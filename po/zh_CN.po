@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 2018a\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-02-05 11:55-0500\n"
-"PO-Revision-Date: 2018-02-28 22:55+0800\n"
+"POT-Creation-Date: 2018-03-14 00:19+0800\n"
+"PO-Revision-Date: 2018-03-14 00:21+0800\n"
 "Last-Translator: Yi-Nung Yang <yinung.yang@gmail.com>\n"
 "Language-Team: Chinese\n"
 "Language: zh_CN\n"
@@ -11,12 +11,12 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Loco-Source-Locale: zh_CN\n"
+"X-Loco-Source-Locale: zh_TW\n"
 "X-Poedit-Basepath: ../../../gretl-git/po\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 "X-Loco-Parser: loco_parse_po\n"
 "X-Generator: Poedit 1.8.7.1\n"
-"X-Poedit-SearchPath-0: zh_CN.po\n"
+"X-Poedit-SearchPath-0: zh_TW.po\n"
 
 #: lib/src/adf_kpss.c:493
 msgid "lagged differences"
@@ -915,9 +915,9 @@ msgid "quarter %s?\n"
 msgstr "%s 是季吗?\n"
 
 #: lib/src/csvdata.c:1185
-#, fuzzy, c-format
+#, c-format
 msgid "quarter %d?\n"
-msgstr "%s 是季吗?\n"
+msgstr ""
 
 #: lib/src/csvdata.c:1192
 #, c-format
@@ -961,14 +961,14 @@ msgid "Data file has trailing commas\n"
 msgstr "资料档尾有英文逗号\n"
 
 #: lib/src/csvdata.c:1776
-#, fuzzy, c-format
+#, c-format
 msgid "Found %d double-quotes, max %d per line\n"
-msgstr "发现 %d 个变数 和 %d 样本数\n"
+msgstr ""
 
 #: lib/src/csvdata.c:1780
-#, fuzzy, c-format
+#, c-format
 msgid "Found %d single-quotes, max %d per line\n"
-msgstr "发现 %d 个变数 和 %d 样本数\n"
+msgstr ""
 
 #: lib/src/csvdata.c:1800
 msgid "Assuming double-quote is the relevant quotation character\n"
@@ -1186,9 +1186,8 @@ msgid "Series length does not match the dataset"
 msgstr "资料长度与资料档不符"
 
 #: lib/src/csvdata.c:6315 lib/src/csvdata.c:6607 lib/src/csvdata.c:6697
-#, fuzzy
 msgid "Invalid join specification"
-msgstr "错误 column 格式"
+msgstr ""
 
 #: lib/src/csvdata.c:6881
 #, c-format
@@ -1629,9 +1628,9 @@ msgid "Matrix %s does not represent a contingency table"
 msgstr "矩阵 %s 并不是一个 contingency table"
 
 #: lib/src/describe.c:2600
-#, fuzzy, c-format
+#, c-format
 msgid "dropping %s: not a discrete variable\n"
-msgstr "%s: 并非字串变数 (string variable)"
+msgstr ""
 
 #: lib/src/describe.c:2898 lib/src/describe.c:3083 lib/src/describe.c:3631
 #: lib/src/geneval.c:7514 lib/src/transforms.c:843 lib/src/transforms.c:1390
@@ -2336,9 +2335,8 @@ msgid "Variable number %d is out of bounds"
 msgstr "变数代码 %d 超过范围"
 
 #: lib/src/geneval.c:7554 lib/src/transforms.c:846 lib/src/transforms.c:1165
-#, fuzzy
 msgid "The constant cannot be lagged"
-msgstr "含常数项及趋势项 (trend)"
+msgstr ""
 
 #: lib/src/geneval.c:7968
 msgid "Matrix specification is not coherent"
@@ -3504,9 +3502,8 @@ msgid "%s: duplicated parameter name '%s'"
 msgstr "%s: 参数名称重复 '%s'"
 
 #: lib/src/gretl_func.c:6212
-#, fuzzy
 msgid "Identifier exceeds the maximum of 31 characters"
-msgstr "变数名称超过最多 31 字元的限制"
+msgstr ""
 
 #: lib/src/gretl_func.c:6624
 #, fuzzy, c-format
@@ -3972,9 +3969,8 @@ msgid "Inadequate data for panel estimation"
 msgstr "反复运算估计"
 
 #: lib/src/gretl_panel.c:2912
-#, fuzzy
 msgid "Hausman test matrix is not positive definite!\n"
-msgstr "Hausman 检定矩阵并非正定 (is not positive definite)"
+msgstr ""
 
 #: lib/src/gretl_panel.c:2914
 #, fuzzy, c-format
@@ -6211,9 +6207,9 @@ msgid "progressive loop: model must be of constant size"
 msgstr ""
 
 #: lib/src/monte_carlo.c:2353
-#, fuzzy, c-format
+#, c-format
 msgid "The '%s' command is not available in loop mode"
-msgstr "抱歉! 此指令无法在迴圈 (loop) 中执行"
+msgstr ""
 
 #: lib/src/monte_carlo.c:2488
 #, c-format
@@ -6532,9 +6528,8 @@ msgid "non-zero ties"
 msgstr "非零且差异值相同之样本种类 (non-zero ties)"
 
 #: lib/src/nonparam.c:1097
-#, fuzzy
 msgid "Fail to reject H0"
-msgstr "无法複製 object"
+msgstr ""
 
 #: lib/src/nonparam.c:1107
 msgid "Expected value"
@@ -7106,9 +7101,9 @@ msgid "Poisson (mean = %g): "
 msgstr "样本均数"
 
 #: lib/src/pvalues.c:3428
-#, fuzzy, c-format
+#, c-format
 msgid "Exponential (scale = %g): "
-msgstr "weibull 分配"
+msgstr ""
 
 #: lib/src/pvalues.c:3436
 #, fuzzy, c-format
@@ -10237,9 +10232,8 @@ msgid "percent change in %s"
 msgstr "取 %s 的变动率"
 
 #: gui/dialogs.c:6301
-#, fuzzy
 msgid "percent changes"
-msgstr "取 %s 的变动率"
+msgstr ""
 
 #: gui/dialogs.c:6310 gui/dialogs.c:6411 gui/ssheet.c:998
 #, c-format
@@ -10264,9 +10258,8 @@ msgid "Monthly, annualized"
 msgstr "年化 (annualized) 季资料"
 
 #: gui/dialogs.c:6362
-#, fuzzy
 msgid "Calculate using logs"
-msgstr "计算机"
+msgstr ""
 
 #: gui/dialogs.c:6399
 #, c-format
@@ -10278,9 +10271,8 @@ msgid "100-based indices"
 msgstr ""
 
 #: gui/dialogs.c:6435
-#, fuzzy
 msgid "Base period:"
-msgstr "%d-期 移动平均 (%s 变数)"
+msgstr ""
 
 #: gui/dialogs.c:6537
 #, fuzzy
@@ -11648,19 +11640,16 @@ msgid "No formula was given"
 msgstr "未给定算式"
 
 #: gui/gpt_dialog.c:2383
-#, fuzzy
 msgid "box"
-msgstr "直条图(空心)"
+msgstr ""
 
 #: gui/gpt_dialog.c:2388
-#, fuzzy
 msgid "c.i. bound"
-msgstr "右尾机率"
+msgstr ""
 
 #: gui/gpt_dialog.c:2390 gui/gpt_dialog.c:2396
-#, fuzzy
 msgid "outliers"
-msgstr "异常值"
+msgstr ""
 
 #: gui/gpt_dialog.c:2416
 #, c-format
@@ -11680,9 +11669,8 @@ msgid "type"
 msgstr "型态:"
 
 #: gui/gpt_dialog.c:2814
-#, fuzzy
 msgid "line"
-msgstr "折线 (lines)"
+msgstr ""
 
 #: gui/gpt_dialog.c:2815
 msgid "line width"
@@ -12347,14 +12335,12 @@ msgid "_Seasonal differences of selected variables"
 msgstr "取季节差分(_S)"
 
 #: gui/gretl.c:1702
-#, fuzzy
 msgid "_Percentage change of selected variables"
 msgstr "取变动率% (_P)"
 
 #: gui/gretl.c:1704
-#, fuzzy
 msgid "_100-based indices of selected variables"
-msgstr "取一阶差分(_F)"
+msgstr "计算以_100 为开始的指数"
 
 #: gui/gretl.c:1706
 msgid "_Index variable"
@@ -14901,9 +14887,8 @@ msgid "Add percent change..."
 msgstr "将变数取变动率 (percent change)..."
 
 #: gui/menustate.c:551 gui/menustate.c:556
-#, fuzzy
 msgid "Add index values..."
-msgstr "编辑变数值"
+msgstr ""
 
 #: gui/menustate.c:552
 msgid "Dummify..."
@@ -14918,9 +14903,8 @@ msgid "Add differences"
 msgstr "将变数取一阶差分"
 
 #: gui/menustate.c:555
-#, fuzzy
 msgid "Add percent changes..."
-msgstr "将变数取变动率 (percent change)..."
+msgstr ""
 
 #: gui/menustate.c:558 gui/menustate.c:573
 msgid "Define new variable..."
@@ -18278,9 +18262,8 @@ msgid "Irregular"
 msgstr "不规则成份变数 (irregular)"
 
 #: plugin/tramo_options.c:425
-#, fuzzy
 msgid "Linearized series"
-msgstr "新增资料变数 (series)"
+msgstr "线性化资料变数 (series)"
 
 #: plugin/tramo_options.c:439
 msgid "Output"
@@ -18563,6 +18546,9 @@ msgstr "增加样本(_A)"
 #~ msgid "Sorry, the %s command is not yet implemented in libgretl\n"
 #~ msgstr "抱歉, %s 在 libgretl 中, 这个指令还没有完成\n"
 
+#~ msgid "Sorry, this command is not available in loop mode"
+#~ msgstr "抱歉! 此指令无法在迴圈 (loop) 中执行"
+
 #, fuzzy
 #~ msgid "lower bound"
 #~ msgstr "下界 (Lower bound) variable"
@@ -18574,6 +18560,9 @@ msgstr "增加样本(_A)"
 #, fuzzy
 #~ msgid "data scale"
 #~ msgstr "scale 尺度参数"
+
+#~ msgid "_Percentage change of selected variable"
+#~ msgstr "取变动率% (_P)"
 
 #, fuzzy
 #~ msgid "Copy as plain text"
