@@ -1782,7 +1782,11 @@ static void arma_extra_info (const MODEL *pmod, PRN *prn)
 	pputs(prn, _("= MLE"));
 	pputs(prn, ")\n");
     } else if (acode & ARMA_EXACT) {
-	pputs(prn, _("Estimated using Kalman filter"));
+	if (gretl_model_get_int(pmod, "AS197")) {
+	    pputs(prn, _("Estimated using AS 197"));
+	} else {
+	    pputs(prn, _("Estimated using Kalman filter"));
+	}
 	pputs(prn, " (");
 	pputs(prn, _("exact ML"));
 	pputs(prn, ")\n");

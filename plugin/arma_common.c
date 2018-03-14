@@ -884,7 +884,7 @@ static int transcribe_extra_info (arma_info *ainfo, MODEL *armod)
     int err = 0;
 
     if (ainfo_list == NULL) {
-	err = E_ALLOC;
+	armod->errcode = err = E_ALLOC;
     } else {
 	/* wrap up a bunch of relevant integers */
 	ainfo_list[1] = ainfo->p;
