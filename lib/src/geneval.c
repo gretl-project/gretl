@@ -12021,7 +12021,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    if (!p->err) {
 		if (k == 1 && e->t == ARRAY) {
 		    li = list_from_strings_array(e->v.a, p);
-		} else if (ok_list_node(e, p)) {
+		} else if (ok_list_node_plus(e)) {
 		    li = node_get_list(e, p);
 		} else {
 		    p->err = E_TYPES;
