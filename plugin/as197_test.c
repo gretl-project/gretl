@@ -150,7 +150,7 @@ static double as197_iteration (const double *b, void *data)
 	    as->w[i] = as->w0[i] - as->mu;
 	}
 	b++;
-    }    
+    }
     if (as->P > 0) {
 	write_big_phi_197(b, as);
     } else if (as->p > 0) {
@@ -325,14 +325,21 @@ static int as197_arma (double *coeff, const DATASET *dset,
 	int nparam = as.p + as.q + as.P + as.Q + as.ifc;
 	int err;
 
-	pmod->errcode = 0;
+	if (as.n > 2000) {
+	    /* try to avoid slowdown on big samples */
+	    as.delta = 0.0001;
+	    as.use_loglik = 1; /* ? */
+	}
+
 	BFGS_defaults(&maxit, &toler, ARMA);
 
 	err = BFGS_max(b, nparam, maxit, toler,
 		       &fncount, &grcount, as197_iteration, C_LOGLIK,
 		       NULL, &as, NULL, opt, ainfo->prn);
 	if (!err) {
-	    as197_full_loglik(&as);
+	    if (!as->loglik) {
+		as197_full_loglik(&as);
+	    }
 	    gretl_model_set_int(pmod, "fncount", fncount);
 	    gretl_model_set_int(pmod, "grcount", grcount);
 	    err = as197_arma_finish(pmod, ainfo, dset, &as, b,
@@ -342,7 +349,7 @@ static int as197_arma (double *coeff, const DATASET *dset,
 
     if (err) {
 	pmod->errcode = err;
-    }    
+    }
 
     as197_info_free(&as);
     gretl_matrix_free(y);
@@ -353,7 +360,7 @@ static int as197_arma (double *coeff, const DATASET *dset,
 
 /* As of 2018-03-13, the AS197 implementation for gretl
    can't handle missing values, "gappy" non-seasonal
-   AR or MA specifications, or exogenous variables 
+   AR or MA specifications, or exogenous variables
    (ARMAX). So we need to screen out these conditions
    before saying OK to using the testing code.
 */
