@@ -777,6 +777,12 @@ gretl_matrix *gretl_matrix_trim_rows (const gretl_matrix *A,
 gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A, 
 				   int mm, int rc, int idx,
 				   int *err);
+    
+double gretl_matrix_global_minmax (const gretl_matrix *A,
+				   int mm, int *err);
+
+double gretl_matrix_global_sum (const gretl_matrix *A,
+				int *err);    
 
 gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p, 
 				gretlopt opt, int *err);

@@ -12964,6 +12964,80 @@ gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
 }
 
 /**
+ * gretl_matrix_global_minmax:
+ * @A: matrix to examine.
+ * @mm: 0 for minimum, 1 for maximum.
+ * @err: location to receive error code.
+ *
+ * Returns: the smallest or greatest element of @A,
+ * ignoring NaNs but not infinities (?), or #NADBL on
+ * failure.
+ */
+
+double gretl_matrix_global_minmax (const gretl_matrix *A,
+				   int mm, int *err)
+{
+    double x, ret = NADBL;
+    int i, n, started = 0;
+    
+    if (gretl_is_null_matrix(A)) {
+	*err = E_DATA;
+	return NADBL;
+    }
+
+    n = A->rows * A->cols;
+
+    for (i=0; i<n; i++) {
+	x = A->val[i];
+	if (isnan(x)) {
+	    ;
+	} else {
+	    if (!started) {
+		ret = x;
+		started = 1;
+	    } else if ((mm == 0 && x < ret) ||
+		       (mm == 1 && x > ret)) {
+		ret = x;
+	    }
+	}
+    }
+
+    return ret;
+}
+
+/**
+ * gretl_matrix_global_sum:
+ * @A: matrix to examine.
+ * @err: location to receive error code.
+ *
+ * Returns: the sum of the elements of @A,
+ * or #NADBL on failure.
+ */
+
+double gretl_matrix_global_sum (const gretl_matrix *A,
+				int *err)
+{
+    double ret = 0.0;
+    int i, n;
+    
+    if (gretl_is_null_matrix(A)) {
+	*err = E_DATA;
+	return NADBL;
+    }
+
+    n = A->rows * A->cols;
+
+    for (i=0; i<n; i++) {
+	ret += A->val[i];
+	if (isnan(ret)) {
+	    break;
+	}
+    }
+
+    return ret;
+}
+
+/**
  * gretl_matrix_pca:
  * @X: T x m data matrix.
  * @p: number of principal components to return: 0 < p <= m,
