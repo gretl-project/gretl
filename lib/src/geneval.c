@@ -7197,10 +7197,15 @@ series_scalar_func (NODE *n, int f, parser *p)
 	if (n->t == MAT) {
 	    if (f == F_SUM || f == F_MAX || f == F_MIN) {
 		/* we'll sum, max, or min all elements of a matrix */
-		tmp = n->v.m;
-		t1 = 0;
-		t2 = tmp->rows * tmp->cols - 1;
-		n->v.xvec = tmp->val;
+		if (f == F_SUM) {
+		    ret->v.xval = gretl_matrix_global_sum(n->v.m, &p->err);
+		} else {
+		    int mm = (f == F_MAX);
+
+		    ret->v.xval = gretl_matrix_global_minmax(n->v.m, mm,
+							     &p->err);
+		}
+		return ret; /* handled */
 	    } else if (f == F_T1 || f == F_T2) {
 		cast_to_series(n, f, &tmp, NULL, NULL, p);
 	    } else {
