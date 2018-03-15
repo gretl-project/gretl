@@ -7195,8 +7195,8 @@ series_scalar_func (NODE *n, int f, parser *p)
 	const double *x;
 
 	if (n->t == MAT) {
-	    if (f == F_SUM) {
-		/* we'll sum all elements of a matrix */
+	    if (f == F_SUM || f == F_MAX || f == F_MIN) {
+		/* we'll sum, max, or min all elements of a matrix */
 		tmp = n->v.m;
 		t1 = 0;
 		t2 = tmp->rows * tmp->cols - 1;
@@ -14474,7 +14474,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_NOBS:
     case F_T1:
     case F_T2:
-	/* functions taking series arg, returning scalar */
+	/* functions taking series arg (mostly), returning scalar */
 	if (l->t == SERIES || l->t == MAT) {
 	    ret = series_scalar_func(l, t->t, p);
 	} else if ((t->t == F_MEAN || t->t == F_SD ||
