@@ -412,9 +412,9 @@ static khelper *kalman_helper_new (arma_info *ainfo,
 
 static int ainfo_get_state_size (arma_info *ainfo)
 {
-    int pmax = ainfo->p + ainfo->pd * ainfo->P;
-    int qmax = ainfo->q + ainfo->pd * ainfo->Q;
-    int r = (pmax > qmax + 1)? pmax : qmax + 1;
+    int plen = ainfo->p + ainfo->pd * ainfo->P;
+    int qlen = ainfo->q + ainfo->pd * ainfo->Q;
+    int r = (plen > qlen + 1)? plen : qlen + 1;
 
     ainfo->r0 = r;
 
@@ -529,7 +529,7 @@ static void write_big_theta (const double *theta,
 	    } else if (MA_included(ainfo, i)) {
 		y = theta[k++];
 	    } else {
-		y = 0;
+		y = 0.0;
 	    }
             ii = (j+1) * ainfo->pd + (i+1);
 	    mc[ii] = x * y;

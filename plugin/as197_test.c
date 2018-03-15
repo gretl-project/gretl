@@ -82,7 +82,7 @@ static void as197_info_free (struct as197_info *as)
 static void write_big_phi_197 (const double *b,
 			       struct as197_info *as)
 {
-    const double *bs = b + as->p;
+    const double *bs = b + as->ai->np;
     double x, y;
     int i, j, k, ii;
 
@@ -96,8 +96,10 @@ static void write_big_phi_197 (const double *b,
         for (i=-1; i<as->p; i++) {
 	    if (i < 0) {
 		y = -1;
-	    } else {
+	    } else if (AR_included(as->ai, i)) {
 		y = b[k++];
+	    } else {
+		y = 0.0;
 	    }
             ii = (j+1) * as->pd + (i+1);
 	    if (ii > 0) {
@@ -110,7 +112,7 @@ static void write_big_phi_197 (const double *b,
 static void write_big_theta_197 (const double *b,
 				 struct as197_info *as)
 {
-    const double *bs = b + as->q;
+    const double *bs = b + as->ai->nq;
     double x, y;
     int i, j, k, ii;
 
@@ -124,8 +126,10 @@ static void write_big_theta_197 (const double *b,
         for (i=-1; i<as->q; i++) {
 	    if (i < 0) {
 		y = 1;
-	    } else {
+	    } else if (MA_included(as->ai, i)) {
 		y = b[k++];
+	    } else {
+		y = 0.0;
 	    }
             ii = (j+1) * as->pd + (i+1);
 	    if (ii > 0) {
@@ -139,15 +143,16 @@ static double as197_iteration (const double *b, void *data)
 {
     struct as197_info *as = data;
     double crit = NADBL;
-    int np = as->p + as->P;
-    int i;
+    /* number of actually included AR terms */
+    int np = as->ai->np + as->P;
+    int i, k;
 
     as->ncalls += 1;
 
     if (as->ma_check) {
 	/* check that MA term(s) are within bounds */
 	const double *theta = b + as->ifc + np;
-	const double *Theta = theta + as->q;
+	const double *Theta = theta + as->ai->nq;
 
 	if (ma_out_of_bounds(as->ai, theta, Theta)) {
 	    as->nbad += 1;
@@ -165,16 +170,26 @@ static double as197_iteration (const double *b, void *data)
     if (as->P > 0) {
 	write_big_phi_197(b, as);
     } else if (as->p > 0) {
+	k = 0;
 	for (i=0; i<as->p; i++) {
-	    as->phi[i] = b[i];
+	    if (AR_included(as->ai, i)) {
+		as->phi[i] = b[k++];
+	    } else {
+		as->phi[i] = 0.0;
+	    }
 	}
     }
     b += np;
     if (as->Q > 0) {
 	write_big_theta_197(b, as);
     } else if (as->q > 0) {
+	k = 0;
 	for (i=0; i<as->q; i++) {
-	    as->theta[i] = b[i];
+	    if (MA_included(as->ai, i)) {
+		as->theta[i] = b[k++];
+	    } else {
+		as->theta[i] = 0.0;
+	    }
 	}
     }
 
@@ -378,12 +393,10 @@ static int as197_arma (const double *coeff,
     return err;
 }
 
-/* As of 2018-03-13, the AS197 implementation for gretl
-   can't handle missing values, "gappy" non-seasonal
-   AR or MA specifications, or exogenous variables
+/* As of 2018-03-15, the AS197 implementation for gretl
+   can't handle missing values or exogenous variables
    (ARMAX). So we need to screen out these conditions
    before saying OK to using the testing code.
-   Added: y-scaling doesn't work yet either?
 */
 
 static int as197_ok (arma_info *ainfo)
@@ -394,11 +407,8 @@ static int as197_ok (arma_info *ainfo)
     } else if (arma_missvals(ainfo)) {
 	/* NAs in sample range */
 	return 0;
-    } else if (ainfo->pqspec != NULL && *ainfo->pqspec != '\0') {
-	/* marker for "gappy" case */
-	return 0;
     } else if (ainfo->yscale != 1.0) {
-	/* not working: and shouldn't be required? */
+	/* not working: and shouldn't be required anyway? */
 	return 0;
     } else {
 	return 1;
