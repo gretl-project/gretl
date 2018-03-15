@@ -1711,6 +1711,23 @@ static int wildcard_special (parser *p)
     return 1;
 }
 
+/* 0xE2 0x88 0x92 = UTF-8 minus */
+
+static void lex_try_utf8 (parser *p)
+{
+    if ((unsigned char) *p->point == 0x88 &&
+	(unsigned char) *(p->point + 1) == 0x92) {
+	p->sym = B_SUB;
+	parser_getc(p);
+	parser_getc(p);
+	parser_getc(p);
+    } else {
+	pprintf(p->prn, _("Unexpected byte 0x%x\n"),
+		(unsigned char) p->ch);
+	p->err = E_PARSE;
+    }
+}
+
 #define word_start_special(c) (c == '$' || c == '_')
 
 #define lag_range_sym(p) ((p->flags & P_LAGPRSE) && p->ch == 't' && \
@@ -1730,6 +1747,10 @@ void lex (parser *p)
     }
 
     while (p->ch != 0) {
+	if ((unsigned char) p->ch == 0xE2) {
+	    lex_try_utf8(p);
+	    return;
+	}
 	switch (p->ch) {
 	case ' ':
 	case '\t':
@@ -1737,11 +1758,11 @@ void lex (parser *p)
         case '\n':
 	    parser_getc(p);
 	    break;
-        case '+': 
+        case '+':
 	    p->sym = B_ADD;
 	    parser_getc(p);
 	    return;
-        case '-': 
+        case '-':
 	    p->sym = B_SUB;
 	    parser_getc(p);
 	    return;
