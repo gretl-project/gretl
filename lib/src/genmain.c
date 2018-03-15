@@ -811,40 +811,6 @@ int generate (const char *line, DATASET *dset,
 
 /* retrieve a scalar result directly */
 
-static double real_generate_scalar (const char *s,
-				    DATASET *dset,
-				    int *err)
-{
-    parser p;
-    double x = NADBL;
-
-    *err = realgen(s, &p, dset, NULL, P_PRIV | P_ANON, NUM);
-
-    if (!*err) {
-	if (p.ret->t == MAT) {
-	    gretl_matrix *m = p.ret->v.m;
-
-	    if (gretl_matrix_is_scalar(m)) {
-		x = p.ret->v.m->val[0];
-	    } else if (!gretl_is_null_matrix(m)) {
-		fprintf(stderr, "generate_scalar: got %d x %d matrix\n",
-			m->rows, m->cols);
-		*err = E_TYPES;
-	    }
-	} else if (p.ret->t == NUM) {
-	    x = p.ret->v.xval;
-	} else {
-	    *err = E_TYPES;
-	}
-    } else if (*err == 1) {
-	*err = E_PARSE;
-    }
-
-    gen_cleanup(&p);
-
-    return x;
-}
-
 double generate_scalar (const char *s, DATASET *dset, int *err)
 {
     parser p;
