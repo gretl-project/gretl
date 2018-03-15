@@ -268,13 +268,17 @@ static int as197_arma_finish (MODEL *pmod,
     pmod->lnL = as->loglik;
 
     if (1) { /* !do_opg */
-	/* base covariance matrix on Hessian (FIXME perhaps QML) */
+	/* base covariance matrix on Hessian (FIXME perhaps QML);
+	   for now we'll not fail entirely if we can't come up
+	   with a Hessian-based covariance matrix
+	*/
 	gretl_matrix *Hinv;
+	int vcv_err = 0;
 
 	as->use_loglik = 1;
 	Hinv = numerical_hessian_inverse(b, ainfo->nc, as197_iteration,
-					 as, &err);
-	if (!err) {
+					 as, &vcv_err);
+	if (!vcv_err) {
 	    err = gretl_model_write_vcv(pmod, Hinv);
 	    if (!err) {
 		gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
