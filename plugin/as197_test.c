@@ -16,9 +16,9 @@ struct as197_info {
     double *vw, *vl, *vk;
     double sumsq, fact;
     double toler;
-    double mu;
     double loglik;
     int verbose;
+    int ma_check;
     int ncalls, nbad;
     int use_loglik;
     arma_info *ai;
@@ -59,11 +59,11 @@ static void as197_info_init (struct as197_info *as,
     as->w = as->w0 = NULL; /* later! */
 
     as->toler = delta;
-    as->mu = 0;
     as->loglik = NADBL;
     as->ifault = 0;
 
     as->verbose = verbose > 1;
+    as->ma_check = 0;
     as->ncalls = as->nbad = 0;
     as->use_loglik = use_loglik;
 }
@@ -144,7 +144,7 @@ static double as197_iteration (const double *b, void *data)
 
     as->ncalls += 1;
 
-    if (as->q > 0 || as->Q > 0) {
+    if (as->ma_check) {
 	/* check that MA term(s) are within bounds */
 	const double *theta = b + as->ifc + np;
 	const double *Theta = theta + as->q;
@@ -157,9 +157,8 @@ static double as197_iteration (const double *b, void *data)
 
     if (as->ifc) {
 	/* subtract the constant */
-	as->mu = b[0];
 	for (i=0; i<as->n; i++) {
-	    as->w[i] = as->w0[i] - as->mu;
+	    as->w[i] = as->w0[i] - b[0];
 	}
 	b++;
     }
@@ -276,6 +275,7 @@ static int as197_arma_finish (MODEL *pmod,
 	int vcv_err = 0;
 
 	as->use_loglik = 1;
+	as->ma_check = 0;
 	Hinv = numerical_hessian_inverse(b, ainfo->nc, as197_iteration,
 					 as, &vcv_err);
 	if (!vcv_err) {
@@ -300,35 +300,6 @@ static int as197_arma_finish (MODEL *pmod,
     return err;
 }
 
-static int as197_undo_y_scaling (arma_info *ainfo,
-				 gretl_matrix *y,
-				 double *b,
-				 struct as197_info *as)
-{
-    double *beta = b + 1 + ainfo->np + ainfo->P +
-	ainfo->nq + ainfo->Q;
-    int i, t, T = ainfo->t2 - ainfo->t1 + 1;
-    int err = 0;
-
-    /* adjust the constant */
-    b[0] /= ainfo->yscale;
-
-    for (i=0; i<ainfo->nexo; i++) {
-	beta[i] /= ainfo->yscale;
-    }
-
-    i = ainfo->t1;
-    for (t=0; t<T; t++) {
-	y->val[t] /= ainfo->yscale;
-    }
-
-    if (na(as197_iteration(b, as))) {
-	err = 1;
-    }
-
-    return err;
-}
-
 static int as197_arma (const double *coeff,
 		       const DATASET *dset,
 		       arma_info *ainfo,
@@ -344,14 +315,13 @@ static int as197_arma (const double *coeff,
     int err = 0;
 
     as197_info_init(&as, ainfo, verbose, delta, use_loglik);
-    as.ai = ainfo; /* link */
+    as.ai = ainfo; /* create link */
 
     b = copyvec(coeff, ainfo->nc);
     if (b == NULL) {
 	return E_ALLOC;
     }
 
-    /* FIXME scaling of y */
     y = form_arma_y_vector(ainfo, &err);
 
     if (!err) {
@@ -370,7 +340,6 @@ static int as197_arma (const double *coeff,
 	double toler;
 	int fncount = 0;
 	int grcount = 0;
-	int nparam = as.p + as.q + as.P + as.Q + as.ifc;
 
 	if (as.n > 2000) {
 	    /* try to avoid slowdown on big samples */
@@ -378,17 +347,17 @@ static int as197_arma (const double *coeff,
 	    as.use_loglik = 1; /* ? */
 	}
 
+	if (as.q > 0 || as.Q > 0) {
+	    as.ma_check = 1; /* ? */
+	}
+
 	BFGS_defaults(&maxit, &toler, ARMA);
 
-	err = BFGS_max(b, nparam, maxit, toler,
+	err = BFGS_max(b, ainfo->nc, maxit, toler,
 		       &fncount, &grcount, as197_iteration, C_LOGLIK,
 		       NULL, &as, NULL, opt, ainfo->prn);
 	if (!err) {
-	    if (ainfo->yscale != 1.0) {
-		/* broken? */
-		as.use_loglik = 1;
-		as197_undo_y_scaling(ainfo, y, b, &as);
-	    } else if (!as.use_loglik) {
+	    if (!as.use_loglik) {
 		as197_full_loglik(&as);
 	    }
 	    gretl_model_set_int(pmod, "fncount", fncount);
@@ -429,7 +398,7 @@ static int as197_ok (arma_info *ainfo)
 	/* marker for "gappy" case */
 	return 0;
     } else if (ainfo->yscale != 1.0) {
-	/* not working yet! */
+	/* not working: and shouldn't be required? */
 	return 0;
     } else {
 	return 1;
