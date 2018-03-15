@@ -139,13 +139,54 @@ static void write_big_theta_197 (const double *b,
     }
 }
 
+static void as197_fill_arrays (struct as197_info *as,
+			       const double *b)
+{
+    int np = as->ai->np + as->P;
+    int i, k;
+
+    if (as->ifc) {
+	/* subtract the constant */
+	for (i=0; i<as->n; i++) {
+	    as->w[i] = as->w0[i] - b[0];
+	}
+	b++;
+    }
+
+    if (as->P > 0) {
+	write_big_phi_197(b, as);
+    } else if (as->p > 0) {
+	k = 0;
+	for (i=0; i<as->p; i++) {
+	    if (AR_included(as->ai, i)) {
+		as->phi[i] = b[k++];
+	    } else {
+		as->phi[i] = 0.0;
+	    }
+	}
+    }
+    b += np;
+
+    if (as->Q > 0) {
+	write_big_theta_197(b, as);
+    } else if (as->q > 0) {
+	k = 0;
+	for (i=0; i<as->q; i++) {
+	    if (MA_included(as->ai, i)) {
+		as->theta[i] = b[k++];
+	    } else {
+		as->theta[i] = 0.0;
+	    }
+	}
+    }
+}
+
 static double as197_iteration (const double *b, void *data)
 {
     struct as197_info *as = data;
     double crit = NADBL;
     /* number of actually included AR terms */
     int np = as->ai->np + as->P;
-    int i, k;
 
     as->ncalls += 1;
 
@@ -160,38 +201,7 @@ static double as197_iteration (const double *b, void *data)
 	}
     }
 
-    if (as->ifc) {
-	/* subtract the constant */
-	for (i=0; i<as->n; i++) {
-	    as->w[i] = as->w0[i] - b[0];
-	}
-	b++;
-    }
-    if (as->P > 0) {
-	write_big_phi_197(b, as);
-    } else if (as->p > 0) {
-	k = 0;
-	for (i=0; i<as->p; i++) {
-	    if (AR_included(as->ai, i)) {
-		as->phi[i] = b[k++];
-	    } else {
-		as->phi[i] = 0.0;
-	    }
-	}
-    }
-    b += np;
-    if (as->Q > 0) {
-	write_big_theta_197(b, as);
-    } else if (as->q > 0) {
-	k = 0;
-	for (i=0; i<as->q; i++) {
-	    if (MA_included(as->ai, i)) {
-		as->theta[i] = b[k++];
-	    } else {
-		as->theta[i] = 0.0;
-	    }
-	}
-    }
+    as197_fill_arrays(as, b);
 
     as->ifault = flikam(as->phi, as->plen, as->theta, as->qlen,
 			as->w, as->e, as->n, &as->sumsq, &as->fact,
@@ -233,6 +243,67 @@ static double as197_iteration (const double *b, void *data)
     }
 
     return crit;
+}
+
+static const double *as197_llt_callback (const double *b, int i,
+					 void *data)
+{
+    struct as197_info *as = data;
+    int err;
+
+    as197_fill_arrays(as, b);
+    err = flikam(as->phi, as->plen, as->theta, as->qlen,
+		 as->w, as->e, as->n, &as->sumsq, &as->fact,
+		 as->vw, as->vl, as->rp1, as->vk, as->r,
+		 as->toler);
+
+    return (err)? NULL : as->e;
+}
+
+/* FIXME consolidate this with arma_OPG_vcv? */
+
+static int as197_OPG_vcv (MODEL *pmod,
+			  struct as197_info *as,
+			  double *b, double s2,
+			  int k, int T,
+			  PRN *prn)
+{
+    gretl_matrix *G = NULL;
+    gretl_matrix *V = NULL;
+    int err = 0;
+
+    G = numerical_score_matrix(b, T, k, as197_llt_callback,
+			       as, &err);
+
+    if (!err) {
+	V = gretl_matrix_XTX_new(G);
+	if (V == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err) {
+	double rcond = gretl_symmetric_matrix_rcond(V, &err);
+
+	if (!err && rcond < 1.0E-10) {
+	    pprintf(prn, "OPG: rcond = %g; will try Hessian\n", rcond);
+	    err = 1;
+	}
+    }
+
+    if (!err) {
+	err = gretl_invert_symmetric_matrix(V);
+    }
+
+    if (!err) {
+	gretl_matrix_multiply_by_scalar(V, s2);
+	err = gretl_model_write_vcv(pmod, V);
+    }
+
+    gretl_matrix_free(G);
+    gretl_matrix_free(V);
+
+    return err;
 }
 
 /* calculate the full loglikelihood on completion */
@@ -278,10 +349,17 @@ static int as197_arma_finish (MODEL *pmod,
 	pmod->uhat[t] = as->e[i++]; /* gretl_vector_get(kh->E, i++); */
     }
 
-    pmod->sigma = sqrt(s2 / ainfo->T);
+    s2 /= ainfo->T;
+    pmod->sigma = sqrt(s2);
     pmod->lnL = as->loglik;
 
-    if (1) { /* !do_opg */
+    if (arma_use_opg(opt)) {
+	err = as197_OPG_vcv(pmod, as, b, s2, k, ainfo->T, prn);
+	if (!err) {
+	    gretl_model_set_vcv_info(pmod, VCV_ML, ML_OP);
+	    pmod->opt |= OPT_G;
+	}
+    } else {
 	/* base covariance matrix on Hessian (FIXME perhaps QML);
 	   for now we'll not fail entirely if we can't come up
 	   with a Hessian-based covariance matrix
