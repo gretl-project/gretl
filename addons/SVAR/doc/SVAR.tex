@@ -1059,10 +1059,10 @@ dShock = GetShock(&BQModel, 2)
 bfail = SVAR_boot(&BQModel, 1024, 0.9, 0)
 
 # page 662
-IRFsave("bq_Yd.pdf", &BQModel,  1, 1)
-IRFsave("bq_ud.pdf", &BQModel, -2, 1)
-IRFsave("bq_Ys.pdf", &BQModel,  1, 2)
-IRFsave("bq_us.pdf", &BQModel, -2, 2)
+IRFsave("bq_Ys.pdf", &BQModel,  1, 1)
+IRFsave("bq_us.pdf", &BQModel,  1, 2)
+IRFsave("bq_Yd.pdf", &BQModel, -2, 1)
+IRFsave("bq_ud.pdf", &BQModel, -2, 2)
 
 # now perform historical decomposition
 list HDDY = SVAR_hd(&BQModel, 1)
@@ -1268,8 +1268,8 @@ straight away set the optional fourth (trailing) argument to 0.
   %\hspace{-1cm}
   \begin{tabular}{cc}
     \includegraphics[width=\irfw, height=\irfh]{bq_Yd} &
-    \includegraphics[width=\irfw, height=\irfh]{bq_Ys} \\
-    \includegraphics[width=\irfw, height=\irfh]{bq_ud} &
+    \includegraphics[width=\irfw, height=\irfh]{bq_ud} \\
+    \includegraphics[width=\irfw, height=\irfh]{bq_Ys} &
     \includegraphics[width=\irfw, height=\irfh]{bq_us}
   \end{tabular}
   \caption{Impulse response functions for the Blanchard-Quah model}
