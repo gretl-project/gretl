@@ -12,7 +12,7 @@ struct as197_info {
     int n;
     int ifc;
     double *phi, *theta;
-    double *w, *w0, *e;
+    double *y, *y0, *e;
     double *vw, *vl, *vk;
     double sumsq, fact;
     double toler;
@@ -22,14 +22,21 @@ struct as197_info {
     int ncalls, nbad;
     int use_loglik;
     arma_info *ai;
+    gretl_matrix *X;
+    int free_X;
 };
 
-static void as197_info_init (struct as197_info *as,
-			     arma_info *ai,
-			     int verbose,
-			     double delta,
-			     int use_loglik)
+static int as197_info_init (struct as197_info *as,
+			    arma_info *ai,
+			    int verbose,
+			    double delta,
+			    int use_loglik)
 {
+    int err = 0;
+
+    as->ai = ai; /* create accessor */
+
+    /* convenience copies of @ai integer values */
     as->p = ai->p;
     as->P = ai->P;
     as->q = ai->q;
@@ -43,29 +50,47 @@ static void as197_info_init (struct as197_info *as,
     as->r = (as->plen > as->qlen + 1)? as->plen : as->qlen + 1;
     as->rp1 = as->r + 1;
 
+    as->y = as->y0 = NULL; /* later! */
+    as->X = NULL; /* later too */
+    as->free_X = 0;
+
     as->phi = as->theta = NULL;
     if (as->plen > 0) {
 	as->phi = malloc(as->plen * sizeof *as->phi);
+	if (as->phi == NULL) {
+	    err = E_ALLOC;
+	}
     }
-    if (as->qlen > 0) {
+    if (!err && as->qlen > 0) {
 	as->theta = malloc(as->qlen * sizeof *as->theta);
+	if (as->theta == NULL) {
+	    err = E_ALLOC;
+	}
     }
 
-    as->e =  malloc(as->n * sizeof *as->e);
-    as->vw = malloc(as->rp1 * sizeof *as->vw);
-    as->vl = malloc(as->rp1 * sizeof *as->vl);
-    as->vk = malloc(as->r * sizeof *as->vk);
+    if (!err) {
+	as->e =  malloc(as->n * sizeof *as->e);
+	as->vw = malloc(as->rp1 * sizeof *as->vw);
+	as->vl = malloc(as->rp1 * sizeof *as->vl);
+	as->vk = malloc(as->r * sizeof *as->vk);
+	if (as->e == NULL || as->vw == NULL ||
+	    as->vl == NULL || as->vk == NULL) {
+	    err = E_ALLOC;
+	}
+    }
 
-    as->w = as->w0 = NULL; /* later! */
+    if (!err) {
+	as->toler = delta;
+	as->loglik = NADBL;
+	as->ifault = 0;
 
-    as->toler = delta;
-    as->loglik = NADBL;
-    as->ifault = 0;
+	as->verbose = verbose > 1;
+	as->ma_check = 0;
+	as->ncalls = as->nbad = 0;
+	as->use_loglik = use_loglik;
+    }
 
-    as->verbose = verbose > 1;
-    as->ma_check = 0;
-    as->ncalls = as->nbad = 0;
-    as->use_loglik = use_loglik;
+    return err;
 }
 
 static void as197_info_free (struct as197_info *as)
@@ -76,7 +101,11 @@ static void as197_info_free (struct as197_info *as)
     free(as->vw);
     free(as->vl);
     free(as->vk);
-    free(as->w0);
+    free(as->y0);
+
+    if (as->free_X) {
+	gretl_matrix_free(as->X);
+    }
 }
 
 static void write_big_phi_197 (const double *b,
@@ -143,12 +172,17 @@ static void as197_fill_arrays (struct as197_info *as,
 			       const double *b)
 {
     int np = as->ai->np + as->P;
+    int nq = as->ai->nq + as->Q;
+    double mu = 0.0;
     int i, k;
 
     if (as->ifc) {
-	/* subtract the constant */
-	for (i=0; i<as->n; i++) {
-	    as->w[i] = as->w0[i] - b[0];
+	mu = b[0];
+	if (as->ai->nexo == 0) {
+	    /* just subtract the constant */
+	    for (i=0; i<as->n; i++) {
+		as->y[i] = as->y0[i] - mu;
+	    }
 	}
 	b++;
     }
@@ -179,6 +213,24 @@ static void as197_fill_arrays (struct as197_info *as,
 	    }
 	}
     }
+    b += nq;
+
+    if (as->ai->nexo > 0) {
+	/* subtract the regression effect */
+	double xij;
+	int j;
+
+	for (i=0; i<as->n; i++) {
+	    as->y[i] = as->y0[i];
+	    if (as->ifc) {
+		as->y[i] -= mu;
+	    }
+	    for (j=0; j<as->ai->nexo; j++) {
+		xij = gretl_matrix_get(as->X, i, j);
+		as->y[i] -= xij * b[j];
+	    }
+	}
+    }
 }
 
 static double as197_iteration (const double *b, void *data)
@@ -204,7 +256,7 @@ static double as197_iteration (const double *b, void *data)
     as197_fill_arrays(as, b);
 
     as->ifault = flikam(as->phi, as->plen, as->theta, as->qlen,
-			as->w, as->e, as->n, &as->sumsq, &as->fact,
+			as->y, as->e, as->n, &as->sumsq, &as->fact,
 			as->vw, as->vl, as->rp1, as->vk, as->r,
 			as->toler);
 
@@ -253,7 +305,7 @@ static const double *as197_llt_callback (const double *b, int i,
 
     as197_fill_arrays(as, b);
     err = flikam(as->phi, as->plen, as->theta, as->qlen,
-		 as->w, as->e, as->n, &as->sumsq, &as->fact,
+		 as->y, as->e, as->n, &as->sumsq, &as->fact,
 		 as->vw, as->vl, as->rp1, as->vk, as->r,
 		 as->toler);
 
@@ -306,7 +358,9 @@ static int as197_OPG_vcv (MODEL *pmod,
     return err;
 }
 
-/* calculate the full loglikelihood on completion */
+/* calculate the full loglikelihood on completion,
+   if we were using Melard's criterion during the
+   maximization process */
 
 static void as197_full_loglik (struct as197_info *as)
 {
@@ -405,10 +459,12 @@ static int as197_arma (const double *coeff,
     double delta = -1.0;
     int use_loglik = 0;
     int verbose = 1;
-    int err = 0;
+    int err;
 
-    as197_info_init(&as, ainfo, verbose, delta, use_loglik);
-    as.ai = ainfo; /* create link */
+    err = as197_info_init(&as, ainfo, verbose, delta, use_loglik);
+    if (err) {
+	return err;
+    }
 
     b = copyvec(coeff, ainfo->nc);
     if (b == NULL) {
@@ -416,14 +472,22 @@ static int as197_arma (const double *coeff,
     }
 
     y = form_arma_y_vector(ainfo, &err);
-
     if (!err) {
-	as.w = y->val;
-	if (as.ifc) {
-	    as.w0 = copyvec(as.w, as.n);
-	    if (as.w0 == NULL) {
+	as.y = y->val;
+	if (as.ifc || ainfo->nexo > 0) {
+	    as.y0 = copyvec(as.y, as.n);
+	    if (as.y0 == NULL) {
 		err = E_ALLOC;
 	    }
+	}
+    }
+
+    if (!err && ainfo->nexo > 0) {
+	if (ainfo->dX != NULL) {
+	    as.X = ainfo->dX;
+	} else {
+	    as.X = form_arma_X_matrix(ainfo, dset, &err);
+	    as.free_X = 1;
 	}
     }
 
@@ -471,22 +535,19 @@ static int as197_arma (const double *coeff,
     return err;
 }
 
-/* As of 2018-03-15, the AS197 implementation for gretl
-   can't handle missing values or exogenous variables
-   (ARMAX). So we need to screen out these conditions
-   before saying OK to using the testing code.
+/* As of 2018-03-16, the AS197 implementation for gretl
+   can't handle missing values or the scaling of the
+   dependent variable. So we need to screen out these
+   conditions before saying OK to using the testing code.
 */
 
 static int as197_ok (arma_info *ainfo)
 {
-    if (ainfo->nexo > 0) {
-	/* exogenous vars included */
-	return 0;
-    } else if (arma_missvals(ainfo)) {
+    if (arma_missvals(ainfo)) {
 	/* NAs in sample range */
 	return 0;
     } else if (ainfo->yscale != 1.0) {
-	/* not working: and shouldn't be required anyway? */
+	/* shouldn't be required anyway? */
 	return 0;
     } else {
 	return 1;
