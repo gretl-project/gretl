@@ -282,7 +282,7 @@ static double as197_iteration (const double *b, void *data)
 	    double ll1 = 1.0 + LN_2_PI + log(as->sumsq / as->n);
 	    double sumldet = as->n * log(as->fact);
 
-	    crit = -0.5 * (as->n * ll1 + sumldet);
+	    as->loglik = crit = -0.5 * (as->n * ll1 + sumldet);
 	} else {
 	    /* Melard's criterion */
 	    crit = -as->fact * as->sumsq;
@@ -358,9 +358,7 @@ static int as197_OPG_vcv (MODEL *pmod,
     return err;
 }
 
-/* calculate the full loglikelihood on completion,
-   if we were using Melard's criterion during the
-   maximization process */
+/* calculate the full loglikelihood on completion */
 
 static void as197_full_loglik (struct as197_info *as)
 {
@@ -515,6 +513,7 @@ static int as197_arma (const double *coeff,
 		       NULL, &as, NULL, opt, ainfo->prn);
 	if (!err) {
 	    if (!as.use_loglik) {
+		/* if we haven't already done this */
 		as197_full_loglik(&as);
 	    }
 	    gretl_model_set_int(pmod, "fncount", fncount);
