@@ -447,6 +447,22 @@ void gretl_warnmsg_sprintf (const char *fmt, ...)
     gretl_warnnum = W_MAX;
 }
 
+char *gretl_strerror (int errnum)
+{
+    static locale_t loc = (locale_t) 0;
+
+    if (loc == (locale_t) 0) {
+	loc = newlocale(LC_ALL_MASK, "", loc);
+    }
+    
+    if (loc != (locale_t) 0) {
+	uselocale(loc);
+	return strerror_l(errnum, loc);
+    } else {
+	return strerror(errnum);
+    }
+}
+
 /**
  * gretl_errmsg_set_from_errno:
  * @s: string to prepend to error message, or %NULL.
@@ -462,7 +478,7 @@ void gretl_errmsg_set_from_errno (const char *s, int errnum)
     char *msg = NULL;
 
     if (errnum) {
-	msg = strerror(errnum);
+	msg = gretl_strerror(errnum);
 	errno = 0;
     }
 

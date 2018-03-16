@@ -984,7 +984,7 @@ int gretl_mkdir (const char *path)
     err = g_mkdir_with_parents(path, 0755);
 
     if (err) {
-	fprintf(stderr, "%s: %s\n", path, strerror(errno));
+	fprintf(stderr, "%s: %s\n", path, gretl_strerror(errno));
 	err = 1;
     }
 

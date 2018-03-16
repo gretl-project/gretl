@@ -4396,7 +4396,7 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 
     if (errno) {
 	gretl_errmsg_sprintf("Failed to calculate MIDAS weights: %s",
-			     strerror(errno));
+			     gretl_strerror(errno));
 	if (*err == 0) {
 	    *err = E_INVARG;
 	}
@@ -4669,7 +4669,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 
     if (errno) {
 	gretl_errmsg_sprintf("Failed to calculate MIDAS gradient: %s",
-			     strerror(errno));
+			     gretl_strerror(errno));
 	if (*err == 0) {
 	    *err = E_INVARG;
 	}
@@ -4993,7 +4993,7 @@ double imhof (const gretl_matrix *m, double arg, int *err)
     }
 
     if (errno != 0) {
-	fprintf(stderr, "imhof: %s\n", strerror(errno));
+	fprintf(stderr, "imhof: %s\n", gretl_strerror(errno));
 	if (!*err) {
 	    *err = E_NOCONV;
 	}

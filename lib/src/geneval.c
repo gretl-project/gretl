@@ -1228,7 +1228,7 @@ static void eval_warning (parser *p, int op, int errnum)
 {
     if (!check_gretl_warning()) {
 	const char *w = (op == B_POW)? "pow" : getsymb(op);
-	const char *s = (errnum)? strerror(errnum) : NULL;
+	const char *s = (errnum)? gretl_strerror(errnum) : NULL;
 
 	if (s != NULL) {
 	    gretl_warnmsg_sprintf("%s: %s", w, s);
