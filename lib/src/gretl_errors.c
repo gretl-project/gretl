@@ -449,6 +449,7 @@ void gretl_warnmsg_sprintf (const char *fmt, ...)
 
 char *gretl_strerror (int errnum)
 {
+#if 0 /* doesn't work, AND not cross-platform */
     static locale_t loc = (locale_t) 0;
 
     if (loc == (locale_t) 0) {
@@ -461,6 +462,9 @@ char *gretl_strerror (int errnum)
     } else {
 	return strerror(errnum);
     }
+#else
+    return strerror(errnum);
+#endif
 }
 
 /**
