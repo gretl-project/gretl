@@ -44,7 +44,7 @@ IRFplot(&BQModel,  1, 2)
 IRFplot(&BQModel, -2, 2)
 */
 
-IRFsave("bq_Yd.pdf", &BQModel,  1, 1)
-IRFsave("bq_ud.pdf", &BQModel, -2, 1)
-IRFsave("bq_Ys.pdf", &BQModel,  1, 2)
-IRFsave("bq_us.pdf", &BQModel, -2, 2)
+IRFsave("bq_Ys.pdf", &BQModel,  1, 1)
+IRFsave("bq_us.pdf", &BQModel,  1, 2)
+IRFsave("bq_Yd.pdf", &BQModel, -2, 1)
+IRFsave("bq_ud.pdf", &BQModel, -2, 2)
