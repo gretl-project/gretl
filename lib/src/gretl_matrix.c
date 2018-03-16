@@ -12990,7 +12990,7 @@ double gretl_matrix_global_minmax (const gretl_matrix *A,
     for (i=0; i<n; i++) {
 	x = A->val[i];
 	if (isnan(x)) {
-	    ;
+	    ; /* skip? */
 	} else {
 	    if (!started) {
 		ret = x;
