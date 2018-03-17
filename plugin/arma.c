@@ -1763,6 +1763,13 @@ MODEL arma_model (const int *list, const int *pqspec,
     ainfo = &ainfo_s;
     arma_info_init(ainfo, opt, pqspec, dset);
 
+#if TEST_AS197
+    if (!(opt & OPT_A) && getenv("AS197") != NULL) {
+	/* for batch-mode testing */
+	opt |= OPT_A;
+    }
+#endif
+
     if (opt & OPT_V) {
 	ainfo->prn = prn;
     }
@@ -1861,14 +1868,14 @@ MODEL arma_model (const int *list, const int *pqspec,
 
     /* third pass: estimate pure AR model by OLS or NLS */
     if (!err && !init_done) {
-	err = ar_arma_init(coeff, dset, ainfo, &armod);
+	err = ar_arma_init(coeff, dset, ainfo, &armod, opt);
     }
 
     if (!err) {
 	clear_model_xpx(&armod);
 	if (arma_exact_ml(ainfo)) {
 #if TEST_AS197
-	    if (((opt & OPT_A) || getenv("AS197")) && as197_ok(ainfo)) {
+	    if ((opt & OPT_A) && as197_ok(ainfo)) {
 		err = as197_arma(coeff, dset, ainfo, &armod, opt);
 	    } else {
 		err = kalman_arma(coeff, dset, ainfo, &armod, opt);

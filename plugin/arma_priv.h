@@ -117,7 +117,8 @@ int hr_arma_init (double *coeff, const DATASET *dset,
 		  arma_info *ainfo, int *done);
 
 int ar_arma_init (double *coeff, const DATASET *dset,
-		  arma_info *ainfo, MODEL *pmod);
+		  arma_info *ainfo, MODEL *pmod,
+		  gretlopt opt);
 
 int arma_by_ls (const double *coeff, const DATASET *dset,
 		arma_info *ainfo, MODEL *pmod);

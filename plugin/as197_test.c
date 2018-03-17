@@ -15,9 +15,8 @@ struct as197_info {
     double *y, *y0, *e;
     double *vw, *vl, *vk;
     double sumsq, fact;
-    double toler;
+    double toler; /* tolerance for switching to fast iterations */
     double loglik;
-    int verbose;
     int ma_check;
     int ncalls, nbad;
     int use_loglik;
@@ -28,8 +27,7 @@ struct as197_info {
 
 static int as197_info_init (struct as197_info *as,
 			    arma_info *ai,
-			    int verbose,
-			    double delta,
+			    double toler,
 			    int use_loglik)
 {
     int err = 0;
@@ -80,11 +78,9 @@ static int as197_info_init (struct as197_info *as,
     }
 
     if (!err) {
-	as->toler = delta;
+	as->toler = toler;
 	as->loglik = NADBL;
 	as->ifault = 0;
-
-	as->verbose = verbose > 1;
 	as->ma_check = 0;
 	as->ncalls = as->nbad = 0;
 	as->use_loglik = use_loglik;
@@ -232,6 +228,15 @@ static void as197_fill_arrays (struct as197_info *as,
     }
 }
 
+static double as197_loglikelihood (const struct as197_info *as)
+{
+    /* full ARMA loglikelihood */
+    double ll1 = 1.0 + LN_2_PI + log(as->sumsq / as->n);
+    double sumldet = as->n * log(as->fact);
+
+    return -0.5 * (as->n * ll1 + sumldet);
+}
+
 static double as197_iteration (const double *b, void *data)
 {
     struct as197_info *as = data;
@@ -274,23 +279,34 @@ static double as197_iteration (const double *b, void *data)
     } else {
 	/* The criterion used by Melard may work better than
 	   the full loglikelihood in the context of his
-	   algorithm?
+	   algorithm? But if we're on the first iteration
+	   and the sum of squares is too massive, switch to
+	   the loglikelihood.
 	*/
+#if 1
+	if (!as->use_loglik) {
+	    /* Melard's criterion */
+	    crit = -as->fact * as->sumsq;
+	    if (as->ncalls == 1 && crit < -5000) {
+		as->use_loglik = 1;
+	    }
+	}
+	if (as->use_loglik) {
+	    as->loglik = crit = as197_loglikelihood(as);
+	}
+#else
 	if (as->use_loglik) {
 	    /* full loglikelihood */
-	    double ll1 = 1.0 + LN_2_PI + log(as->sumsq / as->n);
-	    double sumldet = as->n * log(as->fact);
-
-	    as->loglik = crit = -0.5 * (as->n * ll1 + sumldet);
+	    as->loglik = crit = as197_loglikelihood(as);
 	} else {
 	    /* Melard's criterion */
 	    crit = -as->fact * as->sumsq;
+	    if (as->ncalls == 1 && crit < -5000) {
+		as->loglik = crit = as197_loglikelihood(as);
+		as->use_loglik = 1;
+	    }
 	}
-    }
-
-    if (as->verbose) {
-	printf("flikam: ssq=%#.12g, fact=%#.12g, crit=%#.12g\n",
-	       as->sumsq, as->fact, crit);
+#endif
     }
 
     return crit;
@@ -357,14 +373,35 @@ static int as197_OPG_vcv (MODEL *pmod,
     return err;
 }
 
-/* calculate the full loglikelihood on completion */
-
-static void as197_full_loglik (struct as197_info *as)
+static int as197_undo_y_scaling (arma_info *ainfo,
+				 gretl_matrix *y,
+				 double *b,
+				 struct as197_info *as)
 {
-    double ll1 = 1.0 + LN_2_PI + log(as->sumsq / as->n);
-    double sumldet = as->n * log(as->fact);
+    double *beta = b + 1 + ainfo->np + ainfo->P +
+	ainfo->nq + ainfo->Q;
+    int i, t, T = ainfo->t2 - ainfo->t1 + 1;
+    int err = 0;
 
-    as->loglik = -0.5 * (as->n * ll1 + sumldet);
+    b[0] /= ainfo->yscale;
+
+    for (i=0; i<ainfo->nexo; i++) {
+	beta[i] /= ainfo->yscale;
+    }
+
+    i = ainfo->t1;
+    for (t=0; t<T; t++) {
+	as->y[t] /= ainfo->yscale;
+	as->y0[t] /= ainfo->yscale;
+    }
+
+    as->use_loglik = 1;
+
+    if (na(as197_iteration(b, as))) {
+	err = 1;
+    }
+
+    return err;
 }
 
 static int as197_arma_finish (MODEL *pmod,
@@ -396,8 +433,8 @@ static int as197_arma_finish (MODEL *pmod,
     s2 = 0.0;
     i = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	s2 += as->e[i] * as->e[i]; /* ?? */
-	pmod->uhat[t] = as->e[i++]; /* gretl_vector_get(kh->E, i++); */
+	s2 += as->e[i] * as->e[i];
+	pmod->uhat[t] = as->e[i++];
     }
 
     s2 /= ainfo->T;
@@ -453,12 +490,11 @@ static int as197_arma (const double *coeff,
     struct as197_info as;
     gretl_matrix *y = NULL;
     double *b = NULL;
-    double delta = -1.0;
+    double toler = -1.0;
     int use_loglik = 0;
-    int verbose = 1;
     int err;
 
-    err = as197_info_init(&as, ainfo, verbose, delta, use_loglik);
+    err = as197_info_init(&as, ainfo, toler, use_loglik);
     if (err) {
 	return err;
     }
@@ -511,9 +547,11 @@ static int as197_arma (const double *coeff,
 		       &fncount, &grcount, as197_iteration, C_LOGLIK,
 		       NULL, &as, NULL, opt, ainfo->prn);
 	if (!err) {
-	    if (!as.use_loglik) {
-		/* if we haven't already done this */
-		as197_full_loglik(&as);
+	    if (ainfo->yscale != 1.0) {
+		as197_undo_y_scaling(ainfo, y, b, &as);
+	    } else if (!as.use_loglik) {
+		/* we haven't already computed this */
+		as.loglik = as197_loglikelihood(&as);
 	    }
 	    gretl_model_set_int(pmod, "fncount", fncount);
 	    gretl_model_set_int(pmod, "grcount", grcount);
@@ -534,18 +572,12 @@ static int as197_arma (const double *coeff,
 }
 
 /* As of 2018-03-16, the AS197 implementation for gretl
-   can't handle missing values or the scaling of the
-   dependent variable. So we need to screen out these
-   conditions before saying OK to using the testing code.
+   can't handle missing values within the sample range.
 */
 
 static int as197_ok (arma_info *ainfo)
 {
     if (arma_missvals(ainfo)) {
-	/* NAs in sample range */
-	return 0;
-    } else if (ainfo->yscale != 1.0) {
-	/* shouldn't be required anyway? */
 	return 0;
     } else {
 	return 1;

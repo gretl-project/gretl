@@ -1110,7 +1110,8 @@ static int *make_ar_ols_list (arma_info *ainfo, int av)
 */
 
 int ar_arma_init (double *coeff, const DATASET *dset,
-		  arma_info *ainfo, MODEL *pmod)
+		  arma_info *ainfo, MODEL *pmod,
+		  gretlopt opt)
 {
     PRN *prn = ainfo->prn;
     int *list = ainfo->alist;
@@ -1147,7 +1148,7 @@ int ar_arma_init (double *coeff, const DATASET *dset,
     if (narmax > 0 && ptotal > 0) {
 	/* ARMAX-induced lags of exog vars */
 	av += ainfo->nexo * ptotal;
-    } 
+    }
 
     if (arma_exact_ml(ainfo) && ainfo->ifc) {
 	maybe_set_yscale(ainfo);
