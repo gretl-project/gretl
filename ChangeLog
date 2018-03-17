@@ -1,4 +1,4 @@
-version 2017e, in progress
+2018-03-17 version 2018a
 - New function instring(): boolean variant of strstr()
 - "join" command: add --aggr=spread option for importing
   high frequency data for use in MIDAS analysis

@@ -174,7 +174,7 @@ static void as197_fill_arrays (struct as197_info *as,
     int np = as->ai->np + as->P;
     int nq = as->ai->nq + as->Q;
     double mu = 0.0;
-    int i, k;
+    int i, j;
 
     if (as->ifc) {
 	mu = b[0];
@@ -190,10 +190,10 @@ static void as197_fill_arrays (struct as197_info *as,
     if (as->P > 0) {
 	write_big_phi_197(b, as);
     } else if (as->p > 0) {
-	k = 0;
+	j = 0;
 	for (i=0; i<as->p; i++) {
 	    if (AR_included(as->ai, i)) {
-		as->phi[i] = b[k++];
+		as->phi[i] = b[j++];
 	    } else {
 		as->phi[i] = 0.0;
 	    }
@@ -204,10 +204,10 @@ static void as197_fill_arrays (struct as197_info *as,
     if (as->Q > 0) {
 	write_big_theta_197(b, as);
     } else if (as->q > 0) {
-	k = 0;
+	j = 0;
 	for (i=0; i<as->q; i++) {
 	    if (MA_included(as->ai, i)) {
-		as->theta[i] = b[k++];
+		as->theta[i] = b[j++];
 	    } else {
 		as->theta[i] = 0.0;
 	    }
@@ -218,7 +218,6 @@ static void as197_fill_arrays (struct as197_info *as,
     if (as->ai->nexo > 0) {
 	/* subtract the regression effect */
 	double xij;
-	int j;
 
 	for (i=0; i<as->n; i++) {
 	    as->y[i] = as->y0[i];
