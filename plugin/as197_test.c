@@ -12,10 +12,10 @@ struct as197_info {
     int n;
     int ifc;
     double *phi, *theta;
-    double *y, *y0, *e;
-    double *vw, *vl, *vk;
-    double sumsq, fact;
-    double toler; /* tolerance for switching to fast iterations */
+    double *y, *y0, *e;   /* dependent var and forecast errors */
+    double *vw, *vl, *vk; /* workspace */
+    double sumsq, fact;   /* components of likelihood */
+    double toler;         /* tolerance for switching to fast iterations */
     double loglik;
     int ma_check;
     int ncalls, nbad;
@@ -283,7 +283,6 @@ static double as197_iteration (const double *b, void *data)
 	   and the sum of squares is too massive, switch to
 	   the loglikelihood.
 	*/
-#if 1
 	if (!as->use_loglik) {
 	    /* Melard's criterion */
 	    crit = -as->fact * as->sumsq;
@@ -294,19 +293,6 @@ static double as197_iteration (const double *b, void *data)
 	if (as->use_loglik) {
 	    as->loglik = crit = as197_loglikelihood(as);
 	}
-#else
-	if (as->use_loglik) {
-	    /* full loglikelihood */
-	    as->loglik = crit = as197_loglikelihood(as);
-	} else {
-	    /* Melard's criterion */
-	    crit = -as->fact * as->sumsq;
-	    if (as->ncalls == 1 && crit < -5000) {
-		as->loglik = crit = as197_loglikelihood(as);
-		as->use_loglik = 1;
-	    }
-	}
-#endif
     }
 
     return crit;
@@ -571,8 +557,9 @@ static int as197_arma (const double *coeff,
     return err;
 }
 
-/* As of 2018-03-16, the AS197 implementation for gretl
-   can't handle missing values within the sample range.
+/* As of 2018-03-17, the AS197 implementation for gretl
+   can't handle missing values within the sample range;
+   all other "special cases" should be OK.
 */
 
 static int as197_ok (arma_info *ainfo)
