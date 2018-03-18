@@ -975,6 +975,11 @@ int selector_get_depvar_number (const selector *sr)
     return ynum;
 }
 
+static int depvar_selected (const selector *sr)
+{
+    return selector_get_depvar_number(sr) > 0;
+}
+
 static gint dblclick_lvars_row (GtkWidget *w, GdkEventButton *event, 
 				selector *sr); 
 
@@ -2240,7 +2245,12 @@ static void remove_from_right (GtkWidget *w, selector *sr,
     if (nrows == 0) {
 	/* the listbox is now empty */
 	if (context && sr->lags_button != NULL) {
-	    gtk_widget_set_sensitive(sr->lags_button, FALSE);
+	    /* can't do independent var lags, but can we still
+	       do dependent var lags?
+	    */
+	    int y_lags_ok = select_lags_depvar(sr->ci) && depvar_selected(sr);
+
+	    gtk_widget_set_sensitive(sr->lags_button, y_lags_ok);
 	}
 	if (GTK_WIDGET(view) == sr->rvars1 && sr->ci == ARMA) {
 	    xdiff_button_set_sensitive(sr, FALSE);
