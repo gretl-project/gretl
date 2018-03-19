@@ -1,3 +1,9 @@
+version 2018b, in progress
+- Fixes for GUI model specification dialog: breakage in
+  selection of GARCH robust variance estimator variant,
+  and non-availability of lag selection in some cases
+  where it should be available
+
 2018-03-17 version 2018a
 - New function instring(): boolean variant of strstr()
 - "join" command: add --aggr=spread option for importing
