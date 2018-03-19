@@ -1146,9 +1146,9 @@ void set_garch_robust_vcv (const char *s)
 
     if (scpy != NULL) {
 	gretl_lower(scpy);
-	if (!strcmp(s, "qml")) {
+	if (!strcmp(scpy, "qml")) {
 	    state->garch_robust_vcv = ML_QML;
-	} else if (!strcmp(s, "bw")) {
+	} else if (!strcmp(scpy, "bw")) {
 	    state->garch_robust_vcv = ML_BW;
 	}
 	free(scpy);
