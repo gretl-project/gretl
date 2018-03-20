@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -34,7 +34,7 @@
  *
  * Covers logit (binary, ordered or multinomial), probit (binary
  * or ordered), logistic, tobit, interval regression, models for count data
- * and for duration data, and the heckit sample-selection model. 
+ * and for duration data, and the heckit sample-selection model.
  * Plus a few utility functions.
  */
 
@@ -112,7 +112,7 @@ static void op_container_destroy (op_container *OC)
 }
 
 static op_container *op_container_new (int ci, int ndum,
-				       double **Z, MODEL *pmod,  
+				       double **Z, MODEL *pmod,
 				       gretlopt opt)
 {
     op_container *OC;
@@ -153,7 +153,7 @@ static op_container *op_container_new (int ci, int ndum,
     OC->g = malloc(OC->k * sizeof *OC->g);
     OC->theta = malloc(OC->k * sizeof *OC->theta);
 
-    if (OC->y == NULL || OC->ndx == NULL || 
+    if (OC->y == NULL || OC->ndx == NULL ||
 	OC->dP == NULL || OC->list == NULL ||
 	OC->G == NULL || OC->g == NULL ||
 	OC->theta == NULL) {
@@ -186,7 +186,7 @@ static op_container *op_container_new (int ci, int ndum,
     return OC;
 }
 
-static int op_compute_score (op_container *OC, int yt, 
+static int op_compute_score (op_container *OC, int yt,
 			     double ystar0, double ystar1,
 			     double dP, int t, int s)
 {
@@ -197,7 +197,7 @@ static int op_compute_score (op_container *OC, int yt,
     if (ystar1 < 6.0 || OC->ci == LOGIT) {
 	mills0 = (yt == 0)? 0.0 : lp_pdf(ystar0, OC->ci) / dP;
 	mills1 = (yt == M)? 0.0 : lp_pdf(ystar1, OC->ci) / dP;
-    } else { 
+    } else {
 	/* L'Hopital-based approximation */
 	mills0 = (yt == 0)? 0.0 : -ystar0;
 	mills1 = (yt == M)? 0.0 : -ystar1;
@@ -266,10 +266,10 @@ static int op_compute_probs (const double *theta, op_container *OC)
 		m1 = theta[nx + yt];
 		ystar1 = OC->ndx[s] + m1;
 	    }
-	} 
+	}
 
 #if LPDEBUG > 1
-	fprintf(stderr, "t:%4d/%d s=%d y=%d, ndx = %10.6f, ystar0 = %9.7f, ystar1 = %9.7f\n", 
+	fprintf(stderr, "t:%4d/%d s=%d y=%d, ndx = %10.6f, ystar0 = %9.7f, ystar1 = %9.7f\n",
 		t, OC->nobs, s, yt, OC->ndx[s], ystar0, ystar1);
 #endif
 
@@ -277,7 +277,7 @@ static int op_compute_probs (const double *theta, op_container *OC)
 	    P0 = (yt == 0)? 0.0 : lp_cdf(ystar0, OC->ci);
 	    P1 = (yt == M)? 1.0 : lp_cdf(ystar1, OC->ci);
 	    dP = P1 - P0;
-	} else { 
+	} else {
 	    /* Taylor-based 1st order approximation */
 	    h = ystar1 - ystar0;
 	    adj = lp_pdf(ystar1, OC->ci) + lp_pdf(ystar0, OC->ci);
@@ -288,11 +288,11 @@ static int op_compute_probs (const double *theta, op_container *OC)
 	    OC->dP[s] = dP;
 	} else {
 #if LPDEBUG
-	    fprintf(stderr, "very small dP at obs %d; y=%d, ndx=%g, dP=%g\n", 
+	    fprintf(stderr, "very small dP at obs %d; y=%d, ndx=%g, dP=%g\n",
  		    t, yt, OC->ndx[s], dP);
 #endif
 	    return 1;
-	} 
+	}
 
 	op_compute_score(OC, yt, ystar0, ystar1, dP, t, s);
 
@@ -304,7 +304,7 @@ static int op_compute_probs (const double *theta, op_container *OC)
 
 /* Below: method for getting around the "non-increasing cut point"
    issue in ordered models by construction: the 2nd and higher cut
-   points are represented to the optimizer in the form of the 
+   points are represented to the optimizer in the form of the
    log-difference from the previous cut point.
 */
 
@@ -366,7 +366,7 @@ static double op_loglik (const double *theta, void *ptr)
 	fprintf(stderr, "t = %d, s = %d, x = %g\n", t, s, x);
 #endif
     }
-    
+
     err = op_compute_probs(OC->theta, OC);
 
     if (err) {
@@ -387,7 +387,7 @@ static double op_loglik (const double *theta, void *ptr)
     return ll;
 }
 
-static int op_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll, 
+static int op_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
 		     void *ptr)
 {
     op_container *OC = (op_container *) ptr;
@@ -410,7 +410,7 @@ static int op_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
     return 0;
 }
 
-static int ordered_hessian (op_container *OC, gretl_matrix *H) 
+static int ordered_hessian (op_container *OC, gretl_matrix *H)
 {
     double smal = 1.0e-09;  /* "small" is some sort of macro on win32 */
     double dx, dx2;
@@ -441,10 +441,10 @@ static int ordered_hessian (op_container *OC, gretl_matrix *H)
 	OC->theta[i] += dx2;
 	ll = op_loglik(OC->theta, OC);
 	if (na(ll)) {
-	    OC->theta[i] = ti; 
+	    OC->theta[i] = ti;
 	    err = E_DATA;
 	    break;
-	}	
+	}
 	for (j=0; j<k; j++) {
 	    x = (OC->g[j] - g0[j]) / dx2;
 	    gretl_matrix_set(H, i, j, -x);
@@ -462,7 +462,7 @@ static int ordered_hessian (op_container *OC, gretl_matrix *H)
     return err;
 }
 
-static gretl_matrix *ordered_hessian_inverse (op_container *OC, 
+static gretl_matrix *ordered_hessian_inverse (op_container *OC,
 					      int *err)
 {
     gretl_matrix *H = gretl_zero_matrix_new(OC->k, OC->k);
@@ -588,7 +588,7 @@ double mn_logit_prediction (const gretl_matrix *Xt,
 
 /* compute generalized residual for ordered models */
 
-static double op_gen_resid (op_container *OC, const double *theta, int t) 
+static double op_gen_resid (op_container *OC, const double *theta, int t)
 {
     double ndxt, m0, m1, ystar0, f0, f1;
     double ret, dP, ystar1 = 0.0;
@@ -610,12 +610,12 @@ static double op_gen_resid (op_container *OC, const double *theta, int t)
 	    m1 = theta[nx + yt];
 	    ystar1 = ndxt + m1;
 	}
-    } 
+    }
 
     if (ystar1 < 6.0 || OC->ci == LOGIT || 1) {
 	f0 = (yt == 0)? 0.0 : lp_pdf(ystar0, OC->ci) / dP;
 	f1 = (yt == M)? 0.0 : lp_pdf(ystar1, OC->ci) / dP;
-    } else { 
+    } else {
 	/* L'Hopital-based approximation */
 	f0 = (yt == 0)? 0.0 : -ystar0;
 	f1 = (yt == M)? 0.0 : -ystar1;
@@ -624,7 +624,7 @@ static double op_gen_resid (op_container *OC, const double *theta, int t)
     ret = (f0 - f1);
 
     return ret;
-} 
+}
 
 /* Initialize the cut-points by counting the occurrences of each value
    of the (normalized) dependent variable, finding the sample
@@ -632,7 +632,7 @@ static double op_gen_resid (op_container *OC, const double *theta, int t)
    normal CDF.
 */
 
-static void cut_points_init (op_container *OC, const MODEL *pmod, 
+static void cut_points_init (op_container *OC, const MODEL *pmod,
 			     const double **Z)
 {
     const double *y = Z[pmod->list[1]];
@@ -645,13 +645,13 @@ static void cut_points_init (op_container *OC, const MODEL *pmod,
 	    if (!na(pmod->uhat[t]) && y[t] == j) {
 		nj++;
 	    }
-	}	
+	}
 	p += (double) nj / pmod->nobs;
 	OC->theta[i] = normal_cdf_inverse(p);
     }
 }
 
-static void op_LR_test (MODEL *pmod, op_container *OC, 
+static void op_LR_test (MODEL *pmod, op_container *OC,
 			const double **Z)
 {
     int nx = OC->nx;
@@ -674,7 +674,10 @@ static void op_LR_test (MODEL *pmod, op_container *OC,
     OC->k += nx;
 }
 
-static int oprobit_normtest (MODEL *pmod, op_container *OC)
+static int real_oprobit_normtest (MODEL *pmod, op_container *OC,
+				  gretl_matrix *CMtestmat,
+				  gretl_matrix *y,
+				  gretl_matrix *beta)
 {
     int nobs = OC->nobs;
     int k = OC->k;
@@ -682,21 +685,9 @@ static int oprobit_normtest (MODEL *pmod, op_container *OC)
     int M = OC->ymax;
     double *theta = OC->theta;
     int t, s, i, yt, err = 0;
-    gretl_matrix *CMtestmat;
-    gretl_matrix *y;
-    gretl_matrix *beta;
     double m0, m1, u, v, a2v, b2u;
     double gval, a = 0, b = 0;
     double e3, e4;
-
-    CMtestmat = gretl_matrix_alloc(nobs, k+2);
-    y = gretl_unit_matrix_new(nobs, 1);
-    beta = gretl_matrix_alloc(k+2, 1);
-
-    if (CMtestmat == NULL || y == NULL || beta == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
 
     s = 0;
     for (t=OC->pmod->t1; t<=OC->pmod->t2; t++) {
@@ -716,7 +707,7 @@ static int oprobit_normtest (MODEL *pmod, op_container *OC)
 		m1 = theta[nx + yt];
 		b = OC->ndx[s] + m1;
 	    }
-	} 
+	}
 
 	if (yt == 0) {
 	    u = gretl_matrix_get(OC->G, s, nx);
@@ -732,7 +723,7 @@ static int oprobit_normtest (MODEL *pmod, op_container *OC)
 	    } else {
 		b2u = u = 0;
 	    }
-	} 
+	}
 
 	for (i=0; i<k; i++) {
 	    gval = gretl_matrix_get(OC->G, s, i);
@@ -757,13 +748,30 @@ static int oprobit_normtest (MODEL *pmod, op_container *OC)
 	for (t=0; t<y->rows; t++) {
 	    X2 -= (1 - y->val[t]) * (1 - y->val[t]);
 	}
-
 	if (X2 > 0) {
 	    gretl_model_add_normality_test(pmod, X2);
 	}
     }
 
- bailout:
+    return err;
+}
+
+static int oprobit_normtest (MODEL *pmod, op_container *OC)
+{
+    gretl_matrix *CMtestmat;
+    gretl_matrix *y;
+    gretl_matrix *beta;
+    int err = 0;
+
+    CMtestmat = gretl_matrix_alloc(OC->nobs, OC->k + 2);
+    y = gretl_unit_matrix_new(OC->nobs, 1);
+    beta = gretl_matrix_alloc(OC->k + 2, 1);
+
+    if (CMtestmat == NULL || y == NULL || beta == NULL) {
+	err = E_ALLOC;
+    } else {
+	err = real_oprobit_normtest(pmod, OC, CMtestmat, y, beta);
+    }
 
     gretl_matrix_free(CMtestmat);
     gretl_matrix_free(y);
@@ -773,7 +781,7 @@ static int oprobit_normtest (MODEL *pmod, op_container *OC)
 }
 
 static int fill_op_model (MODEL *pmod, const int *list,
-			  const DATASET *dset, 
+			  const DATASET *dset,
 			  op_container *OC,
 			  int fncount, int grcount)
 {
@@ -884,7 +892,7 @@ static int fill_op_model (MODEL *pmod, const int *list,
     }
 
  bailout:
-    
+
     if (err && !pmod->errcode) {
 	pmod->errcode = err;
     }
@@ -894,9 +902,9 @@ static int fill_op_model (MODEL *pmod, const int *list,
 
 /* Main ordered estimation function */
 
-static int do_ordered (int ci, int ndum, 
-		       DATASET *dset, 
-		       MODEL *pmod, const int *list, 
+static int do_ordered (int ci, int ndum,
+		       DATASET *dset,
+		       MODEL *pmod, const int *list,
 		       gretlopt opt, PRN *prn)
 {
     int maxit = 1000;
@@ -936,10 +944,10 @@ static int do_ordered (int ci, int ndum,
 
 #if LPDEBUG
     for (i=0; i<npar; i++) {
-	fprintf(stderr, "theta[%d]: 'real' = %g, transformed = %g\n", i, 
+	fprintf(stderr, "theta[%d]: 'real' = %g, transformed = %g\n", i,
 		OC->theta[i], theta[i]);
     }
-    fprintf(stderr, "\ninitial loglikelihood = %.12g\n", 
+    fprintf(stderr, "\ninitial loglikelihood = %.12g\n",
 	    op_loglik(theta, OC));
 #endif
 
@@ -951,18 +959,18 @@ static int do_ordered (int ci, int ndum,
 	double crittol = 1.0e-7;
 	double gradtol = 1.0e-7;
 
-	err = newton_raphson_max(theta, npar, maxit, 
-				 crittol, gradtol, &fncount, 
-				 C_LOGLIK, op_loglik, 
-				 op_score, NULL, OC, 
+	err = newton_raphson_max(theta, npar, maxit,
+				 crittol, gradtol, &fncount,
+				 C_LOGLIK, op_loglik,
+				 op_score, NULL, OC,
 				 (prn != NULL)? OPT_V : OPT_NONE,
 				 prn);
 	fprintf(stderr, "use_newton: err = %d\n", err);
     } else {
 	BFGS_defaults(&maxit, &toler, PROBIT);
-	err = BFGS_max(theta, npar, maxit, toler, 
+	err = BFGS_max(theta, npar, maxit, toler,
 		       &fncount, &grcount, op_loglik, C_LOGLIK,
-		       op_score, OC, NULL, 
+		       op_score, OC, NULL,
 		       (prn != NULL)? OPT_V : OPT_NONE, prn);
     }
 
@@ -980,7 +988,7 @@ static int do_ordered (int ci, int ndum,
 
 /* We want to ensure that the values of the dependent variable
    actually used in the analysis (after dropping any bad
-   observations) form a zero-based series of consecutive 
+   observations) form a zero-based series of consecutive
    integers.
 */
 
@@ -1001,14 +1009,14 @@ static int maybe_fix_op_depvar (MODEL *pmod, DATASET *dset,
 	}
     }
 
-    /* Transcribe the y values that were used in 
+    /* Transcribe the y values that were used in
        the initial OLS
-    */    
+    */
 
     yvals = malloc(n * sizeof *yvals);
     if (yvals == NULL) {
 	return E_ALLOC;
-    }    
+    }
 
     i = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
@@ -1018,13 +1026,13 @@ static int maybe_fix_op_depvar (MODEL *pmod, DATASET *dset,
     }
 
     /* Make a sorted vector containing the distinct
-       values of y 
+       values of y
     */
     v = gretl_matrix_values(yvals, n, OPT_S, &err);
 
-#if LPDEBUG   
+#if LPDEBUG
     gretl_matrix_print(v, "distinct y values");
-#endif    
+#endif
 
     if (!err) {
 	nv = gretl_vector_get_length(v);
@@ -1065,7 +1073,7 @@ static int maybe_fix_op_depvar (MODEL *pmod, DATASET *dset,
 	    */
 	    *orig_y = dset->Z[dv];
 	    dset->Z[dv] = normy;
-	}	
+	}
     }
 
 #if LPDEBUG
@@ -1088,7 +1096,7 @@ static void restore_depvar (double **Z, double *y, int v)
     Z[v] = y;
 }
 
-static int *make_dummies_list (const int *list, 
+static int *make_dummies_list (const int *list,
 			       DATASET *dset,
 			       int *err)
 {
@@ -1112,7 +1120,7 @@ static int *make_dummies_list (const int *list,
 
 /* make internal regression list for ordered model */
 
-static int *make_op_list (const int *list, DATASET *dset, 
+static int *make_op_list (const int *list, DATASET *dset,
 			  int **pdumlist, int *err)
 {
     int *dumlist;
@@ -1161,9 +1169,9 @@ static int list_purge_const (int *list, DATASET *dset)
 	}
     }
 
-    /* drop other stuff possibly collinear with the constant 
+    /* drop other stuff possibly collinear with the constant
        (e.g. sets of dummies) */
-    
+
     list[1] = 0;     /* substitute the constant as dependent */
     n = list[0] - 1; /* number of RHS terms */
 
@@ -1200,12 +1208,12 @@ static int list_purge_const (int *list, DATASET *dset)
 
 static int ordered_depvar_check (int v, const DATASET *dset)
 {
-    if (!series_is_discrete(dset, v) && 
+    if (!series_is_discrete(dset, v) &&
 	!gretl_is_oprobit_ok(dset->t1, dset->t2, dset->Z[v])) {
 	gretl_errmsg_sprintf(_("The variable '%s' is not discrete"),
 			     dset->varname[v]);
 	return E_DATA;
-    } 
+    }
 
     return 0;
 }
@@ -1215,7 +1223,7 @@ static int ordered_depvar_check (int v, const DATASET *dset)
 */
 
 static MODEL ordered_estimate (int *list, DATASET *dset, int ci,
-			       gretlopt opt, PRN *prn) 
+			       gretlopt opt, PRN *prn)
 {
     MODEL model;
     int orig_v = dset->v;
@@ -1233,7 +1241,7 @@ static MODEL ordered_estimate (int *list, DATASET *dset, int ci,
     }
 
     if (!model.errcode) {
-	/* construct augmented regression list, including dummies 
+	/* construct augmented regression list, including dummies
 	   for the level of the dependent variable
 	*/
 	biglist = make_op_list(list, dset, &dumlist, &model.errcode);
@@ -1255,7 +1263,7 @@ static MODEL ordered_estimate (int *list, DATASET *dset, int ci,
 
 #if LPDEBUG
     PRN *vprn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
-    
+
     pputs(vprn, "ordered_estimate: initial OLS\n");
     printmodel(&model, dset, OPT_S, vprn);
     gretl_print_destroy(vprn);
@@ -1263,7 +1271,7 @@ static MODEL ordered_estimate (int *list, DATASET *dset, int ci,
 
     if (!model.errcode) {
 	/* after accounting for any missing observations, normalize
-	   the dependent variable if necessary 
+	   the dependent variable if necessary
 	*/
 	model.errcode = maybe_fix_op_depvar(&model, dset,
 					    &orig_y, &ndum);
@@ -1272,7 +1280,7 @@ static MODEL ordered_estimate (int *list, DATASET *dset, int ci,
     /* do the actual ordered probit analysis */
     if (!model.errcode) {
 	clear_model_xpx(&model);
-	model.errcode = do_ordered(ci, ndum, dset, &model, list, 
+	model.errcode = do_ordered(ci, ndum, dset, &model, list,
 				   opt, prn);
     }
 
@@ -1334,7 +1342,7 @@ static double logit_pdf (double x)
    that is, an x such that Prob(y = A | x = B) = 1 for some
    assignment of values 0 or 1 to A and B. The MLE does not
    exist in the presence of such a regressor, so we'll remove
-   it from the model (after alerting the user). 
+   it from the model (after alerting the user).
 
    The approach taken by Stata is not only to drop such a
    regressor but also to drop the observations that are thus
@@ -1361,7 +1369,7 @@ static char *classifier_check (int *list, const DATASET *dset,
 
     for (i=list[0]; i>=2; i--) {
 	int getout = 0;
-	
+
 	v = list[i];
 	if (v == 0) {
 	    continue;
@@ -1393,7 +1401,7 @@ static char *classifier_check (int *list, const DATASET *dset,
 		}
 	    }
 
-#if LIKE_STATA	    
+#if LIKE_STATA
 	    if (pp0 && pp1) {
 		pputc(prn, '\n');
 		pprintf(prn, "Note: %s = %s%s at all observations\n",
@@ -1414,7 +1422,7 @@ static char *classifier_check (int *list, const DATASET *dset,
 			dset->varname[yno], 1, dset->varname[v],
 			maskval);
 	    }
-		
+
 	    if (maskval >= 0) {
 		if (mask == NULL) {
 		    mask = malloc(dset->n + 1);
@@ -1435,7 +1443,7 @@ static char *classifier_check (int *list, const DATASET *dset,
 		    pprintf(prn, "%s dropped and %d observations not used\n",
 			    dset->varname[v], *ndropped);
 		}
-		
+
 		gretl_list_delete_at_pos(list, i);
 		/* It'll get too confusing if we try doing
 		   this for more than one regressor?
@@ -1463,12 +1471,12 @@ static char *classifier_check (int *list, const DATASET *dset,
 			dset->varname[yno], 1, dset->varname[v],
 			maskval);
 	    }
-		
+
 	    if (maskval >= 0) {
 		pprintf(prn, _("Dropping %s\n"), dset->varname[v]);
 		gretl_list_delete_at_pos(list, i);
 	    }
-#endif	    
+#endif
 	}
 	if (getout) {
 	    break;
@@ -1577,7 +1585,7 @@ static double mn_logit_loglik (const double *theta, void *ptr)
     return ll;
 }
 
-static int mn_logit_score (double *theta, double *s, int npar, 
+static int mn_logit_score (double *theta, double *s, int npar,
 			   BFGS_CRIT_FUNC ll, void *ptr)
 {
     mnl_info *mnl = (mnl_info *) ptr;
@@ -1741,7 +1749,7 @@ static int mnl_add_variance_matrix (MODEL *pmod, mnl_info *mnl,
 
     if (!err) {
 	if (opt & OPT_R) {
-	    err = gretl_model_add_QML_vcv(pmod, LOGIT, H, G, 
+	    err = gretl_model_add_QML_vcv(pmod, LOGIT, H, G,
 					  dset, opt, NULL);
 	} else {
 	    err = gretl_model_add_hessian_vcv(pmod, H);
@@ -1762,8 +1770,8 @@ static int mnl_add_variance_matrix (MODEL *pmod, mnl_info *mnl,
    spurious, since there's no meaningful metric for the "distance"
    between y and yhat when y is an unordered response.
 
-   Note: @yvals is non-NULL if and only if we had to transform the 
-   dependent variable, because it did not form a 0-based sequence of 
+   Note: @yvals is non-NULL if and only if we had to transform the
+   dependent variable, because it did not form a 0-based sequence of
    consecutive integers.
 */
 
@@ -1818,7 +1826,7 @@ static void mn_logit_yhat (MODEL *pmod, mnl_info *mnl,
  * and m is the number of distinct outcomes. Each element
  * represents the conditional probability of outcome j
  * given the values of the regressors at observation i.
- * 
+ *
  * If any of the regressor values are missing at a given
  * observation the probabiity is set to NaN; provided the
  * regressor information is complete we compute the
@@ -1932,7 +1940,7 @@ gretl_matrix *mn_logit_probabilities (const MODEL *pmod,
 /* In case the dependent variable is not in canonical form for
    multinomial logit, construct a transformed version */
 
-static int make_canonical_depvar (MODEL *pmod, const double *y, 
+static int make_canonical_depvar (MODEL *pmod, const double *y,
 				  gretl_matrix *yvec)
 {
     struct sorter *s;
@@ -1974,8 +1982,8 @@ static int make_canonical_depvar (MODEL *pmod, const double *y,
 		    s[i++].x = nexty;
 		}
 		i--; /* compensate for outer i++ */
-	    } 
-	} 
+	    }
+	}
     }
 
     /* write canonical version of y into yvec */
@@ -1996,7 +2004,7 @@ static int make_canonical_depvar (MODEL *pmod, const double *y,
    the distinct y values in @valcount.
 */
 
-static int mn_value_count (const double *y, MODEL *pmod, 
+static int mn_value_count (const double *y, MODEL *pmod,
 			   int **valcount, int **yvals)
 {
     double *sy;
@@ -2024,7 +2032,7 @@ static int mn_value_count (const double *y, MODEL *pmod,
 
     vc = malloc(n * sizeof *vc);
     v = malloc(n * sizeof *v);
-    
+
     if (vc == NULL || v == NULL) {
 	pmod->errcode = E_ALLOC;
 	free(sy);
@@ -2168,7 +2176,7 @@ static void mnl_finish (mnl_info *mnl, MODEL *pmod,
 
 /* multinomial logit */
 
-static MODEL mnl_model (const int *list, DATASET *dset, 
+static MODEL mnl_model (const int *list, DATASET *dset,
 			gretlopt opt, PRN *prn)
 {
     int maxit = 1000;
@@ -2234,7 +2242,7 @@ static MODEL mnl_model (const int *list, DATASET *dset,
 		gretl_matrix_set(mnl->X, s++, i, dset->Z[vi][t]);
 	    }
 	}
-    } 
+    }
 
     if (mod.ifc) {
 	double lf0 = log(valcount[0]);
@@ -2251,28 +2259,28 @@ static MODEL mnl_model (const int *list, DATASET *dset,
     }
 
     if (use_bfgs) {
-	mod.errcode = BFGS_max(mnl->theta, mnl->npar, maxit, 0.0, 
+	mod.errcode = BFGS_max(mnl->theta, mnl->npar, maxit, 0.0,
 			       &fncount, &grcount, mn_logit_loglik, C_LOGLIK,
 			       mn_logit_score, mnl, NULL,
 			       (prn != NULL)? OPT_V : OPT_NONE, prn);
-    } else {	
+    } else {
 	double crittol = 1.0e-8;
 	double gradtol = 1.0e-7;
-	
+
 	maxit = 100;
-	mod.errcode = newton_raphson_max(mnl->theta, mnl->npar, maxit, 
-					 crittol, gradtol, &fncount, 
-					 C_LOGLIK, mn_logit_loglik, 
+	mod.errcode = newton_raphson_max(mnl->theta, mnl->npar, maxit,
+					 crittol, gradtol, &fncount,
+					 C_LOGLIK, mn_logit_loglik,
 					 mn_logit_score, mnl_hessian, mnl,
 					 (prn != NULL)? OPT_V : OPT_NONE,
 					 prn);
-    } 
+    }
 
     if (!mod.errcode) {
 	mnl_finish(mnl, &mod, valcount, yvals, dset, opt);
-    }  
+    }
 
- bailout:  
+ bailout:
 
     mnl_info_destroy(mnl);
     free(valcount);
@@ -2285,25 +2293,25 @@ static MODEL mnl_model (const int *list, DATASET *dset,
  * biprobit_model:
  * @list: binary dependent variable 1, binary dependent variable 2,
  * list of regressors for y1. If @list ends here, it is assumed that the
- * explanatory variables for y2 are the same as y1. Otherwise, the list 
+ * explanatory variables for y2 are the same as y1. Otherwise, the list
  * must include a separator and the list of regressors for y2.
  * @dset: dataset struct.
- * @opt: can contain OPT_Q for quiet operation, OPT_V for verbose 
+ * @opt: can contain OPT_Q for quiet operation, OPT_V for verbose
  * operation, OPT_R for robust covariance matrix, OPT_G for covariance
  * matrix based on Outer Product of Gradient.
  * @prn: printing struct.
  *
  * Computes estimates of the bivariate probit model specified by @list,
  * using maximum likelihood via Newton-Raphson.
- * 
+ *
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL biprobit_model (int *list, DATASET *dset, 
+MODEL biprobit_model (int *list, DATASET *dset,
 		      gretlopt opt, PRN *prn)
 {
     MODEL bpmod;
-    MODEL (* biprobit_estimate) (const int *, DATASET *, 
+    MODEL (* biprobit_estimate) (const int *, DATASET *,
 				 gretlopt, PRN *);
 
     gretl_error_clear();
@@ -2369,7 +2377,7 @@ static bin_info *bin_info_new (int ci, int k, int T)
 	    free(bin->theta);
 	    free(bin);
 	    return NULL;
-	}	
+	}
 	bin->B = gretl_matrix_block_new(&bin->X, T, k,
 					&bin->pX, T, k,
 					&bin->b, k, 1,
@@ -2380,7 +2388,7 @@ static bin_info *bin_info_new (int ci, int k, int T)
 	    free(bin->y);
 	    free(bin);
 	    bin = NULL;
-	} 
+	}
     }
 
     return bin;
@@ -2449,7 +2457,7 @@ static double binary_loglik (const double *theta, void *ptr)
     return ll;
 }
 
-static int binary_score (double *theta, double *s, int k, 
+static int binary_score (double *theta, double *s, int k,
 			 BFGS_CRIT_FUNC ll, void *ptr)
 {
     bin_info *bin = (bin_info *) ptr;
@@ -2486,7 +2494,7 @@ static int binary_score (double *theta, double *s, int k,
 /* binary probit/logit: form the negative of the analytical
    Hessian */
 
-static int binary_hessian (double *theta, gretl_matrix *H, 
+static int binary_hessian (double *theta, gretl_matrix *H,
 			   void *data)
 {
     bin_info *bin = data;
@@ -2582,7 +2590,7 @@ static int binary_variance_matrix (MODEL *pmod, bin_info *bin,
 
     if (!err) {
 	if (opt & OPT_R) {
-	    err = gretl_model_add_QML_vcv(pmod, bin->ci, H, G, 
+	    err = gretl_model_add_QML_vcv(pmod, bin->ci, H, G,
 					  dset, opt, NULL);
 	} else {
 	    err = gretl_model_add_hessian_vcv(pmod, H);
@@ -2607,7 +2615,7 @@ static void binary_model_chisq (bin_info *bin, MODEL *pmod)
 	pmod->adjrsq = NADBL;
 	return;
     }
-    
+
     for (t=0; t<bin->T; t++) {
 	ones += bin->y[t];
     }
@@ -2658,7 +2666,7 @@ static int binary_probit_normtest (MODEL *pmod, bin_info *bin)
     for (t=pmod->t1, s=0; t<=pmod->t2; t++) {
 	if (model_missing(pmod, t)) {
 	    continue;
-	} 
+	}
 	et = pmod->uhat[t];
 	Xb = gretl_vector_get(bin->Xb, s);
 	for (i=0; i<k; i++) {
@@ -2684,7 +2692,7 @@ static int binary_probit_normtest (MODEL *pmod, bin_info *bin)
 	    gretl_model_add_normality_test(pmod, X2);
 	}
     }
-    
+
     gretl_matrix_block_destroy(B);
 
     return err;
@@ -2707,7 +2715,7 @@ static double dumslope (MODEL *pmod, const gretl_matrix *xbar, int j)
 	if (i != j) {
 	    Xb += pmod->coeff[i] * xbar->val[i];
 	}
-    } 
+    }
 
     if (pmod->ci == LOGIT) {
 	s = logit(Xb + pmod->coeff[j]) - logit(Xb);
@@ -2730,7 +2738,7 @@ static int binary_model_add_slopes (MODEL *pmod, bin_info *bin)
     xbar = gretl_matrix_column_mean(bin->X, &err);
     if (err) {
 	return err;
-    }    
+    }
 
     ssize = pmod->ncoeff * sizeof *slopes;
     slopes = malloc(ssize);
@@ -2760,7 +2768,7 @@ static int binary_model_add_slopes (MODEL *pmod, bin_info *bin)
 	Xi += bin->T;
     }
 
-    err = gretl_model_set_data(pmod, "slopes", slopes, 
+    err = gretl_model_set_data(pmod, "slopes", slopes,
 			       GRETL_TYPE_DOUBLE_ARRAY,
 			       ssize);
 
@@ -2786,10 +2794,10 @@ static double binary_model_fXb (bin_info *bin)
 	Xb += bin->theta[i] * xbar;
     }
 
-    return (bin->ci == LOGIT)? logit_pdf(Xb) : normal_pdf(Xb);    
+    return (bin->ci == LOGIT)? logit_pdf(Xb) : normal_pdf(Xb);
 }
 
-void binary_model_hatvars (MODEL *pmod, 
+void binary_model_hatvars (MODEL *pmod,
 			   const gretl_matrix *ndx,
 			   const int *y,
 			   gretlopt opt)
@@ -2824,7 +2832,7 @@ void binary_model_hatvars (MODEL *pmod,
 
 	if (model_missing(pmod, t)) {
 	    continue;
-	} 
+	}
 
 	ndxt = gretl_vector_get(ndx, s);
 	yt = y[s++];
@@ -2840,7 +2848,7 @@ void binary_model_hatvars (MODEL *pmod,
 	    pmod->uhat[t] = yt - pmod->yhat[t];
 	} else {
 	    F = normal_cdf(ndxt);
-	    pmod->yhat[t] = F; 
+	    pmod->yhat[t] = F;
 	    pmod->uhat[t] = yt ? invmills(-ndxt) : -invmills(ndxt);
 	}
 
@@ -2850,13 +2858,13 @@ void binary_model_hatvars (MODEL *pmod,
     }
 
     if (act_pred != NULL) {
-	gretl_model_set_data(pmod, "discrete_act_pred", act_pred, 
-			     GRETL_TYPE_INT_ARRAY, 
+	gretl_model_set_data(pmod, "discrete_act_pred", act_pred,
+			     GRETL_TYPE_INT_ARRAY,
 			     4 * sizeof *act_pred);
     }
 
     if (ll != NULL) {
-	gretl_model_set_data(pmod, "llt", ll, 
+	gretl_model_set_data(pmod, "llt", ll,
 			     GRETL_TYPE_DOUBLE_ARRAY,
 			     n * sizeof *ll);
     }
@@ -2914,8 +2922,8 @@ static int binary_model_finish (bin_info *bin, MODEL *pmod,
     return pmod->errcode;
 }
 
-static MODEL binary_model (int ci, const int *inlist, 
-			   DATASET *dset, gretlopt opt, 
+static MODEL binary_model (int ci, const int *inlist,
+			   DATASET *dset, gretlopt opt,
 			   PRN *prn)
 {
     gretlopt max_opt = OPT_NONE;
@@ -2938,7 +2946,7 @@ static MODEL binary_model (int ci, const int *inlist,
     depvar = inlist[1];
 
     if (!gretl_isdummy(dset->t1, dset->t2, dset->Z[depvar])) {
-	gretl_errmsg_sprintf(_("'%s' is not a binary variable"), 
+	gretl_errmsg_sprintf(_("'%s' is not a binary variable"),
 			     dset->varname[depvar]);
 	mod.errcode = E_DATA;
 	return mod;
@@ -3014,16 +3022,16 @@ static MODEL binary_model (int ci, const int *inlist,
 		gretl_matrix_set(bin->X, s++, i, dset->Z[vi][t]);
 	    }
 	}
-    } 
+    }
 
     if (opt & OPT_V) {
 	max_opt = OPT_V;
 	vprn = prn;
     }
 
-    mod.errcode = newton_raphson_max(bin->theta, bin->k, maxit, 
-				     crittol, gradtol, &fncount, 
-				     C_LOGLIK, binary_loglik, 
+    mod.errcode = newton_raphson_max(bin->theta, bin->k, maxit,
+				     crittol, gradtol, &fncount,
+				     C_LOGLIK, binary_loglik,
 				     binary_score, binary_hessian, bin,
 				     max_opt, vprn);
 
@@ -3039,9 +3047,9 @@ static MODEL binary_model (int ci, const int *inlist,
 	if (!mod.errcode && ndropped > 0) {
 	    gretl_model_set_int(&mod, "binary_obs_dropped", ndropped);
 	}
-    }  
+    }
 
- bailout:  
+ bailout:
 
     bin_info_destroy(bin);
 
@@ -3067,11 +3075,11 @@ static MODEL binary_model (int ci, const int *inlist,
  *
  * Computes estimates of the logit model specified by @list,
  * using Newton-Raphson.
- * 
+ *
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL binary_logit (const int *list, DATASET *dset, 
+MODEL binary_logit (const int *list, DATASET *dset,
 		    gretlopt opt, PRN *prn)
 {
     return binary_model(LOGIT, list, dset, opt, prn);
@@ -3090,11 +3098,11 @@ MODEL binary_logit (const int *list, DATASET *dset,
  *
  * Computes estimates of the probit model specified by @list,
  * using Newton-Raphson.
- * 
+ *
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL binary_probit (const int *list, DATASET *dset, 
+MODEL binary_probit (const int *list, DATASET *dset,
 		     gretlopt opt, PRN *prn)
 {
     return binary_model(PROBIT, list, dset, opt, prn);
@@ -3111,11 +3119,11 @@ MODEL binary_probit (const int *list, DATASET *dset,
  * wanted (OPT_V).
  *
  * Computes ML estimates of the ordered logit model specified by @list.
- * 
+ *
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL ordered_logit (int *list, DATASET *dset, 
+MODEL ordered_logit (int *list, DATASET *dset,
 		     gretlopt opt, PRN *prn)
 {
     PRN *vprn = (opt & OPT_V)? prn : NULL;
@@ -3134,11 +3142,11 @@ MODEL ordered_logit (int *list, DATASET *dset,
  * wanted (OPT_V).
  *
  * Computes ML estimates of the ordered probit model specified by @list.
- * 
+ *
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL ordered_probit (int *list, DATASET *dset, 
+MODEL ordered_probit (int *list, DATASET *dset,
 		      gretlopt opt, PRN *prn)
 {
     PRN *vprn = (opt & OPT_V)? prn : NULL;
@@ -3157,16 +3165,16 @@ MODEL ordered_probit (int *list, DATASET *dset,
  * wanted (OPT_V).
  *
  * Computes ML estimates of the multinomial model specified by @list.
- * 
+ *
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL multinomial_logit (int *list, DATASET *dset, 
+MODEL multinomial_logit (int *list, DATASET *dset,
 			 gretlopt opt, PRN *prn)
 {
     PRN *vprn = (opt & OPT_V)? prn : NULL;
 
-    return mnl_model(list, dset, opt, vprn);    
+    return mnl_model(list, dset, opt, vprn);
 }
 
 /**
@@ -3214,11 +3222,11 @@ int logistic_ymax_lmax (const double *y, const DATASET *dset,
 	/* admittedly arbitrary */
 	*lmax = 1.1 * *ymax;
     }
-	    
+
     return 0;
 }
 
-static int make_logistic_depvar (DATASET *dset, int dv, 
+static int make_logistic_depvar (DATASET *dset, int dv,
 				 double lmax)
 {
     int t, v = dset->v;
@@ -3242,7 +3250,7 @@ static int make_logistic_depvar (DATASET *dset, int dv,
 }
 
 static int rewrite_logistic_stats (const DATASET *dset,
-				   MODEL *pmod, int dv, 
+				   MODEL *pmod, int dv,
 				   double lmax)
 {
     double x, ess, sigma;
@@ -3277,7 +3285,7 @@ static int rewrite_logistic_stats (const DATASET *dset,
     return 0;
 }
 
-static double get_real_lmax (const double *y, 
+static double get_real_lmax (const double *y,
 			     const DATASET *dset,
 			     double user_lmax)
 {
@@ -3298,8 +3306,8 @@ static double get_real_lmax (const double *y,
 	    /* respect the user's choice */
 	    lmax = user_lmax;
 	}
-    }	
-	    
+    }
+
     return lmax;
 }
 
@@ -3312,7 +3320,7 @@ static double get_real_lmax (const double *y,
  *
  * Estimate the model given in @list using the logistic transformation
  * of the dependent variable.
- * 
+ *
  * Returns: a #MODEL struct, containing the estimates.
  */
 
@@ -3327,7 +3335,7 @@ MODEL logistic_model (const int *list, double lmax,
 
     fprintf(stderr, "logistic model: lmax = %g\n", lmax);
 
-    gretl_model_init(&lmod, dset); 
+    gretl_model_init(&lmod, dset);
 
     llist = gretl_list_copy(list);
     if (llist == NULL) {
@@ -3339,7 +3347,7 @@ MODEL logistic_model (const int *list, double lmax,
 	if (na(real_lmax)) {
 	    err = E_DATA;
 	}
-    } 
+    }
 
     if (!err) {
 	err = make_logistic_depvar(dset, dv, real_lmax);
@@ -3362,7 +3370,7 @@ MODEL logistic_model (const int *list, double lmax,
 
     dataset_drop_last_variables(dset, 1);
     free(llist);
-    
+
     return lmod;
 }
 
@@ -3404,9 +3412,9 @@ static double table_prob (double a, double b, double c, double d,
     }
 
 #if 0
-    fprintf(stderr, "\ntable_prob: a=%g, b=%g, c=%g, d=%g, n=%g\n", 
+    fprintf(stderr, "\ntable_prob: a=%g, b=%g, c=%g, d=%g, n=%g\n",
 	    a, b, c, d, n);
-    fprintf(stderr, " p1=%g, p2=%g, p3=%g; P = %g\n", 
+    fprintf(stderr, " p1=%g, p2=%g, p3=%g; P = %g\n",
 	    p1, p2, p3, P);
 #endif
 
@@ -3418,9 +3426,9 @@ static double table_prob (double a, double b, double c, double d,
  * @tab: pointer to 2 x 2 cross-tabulation struct.
  * @prn: gretl printer.
  *
- * Computes and prints to @prn the p-value for Fisher's Exact Test for 
+ * Computes and prints to @prn the p-value for Fisher's Exact Test for
  * association between the two variables represented in @tab.
- * 
+ *
  * Returns: 0 on successful completion, error code on error.
  */
 
@@ -3487,7 +3495,7 @@ int fishers_exact_test (const Xtab *tab, PRN *prn)
 		P2 += Pi;
 	    }
 	}
-    } 
+    }
 
     if (!err) {
 	pprintf(prn, "\n%s:\n", _("Fisher's Exact Test"));
@@ -3514,11 +3522,11 @@ int fishers_exact_test (const Xtab *tab, PRN *prn)
  * model specified by @list.
  */
 
-MODEL interval_model (int *list, DATASET *dset, 
+MODEL interval_model (int *list, DATASET *dset,
 		      gretlopt opt, PRN *prn)
 {
     MODEL intmod;
-    MODEL (* interval_estimate) (int *, DATASET *, gretlopt, 
+    MODEL (* interval_estimate) (int *, DATASET *, gretlopt,
 				 PRN *);
 
     gretl_error_clear();
@@ -3551,7 +3559,7 @@ MODEL interval_model (int *list, DATASET *dset,
  * wanted).
  *
  * Produce Tobit estimates of the model given in @list.
- * 
+ *
  * Returns: a #MODEL struct, containing the estimates.
  */
 
@@ -3560,7 +3568,7 @@ MODEL tobit_model (const int *list, double llim, double rlim,
 {
     MODEL (* tobit_estimate) (const int *, double, double,
 			      DATASET *, gretlopt, PRN *);
-    MODEL tmod;    
+    MODEL tmod;
 
     gretl_error_clear();
 
@@ -3582,7 +3590,7 @@ MODEL tobit_model (const int *list, double llim, double rlim,
    the business
 */
 
-static int duration_precheck (const int *list, 
+static int duration_precheck (const int *list,
 			      DATASET *dset, MODEL *pmod,
 			      int *pcensvar)
 {
@@ -3626,7 +3634,7 @@ static int duration_precheck (const int *list,
 	/* run an initial OLS to "set the model up" and check for errors;
 	   the duration_estimate_driver function will overwrite the
 	   coefficients etc.
-	*/	
+	*/
 	if (olslist != NULL) {
 	    *pmod = lsq(olslist, dset, OLS, OPT_A);
 	    if (!pmod->errcode) {
@@ -3667,16 +3675,16 @@ static int duration_precheck (const int *list,
  * wanted).
  *
  * Estimate the duration model given in @list using ML.
- * 
+ *
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL duration_model (const int *list, DATASET *dset, 
+MODEL duration_model (const int *list, DATASET *dset,
 		      gretlopt opt, PRN *prn)
 {
     MODEL dmod;
     int censvar = 0;
-    int (* duration_estimate) (MODEL *, int, const DATASET *, 
+    int (* duration_estimate) (MODEL *, int, const DATASET *,
 			       gretlopt, PRN *);
 
     gretl_error_clear();
@@ -3724,18 +3732,18 @@ static int get_trailing_var (int *list)
  * wanted).
  *
  * Estimate the count data model given in @list using ML.
- * 
+ *
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL count_model (const int *list, int ci, DATASET *dset, 
+MODEL count_model (const int *list, int ci, DATASET *dset,
 		   gretlopt opt, PRN *prn)
 {
     MODEL cmod;
     int *listcpy;
     int offvar;
     int (* count_data_estimate) (MODEL *, int, int,
-				 DATASET *, gretlopt, 
+				 DATASET *, gretlopt,
 				 PRN *);
 
     gretl_error_clear();
@@ -3769,7 +3777,7 @@ MODEL count_model (const int *list, int ci, DATASET *dset,
         return cmod;
     }
 
-    count_data_estimate = get_plugin_function("count_data_estimate"); 
+    count_data_estimate = get_plugin_function("count_data_estimate");
     if (count_data_estimate == NULL) {
 	cmod.errcode = E_FOPEN;
 	return cmod;
@@ -3792,15 +3800,15 @@ MODEL count_model (const int *list, int ci, DATASET *dset,
  * Produce Heckit estimates of the model given in @list. The list must
  * include a separator to divide the main equation from the selection
  * equation.
- * 
+ *
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL heckit_model (const int *list, DATASET *dset, 
+MODEL heckit_model (const int *list, DATASET *dset,
 		    gretlopt opt, PRN *prn)
 {
     MODEL model;
-    MODEL (* heckit_estimate) (const int *, DATASET *, 
+    MODEL (* heckit_estimate) (const int *, DATASET *,
 			       gretlopt, PRN *);
 
     gretl_error_clear();
@@ -3827,11 +3835,11 @@ MODEL heckit_model (const int *list, DATASET *dset,
  * wanted).
  *
  * Produce random-effects probit estimates of the model given in @list.
- * 
+ *
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL reprobit_model (const int *list, DATASET *dset, 
+MODEL reprobit_model (const int *list, DATASET *dset,
 		      gretlopt opt, PRN *prn)
 {
     MODEL model;
@@ -3843,7 +3851,7 @@ MODEL reprobit_model (const int *list, DATASET *dset,
 
     if (!dataset_is_panel(dset)) {
 	err = E_PDWRONG;
-    } else {	
+    } else {
 	reprobit_estimate = get_plugin_function("reprobit_estimate");
 	if (reprobit_estimate == NULL) {
 	    err = E_FOPEN;
