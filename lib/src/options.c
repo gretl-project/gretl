@@ -500,6 +500,7 @@ struct gretl_option gretl_opts[] = {
     { PROBIT,   OPT_V, "verbose", 0 },
     { PROBIT,   OPT_E, "random-effects", 0 },
     { PROBIT,   OPT_G, "quadpoints", 2 },
+    { PROBIT,   OPT_B, "bootstrap", 0 },
     { QLRTEST,  OPT_L, "limit-to", 2 },
     { QLRTEST,  OPT_U, "plot", 2 },
     { QQPLOT,   OPT_R, "raw", 0 },

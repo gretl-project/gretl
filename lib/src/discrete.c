@@ -49,7 +49,7 @@ typedef struct op_container_ op_container;
 struct op_container_ {
     int ci;           /* model command index (PROBIT or LOGIT) */
     gretlopt opt;     /* option flags */
-    int bootstrap;    /* doing bootstrap of normality test */
+    int bootstrap;    /* state: doing bootstrap of normality test */
     int *y;           /* dependent variable */
     double **Z;       /* data */
     int *list;        /* dependent var plus regular regressors */
@@ -65,6 +65,9 @@ struct op_container_ {
     MODEL *pmod;      /* model struct, initially containing OLS */
     gretl_matrix *G;  /* score matrix by observation */
     double *g;        /* total score vector */
+    double X20;       /* original value of normality test */
+    int replics;      /* replications of normtest */
+    int X2_ngt;       /* times X20 exceeded in bootstrap */
 };
 
 struct sorter {
@@ -174,6 +177,11 @@ static op_container *op_container_new (int ci, int ndum,
 	OC->list[i+2] = pmod->list[i+2];
     }
 
+    /* for normality test bootstrap */
+    OC->X20 = NADBL;
+    OC->replics = 0;
+    OC->X2_ngt = 0;
+
 #if LPDEBUG
     fprintf(stderr, "nobs = %d\n", OC->nobs);
     fprintf(stderr, "t1-t2 = %d-%d\n", OC->t1, OC->t2);
@@ -246,7 +254,6 @@ static int op_compute_probs (const double *theta, op_container *OC)
     }
 
     s = 0;
-
     for (t=OC->pmod->t1; t<=OC->pmod->t2; t++) {
 	if (na(OC->pmod->uhat[t])) {
 #if LPDEBUG > 1
@@ -254,9 +261,7 @@ static int op_compute_probs (const double *theta, op_container *OC)
 #endif
 	    continue;
 	}
-
 	yt = OC->y[s];
-
 	if (yt == 0) {
 	    m0 = theta[nx];
 	    ystar1 = OC->ndx[s] + m0;
@@ -268,12 +273,10 @@ static int op_compute_probs (const double *theta, op_container *OC)
 		ystar1 = OC->ndx[s] + m1;
 	    }
 	}
-
 #if LPDEBUG > 1
 	fprintf(stderr, "t:%4d/%d s=%d y=%d, ndx = %10.6f, ystar0 = %9.7f, ystar1 = %9.7f\n",
 		t, OC->nobs, s, yt, OC->ndx[s], ystar0, ystar1);
 #endif
-
 	if (ystar0 < 6.0 || OC->ci == LOGIT) {
 	    P0 = (yt == 0)? 0.0 : lp_cdf(ystar0, OC->ci);
 	    P1 = (yt == M)? 1.0 : lp_cdf(ystar1, OC->ci);
@@ -284,7 +287,6 @@ static int op_compute_probs (const double *theta, op_container *OC)
 	    adj = lp_pdf(ystar1, OC->ci) + lp_pdf(ystar0, OC->ci);
 	    dP =  0.5 * h * adj;
 	}
-
 	if (dP > dPMIN) {
 	    OC->dP[s] = dP;
 	} else {
@@ -294,9 +296,7 @@ static int op_compute_probs (const double *theta, op_container *OC)
 #endif
 	    return 1;
 	}
-
 	op_compute_score(OC, yt, ystar0, ystar1, dP, t, s);
-
 	s++;
     }
 
@@ -369,7 +369,6 @@ static double op_loglik (const double *theta, void *ptr)
     }
 
     err = op_compute_probs(OC->theta, OC);
-
     if (err) {
 	ll = NADBL;
     } else {
@@ -418,7 +417,6 @@ static int ordered_hessian (op_container *OC, gretl_matrix *H)
     double ti, x, ll, *g0;
     int i, j, k = OC->k;
     int err = 0;
-
 
     g0 = malloc(k * sizeof *g0);
     if (g0 == NULL) {
@@ -633,18 +631,24 @@ static double op_gen_resid (op_container *OC, const double *theta, int t)
    normal CDF.
 */
 
-static void cut_points_init (op_container *OC, const MODEL *pmod,
+static void cut_points_init (op_container *OC,
+			     const MODEL *pmod,
 			     const double **Z)
 {
-    const double *y = Z[pmod->list[1]];
-    double p = 0.0;
-    int i, j, t, nj;
+    const double *y = NULL;
+    double yt, p = 0.0;
+    int i, j, s, t, nj;
+
+    if (!OC->bootstrap) {
+	y = Z[pmod->list[1]];
+    }
 
     for (i=OC->nx, j=0; i<OC->k; i++, j++) {
-	nj = 0;
+	s = nj = 0;
 	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    if (!na(pmod->uhat[t]) && y[t] == j) {
-		nj++;
+	    if (!na(pmod->uhat[t])) {
+		yt = (y != NULL)? y[t] : OC->y[s++];
+		nj += (yt == j);
 	    }
 	}
 	p += (double) nj / pmod->nobs;
@@ -662,7 +666,6 @@ static void op_LR_test (MODEL *pmod, op_container *OC,
     OC->nx = 0;
 
     cut_points_init(OC, pmod, Z);
-
     L0 = op_loglik(OC->theta, OC);
 
     if (!na(L0) && L0 <= pmod->lnL) {
@@ -675,12 +678,12 @@ static void op_LR_test (MODEL *pmod, op_container *OC,
     OC->k += nx;
 }
 
-static int real_oprobit_normtest (MODEL *pmod, op_container *OC,
+static int real_oprobit_normtest (MODEL *pmod,
+				  op_container *OC,
 				  gretl_matrix *CMtestmat,
 				  gretl_matrix *y,
 				  gretl_matrix *beta)
 {
-    int nobs = OC->nobs;
     int k = OC->k;
     int nx = OC->nx;
     int M = OC->ymax;
@@ -736,7 +739,7 @@ static int real_oprobit_normtest (MODEL *pmod, op_container *OC,
     err = gretl_matrix_ols(y, CMtestmat, beta, NULL, NULL, NULL);
 
     if (!err) {
-	double X2 = nobs;
+	double X2 = OC->nobs;
 
 	gretl_matrix_multiply(CMtestmat, beta, y);
 	for (t=0; t<y->rows; t++) {
@@ -744,13 +747,14 @@ static int real_oprobit_normtest (MODEL *pmod, op_container *OC,
 	}
 	if (X2 > 0) {
 	    if (OC->bootstrap) {
-		fprintf(stderr, "Bootstrap: normality X2 = %g\n", X2);
+		OC->replics += 1;
+		if (X2 > OC->X20) {
+		    OC->X2_ngt += 1;
+		}
 	    } else {
-		fprintf(stderr, "Real normality X2 = %g\n", X2);
+		OC->X20 = X2;
 		gretl_model_add_normality_test(pmod, X2);
 	    }
-	} else {
-	    fprintf(stderr, "real_oprobit_normtest: X2 = %g\n", X2);
 	}
     } else {
 	fprintf(stderr, "real_oprobit_normtest: err = %d\n", err);
@@ -777,13 +781,19 @@ static int oprobit_normtest (MODEL *pmod, op_container *OC)
 
     if (CMtestmat == NULL) {
 	CMtestmat = gretl_matrix_alloc(OC->nobs, OC->k + 2);
-	y = gretl_unit_matrix_new(OC->nobs, 1);
+	y = gretl_matrix_alloc(OC->nobs, 1);
 	beta = gretl_matrix_alloc(OC->k + 2, 1);
     }
 
     if (CMtestmat == NULL || y == NULL || beta == NULL) {
 	err = E_ALLOC;
     } else {
+	int i;
+
+	/* y needs to be all 1s on input */
+	for (i=0; i<OC->nobs; i++) {
+	    y->val[i] = 1.0;
+	}
 	err = real_oprobit_normtest(pmod, OC, CMtestmat, y, beta);
     }
 
@@ -822,7 +832,6 @@ static int fill_op_model (MODEL *pmod, const int *list,
     }
 
     pmod->ci = OC->ci;
-
     gretl_model_set_int(pmod, "ordered", 1);
     gretl_model_set_int(pmod, "nx", OC->nx);
 
@@ -834,7 +843,6 @@ static int fill_op_model (MODEL *pmod, const int *list,
     }
 
     pmod->ncoeff = npar;
-
     for (i=0; i<npar; i++) {
 	pmod->coeff[i] = OC->theta[i];
     }
@@ -848,19 +856,16 @@ static int fill_op_model (MODEL *pmod, const int *list,
 	if (na(OC->pmod->uhat[t])) {
 	    continue;
 	}
-
 	Xb = 0.0;
 	for (i=0; i<OC->nx; i++) {
 	    v = OC->list[i+2];
 	    Xb += OC->theta[i] * OC->Z[v][t];
 	}
-
 	/* yhat = X\hat{beta} */
 	pmod->yhat[t] = Xb;
 	if (ordered_model_prediction(pmod, Xb) == OC->y[s]) {
 	    correct++;
 	}
-
 	/* compute generalized residual */
 	pmod->uhat[t] = op_gen_resid(OC, OC->theta, s);
 	s++;
@@ -910,13 +915,18 @@ static int fill_op_model (MODEL *pmod, const int *list,
     return pmod->errcode;
 }
 
-/* prepare for a bootstrap iteration of the ordered probit
-   normality test */
+/* Prepare for a bootstrap iteration of the ordered probit
+   normality test: create artificial y. Note: we're using
+   pmod->coeff in creating y, thereby ensuring that we get
+   the coefficients from the original estimation, which
+   are saved onto @pmod before bootstrapping starts.
+*/
 
-static void op_boot_prep (op_container *OC)
+static void op_boot_prep (op_container *OC,
+			  const MODEL *pmod)
 {
-    double ystar, *cut = OC->theta + OC->nx;
-    int ys, ncut = OC->k - OC->nx;
+    double ystar, *cut = pmod->coeff + OC->nx;
+    int y, ncut = OC->k - OC->nx;
     int i, v, t, s = 0;
 
     for (t=OC->t1; t<=OC->t2; t++) {
@@ -927,18 +937,18 @@ static void op_boot_prep (op_container *OC)
 	/* add regression effect */
 	for (i=0; i<OC->nx; i++) {
 	    v = OC->list[i+2];
-	    ystar += OC->theta[i] * OC->Z[v][t];
+	    ystar += pmod->coeff[i] * OC->Z[v][t];
 	}
-	ys = 0;
+	y = 0;
 	/* convert to observable using cut points */
 	for (i=0; i<ncut; i++) {
 	    if (ystar > cut[i]) {
-		ys++;
+		y++;
 	    } else {
 		break;
 	    }
 	}
-	OC->y[s++] = ys;
+	OC->y[s++] = y;
     }
 }
 
@@ -955,18 +965,11 @@ static int do_ordered (int ci, int ndum,
     op_container *OC;
     int i, npar;
     double *theta = NULL;
-    double *theta1 = NULL;
     double toler;
-    int bs_iter = 0;
+    int bs_iter = -1;
     int bs_maxit = 1000; /* configurable? */
     int use_newton = 0;
     int err;
-
-#if 0
-    /* testing! */
-    opt |= OPT_B;
-    bs_maxit = 4;
-#endif
 
     OC = op_container_new(ci, ndum, dset->Z, pmod, opt);
     if (OC == NULL) {
@@ -974,12 +977,24 @@ static int do_ordered (int ci, int ndum,
     }
 
     npar = OC->k;
-
     /* transformed theta to pass to optimizer */
     theta = malloc(npar * sizeof *theta);
     if (theta == NULL) {
 	op_container_destroy(OC);
 	return E_ALLOC;
+    }
+
+    if (libset_get_int(GRETL_OPTIM) == OPTIM_NEWTON) {
+	use_newton = 1;
+    }
+
+ reestimate:
+
+    if (OC->bootstrap) {
+	fncount = grcount = 0;
+	/* reset OC->y using generated normals */
+	op_boot_prep(OC, pmod);
+	bs_iter++;
     }
 
     /* initialize slopes */
@@ -1001,22 +1016,6 @@ static int do_ordered (int ci, int ndum,
     fprintf(stderr, "\ninitial loglikelihood = %.12g\n",
 	    op_loglik(theta, OC));
 #endif
-
-    if (libset_get_int(GRETL_OPTIM) == OPTIM_NEWTON) {
-	use_newton = 1;
-    }
-
- reestimate:
-
-    if (OC->bootstrap) {
-	/* reset OC->y using generated normals */
-	for (i=0; i<npar; i++) {
-	    theta[i] = theta1[i];
-	}
-	op_get_real_theta(OC, theta);
-	op_boot_prep(OC);
-	bs_iter++;
-    }
 
     if (use_newton) {
 	double crittol = 1.0e-7;
@@ -1045,22 +1044,19 @@ static int do_ordered (int ci, int ndum,
 
     if (!err && (opt & OPT_B)) {
 	/* bootstrapping the ordered probit normality test */
-	if (bs_iter == bs_maxit) {
-	    /* we're finished */
-	    fprintf(stderr, "normtest bootstrap finished\n");
-	    /* FIXME do something! */
+	if (bs_iter < 0) {
+	    /* start the procedure */
+	    OC->bootstrap = 1;
 	} else {
-	    if (bs_iter == 0) {
-		/* start the procedure */
-		theta1 = copyvec(theta, npar);
-		fprintf(stderr, "normtest bootstrap starting\n");
-		OC->bootstrap = 1;
-	    } else {
-		/* bootstrap in progress */
-		fprintf(stderr, "normtest bootstrap in progress, iter %d\n",
-			bs_iter);
-		oprobit_normtest(NULL, OC);
-	    }
+	    /* bootstrap in progress: run test */
+	    oprobit_normtest(NULL, OC);
+	}
+	if (bs_iter == bs_maxit) {
+	    double bs_pval = OC->X2_ngt / (double) OC->replics;
+
+	    fprintf(stderr, "bootstrap p-value %g\n", bs_pval);
+	    /* save something onto model */
+	} else {
 	    goto reestimate;
 	}
     }
@@ -1071,7 +1067,6 @@ static int do_ordered (int ci, int ndum,
     }
 
     free(theta);
-    free(theta1);
     op_container_destroy(OC);
 
     return err;
