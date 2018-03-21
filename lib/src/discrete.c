@@ -49,6 +49,7 @@ typedef struct op_container_ op_container;
 struct op_container_ {
     int ci;           /* model command index (PROBIT or LOGIT) */
     gretlopt opt;     /* option flags */
+    int bootstrap;    /* doing bootstrap of normality test */
     int *y;           /* dependent variable */
     double **Z;       /* data */
     int *list;        /* dependent var plus regular regressors */
@@ -125,6 +126,8 @@ static op_container *op_container_new (int ci, int ndum,
     }
 
     OC->ci = ci;
+    OC->opt = opt;
+    OC->bootstrap = 0;
 
     OC->Z = Z;
     OC->pmod = pmod;
@@ -134,8 +137,6 @@ static op_container *op_container_new (int ci, int ndum,
     OC->k = pmod->ncoeff;
     OC->ymax = ndum;
     OC->nx = OC->k - ndum;
-
-    OC->opt = opt;
 
     OC->y = NULL;
     OC->ndx = NULL;
@@ -694,9 +695,7 @@ static int real_oprobit_normtest (MODEL *pmod, op_container *OC,
 	if (na(OC->pmod->uhat[t])) {
 	    continue;
 	}
-
 	yt = OC->y[s];
-
 	if (yt == 0) {
 	    m0 = theta[nx];
 	    b = OC->ndx[s] + m0;
@@ -708,7 +707,6 @@ static int real_oprobit_normtest (MODEL *pmod, op_container *OC,
 		b = OC->ndx[s] + m1;
 	    }
 	}
-
 	if (yt == 0) {
 	    u = gretl_matrix_get(OC->G, s, nx);
 	    b2u = b*b*u;
@@ -724,18 +722,14 @@ static int real_oprobit_normtest (MODEL *pmod, op_container *OC,
 		b2u = u = 0;
 	    }
 	}
-
 	for (i=0; i<k; i++) {
 	    gval = gretl_matrix_get(OC->G, s, i);
 	    gretl_matrix_set(CMtestmat, s, i, gval);
 	}
-
 	e3 = 2*(v-u) + (a2v - b2u);
 	e4 = 3*(a*v-b*u) + (a*a2v - b*b2u);
-
 	gretl_matrix_set(CMtestmat, s, k, e3);
 	gretl_matrix_set(CMtestmat, s, k+1, e4);
-
 	s++;
     }
 
@@ -749,8 +743,17 @@ static int real_oprobit_normtest (MODEL *pmod, op_container *OC,
 	    X2 -= (1 - y->val[t]) * (1 - y->val[t]);
 	}
 	if (X2 > 0) {
-	    gretl_model_add_normality_test(pmod, X2);
+	    if (OC->bootstrap) {
+		fprintf(stderr, "Bootstrap: normality X2 = %g\n", X2);
+	    } else {
+		fprintf(stderr, "Real normality X2 = %g\n", X2);
+		gretl_model_add_normality_test(pmod, X2);
+	    }
+	} else {
+	    fprintf(stderr, "real_oprobit_normtest: X2 = %g\n", X2);
 	}
+    } else {
+	fprintf(stderr, "real_oprobit_normtest: err = %d\n", err);
     }
 
     return err;
@@ -758,24 +761,31 @@ static int real_oprobit_normtest (MODEL *pmod, op_container *OC,
 
 static int oprobit_normtest (MODEL *pmod, op_container *OC)
 {
-    gretl_matrix *CMtestmat;
-    gretl_matrix *y;
-    gretl_matrix *beta;
+    static gretl_matrix *CMtestmat;
+    static gretl_matrix *y;
+    static gretl_matrix *beta;
     int err = 0;
 
-    CMtestmat = gretl_matrix_alloc(OC->nobs, OC->k + 2);
-    y = gretl_unit_matrix_new(OC->nobs, 1);
-    beta = gretl_matrix_alloc(OC->k + 2, 1);
+    if (OC == NULL) {
+	/* cleanup signal */
+	gretl_matrix_free(CMtestmat);
+	gretl_matrix_free(y);
+	gretl_matrix_free(beta);
+	CMtestmat = y = beta = NULL;
+	return 0;
+    }
+
+    if (CMtestmat == NULL) {
+	CMtestmat = gretl_matrix_alloc(OC->nobs, OC->k + 2);
+	y = gretl_unit_matrix_new(OC->nobs, 1);
+	beta = gretl_matrix_alloc(OC->k + 2, 1);
+    }
 
     if (CMtestmat == NULL || y == NULL || beta == NULL) {
 	err = E_ALLOC;
     } else {
 	err = real_oprobit_normtest(pmod, OC, CMtestmat, y, beta);
     }
-
-    gretl_matrix_free(CMtestmat);
-    gretl_matrix_free(y);
-    gretl_matrix_free(beta);
 
     return err;
 }
@@ -900,6 +910,38 @@ static int fill_op_model (MODEL *pmod, const int *list,
     return pmod->errcode;
 }
 
+/* prepare for a bootstrap iteration of the ordered probit
+   normality test */
+
+static void op_boot_prep (op_container *OC)
+{
+    double ystar, *cut = OC->theta + OC->nx;
+    int ys, ncut = OC->k - OC->nx;
+    int i, v, t, s = 0;
+
+    for (t=OC->t1; t<=OC->t2; t++) {
+	if (na(OC->pmod->uhat[t])) {
+	    continue;
+	}
+	ystar = gretl_one_snormal();
+	/* add regression effect */
+	for (i=0; i<OC->nx; i++) {
+	    v = OC->list[i+2];
+	    ystar += OC->theta[i] * OC->Z[v][t];
+	}
+	ys = 0;
+	/* convert to observable using cut points */
+	for (i=0; i<ncut; i++) {
+	    if (ystar > cut[i]) {
+		ys++;
+	    } else {
+		break;
+	    }
+	}
+	OC->y[s++] = ys;
+    }
+}
+
 /* Main ordered estimation function */
 
 static int do_ordered (int ci, int ndum,
@@ -913,9 +955,18 @@ static int do_ordered (int ci, int ndum,
     op_container *OC;
     int i, npar;
     double *theta = NULL;
+    double *theta1 = NULL;
     double toler;
+    int bs_iter = 0;
+    int bs_maxit = 1000; /* configurable? */
     int use_newton = 0;
     int err;
+
+#if 0
+    /* testing! */
+    opt |= OPT_B;
+    bs_maxit = 4;
+#endif
 
     OC = op_container_new(ci, ndum, dset->Z, pmod, opt);
     if (OC == NULL) {
@@ -955,6 +1006,18 @@ static int do_ordered (int ci, int ndum,
 	use_newton = 1;
     }
 
+ reestimate:
+
+    if (OC->bootstrap) {
+	/* reset OC->y using generated normals */
+	for (i=0; i<npar; i++) {
+	    theta[i] = theta1[i];
+	}
+	op_get_real_theta(OC, theta);
+	op_boot_prep(OC);
+	bs_iter++;
+    }
+
     if (use_newton) {
 	double crittol = 1.0e-7;
 	double gradtol = 1.0e-7;
@@ -974,13 +1037,41 @@ static int do_ordered (int ci, int ndum,
 		       (prn != NULL)? OPT_V : OPT_NONE, prn);
     }
 
-    if (!err) {
-	/* transform back to 'real' theta */
+    if (!err && !OC->bootstrap) {
+	/* transform back to 'real' theta and fill the model struct */
 	op_get_real_theta(OC, theta);
 	err = fill_op_model(pmod, list, dset, OC, fncount, grcount);
     }
 
+    if (!err && (opt & OPT_B)) {
+	/* bootstrapping the ordered probit normality test */
+	if (bs_iter == bs_maxit) {
+	    /* we're finished */
+	    fprintf(stderr, "normtest bootstrap finished\n");
+	    /* FIXME do something! */
+	} else {
+	    if (bs_iter == 0) {
+		/* start the procedure */
+		theta1 = copyvec(theta, npar);
+		fprintf(stderr, "normtest bootstrap starting\n");
+		OC->bootstrap = 1;
+	    } else {
+		/* bootstrap in progress */
+		fprintf(stderr, "normtest bootstrap in progress, iter %d\n",
+			bs_iter);
+		oprobit_normtest(NULL, OC);
+	    }
+	    goto reestimate;
+	}
+    }
+
+    if (ci == PROBIT) {
+	/* clean up in normality test */
+	oprobit_normtest(NULL, NULL);
+    }
+
     free(theta);
+    free(theta1);
     op_container_destroy(OC);
 
     return err;
