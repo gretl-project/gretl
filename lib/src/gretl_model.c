@@ -4398,7 +4398,9 @@ void gretl_model_test_print_direct (const ModelTest *test, int heading, PRN *prn
 
     if (*buf != '\0') {
 	const char *pvstr = asy_pval(test->teststat) ? 
-	    N_("with asymptotic p-value") : N_("with p-value");
+	    N_("with asymptotic p-value") :
+	    (test->opt & OPT_B)? N_("with bootstrap p-value") :
+	    N_("with p-value");
 
 	if (plain_format(prn)) {
 	    pprintf(prn, "  %s = %s\n\n", _(pvstr), buf);
@@ -6464,6 +6466,19 @@ int gretl_model_add_normality_test (MODEL *pmod, double X2)
     }
 
     return err;
+}
+
+ModelTest *gretl_model_get_test (MODEL *pmod, ModelTestType ttype)
+{
+    int i;
+
+    for (i=0; i<pmod->ntests; i++) {
+	if (pmod->tests[i].type == ttype) {
+	    return &pmod->tests[i];
+	}
+    }
+
+    return NULL;
 }
 
 static int xneq (double x, double y)

@@ -427,6 +427,9 @@ void model_count_minus (MODEL *pmod);
 void set_model_id (MODEL *pmod, gretlopt opt);
 
 ModelTest *model_test_new (ModelTestType ttype);
+
+ModelTest *gretl_model_get_test (MODEL *pmod, ModelTestType ttype);
+
 void model_test_free (ModelTest *test);
 
 int maybe_add_test_to_model (MODEL *pmod, ModelTest *test);

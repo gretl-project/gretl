@@ -919,9 +919,13 @@ static void record_bootstrap_pvalue (op_container *OC,
 				     MODEL *pmod)
 {
     double pval = OC->X2_ngt / (double) OC->replics;
+    ModelTest *test;
 
-    gretl_model_set_double(pmod, "normtest_boot_pvalue", pval);
-    fprintf(stderr, "normtest_boot_pvalue %g\n", pval);
+    test = gretl_model_get_test(pmod, GRETL_TEST_NORMAL);
+    if (test != NULL) {
+	model_test_set_pvalue(test, pval);
+	model_test_set_opt(test, OPT_B);
+    }
 }
 
 /* Prepare for a bootstrap iteration of the ordered probit
