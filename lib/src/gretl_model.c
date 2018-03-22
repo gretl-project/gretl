@@ -4362,7 +4362,10 @@ static void csv_print_test (const ModelTest *src, PRN *prn)
 #define asy_test(t) (t == GRETL_STAT_WALD_CHISQ || \
 		     t == GRETL_STAT_Z)
 
-#define asy_pval(t) (t == GRETL_STAT_SUP_WALD)
+#define asy_pval(test) (test->teststat == GRETL_STAT_SUP_WALD || \
+			(test->opt & OPT_A))
+
+#define boot_pval(test) (test->opt & OPT_B)
 
 void gretl_model_test_print_direct (const ModelTest *test, int heading, PRN *prn)
 {
@@ -4397,9 +4400,9 @@ void gretl_model_test_print_direct (const ModelTest *test, int heading, PRN *prn
     get_test_pval_string(test, buf, prn);
 
     if (*buf != '\0') {
-	const char *pvstr = asy_pval(test->teststat) ? 
-	    N_("with asymptotic p-value") :
-	    (test->opt & OPT_B)? N_("with bootstrap p-value") :
+	const char *pvstr =
+	    asy_pval(test) ? N_("with asymptotic p-value") :
+	    boot_pval(test) ? N_("with bootstrap p-value") :
 	    N_("with p-value");
 
 	if (plain_format(prn)) {

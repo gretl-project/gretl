@@ -65,6 +65,8 @@ struct op_container_ {
     MODEL *pmod;      /* model struct, initially containing OLS */
     gretl_matrix *G;  /* score matrix by observation */
     double *g;        /* total score vector */
+    gretl_matrix *nty; /* dependent var for normality test */
+    gretl_matrix *ntb; /* coefficients, normality test */
     double X20;       /* original value of normality test */
     int replics;      /* replications of normtest */
     int X2_ngt;       /* times X20 exceeded in bootstrap */
@@ -108,9 +110,12 @@ static void op_container_destroy (op_container *OC)
     free(OC->ndx);
     free(OC->dP);
     free(OC->list);
-    gretl_matrix_free(OC->G);
     free(OC->g);
     free(OC->theta);
+
+    gretl_matrix_free(OC->G);
+    gretl_matrix_free(OC->nty);
+    gretl_matrix_free(OC->ntb);
 
     free(OC);
 }
@@ -122,6 +127,7 @@ static op_container *op_container_new (int ci, int ndum,
     op_container *OC;
     int i, t, vy = pmod->list[1];
     int nobs = pmod->nobs;
+    int err = 0;
 
     OC = malloc(sizeof *OC);
     if (OC == NULL) {
@@ -145,22 +151,46 @@ static op_container *op_container_new (int ci, int ndum,
     OC->ndx = NULL;
     OC->dP = NULL;
     OC->list = NULL;
-    OC->G = NULL;
     OC->g = NULL;
+    OC->theta = NULL;
+    OC->G = NULL;
+    OC->nty = NULL;
+    OC->ntb = NULL;
 
     OC->y = malloc(nobs * sizeof *OC->y);
     OC->ndx = malloc(nobs * sizeof *OC->ndx);
     OC->dP = malloc(nobs * sizeof *OC->dP);
 
     OC->list = gretl_list_new(1 + OC->nx);
-    OC->G = gretl_matrix_alloc(nobs, OC->k);
     OC->g = malloc(OC->k * sizeof *OC->g);
     OC->theta = malloc(OC->k * sizeof *OC->theta);
 
     if (OC->y == NULL || OC->ndx == NULL ||
 	OC->dP == NULL || OC->list == NULL ||
-	OC->G == NULL || OC->g == NULL ||
-	OC->theta == NULL) {
+	OC->g == NULL || OC->theta == NULL) {
+	op_container_destroy(OC);
+	return NULL;
+    }
+
+    if (ci == PROBIT) {
+	/* include extra storage for normality test */
+	OC->G = gretl_matrix_alloc(nobs, OC->k + 2);
+	OC->nty = gretl_matrix_alloc(nobs, 1);
+	OC->ntb = gretl_matrix_alloc(OC->k + 2, 1);
+	if (OC->G == NULL || OC->nty == NULL || OC->ntb == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    /* "shrink" G to proper size for gradient */
+	    gretl_matrix_reuse(OC->G, -1, OC->k);
+	}
+    } else {
+	OC->G = gretl_matrix_alloc(nobs, OC->k);
+	if (OC->G == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (err) {
 	op_container_destroy(OC);
 	return NULL;
     }
@@ -177,7 +207,7 @@ static op_container *op_container_new (int ci, int ndum,
 	OC->list[i+2] = pmod->list[i+2];
     }
 
-    /* for normality test bootstrap */
+    /* for probit normality test bootstrap */
     OC->X20 = NADBL;
     OC->replics = 0;
     OC->X2_ngt = 0;
@@ -673,20 +703,21 @@ static void op_LR_test (MODEL *pmod, op_container *OC,
     OC->k += nx;
 }
 
-static int real_oprobit_normtest (MODEL *pmod,
-				  op_container *OC,
-				  gretl_matrix *CMX,
-				  gretl_matrix *y,
-				  gretl_matrix *beta)
+static int oprobit_normtest (MODEL *pmod,
+			     op_container *OC)
 {
+    gretl_matrix *ntX;
     double *theta = OC->theta;
     int k = OC->k;
     int nx = OC->nx;
-    int t, s, i, yt;
+    int t, s, yt;
     double u, v, a2v, b2u;
-    double gsi, a = 0, b = 0;
+    double a = 0, b = 0;
     double e3, e4;
     int err = 0;
+
+    /* augmented version of G matrix */
+    ntX = gretl_matrix_reuse(OC->G, -1, k+2);
 
     s = 0;
     for (t=OC->pmod->t1; t<=OC->pmod->t2; t++) {
@@ -711,25 +742,26 @@ static int real_oprobit_normtest (MODEL *pmod,
 		u = b2u = 0;
 	    }
 	}
-	for (i=0; i<k; i++) {
-	    gsi = gretl_matrix_get(OC->G, s, i);
-	    gretl_matrix_set(CMX, s, i, gsi);
-	}
 	e3 = 2*(v-u) + (a2v - b2u);
 	e4 = 3*(a*v-b*u) + (a*a2v - b*b2u);
-	gretl_matrix_set(CMX, s, k, e3);
-	gretl_matrix_set(CMX, s, k+1, e4);
+	gretl_matrix_set(ntX, s, k, e3);
+	gretl_matrix_set(ntX, s, k+1, e4);
 	s++;
     }
 
-    err = gretl_matrix_ols(y, CMX, beta, NULL, NULL, NULL);
+    /* dependent var should be all 1s */
+    for (t=0; t<OC->nobs; t++) {
+	OC->nty->val[t] = 1.0;
+    }
+
+    err = gretl_matrix_ols(OC->nty, ntX, OC->ntb, NULL, NULL, NULL);
 
     if (!err) {
 	double X2 = OC->nobs;
 
-	gretl_matrix_multiply(CMX, beta, y);
-	for (t=0; t<y->rows; t++) {
-	    u = 1 - y->val[t];
+	gretl_matrix_multiply(ntX, OC->ntb, OC->nty);
+	for (t=0; t<OC->nobs; t++) {
+	    u = 1 - OC->nty->val[t];
 	    X2 -= u * u;
 	}
 #if 0
@@ -742,50 +774,23 @@ static int real_oprobit_normtest (MODEL *pmod,
 		    OC->X2_ngt += 1;
 		}
 	    } else {
+		ModelTest *test;
+
 		OC->X20 = X2;
 		gretl_model_add_normality_test(pmod, X2);
+		test = gretl_model_get_test(pmod, GRETL_TEST_NORMAL);
+		if (test != NULL) {
+		    /* note asymptotic nature of test */
+		    model_test_set_opt(test, OPT_A);
+		}
 	    }
 	}
     } else {
-	fprintf(stderr, "real_oprobit_normtest: err = %d\n", err);
+	fprintf(stderr, "oprobit_normtest: err = %d\n", err);
     }
 
-    return err;
-}
-
-static int oprobit_normtest (MODEL *pmod, op_container *OC)
-{
-    static gretl_matrix *X;
-    static gretl_matrix *y;
-    static gretl_matrix *b;
-    int err = 0;
-
-    if (OC == NULL) {
-	/* cleanup signal */
-	gretl_matrix_free(X);
-	gretl_matrix_free(y);
-	gretl_matrix_free(b);
-	X = y = b = NULL;
-	return 0;
-    }
-
-    if (X == NULL) {
-	X = gretl_matrix_alloc(OC->nobs, OC->k + 2);
-	y = gretl_matrix_alloc(OC->nobs, 1);
-	b = gretl_matrix_alloc(OC->k + 2, 1);
-    }
-
-    if (X == NULL || y == NULL || b == NULL) {
-	err = E_ALLOC;
-    } else {
-	int i;
-
-	/* y must be all 1s on input */
-	for (i=0; i<OC->nobs; i++) {
-	    y->val[i] = 1.0;
-	}
-	err = real_oprobit_normtest(pmod, OC, X, y, b);
-    }
+    /* return G to correct size for gradient */
+    gretl_matrix_reuse(OC->G, -1, k);
 
     return err;
 }
@@ -955,6 +960,18 @@ static void op_boot_prep (op_container *OC,
     }
 }
 
+static void op_boot_init (op_container *OC,
+			  int *bs_maxit)
+{
+    int K, err = 0;
+
+    K = get_optval_int(PROBIT, OPT_B, &err);
+    if (!err && K > 0) {
+	*bs_maxit = K;
+    }
+    OC->bootstrap = 1;
+}
+
 /* Main ordered estimation function */
 
 static int do_ordered (int ci, int ndum,
@@ -1014,8 +1031,8 @@ static int do_ordered (int ci, int ndum,
  reestimate:
 
     if (OC->bootstrap) {
+	/* prepare for bootstrap iteration */
 	fncount = grcount = 0;
-	/* reset OC->y using generated normals */
 	op_boot_prep(OC, pmod);
 	bs_iter++;
     }
@@ -1049,12 +1066,7 @@ static int do_ordered (int ci, int ndum,
 	/* bootstrapping the ordered probit normality test */
 	if (bs_iter == 0) {
 	    /* start the procedure */
-	    int K = get_optval_int(PROBIT, OPT_B, &err);
-
-	    if (!err && K > 0) {
-		bs_maxit = K;
-	    }
-	    OC->bootstrap = 1;
+	    op_boot_init(OC, &bs_maxit);
 	} else {
 	    /* bootstrap in progress: run test */
 	    oprobit_normtest(NULL, OC);
@@ -1064,11 +1076,6 @@ static int do_ordered (int ci, int ndum,
 	} else {
 	    goto reestimate;
 	}
-    }
-
-    if (ci == PROBIT) {
-	/* clean up in normality test */
-	oprobit_normtest(NULL, NULL);
     }
 
     free(theta);
