@@ -398,6 +398,7 @@ static int as197_arma_finish (MODEL *pmod,
 			      PRN *prn)
 {
     int i, t, k = ainfo->nc;
+    int vcv_err = 0;
     double s2;
     int err;
 
@@ -427,9 +428,13 @@ static int as197_arma_finish (MODEL *pmod,
     pmod->sigma = sqrt(s2);
     pmod->lnL = as->loglik;
 
+    /* configure for computing variance matrix */
+    as->use_loglik = 1;
+    as->ma_check = 0;
+
     if (arma_use_opg(opt)) {
-	err = as197_OPG_vcv(pmod, as, b, s2, k, ainfo->T, prn);
-	if (!err) {
+	vcv_err = as197_OPG_vcv(pmod, as, b, s2, k, ainfo->T, prn);
+	if (!vcv_err) {
 	    gretl_model_set_vcv_info(pmod, VCV_ML, ML_OP);
 	    pmod->opt |= OPT_G;
 	}
@@ -439,10 +444,7 @@ static int as197_arma_finish (MODEL *pmod,
 	   with a Hessian-based covariance matrix
 	*/
 	gretl_matrix *Hinv;
-	int vcv_err = 0;
 
-	as->use_loglik = 1;
-	as->ma_check = 0;
 	Hinv = numerical_hessian_inverse(b, ainfo->nc, as197_iteration,
 					 as, &vcv_err);
 	if (!vcv_err) {
