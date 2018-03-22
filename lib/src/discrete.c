@@ -790,7 +790,7 @@ static int oprobit_normtest (MODEL *pmod, op_container *OC)
     } else {
 	int i;
 
-	/* y needs to be all 1s on input */
+	/* y must be all 1s on input */
 	for (i=0; i<OC->nobs; i++) {
 	    y->val[i] = 1.0;
 	}
@@ -915,6 +915,15 @@ static int fill_op_model (MODEL *pmod, const int *list,
     return pmod->errcode;
 }
 
+static void record_bootstrap_pvalue (op_container *OC,
+				     MODEL *pmod)
+{
+    double pval = OC->X2_ngt / (double) OC->replics;
+
+    gretl_model_set_double(pmod, "normtest_boot_pvalue", pval);
+    fprintf(stderr, "normtest_boot_pvalue %g\n", pval);
+}
+
 /* Prepare for a bootstrap iteration of the ordered probit
    normality test: create artificial y. Note: we're using
    pmod->coeff in creating y, thereby ensuring that we get
@@ -966,8 +975,8 @@ static int do_ordered (int ci, int ndum,
     int i, npar;
     double *theta = NULL;
     double toler;
-    int bs_iter = -1;
-    int bs_maxit = 1000; /* configurable? */
+    int bs_iter = 0;
+    int bs_maxit = 1000;
     int use_newton = 0;
     int err;
 
@@ -1044,18 +1053,20 @@ static int do_ordered (int ci, int ndum,
 
     if (!err && (opt & OPT_B)) {
 	/* bootstrapping the ordered probit normality test */
-	if (bs_iter < 0) {
+	if (bs_iter == 0) {
 	    /* start the procedure */
+	    int K = get_optval_int(PROBIT, OPT_B, &err);
+
+	    if (!err && K > 0) {
+		bs_maxit = K;
+	    }
 	    OC->bootstrap = 1;
 	} else {
 	    /* bootstrap in progress: run test */
 	    oprobit_normtest(NULL, OC);
 	}
 	if (bs_iter == bs_maxit) {
-	    double bs_pval = OC->X2_ngt / (double) OC->replics;
-
-	    fprintf(stderr, "bootstrap p-value %g\n", bs_pval);
-	    /* save something onto model */
+	    record_bootstrap_pvalue(OC, pmod);
 	} else {
 	    goto reestimate;
 	}
