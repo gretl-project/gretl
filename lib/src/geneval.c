@@ -16326,29 +16326,66 @@ static void gen_check_errvals (parser *p)
     }
 }
 
+/* This supports the "backdoor" (not recommended) way of
+   turning a series into a matrix -- "matrix m = s", for
+   @s a series -- as opposed to the recommended version,
+   "matrix m = {s}". However, even here we should probably
+   respect the set-variable "skip_missing". Modified to
+   do so, 2018-03-22.
+*/
+
 static gretl_matrix *series_to_matrix (const double *x,
 				       parser *p,
 				       int *prechecked)
 {
-    int i, n = sample_size(p->dset);
+    int t, n = sample_size(p->dset);
+    int t1 = p->dset->t1;
+    int t2 = p->dset->t2;
+    int respect_skip = 1;
+    int obs_info_ok = 1;
     gretl_matrix *v;
-    double xi;
 
-    v = gretl_column_vector_alloc(n);
+    if (respect_skip && libset_get_bool(SKIP_MISSING)) {
+	int err = series_adjust_sample(x, &t1, &t2);
+
+	if (!err) {
+	    /* no "embedded" NAs, just use revised sample */
+	    n = t2 - t1 + 1;
+	} else {
+	    /* have to count the non-missing values */
+	    n = 0;
+	    for (t=t1; t<=t2; t++) {
+		if (!na(x[t])) n++;
+	    }
+	    obs_info_ok = 0;
+	}
+    }
+
+    if (n == 0) {
+	v = gretl_null_matrix_new();
+    } else {
+	v = gretl_column_vector_alloc(n);
+    }
 
     if (v == NULL) {
 	p->err = E_ALLOC;
-    } else {
-	for (i=0; i<n; i++) {
-	    xi = x[i + p->dset->t1];
-	    if (na(xi)) {
-		set_gretl_warning(W_GENNAN);
-		xi = M_NA;
+    } else if (n > 0) {
+	int i = 0;
+
+	for (t=t1; t<=t2; t++) {
+	    if (na(x[t])) {
+		if (!respect_skip) {
+		    set_gretl_warning(W_GENNAN);
+		    v->val[i++] = M_NA;
+		}
+	    } else {
+		v->val[i++] = x[t];
 	    }
-	    v->val[i] = xi;
 	}
-	gretl_matrix_set_t1(v, p->dset->t1);
-	gretl_matrix_set_t2(v, p->dset->t2);
+	if (obs_info_ok) {
+	    gretl_matrix_set_t1(v, t1);
+	    gretl_matrix_set_t2(v, t2);
+	}
     }
 
     return v;
