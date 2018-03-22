@@ -22,9 +22,9 @@
 
 typedef struct arglist_ arglist;
 
-arglist *arglist_new (const char *pkgname, int argc);
+arglist *arglist_new (const char *pkgname, const void *func, int argc);
 
-arglist *arglist_lookup (const char *pkgname);
+arglist *arglist_lookup (const char *pkgname, const void *func);
 
 int arglist_record_arg (arglist *a, int i, const char *val);
 

@@ -26,6 +26,7 @@
 
 struct arglist_ {
     char pkgname[32];
+    const void *func;
     int argc;
     char **argv;
 };
@@ -72,7 +73,7 @@ void arglist_cleanup (void)
     n_arglists = 0;
 }
 
-arglist *arglist_new (const char *pkgname, int argc)
+arglist *arglist_new (const char *pkgname, const void *func, int argc)
 {
     arglist *a = malloc(sizeof *a);
 
@@ -86,6 +87,7 @@ arglist *arglist_new (const char *pkgname, int argc)
 	    
 	    *a->pkgname = '\0';
 	    strncat(a->pkgname, pkgname, 31);
+	    a->func = func;
 	    a->argc = argc;
 	    err = arglist_push(a);
 	    if (err) {
@@ -98,12 +100,13 @@ arglist *arglist_new (const char *pkgname, int argc)
     return a;
 }
 
-arglist *arglist_lookup (const char *pkgname)
+arglist *arglist_lookup (const char *pkgname, const void *func)
 {
     int i;
 
     for (i=0; i<n_arglists; i++) {
-	if (!strcmp(arglists[i]->pkgname, pkgname)) {
+	if (!strcmp(arglists[i]->pkgname, pkgname) &&
+	    arglists[i]->func == func) {
 	    return arglists[i];
 	}
     }

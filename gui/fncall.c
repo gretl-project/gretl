@@ -1448,7 +1448,7 @@ static int function_call_dialog (call_info *cinfo)
 	if (show_ret) { 
 	    trows += 4;
 	}
-	alist = arglist_lookup(cinfo->pkgname);
+	alist = arglist_lookup(cinfo->pkgname, cinfo->func);
     } else if (show_ret) {
 	tcols = 2;
 	trows = 3;
@@ -1911,10 +1911,13 @@ static void compose_fncall_line (char *line,
 				 char **tmpname,
 				 int *grab_bundle)
 {
-    arglist *alist = arglist_lookup(cinfo->pkgname);
+    arglist *alist;
+
+    alist = arglist_lookup(cinfo->pkgname, cinfo->func);
 
     if (alist == NULL) {
-	alist = arglist_new(cinfo->pkgname, cinfo->n_params);
+	alist = arglist_new(cinfo->pkgname, cinfo->func,
+			    cinfo->n_params);
     }
     
     *line = '\0';
