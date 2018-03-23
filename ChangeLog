@@ -3,6 +3,10 @@ version 2018b, in progress
   selection of GARCH robust variance estimator variant,
   and non-availability of lag selection in some cases
   where it should be available
+- Fix bug: "omit" command not working for dynamic panel
+  models
+- Fix bug: saved argument lists for function packages
+  getting out of sync with the user-selected interface
 
 2018-03-17 version 2018a
 - New function instring(): boolean variant of strstr()
