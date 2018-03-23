@@ -6243,7 +6243,7 @@ int *panel_list_omit (const MODEL *orig, const int *drop, int *err)
     int *newlist = NULL;
     int i;
 
-    if (orig->ci == ARBOND) {
+    if (orig->ci == ARBOND || orig->ci == DPANEL) {
 	return arbond_list_omit(orig, drop, err);
     }
 

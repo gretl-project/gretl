@@ -1637,8 +1637,14 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
 	    errmsg(err, prn);
 	}
     } else {
-	int *omitlist = gretl_list_diff_new(orig->list, rmod.list, 2);
+	int minpos = 2;
+	int *omitlist;
 
+	if (orig->ci == ARBOND || orig->ci == DPANEL) {
+	    /* skip AR spec, separator, and dep var */
+	    minpos = 4;
+	}
+	omitlist = gretl_list_diff_new(orig->list, rmod.list, minpos);
 	if (omitlist != NULL) {
 	    err = add_or_omit_compare(orig, &rmod, omitlist,
 				      dset, OMIT, opt, prn);
