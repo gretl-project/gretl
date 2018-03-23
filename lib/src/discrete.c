@@ -1062,6 +1062,13 @@ static int do_ordered (int ci, int ndum,
 	err = fill_op_model(pmod, list, dset, OC, fncount, grcount);
     }
 
+    if (err == E_NOCONV && bs_iter > 0) {
+	/* tolerate random non-convergence? */
+	err = 0;
+	bs_iter--;
+	goto reestimate;
+    }
+
     if (!err && (opt & OPT_B)) {
 	/* bootstrapping the ordered probit normality test */
 	if (bs_iter == 0) {
