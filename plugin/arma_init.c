@@ -32,11 +32,12 @@ void transform_arma_const (double *b, arma_info *ainfo)
 {
     const double *phi = b + 1;
     const double *Phi = phi + ainfo->np;
-    double narfac = 1.0;
-    double sarfac = 1.0;
+    double narfac = 1.0; /* nonseasonal AR factor */
+    double sarfac = 1.0; /* seasonal AR factor */
     int i, k = 0;
 
     if (ainfo->np == 0 && ainfo->P == 0) {
+	/* nothing to be done */
 	return;
     }
 
@@ -324,7 +325,8 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
 	err = hr_transcribe_coeffs(ainfo, &armod, coeff);
 
 	if (!err && arma_exact_ml(ainfo) &&
-	    ainfo->ifc && ainfo->nexo == 0) {
+	    ainfo->ifc && ainfo->nexo == 0 &&
+	    !arma_cml_init(ainfo)) {
 	    transform_arma_const(coeff, ainfo);
 	}
     }
@@ -1100,15 +1102,14 @@ static int *make_ar_ols_list (arma_info *ainfo, int av)
     return list;
 }
 
-/* Run a least squares model to get initial values for the AR
-   coefficients, either OLS or NLS.  We use NLS if there is
-   nonlinearity due to either (a) the presence of both a seasonal and
-   a non-seasonal AR component or (b) the presence of exogenous
-   variables in the context of a non-zero AR order, where estimation
-   will be via exact ML.
+/* Apply least squares to get initial values for the AR coefficients,
+   either OLS or NLS.  We use NLS if there is nonlinearity due to
+   either (a) the presence of both a seasonal and a non-seasonal AR
+   component or (b) the presence of exogenous variables in the context
+   of a non-zero AR order, where estimation will be via exact ML.
 
    In this initialization any MA coefficients are simply set to
-   near-zero.
+   "near-zero" (MA_SMALL).
 */
 
 int ar_arma_init (double *coeff, const DATASET *dset,
@@ -1208,7 +1209,8 @@ int ar_arma_init (double *coeff, const DATASET *dset,
        unconditional mean of y_t
     */
     if (!err && arma_exact_ml(ainfo) && ainfo->ifc &&
-	(!nonlin || ainfo->nexo == 0)) {
+	(!nonlin || ainfo->nexo == 0) &&
+	!arma_cml_init(ainfo)) {
 	transform_arma_const(coeff, ainfo);
     }
 

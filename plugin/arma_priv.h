@@ -31,7 +31,8 @@ typedef enum {
     ARMA_NAS   = 1 << 6, /* sample contains NAs */
     ARMA_LEV   = 1 << 7, /* doing ARIMA via levels formulation */
     ARMA_YDIFF = 1 << 8, /* ainfo->y contains differenced y */
-    ARMA_AVGLL = 1 << 9  /* passing average likelihood option to Kalman */
+    ARMA_AVGLL = 1 << 9,  /* passing average likelihood option to Kalman */
+    ARMA_CML0  = 1 << 10  /* initialize exact ML via CML? */
 } PrivFlags;
 
 typedef struct arma_info_ arma_info;
@@ -93,6 +94,7 @@ struct arma_info_ {
 #define arima_levels(a)        ((a)->pflags & ARMA_LEV)
 #define arima_ydiff(a)         ((a)->pflags & ARMA_YDIFF)
 #define arma_avg_ll(a)         ((a)->pflags & ARMA_AVGLL)
+#define arma_cml_init(a)       ((a)->pflags & ARMA_CML0)
 
 #define set_arma_has_seasonal(a)  ((a)->pflags |= ARMA_SEAS)
 #define set_arma_is_arima(a)      ((a)->pflags |= ARMA_DSPEC)
@@ -104,6 +106,7 @@ struct arma_info_ {
 #define set_arma_avg_ll(a)        ((a)->pflags |= ARMA_AVGLL)
 #define set_arima_ydiff(a)        ((a)->pflags |= ARMA_YDIFF)
 #define unset_arima_ydiff(a)      ((a)->pflags &= ~ARMA_YDIFF)
+#define set_arma_cml_init(a)      ((a)->pflags |= ARMA_CML0)
 
 #define AR_included(a,i) (a->pmask == NULL || a->pmask[i] == '1')
 #define MA_included(a,i) (a->qmask == NULL || a->qmask[i] == '1')

@@ -1570,7 +1570,7 @@ static int prefer_hr_init (arma_info *ainfo)
 /* Should we try refining initialization via a CML
    (BHHH) run? */
 
-static int try_cml_init (arma_info *ainfo)
+static int maybe_set_cml_init (arma_info *ainfo)
 {
     int ret = 1;
 
@@ -1586,6 +1586,10 @@ static int try_cml_init (arma_info *ainfo)
     } else if (ainfo->q == 0 && ainfo->Q == 0) {
 	/* pure AR: not much point */
 	ret = 0;
+    }
+
+    if (ret) {
+	set_arma_cml_init(ainfo);
     }
 
     return ret;
@@ -1692,7 +1696,7 @@ static int arma_via_OLS (arma_info *ainfo, const double *coeff,
     }
 
     if (!err) {
-	ArmaFlags f = (arma_exact_ml(ainfo))? ARMA_OLS : ARMA_LS;
+	ArmaFlags f = arma_exact_ml(ainfo) ? ARMA_OLS : ARMA_LS;
 
 	pmod->t1 = ainfo->t1;
 	pmod->t2 = ainfo->t2;
@@ -1866,36 +1870,51 @@ MODEL arma_model (const int *list, const int *pqspec,
 	arma_exact_ml(ainfo) && !arma_missvals(ainfo)) {
 	/* pure "I" model, no NAs: OLS provides the MLE */
 	err = arma_via_OLS(ainfo, NULL, dset, &armod);
-	goto bailout;
+	goto bailout; /* estimation handled */
     }
 
-    /* initialize the coefficients: there are 3 possible methods */
+    /* start initialization of the coefficients */
 
-    /* first pass: see if the user specified some values */
+    /* first see if the user specified some values */
     err = user_arma_init(coeff, ainfo, &init_done);
     if (err) {
 	goto bailout;
     }
 
     if (!arma_exact_ml(ainfo) && ainfo->q == 0 && ainfo->Q == 0) {
-	/* for a pure AR model, the conditional MLE is least squares */
+	/* for a pure AR model, the conditional MLE is least
+	   squares (OLS or NLS); in the NLS case a user-specified
+	   initializer may be useful, if present
+	*/
 	const double *b = (init_done)? coeff : NULL;
 
 	err = arma_via_OLS(ainfo, b, dset, &armod);
-	goto bailout;
+	goto bailout; /* estimation handled */
     }
 
-    /* second pass: try Hannan-Rissanen init, if suitable */
+    /* before calling the candidate "basic" initializers below,
+       check if it will be possible and desirable to apply
+       CML to refine the initialization.
+    */
+    if (getenv("INIT_VIA_CML")) {
+	maybe_set_cml_init(ainfo);
+    }
+
+    /* try Hannan-Rissanen init, if suitable */
     if (!init_done && prefer_hr_init(ainfo)) {
 	hr_arma_init(coeff, dset, ainfo, &init_done);
     }
 
-    /* third pass: estimate pure AR model by OLS or NLS */
+    /* initialize via AR model by OLS or NLS, adding minimal
+       MA coefficients if needed: this is the fallback if
+       Hannan-Rissanen fails, but also the default if the
+       conditions of applicability of H-R are not met
+    */
     if (!err && !init_done) {
 	err = ar_arma_init(coeff, dset, ainfo, &armod, opt);
     }
-
-    if (!err && getenv("INIT_VIA_CML") && try_cml_init(ainfo)) {
+ 
+    if (!err && arma_cml_init(ainfo)) {
 	cml_arma_init(coeff, dset, ainfo);
     }
 
