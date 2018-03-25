@@ -24,6 +24,8 @@
 #include "libset.h"
 #include "arma_priv.h"
 
+#define CML_DEBUG 0
+
 /* ln(sqrt(2*pi)) + 0.5 */
 #define LN_SQRT_2_PI_P5 1.41893853320467274178
 
@@ -699,14 +701,24 @@ int cml_arma_init (double *theta, const DATASET *dset,
 	if (!err) {
 	    for (i=0; i<ainfo->nc; i++) {
 		theta[i] = tmp[i];
+#if CML_DEBUG
 		fprintf(stderr, "cml_init pre %g\n", theta[i]);
-	    }
-	    if (ainfo->ifc) {
-		transform_arma_const(theta, ainfo);
-		fprintf(stderr, "adjusted const %g\n", theta[0]);
+#endif
 	    }
 	}
 	free(tmp);
+    }
+
+    /* whether this succeeded or not, we should convert the
+       constant (if present) back to the form wanted by
+       exact ML estimation
+    */
+
+    if (ainfo->ifc) {
+	transform_arma_const(theta, ainfo);
+#if CML_DEBUG
+	fprintf(stderr, "adjusted const %g\n", theta[0]);
+#endif
     }
 
     ainfo->t1 = save_t1;
