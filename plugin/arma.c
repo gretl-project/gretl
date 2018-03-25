@@ -56,9 +56,8 @@ static void bchecker_free (struct bchecker *b)
 
 static struct bchecker *bchecker_allocate (arma_info *ainfo)
 {
-    struct bchecker *b;
+    struct bchecker *b = malloc(sizeof *b);
 
-    b = malloc(sizeof *b);
     if (b == NULL) {
 	return NULL;
     }
@@ -68,7 +67,6 @@ static struct bchecker *bchecker_allocate (arma_info *ainfo)
     b->roots = NULL;
 
     b->qmax = ainfo->q + ainfo->Q * ainfo->pd;
-
     b->temp  = malloc((b->qmax + 1) * sizeof *b->temp);
     b->tmp2  = malloc((b->qmax + 1) * sizeof *b->tmp2);
     b->roots = malloc(b->qmax * sizeof *b->roots);
@@ -1584,12 +1582,16 @@ static int maybe_set_cml_init (arma_info *ainfo)
 	/* can't handle NAs */
 	ret = 0;
     } else if (ainfo->q == 0 && ainfo->Q == 0) {
-	/* pure AR: not much point */
+	/* pure AR: not much point, AR intialization
+	   should do the job?
+	*/
 	ret = 0;
     }
 
     if (ret) {
 	set_arma_cml_init(ainfo);
+	/* mask the "Exact" flag temporarily */
+	ainfo->flags &= ~ARMA_EXACT;
     }
 
     return ret;
@@ -1913,9 +1915,11 @@ MODEL arma_model (const int *list, const int *pqspec,
     if (!err && !init_done) {
 	err = ar_arma_init(coeff, dset, ainfo, &armod, opt);
     }
- 
+
     if (!err && arma_cml_init(ainfo)) {
-	cml_arma_init(coeff, dset, ainfo);
+	cml_arma_init(coeff, dset, ainfo, opt);
+	/* reinstate "Exact" flag */
+	ainfo->flags |= ARMA_EXACT;
     }
 
     if (!err) {

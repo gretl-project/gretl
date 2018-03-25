@@ -325,8 +325,7 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
 	err = hr_transcribe_coeffs(ainfo, &armod, coeff);
 
 	if (!err && arma_exact_ml(ainfo) &&
-	    ainfo->ifc && ainfo->nexo == 0 &&
-	    !arma_cml_init(ainfo)) {
+	    ainfo->ifc && ainfo->nexo == 0) {
 	    transform_arma_const(coeff, ainfo);
 	}
     }
@@ -603,6 +602,8 @@ static double get_xti (const DATASET *dset, int i, int t,
     }
 }
 
+#define apply_yscaling(a) (a->yscale != 1.0)
+
 /* Build temporary dataset including lagged vars: if we're doing exact
    ML on an ARMAX model we need lags of the exogenous variables as
    well as lags of y_t.  Note that the auxiliary dataset has "t = 0"
@@ -658,7 +659,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
 	int realt = t + ainfo->t1;
 	int miss = 0;
 
-	if (ainfo->yscale != 1.0 && !na(y[realt])) {
+	if (apply_yscaling(ainfo) && !na(y[realt])) {
 	    aZ[1][t] = y[realt] * ainfo->yscale;
 	} else {
 	    aZ[1][t] = y[realt];
@@ -680,7 +681,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
 		}
 	    } else {
 		aZ[k][t] = y[s];
-		if (ainfo->yscale != 1.0 && !na(y[s])) {
+		if (apply_yscaling(ainfo) && !na(y[s])) {
 		    aZ[k][t] *= ainfo->yscale;
 		}
 		k++;
@@ -703,7 +704,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
 		}
 	    } else {
 		aZ[k][t] = y[s];
-		if (ainfo->yscale != 1.0 && !na(y[s])) {
+		if (apply_yscaling(ainfo) && !na(y[s])) {
 		    aZ[k][t] *= ainfo->yscale;
 		}
 		for (k=0; k<narmax; k++) {
@@ -723,7 +724,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
 		    }
 		} else {
 		    aZ[ky][t] = y[s];
-		    if (ainfo->yscale != 1.0 && !na(y[s])) {
+		    if (apply_yscaling(ainfo) && !na(y[s])) {
 			aZ[ky][t] *= ainfo->yscale;
 		    }
 		    ky++;
@@ -1209,8 +1210,7 @@ int ar_arma_init (double *coeff, const DATASET *dset,
        unconditional mean of y_t
     */
     if (!err && arma_exact_ml(ainfo) && ainfo->ifc &&
-	(!nonlin || ainfo->nexo == 0) &&
-	!arma_cml_init(ainfo)) {
+	(!nonlin || ainfo->nexo == 0)) {
 	transform_arma_const(coeff, ainfo);
     }
 

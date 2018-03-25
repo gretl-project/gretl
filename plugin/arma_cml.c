@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* ARMA estimation via conditional ML (BHHH method) */
@@ -26,6 +26,75 @@
 
 /* ln(sqrt(2*pi)) + 0.5 */
 #define LN_SQRT_2_PI_P5 1.41893853320467274178
+
+static int cml_init_revise_sample (arma_info *ainfo,
+				   const DATASET *dset)
+{
+    int pmax = ainfo->p + ainfo->P * ainfo->pd;
+    int dmax = ainfo->d + ainfo->D * ainfo->pd;
+    int cml_maxlag = pmax + dmax;
+    int *list = ainfo->alist;
+    int ypos = arma_list_y_position(ainfo);
+    int t0, t1 = ainfo->t1, t2 = ainfo->t2;
+    int i, vi, vlmax, k, t;
+    int missing;
+    int err = 0;
+
+    t0 = t1 - cml_maxlag;
+    if (t0 < 0) {
+	t1 -= t0;
+    }
+
+    if (arma_xdiff(ainfo)) {
+	vlmax = list[0];
+    } else {
+	vlmax = ypos;
+    }
+
+    /* advance the starting point if need be */
+    for (t=t1; t<=t2; t++) {
+	missing = 0;
+	for (i=ypos; i<=list[0] && !missing; i++) {
+	    vi = list[i];
+	    if (na(dset->Z[vi][t])) {
+		missing = 1;
+	    }
+	    if (i <= vlmax) {
+		for (k=1; k<=ainfo->maxlag && !missing; k++) {
+		    if (na(dset->Z[vi][t-k])) {
+			missing = 1;
+		    }
+		}
+	    }
+	}
+	if (missing) {
+	    t1++;
+	} else {
+	    break;
+	}
+    }
+
+    /* check for missing obs within the adjusted sample range */
+    for (t=t1; t<t2 && !err; t++) {
+	for (i=ypos; i<=list[0]; i++) {
+	    if (na(dset->Z[list[i]][t])) {
+		err = E_MISSDATA;
+		break;
+	    }
+	}
+    }
+
+    if (!err && t2 - t1 + 1 <= ainfo->nc) {
+	err = E_DF;
+    }
+
+    if (!err) {
+	ainfo->t1 = t1;
+	ainfo->T = ainfo->t2 - ainfo->t1 + 1;
+    }
+
+    return err;
+}
 
 static void do_MA_partials (double *drv,
 			    arma_info *ainfo,
@@ -130,7 +199,7 @@ static int arma_analytical_score (arma_info *ainfo,
     double **de_sa = de_a + ainfo->np;
     double **de_m = de_sa + ainfo->P;
     double **de_sm = de_m + ainfo->nq;
-    double **de_r = de_sm + ainfo->Q; 
+    double **de_r = de_sm + ainfo->Q;
     int dlen = 1 + ainfo->q + ainfo->pd * ainfo->Q;
     double x, Gsi;
     int t, gt, t1 = ainfo->t1;
@@ -235,7 +304,7 @@ static int arma_analytical_score (arma_info *ainfo,
 
 	/* exogenous regressors (de_r) */
 	for (j=0; j<ainfo->nexo; j++) {
-	    de_r[j][0] = -X[j][t]; 
+	    de_r[j][0] = -X[j][t];
 	    do_MA_partials(de_r[j], ainfo, theta, Theta, t);
 	}
 
@@ -247,7 +316,7 @@ static int arma_analytical_score (arma_info *ainfo,
 		fprintf(stderr, "arma score, bad value at t=%d, i=%d\n", t, i);
 		err = E_NAN;
 		break;
-	    }	    
+	    }
 	    gretl_matrix_set(G, gt, i, Gsi);
 	}
 
@@ -269,17 +338,18 @@ static int conditional_arma_forecast_errors (arma_info *ainfo,
 					     double *s2)
 {
     double *e = ainfo->e;
+    int t1 = ainfo->t1;
     int i, j, k, s, t, p;
 
     *s2 = 0.0;
 
-    for (t=ainfo->t1; t<=ainfo->t2; t++) {
+    for (t=t1; t<=ainfo->t2; t++) {
 	e[t] = y[t];
 
 	/* intercept */
 	if (ainfo->ifc) {
 	    e[t] -= b0;
-	} 
+	}
 
 	/* non-seasonal AR component */
 	k = 0;
@@ -347,8 +417,8 @@ static int conditional_arma_forecast_errors (arma_info *ainfo,
 /* Calculate ARMA log-likelihood.  This function is passed to the
    bhhh_max() routine as a callback. */
 
-static double bhhh_arma_callback (double *coeff, 
-				  gretl_matrix *G, 
+static double bhhh_arma_callback (double *coeff,
+				  gretl_matrix *G,
 				  void *data,
 				  int do_score,
 				  int *err)
@@ -368,13 +438,16 @@ static double bhhh_arma_callback (double *coeff,
     *err = 0;
 
 #if ARMA_DEBUG
-    fprintf(stderr, "arma_ll: p=%d, q=%d, P=%d, Q=%d, pd=%d\n",
-	    ainfo->p, ainfo->q, ainfo->P, ainfo->Q, ainfo->pd);
+    fprintf(stderr, "bhhh_arma_callback: do_score = %d\n", do_score);
+    int i;
+    for (i=0; i<ainfo->nc; i++) {
+	fprintf(stderr, " coeff[%d] = %.15g\n", i, coeff[i]);
+    }
 #endif
 
     if (ma_out_of_bounds(ainfo, theta, Theta)) {
 	pputs(ainfo->prn, "arma: MA estimate(s) out of bounds\n");
-	fputs("arma: MA estimate(s) out of bounds\n", stderr);
+	fputs("bhhh_arma_callback: MA estimate(s) out of bounds\n", stderr);
 	*err = E_NOCONV;
 	return NADBL;
     }
@@ -393,7 +466,7 @@ static double bhhh_arma_callback (double *coeff,
 
     if (do_score) {
 	ainfo->ll = ll;
-	arma_analytical_score(ainfo, y, X, 
+	arma_analytical_score(ainfo, y, X,
 			      phi, Phi, theta, Theta,
 			      s2, G);
     }
@@ -407,7 +480,7 @@ static double bhhh_arma_callback (double *coeff,
    independent variables.
 */
 
-static const double **make_arma_Z (arma_info *ainfo, 
+static const double **make_arma_Z (arma_info *ainfo,
 				   const DATASET *dset)
 {
     const double **aZ;
@@ -419,7 +492,7 @@ static const double **make_arma_Z (arma_info *ainfo,
 #if ARMA_DEBUG
     fprintf(stderr, "make_arma_Z: allocating %d series pointers\n",
 	    nx + 1);
-#endif 
+#endif
 
     aZ = malloc((nx + 1) * sizeof *aZ);
     if (aZ == NULL) {
@@ -444,7 +517,7 @@ static const double **make_arma_Z (arma_info *ainfo,
 
 /* add extra OPG-related stuff to the arma info struct */
 
-static int set_up_arma_OPG_info (arma_info *ainfo, 
+static int set_up_arma_OPG_info (arma_info *ainfo,
 				 const DATASET *dset)
 {
     /* array length needed for derivatives */
@@ -457,7 +530,7 @@ static int set_up_arma_OPG_info (arma_info *ainfo,
     ainfo->Z = make_arma_Z(ainfo, dset);
     if (ainfo->Z == NULL) {
 	err = E_ALLOC;
-    }  
+    }
 
     if (!err) {
 	/* allocate gradient matrix */
@@ -465,7 +538,7 @@ static int set_up_arma_OPG_info (arma_info *ainfo,
 	if (ainfo->G == NULL) {
 	    err = E_ALLOC;
 	}
-    }    
+    }
 
     if (!err && !arma_exact_ml(ainfo)) {
 	/* allocate covariance matrix */
@@ -491,7 +564,7 @@ static int set_up_arma_OPG_info (arma_info *ainfo,
 
     if (!err) {
 	/* derivatives arrays */
-	ainfo->aux = doubles_array_new0(k, nd); 
+	ainfo->aux = doubles_array_new0(k, nd);
 	if (ainfo->aux == NULL) {
 	    err = E_ALLOC;
 	} else {
@@ -504,7 +577,7 @@ static int set_up_arma_OPG_info (arma_info *ainfo,
 
 /* retrieve results specific to bhhh procedure */
 
-static int 
+static int
 conditional_arma_model_prep (MODEL *pmod, arma_info *ainfo,
 			     double *theta)
 {
@@ -558,7 +631,7 @@ int bhhh_arma (double *theta, const DATASET *dset,
     err = bhhh_max(theta, ainfo->nc, ainfo->G,
 		   bhhh_arma_callback, tol, &fncount, &grcount,
 		   ainfo, ainfo->V, bhhh_opt, ainfo->prn);
-    
+
     if (err) {
 	fprintf(stderr, "arma: bhhh_max returned %d\n", err);
     } else {
@@ -581,45 +654,65 @@ int bhhh_arma (double *theta, const DATASET *dset,
 }
 
 static int bhhh_arma_simple (double *theta, const DATASET *dset,
-			     arma_info *ainfo)
+			     arma_info *ainfo, gretlopt opt)
 {
-    double tol = 1.0e-4;
-    int fncount = 0, grcount = 0;
     int err = set_up_arma_OPG_info(ainfo, dset);
 
     if (err) {
 	return err;
     } else {
+	gretlopt bhhh_opt = OPT_NONE;
+	int fncount = 0, grcount = 0;
+	double tol = 1.0e-4;
+	PRN *prn = NULL;
+
+	if (opt & OPT_V) {
+	    bhhh_opt = OPT_V;
+	    prn = ainfo->prn;
+	}
+
 	err = bhhh_max(theta, ainfo->nc, ainfo->G,
 		       bhhh_arma_callback, tol, &fncount, &grcount,
-		       ainfo, ainfo->V, OPT_NONE, NULL);
+		       ainfo, NULL, bhhh_opt, prn);
     }
 
     return err;
 }
 
 int cml_arma_init (double *theta, const DATASET *dset,
-		   arma_info *ainfo)
+		   arma_info *ainfo, gretlopt opt)
 {
     double *tmp = copyvec(theta, ainfo->nc);
+    int save_t1 = ainfo->t1;
+    int save_T = ainfo->T;
     int i, err = 0;
 
     if (tmp == NULL) {
 	err = E_ALLOC;
     } else {
-	err = bhhh_arma_simple(tmp, dset, ainfo);
+	if (ainfo->p > 0 || ainfo->P > 0) {
+	    err = cml_init_revise_sample(ainfo, dset);
+	}
+	if (!err) {
+	    err = bhhh_arma_simple(tmp, dset, ainfo, opt);
+	}
 	if (!err) {
 	    for (i=0; i<ainfo->nc; i++) {
 		theta[i] = tmp[i];
+		fprintf(stderr, "cml_init pre %g\n", theta[i]);
 	    }
 	    if (ainfo->ifc) {
 		transform_arma_const(theta, ainfo);
+		fprintf(stderr, "adjusted const %g\n", theta[0]);
 	    }
 	}
 	free(tmp);
     }
 
-    /* for now we'll disregard errors in here */
+    ainfo->t1 = save_t1;
+    ainfo->T = save_T;
+
+    /* for now we'll disregard any errors in here */
 
     return 0;
 }

@@ -131,7 +131,7 @@ int bhhh_arma (double *theta, const DATASET *dset,
 	       gretlopt opt);
 
 int cml_arma_init (double *theta, const DATASET *dset,
-		   arma_info *ainfo);
+		   arma_info *ainfo, gretlopt opt);
 
 void transform_arma_const (double *b, arma_info *ainfo);
 
