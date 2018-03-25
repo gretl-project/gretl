@@ -1567,6 +1567,30 @@ static int prefer_hr_init (arma_info *ainfo)
     return ret;
 }
 
+/* Should we try refining initialization via a CML
+   (BHHH) run? */
+
+static int try_cml_init (arma_info *ainfo)
+{
+    int ret = 1;
+
+    if (!arma_exact_ml(ainfo)) {
+	/* only if final estimation will be exact ML! */
+	ret = 0;
+    } else if (ainfo->nexo > 0) {
+	/* can't handle ARMAX? */
+	ret = 0;
+    } else if (arma_missvals(ainfo)) {
+	/* can't handle NAs */
+	ret = 0;
+    } else if (ainfo->q == 0 && ainfo->Q == 0) {
+	/* pure AR: not much point */
+	ret = 0;
+    }
+
+    return ret;
+}
+
 /* estimate an ARIMA (0,d,0) x (0,D,0) model via OLS */
 
 static int arima_by_ls (const DATASET *dset, arma_info *ainfo,
@@ -1869,6 +1893,10 @@ MODEL arma_model (const int *list, const int *pqspec,
     /* third pass: estimate pure AR model by OLS or NLS */
     if (!err && !init_done) {
 	err = ar_arma_init(coeff, dset, ainfo, &armod, opt);
+    }
+
+    if (!err && getenv("INIT_VIA_CML") && try_cml_init(ainfo)) {
+	cml_arma_init(coeff, dset, ainfo);
     }
 
     if (!err) {

@@ -579,3 +579,47 @@ int bhhh_arma (double *theta, const DATASET *dset,
 
     return pmod->errcode;
 }
+
+static int bhhh_arma_simple (double *theta, const DATASET *dset,
+			     arma_info *ainfo)
+{
+    double tol = 1.0e-4;
+    int fncount = 0, grcount = 0;
+    int err = set_up_arma_OPG_info(ainfo, dset);
+
+    if (err) {
+	return err;
+    } else {
+	err = bhhh_max(theta, ainfo->nc, ainfo->G,
+		       bhhh_arma_callback, tol, &fncount, &grcount,
+		       ainfo, ainfo->V, OPT_NONE, NULL);
+    }
+
+    return err;
+}
+
+int cml_arma_init (double *theta, const DATASET *dset,
+		   arma_info *ainfo)
+{
+    double *tmp = copyvec(theta, ainfo->nc);
+    int i, err = 0;
+
+    if (tmp == NULL) {
+	err = E_ALLOC;
+    } else {
+	err = bhhh_arma_simple(tmp, dset, ainfo);
+	if (!err) {
+	    for (i=0; i<ainfo->nc; i++) {
+		theta[i] = tmp[i];
+	    }
+	    if (ainfo->ifc) {
+		transform_arma_const(theta, ainfo);
+	    }
+	}
+	free(tmp);
+    }
+
+    /* for now we'll disregard errors in here */
+
+    return 0;
+}

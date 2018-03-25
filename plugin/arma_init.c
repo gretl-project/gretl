@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -28,7 +28,7 @@
    goes: const, phi, Phi, theta, Theta, beta.
 */
 
-static void transform_arma_const (double *b, arma_info *ainfo)
+void transform_arma_const (double *b, arma_info *ainfo)
 {
     const double *phi = b + 1;
     const double *Phi = phi + ainfo->np;
@@ -74,7 +74,7 @@ static int hr_transcribe_coeffs (arma_info *ainfo,
 	    b[0] /= ainfo->T;
 	}
 	k = 1;
-    } 
+    }
 
     for (i=0; i<ainfo->p; i++) {
 	if (AR_included(ainfo, i)) {
@@ -82,7 +82,7 @@ static int hr_transcribe_coeffs (arma_info *ainfo,
 	}
     }
 
-    for (i=0; i<ainfo->P; i++) { 
+    for (i=0; i<ainfo->P; i++) {
 	b[k++] = pmod->coeff[j];
 	j += ainfo->np + 1; /* assumes ainfo->p < pd */
     }
@@ -156,9 +156,9 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
     if (arma_xdiff(ainfo)) {
 	/* for initialization, use the level of y */
 	y = dset->Z[ainfo->yno];
-    } else { 
+    } else {
 	y = ainfo->y;
-    } 
+    }
 
     aset = create_auxiliary_dataset(pass1v + qtotal, ainfo->T, 0);
     if (aset == NULL) {
@@ -166,7 +166,7 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
     }
 
 #if AINIT_DEBUG
-    fprintf(stderr, "hr_arma_init: dataset allocated: %d vars, %d obs\n", 
+    fprintf(stderr, "hr_arma_init: dataset allocated: %d vars, %d obs\n",
 	    pass1v + qtotal, ainfo->T);
 #endif
 
@@ -180,7 +180,7 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
 	err = E_ALLOC;
 	goto bailout;
     }
-	
+
     pass1list[1] = 1;
     pass1list[2] = 0;
     for (i=2; i<pass1v; i++) {
@@ -190,11 +190,11 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
     /* variable names */
 
     strcpy(aset->varname[1], "y");
-    for (i=0; i<nexo; i++) { 
+    for (i=0; i<nexo; i++) {
 	/* exogenous vars */
 	sprintf(aset->varname[i+1], "x%d", i);
     }
-    for (i=1; i<=pass1lags; i++) { 
+    for (i=1; i<=pass1lags; i++) {
 	/* lags */
 	sprintf(aset->varname[i+1+nexo], "y_%d", i);
     }
@@ -227,10 +227,10 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
     if (armod.errcode) {
 	err = armod.errcode;
 	goto bailout;
-    } 
+    }
 
 #if AINIT_DEBUG
-    fprintf(stderr, "pass1 model: t1=%d, t2=%d, nobs=%d, ncoeff=%d, dfd = %d\n", 
+    fprintf(stderr, "pass1 model: t1=%d, t2=%d, nobs=%d, ncoeff=%d, dfd = %d\n",
 	    armod.t1, armod.t2, armod.nobs, armod.ncoeff, armod.dfd);
 #endif
 
@@ -307,7 +307,7 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
 	    pass2list[pos++] = pass1v + i;
 	}
     }
-    
+
     /* now do pass2 */
     clear_model(&armod);
     armod = lsq(pass2list, aset, OLS, OPT_A);
@@ -323,7 +323,7 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
 #endif
 	err = hr_transcribe_coeffs(ainfo, &armod, coeff);
 
-	if (!err && arma_exact_ml(ainfo) && 
+	if (!err && arma_exact_ml(ainfo) &&
 	    ainfo->ifc && ainfo->nexo == 0) {
 	    transform_arma_const(coeff, ainfo);
 	}
@@ -348,7 +348,7 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
     clear_model(&armod);
 
     if (!err && prn != NULL) {
-	pprintf(prn, "\n%s: %s\n\n", _("ARMA initialization"), 
+	pprintf(prn, "\n%s: %s\n\n", _("ARMA initialization"),
 		_("Hannan-Rissanen method"));
     }
 
@@ -377,7 +377,7 @@ static int hr_df_check (arma_info *ainfo, const DATASET *dset)
     }
 
 #if AINIT_DEBUG
-    fprintf(stderr, "hr_init_check: ncoeff=%d, nobs=%d, 'df'=%d\n", 
+    fprintf(stderr, "hr_init_check: ncoeff=%d, nobs=%d, 'df'=%d\n",
 	    ncoeff, nobs, df);
 #endif
 
@@ -402,15 +402,15 @@ int hr_arma_init (double *coeff, const DATASET *dset,
 	fputs("*** hr_arma_init OK\n", stderr);
     } else {
 	fputs("*** hr_arma_init failed, will try ar_arma_init\n", stderr);
-    } 
+    }
 #endif
 
     return err;
 }
 
-/* try to avoid numerical problems when doing exact ML: 
-   arrange for scaling of the dependent variable if it's 
-   "too big" 
+/* try to avoid numerical problems when doing exact ML:
+   arrange for scaling of the dependent variable if it's
+   "too big"
 */
 
 static void maybe_set_yscale (arma_info *ainfo)
@@ -425,6 +425,8 @@ static void maybe_set_yscale (arma_info *ainfo)
 	}
     }
 }
+
+#define MA_SMALL 0.0001 /* was 0.0001 */
 
 /* transcribe coeffs from the OLS or NLS model used for initializing,
    into the array @b that will be passed to the maximizer.
@@ -441,7 +443,7 @@ static void arma_init_transcribe_coeffs (arma_info *ainfo,
 	if (i == q0 && totq > 0) {
 	    /* reserve space for MA terms */
 	    j += totq;
-	} 
+	}
 	if (j < ainfo->nc) {
 	    b[j++] = pmod->coeff[i];
 	}
@@ -454,14 +456,14 @@ static void arma_init_transcribe_coeffs (arma_info *ainfo,
 
     /* insert near-zeros for MA terms */
     for (i=0; i<totq; i++) {
-	b[q0 + i] = 0.0001;
-    } 
+	b[q0 + i] = MA_SMALL;
+    }
 }
 
 /* compose variable names for temporary dataset */
 
-static void arma_init_add_varnames (arma_info *ainfo, 
-				    int ptotal, int narmax, 
+static void arma_init_add_varnames (arma_info *ainfo,
+				    int ptotal, int narmax,
 				    DATASET *aset)
 {
     int i, j, k, kx, ky;
@@ -589,7 +591,7 @@ static const int *xlist;
 
 /* X, if non-NULL, holds the differenced regressors */
 
-static double get_xti (const DATASET *dset, int i, int t, 
+static double get_xti (const DATASET *dset, int i, int t,
 		       const gretl_matrix *X)
 {
     if (X != NULL) {
@@ -605,8 +607,8 @@ static double get_xti (const DATASET *dset, int i, int t,
    at an offset of ainfo->t1 into the "real", external dataset.
 */
 
-static int arma_init_build_dataset (arma_info *ainfo, 
-				    int ptotal, int narmax, 
+static int arma_init_build_dataset (arma_info *ainfo,
+				    int ptotal, int narmax,
 				    const int *list,
 				    const DATASET *dset,
 				    DATASET *aset,
@@ -701,7 +703,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
 		aZ[k][t] = y[s];
 		if (ainfo->yscale != 1.0 && !na(y[s])) {
 		    aZ[k][t] *= ainfo->yscale;
-		}		
+		}
 		for (k=0; k<narmax; k++) {
 		    aZ[kx++][t] = get_xti(dset, k, s, X);
 		}
@@ -738,7 +740,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
 
 	if (miss) {
 	    aset->t1 = t + 1;
-	}	
+	}
     }
 
     if (nonlin && arma_missvals(ainfo)) {
@@ -808,7 +810,7 @@ static int add_to_spec (char *targ, const char *src)
    that takes the form (y_{t-i} - X_{t-i} \beta)
 */
 
-static int y_Xb_at_lag (char *spec, arma_info *ainfo, 
+static int y_Xb_at_lag (char *spec, arma_info *ainfo,
 			int narmax, int lag)
 {
     char chunk[32];
@@ -837,9 +839,9 @@ static int y_Xb_at_lag (char *spec, arma_info *ainfo,
     for (i=0; i<narmax && !err; i++) {
 	if (ainfo->ifc || i > 0) {
 	    err += add_to_spec(spec, "+");
-	} 
+	}
 	sprintf(chunk, "_b%d*x%d_%d", i+1, i+1, lag);
-	err += add_to_spec(spec, chunk); 
+	err += add_to_spec(spec, chunk);
     }
 
     if (nt > 1) {
@@ -853,7 +855,7 @@ static int y_Xb_at_lag (char *spec, arma_info *ainfo,
 
 static int arma_get_nls_model (MODEL *amod, arma_info *ainfo,
 			       int narmax, const double *coeff,
-			       DATASET *dset, PRN *prn) 
+			       DATASET *dset, PRN *prn)
 {
     gretlopt nlsopt = OPT_A;
     char fnstr[MAXLINE];
@@ -896,7 +898,7 @@ static int arma_get_nls_model (MODEL *amod, arma_info *ainfo,
     if (parms == NULL) {
 	err = E_ALLOC;
 	goto bailout;
-    }	
+    }
 
     pnames = strings_array_new_with_length(nparam, VNAMELEN);
     if (pnames == NULL) {
@@ -974,7 +976,7 @@ static int arma_get_nls_model (MODEL *amod, arma_info *ainfo,
 	strcat(fnstr, "_b0");
     } else {
 	strcat(fnstr, "0");
-    } 
+    }
 
     for (i=0; i<ainfo->p && !err; i++) {
 	if (AR_included(ainfo, i)) {
@@ -1103,7 +1105,7 @@ static int *make_ar_ols_list (arma_info *ainfo, int av)
    nonlinearity due to either (a) the presence of both a seasonal and
    a non-seasonal AR component or (b) the presence of exogenous
    variables in the context of a non-zero AR order, where estimation
-   will be via exact ML.  
+   will be via exact ML.
 
    In this initialization any MA coefficients are simply set to
    near-zero.
@@ -1128,21 +1130,21 @@ int ar_arma_init (double *coeff, const DATASET *dset,
     fprintf(stderr, "ar_arma_init: dset->t1=%d, dset->t2=%d (dset->n=%d);\n"
 	    " ainfo->t1=%d, ainfo->t2=%d, ",
 	    dset->t1, dset->t2, dset->n, ainfo->t1, ainfo->t2);
-    fprintf(stderr, "nmixed = %d, ptotal = %d, ifc = %d, nexo = %d\n", 
+    fprintf(stderr, "nmixed = %d, ptotal = %d, ifc = %d, nexo = %d\n",
 	    nmixed, ptotal, ainfo->ifc, ainfo->nexo);
 #endif
 
     if (ptotal == 0 && ainfo->nexo == 0 && !ainfo->ifc) {
 	/* special case of pure MA model */
 	for (i=0; i<ainfo->nq + ainfo->Q; i++) {
-	    coeff[i] = 0.0001; 
-	} 
-	pprintf(ainfo->prn, "\n%s: %s\n\n", _("ARMA initialization"), 
+	    coeff[i] = MA_SMALL;
+	}
+	pprintf(ainfo->prn, "\n%s: %s\n\n", _("ARMA initialization"),
 		_("small MA values"));
 	return 0;
     }
 
-    gretl_model_init(&armod, dset); 
+    gretl_model_init(&armod, dset);
 
     narmax = arma_exact_ml(ainfo) ? ainfo->nexo : 0;
     if (narmax > 0 && ptotal > 0) {
@@ -1205,7 +1207,7 @@ int ar_arma_init (double *coeff, const DATASET *dset,
        estimate of the regression constant to the
        unconditional mean of y_t
     */
-    if (!err && arma_exact_ml(ainfo) && ainfo->ifc && 
+    if (!err && arma_exact_ml(ainfo) && ainfo->ifc &&
 	(!nonlin || ainfo->nexo == 0)) {
 	transform_arma_const(coeff, ainfo);
     }
@@ -1262,7 +1264,7 @@ int arma_by_ls (const double *coeff, const DATASET *dset,
 					   prn);
     } else {
 	gretlopt opt = OPT_A | OPT_Z;
-	
+
 	if (ainfo->nc == 0) {
 	    opt |= OPT_U;
 	}

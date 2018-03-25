@@ -127,6 +127,11 @@ int bhhh_arma (double *theta, const DATASET *dset,
 	       arma_info *ainfo, MODEL *pmod,
 	       gretlopt opt);
 
+int cml_arma_init (double *theta, const DATASET *dset,
+		   arma_info *ainfo);
+
+void transform_arma_const (double *b, arma_info *ainfo);
+
 int arma_list_y_position (arma_info *ainfo);
 
 int arma_model_add_roots (MODEL *pmod, arma_info *ainfo,
