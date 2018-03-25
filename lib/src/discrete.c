@@ -1062,8 +1062,8 @@ static int do_ordered (int ci, int ndum,
 	err = fill_op_model(pmod, list, dset, OC, fncount, grcount);
     }
 
-    if (err == E_NOCONV && bs_iter > 0) {
-	/* tolerate random non-convergence? */
+    if ((err == E_NOCONV || err == E_NAN) && bs_iter > 0) {
+	/* tolerate random numerical problems? */
 	err = 0;
 	bs_iter--;
 	goto reestimate;
