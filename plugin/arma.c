@@ -1787,6 +1787,7 @@ MODEL arma_model (const int *list, const int *pqspec,
     arma_info ainfo_s, *ainfo;
     int init_done = 0;
     int missv = 0, misst = 0;
+    int user_init = 0;
     int err = 0;
 
     ainfo = &ainfo_s;
@@ -1880,6 +1881,8 @@ MODEL arma_model (const int *list, const int *pqspec,
     err = user_arma_init(coeff, ainfo, &init_done);
     if (err) {
 	goto bailout;
+    } else if (init_done) {
+	user_init = 1;
     }
 
     if (!arma_exact_ml(ainfo) && ainfo->q == 0 && ainfo->Q == 0) {
@@ -1897,7 +1900,7 @@ MODEL arma_model (const int *list, const int *pqspec,
        check if it will be possible and desirable to apply
        CML to refine the initialization.
     */
-    if (getenv("INIT_VIA_CML")) {
+    if (!user_init && getenv("INIT_VIA_CML")) {
 	maybe_set_cml_init(ainfo);
     }
 
