@@ -29,6 +29,14 @@
 /* ln(sqrt(2*pi)) + 0.5 */
 #define LN_SQRT_2_PI_P5 1.41893853320467274178
 
+/* Revising the sample: this may be necessary when we're using
+   CML as initializer for exact ML. CML requires that all AR
+   lags of y are available, which may dictate a later start of
+   the estimation range. If we didn't adjust the t1 member of
+   @ainfo we could end up calculating with missing values, or
+   reading off the beginning of the dataset.
+*/
+
 static int cml_init_revise_sample (arma_info *ainfo,
 				   const DATASET *dset)
 {
@@ -41,6 +49,11 @@ static int cml_init_revise_sample (arma_info *ainfo,
     int i, vi, vlmax, k, t;
     int missing;
     int err = 0;
+
+#if CML_DEBUG
+    fprintf(stderr, "cml_init_revise_sample: initial t1=%d, T=%d\n",
+	    ainfo->t1, ainfo->T);
+#endif
 
     t0 = t1 - cml_maxlag;
     if (t0 < 0) {
@@ -62,7 +75,7 @@ static int cml_init_revise_sample (arma_info *ainfo,
 		missing = 1;
 	    }
 	    if (i <= vlmax) {
-		for (k=1; k<=ainfo->maxlag && !missing; k++) {
+		for (k=1; k<=cml_maxlag && !missing; k++) {
 		    if (na(dset->Z[vi][t-k])) {
 			missing = 1;
 		    }
@@ -94,6 +107,11 @@ static int cml_init_revise_sample (arma_info *ainfo,
 	ainfo->t1 = t1;
 	ainfo->T = ainfo->t2 - ainfo->t1 + 1;
     }
+
+#if CML_DEBUG
+    fprintf(stderr, "cml_init_revise_sample: revised t1=%d, T=%d\n",
+	    ainfo->t1, ainfo->T);
+#endif
 
     return err;
 }
@@ -161,6 +179,10 @@ static void zero_derivs (arma_info *ainfo, double **de, int dlen)
     }
 }
 
+#if 0
+
+/* unused at present: see comment in arma_analytical_score() */
+
 static int adjust_score_t1 (arma_info *ainfo, const double *y)
 {
     int p, pmax = ainfo->p + ainfo->pd * ainfo->P;
@@ -182,6 +204,8 @@ static int adjust_score_t1 (arma_info *ainfo, const double *y)
 
     return t1;
 }
+
+#endif
 
 static int arma_analytical_score (arma_info *ainfo,
 				  const double *y,
@@ -210,9 +234,12 @@ static int arma_analytical_score (arma_info *ainfo,
 
     zero_derivs(ainfo, de, dlen);
 
+#if 0 /* currently this function is never called when
+	 estimation is by exact ML */
     if (arma_exact_ml(ainfo)) {
 	t1 = adjust_score_t1(ainfo, y);
     }
+#endif
 
     for (t=t1, gt=0; t<=ainfo->t2 && !err; t++, gt++) {
 
@@ -681,6 +708,9 @@ static int bhhh_arma_simple (double *theta, const DATASET *dset,
     return err;
 }
 
+/* In case of exact ML estimation, run some CML iterations
+   to jump-start the process */
+
 int cml_arma_init (double *theta, const DATASET *dset,
 		   arma_info *ainfo, gretlopt opt)
 {
@@ -688,6 +718,9 @@ int cml_arma_init (double *theta, const DATASET *dset,
     int save_t1 = ainfo->t1;
     int save_T = ainfo->T;
     int i, err = 0;
+
+    /* temporarily remove the "exact" flag */
+    ainfo->flags &= ~ARMA_EXACT;
 
     if (tmp == NULL) {
 	err = E_ALLOC;
@@ -709,13 +742,17 @@ int cml_arma_init (double *theta, const DATASET *dset,
 	free(tmp);
     }
 
-    /* whether this succeeded or not, we should convert the
+    /* Whether this succeeded or not, we should convert the
        constant (if present) back to the form wanted by
-       exact ML estimation
+       exact ML estimation. In addition, if we're scaling
+       the y data for exact ML we should rescale the constant
+       correspondingly.
     */
-
     if (ainfo->ifc) {
 	transform_arma_const(theta, ainfo);
+	if (ainfo->yscale != 1.0) {
+	    theta[0] *= ainfo->yscale;
+	}
 #if CML_DEBUG
 	fprintf(stderr, "adjusted const %g\n", theta[0]);
 #endif
@@ -723,6 +760,8 @@ int cml_arma_init (double *theta, const DATASET *dset,
 
     ainfo->t1 = save_t1;
     ainfo->T = save_T;
+    /* reinstate the "exact" flag */
+    ainfo->flags |= ARMA_EXACT;
 
     /* for now we'll disregard any errors in here */
 

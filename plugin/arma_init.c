@@ -24,7 +24,7 @@
 #define AINIT_DEBUG 0
 
 /* Given an estimate of the ARMA constant via OLS, convert to the form
-   wanted for initializing the Kalman filter.  Note: the 'b' array
+   wanted for initializing the Kalman filter.  Note: the @b array
    goes: const, phi, Phi, theta, Theta, beta.
 */
 
@@ -56,6 +56,12 @@ void transform_arma_const (double *b, arma_info *ainfo)
     }
 
     b[0] /= (narfac * sarfac);
+}
+
+static int init_transform_const (arma_info *ainfo)
+{
+    return ainfo->ifc && arma_exact_ml(ainfo) &&
+	!arma_cml_init(ainfo);
 }
 
 #define HR_MINLAGS 16
@@ -324,15 +330,14 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
 #endif
 	err = hr_transcribe_coeffs(ainfo, &armod, coeff);
 
-	if (!err && arma_exact_ml(ainfo) &&
-	    ainfo->ifc && ainfo->nexo == 0) {
+	if (!err && ainfo->nexo == 0 && init_transform_const(ainfo)) {
 	    transform_arma_const(coeff, ainfo);
 	}
     }
 
 #if AINIT_DEBUG
     if (!err) {
-	fprintf(stderr, "HR init:\n");
+	fprintf(stderr, "HR init (nobs=%d):\n", armod.nobs);
 	for (i=0; i<ainfo->nc; i++) {
 	    fprintf(stderr, "coeff[%d] = %g\n", i, coeff[i]);
 	}
@@ -602,7 +607,7 @@ static double get_xti (const DATASET *dset, int i, int t,
     }
 }
 
-#define apply_yscaling(a) (a->yscale != 1.0)
+#define apply_yscaling(a) (arma_exact_ml(a) && !arma_cml_init(a))
 
 /* Build temporary dataset including lagged vars: if we're doing exact
    ML on an ARMAX model we need lags of the exogenous variables as
@@ -1209,8 +1214,8 @@ int ar_arma_init (double *coeff, const DATASET *dset,
        estimate of the regression constant to the
        unconditional mean of y_t
     */
-    if (!err && arma_exact_ml(ainfo) && ainfo->ifc &&
-	(!nonlin || ainfo->nexo == 0)) {
+    if (!err && (!nonlin || ainfo->nexo == 0) &&
+	init_transform_const(ainfo)) {
 	transform_arma_const(coeff, ainfo);
     }
 

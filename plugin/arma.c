@@ -1321,6 +1321,7 @@ static int kalman_arma (const double *coeff,
 #if ARMA_DEBUG
     fputs("# kalman_arma: initial coefficients:\n", stderr);
     fprintf(stderr, "%d 1\n", ainfo->nc);
+    int i;
     for (i=0; i<ainfo->nc; i++) {
 	fprintf(stderr, "%.15g\n", b[i]);
     }
@@ -1582,7 +1583,7 @@ static int maybe_set_cml_init (arma_info *ainfo)
 	/* can't handle NAs */
 	ret = 0;
     } else if (ainfo->q == 0 && ainfo->Q == 0) {
-	/* pure AR: not much point, AR intialization
+	/* not much point, AR initialization
 	   should do the job?
 	*/
 	ret = 0;
@@ -1590,8 +1591,6 @@ static int maybe_set_cml_init (arma_info *ainfo)
 
     if (ret) {
 	set_arma_cml_init(ainfo);
-	/* mask the "Exact" flag temporarily */
-	ainfo->flags &= ~ARMA_EXACT;
     }
 
     return ret;
@@ -1788,6 +1787,7 @@ MODEL arma_model (const int *list, const int *pqspec,
     arma_info ainfo_s, *ainfo;
     int init_done = 0;
     int missv = 0, misst = 0;
+    int user_init = 0;
     int err = 0;
 
     ainfo = &ainfo_s;
@@ -1881,6 +1881,8 @@ MODEL arma_model (const int *list, const int *pqspec,
     err = user_arma_init(coeff, ainfo, &init_done);
     if (err) {
 	goto bailout;
+    } else {
+	user_init = 1;
     }
 
     if (!arma_exact_ml(ainfo) && ainfo->q == 0 && ainfo->Q == 0) {
@@ -1918,8 +1920,6 @@ MODEL arma_model (const int *list, const int *pqspec,
 
     if (!err && arma_cml_init(ainfo)) {
 	cml_arma_init(coeff, dset, ainfo, opt);
-	/* reinstate "Exact" flag */
-	ainfo->flags |= ARMA_EXACT;
     }
 
     if (!err) {

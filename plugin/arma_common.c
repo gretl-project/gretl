@@ -21,6 +21,8 @@
 #define MAX_ARMA_ORDER 128
 #define MAX_ARIMA_DIFF 2
 
+#define SAMPLE_DEBUG 0
+
 static void 
 real_arima_difference_series (double *dx, const double *x,
 			      int t1, int t2, int *delta, 
@@ -434,7 +436,7 @@ static void calc_max_lag (arma_info *ainfo)
 	ainfo->maxlag = pmax + dmax;
     }
 
-#if ARMA_DEBUG
+#if SAMPLE_DEBUG
     fprintf(stderr, "calc_max_lag: ainfo->maxlag = %d\n", ainfo->maxlag);
 #endif
 }
@@ -450,7 +452,7 @@ static int arma_adjust_sample (arma_info *ainfo,
     int missing;
     int err = 0;
 
-#if ARMA_DEBUG
+#if SAMPLE_DEBUG
     fprintf(stderr, "arma_adjust_sample: at start, t1=%d, t2=%d, maxlag = %d\n",
 	    t1, t2, ainfo->maxlag);
 #endif
@@ -551,7 +553,7 @@ static int arma_adjust_sample (arma_info *ainfo,
     }
 
     if (!err) {
-#if ARMA_DEBUG
+#if SAMPLE_DEBUG
 	fprintf(stderr, "arma_adjust_sample: at end, t1=%d, t2=%d\n",
 		t1, t2);
 #endif
