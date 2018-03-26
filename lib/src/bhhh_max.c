@@ -261,7 +261,7 @@ int bhhh_max (double *theta, int k,
     *fncount = fcount;
     *grcount = gcount;
 
-    if (opt & OPT_V) {
+    if ((opt & OPT_V) && !(opt & OPT_I)) {
 	print_iter_info(-1, ll, C_LOGLIK, k, theta, grad,
 			stepsize, prn);
     }
