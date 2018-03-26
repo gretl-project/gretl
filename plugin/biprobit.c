@@ -991,7 +991,7 @@ static int bp_do_maxlik (bp_container *bp, gretlopt opt, PRN *prn)
 {
     double crittol = 1.0e-06;
     double gradtol = 1.0e-05;
-    int fncount, maxit = 1000;
+    int fncount = 0, maxit = 1000;
     gretlopt maxopt = opt & OPT_V;
     int quiet = opt & OPT_Q;
     double *theta;

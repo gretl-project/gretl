@@ -1453,7 +1453,7 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, DATASET *dset,
 	       PRN *prn)
 {
     gretl_matrix *init_H = NULL;
-    int maxit, fncount, grcount;
+    int maxit, fncount = 0, grcount = 0;
     double rho, gradtol = 1.0e-06, toler = 1.0e-8;
     double *hess = NULL;
     double *theta = NULL;

@@ -677,7 +677,7 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
 	double *theta = NULL;
 	int quadpoints = 32;
 	int maxit = libset_get_int(BFGS_MAXITER);
-	int fcount;
+	int fcount = 0;
 	
 	if (opt & OPT_G) {
 	    int qp = get_optval_int(mod.ci, OPT_G, &err);
@@ -713,7 +713,7 @@ MODEL reprobit_estimate (const int *list, DATASET *dset,
 				     C, maxopt, quiet ? NULL : prn);
 
 	} else {
-	    int gcount;
+	    int gcount = 0;
 
 	    err = BFGS_max(theta, C->npar, maxit, 1.0e-9, 
 			   &fcount, &gcount, reprobit_ll, C_LOGLIK, 

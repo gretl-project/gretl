@@ -304,7 +304,7 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
 
 	if (!*err) {
 	    struct chowlin cl;
-	    int c1, c2;
+	    int c1 = 0, c2 = 0;
 
 	    cl.n = xfac;
 	    cl.targ = acf_1(u->val, T);
