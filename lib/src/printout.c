@@ -2948,9 +2948,9 @@ print_iter_info (int iter, double crit, int type, int k,
     }
 
     if (iter < 0) {
-	pputs(prn, _("\n--- FINAL VALUES: \n"));
+	pprintf(prn, "--- %s:\n", _("FINAL VALUES"));
     } else {
-	pprintf(prn, "%s %d: ", _("Iteration"), iter);
+	pprintf(prn, "%s %d:", _("Iteration"), iter);
     }
 
     if (na(crit) || na(-crit)) {
