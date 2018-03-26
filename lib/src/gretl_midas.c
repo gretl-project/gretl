@@ -1990,7 +1990,6 @@ static int midas_bfgs_run (MODEL *pmod, midas_info *mi,
 #if MIDAS_DEBUG
 	fprintf(stderr, "midas_bfgs_run: calling LBFGS_max\n");
 #endif
-
 	err = LBFGS_max(theta, n, 1000, reltol,
 			&fncount, &grcount, NULL,
 			C_SSR, NULL, cond_ols_callback,
