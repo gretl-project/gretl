@@ -187,12 +187,6 @@ int bhhh_max (double *theta, int k,
     grad = g->val;
 
     while (crit > toler && iter++ < itermax) {
-#if BHHH_DEBUG
-	fprintf(stderr, "BHHH: iter = %d\n", iter);
-	for (i=0; i<k; i++) {
-	    fprintf(stderr, " theta[%d] = %g\n", i, theta[i]);
-	}
-#endif
 	/* compute loglikelihood and score */
 	if (numeric) {
 	    ll = bhhh_numeric(theta, k, M, G, callback, data, &err);
@@ -207,11 +201,8 @@ int bhhh_max (double *theta, int k,
 	    break;
 	}
 
-#if BHHH_DEBUG
-	fprintf(stderr, "Top of loop: ll = %g\n", ll);
-# if BHHH_DEBUG > 1
+#if BHHH_DEBUG > 1
 	gretl_matrix_print(G, "RHS in OPG regression");
-# endif
 #endif
 	/* BHHH via OPG regression */
 	err = gretl_matrix_ols(c, G, g, NULL, NULL, NULL);
