@@ -690,19 +690,20 @@ static int bhhh_arma_simple (double *theta, const DATASET *dset,
     if (err) {
 	return err;
     } else {
-	gretlopt bhhh_opt = OPT_NONE;
+	gretlopt bhhh_opt = OPT_I; /* initializing */
 	int fncount = 0, grcount = 0;
 	double tol = 1.0e-4;
 	PRN *prn = NULL;
 
 	if (opt & OPT_V) {
-	    bhhh_opt = OPT_V;
+	    bhhh_opt |= OPT_V;
 	    prn = ainfo->prn;
 	}
 
 	err = bhhh_max(theta, ainfo->nc, ainfo->G,
-		       bhhh_arma_callback, tol, &fncount, &grcount,
-		       ainfo, NULL, bhhh_opt, prn);
+		       bhhh_arma_callback, tol,
+		       &fncount, &grcount, ainfo,
+		       NULL, bhhh_opt, prn);
     }
 
     return err;
