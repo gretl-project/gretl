@@ -644,7 +644,6 @@ int bhhh_arma (double *theta, const DATASET *dset,
 {
     gretlopt bhhh_opt = OPT_NONE;
     double tol = libset_get_double(BHHH_TOLER);
-    int fncount = 0, grcount = 0;
     int err = 0;
 
     err = set_up_arma_OPG_info(ainfo, dset);
@@ -658,7 +657,8 @@ int bhhh_arma (double *theta, const DATASET *dset,
     }
 
     err = bhhh_max(theta, ainfo->nc, ainfo->G,
-		   bhhh_arma_callback, tol, &fncount, &grcount,
+		   bhhh_arma_callback, tol,
+		   &ainfo->fncount, &ainfo->grcount,
 		   ainfo, ainfo->V, bhhh_opt, ainfo->prn);
 
     if (err) {
@@ -669,8 +669,8 @@ int bhhh_arma (double *theta, const DATASET *dset,
     }
 
     if (!err) {
-	gretl_model_set_int(pmod, "fncount", fncount);
-	gretl_model_set_int(pmod, "grcount", grcount);
+	gretl_model_set_int(pmod, "fncount", ainfo->fncount);
+	gretl_model_set_int(pmod, "grcount", ainfo->grcount);
 	write_arma_model_stats(pmod, ainfo, dset);
 	arma_model_add_roots(pmod, ainfo, theta);
     }
@@ -691,19 +691,19 @@ static int bhhh_arma_simple (double *theta, const DATASET *dset,
 	return err;
     } else {
 	gretlopt bhhh_opt = OPT_I; /* initializing */
-	int fncount = 0, grcount = 0;
 	double tol = 1.0e-4;
 	PRN *prn = NULL;
 
 	if (opt & OPT_V) {
 	    bhhh_opt |= OPT_V;
 	    prn = ainfo->prn;
+	    pprintf(prn, "%s\n\n", _("BHHH iteration"));
 	}
 
 	err = bhhh_max(theta, ainfo->nc, ainfo->G,
 		       bhhh_arma_callback, tol,
-		       &fncount, &grcount, ainfo,
-		       NULL, bhhh_opt, prn);
+		       &ainfo->fncount, &ainfo->grcount,
+		       ainfo, NULL, bhhh_opt, prn);
     }
 
     return err;

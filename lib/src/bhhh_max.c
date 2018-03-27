@@ -242,6 +242,12 @@ int bhhh_max (double *theta, int k,
 
 	if (err) break;
 
+	/* print iteration info, if wanted */
+	if (opt & OPT_V) {
+	    print_iter_info(iter, ll, C_LOGLIK, k, theta, grad,
+			    stepsize, prn);
+	}
+
 	/* actually update parameter estimates */
 	for (i=0; i<k; i++) {
 	    theta[i] = ctemp[i];
@@ -249,11 +255,6 @@ int bhhh_max (double *theta, int k,
 	/* double the steplength? (was < 4.0 below) */
 	if (stepsize < 1.0) {
 	    stepsize *= 2.0;
-	}
-	/* print iteration info, if wanted */
-	if (opt & OPT_V) {
-	    print_iter_info(iter, ll, C_LOGLIK, k, theta, grad,
-			    stepsize, prn);
 	}
 	crit = ll2 - ll;
     }

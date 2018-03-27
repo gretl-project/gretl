@@ -64,6 +64,8 @@ struct arma_info_ {
     int T;              /* number of valid observations in sample */
     int fullT;          /* total obs (possibly including interior NAs) */
     int r0;             /* size of ARMA state vector */
+    int fncount;        /* count of function evaluations */
+    int grcount;        /* count of gradient evaluations */
     double *y;          /* dependent variable (possibly differenced) */
     double *e;          /* forecast errors */
     const double **Z;   /* virtual dataset */

@@ -790,7 +790,8 @@ static void optim_get_user_values (double *b, int n, int *maxit,
 	    for (i=0; i<n; i++) {
 		b[i] = uinit->val[i];
 	    }
-	    if (opt & OPT_V) {
+	    if ((opt & OPT_V) && !(opt & OPT_A)) {
+		/* OPT_A: arma: handled elsewhere */
 		pputs(prn, _("\n\n*** User-specified starting values:\n"));
 		for (i=0; i<n; i++) {
 		    pprintf(prn, " %12.6f", b[i]);
@@ -1338,12 +1339,12 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 
  skipcalc:
 
-    *fncount = fcount;
-    *grcount = gcount;
+    *fncount += fcount;
+    *grcount += gcount;
 
     if (verbose) {
 	print_iter_info(-1, f, crittype, n, b, g, steplen, prn);
-	pputc(prn, '\n');
+	// pputc(prn, '\n');
     }
 
  bailout:

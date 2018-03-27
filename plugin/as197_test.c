@@ -516,8 +516,6 @@ static int as197_arma (const double *coeff,
 	/* maximize loglikelihood via BFGS */
 	int maxit;
 	double toler;
-	int fncount = 0;
-	int grcount = 0;
 
 	if (as.n > 2000) {
 	    /* try to avoid slowdown on big samples */
@@ -532,7 +530,8 @@ static int as197_arma (const double *coeff,
 	BFGS_defaults(&maxit, &toler, ARMA);
 
 	err = BFGS_max(b, ainfo->nc, maxit, toler,
-		       &fncount, &grcount, as197_iteration, C_LOGLIK,
+		       &ainfo->fncount, &ainfo->grcount,
+		       as197_iteration, C_LOGLIK,
 		       NULL, &as, NULL, opt, ainfo->prn);
 	if (!err) {
 	    if (ainfo->yscale != 1.0) {
@@ -541,8 +540,8 @@ static int as197_arma (const double *coeff,
 		/* we haven't already computed this */
 		as.loglik = as197_loglikelihood(&as);
 	    }
-	    gretl_model_set_int(pmod, "fncount", fncount);
-	    gretl_model_set_int(pmod, "grcount", grcount);
+	    gretl_model_set_int(pmod, "fncount", ainfo->fncount);
+	    gretl_model_set_int(pmod, "grcount", ainfo->grcount);
 	    err = as197_arma_finish(pmod, ainfo, dset, &as, b,
 				    opt, ainfo->prn);
 	}

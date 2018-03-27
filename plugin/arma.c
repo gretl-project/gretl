@@ -1308,7 +1308,6 @@ static int kalman_arma (const double *coeff,
     gretl_matrix *y = NULL;
     gretl_matrix *X = NULL;
     int r, k = 1 + ainfo->nexo; /* number of exog vars plus space for const */
-    int fncount = 0, grcount = 0;
     int use_newton = 0;
     double *b;
     int err = 0;
@@ -1413,7 +1412,7 @@ static int kalman_arma (const double *coeff,
 	    double gradtol = 1.0e-7;
 
 	    err = newton_raphson_max(b, ainfo->nc, maxit,
-				     crittol, gradtol, &fncount,
+				     crittol, gradtol, &ainfo->fncount,
 				     C_LOGLIK, kalman_arma_ll,
 				     NULL, NULL, K, opt,
 				     ainfo->prn);
@@ -1427,9 +1426,15 @@ static int kalman_arma (const double *coeff,
 		ainfo->pflags |= ARMA_LBFGS;
 	    }
 
+	    if (arma_cml_init(ainfo) && (opt & OPT_V)) {
+		pprintf(ainfo->prn, "%s\n\n", _("BFGS iteration"));
+	    }
+
 	    err = BFGS_max(b, ainfo->nc, maxit, toler,
-			   &fncount, &grcount, kalman_arma_ll, C_LOGLIK,
-			   NULL, K, NULL, opt, ainfo->prn);
+			   &ainfo->fncount, &ainfo->grcount,
+			   kalman_arma_ll, C_LOGLIK,
+			   NULL, K, NULL, opt | OPT_A,
+			   ainfo->prn);
 
 	    if (save_lbfgs == 0 && (opt & OPT_L)) {
 		libset_set_bool(USE_LBFGS, 0);
@@ -1451,10 +1456,10 @@ static int kalman_arma (const double *coeff,
 
     if (!err) {
 	if (use_newton) {
-	    gretl_model_set_int(pmod, "iters", fncount);
+	    gretl_model_set_int(pmod, "iters", ainfo->fncount);
 	} else {
-	    gretl_model_set_int(pmod, "fncount", fncount);
-	    gretl_model_set_int(pmod, "grcount", grcount);
+	    gretl_model_set_int(pmod, "fncount", ainfo->fncount);
+	    gretl_model_set_int(pmod, "grcount", ainfo->grcount);
 	}
 	err = kalman_arma_finish(pmod, ainfo, dset, K, b,
 				 opt, ainfo->prn);
@@ -1499,21 +1504,21 @@ static int user_arma_init (double *coeff, arma_info *ainfo, int *init_done)
     }
 
     if (arma_exact_ml(ainfo)) {
-	/* initialization is handled within BFGS/Newton-Raphson */
+	/* user initialization is handled within BFGS/Newton-Raphson */
 	for (i=0; i<ainfo->nc; i++) {
 	    coeff[i] = 0.0;
 	}
     } else {
 	const gretl_matrix *m = get_init_vals();
 
-	pprintf(prn, "\n%s: %s\n\n", _("ARMA initialization"),
-		_("user-specified values"));
-
 	for (i=0; i<ainfo->nc; i++) {
 	    coeff[i] = gretl_vector_get(m, i);
 	}
 	free_init_vals();
     }
+
+    pprintf(prn, "\n%s: %s\n\n", _("ARMA initialization"),
+	    _("user-specified values"));
 
     *init_done = 1;
 
