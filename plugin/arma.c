@@ -1504,7 +1504,7 @@ static int user_arma_init (double *coeff, arma_info *ainfo, int *init_done)
     }
 
     if (arma_exact_ml(ainfo)) {
-	/* user initialization is handled within BFGS/Newton-Raphson */
+	/* user-specified initializer is handled within BFGSmax */
 	for (i=0; i<ainfo->nc; i++) {
 	    coeff[i] = 0.0;
 	}
