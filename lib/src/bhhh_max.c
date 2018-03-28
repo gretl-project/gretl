@@ -152,6 +152,7 @@ int bhhh_max (double *theta, int k,
     double minstep = 1.0e-06;
     double crit = 1.0;
     double stepsize = 0.25;
+    double shrink = 0.5;
     double ll2, ll = 0.0;
     int numeric = 0;
     int i, T, err = 0;
@@ -181,6 +182,12 @@ int bhhh_max (double *theta, int k,
     if (c == NULL || g == NULL || delta == NULL || ctemp == NULL) {
 	err = E_ALLOC;
 	goto bailout;
+    }
+
+    if (opt & OPT_I) {
+	/* using BHHH for initialization of exact ML */
+	minstep = 1.0e-03;
+	shrink = 0.4;
     }
 
     itermax = libset_get_int(BHHH_MAXITER);
@@ -223,14 +230,14 @@ int bhhh_max (double *theta, int k,
 #endif
 	while (err || ll2 < ll) {
 	    /* ... or if not, halve the steplength */
-	    stepsize *= 0.5;
+	    stepsize *= shrink;
 	    if (stepsize < minstep) {
 		fprintf(stderr, "BHHH: hit minimum step size %g\n", minstep);
 		err = E_NOCONV;
 		break;
 	    }
 	    for (i=0; i<k; i++) {
-		delta[i] *= 0.5;
+		delta[i] *= shrink;
 		ctemp[i] = theta[i] + delta[i];
 	    }
 	    ll2 = callback(ctemp, G, data, 0, &err);
