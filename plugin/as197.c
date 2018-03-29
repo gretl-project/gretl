@@ -256,7 +256,7 @@ static int tw_acf (const double *phi, int p,
 		return 5;
 	    }
 	    if (kc == 0) {
-		continue; /* goto 290; */
+		break;
 	    }
 	    for (j=0; j<kc; j++) {
 		alpha[j] = (cvli[j] + alpha[kc] * cvli[kc-j-1]) / div;
@@ -273,7 +273,7 @@ static int tw_acf (const double *phi, int p,
 		cvli[j] = alpha[j];
 	    }
 	}
-    } /* 290 */
+    }
 
     /* computation of T.W. Nu (Nu is stored in cvli,
        copied into acf)
