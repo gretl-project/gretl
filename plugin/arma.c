@@ -1931,7 +1931,7 @@ MODEL arma_model (const int *list, const int *pqspec,
 	clear_model_xpx(&armod);
 	if (arma_exact_ml(ainfo)) {
 #if TEST_AS197
-	    if ((opt & OPT_A) && as197_ok(ainfo)) {
+	    if ((opt & OPT_A) && (1 || as197_ok(ainfo))) {
 		err = as197_arma(coeff, dset, ainfo, &armod, opt);
 	    } else {
 		err = kalman_arma(coeff, dset, ainfo, &armod, opt);
