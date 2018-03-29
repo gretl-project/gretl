@@ -7,6 +7,8 @@ static int tw_acf (const double *phi, int p,
 #define max0(i,j) ((i)>(j) ? (i) : (j))
 #define min0(i,j) ((i)<(j) ? (i) : (j))
 
+#define missing(x) (na(x) || isnan(x))
+
 #define DSHRINK 0.0625
 #define DEXPAND 16.0
 #define DCDELTA 4.0
@@ -32,7 +34,7 @@ int flikam (const double *phi, int p,
     double eps1 = 1.0e-10;
     double detman = 1.0;
     double detcar = 0.0;
-    double R, A, aor;
+    double R, A, aor, wi;
     double vw0, vl0, alf, flj;
     int mxpq = max0(p, q);
     int mnpq = min0(p, q);
@@ -43,10 +45,9 @@ int flikam (const double *phi, int p,
 
     *sumsq = *fact = 0;
 
-    /*
-      calculation of the autocovariance function of a process with
-      unit innovation variance (vw) and the covariance between the
-      variable and the lagged innovations (vl).
+    /* calculation of the autocovariance function of a process with
+       unit innovation variance (vw) and the covariance between the
+       variable and the lagged innovations (vl).
     */
     ret = tw_acf(phi, p, theta, q, vw, mxpqp1, vl, mxpqp1, vk, mxpq);
     if (ret > 0) {
@@ -122,14 +123,17 @@ int flikam (const double *phi, int p,
 	    detcar -= DCDELTA;
 	}
 	vw0 = vw[0];
-        A = W[i] - vw0;
-        E[i] = A / sqrt(R);
-	/* manage missing values (assume no error on forecast?) */
-        if (na(A)) {
-	    A = 0;
+        if (missing(W[i])) {
+	    /* FIXME?! */
+	    wi = vw0;
+	    aor = A = E[i] = 0.0;
+	} else {
+	    wi = W[i];
+	    A = W[i] - vw0;
+	    E[i] = A / sqrt(R);
+	    aor = A / R;
+	    *sumsq += A * aor;
 	}
-	aor = A / R;
-        *sumsq += A * aor;
         vl0 = vl[0];
         alf = vl0 / R;
         R -= alf * vl0;
@@ -149,7 +153,7 @@ int flikam (const double *phi, int p,
 	    vk[j] -= alf * vl[j+1];
 	}
 	for (j=jfrom; j<p; j++) {
-	    vw[j] = vw[j+1] + phi[j] * W[i];
+	    vw[j] = vw[j+1] + phi[j] * wi;
 	}
     }
 
@@ -158,7 +162,7 @@ int flikam (const double *phi, int p,
 	nexti = i;
 	ret = -nexti;
 	for (i=nexti; i<n; i++) {
-	    if (na(W[i])) {
+	    if (missing(W[i])) {
 		continue;
 	    }
 	    E[i] = W[i];
@@ -275,7 +279,7 @@ static int tw_acf (const double *phi, int p,
 	}
     }
 
-    /* computation of T.W. Nu (Nu is stored in cvli,
+    /* computation of T-W Nu (Nu is stored in cvli,
        copied into acf)
     */
     acf[0] *= 0.5;
