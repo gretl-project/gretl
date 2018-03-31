@@ -7,8 +7,6 @@ static int tw_acf (const double *phi, int p,
 #define max0(i,j) ((i)>(j) ? (i) : (j))
 #define min0(i,j) ((i)<(j) ? (i) : (j))
 
-#define missing(x) (na(x) || isnan(x))
-
 #define DSHRINK 0.0625
 #define DEXPAND 16.0
 #define DCDELTA 4.0
@@ -41,6 +39,7 @@ int flikam (const double *phi, int p,
     int mxpqp1 = mxpq + 1;
     int do_quick = 0;
     int last, loop, jfrom, nexti;
+    int ok_n = n;
     int i, j, k, ret = 0;
 
     *sumsq = *fact = 0;
@@ -123,10 +122,11 @@ int flikam (const double *phi, int p,
 	    detcar -= DCDELTA;
 	}
 	vw0 = vw[0];
-        if (missing(W[i])) {
+        if (isnan(W[i])) {
 	    /* FIXME?! */
 	    wi = vw0;
 	    aor = A = E[i] = 0.0;
+	    ok_n--;
 	} else {
 	    wi = W[i];
 	    A = W[i] - vw0;
@@ -162,7 +162,9 @@ int flikam (const double *phi, int p,
 	nexti = i;
 	ret = -nexti;
 	for (i=nexti; i<n; i++) {
-	    if (missing(W[i])) {
+	    if (isnan(W[i])) {
+		E[i] = 0;
+		ok_n--;
 		continue;
 	    }
 	    E[i] = W[i];
@@ -176,7 +178,7 @@ int flikam (const double *phi, int p,
 	}
     }
 
-    *fact = pow(detman, 1.0 / n) * pow(2.0, detcar / n);
+    *fact = pow(detman, 1.0 / ok_n) * pow(2.0, detcar / ok_n);
 
     return ret;
 }

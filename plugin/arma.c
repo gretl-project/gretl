@@ -30,8 +30,9 @@
 #define ARMA_MDEBUG 0
 #define CHK_FOR_ENV 0
 
-/* for "live" testing of G. Melard's ARMA algorithm */
+/* for "live" testing of alternative algorithms */
 #define TEST_AS197 1
+#define TEST_AS154 0
 
 #include "arma_common.c"
 
@@ -1188,19 +1189,8 @@ static void kalman_rescale_y (gretl_vector *y, double scale)
 #endif
 
     for (i=0; i<y->rows; i++) {
-	if (!na(y->val[i])) {
+	if (!isnan(y->val[i])) {
 	    y->val[i] *= scale;
-	}
-    }
-}
-
-static void matrix_NA_to_nan (gretl_matrix *m)
-{
-    int i, n = m->rows * m->cols;
-
-    for (i=0; i<n; i++) {
-	if (na(m->val[i])) {
-	    m->val[i] = M_NA;
 	}
     }
 }
@@ -1220,9 +1210,6 @@ static gretl_matrix *form_arma_y_vector (arma_info *ainfo,
     } else {
 	if (ainfo->yscale != 1.0) {
 	    kalman_rescale_y(yvec, ainfo->yscale);
-	}
-	if (arma_missvals(ainfo)) {
-	    matrix_NA_to_nan(yvec);
 	}
 #if ARMA_DEBUG
 	gretl_matrix_print(yvec, "arma y vector");
@@ -1483,11 +1470,14 @@ static int kalman_arma (const double *coeff,
 
 /* end of Kalman-specific material */
 
-#if TEST_AS197 /* experimental!! */
+#define y_missing(y) (na(y) || isnan(y))
 
-#include "as197.c"
-#include "as197_test.c"
-
+#if TEST_AS197
+# include "as197.c"
+# include "as197_test.c"
+#elif TEST_AS154
+# include "as154.c"
+# include "as154_test.c"
 #endif
 
 static int user_arma_init (double *coeff, arma_info *ainfo, int *init_done)
@@ -1798,7 +1788,7 @@ MODEL arma_model (const int *list, const int *pqspec,
     ainfo = &ainfo_s;
     arma_info_init(ainfo, opt, pqspec, dset);
 
-#if TEST_AS197
+#if TEST_AS197 || TEST_AS154
     if (!(opt & OPT_A) && getenv("AS197") != NULL) {
 	/* for batch-mode testing */
 	opt |= OPT_A;
@@ -1931,11 +1921,17 @@ MODEL arma_model (const int *list, const int *pqspec,
 	clear_model_xpx(&armod);
 	if (arma_exact_ml(ainfo)) {
 #if TEST_AS197
-	    if ((opt & OPT_A) && as197_ok(ainfo)) {
+	    if ((opt & OPT_A) && (1 || as197_ok(ainfo))) {
 		err = as197_arma(coeff, dset, ainfo, &armod, opt);
 	    } else {
 		err = kalman_arma(coeff, dset, ainfo, &armod, opt);
 	    }
+#elif TEST_AS154
+	    if (opt & OPT_A) {
+		err = as154_arma(coeff, dset, ainfo, &armod, opt);
+	    } else {
+		err = kalman_arma(coeff, dset, ainfo, &armod, opt);
+	    }	    
 #else
 	    err = kalman_arma(coeff, dset, ainfo, &armod, opt);
 #endif

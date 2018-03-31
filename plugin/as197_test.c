@@ -10,6 +10,7 @@ struct as197_info {
     int rp1;
     int ifault;
     int n;
+    int ok_n;
     int ifc;
     double *phi, *theta;
     double *y, *y0, *e;   /* dependent var and forecast errors */
@@ -40,7 +41,8 @@ static int as197_info_init (struct as197_info *as,
     as->q = ai->q;
     as->Q = ai->Q;
     as->pd = ai->pd;
-    as->n = ai->T;
+    as->n = ai->fullT;
+    as->ok_n = ai->T;
     as->ifc = ai->ifc;
 
     as->plen = as->p + as->pd * as->P;
@@ -177,7 +179,10 @@ static void as197_fill_arrays (struct as197_info *as,
 	if (as->ai->nexo == 0) {
 	    /* just subtract the constant */
 	    for (i=0; i<as->n; i++) {
-		as->y[i] = as->y0[i] - mu;
+		as->y[i] = as->y0[i];
+		if (!isnan(as->y0[i])) {
+		    as->y[i] -= mu;
+		}
 	    }
 	}
 	b++;
@@ -217,12 +222,14 @@ static void as197_fill_arrays (struct as197_info *as,
 
 	for (i=0; i<as->n; i++) {
 	    as->y[i] = as->y0[i];
-	    if (as->ifc) {
-		as->y[i] -= mu;
-	    }
-	    for (j=0; j<as->ai->nexo; j++) {
-		xij = gretl_matrix_get(as->X, i, j);
-		as->y[i] -= xij * b[j];
+	    if (!isnan(as->y[i])) {
+		if (as->ifc) {
+		    as->y[i] -= mu;
+		}
+		for (j=0; j<as->ai->nexo; j++) {
+		    xij = gretl_matrix_get(as->X, i, j);
+		    as->y[i] -= xij * b[j];
+		}
 	    }
 	}
     }
@@ -231,10 +238,10 @@ static void as197_fill_arrays (struct as197_info *as,
 static double as197_loglikelihood (const struct as197_info *as)
 {
     /* full ARMA loglikelihood */
-    double ll1 = 1.0 + LN_2_PI + log(as->sumsq / as->n);
-    double sumldet = as->n * log(as->fact);
+    double ll1 = 1.0 + LN_2_PI + log(as->sumsq / as->ok_n);
+    double sumldet = as->ok_n * log(as->fact);
 
-    return -0.5 * (as->n * ll1 + sumldet);
+    return -0.5 * (as->ok_n * ll1 + sumldet);
 }
 
 static double as197_iteration (const double *b, void *data)
@@ -366,8 +373,7 @@ static int as197_undo_y_scaling (arma_info *ainfo,
 {
     double *beta = b + 1 + ainfo->np + ainfo->P +
 	ainfo->nq + ainfo->Q;
-    int i, t, T = ainfo->t2 - ainfo->t1 + 1;
-    int err = 0;
+    int i, t, err = 0;
 
     b[0] /= ainfo->yscale;
 
@@ -376,9 +382,11 @@ static int as197_undo_y_scaling (arma_info *ainfo,
     }
 
     i = ainfo->t1;
-    for (t=0; t<T; t++) {
-	as->y[t] /= ainfo->yscale;
-	as->y0[t] /= ainfo->yscale;
+    for (t=0; t<ainfo->fullT; t++) {
+	if (!isnan(as->y0[t])) {
+	    as->y[t] /= ainfo->yscale;
+	    as->y0[t] /= ainfo->yscale;
+	}
     }
 
     as->use_loglik = 1;

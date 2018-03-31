@@ -118,6 +118,7 @@ static int hr_transcribe_coeffs (arma_info *ainfo,
     /* check MA values? */
     if (ainfo->q > 0 || ainfo->Q > 0) {
 	err = ma_out_of_bounds(ainfo, theta, Theta);
+	// fprintf(stderr, "HR MA check: err=%d\n", err);
 	bounds_checker_cleanup();
     }
 
