@@ -2304,6 +2304,15 @@ static int test_for_genr (CMD *c, int i, DATASET *dset)
 	    c->ci = GENR;
 	    c->opt |= OPT_O;
 	}
+#ifdef USE_RLIB
+	else if (j == 1 && toks[j].type == TOK_DOT &&
+		 libset_get_bool(R_FUNCTIONS) &&
+		 toks[0].type == TOK_NAME && !strcmp(toks[0].s, "R")) {
+	    /* R function call, no assignment */
+	    c->ci = GENR;
+	    c->opt |= OPT_O;
+	}
+#endif
     }
 
     return c->ci;

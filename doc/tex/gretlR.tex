@@ -496,7 +496,6 @@ foreign language=R --send-data
     strmod <- StructTS(y)
     compon <- as.ts(tsSmooth(strmod))
     vars <- as.matrix(strmod$coef)
-            
     gretl.export(compon)
     gretl.export(vars)
 end foreign
@@ -521,7 +520,6 @@ block; see example \ref{RStructTS-simple}.
   \caption{Estimation of the Basic Structural Model -- via a function}
 \begin{scode}
 function list RStructTS(series myseries)
-
     smpl ok(myseries) --restrict
     sx = argname(myseries)
 
@@ -559,13 +557,12 @@ gretl function that calls \app{R} internally.
 \label{sec:R-performance}
 
 \app{R} is a large and complex program, which takes an appreciable
-time to initialize itself.\footnote{About one third of a second on an
-  Intel Core Duo machine of 2009 vintage.}  In interactive use this
-not a significant problem, but if you have a gretl script that
-calls \app{R} repeatedly the cumulated start-up costs can become
-bothersome.  To get around this, gretl calls the \app{R} shared
-library by preference; in this case the start-up cost is borne only
-once, on the first invocation of \app{R} code from within gretl.
+time to initialize itself.  In interactive use this not a significant
+problem, but if you have a gretl script that calls \app{R} repeatedly
+the cumulated start-up costs can become bothersome.  To get around
+this, gretl calls the \app{R} shared library by preference; in this
+case the start-up cost is borne only once, on the first invocation of
+\app{R} code from within gretl.
 
 Support for the \app{R} shared library is built into the gretl
 packages for MS Windows and OS X---but the advantage is realized
@@ -612,7 +609,10 @@ but the example shows a couple of points.  First, for this mechanism
 to work you need to enable \verb|R_functions| via the \texttt{set}
 command.  Second, to avoid collision with the gretl function
 namespace, calls to functions defined in this way must be prefixed
-with ``\texttt{R.}'', as in \verb|R.plus_one|.
+with ``\texttt{R.}'', as in \verb|R.plus_one|. But note, this
+mechanism will not work if you have defined a gretl bundle named
+\texttt{R}: in that case identifiers beginning with ``\texttt{R.{}}''
+will be understood as referring to members of the bundle in question.
 
 Built-in \app{R} functions may also be called in this way, once
 \verb|R_functions| is set \texttt{on}.  For example one can invoke

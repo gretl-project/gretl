@@ -1207,10 +1207,12 @@ static void look_up_dollar_word (const char *s, parser *p)
 
 #ifdef USE_RLIB
 # include "gretl_foreign.h"
+# include "libset.h"
 
 static int maybe_get_R_function (const char *s)
 {
-    if (strlen(s) >= 3 && !strncmp(s, "R.", 2)) {
+    if (libset_get_bool(R_FUNCTIONS) &&
+	strlen(s) >= 3 && !strncmp(s, "R.", 2)) {
 	return get_R_function_by_name(s + 2);
     } else {
 	return 0;
@@ -1533,8 +1535,10 @@ static void getword (parser *p)
 #ifdef USE_RLIB
     /* allow for R.foo function namespace */
     if (*word == 'R' && p->ch == '.' && *p->point != '$') {
-	word[i++] = p->ch;
-	parser_getc(p);
+	if (libset_get_bool(R_FUNCTIONS) && !gretl_is_bundle("R")) {
+	    word[i++] = p->ch;
+	    parser_getc(p);
+	}
     }
 #endif
 
