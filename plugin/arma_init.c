@@ -64,6 +64,28 @@ static int init_transform_const (arma_info *ainfo)
 	!arma_cml_init(ainfo);
 }
 
+/* try to avoid numerical problems when doing exact ML:
+   arrange for scaling of the dependent variable if it's
+   "too big"
+*/
+
+static void maybe_set_yscale (arma_info *ainfo)
+{
+    double ybar = gretl_mean(ainfo->t1, ainfo->t2, ainfo->y);
+
+    if (fabs(ybar) > 250) {
+	if (arima_levels(ainfo)) {
+	    set_arma_avg_ll(ainfo); /* is this a good idea? */
+	} else {
+	    ainfo->yscale = 10 / ybar;
+	}
+    } else if (fabs(ybar) < 0.01) {
+	ainfo->yscale = 10 / ybar;
+    }
+}
+
+#define apply_yscaling(a) (arma_exact_ml(a) && !arma_cml_init(a))
+
 #define HR_MINLAGS 16
 
 static int hr_transcribe_coeffs (arma_info *ainfo,
@@ -148,6 +170,7 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
     int *pass2list = NULL;
     int *arlags = NULL;
     int *malags = NULL;
+    double ys;
     MODEL armod;
     int xstart;
     int m, pos, s;
@@ -180,6 +203,11 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
 
     /* in case we bomb before estimating a model */
     gretl_model_init(&armod, dset);
+
+    /* NEW 2019-04-01 */
+    if (arma_exact_ml(ainfo) && ainfo->ifc) {
+	maybe_set_yscale(ainfo);
+    }
 
     /* Start building stuff for pass 1 */
 
@@ -218,14 +246,25 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
 
     for (t=0; t<ainfo->T; t++) {
 	s = t + ainfo->t1;
-	aset->Z[1][t] = y[s];
+	if (apply_yscaling(ainfo) && !na(y[s])) {
+	    aset->Z[1][t] = y[s] * ainfo->yscale;
+	} else {
+	    aset->Z[1][t] = y[s];
+	}
 	for (i=0, pos=2; i<nexo; i++) {
 	    m = list[xstart + i];
 	    aset->Z[pos++][t] = dset->Z[m][s];
 	}
 	for (i=1; i<=pass1lags; i++) {
 	    s = t + ainfo->t1 - i;
-	    aset->Z[pos++][t] = (s >= 0)? y[s] : NADBL;
+	    if (s < 0) {
+		ys = NADBL;
+	    } else if (apply_yscaling(ainfo) && !na(y[s])) {
+		ys = y[s] * ainfo->yscale;
+	    } else {
+		ys = y[s];
+	    }
+	    aset->Z[pos++][t] = ys;
 	}
     }
 
@@ -415,25 +454,27 @@ int hr_arma_init (double *coeff, const DATASET *dset,
     return err;
 }
 
-/* try to avoid numerical problems when doing exact ML:
-   arrange for scaling of the dependent variable if it's
-   "too big"
-*/
-
-static void maybe_set_yscale (arma_info *ainfo)
+static double get_y_mean (arma_info *ainfo)
 {
-    double ybar = gretl_mean(ainfo->t1, ainfo->t2, ainfo->y);
+    double ysum = 0.0;
+    int t, T = 0;
 
-    if (fabs(ybar) > 250) {
-	if (arima_levels(ainfo)) {
-	    set_arma_avg_ll(ainfo); /* is this a good idea? */
-	} else {
-	    ainfo->yscale = 10 / ybar;
+    for (t=ainfo->t1; t<=ainfo->t2; t++) {
+	if (!na(ainfo->y[t])) {
+	    if (ainfo->yscale != 1.0) {
+		ysum += ainfo->yscale * ainfo->y[t];
+	    } else {
+		ysum += ainfo->y[t];
+	    }
+	    T++;
 	}
     }
+
+    return ysum / T;
 }
 
-#define MA_SMALL 0.0001 /* was 0.0001 */
+/* #define MA_SMALL 0.01 */
+#define MA_TINY  0.0001
 
 /* transcribe coeffs from the OLS or NLS model used for initializing,
    into the array @b that will be passed to the maximizer.
@@ -463,7 +504,7 @@ static void arma_init_transcribe_coeffs (arma_info *ainfo,
 
     /* insert near-zeros for MA terms */
     for (i=0; i<totq; i++) {
-	b[q0 + i] = MA_SMALL;
+	b[q0 + i] = MA_TINY;
     }
 }
 
@@ -607,8 +648,6 @@ static double get_xti (const DATASET *dset, int i, int t,
 	return dset->Z[xlist[i]][t];
     }
 }
-
-#define apply_yscaling(a) (arma_exact_ml(a) && !arma_cml_init(a))
 
 /* Build temporary dataset including lagged vars: if we're doing exact
    ML on an ARMAX model we need lags of the exogenous variables as
@@ -760,7 +799,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
 	arima_difference_undo(ainfo, dset);
     }
 
-#if AINIT_DEBUG
+#if AINIT_DEBUG > 1
     PRN *eprn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
 
     if (eprn != NULL) {
@@ -1116,7 +1155,7 @@ static int *make_ar_ols_list (arma_info *ainfo, int av)
    of a non-zero AR order, where estimation will be via exact ML.
 
    In this initialization any MA coefficients are simply set to
-   "near-zero" (MA_SMALL).
+   "near-zero" (MA_TINY).
 */
 
 int ar_arma_init (double *coeff, const DATASET *dset,
@@ -1145,7 +1184,7 @@ int ar_arma_init (double *coeff, const DATASET *dset,
     if (ptotal == 0 && ainfo->nexo == 0 && !ainfo->ifc) {
 	/* special case of pure MA model */
 	for (i=0; i<ainfo->nq + ainfo->Q; i++) {
-	    coeff[i] = MA_SMALL;
+	    coeff[i] = MA_TINY;
 	}
 	pprintf(ainfo->prn, "\n%s: %s\n\n", _("ARMA initialization"),
 		_("small MA values"));
@@ -1162,6 +1201,17 @@ int ar_arma_init (double *coeff, const DATASET *dset,
 
     if (arma_exact_ml(ainfo) && ainfo->ifc) {
 	maybe_set_yscale(ainfo);
+    }
+
+    if (ptotal == 0 && ainfo->nexo == 0 && ainfo->ifc) {
+	/* straight MA model with constant */
+	coeff[0] = get_y_mean(ainfo);
+	for (i=1; i<=ainfo->nq + ainfo->Q; i++) {
+	    coeff[i] = MA_TINY;
+	}
+	pprintf(ainfo->prn, "\n%s: %s\n\n", _("ARMA initialization"),
+		_("small MA values"));
+	return 0;
     }
 
     aset = create_auxiliary_dataset(av, ainfo->fullT, 0);
