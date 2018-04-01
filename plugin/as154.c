@@ -1,5 +1,5 @@
 static int inclu2_(int, int, const double *,
-		   double *, double, double *, 
+		   double *, double, double *,
 		   double *, double *, double *,
 		   double *, int *);
 
@@ -58,14 +58,14 @@ int starma (int ip, int iq, int ir, int np, double *phi,
 	thetab[i] = 0;
 	xnext[i] = 0;
     }
-    
+
     ind = -1;
     ind1 = -1;
     npr = np - ir;
     npr1 = npr + 1;
     indj = npr1 - 1;
     ind2 = npr - 1;
-    
+
     for (j=0; j<ir; j++) {
 	phij = phi[j];
 	xnext[indj++] = 0;
@@ -94,7 +94,7 @@ int starma (int ip, int iq, int ir, int np, double *phi,
 	    }
 	}
     }
-    
+
     regres_(np, nrbar, rbar, thetab, p0);
 
     /* reorder p0 */
@@ -112,7 +112,7 @@ int starma (int ip, int iq, int ir, int np, double *phi,
     }
     return 0;
 
- backsub:    
+ backsub:
 
     indn = np;
     ind = np;
@@ -126,13 +126,13 @@ int starma (int ip, int iq, int ir, int np, double *phi,
 	    }
 	}
     }
-    
+
     return 0;
 }
 
 int karma (int ip, int iq, int ir, int np, double *phi,
-	   double *theta, double *a, double *p0, 
-	   double *v, int n, double *w, double *resid, 
+	   double *theta, double *a, double *p0,
+	   double *v, int n, double *w, double *resid,
 	   double *sumlog, double *ssq, int iupd,
 	   double delta, double *e, int *nit)
 {
@@ -152,10 +152,10 @@ int karma (int ip, int iq, int ir, int np, double *phi,
     if (*nit != 0) {
 	goto quick_recurse;
     }
-    
+
     for (i=0; i<n; i++) {
 	wnext = w[i];
-	
+
 	/* prediction */
 	if (iupd == 0 || i > 0) {
 	    dt = 0;
@@ -221,7 +221,7 @@ int karma (int ip, int iq, int ir, int np, double *phi,
 	*ssq += ut * ut / ft;
 	*sumlog += log(ft);
     }
-    
+
     *nit = n;
     return 0;
 
@@ -232,7 +232,7 @@ int karma (int ip, int iq, int ir, int np, double *phi,
     } else {
 	*nit = i - 1; /* ? */
     }
-    
+
     for (ii=i; ii<n; ii++) {
 	if (isnan(w[ii])) {
 	    resid[ii] = 0;
@@ -258,7 +258,7 @@ int karma (int ip, int iq, int ir, int np, double *phi,
 	    inde = 0;
 	}
     }
-    
+
     return 0;
 }
 
@@ -316,7 +316,7 @@ int kalfor_(int m, int ip, int ir, int np, double *phi,
 	    }
 	}
     }
-    
+
     return 0;
 }
 
@@ -334,10 +334,10 @@ static int inclu2_ (int np, int nrbar, const double *xnext,
     for (i=0; i<np; i++) {
 	xrow[i] = xnext[i];
     }
-    
+
     *recres = 0.0;
     thisr = -1;
-    
+
     for (i=0; i<np; i++) {
 	if (xrow[i] == 0) {
 	    thisr = thisr + np - i - 1;
@@ -368,14 +368,14 @@ static int inclu2_ (int np, int nrbar, const double *xnext,
 	    return 0;
 	}
     }
-    
+
     *ssqerr += wt * y * y;
     *recres = y * sqrt(wt);
-    
+
     return 0;
 }
 
-static int regres_(int np, int nrbar, const double *rbar, 
+static int regres_(int np, int nrbar, const double *rbar,
 		   const double *thetab, double *beta)
 {
     int i, j, i1, jm;
@@ -394,7 +394,6 @@ static int regres_(int np, int nrbar, const double *rbar,
 	}
 	beta[im--] = bi;
     }
-    
+
     return 0;
 }
-
