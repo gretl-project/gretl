@@ -1566,7 +1566,8 @@ static int prefer_hr_init (arma_info *ainfo)
 
 static int maybe_set_cml_init (arma_info *ainfo)
 {
-    int ret = 1;
+    /* probably not for smaller samples */
+    int ret = ainfo->T > 350;
 
     if (!arma_exact_ml(ainfo)) {
 	/* only if final estimation will be exact ML! */
