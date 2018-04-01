@@ -531,7 +531,7 @@ static void write_big_theta (const double *theta,
 		y = 0.0;
 	    }
             ii = (j+1) * ainfo->pd + (i+1);
-	    mc[ii] = x * y;
+	    mc[ii] += x * y;
         }
     }
 

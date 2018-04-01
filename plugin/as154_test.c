@@ -172,7 +172,7 @@ void write_big_theta_154 (const double *b,
 	    }
             ii = (j+1) * as->pd + (i+1);
 	    if (ii > 0) {
-		as->theta[ii-1] = x * y;
+		as->theta[ii-1] += x * y;
 	    }
         }
     }
@@ -537,7 +537,7 @@ static int as154_arma (const double *coeff,
 	int maxit;
 	double toler;
 
-	if (1) {
+	if (0) {
 	    as.toler = 0.0001;
 	    as.use_loglik = 1; /* ? */
 	}

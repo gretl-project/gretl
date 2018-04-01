@@ -160,7 +160,7 @@ static void write_big_theta_197 (const double *b,
 	    }
             ii = (j+1) * as->pd + (i+1);
 	    if (ii > 0) {
-		as->theta[ii-1] = x * y;
+		as->theta[ii-1] += x * y;
 	    }
         }
     }
