@@ -7,6 +7,10 @@ version 2018b, in progress
   models
 - Fix bug: saved argument lists for function packages
   getting out of sync with the user-selected interface
+- Fix bug: command-line refinements for the "graphpg"
+  command subject to bitrot
+- When R_functions is set "on", accept call to an R function
+  without assignment of the return value, if any
 
 2018-03-17 version 2018a
 - New function instring(): boolean variant of strstr()
