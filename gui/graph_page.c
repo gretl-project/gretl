@@ -863,45 +863,54 @@ static int print_graph_page_direct (const char *fname,
     return err;
 }
 
-int graph_page_parse_line (const char *line, gretlopt opt)
+int graph_page_exec (const char *parm,
+		     const char *parm2,
+		     gretlopt opt)
 {
     const char *outfile = NULL;
-    char cmdword[16];
-    int gotcmd = 0;
+    int gotparm = 0;
     int err = 0;
 
-    if (sscanf(line, "%*s %15s", cmdword) == 1) {
-	gotcmd = 1;
+    if (parm != NULL) {
+	gotparm = 1;
     }
 
-    if (gotcmd && (opt & OPT_O)) {
+    if (gotparm && (opt & OPT_O)) {
 	/* the --output option rules out the various
 	   command words */
-	return E_PARSE;
+	err = E_PARSE;
     } else if (opt & OPT_O) {
 	/* --output="filename" */
 	outfile = get_optval_string(GRAPHPG, OPT_O);
 	if (outfile == NULL) {
-	    return E_PARSE;
+	    err = E_PARSE;
 	} else {
-	    return print_graph_page_direct(outfile, opt);
+	    err = print_graph_page_direct(outfile, opt);
 	}
-    } else if (!gotcmd) {
-	return E_PARSE;
+    } else if (!gotparm) {
+	err = E_PARSE;
     }
 
-    if (!strcmp(cmdword, "add")) {
-	err = graph_page_add_last_graph();
-    } else if (!strcmp(cmdword, "show")) {
-	err = display_graph_page(NULL);
-    } else if (!strcmp(cmdword, "free")) {
-	if (gpage.ngraphs > 0) {
-	    clear_graph_page(0);
+    if (gotparm && !err) {
+	/* handle the parameter we got */
+	if (!strcmp(parm, "add")) {
+	    err = graph_page_add_last_graph();
+	} else if (!strcmp(parm, "show")) {
+	    err = display_graph_page(NULL);
+	} else if (!strcmp(parm, "free")) {
+	    if (gpage.ngraphs > 0) {
+		clear_graph_page(0);
+	    }
+	} else if (!strcmp(parm, "fontscale")) {
+	    if (parm2 == NULL) {
+		gretl_errmsg_set("fontscale: parameter is missing");
+		err = E_PARSE;
+	    } else {
+		err = graph_page_set_font_scale(parm2);
+	    }
+	} else {
+	    err = E_PARSE;
 	}
-    } else if (!strcmp(cmdword, "fontscale")) {
-	const char *s = strstr(line, "fontscale");
-
-	err = graph_page_set_font_scale(s + 9);
     }
 
     return err;
