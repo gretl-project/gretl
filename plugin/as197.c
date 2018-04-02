@@ -1,7 +1,6 @@
 static int tw_acf (const double *phi, int p,
                    const double *theta, int q,
-		   double *acf, int ma,
-		   double *cvli, int mxpqp1,
+		   double *acf, double *cvli, int ma,
 		   double *alpha, int mxpq);
 
 #define max0(i,j) ((i)>(j) ? (i) : (j))
@@ -48,7 +47,7 @@ int flikam (const double *phi, int p,
        unit innovation variance (vw) and the covariance between the
        variable and the lagged innovations (vl).
     */
-    ret = tw_acf(phi, p, theta, q, vw, mxpqp1, vl, mxpqp1, vk, mxpq);
+    ret = tw_acf(phi, p, theta, q, vw, vl, mxpqp1, vk, mxpq);
     if (ret > 0) {
 	return ret;
     }
@@ -123,7 +122,7 @@ int flikam (const double *phi, int p,
 	}
 	vw0 = vw[0];
         if (isnan(W[i])) {
-	    /* FIXME?! */
+	    /* FIXME? */
 	    wi = vw0;
 	    aor = A = E[i] = 0.0;
 	    ok_n--;
@@ -200,17 +199,12 @@ int flikam (const double *phi, int p,
 
 static int tw_acf (const double *phi, int p,
                    const double *theta, int q,
-		   double *acf, int ma,
-		   double *cvli, int mxpqp1,
+		   double *acf, double *cvli, int ma,
 		   double *alpha, int mxpq)
 {
-    double div, eps2 = 1.0e-10;
+    double ak, div, eps2 = 1.0e-10;
     int i, j, k, kc, j1;
     int kp1, mikp, miim1p;
-
-    if (ma < mxpqp1) {
-	return 4;
-    }
 
     /* Initialization, and return if p = q = 0 */
     acf[0] = cvli[0] = 1.0;
@@ -218,13 +212,7 @@ static int tw_acf (const double *phi, int p,
 	return 0;
     }
     for (i=1; i<ma; i++) {
-	acf[i] = 0;
-    }
-    if (mxpqp1 == 1) {
-	return 0;
-    }
-    for (i=1; i<mxpqp1; i++) {
-	cvli[i] = 0;
+	acf[i] = cvli[i] = 0;
     }
     for (k=0; k<mxpq; k++) {
 	alpha[k] = 0;
@@ -243,6 +231,7 @@ static int tw_acf (const double *phi, int p,
     }
 
     if (p == 0) {
+	/* no AR part */
 	return 0;
     }
 
@@ -251,13 +240,14 @@ static int tw_acf (const double *phi, int p,
         alpha[k] = cvli[k] = phi[k];
     }
 
-    /* computation of T-W alpha and delta (delta stored in ACF
+    /* Tunnicliffe-Wilson's alpha and delta (delta stored in ACF
        which is gradually overwritten)
     */
     for (k=0; k<mxpq; k++) {
         kc = mxpq - k - 1;
         if (kc < p) {
-	    div = 1.0 - alpha[kc] * alpha[kc];
+	    ak = alpha[kc];
+	    div = 1.0 - ak * ak;
 	    if (div < eps2) {
 		return 5;
 	    }
@@ -265,7 +255,10 @@ static int tw_acf (const double *phi, int p,
 		break;
 	    }
 	    for (j=0; j<kc; j++) {
-		alpha[j] = (cvli[j] + alpha[kc] * cvli[kc-j-1]) / div;
+		alpha[j] = (cvli[j] + ak * cvli[kc-j-1]) / div;
+	    }
+	    for (j=0; j<kc; j++) {
+		cvli[j] = alpha[j];
 	    }
 	}
 	if (kc < q) {
@@ -274,31 +267,25 @@ static int tw_acf (const double *phi, int p,
 		acf[j] += acf[kc+1] * alpha[kc-j];
 	    }
 	}
-	if (kc < p) {
-	    for (j=0; j<kc; j++) {
-		cvli[j] = alpha[j];
-	    }
-	}
     }
 
-    /* computation of T-W Nu (Nu is stored in cvli,
+    /* computation of Tunnicliffe-Wilson's nu (stored in cvli,
        copied into acf)
     */
     acf[0] *= 0.5;
-    for (k=0; k<mxpq; k++) {
-        if (k < p) {
-	    kp1 = k + 1;
-	    div = 1.0 - alpha[k] * alpha[k];
-	    for (j=0; j<=kp1; j++) {
-		cvli[j] = (acf[j] + alpha[k] * acf[k+1-j]) / div;
-	    }
-	    for (j=0; j<=kp1; j++) {
-		acf[j] = cvli[j];
-	    }
+    for (k=0; k<p; k++) {
+	ak = alpha[k];
+	kp1 = k + 1;
+	div = 1.0 - ak * ak;
+	for (j=0; j<=kp1; j++) {
+	    cvli[j] = (acf[j] + ak * acf[k+1-j]) / div;
+	}
+	for (j=0; j<=kp1; j++) {
+	    acf[j] = cvli[j];
 	}
     }
 
-    /* Computation of ACF (acf is gradually overwritten) */
+    /* Computation of acf (which is gradually overwritten) */
     for (i=0; i<ma; i++) {
         miim1p = min0(i, p);
         for (j=0; j<miim1p; j++) {
@@ -311,11 +298,9 @@ static int tw_acf (const double *phi, int p,
     cvli[0] = 1.0;
     for (k=0; k<q; k++) {
 	cvli[k+1] = theta[k];
-	if (p > 0) {
-	    mikp = min0(k+1, p);
-	    for (j=0; j<mikp; j++) {
-		cvli[k+1] += phi[j] * cvli[k-j];
-	    }
+	mikp = min0(k+1, p);
+	for (j=0; j<mikp; j++) {
+	    cvli[k+1] += phi[j] * cvli[k-j];
 	}
     }
 
