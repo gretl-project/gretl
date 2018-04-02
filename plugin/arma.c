@@ -1566,10 +1566,12 @@ static int prefer_hr_init (arma_info *ainfo)
 
 static int maybe_set_cml_init (arma_info *ainfo)
 {
-    /* probably not for smaller samples */
-    int ret = ainfo->T > 350;
+    int ret = 1;
 
-    if (!arma_exact_ml(ainfo)) {
+    if (ainfo->T < 300) {
+	/* probably not for smaller samples */
+	ret = 0;
+    } else if (!arma_exact_ml(ainfo)) {
 	/* only if final estimation will be exact ML! */
 	ret = 0;
     } else if (ainfo->nexo > 0) {
@@ -1579,9 +1581,7 @@ static int maybe_set_cml_init (arma_info *ainfo)
 	/* can't handle NAs */
 	ret = 0;
     } else if (ainfo->q == 0 && ainfo->Q == 0) {
-	/* not much point, AR initialization
-	   should do the job?
-	*/
+	/* AR initialization should do the job */
 	ret = 0;
     }
 
@@ -1900,6 +1900,12 @@ MODEL arma_model (const int *list, const int *pqspec,
 	maybe_set_cml_init(ainfo);
     }
 
+    /* see if it may be helpful to scale the dependent
+       variable, if we're doing exact ML */
+    if (arma_exact_ml(ainfo) && ainfo->ifc) {
+	maybe_set_yscale(ainfo);
+    }
+
     /* try Hannan-Rissanen init, if suitable */
     if (!init_done && prefer_hr_init(ainfo)) {
 	hr_arma_init(coeff, dset, ainfo, &init_done);
@@ -1932,7 +1938,7 @@ MODEL arma_model (const int *list, const int *pqspec,
 		err = as154_arma(coeff, dset, ainfo, &armod, opt);
 	    } else {
 		err = kalman_arma(coeff, dset, ainfo, &armod, opt);
-	    }	    
+	    }
 #else
 	    err = kalman_arma(coeff, dset, ainfo, &armod, opt);
 #endif

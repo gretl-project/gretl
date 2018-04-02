@@ -118,6 +118,8 @@ int ma_out_of_bounds (arma_info *ainfo, const double *theta,
 
 void bounds_checker_cleanup (void);
 
+void maybe_set_yscale (arma_info *ainfo);
+
 int hr_arma_init (double *coeff, const DATASET *dset,
 		  arma_info *ainfo, int *done);
 

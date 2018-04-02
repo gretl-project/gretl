@@ -239,9 +239,8 @@ static double as197_loglikelihood (const struct as197_info *as)
 {
     /* full ARMA loglikelihood */
     double ll1 = 1.0 + LN_2_PI + log(as->sumsq / as->ok_n);
-    double sumldet = as->ok_n * log(as->fact);
 
-    return -0.5 * (as->ok_n * ll1 + sumldet);
+    return -0.5 * as->ok_n * (ll1 + log(as->fact));
 }
 
 static double as197_iteration (const double *b, void *data)
@@ -543,6 +542,7 @@ static int as197_arma (const double *coeff,
 		       NULL, &as, NULL, opt, ainfo->prn);
 	if (!err) {
 	    if (ainfo->yscale != 1.0) {
+		/* note: this implies recalculation of loglik */
 		as197_undo_y_scaling(ainfo, y, b, &as);
 	    } else if (!as.use_loglik) {
 		/* we haven't already computed this */

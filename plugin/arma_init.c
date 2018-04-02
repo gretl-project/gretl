@@ -66,10 +66,10 @@ static int init_transform_const (arma_info *ainfo)
 
 /* try to avoid numerical problems when doing exact ML:
    arrange for scaling of the dependent variable if it's
-   "too big"
+   "too big" or "too small"
 */
 
-static void maybe_set_yscale (arma_info *ainfo)
+void maybe_set_yscale (arma_info *ainfo)
 {
     double ybar = gretl_mean(ainfo->t1, ainfo->t2, ainfo->y);
 
@@ -77,14 +77,16 @@ static void maybe_set_yscale (arma_info *ainfo)
 	if (arima_levels(ainfo)) {
 	    set_arma_avg_ll(ainfo); /* is this a good idea? */
 	} else {
-	    ainfo->yscale = 10 / ybar;
+	    ainfo->yscale = fabs(10 / ybar);
 	}
     } else if (fabs(ybar) < 0.01) {
-	ainfo->yscale = 10 / ybar;
+	ainfo->yscale = fabs(10 / ybar);
     }
 }
 
-#define apply_yscaling(a) (arma_exact_ml(a) && !arma_cml_init(a))
+#define apply_yscaling(a,x) (arma_exact_ml(a) && \
+			     !arma_cml_init(a) && \
+			     !na(x))
 
 #define HR_MINLAGS 16
 
@@ -204,11 +206,6 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
     /* in case we bomb before estimating a model */
     gretl_model_init(&armod, dset);
 
-    /* NEW 2019-04-01 */
-    if (arma_exact_ml(ainfo) && ainfo->ifc) {
-	maybe_set_yscale(ainfo);
-    }
-
     /* Start building stuff for pass 1 */
 
     pass1list = gretl_list_new(pass1v);
@@ -246,7 +243,7 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
 
     for (t=0; t<ainfo->T; t++) {
 	s = t + ainfo->t1;
-	if (apply_yscaling(ainfo) && !na(y[s])) {
+	if (apply_yscaling(ainfo, y[s])) {
 	    aset->Z[1][t] = y[s] * ainfo->yscale;
 	} else {
 	    aset->Z[1][t] = y[s];
@@ -259,7 +256,7 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
 	    s = t + ainfo->t1 - i;
 	    if (s < 0) {
 		ys = NADBL;
-	    } else if (apply_yscaling(ainfo) && !na(y[s])) {
+	    } else if (apply_yscaling(ainfo, y[s])) {
 		ys = y[s] * ainfo->yscale;
 	    } else {
 		ys = y[s];
@@ -704,7 +701,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
 	int realt = t + ainfo->t1;
 	int miss = 0;
 
-	if (apply_yscaling(ainfo) && !na(y[realt])) {
+	if (apply_yscaling(ainfo, y[realt])) {
 	    aZ[1][t] = y[realt] * ainfo->yscale;
 	} else {
 	    aZ[1][t] = y[realt];
@@ -726,7 +723,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
 		}
 	    } else {
 		aZ[k][t] = y[s];
-		if (apply_yscaling(ainfo) && !na(y[s])) {
+		if (apply_yscaling(ainfo, y[s])) {
 		    aZ[k][t] *= ainfo->yscale;
 		}
 		k++;
@@ -749,7 +746,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
 		}
 	    } else {
 		aZ[k][t] = y[s];
-		if (apply_yscaling(ainfo) && !na(y[s])) {
+		if (apply_yscaling(ainfo, y[s])) {
 		    aZ[k][t] *= ainfo->yscale;
 		}
 		for (k=0; k<narmax; k++) {
@@ -769,7 +766,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
 		    }
 		} else {
 		    aZ[ky][t] = y[s];
-		    if (apply_yscaling(ainfo) && !na(y[s])) {
+		    if (apply_yscaling(ainfo, y[s])) {
 			aZ[ky][t] *= ainfo->yscale;
 		    }
 		    ky++;
@@ -1197,10 +1194,6 @@ int ar_arma_init (double *coeff, const DATASET *dset,
     if (narmax > 0 && ptotal > 0) {
 	/* ARMAX-induced lags of exog vars */
 	av += ainfo->nexo * ptotal;
-    }
-
-    if (arma_exact_ml(ainfo) && ainfo->ifc) {
-	maybe_set_yscale(ainfo);
     }
 
     if (ptotal == 0 && ainfo->nexo == 0 && ainfo->ifc) {
