@@ -61,7 +61,7 @@ function matrix stdAB_init(matrix mX, matrix aRd, matrix bRd)
     matrix ret = b | e
   else
     matrix Sigma = (mX'mX) / rows(mX)
-    matrix ret = init_C(0, Sigma, bRd)
+    matrix ret = init_C(Sigma, bRd)
   endif
 
   return ret

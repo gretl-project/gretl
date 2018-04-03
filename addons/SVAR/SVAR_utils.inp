@@ -373,6 +373,7 @@ function void printStrMat(matrix X, matrix V, string name)
 
   matrix cfse = vec(X)
   matrix se = sqrt(diag(V))
+  
   matrix numzero = selifr(seq(1,rows(se))', (se .< 1.0e-15))
   if rows(numzero) > 1
     se[numzero] = 0.0

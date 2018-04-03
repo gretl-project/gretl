@@ -136,7 +136,7 @@ function list SVAR_hd(bundle *Mod, scalar nv)
 	# printf "%8.3f\n", Mod.X
 	# printf "%8.3f\n", Mod.mu
 	
-	matrix m = (mreg ~ Mod.X) * Mod.mu'
+	matrix m = (mreg ~ Mod.X) * Mod.mu
     endif
   
     matrix E = Mod.E 

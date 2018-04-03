@@ -39,7 +39,7 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
     matrix fullRd = get_full_Rd(&obj, verbosity) # this also sets obj.C1 !
 
     # try to set some "sensible" initial values
-    matrix param = init_C(0, Sigma, fullRd) 
+    matrix param = init_C(Sigma, fullRd) 
             
     if obj.simann > 0
       printf "before simann:\n%12.6f\n", param
