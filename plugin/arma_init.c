@@ -72,15 +72,16 @@ static int init_transform_const (arma_info *ainfo)
 void maybe_set_yscale (arma_info *ainfo)
 {
     double ybar = gretl_mean(ainfo->t1, ainfo->t2, ainfo->y);
+    double abs_ybar = fabs(ybar);
 
-    if (fabs(ybar) > 250) {
+    if (abs_ybar > 250) {
 	if (arima_levels(ainfo)) {
 	    set_arma_avg_ll(ainfo); /* is this a good idea? */
 	} else {
-	    ainfo->yscale = fabs(10 / ybar);
+	    ainfo->yscale = 10 / abs_ybar;
 	}
-    } else if (fabs(ybar) < 0.01) {
-	ainfo->yscale = fabs(10 / ybar);
+    } else if (abs_ybar < 0.01 && abs_ybar > 0) {
+	ainfo->yscale = 10 / abs_ybar;
     }
 }
 

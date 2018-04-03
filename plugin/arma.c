@@ -1251,12 +1251,14 @@ static int kalman_undo_y_scaling (arma_info *ainfo,
 				  gretl_matrix *y, double *b,
 				  kalman *K)
 {
-    double *beta = b + 1 + ainfo->np + ainfo->P +
+    double *beta = b + ainfo->ifc + ainfo->np + ainfo->P +
 	ainfo->nq + ainfo->Q;
     int i, t, T = ainfo->t2 - ainfo->t1 + 1;
     int err = 0;
 
-    b[0] /= ainfo->yscale;
+    if (ainfo->ifc) {
+	b[0] /= ainfo->yscale;
+    }
 
     for (i=0; i<ainfo->nexo; i++) {
 	beta[i] /= ainfo->yscale;

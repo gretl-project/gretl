@@ -370,11 +370,13 @@ static int as197_undo_y_scaling (arma_info *ainfo,
 				 double *b,
 				 struct as197_info *as)
 {
-    double *beta = b + 1 + ainfo->np + ainfo->P +
+    double *beta = b + ainfo->ifc + ainfo->np + ainfo->P +
 	ainfo->nq + ainfo->Q;
     int i, t, err = 0;
 
-    b[0] /= ainfo->yscale;
+    if (ainfo->ifc) {
+	b[0] /= ainfo->yscale;
+    }
 
     for (i=0; i<ainfo->nexo; i++) {
 	beta[i] /= ainfo->yscale;
@@ -382,9 +384,11 @@ static int as197_undo_y_scaling (arma_info *ainfo,
 
     i = ainfo->t1;
     for (t=0; t<ainfo->fullT; t++) {
-	if (!isnan(as->y0[t])) {
+	if (!isnan(as->y[t])) {
 	    as->y[t] /= ainfo->yscale;
-	    as->y0[t] /= ainfo->yscale;
+	    if (as->y0 != NULL) {
+		as->y0[t] /= ainfo->yscale;
+	    }
 	}
     }
 
@@ -528,6 +532,8 @@ static int as197_arma (const double *coeff,
 	    /* try to avoid slowdown on big samples */
 	    as.toler = 0.0001;
 	    as.use_loglik = 1; /* ? */
+	} else if (!as.ifc) {
+	    as.use_loglik = 1;
 	}
 
 	if (as.q > 0 || as.Q > 0) {
