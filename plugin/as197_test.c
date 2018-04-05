@@ -19,7 +19,7 @@ struct as197_info {
     double toler;         /* tolerance for switching to fast iterations */
     double loglik;
     int ma_check;
-    int ncalls, nbad;
+    int ncalls;
     int use_loglik;
     arma_info *ai;
     gretl_matrix *X;
@@ -69,13 +69,15 @@ static int as197_info_init (struct as197_info *as,
     }
 
     if (!err) {
+	int worklen = as->n + 2*as->rp1 + as->r;
+
 	as->e =  malloc(as->n * sizeof *as->e);
-	as->vw = malloc(as->rp1 * sizeof *as->vw);
-	as->vl = malloc(as->rp1 * sizeof *as->vl);
-	as->vk = malloc(as->r * sizeof *as->vk);
-	if (as->e == NULL || as->vw == NULL ||
-	    as->vl == NULL || as->vk == NULL) {
+	if (as->e == NULL) {
 	    err = E_ALLOC;
+	} else {
+	    as->vw = as->e + as->n;
+	    as->vl = as->vw + as->rp1;
+	    as->vk = as->vl + as->rp1;
 	}
     }
 
@@ -84,7 +86,7 @@ static int as197_info_init (struct as197_info *as,
 	as->loglik = NADBL;
 	as->ifault = 0;
 	as->ma_check = 0;
-	as->ncalls = as->nbad = 0;
+	as->ncalls = 0;
 	as->use_loglik = use_loglik;
     }
 
@@ -96,9 +98,6 @@ static void as197_info_free (struct as197_info *as)
     free(as->phi);
     free(as->theta);
     free(as->e);
-    free(as->vw);
-    free(as->vl);
-    free(as->vk);
     free(as->y0);
 
     if (as->free_X) {
@@ -258,7 +257,6 @@ static double as197_iteration (const double *b, void *data)
 	const double *Theta = theta + as->ai->nq;
 
 	if (ma_out_of_bounds(as->ai, theta, Theta)) {
-	    as->nbad += 1;
 	    return crit;
 	}
     }
@@ -276,12 +274,11 @@ static double as197_iteration (const double *b, void *data)
 	} else {
 	    fprintf(stderr, "flikam: ifault = %d\n", as->ifault);
 	}
-	as->nbad += 1;
 	return NADBL;
     }
 
     if (isnan(as->sumsq) || isnan(as->fact)) {
-	as->nbad += 1; /* leave crit as NA */
+	; /* leave crit as NA */
     } else {
 	/* The criterion used by Melard may work better than
 	   the full loglikelihood in the context of his
@@ -471,7 +468,7 @@ static int as197_arma_finish (MODEL *pmod,
 	write_arma_model_stats(pmod, ainfo, dset);
 	arma_model_add_roots(pmod, ainfo, b);
 	gretl_model_set_int(pmod, "arma_flags", ARMA_EXACT);
-	gretl_model_set_int(pmod, "AS197", 1);
+	gretl_model_set_int(pmod, "as_algo", 197);
 	if (arima_ydiff_only(ainfo)) {
 	    pmod->opt |= OPT_Y;
 	}

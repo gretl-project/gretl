@@ -139,14 +139,13 @@ int karma (int ip, int iq, int ir, int np, double *phi,
     double g, a0;
     int i, j, l, ii;
     double dt, et, ft, ut, wnext;
-    int ir1, ind, inde, indn, indw;
+    int ind, indn, indw, inde = 0;
     int reset_i = 1;
+    int ir1 = ir - 1;
 
-    ir1 = ir - 1;
     for (i=0; i<ir; i++) {
 	e[i] = 0;
     }
-    inde = 0;
 
     /* for non-zero values of @nit, perform quick recursions */
     if (*nit != 0) {
@@ -155,7 +154,6 @@ int karma (int ip, int iq, int ir, int np, double *phi,
 
     for (i=0; i<n; i++) {
 	wnext = w[i];
-
 	/* prediction */
 	if (iupd == 0 || i > 0) {
 	    dt = 0;
@@ -189,13 +187,11 @@ int karma (int ip, int iq, int ir, int np, double *phi,
 		}
 	    }
 	}
-
 	if (isnan(wnext)) {
 	    /* ?? */
 	    resid[i] = 0;
 	    continue;
 	}
-
 	/* updating */
 	ft = p0[0];
 	ut = wnext - a[0];
@@ -251,8 +247,7 @@ int karma (int ip, int iq, int ir, int np, double *phi,
 	    }
 	    et -= theta[j] * e[inde];
 	}
-	e[inde] = et;
-	resid[ii] = et;
+	e[inde] = resid[ii] = et;
 	*ssq += et * et;
 	if (++inde >= iq) {
 	    inde = 0;

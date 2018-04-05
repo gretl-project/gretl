@@ -2910,6 +2910,10 @@ gint populate_remote_addons_list (windata_t *vwin)
 	return err;
     }
 
+#if 0
+    fprintf(stderr, "getbuf: '%s'\n", getbuf);
+#endif
+
     xmlKeepBlanksDefault(0);
 
     doc = xmlParseMemory(getbuf, strlen(getbuf));

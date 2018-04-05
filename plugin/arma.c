@@ -28,6 +28,7 @@
 
 #define ARMA_DEBUG 0
 #define ARMA_MDEBUG 0
+#define SHOW_INIT 0
 #define CHK_FOR_ENV 0
 
 /* for "live" testing of alternative algorithms */
@@ -1906,11 +1907,17 @@ MODEL arma_model (const int *list, const int *pqspec,
        variable, if we're doing exact ML */
     if (arma_exact_ml(ainfo) && ainfo->ifc) {
 	maybe_set_yscale(ainfo);
+#if SHOW_INIT
+	fprintf(stderr, "yscale = %g\n", ainfo->yscale);
+#endif
     }
 
     /* try Hannan-Rissanen init, if suitable */
     if (!init_done && prefer_hr_init(ainfo)) {
 	hr_arma_init(coeff, dset, ainfo, &init_done);
+#if SHOW_INIT
+	fprintf(stderr, "HR init: %s\n", init_done ? "success" : "fail");
+#endif
     }
 
     /* initialize via AR model by OLS or NLS, adding minimal
@@ -1920,6 +1927,9 @@ MODEL arma_model (const int *list, const int *pqspec,
     */
     if (!err && !init_done) {
 	err = ar_arma_init(coeff, dset, ainfo, &armod, opt);
+#if SHOW_INIT
+	fprintf(stderr, "AR init: err = %d\n", err);
+#endif
     }
 
     if (!err && arma_cml_init(ainfo)) {

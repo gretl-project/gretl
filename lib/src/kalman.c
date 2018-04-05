@@ -1806,7 +1806,7 @@ int kalman_forecast (kalman *K, PRN *prn)
 	       FIXME?
 	     */
 	    Tmiss++;
-	}	
+	}
 
 	/* initial matrix calculations: form PH and H'PH 
 	   (note that we need PH later) */

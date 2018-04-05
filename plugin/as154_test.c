@@ -1,16 +1,3 @@
-/* initial setup */
-extern int starma (int ip, int iq, int ir, int np,
-		   double *phi, double *theta, double *a, double *p, 
-		   double *v, double *thetab, double *xnext, double *
-		   xrow, double *rbar, int nrbar);
-
-/* kalman filtering */
-extern int karma (int ip, int iq, int ir, int np, double *phi,
-		  double *theta, double *a, double *p,
-		  double *v, int n, double *w, double *resid,
-		  double *sumlog, double *ssq, int iupd, double delta,
-		  double *e, int *nit);
-
 struct as154_info {
     int p;
     int P;
@@ -27,16 +14,13 @@ struct as154_info {
     int ok_n;
     int ifc;
     double *phi, *theta;
+    double *y, *y0, *e;
     double *A, *P0, *V;
     double *thetab;
-    double *xnext;
-    double *xrow;
-    double *rbar;
-    double *y, *y0;
-    double *resid, *e;
-    double ssq, sumlog;
+    double *xnext, *xrow, *rbar; /* workspace */
+    double *resid;
+    double sumsq, sumlog;
     double toler;
-    double mu;
     double loglik;
     int ma_check;
     int iupd;
@@ -51,7 +35,7 @@ static int as154_info_init (struct as154_info *as,
 			    double toler,
 			    int use_loglik)
 {
-    int worklen;
+    int err = 0;
 
     as->ai = ai; /* create accessor */
 
@@ -79,26 +63,38 @@ static int as154_info_init (struct as154_info *as,
     as->A =     malloc(as->r * sizeof *as->A);
     as->P0 =    malloc(as->np * sizeof *as->P0);
     as->V =     malloc(as->np * sizeof *as->V);
-
     as->resid = malloc(as->n * sizeof *as->resid);
     as->e = malloc(as->r * sizeof *as->e);
 
-    worklen = 3 * as->np + as->nrbar;
-    as->thetab = malloc(worklen * sizeof *as->thetab);
-    as->xnext = as->thetab + as->np;
-    as->xrow = as->xnext + as->np;
-    as->rbar = as->xrow + as->np;
+    if (as->phi == NULL || as->theta == NULL || as->A == NULL ||
+	as->P0 == NULL || as->V == NULL || as->resid == NULL ||
+	as->e == NULL) {
+	err = E_ALLOC;
+    }
 
-    as->toler = toler;
-    as->mu = 0;
-    as->loglik = NADBL;
-    as->ifault = 0;
-    as->ma_check = 0;
-    as->iupd = 1;
+    if (!err) {
+	int worklen = 3 * as->np + as->nrbar;
 
-    as->use_loglik = use_loglik;
+	as->thetab = malloc(worklen * sizeof *as->thetab);
+	if (as->thetab == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    as->xnext = as->thetab + as->np;
+	    as->xrow = as->xnext + as->np;
+	    as->rbar = as->xrow + as->np;
+	}
+    }
 
-    return 0;
+    if (!err) {
+	as->toler = toler;
+	as->loglik = NADBL;
+	as->ifault = 0;
+	as->ma_check = 0;
+	as->iupd = 1;
+	as->use_loglik = use_loglik;
+    }
+
+    return err;
 }
 
 static void as154_info_free (struct as154_info *as)
@@ -250,7 +246,7 @@ static void as154_fill_arrays (struct as154_info *as,
 static double as154_loglikelihood (const struct as154_info *as)
 {
     /* full ARMA loglikelihood */
-    double ll1 = 1.0 + LN_2_PI + log(as->ssq / as->ok_n);
+    double ll1 = 1.0 + LN_2_PI + log(as->sumsq / as->ok_n);
 
     return -0.5 * (as->ok_n * ll1 + as->sumlog);
 }
@@ -286,15 +282,15 @@ static double as154_iteration (const double *b, void *data)
     }
 
     /* intialization required */
-    as->sumlog = as->ssq = 0;
+    as->sumlog = as->sumsq = 0;
 
     karma(as->plen, as->qlen, as->r, as->np,
 	  as->phi, as->theta, as->A, as->P0, as->V,
 	  as->n, as->y, as->resid,
-	  &as->sumlog, &as->ssq, as->iupd,
+	  &as->sumlog, &as->sumsq, as->iupd,
 	  as->toler, as->e, &nit);
 
-    if (isnan(as->sumlog) || isnan(as->ssq) || as->ssq <= 0) {
+    if (isnan(as->sumlog) || isnan(as->sumsq) || as->sumsq <= 0) {
 	; // fprintf(stderr, "karma: got NaNs, nit = %d\n", nit);
     } else {
 	/* The criterion used by Gardner at al may work
@@ -305,7 +301,7 @@ static double as154_iteration (const double *b, void *data)
 	    as->loglik = crit = as154_loglikelihood(as);
 	} else {
 	    /* Gardner et al criterion */
-	    crit = -(as->ok_n * log(as->ssq) + as->sumlog);
+	    crit = -(as->ok_n * log(as->sumsq) + as->sumlog);
 	}
     }
 
@@ -320,14 +316,14 @@ static const double *as154_llt_callback (const double *b, int i,
 
     as154_fill_arrays(as, b);
 
-    as->sumlog = as->ssq = 0;
+    as->sumlog = as->sumsq = 0;
     karma(as->plen, as->qlen, as->r, as->np,
 	  as->phi, as->theta, as->A, as->P0, as->V,
 	  as->n, as->y, as->resid,
-	  &as->sumlog, &as->ssq, as->iupd,
+	  &as->sumlog, &as->sumsq, as->iupd,
 	  as->toler, as->e, &nit);
 
-    if (isnan(as->sumlog) || isnan(as->ssq) || as->ssq <= 0) {
+    if (isnan(as->sumlog) || isnan(as->sumsq) || as->sumsq <= 0) {
 	err = E_NAN;
     }
 
@@ -480,7 +476,7 @@ static int as154_arma_finish (MODEL *pmod,
 	write_arma_model_stats(pmod, ainfo, dset);
 	arma_model_add_roots(pmod, ainfo, b);
 	gretl_model_set_int(pmod, "arma_flags", ARMA_EXACT);
-	gretl_model_set_int(pmod, "AS197", 1);
+	gretl_model_set_int(pmod, "as_algo", 154);
 	if (arima_ydiff_only(ainfo)) {
 	    pmod->opt |= OPT_Y;
 	}
@@ -542,6 +538,8 @@ static int as154_arma (const double *coeff,
 	    as.use_loglik = 1; /* ? */
 	}
 
+	as.use_loglik = 1;
+
 	if (as.q > 0 || as.Q > 0) {
 	    as.ma_check = 1; /* ? */
 	}
@@ -576,4 +574,3 @@ static int as154_arma (const double *coeff,
 
     return err;
 }
-
