@@ -71,7 +71,7 @@ static int as197_info_init (struct as197_info *as,
     if (!err) {
 	int worklen = as->n + 2*as->rp1 + as->r;
 
-	as->e =  malloc(as->n * sizeof *as->e);
+	as->e =  malloc(worklen * sizeof *as->e);
 	if (as->e == NULL) {
 	    err = E_ALLOC;
 	} else {
