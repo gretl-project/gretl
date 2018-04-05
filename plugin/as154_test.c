@@ -18,7 +18,7 @@ struct as154_info {
     double *A, *P0, *V;
     double *thetab;
     double *xnext, *xrow, *rbar; /* workspace */
-    double *resid;
+    double *evec; /* small residual vector */
     double sumsq, sumlog;
     double toler;
     double loglik;
@@ -63,12 +63,12 @@ static int as154_info_init (struct as154_info *as,
     as->A =     malloc(as->r * sizeof *as->A);
     as->P0 =    malloc(as->np * sizeof *as->P0);
     as->V =     malloc(as->np * sizeof *as->V);
-    as->resid = malloc(as->n * sizeof *as->resid);
-    as->e = malloc(as->r * sizeof *as->e);
+    as->e =     malloc(as->n * sizeof *as->e);
+    as->evec =  malloc(as->r * sizeof *as->evec);
 
     if (as->phi == NULL || as->theta == NULL || as->A == NULL ||
-	as->P0 == NULL || as->V == NULL || as->resid == NULL ||
-	as->e == NULL) {
+	as->P0 == NULL || as->V == NULL || as->e == NULL ||
+	as->evec == NULL) {
 	err = E_ALLOC;
     }
 
@@ -104,8 +104,8 @@ static void as154_info_free (struct as154_info *as)
     free(as->A);
     free(as->P0);
     free(as->V);
-    free(as->resid);
     free(as->e);
+    free(as->evec);
     free(as->thetab);
     free(as->y0);
 
@@ -286,9 +286,9 @@ static double as154_iteration (const double *b, void *data)
 
     karma(as->plen, as->qlen, as->r, as->np,
 	  as->phi, as->theta, as->A, as->P0, as->V,
-	  as->n, as->y, as->resid,
+	  as->n, as->y, as->e,
 	  &as->sumlog, &as->sumsq, as->iupd,
-	  as->toler, as->e, &nit);
+	  as->toler, as->evec, &nit);
 
     if (isnan(as->sumlog) || isnan(as->sumsq) || as->sumsq <= 0) {
 	; // fprintf(stderr, "karma: got NaNs, nit = %d\n", nit);
@@ -319,9 +319,9 @@ static const double *as154_llt_callback (const double *b, int i,
     as->sumlog = as->sumsq = 0;
     karma(as->plen, as->qlen, as->r, as->np,
 	  as->phi, as->theta, as->A, as->P0, as->V,
-	  as->n, as->y, as->resid,
+	  as->n, as->y, as->e,
 	  &as->sumlog, &as->sumsq, as->iupd,
-	  as->toler, as->e, &nit);
+	  as->toler, as->evec, &nit);
 
     if (isnan(as->sumlog) || isnan(as->sumsq) || as->sumsq <= 0) {
 	err = E_NAN;
