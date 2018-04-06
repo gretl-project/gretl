@@ -436,8 +436,13 @@ static int as154_arma_finish (MODEL *pmod,
     s2 = 0.0;
     i = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	s2 += as->e[i] * as->e[i];
-	pmod->uhat[t] = as->e[i++];
+	if (isnan(as->e[i])) {
+	    pmod->uhat[t] = NADBL;
+	} else {
+	    s2 += as->e[i] * as->e[i];
+	    pmod->uhat[t] = as->e[i];
+	}
+	i++;
     }
 
     s2 /= ainfo->T;

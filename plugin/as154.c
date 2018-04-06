@@ -130,6 +130,68 @@ int starma (int ip, int iq, int ir, int np, double *phi,
     return 0;
 }
 
+/* Handle the required transformation of the P matrix
+   in case the dependent variable is missing at the
+   prior observation. FIXME: make this more efficient.
+*/
+
+static int handle_missing_obs (int ip, int ir, int np,
+			       const double *phi,
+			       const double *v,
+			       double *p0)
+{
+    gretl_matrix_block *B;
+    gretl_matrix *m, *T, *P, *TPT;
+    int i, j, err = 0;
+
+    B = gretl_matrix_block_new(&m, np, 1,
+			       &T, ir, ir,
+			       &P, ir, ir,
+			       &TPT, ir, ir,
+			       NULL);
+    if (B == NULL) {
+	return E_ALLOC;
+    }
+
+    gretl_matrix_zero(T);
+
+    for (i=0; i<ip; i++) {
+	T->val[i] = phi[i];
+	for (j=1; j<ir; j++) {
+	    gretl_matrix_set(T, i+j-1, j, 1.0);
+	}
+    }
+
+    for (i=0; i<np; i++) {
+	m->val[i] = p0[i];
+    }
+    err = gretl_matrix_unvectorize_h(P, m);
+
+    if (!err) {
+	err = gretl_matrix_qform(T, GRETL_MOD_NONE, P,
+				 TPT, GRETL_MOD_NONE);
+    }
+
+    if (!err) {
+	for (i=0; i<np; i++) {
+	    m->val[i] = v[i];
+	}
+	err = gretl_matrix_unvectorize_h(P, m);
+    }
+
+    if (!err) {
+	gretl_matrix_add_to(TPT, P);
+	gretl_matrix_vectorize_h(m, TPT);
+	for (i=0; i<np; i++) {
+	    p0[i] = m->val[i];
+	}
+    }
+
+    gretl_matrix_block_destroy(B);
+
+    return err;
+}
+
 int karma (int ip, int iq, int ir, int np, double *phi,
 	   double *theta, double *a, double *p0,
 	   double *v, int n, double *w, double *resid,
@@ -142,6 +204,7 @@ int karma (int ip, int iq, int ir, int np, double *phi,
     int ind, indn, indw, inde = 0;
     int reset_i = 1;
     int ir1 = ir - 1;
+    int skip = 0;
 
     for (i=0; i<ir; i++) {
 	e[i] = 0;
@@ -174,22 +237,26 @@ int karma (int ip, int iq, int ir, int np, double *phi,
 	    for (j=0; j<ip; j++) {
 		a[j] += phi[j] * a0;
 	    }
-	    ind = -1;
-	    indn = ir-1;
-	    for (l=0; l<ir; l++) {
-		for (j=l; j<ir; j++) {
-		    ind++;
-		    p0[ind] = v[ind];
-		    if (j != ir-1) {
-			indn++;
-			p0[ind] += p0[indn];
+	    if (skip) {
+		handle_missing_obs(ip, ir, np, phi, v, p0);
+	    } else {
+		ind = -1;
+		indn = ir-1;
+		for (l=0; l<ir; l++) {
+		    for (j=l; j<ir; j++) {
+			ind++;
+			p0[ind] = v[ind];
+			if (j != ir-1) {
+			    indn++;
+			    p0[ind] += p0[indn];
+			}
 		    }
 		}
 	    }
 	}
 	if (isnan(wnext)) {
-	    /* ?? */
-	    resid[i] = 0;
+	    resid[i] = M_NA;
+	    skip = 1;
 	    continue;
 	}
 	/* updating */
@@ -216,6 +283,7 @@ int karma (int ip, int iq, int ir, int np, double *phi,
 	}
 	*ssq += ut * ut / ft;
 	*sumlog += log(ft);
+	skip = 0;
     }
 
     *nit = n;
