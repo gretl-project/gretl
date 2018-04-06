@@ -155,7 +155,7 @@ static int handle_missing_obs (int ip, int ir, int np,
 	return E_ALLOC;
     }
 
-    /* construct the full T matrix */
+    /* construct the full T matrix using @phi */
     gretl_matrix_zero(T);
     for (i=0; i<ip; i++) {
 	T->val[i] = phi[i];
@@ -164,7 +164,7 @@ static int handle_missing_obs (int ip, int ir, int np,
 	}
     }
 
-    /* construct full P matrix */
+    /* construct full P matrix using @p0 */
     gretl_matrix_init(&m);
     m.rows = np; m.cols = 1; m.val = p0;
     err = gretl_matrix_unvectorize_h(P, &m);
@@ -237,6 +237,7 @@ int karma (int ip, int iq, int ir, int np, double *phi,
 		a[j] += phi[j] * a0;
 	    }
 	    if (skip) {
+		/* gretl addition to algorithm */
 		handle_missing_obs(ip, ir, np, phi, v, p0);
 	    } else {
 		ind = -1;
@@ -275,8 +276,13 @@ int karma (int ip, int iq, int ir, int np, double *phi,
 	for (l=0; l<ir; l++) {
 	    p0[l] = 0;
 	}
+#if 0	
+	resid[i] = ut;
+	e[inde++] = ut / sqrt(ft);
+#else
 	resid[i] = ut / sqrt(ft);
 	e[inde++] = resid[i];
+#endif
 	if (inde >= iq) {
 	    inde = 0;
 	}
@@ -323,66 +329,6 @@ int karma (int ip, int iq, int ir, int np, double *phi,
 
     return 0;
 }
-
-#if 0
-
-int kalfor_(int m, int ip, int ir, int np, double *phi,
-	    double *a, double *p, double *v, double *work)
-{
-    int i, j, l;
-    double a1, dt;
-    int ir1, ind, ind1;
-    double phii, phij, phijdt;
-
-    /* Parameter adjustments */
-    --work;
-    --a;
-    --phi;
-    --v;
-    --p;
-
-    ir1 = ir - 1;
-    for (l=1; l<=m; l++) {
-	/* predict a */
-	a1 = a[1];
-	if (ir != 1) {
-	    for (i=1; i<=ir1; i++) {
-		a[i] = a[i+1];
-	    }
-	}
-	a[ir] = 0;
-	for (j=1; j<=ip; j++) {
-	    a[j] += phi[j] * a1;
-	}
-	/* predict p */
-	for (i=1; i<=ir; i++) {
-	    work[i] = p[i];
-	}
-	ind = 0;
-	ind1 = ir;
-	dt = p[1];
-	for (j=1; j<=ir; j++) {
-	    phij = phi[j];
-	    phijdt = phij * dt;
-	    for (i=j; i<=ir; i++) {
-		ind++;
-		phii = phi[i];
-		p[ind] = v[ind] + phii * phijdt;
-		if (j < ir) {
-		    p[ind] += work[j+1] * phii;
-		}
-		if (i < ir) {
-		    ind1++;
-		    p[ind] = p[ind] + work[i+1] * phij + p[ind1];
-		}
-	    }
-	}
-    }
-
-    return 0;
-}
-
-#endif
 
 static int inclu2_ (int np, int nrbar, const double *xnext,
 		    double *xrow, double y, double *p0, double *rbar,

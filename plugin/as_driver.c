@@ -488,7 +488,7 @@ static const double *as154_llt_callback (const double *b, int i,
     return (err)? NULL : as->e;
 }
 
-/* FIXME consolidate this with arma_OPG_vcv? */
+/* FIXME: consolidate this with arma_OPG_vcv? */
 
 static int as_OPG_vcv (MODEL *pmod,
 		       struct as_info *as,
@@ -680,11 +680,7 @@ static int as_arma_finish (MODEL *pmod,
 
 static int as197_ok (arma_info *ainfo)
 {
-    if (arma_missvals(ainfo)) {
-	return 0;
-    } else {
-	return 1;
-    }
+    return arma_missvals(ainfo) ? 0 : 1;
 }
 
 static int as_arma (const double *coeff,
