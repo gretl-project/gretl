@@ -31,10 +31,6 @@
 #define SHOW_INIT 0
 #define CHK_FOR_ENV 0
 
-/* for "live" testing of alternative algorithms */
-#define TEST_AS197 1
-#define TEST_AS154 0
-
 #include "arma_common.c"
 
 #define KALMAN_ALL 999
@@ -1475,13 +1471,11 @@ static int kalman_arma (const double *coeff,
 
 #define y_missing(y) (na(y) || isnan(y))
 
-#if TEST_AS197
+/* support for AS 154 and AS 197 */
+
 # include "as197.c"
-# include "as197_test.c"
-#elif TEST_AS154
 # include "as154.c"
-# include "as154_test.c"
-#endif
+# include "as_driver.c"
 
 static int user_arma_init (double *coeff, arma_info *ainfo, int *init_done)
 {
@@ -1792,12 +1786,10 @@ MODEL arma_model (const int *list, const int *pqspec,
     ainfo = &ainfo_s;
     arma_info_init(ainfo, opt, pqspec, dset);
 
-#if TEST_AS197 || TEST_AS154
     if (!(opt & OPT_A) && getenv("AS197") != NULL) {
 	/* for batch-mode testing */
 	opt |= OPT_A;
     }
-#endif
 
     if (opt & OPT_V) {
 	ainfo->prn = prn;
@@ -1939,21 +1931,11 @@ MODEL arma_model (const int *list, const int *pqspec,
     if (!err) {
 	clear_model_xpx(&armod);
 	if (arma_exact_ml(ainfo)) {
-#if TEST_AS197
-	    if ((opt & OPT_A) && (1 || as197_ok(ainfo))) {
-		err = as197_arma(coeff, dset, ainfo, &armod, opt);
-	    } else {
-		err = kalman_arma(coeff, dset, ainfo, &armod, opt);
-	    }
-#elif TEST_AS154
 	    if (opt & OPT_A) {
-		err = as154_arma(coeff, dset, ainfo, &armod, opt);
+		err = as_arma(coeff, dset, ainfo, &armod, opt);
 	    } else {
 		err = kalman_arma(coeff, dset, ainfo, &armod, opt);
 	    }
-#else
-	    err = kalman_arma(coeff, dset, ainfo, &armod, opt);
-#endif
 	} else {
 	    err = bhhh_arma(coeff, dset, ainfo, &armod, opt);
 	}

@@ -1,4 +1,7 @@
-struct as154_info {
+/* shared between AS 154 and AS 197 */
+
+struct as_info {
+    int algo;
     int p;
     int P;
     int q;
@@ -7,57 +10,43 @@ struct as154_info {
     int plen;
     int qlen;
     int r;
-    int np;
-    int nrbar;
+    int rp1;       /* AS 197 */
+    int np, nrbar; /* AS 154 */
     int ifault;
     int n;
     int ok_n;
     int ifc;
+    /* AR and MA coeffs */
     double *phi, *theta;
+     /* dependent var and forecast errors */
     double *y, *y0, *e;
+    /* AS 197 workspace */
+    double *vw, *vl, *vk;
+    /* AS 154 workspace */
     double *A, *P0, *V;
     double *thetab;
-    double *xnext, *xrow, *rbar; /* workspace */
-    double *evec; /* small residual vector */
-    double sumsq, sumlog;
-    double toler;
+    double *xnext, *xrow, *rbar;
+    double *evec;
+    /* components of likelihood */
+    double sumsq, fact, sumlog;
+    double toler;  /* tolerance for switching to fast iterations */
     double loglik;
     int ma_check;
-    int iupd;
+    int iupd; /* specific to AS 154 */
+    int ncalls;
     int use_loglik;
     arma_info *ai;
     gretl_matrix *X;
     int free_X;
 };
 
-static int as154_info_init (struct as154_info *as,
-			    arma_info *ai,
-			    double toler,
-			    int use_loglik)
+static int as_154_alloc (struct as_info *as)
 {
     int err = 0;
 
-    as->ai = ai; /* create accessor */
-
-    as->p = ai->p;
-    as->P = ai->P;
-    as->q = ai->q;
-    as->Q = ai->Q;
-    as->pd = ai->pd;
-    as->n = ai->fullT;
-    as->ok_n = ai->T;
-    as->ifc = ai->ifc;
-
-    as->plen = as->p + as->pd * as->P;
-    as->qlen = as->q + as->pd * as->Q;
-    as->r = (as->plen > as->qlen + 1)? as->plen : as->qlen + 1;
-    as->np = as->r * (as->r + 1)/2;
-    as->nrbar = as->np * (as->np - 1)/2;
-
-    as->y = as->y0 = NULL; /* later! */
-    as->X = NULL; /* later too */
-    as->free_X = 0;
-
+    /* unused pointers specific to AS 197 */
+    as->vw = as->vl = as->vk = NULL;
+    
     as->phi =   malloc(as->r * sizeof *as->phi);
     as->theta = malloc(as->r * sizeof *as->theta);
     as->A =     malloc(as->r * sizeof *as->A);
@@ -85,37 +74,128 @@ static int as154_info_init (struct as154_info *as,
 	}
     }
 
+    return err;
+}
+
+static int as_197_alloc (struct as_info *as)
+{
+    int err = 0;
+
+    /* unused pointers specific to AS 154 */
+    as->A = as->P0 = as->V = as->evec = NULL;
+    as->thetab = as->xnext = as->xrow = as->rbar = NULL;
+		
+    as->phi = as->theta = NULL;
+    
+    if (as->plen > 0) {
+	as->phi = malloc(as->plen * sizeof *as->phi);
+	if (as->phi == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+    
+    if (!err && as->qlen > 0) {
+	as->theta = malloc(as->qlen * sizeof *as->theta);
+	if (as->theta == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err) {
+	int worklen = as->n + 2*as->rp1 + as->r;
+
+	as->e =  malloc(worklen * sizeof *as->e);
+	if (as->e == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    as->vw = as->e + as->n;
+	    as->vl = as->vw + as->rp1;
+	    as->vk = as->vl + as->rp1;
+	}
+    }
+
+    return err;
+}
+
+static int as_info_init (struct as_info *as,
+			 int algo,
+			 arma_info *ai,
+			 double toler,
+			 int use_loglik)
+{
+    int err = 0;
+
+    as->algo = algo;
+    as->ai = ai; /* create accessor */
+
+    /* convenience copies of @ai integer values */
+    as->p = ai->p;
+    as->P = ai->P;
+    as->q = ai->q;
+    as->Q = ai->Q;
+    as->pd = ai->pd;
+    as->n = ai->fullT;
+    as->ok_n = ai->T;
+    as->ifc = ai->ifc;
+
+    as->plen = as->p + as->pd * as->P;
+    as->qlen = as->q + as->pd * as->Q;
+    as->r = (as->plen > as->qlen + 1)? as->plen : as->qlen + 1;
+
+    if (algo == 154) {
+	as->np = as->r * (as->r + 1)/2;
+	as->nrbar = as->np * (as->np - 1)/2;
+	as->rp1 = 0;
+    } else {
+	as->rp1 = as->r + 1;
+	as->np = as->nrbar = 0;
+    }
+
+    as->y = as->y0 = NULL; /* later! */
+    as->X = NULL; /* later too */
+    as->free_X = 0;
+
+    if (algo == 154) {
+	err = as_154_alloc(as);
+    } else {
+	err = as_197_alloc(as);
+    }
+
     if (!err) {
 	as->toler = toler;
 	as->loglik = NADBL;
 	as->ifault = 0;
 	as->ma_check = 0;
-	as->iupd = 1; /* FIXME AR(1) */
+	as->iupd = 1; /* AS 154: FIXME AR(1) */
+	as->ncalls = 0;
 	as->use_loglik = use_loglik;
     }
 
     return err;
 }
 
-static void as154_info_free (struct as154_info *as)
+static void as_info_free (struct as_info *as)
 {
     free(as->phi);
     free(as->theta);
-    free(as->A);
-    free(as->P0);
-    free(as->V);
     free(as->e);
-    free(as->evec);
-    free(as->thetab);
     free(as->y0);
+
+    if (as->algo == 154) {
+	free(as->A);
+	free(as->P0);
+	free(as->V);
+	free(as->evec);
+	free(as->thetab);
+    }
 
     if (as->free_X) {
 	gretl_matrix_free(as->X);
     }
 }
 
-void write_big_phi_154 (const double *b,
-			struct as154_info *as)
+static void as_write_big_phi (const double *b,
+			      struct as_info *as)
 {
     const double *bs = b + as->ai->np;
     double x, y;
@@ -144,8 +224,8 @@ void write_big_phi_154 (const double *b,
     }
 }
 
-void write_big_theta_154 (const double *b,
-			  struct as154_info *as)
+static void as_write_big_theta (const double *b,
+				struct as_info *as)
 {
     const double *bs = b + as->ai->nq;
     double x, y;
@@ -174,8 +254,8 @@ void write_big_theta_154 (const double *b,
     }
 }
 
-static void as154_fill_arrays (struct as154_info *as,
-			       const double *b)
+static void as_fill_arrays (struct as_info *as,
+			    const double *b)
 {
     int np = as->ai->np + as->P;
     int nq = as->ai->nq + as->Q;
@@ -188,7 +268,7 @@ static void as154_fill_arrays (struct as154_info *as,
 	    /* just subtract the constant */
 	    for (i=0; i<as->n; i++) {
 		as->y[i] = as->y0[i];
-		if (!isnan(as->y[i])) {
+		if (!isnan(as->y0[i])) {
 		    as->y[i] -= mu;
 		}
 	    }
@@ -197,7 +277,7 @@ static void as154_fill_arrays (struct as154_info *as,
     }
 
     if (as->P > 0) {
-	write_big_phi_154(b, as);
+	as_write_big_phi(b, as);
     } else if (as->p > 0) {
 	j = 0;
 	for (i=0; i<as->p; i++) {
@@ -211,7 +291,7 @@ static void as154_fill_arrays (struct as154_info *as,
     b += np;
 
     if (as->Q > 0) {
-	write_big_theta_154(b, as);
+	as_write_big_theta(b, as);
     } else if (as->q > 0) {
 	j = 0;
 	for (i=0; i<as->q; i++) {
@@ -243,17 +323,81 @@ static void as154_fill_arrays (struct as154_info *as,
     }
 }
 
-static double as154_loglikelihood (const struct as154_info *as)
+/* full ARMA loglikelihood */
+
+static double as_loglikelihood (const struct as_info *as)
 {
-    /* full ARMA loglikelihood */
     double ll1 = 1.0 + LN_2_PI + log(as->sumsq / as->ok_n);
 
-    return -0.5 * (as->ok_n * ll1 + as->sumlog);
+    if (as->algo == 154) {
+	return -0.5 * (as->ok_n * ll1 + as->sumlog);
+    } else {
+	return -0.5 * as->ok_n * (ll1 + log(as->fact));
+    }
+}
+
+static double as197_iteration (const double *b, void *data)
+{
+    struct as_info *as = data;
+    double crit = NADBL;
+    /* number of actually included AR terms */
+    int np = as->ai->np + as->P;
+
+    as->ncalls += 1;
+
+    if (as->ma_check) {
+	/* check that MA term(s) are within bounds */
+	const double *theta = b + as->ifc + np;
+	const double *Theta = theta + as->ai->nq;
+
+	if (ma_out_of_bounds(as->ai, theta, Theta)) {
+	    return crit;
+	}
+    }
+
+    as_fill_arrays(as, b);
+
+    as->ifault = flikam(as->phi, as->plen, as->theta, as->qlen,
+			as->y, as->e, as->n, &as->sumsq, &as->fact,
+			as->vw, as->vl, as->rp1, as->vk, as->r,
+			as->toler);
+
+    if (as->ifault > 0) {
+	if (as->ifault == 5) {
+	    ; // fputs("flikam: (near) non-stationarity\n", stderr);
+	} else {
+	    fprintf(stderr, "flikam: ifault = %d\n", as->ifault);
+	}
+	return NADBL;
+    }
+
+    if (isnan(as->sumsq) || isnan(as->fact)) {
+	; /* leave crit as NA */
+    } else {
+	/* The criterion used by Melard may work better than
+	   the full loglikelihood in the context of his
+	   algorithm? But if we're on the first iteration
+	   and the sum of squares is too massive, switch to
+	   the loglikelihood.
+	*/
+	if (!as->use_loglik) {
+	    /* Melard's criterion */
+	    crit = -as->fact * as->sumsq;
+	    if (as->ncalls == 1 && crit < -5000) {
+		as->use_loglik = 1;
+	    }
+	}
+	if (as->use_loglik) {
+	    as->loglik = crit = as_loglikelihood(as);
+	}
+    }
+
+    return crit;
 }
 
 static double as154_iteration (const double *b, void *data)
 {
-    struct as154_info *as = data;
+    struct as_info *as = data;
     double crit = NADBL;
     /* number of actually included AR terms */
     int np = as->ai->np + as->P;
@@ -269,7 +413,7 @@ static double as154_iteration (const double *b, void *data)
 	}
     }
 
-    as154_fill_arrays(as, b);
+    as_fill_arrays(as, b);
 
     as->ifault = starma(as->plen, as->qlen, as->r, as->np,
 			as->phi, as->theta, as->A, as->P0, as->V,
@@ -298,7 +442,7 @@ static double as154_iteration (const double *b, void *data)
 	   context of their algorithm?
 	*/
 	if (as->use_loglik) {
-	    as->loglik = crit = as154_loglikelihood(as);
+	    as->loglik = crit = as_loglikelihood(as);
 	} else {
 	    /* Gardner et al criterion */
 	    crit = -(as->ok_n * log(as->sumsq) + as->sumlog);
@@ -308,14 +452,28 @@ static double as154_iteration (const double *b, void *data)
     return crit;
 }
 
+static const double *as197_llt_callback (const double *b, int i,
+					 void *data)
+{
+    struct as_info *as = data;
+    int err;
+
+    as_fill_arrays(as, b);
+    err = flikam(as->phi, as->plen, as->theta, as->qlen,
+		 as->y, as->e, as->n, &as->sumsq, &as->fact,
+		 as->vw, as->vl, as->rp1, as->vk, as->r,
+		 as->toler);
+
+    return (err)? NULL : as->e;
+}
+
 static const double *as154_llt_callback (const double *b, int i,
 					 void *data)
 {
-    struct as154_info *as = data;
+    struct as_info *as = data;
     int err = 0, nit = 0;
 
-    as154_fill_arrays(as, b);
-
+    as_fill_arrays(as, b);
     as->sumlog = as->sumsq = 0;
     karma(as->plen, as->qlen, as->r, as->np,
 	  as->phi, as->theta, as->A, as->P0, as->V,
@@ -330,18 +488,25 @@ static const double *as154_llt_callback (const double *b, int i,
     return (err)? NULL : as->e;
 }
 
-static int as154_OPG_vcv (MODEL *pmod,
-			  struct as154_info *as,
-			  double *b, double s2,
-			  int k, int T,
-			  PRN *prn)
+/* FIXME consolidate this with arma_OPG_vcv? */
+
+static int as_OPG_vcv (MODEL *pmod,
+		       struct as_info *as,
+		       double *b, double s2,
+		       int k, int T,
+		       PRN *prn)
 {
     gretl_matrix *G = NULL;
     gretl_matrix *V = NULL;
     int err = 0;
 
-    G = numerical_score_matrix(b, T, k, as154_llt_callback,
-			       as, &err);
+    if (as->algo == 154) {
+	G = numerical_score_matrix(b, T, k, as154_llt_callback,
+				   as, &err);
+    } else {
+	G = numerical_score_matrix(b, T, k, as197_llt_callback,
+				   as, &err);
+    }
 
     if (!err) {
 	V = gretl_matrix_XTX_new(G);
@@ -374,44 +539,57 @@ static int as154_OPG_vcv (MODEL *pmod,
     return err;
 }
 
-static int as154_undo_y_scaling (arma_info *ainfo,
-				 gretl_matrix *y,
-				 double *b,
-				 struct as154_info *as)
+static int as_undo_y_scaling (arma_info *ainfo,
+			      gretl_matrix *y,
+			      double *b,
+			      struct as_info *as)
 {
-    double *beta = b + 1 + ainfo->np + ainfo->P +
+    double *beta = b + ainfo->ifc + ainfo->np + ainfo->P +
 	ainfo->nq + ainfo->Q;
-    int i, t, T = ainfo->t2 - ainfo->t1 + 1;
-    int err = 0;
+    double lnl;
+    int i, t, err = 0;
 
-    b[0] /= ainfo->yscale;
+    if (ainfo->ifc) {
+	b[0] /= ainfo->yscale;
+    }
 
     for (i=0; i<ainfo->nexo; i++) {
 	beta[i] /= ainfo->yscale;
     }
 
+    /* FIXME @i vs @t, and @T vs @fullT !! */
+
     i = ainfo->t1;
-    for (t=0; t<T; t++) {
-	if (!isnan(as->y0[t])) {
+    for (t=0; t<ainfo->fullT; t++) {
+	if (!isnan(as->y[t])) {
 	    as->y[t] /= ainfo->yscale;
-	    as->y0[t] /= ainfo->yscale;
+	    if (as->y0 != NULL) {
+		as->y0[t] /= ainfo->yscale;
+	    }
 	}
     }
 
     as->use_loglik = 1;
-    if (na(as154_iteration(b, as))) {
+
+    if (as->algo == 154) {
+	lnl = as154_iteration(b, as);
+    } else {
+	lnl = as197_iteration(b, as);
+    }
+
+    if (na(lnl)) {
 	err = 1;
     }
 
     return err;
 }
 
-static int as154_arma_finish (MODEL *pmod,
-			      arma_info *ainfo,
-			      const DATASET *dset,
-			      struct as154_info *as,
-			      double *b, gretlopt opt,
-			      PRN *prn)
+static int as_arma_finish (MODEL *pmod,
+			   arma_info *ainfo,
+			   const DATASET *dset,
+			   struct as_info *as,
+			   double *b, gretlopt opt,
+			   PRN *prn)
 {
     int i, t, k = ainfo->nc;
     int vcv_err = 0;
@@ -454,7 +632,7 @@ static int as154_arma_finish (MODEL *pmod,
     as->ma_check = 0;
 
     if (arma_use_opg(opt)) {
-	vcv_err = as154_OPG_vcv(pmod, as, b, s2, k, ainfo->T, prn);
+	vcv_err = as_OPG_vcv(pmod, as, b, s2, k, ainfo->T, prn);
 	if (!vcv_err) {
 	    gretl_model_set_vcv_info(pmod, VCV_ML, ML_OP);
 	    pmod->opt |= OPT_G;
@@ -466,8 +644,13 @@ static int as154_arma_finish (MODEL *pmod,
 	*/
 	gretl_matrix *Hinv;
 
-	Hinv = numerical_hessian_inverse(b, ainfo->nc, as154_iteration,
-					 as, &vcv_err);
+	if (as->algo == 154) {
+	    Hinv = numerical_hessian_inverse(b, ainfo->nc, as154_iteration,
+					     as, &vcv_err);
+	} else {
+	    Hinv = numerical_hessian_inverse(b, ainfo->nc, as197_iteration,
+					     as, &vcv_err);
+	}
 	if (!vcv_err) {
 	    err = gretl_model_write_vcv(pmod, Hinv);
 	    if (!err) {
@@ -481,7 +664,7 @@ static int as154_arma_finish (MODEL *pmod,
 	write_arma_model_stats(pmod, ainfo, dset);
 	arma_model_add_roots(pmod, ainfo, b);
 	gretl_model_set_int(pmod, "arma_flags", ARMA_EXACT);
-	gretl_model_set_int(pmod, "as_algo", 154);
+	gretl_model_set_int(pmod, "as_algo", as->algo);
 	if (arima_ydiff_only(ainfo)) {
 	    pmod->opt |= OPT_Y;
 	}
@@ -490,20 +673,44 @@ static int as154_arma_finish (MODEL *pmod,
     return err;
 }
 
-static int as154_arma (const double *coeff,
-		       const DATASET *dset,
-		       arma_info *ainfo,
-		       MODEL *pmod,
-		       gretlopt opt)
+/* As of 2018-04, the AS 197 implementation for gretl
+   can't properly handle missing values within the sample
+   range; all other "special cases" should be OK.
+*/
+
+static int as197_ok (arma_info *ainfo)
 {
-    struct as154_info as;
+    if (arma_missvals(ainfo)) {
+	return 0;
+    } else {
+	return 1;
+    }
+}
+
+static int as_arma (const double *coeff,
+		    const DATASET *dset,
+		    arma_info *ainfo,
+		    MODEL *pmod,
+		    gretlopt opt)
+{
+    struct as_info as = {0};
     gretl_matrix *y = NULL;
     double *b = NULL;
     double toler = -1.0;
     int use_loglik = 0;
-    int err;
+    int algo, err = 0;
 
-    err = as154_info_init(&as, ainfo, toler, use_loglik);
+    algo = get_optval_int(ARMA, OPT_A, &err);
+    if (algo == 0) {
+	/* user didn't specify: prefer 197 unless there are
+	   missing values to be handled */
+	algo = as197_ok(ainfo) ? 197 : 154;
+    }
+    if (err || (algo != 154 && algo != 197)) {
+	return E_BADOPT;
+    }
+
+    err = as_info_init(&as, algo, ainfo, toler, use_loglik);
     if (err) {
 	return err;
     }
@@ -538,12 +745,18 @@ static int as154_arma (const double *coeff,
 	int maxit;
 	double toler;
 
-	if (0) {
-	    as.toler = 0.0001;
-	    as.use_loglik = 1; /* ? */
+	if (as.algo == 197) {
+	    if (as.n > 2000) {
+		/* try to avoid slowdown on big samples */
+		as.toler = 0.0001;
+		as.use_loglik = 1; /* ? */
+	    } else if (!as.ifc) {
+		as.use_loglik = 1;
+	    }
+	} else {
+	    /* AS 154 */
+	    as.use_loglik = 1; /* generally better? */
 	}
-
-	as.use_loglik = 1;
 
 	if (as.q > 0 || as.Q > 0) {
 	    as.ma_check = 1; /* ? */
@@ -551,21 +764,29 @@ static int as154_arma (const double *coeff,
 
 	BFGS_defaults(&maxit, &toler, ARMA);
 
-	err = BFGS_max(b, ainfo->nc, maxit, toler,
-		       &ainfo->fncount, &ainfo->grcount,
-		       as154_iteration, C_LOGLIK,
-		       NULL, &as, NULL, opt, ainfo->prn);
+	if (as.algo == 154) {
+	    err = BFGS_max(b, ainfo->nc, maxit, toler,
+			   &ainfo->fncount, &ainfo->grcount,
+			   as154_iteration, C_LOGLIK,
+			   NULL, &as, NULL, opt, ainfo->prn);
+	} else {
+	    err = BFGS_max(b, ainfo->nc, maxit, toler,
+			   &ainfo->fncount, &ainfo->grcount,
+			   as197_iteration, C_LOGLIK,
+			   NULL, &as, NULL, opt, ainfo->prn);
+	}
 	if (!err) {
 	    if (ainfo->yscale != 1.0) {
-		as154_undo_y_scaling(ainfo, y, b, &as);
+		/* note: this implies recalculation of loglik */
+		as_undo_y_scaling(ainfo, y, b, &as);
 	    } else if (!as.use_loglik) {
 		/* we haven't already computed this */
-		as.loglik = as154_loglikelihood(&as);
+		as.loglik = as_loglikelihood(&as);
 	    }
 	    gretl_model_set_int(pmod, "fncount", ainfo->fncount);
 	    gretl_model_set_int(pmod, "grcount", ainfo->grcount);
-	    err = as154_arma_finish(pmod, ainfo, dset, &as, b,
-				    opt, ainfo->prn);
+	    err = as_arma_finish(pmod, ainfo, dset, &as, b,
+				 opt, ainfo->prn);
 	}
     }
 
@@ -573,9 +794,10 @@ static int as154_arma (const double *coeff,
 	pmod->errcode = err;
     }
 
-    as154_info_free(&as);
+    as_info_free(&as);
     gretl_matrix_free(y);
     free(b);
 
     return err;
 }
+
