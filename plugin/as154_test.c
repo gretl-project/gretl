@@ -90,7 +90,7 @@ static int as154_info_init (struct as154_info *as,
 	as->loglik = NADBL;
 	as->ifault = 0;
 	as->ma_check = 0;
-	as->iupd = 1;
+	as->iupd = 1; /* FIXME AR(1) */
 	as->use_loglik = use_loglik;
     }
 

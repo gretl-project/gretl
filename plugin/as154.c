@@ -14,9 +14,7 @@ int starma (int ip, int iq, int ir, int np, double *phi,
     int ind, npr, ind1, ind2, npr1, indi, indj, indn;
     double vj, phii, phij;
     int i, j, irank;
-    double ynext;
-    double recres;
-    double ssqerr;
+    double ynext, recres, ssqerr;
 
     /* set A(0), v and phi */
 
@@ -132,7 +130,11 @@ int starma (int ip, int iq, int ir, int np, double *phi,
 
 /* Handle the required transformation of the P matrix
    in case the dependent variable is missing at the
-   prior observation. FIXME: make this more efficient.
+   prior observation. In principle this could be done
+   without constructing the full T and P matrices --
+   exploiting the symmetry of P and the special
+   structure of T -- but it would be quite fiddly!
+   See the Gardner et al AS 154 paper for details.
 */
 
 static int handle_missing_obs (int ip, int ir, int np,
@@ -141,11 +143,11 @@ static int handle_missing_obs (int ip, int ir, int np,
 			       double *p0)
 {
     gretl_matrix_block *B;
-    gretl_matrix *m, *T, *P, *TPT;
-    int i, j, err = 0;
+    gretl_matrix *T, *P, *TPT;
+    gretl_matrix m;
+    int i, j, k, err = 0;
 
-    B = gretl_matrix_block_new(&m, np, 1,
-			       &T, ir, ir,
+    B = gretl_matrix_block_new(&T, ir, ir,
 			       &P, ir, ir,
 			       &TPT, ir, ir,
 			       NULL);
@@ -153,8 +155,8 @@ static int handle_missing_obs (int ip, int ir, int np,
 	return E_ALLOC;
     }
 
+    /* construct the full T matrix */
     gretl_matrix_zero(T);
-
     for (i=0; i<ip; i++) {
 	T->val[i] = phi[i];
 	for (j=1; j<ir; j++) {
@@ -162,28 +164,25 @@ static int handle_missing_obs (int ip, int ir, int np,
 	}
     }
 
-    for (i=0; i<np; i++) {
-	m->val[i] = p0[i];
-    }
-    err = gretl_matrix_unvectorize_h(P, m);
+    /* construct full P matrix */
+    gretl_matrix_init(&m);
+    m.rows = np; m.cols = 1; m.val = p0;
+    err = gretl_matrix_unvectorize_h(P, &m);
 
     if (!err) {
+	/* form T*P*T' */
 	err = gretl_matrix_qform(T, GRETL_MOD_NONE, P,
 				 TPT, GRETL_MOD_NONE);
     }
 
     if (!err) {
-	for (i=0; i<np; i++) {
-	    m->val[i] = v[i];
-	}
-	err = gretl_matrix_unvectorize_h(P, m);
-    }
-
-    if (!err) {
-	gretl_matrix_add_to(TPT, P);
-	gretl_matrix_vectorize_h(m, TPT);
-	for (i=0; i<np; i++) {
-	    p0[i] = m->val[i];
+	/* p0 <- TPT' + V (= RR'), in vech mode */
+	k = 0;
+	for (j=0; j<ir; j++) {
+	    for (i=j; i<ir; i++) {
+		p0[k] = gretl_matrix_get(TPT, i, j) + v[k];
+		k++;
+	    }
 	}
     }
 
@@ -260,8 +259,8 @@ int karma (int ip, int iq, int ir, int np, double *phi,
 	    continue;
 	}
 	/* updating */
-	ft = p0[0];
-	ut = wnext - a[0];
+	ft = p0[0];        /* MSE */
+	ut = wnext - a[0]; /* unscaled forecast error */
 	if (ir != 1) {
 	    ind = ir-1;
 	    for (j=1; j<ir; j++) {
