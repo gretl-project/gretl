@@ -29,10 +29,9 @@ enum {
     KALMAN_SMOOTH  = 1 << 5, /* preparing for smoothing pass */
     KALMAN_SIM     = 1 << 6, /* running simulation */
     KALMAN_CROSS   = 1 << 7, /* cross-correlated disturbances */
-    KALMAN_ETT     = 1 << 8, /* ARMA: producing \epsilon{t|t} estimates */
-    KALMAN_CHECK   = 1 << 9, /* checking user-defined matrices */
-    KALMAN_BUNDLE  = 1 << 10, /* kalman is inside a bundle */
-    KALMAN_SSFSIM  = 1 << 11  /* on simulation, emulate SsfPack */
+    KALMAN_CHECK   = 1 << 8, /* checking user-defined matrices */
+    KALMAN_BUNDLE  = 1 << 9, /* kalman is inside a bundle */
+    KALMAN_SSFSIM  = 1 << 10  /* on simulation, emulate SsfPack */
 };
 
 typedef struct kalman_ kalman;

@@ -1024,24 +1024,22 @@ static int arma_use_opg (gretlopt opt)
     return ret;
 }
 
+/* The following is now basically functionless, other
+   then for backward compatibility: it duplicates the
+   model's $uhat array as the $ehat vector, just in
+   case any scripts want it under that name.
+*/
+
 static void arma_add_ehat (MODEL *pmod, arma_info *ainfo,
 			   kalman *K, double *b)
 {
-    int err;
+    khelper *kh = kalman_get_data(K);
+    gretl_matrix *ehat = gretl_matrix_copy(kh->E);
 
-    kalman_set_options(K, KALMAN_ETT);
-    rewrite_kalman_matrices(K, b, KALMAN_ALL);
-    err = kalman_forecast(K, NULL);
-
-    if (!err) {
-	khelper *kh = kalman_get_data(K);
-	gretl_matrix *ehat = gretl_matrix_copy(kh->E);
-
-	if (ehat != NULL) {
-	    gretl_matrix_set_t1(ehat, pmod->t1);
-	    gretl_matrix_set_t2(ehat, pmod->t2);
-	    gretl_model_set_matrix_as_data(pmod, "ehat", ehat);
-	}
+    if (ehat != NULL) {
+	gretl_matrix_set_t1(ehat, pmod->t1);
+	gretl_matrix_set_t2(ehat, pmod->t2);
+	gretl_model_set_matrix_as_data(pmod, "ehat", ehat);
     }
 }
 

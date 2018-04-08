@@ -1313,9 +1313,13 @@ static int kalman_arma_iter_1 (kalman *K, int missobs)
 	K->SSRw += Ve * K->e->val[0];
     }
 
-    if (K->flags & KALMAN_ETT) {
-	K->e->val[0] = Ve;
-    }
+    /* 2018-04-07: the following (which is now standard)
+       was confined to the case of KALMAN_ETT being set,
+       and I believe the formula was wrong, namely
+       K->e->val[0] = Ve, which amounts dividing e->val[0]
+       by its estimated variance rather than standard
+       deviation. AC. */
+    K->e->val[0] = sqrt(K->Vt->val[0]) * K->e->val[0];
 
     return err;
 }
