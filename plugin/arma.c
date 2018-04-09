@@ -1906,7 +1906,8 @@ MODEL arma_model (const int *list, const int *pqspec,
     if (!init_done && prefer_hr_init(ainfo)) {
 	hr_arma_init(coeff, dset, ainfo, &init_done);
 #if SHOW_INIT
-	fprintf(stderr, "HR init: %s\n", init_done ? "success" : "fail");
+	fprintf(stderr, "HR init (%d %d): %s\n", ainfo->p, ainfo->q,
+		init_done ? "success" : "fail");
 #endif
     }
 
