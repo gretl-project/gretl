@@ -768,11 +768,11 @@ int filter_series (const double *x, double *y, const DATASET *dset,
 
 /**
  * filter_matrix:
- * @X: matrix of original data.
- * @Y: result matrix (newly allocated).
+ * @X: matrix of original data, r x c.
  * @A: vector for autoregressive polynomial.
  * @C: vector for moving average polynomial.
  * @y0: initial value of output series.
+ * @err: location to receive error code.
  *
  * Filters the columns of x according to y_t = C(L)/A(L) x_t.  If the
  * intended AR order is p, @A should be a vector of length p.  If the
@@ -781,11 +781,12 @@ int filter_series (const double *x, double *y, const DATASET *dset,
  * NULL this is taken to mean that the lag-0 MA coefficient is unity
  * (and all others are zero).
  *
- * Returns: 0 on success, non-zero error code on failure.
+ * Returns: r x c matrix of filtered values, or NULL on failure.
  */
 
-gretl_matrix *filter_matrix (gretl_matrix *X, gretl_vector *A, gretl_vector *C,
-			     double y0, int *err)
+gretl_matrix *filter_matrix (gretl_matrix *X, gretl_vector *A,
+			     gretl_vector *C, double y0,
+			     int *err)
 {
     int r = X->rows;
     int c = X->cols;
