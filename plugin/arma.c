@@ -60,8 +60,7 @@ static struct bchecker *bchecker_allocate (arma_info *ainfo)
 	return NULL;
     }
 
-    b->temp = NULL;
-    b->tmp2 = NULL;
+    b->temp = b->tmp2 = NULL;
     b->roots = NULL;
 
     b->qmax = ainfo->q + ainfo->Q * ainfo->pd;
@@ -174,6 +173,13 @@ int ma_out_of_bounds (arma_info *ainfo, const double *theta,
 	re = b->roots[i].r;
 	im = b->roots[i].i;
 	rt = re * re + im * im;
+#if 0
+	fprintf(stderr, "root %d: re=%g im=%g rt=%g\n", i, re, im, rt);
+	int j;
+	for (j=0; j<=b->qmax; j++) {
+	    fprintf(stderr, " b[%d] = %g\n", j, b->temp[j]);
+	}
+#endif
 	if (rt > DBL_EPSILON && rt <= 1.0) {
 	    pprintf(ainfo->prn, _("MA root %d = %g\n"), i, rt);
 	    err = 1;
