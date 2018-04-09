@@ -49,7 +49,7 @@ function matrix C1mat( const matrix A, bool VECM[0],
     return ret
 end function
 
-function matrix init_C(scalar scale, matrix Sigma, matrix Rd)
+function matrix init_C(matrix Sigma, matrix Rd)
     matrix Ss = imp2exp(Rd)
     scalar k = cols(Ss)
     if k == 1
