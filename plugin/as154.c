@@ -157,10 +157,14 @@ static int handle_missing_obs (int ip, int ir, int np,
 
     /* construct the full T matrix using @phi */
     gretl_matrix_zero(T);
-    for (i=0; i<ip; i++) {
-	T->val[i] = phi[i];
-	for (j=1; j<ir; j++) {
-	    gretl_matrix_set(T, i+j-1, j, 1.0);
+    for (i=0; i<ir; i++) {
+	if (i < ip) {
+	    T->val[i] = phi[i];
+	}
+	if (i < ir-1) {
+	    for (j=1; j<ir; j++) {
+		gretl_matrix_set(T, i+j-1, j, 1.0);
+	    }
 	}
     }
 
