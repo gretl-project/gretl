@@ -425,7 +425,7 @@ static double as154_iteration (const double *b, void *data)
 	return NADBL;
     }
 
-    /* intialization required */
+    /* initialization required */
     as->sumlog = as->sumsq = 0;
 
     karma(as->plen, as->qlen, as->r, as->np,
