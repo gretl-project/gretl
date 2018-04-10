@@ -557,9 +557,6 @@ static int as_undo_y_scaling (arma_info *ainfo,
 	beta[i] /= ainfo->yscale;
     }
 
-    /* FIXME @i vs @t, and @T vs @fullT !! */
-
-    i = ainfo->t1;
     for (t=0; t<ainfo->fullT; t++) {
 	if (!isnan(as->y[t])) {
 	    as->y[t] /= ainfo->yscale;

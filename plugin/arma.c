@@ -409,7 +409,9 @@ static khelper *kalman_helper_new (arma_info *ainfo,
 
 /* Get the dimension of the state-space representation: note
    that this is augmented if we're estimating an ARIMA
-   model using the levels formulation.
+   model using the levels formulation in order to handle
+   missing values -- see Harvey and Pierse, "Estimating
+   Missing Observations in Economic Time Series", JASA 1984.
 */
 
 static int ainfo_get_state_size (arma_info *ainfo)
@@ -1847,6 +1849,10 @@ MODEL arma_model (const int *list, const int *pqspec,
 	ainfo->y = (double *) dset->Z[ainfo->yno];
 	if (ainfo->d > 0 || ainfo->D > 0) {
 	    if (arma_missvals(ainfo)) {
+		/* for now: scrub OPT_A since AS154 is not
+		   ready the the levels version of ARIMA
+		*/
+		opt &= ~OPT_A;
 		set_arima_levels(ainfo);
 	    } else if (getenv("ARIMA_LEVELS")) {
 		/* for testing purposes */
