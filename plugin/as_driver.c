@@ -425,7 +425,7 @@ static double as154_iteration (const double *b, void *data)
 	return NADBL;
     }
 
-    /* intialization required */
+    /* initialization required */
     as->sumlog = as->sumsq = 0;
 
     karma(as->plen, as->qlen, as->r, as->np,
@@ -488,57 +488,6 @@ static const double *as154_llt_callback (const double *b, int i,
     return (err)? NULL : as->e;
 }
 
-/* FIXME: consolidate this with arma_OPG_vcv? */
-
-static int as_OPG_vcv (MODEL *pmod,
-		       struct as_info *as,
-		       double *b, double s2,
-		       int k, int T,
-		       PRN *prn)
-{
-    gretl_matrix *G = NULL;
-    gretl_matrix *V = NULL;
-    int err = 0;
-
-    if (as->algo == 154) {
-	G = numerical_score_matrix(b, T, k, as154_llt_callback,
-				   as, &err);
-    } else {
-	G = numerical_score_matrix(b, T, k, as197_llt_callback,
-				   as, &err);
-    }
-
-    if (!err) {
-	V = gretl_matrix_XTX_new(G);
-	if (V == NULL) {
-	    err = E_ALLOC;
-	}
-    }
-
-    if (!err) {
-	double rcond = gretl_symmetric_matrix_rcond(V, &err);
-
-	if (!err && rcond < 1.0E-10) {
-	    pprintf(prn, "OPG: rcond = %g; will try Hessian\n", rcond);
-	    err = 1;
-	}
-    }
-
-    if (!err) {
-	err = gretl_invert_symmetric_matrix(V);
-    }
-
-    if (!err) {
-	gretl_matrix_multiply_by_scalar(V, s2);
-	err = gretl_model_write_vcv(pmod, V);
-    }
-
-    gretl_matrix_free(G);
-    gretl_matrix_free(V);
-
-    return err;
-}
-
 static int as_undo_y_scaling (arma_info *ainfo,
 			      gretl_matrix *y,
 			      double *b,
@@ -557,9 +506,6 @@ static int as_undo_y_scaling (arma_info *ainfo,
 	beta[i] /= ainfo->yscale;
     }
 
-    /* FIXME @i vs @t, and @T vs @fullT !! */
-
-    i = ainfo->t1;
     for (t=0; t<ainfo->fullT; t++) {
 	if (!isnan(as->y[t])) {
 	    as->y[t] /= ainfo->yscale;
@@ -592,6 +538,8 @@ static int as_arma_finish (MODEL *pmod,
 			   PRN *prn)
 {
     int i, t, k = ainfo->nc;
+    int do_opg = arma_use_opg(opt);
+    int QML = (opt & OPT_R);
     int vcv_err = 0;
     double s2;
     int err;
@@ -631,17 +579,8 @@ static int as_arma_finish (MODEL *pmod,
     as->use_loglik = 1;
     as->ma_check = 0;
 
-    if (arma_use_opg(opt)) {
-	vcv_err = as_OPG_vcv(pmod, as, b, s2, k, ainfo->T, prn);
-	if (!vcv_err) {
-	    gretl_model_set_vcv_info(pmod, VCV_ML, ML_OP);
-	    pmod->opt |= OPT_G;
-	}
-    } else {
-	/* base covariance matrix on Hessian (FIXME perhaps QML);
-	   for now we'll not fail entirely if we can't come up
-	   with a Hessian-based covariance matrix
-	*/
+    if (!do_opg) {
+	/* base covariance matrix on Hessian (perhaps QML) */
 	gretl_matrix *Hinv;
 
 	if (as->algo == 154) {
@@ -652,12 +591,29 @@ static int as_arma_finish (MODEL *pmod,
 					     as, &vcv_err);
 	}
 	if (!vcv_err) {
-	    err = gretl_model_write_vcv(pmod, Hinv);
-	    if (!err) {
-		gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
+	    if (QML) {
+		vcv_err = arma_QML_vcv(pmod, Hinv, as, as->algo, b, s2,
+				       k, ainfo->T, prn);
+	    } else {
+		err = gretl_model_write_vcv(pmod, Hinv);
+		if (!err) {
+		    gretl_model_set_vcv_info(pmod, VCV_ML, ML_HESSIAN);
+		}
 	    }
+	} else if (!(opt & OPT_H)) {
+	    /* fallback when Hessian not explicitly requested */
+	    do_opg = 1;
+	    gretl_model_set_int(pmod, "hess-error", 1);
 	}
 	gretl_matrix_free(Hinv);
+    }
+
+    if (do_opg) {
+	vcv_err = arma_OPG_vcv(pmod, as, as->algo, b, s2, k, ainfo->T, prn);
+	if (!vcv_err) {
+	    gretl_model_set_vcv_info(pmod, VCV_ML, ML_OP);
+	    pmod->opt |= OPT_G;
+	}
     }
 
     if (!err) {
@@ -755,7 +711,7 @@ static int as_arma (const double *coeff,
 	}
 
 	if (as.q > 0 || as.Q > 0) {
-	    as.ma_check = 1; /* ? */
+	    as.ma_check = 1;
 	}
 
 	BFGS_defaults(&maxit, &toler, ARMA);
