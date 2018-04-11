@@ -35,6 +35,12 @@
 
 #define KALMAN_ALL 999
 
+static const double *as197_llt_callback (const double *b,
+					 int i, void *data);
+
+static const double *as154_llt_callback (const double *b,
+					 int i, void *data);
+
 struct bchecker {
     int qmax;
     double *temp;
@@ -874,16 +880,25 @@ static const double *kalman_arma_llt_callback (const double *b, int i,
    Gradient
 */
 
-static int arma_OPG_vcv (MODEL *pmod, kalman *K, double *b,
-			 double s2, int k, int T,
+static int arma_OPG_vcv (MODEL *pmod, void *data, int algo,
+			 double *b, double s2,
+			 int k, int T,
 			 PRN *prn)
 {
     gretl_matrix *G = NULL;
     gretl_matrix *V = NULL;
     int err = 0;
 
-    G = numerical_score_matrix(b, T, k, kalman_arma_llt_callback,
-			       K, &err);
+    if (algo == 154) {
+	G = numerical_score_matrix(b, T, k, as154_llt_callback,
+				   data, &err);
+    } else if (algo == 197) {
+	G = numerical_score_matrix(b, T, k, as197_llt_callback,
+				   data, &err);
+    } else {
+	G = numerical_score_matrix(b, T, k, kalman_arma_llt_callback,
+				   data, &err);
+    }
 
     if (!err) {
 	V = gretl_matrix_XTX_new(G);
@@ -916,15 +931,24 @@ static int arma_OPG_vcv (MODEL *pmod, kalman *K, double *b,
     return err;
 }
 
-static int arma_QML_vcv (MODEL *pmod, gretl_matrix *H, kalman *K,
+static int arma_QML_vcv (MODEL *pmod, gretl_matrix *H,
+			 void *data, int algo,
 			 double *b, double s2, int k, int T,
 			 PRN *prn)
 {
     gretl_matrix *G;
     int err = 0;
 
-    G = numerical_score_matrix(b, T, k, kalman_arma_llt_callback,
-			       K, &err);
+    if (algo == 154) {
+	G = numerical_score_matrix(b, T, k, as154_llt_callback,
+				   data, &err);
+    } else if (algo == 197) {
+	G = numerical_score_matrix(b, T, k, as197_llt_callback,
+				   data, &err);
+    } else {
+	G = numerical_score_matrix(b, T, k, kalman_arma_llt_callback,
+				   data, &err);
+    }
 
     if (!err) {
 	gretl_matrix_divide_by_scalar(G, sqrt(s2));
@@ -1033,7 +1057,7 @@ static int arma_use_opg (gretlopt opt)
 }
 
 /* The following is now basically functionless, other
-   then for backward compatibility: it duplicates the
+   than for backward compatibility: it duplicates the
    model's $uhat array as the $ehat vector, just in
    case any scripts want it under that name.
 */
@@ -1120,7 +1144,7 @@ static int kalman_arma_finish (MODEL *pmod,
 		gretl_matrix_divide_by_scalar(Hinv, ainfo->T);
 	    }
 	    if (QML) {
-		err = arma_QML_vcv(pmod, Hinv, K, b, s2, k, ainfo->T, prn);
+		err = arma_QML_vcv(pmod, Hinv, K, 0, b, s2, k, ainfo->T, prn);
 	    } else {
 		err = gretl_model_write_vcv(pmod, Hinv);
 		if (!err) {
@@ -1128,19 +1152,16 @@ static int kalman_arma_finish (MODEL *pmod,
 		}
 	    }
 	} else if (!(opt & OPT_H)) {
-	    /* try falling back to OPG, if use of the Hessian has not
-	       been explicitly specified
-	    */
+	    /* fallback when Hessian not explicitly requested */
 	    err = 0;
 	    do_opg = 1;
-	    /* arrange for a warning to be printed */
 	    gretl_model_set_int(pmod, "hess-error", 1);
 	}
 	gretl_matrix_free(Hinv);
     }
 
     if (do_opg) {
-	err = arma_OPG_vcv(pmod, K, b, s2, k, ainfo->T, prn);
+	err = arma_OPG_vcv(pmod, K, 0, b, s2, k, ainfo->T, prn);
 	if (!err) {
 	    gretl_model_set_vcv_info(pmod, VCV_ML, ML_OP);
 	    pmod->opt |= OPT_G;

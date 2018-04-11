@@ -95,8 +95,6 @@ void maybe_set_yscale (arma_info *ainfo)
 
 #if FLIP_INIT
 
-/* ---- start experiment ---- */
-
 /* if @z is n x 1, append a column of zeros; otherwise
    leave it alone
 */
@@ -302,8 +300,6 @@ static int flip_ma_poly (double *theta, int q)
 
     return err;
 }
-
-/* ---- end of experiment ---- */
 
 #endif /* FLIP_INIT */
 

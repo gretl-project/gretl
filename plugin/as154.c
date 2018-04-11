@@ -155,7 +155,9 @@ static int handle_missing_obs (int ip, int ir, int np,
 	return E_ALLOC;
     }
 
-    /* construct the full T matrix using @phi */
+    /* construct the full T matrix using @phi :
+       FIXME: something (still) wrong here!
+    */
     gretl_matrix_zero(T);
     for (i=0; i<ir; i++) {
 	if (i < ip) {
