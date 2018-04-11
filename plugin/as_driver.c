@@ -474,6 +474,11 @@ static const double *as154_llt_callback (const double *b, int i,
     int err = 0, nit = 0;
 
     as_fill_arrays(as, b);
+    as->ifault = starma(as->plen, as->qlen, as->r, as->np,
+			as->phi, as->theta, as->A, as->P0, as->V,
+			as->thetab, as->xnext, as->xrow,
+			as->rbar, as->nrbar);
+
     as->sumlog = as->sumsq = 0;
     karma(as->plen, as->qlen, as->r, as->np,
 	  as->phi, as->theta, as->A, as->P0, as->V,
@@ -482,6 +487,7 @@ static const double *as154_llt_callback (const double *b, int i,
 	  as->toler, as->evec, &nit);
 
     if (isnan(as->sumlog) || isnan(as->sumsq) || as->sumsq <= 0) {
+	fprintf(stderr, "as154_llt_callback: failed\n");
 	err = E_NAN;
     }
 
