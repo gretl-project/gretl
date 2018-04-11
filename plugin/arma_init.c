@@ -22,8 +22,8 @@
 #include "arma_priv.h"
 
 #define AINIT_DEBUG 0
-#define SQUEEZE_INIT 0
-#define SQUEEZE_SHOW 0
+#define FLIP_INIT 1
+#define FLIP_SHOW 0
 
 /* Given an estimate of the ARMA constant via OLS, convert to the form
    wanted for initializing the Kalman filter.  Note: the @b array
@@ -93,281 +93,219 @@ void maybe_set_yscale (arma_info *ainfo)
 
 #define HR_MINLAGS 16
 
-#if SQUEEZE_INIT
+#if FLIP_INIT
 
 /* ---- start experiment ---- */
 
-static gretl_matrix *multpoly (const gretl_matrix *beta,
-			       gretl_matrix *gamma,
-			       int *err)
+/* if @z is n x 1, append a column of zeros; otherwise
+   leave it alone
+*/
+
+static int force_complex (gretl_matrix *z)
 {
-    gretl_matrix *tmp, *ret;
-    int i, nb, nq;
+    int i, err = 0;
 
-    nb = gretl_vector_get_length(beta);
-    nq = gretl_vector_get_length(gamma);
-
-    /* tmp = vec(beta) | zeros(rows(q)-1, 1) */
-    tmp = gretl_zero_matrix_new(nb + nq -1, 1);
-    for (i=0; i<nb; i++) {
-	tmp->val[i] = beta->val[i];
+    if (z->cols == 1) {
+	err = gretl_matrix_realloc(z, z->rows, 2);
+	if (!err) {
+	    for (i=0; i<z->rows; i++) {
+		gretl_matrix_set(z, i, 1, 0.0);
+	    }
+	}
     }
 
-    ret = filter_matrix(tmp, NULL, gamma, 0, err);
+    return 0;
+}
+
+/* complex inversion of @z */
+
+static gretl_matrix *cinv (gretl_matrix *z)
+{
+    gretl_matrix *tmp, *ret = NULL;
+    int n = z->rows;
+    int i, err = 0;
+
+    tmp = gretl_zero_matrix_new(n, 2);
+    for (i=0; i<n; i++) {
+	tmp->val[i] = 1.0;
+    }
+    force_complex(z);
+    ret = gretl_matrix_complex_divide(tmp, z, &err);
+    force_complex(ret);
     gretl_matrix_free(tmp);
 
     return ret;
 }
 
-static void load_from_row (gretl_matrix *targ,
-			   const gretl_matrix *src,
-			   int i)
+static void copy_row (gretl_matrix *targ, int it,
+		      const gretl_matrix *src, int is,
+		      int neg)
 {
+    double d;
     int j;
 
     for (j=0; j<src->cols; j++) {
-	targ->val[j] = gretl_matrix_get(src, i, j);
+	d = gretl_matrix_get(src, is, j);
+	gretl_matrix_set(targ, it, j, neg ? -d : d);
     }
 }
 
-static int tr_initvals (double *theta, int nt)
+/* computes a polynomial from its roots: @r is assumed
+   to be n x 2 (complex)
+*/
+
+static gretl_matrix *polfromroots (gretl_matrix *r)
 {
-    gretl_matrix *tmp = NULL;
-    gretl_matrix *roots0 = NULL;
-    gretl_matrix *invrootsRe = NULL;
-    gretl_matrix *Reret = NULL;
-    gretl_matrix *Cret = NULL;
-    gretl_matrix *thetamod = NULL;
-    char *check = NULL;
-    double x, y, tol, cut;
-    int nreal, ncomplex;
-    int i, j, err = 0;
-
-    /* defaults */
-    tol = 1.0e-6;
-    cut = 0.01;
-
-    tmp = gretl_column_vector_alloc(1 + nt);
-    tmp->val[0] = 1.0;
-    for (i=1; i<=nt; i++) {
-	tmp->val[i] = -theta[i-1];
-    }
-    roots0 = gretl_matrix_polroots(tmp, &err);
-    gretl_matrix_free(tmp);
-
-    if (roots0->cols == 1) {
-	nreal = roots0->rows;
-	ncomplex = 0;
-	invrootsRe = gretl_column_vector_alloc(nreal);
-	for (i=0; i<nreal; i++) {
-	    invrootsRe->val[i] = 1.0 / roots0->val[i];
-	}
-    } else {
-	int n = roots0->rows;
-
-	check = calloc(n, 1);
-	nreal = 0;
-	for (i=0; i<n; i++) {
-	    x = gretl_matrix_get(roots0, i, 1);
-	    if (fabs(x) < tol) {
-		check[i] = 1;
-		nreal++;
-	    }
-	}
-	ncomplex = n - nreal;
-	if (nreal > 0) {
-	    invrootsRe = gretl_column_vector_alloc(nreal);
-	    j = 0;
-	    for (i=0; i<n; i++) {
-		if (check[i]) {
-		    x = gretl_matrix_get(roots0, i, 0);
-		    invrootsRe->val[j++] = 1.0 / x;
-		}
-	    }
-	}
-    }
-
-    if (nreal > 0) {
-	gretl_matrix *Remults;
-	int n = invrootsRe->rows;
-	double L, M, R;
-
-	Remults = gretl_matrix_alloc(n, 2);
-
-	for (i=0; i<n; i++) {
-	    x = invrootsRe->val[i];
-	    L = (x < cut-1) * (cut-1);
-	    M = (x >= cut-1) * (x <= 1-cut) * x;
-	    R = (x > 1-cut) * (1-cut);
-	    x = L + M + R;
-	    gretl_matrix_set(Remults, i, 0, 1.0);
-	    gretl_matrix_set(Remults, i, 1, -x);
-	}
-
-	if (nreal == 1) {
-	    Reret = Remults;
-	} else {
-	    gretl_matrix *mply;
-
-	    tmp = gretl_matrix_alloc(1, 2);
-	    Reret = gretl_matrix_alloc(2, 1);
-	    load_from_row(Reret, Remults, 0);
-	    for (i=1; i<nreal; i++) {
-		load_from_row(tmp, Remults, i);
-		mply = multpoly(Reret, tmp, &err);
-		gretl_matrix_free(Reret);
-		Reret = mply;
-	    }
-	    gretl_matrix_free(tmp);
-	    gretl_matrix_free(Remults);
-	}
-    }
-
-    if (ncomplex > 0) {
-	gretl_matrix *complexes;
-	gretl_matrix *num, *c_invs0, *pre_Cret;
-	double mult, x0, y0;
-	double c12 = (1-cut) * (1-cut);
-	int nc2 = ncomplex / 2;
-
-	complexes = gretl_matrix_alloc(ncomplex, 2);
-
-	j = 0;
-	for (i=0; i<roots0->rows; i++) {
-	    if (check[i] == 0) {
-		x = gretl_matrix_get(roots0, i, 0);
-		y = gretl_matrix_get(roots0, i, 1);
-		gretl_matrix_set(complexes, j, 0, x);
-		gretl_matrix_set(complexes, j, 1, y);
-		j++;
-	    }
-	}
-
-	num = gretl_unit_matrix_new(ncomplex, 1);
-	c_invs0 = gretl_matrix_complex_divide(num, complexes, &err);
-	gretl_matrix_free(num);
-	pre_Cret = gretl_matrix_alloc(nc2, 3);
-
-	j = 0;
-	for (i=0; i<ncomplex; i++) {
-	    if (i % 2 == 0 && j < nc2) {
-		x = gretl_matrix_get(c_invs0, i, 0);
-		y = gretl_matrix_get(c_invs0, i, 1);
-		if (x*x + y*y > c12) {
-		    /* "cutted" */
-		    x0 = gretl_matrix_get(complexes, i, 0);
-		    y0 = gretl_matrix_get(complexes, i, 1);
-		    mult = sqrt(x0*x0 + y0*y0) * (1-cut);
-		    x *= mult; y *= mult;
-		}
-		gretl_matrix_set(pre_Cret, j, 0, 1.0);
-		gretl_matrix_set(pre_Cret, j, 1, -2*x);
-		gretl_matrix_set(pre_Cret, j, 2, x*x + y*y);
-		j++;
-	    }
-	}
-	gretl_matrix_free(c_invs0);
-	gretl_matrix_free(complexes);
-
-	if (ncomplex == 2) {
-	    /* Cret = vec(pre_Cret) */
-	    Cret = pre_Cret;
-	    Cret->rows = Cret->rows * Cret->cols;
-	    Cret->cols = 1;
-	} else {
-	    gretl_matrix *mply;
-
-	    tmp = gretl_matrix_alloc(1, 3);
-	    Cret = gretl_matrix_alloc(3, 1);
-	    load_from_row(Cret, pre_Cret, 0);
-	    for (i=1; i<nc2; i++) {
-		load_from_row(tmp, pre_Cret, i);
-		mply = multpoly(Cret, tmp, &err);
-		gretl_matrix_free(Cret);
-		Cret = mply;
-	    }
-	    gretl_matrix_free(tmp);
-	    gretl_matrix_free(pre_Cret);
-	}
-    }
-
-    if (nreal > 0 && ncomplex > 0) {
-	thetamod = multpoly(Reret, Cret, &err);
-    } else if (nreal == 0) {
-	thetamod = Cret;
-	Cret = NULL;  /* don't free */
-    } else {
-	thetamod = Reret;
-	Reret = NULL; /* don't free */
-    }
-
-    /* revise the incoming theta */
-    for (i=0; i<nt; i++) {
-	theta[i] = -thetamod->val[i+1];
-    }
-
-    gretl_matrix_free(roots0);
-    gretl_matrix_free(invrootsRe);
-    gretl_matrix_free(Reret);
-    gretl_matrix_free(Cret);
-    gretl_matrix_free(thetamod);
-    free(check);
-
-    return err;
-}
-
-static int maybe_squeeze_coeffs (double *coeff,
-				 int p, int q,
-				 int P, int Q)
-{
-    double *b = coeff;
+    gretl_matrix *tmp, *ret = NULL;
+    int n = r->rows;
     int err = 0;
 
-#if SQUEEZE_SHOW
-    int i, n = p + P + q + Q;
-    int revised = 0;
-    gretl_matrix *show = gretl_matrix_alloc(n, 2);
+    tmp = gretl_matrix_alloc(1, 2);
 
-    for (i=0; i<n; i++) {
-	show->val[i] = coeff[i];
-    }
-#endif
+    if (n == 0) {
+	tmp->val[0] = 1;
+	tmp->val[1] = 0;
+	ret = tmp;
+    } else {
+	force_complex(r);
+	copy_row(tmp, 0, r, n-1, 0);
+	if (tmp->val[0] == 0 && tmp->val[1] == 0) {
+	    tmp->val[0] = tmp->val[1] = M_NA;
+	    ret = tmp;
+        } else {
+	    gretl_matrix *ix = cinv(tmp);
+	    int i;
 
-    if (p > 0) {
-	tr_initvals(b, p);
-	b += p;
-    }
-    if (P > 0) {
-	tr_initvals(b, P);
-	b += P;
-    }
-    if (q > 0) {
-	tr_initvals(b, q);
-	b += q;
-    }
-    if (Q > 0) {
-	tr_initvals(b, Q);
-    }
+            if (n == 1) {
+		/* hansl: ret = {1,0} | -ix */
+		ret = gretl_zero_matrix_new(ix->rows + 1, 2);
+		ret->val[0] = 1;
+		for (i=0; i<ix->rows; i++) {
+		    copy_row(ret, i+1, ix, i, 1);
+		}
+            } else {
+		gretl_matrix *rslice; /* hansl: = r[1:n-1,] */
+		gretl_matrix *tmp1, *tmp2;
+		double d0, d1;
 
-#if SQUEEZE_SHOW
-    for (i=0; i<n; i++) {
-	if (fabs(show->val[i] - coeff[i]) > 1.0e-15) {
-	    revised = 1;
+		rslice = gretl_matrix_alloc(n-1, 2);
+		for (i=0; i<rslice->rows; i++) {
+		    copy_row(rslice, i, r, i, 0);
+		}
+		gretl_matrix_free(tmp);
+                tmp = polfromroots(rslice);
+		/* hansl: ret = tmp | {0,0} */
+		ret = gretl_zero_matrix_new(tmp->rows + 1, 2);
+		for (i=0; i<tmp->rows; i++) {
+		    copy_row(ret, i, tmp, i, 0);
+		}
+		/* hansl: ix = transp(mshape(ix, 2, n)) */
+		tmp1 = gretl_matrix_shape(ix, 2, n, &err);
+		gretl_matrix_transpose_in_place(tmp1);
+		/* hansl: tmp = force_complex(cmult(tmp , -ix)) */
+		gretl_matrix_multiply_by_scalar(tmp1, -1.0);
+		tmp2 = gretl_matrix_complex_multiply(tmp, tmp1, &err);
+		force_complex(tmp2);
+		/* hansl: ret[2:,] += tmp */
+		for (i=1; i<ret->rows; i++) {
+		    d0 = gretl_matrix_get(ret, i, 0);
+		    d0 += gretl_matrix_get(tmp2, i-1, 0);
+		    d1 = gretl_matrix_get(ret, i, 1);
+		    d1 += gretl_matrix_get(tmp2, i-1, 1);
+		    gretl_matrix_set(ret, i, 0, d0);
+		    gretl_matrix_set(ret, i, 1, d1);
+		}
+		gretl_matrix_free(tmp1);
+		gretl_matrix_free(tmp2);
+		gretl_matrix_free(rslice);
+	    }
+	    gretl_matrix_free(ix);
 	}
-	gretl_matrix_set(show, i, 1, coeff[i]);
     }
-    if (revised) {
-	gretl_matrix_print(show, "coeffs: orig and revised");
+
+    if (ret == tmp) {
+	tmp = NULL;
     }
-    gretl_matrix_free(show);
-#endif
+    gretl_matrix_free(tmp);
+
+    return ret;
+}
+
+/* checks if the MA polynomial given by @theta, of length @q,
+   is fundamental and modifies it if that is not the case.
+*/
+
+static int flip_ma_poly (double *theta, int q)
+{
+    gretl_matrix *tmp, *r;
+    double re, im;
+    int n_inside = 0;
+    int i, err = 0;
+
+    /* hansl: r = force_complex(polroots(1 | q)) */
+    tmp = gretl_matrix_alloc(q + 1, 1);
+    tmp->val[0] = 1.0;
+    for (i=0; i<q; i++) {
+	tmp->val[i+1] = theta[i];
+    }
+    r = gretl_matrix_polroots(tmp, &err);
+    force_complex(r);
+
+    gretl_matrix_zero(tmp);
+    for (i=0; i<r->rows; i++) {
+	re = gretl_matrix_get(r, i, 0);
+	im = gretl_matrix_get(r, i, 1);
+	if (re*re + im*im < 1.0) {
+	    /* record row reference */
+	    tmp->val[i] = 1;
+	    n_inside++;
+	}
+    }
+
+    if (n_inside > 0) {
+	gretl_matrix *rfix, *ifix;
+	int k = 0;
+
+	/* compose sub-matrix */
+	rfix = gretl_matrix_alloc(n_inside, 2);
+	for (i=0; i<r->rows; i++) {
+	    if (tmp->val[i] == 1) {
+		copy_row(rfix, k++, r, i, 0);
+	    }
+	}
+	/* complex inversion */
+	ifix = cinv(rfix);
+	/* replace the inverted portion of r */
+	k = 0;
+	for (i=0; i<r->rows; i++) {
+	    if (tmp->val[i] == 1) {
+		copy_row(r, i, ifix, k++, 0);
+	    }
+	}
+	gretl_matrix_free(tmp);
+        tmp = polfromroots(r);
+	for (i=0; i<q; i++) {
+#if FLIP_SHOW
+	    if (tmp->val[i+1] != theta[i]) {
+		fprintf(stderr, "theta[%d]: %g -> %g\n",
+			i, theta[i], tmp->val[i+1]);
+	    }
+#endif	    
+	    theta[i] = tmp->val[i+1];
+	}
+	gretl_matrix_free(rfix);
+	gretl_matrix_free(ifix);
+    }
+
+    gretl_matrix_free(r);
+    gretl_matrix_free(tmp);
 
     return err;
 }
 
 /* ---- end of experiment ---- */
 
-#endif /* SQUEEZE_INIT */
+#endif /* FLIP_INIT */
 
 /* @pmod->coeff contains coefficients from step 2 of
    the H-R procedure, in the order: intercept, exogenous
@@ -422,28 +360,28 @@ static int hr_transcribe_coeffs (arma_info *ainfo,
 	b[k++] = pmod->coeff[j++];
     }
 
-#if SQUEEZE_INIT
-    if (ainfo->q == 0 || ainfo->Q == 0) {
-	/* not reliable for seasonal + nonseasonal MA! */
-	maybe_squeeze_coeffs(b + ainfo->ifc,
-			     ainfo->p, ainfo->P,
-			     ainfo->q, ainfo->Q);
+#if FLIP_INIT
+    if (ainfo->q > 0) {
+	flip_ma_poly(theta, ainfo->q);
     }
-#endif
-
+    if (ainfo->Q > 0) {
+	flip_ma_poly(Theta, ainfo->Q);
+    }    
+#else
     /* check MA values? */
     if (ainfo->q > 0 || ainfo->Q > 0) {
 	err = ma_out_of_bounds(ainfo, theta, Theta);
-#if AINIT_DEBUG
+# if AINIT_DEBUG
 	if (err) {
 	    fprintf(stderr, "H-R failed coeffs:\n");
 	    for (i=0; i<ainfo->nc; i++) {
 		fprintf(stderr, "%#.9g\n", b[i]);
 	    }
 	}
-#endif
+# endif
 	bounds_checker_cleanup();
     }
+#endif /* FLIP_INIT or not */    
 
     return err;
 }
