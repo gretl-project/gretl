@@ -155,20 +155,12 @@ static int handle_missing_obs (int ip, int ir, int np,
 	return E_ALLOC;
     }
 
-    /* construct the full T matrix using @phi :
-       FIXME: something (still) wrong here!
-    */
+    /* construct the full T matrix using @phi */
     gretl_matrix_zero(T);
-    for (i=0; i<ir; i++) {
-	if (i < ip) {
-	    T->val[i] = phi[i];
-	}
-	if (i < ir-1) {
-	    for (j=1; j<ir; j++) {
-		gretl_matrix_set(T, i+j-1, j, 1.0);
-	    }
-	}
+    for (i=0; i<ip; i++) {
+	T->val[i] = phi[i];
     }
+    gretl_matrix_inscribe_I(T, 0, 1, ir-1);
 
     /* construct full P matrix using @p0 */
     gretl_matrix_init(&m);
