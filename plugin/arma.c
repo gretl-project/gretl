@@ -870,11 +870,9 @@ static double kalman_arma_ll (const double *b, void *data)
     }
 #endif
 
-    if (kalman_do_ma_check) {
-	if (maybe_correct_MA(ainfo, theta, Theta)) {
-	    pputs(kalman_get_printer(K), _("MA estimate(s) out of bounds\n"));
-	    return NADBL;
-	}
+    if (kalman_do_ma_check && maybe_correct_MA(ainfo, theta, Theta)) {
+	pputs(kalman_get_printer(K), _("MA estimate(s) out of bounds\n"));
+	return NADBL;
     }
 
     err = rewrite_kalman_matrices(K, b, KALMAN_ALL);
@@ -1806,6 +1804,9 @@ MODEL arma_model (const int *list, const int *pqspec,
     }
 
     if (!err) {
+	/* just in case we find problemsin some cases, here's
+	   a switch to make out-of-bounds MA an error in the
+	   course of iteration... */
 	/* set_arma_no_flip(ainfo); */
 	clear_model_xpx(&armod);
 	if (arma_exact_ml(ainfo)) {
