@@ -272,7 +272,7 @@ int flip_ma_poly (double *theta, arma_info *ainfo,
 	    tmp->val[i+1] = theta[i];
 	}
     } else {
-	/* expand to handle gappiness */
+	/* expand to handle MA gappiness */
 	tmp = poly_from_theta(theta, qmask, q);
     }
     r = gretl_matrix_polroots(tmp, &err);
@@ -319,7 +319,7 @@ int flip_ma_poly (double *theta, arma_info *ainfo,
 	gretl_matrix_free(tmp);
         tmp = polfromroots(r);
 	if (qmask != NULL) {
-	    /* shrink theta */
+	    /* shrink to theta */
 	    k = 0;
 	    for (i=0; i<q; i++) {
 		if (qmask[i] == '1') {
@@ -327,6 +327,7 @@ int flip_ma_poly (double *theta, arma_info *ainfo,
 		}
 	    }
 	} else {
+	    /* just copy to theta */
 	    for (i=0; i<q; i++) {
 		theta[i] = tmp->val[i+1];
 	    }
