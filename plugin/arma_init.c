@@ -22,8 +22,6 @@
 #include "arma_priv.h"
 
 #define AINIT_DEBUG 0
-#define FLIP_INIT 1
-#define FLIP_SHOW 0
 
 /* Given an estimate of the ARMA constant via OLS, convert to the form
    wanted for initializing the Kalman filter.  Note: the @b array
@@ -92,8 +90,6 @@ void maybe_set_yscale (arma_info *ainfo)
 			     !na(x))
 
 #define HR_MINLAGS 16
-
-#if FLIP_INIT
 
 /* if @z is n x 1, append a column of zeros; otherwise
    leave it alone
@@ -229,22 +225,55 @@ static gretl_matrix *polfromroots (gretl_matrix *r)
     return ret;
 }
 
+/* for non-seasonal "gappy" MA coeff vector: expand
+   by inserting zeros as needed */
+
+static gretl_matrix *poly_from_theta (const double *theta,
+				      const char *qmask,
+				      int q)
+{
+    gretl_matrix *ret;
+    int i, k = 0;
+
+    ret = gretl_zero_matrix_new(q + 1, 1);
+    ret->val[0] = 1.0;
+
+    for (i=0; i<q; i++) {
+        if (qmask[i] == '1') {
+	    ret->val[i+1] = theta[k++];
+        }
+    }
+
+    return ret;
+}
+
 /* checks if the MA polynomial given by @theta, of length @q,
    is fundamental and modifies it if that is not the case.
 */
 
-static int flip_ma_poly (double *theta, int q)
+int flip_ma_poly (double *theta, arma_info *ainfo,
+		  int seasonal)
 {
     gretl_matrix *tmp, *r;
+    const char *qmask;
     double re, im;
-    int n_inside = 0;
+    int q, n_inside = 0;
     int i, err = 0;
 
+    q = seasonal ? ainfo->Q : ainfo->q;
+    qmask = seasonal ? NULL : ainfo->qmask;
+
     /* hansl: r = force_complex(polroots(1 | q)) */
-    tmp = gretl_matrix_alloc(q + 1, 1);
-    tmp->val[0] = 1.0;
-    for (i=0; i<q; i++) {
-	tmp->val[i+1] = theta[i];
+    if (qmask == NULL) {
+	/* no expansion needed */
+	tmp = gretl_matrix_alloc(q + 1, 1);
+	tmp->val[0] = 1.0;
+	for (i=0; i<q; i++) {
+	    tmp->val[i+1] = theta[i];
+	}
+    } else {
+	/* expand to handle gappiness */
+	tmp = poly_from_theta(theta, qmask, q);
     }
     r = gretl_matrix_polroots(tmp, &err);
     force_complex(r);
@@ -258,6 +287,13 @@ static int flip_ma_poly (double *theta, int q)
 	    tmp->val[i] = 1;
 	    n_inside++;
 	}
+    }
+
+    if (n_inside > 0 && arma_no_flip(ainfo)) {
+	/* treat non-stationarity as error condition */
+	gretl_matrix_free(r);
+	gretl_matrix_free(tmp);
+	return 1;
     }
 
     if (n_inside > 0) {
@@ -282,14 +318,18 @@ static int flip_ma_poly (double *theta, int q)
 	}
 	gretl_matrix_free(tmp);
         tmp = polfromroots(r);
-	for (i=0; i<q; i++) {
-#if FLIP_SHOW
-	    if (tmp->val[i+1] != theta[i]) {
-		fprintf(stderr, "theta[%d]: %g -> %g\n",
-			i, theta[i], tmp->val[i+1]);
+	if (qmask != NULL) {
+	    /* shrink theta */
+	    k = 0;
+	    for (i=0; i<q; i++) {
+		if (qmask[i] == '1') {
+		    theta[k++] = tmp->val[i+1];
+		}
 	    }
-#endif	    
-	    theta[i] = tmp->val[i+1];
+	} else {
+	    for (i=0; i<q; i++) {
+		theta[i] = tmp->val[i+1];
+	    }
 	}
 	gretl_matrix_free(rfix);
 	gretl_matrix_free(ifix);
@@ -300,8 +340,6 @@ static int flip_ma_poly (double *theta, int q)
 
     return err;
 }
-
-#endif /* FLIP_INIT */
 
 /* @pmod->coeff contains coefficients from step 2 of
    the H-R procedure, in the order: intercept, exogenous
@@ -356,28 +394,12 @@ static int hr_transcribe_coeffs (arma_info *ainfo,
 	b[k++] = pmod->coeff[j++];
     }
 
-#if FLIP_INIT
     if (ainfo->q > 0) {
-	flip_ma_poly(theta, ainfo->q);
+	flip_ma_poly(theta, ainfo, 0);
     }
     if (ainfo->Q > 0) {
-	flip_ma_poly(Theta, ainfo->Q);
-    }    
-#else
-    /* check MA values? */
-    if (ainfo->q > 0 || ainfo->Q > 0) {
-	err = ma_out_of_bounds(ainfo, theta, Theta);
-# if AINIT_DEBUG
-	if (err) {
-	    fprintf(stderr, "H-R failed coeffs:\n");
-	    for (i=0; i<ainfo->nc; i++) {
-		fprintf(stderr, "%#.9g\n", b[i]);
-	    }
-	}
-# endif
-	bounds_checker_cleanup();
+	flip_ma_poly(Theta, ainfo, 1);
     }
-#endif /* FLIP_INIT or not */    
 
     return err;
 }
@@ -703,8 +725,7 @@ static double get_y_mean (arma_info *ainfo)
     return ysum / T;
 }
 
-/* #define MA_SMALL 0.01 */
-#define MA_TINY  0.0001
+#define MA_SMALL  0.0001
 
 /* transcribe coeffs from the OLS or NLS model used for initializing,
    into the array @b that will be passed to the maximizer.
@@ -734,7 +755,7 @@ static void arma_init_transcribe_coeffs (arma_info *ainfo,
 
     /* insert near-zeros for MA terms */
     for (i=0; i<totq; i++) {
-	b[q0 + i] = MA_TINY;
+	b[q0 + i] = MA_SMALL;
     }
 }
 
@@ -1385,7 +1406,7 @@ static int *make_ar_ols_list (arma_info *ainfo, int av)
    of a non-zero AR order, where estimation will be via exact ML.
 
    In this initialization any MA coefficients are simply set to
-   "near-zero" (MA_TINY).
+   "near-zero" (MA_SMALL).
 */
 
 int ar_arma_init (double *coeff, const DATASET *dset,
@@ -1414,7 +1435,7 @@ int ar_arma_init (double *coeff, const DATASET *dset,
     if (ptotal == 0 && ainfo->nexo == 0 && !ainfo->ifc) {
 	/* special case of pure MA model */
 	for (i=0; i<ainfo->nq + ainfo->Q; i++) {
-	    coeff[i] = MA_TINY;
+	    coeff[i] = MA_SMALL;
 	}
 	pprintf(ainfo->prn, "\n%s: %s\n\n", _("ARMA initialization"),
 		_("small MA values"));
@@ -1433,7 +1454,7 @@ int ar_arma_init (double *coeff, const DATASET *dset,
 	/* straight MA model with constant */
 	coeff[0] = get_y_mean(ainfo);
 	for (i=1; i<=ainfo->nq + ainfo->Q; i++) {
-	    coeff[i] = MA_TINY;
+	    coeff[i] = MA_SMALL;
 	}
 	pprintf(ainfo->prn, "\n%s: %s\n\n", _("ARMA initialization"),
 		_("small MA values"));

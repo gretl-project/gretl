@@ -474,11 +474,8 @@ static double bhhh_arma_callback (double *coeff,
     }
 #endif
 
-    if (ma_out_of_bounds(ainfo, theta, Theta)) {
-	pputs(ainfo->prn, "arma: MA estimate(s) out of bounds\n");
-	fputs("bhhh_arma_callback: MA estimate(s) out of bounds\n", stderr);
-	*err = E_NOCONV;
-	return NADBL;
+    if (ainfo->nq > 0 || ainfo->Q > 0) {
+	maybe_correct_MA(ainfo, (double *) theta, (double *) Theta);
     }
 
     conditional_arma_forecast_errors(ainfo, y, X, coeff[0],

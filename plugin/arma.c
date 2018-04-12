@@ -41,164 +41,20 @@ static const double *as197_llt_callback (const double *b,
 static const double *as154_llt_callback (const double *b,
 					 int i, void *data);
 
-struct bchecker {
-    int qmax;
-    double *temp;
-    double *tmp2;
-    cmplx *roots;
-};
-
-static void bchecker_free (struct bchecker *b)
+int maybe_correct_MA (arma_info *ainfo,
+		      double *theta,
+		      double *Theta)
 {
-    if (b != NULL) {
-	free(b->temp);
-	free(b->tmp2);
-	free(b->roots);
-	free(b);
+    int err = 0;
+
+    if (ainfo->q > 0) {
+	err = flip_ma_poly(theta, ainfo, 0);
     }
-}
-
-static struct bchecker *bchecker_allocate (arma_info *ainfo)
-{
-    struct bchecker *b = malloc(sizeof *b);
-
-    if (b == NULL) {
-	return NULL;
-    }
-
-    b->temp = b->tmp2 = NULL;
-    b->roots = NULL;
-
-    b->qmax = ainfo->q + ainfo->Q * ainfo->pd;
-    b->temp  = malloc((b->qmax + 1) * sizeof *b->temp);
-    b->tmp2  = malloc((b->qmax + 1) * sizeof *b->tmp2);
-    b->roots = malloc(b->qmax * sizeof *b->roots);
-
-    if (b->temp == NULL || b->tmp2 == NULL || b->roots == NULL) {
-	bchecker_free(b);
-	b = NULL;
-    }
-
-    return b;
-}
-
-/* check whether the MA estimates have gone out of bounds in the
-   course of iteration */
-
-int ma_out_of_bounds (arma_info *ainfo, const double *theta,
-		      const double *Theta)
-{
-    static struct bchecker *b = NULL;
-    double re, im, rt;
-    int i, j, k, m, si, qtot;
-    int tzero = 1, Tzero = 1;
-    int err = 0, cerr = 0;
-
-    if (ainfo == NULL) {
-	/* signal for cleanup */
-	bchecker_free(b);
-	b = NULL;
-	return 0;
-    }
-
-    k = 0;
-    for (i=0; i<ainfo->q && tzero; i++) {
-	if (MA_included(ainfo, i)) {
-	    if (theta[k++] != 0.0) {
-		tzero = 0;
-	    }
-	}
-    }
-
-    for (i=0; i<ainfo->Q && Tzero; i++) {
-	if (Theta[i] != 0.0) {
-	    Tzero = 0;
-	}
-    }
-
-    if (tzero && Tzero) {
-	/* nothing to be done */
-	return 0;
-    }
-
-    if (b == NULL) {
-	b = bchecker_allocate(ainfo);
-	if (b == NULL) {
-	    return 1;
-	}
-    }
-
-    b->temp[0] = 1.0;
-
-    /* initialize to non-seasonal MA or zero */
-    k = 0;
-    for (i=0; i<b->qmax; i++) {
-        if (i < ainfo->q && MA_included(ainfo, i)) {
-	    b->temp[i+1] = theta[k++];
-        } else {
-            b->temp[i+1] = 0.0;
-        }
-    }
-
-    /* add seasonal MA and interaction */
-    if (Tzero) {
-	qtot = ainfo->q;
-    } else {
-	qtot = b->qmax;
-	for (j=0; j<ainfo->Q; j++) {
-	    si = (j + 1) * ainfo->pd;
-	    b->temp[si] += Theta[j];
-	    k = 0;
-	    for (i=0; i<ainfo->q; i++) {
-		if (MA_included(ainfo, i)) {
-		    m = si + (i + 1);
-		    b->temp[m] += Theta[j] * theta[k++];
-		}
-	    }
-	}
-    }
-
-#if ARMA_DEBUG
-    if (b->temp[qtot] == 0.0) {
-	fprintf(stderr, "b->temp[%d] = 0; polrt won't work\n", qtot);
-	fprintf(stderr, "q = %d, Q = %d, b->qmax = %d\n",
-		ainfo->q, ainfo->Q, b->qmax);
-	for (i=0; i<=qtot; i++) {
-	    fprintf(stderr, "b->temp[%d] = %g\n", i, b->temp[i]);
-	}
-    }
-#endif
-
-    cerr = polrt(b->temp, b->tmp2, qtot, b->roots);
-    if (cerr) {
-	fprintf(stderr, "ma_out_of_bounds: polrt returned %d\n", cerr);
-	return 0; /* ?? */
-    }
-
-    for (i=0; i<qtot; i++) {
-	re = b->roots[i].r;
-	im = b->roots[i].i;
-	rt = re * re + im * im;
-#if 0
-	fprintf(stderr, "root %d: re=%g im=%g rt=%g\n", i, re, im, rt);
-	int j;
-	for (j=0; j<=b->qmax; j++) {
-	    fprintf(stderr, " b[%d] = %g\n", j, b->temp[j]);
-	}
-#endif
-	if (rt > DBL_EPSILON && rt <= 1.0) {
-	    pprintf(ainfo->prn, _("MA root %d = %g\n"), i, rt);
-	    err = 1;
-	    break;
-	}
+    if (!err && ainfo->Q > 0) {
+	err = flip_ma_poly(Theta, ainfo, 1);
     }
 
     return err;
-}
-
-void bounds_checker_cleanup (void)
-{
-    ma_out_of_bounds(NULL, NULL, NULL);
 }
 
 /*
@@ -633,6 +489,7 @@ static int kalman_matrices_init (arma_info *ainfo,
 	}
 	for (i=0; i<k; i++) {
 	    gretl_vector_set(kh->H, r0 + i, c[i]);
+	    /* lagged data */
 	    y0 = y[ainfo->t1 - 1 - i];
 	    if (ainfo->yscale != 1.0 && !na(y0)) {
 		y0 *= ainfo->yscale;
@@ -644,7 +501,6 @@ static int kalman_matrices_init (arma_info *ainfo,
 #if ARMA_DEBUG
 	gretl_matrix_print(kh->S, "S0 (arima via levels)");
 #endif
-
 	/* initialize the plain-arma "shadow" matrices */
 	gretl_matrix_zero(kh->F_);
 	gretl_matrix_inscribe_I(kh->F_, 1, 0, r0 - 1);
@@ -992,8 +848,8 @@ static double kalman_arma_ll (const double *b, void *data)
     khelper *kh = kalman_get_data(K);
     arma_info *ainfo = kh->kainfo;
     int offset = ainfo->ifc + ainfo->np + ainfo->P;
-    const double *theta = b + offset;
-    const double *Theta = theta + ainfo->nq;
+    double *theta = (double *) b + offset;
+    double *Theta = theta + ainfo->nq;
     double ll = NADBL;
     int err = 0;
 
@@ -1014,9 +870,11 @@ static double kalman_arma_ll (const double *b, void *data)
     }
 #endif
 
-    if (kalman_do_ma_check && ma_out_of_bounds(ainfo, theta, Theta)) {
-	pputs(kalman_get_printer(K), _("MA estimate(s) out of bounds\n"));
-	return NADBL;
+    if (kalman_do_ma_check) {
+	if (maybe_correct_MA(ainfo, theta, Theta)) {
+	    pputs(kalman_get_printer(K), _("MA estimate(s) out of bounds\n"));
+	    return NADBL;
+	}
     }
 
     err = rewrite_kalman_matrices(K, b, KALMAN_ALL);
@@ -1861,8 +1719,7 @@ MODEL arma_model (const int *list, const int *pqspec,
 	if (ainfo->d > 0 || ainfo->D > 0) {
 	    if (arma_missvals(ainfo)) {
 		/* for now: insist on native Kalman, since only it
-		   handles the the levels version of ARIMA
-		*/
+		   handles the levels formulation of ARIMA */
 		opt &= ~OPT_A;
 		opt |= OPT_K;
 		set_arima_levels(ainfo);
@@ -1949,6 +1806,7 @@ MODEL arma_model (const int *list, const int *pqspec,
     }
 
     if (!err) {
+	/* set_arma_no_flip(ainfo); */
 	clear_model_xpx(&armod);
 	if (arma_exact_ml(ainfo)) {
 	    if (opt & OPT_K) {
@@ -1977,9 +1835,6 @@ MODEL arma_model (const int *list, const int *pqspec,
 
     free(coeff);
     arma_info_cleanup(ainfo);
-
-    /* cleanup in MA roots checker */
-    bounds_checker_cleanup();
 
     return armod;
 }
