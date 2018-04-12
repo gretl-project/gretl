@@ -1776,13 +1776,8 @@ static int check_arma_options (gretlopt opt)
     err = incompatible_options(opt, OPT_C | OPT_L);
 
     if (!err) {
-	/* nor --save-ehat with conditional ML */
-	err = incompatible_options(opt, OPT_E | OPT_C);
-    }
-
-    if (!err) {
-	/* nor --save-ehat with X-12-ARIMA */
-	err = incompatible_options(opt, OPT_E | OPT_X);
+	/* nor more than one of AS, CML or Kalman */
+	err = incompatible_options(opt, OPT_A | OPT_C | OPT_K);
     }
 
     if (!err) {
@@ -1812,11 +1807,6 @@ MODEL arma_model (const int *list, const int *pqspec,
 
     ainfo = &ainfo_s;
     arma_info_init(ainfo, opt, pqspec, dset);
-
-    if (!(opt & OPT_A) && getenv("AS197") != NULL) {
-	/* for batch-mode testing */
-	opt |= OPT_A;
-    }
 
     if (opt & OPT_V) {
 	ainfo->prn = prn;
@@ -1870,13 +1860,11 @@ MODEL arma_model (const int *list, const int *pqspec,
 	ainfo->y = (double *) dset->Z[ainfo->yno];
 	if (ainfo->d > 0 || ainfo->D > 0) {
 	    if (arma_missvals(ainfo)) {
-		/* for now: scrub OPT_A since AS154 is not
-		   ready the the levels version of ARIMA
+		/* for now: insist on native Kalman, since only it
+		   handles the the levels version of ARIMA
 		*/
 		opt &= ~OPT_A;
-		set_arima_levels(ainfo);
-	    } else if (getenv("ARIMA_LEVELS")) {
-		/* for testing purposes */
+		opt |= OPT_K;
 		set_arima_levels(ainfo);
 	    } else {
 		/* this replaces ainfo->y */
@@ -1963,10 +1951,10 @@ MODEL arma_model (const int *list, const int *pqspec,
     if (!err) {
 	clear_model_xpx(&armod);
 	if (arma_exact_ml(ainfo)) {
-	    if (opt & OPT_A) {
-		err = as_arma(coeff, dset, ainfo, &armod, opt);
-	    } else {
+	    if (opt & OPT_K) {
 		err = kalman_arma(coeff, dset, ainfo, &armod, opt);
+	    } else {
+		err = as_arma(coeff, dset, ainfo, &armod, opt);
 	    }
 	} else {
 	    err = bhhh_arma(coeff, dset, ainfo, &armod, opt);

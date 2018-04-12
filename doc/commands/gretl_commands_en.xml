@@ -975,16 +975,15 @@
 
       <para>
 	The default is to use the <quote>native</quote> gretl ARMA
-	functionality, with estimation by exact ML using the Kalman
-	filter; estimation via conditional ML is available as an
-	option.  (If <program>X-12-ARIMA</program> is installed you
-	have the option of using it instead of native code.)  For
-	details regarding these options, please see <guideref
-	targ="chap:timeseries"/>.
+	functionality, with estimation by exact ML; estimation via
+	conditional ML is available as an option.  (If
+	<program>X-12-ARIMA</program> is installed you have the option
+	of using it instead of native code.)  For details regarding
+	these options, please see <guideref targ="chap:timeseries"/>.
       </para>
 
       <para context="cli">
-	When the native exact ML code is used, estimated standard
+	When native exact ML code is used, estimated standard
 	errors are by default based on a numerical approximation to
 	the (negative inverse of) the Hessian, with a fallback to the
 	outer product of the gradient (OPG) if calculation of the
@@ -7517,8 +7516,8 @@
 	file is used.
       </para>
       <para>
-	For details on all of this, see the <book>Gretl Function
-	Package Guide</book>.
+	For details on all of this, see the <mnu>PkgHelp:Pkgbook</mnu>
+	(under the Help menu).
       </para>
     </description>
 
@@ -12030,8 +12029,8 @@
 	<li>
 	  <para><lit>max_verbose</lit>: <lit>on</lit> or
 	  <lit>off</lit> (the default). Toggles verbose output for the
-	  <lit>BFGSmax</lit> and <lit>NRmax</lit> functions (see the
-	  User's Guide for details).
+	  <lit>BFGSmax</lit> and <lit>NRmax</lit> functions; see
+	  <guideref targ="chap:numerical"/> for details).
 	</para>
 	</li>
 	<li>
