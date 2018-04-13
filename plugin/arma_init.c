@@ -444,6 +444,7 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
     /* how many variables do we need to allocate for? */
     nv = nv1 > nv2 ? nv1 : nv2;
 
+    /* allocate sufficient storage for both passes */
     aset = create_auxiliary_dataset(nv, ainfo->T, 0);
     if (aset == NULL) {
 	return E_ALLOC;
@@ -462,7 +463,7 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
 	y = ainfo->y;
     }
 
-    /* in case we bomb before estimating a model */
+    /* in case we fail before estimating a model */
     gretl_model_init(&armod, dset);
 
     /* regression list */
@@ -514,9 +515,6 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
     /* pass2 non-seasonal AR lags first */
     for (i=1; i<=ainfo->p; i++) {
 	if (AR_included(ainfo, i-1)) {
-#if AINIT_DEBUG
-	    fprintf(stderr, "included: y_%d\n", i);
-#endif
 	    sprintf(aset->varname[pos], "y_%d", i);
 	    for (t=0; t<ainfo->T; t++) {
 		s = t + ainfo->t1 - i;
@@ -574,9 +572,6 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
     /* then any "extra" AR lags for pass 1 only */
     for (i=1; i<=p1lags; i++) {
 	if (!done[i-1]) {
-#if AINIT_DEBUG
-	    fprintf(stderr, "extra: y_%d\n", i);
-#endif
 	    sprintf(aset->varname[pos], "y_%d", i);
 	    for (t=0; t<ainfo->T; t++) {
 		s = t + ainfo->t1 - i;
@@ -606,7 +601,10 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
 
     /* revise hrlist if needed (FIXME constant?) */
     hrlist[0] = nv2;
-    /* position for insertion of MA terms */
+    /* position for insertion of MA terms: at least some of
+       these will likely overwrite AR terms that were wanted
+       only for pass 1
+    */
     pos = mapos;
 
     for (i=1; i<=ainfo->q; i++) {
