@@ -347,11 +347,11 @@ static double as197_iteration (const double *b, void *data)
 
     if (as->ma_check) {
 	/* check that MA term(s) are within bounds */
-	const double *theta = b + as->ifc + np;
-	const double *Theta = theta + as->ai->nq;
+	double *theta = (double *) b + as->ifc + np;
+	double *Theta = theta + as->ai->nq;
 
-	if (ma_out_of_bounds(as->ai, theta, Theta)) {
-	    return crit;
+	if (maybe_correct_MA(as->ai, theta, Theta)) {
+	    return NADBL;
 	}
     }
 
@@ -405,11 +405,11 @@ static double as154_iteration (const double *b, void *data)
 
     if (as->ma_check) {
 	/* check that MA term(s) are within bounds */
-	const double *theta = b + as->ifc + np;
-	const double *Theta = theta + as->ai->nq;
+	double *theta = (double *) b + as->ifc + np;
+	double *Theta = theta + as->ai->nq;
 
-	if (ma_out_of_bounds(as->ai, theta, Theta)) {
-	    return crit;
+	if (maybe_correct_MA(as->ai, theta, Theta)) {
+	    return NADBL;
 	}
     }
 

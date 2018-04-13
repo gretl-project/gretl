@@ -457,12 +457,13 @@ static double bhhh_arma_callback (double *coeff,
     const double *y = ainfo->Z[0];
     const double **X = ainfo->Z + 1;
     /* pointers to blocks of coefficients */
-    const double *phi =   coeff + ainfo->ifc;
-    const double *Phi =     phi + ainfo->np;
-    const double *theta =   Phi + ainfo->P;
-    const double *Theta = theta + ainfo->nq;
-    const double *beta =  Theta + ainfo->Q;
+    double *phi =   coeff + ainfo->ifc;
+    double *Phi =     phi + ainfo->np;
+    double *theta =   Phi + ainfo->P;
+    double *Theta = theta + ainfo->nq;
+    double *beta =  Theta + ainfo->Q;
     double ll, s2 = 0.0;
+    int any_ma = ainfo->q > 0 || ainfo->Q > 0;
 
     *err = 0;
 
@@ -474,7 +475,7 @@ static double bhhh_arma_callback (double *coeff,
     }
 #endif
 
-    if (ma_out_of_bounds(ainfo, theta, Theta)) {
+    if (any_ma && maybe_correct_MA(ainfo, theta, Theta)) {
 	pputs(ainfo->prn, "arma: MA estimate(s) out of bounds\n");
 	fputs("bhhh_arma_callback: MA estimate(s) out of bounds\n", stderr);
 	*err = E_NOCONV;
