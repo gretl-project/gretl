@@ -23,7 +23,7 @@ static int tw_acf (const double *phi, int p,
 
 int flikam (const double *phi, int p,
 	    const double *theta, int q,
-	    const double *W, double *E, int n,
+	    const double *w, double *e, int n,
 	    double *sumsq, double *fact,
 	    double *vw, double *vl, int rp1,
 	    double *vk, int r, double toler)
@@ -31,7 +31,7 @@ int flikam (const double *phi, int p,
     double eps1 = 1.0e-10;
     double detman = 1.0;
     double detcar = 0.0;
-    double R, A, aor, wi;
+    double R, a, aor, wi;
     double vw0, vl0, alf, flj;
     int mxpq = max0(p, q);
     int mnpq = min0(p, q);
@@ -121,17 +121,17 @@ int flikam (const double *phi, int p,
 	    detcar -= DCDELTA;
 	}
 	vw0 = vw[0];
-        if (isnan(W[i])) {
+        if (isnan(w[i])) {
 	    /* FIXME? */
 	    wi = vw0;
-	    aor = A = E[i] = 0.0;
+	    aor = a = e[i] = 0.0;
 	    ok_n--;
 	} else {
-	    wi = W[i];
-	    A = W[i] - vw0;
-	    E[i] = A / sqrt(R);
-	    aor = A / R;
-	    *sumsq += A * aor;
+	    wi = w[i];
+	    a = wi - vw0;
+	    e[i] = a / sqrt(R);
+	    aor = a / R;
+	    *sumsq += a * aor;
 	}
         vl0 = vl[0];
         alf = vl0 / R;
@@ -161,19 +161,19 @@ int flikam (const double *phi, int p,
 	nexti = i;
 	ret = -nexti;
 	for (i=nexti; i<n; i++) {
-	    if (isnan(W[i])) {
-		E[i] = 0;
+	    if (isnan(w[i])) {
+		e[i] = 0;
 		ok_n--;
 		continue;
 	    }
-	    E[i] = W[i];
+	    e[i] = w[i];
 	    for (j=0; j<p; j++) {
-		E[i] -= phi[j] * W[i-j-1];
+		e[i] -= phi[j] * w[i-j-1];
 	    }
 	    for (j=0; j<q; j++) {
-		E[i] -= theta[j] * E[i-j-1];
+		e[i] -= theta[j] * e[i-j-1];
 	    }
-	    *sumsq += E[i] * E[i];
+	    *sumsq += e[i] * e[i];
 	}
     }
 
