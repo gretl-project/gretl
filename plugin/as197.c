@@ -31,8 +31,8 @@ int flikam (const double *phi, int p,
     double eps1 = 1.0e-10;
     double detman = 1.0;
     double detcar = 0.0;
-    double R, a, aor, wi;
-    double vw0, vl0, alf, flj;
+    double h2, a, aor, wi;
+    double vw0, vl0, alfa, flj;
     int mxpq = max0(p, q);
     int mnpq = min0(p, q);
     int mxpqp1 = mxpq + 1;
@@ -65,8 +65,8 @@ int flikam (const double *phi, int p,
     }
 
     /* computation of the initial vectors (vl, vk) */
-    R = vk[0];
-    if (R <= eps1) {
+    h2 = vk[0];
+    if (h2 <= eps1) {
 	return 8; /* fault code */
     }
     vl[r-1] = 0;
@@ -76,7 +76,7 @@ int flikam (const double *phi, int p,
 	    vl[j] = vk[j+1];
 	}
 	if (j < p) {
-	    vl[j] += phi[j] * R;
+	    vl[j] += phi[j] * h2;
 	}
 	vk[j] = vl[j];
     }
@@ -106,12 +106,12 @@ int flikam (const double *phi, int p,
 		break;
 	    }
 	}
-        if (i > mxpq && fabs(R - 1.0) < toler) {
+        if (i > mxpq && fabs(h2 - 1.0) < toler) {
 	    do_quick = 1;
 	    break;
 	}
 	/* update scalars */
-        detman *= R;
+        detman *= h2;
 	while (fabs(detman) >= 1.0) {
 	    detman *= DSHRINK;
 	    detcar += DCDELTA;
@@ -129,27 +129,27 @@ int flikam (const double *phi, int p,
 	} else {
 	    wi = w[i];
 	    a = wi - vw0;
-	    e[i] = a / sqrt(R);
-	    aor = a / R;
+	    e[i] = a / sqrt(h2);
+	    aor = a / h2;
 	    *sumsq += a * aor;
 	}
         vl0 = vl[0];
-        alf = vl0 / R;
-        R -= alf * vl0;
-	if (R <= eps1) {
+        alfa = vl0 / h2;
+        h2 -= alfa * vl0;
+	if (h2 <= eps1) {
 	    return 8; /* fault code */
 	}
  	/* update vectors */
         for (j=0; j<loop; j++) {
 	    flj = vl[j+1] + phi[j] * vl0;
 	    vw[j] = vw[j+1] + phi[j] * vw0 + aor * vk[j];
-	    vl[j] = flj - alf * vk[j];
-	    vk[j] -= alf * flj;
+	    vl[j] = flj - alfa * vk[j];
+	    vk[j] -= alfa * flj;
 	}
 	for (j=jfrom; j<q; j++) {
 	    vw[j] = vw[j+1] + aor * vk[j];
-	    vl[j] = vl[j+1] - alf * vk[j];
-	    vk[j] -= alf * vl[j+1];
+	    vl[j] = vl[j+1] - alfa * vk[j];
+	    vk[j] -= alfa * vl[j+1];
 	}
 	for (j=jfrom; j<p; j++) {
 	    vw[j] = vw[j+1] + phi[j] * wi;
