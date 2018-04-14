@@ -405,6 +405,40 @@ static int hr_transcribe_coeffs (arma_info *ainfo,
     return err;
 }
 
+static int pre_sample_count (arma_info *ainfo,
+			     const double *y,
+			     int maxlag)
+{
+    int t, n = 0;
+
+    for (t=ainfo->t1-1; t>=0; t--) {
+	if (!na(y[t])) {
+	    n++;
+	    if (n == maxlag) {
+		break;
+	    }
+	} else {
+	    break;
+	}
+    }
+
+    return n;
+}
+
+static double *prescale_y (double *y, double scale, int n)
+{
+    double *ys = copyvec(y, n);
+    int t;
+    
+    for (t=0; t<n; t++) {
+	if (!na(ys[t])) {
+	    ys[t] *= scale;
+	}
+    }
+	    
+    return ys;
+}
+
 /* Hannan-Rissanen ARMA initialization via two OLS passes. In the
    first pass we run an OLS regression of y on the exogenous vars plus
    a certain (biggish) number of lags. In the second we estimate the
@@ -416,22 +450,33 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
 			      arma_info *ainfo, PRN *prn)
 {
     const int *list = ainfo->alist;
-    const double *y;
+    double *y, *dest, *src;
     DATASET *aset = NULL;
     MODEL armod;
     int *hrlist = NULL;
-    char yscale, *done = NULL;
-    int maxp2p, p1lags;
+    char *done = NULL;
+    int maxp2p, maxp2q, p1lags;
     int nv, nv1, nv2;
     int np2p, np2q;
-    int m, src, pos, mapos;
+    int m, xpos, pos, mapos;
     size_t datalen;
-    int xstart;
-    int i, j, s, t;
+    int xstart, free_y = 0;
+    int i, j, T, t1;
     int err = 0;
 
-    /* the greatest lag-length in pass 2 */
+    /* the dependent variable (of length dset->n) */
+    if (arma_xdiff(ainfo)) {
+	/* for initialization, use the level of y */
+	y = (double *) dset->Z[ainfo->yno];
+    } else {
+	y = ainfo->y;
+    }    
+
+    /* the greatest AR lag-length in pass 2 */
     maxp2p = ainfo->p + ainfo->pd * ainfo->P;
+    /* the greatest MA lag-length in pass 2 */
+    maxp2q = ainfo->q + ainfo->pd * ainfo->Q;
+    
     /* the actual number of lags in pass 2 */
     np2p = ainfo->np + ainfo->P + ainfo->p * ainfo->P;
     np2q = ainfo->nq + ainfo->Q + ainfo->q * ainfo->Q;
@@ -444,23 +489,34 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
     /* how many variables do we need to allocate for? */
     nv = nv1 > nv2 ? nv1 : nv2;
 
+    /* and how many observations? */
+    T = ainfo->T - p1lags;
+    if (ainfo->t1 > 0) {
+	/* use non-missing pre-sample obs? */
+	T += pre_sample_count(ainfo, y, p1lags);
+    }
+    /* benchmark position for reading from dset */
+    t1 = ainfo->t1 + ainfo->T - T;
+
     /* allocate sufficient storage for both passes */
-    aset = create_auxiliary_dataset(nv, ainfo->T, 0);
+    aset = create_auxiliary_dataset(nv, T, 0);
     if (aset == NULL) {
 	return E_ALLOC;
     }
 
 #if AINIT_DEBUG
     fprintf(stderr, "hr_arma_init: dataset allocated: %d vars, %d obs\n",
-	    nv, ainfo->T);
+	    nv, T);
 #endif
 
-    /* dependent variable */
-    if (arma_xdiff(ainfo)) {
-	/* for initialization, use the level of y */
-	y = dset->Z[ainfo->yno];
-    } else {
-	y = ainfo->y;
+    if (ainfo->yscale != 1.0 && !arma_cml_init(ainfo)) {
+	y = prescale_y(y, ainfo->yscale, dset->n);
+	if (y == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	} else {
+	    free_y = 1;
+	}
     }
 
     /* in case we fail before estimating a model */
@@ -491,41 +547,24 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
 
     /* recorder array, etc. */
     done = calloc(p1lags, 1);
-    datalen = ainfo->T * sizeof(double);
-    yscale = !arma_cml_init(ainfo) && ainfo->yscale != 1.0;
+    datalen = T * sizeof(double);
 
     /* dependent var */
     strcpy(aset->varname[1], "y");
-    for (t=0; t<ainfo->T; t++) {
-	s = t + ainfo->t1;
-	if (yscale && !na(y[s])) {
-	    aset->Z[1][t] = y[s] * ainfo->yscale;
-	} else {
-	    aset->Z[1][t] = y[s];
-	}
-    }
+    memcpy(aset->Z[1], y + t1, datalen);
     /* exogenous vars */
     pos = 2;
     for (i=0; i<ainfo->nexo; i++) {
 	sprintf(aset->varname[pos], "x%d", i);
-	src = list[xstart + i];
-	memcpy(aset->Z[pos], dset->Z[src] + ainfo->t1, datalen);
+	xpos = list[xstart + i];
+	memcpy(aset->Z[pos], dset->Z[xpos] + t1, datalen);
 	pos++;
     }
     /* pass2 non-seasonal AR lags first */
     for (i=1; i<=ainfo->p; i++) {
 	if (AR_included(ainfo, i-1)) {
 	    sprintf(aset->varname[pos], "y_%d", i);
-	    for (t=0; t<ainfo->T; t++) {
-		s = t + ainfo->t1 - i;
-		if (s >= 0) {
-		    if (yscale && !na(y[s])) {
-			aset->Z[pos][t] = y[s] * ainfo->yscale;
-		    } else {
-			aset->Z[pos][t] = y[s];
-		    }
-		}
-	    }
+	    memcpy(aset->Z[pos], y + t1 - i, datalen);
 	    done[i-1] = 1;
 	    pos++;
 	}
@@ -534,16 +573,7 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
     for (j=1; j<=ainfo->P; j++) {
 	m = j * ainfo->pd;
 	sprintf(aset->varname[pos], "y_%d", m);
-	for (t=0; t<ainfo->T; t++) {
-	    s = t + ainfo->t1 - m;
-	    if (s >= 0) {
-		if (yscale && !na(y[s])) {
-		    aset->Z[pos][t] = y[s] * ainfo->yscale;
-		} else {
-		    aset->Z[pos][t] = y[s];
-		}
-	    }
-	}
+	memcpy(aset->Z[pos], y + t1 - m, datalen);
 	done[m-1] = 1;
 	pos++;
     }
@@ -553,16 +583,7 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
 	    if (AR_included(ainfo, i-1)) {
 		m = j * ainfo->pd + i;
 		sprintf(aset->varname[pos], "y_%d", m);
-		for (t=0; t<ainfo->T; t++) {
-		    s = t + ainfo->t1 - m;
-		    if (s >= 0) {
-			if (yscale && !na(y[s])) {
-			    aset->Z[pos][t] = y[s] * ainfo->yscale;
-			} else {
-			    aset->Z[pos][t] = y[s];
-			}
-		    }
-		}
+		memcpy(aset->Z[pos], y + t1 - m, datalen);
 		done[m-1] = 1;
 		pos++;
 	    }
@@ -573,16 +594,7 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
     for (i=1; i<=p1lags; i++) {
 	if (!done[i-1]) {
 	    sprintf(aset->varname[pos], "y_%d", i);
-	    for (t=0; t<ainfo->T; t++) {
-		s = t + ainfo->t1 - i;
-		if (s >= 0) {
-		    if (yscale && !na(y[s])) {
-			aset->Z[pos][t] = y[s] * ainfo->yscale;
-		    } else {
-			aset->Z[pos][t] = y[s];
-		    }
-		}
-	    }
+	    memcpy(aset->Z[pos], y + t1 - i, datalen);
 	    pos++;
 	}
     }
@@ -607,25 +619,27 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
     */
     pos = mapos;
 
+    /* pass 2 sample: skip the leading observations for
+       which we don't have lagged residuals from pass 1
+    */
+    aset->t1 = maxp2q;
+    datalen = (T - maxp2q) * sizeof(double);
+
     for (i=1; i<=ainfo->q; i++) {
 	if (MA_included(ainfo, i-1)) {
 	    sprintf(aset->varname[pos], "e_%d", i);
-	    for (t=0; t<i; t++) {
-		aset->Z[pos][t] = NADBL;
-	    }
-	    datalen = (ainfo->T - i) * sizeof(double);
-	    memcpy(aset->Z[pos] + i, armod.uhat, datalen);
+	    dest = aset->Z[pos] + aset->t1;
+	    src = armod.uhat + aset->t1 - i;
+	    memcpy(dest, src, datalen);
 	    pos++;
 	}
     }
     for (j=1; j<=ainfo->Q; j++) {
 	m = j * ainfo->pd;
 	sprintf(aset->varname[pos], "e_%d", m);
-	for (t=0; t<m; t++) {
-	    aset->Z[pos][t] = NADBL;
-	}
-	datalen = (ainfo->T - m) * sizeof(double);
-	memcpy(aset->Z[pos] + m, armod.uhat, datalen);
+	dest = aset->Z[pos] + aset->t1;
+	src = armod.uhat + aset->t1 - m;
+	memcpy(dest, src, datalen);
 	pos++;
     }
     for (j=1; j<=ainfo->Q; j++) {
@@ -633,11 +647,9 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
 	    if (MA_included(ainfo, i-1)) {
 		m = j * ainfo->pd + i;
 		sprintf(aset->varname[pos], "e_%d", m);
-		for (t=0; t<m; t++) {
-		    aset->Z[pos][t] = NADBL;
-		}
-		datalen = (ainfo->T - m) * sizeof(double);
-		memcpy(aset->Z[pos] + m, armod.uhat, datalen);
+		dest = aset->Z[pos] + aset->t1;
+		src = armod.uhat + aset->t1 - m;
+		memcpy(dest, src, datalen);
 		pos++;
 	    }
 	}
@@ -677,6 +689,9 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
     free(done);
     destroy_dataset(aset);
     clear_model(&armod);
+    if (free_y) {
+	free(y);
+    }
 
     if (!err && prn != NULL) {
 	pprintf(prn, "\n%s: %s\n\n", _("ARMA initialization"),

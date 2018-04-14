@@ -1723,7 +1723,7 @@ MODEL arma_model (const int *list, const int *pqspec,
 		opt |= OPT_K;
 		set_arima_levels(ainfo);
 	    } else {
-		/* this replaces ainfo->y */
+		/* note: this replaces ainfo->y */
 		err = arima_difference(ainfo, dset, 0);
 	    }
 	}
