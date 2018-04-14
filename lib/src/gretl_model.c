@@ -1556,8 +1556,8 @@ static gretl_matrix *arma_model_spectrum (gretl_matrix *phi,
     return ret;
 }
 
-static double arima_difference (const double *x, int t,
-				int *delta, int k, int *err)
+static double arima_diff (const double *x, int t,
+			  int *delta, int k, int *err)
 {
     double dxt = x[t];
     int i, p;
@@ -1655,7 +1655,7 @@ static gretl_vector *get_arma_yvec (const MODEL *pmod,
 	for (t=0; t<T && !*err; t++) {
 	    s = t + t1;
 	    if (delta != NULL) {
-		yt = arima_difference(dset->Z[yno], s, delta, k, err);
+		yt = arima_diff(dset->Z[yno], s, delta, k, err);
 	    } else {
 		yt = dset->Z[yno][s];
 	    }
@@ -1664,8 +1664,8 @@ static gretl_vector *get_arma_yvec (const MODEL *pmod,
 		for (i=1, j=0; i<=xlist[0]; i++) {
 		    if (xlist[i] != 0) {
 			if (xdiff) {
-			    xti = arima_difference(dset->Z[xlist[i]], s,
-						   delta, k, err);
+			    xti = arima_diff(dset->Z[xlist[i]], s,
+					     delta, k, err);
 			} else {
 			    xti = dset->Z[xlist[i]][s];
 			}
