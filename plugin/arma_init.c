@@ -91,26 +91,6 @@ void maybe_set_yscale (arma_info *ainfo)
 
 #define HR_MINLAGS 16
 
-/* if @z is n x 1, append a column of zeros; otherwise
-   leave it alone
-*/
-
-static int force_complex (gretl_matrix *z)
-{
-    int i, err = 0;
-
-    if (z->cols == 1) {
-	err = gretl_matrix_realloc(z, z->rows, 2);
-	if (!err) {
-	    for (i=0; i<z->rows; i++) {
-		gretl_matrix_set(z, i, 1, 0.0);
-	    }
-	}
-    }
-
-    return 0;
-}
-
 /* complex inversion of @z */
 
 static gretl_matrix *cinv (gretl_matrix *z)
@@ -123,9 +103,7 @@ static gretl_matrix *cinv (gretl_matrix *z)
     for (i=0; i<n; i++) {
 	tmp->val[i] = 1.0;
     }
-    force_complex(z);
-    ret = gretl_matrix_complex_divide(tmp, z, &err);
-    force_complex(ret);
+    ret = gretl_matrix_complex_divide(tmp, z, 1, &err);
     gretl_matrix_free(tmp);
 
     return ret;
@@ -148,7 +126,7 @@ static void copy_row (gretl_matrix *targ, int it,
    to be n x 2 (complex)
 */
 
-static gretl_matrix *polfromroots (gretl_matrix *r)
+static gretl_matrix *polfromroots (const gretl_matrix *r)
 {
     gretl_matrix *tmp, *ret = NULL;
     int n = r->rows;
@@ -161,7 +139,6 @@ static gretl_matrix *polfromroots (gretl_matrix *r)
 	tmp->val[1] = 0;
 	ret = tmp;
     } else {
-	force_complex(r);
 	copy_row(tmp, 0, r, n-1, 0);
 	if (tmp->val[0] == 0 && tmp->val[1] == 0) {
 	    tmp->val[0] = tmp->val[1] = M_NA;
@@ -196,10 +173,9 @@ static gretl_matrix *polfromroots (gretl_matrix *r)
 		/* hansl: ix = transp(mshape(ix, 2, n)) */
 		tmp1 = gretl_matrix_shape(ix, 2, n, &err);
 		gretl_matrix_transpose_in_place(tmp1);
-		/* hansl: tmp = force_complex(cmult(tmp , -ix)) */
+		/* hansl: tmp = cmult(tmp , -ix) */
 		gretl_matrix_multiply_by_scalar(tmp1, -1.0);
-		tmp2 = gretl_matrix_complex_multiply(tmp, tmp1, &err);
-		force_complex(tmp2);
+		tmp2 = gretl_matrix_complex_multiply(tmp, tmp1, 1, &err);
 		/* hansl: ret[2:,] += tmp */
 		for (i=1; i<ret->rows; i++) {
 		    d0 = gretl_matrix_get(ret, i, 0);
@@ -263,7 +239,6 @@ int flip_ma_poly (double *theta, arma_info *ainfo,
     q = seasonal ? ainfo->Q : ainfo->q;
     qmask = seasonal ? NULL : ainfo->qmask;
 
-    /* hansl: r = force_complex(polroots(1 | q)) */
     if (qmask == NULL) {
 	/* no expansion needed */
 	tmp = gretl_matrix_alloc(q + 1, 1);
@@ -275,8 +250,7 @@ int flip_ma_poly (double *theta, arma_info *ainfo,
 	/* expand to handle MA gappiness */
 	tmp = poly_from_theta(theta, qmask, q);
     }
-    r = gretl_matrix_polroots(tmp, &err);
-    force_complex(r);
+    r = gretl_matrix_polroots(tmp, 1, &err);
 
     gretl_matrix_zero(tmp);
     for (i=0; i<r->rows; i++) {

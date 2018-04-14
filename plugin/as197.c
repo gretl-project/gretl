@@ -18,7 +18,8 @@ static int tw_acf (const double *phi, int p,
   expressed as fact * sumsq.
 
   Sign of the MA coefficients switched to agree with the
-  convention followed by gretl.
+  convention followed by gretl; notation revised somewhat
+  to be closer to Melard's documentation.
 */
 
 int flikam (const double *phi, int p,

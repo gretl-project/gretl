@@ -2825,10 +2825,10 @@ static int real_matrix_calc (const gretl_matrix *A,
 	C = gretl_matrix_hdproduct_new(A, B, &err);
 	break;
     case F_CMULT:
-	C = gretl_matrix_complex_multiply(A, B, &err);
+	C = gretl_matrix_complex_multiply(A, B, 0, &err);
 	break;
     case F_CDIV:
-	C = gretl_matrix_complex_divide(A, B, &err);
+	C = gretl_matrix_complex_divide(A, B, 0, &err);
 	break;
     case F_MRSEL:
 	C = gretl_matrix_bool_sel(A, B, 1, &err);
@@ -3997,7 +3997,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    ret->v.m = gretl_matrix_ffti(m, &p->err);
 	    break;
 	case F_POLROOTS:
-	    ret->v.m = gretl_matrix_polroots(m, &p->err);
+	    ret->v.m = gretl_matrix_polroots(m, 0, &p->err);
 	    break;
 	case F_RANKING:
 	    ret->v.m = rank_vector(m, F_SORT, &p->err);
