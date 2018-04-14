@@ -429,13 +429,13 @@ static double *prescale_y (double *y, double scale, int n)
 {
     double *ys = copyvec(y, n);
     int t;
-    
+
     for (t=0; t<n; t++) {
 	if (!na(ys[t])) {
 	    ys[t] *= scale;
 	}
     }
-	    
+
     return ys;
 }
 
@@ -470,13 +470,13 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
 	y = (double *) dset->Z[ainfo->yno];
     } else {
 	y = ainfo->y;
-    }    
+    }
 
     /* the greatest AR lag-length in pass 2 */
     maxp2p = ainfo->p + ainfo->pd * ainfo->P;
     /* the greatest MA lag-length in pass 2 */
     maxp2q = ainfo->q + ainfo->pd * ainfo->Q;
-    
+
     /* the actual number of lags in pass 2 */
     np2p = ainfo->np + ainfo->P + ainfo->p * ainfo->P;
     np2q = ainfo->nq + ainfo->Q + ainfo->q * ainfo->Q;
