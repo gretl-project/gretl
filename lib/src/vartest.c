@@ -899,7 +899,7 @@ static gretl_matrix *var_hac_xox (GRETL_VAR *var, int k,
 	for (t=0; t<var->T; t++) {
 	    uk->val[t] = gretl_matrix_get(var->E, t, k);
 	}
-	XOX = HAC_XOX(uk, var->X, vi, 0, err);
+	XOX = HAC_XOX(var->X, uk, vi, 0, err);
 	gretl_matrix_free(uk);
     }
 

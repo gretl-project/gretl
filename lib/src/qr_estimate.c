@@ -465,9 +465,9 @@ int newey_west_bandwidth (const gretl_matrix *H,
 	}
 	sigma /= T-1;
 	if (kern == KERNEL_BARTLETT) {
-	    s1 += 2 * j * sigma;
+	    s1 += 2*j*sigma;
 	} else {
-	    s1 += 2 * j * j * sigma;
+	    s1 += 2*j*j*sigma;
 	}
 	s0 += 2 * sigma;
 #if NW_DEBUG
@@ -704,7 +704,11 @@ static gretl_matrix *newey_west_H (const gretl_matrix *X,
 	for (j=0; j<k; j++) {
 	    for (t=0; t<T; t++) {
 		xtj = gretl_matrix_get(X, t, j);
-		gretl_matrix_set(H, t, j, xtj * u->val[t]);
+		if (u != NULL) {
+		    gretl_matrix_set(H, t, j, xtj * u->val[t]);
+		} else {
+		    gretl_matrix_set(H, t, j, xtj);
+		}
 		if (make_w && j == 0 && t > 0) {
 		    if (xtj != gretl_matrix_get(X, t-1, j)) {
 			make_w = 0;
@@ -728,8 +732,8 @@ static gretl_matrix *newey_west_H (const gretl_matrix *X,
 
 /* HAC_XOX: compute the "sandwich filling" for the HAC estimator */
 
-gretl_matrix *HAC_XOX (const gretl_matrix *uhat,
-		       const gretl_matrix *X,
+gretl_matrix *HAC_XOX (const gretl_matrix *X,
+		       const gretl_matrix *uhat,
 		       VCVInfo *vi, int use_prior,
 		       int *err)
 {
@@ -818,13 +822,11 @@ gretl_matrix *HAC_XOX (const gretl_matrix *uhat,
 	for (j=0; j<=p; j++) {
 	    /* cumulate running sum of Gamma-hat terms */
 	    gretl_matrix_zero(Gj);
-
 	    for (t=j; t<T; t++) {
 		/* W(t)-transpose * W(t-j) */
 		wtw(Wtj, H, k, t, j);
 		gretl_matrix_add_to(Gj, Wtj);
 	    }
-
 	    if (j > 0) {
 		/* Gamma(j) = Gamma(j) + Gamma(j)-transpose */
 		gretl_matrix_add_self_transpose(Gj);
@@ -835,7 +837,6 @@ gretl_matrix *HAC_XOX (const gretl_matrix *uhat,
 		}
 		gretl_matrix_multiply_by_scalar(Gj, wj);
 	    }
-
 	    gretl_matrix_add_to(XOX, Gj);
 	}
     }
@@ -844,7 +845,7 @@ gretl_matrix *HAC_XOX (const gretl_matrix *uhat,
 	hac_recolor(XOX, A);
     }
 
-    if (!use_prior) {
+    if (vi != NULL && !use_prior) {
 	vi->vmaj = VCV_HAC;
 	vi->vmin = kern;
 	vi->flags = prewhiten ? HAC_PREWHITEN : 0;
@@ -923,7 +924,7 @@ static int qr_make_hac (MODEL *pmod, const DATASET *dset,
     umat.cols = 1;
     umat.val = pmod->uhat + pmod->t1;
 
-    XOX = HAC_XOX(&umat, X, &vi, 0, &err);
+    XOX = HAC_XOX(X, &umat, &vi, 0, &err);
 
     if (!err) {
 	V = gretl_matrix_alloc(XOX->rows, XOX->rows);

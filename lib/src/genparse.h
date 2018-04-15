@@ -290,6 +290,7 @@ enum {
     F_GETINFO,
     F_CDUMIFY,
     F_GETKEYS,
+    F_LRCOVAR,
     HF_CINV,
     HF_CTRAN,
     HF_CEXP,
