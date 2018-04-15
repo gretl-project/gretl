@@ -412,6 +412,8 @@ static int lag_trunc_param (int kern, int prewhitened, int T)
    the exposition in their 1994 paper in Review of Economic
    Studies, pp. 634-5. See also A. Hall, "Generalized Method
    of Moments" (Oxford, 2005), p. 82.
+
+   Public because it's called from gmm.c (with @w NULL).
 */
 
 int newey_west_bandwidth (const gretl_matrix *H, 
