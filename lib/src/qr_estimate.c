@@ -683,7 +683,9 @@ static int nw_prewhiten (gretl_matrix *H, gretl_matrix **pA)
 /* Form the matrix H, such that H_t = X_t * u_t. In
    addition, if @pw is non-NULL and the first column 
    of @X is constant, then write into @pw a vector of
-   1s with the first element set to zero.
+   1s with the first element set to zero. Or if @u is
+   NULL, just copy X to H, but again fill @pw if
+   required.
 */
 
 static gretl_matrix *newey_west_H (const gretl_matrix *X, 
@@ -725,7 +727,7 @@ static gretl_matrix *newey_west_H (const gretl_matrix *X,
 		xtj = gretl_matrix_get(X, t, j);
 		gretl_matrix_set(H, t, j, xtj * u->val[t]);
 		if (make_w && j == 0 && t > 0 && xtj != x0) {
-		    /* first column not constant */
+		    /* first X column not constant */
 		    make_w = 0;
 		}
 	    }
