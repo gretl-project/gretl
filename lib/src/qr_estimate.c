@@ -691,39 +691,51 @@ static gretl_matrix *newey_west_H (const gretl_matrix *X,
 				   gretl_matrix **pw)
 {
     gretl_matrix *H;
-    double xtj;
+    double x0 = X->val[0];
     int T = X->rows;
     int k = X->cols;
+    int make_w;
     int j, t;
 
-    H = gretl_matrix_alloc(T, k);
+    /* tentative */
+    make_w = (pw != NULL && k > 1);
 
-    if (H != NULL) {
-	int make_w = (pw != NULL && k > 1);
+    if (u == NULL) {
+	H = gretl_matrix_copy(X);
+    } else {
+	H = gretl_matrix_alloc(T, k);
+    }
+
+    if (H != NULL && u == NULL) {
+	/* we just have to check for constancy */
+	if (make_w) {
+	    for (t=1; t<T; t++) {
+		if (X->val[t] != x0) {
+		    make_w = 0;
+		    break;
+		}
+	    }
+	}
+    } else if (H != NULL) {
+	/* @u is non-NULL */
+	double xtj;
 
 	for (j=0; j<k; j++) {
 	    for (t=0; t<T; t++) {
 		xtj = gretl_matrix_get(X, t, j);
-		if (u != NULL) {
-		    gretl_matrix_set(H, t, j, xtj * u->val[t]);
-		} else {
-		    gretl_matrix_set(H, t, j, xtj);
-		}
-		if (make_w && j == 0 && t > 0) {
-		    if (xtj != gretl_matrix_get(X, t-1, j)) {
-			make_w = 0;
-		    }
+		gretl_matrix_set(H, t, j, xtj * u->val[t]);
+		if (make_w && j == 0 && t > 0 && xtj != x0) {
+		    /* first column not constant */
+		    make_w = 0;
 		}
 	    }
 	}
+    }
 
-	if (make_w) {
-	    gretl_matrix *w = gretl_unit_matrix_new(k, 1);
-
-	    if (w != NULL) {
-		w->val[0] = 0;
-		*pw = w;
-	    }
+    if (H != NULL && make_w) {
+	*pw = gretl_unit_matrix_new(k, 1);
+	if (*pw != NULL) {
+	    (*pw)->val[0] = 0;
 	}
     }
 
