@@ -50,4 +50,7 @@ gretl_matrix *HAC_XOX (const gretl_matrix *X,
 		       VCVInfo *vi, int use_prior,
 		       int *err);
 
+gretl_matrix *long_run_covariance (const gretl_matrix *X,
+				   int demean, int *err);
+
 #endif  /* QR_ESTIMATE_H */
