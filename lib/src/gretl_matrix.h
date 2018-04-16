@@ -308,6 +308,7 @@ gretl_matrix_dot_op (const gretl_matrix *a, const gretl_matrix *b,
 
 gretl_matrix *gretl_matrix_complex_multiply (const gretl_matrix *a, 
 					     const gretl_matrix *b,
+					     int force_complex,
 					     int *err);
 
 gretl_matrix *gretl_matrix_divide (const gretl_matrix *a, 
@@ -317,11 +318,13 @@ gretl_matrix *gretl_matrix_divide (const gretl_matrix *a,
 
 gretl_matrix *gretl_matrix_complex_divide (const gretl_matrix *a, 
 					   const gretl_matrix *b,
+					   int force_complex,
 					   int *err);
 
 gretl_matrix *gretl_matrix_exp (const gretl_matrix *m, int *err);
 
 gretl_matrix *gretl_matrix_polroots (const gretl_matrix *a,
+				     int force_complex,
 				     int *err);
 
 void gretl_matrix_raise (gretl_matrix *m, double x);

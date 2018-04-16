@@ -45,8 +45,8 @@ int newey_west_bandwidth (const gretl_matrix *f,
 			  int kern, int prewhitened,
 			  int *h, double *bt);
 
-gretl_matrix *HAC_XOX (const gretl_matrix *uhat,
-		       const gretl_matrix *X,
+gretl_matrix *HAC_XOX (const gretl_matrix *X,
+		       const gretl_matrix *uhat,
 		       VCVInfo *vi, int use_prior,
 		       int *err);
 

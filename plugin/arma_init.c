@@ -91,26 +91,6 @@ void maybe_set_yscale (arma_info *ainfo)
 
 #define HR_MINLAGS 16
 
-/* if @z is n x 1, append a column of zeros; otherwise
-   leave it alone
-*/
-
-static int force_complex (gretl_matrix *z)
-{
-    int i, err = 0;
-
-    if (z->cols == 1) {
-	err = gretl_matrix_realloc(z, z->rows, 2);
-	if (!err) {
-	    for (i=0; i<z->rows; i++) {
-		gretl_matrix_set(z, i, 1, 0.0);
-	    }
-	}
-    }
-
-    return 0;
-}
-
 /* complex inversion of @z */
 
 static gretl_matrix *cinv (gretl_matrix *z)
@@ -123,9 +103,7 @@ static gretl_matrix *cinv (gretl_matrix *z)
     for (i=0; i<n; i++) {
 	tmp->val[i] = 1.0;
     }
-    force_complex(z);
-    ret = gretl_matrix_complex_divide(tmp, z, &err);
-    force_complex(ret);
+    ret = gretl_matrix_complex_divide(tmp, z, 1, &err);
     gretl_matrix_free(tmp);
 
     return ret;
@@ -148,7 +126,7 @@ static void copy_row (gretl_matrix *targ, int it,
    to be n x 2 (complex)
 */
 
-static gretl_matrix *polfromroots (gretl_matrix *r)
+static gretl_matrix *polfromroots (const gretl_matrix *r)
 {
     gretl_matrix *tmp, *ret = NULL;
     int n = r->rows;
@@ -161,7 +139,6 @@ static gretl_matrix *polfromroots (gretl_matrix *r)
 	tmp->val[1] = 0;
 	ret = tmp;
     } else {
-	force_complex(r);
 	copy_row(tmp, 0, r, n-1, 0);
 	if (tmp->val[0] == 0 && tmp->val[1] == 0) {
 	    tmp->val[0] = tmp->val[1] = M_NA;
@@ -196,10 +173,9 @@ static gretl_matrix *polfromroots (gretl_matrix *r)
 		/* hansl: ix = transp(mshape(ix, 2, n)) */
 		tmp1 = gretl_matrix_shape(ix, 2, n, &err);
 		gretl_matrix_transpose_in_place(tmp1);
-		/* hansl: tmp = force_complex(cmult(tmp , -ix)) */
+		/* hansl: tmp = cmult(tmp , -ix) */
 		gretl_matrix_multiply_by_scalar(tmp1, -1.0);
-		tmp2 = gretl_matrix_complex_multiply(tmp, tmp1, &err);
-		force_complex(tmp2);
+		tmp2 = gretl_matrix_complex_multiply(tmp, tmp1, 1, &err);
 		/* hansl: ret[2:,] += tmp */
 		for (i=1; i<ret->rows; i++) {
 		    d0 = gretl_matrix_get(ret, i, 0);
@@ -263,7 +239,6 @@ int flip_ma_poly (double *theta, arma_info *ainfo,
     q = seasonal ? ainfo->Q : ainfo->q;
     qmask = seasonal ? NULL : ainfo->qmask;
 
-    /* hansl: r = force_complex(polroots(1 | q)) */
     if (qmask == NULL) {
 	/* no expansion needed */
 	tmp = gretl_matrix_alloc(q + 1, 1);
@@ -275,8 +250,7 @@ int flip_ma_poly (double *theta, arma_info *ainfo,
 	/* expand to handle MA gappiness */
 	tmp = poly_from_theta(theta, qmask, q);
     }
-    r = gretl_matrix_polroots(tmp, &err);
-    force_complex(r);
+    r = gretl_matrix_polroots(tmp, 1, &err);
 
     gretl_matrix_zero(tmp);
     for (i=0; i<r->rows; i++) {
@@ -405,6 +379,40 @@ static int hr_transcribe_coeffs (arma_info *ainfo,
     return err;
 }
 
+static int pre_sample_count (arma_info *ainfo,
+			     const double *y,
+			     int maxlag)
+{
+    int t, n = 0;
+
+    for (t=ainfo->t1-1; t>=0; t--) {
+	if (!na(y[t])) {
+	    n++;
+	    if (n == maxlag) {
+		break;
+	    }
+	} else {
+	    break;
+	}
+    }
+
+    return n;
+}
+
+static double *prescale_y (double *y, double scale, int n)
+{
+    double *ys = copyvec(y, n);
+    int t;
+
+    for (t=0; t<n; t++) {
+	if (!na(ys[t])) {
+	    ys[t] *= scale;
+	}
+    }
+
+    return ys;
+}
+
 /* Hannan-Rissanen ARMA initialization via two OLS passes. In the
    first pass we run an OLS regression of y on the exogenous vars plus
    a certain (biggish) number of lags. In the second we estimate the
@@ -416,79 +424,93 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
 			      arma_info *ainfo, PRN *prn)
 {
     const int *list = ainfo->alist;
-    int np = ainfo->p, nq = ainfo->q;
-    int nP = ainfo->P, nQ = ainfo->Q;
-    int ptotal = np + nP + np * nP;
-    int qtotal = nq + nQ + nq * nQ;
-    int nexo = ainfo->nexo;
-    int pass1lags, pass1v;
-    const double *y;
+    double *y, *dest, *src;
     DATASET *aset = NULL;
-    int *pass1list = NULL;
-    int *pass2list = NULL;
-    int *arlags = NULL;
-    int *malags = NULL;
-    double ys;
     MODEL armod;
-    int xstart;
-    int m, pos, s;
-    int i, j, t;
+    int *hrlist = NULL;
+    char *done = NULL;
+    int maxp2p, maxp2q, p1lags;
+    int nv, nv1, nv2;
+    int np2p, np2q;
+    int m, xpos, pos, mapos;
+    size_t datalen;
+    int xstart, free_y = 0;
+    int i, j, T, t1;
     int err = 0;
 
-    pass1lags = (ainfo->Q + ainfo->P) * dset->pd;
-    if (pass1lags < HR_MINLAGS) {
-	pass1lags = HR_MINLAGS;
-    }
-    pass1v = pass1lags + nexo + 2;
-
-    /* dependent variable */
+    /* the dependent variable (of length dset->n) */
     if (arma_xdiff(ainfo)) {
 	/* for initialization, use the level of y */
-	y = dset->Z[ainfo->yno];
+	y = (double *) dset->Z[ainfo->yno];
     } else {
 	y = ainfo->y;
     }
 
-    aset = create_auxiliary_dataset(pass1v + qtotal, ainfo->T, 0);
+    /* the greatest AR lag-length in pass 2 */
+    maxp2p = ainfo->p + ainfo->pd * ainfo->P;
+    /* the greatest MA lag-length in pass 2 */
+    maxp2q = ainfo->q + ainfo->pd * ainfo->Q;
+
+    /* the actual number of lags in pass 2 */
+    np2p = ainfo->np + ainfo->P + ainfo->p * ainfo->P;
+    np2q = ainfo->nq + ainfo->Q + ainfo->q * ainfo->Q;
+    nv2 = 2 + ainfo->nexo + np2p + np2q;
+
+    /* do we need more AR lags for H-R? */
+    p1lags = maxp2p < HR_MINLAGS ? HR_MINLAGS : maxp2p;
+    nv1 = 2 + ainfo->nexo + p1lags;
+
+    /* how many variables do we need to allocate for? */
+    nv = nv1 > nv2 ? nv1 : nv2;
+
+    /* and how many observations? */
+    T = ainfo->T - p1lags;
+    if (ainfo->t1 > 0) {
+	/* use non-missing pre-sample obs? */
+	T += pre_sample_count(ainfo, y, p1lags);
+    }
+    /* benchmark position for reading from dset */
+    t1 = ainfo->t1 + ainfo->T - T;
+
+    /* allocate sufficient storage for both passes */
+    aset = create_auxiliary_dataset(nv, T, 0);
     if (aset == NULL) {
 	return E_ALLOC;
     }
 
 #if AINIT_DEBUG
     fprintf(stderr, "hr_arma_init: dataset allocated: %d vars, %d obs\n",
-	    pass1v + qtotal, ainfo->T);
+	    nv, T);
 #endif
 
-    /* in case we bomb before estimating a model */
+    if (ainfo->yscale != 1.0 && !arma_cml_init(ainfo)) {
+	y = prescale_y(y, ainfo->yscale, dset->n);
+	if (y == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	} else {
+	    free_y = 1;
+	}
+    }
+
+    /* in case we fail before estimating a model */
     gretl_model_init(&armod, dset);
 
-    /* Start building stuff for pass 1 */
-
-    pass1list = gretl_list_new(pass1v);
-    if (pass1list == NULL) {
+    /* regression list */
+    hrlist = gretl_list_new(nv);
+    if (hrlist == NULL) {
 	err = E_ALLOC;
 	goto bailout;
+    } else {
+	hrlist[1] = 1;
+	hrlist[2] = 0;
+	for (i=2; i<nv; i++) {
+	    hrlist[i+1] = i;
+	}
     }
 
-    pass1list[1] = 1;
-    pass1list[2] = 0;
-    for (i=2; i<pass1v; i++) {
-	pass1list[i+1] = i;
-    }
-
-    /* variable names */
-
-    strcpy(aset->varname[1], "y");
-    for (i=0; i<nexo; i++) {
-	/* exogenous vars */
-	sprintf(aset->varname[i+1], "x%d", i);
-    }
-    for (i=1; i<=pass1lags; i++) {
-	/* lags */
-	sprintf(aset->varname[i+1+nexo], "y_%d", i);
-    }
-
-     /* Fill the dataset with the data for pass 1 */
+    /* adjust the list for pass 1 */
+    hrlist[0] = nv1;
 
     /* starting position for reading exogeneous vars */
     if (ainfo->d > 0 || ainfo->D > 0) {
@@ -497,33 +519,62 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
 	xstart = (arma_has_seasonal(ainfo))? 8 : 5;
     }
 
-    for (t=0; t<ainfo->T; t++) {
-	s = t + ainfo->t1;
-	if (apply_yscaling(ainfo, y[s])) {
-	    aset->Z[1][t] = y[s] * ainfo->yscale;
-	} else {
-	    aset->Z[1][t] = y[s];
+    /* recorder array, etc. */
+    done = calloc(p1lags, 1);
+    datalen = T * sizeof(double);
+
+    /* dependent var */
+    strcpy(aset->varname[1], "y");
+    memcpy(aset->Z[1], y + t1, datalen);
+    /* exogenous vars */
+    pos = 2;
+    for (i=0; i<ainfo->nexo; i++) {
+	sprintf(aset->varname[pos], "x%d", i);
+	xpos = list[xstart + i];
+	memcpy(aset->Z[pos], dset->Z[xpos] + t1, datalen);
+	pos++;
+    }
+    /* pass2 non-seasonal AR lags first */
+    for (i=1; i<=ainfo->p; i++) {
+	if (AR_included(ainfo, i-1)) {
+	    sprintf(aset->varname[pos], "y_%d", i);
+	    memcpy(aset->Z[pos], y + t1 - i, datalen);
+	    done[i-1] = 1;
+	    pos++;
 	}
-	for (i=0, pos=2; i<nexo; i++) {
-	    m = list[xstart + i];
-	    aset->Z[pos++][t] = dset->Z[m][s];
-	}
-	for (i=1; i<=pass1lags; i++) {
-	    s = t + ainfo->t1 - i;
-	    if (s < 0) {
-		ys = NADBL;
-	    } else if (apply_yscaling(ainfo, y[s])) {
-		ys = y[s] * ainfo->yscale;
-	    } else {
-		ys = y[s];
+    }
+    /* then pass2 seasonal AR lags */
+    for (j=1; j<=ainfo->P; j++) {
+	m = j * ainfo->pd;
+	sprintf(aset->varname[pos], "y_%d", m);
+	memcpy(aset->Z[pos], y + t1 - m, datalen);
+	done[m-1] = 1;
+	pos++;
+    }
+    /* then pass2 AR interactions */
+    for (j=1; j<=ainfo->P; j++) {
+	for (i=1; i<=ainfo->p; i++) {
+	    if (AR_included(ainfo, i-1)) {
+		m = j * ainfo->pd + i;
+		sprintf(aset->varname[pos], "y_%d", m);
+		memcpy(aset->Z[pos], y + t1 - m, datalen);
+		done[m-1] = 1;
+		pos++;
 	    }
-	    aset->Z[pos++][t] = ys;
+	}
+    }
+    mapos = pos; /* insertion point for pass2 MA lags */
+    /* then any "extra" AR lags for pass 1 only */
+    for (i=1; i<=p1lags; i++) {
+	if (!done[i-1]) {
+	    sprintf(aset->varname[pos], "y_%d", i);
+	    memcpy(aset->Z[pos], y + t1 - i, datalen);
+	    pos++;
 	}
     }
 
-    /* pass 1 proper */
-
-    armod = lsq(pass1list, aset, OLS, OPT_A);
+    /* pass 1 estimation (FIXME constant?) */
+    armod = lsq(hrlist, aset, OLS, OPT_A);
     if (armod.errcode) {
 	err = armod.errcode;
 	goto bailout;
@@ -534,83 +585,53 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
 	    armod.t1, armod.t2, armod.nobs, armod.ncoeff, armod.dfd);
 #endif
 
-    /* allocations for pass 2 */
+    /* revise hrlist if needed (FIXME constant?) */
+    hrlist[0] = nv2;
+    /* position for insertion of MA terms: at least some of
+       these will likely overwrite AR terms that were wanted
+       only for pass 1
+    */
+    pos = mapos;
 
-    if (qtotal > 0) {
-	malags = malloc(qtotal * sizeof *malags);
-	if (malags == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    for (i=0, pos=0; i<nq; i++) {
-		malags[pos++] = i+1;
-	    }
-	    for (i=0; i<ainfo->Q; i++) {
-		for (j=0; j<=nq; j++) {
-		    malags[pos++] = (i+1) * dset->pd + j;
-		}
-	    }
+    /* pass 2 sample: skip the leading observations for
+       which we don't have lagged residuals from pass 1
+    */
+    aset->t1 = maxp2q;
+    datalen = (T - maxp2q) * sizeof(double);
+
+    for (i=1; i<=ainfo->q; i++) {
+	if (MA_included(ainfo, i-1)) {
+	    sprintf(aset->varname[pos], "e_%d", i);
+	    dest = aset->Z[pos] + aset->t1;
+	    src = armod.uhat + aset->t1 - i;
+	    memcpy(dest, src, datalen);
+	    pos++;
 	}
     }
-
-    if (ptotal > 0 && !err) {
-	arlags = malloc(ptotal * sizeof *arlags);
-	if (arlags == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    for (i=0, pos=0; i<np; i++) {
-		arlags[pos++] = i+1;
-	    }
-	    for (i=0; i<ainfo->P; i++) {
-		for (j=0; j<=np; j++) {
-		    arlags[pos++] = (i+1) * dset->pd + j;
-		}
-	    }
-	}
-    }
-
-    if (!err) {
-	pass2list = gretl_list_new(2 + nexo + ptotal + qtotal);
-	if (pass2list == NULL) {
-	    err = E_ALLOC;
-	}
-    }
-
-    /* handle error in pass2 allocations */
-    if (err) {
-	goto bailout;
-    }
-
-    /* stick lagged residuals into temp dataset */
-    pos = pass1v;
-    for (i=0; i<qtotal; i++) {
-	sprintf(aset->varname[pos], "e_%d", malags[i]);
-	for (t=0; t<ainfo->T; t++) {
-	    s = t - malags[i];
-	    aset->Z[pos][t] = (s >= 0)? armod.uhat[s] : NADBL;
-	}
+    for (j=1; j<=ainfo->Q; j++) {
+	m = j * ainfo->pd;
+	sprintf(aset->varname[pos], "e_%d", m);
+	dest = aset->Z[pos] + aset->t1;
+	src = armod.uhat + aset->t1 - m;
+	memcpy(dest, src, datalen);
 	pos++;
     }
-
-    /* compose pass 2 regression list */
-    for (i=1, pos=1; i<=nexo+2; i++) {
-	pass2list[pos++] = pass1list[i];
-    }
-    for (i=0; i<ptotal; i++) {
-	/* FIXME? */
-	if (AR_included(ainfo,i)) {
-	    pass2list[pos++] = arlags[i] + nexo + 1;
-	}
-    }
-    for (i=0; i<qtotal; i++) {
-	/* FIXME? */
-	if (MA_included(ainfo,i)) {
-	    pass2list[pos++] = pass1v + i;
+    for (j=1; j<=ainfo->Q; j++) {
+	for (i=1; i<=ainfo->q; i++) {
+	    if (MA_included(ainfo, i-1)) {
+		m = j * ainfo->pd + i;
+		sprintf(aset->varname[pos], "e_%d", m);
+		dest = aset->Z[pos] + aset->t1;
+		src = armod.uhat + aset->t1 - m;
+		memcpy(dest, src, datalen);
+		pos++;
+	    }
 	}
     }
 
-    /* now do pass2 */
+    /* pass 2 estimation */
     clear_model(&armod);
-    armod = lsq(pass2list, aset, OLS, OPT_A);
+    armod = lsq(hrlist, aset, OLS, OPT_A);
 
     if (armod.errcode) {
 	err = armod.errcode;
@@ -622,7 +643,6 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
 	gretl_print_destroy(modprn);
 #endif
 	err = hr_transcribe_coeffs(ainfo, &armod, coeff);
-
 	if (!err && ainfo->nexo == 0 && init_transform_const(ainfo)) {
 	    transform_arma_const(coeff, ainfo);
 	}
@@ -639,12 +659,13 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
 
  bailout:
 
-    free(pass1list);
-    free(pass2list);
-    free(arlags);
-    free(malags);
+    free(hrlist);
+    free(done);
     destroy_dataset(aset);
     clear_model(&armod);
+    if (free_y) {
+	free(y);
+    }
 
     if (!err && prn != NULL) {
 	pprintf(prn, "\n%s: %s\n\n", _("ARMA initialization"),

@@ -1036,7 +1036,7 @@ static int boot_hac_vcv (boot *bs,
     gretl_matrix *XOX;
     int err = 0;
 
-    XOX = HAC_XOX(d, bs->X, bs->vi, 1, &err);
+    XOX = HAC_XOX(bs->X, d, bs->vi, 1, &err);
 
     if (!err) {
 	err = gretl_matrix_qform(XTXI, GRETL_MOD_TRANSPOSE, XOX,
@@ -1062,7 +1062,7 @@ static double boot_hac_tau (boot *bs,
     double se, tau = NADBL;
     int j = bs->p;
 
-    XOX = HAC_XOX(d, bs->X, bs->vi, 1, err);
+    XOX = HAC_XOX(bs->X, d, bs->vi, 1, err);
 
     if (!*err) {
 	gretl_matrix_qform(XTXI, GRETL_MOD_TRANSPOSE, XOX,

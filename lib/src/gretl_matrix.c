@@ -1960,6 +1960,7 @@ gretl_matrix *gretl_matrix_exp (const gretl_matrix *m, int *err)
 /**
  * gretl_matrix_polroots:
  * @a: vector of coefficients.
+ * @force_complex: see below.
  * @err: location to receive error code.
  *
  * Calculates the roots of the polynomial with coefficients
@@ -1968,12 +1969,15 @@ gretl_matrix *gretl_matrix_exp (const gretl_matrix *m, int *err)
  * i.e. starting with the constant and ending with the
  * coefficient on x^p.
  *
- * Returns: a p-vector if all the roots are real, otherwise a
- * p x 2 matrix with the real parts in the first column and
- * the imaginary parts in the second.  Or NULL on failure.
+ * Returns: by default, a p-vector if all the roots are real,
+ * otherwise a p x 2 matrix with the real parts in the first
+ * column and the imaginary parts in the second. The @force_complex
+ * flag can be used to enforce a p x 2 return even if the
+ * imaginary parts are all zero.
  */
 
 gretl_matrix *gretl_matrix_polroots (const gretl_matrix *a,
+				     int force_complex,
 				     int *err)
 {
     gretl_matrix *r = NULL;
@@ -2010,26 +2014,22 @@ gretl_matrix *gretl_matrix_polroots (const gretl_matrix *a,
     if (polerr) {
 	*err = E_DATA;
     } else {
-	int allreal = 1;
+	int allreal = !force_complex;
 
-	for (i=0; i<order; i++) {
+	for (i=0; i<order && allreal; i++) {
 	    if (roots[i].i != 0) {
 		allreal = 0;
-		break;
 	    }
 	}
-
 	if (allreal) {
 	    r = gretl_matrix_alloc(order, 1);
 	} else {
 	    r = gretl_matrix_alloc(order, 2);
 	}
-
 	if (r == NULL) {
 	    *err = E_ALLOC;
 	    goto bailout;
 	}
-
 	for (i=0; i<order; i++) {
 	    gretl_matrix_set(r, i, 0, roots[i].r);
 	    if (!allreal) {
@@ -6372,7 +6372,9 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 static gretl_matrix *
 gretl_matrix_complex_multdiv (const gretl_matrix *a, 
 			      const gretl_matrix *b,
-			      int multiply, int *err)
+			      int multiply,
+			      int force_complex,
+			      int *err)
 {
     gretl_matrix *c = NULL;
     double *ar, *ai;
@@ -6402,7 +6404,11 @@ gretl_matrix_complex_multdiv (const gretl_matrix *a,
 	return NULL;
     }
 
-    p = (n == 1 && q == 1)? 1 : 2;
+    if (force_complex) {
+	p = 2;
+    } else {
+	p = (n == 1 && q == 1)? 1 : 2;
+    }
 
     c = gretl_matrix_alloc(m, p);
     if (c == NULL) {
@@ -6469,7 +6475,7 @@ gretl_matrix_complex_multdiv (const gretl_matrix *a,
 	}
     }
 
-    if (!*err && c->cols == 2 && izero) {
+    if (!*err && !force_complex && c->cols == 2 && izero) {
 	*err = gretl_matrix_realloc(c, c->rows, 1);
 	if (*err) {
 	    gretl_matrix_free(c);
@@ -6484,6 +6490,7 @@ gretl_matrix_complex_multdiv (const gretl_matrix *a,
  * gretl_matrix_complex_multiply:
  * @a: m x (1 or 2) matrix.
  * @b: m x (1 or 2) matrix.
+ * @force_complex: see below.
  * @err: location to receive error code.
  *
  * Computes the complex product of @a and @b.  The first
@@ -6491,23 +6498,25 @@ gretl_matrix_complex_multdiv (const gretl_matrix *a,
  * values, and the second column (if present) imaginary 
  * coefficients.
  * 
- * Returns: an m x 2 matrix with the result of the multiplication 
+ * Returns: a matrix with the result of the multiplication 
  * of the two vectors of complex numbers. If both @a and @b have no 
- * imaginary part, the return value will be m x 1.  Or NULL on 
- * failure.
+ * imaginary part and the @force_complex flag is zero, the return
+ * value will be m x 1, otherwise it will be m x 2.
  */
 
 gretl_matrix *gretl_matrix_complex_multiply (const gretl_matrix *a, 
 					     const gretl_matrix *b,
+					     int force_complex,
 					     int *err)
 {
-    return gretl_matrix_complex_multdiv(a, b, 1, err);
+    return gretl_matrix_complex_multdiv(a, b, 1, force_complex, err);
 }
 
 /**
  * gretl_matrix_complex_divide:
  * @a: m x (1 or 2) matrix.
  * @b: m x (1 or 2) matrix.
+ * @force_complex: see below.
  * @err: location to receive error code.
  *
  * Computes the complex division of @a over @b.  The first
@@ -6515,17 +6524,18 @@ gretl_matrix *gretl_matrix_complex_multiply (const gretl_matrix *a,
  * values, and the second column (if present) imaginary 
  * coefficients.
  * 
- * Returns: an m x 2 matrix with the result of the division 
- * of the two vectors of complex numbers. If both @a and @b have no 
- * imaginary part, the return value will be m x 1.  Or NULL on 
- * failure.
+ * Returns: a matrix with the result of the division of the 
+ * two vectors of complex numbers. If both @a and @b have no 
+ * imaginary part and the @force_complex flag is zero, the return
+ * value will be m x 1, otherwise it will be m x 2.
  */
 
 gretl_matrix *gretl_matrix_complex_divide (const gretl_matrix *a, 
 					   const gretl_matrix *b,
+					   int force_complex,
 					   int *err)
 {
-    return gretl_matrix_complex_multdiv(a, b, 0, err);
+    return gretl_matrix_complex_multdiv(a, b, 0, force_complex, err);
 }
 
 /* return sum of elements in row i */

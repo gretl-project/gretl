@@ -1404,7 +1404,7 @@ static int prefer_hr_init (arma_info *ainfo)
 
     if (ainfo->q > 1 || ainfo->Q > 0) {
 	ret = 1;
-	if (ainfo->pqspec != NULL && *ainfo->pqspec != '\0') {
+	if (0 && ainfo->pqspec != NULL && *ainfo->pqspec != '\0') {
 	    /* don't use for gappy arma (yet?) */
 	    ret = 0;
 	} else if (arma_xdiff(ainfo)) {
@@ -1415,7 +1415,8 @@ static int prefer_hr_init (arma_info *ainfo)
 	    ret = 0;
 	} else if (ainfo->p > 0 && ainfo->P > 0) {
 	    /* not sure about this: HR catches the MA terms, but NLS
-	       handles the seasonal/non-seasonal AR interactions better
+	       handles the seasonal/non-seasonal AR interactions
+	       better?
 	    */
 	    ret = 0;
 	} else if ((ainfo->P > 0 && ainfo->p >= ainfo->pd) ||
@@ -1722,7 +1723,7 @@ MODEL arma_model (const int *list, const int *pqspec,
 		opt |= OPT_K;
 		set_arima_levels(ainfo);
 	    } else {
-		/* this replaces ainfo->y */
+		/* note: this replaces ainfo->y */
 		err = arima_difference(ainfo, dset, 0);
 	    }
 	}

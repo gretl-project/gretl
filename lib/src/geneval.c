@@ -37,6 +37,7 @@
 #include "genr_optim.h"
 #include "gretl_cmatrix.h"
 #include "gretl_btree.h"
+#include "qr_estimate.h"
 
 #ifdef USE_CURL
 # include "gretl_www.h"
@@ -2825,10 +2826,10 @@ static int real_matrix_calc (const gretl_matrix *A,
 	C = gretl_matrix_hdproduct_new(A, B, &err);
 	break;
     case F_CMULT:
-	C = gretl_matrix_complex_multiply(A, B, &err);
+	C = gretl_matrix_complex_multiply(A, B, 0, &err);
 	break;
     case F_CDIV:
-	C = gretl_matrix_complex_divide(A, B, &err);
+	C = gretl_matrix_complex_divide(A, B, 0, &err);
 	break;
     case F_MRSEL:
 	C = gretl_matrix_bool_sel(A, B, 1, &err);
@@ -3997,7 +3998,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    ret->v.m = gretl_matrix_ffti(m, &p->err);
 	    break;
 	case F_POLROOTS:
-	    ret->v.m = gretl_matrix_polroots(m, &p->err);
+	    ret->v.m = gretl_matrix_polroots(m, 0, &p->err);
 	    break;
 	case F_RANKING:
 	    ret->v.m = rank_vector(m, F_SORT, &p->err);
@@ -10347,6 +10348,14 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	}
 	if (l->t == NUM) gretl_matrix_free(m1);
 	if (m->t == NUM) gretl_matrix_free(m2);
+    } else if (f == F_LRCOVAR) {
+	if (l->t == MAT) {
+	    gretl_matrix *X = l->v.m;
+
+	    A = HAC_XOX(X, NULL, NULL, 0, &p->err);
+	} else {
+	    node_type_error(f, 1, MAT, l, p);
+	}
     } else if (f == F_EIGSOLVE) {
 	gretl_matrix *m1 = mat_or_num_get_matrix(l, p, 1);
 	gretl_matrix *m2 = mat_or_num_get_matrix(m, p, 2);
@@ -14849,6 +14858,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_SUBSTR:
     case F_MWEIGHTS:
     case F_MGRADIENT:
+    case F_LRCOVAR:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {
 	    ret = replace_value(l, m, r, p);
