@@ -10349,12 +10349,20 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	if (l->t == NUM) gretl_matrix_free(m1);
 	if (m->t == NUM) gretl_matrix_free(m2);
     } else if (f == F_LRCOVAR) {
-	if (l->t == MAT) {
-	    gretl_matrix *X = l->v.m;
-
-	    A = HAC_XOX(X, NULL, NULL, 0, &p->err);
-	} else {
+	if (l->t != MAT) {
 	    node_type_error(f, 1, MAT, l, p);
+	} else if (!empty_or_num(m)) {
+	    node_type_error(f, 2, NUM, r, p);
+	} else {
+	    gretl_matrix *X = l->v.m;
+	    if (!null_or_empty(r)){
+		int d = node_get_int(r, p);
+		if (d == 0) { 
+		    gretl_matrix_demean_by_column(X);
+		}
+	    }
+	    A = HAC_XOX(X, NULL, NULL, 0, &p->err);
+	    gretl_matrix_divide_by_scalar(A, X->rows);
 	}
     } else if (f == F_EIGSOLVE) {
 	gretl_matrix *m1 = mat_or_num_get_matrix(l, p, 1);
