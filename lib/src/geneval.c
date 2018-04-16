@@ -10351,7 +10351,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
     } else if (f == F_LRCOVAR) {
 	if (l->t != MAT) {
 	    node_type_error(f, 1, MAT, l, p);
-	} else if (!empty_or_num(m)) {
+	} else if (!empty_or_num(r)) {
 	    node_type_error(f, 2, NUM, r, p);
 	} else {
 	    gretl_matrix *X = l->v.m;
