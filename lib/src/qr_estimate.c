@@ -335,17 +335,17 @@ static gretl_matrix *make_data_X (const MODEL *pmod,
 
 /* Calculate W(t)-transpose * W(t-lag) */
 
-static void wtw (gretl_matrix *wt, const gretl_matrix *X,
-		 int n, int t, int lag)
+static void wtw (gretl_matrix *wt, const gretl_matrix *H,
+		 int t, int lag)
 {
-    int i, j;
-    double xi, xj;
+    int i, j, s = t - lag;
+    double hti, htj;
 
-    for (i=0; i<n; i++) {
-	xi = gretl_matrix_get(X, t, i);
-	for (j=0; j<n; j++) {
-	    xj = gretl_matrix_get(X, t - lag, j);
-	    gretl_matrix_set(wt, i, j, xi * xj);
+    for (i=0; i<H->cols; i++) {
+	hti = gretl_matrix_get(H, t, i);
+	for (j=0; j<H->cols; j++) {
+	    htj = gretl_matrix_get(H, s, j);
+	    gretl_matrix_set(wt, i, j, hti * htj);
 	}
     }
 }
@@ -838,7 +838,7 @@ gretl_matrix *HAC_XOX (const gretl_matrix *X,
 	    gretl_matrix_zero(Gj);
 	    for (t=j; t<T; t++) {
 		/* W(t)-transpose * W(t-j) */
-		wtw(Wtj, H, k, t, j);
+		wtw(Wtj, H, t, j);
 		gretl_matrix_add_to(Gj, Wtj);
 	    }
 	    if (j > 0) {
