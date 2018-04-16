@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -121,7 +121,7 @@ static double qr_get_tss (MODEL *pmod, const DATASET *dset,
 		}
 	    }
 	}
-    } 
+    }
 
     if (!*ifc && ctss > 0) {
 	double cR2 = 1 - (pmod->ess / ctss);
@@ -143,7 +143,7 @@ static void qr_compute_stats (MODEL *pmod, const DATASET *dset,
 
     if (yconst && pmod->dfd > 0) {
 	double y0 = dset->Z[yno][pmod->t1];
-    
+
 	if (y0 > 0) {
 	    double tss = pmod->nobs * y0 * y0;
 
@@ -170,7 +170,7 @@ static void qr_compute_stats (MODEL *pmod, const DATASET *dset,
 	} else if (pmod->rsq == 1.0) {
 	    pmod->fstt = NADBL;
 	} else {
-	    pmod->fstt = (pmod->tss - pmod->ess) * pmod->dfd / 
+	    pmod->fstt = (pmod->tss - pmod->ess) * pmod->dfd /
 		(pmod->ess * pmod->dfn);
 	}
     } else {
@@ -283,10 +283,10 @@ static void get_resids_and_SSR (MODEL *pmod, const DATASET *dset,
     /* if SSR is small enough, treat it as zero */
     if (fabs(pmod->ess) < ESSZERO) {
 	pmod->ess = 0.0;
-    } 
+    }
 }
 
-static void 
+static void
 get_data_X (gretl_matrix *X, const MODEL *pmod, const DATASET *dset)
 {
     int wt = pmod->nwt;
@@ -320,7 +320,7 @@ get_data_X (gretl_matrix *X, const MODEL *pmod, const DATASET *dset)
     }
 }
 
-static gretl_matrix *make_data_X (const MODEL *pmod, 
+static gretl_matrix *make_data_X (const MODEL *pmod,
 				  const DATASET *dset)
 {
     gretl_matrix *X;
@@ -335,17 +335,17 @@ static gretl_matrix *make_data_X (const MODEL *pmod,
 
 /* Calculate W(t)-transpose * W(t-lag) */
 
-static void wtw (gretl_matrix *wt, const gretl_matrix *X, 
-		 int n, int t, int lag)
+static void wtw (gretl_matrix *wt, const gretl_matrix *H,
+		 int t, int lag)
 {
-    int i, j;
-    double xi, xj;
+    int i, j, s = t - lag;
+    double hti, htj;
 
-    for (i=0; i<n; i++) {
-	xi = gretl_matrix_get(X, t, i);
-	for (j=0; j<n; j++) {
-	    xj = gretl_matrix_get(X, t - lag, j);
-	    gretl_matrix_set(wt, i, j, xi * xj);
+    for (i=0; i<H->cols; i++) {
+	hti = gretl_matrix_get(H, t, i);
+	for (j=0; j<H->cols; j++) {
+	    htj = gretl_matrix_get(H, s, j);
+	    gretl_matrix_set(wt, i, j, hti * htj);
 	}
     }
 }
@@ -416,7 +416,7 @@ static int lag_trunc_param (int kern, int prewhitened, int T)
    Public because it's called from gmm.c (with @w NULL).
 */
 
-int newey_west_bandwidth (const gretl_matrix *H, 
+int newey_west_bandwidth (const gretl_matrix *H,
 			  const gretl_matrix *w,
 			  int kern, int prewhitened,
 			  int *m, double *b)
@@ -490,7 +490,7 @@ int newey_west_bandwidth (const gretl_matrix *H,
     if (*b > T / 2.0) {
 	/* FIXME arbitrary truncation in case this method has gone
 	   wonky! */
-	fprintf(stderr, "newey_west_bandwidth (PW=%d): invalid result %d (s^(0)=%g)\n", 
+	fprintf(stderr, "newey_west_bandwidth (PW=%d): invalid result %d (s^(0)=%g)\n",
 		prewhitened, *m, s0);
 	*b = T / 2.0;
 	*m = (int) floor(*b);
@@ -508,7 +508,7 @@ static int hac_recolor (gretl_matrix *XOX, gretl_matrix *A)
     S = gretl_matrix_alloc(k, k);
     if (S == NULL) {
 	err = E_ALLOC;
-    }  
+    }
 
     if (!err) {
 	double aij;
@@ -568,7 +568,7 @@ static int revise_VAR_residuals (gretl_matrix *A,
 	for (i=0; i<k; i++) {
 	    yti = gretl_matrix_get(Y, t, i);
 	    gretl_matrix_set(E, t, i, yti - Pt->val[i]);
-	}	    
+	}
     }
 
     gretl_matrix_free(Xt);
@@ -652,7 +652,7 @@ static int nw_prewhiten (gretl_matrix *H, gretl_matrix **pA)
     /* apply the "0.97 limit" if needed */
     if (!err) {
 	err = maybe_limit_VAR_coeffs(A, H0, H1, U);
-    }    
+    }
 
     if (!err) {
 	/* replace incoming H with VAR residuals */
@@ -683,14 +683,14 @@ static int nw_prewhiten (gretl_matrix *H, gretl_matrix **pA)
 }
 
 /* Form the matrix H, such that H_t = X_t * u_t. In
-   addition, if @pw is non-NULL and the first column 
+   addition, if @pw is non-NULL and the first column
    of @X is constant, then write into @pw a vector of
    1s with the first element set to zero. Or if @u is
    NULL, just copy X to H, but again fill @pw if
    required.
 */
 
-static gretl_matrix *newey_west_H (const gretl_matrix *X, 
+static gretl_matrix *newey_west_H (const gretl_matrix *X,
 				   const gretl_matrix *u,
 				   gretl_matrix **pw)
 {
@@ -784,7 +784,7 @@ gretl_matrix *HAC_XOX (const gretl_matrix *X,
     }
 
 #if NW_DEBUG
-    fprintf(stderr, "*** HAC: kern = %d, prewhiten = %d ***\n", 
+    fprintf(stderr, "*** HAC: kern = %d, prewhiten = %d ***\n",
 	    kern, prewhiten);
 #endif
 
@@ -840,7 +840,7 @@ gretl_matrix *HAC_XOX (const gretl_matrix *X,
 	    gretl_matrix_zero(Gj);
 	    for (t=j; t<T; t++) {
 		/* W(t)-transpose * W(t-j) */
-		wtw(Wtj, H, k, t, j);
+		wtw(Wtj, H, t, j);
 		gretl_matrix_add_to(Gj, Wtj);
 	    }
 	    if (j > 0) {
@@ -891,6 +891,34 @@ gretl_matrix *HAC_XOX (const gretl_matrix *X,
     return XOX;
 }
 
+/* to support the hansl function lrcovar() */
+
+gretl_matrix *long_run_covariance (const gretl_matrix *X,
+				   int demeaned, int *err)
+{
+    gretl_matrix *V = NULL;
+
+    if (demeaned) {
+	V = HAC_XOX(X, NULL, NULL, 0, err);
+    } else {
+	gretl_matrix *Xd = gretl_matrix_copy(X);
+
+	if (Xd == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    gretl_matrix_demean_by_column(Xd);
+	    V = HAC_XOX(Xd, NULL, NULL, 0, err);
+	    gretl_matrix_free(Xd);
+	}
+    }
+
+    if (V != NULL) {
+	gretl_matrix_divide_by_scalar(V, X->rows);
+    }
+
+    return V;
+}
+
 /* not a rigorous check, but catches the worst cases */
 
 static int vcv_is_broken (const gretl_matrix *V)
@@ -917,7 +945,7 @@ static int vcv_is_broken (const gretl_matrix *V)
    Theory and Methods, chapter 9.
 */
 
-static int qr_make_hac (MODEL *pmod, const DATASET *dset, 
+static int qr_make_hac (MODEL *pmod, const DATASET *dset,
 			gretl_matrix *XTXi)
 {
     gretl_matrix *X, *XOX, *V = NULL;
@@ -969,7 +997,7 @@ static int qr_make_hac (MODEL *pmod, const DATASET *dset,
 	} else {
 	    gretl_model_set_double(pmod, "hac_bw", (double) vi.order);
 	}
-    }	
+    }
 
     gretl_matrix_free(X);
     gretl_matrix_free(XOX);
@@ -1009,7 +1037,7 @@ static int qr_make_hccme (MODEL *pmod, const DATASET *dset,
     gretl_matrix *X;
     gretl_matrix *diag = NULL;
     gretl_matrix *tmp1 = NULL, *tmp2 = NULL, *V = NULL;
-    int T = pmod->nobs; 
+    int T = pmod->nobs;
     int k = pmod->list[0] - 1;
     int hc_version;
     int i, t;
@@ -1023,7 +1051,7 @@ static int qr_make_hccme (MODEL *pmod, const DATASET *dset,
     if (diag == NULL) {
 	err = 1;
 	goto bailout;
-    }  
+    }
 
     tmp1 = gretl_matrix_alloc(k, T);
     tmp2 = gretl_matrix_alloc(k, k);
@@ -1031,7 +1059,7 @@ static int qr_make_hccme (MODEL *pmod, const DATASET *dset,
     if (tmp1 == NULL || tmp2 == NULL || V == NULL) {
 	err = 1;
 	goto bailout;
-    }  
+    }
 
     hc_version = libset_get_int(HC_VERSION);
     gretl_model_set_vcv_info(pmod, VCV_HC, hc_version);
@@ -1095,7 +1123,7 @@ int qr_matrix_hccme (const gretl_matrix *X,
 {
     gretl_matrix *tmp1 = NULL;
     gretl_matrix *tmp2 = NULL;
-    int T = X->rows; 
+    int T = X->rows;
     int k = X->cols;
     int t, err = 0;
 
@@ -1148,14 +1176,14 @@ static int qr_dw_stats (MODEL *pmod, const DATASET *dset,
     for (s=0, t=pmod->t1; t<=pmod->t2; s++, t++) {
 	gretl_vector_set(u, s, pmod->uhat[t]);
     }
-    
+
     pv = dw_pval(u, X, &DW, &err);
 
     if (!err) {
 	pmod->dw = DW;
 	gretl_model_set_double(pmod, "dw_pval", pv);
     }
-    
+
     return err;
 }
 
@@ -1178,7 +1206,7 @@ static void get_model_data (MODEL *pmod, const DATASET *dset,
 
     if (pmod->missmask == NULL && !pwe && !qdiff && !dwt && !pmod->nwt) {
 	/* simple case: no missing values and no data transformation
-	   called for, so use faster procedure 
+	   called for, so use faster procedure
 	*/
 	int T = pmod->t2 - pmod->t1 + 1;
 	size_t sz = T * sizeof(double);
@@ -1235,7 +1263,7 @@ static void get_model_data (MODEL *pmod, const DATASET *dset,
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    if (model_missing(pmod, t)) {
 		continue;
-	    }		
+	    }
 	    x = dset->Z[vy][t];
 	    if (dwt) {
 		if (dset->Z[dwt][t] == 0.0) continue;
@@ -1253,7 +1281,7 @@ static void get_model_data (MODEL *pmod, const DATASET *dset,
     }
 }
 
-static int 
+static int
 allocate_model_arrays (MODEL *pmod, int k, int T)
 {
     if (pmod->sderr == NULL) {
@@ -1268,7 +1296,7 @@ allocate_model_arrays (MODEL *pmod, int k, int T)
 	pmod->uhat = malloc(T * sizeof *pmod->uhat);
     }
 
-    if (pmod->sderr == NULL || pmod->yhat == NULL || 
+    if (pmod->sderr == NULL || pmod->yhat == NULL ||
 	pmod->uhat == NULL) {
 	return E_ALLOC;
     }
@@ -1330,7 +1358,7 @@ static int QR_decomp_plus (gretl_matrix *Q, gretl_matrix *R,
 #define REDEBUG 0
 
 static void
-drop_redundant_vars (MODEL *pmod, DATASET *dset, gretl_matrix *R, 
+drop_redundant_vars (MODEL *pmod, DATASET *dset, gretl_matrix *R,
 		     int rank, gretlopt opt)
 {
     int *droplist = NULL;
@@ -1414,7 +1442,7 @@ int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
     /* allocate temporary arrays */
     g = gretl_matrix_alloc(k, 1);
     b = gretl_matrix_alloc(k, 1);
-    
+
     if (g == NULL || b == NULL) {
 	err = E_ALLOC;
     } else {
@@ -1425,9 +1453,9 @@ int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
 	goto qr_cleanup;
     }
 
-    /* make "g" into gamma-hat */    
+    /* make "g" into gamma-hat */
     gretl_matrix_multiply_mod(Q, GRETL_MOD_TRANSPOSE,
-			      y, GRETL_MOD_NONE, 
+			      y, GRETL_MOD_NONE,
 			      g, GRETL_MOD_NONE);
 
     /* OLS coefficients */
@@ -1435,7 +1463,7 @@ int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
     pmod->coeff = gretl_matrix_steal_data(b);
 
     /* write vector of fitted values into y */
-    gretl_matrix_multiply(Q, g, y);    
+    gretl_matrix_multiply(Q, g, y);
 
     /* get vector of residuals and SSR */
     get_resids_and_SSR(pmod, dset, y, dset->n);
@@ -1458,7 +1486,7 @@ int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
 			      V, GRETL_MOD_NONE);
 
     /* VCV and standard errors */
-    if (opt & OPT_R) { 
+    if (opt & OPT_R) {
 	pmod->opt |= OPT_R;
 	if (opt & OPT_C) {
 	    err = qr_make_cluster_vcv(pmod, OLS, dset, V, opt);
@@ -1506,7 +1534,7 @@ int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
 
     pmod->errcode = err;
 
-    return err;    
+    return err;
 }
 
 int qr_tsls_vcv (MODEL *pmod, const DATASET *dset, gretlopt opt)
@@ -1548,7 +1576,7 @@ int qr_tsls_vcv (MODEL *pmod, const DATASET *dset, gretlopt opt)
 		pmod->ci = IVREG; /* ? */
 		err = panel_tsls_robust_vcv(pmod, dset);
 	    }
-	} else if (dataset_is_time_series(dset) && 
+	} else if (dataset_is_time_series(dset) &&
 		   !libset_get_bool(FORCE_HC)) {
 	    pmod->opt |= OPT_R;
 	    err = qr_make_hac(pmod, dset, V);
@@ -1559,7 +1587,7 @@ int qr_tsls_vcv (MODEL *pmod, const DATASET *dset, gretlopt opt)
     } else {
 	qr_make_regular_vcv(pmod, V, OPT_NONE);
     }
-    
+
  qr_cleanup:
 
     gretl_matrix_free(Q);
@@ -1568,7 +1596,7 @@ int qr_tsls_vcv (MODEL *pmod, const DATASET *dset, gretlopt opt)
 
     pmod->errcode = err;
 
-    return err;    
+    return err;
 }
 
 static int cval_count (MODEL *pmod, double cvi, const double *cZ)
@@ -1584,7 +1612,7 @@ static int cval_count (MODEL *pmod, double cvi, const double *cZ)
     return cc;
 }
 
-static int cval_count_max (MODEL *pmod, const gretl_matrix *cvals, 
+static int cval_count_max (MODEL *pmod, const gretl_matrix *cvals,
 			   const double *cZ)
 {
     int n = gretl_vector_get_length(cvals);
@@ -1604,7 +1632,7 @@ static int cval_count_max (MODEL *pmod, const gretl_matrix *cvals,
 
 static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
 				       int cvar,
-				       gretl_matrix *cvals, 
+				       gretl_matrix *cvals,
 				       gretl_matrix *XX,
 				       const DATASET *dset,
 				       int *err)
@@ -1621,7 +1649,7 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
     int total_obs = 0;
     int i, j, v, t;
 
-    cZ = dset->Z[cvar];    
+    cZ = dset->Z[cvar];
     N = cval_count_max(pmod, cvals, cZ);
 #if CDEBUG
     fprintf(stderr, "max cval count = %d\n", N);
@@ -1634,7 +1662,7 @@ static gretl_matrix *cluster_vcv_calc (MODEL *pmod,
     Xi  = gretl_matrix_alloc(N, k);
     eXi = gretl_vector_alloc(k);
 
-    if (V == NULL || W == NULL || XXW == NULL || 
+    if (V == NULL || W == NULL || XXW == NULL ||
 	ei == NULL || Xi == NULL || eXi == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
@@ -1783,7 +1811,7 @@ static gretl_matrix *cluster_var_values (const double *cvar,
 	    }
 	}
 	if (!*err) {
-	    cvals = gretl_matrix_values(cvar + pmod->t1, pmod->nobs, 
+	    cvals = gretl_matrix_values(cvar + pmod->t1, pmod->nobs,
 					OPT_S, err);
 	}
     }
@@ -1797,9 +1825,9 @@ static gretl_matrix *cluster_var_values (const double *cvar,
  * @ci: command index (right now, OLS or IVREG).
  * @dset: pointer to dataset.
  * @XX: X'X matrix.
- * 
+ *
  * Compute and set on @pmod a variance matrix that is "clustered"
- * by the value of a selected variable via the --cluster=foo 
+ * by the value of a selected variable via the --cluster=foo
  * command-line option.
  *
  * Returns: 0 on success, non-zero code on error.
@@ -1821,7 +1849,7 @@ static int qr_make_cluster_vcv (MODEL *pmod, int ci,
 	return E_NOTIMP;
     }
 
-    cname = get_optval_string(ci, OPT_C); 
+    cname = get_optval_string(ci, OPT_C);
     if (cname == NULL) {
 	return E_PARSE;
     }

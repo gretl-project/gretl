@@ -10349,12 +10349,15 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	if (l->t == NUM) gretl_matrix_free(m1);
 	if (m->t == NUM) gretl_matrix_free(m2);
     } else if (f == F_LRCOVAR) {
-	if (l->t == MAT) {
-	    gretl_matrix *X = l->v.m;
+	int d = 0; /* arg is demeaned? */
 
-	    A = HAC_XOX(X, NULL, NULL, 0, &p->err);
-	} else {
+	if (l->t != MAT) {
 	    node_type_error(f, 1, MAT, l, p);
+	} else {
+	    d = node_get_bool(r, p, d);
+	}
+	if (!p->err) {
+	    A = long_run_covariance(l->v.m, d, &p->err);
 	}
     } else if (f == F_EIGSOLVE) {
 	gretl_matrix *m1 = mat_or_num_get_matrix(l, p, 1);

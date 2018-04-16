@@ -11,7 +11,7 @@ function list GenerateExampleData(scalar phi, scalar T)
     E = mnormal(T, 2) * K'
     Y = varsimul(A, E, zeros(1,2))
     list ret = null
-    loop for i=1..2 -q
+    loop i=1..2 --quiet
 	series y$i = Y[2:,i]
 	ret += y$i
     endloop
