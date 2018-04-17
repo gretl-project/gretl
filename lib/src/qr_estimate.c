@@ -891,19 +891,17 @@ gretl_matrix *HAC_XOX (const gretl_matrix *X,
     return XOX;
 }
 
-/* To support the hansl function lrcovar(). FIXME: maybe
-   change the second arg from indicating "the data are
-   already de-meaned" to "the data should be demeaned"?
+/* To support the hansl function lrcovar(): note that
+   setting @demean to non-zero value means that @X should
+   be demeaned before proceeding.
 */
 
 gretl_matrix *long_run_covariance (const gretl_matrix *X,
-				   int demeaned, int *err)
+				   int demean, int *err)
 {
     gretl_matrix *V = NULL;
 
-    if (demeaned) {
-	V = HAC_XOX(X, NULL, NULL, 0, err);
-    } else {
+    if (demean) {
 	gretl_matrix *Xd = gretl_matrix_copy(X);
 
 	if (Xd == NULL) {
@@ -913,6 +911,8 @@ gretl_matrix *long_run_covariance (const gretl_matrix *X,
 	    V = HAC_XOX(Xd, NULL, NULL, 0, err);
 	    gretl_matrix_free(Xd);
 	}
+    } else {
+	V = HAC_XOX(X, NULL, NULL, 0, err);
     }
 
     if (V != NULL) {

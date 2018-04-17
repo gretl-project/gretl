@@ -10349,7 +10349,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	if (l->t == NUM) gretl_matrix_free(m1);
 	if (m->t == NUM) gretl_matrix_free(m2);
     } else if (f == F_LRCOVAR) {
-	int d = 0; /* arg is demeaned? FIXME flip this? */
+	int d = 1; /* demean the matrix arg? */
 
 	if (l->t != MAT) {
 	    node_type_error(f, 1, MAT, l, p);
