@@ -328,32 +328,28 @@ matrix.  The filling in the sandwich is
 \end{array}
 \]
 %
-Since $\Omega = E(uu')$, the matrix being estimated here can also be
-written as
-\[
-\Sigma = E(X'u\,u'X)
-\]
-%
-which expresses $\Sigma$ as the long-run covariance of the random
-$k$-vector $X'u$.   
+It can be proven that, under mild regularity conditions, $T^{-1}
+\hat{\Sigma}$ is a consistent estimator of the long-run covariance
+matrix of the random $k$-vector $x_t \cdot u_t$.   
 
-From a computational point of view, it is not necessary or desirable
+From a computational point of view, it is not necessary nor desirable
 to store the (potentially very large) $T \times T$ matrix
-$\hat{\Omega}$ as such.  Rather, one computes the sandwich filling 
-by summation as
+$\hat{\Omega}$ as such.  Rather, one computes the sandwich filling by
+summation as a weighted sum:
 %
 \[
 \hat{\Sigma} = \hat{\Gamma}(0) + \sum_{j=1}^p w_j 
   \left(\hat{\Gamma}(j) + \hat{\Gamma}'(j) \right)
 \]
 %
-where the $k \times k$ sample autocovariance matrix $\hat{\Gamma}(j)$,
-for $j \geq 0$, is given by
+where $w_j$ is the weight given to lag $j > 0$ and the $k \times k$
+matrix $\hat{\Gamma}(j)$, for $j \geq 0$, is given by
 \[
-\hat{\Gamma}(j) = \frac{1}{T} \sum_{t=j+1}^T
-  \hat{u}_t \hat{u}_{t-j}\, X'_t\, X_{t-j}
+  \hat{\Gamma}(j) = \sum_{t=j+1}^T \hat{u}_t \hat{u}_{t-j}\, X'_t\,
+  X_{t-j} ;
 \]
-and $w_j$ is the weight given to the autocovariance at lag $j > 0$.
+that is, the sample autocovariance matrix of $x_t \cdot u_t$ at lag
+$j$, apart from a scaling factor $T$.
 
 This leaves two questions.  How exactly do we determine the maximum
 lag length or ``bandwidth'', $p$, of the HAC estimator?  And how
@@ -678,10 +674,14 @@ factor is just $m/(m-1)$.
 \subsection{Availability and syntax}
 
 The cluster-robust estimator is currently available for models
-estimated via OLS and TSLS, and also for most ML estimators other
-than those specialized for time-series data: binary logit and probit,
+estimated via OLS and TSLS, and also for most ML estimators other than
+those specialized for time-series data: binary logit and probit,
 ordered logit and probit, multinomial logit, Tobit, interval
-regression, biprobit, count models and duration models. In all
+regression, biprobit, count models and duration models. Additionally,
+the same option is available for generic maximum-likelihood estimation
+the \cmd{mle} command (see chapter \ref{chap:mle} for extra details).
+
+In all
 cases the syntax is the same: you give the option flag
 \option{cluster=} followed by the name of the series to be used to
 define the clusters, as in
