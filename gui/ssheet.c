@@ -2279,6 +2279,10 @@ catch_sheet_edit_key (GtkWidget *view, GdkEventKey *key,
 #if CELLDEBUG
 	fprintf(stderr, "catch_edit_key: GDK_Down\n");
 #endif
+    } else if (key->keyval == GDK_Tab) {
+#if CELLDEBUG
+	fprintf(stderr, "catch_edit_key: GDK_Tab\n");
+#endif
     }
 
     return FALSE;
@@ -2417,7 +2421,7 @@ static gint catch_spreadsheet_key (GtkWidget *view, GdkEvent *event,
 
     if (kval == GDK_Tab) {
 	/* FIXME */
-	;
+	return FALSE;
     }
 
     if (kval == GDK_Left) {
