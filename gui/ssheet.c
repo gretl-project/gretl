@@ -2361,8 +2361,10 @@ static void manufacture_keystroke (GtkWidget *widget,
     GdkKeymapKey *keys;
     gint n_keys;
 
-#if GTK_MAJOR_VERSION >= 3
-    /* with GDK 3, we can't pass NULL for keymap below */
+#if GTK_MAJOR_VERSION >= 3 || defined(G_OS_WIN32)
+    /* with GDK 3, we can't pass NULL for keymap below, and neither
+       (it appears) for GDK 2 on MS Windows
+    */
     keymap = gdk_keymap_get_for_display(gdk_display_get_default());
 #endif	
 
@@ -2416,7 +2418,7 @@ static gint catch_spreadsheet_key (GtkWidget *view, GdkEvent *event,
     guint kval = ((GdkEventKey*) event)->keyval;
 
 #if CELLDEBUG
-    fprintf(stderr, "catch_spreadsheet_key: %d\n", kval);
+    fprintf(stderr, "catch_spreadsheet_key: %d (tab=%d)\n", kval, GDK_Tab);
 #endif
 
     if (kval == GDK_Tab) {
