@@ -471,6 +471,8 @@ static gretl_array *strings_array_from_string (const char *s,
 	}
     }
 
+    free(tmp);
+
     if (*err) {
 	gretl_array_destroy(names);
 	names = NULL;

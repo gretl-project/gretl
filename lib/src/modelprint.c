@@ -2498,13 +2498,19 @@ static void print_coeff_table_end (const MODEL *pmod, PRN *prn)
 	pputs(prn, "}\n\n");
     }
 
-    if (pmod->ci == NLS || pmod->ci == MIDASREG) {
-	/* we'll handle near-singularity elsewhere, in
-	   conjunction with printing GNR info */
+    if (pmod == NULL) {
+	/* no MODEL is given when we're called via the
+	   "modprint" command */
 	return;
     }
 
-    if (plain_format(prn) && gretl_model_get_int(pmod, "near-singular")) {
+    /* Maybe print "near-singularity" message? Not in the
+       case of NLS or MIDAS regression, when this will be
+       handled in conjunction with printing GNR info.
+    */
+    if (pmod->ci == NLS || pmod->ci == MIDASREG) {
+	;
+    } else if (plain_format(prn) && gretl_model_get_int(pmod, "near-singular")) {
 	const char *msg = N_("Warning: data matrix close to singularity!");
 
 	pprintf(prn, "%s\n\n", _(msg));
