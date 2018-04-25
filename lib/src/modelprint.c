@@ -2498,7 +2498,7 @@ static void print_coeff_table_end (const MODEL *pmod, PRN *prn)
 	pputs(prn, "}\n\n");
     }
 
-    if (pmod->ci == NLS || pmod->ci == MIDASREG) {
+    if (pmod == NULL || pmod->ci == NLS || pmod->ci == MIDASREG) {
 	/* we'll handle near-singularity elsewhere, in
 	   conjunction with printing GNR info */
 	return;
