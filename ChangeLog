@@ -9,6 +9,9 @@ version 2018b, in progress
   getting out of sync with the user-selected interface
 - Fix bug: command-line refinements for the "graphpg"
   command subject to bitrot
+- Fix bug: crash on Windows when using Tab key in the data
+  editor window
+- Fix bug: crash in "modprint" under some conditions
 - When R_functions is set "on", accept call to an R function
   without assignment of the return value, if any
 
