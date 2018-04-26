@@ -2362,7 +2362,7 @@ static void manufacture_keystroke (GtkWidget *widget,
     gint n_keys;
 
 #if GTK_MAJOR_VERSION >= 3 || defined(G_OS_WIN32)
-    /* with GDK 3, we can't pass NULL for keymap below, and neither
+    /* with GDK 3, we can't pass NULL for keymap below -- and neither
        (it appears) for GDK 2 on MS Windows
     */
     keymap = gdk_keymap_get_for_display(gdk_display_get_default());
