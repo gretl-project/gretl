@@ -373,7 +373,7 @@ following options to the \texttt{coint2} and \texttt{vecm} commands:
   \end{tabular}
 \end{center}
 Note that for this command the above options are mutually exclusive.
-In addition, you have the option of using the \option{seasonal}
+In addition, you have the option of using the \option{seasonals}
 options, for augmenting $\mu_t$ with centered seasonal dummies.  In
 each case, p-values are computed via the approximations devised by
 \cite{doornik98}.
@@ -402,7 +402,7 @@ Johansen's example found in his 1995 book.
 %
 \begin{code}
 open denmark
-coint2 2 LRM LRY IBO IDE --rc --seasonal
+coint2 2 LRM LRY IBO IDE --rc --seasonals
 \end{code}
 %
 In this case, the vector $y_t$ in equation (\ref{eq:VECM}) comprises
