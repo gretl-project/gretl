@@ -39,7 +39,6 @@ int flikam (const double *phi, int p,
     int mxpqp1 = mxpq + 1;
     int do_quick = 0;
     int last, loop, jfrom, nexti;
-    int ok_n = n;
     int i, j, k, ret = 0;
 
     *sumsq = *fact = 0;
@@ -122,18 +121,11 @@ int flikam (const double *phi, int p,
 	    detcar -= DCDELTA;
 	}
 	vw0 = vw[0];
-        if (isnan(w[i])) {
-	    /* FIXME? */
-	    wi = vw0;
-	    aor = a = e[i] = 0.0;
-	    ok_n--;
-	} else {
-	    wi = w[i];
-	    a = wi - vw0;
-	    e[i] = a / sqrt(h2);
-	    aor = a / h2;
-	    *sumsq += a * aor;
-	}
+	wi = w[i];
+	a = wi - vw0;
+	e[i] = a / sqrt(h2);
+	aor = a / h2;
+	*sumsq += a * aor;
         vl0 = vl[0];
         alfa = vl0 / h2;
         h2 -= alfa * vl0;
@@ -162,11 +154,6 @@ int flikam (const double *phi, int p,
 	nexti = i;
 	ret = -nexti;
 	for (i=nexti; i<n; i++) {
-	    if (isnan(w[i])) {
-		e[i] = 0;
-		ok_n--;
-		continue;
-	    }
 	    e[i] = w[i];
 	    for (j=0; j<p; j++) {
 		e[i] -= phi[j] * w[i-j-1];
@@ -178,7 +165,7 @@ int flikam (const double *phi, int p,
 	}
     }
 
-    *fact = pow(detman, 1.0 / ok_n) * pow(2.0, detcar / ok_n);
+    *fact = pow(detman, 1.0 / n) * pow(2.0, detcar / n);
 
     return ret;
 }
