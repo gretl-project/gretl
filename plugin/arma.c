@@ -1805,10 +1805,6 @@ MODEL arma_model (const int *list, const int *pqspec,
     }
 
     if (!err) {
-	/* just in case we find problemsin some cases, here's
-	   a switch to make out-of-bounds MA an error in the
-	   course of iteration... */
-	/* set_arma_no_flip(ainfo); */
 	clear_model_xpx(&armod);
 	if (arma_exact_ml(ainfo)) {
 	    if (opt & OPT_K) {

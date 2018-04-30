@@ -229,8 +229,8 @@ static gretl_matrix *poly_from_coeff (const double *coeff,
     return ret;
 }
 
-/* checks if the polynomial given by @coeff, of length @n,
-   is fundamental and modifies it if that is not the case.
+/* checks if the polynomial given by @coeff is fundamental,
+   and modifies it if that is not the case.
 */
 
 int flip_poly (double *coeff, arma_info *ainfo,
@@ -272,13 +272,6 @@ int flip_poly (double *coeff, arma_info *ainfo,
 	    tmp->val[i] = 1;
 	    n_inside++;
 	}
-    }
-
-    if (n_inside > 0 && arma_no_flip(ainfo)) {
-	/* treat non-stationarity as error condition */
-	gretl_matrix_free(r);
-	gretl_matrix_free(tmp);
-	return 1;
     }
 
     if (n_inside > 0) {
