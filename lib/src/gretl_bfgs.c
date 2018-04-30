@@ -791,7 +791,7 @@ static void optim_get_user_values (double *b, int n, int *maxit,
 		b[i] = uinit->val[i];
 	    }
 	    if ((opt & OPT_V) && !(opt & OPT_A)) {
-		/* OPT_A: arma: handled elsewhere */
+		/* OPT_A: arma: this is handled elsewhere */
 		pputs(prn, _("\n\n*** User-specified starting values:\n"));
 		for (i=0; i<n; i++) {
 		    pprintf(prn, " %12.6f", b[i]);

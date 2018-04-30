@@ -658,14 +658,12 @@ static int as_arma (const double *coeff,
     int use_loglik = 0;
     int algo, err = 0;
 
-    algo = get_optval_int(ARMA, OPT_A, &err);
-    if (algo == 0) {
-	/* user didn't specify: prefer 197 unless there are
-	   missing values to be handled */
+    if (opt & OPT_A) {
+	/* --as154 */
+	algo = 154;
+    } else {
+	/* prefer AS 197 if it's usable */
 	algo = as197_ok(ainfo) ? 197 : 154;
-    }
-    if (err || (algo != 154 && algo != 197)) {
-	return E_BADOPT;
     }
 
     err = as_info_init(&as, algo, ainfo, toler, use_loglik);
@@ -700,6 +698,7 @@ static int as_arma (const double *coeff,
 
     if (!err) {
 	/* maximize loglikelihood via BFGS */
+	gretlopt maxopt = opt | OPT_A;
 	int maxit;
 	double toler;
 
@@ -726,12 +725,12 @@ static int as_arma (const double *coeff,
 	    err = BFGS_max(b, ainfo->nc, maxit, toler,
 			   &ainfo->fncount, &ainfo->grcount,
 			   as154_iteration, C_LOGLIK,
-			   NULL, &as, NULL, opt, ainfo->prn);
+			   NULL, &as, NULL, maxopt, ainfo->prn);
 	} else {
 	    err = BFGS_max(b, ainfo->nc, maxit, toler,
 			   &ainfo->fncount, &ainfo->grcount,
 			   as197_iteration, C_LOGLIK,
-			   NULL, &as, NULL, opt, ainfo->prn);
+			   NULL, &as, NULL, maxopt, ainfo->prn);
 	}
 	if (!err) {
 	    if (ainfo->yscale != 1.0) {

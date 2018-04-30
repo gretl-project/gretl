@@ -88,6 +88,11 @@ void maybe_set_yscale (arma_info *ainfo)
     } else if (abs_ybar < 0.01 && abs_ybar > 0) {
 	ainfo->yscale = 10 / abs_ybar;
     }
+
+    if (ainfo->prn != NULL && ainfo->yscale != 1.0) {
+	pputc(ainfo->prn, '\n');
+	pprintf(ainfo->prn, _("Scaling y by %g\n"), ainfo->yscale);
+    }
 }
 
 #define apply_yscaling(a,x) (arma_exact_ml(a) && \
@@ -685,8 +690,7 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
     }
 
     if (!err && prn != NULL) {
-	pprintf(prn, "\n%s: %s\n\n", _("ARMA initialization"),
-		_("Hannan-Rissanen method"));
+	ainfo->init = INI_HR;
     }
 
     return err;
@@ -722,16 +726,13 @@ static int hr_df_check (arma_info *ainfo, const DATASET *dset)
 }
 
 int hr_arma_init (double *coeff, const DATASET *dset,
-		  arma_info *ainfo, int *done)
+		  arma_info *ainfo)
 {
     int ok = hr_df_check(ainfo, dset);
     int err = 0;
 
     if (ok) {
 	err = real_hr_arma_init(coeff, dset, ainfo, ainfo->prn);
-	if (!err) {
-	    *done = 1;
-	}
     }
 
 #if AINIT_DEBUG
@@ -1452,7 +1453,6 @@ int ar_arma_init (double *coeff, const DATASET *dset,
 		  arma_info *ainfo, MODEL *pmod,
 		  gretlopt opt)
 {
-    PRN *prn = ainfo->prn;
     int *list = ainfo->alist;
     int nmixed = ainfo->np * ainfo->P;
     int ptotal = ainfo->np + ainfo->P + nmixed;
@@ -1476,8 +1476,7 @@ int ar_arma_init (double *coeff, const DATASET *dset,
 	for (i=0; i<ainfo->nq + ainfo->Q; i++) {
 	    coeff[i] = MA_SMALL;
 	}
-	pprintf(ainfo->prn, "\n%s: %s\n\n", _("ARMA initialization"),
-		_("small MA values"));
+	ainfo->init = INI_SMALL;
 	return 0;
     }
 
@@ -1495,8 +1494,7 @@ int ar_arma_init (double *coeff, const DATASET *dset,
 	for (i=1; i<=ainfo->nq + ainfo->Q; i++) {
 	    coeff[i] = MA_SMALL;
 	}
-	pprintf(ainfo->prn, "\n%s: %s\n\n", _("ARMA initialization"),
-		_("small MA values"));
+	ainfo->init = INI_SMALL;
 	return 0;
     }
 
@@ -1556,14 +1554,8 @@ int ar_arma_init (double *coeff, const DATASET *dset,
 	transform_arma_const(coeff, ainfo);
     }
 
-    if (!err && prn != NULL) {
-	if (nonlin) {
-	    pprintf(prn, "\n%s: %s\n\n", _("ARMA initialization"),
-		    _("using nonlinear AR model"));
-	} else {
-	    pprintf(prn, "\n%s: %s\n\n", _("ARMA initialization"),
-		    _("using linear AR model"));
-	}
+    if (!err) {
+	ainfo->init = nonlin ? INI_NLS : INI_OLS;
     }
 
     /* clean up */

@@ -35,6 +35,7 @@ arma_info_init (arma_info *ainfo, gretlopt opt,
     ainfo->yno = 0;
     ainfo->flags = 0;
     ainfo->pflags = 0;
+    ainfo->init = 0;
     ainfo->alist = NULL;
 
     if (opt & OPT_X) {

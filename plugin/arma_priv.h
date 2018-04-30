@@ -35,6 +35,14 @@ typedef enum {
     ARMA_CML0   = 1 << 10 /* initialize exact ML via CML? */
 } PrivFlags;
 
+typedef enum {
+    INI_USER = 1,
+    INI_HR,
+    INI_SMALL,
+    INI_NLS,
+    INI_OLS
+} IniMethod;
+
 typedef struct arma_info_ arma_info;
 
 struct arma_info_ {
@@ -46,6 +54,7 @@ struct arma_info_ {
     char *pmask;        /* specific AR lags included */
     char *qmask;        /* specific MA lags included */
     double ll;          /* log-likelihood */
+    IniMethod init;     /* initialization method */
     int ifc;            /* specification includes a constant? */
     int p;              /* max non-seasonal AR order */
     int d;              /* non-seasonal difference */
@@ -123,7 +132,7 @@ int maybe_correct_MA (arma_info *ainfo,
 void maybe_set_yscale (arma_info *ainfo);
 
 int hr_arma_init (double *coeff, const DATASET *dset,
-		  arma_info *ainfo, int *done);
+		  arma_info *ainfo);
 
 int ar_arma_init (double *coeff, const DATASET *dset,
 		  arma_info *ainfo, MODEL *pmod,

@@ -1360,15 +1360,31 @@ static int kalman_arma (const double *coeff,
 # include "as154.c"
 # include "as_driver.c"
 
-static int user_arma_init (double *coeff, arma_info *ainfo, int *init_done)
+static void arma_init_message (arma_info *ainfo)
 {
-    PRN *prn = ainfo->prn;
+    pprintf(ainfo->prn, "\n%s: ", _("ARMA initialization"));
+
+    if (ainfo->init == INI_USER) {
+	pprintf(ainfo->prn, "%s\n\n", _("user-specified values"));
+    } else if (ainfo->init == INI_HR) {
+	pprintf(ainfo->prn, "%s\n\n", _("Hannan-Rissanen method"));
+    } else if (ainfo->init == INI_SMALL) {
+	pprintf(ainfo->prn, "%s\n\n", _("small MA values"));
+    } else if (ainfo->init == INI_NLS) {
+	pprintf(ainfo->prn, "%s\n\n", _("using nonlinear AR model"));
+    } else if (ainfo->init == INI_OLS) {
+	pprintf(ainfo->prn, "%s\n\n", _("using linear AR model"));
+    }
+}
+
+static int user_arma_init (double *coeff, arma_info *ainfo)
+{
     int i, nc = n_init_vals();
 
     if (nc == 0) {
 	return 0;
     } else if (nc < ainfo->nc) {
-	pprintf(prn, "ARMA initialization: need %d coeffs but got %d\n",
+	pprintf(ainfo->prn, "ARMA initialization: need %d coeffs but got %d\n",
 		ainfo->nc, nc);
 	return E_DATA;
     }
@@ -1387,10 +1403,7 @@ static int user_arma_init (double *coeff, arma_info *ainfo, int *init_done)
 	free_init_vals();
     }
 
-    pprintf(prn, "\n%s: %s\n\n", _("ARMA initialization"),
-	    _("user-specified values"));
-
-    *init_done = 1;
+    ainfo->init = INI_USER;
 
     return 0;
 }
@@ -1404,10 +1417,7 @@ static int prefer_hr_init (arma_info *ainfo)
 
     if (ainfo->q > 1 || ainfo->Q > 0) {
 	ret = 1;
-	if (0 && ainfo->pqspec != NULL && *ainfo->pqspec != '\0') {
-	    /* don't use for gappy arma (yet?) */
-	    ret = 0;
-	} else if (arma_xdiff(ainfo)) {
+	if (arma_xdiff(ainfo)) {
 	    /* don't use for ARIMAX (yet?) */
 	    ret = 0;
 	} else if (ainfo->T < 100) {
@@ -1657,9 +1667,7 @@ MODEL arma_model (const int *list, const int *pqspec,
     double *coeff = NULL;
     MODEL armod;
     arma_info ainfo_s, *ainfo;
-    int init_done = 0;
     int missv = 0, misst = 0;
-    int user_init = 0;
     int err = 0;
 
     ainfo = &ainfo_s;
@@ -1744,11 +1752,9 @@ MODEL arma_model (const int *list, const int *pqspec,
     /* start initialization of the coefficients */
 
     /* first see if the user specified some values */
-    err = user_arma_init(coeff, ainfo, &init_done);
+    err = user_arma_init(coeff, ainfo);
     if (err) {
 	goto bailout;
-    } else if (init_done) {
-	user_init = 1;
     }
 
     if (!arma_exact_ml(ainfo) && ainfo->q == 0 && ainfo->Q == 0) {
@@ -1756,7 +1762,7 @@ MODEL arma_model (const int *list, const int *pqspec,
 	   squares (OLS or NLS); in the NLS case a user-specified
 	   initializer may be useful, if present
 	*/
-	const double *b = (init_done)? coeff : NULL;
+	const double *b = ainfo->init ? coeff : NULL;
 
 	err = arma_via_OLS(ainfo, b, dset, &armod);
 	goto bailout; /* estimation handled */
@@ -1766,7 +1772,7 @@ MODEL arma_model (const int *list, const int *pqspec,
        check if it will be possible and desirable to apply
        CML to refine the initialization.
     */
-    if (!user_init && ((opt & OPT_B) || getenv("INIT_VIA_CML"))) {
+    if (ainfo->init != INI_USER && ((opt & OPT_B) || getenv("INIT_VIA_CML"))) {
 	maybe_set_cml_init(ainfo);
     }
 
@@ -1780,11 +1786,11 @@ MODEL arma_model (const int *list, const int *pqspec,
     }
 
     /* try Hannan-Rissanen init, if suitable */
-    if (!init_done && prefer_hr_init(ainfo)) {
-	hr_arma_init(coeff, dset, ainfo, &init_done);
+    if (!ainfo->init && prefer_hr_init(ainfo)) {
+	hr_arma_init(coeff, dset, ainfo);
 #if SHOW_INIT
 	fprintf(stderr, "HR init (%d %d): %s\n", ainfo->p, ainfo->q,
-		init_done ? "success" : "fail");
+		ainfo->init ? "success" : "fail");
 #endif
     }
 
@@ -1793,11 +1799,15 @@ MODEL arma_model (const int *list, const int *pqspec,
        Hannan-Rissanen fails, but also the default if the
        conditions of applicability of H-R are not met
     */
-    if (!err && !init_done) {
+    if (!err && !ainfo->init) {
 	err = ar_arma_init(coeff, dset, ainfo, &armod, opt);
 #if SHOW_INIT
 	fprintf(stderr, "AR init: err = %d\n", err);
 #endif
+    }
+
+    if (ainfo->prn != NULL && ainfo->init) {
+	arma_init_message(ainfo);
     }
 
     if (!err && arma_cml_init(ainfo)) {
