@@ -3213,6 +3213,31 @@ static void function_package_set_auxfile (fnpkg *pkg,
     }
 }
 
+static int check_for_pdf_ref (const char *s, fnpkg *pkg,
+			      int *err)
+{
+    int len, ret = 0;
+
+    if (!strncmp(s, "pdfdoc:", 7)) {
+	s += 7;
+    }
+
+    len = strlen(s);
+    if (len < 64 && strchr(s, ' ') == NULL && has_suffix(s, ".pdf")) {
+	char *tmp = gretl_strndup(s, len - 4);
+
+	if (strcmp(tmp, pkg->name)) {
+	    gretl_errmsg_sprintf(_("PDF doc should be called %s.pdf"), pkg->name);
+	    *err = E_DATA;
+	} else {
+	    ret = 1;
+	}
+	free(tmp);
+    }
+
+    return ret;
+}
+
 static int is_pdf_ref (const char *s)
 {
     if (!strncmp(s, "pdfdoc:", 7)) {
@@ -3235,7 +3260,6 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
     const char *okstr, *failed;
     int quiet = (opt & OPT_Q);
     char *p, line[1024];
-    gchar *tmp;
     int dfd = -1;
     int got = 0;
     int err = 0;
@@ -3291,19 +3315,20 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 	    } else if (!strncmp(line, "menu-attachment", 15)) {
 		err = function_package_set_properties(pkg, "menu-attachment", p, NULL);
 	    } else if (!strncmp(line, "help", 4)) {
-		int pdfdoc = 0;
+		gchar *hstr = NULL;
+		int pdfdoc;
 
-		if (is_pdf_ref(p)) {
+		pdfdoc = check_for_pdf_ref(p, pkg, &err);
+		if (pdfdoc) {
 		    if (!quiet) {
 			pprintf(prn, "Recording help reference %s\n", p);
 		    }
-		    tmp = g_strdup_printf("pdfdoc:%s", p);
-		    pdfdoc = 1;
-		} else {
+		    hstr = g_strdup_printf("pdfdoc:%s", p);
+		} else if (!err) {
 		    if (!quiet) {
 			pprintf(prn, "Looking for help text in %s... ", p);
 		    }
-		    tmp = pkg_aux_content(p, &err);
+		    hstr = pkg_aux_content(p, &err);
 		    if (err) {
 			pputs(prn, failed);
 		    } else {
@@ -3311,46 +3336,50 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 		    }
 		}
 		if (!err) {
-		    err = function_package_set_properties(pkg, "help", tmp, NULL);
+		    err = function_package_set_properties(pkg, "help", hstr, NULL);
 		    if (!err) {
 			got++;
 			if (!pdfdoc) {
 			    function_package_set_auxfile(pkg, "help-fname", p);
 			}
 		    }
-		    g_free(tmp);
 		}
+		g_free(hstr);
 	    } else if (!strncmp(line, "gui-help", 8)) {
+		gchar *ghstr = NULL;
+
 		if (!quiet) {
 		    pprintf(prn, "Looking for GUI help text in %s... ", p);
 		}
-		tmp = pkg_aux_content(p, &err);
+		ghstr = pkg_aux_content(p, &err);
 		if (err) {
 		    pputs(prn, failed);
 		} else {
 		    pputs(prn, okstr);
-		    err = function_package_set_properties(pkg, "gui-help", tmp, NULL);
+		    err = function_package_set_properties(pkg, "gui-help", ghstr, NULL);
 		    if (!err) {
 			function_package_set_auxfile(pkg, "gui-help-fname", p);
 		    }
-		    g_free(tmp);
 		}
+		g_free(ghstr);
 	    } else if (!strncmp(line, "sample-script", 13)) {
+		gchar *script = NULL;
+
 		if (!quiet) {
 		    pprintf(prn, "Looking for sample script in %s... ", p);
 		}
-		tmp = pkg_aux_content(p, &err);
+		script = pkg_aux_content(p, &err);
 		if (err) {
 		    pputs(prn, failed);
 		} else {
 		    pputs(prn, okstr);
-		    err = function_package_set_properties(pkg, "sample-script", tmp, NULL);
+		    err = function_package_set_properties(pkg, "sample-script", script, NULL);
 		    if (!err) {
 			got++;
 			function_package_set_auxfile(pkg, "sample-fname", p);
 		    }
-		    g_free(tmp);
 		}
+		g_free(script);
 	    } else if (!strncmp(line, "data-files", 10)) {
 		if (!quiet) {
 		    pprintf(prn, "Recording data-file list: %s\n", p);
@@ -3959,7 +3988,8 @@ int function_package_set_properties (fnpkg *pkg, ...)
 	    }
 
 	    if (!err && !strcmp(key, "help")) {
-		if (!strncmp(sval, "pdfdoc", 6) || is_pdf_ref(sval)) {
+		if (!strncmp(sval, "pdfdoc", 6) ||
+		    is_pdf_ref(sval)) {
 		    pkg->uses_subdir = 1;
 		}
 	    }
