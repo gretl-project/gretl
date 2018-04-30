@@ -56,6 +56,11 @@ void transform_arma_const (double *b, arma_info *ainfo)
     }
 
     b[0] /= (narfac * sarfac);
+
+#if AINIT_DEBUG
+    fprintf(stderr, "transform_arma_const: revised = %g (ns=%g, s=%g)\n",
+	    b[0], narfac, sarfac);
+#endif
 }
 
 static int init_transform_const (arma_info *ainfo)
@@ -201,54 +206,60 @@ static gretl_matrix *polfromroots (const gretl_matrix *r)
     return ret;
 }
 
-/* for non-seasonal "gappy" MA coeff vector: expand
+/* for non-seasonal "gappy" coeff vector: expand
    by inserting zeros as needed */
 
-static gretl_matrix *poly_from_theta (const double *theta,
-				      const char *qmask,
-				      int q)
+static gretl_matrix *poly_from_coeff (const double *coeff,
+				      const char *mask,
+				      int n, int ar)
 {
     gretl_matrix *ret;
     int i, k = 0;
 
-    ret = gretl_zero_matrix_new(q + 1, 1);
+    ret = gretl_zero_matrix_new(n + 1, 1);
     ret->val[0] = 1.0;
 
-    for (i=0; i<q; i++) {
-        if (qmask[i] == '1') {
-	    ret->val[i+1] = theta[k++];
+    for (i=0; i<n; i++) {
+        if (mask[i] == '1') {
+	    ret->val[i+1] = ar ? -coeff[k] : coeff[k];
+	    k++;
         }
     }
 
     return ret;
 }
 
-/* checks if the MA polynomial given by @theta, of length @q,
+/* checks if the polynomial given by @coeff, of length @n,
    is fundamental and modifies it if that is not the case.
 */
 
-int flip_ma_poly (double *theta, arma_info *ainfo,
-		  int seasonal)
+int flip_poly (double *coeff, arma_info *ainfo,
+	       int ar, int seasonal)
 {
     gretl_matrix *tmp, *r;
-    const char *qmask;
+    const char *mask;
     double re, im;
-    int q, n_inside = 0;
+    int n, n_inside = 0;
     int i, err = 0;
 
-    q = seasonal ? ainfo->Q : ainfo->q;
-    qmask = seasonal ? NULL : ainfo->qmask;
+    if (ar) {
+	n = seasonal ? ainfo->P : ainfo->p;
+	mask = seasonal ? NULL : ainfo->pmask;
+    } else {
+	n = seasonal ? ainfo->Q : ainfo->q;
+	mask = seasonal ? NULL : ainfo->qmask;
+    }
 
-    if (qmask == NULL) {
+    if (mask == NULL) {
 	/* no expansion needed */
-	tmp = gretl_matrix_alloc(q + 1, 1);
+	tmp = gretl_matrix_alloc(n + 1, 1);
 	tmp->val[0] = 1.0;
-	for (i=0; i<q; i++) {
-	    tmp->val[i+1] = theta[i];
+	for (i=0; i<n; i++) {
+	    tmp->val[i+1] = ar ? -coeff[i] : coeff[i];
 	}
     } else {
-	/* expand to handle MA gappiness */
-	tmp = poly_from_theta(theta, qmask, q);
+	/* expand to handle gappiness */
+	tmp = poly_from_coeff(coeff, mask, n, ar);
     }
     r = gretl_matrix_polroots(tmp, 1, &err);
 
@@ -272,6 +283,7 @@ int flip_ma_poly (double *theta, arma_info *ainfo,
 
     if (n_inside > 0) {
 	gretl_matrix *rfix, *ifix;
+	double ci1;
 	int k = 0;
 
 	/* compose sub-matrix */
@@ -292,18 +304,20 @@ int flip_ma_poly (double *theta, arma_info *ainfo,
 	}
 	gretl_matrix_free(tmp);
         tmp = polfromroots(r);
-	if (qmask != NULL) {
-	    /* shrink to theta */
+	if (mask != NULL) {
+	    /* shrink to coeff */
 	    k = 0;
-	    for (i=0; i<q; i++) {
-		if (qmask[i] == '1') {
-		    theta[k++] = tmp->val[i+1];
+	    for (i=0; i<n; i++) {
+		if (mask[i] == '1') {
+		    ci1 = tmp->val[i+1];
+		    coeff[k++] = ar ? -ci1 : ci1;
 		}
 	    }
 	} else {
-	    /* just copy to theta */
-	    for (i=0; i<q; i++) {
-		theta[i] = tmp->val[i+1];
+	    /* just copy to coeff */
+	    for (i=0; i<n; i++) {
+		ci1 = tmp->val[i+1];
+		coeff[i] = ar ? -ci1 : ci1;
 	    }
 	}
 	gretl_matrix_free(rfix);
@@ -326,6 +340,8 @@ int flip_ma_poly (double *theta, arma_info *ainfo,
 static int hr_transcribe_coeffs (arma_info *ainfo,
 				 MODEL *pmod, double *b)
 {
+    double *phi = NULL;
+    double *Phi = NULL;
     double *theta = NULL;
     double *Theta = NULL;
     int j = ainfo->nexo + ainfo->ifc;
@@ -340,12 +356,14 @@ static int hr_transcribe_coeffs (arma_info *ainfo,
 	k = 1;
     }
 
+    phi = b + k;
     for (i=0; i<ainfo->p; i++) {
 	if (AR_included(ainfo, i)) {
 	    b[k++] = pmod->coeff[j++];
 	}
     }
 
+    Phi = b + k;
     for (i=0; i<ainfo->P; i++) {
 	b[k++] = pmod->coeff[j];
 	j += ainfo->np + 1; /* assumes ainfo->p < pd */
@@ -369,11 +387,17 @@ static int hr_transcribe_coeffs (arma_info *ainfo,
 	b[k++] = pmod->coeff[j++];
     }
 
+    if (ainfo->p > 0) {
+	flip_poly(phi, ainfo, 1, 0);
+    }
+    if (ainfo->P > 0) {
+	flip_poly(Phi, ainfo, 1, 1);
+    }
     if (ainfo->q > 0) {
-	flip_ma_poly(theta, ainfo, 0);
+	flip_poly(theta, ainfo, 0, 0);
     }
     if (ainfo->Q > 0) {
-	flip_ma_poly(Theta, ainfo, 1);
+	flip_poly(Theta, ainfo, 0, 1);
     }
 
     return err;

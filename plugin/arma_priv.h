@@ -116,8 +116,8 @@ struct arma_info_ {
 #define AR_included(a,i) (a->pmask == NULL || a->pmask[i] == '1')
 #define MA_included(a,i) (a->qmask == NULL || a->qmask[i] == '1')
 
-int flip_ma_poly (double *theta, arma_info *ainfo,
-		  int seasonal);
+int flip_poly (double *theta, arma_info *ainfo,
+	       int ar, int seasonal);
 
 int maybe_correct_MA (arma_info *ainfo,
 		      double *theta,

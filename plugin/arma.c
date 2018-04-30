@@ -48,10 +48,10 @@ int maybe_correct_MA (arma_info *ainfo,
     int err = 0;
 
     if (ainfo->q > 0) {
-	err = flip_ma_poly(theta, ainfo, 0);
+	err = flip_poly(theta, ainfo, 0, 0);
     }
     if (!err && ainfo->Q > 0) {
-	err = flip_ma_poly(Theta, ainfo, 1);
+	err = flip_poly(Theta, ainfo, 0, 1);
     }
 
     return err;
