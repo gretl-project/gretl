@@ -1,4 +1,7 @@
 version 2018b, in progress
+- Substantial speed-up of AR(I)MA estimation, using
+  Melard's algorithm AS 197; also improvements to the
+  initialization for such estimation
 - Fixes for GUI model specification dialog: breakage in
   selection of GARCH robust variance estimator variant,
   and non-availability of lag selection in some cases
