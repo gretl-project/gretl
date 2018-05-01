@@ -4458,8 +4458,25 @@ int gretl_VAR_bundlize (const GRETL_VAR *var,
     }
 
     /* lists: lags, ylist, xlist, rlist */
+    if (var->lags != NULL) {
+	gretl_matrix *v = gretl_list_to_vector(var->lags, &err);
 
-    /* double arrays: Fvals, Ivals */
+	if (!err) {
+	    gretl_bundle_donate_data(b, "lags", v,
+				     GRETL_TYPE_MATRIX, 0);
+	}
+    }
+    if (var->ylist != NULL) {
+	gretl_bundle_set_list(b, "ylist", var->ylist);
+    }
+    if (var->xlist != NULL) {
+	gretl_bundle_set_list(b, "xlist", var->xlist);
+    }
+    if (var->rlist != NULL) {
+	gretl_bundle_set_list(b, "rlist", var->rlist);
+    }
+
+    /* doubles arrays: Fvals, Ivals? */
 
     if (var->X != NULL && var->Y != NULL) {
 	gretl_bundle_set_matrix(b, "X", var->X);
