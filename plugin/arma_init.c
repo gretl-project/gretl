@@ -736,7 +736,7 @@ int hr_arma_init (double *coeff, const DATASET *dset,
     }
 
 #if AINIT_DEBUG
-    if (*done) {
+    if (ainfo->init) {
 	fputs("*** hr_arma_init OK\n", stderr);
     } else {
 	fputs("*** hr_arma_init failed, will try ar_arma_init\n", stderr);
@@ -767,12 +767,14 @@ static double get_y_mean (arma_info *ainfo)
 
 #define MA_SMALL  0.0001
 
-/* transcribe coeffs from the OLS or NLS model used for initializing,
-   into the array @b that will be passed to the maximizer.
+/* Transcribe coeffs from the OLS or NLS model used for initializing,
+   into the array @b that will be passed to the maximizer. While
+   we're at it, check that the AR polynomial(s) are in the
+   stationary zone.
 */
 
-static void arma_init_transcribe_coeffs (arma_info *ainfo,
-					 MODEL *pmod, double *b)
+static void ar_init_transcribe_coeffs (arma_info *ainfo,
+				       MODEL *pmod, double *b)
 {
     int q0 = ainfo->ifc + ainfo->np + ainfo->P;
     int totq = ainfo->nq + ainfo->Q;
@@ -796,6 +798,14 @@ static void arma_init_transcribe_coeffs (arma_info *ainfo,
     /* insert near-zeros for MA terms */
     for (i=0; i<totq; i++) {
 	b[q0 + i] = MA_SMALL;
+    }
+
+    /* stationarity check/fix */
+    if (ainfo->p > 0) {
+	flip_poly(b + ainfo->ifc, ainfo, 1, 0);
+    }
+    if (ainfo->P > 0) {
+	flip_poly(b + ainfo->ifc + ainfo->np, ainfo, 1, 1);
     }
 }
 
@@ -1520,7 +1530,7 @@ int ar_arma_init (double *coeff, const DATASET *dset,
 
 #if AINIT_DEBUG
 	fprintf(stderr, "arma:_init_by_ls: doing NLS\n");
-	dprn = prn;
+	dprn = ainfo->prn;
 #endif
 	err = arma_get_nls_model(&armod, ainfo, narmax, NULL, aset,
 				 dprn);
@@ -1533,16 +1543,13 @@ int ar_arma_init (double *coeff, const DATASET *dset,
     }
 
 #if AINIT_DEBUG
-    if (!err) {
-	pputs(prn, "\n*** armod, in ar_arma_init\n");
-	printmodel(&armod, aset, OPT_NONE, prn);
-    } else {
+    if (err) {
 	fprintf(stderr, "LS init: armod.errcode = %d\n", err);
     }
 #endif
 
     if (!err) {
-	arma_init_transcribe_coeffs(ainfo, &armod, coeff);
+	ar_init_transcribe_coeffs(ainfo, &armod, coeff);
     }
 
     /* handle the case where we need to translate from an
@@ -1560,8 +1567,8 @@ int ar_arma_init (double *coeff, const DATASET *dset,
 
     /* clean up */
     clear_model(&armod);
-    free(arlist);
     destroy_dataset(aset);
+    free(arlist);
 
     return err;
 }
