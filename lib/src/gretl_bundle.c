@@ -28,6 +28,8 @@
 #include "gretl_typemap.h"
 #include "genparse.h"
 #include "kalman.h"
+#include "var.h"
+#include "system.h"
 #include "gretl_bundle.h"
 
 #define BDEBUG 0
@@ -2361,9 +2363,10 @@ gretl_bundle *bundle_from_system (void *ptr,
 	var = (GRETL_VAR *) ptr;
     } else if (otype == GRETL_OBJ_SYS) {
 	sys = (equation_system *) ptr;
-	fprintf(stderr, "Got a system: FIXME\n");
+    } else {
+	gretl_errmsg_sprintf(_("%s: no data available"), "$system");
 	*err = E_DATA;
-    }
+    }	
 
     if (!*err) {
 	b = gretl_bundle_new();
@@ -2375,6 +2378,8 @@ gretl_bundle *bundle_from_system (void *ptr,
 
     if (var != NULL) {
 	*err = gretl_VAR_bundlize(var, dset, b);
+    } else if (sys != NULL) {
+	*err = equation_system_bundlize(sys, b);
     }
 
     /* don't return a broken bundle */

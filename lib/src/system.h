@@ -217,6 +217,9 @@ int equation_system_serialize (equation_system *sys,
 			       SavedObjectFlags flags,
 			       FILE *fp);
 
+int equation_system_bundlize (equation_system *sys,
+			      gretl_bundle *b);
+
 int gretl_system_print (equation_system *sys, 
 			const DATASET *dset, 
 			gretlopt opt, PRN *prn);

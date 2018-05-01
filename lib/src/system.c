@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* mechanisms for defining and handling systems of equations */
@@ -114,7 +114,7 @@ const char *badsystem = N_("Unrecognized equation system type");
 const char *toofew = N_("An equation system must have at least two equations");
 
 static void destroy_ident (identity *ident);
-static int 
+static int
 add_predet_to_sys (equation_system *sys, const DATASET *dset,
 		   int id, int src, int lag);
 static int sys_check_lists (equation_system *sys, const DATASET *dset);
@@ -185,8 +185,8 @@ void delete_anonymous_equation_system (int level)
     }
 }
 
-static void 
-print_system_equation (const int *list, const DATASET *dset, 
+static void
+print_system_equation (const int *list, const DATASET *dset,
 		       PRN *prn)
 {
     int i, v;
@@ -207,18 +207,18 @@ print_system_equation (const int *list, const DATASET *dset,
     pputc(prn, '\n');
 }
 
-static void 
-print_system_identity (const identity *ident, const DATASET *dset, 
+static void
+print_system_identity (const identity *ident, const DATASET *dset,
 		       gretlopt opt, PRN *prn)
 {
     int i;
 
     if (opt & OPT_H) {
-	pprintf(prn, "Identity: %s = %s ", 
+	pprintf(prn, "Identity: %s = %s ",
 		dset->varname[ident->depvar],
 		dset->varname[ident->atoms[0].varnum]);
     } else {
-	pprintf(prn, "identity %s = %s ", 
+	pprintf(prn, "identity %s = %s ",
 		dset->varname[ident->depvar],
 		dset->varname[ident->atoms[0].varnum]);
     }
@@ -267,18 +267,18 @@ static int get_predet_parent (const equation_system *sys, int v, int *lag)
  * @opt: use OPT_H for printing in a form designed to appear
  * in the header when results of estimation are printed.
  * @prn: printing struct.
- * 
+ *
  * Prints details of an equation system to @prn.
  */
 
-void 
-print_equation_system_info (const equation_system *sys, 
-			    const DATASET *dset, 
+void
+print_equation_system_info (const equation_system *sys,
+			    const DATASET *dset,
 			    gretlopt opt, PRN *prn)
 {
     int header = (opt & OPT_H);
     int i, vi, lag;
-    
+
     if (header && sys->name != NULL && !sys_anonymous(sys->name)) {
 	pprintf(prn, "%s %s\n", _("Equation system"), sys->name);
     }
@@ -286,7 +286,7 @@ print_equation_system_info (const equation_system *sys,
     if (!header) {
 	for (i=0; i<sys->neqns; i++) {
 	    print_system_equation(sys->lists[i], dset, prn);
-	}    
+	}
     }
 
     for (i=0; i<sys->nidents; i++) {
@@ -311,7 +311,7 @@ print_equation_system_info (const equation_system *sys,
 		pprintf(prn, " %s(-%d)", dset->varname[vi], lag);
 	    }
 	    pputc(prn, '\n');
-	}    
+	}
 	if (sys->ilist != NULL && sys->ilist[0] > sys->plist[0]) {
 	    pputs(prn, _("Exogenous variables:"));
 	    for (i=1; i<=sys->ilist[0]; i++) {
@@ -329,7 +329,7 @@ print_equation_system_info (const equation_system *sys,
 	    pprintf(prn, " %s", dset->varname[vi]);
 	}
 	pputc(prn, '\n');
-    }	
+    }
 }
 
 int system_method_from_string (const char *s)
@@ -502,7 +502,7 @@ static void system_clear_results (equation_system *sys)
 
     if (sys->Sr != NULL) {
 	gretl_matrix_replace(&sys->Sr, NULL);
-    }    
+    }
 
     if (sys->F != NULL) {
 	gretl_matrix_replace(&sys->F, NULL);
@@ -574,7 +574,7 @@ static int sys_rearrange_eqn_lists (equation_system *sys,
 	reglist_check_for_const(sys->lists[i], dset);
     }
 
-    if (sys->method != SYS_METHOD_TSLS && 
+    if (sys->method != SYS_METHOD_TSLS &&
 	sys->method != SYS_METHOD_3SLS) {
 	/* we can't have ';' in equation lists */
 	int j;
@@ -599,7 +599,7 @@ static int sys_rearrange_eqn_lists (equation_system *sys,
    duplicated elements.
 */
 
-static int *matrix_row_to_list (const gretl_matrix *m, int i, 
+static int *matrix_row_to_list (const gretl_matrix *m, int i,
 				const DATASET *dset,
 				int *err)
 {
@@ -626,7 +626,7 @@ static int *matrix_row_to_list (const gretl_matrix *m, int i,
 	if (k < 0 || k >= dset->v) {
 	    *err = E_UNKVAR;
 	    return NULL;
-	} 
+	}
     }
 
     /* construct the list */
@@ -638,7 +638,7 @@ static int *matrix_row_to_list (const gretl_matrix *m, int i,
 	for (j=0; j<n; j++) {
 	    list[k++] = (int) gretl_matrix_get(m, i, j);
 	}
-    }	    
+    }
 
     if (!*err) {
 	k = gretl_list_duplicates(list, EQUATION);
@@ -688,7 +688,7 @@ static int sys_check_eqn_list (const int *list)
 /* @LY is a simple list of g regressands; @LX is either a common
    list of regressors or it should contain g sub-lists, one
    per equation.
-*/ 
+*/
 
 static int add_equations_from_lists (equation_system *sys,
 				     const int *LY,
@@ -749,7 +749,7 @@ static int add_equations_from_lists (equation_system *sys,
 			pos++;
 			nx++;
 		    }
-		} 
+		}
 	    }
 	    err = sys_check_eqn_list(list);
 	}
@@ -773,7 +773,7 @@ static int add_equations_from_matrix (equation_system *sys,
     sys->lists = realloc(sys->lists, (n + m->rows) * sizeof *sys->lists);
     if (sys->lists == NULL) {
 	return E_ALLOC;
-    }    
+    }
 
     for (i=0; i<m->rows && !err; i++) {
 	list = matrix_row_to_list(m, i, dset, &err);
@@ -798,29 +798,29 @@ static int add_equations_from_matrix (equation_system *sys,
  * @param: the name of a pre-defined matrix, or the names
  * of two pre-defined lists (space-separated).
  * @dset: dataset information.
- * 
+ *
  * Adds one or more equations to @sys in one or other of two
  * ways, as follows.
  *
  * If @param contains a single name it is taken to be
- * the name of a matrix, and we interpret the rows of the 
+ * the name of a matrix, and we interpret the rows of the
  * specified matrix as lists. Lists of differing length
- * can be accommodated by padding unused trailing elements of 
+ * can be accommodated by padding unused trailing elements of
  * short rows with zeros. (EXPERIMENTAL, may be dropped)
  *
  * If @param contains two names, they are taken to be the
  * names of lists. The first serves as a list of g
  * regressands, one per equation. If the second list contains
- * no instances of #LISTSEP it is treated as a common set of 
+ * no instances of #LISTSEP it is treated as a common set of
  * regressors; otherwise it should contain g sub-lists, one
  * per equation, separated by #LISTSEP.
- * 
+ *
  * Returns: 0 on success, non-zero on failure, in which case
  * @sys is destroyed.
  */
 
-int equation_system_append_multi (equation_system *sys, 
-				  const char *param, 
+int equation_system_append_multi (equation_system *sys,
+				  const char *param,
 				  const DATASET *dset)
 {
     char name1[VNAMELEN], name2[VNAMELEN];
@@ -876,9 +876,9 @@ int equation_system_append_multi (equation_system *sys,
  * equation_system_append:
  * @sys: initialized equation system.
  * @list: list containing dependent variable and regressors.
- * 
- * Adds an equation, as represented by @list, to @sys. 
- * 
+ *
+ * Adds an equation, as represented by @list, to @sys.
+ *
  * Returns: 0 on success, non-zero on failure, in which case
  * @sys is destroyed.
  */
@@ -929,8 +929,8 @@ char *get_system_name_from_line (const char *s)
     int pchars = 0;
 
     if (!strncmp(s, "method", 6)) {
-	/* skip "method = whatever", with possible 
-	   spaces around '=' 
+	/* skip "method = whatever", with possible
+	   spaces around '='
 	*/
 	char c = *(s+6);
 
@@ -943,7 +943,7 @@ char *get_system_name_from_line (const char *s)
 	    p += strspn(s, " ");
 	    s = p;
 	}
-    }     
+    }
 
 #if SYSDEBUG
     fprintf(stderr, "get_system_name_from_line: s = '%s'\n", s);
@@ -1009,7 +1009,7 @@ static int parse_sys_start_param (const char *s,
 
     if (len > 7 && !strncmp(s, "method=", 7)) {
 	char mstr[9];
-	
+
 	*mstr = '\0';
 	strncat(mstr, s + 7, 8);
 	gretl_lower(mstr);
@@ -1037,20 +1037,20 @@ static int parse_sys_start_param (const char *s,
  * @opt: may include OPT_I for iterative estimation (will be
  * ignored if the the estimation method does not support it).
  * @err: location to receive error code.
- * 
+ *
  * Start compiling an equation system. Either @param must contain
  * an estimation method or the system must be given a name.
- * If a method is given, the system will be estimated as soon as its 
- * definition is complete. If a name is given, the system definition 
- * is saved on a stack and it can subsequently be estimated via various 
+ * If a method is given, the system will be estimated as soon as its
+ * definition is complete. If a name is given, the system definition
+ * is saved on a stack and it can subsequently be estimated via various
  * methods. If both a name and an estimation method are given, the system
  * is both estimated and saved.
  *
  * Returns: pointer to a new equation system, or %NULL on error.
  */
 
-equation_system *equation_system_start (const char *param, 
-					const char *name, 
+equation_system *equation_system_start (const char *param,
+					const char *name,
 					gretlopt opt,
 					int *err)
 {
@@ -1079,7 +1079,7 @@ equation_system *equation_system_start (const char *param,
 	sys = equation_system_new(method, "$system", err);
 	if (!*err) {
 	    push_anon_system(sys);
-	}	    
+	}
     }
 
     if (sys != NULL) {
@@ -1088,18 +1088,18 @@ equation_system *equation_system_start (const char *param,
 	}
 	if (opt & OPT_Q) {
 	    sys->flags |= SYSTEM_QUIET;
-	}	
+	}
     }
 
 #if SYSDEBUG > 1
-    fprintf(stderr, "new system '%s' at %p, flags = %d\n", sys->name, 
+    fprintf(stderr, "new system '%s' at %p, flags = %d\n", sys->name,
 	    (void *) sys, sys->flags);
 #endif
 
     return sys;
 }
 
-/* determine the degrees of freedom for the unrestricted 
+/* determine the degrees of freedom for the unrestricted
    estimation of @sys
 */
 
@@ -1136,7 +1136,7 @@ static int get_eqn_ref (const equation_system *sys, int j)
 	    return i;
 	}
     }
-	
+
     return -1;
 }
 
@@ -1172,13 +1172,13 @@ static int maybe_get_single_equation_dfu (const equation_system *sys,
 
 /* Asymptotic F-test, as in Greene:
 
-   (1/J) * (Rb-q)' * [R*Var(b)*R']^{-1} * (Rb-q) 
+   (1/J) * (Rb-q)' * [R*Var(b)*R']^{-1} * (Rb-q)
 
    or chi-square version if given OPT_W
 */
 
 static int real_system_wald_test (const equation_system *sys,
-				  const gretl_matrix *b, 
+				  const gretl_matrix *b,
 				  const gretl_matrix *vcv,
 				  const gretl_matrix *R,
 				  const gretl_matrix *q,
@@ -1202,7 +1202,7 @@ static int real_system_wald_test (const equation_system *sys,
 	pputs(prn, "Missing matrix in system Wald test!\n");
 	return E_DATA;
     }
-    
+
     Rrows = gretl_matrix_rows(R);
     dfu = system_get_dfu(sys);
     dfn = gretl_matrix_rows(R);
@@ -1253,17 +1253,17 @@ static int real_system_wald_test (const equation_system *sys,
 		pprintf(prn, "%s:\n", _("F test for the specified restrictions"));
 		pprintf(prn, "  F(%d,%d) = %g [%.4f]\n", dfn, dfu, test, pval);
 	    }
-	    pputc(prn, '\n'); 
+	    pputc(prn, '\n');
 	}
     }
-    
+
     gretl_matrix_free(Rbq);
     gretl_matrix_free(RvR);
 
     return err;
 }
 
-int system_wald_test (const equation_system *sys, 
+int system_wald_test (const equation_system *sys,
 		      const gretl_matrix *R,
 		      const gretl_matrix *q,
 		      gretlopt opt,
@@ -1276,7 +1276,7 @@ int system_wald_test (const equation_system *sys,
 	gretl_errmsg_set("restrict: no estimates are available");
 	return E_DATA;
     }
-    
+
     return real_system_wald_test(sys, b, V, R, q, opt, prn);
 }
 
@@ -1312,7 +1312,7 @@ static int sys_test_type (equation_system *sys)
     int ret = SYS_TEST_NONE;
 
     if (system_n_restrictions(sys) > 0) {
-	if (sys->method == SYS_METHOD_SUR || 
+	if (sys->method == SYS_METHOD_SUR ||
 	    sys->method == SYS_METHOD_WLS) {
 	    if (sys->flags & SYSTEM_ITERATE) {
 		ret = SYS_TEST_LR;
@@ -1328,7 +1328,7 @@ static int sys_test_type (equation_system *sys)
 	    ret = SYS_TEST_F;
 	} else if (sys->method == SYS_METHOD_FIML) {
 	    ret = SYS_TEST_LR;
-	} 
+	}
     }
 
     return ret;
@@ -1377,8 +1377,8 @@ static int shrink_b_and_vcv (const gretl_matrix *b,
     return 0;
 }
 
-static int estimate_with_test (equation_system *sys, DATASET *dset, 
-			       int stest, int (*system_est)(), 
+static int estimate_with_test (equation_system *sys, DATASET *dset,
+			       int stest, int (*system_est)(),
 			       gretlopt opt, PRN *prn)
 {
     gretl_matrix *vcv = NULL;
@@ -1431,7 +1431,7 @@ static int estimate_with_test (equation_system *sys, DATASET *dset,
     return err;
 }
 
-static void 
+static void
 adjust_sys_flags_for_method (equation_system *sys, int method)
 {
     char oldflags = sys->flags;
@@ -1441,7 +1441,7 @@ adjust_sys_flags_for_method (equation_system *sys, int method)
     /* the iterate option is only available for WLS, SUR or 3SLS */
 
     if (oldflags & SYSTEM_ITERATE) {
-	if (sys->method == SYS_METHOD_WLS || 
+	if (sys->method == SYS_METHOD_WLS ||
 	    sys->method == SYS_METHOD_SUR ||
 	    sys->method == SYS_METHOD_3SLS) {
 	    sys->flags |= SYSTEM_ITERATE;
@@ -1450,14 +1450,14 @@ adjust_sys_flags_for_method (equation_system *sys, int method)
 
     /* by default, apply a df correction for single-equation methods */
 
-    if (sys->method == SYS_METHOD_OLS || 
+    if (sys->method == SYS_METHOD_OLS ||
 	sys->method == SYS_METHOD_WLS ||
-	sys->method == SYS_METHOD_TSLS || 
+	sys->method == SYS_METHOD_TSLS ||
 	sys->method == SYS_METHOD_LIML) {
 	if (oldflags & SYSTEM_DFCORR) {
 	    sys->flags |= SYSTEM_DFCORR;
 	}
-    } 
+    }
 
     /* carry forward the GEOMEAN flag */
 
@@ -1466,7 +1466,7 @@ adjust_sys_flags_for_method (equation_system *sys, int method)
     }
 }
 
-static void 
+static void
 set_sys_flags_from_opt (equation_system *sys, gretlopt opt)
 {
     sys->flags = 0;
@@ -1474,7 +1474,7 @@ set_sys_flags_from_opt (equation_system *sys, gretlopt opt)
     /* the iterate option is available for WLS, SUR or 3SLS */
 
     if (opt & OPT_I) {
-	if (sys->method == SYS_METHOD_WLS || 
+	if (sys->method == SYS_METHOD_WLS ||
 	    sys->method == SYS_METHOD_SUR ||
 	    sys->method == SYS_METHOD_3SLS) {
 	    sys->flags |= SYSTEM_ITERATE;
@@ -1483,20 +1483,20 @@ set_sys_flags_from_opt (equation_system *sys, gretlopt opt)
 
     /* by default, apply a df correction for single-equation methods */
 
-    if (sys->method == SYS_METHOD_OLS || 
+    if (sys->method == SYS_METHOD_OLS ||
 	sys->method == SYS_METHOD_TSLS) {
 	if (!(opt & OPT_N)) {
 	    sys->flags |= SYSTEM_DFCORR;
 	}
-    } 
+    }
 
     if (opt & OPT_M) {
 	sys->flags |= SYSTEM_VCV_GEOMEAN;
-    } 
+    }
 
     if (opt & OPT_Q) {
 	sys->flags |= SYSTEM_QUIET;
-    }     
+    }
 
     if (opt & OPT_S) {
 	/* estimating single equation via LIML */
@@ -1510,18 +1510,18 @@ set_sys_flags_from_opt (equation_system *sys, gretlopt opt)
  * @dset: dataset struct.
  * @opt: may include OPT_V for more verbose operation.
  * @prn: printing struct.
- * 
+ *
  * Estimate a pre-defined equation system and print the results
  * to @prn.
- * 
+ *
  * Returns: 0 on success, non-zero on error.
  */
 
-int 
-equation_system_estimate (equation_system *sys, DATASET *dset, 
+int
+equation_system_estimate (equation_system *sys, DATASET *dset,
 			  gretlopt opt, PRN *prn)
 {
-    int (*system_est) (equation_system *, DATASET *, 
+    int (*system_est) (equation_system *, DATASET *,
 		       gretlopt, PRN *);
     int stest = 0;
     int err = 0;
@@ -1551,7 +1551,7 @@ equation_system_estimate (equation_system *sys, DATASET *dset,
     /* if restrictions are in place, reset the restricted flag */
     if (sys->R != NULL && sys->q != NULL) {
 	sys->flags |= SYSTEM_RESTRICT;
-    } 
+    }
 
     /* in case we're re-estimating */
     system_clear_results(sys);
@@ -1579,7 +1579,7 @@ equation_system_estimate (equation_system *sys, DATASET *dset,
 	pputc(prn, '\n');
 	err = 1;
     } else if (stest != SYS_TEST_NONE) {
-	err = estimate_with_test(sys, dset, stest, 
+	err = estimate_with_test(sys, dset, stest,
 				 system_est, opt, prn);
     } else {
 	err = (*system_est) (sys, dset, opt, prn);
@@ -1589,7 +1589,7 @@ equation_system_estimate (equation_system *sys, DATASET *dset,
 
     if (!err && !(sys->flags & SYSTEM_LIML1)) {
 	set_as_last_model(sys, GRETL_OBJ_SYS);
-    } 
+    }
 
     return err;
 }
@@ -1632,7 +1632,7 @@ static int sys_make_biglist (equation_system *sys)
 
     for (i=0; i<sys->nidents; i++) {
 	bign += 1 + sys->idents[i]->n_atoms;
-    }   
+    }
 
     if (sys->ilist != NULL) {
 	bign += sys->ilist[0];
@@ -1648,7 +1648,7 @@ static int sys_make_biglist (equation_system *sys)
 	biglist[i] = -1;
     }
 
-    k = 0;    
+    k = 0;
 
     /* system equations */
     for (i=0; i<sys->neqns; i++) {
@@ -1674,7 +1674,7 @@ static int sys_make_biglist (equation_system *sys)
 		biglist[++k] = vj;
 	    }
 	}
-    }    
+    }
 
     if (sys->ilist != NULL) {
 	/* system instruments */
@@ -1702,13 +1702,13 @@ static int sys_get_lag_src (const char *vname, const DATASET *dset)
 {
     int fd, src = series_index(dset, vname);
 
-    if (src == dset->v && vname != NULL && 
+    if (src == dset->v && vname != NULL &&
 	(fd = gretl_function_depth()) > 0) {
 	int i;
 
-	for (i=1; i<dset->v; i++) { 
+	for (i=1; i<dset->v; i++) {
 	    if (fd == series_get_stack_level(dset, i) &&
-		series_is_listarg(dset, i) && 
+		series_is_listarg(dset, i) &&
 		!strcmp(dset->varname[i], vname)) {
 		src = i;
 		break;
@@ -1737,13 +1737,13 @@ static int is_tsls_style_instrument (equation_system *sys, int v)
     return 0;
 }
 
-/* Here we deal with the case where the user has specified the 
+/* Here we deal with the case where the user has specified the
    system equations "tsls-style": besides the left-hand side
-   variables, we also need to identify as endogenous any 
+   variables, we also need to identify as endogenous any
    regressors that do not appear as instruments.
 */
 
-static int tsls_style_augment_ylist (equation_system *sys, 
+static int tsls_style_augment_ylist (equation_system *sys,
 				     int **pylist)
 {
     const int *list;
@@ -1780,7 +1780,7 @@ static int tsls_style_augment_ylist (equation_system *sys,
 }
 
 /* It's possible to specify instruments per equation, as in tsls,
-   with a two-part regression list. But this cannot be mixed with 
+   with a two-part regression list. But this cannot be mixed with
    any other means of specifying endogeneity/exogeneity of
    variables.
 */
@@ -1804,7 +1804,7 @@ static int check_for_tsls_style_lists (equation_system *sys,
 	} else if (sys->nidents > 0) {
 	    gretl_errmsg_set("You can't mix identities with tsls-style lists");
 	    *err = E_DATA;
-	}	    
+	}
     }
 
     return tsls_style;
@@ -1833,7 +1833,7 @@ static void tsls_style_shift_vars (equation_system *sys, int *xplist)
 
 /* for consistency with the way in which per-equation results
    are organized, we should ensure that if a constant is present
-   among the exogenous terms in a system it appears as the 
+   among the exogenous terms in a system it appears as the
    first element of the system's "xlist".
 */
 
@@ -1860,7 +1860,7 @@ static void sys_xlist_reshuffle_const (int *list)
    in order
 */
 
-static int sys_check_lists (equation_system *sys, 
+static int sys_check_lists (equation_system *sys,
 			    const DATASET *dset)
 {
     const int *slist;
@@ -1920,24 +1920,24 @@ static int sys_check_lists (equation_system *sys,
 	err = tsls_style_augment_ylist(sys, &ylist);
 	if (err) {
 	    goto bailout;
-	}	
+	}
     } else {
 	for (i=0; i<sys->nidents; i++) {
 	    ident = sys->idents[i];
 	    vj = ident->depvar;
 	    if (!in_gretl_list(ylist, vj)) {
 		ylist[++k] = vj;
-	    } 
+	    }
 	}
 	ylist[0] = k;
-    }   
+    }
 
 #if SYSDEBUG
     printlist(ylist, "system auto ylist");
 #endif
 
-    /* If the user gave a list of endogenous vars (in sys->ylist), check 
-       that it contains all the presumably endogenous variables we found 
+    /* If the user gave a list of endogenous vars (in sys->ylist), check
+       that it contains all the presumably endogenous variables we found
        above and recorded in ylist; otherwise use the ylist as computed
        above.
     */
@@ -1946,7 +1946,7 @@ static int sys_check_lists (equation_system *sys,
 	    vj = ylist[j];
 	    if (!in_gretl_list(sys->ylist, vj)) {
 		gretl_errmsg_sprintf("%s appears on the left-hand side "
-				     "of an equation but is not marked as endogenous", 
+				     "of an equation but is not marked as endogenous",
 				     dset->varname[vj]);
 		err = E_DATA;
 		goto bailout;
@@ -1964,7 +1964,7 @@ static int sys_check_lists (equation_system *sys,
     err = sys_make_biglist(sys);
     if (err) {
 	goto bailout;
-    }    
+    }
 
     /* If the user gave an endogenous list, check that it doesn't
        contain any variables that are not actually present in the
@@ -1975,7 +1975,7 @@ static int sys_check_lists (equation_system *sys,
 	    vj = sys->ylist[j];
 	    if (!in_gretl_list(sys->biglist, vj)) {
 		gretl_errmsg_sprintf("%s is marked as endogenous but is "
-				     "not present in the system", 
+				     "not present in the system",
 				     dset->varname[vj]);
 		err = E_DATA;
 		goto bailout;
@@ -2006,8 +2006,8 @@ static int sys_check_lists (equation_system *sys,
     printlist(xplist, "system auto xplist (exog + predet)");
 #endif
 
-    /* If the user gave a list of instruments (sys->ilist), check 
-       that it does not contain anything that is in fact clearly 
+    /* If the user gave a list of instruments (sys->ilist), check
+       that it does not contain anything that is in fact clearly
        endogenous; otherwise use the xplist we computed above.
     */
     if (user_ilist) {
@@ -2015,7 +2015,7 @@ static int sys_check_lists (equation_system *sys,
 	    vj = sys->ilist[j];
 	    if (in_gretl_list(sys->ylist, vj)) {
 		gretl_errmsg_sprintf("%s is marked as an instrument "
-				     "but is endogenous", 
+				     "but is endogenous",
 				     dset->varname[vj]);
 		err = E_DATA;
 		goto bailout;
@@ -2043,7 +2043,7 @@ static int sys_check_lists (equation_system *sys,
 				 sys->ylist[0], nlhs);
 	    err = E_DATA;
 	}
-    }    
+    }
 
     /* Now narrow down "xplist", removing variables that are in fact
        lags of endogenous variables (and recording them as such): this
@@ -2101,12 +2101,12 @@ static int sys_has_user_name (equation_system *sys)
  * @opt: may include OPT_V for verbose operation, OPT_S
  * to permit estimation of a single equation.
  * @prn: printing struct.
- * 
+ *
  * Finalize an equation system, e.g. in response to "end system".
- * If the system has a specified name, we save it on a stack of 
- * defined systems.  If it has a specified estimation method, 
+ * If the system has a specified name, we save it on a stack of
+ * defined systems.  If it has a specified estimation method,
  * we go ahead and estimate it.  If it has both, we do both.
- * 
+ *
  * Returns: 0 on success, non-zero on error.  If the system is
  * mal-formed, it is destroyed.
  */
@@ -2142,7 +2142,7 @@ int equation_system_finalize (equation_system *sys, DATASET *dset,
 	gretl_errmsg_set(_(badsystem));
 	equation_system_destroy(sys);
 	return 1;
-    } 
+    }
 
     err = sys_check_lists(sys, dset);
 
@@ -2168,7 +2168,7 @@ int equation_system_finalize (equation_system *sys, DATASET *dset,
 
    estimate <sysname> method=<method>
 
-   where <sysname> is the name of a previously defined 
+   where <sysname> is the name of a previously defined
    equation system and <method> is a reognized estimation
    method.
 
@@ -2181,9 +2181,9 @@ int equation_system_finalize (equation_system *sys, DATASET *dset,
    last model.
 
    The method=<method> field is optional, provided that the
-   (named or last-model) system already has a specified 
+   (named or last-model) system already has a specified
    estimation method; so the minimal form of the command
-   line is simply "estimate". 
+   line is simply "estimate".
 */
 
 int estimate_named_system (const char *sysname, const char *param,
@@ -2370,7 +2370,7 @@ int system_normality_test (const equation_system *sys,
     if (sys->E == NULL || sys->S == NULL) {
 	err = 1;
     } else {
-	err = multivariate_normality_test(sys->E, 
+	err = multivariate_normality_test(sys->E,
 					  sys->S,
 					  opt,
 					  prn);
@@ -2412,7 +2412,7 @@ static const char *system_get_full_string (const equation_system *sys,
 {
     static char sysstr[128];
     const char *lstr = gretl_system_long_strings[sys->method];
-    
+
     if (sys->flags & SYSTEM_ITERATE) {
 	if (tex) {
 	    sprintf(sysstr, A_("iterated %s"), A_(lstr));
@@ -2498,13 +2498,13 @@ void system_attach_uhat (equation_system *sys, gretl_matrix *E)
 MODEL *system_get_model (const equation_system *sys, int i)
 {
     if (sys->models == NULL || i >= sys->neqns) {
-	return NULL; 
-    }   
+	return NULL;
+    }
 
     return sys->models[i];
 }
 
-/* for case of applying df correction to cross-equation 
+/* for case of applying df correction to cross-equation
    residual covariance matrix */
 
 int system_vcv_geomean (const equation_system *sys)
@@ -2553,7 +2553,7 @@ static int sys_eqn_indep_coeffs (const equation_system *sys, int eq)
     return nc;
 }
 
-double 
+double
 system_vcv_denom (const equation_system *sys, int i, int j)
 {
     double den = sys->T;
@@ -2650,8 +2650,8 @@ parse_identity (const char *str, DATASET *dset, int *err)
 #endif
 
     /* First pass: count the elements and check everything for validity.
-       nv is the number of variables appearing on the right-hand side 
-       of the identity (nv >= 1).  
+       nv is the number of variables appearing on the right-hand side
+       of the identity (nv >= 1).
     */
 
     i = 0;
@@ -2732,11 +2732,11 @@ parse_identity (const char *str, DATASET *dset, int *err)
 		*err = E_ALLOC;
 		return NULL;
 	    }
-	}    
+	}
     }
 
     if (*err) {
-	return NULL; 
+	return NULL;
     }
 
     ident->atoms[0].op = OP_PLUS;
@@ -2774,7 +2774,7 @@ parse_identity (const char *str, DATASET *dset, int *err)
 
 /* add information regarding a predetermined regressor */
 
-static int 
+static int
 add_predet_to_sys (equation_system *sys, const DATASET *dset,
 		   int id, int src, int lag)
 {
@@ -2806,12 +2806,12 @@ add_predet_to_sys (equation_system *sys, const DATASET *dset,
     test = gretl_list_append_term(&sys->plist, id);
     if (test == NULL) {
 	return E_ALLOC;
-    } 
+    }
 
     return 0;
 }
 
-static int 
+static int
 add_identity_to_sys (equation_system *sys, const char *line,
 		     DATASET *dset)
 {
@@ -2848,12 +2848,12 @@ add_aux_list_to_sys (equation_system *sys, const char *line,
 	if (sys->ylist != NULL) {
 	    gretl_errmsg_set("Only one list of endogenous variables may be given");
 	    return 1;
-	} 
+	}
     } else if (which == INSTR_LIST) {
 	if (sys->ilist != NULL) {
 	    gretl_errmsg_set("Only one list of instruments may be given");
 	    return 1;
-	} 
+	}
     } else {
 	return E_DATA;
     }
@@ -2878,18 +2878,18 @@ add_aux_list_to_sys (equation_system *sys, const char *line,
  * @sys: initialized equation system.
  * @line: command line.
  * @dset: dataset struct.
- * 
+ *
  * Modifies @sys according to the command supplied in @line,
  * which must start with "identity" (and supply an identity
  * to be added to the system, or "endog" (and supply a list
  * of endogenous variables), or "instr" (and supply a list of
  * instrumental variables).
- * 
+ *
  * Returns: 0 on success, non-zero on failure, in which case
  * @sys is destroyed.
  */
 
-int 
+int
 system_parse_line (equation_system *sys, const char *line,
 		   DATASET *dset)
 {
@@ -2920,7 +2920,7 @@ system_parse_line (equation_system *sys, const char *line,
     return err;
 }
 
-void 
+void
 system_set_restriction_matrices (equation_system *sys,
 				 gretl_matrix *R, gretl_matrix *q)
 {
@@ -2933,7 +2933,7 @@ system_set_restriction_matrices (equation_system *sys,
 }
 
 double *
-equation_system_get_series (const equation_system *sys, 
+equation_system_get_series (const equation_system *sys,
 			    const DATASET *dset,
 			    int idx, const char *key, int *err)
 {
@@ -2942,7 +2942,7 @@ equation_system_get_series (const equation_system *sys,
     const char *msel;
     int t, col = 0;
 
-    if (sys == NULL || (idx != M_UHAT && idx != M_YHAT)) { 
+    if (sys == NULL || (idx != M_UHAT && idx != M_YHAT)) {
 	*err = E_BADSTAT;
 	return NULL;
     }
@@ -3021,7 +3021,7 @@ static gretl_matrix *get_stderr_vec (const gretl_matrix *V)
     int k = V->rows;
 
     se = gretl_column_vector_alloc(k);
-    
+
     if (se != NULL) {
 	double x;
 	int i;
@@ -3039,7 +3039,7 @@ static gretl_matrix *get_stderr_vec (const gretl_matrix *V)
    system */
 
 gretl_matrix *
-equation_system_get_matrix (const equation_system *sys, int idx, 
+equation_system_get_matrix (const equation_system *sys, int idx,
 			    int *err)
 {
     gretl_matrix *M = NULL;
@@ -3049,7 +3049,7 @@ equation_system_get_matrix (const equation_system *sys, int idx,
 	return NULL;
     }
 
-    switch (idx) {  
+    switch (idx) {
     case M_COEFF:
 	if (sys->b == NULL) {
 	    *err = E_BADSTAT;
@@ -3109,7 +3109,7 @@ equation_system_get_matrix (const equation_system *sys, int idx,
     return M;
 }
 
-int highest_numbered_var_in_system (const equation_system *sys, 
+int highest_numbered_var_in_system (const equation_system *sys,
 				    const DATASET *dset)
 {
     int i, j, v, vmax = 0;
@@ -3205,7 +3205,7 @@ equation_system_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
     if (got < 2) {
 	*err = E_DATA;
 	return NULL;
-    }     
+    }
 
     sys = equation_system_new(method, sname, err);
     if (*err) {
@@ -3220,7 +3220,7 @@ equation_system_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
     if (got < 3) {
 	*err = E_DATA;
 	goto bailout;
-    } 
+    }
 
     gretl_xml_get_prop_as_int(node, "order", &sys->order);
 
@@ -3243,20 +3243,20 @@ equation_system_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
     i = j = 0;
     while (cur != NULL && !*err) {
 	if (!xmlStrcmp(cur->name, (XUC) "eqnlist")) {
-	    sys->lists[i++] = gretl_xml_get_list(cur, doc, err); 
+	    sys->lists[i++] = gretl_xml_get_list(cur, doc, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "endog_vars")) {
 	    sys->ylist = gretl_xml_get_list(cur, doc, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "instr_vars")) {
 	    sys->ilist = gretl_xml_get_list(cur, doc, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "identity")) {
-	    sys->idents[j++] = sys_retrieve_identity(cur, err); 
+	    sys->idents[j++] = sys_retrieve_identity(cur, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "R")) {
 	    sys->R = gretl_xml_get_matrix(cur, doc, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "q")) {
 	    sys->q = gretl_xml_get_matrix(cur, doc, err);
 	}
 	cur = cur->next;
-    } 
+    }
 
     if (!*err && (i != sys->neqns || j != sys->nidents)) {
 	*err = E_DATA;
@@ -3285,14 +3285,14 @@ static void xml_print_identity (identity *ident, FILE *fp)
     fputs("</identity>\n", fp);
 }
 
-int equation_system_serialize (equation_system *sys, 
+int equation_system_serialize (equation_system *sys,
 			       SavedObjectFlags flags,
 			       FILE *fp)
 {
     int tsls_style = 0;
     int i, err = 0;
 
-    fprintf(fp, "<gretl-equation-system name=\"%s\" saveflags=\"%d\" method=\"%d\" ",  
+    fprintf(fp, "<gretl-equation-system name=\"%s\" saveflags=\"%d\" method=\"%d\" ",
 	    (sys->name != NULL)? sys->name : "none", flags, sys->method);
 
     fprintf(fp, "n_equations=\"%d\" nidents=\"%d\" flags=\"%d\" order=\"%d\">\n",
@@ -3316,12 +3316,70 @@ int equation_system_serialize (equation_system *sys,
 
     for (i=0; i<sys->nidents; i++) {
 	xml_print_identity(sys->idents[i], fp);
-    }    
+    }
 
     gretl_matrix_serialize(sys->R, "R", fp);
     gretl_matrix_serialize(sys->q, "q", fp);
 
     fputs("</gretl-equation-system>\n", fp);
+
+    return err;
+}
+
+int equation_system_bundlize (equation_system *sys,
+			      gretl_bundle *b)
+{
+    const char *s;
+    char lname[16];
+    int tsls_style = 0;
+    int i, err = 0;
+
+    gretl_bundle_set_int(b, "neqns", sys->neqns);
+    s = system_method_short_string(sys->method);
+    if (s != NULL) {
+	gretl_bundle_set_string(b, "method", s);
+    }
+
+    gretl_bundle_set_int(b, "t1", sys->t1);
+    gretl_bundle_set_int(b, "t2", sys->t2);
+
+    gretl_bundle_set_matrix(b, "coeff", sys->b);
+    gretl_bundle_set_matrix(b, "vcv",   sys->vcv);
+    gretl_bundle_set_matrix(b, "sigma", sys->S);
+    gretl_bundle_set_matrix(b, "uhat",  sys->E);
+    gretl_bundle_set_matrix(b, "yhat",  sys->yhat);
+
+    /* Gamma, B, A? */
+
+    for (i=0; i<sys->neqns; i++) {
+	sprintf(lname, "list%d", i+1);
+	gretl_bundle_set_list(b, lname, sys->lists[i]);
+    }
+
+    for (i=0; i<sys->neqns; i++) {
+	if (gretl_list_has_separator(sys->lists[i])) {
+	    tsls_style = 1;
+	    break;
+	}
+    }
+
+    if (!tsls_style) {
+	gretl_bundle_set_list(b, "endog_vars", sys->ylist);
+	gretl_bundle_set_list(b, "instr_vars", sys->ilist);
+    }
+
+#if 0
+    for (i=0; i<sys->nidents; i++) {
+	xml_print_identity(sys->idents[i], fp);
+    }
+#endif
+
+    if (sys->R != NULL) {
+	gretl_bundle_set_matrix(b, "R", sys->R);
+    }
+    if (sys->q != NULL) {
+	gretl_bundle_set_matrix(b, "q", sys->q);
+    }
 
     return err;
 }
@@ -3357,7 +3415,7 @@ print_system_overid_test (const equation_system *sys, PRN *prn)
     if (sys->method == SYS_METHOD_FIML && df > 0) {
 	double X2;
 
-	if (na(sys->ll) || na(sys->llu) || 
+	if (na(sys->ll) || na(sys->llu) ||
 	    sys->ll == 0.0 || sys->llu == 0.0) {
 	    return;
 	}
@@ -3386,7 +3444,7 @@ print_system_overid_test (const equation_system *sys, PRN *prn)
 	    pprintf(prn, "  %s = %g\n", _("Unrestricted log-likelihood"), sys->llu);
 	    pprintf(prn, "  %s(%d) = %g [%.4f]\n\n", _("Chi-square"), df, X2, pv);
 	}
-    } else if ((sys->method == SYS_METHOD_3SLS || 
+    } else if ((sys->method == SYS_METHOD_3SLS ||
 		sys->method == SYS_METHOD_SUR) && df > 0) {
 	if (na(sys->X2) || sys->X2 <= 0.0) {
 	    if (!tex) {
@@ -3401,7 +3459,7 @@ print_system_overid_test (const equation_system *sys, PRN *prn)
 	pv = chisq_cdf_comp(df, sys->X2);
 
 	if (tex) {
-	    pprintf(prn, "\\noindent %s:\\\\\n", 
+	    pprintf(prn, "\\noindent %s:\\\\\n",
 		    A_("Hansen--Sargan over-identification test"));
 	    pprintf(prn, "  $\\chi^2(%d)$ = %g [%.4f]\\\\\n", df, sys->X2, pv);
 	} else {
@@ -3434,7 +3492,7 @@ int system_diag_test (const equation_system *sys, double *test,
 	    }
 	    if (pval != NULL) {
 		*pval = chisq_cdf_comp(df, lr);
-	    }	    
+	    }
 	} else {
 	    err = E_BADSTAT;
 	}
@@ -3445,7 +3503,7 @@ int system_diag_test (const equation_system *sys, double *test,
 	}
 	if (pval != NULL) {
 	    *pval = chisq_cdf_comp(df, sys->diag);
-	}		
+	}
     } else {
 	err = E_BADSTAT;
     }
@@ -3484,17 +3542,17 @@ int system_print_sigma (const equation_system *sys, PRN *prn)
 	}
     } else {
 	double x, lm = sys->diag;
-	
+
 	if (lm > 0) {
 	    x = chisq_cdf_comp(df, lm);
 	    if (tex) {
-		pprintf(prn, "%s:", 
+		pprintf(prn, "%s:",
 			_("Breusch--Pagan test for diagonal covariance matrix"));
 		gretl_prn_newline(prn);
 		pprintf(prn, "  $\\chi^2(%d)$ = %g [%.4f]", df, lm, x);
 		gretl_prn_newline(prn);
 	    } else {
-		pprintf(prn, "%s:\n", 
+		pprintf(prn, "%s:\n",
 			_("Breusch-Pagan test for diagonal covariance matrix"));
 		pprintf(prn, "  %s(%d) = %g [%.4f]\n", _("Chi-square"),
 			df, lm, x);
@@ -3535,7 +3593,7 @@ static int categorize_variable (int vnum, const equation_system *sys,
 		ret = PREDET;
 	    }
 	}
-    }  
+    }
 
     if (pos > 0) {
 	*col = pos - 1;
@@ -3563,7 +3621,7 @@ static int get_col_and_lag (int vnum, const equation_system *sys,
 
 /* reduced-form error covariance matrix */
 
-static int 
+static int
 sys_add_RF_covariance_matrix (equation_system *sys, int n)
 {
     gretl_matrix *G = NULL, *S = NULL;
@@ -3574,7 +3632,7 @@ sys_add_RF_covariance_matrix (equation_system *sys, int n)
 	if (G == NULL) {
 	    return E_ALLOC;
 	}
-    } 
+    }
 
     if (n > sys->S->rows) {
 	S = gretl_zero_matrix_new(n, n);
@@ -3770,14 +3828,14 @@ static gretl_matrix *sys_companion_matrix (equation_system *sys,
 	}
     }
 
-#if SYSDEBUG   
+#if SYSDEBUG
     gretl_matrix_print(C, "system companion matrix");
 #endif
 
     return C;
 }
 
-static gretl_matrix *sys_get_fcast_se (equation_system *sys, 
+static gretl_matrix *sys_get_fcast_se (equation_system *sys,
 				       int periods, int *err)
 {
     int n = sys->neqns + sys->nidents;
@@ -3814,7 +3872,7 @@ static gretl_matrix *sys_get_fcast_se (equation_system *sys,
     }
 
     k = sys->A->cols;
-    
+
     Vt = gretl_matrix_alloc(k, k);
     V0 = gretl_zero_matrix_new(k, k);
     Tmp = gretl_matrix_alloc(k, k);
@@ -3852,7 +3910,7 @@ static gretl_matrix *sys_get_fcast_se (equation_system *sys,
     if (C != sys->A) {
 	gretl_matrix_free(C);
     }
-    
+
     if (*err) {
 	gretl_matrix_free(se);
 	se = NULL;
@@ -4007,7 +4065,7 @@ gretl_matrix *sys_get_fitted_values (equation_system *sys,
 		    miss = 1;
 		} else {
 		    yl->val[col] = xit;
-		} 
+		}
 	    }
 	    if (!miss) {
 		gretl_matrix_multiply(sys->A, yl, y);
@@ -4093,7 +4151,7 @@ static int sys_add_forecast (equation_system *sys,
     if (sys->Gamma == NULL || sys->Gamma->rows != n) {
 	fprintf(stderr, "sys_add_forecast: Gamma is broken!\n");
 	return E_DATA;
-    } 
+    }
 
 #if SYSDEBUG
     fprintf(stderr, "*** sys_add_forecast\n");
@@ -4119,7 +4177,7 @@ static int sys_add_forecast (equation_system *sys,
     T = t2 - t1 + 1;
     ncols = 2 * n;
 
-    /* At which observation (tdyn) does the forecast turn 
+    /* At which observation (tdyn) does the forecast turn
        dynamic, if at all? */
 
     if ((opt & OPT_S) || sys->A == NULL) {
@@ -4129,7 +4187,7 @@ static int sys_add_forecast (equation_system *sys,
 	/* got the --dynamic option: from the start */
 	tdyn = t1;
     } else {
-	/* by default, for a model with dynamics: just after 
+	/* by default, for a model with dynamics: just after
 	   the estimation sample ends */
 	tdyn = sys->t2 + 1;
     }
@@ -4176,7 +4234,7 @@ static int sys_add_forecast (equation_system *sys,
 		    /* prior forecast value preferred */
 		    if (s - lag >= 0) {
 			xitd = xit = dset->Z[vi][t];
-		    } 
+		    }
 		    xit = gretl_matrix_get(sys->F, s - lag, col);
 		}
 		col += n * (lag - 1);
@@ -4186,7 +4244,7 @@ static int sys_add_forecast (equation_system *sys,
 		    yl->val[col] = xitd;
 		} else {
 		    miss = 1;
-		} 
+		}
 	    }
 	    if (!miss) {
 		gretl_matrix_multiply(sys->A, yl, y);
@@ -4266,13 +4324,13 @@ static int sys_add_forecast (equation_system *sys,
 
 const gretl_matrix *
 system_get_forecast_matrix (equation_system *sys, int t1, int t2,
-			    DATASET *dset, gretlopt opt, 
+			    DATASET *dset, gretlopt opt,
 			    int *err)
 {
     if (sys->F != NULL) {
 	gretl_matrix_replace(&sys->F, NULL);
     }
-	
+
     *err = sys_add_forecast(sys, t1, t2, dset, opt);
 
     return sys->F;
@@ -4450,11 +4508,11 @@ static int sys_print_reconstituted_models (const equation_system *sys,
     }
 
     clear_model(&mod);
-    
+
     return err;
 }
 
-int gretl_system_print (equation_system *sys, const DATASET *dset, 
+int gretl_system_print (equation_system *sys, const DATASET *dset,
 			gretlopt opt, PRN *prn)
 {
     const char *name = sys->name;
@@ -4462,7 +4520,7 @@ int gretl_system_print (equation_system *sys, const DATASET *dset,
     int nr = system_n_restrictions(sys);
     int i;
 
-    if (sys->models != NULL && 
+    if (sys->models != NULL &&
 	sys->method == SYS_METHOD_LIML &&
 	sys->ldata == NULL) {
 	sys_attach_ldata(sys);
@@ -4477,7 +4535,7 @@ int gretl_system_print (equation_system *sys, const DATASET *dset,
 	pputs(prn, "\\begin{center}\n");
 	if (name != NULL) {
 	    pprintf(prn, "%s, %s\\\\\n", A_("Equation system"), name);
-	    pprintf(prn, "%s: %s", A_("Estimator"), 
+	    pprintf(prn, "%s: %s", A_("Estimator"),
 		    system_get_full_string(sys, 1));
 	} else {
 	    pprintf(prn, "%s, %s", A_("Equation system"),
@@ -4487,7 +4545,7 @@ int gretl_system_print (equation_system *sys, const DATASET *dset,
 	pputc(prn, '\n');
 	if (name != NULL) {
 	    pprintf(prn, "%s, %s\n", _("Equation system"), name);
-	    pprintf(prn, "%s: %s\n", _("Estimator"), 
+	    pprintf(prn, "%s: %s\n", _("Estimator"),
 		    system_get_full_string(sys, 0));
 	} else {
 	    pprintf(prn, "%s, %s\n", _("Equation system"),
@@ -4502,7 +4560,7 @@ int gretl_system_print (equation_system *sys, const DATASET *dset,
 	} else {
 	    pprintf(prn, _("Convergence achieved after %d iterations\n"), sys->iters);
 	}
-	if (sys->method == SYS_METHOD_SUR || 
+	if (sys->method == SYS_METHOD_SUR ||
 	    sys->method == SYS_METHOD_FIML) {
 	    if (tex) {
 		gretl_prn_newline(prn);
@@ -4522,7 +4580,7 @@ int gretl_system_print (equation_system *sys, const DATASET *dset,
 	pputs(prn, "\n\\end{center}\n\n");
     } else {
 	pputc(prn, '\n');
-    }    
+    }
 
     if (sys->models != NULL) {
 	for (i=0; i<sys->neqns; i++) {
@@ -4537,8 +4595,8 @@ int gretl_system_print (equation_system *sys, const DATASET *dset,
 
     system_print_sigma(sys, prn);
 
-    if (nr == 0 && (sys->method == SYS_METHOD_FIML || 
-		    sys->method == SYS_METHOD_3SLS || 
+    if (nr == 0 && (sys->method == SYS_METHOD_FIML ||
+		    sys->method == SYS_METHOD_3SLS ||
 		    sys->method == SYS_METHOD_SUR)) {
 	print_system_overid_test(sys, prn);
     }
@@ -4557,7 +4615,7 @@ static void ensure_asy_printout (equation_system *sys)
     }
 }
 
-int 
+int
 system_save_and_print_results (equation_system *sys, DATASET *dset,
 			       gretlopt opt, PRN *prn)
 {
@@ -4581,7 +4639,7 @@ system_save_and_print_results (equation_system *sys, DATASET *dset,
 
     if (!err) {
 	err = sys_add_structural_form(sys, dset);
-    } 
+    }
 
     if (!(opt & OPT_Q)) {
 	if (sys->method == SYS_METHOD_FIML) {
@@ -4593,7 +4651,7 @@ system_save_and_print_results (equation_system *sys, DATASET *dset,
     return err;
 }
 
-int system_autocorrelation_test (equation_system *sys, int order, 
+int system_autocorrelation_test (equation_system *sys, int order,
 				 gretlopt opt, PRN *prn)
 {
     double *u, lb;
@@ -4606,7 +4664,7 @@ int system_autocorrelation_test (equation_system *sys, int order,
 	u = sys->E->val + (i * sys->T);
 	lb = ljung_box(order, 0, sys->T - 1, u, &err);
 	if (!err && !((opt & OPT_Q))) {
-	    pprintf(prn, "%s: %s(%d) = %g [%.4f]\n\n", 
+	    pprintf(prn, "%s: %s(%d) = %g [%.4f]\n\n",
 		    _("Ljung-Box Q'"), _("Chi-square"), order,
 		    lb, chisq_cdf_comp(order, lb));
 	}
@@ -4615,7 +4673,7 @@ int system_autocorrelation_test (equation_system *sys, int order,
     return err;
 }
 
-int system_arch_test (equation_system *sys, int order, 
+int system_arch_test (equation_system *sys, int order,
 		      gretlopt opt, PRN *prn)
 {
     const double *u;
@@ -4643,7 +4701,7 @@ int system_supports_method (equation_system *sys, int method)
 
 	for (i=0; i<sys->neqns; i++) {
 	    if (gretl_list_has_separator(sys->lists[i])) {
-		return method == SYS_METHOD_TSLS || 
+		return method == SYS_METHOD_TSLS ||
 		    method == SYS_METHOD_3SLS;
 	    }
 	}
@@ -4682,7 +4740,7 @@ static void finalize_liml_model (MODEL *pmod, equation_system *sys)
 
 /* implement the --liml option to "tsls" */
 
-MODEL single_equation_liml (const int *list, DATASET *dset, 
+MODEL single_equation_liml (const int *list, DATASET *dset,
 			    gretlopt opt)
 {
     int *mlist = NULL, *ilist = NULL;
