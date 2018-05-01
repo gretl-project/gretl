@@ -964,10 +964,10 @@
 	  contain the generalized residuals.
 	</para>
 	<para>
-	  If the <quote>model</quote> in question is actually a system (a
-	  VAR or VECM, or system of simultaneous equations),
-	  <lit>$uhat</lit> with no parameters retrieves the matrix of
-	  residuals, one column per equation.
+	  If the <quote>model</quote> in question is actually a system
+	  (a VAR or VECM, or system of simultaneous equations),
+	  <lit>$uhat</lit> retrieves the matrix of residuals, one
+	  column per equation.
 	</para>
       </description>
     </function>
