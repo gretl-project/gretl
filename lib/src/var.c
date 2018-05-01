@@ -4450,6 +4450,11 @@ int gretl_VAR_bundlize (const GRETL_VAR *var,
     gretl_bundle_set_int(b, "neqns", var->neqns);
     gretl_bundle_set_int(b, "order", var->order);
     gretl_bundle_set_int(b, "robust", var->robust);
+    gretl_bundle_set_int(b, "t1", var->t1);
+    gretl_bundle_set_int(b, "t2", var->t2);
+
+    gretl_bundle_set_scalar(b, "lnl", var->ll);
+    gretl_bundle_set_scalar(b, "ldet", var->ldet);
 
     if (var->LBs > 0 && !na(var->LB)) {
 	/* Portmanteau test */

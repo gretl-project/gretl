@@ -3349,7 +3349,17 @@ int equation_system_bundlize (equation_system *sys,
     gretl_bundle_set_matrix(b, "uhat",  sys->E);
     gretl_bundle_set_matrix(b, "yhat",  sys->yhat);
 
-    /* Gamma, B, A? */
+    if (sys->Gamma != NULL) {
+	gretl_bundle_set_matrix(b, "Gamma", sys->Gamma);
+    }
+    if (sys->A != NULL) {
+	gretl_bundle_set_matrix(b, "A", sys->A);
+    }
+    if (sys->B != NULL) {
+	gretl_bundle_set_matrix(b, "B", sys->B);
+    }
+
+    /* per-equation model structs? */
 
     for (i=0; i<sys->neqns; i++) {
 	sprintf(lname, "list%d", i+1);
@@ -3368,12 +3378,17 @@ int equation_system_bundlize (equation_system *sys,
 	gretl_bundle_set_list(b, "instr_vars", sys->ilist);
     }
 
-#if 0
+    if (sys->plist != NULL) {
+	gretl_bundle_set_list(b, "predet_vars", sys->plist);
+    }
+
+#if 0 /* FIXME */
     for (i=0; i<sys->nidents; i++) {
 	xml_print_identity(sys->idents[i], fp);
     }
 #endif
 
+    /* restrictions? */
     if (sys->R != NULL) {
 	gretl_bundle_set_matrix(b, "R", sys->R);
     }
