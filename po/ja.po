@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: gretl revision 1.405\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2018-02-05 11:55-0500\n"
-"PO-Revision-Date: 2016-04-19 19:41+0900\n"
+"PO-Revision-Date: 2018-05-01 13:36+0900\n"
 "Last-Translator: Shintaro Nakagawa <s-nakagawa@shimonoseki-cu.ac.jp>\n"
-"Language-Team: Shintaro Nakagawa <s-nakagawa@shimonoseki-cu.ac.jp>\n"
+"Language-Team: Shintaro Nakagawa\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.5.7\n"
+"X-Generator: Poedit 2.0.7\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 
 #: lib/src/adf_kpss.c:493
@@ -102,9 +102,8 @@ msgid "with constant and trend"
 msgstr "定数項及びトレンド項付きの検定"
 
 #: lib/src/adf_kpss.c:596
-#, fuzzy
 msgid "with constant, linear and quadratic trend"
-msgstr "定数項と二次トレンド項付きの検定"
+msgstr "定数項と線形および二次トレンド項付きの検定"
 
 #: lib/src/adf_kpss.c:623 lib/src/adf_kpss.c:628 lib/src/adf_kpss.c:2216
 #: lib/src/adf_kpss.c:2218 lib/src/bootstrap.c:694 lib/src/compare.c:374
@@ -257,7 +256,7 @@ msgid ""
 " (including trend)\n"
 "\n"
 msgstr ""
-"(トレンドを含む)\n"
+" (トレンドを含む)\n"
 "\n"
 
 #: lib/src/adf_kpss.c:2147
@@ -605,11 +604,11 @@ msgstr "特定化についてのRESET検定"
 
 #: lib/src/compare.c:1949
 msgid "Godfrey (1994) test for"
-msgstr "Godfrey (1994) 検定、対象:"
+msgstr "Godfrey (1994) 検定、対象は"
 
 #: lib/src/compare.c:1951
 msgid "Breusch-Godfrey test for"
-msgstr "ブロイシュ＝ゴッドフリー(Breusch-Godfrey)検定, 対象:"
+msgstr "ブロイシュ＝ゴッドフリー(Breusch-Godfrey)検定, 対象 "
 
 #: lib/src/compare.c:1955
 msgid "autocorrelation up to order"
@@ -870,7 +869,7 @@ msgstr "'%s' および '%s': 日付が得られません\n"
 #: lib/src/csvdata.c:1147
 #, c-format
 msgid "   %s: probably a year... "
-msgstr "   %sを年号と解釈すると、"
+msgstr "   %sを年号と解釈すると "
 
 #: lib/src/csvdata.c:1149
 #, c-format
@@ -879,7 +878,7 @@ msgstr "   %s: 恐らく、年号ではありません\n"
 
 #: lib/src/csvdata.c:1153
 msgid "   but I can't make sense of the extra bit\n"
-msgstr "その後についている数字が解釈できません\n"
+msgstr "   余分なビットの意味が分かりません\n"
 
 #: lib/src/csvdata.c:1155
 msgid "and just a year\n"
@@ -891,9 +890,9 @@ msgid "quarter %s?\n"
 msgstr "第%s四半期?\n"
 
 #: lib/src/csvdata.c:1185
-#, fuzzy, c-format
+#, c-format
 msgid "quarter %d?\n"
-msgstr "第%s四半期?\n"
+msgstr "第%d四半期?\n"
 
 #: lib/src/csvdata.c:1192
 #, c-format
@@ -912,7 +911,7 @@ msgstr "   日付の並びが逆になっていませんか?\n"
 #: lib/src/csvdata.c:1479
 #, c-format
 msgid "   first row label \"%s\", last label \"%s\"\n"
-msgstr "最初の行ラベルは\"%s\"、最後の行ラベルは\"%s\"でした\n"
+msgstr "   最初の行ラベルは\"%s\"、最後の行ラベルは\"%s\"でした\n"
 
 #: lib/src/csvdata.c:1503
 msgid "trying to parse row labels as dates...\n"
@@ -1041,7 +1040,7 @@ msgstr "第%d行, 第%d列において:\n"
 #: lib/src/csvdata.c:3111 lib/src/dataio.c:3177 lib/src/dataio.c:3220
 #, c-format
 msgid "'%s' -- no numeric conversion performed!"
-msgstr "'%s' -- 数値に変換できません"
+msgstr "'%s' -- 数値に変換できません!"
 
 #: lib/src/csvdata.c:3293
 #, c-format
@@ -1163,9 +1162,8 @@ msgid "Series length does not match the dataset"
 msgstr "系列の長さがデータセットに適合しません"
 
 #: lib/src/csvdata.c:6315 lib/src/csvdata.c:6607 lib/src/csvdata.c:6697
-#, fuzzy
 msgid "Invalid join specification"
-msgstr "有効でないコラム指定"
+msgstr "有効でないjoin指定"
 
 #: lib/src/csvdata.c:6881
 #, c-format
@@ -1188,7 +1186,7 @@ msgid ""
 "(first must be alphabetical)"
 msgstr ""
 "変数名の最初の文字 '%s' がアルファベットではありません\n"
-"(最初の文字は必ずアルファベットにして下さい) "
+"(最初の文字は必ずアルファベットにして下さい)"
 
 #: lib/src/dataio.c:143
 #, c-format
@@ -1261,7 +1259,7 @@ msgstr ""
 
 #: lib/src/dataio.c:1569
 msgid "append: don't know how to align the new series!"
-msgstr "追加: 新しい系列をどのように並べるか分かりません"
+msgstr "append: 新しい系列をどのように並べるか分かりません!"
 
 #: lib/src/dataio.c:1722 lib/src/dataio.c:2095 lib/src/dataio.c:2107
 #: lib/src/dataio.c:2776 lib/src/dataio.c:2785 cli/gretlcli.c:229
@@ -1552,7 +1550,7 @@ msgstr "%s: 変換を処理できません"
 
 #: lib/src/dbread.c:3214
 msgid "Sorry, can't handle this conversion yet!"
-msgstr "すみません。この変換は今のところ扱えません"
+msgstr "すみません。この変換は今のところ扱えません!"
 
 #: lib/src/dbread.c:3222
 #, c-format
@@ -1605,9 +1603,9 @@ msgid "Matrix %s does not represent a contingency table"
 msgstr ""
 
 #: lib/src/describe.c:2600
-#, fuzzy, c-format
+#, c-format
 msgid "dropping %s: not a discrete variable\n"
-msgstr "%s: 文字列変数ではありません"
+msgstr "離散変数でないため、%sを落とします\n"
 
 #: lib/src/describe.c:2898 lib/src/describe.c:3083 lib/src/describe.c:3631
 #: lib/src/geneval.c:7514 lib/src/transforms.c:843 lib/src/transforms.c:1390
@@ -1635,9 +1633,8 @@ msgid "Autocorrelation function for %s"
 msgstr "%sの自己相関係数"
 
 #: lib/src/describe.c:3157
-#, fuzzy
 msgid "***, **, * indicate significance at the 1%, 5%, 10% levels\n"
-msgstr "** 有意水準5%で有意"
+msgstr "***,**,* は、有意水準1%,5%,10%を示す\n"
 
 #: lib/src/describe.c:3160
 msgid "using Bartlett standard errors for ACF"
@@ -1651,8 +1648,6 @@ msgstr "標準誤差 1/T^%.1f を使用"
 #: lib/src/describe.c:3180
 msgid "  LAG      ACF          PACF         Q-stat. [p-value]"
 msgstr ""
-"  ラグ　自己相関係数　　偏自己相関係数　　Q統計量 [p値]\n"
-"　　　　(ACF)　　　　　(PACF)        "
 
 #: lib/src/describe.c:3317
 msgid "Argument is a constant"
@@ -1779,7 +1774,7 @@ msgstr "変動係数"
 #: lib/src/describe.c:4499 lib/src/describe.c:4715 gui/guiprint.c:692
 #: gui/guiprint.c:1075
 msgid "Skewness"
-msgstr "歪度 "
+msgstr "歪度"
 
 #: lib/src/describe.c:4500 lib/src/describe.c:4716 gui/guiprint.c:692
 msgid "Ex. kurtosis"
@@ -1847,7 +1842,6 @@ msgid "Min"
 msgstr "メイン"
 
 #: lib/src/describe.c:4683 gui/guiprint.c:612 gui/guiprint.c:985
-#, fuzzy
 msgid "Max"
 msgstr "最大値"
 
@@ -1919,11 +1913,11 @@ msgstr "相関行列"
 
 #: lib/src/describe.c:5940 lib/src/describe.c:6033
 msgid "Sample range has no valid observations."
-msgstr "標本範囲は、有効な観測を含んでいません"
+msgstr "標本範囲は、有効な観測を含んでいません."
 
 #: lib/src/describe.c:5946 lib/src/describe.c:6039
 msgid "Sample range has only one observation."
-msgstr "標本範囲は、１つの観測しか含んでいません"
+msgstr "標本範囲は、１つの観測しか含んでいません."
 
 #: lib/src/describe.c:5976
 #, c-format
@@ -2054,7 +2048,7 @@ msgstr "Lilliefors 検定"
 #: lib/src/describe.c:7077
 #, c-format
 msgid "Test for normality of %s:"
-msgstr "正規性の検定: %s"
+msgstr "%sの正規性の検定:"
 
 #: lib/src/discrete.c:1205 lib/src/geneval.c:9940 lib/src/gretl_list.c:1771
 #: lib/src/interact.c:2006
@@ -2101,7 +2095,7 @@ msgstr "フィッシャーの正確確率検定(Fisher's Exact Test)"
 #: lib/src/discrete.c:3609 gui/selector.c:1407
 #, c-format
 msgid "The variable '%s' is not a 0/1 variable."
-msgstr "変数 '%s'は、0/1変数ではありません"
+msgstr "変数 '%s'は、0/1変数ではありません."
 
 #: lib/src/discrete.c:3652
 msgid "Durations must be positive"
@@ -2232,7 +2226,7 @@ msgid ""
 "Please select a smaller sample."
 msgstr ""
 "X-12-ARIMAは、%d個を越える観測を扱えません\n"
-"サンプルのサイズを小さくして下さい"
+"より小さいサンプルを選択して下さい"
 
 #: lib/src/flow_control.c:108
 msgid "error evaluating 'if'"
@@ -2302,9 +2296,8 @@ msgid "Variable number %d is out of bounds"
 msgstr "変数値 %d は、境界外です"
 
 #: lib/src/geneval.c:7554 lib/src/transforms.c:846 lib/src/transforms.c:1165
-#, fuzzy
 msgid "The constant cannot be lagged"
-msgstr "定数項及びトレンド項付きの検定"
+msgstr "定数のラグを取ることは出来ません"
 
 #: lib/src/geneval.c:7968
 msgid "Matrix specification is not coherent"
@@ -2320,9 +2313,8 @@ msgid "\"catch\" should not be used on calls to user-defined functions"
 msgstr ""
 
 #: lib/src/geneval.c:8747
-#, fuzzy
 msgid "Libsvm is not supported"
-msgstr "頻度%dは、サポートされていません"
+msgstr "Libsvmは、サポートされていません"
 
 #: lib/src/geneval.c:8916
 #, fuzzy, c-format
@@ -2341,14 +2333,13 @@ msgid "'%s' : not implemented for this type"
 msgstr "'%s': このタイプに対しては実装されていません"
 
 #: lib/src/geneval.c:9494
-#, fuzzy
 msgid "Invalid list element"
-msgstr "有効でない入力値"
+msgstr "有効でないリスト要素"
 
 #: lib/src/geneval.c:9650
-#, fuzzy, c-format
+#, c-format
 msgid "The operator '%s' is not valid in this context"
-msgstr "シンボル'%s'は、この文脈では有効ではありません\n"
+msgstr "オペレータ’%s’は、この文脈では有効ではありません"
 
 #: lib/src/geneval.c:12531
 msgid "array: no type was specified"
@@ -2397,7 +2388,7 @@ msgstr "%s: 入力値は%sであるべきです"
 #: lib/src/geneval.c:13673
 #, c-format
 msgid "%s: argument %d should be %s"
-msgstr "%s: 入力値 %d は、%sであるべきです。"
+msgstr "%s: 入力値 %d は、%sであるべきです"
 
 #: lib/src/geneval.c:13679
 #, c-format
@@ -2445,9 +2436,8 @@ msgid "'%s' : only defined for matrices"
 msgstr "'%s': 行列に対してだけ定義されます"
 
 #: lib/src/geneval.c:16938
-#, fuzzy
 msgid "Invalid left-hand side expression"
-msgstr "必要な項目が入力されていません"
+msgstr "数式の左辺の表現が有効ではありません"
 
 #: lib/src/geneval.c:17523
 msgid "Bare declarations are not allowed here"
@@ -2603,9 +2593,8 @@ msgid "(for logical OR, use '||')\n"
 msgstr "(論理ORには, '||'を使用)\n"
 
 #: lib/src/genlex.c:977
-#, fuzzy
 msgid "Incomplete expression\n"
-msgstr "必要な項目が入力されていません"
+msgstr "数式表現が不完備です\n"
 
 #: lib/src/genlex.c:982
 #, c-format
@@ -2671,9 +2660,9 @@ msgid "Generated matrix %s"
 msgstr "行列 %s を作成しました"
 
 #: lib/src/genmain.c:116
-#, fuzzy, c-format
+#, c-format
 msgid "Modified list %s"
-msgstr "リスト'%s'を追加しました\n"
+msgstr "リスト'%s'を修正しました"
 
 #: lib/src/genmain.c:118
 #, c-format
@@ -2721,7 +2710,7 @@ msgstr "'%c' を期待しましたが、数式が終わってしまいました\
 #: lib/src/gensyntax.c:245
 #, c-format
 msgid "Expected '%c' but found '%s'\n"
-msgstr " '%c' を期待しましたが、'%s' が見つかりました\n"
+msgstr "'%c' を期待しましたが、'%s' が見つかりました\n"
 
 #: lib/src/gensyntax.c:411
 msgid "Wrong type of operand for unary '&'"
@@ -3342,12 +3331,10 @@ msgid "generated non-finite values"
 msgstr ""
 
 #: lib/src/gretl_errors.c:226 lib/src/gretl_errors.c:229
-#, fuzzy
 msgid "In regard to function"
-msgstr "選択(select)関数"
+msgstr "関数に関して"
 
 #: lib/src/gretl_errors.c:227
-#, fuzzy
 msgid "package"
 msgstr "パッケージ"
 
@@ -3454,9 +3441,8 @@ msgid "%s: duplicated parameter name '%s'"
 msgstr "%s: 重複パラメータ名 '%s'"
 
 #: lib/src/gretl_func.c:6212
-#, fuzzy
 msgid "Identifier exceeds the maximum of 31 characters"
-msgstr "変数名が31文字の上限を超えています"
+msgstr "識別子が31文字の上限を超えています"
 
 #: lib/src/gretl_func.c:6624
 #, c-format
@@ -3868,11 +3854,9 @@ msgid ""
 msgstr ""
 
 #: lib/src/gretl_panel.c:1707
-#, fuzzy, c-format
+#, c-format
 msgid "Residual variance: %g/(%d - %d) = %g\n"
-msgstr ""
-"\n"
-"残差分散: %g/(%d - %d) = %g\n"
+msgstr " 残差分散: %g/(%d - %d) = %g\n"
 
 #: lib/src/gretl_panel.c:1712
 msgid "Joint significance of differing group means:\n"
@@ -3903,19 +3887,17 @@ msgid "Inadequate data for panel estimation"
 msgstr "パネル推定には適さないデータです"
 
 #: lib/src/gretl_panel.c:2912
-#, fuzzy
 msgid "Hausman test matrix is not positive definite!\n"
-msgstr "ハウスマン(Hausman)検定行列は、正値定符号ではありません"
+msgstr "ハウスマン(Hausman)検定行列は、正値定符号ではありません!\n"
 
 #: lib/src/gretl_panel.c:2914
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Hausman test statistic:\n"
 " H = %g with p-value = prob(chi-square(%d) > %g) = %g\n"
 msgstr ""
-"\n"
-"ブロイシュ＝ペーガン(Breusch-Pagan)検定統計量:\n"
-" LM = %g 但し p-値 = prob(chi-square(1) > %g) = %g\n"
+"ハウスマン検定統計量:\n"
+" H = %g 但し p-値 = prob(chi-square(%d) > %g) = %g\n"
 
 #: lib/src/gretl_panel.c:2917
 msgid ""
@@ -3930,9 +3912,8 @@ msgid "Error estimating random effects model\n"
 msgstr "変量効果モデルの推定中にエラーが発生しました\n"
 
 #: lib/src/gretl_panel.c:3319
-#, fuzzy
 msgid "Means of pooled OLS residuals for cross-sectional units:"
-msgstr "クロスセクションユニット数: %d"
+msgstr "クロスセクションユニットに対するプールドOLS残差の平均:"
 
 #: lib/src/gretl_panel.c:3336
 #, c-format
@@ -3940,12 +3921,11 @@ msgid " unit %2d: %13.5g\n"
 msgstr " ユニット %2d: %13.5g\n"
 
 #: lib/src/gretl_panel.c:3348
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Breusch-Pagan test statistic:\n"
 " LM = %g with p-value = prob(chi-square(1) > %g) = %g\n"
 msgstr ""
-"\n"
 "ブロイシュ＝ペーガン(Breusch-Pagan)検定統計量:\n"
 " LM = %g 但し p-値 = prob(chi-square(1) > %g) = %g\n"
 
@@ -3970,18 +3950,17 @@ msgid "%s: invalid option argument"
 msgstr "%s: 有効でないオプション設定"
 
 #: lib/src/gretl_panel.c:3630
-#, fuzzy, c-format
+#, c-format
 msgid "Diagnostics: using n = %d cross-sectional units\n"
-msgstr "クロスセクションユニット数: %d"
+msgstr "診断: n=%d クロスセクションユニットを仕様する\n"
 
 #: lib/src/gretl_panel.c:3656 lib/src/gretl_panel.c:4019
 msgid "Couldn't estimate group means regression\n"
 msgstr "グループ平均回帰(group means regression)を推定できませんでした\n"
 
 #: lib/src/gretl_panel.c:3989
-#, fuzzy
 msgid "Couldn't estimate group means regression"
-msgstr "グループ平均回帰(group means regression)を推定できませんでした\n"
+msgstr "グループ平均回帰(group means regression)を推定できません"
 
 #: lib/src/gretl_panel.c:4382
 msgid "Can't produce ML estimates: some units have only one observation"
@@ -4096,9 +4075,8 @@ msgid "Matrix inversion failed: restrictions may be inconsistent or redundant"
 msgstr ""
 
 #: lib/src/gretl_restrict.c:626
-#, fuzzy
 msgid "Invalid restriction on beta"
-msgstr "有効でない制約"
+msgstr "ベータへの有効でない制約"
 
 #: lib/src/gretl_restrict.c:635
 #, fuzzy, c-format
@@ -4242,7 +4220,7 @@ msgstr ""
 #: lib/src/gretl_string_table.c:911 lib/src/gretl_win32.c:630
 #: lib/src/interact.c:438
 msgid "The shell command is not activated."
-msgstr "このシェル・コマンドはアクティ米とされません"
+msgstr "このシェル・コマンドはアクティブ化されません"
 
 #: lib/src/gretl_string_table.c:1120 lib/src/interact.c:1230
 #, c-format
@@ -4283,7 +4261,7 @@ msgid ""
 "of the number of %s (%d)."
 msgstr ""
 "パネルのデータセットは、バランスしていなければなりません\n"
-"観測数(%d)が、%sの数(%d)の倍数ではありません"
+"観測数(%d)が、%sの数(%d)の倍数ではありません."
 
 #: lib/src/gretl_utils.c:1158 lib/src/gretl_utils.c:1247
 msgid "units"
@@ -4429,23 +4407,21 @@ msgid "'%s': malformed gdt file"
 msgstr ""
 
 #: lib/src/gretl_xml.c:3904
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't read '%s'"
-msgstr "'%s'を開けません"
+msgstr "'%s'を読み込めません"
 
 #: lib/src/gretl_zip.c:487 lib/src/gretl_zip.c:495
 msgid "not found"
 msgstr "見つかりませんでした"
 
 #: lib/src/interact.c:746
-#, fuzzy
 msgid "is a 0/1 variable"
-msgstr "X軸の変数"
+msgstr "0/1変数です"
 
 #: lib/src/interact.c:747
-#, fuzzy
 msgid "not integer-valued"
-msgstr "未インストール"
+msgstr "整数値ではない"
 
 #: lib/src/interact.c:801 lib/src/printout.c:1809
 msgid "No series are defined\n"
@@ -4465,9 +4441,9 @@ msgid "Closed output file '%s'\n"
 msgstr "アウトプットファイル'%s'を閉じました\n"
 
 #: lib/src/interact.c:967
-#, fuzzy, c-format
+#, c-format
 msgid "Output is already diverted to '%s'"
-msgstr "現在、アウトプットはファイルに出力されません\n"
+msgstr "既にアウトプットは%sに振り向けられています"
 
 #: lib/src/interact.c:974
 msgid "Now discarding output\n"
@@ -4587,7 +4563,7 @@ msgstr "%s: 有効でない値 '%s'"
 
 #: lib/src/libset.c:1416
 msgid "Variables that can be set using \"set\""
-msgstr "変数は\"set\"を用いて設定できます"
+msgstr "変数は\"set\"を用いて設定できる変数"
 
 #: lib/src/libset.c:1418
 msgid "\"help set\" for details"
@@ -4615,9 +4591,9 @@ msgid "Time series"
 msgstr "時系列"
 
 #: lib/src/libset.c:1771
-#, fuzzy, c-format
+#, c-format
 msgid "Pseudo-random number generator seeded with %u\n"
-msgstr "乱数生成"
+msgstr "シードが%uである疑似乱数の生成\n"
 
 #: lib/src/libset.c:1797
 #, c-format
@@ -4740,7 +4716,7 @@ msgstr ""
 #: lib/src/modelprint.c:396
 #, c-format
 msgid "Test for AR(%d) errors:"
-msgstr " AR(%d)誤差についての検定:"
+msgstr "AR(%d)誤差についての検定:"
 
 #: lib/src/modelprint.c:433 lib/src/modelprint.c:440
 msgid "Wald (joint) test"
@@ -4773,14 +4749,12 @@ msgid "Number of instruments = %d"
 msgstr "操作変数の数 = %d"
 
 #: lib/src/modelprint.c:669
-#, fuzzy
 msgid "Warning: convergence is questionable"
-msgstr "警告: 欠損値がありました\n"
+msgstr "警告: 収束は疑わしいです"
 
 #: lib/src/modelprint.c:671
-#, fuzzy
 msgid "Convergence seems to be reasonably complete"
-msgstr "収束許容範囲:"
+msgstr "おそらく収束が完了したようです"
 
 #: lib/src/modelprint.c:676
 msgid "GNR: got incomplete results"
@@ -4851,11 +4825,11 @@ msgstr "チョウ(Chow)検定のための拡張された回帰"
 
 #: lib/src/modelprint.c:887
 msgid "Cointegrating regression -- "
-msgstr "共和分回帰 --"
+msgstr "共和分回帰 -- "
 
 #: lib/src/modelprint.c:889
 msgid "Cointegrating regression - "
-msgstr "共和分回帰 -"
+msgstr "共和分回帰 - "
 
 #: lib/src/modelprint.c:893
 msgid "Augmented Dickey--Fuller regression"
@@ -5021,7 +4995,7 @@ msgstr ""
 
 #: lib/src/modelprint.c:977 gui/selector.c:4187 plugin/tramo_options.c:724
 msgid "ARIMA"
-msgstr "自己回帰和分移動平均(ARIMA)"
+msgstr "自己回帰和分移動平均（ARIMA）"
 
 #: lib/src/modelprint.c:979
 msgid "ARMA"
@@ -5253,9 +5227,8 @@ msgid "Could not compute Beck-Katz standard errors"
 msgstr "Beck-Katz標準誤差を計算できませんでした"
 
 #: lib/src/modelprint.c:1435
-#, fuzzy
 msgid "Could not compute robust standard errors"
-msgstr "Beck-Katz標準誤差を計算できませんでした"
+msgstr "頑健標準誤差を計算できませんでした"
 
 #: lib/src/modelprint.c:1443
 msgid "Bartlett kernel"
@@ -5289,7 +5262,7 @@ msgstr "不均一分散頑健標準誤差"
 
 #: lib/src/modelprint.c:1477
 msgid "variant"
-msgstr "タイプ:"
+msgstr "バリアント"
 
 #: lib/src/modelprint.c:1495
 msgid "Standard errors based on Hessian"
@@ -5346,9 +5319,9 @@ msgid "Omitted due to exact collinearity:"
 msgstr "完全な共線性のため次の変数を取り除きました:"
 
 #: lib/src/modelprint.c:1683
-#, fuzzy, c-format
+#, c-format
 msgid " %d series"
-msgstr "系列を追加"
+msgstr " %d 系列を追加"
 
 #: lib/src/modelprint.c:1698
 msgid "Redundant instruments:"
@@ -5487,9 +5460,8 @@ msgid "%s, using %d observations"
 msgstr "%s, 観測数: %d"
 
 #: lib/src/modelprint.c:2072
-#, fuzzy
 msgid "Using weighted Nerlove transformation"
-msgstr "Nerloveの変換を使用"
+msgstr "加重Nerloveの変換を使用"
 
 #: lib/src/modelprint.c:2074
 msgid "Using Nerlove's transformation"
@@ -6006,7 +5978,7 @@ msgstr ""
 
 #: lib/src/monte_carlo.c:1413
 msgid "No valid loop condition was given."
-msgstr "有効なループ条件が与えられていません"
+msgstr "有効なループ条件が与えられていません."
 
 #: lib/src/monte_carlo.c:1502 lib/src/monte_carlo.c:1510
 #, c-format
@@ -6015,7 +5987,7 @@ msgstr "最大繰り返し回数, %d, に到達しました"
 
 #: lib/src/monte_carlo.c:1512
 msgid "You can use \"set loop_maxiter\" to increase the limit"
-msgstr "\"set loop_maxiter\" を用いれば、上限を上げることができます。 "
+msgstr "\"set loop_maxiter\" を用いれば、上限を上げることができます。"
 
 #: lib/src/monte_carlo.c:2174
 msgid "progressive loop: model must be of constant size"
@@ -6255,7 +6227,7 @@ msgstr "スピアマン(Spearman)の順位相関係数( rho) = %.8f\n"
 #: lib/src/nonparam.c:375 lib/src/nonparam.c:660
 #, c-format
 msgid "z-score = %g, with two-tailed p-value %.4f\n"
-msgstr "Zスコア= %g, 但し両側p値 %.4f\n"
+msgstr "zスコア= %g, 但し両側p値 %.4f\n"
 
 #: lib/src/nonparam.c:387
 #, c-format
@@ -6312,7 +6284,7 @@ msgstr ""
 #: lib/src/nonparam.c:931
 #, c-format
 msgid "z-score = %g, with two-tailed p-value %g\n"
-msgstr "Zスコア = %g, 但し両側p値 %g\n"
+msgstr "zスコア = %g, 但し両側p値 %g\n"
 
 #: lib/src/nonparam.c:960
 msgid "Two-tailed p-value"
@@ -6789,11 +6761,11 @@ msgstr ""
 #: lib/src/printout.c:2963
 #, c-format
 msgid " (steplength = %g)"
-msgstr "(ステップの長さ = %g)"
+msgstr " (ステップの長さ = %g)"
 
 #: lib/src/printout.c:2969 plugin/fcp.c:249
 msgid "Parameters: "
-msgstr "パラメータ:"
+msgstr "パラメータ: "
 
 #: lib/src/printout.c:2977 plugin/fcp.c:262
 msgid "Gradients:  "
@@ -6892,7 +6864,7 @@ msgstr " Prob(x = %d) = %g\n"
 #: lib/src/pvalues.c:3414
 #, c-format
 msgid "Poisson (mean = %g): "
-msgstr "ポワソン (平均 = %g):"
+msgstr "ポワソン (平均 = %g): "
 
 #: lib/src/pvalues.c:3428
 #, fuzzy, c-format
@@ -7161,7 +7133,7 @@ msgstr "連立方程式"
 
 #: lib/src/system.c:297
 msgid "Endogenous variables:"
-msgstr "内生変数: "
+msgstr "内生変数:"
 
 #: lib/src/system.c:307
 msgid "Predetermined variables:"
@@ -7283,14 +7255,14 @@ msgid "Invalid option '--%s'"
 msgstr "有効でないオプション '--%s'"
 
 #: lib/src/tokenize.c:1766
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid lag order %g"
-msgstr "有効でないラグ次数: %d"
+msgstr "有効でないラグ次数: %g"
 
 #: lib/src/tokenize.c:3180
-#, fuzzy, c-format
+#, c-format
 msgid "Unexpected symbol %c"
-msgstr "予想していなかったシンボル '%c'"
+msgstr "予想していなかったシンボル %c"
 
 #: lib/src/transforms.c:175
 #, c-format
@@ -7343,9 +7315,9 @@ msgid "dummy for %s = %g"
 msgstr "%s = %g に対するダミー"
 
 #: lib/src/transforms.c:1927
-#, fuzzy, c-format
+#, c-format
 msgid "A minimum of %d observations is required"
-msgstr "何期ずつ平均しますか？:"
+msgstr "少なくとも %d 個の観察が必要です"
 
 #: lib/src/transforms.c:2046
 msgid "dummify: no suitable variables were found"
@@ -7592,9 +7564,8 @@ msgid "Test for autocorrelation of order"
 msgstr "%d次までの自己相関についての検定"
 
 #: lib/src/vartest.c:422
-#, fuzzy
 msgid "Test for ARCH of order up to"
-msgstr "ARCHの次数についての検定"
+msgstr "以下の次数までのARCHの検定"
 
 #: lib/src/vartest.c:681
 #, c-format
@@ -7611,7 +7582,7 @@ msgstr ""
 "値）\n"
 "につけられている\n"
 "ここで、AICは赤池の情報量規準、BICはシュワルツのベイジアン情報量規準、\n"
-"HQCはHannan-Quinn規準の略である"
+"HQCはHannan-Quinn規準の略である."
 
 #: lib/src/vartest.c:689
 msgid "lags        loglik    p(LR)       AIC          BIC          HQC"
@@ -7691,14 +7662,14 @@ msgstr "ヘルプファイル%sにアクセスできません\n"
 
 #: cli/gretlcli.c:703
 msgid "Type \"open filename\" to open a data set\n"
-msgstr " \"open filename\"とタイプするとデータセットを開きます\n"
+msgstr "\"open filename\"とタイプするとデータセットを開きます\n"
 
 #: cli/gretlcli.c:949
 #, c-format
 msgid "Opening a new data file closes the present one.  Proceed? (y/n) "
 msgstr ""
 "新しいデータファイルを開くと、現在のデータファイルを閉じることになります。よ"
-"ろしいですか？(y/n)"
+"ろしいですか？(y/n) "
 
 #: cli/gretlcli.c:953
 msgid "OK, staying with current data set\n"
@@ -7707,7 +7678,7 @@ msgstr "了解しました。現在のデータセットを使い続けます\n"
 #: cli/gretlcli.c:1030
 #, c-format
 msgid "type a filename to store output (enter to quit): "
-msgstr "出力をストアするファイル名をタイプして下さい(enterキーで終了);"
+msgstr "出力をストアするファイル名をタイプして下さい(enterキーで終了); "
 
 #: cli/gretlcli.c:1044
 #, c-format
@@ -8064,8 +8035,8 @@ msgid ""
 "The assumption of a normal sampling distribution\n"
 "is not justified here.  Abandoning the test."
 msgstr ""
-"標本分布が正規分布であるという仮定が満たされません\n"
-"検定は中止します"
+"正規標本分布の仮定が、ここでは満たされません\n"
+"検定を中止します."
 
 #: gui/calculator.c:1991 gui/filters.c:510
 msgid "uniform"
@@ -8183,9 +8154,8 @@ msgid "Runs test"
 msgstr "ラン検定"
 
 #: gui/calculator.c:2559
-#, fuzzy
 msgid "Correlation"
-msgstr "相関係数"
+msgstr "相関"
 
 #: gui/calculator.c:2592
 msgid "Sign test"
@@ -8397,7 +8367,7 @@ msgstr "両方の分布関数"
 
 #: gui/callbacks.c:236
 msgid "Sorry, this item not yet implemented!"
-msgstr "この項目は、まだ実装されていません！ごめんなさい"
+msgstr "この項目は、まだ実装されていません. ごめんなさい!"
 
 #: gui/callbacks.c:355 gui/dialogs.c:5352
 msgid "gretl: warning"
@@ -8479,7 +8449,7 @@ msgstr ""
 
 #: gui/callbacks.c:580
 msgid "Enter value to be read as \"missing\":"
-msgstr "欠損値として解釈する値を入力して下さい"
+msgstr "欠損値として解釈する値を入力して下さい:"
 
 #: gui/callbacks.c:584 gui/callbacks.c:675
 msgid "gretl: GMM"
@@ -8585,14 +8555,12 @@ msgid "cross-correlogram"
 msgstr "相互相関係数（クロス・コレログラム）"
 
 #: gui/callbacks.c:840 gui/callbacks.c:885
-#, fuzzy
 msgid "Collinearity check"
-msgstr "共線性(_C)"
+msgstr "共線性チェック"
 
 #: gui/callbacks.c:841
-#, fuzzy
 msgid "Include a constant?"
-msgstr "定数項を含む"
+msgstr "定数項を含みますか?"
 
 #: gui/callbacks.c:878
 msgid "For a matrix composed of the selected series:"
@@ -8821,14 +8789,14 @@ msgid "Function package %s"
 msgstr "関数パッケージ %s"
 
 #: gui/datafiles.c:850
-#, fuzzy, c-format
+#, c-format
 msgid "Unload package %s?"
-msgstr "パッケージをアップロード..."
+msgstr "パッケージ%sをアップロードしますか?"
 
 #: gui/datafiles.c:857
-#, fuzzy, c-format
+#, c-format
 msgid "Package %s is not loaded"
-msgstr "MPIライブラリが読み込まれていません"
+msgstr "パッケージ%sは、読み込まれていません"
 
 #: gui/datafiles.c:992 gui/datafiles.c:1033
 msgid "No function files were found"
@@ -8988,7 +8956,6 @@ msgid "gretl: packages on menus"
 msgstr "gretl: メニュー上のパッケージ"
 
 #: gui/datafiles.c:2543
-#, fuzzy
 msgid ""
 "No gretl function packages were found on this computer.\n"
 "Please try /File/Functions packages/On server"
@@ -9360,7 +9327,7 @@ msgstr "gretl: 形式の選択"
 
 #: gui/dialogs.c:824
 msgid "Copy as:"
-msgstr "形式を指定してコピー"
+msgstr "形式を指定してコピー:"
 
 #: gui/dialogs.c:824
 msgid "Save as"
@@ -9396,7 +9363,7 @@ msgstr "残差を再サンプル"
 
 #: gui/dialogs.c:1100
 msgid "Resample data \"pairs\""
-msgstr "データ  \"pairs\" を再サンプル"
+msgstr "データ \"pairs\" を再サンプル"
 
 #: gui/dialogs.c:1108
 msgid "Wild bootstrap"
@@ -9664,7 +9631,7 @@ msgstr "信頼限界をグラフに描く"
 
 #: gui/dialogs.c:3333
 msgid "Plot confidence interval using"
-msgstr "信頼区間のプロットの仕方:"
+msgstr "信頼区間のプロットに次を使用する"
 
 #: gui/dialogs.c:3399
 msgid "Add observations"
@@ -10013,9 +9980,8 @@ msgid "100-based indices"
 msgstr ""
 
 #: gui/dialogs.c:6435
-#, fuzzy
 msgid "Base period:"
-msgstr "標本ピリオドグラム"
+msgstr "基準となる期:"
 
 #: gui/dialogs.c:6537
 #, fuzzy
@@ -10049,9 +10015,8 @@ msgid "High-frequency regressor %s"
 msgstr "= %sの一階の階差"
 
 #: gui/dialogs.c:6578
-#, fuzzy
 msgid "Parameterization"
-msgstr "パラメータ:"
+msgstr "パラメータ化"
 
 #: gui/dialogs.c:6590
 #, fuzzy
@@ -10124,14 +10089,14 @@ msgid "Open %s in new window"
 msgstr "新しいウィンドウへ移動"
 
 #: gui/fileselect.c:340
-#, fuzzy, c-format
+#, c-format
 msgid "Replace %s"
-msgstr "置換しました"
+msgstr "%sを置換する"
 
 #: gui/fileselect.c:345
-#, fuzzy, c-format
+#, c-format
 msgid "Save changes to %s"
-msgstr "変更を保存しますか？"
+msgstr "変更を%sに保存する"
 
 #: gui/fileselect.c:348
 #, fuzzy
@@ -10388,9 +10353,8 @@ msgid "Upper frequency bound:"
 msgstr "周期の上限:"
 
 #: gui/filters.c:444
-#, fuzzy
 msgid "The initial EMA value is"
-msgstr "指数平滑移動平均の系列の第１項の計算方法:"
+msgstr "EMAの初期値は"
 
 #: gui/filters.c:453
 msgid "the mean of the first n observations"
@@ -10623,19 +10587,19 @@ msgstr "関数パッケージの情報を取得できませんでした"
 
 #: gui/fncall.c:2451
 msgid "This package needs time series data."
-msgstr "このパッケージには時系列データが必要です"
+msgstr "このパッケージには時系列データが必要です."
 
 #: gui/fncall.c:2452
 msgid "This package needs quarterly or monthly data."
-msgstr "このパッケージには四半期あるいは月次データが必要です"
+msgstr "このパッケージには四半期あるいは月次データが必要です."
 
 #: gui/fncall.c:2453
 msgid "This package needs panel data."
-msgstr "このパッケージにはパネル・データが必要です"
+msgstr "このパッケージにはパネル・データが必要です."
 
 #: gui/fncall.c:2454
 msgid "This package needs a dataset in place."
-msgstr "このパッケージは事前にデータセット読み込んでおく必要があります"
+msgstr "このパッケージは事前にデータセット読み込んでおく必要があります."
 
 #: gui/fncall.c:2455
 msgid "Would you like to open its sample script?"
@@ -10716,7 +10680,7 @@ msgstr "gfnファイルを保存"
 
 #: gui/fnsave.c:685
 msgid "A file of this name already exists."
-msgstr "この名前のファイルは、既に存在しています"
+msgstr "この名前のファイルは、既に存在しています."
 
 #: gui/fnsave.c:686 gui/gui_utils.c:5314
 msgid "OK to overwrite it?"
@@ -10885,7 +10849,7 @@ msgstr "任意のモデル"
 
 #: gui/fnsave.c:2691
 msgid "You may add or delete names of datafiles to be included in the package."
-msgstr "パッケージに含むデータファイル名を、追加あるいは削除できます"
+msgstr "パッケージに含むデータファイルの名前を、追加あるいは削除できます."
 
 #: gui/fnsave.c:2727
 msgid ""
@@ -10901,7 +10865,7 @@ msgstr "ラベル"
 
 #: gui/fnsave.c:2962
 msgid "To create a menu attachment, you must supply a label."
-msgstr "メニュー・アタッチメントを作るには、ラベルを設定しなければなりません"
+msgstr "メニュー・アタッチメントを作るには、ラベルを設定しなければなりません."
 
 #: gui/fnsave.c:3130
 #, c-format
@@ -11014,7 +10978,7 @@ msgid ""
 msgstr ""
 "パッケージのファイル名が不適切です: ファイル名は文字ではじまり\n"
 "32文字未満で、ASCII文字・数字・'_'のみを含み\n"
-" 最後は \".gfn\" で終わらなければなりません"
+" 最後は \".gfn\" で終わらなければなりません."
 
 #: gui/fnsave.c:4251 gui/selector.c:8003
 msgid ""
@@ -11069,7 +11033,7 @@ msgstr "ウィンドウ一覧"
 
 #: gui/gpt_control.c:367
 msgid " Click to set position"
-msgstr "クリックされた位置の座標を入力します"
+msgstr " クリックされた位置の座標を入力します"
 
 #: gui/gpt_control.c:996
 msgid "gnuplot command failed"
@@ -11342,7 +11306,7 @@ msgstr "デフォルトとして設定"
 #: gui/gpt_dialog.c:2013 gui/gpt_dialog.c:2400
 #, c-format
 msgid "line %d: "
-msgstr "線　%d:"
+msgstr "線　%d: "
 
 #: gui/gpt_dialog.c:2212
 msgid "No formula was given"
@@ -11366,7 +11330,7 @@ msgstr "異常値(外れ値)"
 #: gui/gpt_dialog.c:2416
 #, c-format
 msgid "label %d: "
-msgstr "ラベル %d:"
+msgstr "ラベル %d: "
 
 #: gui/gpt_dialog.c:2652
 msgid "Lines"
@@ -11381,7 +11345,6 @@ msgid "type"
 msgstr "タイプ"
 
 #: gui/gpt_dialog.c:2814
-#, fuzzy
 msgid "line"
 msgstr "線"
 
@@ -11622,12 +11585,11 @@ msgstr "変数説明ラベル"
 
 #: gui/gretl.c:1454 gui/menustate.c:883
 msgid " No datafile loaded "
-msgstr " データファイルがロードされていません"
+msgstr " データファイルがロードされていません "
 
 #: gui/gretl.c:1466
-#, fuzzy
 msgid "Working directory: click to configure"
-msgstr "作業ディレクトリ:"
+msgstr "作業ディレクトリ:クリックして設定"
 
 #: gui/gretl.c:1572 gui/gretl.c:1586
 msgid "_User file..."
@@ -11759,7 +11721,7 @@ msgstr "ローカル・マシン上(_l)..."
 
 #: gui/gretl.c:1613
 msgid "On _server..."
-msgstr "サーバー上"
+msgstr "サーバー上(_s)…"
 
 #: gui/gretl.c:1614
 msgid "Edit package..."
@@ -11790,14 +11752,12 @@ msgid "_General..."
 msgstr "一般(_G)..."
 
 #: gui/gretl.c:1626
-#, fuzzy
 msgid "Font _scale..."
-msgstr "XY散布図(_s)..."
+msgstr "フォント・サイズ(_s)..."
 
 #: gui/gretl.c:1628
-#, fuzzy
 msgid "Monospaced _font..."
-msgstr "メニューフォント(_M)..."
+msgstr "等幅フォント(_f)…"
 
 #: gui/gretl.c:1630 gui/gretl.c:1946
 msgid "_Menu font..."
@@ -12048,14 +12008,12 @@ msgid "_Seasonal differences of selected variables"
 msgstr "選択された変数の季節階差(_seasonal diffrence)"
 
 #: gui/gretl.c:1702
-#, fuzzy
 msgid "_Percentage change of selected variables"
 msgstr "選択された変数のパーセント変化(_P)"
 
 #: gui/gretl.c:1704
-#, fuzzy
 msgid "_100-based indices of selected variables"
-msgstr "選択された変数の１階の階差(_F)"
+msgstr "選択された変数の基準となる期を100とする指数(_100)"
 
 #: gui/gretl.c:1706
 msgid "_Index variable"
@@ -12067,7 +12025,7 @@ msgstr "タイム・トレンド(_T)"
 
 #: gui/gretl.c:1708
 msgid "_Panel unit index"
-msgstr "パネル・ユニット・インデックス(_P)..."
+msgstr "パネル・ユニット・インデックス(_P)"
 
 #: gui/gretl.c:1709
 msgid "_Random variable..."
@@ -12266,47 +12224,40 @@ msgid "_Model"
 msgstr "モデル(_M)"
 
 #: gui/gretl.c:1777
-#, fuzzy
 msgid "_Ordinary Least Squares"
-msgstr "通常の最小二乗法"
+msgstr "通常の最小二乗法(_O)"
 
 #: gui/gretl.c:1778
 msgid "_Instrumental variables"
 msgstr "操作変数法(_I)"
 
 #: gui/gretl.c:1779
-#, fuzzy
 msgid "_Two-Stage Least Squares"
-msgstr "2段階最小二乗法"
+msgstr "2段階最小二乗法(_T)"
 
 #: gui/gretl.c:1780
-#, fuzzy
 msgid "_LIML"
-msgstr "制限情報最尤法(_LIML)..."
+msgstr "制限情報最尤法(_LIML)"
 
 #: gui/gretl.c:1781 gui/gretl.c:1828
-#, fuzzy
 msgid "_GMM"
-msgstr "一般化モーメント法（_GMM）..."
+msgstr "一般化モーメント法（_GMM）"
 
 #: gui/gretl.c:1782
 msgid "Other _linear models"
 msgstr "その他の線形モデル(_l)"
 
 #: gui/gretl.c:1783
-#, fuzzy
 msgid "_Weighted Least Squares"
-msgstr "加重最小二乗法"
+msgstr "加重最小二乗法(_W)"
 
 #: gui/gretl.c:1784
-#, fuzzy
 msgid "H_eteroskedasticity corrected"
-msgstr "不均一分散を修正した推定"
+msgstr "不均一分散を修正した推定(_e)"
 
 #: gui/gretl.c:1785
-#, fuzzy
 msgid "High _precision OLS"
-msgstr "高精度OLS(_p)..."
+msgstr "高精度OLS(_p)"
 
 #: gui/gretl.c:1786 gui/library.c:3990 gui/library.c:6029 gui/selector.c:6956
 msgid "ANOVA"
@@ -12317,14 +12268,12 @@ msgid "_Time series"
 msgstr "時系列(_T)"
 
 #: gui/gretl.c:1788
-#, fuzzy
 msgid "ARI_MA"
-msgstr "ARI_MA..."
+msgstr "ARI_MA"
 
 #: gui/gretl.c:1789
-#, fuzzy
 msgid "_GARCH"
-msgstr "_GARCH..."
+msgstr "_GARCH"
 
 #: gui/gretl.c:1791
 msgid "_AR errors (GLS)"
@@ -12336,48 +12285,40 @@ msgid "_AR(1)"
 msgstr "１階の自己回帰過程(AR(1))"
 
 #: gui/gretl.c:1793
-#, fuzzy
 msgid "_AR (general)"
-msgstr "AR(季節)"
+msgstr "_AR(一般)"
 
 #: gui/gretl.c:1794
-#, fuzzy
 msgid "_Multivariate"
-msgstr "二変量(_v)..."
+msgstr "二変量(_M)"
 
 #: gui/gretl.c:1795
-#, fuzzy
 msgid "_Vector Autoregression"
-msgstr "ベクトル自己回帰モデル(_VAR)..."
+msgstr "ベクトル自己回帰モデル(_VAR)"
 
 #: gui/gretl.c:1796
-#, fuzzy
 msgid "VAR _lag selection"
-msgstr "VARラグ選択"
+msgstr "VARラグ選択(_l)"
 
 #: gui/gretl.c:1797
-#, fuzzy
 msgid "V_ECM"
-msgstr "ベクトル誤差修正モデル(V_ECM)..."
+msgstr "ベクトル誤差修正モデル(V_ECM)"
 
 #: gui/gretl.c:1798
-#, fuzzy
 msgid "Cointegration test (_Johansen)"
-msgstr "共和分検定(_C)"
+msgstr "共和分検定(_Johansen)"
 
 #: gui/gretl.c:1799
-#, fuzzy
 msgid "Cointegration test (_Engle-Granger)"
-msgstr "共和分検定(_C)"
+msgstr "共和分検定(_Engle-Granger)"
 
 #: gui/gretl.c:1800
 msgid "_Panel"
 msgstr "パネル(_P)"
 
 #: gui/gretl.c:1801
-#, fuzzy
 msgid "_Fixed or random effects"
-msgstr "固定効果あるいは変量効果(_F)..."
+msgstr "固定効果あるいは変量効果(_F)"
 
 #: gui/gretl.c:1802
 #, fuzzy
@@ -12385,14 +12326,12 @@ msgid "_Weighted least squares"
 msgstr "加重最小二乗法"
 
 #: gui/gretl.c:1803
-#, fuzzy
 msgid "_Between model"
-msgstr "Betweenモデル"
+msgstr "_Betweenモデル"
 
 #: gui/gretl.c:1804
-#, fuzzy
 msgid "_Dynamic panel model"
-msgstr "ダイナミック・パネル・モデル"
+msgstr "ダイナミック・パネル・モデル(_D)"
 
 #: gui/gretl.c:1805
 msgid "_Limited dependent variable"
@@ -12403,102 +12342,84 @@ msgid "_Logit"
 msgstr "ロジット(_L)"
 
 #: gui/gretl.c:1807 gui/gretl.c:1811
-#, fuzzy
 msgid "_Binary"
-msgstr "二項(_Binary)..."
+msgstr "二項(_Binary)"
 
 #: gui/gretl.c:1808 gui/gretl.c:1812
-#, fuzzy
 msgid "_Ordered"
-msgstr "順序付き(_O)..."
+msgstr "順序付き(_O)"
 
 #: gui/gretl.c:1809
-#, fuzzy
 msgid "_Multinomial"
-msgstr "多項(_M)..."
+msgstr "多項(_M)"
 
 #: gui/gretl.c:1810
 msgid "_Probit"
 msgstr "プロビット(_P)"
 
 #: gui/gretl.c:1813
-#, fuzzy
 msgid "Bi_variate"
-msgstr "二変量(_v)..."
+msgstr "二変量(_v)"
 
 #: gui/gretl.c:1814
-#, fuzzy
 msgid "_Random effects"
-msgstr "変量効果（ランダム効果）"
+msgstr "変量効果（ランダム効果）(_R)"
 
 #: gui/gretl.c:1815
-#, fuzzy
 msgid "To_bit"
-msgstr "トービット(_T)..."
+msgstr "トービット(_T)"
 
 #: gui/gretl.c:1816
-#, fuzzy
 msgid "_Heckit"
-msgstr "ヘックマンの選択モデル(Heckit)"
+msgstr "ヘックマンの選択モデル(_Heckit)"
 
 #: gui/gretl.c:1817
-#, fuzzy
 msgid "_Count data"
-msgstr "カウントデータ(_C)..."
+msgstr "カウントデータ(_C)"
 
 #: gui/gretl.c:1818
-#, fuzzy
 msgid "_Duration data"
-msgstr "デュレーション・データ(_D)..."
+msgstr "デュレーション・データ(_D)"
 
 #: gui/gretl.c:1819
-#, fuzzy
 msgid "Lo_gistic"
-msgstr "ロジスティック回帰"
+msgstr "ロジスティック回帰(_g)"
 
 #: gui/gretl.c:1820
-#, fuzzy
 msgid "_Interval regression"
-msgstr "区間回帰"
+msgstr "区間回帰(_I)"
 
 #: gui/gretl.c:1821
 msgid "_Robust estimation"
 msgstr "頑健推定(_R)"
 
 #: gui/gretl.c:1822
-#, fuzzy
 msgid "Least _Absolute Deviation"
-msgstr "最小絶対偏差推定(L_AD)..."
+msgstr "最小絶対偏差推定(L_AD)"
 
 #: gui/gretl.c:1823
-#, fuzzy
 msgid "_Quantile regression"
-msgstr "区分回帰(Quantile regression)"
+msgstr "区分回帰(_Quantile regression)"
 
 #: gui/gretl.c:1824
-#, fuzzy
 msgid "_Loess"
-msgstr "局所重み付け多項式回帰(Loess)"
+msgstr "局所重み付け多項式回帰(_Loess)"
 
 #: gui/gretl.c:1825
-#, fuzzy
 msgid "_Nadaraya-Watson"
-msgstr "_Nadaraya-Watson..."
+msgstr "_Nadaraya-Watson"
 
 #: gui/gretl.c:1826
-#, fuzzy
 msgid "_Nonlinear Least Squares"
-msgstr "非線型最小二乗法(_N)..."
+msgstr "非線型最小二乗法(_N)"
 
 #: gui/gretl.c:1827
-#, fuzzy
 msgid "_Maximum likelihood"
-msgstr "最尤法"
+msgstr "最尤法(_M)"
 
 #: gui/gretl.c:1829
-#, fuzzy
 msgid "_Simultaneous equations"
-msgstr "同時方程式(連立方程式)..."
+msgstr "同時方程式(連立方程式)(_S)"
 
 #: gui/gretl.c:1832
 msgid "_Help"
@@ -12513,9 +12434,8 @@ msgid "_Function reference"
 msgstr "関数リファレンス(_F)"
 
 #: gui/gretl.c:1835
-#, fuzzy
 msgid "_Packages"
-msgstr "パッケージ"
+msgstr "パッケージ(_P)"
 
 #: gui/gretl.c:1836
 msgid "_User's guide"
@@ -12610,7 +12530,7 @@ msgstr "フィルタ"
 
 #: gui/gtkfontselhack.c:263
 msgid "The filter for acceptable fonts."
-msgstr "利用可能なフォントのためのフィルタ"
+msgstr "利用可能フォントのフィルタ"
 
 #: gui/gtkfontselhack.c:354
 msgid "_Family:"
@@ -12989,9 +12909,8 @@ msgid "_Common factor"
 msgstr "共通因子(_C)"
 
 #: gui/gui_utils.c:275
-#, fuzzy
 msgid "_Cross-sectional dependence"
-msgstr "クロスセクションデータ"
+msgstr ""
 
 #: gui/gui_utils.c:276
 msgid "_Panel diagnostics"
@@ -13085,9 +13004,8 @@ msgid "gretl: import %s data"
 msgstr "gretl: %sデータのインポート"
 
 #: gui/gui_utils.c:1272
-#, fuzzy
 msgid "simple append"
-msgstr "標本平均"
+msgstr "単純な追加"
 
 #: gui/gui_utils.c:1273
 msgid "\"join\" (advanced)"
@@ -13346,7 +13264,7 @@ msgstr "X-12-ARIMAの出力を表示"
 
 #: gui/gui_utils.c:3735
 msgid "Cholesky ordering:"
-msgstr "コレスキー順序: "
+msgstr "コレスキー順序:"
 
 #: gui/gui_utils.c:3816
 msgid "include bootstrap confidence interval"
@@ -13495,15 +13413,12 @@ msgstr ""
 "このモデルが推定された標本を復元しますか?"
 
 #: gui/gui_utils.c:5222
-#, fuzzy
 msgid ""
 "The model sample differs from the dataset sample,\n"
 "so some menu options will be disabled."
 msgstr ""
 "モデルの標本は、データセットの標本と異なります\n"
-"そのため、幾つかのメニューオプションが無効化されます\n"
-"\n"
-"このモデルが推定された標本を復元しますか?"
+"そのため、幾つかのメニューオプションが無効化されます."
 
 #: gui/gui_utils.c:5292 gui/library.c:5157
 #, c-format
@@ -13586,9 +13501,8 @@ msgid "data frame"
 msgstr "データスケール"
 
 #: gui/gui_utils.c:5864
-#, fuzzy
 msgid "Send data as"
-msgstr "データに名前を付けて保存..."
+msgstr "名前を付けてデータを送る"
 
 #: gui/helpfiles.c:76
 msgid "Larger"
@@ -13732,9 +13646,8 @@ msgid "Failed to download file"
 msgstr "ファイルのダウンロードに失敗しました"
 
 #: gui/join-gui.c:465
-#, fuzzy
 msgid "show details of importation"
-msgstr "繰り返し計算の詳細を表示する"
+msgstr "インポートの詳細を表示する"
 
 #: gui/join-gui.c:781
 msgid "The 'seq' aggregator requires an integer parameter, as in seq:1"
@@ -13774,7 +13687,7 @@ msgstr "基本統計量"
 
 #: gui/library.c:709
 msgid "summary stats: "
-msgstr "基本統計量:"
+msgstr "基本統計量: "
 
 #: gui/library.c:716 gui/library.c:5225
 msgid "normality test"
@@ -14000,8 +13913,8 @@ msgid ""
 "range over which the model is estimated (Sample menu)."
 msgstr ""
 "標本の外部の予測に利用できる観測がありません。\n"
-"（Dataメニューから）観測を追加するか\n"
-"（Sampleメニューから）標本の範囲を制限するなどしてください"
+"もし予測したいならば（DataメニューのEdit dataにて）観測を追加するか\n"
+"あるいは（Sampleメニューから）標本の範囲を制限するなどしてください."
 
 #: gui/library.c:2301 gui/selector.c:8052
 msgid "No variables are selected"
@@ -14021,7 +13934,7 @@ msgstr "gretl: ベクトル自己回帰モデル(VAR)"
 
 #: gui/library.c:2584
 msgid "gretl: LM test "
-msgstr "gretl: LM検定"
+msgstr "gretl: LM検定 "
 
 #: gui/library.c:2587 gui/library.c:2591 gui/library.c:2595
 msgid "(heteroskedasticity)"
@@ -14142,7 +14055,7 @@ msgstr "注意: この文脈では、小数点を表す記号は、'.'でなけ�
 
 #: gui/library.c:4108
 msgid "Sorry, not implemented yet!"
-msgstr "まだ実装されていません！ごめんなさい"
+msgstr "まだ実装されていません.ごめんなさい!"
 
 #: gui/library.c:4124
 msgid "gretl: GARCH"
@@ -14591,9 +14504,8 @@ msgid "Edit attributes"
 msgstr "属性を編集"
 
 #: gui/menustate.c:542
-#, fuzzy
 msgid "Collinearity"
-msgstr "共線性(_C)"
+msgstr "共線性"
 
 #: gui/menustate.c:544 gui/selector.c:6942
 msgid "XY scatterplot"
@@ -14612,9 +14524,8 @@ msgid "Add percent change..."
 msgstr "パーセント変化を追加..."
 
 #: gui/menustate.c:551 gui/menustate.c:556
-#, fuzzy
 msgid "Add index values..."
-msgstr "値を編集..."
+msgstr "インデックス変数を追加する…"
 
 #: gui/menustate.c:552
 msgid "Dummify..."
@@ -14638,14 +14549,12 @@ msgid "Define new variable..."
 msgstr "新しい変数を定義..."
 
 #: gui/menustate.c:565
-#, fuzzy
 msgid "Add logs..."
-msgstr "対数を取る"
+msgstr "対数を取る…"
 
 #: gui/menustate.c:566
-#, fuzzy
 msgid "Add differences..."
-msgstr "階差を取る"
+msgstr "階差を取る…"
 
 #: gui/menustate.c:568
 #, fuzzy
@@ -14693,7 +14602,7 @@ msgstr "%s: 全範囲 %s - %s"
 
 #: gui/menustate.c:1074
 msgid " Unsaved data "
-msgstr "保存されていないデータ"
+msgstr " 保存されていないデータ "
 
 #: gui/model_table.c:82
 msgid "Model table is full"
@@ -14711,8 +14620,8 @@ msgstr "すみません。このモデルはモデル比較表に挿入できま
 msgid ""
 "Can't add model to table -- this model has a different dependent variable"
 msgstr ""
-"モデルをモデル比較表に追加できません。このモデルは、比較表の他のモデルとは異"
-"なる従属変数を持っています。"
+"モデルをモデル比較表に追加できません.このモデルは、比較表の他のモデルとは異な"
+"る従属変数を持っています"
 
 #: gui/model_table.c:239
 msgid "Model is already included in the table"
@@ -14954,9 +14863,8 @@ msgid "Heteroskedasticity corrected"
 msgstr "不均一分散を修正した推定"
 
 #: gui/selector.c:4143
-#, fuzzy
 msgid "AR(1) errors"
-msgstr " AR(%d)誤差についての検定:"
+msgstr "AR(1) 誤差"
 
 #: gui/selector.c:4155
 msgid "Random effects (binary) probit"
@@ -15020,23 +14928,20 @@ msgid "Interval regression"
 msgstr "区間回帰"
 
 #: gui/selector.c:4205
-#, fuzzy
 msgid "Cointegration (Engle-Granger)"
-msgstr "共和分ランク"
+msgstr "共和分(Engle-Granger)"
 
 #: gui/selector.c:4207
-#, fuzzy
 msgid "Cointegration (Johansen)"
-msgstr "共和分ランク"
+msgstr "共和分(Johansen)"
 
 #: gui/selector.c:4209
 msgid "Multiple precision OLS"
 msgstr "任意精度OLS"
 
 #: gui/selector.c:4215
-#, fuzzy
 msgid "MIDAS regression"
-msgstr "KPSS回帰"
+msgstr "MIDAS回帰"
 
 #: gui/selector.c:4225
 msgid "Weight variable"
@@ -15199,9 +15104,8 @@ msgid "Equation 2 regressors"
 msgstr "方程式2の説明変数"
 
 #: gui/selector.c:4975
-#, fuzzy
 msgid "High-frequency"
-msgstr "頻度"
+msgstr "高頻度"
 
 #: gui/selector.c:4977
 msgid "Helper functions"
@@ -15248,9 +15152,8 @@ msgid "Seasonal"
 msgstr "季節"
 
 #: gui/selector.c:5447
-#, fuzzy
 msgid "Orders"
-msgstr "次数:"
+msgstr "次数"
 
 #: gui/selector.c:5487
 msgid "I"
@@ -15342,7 +15245,7 @@ msgstr "残差を標準化する"
 
 #: gui/selector.c:6045
 msgid "Use Fiorentini et al algorithm"
-msgstr "Fiorentini et alのアルゴリズムを用いる "
+msgstr "Fiorentini et alのアルゴリズムを用いる"
 
 #: gui/selector.c:6051
 msgid "Prefer NLS via Levenberg-Marquardt"
@@ -15500,15 +15403,15 @@ msgstr ""
 
 #: gui/selector.c:6638
 msgid "gretl datafile (.gdt)"
-msgstr "Gretl データファイル"
+msgstr "gretデータファイル(.gdt)"
 
 #: gui/selector.c:6639
 msgid "gretl binary datafile (.gdtb)"
-msgstr "Gretlバイナリー・データファイル (*.gdtb)"
+msgstr "gretlバイナリー・データファイル (*.gdtb)"
 
 #: gui/selector.c:6640
 msgid "gretl database (.bin)"
-msgstr "Gretlデータベース (.bin)"
+msgstr "gretlデータベース (.bin)"
 
 #: gui/selector.c:6641
 msgid "space separated (R-friendly)"
@@ -15536,7 +15439,7 @@ msgstr "データの書式を選択"
 
 #: gui/selector.c:6931
 msgid "Name for package:"
-msgstr "パッケージ名: "
+msgstr "パッケージ名:"
 
 #: gui/selector.c:6944
 msgid "plot with impulses"
@@ -15999,9 +15902,8 @@ msgid "Prompt to save session"
 msgstr "セッションを保存するか確認"
 
 #: gui/settings.c:226
-#, fuzzy
 msgid "Display working directory"
-msgstr "gretl: 作業ディレクトリ"
+msgstr "作業ディレクトリを表示する"
 
 #: gui/settings.c:230
 msgid "Set working directory from shell"
@@ -16245,7 +16147,7 @@ msgstr "フォントを選択して下さい"
 
 #: gui/settings.c:2641 gui/settings.c:2751
 msgid "Font for gretl output windows"
-msgstr "gretlアウトプット・ウィンドウのフォント"
+msgstr "アウトプット・ウィンドウのフォント"
 
 #: gui/settings.c:2645 gui/settings.c:2755
 msgid "Font for menus and labels"
@@ -16253,7 +16155,7 @@ msgstr "メニューとラベルのフォント"
 
 #: gui/settings.c:2836
 msgid "Remember this setting"
-msgstr ""
+msgstr "この設定を記憶する"
 
 #: gui/settings.c:2846
 #, fuzzy
@@ -16262,7 +16164,7 @@ msgstr "gretl: 標本設定"
 
 #: gui/settings.c:2851
 msgid "Scale for monospaced and menu fonts"
-msgstr ""
+msgstr "等幅フォントおよびメニューフォントの大きさ"
 
 #: gui/settings.c:3017
 msgid "Working directory:"
@@ -16293,14 +16195,12 @@ msgid "always start in the working directory"
 msgstr "作業ディレクトリを開く"
 
 #: gui/settings.c:3090
-#, fuzzy
 msgid "Show working directory in main window"
-msgstr "シェルから作業ディレクトリを設定する"
+msgstr "作業ディレクトリをメインウィンドウに表示する"
 
 #: gui/settings.c:3100
-#, fuzzy
 msgid "Open working directory"
-msgstr "gretl: 作業ディレクトリ"
+msgstr "作業ディレクトリを開く"
 
 #: gui/settings.c:3169
 msgid "gretl: working directory"
@@ -16633,12 +16533,11 @@ msgstr "テキストを保存"
 
 #: gui/toolbar.c:290
 msgid "Number of digits to show for statistics"
-msgstr ""
+msgstr "統計量の表示桁数"
 
 #: gui/toolbar.c:295
-#, fuzzy
 msgid "Number of digits to show for coefficients"
-msgstr "係数の合計"
+msgstr "係数の表示桁数"
 
 #: gui/toolbar.c:323
 msgid "Nothing to send"
@@ -16774,19 +16673,16 @@ msgid "Help on command"
 msgstr "選択したコマンドのヘルプを表示"
 
 #: gui/toolbar.c:823
-#, fuzzy
 msgid "Digits..."
-msgstr "ラグ..."
+msgstr "桁数…"
 
 #: gui/toolbar.c:1030
-#, fuzzy
 msgid "_Save forecast..."
-msgstr "名前を付けて保存(_S)"
+msgstr "予測を保存(_S)…"
 
 #: gui/toolbar.c:1031
-#, fuzzy
 msgid "Save standard errors..."
-msgstr "標準誤差を表示(_s)"
+msgstr "標準誤差を保存…"
 
 #: gui/toolbar.c:1216
 msgid "New tab"
@@ -16915,9 +16811,8 @@ msgid "Numeric values represent an encoding"
 msgstr ""
 
 #: gui/varinfo.c:1001
-#, fuzzy
 msgid "gretl: save series"
-msgstr "gretl: 行列の保存"
+msgstr "gretl: 系列の保存"
 
 #: gui/winstack.c:298
 msgid "Main window"
@@ -16964,9 +16859,8 @@ msgid "EGARCH"
 msgstr ""
 
 #: plugin/addons-i18n.c:14
-#, fuzzy
 msgid "Forecast"
-msgstr "予測(_F)"
+msgstr "予測"
 
 #: plugin/addons-i18n.c:16
 msgid "GED"
@@ -17058,7 +16952,7 @@ msgstr ""
 
 #: plugin/addons-i18n.c:46
 msgid "Structural VARs"
-msgstr ""
+msgstr "構造VAR"
 
 #: plugin/addons-i18n.c:47
 msgid "AB-model"
@@ -17322,7 +17216,7 @@ msgstr ""
 
 #: plugin/fcp.c:246
 msgid " (using Hessian)"
-msgstr "(ヘッシアンを使用)"
+msgstr " (ヘッシアンを使用)"
 
 #: plugin/fiml.c:92
 msgid "No list of endogenous variables was given"
@@ -17709,7 +17603,7 @@ msgstr ""
 #: plugin/ods_import.c:423
 #, c-format
 msgid "Sheet row %d, column %d"
-msgstr "シート 行%d, 列%d "
+msgstr "シート 行%d, 列%d"
 
 #: plugin/ods_import.c:437
 #, c-format
@@ -17801,7 +17695,7 @@ msgstr "このモデルの信頼区間を計算できませんでした"
 
 #: plugin/range-mean.c:111
 msgid "range-mean plot for"
-msgstr "レンジ(range)・平均プロット:"
+msgstr "レンジ(range)・平均プロット"
 
 #: plugin/range-mean.c:114 plugin/range-mean.c:225
 msgid "range"
@@ -18104,7 +17998,7 @@ msgstr ""
 
 #: plugin/workbook.c:467
 msgid "Password protected workbooks are not supported yet."
-msgstr "パスワードで保護されたworkbookは、サポートされていません"
+msgstr "パスワードで保護されたworkbookは、サポートされていません."
 
 #: plugin/workbook.c:559
 msgid "This file is not an 'OLE' file -- it may be too old for gretl to read\n"
