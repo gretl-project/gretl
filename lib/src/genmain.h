@@ -126,6 +126,7 @@ typedef enum {
 
 typedef enum {
     B_MODEL = M_MAX + 1, /* last model as bundle */
+    B_SYSTEM,            /* last VAR/VECM/system as bundle */
     B_SYSINFO            /* system information */
 } BundleDataIndex;
 

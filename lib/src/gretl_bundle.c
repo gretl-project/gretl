@@ -2227,6 +2227,7 @@ gretl_bundle *bundle_from_model (MODEL *pmod,
 	if (p == NULL || type != GRETL_OBJ_EQN) {
 	    p = get_last_model(&type);
 	    if (p == NULL || type != GRETL_OBJ_EQN) {
+		gretl_errmsg_sprintf(_("%s: no data available"), "$model");
 		*err = E_DATA;
 		return NULL;
 	    }
@@ -2322,6 +2323,59 @@ gretl_bundle *bundle_from_model (MODEL *pmod,
     }
 
     free(x);
+
+    /* don't return a broken bundle */
+    if (*err && b != NULL) {
+	gretl_bundle_destroy(b);
+	b = NULL;
+    }
+
+    return b;
+}
+
+/* For an estimated system of some sort, create a bundle containing
+   relevant data.
+*/
+
+gretl_bundle *bundle_from_system (void *ptr,
+				  int type,
+				  DATASET *dset,
+				  int *err)
+{
+    GRETL_VAR *var = NULL;
+    GretlObjType otype = type;
+    equation_system *sys = NULL;
+    gretl_bundle *b = NULL;
+
+    if (ptr == NULL) {
+	ptr = get_genr_model(&otype);
+	if (ptr == NULL || otype == GRETL_OBJ_EQN) {
+	    ptr = get_last_model(&otype);
+	}
+    }
+
+    if (ptr == NULL) {
+	gretl_errmsg_sprintf(_("%s: no data available"), "$system");
+	*err = E_DATA;
+    } else if (otype == GRETL_OBJ_VAR) {
+	var = (GRETL_VAR *) ptr;
+    } else if (otype == GRETL_OBJ_SYS) {
+	sys = (equation_system *) ptr;
+	fprintf(stderr, "Got a system: FIXME\n");
+	*err = E_DATA;
+    }
+
+    if (!*err) {
+	b = gretl_bundle_new();
+	if (b == NULL) {
+	    *err = E_ALLOC;
+	    return NULL;
+	}
+    }
+
+    if (var != NULL) {
+	*err = gretl_VAR_bundlize(var, dset, b);
+    }
 
     /* don't return a broken bundle */
     if (*err && b != NULL) {

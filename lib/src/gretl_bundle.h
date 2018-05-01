@@ -193,6 +193,11 @@ gretl_bundle *bundle_from_model (MODEL *pmod,
 				 DATASET *dset,
 				 int *err);
 
+gretl_bundle *bundle_from_system (void *ptr,
+				  int type,
+				  DATASET *dset,
+				  int *err);
+
 gretl_bundle *kalman_bundle_new (gretl_matrix *M[],
 				 int copy[], int nmat,
 				 int *err);

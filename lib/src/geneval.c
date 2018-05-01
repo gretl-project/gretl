@@ -8586,6 +8586,10 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
 	    } else {
 		val = last_model_get_data(key, &type, &size, &copied, &p->err);
 	    }
+	} else if (l->v.idnum == B_SYSTEM) {
+	    /* FIXME */
+	    gretl_errmsg_set("$system sub-object: not ready yet");
+	    p->err = E_DATA;
 	} else if (l->v.idnum == B_SYSINFO) {
 	    val = sysinfo_bundle_get_data(key, &type, &p->err);
 	}
@@ -8899,6 +8903,8 @@ static gretl_bundle *bvar_get_bundle (NODE *n, parser *p)
 
     if (n->v.idnum == B_MODEL) {
 	b = bundle_from_model(NULL, p->dset, &p->err);
+    } else if (n->v.idnum == B_SYSTEM) {
+	b = bundle_from_system(NULL, 0, p->dset, &p->err);
     } else if (n->v.idnum == B_SYSINFO) {
 	gretl_bundle *tmp = get_sysinfo_bundle(&p->err);
 
@@ -13257,6 +13263,8 @@ static GretlType object_var_type (int idx, const char *oname,
     } else if (model_data_string(idx)) {
 	vtype = GRETL_TYPE_STRING;
     } else if (idx == B_MODEL) {
+	vtype = GRETL_TYPE_BUNDLE;
+    } else if (idx == B_SYSTEM) {
 	vtype = GRETL_TYPE_BUNDLE;
     }
 

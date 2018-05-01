@@ -161,6 +161,7 @@ struct str_table mvars[] = {
 
 struct str_table bvars[] = {
     { B_MODEL,   "$model" },
+    { B_SYSTEM,  "$system" },
     { B_SYSINFO, "$sysinfo" },
     { 0,         NULL }
 };

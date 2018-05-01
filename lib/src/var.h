@@ -249,6 +249,9 @@ void gretl_VAR_param_names (GRETL_VAR *v, char **params,
 int gretl_VAR_serialize (const GRETL_VAR *var, SavedObjectFlags flags,
 			 FILE *fp);
 
+int gretl_VAR_bundlize (const GRETL_VAR *var, DATASET *dset,
+			gretl_bundle *b);
+
 int transcribe_VAR_models (GRETL_VAR *var, 
 			   const DATASET *dset,
 			   const gretl_matrix *XTX);
