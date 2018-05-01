@@ -4453,8 +4453,8 @@ int gretl_VAR_bundlize (const GRETL_VAR *var,
 
     if (var->LBs > 0 && !na(var->LB)) {
 	/* Portmanteau test */
-	gretl_bundle_set_scalar(b, "LB", var->LB);
-	gretl_bundle_set_scalar(b, "LBs", var->LBs);
+	gretl_bundle_set_scalar(b, "Ljung_Box", var->LB);
+	gretl_bundle_set_scalar(b, "LB_order", var->LBs);
     }
 
     /* lists: lags, ylist, xlist, rlist */
@@ -4464,6 +4464,7 @@ int gretl_VAR_bundlize (const GRETL_VAR *var,
 	if (!err) {
 	    gretl_bundle_donate_data(b, "lags", v,
 				     GRETL_TYPE_MATRIX, 0);
+	    gretl_bundle_set_note(b, "lags", "gappy lags vector");
 	}
     }
     if (var->ylist != NULL) {
@@ -4478,6 +4479,18 @@ int gretl_VAR_bundlize (const GRETL_VAR *var,
 
     /* doubles arrays: Fvals, Ivals? */
 
+    if (var->B != NULL) {
+	gretl_bundle_set_matrix(b, "coeff", var->B);
+    }
+    if (var->S != NULL) {
+	gretl_bundle_set_matrix(b, "sigma", var->S);
+    }
+    if (var->XTX != NULL) {
+	gretl_bundle_set_matrix(b, "xtxinv", var->XTX);
+    }
+    if (var->E != NULL) {
+	gretl_bundle_set_matrix(b, "uhat", var->E);
+    }
     if (var->X != NULL && var->Y != NULL) {
 	gretl_bundle_set_matrix(b, "X", var->X);
 	gretl_bundle_set_matrix(b, "Y", var->Y);
