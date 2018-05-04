@@ -964,10 +964,10 @@
 	  probit, contén os erros xeneralizados.
 	</para>
 	<para>
-	  Cando o <quote>modelo</quote> en cuestión actual é un sistema de
+	  Cando o <quote>modelo</quote> actual en cuestión é un sistema de
 	  ecuacións (un VAR, un VECM ou un sistema de ecuacións simultáneas),
-	  o <lit>$uhat</lit> sen parámetros xera unha matriz cos erros de
-	  estimación de cada ecuación ordenados por columnas.
+	  o <lit>$uhat</lit> xera unha matriz cos erros de estimación de cada
+	  ecuación ordenados por columnas.
 	</para>
       </description>
     </function>
@@ -4072,6 +4072,7 @@
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="scalar" optional="true">lambda</fnarg>
+	<fnarg type="bool" optional="true">one-sided</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4081,6 +4082,23 @@
 	  Gretl usa valores por defecto baseados na periodicidade dos datos;
 	  concretamente, o parámetro é igual a 100 veces o cadrado da
 	  periodicidade (100 para datos anuais, 1600 para datos trimestrais, etc.).
+	</para>
+	<para>
+	  Por defecto, o filtro é o da habitual versión de dúas partes
+	  (pasado e futuro), pero se indicas o terceiro argumento (opcional)
+	  mediante un valor non nulo, calcúlase a variante dunha soa
+	  parte (sen ollada cara adiante) do xeito no que se indica en
+	  <cite key="stock-watson1999">Stock e Watson (1999)</cite>.
+	</para>
+	<para>
+	  O uso máis habitual do filtro HP é para a eliminación da tendencia,
+	  pero se estás interesado na propia tendencia, é doado de obtela
+	  mediante subtracción, como no exemplo seguinte:
+	</para>
+	<code>
+	  series hptrend = y - hfilt(y)
+	</code>
+	<para>
 	  <seelist>
             <fncref targ="bkfilt"/>
             <fncref targ="bwfilt"/>
@@ -4283,7 +4301,31 @@
 	  chamada <lit>foo</lit> na lista <lit>L</lit>, indícame a súa posición
 	  ou 0 no caso de que non exista.</quote>
 	</para>
-  </description>
+      </description>
+    </function>
+
+    <function name="instring" section="strings" output="int">
+      <fnargs>
+	<fnarg type="string">s1</fnarg>
+	<fnarg type="string">s2</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Este é un booleano relativo de <fncref targ="strstr"/>:
+	  devolve 1 se <argname>s1</argname> contén
+	  <argname>s2</argname>, e 0 noutro caso. Deste xeito, a
+	  expresión condicional
+	</para>
+	<code>
+	  if instring("gatada", "gata")
+	</code>
+	<para>
+	  é equivalente loxicamente (pero mais eficiente) ca
+	</para>
+	<code>
+	  if strlen(strstr("gatada", "gata")) > 0
+	</code>
+      </description>
     </function>
 
     <function name="int" section="math" output="asinput">
@@ -9227,14 +9269,19 @@
 	  parte de <argname>s1</argname> que comeza con <argname>s2</argname>;
 	  noutro caso, devolve unha cadea de texto baleira.
 	</para>
-    <para>
-        Exemplo:
-    </para>
-    <code>
-        string s1 = "Gretl é un programa de Econometría"
-        string s2 = strstr(s1, "un")
-        print s2
-    </code>
+  <para>
+          Exemplo:
+  </para>
+  <code>
+          string s1 = "Gretl é un programa de Econometría"
+          string s2 = strstr(s1, "un")
+          print s2
+  </code>
+	<para>
+	  Se unicamente queres descubrir se <argname>s1</argname>
+	  contén a <argname>s2</argname> (proba booleana), consulta
+	  <fncref targ="instring"/>.
+	</para>
       </description>
     </function>
 
@@ -9247,14 +9294,14 @@
 	  Devolve unha cadea de texto cunha copia de <argname>s</argname>
 	  na que se eliminaron os espazos en branco do inicio e do final.
 	</para>
-    <para>
-        Exemplo:
-    </para>
-    <code>
-        string s1 = "    Moito espazo en branco.  "
-        string s2 = strstrip(s1)
-        print s1 s2
-    </code>
+  <para>
+          Exemplo:
+  </para>
+  <code>
+          string s1 = "    Moito espazo en branco.  "
+          string s2 = strstrip(s1)
+          print s1 s2
+  </code>
       </description>
     </function>
 
@@ -9271,14 +9318,14 @@
 	  <argname>subst</argname>. Consulta tamén <fncref targ="regsub"/> para
 	  outras substitucións máis complexas mediante expresións regulares.
 	</para>
-    <para>
-        Exemplo:
-    </para>
-    <code>
-        string s1 =  "Hola, Gretl!"
-        string s2 = strsub(s1, "Gretl", "Hansl")
-        print s2
-    </code>
+  <para>
+          Exemplo:
+  </para>
+  <code>
+          string s1 =  "Hola, Gretl!"
+          string s2 = strsub(s1, "Gretl", "Hansl")
+          print s2
+  </code>
       </description>
     </function>
 
@@ -9312,46 +9359,46 @@
 	  carácter indicado polo enteiro positivo de <argname>inicio</argname> e
 	  rematando no indicado por <argname>fin</argname>, ambos incluídos.
 	</para>
-    <para>
-        Por exemplo, o código de abaixo
-    </para>
-    <code>
-        string s1 = "Hola, Gretl!"
-        string s2 = substr(s1, 7, 11)
-        string s3 = substr("Hola, Gretl!", 7, 11)
-        print s2
-        print s3
-    </code>
-    <para>
-        proporciona:
-    </para>
-    <code>
-      ? print s2
-      Gretl
-      ? print s3
-      Gretl
-    </code>
-    <para>
-        Debes de darte de conta de que, nalgúns casos, poderías estar
-        desexando intercambiar claridade por concisión, e utilizar operadores
-        de redución e incremento, como en
-    </para>
-    <code>
-        string s1 = "Hola, Gretl!"
-        string s2 = s1[7:11]
-        string s3 = s1 + 6
-        print s2
-        print s3
-    </code>
-    <para>
-        o que te proporcionaría
-    </para>
-    <code>
-      ? print s2
-      Gretl
-      ? print s3
-      Gretl!
-    </code>
+  <para>
+          Por exemplo, o código de abaixo
+  </para>
+  <code>
+          string s1 = "Hola, Gretl!"
+          string s2 = substr(s1, 7, 11)
+          string s3 = substr("Hola, Gretl!", 7, 11)
+          print s2
+          print s3
+  </code>
+  <para>
+          proporciona:
+  </para>
+  <code>
+    ? print s2
+    Gretl
+    ? print s3
+    Gretl
+  </code>
+  <para>
+          Debes de darte de conta de que, nalgúns casos, poderías estar
+          desexando intercambiar claridade por concisión, e utilizar operadores
+          de redución e incremento, como en
+  </para>
+  <code>
+          string s1 = "Hola, Gretl!"
+          string s2 = s1[7:11]
+          string s3 = s1 + 6
+          print s2
+          print s3
+  </code>
+  <para>
+    o que te proporcionaría
+  </para>
+  <code>
+    ? print s2
+    Gretl
+    ? print s3
+    Gretl!
+  </code>
       </description>
     </function>
 

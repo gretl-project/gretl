@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2018-02-05 11:55-0500\n"
-"PO-Revision-Date: 2018-02-05 19:58+0100\n"
+"PO-Revision-Date: 2018-05-04 12:21+0200\n"
 "Last-Translator: JCEN <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -3713,7 +3713,7 @@ msgstr "[A relación é linear]"
 
 #: lib/src/gretl_model.c:3926 gui/gui_utils.c:4349
 msgid "Test for normality of residual"
-msgstr "Proba de normalidade dos erros"
+msgstr "Proba de normalidade das perturbacións"
 
 #: lib/src/gretl_model.c:3927
 msgid "error is normally distributed"
@@ -6773,7 +6773,7 @@ msgstr "Listando %d variables:\n"
 
 #: lib/src/printout.c:2597 gui/guiprint.c:1398
 msgid "Mean Error"
-msgstr "Erro medio"
+msgstr "Media dos erros"
 
 #: lib/src/printout.c:2598 gui/guiprint.c:1400
 msgid "Root Mean Squared Error"
@@ -6781,15 +6781,15 @@ msgstr "Raíz do erro cadrado medio"
 
 #: lib/src/printout.c:2599 gui/guiprint.c:1401
 msgid "Mean Absolute Error"
-msgstr "Erro absoluto medio"
+msgstr "Media dos valores absolutos dos erros"
 
 #: lib/src/printout.c:2600 gui/guiprint.c:1402
 msgid "Mean Percentage Error"
-msgstr "Porcentaxe de erro medio"
+msgstr "Media dos erros relativos (%)"
 
 #: lib/src/printout.c:2601 gui/guiprint.c:1403
 msgid "Mean Absolute Percentage Error"
-msgstr "Porcentaxe de erro absoluto medio"
+msgstr "Media dos valores absolutos dos erros relativos (%)"
 
 #: lib/src/printout.c:2602
 msgid "Theil's U"
@@ -13045,7 +13045,7 @@ msgstr "_Heterocedasticidade"
 
 #: gui/gui_utils.c:266
 msgid "_Normality of residual"
-msgstr "_Normalidade dos erros"
+msgstr "_Normalidade das perturbacións"
 
 #: gui/gui_utils.c:267
 msgid "_Chow test"
@@ -13484,7 +13484,7 @@ msgstr "Nivel de retardo para a proba:"
 
 #: gui/gui_utils.c:4470
 msgid "_Normality of residuals"
-msgstr "_Normalidade dos erros"
+msgstr "_Normalidade das perturbacións"
 
 #: gui/gui_utils.c:4477
 msgid "Linear restrictions"

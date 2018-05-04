@@ -884,11 +884,7 @@
 	  <flag>--y-diff-only</flag>
 	  <effect>ARIMAX especial; mira abaixo</effect>
 	</option>
-	<option>
-	  <flag>--save-ehat</flag>
-	  <effect>Mira abaixo</effect>
-	</option>
-      </options>
+	      </options>
       <examples>
         <example>arima 1 0 2 ; y</example>
 	<example>arima 2 0 2 ; y 0 x1 x2 --verbose</example>
@@ -974,17 +970,16 @@
       </para>
 
       <para>
-	Por defecto, utilízase a funcionalidade ARMA <quote>propia</quote>
-	de Gretl, coa estimación Máximo Verosímil (MV) exacta utilizando o
-	filtro de Kalman; pero dispós da opción de facer a estimación mediante
-	MV condicional. (Se o programa <program>ARIMA X-12</program> está
-	instalado no ordenador, tes a posibilidade de utilizalo en vez do
+	Por defecto, utilízase a funcionalidade ARMA <quote>propia</quote> de Gretl,
+	coa estimación Máximo Verosímil (MV) exacta; pero dispós da opción de facer
+	a estimación mediante MV condicional. (Se o programa <program>ARIMA X-12</program>
+	está instalado no ordenador, tes a posibilidade de utilizalo en vez do
 	código propio.) Para outros detalles relacionados con estas opcións,
 	consulta o <guideref targ="chap:timeseries"/>.
       </para>
 
       <para context="cli">
-	Cando se utiliza o código propio de MV exacta, as desviacións
+	Cando se utiliza código propio de MV exacta, as desviacións
 	padrón estimadas baséanse por defecto nunha aproximación numérica á
 	(inversa negativa da) matriz Hessiana, cun último recurso ao Produto
 	Externo do vector Gradiente (PEG) se o cálculo da matriz Hessiana
@@ -1013,16 +1008,6 @@
 	consiste en calcular as primeiras diferenzas tanto da variable dependente
 	como dos regresores, pero cando indicas esta opción, só se calcula para
 	a variable dependente, quedando os regresores en niveis.
-      </para>
-
-      <para context="cli">
-	A opción <opt>save-ehat</opt> só pode aplicarse cando se utiliza a
-	estimación Máximo Verosímil exacta propia de Gretl. O seu efecto consiste
-	en que te permite dispoñer dun vector que contén a estimación óptima
-	ata o período <math>t</math> da perturbación ou innovación de data
-	<math>t</math>, e que podes recuperar co accesorio <lit>$ehat</lit>.
-	Estes valores difiren das series cos erros (<lit>$uhat</lit>) que
-	conteñen os erros das predicións adiantadas un paso.
       </para>
 
       <para>O valor do AIC de Akaike indicado en conexión
@@ -7517,8 +7502,8 @@
 	un ficheiro gfn que xa existía.
       </para>
       <para>
-	Para obter máis detalles sobre todo isto, consulta o
-	<book>Manual de paquetes de funcións de Gretl</book>.
+	Para obter máis detalles sobre todo isto, consulta o <mnu>PkgHelp:Pkgbook</mnu>
+	(baixo o menú Axuda)..
       </para>
     </description>
 
@@ -12030,8 +12015,8 @@
 	<li>
 	  <para><lit>max_verbose</lit>: <lit>on</lit> ou <lit>off</lit> (por defecto).
 	  Conmuta o resultado máis cumprido para as funcións <lit>BFGSmax</lit>
-	  e <lit>NRmax</lit> (consulta o Manual de Usuario para obter máis
-	  detalles).
+	  e <lit>NRmax</lit> (consulta o <guideref targ="chap:numerical"/> para
+	  obter máis detalles).
 	</para>
 	</li>
 	<li>
