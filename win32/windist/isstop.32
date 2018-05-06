@@ -38,5 +38,5 @@ Name: "ja"; MessagesFile: "compiler:Languages\Japanese.isl"
 Name: "uk"; MessagesFile: "compiler:Languages\Ukrainian.isl"
 
 [Tasks]
-Name: modifypath; Description: &Add gretl directory to your PATH; Flags: checkedonce
+Name: modifypath; Description: &Add gretl directory to your PATH; Flags: unchecked
 
