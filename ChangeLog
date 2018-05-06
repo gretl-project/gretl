@@ -2,6 +2,8 @@ version 2018b, in progress
 - Substantial speed-up of AR(I)MA estimation, using
   Melard's algorithm AS 197; also improvements to the
   initialization for such estimation
+- When R_functions is set "on", accept call to an R function
+  without assignment of the return value, if any  
 - Fixes for GUI model specification dialog: breakage in
   selection of GARCH robust variance estimator variant,
   and non-availability of lag selection in some cases
@@ -15,8 +17,8 @@ version 2018b, in progress
 - Fix bug: crash on Windows when using Tab key in the data
   editor window
 - Fix bug: crash in "modprint" under some conditions
-- When R_functions is set "on", accept call to an R function
-  without assignment of the return value, if any
+- Builds for Windows and Mac (Quartz): update to gnuplot
+  5.2.3
 
 2018-03-17 version 2018a
 - New function instring(): boolean variant of strstr()
