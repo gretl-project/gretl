@@ -4472,7 +4472,7 @@ static void summary_print_val (double x, int digits, int places,
 	int len = prec + 9;
 	char *s = (digits > 0)? "#" : "";
 	char t = (digits > 0)? 'g' : 'f';
-	char fmt[16];
+	char fmt[32];
 
 	sprintf(fmt, "%%%s%d.%d%c", s, len, prec, t);
 	pprintf(prn, fmt, x);

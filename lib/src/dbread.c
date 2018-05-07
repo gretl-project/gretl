@@ -1670,7 +1670,7 @@ static double *interpolate_db_series (const double *src,
 double *expand_db_series (const double *src, SERIESINFO *sinfo,
 			  int target_pd, int interpol)
 {
-    char stobs[12] = {0};
+    char stobs[OBSLEN] = {0};
     int oldn = sinfo->nobs;
     int mult, newn;
     double *x = NULL;
@@ -3645,7 +3645,7 @@ static DATASET *compact_data_spread (const DATASET *dset, int newpd,
     };
     const char *p0, *p1;
     DATASET *cset = NULL;
-    char sfx[6];
+    char sfx[16];
     char label[MAXLABEL];
     int oldpd = dset->pd;
     int compfac = oldpd / newpd;
@@ -4895,7 +4895,7 @@ static gretl_matrix *interpol_expand_dataset (const DATASET *dset,
 
 int expand_data_set (DATASET *dset, int newpd, int interpol)
 {
-    char stobs[12];
+    char stobs[OBSLEN];
     int oldn = dset->n;
     int oldpd = dset->pd;
     int t1 = dset->t1;

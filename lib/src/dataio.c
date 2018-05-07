@@ -2633,7 +2633,7 @@ int read_or_write_obs_markers (gretlopt opt, DATASET *dset, PRN *prn)
 static void 
 octave_varname (char *name, const char *s, int nnum, int v)
 {
-    char nstr[8];
+    char nstr[12];
     int len, tr;
 
     if (nnum == 0) {

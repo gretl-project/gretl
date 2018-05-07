@@ -268,7 +268,7 @@ static void set_cp_from_locale (const char *loc)
 
 static const char *get_gretl_charset (void)
 {
-    static char cset[12];
+    static char cset[16];
 
 # ifdef WIN32
     if (gretl_cpage > 0) {
@@ -277,7 +277,7 @@ static const char *get_gretl_charset (void)
     }
 # endif
 
-    if (gretl_cset_maj > 0 && gretl_cset_min > 0) {
+    if (gretl_cset_maj > 0 && gretl_cset_min > 0 && gretl_cset_min < 99) {
 	sprintf(cset, "ISO-%d-%d", gretl_cset_maj, gretl_cset_min);
 	return cset;
     } 

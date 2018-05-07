@@ -1196,7 +1196,7 @@ static char *real_png_term_line (char *term_line,
 				 double scale)
 {
     char ad_hoc_fontspec[128];
-    char font_string[128];
+    char font_string[140];
     char size_string[16];
 
     *font_string = *size_string = *ad_hoc_fontspec = '\0';
@@ -1331,7 +1331,7 @@ static char *gretl_emf_term_line (char *term_line,
 				  PlotType ptype,
 				  GptFlags flags)
 {
-    char font_string[128];
+    char font_string[140];
 
     *font_string = '\0';
     write_emf_font_string(font_string);
