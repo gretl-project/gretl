@@ -3601,8 +3601,8 @@ static int cli_validate_package_file (const char *fname,
 	}
 
 	cvp->userData = (void *) prn;
-	cvp->error    = (xmlValidityErrorFunc) pprintf;
-	cvp->warning  = (xmlValidityWarningFunc) pprintf;
+	cvp->error    = (xmlValidityErrorFunc) pprintf2;
+	cvp->warning  = (xmlValidityWarningFunc) pprintf2;
 
 	pprintf(prn, "Checking against %s\n", dtdname);
 

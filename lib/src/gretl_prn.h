@@ -111,6 +111,8 @@ void gretl_print_set_delim (PRN *prn, char delim);
 
 int pprintf (PRN *prn, const char *format, ...);
 
+void pprintf2 (PRN *prn, const char *format, ...);
+
 int pputs (PRN *prn, const char *s);
 
 int pputc (PRN *prn, int c);

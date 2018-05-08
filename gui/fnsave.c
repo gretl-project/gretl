@@ -255,7 +255,7 @@ static char *filename_from_funname (char *fname,
     return fname;
 }
 
-static void destroy_code_window (windata_t *vwin)
+static void destroy_code_window (windata_t *vwin, gpointer p)
 {
     gtk_widget_destroy(vwin->main);
 }
@@ -3921,8 +3921,8 @@ static int validate_package_file (const char *fname, int verbose)
 	}
 
 	cvp->userData = (void *) prn;
-	cvp->error    = (xmlValidityErrorFunc) pprintf;
-	cvp->warning  = (xmlValidityWarningFunc) pprintf;
+	cvp->error    = (xmlValidityErrorFunc) pprintf2;
+	cvp->warning  = (xmlValidityWarningFunc) pprintf2;
 
 	if (!xmlValidateDtd(cvp, doc, dtd)) {
 	    const char *buf = gretl_print_get_buffer(prn);

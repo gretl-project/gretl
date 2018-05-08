@@ -1036,6 +1036,63 @@ int pprintf (PRN *prn, const char *format, ...)
     return plen;
 }
 
+/* void variant of pprintf() for use in certain callbacks */
+
+void pprintf2 (PRN *prn, const char *format, ...)
+{
+    va_list args;
+    int rem, plen = 0;
+
+    if (prn == NULL || prn->fixed) {
+	return;
+    }
+
+    if (prn->fp != NULL) {
+	/* printing to stream: straightforward */
+	va_start(args, format);
+	vfprintf(prn->fp, format, args);
+	va_end(args);
+	return;
+    }
+
+    if (strncmp(format, "@init", 5) == 0) {
+	pprintf_init(prn);
+	return;
+    }
+
+    if (prn->buf == NULL) {
+	return;
+    }
+
+    rem = prn->bufsize - prn->blen;
+    if (rem < MINREM) {
+	if (realloc_prn_buffer(prn, 0)) {
+	    return;
+	}
+    }
+
+    rem = prn->bufsize - prn->blen - 1;
+    va_start(args, format);
+    plen = vsnprintf(prn->buf + prn->blen, rem, format, args);
+    va_end(args);
+
+    if (plen >= rem) {
+	size_t newsize = prn->bufsize + plen + 1024;
+
+	if (realloc_prn_buffer(prn, newsize)) {
+	    return;
+	}
+	rem = prn->bufsize - prn->blen - 1;
+	va_start(args, format);
+	plen = vsnprintf(prn->buf + prn->blen, rem, format, args);
+	va_end(args);
+    }
+
+    if (plen > 0) {
+	prn->blen += plen;
+    }
+}
+
 /**
  * pputs:
  * @prn: gretl printing struct.
