@@ -1339,12 +1339,15 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 
  skipcalc:
 
+    /* particularly relevant for iterated GMM: increment,
+       don't just set, these two counts
+    */
     *fncount += fcount;
     *grcount += gcount;
 
     if (verbose) {
 	print_iter_info(-1, f, crittype, n, b, g, steplen, prn);
-	// pputc(prn, '\n');
+	/* pputc(prn, '\n'); */
     }
 
  bailout:
