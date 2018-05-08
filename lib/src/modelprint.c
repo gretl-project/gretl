@@ -1933,8 +1933,8 @@ static void print_model_heading (const MODEL *pmod,
 				 gretlopt opt, 
 				 PRN *prn)
 {
-    char startdate[OBSLEN], enddate[OBSLEN], vname[32];
-    char datesep[4];
+    char startdate[OBSLEN], enddate[OBSLEN];
+    char vname[48], datesep[4];
     int t1 = pmod->t1, t2 = pmod->t2;
     int tex = tex_format(prn);
     int csv = csv_format(prn);
@@ -2682,7 +2682,7 @@ struct middletab {
     int nls;              /* translation on? (0/1) */
     int d;                /* CSV field delimiter */
     int multi;            /* Using multiple precision? (0/1) */
-    char txt_fmt[36];     /* format for plain text output */
+    char txt_fmt[48];     /* format for plain text output */
 };
 
 static void set_mtab_string_width (struct middletab *mt)
@@ -2818,7 +2818,7 @@ static char *print_eight (char *s, struct middletab *mt, int i)
 	    sprintf(tmp, "%8.6f", ax);
 	} else if (strlen(p) == 4) {
 	    if (*(p+1) == '0') {
-		memcpy(p+1, p+2, 3);
+		memmove(p+1, p+2, 3);
 	    } else {
 		sprintf(tmp, "%#.2g", ax);
 	    }

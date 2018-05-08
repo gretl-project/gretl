@@ -36,7 +36,7 @@
 static void add_garch_varnames (MODEL *pmod, const DATASET *dset,
 				const int *list)
 {
-    char tmp[16];
+    char tmp[24];
     int p = list[1];        /* GARCH beta terms */
     int q = list[2];        /* ARCH alpha terms > 0 */
     int r = list[0] - 4;    /* regressors */

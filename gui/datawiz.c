@@ -1586,7 +1586,7 @@ static int dwiz_compute_step (int prevstep, int direction, DATASET *dwinfo,
 /* clear a given notebook page, but leave the title string
    unchanged */
 
-static void kill_dwiz_child (GtkWidget *w)
+static void kill_dwiz_child (GtkWidget *w, gpointer p)
 {
     int t = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "title"));
 

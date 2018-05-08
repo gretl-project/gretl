@@ -334,7 +334,7 @@ static void urlinfo_set_params (urlinfo *u, CGIOpt opt,
     }
 
     if (filter > 0) {
-	char fstr[8];
+	char fstr[12];
 
 	sprintf(fstr, "%d", filter);
 	strcat(u->url, "&filter=");

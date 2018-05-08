@@ -498,7 +498,7 @@ static void tex_mp_coeff_name (char *targ, const char *src,
 static void tex_arma_coeff_name (char *targ, const char *src,
 				 int inmath)
 {
-    char vname[VNAMELEN], vnesc[32], texname[32];
+    char vname[VNAMELEN], vnesc[32], texname[48];
     int i;
 
     if (sscanf(src, "phi_%d", &i)) {
