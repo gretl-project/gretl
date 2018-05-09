@@ -670,7 +670,7 @@ int main (int argc, char **argv)
 	strncat(auxname, optdb, MAXLEN - 1);
 	maybe_fix_dbname(auxname);
     } else if (optwebdb != NULL) {
-	strncat(auxname, optdb, MAXLEN - 1);
+	strncat(auxname, optwebdb, MAXLEN - 1);
     } else if (optpkg != NULL) {
 	strncat(auxname, optpkg, MAXLEN - 1);
     }
