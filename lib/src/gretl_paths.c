@@ -3414,7 +3414,7 @@ static void load_default_workdir (char *targ)
 	if (home != NULL) {
 	    strcpy(targ, home);
 	} else {
-	    sprintf(targ, "%suser/", paths.gretldir);
+	    gretl_path_compose(targ, MAXLEN, paths.gretldir, "user/");
 	}
     }
 }
@@ -4199,4 +4199,19 @@ const char *gretl_function_package_path (void)
     }
 
     return path;
+}
+
+int gretl_path_compose (char *targ, int len,
+			const char *s1,
+			const char *s2)
+{
+    targ[0] = '\0';
+    if (strlen(s1) + strlen(s2) >= len) {
+	gretl_errmsg_set("filename is too long");
+	return E_DATA;
+    } else {
+	strcpy(targ, s1);
+	strcat(targ, s2);
+	return 0;
+    }
 }

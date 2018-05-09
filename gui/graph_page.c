@@ -76,18 +76,28 @@ static void gpage_filenames_init (const char *base)
 static char *gpage_fname (const char *ext, int i)
 {
     static char fname[MAXLEN];
+    char num[12];
+    int n = strlen(gpage_base);
 
-    strcpy(fname, gpage_base);
+    fname[0] = num[0] = '\0';
 
     if (i > 0) {
-	char num[6];
-
 	sprintf(num, "_%d", i);
-	strcat(fname, num);
+	n += strlen(num);
     }
 
     if (ext != NULL) {
-	strcat(fname, ext);
+	n += strlen(ext);
+    }
+
+    if (n < MAXLEN) {
+	strcpy(fname, gpage_base);
+	if (num[0] != '\0') {
+	    strcat(fname, num);
+	}
+	if (ext != NULL) {
+	    strcat(fname, ext);
+	}
     }
 
     return fname;
@@ -173,7 +183,6 @@ enum {
 
 static int tex_graph_setup (int ng, FILE *fp)
 {
-    char fname[FILENAME_MAX];
     double scale[] = { 1.2, 1.0, 0.9, 0.85 };
     double s, vspace = 1.0;
     int i;
@@ -187,21 +196,18 @@ static int tex_graph_setup (int ng, FILE *fp)
 
     if (ng == 1) {
 	s = scale[SCALE_LARGE];
-	sprintf(fname, "%s_1", gpage_tex_base);
-	fprintf(fp, "\\includegraphics[scale=%g]{%s}\n", s, fname);
+	fprintf(fp, "\\includegraphics[scale=%g]{%s_1}\n", s, gpage_tex_base);
     } else if (ng == 2) {
 	s = scale[SCALE_REGULAR];
-	sprintf(fname, "%s_%d", gpage_tex_base, 1);
-	fprintf(fp, "\\includegraphics[scale=%g]{%s}\n\n", s, fname);
+	fprintf(fp, "\\includegraphics[scale=%g]{%s_1}\n\n", s, gpage_tex_base);
 	fprintf(fp, "\\vspace{%gin}\n\n", vspace);
-	sprintf(fname, "%s_%d", gpage_tex_base, 2);
-	fprintf(fp, "\\includegraphics{%s}\n\n", fname);
+	fprintf(fp, "\\includegraphics{%s_2}\n\n", gpage_tex_base);
     } else if (ng == 3) {
 	s = scale[SCALE_MEDIUM];
 	vspace = 0.25;
 	for (i=0; i<3; i++) {
-	    sprintf(fname, "%s_%d", gpage_tex_base, i + 1);
-	    fprintf(fp, "\\includegraphics[scale=%g]{%s}\n\n", s, fname);
+	    fprintf(fp, "\\includegraphics[scale=%g]{%s_%d}\n\n", s,
+		    gpage_tex_base, i + 1);
 	    fprintf(fp, "\\vspace{%gin}\n", vspace);
 	}
     } else {
@@ -214,12 +220,12 @@ static int tex_graph_setup (int ng, FILE *fp)
 	}	    
 	fputs("\\begin{tabular}{cc}\n", fp);
 	for (i=0; i<ng; i++) {
-	    sprintf(fname, "%s_%d", gpage_tex_base, i + 1);
 	    if (oddgraph(ng, i)) {
-		fprintf(fp, "\\multicolumn{2}{c}{\\includegraphics[scale=%g]{%s}}",
-			s, fname);
+		fprintf(fp, "\\multicolumn{2}{c}{\\includegraphics[scale=%g]{%s_%d}}",
+			s, gpage_tex_base, i + 1);
 	    } else {
-		fprintf(fp, "\\includegraphics[scale=%g]{%s}", s, fname);
+		fprintf(fp, "\\includegraphics[scale=%g]{%s_%d}", s,
+			gpage_tex_base, i + 1);
 		if (i % 2 == 0) {
 		    fputs(" &\n  ", fp);
 		} else if (i < ng - 1) {
@@ -327,16 +333,17 @@ static int graph_page_add_last_graph (void)
 static int gnuplot_compile (const char *fname)
 {
     const char *gnuplot = gretl_gnuplot_path();
-    char plotcmd[MAXLEN];
+    gchar *plotcmd;
     int err = 0;
 
 #ifdef G_OS_WIN32
-    sprintf(plotcmd, "\"%s\" \"%s\"", gnuplot, fname);
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", gnuplot, fname);
 #else
-    sprintf(plotcmd, "%s \"%s\"", gnuplot, fname);
+    plotcmd = g_strdup_printf("%s \"%s\"", gnuplot, fname);
 #endif
 
     err = gretl_spawn(plotcmd);
+    g_free(plotcmd);
 
     return err;
 }
@@ -847,7 +854,9 @@ static int print_graph_page_direct (const char *fname,
 	}
 	if (*thisdir != '\0') {
 	    /* come back out of dotdir */
-	    chdir(thisdir);
+	    if (chdir(thisdir) == -1) {
+		err = 1;
+	    }
 	}
 	fname = gretl_maybe_switch_dir(fname);
 	err = gretl_copy_file(output, fname);

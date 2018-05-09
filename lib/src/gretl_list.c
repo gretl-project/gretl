@@ -1671,13 +1671,13 @@ static void name_xprod_term (char *vname, int vi, int vj,
     int ilen = strlen(si);
     int jlen = strlen(sj);
     int totlen = ilen + jlen + 2;
-    char numstr[32];
+    char numstr[16];
 
     sprintf(numstr, "%d", di);
     totlen += strlen(numstr);
 
-    if (totlen > VNAMELEN - 1) {
-	int decr = totlen - (VNAMELEN - 1);
+    if (totlen >= VNAMELEN) {
+	int decr = 1 + totlen - VNAMELEN;
 
 	while (decr > 0) {
 	    if (ilen > jlen) {

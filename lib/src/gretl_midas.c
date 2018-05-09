@@ -2487,7 +2487,7 @@ static int add_midas_matrices (midas_info *mi,
 	if (mi->hfslopes > 0) {
 	    /* initialize HF slopes, with fallback to zero */
 	    int use_c = !init_err && c->rows > mi->nx;
-	    char tmp[16];
+	    char tmp[24];
 	    double bzi;
 
 	    for (i=0; i<mi->nmidas && !err; i++) {

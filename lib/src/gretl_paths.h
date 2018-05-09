@@ -232,6 +232,10 @@ void set_gretl_png_font (const char *s);
 void get_gretl_config_from_file (FILE *fp, ConfigPaths *cpaths,
 				 char *dbproxy, int *use_proxy);
 
+int gretl_path_compose (char *targ, int len,
+			const char *s1,
+			const char *s2);
+
 #ifdef WIN32
 
 void win32_set_gretldir (const char *progname);

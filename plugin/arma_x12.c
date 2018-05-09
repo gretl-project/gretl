@@ -1,17 +1,17 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -98,7 +98,7 @@ static int tramo_x12a_spawn (const char *workdir, const char *fmt, ...)
     }
     free(argv);
     if (ret != 0) fputc('\n', stderr);
-    
+
     return ret;
 }
 
@@ -114,6 +114,7 @@ static int add_unique_output_file (MODEL *pmod, const char *path)
     char unique[FILENAME_MAX];
     char line[256];
     FILE *f0, *f1;
+    int err;
 
     sprintf(outname, "%s.out", path);
     f0 = gretl_fopen(outname, "r");
@@ -121,7 +122,12 @@ static int add_unique_output_file (MODEL *pmod, const char *path)
 	return E_FOPEN;
     }
 
-    sprintf(unique, "%s.XXXXXX", outname);
+    err = gretl_path_compose(unique, FILENAME_MAX, outname, ".XXXXXX");
+    if (err) {
+	fclose(f0);
+	return err;
+    }
+
     f1 = gretl_mktemp(unique, "w");
     if (f1 == NULL) {
 	fclose(f0);
@@ -148,9 +154,13 @@ static int print_iterations (const char *path, PRN *prn)
     FILE *fp;
     char line[129];
     int print = 0;
-    int err = 0;
+    int err;
 
-    sprintf(fname, "%s.out", path);
+    err = gretl_path_compose(fname, MAXLEN, path, ".out");
+    if (err) {
+	return err;
+    }
+
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
 	fprintf(stderr, "Couldn't read from '%s'\n", fname);
@@ -163,7 +173,7 @@ static int print_iterations (const char *path, PRN *prn)
 	}
 	fclose(fp);
     }
-    
+
     return err;
 }
 
@@ -250,7 +260,7 @@ static int get_ll_stats (const char *fname, MODEL *pmod)
 
 /* Parse the roots information from the X12ARIMA output file foo.rts */
 
-static int get_roots (const char *fname, MODEL *pmod, 
+static int get_roots (const char *fname, MODEL *pmod,
 		      arma_info *ainfo)
 {
     FILE *fp;
@@ -289,7 +299,7 @@ static int get_roots (const char *fname, MODEL *pmod,
 	    }
 	}
     }
-    
+
     gretl_pop_c_numeric_locale();
 
     fclose(fp);
@@ -368,7 +378,7 @@ static int get_x12a_vcv (const char *fname, MODEL *pmod, int nc)
    the X-12-ARIMA output file foo.est
 */
 
-static int 
+static int
 get_estimates (const char *fname, MODEL *pmod, arma_info *ainfo)
 {
     double *ar_coeff = pmod->coeff + ainfo->ifc;
@@ -409,7 +419,7 @@ get_estimates (const char *fname, MODEL *pmod, arma_info *ainfo)
 		    x_coeff[i] = b;
 		    x_sderr[i] = se;
 		    i++;
-		}		
+		}
 	    } else if (!strcmp(word, "AR")) {
 		if (sscanf(line, "%*s %*s %*s %*s %lf %lf", &b, &se) == 2) {
 		    ar_coeff[j] = b;
@@ -443,7 +453,7 @@ get_estimates (const char *fname, MODEL *pmod, arma_info *ainfo)
 
 /* Parse the residuals from the x12a output file foo.rsd */
 
-static int 
+static int
 get_uhat (const char *fname, MODEL *pmod, const DATASET *dset)
 {
     FILE *fp;
@@ -470,7 +480,7 @@ get_uhat (const char *fname, MODEL *pmod, const DATASET *dset)
 	    if (t >= 0 && t < dset->n) {
 		pmod->uhat[t] = x;
 		nobs++;
-	    } 
+	    }
 	}
     }
 
@@ -486,9 +496,9 @@ get_uhat (const char *fname, MODEL *pmod, const DATASET *dset)
     return err;
 }
 
-static void 
-populate_x12a_arma_model (MODEL *pmod, const char *path, 
-			  const DATASET *dset, 
+static void
+populate_x12a_arma_model (MODEL *pmod, const char *path,
+			  const DATASET *dset,
 			  arma_info *ainfo)
 {
     char fname[MAXLEN];
@@ -505,26 +515,29 @@ populate_x12a_arma_model (MODEL *pmod, const char *path,
 	return;
     }
 
-    sprintf(fname, "%s.est", path);
-    err = get_estimates(fname, pmod, ainfo);
+    err = gretl_path_compose(fname, MAXLEN, path, ".est");
+    if (!err) {
+	err = get_estimates(fname, pmod, ainfo);
+    }
 
     if (!err) {
-	sprintf(fname, "%s.rsd", path);
+	gretl_path_compose(fname, MAXLEN, path, ".rsd");
 	err = get_uhat(fname, pmod, dset);
     }
 
     if (!err) {
-	sprintf(fname, "%s.lks", path);
+	gretl_path_compose(fname, MAXLEN, path, ".lks");
 	err = get_ll_stats(fname, pmod);
     }
 
     if (!err) {
-	sprintf(fname, "%s.rts", path);
+	gretl_path_compose(fname, MAXLEN, path, ".rts");
 	err = get_roots(fname, pmod, ainfo);
     }
 
 #if 0
     if (!err) {
+	gretl_path_compose(fname, MAXLEN, path, ".acm");
 	sprintf(fname, "%s.acm", path);
 	err = get_x12a_vcv(fname, pmod, nc);
 	/* also .rcm */
@@ -539,7 +552,7 @@ populate_x12a_arma_model (MODEL *pmod, const char *path,
     }
 }
 
-static void 
+static void
 output_series_to_spc (const int *list, const DATASET *dset,
 		      int t1, int t2, FILE *fp)
 {
@@ -587,7 +600,7 @@ static int *arma_info_get_x_list (arma_info *ainfo)
     return xlist;
 }
 
-static void 
+static void
 make_x12a_date_string (int t, const DATASET *dset, char *str)
 {
     if (non_yearly_frequency(dset->pd)) {
@@ -604,7 +617,7 @@ make_x12a_date_string (int t, const DATASET *dset, char *str)
 static void x12_pdq_string (arma_info *ainfo, FILE *fp)
 {
     fputc('(', fp);
-    
+
     if (ainfo->pmask == NULL) {
 	fprintf(fp, "%d", ainfo->p);
     } else {
@@ -644,9 +657,9 @@ static void x12_pdq_string (arma_info *ainfo, FILE *fp)
     fputc(')', fp);
 }
 
-static int write_arma_spc_file (const char *fname, 
+static int write_arma_spc_file (const char *fname,
 				const DATASET *dset,
-				arma_info *ainfo, int pdmax, 
+				arma_info *ainfo, int pdmax,
 				gretlopt opt)
 {
     int maxobs = pdmax * 50;
@@ -670,16 +683,16 @@ static int write_arma_spc_file (const char *fname,
     fp = gretl_fopen(fname, "w");
     if (fp == NULL) {
 	fprintf(stderr, "Couldn't write to '%s'\n", fname);
-	return 1;  
-    } 
+	return 1;
+    }
 
     gretl_push_c_numeric_locale();
 
-    fprintf(fp, "series{\n title=\"%s\"\n period=%d\n", 
+    fprintf(fp, "series{\n title=\"%s\"\n period=%d\n",
 	    dset->varname[ainfo->yno], dset->pd);
 
     t1 -= ainfo->maxlag;
-    
+
     make_x12a_date_string(t1, dset, datestr);
     fprintf(fp, " start=%s\n", datestr);
 
@@ -742,8 +755,8 @@ static int write_arma_spc_file (const char *fname,
 
     fputs("estimate {\n", fp);
 
-    /* could enable here: "tol = XX, maxiter = NN"  
-       the default is tol = 1.0e-5, maxiter = 200 
+    /* could enable here: "tol = XX, maxiter = NN"
+       the default is tol = 1.0e-5, maxiter = 200
     */
 
     if (opt & OPT_V) {
@@ -811,7 +824,7 @@ static void x12a_maybe_allow_missvals (arma_info *ainfo)
 }
 
 MODEL arma_x12_model (const int *list, const int *pqspec,
-		      const DATASET *dset, int pdmax, 
+		      const DATASET *dset, int pdmax,
 		      gretlopt opt, PRN *prn)
 {
     int verbose = (opt & OPT_V);
@@ -838,7 +851,7 @@ MODEL arma_x12_model (const int *list, const int *pqspec,
     if (opt & OPT_V) {
 	ainfo->prn = prn;
     }
-    gretl_model_init(&armod, dset); 
+    gretl_model_init(&armod, dset);
 
     ainfo->alist = gretl_list_copy(list);
     if (ainfo->alist == NULL) {
@@ -852,7 +865,7 @@ MODEL arma_x12_model (const int *list, const int *pqspec,
     if (err) {
 	armod.errcode = err;
 	goto bailout;
-    }     
+    }
 
     /* calculate maximum lag */
     calc_max_lag(ainfo);
@@ -887,7 +900,7 @@ MODEL arma_x12_model (const int *list, const int *pqspec,
 #endif
 
     if (!err) {
-	sprintf(path, "%s%c%s", workdir, SLASH, yname); 
+	sprintf(path, "%s%c%s", workdir, SLASH, yname);
 	populate_x12a_arma_model(&armod, path, dset, ainfo);
 	if (verbose && !armod.errcode) {
 	    print_iterations(path, ainfo->prn);
@@ -897,7 +910,7 @@ MODEL arma_x12_model (const int *list, const int *pqspec,
 		add_unique_output_file(&armod, path);
 	    }
 	    gretl_model_set_int(&armod, "arma_flags", (int) ainfo->flags);
-	}	
+	}
     } else {
 	armod.errcode = E_UNSPEC;
 	gretl_errmsg_set(_("Failed to execute x12arima"));

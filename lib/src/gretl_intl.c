@@ -268,7 +268,7 @@ static void set_cp_from_locale (const char *loc)
 
 static const char *get_gretl_charset (void)
 {
-    static char cset[16];
+    static char cset[24];
 
 # ifdef WIN32
     if (gretl_cpage > 0) {

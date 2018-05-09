@@ -3000,7 +3000,7 @@ gint populate_remote_func_list (windata_t *vwin, int filter)
     GtkTreeIter iter;  
     char *getbuf = NULL;
     char line[1024];
-    char fname[64];
+    char fname[128];
     char basename[32];
     const char *status;
     time_t remtime;

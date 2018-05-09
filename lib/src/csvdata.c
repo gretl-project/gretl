@@ -6531,8 +6531,7 @@ static int *midas_revise_jspec (joinspec *jspec,
     }
 
     if (!*err) {
-	char cname[VNAMELEN];
-	char tmp[VNAMELEN];
+	char *cname, tmp[VNAMELEN];
 	int i, v, extlen;
 	char mc;
 
@@ -6547,7 +6546,11 @@ static int *midas_revise_jspec (joinspec *jspec,
 	gretl_trunc(tmp, VNAMELEN - extlen - 1);
 
 	for (i=0; i<nvars && !*err; i++) {
-	    sprintf(cname, "%s_%c%d", tmp, mc, nvars - i);
+	    cname = gretl_strdup_printf("%s_%c%d", tmp, mc, nvars - i);
+	    if (cname == NULL) {
+		*err = E_ALLOC;
+		break;
+	    }
 	    v = current_series_index(dset, cname);
 	    ret[i+1] = v;
 	    if (v < 0) {
@@ -6558,8 +6561,10 @@ static int *midas_revise_jspec (joinspec *jspec,
 		    *n_add += 1;
 		}
 	    }
-	    if (!*err) {
-		jspec->mdsnames[i] = gretl_strdup(cname);
+	    if (*err) {
+		free(cname);
+	    } else {
+		jspec->mdsnames[i] = cname;
 	    }
 	}
     }

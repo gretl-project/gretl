@@ -2419,7 +2419,7 @@ static int check_for_rerun (const char *texbase)
     FILE *fp;
     int ret = 0;
 
-    sprintf(logfile, "%s.log", texbase);
+    gretl_path_compose(logfile, MAXLEN, texbase, ".log");
     fp = gretl_fopen(logfile, "r");
 
     if (fp != NULL) {
@@ -2500,12 +2500,12 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 	    file_read_errbox(tmp);
 	}
 #else
-	sprintf(tmp, "%s.pdf", texbase);
+	gretl_path_compose(tmp, MAXLEN, texbase, ".pdf");
 	gretl_fork("viewpdf", tmp, NULL);
 #endif
     }
 
-    sprintf(tmp, "%s.log", texbase);
+    gretl_path_compose(tmp, MAXLEN, texbase, ".log");
     if (err == LATEX_ERROR) {
 	view_file(tmp, 0, 1, 78, 350, VIEW_FILE);
     } else {
@@ -2514,7 +2514,7 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 	gretl_remove(tmp);
     }
 
-    sprintf(tmp, "%s.aux", texbase);
+    gretl_path_compose(tmp, MAXLEN, texbase, ".aux");
     gretl_remove(tmp);
 }
 

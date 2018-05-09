@@ -301,21 +301,22 @@ static int read_nist_file (const char *fname,
 {
     FILE *fp;    
     char *p, line[MAXLEN], difficulty[48];
+    gchar *fullname;
     int cstart = 0, cstop = 0;
     int dstart = 0, dstop = 0;
     int lcount = 0, nvar = 0, nobs = 0;
     DATASET *dset = NULL;
     mp_results *certvals = NULL;
     int i, t, npoly = 0;
-    char fullname[128];
 
 #ifdef WIN32
-    sprintf(fullname, "%s\\%s", datadir, fname);
-    fp = fopen(fullname, "r");
+    fullname = g_strdup_printf("%s\\%s", datadir, fname);
+    fp = gretl_fopen(fullname, "r");
 #else
-    sprintf(fullname, "%s/%s", datadir, fname);
-    fp = fopen(fullname, "r");
+    fullname = g_strdup_printf("%s/%s", datadir, fname);
+    fp = gretl_fopen(fullname, "r");
 #endif
+    g_free(fullname);
 
     if (fp == NULL) {
 	pprintf(prn, "Couldn't open %s\n", fname);
