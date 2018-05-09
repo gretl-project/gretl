@@ -1831,7 +1831,7 @@ static void tsls_style_shift_vars (equation_system *sys, int *xplist)
     xplist[0] = nxp;
 }
 
-/* for consistency with the way in which per-equation results
+/* For consistency with the way in which per-equation results
    are organized, we should ensure that if a constant is present
    among the exogenous terms in a system it appears as the
    first element of the system's "xlist".
@@ -1969,7 +1969,7 @@ static int sys_check_lists (equation_system *sys,
     /* If the user gave an endogenous list, check that it doesn't
        contain any variables that are not actually present in the
        system.
-     */
+    */
     if (user_ylist) {
 	for (j=1; j<=sys->ylist[0]; j++) {
 	    vj = sys->ylist[j];
@@ -2149,7 +2149,8 @@ int equation_system_finalize (equation_system *sys, DATASET *dset,
     if (!err && !(opt & OPT_S) && sys_has_user_name(sys)) {
 	/* save the system for subsequent estimation: but note that we
 	   should not do this if given OPT_S, for single-equation
-	   LIML */
+	   LIML
+	*/
 	err = gretl_stack_object_as(sys, GRETL_OBJ_SYS, sys->name);
     }
 
