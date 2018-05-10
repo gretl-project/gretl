@@ -136,8 +136,9 @@ typedef enum {
     LOOP_CMD_CATCH   = 1 << 4, /* "catch" flag present */
     LOOP_CMD_COND    = 1 << 5, /* compiled conditional */
     LOOP_CMD_DONE    = 1 << 6, /* progressive loop command parsed */
-    LOOP_CMD_OK      = 1 << 7, /* command has been run without error */
-    LOOP_CMD_NOEQ    = 1 << 8  /* "genr" with no formula */
+    LOOP_CMD_PARSED  = 1 << 7, /* regular loop command parsed */
+    LOOP_CMD_OK      = 1 << 8, /* command has been run without error */
+    LOOP_CMD_NOEQ    = 1 << 9  /* "genr" with no formula */
 } LoopCmdFlags;
 
 struct loop_command_ {
@@ -3140,8 +3141,10 @@ static inline void cmd_info_to_loop (LOOPSET *loop, int j,
 
     if (lcmd->ci == ELSE || lcmd->ci == ENDIF ||
 	lcmd->ci == BREAK || lcmd->ci == LOOP) {
-	/* flag as parsed OK */
-	lcmd->flags |= LOOP_CMD_OK;
+	if (lcmd->flags & LOOP_CMD_PARSED) {
+	    /* flag as parsed OK */
+	    lcmd->flags |= LOOP_CMD_OK;
+	}
     }
 
     lcmd->opt = cmd->opt;
@@ -3151,9 +3154,10 @@ static inline void cmd_info_to_loop (LOOPSET *loop, int j,
     }
 
 #if LOOP_DEBUG > 1
-    fprintf(stderr, " loop-flagged: nosub %d, catch %d\n",
+    fprintf(stderr, " loop-flagged: nosub %d, catch %d, checked %d\n",
 	    loop_cmd_nosub(loop, j)? 1 : 0,
-	    loop_cmd_catch(loop, j)? 1 : 0);
+	    loop_cmd_catch(loop, j)? 1 : 0,
+	    cmd_checked(loop, j)? 1 : 0);
 #endif
 }
 
@@ -3565,7 +3569,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		    cmd->ci = CMD_MASKED;
 		}
 		parse = 0;
-	    } else if (ends_condition(loop, j)) {
+	    } else if (ends_condition(loop, j) && cmd_checked(loop, j)) {
 		cmd->ci = ci;
 		flow_control(NULL, NULL, cmd, NULL);
 		if (cmd->err) {
@@ -3594,6 +3598,9 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 
 	    if (parse && !err) {
 		err = parse_command_line(line, cmd, dset, NULL);
+		if (!err) {
+		    loop->cmds[j].flags |= LOOP_CMD_PARSED;
+		}
 	    }
 
 #if LOOP_DEBUG > 1

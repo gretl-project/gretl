@@ -3368,9 +3368,12 @@ static int tokenize_line (CMD *cmd, const char *line,
 	}
 
 	if (compmode && (cmd->ci > 0 || cmd->ntoks == 3)) {
-	    /* we just wanted the command index, and either we've got it
-	       or it seems we're not going to get it */
-	    break;
+	    if (cmd->ci != ELSE && cmd->ci != ENDIF) {
+		/* we just wanted the command index, and either we've got it
+		   or it seems we're not going to get it
+		*/
+		break;
+	    }
 	}
 
 	if (cmd->ciflags & CI_LCHK) {
@@ -3850,16 +3853,19 @@ static int real_parse_command (char *line, CMD *cmd,
 	    /* Are we doing get_command_index(), for compilation?
 	       In that case we shouldn't do any further processing
 	       unless we got a nested loop command (in which case we
-	       want to extract the options).
+	       want to extract the options), or we got a ci that
+	       ought to be unitary.
 	    */
-	    if (!err && cmd->ci == LOOP && compmode == LOOP) {
+	    if (!err && compmode == LOOP && cmd->ci == LOOP) {
 		err = assemble_command(cmd, dset, line);
 		compmode = 0;
+	    } else if (!err && (cmd->ci == ELSE || cmd->ci == ENDIF)) {
+		err = check_for_stray_tokens(cmd);
 	    }
 	    goto parse_exit;
 	}
 
-	if (cmd->ci == ELSE || cmd->ci == ENDIF) {
+	if (!err && (cmd->ci == ELSE || cmd->ci == ENDIF)) {
 	    /* These don't go to assemble_command(), so check
 	       them here for extraneous junk.
 	    */
