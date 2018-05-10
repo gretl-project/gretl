@@ -1,25 +1,25 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* monte_carlo.c - loop procedures */
 
-#include "libgretl.h" 
+#include "libgretl.h"
 #include "monte_carlo.h"
 #include "libset.h"
 #include "compat.h"
@@ -75,9 +75,9 @@ typedef struct {
     double *xbak;  /* previous values */
     int *diff;     /* indicator for difference */
     char *na;      /* indicator for NAs in calculation */
-} LOOP_PRINT;  
+} LOOP_PRINT;
 
-/* below: used only in "progressive" loops */ 
+/* below: used only in "progressive" loops */
 
 typedef struct {
     int lineno;             /* location: line number in loop */
@@ -96,7 +96,7 @@ typedef struct {
 } LOOP_MODEL;
 
 typedef struct {
-    int lineno;     /* location: line number in loop */ 
+    int lineno;     /* location: line number in loop */
     int n;          /* number of observations */
     int nvars;      /* number of variables to store */
     char **names;   /* names of vars to print */
@@ -187,7 +187,7 @@ struct LOOPSET_ {
     loop_command *cmds;   /* saved command info */
     char **eachstrs;      /* for use with "foreach" loop */
     MODEL **models;       /* regular model pointers */
-    int *model_lines;     
+    int *model_lines;
     LOOP_MODEL *lmodels;
     LOOP_PRINT *prns;
     LOOP_STORE store;
@@ -219,7 +219,7 @@ static int extend_loop_dataset (LOOP_STORE *lstore);
 static void controller_free (controller *clr);
 static void destroy_loop_stack (LOOPSET *loop);
 
-static int 
+static int
 make_dollar_substitutions (char *str, int maxlen,
 			   const LOOPSET *loop,
 			   const DATASET *dset,
@@ -291,12 +291,12 @@ static int does_string_sub (const char *s,
    look up its current value (and modify the sign if wanted).  Or if
    we got a "genr" expression, evaluate it.  Otherwise we should have
    got a numerical constant at setup, in which case we just return
-   that value.  
+   that value.
 */
 
 static double controller_get_val (controller *clr,
 				  LOOPSET *loop,
-				  DATASET *dset, 
+				  DATASET *dset,
 				  int *err)
 {
     if (clr->vname[0] != '\0') {
@@ -304,7 +304,7 @@ static double controller_get_val (controller *clr,
 	    clr->val = gretl_scalar_get_value(clr->vname, NULL) * clr->vsign;
 	} else {
 	    gretl_errmsg_sprintf(_("'%s': not a scalar"), clr->vname);
-	} 
+	}
     } else if (clr->expr != NULL && gretl_strsub_on()) {
 	int done = 0;
 
@@ -328,12 +328,12 @@ static double controller_get_val (controller *clr,
 
 	    *expr = '\0';
 	    strncat(expr, clr->expr, 63);
-	    *err = make_dollar_substitutions(expr, 63, loop, dset, 
+	    *err = make_dollar_substitutions(expr, 63, loop, dset,
 					     &subst, OPT_T);
 	    if (!*err && subst) {
 		clr->val = generate_scalar(expr, dset, err);
 		done = 1;
-	    }	    
+	    }
 	}
 	if (!*err && !done) {
 	    clr->val = generate_scalar(clr->expr, dset, err);
@@ -344,7 +344,7 @@ static double controller_get_val (controller *clr,
     }
 
 #if LOOP_DEBUG > 1
-    fprintf(stderr, "controller_get_val: vname='%s', expr='%s', val=%g, err=%d\n", 
+    fprintf(stderr, "controller_get_val: vname='%s', expr='%s', val=%g, err=%d\n",
 	    clr->vname, clr->expr, clr->val, *err);
 #endif
 
@@ -369,7 +369,7 @@ forloop_init (LOOPSET *loop, DATASET *dset, int *err)
 
 /* evaluate boolean condition in for-loop or while-loop */
 
-static int 
+static int
 loop_testval (LOOPSET *loop, DATASET *dset, int *err)
 {
     const char *expr = loop->test.expr;
@@ -417,7 +417,7 @@ loop_testval (LOOPSET *loop, DATASET *dset, int *err)
 
 /* evaluate third expression in for-loop, if any */
 
-static void 
+static void
 loop_delta (LOOPSET *loop, DATASET *dset, int *err)
 {
     const char *expr = loop->delta.expr;
@@ -491,7 +491,7 @@ int ok_in_loop (int c)
 
 #if 0
     if (c == RENAME) return 0;
-#endif    
+#endif
 
     return 1;
 }
@@ -504,7 +504,7 @@ static int loop_attach_child (LOOPSET *loop, LOOPSET *child)
     children = realloc(loop->children, (nc + 1) * sizeof *children);
     if (children == NULL) {
 	return E_ALLOC;
-    } 
+    }
 
     loop->children = children;
     loop->children[nc] = child;
@@ -513,7 +513,7 @@ static int loop_attach_child (LOOPSET *loop, LOOPSET *child)
     child->level = loop->level + 1;
 
 #if LOOP_DEBUG
-    fprintf(stderr, "child loop %p has parent %p\n", 
+    fprintf(stderr, "child loop %p has parent %p\n",
 	    (void *) child, (void *) child->parent);
 #endif
 
@@ -593,9 +593,9 @@ static LOOPSET *gretl_loop_new (LOOPSET *parent)
 	if (err) {
 	    free(loop);
 	    loop = NULL;
-	} 
+	}
     }
-	
+
     return loop;
 }
 
@@ -632,7 +632,7 @@ void gretl_loop_destroy (LOOPSET *loop)
 	    free(loop->cmds[i].line);
 	    if (loop->cmds[i].genr != NULL) {
 		destroy_genr(loop->cmds[i].genr);
-	    }	    
+	    }
 	}
 	free(loop->cmds);
     }
@@ -655,7 +655,7 @@ void gretl_loop_destroy (LOOPSET *loop)
     }
 
     if (loop->prns != NULL) {
-	for (i=0; i<loop->n_prints; i++) { 
+	for (i=0; i<loop->n_prints; i++) {
 	    loop_print_free(&loop->prns[i]);
 	}
 	free(loop->prns);
@@ -679,7 +679,7 @@ static void destroy_loop_stack (LOOPSET *loop)
     if (loop == NULL) {
 	return;
     }
-    
+
     /* find the origin of the stack */
     while (loop->parent != NULL) {
 	loop = loop->parent;
@@ -718,7 +718,7 @@ static int parse_as_while_loop (LOOPSET *loop, const char *s)
 static int check_index_in_parentage (LOOPSET *loop, const char *vname)
 {
     int thistype = loop->type;
-	
+
     while ((loop = loop->parent) != NULL) {
 	if ((loop->type != FOR_LOOP || loop->type != thistype) &&
 	    strcmp(vname, loop->idxname) == 0) {
@@ -748,7 +748,7 @@ static int loop_attach_index_var (LOOPSET *loop, const char *vname,
 	gretl_scalar_set_value_authorized(vname, loop->init.val);
     } else {
 	char genline[64];
-	
+
 	if (na(loop->init.val)) {
 	    sprintf(genline, "%s=NA", vname);
 	} else {
@@ -756,14 +756,14 @@ static int loop_attach_index_var (LOOPSET *loop, const char *vname,
 	    sprintf(genline, "%s=%g", vname, loop->init.val);
 	    gretl_pop_c_numeric_locale();
 	}
-	
+
 	err = generate(genline, dset, GRETL_TYPE_DOUBLE, OPT_Q, NULL);
-	
+
 	if (!err) {
 	    strcpy(loop->idxname, vname);
 	    loop->flags |= LOOP_DELVAR;
 	}
-    } 
+    }
 
     return err;
 }
@@ -773,7 +773,7 @@ static int loop_attach_index_var (LOOPSET *loop, const char *vname,
    the count for a simple count loop).
 */
 
-static int index_get_limit (LOOPSET *loop, controller *clr, const char *s, 
+static int index_get_limit (LOOPSET *loop, controller *clr, const char *s,
 			    DATASET *dset)
 {
     int v, err = 0;
@@ -804,7 +804,7 @@ static int index_get_limit (LOOPSET *loop, controller *clr, const char *s,
 	    if (clr->expr == NULL) {
 		err = E_ALLOC;
 	    }
-	} 
+	}
     }
 
     return err;
@@ -814,13 +814,13 @@ static int index_get_limit (LOOPSET *loop, controller *clr, const char *s,
 
 static int parse_as_indexed_loop (LOOPSET *loop,
 				  DATASET *dset,
-				  const char *lvar, 
+				  const char *lvar,
 				  const char *start,
 				  const char *end)
 {
     int err = 0;
 
-    /* starting and ending values: the order in which we try 
+    /* starting and ending values: the order in which we try
        for valid values is: dates, numeric constants,
        named scalars, scalar expressions.
     */
@@ -865,7 +865,7 @@ static int parse_as_indexed_loop (LOOPSET *loop,
     return err;
 }
 
-static int parse_as_count_loop (LOOPSET *loop, 
+static int parse_as_count_loop (LOOPSET *loop,
 				DATASET *dset,
 				const char *s)
 {
@@ -916,7 +916,7 @@ static int set_forloop_element (char *s, LOOPSET *loop, int i)
     if (!err && i == 0) {
 	/* initialization: look for varname for possible substitution */
 	err = extract_varname(clr->vname, s, &len);
-    } 
+    }
 
 #if LOOP_DEBUG > 1
     fprintf(stderr, " expr='%s', vname='%s'\n", clr->expr, clr->vname);
@@ -979,7 +979,7 @@ static int loop_list_refresh (LOOPSET *loop, const DATASET *dset)
 	char lname[VNAMELEN];
 
 	strcpy(lname, loop->eachname);
-	err = make_dollar_substitutions(lname, VNAMELEN, loop, 
+	err = make_dollar_substitutions(lname, VNAMELEN, loop,
 					dset, NULL, OPT_T);
 	if (!err) {
 	    list = get_list_by_name(lname);
@@ -1007,7 +1007,7 @@ static int loop_list_refresh (LOOPSET *loop, const DATASET *dset)
 	    if (strval != NULL) {
 		/* maybe space separated strings? */
 		int nf = 0;
-		
+
 		loop->eachstrs = gretl_string_split_quoted(strval, &nf, NULL, &err);
 		if (!err) {
 		    loop->final.val = nf;
@@ -1061,7 +1061,7 @@ static int find_list_in_parentage (LOOPSET *loop, const char *s)
    when the loop is actually run, since the list may have changed in
    the meantime.
 
-   Besides the possibilities mentioned above, the single field 
+   Besides the possibilities mentioned above, the single field
    may be an @-string that cashes out into one or more "words".
 */
 
@@ -1094,7 +1094,7 @@ static int list_loop_setup (LOOPSET *loop, char *s, int *nf)
 	*loop->eachname = '\0';
 	strncat(loop->eachname, s, VNAMELEN - 1);
 	*nf = (list != NULL)? list[0] : 0;
-    } 
+    }
 
     return err;
 }
@@ -1105,7 +1105,7 @@ enum {
 };
 
 static int
-each_strings_from_list_of_vars (LOOPSET *loop, const DATASET *dset, 
+each_strings_from_list_of_vars (LOOPSET *loop, const DATASET *dset,
 				char *s, int *pnf, int type)
 {
     int *list = NULL;
@@ -1117,10 +1117,10 @@ each_strings_from_list_of_vars (LOOPSET *loop, const DATASET *dset,
     } else {
 	char vn1[VNAMELEN], vn2[VNAMELEN];
 	char fmt[16];
-	
+
 	gretl_delchar(' ', s);
 	sprintf(fmt, "%%%d[^.]..%%%ds", VNAMELEN-1, VNAMELEN-1);
-	
+
 
 	if (sscanf(s, fmt, vn1, vn2) != 2) {
 	    err = E_PARSE;
@@ -1197,7 +1197,7 @@ static int count_each_fields (const char *s)
 	    }
 	}
     }
-	    
+
     return nf;
 }
 
@@ -1212,24 +1212,24 @@ parse_as_each_loop (LOOPSET *loop, DATASET *dset, char *s)
     if (*s == '\0') {
 	return E_PARSE;
     }
-    
+
     s += strspn(s, " "); /* skip any spaces */
 
 #if LOOP_DEBUG > 1
     fprintf(stderr, "parse_as_each_loop: s = '%s'\n", s);
-#endif 
+#endif
 
     /* get the index variable name (as in "foreach i") */
     if (gretl_scan_varname(s, ivar) != 1) {
 	return E_PARSE;
-    } 
+    }
 
     s += strlen(ivar);
     nf = count_each_fields(s);
 
 #if LOOP_DEBUG > 1
     fprintf(stderr, " number of fields = %d\n", nf);
-#endif 
+#endif
 
     if (nf == 0) {
 	return E_PARSE;
@@ -1244,7 +1244,7 @@ parse_as_each_loop (LOOPSET *loop, DATASET *dset, char *s)
 	err = each_strings_from_list_of_vars(loop, dset, s, &nf,
 					     WILDCARD_LIST);
 	done = (err == 0);
-    }	
+    }
 
     if (!done && nf == 1) {
 	/* try for a named list? */
@@ -1262,11 +1262,11 @@ parse_as_each_loop (LOOPSET *loop, DATASET *dset, char *s)
 	loop->init.val = 1;
 	loop->final.val = nf;
 	err = loop_attach_index_var(loop, ivar, dset);
-    }   
+    }
 
 #if LOOP_DEBUG > 1
     fprintf(stderr, "parse_as_each_loop: final.val=%g\n", loop->final.val);
-#endif 
+#endif
 
     return err;
 }
@@ -1317,7 +1317,7 @@ static int parse_as_for_loop (LOOPSET *loop, char *s)
 	}
 	tmp[i] = '\0';
 	err = set_forloop_element(tmp, loop, j);
-    }  
+    }
 
     if (!err && (sc != 2 || s != q)) {
 	/* we've reached the reached rightmost ')' but have not
@@ -1380,7 +1380,7 @@ static int is_indexed_loop (const char *s,
     return 0;
 }
 
-static int parse_first_loopline (char *s, LOOPSET *loop, 
+static int parse_first_loopline (char *s, LOOPSET *loop,
 				 DATASET *dset)
 {
     char vname[VNAMELEN];
@@ -1445,7 +1445,7 @@ static int parse_first_loopline (char *s, LOOPSET *loop,
  * Returns: loop pointer on successful completion, %NULL on error.
  */
 
-static LOOPSET *start_new_loop (char *s, LOOPSET *inloop, 
+static LOOPSET *start_new_loop (char *s, LOOPSET *inloop,
 				DATASET *dset,
 				gretlopt opt,
 				int *nested,
@@ -1456,7 +1456,7 @@ static LOOPSET *start_new_loop (char *s, LOOPSET *inloop,
     gretl_error_clear();
 
 #if LOOP_DEBUG
-    fprintf(stderr, "start_new_loop: inloop=%p, line='%s'\n", 
+    fprintf(stderr, "start_new_loop: inloop=%p, line='%s'\n",
 	    (void *) inloop, s);
 #endif
 
@@ -1490,7 +1490,7 @@ static LOOPSET *start_new_loop (char *s, LOOPSET *inloop,
 #endif
 	destroy_loop_stack(loop);
 	loop = NULL;
-    } 
+    }
 
     return loop;
 }
@@ -1537,7 +1537,7 @@ static int loop_count_too_high (LOOPSET *loop)
  * Returns: 1 to indicate looping should continue, 0 to terminate.
  */
 
-static int 
+static int
 loop_condition (LOOPSET *loop, DATASET *dset, int *err)
 {
     int ok = 0;
@@ -1635,13 +1635,13 @@ static int gretl_loop_prepare (LOOPSET *loop)
     mpf_set_default_prec(256);
 
     /* allocate some initial lines/commands for loop */
-    loop->cmds = malloc(LOOP_BLOCK * sizeof *loop->cmds); 
-    
+    loop->cmds = malloc(LOOP_BLOCK * sizeof *loop->cmds);
+
     if (loop->cmds == NULL) {
 	return E_ALLOC;
     } else {
 	loop_cmds_init(loop, 0, LOOP_BLOCK);
-    } 
+    }
 
     return 0;
 }
@@ -1754,7 +1754,7 @@ static int loop_model_start (LOOP_MODEL *lmod, MODEL *pmod)
     if (!err) {
 	loop_model_zero(lmod, 0);
 #if LOOP_DEBUG > 1
-	fprintf(stderr, " model copied to %p, returning 0\n", 
+	fprintf(stderr, " model copied to %p, returning 0\n",
 		(void *) lmod->model0);
 #endif
     }
@@ -1792,7 +1792,7 @@ static void loop_print_zero (LOOP_PRINT *lprn, int started)
 
     lprn->n = 0;
 
-    for (i=0; i<lprn->nvars; i++) { 
+    for (i=0; i<lprn->nvars; i++) {
 	if (started) {
 	    mpf_set_d(lprn->sum[i], 0.0);
 	    mpf_set_d(lprn->ssq[i], 0.0);
@@ -1859,7 +1859,7 @@ static int loop_print_start (LOOP_PRINT *lprn, const char *namestr)
     strings_array_free(lprn->names, lprn->nvars);
     lprn->names = NULL;
     lprn->nvars = 0;
-    
+
     free(lprn->sum);
     free(lprn->ssq);
     free(lprn->xbak);
@@ -1929,7 +1929,7 @@ static void loop_store_free (LOOP_STORE *lstore)
     lstore->opt = OPT_NONE;
 }
 
-static int loop_store_set_filename (LOOP_STORE *lstore, 
+static int loop_store_set_filename (LOOP_STORE *lstore,
 				    const char *fname,
 				    gretlopt opt)
 {
@@ -1946,14 +1946,14 @@ static int loop_store_set_filename (LOOP_STORE *lstore,
 	opt = data_save_opt_from_suffix(lstore->fname);
     }
 
-    lstore->opt = opt;    
+    lstore->opt = opt;
 
     return 0;
 }
 
 /* check, allocate and initialize loop data storage */
 
-static int loop_store_start (LOOPSET *loop, const char *names, 
+static int loop_store_start (LOOPSET *loop, const char *names,
 			     const char *fname, gretlopt opt)
 {
     LOOP_STORE *lstore = &loop->store;
@@ -1980,7 +1980,7 @@ static int loop_store_start (LOOPSET *loop, const char *names,
     if (lstore->dset == NULL) {
 	return E_ALLOC;
     }
-    
+
 #if LOOP_DEBUG > 1
     fprintf(stderr, "loop_store_init: created sZ, v = %d, n = %d\n",
 	    lstore->dset->v, lstore->dset->n);
@@ -2033,7 +2033,7 @@ static int loop_store_update (LOOPSET *loop, int j,
     }
 
     for (i=0; i<lstore->nvars && !err; i++) {
-	lstore->dset->Z[i+1][t] = 
+	lstore->dset->Z[i+1][t] =
 	    gretl_scalar_get_value(lstore->names[i], &err);
     }
 
@@ -2163,7 +2163,7 @@ static int loop_model_update (LOOP_MODEL *lmod, MODEL *pmod)
     int j, err = 0;
 
 #if LOOP_DEBUG > 1
-    fprintf(stderr, "loop_model_update: lmod = %p, pmod = %p\n", 
+    fprintf(stderr, "loop_model_update: lmod = %p, pmod = %p\n",
 	    (void *) lmod, (void *) pmod);
 #endif
 
@@ -2187,7 +2187,7 @@ static int loop_model_update (LOOP_MODEL *lmod, MODEL *pmod)
 
     for (j=0; j<pmod->ncoeff; j++) {
 	mpf_set_d(m, pmod->coeff[j]);
-	mpf_add(lmod->sum_coeff[j], lmod->sum_coeff[j], m); 
+	mpf_add(lmod->sum_coeff[j], lmod->sum_coeff[j], m);
 	mpf_mul(m, m, m);
 	mpf_add(lmod->ssq_coeff[j], lmod->ssq_coeff[j], m);
 
@@ -2221,7 +2221,7 @@ static int loop_model_update (LOOP_MODEL *lmod, MODEL *pmod)
    allocation first.
 */
 
-static int loop_print_update (LOOPSET *loop, int j, const char *names) 
+static int loop_print_update (LOOPSET *loop, int j, const char *names)
 {
     LOOP_PRINT *lprn;
     int err = 0;
@@ -2242,7 +2242,7 @@ static int loop_print_update (LOOPSET *loop, int j, const char *names)
 	int i;
 
 	mpf_init(m);
-    
+
 	for (i=0; i<lprn->nvars; i++) {
 	    if (lprn->na[i]) {
 		continue;
@@ -2255,7 +2255,7 @@ static int loop_print_update (LOOPSET *loop, int j, const char *names)
 		lprn->na[i] = 1;
 		continue;
 	    }
-	    mpf_set_d(m, x); 
+	    mpf_set_d(m, x);
 	    mpf_add(lprn->sum[i], lprn->sum[i], m);
 	    mpf_mul(m, m, m);
 	    mpf_add(lprn->ssq[i], lprn->ssq[i], m);
@@ -2280,8 +2280,8 @@ static int add_more_loop_commands (LOOPSET *loop)
     loop_command *cmds;
 
     /* in case we ran out of space */
-    cmds = realloc(loop->cmds, totcmds * sizeof *cmds); 
-    
+    cmds = realloc(loop->cmds, totcmds * sizeof *cmds);
+
     if (cmds == NULL) {
 	return E_ALLOC;
     }
@@ -2290,7 +2290,7 @@ static int add_more_loop_commands (LOOPSET *loop)
     loop_cmds_init(loop, loop->n_cmds, totcmds);
 
     return 0;
-}  
+}
 
 static int real_append_line (ExecState *s, LOOPSET *loop)
 {
@@ -2331,7 +2331,7 @@ static int real_append_line (ExecState *s, LOOPSET *loop)
 #endif
 
     return err;
-}  
+}
 
 /**
  * gretl_loop_append_line:
@@ -2353,7 +2353,7 @@ int gretl_loop_append_line (ExecState *s, DATASET *dset)
     gretl_error_clear();
 
 #if LOOP_DEBUG > 1
-    fprintf(stderr, "gretl_loop_append_line: currloop = %p, line = '%s'\n", 
+    fprintf(stderr, "gretl_loop_append_line: currloop = %p, line = '%s'\n",
 	    (void *) loop, s->line);
 #endif
 
@@ -2376,10 +2376,10 @@ int gretl_loop_append_line (ExecState *s, DATASET *dset)
 	}
 
 	if (!err) {
-	    newloop = start_new_loop(spec, loop, dset, opt, 
+	    newloop = start_new_loop(spec, loop, dset, opt,
 				     &nested, &err);
 #if GLOBAL_TRACE || LOOP_DEBUG
-	    fprintf(stderr, "got LOOP: newloop at %p (err = %d)\n", 
+	    fprintf(stderr, "got LOOP: newloop at %p (err = %d)\n",
 		    (void *) newloop, err);
 #endif
 	    if (newloop == NULL) {
@@ -2407,7 +2407,7 @@ int gretl_loop_append_line (ExecState *s, DATASET *dset)
 	    /* back up a level */
 	    newloop = loop->parent;
 	}
-    } 
+    }
 
     if (!err && loop != NULL && s->cmd->ci != ENDLOOP) {
 	err = real_append_line(s, loop);
@@ -2425,8 +2425,8 @@ int gretl_loop_append_line (ExecState *s, DATASET *dset)
     return err;
 }
 
-static void print_loop_coeff (const DATASET *dset, 
-			      const LOOP_MODEL *lmod, 
+static void print_loop_coeff (const DATASET *dset,
+			      const LOOP_MODEL *lmod,
 			      int i, PRN *prn)
 {
     char pname[VNAMELEN];
@@ -2473,7 +2473,7 @@ static void print_loop_coeff (const DATASET *dset,
     gretl_model_get_param_name(lmod->model0, dset, i, pname);
     maybe_trim_varname(tmp, pname);
     pprintf(prn, "%*s", 15, tmp); /* FIXME length */
-    pprintf(prn, "%#14g %#14g %#14g %#14g\n", mpf_get_d(c1), mpf_get_d(sd1), 
+    pprintf(prn, "%#14g %#14g %#14g %#14g\n", mpf_get_d(c1), mpf_get_d(sd1),
 	    mpf_get_d(c2), mpf_get_d(sd2));
 
     mpf_clear(c1);
@@ -2483,7 +2483,7 @@ static void print_loop_coeff (const DATASET *dset,
     mpf_clear(sd2);
 }
 
-static void loop_model_print (LOOP_MODEL *lmod, const DATASET *dset, 
+static void loop_model_print (LOOP_MODEL *lmod, const DATASET *dset,
 			      PRN *prn)
 {
     char startdate[OBSLEN], enddate[OBSLEN];
@@ -2494,11 +2494,11 @@ static void loop_model_print (LOOP_MODEL *lmod, const DATASET *dset,
 
     pputc(prn, '\n');
     pprintf(prn, _("%s estimates using the %d observations %s-%s\n"),
-	    _(estimator_string(lmod->model0, prn)), lmod->model0->nobs, 
+	    _(estimator_string(lmod->model0, prn)), lmod->model0->nobs,
 	    startdate, enddate);
     print_model_vcv_info(lmod->model0, dset, prn);
-    pprintf(prn, _("Statistics for %d repetitions\n"), lmod->n); 
-    pprintf(prn, _("Dependent variable: %s\n\n"), 
+    pprintf(prn, _("Statistics for %d repetitions\n"), lmod->n);
+    pprintf(prn, _("Dependent variable: %s\n\n"),
 	    gretl_model_get_depvar_name(lmod->model0, dset));
 
     pputs(prn, _("                     mean of      std. dev. of     mean of"
@@ -2539,7 +2539,7 @@ static void loop_print_print (LOOP_PRINT *lprn, PRN *prn)
 	}
     }
 
-    pprintf(prn, _("Statistics for %d repetitions\n"), n); 
+    pprintf(prn, _("Statistics for %d repetitions\n"), n);
     pputc(prn, '\n');
     bufspace(maxlen + 1, prn);
 
@@ -2548,7 +2548,7 @@ static void loop_print_print (LOOP_PRINT *lprn, PRN *prn)
 
     len = get_utf_width(_("std. dev"), 14);
     pprintf(prn, "%*s\n", len, _("std. dev"));
-    
+
     for (i=0; i<lprn->nvars; i++) {
 	s = lprn->names[i];
 	if (lprn->na[i]) {
@@ -2577,7 +2577,7 @@ static void loop_print_print (LOOP_PRINT *lprn, PRN *prn)
     mpf_clear(mean);
     mpf_clear(m);
     mpf_clear(sd);
- 
+
     pputc(prn, '\n');
 }
 
@@ -2615,7 +2615,7 @@ static int loop_store_save (LOOP_STORE *lstore, PRN *prn)
  * Print out the results after completion of the loop @loop.
  */
 
-static void print_loop_results (LOOPSET *loop, const DATASET *dset, 
+static void print_loop_results (LOOPSET *loop, const DATASET *dset,
 				PRN *prn)
 {
     int iters = loop->iter;
@@ -2630,7 +2630,7 @@ static void print_loop_results (LOOPSET *loop, const DATASET *dset,
 	int ci = loop->cmds[i].ci;
 
 #if LOOP_DEBUG > 1
-	fprintf(stderr, "print_loop_results: loop command %d: %s\n", 
+	fprintf(stderr, "print_loop_results: loop command %d: %s\n",
 		i, loop->cmds[i].line);
 #endif
 
@@ -2642,7 +2642,7 @@ static void print_loop_results (LOOPSET *loop, const DATASET *dset,
 		set_model_id(pmod, OPT_NONE);
 		popt = get_printmodel_opt(pmod, opt);
 		printmodel(pmod, dset, popt, prn);
-	    }	    
+	    }
 	}
 
 	if (loop_is_progressive(loop)) {
@@ -2661,7 +2661,7 @@ static void print_loop_results (LOOPSET *loop, const DATASET *dset,
     }
 }
 
-static int substitute_dollar_targ (char *str, int maxlen, 
+static int substitute_dollar_targ (char *str, int maxlen,
 				   const LOOPSET *loop,
 				   const DATASET *dset,
 				   int *subst)
@@ -2682,7 +2682,7 @@ static int substitute_dollar_targ (char *str, int maxlen,
 	if (!gretl_is_scalar(loop->init.vname)) {
 	    /* nothing to substitute */
 	    return 0;
-	} 
+	}
 	sprintf(targ, "$%s", loop->init.vname);
 	targlen = strlen(targ);
     } else if (indexed_loop(loop)) {
@@ -2722,7 +2722,7 @@ static int substitute_dollar_targ (char *str, int maxlen,
 	ntodate(insert, idx - 1, dset);
     } else if (loop->type == EACH_LOOP) {
 	ins = loop->eachstrs[idx - 1];
-    } 
+    }
 
     inslen = strlen(ins);
     incr = inslen - targlen;
@@ -2785,9 +2785,9 @@ static int extend_loop_dataset (LOOP_STORE *lstore)
 	lstore->dset->Z[i] = x;
 	for (t=oldn; t<n; t++) {
 	    lstore->dset->Z[i][t] = (i == 0)? 1.0 : NADBL;
-	}	    
+	}
     }
-    
+
     lstore->dset->n = n;
     lstore->dset->t2 = n - 1;
 
@@ -2818,7 +2818,7 @@ static void progressive_loop_zero (LOOPSET *loop)
 		loop->cmds[i].flags &= ~LOOP_CMD_DONE;
 	    }
 	}
-    }    
+    }
 
     for (i=0; i<loop->n_loop_models; i++) {
 	loop_model_free(&loop->lmodels[i]);
@@ -2891,7 +2891,7 @@ static int top_of_loop (LOOPSET *loop, DATASET *dset)
     return err;
 }
 
-static void 
+static void
 print_loop_progress (const LOOPSET *loop, const DATASET *dset,
 		     PRN *prn)
 {
@@ -2917,7 +2917,7 @@ subst_loop_in_parentage (const LOOPSET *loop)
     return loop;
 }
 
-static int 
+static int
 make_dollar_substitutions (char *str, int maxlen,
 			   const LOOPSET *loop,
 			   const DATASET *dset,
@@ -2927,7 +2927,7 @@ make_dollar_substitutions (char *str, int maxlen,
     int err = 0;
 
     /* if (opt & OPT_T) we're just processing a variable name, at the top
-       of a loop, so we can skip to the "parentage" bit 
+       of a loop, so we can skip to the "parentage" bit
     */
 
     if (!(opt & OPT_T) && (indexed_loop(loop) || loop->type == FOR_LOOP)) {
@@ -2970,7 +2970,7 @@ static LOOPSET *get_child_loop_by_line (LOOPSET *loop, int lno)
 
 static int add_loop_genr (LOOPSET *loop,
 			  int lno,
-			  CMD *cmd, 
+			  CMD *cmd,
 			  DATASET *dset,
 			  PRN *prn)
 {
@@ -3017,7 +3017,7 @@ static int loop_print_save_model (MODEL *pmod, DATASET *dset,
 	    (havename || window)) {
 	    s->callback(s, s->pmod, GRETL_OBJ_EQN);
 	}
-    } 
+    }
 
     return err;
 }
@@ -3070,7 +3070,7 @@ static int loop_process_error (LOOPSET *loop, int j, int err, PRN *prn)
 }
 
 /* Based on the stored flags in the loop-line record, set
-   or unset some flags for the command parser: this can 
+   or unset some flags for the command parser: this can
    reduce the amount of work the parser has to do on each
    iteration of a loop (maybe some of this obsolete?).
 */
@@ -3082,7 +3082,7 @@ static inline void loop_info_to_cmd (LOOPSET *loop, int j,
     fprintf(stderr, "loop_info_to_cmd: i=%d, j=%d: '%s'\n",
 	    loop->iter, j, loop->cmds[j].line);
 #endif
-    
+
     if (loop_is_progressive(loop)) {
 	cmd->flags |= CMD_PROG;
     } else {
@@ -3109,7 +3109,7 @@ static inline void loop_info_to_cmd (LOOPSET *loop, int j,
 	    (cmd->flags & CMD_PROG)? 1 : 0,
 	    (cmd->flags & CMD_NOSUB)? 1 : 0,
 	    (cmd->flags & CMD_CATCH)? 1 : 0);
-#endif	    
+#endif
 }
 
 /* Based on the parsed info in @cmd, maybe modify some flags in
@@ -3120,7 +3120,7 @@ static inline void cmd_info_to_loop (LOOPSET *loop, int j,
 				     CMD *cmd, int *subst)
 {
     loop_command *lcmd = &loop->cmds[j];
-    
+
 #if LOOP_DEBUG > 1
     fprintf(stderr, "cmd_info_to_loop: j=%d: '%s'\n",
 	    j, lcmd->line);
@@ -3150,11 +3150,11 @@ static inline void cmd_info_to_loop (LOOPSET *loop, int j,
 	lcmd->flags |= LOOP_CMD_CATCH;
     }
 
-#if LOOP_DEBUG > 1  
+#if LOOP_DEBUG > 1
     fprintf(stderr, " loop-flagged: nosub %d, catch %d\n",
 	    loop_cmd_nosub(loop, j)? 1 : 0,
 	    loop_cmd_catch(loop, j)? 1 : 0);
-#endif	 
+#endif
 }
 
 static int loop_delete_object (LOOPSET *loop, CMD *cmd, PRN *prn)
@@ -3198,7 +3198,7 @@ static int loop_delete_object (LOOPSET *loop, CMD *cmd, PRN *prn)
 
 static char *inner_errline;
 
-static int loop_report_error (LOOPSET *loop, int err, 
+static int loop_report_error (LOOPSET *loop, int err,
 			      const char *errline,
 			      ExecState *state,
 			      PRN *prn)
@@ -3242,6 +3242,11 @@ static int conditional_line (LOOPSET *loop, int j)
 {
     return loop->cmds[j].ci == IF || loop->cmds[j].ci == ELIF ||
 	loop->cmds[j].ci == ELSE || loop->cmds[j].ci == ENDIF;
+}
+
+static int ends_condition (LOOPSET *loop, int j)
+{
+    return loop->cmds[j].ci == ELSE || loop->cmds[j].ci == ENDIF;
 }
 
 static int do_compile_conditional (LOOPSET *loop, int j)
@@ -3322,7 +3327,7 @@ static int maybe_preserve_loop (LOOPSET *loop)
     if (loop_err_caught(loop)) {
 	return 0;
     }
-    
+
     if (!loop_is_attached(loop) && gretl_function_depth() > 0) {
 	if (gretl_iteration_depth() > 0 || gretl_looping()) {
 	    int err = attach_loop_to_function(loop);
@@ -3332,7 +3337,7 @@ static int maybe_preserve_loop (LOOPSET *loop)
 # if GLOBAL_TRACE
 		fprintf(stderr, "loop %p attached to function\n",
 			(void *) loop);
-# endif		
+# endif
 	    }
 	}
     }
@@ -3352,7 +3357,7 @@ static int maybe_preserve_loop (LOOPSET *loop)
 void loop_reset_genrs (LOOPSET *loop)
 {
     int i;
-    
+
     for (i=0; i<loop->n_children; i++) {
 	loop_reset_genrs(loop->children[i]);
     }
@@ -3384,8 +3389,8 @@ static void abort_loop_execution (ExecState *s)
 
 static int block_model (CMD *cmd)
 {
-    return cmd->ci == END && 
-	(!strcmp(cmd->param, "mle") || 
+    return cmd->ci == END &&
+	(!strcmp(cmd->param, "mle") ||
 	 !strcmp(cmd->param, "nls") ||
 	 !strcmp(cmd->param, "gmm"));
 }
@@ -3397,7 +3402,7 @@ static int block_model (CMD *cmd)
 
 #define LTRACE 0
 
-int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop) 
+int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 {
     char *line = s->line;
     CMD *cmd = s->cmd;
@@ -3448,7 +3453,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
     }
 
     show_activity = show_activity_func_installed();
-    
+
     while (!err && loop_condition(loop, dset, &err)) {
 	/* respective iterations of a given loop */
 #if LOOP_DEBUG > 1
@@ -3460,8 +3465,8 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	    print_loop_progress(loop, dset, prn);
 	}
 
-	if (gretl_in_gui_mode() && 
-	    loop->iter % 10 == 0 && 
+	if (gretl_in_gui_mode() &&
+	    loop->iter % 10 == 0 &&
 	    check_for_stop()) {
 	    /* the GUI user clicked the "Stop" button */
 	    abort_loop_execution(s);
@@ -3530,12 +3535,12 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		}
 	    }
 
-	cond_next:    
+	cond_next:
 
 	    if (!loop_cmd_nodol(loop, j)) {
 		if (strchr(line, '$')) {
 		    /* handle loop-specific $-string substitution */
-		    err = make_dollar_substitutions(line, MAXLINE, loop, 
+		    err = make_dollar_substitutions(line, MAXLINE, loop,
 						    dset, &subst, OPT_NONE);
 		    if (err) {
 			break;
@@ -3555,6 +3560,15 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		flow_control(line, dset, cmd, &loop->cmds[j].genr);
 		if (cmd->err) {
 		    /* we hit an error evaluating the if state */
+		    err = cmd->err;
+		} else {
+		    cmd->ci = CMD_MASKED;
+		}
+		parse = 0;
+	    } else if (ends_condition(loop, j)) {
+		cmd->ci = ci;
+		flow_control(NULL, NULL, cmd, NULL);
+		if (cmd->err) {
 		    err = cmd->err;
 		} else {
 		    cmd->ci = CMD_MASKED;
@@ -3687,14 +3701,14 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 			loop->cmds[j].flags |= LOOP_CMD_NOEQ;
 			err = generate(cmd->vstart, dset, cmd->gtype,
 				       cmd->opt, prn);
-		    }			
+		    }
 		}
 	    } else if (cmd->ci == DELEET && !(cmd->opt & (OPT_F | OPT_T))) {
 		err = loop_delete_object(loop, cmd, prn);
 	    } else {
 		/* send command to the regular processor */
 		int catch = cmd->flags & CMD_CATCH;
-		
+
 		err = gretl_cmd_exec(s, dset);
 		if (catch) {
 		    /* ensure "catch" hasn't been scrubbed */
@@ -3748,7 +3762,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
     }
 
     if (!err && loop->iter > 0) {
-	print_loop_results(loop, dset, prn); 
+	print_loop_results(loop, dset, prn);
     }
 
     if (loop->n_models > 0) {
@@ -3771,7 +3785,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	; /* leave 'line' alone */
     } else if (line != NULL) {
 	*line = '\0';
-    } 
+    }
 
     /* be sure to clear some loop-special parser flags */
     cmd->flags &= ~CMD_PROG;

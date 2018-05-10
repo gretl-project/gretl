@@ -306,9 +306,8 @@ int flow_control (const char *line, DATASET *dset, CMD *cmd,
 		  void *ptr)
 {
     int ci = cmd->ci;
-    int blocked, ok, err = 0;
-
-    blocked = get_if_state(IS_FALSE);
+    int blocked = get_if_state(IS_FALSE);
+    int ok, err = 0;
 
     if (ci != IF && ci != ELSE && ci != ELIF && ci != ENDIF) {
 	return blocked;
