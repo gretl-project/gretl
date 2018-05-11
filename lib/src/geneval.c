@@ -2947,6 +2947,36 @@ static NODE *matrix_series_calc (NODE *l, NODE *r, int op, parser *p)
     return ret;
 }
 
+/* In principle we want two matrices, but in fact we have a
+   series and a scalar, so some "casting" is needed.
+*/
+
+static NODE *num_series_dotcalc (NODE *l, NODE *r, int op, parser *p)
+{
+    NODE *ret = aux_matrix_node(p);
+
+    if (ret != NULL && starting(p)) {
+	gretl_matrix *a = NULL, *b = NULL;
+
+	if (l->t == SERIES) {
+	    a = tmp_matrix_from_series(l, p);
+	    b = gretl_matrix_from_scalar(r->v.xval);
+	} else {
+	    a = gretl_matrix_from_scalar(l->v.xval);
+	    b = tmp_matrix_from_series(r, p);
+	}
+
+	if (!p->err) {
+	    p->err = real_matrix_calc(a, b, op, &ret->v.m);
+	}
+
+	gretl_matrix_free(a);
+	gretl_matrix_free(b);
+    }
+
+    return ret;
+}
+
 /* Here we know have a scalar and a 1 x 1 matrix to work with,
    in either order */
 
@@ -4413,36 +4443,32 @@ static NODE *submatrix_node (NODE *l, NODE *r, parser *p)
     NODE *ret = NULL;
 
     if (starting(p)) {
-	gretl_matrix *a = NULL;
-	matrix_subspec *spec = NULL;
+	matrix_subspec *spec = r->v.mspec;
 
-	if (r->t != MSPEC) {
-	    fprintf(stderr, "submatrix_node: couldn't find mspec\n");
-	    p->err = E_TYPES;
-	    return NULL;
-	}
+	p->err = check_matrix_subspec(spec, l->v.m);
+	if (!p->err) {
+	    if (spec->type[0] == SEL_ELEMENT) {
+		int i = mspec_get_row_index(spec);
+		int j = mspec_get_col_index(spec);
+		double x;
 
-	spec = r->v.mspec;
-
-	if (l->t == MAT) {
-	    a = matrix_get_submatrix(l->v.m, spec, 0, &p->err);
-	} else if (l->t == STR) {
-	    /* FIXME never reached? */
-	    a = user_matrix_get_submatrix(l->v.str, spec, &p->err);
-	} else {
-	    p->err = E_TYPES;
-	}
-
-	if (a != NULL) {
-	    ret = aux_matrix_node(p);
-	    if (ret == NULL) {
-		gretl_matrix_free(a);
+		x = matrix_get_element(l->v.m, i, j, &p->err);
+		if (!p->err) {
+		    ret = aux_scalar_node(p);
+		    if (!p->err) {
+			ret->v.xval = x;
+		    }
+		}
 	    } else {
-		ret->v.m = a;
+		ret = aux_matrix_node(p);
+		if (!p->err) {
+		    ret->v.m = matrix_get_submatrix(l->v.m, spec,
+						    1, &p->err);
+		}
 	    }
 	}
     } else {
-	ret = aux_matrix_node(p);
+	ret = aux_any_node(p);
     }
 
     return ret;
@@ -6095,6 +6121,9 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
 	    /* series on left */
 	    n = sample_size(p->dset);
 	    x = l->v.xvec + p->dset->t1;
+	} else if (l->t == NUM) {
+	    n = 1;
+	    x = &l->v.xval;
 	} else {
 	    /* must be matrix on left */
 	    n = gretl_vector_get_length(l->v.m);
@@ -6115,6 +6144,13 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
 		    p->err = E_NONCONF;
 		} else {
 		    y = r->v.xvec + p->dset->t1;
+		}
+	    } else if (r->t == NUM) {
+		n2 = 1;
+		if (n2 != n) {
+		    p->err = E_NONCONF;
+		} else {
+		    y = &r->v.xval;
 		}
 	    } else if (r->t == MAT) {
 		/* matrix on right */
@@ -14056,6 +14092,9 @@ static NODE *eval (NODE *t, parser *p)
 	} else if ((l->t == MAT && r->t == SERIES) ||
 		   (l->t == SERIES && r->t == MAT)) {
 	    ret = matrix_series_calc(l, r, t->t, p);
+	} else if ((l->t == NUM && r->t == SERIES) ||
+		   (l->t == SERIES && r->t == NUM)) {
+	    ret = num_series_dotcalc(l, r, t->t, p);
 	} else {
 	    node_type_error(t->t, (l->t == MAT)? 2 : 1,
 			    MAT, (l->t == MAT)? r : l, p);
@@ -14306,11 +14345,13 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case MSL:
-	/* user matrix plus subspec */
+	/* matrix plus subspec */
 	if (t->flags & LHT_NODE) {
 	    ret = lhs_terminal_node(t, l, r, p);
-	} else {
+	} else if (l->t == MAT && r->t == MSPEC) {
 	    ret = submatrix_node(l, r, p);
+	} else {
+	    p->err = E_TYPES;
 	}
 	break;
     case OSL:
@@ -14600,8 +14641,8 @@ static NODE *eval (NODE *t, parser *p)
     case F_NAALEN:
     case F_KMEIER:
 	/* functions taking two series/vectors as args */
-	if ((l->t == SERIES || l->t == MAT) &&
-	    (r->t == SERIES || r->t == MAT)) {
+	if ((l->t == SERIES || l->t == MAT || l->t == NUM) &&
+	    (r->t == SERIES || r->t == MAT || r->t == NUM)) {
 	    ret = series_2_func(l, r, t->t, p);
 	} else if ((l->t == SERIES || l->t == MAT) &&
 		   null_or_empty(r) &&
@@ -17507,6 +17548,7 @@ static void parser_init (parser *p, const char *str,
 void gen_save_or_print (parser *p, PRN *prn)
 {
     if (p->flags & P_DISCARD) {
+	/* doing "eval" */
 	if (p->ret == NULL) {
 	    return;
 	} else if (p->ret->t == MAT) {
