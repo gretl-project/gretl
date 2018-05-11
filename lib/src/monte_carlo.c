@@ -2634,7 +2634,7 @@ static void print_loop_results (LOOPSET *loop, const DATASET *dset,
 		i, loop->cmds[i].line);
 #endif
 
-	if (!loop_is_progressive(loop) && ci == OLS) {
+	if (ci == OLS && !loop_is_progressive(loop)) {
 	    if (model_print_deferred(opt)) {
 		MODEL *pmod = loop->models[j++];
 		gretlopt popt;
