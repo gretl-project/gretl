@@ -2449,8 +2449,10 @@ static int check_tic_labels (double vmin, double vmax,
     if (d > 6) {
 	if (axis == 'x') {
 	    sprintf(gi->xfmt, "%% .%dg", d+1);
-	    sprintf(gi->xtics, "%.*g %#.6g", d+1, vmin, 
-		    (vmax - vmin)/ 4.0);
+	    if (vmax > vmin) {
+		sprintf(gi->xtics, "%.*g %#.6g", d+1, vmin,
+			(vmax - vmin)/ 4.0);
+	    }
 	} else {
 	    sprintf(gi->yfmt, "%% .%dg", d+1);
 	}	    
