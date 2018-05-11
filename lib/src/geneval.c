@@ -9785,20 +9785,28 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 	return p->err;
     }
 
+    if (rhs_scalar && spec->type[0] == SEL_ELEMENT &&
+	p->op == B_ASN) {
+        /* straight assignment of a scalar value to
+	   a single element of an existing matrix
+	*/
+	int i = mspec_get_row_index(spec);
+	int j = mspec_get_col_index(spec);
+
+	gretl_matrix_set(m1, i-1, j-1, na(y) ? M_NA : y);
+	return p->err; /* we're done */
+    }
+
     if (rhs_scalar && spec->type[0] == SEL_ELEMENT) {
-    	/* assignment (possibly inflected) of a scalar value
-	   to a single element of an existing matrix
+        /* inflected assignment of a scalar value to
+	   a single element of an existing matrix
 	*/
 	int i = mspec_get_row_index(spec);
 	int j = mspec_get_col_index(spec);
 	double x = matrix_get_element(m1, i, j, &p->err);
 
 	if (!p->err) {
-	    if (p->op == B_ASN) {
-		x = y;
-	    } else {
-		x = xy_calc(x, y, p->op, MAT, p);
-	    }
+	    x = xy_calc(x, y, p->op, MAT, p);
 	    if (xna(x)) {
 		if (na(x)) {
 		    x = M_NA;
@@ -9807,7 +9815,7 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 	    }
 	    gretl_matrix_set(m1, i-1, j-1, x);
 	}
-	return p->err; /* note, we're done */
+	return p->err; /* we're done */
     }
 
     if (rhs_scalar && p->op == B_ASN) {
@@ -9820,7 +9828,7 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 	    set_gretl_warning(W_GENNAN);
 	}
 	p->err = assign_scalar_to_submatrix(m1, y, spec);
-	return p->err; /* note, we're done */
+	return p->err; /* we're done */
     }
 
     if (p->op != B_ASN) {
