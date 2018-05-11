@@ -1102,9 +1102,10 @@ static double unix_scan_NA (FILE *fp, int *err)
 {
     char test[3] = {0};
 
-    fscanf(fp, "%2s", test);
-
-    if (!strcmp(test, "NA") || !strcmp(test, ".")) {
+    if (fscanf(fp, "%2s", test) < 1) {
+	*err = E_DATA;
+	return 0;
+    } else if (!strcmp(test, "NA") || !strcmp(test, ".")) {
 	return M_NA;
     } else {
 	gretl_errmsg_sprintf(_("got invalid field '%s'"), test);
