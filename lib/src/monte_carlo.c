@@ -135,10 +135,9 @@ typedef enum {
     LOOP_CMD_NOSUB   = 1 << 3, /* no @-substitution this line */
     LOOP_CMD_CATCH   = 1 << 4, /* "catch" flag present */
     LOOP_CMD_COND    = 1 << 5, /* compiled conditional */
-    LOOP_CMD_DONE    = 1 << 6, /* progressive loop command parsed */
+    LOOP_CMD_PDONE   = 1 << 6, /* progressive loop command started */
     LOOP_CMD_PARSED  = 1 << 7, /* regular loop command parsed */
-    LOOP_CMD_OK      = 1 << 8, /* command has been run without error */
-    LOOP_CMD_NOEQ    = 1 << 9  /* "genr" with no formula */
+    LOOP_CMD_NOEQ    = 1 << 8  /* "genr" with no formula */
 } LoopCmdFlags;
 
 struct loop_command_ {
@@ -2022,7 +2021,7 @@ static int loop_store_update (LOOPSET *loop, int j,
 	    return err;
 	}
 	lstore->lineno = j;
-	loop->cmds[j].flags |= LOOP_CMD_DONE;
+	loop->cmds[j].flags |= LOOP_CMD_PDONE;
     }
 
     t = lstore->n;
@@ -2233,7 +2232,7 @@ static int loop_print_update (LOOPSET *loop, int j, const char *names)
 	/* not started yet */
 	err = loop_print_start(lprn, names);
 	if (!err) {
-	    loop->cmds[j].flags |= LOOP_CMD_DONE;
+	    loop->cmds[j].flags |= LOOP_CMD_PDONE;
 	}
     }
 
@@ -2805,7 +2804,7 @@ static void progressive_loop_zero (LOOPSET *loop)
        away with just "zeroing" the relevant structures
        in an appropriate way, rather than destroying
        them? Maybe, but so long as we're destroying them
-       we have to remove the "preparsed" flags from
+       we have to remove the "started" flags from
        associated "print" and "store" commands, or else
        things will go awry on the second execution of
        a nested progressive loop.
@@ -2816,7 +2815,7 @@ static void progressive_loop_zero (LOOPSET *loop)
 	    if (loop->cmds[i].ci == PRINT ||
 		loop->cmds[i].ci == STORE) {
 		/* reset */
-		loop->cmds[i].flags &= ~LOOP_CMD_DONE;
+		loop->cmds[i].flags &= ~LOOP_CMD_PDONE;
 	    }
 	}
     }
@@ -3041,13 +3040,13 @@ static int loop_next_command (char *targ, LOOPSET *loop, int *pj)
     return ret;
 }
 
-#define genr_compiled(l,j) (l->cmds[j].flags & LOOP_CMD_GENR)
+#define genr_compiled(l,j)  (l->cmds[j].flags & LOOP_CMD_GENR)
 #define loop_cmd_nodol(l,j) (l->cmds[j].flags & LOOP_CMD_NODOL)
 #define loop_cmd_nosub(l,j) (l->cmds[j].flags & LOOP_CMD_NOSUB)
 #define loop_cmd_catch(l,j) (l->cmds[j].flags & LOOP_CMD_CATCH)
-#define conditional_compiled(l,j) (l->cmds[j].flags & LOOP_CMD_COND)
-#define cmd_preparsed(l,j) (l->cmds[j].flags & LOOP_CMD_DONE)
-#define cmd_checked(l,j)   (l->cmds[j].flags & LOOP_CMD_OK)
+#define cond_compiled(l,j)  (l->cmds[j].flags & LOOP_CMD_COND)
+#define prog_cmd_started(l,j) (l->cmds[j].flags & LOOP_CMD_PDONE)
+#define cmd_parsed(l,j) (l->cmds[j].flags & LOOP_CMD_PARSED)
 
 static int loop_process_error (LOOPSET *loop, int j, int err, PRN *prn)
 {
@@ -3139,14 +3138,6 @@ static inline void cmd_info_to_loop (LOOPSET *loop, int j,
 	}
     }
 
-    if (lcmd->ci == ELSE || lcmd->ci == ENDIF ||
-	lcmd->ci == BREAK || lcmd->ci == LOOP) {
-	if (lcmd->flags & LOOP_CMD_PARSED) {
-	    /* flag as parsed OK */
-	    lcmd->flags |= LOOP_CMD_OK;
-	}
-    }
-
     lcmd->opt = cmd->opt;
 
     if (cmd->flags & CMD_CATCH) {
@@ -3157,7 +3148,7 @@ static inline void cmd_info_to_loop (LOOPSET *loop, int j,
     fprintf(stderr, " loop-flagged: nosub %d, catch %d, checked %d\n",
 	    loop_cmd_nosub(loop, j)? 1 : 0,
 	    loop_cmd_catch(loop, j)? 1 : 0,
-	    cmd_checked(loop, j)? 1 : 0);
+	    cmd_parsed(loop, j)? 1 : 0);
 #endif
 }
 
@@ -3487,15 +3478,15 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 #if LTRACE || (LOOP_DEBUG > 1)
 	    fprintf(stderr, "iter=%d, j=%d, line='%s', ci=%d (%s), compiled=%d\n",
 		    loop->iter, j, line, ci, gretl_command_word(ci),
-		    genr_compiled(loop, j) || conditional_compiled(loop, j) ||
-		    cmd_checked(loop, j));
+		    genr_compiled(loop, j) || cond_compiled(loop, j) ||
+		    cmd_parsed(loop, j));
 #endif
 	    strcpy(errline, line);
 
 	    if (gretl_if_state_false()) {
 		/* the only ways out are via ELSE, ELIF or ENDIF */
 		if (ci == ELSE || ci == ENDIF) {
-		    if (cmd_checked(loop, j)) {
+		    if (cmd_parsed(loop, j)) {
 			cmd->ci = ci;
 			cmd->err = 0;
 			flow_control(NULL, NULL, cmd, NULL);
@@ -3516,7 +3507,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		}
 	    }
 
-	    if (cmd_checked(loop, j)) {
+	    if (cmd_parsed(loop, j)) {
 		/* no parsing needed */
 		cmd->ci = ci;
 		if (ci == BREAK) {
@@ -3559,7 +3550,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	    /* transcribe saved loop info -> cmd */
 	    loop_info_to_cmd(loop, j, cmd);
 
-	    if (conditional_compiled(loop, j)) {
+	    if (cond_compiled(loop, j)) {
 		cmd->ci = ci;
 		flow_control(line, dset, cmd, &loop->cmds[j].genr);
 		if (cmd->err) {
@@ -3569,7 +3560,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		    cmd->ci = CMD_MASKED;
 		}
 		parse = 0;
-	    } else if (ends_condition(loop, j) && cmd_checked(loop, j)) {
+	    } else if (ends_condition(loop, j) && cmd_parsed(loop, j)) {
 		cmd->ci = ci;
 		flow_control(NULL, NULL, cmd, NULL);
 		if (cmd->err) {
@@ -3587,7 +3578,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		    loop->cmds[j].flags |= LOOP_CMD_COND;
 		}
 		parse = 0;
-	    } else if (cmd_preparsed(loop, j)) {
+	    } else if (prog_cmd_started(loop, j)) {
 		cmd->ci = ci;
 		if (loop->cmds[j].flags & LOOP_CMD_NOSUB) {
 		    parse = 0;
@@ -3673,13 +3664,13 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	    } else if (cmd->ci == ENDLOOP) {
 		; /* implicit break */
 	    } else if (progressive && cmd->ci == PRINT && !loop_literal(loop, j)) {
-		if (cmd_preparsed(loop, j)) {
+		if (prog_cmd_started(loop, j)) {
 		    err = loop_print_update(loop, j, NULL);
 		} else {
 		    err = loop_print_update(loop, j, cmd->parm2);
 		}
 	    } else if (progressive && cmd->ci == STORE) {
-		if (cmd_preparsed(loop, j)) {
+		if (prog_cmd_started(loop, j)) {
 		    err = loop_store_update(loop, j, NULL, NULL, 0);
 		} else {
 		    err = loop_store_update(loop, j, cmd->parm2, cmd->param,

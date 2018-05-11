@@ -28,7 +28,8 @@ typedef enum {
     CI_BLOCK = 1 << 15, /* command starts a block */
     CI_FFORM = 1 << 16, /* command also has function-form */
     CI_LCHK  = 1 << 17, /* needs checking for "list" specials */
-    CI_INFL  = 1 << 18  /* command arglist "inflected" by options */
+    CI_INFL  = 1 << 18, /* command arglist "inflected" by options */
+    CI_FCMIN = 1 << 19  /* minimal (single word) flow control */
 } CIFlags;
 
 struct gretl_cmd {
@@ -78,7 +79,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { ARCH,     "arch",     CI_ORD1 | CI_LIST },
     { ARMA,     "arima",    CI_LIST | CI_L1INT },
     { BIPROBIT, "biprobit", CI_LIST },
-    { BREAK,    "break",    CI_NOOPT },
+    { BREAK,    "break",    CI_NOOPT | CI_FCMIN },
     { BXPLOT,   "boxplot",  CI_LIST | CI_EXTRA | CI_INFL },
     { CHOW,     "chow",     CI_PARM1 },
     { CLEAR,    "clear",    0 },
@@ -98,10 +99,10 @@ static struct gretl_cmd gretl_cmds[] = {
     { DUMMIFY,  "dummify",  CI_LIST },
     { DURATION, "duration", CI_LIST },
     { ELIF,     "elif",     CI_EXPR },
-    { ELSE,     "else",     CI_NOOPT },
+    { ELSE,     "else",     CI_NOOPT | CI_FCMIN },
     { END,      "end",      CI_PARM1 },
-    { ENDIF,    "endif",    CI_NOOPT },
-    { ENDLOOP,  "endloop",  CI_NOOPT },
+    { ENDIF,    "endif",    CI_NOOPT | CI_FCMIN },
+    { ENDLOOP,  "endloop",  CI_NOOPT | CI_FCMIN },
     { EQNPRINT, "eqnprint", 0 }, /* special, handled later */
     { EQUATION, "equation", CI_LIST },
     { ESTIMATE, "estimate", CI_PARM1 | CI_PARM2 }, /* params optional */
@@ -231,6 +232,8 @@ static struct gretl_cmd gretl_cmds[] = {
 #define has_function_form(c) (gretl_cmds[c].flags & CI_FFORM)
 
 #define option_inflected(c) (c->ciflags & CI_INFL)
+
+#define simple_flow_control(c) (c->ciflags & CI_FCMIN)
 
 static int command_get_flags (int ci)
 {
@@ -3367,13 +3370,17 @@ static int tokenize_line (CMD *cmd, const char *line,
 	    }
 	}
 
-	if (compmode && (cmd->ci > 0 || cmd->ntoks == 3)) {
-	    if (cmd->ci != ELSE && cmd->ci != ENDIF) {
-		/* we just wanted the command index, and either we've got it
-		   or it seems we're not going to get it
-		*/
+	/* when we're just looking for a command index (compmode),
+	   we may be able to get out early
+	*/
+	if (compmode && simple_flow_control(cmd)) {
+	    if (string_is_blank(s)) {
 		break;
 	    }
+	} else if (compmode && (cmd->ci > 0 || cmd->ntoks == 3)) {
+	    /* either we've got the command index or it seems
+	       we're not going to get it */
+	    break;
 	}
 
 	if (cmd->ciflags & CI_LCHK) {
@@ -3844,8 +3851,10 @@ static int real_parse_command (char *line, CMD *cmd,
 
     if (*line != '\0') {
 	if (!compmode && gretl_if_state_false()) {
+	    /* take a short-cut */
 	    cmd->ci = get_flow_control_ci(line);
 	} else {
+	    /* not compiling or not blocked */
 	    err = tokenize_line(cmd, line, dset, compmode);
 	}
 
@@ -3859,13 +3868,13 @@ static int real_parse_command (char *line, CMD *cmd,
 	    if (!err && compmode == LOOP && cmd->ci == LOOP) {
 		err = assemble_command(cmd, dset, line);
 		compmode = 0;
-	    } else if (!err && (cmd->ci == ELSE || cmd->ci == ENDIF)) {
+	    } else if (!err && simple_flow_control(cmd)) {
 		err = check_for_stray_tokens(cmd);
 	    }
 	    goto parse_exit;
 	}
 
-	if (!err && (cmd->ci == ELSE || cmd->ci == ENDIF)) {
+	if (!err && simple_flow_control(cmd)) {
 	    /* These don't go to assemble_command(), so check
 	       them here for extraneous junk.
 	    */
