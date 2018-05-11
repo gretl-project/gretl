@@ -577,7 +577,7 @@ user_var *get_user_var_of_type_by_name (const char *name,
     if (u == NULL) {
 	/* "On demand" hashing: if we're successful in looking
 	   up a variable in the traditional manner, then
-	   insert it into the user vars hash table.
+	   insert it into the uservars hash table.
 	*/
 	for (i=imin; i<n_vars; i++) {
 	    if (uvars[i]->level == d && 
@@ -1667,8 +1667,7 @@ int add_auxiliary_scalar (const char *name, double val)
     return err;
 }
 
-static int real_scalar_set_value (const char *name, double val,
-				  int authorized)
+int gretl_scalar_set_value (const char *name, double val)
 {
     user_var *u;
     int err = 0;
@@ -1678,7 +1677,7 @@ static int real_scalar_set_value (const char *name, double val,
     if (u == NULL) {
 	gretl_errmsg_sprintf("%s: no such scalar", name);
 	err = E_DATA;
-    } else if (!authorized && scalar_is_read_only_index(name)) {
+    } else if (scalar_is_read_only_index(name)) {
 	err = E_DATA;
 	gretl_errmsg_sprintf(_("The variable %s is currently read-only"), name);
     } else {
@@ -1690,16 +1689,6 @@ static int real_scalar_set_value (const char *name, double val,
     }
 
     return err;
-}
-
-int gretl_scalar_set_value (const char *name, double val)
-{
-    return real_scalar_set_value(name, val, 0);
-}
-
-int gretl_scalar_set_value_authorized (const char *name, double val)
-{
-    return real_scalar_set_value(name, val, 1);
 }
 
 /* get the value from a user variable of scalar type */

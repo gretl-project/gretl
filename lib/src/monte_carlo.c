@@ -1564,7 +1564,6 @@ loop_condition (LOOPSET *loop, DATASET *dset, int *err)
 	    if (indexed_loop(loop) && loop->iter > 0) {
 		loop->idxval += 1;
 		uvar_set_scalar_value(loop->idxvar, loop->idxval);
-		// gretl_scalar_set_value_authorized(loop->idxname, loop->idxval);
 	    }
 	}
     } else if (!loop_count_too_high(loop)) {
@@ -2887,12 +2886,11 @@ static int top_of_loop (LOOPSET *loop, DATASET *dset)
 	if (indexed_loop(loop)) {
 	    loop->idxval = loop->init.val;
 	    uvar_set_scalar_value(loop->idxvar, loop->idxval);
-	    // gretl_scalar_set_value_authorized(loop->idxname, loop->idxval);
 	}
 
 	/* initialization, in case this loop is being run more than
-	   once (i.e. it's embedded in an outer loop) */
-
+	   once (i.e. it's embedded in an outer loop)
+	*/
 	if (loop_is_progressive(loop)) {
 	    progressive_loop_zero(loop);
 	} else {
