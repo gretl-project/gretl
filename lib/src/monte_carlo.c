@@ -28,6 +28,7 @@
 #include "objstack.h"
 #include "gretl_func.h"
 #include "uservar.h"
+#include "uservar_priv.h"
 #include "flow_control.h"
 #include "system.h"
 #include "genparse.h"
@@ -164,6 +165,7 @@ struct LOOPSET_ {
 
     /* index/foreach control variables */
     char idxname[VNAMELEN];
+    user_var *idxvar;
     int idxval;
     char eachname[VNAMELEN];
 
@@ -546,6 +548,7 @@ static void gretl_loop_init (LOOPSET *loop)
     loop->iter = 0;
     loop->err = 0;
     *loop->idxname = '\0';
+    loop->idxvar = NULL;
     loop->idxval = 0;
     loop->brk = 0;
     *loop->eachname = '\0';
@@ -743,9 +746,16 @@ static int loop_attach_index_var (LOOPSET *loop, const char *vname,
 	}
     }
 
-    if (gretl_is_scalar(vname)) {
-	strcpy(loop->idxname, vname);
-	gretl_scalar_set_value_authorized(vname, loop->init.val);
+    loop->idxvar = get_user_var_by_name(vname);
+    
+    if (loop->idxvar != NULL) {
+	if (loop->idxvar->type == GRETL_TYPE_DOUBLE) {
+	    strcpy(loop->idxname, vname);
+	    uvar_set_scalar_value(loop->idxvar, loop->init.val);
+	} else {
+	    gretl_errmsg_set("loop index must be a scalar");
+	    err = E_TYPES;
+	}
     } else {
 	char genline[64];
 
@@ -760,7 +770,9 @@ static int loop_attach_index_var (LOOPSET *loop, const char *vname,
 	err = generate(genline, dset, GRETL_TYPE_DOUBLE, OPT_Q, NULL);
 
 	if (!err) {
+	    /* automatic index variable */
 	    strcpy(loop->idxname, vname);
+	    loop->idxvar = get_user_var_by_name(vname);
 	    loop->flags |= LOOP_DELVAR;
 	}
     }
@@ -1551,7 +1563,8 @@ loop_condition (LOOPSET *loop, DATASET *dset, int *err)
 	    ok = 1;
 	    if (indexed_loop(loop) && loop->iter > 0) {
 		loop->idxval += 1;
-		gretl_scalar_set_value_authorized(loop->idxname, loop->idxval);
+		uvar_set_scalar_value(loop->idxvar, loop->idxval);
+		// gretl_scalar_set_value_authorized(loop->idxname, loop->idxval);
 	    }
 	}
     } else if (!loop_count_too_high(loop)) {
@@ -2873,7 +2886,8 @@ static int top_of_loop (LOOPSET *loop, DATASET *dset)
     if (!err) {
 	if (indexed_loop(loop)) {
 	    loop->idxval = loop->init.val;
-	    gretl_scalar_set_value_authorized(loop->idxname, loop->idxval);
+	    uvar_set_scalar_value(loop->idxvar, loop->idxval);
+	    // gretl_scalar_set_value_authorized(loop->idxname, loop->idxval);
 	}
 
 	/* initialization, in case this loop is being run more than
@@ -3314,6 +3328,10 @@ static int loop_reattach_index_var (LOOPSET *loop, DATASET *dset)
 
     err = generate(genline, dset, GRETL_TYPE_DOUBLE, OPT_Q, NULL);
 
+    if (!err) {
+	loop->idxvar = get_user_var_by_name(loop->idxname);
+    }
+
     return err;
 }
 
@@ -3432,7 +3450,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
     fprintf(stderr, "loop_exec: loop = %p\n", (void *) loop);
 #endif
 
- #if LOOPSAVE
+#if LOOPSAVE
     if (loop_is_attached(loop) && *loop->idxname != '\0') {
 	loop_reattach_index_var(loop, dset);
     }
