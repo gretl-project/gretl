@@ -757,41 +757,6 @@ double matrix_get_element (const gretl_matrix *M, int i, int j,
     return x;
 }
 
-gretl_matrix *user_matrix_get_submatrix (const char *name, 
-					 matrix_subspec *spec,
-					 int *err)
-{
-    gretl_matrix *S = NULL;
-    gretl_matrix *M;
-
-    M = user_var_get_value_by_name(name);
-    if (M == NULL) {
-	*err = E_UNKVAR;
-    } else {
-	S = matrix_get_submatrix(M, spec, 0, err);
-    }
-
-    return S;
-}
-
-/* Look up the existing matrix called @name, and substitute
-   the matrix @S for part of the original, as specified by
-   @spec.
-*/
-
-int user_matrix_replace_submatrix (const char *mname, 
-				   const gretl_matrix *S,
-				   matrix_subspec *spec)
-{
-    gretl_matrix *M = user_var_get_value_by_name(mname);
-
-    if (M == NULL) {
-	return E_UNKVAR;
-    } else {
-	return matrix_replace_submatrix(M, S, spec);
-    }
-}
-
 /* Handle the case where we got a single string as argument
    to colnames() or rownames(), for a matrix with more than
    one column or row: construct specific names by appending

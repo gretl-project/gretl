@@ -70,10 +70,6 @@ int matrix_replace_submatrix (gretl_matrix *M,
 			      const gretl_matrix *S,
 			      matrix_subspec *spec);
 
-int user_matrix_replace_submatrix (const char *mname, 
-				   const gretl_matrix *S,
-				   matrix_subspec *spec);
-
 int umatrix_set_names_from_string (gretl_matrix *M, 
 				   const char *s,
 				   int byrow);
@@ -154,10 +150,6 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 				    matrix_subspec *spec,
 				    int prechecked,
 				    int *err);
-
-gretl_matrix *user_matrix_get_submatrix (const char *name, 
-					 matrix_subspec *spec,
-					 int *err);
 
 int matrix_invert_in_place (gretl_matrix *m);
 
