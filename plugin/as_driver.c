@@ -696,9 +696,11 @@ static int as_arma (const double *coeff,
 	    if (as.n > 2000) {
 		/* try to avoid slowdown on big samples? */
 		as.toler = 0.0001;
+		as.use_loglik = 1; /* ? */
 	    } else if (!as.ifc) {
 		as.use_loglik = 1;
 	    }
+	    as.use_loglik = 1;
 	} else {
 	    /* AS 154 */
 	    as.cfunc = as154_iteration;
