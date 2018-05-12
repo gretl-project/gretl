@@ -31,6 +31,7 @@ struct as_info {
     double sumsq, fact, sumlog;
     double toler;  /* tolerance for switching to fast iterations */
     double loglik;
+    BFGS_CRIT_FUNC cfunc;
     int ma_check;
     int iupd; /* specific to AS 154 */
     int ncalls;
@@ -46,7 +47,7 @@ static int as_154_alloc (struct as_info *as)
 
     /* unused pointers specific to AS 197 */
     as->vw = as->vl = as->vk = NULL;
-    
+
     as->phi =   malloc(as->r * sizeof *as->phi);
     as->theta = malloc(as->r * sizeof *as->theta);
     as->A =     malloc(as->r * sizeof *as->A);
@@ -84,16 +85,16 @@ static int as_197_alloc (struct as_info *as)
     /* unused pointers specific to AS 154 */
     as->A = as->P0 = as->V = as->evec = NULL;
     as->thetab = as->xnext = as->xrow = as->rbar = NULL;
-		
+
     as->phi = as->theta = NULL;
-    
+
     if (as->plen > 0) {
 	as->phi = malloc(as->plen * sizeof *as->phi);
 	if (as->phi == NULL) {
 	    err = E_ALLOC;
 	}
     }
-    
+
     if (!err && as->qlen > 0) {
 	as->theta = malloc(as->qlen * sizeof *as->theta);
 	if (as->theta == NULL) {
@@ -120,8 +121,7 @@ static int as_197_alloc (struct as_info *as)
 static int as_info_init (struct as_info *as,
 			 int algo,
 			 arma_info *ai,
-			 double toler,
-			 int use_loglik)
+			 double toler)
 {
     int err = 0;
 
@@ -168,7 +168,7 @@ static int as_info_init (struct as_info *as,
 	as->ma_check = 0;
 	as->iupd = 1; /* AS 154: FIXME AR(1) */
 	as->ncalls = 0;
-	as->use_loglik = use_loglik;
+	as->use_loglik = 0;
     }
 
     return err;
@@ -522,12 +522,7 @@ static int as_undo_y_scaling (arma_info *ainfo,
     }
 
     as->use_loglik = 1;
-
-    if (as->algo == 154) {
-	lnl = as154_iteration(b, as);
-    } else {
-	lnl = as197_iteration(b, as);
-    }
+    lnl = as->cfunc(b, as);
 
     if (na(lnl)) {
 	err = 1;
@@ -589,13 +584,8 @@ static int as_arma_finish (MODEL *pmod,
 	/* base covariance matrix on Hessian (perhaps QML) */
 	gretl_matrix *Hinv;
 
-	if (as->algo == 154) {
-	    Hinv = numerical_hessian_inverse(b, ainfo->nc, as154_iteration,
-					     as, &vcv_err);
-	} else {
-	    Hinv = numerical_hessian_inverse(b, ainfo->nc, as197_iteration,
-					     as, &vcv_err);
-	}
+	Hinv = numerical_hessian_inverse(b, ainfo->nc, as->cfunc,
+					 as, &vcv_err);
 	if (!vcv_err) {
 	    if (QML) {
 		vcv_err = arma_QML_vcv(pmod, Hinv, as, as->algo, b, s2,
@@ -655,7 +645,6 @@ static int as_arma (const double *coeff,
     gretl_matrix *y = NULL;
     double *b = NULL;
     double toler = -1.0;
-    int use_loglik = 0;
     int algo, err = 0;
 
     if (opt & OPT_A) {
@@ -666,7 +655,7 @@ static int as_arma (const double *coeff,
 	algo = as197_ok(ainfo) ? 197 : 154;
     }
 
-    err = as_info_init(&as, algo, ainfo, toler, use_loglik);
+    err = as_info_init(&as, algo, ainfo, toler);
     if (err) {
 	return err;
     }
@@ -703,15 +692,16 @@ static int as_arma (const double *coeff,
 	double toler;
 
 	if (as.algo == 197) {
+	    as.cfunc = as197_iteration;
 	    if (as.n > 2000) {
 		/* try to avoid slowdown on big samples? */
 		as.toler = 0.0001;
 	    } else if (!as.ifc) {
 		as.use_loglik = 1;
 	    }
-	    as.use_loglik = 1; /* better on average? */
 	} else {
 	    /* AS 154 */
+	    as.cfunc = as154_iteration;
 	    as.use_loglik = 1; /* generally better? */
 	}
 
@@ -721,17 +711,21 @@ static int as_arma (const double *coeff,
 
 	BFGS_defaults(&maxit, &toler, ARMA);
 
-	if (as.algo == 154) {
+	err = BFGS_max(b, ainfo->nc, maxit, toler,
+		       &ainfo->fncount, &ainfo->grcount,
+		       as.cfunc, C_LOGLIK, NULL, &as, NULL,
+		       maxopt, ainfo->prn);
+
+	if (as.algo == 197 && err == E_NOCONV && !as.use_loglik) {
+	    /* see if we can get convergence using the full
+	       loglikelihood as criterion? */
+	    as.use_loglik = 1;
 	    err = BFGS_max(b, ainfo->nc, maxit, toler,
 			   &ainfo->fncount, &ainfo->grcount,
-			   as154_iteration, C_LOGLIK,
-			   NULL, &as, NULL, maxopt, ainfo->prn);
-	} else {
-	    err = BFGS_max(b, ainfo->nc, maxit, toler,
-			   &ainfo->fncount, &ainfo->grcount,
-			   as197_iteration, C_LOGLIK,
-			   NULL, &as, NULL, maxopt, ainfo->prn);
+			   as.cfunc, C_LOGLIK, NULL, &as, NULL,
+			   maxopt, ainfo->prn);
 	}
+
 	if (!err) {
 	    if (ainfo->yscale != 1.0) {
 		/* note: this implies recalculation of loglik */
@@ -757,4 +751,3 @@ static int as_arma (const double *coeff,
 
     return err;
 }
-
