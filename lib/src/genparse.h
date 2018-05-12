@@ -616,7 +616,8 @@ enum {
     PAR_NODE = 1 << 3, /* exponentiation node is parenthesized */
     PRX_NODE = 1 << 4, /* aux node is proxy (don't reuse!) */
     ALS_NODE = 1 << 5, /* node holds aliased function call */
-    LHT_NODE = 1 << 6  /* node holds terminal of LHS */
+    LHT_NODE = 1 << 6, /* node holds terminal of LHS */
+    MSL_NODE = 1 << 7  /* (scalar) node is matrix element */
 };
 
 struct node {
