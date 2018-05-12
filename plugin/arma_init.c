@@ -689,7 +689,7 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
 	free(y);
     }
 
-    if (!err && prn != NULL) {
+    if (!err) {
 	ainfo->init = INI_HR;
     }
 
