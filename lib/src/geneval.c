@@ -1191,15 +1191,15 @@ static int node_replace_array (NODE *n, gretl_array *a)
 
 static int node_replace_scalar (NODE *n, double x)
 {
-    int err;
+    int err = 0;
 
     if (n->uv != NULL && n->uv->type == GRETL_TYPE_DOUBLE) {
-	err = user_var_set_scalar_value(n->uv, x);
+	uvar_set_scalar_value(n->uv, x);
     } else {
 	if (n->uv == NULL) {
-	    fprintf(stderr, "*** replace scalar: node uv is NULL!\n");
+	    fprintf(stderr, "*** node_replace scalar: node uv is NULL!\n");
 	} else {
-	    fprintf(stderr, "*** replace scalar: node uv of wrong type!\n");
+	    fprintf(stderr, "*** node_replace scalar: node uv of wrong type!\n");
 	}
 	err = gretl_scalar_set_value(n->vname, x);
     }
@@ -1209,15 +1209,15 @@ static int node_replace_scalar (NODE *n, double x)
 
 static int gen_replace_scalar (parser *p, double x)
 {
-    int err;
+    int err = 0;
 
     if (p->lh.uv != NULL && p->lh.uv->type == GRETL_TYPE_DOUBLE) {
-	err = user_var_set_scalar_value(p->lh.uv, x);
+	uvar_set_scalar_value(p->lh.uv, x);
     } else {
 	if (p->lh.uv == NULL) {
-	    fprintf(stderr, "*** replace scalar: LHS uv is NULL!\n");
+	    fprintf(stderr, "*** gen_replace scalar: LHS uv is NULL!\n");
 	} else {
-	    fprintf(stderr, "*** replace scalar: LHS uv of wrong type!\n");
+	    fprintf(stderr, "***gen_ replace scalar: LHS uv of wrong type!\n");
 	}
 	err = gretl_scalar_set_value(p->lh.name, x);
     }
@@ -17015,14 +17015,18 @@ static int save_generated_var (parser *p, PRN *prn)
 
     if (p->targ == NUM) {
 	if (p->lh.t == NUM) {
-	    /* modifying existing scalar */
-	    x = gretl_scalar_get_value(p->lh.name, NULL);
+	    /* modifying an existing scalar */
 	    if (r->t == NUM) {
-		x = xy_calc(x, r->v.xval, p->op, NUM, p);
+		x = r->v.xval;
 	    } else if (scalar_matrix_node(r)) {
-		x = xy_calc(x, r->v.m->val[0], p->op, NUM, p);
+		x = r->v.m->val[0];
 	    } else {
 		p->err = E_TYPES;
+	    }
+	    if (!p->err && p->op != B_ASN) {
+		double x0 = uvar_get_scalar_value(p->lh.uv);
+
+		x = xy_calc(x0, x, p->op, NUM, p);
 	    }
 	    if (!p->err) {
 		p->err = gen_replace_scalar(p, x);
@@ -17299,7 +17303,6 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
 	p->flags &= ~P_DELTAN;
     } else {
 	p->flags = (P_START | P_PRIV | P_EXEC);
-
 	for (i=0; saveflags[i] > 0; i++) {
 	    if (prevflags & saveflags[i]) {
 		p->flags |= saveflags[i];
