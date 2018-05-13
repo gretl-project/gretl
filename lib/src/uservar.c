@@ -498,6 +498,10 @@ user_var *get_user_var_of_type_by_name (const char *name,
 	return NULL;
     }
 
+#if 0
+    fprintf(stderr, "get_user_var: '%s' (type=%d)\n", name, (int) type);
+#endif
+
     if (type == GRETL_TYPE_DOUBLE) {
 	/* support "auxiliary scalars" mechanism */
 	imin = scalar_imin;
