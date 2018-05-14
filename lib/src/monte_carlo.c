@@ -113,7 +113,8 @@ typedef enum {
     LOOP_DELVAR      = 1 << 3,
     LOOP_ATTACHED    = 1 << 4,
     LOOP_RENAMING    = 1 << 5,
-    LOOP_ERR_CAUGHT  = 1 << 6
+    LOOP_ERR_CAUGHT  = 1 << 6,
+    LOOP_CONDITIONAL = 1 << 7
 } LoopFlags;
 
 struct controller_ {
@@ -209,6 +210,8 @@ struct LOOPSET_ {
 #define loop_is_renaming(l)     (l->flags & LOOP_RENAMING)
 #define loop_set_renaming(l)    (l->flags |= LOOP_RENAMING)
 #define loop_err_caught(l)      (l->flags |= LOOP_ERR_CAUGHT)
+#define loop_has_cond(l)        (l->flags & LOOP_CONDITIONAL)
+#define loop_set_has_cond(l)    (l->flags |= LOOP_CONDITIONAL)
 
 #define model_print_deferred(o) (o & OPT_F)
 
@@ -747,7 +750,7 @@ static int loop_attach_index_var (LOOPSET *loop, const char *vname,
     }
 
     loop->idxvar = get_user_var_by_name(vname);
-    
+
     if (loop->idxvar != NULL) {
 	if (loop->idxvar->type == GRETL_TYPE_DOUBLE) {
 	    strcpy(loop->idxname, vname);
@@ -2331,6 +2334,8 @@ static int real_append_line (ExecState *s, LOOPSET *loop)
 	    }
 	} else if (s->cmd->ci == RENAME || s->cmd->ci == OPEN) {
 	    loop_set_renaming(loop);
+	} else if (s->cmd->ci == IF) {
+	    loop_set_has_cond(loop);
 	}
 	loop->cmds[n].ci = s->cmd->ci;
 	loop->n_cmds += 1;
@@ -3206,7 +3211,7 @@ static int loop_delete_object (LOOPSET *loop, CMD *cmd, PRN *prn)
 static char *inner_errline;
 
 static int loop_report_error (LOOPSET *loop, int err,
-			      const char *errline,
+			      char *errline,
 			      ExecState *state,
 			      PRN *prn)
 {
@@ -3219,7 +3224,7 @@ static int loop_report_error (LOOPSET *loop, int err,
     if (err) {
 	if (fd == 0) {
 	    errmsg(err, prn);
-	    if (*errline != '\0') {
+	    if (errline != NULL && *errline != '\0') {
 		pprintf(prn, ">> %s\n", errline);
 	    }
 	}
@@ -3230,7 +3235,7 @@ static int loop_report_error (LOOPSET *loop, int err,
 	err = loop->err;
     }
 
-    if (fd > 0 && err && *errline != '\0') {
+    if (fd > 0 && err && errline != NULL && *errline != '\0') {
 	strcpy(state->line, errline);
     }
 
@@ -3416,13 +3421,14 @@ static int block_model (CMD *cmd)
 int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 {
     char *line = s->line;
+    char *errline = NULL;
     CMD *cmd = s->cmd;
     PRN *prn = s->prn;
-    char errline[MAXLINE];
     int indent0;
     int progressive;
+    int gui_mode, echo;
     int show_activity = 0;
-    int j, err = 0;
+    int j = 0, err = 0;
 
     if (loop == NULL) {
 	loop = currloop;
@@ -3440,6 +3446,8 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	return 1;
     }
 
+    gui_mode = gretl_in_gui_mode();
+    echo = gretl_echo_on();
     indent0 = gretl_if_state_record();
     progressive = loop_is_progressive(loop);
     set_loop_on(loop_is_quiet(loop));
@@ -3454,16 +3462,16 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
     }
 #endif
 
-    if (loop_is_renaming(loop)) {
-	loop_renaming = 1;
-    }
-
     err = top_of_loop(loop, dset);
-    if (err) {
-	*errline = '\0';
-    }
 
-    show_activity = show_activity_func_installed();
+    if (!err) {
+	if (loop_is_renaming(loop)) {
+	    loop_renaming = 1;
+	}
+	if (gui_mode) {
+	    show_activity = show_activity_func_installed();
+	}
+    }
 
     while (!err && loop_condition(loop, dset, &err)) {
 	/* respective iterations of a given loop */
@@ -3472,13 +3480,11 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 #endif
 	j = -1;
 
-	if (gretl_echo_on() && indexed_loop(loop) && !loop_is_quiet(loop)) {
+	if (echo && indexed_loop(loop) && !loop_is_quiet(loop)) {
 	    print_loop_progress(loop, dset, prn);
 	}
 
-	if (gretl_in_gui_mode() &&
-	    loop->iter % 10 == 0 &&
-	    check_for_stop()) {
+	if (gui_mode && loop->iter % 10 == 0 && check_for_stop()) {
 	    /* the GUI user clicked the "Stop" button */
 	    abort_loop_execution(s);
 	    err = E_STOP;
@@ -3497,9 +3503,9 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		    genr_compiled(loop, j) || cond_compiled(loop, j) ||
 		    cmd_parsed(loop, j));
 #endif
-	    strcpy(errline, line);
+	    errline = loop->cmds[j].line;
 
-	    if (gretl_if_state_false()) {
+	    if (loop_has_cond(loop) && gretl_if_state_false()) {
 		/* the only ways out are via ELSE, ELIF or ENDIF */
 		if (ci == ELSE || ci == ENDIF) {
 		    if (cmd_parsed(loop, j)) {
@@ -3535,7 +3541,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	    }
 
 	    if (genr_compiled(loop, j)) {
-		if (gretl_echo_on() && !loop_is_quiet(loop)) {
+		if (echo && !loop_is_quiet(loop)) {
 		    pprintf(prn, "? %s\n", line);
 		}
 		err = execute_genr(loop->cmds[j].genr, dset, prn);
@@ -3637,7 +3643,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		cmd_info_to_loop(loop, j, cmd, &subst);
 	    }
 
-	    if (gretl_echo_on()) {
+	    if (echo) {
 		if (s->cmd->ci == ENDLOOP) {
 		    if (indexed_loop(loop)) {
 			pputc(prn, '\n');
@@ -3761,7 +3767,6 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	if (err && inner_errline == NULL) {
 	    inner_errline = gretl_strdup(errline);
 	}
-
     } /* end iterations of loop */
 
     cmd->flags &= ~CMD_NOSUB;
