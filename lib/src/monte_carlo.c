@@ -3039,24 +3039,6 @@ static int loop_print_save_model (MODEL *pmod, DATASET *dset,
     return err;
 }
 
-/* get the next command for a loop by pulling a line off the
-   stack of loop commands.
-*/
-
-static int loop_next_command (char *targ, LOOPSET *loop, int *pj)
-{
-    int ret = 1, j = *pj + 1;
-
-    if (j < loop->n_cmds) {
-	strcpy(targ, loop->cmds[j].line);
-	*pj = j;
-    } else {
-	ret = 0;
-    }
-
-    return ret;
-}
-
 #define genr_compiled(l,j)  (l->cmds[j].flags & LOOP_CMD_GENR)
 #define loop_cmd_nodol(l,j) (l->cmds[j].flags & LOOP_CMD_NODOL)
 #define loop_cmd_nosub(l,j) (l->cmds[j].flags & LOOP_CMD_NOSUB)
@@ -3064,6 +3046,10 @@ static int loop_next_command (char *targ, LOOPSET *loop, int *pj)
 #define cond_compiled(l,j)  (l->cmds[j].flags & LOOP_CMD_COND)
 #define prog_cmd_started(l,j) (l->cmds[j].flags & LOOP_CMD_PDONE)
 #define cmd_parsed(l,j) (l->cmds[j].flags & LOOP_CMD_PARSED)
+
+#define is_compiled(l,j) ((l->cmds[j].flags & (LOOP_CMD_GENR|LOOP_CMD_COND)) || \
+			  ((l->cmds[j].ci == ELSE || loop->cmds[j].ci == ENDIF) && \
+			   (l->cmds[j].flags & LOOP_CMD_PARSED)))
 
 static int loop_process_error (LOOPSET *loop, int j, int err, PRN *prn)
 {
@@ -3416,19 +3402,50 @@ static int block_model (CMD *cmd)
 			       c == MLE ||  \
 			       c == GMM)
 
+static int handle_prog_command (LOOPSET *loop, int j,
+				CMD *cmd, int *err)
+{
+    int handled = 0;
+
+    if (cmd->ci == PRINT && !loop_literal(loop, j)) {
+	if (prog_cmd_started(loop, j)) {
+	    *err = loop_print_update(loop, j, NULL);
+	} else {
+	    *err = loop_print_update(loop, j, cmd->parm2);
+	}
+	handled = 1;
+    } else if (cmd->ci == STORE) {
+	if (prog_cmd_started(loop, j)) {
+	    *err = loop_store_update(loop, j, NULL, NULL, 0);
+	} else {
+	    *err = loop_store_update(loop, j, cmd->parm2, cmd->param,
+				     cmd->opt);
+	}
+	handled = 1;
+    } else if (not_ok_in_progloop(cmd->ci)) {
+	gretl_errmsg_sprintf(_("%s: not implemented in 'progressive' loops"),
+			     gretl_command_word(cmd->ci));
+	*err = 1;
+	handled = 1;
+    }
+
+    return handled;
+}
+
 #define LTRACE 0
 
 int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 {
     char *line = s->line;
-    char *errline = NULL;
+    char *currline = NULL;
+    char *showline = NULL;
     CMD *cmd = s->cmd;
     PRN *prn = s->prn;
     int indent0;
     int progressive;
     int gui_mode, echo;
     int show_activity = 0;
-    int j = 0, err = 0;
+    int err = 0;
 
     if (loop == NULL) {
 	loop = currloop;
@@ -3475,15 +3492,14 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 
     while (!err && loop_condition(loop, dset, &err)) {
 	/* respective iterations of a given loop */
+	int j;
+
 #if LOOP_DEBUG > 1
 	fprintf(stderr, "*** top of loop: iter = %d\n", loop->iter);
 #endif
-	j = -1;
-
 	if (echo && indexed_loop(loop) && !loop_is_quiet(loop)) {
 	    print_loop_progress(loop, dset, prn);
 	}
-
 	if (gui_mode && loop->iter % 10 == 0 && check_for_stop()) {
 	    /* the GUI user clicked the "Stop" button */
 	    abort_loop_execution(s);
@@ -3491,19 +3507,27 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	    break;
 	}
 
-	while (!err && loop_next_command(line, loop, &j)) {
+	for (j=0; j<loop->n_cmds && !err; j++) {
 	    /* exec commands on this iteration */
 	    int ci = loop->cmds[j].ci;
 	    int parse = 1;
 	    int subst = 0;
 
+	    currline = loop->cmds[j].line;
+	    if (!is_compiled(loop, j)) {
+		strcpy(line, currline);
+		showline = line;
+	    } else {
+		/* for "echo" purposes */
+		showline = currline;
+	    }
+
 #if LTRACE || (LOOP_DEBUG > 1)
 	    fprintf(stderr, "iter=%d, j=%d, line='%s', ci=%d (%s), compiled=%d\n",
-		    loop->iter, j, line, ci, gretl_command_word(ci),
+		    loop->iter, j, showline, ci, gretl_command_word(ci),
 		    genr_compiled(loop, j) || cond_compiled(loop, j) ||
 		    cmd_parsed(loop, j));
 #endif
-	    errline = loop->cmds[j].line;
 
 	    if (loop_has_cond(loop) && gretl_if_state_false()) {
 		/* the only ways out are via ELSE, ELIF or ENDIF */
@@ -3542,7 +3566,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 
 	    if (genr_compiled(loop, j)) {
 		if (echo && !loop_is_quiet(loop)) {
-		    pprintf(prn, "? %s\n", line);
+		    pprintf(prn, "? %s\n", showline);
 		}
 		err = execute_genr(loop->cmds[j].genr, dset, prn);
 		if (err) {
@@ -3574,7 +3598,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 
 	    if (cond_compiled(loop, j)) {
 		cmd->ci = ci;
-		flow_control(line, dset, cmd, &loop->cmds[j].genr);
+		flow_control(NULL, dset, cmd, &loop->cmds[j].genr);
 		if (cmd->err) {
 		    /* we hit an error evaluating the if state */
 		    err = cmd->err;
@@ -3614,13 +3638,12 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		if (!err) {
 		    loop->cmds[j].flags |= LOOP_CMD_PARSED;
 		}
-	    }
-
 #if LOOP_DEBUG > 1
-	    fprintf(stderr, "    after: '%s', ci=%d\n", line, cmd->ci);
-	    fprintf(stderr, "    cmd->savename = '%s'\n", cmd->savename);
-	    fprintf(stderr, "    err from parse_command_line: %d\n", err);
+		fprintf(stderr, "    after: '%s', ci=%d\n", line, cmd->ci);
+		fprintf(stderr, "    cmd->savename = '%s'\n", cmd->savename);
+		fprintf(stderr, "    err from parse_command_line: %d\n", err);
 #endif
+	    }
 
 	handle_err:
 
@@ -3649,7 +3672,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 			pputc(prn, '\n');
 		    }
 		} else if (!loop_is_quiet(loop)) {
-		    gretl_echo_command(cmd, line, prn);
+		    gretl_echo_command(cmd, showline, prn);
 		}
 	    }
 
@@ -3685,23 +3708,6 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		break;
 	    } else if (cmd->ci == ENDLOOP) {
 		; /* implicit break */
-	    } else if (progressive && cmd->ci == PRINT && !loop_literal(loop, j)) {
-		if (prog_cmd_started(loop, j)) {
-		    err = loop_print_update(loop, j, NULL);
-		} else {
-		    err = loop_print_update(loop, j, cmd->parm2);
-		}
-	    } else if (progressive && cmd->ci == STORE) {
-		if (prog_cmd_started(loop, j)) {
-		    err = loop_store_update(loop, j, NULL, NULL, 0);
-		} else {
-		    err = loop_store_update(loop, j, cmd->parm2, cmd->param,
-					    cmd->opt);
-		}
-	    } else if (progressive && not_ok_in_progloop(cmd->ci)) {
-		gretl_errmsg_sprintf(_("%s: not implemented in 'progressive' loops"),
-				     gretl_command_word(cmd->ci));
-		err = 1;
 	    } else if (cmd->ci == GENR) {
 		if (subst || (loop->cmds[j].flags & LOOP_CMD_NOEQ)) {
 		    /* We can't use a "compiled" genr if string substitution
@@ -3725,6 +3731,8 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		}
 	    } else if (cmd->ci == DELEET && !(cmd->opt & (OPT_F | OPT_T))) {
 		err = loop_delete_object(loop, cmd, prn);
+	    } else if (progressive && handle_prog_command(loop, j, cmd, &err)) {
+		; /* OK, or not */
 	    } else {
 		/* send command to the regular processor */
 		int catch = cmd->flags & CMD_CATCH;
@@ -3765,7 +3773,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	}
 
 	if (err && inner_errline == NULL) {
-	    inner_errline = gretl_strdup(errline);
+	    inner_errline = gretl_strdup(currline);
 	}
     } /* end iterations of loop */
 
@@ -3777,7 +3785,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
     }
 
     if (err || loop->err) {
-	err = loop_report_error(loop, err, errline, s, prn);
+	err = loop_report_error(loop, err, currline, s, prn);
     }
 
     if (!err && loop->iter > 0) {
