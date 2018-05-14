@@ -3138,6 +3138,10 @@ static inline void cmd_info_to_loop (LOOPSET *loop, int j,
 	}
     }
 
+    if (cmd->ci == IF || cmd->ci == ELIF) {
+	return;
+    }
+
     lcmd->opt = cmd->opt;
 
     if (cmd->flags & CMD_CATCH) {
@@ -3560,6 +3564,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	    }
 
 	    if (genr_compiled(loop, j)) {
+		/* no parsing needed */
 		if (echo && !loop_is_quiet(loop)) {
 		    pprintf(prn, "? %s\n", showline);
 		}
@@ -3592,6 +3597,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	    loop_info_to_cmd(loop, j, cmd);
 
 	    if (cond_compiled(loop, j)) {
+		/* compiled IF or ELIF */
 		cmd->ci = ci;
 		flow_control(NULL, dset, cmd, &loop->cmds[j].genr);
 		if (cmd->err) {
@@ -3602,6 +3608,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		}
 		parse = 0;
 	    } else if (ends_condition(loop, j)) {
+		/* compiled ELSE or ENDIF */
 		cmd->ci = ci;
 		flow_control(NULL, NULL, cmd, NULL);
 		if (cmd->err) {
@@ -3647,7 +3654,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		}
 	    } else if (cmd->ci < 0) {
 		/* blocked/masked */
-		if (conditional_line(loop, j)) {
+		if (ci == IF || ci == ELIF) {
 		    cmd_info_to_loop(loop, j, cmd, &subst);
 		}
 		continue;
