@@ -138,8 +138,7 @@ typedef enum {
     LOOP_CMD_CATCH   = 1 << 4, /* "catch" flag present */
     LOOP_CMD_COND    = 1 << 5, /* compiled conditional */
     LOOP_CMD_PDONE   = 1 << 6, /* progressive loop command started */
-    LOOP_CMD_PARSED  = 1 << 7, /* regular loop command parsed */
-    LOOP_CMD_NOEQ    = 1 << 8  /* "genr" with no formula */
+    LOOP_CMD_NOEQ    = 1 << 7  /* "genr" with no formula */
 } LoopCmdFlags;
 
 struct loop_command_ {
@@ -3045,11 +3044,9 @@ static int loop_print_save_model (MODEL *pmod, DATASET *dset,
 #define loop_cmd_catch(l,j) (l->cmds[j].flags & LOOP_CMD_CATCH)
 #define cond_compiled(l,j)  (l->cmds[j].flags & LOOP_CMD_COND)
 #define prog_cmd_started(l,j) (l->cmds[j].flags & LOOP_CMD_PDONE)
-#define cmd_parsed(l,j) (l->cmds[j].flags & LOOP_CMD_PARSED)
 
 #define is_compiled(l,j) ((l->cmds[j].flags & (LOOP_CMD_GENR|LOOP_CMD_COND)) || \
-			  ((l->cmds[j].ci == ELSE || loop->cmds[j].ci == ENDIF) && \
-			   (l->cmds[j].flags & LOOP_CMD_PARSED)))
+			  l->cmds[j].ci == ELSE || loop->cmds[j].ci == ENDIF)
 
 static int loop_process_error (LOOPSET *loop, int j, int err, PRN *prn)
 {
@@ -3148,10 +3145,9 @@ static inline void cmd_info_to_loop (LOOPSET *loop, int j,
     }
 
 #if LOOP_DEBUG > 1
-    fprintf(stderr, " loop-flagged: nosub %d, catch %d, checked %d\n",
+    fprintf(stderr, " loop-flagged: nosub %d, catch %d\n",
 	    loop_cmd_nosub(loop, j)? 1 : 0,
-	    loop_cmd_catch(loop, j)? 1 : 0,
-	    cmd_parsed(loop, j)? 1 : 0);
+	    loop_cmd_catch(loop, j)? 1 : 0);
 #endif
 }
 
@@ -3510,41 +3506,40 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	for (j=0; j<loop->n_cmds && !err; j++) {
 	    /* exec commands on this iteration */
 	    int ci = loop->cmds[j].ci;
+	    int compiled = is_compiled(loop, j);
 	    int parse = 1;
 	    int subst = 0;
 
 	    currline = loop->cmds[j].line;
-	    if (!is_compiled(loop, j)) {
-		strcpy(line, currline);
-		showline = line;
-	    } else {
-		/* for "echo" purposes */
+	    if (compiled) {
+		/* just for "echo" purposes */
 		showline = currline;
+	    } else {
+		/* line may be modified below */
+		showline = strcpy(line, currline);
 	    }
 
 #if LTRACE || (LOOP_DEBUG > 1)
 	    fprintf(stderr, "iter=%d, j=%d, line='%s', ci=%d (%s), compiled=%d\n",
 		    loop->iter, j, showline, ci, gretl_command_word(ci),
-		    genr_compiled(loop, j) || cond_compiled(loop, j) ||
-		    cmd_parsed(loop, j));
+		    compiled);
 #endif
 
 	    if (loop_has_cond(loop) && gretl_if_state_false()) {
-		/* the only ways out are via ELSE, ELIF or ENDIF */
+		/* The only ways out of a blocked state are
+		   via ELSE, ELIF or ENDIF, and the only
+		   commands we need assess are the foregoing
+		   plus IF.
+		*/
 		if (ci == ELSE || ci == ENDIF) {
-		    if (cmd_parsed(loop, j)) {
-			cmd->ci = ci;
-			cmd->err = 0;
-			flow_control(NULL, NULL, cmd, NULL);
-			if (cmd->err) {
-			    err = cmd->err;
-			    goto handle_err;
-			} else {
-			    continue;
-			}
+		    cmd->ci = ci;
+		    cmd->err = 0;
+		    flow_control(NULL, NULL, cmd, NULL);
+		    if (cmd->err) {
+			err = cmd->err;
+			goto handle_err;
 		    } else {
-			/* this line not checked yet */
-			goto do_parsing;
+			continue;
 		    }
 		} else if (ci == IF || ci == ELIF) {
 		    goto cond_next;
@@ -3553,7 +3548,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		}
 	    }
 
-	    if (cmd_parsed(loop, j)) {
+	    if (ci == BREAK || ci == LOOP) {
 		/* no parsing needed */
 		cmd->ci = ci;
 		if (ci == BREAK) {
@@ -3606,7 +3601,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		    cmd->ci = CMD_MASKED;
 		}
 		parse = 0;
-	    } else if (ends_condition(loop, j) && cmd_parsed(loop, j)) {
+	    } else if (ends_condition(loop, j)) {
 		cmd->ci = ci;
 		flow_control(NULL, NULL, cmd, NULL);
 		if (cmd->err) {
@@ -3631,13 +3626,8 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		}
 	    }
 
-	do_parsing:
-
 	    if (parse && !err) {
 		err = parse_command_line(line, cmd, dset, NULL);
-		if (!err) {
-		    loop->cmds[j].flags |= LOOP_CMD_PARSED;
-		}
 #if LOOP_DEBUG > 1
 		fprintf(stderr, "    after: '%s', ci=%d\n", line, cmd->ci);
 		fprintf(stderr, "    cmd->savename = '%s'\n", cmd->savename);
@@ -3749,7 +3739,6 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		    loop_print_save_model(s->model, dset, prn, s);
 		}
 	    }
-
 	    if (err && (cmd->flags & CMD_CATCH)) {
 		set_gretl_errno(err);
 		cmd->flags ^= CMD_CATCH;
