@@ -3858,6 +3858,13 @@ static int real_parse_command (char *line, CMD *cmd,
 	    err = tokenize_line(cmd, line, dset, compmode);
 	}
 
+	if (!err && simple_flow_control(cmd)) {
+	    /* These don't go to assemble_command(), so check
+	       them here for extraneous junk.
+	    */
+	    err = check_for_stray_tokens(cmd);
+	}
+
 	if (compmode) {
 	    /* Are we doing get_command_index(), for compilation?
 	       In that case we shouldn't do any further processing
@@ -3868,17 +3875,8 @@ static int real_parse_command (char *line, CMD *cmd,
 	    if (!err && compmode == LOOP && cmd->ci == LOOP) {
 		err = assemble_command(cmd, dset, line);
 		compmode = 0;
-	    } else if (!err && simple_flow_control(cmd)) {
-		err = check_for_stray_tokens(cmd);
 	    }
 	    goto parse_exit;
-	}
-
-	if (!err && simple_flow_control(cmd)) {
-	    /* These don't go to assemble_command(), so check
-	       them here for extraneous junk.
-	    */
-	    err = check_for_stray_tokens(cmd);
 	}
 
 	/* If we haven't already hit an error, then we need to consult
@@ -3896,7 +3894,7 @@ static int real_parse_command (char *line, CMD *cmd,
 	}
 
 	/* Otherwise proceed to "assemble" the parsed command */
-	if (!err) {
+	if (!err && !simple_flow_control(cmd)) {
 	    err = assemble_command(cmd, dset, line);
 	}
     }
