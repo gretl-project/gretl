@@ -861,10 +861,7 @@ static NODE *get_aux_node (parser *p, int t, int n, int flags)
     return ret;
 }
 
-static NODE *aux_scalar_node (parser *p)
-{
-    return get_aux_node(p, NUM, 0, 0);
-}
+#define aux_scalar_node(p) get_aux_node(p,NUM,0,0)
 
 static int no_data_error (parser *p)
 {
@@ -892,10 +889,7 @@ static NODE *aux_empty_series_node (parser *p)
     }
 }
 
-static NODE *aux_ivec_node (parser *p, int n)
-{
-    return get_aux_node(p, IVEC, n, TMP_NODE);
-}
+#define aux_ivec_node(p,n) get_aux_node(p,IVEC,n,TMP_NODE)
 
 static NODE *aux_list_node (parser *p)
 {
@@ -917,60 +911,17 @@ static NODE *list_pointer_node (parser *p)
     }
 }
 
-static NODE *aux_matrix_node (parser *p)
-{
-    return get_aux_node(p, MAT, 0, TMP_NODE);
-}
-
-static NODE *matrix_pointer_node (parser *p)
-{
-    return get_aux_node(p, MAT, 0, 0);
-}
-
-static NODE *aux_mspec_node (parser *p)
-{
-    return get_aux_node(p, MSPEC, 0, 0);
-}
-
-static NODE *aux_string_node (parser *p)
-{
-    return get_aux_node(p, STR, 0, TMP_NODE);
-}
-
-static NODE *string_pointer_node (parser *p)
-{
-    return get_aux_node(p, STR, 0, 0);
-}
-
-static NODE *aux_bundle_node (parser *p)
-{
-    return get_aux_node(p, BUNDLE, 0, TMP_NODE);
-}
-
-static NODE *bundle_pointer_node (parser *p)
-{
-    return get_aux_node(p, BUNDLE, 0, 0);
-}
-
-static NODE *aux_array_node (parser *p)
-{
-    return get_aux_node(p, ARRAY, 0, TMP_NODE);
-}
-
-static NODE *array_pointer_node (parser *p)
-{
-    return get_aux_node(p, ARRAY, 0, 0);
-}
-
-static NODE *aux_b2_node (parser *p)
-{
-    return get_aux_node(p, EMPTY, 0, 0);
-}
-
-static NODE *aux_any_node (parser *p)
-{
-    return get_aux_node(p, 0, 0, 0);
-}
+#define aux_matrix_node(p) get_aux_node(p,MAT,0,TMP_NODE)
+#define matrix_pointer_node(p) get_aux_node(p,MAT,0,0)
+#define aux_mspec_node(p) get_aux_node(p,MSPEC,0,0)
+#define aux_string_node(p) get_aux_node(p,STR,0,TMP_NODE)
+#define string_pointer_node(p) get_aux_node(p,STR,0,0)
+#define aux_bundle_node(p) get_aux_node(p,BUNDLE,0,TMP_NODE)
+#define bundle_pointer_node(p) get_aux_node(p,BUNDLE,0,0)
+#define aux_array_node(p) get_aux_node(p,ARRAY,0,TMP_NODE)
+#define array_pointer_node(p) get_aux_node(p,ARRAY,0,0)
+#define aux_b2_node(p) get_aux_node(p,EMPTY,0,0)
+#define aux_any_node(p) get_aux_node(p,0,0,0)
 
 /* Start of functions that probably should not be needed in
    their present full form, but testing is required before
@@ -17007,6 +16958,7 @@ static int save_generated_var (parser *p, PRN *prn)
     }
 
     if (p->dset != NULL && p->dset->Z != NULL) {
+	/* convenience notation */
 	Z = p->dset->Z;
 	v = p->lh.vnum;
     }
