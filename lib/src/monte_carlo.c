@@ -3236,12 +3236,6 @@ static void loop_reset_error (void)
     }
 }
 
-static int conditional_line (LOOPSET *loop, int j)
-{
-    return loop->cmds[j].ci == IF || loop->cmds[j].ci == ELIF ||
-	loop->cmds[j].ci == ELSE || loop->cmds[j].ci == ENDIF;
-}
-
 static int ends_condition (LOOPSET *loop, int j)
 {
     return loop->cmds[j].ci == ELSE || loop->cmds[j].ci == ENDIF;
@@ -3608,7 +3602,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		}
 		parse = 0;
 	    } else if (ends_condition(loop, j)) {
-		/* compiled ELSE or ENDIF */
+		/* (compiled) ELSE or ENDIF */
 		cmd->ci = ci;
 		flow_control(NULL, NULL, cmd, NULL);
 		if (cmd->err) {
@@ -3695,7 +3689,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		loop->brk = 1;
 		break;
 	    } else if (cmd->ci == FUNCRET) {
-		/* The following line added 2016-11-20: just in case
+		/* The following clause added 2016-11-20: just in case
 		   the return value is, or references, an automatic
 		   loop index scalar.
 		*/
