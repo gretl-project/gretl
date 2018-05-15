@@ -7545,9 +7545,7 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
     return err;
 }
 
-#if LOOPSAVE
-
-/* reset any saved "genr" structs in context of saved loops */
+/* reset any saved uservar addresses in context of saved loops */
 
 static void reset_saved_loops (ufunc *u)
 {
@@ -7559,12 +7557,10 @@ static void reset_saved_loops (ufunc *u)
 	    fprintf(stderr, "at exit from %s, reset_saved_loop %p\n",
 		    u->name, (void *) u->lines[i].loop);
 # endif
-	    loop_reset_genrs(u->lines[i].loop);
+	    loop_reset_uvars(u->lines[i].loop);
 	}
     }
 }
-
-#endif
 
 static void set_pkgdir (fnpkg *pkg)
 {
@@ -8115,8 +8111,6 @@ int current_function_size (void)
     return (u != NULL)? u->n_lines : 0;
 }
 
-#if LOOPSAVE
-
 int attach_loop_to_function (void *ptr)
 {
     fncall *call = current_function_call();
@@ -8176,8 +8170,6 @@ int detach_loop_from_function (void *ptr)
     return err;
 }
 
-#endif /* LOOPSAVE */
-
 static gchar *return_line;
 
 /* to be called when a "return" statement occurs within a
@@ -8226,9 +8218,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     int redir_level = 0;
     int retline = -1;
     int debugging = u->debug;
-#if LOOPSAVE
     int loopstart = 0;
-#endif
     int i, err = 0;
 
 #if EXEC_DEBUG || GLOBAL_TRACE
@@ -8337,12 +8327,11 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    continue;
 	}
 
-#if LOOPSAVE
 	if (u->lines[i].loop != NULL && !call->recursing) {
-# if LSDEBUG
+#if LSDEBUG
 	    fprintf(stderr, "%s: got loop %p on line %d (%s)\n", u->name,
 		    (void *) u->lines[i].loop, i, line);
-# endif
+#endif
 	    if (!gretl_if_state_false()) {
 		/* not blocked, so execute the loop code */
 		err = gretl_loop_exec(&state, dset, u->lines[i].loop);
@@ -8365,9 +8354,6 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 		loopstart = 0;
 	    }
 	}
-#else
-	err = maybe_exec_line(&state, dset, NULL);
-#endif /* LOOPSAVE or not */
 
 	if (!err && !gretl_compiling_loop() && state.cmd->ci == FUNCRET) {
 	    err = handle_return_statement(call, &state, dset, lineno);
@@ -8400,10 +8386,8 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	}
 
 	if (gretl_execute_loop()) {
-#if LOOPSAVE
 	    /* mark the ending point of an (outer) loop */
 	    u->lines[u->line_idx].next_idx = i;
-#endif
 	    err = gretl_loop_exec(&state, dset, NULL);
 	    if (err) {
 		/* note that @lineno will point at the end of a loop here */
@@ -8463,11 +8447,9 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     function_assign_returns(call, rtype, dset, ret,
 			    descrip, prn, &err);
 
-#if LOOPSAVE
     if (!err && !call->recursing) {
 	reset_saved_loops(call->fun);
     }
-#endif
 
     gretl_exec_state_clear(&state);
 

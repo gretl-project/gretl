@@ -54,12 +54,6 @@ enum loop_types {
     EACH_LOOP
 };
 
-/* Define SAVE_TOPGEN to compile the test conditions
-   for "while" and "for" loops, and also the "delta"
-   expression for the latter, if present.
-*/
-#define SAVE_TOPGEN 1
-
 #define DEFAULT_NOBS 512
 
 #define indexed_loop(l) (l->type == INDEX_LOOP || \
@@ -120,12 +114,11 @@ typedef enum {
 struct controller_ {
     double val;            /* evaluated value */
     char vname[VNAMELEN];  /* name of (scalar) variable, if used */
+    user_var *uv;          /* pointer to scalar variable */
     int vsign;             /* 1 or -1, if vname is used */
     char *expr;            /* expression to pass to genr, if used */
-#if SAVE_TOPGEN
     GENERATOR *genr;       /* compiled generator */
     int subst;             /* expression uses string substitution? */
-#endif
 };
 
 typedef struct controller_ controller;
@@ -262,8 +255,6 @@ int get_loop_renaming (void)
     return loop_renaming;
 }
 
-#if SAVE_TOPGEN
-
 /* Test for a "while" or "for" expression: if it
    involves string substitution we can't compile.
 */
@@ -288,8 +279,6 @@ static int does_string_sub (const char *s,
     return subst;
 }
 
-#endif
-
 /* For indexed loops: get a value from a loop "limit" element (lower
    or upper).  If we got the name of a scalar variable at setup time,
    look up its current value (and modify the sign if wanted).  Or if
@@ -304,10 +293,14 @@ static double controller_get_val (controller *clr,
 				  int *err)
 {
     if (clr->vname[0] != '\0') {
-	if (gretl_is_scalar(clr->vname)) {
-	    clr->val = gretl_scalar_get_value(clr->vname, NULL) * clr->vsign;
-	} else {
+	if (clr->uv == NULL) {
+	    clr->uv = get_user_var_of_type_by_name(clr->vname, GRETL_TYPE_DOUBLE);
+	}
+	if (clr->uv == NULL) {
 	    gretl_errmsg_sprintf(_("'%s': not a scalar"), clr->vname);
+	    *err = E_TYPES;
+	} else {
+	    clr->val = uvar_get_scalar_value(clr->uv) * clr->vsign;
 	}
     } else if (clr->expr != NULL && gretl_strsub_on()) {
 	int done = 0;
@@ -382,7 +375,6 @@ loop_testval (LOOPSET *loop, DATASET *dset, int *err)
     if (expr != NULL) {
 	double x = NADBL;
 
-#if SAVE_TOPGEN
 	if (loop->test.subst < 0) {
 	    /* not checked yet */
 	    loop->test.subst = does_string_sub(expr, loop, dset);
@@ -400,9 +392,6 @@ loop_testval (LOOPSET *loop, DATASET *dset, int *err)
 	} else if (!*err) {
 	    x = generate_scalar(expr, dset, err);
 	}
-#else
-	x = generate_scalar(expr, dset, err);
-#endif
 
 	if (!*err && na(x)) {
 	    *err = E_DATA;
@@ -427,7 +416,6 @@ loop_delta (LOOPSET *loop, DATASET *dset, int *err)
     const char *expr = loop->delta.expr;
 
     if (expr != NULL) {
-#if SAVE_TOPGEN
 	if (loop->delta.subst < 0) {
 	    /* not checked yet */
 	    loop->delta.subst = does_string_sub(expr, loop, dset);
@@ -445,9 +433,6 @@ loop_delta (LOOPSET *loop, DATASET *dset, int *err)
 	} else if (!*err) {
 	    *err = generate(expr, dset, GRETL_TYPE_ANY, OPT_Q, NULL);
 	}
-#else
-	*err = generate(expr, dset, GRETL_TYPE_ANY, OPT_Q, NULL);
-#endif
 	if (*err) {
 	    gretl_errmsg_sprintf("%s: '%s'", _("error evaluating loop condition"),
 				 expr);
@@ -612,11 +597,9 @@ void gretl_loop_destroy (LOOPSET *loop)
 	return;
     }
 
-#if LOOPSAVE
     if (loop_is_attached(loop)) {
 	detach_loop_from_function(loop);
     }
-#endif
 
 #if GLOBAL_TRACE || LOOP_DEBUG
     fprintf(stderr, "destroying LOOPSET at %p\n", (void *) loop);
@@ -736,7 +719,12 @@ static int check_index_in_parentage (LOOPSET *loop, const char *vname)
     return 0;
 }
 
-static int loop_attach_index_var (LOOPSET *loop, const char *vname,
+/* The following is called only once, at the point of initial
+   "compilation" of a loop.
+*/
+
+static int loop_attach_index_var (LOOPSET *loop,
+				  const char *vname,
 				  DATASET *dset)
 {
     int err = 0;
@@ -1551,8 +1539,7 @@ static int loop_count_too_high (LOOPSET *loop)
  * Returns: 1 to indicate looping should continue, 0 to terminate.
  */
 
-static int
-loop_condition (LOOPSET *loop, DATASET *dset, int *err)
+static int loop_condition (LOOPSET *loop, DATASET *dset, int *err)
 {
     int ok = 0;
 
@@ -1587,16 +1574,15 @@ static void controller_init (controller *clr)
 {
     clr->val = NADBL;
     clr->vname[0] = '\0';
+    clr->uv = NULL;
     clr->vsign = 1;
     clr->expr = NULL;
-#if SAVE_TOPGEN
     clr->genr = NULL;
     if (gretl_strsub_on()) {
 	clr->subst = -1;
     } else {
 	clr->subst = 0;
     }
-#endif
 }
 
 static void controller_free (controller *clr)
@@ -1605,27 +1591,11 @@ static void controller_free (controller *clr)
 	free(clr->expr);
 	clr->expr = NULL;
     }
-#if SAVE_TOPGEN
     if (clr->genr != NULL) {
 	destroy_genr(clr->genr);
 	clr->genr = NULL;
     }
-#endif
 }
-
-#if SAVE_TOPGEN
-
-static void reset_top_genrs (LOOPSET *loop)
-{
-    if (loop->test.genr != NULL) {
-	genr_reset_uvars(loop->test.genr);
-    }
-    if (loop->delta.genr != NULL) {
-	genr_reset_uvars(loop->delta.genr);
-    }
-}
-
-#endif
 
 static void loop_cmds_init (LOOPSET *loop, int i1, int i2)
 {
@@ -2853,15 +2823,40 @@ static void progressive_loop_zero (LOOPSET *loop)
     loop_store_free(&loop->store);
 }
 
+/* When re-executing a loop that has been saved onto its
+   calling function, the loop index variable may have been
+   destroyed, in which case it has to be recreated.
+*/
+
+static int loop_reattach_index_var (LOOPSET *loop, DATASET *dset)
+{
+    char genline[64];
+    int err = 0;
+
+    if (na(loop->init.val)) {
+	sprintf(genline, "%s=NA", loop->idxname);
+    } else {
+	gretl_push_c_numeric_locale();
+	sprintf(genline, "%s=%g", loop->idxname, loop->init.val);
+	gretl_pop_c_numeric_locale();
+    }
+
+    err = generate(genline, dset, GRETL_TYPE_DOUBLE, OPT_Q, NULL);
+
+    if (!err) {
+	loop->idxvar = get_user_var_by_name(loop->idxname);
+    }
+
+    return err;
+}
+
+/* Called at the start of iteration for a given loop */
+
 static int top_of_loop (LOOPSET *loop, DATASET *dset)
 {
     int err = 0;
 
     loop->iter = 0;
-
-#if SAVE_TOPGEN
-    reset_top_genrs(loop);
-#endif
 
     if (loop->eachname[0] != '\0') {
 	err = loop_list_refresh(loop, dset);
@@ -2869,6 +2864,10 @@ static int top_of_loop (LOOPSET *loop, DATASET *dset)
 	loop->init.val = controller_get_val(&loop->init, loop, dset, &err);
     } else if (loop->type == FOR_LOOP) {
 	forloop_init(loop, dset, &err);
+    }
+
+    if (!err && loop->idxname[0] != '\0' && loop->idxvar == NULL) {
+	err = loop_reattach_index_var(loop, dset);
     }
 
     if (!err && (loop->type == COUNT_LOOP || indexed_loop(loop))) {
@@ -2891,7 +2890,6 @@ static int top_of_loop (LOOPSET *loop, DATASET *dset)
 	    loop->idxval = loop->init.val;
 	    uvar_set_scalar_value(loop->idxvar, loop->idxval);
 	}
-
 	/* initialization, in case this loop is being run more than
 	   once (i.e. it's embedded in an outer loop)
 	*/
@@ -2907,9 +2905,9 @@ static int top_of_loop (LOOPSET *loop, DATASET *dset)
     return err;
 }
 
-static void
-print_loop_progress (const LOOPSET *loop, const DATASET *dset,
-		     PRN *prn)
+static void print_loop_progress (const LOOPSET *loop,
+				 const DATASET *dset,
+				 PRN *prn)
 {
     int i = loop->init.val + loop->iter;
 
@@ -3039,14 +3037,15 @@ static int loop_print_save_model (MODEL *pmod, DATASET *dset,
 }
 
 #define genr_compiled(l,j)  (l->cmds[j].flags & LOOP_CMD_GENR)
+#define cond_compiled(l,j)  (l->cmds[j].flags & LOOP_CMD_COND)
 #define loop_cmd_nodol(l,j) (l->cmds[j].flags & LOOP_CMD_NODOL)
 #define loop_cmd_nosub(l,j) (l->cmds[j].flags & LOOP_CMD_NOSUB)
 #define loop_cmd_catch(l,j) (l->cmds[j].flags & LOOP_CMD_CATCH)
-#define cond_compiled(l,j)  (l->cmds[j].flags & LOOP_CMD_COND)
 #define prog_cmd_started(l,j) (l->cmds[j].flags & LOOP_CMD_PDONE)
 
-#define is_compiled(l,j) ((l->cmds[j].flags & (LOOP_CMD_GENR|LOOP_CMD_COND)) || \
-			  l->cmds[j].ci == ELSE || loop->cmds[j].ci == ENDIF)
+#define is_compiled(l,j) (l->cmds[j].genr != NULL ||	\
+			  l->cmds[j].ci == ELSE ||	\
+			  loop->cmds[j].ci == ENDIF)
 
 static int loop_process_error (LOOPSET *loop, int j, int err, PRN *prn)
 {
@@ -3289,35 +3288,6 @@ static int model_command_post_process (ExecState *s,
     return err;
 }
 
-#if LOOPSAVE
-
-/* When re-executing a loop that has been saved onto its
-   calling function, the loop index variable may have been
-   destroyed, in which case it has to be recreated.
-*/
-
-static int loop_reattach_index_var (LOOPSET *loop, DATASET *dset)
-{
-    char genline[64];
-    int err = 0;
-
-    if (na(loop->init.val)) {
-	sprintf(genline, "%s=NA", loop->idxname);
-    } else {
-	gretl_push_c_numeric_locale();
-	sprintf(genline, "%s=%g", loop->idxname, loop->init.val);
-	gretl_pop_c_numeric_locale();
-    }
-
-    err = generate(genline, dset, GRETL_TYPE_DOUBLE, OPT_Q, NULL);
-
-    if (!err) {
-	loop->idxvar = get_user_var_by_name(loop->idxname);
-    }
-
-    return err;
-}
-
 static int maybe_preserve_loop (LOOPSET *loop)
 {
     if (loop_err_caught(loop)) {
@@ -3330,10 +3300,10 @@ static int maybe_preserve_loop (LOOPSET *loop)
 
 	    if (!err) {
 		loop_set_attached(loop);
-# if GLOBAL_TRACE
+#if GLOBAL_TRACE
 		fprintf(stderr, "loop %p attached to function\n",
 			(void *) loop);
-# endif
+#endif
 	    }
 	}
     }
@@ -3341,23 +3311,26 @@ static int maybe_preserve_loop (LOOPSET *loop)
     return loop_is_attached(loop);
 }
 
-/* loop_reset_genrs(): may be called on exit from a function
-   onto which one or more "compiled" loops have been attached.
-   The point is to reset the stored addresses of all "uservars"
-   to NULL, since in general on a subsequent invocation of
-   the function a variable of a given name will occupy a
-   different memory address. A reset to NULL will force a new
-   lookup of these variables by name within "genr".
+/* loop_reset_uvars(): called on exit from a function onto
+   which one or more "compiled" loops have been attached.
+   The point is to reset to NULL the stored addresses of
+   any "uservars" that have been recorded in the context
+   of the loop, since in general on a subsequent invocation
+   of the function a variable of a given name will occupy a
+   different memory address. A reset to NULL will force a
+   new lookup of these variables by name, both within "genr"
+   and within the loop machinery.
 */
 
-void loop_reset_genrs (LOOPSET *loop)
+void loop_reset_uvars (LOOPSET *loop)
 {
     int i;
 
     for (i=0; i<loop->n_children; i++) {
-	loop_reset_genrs(loop->children[i]);
+	loop_reset_uvars(loop->children[i]);
     }
 
+    /* stored references within "genrs" */
     if (loop->cmds != NULL) {
 	for (i=0; i<loop->n_cmds; i++) {
 	    if (loop->cmds[i].genr != NULL) {
@@ -3365,16 +3338,20 @@ void loop_reset_genrs (LOOPSET *loop)
 	    }
 	}
     }
+
+    /* stored refs in controllers? */
+    if (loop->test.genr != NULL) {
+	genr_reset_uvars(loop->test.genr);
+    }
+    if (loop->delta.genr != NULL) {
+	genr_reset_uvars(loop->delta.genr);
+    }
+
+    /* other (possibly) stored references */
+    loop->idxvar = NULL;
+    loop->init.uv = NULL;
+    loop->final.uv = NULL;
 }
-
-#else /* !LOOPSAVE */
-
-void loop_reset_genrs (LOOPSET *loop)
-{
-    return;
-}
-
-#endif
 
 static void abort_loop_execution (ExecState *s)
 {
@@ -3465,12 +3442,6 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 
 #if LOOP_DEBUG
     fprintf(stderr, "loop_exec: loop = %p\n", (void *) loop);
-#endif
-
-#if LOOPSAVE
-    if (loop_is_attached(loop) && *loop->idxname != '\0') {
-	loop_reattach_index_var(loop, dset);
-    }
 #endif
 
     err = top_of_loop(loop, dset);
@@ -3602,7 +3573,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		}
 		parse = 0;
 	    } else if (ends_condition(loop, j)) {
-		/* (compiled) ELSE or ENDIF */
+		/* plain ELSE or ENDIF */
 		cmd->ci = ci;
 		flow_control(NULL, NULL, cmd, NULL);
 		if (cmd->err) {
@@ -3817,12 +3788,10 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	loop_renaming = 0;
 	set_loop_off();
 	loop_reset_error();
-#if LOOPSAVE
 	if (!err && maybe_preserve_loop(loop)) {
 	    /* prevent destruction of saved loop */
 	    loop = NULL;
 	}
-#endif
 	gretl_loop_destroy(loop);
     }
 
