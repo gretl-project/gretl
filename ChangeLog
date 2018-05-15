@@ -17,6 +17,8 @@ version 2018b, in progress
 - Fix bug: crash on Windows when using Tab key in the data
   editor window
 - Fix bug: crash in "modprint" under some conditions
+- Fix quasi-bug: failure on calling gnuplot when there's
+  no variation on the x-axis
 - Builds for Windows and Mac (Quartz): update to gnuplot
   5.2.3
 
