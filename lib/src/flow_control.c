@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* if-then stuff - conditional execution */
@@ -50,7 +50,7 @@ enum {
    (integer) representing the truth or falsity of the condition.
    The condition is expressed in the string @s. If a loop is
    being executed currently the @ptr argument may be non-NULL:
-   this will happen if the conditional is known NOT to be 
+   this will happen if the conditional is known NOT to be
    subject to string substitution, in which case it can be
    "compiled" and reused.
 */
@@ -69,7 +69,7 @@ static int if_eval (int ci, const char *s, DATASET *dset,
     if (s != NULL) {
 	s += (ci == IF)? 2 : 4;
 	while (*s == ' ') s++;
-    }    
+    }
 
     if (ptr != NULL) {
 	/* We're being called from a loop, with the implicit
@@ -140,11 +140,36 @@ static const char *ifstr (int c)
 static void unmatched_message (int code)
 {
     gretl_errmsg_sprintf(_("Unmatched \"%s\""),
-			 (code == SET_ELSE)? "else" : 
+			 (code == SET_ELSE)? "else" :
 			 (code == SET_ELIF)? "elif" : "endif");
 }
 
 #define IF_DEPTH 1024
+
+/* Note: the @got_T boolean array below is used to record,
+   within an "if ... endif" block, whether any true condition
+   has been encountered. This is relevant in the case of
+   blocks containing "elif" clauses (as well as, possibly,
+   an "else" clause): by reference to @got_T we can ensure
+   that at most one branch is followed. Otherwise we'd be in
+   danger of following all branches for which the "if" part of
+   an "elif" condition turns out to be true, so disregarding
+   the "else" implicit in "elif".
+
+   A simple example:
+
+   x = 2
+   if x == 1
+      print "x = 1"
+   elif x == 2
+      print "x = 2"
+   elif x < 3
+      print "x < 3"
+   endif
+
+   Use of @got_T in this case ensures that the branch with
+   condition x < 3 is not followed.
+*/
 
 static int ifstate (int code, int val, int *err)
 {
@@ -196,7 +221,7 @@ static int ifstate (int code, int val, int *err)
 	    } else if (!got_T[indent]) {
 		T[indent] = 1;
 	    }
-	}	
+	}
     } else if (code == SET_ENDIF) {
 	if (tok[indent] != TOK_IF &&
 	    tok[indent] != TOK_ELIF &&
@@ -211,7 +236,7 @@ static int ifstate (int code, int val, int *err)
     }
 
 #if IFDEBUG
-    fprintf(stderr, "ifstate: returning %d (indent %d, err %d)\n", 
+    fprintf(stderr, "ifstate: returning %d (indent %d, err %d)\n",
 	    ret, indent, (err == NULL)? 0 : *err);
 #endif
 
@@ -237,7 +262,7 @@ void gretl_if_state_clear (void)
 {
 #if IFDEBUG
     fprintf(stderr, "gretl_if_state_clear called\n");
-#endif    
+#endif
     ifstate(RELAX, 0, NULL);
 }
 
@@ -288,13 +313,13 @@ int gretl_if_state_check (int indent0)
    is something other than one of the flow control symbols
    IF, ELSE, ELIF or ENDIF, this function simply returns
    1 if execution if blocked by a false IF condition or 0
-   otherwise. 
+   otherwise.
 
    If we get one of the flow control symbols we operate
-   on the program's "if state", pushing a term onto, or 
-   popping a term off, the existing stack. And in this case 
-   we always return 1, which indicates to the machinery in 
-   interact.c that execution of the current command is 
+   on the program's "if state", pushing a term onto, or
+   popping a term off, the existing stack. And in this case
+   we always return 1, which indicates to the machinery in
+   interact.c that execution of the current command is
    completed.
 
    We need the @line (command line) and @dset arguments
@@ -341,8 +366,7 @@ int flow_control (const char *line, DATASET *dset, CMD *cmd,
     if (err) {
 	set_if_state(RELAX);
 	cmd->err = err;
-    } 
+    }
 
     return 1;
 }
-
