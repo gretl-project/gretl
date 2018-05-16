@@ -8179,7 +8179,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	}
 
 	if (p->err || arg == NULL) {
-	    fprintf(stderr, "%s: failed to evaluate arg %d\n", funname, i);
+	    fprintf(stderr, "%s: failed to evaluate arg %d\n", funname, i+1);
 	    p->err = (p->err == 0)? E_DATA : p->err;
 	} else if (!ok_ufunc_sym(arg->t)) {
 	    gretl_errmsg_sprintf("%s: invalid argument type %s", funname,
@@ -8188,7 +8188,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	}
 
 #if EDEBUG
-	fprintf(stderr, "%s: arg %d is of type %s (err=%d)\n", funname, i,
+	fprintf(stderr, "%s: arg %d is of type %s (err=%d)\n", funname, i+1,
 		arg == NULL ? "?" : getsymb(arg->t), p->err);
 #endif
 
@@ -13456,7 +13456,7 @@ static NODE *lhs_terminal_node (NODE *t, NODE *l, NODE *r,
     return ret;
 }
 
-/* node_reattach_series: on successive executions of a given
+/* reattach_series: on successive executions of a given
    compiled "genr", the "xvec" pointer recorded on a
    SERIES node will have become invalid if:
 
@@ -13483,7 +13483,7 @@ static NODE *lhs_terminal_node (NODE *t, NODE *l, NODE *r,
    going on within a loop on the current execution stack.
 */
 
-static void node_reattach_series (NODE *n, parser *p)
+static void reattach_series (NODE *n, parser *p)
 {
     if (/* 1 || */ n->v.xvec == NULL || get_loop_renaming()) {
 	/* do a full reset */
@@ -13531,44 +13531,48 @@ static void reattach_data_error (NODE *n, parser *p)
 
 static void node_reattach_data (NODE *n, parser *p)
 {
-    GretlType type = 0;
-    void *data = NULL;
+    if (n->t == SERIES) {
+	reattach_series(n, p);
+    } else {
+	GretlType type = 0;
+	void *data = NULL;
 
-    if (n->uv == NULL || (n->t == LIST && gretl_looping())) {
-	n->uv = get_user_var_by_name(n->vname);
-    }
+	if (n->uv == NULL || (n->t == LIST && gretl_looping())) {
+	    n->uv = get_user_var_by_name(n->vname);
+	}
 
-    if (n->uv != NULL) {
-	data = n->uv->ptr;
-	type = n->uv->type;
-    }
+	if (n->uv != NULL) {
+	    data = n->uv->ptr;
+	    type = n->uv->type;
+	}
 
-    if (data == NULL) {
-	reattach_data_error(n, p);
-    } else if (uscalar_node(n)) {
-	if (type == GRETL_TYPE_DOUBLE) {
-	    n->v.xval = *(double *) data;
+	if (data == NULL) {
+	    reattach_data_error(n, p);
+	} else if (uscalar_node(n)) {
+	    if (type == GRETL_TYPE_DOUBLE) {
+		n->v.xval = *(double *) data;
 #if ONE_BY_ONE_CAST
-	} else if (type == GRETL_TYPE_MATRIX) {
-	    /* allow type-mutation */
-	    n->t = MAT;
-	    n->v.m = (gretl_matrix *) data;
+	    } else if (type == GRETL_TYPE_MATRIX) {
+		/* allow type-mutation */
+		n->t = MAT;
+		n->v.m = (gretl_matrix *) data;
 #endif
+	    } else {
+		reattach_data_error(n, p);
+	    }
+	} else if (n->t == MAT && type == GRETL_TYPE_MATRIX) {
+	    n->v.m = data;
+	} else if (n->t == LIST && type == GRETL_TYPE_LIST) {
+	    n->v.ivec = data;
+	} else if (n->t == BUNDLE && type == GRETL_TYPE_BUNDLE) {
+	    n->v.b = data;
+	} else if (n->t == STR && type == GRETL_TYPE_STRING) {
+	    n->v.str = data;
+	} else if (n->t == ARRAY && type == GRETL_TYPE_ARRAY) {
+	    n->v.a = data;
 	} else {
 	    reattach_data_error(n, p);
 	}
-    } else if (n->t == MAT && type == GRETL_TYPE_MATRIX) {
-	n->v.m = data;
-    } else if (n->t == LIST && type == GRETL_TYPE_LIST) {
-	n->v.ivec = data;
-    } else if (n->t == BUNDLE && type == GRETL_TYPE_BUNDLE) {
-	n->v.b = data;
-    } else if (n->t == STR && type == GRETL_TYPE_STRING) {
-	n->v.str = data;
-    } else if (n->t == ARRAY && type == GRETL_TYPE_ARRAY) {
-	n->v.a = data;
-    } else {
-	reattach_data_error(n, p);
     }
 }
 
@@ -13747,13 +13751,8 @@ static NODE *eval (NODE *t, parser *p)
     case DBUNDLE:
 	ret = dollar_bundle_node(t, p);
 	break;
-    case SERIES:
-	if (compiled(p) && starting(p) && useries_node(t)) {
-	    node_reattach_series(t, p);
-	}
-	ret = t;
-	break;
     case NUM:
+    case SERIES:
     case MAT:
     case STR:
     case LIST:
