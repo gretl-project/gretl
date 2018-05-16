@@ -78,7 +78,6 @@ static int if_eval (int ci, const char *s, DATASET *dset,
 	   without having to be evaluated from scratch.
 	*/
 	ifgen = *(GENERATOR **) ptr;
-
 	if (ifgen == NULL && s != NULL) {
 	    /* Generator not compiled yet: do it now. The
 	       flag OPT_P indicates that we're generating
@@ -156,10 +155,20 @@ static int ifstate (int code, int val, int *err)
     int i, ret = 0;
 
 #if IFDEBUG
-    fprintf(stderr, "ifstate: code = %s\n", ifstr(code));
+    if (code != IS_FALSE) {
+	fprintf(stderr, "ifstate: code = %s\n", ifstr(code));
+    }
 #endif
 
-    if (code == RELAX) {
+    if (code == IS_FALSE || code == IS_TRUE) {
+	for (i=1; i<=indent; i++) {
+	    if (T[i] == 0) {
+		ret = 1; /* blocked */
+		break;
+	    }
+	}
+	return code == IS_TRUE ? !ret : ret;
+    } else if (code == RELAX) {
 	indent = 0;
     } else if (code == IFRESET) {
 	indent = val;
@@ -199,17 +208,7 @@ static int ifstate (int code, int val, int *err)
 	    got_T[indent] = 0;
 	    indent--;
 	}
-    } else if (code == IS_FALSE || code == IS_TRUE) {
-	for (i=1; i<=indent; i++) {
-	    if (T[i] == 0) {
-		ret = 1;
-		break;
-	    }
-	}
-	if (code == IS_TRUE) {
-	    ret = !ret;
-	}
-    } 
+    }
 
 #if IFDEBUG
     fprintf(stderr, "ifstate: returning %d (indent %d, err %d)\n", 
@@ -315,8 +314,10 @@ int flow_control (const char *line, DATASET *dset, CMD *cmd,
 
     if (ci == IF) {
 	if (blocked) {
+	    /* just increase the "indent" level */
 	    err = set_if_state(SET_FALSE);
 	} else {
+	    /* actually evaluate the condition */
 	    ok = if_eval(ci, line, dset, ptr, &err);
 	    if (!err) {
 		err = set_if_state(ok? SET_TRUE : SET_FALSE);
