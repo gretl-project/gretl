@@ -2395,6 +2395,16 @@
           Poisson (p o P): Media
         </para>
       </li>   
+      <li>
+        <para>
+          Laplace (l o L): media; scala
+        </para>
+      </li>
+      <li>
+        <para>
+          GED Standardizzata (E): forma
+        </para>
+      </li>
     </ilist>
     <tabular colspec="llll">
       \textit{Distribuzione} &amp; \textsl{c} &amp;
@@ -2411,6 +2421,10 @@
       $p$ &amp; $n$ \\ 
       Poisson &amp; \texttt{p} o \texttt{P} &amp; 
       $\lambda$ &amp; -- \\ 
+      Laplace &amp; \texttt{l} o \texttt{L} &amp; 
+      media &amp; scala \\ 
+      GED Standardizzata &amp; \texttt{E} &amp; 
+      forma &amp; -- \\ 
     </tabular>
     <para>
       <seelist>
@@ -4679,28 +4693,14 @@
       </fnargs>
       <description>
     <para>
-      Dato un argomento scalare, restituisce 1 se
-      <argname>x</argname> è <quote>Not a Number</quote> (NaN), 0
-      altrimenti. Se l'argomento è una matrice produce una matrice
-      delle stesse dimensioni contenente 1 nelle posizioni in cui
-      l'elemento corrispondente della matrice di input è NaN e 0
-      altrimenti.
+      Dato un argomento scalare, restituisce 1 se <argname>x</argname>
+      è <quote>Not a Number</quote> (NaN), 0 altrimenti. Se
+      l'argomento è una matrice produce una matrice delle stesse
+      dimensioni contenente 1 nelle posizioni in cui l'elemento
+      corrispondente della matrice di input è NaN e 0 altrimenti.
     </para>
       </description>
     </function>
-
-    <function name="isnull" section="data-utils" output="int">
-      <fnargs>
-    <fnarg type="string">nome</fnarg>
-      </fnargs>
-      <description>
-    <para>
-      Restituisce 0 se <argname>nome</argname> è l'identificativo di
-      un oggetto già definito, che può essere uno scalare, una
-      variabile, una matrice, una lista o un bundle; in caso contrario restituisce 1.
-    </para>
-      </description>
-    </function>  
 
     <function name="isoconv" section="calendar" output="scalar">
       <fnargs>
@@ -4711,13 +4711,12 @@
       </fnargs>
       <description>
     <para>
-      Data una variabile <argname>date</argname> contenente date
-      nel formato <quote>base</quote> ISO 8601
-      (<lit>YYYYMMDD</lit>), questa funzione scrive l'anno, il
-      mese e (opzionale) il giorno corrispondenti nella variabile
-      nominata nel secondo e nei successivi argomenti.  Un
-      esempio, assumendo che la variabile <lit>dates</lit>
-      contenga valori a 8 cifre appropriati:
+      Data una variabile <argname>date</argname> contenente date nel
+      formato <quote>base</quote> ISO 8601 (<lit>YYYYMMDD</lit>),
+      questa funzione scrive l'anno, il mese e (opzionale) il giorno
+      corrispondenti nella variabile nominata nel secondo e nei
+      successivi argomenti.  Un esempio, assumendo che la variabile
+      <lit>dates</lit> contenga valori a 8 cifre appropriati:
     </para>
     <code>
       series y, m, d
@@ -6286,12 +6285,12 @@
       </fnargs>
       <description>
     <para>
-      Restituisce una matrice nella quale le righe di <argname>X</argname>
-      sono riordinate per valore crescente degli elementi nella
-      colonna <argname>j</argname>. Il riordinamento è stabile:
-      le righe che contengono lo stesso valore nella colonna 
-      <argname>j</argname>
-      mantengono l'ordinamento relativo preesistente.
+      Restituisce una matrice nella quale le righe di
+      <argname>X</argname> sono riordinate per valore crescente degli
+      elementi nella colonna <argname>j</argname>. Il riordinamento è
+      stabile: le righe che contengono lo stesso valore nella colonna
+      <argname>j</argname> mantengono l'ordinamento relativo
+      preesistente.
     </para>
       </description>
     </function>
@@ -6336,14 +6335,29 @@
 	  parameterizzazione, che a sua volta determina
 	  <math>k</math>, il numero di elementi di <repl>theta</repl>:
 	  1 = Almon espnenziale normalizzata (<math>k</math> almeno 1,
-	  di solito 2); 2 = beta normalzzata con zero in fondo
+	  di solito 2); 2 = beta normalizzata con zero in fondo
 	  (<math>k</math> = 2); 3 = beta normalzzata senza zero in
 	  fondo lag (<math>k</math> = 3); and 4 = polinomio di Almon
-	  (<math>k</math> at least 1).
+	  (<math>k</math> almeno 1). Si noti che per la beta
+	  normalizzata i primi due elementi di <repl>theta</repl>
+	  devono essere positivi.
 	</para>
+	<para>
+	  Il parametro <repl>tipo</repl> può essere fornito sotto
+	  forma di un intero, come mostrato sopra, oppure come
+	  stringa, come segue: <lit>nealmon</lit>, <lit>beta0</lit>,
+	  <lit>betan</lit>, <lit>almonp</lit>. Se si opta per una
+	  stringa, essa dev'essere racchiusa fra virgolette. Ad
+	  esempio, le due formulazioni seguenti sono equivalenti:
+	</para>
+	<code>
+	  W = mweights(8, theta, 2)
+	  W = mweights(8, theta, "beta0")
+	</code>
 	<para>
 	  <seelist>
             <fncref targ="mgradient"/>
+            <fncref targ="mlincomb"/>
 	  </seelist>
 	</para>	
       </description>
