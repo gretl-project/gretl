@@ -1553,7 +1553,7 @@ int gretl_var_get_sample (const GRETL_VAR *var, int *t1, int *t2)
 
 const MODEL *gretl_VAR_get_model (const GRETL_VAR *var, int i)
 {
-    if (var != NULL && i < var->neqns) {
+    if (var != NULL && var->models != NULL && i < var->neqns) {
 	return var->models[i];
     } else {
 	return NULL;
@@ -2403,7 +2403,6 @@ int transcribe_VAR_models (GRETL_VAR *var,
 
 	if (!err) {
 	    VAR_depvar_name(var, i, dset->varname[yno]);
-
 	    if (i == 0) {
 		pmod->params = params;
 	    } else {
@@ -2425,7 +2424,6 @@ int transcribe_VAR_models (GRETL_VAR *var,
 	if (!err) {
 	    pmod->list[1] = yno;
 	    set_VAR_model_stats(var, i);
-
 	    for (j=0; j<jmax; j++) {
 		pmod->coeff[j] = gretl_matrix_get(var->B, j, i);
 		if (XTX != NULL) {

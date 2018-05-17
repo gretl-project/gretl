@@ -374,12 +374,7 @@ gretl_matrix *VAR_coeff_matrix_from_VECM (const GRETL_VAR *var)
     T0 = S0 + nseas;
 
     for (i=0; i<var->neqns; i++) {
-#if 1
-	const MODEL *pmod = var->models[i];
-	const double *coeff = pmod->coeff;
-#else /* more testing needed before switching */
 	const double *coeff = var->B->val + i*var->B->rows;
-#endif
 	int col = 0;
 
 	/* constant, if present */
