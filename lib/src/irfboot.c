@@ -796,7 +796,7 @@ static GRETL_VAR *back_up_VAR (GRETL_VAR *v)
     err = get_gretl_matrix_err();
 
     if (!err && v->jinfo != NULL) {
-	vbak->jinfo = malloc(sizeof *vbak->jinfo);
+	vbak->jinfo = calloc(1, sizeof *vbak->jinfo);
 	if (vbak->jinfo == NULL) {
 	    err = E_ALLOC;
 	} else {
