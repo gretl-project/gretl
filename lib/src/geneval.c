@@ -38,6 +38,7 @@
 #include "gretl_cmatrix.h"
 #include "gretl_btree.h"
 #include "qr_estimate.h"
+#include "var.h"
 
 #ifdef USE_CURL
 # include "gretl_www.h"
@@ -10239,21 +10240,6 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 
 	    A = matrix_chowlin(l->v.m, X, m->v.xval, &p->err);
 	}
-    } else if (f == F_IRF) {
-	if (l->t != NUM) {
-	    node_type_error(f, 1, NUM, l, p);
-	} else if (m->t != NUM) {
-	    node_type_error(f, 2, NUM, m, p);
-	} else if (r->t != NUM && r->t != EMPTY) {
-	    node_type_error(f, 3, NUM, r, p);
-	} else {
-	    double alpha = (r->t == NUM)? r->v.xval : 0.0;
-	    int targ = (int) l->v.xval - 1;
-	    int shock = (int) m->v.xval - 1;
-
-	    A = last_model_get_irf_matrix(targ, shock, alpha,
-					  p->dset, &p->err);
-	}
     } else if (f == F_MLAG) {
 	gretl_matrix *m1 = node_get_matrix(l, p, 0, 1);
 	gretl_matrix *m2 = node_get_matrix(m, p, 1, 2);
@@ -11160,7 +11146,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	}
 
 	/* evaluate the first (series) argument */
-	e = eval(n->v.bn.n[0], p);
+	if (!p->err) {
+	    e = eval(n->v.bn.n[0], p);
+	}
 	if (!p->err && e->t != SERIES) {
 	    node_type_error(t->t, 1, SERIES, e, p);
 	}
@@ -11580,6 +11568,56 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    }
 	    ret->v.m = gretl_quadrule_matrix_new(order, method,
 						 a, b, &p->err);
+	}
+    } else if (t->t == F_IRF) {
+	int targ = 0, shock = 0;
+	double alpha = 0.0;
+	gretl_bundle *vb = NULL;
+
+	if (k < 2 || k > 4) {
+	    n_args_error(k, 4, t->t, p);
+	}
+
+	for (i=0; i<k && !p->err; i++) {
+	    e = eval(n->v.bn.n[i], p);
+	    if (e == NULL) {
+		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
+	    } else if (i == 0) {
+		targ = node_get_int(e, p);
+	    } else if (i == 1) {
+		shock = node_get_int(e, p);
+	    } else if (i == 2) {
+		/* optional bootstrap alpha */
+		if (e->t != EMPTY) {
+		    alpha = node_get_scalar(e, p);
+		}
+	    } else {
+		/* final optional arg must be bundle */
+		if (e->t != EMPTY && e->t != BUNDLE) {
+		    node_type_error(t->t, 4, BUNDLE, e, p);
+		} else if (e->t == BUNDLE) {
+		    vb = e->v.b;
+		}
+	    }
+	}
+	if (!p->err) {
+	    reset_p_aux(p, save_aux);
+	    ret = aux_matrix_node(p);
+	}
+	if (!p->err) {
+	    /* convert indices to zero-based */
+	    targ--;
+	    shock--;
+	    if (ret->v.m != NULL) {
+		gretl_matrix_free(ret->v.m);
+	    }
+	    if (vb != NULL) {
+		ret->v.m = gretl_IRF_from_bundle(vb, targ, shock, alpha,
+						 p->dset, &p->err);
+	    } else {
+		ret->v.m = last_model_get_irf_matrix(targ, shock, alpha,
+						     p->dset, &p->err);
+	    }
 	}
     } else if (t->t == F_QLRPVAL) {
 	double X2 = NADBL;
@@ -13066,6 +13104,41 @@ static NODE *dollar_var_node (NODE *t, parser *p)
 	}
     } else {
 	ret = aux_any_node(p);
+    }
+
+    return ret;
+}
+
+static NODE *fevd_node (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_matrix_node(p);
+
+    if (ret != NULL) {
+	int targ = node_get_int(l, p);
+
+	if (!p->err && !null_or_empty(r) && r->t != BUNDLE) {
+	    p->err = E_INVARG;
+	}
+
+	if (!p->err) {
+	    /* convert @targ to zero-based */
+	    targ -= 1;
+	    if (r->t == BUNDLE) {
+		ret->v.m = gretl_FEVD_from_bundle(r->v.b, targ,
+						  p->dset, &p->err);
+	    } else {
+		GretlObjType otype;
+		void *ptr;
+
+		ptr = get_last_model(&otype);
+		if (ptr == NULL || otype != GRETL_OBJ_VAR) {
+		    p->err = E_BADSTAT;
+		} else {
+		    ret->v.m = gretl_VAR_get_FEVD_matrix(ptr, targ, 0,
+							 p->dset, &p->err);
+		}
+	    }
+	}
     }
 
     return ret;
@@ -14661,6 +14734,14 @@ static NODE *eval (NODE *t, parser *p)
 	    p->err = E_TYPES;
 	}
 	break;
+    case F_FEVD:
+	/* integer target plus optional bundle */
+	if (scalar_node(l)) {
+	    ret = fevd_node(l, r, p);
+	} else {
+	    p->err = E_TYPES;
+	}
+	break;
     case F_CNAMESET:
     case F_RNAMESET:
 	/* matrix, with (list, string or strings array) as second arg */
@@ -14712,7 +14793,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_BWFILT:
     case F_CHOWLIN:
     case F_VARSIMUL:
-    case F_IRF:
     case F_STRSUB:
     case F_REGSUB:
     case F_MLAG:
@@ -14791,6 +14871,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_DEFARRAY:
     case F_DEFBUNDLE:
     case F_DEFLIST:
+    case F_IRF:
     case HF_CLOGFI:
 	/* built-in functions taking more than three args */
 	ret = eval_nargs_func(t, p);

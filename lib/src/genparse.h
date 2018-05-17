@@ -383,6 +383,7 @@ enum {
     F_COR,
     F_STRSCRAPE,
     F_LRCOVAR,
+    F_FEVD,
     HF_CMMULT,
     HF_CFFT,
     HF_CMATRIX,
@@ -411,7 +412,6 @@ enum {
     F_BWFILT,
     F_CHOWLIN,
     F_VARSIMUL,
-    F_IRF,
     F_STRSUB,
     F_REGSUB,
     F_MLAG,
@@ -466,6 +466,7 @@ enum {
     F_KSETUP,
     F_BFGSCMAX,
     F_SVM,
+    F_IRF,
     HF_CLOGFI,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };

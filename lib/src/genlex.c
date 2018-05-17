@@ -211,6 +211,7 @@ struct str_table funcs[] = {
     { F_MISSZERO, "misszero" },
     { F_LRVAR,    "lrvar" },
     { F_LRCOVAR,  "lrcovar" },
+    { F_FEVD,     "fevd" },
     { F_QUANTILE, "quantile" },
     { F_MEDIAN,   "median" },
     { F_GINI,     "gini" },
