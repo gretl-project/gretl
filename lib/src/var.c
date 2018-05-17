@@ -1927,7 +1927,6 @@ gretl_VAR_get_fcast_decomp (const GRETL_VAR *var,
 	for (i=0; i<n; i++) {
 	    vtot += gretl_matrix_get(vd, t, i);
 	}
-
 	/* normalize variance contributions as % shares */
 	for (i=0; i<n; i++) {
 	    vi = gretl_matrix_get(vd, t, i);
@@ -4317,6 +4316,39 @@ static void johansen_serialize (JohansenInfo *j, FILE *fp)
     fputs("</gretl-johansen>\n", fp);
 }
 
+/* Retrieve enough VECM-related info from @b to carry
+   out an IRF bootstrap: this is NOT READY yet!!
+*/
+
+static int retrieve_johansen_basics (GRETL_VAR *var,
+				     gretl_bundle *b)
+{
+    int err = 0;
+
+    var->jinfo = calloc(1, sizeof *var->jinfo);
+
+    /* TODO: figure out what else is needed! */
+
+    if (var->jinfo == NULL) {
+	err = E_ALLOC;
+    } else {
+	var->jinfo->R0 = gretl_bundle_get_matrix(b, "u", &err);
+	var->jinfo->R1 = gretl_bundle_get_matrix(b, "v", &err);
+	var->jinfo->S00 = gretl_bundle_get_matrix(b, "Suu", &err);
+	var->jinfo->S11 = gretl_bundle_get_matrix(b, "Svv", &err);
+	var->jinfo->S01 = gretl_bundle_get_matrix(b, "Suv", &err);
+	var->jinfo->Beta = gretl_bundle_get_matrix(b, "Beta", &err);
+	var->jinfo->Alpha = gretl_bundle_get_matrix(b, "Alpha", &err);
+    }
+
+    if (err && var->jinfo != NULL) {
+	free(var->jinfo);
+	var->jinfo = NULL;
+    }
+
+    return err;
+}
+
 static gretl_bundle *johansen_bundlize (JohansenInfo *j)
 {
     gretl_bundle *b = gretl_bundle_new();
@@ -4436,12 +4468,146 @@ int gretl_VAR_serialize (const GRETL_VAR *var, SavedObjectFlags flags,
     return err;
 }
 
+/* Reconstitute a VAR or VECM (partially) from the
+   bundle @b, for the purposes of generating an
+   FEVD or IRF. How far we need to go in rebuilding
+   the GRETL_VAR struct depends on the purpose, and
+   in the IRF case, whether or not bootstrapping is
+   required. For FEVD we basically just need the A
+   and C matrices from the bundle.
+*/
+
+static GRETL_VAR *VAR_from_bundle (gretl_bundle *b,
+				   int irf, int boot,
+				   int *err)
+{
+    GRETL_VAR *var = malloc(sizeof *var);
+
+    if (var == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    gretl_VAR_clear(var);
+
+    if (gretl_bundle_get_int(b, "ecm", NULL)) {
+	var->ci = VECM;
+    } else {
+	var->ci = VAR;
+    }
+
+    var->neqns = gretl_bundle_get_int(b, "neqns", err);
+    if (!*err) {
+	var->order = gretl_bundle_get_int(b, "order", err);
+    }
+
+    if (!*err) {
+	/* note: here we're "borrowing" the required
+	   matrices from the bundle
+	*/
+	gretl_matrix **mm[] = {
+	    &var->A, &var->C, &var->X, &var->Y,
+	    &var->XTX, &var->B, &var->S, &var->E
+	};
+	const char *keys[] = {
+	    "A", "C", "X", "Y", "xtxinv",
+	    "coeff", "sigma", "uhat"
+	};
+	int i, n = 2 + 2*irf + 4*boot;
+
+	for (i=0; i<n && !*err; i++) {
+	    *mm[i] = gretl_bundle_get_matrix(b, keys[i], err);
+	}
+
+	if (!*err && var->ci == VECM && boot) {
+	    /* not ready, shouldn't be reached at present */
+	    gretl_bundle *jb;
+
+	    jb = gretl_bundle_get_bundle(b, "vecm_info", err);
+	    if (!*err) {
+		*err = retrieve_johansen_basics(var, jb);
+	    }
+	}
+	if (*err) {
+	    /* scrub all borrowings */
+	    for (i=0; i<n; i++) {
+		*mm[i] = NULL;
+	    }
+	}
+    }
+
+    if (*err) {
+	gretl_VAR_free(var);
+	var = NULL;
+    }
+
+    return var;
+}
+
+gretl_matrix *gretl_FEVD_from_bundle (gretl_bundle *b,
+				      int targ,
+				      const DATASET *dset,
+				      int *err)
+{
+    GRETL_VAR *var = VAR_from_bundle(b, 0, 0, err);
+    gretl_matrix *ret = NULL;
+
+    if (var != NULL) {
+	ret = gretl_VAR_get_FEVD_matrix(var, targ, 0, dset, err);
+	/* nullify borrowed matrices! */
+	var->A = var->C = NULL;
+	gretl_VAR_free(var);
+    }
+
+    return ret;
+}
+
+gretl_matrix *gretl_IRF_from_bundle (gretl_bundle *b,
+				     int targ, int shock,
+				     double alpha,
+				     const DATASET *dset,
+				     int *err)
+{
+    gretl_matrix *ret = NULL;
+    GRETL_VAR *var = NULL;
+    int boot = 0;
+
+    if (alpha != 0 && (alpha < 0.01 || alpha > 0.6)) {
+	*err = E_INVARG;
+	return NULL;
+    } else if (alpha != 0) {
+	boot = 1;
+    }
+
+    var = VAR_from_bundle(b, 1, boot, err);
+
+    if (var != NULL && boot && var->ci == VECM) {
+	gretl_errmsg_set("irf bootstrap on VECM bundle: not ready yet!");
+	*err = E_BADSTAT;
+    }
+
+    if (!*err && var != NULL) {
+	ret = gretl_VAR_get_impulse_response(var, targ, shock,
+					     0, alpha, dset, err);
+    }
+
+    if (var != NULL) {
+	/* nullify borrowed matrices! */
+	var->A = var->C = NULL;
+	var->X = var->Y = NULL;
+	var->B = var->S = NULL;
+	var->XTX = var->E = NULL;
+	gretl_VAR_free(var);
+    }
+
+    return ret;
+}
+
 int gretl_VAR_bundlize (const GRETL_VAR *var,
 			DATASET *dset,
 			gretl_bundle *b)
 {
-    gretl_array *models;
-    int i, err = 0;
+    int err = 0;
 
     if (var->name != NULL) {
 	gretl_bundle_set_string(b, "name", var->name);
@@ -4484,6 +4650,12 @@ int gretl_VAR_bundlize (const GRETL_VAR *var,
 
     /* doubles arrays: Fvals, Ivals? */
 
+    if (var->A != NULL) {
+	gretl_bundle_set_matrix(b, "A", var->A);
+    }
+    if (var->C != NULL) {
+	gretl_bundle_set_matrix(b, "C", var->C);
+    }
     if (var->B != NULL) {
 	gretl_bundle_set_matrix(b, "coeff", var->B);
     }
@@ -4503,11 +4675,12 @@ int gretl_VAR_bundlize (const GRETL_VAR *var,
     if (var->ord != NULL) {
 	gretl_bundle_set_matrix(b, "ord", var->ord);
     }
-    if (var->ci == VECM) {
-	gretl_bundle_set_matrix(b, "A", var->A);
-    }
 
-    /* bundle up the individual MODEL structs */
+#if 0
+    /* bundle up the individual MODEL structs (?) */
+    gretl_array *models;
+    int i;
+
     models = gretl_array_new(GRETL_TYPE_BUNDLES, var->neqns, &err);
     for (i=0; i<var->neqns && !err; i++) {
 	gretl_bundle *mbi;
@@ -4523,6 +4696,7 @@ int gretl_VAR_bundlize (const GRETL_VAR *var,
     } else if (models != NULL) {
 	gretl_array_destroy(models);
     }
+#endif
 
     if (var->jinfo != NULL) {
 	/* VECM specific info */

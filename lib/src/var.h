@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #ifndef VAR_H_
@@ -86,24 +86,24 @@ struct GRETL_VAR_ {
 
 int var_max_order (const int *list, const DATASET *dset);
 
-GRETL_VAR *gretl_VAR (int order, int *laglist, int *list, 
-		      const DATASET *dset, gretlopt opt, 
+GRETL_VAR *gretl_VAR (int order, int *laglist, int *list,
+		      const DATASET *dset, gretlopt opt,
 		      PRN *prn, int *err);
 
-GRETL_VAR *gretl_VECM (int order, int rank, int *list, 
-		       const DATASET *dset, gretlopt opt, 
+GRETL_VAR *gretl_VECM (int order, int rank, int *list,
+		       const DATASET *dset, gretlopt opt,
 		       PRN *prn, int *err);
 
 const gretl_matrix *
-gretl_VAR_get_forecast_matrix (GRETL_VAR *var, int t1, int t2, 
-			       DATASET *dset, gretlopt opt, 
+gretl_VAR_get_forecast_matrix (GRETL_VAR *var, int t1, int t2,
+			       DATASET *dset, gretlopt opt,
 			       int *err);
 
 const gretl_matrix *
 gretl_VAR_get_residual_matrix (const GRETL_VAR *var);
 
 gretl_matrix *
-gretl_VAR_get_fcast_decomp (const GRETL_VAR *var, 
+gretl_VAR_get_fcast_decomp (const GRETL_VAR *var,
 			    int targ, int periods,
 			    int *errp);
 
@@ -111,32 +111,43 @@ gretl_matrix *
 gretl_VAR_get_vma_matrix (const GRETL_VAR *var, const DATASET *dset,
 			  int *err);
 
-gretl_matrix *gretl_VAR_get_FEVD_matrix (const GRETL_VAR *var, 
-					 int targ, int horizon, 
+gretl_matrix *gretl_VAR_get_FEVD_matrix (const GRETL_VAR *var,
+					 int targ, int horizon,
 					 const DATASET *dset,
 					 int *err);
 
 gretl_matrix *
-gretl_VAR_get_full_FEVD_matrix (const GRETL_VAR *var, 
+gretl_VAR_get_full_FEVD_matrix (const GRETL_VAR *var,
 				const DATASET *dset,
 				int *err);
 
+gretl_matrix *gretl_FEVD_from_bundle (gretl_bundle *b,
+				      int targ,
+				      const DATASET *dset,
+				      int *err);
+
+gretl_matrix *gretl_IRF_from_bundle (gretl_bundle *b,
+				     int targ, int shock,
+				     double alpha,
+				     const DATASET *dset,
+				     int *err);
+
 gretl_matrix *
-VECM_get_EC_matrix (const GRETL_VAR *v, 
-		    const DATASET *dset, 
+VECM_get_EC_matrix (const GRETL_VAR *v,
+		    const DATASET *dset,
 		    int *err);
 
-int 
+int
 gretl_VAR_do_error_decomp (const gretl_matrix *S, gretl_matrix *C,
 			   const gretl_matrix *ord);
 
 const gretl_matrix *gretl_VAR_get_roots (GRETL_VAR *var, int *err);
 
-int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int order, 
+int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int order,
 				    DATASET *dset, gretlopt opt,
 				    PRN *prn);
 
-int gretl_VAR_arch_test (GRETL_VAR *var, int order, 
+int gretl_VAR_arch_test (GRETL_VAR *var, int order,
 			 DATASET *dset, gretlopt opt,
 			 PRN *prn);
 
@@ -153,11 +164,11 @@ GRETL_VAR *gretl_VAR_omit_test (GRETL_VAR *var, const int *omitlist,
 				DATASET *dset, gretlopt opt,
 				PRN *prn, int *err);
 
-int gretl_VAR_wald_omit_test (GRETL_VAR *var, const int *omitlist, 
+int gretl_VAR_wald_omit_test (GRETL_VAR *var, const int *omitlist,
 			      DATASET *dset, gretlopt opt,
 			      PRN *prn);
 
-double *gretl_VECM_get_EC (GRETL_VAR *vecm, int j, const DATASET *dset, 
+double *gretl_VECM_get_EC (GRETL_VAR *vecm, int j, const DATASET *dset,
 			   int *err);
 
 void gretl_VAR_free (GRETL_VAR *var);
@@ -165,7 +176,7 @@ void gretl_VAR_free (GRETL_VAR *var);
 int default_VAR_horizon (const DATASET *dset);
 
 gretl_matrix *
-gretl_VAR_get_impulse_response (GRETL_VAR *var, 
+gretl_VAR_get_impulse_response (GRETL_VAR *var,
 				int targ, int shock,
 				int periods, double alpha,
 				const DATASET *dset,
@@ -197,11 +208,11 @@ int gretl_VAR_do_irf (GRETL_VAR *var, const char *line,
 
 int gretl_VAR_get_highest_variable (const GRETL_VAR *var);
 
-GRETL_VAR *johansen_test (int order, const int *list, 
-			  const DATASET *dset, gretlopt opt, 
+GRETL_VAR *johansen_test (int order, const int *list,
+			  const DATASET *dset, gretlopt opt,
 			  PRN *prn);
 
-int johansen_test_simple (int order, const int *list, 
+int johansen_test_simple (int order, const int *list,
 			  const DATASET *dset,
 			  gretlopt opt, PRN *prn);
 
@@ -209,16 +220,16 @@ int gretl_VECM_n_beta (const GRETL_VAR *vecm);
 
 int gretl_VECM_n_alpha (const GRETL_VAR *vecm);
 
-int gretl_VECM_test (GRETL_VAR *vecm, 
+int gretl_VECM_test (GRETL_VAR *vecm,
 		     gretl_restriction *rset,
-		     const DATASET *dset, 
+		     const DATASET *dset,
 		     gretlopt opt,
 		     PRN *prn);
 
 GRETL_VAR *
-real_gretl_restricted_vecm (GRETL_VAR *orig, 
+real_gretl_restricted_vecm (GRETL_VAR *orig,
 			    gretl_restriction *rset,
-			    const DATASET *dset, 
+			    const DATASET *dset,
 			    PRN *prn, int *err);
 
 int gretl_VECM_rank (const GRETL_VAR *vecm);
@@ -237,13 +248,13 @@ const gretl_matrix *gretl_VECM_Ra_matrix (const GRETL_VAR *vecm);
 
 const gretl_matrix *gretl_VECM_qa_matrix (const GRETL_VAR *vecm);
 
-double *gretl_VAR_get_series (const GRETL_VAR *var, const DATASET *dset, 
+double *gretl_VAR_get_series (const GRETL_VAR *var, const DATASET *dset,
 			      int idx, const char *key, int *err);
 
-gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx, 
+gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx,
 				    int *err);
 
-void gretl_VAR_param_names (GRETL_VAR *v, char **params, 
+void gretl_VAR_param_names (GRETL_VAR *v, char **params,
 			    const DATASET *dset);
 
 int gretl_VAR_serialize (const GRETL_VAR *var, SavedObjectFlags flags,
@@ -252,17 +263,16 @@ int gretl_VAR_serialize (const GRETL_VAR *var, SavedObjectFlags flags,
 int gretl_VAR_bundlize (const GRETL_VAR *var, DATASET *dset,
 			gretl_bundle *b);
 
-int transcribe_VAR_models (GRETL_VAR *var, 
+int transcribe_VAR_models (GRETL_VAR *var,
 			   const DATASET *dset,
 			   const gretl_matrix *XTX);
 
 #ifdef FULL_XML_HEADERS
 
-GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc, 
+GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc,
 			       const DATASET *dset,
 			       int *err);
 
 #endif
 
 #endif /* VAR_H_ */
-
