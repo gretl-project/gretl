@@ -38,6 +38,7 @@ typedef struct irfboot_ irfboot;
 struct irfboot_ {
     int ncoeff;         /* number of coefficients per equation */
     int horizon;        /* horizon for impulse responses */
+    gretl_matrix_block *MB; /* wrapper for some of the following */
     gretl_matrix *rE;   /* matrix of resampled original residuals */
     gretl_matrix *Xt;   /* row t of X matrix */
     gretl_matrix *Yt;   /* yhat at t */
@@ -56,13 +57,11 @@ static void irf_boot_free (irfboot *b)
 	return;
     }
 
-    gretl_matrix_free(b->rE);
+    gretl_matrix_block_destroy(b->MB);
+
     gretl_matrix_free(b->Xt);
     gretl_matrix_free(b->Yt);
     gretl_matrix_free(b->Et);
-    gretl_matrix_free(b->rtmp);
-    gretl_matrix_free(b->ctmp);
-    gretl_matrix_free(b->resp);
     gretl_matrix_free(b->C0);
 
     if (b->dset != NULL) {
@@ -77,15 +76,17 @@ static int boot_allocate (irfboot *b, const GRETL_VAR *v)
 {
     int n = v->neqns * effective_order(v);
 
-    b->rtmp = gretl_matrix_alloc(n, v->neqns);
-    b->ctmp = gretl_matrix_alloc(n, v->neqns);
-    b->rE = gretl_matrix_alloc(v->T, v->neqns);
-    b->resp = gretl_matrix_alloc(b->horizon, BOOT_ITERS);
-    b->sample = malloc(v->T * sizeof *b->sample);
+    b->MB = gretl_matrix_block_new(&b->rtmp, n, v->neqns,
+				   &b->ctmp, n, v->neqns,
+				   &b->rE, v->T, v->neqns,
+				   &b->resp, b->horizon, BOOT_ITERS,
+				   NULL);
+    if (b->MB == NULL) {
+	return E_ALLOC;
+    }
 
-    if (b->rtmp == NULL || b->ctmp == NULL ||
-	b->rE == NULL || b->resp == NULL ||
-	b->sample == NULL) {
+    b->sample = malloc(v->T * sizeof *b->sample);
+    if (b->sample == NULL) {
 	return E_ALLOC;
     }
 
@@ -113,15 +114,11 @@ static irfboot *irf_boot_new (const GRETL_VAR *var, int periods)
 	return NULL;
     }
 
-    b->rE = NULL;
+    b->MB = NULL;
     b->Xt = NULL;
     b->Yt = NULL;
     b->Et = NULL;
-    b->rtmp = NULL;
-    b->ctmp = NULL;
-    b->resp = NULL;
     b->C0 = NULL;
-
     b->sample = NULL;
     b->dset = NULL;
 
@@ -152,15 +149,15 @@ static irfboot *irf_boot_new (const GRETL_VAR *var, int periods)
 }
 
 static int
-recalculate_impulse_responses (irfboot *b, GRETL_VAR *v,
+recalculate_impulse_responses (irfboot *b, GRETL_VAR *var,
 			       int targ, int shock, int iter)
 {
-    gretl_matrix *C = v->C;
+    gretl_matrix *C = var->C;
     double x;
     int t, err = 0;
 
-    if (v->ord != NULL) {
-	C = reorder_responses(v, &err);
+    if (var->ord != NULL) {
+	C = reorder_responses(var, &err);
 	if (err) {
 	    return err;
 	}
@@ -172,14 +169,14 @@ recalculate_impulse_responses (irfboot *b, GRETL_VAR *v,
 	    gretl_matrix_copy_values(b->rtmp, C);
 	} else {
 	    /* calculate further estimated responses */
-	    gretl_matrix_multiply(v->A, b->rtmp, b->ctmp);
+	    gretl_matrix_multiply(var->A, b->rtmp, b->ctmp);
 	    gretl_matrix_copy_values(b->rtmp, b->ctmp);
 	}
 	x = gretl_matrix_get(b->rtmp, targ, shock);
 	gretl_matrix_set(b->resp, t, iter, x);
     }
 
-    if (C != v->C) {
+    if (C != var->C) {
 	gretl_matrix_free(C);
     }
 

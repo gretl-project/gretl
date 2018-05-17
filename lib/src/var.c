@@ -4597,6 +4597,10 @@ gretl_matrix *gretl_IRF_from_bundle (gretl_bundle *b,
 	var->X = var->Y = NULL;
 	var->B = var->S = NULL;
 	var->XTX = var->E = NULL;
+	if (var->jinfo != NULL) {
+	    free(var->jinfo);
+	    var->jinfo = NULL;
+	}
 	gretl_VAR_free(var);
     }
 
