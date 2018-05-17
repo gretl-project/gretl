@@ -1,26 +1,26 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* bootstrapped confidence intervals for impulse response functions */
 
-#include "libgretl.h" 
-#include "var.h"  
+#include "libgretl.h"
+#include "var.h"
 #include "johansen.h"
 #include "vartest.h"
 #include "matrix_extra.h"
@@ -47,7 +47,7 @@ struct irfboot_ {
     gretl_matrix *resp; /* impulse response matrix */
     gretl_matrix *C0;   /* initial coefficient estimates (VECM only) */
     int *sample;        /* resampling array */
-    DATASET *dset;      /* dummy dataset for levels (VECM only) */  
+    DATASET *dset;      /* dummy dataset for levels (VECM only) */
 };
 
 static void irf_boot_free (irfboot *b)
@@ -94,7 +94,7 @@ static int boot_allocate (irfboot *b, const GRETL_VAR *v)
 	b->Xt = gretl_matrix_alloc(1, v->X->cols);
 	b->Yt = gretl_matrix_alloc(1, v->neqns);
 	b->Et = gretl_matrix_alloc(1, v->neqns);
-	
+
 	if (b->Xt == NULL || b->Yt == NULL || b->Et == NULL) {
 	    return E_ALLOC;
 	}
@@ -128,7 +128,7 @@ static irfboot *irf_boot_new (const GRETL_VAR *var, int periods)
     b->horizon = periods;
 
     if (var->jinfo != NULL) {
-	b->ncoeff = var->ncoeff + (var->neqns - jrank(var)) + 
+	b->ncoeff = var->ncoeff + (var->neqns - jrank(var)) +
 	    n_restricted_terms(var); /* FIXME? */
     } else {
 	b->ncoeff = var->ncoeff;
@@ -138,7 +138,7 @@ static irfboot *irf_boot_new (const GRETL_VAR *var, int periods)
     fprintf(stderr, "boot: t1=%d, t2=%d, ncoeff=%d, horizon=%d\n",
 	    var->t1, var->t2, b->ncoeff, b->horizon);
     fprintf(stderr, " T=%d, neqns=%d, order=%d, rank=%d, ifc=%d\n",
-	    var->T, var->neqns, var->order, jrank(var), var->ifc); 
+	    var->T, var->neqns, var->order, jrank(var), var->ifc);
 #endif
 
     err = boot_allocate(b, var);
@@ -207,14 +207,14 @@ static void maybe_resize_vecm_matrices (GRETL_VAR *v)
 
 /* In re-estimation of VAR or VECM we'll tolerate at most 9 cases of
    near-perfect collinearity (which can arise by chance): maybe this
-   should be more flexible? 
+   should be more flexible?
 */
 
 #define MAXSING 10
 #define VAR_FATAL(e,i,s) (e && (e != E_SINGULAR || i == 0 || s >= MAXSING))
 
-static int 
-re_estimate_VECM (irfboot *b, GRETL_VAR *v, int targ, int shock, 
+static int
+re_estimate_VECM (irfboot *b, GRETL_VAR *v, int targ, int shock,
 		  int iter, int scount)
 {
     static int (*jbr) (GRETL_VAR *, const DATASET *) = NULL;
@@ -248,7 +248,7 @@ re_estimate_VECM (irfboot *b, GRETL_VAR *v, int targ, int shock,
     gretl_matrix_print(v->B, "var->B");
 #endif
 
-    if (!err) {   
+    if (!err) {
 	err = gretl_VAR_do_error_decomp(v->S, v->C, v->ord);
     }
 
@@ -259,7 +259,7 @@ re_estimate_VECM (irfboot *b, GRETL_VAR *v, int targ, int shock,
     return err;
 }
 
-static int re_estimate_VAR (irfboot *b, GRETL_VAR *v, int targ, int shock, 
+static int re_estimate_VAR (irfboot *b, GRETL_VAR *v, int targ, int shock,
 			    int iter)
 {
     int err;
@@ -269,8 +269,8 @@ static int re_estimate_VAR (irfboot *b, GRETL_VAR *v, int targ, int shock,
     if (!err) {
 	VAR_write_A_matrix(v);
     }
-    
-    if (!err) {    
+
+    if (!err) {
 	gretl_matrix_multiply_mod(v->E, GRETL_MOD_TRANSPOSE,
 				  v->E, GRETL_MOD_NONE,
 				  v->S, GRETL_MOD_NONE);
@@ -327,15 +327,15 @@ static gretl_matrix *make_restricted_coeff_matrix (const GRETL_VAR *v)
 /* VECM: make a record of all the original coefficients in the VAR
    representation of the VECM, so we have these on hand in convenient
    form for recomputing the dataset after resampling the residuals,
-   or for forecasting.  
+   or for forecasting.
 
-   We get these coefficients from three sources: (1) the 
+   We get these coefficients from three sources: (1) the
    companion matrix, A; (2) the VECM models (unrestricted constant
    and/or trend, seasonals if applicable); and (3) the implied
    coefficient on a restricted constant or trend.
 
    Note that the construction here depends on the order in which
-   variables are added to the dataset; that order can't be changed 
+   variables are added to the dataset; that order can't be changed
    without breaking stuff here.
 */
 
@@ -414,7 +414,7 @@ gretl_matrix *VAR_coeff_matrix_from_VECM (const GRETL_VAR *var)
 		aij = gretl_matrix_get(rbeta, i, j);
 		gretl_matrix_set(C0, i, col++, aij);
 	    }
-	} 	
+	}
     }
 
     if (rbeta != NULL) {
@@ -447,7 +447,7 @@ static int init_VECM_dataset (irfboot *b, GRETL_VAR *var,
     b->dset = create_auxiliary_dataset(nv, dset->n, 0);
     if (b->dset == NULL) {
 	return E_ALLOC;
-    }   
+    }
 
     copy_dataset_obs_info(b->dset, dset);
     b->dset->t1 = dset->t1;
@@ -478,7 +478,7 @@ static int init_VECM_dataset (irfboot *b, GRETL_VAR *var,
 
 /* Compute VECM Y (in levels) using the VAR representation. */
 
-static void 
+static void
 compute_VECM_dataset (irfboot *b, GRETL_VAR *var, int iter)
 {
     int order = var->order + 1;
@@ -704,88 +704,6 @@ static int irf_boot_quantiles (irfboot *b, gretl_matrix *R, double alpha)
     return 0;
 }
 
-/* make a back-up copy of the VAR data that we'll want to restore on
-   exit from the IRF bootstrap operation */
-
-static GRETL_VAR *back_up_VAR (const GRETL_VAR *v)
-{
-    
-    GRETL_VAR *vbak;
-    int err = 0;
-
-    vbak = malloc(sizeof *vbak);
-    if (vbak == NULL) {
-	return NULL;
-    }
-
-    gretl_VAR_clear(vbak);
-
-    clear_gretl_matrix_err();
-
-    vbak->Y = gretl_matrix_copy(v->Y);
-    vbak->B = gretl_matrix_copy(v->B);
-
-    if (v->xcols > v->X->cols) {
-	int save_k = v->X->cols;
-
-	gretl_matrix_reuse(v->X, -1, v->xcols);
-	vbak->X = gretl_matrix_copy(v->X);
-	gretl_matrix_reuse(vbak->X, -1, save_k);
-	gretl_matrix_reuse(v->X, -1, save_k);
-    } else {
-	vbak->X = gretl_matrix_copy(v->X);
-    }
-
-    vbak->XTX = gretl_matrix_copy(v->XTX);
-    vbak->A = gretl_matrix_copy(v->A);
-    vbak->E = gretl_matrix_copy(v->E);
-    vbak->C = gretl_matrix_copy(v->C);
-    vbak->S = gretl_matrix_copy(v->S);
-
-    err = get_gretl_matrix_err();
-
-    if (!err && v->jinfo != NULL) {
-	vbak->jinfo = malloc(sizeof *vbak->jinfo);
-	if (vbak->jinfo == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    vbak->ylist = gretl_list_copy(v->ylist);
-	    if (vbak->ylist == NULL) {
-		err = E_ALLOC;
-	    }
-	}
-    }
-
-    if (!err && v->rlist != NULL) {
-	vbak->rlist = gretl_list_copy(v->rlist);
-	if (vbak->rlist == NULL) {
-	    err = E_ALLOC;
-	}
-    }	
-
-    if (!err && vbak->jinfo != NULL) {
-	vbak->jinfo->R0 = gretl_matrix_copy(v->jinfo->R0);
-	vbak->jinfo->R1 = gretl_matrix_copy(v->jinfo->R1);
-	vbak->jinfo->S00 = gretl_matrix_copy(v->jinfo->S00);
-	vbak->jinfo->S11 = gretl_matrix_copy(v->jinfo->S11);
-	vbak->jinfo->S01 = gretl_matrix_copy(v->jinfo->S01);
-	vbak->jinfo->Beta = gretl_matrix_copy(v->jinfo->Beta);
-	vbak->jinfo->Alpha = gretl_matrix_copy(v->jinfo->Alpha);
-	err = get_gretl_matrix_err();
-    }
-
-    if (err) {
-	gretl_VAR_free(vbak);
-	vbak = NULL;
-    } else {
-	vbak->T = v->T;
-	vbak->neqns = v->neqns;
-	vbak->order = v->order;
-    }
-
-    return vbak;
-}
-
 static void restore_VAR_data (GRETL_VAR *v, GRETL_VAR *vbak)
 {
     gretl_matrix_replace(&v->Y, vbak->Y);
@@ -797,7 +715,7 @@ static void restore_VAR_data (GRETL_VAR *v, GRETL_VAR *vbak)
     gretl_matrix_replace(&v->C, vbak->C);
     gretl_matrix_replace(&v->S, vbak->S);
 
-    if (v->jinfo != NULL) {
+    if (vbak->jinfo != NULL) {
 	gretl_matrix_replace(&v->jinfo->R0, vbak->jinfo->R0);
 	gretl_matrix_replace(&v->jinfo->R1, vbak->jinfo->R1);
 	gretl_matrix_replace(&v->jinfo->S00, vbak->jinfo->S00);
@@ -806,10 +724,12 @@ static void restore_VAR_data (GRETL_VAR *v, GRETL_VAR *vbak)
 	gretl_matrix_replace(&v->jinfo->Beta, vbak->jinfo->Beta);
 	gretl_matrix_replace(&v->jinfo->Alpha, vbak->jinfo->Alpha);
 
-	free(v->ylist);
-	v->ylist = vbak->ylist;
+	if (vbak->ylist != NULL) {
+	    free(v->ylist);
+	    v->ylist = vbak->ylist;
+	}
 
-	if (v->rlist != NULL) {
+	if (vbak->rlist != NULL) {
 	    free(v->rlist);
 	    v->rlist = vbak->rlist;
 	}
@@ -820,10 +740,100 @@ static void restore_VAR_data (GRETL_VAR *v, GRETL_VAR *vbak)
     free(vbak);
 }
 
+/* make a back-up copy of the VAR data that we'll want to restore on
+   exit from the IRF bootstrap operation */
+
+static void matrix_swap_copy (gretl_matrix **targ,
+			      gretl_matrix **src)
+{
+    *targ = *src;
+    *src = gretl_matrix_copy(*targ);
+}
+
+static int list_swap_copy (int **targ, int **src)
+{
+    *targ = *src;
+    *src = gretl_list_copy(*targ);
+    return *src == NULL ? E_ALLOC : 0;
+}
+
+static GRETL_VAR *back_up_VAR (GRETL_VAR *v)
+{
+    GRETL_VAR *vbak;
+    int err = 0;
+
+    vbak = malloc(sizeof *vbak);
+    if (vbak == NULL) {
+	return NULL;
+    }
+
+    gretl_VAR_clear(vbak);
+    clear_gretl_matrix_err();
+
+    matrix_swap_copy(&vbak->Y, &v->Y);
+    matrix_swap_copy(&vbak->B, &v->B);
+
+    if (v->xcols > v->X->cols) {
+	int save_k = v->X->cols;
+
+	vbak->X = v->X;
+	gretl_matrix_reuse(vbak->X, -1, v->xcols);
+	v->X = gretl_matrix_copy(vbak->X);
+	gretl_matrix_reuse(vbak->X, -1, save_k);
+	gretl_matrix_reuse(v->X, -1, save_k);
+    } else {
+	matrix_swap_copy(&vbak->X, &v->X);
+    }
+
+    matrix_swap_copy(&vbak->XTX, &v->XTX);
+    matrix_swap_copy(&vbak->A, &v->A);
+    matrix_swap_copy(&vbak->E, &v->E);
+    matrix_swap_copy(&vbak->C, &v->C);
+    matrix_swap_copy(&vbak->S, &v->S);
+
+    err = get_gretl_matrix_err();
+
+    if (!err && v->jinfo != NULL) {
+	vbak->jinfo = malloc(sizeof *vbak->jinfo);
+	if (vbak->jinfo == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    err = list_swap_copy(&vbak->ylist, &v->ylist);
+	}
+    }
+
+    if (!err && v->rlist != NULL) {
+	err = list_swap_copy(&vbak->rlist, &v->rlist);
+    }
+
+    if (!err && vbak->jinfo != NULL) {
+	matrix_swap_copy(&vbak->jinfo->R0, &v->jinfo->R0);
+	matrix_swap_copy(&vbak->jinfo->R1, &v->jinfo->R1);
+	matrix_swap_copy(&vbak->jinfo->S00, &v->jinfo->S00);
+	matrix_swap_copy(&vbak->jinfo->S11, &v->jinfo->S11);
+	matrix_swap_copy(&vbak->jinfo->S01, &v->jinfo->S01);
+	matrix_swap_copy(&vbak->jinfo->Beta, &v->jinfo->Beta);
+	matrix_swap_copy(&vbak->jinfo->Alpha, &v->jinfo->Alpha);
+	err = get_gretl_matrix_err();
+    }
+
+    if (err) {
+	restore_VAR_data(v, vbak);
+	gretl_VAR_free(vbak);
+	vbak = NULL;
+    } else {
+	vbak->T = v->T;
+	vbak->neqns = v->neqns;
+	vbak->order = v->order;
+    }
+
+    return vbak;
+}
+
 /* public bootstrapping function, called from var.c */
 
-gretl_matrix *irf_bootstrap (GRETL_VAR *var, 
-			     int targ, int shock, 
+gretl_matrix *irf_bootstrap (GRETL_VAR *var,
+			     int targ, int shock,
 			     int periods, double alpha,
 			     const DATASET *dset,
 			     int *err)
@@ -848,7 +858,7 @@ gretl_matrix *irf_bootstrap (GRETL_VAR *var,
     if (R == NULL) {
 	*err = E_ALLOC;
 	return NULL;
-    }    
+    }
 
     vbak = back_up_VAR(var);
     if (vbak == NULL) {
@@ -913,5 +923,3 @@ gretl_matrix *irf_bootstrap (GRETL_VAR *var,
 
     return R;
 }
-
-
