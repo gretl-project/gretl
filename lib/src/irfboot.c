@@ -374,12 +374,17 @@ gretl_matrix *VAR_coeff_matrix_from_VECM (const GRETL_VAR *var)
     T0 = S0 + nseas;
 
     for (i=0; i<var->neqns; i++) {
+#if 1
 	const MODEL *pmod = var->models[i];
+	const double *coeff = pmod->coeff;
+#else /* more testing needed before switching */
+	const double *coeff = var->B->val + i*var->B->rows;
+#endif
 	int col = 0;
 
 	/* constant, if present */
 	if (var->ifc) {
-	    gretl_matrix_set(C0, i, col++, pmod->coeff[0]);
+	    gretl_matrix_set(C0, i, col++, coeff[0]);
 	}
 
 	/* endogenous vars: use companion matrix */
@@ -392,17 +397,17 @@ gretl_matrix *VAR_coeff_matrix_from_VECM (const GRETL_VAR *var)
 
 	/* exogenous vars */
 	for (j=0; j<nexo; j++) {
-	    gretl_matrix_set(C0, i, col++, pmod->coeff[X0+j]);
+	    gretl_matrix_set(C0, i, col++, coeff[X0+j]);
 	}
 
 	/* seasonals, if present */
 	for (j=0; j<nseas; j++) {
-	    gretl_matrix_set(C0, i, col++, pmod->coeff[S0+j]);
+	    gretl_matrix_set(C0, i, col++, coeff[S0+j]);
 	}
 
 	/* unrestricted trend, if present */
 	if (jcode(var) == J_UNREST_TREND) {
-	    gretl_matrix_set(C0, i, col++, pmod->coeff[T0]);
+	    gretl_matrix_set(C0, i, col++, coeff[T0]);
 	}
 
 	/* additional restricted term(s), if present */

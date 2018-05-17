@@ -4317,7 +4317,8 @@ static void johansen_serialize (JohansenInfo *j, FILE *fp)
 }
 
 /* Retrieve enough VECM-related info from @b to carry
-   out an IRF bootstrap: this is NOT READY yet!!
+   out an IRF bootstrap: this requires more testing, and
+   right now is surely broken for restricted VECMs.
 */
 
 static int retrieve_johansen_basics (GRETL_VAR *var,
@@ -4327,18 +4328,28 @@ static int retrieve_johansen_basics (GRETL_VAR *var,
 
     var->jinfo = calloc(1, sizeof *var->jinfo);
 
-    /* TODO: figure out what else is needed! */
-
     if (var->jinfo == NULL) {
 	err = E_ALLOC;
     } else {
-	var->jinfo->R0 = gretl_bundle_get_matrix(b, "u", &err);
-	var->jinfo->R1 = gretl_bundle_get_matrix(b, "v", &err);
-	var->jinfo->S00 = gretl_bundle_get_matrix(b, "Suu", &err);
-	var->jinfo->S11 = gretl_bundle_get_matrix(b, "Svv", &err);
-	var->jinfo->S01 = gretl_bundle_get_matrix(b, "Suv", &err);
-	var->jinfo->Beta = gretl_bundle_get_matrix(b, "Beta", &err);
-	var->jinfo->Alpha = gretl_bundle_get_matrix(b, "Alpha", &err);
+	int i, e[10] = {0};
+
+	var->jinfo->code = gretl_bundle_get_int(b, "code", &e[0]);
+	var->jinfo->rank = gretl_bundle_get_int(b, "rank", &e[1]);
+	var->jinfo->seasonals = gretl_bundle_get_int(b, "seasonals", &e[2]);
+	var->jinfo->R0 = gretl_bundle_get_matrix(b, "u", &e[3]);
+	var->jinfo->R1 = gretl_bundle_get_matrix(b, "v", &e[4]);
+	var->jinfo->S00 = gretl_bundle_get_matrix(b, "Suu", &e[5]);
+	var->jinfo->S11 = gretl_bundle_get_matrix(b, "Svv", &e[6]);
+	var->jinfo->S01 = gretl_bundle_get_matrix(b, "Suv", &e[7]);
+	var->jinfo->Beta = gretl_bundle_get_matrix(b, "Beta", &e[8]);
+	var->jinfo->Alpha = gretl_bundle_get_matrix(b, "Alpha", &e[9]);
+
+	for (i=0; i<10; i++) {
+	    if (e[i]) {
+		err = e[i];
+		break;
+	    }
+	}
     }
 
     if (err && var->jinfo != NULL) {
@@ -4482,6 +4493,7 @@ static GRETL_VAR *VAR_from_bundle (gretl_bundle *b,
 				   int *err)
 {
     GRETL_VAR *var = malloc(sizeof *var);
+    int i, ierr[6];
 
     if (var == NULL) {
 	*err = E_ALLOC;
@@ -4496,9 +4508,24 @@ static GRETL_VAR *VAR_from_bundle (gretl_bundle *b,
 	var->ci = VAR;
     }
 
-    var->neqns = gretl_bundle_get_int(b, "neqns", err);
+    var->neqns = gretl_bundle_get_int(b, "neqns", &ierr[0]);
+    var->order = gretl_bundle_get_int(b, "order", &ierr[1]);
+    var->ncoeff = gretl_bundle_get_int(b, "ncoeff", &ierr[2]);
+    var->t1 = gretl_bundle_get_int(b, "t1", &ierr[3]);
+    var->t2 = gretl_bundle_get_int(b, "t2", &ierr[4]);
+    var->T  = gretl_bundle_get_int(b, "T", &ierr[5]);
+    for (i=0; i<6; i++) {
+	if (ierr[i]) {
+	    *err = ierr[i];
+	    break;
+	}
+    }
+
     if (!*err) {
-	var->order = gretl_bundle_get_int(b, "order", err);
+	/* note: borrowing */
+	var->ylist = gretl_bundle_get_list(b, "ylist", NULL);
+	var->xlist = gretl_bundle_get_list(b, "xlist", NULL);
+	var->rlist = gretl_bundle_get_list(b, "rlist", NULL);
     }
 
     if (!*err) {
@@ -4513,14 +4540,13 @@ static GRETL_VAR *VAR_from_bundle (gretl_bundle *b,
 	    "A", "C", "X", "Y", "xtxinv",
 	    "coeff", "sigma", "uhat"
 	};
-	int i, n = 2 + 2*irf + 4*boot;
+	int n = 2 + 2*irf + 4*boot;
 
 	for (i=0; i<n && !*err; i++) {
 	    *mm[i] = gretl_bundle_get_matrix(b, keys[i], err);
 	}
-
 	if (!*err && var->ci == VECM && boot) {
-	    /* not ready, shouldn't be reached at present */
+	    /* not fully ready, won't be reached at present */
 	    gretl_bundle *jb;
 
 	    jb = gretl_bundle_get_bundle(b, "vecm_info", err);
@@ -4529,7 +4555,7 @@ static GRETL_VAR *VAR_from_bundle (gretl_bundle *b,
 	    }
 	}
 	if (*err) {
-	    /* scrub all borrowings */
+	    /* scrub all borrowed pointers on error */
 	    for (i=0; i<n; i++) {
 		*mm[i] = NULL;
 	    }
@@ -4537,6 +4563,12 @@ static GRETL_VAR *VAR_from_bundle (gretl_bundle *b,
     }
 
     if (*err) {
+	/* clean up carefully! */
+	var->ylist = var->xlist = var->rlist = NULL;
+	if (var->jinfo != NULL) {
+	    free(var->jinfo);
+	    var->jinfo = NULL;
+	}
 	gretl_VAR_free(var);
 	var = NULL;
     }
@@ -4554,12 +4586,31 @@ gretl_matrix *gretl_FEVD_from_bundle (gretl_bundle *b,
 
     if (var != NULL) {
 	ret = gretl_VAR_get_FEVD_matrix(var, targ, 0, dset, err);
-	/* nullify borrowed matrices! */
+	/* nullify borrowed pointers */
 	var->A = var->C = NULL;
+	var->xlist = var->ylist = var->rlist = NULL;
 	gretl_VAR_free(var);
     }
 
     return ret;
+}
+
+/* Clean-up of temporary "jinfo" used in IRF
+   bootstrapping. We can't use the regular destructor,
+   johansen_info_free(), because the primary matrix
+   pointers on var->jinfo are in this case borrowed
+   from a $system bundle; but we do need to free any
+   "extra" matrices that have been added.
+*/
+
+static void free_temp_jinfo (GRETL_VAR *var)
+{
+    /* handle extra matrice */
+    gretl_matrix_free(var->jinfo->YY);
+    gretl_matrix_free(var->jinfo->RR);
+    gretl_matrix_free(var->jinfo->BB);
+
+    free(var->jinfo);
 }
 
 gretl_matrix *gretl_IRF_from_bundle (gretl_bundle *b,
@@ -4592,13 +4643,14 @@ gretl_matrix *gretl_IRF_from_bundle (gretl_bundle *b,
     }
 
     if (var != NULL) {
-	/* nullify borrowed matrices! */
+	/* nullify borrowed pointers */
 	var->A = var->C = NULL;
 	var->X = var->Y = NULL;
 	var->B = var->S = NULL;
 	var->XTX = var->E = NULL;
+	var->xlist = var->ylist = var->rlist = NULL;
 	if (var->jinfo != NULL) {
-	    free(var->jinfo);
+	    free_temp_jinfo(var);
 	    var->jinfo = NULL;
 	}
 	gretl_VAR_free(var);
@@ -4618,10 +4670,12 @@ int gretl_VAR_bundlize (const GRETL_VAR *var,
     }
     gretl_bundle_set_int(b, "ecm", var->ci == VECM);
     gretl_bundle_set_int(b, "neqns", var->neqns);
+    gretl_bundle_set_int(b, "ncoeff", var->ncoeff);
     gretl_bundle_set_int(b, "order", var->order);
     gretl_bundle_set_int(b, "robust", var->robust);
     gretl_bundle_set_int(b, "t1", var->t1);
     gretl_bundle_set_int(b, "t2", var->t2);
+    gretl_bundle_set_int(b, "T", var->T);
 
     gretl_bundle_set_scalar(b, "lnl", var->ll);
     gretl_bundle_set_scalar(b, "ldet", var->ldet);
@@ -4707,8 +4761,8 @@ int gretl_VAR_bundlize (const GRETL_VAR *var,
 	gretl_bundle *jb = johansen_bundlize(var->jinfo);
 
 	if (jb != NULL) {
-	    err = gretl_bundle_set_data(b, "vecm_info", jb,
-					GRETL_TYPE_BUNDLE, 0);
+	    err = gretl_bundle_donate_data(b, "vecm_info", jb,
+					   GRETL_TYPE_BUNDLE, 0);
 	}
     }
 
