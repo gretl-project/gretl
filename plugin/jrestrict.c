@@ -2008,7 +2008,7 @@ static int G_from_remapped_R (Jwrap *J, const gretl_matrix *R)
 }
 
 /* detect the presence of a cross-equation alpha
-   restriction */
+   restriction (FIXME?) */
 
 static int 
 cross_alpha_check (Jwrap *J, const gretl_matrix *R)

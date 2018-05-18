@@ -2682,6 +2682,7 @@ static int allocate_johansen_extra_matrices (GRETL_VAR *v)
 	v->jinfo->YY != NULL) {
 	return 0;
     } else {
+	int xc = v->X == NULL ? 0 : v->X->cols;
 	int p0 = v->neqns;
 	int p1 = p0 + n_restricted_terms(v);
 	int p = p0 + p1;
@@ -2699,7 +2700,7 @@ static int allocate_johansen_extra_matrices (GRETL_VAR *v)
 	    v->jinfo->S01 = gretl_matrix_alloc(p0, p1);
 	}
 
-	if (v->ncoeff > 0 && v->jinfo->YY == NULL) {
+	if (xc > 0 && v->ncoeff > 0 && v->jinfo->YY == NULL) {
 	    v->jinfo->YY = gretl_matrix_alloc(v->T, p);
 	    v->jinfo->RR = gretl_matrix_alloc(v->T, p);
 	    v->jinfo->BB = gretl_matrix_alloc(v->X->cols, p);
@@ -2829,6 +2830,7 @@ int johansen_stage_1 (GRETL_VAR *v, const DATASET *dset,
 
     err = allocate_johansen_extra_matrices(v);
     if (err) {
+	fprintf(stderr, "allocate_extra_matrices: err = %d\n", err);
 	return err;
     }
 
@@ -2836,7 +2838,7 @@ int johansen_stage_1 (GRETL_VAR *v, const DATASET *dset,
     fprintf(stderr, "johansen_stage_1: ncoeff = %d\n", v->ncoeff);
 #endif
 
-    if (v->ncoeff == 0) {
+    if (v->ncoeff == 0 || v->jinfo->BB == NULL) {
 	/* nothing to concentrate out */
 	if (opt & OPT_V) {
 	    pputs(prn, "\nNo initial VAR estimation is required\n\n");
@@ -3242,6 +3244,7 @@ real_gretl_restricted_vecm (GRETL_VAR *orig,
 
     list = rebuild_full_VAR_list(orig);
     if (list == NULL) {
+	*err = E_ALLOC;
 	return NULL;
     }
 
@@ -4315,8 +4318,7 @@ static void johansen_serialize (JohansenInfo *j, FILE *fp)
 }
 
 /* Retrieve enough VECM-related info from @b to carry
-   out an IRF bootstrap: this requires more testing, and
-   right now is surely broken for restricted VECMs.
+   out an IRF bootstrap: this requires more testing.
 */
 
 static int retrieve_johansen_basics (GRETL_VAR *var,
@@ -4347,6 +4349,14 @@ static int retrieve_johansen_basics (GRETL_VAR *var,
 		err = e[i];
 		break;
 	    }
+	}
+
+	if (!err) {
+	    /* restriction matrices: may not be present */
+	    var->jinfo->R = gretl_bundle_get_matrix(b, "R", NULL);
+	    var->jinfo->q = gretl_bundle_get_matrix(b, "q", NULL);
+	    var->jinfo->Ra = gretl_bundle_get_matrix(b, "Ra", NULL);
+	    var->jinfo->qa = gretl_bundle_get_matrix(b, "qa", NULL);
 	}
     }
 
@@ -4560,6 +4570,8 @@ static GRETL_VAR *VAR_from_bundle (gretl_bundle *b,
 	}
     }
 
+    gretl_matrix_print(var->A, "var->A, from bundle");
+
     if (*err) {
 	/* clean up carefully! */
 	var->ylist = var->xlist = var->rlist = NULL;
@@ -4630,7 +4642,7 @@ gretl_matrix *gretl_IRF_from_bundle (gretl_bundle *b,
 
     var = VAR_from_bundle(b, 1, boot, err);
 
-    if (var != NULL && boot && var->ci == VECM) {
+    if (0 && var != NULL && boot && var->ci == VECM) {
 	gretl_errmsg_set("irf bootstrap on VECM bundle: not ready yet!");
 	*err = E_BADSTAT;
     }
