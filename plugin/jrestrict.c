@@ -2007,22 +2007,47 @@ static int G_from_remapped_R (Jwrap *J, const gretl_matrix *R)
     return err;
 }
 
-/* detect the presence of a cross-equation alpha
-   restriction (FIXME?) */
+/* Old comment: "detect the presence of a cross-equation alpha
+   restriction". As of 2018-05-10 I'm unsure about this function.
+   What it actually does is detect the case where @Ra, as a whole,
+   places restrictions on more than one column of alpha, that is,
+   on more than one EC term.
+
+   @Ra will have as many rows as there are restrictions on
+   alpha and as many columns as elements in vec(alpha). When
+   we integer-divide the column index j by J->p (the number
+   of equations in the system) we get the 0-based index of the
+   associated alpha column. The code looks for non-zero
+   elements in @Ra: on finding the first one it records the
+   alpha column (@acol); if it later finds a non-zero entry
+   associated with a different alpha column it records the
+   "cross_alpha" flag and returns 1.
+
+   My puzzlement now is whether we're really seeking "cross-
+   equation alpha restrictions" -- if so, the function seems
+   wrong... Note that the only actual use of the "cross_alpha"
+   flag is to rule out scale removal in restricted estimation,
+   so the real question is, what feature of @Ra ought to trigger
+   that limitation?
+*/
 
 static int 
 cross_alpha_check (Jwrap *J, const gretl_matrix *Ra)
 {
     double x;
-    int i, j, k = -1;
+    int i, j, acol = -1;
 
     for (i=0; i<Ra->rows; i++) {
 	for (j=0; j<Ra->cols; j++) {
 	    x = gretl_matrix_get(Ra, i, j);
 	    if (x != 0) {
-		if (k < 0) {
-		    k = j / J->p;
-		} else if (j / J->p != k) {
+		if (acol < 0) {
+		    /* first non-zero element found */
+		    acol = j / J->p;
+		} else if (j / J->p != acol) {
+		    /* this non-zero element pertains
+		       to a different alpha column
+		    */
 		    J->flags |= J_CROSS_ALPHA;
 		    return 1;
 		}
