@@ -303,12 +303,20 @@ that all the $\alpha_i$s are equal, in which case the pooled model
 adequate.
 
 When you estimate using \textsl{random effects}, the Breusch--Pagan
-and Hausman tests are presented automatically.  
+and Hausman tests are presented automatically. To save their results 
+in the context of a script one would copy the \dollar{model.bp\_test} 
+or \dollar{model.hausman\_test} bundles which are nested inside the 
+\dollar{model} bundle. Both of these inner bundles contain the 
+elements \texttt{test}, \texttt{dfn} (degrees of freedom), and 
+\texttt{pvalue}.  
 
 The Breusch--Pagan test is the counterpart to the $F$-test mentioned
 above.  The null hypothesis is that the variance of $v_i$ in
-equation (\ref{eq:RE}) equals zero; if this hypothesis is not rejected,
-then again we conclude that the simple pooled model is adequate.
+equation (\ref{eq:RE}) equals zero; if this hypothesis is not 
+rejected, then again we conclude that the simple pooled model is 
+adequate. If the panel is unbalanced the method from 
+\cite{baltagi-li90} is used to perform the Breusch--Pagan test for 
+individual effects.
 
 The Hausman test probes the consistency of the GLS estimates.  The
 null hypothesis is that these estimates are consistent---that is,
