@@ -2011,19 +2011,18 @@ static int G_from_remapped_R (Jwrap *J, const gretl_matrix *R)
    restriction (FIXME?) */
 
 static int 
-cross_alpha_check (Jwrap *J, const gretl_matrix *R)
+cross_alpha_check (Jwrap *J, const gretl_matrix *Ra)
 {
     double x;
     int i, j, k = -1;
 
-    for (i=0; i<R->rows; i++) {
-	for (j=0; j<R->cols; j++) {
-	    x = gretl_matrix_get(R, i, j);
+    for (i=0; i<Ra->rows; i++) {
+	for (j=0; j<Ra->cols; j++) {
+	    x = gretl_matrix_get(Ra, i, j);
 	    if (x != 0) {
 		if (k < 0) {
 		    k = j / J->p;
 		} else if (j / J->p != k) {
-		    fprintf(stderr, "Got a cross-alpha restriction\n");
 		    J->flags |= J_CROSS_ALPHA;
 		    return 1;
 		}
