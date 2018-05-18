@@ -174,9 +174,8 @@ int filename_to_win32 (char *targ, const char *src)
     gsize bytes;
     int err = 0;
 
-    fprintf(stderr, "filename_to_win32: src='%s'\n", src);
-
     *targ = '\0';
+    fprintf(stderr, "filename_to_win32: src='%s'\n", src);
 
     if (string_is_utf8((const unsigned char *) src)) {
 	gchar *tr = g_locale_from_utf8(src, -1, NULL, &bytes, &gerr);
@@ -187,20 +186,23 @@ int filename_to_win32 (char *targ, const char *src)
 	    g_error_free(gerr);
 	    err = 1;
 	} else {
-	    fprintf(stderr, "  converted: tr='%s'\n", tr);
+	    fprintf(stderr, "filename_to_win32: tr = '%s'\n", tr);
 	    strncat(targ, tr, MAXLEN - 1);
 	    g_free(tr);
 	}
     } else {
 	strncat(targ, src, MAXLEN - 1);
-	fprintf(stderr, "  passed through: targ='%s'\n", targ);
+    }
+
+    if (err) {
+	/* just try the original version? */
+	strncat(targ, src, MAXLEN - 1);
+	err = 0; /* ?? */
     }
 
     if (!err) {
 	slash_convert(targ, TO_BACKSLASH);
     }
-
-    fprintf(stderr, "  on exit, err=%d, targ='%s'\n", err, targ);
 
     return err;
 }
