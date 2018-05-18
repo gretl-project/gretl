@@ -181,14 +181,13 @@ int filename_to_win32 (char *targ, const char *src)
     if (string_is_utf8((const unsigned char *) src)) {
 	gchar *tr = g_locale_from_utf8(src, -1, NULL, &bytes, &gerr);
 
-	fprintf(stderr, "  converted: tr='%s'\n", tr);
-
 	if (gerr != NULL) {
 	    fprintf(stderr, "filename_to_win32 failed on '%s': %s\n",
 		    src, gerr->message);
 	    g_error_free(gerr);
 	    err = 1;
 	} else {
+	    fprintf(stderr, "  converted: tr='%s'\n", tr);
 	    strncat(targ, tr, MAXLEN - 1);
 	    g_free(tr);
 	}
@@ -201,7 +200,7 @@ int filename_to_win32 (char *targ, const char *src)
 	slash_convert(targ, TO_BACKSLASH);
     }
 
-    fprintf(stderr, "  on exit, targ='%s'\n", targ);
+    fprintf(stderr, "  on exit, err=%d, targ='%s'\n", err, targ);
 
     return err;
 }
