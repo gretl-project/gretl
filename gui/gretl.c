@@ -439,7 +439,7 @@ void gui_nls_init (void)
     real_nls_init();
 }
 
-#ifndef G_OS_WIN32
+#if 1 //ndef G_OS_WIN32
 
 static void record_filearg (char *targ, const char *src)
 {
@@ -729,7 +729,7 @@ int main (int argc, char **argv)
 	   given on the command line (by now any options will
 	   have been extracted from the argv array).
 	*/
-#ifdef G_OS_WIN32
+#if 0 // def G_OS_WIN32
 	if (filename_to_win32(tryfile, filearg)) {
 	    exit(EXIT_FAILURE);
 	}
