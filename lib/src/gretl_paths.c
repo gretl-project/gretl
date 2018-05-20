@@ -950,7 +950,7 @@ int gretl_mkdir (const char *path)
 
 #ifdef WIN32
     if (!filename_is_utf8(path)) {
-	gchar pconv = g_locale_to_utf8(path, -1, NULL, NULL, NULL);
+	gchar *pconv = g_locale_to_utf8(path, -1, NULL, NULL, NULL);
 
 	if (pconv != NULL) {
 	    err = g_mkdir_with_parents(path, 0755);
