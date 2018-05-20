@@ -175,18 +175,17 @@ int filename_to_win32 (char *targ, const char *src)
     int err = 0;
 
     *targ = '\0';
-    fprintf(stderr, "filename_to_win32: src='%s'\n", src);
 
     if (string_is_utf8((const unsigned char *) src)) {
+	/* non-ASCII but validates as UTF-8 */
 	gchar *tr = g_locale_from_utf8(src, -1, NULL, &bytes, &gerr);
 
 	if (gerr != NULL) {
-	    fprintf(stderr, "filename_to_win32 failed on '%s': %s\n",
+	    fprintf(stderr, " filename_to_win32: recoding failed on '%s':\n%s\n",
 		    src, gerr->message);
 	    g_error_free(gerr);
 	    err = 1;
 	} else {
-	    fprintf(stderr, "filename_to_win32: tr = '%s'\n", tr);
 	    strncat(targ, tr, MAXLEN - 1);
 	    g_free(tr);
 	}
@@ -195,9 +194,11 @@ int filename_to_win32 (char *targ, const char *src)
     }
 
     if (err) {
-	/* just try the original version? */
+	/* We'll hope for the best with the original version:
+	   it might be OK but out-of-codepage.
+	*/
 	strncat(targ, src, MAXLEN - 1);
-	err = 0; /* ?? */
+	err = 0;
     }
 
     if (!err) {

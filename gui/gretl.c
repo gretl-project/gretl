@@ -597,6 +597,70 @@ static gboolean maybe_hand_off (char *filearg, char *auxname)
 
 #endif
 
+#ifdef G_OS_WIN32
+
+/* The point of the following special code: when gretl is
+   invoked by the OS (via double-click on a file associated
+   with gretl in the registry) the command-line may contain
+   a "mixed language" filename that is not representable in
+   the locale Code Page. Such a filename will appear in
+   mangled form in the argv array, and we need to call on
+   Windows APIs to get a UTF-16 version of this array.
+*/
+
+static void alt_gtk_init (int *pargc,
+			  char ***pargv,
+			  char *filearg,
+			  GError **popterr)
+{
+    int argc_w = 0;
+    int initted = 0;
+    LPWSTR *argv_w;
+
+    win32_set_gretldir((*pargv)[0]);
+
+    /* get args as UTF-16 */
+    argv_w = CommandLineToArgvW(GetCommandLineW(), &argc_w);
+
+    if (argv_w != NULL) {
+	gchar **argv_u8 = calloc(argc_w, sizeof *argv_u8);
+	gchar **origp = argv_u8; /* for use with g_free */
+	int n_u8 = argc_w;
+	int i, uerr = 0;
+
+	/* for GTK, convert args to UTF-8 */
+	for (i=0; i<argc_w && !uerr; i++) {
+	    argv_u8[i] = g_utf16_to_utf8(argv_w[i], -1, NULL, NULL, NULL);
+	    if (argv_u8[i] == NULL) {
+		uerr = 1;
+	    }
+	}
+	if (!uerr) {
+	    gtk_init_with_args(&argc_w, &argv_u8, _(param_msg),
+			       options, "gretl", popterr);
+	    if (argc_w > 1 && *filearg == '\0') {
+		strncat(filearg, argv_u8[1], MAXLEN - 1);
+	    }
+	    *pargc = argc_w; /* update (residual) arg count */
+	    initted = 1;
+	}
+	/* clean up */
+	for (i=0; i<n_u8; i++) {
+	    g_free(origp[i]);
+	}
+	g_free(origp);
+	LocalFree(argv_w);
+    }
+
+    if (!initted) {
+	/* try fallback? */
+	gtk_init_with_args(pargc, pargv, _(param_msg), options,
+			   "gretl", popterr);
+    }
+}
+
+#endif
+
 static int have_data (void)
 {
     return dataset != NULL && dataset->v > 0;
@@ -610,11 +674,9 @@ int main (int argc, char **argv)
     char auxname[MAXLEN];
     char filearg[MAXLEN];
     GError *opterr = NULL;
-    int gtk_initted = 0;
 
-#ifdef G_OS_WIN32
-    win32_set_gretldir(callname);
-#elif !defined(OS_OSX)
+#if !defined(G_OS_WIN32) && !defined(OS_OSX)
+    /* Linux-specific */
     protect_against_ubuntu();
 #endif
 
@@ -632,41 +694,10 @@ int main (int argc, char **argv)
 #endif
 
 #ifdef G_OS_WIN32
-    int i, argc_w = 0;
-    LPWSTR *argv_w = CommandLineToArgvW(GetCommandLineW(), &argc_w);
-
-    if (argv_w != NULL) {
-	gchar **argv_u8 = calloc(argc_w, sizeof *argv_u8);
-	int uerr = 0;
-
-	for (i=0; i<argc_w && !uerr; i++) {
-	    argv_u8[i] = g_utf16_to_utf8(argv_w[i], -1, NULL, NULL, NULL);
-	    if (argv_u8[i] == NULL) {
-		uerr = 1;
-	    }
-	}
-	if (!uerr) {
-	    gtk_init_with_args(&argc_w, &argv_u8, _(param_msg),
-			       options, "gretl", &opterr);
-	    if (argc_w > 1 && *filearg == '\0') {
-		strncat(filearg, argv_u8[1], MAXLEN - 1);
-	    }
-	    gtk_initted = 1;
-	}
-# if 0
-	/* this could be a crasher? */
-	for (i=0; i<argc_w; i++) {
-	    g_free(argv_u8[i]);
-	}
-	g_free(argv_u8);
-# endif
-	LocalFree(argv_w);
-    }
+    alt_gtk_init(&argc, &argv, filearg, &opterr);
+#else
+    gtk_init_with_args(&argc, &argv, _(param_msg), options, "gretl", &opterr);
 #endif
-
-    if (!gtk_initted) {
-	gtk_init_with_args(&argc, &argv, _(param_msg), options, "gretl", &opterr);
-    }
     if (opterr != NULL) {
 	g_print("%s\n", opterr->message);
 	exit(EXIT_FAILURE);
@@ -746,7 +777,8 @@ int main (int argc, char **argv)
     init_fileptrs();
 
     if (argc > 1 && *filearg == '\0') {
-	/* FIXME encoding of @filearg */
+	/* residual unhandled arg should the name
+	   of a file to be opened */
 	strncat(filearg, argv[1], MAXLEN - 1);
     }
 
@@ -767,6 +799,7 @@ int main (int argc, char **argv)
 	   have been extracted from the argv array).
 	*/
 #ifdef G_OS_WIN32
+	/* should we be doing this at all? */
 	if (filename_to_win32(tryfile, filearg)) {
 	    exit(EXIT_FAILURE);
 	}
