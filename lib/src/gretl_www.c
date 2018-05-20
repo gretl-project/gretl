@@ -468,9 +468,11 @@ static int curl_get (urlinfo *u)
 	res = curl_easy_perform(curl);
 
 #ifdef SSLWIN
-	if (res == CURLE_SSL_CACERT) {
+	fprintf(stderr, "curl first pass: res=%d\n", res);
+	if (res != CURLE_OK /* res == CURLE_SSL_CACERT */) {
 	    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, FALSE);
 	    res = curl_easy_perform(curl);
+	    fprintf(stderr, "curl second pass: res=%d\n", res);
 	}
 #endif
 
@@ -1151,6 +1153,9 @@ int gretl_curl (const char *url, const char *header,
 		const char *postdata, int include,
 		char **output, char **errmsg)
 {
+#ifdef SSLWIN
+    static char cpath[MAXLEN];
+#endif
     CURL *curl;
     struct curl_slist *hlist = NULL;
     struct GetBuf getbuf = {
@@ -1159,6 +1164,17 @@ int gretl_curl (const char *url, const char *header,
     };
     CURLcode res;
     int err = 0;
+
+    /* FIXME consolidate common portions of this function
+       and curl_get() above, in particular wrt Windows
+    */
+
+#ifdef SSLWIN
+    /* set up the certs path once */
+    if (cpath[0] == '\0') {
+	set_ca_cert_path(cpath);
+    }
+#endif
 
     err = gretl_curl_toggle(1);
     if (err) {
@@ -1199,6 +1215,12 @@ int gretl_curl (const char *url, const char *header,
     if (wproxy && *proxyhost != '\0') {
 	curl_easy_setopt(curl, CURLOPT_PROXY, proxyhost);
     }
+
+#ifdef SSLWIN
+    /* be on the safe side: 'http' can turn into 'https'
+       at the server */
+    curl_easy_setopt(curl, CURLOPT_CAINFO, cpath);
+#endif
 
     res = curl_easy_perform(curl);
 
