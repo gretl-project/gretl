@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* gretl.c : main for gretl */
@@ -71,7 +71,7 @@
 #endif
 
 /* update.c */
-extern int update_query (void); 
+extern int update_query (void);
 
 /* functions private to gretl.c */
 static void make_main_window (void);
@@ -102,7 +102,7 @@ GtkTargetEntry gretl_drag_targets[] = {
     { "graph_file",     GTK_TARGET_SAME_APP, GRETL_GRAPH_FILE }
 };
 
-static void  
+static void
 mdata_handle_drag  (GtkWidget          *widget,
 		    GdkDragContext     *dc,
 		    gint                x,
@@ -118,30 +118,30 @@ static int opteng, optbasque, optdump, optver;
 static int optdebug;
 #endif
 
-static gchar *param_msg = 
+static gchar *param_msg =
     N_("\nYou may supply the name of a data file on the command line");
 
 static GOptionEntry options[] = {
-    { "run", 'r', 0, G_OPTION_ARG_FILENAME, &optrun, 
+    { "run", 'r', 0, G_OPTION_ARG_FILENAME, &optrun,
       N_("open a script file on startup"), "SCRIPT" },
-    { "db", 'd', 0, G_OPTION_ARG_STRING, &optdb, 
+    { "db", 'd', 0, G_OPTION_ARG_STRING, &optdb,
       N_("open a database on startup"), "DATABASE" },
-    { "webdb", 'w', 0, G_OPTION_ARG_STRING, &optwebdb, 
+    { "webdb", 'w', 0, G_OPTION_ARG_STRING, &optwebdb,
       N_("open a remote (web) database on startup"), "REMOTE_DB" },
-    { "pkg", 'p', 0, G_OPTION_ARG_STRING, &optpkg, 
+    { "pkg", 'p', 0, G_OPTION_ARG_STRING, &optpkg,
       N_("open (edit) a function package on startup"), "FUNCPKG" },
-    { "english", 'e', 0, G_OPTION_ARG_NONE, &opteng, 
+    { "english", 'e', 0, G_OPTION_ARG_NONE, &opteng,
       N_("force use of English"), NULL },
-    { "basque", 'q', 0, G_OPTION_ARG_NONE, &optbasque, 
+    { "basque", 'q', 0, G_OPTION_ARG_NONE, &optbasque,
       N_("force use of Basque"), NULL },
-    { "dump", 'c', 0, G_OPTION_ARG_NONE, &optdump, 
+    { "dump", 'c', 0, G_OPTION_ARG_NONE, &optdump,
       N_("dump gretl configuration to file"), NULL },
 #ifdef G_OS_WIN32
-    { "debug", 'b', 0, G_OPTION_ARG_NONE, &optdebug, 
-      N_("send debugging info to console"), NULL }, 
+    { "debug", 'b', 0, G_OPTION_ARG_NONE, &optdebug,
+      N_("send debugging info to console"), NULL },
 #endif
-    { "version", 'v', 0, G_OPTION_ARG_NONE, &optver, 
-      N_("print version information"), NULL }, 
+    { "version", 'v', 0, G_OPTION_ARG_NONE, &optver,
+      N_("print version information"), NULL },
     { NULL, '\0', 0, 0, NULL, NULL, NULL },
 };
 
@@ -185,7 +185,7 @@ char viewps[MAXSTR] = "gv";
 char Rcommand[MAXSTR] = "xterm -e R";
 #endif
 
-static void spreadsheet_edit (void) 
+static void spreadsheet_edit (void)
 {
     show_spreadsheet(SHEET_EDIT_VARLIST);
 }
@@ -229,7 +229,7 @@ static void pc_change_callback (GtkAction *action, gpointer p)
 {
     const char *s = gtk_action_get_name(action);
     int idxvals = !strcmp(s, "idxvals");
-    
+
     if (mdata_selection_count() == 1) {
 	single_percent_change_dialog(mdata->active_var, idxvals);
     } else {
@@ -264,7 +264,7 @@ static void email_data (gpointer p, guint u, GtkWidget *w)
 	    title = g_strndup(base, len);
 	}
     }
-    
+
     if (title == NULL) {
 	sprintf(gdttmp, "%suntitled.gdt", gretl_dotdir());
     } else {
@@ -383,7 +383,7 @@ static void real_nls_init (void)
     bind_textdomain_codeset(PACKAGE, "UTF-8");
 }
 
-#elif defined(OS_OSX) 
+#elif defined(OS_OSX)
 
 static void real_nls_init (void)
 {
@@ -434,7 +434,7 @@ void gui_nls_init (void)
 	    /* don't set up translation */
 	    return;
 	}
-    } 
+    }
 
     real_nls_init();
 }
@@ -446,7 +446,7 @@ static void record_filearg (char *targ, const char *src)
     if (*src == '.') {
 	gchar *cdir = g_get_current_dir();
 	gchar *tmp = g_build_filename(cdir, src, NULL);
-	
+
 	strcpy(targ, tmp);
 	g_free(cdir);
 	g_free(tmp);
@@ -496,7 +496,7 @@ static void app_will_quit_cb (GtkosxApplication *App, gpointer p)
     gtk_main_quit();
 }
 
-static gboolean app_open_file_cb (GtkosxApplication *app, 
+static gboolean app_open_file_cb (GtkosxApplication *app,
 				  gchar *path, gpointer p)
 {
     *tryfile = '\0';
@@ -511,7 +511,7 @@ static void install_mac_signals (GtkosxApplication *App)
     g_signal_connect(App, "NSApplicationWillTerminate",
 		     G_CALLBACK(app_will_quit_cb), NULL);
     g_signal_connect(App, "NSApplicationOpenFile",
-		     G_CALLBACK(app_open_file_cb), NULL);    
+		     G_CALLBACK(app_open_file_cb), NULL);
 }
 
 # ifdef GRETL_MACINT
@@ -610,6 +610,7 @@ int main (int argc, char **argv)
     char auxname[MAXLEN];
     char filearg[MAXLEN];
     GError *opterr = NULL;
+    int gtk_initted = 0;
 
 #ifdef G_OS_WIN32
     win32_set_gretldir(callname);
@@ -626,11 +627,46 @@ int main (int argc, char **argv)
     *filearg = '\0';
 
 #if GUI_DEBUG
-    fprintf(stderr, "starting gretl %s, build date %s\n", GRETL_VERSION, 
+    fprintf(stderr, "starting gretl %s, build date %s\n", GRETL_VERSION,
 	    BUILD_DATE);
 #endif
 
-    gtk_init_with_args(&argc, &argv, _(param_msg), options, "gretl", &opterr);
+#ifdef G_OS_WIN32
+    int i, argc_w = 0;
+    LPWSTR *argv_w = CommandLineToArgvW(GetCommandLineW(), &argc_w);
+
+    if (argv_w != NULL) {
+	gchar **argv_u8 = calloc(argc_w, sizeof *argv_u8);
+	int uerr = 0;
+
+	for (i=0; i<argc_w && !uerr; i++) {
+	    argv_u8[i] = g_utf16_to_utf8(argv_w[i], -1, NULL, NULL, NULL);
+	    if (argv_u8[i] == NULL) {
+		uerr = 1;
+	    }
+	}
+	if (!uerr) {
+	    gtk_init_with_args(&argc_w, &argv_u8, _(param_msg),
+			       options, "gretl", &opterr);
+	    if (argc_w > 1 && *filearg == '\0') {
+		strncat(filearg, argv_u8[1], MAXLEN - 1);
+	    }
+	    gtk_initted = 1;
+	}
+# if 0
+	/* this could be a crasher? */
+	for (i=0; i<argc_w; i++) {
+	    g_free(argv_u8[i]);
+	}
+	g_free(argv_u8);
+# endif
+	LocalFree(argv_w);
+    }
+#endif
+
+    if (!gtk_initted) {
+	gtk_init_with_args(&argc, &argv, _(param_msg), options, "gretl", &opterr);
+    }
     if (opterr != NULL) {
 	g_print("%s\n", opterr->message);
 	exit(EXIT_FAILURE);
@@ -647,14 +683,14 @@ int main (int argc, char **argv)
     gretl_win32_debug_init(optdebug);
 #elif GTK_MAJOR_VERSION == 3
     quell_glib_spew();
-#endif    
+#endif
 
     libgretl_init();
     gretl_set_gui_mode();
 
 #ifdef G_OS_WIN32
     gretl_win32_init(callname, optdebug);
-#else 
+#else
     gretl_config_init();
 #endif
 
@@ -710,6 +746,7 @@ int main (int argc, char **argv)
     init_fileptrs();
 
     if (argc > 1 && *filearg == '\0') {
+	/* FIXME encoding of @filearg */
 	strncat(filearg, argv[1], MAXLEN - 1);
     }
 
@@ -881,7 +918,7 @@ int is_control_key (guint k)
 
 /* keystrokes recognized in the main gretl window */
 
-static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event, 
+static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
 			     windata_t *vwin)
 {
     int Ctrl = (event->state & GDK_CONTROL_MASK);
@@ -890,7 +927,7 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
 
     if (is_control_key(event->keyval)) {
 	return FALSE;
-    }   
+    }
 
     if (Ctrl && k == GDK_v) {
 	/* Ctrl-V for paste */
@@ -922,7 +959,7 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
 	/* alt-x -> approx. equals */
 	k = GDK_x;
     }
-#endif  
+#endif
 
     if (k == GDK_F1) {
 	/* invoke help */
@@ -994,7 +1031,7 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
 	}
 
 	return TRUE;
-    } 
+    }
 
  suppress:
 
@@ -1010,7 +1047,7 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *event,
 
 static int series_get_parent_iter (int pv, GtkTreeIter *parent)
 {
-    GtkTreeModel *model = 
+    GtkTreeModel *model =
 	gtk_tree_view_get_model(GTK_TREE_VIEW(mdata->listbox));
     GtkTreeIter iter;
     gchar *idstr;
@@ -1019,7 +1056,7 @@ static int series_get_parent_iter (int pv, GtkTreeIter *parent)
     if (!gtk_tree_model_get_iter_first(model, &iter)) {
 	return 0;
     }
-    
+
     while (1) {
 	gtk_tree_model_get(model, &iter, 0, &idstr, -1);
 	if (atoi(idstr) == pv) {
@@ -1104,7 +1141,7 @@ static int get_lag_or_dummy_parent (int v)
     if (pv < 0 || pv >= dataset->v) {
 	pv = 0;
     }
-    
+
     return pv;
 }
 
@@ -1118,7 +1155,7 @@ void populate_varlist (void)
     GtkTreeModel *model = gtk_tree_view_get_model(view);
     GtkTreeStore *store = GTK_TREE_STORE(model);
     GtkTreeSelection *select;
-    GtkTreeIter iter;    
+    GtkTreeIter iter;
     char id[12];
     int i, pos = 0;
 
@@ -1126,7 +1163,7 @@ void populate_varlist (void)
 	/* record line position? */
 	pos = get_line_pos(model);
     }
-    
+
     gtk_tree_store_clear(store);
     gtk_tree_model_get_iter_first(model, &iter);
 
@@ -1145,11 +1182,11 @@ void populate_varlist (void)
 	    GtkTreeIter child_iter, parent_iter;
 
 	    if (series_get_parent_iter(pv, &parent_iter)) {
-		gtk_tree_store_insert_before(store, &child_iter, 
+		gtk_tree_store_insert_before(store, &child_iter,
 					     &parent_iter, NULL);
 		sprintf(id, "%d", i);
-		gtk_tree_store_set(store, &child_iter, 
-				   0, id, 
+		gtk_tree_store_set(store, &child_iter,
+				   0, id,
 				   1, dataset->varname[i],
 				   2, series_get_label(dataset, i),
 				   -1);
@@ -1161,13 +1198,13 @@ void populate_varlist (void)
 	if (pv == 0) {
 	    gtk_tree_store_append(store, &iter, NULL);
 	    sprintf(id, "%d", i);
-	    gtk_tree_store_set(store, &iter, 
-			       0, id, 
+	    gtk_tree_store_set(store, &iter,
+			       0, id,
 			       1, dataset->varname[i],
 			       2, series_get_label(dataset, i),
 			       -1);
 	}
-    } 
+    }
 
     gtk_tree_model_get_iter_first(model, &iter);
 
@@ -1175,7 +1212,7 @@ void populate_varlist (void)
 	/* no saved position */
 	pos = 1;
 	gtk_tree_model_iter_next(model, &iter);
-    } else {	
+    } else {
 	/* try to return to previous position */
 	GtkTreeIter last;
 
@@ -1193,7 +1230,7 @@ void populate_varlist (void)
 	    i++;
 	}
 	pos = i;
-    } 
+    }
 
     mdata->active_var = pos;
     select = gtk_tree_view_get_selection(view);
@@ -1220,7 +1257,7 @@ void populate_varlist (void)
 
     if (!click_connected) {
 	g_signal_connect(G_OBJECT(mdata->listbox), "button-press-event",
-			 G_CALLBACK(main_popup_handler), 
+			 G_CALLBACK(main_popup_handler),
 			 mdata);
 	g_signal_connect(G_OBJECT(mdata->listbox), "button-press-event",
 			 G_CALLBACK(main_varclick),
@@ -1274,12 +1311,12 @@ static void real_select_list (const int *list)
     while (nsel < list[0]) {
 	if (!gtk_tree_model_iter_next(model, &iter)) {
 	    break;
-	}	
+	}
 	gtk_tree_model_get(model, &iter, 0, &idstr, -1);
 	if (in_gretl_list(list, atoi(idstr))) {
 	    gtk_tree_selection_select_iter(select, &iter);
 	    nsel++;
-	} 
+	}
 	g_free(idstr);
     }
 }
@@ -1342,13 +1379,13 @@ static float get_gui_scale (void)
     return scale;
 }
 
-static gboolean 
+static gboolean
 mainwin_config (GtkWidget *w, GdkEventConfigure *event, gpointer p)
 {
     mainwin_width = event->width;
     mainwin_height = event->height;
 
-    gdk_window_get_root_origin(gtk_widget_get_window(mdata->main), 
+    gdk_window_get_root_origin(gtk_widget_get_window(mdata->main),
 			       &main_x, &main_y);
 
     return FALSE;
@@ -1367,7 +1404,7 @@ static void set_main_window_scale (void)
 	int h = gdk_screen_get_height(s);
 	double aspect = 1.25;
 	double hfac = 2.10;
- 
+
 	if (mainwin_height < h / hfac) {
 	    mainwin_height = h / hfac;
 	    if ((double) w / h > 1.35) {
@@ -1392,7 +1429,7 @@ void show_link_cursor (GtkWidget *w, gpointer p)
     gdk_cursor_unref(c);
 }
 
-static void make_main_window (void) 
+static void make_main_window (void)
 {
 #ifdef MAC_INTEGRATION
     GtkUIManager *mac_mgr;
@@ -1401,8 +1438,8 @@ static void make_main_window (void)
     GtkWidget *wlabel = NULL;
     GtkWidget *align;
     const char *titles[] = {
-	N_("ID #"), 
-	N_("Variable name"), 
+	N_("ID #"),
+	N_("Variable name"),
 	N_("Descriptive label")
     };
     GType types[] = {
@@ -1416,7 +1453,7 @@ static void make_main_window (void)
     if (mdata == NULL) {
 	noalloc();
     }
-    
+
     gui_scale = get_gui_scale();
 
     if (!winsize || mainwin_width <= 200 || mainwin_height <= 200) {
@@ -1433,7 +1470,7 @@ static void make_main_window (void)
     g_signal_connect(G_OBJECT(mdata->main), "destroy",
 		     G_CALLBACK(gtk_main_quit), NULL);
 
-    gtk_window_set_default_size(GTK_WINDOW(mdata->main), 
+    gtk_window_set_default_size(GTK_WINDOW(mdata->main),
 				mainwin_width, mainwin_height);
 
     mdata->mbar = make_main_menu();
@@ -1454,7 +1491,7 @@ static void make_main_window (void)
     box = gtk_vbox_new(FALSE, 0);
 
     /* label for name of datafile */
-    dlabel = gtk_label_new(_(" No datafile loaded ")); 
+    dlabel = gtk_label_new(_(" No datafile loaded "));
     g_object_set_data(G_OBJECT(mdata->main), "dlabel", dlabel);
 
     /* label for working directory? */
@@ -1485,7 +1522,7 @@ static void make_main_window (void)
 #if GUI_DEBUG
     fprintf(stderr, " adding main-window listbox...\n");
 #endif
-   
+
     vwin_add_list_box(mdata, GTK_BOX(box), 3, 0, types, titles, 1);
 
     gtk_drag_dest_set(mdata->listbox,
@@ -1570,13 +1607,13 @@ static void make_main_window (void)
 
 GtkActionEntry main_entries[] = {
     /* File */
-    { "File",         NULL, N_("_File"), NULL, NULL, NULL }, 
-    { "OpenDataMenu", NULL, N_("_Open data"), NULL, NULL, NULL }, 
+    { "File",         NULL, N_("_File"), NULL, NULL, NULL },
+    { "OpenDataMenu", NULL, N_("_Open data"), NULL, NULL, NULL },
     { "OpenData",     GTK_STOCK_OPEN, N_("_User file..."), NULL, NULL, G_CALLBACK(open_data) },
     { "DisplayDataFiles", GTK_STOCK_OPEN, N_("_Sample file..."), "", NULL, G_CALLBACK(show_files) },
-    { "AppendData", NULL, N_("_Append data..."), NULL, NULL, G_CALLBACK(open_data) }, 
+    { "AppendData", NULL, N_("_Append data..."), NULL, NULL, G_CALLBACK(open_data) },
     { "SaveData",  GTK_STOCK_SAVE, N_("_Save data"), NULL, NULL, G_CALLBACK(auto_store) },
-    { "SaveDataAs", GTK_STOCK_SAVE_AS, N_("Save data _as..."), NULL, NULL, G_CALLBACK(fsave_callback) }, 
+    { "SaveDataAs", GTK_STOCK_SAVE_AS, N_("Save data _as..."), NULL, NULL, G_CALLBACK(fsave_callback) },
     { "ExportData", NULL, N_("_Export data..."), NULL, NULL, G_CALLBACK(fsave_callback) },
 #ifdef ENABLE_MAILER
     { "MailData", GRETL_STOCK_MAIL, N_("Send To..."), NULL, NULL, G_CALLBACK(email_data) },
@@ -1600,9 +1637,9 @@ GtkActionEntry main_entries[] = {
 
     { "SessionFiles", NULL, N_("_Session files"), NULL, NULL, NULL },
     { "OpenSession", GTK_STOCK_OPEN, N_("_Open session..."), "", NULL, G_CALLBACK(open_session_callback) },
-    { "SaveSession", GTK_STOCK_SAVE, N_("_Save session"), "", NULL, 
+    { "SaveSession", GTK_STOCK_SAVE, N_("_Save session"), "", NULL,
       G_CALLBACK(save_session_callback) },
-    { "SaveSessionAs", GTK_STOCK_SAVE_AS, N_("Save session _as..."), NULL, NULL, 
+    { "SaveSessionAs", GTK_STOCK_SAVE_AS, N_("Save session _as..."), NULL, NULL,
       G_CALLBACK(save_session_callback) },
 
     { "Databases", NULL, N_("_Databases"), NULL, NULL, NULL },
@@ -1696,15 +1733,15 @@ GtkActionEntry main_entries[] = {
     { "logs", NULL, N_("_Logs of selected variables"), NULL, NULL, G_CALLBACK(logs_etc_callback) },
     { "square", NULL, N_("_Squares of selected variables"), NULL, NULL, G_CALLBACK(logs_etc_callback) },
     { "lags", NULL, N_("_Lags of selected variables"), NULL, NULL, G_CALLBACK(logs_etc_callback) },
-    { "diff", NULL, N_("_First differences of selected variables"), NULL, NULL, 
+    { "diff", NULL, N_("_First differences of selected variables"), NULL, NULL,
       G_CALLBACK(logs_etc_callback) },
-    { "ldiff", NULL, N_("_Log differences of selected variables"), NULL, NULL, 
+    { "ldiff", NULL, N_("_Log differences of selected variables"), NULL, NULL,
       G_CALLBACK(logs_etc_callback) },
-    { "sdiff", NULL, N_("_Seasonal differences of selected variables"), NULL, NULL, 
+    { "sdiff", NULL, N_("_Seasonal differences of selected variables"), NULL, NULL,
       G_CALLBACK(logs_etc_callback) },
-    { "pcdiff", NULL, N_("_Percentage change of selected variables"), NULL, NULL, 
+    { "pcdiff", NULL, N_("_Percentage change of selected variables"), NULL, NULL,
       G_CALLBACK(pc_change_callback) },
-    { "idxvals", NULL, N_("_100-based indices of selected variables"), NULL, NULL, 
+    { "idxvals", NULL, N_("_100-based indices of selected variables"), NULL, NULL,
       G_CALLBACK(pc_change_callback) },
     { "AddIndex", NULL, N_("_Index variable"), NULL, NULL, G_CALLBACK(add_index) },
     { "AddTime", NULL, N_("_Time trend"), NULL, NULL, G_CALLBACK(add_index) },
@@ -1714,7 +1751,7 @@ GtkActionEntry main_entries[] = {
     { "UnitDums", NULL, N_("_Unit dummies"), NULL, NULL, G_CALLBACK(add_dummies) },
     { "TimeDums", NULL, N_("_Time dummies"), NULL, NULL, G_CALLBACK(add_dummies) },
     { "RangeDum", NULL, N_("_Observation range dummy"), NULL, NULL, G_CALLBACK(range_dummy_dialog) },
-    { "dummify", NULL, N_("Dummies for _discrete variable..."), NULL, NULL, 
+    { "dummify", NULL, N_("Dummies for _discrete variable..."), NULL, NULL,
       G_CALLBACK(add_dummies) },
     { "NewMatrix", NULL, N_("_Define matrix..."), NULL, NULL, G_CALLBACK(new_matrix_callback) },
 
@@ -1723,14 +1760,14 @@ GtkActionEntry main_entries[] = {
     { "SMPL", NULL, N_("_Set range..."), NULL, NULL, G_CALLBACK(sample_range_dialog) },
     { "FullRange", NULL, N_("_Restore full range"), NULL, NULL, G_CALLBACK(restore_sample_callback) },
     { "ShowSample", NULL, N_("_Show status"), NULL, NULL, G_CALLBACK(show_sample_callback) },
-    { "SMPLBOOL", NULL, N_("_Restrict, based on criterion..."), NULL, NULL, 
+    { "SMPLBOOL", NULL, N_("_Restrict, based on criterion..."), NULL, NULL,
       G_CALLBACK(sample_restrict_dialog) },
     { "SMPLRAND", NULL, N_("R_andom sub-sample..."), NULL, NULL, G_CALLBACK(sample_range_dialog) },
-    { "SampleWReplace", NULL, N_("_Resample with replacement..."), NULL, NULL, 
+    { "SampleWReplace", NULL, N_("_Resample with replacement..."), NULL, NULL,
       G_CALLBACK(gui_resample_data) },
-    { "DropMissing", NULL, N_("Drop observations with _missing values..."), NULL, NULL, 
+    { "DropMissing", NULL, N_("Drop observations with _missing values..."), NULL, NULL,
       G_CALLBACK(drop_missing_data) },
-    { "PermaSample", NULL, N_("Make current subsample permanent..."), NULL, NULL, 
+    { "PermaSample", NULL, N_("Make current subsample permanent..."), NULL, NULL,
       G_CALLBACK(perma_sample_callback) },
     { "CountMissing", NULL, N_("_Count missing values"), NULL, NULL, G_CALLBACK(count_missing) },
 
@@ -1763,29 +1800,29 @@ GtkActionEntry main_entries[] = {
     { "FilterBW", NULL, N_("_Butterworth"), NULL, NULL, G_CALLBACK(filter_callback) },
     { "FilterPoly", NULL, N_("_Polynomial trend"), NULL, NULL, G_CALLBACK(filter_callback) },
     { "FilterFD", NULL, N_("_Fractional difference"), NULL, NULL, G_CALLBACK(filter_callback) },
-    
+
 #ifdef HAVE_X12A
-    { "X12A", NULL, N_("_X-12-ARIMA analysis"), NULL, NULL, G_CALLBACK(do_tramo_x12a) },    
+    { "X12A", NULL, N_("_X-12-ARIMA analysis"), NULL, NULL, G_CALLBACK(do_tramo_x12a) },
 #endif
 #ifdef HAVE_TRAMO
-    { "Tramo", NULL, N_("_TRAMO analysis"), NULL, NULL, G_CALLBACK(do_tramo_x12a) },  
+    { "Tramo", NULL, N_("_TRAMO analysis"), NULL, NULL, G_CALLBACK(do_tramo_x12a) },
 #endif
-    { "Hurst", NULL, N_("_Hurst exponent"), NULL, NULL, G_CALLBACK(do_hurst) },     
-    { "EditAttrs", NULL, N_("_Edit attributes"), NULL, NULL, G_CALLBACK(varinfo_callback) },     
-    { "VSETMISS", NULL, N_("Set missing _value code..."), NULL, NULL, G_CALLBACK(gretl_callback) },     
-    { "GENR", NULL, N_("Define _new variable..."), NULL, NULL, G_CALLBACK(gretl_callback) }, 
+    { "Hurst", NULL, N_("_Hurst exponent"), NULL, NULL, G_CALLBACK(do_hurst) },
+    { "EditAttrs", NULL, N_("_Edit attributes"), NULL, NULL, G_CALLBACK(varinfo_callback) },
+    { "VSETMISS", NULL, N_("Set missing _value code..."), NULL, NULL, G_CALLBACK(gretl_callback) },
+    { "GENR", NULL, N_("Define _new variable..."), NULL, NULL, G_CALLBACK(gretl_callback) },
 
     /* Model */
     { "Model", NULL, N_("_Model"), NULL, NULL, NULL },
-    { "ols", NULL, N_("_Ordinary Least Squares"), NULL, NULL, G_CALLBACK(model_callback) }, 
+    { "ols", NULL, N_("_Ordinary Least Squares"), NULL, NULL, G_CALLBACK(model_callback) },
     { "ivreg", NULL, N_("_Instrumental variables"), NULL, NULL, NULL },
-    { "tsls", NULL, N_("_Two-Stage Least Squares"), NULL, NULL, G_CALLBACK(model_callback) }, 
-    { "iv-liml", NULL, N_("_LIML"), NULL, NULL, G_CALLBACK(model_callback) }, 
-    { "iv-gmm", NULL, N_("_GMM"), NULL, NULL, G_CALLBACK(model_callback) }, 
+    { "tsls", NULL, N_("_Two-Stage Least Squares"), NULL, NULL, G_CALLBACK(model_callback) },
+    { "iv-liml", NULL, N_("_LIML"), NULL, NULL, G_CALLBACK(model_callback) },
+    { "iv-gmm", NULL, N_("_GMM"), NULL, NULL, G_CALLBACK(model_callback) },
     { "LinearModels", NULL, N_("Other _linear models"), NULL, NULL, NULL },
-    { "wls", NULL, N_("_Weighted Least Squares"), NULL, NULL, G_CALLBACK(model_callback) }, 
+    { "wls", NULL, N_("_Weighted Least Squares"), NULL, NULL, G_CALLBACK(model_callback) },
     { "hsk", NULL, N_("H_eteroskedasticity corrected"), NULL, NULL, G_CALLBACK(model_callback) },
-    { "mpols", NULL, N_("High _precision OLS"), NULL, NULL, G_CALLBACK(model_callback) }, 
+    { "mpols", NULL, N_("High _precision OLS"), NULL, NULL, G_CALLBACK(model_callback) },
     { "anova", NULL, N_("ANOVA"), NULL, NULL, G_CALLBACK(model_callback) },
     { "TSModels", NULL, N_("_Time series"), NULL, NULL, NULL },
     { "arima", NULL, N_("ARI_MA"), NULL, NULL, G_CALLBACK(model_callback) },
@@ -1806,30 +1843,30 @@ GtkActionEntry main_entries[] = {
     { "PANEL_B", NULL, N_("_Between model"), NULL, NULL, G_CALLBACK(model_callback) },
     { "dpanel", NULL, N_("_Dynamic panel model"), NULL, NULL, G_CALLBACK(model_callback) },
     { "LimdepModels", NULL, N_("_Limited dependent variable"), NULL, NULL, NULL },
-    { "logit", NULL, N_("_Logit"), NULL, NULL, NULL }, 
-    { "blogit", NULL, N_("_Binary"), NULL, NULL, G_CALLBACK(model_callback) }, 
-    { "ologit", NULL, N_("_Ordered"), NULL, NULL, G_CALLBACK(model_callback) }, 
-    { "mlogit", NULL, N_("_Multinomial"), NULL, NULL, G_CALLBACK(model_callback) }, 
-    { "probit", NULL, N_("_Probit"), NULL, NULL, NULL }, 
-    { "bprobit", NULL, N_("_Binary"), NULL, NULL, G_CALLBACK(model_callback) }, 
-    { "oprobit", NULL, N_("_Ordered"), NULL, NULL, G_CALLBACK(model_callback) }, 
+    { "logit", NULL, N_("_Logit"), NULL, NULL, NULL },
+    { "blogit", NULL, N_("_Binary"), NULL, NULL, G_CALLBACK(model_callback) },
+    { "ologit", NULL, N_("_Ordered"), NULL, NULL, G_CALLBACK(model_callback) },
+    { "mlogit", NULL, N_("_Multinomial"), NULL, NULL, G_CALLBACK(model_callback) },
+    { "probit", NULL, N_("_Probit"), NULL, NULL, NULL },
+    { "bprobit", NULL, N_("_Binary"), NULL, NULL, G_CALLBACK(model_callback) },
+    { "oprobit", NULL, N_("_Ordered"), NULL, NULL, G_CALLBACK(model_callback) },
     { "biprobit", NULL, N_("Bi_variate"), NULL, NULL, G_CALLBACK(model_callback) },
     { "reprobit", NULL, N_("_Random effects"), NULL, NULL, G_CALLBACK(model_callback) },
-    { "tobit", NULL, N_("To_bit"), NULL, NULL, G_CALLBACK(model_callback) }, 
-    { "heckit", NULL, N_("_Heckit"), NULL, NULL, G_CALLBACK(model_callback) }, 
-    { "countmod", NULL, N_("_Count data"), NULL, NULL, G_CALLBACK(model_callback) }, 
-    { "duration", NULL, N_("_Duration data"), NULL, NULL, G_CALLBACK(model_callback) }, 
-    { "logistic", NULL, N_("Lo_gistic"), NULL, NULL, G_CALLBACK(model_callback) }, 
-    { "intreg", NULL, N_("_Interval regression"), NULL, NULL, G_CALLBACK(model_callback) }, 
+    { "tobit", NULL, N_("To_bit"), NULL, NULL, G_CALLBACK(model_callback) },
+    { "heckit", NULL, N_("_Heckit"), NULL, NULL, G_CALLBACK(model_callback) },
+    { "countmod", NULL, N_("_Count data"), NULL, NULL, G_CALLBACK(model_callback) },
+    { "duration", NULL, N_("_Duration data"), NULL, NULL, G_CALLBACK(model_callback) },
+    { "logistic", NULL, N_("Lo_gistic"), NULL, NULL, G_CALLBACK(model_callback) },
+    { "intreg", NULL, N_("_Interval regression"), NULL, NULL, G_CALLBACK(model_callback) },
     { "RobustModels", NULL, N_("_Robust estimation"), NULL, NULL, NULL },
-    { "lad", NULL, N_("Least _Absolute Deviation"), NULL, NULL, G_CALLBACK(model_callback) }, 
-    { "quantreg", NULL, N_("_Quantile regression"), NULL, NULL, G_CALLBACK(model_callback) }, 
-    { "loess", NULL, N_("_Loess"), NULL, NULL, G_CALLBACK(selector_callback) }, 
+    { "lad", NULL, N_("Least _Absolute Deviation"), NULL, NULL, G_CALLBACK(model_callback) },
+    { "quantreg", NULL, N_("_Quantile regression"), NULL, NULL, G_CALLBACK(model_callback) },
+    { "loess", NULL, N_("_Loess"), NULL, NULL, G_CALLBACK(selector_callback) },
     { "nadarwat", NULL, N_("_Nadaraya-Watson"), NULL, NULL, G_CALLBACK(selector_callback) },
-    { "nls", NULL, N_("_Nonlinear Least Squares"), NULL, NULL, G_CALLBACK(gretl_callback) }, 
-    { "mle", NULL, N_("_Maximum likelihood"), NULL, NULL, G_CALLBACK(gretl_callback) }, 
-    { "gmm", NULL, N_("_GMM"), NULL, NULL, G_CALLBACK(gretl_callback) }, 
-    { "system", NULL, N_("_Simultaneous equations"), NULL, NULL, G_CALLBACK(gretl_callback) }, 
+    { "nls", NULL, N_("_Nonlinear Least Squares"), NULL, NULL, G_CALLBACK(gretl_callback) },
+    { "mle", NULL, N_("_Maximum likelihood"), NULL, NULL, G_CALLBACK(gretl_callback) },
+    { "gmm", NULL, N_("_GMM"), NULL, NULL, G_CALLBACK(gretl_callback) },
+    { "system", NULL, N_("_Simultaneous equations"), NULL, NULL, G_CALLBACK(gretl_callback) },
 
     /* Help */
     { "Help", NULL, N_("_Help"), NULL, NULL, NULL },
@@ -1883,7 +1920,7 @@ static gchar *main_menu_user_string (const gchar *mpath)
 	const gchar *p1 = NULL, *p2 = NULL;
 
 	for (i=0; i<nmain && !p1; i++) {
-	    if (main_entries[i].callback == NULL && 
+	    if (main_entries[i].callback == NULL &&
 		!strcmp(S[0], main_entries[i].name)) {
 		p1 = main_entries[i].label;
 		if (S[1] != NULL) {
@@ -1902,7 +1939,7 @@ static gchar *main_menu_user_string (const gchar *mpath)
 	    ret = g_strdup_printf("%s", _(p1));
 	}
     }
-	
+
     g_strfreev(S);
 
     if (ret != NULL) {
@@ -1948,7 +1985,7 @@ static void add_conditional_items (windata_t *vwin)
 			      "/menubar/Tools/Preferences",
 			      N_("_Menu font..."),
 			      "MenuFont",
-			      GTK_UI_MANAGER_MENUITEM, 
+			      GTK_UI_MANAGER_MENUITEM,
 			      FALSE);
     }
 
@@ -1957,7 +1994,7 @@ static void add_conditional_items (windata_t *vwin)
 			  "/menubar/Variable/X12A",
 			  N_("_X-12-ARIMA analysis"),
 			  "X12A",
-			  GTK_UI_MANAGER_MENUITEM, 
+			  GTK_UI_MANAGER_MENUITEM,
 			  FALSE);
 #endif
 
@@ -1966,7 +2003,7 @@ static void add_conditional_items (windata_t *vwin)
 			  "/menubar/Variable/Tramo",
 			  N_("_TRAMO analysis"),
 			  "Tramo",
-			  GTK_UI_MANAGER_MENUITEM, 
+			  GTK_UI_MANAGER_MENUITEM,
 			  FALSE);
 #endif
 
@@ -2016,7 +2053,7 @@ static GtkActionEntry mac_entries[] = {
       G_CALLBACK(new_gretl_instance)},
 };
 
-const gchar *mac_ui = 
+const gchar *mac_ui =
     "<ui>"
     "  <menubar>"
     "    <menu name='File' action='FileMenu'>"
@@ -2036,8 +2073,8 @@ static GtkUIManager *add_mac_menu (void)
     mgr = gtk_ui_manager_new();
     actions = gtk_action_group_new("MacActions");
     gtk_action_group_set_translation_domain(actions, "gretl");
-    gtk_action_group_add_actions(actions, mac_entries, 
-				 G_N_ELEMENTS(mac_entries), 
+    gtk_action_group_add_actions(actions, mac_entries,
+				 G_N_ELEMENTS(mac_entries),
 				 mdata->main);
     gtk_ui_manager_insert_action_group(mgr, actions, 0);
     g_object_unref(actions);
@@ -2085,12 +2122,12 @@ static GtkWidget *make_main_menu (void)
     mdata->ui = gtk_ui_manager_new();
     actions = gtk_action_group_new("Actions");
     gtk_action_group_set_translation_domain(actions, "gretl");
-    gtk_action_group_add_actions(actions, main_entries, 
+    gtk_action_group_add_actions(actions, main_entries,
 				 G_N_ELEMENTS(main_entries), mdata);
     gtk_ui_manager_insert_action_group(mdata->ui, actions, 0);
     g_object_unref(actions);
 
-    gtk_window_add_accel_group(GTK_WINDOW(mdata->main), 
+    gtk_window_add_accel_group(GTK_WINDOW(mdata->main),
 			       gtk_ui_manager_get_accel_group(mdata->ui));
 
     if (!gtk_ui_manager_add_ui_from_string(mdata->ui, main_ui, -1, &error)) {
@@ -2120,7 +2157,7 @@ static GtkWidget *make_main_menu (void)
     return menu;
 }
 
-static void name_new_list (GtkWidget *widget, dialog_t *dlg) 
+static void name_new_list (GtkWidget *widget, dialog_t *dlg)
 {
     char *lname = (char *) edit_dialog_get_data(dlg);
     const gchar *buf = edit_dialog_get_text(dlg);
@@ -2155,7 +2192,7 @@ static void real_make_mainwin_list (const int *list,
 
 /* respond to "Define list", selected from main window
    right-click popup menu when two or more series are
-   selected 
+   selected
 */
 
 void make_list_from_main (void)
@@ -2175,7 +2212,7 @@ void make_list_from_main (void)
 			      dataset->varname[list[list[0]]]);
 
 	blocking_edit_dialog(0, _("gretl: name list"), msg,
-			     NULL, name_new_list, lname, 
+			     NULL, name_new_list, lname,
 			     VARCLICK_NONE, mdata->main,
 			     &cancel);
 	g_free(msg);
@@ -2207,10 +2244,10 @@ int gui_restore_sample (DATASET *dset)
 
 static void restore_sample_callback (void)
 {
-    int err = gui_restore_sample(dataset); 
+    int err = gui_restore_sample(dataset);
 
     if (!err) {
-	set_sample_label(dataset);    
+	set_sample_label(dataset);
 	lib_command_strcpy("smpl --full");
 	record_command_verbatim();
     }
@@ -2270,17 +2307,17 @@ int gretl_fork (const char *progvar, const char *arg,
 	errbox_printf("Internal error: variable %s is undefined", progvar);
 	return 1;
     }
-    
+
     argv[0] = g_strdup(prog);
-    
+
     if (opt != NULL) {
 	argv[1] = g_strdup(arg);
 	argv[2] = g_strdup(opt);
     } else if (arg != NULL) {
 	argv[1] = g_strdup(arg);
     }
-    
-    run = g_spawn_async(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, 
+
+    run = g_spawn_async(NULL, argv, NULL, G_SPAWN_SEARCH_PATH,
 			NULL, NULL, NULL, &err);
 
     if (err != NULL) {
@@ -2299,7 +2336,7 @@ int gretl_fork (const char *progvar, const char *arg,
     return !run;
 }
 
-#endif	
+#endif
 
 /* Icon handling for X11 */
 
@@ -2317,7 +2354,7 @@ void set_wm_icon (GtkWidget *w)
 	gtkosx_application_set_dock_icon_pixbuf(App, icon);
 	gtk_window_set_icon(GTK_WINDOW(w), icon);
 	g_object_unref(icon);
-    }    
+    }
 # else
     if (icon != NULL) {
 	gtk_window_set_icon(GTK_WINDOW(w), icon);
@@ -2337,7 +2374,7 @@ static int has_db_suffix (const char *fname)
 
 /* Drag 'n' drop: respond to data dropped into the main window */
 
-static void  
+static void
 mdata_handle_drag  (GtkWidget *widget,
 		    GdkDragContext *context,
 		    gint x,
@@ -2367,7 +2404,7 @@ mdata_handle_drag  (GtkWidget *widget,
     }
 
     /* ignore the wrong sort of data */
-    if (data == NULL || (dfname = (gchar *) seldata) == NULL || 
+    if (data == NULL || (dfname = (gchar *) seldata) == NULL ||
 	strlen(dfname) <= 5 || strncmp(dfname, "file:", 5)) {
 	return;
     }
@@ -2379,7 +2416,7 @@ mdata_handle_drag  (GtkWidget *widget,
 
     /* there may be multiple files: we ignore all but the first */
     *tmp = 0;
-    if ((pos = gretl_charpos('\r', dfname)) > 0 || 
+    if ((pos = gretl_charpos('\r', dfname)) > 0 ||
 	(pos = gretl_charpos('\n', dfname) > 0)) {
 	strncat(tmp, dfname + skip, pos - skip);
     } else {
@@ -2439,7 +2476,7 @@ static void auto_store (void)
 	} else {
 	    file_selector(SAVE_DATA, FSEL_DATA_NONE, NULL);
 	}
-    }	
+    }
 }
 
 static void mdata_text_received (GtkClipboard *cb,
@@ -2456,7 +2493,7 @@ static void mdata_text_received (GtkClipboard *cb,
 	if (canceled(resp)) {
 	    return;
 	}
-	
+
 	err = user_fopen(CLIPTEMP, fullname, &prn);
 
 	if (!err) {
@@ -2500,7 +2537,7 @@ int mdata_active_var (void)
     return mdata->active_var;
 }
 
-static gboolean 
+static gboolean
 main_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer data)
 {
     if (right_click(event)) {
@@ -2523,7 +2560,7 @@ main_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer data)
 	    gtk_menu_popup(GTK_MENU(mdata->popup), NULL, NULL, NULL, NULL,
 			   event->button, event->time);
 	    g_signal_connect(G_OBJECT(mdata->popup), "destroy",
-			     G_CALLBACK(gtk_widget_destroyed), 
+			     G_CALLBACK(gtk_widget_destroyed),
 			     &mdata->popup);
 	}
 
