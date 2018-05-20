@@ -5447,34 +5447,31 @@
       </description>
     </function>
 
-	<function name="lrcovar" section="filters" output="matrix">
-		<fnargs>
-			<fnarg type="matrix">A</fnarg>
-			<fnarg type="bool" optional="true">demean</fnarg>
-		</fnargs>
-
-		<description>
-			<para>
-		Returns the long-run variance-covariance matrix of the columns of 
-		<argname>A</argname>. The data are first demeaned unless the second 
-		(optional) argument is set to zero. 
-		The kernel type and lag truncation parameter (window size) can be 
-		chosen before calling this function with the HAC-related options 
-		that the <cmdref targ="set"/> 
-		command offers, such as <lit>hac_kernel</lit>, <lit>hac_lag</lit>,
-		<lit>hac_prewhiten</lit>. See also
-		the section on Time series data and HAC covariance matrices in the 
-		gretl user guide.
-			</para>
-			
-			<para>
-	  			<seelist>
-					<fncref targ="lrvar"/>
-				</seelist>
-			</para>
-
-		</description>
-	</function>
+    <function name="lrcovar" section="filters" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">A</fnarg>
+	<fnarg type="bool" optional="true">demean</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns the long-run variance-covariance matrix of the
+	  columns of <argname>A</argname>. The data are first demeaned
+	  unless the second (optional) argument is set to zero.  The
+	  kernel type and lag truncation parameter (window size) can
+	  be chosen before calling this function with the HAC-related
+	  options that the <cmdref targ="set"/> command offers, such
+	  as <lit>hac_kernel</lit>, <lit>hac_lag</lit>,
+	  <lit>hac_prewhiten</lit>. See also the section on Time
+	  series data and HAC covariance matrices in <guideref
+	  targ="chap:robust_vcv"/>.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="lrvar"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
 
     <function name="lrvar" section="filters" output="scalar">
       <fnargs>
@@ -5497,6 +5494,9 @@
 	  with 
 	  \[ w_i = 1 - \frac{|i|}{k + 1} \]
 	</para>
+	<para>
+	  For a multivariate counterpart, see <fncref targ="lrcovar"/>.
+	</para>	
       </description>
     </function>
 
