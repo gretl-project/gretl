@@ -5483,6 +5483,35 @@
       </description>
     </function>
 
+    <function name="lrcovar" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">A</fnarg>
+	<fnarg type="bool" optional="true">centra</fnarg>
+      </fnargs>
+      
+      <description>
+	<para>
+	  Restituisce la matrice varianze-covarianze di lungo periodo
+	  delle colonne di <argname>A</argname>. Le colonne vengono
+	  centrate a meno che il secondo argomento (opzionale) non sia
+	  zero. Il tipo di kernel e il parametro di troncamento
+	  (ampiezza della finestra) vengono scelti tramite le
+	  opportune opzioni offerte dal comando <cmdref targ="set"/>,
+	  quali <lit>hac_kernel</lit>, <lit>hac_lag</lit> e
+	  <lit>hac_prewhiten</lit>. Si veda la sezione su dati in
+	  serie storiche e matrici di covarianze robuste in <guideref
+	  targ="chap:robust_vcv"/> per più dettagli.
+	</para>
+	
+	<para>
+	  <seelist>
+	    <fncref targ="lrvar"/>
+	  </seelist>
+	</para>
+	
+      </description>
+    </function>
+
     <function name="lrvar" section="filters" output="scalar">
       <fnargs>
     <fnarg type="series-or-vec">y</fnarg>
