@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* gretl_www.c for gretl -- uses libcurl API */
@@ -39,10 +39,6 @@ enum {
 
 #define DBHLEN 64
 
-#if defined(WIN32)
-# define SSLWIN
-#endif
-
 static char dbhost[DBHLEN]       = "ricardo.ecn.wfu.edu";
 static char gretlhost[DBHLEN]    = "ricardo.ecn.wfu.edu";
 static char datacgi[DBHLEN]      = "/gretl/cgi-bin/gretldata.cgi";
@@ -56,6 +52,10 @@ static char proxyhost[128];
 
 static char sffiles[DBHLEN] = "downloads.sourceforge.net";
 static char sfweb[DBHLEN]   = "gretl.sourceforge.net";
+
+#ifdef WIN32
+static char certs_path[MAXLEN];
+#endif
 
 #define URLLEN 1024
 
@@ -77,7 +77,7 @@ struct urlinfo_ {
     int timeout;             /* seconds till timing out */
 };
 
-static void urlinfo_init (urlinfo *u, 
+static void urlinfo_init (urlinfo *u,
 			  const char *hostname,
 			  int saveopt,
 			  const char *localfile)
@@ -126,7 +126,7 @@ static void urlinfo_set_url (urlinfo *u, const char *url)
 static void urlinfo_finalize (urlinfo *u, char **getbuf, int *err)
 {
     if (u->fp != NULL) {
-	fclose(u->fp); 
+	fclose(u->fp);
     } else if (getbuf != NULL) {
 	*getbuf = u->getbuf;
     }
@@ -139,7 +139,7 @@ static void urlinfo_finalize (urlinfo *u, char **getbuf, int *err)
 	if (u->datalen == 0) {
 	    *err = E_DATA;
 	}
-    }    
+    }
 }
 
 static void urlinfo_set_show_progress (urlinfo *u)
@@ -152,7 +152,7 @@ static void urlinfo_set_show_progress (urlinfo *u)
     }
 }
 
-static int progress_func (void *clientp, double dltotal, double dlnow, 
+static int progress_func (void *clientp, double dltotal, double dlnow,
 			  double ultotal, double ulnow)
 {
     urlinfo *u = (urlinfo *) clientp;
@@ -197,14 +197,14 @@ static int grow_read_buffer (urlinfo *u, size_t bgot)
 	u->getbuf = newbuf;
 	u->buflen = newlen;
 #if WDEBUG
-	fprintf(stderr, "u->getbuf realloc'd at %p (len %d)\n", 
+	fprintf(stderr, "u->getbuf realloc'd at %p (len %d)\n",
 		(void *) u->getbuf, (int) u->buflen);
 #endif
 	return 0;
     }
 }
 
-static size_t gretl_write_func (void *buf, size_t size, size_t nmemb, 
+static size_t gretl_write_func (void *buf, size_t size, size_t nmemb,
 				void *data)
 {
     urlinfo *u = (urlinfo *) data;
@@ -212,7 +212,7 @@ static size_t gretl_write_func (void *buf, size_t size, size_t nmemb,
     size_t ret = 0;
 
 #if WDEBUG > 1
-    fprintf(stderr, "write_func: size = %d, nmemb = %d\n", 
+    fprintf(stderr, "write_func: size = %d, nmemb = %d\n",
 	    (int) size, (int) nmemb);
 #endif
 
@@ -240,7 +240,7 @@ static size_t gretl_write_func (void *buf, size_t size, size_t nmemb,
 		return 0;
 	    }
 	    u->buflen = WBUFSIZE;
-	} 
+	}
 	if (u->datalen + bgot > u->buflen) {
 	    u->err = grow_read_buffer(u, bgot);
 	    if (u->err) {
@@ -261,7 +261,7 @@ static size_t gretl_write_func (void *buf, size_t size, size_t nmemb,
 static int progress_bar_wanted (int opt)
 {
     if (gretl_in_gui_mode()) {
-	return (opt == GRAB_IDX || 
+	return (opt == GRAB_IDX ||
 		opt == GRAB_DATA ||
 		opt == GRAB_NBO_DATA ||
 		opt == GRAB_FILE ||
@@ -270,7 +270,7 @@ static int progress_bar_wanted (int opt)
 		opt == GRAB_PKG ||
 		opt == GRAB_FOREIGN);
     }
-    
+
     return 0;
 }
 
@@ -308,9 +308,9 @@ static const char *print_option (int opt)
     }
 
     return NULL;
-} 
+}
 
-static void urlinfo_set_params (urlinfo *u, CGIOpt opt, 
+static void urlinfo_set_params (urlinfo *u, CGIOpt opt,
 				const char *fname,
 				const char *series,
 				int filter)
@@ -339,7 +339,7 @@ static void urlinfo_set_params (urlinfo *u, CGIOpt opt,
 	sprintf(fstr, "%d", filter);
 	strcat(u->url, "&filter=");
 	strcat(u->url, fstr);
-    }    
+    }
 }
 
 static void maybe_revise_www_paths (void)
@@ -353,6 +353,23 @@ static void maybe_revise_www_paths (void)
     }
 }
 
+#ifdef WIN32
+
+static void certs_path_init (void)
+{
+# ifndef PKGBUILD
+    char *pfx = getenv("MINGW_PREFIX");
+
+    if (pfx != NULL) {
+	sprintf(certs_path, "%s/share/curl/curl-ca-bundle.crt", pfx);
+	return;
+    }
+# endif
+    sprintf(certs_path, "%scurl-ca-bundle.crt", gretl_home());
+}
+
+#endif
+
 static int gretl_curl_toggle (int on)
 {
     static int init_done;
@@ -365,6 +382,9 @@ static int gretl_curl_toggle (int on)
 		gretl_errmsg_set("Failed to initialize libcurl");
 		return 1;
 	    } else {
+#ifdef WIN32
+		certs_path_init();
+#endif
 		init_done = 1;
 	    }
 	}
@@ -378,121 +398,109 @@ static int gretl_curl_toggle (int on)
 static void set_curl_proxy (urlinfo *u, CURL *curl)
 {
     CURLcode err;
-	    
+
     err = curl_easy_setopt(curl, CURLOPT_PROXY, proxyhost);
-    
+
     if (err != CURLE_OK) {
 	fprintf(stderr, "trying to set http proxy '%s':\n", proxyhost);
-	fprintf(stderr, " CURL error %d (%s)", err, curl_easy_strerror(err));
+	fprintf(stderr, "cURL error %d (%s)", err, curl_easy_strerror(err));
     } else if (u->verbose) {
 	fprintf(stderr, "using http proxy '%s'\n", proxyhost);
     }
 }
 
-#ifdef SSLWIN
-
-static void set_ca_cert_path (char *cpath)
+static int common_curl_setup (CURL **pcurl)
 {
-# ifndef PKGBUILD
-    char *pfx = getenv("MINGW_PREFIX");
-
-    if (pfx != NULL) {
-	sprintf(cpath, "%s/share/curl/curl-ca-bundle.crt", pfx);
-	return;
-    }
-# endif
-    sprintf(cpath, "%scurl-ca-bundle.crt", gretl_home());
-}
-
-#endif
-
-static int curl_get (urlinfo *u)
-{
-#ifdef SSLWIN
-    static char cpath[MAXLEN];
-#endif
-    CURL *curl;
-    CURLcode res;
-    int err = 0;
-
-#ifdef SSLWIN
-    /* set up the certs path once */
-    if (cpath[0] == '\0') {
-	set_ca_cert_path(cpath);
-    }
-#endif
+    int err;
 
     err = gretl_curl_toggle(1);
     if (err) {
 	return err;
     }
 
-    curl = curl_easy_init();
+    *pcurl = curl_easy_init();
 
-    if (curl == NULL) {
+    if (*pcurl == NULL) {
 	gretl_errmsg_set("curl_easy_init failed");
 	err = 1;
     } else {
-	if (u->verbose) {
-	    fprintf(stderr, "curl_get: %s\n", u->url);
-	}
-	curl_easy_setopt(curl, CURLOPT_URL, u->url);
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, gretl_write_func);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, u);
-	curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
-	curl_easy_setopt(curl, CURLOPT_USERAGENT, u->agent);
-	curl_easy_setopt(curl, CURLOPT_VERBOSE, u->verbose);
-	
-	if (u->timeout > 0) {
-	    curl_easy_setopt(curl, CURLOPT_TIMEOUT, (long) u->timeout);
-	}
-	
-	if (wproxy && *proxyhost != '\0') {
-	    set_curl_proxy(u, curl);
-	}
-
-#ifdef SSLWIN
-	/* be on the safe side: 'http' can turn into 'https'
-	   at the server */
-	curl_easy_setopt(curl, CURLOPT_CAINFO, cpath);
+	curl_easy_setopt(*pcurl, CURLOPT_VERBOSE,
+			 getenv("GRETL_WWW_VERBOSE") != NULL);
+#ifdef WIN32
+	curl_easy_setopt(*pcurl, CURLOPT_CAINFO, certs_path);
 #endif
-
-	if (u->progfunc != NULL) {
-	    curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, progress_func);
-	    curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, u);
-	    curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0);
-	} else {
-	    curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
-	}
-
-	res = curl_easy_perform(curl);
-
-#ifdef SSLWIN
-	fprintf(stderr, "curl first pass: res=%d\n", res);
-	if (res != CURLE_OK /* res == CURLE_SSL_CACERT */) {
-	    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, FALSE);
-	    res = curl_easy_perform(curl);
-	    fprintf(stderr, "curl second pass: res=%d\n", res);
-	}
-#endif
-
-	if (u->progfunc != NULL) {
-	    stop_progress_bar(u);
-	}
-
-	if (res != CURLE_OK) {
-	    gretl_errmsg_sprintf("cURL error %d (%s)", res,
-				 curl_easy_strerror(res));
-	    err = u->err ? u->err : 1;
-	}
-
-	curl_easy_cleanup(curl);
     }
 
     return err;
 }
 
-/* grab data from an internet host.  
+static int curl_get (urlinfo *u)
+{
+    CURL *curl = NULL;
+    CURLcode res;
+    int err;
+
+    err = common_curl_setup(&curl);
+    if (err) {
+	return err;
+    }
+
+    if (u->verbose) {
+	fprintf(stderr, "curl_get: %s\n", u->url);
+    }
+    curl_easy_setopt(curl, CURLOPT_URL, u->url);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, gretl_write_func);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, u);
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, u->agent);
+
+    if (u->timeout > 0) {
+	curl_easy_setopt(curl, CURLOPT_TIMEOUT, (long) u->timeout);
+    }
+
+    if (wproxy && *proxyhost != '\0') {
+	set_curl_proxy(u, curl);
+    }
+
+#ifdef WIN32
+    /* be on the safe side: 'http' can turn into 'https'
+       at the server */
+    curl_easy_setopt(curl, CURLOPT_CAINFO, certs_path);
+#endif
+
+    if (u->progfunc != NULL) {
+	curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, progress_func);
+	curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, u);
+	curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0);
+    } else {
+	curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
+    }
+
+    res = curl_easy_perform(curl);
+
+#ifdef WIN32
+    if (res == CURLE_SSL_CACERT) {
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, FALSE);
+	res = curl_easy_perform(curl);
+    }
+#endif
+
+    if (u->progfunc != NULL) {
+	stop_progress_bar(u);
+    }
+
+    if (res != CURLE_OK) {
+	gretl_errmsg_sprintf("cURL error %d (%s)", res,
+			     curl_easy_strerror(res));
+	err = u->err ? u->err : 1;
+    }
+
+    curl_easy_cleanup(curl);
+
+    return err;
+}
+
+/* grab data from an internet host.
 
    @host: name of host to access.
 
@@ -514,10 +522,10 @@ static int curl_get (urlinfo *u)
    Exactly one of @localfile and @getbuf should be non-NULL.
 */
 
-static int retrieve_url (const char *hostname, 
-			 CGIOpt opt, 
-			 const char *fname, 
-			 const char *dbseries, 
+static int retrieve_url (const char *hostname,
+			 CGIOpt opt,
+			 const char *fname,
+			 const char *dbseries,
 			 const char *localfile,
 			 int filter,
 			 char **getbuf)
@@ -605,7 +613,7 @@ int gretl_www_init (const char *host, const char *proxy, int use_proxy)
     }
 
     return 0;
-} 
+}
 
 void gretl_www_cleanup (void)
 {
@@ -624,7 +632,7 @@ int get_update_info (char **saver, int verbose)
 	strcat(u.url, "?opt=MANUAL_QUERY");
     } else {
 	strcat(u.url, "?opt=QUERY");
-    } 
+    }
 
     err = curl_get(&u);
     urlinfo_finalize(&u, saver, &err);
@@ -638,11 +646,15 @@ int get_update_info (char **saver, int verbose)
    server.
 */
 
-int upload_function_package (const char *login, const char *pass, 
+int upload_function_package (const char *login, const char *pass,
 			     const char *fname, const char *buf,
 			     size_t buflen, char **retbuf)
 {
-    CURL *curl;
+    struct curl_httppost *post = NULL;
+    struct curl_httppost *last = NULL;
+    int zipfile = has_suffix(fname, ".zip");
+    char sizestr[32];
+    CURL *curl = NULL;
     CURLcode res;
     int saveopt = SAVE_NONE;
     urlinfo u;
@@ -658,78 +670,65 @@ int upload_function_package (const char *login, const char *pass,
     urlinfo_init(&u, gretlhost, saveopt, NULL);
     strcat(u.url, datacgi);
 
-    err = gretl_curl_toggle(1);
+    err = common_curl_setup(&curl);
     if (err) {
 	return err;
     }
 
-    curl = curl_easy_init();
+    curl_easy_setopt(curl, CURLOPT_URL, u.url);
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, u.agent);
 
-    if (curl == NULL) {
-	gretl_errmsg_set("curl_easy_init failed");
-	err = 1;
-    } else {
-	struct curl_httppost *post = NULL;
-	struct curl_httppost *last = NULL;
-	int zipfile = has_suffix(fname, ".zip");
-	char sizestr[32];
-	
-	curl_easy_setopt(curl, CURLOPT_URL, u.url);
-	curl_easy_setopt(curl, CURLOPT_USERAGENT, u.agent);
-	curl_easy_setopt(curl, CURLOPT_VERBOSE, u.verbose);
-
-	if (saveopt == SAVE_TO_BUFFER) {
-	    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, gretl_write_func);
-	    curl_easy_setopt(curl, CURLOPT_FILE, &u);
-	}
-
-	if (wproxy && *proxyhost != '\0') {
-	    set_curl_proxy(&u, curl);
-	}
-
-	curl_formadd(&post, &last, 
-		     CURLFORM_COPYNAME, "login", 
-		     CURLFORM_PTRCONTENTS, login, 
-		     CURLFORM_END);
-	curl_formadd(&post, &last, 
-		     CURLFORM_COPYNAME, "pass", 
-		     CURLFORM_PTRCONTENTS, pass, 
-		     CURLFORM_END);
-	if (zipfile) {
-	    sprintf(sizestr, "%d", (int) buflen);
-	    curl_formadd(&post, &last, 
-			 CURLFORM_COPYNAME, "datasize",
-			 CURLFORM_PTRCONTENTS, sizestr, 
-			 CURLFORM_END);		    
-	    curl_formadd(&post, &last, 
-			 CURLFORM_COPYNAME, "pkg", 
-			 CURLFORM_BUFFER, fname,
-			 CURLFORM_CONTENTTYPE, "application/x-zip-compressed",
-			 CURLFORM_BUFFERPTR, buf,
-			 CURLFORM_BUFFERLENGTH, buflen,
-			 CURLFORM_END);	    
-	} else {
-	    curl_formadd(&post, &last, 
-			 CURLFORM_COPYNAME, "pkg", 
-			 CURLFORM_BUFFER, fname,
-			 CURLFORM_CONTENTTYPE, "text/plain; charset=utf-8",
-			 CURLFORM_BUFFERPTR, buf,
-			 CURLFORM_BUFFERLENGTH, strlen(buf),
-			 CURLFORM_END);
-	}
-
-	curl_easy_setopt(curl, CURLOPT_HTTPPOST, post);
-	res = curl_easy_perform(curl);
-
-	if (res != CURLE_OK) {
-	    gretl_errmsg_sprintf("CURL error %d (%s)", res, 
-				 curl_easy_strerror(res));
-	    err = u.err ? u.err : 1;
-	}
-
-	curl_formfree(post);
-	curl_easy_cleanup(curl);	
+    if (saveopt == SAVE_TO_BUFFER) {
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, gretl_write_func);
+	curl_easy_setopt(curl, CURLOPT_FILE, &u);
     }
+
+    if (wproxy && *proxyhost != '\0') {
+	set_curl_proxy(&u, curl);
+    }
+
+    curl_formadd(&post, &last,
+		 CURLFORM_COPYNAME, "login",
+		 CURLFORM_PTRCONTENTS, login,
+		 CURLFORM_END);
+    curl_formadd(&post, &last,
+		 CURLFORM_COPYNAME, "pass",
+		 CURLFORM_PTRCONTENTS, pass,
+		 CURLFORM_END);
+    if (zipfile) {
+	sprintf(sizestr, "%d", (int) buflen);
+	curl_formadd(&post, &last,
+		     CURLFORM_COPYNAME, "datasize",
+		     CURLFORM_PTRCONTENTS, sizestr,
+		     CURLFORM_END);
+	curl_formadd(&post, &last,
+		     CURLFORM_COPYNAME, "pkg",
+		     CURLFORM_BUFFER, fname,
+		     CURLFORM_CONTENTTYPE, "application/x-zip-compressed",
+		     CURLFORM_BUFFERPTR, buf,
+		     CURLFORM_BUFFERLENGTH, buflen,
+		     CURLFORM_END);
+    } else {
+	curl_formadd(&post, &last,
+		     CURLFORM_COPYNAME, "pkg",
+		     CURLFORM_BUFFER, fname,
+		     CURLFORM_CONTENTTYPE, "text/plain; charset=utf-8",
+		     CURLFORM_BUFFERPTR, buf,
+		     CURLFORM_BUFFERLENGTH, strlen(buf),
+		     CURLFORM_END);
+    }
+
+    curl_easy_setopt(curl, CURLOPT_HTTPPOST, post);
+    res = curl_easy_perform(curl);
+
+    if (res != CURLE_OK) {
+	gretl_errmsg_sprintf("cURL error %d (%s)", res,
+			     curl_easy_strerror(res));
+	err = u.err ? u.err : 1;
+    }
+
+    curl_formfree(post);
+    curl_easy_cleanup(curl);
 
     if (retbuf != NULL) {
 	*retbuf = u.getbuf;
@@ -740,45 +739,45 @@ int upload_function_package (const char *login, const char *pass,
 
 int list_remote_dbs (char **getbuf)
 {
-    return retrieve_url(dbhost, LIST_DBS, NULL, NULL, 
+    return retrieve_url(dbhost, LIST_DBS, NULL, NULL,
 			NULL, 0, getbuf);
 }
 
 int list_remote_function_packages (char **getbuf, int filter)
 {
-    return retrieve_url(gretlhost, LIST_FUNCS, NULL, NULL, 
+    return retrieve_url(gretlhost, LIST_FUNCS, NULL, NULL,
 			NULL, filter, getbuf);
 }
 
 int list_remote_function_categories (char **getbuf)
 {
-    return retrieve_url(gretlhost, LIST_CATS, NULL, NULL, 
+    return retrieve_url(gretlhost, LIST_CATS, NULL, NULL,
 			NULL, 0, getbuf);
 }
 
 int query_sourceforge (const char *query, char **getbuf)
 {
-    return retrieve_url(sfweb, QUERY_SF, query, NULL, 
+    return retrieve_url(sfweb, QUERY_SF, query, NULL,
 			NULL, 0, getbuf);
 }
 
 int list_remote_data_packages (char **getbuf)
 {
-    return retrieve_url(sfweb, LIST_PKGS, NULL, NULL, 
+    return retrieve_url(sfweb, LIST_PKGS, NULL, NULL,
 			NULL, 0, getbuf);
 }
 
-int retrieve_remote_db_index (const char *dbname, char **getbuf) 
+int retrieve_remote_db_index (const char *dbname, char **getbuf)
 {
-    return retrieve_url(dbhost, GRAB_IDX, dbname, NULL, 
+    return retrieve_url(dbhost, GRAB_IDX, dbname, NULL,
 			NULL, 0, getbuf);
 }
 
-int retrieve_remote_db (const char *dbname, 
+int retrieve_remote_db (const char *dbname,
 			const char *localname,
 			int opt)
 {
-    return retrieve_url(dbhost, opt, dbname, NULL, 
+    return retrieve_url(dbhost, opt, dbname, NULL,
 			localname, 0, NULL);
 }
 
@@ -787,12 +786,12 @@ int check_remote_db (const char *dbname)
     char *getbuf = NULL;
     int err;
 
-    err = retrieve_url(dbhost, CHECK_DB, dbname, NULL, 
+    err = retrieve_url(dbhost, CHECK_DB, dbname, NULL,
 		       NULL, 0, &getbuf);
 
     if (!err && getbuf != NULL) {
 	err = strncmp(getbuf, "OK", 2) != 0;
-    } 
+    }
 
     free(getbuf);
 
@@ -807,7 +806,7 @@ static int check_downloaded_file (const char *fname,
 				  const char *dl)
 {
     int err = 0;
-    
+
     if (has_suffix(fname, ".zip") &&
 	!gretl_is_pkzip_file(fname)) {
 	err = E_DATA;
@@ -815,7 +814,7 @@ static int check_downloaded_file (const char *fname,
 	       !gretl_is_xml_file(fname)) {
 	err = E_DATA;
     }
-	
+
     if (err) {
 	/* let's see what we got */
 	FILE *fp = gretl_fopen(fname, "rb");
@@ -853,12 +852,12 @@ static int check_downloaded_file (const char *fname,
  * Returns: 0 on success, non-zero on failure.
  */
 
-int retrieve_remote_function_package (const char *pkgname, 
+int retrieve_remote_function_package (const char *pkgname,
 				      const char *localname)
 {
     int err;
 
-    err = retrieve_url(gretlhost, GRAB_FUNC, pkgname, NULL, 
+    err = retrieve_url(gretlhost, GRAB_FUNC, pkgname, NULL,
 		       localname, 0, NULL);
 
     if (!err) {
@@ -880,10 +879,10 @@ int retrieve_remote_function_package (const char *pkgname,
  * Returns: 0 on success, non-zero on failure.
  */
 
-int retrieve_remote_gfn_content (const char *zipname, 
+int retrieve_remote_gfn_content (const char *zipname,
 				 const char *localname)
 {
-    return retrieve_url(gretlhost, GRAB_FUNC_INFO, zipname, NULL, 
+    return retrieve_url(gretlhost, GRAB_FUNC_INFO, zipname, NULL,
 			localname, 0, NULL);
 }
 
@@ -896,15 +895,15 @@ int retrieve_remote_gfn_content (const char *zipname,
  * .zip extension, or NULL on failure.
  */
 
-char *retrieve_remote_pkg_filename (const char *pkgname, 
+char *retrieve_remote_pkg_filename (const char *pkgname,
 				    int *err)
 {
     char *fname = NULL;
     char *buf = NULL;
 
-    *err = retrieve_url(gretlhost, FUNC_FULLNAME, pkgname, NULL, 
+    *err = retrieve_url(gretlhost, FUNC_FULLNAME, pkgname, NULL,
 			NULL, 0, &buf);
-    
+
     if (!*err) {
 	if (buf == NULL) {
 	    *err = E_DATA;
@@ -927,7 +926,7 @@ char *retrieve_remote_pkg_filename (const char *pkgname,
 
 /**
  * retrieve_remote_datafiles_package:
- * @pkgname: name of data files package to retrieve, e.g. 
+ * @pkgname: name of data files package to retrieve, e.g.
  * "wooldridge.tar.gz".
  * @localname: full path to which the package file should be
  * written on the local machine.
@@ -937,10 +936,10 @@ char *retrieve_remote_pkg_filename (const char *pkgname,
  * Returns: 0 on success, non-zero on failure.
  */
 
-int retrieve_remote_datafiles_package (const char *pkgname, 
+int retrieve_remote_datafiles_package (const char *pkgname,
 				       const char *localname)
 {
-    return retrieve_url(sffiles, GRAB_PKG, pkgname, NULL, 
+    return retrieve_url(sffiles, GRAB_PKG, pkgname, NULL,
 			localname, 0, NULL);
 }
 
@@ -963,7 +962,7 @@ int retrieve_remote_db_data (const char *dbname,
 			     char **getbuf,
 			     int opt)
 {
-    return retrieve_url(dbhost, opt, dbname, varname, 
+    return retrieve_url(dbhost, opt, dbname, varname,
 			NULL, 0, getbuf);
 }
 
@@ -973,7 +972,7 @@ int retrieve_remote_db_data (const char *dbname,
  * @localname: full path to which the file should be written
  * on the local machine.
  *
- * Retrieves the specified manual file in PDF format from 
+ * Retrieves the specified manual file in PDF format from
  * sourceforge.
  *
  * Returns: 0 on success, non-zero on failure.
@@ -981,7 +980,7 @@ int retrieve_remote_db_data (const char *dbname,
 
 int retrieve_manfile (const char *fname, const char *localname)
 {
-    return retrieve_url(sffiles, GRAB_PDF, fname, NULL, 
+    return retrieve_url(sffiles, GRAB_PDF, fname, NULL,
 			localname, 0, NULL);
 }
 
@@ -1068,7 +1067,7 @@ int retrieve_public_file (const char *uri, char *localname)
  * @len: location to receive length of data retreived (bytes).
  * @err: location to receive error code.
  *
- * Returns: allocated buffer containing the specified resource, 
+ * Returns: allocated buffer containing the specified resource,
  * or NULL on failure.
  */
 
@@ -1118,7 +1117,7 @@ static size_t curl_bufwrite (void *buf, size_t sz, size_t nmemb, void *p)
 
     if (out == NULL || out->pbuf == NULL || nmemb == 0) {
 	return 0;
-    }    
+    }
 
     sz *= nmemb;
     mem = realloc(*out->pbuf, out->written + sz + 1);
@@ -1149,14 +1148,11 @@ static size_t curl_bufwrite (void *buf, size_t sz, size_t nmemb, void *p)
  * Returns: 0 on success, non-zero code on error.
  */
 
-int gretl_curl (const char *url, const char *header, 
+int gretl_curl (const char *url, const char *header,
 		const char *postdata, int include,
 		char **output, char **errmsg)
 {
-#ifdef SSLWIN
-    static char cpath[MAXLEN];
-#endif
-    CURL *curl;
+    CURL *curl = NULL;
     struct curl_slist *hlist = NULL;
     struct GetBuf getbuf = {
 	output, /* pointer to buffer */
@@ -1165,34 +1161,13 @@ int gretl_curl (const char *url, const char *header,
     CURLcode res;
     int err = 0;
 
-    /* FIXME consolidate common portions of this function
-       and curl_get() above, in particular wrt Windows
-    */
-
-#ifdef SSLWIN
-    /* set up the certs path once */
-    if (cpath[0] == '\0') {
-	set_ca_cert_path(cpath);
-    }
-#endif
-
-    err = gretl_curl_toggle(1);
+    err = common_curl_setup(&curl);
     if (err) {
 	return err;
-    }
-  
-    curl = curl_easy_init();
-    if (curl == NULL) {
-	gretl_errmsg_set("curl_easy_init failed");
-	return 1;
     }
 
     if (header != NULL) {
 	hlist = curl_slist_append(hlist, header);
-    }
-
-    if (getenv("GRETL_WWW_VERBOSE") != NULL) {
-	curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
     }
 
     curl_easy_setopt(curl, CURLOPT_URL, url);
@@ -1202,7 +1177,7 @@ int gretl_curl (const char *url, const char *header,
 
     if (include) {
 	curl_easy_setopt(curl, CURLOPT_HEADER, 1);
-    }  
+    }
 
     if (hlist != NULL) {
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, hlist);
@@ -1215,12 +1190,6 @@ int gretl_curl (const char *url, const char *header,
     if (wproxy && *proxyhost != '\0') {
 	curl_easy_setopt(curl, CURLOPT_PROXY, proxyhost);
     }
-
-#ifdef SSLWIN
-    /* be on the safe side: 'http' can turn into 'https'
-       at the server */
-    curl_easy_setopt(curl, CURLOPT_CAINFO, cpath);
-#endif
 
     res = curl_easy_perform(curl);
 
@@ -1240,7 +1209,7 @@ int gretl_curl (const char *url, const char *header,
 
     if (hlist != NULL) {
 	curl_slist_free_all(hlist);
-    }    
+    }
     curl_easy_cleanup(curl);
 
     return err;
