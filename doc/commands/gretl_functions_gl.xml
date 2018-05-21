@@ -5447,6 +5447,32 @@
       </description>
     </function>
 
+    <function name="lrcovar" section="filters" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">A</fnarg>
+	<fnarg type="bool" optional="true">demean</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devolve unha matriz coas varianzas e covarianzas de longo prazo
+	  das columnas da matriz <argname>A</argname>. Primeiro, aos datos
+	  se lles resta a media, agás que se asigne un cero ao segundo
+	  argumento (opcional). Podes escoller o tipo de kernel e o parámetro
+	  de tronzado do retardo (o tamaño da fiestra), antes de chamar a
+	  esta función mediante as opcións relacionadas co HAC que ofrece
+	  a instrución <cmdref targ="set"/>, tales como <lit>hac_kernel</lit>,
+	  <lit>hac_lag</lit>, ou <lit>hac_prewhiten</lit>. Consulta tamén
+	  a sección sobre datos de Series de tempo e matrices de covarianzas
+	  HAC en <guideref targ="chap:robust_vcv"/>.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="lrvar"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="lrvar" section="filters" output="scalar">
       <fnargs>
 	<fnarg type="series-or-vec">y</fnarg>
@@ -5467,6 +5493,9 @@
 	  \right] \]
 	  con
 	  \[ w_i = 1 - \frac{|i|}{k + 1} \]
+	</para>
+	<para>
+	  Para unha contrapartida multivariante, consulta <fncref targ="lrcovar"/>.
 	</para>
       </description>
     </function>
