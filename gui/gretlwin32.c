@@ -172,6 +172,7 @@ int filename_to_win32 (char *targ, const char *src)
 {
     GError *gerr = NULL;
     gsize bytes;
+    int done = 0;
 
     *targ = '\0';
 
@@ -197,9 +198,8 @@ int filename_to_win32 (char *targ, const char *src)
 	strncat(targ, src, MAXLEN-1);
     }
 
-    if (!err) {
-	slash_convert(targ, TO_BACKSLASH);
-    }
+    /* do we want to do this? */
+    slash_convert(targ, TO_BACKSLASH);
 
     return 0;
 }
