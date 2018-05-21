@@ -4352,20 +4352,30 @@ static NODE *submatrix_node (NODE *l, NODE *r, parser *p)
 
 	p->err = check_matrix_subspec(spec, m);
 	if (!p->err) {
+	    int done = 0;
+
 	    if (spec->type[0] == SEL_ELEMENT) {
 		int i = mspec_get_row_index(spec);
 		int j = mspec_get_col_index(spec);
-		double x;
 
-		x = matrix_get_element(m, i, j, &p->err);
-		if (!p->err) {
-		    ret = aux_scalar_node(p);
+		/* SEL_ELEMENT may in fact mean exclusion
+		   of a row or column in the case of negative
+		   indices
+		*/
+		if (i >= 1 && j >= 1) {
+		    double x = matrix_get_element(m, i, j, &p->err);
+
 		    if (!p->err) {
-			ret->v.xval = x;
-			ret->flags |= MSL_NODE;
+			ret = aux_scalar_node(p);
+			if (!p->err) {
+			    ret->v.xval = x;
+			    ret->flags |= MSL_NODE;
+			}
 		    }
+		    done = 1;
 		}
-	    } else {
+	    }
+	    if (!done) {
 		ret = aux_matrix_node(p);
 		if (!p->err) {
 		    ret->v.m = matrix_get_submatrix(m, spec, 1,
