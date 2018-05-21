@@ -291,11 +291,9 @@ static void get_runfile (char *fname)
     *tryfile = '\0';
 
 #ifdef G_OS_WIN32
-    if (filename_to_win32(tryfile, fname)) {
-	return;
-    }
+    filename_to_win32(tryfile, fname);
 #else
-    strncat(tryfile, fname, MAXLEN - 1);
+    strncat(tryfile, fname, MAXLEN-1);
 #endif
 
     /* try "as is" first? */
@@ -800,9 +798,7 @@ int main (int argc, char **argv)
 	*/
 #ifdef G_OS_WIN32
 	/* should we be doing this at all? */
-	if (filename_to_win32(tryfile, filearg)) {
-	    exit(EXIT_FAILURE);
-	}
+	filename_to_win32(tryfile, filearg);
 #else
 	record_filearg(tryfile, filearg);
 #endif
@@ -2460,10 +2456,7 @@ mdata_handle_drag  (GtkWidget *widget,
     unescape_url(tmp);
 
 #ifdef G_OS_WIN32
-    if (filename_to_win32(tryfile, tmp) != 0) {
-	/* conversion failed: try the original */
-	strcpy(tryfile, tmp);
-    }
+    filename_to_win32(tryfile, tmp);
 #else
     strcpy(tryfile, tmp);
 #endif

@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #undef CHILD_DEBUG
@@ -72,25 +72,25 @@ void redirect_io_to_console (void)
     setvbuf(stderr, NULL, _IONBF, 0);
 }
 
-int real_create_child_process (char *prog, int showerr) 
-{ 
-    PROCESS_INFORMATION proc_info; 
-    STARTUPINFO start_info; 
+int real_create_child_process (char *prog, int showerr)
+{
+    PROCESS_INFORMATION proc_info;
+    STARTUPINFO start_info;
     int ret, err = 0;
 
     ZeroMemory(&proc_info, sizeof proc_info);
     ZeroMemory(&start_info, sizeof start_info);
-    start_info.cb = sizeof start_info; 
+    start_info.cb = sizeof start_info;
 
-    ret = CreateProcess(NULL, 
+    ret = CreateProcess(NULL,
 			prog,          /* command line */
 			NULL,          /* process security attributes  */
-			NULL,          /* primary thread security attributes */ 
+			NULL,          /* primary thread security attributes */
 			FALSE,         /* handles are inherited?  */
 			0,             /* creation flags  */
 			(LPVOID) NULL, /* NULL => use parent's environment  */
 			NULL,          /* use parent's current directory  */
-			&start_info,   /* receives STARTUPINFO */ 
+			&start_info,   /* receives STARTUPINFO */
 			&proc_info);   /* receives PROCESS_INFORMATION  */
 
     if (ret == 0) {
@@ -105,13 +105,13 @@ int real_create_child_process (char *prog, int showerr)
 	fprintf(stderr, "gretl: create_child_process():\n"
 		" prog='%s'\n\n", prog);
 	fprintf(stderr, " return from CreateProcess() = %d\n", ret);
-    }	
+    }
 #endif
 
     return err;
 }
 
-int create_child_process (char *prog) 
+int create_child_process (char *prog)
 {
     return real_create_child_process(prog, 1);
 }
@@ -141,7 +141,7 @@ void win32_start_R_async (void)
     const char *supp2 = "--no-restore-data";
     gchar *Rline = NULL;
     int err;
-    
+
     Rline = g_strdup_printf("\"%s\" %s %s", Rcommand, supp1, supp2);
     err = real_create_child_process(Rline, 0);
 
@@ -172,7 +172,6 @@ int filename_to_win32 (char *targ, const char *src)
 {
     GError *gerr = NULL;
     gsize bytes;
-    int err = 0;
 
     *targ = '\0';
 
@@ -184,28 +183,25 @@ int filename_to_win32 (char *targ, const char *src)
 	    fprintf(stderr, " filename_to_win32: recoding failed on '%s':\n%s\n",
 		    src, gerr->message);
 	    g_error_free(gerr);
-	    err = 1;
 	} else {
-	    strncat(targ, tr, MAXLEN - 1);
+	    strncat(targ, tr, MAXLEN-1);
+	    done = 1;
 	    g_free(tr);
 	}
-    } else {
-	strncat(targ, src, MAXLEN - 1);
     }
 
-    if (err) {
+    if (!done) {
 	/* We'll hope for the best with the original version:
 	   it might be OK but out-of-codepage.
 	*/
-	strncat(targ, src, MAXLEN - 1);
-	err = 0;
+	strncat(targ, src, MAXLEN-1);
     }
 
     if (!err) {
 	slash_convert(targ, TO_BACKSLASH);
     }
 
-    return err;
+    return 0;
 }
 
 static void dummy_output_handler (const gchar *log_domain,
@@ -286,7 +282,7 @@ void gretl_win32_debug_init (int debug)
 }
 
 /* Carry out some Windows-specific start-up tasks, and
-   call read_rc to get the per-user configuration info. 
+   call read_rc to get the per-user configuration info.
 */
 
 void gretl_win32_init (const char *progname, int debug)
@@ -299,8 +295,8 @@ void gretl_win32_init (const char *progname, int debug)
        In that case we'll make use of libwimp the default,
        prior to reading the user's config file.
     */
-    read_reg_val(HKEY_CURRENT_USER, 
-		 "Microsoft\\Windows\\CurrentVersion\\ThemeManager", 
+    read_reg_val(HKEY_CURRENT_USER,
+		 "Microsoft\\Windows\\CurrentVersion\\ThemeManager",
 		 "ThemeActive", tmp);
     set_wimp_preferred(!strcmp(tmp, "1"));
 
@@ -354,7 +350,7 @@ int prn_to_clipboard (PRN *prn, int fmt)
 	} else {
 	    sz = strlen(winbuf) + 1;
 	}
-	
+
 	winclip = GlobalAlloc(GMEM_MOVEABLE, sz);
 	ptr = GlobalLock(winclip);
 	if (ubuf != NULL) {
@@ -362,7 +358,7 @@ int prn_to_clipboard (PRN *prn, int fmt)
 	} else {
 	    memcpy(ptr, winbuf, sz);
 	}
-	GlobalUnlock(winclip);    
+	GlobalUnlock(winclip);
 
 	if (ubuf != NULL) {
 	    clip_format = CF_UNICODETEXT;
@@ -424,11 +420,11 @@ static int real_send_file (char *fullname, LPMAPISENDMAIL send_mail)
     mfd.nPosition = 1; /* ? */
 
     if (strstr(fname, ".gdt") != NULL) {
-	tmp = g_strdup_printf(_("Please find the gretl data file %s attached."), 
+	tmp = g_strdup_printf(_("Please find the gretl data file %s attached."),
 			      fname);
 	msg.lpszSubject  = "dataset";
     } else {
-	tmp = g_strdup_printf(_("Please find the gretl script %s attached."), 
+	tmp = g_strdup_printf(_("Please find the gretl script %s attached."),
 			      fname);
 	msg.lpszSubject  = "script";
     }
@@ -464,7 +460,7 @@ int send_file (char *fullname)
 	send_mail = (LPMAPISENDMAIL) GetProcAddress(mapilib, "MAPISendMail");
 	if (send_mail == NULL) {
 	    err = 1;
-	} 
+	}
     }
 
     if (!err) {
@@ -473,7 +469,7 @@ int send_file (char *fullname)
 
     if (err) {
 	win_show_last_error();
-    } 
+    }
 
     if (mapilib != NULL) {
 	FreeLibrary(mapilib);
@@ -497,7 +493,7 @@ int emf_to_clipboard (char *emfname)
     if (mainw == NULL) {
 	errbox("Got NULL HWND");
 	return 1;
-    }	
+    }
 
     if (!OpenClipboard(mainw)) {
 	errbox(_("Cannot open the clipboard"));
@@ -516,13 +512,13 @@ int emf_to_clipboard (char *emfname)
     if (hemfclip == NULL) {
 	errbox("Couldn't copy graphic metafile");
 	return 1;
-    }    
+    }
 
     htest = SetClipboardData(CF_ENHMETAFILE, hemfclip);
     if (htest == NULL) {
 	errbox("Failed to put data on clipboard");
 	return 1;
-    }  	
+    }
 
     CloseClipboard();
     DeleteEnhMetaFile(hemf);
@@ -563,7 +559,7 @@ static char *get_exe_for_type (const char *ext)
     char *exe = NULL;
     HRESULT ret;
     DWORD len = 0;
-	
+
     ret = AssocQueryString(ASSOCF_NOTRUNCATE, ASSOCSTR_EXECUTABLE,
 			   ext, NULL, NULL, &len);
     if (ret == S_FALSE) {
@@ -807,11 +803,11 @@ void win32_font_selector (char *fontname, int flag)
 
     ZeroMemory(&cf, sizeof cf);
     cf.lStructSize = sizeof cf;
-    cf.Flags = CF_SCREENFONTS | CF_TTONLY | CF_LIMITSIZE | 
+    cf.Flags = CF_SCREENFONTS | CF_TTONLY | CF_LIMITSIZE |
 	CF_INITTOLOGFONTSTRUCT | CF_NOSCRIPTSEL;
     if (flag == FIXED_FONT_SELECTION) {
 	cf.Flags |= CF_FIXEDPITCHONLY;
-    } 
+    }
     cf.nSizeMin = 6;
     cf.nSizeMax = 24;
 
@@ -825,7 +821,7 @@ void win32_font_selector (char *fontname, int flag)
     }
 
     /* allocated via pango */
-    g_free(cf.lpLogFont); 
+    g_free(cf.lpLogFont);
 }
 
 int win32_rename_dir (const char *oldname, const char *newname)
@@ -839,13 +835,13 @@ int win32_rename_dir (const char *oldname, const char *newname)
     if (len > 1 && oldname[len - 1] == '\\' && oldname[len - 2] != ':') {
 	oldtmp = gretl_strndup(oldname, len - 1);
 	oldname = oldtmp;
-    } 
+    }
 
     len = strlen(newname);
     if (len > 1 && newname[len - 1] == '\\' && newname[len - 2] != ':') {
 	newtmp = gretl_strndup(newname, len - 1);
 	newname = newtmp;
-    }    
+    }
 
     err = gretl_rename(oldname, newname);
 
@@ -874,11 +870,11 @@ HDDEDATA CALLBACK init_callback (UINT uType, UINT uFmt, HCONV hconv,
     if (uType == XTYP_ADVDATA) {
 	DWORD len = DdeGetData(hdata, NULL, 0, 0);
 	char *buf = (char *)_alloca(len + 1);
-	
+
 	DdeGetData(hdata, (LPBYTE) buf, len + 1, 0);
 	return (HDDEDATA) DDE_FACK;
     }
-    
+
     return (HDDEDATA) NULL;
 }
 
@@ -886,10 +882,10 @@ static int start_dde_server (LPCTSTR prog)
 {
     PROCESS_INFORMATION pi;
     STARTUPINFO si;
-    
+
     ZeroMemory(&si, sizeof si);
     si.cb = sizeof si;
-    
+
     if (!CreateProcess(NULL, (LPTSTR) prog, NULL, NULL, FALSE, 0,
 		       NULL, NULL, &si, &pi)) {
 	fprintf(stderr, "DDE: couldn't start process %s\n", prog);
@@ -900,7 +896,7 @@ static int start_dde_server (LPCTSTR prog)
 
     CloseHandle(pi.hThread);
     CloseHandle(pi.hProcess);
-    
+
     return 0;
 }
 
@@ -914,10 +910,10 @@ static DWORD open_dde_conversation (LPCTSTR topic_name,
     HSZ service, topic;
     UINT ret;
     int i, err = 0;
-    
+
     ret = DdeInitialize(&session, (PFNCALLBACK) init_callback,
 			APPCLASS_STANDARD | APPCMD_CLIENTONLY, 0);
-    
+
     if (ret != DMLERR_NO_ERROR) {
 	fprintf(stderr, "DDE: couldn't initialize session\n");
 	return 0;
@@ -931,7 +927,7 @@ static DWORD open_dde_conversation (LPCTSTR topic_name,
 	DdeUninitialize(session);
 	return 0;
     }
-    
+
     conversation = DdeConnect(session, service, topic, 0);
 
     if (conversation == NULL) {
@@ -946,7 +942,7 @@ static DWORD open_dde_conversation (LPCTSTR topic_name,
 	if (conversation == NULL && !err) {
 	    fprintf(stderr, "DDE: couldn't contact server %s\n", ddename);
 	    err = 1;
-	}	
+	}
     }
 
     DdeFreeStringHandle(session, service);
@@ -967,13 +963,13 @@ static int exec_dde_command (const char *buf, HCONV conversation,
 {
     HDDEDATA ret;
     int err;
-    
+
     ret = DdeClientTransaction((LPBYTE) buf, strlen(buf) + 1,
 			       conversation, 0, 0, XTYP_EXECUTE,
 			       TRANSACTION_TIMEOUT, 0);
 
     /* MSDN: "The return value is zero for all unsuccessful
-       transactions" 
+       transactions"
     */
     err = (ret == 0);
 
@@ -1010,7 +1006,7 @@ static int dde_open_pdf (const char *exename,
     /* Adobe DDE commands only work on documents opened
        by DDE. It's therefore necessary to close the document
        first (if it's already open) then reopen it.
-    */    
+    */
 
     sprintf(buf, "[DocClose(\"%s\")]", fname);
     exec_dde_command(buf, conversation, session);

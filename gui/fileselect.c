@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "gretl.h"
@@ -66,7 +66,7 @@ static struct extmap action_map[] = {
     { SAVE_GP_CMDS,      ".plt" },
     { SAVE_R_CMDS,       ".R" },
     { SAVE_OX_CMDS,      ".ox" },
-    { SAVE_OCTAVE_CMDS,  ".m" }, 
+    { SAVE_OCTAVE_CMDS,  ".m" },
     { SAVE_PYTHON_CMDS,  ".py" },
     { SAVE_STATA_CMDS,   ".do" },
     { SAVE_JULIA_CODE,   ".jl" },
@@ -259,7 +259,7 @@ gchar *pre_trim_buffer (gchar *s)
     return ret;
 }
 
-static void 
+static void
 save_editable_content (int action, const char *fname, windata_t *vwin)
 {
     gchar *buf = textview_get_text(vwin->text);
@@ -285,7 +285,7 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
 	strcpy(scriptfile, fname);
 	mkfilelist(FILE_LIST_SCRIPT, scriptfile);
 	script_window_update(vwin, fname);
-    } else if (action == SAVE_GP_CMDS || 
+    } else if (action == SAVE_GP_CMDS ||
 	       action == SAVE_R_CMDS ||
 	       action == SAVE_OX_CMDS ||
 	       action == SAVE_OCTAVE_CMDS ||
@@ -293,7 +293,7 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
 	       action == SAVE_STATA_CMDS ||
 	       action == SAVE_JULIA_CODE) {
 	script_window_update(vwin, fname);
-    } 
+    }
 }
 
 static void filesel_save_prn_buffer (PRN *prn, const char *fname)
@@ -302,7 +302,7 @@ static void filesel_save_prn_buffer (PRN *prn, const char *fname)
     FILE *fp;
 
     /* if @prn is in RTF, use binary mode to avoid messing
-       with pre-set line endings 
+       with pre-set line endings
     */
 
     if ((fmt & GRETL_FORMAT_RTF) || fmt == GRETL_FORMAT_RTF_TXT) {
@@ -407,7 +407,7 @@ static void filesel_open_script (const char *fname, windata_t *vwin)
     if (role >= EDIT_GP && role < EDIT_MAX) {
 	foreign = 1;
     }
-    
+
     if (vwin != NULL && !window_is_tab(vwin)) {
 	/* We're called from an existing (and untabbed) script
 	   editor window: give choice of opening a new window
@@ -469,7 +469,7 @@ static char *suggested_savename (const char *fname)
     sfx = strrchr(s, '.');
 
     if (sfx != NULL) {
-	if (strlen(sfx) == 4 || 
+	if (strlen(sfx) == 4 ||
 	    !strcmp(sfx, ".xlsx") ||
 	    !strcmp(sfx, ".gnumeric")) {
 	    if (strcmp(sfx, ".gdt")) {
@@ -533,10 +533,10 @@ static void bootstrap_save_callback (const char *fname)
 
     if (err) {
 	gui_errmsg(err);
-    } 
+    }
 }
 
-static void maybe_set_fsel_status (int action, FselDataSrc src, 
+static void maybe_set_fsel_status (int action, FselDataSrc src,
 				   gpointer p, int val)
 {
     if (src == FSEL_DATA_STATUS && p != NULL) {
@@ -559,7 +559,7 @@ static void os_open_other (const char *fname)
 }
 
 static void
-file_selector_process_result (const char *in_fname, int action, 
+file_selector_process_result (const char *in_fname, int action,
 			      FselDataSrc src, gpointer data)
 {
     char fname[FILENAME_MAX];
@@ -666,7 +666,7 @@ file_selector_process_result (const char *in_fname, int action,
 	err = do_save_markers(fname);
     } else if (action == SAVE_LABELS) {
 	err = do_save_labels(fname);
-    } else if (action == SET_PROG || 
+    } else if (action == SET_PROG ||
 	       action == SET_DIR ||
 	       action == SET_OTHER) {
 	set_path_callback(data, fname);
@@ -687,10 +687,10 @@ file_selector_process_result (const char *in_fname, int action,
 
 static char *get_filter_suffix (int action, gpointer data, char *suffix)
 {
-    
+
     const char *ext = get_extension_for_action(action, data);
 
-    if (ext == NULL) { 
+    if (ext == NULL) {
 	strcpy(suffix, "*");
     } else {
 	sprintf(suffix, "*%s", ext);
@@ -725,7 +725,7 @@ static GtkFileFilter *get_file_filter (int action, gpointer data)
 {
     GtkFileFilter *filter;
     char suffix[16];
-    
+
     filter = gtk_file_filter_new();
     get_filter_suffix(action, data, suffix);
     gtk_file_filter_add_pattern(filter, suffix);
@@ -738,25 +738,21 @@ static GtkFileFilter *get_file_filter (int action, gpointer data)
 
 #ifdef G_OS_WIN32
 
-/* On getting an output filename @s from the GTK file chooser, 
+/* On getting an output filename @s from the GTK file chooser,
    try converting it to the locale encoding */
 
 static gchar *inplace_windows_filename (gchar *s)
 {
     char tmp[MAXLEN];
-    int err;
 
-    err = filename_to_win32(tmp, s);
-
-    if (!err) {
-	g_free(s);
-	s = g_strdup(tmp);
-    }
+    filename_to_win32(tmp, s);
+    g_free(s);
+    s = g_strdup(tmp);
 
     return s;
 }
 
-/* Having constructed a path @s for input use with the GTK 
+/* Having constructed a path @s for input use with the GTK
    file chooser, ensure that it's in UTF-8 */
 
 static char *win32_correct_path (char *s)
@@ -835,7 +831,7 @@ static void filesel_maybe_set_current_name (GtkFileChooser *filesel,
 	} else if (action == SET_OTHER) {
 	    set_default_other_path(filesel);
 	}
-    } else if (action == SAVE_FUNCTIONS || 
+    } else if (action == SAVE_FUNCTIONS ||
 	       action == SAVE_FUNCTIONS_AS ||
 	       action == SAVE_GFN_SPEC ||
 	       action == SAVE_GFN_ZIP) {
@@ -958,7 +954,7 @@ static int filesel_set_filters (GtkWidget *filesel, int action,
 	GtkFileFilter *filter = get_file_filter(action, data);
 
 	gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(filesel), filter);
-	multi = 0;	
+	multi = 0;
     } else if (action == OPEN_DATA || action == APPEND_DATA) {
 	GtkFileFilter *flt;
 	int i;
@@ -1046,13 +1042,13 @@ static void add_compression_level_option (GtkWidget *filesel)
 
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), deflt);
     gtk_spin_button_set_digits(GTK_SPIN_BUTTON(spin), 0);
-    g_signal_connect(G_OBJECT(spin), "destroy", 
+    g_signal_connect(G_OBJECT(spin), "destroy",
 		     G_CALLBACK(record_compress_level), NULL);
 
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 5);
     gtk_widget_show_all(hbox);
-    gtk_file_chooser_set_extra_widget(GTK_FILE_CHOOSER(filesel), 
+    gtk_file_chooser_set_extra_widget(GTK_FILE_CHOOSER(filesel),
 				      hbox);
 }
 
@@ -1062,7 +1058,7 @@ static void check_native_data_save_filter (GtkWidget *filesel)
     const gchar *filter_name;
 
     /* we need to know if .gdt or .gdtb was chosen */
-	
+
     filter = gtk_file_chooser_get_filter(GTK_FILE_CHOOSER(filesel));
     filter_name = gtk_file_filter_get_name(filter);
     if (strstr(filter_name, "gdtb") != NULL) {
@@ -1105,9 +1101,9 @@ static void set_up_filesel_filters (GtkWidget *filesel,
     }
 }
 
-static void gtk_file_selector (int action, FselDataSrc src, 
+static void gtk_file_selector (int action, FselDataSrc src,
 			       gpointer data, GtkWidget *parent,
-			       const char *dirname) 
+			       const char *dirname)
 {
     static char savedir[MAXLEN];
     char startdir[MAXLEN];
@@ -1146,7 +1142,7 @@ static void gtk_file_selector (int action, FselDataSrc src,
     } else {
 	fsel_action = GTK_FILE_CHOOSER_ACTION_SAVE;
 	okstr = GTK_STOCK_SAVE;
-	if (action == SAVE_FUNCTIONS || 
+	if (action == SAVE_FUNCTIONS ||
 	    action == SAVE_DATA_PKG ||
 	    action == SAVE_GFN_SPEC ||
 	    action == SAVE_GFN_ZIP) {
@@ -1194,7 +1190,7 @@ static void gtk_file_selector (int action, FselDataSrc src,
 					  GTK_RESPONSE_ACCEPT,
 					  NULL);
 
-    if (action == SAVE_DATA || 
+    if (action == SAVE_DATA ||
 	action == SAVE_DATA_AS ||
 	action == SAVE_BOOT_DATA ||
 	action == EXPORT_GDT ||
@@ -1235,7 +1231,7 @@ static void gtk_file_selector (int action, FselDataSrc src,
 	}
 
 	fname = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(filesel));
-	
+
 	if (remember) {
 	    remember_folder(GTK_FILE_CHOOSER(filesel), savedir);
 	} else if (action == UPLOAD_PKG || action == SET_FDIR) {
@@ -1277,7 +1273,7 @@ void file_selector (int action,
 }
 
 void file_selector_with_parent (int action,
-				FselDataSrc src, 
+				FselDataSrc src,
 				gpointer data,
 				GtkWidget *parent)
 {
