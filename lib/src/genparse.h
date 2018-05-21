@@ -440,6 +440,7 @@ enum {
     F_NUMHESS,
     F_STRSPLIT,
     F_HPFILT,
+    HF_CEIGG,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,

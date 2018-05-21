@@ -7,6 +7,11 @@ void zheev_ (const char *jobz, const char *uplo, integer *n,
 	     cmplx *a, integer *lda, double *w, cmplx *work,
 	     integer *lwork, double *rwork, integer *info);
 
+void zgeev_ (const char *jobvl, const char *jobvr, integer *n,
+	     cmplx *a, integer *lda, double *w, cmplx *vl,
+	     integer *ldvl, cmplx *vr, integer *ldvr, cmplx *work,
+	     integer *lwork, double *rwork, integer *info);
+
 void zgetrf_ (integer *m, integer *n, cmplx *a, integer *lda,
 	      integer *ipiv, integer *info);
 

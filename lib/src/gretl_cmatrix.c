@@ -223,7 +223,7 @@ gretl_matrix *gretl_zgemm (const gretl_matrix *A, gretl_matrix *B,
     } else if (A->cols != B->rows / 2) {
 	*err = E_NONCONF;
 	return NULL;
-    }	
+    }
 
     m = A->rows / 2;
     n = B->cols;
@@ -335,6 +335,132 @@ gretl_matrix *gretl_zheev (const gretl_matrix *A, gretl_matrix *V,
     return ret;
 }
 
+/* Eigen decomposition of complex (non-Hermitian) matrix using
+   LAPACK's zgeev() */
+
+gretl_matrix *gretl_zgeev (const gretl_matrix *A,
+			   gretl_matrix *VL,
+			   gretl_matrix *VR,
+			   int *err)
+{
+    gretl_matrix *ret = NULL;
+    gretl_matrix *Acpy = NULL;
+    gretl_matrix *Ltmp = NULL;
+    gretl_matrix *Rtmp = NULL;
+    integer n, info, lwork;
+    integer ldvl, ldvr;
+    double *w = NULL;
+    double *rwork = NULL;
+    cmplx *a = NULL;
+    cmplx *work = NULL;
+    cmplx *vl = NULL, *vr = NULL;
+    cmplx wsz;
+    char jobvl = VL != NULL ? 'V' : 'N';
+    char jobvr = VR != NULL ? 'V' : 'N';
+
+    if (gretl_is_null_matrix(A) || A->rows != 2 * A->cols) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    n = A->rows / 2;
+    ldvl = VL != NULL ? n : 1;
+    ldvr = VR != NULL ? n : 1;
+
+    /* we need a copy of @A, which gets overwritten */
+    Acpy = gretl_matrix_copy(A);
+    if (Acpy == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    a = (cmplx *) Acpy->val;
+
+    if (VL != NULL) {
+	if (VL->rows * VL->cols == A->rows * A->cols) {
+	    /* VL is useable as is */
+	    VL->rows = A->rows;
+	    VL->cols = A->cols;
+	    vl = (cmplx *) VL->val;
+	} else {
+	    /* we need to allocate storage */
+	    Ltmp = gretl_zero_matrix_new(A->rows, A->cols);
+	    if (Ltmp == NULL) {
+		*err = E_ALLOC;
+		goto bailout;
+	    }
+	    vl = (cmplx *) Ltmp->val;
+	}
+    }
+
+    if (VR != NULL) {
+	if (VR->rows * VR->cols == A->rows * A->cols) {
+	    /* VR is useable as is */
+	    VR->rows = A->rows;
+	    VR->cols = A->cols;
+	    vr = (cmplx *) VR->val;
+	} else {
+	    /* we need to allocate storage */
+	    Rtmp = gretl_zero_matrix_new(A->rows, A->cols);
+	    if (Rtmp == NULL) {
+		*err = E_ALLOC;
+		goto bailout;
+	    }
+	    vr = (cmplx *) Rtmp->val;
+	}
+    }
+
+    rwork = malloc(2 * n * sizeof *rwork);
+    ret = gretl_matrix_alloc(2 * n, 1);
+    if (rwork == NULL || ret == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    w = ret->val;
+
+    /* get optimal workspace size */
+    lwork = -1;
+    zgeev_(&jobvl, &jobvr, &n, a, &n, w, vl, &ldvl, vr, &ldvr,
+	   &wsz, &lwork, rwork, &info);
+    lwork = (integer) wsz.r;
+    work = malloc(lwork * sizeof *work);
+    if (work == NULL || rwork == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* do the actual decomposition */
+    zgeev_(&jobvl, &jobvr, &n, a, &n, w, vl, &ldvl, vr, &ldvr,
+	   work, &lwork, rwork, &info);
+    if (info != 0) {
+	fprintf(stderr, "zgeev: info = %d\n", info);
+	*err = E_DATA;
+    } else {
+	if (Ltmp != NULL) {
+	    gretl_matrix_replace_content(VL, Ltmp);
+	}
+	if (Rtmp != NULL) {
+	    gretl_matrix_replace_content(VR, Rtmp);
+	}
+    }
+
+ bailout:
+
+    free(rwork);
+    free(work);
+    gretl_matrix_free(Acpy);
+    gretl_matrix_free(Ltmp);
+    gretl_matrix_free(Rtmp);
+
+    if (*err) {
+	gretl_matrix_free(ret);
+	ret = NULL;
+    }
+
+    return ret;
+}
+
 /* Inverse of a complex matrix via LU decomposition using the
    LAPACK functions zgetrf() and zgetri()
 */
@@ -396,7 +522,7 @@ gretl_matrix *gretl_zgetri (const gretl_matrix *A, int *err)
     }
 
  bailout:
-    
+
     free(work);
     free(ipiv);
 
@@ -422,7 +548,7 @@ gretl_matrix *gretl_complex_fft (const gretl_matrix *A, int inverse,
     if (gretl_is_null_matrix(A) || A->rows % 2 != 0) {
 	*err = E_INVARG;
 	return NULL;
-    }    
+    }
 
     B = gretl_matrix_copy(A);
     if (B == NULL) {

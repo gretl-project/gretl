@@ -3179,6 +3179,24 @@ static gretl_matrix *matrix_node_get_matrix (NODE *n, parser *p)
     return n->v.m;
 }
 
+static gretl_matrix *ptr_node_get_matrix (NODE *n, parser *p)
+{
+    gretl_matrix *m = NULL;
+
+    if (n->t != U_ADDR) {
+	p->err = E_INVARG;
+    } else {
+	n = n->v.b1.b;
+	if (n->t != MAT) {
+	    p->err = E_INVARG;
+	} else {
+	    m = n->v.m;
+	}
+    }
+
+    return m;
+}
+
 static const char *node_get_fncall (NODE *n, parser *p)
 {
     const char *ret = NULL;
@@ -10037,6 +10055,20 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 		A = gretl_matrix_varsimul(m1, m2, m3, &p->err);
 	    }
 	}
+    } else if (f == HF_CEIGG) {
+	gretl_matrix *lm = node_get_matrix(l, p, 0, 1);
+	gretl_matrix *vl = NULL, *vr = NULL;
+
+	if (l->t != MAT) {
+	    node_type_error(f, 1, MAT, l, p);
+	} else if (!null_or_empty(m)) {
+	    vl = ptr_node_get_matrix(m, p);
+	} else if (!null_or_empty(r)) {
+	    vr = ptr_node_get_matrix(r, p);
+	}
+	if (!p->err) {
+	    A = gretl_zgeev(lm, vl, vr, &p->err);
+	}
     } else if (f == F_CORRGM) {
 	if (l->t != SERIES && l->t != MAT && l->t != LIST) {
 	    node_type_error(f, 1, SERIES, l, p);
@@ -14806,6 +14838,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_MWEIGHTS:
     case F_MGRADIENT:
     case F_LRCOVAR:
+    case HF_CEIGG:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {
 	    ret = replace_value(l, m, r, p);
