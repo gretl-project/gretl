@@ -147,12 +147,11 @@ static GOptionEntry options[] = {
 
 windata_t *mdata;
 DATASET *dataset;
+MODEL *model;
 
 char datafile[MAXLEN];
 char scriptfile[MAXLEN];
 char tryfile[MAXLEN];
-
-MODEL *model;             /* gretl models struct */
 
 int data_status, orig_vars;
 float gui_scale;
@@ -617,8 +616,6 @@ static void alt_gtk_init (int *pargc,
     int initted = 0;
     LPWSTR *argv_w;
 
-    win32_set_gretldir((*pargv)[0]);
-
     /* get args as UTF-16 */
     argv_w = CommandLineToArgvW(GetCommandLineW(), &argc_w);
 
@@ -675,7 +672,10 @@ int main (int argc, char **argv)
     char filearg[MAXLEN];
     GError *opterr = NULL;
 
-#if !defined(G_OS_WIN32) && !defined(OS_OSX)
+#if defined(G_OS_WIN32)
+    /* this must come before NLS initialization */
+    win32_set_gretldir(callname);
+#elif !defined(OS_OSX)
     /* Linux-specific */
     protect_against_ubuntu();
 #endif
