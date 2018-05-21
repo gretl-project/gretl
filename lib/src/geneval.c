@@ -10061,10 +10061,13 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 
 	if (l->t != MAT) {
 	    node_type_error(f, 1, MAT, l, p);
-	} else if (!null_or_empty(m)) {
-	    vl = ptr_node_get_matrix(m, p);
-	} else if (!null_or_empty(r)) {
-	    vr = ptr_node_get_matrix(r, p);
+	} else {
+	    if (!null_or_empty(m)) {
+		vl = ptr_node_get_matrix(m, p);
+	    }
+	    if (!null_or_empty(r)) {
+		vr = ptr_node_get_matrix(r, p);
+	    }
 	}
 	if (!p->err) {
 	    A = gretl_zgeev(lm, vl, vr, &p->err);
