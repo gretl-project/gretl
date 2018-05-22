@@ -738,20 +738,6 @@ static GtkFileFilter *get_file_filter (int action, gpointer data)
 
 #ifdef G_OS_WIN32
 
-/* On getting an output filename @s from the GTK file chooser,
-   try converting it to the locale encoding */
-
-static gchar *inplace_windows_filename (gchar *s)
-{
-    char tmp[MAXLEN];
-
-    filename_to_win32(tmp, s);
-    g_free(s);
-    s = g_strdup(tmp);
-
-    return s;
-}
-
 /* Having constructed a path @s for input use with the GTK
    file chooser, ensure that it's in UTF-8 */
 
@@ -1242,9 +1228,6 @@ static void gtk_file_selector (int action, FselDataSrc src,
 	filesel = NULL;
 
 	if (fname != NULL) {
-#ifdef G_OS_WIN32
-	    fname = inplace_windows_filename(fname);
-#endif
 	    file_selector_process_result(fname, action, src, data);
 	    g_free(fname);
 	}

@@ -536,14 +536,9 @@ tabwin_handle_drag  (GtkWidget *widget,
 	strcat(tmp, dfname + skip);
     }
 
-    /* handle spaces and such */
+    /* handle spaces and such then transcribe */
     unescape_url(tmp);
-
-#ifdef G_OS_WIN32
-    filename_to_win32(tryfile, tmp);
-#else
     strcpy(tryfile, tmp);
-#endif
 
     if (has_suffix(tryfile, ".inp")) {
 	/* FIXME generalize? */

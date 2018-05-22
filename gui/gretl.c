@@ -289,12 +289,7 @@ static void noalloc (void)
 static void get_runfile (char *fname)
 {
     *tryfile = '\0';
-
-#ifdef G_OS_WIN32
-    filename_to_win32(tryfile, fname);
-#else
     strncat(tryfile, fname, MAXLEN-1);
-#endif
 
     /* try "as is" first? */
     if (gretl_test_fopen(tryfile, "r") != 0 &&
@@ -436,8 +431,6 @@ void gui_nls_init (void)
     real_nls_init();
 }
 
-#ifndef G_OS_WIN32
-
 static void record_filearg (char *targ, const char *src)
 {
     if (*src == '.') {
@@ -452,7 +445,7 @@ static void record_filearg (char *targ, const char *src)
     }
 }
 
-# if GTK_MAJOR_VERSION == 3
+#if !defined(G_OS_WIN32) && GTK_MAJOR_VERSION == 3
 
 /* cut out annoying runtime spew from GLib-GObject
    warning about deprecated stuff
@@ -473,8 +466,6 @@ static void quell_glib_spew (void)
     g_log_set_handler("GLib-GObject", G_LOG_LEVEL_WARNING,
 		      (GLogFunc) logtrap, NULL);
 }
-
-# endif
 
 #endif
 
@@ -796,12 +787,7 @@ int main (int argc, char **argv)
 	   given on the command line (by now any options will
 	   have been extracted from the argv array).
 	*/
-#ifdef G_OS_WIN32
-	/* should we be doing this at all? */
-	filename_to_win32(tryfile, filearg);
-#else
 	record_filearg(tryfile, filearg);
-#endif
     }
 
 #if GUI_DEBUG
@@ -2452,14 +2438,9 @@ mdata_handle_drag  (GtkWidget *widget,
 	strcat(tmp, dfname + skip);
     }
 
-    /* handle spaces and such */
+    /* handle spaces and such then transcribe */
     unescape_url(tmp);
-
-#ifdef G_OS_WIN32
-    filename_to_win32(tryfile, tmp);
-#else
     strcpy(tryfile, tmp);
-#endif
 
     real_open_tryfile();
 }

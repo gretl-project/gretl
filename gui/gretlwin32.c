@@ -163,47 +163,6 @@ void win32_start_R_async (void)
     g_free(Rline);
 }
 
-/* Convert @src, a filename that might be in UTF-8 and might contain
-   forward slashes, to canonical win32 form.  We assume that @targ can
-   hold MAXLEN bytes.
-*/
-
-int filename_to_win32 (char *targ, const char *src)
-{
-    GError *gerr = NULL;
-    gsize bytes;
-    int done = 0;
-
-    *targ = '\0';
-
-    if (string_is_utf8((const unsigned char *) src)) {
-	/* non-ASCII but validates as UTF-8 */
-	gchar *tr = g_locale_from_utf8(src, -1, NULL, &bytes, &gerr);
-
-	if (gerr != NULL) {
-	    fprintf(stderr, " filename_to_win32: recoding failed on '%s':\n%s\n",
-		    src, gerr->message);
-	    g_error_free(gerr);
-	} else {
-	    strncat(targ, tr, MAXLEN-1);
-	    done = 1;
-	    g_free(tr);
-	}
-    }
-
-    if (!done) {
-	/* We'll hope for the best with the original version:
-	   it might be OK but out-of-codepage.
-	*/
-	strncat(targ, src, MAXLEN-1);
-    }
-
-    /* do we want to do this? */
-    slash_convert(targ, TO_BACKSLASH);
-
-    return 0;
-}
-
 static void dummy_output_handler (const gchar *log_domain,
 				  GLogLevelFlags log_level,
 				  const gchar *message,
