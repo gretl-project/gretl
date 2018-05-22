@@ -506,7 +506,17 @@ int read_zipfile (zfile *zf, int task)
 	return 0;
     }
 
+#ifdef G_OS_WIN32
+    /* handle the case where fname is in UTF-8 */
+    if (g_utf8_validate(zf->fname, -1, NULL)) {
+	zf->fp = g_fopen(zf->fname, "rb");
+    } else {
+	zf->fp = fopen(zf->fname, "rb");
+    }
+#else
     zf->fp = fopen(zf->fname, "rb");
+#endif
+
     if (zf->fp == NULL) {
 	if (task == ZIP_DO_ZIP) {
 	    return 0;
