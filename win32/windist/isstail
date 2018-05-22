@@ -19,7 +19,7 @@ Root: HKCR; Subkey: ".inp"; ValueType: string; ValueName: ""; ValueData: "GretlS
 Root: HKCR; Subkey: ".inp"; ValueType: string; ValueName: "Content Type"; ValueData: "application/x-gretlscript"
 Root: HKCR; Subkey: "GretlScriptFile"; ValueType: string; ValueName: ""; ValueData: "Gretl script file"; Flags: uninsdeletekey
 Root: HKCR; Subkey: "GretlScriptFile\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\gretl.exe,2"
-Root: HKCR; Subkey: "GretlScriptFile\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\gretl.exe"" -r ""%1"""
+Root: HKCR; Subkey: "GretlScriptFile\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\gretl.exe"" ""%1"""
 Root: HKCR; Subkey: ".gretl"; ValueType: string; ValueName: ""; ValueData: "GretlSessionFile"; Flags: uninsdeletevalue
 Root: HKCR; Subkey: ".gretl"; ValueType: string; ValueName: "Content Type"; ValueData: "application/x-gretlsession"
 Root: HKCR; Subkey: "GretlSessionFile"; ValueType: string; ValueName: ""; ValueData: "Gretl session file"; Flags: uninsdeletekey

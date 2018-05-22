@@ -112,18 +112,16 @@ mdata_handle_drag  (GtkWidget          *widget,
 		    guint               time,
 		    gpointer            p);
 
-static char *optrun, *optdb, *optwebdb, *optpkg;
+static char *optdb, *optwebdb, *optpkg;
 static int opteng, optbasque, optdump, optver;
 #ifdef G_OS_WIN32
 static int optdebug;
 #endif
 
 static gchar *param_msg =
-    N_("\nYou may supply the name of a data file on the command line");
+    N_("\nYou may supply the name of a data or script file on the command line");
 
 static GOptionEntry options[] = {
-    { "run", 'r', 0, G_OPTION_ARG_STRING, &optrun,
-      N_("open a script file on startup"), "SCRIPT" },
     { "db", 'd', 0, G_OPTION_ARG_STRING, &optdb,
       N_("open a database on startup"), "DATABASE" },
     { "webdb", 'w', 0, G_OPTION_ARG_STRING, &optwebdb,
@@ -284,22 +282,6 @@ static void noalloc (void)
 {
     fputs(I_("Out of memory!\n"), stderr);
     exit(EXIT_FAILURE);
-}
-
-static void get_runfile (char *fname)
-{
-    *tryfile = '\0';
-    strncat(tryfile, fname, MAXLEN-1);
-
-    /* try "as is" first? */
-    if (gretl_test_fopen(tryfile, "r") != 0 &&
-	gretl_addpath(tryfile, 1) == NULL) {
-	fprintf(stderr, I_("Couldn't find script '%s'\n"), tryfile);
-	exit(EXIT_FAILURE);
-    } else {
-	fprintf(stderr, I_("%s found\n"), tryfile);
-	gretl_set_current_dir(tryfile);
-    }
 }
 
 static int script_type (const char *fname)
@@ -630,16 +612,11 @@ static void alt_gtk_init (int *pargc,
 	    *pargc = argc_w; /* update (residual) arg count */
 	    initted = 1;
 	}
-#if 0	
 	/* clean up */
 	for (i=0; i<n_u8; i++) {
-	    if (origp[i] == optrun) {
-		optrun = g_strdup(origp[i]);
-	    }
 	    g_free(origp[i]);
 	}
 	g_free(origp);
-#endif	
 	LocalFree(argv_w);
     }
 
@@ -725,8 +702,6 @@ int main (int argc, char **argv)
     } else if (optdump) {
 	dump_rc();
 	exit(EXIT_SUCCESS);
-    } else if (optrun != NULL) {
-	get_runfile(optrun);
     } else if (optdb != NULL) {
 	strncat(auxname, optdb, MAXLEN - 1);
 	maybe_fix_dbname(auxname);
