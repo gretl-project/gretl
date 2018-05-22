@@ -119,7 +119,6 @@ void print_window_content (gchar *fullbuf, gchar *selbuf,
     HFONT fixed_font;
     DOCINFO di;
     TEXTMETRIC lptm;
-    BYTE charset;
     int px, x, y, incr;
     gchar *text, *rawbuf, *printbuf = NULL;
     gchar *hdrstart, hdr[90];
@@ -144,13 +143,6 @@ void print_window_content (gchar *fullbuf, gchar *selbuf,
     /* logical pixels per inch */
     px = GetDeviceCaps(dc, LOGPIXELSY);
 
-    /* select character set */
-    if (iso_latin_version() == 2) {
-	charset = EASTEUROPE_CHARSET;
-    } else {
-	charset = ANSI_CHARSET;
-    }
-
     winfont = win32_fixed_font_name();
     
     /* setup font specifics */
@@ -163,7 +155,7 @@ void print_window_content (gchar *fullbuf, gchar *selbuf,
     lfont.lfItalic = 0;
     lfont.lfUnderline = 0;
     lfont.lfStrikeOut = 0;
-    lfont.lfCharSet = charset;
+    lfont.lfCharSet = DEFAULT_CHARSET;
     lfont.lfOutPrecision = OUT_DEVICE_PRECIS;
     lfont.lfClipPrecision = CLIP_DEFAULT_PRECIS;
     lfont.lfQuality = DEFAULT_QUALITY;
