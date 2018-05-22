@@ -2,6 +2,7 @@ version 2018b, in progress
 - Substantial speed-up of AR(I)MA estimation, using
   Melard's algorithm AS 197; also improvements to the
   initialization for such estimation
+- New function lrcovar(): long-run covariance
 - When R_functions is set "on", accept call to an R function
   without assignment of the return value, if any  
 - Fixes for GUI model specification dialog: breakage in
