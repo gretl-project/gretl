@@ -122,7 +122,7 @@ static gchar *param_msg =
     N_("\nYou may supply the name of a data file on the command line");
 
 static GOptionEntry options[] = {
-    { "run", 'r', 0, G_OPTION_ARG_FILENAME, &optrun,
+    { "run", 'r', 0, G_OPTION_ARG_STRING, &optrun,
       N_("open a script file on startup"), "SCRIPT" },
     { "db", 'd', 0, G_OPTION_ARG_STRING, &optdb,
       N_("open a database on startup"), "DATABASE" },
@@ -630,6 +630,7 @@ static void alt_gtk_init (int *pargc,
 	    *pargc = argc_w; /* update (residual) arg count */
 	    initted = 1;
 	}
+#if 0	
 	/* clean up */
 	for (i=0; i<n_u8; i++) {
 	    if (origp[i] == optrun) {
@@ -638,6 +639,7 @@ static void alt_gtk_init (int *pargc,
 	    g_free(origp[i]);
 	}
 	g_free(origp);
+#endif	
 	LocalFree(argv_w);
     }
 
