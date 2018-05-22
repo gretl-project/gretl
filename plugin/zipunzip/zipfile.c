@@ -7,6 +7,7 @@
 */
 
 #include "zunz_private.h"
+#include <glib/gstdio.h> /* for g_fopen */
 
 /* Macros for converting integers in little-endian to machine format */
 #define SH(a) ((guint16)(((guint16)(guchar)(a)[0])|(((guint16)(guchar)(a)[1])<< 8)))
