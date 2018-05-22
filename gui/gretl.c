@@ -632,9 +632,10 @@ static void alt_gtk_init (int *pargc,
 	}
 	/* clean up */
 	for (i=0; i<n_u8; i++) {
-	    if (origp[i] != optrun) {
-		g_free(origp[i]);
+	    if (origp[i] == optrun) {
+		optrun = g_strdup(origp[i]);
 	    }
+	    g_free(origp[i]);
 	}
 	g_free(origp);
 	LocalFree(argv_w);
@@ -722,7 +723,7 @@ int main (int argc, char **argv)
     } else if (optdump) {
 	dump_rc();
 	exit(EXIT_SUCCESS);
-    } else if (optrun) {
+    } else if (optrun != NULL) {
 	get_runfile(optrun);
     } else if (optdb != NULL) {
 	strncat(auxname, optdb, MAXLEN - 1);
