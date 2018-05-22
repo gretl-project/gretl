@@ -632,7 +632,9 @@ static void alt_gtk_init (int *pargc,
 	}
 	/* clean up */
 	for (i=0; i<n_u8; i++) {
-	    g_free(origp[i]);
+	    if (origp[i] != optrun) {
+		g_free(origp[i]);
+	    }
 	}
 	g_free(origp);
 	LocalFree(argv_w);
