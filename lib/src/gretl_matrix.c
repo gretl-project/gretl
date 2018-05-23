@@ -8675,7 +8675,7 @@ int gretl_invpd (gretl_matrix *a)
  * gretl_maybe_invpd:
  * @a: matrix to invert.
  * 
- * Attempts to computes the inverse of a matrix which may be
+ * Attempts to compute the inverse of a matrix which may be
  * positive definite.  On exit @a is overwritten with 
  * the inverse. Uses the LAPACK functions dpotrf() and dpotri().
  * Little checking is done, for speed: we assume the caller
