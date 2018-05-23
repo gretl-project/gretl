@@ -200,6 +200,19 @@ gretl_matrix *gretl_matrix_ffti (const gretl_matrix *y, int *err)
     return ft;
 }
 
+static int cmatrix_validate (const gretl_matrix *m, int square)
+{
+    if (gretl_is_null_matrix(m)) {
+	return 0;
+    } else if (m->rows % 2 != 0) {
+	return 0;
+    } else if (square && m->rows != 2 * m->cols) {
+	return 0;
+    } else {
+	return 1;
+    }
+}
+
 /* end fftw-based real FFT functions */
 
 /* Multiplication of complex matrices via BLAS zgemm() */
@@ -216,8 +229,7 @@ gretl_matrix *gretl_zgemm (const gretl_matrix *A, gretl_matrix *B,
     integer lda, ldb, ldc;
     integer m, n, k;
 
-    if (gretl_is_null_matrix(A) || A->rows % 2 != 0 ||
-	gretl_is_null_matrix(B) || B->rows % 2 != 0) {
+    if (!cmatrix_validate(A, 0) || !cmatrix_validate(B, 0)) {
 	*err = E_INVARG;
 	return NULL;
     } else if (A->cols != B->rows / 2) {
@@ -266,7 +278,7 @@ gretl_matrix *gretl_zheev (const gretl_matrix *A, gretl_matrix *V,
     char jobz = V != NULL ? 'V' : 'N';
     char uplo = 'U';
 
-    if (gretl_is_null_matrix(A) || A->rows != 2 * A->cols) {
+    if (!cmatrix_validate(A, 1)) {
 	*err = E_INVARG;
 	return NULL;
     }
@@ -358,7 +370,7 @@ gretl_matrix *gretl_zgeev (const gretl_matrix *A,
     char jobvl = VL != NULL ? 'V' : 'N';
     char jobvr = VR != NULL ? 'V' : 'N';
 
-    if (gretl_is_null_matrix(A) || A->rows != 2 * A->cols) {
+    if (!cmatrix_validate(A, 1)) {
 	*err = E_INVARG;
 	return NULL;
     }
@@ -377,6 +389,7 @@ gretl_matrix *gretl_zgeev (const gretl_matrix *A,
     a = (cmplx *) Acpy->val;
 
     if (VL != NULL) {
+	/* left eigenvectors wanted */
 	if (VL->rows * VL->cols == A->rows * A->cols) {
 	    /* VL is useable as is */
 	    VL->rows = A->rows;
@@ -394,6 +407,7 @@ gretl_matrix *gretl_zgeev (const gretl_matrix *A,
     }
 
     if (VR != NULL) {
+	/* right eigenvectors wanted */
 	if (VR->rows * VR->cols == A->rows * A->cols) {
 	    /* VR is useable as is */
 	    VR->rows = A->rows;
@@ -473,7 +487,7 @@ gretl_matrix *gretl_zgetri (const gretl_matrix *A, int *err)
     cmplx *a, *work = NULL;
     integer n, info;
 
-    if (gretl_is_null_matrix(A) || A->rows != 2 * A->cols) {
+    if (!cmatrix_validate(A, 1)) {
 	*err = E_INVARG;
 	return NULL;
     }
@@ -545,7 +559,7 @@ gretl_matrix *gretl_complex_fft (const gretl_matrix *A, int inverse,
     int sign;
     int r, c, j;
 
-    if (gretl_is_null_matrix(A) || A->rows % 2 != 0) {
+    if (!cmatrix_validate(A, 0)) {
 	*err = E_INVARG;
 	return NULL;
     }
@@ -607,8 +621,7 @@ gretl_matrix *gretl_complex_hprod (const gretl_matrix *A,
     int i, j, k;
     int cr, cc;
 
-    if (gretl_is_null_matrix(A) || A->rows % 2 != 0 ||
-	gretl_is_null_matrix(B) || B->rows % 2 != 0) {
+    if (!cmatrix_validate(A, 0) || !cmatrix_validate(B, 0)) {
 	*err = E_INVARG;
 	return NULL;
     }
@@ -710,7 +723,7 @@ int complex_matrix_print (gretl_matrix *A, const char *name, PRN *prn)
     char s[4] = "   ";
     int r, c, i, j;
 
-    if (gretl_is_null_matrix(A) || A->rows % 2 != 0) {
+    if (!cmatrix_validate(A, 0)) {
 	return E_INVARG;
     }
 
@@ -746,7 +759,7 @@ int complex_matrix_printf (gretl_matrix *A, const char *fmt, PRN *prn)
     char s[3] = "  ";
     int r, c, i, j;
 
-    if (gretl_is_null_matrix(A) || A->rows % 2 != 0) {
+    if (!cmatrix_validate(A, 0)) {
 	return E_INVARG;
     }
 
@@ -822,7 +835,7 @@ gretl_matrix *gretl_cxtract (const gretl_matrix *A, int im,
     gretl_matrix *C = NULL;
     int i, j, r, n;
 
-    if (gretl_is_null_matrix(A)) {
+    if (!cmatrix_validate(A, 0)) {
 	*err = E_INVARG;
 	return NULL;
     }
@@ -853,7 +866,7 @@ gretl_matrix *gretl_ctran (const gretl_matrix *A, int *err)
     cmplx *a, *c, aij;
     int i, j, ra, rc;
 
-    if (gretl_is_null_matrix(A) || A->rows % 2 != 0) {
+    if (!cmatrix_validate(A, 0)) {
 	*err = E_INVARG;
 	return NULL;
     }
