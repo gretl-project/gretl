@@ -113,7 +113,7 @@ mdata_handle_drag  (GtkWidget          *widget,
 		    gpointer            p);
 
 static char *optdb, *optwebdb, *optpkg;
-static int opteng, optbasque, optdump, optver;
+static int optrun, opteng, optbasque, optdump, optver;
 #ifdef G_OS_WIN32
 static int optdebug;
 #endif
@@ -122,6 +122,8 @@ static gchar *param_msg =
     N_("\nYou may supply the name of a data or script file on the command line");
 
 static GOptionEntry options[] = {
+    { "run", 'r', 0, G_OPTION_ARG_NONE, &optrun,
+       N_("open a script file on startup"), NULL },
     { "db", 'd', 0, G_OPTION_ARG_STRING, &optdb,
       N_("open a database on startup"), "DATABASE" },
     { "webdb", 'w', 0, G_OPTION_ARG_STRING, &optwebdb,
