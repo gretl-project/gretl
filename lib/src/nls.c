@@ -79,6 +79,8 @@ struct parm_ {
 #define numeric_mode(s) (!(s->flags & NL_ANALYTICAL))
 #define analytic_mode(s) (s->flags & NL_ANALYTICAL)
 
+#define scalar_loglik(s) (s->lhtype == GRETL_TYPE_DOUBLE)
+
 /* file-scope global variables */
 
 static nlspec private_spec;
@@ -965,71 +967,6 @@ int update_coeff_values (const double *b, nlspec *s)
     return err;
 }
 
-#define NLS_SKIP_MISSING 0 /* not properly tested yet */
-
-#if NLS_SKIP_MISSING
-
-static int nls_make_trimmed_dataset (nlspec *spec, int t1, int t2)
-{
-    DATASET *dset = NULL;
-    DATASET *d0 = spec->dset;
-    int nvar = d0->v;
-    int nobs = 0;
-    int i, t, s;
-
-    spec->missmask = malloc(d0->n + 1);
-    if (spec->missmask == NULL) {
-	return E_ALLOC;
-    }
-
-    spec->missmask[d0->n] = '\0';
-    memset(spec->missmask, '0', d0->n);
-
-    for (t=t1; t<=t2; t++) {
-	if (na(d0->Z[spec->lhv][t])) {
-	    spec->missmask[t] = '1';
-	} else {
-	    nobs++;
-	}
-    }
-
-    if (nobs < spec->ncoeff) {
-	return E_DF;
-    }
-
-    dset = create_auxiliary_dataset(nvar, nobs, 0);
-    if (dset == NULL) {
-	return E_ALLOC;
-    }
-
-    for (i=1; i<nvar; i++) {
-	strcpy(dset->varname[i], d0->varname[i]);
-	s = 0;
-	for (t=t1; t<=t2; t++) {
-	    if (!na(origZ[spec->lhv][t])) {
-		dset->Z[i][s++] = d0->Z[i][t];
-	    }
-	}
-    }
-
-    spec->real_t1 = t1;
-    spec->real_t2 = t2;
-
-    spec->dset = dset;
-    spec->t1 = 0;
-    spec->t2 = nobs - 1;
-    spec->nobs = nobs;
-
-#if NLS_DEBUG
-    fprintf(stderr, "s->t1 = %d, s->t2 = %d, s->nobs = %d, nvar = %d\n",
-	    spec->t1, spec->t2, spec->nobs, nvar);
-#endif
-
-    return 0;
-}
-
-#endif
-
 static int nl_coeff_check (nlspec *s)
 {
     int i;
@@ -1107,11 +1044,7 @@ static int nl_missval_check (nlspec *s, const DATASET *dset)
 	    fprintf(stderr, "  after setting t1=%d, t2=%d, "
 		    "got NA for var %d (%s) at obs %d\n", t1, t2, v, 
 		    dset->varname[v], t);
-#if NLS_SKIP_MISSING
-	    return nls_make_trimmed_dataset(s, t1, t2);
-#else
 	    return E_MISSDATA;
-#endif
 	}
     }  
 
@@ -1519,6 +1452,17 @@ static gretl_matrix *ml_gradient_matrix (nlspec *spec, int *err)
 	gretl_matrix *m;
 	double x = 0.0;
 	int i, j, v, s, t;
+
+	if (spec->nparam == 1 && matrix_deriv(spec, 0)) {
+	    m = get_derivative_matrix(spec, 0, err);
+	    if (!*err) {
+		G = gretl_matrix_copy(m);
+		if (G == NULL) {
+		    *err = E_ALLOC;
+		}
+	    }
+	    return G;
+	}
 	
 	G = gretl_matrix_alloc(T, k);
 	if (G == NULL) {
@@ -1535,7 +1479,7 @@ static gretl_matrix *ml_gradient_matrix (nlspec *spec, int *err)
 		for (s=0; s<m->cols; s++) {
 		    x = gretl_matrix_get(m, 0, s);
 		    for (t=0; t<T; t++) {
-			if (t > 0 && m->rows > 0) {
+			if (t > 0 && t < m->rows) {
 			    x = gretl_matrix_get(m, t, s);
 			}
 			gretl_matrix_set(G, t, j, x);
@@ -2618,7 +2562,7 @@ static int mle_calculate (nlspec *s, PRN *prn)
 	/* doing Hessian or QML covariance matrix */
 	if (hessfunc != NULL) {
 	    s->Hinv = mle_hessian_inverse(s, &err);
-	} else if (analytic_mode(s)) {
+	} else if (analytic_mode(s) && !scalar_loglik(s)) {
 	    s->Hinv = hessian_inverse_from_score(s->coeff, s->ncoeff, 
 						 gradfunc, get_mle_ll,
 						 s, &err);
@@ -3246,85 +3190,23 @@ static int mle_scalar_check (nlspec *spec)
 {
     int err = 0;
 
-    if (spec->lhtype == GRETL_TYPE_DOUBLE) {
-	if (numeric_mode(spec)) {
-	    /* can't do OPG, so can't do QMLE for variance */
-	    if (spec->opt & OPT_R) {
-		gretl_errmsg_set("Scalar loglikelihood: can't do QML");
-		err = E_BADOPT;
-	    } else if (!(spec->opt & OPT_A)) {
-		/* ensure that we use the Hessian */
-		spec->opt |= OPT_H;
-	    }
-	} else {
+    if (scalar_loglik(spec)) {
+	/* without per-observation likelihood values, we can do
+	   neither OPG nor QML */
+	if (spec->opt & OPT_R) {
+	    gretl_errmsg_set("Scalar loglikelihood: can't do QML");
+	    err = E_BADOPT;
+	} else if (!(spec->opt & OPT_A)) {
+	    /* ensure that we use the Hessian */
+	    spec->opt |= OPT_H;
+	}
+	if (analytic_mode(spec)) {
 	    /* analytic mode: don't try to check gradient */
 	    spec->opt |= OPT_G;
 	}
     }
 
     return err;
-}
-
-/* remedial treatment for an NLS model estimated using
-   a trimmed dataset, to avoid missing observations
-*/
-
-static int nls_model_fix_sample (MODEL *pmod,
-				 nlspec *spec, 
-				 DATASET *dset)
-{
-    double *uhat = NULL;
-    double *yhat = NULL;
-
-    if (pmod->uhat != NULL) {
-	uhat = malloc(dset->n * sizeof *uhat);
-	if (uhat == NULL) {
-	    return E_ALLOC;
-	}
-    }
-
-    if (pmod->yhat != NULL) {
-	yhat = malloc(dset->n * sizeof *yhat);
-	if (yhat == NULL) {
-	    free(uhat);
-	    return E_ALLOC;
-	}
-    }    
-
-    if (uhat != NULL || yhat != NULL) {
-	int t, s = 0;
-
-	for (t=0; t<dset->n; t++) {
-	    if (t < spec->real_t1 || t > spec->real_t2 ||
-		spec->missmask[t] == '1') {
-		if (uhat != NULL) uhat[t] = NADBL;
-		if (yhat != NULL) yhat[t] = NADBL;
-	    } else {
-		if (uhat != NULL) uhat[t] = pmod->uhat[s];
-		if (yhat != NULL) yhat[t] = pmod->yhat[s];
-		s++;
-	    }
-	}
-
-	if (uhat != NULL) {
-	    free(pmod->uhat);
-	    pmod->uhat = uhat;
-	}
-
-	if (yhat != NULL) {
-	    free(pmod->yhat);
-	    pmod->yhat = yhat;
-	}
-    }
-
-    pmod->full_n = dset->n;
-    pmod->t1 = spec->real_t1;
-    pmod->t2 = spec->real_t2;
-
-    pmod->missmask = spec->missmask;
-    spec->missmask = NULL;
-
-    return 0;
 }
 
 static void nls_run_GNR (MODEL *pmod, nlspec *spec, PRN *prn)
@@ -3522,14 +3404,6 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
     }
 
     destroy_private_scalars();
-
-    if (spec->dset != dset && spec->dset != NULL) {
-	if (!nlmod.errcode) {
-	    nls_model_fix_sample(&nlmod, spec, dset);
-	}
-	destroy_dataset(spec->dset);
-    }
-
     clear_nlspec(spec);
 
 #if NLS_DEBUG
