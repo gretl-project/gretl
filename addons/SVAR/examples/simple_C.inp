@@ -25,9 +25,4 @@ set stopwatch
 bfail = SVAR_boot(&Mod, 1024, 0.90)
 printf "Failed = %d, Time (bootstrap) = %g\n", bfail, $stopwatch
 
-loop i=1..2 --quiet
-    loop j=1..2  --quiet
-        sprintf fnam "simpleC_%d%d.pdf", i, j
-        IRFsave(fnam, &Mod, i, j)
-    endloop
-endloop
+IRFsave("simpleC", &Mod, 0, 0)	# 0 means "all"
