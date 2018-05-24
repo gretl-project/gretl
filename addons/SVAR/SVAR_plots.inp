@@ -1,14 +1,13 @@
-function scalar check_bounds(scalar s, scalar v, scalar n)
+function scalar check_bounds(int s, int v, int n)
 
-  if abs(s) > n || (s == 0)
-    return 1
-  endif
+    if abs(s) > n || (s == 0)
+        return 1
 
-  if (v > n) || (v < 1)
-    return 2
-  endif
+    elif (v > n) || (v < 1)
+        return 2
+    endif
 
-  return 0
+    return 0
 end function
 
 /* ---------------------------------------------------------------------- */
@@ -16,107 +15,107 @@ end function
 /* ---------------------------------------------------------------------- */
 
 function string IRFgrph(matrix IRFmat, int snum, int vnum, scalar scale, \
-			string sname, string vname, int keypos[0:2:1], \
-			matrix *cumul[null],  bundle *boot[null], \
-			int bc[0:2:0])
+      string sname, string vname, int keypos[0:2:1], \
+      matrix *cumul[null],  bundle *boot[null], \
+      int bc[0:2:0])
 
-  # bc: bias correction choice
+    # bc: bias correction choice
     
-  scalar flip = (snum<0)
-  scalar snum = abs(snum)
-  scalar n = round(sqrt(cols(IRFmat)))
+    scalar flip = (snum<0)
+    scalar snum = abs(snum)
+    scalar n = round(sqrt(cols(IRFmat)))
                         
-  if !isnull(boot)
-    scalar bootrep = boot.rep
-    scalar alpha = boot.alpha
-  else
-    scalar bootrep = 0
-  endif
+    if !isnull(boot)
+        scalar bootrep = boot.rep
+        scalar alpha = boot.alpha
+    else
+        scalar bootrep = 0
+    endif
 
-  # anything to cumulate?
-  scalar cumulate = !isnull(cumul) ? sumr(sumc(cumul .= vnum)) > 0 : 0
+    # anything to cumulate?
+    scalar cumulate = !isnull(cumul) ? sumr(sumc(cumul .= vnum)) > 0 : 0
 
-  scalar tmpfname = int(1000*muniform(1,1))
-  string tmpfile = $windows ? sprintf("@dotdir\\irf%d.gp", tmpfname) : \
-    sprintf("@dotdir/irf%d.gp", tmpfname)
+    scalar tmpfname = int(1000*muniform(1,1))
+    string tmpfile = $windows ? sprintf("@dotdir\\irf%d.gp", tmpfname) : \
+      sprintf("@dotdir/irf%d.gp", tmpfname)
  
-  scalar k = (snum-1)*n + vnum
+    scalar k = (snum-1)*n + vnum
 
-  scalar h = rows(IRFmat)
-  matrix x = flip ? -IRFmat[,k]./scale : IRFmat[,k]./scale	# matrix?
-  if bootrep > 0
-    matrix hicb = flip ? -boot.lo_cb : boot.hi_cb	# matrix?
-    matrix locb = flip ? -boot.hi_cb : boot.lo_cb
-    matrix mdn  = flip ? -boot.mdns : boot.mdns
-    matrix locb = locb[,k] ./ scale
-    matrix hicb = hicb[,k] ./ scale
-    matrix mdn  = mdn[,k]  ./ scale
-    scalar miny = minc((locb | x))
-    scalar maxy = maxc((hicb | x))
-  else
-    scalar miny = minc(x)
-    scalar maxy = maxc(x)
-  endif
+    scalar h = rows(IRFmat)
+    matrix x = flip ? -IRFmat[,k]./scale : IRFmat[,k]./scale	# matrix?
+    if bootrep > 0
+        matrix hicb = flip ? -boot.lo_cb : boot.hi_cb	# matrix?
+        matrix locb = flip ? -boot.hi_cb : boot.lo_cb
+        matrix mdn  = flip ? -boot.mdns : boot.mdns
+        matrix locb = locb[,k] ./ scale
+        matrix hicb = hicb[,k] ./ scale
+        matrix mdn  = mdn[,k]  ./ scale
+        scalar miny = minc((locb | x))
+        scalar maxy = maxc((hicb | x))
+    else
+        scalar miny = minc(x)
+        scalar maxy = maxc(x)
+    endif
 
-  scalar miny = (miny>0) ? 0 : miny
-  scalar maxy = (maxy<0) ? 0 : maxy
+    scalar miny = (miny>0) ? 0 : miny
+    scalar maxy = (maxy<0) ? 0 : maxy
 
-  set force_decpoint on
+    set force_decpoint on
   
-  outfile "@tmpfile" --write
-  printf "set yrange [%g:%g]\n", miny*1.05, maxy*1.05
-  printf "set xrange [%g:%g]\n", 0, (h-1)*1.05
-  printf "set xzeroaxis\n"
+    outfile "@tmpfile" --write
+    printf "set yrange [%g:%g]\n", miny*1.05, maxy*1.05
+    printf "set xrange [%g:%g]\n", 0, (h-1)*1.05
+    printf "set xzeroaxis\n"
 
-  string l_sname = sname=="" ? sprintf("%d", snum) : sname  
-  string l_vname = vname=="" ? sprintf("%d", vnum) : vname 
+    string l_sname = sname=="" ? sprintf("%d", snum) : sname  
+    string l_vname = vname=="" ? sprintf("%d", vnum) : vname 
 
-  printf "set title \"IRF: %s -> %s", l_sname, l_vname
+    printf "set title \"IRF: %s -> %s", l_sname, l_vname
 
-  if bc == 1
-      printf "; bias-correction = partial"
-  elif bc == 2
-      printf "; bias-correction = full"
-  endif
+    if bc == 1
+        printf "; bias-correction = partial"
+    elif bc == 2
+        printf "; bias-correction = full"
+    endif
 
-  if cumulate > 0
-    printf " (cumulated)"
-  endif
+    if cumulate > 0
+        printf " (cumulated)"
+    endif
 
-  printf "\"\n"
+    printf "\"\n"
 
-  if bootrep > 0
-      if keypos == 0
-	  printf "set key off\n"
-      elif keypos == 1
-	  printf "set key outside\n"
-      elif keypos == 2
-	  printf "set key below\n"
-      endif
-      printf "set style fill solid 0.125\n" 
-      printf "plot '-' using 1:2:3 w filledcurve t 'Bstrap %d%% CI', \\\n", floor(100*alpha)
-      printf "'-' w l lw 1 lc 1 t 'Bstrap median', \\\n"
-      printf "'-' w l lw 2 lc -1 t 'IRF'\n"
-      loop i=1..h -q
-	  printf "%d\t%g\t%g\n", i-1, locb[i,], hicb[i,]
-      endloop
-      printf "e\n"
-      loop i=1..h -q
-	  printf "%d\t%g\n", i-1, mdn[i,]
-      endloop
-      printf "e\n"
-  else
-      printf "plot '-' w l lw 2\n"
-  endif
+    if bootrep > 0
+        if keypos == 0
+            printf "set key off\n"
+        elif keypos == 1
+            printf "set key outside\n"
+        elif keypos == 2
+            printf "set key below\n"
+        endif
+        printf "set style fill solid 0.125\n" 
+        printf "plot '-' using 1:2:3 w filledcurve t 'Bstrap %d%% CI', \\\n", floor(100*alpha)
+        printf "'-' w l lw 1 lc 1 t 'Bstrap median', \\\n"
+        printf "'-' w l lw 2 lc -1 t 'IRF'\n"
+        loop i=1..h -q
+            printf "%d\t%g\t%g\n", i-1, locb[i,], hicb[i,]
+        endloop
+        printf "e\n"
+        loop i=1..h -q
+            printf "%d\t%g\n", i-1, mdn[i,]
+        endloop
+        printf "e\n"
+    else
+        printf "plot '-' w l lw 2\n"
+    endif
 
-  loop i=1..h -q
-    printf "%d\t%g\n", i-1, x[i]
-  endloop
-  printf "e\n"
-  outfile --close
-  set force_decpoint off
+    loop i=1..h -q
+        printf "%d\t%g\n", i-1, x[i]
+    endloop
+    printf "e\n"
+    outfile --close
+    set force_decpoint off
 
-  return tmpfile
+    return tmpfile
 end function
 
 /* ---------------------------------------------------------------------- */
@@ -124,61 +123,59 @@ end function
 /* ---------------------------------------------------------------------- */
 
 function void IRFsave(string outfilename, bundle *obj, int snum, 
-  int vnum, int keypos[0:2:1])
+      int vnum, int keypos[0:2:1])
 
-  scalar n = obj.n
-  err = check_bounds(snum, vnum, n)
+    # copy some input and do checks
+    scalar n = obj.n
+    err = check_bounds(snum, vnum, n)
+    if err == 1
+        printf "Shock number %d out of bounds\n", abs(snum)
+        return
+    elif err == 2
+        printf "Variable number %d out of bounds\n", vnum 
+        return
+    endif
 
-  if err == 1
-    printf "Shock number %d out of bounds\n", abs(snum)
-    return
-  elif err == 2
-    printf "Variable number %d out of bounds\n", vnum 
-    return
-  endif
+    matrix IRFmat  = obj.IRFs
+    string yn = obj.Ynames[vnum]
+    string sn = obj.snames[abs(snum)] # why abs()?
 
-  scalar ncumul  = obj.ncumul
-  scalar nboot   = obj.nboot
-  matrix IRFmat  = obj.IRFs
-  strings Ynames = obj.Ynames
-  strings snames = obj.snames
-
-  string yn = Ynames[vnum]
-  string sn = snames[abs(snum)]
-
-  if obj.normalize == 1
-      matrix tmp = mshape(IRFmat[1,], n, n)
-      scalar scale =  tmp[snum, snum]
-  else
-      scalar scale = 1
-  endif
+    # normalization / scaling
+    if obj.normalize == 1
+        matrix tmp = mshape(IRFmat[1,], n, n)
+        scalar scale = tmp[snum, snum]
+    else
+        scale = 1
+    endif
     
-  if ncumul == 0
-    if nboot == 0
-      string tmpfile = IRFgrph(IRFmat, snum, vnum, scale, sn, yn, keypos)
+    # produce plots
+    string tmpfile
+    if obj.nboot
+        boot = obj.bootdata	# matrix?
+        bc = boot.biascorr
+    endif    
+    if obj.ncumul == 0
+        if obj.nboot == 0
+            tmpfile = IRFgrph(IRFmat, snum, vnum, scale, sn, yn, keypos)
+        else
+            tmpfile = IRFgrph(IRFmat, snum, vnum, scale, sn, yn, keypos, null, &boot, bc)
+        endif
     else
-      boot = obj.bootdata
-      bc = boot.biascorr
-      string tmpfile = IRFgrph(IRFmat, snum, vnum, scale, sn, yn, keypos, null, &boot, bc)
+        matrix cumul = obj.cumul
+        if obj.nboot == 0
+            tmpfile = IRFgrph(IRFmat, snum, vnum, scale, sn, yn, keypos, &cumul)
+        else
+            tmpfile = IRFgrph(IRFmat, snum, vnum, scale, sn, yn, keypos, &cumul, &boot, bc)
+        endif
     endif
-  else
-    matrix cumul = obj.cumul
-    if nboot == 0
-      tmpfile = IRFgrph(IRFmat, snum, vnum, scale, sn, yn, keypos, &cumul)
-    else
-      boot = obj.bootdata
-      bc = boot.biascorr
-      tmpfile = IRFgrph(IRFmat, snum, vnum, scale, sn, yn, keypos, &cumul, &boot, bc)
-    endif
-  endif
 
-  gnuplot --input="@tmpfile" --output="@outfilename"
+    gnuplot --input="@tmpfile" --output="@outfilename"
 
 end function
 
-function void IRFplot(bundle *obj, scalar snum, scalar vnum, int keypos[0:2:1])
+function void IRFplot(bundle *obj, int snum, int vnum, int keypos[0:2:1])
 
-  IRFsave("display", &obj, snum, vnum, keypos)
+    IRFsave("display", &obj, snum, vnum, keypos)
 
 end function
 
@@ -187,60 +184,60 @@ end function
 /* ---------------------------------------------------------------------- */
 
 function string FEVDgrph(matrix FEVDmat, scalar v, 
-  string vname, strings snames, int keypos[0:2:1])
+      string vname, strings snames, int keypos[0:2:1])
 
-  n = round(sqrt(cols(FEVDmat)))
-  h = rows(FEVDmat) - 1
+    n = round(sqrt(cols(FEVDmat)))
+    h = rows(FEVDmat) - 1
                     
-  scalar tmpfname = int(10000*muniform(1,1))
-  if $windows
-    sprintf datfile "@dotdir\\fevd%d.txt", tmpfname 
-    sprintf tmpfile "@dotdir\\fevd%d.gp", tmpfname 
-  else
-    sprintf datfile "@dotdir/fevd%d.txt", tmpfname
-    sprintf tmpfile "@dotdir/fevd%d.gp", tmpfname
-  endif
- 
-  matrix sel = (v-1)*n + seq(1,n)
-  set force_decpoint on
-  
-  outfile "@tmpfile" --write
-  if keypos == 0
-      printf "set key off\n"
-  elif keypos == 1
-      printf "set key outside\n"
-  elif keypos == 2
-      printf "set key below\n"
-  endif
-  printf "set yrange [0:100]\n"
-  printf "set xrange [%g:%g]\n", 0, h
-  printf "set xzeroaxis\n"
-
-  printf "set title \"FEVD for %s\"\n", vname
-  printf "set style fill solid 0.25\n"
-  printf "set style histogram rowstacked\n"
-  printf "set style data histogram\n"
-  
-  loop i=1..n --quiet
-    string sname = snames[i]
-
-    if i == 1
-      printf "plot '%s' using 2 t '%s', \\\n", datfile, sname 
-    elif i == n
-      printf "\t'' using %d t '%s'\n", i+1, sname 
+    scalar tmpfname = int(10000*muniform(1,1))
+    if $windows
+        sprintf datfile "@dotdir\\fevd%d.txt", tmpfname 
+        sprintf tmpfile "@dotdir\\fevd%d.gp", tmpfname 
     else
-      printf "\t'' using %d t '%s', \\\n", i+1, sname
+        sprintf datfile "@dotdir/fevd%d.txt", tmpfname
+        sprintf tmpfile "@dotdir/fevd%d.gp", tmpfname
     endif
-  endloop
-  outfile --close
+ 
+    matrix sel = (v-1)*n + seq(1,n)
+    set force_decpoint on
+  
+    outfile "@tmpfile" --write
+    if keypos == 0
+        printf "set key off\n"
+    elif keypos == 1
+        printf "set key outside\n"
+    elif keypos == 2
+        printf "set key below\n"
+    endif
+    printf "set yrange [0:100]\n"
+    printf "set xrange [%g:%g]\n", 0, h
+    printf "set xzeroaxis\n"
+
+    printf "set title \"FEVD for %s\"\n", vname
+    printf "set style fill solid 0.25\n"
+    printf "set style histogram rowstacked\n"
+    printf "set style data histogram\n"
+  
+    loop i=1..n --quiet
+        string sname = snames[i]
+
+        if i == 1
+            printf "plot '%s' using 2 t '%s', \\\n", datfile, sname 
+        elif i == n
+            printf "\t'' using %d t '%s'\n", i+1, sname 
+        else
+            printf "\t'' using %d t '%s', \\\n", i+1, sname
+        endif
+    endloop
+    outfile --close
          
-  outfile "@datfile" --write
-  printf "%12.4f\n", seq(0, h)' ~ 100*FEVDmat[,sel]
-  outfile --close
+    outfile "@datfile" --write
+    printf "%12.4f\n", seq(0, h)' ~ 100*FEVDmat[,sel]
+    outfile --close
 
-  set force_decpoint off
+    set force_decpoint off
 
-  return tmpfile
+    return tmpfile
 end function
 
 
@@ -249,21 +246,19 @@ end function
 /* ---------------------------------------------------------------------- */
 
 function void FEVDsave(string outfilename, bundle *obj, int vnum, \
-		       int keypos[0:2:1])
+      int keypos[0:2:1])
 
-  err = check_bounds(1, vnum, obj.n)
+    err = check_bounds(1, vnum, obj.n)
 
-  if err == 2
-    printf "Variable number %d out of bounds\n", vnum 
-    return
-  endif
+    if err == 2
+        printf "Variable number %d out of bounds\n", vnum 
+        return
+    endif
 
-  matrix Fmat = FEVD(&obj)
-  strings Ynames = obj.Ynames
-  strings snames = obj.snames
+    matrix Fmat = FEVD(&obj)
 
-  string tmpfile = FEVDgrph(Fmat, vnum, Ynames[vnum], snames, keypos)
-  gnuplot --input="@tmpfile" --output="@outfilename"
+    string tmpfile = FEVDgrph(Fmat, vnum, obj.Ynames[vnum], obj.snames, keypos)
+    gnuplot --input="@tmpfile" --output="@outfilename"
 
 end function
 
@@ -281,18 +276,15 @@ function void HDsave(string outfilename, bundle *obj, int vnum)
 
     # more fashionable (=Dynare-like) style
 
-    strings snames = obj.snames
-    strings Ynames = obj.Ynames
-
     list tmp = SVAR_hd(&obj, vnum)
-    list tmp -= tmp[1] # take away deterministic component
+    tmp -= tmp[1] # take away deterministic component
     loop i=1..nelem(tmp) --quiet
-        string sn = snames[i]
+        string sn = obj.snames[i]
         setinfo tmp[i] --graph-name="@sn"
     endloop
     
     series tmpvarname = sum(tmp)
-    string gnam = sprintf("%s (stoch. component)", Ynames[vnum])
+    string gnam = sprintf("%s (stoch. component)", obj.Ynames[vnum])
     setinfo tmpvarname --graph-name="@gnam"
     tmp += tmpvarname
     
@@ -316,27 +308,26 @@ end function
 /* ---------------------------------------------------------------------- */
 
 function void GUI_plot(bundle *b, int ptype[0:2:0] \
-		       "Plot type" {"IRF", "FEVD", \ 
-				    "Historical decomposition"})
+      "Plot type" {"IRF", "FEVD", "Historical decomposition"})
 
-  scalar n = b.n
-  matrix tt = seq(0, b.horizon)'
+    scalar n = b.n
+    matrix tt = seq(0, b.horizon)'
   
-  if ptype == 0
-    loop i=1..n -q
-	loop j=1..n -q
-	    IRFplot(&b, i, j)
-	endloop
-    endloop
+    if ptype == 0
+        loop i=1..n -q
+            loop j=1..n -q
+                IRFplot(&b, i, j)
+            endloop
+        endloop
 
-  elif ptype == 1
-      loop i=1..n -q
-	  FEVDplot(&b, i)
-      endloop
-  elif ptype == 2
-      loop i=1..n -q
-	  HDplot(&b, i)
-      endloop
-  endif
+    elif ptype == 1
+        loop i=1..n -q
+            FEVDplot(&b, i)
+        endloop
+    elif ptype == 2
+        loop i=1..n -q
+            HDplot(&b, i)
+        endloop
+    endif
 
 end function
