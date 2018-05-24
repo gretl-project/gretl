@@ -2695,6 +2695,7 @@ int gretl_model_add_OPG_vcv (MODEL *pmod,
 	    gretl_model_set_vcv_info(pmod, VCV_ML, ML_OP);
 	}
     } else {
+	/* diagnostic: recreate and print G'G */
 	gretl_matrix_multiply_mod(G, GRETL_MOD_TRANSPOSE,
 				  G, GRETL_MOD_NONE,
 				  GG, GRETL_MOD_NONE);
