@@ -2827,7 +2827,8 @@ MODEL midas_model (const int *list,
 	/* estimation using native NLS */
 	err = midas_nls_setup(mi, dset, opt, prn);
 	if (!err) {
-	    mod = nl_model(dset, (opt | OPT_G | OPT_M), prn);
+	    /* OPT_S: suppress gradient check */
+	    mod = nl_model(dset, (opt | OPT_S | OPT_M), prn);
 	}
     } else if (!err) {
 	/* estimation using L-BFGS-B or GSS */
