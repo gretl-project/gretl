@@ -61,6 +61,7 @@ end function
 # ----- main ----------------------------------------------
 
 nulldata 10000
+set seed 7654321
 set optimizer bfgs
 
 # generate artificial data
