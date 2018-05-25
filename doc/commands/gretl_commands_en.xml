@@ -7966,6 +7966,10 @@
 	  <effect>see below</effect>
 	</option>
 	<option>
+	  <flag>--auxiliary</flag>
+	  <effect>see below</effect>
+	</option>
+	<option>
 	  <flag>--lbfgs</flag>
 	  <effect>use L-BFGS-B instead of regular BFGS</effect>
 	</option>
@@ -7980,11 +7984,10 @@
     <description context="gui">
       <para>
 	Performs Maximum Likelihood (ML) estimation using either the
-	BFGS (Broyden, Fletcher, Goldfarb, Shanno) algorithm or
-	Newton's method. You must specify the log-likelihood function;
-	it is recommended that you also supply expressions for the
-	derivatives of this function with respect to each of the
-	parameters if possible.
+	BFGS (Broyden, Fletcher, Goldfarb, Shanno) algorithm.  You
+	must specify the log-likelihood function; it is recommended
+	that you also supply expressions for the derivatives of this
+	function with respect to each of the parameters if possible.
       </para>
       <para>
 	Simple example: Suppose we have a series <lit>X</lit> with values 0
@@ -8046,6 +8049,11 @@
 	computed.
       </para>
       <para>
+	This help text assumes use of the default BFGS maximizer. For
+	information on using Newton's method please see
+	<guideref targ="chap:mle"/>.
+      </para>
+      <para>
 	Simple example: Suppose we have a series <lit>X</lit> with
 	values 0 or 1 and we wish to obtain the maximum likelihood
 	estimate of the probability, <lit>p</lit>, that <lit>X</lit> = 1.
@@ -8093,15 +8101,28 @@
 	Note that any option flags should be appended to the ending line
 	of the MLE block.
       </para>
+      <subhead>Covariance matrix and standard errors</subhead>
       <para>
-	By default, estimated standard errors are based on the Outer
-	Product of the Gradient.  If the <opt>hessian</opt> option is
-	given, they are instead based on the negative inverse of the
-	Hessian (which is approximated numerically).  If the
-	<opt>robust</opt> option is given, a QML estimator is used
-	(namely, a sandwich of the negative inverse of the Hessian and the
-	covariance matrix of the gradient).
+	If the log-likelihood function returns a series or vector
+	giving per-observation values then estimated standard errors
+	are by default based on the Outer Product of the Gradient
+	(OPG), while if the <opt>hessian</opt> option is given they
+	are instead based on the negative inverse of the Hessian,
+	which is approximated numerically.  If the <opt>robust</opt>
+	option is given, a QML estimator is used (namely, a sandwich
+	of the negative inverse of the Hessian and the OPG).  However,
+	if the log-likelihood function just returns a scalar value,
+	the OPG is not available (and so neither is the QML
+	estimator), and standard errors are of necessity computed
+	using the numerical Hessian.
       </para>
+      <para>
+	In the event that you just want the primary parameter
+	estimates you can give the <opt>auxiliary</opt> option, which
+	suppresses computation of the covariance matrix and standard
+	errors; this will save some CPU cycles and memory usage.
+      </para>
+      <subhead>Checking analytical derivatives</subhead>
       <para>
 	If you supply analytical derivatives, by default gretl runs a
 	numerical check on their plausibility.  Occasionally this may
@@ -8125,7 +8146,7 @@
 	holds <math>k</math> such names.
       </para>
       <para>
-	For an in-depth description of <cmd>mle</cmd>, please refer to
+	For an in-depth description of <cmd>mle</cmd> please refer to
 	<guideref targ="chap:mle"/>.
       </para>
     </description>

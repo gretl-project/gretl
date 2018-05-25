@@ -73,7 +73,7 @@ g_i(\theta) = \frac{\partial\LogLik(\theta)}{\partial\theta_i}
   = \sum_{t=1}^T \frac{\partial\ell_t(\theta)}{\partial\theta_i}
 \]
 
-Gradient-based methods can be shortly illustrated as follows:
+Gradient-based methods can be briefly illustrated as follows:
 
 \begin{enumerate}
 \item pick a point $\theta_0 \in \Theta$;
@@ -90,8 +90,8 @@ another in the way they compute the direction vector
 $d(\mathbf{g}(\theta_0))$, to ensure that $\LogLik(\theta_1) >
 \LogLik(\theta_0)$ (so that we eventually end up on the maximum).
 
-The default method gretl uses to maximize the log-likelihood is
-a gradient-based algorithm known as the \textbf{BFGS} (Broyden,
+The default method gretl uses to maximize the log-likelihood is a
+gradient-based algorithm known as the \textbf{BFGS} (Broyden,
 Fletcher, Goldfarb and Shanno) method. This technique is used in most
 econometric and statistical packages, as it is well-established and
 remarkably powerful. Clearly, in order to make this technique
@@ -100,9 +100,12 @@ $\mathbf{g}(\theta)$ for any value of $\theta$. In some cases this
 vector can be written explicitly as a function of $\mathbf{Y}$. If
 this is not possible or too difficult the gradient may be evaluated
 numerically. The alternative \textbf{Newton-Raphson} algorithm is also
-available, which is more effective under some circumstances but is
-also more fragile; see section \ref{sec:mle-adv} and chapter
-\ref{chap:numerical} for details.
+available. This method is more effective under some circumstances but
+is also more fragile; see section \ref{sec:mle-adv} and chapter
+\ref{chap:numerical} for details.\footnote{Note that some of the
+  statements made below (for example, regarding estimation of the
+  covariance matrix) have to be modified when Newton's method is
+  used.}
 
 The choice of the starting value, $\theta_0$, is crucial in some contexts
 and inconsequential in others. In general, however, it is
@@ -121,7 +124,7 @@ value, the machine precision to the power 3/4).
 \subsection{Covariance matrix and standard errors}
 
 By default the covariance matrix of the parameter estimates is
-based on the Outer Product of the Gradient.  That is,
+based on the Outer Product of the Gradient (OPG).  That is,
 \begin{equation}
   \label{eq:OPGmat}
   \widehat{\mbox{Var}}_{\mbox{\scriptsize OPG}}(\hat{\theta}) =
@@ -143,6 +146,12 @@ Cluster-robust estimation is also available: in order to activate it,
 use the \option{cluster=}\emph{\texttt{clustvar}}, where \cmd{clustvar}
 should be a discrete series. See section \ref{sec:vcv-cluster} for
 more details.
+
+Note, however, that if the log-likelihood function supplied by the
+user just returns a scalar value---as opposed to a series or vector
+holding per-observation contributions---then the OPG method is not
+applicable and so the covariance matrix must be estimated via a
+numerical approximation to the Hessian.
 
 \section{Gamma estimation}
 \label{sec:ml-gamma}
@@ -970,7 +979,7 @@ the \cmd{mle} block remains nicely compact.
 \subsection{Newton's method and the analytical Hessian}
 \label{sec:mle-adv-hessian}
 
-Since version 1.9.7, gretl offers the user the option of using
+As mentioned above, gretl offers the user the option of using
 Newton's method for maximizing the log-likelihood. In terms of the
 notation used in section \ref{sec:mle-intro}, the direction for
 updating the inital parameter vector $\theta_0$ is given by
@@ -1037,11 +1046,11 @@ generally to be avoided, as may be extremely time-consuming and may
 yield imprecise results.
 
 A much better option is to calculate the Hessian analytically and have
-gretl use its true value rather than a numerical
-approximation. In most cases, this is both much faster and numerically
-stable, but of course comes at the price of having to differentiate
-the loglikelihood twice to respect with the parameters and translate
-the resulting expressions into efficient \app{hansl} code.
+gretl use its true value rather than a numerical approximation. In
+most cases, this is both much faster and numerically stable, but of
+course comes at the price of having to differentiate the loglikelihood
+twice to respect with the parameters and translate the resulting
+expressions into efficient \app{hansl} code.
 
 Luckily, both tasks are relatively easy in the probit case: the matrix
 of second derivatives of $\LogLik_i$ may be written as
@@ -1065,7 +1074,7 @@ so the total Hessian is
 where $w_i = m_i \left( m_i + \mathbf{x}_i'\beta \right)$. It can be
 shown that $w_i > 0$, so the Hessian is guaranteed to be negative
 definite in all sensible cases and the conditions are ideal for
-applying Newton's method. 
+applying Newton's method.
 
 A \app{hansl} translation of equation \eqref{eq:mle-tothess} may look
 like
@@ -1094,20 +1103,29 @@ end mle
 \end{code}
 In other words, the \cmd{hessian} keyword must be followed by the call
 to a function whose first argument is a matrix pointer which is
-supposed to be filled with the \emph{negative} of the Hessian at $\theta$.
+supposed to be filled with the \emph{negative} of the Hessian at
+$\theta$.
 
-Another feature worth noting is that gretl does not perform any
-numerical check on whether the function computes the Hessian correctly
-or not. On the one hand, this means that you can trick \cmd{mle} into
-using alternatives to the Hessian and thereby implement other
-optimization methods. For example, if you substitute in equation
-\ref{eq:mle-newton} the Hessian $\mathbf{H}$ with the negative of the
-OPG matrix $-\mathbf{G}'\mathbf{G}$, as defined in \eqref{eq:OPGmat},
-you get the so-called BHHH optimization method (see
-\cite{bhhh74}). Again, the sample file \verb|mle-advanced.inp|
-provides an example. On the other hand, you may want to perform a
-check of your analytically-computed $\mathbf{H}$ matrix versus a
-numerical approximation.
+We said above (section~\ref{sec:mle-intro}) that the covariance matrix
+of the parameter estimates is by default estimated using the Outer
+Product of the Gradient (so long as the log-likelihood function
+returns the per-observation contributions). However, if you supply a
+function that computes the Hessian then by default it is used in
+estimating the covariance matrix. If you wish to impose use of OPG
+instead, append the \option{opg} option to the end of the \cmd{mle}
+block.
+
+Note that gretl does not perform any numerical check on whether a
+user-supplied function computes the Hessian correctly. On the one
+hand, this means that you can trick \cmd{mle} into using alternatives
+to the Hessian and thereby implement other optimization methods. For
+example, if you substitute in equation \ref{eq:mle-newton} the Hessian
+$\mathbf{H}$ with the negative of the OPG matrix
+$-\mathbf{G}'\mathbf{G}$, as defined in \eqref{eq:OPGmat}, you get the
+so-called BHHH optimization method (see \cite{bhhh74}). Again, the
+sample file \verb|mle-advanced.inp| provides an example. On the other
+hand, you may want to perform a check of your analytically-computed
+$\mathbf{H}$ matrix versus a numerical approximation.
 
 If you have a function that computes the score, this is relatively
 simple to do by using the \cmd{fdjac} function, briefly described in
