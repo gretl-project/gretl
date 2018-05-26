@@ -274,13 +274,16 @@ static void do_stata_printout (PRN *prn)
 {
     gchar *buf = NULL;
 
-    /* we should located in dotdir at this point */
+    /* we should located in the directory in which
+       gretltmp.log is written at this point */
 
     if (g_file_get_contents("gretltmp.log", &buf, NULL, NULL)) {
 	pputs(prn, buf);
 	g_free(buf);
 	pputc(prn, '\n');
     }
+
+    gretl_remove("gretltmp.log");
 }
 
 static void make_gretl_R_names (void)
@@ -400,7 +403,8 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 	cmd = g_strdup_printf("\"%s\" --silent \"%s\"", path, fname);
     } else if (foreign_lang == LANG_STATA) {
 	path = gretl_stata_path();
-	cmd = g_strdup_printf("\"%s\" /q /e do gretltmp.do", path);
+	fname = gretl_stata_filename();
+	cmd = g_strdup_printf("\"%s\" /q /e do \"%s\"", path, fname);
     } else if (foreign_lang == LANG_PYTHON) {
 	path = gretl_python_path();
 	fname = gretl_python_filename();
@@ -413,14 +417,7 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 	return 1;
     }
 
-    if (foreign_lang == LANG_STATA) {
-	/* we need to get into dotdir here, to control
-	   location of output log */
-	gretl_chdir(gretl_dotdir());
-    }
-
-    /* workdir or dotdir here? */
-    err = gretl_win32_grab_output(cmd, gretl_dotdir(), &sout);
+    err = gretl_win32_grab_output(cmd, gretl_workdir(), &sout);
 
     if (sout != NULL && *sout != '\0') {
 	pputs(prn, sout);
@@ -535,7 +532,7 @@ static char *win32_dotpath (void)
 #else /* !G_OS_WIN32 */
 
 static int lib_run_prog_sync (char **argv, gretlopt opt,
-			      int use_dotdir, PRN *prn)
+			      PRN *prn)
 {
     gchar *sout = NULL;
     gchar *errout = NULL;
@@ -543,8 +540,8 @@ static int lib_run_prog_sync (char **argv, gretlopt opt,
     GError *gerr = NULL;
     int err = 0;
 
-    g_spawn_sync(use_dotdir ? NULL : gretl_workdir(),
-		 argv, NULL, G_SPAWN_SEARCH_PATH,
+    g_spawn_sync(gretl_workdir(), argv,
+		 NULL, G_SPAWN_SEARCH_PATH,
 		 NULL, NULL, &sout, &errout,
 		 &status, &gerr);
 
@@ -605,13 +602,12 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
 	NULL
     };
 
-    return lib_run_prog_sync(argv, opt, 0, prn);
+    return lib_run_prog_sync(argv, opt, prn);
 }
 
 static int lib_run_other_sync (gretlopt opt, PRN *prn)
 {
     char *argv[6];
-    int use_dotdir = 0;
     int err;
 
     if (foreign_lang == LANG_OX) {
@@ -636,16 +632,11 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 	argv[1] = "-q";
 	argv[2] = "-b";
 	argv[3] = "do";
-	argv[4] = "gretltmp.do";
+	argv[4] = (char *) gretl_stata_filename();
 	argv[5] = NULL;
-	/* otherwise there's no way to control the location
-	   of the stata output (gretltmp.log)
-	*/
-	gretl_chdir(gretl_dotdir());
-	use_dotdir = 1;
     }
 
-    err = lib_run_prog_sync(argv, opt, use_dotdir, prn);
+    err = lib_run_prog_sync(argv, opt, prn);
 
     return err;
 }
@@ -746,7 +737,7 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	    print_mpi_command(argv, prn);
 	}
 
-	err = lib_run_prog_sync(argv, opt, 0, prn);
+	err = lib_run_prog_sync(argv, opt, prn);
 	g_free(mpiprog);
     }
 
@@ -826,12 +817,13 @@ static int real_write_octave_io_file (void)
     } else {
 #ifdef G_OS_WIN32
 	gchar *dotcpy = win32_dotpath();
-
+#endif
+	fputs("# not a 'function file' as such\n1;\n", fp);
 	fputs("function dotdir = gretl_dotdir()\n", fp);
+#ifdef G_OS_WIN32
 	fprintf(fp, "  dotdir = \"%s\";\n", dotcpy);
 	g_free(dotcpy);
 #else
-	fputs("function dotdir = gretl_dotdir()\n", fp);
 	fprintf(fp, "  dotdir = \"%s\";\n", dotdir);
 #endif
 	fputs("endfunction\n\n", fp);
@@ -1522,7 +1514,7 @@ static int write_data_for_stata (const DATASET *dset,
 	gretl_errmsg_sprintf("write_data_for_stata: failed with err = %d\n", err);
     } else {
 	fputs("* load data from gretl\n", fp);
-	fputs("insheet using \"stata.csv\"\n", fp);
+	fprintf(fp, "insheet using \"%s\"\n", sdata);
     }
 
     g_free(sdata);
@@ -2840,16 +2832,15 @@ int foreign_append (const char *line, int context)
     return err;
 }
 
+/* write profile (perhaps) and Rsrc files */
+
 static int run_R_binary (const char *buf,
 			 const DATASET *dset,
 			 gretlopt opt,
 			 PRN *prn)
 {
-    int err;
+    int err = write_gretl_R_files(buf, dset, opt);
 
-    /* write profile (perhaps) and Rsrc files */
-
-    err = write_gretl_R_files(buf, dset, opt);
     if (err) {
 	delete_gretl_R_files();
     } else {
@@ -2898,7 +2889,7 @@ int foreign_execute (const DATASET *dset,
 	    err = lib_run_mpi_sync(foreign_opt, prn);
 	}
 	foreign_destroy();
-	return err;
+	return err; /* handled */
     }
 #endif
 
@@ -2912,48 +2903,46 @@ int foreign_execute (const DATASET *dset,
 #else
 	err = run_R_binary(NULL, dset, foreign_opt, prn);
 #endif
-    } else if (foreign_lang == LANG_OX) {
+	foreign_destroy();
+	return err; /* handled */
+    }
+
+    if (foreign_lang == LANG_OX) {
 	err = write_gretl_ox_file(NULL, foreign_opt, NULL);
 	if (err) {
 	    delete_gretl_ox_file();
-	} else {
-	    err = lib_run_other_sync(foreign_opt, prn);
 	}
     } else if (foreign_lang == LANG_OCTAVE) {
 	err = write_gretl_octave_file(NULL, foreign_opt,
 				      dset, NULL);
 	if (err) {
 	    delete_gretl_octave_file();
-	} else {
-	    err = lib_run_other_sync(foreign_opt, prn);
 	}
     } else if (foreign_lang == LANG_STATA) {
 	err = write_gretl_stata_file(NULL, foreign_opt,
 				     dset, NULL);
 	if (err) {
 	    delete_gretl_stata_file();
-	} else {
-	    err = lib_run_other_sync(foreign_opt, prn);
 	}
     } else if (foreign_lang == LANG_PYTHON) {
 	err = write_gretl_python_file(NULL, foreign_opt,
 				      NULL);
 	if (err) {
 	    delete_gretl_python_file();
-	} else {
-	    err = lib_run_other_sync(foreign_opt, prn);
 	}
     } else if (foreign_lang == LANG_JULIA) {
 	err = write_gretl_julia_file(NULL, foreign_opt,
 				     NULL);
 	if (err) {
 	    delete_gretl_julia_file();
-	} else {
-	    err = lib_run_other_sync(foreign_opt, prn);
 	}
     } else {
 	/* "can't happen" */
 	err = E_DATA;
+    }
+
+    if (!err) {
+	err = lib_run_other_sync(foreign_opt, prn);
     }
 
     foreign_destroy();
