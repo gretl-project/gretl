@@ -8636,14 +8636,14 @@ int real_gretl_invpd (gretl_matrix *a, int verbose)
 		    "dpotrf failed with info = %d (n = %d)\n", 
 		    (int) info, (int) n);
 	}
-	err = (info > 0)? E_NOTPD : E_DATA;
+	err = info > 0 ? E_NOTPD : E_DATA;
     } 
 
     if (!err) {
 	dpotri_(&uplo, &n, a->val, &n, &info);
 	if (info != 0) {
 	    err = E_SINGULAR;
-	    fprintf(stderr, "gretl_invert_symmetric_matrix:\n"
+	    fprintf(stderr, "real_gretl_invpd:\n"
 		    " dpotri failed with info = %d\n", (int) info);
 	} else {
 	    gretl_matrix_mirror(a, uplo);
