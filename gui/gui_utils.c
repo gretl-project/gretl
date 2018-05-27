@@ -2651,7 +2651,18 @@ static void add_multinomial_probs_item (windata_t *vwin)
     vwin_menu_add_item(vwin, mpath, &entry);
 }
 
-#define dw_pval_ok(m) ((m->ci == OLS || m->ci == PANEL) && !na(pmod->dw))
+static int dw_pval_ok (const MODEL *pmod)
+{
+    if (na(pmod->dw)) {
+	return 0;
+    } else if (pmod->ci == OLS) {
+	return 1;
+    } else if (pmod->ci == PANEL) {
+	return panel_DW_pval_ok(pmod);
+    } else {
+	return 0;
+    }
+}
 
 static void get_ci_and_opt (const gchar *s, int *ci, gretlopt *opt)
 {

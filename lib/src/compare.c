@@ -1727,7 +1727,7 @@ double get_DW_pvalue_for_model (MODEL *pmod, DATASET *dset,
     } else if (pmod == NULL || pmod->list == NULL) {
 	*err = E_DATA;
     } else if ((pmod->ci != OLS && pmod->ci != PANEL) || 
-	       model_has_missing_obs(pmod) || na(pmod->dw)) {
+	       na(pmod->dw) || model_has_missing_obs(pmod)) {
 	*err = E_BADSTAT;
     } else {
 	/* check that relevant vars have not been redefined */

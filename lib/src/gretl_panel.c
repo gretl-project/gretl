@@ -704,6 +704,8 @@ int panel_DW_pval_ok (const MODEL *pmod)
 {
     if (na(pmod->dw)) {
 	return 0;
+    } else if (model_has_missing_obs(pmod)) {
+	return 0; /* is this really necessary? */
     } else {
 	int T = pmod->nobs;
 	int k = pmod->ncoeff;
