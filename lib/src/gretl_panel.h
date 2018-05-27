@@ -38,6 +38,8 @@ int panel_xdepend_test (MODEL *pmod, DATASET *dset,
 int groupwise_hetero_test (MODEL *pmod, DATASET *dset,
 			   gretlopt opt, PRN *prn);
 
+int panel_DW_pval_ok (const MODEL *pmod);
+
 int panel_tsls_robust_vcv (MODEL *pmod, const DATASET *dset);
 
 int set_panel_structure_from_vars (int uv, int tv, DATASET *dset);
