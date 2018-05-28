@@ -83,6 +83,8 @@ struct panelmod_t_ {
     double s2e;           /* residual variance, fixed-effects regression */
     double s2v;           /* estimate of between variance */
     double ubPub;         /* for use in unbalanced Swamy-Arora */
+    double dw;            /* Durbin-Watson, for transfer to random effects */
+    double rho;           /* for transfer to random effects */
     int *small2big;       /* data indexation array */
     int *big2small;       /* reverse data indexation array */
     MODEL *pooled;        /* reference model (pooled OLS) */
@@ -173,6 +175,8 @@ static void panelmod_init (panelmod_t *pan)
     pan->theta = NADBL;
     pan->theta_bar = NADBL;
     pan->ubPub = NADBL;
+    pan->dw = NADBL;
+    pan->rho = NADBL;
 
     pan->Ffe = NADBL;
     pan->Fdfn = 0;
@@ -824,6 +828,12 @@ static void panel_dwstat (MODEL *pmod, panelmod_t *pan)
     }
     if (!na(pmod->rho) && (pmod->rho <= -1.0 || pmod->rho >= 1.0)) {
 	pmod->rho = NADBL;
+    }
+
+    if (pan->opt & OPT_U) {
+	/* make these stats available for random effects reporting */
+	pan->dw = pmod->dw;
+	pan->rho = pmod->rho;
     }
 }
 
@@ -2520,8 +2530,8 @@ static void fix_gls_stats (MODEL *pmod, panelmod_t *pan)
     pmod->rsq = NADBL;
     pmod->adjrsq = NADBL;
     pmod->fstt = NADBL;
-    pmod->rho = NADBL;
-    pmod->dw = NADBL;
+    pmod->rho = pan->rho;
+    pmod->dw = pan->dw;
 
     /* add joint chi-square test on regressors */
 
@@ -2723,6 +2733,9 @@ static int within_variance (panelmod_t *pan,
 		clear_model(&femod);
 	    }
 	} else {
+	    if (pan->opt & OPT_U) {
+		panel_dwstat(&femod, pan);
+	    }
 	    clear_model(&femod);
 	}
     }
