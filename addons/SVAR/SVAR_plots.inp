@@ -129,13 +129,14 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
     # negative snum is allowed and means to flip the shock
     
     # copy and prepare some input
+    string tmpfile, tmpout
     n = obj.n
     matrix IRFmat  = obj.IRFs
-    scale = 1
+    scale = 1	# possibly changed later
     if obj.normalize == 1
         matrix tmp = mshape(IRFmat[1,], n, n)
     endif
-    string tmpfile
+   
     if obj.nboot
         boot = obj.bootdata	# bundle?
         bc = boot.biascorr
@@ -202,7 +203,20 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
                 endif
             endif
     
-            string tmpout = (outfilename == "display") ? "display" : sprintf("%s_%d%d", outfilename, snum, vnum)  
+            if (outfilename == "display") || (sfrom == sto && vfrom == vto) # single plot, no indices
+                tmpout = outfilename
+            else
+                strings be = base_n_ext(outfilename)	# gives 2-elem array
+                if (sfrom == sto) && (vfrom != vto)	# several v indices
+                    tmpout = sprintf("%s_%d.%s", be[1], vnum, be[2])
+                elif (sfrom != sto) && (vfrom == vto) 	# several s indices
+                    tmpout = sprintf("%s_%d.%s", be[1], snum, be[2])
+                elif (sfrom != sto) && (vfrom != vto)  # all indices
+                    tmpout = sprintf("%s_%d%d.%s", be[1], snum, vnum, be[2])
+                else
+                    funcerr "shouldn't happen"
+                endif    
+            endif
             gnuplot --input="@tmpfile" --output="@tmpout"
         endloop
     endloop
