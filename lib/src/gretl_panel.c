@@ -704,32 +704,35 @@ int panel_DW_pval_ok (const MODEL *pmod)
 {
     if (na(pmod->dw)) {
 	return 0;
-    } else if (model_has_missing_obs(pmod)) {
-	return 0; /* is this really necessary? */
     } else {
-	return 1;
+	int Tmax = gretl_model_get_int(pmod, "Tmax");
+	int Tmin = gretl_model_get_int(pmod, "Tmin");
+
+	/* too restrictive? */
+	return Tmax == Tmin;
     }
 }
 
 /* See Bhargava, Franzini and Narendranathan, "Serial Correlation and
    the Fixed Effects Model", Review of Economic Studies 49, 1982,
-   page 536.
+   page 536. Strictly speaking what's calculated here is the marginal
+   significance level of the DW stat when considered as a d_L value.
 */
 
 double BFN_panel_DW_pvalue (MODEL *pmod, int *err)
 {
     gretl_matrix *lam = NULL;
     double r, pv, lamq, sinarg, pi2T;
+    double T = gretl_model_get_double(pmod, "Tbar");
     int N = gretl_model_get_int(pmod, "n_included_units");
-    int T = gretl_model_get_int(pmod, "Tmax");
     int nlam, k = pmod->ncoeff;
     int i, q;
 
-    if ((pmod->opt & OPT_F) || pmod->ifc) {
+    if (pmod->ifc) {
 	k--; /* don't include the constant */
     }
 
-    nlam = N*T - N - k;
+    nlam = pmod->nobs - N - k;
     lam = gretl_column_vector_alloc(nlam);
     if (lam == NULL) {
 	*err = E_ALLOC;
@@ -778,6 +781,7 @@ static void panel_dwstat (MODEL *pmod, panelmod_t *pan)
     double rnum = 0.0;
     double rden = 0.0;
     double ut, u1;
+    int missvals;
     int i, t, s;
 
     pmod->dw = pmod->rho = NADBL;
@@ -785,6 +789,8 @@ static void panel_dwstat (MODEL *pmod, panelmod_t *pan)
     if (pmod->ess <= 0.0) {
 	return;
     }
+
+    missvals = model_has_missing_obs(pmod);
 
     for (i=0; i<pan->nunits; i++) {
 	if (pan->unit_obs[i] == 0) {
@@ -808,7 +814,7 @@ static void panel_dwstat (MODEL *pmod, panelmod_t *pan)
 
     if (dwnum > 0.0) {
 	pmod->dw = dwnum / pmod->ess;
-	if (model_has_missing_obs(pmod)) {
+	if (missvals) {
 	    /* use DW to approximate rho */
 	    pmod->rho = 1 - pmod->dw/2;
 	}
@@ -2559,6 +2565,9 @@ static void add_panel_obs_info (MODEL *pmod, panelmod_t *pan)
     gretl_model_set_int(pmod, "n_included_units", pan->effn);
     gretl_model_set_int(pmod, "Tmin", pan->Tmin);
     gretl_model_set_int(pmod, "Tmax", pan->Tmax);
+    if (pan->Tbar > 0) {
+	gretl_model_set_double(pmod, "Tbar", pan->Tbar);
+    }
 }
 
 static void replace_re_residuals (MODEL *pmod, panelmod_t *pan)

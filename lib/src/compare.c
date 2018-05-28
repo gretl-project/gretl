@@ -1722,8 +1722,7 @@ double get_DW_pvalue_for_model (MODEL *pmod, DATASET *dset,
 	return pv;
     }
 
-    if (pmod->ci == PANEL && !na(pmod->dw) &&
-	!model_has_missing_obs(pmod)) {
+    if (pmod->ci == PANEL && panel_DW_pval_ok(pmod)) {
 	/* Use Bhargava et al approximation */
 	return BFN_panel_DW_pvalue(pmod, err);
     }
