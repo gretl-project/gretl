@@ -723,7 +723,7 @@ double BFN_panel_DW_pvalue (MODEL *pmod, int *err)
 {
     gretl_matrix *lam = NULL;
     double r, pv, lamq, sinarg, pi2T;
-    double T = gretl_model_get_double(pmod, "Tbar");
+    int T = gretl_model_get_int(pmod, "Tmax");
     int N = gretl_model_get_int(pmod, "n_included_units");
     int nlam, k = pmod->ncoeff;
     int i, q;
@@ -739,7 +739,7 @@ double BFN_panel_DW_pvalue (MODEL *pmod, int *err)
 	return NADBL;
     }
 
-    pi2T = M_PI / (2*T);
+    pi2T = M_PI / (2.0*T);
     sinarg = sin(pi2T);
     lamq = 4 * sinarg * sinarg;
     r = pmod->dw;
