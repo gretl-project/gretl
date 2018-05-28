@@ -72,6 +72,7 @@ typedef enum {
     M_BIC,        /* Bayesian info criterion */
     M_HQC,        /* Hannan-Quinn criterion */
     M_TRSQ,       /* T * R-squared, last model */
+    M_DW,         /* Durbin-Watson statistic */
     M_DWPVAL,     /* Durbin-Watson p-value, last model */
     M_FSTT,       /* overall F-statistic, last model */
     M_CHISQ,      /* overall chi-square stat, last model */

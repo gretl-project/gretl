@@ -40,6 +40,8 @@ int groupwise_hetero_test (MODEL *pmod, DATASET *dset,
 
 int panel_DW_pval_ok (const MODEL *pmod);
 
+double BFN_panel_DW_pvalue (MODEL *pmod, int *err);
+
 int panel_tsls_robust_vcv (MODEL *pmod, const DATASET *dset);
 
 int set_panel_structure_from_vars (int uv, int tv, DATASET *dset);

@@ -4927,7 +4927,6 @@ static double imhof_integral (double arg, const double *lambda, int k,
 	ret = 0.5 - int1 / (3.0 * M_PI);
 	if (ret < 0) {
 	    fprintf(stderr, "n = %d, Imhof integral gave negative value %g\n", n, ret);
-	    ret = NADBL;
 	}
     }
 
@@ -4960,8 +4959,8 @@ static int imhof_get_eigenvals (const gretl_matrix *m,
 
 /* Implements the "imhof" function in genr: computes the probability
    P(u'Au < arg) for a quadratic form in Normal(0,1) variables.  The
-   argument @m may be either the square matrix A or a column
-   vector containing the precomputed eigenvalues of A.
+   argument @m may be either the square matrix A or a vector
+   containing the precomputed eigenvalues of A.
 */
 
 double imhof (const gretl_matrix *m, double arg, int *err)
@@ -4972,10 +4971,10 @@ double imhof (const gretl_matrix *m, double arg, int *err)
 
     errno = 0;
 
-    if (m->cols == 1) {
-	/* we'll assume m is a column vector of eigenvalues */
+    if (m->cols == 1 || m->rows == 1) {
+	/* we'll assume m is a vector of eigenvalues */
 	lambda = m->val;
-	k = m->rows;
+	k = gretl_vector_get_length(m);
     } else if (m->rows == m->cols) {
 	/* we'll assume m is the 'A' matrix */
 	*err = imhof_get_eigenvals(m, &lambda, &k);
@@ -5000,6 +4999,9 @@ double imhof (const gretl_matrix *m, double arg, int *err)
 	}
 	ret = NADBL;
 	errno = 0;
+    } else if (!*err && ret < 0 && ret > -1.0e-14) {
+	/* just approximation error? */
+	ret = 0;
     }
 
     if (free_lambda) {

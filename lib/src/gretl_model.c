@@ -6714,6 +6714,9 @@ double gretl_model_get_scalar (MODEL *pmod, ModelDataIndex idx,
     case M_T:
 	x = (double) pmod->nobs;
 	break;
+    case M_DW:
+	x = pmod->dw;
+	break;
     case M_DWPVAL:
 	x = get_DW_pvalue_for_model(pmod, dset, err);
 	break;

@@ -111,6 +111,7 @@ struct str_table mvars[] = {
     { M_BIC,     "$bic" },
     { M_HQC,     "$hqc" },
     { M_TRSQ,    "$trsq" },
+    { M_DW,      "$dw" },
     { M_DWPVAL,  "$dwpval" },
     { M_FSTT,    "$Fstat" },
     { M_CHISQ,   "$chisq" },

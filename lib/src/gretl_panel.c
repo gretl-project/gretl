@@ -707,162 +707,58 @@ int panel_DW_pval_ok (const MODEL *pmod)
     } else if (model_has_missing_obs(pmod)) {
 	return 0; /* is this really necessary? */
     } else {
-	int T = pmod->nobs;
-	int k = pmod->ncoeff;
-	double sz;
-
-	if (pmod->opt & OPT_F) {
-	    /* fixed effects */
-	    k += gretl_model_get_int(pmod, "n_included_units") - 1;
-	}
-	sz = T * k + 3 * T * T + k * k;
-	sz *= 8.0 / (1024 * 1024);
-	if (sz > 50) {
-	    /* more than 50 MB of storage required */
-	    return 0;
-	}
+	return 1;
     }
-
-    return 1;
 }
 
-static int panel_DW_pvalue (MODEL *pmod, const panelmod_t *pan,
-			    const double **Z)
+/* See Bhargava, Franzini and Narendranathan, "Serial Correlation and
+   the Fixed Effects Model", Review of Economic Studies 49, 1982,
+   page 536.
+*/
+
+double BFN_panel_DW_pvalue (MODEL *pmod, int *err)
 {
-    gretl_matrix *X = NULL;
-    gretl_matrix *XX = NULL;
-    gretl_matrix *M = NULL;
-    gretl_matrix *A = NULL;
-    gretl_matrix *MA = NULL;
-    gretl_matrix *Ai = NULL;
-    gretl_matrix *E = NULL;
-    double pv, sz;
-    int T = pan->NT;
-    int k = pmod->ncoeff;
-    int Ti_prev = 0;
-    int jmin = 0, effj = 0;
-    int xrow = 0, ins = 0;
-    int i, j, jj, t, s, v;
-    int err = 0;
+    gretl_matrix *lam = NULL;
+    double r, pv, lamq, sinarg, pi2T;
+    int N = gretl_model_get_int(pmod, "n_included_units");
+    int T = gretl_model_get_int(pmod, "Tmax");
+    int nlam, k = pmod->ncoeff;
+    int i, q;
 
-    if (pan->opt & OPT_F) {
-	/* fixed effects */
-	k += pan->effn - 1; /* allow for unit dummies */
-	jmin = 1;           /* offset to avoid average constant */
+    if ((pmod->opt & OPT_F) || pmod->ifc) {
+	k--; /* don't include the constant */
     }
 
-    /* determine allocation size */
-    sz = T * k + 3 * T * T + k * k;
-    sz *= 8.0 / (1024 * 1024);
-
-    if (sz > 50) {
-	/* more than 50 MB of storage: we'll not try this */
-	fprintf(stderr, "panel_DW_pvalue: size = %g MB\n", sz);
+    nlam = N*T - N - k;
+    lam = gretl_column_vector_alloc(nlam);
+    if (lam == NULL) {
+	*err = E_ALLOC;
+	return NADBL;
     }
 
-    X = gretl_matrix_alloc(T, k);
-    M = gretl_identity_matrix_new(T);
-    A = gretl_zero_matrix_new(T, T);
-    MA = gretl_zero_matrix_new(T, T);
-    XX = gretl_matrix_alloc(k, k);
+    pi2T = M_PI / (2*T);
+    sinarg = sin(pi2T);
+    lamq = 4 * sinarg * sinarg;
+    r = pmod->dw;
 
-    if (X == NULL || M == NULL || A == NULL ||
-	MA == NULL || XX == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    for (i=0; i<pan->nunits; i++) {
-	int Ti = pan->unit_obs[i];
-
-	if (Ti == 0) {
-	    continue;
-	}
-	if (Ti != Ti_prev) {
-	    gretl_matrix_free(Ai);
-	    Ai = gretl_DW_matrix_new(Ti);
-	    if (Ai == NULL) {
-		err = E_ALLOC;
-		break;
-	    }
-	}
-	err = gretl_matrix_inscribe_matrix(A, Ai, ins, ins,
-					   GRETL_MOD_NONE);
-	if (err) {
-	    break;
-	}
-	ins += Ti;
-
-	for (t=0; t<pan->T; t++) {
-	    s = panel_index(i, t);
-	    if (na(pmod->uhat[s])) {
-		continue;
-	    }
-	    for (j=jmin; j<pmod->ncoeff; j++) {
-		/* write regressors at t into X */
-		v = pmod->list[j+2];
-		gretl_matrix_set(X, xrow, j - jmin, Z[v][s]);
-	    }
-	    if (jmin > 0) {
-		/* fixed effects: append unit dummies */
-		for (j=0; j<pan->effn; j++) {
-		    jj = j + pmod->ncoeff - 1;
-		    gretl_matrix_set(X, xrow, jj, (effj == j)? 1.0 : 0.0);
-		}
-	    }
-	    xrow++;
-	}
-	effj++;
-    }
-
-    gretl_matrix_free(Ai);
-
-    if (err) {
-	goto bailout;
-    }
-
-    gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
-			      X, GRETL_MOD_NONE,
-			      XX, GRETL_MOD_NONE);
-
-    err = gretl_invert_symmetric_matrix(XX);
-
-    if (!err) {
-	/* M = I - X(X'X)^{-1}X' */
-	err = gretl_matrix_qform(X, GRETL_MOD_NONE,
-				 XX, M, GRETL_MOD_DECREMENT);
-    }
-
-    if (!err) {
-	err = gretl_matrix_multiply(M, A, MA);
-    }
-
-    if (!err) {
-	E = gretl_general_matrix_eigenvals(MA, 0, &err);
-    }
-
-    if (!err) {
-	k = T - k; /* number of non-zero eigenvalues */
-	for (i=0; i<k; i++) {
-	    E->val[i] -= pmod->dw;
-	}
-	gretl_matrix_reuse(E, k, 1);
-	pv = imhof(E, 0.0, &err);
-	if (!err) {
-	    gretl_model_set_double(pmod, "dw_pval", pv);
+    q = 1;
+    for (i=0; i<nlam; i++) {
+	lam->val[i] = lamq - r;
+	if ((i+1) % N == 0) {
+	    q++;
+	    sinarg = sin(q*pi2T);
+	    lamq = 4 * sinarg * sinarg;
 	}
     }
 
- bailout:
+    pv = imhof(lam, 0, err);
+    if (!*err) {
+	gretl_model_set_double(pmod, "dw_pval", pv);
+    }
 
-    gretl_matrix_free(XX);
-    gretl_matrix_free(X);
-    gretl_matrix_free(M);
-    gretl_matrix_free(A);
-    gretl_matrix_free(MA);
-    gretl_matrix_free(E);
+    gretl_matrix_free(lam);
 
-    return err;
+    return pv;
 }
 
 /* Durbin-Watson statistic for the pooled or fixed effects model.  We
@@ -912,12 +808,16 @@ static void panel_dwstat (MODEL *pmod, panelmod_t *pan)
 
     if (dwnum > 0.0) {
 	pmod->dw = dwnum / pmod->ess;
-    }
-    if (rden > 0.0 && !na(rden)) {
-	pmod->rho = rnum / rden;
-	if (pmod->rho <= -1.0 || pmod->rho >= 1.0) {
-	    pmod->rho = NADBL;
+	if (model_has_missing_obs(pmod)) {
+	    /* use DW to approximate rho */
+	    pmod->rho = 1 - pmod->dw/2;
 	}
+    }
+    if (na(pmod->rho) && rden > 0.0 && !na(rden)) {
+	pmod->rho = rnum / rden;
+    }
+    if (!na(pmod->rho) && (pmod->rho <= -1.0 || pmod->rho >= 1.0)) {
+	pmod->rho = NADBL;
     }
 }
 
@@ -2739,9 +2639,6 @@ static int save_panel_model (MODEL *pmod, panelmod_t *pan,
 
     if (pan->opt & OPT_F) {
 	panel_dwstat(pmod, pan);
-	if (!na(pmod->dw) && (pan->opt & OPT_I)) {
-	    panel_DW_pvalue(pmod, pan, Z);
-	}
     }
 
     time_dummies_wald_test(pan, pmod);
@@ -3750,10 +3647,6 @@ static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
     }
 
     panel_dwstat(pmod, pan);
-
-    if (!na(pmod->dw) && (pan->opt & OPT_I)) {
-	panel_DW_pvalue(pmod, pan, (const double **) dset->Z);
-    }
 }
 
 /* fixed effects | random effects | between | pooled */
