@@ -274,8 +274,9 @@ static void do_stata_printout (PRN *prn)
 {
     gchar *buf = NULL;
 
-    /* we should located in the directory in which
+    /* we need to be located in the directory in which
        gretltmp.log is written at this point */
+    gretl_chdir(gretl_workdir());
 
     if (g_file_get_contents("gretltmp.log", &buf, NULL, NULL)) {
 	pputs(prn, buf);
