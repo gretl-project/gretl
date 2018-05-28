@@ -32,6 +32,7 @@
 #include "gretl_typemap.h"
 #include "uservar.h"
 #include "gretl_string_table.h"
+#include "gretl_panel.h"
 #include "csvdata.h"
 #include "kalman.h"
 
