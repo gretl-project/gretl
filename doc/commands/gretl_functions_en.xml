@@ -152,7 +152,16 @@
 	  details; see also <fncref targ="$diagpval"/>.
 	</para>
       </description>
-    </function>    
+    </function>
+
+    <function name="$dw" section="access" output="scalar">
+      <description>
+	<para>
+	  Returns the Durbin&ndash;Watson statistic for first-order
+	  serial correlation from the model last estimated (if available).
+	</para>
+      </description>
+    </function>
 
     <function name="$dwpval" section="access" output="scalar">
       <description>
@@ -9259,17 +9268,7 @@
 	  will split the input into an array of four strings using
 	  comma as separator. The <quote>extra</quote> comma in the
 	  input above indicates that the <argname>i</argname> argument
-	  is omitted, but it's not strictly necessary unless you wish
-	  to extract a single element; if the second argument is a
-	  string and only two arguments are given it is understood
-	  that <argname>sep</argname> rather than <argname>i</argname>
-	  is intended. So
-	</para>
-	<code>
-	  strings S = strsplit(basket, ",")
-	</code>
-	<para>
-	  is equally acceptable.
+	  is omitted.
 	</para>
 	<para>
 	  The backslash-escape sequences <quote><lit>\n</lit></quote>
