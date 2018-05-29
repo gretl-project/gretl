@@ -142,25 +142,9 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
         bc = boot.biascorr
     endif 
     
-    /* Interpret snum==0 and vnum==0 as meaning "all 1..n"
-    (The flipping of the shock by passing a negative number 
-    is then not possible to specify;
-    users have to do it explicitly in their own loop then.)
-    */
-    if snum
-        sfrom = snum
-        sto = snum
-    else
-        sfrom = 1
-        sto = n     
-    endif
-    if vnum
-        vfrom = vnum
-        vto = vnum
-    else
-        vfrom = 1
-        vto = n
-    endif
+    scalar sfrom sto vfrom vto
+    is_srange = range(snum, n, &sfrom, &sto)
+    is_vrange = range(vnum, n, &vfrom, &vto)
     
     # cycle through all (selected) shocks and variables        
     loop snum = sfrom..sto -q
@@ -206,13 +190,15 @@ function void IRFsave(string outfilename, bundle *obj, int snum,
             if (outfilename == "display") || (sfrom == sto && vfrom == vto) # single plot, no indices
                 tmpout = outfilename
             else
-                strings be = base_n_ext(outfilename)	# gives 2-elem array
-                if (sfrom == sto) && (vfrom != vto)	# several v indices
-                    tmpout = sprintf("%s_%d.%s", be[1], vnum, be[2])
-                elif (sfrom != sto) && (vfrom == vto) 	# several s indices
+                strings be = basename(outfilename)	# gives 2-elem array
+                if is_vrange	 # several v indices
+		    if is_srange # several s indices
+			tmpout = sprintf("%s_%d%d.%s", be[1], snum, vnum, be[2])
+		    else
+			tmpout = sprintf("%s_%d.%s", be[1], vnum, be[2])
+		    endif
+                elif is_srange 	# several s indices
                     tmpout = sprintf("%s_%d.%s", be[1], snum, be[2])
-                elif (sfrom != sto) && (vfrom != vto)  # all indices
-                    tmpout = sprintf("%s_%d%d.%s", be[1], snum, vnum, be[2])
                 else
                     funcerr "shouldn't happen"
                 endif    
@@ -295,21 +281,16 @@ end function
 /* --- FEVD public graphing functions ----------------------------------- */
 /* ---------------------------------------------------------------------- */
 
-function void FEVDsave(string outfilename, bundle *obj, int vnum, \
+function void FEVDsave(string outfilename, bundle *obj, int vnum[0], \
       int keypos[0:2:1])
 
-    # Interpret vnum==0 as meaning "all 1..n"
-    if vnum 
-        vfrom = vnum
-        vto = vnum
-    else
-        vfrom = 1
-        vto = obj.n
-    endif
+    scalar n = obj.n
+    scalar vfrom vto
+    is_vrange = range(vnum, n, &vfrom, &vto)
     matrix Fmat = FEVD(&obj)
     
     loop vnum = vfrom..vto -q
-        err = check_bounds(1, vnum, obj.n)
+        err = check_bounds(1, vnum, n)
         if err == 2
             printf "Variable number %d out of bounds\n", vnum 
             return
@@ -322,7 +303,7 @@ function void FEVDsave(string outfilename, bundle *obj, int vnum, \
     endloop
 end function
 
-function void FEVDplot(bundle *obj, int vnum, int keypos[0:2:1])
+function void FEVDplot(bundle *obj, int vnum[0], int keypos[0:2:1])
 
     FEVDsave("display", &obj, vnum, keypos)
 
@@ -332,21 +313,17 @@ end function
 /* --- HD public graphing functions ------------------------------------- */
 /* ---------------------------------------------------------------------- */
 
-function void HDsave(string outfilename, bundle *obj, int vnum)
+function void HDsave(string outfilename, bundle *obj, int vnum[0])
 
     # more fashionable (=Dynare-like) style
     
     # Interpret vnum==0 as meaning "all 1..n"
-    if vnum 
-        vfrom = vnum
-        vto = vnum
-    else
-        vfrom = 1
-        vto = obj.n
-    endif
+    scalar n = obj.n
+    scalar vfrom vto
+    is_vrange = range(vnum, n, &vfrom, &vto)
 
     loop vnum = vfrom..vto -q
-        err = check_bounds(1, vnum, obj.n)
+        err = check_bounds(1, vnum, n)
         if err == 2
             printf "Variable number %d out of bounds\n", vnum 
             return
@@ -374,7 +351,7 @@ function void HDsave(string outfilename, bundle *obj, int vnum)
     endloop
 end function
 
-function void HDplot(bundle *obj, int vnum)
+function void HDplot(bundle *obj, int vnum[0])
 
     HDsave("display", &obj, vnum)
 
