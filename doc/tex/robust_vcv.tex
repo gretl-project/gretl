@@ -556,11 +556,10 @@ panel data require attention.
   cross-sectional units.
 \item The covariance of the errors across the units may be non-zero in
   each time period.
-\item If the ``between'' variation is not removed, the errors may
+\item If the ``between'' variation is not swept out, the errors may
   exhibit autocorrelation, not in the usual time-series sense but in
-  the sense that the mean error for unit $i$ may differ from that of
-  unit $j$.  (This is particularly relevant when estimation
-  is by pooled OLS.)
+  the sense that the mean value of the error term may differ across
+  units.  This is relevant when estimation is by pooled OLS.
 \end{itemize}
 
 Gretl currently offers two robust covariance matrix estimators

@@ -1,6 +1,14 @@
 \chapter{Panel data}
 \label{chap:panel}
 
+A panel dataset is one in which each of $N>1$ units (sometimes called
+``individuals'' or ``groups'') is observed over time. In a balanced
+panel there are $T>1$ observations on each unit; more generally the
+number of observations may differ by unit. In the following we index
+units by $i$ and time by $t$. To allow for imbalance in a panel we use
+the notation $T_i$ to refer to the number of observations for unit
+or individual $i$.
+
 \section{Estimation of panel models}
 
 \subsection{Pooled Ordinary Least Squares}
@@ -179,34 +187,54 @@ effects are negligible, then pooled OLS turns out, unsurprisingly, to
 be the optimal estimator.
 
 To implement the GLS approach we need to calculate $\theta$, which in
-turn requires estimates of the variances $\sigma^2_{\varepsilon}$ and
-$\sigma^2_v$.  (These are often referred to as the ``within'' and
+turn requires estimates of the two variances $\sigma^2_{\varepsilon}$
+and $\sigma^2_v$.  (These are often referred to as the ``within'' and
 ``between'' variances respectively, since the former refers to
 variation within each cross-sectional unit and the latter to variation
 between the units).  Several means of estimating these magnitudes have
 been suggested in the literature \citep[see][]{baltagi95}; by default
 gretl uses the method of \cite{swamy72}: $\sigma^2_\varepsilon$ is
 estimated by the residual variance from the fixed effects model, and
-$\sigma^2_v$ is estimated by means of a regression using the
-group means of all the relevant variables, that is,
+$\sigma^2_v$ is estimated indirectly with the help of the ``between''
+regression which uses the group means of all the relevant variables:
+is,
 \[
 \bar{y}_i = \bar{X}_i \beta + e_i
 \]
 The residual variance from this regression, $s^2_e$, can be shown to
 estimate the sum $\sigma^2_v + \sigma^2_\varepsilon/T$.  An estimate
 of $\sigma^2_v$ can therefore be obtained by subtracting $1/T$ times
-the estimate of $\sigma^2_\varepsilon$ from $s^2_e$.
-
+the estimate of $\sigma^2_\varepsilon$ from $s^2_e$:
+\begin{equation}
+\label{eq:SWAR}
+\hat{\sigma}^2_v = s^2_e - \hat{\sigma}^2_\varepsilon / T
+\end{equation}
 Alternatively, if the \option{nerlove} option is given, gretl
 uses the method suggested by \cite{nerlove71}. In this case
 $\sigma^2_v$ is estimated as the sample variance of the fixed effects,
 $\hat{\alpha}_i$,
-\[
-\hat{\sigma}^2_v = \frac{1}{n-1} \sum_{i=1}^n 
+\begin{equation}
+\label{eq:NLV}
+\hat{\sigma}^2_v = \frac{1}{N-1} \sum_{i=1}^n 
   \left(\hat{\alpha}_i - \bar{\hat{\alpha}}\right)^2 
-\]
-where $n$ is the number of individuals and $\bar{\hat{\alpha}}$ is the mean
+\end{equation}
+where $N$ is the number of individuals and $\bar{\hat{\alpha}}$ is the mean
 of the estimated fixed effects.
+
+Swamy and Arora's equation (\ref{eq:SWAR}) involves $T$, hence
+assuming a balanced panel. When the number of time series
+observations, $T_i$, differs across individuals some sort of
+adjustment is needed. By default gretl follows \textsf{Stata} by using
+the harmonic mean of the $T_i$s in place of $T$. It may be argued,
+however, that a more substantial adjustment is called for in the
+unbalanced case. \cite{baltagi-chang94} recommend a variant of
+Swamy--Arora which involves $T_i$-weighted estimation of the between
+regression, on the basis that units with more observations will be
+more informative about the variance of interest. In gretl one can
+switch to the Baltagi--Chang variant by giving the \option{unbalanced}
+option with the \cmd{panel} command. But the gain in efficiency from
+doing so may well be slim; for a discussion of this point and related
+matters see \cite{cottrell17}.
 
 \subsection{Choice of estimator}
 \label{panel-choice}
@@ -372,6 +400,40 @@ avoids this potential problem.  The procedure is:
 By default gretl computes the Hausman test via the regression
 method, but it uses the matrix-difference method if you pass the
 option \option{matrix-diff} to the \cmd{panel} command.
+
+\subsection{Serial correlation}
+\label{panel-autocorr}
+
+A simple test for first-order autocorrelation of the error term,
+namely the Durbin--Watson (DW) statistic, is printed as part of the
+output for pooled OLS as well as fixed-effects and random-effects
+estimation. Let us define ``serial correlation proper'' as serial
+correlation strictly in the time dimension of a panel dataset. When
+based on the residuals from fixed-effects estimation, the DW statistic
+is a test for serial correlation proper.\footnote{The generalization
+  of the Durbin--Watson statistic from the straight time-series
+  context to panel data is due to \cite{BFN82}.}  The DW value shown
+in the case of random-effects estimation is based on the fixed-effects
+residuals. When DW is based on pooled OLS residuals it tests for
+serial correlation proper only on the assumption of a common
+intercept. Put differently, in this case it tests a joint null
+hypothesis: absence of fixed effects plus absence of (first order)
+serial correlation proper.  In the presence of missing observations
+the DW statistic is calculated as described in \cite{baltagi-Wu99}
+(their expression for $d_1$ under equation (16) on page 819).
+
+When it is computed, the DW statistic can be retrieved via the
+accessor \dollar{dw} after estimation. In addition, an approximate
+$P$-value for the null of no serial correlation ($\rho = 0$) against
+the alternative of $\rho > 0$ may be available via the accessor
+\dollar{dwpval}. This is based on the analysis in \cite{BFN82};
+strictly speaking it is the marginal significance level of DW
+considered as a $d_L$ value (the value below which the test rejects,
+as opposed to $d_U$, the value above which the test fails to reject).
+In the panel case, however, $d_L$ and $d_U$ are quite close,
+particularly when $N$ (the number of individual units) is large. At
+present gretl does not attempt to compute such $P$-values when the
+number of observations differs across individuals.
 
 \subsection{Robust standard errors}
 \label{panel-robust}
