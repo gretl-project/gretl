@@ -5606,9 +5606,6 @@ gretlopt get_printmodel_opt (const MODEL *pmod,
     if (opt & OPT_S) {
 	ret |= OPT_S; /* "simple": reduced output */
     }
-    if (opt & OPT_Q) {
-	ret |= OPT_Q; /* quiet: no output */
-    }
     if (pmod->ci == OLS && (opt & OPT_V)) {
 	ret |= OPT_V; /* anova (OLS only) */
     }
