@@ -5592,6 +5592,14 @@ gretlopt get_printmodel_opt (const MODEL *pmod,
        routine.
     */
 
+    /* first handle cases where we should not print */
+    if (opt & OPT_Q) {
+	return OPT_Q;
+    } else if (pmod->ci == MLE && (opt & OPT_A) && !(opt & OPT_V)) {
+	/* mle with the --auxiliary option */
+	return OPT_Q;
+    }
+
     if (opt & OPT_O) {
 	ret |= OPT_O; /* show covariance matrix */
     }
