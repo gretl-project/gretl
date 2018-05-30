@@ -3268,6 +3268,10 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 		   !strcmp(cmd->param, "nls") ||
 		   !strcmp(cmd->param, "gmm")) {
 	    clear_model(model);
+	    /* ensure that "aux" mle doesn't print */
+	    if (!strcmp(cmd->param, "mle") && (cmd->opt & OPT_A)) {
+		if (!(cmd->opt & OPT_V)) cmd->opt |= OPT_Q;
+	    }
 	    *model = nl_model(dset, cmd->opt, prn);
 	    err = print_save_model(model, dset, cmd->opt, 0, prn, s);
 	} else if (!strcmp(cmd->param, "restrict")) {
