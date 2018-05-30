@@ -1135,7 +1135,7 @@ static int print_save_model (MODEL *pmod, DATASET *dset,
 			     PRN *prn, ExecState *s)
 {
     int err = pmod->errcode;
-
+    
     if (!err) {
 	set_gretl_errno(0);
 	if (!gretl_looping_currently() || loop_force) {
@@ -1146,8 +1146,12 @@ static int print_save_model (MODEL *pmod, DATASET *dset,
 	    if (havename) {
 		gretl_model_set_name(pmod, s->cmd->savename);
 	    }
-	    popt = get_printmodel_opt(pmod, opt);
-	    printmodel(pmod, dset, popt, prn);
+
+	    if (!((pmod->ci == MLE) && (opt & OPT_A))) {
+		/* exempt mle --auxiliary from model printout */
+		popt = get_printmodel_opt(pmod, opt);
+		printmodel(pmod, dset, popt, prn);
+	    }
 	    attach_subsample_to_model(pmod, dset);
 	    s->pmod = maybe_stack_model(pmod, s->cmd, prn, &err);
 	    if (!err && gretl_in_gui_mode() && s->callback != NULL && 
