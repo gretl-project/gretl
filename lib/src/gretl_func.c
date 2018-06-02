@@ -7938,7 +7938,7 @@ static int handle_return_statement (fncall *call,
 	    char formula[MAXLINE];
 
 	    sprintf(formula, "$retval=%s", s);
-	    err = generate(formula, dset, fun->rettype, OPT_P, NULL);
+	    err = generate(formula, dset, fun->rettype, OPT_P, state->prn);
 	    if (err) {
 		set_func_error_message(err, fun, state, s, lineno);
 	    } else {
@@ -8232,7 +8232,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     }
 
 #if EXEC_DEBUG
-    fprintf(stderr, "gretl_function_exec: argc = %d\n", u->argc);
+    fprintf(stderr, "gretl_function_exec: argc = %d\n", call->argc);
     fprintf(stderr, "u->n_params = %d\n", u->n_params);
 #endif
 
