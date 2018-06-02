@@ -804,9 +804,7 @@ static void panel_dwstat (MODEL *pmod, panelmod_t *pan)
 	for (t=0; t<pan->T; t++) {
 	    s = panel_index(i, t);
 	    if (s >= pmod->t2) {
-		fprintf(stderr, "DW: s=%d is out of bounds!\n"
-			"i=%d, t=%d; t2=%d, nobs=%d, fulln=%d\n", s, i, t,
-			pmod->t2, pmod->nobs, pmod->full_n);
+		/* FIXME conditionality? */
 		in_bounds = 0;
 		break;
 	    }
