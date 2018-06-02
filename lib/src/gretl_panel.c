@@ -785,6 +785,7 @@ static void panel_dwstat (MODEL *pmod, panelmod_t *pan)
     double rnum = 0.0;
     double rden = 0.0;
     double ut, u1;
+    int in_bounds = 1;
     int missvals;
     int i, t, s;
 
@@ -796,12 +797,19 @@ static void panel_dwstat (MODEL *pmod, panelmod_t *pan)
 
     missvals = model_has_missing_obs(pmod);
 
-    for (i=0; i<pan->nunits; i++) {
+    for (i=0; i<pan->nunits && in_bounds; i++) {
 	if (pan->unit_obs[i] == 0) {
-	    continue; /* ?? */
+	    continue;
 	}
 	for (t=0; t<pan->T; t++) {
 	    s = panel_index(i, t);
+	    if (s >= pmod->t2) {
+		fprintf(stderr, "DW: s=%d is out of bounds!\n"
+			"i=%d, t=%d; t2=%d, nobs=%d, fulln=%d\n", s, i, t,
+			pmod->t2, pmod->nobs, pmod->full_n);
+		in_bounds = 0;
+		break;
+	    }
 	    ut = pmod->uhat[s];
 	    if (!na(ut) && t > 0) {
 		u1 = pmod->uhat[s-1];
