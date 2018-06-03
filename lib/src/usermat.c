@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -118,7 +118,7 @@ static int msel_out_of_bounds (int *range, int n)
     }
 
     if (bad != NULL) {
-	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), 
+	gretl_errmsg_sprintf(_("Index value %d is out of bounds"),
 			     *bad);
 	return 1;
     } else {
@@ -185,7 +185,7 @@ static int vec_is_exclusion (const gretl_matrix *m, int n,
     return 0;
 }
 
-/* convert a matrix subspec component into list of rows 
+/* convert a matrix subspec component into list of rows
    or columns */
 
 static int *mspec_make_list (int type, union msel *sel, int n,
@@ -215,7 +215,7 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 	/* range or element */
 	int sr0 = sel->range[0];
 	int sr1 = sel->range[1];
-	
+
 	if (sr1 == MSEL_MAX) {
 	    sr1 = sel->range[1] = n;
 	}
@@ -223,7 +223,7 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 	    /* excluding a single row or column? */
 	    sr0 = -sr0;
 	    if (sr0 > n) {
-		gretl_errmsg_sprintf(_("Index value %d is out of bounds"), 
+		gretl_errmsg_sprintf(_("Index value %d is out of bounds"),
 				     sr0);
 		*err = E_DATA;
 	    } else {
@@ -236,7 +236,7 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 	    ns = sr1 - sr0 + 1;
 	    if (ns <= 0) {
 		gretl_errmsg_sprintf(_("Range %d to %d is non-positive!"),
-				     sr0, sr1); 
+				     sr0, sr1);
 		*err = E_DATA;
 	    }
 	}
@@ -259,7 +259,7 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 
     if (exclude) {
 	int k = 1;
-	
+
 	for (i=1; i<=slice[0]; i++) {
 	    if (i == exclude) {
 		k++;
@@ -274,13 +274,13 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 		slice[i+1] = sel->m->val[i];
 	    } else {
 		slice[i+1] = sel->range[0] + i;
-	    } 
+	    }
 	}
     }
 
     for (i=1; i<=slice[0] && !*err; i++) {
 	if (slice[i] < 1 || slice[i] > n) {
-	    gretl_errmsg_sprintf(_("Index value %d is out of bounds"), 
+	    gretl_errmsg_sprintf(_("Index value %d is out of bounds"),
 				 slice[i]);
 	    *err = 1;
 	}
@@ -300,24 +300,58 @@ static int *mspec_make_list (int type, union msel *sel, int n,
     return slice;
 }
 
+#define lhs_is_scalar(s) (s->type[0] == SEL_ELEMENT || \
+			  (s->type[0] == SEL_RANGE && s->sel[0].range[0] > 0 &&	\
+			   s->sel[0].range[0] == s->sel[0].range[1]))
+
+#define rhs_is_scalar(s) (s->type[1] == SEL_ELEMENT || \
+			  (s->type[1] == SEL_RANGE && s->sel[1].range[0] > 0 &&	\
+			   s->sel[1].range[0] == s->sel[1].range[1]))
+
 /* Catch the case of an implicit column or row specification for
    a sub-matrix of an (n x 1) or (1 x m) matrix; also catch the
    error of giving just one row/col spec for a matrix that has
    more than one row and more than one column.
 */
 
+#define MAT_CONTIG 0 /* not just yet */
+
 int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 {
+    int isvec = gretl_vector_get_length(m);
+    int get_element = 0;
+    int get_contig = 0;
     int err = 0;
+
+#if MAT_CONTIG
+    if (isvec || rhs_is_scalar(spec)) {
+	if (lhs_is_scalar(spec)) {
+	    get_element = 1;
+	} else if (spec->type[0] == SEL_RANGE ||
+		   spec->type[0] == SEL_ALL) {
+	    /* flag as contiguous */
+	    get_contig = 1;
+	}
+    }
+#else
+    if (isvec || rhs_is_scalar(spec)) {
+	if (lhs_is_scalar(spec)) {
+	    get_element = 1;
+	}
+    }
+#endif
 
     if (spec->type[1] == SEL_NULL) {
 	/* we got only one row/col spec */
-	if (m->cols == 1) {
+	if (!isvec) {
+	    gretl_errmsg_set(_("Ambiguous matrix index"));
+	    return E_DATA;
+	} else if (m->cols == 1) {
 	    /* OK: implicitly col = 1 */
 	    spec->type[1] = SEL_RANGE;
 	    mspec_set_col_index(spec, 1);
-	} else if (m->rows == 1) {
-	    /* OK: implicitly row = 1, and transfer the single 
+	} else {
+	    /* OK: implicitly row = 1, and transfer the single
 	       given spec to the column dimension */
 	    spec->type[1] = spec->type[0];
 	    if (spec->type[1] == SEL_MATRIX) {
@@ -325,35 +359,67 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 	    } else {
 		spec->sel[1].range[0] = spec->sel[0].range[0];
 		spec->sel[1].range[1] = spec->sel[0].range[1];
-	    }		
+	    }
 	    spec->type[0] = SEL_RANGE;
 	    mspec_set_row_index(spec, 1);
-	} else {
-	    gretl_errmsg_set(_("Ambiguous matrix index"));
-	    err = E_DATA;
-	}	    
+	}
     }
 
-    if (spec->type[0] == SEL_RANGE && spec->type[1] == SEL_RANGE) {
-	if (spec->sel[0].range[0] == spec->sel[0].range[1] &&
-	    spec->sel[1].range[0] == spec->sel[1].range[1]) {
-	    spec->type[0] = spec->type[1] = SEL_ELEMENT;
+    if (get_element) {
+	spec->type[0] = spec->type[1] = SEL_ELEMENT;
+    } else if (get_contig) {
+	int i, j, n;
+
+	if (spec->sel[0].range[1] == MSEL_MAX) {
+	    spec->sel[0].range[1] = m->rows;
 	}
+	if (spec->sel[1].range[1] == MSEL_MAX) {
+	    spec->sel[1].range[1] = m->cols;
+	}
+
+	if (!isvec) {
+	    if (spec->type[0] == SEL_RANGE) {
+		i = spec->sel[0].range[0];
+		j = spec->sel[1].range[0];
+		n = spec->sel[0].range[1] - i + 1;
+	    } else {
+		/* must be SEL_ALL */
+		i = 1;
+		j = spec->sel[1].range[0];
+		n = m->rows;
+	    }
+	} else {
+	    if (m->cols == 1 && spec->type[0] == SEL_ALL) {
+		spec->sel[0].range[0] = 1;
+		spec->sel[0].range[1] = m->rows;
+	    }
+	    i = spec->sel[0].range[0];
+	    if (m->rows == 1) {
+		j = spec->sel[1].range[0];
+		n = spec->sel[1].range[1] - j + 1;
+	    } else {
+		j = spec->sel[1].range[1];
+		n = spec->sel[0].range[1] - i + 1;
+	    }
+	}
+	spec->type[0] = SEL_CONTIG;
+	spec->sel[0].range[0] = (j-1) * m->rows + (i-1);
+	spec->sel[0].range[1] = n;
     }
 
     return err;
 }
 
-static int get_slices (matrix_subspec *spec, 
+static int get_slices (matrix_subspec *spec,
 		       const gretl_matrix *M)
 {
     int err = 0;
 
-    spec->rslice = mspec_make_list(spec->type[0], &spec->sel[0], 
+    spec->rslice = mspec_make_list(spec->type[0], &spec->sel[0],
 				   M->rows, &err);
 
     if (!err) {
-	spec->cslice = mspec_make_list(spec->type[1], &spec->sel[1], 
+	spec->cslice = mspec_make_list(spec->type[1], &spec->sel[1],
 				       M->cols, &err);
     }
 
@@ -361,7 +427,7 @@ static int get_slices (matrix_subspec *spec,
     if (err) {
 	fprintf(stderr, "matrix: get_slices, err=%d\n", err);
     }
-#endif 
+#endif
 
     return err;
 }
@@ -376,6 +442,16 @@ int assign_scalar_to_submatrix (gretl_matrix *M, double x,
     if (spec == NULL) {
 	fprintf(stderr, "matrix_replace_submatrix: spec is NULL!\n");
 	return E_DATA;
+    }
+
+    if (spec->type[0] == SEL_CONTIG) {
+	int ini = spec->sel[0].range[0];
+	int fin = ini + spec->sel[0].range[1];
+
+	for (i=ini; i<fin; i++) {
+	    M->val[i] = x;
+	}
+	return 0;
     }
 
     if (spec->type[0] == SEL_DIAG) {
@@ -413,7 +489,7 @@ int assign_scalar_to_submatrix (gretl_matrix *M, double x,
 
 matrix_subspec *matrix_subspec_new (void)
 {
-    matrix_subspec *spec = malloc(sizeof *spec);
+    matrix_subspec *spec = calloc(1, sizeof *spec);
 
     if (spec != NULL) {
 	spec->rslice = spec->cslice = NULL;
@@ -422,7 +498,7 @@ matrix_subspec *matrix_subspec_new (void)
     return spec;
 }
 
-static int matrix_insert_diagonal (gretl_matrix *M, 
+static int matrix_insert_diagonal (gretl_matrix *M,
 				   const gretl_matrix *S,
 				   int mr, int mc)
 {
@@ -436,7 +512,27 @@ static int matrix_insert_diagonal (gretl_matrix *M,
     for (i=0; i<n; i++) {
 	gretl_matrix_set(M, i, i, S->val[i]);
     }
-    
+
+    return 0;
+}
+
+static int matrix_contiguous_insert (gretl_matrix *M,
+				     const gretl_matrix *S,
+				     matrix_subspec *spec)
+{
+    int ini = spec->sel[0].range[0];
+    int n = spec->sel[0].range[1];
+    int fin = ini + n;
+    int i, j = 0;
+
+    if (gretl_vector_get_length(S) != n) {
+	return E_NONCONF;
+    }
+
+    for (i=ini; i<fin; i++) {
+	M->val[i] = S->val[j++];
+    }
+
     return 0;
 }
 
@@ -474,6 +570,8 @@ int matrix_replace_submatrix (gretl_matrix *M,
 
     if (spec->type[0] == SEL_DIAG) {
 	return matrix_insert_diagonal(M, S, mr, mc);
+    } else if (spec->type[0] == SEL_CONTIG) {
+	return matrix_contiguous_insert(M, S, spec);
     }
 
     if (spec->rslice == NULL && spec->cslice == NULL) {
@@ -499,11 +597,11 @@ int matrix_replace_submatrix (gretl_matrix *M,
 	sr = (spec->rslice == NULL)? mr : spec->rslice[0];
 	sc = (spec->cslice == NULL)? mc : spec->cslice[0];
     } else if (spec->rslice != NULL && spec->rslice[0] != sr) {
-	fprintf(stderr, "mspec has %d rows but substitute matrix has %d\n", 
+	fprintf(stderr, "mspec has %d rows but substitute matrix has %d\n",
 		spec->rslice[0], sr);
 	err = E_NONCONF;
     } else if (spec->cslice != NULL && spec->cslice[0] != sc) {
-	fprintf(stderr, "mspec has %d cols but substitute matrix has %d\n", 
+	fprintf(stderr, "mspec has %d cols but substitute matrix has %d\n",
 		spec->cslice[0], sc);
 	err = E_NONCONF;
     }
@@ -569,8 +667,8 @@ static int check_for_exclusion (const gretl_matrix *M,
 	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), 0);
 	return E_DATA;
     } else if (i > M->rows || j > M->cols) {
-	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), 
-			     i > M->rows ? i : j);	    
+	gretl_errmsg_sprintf(_("Index value %d is out of bounds"),
+			     i > M->rows ? i : j);
 	return E_DATA;
     } else {
 	int rdim = ipos ? 1 : M->rows - 1;
@@ -583,7 +681,7 @@ static int check_for_exclusion (const gretl_matrix *M,
 	if (spec->rslice == NULL || spec->cslice == NULL) {
 	    return E_ALLOC;
 	}
-	
+
 	if (ipos) {
 	    /* include specified row only */
 	    spec->rslice[1] = i;
@@ -596,7 +694,7 @@ static int check_for_exclusion (const gretl_matrix *M,
 		spec->rslice[k] = r++;
 	    }
 	}
-	
+
 	if (jpos) {
 	    /* include specified column only */
 	    spec->cslice[1] = j;
@@ -614,9 +712,19 @@ static int check_for_exclusion (const gretl_matrix *M,
     return 0;
 }
 
-gretl_matrix *matrix_get_submatrix (const gretl_matrix *M, 
+static void matrix_transcribe_dates (gretl_matrix *targ,
+				     const gretl_matrix *src)
+{
+    int mt1 = gretl_matrix_get_t1(src);
+    int mt2 = gretl_matrix_get_t2(src);
+
+    gretl_matrix_set_t1(targ, mt1);
+    gretl_matrix_set_t2(targ, mt2);
+}
+
+gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 				    matrix_subspec *spec,
-				    int prechecked, 
+				    int prechecked,
 				    int *err)
 {
     gretl_matrix *S = NULL;
@@ -636,6 +744,8 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 
     if (spec->type[0] == SEL_DIAG) {
 	return gretl_matrix_get_diagonal(M, err);
+    } else if (spec->type[0] == SEL_CONTIG) {
+	return matrix_get_chunk(M, spec, err);
     } else if (spec->type[0] == SEL_ELEMENT) {
 	int i = mspec_get_row_index(spec);
 	int j = mspec_get_col_index(spec);
@@ -643,7 +753,7 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 
 	if (i > 0 && j > 0) {
 	    double x = matrix_get_element(M, i, j, err);
-	    
+
 	    if (!*err) {
 		S = gretl_matrix_from_scalar(x);
 	    }
@@ -676,7 +786,7 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 
     S = gretl_matrix_alloc(r, c);
     if (S == NULL) {
-	*err = E_ALLOC;	
+	*err = E_ALLOC;
     }
 
     if (S != NULL) {
@@ -711,11 +821,7 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
     if (S != NULL) {
 	/* try transcribing metadata on @M if applicable */
 	if (S->rows == M->rows && gretl_matrix_is_dated(M)) {
-	    int mt1 = gretl_matrix_get_t1(M);
-	    int mt2 = gretl_matrix_get_t2(M);
-
-	    gretl_matrix_set_t1(S, mt1);
-	    gretl_matrix_set_t2(S, mt2);
+	    matrix_transcribe_dates(S, M);
 	}
 	if (S->cols == M->cols) {
 	    const char **cnames = gretl_matrix_get_colnames(M);
@@ -747,7 +853,7 @@ double matrix_get_element (const gretl_matrix *M, int i, int j,
     if (M == NULL) {
 	*err = E_DATA;
     } else if (i < 0 || i >= M->rows || j < 0 || j >= M->cols) {
-	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), 
+	gretl_errmsg_sprintf(_("Index value %d is out of bounds"),
 			     (i < 0 || i >= M->rows)? (i+1) : (j+1));
 	*err = 1;
     } else {
@@ -755,6 +861,42 @@ double matrix_get_element (const gretl_matrix *M, int i, int j,
     }
 
     return x;
+}
+
+/* copy a contiguous chunk of data out of @M */
+
+gretl_matrix *matrix_get_chunk (const gretl_matrix *M,
+				matrix_subspec *spec,
+				int *err)
+{
+    int offset = spec->sel[0].range[0];
+    int n = spec->sel[0].range[1];
+    size_t sz = n * sizeof(double);
+    gretl_matrix *ret;
+
+    if (offset < 0) {
+	fprintf(stderr, "matrix_get_chunk: offset = %d\n", offset);
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (M->rows == 1) {
+	ret = gretl_matrix_alloc(1, n);
+    } else {
+	ret = gretl_matrix_alloc(n, 1);
+    }
+
+    if (ret == NULL) {
+	*err = E_ALLOC;
+    } else {
+	memcpy(ret->val, M->val + offset, sz);
+	if (M->rows > 1 && n == M->rows && offset == 0 &&
+	    gretl_matrix_is_dated(M)) {
+	    matrix_transcribe_dates(ret, M);
+	}
+    }
+
+    return ret;
 }
 
 /* Handle the case where we got a single string as argument
@@ -773,7 +915,7 @@ static char **expand_names (const char *s, int n, int *err)
     }
 
     S = strings_array_new(n);
-    
+
     if (S == NULL) {
 	*err = E_ALLOC;
     } else {
@@ -798,7 +940,7 @@ static char **expand_names (const char *s, int n, int *err)
     return S;
 }
 
-int umatrix_set_names_from_string (gretl_matrix *M, 
+int umatrix_set_names_from_string (gretl_matrix *M,
 				   const char *s,
 				   int byrow)
 {
@@ -817,7 +959,7 @@ int umatrix_set_names_from_string (gretl_matrix *M,
 	int ns;
 
 	S = gretl_string_split(s, &ns, " \n\t");
-	
+
 	if (S == NULL) {
 	    err = E_ALLOC;
 	} else if (ns == 1 && n > 1) {
@@ -840,7 +982,7 @@ int umatrix_set_names_from_string (gretl_matrix *M,
     return err;
 }
 
-int umatrix_set_names_from_array (gretl_matrix *M, 
+int umatrix_set_names_from_array (gretl_matrix *M,
 				  void *data,
 				  int byrow)
 {
@@ -882,13 +1024,13 @@ int umatrix_set_names_from_array (gretl_matrix *M,
 	    } else {
 		gretl_matrix_set_colnames(M, S);
 	    }
-	} 
+	}
     }
 
     return err;
 }
 
-int umatrix_set_names_from_list (gretl_matrix *M, 
+int umatrix_set_names_from_list (gretl_matrix *M,
 				 const int *list,
 				 const DATASET *dset,
 				 int byrow)
@@ -977,8 +1119,8 @@ char *user_matrix_get_row_name (const gretl_matrix *M, int row,
     return ret;
 }
 
-double 
-user_matrix_get_determinant (gretl_matrix *m, int tmpmat, 
+double
+user_matrix_get_determinant (gretl_matrix *m, int tmpmat,
 			     int f, int *err)
 {
     gretl_matrix *R = NULL;
@@ -1008,7 +1150,7 @@ user_matrix_get_determinant (gretl_matrix *m, int tmpmat,
     return d;
 }
 
-gretl_matrix *user_matrix_matrix_func (gretl_matrix *m, int tmpmat, 
+gretl_matrix *user_matrix_matrix_func (gretl_matrix *m, int tmpmat,
 				       int f, int *err)
 {
     gretl_matrix *R = NULL;
@@ -1030,7 +1172,7 @@ gretl_matrix *user_matrix_matrix_func (gretl_matrix *m, int tmpmat,
 	R = gretl_matrix_copy(m);
 	if (R == NULL) {
 	    *err = E_ALLOC;
-	}	
+	}
     }
 
     if (R != NULL) {
@@ -1057,8 +1199,8 @@ gretl_matrix *user_matrix_matrix_func (gretl_matrix *m, int tmpmat,
 	    gretl_matrix_free(R);
 	    R = NULL;
 	}
-    } 
-   
+    }
+
     return R;
 }
 
@@ -1087,7 +1229,7 @@ int matrix_invert_in_place (gretl_matrix *m)
 	    matrix_cannibalize(m, R);
 	}
 	gretl_matrix_free(R);
-    } 
+    }
 
     return err;
 }
@@ -1105,7 +1247,7 @@ int matrix_cholesky_in_place (gretl_matrix *m)
 	    matrix_cannibalize(m, R);
 	}
 	gretl_matrix_free(R);
-    } 
+    }
 
     return err;
 }
@@ -1157,7 +1299,7 @@ gretl_matrix *user_matrix_vec (const gretl_matrix *m, int *err)
 	R = gretl_matrix_alloc(m->rows * m->cols, 1);
 	if (R != NULL) {
 	    gretl_matrix_vectorize(R, m);
-	} 
+	}
     }
 
     if (R == NULL) {
@@ -1183,7 +1325,7 @@ gretl_matrix *user_matrix_vech (const gretl_matrix *m, int *err)
 	if (R != NULL) {
 	    *err = gretl_matrix_vectorize_h(R, m);
 	}
-    } 
+    }
 
     if (R == NULL && !*err) {
 	*err = E_ALLOC;
@@ -1206,7 +1348,7 @@ gretl_matrix *user_matrix_unvech (const gretl_matrix *m, int *err)
 	R = gretl_matrix_alloc(n, n);
 	if (R != NULL) {
 	    *err = gretl_matrix_unvectorize_h(R, m);
-	} 
+	}
     }
 
     if (R == NULL && !*err) {
@@ -1216,8 +1358,8 @@ gretl_matrix *user_matrix_unvech (const gretl_matrix *m, int *err)
     return R;
 }
 
-static int 
-real_user_matrix_QR_decomp (const gretl_matrix *m, gretl_matrix **Q, 
+static int
+real_user_matrix_QR_decomp (const gretl_matrix *m, gretl_matrix **Q,
 			    gretl_matrix **R)
 {
     int mc = gretl_matrix_cols(m);
@@ -1309,9 +1451,9 @@ static int revise_SVD_V (gretl_matrix **pV, int r, int c)
     return 0;
 }
 
-gretl_matrix *user_matrix_SVD (const gretl_matrix *m, 
-			       const char *uname, 
-			       const char *vname, 
+gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
+			       const char *uname,
+			       const char *vname,
 			       int *err)
 {
     gretl_matrix *U = NULL;
@@ -1362,7 +1504,7 @@ gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
 	if (V != NULL) {
 	    if (tall < 0) {
 		*err = revise_SVD_V(&V, minrc, m->cols);
-	    } 
+	    }
 	    if (!*err) {
 		user_matrix_replace_matrix_by_name(vname, V);
 	    }
@@ -1380,9 +1522,9 @@ gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
    replace the old one, and we set @newmat = 1).
 */
 
-static gretl_matrix *get_sized_matrix (const char *mname, 
+static gretl_matrix *get_sized_matrix (const char *mname,
 				       int r, int c,
-				       int *newmat, 
+				       int *newmat,
 				       int *err)
 {
     gretl_matrix *m = get_matrix_by_name(mname);
@@ -1414,10 +1556,10 @@ static int check_vcv_arg (const char *mname)
     }
 }
 
-gretl_matrix *user_matrix_ols (const gretl_matrix *Y, 
-			       const gretl_matrix *X, 
-			       const char *Uname, 
-			       const char *Vname, 
+gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
+			       const gretl_matrix *X,
+			       const char *Uname,
+			       const char *Vname,
 			       gretlopt opt,
 			       int *err)
 {
@@ -1453,7 +1595,7 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 	if (*err) {
 	    return NULL;
 	}
-    } 
+    }
 
     if (!nullarg(Vname)) {
 	if (g > 1) {
@@ -1519,18 +1661,18 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 	}
 	if (newV) {
 	    user_matrix_replace_matrix_by_name(Vname, V);
-	}	
+	}
     }
 
     return B;
 }
 
-gretl_matrix *user_matrix_rls (const gretl_matrix *Y, 
+gretl_matrix *user_matrix_rls (const gretl_matrix *Y,
 			       const gretl_matrix *X,
 			       const gretl_matrix *R,
 			       const gretl_matrix *Q,
-			       const char *Uname, 
-			       const char *Vname, 
+			       const char *Uname,
+			       const char *Vname,
 			       int *err)
 {
     gretl_matrix *B = NULL;
@@ -1558,7 +1700,7 @@ gretl_matrix *user_matrix_rls (const gretl_matrix *Y,
 	if (*err) {
 	    return NULL;
 	}
-    } 
+    }
 
     if (!nullarg(Vname)) {
 	*err = check_vcv_arg(Vname);
@@ -1594,17 +1736,17 @@ gretl_matrix *user_matrix_rls (const gretl_matrix *Y,
 	}
 	if (newV) {
 	    user_matrix_replace_matrix_by_name(Vname, V);
-	}	
+	}
     }
 
     return B;
 }
 
-gretl_matrix *user_matrix_GHK (const gretl_matrix *C, 
+gretl_matrix *user_matrix_GHK (const gretl_matrix *C,
 			       const gretl_matrix *A,
 			       const gretl_matrix *B,
 			       const gretl_matrix *U,
-			       const char *dP_name, 
+			       const char *dP_name,
 			       int *err)
 {
     gretl_matrix *P = NULL;
@@ -1623,7 +1765,7 @@ gretl_matrix *user_matrix_GHK (const gretl_matrix *C,
 
     if (!nullarg(dP_name)) {
 	dP = get_sized_matrix(dP_name, n, npar, &new_dP, err);
-    } 
+    }
 
     if (!*err) {
 	P = gretl_GHK2(C, A, B, U, dP, err);
@@ -1712,7 +1854,7 @@ user_matrix_eigen_analysis (const gretl_matrix *m, const char *rname,
     return E;
 }
 
-gretl_matrix *user_gensymm_eigenvals (const gretl_matrix *A, 
+gretl_matrix *user_gensymm_eigenvals (const gretl_matrix *A,
 				      const gretl_matrix *B,
 				      const char *rname,
 				      int *err)

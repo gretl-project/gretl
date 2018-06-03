@@ -4351,10 +4351,15 @@ static NODE *submatrix_node (NODE *l, NODE *r, parser *p)
 	gretl_matrix *m = node_get_matrix(l, p, 0, 0);
 
 	p->err = check_matrix_subspec(spec, m);
+
 	if (!p->err) {
 	    int done = 0;
 
-	    if (spec->type[0] == SEL_ELEMENT) {
+	    if (spec->type[0] == SEL_CONTIG) {
+		ret = aux_matrix_node(p);
+		ret->v.m = matrix_get_chunk(m, spec, &p->err);
+		done = 1;
+	    } else if (spec->type[0] == SEL_ELEMENT) {
 		int i = mspec_get_row_index(spec);
 		int j = mspec_get_col_index(spec);
 
