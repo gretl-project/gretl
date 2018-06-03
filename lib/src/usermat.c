@@ -314,7 +314,9 @@ static int *mspec_make_list (int type, union msel *sel, int n,
    more than one row and more than one column.
 */
 
-#define MAT_CONTIG 0 /* not just yet */
+#define MAT_CONTIG 1 /* needs testing still */
+
+#if MAT_CONFIG
 
 int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 {
@@ -323,7 +325,6 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
     int get_contig = 0;
     int err = 0;
 
-#if MAT_CONTIG
     if (isvec || rhs_is_scalar(spec)) {
 	if (lhs_is_scalar(spec)) {
 	    get_element = 1;
@@ -333,13 +334,6 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 	    get_contig = 1;
 	}
     }
-#else
-    if (isvec || rhs_is_scalar(spec)) {
-	if (lhs_is_scalar(spec)) {
-	    get_element = 1;
-	}
-    }
-#endif
 
     if (spec->type[1] == SEL_NULL) {
 	/* we got only one row/col spec */
@@ -389,10 +383,15 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 		n = m->rows;
 	    }
 	} else {
-	    if (m->cols == 1 && spec->type[0] == SEL_ALL) {
-		spec->sel[0].range[0] = 1;
-		spec->sel[0].range[1] = m->rows;
-	    }
+            if (m->cols == 1) {
+                if (spec->type[0] == SEL_ALL) {
+                    spec->sel[0].range[0] = 1;
+                    spec->sel[0].range[1] = m->rows;
+                }
+                if (spec->type[1] == SEL_ALL) {
+                    mspec_set_col_index(spec, 1);
+                }
+            }
 	    i = spec->sel[0].range[0];
 	    if (m->rows == 1) {
 		j = spec->sel[1].range[0];
@@ -409,6 +408,48 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 
     return err;
 }
+
+#else
+
+int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
+{
+    int err = 0;
+
+    if (spec->type[1] == SEL_NULL) {
+	/* we got only one row/col spec */
+	if (m->cols == 1) {
+	    /* OK: implicitly col = 1 */
+	    spec->type[1] = SEL_RANGE;
+	    mspec_set_col_index(spec, 1);
+	} else if (m->rows == 1) {
+	    /* OK: implicitly row = 1, and transfer the single
+	       given spec to the column dimension */
+	    spec->type[1] = spec->type[0];
+	    if (spec->type[1] == SEL_MATRIX) {
+		spec->sel[1].m = spec->sel[0].m;
+	    } else {
+		spec->sel[1].range[0] = spec->sel[0].range[0];
+		spec->sel[1].range[1] = spec->sel[0].range[1];
+	    }
+	    spec->type[0] = SEL_RANGE;
+	    mspec_set_row_index(spec, 1);
+	} else {
+	    gretl_errmsg_set(_("Ambiguous matrix index"));
+	    err = E_DATA;
+	}
+    }
+
+    if (spec->type[0] == SEL_RANGE && spec->type[1] == SEL_RANGE) {
+	if (spec->sel[0].range[0] == spec->sel[0].range[1] &&
+	    spec->sel[1].range[0] == spec->sel[1].range[1]) {
+	    spec->type[0] = spec->type[1] = SEL_ELEMENT;
+	}
+    }
+
+    return err;
+}
+
+#endif
 
 static int get_slices (matrix_subspec *spec,
 		       const gretl_matrix *M)
