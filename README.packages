@@ -11,6 +11,11 @@ to validate and expand to new distributions.
 
 Helio Guilherme, 23 September 2011 
 -----
+Fedora 28               (contrib. 2018-06-03)
+sudo dnf install gcc gmp-devel mpfr-devel fftw-devel lapack-devel \
+gnuplot libxml2-devel curl-devel readline-devel gtksourceview3-devel \
+json-glib-devel
+
 OpenSUSE 13.1           (contrib. 2014-01-15)
 # dependencies
 sudo zypper install cvs gcc make
