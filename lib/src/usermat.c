@@ -316,7 +316,7 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 
 #define MAT_CONTIG 1 /* needs testing still */
 
-#if MAT_CONFIG
+#if MAT_CONTIG
 
 int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 {
