@@ -267,6 +267,61 @@ static int match_obs_marker (const char *s, const DATASET *dset)
     return -1;
 }
 
+static int caldate_precheck (const char *s, int *y2, int *slashed)
+{
+    int n = strlen(s);
+    int ok = 0;
+
+    if (n < 8 || !isdigit(s[0]) || !isdigit(s[1])) {
+	/* can't be date */
+	return 0;
+    }
+
+    if (n == 10) {
+	if (s[4] == '-' && s[7] == '-') {
+	    ok = 1; /* could be YYYY-MM-DD */
+	} else if (s[4] == '/' && s[7] == '/') {
+	    *slashed = 1; /* could be YYYY/MM/DD */
+	    ok = 1;
+	}
+    } else if (n == 8) {
+	if (s[2] == '-' && s[5] == '-') {
+	    ok = 1; /* could be YY-MM-DD */
+	} else if (s[2] == '/' && s[5] == '/') {
+	    *slashed = 1; /* could be YY/MM/DD */
+	    ok = 1;
+	}
+	if (ok) *y2 = 1;
+    }
+
+    return ok;
+}
+
+static int datecmp (const char *s1, int y21, int slash1,
+		    const char *s2, int y22, int slash2)
+{
+    if (y21 && !y22) {
+	s2 += 2;
+    } else if (!y21 && y22) {
+	s1 += 2;
+    }
+    if (slash1 && !slash2) {
+	char revs1[OBSLEN];
+
+	strcpy(revs1, s1);
+	gretl_charsub(revs1, '/', '-');
+	return strcmp(revs1, s2);
+    } else if (slash2 && !slash1) {
+	char revs2[OBSLEN];
+
+	strcpy(revs2, s2);
+	gretl_charsub(revs2, '/', '-');
+	return strcmp(s1, revs2);
+    } else {
+	return strcmp(s1, s2);
+    }
+}
+
 static int 
 real_dateton (const char *date, const DATASET *dset, int nolimit)
 {
@@ -282,32 +337,28 @@ real_dateton (const char *date, const DATASET *dset, int nolimit)
 #endif
 	if (dataset_has_markers(dset)) {
 	    /* "hard-wired" calendar dates as strings */
+	    int tryit, y21 = 0, slash1 = 0;
+	    int y22 = 0, slash2 = 0;
+
+	    tryit = caldate_precheck(date, &y21, &slash1);
+	    if (!tryit) {
+		return -1;
+	    }
+	    tryit = caldate_precheck(dset->S[0], &y22, &slash2);
+	    if (!tryit) {
+		return -1;
+	    }
 	    for (t=0; t<dset->n; t++) {
-		if (!strcmp(date, dset->S[t])) {
+		if (!datecmp(date, y21, slash1, dset->S[t], y22, slash2)) {
 		    /* handled */
 		    return t;
 		}
-	    }
-	    /* try allowing for 2- versus 4-digit years? */
-	    if (strlen(dset->S[0]) == 10 &&
-		(!strncmp(dset->S[0], "19", 2) || 
-		 !strncmp(dset->S[0], "20", 2))) {
-		for (t=0; t<dset->n; t++) {
-		    if (!strcmp(date, dset->S[t] + 2)) {
-			/* handled */
-			return t;
-		    }
-		}		
 	    }
 	    /* out of options: abort */
 	    return -1;
 	} else {
 	    /* automatic calendar dates */
-	    if (isdigit(date[0])) {
-		/* no point in trying this unless @date at least
-		   starts with a number */
-		n = calendar_obs_number(date, dset);
-	    }
+	    n = calendar_obs_number(date, dset);
 	    handled = 1;
 	} 
     } else if (dataset_is_daily(dset) ||
