@@ -405,6 +405,10 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 	spec->type[0] = SEL_CONTIG;
 	spec->sel[0].range[0] = (j-1) * m->rows + (i-1);
 	spec->sel[0].range[1] = n;
+	if (spec->sel[0].range[0] < 0 || n <= 0) {
+	    fprintf(stderr, "*** offset = %d, n = %d ***\n",
+		    spec->sel[0].range[0], n);
+	}
     }
 
     return err;
