@@ -314,7 +314,7 @@ static int *mspec_make_list (int type, union msel *sel, int n,
    more than one row and more than one column.
 */
 
-#define MAT_CONTIG 1 /* needs testing still */
+#define MAT_CONTIG 0 /* needs testing still */
 
 #if MAT_CONTIG
 
