@@ -795,6 +795,13 @@ static void panel_dwstat (MODEL *pmod, panelmod_t *pan)
 	return;
     }
 
+#if 0
+    fprintf(stderr, "DW: pmod=%p, pooled=%p, T=%d\n",
+	    (void *) pmod, (void *) pan->pooled, pan->T);
+    fprintf(stderr, " t1=%d, t2=%d, nobs=%d, full_n=%d\n", pmod->t1,
+	    pmod->t2, pmod->nobs, pmod->full_n);
+#endif
+
     missvals = model_has_missing_obs(pmod);
 
     for (i=0; i<pan->nunits && in_bounds; i++) {
@@ -805,6 +812,7 @@ static void panel_dwstat (MODEL *pmod, panelmod_t *pan)
 	    s = panel_index(i, t);
 	    if (s >= pmod->t2) {
 		/* FIXME conditionality? */
+		fprintf(stderr, "At i=%d,t=%d: s=%d >= pmod->t2\n", i, t, s);
 		in_bounds = 0;
 		break;
 	    }
@@ -825,7 +833,7 @@ static void panel_dwstat (MODEL *pmod, panelmod_t *pan)
     if (dwnum > 0.0) {
 	pmod->dw = dwnum / pmod->ess;
 	if (missvals) {
-	    /* use DW to approximate rho */
+	    /* use DW to approximate rho? */
 	    pmod->rho = 1 - pmod->dw/2;
 	}
     }
@@ -2739,7 +2747,8 @@ static int within_variance (panelmod_t *pan,
 		clear_model(&femod);
 	    }
 	} else {
-	    if (pan->opt & OPT_U) {
+	    if (0 && (pan->opt & OPT_U)) {
+		/* not ready yet! */
 		panel_dwstat(&femod, pan);
 	    }
 	    clear_model(&femod);
