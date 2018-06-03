@@ -383,13 +383,14 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 		n = m->rows;
 	    }
 	} else {
+	    /* we're looking at a vector */
             if (m->cols == 1) {
                 if (spec->type[0] == SEL_ALL) {
                     spec->sel[0].range[0] = 1;
                     spec->sel[0].range[1] = m->rows;
                 }
                 if (spec->type[1] == SEL_ALL) {
-                    mspec_set_col_index(spec, 1);
+		    mspec_set_col_index(spec, 1);
                 }
             }
 	    i = spec->sel[0].range[0];

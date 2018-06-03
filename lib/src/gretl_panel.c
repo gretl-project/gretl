@@ -811,8 +811,6 @@ static void panel_dwstat (MODEL *pmod, panelmod_t *pan)
 	for (t=0; t<pan->T; t++) {
 	    s = panel_index(i, t);
 	    if (s >= pmod->t2) {
-		/* FIXME conditionality? */
-		fprintf(stderr, "At i=%d,t=%d: s=%d >= pmod->t2\n", i, t, s);
 		in_bounds = 0;
 		break;
 	    }
