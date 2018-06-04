@@ -319,6 +319,7 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 #define MAT_CONTIG 0 /* needs testing still */
 
 #if MAT_CONTIG
+#define CONTIG_DEBUG 0
 
 static int old_check (matrix_subspec *spec, const gretl_matrix *m)
 {
@@ -358,6 +359,34 @@ static int old_check (matrix_subspec *spec, const gretl_matrix *m)
     return err;
 }
 
+static int handle_single_index (matrix_subspec *spec, const gretl_matrix *m,
+				int isvec)
+{
+    if (!isvec) {
+	gretl_errmsg_set(_("Ambiguous matrix index"));
+	return E_DATA;
+    } else if (m->cols == 1) {
+	/* OK: implicitly col = 1 */
+	spec->type[1] = SEL_RANGE;
+	mspec_set_col_index(spec, 1);
+    } else {
+	/* OK: implicitly row = 1, and transfer the single
+	   given spec to the column dimension */
+	spec->type[1] = spec->type[0];
+	if (spec->type[1] == SEL_MATRIX) {
+	    spec->sel[1].m = spec->sel[0].m;
+	} else {
+	    //spec->sel[1] = spec->sel[0];
+	    spec->sel[1].range[0] = spec->sel[0].range[0];
+	    spec->sel[1].range[1] = spec->sel[0].range[1];
+	}
+	spec->type[0] = SEL_RANGE;
+	mspec_set_row_index(spec, 1);
+    }
+
+    return 0;
+}
+
 int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 {
     int isvec = gretl_vector_get_length(m);
@@ -365,35 +394,55 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
     int get_contig = 0;
     int err = 0;
 
-#if 1
-    fprintf(stderr, "SS = (%d,%d,%d,%d), m is %dx%d\n",
+#if CONTIG_DEBUG
+    fprintf(stderr, "types = (%d,%d), SS = (%d,%d,%d,%d), m is %dx%d\n",
+	    spec->type[0], spec->type[1],
 	    spec->sel[0].range[0], spec->sel[0].range[1],
 	    spec->sel[1].range[0], spec->sel[1].range[1],
 	    m->rows, m->cols);
+    fprintf(stderr, "lh scalar %d, rh scalar %d\n",
+	    lhs_is_scalar(spec, m), rhs_is_scalar(spec, m));
 #endif
 
     if (m->rows == 0 || m->cols == 0) {
 	fprintf(stderr, "*** check subspec: m is %d x %d ***\n",
 		m->rows, m->cols);
-	return old_check(spec, m);
+	// return old_check(spec, m);
+	return 0;
     }
 
-    fprintf(stderr, "lh scalar %d, rh scalar %d\n",
-	    lhs_is_scalar(spec, m), rhs_is_scalar(spec, m));
+    if (lhs_is_scalar(spec, m)) {
+	if (rhs_is_scalar(spec, m)) {
+	    get_element = 1;
+	} else if (m->rows == 1 && spec->type[1] == SEL_NULL) {
+	    get_element = 1;
+	}
+#if CONTIG_DEBUG
+	if (get_element) {
+	    fprintf(stderr, "Get element\n");
+	}
+#endif
+    }
 
-    if (lhs_is_scalar(spec, m) && rhs_is_scalar(spec, m)) {
-	fprintf(stderr, "Get element\n");
-	get_element = 1;
-    } else  if (isvec || rhs_is_scalar(spec, m)) {
+    if (!get_element && (isvec || rhs_is_scalar(spec, m))) {
 	if (spec->type[0] == SEL_RANGE ||
 	    spec->type[0] == SEL_ALL) {
 	    /* flag as contiguous */
-	    fprintf(stderr, "Get contig\n");
 	    get_contig = (spec->type[1] != SEL_MATRIX);
+#if CONTIG_DEBUG
+	    if (get_contig) {
+		fprintf(stderr, "Get contig\n");
+	    }
+#endif
 	}
     }
 
     if (spec->type[1] == SEL_NULL) {
+	err = handle_single_index(spec, m, isvec);
+	if (err) {
+	    return err;
+	}
+#if 0
 	/* we got only one row/col spec */
 	if (!isvec) {
 	    gretl_errmsg_set(_("Ambiguous matrix index"));
@@ -409,12 +458,14 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 	    if (spec->type[1] == SEL_MATRIX) {
 		spec->sel[1].m = spec->sel[0].m;
 	    } else {
-		spec->sel[1].range[0] = spec->sel[0].range[0];
-		spec->sel[1].range[1] = spec->sel[0].range[1];
+		spec->sel[1] = spec->sel[0];
+		//spec->sel[1].range[0] = spec->sel[0].range[0];
+		//spec->sel[1].range[1] = spec->sel[0].range[1];
 	    }
 	    spec->type[0] = SEL_RANGE;
 	    mspec_set_row_index(spec, 1);
 	}
+#endif
     } else if (spec->type[1] == SEL_ALL) {
 	spec->type[1] = SEL_RANGE;
 	spec->sel[1].range[0] = 1;
@@ -628,26 +679,6 @@ static int matrix_insert_diagonal (gretl_matrix *M,
     return 0;
 }
 
-static int matrix_contiguous_insert (gretl_matrix *M,
-				     const gretl_matrix *S,
-				     matrix_subspec *spec)
-{
-    int ini = spec->sel[0].range[0];
-    int n = spec->sel[0].range[1];
-    int fin = ini + n;
-    int i, j = 0;
-
-    if (gretl_vector_get_length(S) != n) {
-	return E_NONCONF;
-    }
-
-    for (i=ini; i<fin; i++) {
-	M->val[i] = S->val[j++];
-    }
-
-    return 0;
-}
-
 /* @M is the target for partial replacement, @S is the source to
    substitute, and @spec tells how/where to make the
    substitution.
@@ -673,6 +704,18 @@ int matrix_replace_submatrix (gretl_matrix *M,
 	return E_DATA;
     }
 
+    if (spec->type[0] == SEL_CONTIG) {
+	int ini = spec->sel[0].range[0];
+	int n = spec->sel[0].range[1];
+
+	if (gretl_vector_get_length(S) != n) {
+	    return E_NONCONF;
+	} else {
+	    memcpy(M->val + ini, S->val, n * sizeof(double));
+	    return 0;
+	}
+    }
+
     if (sr > mr || sc > mc) {
 	/* the replacement matrix won't fit into M */
 	fprintf(stderr, "matrix_replace_submatrix: target is %d x %d but "
@@ -682,8 +725,6 @@ int matrix_replace_submatrix (gretl_matrix *M,
 
     if (spec->type[0] == SEL_DIAG) {
 	return matrix_insert_diagonal(M, S, mr, mc);
-    } else if (spec->type[0] == SEL_CONTIG) {
-	return matrix_contiguous_insert(M, S, spec);
     }
 
     if (spec->rslice == NULL && spec->cslice == NULL) {

@@ -7560,14 +7560,13 @@ static NODE *series_sort_by (NODE *l, NODE *r, parser *p)
 static NODE *vector_sort (NODE *l, int f, parser *p)
 {
     NODE *ret = (l->t == SERIES)? aux_series_node(p) :
-	(l->t == NUM)? aux_scalar_node(p) :
 	aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
 	if (l->t == SERIES) {
 	    p->err = sort_series(l->v.xvec, ret->v.xvec, f, p->dset);
 	} else if (l->t == NUM) {
-	    ret->v.xval = l->v.xval;
+	    ret->v.m = gretl_matrix_from_scalar(l->v.xval);
 	} else if (gretl_is_null_matrix(l->v.m)) {
 	    p->err = E_DATA;
 	} else {
