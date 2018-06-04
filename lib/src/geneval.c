@@ -4237,6 +4237,7 @@ static void print_mspec (matrix_subspec *mspec)
 static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
 {
     matrix_subspec *spec = targ->v.mspec;
+    int ridx = 0, cidx = 0;
 
     if (spec == NULL) {
 	spec = matrix_subspec_new();
@@ -4255,6 +4256,21 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
     }
 #endif
 
+    if (l->t == NUM) {
+	ridx = node_get_int(l, p);
+	if (!p->err && ridx == 0) {
+	    gretl_errmsg_sprintf(_("Index value %d is out of bounds"), 0);
+	    p->err = E_INVARG;
+	}
+    }
+    if (!p->err && r != NULL && r->t == NUM) {
+	cidx = node_get_int(r, p);
+	if (!p->err && cidx == 0) {
+	    gretl_errmsg_sprintf(_("Index value %d is out of bounds"), 0);
+	    p->err = E_INVARG;
+	}
+    }
+
     if (l->t == DUM) {
 	if (l->v.idnum == DUM_DIAG) {
 	    spec->type[0] = SEL_DIAG;
@@ -4263,16 +4279,14 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
 	    p->err = E_TYPES;
 	}
 	goto finished;
-    } else if (l->t == NUM && r != NULL && r->t == NUM) {
+    } else if (ridx > 0 && cidx > 0) {
 	spec->type[0] = spec->type[1] = SEL_ELEMENT;
-	mspec_set_row_index(spec, l->v.xval);
-	mspec_set_col_index(spec, r->v.xval);
+	mspec_set_row_index(spec, ridx);
+	mspec_set_col_index(spec, cidx);
 	goto finished;
-    }
-
-    if (l->t == NUM) {
-	spec->type[0] = SEL_RANGE;
-	mspec_set_row_index(spec, l->v.xval);
+    } else if (l->t == NUM) {
+	spec->type[0] = ridx > 0 ? SEL_RANGE : SEL_EXCL;
+	mspec_set_row_index(spec, ridx);
     } else if (l->t == IVEC) {
 	spec->type[0] = SEL_RANGE;
 	spec->sel[0].range[0] = l->v.ivec[0];
@@ -4295,8 +4309,8 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
     if (r == NULL) {
 	spec->type[1] = SEL_NULL;
     } else if (r->t == NUM) {
-	spec->type[1] = SEL_RANGE;
-	mspec_set_col_index(spec, r->v.xval);
+	spec->type[1] = cidx > 0 ? SEL_RANGE : SEL_EXCL;
+	mspec_set_col_index(spec, cidx);
     } else if (r->t == IVEC) {
 	spec->type[1] = SEL_RANGE;
 	spec->sel[1].range[0] = r->v.ivec[0];
@@ -4353,34 +4367,22 @@ static NODE *submatrix_node (NODE *l, NODE *r, parser *p)
 	p->err = check_matrix_subspec(spec, m);
 
 	if (!p->err) {
-	    int done = 0;
-
 	    if (spec->type[0] == SEL_CONTIG) {
 		ret = aux_matrix_node(p);
 		ret->v.m = matrix_get_chunk(m, spec, &p->err);
-		done = 1;
 	    } else if (spec->type[0] == SEL_ELEMENT) {
 		int i = mspec_get_row_index(spec);
 		int j = mspec_get_col_index(spec);
+		double x = matrix_get_element(m, i, j, &p->err);
 
-		/* SEL_ELEMENT may in fact mean exclusion
-		   of a row or column in the case of negative
-		   indices
-		*/
-		if (i >= 1 && j >= 1) {
-		    double x = matrix_get_element(m, i, j, &p->err);
-
+		if (!p->err) {
+		    ret = aux_scalar_node(p);
 		    if (!p->err) {
-			ret = aux_scalar_node(p);
-			if (!p->err) {
-			    ret->v.xval = x;
-			    ret->flags |= MSL_NODE;
-			}
+			ret->v.xval = x;
+			ret->flags |= MSL_NODE;
 		    }
-		    done = 1;
 		}
-	    }
-	    if (!done) {
+	    } else {
 		ret = aux_matrix_node(p);
 		if (!p->err) {
 		    ret->v.m = matrix_get_submatrix(m, spec, 1,
@@ -9662,6 +9664,8 @@ static int set_series_obs_value (NODE *lhs, NODE *rhs, parser *p)
     return p->err;
 }
 
+#define NEW_ELEM 0
+
 #define ok_submatrix_op(o) (o == B_ASN  || o == B_DOTASN || \
 			    o == B_ADD  || o == B_SUB ||    \
 			    o == B_MUL  || o == B_DIV)
@@ -9741,7 +9745,11 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 	int i = mspec_get_row_index(spec);
 	int j = mspec_get_col_index(spec);
 
+#if NEW_ELEM
+	m1->val[i] = na(y) ? M_NA : y;
+#else
 	gretl_matrix_set(m1, i-1, j-1, na(y) ? M_NA : y);
+#endif
 	return p->err; /* we're done */
     }
 
@@ -9761,7 +9769,11 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 		}
 		set_gretl_warning(W_GENNAN);
 	    }
+#if NEW_ELEM
+	    m1->val[i] = x;
+#else
 	    gretl_matrix_set(m1, i-1, j-1, x);
+#endif
 	}
 	return p->err; /* we're done */
     }

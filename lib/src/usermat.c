@@ -212,7 +212,7 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 	    }
 	}
     } else {
-	/* range or element */
+	/* range or exclusion */
 	int sr0 = sel->range[0];
 	int sr1 = sel->range[1];
 
@@ -302,24 +302,42 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 
 #define lhs_is_scalar(s,m) (s->type[0] == SEL_ELEMENT ||		\
 			    (m->rows == 1 && (s->type[0] == SEL_ALL || s->type[0] == SEL_NULL)) || \
-			    (s->type[0] == SEL_RANGE && s->sel[0].range[0] > 0 && \
+			    (s->type[0] == SEL_RANGE && \
 			     s->sel[0].range[0] == s->sel[0].range[1]))
 
 #define rhs_is_scalar(s,m) (s->type[1] == SEL_ELEMENT ||		\
 			    (m->cols == 1 && (s->type[1] == SEL_ALL || s->type[1] == SEL_NULL)) || \
-			    (s->type[1] == SEL_RANGE && s->sel[1].range[0] > 0 && \
+			    (s->type[1] == SEL_RANGE && \
 			     s->sel[1].range[0] == s->sel[1].range[1]))
+
+#define MAT_CONTIG 0 /* needs testing still */
+#define NEW_ELEM 0
+
+#if MAT_CONTIG
+#define CONTIG_DEBUG 0
+
+#if NEW_ELEM
+
+static int element_get_index (matrix_subspec *spec, const gretl_matrix *m)
+
+{
+    int i = spec->sel[0].range[0];
+    int j = spec->sel[1].range[0];
+
+    if (spec->type[0] == SEL_ELEMENT) {
+	return (j-1) * m->rows + (i-1);
+    } else {
+	return i > j ? (i-1) : (j-1);
+    }
+}
+
+#endif
 
 /* Catch the case of an implicit column or row specification for
    a sub-matrix of an (n x 1) or (1 x m) matrix; also catch the
    error of giving just one row/col spec for a matrix that has
    more than one row and more than one column.
 */
-
-#define MAT_CONTIG 0 /* needs testing still */
-
-#if MAT_CONTIG
-#define CONTIG_DEBUG 0
 
 int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 {
@@ -354,9 +372,17 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 	} else if (m->rows == 1 && spec->type[1] == SEL_NULL) {
 	    get_element = 1;
 	}
-#if CONTIG_DEBUG
+#if NEW_ELEM
 	if (get_element) {
-	    fprintf(stderr, "Get element\n");
+	    int k = element_get_index(spec, m);
+
+	    spec->type[0] = spec->type[1] = SEL_ELEMENT;
+	    spec->sel[0].range[0] = k;
+	    spec->sel[1].range[0] = 1;
+#if CONTIG_DEBUG
+	    fprintf(stderr, "Get element: k = %d\n", k);
+#endif
+	    return 0;
 	}
 #endif
     }
@@ -734,65 +760,6 @@ int matrix_replace_submatrix (gretl_matrix *M,
     return err;
 }
 
-static int check_for_exclusion (const gretl_matrix *M,
-				matrix_subspec *spec,
-				int i, int j)
-{
-    int ipos = i > 0;
-    int jpos = j > 0;
-
-    if (!ipos) i = -i;
-    if (!jpos) j = -j;
-
-    if (i == 0 || j == 0) {
-	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), 0);
-	return E_DATA;
-    } else if (i > M->rows || j > M->cols) {
-	gretl_errmsg_sprintf(_("Index value %d is out of bounds"),
-			     i > M->rows ? i : j);
-	return E_DATA;
-    } else {
-	int rdim = ipos ? 1 : M->rows - 1;
-	int cdim = jpos ? 1 : M->cols - 1;
-	int k, r = 1, c = 1;
-
-	spec->rslice = gretl_list_new(rdim);
-	spec->cslice = gretl_list_new(cdim);
-
-	if (spec->rslice == NULL || spec->cslice == NULL) {
-	    return E_ALLOC;
-	}
-
-	if (ipos) {
-	    /* include specified row only */
-	    spec->rslice[1] = i;
-	} else {
-	    /* exclude specified row */
-	    for (k=1; k<M->rows; k++) {
-		if (r == i) {
-		    r++;
-		}
-		spec->rslice[k] = r++;
-	    }
-	}
-
-	if (jpos) {
-	    /* include specified column only */
-	    spec->cslice[1] = j;
-	} else {
-	    /* exclude specified column */
-	    for (k=1; k<M->cols; k++) {
-		if (c == j) {
-		    c++;
-		}
-		spec->cslice[k] = c++;
-	    }
-	}
-    }
-
-    return 0;
-}
-
 static void matrix_transcribe_dates (gretl_matrix *targ,
 				     const gretl_matrix *src)
 {
@@ -830,23 +797,12 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
     } else if (spec->type[0] == SEL_ELEMENT) {
 	int i = mspec_get_row_index(spec);
 	int j = mspec_get_col_index(spec);
-	int keep_going = 0;
+	double x = matrix_get_element(M, i, j, err);
 
-	if (i > 0 && j > 0) {
-	    double x = matrix_get_element(M, i, j, err);
-
-	    if (!*err) {
-		S = gretl_matrix_from_scalar(x);
-	    }
-	} else {
-	    *err = check_for_exclusion(M, spec, i, j);
-	    if (*err == 0) {
-		keep_going = 1;
-	    }
+	if (!*err) {
+	    S = gretl_matrix_from_scalar(x);
 	}
-	if (!keep_going) {
-	    return S;
-	}
+	return S;
     }
 
     if (spec->rslice == NULL && spec->cslice == NULL) {
@@ -920,6 +876,27 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
     return S;
 }
 
+#if NEW_ELEM
+
+double matrix_get_element (const gretl_matrix *M, int i, int j,
+			   int *err)
+{
+    double x = NADBL;
+
+    if (M == NULL) {
+	*err = E_DATA;
+    } else if (i < 0 || i >= M->rows * M->cols) {
+	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), i);
+	*err = 1;
+    } else {
+	x = M->val[i];
+    }
+
+    return x;
+}
+
+#else
+
 double matrix_get_element (const gretl_matrix *M, int i, int j,
 			   int *err)
 {
@@ -943,6 +920,8 @@ double matrix_get_element (const gretl_matrix *M, int i, int j,
 
     return x;
 }
+
+#endif /* NEW_ELEM or not */
 
 /* copy a contiguous chunk of data out of @M */
 

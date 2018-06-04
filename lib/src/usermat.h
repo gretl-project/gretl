@@ -29,6 +29,7 @@ enum {
     SEL_DIAG,
     SEL_ALL,
     SEL_CONTIG,
+    SEL_EXCL,
     SEL_NULL
 };
 
