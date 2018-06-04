@@ -300,13 +300,15 @@ static int *mspec_make_list (int type, union msel *sel, int n,
     return slice;
 }
 
-#define lhs_is_scalar(s) (s->type[0] == SEL_ELEMENT || \
-			  (s->type[0] == SEL_RANGE && s->sel[0].range[0] > 0 &&	\
-			   s->sel[0].range[0] == s->sel[0].range[1]))
+#define lhs_is_scalar(s,m) (s->type[0] == SEL_ELEMENT ||		\
+			    (m->rows == 1 && (s->type[0] == SEL_ALL || s->type[0] == SEL_NULL)) || \
+			    (s->type[0] == SEL_RANGE && s->sel[0].range[0] > 0 && \
+			     s->sel[0].range[0] == s->sel[0].range[1]))
 
-#define rhs_is_scalar(s) (s->type[1] == SEL_ELEMENT || \
-			  (s->type[1] == SEL_RANGE && s->sel[1].range[0] > 0 &&	\
-			   s->sel[1].range[0] == s->sel[1].range[1]))
+#define rhs_is_scalar(s,m) (s->type[1] == SEL_ELEMENT ||		\
+			    (m->cols == 1 && (s->type[1] == SEL_ALL || s->type[1] == SEL_NULL)) || \
+			    (s->type[1] == SEL_RANGE && s->sel[1].range[0] > 0 && \
+			     s->sel[1].range[0] == s->sel[1].range[1]))
 
 /* Catch the case of an implicit column or row specification for
    a sub-matrix of an (n x 1) or (1 x m) matrix; also catch the
@@ -363,19 +365,31 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
     int get_contig = 0;
     int err = 0;
 
+#if 1
+    fprintf(stderr, "SS = (%d,%d,%d,%d), m is %dx%d\n",
+	    spec->sel[0].range[0], spec->sel[0].range[1],
+	    spec->sel[1].range[0], spec->sel[1].range[1],
+	    m->rows, m->cols);
+#endif
+
     if (m->rows == 0 || m->cols == 0) {
 	fprintf(stderr, "*** check subspec: m is %d x %d ***\n",
 		m->rows, m->cols);
 	return old_check(spec, m);
     }
 
-    if (isvec || rhs_is_scalar(spec)) {
-	if (lhs_is_scalar(spec)) {
-	    get_element = 1;
-	} else if (spec->type[0] == SEL_RANGE ||
-		   spec->type[0] == SEL_ALL) {
+    fprintf(stderr, "lh scalar %d, rh scalar %d\n",
+	    lhs_is_scalar(spec, m), rhs_is_scalar(spec, m));
+
+    if (lhs_is_scalar(spec, m) && rhs_is_scalar(spec, m)) {
+	fprintf(stderr, "Get element\n");
+	get_element = 1;
+    } else  if (isvec || rhs_is_scalar(spec, m)) {
+	if (spec->type[0] == SEL_RANGE ||
+	    spec->type[0] == SEL_ALL) {
 	    /* flag as contiguous */
-	    get_contig = 1;
+	    fprintf(stderr, "Get contig\n");
+	    get_contig = (spec->type[1] != SEL_MATRIX);
 	}
     }
 
@@ -401,6 +415,14 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 	    spec->type[0] = SEL_RANGE;
 	    mspec_set_row_index(spec, 1);
 	}
+    } else if (spec->type[1] == SEL_ALL) {
+	spec->type[1] = SEL_RANGE;
+	spec->sel[1].range[0] = 1;
+	spec->sel[1].range[1] = m->cols;
+    } else if (spec->type[0] == SEL_ALL) {
+	spec->type[0] = SEL_RANGE;
+	spec->sel[0].range[0] = 1;
+	spec->sel[0].range[1] = m->rows;
     }
 
     if (get_element) {
