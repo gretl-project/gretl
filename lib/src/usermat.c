@@ -321,75 +321,10 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 #if MAT_CONTIG
 #define CONTIG_DEBUG 0
 
-static int old_check (matrix_subspec *spec, const gretl_matrix *m)
-{
-    int err = 0;
-
-    if (spec->type[1] == SEL_NULL) {
-	/* we got only one row/col spec */
-	if (m->cols == 1) {
-	    /* OK: implicitly col = 1 */
-	    spec->type[1] = SEL_RANGE;
-	    mspec_set_col_index(spec, 1);
-	} else if (m->rows == 1) {
-	    /* OK: implicitly row = 1, and transfer the single
-	       given spec to the column dimension */
-	    spec->type[1] = spec->type[0];
-	    if (spec->type[1] == SEL_MATRIX) {
-		spec->sel[1].m = spec->sel[0].m;
-	    } else {
-		spec->sel[1].range[0] = spec->sel[0].range[0];
-		spec->sel[1].range[1] = spec->sel[0].range[1];
-	    }
-	    spec->type[0] = SEL_RANGE;
-	    mspec_set_row_index(spec, 1);
-	} else {
-	    gretl_errmsg_set(_("Ambiguous matrix index"));
-	    err = E_DATA;
-	}
-    }
-
-    if (spec->type[0] == SEL_RANGE && spec->type[1] == SEL_RANGE) {
-	if (spec->sel[0].range[0] == spec->sel[0].range[1] &&
-	    spec->sel[1].range[0] == spec->sel[1].range[1]) {
-	    spec->type[0] = spec->type[1] = SEL_ELEMENT;
-	}
-    }
-
-    return err;
-}
-
-static int handle_single_index (matrix_subspec *spec, const gretl_matrix *m,
-				int isvec)
-{
-    if (!isvec) {
-	gretl_errmsg_set(_("Ambiguous matrix index"));
-	return E_DATA;
-    } else if (m->cols == 1) {
-	/* OK: implicitly col = 1 */
-	spec->type[1] = SEL_RANGE;
-	mspec_set_col_index(spec, 1);
-    } else {
-	/* OK: implicitly row = 1, and transfer the single
-	   given spec to the column dimension */
-	spec->type[1] = spec->type[0];
-	if (spec->type[1] == SEL_MATRIX) {
-	    spec->sel[1].m = spec->sel[0].m;
-	} else {
-	    //spec->sel[1] = spec->sel[0];
-	    spec->sel[1].range[0] = spec->sel[0].range[0];
-	    spec->sel[1].range[1] = spec->sel[0].range[1];
-	}
-	spec->type[0] = SEL_RANGE;
-	mspec_set_row_index(spec, 1);
-    }
-
-    return 0;
-}
-
 int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 {
     int isvec = gretl_vector_get_length(m);
+    int rh_scalar;
     int get_element = 0;
     int get_contig = 0;
     int err = 0;
@@ -411,8 +346,10 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 	return 0;
     }
 
+    rh_scalar = rhs_is_scalar(spec, m);
+
     if (lhs_is_scalar(spec, m)) {
-	if (rhs_is_scalar(spec, m)) {
+	if (rh_scalar) {
 	    get_element = 1;
 	} else if (m->rows == 1 && spec->type[1] == SEL_NULL) {
 	    get_element = 1;
@@ -424,25 +361,18 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 #endif
     }
 
-    if (!get_element && (isvec || rhs_is_scalar(spec, m))) {
-	if (spec->type[0] == SEL_RANGE ||
-	    spec->type[0] == SEL_ALL) {
-	    /* flag as contiguous */
-	    get_contig = (spec->type[1] != SEL_MATRIX);
+    if (!get_element && (isvec || rh_scalar) &&
+	(spec->type[0] == SEL_RANGE || spec->type[0] == SEL_ALL)) {
+	/* flag as contiguous? */
+	get_contig = (spec->type[1] != SEL_MATRIX);
 #if CONTIG_DEBUG
-	    if (get_contig) {
-		fprintf(stderr, "Get contig\n");
-	    }
-#endif
+	if (get_contig) {
+	    fprintf(stderr, "Get contig\n");
 	}
+#endif
     }
 
     if (spec->type[1] == SEL_NULL) {
-	err = handle_single_index(spec, m, isvec);
-	if (err) {
-	    return err;
-	}
-#if 0
 	/* we got only one row/col spec */
 	if (!isvec) {
 	    gretl_errmsg_set(_("Ambiguous matrix index"));
@@ -458,14 +388,12 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 	    if (spec->type[1] == SEL_MATRIX) {
 		spec->sel[1].m = spec->sel[0].m;
 	    } else {
-		spec->sel[1] = spec->sel[0];
-		//spec->sel[1].range[0] = spec->sel[0].range[0];
-		//spec->sel[1].range[1] = spec->sel[0].range[1];
+		spec->sel[1].range[0] = spec->sel[0].range[0];
+		spec->sel[1].range[1] = spec->sel[0].range[1];
 	    }
 	    spec->type[0] = SEL_RANGE;
 	    mspec_set_row_index(spec, 1);
 	}
-#endif
     } else if (spec->type[1] == SEL_ALL) {
 	spec->type[1] = SEL_RANGE;
 	spec->sel[1].range[0] = 1;
