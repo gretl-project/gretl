@@ -4285,11 +4285,15 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
     }
 
     if (l->t == DUM) {
-	if (l->v.idnum == DUM_DIAG) {
-	    spec->type[0] = SEL_DIAG;
-	    spec->type[1] = SEL_ALL;
+	if (r != NULL) {
+	    p->err = E_INVARG;
 	} else {
-	    p->err = E_TYPES;
+	    if (l->v.idnum == DUM_DIAG) {
+		spec->type[0] = SEL_DIAG;
+		spec->type[1] = SEL_ALL;
+	    } else {
+		p->err = E_TYPES;
+	    }
 	}
 	goto finished;
     } else if (ridx > 0 && cidx > 0) {
