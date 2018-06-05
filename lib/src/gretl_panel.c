@@ -2173,6 +2173,53 @@ static int re_hatvars_prep (panelmod_t *pan)
     }
 }
 
+/* When calculating DW using the fixed-effects residuals,
+   in the context of estimation of the random-effects
+   specification, we need to expand up the residual series
+   temporarily.
+*/
+
+static int expand_fe_uhat (MODEL *femod, panelmod_t *pan)
+{
+    double *uhat = NULL;
+    int NT = pan->pooled->full_n;
+    int i, s, t;
+
+    uhat = malloc(NT * sizeof *uhat);
+    if (uhat == NULL) {
+	return E_ALLOC;
+    }
+
+    for (t=0; t<NT; t++) {
+	uhat[t] = NADBL;
+    }
+
+    s = 0;
+    for (i=0; i<pan->nunits; i++) {
+	int ti, Ti = pan->unit_obs[i];
+
+	if (Ti == 0) {
+	    continue;
+	}
+	for (ti=0; ti<Ti; ti++) {
+	    t = big_index(pan, s);
+	    uhat[t] = femod->uhat[s];
+	    if (s == 0) {
+		femod->t1 = t;
+	    } else if (s == femod->nobs - 1) {
+		femod->t2 = t;
+	    }
+	    s++;
+	}
+    }
+
+    /* replace the uhat array on @femod */
+    free(femod->uhat);
+    femod->uhat = uhat;
+
+    return 0;
+}
+
 /* Fix uhat and yhat in two cases.
 
    (a) When we estimated fixed effects using a de-meaned dataset we
@@ -2745,9 +2792,10 @@ static int within_variance (panelmod_t *pan,
 		clear_model(&femod);
 	    }
 	} else {
-	    if (0 && (pan->opt & OPT_U)) {
-		/* not ready yet! */
-		panel_dwstat(&femod, pan);
+	    if (pan->opt & OPT_U) {
+		if (expand_fe_uhat(&femod, pan) == 0) {
+		    panel_dwstat(&femod, pan);
+		}
 	    }
 	    clear_model(&femod);
 	}
