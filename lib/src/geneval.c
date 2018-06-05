@@ -17080,6 +17080,9 @@ static int save_generated_var (parser *p, PRN *prn)
 	    no_decl = 1;
 	    p->targ = NUM;
 	    p->flags |= P_NODECL;
+	} else if (matrix_element_node(r)) {
+	    p->targ = NUM;
+	    p->flags |= P_NODECL;
 	} else {
 	    p->targ = r->t;
 	}

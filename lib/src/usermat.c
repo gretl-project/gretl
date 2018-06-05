@@ -371,6 +371,11 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 	    lhs_is_scalar(spec, m), rhs_is_scalar(spec, m));
 #endif
 
+    if (spec->type[0] == SEL_DIAG) {
+	/* nothing to check */
+	return 0;
+    }
+
     if (m->rows == 0 || m->cols == 0) {
 	fprintf(stderr, "*** check subspec: m is %d x %d ***\n",
 		m->rows, m->cols);
