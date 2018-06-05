@@ -302,18 +302,17 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 
 #define lhs_is_scalar(s,m) (s->type[0] == SEL_ELEMENT ||		\
 			    (m->rows == 1 && (s->type[0] == SEL_ALL || s->type[0] == SEL_NULL)) || \
-			    (s->type[0] == SEL_RANGE && \
-			     s->sel[0].range[0] == s->sel[0].range[1]))
+			    (s->type[0] == SEL_RANGE && s->sel[0].range[0] == s->sel[0].range[1]))
 
 #define rhs_is_scalar(s,m) (s->type[1] == SEL_ELEMENT ||		\
 			    (m->cols == 1 && (s->type[1] == SEL_ALL || s->type[1] == SEL_NULL)) || \
-			    (s->type[1] == SEL_RANGE && \
-			     s->sel[1].range[0] == s->sel[1].range[1]))
+			    (s->type[1] == SEL_RANGE && s->sel[1].range[0] == s->sel[1].range[1]))
 
 #define MAT_CONTIG 0 /* needs testing still */
-#define NEW_ELEM 0
+#define NEW_ELEM 0   /* note: requires MAT_CONTIG */
 
 #if MAT_CONTIG
+
 #define CONTIG_DEBUG 0
 
 #if NEW_ELEM
@@ -323,12 +322,20 @@ static int element_get_index (matrix_subspec *spec, const gretl_matrix *m)
 {
     int i = spec->sel[0].range[0];
     int j = spec->sel[1].range[0];
+    int k;
 
-    if (spec->type[0] == SEL_ELEMENT) {
-	return (j-1) * m->rows + (i-1);
+    if (spec->type[0] == SEL_ELEMENT ||
+	(spec->type[0] == SEL_RANGE && spec->type[1] == SEL_RANGE)) {
+	k = (j-1) * m->rows + (i-1);
     } else {
-	return i > j ? (i-1) : (j-1);
+	k = i > j ? (i-1) : (j-1);
     }
+
+#if CONTIG_DEBUG
+    fprintf(stderr, "Get element: i=%d, j=%d, k=%d\n", i, j, k);
+#endif
+
+    return k;
 }
 
 #endif
@@ -348,11 +355,18 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
     int err = 0;
 
 #if CONTIG_DEBUG
-    fprintf(stderr, "types = (%d,%d), SS = (%d,%d,%d,%d), m is %dx%d\n",
-	    spec->type[0], spec->type[1],
-	    spec->sel[0].range[0], spec->sel[0].range[1],
-	    spec->sel[1].range[0], spec->sel[1].range[1],
-	    m->rows, m->cols);
+    fprintf(stderr, "types = (%d,%d), ",  spec->type[0], spec->type[1]);
+    if (spec->type[0] == SEL_MATRIX) {
+	fputs("matrix sel, ", stderr);
+    } else {
+	fprintf(stderr, "S0 = (%d,%d), ", spec->sel[0].range[0], spec->sel[0].range[1]);
+    }
+    if (spec->type[1] == SEL_MATRIX) {
+	fputs("matrix sel, ", stderr);
+    } else {
+	fprintf(stderr, "S1 = (%d,%d), ", spec->sel[1].range[0], spec->sel[1].range[1]);
+    }
+    fprintf(stderr, "m is %dx%d\n", m->rows, m->cols);
     fprintf(stderr, "lh scalar %d, rh scalar %d\n",
 	    lhs_is_scalar(spec, m), rhs_is_scalar(spec, m));
 #endif
@@ -374,14 +388,9 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 	}
 #if NEW_ELEM
 	if (get_element) {
-	    int k = element_get_index(spec, m);
-
+	    spec->sel[0].range[0] = element_get_index(spec, m);
 	    spec->type[0] = spec->type[1] = SEL_ELEMENT;
-	    spec->sel[0].range[0] = k;
 	    spec->sel[1].range[0] = 1;
-#if CONTIG_DEBUG
-	    fprintf(stderr, "Get element: k = %d\n", k);
-#endif
 	    return 0;
 	}
 #endif
@@ -887,7 +896,7 @@ double matrix_get_element (const gretl_matrix *M, int i, int j,
 	*err = E_DATA;
     } else if (i < 0 || i >= M->rows * M->cols) {
 	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), i);
-	*err = 1;
+	*err = E_INVARG;
     } else {
 	x = M->val[i];
     }

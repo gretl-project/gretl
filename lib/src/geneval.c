@@ -9743,11 +9743,11 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 	   a single element of an existing matrix
 	*/
 	int i = mspec_get_row_index(spec);
-	int j = mspec_get_col_index(spec);
 
 #if NEW_ELEM
 	m1->val[i] = na(y) ? M_NA : y;
 #else
+	int j = mspec_get_col_index(spec);
 	gretl_matrix_set(m1, i-1, j-1, na(y) ? M_NA : y);
 #endif
 	return p->err; /* we're done */

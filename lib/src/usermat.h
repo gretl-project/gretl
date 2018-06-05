@@ -23,14 +23,14 @@
 #define MSEL_MAX -999
 
 enum {
-    SEL_RANGE,
-    SEL_ELEMENT,
-    SEL_MATRIX,
-    SEL_DIAG,
-    SEL_ALL,
-    SEL_CONTIG,
-    SEL_EXCL,
-    SEL_NULL
+      SEL_NULL,
+      SEL_RANGE,
+      SEL_ELEMENT,
+      SEL_MATRIX,
+      SEL_DIAG,
+      SEL_ALL,
+      SEL_CONTIG,
+      SEL_EXCL
 };
 
 typedef struct matrix_subspec_ matrix_subspec;
