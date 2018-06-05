@@ -3080,13 +3080,21 @@ static NODE *matrix_transpose_node (NODE *n, parser *p)
     if (starting(p)) {
 	if (is_tmp_node(n)) {
 	    /* transpose temp matrix in place */
-	    p->err = gretl_matrix_transpose_in_place(n->v.m);
+	    if (n->v.m->is_complex) {
+		p->err = gretl_ctran_in_place(n->v.m);
+	    } else {
+		p->err = gretl_matrix_transpose_in_place(n->v.m);
+	    }
 	    ret = n;
 	} else {
 	    /* create transpose as new matrix */
 	    ret = aux_matrix_node(p);
 	    if (!p->err) {
-		ret->v.m = gretl_matrix_copy_transpose(n->v.m);
+		if (n->v.m->is_complex) {
+		    ret->v.m = gretl_ctran(n->v.m, &p->err);
+		} else {
+		    ret->v.m = gretl_matrix_copy_transpose(n->v.m);
+		}
 		if (ret->v.m == NULL) {
 		    p->err = E_ALLOC;
 		}
@@ -3913,7 +3921,12 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    ret->v.m = gretl_matrix_get_diagonal(m, &p->err);
 	    break;
 	case F_TRANSP:
-	    ret->v.m = gretl_matrix_copy_transpose(m);
+	    if (m->is_complex) {
+		fprintf(stderr, "complex\n");
+		ret->v.m = gretl_ctran(m, &p->err);
+	    } else {
+		ret->v.m = gretl_matrix_copy_transpose(m);
+	    }
 	    break;
 	case F_VEC:
 	    ret->v.m = user_matrix_vec(m, &p->err);
@@ -17509,7 +17522,11 @@ void gen_save_or_print (parser *p, PRN *prn)
 	if (p->ret == NULL) {
 	    return;
 	} else if (p->ret->t == MAT) {
-	    gretl_matrix_print_to_prn(p->ret->v.m, p->lh.name, p->prn);
+	    if (p->ret->v.m->is_complex) {
+		complex_matrix_print(p->ret->v.m, p->lh.name, p->prn);
+	    } else { 
+		gretl_matrix_print_to_prn(p->ret->v.m, p->lh.name, p->prn);
+	    }
 	} else if (p->ret->t == LIST) {
 	    if (p->lh.name[0] != '\0') {
 		gretl_list_print(get_list_by_name(p->lh.name),

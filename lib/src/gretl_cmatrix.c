@@ -821,7 +821,9 @@ gretl_matrix *gretl_cmatrix (const gretl_matrix *Re,
 	C->val[ic+1] = Im->val[i];
 	ic += 2;
     }
-
+    
+    C->is_complex = 1;
+    
     return C;
 }
 
@@ -890,7 +892,51 @@ gretl_matrix *gretl_ctran (const gretl_matrix *A, int *err)
 	}
     }
 
+    C->is_complex = 1;
+    
     return C;
+}
+
+int gretl_ctran_in_place (gretl_matrix *A)
+{
+    gretl_matrix *C = NULL;
+    cmplx *a, *c, aij;
+    int i, j, ra, rc;
+    int err = 0;
+
+    if (!cmatrix_validate(A, 0)) {
+	return E_INVARG;
+    }
+
+    C = gretl_matrix_alloc(2 * A->cols, A->rows / 2);
+    if (C == NULL) {
+	return E_ALLOC;
+    }
+
+    a = (cmplx *) A->val;
+    c = (cmplx *) C->val;
+    ra = A->rows / 2;
+    rc = C->rows / 2;
+
+    for (j=0; j<A->cols; j++) {
+	for (i=0; i<ra; i++) {
+	    aij = a[j*ra+i];
+	    aij.i = -aij.i;
+	    c[i*rc+j] = aij;
+	}
+    }
+
+    A->rows = C->rows;
+    A->cols = C->cols;
+    
+    free(A->val);
+    A->val = C->val;
+    gretl_matrix_destroy_info(A);
+
+    C->val = NULL;
+    gretl_matrix_free(C);
+    
+    return err;
 }
 
 /* return cexp() of a complex argument given as a 2-vector */

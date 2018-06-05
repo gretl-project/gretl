@@ -2343,7 +2343,8 @@ int print_user_var_by_name (const char *name,
     if (u->type == GRETL_TYPE_DOUBLE) {
 	print_scalar_by_name(name, prn);
     } else if (u->type == GRETL_TYPE_MATRIX) {
-	if (opt & OPT_C) {
+	gretl_matrix *tmp = u->ptr;
+	if (tmp->is_complex || opt & OPT_C) {
 	    err = complex_matrix_print(u->ptr, name, prn);
 	} else {
 	    gretl_matrix_print_to_prn(u->ptr, name, prn);

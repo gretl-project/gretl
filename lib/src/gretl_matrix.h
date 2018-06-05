@@ -73,6 +73,7 @@ typedef struct gretl_matrix_ {
     int rows;
     int cols;
     double *val;
+    int is_complex;
     /*< private >*/
     matrix_info *info;
 } gretl_matrix;
@@ -192,6 +193,10 @@ typedef struct gretl_matrix_block_ gretl_matrix_block;
                                    (m)->cols == 1)
 
 #define gretl_is_null_matrix(m) (m == NULL || m->rows == 0 || m->cols == 0)
+
+#define gretl_is_complex_matrix(m) (m != NULL && m->is_complex == 1)
+
+#define gretl_set_complex_matrix(m, i) (m->is_complex = i)
 
 int get_gretl_matrix_err (void);
 

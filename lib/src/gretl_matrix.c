@@ -259,6 +259,7 @@ gretl_matrix *gretl_matrix_alloc (int rows, int cols)
 
     m->rows = rows;
     m->cols = cols;
+    m->is_complex = 0;
     m->info = NULL;
 
     return m;
@@ -402,6 +403,7 @@ gretl_matrix_block *gretl_matrix_block_new (gretl_matrix **pm, ...)
 	for (i=1; i<B->n; i++) {
 	    m = B->matrix[i-1];
 	    B->matrix[i]->val = m->val + (m->rows * m->cols);
+	    B->matrix[i]->is_complex = 0;
 	}
     } 
 
@@ -969,6 +971,8 @@ gretl_matrix_copy_mod (const gretl_matrix *m, int mod)
 	gretl_matrix_copy_info(c, m);
     }
 
+    c->is_complex = m->is_complex;
+    
     return c;
 }
 
@@ -986,6 +990,7 @@ static gretl_matrix *matrix_copy_plain (const gretl_matrix *m)
 	int n = c->rows * c->cols;
 
 	memcpy(c->val, m->val, n * sizeof *m->val);
+	c->is_complex = m->is_complex;
     }
 
     return c;
@@ -1031,6 +1036,7 @@ static gretl_matrix *gretl_matrix_copy_tmp (const gretl_matrix *a)
 	b->cols = a->cols;
 	b->info = NULL;
 	memcpy(b->val, a->val, sz);
+	b->is_complex = a->is_complex;
     }
 
     return b;
@@ -2591,6 +2597,7 @@ int gretl_matrix_inscribe_I (gretl_matrix *m, int row, int col, int n)
     
     return 0;
 }
+
 
 /**
  * gretl_matrix_transpose_in_place:
