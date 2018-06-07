@@ -484,7 +484,7 @@ char *session_graph_make_path (char *path, const char *fname)
 	/* should be OK */
 	strcpy(path, fname);
     } else {
-	char *p = strrchr(fname, SLASH);
+	const char *p = path_last_slash_const(fname);
 
 	if (p != NULL) {
 	    sprintf(path, "%s%s", session.dirname, p);
@@ -1237,7 +1237,7 @@ void bundle_add_as_icon (GtkAction *action, gpointer p)
 static void
 session_name_from_session_file (char *sname, const char *fname)
 {
-    const char *p = strrchr(fname, SLASH);
+    const char *p = path_last_slash_const(fname);
     char *q;
 
     if (p != NULL) {
@@ -1783,8 +1783,8 @@ static void relpath_from_fname (char *path, const char *fname)
 
     strcpy(path, ".");
 
-    p = (*fname == SLASH)? fname + 1 : fname;
-    p = strrchr(p, SLASH);
+    p = IS_SLASH(*fname) ? fname + 1 : fname;
+    p = path_last_slash_const(p);
 
     if (p != NULL) {
 	strcat(path, p + 1);

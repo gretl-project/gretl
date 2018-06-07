@@ -205,8 +205,8 @@ static int post_process_savename (char *fname, int action, gpointer data)
 
 static void script_window_update (windata_t *vwin, const char *fname)
 {
+    const char *p = path_last_slash_const(fname);
     gchar *trfname, *title;
-    const char *p = strrchr(fname, SLASH);
 
     /* update internal filename record */
     strcpy(vwin->fname, fname);
@@ -457,7 +457,7 @@ static void filesel_open_session (const char *fname)
 
 static char *suggested_savename (const char *fname)
 {
-    const char *ss = strrchr(fname, SLASH);
+    const char *ss = path_last_slash_const(fname);
     char *s, *sfx;
 
     if (ss == NULL) {
@@ -483,7 +483,7 @@ static char *suggested_savename (const char *fname)
 
 static char *suggested_exportname (const char *fname, int action)
 {
-    const char *ss = strrchr(fname, SLASH);
+    const char *ss = path_last_slash_const(fname);
     char *s, *sfx;
 
     if (ss == NULL) {

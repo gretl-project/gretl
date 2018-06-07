@@ -1049,7 +1049,7 @@ void set_sample_label (DATASET *dset)
     if (dlabel != NULL) {
 	if (strlen(datafile) > 2) {
 	    /* data file open already */
-	    const char *p = strrchr(datafile, SLASH);
+	    const char *p = path_last_slash_const(datafile);
 	    gchar *trfname;
 
 	    if (p != NULL) {

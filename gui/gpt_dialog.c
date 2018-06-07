@@ -879,7 +879,7 @@ static gboolean maybe_append_user_bars_file (GtkComboBox *combo,
     }
 
     if (ed->user_barsfile != NULL) {
-	const char *p = strrchr(ed->user_barsfile, SLASH);
+	const char *p = path_last_slash_const(ed->user_barsfile);
 	const char *show = (p != NULL)? (p+1) : ed->user_barsfile;
 
 	combo_box_append_text(combo, show);
@@ -1540,7 +1540,7 @@ void set_plotbars_filename (const char *fname, gpointer data)
 	}
     } else {
 	/* we got a completed file selection */
-	const char *p = strrchr(fname, SLASH);
+	const char *p = path_last_slash_const(fname);
 	const char *show = (p != NULL)? (p+1) : fname;
 	int had_userfile = ed->user_barsfile != NULL;
 

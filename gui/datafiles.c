@@ -109,7 +109,7 @@ static char *full_path (char *s1, const char *s2)
 	n--;
     }
     
-    if (s1[n-1] == SLASH) {
+    if (IS_SLASH(s1[n-1])) {
 	sprintf(fpath, "%s%s", s1, s2);
     } else {
 	sprintf(fpath, "%s%c%s", s1, SLASH, s2);
@@ -2571,7 +2571,7 @@ static int gfn_paths_match (const char *p0, const char *p1,
 	size_t n = strlen(p0);
 
 	if (strlen(p1) > n && !strncmp(p1, p0, n) &&
-	    p1[n] == SLASH) {
+	    IS_SLASH(p1[n])) {
 	    ret = !strcmp(p1 + n + 1, pkgname);
 	}
     }
@@ -2603,7 +2603,7 @@ static void update_gfn_browser (const char *pkgname,
     }
 
     dirname = g_strdup(fname);
-    p = strrchr(dirname, SLASH);
+    p = path_last_slash(dirname);
     if (p != NULL) {
 	*p = '\0';
     }

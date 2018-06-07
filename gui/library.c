@@ -8292,7 +8292,7 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
 	char *s, *p, scriptdir[MAXLEN];
 
 	strcpy(scriptdir, vwin->fname);
-	p = strrchr(scriptdir, SLASH);
+	p = path_last_slash(scriptdir);
 	if (p != NULL) {
 	    s = getcwd(cwd, MAXLEN);
 	    if (s == NULL) {
@@ -9548,7 +9548,7 @@ static int script_delete_function_package (const char *param,
 	    /* delete package file(s) */
 	    err = delete_function_package(fname);
 	    if (!err) {
-		p = strrchr(fname, SLASH);
+		p = path_last_slash(fname);
 		if (p != NULL) {
 		    *p = '\0';
 		}
@@ -9622,7 +9622,7 @@ int script_install_function_package (const char *pkgname,
 	    const char *p;
 
 	    gretl_maybe_switch_dir(pkgname);
-	    p = strrchr(pkgname, SLASH);
+	    p = path_last_slash_const(pkgname);
 	    if (p != NULL) {
 		fname = gretl_strdup(p + 1);
 	    }

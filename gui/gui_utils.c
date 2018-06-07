@@ -801,9 +801,37 @@ void mark_dataset_as_modified (void)
     }
 }
 
+char *path_last_slash (char *path)
+{
+    char *p = strrchr(path, SLASH);
+
+#ifdef G_OS_WIN32
+    if (p == NULL) {
+	/* allow for both back- and forward slashes */
+	p = strrchr(path, '/');
+    }
+#endif
+
+    return p;
+}
+
+const char *path_last_slash_const (const char *path)
+{
+    const char *p = strrchr(path, SLASH);
+
+#ifdef G_OS_WIN32
+    if (p == NULL) {
+	/* allow for both back- and forward slashes */
+	p = strrchr(path, '/');
+    }
+#endif
+
+    return p;
+}
+
 char *gretl_basename (char *dest, const char *src, int addscore)
 {
-    const char *p = strrchr(src, SLASH);
+    const char *p = path_last_slash_const(src);
 
     if (p != NULL) {
 	/* take last part of src filename */

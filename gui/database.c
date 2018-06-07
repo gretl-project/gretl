@@ -292,7 +292,7 @@ static const char *trimmed_db_name (const char *fname)
     const char *s = fname;
 
     if (strstr(fname, gretl_binbase()) != NULL) {
-	s = strrchr(fname, SLASH);
+	s = path_last_slash_const(fname);
 	if (s != NULL) {
 	    return s + 1;
 	}
@@ -1055,8 +1055,8 @@ make_db_index_window (int action, char *fname, char *buf,
 	return 1;
     }
 
-    if (buf == NULL && strrchr(fname, SLASH) != NULL) {
-	title = strrchr(fname, SLASH) + 1;
+    if (buf == NULL && path_last_slash(fname) != NULL) {
+	title = path_last_slash(fname) + 1;
     } else {
 	title = fname;
     }
@@ -2146,11 +2146,7 @@ static int unpack_book_data (const char *fname)
     errno = 0;
 
     strcpy(path, fname);
-
-    p = strrchr(path, SLASH);
-    if (p == NULL && SLASH == '\\') {
-	p = strrchr(path, '/');
-    }
+    p = path_last_slash(path);
     if (p != NULL) {
 	*p = '\0';
     }

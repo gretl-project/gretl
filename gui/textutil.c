@@ -694,7 +694,7 @@ void window_print (GtkAction *action, windata_t *vwin)
 
     if (vwin->role == EDIT_HANSL ||
 	vwin->role == VIEW_SCRIPT) {
-	const char *p = strrchr(vwin->fname, SLASH);
+	const char *p = path_last_slash_const(vwin->fname);
 	
 	if (p != NULL) {
 	    filename = p + 1;

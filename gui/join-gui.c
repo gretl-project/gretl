@@ -283,7 +283,7 @@ static void set_join_top_label (join_info *jinfo,
     const char *p;
     gchar *s;
 
-    p = strrchr(fname, SLASH);
+    p = path_last_slash_const(fname);
     if (p != NULL) {
 	p++;
     } else {

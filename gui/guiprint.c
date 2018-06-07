@@ -2467,11 +2467,12 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
     *texbase = 0;
     strncat(texbase, texfile, dot);
 
-    texshort = strrchr(texbase, SLASH) + 1;
+    texshort = path_last_slash(texbase);
     if (texshort == NULL) {
 	errbox(_("Failed to process TeX file"));
 	return;
-    } 
+    }
+    texshort++;
 
     err = latex_compile(texshort);
 

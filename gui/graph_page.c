@@ -64,7 +64,7 @@ static void gpage_filenames_init (const char *base)
 	} else if (has_suffix(gpage_base, ".ps")) {
 	    gpage_base[strlen(gpage_base) - 3] = '\0';
 	}
-	p = strrchr(gpage_base, SLASH);
+	p = path_last_slash_const(gpage_base);
 	if (p != NULL) {
 	    strcpy(gpage_tex_base, p + 1);
 	} else {
@@ -645,7 +645,7 @@ static gchar *gpage_switch_compiler (int term)
     int len0, have_pdf;
 
     strcpy(tmp, latex);
-    p = strrchr(tmp, SLASH);
+    p = path_last_slash(tmp);
     if (p == NULL) {
 	len0 = 0;
 	p = tmp;

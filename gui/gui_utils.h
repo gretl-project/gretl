@@ -36,6 +36,12 @@
 
 #define vwin_content_changed(v) (v->flags & VWIN_CONTENT_CHANGED)
 
+#ifdef G_OS_WIN33
+#define IS_SLASH(c) (c == '\\' || c == '/')
+#else
+#define IS_SLASH(c) (c == '/')
+#endif
+
 int vwin_is_editing (windata_t *vwin);
 
 int copyfile (const char *src, const char *dest);
@@ -158,6 +164,10 @@ GtkWidget *make_bundle_save_menu (windata_t *vwin);
 void *gui_get_plugin_function (const char *funcname);
 
 int get_imported_data (char *fname, int ftype, int append);
+
+char *path_last_slash (char *path);
+
+const char *path_last_slash_const (const char *path);
 
 char *gretl_basename (char *dest, const char *src, int addscore);
 

@@ -2002,7 +2002,7 @@ static int get_x12a_doc_path (char *path, const char *fname)
 	char *p;
 
 	strcpy(path, x12a);
-	p = strrchr(path, SLASH);
+	p = path_last_slash(path);
 	if (p != NULL) {
 	    sprintf(p + 1, "docs%c%s", SLASH, fname);
 	    ret = 1;

@@ -1447,7 +1447,7 @@ static gboolean insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	*tagname = '\0';
 	strncat(tagname, text, TAGLEN-1);
     } else if (page == PDF_PAGE) {
-	char *p = strrchr(text, SLASH);
+	const char *p = path_last_slash_const(text);
 
 	*tagname = '\0';
 	strncat(tagname, text, TAGLEN-1);
