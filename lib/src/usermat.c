@@ -374,11 +374,23 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
     if (spec->type[0] == SEL_DIAG) {
 	/* nothing to check */
 	return 0;
+    } else if (spec->type[0] == SEL_SINGLE) {
+	if (!isvec) {
+	    gretl_errmsg_set(_("Ambiguous matrix index"));
+	    return E_DATA;
+	} else {
+	    spec->type[0] = spec->type[1] = SEL_ELEMENT;
+	    spec->sel[0].range[0] -= 1;
+	    spec->sel[1].range[0] = 1;
+	    return 0;
+	}
     }
 
     if (m->rows == 0 || m->cols == 0) {
+#if 0
 	fprintf(stderr, "*** check subspec: m is %d x %d ***\n",
 		m->rows, m->cols);
+#endif
 	// return old_check(spec, m);
 	return 0;
     }

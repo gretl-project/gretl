@@ -4244,6 +4244,8 @@ static void print_mspec (matrix_subspec *mspec)
 
 #endif
 
+#define NEW_ELEM 0
+
 /* compose a sub-matrix specification, from scalars and/or
    index matrices */
 
@@ -4275,6 +4277,14 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
 	    gretl_errmsg_sprintf(_("Index value %d is out of bounds"), 0);
 	    p->err = E_INVARG;
 	}
+#if NEW_ELEM
+	if (!p->err && r == NULL && ridx > 0) {
+	    spec->type[0] = SEL_SINGLE;
+	    spec->type[1] = SEL_NULL;
+	    mspec_set_row_index(spec, ridx);
+	    goto finished;
+	}
+#endif
     }
     if (!p->err && r != NULL && r->t == NUM) {
 	cidx = node_get_int(r, p);
@@ -9680,8 +9690,6 @@ static int set_series_obs_value (NODE *lhs, NODE *rhs, parser *p)
 
     return p->err;
 }
-
-#define NEW_ELEM 0
 
 #define ok_submatrix_op(o) (o == B_ASN  || o == B_DOTASN || \
 			    o == B_ADD  || o == B_SUB ||    \

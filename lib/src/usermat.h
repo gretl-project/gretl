@@ -30,7 +30,8 @@ enum {
       SEL_DIAG,
       SEL_ALL,
       SEL_CONTIG,
-      SEL_EXCL
+      SEL_EXCL,
+      SEL_SINGLE
 };
 
 typedef struct matrix_subspec_ matrix_subspec;
