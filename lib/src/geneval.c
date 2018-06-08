@@ -6786,26 +6786,40 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
 	    }
 	    if (!p->err) {
 		int nobj = 0;
+		int *pnobj = uv == NULL ? NULL : &nobj;
 
-		ret->v.str = jfunc(l->v.str, r->v.str, &nobj, &p->err);
+		ret->v.str = jfunc(l->v.str, r->v.str, pnobj, &p->err);
 		if (!p->err && uv != NULL) {
-		    user_var_set_scalar_value(uv, (double) nobj);
+		    user_var_set_scalar_value(uv, (double) *pnobj);
 		}
 	    }
 	} else if (f == F_XMLGET) {
 	    char *(*xfunc) (const char *, void *, GretlType,
 			    int *, int *);
+	    user_var *uv = NULL;
 
-	    xfunc = get_plugin_function("xml_get");
-	    if (xfunc == NULL) {
-		p->err = E_FOPEN;
-	    } else {
+	    if (!null_or_empty(x)) {
+		uv = ptr_node_get_uvar(x, NUM, p);
+	    }
+	    if (!p->err) {
+		xfunc = get_plugin_function("xml_get");
+		if (xfunc == NULL) {
+		    p->err = E_FOPEN;
+		}
+	    }
+	    if (!p->err) {
+		int nobj = 0;
+		int *pnobj = uv == NULL ? NULL : &nobj;
+
 		if (r->t == ARRAY) {
 		    ret->v.str = xfunc(l->v.str, r->v.a, GRETL_TYPE_ARRAY,
-				       NULL, &p->err);
+				       pnobj, &p->err);
 		} else {
 		    ret->v.str = xfunc(l->v.str, r->v.str, GRETL_TYPE_STRING,
-				       NULL, &p->err);
+				       pnobj, &p->err);
+		}
+		if (!p->err && uv != NULL) {
+		    user_var_set_scalar_value(uv, (double) *pnobj);
 		}
 	    }
 	} else {
@@ -15207,7 +15221,10 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_JSONGET:
+    case F_XMLGET:
 	if (l->t == STR && m->t == STR) {
+	    ret = two_string_func(l, m, r, t->t, p);
+	} else if (l->t == STR && m->t == ARRAY && t->t == F_XMLGET) {
 	    ret = two_string_func(l, m, r, t->t, p);
 	} else {
 	    node_type_error(t->t, (l->t == STR)? 2 : 1,
@@ -15216,7 +15233,6 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_STRSTR:
     case F_INSTRING:
-    case F_XMLGET:
 	if (l->t == STR && r->t == STR) {
 	    ret = two_string_func(l, r, NULL, t->t, p);
 	} else if (l->t == STR && r->t == ARRAY && t->t == F_XMLGET) {

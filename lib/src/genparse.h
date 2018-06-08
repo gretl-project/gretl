@@ -367,7 +367,6 @@ enum {
     F_BCAST,
     F_ALLREDUCE,
     F_GENSERIES,
-    F_XMLGET,
     F_KPSSCRIT,
     F_STRINGIFY,
     F_SQUARE,
@@ -439,6 +438,7 @@ enum {
     F_NUMHESS,
     F_STRSPLIT,
     F_HPFILT,
+    F_XMLGET,
     F_JSONGET,
     HF_CEIGG,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */

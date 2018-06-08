@@ -102,7 +102,7 @@ static int xml_get_multi (xmlDocPtr doc,
     }
 
     if (nrmax == 0) {
-	return E_DATA;
+	return 0;
     }
 
     for (i=0; i<nrmax && !err; i++) {
@@ -180,6 +180,7 @@ char *xml_get (const char *data, void *ppath,
 {
     xmlXPathContextPtr context;
     xmlDocPtr doc = NULL;
+    int allow_fail;
     char *ret = NULL;
     PRN *prn = NULL;
     int n = 0;
@@ -188,6 +189,7 @@ char *xml_get (const char *data, void *ppath,
 	if (n_objects != NULL) {
 	    *n_objects = 0;
 	}
+	*err = E_DATA;
 	return NULL;
     }
 
@@ -212,6 +214,8 @@ char *xml_get (const char *data, void *ppath,
     }
 #endif
 
+    allow_fail = (n_objects != NULL);
+
     prn = gretl_print_new(GRETL_PRINT_BUFFER, err);
 
     if (!*err && ptype == GRETL_TYPE_STRING) {
@@ -220,14 +224,14 @@ char *xml_get (const char *data, void *ppath,
 	char *path = (char *) ppath;
 
 	optr = getnodeset(doc, (xmlChar *) path, context);
-	if (optr == NULL) {
-	    *err = 1;
-	} else {
+	if (optr != NULL) {
 	    *err = real_xml_get(doc, optr, &n, prn);
 	    if (!*err) {
 		ret = gretl_print_steal_buffer(prn);
 	    }
 	    xmlXPathFreeObject(optr);
+	} else if (!allow_fail) {
+	    *err = E_DATA;
 	}
     } else if (!*err) {
 	/* an array of XPath specs */
@@ -257,7 +261,7 @@ char *xml_get (const char *data, void *ppath,
 	}
 	if (!*err) {
 	    *err = xml_get_multi(doc, oparr, ns, &n, prn);
-	    if (!*err) {
+	    if (!*err && n > 0) {
 		ret = gretl_print_steal_buffer(prn);
 	    }
 	}
@@ -275,6 +279,10 @@ char *xml_get (const char *data, void *ppath,
 
     xmlXPathFreeContext(context);
     xmlFreeDoc(doc);
+
+    if (!*err && n == 0) {
+	ret = gretl_strdup("");
+    }
 
     return ret;
 }

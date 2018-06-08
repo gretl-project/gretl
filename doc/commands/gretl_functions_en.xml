@@ -10273,6 +10273,21 @@
 	  or commas it is wrapped in double quotes.
 	</para>
 	<para>
+	  By default an error is flagged if <argname>path</argname> is
+	  not matched in the XML buffer, but this behavior is
+	  modified if you pass the third, optional argument: in that
+	  case the argument retrieves a count of the matches and an
+	  empty string is returned if there are none. Example call:
+	</para>
+	<code>
+	  ngot = 0
+	  ret = xmlget(xbuf, "//some/thing", &amp;ngot)
+	</code>
+	<para>
+	  However, an error is still flagged in case of a malformed
+	  query.
+	</para>	
+	<para>
 	  A good introduction to XPath usage and syntax can be found
 	  at
 	  <url>https://www.w3schools.com/xml/xml_xpath.asp</url>. The
