@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <localization language="it">
 
  <gentext key="args"          text="Argomenti:  "/>
@@ -12,7 +12,7 @@
  <gentext key="output"        text="Risultato:  "/>
  <gentext key="guidebook"     text="la guida all'uso di gretl"/>
  <gentext key="funcchap"      text="la guida alle funzioni di gretl"/>
- <gentext key="menupath"      text="Accesso dal menù:    "/>
+ <gentext key="menupath"      text="Accesso dal menÃ¹:    "/>
  <gentext key="otheraccess"   text="Accesso alternativo: "/>
  <gentext key="scriptcommand" text="Comando script: "/>
  <gentext key="or"            text=" o "/>
@@ -46,6 +46,7 @@
  <gentext key="matrixref"     text="riferimento a matrice"/>
  <gentext key="seriesref"     text="riferimento a serie"/>
  <gentext key="bundleref"     text="riferimento a bundle"/>
+ <gentext key="scalarref"     text="riferimento a scalare"/>
  <gentext key="cvec"          text="vettore colonna"/>
  <gentext key="rvec"          text="vettore riga"/>
  <gentext key="list"          text="lista"/>

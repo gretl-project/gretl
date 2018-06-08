@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <localization language="es">
 
  <gentext key="args"          text="Argumentos: "/>
@@ -6,16 +6,16 @@
  <gentext key="altforms"      text="Variantes:  "/>
  <gentext key="syntax"        text="Sintaxis:   "/>
  <gentext key="opts"          text="Opciones:   "/>
- <gentext key="opt"           text="Opción:     "/>
+ <gentext key="opt"           text="OpciÃ³n:     "/>
  <gentext key="examples"      text="Ejemplos:   "/>
  <gentext key="example"       text="Ejemplo:    "/>
  <gentext key="output"        text="Output:     "/>
  <gentext key="guidebook"     text="el manual de gretl"/>
- <gentext key="menupath"      text="Menú gráfico: "/>
+ <gentext key="menupath"      text="MenÃº grÃ¡fico: "/>
  <gentext key="otheraccess"   text="Otro acceso:  "/>
- <gentext key="scriptcommand" text="Instrucción de guión: "/>
+ <gentext key="scriptcommand" text="InstrucciÃ³n de guiÃ³n: "/>
  <gentext key="or"            text=" o "/>
- <gentext key="Seealso"       text="Ver También "/>
+ <gentext key="Seealso"       text="Ver TambiÃ©n "/>
  <gentext key="anyfloat"      text="scalar, series or matrix"/>
  <gentext key="series-or-vec" text="series or vector"/>
  <gentext key="series-or-mat" text="series or matrix"/>
@@ -45,6 +45,7 @@
  <gentext key="matrixref"     text="reference to matrix"/>
  <gentext key="seriesref"     text="reference to series"/>
  <gentext key="bundleref"     text="reference to bundle"/>
+ <gentext key="scalarref"     text="reference to scalar"/>
  <gentext key="cvec"          text="column vector"/>
  <gentext key="rvec"          text="row vector"/>
  <gentext key="list"          text="list"/>

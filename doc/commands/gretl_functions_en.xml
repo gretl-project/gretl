@@ -4764,6 +4764,7 @@
       <fnargs>
 	<fnarg type="string">buf</fnarg>
 	<fnarg type="string">path</fnarg>
+	<fnarg optional="true" type="scalarref">nread</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4782,6 +4783,21 @@
 	  If the object to which <argname>path</argname> refers is an
 	  array, the members are printed one per line in the returned
 	  string.
+	</para>
+	<para>
+	  By default an error is flagged if <argname>path</argname> is
+	  not matched in the JSON buffer, but this behavior is
+	  modified if you pass the third, optional argument: in that
+	  case the argument retrieves a count of the matches and an
+	  empty string is returned if there are none. Example call:
+	</para>
+	<code>
+	  ngot = 0
+	  ret = jsonget(jbuf, "$.some.thing", &amp;ngot)
+	</code>
+	<para>
+	  However, an error is still flagged in case of a malformed
+	  query.
 	</para>
 	<para>
 	  An accurate account of JsonPath syntax can be found at

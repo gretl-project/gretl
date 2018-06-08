@@ -1,33 +1,33 @@
-<?xml version="1.0" encoding="ISO-8859-1" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <localization language="pt">
 
  <gentext          key="args" text="Argumentos: "/>
  <gentext           key="arg" text="Argumento:  "/>
  <gentext      key="altforms" text="Variantes:  "/>
  <gentext        key="syntax" text="Sintaxe:    "/>
- <gentext          key="opts" text="Opções:     "/>
- <gentext           key="opt" text="Opção:      "/>
+ <gentext          key="opts" text="OpÃ§Ãµes:     "/>
+ <gentext           key="opt" text="OpÃ§Ã£o:      "/>
  <gentext      key="examples" text="Exemplos:   "/>
  <gentext       key="example" text="Exemplo:    "/>
  <gentext       key="output"  text="Resultado:  "/>
- <gentext     key="guidebook" text="guia de utilização do Gretl"/>
- <gentext     key="funcchap"  text="manual das funções do Gretl"/>
+ <gentext     key="guidebook" text="guia de utilizaÃ§Ã£o do Gretl"/>
+ <gentext     key="funcchap"  text="manual das funÃ§Ãµes do Gretl"/>
  <gentext      key="menupath" text="Caminho de Menu:    "/>
  <gentext   key="otheraccess" text="Acesso alternativo: "/>
  <gentext key="scriptcommand" text="Comando:    "/>
  <gentext key="or" text=" ou "/>
- <gentext key="Seealso" text="Ver também"/>
- <gentext key="anyfloat"      text="escalar, série ou matriz"/>
- <gentext key="series-or-vec" text="série ou vetor"/>
- <gentext key="series-or-mat" text="série ou matriz"/>
- <gentext key="series-list-or-mat" text="série, lista ou matriz"/>
- <gentext key="scalar-or-series" text="escalar ou série"/>
- <gentext key="int-or-list"   text="número inteiro ou lista"/>
- <gentext key="int-or-string" text="número inteiro ou texto"/>
- <gentext key="series-or-list" text="série ou lista"/>
+ <gentext key="Seealso" text="Ver tambÃ©m"/>
+ <gentext key="anyfloat"      text="escalar, sÃ©rie ou matriz"/>
+ <gentext key="series-or-vec" text="sÃ©rie ou vetor"/>
+ <gentext key="series-or-mat" text="sÃ©rie ou matriz"/>
+ <gentext key="series-list-or-mat" text="sÃ©rie, lista ou matriz"/>
+ <gentext key="scalar-or-series" text="escalar ou sÃ©rie"/>
+ <gentext key="int-or-list"   text="nÃºmero inteiro ou lista"/>
+ <gentext key="int-or-string" text="nÃºmero inteiro ou texto"/>
+ <gentext key="series-or-list" text="sÃ©rie ou lista"/>
  <gentext key="scalar-or-vec" text="escalar ou vetor"/>
  <gentext key="scalar-or-matrix" text="escalar ou matriz"/>
- <gentext key="anyfloat-or-list" text="escalar, série, matriz ou lista"/>
+ <gentext key="anyfloat-or-list" text="escalar, sÃ©rie, matriz ou lista"/>
  <gentext key="list-or-string" text="lista ou texto"/>
  <gentext key="list-or-mat"    text="lista ou matriz"/>
  <gentext key="matrix-or-bundle" text="matriz ou bundle"/>
@@ -35,17 +35,18 @@
  <gentext key="scalar"        text="escalar"/>
  <gentext key="bundle"        text="lote"/>
  <gentext key="pscalar"       text="escalar entre 0 e 1"/>
- <gentext key="int"           text="número inteiro"/>
+ <gentext key="int"           text="nÃºmero inteiro"/>
  <gentext key="bool"          text="booleano"/>
- <gentext key="series"        text="série"/>
+ <gentext key="series"        text="sÃ©rie"/>
  <gentext key="vector"        text="vetor"/>
  <gentext key="matrix"        text="matriz"/>
  <gentext key="smatrix"       text="matriz quadrada"/>
- <gentext key="symmat"        text="matriz simétrica"/>
+ <gentext key="symmat"        text="matriz simÃ©trica"/>
  <gentext key="pdmat"         text="matriz positiva definida"/>
- <gentext key="matrixref"     text="referência a matriz"/>
- <gentext key="seriesref"     text="referência a série"/>
- <gentext key="bundleref"     text="referência a lote"/>
+ <gentext key="matrixref"     text="referÃªncia a matriz"/>
+ <gentext key="seriesref"     text="referÃªncia a sÃ©rie"/>
+ <gentext key="bundleref"     text="referÃªncia a lote"/>
+ <gentext key="scalarref"     text="referÃªncia a escalar"/>
  <gentext key="cvec"          text="vetor coluna"/>
  <gentext key="rvec"          text="vetor linha"/>
  <gentext key="list"          text="lista"/>
@@ -58,14 +59,14 @@
  <gentext key="strings-or-list"  text="cadeia de texto ou lista"/>
  <gentext key="char"          text="caractere"/>
  <gentext key="coeffname"     text="nome do coeficiente"/>
- <gentext key="sslist"        text="escalar, série ou lista"/>
- <gentext key="smlist"        text="série, matriz ou lista"/>
- <gentext key="fncall"        text="chamada a função"/>
+ <gentext key="sslist"        text="escalar, sÃ©rie ou lista"/>
+ <gentext key="smlist"        text="sÃ©rie, matriz ou lista"/>
+ <gentext key="fncall"        text="chamada a funÃ§Ã£o"/>
  <gentext key="optional"      text="opcional"/>
  <gentext key="conditional"   text="condicional"/>
  <gentext key="seebelow"      text="ver abaixo"/>
  <gentext key="varargs"       text="ver abaixo"/>
- <gentext key="chapter"       text="Capítulo"/>
+ <gentext key="chapter"       text="CapÃ­tulo"/>
  <gentext key="applies-to"    text="Aplica-se a"/> 
  
 </localization>
