@@ -336,17 +336,18 @@ function void HDsave(string outfilename, bundle *obj, int vnum[0])
             setinfo tmp[i] --graph-name="@sn"
         endloop
     
-        series tmpvarname = sum(tmp)
+        series tmpvar = sum(tmp)
         string gnam = sprintf("%s (stoch. component)", obj.Ynames[vnum])
-        setinfo tmpvarname --graph-name="@gnam"
-        tmp += tmpvarname
+        setinfo tmpvar --graph-name="@gnam"
+        tmp = tmpvar tmp	# put the line with the target var name first
     
         string tmpout = (outfilename == "display") ? "display" : sprintf("%s_%d", outfilename, vnum)
         plot tmp
             option time-series 
             option single-yaxis
             option with-boxes
-            option with-lines=tmpvarname
+            option with-lines=tmpvar
+            printf "set title \"HD for %s\"", obj.Ynames[vnum]
         end plot --output="@tmpout"
     endloop
 end function
@@ -368,18 +369,12 @@ function void GUI_plot(bundle *b, int ptype[0:2:0] \
     matrix tt = seq(0, b.horizon)'
   
     if ptype == 0
-        IRFplot(&b, 0, 0)	# experimental: all in one go
+        IRFplot(&b, 0, 0) # all in one go
 
     elif ptype == 1
-        # loop i=1..n -q
-        #     FEVDplot(&b, i)
-        # endloop
         FEVDplot(&b, 0)
         
     elif ptype == 2
-        # loop i=1..n -q
-        #    HDplot(&b, i)
-        # endloop
         HDplot(&b, 0)
     endif
 
