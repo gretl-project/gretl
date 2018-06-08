@@ -122,7 +122,7 @@ gretl_VAR_get_full_FEVD_matrix (const GRETL_VAR *var,
 				int *err);
 
 gretl_matrix *gretl_FEVD_from_bundle (gretl_bundle *b,
-				      int targ,
+				      int targ, int shock,
 				      const DATASET *dset,
 				      int *err);
 

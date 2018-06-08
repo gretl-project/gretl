@@ -4587,7 +4587,7 @@ static GRETL_VAR *VAR_from_bundle (gretl_bundle *b,
 }
 
 gretl_matrix *gretl_FEVD_from_bundle (gretl_bundle *b,
-				      int targ,
+				      int targ, int shock,
 				      const DATASET *dset,
 				      int *err)
 {

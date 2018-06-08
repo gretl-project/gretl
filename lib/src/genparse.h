@@ -381,7 +381,6 @@ enum {
     F_COR,
     F_STRSCRAPE,
     F_LRCOVAR,
-    F_FEVD,
     HF_CMMULT,
     HF_CFFT,
     HF_CMATRIX,
@@ -440,6 +439,7 @@ enum {
     F_HPFILT,
     F_XMLGET,
     F_JSONGET,
+    F_FEVD,
     HF_CEIGG,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,

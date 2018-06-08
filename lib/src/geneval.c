@@ -13244,12 +13244,13 @@ static NODE *dollar_var_node (NODE *t, parser *p)
     return ret;
 }
 
-static NODE *fevd_node (NODE *l, NODE *r, parser *p)
+static NODE *fevd_node (NODE *l, NODE *m, NODE *r, parser *p)
 {
     NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL) {
 	int targ = node_get_int(l, p);
+	int shock = node_get_int(m, p);
 
 	if (!p->err && !null_or_empty(r) && r->t != BUNDLE) {
 	    p->err = E_INVARG;
@@ -13259,7 +13260,7 @@ static NODE *fevd_node (NODE *l, NODE *r, parser *p)
 	    /* convert @targ to zero-based */
 	    targ -= 1;
 	    if (r->t == BUNDLE) {
-		ret->v.m = gretl_FEVD_from_bundle(r->v.b, targ,
+		ret->v.m = gretl_FEVD_from_bundle(r->v.b, targ, shock,
 						  p->dset, &p->err);
 	    } else {
 		GretlObjType otype;
@@ -14870,9 +14871,9 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_FEVD:
-	/* integer target plus optional bundle */
-	if (scalar_node(l)) {
-	    ret = fevd_node(l, r, p);
+	/* integer target, source plus optional bundle */
+	if (scalar_node(l) && scalar_node(m)) {
+	    ret = fevd_node(l, m, r, p);
 	} else {
 	    p->err = E_TYPES;
 	}
