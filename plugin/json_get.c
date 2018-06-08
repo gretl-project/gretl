@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* parsing of JSON buffer using the json-glib library */
@@ -54,10 +54,10 @@ static int output_json_node_value (JsonNode *node,
 
 #if 0
     fprintf(stderr, "jsonget: node type %s\n", g_type_name(type));
-#endif    
-    
+#endif
+
     if (!handled_type(type)) {
-	gretl_errmsg_sprintf("jsonget: unhandled object type '%s'", 
+	gretl_errmsg_sprintf("jsonget: unhandled object type '%s'",
 			     g_type_name(type));
 	err = E_DATA;
     } else if (type == G_TYPE_STRING) {
@@ -67,7 +67,7 @@ static int output_json_node_value (JsonNode *node,
 	    pputs(prn, s);
 	} else {
 	    err = E_DATA;
-	}	
+	}
     } else if (type == G_TYPE_DOUBLE) {
 	double x = json_node_get_double(node);
 
@@ -135,7 +135,8 @@ static int excavate_json_object (JsonNode *node,
 }
 
 static int real_json_get (JsonParser *parser, const char *pathstr,
-			  int *n_objects, PRN *prn)
+			  int *n_objects, int allow_fail,
+			  PRN *prn)
 {
     GError *gerr = NULL;
     JsonNode *match, *node;
@@ -151,7 +152,7 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
 	gretl_errmsg_set("jsonget: got null root node");
 	return E_DATA;
     }
-    
+
     path = json_path_new();
 
     if (!json_path_compile(path, pathstr, &gerr)) {
@@ -161,7 +162,7 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
 	    g_error_free(gerr);
 	} else {
 	    gretl_errmsg_set("jsonget: failed to compile JsonPath");
-	}	    
+	}
 	g_object_unref(path);
 	return E_DATA;
     }
@@ -169,9 +170,11 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
     match = json_path_match(path, node);
 
     if (null_node(match)) {
-	/* FIXME : maybe return empty string? */
+	if (match != NULL) {
+	    json_node_unref(match);
+	}
 	g_object_unref(path);
-	return E_DATA;
+	return allow_fail ? 0 : E_DATA;
     }
 
     /* in case we get floating-point output */
@@ -193,7 +196,7 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
 	if (null_node(node)) {
 	    gretl_errmsg_set("jsonget: failed to match JsonPath");
 	    ntype = 0;
-	    err = E_DATA;
+	    err = allow_fail ? 0 : E_DATA;
 	    goto bailout;
 	} else {
 	    ntype = json_node_get_value_type(node);
@@ -216,7 +219,7 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
 		    }
 		}
 	    } else {
-		gretl_errmsg_sprintf("jsonget: unhandled array type '%s'", 
+		gretl_errmsg_sprintf("jsonget: unhandled array type '%s'",
 				     g_type_name(ntype));
 		err = E_DATA;
 	    }
@@ -278,6 +281,7 @@ char *json_get (const char *data, const char *path, int *n_objects,
 	if (n_objects != NULL) {
 	    *n_objects = 0;
 	}
+	*err = E_DATA;
 	return NULL;
     }
 
@@ -299,9 +303,15 @@ char *json_get (const char *data, const char *path, int *n_objects,
 	PRN *prn = gretl_print_new(GRETL_PRINT_BUFFER, err);
 
 	if (!*err) {
-	    *err = real_json_get(parser, path, &n, prn);
+	    int allow_fail = n_objects != NULL;
+
+	    *err = real_json_get(parser, path, &n, allow_fail, prn);
 	    if (!*err) {
-		ret = gretl_print_steal_buffer(prn);
+		if (n == 0 && allow_fail) {
+		    ret = gretl_strdup("");
+		} else {
+		    ret = gretl_print_steal_buffer(prn);
+		}
 	    }
 	    gretl_print_destroy(prn);
 	}
@@ -313,7 +323,7 @@ char *json_get (const char *data, const char *path, int *n_objects,
 
     if (n_objects != NULL) {
 	*n_objects = n;
-    }    
+    }
 
     g_object_unref(parser);
 

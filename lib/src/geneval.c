@@ -3205,6 +3205,25 @@ static gretl_matrix *ptr_node_get_matrix (NODE *n, parser *p)
     return m;
 }
 
+static user_var *ptr_node_get_uvar (NODE *n, int t, parser *p)
+{
+    user_var *uv = NULL;
+
+    if (n->t == U_ADDR) {
+	NODE *nb = n->v.b1.b;
+
+	if (nb->t == t) {
+	    uv = nb->uv;
+	}
+    }
+
+    if (uv == NULL) {
+	p->err = E_TYPES;
+    }
+
+    return uv;
+}
+
 static const char *node_get_fncall (NODE *n, parser *p)
 {
     const char *ret = NULL;
@@ -6697,7 +6716,8 @@ static void strstr_escape (char *s)
     }
 }
 
-static NODE *two_string_func (NODE *l, NODE *r, int f, parser *p)
+static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
+			      int f, parser *p)
 {
     NODE *ret = NULL;
 
@@ -6753,12 +6773,24 @@ static NODE *two_string_func (NODE *l, NODE *r, int f, parser *p)
 	} else if (f == F_JSONGET) {
 	    char *(*jfunc) (const char *, const char *,
 			    int *, int *);
+	    user_var *uv = NULL;
 
-	    jfunc = get_plugin_function("json_get");
-	    if (jfunc == NULL) {
-		p->err = E_FOPEN;
-	    } else {
-		ret->v.str = jfunc(l->v.str, r->v.str, NULL, &p->err);
+	    if (!null_or_empty(x)) {
+		uv = ptr_node_get_uvar(x, NUM, p);
+	    }
+	    if (!p->err) {
+		jfunc = get_plugin_function("json_get");
+		if (jfunc == NULL) {
+		    p->err = E_FOPEN;
+		}
+	    }
+	    if (!p->err) {
+		int nobj = 0;
+
+		ret->v.str = jfunc(l->v.str, r->v.str, &nobj, &p->err);
+		if (!p->err && uv != NULL) {
+		    user_var_set_scalar_value(uv, (double) nobj);
+		}
 	    }
 	} else if (f == F_XMLGET) {
 	    char *(*xfunc) (const char *, void *, GretlType,
@@ -14072,7 +14104,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case B_HCAT:
 	if (l->t == STR) {
-	    ret = two_string_func(l, r, t->t, p);
+	    ret = two_string_func(l, r, NULL, t->t, p);
 	    break;
 	}
 	/* Falls through. */
@@ -15174,14 +15206,21 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, 0, STR, l, p);
 	}
 	break;
+    case F_JSONGET:
+	if (l->t == STR && m->t == STR) {
+	    ret = two_string_func(l, m, r, t->t, p);
+	} else {
+	    node_type_error(t->t, (l->t == STR)? 2 : 1,
+			    STR, (l->t == STR)? m : l, p);
+	}
+	break;
     case F_STRSTR:
     case F_INSTRING:
-    case F_JSONGET:
     case F_XMLGET:
 	if (l->t == STR && r->t == STR) {
-	    ret = two_string_func(l, r, t->t, p);
+	    ret = two_string_func(l, r, NULL, t->t, p);
 	} else if (l->t == STR && r->t == ARRAY && t->t == F_XMLGET) {
-	    ret = two_string_func(l, r, t->t, p);
+	    ret = two_string_func(l, r, NULL, t->t, p);
 	} else {
 	    node_type_error(t->t, (l->t == STR)? 2 : 1,
 			    STR, (l->t == STR)? r : l, p);
@@ -17539,7 +17578,7 @@ void gen_save_or_print (parser *p, PRN *prn)
 	} else if (p->ret->t == MAT) {
 	    if (p->ret->v.m->is_complex) {
 		complex_matrix_print(p->ret->v.m, p->lh.name, p->prn);
-	    } else { 
+	    } else {
 		gretl_matrix_print_to_prn(p->ret->v.m, p->lh.name, p->prn);
 	    }
 	} else if (p->ret->t == LIST) {
