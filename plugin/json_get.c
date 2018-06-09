@@ -171,7 +171,7 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
 
     if (null_node(match)) {
 	if (match != NULL) {
-	    json_node_unref(match);
+	    json_node_free(match);
 	}
 	g_object_unref(path);
 	return allow_fail ? 0 : E_DATA;
