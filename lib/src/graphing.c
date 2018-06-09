@@ -7055,7 +7055,7 @@ int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods,
     PlotType ptype;
     int err = 0;
 
-    V = gretl_VAR_get_FEVD_matrix(var, targ, periods, dset, &err);
+    V = gretl_VAR_get_FEVD_matrix(var, targ, 0, periods, dset, &err);
     if (V == NULL) {
 	return E_ALLOC;
     }

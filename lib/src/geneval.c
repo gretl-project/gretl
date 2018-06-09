@@ -13250,15 +13250,19 @@ static NODE *fevd_node (NODE *l, NODE *m, NODE *r, parser *p)
 
     if (ret != NULL) {
 	int targ = node_get_int(l, p);
-	int shock = node_get_int(m, p);
+	int shock = 0;
 
+	if (!p->err && !null_or_empty(m)) {
+	    shock = node_get_int(m, p);
+	}
 	if (!p->err && !null_or_empty(r) && r->t != BUNDLE) {
 	    p->err = E_INVARG;
 	}
 
 	if (!p->err) {
-	    /* convert @targ to zero-based */
+	    /* convert @targ, @shock to zero-based */
 	    targ -= 1;
+	    shock -= 1;
 	    if (r->t == BUNDLE) {
 		ret->v.m = gretl_FEVD_from_bundle(r->v.b, targ, shock,
 						  p->dset, &p->err);
@@ -13270,7 +13274,7 @@ static NODE *fevd_node (NODE *l, NODE *m, NODE *r, parser *p)
 		if (ptr == NULL || otype != GRETL_OBJ_VAR) {
 		    p->err = E_BADSTAT;
 		} else {
-		    ret->v.m = gretl_VAR_get_FEVD_matrix(ptr, targ, 0,
+		    ret->v.m = gretl_VAR_get_FEVD_matrix(ptr, targ, shock, 0,
 							 p->dset, &p->err);
 		}
 	    }
@@ -14872,7 +14876,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_FEVD:
 	/* integer target, source plus optional bundle */
-	if (scalar_node(l) && scalar_node(m)) {
+	if (scalar_node(l) && (null_or_empty(m) || scalar_node(m))) {
 	    ret = fevd_node(l, m, r, p);
 	} else {
 	    p->err = E_TYPES;

@@ -112,7 +112,8 @@ gretl_VAR_get_vma_matrix (const GRETL_VAR *var, const DATASET *dset,
 			  int *err);
 
 gretl_matrix *gretl_VAR_get_FEVD_matrix (const GRETL_VAR *var,
-					 int targ, int horizon,
+					 int targ, int shock,
+					 int horizon,
 					 const DATASET *dset,
 					 int *err);
 

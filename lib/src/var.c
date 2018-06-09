@@ -1954,7 +1954,8 @@ gretl_VAR_get_fcast_decomp (const GRETL_VAR *var,
 
 gretl_matrix *
 gretl_VAR_get_FEVD_matrix (const GRETL_VAR *var,
-			   int targ, int horizon,
+			   int targ, int shock,
+			   int horizon,
 			   const DATASET *dset,
 			   int *err)
 {
@@ -1969,16 +1970,23 @@ gretl_VAR_get_FEVD_matrix (const GRETL_VAR *var,
 	h = default_VAR_horizon(dset);
     }
 
-    if (targ < 0) {
+    if (targ < 0 && shock < 0) {
 	/* doing the whole thing */
 	k = n * n;
 	imin = 0;
 	imax = n;
-    } else {
-	/* doing one specific equation */
+    } else if (targ >= 0 && shock < 0) {
+	/* one target, all shocks */
 	k = n;
 	imin = targ;
 	imax = targ + 1;
+    } else if (targ < 0 && shock >= 0) {
+	/* all targets, one shock: not yet! */
+	*err = E_INVARG;
+	return NULL;
+    } else {
+	*err = E_INVARG;
+	return NULL;
     }
 
     V = gretl_matrix_alloc(h, k);
@@ -2014,7 +2022,7 @@ gretl_matrix *
 gretl_VAR_get_full_FEVD_matrix (const GRETL_VAR *var, const DATASET *dset,
 				int *err)
 {
-    return gretl_VAR_get_FEVD_matrix(var, -1, -1, dset, err);
+    return gretl_VAR_get_FEVD_matrix(var, -1, -1, -1, dset, err);
 }
 
 int var_max_order (const int *list, const DATASET *dset)
@@ -4570,7 +4578,9 @@ static GRETL_VAR *VAR_from_bundle (gretl_bundle *b,
 	}
     }
 
+#if 0
     gretl_matrix_print(var->A, "var->A, from bundle");
+#endif
 
     if (*err) {
 	/* clean up carefully! */
@@ -4595,7 +4605,7 @@ gretl_matrix *gretl_FEVD_from_bundle (gretl_bundle *b,
     gretl_matrix *ret = NULL;
 
     if (var != NULL) {
-	ret = gretl_VAR_get_FEVD_matrix(var, targ, 0, dset, err);
+	ret = gretl_VAR_get_FEVD_matrix(var, targ, shock, 0, dset, err);
 	/* nullify borrowed pointers */
 	var->A = var->C = NULL;
 	var->xlist = var->ylist = var->rlist = NULL;
