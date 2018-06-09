@@ -4128,12 +4128,18 @@ static GtkTextTagTable *gretl_console_tags_new (void)
     g_object_set(tag, "foreground", "red", NULL);
     gtk_text_tag_table_add(table, tag);
 
+    tag = gtk_text_tag_new("plain");
+    g_object_set(tag, "foreground", "black",
+		 "weight", PANGO_WEIGHT_MEDIUM, NULL);
+    gtk_text_tag_table_add(table, tag);
+
     return table;
 }
 
 void create_console (windata_t *vwin, int hsize, int vsize)
 {
     static GtkTextTagTable *console_tags = NULL;
+    GtkSourceLanguageManager *lm = NULL;
     GtkSourceBuffer *sbuf;
     GtkTextView *view;
     int cw;
@@ -4142,8 +4148,15 @@ void create_console (windata_t *vwin, int hsize, int vsize)
 	console_tags = gretl_console_tags_new();
     }
 
+    /* new as of 2018-06-09 */
+    lm = gtk_source_language_manager_get_default();
+    ensure_sourceview_path(lm);
+
     sbuf = gtk_source_buffer_new(console_tags);
     gtk_source_buffer_set_highlight_matching_brackets(sbuf, TRUE);
+    if (lm != NULL) {
+	g_object_set_data(G_OBJECT(sbuf), "languages-manager", lm);
+    }
 
     vwin->text = gtk_source_view_new_with_buffer(sbuf);
     vwin->sbuf = sbuf;
@@ -4170,6 +4183,7 @@ void create_console (windata_t *vwin, int hsize, int vsize)
 	gtk_window_set_default_size(GTK_WINDOW(vmain), hsize, vsize);
     }
 
+    sourceview_apply_language(vwin);
     gtk_text_view_set_editable(view, TRUE);
     gtk_text_view_set_cursor_visible(view, TRUE);
 }

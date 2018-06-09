@@ -274,13 +274,15 @@ static void print_result_to_console (GtkTextBuffer *buf,
     const char *prnbuf = gretl_print_get_buffer(state->prn);
 
     if (g_utf8_validate(prnbuf, -1, NULL)) {
-	gtk_text_buffer_insert(buf, iter, prnbuf, -1);
+	gtk_text_buffer_insert_with_tags_by_name(buf, iter, prnbuf, -1,
+						 "plain", NULL);
     } else {
 	gchar *trbuf = my_locale_to_utf8(prnbuf);
 
 	fprintf(stderr, "console text did not validate as utf8\n");
 	if (trbuf != NULL) {
-	    gtk_text_buffer_insert(buf, iter, trbuf, -1);
+	    gtk_text_buffer_insert_with_tags_by_name(buf, iter, trbuf, -1,
+						     "plain", NULL);
 	    g_free(trbuf);
 	}
     }
@@ -450,7 +452,8 @@ void gretl_console (void)
     gtk_text_buffer_get_start_iter(buf, &iter);
 
     /* insert intro string and first prompt */
-    gtk_text_buffer_insert(buf, &iter, _(intro), -1);
+    gtk_text_buffer_insert_with_tags_by_name(buf, &iter, _(intro), -1,
+					     "plain", NULL);
     console_insert_prompt(buf, &iter, "\n? ");
 
     gtk_widget_grab_focus(vwin->text);
