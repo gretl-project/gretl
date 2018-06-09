@@ -1970,23 +1970,16 @@ gretl_VAR_get_FEVD_matrix (const GRETL_VAR *var,
 	h = default_VAR_horizon(dset);
     }
 
-    if (targ < 0 && shock < 0) {
-	/* doing the whole thing */
+    if (targ < 0) {
+	/* do the whole thing */
 	k = n * n;
 	imin = 0;
 	imax = n;
-    } else if (targ >= 0 && shock < 0) {
-	/* one target, all shocks */
+    } else {
+	/* got a specific target */
 	k = n;
 	imin = targ;
 	imax = targ + 1;
-    } else if (targ < 0 && shock >= 0) {
-	/* all targets, one shock: not yet! */
-	*err = E_INVARG;
-	return NULL;
-    } else {
-	*err = E_INVARG;
-	return NULL;
     }
 
     V = gretl_matrix_alloc(h, k);
@@ -2010,7 +2003,47 @@ gretl_VAR_get_FEVD_matrix (const GRETL_VAR *var,
 	}
     }
 
-    if (*err) {
+    /* If @shock is specific, not all, we now proceed to carve
+       out the columns of @V that are actually wanted. This is
+       not as efficient as it might be -- we're computing more
+       than we need above -- but it's simple and will do for
+       the present.
+    */
+
+    if (!*err && shock >= 0) {
+	gretl_matrix *V2 = NULL;
+
+	if (targ >= 0) {
+	    /* just one column wanted */
+	    V2 = gretl_column_vector_alloc(h);
+	    if (V2 != NULL) {
+		for (j=0; j<h; j++) {
+		    V2->val[j] = gretl_matrix_get(V, j, shock);
+		}
+	    }
+	} else {
+	    /* n columns wanted */
+	    V2 = gretl_matrix_alloc(h, n);
+	    if (V2 != NULL) {
+		k = shock;
+		for (j=0; j<n; j++) {
+		    for (i=0; i<h; i++) {
+			vjk = gretl_matrix_get(V, i, k);
+			gretl_matrix_set(V2, i, j, vjk);
+		    }
+		    k += n;
+		}
+	    }
+	}
+	if (V2 == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    gretl_matrix_free(V);
+	    V = V2;
+	}
+    }
+
+    if (*err && V != NULL) {
 	gretl_matrix_free(V);
 	V = NULL;
     }
