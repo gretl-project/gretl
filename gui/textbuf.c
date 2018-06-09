@@ -4130,7 +4130,7 @@ static GtkTextTagTable *gretl_console_tags_new (void)
 
     tag = gtk_text_tag_new("plain");
     g_object_set(tag, "foreground", "black",
-		 "weight", PANGO_WEIGHT_MEDIUM, NULL);
+		 "weight", PANGO_WEIGHT_NORMAL, NULL);
     gtk_text_tag_table_add(table, tag);
 
     return table;
