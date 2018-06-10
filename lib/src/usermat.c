@@ -308,7 +308,7 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 			    (m->cols == 1 && (s->type[1] == SEL_ALL || s->type[1] == SEL_NULL)) || \
 			    (s->type[1] == SEL_RANGE && s->sel[1].range[0] == s->sel[1].range[1]))
 
-#define MAT_CONTIG 0 /* needs testing still */
+#define MAT_CONTIG 1 /* should be OK now? */
 #define NEW_ELEM 0   /* note: requires MAT_CONTIG */
 
 #if MAT_CONTIG
