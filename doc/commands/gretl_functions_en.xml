@@ -283,6 +283,10 @@
 	  in variable <math>j</math> is therefore found in column
 	  (<math>i</math> &minus; 1)<math>p</math> + <math>j</math>.
 	</para>
+	<para>
+	  For a more flexible variant of this functionality, see the
+	  <fncref targ="fevd"/> function.
+	</para>
       </description>
     </function>
 
@@ -883,6 +887,35 @@
 	      # do something linux-specific
 	  endif
 	</code>
+      </description>
+    </function>
+
+    <function name="$system" section="access" output="bundle">
+      <description>
+	<para>
+	  Must follow estimation of a system of equations via one of
+	  the commands <cmdref targ="system"/>, <cmdref targ="var"/>
+	  or <cmdref targ="vecm"/>; returns a bundle containing many
+	  items of data pertaining to the system. All the relevant
+	  regular system accessors are included: these are referenced
+	  by keys that are the same as the regular accessor names,
+	  minus the leading dollar sign. So for example the residuals
+	  appear under the key <lit>uhat</lit> and the coefficients
+	  under <lit>coeff</lit>. The keys for additional information
+	  should hopefully be fairly self-explanatory. To see what's
+	  available you can get a copy of the bundle and print its
+	  content, as in
+	</para>
+	<code>
+	  var 4 y1 y2 y2
+	  bundle b = $system
+	  print b
+	</code>
+	<para>
+	  A bundle obtained in this way can be passed as the final,
+	  optional argument to the functions <fncref targ="fevd"/>
+	  and <fncref targ="irf"/>.
+	</para>
       </description>
     </function>
 
@@ -3294,6 +3327,59 @@
       </description>
     </function>
 
+    <function name="fevd" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="int">target</fnarg>
+	<fnarg type="int">shock</fnarg>
+	<fnarg type="bundle" optional="true">sys</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  This function provides a more flexible alternative to the
+	  accessor <fncref targ="$fevd"/> for obtaining a forecast
+	  error variance decomposition (FEVD) matrix following
+	  estimation of a VAR or VECM. Without the final optional
+	  argument, it is available only when the last model estimated
+	  was a VAR or VECM. Alternatively, information on such a
+	  system can be stored in a bundle via the <fncref
+	  targ="$system"/> accessor and subsequently passed to
+	  <lit>fevd</lit>.
+	</para>
+	<para>
+	  The <argname>target</argname> and <argname>shock</argname>
+	  argument take the form of 1-based indices of endogenous
+	  variables in the system, with 0 taken to mean
+	  <quote>all</quote>. The following code fragment illustrates
+	  usage. In the first example the matrix <lit>fe1</lit> holds
+	  the shares of the FEVD for <lit>y1</lit> due to each of
+	  <lit>y1</lit>, <lit>y2</lit> and <lit>y3</lit> (the rows
+	  therefore summing to 1). In the second, <lit>fe2</lit> holds
+	  the contribution of <lit>y2</lit> to the forecast error
+	  variance of all three variables (so the rows do not sum to
+	  1). In the third case the return value is a column vector
+	  showing the <quote>own share</quote> of the FEVD for
+	  <lit>y1</lit>.
+	</para>
+	<code>
+	  var 4 y1 y2 y3
+	  bundle vb = $system
+	  matrix fe1 = fevd(1, 0, vb)
+	  matrix fe2 = fevd(0, 2, vb)
+	  matrix fe3 = fevd(1, 1, vb)
+	</code>
+	<para>
+	  The number of periods (rows) over which the decomposition is
+	  traced is determined automatically based on the frequency of
+	  the data, but this can be overridden via the
+	  <lit>horizon</lit> argument to the <cmdref targ="set"/>
+	  command, as in <lit>set horizon 10</lit>.
+	</para>
+	<para>
+	  <seelist><fncref targ="irf"/></seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="fft" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
@@ -4568,13 +4654,20 @@
 	<fnarg type="int">target</fnarg>
 	<fnarg type="int">shock</fnarg>
 	<fnarg type="pscalar" optional="true">alpha</fnarg>
+	<fnarg type="bundle" optional="true">sys</fnarg>
       </fnargs>  
       <description>
 	<para>
-	  This function is available only when the last model
-	  estimated was a VAR or VECM. It returns a matrix containing
-	  the estimated response of the <argname>target</argname>
-	  variable to an impulse of one standard deviation in the
+	  Without the final optional argument, this function is
+	  available only when the last model estimated was a VAR or
+	  VECM. Alternatively, information on a VAR or VECM can be
+	  stored in a bundle via the <fncref targ="$system"/> accessor
+	  and subsequently passed to <lit>irf</lit>.
+	</para>
+	<para>
+	  The return value is a matrix containing the estimated
+	  response of the <argname>target</argname> variable to an
+	  impulse of one standard deviation in the
 	  <argname>shock</argname> variable. These variables are
 	  identified by their position in the model specification: for
 	  example, if <argname>target</argname> and
@@ -4597,6 +4690,9 @@
 	  traced is determined automatically based on the frequency
 	  of the data, but this can be overridden via the <cmdref
 	  targ="set"/> command, as in <lit>set horizon 10</lit>.
+	</para>
+	<para>
+	  <seelist><fncref targ="fevd"/></seelist>
 	</para>
       </description>
     </function>
