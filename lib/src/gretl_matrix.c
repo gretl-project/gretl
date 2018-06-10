@@ -623,6 +623,7 @@ static void gretl_matrix_init_full (gretl_matrix *m,
     m->cols = cols;
     m->val = val;
     m->info = NULL;
+    m->is_complex = 0;
 }
 
 /**
@@ -637,6 +638,7 @@ void gretl_matrix_init (gretl_matrix *m)
     m->rows = m->cols = 0;
     m->val = NULL;
     m->info = NULL;
+    m->is_complex = 0;
 }
 
 /**

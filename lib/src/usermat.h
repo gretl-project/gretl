@@ -54,6 +54,8 @@ struct matrix_subspec_ {
 #define mspec_set_row_index(m,i) (m->sel[0].range[0] = m->sel[0].range[1] = (i))
 #define mspec_set_col_index(m,j) (m->sel[1].range[0] = m->sel[1].range[1] = (j))
 
+#define mspec_get_element(m) (m->sel[0].range[0])
+
 #define gretl_is_matrix(s) (get_matrix_by_name(s) != NULL)
 
 matrix_subspec *matrix_subspec_new (void);

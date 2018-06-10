@@ -3941,7 +3941,6 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    break;
 	case F_TRANSP:
 	    if (m->is_complex) {
-		fprintf(stderr, "complex\n");
 		ret->v.m = gretl_ctran(m, &p->err);
 	    } else {
 		ret->v.m = gretl_matrix_copy_transpose(m);
@@ -4234,12 +4233,15 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
 static void print_mspec (matrix_subspec *mspec)
 {
     const char *mstypes[] = {
-	"SEL_RANGE",
-	"SEL_ELEMENT",
-	"SEL_MATRIX",
-	"SEL_DIAG",
-	"SEL_ALL",
-	"SEL_NULL"
+         "SEL_NULL",
+         "SEL_RANGE",
+         "SEL_ELEMENT",
+         "SEL_MATRIX",
+         "SEL_DIAG",
+         "SEL_ALL",
+         "SEL_CONTIG",
+         "SEL_EXCL"
+         "SEL_SINGLE"
     };
 
     fprintf(stderr, "mspec at %p:\n", (void *) mspec);
@@ -4687,7 +4689,9 @@ static int test_for_single_range (matrix_subspec *spec,
 {
     int ret = 0;
 
-    if (spec->type[0] == SEL_RANGE &&
+    if (spec->type[0] == SEL_SINGLE) {
+	ret = spec->sel[0].range[0];
+    } else if (spec->type[0] == SEL_RANGE &&
 	spec->type[1] == SEL_NULL) {
 	if (spec->sel[0].range[0] == spec->sel[0].range[1]) {
 	    ret = spec->sel[0].range[0];
@@ -9398,7 +9402,9 @@ static int array_index_from_mspec (matrix_subspec *spec, int *err)
 {
     int idx = 0;
 
-    if (spec->type[0] == SEL_RANGE &&
+    if (spec->type[0] == SEL_SINGLE) {
+	idx = spec->sel[0].range[0];
+    } else if (spec->type[0] == SEL_RANGE &&
 	spec->type[1] == SEL_NULL &&
 	spec->sel[0].range[0] == spec->sel[0].range[1]) {
 	idx = spec->sel[0].range[0];
@@ -9813,12 +9819,14 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
         /* straight assignment of a scalar value to
 	   a single element of an existing matrix
 	*/
-	int i = mspec_get_row_index(spec);
-
 #if NEW_ELEM
+	int i = mspec_get_element(spec);
+
 	m1->val[i] = na(y) ? M_NA : y;
 #else
+	int i = mspec_get_row_index(spec);
 	int j = mspec_get_col_index(spec);
+
 	gretl_matrix_set(m1, i-1, j-1, na(y) ? M_NA : y);
 #endif
 	return p->err; /* we're done */
@@ -15344,8 +15352,9 @@ static NODE *eval (NODE *t, parser *p)
  bailout:
 
 #if EDEBUG
-    fprintf(stderr, "eval (t->t = %03d, %s): returning NODE at %p, err %d\n",
-	    t->t, getsymb(t->t), (void *) ret, p->err);
+    fprintf(stderr, "eval (t->t = %03d, %s): returning NODE %s at %p, err %d\n",
+	    t->t, getsymb(t->t), ret == NULL ? "nil" : getsymb(ret->t),
+	    (void *) ret, p->err);
     if (t->t == SERIES)
 	fprintf(stderr, " (SERIES node, xvec at %p, vnum = %d)\n",
 		(void *) t->v.xvec, t->vnum);
