@@ -26,6 +26,13 @@
 #include "uservar.h"
 
 #define MDEBUG 0
+#define CONTIG_DEBUG 0
+
+#define mspec_get_offset(m) (m->sel[0].range[0])
+#define mspec_get_n_elem(m) (m->sel[0].range[1])
+
+#define mspec_set_offset(m,o) (m->sel[0].range[0] = o)
+#define mspec_set_n_elem(m,n) (m->sel[0].range[1] = n)
 
 /**
  * get_matrix_by_name:
@@ -308,12 +315,7 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 			    (m->cols == 1 && (s->type[1] == SEL_ALL || s->type[1] == SEL_NULL)) || \
 			    (s->type[1] == SEL_RANGE && s->sel[1].range[0] == s->sel[1].range[1]))
 
-#define MAT_CONTIG 1 /* should be OK now? */
-#define NEW_ELEM 0   /* note: requires MAT_CONTIG */
-
-#if MAT_CONTIG
-
-#define CONTIG_DEBUG 0
+#define NEW_ELEM 0  /* not just yet? */
 
 #if NEW_ELEM
 
@@ -338,7 +340,7 @@ static int element_get_index (matrix_subspec *spec, const gretl_matrix *m)
     return k;
 }
 
-#endif
+#endif /* NEW_ELEM */
 
 /* Catch the case of an implicit column or row specification for
    a sub-matrix of an (n x 1) or (1 x m) matrix; also catch the
@@ -500,58 +502,16 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 	    }
 	}
 	spec->type[0] = SEL_CONTIG;
-	spec->sel[0].range[0] = (j-1) * m->rows + (i-1);
-	spec->sel[0].range[1] = n;
+	mspec_set_offset(spec, (j-1) * m->rows + (i-1));
+	mspec_set_n_elem(spec, n);
 	if (spec->sel[0].range[0] < 0 || n <= 0) {
 	    fprintf(stderr, "*** offset = %d, n = %d (i=%d, j=%d, m: %dx%d) ***\n",
-		    spec->sel[0].range[0], n, i, j, m->rows, m->cols);
+		    mspec_get_offset(spec), n, i, j, m->rows, m->cols);
 	}
     }
 
     return err;
 }
-
-#else
-
-int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
-{
-    int err = 0;
-
-    if (spec->type[1] == SEL_NULL) {
-	/* we got only one row/col spec */
-	if (m->cols == 1) {
-	    /* OK: implicitly col = 1 */
-	    spec->type[1] = SEL_RANGE;
-	    mspec_set_col_index(spec, 1);
-	} else if (m->rows == 1) {
-	    /* OK: implicitly row = 1, and transfer the single
-	       given spec to the column dimension */
-	    spec->type[1] = spec->type[0];
-	    if (spec->type[1] == SEL_MATRIX) {
-		spec->sel[1].m = spec->sel[0].m;
-	    } else {
-		spec->sel[1].range[0] = spec->sel[0].range[0];
-		spec->sel[1].range[1] = spec->sel[0].range[1];
-	    }
-	    spec->type[0] = SEL_RANGE;
-	    mspec_set_row_index(spec, 1);
-	} else {
-	    gretl_errmsg_set(_("Ambiguous matrix index"));
-	    err = E_DATA;
-	}
-    }
-
-    if (spec->type[0] == SEL_RANGE && spec->type[1] == SEL_RANGE) {
-	if (spec->sel[0].range[0] == spec->sel[0].range[1] &&
-	    spec->sel[1].range[0] == spec->sel[1].range[1]) {
-	    spec->type[0] = spec->type[1] = SEL_ELEMENT;
-	}
-    }
-
-    return err;
-}
-
-#endif
 
 static int get_slices (matrix_subspec *spec,
 		       const gretl_matrix *M)
@@ -588,8 +548,8 @@ int assign_scalar_to_submatrix (gretl_matrix *M, double x,
     }
 
     if (spec->type[0] == SEL_CONTIG) {
-	int ini = spec->sel[0].range[0];
-	int fin = ini + spec->sel[0].range[1];
+	int ini = mspec_get_offset(spec);
+	int fin = ini + mspec_get_n_elem(spec);
 
 	for (i=ini; i<fin; i++) {
 	    M->val[i] = x;
@@ -685,8 +645,8 @@ int matrix_replace_submatrix (gretl_matrix *M,
     }
 
     if (spec->type[0] == SEL_CONTIG) {
-	int ini = spec->sel[0].range[0];
-	int n = spec->sel[0].range[1];
+	int ini = mspec_get_offset(spec);
+	int n = mspec_get_n_elem(spec);
 
 	if (gretl_vector_get_length(S) != n) {
 	    return E_NONCONF;
