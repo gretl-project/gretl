@@ -2415,8 +2415,8 @@ static NODE *series_string_calc (NODE *l, NODE *r, int f, parser *p)
     }
 
     if (ret != NULL) {
-	int t1 = (autoreg(p))? p->obs : p->dset->t1;
-	int t2 = (autoreg(p))? p->obs : p->dset->t2;
+	int t1 = autoreg(p) ? p->obs : p->dset->t1;
+	int t2 = autoreg(p) ? p->obs : p->dset->t2;
 
 	for (t=t1; t<=t2; t++) {
 	    if (x != NULL) {
@@ -2479,8 +2479,8 @@ static NODE *series_calc (NODE *l, NODE *r, int f, parser *p)
     }
 
     if (!p->err) {
-	int t1 = (autoreg(p))? p->obs : p->dset->t1;
-	int t2 = (autoreg(p))? p->obs : p->dset->t2;
+	int t1 = autoreg(p) ? p->obs : p->dset->t1;
+	int t2 = autoreg(p) ? p->obs : p->dset->t2;
 	int t;
 
 	for (t=t1; t<=t2; t++) {
@@ -3439,6 +3439,8 @@ static void lag_calc (double *y, const double *x,
 	    } else {
 		p->err = E_DATA;
 	    }
+	} else {
+	    y[t] = NADBL;
 	}
     }
 }
@@ -4300,6 +4302,7 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
 	}
 #if NEW_ELEM
 	if (!p->err && r == NULL && ridx > 0) {
+	    /* identify and flag the single index case */
 	    spec->type[0] = SEL_SINGLE;
 	    spec->type[1] = SEL_NULL;
 	    mspec_set_row_index(spec, ridx);
@@ -7613,8 +7616,8 @@ static NODE *series_lag (NODE *l, NODE *r, parser *p)
 	return NULL;
     }
 
-    t1 = (autoreg(p))? p->obs : p->dset->t1;
-    t2 = (autoreg(p))? p->obs : p->dset->t2;
+    t1 = autoreg(p) ? p->obs : p->dset->t1;
+    t2 = autoreg(p) ? p->obs : p->dset->t2;
 
     lag_calc(ret->v.xvec, x, k, t1, t2, B_ASN, 1.0, p);
 
@@ -7846,10 +7849,10 @@ static NODE *series_series_func (NODE *l, NODE *r, NODE *o,
 	    }
 	    break;
 	case F_FRACDIFF:
-	    p->err = fracdiff_series(x, y, parm, 1, (autoreg(p))? p->obs : -1, p->dset);
+	    p->err = fracdiff_series(x, y, parm, 1, autoreg(p) ? p->obs : -1, p->dset);
 	    break;
 	case F_FRACLAG:
-	    p->err = fracdiff_series(x, y, parm, 0, (autoreg(p))? p->obs : -1, p->dset);
+	    p->err = fracdiff_series(x, y, parm, 0, autoreg(p) ? p->obs : -1, p->dset);
 	    break;
 	case F_BOXCOX:
 	    p->err = boxcox_series(x, y, parm, p->dset);
@@ -10823,8 +10826,8 @@ static NODE *eval_bessel_func (NODE *l, NODE *m, NODE *r, parser *p)
 	ret = aux_series_node(p);
 	if (ret != NULL) {
 	    const double *x = r->v.xvec;
-	    int t1 = (autoreg(p))? p->obs : p->dset->t1;
-	    int t2 = (autoreg(p))? p->obs : p->dset->t2;
+	    int t1 = autoreg(p) ? p->obs : p->dset->t1;
+	    int t2 = autoreg(p) ? p->obs : p->dset->t2;
 	    int t;
 
 	    for (t=t1; t<=t2 && !p->err; t++) {
@@ -12743,8 +12746,8 @@ static int vec_branch (const double *c, parser *p)
     int c1, t, t1, t2;
     int ret;
 
-    t1 = (autoreg(p))? p->obs : p->dset->t1;
-    t2 = (autoreg(p))? p->obs : p->dset->t2;
+    t1 = autoreg(p) ? p->obs : p->dset->t1;
+    t2 = autoreg(p) ? p->obs : p->dset->t2;
 
     c1 = (c[t1] != 0.0);
     ret = (c1)? FORK_L : FORK_R;
@@ -12813,8 +12816,8 @@ static NODE *query_eval_series (const double *c, NODE *n, parser *p)
     reset_p_aux(p, save_aux);
     ret = aux_series_node(p);
 
-    t1 = (autoreg(p))? p->obs : p->dset->t1;
-    t2 = (autoreg(p))? p->obs : p->dset->t2;
+    t1 = autoreg(p) ? p->obs : p->dset->t1;
+    t2 = autoreg(p) ? p->obs : p->dset->t2;
 
     for (t=t1; t<=t2; t++) {
 	if (xna(c[t])) {
@@ -17259,6 +17262,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	    int t1 = p->dset->t1;
 
 	    if (autoreg(p) && p->op == B_ASN) {
+		/* FIXME this is wrong, surely? */
 		while (xna(x[t1]) && t1 <= p->dset->t2) {
 		    t1++;
 		}
