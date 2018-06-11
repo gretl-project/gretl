@@ -704,16 +704,22 @@ static int panel_autocorr_1 (MODEL *pmod, const panelmod_t *pan)
 
 #endif
 
+#define DWPVAL_TESTING 1
+
 int panel_DW_pval_ok (const MODEL *pmod)
 {
     if (na(pmod->dw)) {
 	return 0;
     } else {
+#if DWPVAL_TESTING
+	return 1;
+#else
 	int Tmax = gretl_model_get_int(pmod, "Tmax");
 	int Tmin = gretl_model_get_int(pmod, "Tmin");
 
 	/* too restrictive? */
 	return Tmax == Tmin;
+#endif
     }
 }
 
@@ -727,10 +733,17 @@ double BFN_panel_DW_pvalue (MODEL *pmod, int *err)
 {
     gretl_matrix *lam = NULL;
     double r, pv, lamq, sinarg, pi2T;
-    int T = gretl_model_get_int(pmod, "Tmax");
+    int Tmax = gretl_model_get_int(pmod, "Tmax");
+    int Tmin = gretl_model_get_int(pmod, "Tmax");
     int N = gretl_model_get_int(pmod, "n_included_units");
-    int nlam, k = pmod->ncoeff;
+    int T, nlam, k = pmod->ncoeff;
     int i, q;
+
+    if (Tmax == Tmin) {
+	T = Tmax;
+    } else {
+	T = floor(gretl_model_get_int(pmod, "Tbar"));
+    }
 
     if (pmod->ifc) {
 	k--; /* don't include the constant */
