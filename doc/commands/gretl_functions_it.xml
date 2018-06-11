@@ -4779,6 +4779,7 @@
       <fnargs>
 	<fnarg type="string">buf</fnarg>
 	<fnarg type="string">path</fnarg>
+	<fnarg optional="true" type="scalarref">nread</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4801,6 +4802,22 @@
 	  risultato.
 	</para>
 	<para>
+	  Per default, se <argname>path</argname> non viene trovato nel
+	  buffer JSON si verifica un errore, ma questo può essere
+	  evitato passano il terzo argomento (opzionale): così
+	  facendo, l'argomento restituisce il numero di corrispondenze
+	  trovate. Se non ce ne sono, la funzione restituisce una
+	  stringa vuota. Ad esempio:
+	</para>
+	<code>
+	  ngot = 0
+	  ret = jsonget(jbuf, "$.some.thing", &amp;ngot)
+	</code>
+	<para>
+	  Tuttavia se la query non rispetta lo standard, viene
+	  ritornato ugualmente un errore.
+	</para>
+	<para>
 	  Per maggiori dettagli sulla sintassi JsonPath, si veda ad
 	  esempio
 	  <url>http://goessner.net/articles/JsonPath/</url>. Tuttavia,
@@ -4813,8 +4830,8 @@
 	  <url>http://developer.gnome.org/json-glib/</url>.
 	</para>
 	<para>
-	  Ciò premesso, dovrebbe mettere a disposizione
-	  <lit>jsonget</lit> i seguenti operatori:
+	  Ciò premesso, <lit>jsonget</lit> dovrebbe mettere a
+	  disposizione i seguenti operatori:
 	</para>
 	  <ilist>
 	    <li>
