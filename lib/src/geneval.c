@@ -17262,7 +17262,9 @@ static int save_generated_var (parser *p, PRN *prn)
 	    int t1 = p->dset->t1;
 
 	    if (autoreg(p) && p->op == B_ASN) {
-		/* FIXME this is wrong, surely? */
+		/* FIXME extend this treatment to the first observation(s)
+		   for each individual in a panel dataset
+		*/
 		while (xna(x[t1]) && t1 <= p->dset->t2) {
 		    t1++;
 		}
