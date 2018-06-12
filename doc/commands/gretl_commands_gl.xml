@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE commandref SYSTEM "gretl_commands.dtd">
 
 <commandref language="galego">
@@ -7966,6 +7966,10 @@
 	  <effect>Mira abaixo</effect>
 	</option>
 	<option>
+	  <flag>--auxiliary</flag>
+	  <effect>Mira abaixo</effect>
+	</option>
+	<option>
 	  <flag>--lbfgs</flag>
 	  <effect>Utiliza L-BFGS-B en vez do BFGS habitual</effect>
 	</option>
@@ -7979,11 +7983,10 @@
 
     <description context="gui">
       <para>
-	Realiza a estimación de Máxima Verosimilitude (MV ou ML)
-	utilizando ben o algoritmo BFGS (Broyden, Fletcher, Goldfarb,
-	Shanno) ou ben o método de Newton. Debes de especificar a
-	función logaritmo de verosimilitude; e recoméndase tamén
-	que proporciones as expresións das derivadas desta función
+	Realiza a estimación de Máxima Verosimilitude (MV ou ML) usando
+	o algoritmo BFGS (Broyden, Fletcher, Goldfarb, Shanno). Debes de
+	especificar a función logaritmo de verosimilitude; e se te recomenda
+	que tamén proporciones as expresións das derivadas desta función
 	con respecto a cada un dos parámetros, se é posible.
       </para>
       <para>
@@ -8046,6 +8049,11 @@
 	calcúlase unha aproximación numérica.
       </para>
       <para>
+	Este texto de axuda asume que se utiliza, por defecto, o maximizador
+	BFGS. Para obter máis información sobre o uso do método de Newton,
+	por favor consulta <guideref targ="chap:mle"/>.
+      </para>
+      <para>
 	Exemplo sinxelo: Supón que temos unha serie <lit>X</lit>
 	con valores 0 ou 1, e queremos obter a estimación máximo
 	verosímil da probabilidade (<lit>p</lit>) de que <lit>X</lit> = 1.
@@ -8093,15 +8101,28 @@
 	Ten en conta que calquera indicador de opción debe de engadirse á
 	liña final do bloque EMV (MLE).
       </para>
+      <subhead>Matriz de covarianzas e desviacións padrón</subhead>
       <para>
-	As desviacións padrón estimadas baséanse no Produto Externo do
-	vector Gradiente, por defecto. Se indicas a opción <opt>hessian</opt>,
-	baséanse en troques na inversa negativa da matriz Hessiana (que
-	se aproxima numericamente). Se indicas a opción <opt>robust</opt>,
+	Cando a función do logaritmo da verosimilitude devolve unha serie ou
+	un vector que proporciona valores por observación, entón as desviacións
+	padrón estimadas baséanse por defecto no Produto Externo do vector
+	Gradiente (PEG); mentres que se indicas a opción <opt>hessian</opt>,
+	baséanse pola contra na inversa negativa da matriz Hessiana, que se
+	aproxima numericamente. Cando indicas a opción <opt>robust</opt>,
 	utilízase un estimador CMV (QML, un <quote>emparedado</quote> entre
-	a inversa negativa da matriz Hessiana e a matriz de covarianzas do
-	vector gradiente, en concreto).
+	a inversa negativa da matriz Hessiana e o PEG). Agora ben, cando a
+	función do logaritmo da verosimilitude unicamente devolve un valor
+	escalar, o PEG non está dispoñible (polo tanto tampouco o estimador
+	CMV), e as desviacións padrón teñen que calcularse necesariamente
+	utilizando a matriz Hessiana numérica.
       </para>
+      <para>
+	No caso de que unicamente queiras as estimacións do parámetro
+	primario, podes indicar a opción <opt>auxiliary</opt>, que elimina
+	o cálculo da matriz de covarianzas e das desviacións padrón. Isto
+	vai aforrar algúns ciclos de CPU e uso de memoria.
+      </para>
+      <subhead>Comprobando as derivadas analíticas</subhead>
       <para>
 	Se proporcionas as derivadas analíticas, por defecto Gretl executa
 	unha verificación numérica da súa credibilidade. Algunhas veces isto
@@ -8126,7 +8147,7 @@
       </para>
       <para>
 	Para unha descrición máis en profundidade da estimación
-	<cmd>mle</cmd>, consulta o <guideref targ="chap:mle"/>.
+	<cmd>mle</cmd> consulta o <guideref targ="chap:mle"/>.
       </para>
     </description>
 

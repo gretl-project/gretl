@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE funcref SYSTEM "gretl_functions.dtd">
 
 <funcref language="galego">
@@ -154,6 +154,15 @@
       </description>
     </function>
 
+    <function name="$dw" section="access" output="scalar">
+      <description>
+	<para>
+	  Devolve un escalar (se é posible) co valor do estatístico de Durbin&ndash;Watson
+	  para probar autocorrelación de primeira orde no derradeiro model estimado.
+	</para>
+      </description>
+    </function>
+
     <function name="$dwpval" section="access" output="scalar">
       <description>
 	<para>
@@ -273,6 +282,10 @@
 	  <math>i</math> causada por unha innovación na variable <math>j</math>
 	  vai atoparse entón inspeccionando a columna (<math>i</math> &minus; 1)
 	  <math>p</math> + <math>j</math>.
+	</para>
+	<para>
+	  Para unha variante máis flexible desta funcionalidade, consulta a
+	  función <fncref targ="fevd"/>.
 	</para>
       </description>
     </function>
@@ -874,6 +887,35 @@
 	      # Faga algo que sexa propio do Linux
 	  endif
 	</code>
+      </description>
+    </function>
+
+    <function name="$system" section="access" output="bundle">
+      <description>
+	<para>
+	  Debe de seguir á estimación dun sistema de ecuacións, feita
+	  coa instrución <cmdref targ="system"/>, <cmdref targ="var"/> ou
+	  con <cmdref targ="vecm"/>; e devolve un feixe que contén moitos
+	  apartados de datos que pertencen ao sistema. Inclúense todos
+	  os accesorios do sistema importantes e habituais, que se nomean
+	  mediante símbolos chave que son idénticos aos nomes habituais
+	  dos accesorios, menos o símbolo de dólar inicial. Así, por exemplo,
+	  os erros aparecen baixo a chave <lit>uhat</lit> e os coeficientes
+	  baixo <lit>coeff</lit>. As chaves para obter información adicional
+	  agárdase que deberan explicarse suficientemente por si mesmas.
+	  Para observar que tes á túa disposición, podes obter unha copia
+	  do feixe e representar o seu contido, como en
+	</para>
+	<code>
+	  var 4 y1 y2 y2
+	  bundle b = $system
+	  print b
+	</code>
+	<para>
+	  Podes pasar un fexie obtido deste xeito como argumeto
+	  final (opcional) das funcións <fncref targ="fevd"/> e
+	  <fncref targ="irf"/>.
+	</para>
       </description>
     </function>
 
@@ -3285,6 +3327,59 @@
       </description>
     </function>
 
+    <function name="fevd" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="int">target</fnarg>
+	<fnarg type="int">shock</fnarg>
+	<fnarg type="bundle" optional="true">sys</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esta función proporciona unha alternativa máis flexible ao
+	  accesorio <fncref targ="$fevd"/> para obter unha matriz
+	  de descomposición da varianza do erro de predición (FEVD)
+	  logo de estimar un VAR ou un VECM. A falta do argumento final
+	  (opcional), só está dispoñible cando o último modelo estimado
+	  foi un VAR ou un VECM. Como alternativa, podes gardar nun
+	  feixe a información sobre estes tipos de sistemas, mediante o
+	  accesorio <fncref targ="$system"/>, e posteriormente pasarlle
+	  a función <lit>fevd</lit>.
+	</para>
+	<para>
+	  Os argumentos da función, <argname>target</argname> e
+	  <argname>shock</argname>, teñen a forma de índices enteiros
+	  positivos das variable endóxenas do sistema, tomando o 0 para
+	  representar <quote>todas</quote>. O seguinte fragmento de código,
+	  ilustra o seu uso. No primeiro exemplo, a matriz <lit>fe1</lit>
+	  contén as partes da FEVD para <lit>y1</lit> debidas a cada
+	  parte de <lit>y1</lit>, <lit>y2</lit> e <lit>y3</lit> (polo tanto,
+	  as filas suman 1 en total). No segundo, <lit>fe2</lit> contén
+	  a contribución de <lit>y2</lit> á varianza do erro de predición
+	  das tres variables (entón, as filas non suman 1 en total).
+	  No terceiro caso, o que se devolve é un vector columna que
+	  amosa a <quote>parte propia</quote> da FEVD de
+	  <lit>y1</lit>.
+	</para>
+	<code>
+	  var 4 y1 y2 y3
+	  bundle vb = $system
+	  matrix fe1 = fevd(1, 0, vb)
+	  matrix fe2 = fevd(0, 2, vb)
+	  matrix fe3 = fevd(1, 1, vb)
+	</code>
+	<para>
+	  O número de períodos (filas) sobre os que se traza a
+	  descomposición, determínase automaticamente en base á
+	  frecuencia dos datos, pero podes ignorar isto mediante o
+	  argumento <lit>horizon</lit> da instrución <cmdref targ="set"/>,
+    como en <lit>set horizon 10</lit>.
+	</para>
+	<para>
+	  <seelist><fncref targ="irf"/></seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="fft" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
@@ -4559,11 +4654,18 @@
 	<fnarg type="int">target</fnarg>
 	<fnarg type="int">shock</fnarg>
 	<fnarg type="pscalar" optional="true">alpha</fnarg>
+	<fnarg type="bundle" optional="true">sys</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Esta función só está dispoñible cando o último modelo estimado foi
-	  un VAR ou un VECM. Como resultado, devolve unha matriz que contén
+	  A falta do argumento final (opcional), esta función só está
+	  dispoñible cando o último modelo estimado foi un VAR ou un
+	  VECM. Como alternativa, podes gardar nun feixe a información
+	  sobre un VAR ou un VECM co accesorio <fncref targ="$system"/>
+	  e posteriormente pasarlle a función <lit>irf</lit>.
+	</para>
+	<para>
+	  Como resultado, devolve unha matriz que contén
 	  a resposta estimada da variable <argname>target</argname> ante un
 	  impulso na variable <argname>shock</argname> de magnitude igual a
 	  unha vez a súa desviación padrón. Estas dúas variables identifícanse
@@ -4588,6 +4690,9 @@
 	  determina automaticamente dependendo da frecuencia dos datos; mais
 	  iso pode axustarse por medio da instrución <cmdref targ="set"/>,
 	  como por exemplo con <lit>set horizon 10</lit>.
+	</para>
+	<para>
+	  <seelist><fncref targ="fevd"/></seelist>
 	</para>
       </description>
     </function>
@@ -4755,24 +4860,40 @@
       <fnargs>
 	<fnarg type="string">buf</fnarg>
 	<fnarg type="string">path</fnarg>
+	<fnarg optional="true" type="scalarref">nread</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Como argumento <argname>buf</argname> deberás utilizar un
-	  <quote>buffer</quote> JSON, tal como pode recuperarse dun sitio
-	  web adecuado por medio da función <fncref targ="curl"/>; e como
-	  argumento <argname>path</argname> deberás usar unha especificación
-	  de tipo JsonPath.
+	  Como argumento <argname>buf</argname> deberás utilizar
+	  un búfer JSON, tal como pode recuperarse dun sitio web
+	  adecuado por medio da función <fncref targ="curl"/>; e como
+	  argumento <argname>path</argname> deberás usar unha
+	  especificación de tipo JsonPath.
 	</para>
 	<para>
-	  Esta función devolve unha cadea de texto que representa os datos
-	  que se atopan no <quote>buffer</quote> na ruta especificada. Se
-	  admiten os tipos de datos <quote>double</quote> (punto flotante),
-	  <quote>int</quote> (enteiro) e cadea de texto. No caso de enteiros ou
-	  de puntos flotantes, devólvese a súa representación como cadeas de
-	  texto (usando <quote>C</quote> local para os segundos). Se o obxecto
-	  ao que se refire a ruta (<argname>path</argname>) é un arranxo, os
-	  seus elementos imprímense un por cada fila na cadea de texto devolta.
+	  Esta función devolve unha cadea de texto que representa os datos que
+	  se atopan no búfer na ruta especificada. Se admiten os tipos de datos
+	  <quote>double</quote> (punto flotante), <quote>int</quote> (enteiro)
+	  e cadea de texto. No caso de enteiros ou de puntos flotantes, se
+	  devolve a súa representación como cadeas de texto (usando para os
+	  segundos, <quote>C</quote> local). Se o obxecto ao que se refire
+	  a ruta (<argname>path</argname>) é un arranxo, os seus elementos
+	  imprímense un por cada fila na cadea de texto devolta.
+	</para>
+	<para>
+	  Por defecto, amósase un erro se <argname>path</argname>
+	  non coincide no búfer JSON, pero este comportamento
+	  modifícase se indicas o terceiro argumento (opcional) pois, neste
+	  caso, o argumento recupera un reconto das coincidencias, devolvéndose
+	  unha cadea baleira se non hai ningunha. Chamada de exemplo:
+	</para>
+	<code>
+	  ngot = 0
+	  ret = jsonget(jbuf, "$.some.thing", &amp;ngot)
+	</code>
+	<para>
+	  Agora ben, aínda vaise amosar un erro no caso de facer unha solicitude
+	  mal configurada.
 	</para>
 	<para>
 	  Podes atopar unha exposición fidedigna da sintaxe JsonPath en
@@ -9259,17 +9380,7 @@
 	  vai separar o primeiro argumento da función nun arranxo de catro
 	  cadeas de texto, usando a coma como elemento separador. A coma
 	  <quote>extra</quote> indicada arriba, expresa que se quere omitir
-	  o segundo argumento <argname>i</argname> da función, aínda que
-	  isto non sexa estritamente necesario (agás que desexes extraer un
-	  único elemento), pois cando só indicas dous argumentos e o segundo
-	  é unha cadea de texto, enténdese que pretendes expresar o argumento
-	  <argname>sep</argname> en lugar de <argname>i</argname>. Así...
-	</para>
-	<code>
-	  strings S = strsplit(Cesta, ",")
-	</code>
-	<para>
-	  resulta igualmente aceptable.
+	  o segundo argumento <argname>i</argname> da función.
 	</para>
 	<para>
 	  As dúas secuencias de barra diagonal esquerda para escapar, indicadas
@@ -10257,6 +10368,21 @@
 	  cadea obtida do búfer XML contén algún espazo ou coma, contórnase
 	  entre comiñas.
 	</para>
+	<para>
+	  Por defecto, amósase un erro se <argname>path</argname> non
+	  coincide no búfer XML, pero este comportamento modifícase
+	  se indicas o terceiro argumento (opcional) pois, neste
+	  caso, o argumento recupera un reconto das coincidencias, devolvéndose
+	  unha cadea baleira se non hai ningunha. Chamada de exemplo:
+	</para>
+	<code>
+	  ngot = 0
+	  ret = xmlget(xbuf, "//some/thing", &amp;ngot)
+	</code>
+	<para>
+	  Agora ben, aínda vaise amosar un erro no caso de facer unha solicitude
+	  mal configurada.
+	</para>	
 	<para>
 	  Podes atopar unha boa introdución ao uso e á sintaxe de
 	  XPath en
