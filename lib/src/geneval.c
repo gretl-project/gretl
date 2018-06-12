@@ -3453,8 +3453,13 @@ static void transcribe_panel_autoreg_series (double *targ,
 	    /* start of sample, or new unit starting */
 	    s = 0;
 	    while (na(src[t]) && s < T) {
-		t++; /* skip, don't overwrite, initializer */
+		t++; /* don't overwrite initializer */
 		s++;
+	    }
+	    if (s == T) {
+		/* back up one place for new check */
+		t--;
+		continue;
 	    }
 	}
 	targ[t] = src[t];
