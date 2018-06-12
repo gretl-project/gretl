@@ -3454,6 +3454,7 @@ static void transcribe_panel_autoreg_series (double *targ,
 	    s = 0;
 	    while (na(src[t]) && s < T) {
 		t++; /* skip, don't overwrite, initializer */
+		s++;
 	    }
 	}
 	targ[t] = src[t];
