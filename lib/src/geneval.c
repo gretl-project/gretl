@@ -3428,7 +3428,6 @@ static void lag_calc (double *y, const double *x,
 		s = -1;
 	    }
 	}
-
 	if (s >= 0 && s < p->dset->n) {
 	    if (op == B_ASN && mul == 1.0) {
 		y[t] = x[s];
@@ -3439,9 +3438,25 @@ static void lag_calc (double *y, const double *x,
 	    } else {
 		p->err = E_DATA;
 	    }
-	} else {
-	    y[t] = NADBL;
 	}
+    }
+}
+
+static void transcribe_panel_autoreg_series (double *targ,
+					     const double *src,
+					     parser *p)
+{
+    int t, s, T = p->dset->pd;
+
+    for (t=p->dset->t1; t<=p->dset->t2; t++) {
+	if (t == p->dset->t1 || t / T != (t-1) / T) {
+	    /* start of sample, or new unit starting */
+	    s = 0;
+	    while (na(src[t]) && s < T) {
+		t++; /* skip, don't overwrite, initializer */
+	    }
+	}
+	targ[t] = src[t];
     }
 }
 
@@ -17259,26 +17274,30 @@ static int save_generated_var (parser *p, PRN *prn)
 	    }
 	} else if (r->t == SERIES) {
 	    const double *x = r->v.xvec;
-	    int t1 = p->dset->t1;
 
-	    if (autoreg(p) && p->op == B_ASN) {
-		/* FIXME extend this treatment to the first observation(s)
-		   for each individual in a panel dataset
-		*/
-		while (xna(x[t1]) && t1 <= p->dset->t2) {
-		    t1++;
-		}
-	    }
-	    if (p->op == B_ASN) {
-		/* avoid multiple calls to xy_calc */
-		if (Z[v] != x) {
-		    size_t sz = (p->dset->t2 - t1 + 1) * sizeof *x;
-
-		    memcpy(Z[v] + t1, x + t1, sz);
-		}
+	    if (p->dset->structure == STACKED_TIME_SERIES &&
+		autoreg(p) && p->op == B_ASN) {
+		transcribe_panel_autoreg_series(Z[v], x, p);
 	    } else {
-		for (t=t1; t<=p->dset->t2; t++) {
-		    Z[v][t] = xy_calc(Z[v][t], x[t], p->op, SERIES, p);
+		int t1 = p->dset->t1;
+
+		if (autoreg(p) && p->op == B_ASN) {
+		    while (xna(x[t1]) && t1 <= p->dset->t2) {
+			/* don't overwite initializer */
+			t1++;
+		    }
+		}
+		if (p->op == B_ASN) {
+		    /* avoid multiple calls to xy_calc */
+		    if (Z[v] != x) {
+			size_t sz = (p->dset->t2 - t1 + 1) * sizeof *x;
+
+			memcpy(Z[v] + t1, x + t1, sz);
+		    }
+		} else {
+		    for (t=t1; t<=p->dset->t2; t++) {
+			Z[v][t] = xy_calc(Z[v][t], x[t], p->op, SERIES, p);
+		    }
 		}
 	    }
 	} else if (r->t == MAT) {
