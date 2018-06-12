@@ -62,7 +62,7 @@ struct panelmod_t_ {
     int T;                /* times-series length of panel */
     int Tmax;             /* effective times-series length (max usable obs per unit) */
     int Tmin;             /* shortest usable times-series */
-    double Tbar;          /* harmonic mean of per-units time-series lengths */
+    double Tbar;          /* harmonic mean of per-unit time-series lengths */
     int NT;               /* total observations used (based on pooled model) */
     int ntdum;            /* number of time dummies added */
     int *unit_obs;        /* array of number of observations per x-sect unit */
@@ -104,6 +104,7 @@ int IGLS;
 char glsmat[MAXLEN];
 
 static int varying_vars_list (const DATASET *dset, panelmod_t *pan);
+static void calculate_Tbar (panelmod_t *pan);
 
 /* translate from (i = unit, t = time period for that unit) to
    overall 0-based index into the data set */
@@ -704,7 +705,7 @@ static int panel_autocorr_1 (MODEL *pmod, const panelmod_t *pan)
 
 #endif
 
-#define DWPVAL_TESTING 1
+#define DWPVAL_TESTING 0
 
 int panel_DW_pval_ok (const MODEL *pmod)
 {
@@ -717,32 +718,62 @@ int panel_DW_pval_ok (const MODEL *pmod)
 	int Tmax = gretl_model_get_int(pmod, "Tmax");
 	int Tmin = gretl_model_get_int(pmod, "Tmin");
 
-	/* too restrictive? */
+	/* Too restrictive? Or not restrictive enough? */
 	return Tmax == Tmin;
 #endif
     }
+}
+
+static int mean_consec_uhat (MODEL *pmod, const DATASET *dset, int N)
+{
+    const double *u = pmod->uhat;
+    int csum = 0, cdenom = 0;
+    int T = dset->pd;
+    int i, t, s;
+
+    for (i=0; i<N; i++) {
+	int Ti = 0, ci = 0;
+
+	for (t=1; t<T; t++) {
+	    s = pmod->t1 + T*i + t;
+	    if (!na(u[s])) {
+		Ti++;
+		if (!na(u[s-1])) {
+		    ci++;
+		}
+	    }
+	}
+	if (Ti > 0) {
+	    csum += ci;
+	    cdenom++;
+	}
+    }
+
+    return 1 + csum / cdenom;
 }
 
 /* See Bhargava, Franzini and Narendranathan, "Serial Correlation and
    the Fixed Effects Model", Review of Economic Studies 49, 1982,
    page 536. Strictly speaking what's calculated here is the marginal
    significance level of the DW stat when considered as a d_L value.
+   It's unclear if this method can really be extended to unbalanced
+   panels.
 */
 
-double BFN_panel_DW_pvalue (MODEL *pmod, int *err)
+double BFN_panel_DW_pvalue (MODEL *pmod, const DATASET *dset, int *err)
 {
     gretl_matrix *lam = NULL;
-    double r, pv, lamq, sinarg, pi2T;
-    int Tmax = gretl_model_get_int(pmod, "Tmax");
-    int Tmin = gretl_model_get_int(pmod, "Tmax");
+    double r, pv, lamq, sinarg, pi_2T;
+    int Tmin = gretl_model_get_int(pmod, "Tmin");
     int N = gretl_model_get_int(pmod, "n_included_units");
     int T, nlam, k = pmod->ncoeff;
     int i, q;
 
-    if (Tmax == Tmin) {
-	T = Tmax;
+    if (Tmin == dset->pd) {
+	T = dset->pd;
     } else {
-	T = floor(gretl_model_get_int(pmod, "Tbar"));
+	/* FIXME! */
+	T = mean_consec_uhat(pmod, dset, N);
     }
 
     if (pmod->ifc) {
@@ -756,8 +787,8 @@ double BFN_panel_DW_pvalue (MODEL *pmod, int *err)
 	return NADBL;
     }
 
-    pi2T = M_PI / (2.0*T);
-    sinarg = sin(pi2T);
+    pi_2T = M_PI / (2.0*T);
+    sinarg = sin(pi_2T);
     lamq = 4 * sinarg * sinarg;
     r = pmod->dw;
 
@@ -766,15 +797,23 @@ double BFN_panel_DW_pvalue (MODEL *pmod, int *err)
 	lam->val[i] = lamq - r;
 	if ((i+1) % N == 0) {
 	    q++;
-	    sinarg = sin(q*pi2T);
+	    sinarg = sin(q*pi_2T);
 	    lamq = 4 * sinarg * sinarg;
 	}
     }
 
     pv = imhof(lam, 0, err);
     if (!*err) {
+	if (pv < 0) {
+	    pv = 0;
+	}
 	gretl_model_set_double(pmod, "dw_pval", pv);
     }
+
+#if 0
+    fprintf(stderr, "DW: Tmax=%d, Tmin=%d, T=%d, N=%d, nlam=%d, DW=%g, pv=%g\n",
+	    Tmax, Tmin, T, N, nlam, pmod->dw, pv);
+#endif
 
     gretl_matrix_free(lam);
 
@@ -2647,6 +2686,9 @@ static void add_panel_obs_info (MODEL *pmod, panelmod_t *pan)
     gretl_model_set_int(pmod, "n_included_units", pan->effn);
     gretl_model_set_int(pmod, "Tmin", pan->Tmin);
     gretl_model_set_int(pmod, "Tmax", pan->Tmax);
+    if (pan->Tmax > pan->Tmin && pan->Tbar == 0) {
+	calculate_Tbar(pan);
+    }
     if (pan->Tbar > 0) {
 	gretl_model_set_double(pmod, "Tbar", pan->Tbar);
     }

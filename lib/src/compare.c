@@ -1724,7 +1724,7 @@ double get_DW_pvalue_for_model (MODEL *pmod, DATASET *dset,
 
     if (pmod->ci == PANEL && panel_DW_pval_ok(pmod)) {
 	/* Use Bhargava et al approximation */
-	return BFN_panel_DW_pvalue(pmod, err);
+	return BFN_panel_DW_pvalue(pmod, dset, err);
     }
 
     if (dset == NULL || dset->Z == NULL) {
