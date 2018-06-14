@@ -6141,13 +6141,13 @@ static double nw_kernel (double x)
  */
 
 int nadaraya_watson (const double *y, const double *x, double h,
-		     DATASET *dset, double *m)
+		     DATASET *dset, int leave_one_out, double *m)
 {
     int t, s, err = 0;
     int t1 = dset->t1, t2 = dset->t2;
     double xt, xs, ys, yt, k;
     double ah = fabs(h);
-    int LOO = (h < 0);  /* leave-one-out */
+    int LOO = leave_one_out || (h < 0);  /* leave-one-out */
     double TRIM = libset_get_double(NADARWAT_TRIM) * ah;
     int n = t2 + 1;
     double *num, *den;

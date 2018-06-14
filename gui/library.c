@@ -4422,10 +4422,7 @@ int do_nonparam_model (selector *sr)
 	    h = pow(sample_size(dataset), -0.2);
 	}
 
-	if (LOO) {
-	    h = -h;
-	}
-	err = nadaraya_watson(y, x, h, dataset, m);
+	err = nadaraya_watson(y, x, h, dataset, LOO, m);
 	if (!err) {
 	    gretl_bundle_set_string(bundle, "function", "nadarwat");
 	    gretl_bundle_set_scalar(bundle, "h", h);

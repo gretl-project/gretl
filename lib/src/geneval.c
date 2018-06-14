@@ -10460,7 +10460,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    ret = aux_series_node(p);
 	    if (!p->err) {
 		p->err = nadaraya_watson(l->v.xvec, m->v.xvec,
-					 r->v.xval, p->dset,
+					 r->v.xval, p->dset, 0,
 					 ret->v.xvec);
 	    }
 	}
