@@ -705,7 +705,7 @@ static int panel_autocorr_1 (MODEL *pmod, const panelmod_t *pan)
 
 #endif
 
-#define DWPVAL_TESTING 0
+#define DWPVAL_TESTING 1
 
 int panel_DW_pval_ok (const MODEL *pmod)
 {
@@ -724,34 +724,6 @@ int panel_DW_pval_ok (const MODEL *pmod)
     }
 }
 
-static int mean_consec_uhat (MODEL *pmod, const DATASET *dset, int N)
-{
-    const double *u = pmod->uhat;
-    int csum = 0, cdenom = 0;
-    int T = dset->pd;
-    int i, t, s;
-
-    for (i=0; i<N; i++) {
-	int Ti = 0, ci = 0;
-
-	for (t=1; t<T; t++) {
-	    s = pmod->t1 + T*i + t;
-	    if (!na(u[s])) {
-		Ti++;
-		if (!na(u[s-1])) {
-		    ci++;
-		}
-	    }
-	}
-	if (Ti > 0) {
-	    csum += ci;
-	    cdenom++;
-	}
-    }
-
-    return 1 + csum / cdenom;
-}
-
 /* See Bhargava, Franzini and Narendranathan, "Serial Correlation and
    the Fixed Effects Model", Review of Economic Studies 49, 1982,
    page 536. Strictly speaking what's calculated here is the marginal
@@ -764,17 +736,10 @@ double BFN_panel_DW_pvalue (MODEL *pmod, const DATASET *dset, int *err)
 {
     gretl_matrix *lam = NULL;
     double r, pv, lamq, sinarg, pi_2T;
-    int Tmin = gretl_model_get_int(pmod, "Tmin");
+    int T = gretl_model_get_int(pmod, "Tmax");
     int N = gretl_model_get_int(pmod, "n_included_units");
-    int T, nlam, k = pmod->ncoeff;
+    int nlam, k = pmod->ncoeff;
     int i, q;
-
-    if (Tmin == dset->pd) {
-	T = dset->pd;
-    } else {
-	/* FIXME! */
-	T = mean_consec_uhat(pmod, dset, N);
-    }
 
     if (pmod->ifc) {
 	k--; /* don't include the constant */
@@ -811,8 +776,8 @@ double BFN_panel_DW_pvalue (MODEL *pmod, const DATASET *dset, int *err)
     }
 
 #if 0
-    fprintf(stderr, "DW: Tmax=%d, Tmin=%d, T=%d, N=%d, nlam=%d, DW=%g, pv=%g\n",
-	    Tmax, Tmin, T, N, nlam, pmod->dw, pv);
+    fprintf(stderr, "DW: T=%d, Tmin=%d, N=%d, nlam=%d, DW=%g, pv=%g\n",
+	    T, gretl_model_get_int(pmod, "Tmin"), N, nlam, pmod->dw, pv);
 #endif
 
     gretl_matrix_free(lam);
@@ -820,9 +785,7 @@ double BFN_panel_DW_pvalue (MODEL *pmod, const DATASET *dset, int *err)
     return pv;
 }
 
-/* Durbin-Watson statistic for the pooled or fixed effects model.  We
-   only use units that have at least two consecutive time-series
-   observations, and we use only consecutive observations.
+/* Durbin-Watson statistic for the pooled or fixed effects model.
 
    See Bhargava, Franzini and Narendranathan, "Serial Correlation and
    the Fixed Effects Model", Review of Economic Studies 49, 1982,
@@ -854,8 +817,6 @@ static void panel_dwstat (MODEL *pmod, panelmod_t *pan)
 	    pmod->t2, pmod->nobs, pmod->full_n);
 #endif
 
-    missvals = model_has_missing_obs(pmod);
-
     for (i=0; i<pan->nunits && in_bounds; i++) {
 	if (pan->unit_obs[i] == 0) {
 	    continue;
@@ -870,6 +831,7 @@ static void panel_dwstat (MODEL *pmod, panelmod_t *pan)
 	    if (!na(ut) && t > 0) {
 		u1 = pmod->uhat[s-1];
 		if (na(u1)) {
+		    /* implicitly take u1 as 0 */
 		    dwnum += ut * ut;
 		} else {
 		    dwnum += (ut - u1) * (ut - u1);
@@ -882,10 +844,6 @@ static void panel_dwstat (MODEL *pmod, panelmod_t *pan)
 
     if (dwnum > 0.0) {
 	pmod->dw = dwnum / pmod->ess;
-	if (missvals) {
-	    /* use DW to approximate rho? */
-	    pmod->rho = 1 - pmod->dw/2;
-	}
     }
     if (na(pmod->rho) && rden > 0.0 && !na(rden)) {
 	pmod->rho = rnum / rden;
