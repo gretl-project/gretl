@@ -10447,6 +10447,8 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    rname = (r->t == U_ADDR)? ptr_node_get_matrix_name(r, p) : "null";
 	    A = user_gensymm_eigenvals(m1, m2, rname, &p->err);
 	}
+#if NADARWAT_NEW	
+#else
     } else if (f == F_NADARWAT) {
 	post_process = 0;
 	if (l->t != SERIES) {
@@ -10464,6 +10466,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 					 ret->v.xvec);
 	    }
 	}
+#endif	
     } else if (f == F_PRINCOMP) {
 	if (l->t != MAT) {
 	    node_type_error(f, 1, MAT, l, p);
@@ -12131,6 +12134,85 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		ret->v.ivec = full_list;
 	    }
 	}
+#if NADARWAT_NEW
+    } else if (t->t == F_NADARWAT) {
+	const double *x = NULL;
+	const double *y = NULL;
+	
+	if (k < 1 || k > 4) {
+	    n_args_error(k, 4, t->t, p);
+	}
+
+	/* evaluate the first two series argumentS */
+	if (!p->err) {
+	    e = eval(n->v.bn.n[0], p);
+	}
+	if (!p->err && e->t != SERIES) {
+	    node_type_error(t->t, 1, SERIES, e, p);
+	}
+
+	if (!p->err) {
+	    x = e->v.xvec;
+	}
+
+	if (!p->err) {
+	    e = eval(n->v.bn.n[1], p);
+	}
+	if (!p->err && e->t != SERIES) {
+	    node_type_error(t->t, 1, SERIES, e, p);
+	}
+
+	if (!p->err) {
+	    y = e->v.xvec;
+	}
+
+	/* third arguments is a double (bandwidth) */
+
+	double h = 0;
+	if (k>2) {
+	    e = n->v.bn.n[2];
+	    if (e->t == EMPTY) {
+		// fixme: we'll want some automatic choice here
+		h = 1.0;
+	    } else {
+		e = eval(n->v.bn.n[2], p);
+		if (e == NULL) {
+		    fprintf(stderr, "eval_nargs_func: failed "
+			    "to evaluate arg %d\n", 2);
+		} else {
+		    h = node_get_scalar(e, p);
+		}
+	    }
+	}
+
+	/* fourth arguments is Boolean (leave-one-out) */
+
+	int LOO = 0;
+	if (k==4) {
+	    e = n->v.bn.n[3];
+	    if (e->t == EMPTY) {
+		; // that's ok
+	    } else {
+		e = eval(n->v.bn.n[3], p);
+		if (e == NULL) {
+		    fprintf(stderr, "eval_nargs_func: failed "
+			    "to evaluate arg %d\n", 3);
+		} else {
+		    LOO = node_get_int(e, p);
+		}
+	    }
+	}
+	    
+	if (!p->err) {
+	    reset_p_aux(p, save_aux);
+	    ret = aux_series_node(p);
+	}
+
+	if (!p->err) {
+	    p->err = nadaraya_watson(x, y, h, p->dset, LOO,
+				     ret->v.xvec);
+	}
+#endif	
     }
 
     return ret;
@@ -14969,7 +15051,10 @@ static NODE *eval (NODE *t, parser *p)
     case F_REGSUB:
     case F_MLAG:
     case F_EIGSOLVE:
+#if NADARWAT_NEW
+#else
     case F_NADARWAT:
+#endif
     case F_PRINCOMP:
     case F_HALTON:
     case F_AGGRBY:
@@ -15045,6 +15130,9 @@ static NODE *eval (NODE *t, parser *p)
     case F_DEFBUNDLE:
     case F_DEFLIST:
     case F_IRF:
+#if NADARWAT_NEW
+    case F_NADARWAT:
+#endif
     case HF_CLOGFI:
 	/* built-in functions taking more than three args */
 	ret = eval_nargs_func(t, p);
