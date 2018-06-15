@@ -801,7 +801,6 @@ static void panel_dwstat (MODEL *pmod, panelmod_t *pan)
     double rden = 0.0;
     double ut, u1;
     int in_bounds = 1;
-    int missvals;
     int i, t, s;
 
     pmod->dw = pmod->rho = NADBL;
@@ -818,6 +817,8 @@ static void panel_dwstat (MODEL *pmod, panelmod_t *pan)
 #endif
 
     for (i=0; i<pan->nunits && in_bounds; i++) {
+	int started = 0;
+
 	if (pan->unit_obs[i] == 0) {
 	    continue;
 	}
@@ -828,16 +829,23 @@ static void panel_dwstat (MODEL *pmod, panelmod_t *pan)
 		break;
 	    }
 	    ut = pmod->uhat[s];
-	    if (!na(ut) && t > 0) {
+	    if (!na(ut)) {
+		if (t == 0) {
+		    started = 1;
+		    continue;
+		}
 		u1 = pmod->uhat[s-1];
 		if (na(u1)) {
 		    /* implicitly take u1 as 0 */
-		    dwnum += ut * ut;
+		    if (started) {
+			dwnum += ut * ut;
+		    }
 		} else {
 		    dwnum += (ut - u1) * (ut - u1);
 		    rnum += ut * u1;
 		    rden += u1 * u1;
 		}
+		started = 1;
 	    }
 	}
     }
