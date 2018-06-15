@@ -12139,7 +12139,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	const double *x = NULL;
 	const double *y = NULL;
 	
-	if (k < 1 || k > 4) {
+	if (k < 2 || k > 4) {
 	    n_args_error(k, 4, t->t, p);
 	}
 
@@ -12166,14 +12166,15 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    y = e->v.xvec;
 	}
 
-	/* third arguments is a double (bandwidth) */
+	/*  set bandwidth */
 
-	double h = 0;
+	int nobs = p->dset->n;
+	double s, h = 0;
+	int auto_bw = (k==2);
 	if (k>2) {
 	    e = n->v.bn.n[2];
 	    if (e->t == EMPTY) {
-		// fixme: we'll want some automatic choice here
-		h = 1.0;
+		auto_bw = 1;
 	    } else {
 		e = eval(n->v.bn.n[2], p);
 		if (e == NULL) {
@@ -12185,7 +12186,13 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    }
 	}
 
-	/* fourth arguments is Boolean (leave-one-out) */
+	if (auto_bw || h == 0) {
+	    s = gretl_stddev(0, nobs - 1, x);
+	    h = kernel_bandwidth(x, s, nobs);
+	    fprintf(stderr, "auto_bandwidth: h = %g\n", h);
+	}
+
+	/* fourth optional arguments is Boolean (leave-one-out) */
 
 	int LOO = 0;
 	if (k==4) {
