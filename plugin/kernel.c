@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "version.h"
+#include "nonparam.h"
 
 #define KDEBUG 0
 
@@ -180,27 +181,6 @@ static void kernel_xmin_xmax (kernel_info *kinfo, double s)
     kinfo->xstep = (kinfo->xmax - kinfo->xmin) / kinfo->kn;
 }
 
-static double quartiles (const double *x, int n,
-			 double *q1, double *q3)
-{
-    int n2 = n / 2;
-    double xx;
-
-    xx = (n % 2)? x[n2] : 0.5 * (x[n2 - 1] + x[n2]);
-
-    if (q1 != NULL && q3 != NULL) {
-        if (n % 2) {
-            *q1 = quartiles(x, n2 + 1, NULL, NULL);
-            *q3 = quartiles(x + n2, n2 + 1, NULL, NULL);
-        } else {
-            *q1 = quartiles(x, n2, NULL, NULL);
-            *q3 = quartiles(x + n2, n2, NULL, NULL);
-        }
-    }
-
-    return xx;
-}
-
 static int kernel_kn (int nobs)
 {
     if (nobs >= 1000) {
@@ -218,21 +198,10 @@ static int set_kernel_params (kernel_info *kinfo,
 			      double bwscale,
 			      gretlopt opt)
 {
+
     double s = gretl_stddev(0, kinfo->n - 1, kinfo->x);
-    double n5 = pow((double) kinfo->n, -0.20);
-    double w, q1, q3, r, bw;
+    double bw = kernel_bandwidth(kinfo->x, s, kinfo->n);
 
-    quartiles(kinfo->x, kinfo->n, &q1, &q3);
-    r = (q3 - q1) / 1.349;
-    w = (r < s && r > 0)? r : s;
-
-#if KDEBUG
-    fprintf(stderr, "Silverman bandwidth: s=%g, q1=%g, q3=%g, IQR=%g, w=%g\n",
-	    s, q1, q3, q3 - q1, w);
-#endif
-
-    /* Silverman bandwidth times scale factor */
-    bw = 0.9 * w * n5;
     kinfo->h = bwscale * bw;
 
     if (kinfo->h <= 0.0) {

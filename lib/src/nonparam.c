@@ -1921,3 +1921,43 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
 
     return yh;
 }
+
+
+static double quartiles (const double *x, int n,
+			 double *q1, double *q3)
+{
+    int n2 = n / 2;
+    double xx;
+
+    xx = (n % 2)? x[n2] : 0.5 * (x[n2 - 1] + x[n2]);
+
+    if (q1 != NULL && q3 != NULL) {
+        if (n % 2) {
+            *q1 = quartiles(x, n2 + 1, NULL, NULL);
+            *q3 = quartiles(x + n2, n2 + 1, NULL, NULL);
+        } else {
+            *q1 = quartiles(x, n2, NULL, NULL);
+            *q3 = quartiles(x + n2, n2, NULL, NULL);
+        }
+    }
+
+    return xx;
+}
+
+double kernel_bandwidth(const double *x, double s, int n)
+{
+    double w, q1, q3, r, bw;
+    double n5 = pow((double) n, -0.20);
+
+    quartiles(x, n, &q1, &q3);
+    r = (q3 - q1) / 1.349;
+    w = (r < s && r > 0)? r : s;
+
+#if 0
+    fprintf(stderr, "Silverman bandwidth: s=%g, q1=%g, q3=%g, IQR=%g, w=%g\n",
+	    s, q1, q3, q3 - q1, w);
+#endif
+
+    /* Silverman bandwidth times scale factor */
+    return 0.9 * w * n5;
+}

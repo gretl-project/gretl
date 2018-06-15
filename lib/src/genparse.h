@@ -26,7 +26,7 @@
 #include "gretl_array.h"
 
 #define GENDEBUG 0
-#define NADARWAT_NEW 0
+#define NADARWAT_NEW 1
 
 /* operators, types, punctuation */
 
