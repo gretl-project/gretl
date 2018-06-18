@@ -12137,6 +12137,11 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		    auto_bw = 1;
 		} else {
 		    h = node_get_scalar(e, p);
+		    if (k > 3 && h < 0) {
+			gretl_errmsg_sprintf(_("Bandwidth cannot be negative with more than 3 arguments"));
+			p->err = E_INVARG;
+			break;
+		    }
 		}
 	    } else if (i == 3) {
 		/* Leave One Out? */
