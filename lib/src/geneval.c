@@ -4288,8 +4288,6 @@ static void print_mspec (matrix_subspec *mspec)
 
 #endif
 
-#define NEW_ELEM 0
-
 /* compose a sub-matrix specification, from scalars and/or
    index matrices */
 
@@ -4321,7 +4319,6 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
 	    gretl_errmsg_sprintf(_("Index value %d is out of bounds"), 0);
 	    p->err = E_INVARG;
 	}
-#if NEW_ELEM
 	if (!p->err && r == NULL && ridx > 0) {
 	    /* identify and flag the single index case */
 	    spec->type[0] = SEL_SINGLE;
@@ -4329,7 +4326,6 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
 	    mspec_set_row_index(spec, ridx);
 	    goto finished;
 	}
-#endif
     }
     if (!p->err && r != NULL && r->t == NUM) {
 	cidx = node_get_int(r, p);
@@ -4443,9 +4439,8 @@ static NODE *submatrix_node (NODE *l, NODE *r, parser *p)
 		ret = aux_matrix_node(p);
 		ret->v.m = matrix_get_chunk(m, spec, &p->err);
 	    } else if (spec->type[0] == SEL_ELEMENT) {
-		int i = mspec_get_row_index(spec);
-		int j = mspec_get_col_index(spec);
-		double x = matrix_get_element(m, i, j, &p->err);
+		int i = mspec_get_element(spec);
+		double x = matrix_get_element(m, i, &p->err);
 
 		if (!p->err) {
 		    ret = aux_scalar_node(p);
@@ -9838,45 +9833,28 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 	return p->err;
     }
 
-    if (rhs_scalar && spec->type[0] == SEL_ELEMENT &&
-	p->op == B_ASN) {
-        /* straight assignment of a scalar value to
-	   a single element of an existing matrix
+    if (rhs_scalar && spec->type[0] == SEL_ELEMENT) {
+	/* assignment, plain or inflected, of scalar to single
+	   element of target matrix
 	*/
-#if NEW_ELEM
 	int i = mspec_get_element(spec);
 
-	m1->val[i] = na(y) ? M_NA : y;
-#else
-	int i = mspec_get_row_index(spec);
-	int j = mspec_get_col_index(spec);
+	if (p->op == B_ASN) {
+	    m1->val[i] = na(y) ? M_NA : y;
+	} else {
+	    /* inflected */
+	    double x = matrix_get_element(m1, i, &p->err);
 
-	gretl_matrix_set(m1, i-1, j-1, na(y) ? M_NA : y);
-#endif
-	return p->err; /* we're done */
-    }
-
-    if (rhs_scalar && spec->type[0] == SEL_ELEMENT) {
-        /* inflected assignment of a scalar value to
-	   a single element of an existing matrix
-	*/
-	int i = mspec_get_row_index(spec);
-	int j = mspec_get_col_index(spec);
-	double x = matrix_get_element(m1, i, j, &p->err);
-
-	if (!p->err) {
-	    x = xy_calc(x, y, p->op, MAT, p);
-	    if (xna(x)) {
-		if (na(x)) {
-		    x = M_NA;
+	    if (!p->err) {
+		x = xy_calc(x, y, p->op, MAT, p);
+		if (xna(x)) {
+		    if (na(x)) {
+			x = M_NA;
+		    }
+		    set_gretl_warning(W_GENNAN);
 		}
-		set_gretl_warning(W_GENNAN);
 	    }
-#if NEW_ELEM
 	    m1->val[i] = x;
-#else
-	    gretl_matrix_set(m1, i-1, j-1, x);
-#endif
 	}
 	return p->err; /* we're done */
     }

@@ -315,10 +315,6 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 			    (m->cols == 1 && (s->type[1] == SEL_ALL || s->type[1] == SEL_NULL)) || \
 			    (s->type[1] == SEL_RANGE && s->sel[1].range[0] == s->sel[1].range[1]))
 
-#define NEW_ELEM 0  /* not just yet? */
-
-#if NEW_ELEM
-
 static int element_get_index (matrix_subspec *spec, const gretl_matrix *m)
 
 {
@@ -340,8 +336,6 @@ static int element_get_index (matrix_subspec *spec, const gretl_matrix *m)
     return k;
 }
 
-#endif /* NEW_ELEM */
-
 /* Catch the case of an implicit column or row specification for
    a sub-matrix of an (n x 1) or (1 x m) matrix; also catch the
    error of giving just one row/col spec for a matrix that has
@@ -351,9 +345,7 @@ static int element_get_index (matrix_subspec *spec, const gretl_matrix *m)
 int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 {
     int isvec = gretl_vector_get_length(m);
-    int rh_scalar;
-    int get_element = 0;
-    int get_contig = 0;
+    int rh_scalar, get_contig = 0;
     int err = 0;
 
 #if CONTIG_DEBUG
@@ -382,42 +374,31 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 	    return E_DATA;
 	} else {
 	    spec->type[0] = spec->type[1] = SEL_ELEMENT;
-	    spec->sel[0].range[0] -= 1;
+	    spec->sel[0].range[0] -= 1; /* 0-based offset */
 	    spec->sel[1].range[0] = 1;
 	    return 0;
 	}
     }
 
     if (m->rows == 0 || m->cols == 0) {
-#if 0
-	fprintf(stderr, "*** check subspec: m is %d x %d ***\n",
-		m->rows, m->cols);
-#endif
-	// return old_check(spec, m);
 	return 0;
     }
 
     rh_scalar = rhs_is_scalar(spec, m);
 
     if (lhs_is_scalar(spec, m)) {
-	if (rh_scalar) {
-	    get_element = 1;
-	} else if (m->rows == 1 && spec->type[1] == SEL_NULL) {
-	    get_element = 1;
-	}
-#if NEW_ELEM
-	if (get_element) {
+	if (rh_scalar || (m->rows == 1 && spec->type[1] == SEL_NULL)) {
+	    /* we're looking at just one element */
 	    spec->sel[0].range[0] = element_get_index(spec, m);
 	    spec->type[0] = spec->type[1] = SEL_ELEMENT;
 	    spec->sel[1].range[0] = 1;
 	    return 0;
 	}
-#endif
     }
 
-    if (!get_element && (isvec || rh_scalar) &&
+    if ((isvec || rh_scalar) &&
 	(spec->type[0] == SEL_RANGE || spec->type[0] == SEL_ALL)) {
-	/* flag as contiguous? */
+	/* flag as contiguous values? */
 	get_contig = (spec->type[1] != SEL_MATRIX);
 #if CONTIG_DEBUG
 	if (get_contig) {
@@ -458,9 +439,7 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 	spec->sel[0].range[1] = m->rows;
     }
 
-    if (get_element) {
-	spec->type[0] = spec->type[1] = SEL_ELEMENT;
-    } else if (get_contig) {
+    if (get_contig) {
 	int i, j, n;
 
 	if (spec->sel[0].range[1] == MSEL_MAX) {
@@ -781,9 +760,8 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
     } else if (spec->type[0] == SEL_CONTIG) {
 	return matrix_get_chunk(M, spec, err);
     } else if (spec->type[0] == SEL_ELEMENT) {
-	int i = mspec_get_row_index(spec);
-	int j = mspec_get_col_index(spec);
-	double x = matrix_get_element(M, i, j, err);
+	int i = mspec_get_element(spec);
+	double x = matrix_get_element(M, i, err);
 
 	if (!*err) {
 	    S = gretl_matrix_from_scalar(x);
@@ -862,10 +840,7 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
     return S;
 }
 
-#if NEW_ELEM
-
-double matrix_get_element (const gretl_matrix *M, int i, int j,
-			   int *err)
+double matrix_get_element (const gretl_matrix *M, int i, int *err)
 {
     double x = NADBL;
 
@@ -880,34 +855,6 @@ double matrix_get_element (const gretl_matrix *M, int i, int j,
 
     return x;
 }
-
-#else
-
-double matrix_get_element (const gretl_matrix *M, int i, int j,
-			   int *err)
-{
-    double x = NADBL;
-
-    /* The incoming i and j are from userspace, and will
-       be 1-based.
-    */
-    i--;
-    j--;
-
-    if (M == NULL) {
-	*err = E_DATA;
-    } else if (i < 0 || i >= M->rows || j < 0 || j >= M->cols) {
-	gretl_errmsg_sprintf(_("Index value %d is out of bounds"),
-			     (i < 0 || i >= M->rows)? (i+1) : (j+1));
-	*err = 1;
-    } else {
-	x = gretl_matrix_get(M, i, j);
-    }
-
-    return x;
-}
-
-#endif /* NEW_ELEM or not */
 
 /* copy a contiguous chunk of data out of @M */
 

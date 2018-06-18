@@ -146,8 +146,7 @@ gretl_matrix *user_gensymm_eigenvals (const gretl_matrix *A,
 				      const char *rname,
 				      int *err);
 
-double matrix_get_element (const gretl_matrix *M, int i, int j,
-			   int *err);
+double matrix_get_element (const gretl_matrix *M, int i, int *err);
 
 gretl_matrix *matrix_get_chunk (const gretl_matrix *M,
 				matrix_subspec *spec,
