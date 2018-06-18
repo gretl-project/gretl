@@ -4414,7 +4414,7 @@ int do_nonparam_model (selector *sr)
 	}
     } else if (!err && ci == NADARWAT) {
 	int LOO = (opt & OPT_O)? 1 : 0;
-	double h;
+	double h, trim = libset_get_double(NADARWAT_TRIM);
 
 	if ((s = strstr(buf, "h=")) != NULL) {
 	    h = atof(s + 2);
@@ -4422,7 +4422,7 @@ int do_nonparam_model (selector *sr)
 	    h = pow(sample_size(dataset), -0.2);
 	}
 
-	err = nadaraya_watson(y, x, h, dataset, LOO, m);
+	err = nadaraya_watson(y, x, h, dataset, LOO, trim, m);
 	if (!err) {
 	    gretl_bundle_set_string(bundle, "function", "nadarwat");
 	    gretl_bundle_set_scalar(bundle, "h", h);

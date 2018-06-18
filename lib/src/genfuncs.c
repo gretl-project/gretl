@@ -6118,6 +6118,8 @@ static double nw_kernel (double x)
  * @x: array with "explanatory variable"
  * @h: double, bandwidth (may be negative; see below)
  * @dset: data set information.
+ * @leave_one_out: Boolean flag (see below)
+ * @trim: trim parameter (see below)
  * @m: array to hold results
  *
  * Implements the Nadaraya-Watson non-parametric estimator for the
@@ -6131,24 +6133,30 @@ static double nw_kernel (double x)
  * and j, but since the function K() is assumed to be symmetric, we
  * compute it once to save time.
  *
- * The scalar @h holds the kernel bandwidth; if negative, it implies
- * that the leave-one-out estimator (essentially a jackknife
- * estimator; see Pagan and Ullah, Nonparametric Econometrics,
- * page 119) is wanted. A rudimentary form of trimming is implemented,
- * but it will have to be refined.
+ * The scalar @h holds the kernel bandwidth; if @leave_one_out is
+ * non-zero the "leave-one-out" variant of the estimator (essentially
+ * a jackknife estimator; see Pagan and Ullah, Nonparametric
+ * Econometrics, page 119) is computed. For compatibility reason, this
+ * also happens if h is negative.
+ *
+ * A rudimentary form of trimming is implemented: the kernel function
+ * is set to 0 when the product of the @trim parameter times the
+ * bandwidth @h exceeds |X_i - X_j|, so as to speed computation and
+ * enhance numerical stability.
  *
  * Returns: 0 on successful completion, non-zero code on error.
  */
 
 int nadaraya_watson (const double *y, const double *x, double h,
-		     DATASET *dset, int leave_one_out, double *m)
+		     DATASET *dset, int leave_one_out, double trim,
+		     double *m)
 {
     int t, s, err = 0;
     int t1 = dset->t1, t2 = dset->t2;
     double xt, xs, ys, yt, k;
     double ah = fabs(h);
     int LOO = leave_one_out || (h < 0);  /* leave-one-out */
-    double TRIM = libset_get_double(NADARWAT_TRIM) * ah;
+    double TRIM = trim * ah;
     int n = t2 + 1;
     double *num, *den;
 
