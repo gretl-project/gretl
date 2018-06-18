@@ -1922,7 +1922,6 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
     return yh;
 }
 
-
 static double quartiles (const double *x, int n,
 			 double *q1, double *q3)
 {
@@ -1944,9 +1943,9 @@ static double quartiles (const double *x, int n,
     return xx;
 }
 
-double kernel_bandwidth(const double *x, double s, int n)
+double kernel_bandwidth (const double *x, double s, int n)
 {
-    double w, q1, q3, r, bw;
+    double w, q1, q3, r;
     double n5 = pow((double) n, -0.20);
 
     quartiles(x, n, &q1, &q3);
