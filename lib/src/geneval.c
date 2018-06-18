@@ -12120,9 +12120,10 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	int auto_bw = (k == 2);
 	int LOO = 0;
 	double s, h = 0;
+	double trim = libset_get_double(NADARWAT_TRIM);
 
-	if (k < 2 || k > 4) {
-	    n_args_error(k, 4, t->t, p);
+	if (k < 2 || k > 5) {
+	    n_args_error(k, 5, t->t, p);
 	}
 
 	for (i=0; i<k && !p->err; i++) {
@@ -12146,14 +12147,16 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		}
 	    } else if (i == 3) {
 		/* Leave One Out? */
-		LOO = node_get_bool(e, p, 0);
+		LOO = (e->t != EMPTY) && node_get_bool(e, p, 0);
+	    } else if (i == 4) {
+		/* trim? */
+		trim = node_get_scalar(e, p);
 	    }
 	}
 
 	if (auto_bw || h == 0) {
 	    s = gretl_stddev(0, nobs - 1, x);
 	    h = kernel_bandwidth(x, s, nobs);
-	    fprintf(stderr, "auto_bandwidth: h = %g\n", h);
 	}
 
 	if (!p->err) {
@@ -12162,7 +12165,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	}
 	if (!p->err) {
 	    p->err = nadaraya_watson(x, y, h, p->dset, LOO,
-				     ret->v.xvec);
+				     trim, ret->v.xvec);
 	}
 #endif
     }
