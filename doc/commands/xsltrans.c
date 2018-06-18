@@ -20,7 +20,7 @@
 /* Formatter for gretl commands info stored as "generic" XML: takes
    a purely content-based XML representation of the info relating to
    the gretl commands (conforming to gretl_commands.dtd) and uses
-   XSL transformation to turn this into output suitable for gretl's 
+   XSL transformation to turn this into output suitable for gretl's
    "online" help files as well as TeX.
 */
 
@@ -45,14 +45,15 @@ enum {
     FORMAT_PLAIN,
     FORMAT_PANGO,
     FORMAT_TEX,
-    FORMAT_HTML
+    FORMAT_HTML,
+    FORMAT_C
 };
 
 #define UTF const xmlChar *
 
 char textemp[16];
 
-static void 
+static void
 get_full_filename (char *targ, const char *dir, const char *fname)
 {
     if (dir == NULL || *dir == '\0') {
@@ -62,7 +63,7 @@ get_full_filename (char *targ, const char *dir, const char *fname)
     }
 }
 
-static void build_params (char const **params, int content, 
+static void build_params (char const **params, int content,
 			  int format, const char *lang)
 {
     int i = 0;
@@ -70,16 +71,16 @@ static void build_params (char const **params, int content,
     if (strcmp(lang, "en")) {
 	params[i++] = "lang";
 	params[i++] = lang;
-    }    
+    }
 
     /* note: help='cli' is the default in gretlhlp.xsl;
        we need give an explicit value here only if we
        want to override that */
-    
+
     if (content == CONTENT_GUI) {
 	params[i++] = "hlp";
 	params[i++] = "\"gui\"";
-    } 
+    }
 
     if (content == CONTENT_FUNCS && format == FORMAT_PANGO) {
 	params[i++] = "topic";
@@ -89,13 +90,13 @@ static void build_params (char const **params, int content,
     if (format == FORMAT_PANGO) {
 	params[i++] = "fmt";
 	params[i++] = "\"pango\"";
-    }	
+    }
 
     params[i] = NULL;
 }
 
-int real_apply_xslt (xmlDocPtr doc, 
-		     xsltStylesheetPtr style, 
+int real_apply_xslt (xmlDocPtr doc,
+		     xsltStylesheetPtr style,
 		     char const **params)
 {
     xmlDocPtr result;
@@ -113,7 +114,7 @@ int real_apply_xslt (xmlDocPtr doc,
     return err;
 }
 
-int apply_xslt (xmlDocPtr doc, int content, int format, 
+int apply_xslt (xmlDocPtr doc, int content, int format,
 		const char *lang, const char *docdir)
 {
     xsltStylesheetPtr style;
@@ -129,6 +130,8 @@ int apply_xslt (xmlDocPtr doc, int content, int format,
 	get_full_filename(styname, docdir, "gretltex.xsl");
     } else if (format == FORMAT_HTML) {
 	get_full_filename(styname, docdir, "gretlhtml.xsl");
+    } else if (format == FORMAT_C) {
+	get_full_filename(styname, docdir, "gretlC.xsl");
     } else {
 	get_full_filename(styname, docdir, "gretltxt.xsl");
     }
@@ -172,7 +175,7 @@ int process_xml_file (const char *fname, int content,
     char lang[8] = "en";
     int err = 0;
 
-    LIBXML_TEST_VERSION 
+    LIBXML_TEST_VERSION
 	xmlKeepBlanksDefault(0);
 
     xmlSubstituteEntitiesDefault(1);
@@ -337,6 +340,9 @@ int main (int argc, char **argv)
 	    format = FORMAT_TEX;
 	} else if (!strcmp(argv[i], "--html")) {
 	    format = FORMAT_HTML;
+	} else if (!strcmp(argv[i], "--C")) {
+	    format = FORMAT_C;
+	    content = CONTENT_FUNCS;
 	} else if (!strcmp(argv[i], "--cmds")) {
 	    content = CONTENT_CMDS;
 	} else if (!strcmp(argv[i], "--funcs")) {
