@@ -307,13 +307,16 @@ static int *mspec_make_list (int type, union msel *sel, int n,
     return slice;
 }
 
+#define all_or_null(t) (t == SEL_ALL || t == SEL_NULL)
+#define singleton_range(sel) (sel.range[0] == sel.range[1])
+
 #define lhs_is_scalar(s,m) (s->type[0] == SEL_ELEMENT ||		\
-			    (m->rows == 1 && (s->type[0] == SEL_ALL || s->type[0] == SEL_NULL)) || \
-			    (s->type[0] == SEL_RANGE && s->sel[0].range[0] == s->sel[0].range[1]))
+			    (m->rows == 1 && all_or_null(s->type[0])) || \
+			    (s->type[0] == SEL_RANGE && singleton_range(s->sel[0])))
 
 #define rhs_is_scalar(s,m) (s->type[1] == SEL_ELEMENT ||		\
-			    (m->cols == 1 && (s->type[1] == SEL_ALL || s->type[1] == SEL_NULL)) || \
-			    (s->type[1] == SEL_RANGE && s->sel[1].range[0] == s->sel[1].range[1]))
+			    (m->cols == 1 && all_or_null(s->type[1])) || \
+			    (s->type[1] == SEL_RANGE && singleton_range(s->sel[1])))
 
 static int element_get_index (matrix_subspec *spec, const gretl_matrix *m)
 
@@ -840,6 +843,10 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
     return S;
 }
 
+/* Return the element of @M that occupies 0-based position @i in
+   its internal vec representation.
+*/
+
 double matrix_get_element (const gretl_matrix *M, int i, int *err)
 {
     double x = NADBL;
@@ -856,7 +863,10 @@ double matrix_get_element (const gretl_matrix *M, int i, int *err)
     return x;
 }
 
-/* copy a contiguous chunk of data out of @M */
+/* Copy a contiguous chunk of data out of @M, the offset and
+   extent of which are given by @spec. At present we come
+   here only if it's known that @M is a vector.
+*/
 
 gretl_matrix *matrix_get_chunk (const gretl_matrix *M,
 				matrix_subspec *spec,

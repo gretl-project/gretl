@@ -9762,10 +9762,6 @@ static int set_series_obs_value (NODE *lhs, NODE *rhs, parser *p)
     return p->err;
 }
 
-#define ok_submatrix_op(o) (o == B_ASN  || o == B_DOTASN || \
-			    o == B_ADD  || o == B_SUB ||    \
-			    o == B_MUL  || o == B_DIV)
-
 /* Here we're replacing a sub-matrix of the original LHS matrix, by
    either straight or inflected assignment. The value that we're
    using for replacement will be either a matrix or a scalar.
@@ -9782,11 +9778,8 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
     int prechecked = 0;
     int free_m2 = 0;
 
-    if (!ok_submatrix_op(p->op)) {
-	gretl_errmsg_sprintf(_("The operator '%s' is not valid in this context"),
-			     get_opstr(p->op));
-	return E_TYPES;
-    } else if (lh1->t != MAT) {
+    if (lh1->t != MAT) {
+	/* is this ever possible? */
 	fprintf(stderr, "set_matrix_value: got %s, not matrix!\n",
 		getsymb(lh1->t));
 	return E_DATA;
