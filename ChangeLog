@@ -3,6 +3,11 @@ version 2018b, in progress
   Melard's algorithm AS 197; also improvements to the
   initialization for such estimation
 - New function lrcovar(): long-run covariance
+- New function fevd(): forecast error variance decomposition
+  following estimation via "var" or "vecm"
+- New accessor $system (bundle) following estimation of a
+  system of equations
+- Enhancements for nadarwat() function
 - When R_functions is set "on", accept call to an R function
   without assignment of the return value, if any  
 - Fixes for GUI model specification dialog: breakage in
@@ -25,7 +30,7 @@ version 2018b, in progress
 - Fix for Windows: support for filenames that cannot be
   represented correctly in the active code page
 - Builds for Windows and Mac (Quartz): update to gnuplot
-  5.2.3
+  5.2.4
 
 2018-03-17 version 2018a
 - New function instring(): boolean variant of strstr()
