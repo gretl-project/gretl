@@ -12147,7 +12147,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		}
 	    } else if (i == 3) {
 		/* Leave One Out? */
-		LOO = (e->t != EMPTY) && node_get_bool(e, p, 0);
+		LOO = node_get_bool(e, p, 0);
 	    } else if (i == 4) {
 		/* trim? */
 		trim = node_get_scalar(e, p);
