@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #define FULL_XML_HEADERS
@@ -126,7 +126,7 @@ static xmlDocPtr gretl_xmlParseFile (const char *fname)
 
 int gretl_xml_open_doc_root (const char *fname,
 			     const char *rootname,
-			     xmlDocPtr *pdoc, 
+			     xmlDocPtr *pdoc,
 			     xmlNodePtr *pnode)
 {
     xmlDocPtr doc;
@@ -164,7 +164,7 @@ int gretl_xml_open_doc_root (const char *fname,
 	    xmlFreeDoc(doc);
 	    err = 1;
 	}
-    }    
+    }
 
     if (!err) {
 	*pdoc = doc;
@@ -229,7 +229,7 @@ static int alt_puts (const char *s, FILE *fp, gzFile fz)
 	ret = fputs(s, fp);
     } else if (fz != NULL) {
 	ret = gzputs(fz, s);
-    } 
+    }
 
     return ret;
 }
@@ -263,7 +263,7 @@ static int savenum (const int *list, int i)
  * @tag: name to give value.
  * @i: value to put (as attribute)
  * @fp: file to which to write.
- * 
+ *
  * Writes to @fp a string of the form "\%s=\%d".
  */
 
@@ -277,7 +277,7 @@ void gretl_xml_put_int (const char *tag, int i, FILE *fp)
  * @tag: name to give value.
  * @x: value to put (as attribute)
  * @fp: file to which to write.
- * 
+ *
  * Writes to @fp a string of the form "\%s=\%.16g" if the value of
  * @x is valid, otherwise "\%s=NA".
  */
@@ -297,7 +297,7 @@ void gretl_xml_put_double (const char *tag, double x, FILE *fp)
  * @x: values to put.
  * @n: number of values in @x.
  * @fp: file to which to write.
- * 
+ *
  */
 
 void gretl_xml_put_double_array (const char *tag, double *x, int n,
@@ -313,14 +313,14 @@ void gretl_xml_put_double_array (const char *tag, double *x, int n,
 	    fprintf(fp, "%.16g ", x[i]);
 	}
     }
-    fprintf(fp, "</%s>\n", tag);    
+    fprintf(fp, "</%s>\n", tag);
 }
 
 /**
  * gretl_xml_put_string:
  * @str: string to put.
  * @fp: file to which to write.
- * 
+ *
  * Write @str to @fp.  If @str needs to have XML-special
  * characters escaped, this will be done automatically.
  * If @str is NULL, this is considered a no-op.
@@ -334,7 +334,7 @@ int gretl_xml_put_string (const char *str, FILE *fp)
 
     if (str == NULL) {
 	return 0;
-    }    
+    }
 
     if (gretl_xml_validate(str)) {
 	fputs(str, fp);
@@ -358,10 +358,10 @@ int gretl_xml_put_string (const char *str, FILE *fp)
  * @strs: array of strings to put.
  * @n: number of strings in @strs.
  * @fp: file to which to write.
- * 
+ *
  */
 
-void gretl_xml_put_strings_array (const char *tag, const char **strs, 
+void gretl_xml_put_strings_array (const char *tag, const char **strs,
 				  int n, FILE *fp)
 {
     int i;
@@ -382,7 +382,7 @@ void gretl_xml_put_strings_array (const char *tag, const char **strs,
 	gretl_xml_put_string(strs[i], fp);
 	fputc(' ', fp);
     }
-    fprintf(fp, "</%s>\n", tag); 
+    fprintf(fp, "</%s>\n", tag);
 }
 
 /**
@@ -391,10 +391,10 @@ void gretl_xml_put_strings_array (const char *tag, const char **strs,
  * @strs: array of strings to put.
  * @n: number of strings in @strs.
  * @fp: file to which to write.
- * 
+ *
  */
 
-void gretl_xml_put_strings_array_quoted (const char *tag, 
+void gretl_xml_put_strings_array_quoted (const char *tag,
 					 const char **strs, int n,
 					 FILE *fp)
 {
@@ -406,7 +406,7 @@ void gretl_xml_put_strings_array_quoted (const char *tag,
 	gretl_xml_put_string(strs[i], fp);
 	fputs("\" ", fp);
     }
-    fprintf(fp, "</%s>\n", tag); 
+    fprintf(fp, "</%s>\n", tag);
 }
 
 /**
@@ -414,8 +414,8 @@ void gretl_xml_put_strings_array_quoted (const char *tag,
  * @tag: name to give string.
  * @str: string to put.
  * @fp: file to which to write.
- * 
- * Write @str to @fp, enclosed in simple starting and ending 
+ *
+ * Write @str to @fp, enclosed in simple starting and ending
  * tags specified by @tag.  If @str needs to have XML-special
  * characters escaped, this will be done automatically.
  * If @str is NULL, this is considered a no-op.
@@ -423,7 +423,7 @@ void gretl_xml_put_strings_array_quoted (const char *tag,
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-void gretl_xml_put_tagged_string (const char *tag, const char *str, 
+void gretl_xml_put_tagged_string (const char *tag, const char *str,
 				  FILE *fp)
 {
     fprintf(fp, "<%s>", tag);
@@ -438,7 +438,7 @@ void gretl_xml_put_tagged_string (const char *tag, const char *str,
  * @attrib: name of attribute.
  * @attval: value of attribute.
  * @fp: file to which to write.
- * 
+ *
  * Similar to gretl_xml_put_tagged_string(), but allows
  * (in fact, requires) an attribute name and value along
  * with the element name and value.
@@ -464,7 +464,7 @@ void gretl_xml_put_tagged_string_plus (const char *tag,
  * @list: list of integers to be written.
  * @name: name to give list, or NULL.
  * @fp: file to which to write.
- * 
+ *
  */
 
 void gretl_list_serialize (const int *list, const char *name,
@@ -485,7 +485,7 @@ void gretl_list_serialize (const int *list, const char *name,
     for (i=0; i<=list[0]; i++) {
 	fprintf(fp, "%d ", list[i]);
     }
-    fputs("</list>\n", fp); 
+    fputs("</list>\n", fp);
 }
 
 /**
@@ -493,10 +493,10 @@ void gretl_list_serialize (const int *list, const char *name,
  * @tag: tag in which list should be wrapped.
  * @list: list of integers to be written.
  * @fp: file to which to write.
- * 
+ *
  */
 
-void gretl_xml_put_tagged_list (const char *tag, const int *list, 
+void gretl_xml_put_tagged_list (const char *tag, const int *list,
 				FILE *fp)
 {
     int i;
@@ -513,7 +513,7 @@ void gretl_xml_put_tagged_list (const char *tag, const int *list,
 	    fprintf(fp, "%d ", list[i]);
 	}
     }
-    fprintf(fp, "</%s>\n", tag); 
+    fprintf(fp, "</%s>\n", tag);
 }
 
 /**
@@ -521,11 +521,11 @@ void gretl_xml_put_tagged_list (const char *tag, const int *list,
  * @m: matrix to be written.
  * @name: name for matrix, or NULL.
  * @fp: stream to which to print.
- * 
+ *
  */
 
-void gretl_matrix_serialize (const gretl_matrix *m, 
-			     const char *name, 
+void gretl_matrix_serialize (const gretl_matrix *m,
+			     const char *name,
 			     FILE *fp)
 {
     const char **S;
@@ -537,7 +537,7 @@ void gretl_matrix_serialize (const gretl_matrix *m,
     }
 
     if (name == NULL) {
-	fprintf(fp, "<gretl-matrix rows=\"%d\" cols=\"%d\"\n", 
+	fprintf(fp, "<gretl-matrix rows=\"%d\" cols=\"%d\"\n",
 		m->rows, m->cols);
     } else {
 	fprintf(fp, "<gretl-matrix name=\"%s\" rows=\"%d\" cols=\"%d\"",
@@ -559,7 +559,7 @@ void gretl_matrix_serialize (const gretl_matrix *m,
 	    fputs(S[j], fp);
 	    fputc((j < m->cols - 1)? ' ' : '"', fp);
 	}
-    } 
+    }
 
     S = gretl_matrix_get_rownames(m);
 
@@ -569,7 +569,7 @@ void gretl_matrix_serialize (const gretl_matrix *m,
 	    fputs(S[j], fp);
 	    fputc((j < m->rows - 1)? ' ' : '"', fp);
 	}
-    }     
+    }
 
     fputs(">\n", fp);
 
@@ -587,7 +587,7 @@ void gretl_matrix_serialize (const gretl_matrix *m,
 	fputc('\n', fp);
     }
 
-    fputs("</gretl-matrix>\n", fp); 
+    fputs("</gretl-matrix>\n", fp);
 }
 
 /**
@@ -608,7 +608,7 @@ void gretl_scalar_serialize (double x, const char *name, FILE *fp)
  * @s: UTF-8 string.
  * @name: name of object.
  * @fp: stream for writing.
- * 
+ *
  */
 
 void gretl_string_serialize (const char *s, const char *name, FILE *fp)
@@ -621,7 +621,7 @@ void gretl_string_serialize (const char *s, const char *name, FILE *fp)
  * @node: XML node pointer.
  * @tag: name by which integer property is known.
  * @i: location to write int value.
- * 
+ *
  * Returns: 1 if an int is found and read successfully, 0
  * otherwise.
  */
@@ -645,7 +645,7 @@ int gretl_xml_get_prop_as_int (xmlNodePtr node, const char *tag,
  * @node: XML node pointer.
  * @tag: name by which unsigned integer property is known.
  * @u: location to write value.
- * 
+ *
  * Returns: 1 if an unsigned int is found and read successfully, 0
  * otherwise.
  */
@@ -671,7 +671,7 @@ gretl_xml_get_prop_as_unsigned_int (xmlNodePtr node,
  * @node: XML node pointer.
  * @tag: name by which unsigned character property is known.
  * @u: location to write value.
- * 
+ *
  * Returns: 1 if an unsigned char is found and read successfully, 0
  * otherwise.
  */
@@ -696,7 +696,7 @@ int gretl_xml_get_prop_as_uchar (xmlNodePtr node, const char *tag,
  * @node: XML node pointer.
  * @tag: name by which floating-point property is known.
  * @x: location to write double value.
- * 
+ *
  * Returns: 1 if a double is found and read successfully, 0
  * otherwise.
  */
@@ -727,7 +727,7 @@ int gretl_xml_get_prop_as_double (xmlNodePtr node, const char *tag,
  * @node: XML node pointer.
  * @tag: name by which string property is known.
  * @pstr: location to assign string.
- * 
+ *
  * Returns: 1 if a string is found and read successfully, 0
  * otherwise.
  */
@@ -749,7 +749,7 @@ int gretl_xml_get_prop_as_string (xmlNodePtr node, const char *tag,
 /**
  * gretl_xml_get_type_property:
  * @node: XML node pointer.
- * 
+ *
  * Returns: the gretl type identifier associated with the
  * property tagged "type" on @node, or 0 on failure.
  */
@@ -776,7 +776,7 @@ GretlType gretl_xml_get_type_property (xmlNodePtr node)
  * gretl_xml_get_prop_as_bool:
  * @node: XML node pointer.
  * @tag: name by which property is known.
- * 
+ *
  * Returns: 1 if the named property is found and has value %true,
  * else 0.
  */
@@ -787,7 +787,7 @@ int gretl_xml_get_prop_as_bool (xmlNodePtr node, const char *tag)
     int ret = 0;
 
     if (tmp != NULL) {
-	if (!strcmp((char *) tmp, "true") || 
+	if (!strcmp((char *) tmp, "true") ||
 	    !strcmp((char *) tmp, "1")) {
 	    ret = 1;
 	}
@@ -802,7 +802,7 @@ int gretl_xml_get_prop_as_bool (xmlNodePtr node, const char *tag)
  * @node: XML node pointer.
  * @doc: XML document pointer.
  * @i: location to receive integer.
- * 
+ *
  * Returns: 1 if an int is found and read successfully, 0
  * otherwise.
  */
@@ -828,12 +828,12 @@ int gretl_xml_node_get_int (xmlNodePtr node, xmlDocPtr doc, int *i)
  * @node: XML node pointer.
  * @doc: XML document pointer.
  * @x: location to receive double.
- * 
+ *
  * Returns: 1 if a double is found and read successfully, 0
  * otherwise.
  */
 
-int gretl_xml_node_get_double (xmlNodePtr node, xmlDocPtr doc, 
+int gretl_xml_node_get_double (xmlNodePtr node, xmlDocPtr doc,
 			       double *x)
 {
     char *s, *p;
@@ -861,12 +861,12 @@ int gretl_xml_node_get_double (xmlNodePtr node, xmlDocPtr doc,
  * @node: XML node pointer.
  * @doc: XML document pointer.
  * @pstr: location to receive string.
- * 
+ *
  * Returns: 1 if a string is found and read successfully, 0
  * otherwise.
  */
 
-int gretl_xml_node_get_string (xmlNodePtr node, xmlDocPtr doc, 
+int gretl_xml_node_get_string (xmlNodePtr node, xmlDocPtr doc,
 			       char **pstr)
 {
     xmlChar *tmp;
@@ -886,7 +886,7 @@ int gretl_xml_node_get_string (xmlNodePtr node, xmlDocPtr doc,
  * gretl_xml_get_string:
  * @node: XML node pointer.
  * @doc: XML document pointer.
- * 
+ *
  * Returns: allocated copy of the string content of @node, or
  * NULL on error.
  */
@@ -901,15 +901,15 @@ char *gretl_xml_get_string (xmlNodePtr node, xmlDocPtr doc)
  * @node: XML node pointer.
  * @doc: XML document pointer.
  * @pstr: location to receive string.
- * 
+ *
  * Reads a string from @node and trims both leading and trailing
  * white space.
- * 
+ *
  * Returns: 1 if a string is found and read successfully, 0
  * otherwise.
  */
 
-int gretl_xml_node_get_trimmed_string (xmlNodePtr node, xmlDocPtr doc, 
+int gretl_xml_node_get_trimmed_string (xmlNodePtr node, xmlDocPtr doc,
 				       char **pstr)
 {
     char *tmp;
@@ -923,7 +923,7 @@ int gretl_xml_node_get_trimmed_string (xmlNodePtr node, xmlDocPtr doc,
 	s += strspn(s, " \t\n\r");
 	len = strlen(s);
 	for (i=len-1; i>=0; i--) {
-	    if (s[i] == ' ' || s[i] == '\t' || 
+	    if (s[i] == ' ' || s[i] == '\t' ||
 		s[i] == '\r' || s[i] == '\n') {
 		len--;
 	    } else {
@@ -934,7 +934,7 @@ int gretl_xml_node_get_trimmed_string (xmlNodePtr node, xmlDocPtr doc,
 	if (*pstr != NULL) {
 	    ret = 1;
 	}
-	free(tmp);	
+	free(tmp);
     } else {
 	/* empty string */
 	*pstr = gretl_strdup("");
@@ -951,7 +951,7 @@ int gretl_xml_node_get_trimmed_string (xmlNodePtr node, xmlDocPtr doc,
  * @node: XML node pointer.
  * @doc: XML document pointer.
  * @err: location to receive error code.
- * 
+ *
  * Returns: allocated list read from @node, or %NULL on
  * failure.
  */
@@ -1014,12 +1014,12 @@ int *gretl_xml_get_list (xmlNodePtr node, xmlDocPtr doc, int *err)
  * @doc: XML document pointer.
  * @name: name of child node.
  * @pstr: location to receive string.
- * 
+ *
  * Returns: 1 if a string is found and read successfully, 0
  * otherwise.
  */
 
-int gretl_xml_child_get_string (xmlNodePtr node, xmlDocPtr doc, 
+int gretl_xml_child_get_string (xmlNodePtr node, xmlDocPtr doc,
 				const char *name, char **pstr)
 {
     xmlNodePtr cur;
@@ -1077,7 +1077,7 @@ static void *gretl_xml_get_array (xmlNodePtr node, xmlDocPtr doc,
 
     if (n <= 0) {
 	return NULL;
-    }    
+    }
 
     if (type == GRETL_TYPE_INT_ARRAY) {
 	ivals = malloc(n * sizeof *ivals);
@@ -1104,7 +1104,7 @@ static void *gretl_xml_get_array (xmlNodePtr node, xmlDocPtr doc,
 	char *test;
 
 	errno = 0;
-	
+
 	if (type == GRETL_TYPE_DOUBLE_ARRAY) {
 	    double x;
 
@@ -1145,7 +1145,7 @@ static void *gretl_xml_get_array (xmlNodePtr node, xmlDocPtr doc,
 		    nread++;
 		}
 	    }
-	} else if (type == GRETL_TYPE_CMPLX_ARRAY) { 
+	} else if (type == GRETL_TYPE_CMPLX_ARRAY) {
 	    double x;
 	    int n2 = n * 2;
 	    int rval = 1;
@@ -1175,7 +1175,7 @@ static void *gretl_xml_get_array (xmlNodePtr node, xmlDocPtr doc,
 		    }
 		}
 	    }
-	}   
+	}
 
 	free(tmp);
 
@@ -1203,7 +1203,7 @@ static void *gretl_xml_get_array (xmlNodePtr node, xmlDocPtr doc,
  * @doc: XML document pointer.
  * @nelem: location to receive number of elements in array.
  * @err: location to receive error code.
- * 
+ *
  * Returns: allocated array of integers read from @node, or %NULL on
  * failure.
  */
@@ -1221,7 +1221,7 @@ int *gretl_xml_get_int_array (xmlNodePtr node, xmlDocPtr doc,
  * @doc: XML document pointer.
  * @nelem: location to receive number of elements in array.
  * @err: location to receive error code.
- * 
+ *
  * Returns: allocated array of doubles read from @node, or %NULL on
  * failure.
  */
@@ -1234,7 +1234,7 @@ double *gretl_xml_get_double_array (xmlNodePtr node, xmlDocPtr doc,
     if (err == NULL) {
 	err = &myerr;
     }
-	
+
     return gretl_xml_get_array(node, doc, GRETL_TYPE_DOUBLE_ARRAY,
 			       nelem, err);
 }
@@ -1245,8 +1245,8 @@ double *gretl_xml_get_double_array (xmlNodePtr node, xmlDocPtr doc,
  * @doc: XML document pointer.
  * @nelem: location to receive number of elements in array.
  * @err: location to receive error code.
- * 
- * Returns: allocated array of cmplx (complex numbers) read from 
+ *
+ * Returns: allocated array of cmplx (complex numbers) read from
  * @node, or %NULL on failure.
  */
 
@@ -1275,7 +1275,7 @@ static char *chunk_strdup (const char *src, const char **ptr, int *err)
 	    while (*src && *src != '"') {
 		len++;
 		src++;
-	    }	
+	    }
 	    if (*src == '"') {
 		src++;
 	    }
@@ -1313,8 +1313,8 @@ static char *chunk_strdup (const char *src, const char **ptr, int *err)
  * @slop: if non-zero, allow the number of strings to fall
  * short of the recorded string count by one.
  * @err: location to receive error code.
- * 
- * Returns: allocated array of strings read from @node, or 
+ *
+ * Returns: allocated array of strings read from @node, or
  * %NULL on failure.
  */
 
@@ -1388,12 +1388,12 @@ char **gretl_xml_get_strings_array (xmlNodePtr node, xmlDocPtr doc,
  * @name: name of child node.
  * @pstrs: location to receive strings array.
  * @nstrs: location to receive number of strings.
- * 
+ *
  * Returns: 1 if an array of strings is found and read successfully,
  * 0 otherwise.
  */
 
-int gretl_xml_child_get_strings_array (xmlNodePtr node, xmlDocPtr doc, 
+int gretl_xml_child_get_strings_array (xmlNodePtr node, xmlDocPtr doc,
 				       const char *name, char ***pstrs,
 				       int *nstrs)
 {
@@ -1467,7 +1467,7 @@ static int get_matrix_values_via_file (gretl_matrix *m, const char *s)
     return err;
 }
 
-static int maybe_add_matrix_labels (gretl_matrix *m, 
+static int maybe_add_matrix_labels (gretl_matrix *m,
 				    const char *s,
 				    int byrow)
 {
@@ -1489,7 +1489,7 @@ static int maybe_add_matrix_labels (gretl_matrix *m,
 	    gretl_matrix_set_rownames(m, S);
 	} else {
 	    gretl_matrix_set_colnames(m, S);
-	} 
+	}
     }
 
     return err;
@@ -1500,12 +1500,12 @@ static int maybe_add_matrix_labels (gretl_matrix *m,
  * @node: XML node pointer.
  * @doc: XML document pointer.
  * @err: location to receive error code.
- * 
- * Returns: allocated gretl matrix read from @node, or %NULL 
+ *
+ * Returns: allocated gretl matrix read from @node, or %NULL
  * on failure.
  */
 
-gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node, xmlDocPtr doc, 
+gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node, xmlDocPtr doc,
 				    int *err)
 {
     gretl_matrix *m = NULL;
@@ -1552,7 +1552,7 @@ gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node, xmlDocPtr doc,
 	    *err = E_ALLOC;
 	}
 	return m;
-    }	
+    }
 
     if (rows <= 0 || cols <= 0) {
 	*err = E_DATA;
@@ -1647,7 +1647,7 @@ gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node, xmlDocPtr doc,
  * @node: XML node pointer.
  * @doc: XML document pointer.
  * @pmask: location to receive allocated mask.
- * 
+ *
  * Returns: 0 on success, non-zero on failure.
  */
 
@@ -1672,7 +1672,7 @@ int gretl_xml_get_submask (xmlNodePtr node, xmlDocPtr doc, char **pmask)
 	err = 1;
     } else {
 	xmlChar *tmp = xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
-	
+
 	if (tmp == NULL) {
 	    err = 1;
 	} else {
@@ -1704,16 +1704,16 @@ void gretl_xml_header (FILE *fp)
  * @X: matrix, variable in columns.
  * @varnames: column names.
  * @labels: descriptive labels for the variables, or %NULL.
- * 
+ *
  * Write out a .gdt data file containing the elements of
  * of the given matrix.
- * 
+ *
  * Returns: 0 on successful completion, non-zero on error.
  */
 
-int gretl_matrix_write_as_gdt (const char *fname, 
+int gretl_matrix_write_as_gdt (const char *fname,
 			       const gretl_matrix *X,
-			       const char **varnames, 
+			       const char **varnames,
 			       const char **labels)
 {
     gzFile fz = Z_NULL;
@@ -1734,7 +1734,7 @@ int gretl_matrix_write_as_gdt (const char *fname,
     }
 
     msize = T * k * sizeof(double);
-    
+
     if (msize > 100000) {
 	fprintf(stderr, I_("Writing %.0f Kbytes of data\n"), msize / 1024);
     } else {
@@ -1760,7 +1760,7 @@ int gretl_matrix_write_as_gdt (const char *fname,
     gzprintf(fz, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 	     "<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
 	     "<gretldata version=\"%s\" name=\"%s\" frequency=\"1\" "
-	     "startobs=\"1\" endobs=\"%d\" type=\"cross-section\">\n", 
+	     "startobs=\"1\" endobs=\"%d\" type=\"cross-section\">\n",
 	     GRETLDATA_VERSION, datname, T);
 
     free(xmlbuf);
@@ -1788,14 +1788,14 @@ int gretl_matrix_write_as_gdt (const char *fname,
 	    gzprintf(fz, "%.12g ", gretl_matrix_get(X, t, i));
 	}
 	gzputs(fz, "</obs>\n");
-	if (msize > 0 && t && (t % 50 == 0)) { 
+	if (msize > 0 && t && (t % 50 == 0)) {
 	    (*show_progress) (50, T, SP_NONE);
 	}
     }
 
     gzputs(fz, "</observations>\n</gretldata>\n");
 
- cleanup: 
+ cleanup:
 
     if (in_c_locale) {
 	gretl_pop_c_numeric_locale();
@@ -1803,7 +1803,7 @@ int gretl_matrix_write_as_gdt (const char *fname,
 
     if (msize > 0) {
 	(*show_progress)(0, T, SP_FINISH);
-    } 
+    }
 
     gzclose(fz);
 
@@ -1826,7 +1826,7 @@ static int string_table_count (const DATASET *dset,
     return n;
 }
 
-static void maybe_print_panel_info (const DATASET *dset, 
+static void maybe_print_panel_info (const DATASET *dset,
 				    int skip_padding,
 				    FILE *fp, gzFile fz)
 {
@@ -1920,7 +1920,7 @@ static int write_binary_header (FILE *fp)
     return err;
 }
 
-static int write_binary_data (const char *fname, const DATASET *dset, 
+static int write_binary_data (const char *fname, const DATASET *dset,
 			      const int *list, int nvars, int nrows)
 {
     char *bname;
@@ -1958,7 +1958,7 @@ static int write_binary_data (const char *fname, const DATASET *dset,
 	    tv = dset->v - 1;
 	    nv = dset->v - 2;
 	}
-	
+
 	for (t=dset->t1; t<=dset->t2 && !err; t++) {
 	    if (!row_is_padding(dset, t, nv)) {
 		dset->Z[uv][t] = 1 + t / dset->pd;
@@ -1992,7 +1992,7 @@ static int write_binary_data (const char *fname, const DATASET *dset,
     } else {
 	for (i=1; i<=nvars && !err; i++) {
 	    v = savenum(list, i);
-	    wrote = fwrite(dset->Z[v] + dset->t1, sizeof(double), 
+	    wrote = fwrite(dset->Z[v] + dset->t1, sizeof(double),
 			   T, fp);
 	    if (wrote != T) {
 		err = E_DATA;
@@ -2050,9 +2050,25 @@ static int read_binary_header (FILE *fp, int order)
     return err;
 }
 
-static int read_binary_data (const char *fname, 
+#if NEW_NA
+
+static void na_convert (double *x, int n)
+{
+    int i;
+
+    for (i=0; i<n; i++) {
+	if (x[i] == DBL_MAX) {
+	    x[i] = NADBL;
+	}
+    }
+}
+
+#endif
+
+static int read_binary_data (const char *fname,
 			     DATASET *dset,
 			     int order,
+			     double gdtversion,
 			     int fullv,
 			     const int *vlist)
 {
@@ -2075,10 +2091,17 @@ static int read_binary_data (const char *fname,
 
 	for (i=1; i<fullv && !err; i++) {
 	    if (vlist == NULL || in_gretl_list(vlist, i)) {
-		got = fread(dset->Z[k++], sizeof(double), T, fp);
+		got = fread(dset->Z[k], sizeof(double), T, fp);
 		if (got != T) {
 		    err = E_DATA;
 		}
+#if NEW_NA
+		if (!err && gdtversion < 1.4) {
+		    /* we need to convert old-style NAs */
+		    na_convert(Z[k], dset->n);
+		}
+#endif
+		k++;
 	    } else {
 		fseek(fp, offset, SEEK_CUR);
 	    }
@@ -2141,8 +2164,8 @@ static int p15_OK (const DATASET *dset, int v)
     return ret;
 }
 
-static int real_write_gdt (const char *fname, const int *list, 
-			   const DATASET *dset, gretlopt opt, 
+static int real_write_gdt (const char *fname, const int *list,
+			   const DATASET *dset, gretlopt opt,
 			   int progress)
 {
     FILE *fp = NULL;
@@ -2205,7 +2228,7 @@ static int real_write_gdt (const char *fname, const int *list,
 		v = savenum(list, i+1);
 		p15[i] = p15_OK(dset, v);
 	    }
-	}	    
+	}
     }
 
     if (progress) {
@@ -2236,13 +2259,13 @@ static int real_write_gdt (const char *fname, const int *list,
 	gzprintf(fz, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 		 "<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
 		 "<gretldata version=\"%s\" name=\"%s\" frequency=\"%s\" "
-		 "startobs=\"%s\" endobs=\"%s\" ", 
+		 "startobs=\"%s\" endobs=\"%s\" ",
 		 GRETLDATA_VERSION, xmlbuf, freqstr, startdate, enddate);
     } else {
 	fprintf(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 		"<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
 		"<gretldata version=\"%s\" name=\"%s\" frequency=\"%s\" "
-		"startobs=\"%s\" endobs=\"%s\" ", 
+		"startobs=\"%s\" endobs=\"%s\" ",
 		GRETLDATA_VERSION, xmlbuf, freqstr, startdate, enddate);
     }
 
@@ -2269,7 +2292,7 @@ static int real_write_gdt (const char *fname, const int *list,
 
     have_markers = dataset_has_markers(dset);
 
-    if (dataset_is_panel(dset) && !have_markers && 
+    if (dataset_is_panel(dset) && !have_markers &&
 	nvars == dset->v - 1 && dsize > 1024 * 1024 * 10) {
 	/* we have more than 10 MB of panel data */
 	int padrows = panel_padding_rows(dset);
@@ -2310,7 +2333,7 @@ static int real_write_gdt (const char *fname, const int *list,
 	} else {
 	    fprintf(fp, "<variables count=\"%d\">\n", nvars + 2);
 	}
-    } else {	
+    } else {
 	if (gz) {
 	    gzprintf(fz, "<variables count=\"%d\">\n", nvars);
 	} else {
@@ -2341,7 +2364,7 @@ static int real_write_gdt (const char *fname, const int *list,
 		    fprintf(fp, "\n label=\"%s\"", xmlbuf);
 		}
 	    }
-	} 
+	}
 
 	vstr = series_get_display_name(dset, v);
 	if (*vstr) {
@@ -2396,7 +2419,7 @@ static int real_write_gdt (const char *fname, const int *list,
 	    } else {
 		fprintf(fp, "\n compact-method=\"%s\"", meth);
 	    }
-	} 
+	}
 
 	if (series_is_discrete(dset, v)) {
 	    alt_puts("\n discrete=\"true\"", fp, fz);
@@ -2432,7 +2455,7 @@ static int real_write_gdt (const char *fname, const int *list,
     if (skip_padding) {
 	alt_puts("<variable name=\"unit__\"\n/>\n", fp, fz);
 	alt_puts("<variable name=\"time__\"\n/>\n", fp, fz);
-    }	
+    }
 
     alt_puts("</variables>\n", fp, fz);
 
@@ -2468,7 +2491,7 @@ static int real_write_gdt (const char *fname, const int *list,
 		    fprintf(fp, " label=\"%s\"", xmlbuf);
 		}
 	    }
-	} 
+	}
 	if (binary) {
 	    fputs(" />\n", fp);
 	    continue;
@@ -2495,7 +2518,7 @@ static int real_write_gdt (const char *fname, const int *list,
 	}
 	alt_puts("</obs>\n", fp, fz);
 
-	if (progress && t && ((t - dset->t1) % 50 == 0)) { 
+	if (progress && t && ((t - dset->t1) % 50 == 0)) {
 	    (*show_progress) (50, tsamp, SP_NONE);
 	}
     }
@@ -2554,7 +2577,7 @@ static int real_write_gdt (const char *fname, const int *list,
 
     alt_puts("</gretldata>\n", fp, fz);
 
- cleanup: 
+ cleanup:
 
     if (in_c_locale) {
 	gretl_pop_c_numeric_locale();
@@ -2562,7 +2585,7 @@ static int real_write_gdt (const char *fname, const int *list,
 
     if (progress) {
 	(*show_progress)(0, dset->t2 - dset->t1 + 1, SP_FINISH);
-    } 
+    }
 
     if (p15) free(p15);
     if (fp != NULL) fclose(fp);
@@ -2579,15 +2602,15 @@ static int real_write_gdt (const char *fname, const int *list,
  * @opt: if %OPT_Z write gzipped data, else uncompressed.
  * @progress: may be 1 when called from gui to display progress
  * bar in case of a large data write; generally should be 0.
- * 
+ *
  * Write out in xml a data file containing the values of the given set
  * of variables.
- * 
+ *
  * Returns: 0 on successful completion, non-zero on error.
  */
 
-int gretl_write_gdt (const char *fname, const int *list, 
-		     const DATASET *dset, gretlopt opt, 
+int gretl_write_gdt (const char *fname, const int *list,
+		     const DATASET *dset, gretlopt opt,
 		     int progress)
 {
     int err = 0;
@@ -2659,7 +2682,7 @@ static int process_varlist (xmlNodePtr node, DATASET *dset, int probe)
 	    if (dset->Z == NULL) {
 		err = E_ALLOC;
 	    }
-	}		
+	}
 	free(tmp);
     } else {
 	gretl_errmsg_set(_("Got no variables"));
@@ -2707,7 +2730,7 @@ static int process_varlist (xmlNodePtr node, DATASET *dset, int probe)
 	    }
 	    tmp = xmlGetProp(cur, (XUC) "parent");
 	    if (tmp != NULL) {
-		series_set_parent(dset, i, (char *) tmp); 
+		series_set_parent(dset, i, (char *) tmp);
 		free(tmp);
 	    }
 	    tmp = xmlGetProp(cur, (XUC) "transform");
@@ -2767,14 +2790,14 @@ static int process_varlist (xmlNodePtr node, DATASET *dset, int probe)
 		free(tmp);
 	    }
 	    i++;
-	}	    
+	}
 	cur = cur->next;
     }
-   
+
     if (i != dset->v) {
 	gretl_errmsg_set(_("Number of variables does not match declaration"));
 	err = E_DATA;
-    } 
+    }
 
     return err;
 }
@@ -2836,11 +2859,11 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
     /* actually read the info */
 
     k = i = 1;
-    
+
     while (cur != NULL) {
         if (!xmlStrcmp(cur->name, (XUC) "variable")) {
 	    int wanted = 0;
-	    
+
 	    tmp = xmlGetProp(cur, (XUC) "name");
 	    if (tmp != NULL) {
 		if (in_gretl_list(vlist, i)) {
@@ -2870,7 +2893,7 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
 	    }
 	    tmp = xmlGetProp(cur, (XUC) "parent");
 	    if (tmp != NULL) {
-		series_set_parent(dset, k, (char *) tmp); 
+		series_set_parent(dset, k, (char *) tmp);
 		free(tmp);
 	    }
 	    tmp = xmlGetProp(cur, (XUC) "transform");
@@ -2907,7 +2930,7 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
 	    tmp = xmlGetProp(cur, (XUC) "midas_period");
 	    if (tmp != NULL) {
 		int mpd = atoi((char *) tmp);
-		
+
 		if (mpd > 0) {
 		    series_set_midas_period(dset, k, mpd);
 		}
@@ -2933,7 +2956,7 @@ static int process_varlist_subset (xmlNodePtr node, DATASET *dset,
 	    i++;
 	    k++;
 	}
-	
+
 	cur = cur->next;
     }
 
@@ -2952,9 +2975,9 @@ static void set_underflow_warning (int n)
 /* Read the values for all (or selected) variables at
    observation @t */
 
-static int process_values (DATASET *dset, 
+static int process_values (DATASET *dset,
 			   int t, char *s,
-			   int fullv, 
+			   int fullv,
 			   const int *vlist,
 			   int *n_uflow)
 {
@@ -3009,9 +3032,10 @@ static int process_values (DATASET *dset,
     return err;
 }
 
-static int read_observations (xmlDocPtr doc, xmlNodePtr node, 
+static int read_observations (xmlDocPtr doc, xmlNodePtr node,
 			      DATASET *dset, double dsize,
-			      int binary, const char *fname)
+			      int binary, double gdtversion,
+			      const char *fname)
 {
     xmlNodePtr cur;
     xmlChar *tmp;
@@ -3024,7 +3048,7 @@ static int read_observations (xmlDocPtr doc, xmlNodePtr node,
     tmp = xmlGetProp(node, (XUC) "count");
     if (tmp == NULL) {
 	return E_DATA;
-    } 
+    }
 
     if (sscanf((char *) tmp, "%d", &n) == 1) {
 	dset->n = n;
@@ -3072,7 +3096,8 @@ static int read_observations (xmlDocPtr doc, xmlNodePtr node,
     }
 
     if (binary) {
-	err = read_binary_data(fname, dset, binary, dset->v, NULL);
+	err = read_binary_data(fname, dset, binary, gdtversion,
+			       dset->v, NULL);
 	if (!dset->markers) {
 	    goto bailout;
 	}
@@ -3126,7 +3151,7 @@ static int read_observations (xmlDocPtr doc, xmlNodePtr node,
 	if (err) {
 	    break;
 	}
- 
+
 	cur = cur->next;
 
 	if (cur != NULL && t == dset->n) {
@@ -3156,15 +3181,16 @@ static int read_observations (xmlDocPtr doc, xmlNodePtr node,
 
     if (!err && n_uflow > 0) {
 	set_underflow_warning(n_uflow);
-    }    
+    }
 
     return err;
 }
 
 static int read_observations_subset (xmlDocPtr doc,
-				     xmlNodePtr node, 
+				     xmlNodePtr node,
 				     DATASET *dset,
 				     int binary,
+				     double gdtversion,
 				     const char *fname,
 				     int fullv,
 				     const int *vlist,
@@ -3179,7 +3205,7 @@ static int read_observations_subset (xmlDocPtr doc,
     tmp = xmlGetProp(node, (XUC) "count");
     if (tmp == NULL) {
 	return E_DATA;
-    } 
+    }
 
     if (sscanf((char *) tmp, "%d", &n) == 1) {
 	dset->n = n;
@@ -3222,7 +3248,8 @@ static int read_observations_subset (xmlDocPtr doc,
     }
 
     if (binary) {
-	err = read_binary_data(fname, dset, binary, fullv, vlist);
+	err = read_binary_data(fname, dset, binary, gdtversion,
+			       fullv, vlist);
 	if (!dset->markers) {
 	    goto bailout;
 	}
@@ -3268,7 +3295,7 @@ static int read_observations_subset (xmlDocPtr doc,
 	if (err) {
 	    break;
 	}
- 
+
 	cur = cur->next;
 
 	if (cur != NULL && t == dset->n) {
@@ -3306,7 +3333,7 @@ static int owner_id (const DATASET *dset, const char *s)
 }
 
 static int process_string_tables (xmlDocPtr doc,
-				  xmlNodePtr node, 
+				  xmlNodePtr node,
 				  DATASET *dset,
 				  int subset)
 {
@@ -3362,7 +3389,7 @@ static int process_string_tables (xmlDocPtr doc,
 		}
 	    }
 	    if (v > 0) {
-		strs = gretl_xml_get_strings_array(cur, doc, &n_strs, 
+		strs = gretl_xml_get_strings_array(cur, doc, &n_strs,
 						   0, &err);
 		if (err) {
 		    fprintf(stderr, "process_string_tables: get_strings_array "
@@ -3378,7 +3405,7 @@ static int process_string_tables (xmlDocPtr doc,
 		}
 	    }
 	    free(owner);
-	}	   
+	}
 	if (!err) {
 	    cur = cur->next;
 	}
@@ -3409,13 +3436,13 @@ static int process_panel_info (xmlNodePtr cur, DATASET *dset,
     if (tmp != NULL) {
 	sd0 = atof((const char *) tmp);
 	free(tmp);
-    } 
+    }
 
     tmp = xmlGetProp(cur, (XUC) "skip-padding");
     if (tmp != NULL) {
 	*repad = 1;
 	free(tmp);
-    }    
+    }
 
     if (pd > 0 && sd0 > 0.0) {
 	dset->panel_pd = pd;
@@ -3513,7 +3540,7 @@ static int xml_get_startobs (xmlNodePtr node, double *sd0, char *stobs,
 	    /* handle legacy gdt dates */
 	    gretl_charsub(obstr, '/', '-');
 	}
-	
+
 	if (likely_calendar(obstr) && caldata) {
 	    guint32 ed = get_epoch_day(obstr);
 
@@ -3597,7 +3624,7 @@ static int gdt_binary_order (xmlNodePtr node)
 {
     xmlChar *tmp = xmlGetProp(node, (XUC) "binary");
     int ret = 0;
-    
+
     if (tmp != NULL) {
 	if (!strcmp((char *) tmp, "little-endian")) {
 	    ret = G_LITTLE_ENDIAN;
@@ -3670,8 +3697,8 @@ static void data_read_message (const char *fname, DATASET *dset, PRN *prn)
 {
     pprintf(prn, A_("\nRead datafile %s\n"), fname);
     pprintf(prn, A_("periodicity: %d, maxobs: %d\n"
-		    "observations range: %s to %s\n"), 
-	    (custom_time_series(dset))? 1 : dset->pd, 
+		    "observations range: %s to %s\n"),
+	    (custom_time_series(dset))? 1 : dset->pd,
 	    dset->n, dset->stobs, dset->endobs);
     pputc(prn, '\n');
 }
@@ -3748,7 +3775,7 @@ static int replace_panel_padding (DATASET *dset)
 }
 
 static int real_read_gdt (const char *fname, const char *srcname,
-			  DATASET *dset, gretlopt opt, PRN *prn) 
+			  DATASET *dset, gretlopt opt, PRN *prn)
 {
     DATASET *tmpset;
     xmlDocPtr doc = NULL;
@@ -3767,7 +3794,7 @@ static int real_read_gdt (const char *fname, const char *srcname,
     if (fsz < 0) {
 	return E_FOPEN;
     } else if (fsz > 100000) {
-	fprintf(stderr, "%s %.0f Kbytes %s...\n", 
+	fprintf(stderr, "%s %.0f Kbytes %s...\n",
 		gz ? I_("Uncompressing") : I_("Reading"),
 		(double) fsz / 1024.0, I_("of data"));
     }
@@ -3796,12 +3823,12 @@ static int real_read_gdt (const char *fname, const char *srcname,
     err = xml_get_data_structure(cur, &tmpset->structure);
     if (err) {
 	goto bailout;
-    } 
+    }
 
     err = xml_get_data_frequency(cur, &tmpset->pd, &tmpset->structure);
     if (err) {
 	goto bailout;
-    }   
+    }
 
     gretl_push_c_numeric_locale();
     in_c_locale = 1;
@@ -3832,7 +3859,7 @@ static int real_read_gdt (const char *fname, const char *srcname,
     cur = cur->xmlChildrenNode;
     while (cur != NULL && !err) {
         if (!xmlStrcmp(cur->name, (XUC) "description")) {
-	    tmpset->descrip = (char *) 
+	    tmpset->descrip = (char *)
 		xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
         } else if (!xmlStrcmp(cur->name, (XUC) "variables")) {
 	    err = process_varlist(cur, tmpset, 0);
@@ -3847,9 +3874,9 @@ static int real_read_gdt (const char *fname, const char *srcname,
 		err = 1;
 	    } else {
 		double dsize = (opt & OPT_B)? (double) fsz : 0;
-		
+
 		err = read_observations(doc, cur, tmpset, dsize,
-					binary, fname);
+					binary, gdtversion, fname);
 		if (err) {
 		    fprintf(stderr, "error %d in read_observations\n", err);
 		} else {
@@ -3865,7 +3892,7 @@ static int real_read_gdt (const char *fname, const char *srcname,
 		if (err) {
 		    fprintf(stderr, "error %d processing string tables\n", err);
 		}
-	    }	    
+	    }
 	} else if (!xmlStrcmp(cur->name, (XUC) "panel-info")) {
 	    if (!gotvars) {
 		gretl_errmsg_set(_("Variables information is missing"));
@@ -3965,11 +3992,12 @@ static int real_read_gdt (const char *fname, const char *srcname,
 static int real_read_gdt_subset (const char *fname,
 				 DATASET *dset,
 				 const int *vlist,
-				 gretlopt opt) 
+				 gretlopt opt)
 {
     DATASET *tmpset;
     xmlDocPtr doc = NULL;
     xmlNodePtr cur;
+    double gdtversion = 1.0;
     int gotvars = 0, gotobs = 0;
     int caldata = 0;
     int in_c_locale = 0;
@@ -3995,12 +4023,14 @@ static int real_read_gdt_subset (const char *fname,
     err = xml_get_data_structure(cur, &tmpset->structure);
     if (err) {
 	goto bailout;
-    } 
+    }
 
     err = xml_get_data_frequency(cur, &tmpset->pd, &tmpset->structure);
     if (err) {
 	goto bailout;
-    }   
+    }
+
+    gdtversion = get_gdt_version(cur);
 
     gretl_push_c_numeric_locale();
     in_c_locale = 1;
@@ -4011,7 +4041,7 @@ static int real_read_gdt_subset (const char *fname,
     err = xml_get_startobs(cur, &tmpset->sd0, tmpset->stobs, caldata);
     if (err) {
 	goto bailout;
-    }     
+    }
 
     *tmpset->endobs = '\0';
     caldata = calendar_data(tmpset);
@@ -4040,9 +4070,10 @@ static int real_read_gdt_subset (const char *fname,
 		gretl_errmsg_set(_("Variables information is missing"));
 		err = E_DATA;
 	    } else {
-		err = read_observations_subset(doc, cur, tmpset, 
-					       binary, fname,
-					       fullv, vlist, opt);
+		err = read_observations_subset(doc, cur, tmpset,
+					       binary, gdtversion,
+					       fname, fullv, vlist,
+					       opt);
 	    }
 	    if (!err) {
 		gotobs = 1;
@@ -4053,7 +4084,7 @@ static int real_read_gdt_subset (const char *fname,
 		err = 1;
 	    } else {
 		err = process_string_tables(doc, cur, tmpset, 1);
-	    }	    
+	    }
 	}
 	if (!err) {
 	    cur = cur->next;
@@ -4132,12 +4163,12 @@ static int real_read_gdt_varnames (const char *fname,
     err = xml_get_data_structure(cur, &tmpset->structure);
     if (err) {
 	goto bailout;
-    } 
+    }
 
     err = xml_get_data_frequency(cur, &tmpset->pd, &tmpset->structure);
     if (err) {
 	goto bailout;
-    }   
+    }
 
     gretl_push_c_numeric_locale();
     in_c_locale = 1;
@@ -4148,7 +4179,7 @@ static int real_read_gdt_varnames (const char *fname,
     err = xml_get_startobs(cur, &tmpset->sd0, tmpset->stobs, caldata);
     if (err) {
 	goto bailout;
-    }     
+    }
 
     *tmpset->endobs = '\0';
     caldata = calendar_data(tmpset);
@@ -4205,13 +4236,13 @@ static int real_read_gdt_varnames (const char *fname,
  * use OPT_T when appending to panel data (see the "append"
  * command in the gretl manual). Otherwise use OPT_NONE.
  * @prn: where any messages should be written.
- * 
+ *
  * Read data from native file into gretl's workspace.
- * 
+ *
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int gretl_read_gdt (const char *fname, DATASET *dset, 
+int gretl_read_gdt (const char *fname, DATASET *dset,
 		    gretlopt opt, PRN *prn)
 {
     if (has_suffix(fname, ".gdtb")) {
@@ -4260,18 +4291,18 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
  * @vlist: list of series to extract.
  * @opt: may include OPT_M to retrieve the observation
  * markers associated with the data, if any.
- * 
+ *
  * Read specified series from native file into @dset,
  * which should be "empty" on input.
- * 
+ *
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int gretl_read_gdt_subset (const char *fname, DATASET *dset, 
+int gretl_read_gdt_subset (const char *fname, DATASET *dset,
 			   int *vlist, gretlopt opt)
 {
     int err = 0;
-    
+
     if (has_suffix(fname, ".gdtb")) {
 	/* zipfile with gdt + binary */
 	gchar *zdir;
@@ -4311,18 +4342,18 @@ int gretl_read_gdt_subset (const char *fname, DATASET *dset,
  * @fname: name of file to open for reading.
  * @vnames: location to receive array of series names.
  * @nvars: location to receive the number of series.
- * 
+ *
  * Read the array of series names from the specified file.
- * 
+ *
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int gretl_read_gdt_varnames (const char *fname, 
+int gretl_read_gdt_varnames (const char *fname,
 			     char ***vnames,
 			     int *nvars)
 {
     int err = 0;
-    
+
     if (has_suffix(fname, ".gdtb")) {
 	/* zipfile with gdt + binary */
 	gchar *zdir;
@@ -4357,9 +4388,9 @@ int gretl_read_gdt_varnames (const char *fname,
 /**
  * gretl_get_gdt_description:
  * @fname: name of file to try.
- * 
+ *
  * Read data description for gretl native data file.
- * 
+ *
  * Returns: buffer containing description, or NULL on failure.
  */
 

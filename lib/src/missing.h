@@ -24,16 +24,20 @@
 
 #define NEW_NA 0
 
-#define NADBL DBL_MAX
-#define na(x) ((x) == NADBL)
-
-/* xna = "extended NA", including regular NA for missing data
-   as well as NaNs and infinities */
-
-#ifndef isfinite
-# define isfinite(x) (!isnan(x) && !isinf(x))
-# define xna(x) ((x) == NADBL || isnan(x) || isinf(x))
-#else
+#if NEW_NA
+# ifdef NAN
+#  define NADBL NAN
+# else
+#  define NADBL 0.0/0.0
+# endif
+# ifndef isfinite
+#  define isfinite(x) (!isnan(x) && !isinf(x))
+# endif
+# define na(x) !isfinite(x)
+# define xna(x) !isfinite(x)
+#else /* not NEW_NA */
+# define NADBL DBL_MAX
+# define na(x) ((x) == NADBL)
 # define xna(x) ((x) == NADBL || !isfinite(x))
 #endif
 
