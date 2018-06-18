@@ -1546,8 +1546,7 @@ int varnum_from_string (const char *str, DATASET *dset)
  * possible. Otherwise returns -1 with @err set to a
  * non-zero value. Note that it is considered an
  * error if @x is "too far" from the nearest integer;
- * it must be "almost integral", with tolerance
- * 1.0e-6.
+ * it must be "almost integral", with tolerance 0.001.
  */
 
 int gretl_int_from_double (double x, int *err)
@@ -1557,11 +1556,9 @@ int gretl_int_from_double (double x, int *err)
     if (fabs(x) > INT_MAX) {
 	*err = E_INVARG;
     } else {
-	double slop = 1.0e-6;
+	double slop = 0.001;
 	
-	if (x - floor(x) < slop) {
-	    k = lrint(x);
-	} else if (ceil(x) - x < slop) {
+	if (x - floor(x) < slop || ceil(x) - x < slop) {
 	    k = lrint(x);
 	} else {
 	    *err = E_INVARG;
