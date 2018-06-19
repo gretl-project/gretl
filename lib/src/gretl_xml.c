@@ -2098,7 +2098,7 @@ static int read_binary_data (const char *fname,
 #if NEW_NA
 		if (!err && gdtversion < 1.4) {
 		    /* we need to convert old-style NAs */
-		    na_convert(Z[k], dset->n);
+		    na_convert(dset->Z[k], dset->n);
 		}
 #endif
 		k++;
