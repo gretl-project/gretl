@@ -12097,6 +12097,8 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		    li = list_from_strings_array(e->v.a, p);
 		} else if (ok_list_node_plus(e)) {
 		    li = node_get_list(e, p);
+		} else if (e->t == MAT) {
+		    li = node_get_list(e, p);
 		} else {
 		    p->err = E_TYPES;
 		}
