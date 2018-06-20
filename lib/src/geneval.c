@@ -4423,6 +4423,10 @@ static NODE *mspec_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_mspec_node(p);
 
+    if (l->t == STR && r == NULL) {
+	fprintf(stderr, "mspec: probably should be bundle-member!\n");
+    }
+
     if (ret != NULL && starting(p)) {
 	build_mspec(ret, l, r, p);
     }
@@ -14463,7 +14467,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case MSLRAW:
-	/* unevaluated matrix subspec */
+	/* unevaluated matrix (or object) subspec */
 	ret = mspec_node(l, r, p);
 	break;
     case SUBSL:
@@ -16291,7 +16295,6 @@ static void gen_preprocess (parser *p, int flags)
 #if LHDEBUG
 	fprintf(stderr, "parsed lhtree, err=%d\n", p->err);
 	print_tree(p->lhtree, p, 0);
-	fprintf(stderr, "done print_tree\n");
 #endif
 	p->point = savepoint;
 	p->ch = 0;
