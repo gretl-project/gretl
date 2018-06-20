@@ -4319,6 +4319,14 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
     }
 #endif
 
+    /* special case: bundle membership */
+    if (l->t == STR && r == NULL) {
+	spec->type[0] = SEL_STR;
+	spec->type[1] = SEL_NULL;
+	spec->sel[0].str = l->v.str;
+	goto finished;
+    }
+
     if (l->t == NUM) {
 	ridx = node_get_int(l, p);
 	if (!p->err && ridx == 0) {
@@ -4422,10 +4430,6 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
 static NODE *mspec_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_mspec_node(p);
-
-    if (l->t == STR && r == NULL) {
-	fprintf(stderr, "mspec: probably should be bundle-member!\n");
-    }
 
     if (ret != NULL && starting(p)) {
 	build_mspec(ret, l, r, p);
@@ -4774,6 +4778,29 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
 		ret = aux_scalar_node(p);
 		if (!p->err) {
 		    ret->v.xval = l->v.xvec[t-1];
+		}
+	    }
+	} else if (l->t == BUNDLE && r->t == MSPEC) {
+	    /* the "mspec" must hold a single key string */
+	    char *s = r->v.mspec->sel[0].str;
+	    GretlType type = GRETL_TYPE_NONE;
+	    int size = 0;
+	    void *val;
+
+	    val = gretl_bundle_get_data(l->v.b, s, &type, &size, &p->err);
+	    if (!p->err) {
+		int t = gen_type_from_gretl_type(type);
+
+		if (t == NUM) {
+		    ret = aux_scalar_node(p);
+		    if (!p->err) {
+			ret->v.xval = *(double *) val;
+		    }
+		} else {
+		    ret = get_aux_node(p, t, 0, 0);
+		    if (!p->err) {
+			ret->v.ptr = val;
+		    }
 		}
 	    }
 	} else {
@@ -9239,10 +9266,12 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 
     if (lh1->t != BUNDLE) {
 	return E_DATA;
+    } else if (lh2->t != STR && lh2->t != MSPEC) {
+	return E_DATA;
     }
 
     bundle = lh1->v.b;
-    key = lh2->v.str;
+    key = lh2->t == STR ? lh2->v.str : lh2->v.mspec->sel[0].str;
 
     if (bundle == NULL || key == NULL) {
 	return E_DATA;
@@ -17203,15 +17232,23 @@ static int save_generated_var (parser *p, PRN *prn)
 	} else if (compound_t == OSL) {
 	    NODE *lh1 = p->lhres->v.b2.l;
 
+#if LHDEBUG
+	    fprintf(stderr, "OSL save: lh1 type = %s\n", getsymb(lh1->t));
+#endif
 	    if (lh1->t == ARRAY) {
 		p->err = set_array_value(p->lhres, r, p);
 	    } else if (lh1->t == LIST) {
 		p->err = set_list_value(p->lhres, r, p);
 	    } else if (lh1->t == STR) {
 		p->err = set_string_value(p->lhres, r, p);
+	    } else if (lh1->t == BUNDLE) {
+		p->err = set_bundle_value(p->lhres, r, p);
 	    } else if (lh1->t == MAT) {
 		/* is this ever reached?? */
 		p->err = set_matrix_value(p->lhres, r, p);
+	    } else {
+		gretl_errmsg_set(_("Invalid left-hand side expression"));
+		p->err = E_TYPES;
 	    }
 	} else {
 	    gretl_errmsg_set(_("Invalid left-hand side expression"));

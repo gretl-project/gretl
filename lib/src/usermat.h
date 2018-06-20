@@ -31,7 +31,8 @@ enum {
       SEL_ALL,
       SEL_CONTIG,
       SEL_EXCL,
-      SEL_SINGLE
+      SEL_SINGLE,
+      SEL_STR
 };
 
 typedef struct matrix_subspec_ matrix_subspec;
@@ -39,6 +40,7 @@ typedef struct matrix_subspec_ matrix_subspec;
 union msel {
     int range[2];
     gretl_matrix *m;
+    char *str;
 };
 
 struct matrix_subspec_ {
