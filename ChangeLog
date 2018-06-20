@@ -9,7 +9,8 @@ version 2018b, in progress
   system of equations
 - Enhancements for nadarwat() function
 - When R_functions is set "on", accept call to an R function
-  without assignment of the return value, if any  
+  without assignment of the return value, if any
+- GUI console: use hansl syntax highlighting
 - Fixes for GUI model specification dialog: breakage in
   selection of GARCH robust variance estimator variant,
   and non-availability of lag selection in some cases
