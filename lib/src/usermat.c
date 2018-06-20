@@ -401,11 +401,14 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 
     if ((isvec || rh_scalar) &&
 	(spec->type[0] == SEL_RANGE || spec->type[0] == SEL_ALL)) {
-	/* flag as contiguous values? */
-	get_contig = (spec->type[1] != SEL_MATRIX);
+	/* flag as contiguous values provided the rh spec does not take
+	   the form of a matrix or column exclusion
+	*/
+	get_contig = spec->type[1] != SEL_MATRIX && spec->type[1] != SEL_EXCL;
 #if CONTIG_DEBUG
 	if (get_contig) {
-	    fprintf(stderr, "Get contig\n");
+	    fprintf(stderr, "got_contig: isvec %d, rh_scalar %d, rh range %d:%d\n",
+		    isvec, rh_scalar, spec->sel[1].range[0], spec->sel[1].range[0]);
 	}
 #endif
     }

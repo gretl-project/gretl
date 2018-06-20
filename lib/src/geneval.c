@@ -79,11 +79,17 @@ static void real_rndebug (const char *format, ...)
 # define rndebug(x)
 #endif
 
-#define MATRIX_NA_CHECK 1
 #define ONE_BY_ONE_CAST 1
 
-#define SCALARS_ENSURE_FINITE 1 /* debatable, but watch out for read/write */
-#define SERIES_ENSURE_FINITE 1  /* debatable */
+#if NEW_NA /* NADBL equivalent to NaN */
+# define MATRIX_NA_CHECK 0
+# define SCALARS_ENSURE_FINITE 0
+# define SERIES_ENSURE_FINITE 0
+#else      /* NADBL distinct from NaN */
+# define MATRIX_NA_CHECK 1
+# define SCALARS_ENSURE_FINITE 1 /* debatable, but watch out for read/write */
+# define SERIES_ENSURE_FINITE 1  /* debatable */
+#endif
 
 enum {
     FR_TREE = 1,
@@ -159,7 +165,7 @@ static int ok_list_node (NODE *n, parser *p)
     } else if (n->t == SERIES && n->vnum >= 0) {
 	/* can interpret as singleton list */
 	return 1;
-    } else if (p->targ == LIST) {
+    } else if (p->flags & P_LISTDEF) {
 	/* when defining a list we can be a bit more accommodating */
 	return scalar_node(n) || n->t == EMPTY;
     }
@@ -244,7 +250,7 @@ static void clear_mspec (matrix_subspec *spec, parser *p)
 static void print_tree (NODE *t, parser *p, int level)
 {
     if (t == NULL) {
-	fputs("null\n", stderr);
+	fprintf(stderr, " %d: node is null\n", level);
 	return;
     }
 
@@ -9778,7 +9784,12 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
     int prechecked = 0;
     int free_m2 = 0;
 
-    if (lh1->t != MAT) {
+    if (p->op == B_HCAT || p->op == B_VCAT) {
+	/* can't do these things on a submatrix */
+	gretl_errmsg_sprintf(_("The operator '%s' is not valid in this context"),
+			     get_opstr(p->op));
+	return E_TYPES;
+    } else if (lh1->t != MAT) {
 	/* is this ever possible? */
 	fprintf(stderr, "set_matrix_value: got %s, not matrix!\n",
 		getsymb(lh1->t));
@@ -15884,7 +15895,7 @@ static int extract_lhs_and_op (const char **ps, parser *p,
     int err = 0;
 
 #if LHDEBUG
-    fprintf(stderr, "extract: input='%s'\n", s);
+    fprintf(stderr, "extract_lhs_and_op: input='%s'\n", s);
 #endif
 
     if (p->targ != UNK && strchr(s, '=') == NULL) {
@@ -15925,7 +15936,7 @@ static int extract_lhs_and_op (const char **ps, parser *p,
 		/* no: straight assignment */
 		opstr[0] = '=';
 	    }
-	    n++; /* add one for '=' */
+	    n++; /* plus 1 for '=' */
 	}
 
 	if (lhlen > 0) {
@@ -16278,6 +16289,7 @@ static void gen_preprocess (parser *p, int flags)
 #if LHDEBUG
 	fprintf(stderr, "parsed lhtree, err=%d\n", p->err);
 	print_tree(p->lhtree, p, 0);
+	fprintf(stderr, "done print_tree\n");
 #endif
 	p->point = savepoint;
 	p->ch = 0;
@@ -16373,7 +16385,7 @@ static void gen_preprocess (parser *p, int flags)
 	*/
 	p->targ = MAT;
     } else if (p->targ == LIST) {
-	/* flag list target to parses */
+	/* flag presence of list target to parser */
 	p->flags |= P_LISTDEF;
     }
 }
