@@ -821,7 +821,7 @@ const char *path_last_slash_const (const char *path)
 
 #ifdef G_OS_WIN32
     if (p == NULL) {
-	/* allow for both back- and forward slashes */
+	/* allow for both backslash and forward slash */
 	p = strrchr(path, '/');
     }
 #endif
@@ -834,14 +834,14 @@ char *gretl_basename (char *dest, const char *src, int addscore)
     const char *p = path_last_slash_const(src);
 
     if (p != NULL) {
-	/* take last part of src filename */
+	/* take last part of @src filename */
 	strcpy(dest, p + 1);
     } else {
 	strcpy(dest, src);
     }
 
     if (addscore) {
-	/* double any underscores in dest */
+	/* double any underscores in @dest */
 	char mod[MAXSTR];
 	int n = strlen(dest);
 	int i, j = 0;
@@ -1741,7 +1741,7 @@ gchar *title_from_filename (const char *fname, int role, gboolean prepend)
 	    title = g_strdup(_("gretl: untitled"));
 	}
     } else {
-	const char *p = strrchr(fname, SLASH);
+	const char *p = path_last_slash_const(fname);
 	gchar *trfname;
 
 	if (p != NULL) {
