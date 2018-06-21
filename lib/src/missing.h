@@ -22,9 +22,9 @@
 
 #include <float.h>
 
-#define NEW_NA 0
+#define NA_IS_NAN 0
 
-#if NEW_NA
+#if NA_IS_NAN
 # ifdef NAN
 #  define NADBL NAN
 # else
@@ -35,7 +35,7 @@
 # endif
 # define na(x) !isfinite(x)
 # define xna(x) !isfinite(x)
-#else /* not NEW_NA */
+#else /* not NA_IS_NAN */
 # define NADBL DBL_MAX
 # define na(x) ((x) == NADBL)
 # define xna(x) ((x) == NADBL || !isfinite(x))

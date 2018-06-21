@@ -2050,7 +2050,7 @@ static int read_binary_header (FILE *fp, int order)
     return err;
 }
 
-#if NEW_NA
+#if NA_IS_NAN
 
 static void na_convert (double *x, int n)
 {
@@ -2095,7 +2095,7 @@ static int read_binary_data (const char *fname,
 		if (got != T) {
 		    err = E_DATA;
 		}
-#if NEW_NA
+#if NA_IS_NAN
 		if (!err && gdtversion < 1.4) {
 		    /* we need to convert old-style NAs */
 		    na_convert(dset->Z[k], dset->n);

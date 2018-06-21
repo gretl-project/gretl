@@ -81,7 +81,7 @@ static void real_rndebug (const char *format, ...)
 
 #define ONE_BY_ONE_CAST 1
 
-#if NEW_NA /* NADBL equivalent to NaN */
+#if NA_IS_NAN /* NADBL equivalent to NaN */
 # define MATRIX_NA_CHECK 0
 # define SCALARS_ENSURE_FINITE 0
 # define SERIES_ENSURE_FINITE 0
