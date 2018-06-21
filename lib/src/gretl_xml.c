@@ -45,7 +45,14 @@
 
 #undef XML_DEBUG
 
+#if NA_IS_NAN
+/* mark change by bumping GDT version */
+#define GRETLDATA_VERSION "1.4"
+#else
+/* status quo as of June 2018 */
 #define GRETLDATA_VERSION "1.3"
+#endif
+
 #define GDT_DEBUG 0
 
 #ifdef WIN32
