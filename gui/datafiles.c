@@ -1172,7 +1172,7 @@ static void show_addon_info (GtkWidget *w, gpointer data)
     if (pkgname == NULL || descrip == NULL) {
 	gui_errmsg(E_DATA);
     } else {
-	gchar *local = NULL;
+	gchar *localver = NULL;
 
 	if (status != NULL && !strcmp(status, _("Not up to date"))) {
 	    char *path = gretl_function_package_get_path(pkgname, PKG_SUBDIR);
@@ -1187,8 +1187,8 @@ static void show_addon_info (GtkWidget *w, gpointer data)
 						      "date", &date,
 						      NULL);
 		if (!err) {
-		    local = g_strdup_printf("Installed version is %s (%s)", 
-					    ver, date);
+		    localver = g_strdup_printf("Installed version is %s (%s)", 
+					       ver, date);
 		    g_free(ver);
 		    g_free(date);
 		}
@@ -1196,9 +1196,11 @@ static void show_addon_info (GtkWidget *w, gpointer data)
 	    }
 	}
 
-	if (local != NULL) {
-	    infobox_printf("%s:\n%s\n%s", pkgname, descrip, local);
-	    g_free(local);
+	/* FIXME give more info on addons here? */
+
+	if (localver != NULL) {
+	    infobox_printf("%s:\n%s\n%s", pkgname, descrip, localver);
+	    g_free(localver);
 	} else {
 	    infobox_printf("%s:\n%s", pkgname, descrip);
 	}
