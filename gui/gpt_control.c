@@ -196,7 +196,7 @@ struct linestyle_ {
 
 static int get_png_bounds_info (png_bounds *bounds);
 
-#define PLOTSPEC_DETAILS_IN_MEMORY(s) (s->data != NULL)
+#define PLOTSPEC_DETAILS_IN_MEMORY(s) (s->lines != NULL)
 
 static void terminate_plot_positioning (png_plot *plot)
 {
@@ -2566,15 +2566,15 @@ static int plot_get_data_and_markers (GPT_SPEC *spec,
 {
     int err = 0;
 
+    if (spec->nobs == 0 || spec->datacols == 0) {
+	/* nothing to be done */
+	return 0;
+    }
+
 #if GPDEBUG
     fprintf(stderr, "plot_get_data, allocating: nobs=%d, datacols=%d\n",
 	    spec->nobs, spec->datacols);
 #endif
-
-    if (spec->nobs == 0 || spec->datacols == 0) {
-	/* somehow we got here by mistake! */
-	return E_DATA;
-    }
 
     /* allocate for the plot data... */
     spec->data = gretl_matrix_alloc(spec->nobs, spec->datacols);
