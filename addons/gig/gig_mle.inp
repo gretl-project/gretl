@@ -199,7 +199,7 @@ function scalar aparchFilter(series *depVar, series *h, series *e,
 	       h = filter(h, null, bvec, e0)
 	   endif
 
-	   err = (min(h)<0)
+	   err = min(h)<0 || max(!ok(h))
 	   # the loglikelihood function needs sigma^2
 	   if !err && (delta != 2)
 	       h = h^(2/delta)

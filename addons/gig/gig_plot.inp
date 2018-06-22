@@ -90,7 +90,7 @@ function string gig_grph(string yname, series u, series h)
      endloop
      printf "e\n"
 
-    outfile "@tmpfile" --close
+    outfile --close
     set force_decpoint off
 
     return tmpfile
@@ -130,7 +130,7 @@ function string gig_dgrph(matrix X, string desc)
     endloop
     printf "e\n"
 
-    outfile "@tmpfile" --close
+    outfile --close
     set force_decpoint off
 
     return tmpfile
