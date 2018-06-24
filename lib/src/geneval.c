@@ -4269,8 +4269,9 @@ static void print_mspec (matrix_subspec *mspec)
          "SEL_DIAG",
          "SEL_ALL",
          "SEL_CONTIG",
-         "SEL_EXCL"
-         "SEL_SINGLE"
+         "SEL_EXCL",
+         "SEL_SINGLE",
+	 "SEL_STR"
     };
 
     fprintf(stderr, "mspec at %p:\n", (void *) mspec);
@@ -4320,10 +4321,14 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
 #endif
 
     /* special case: bundle membership */
-    if (l->t == STR && r == NULL) {
-	spec->type[0] = SEL_STR;
-	spec->type[1] = SEL_NULL;
-	spec->sel[0].str = l->v.str;
+    if (l->t == STR) {
+	if (r == NULL) {
+	    spec->type[0] = SEL_STR;
+	    spec->type[1] = SEL_NULL;
+	    spec->sel[0].str = l->v.str;
+	} else {
+	    p->err = E_TYPES;
+	}
 	goto finished;
     }
 
@@ -4463,6 +4468,8 @@ static NODE *submatrix_node (NODE *l, NODE *r, parser *p)
 			ret->flags |= MSL_NODE;
 		    }
 		}
+	    } else if (spec->type[0] == SEL_STR) {
+		p->err = E_TYPES;
 	    } else {
 		ret = aux_matrix_node(p);
 		if (!p->err) {
