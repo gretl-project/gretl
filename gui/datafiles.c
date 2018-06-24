@@ -1,17 +1,17 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
@@ -48,7 +48,7 @@
 
 static GtkWidget *files_vbox (windata_t *vwin);
 static GtkWidget *files_notebook (windata_t *vwin, int role);
-static int populate_notebook_filelists (windata_t *vwin, 
+static int populate_notebook_filelists (windata_t *vwin,
 					GtkWidget *notebook,
 					int role);
 static gint populate_gfn_list (windata_t *vwin);
@@ -94,7 +94,7 @@ enum {
                           c == REMOTE_ADDONS)
 
 static void
-read_fn_files_in_dir (DIR *dir, const char *path, 
+read_fn_files_in_dir (DIR *dir, const char *path,
 		      GtkListStore *store,
 		      GtkTreeIter *iter,
 		      int *nfn);
@@ -108,7 +108,7 @@ static char *full_path (char *s1, const char *s2)
 	s1[n-1] = '\0';
 	n--;
     }
-    
+
     if (IS_SLASH(s1[n-1])) {
 	sprintf(fpath, "%s%s", s1, s2);
     } else {
@@ -134,10 +134,10 @@ static int is_oldstyle_collection (file_collection *coll, int *err)
 	{ "wooldridge", "jw_descriptions", "Wooldridge", COLL_DATA, NULL },
 	{ "gujarati", "dg_descriptions", "Gujarati", COLL_DATA, NULL },
 	{ "pwt56", "descriptions", "PWT 56", COLL_DATA, NULL }
-    }; 
+    };
     const file_collection std_ps = {
 	"pwt56", "ps_descriptions", "PWT 56", COLL_PS, NULL
-    }; 
+    };
     int i;
 
     for (i=0; i<3; i++) {
@@ -165,7 +165,7 @@ static int is_oldstyle_collection (file_collection *coll, int *err)
     }
 
     return 0;
-} 
+}
 
 /* return non-zero only on fatal error */
 
@@ -187,7 +187,7 @@ static int get_title_from_descfile (file_collection *coll)
 		err = E_ALLOC;
 	    }
 	}
-    } 
+    }
 
     if (fp != NULL) {
 	fclose(fp);
@@ -202,7 +202,7 @@ static void free_file_collection (file_collection *coll)
     free(coll->descfile);
     free(coll->title);
     free(coll);
-}  
+}
 
 static file_collection *file_collection_new (const char *path,
 					     const char *descfile,
@@ -239,7 +239,7 @@ static file_collection *file_collection_new (const char *path,
 	free_file_collection(coll);
 	coll = NULL;
     }
-    
+
     return coll;
 }
 
@@ -277,7 +277,7 @@ static file_collection *collection_stack (file_collection *coll, int op)
 
     if (op == STACK_PUSH && coll != NULL) {
 	void *tmp;
-	
+
 	if (coll->which == COLL_DATA) {
 	    tmp = realloc(datacoll, (n_data + 1) * sizeof *datacoll);
 	    if (tmp != NULL) {
@@ -321,7 +321,7 @@ static file_collection *collection_stack (file_collection *coll, int op)
         pscoll = NULL;
         n_ps = 0;
         n_ps_popped = 0;
-    } 
+    }
 
     return ret;
 }
@@ -356,7 +356,7 @@ static void reset_files_stack (int role)
 
 static void sort_files_stack (int role)
 {
-    if (role == TEXTBOOK_DATA) {    
+    if (role == TEXTBOOK_DATA) {
 	collection_stack(NULL, STACK_SORT_DATA);
     } else {
 	collection_stack(NULL, STACK_SORT_PS);
@@ -375,7 +375,7 @@ static int get_file_collections_from_dir (const char *path, DIR *dir,
     struct dirent *dirent;
     int n = 0;
 
-    while (!*err && (dirent = readdir(dir))) { 
+    while (!*err && (dirent = readdir(dir))) {
 	/* we're looking for a filename that ends with "descriptions" */
 	if (strstr(dirent->d_name, "descriptions")) {
 	    size_t len = strlen(dirent->d_name);
@@ -402,7 +402,7 @@ static int dont_go_there (const char *s)
 {
     int ret = 0;
 
-    if (!strcmp(s, "..") || strstr(s, ".inp") || strstr(s, ".gdt") || 
+    if (!strcmp(s, "..") || strstr(s, ".inp") || strstr(s, ".gdt") ||
 	strstr(s, ".gretl") || strstr(s, ".hdr")) {
 	ret = 1;
     }
@@ -414,17 +414,17 @@ static int dont_go_there (const char *s)
    non-zero only if something show-stopping occurs
 */
 
-static int seek_file_collections (const char *basedir, 
+static int seek_file_collections (const char *basedir,
 				  SearchType stype,
 				  int *err)
 {
     char *path = NULL;
-    DIR *topdir;      
+    DIR *topdir;
     struct dirent *dirent;
     int n_coll = 0;
 
 #if COLL_DEBUG
-    fprintf(stderr, "*** seek_file_collections: basedir='%s', type=%d\n", 
+    fprintf(stderr, "*** seek_file_collections: basedir='%s', type=%d\n",
 	    basedir, stype);
 #endif
 
@@ -441,7 +441,7 @@ static int seek_file_collections (const char *basedir,
 	/* USER_SEARCH */
 	path = gretl_strdup(basedir);
 	trim_slash(path);
-    } 
+    }
 
     topdir = gretl_opendir(path);
     if (topdir == NULL) {
@@ -579,8 +579,8 @@ char *strip_extension (char *s)
 	}
     } else {
 	p = strrchr(s, '.');
-    
-	if (p != NULL && 
+
+	if (p != NULL &&
 	    (!strcmp(p, ".gdt") || !strcmp(p, ".inp") ||
 	     !strcmp(p, ".bin") || !strcmp(p, ".gfn") ||
 	     !strcmp(p, ".bn7") || !strcmp(p, ".zip"))) {
@@ -591,7 +591,7 @@ char *strip_extension (char *s)
     return s;
 }
 
-static int validate_desc_strings (const char *s1, 
+static int validate_desc_strings (const char *s1,
 				  const char *s2,
 				  const char *s3)
 {
@@ -628,33 +628,33 @@ static int read_file_descriptions (windata_t *win, gpointer p)
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(win->listbox)));
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
-    
+
     while (fgets(line, sizeof line, fp) && !err) {
 	char fname[24], descrip[80], data[64];
 
 	if (*line == '#') continue;
 
 	if (win->role == TEXTBOOK_DATA) {
-	    if (sscanf(line, " \"%23[^\"]\",\"%79[^\"]\"", 
+	    if (sscanf(line, " \"%23[^\"]\",\"%79[^\"]\"",
 		       fname, descrip) == 2) {
 		err = validate_desc_strings(fname, descrip, NULL);
 		if (!err) {
 		    gtk_list_store_append(store, &iter);
-		    gtk_list_store_set(store, &iter, 
-				       0, strip_extension(fname), 
+		    gtk_list_store_set(store, &iter,
+				       0, strip_extension(fname),
 				       1, descrip, -1);
 		}
 	    }
-	} else { 
+	} else {
 	    /* script files */
-	    if (sscanf(line, " \"%23[^\"]\",\"%79[^\"]\",\"%63[^\"]\"", 
+	    if (sscanf(line, " \"%23[^\"]\",\"%79[^\"]\",\"%63[^\"]\"",
 		       fname, descrip, data) == 3) {
 		err = validate_desc_strings(fname, descrip, data);
 		if (!err) {
 		    gtk_list_store_append(store, &iter);
-		    gtk_list_store_set(store, &iter, 
-				       0, strip_extension(fname), 
-				       1, descrip, 
+		    gtk_list_store_set(store, &iter,
+				       0, strip_extension(fname),
+				       1, descrip,
 				       2, data, -1);
 		}
 	    }
@@ -669,7 +669,7 @@ static int read_file_descriptions (windata_t *win, gpointer p)
 	selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(win->listbox));
 	gtk_tree_selection_select_iter(selection, &iter);
     }
-    
+
     return err;
 }
 
@@ -714,7 +714,7 @@ void browser_open_data (GtkWidget *w, gpointer data)
     file_collection *collection;
     gchar *filename;
 
-    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
+    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var,
 			 0, &filename);
     collection = g_object_get_data(G_OBJECT(vwin->listbox), "collection");
     build_path(tryfile, collection->path, filename, ".gdt");
@@ -731,7 +731,7 @@ void browser_open_ps (GtkWidget *w, gpointer data)
     file_collection *collection;
     gchar *filename;
 
-    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
+    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var,
 			 0, &filename);
     collection = g_object_get_data(G_OBJECT(vwin->listbox), "collection");
     build_path(scriptfile, collection->path, filename, ".inp");
@@ -743,9 +743,9 @@ void browser_open_ps (GtkWidget *w, gpointer data)
     set_scriptpage(collection->title);
 
     view_script(scriptfile, 0, VIEW_SCRIPT);
-} 
+}
 
-static gint enter_opens_file (GtkWidget *w, GdkEventKey *key, 
+static gint enter_opens_file (GtkWidget *w, GdkEventKey *key,
 			      windata_t *vwin)
 {
     if (key->keyval == GDK_Return || key->keyval == GDK_o) {
@@ -820,7 +820,7 @@ static void browser_delete_row_by_content (windata_t *vwin,
     }
 }
 
-static int gui_delete_fn_pkg (const char *pkgname, const char *fname, 
+static int gui_delete_fn_pkg (const char *pkgname, const char *fname,
 			      windata_t *vwin)
 {
     gchar *msg = NULL;
@@ -845,7 +845,7 @@ static int gui_delete_fn_pkg (const char *pkgname, const char *fname,
 	if (resp < 0) {
 	    /* canceled */
 	    return 0;
-	}	
+	}
     } else if (get_function_package_by_name(pkgname)) {
 	msg = g_strdup_printf(_("Unload package %s?"), pkgname);
 	resp = yes_no_dialog(NULL, msg, vwin_toplevel(vwin));
@@ -857,7 +857,7 @@ static int gui_delete_fn_pkg (const char *pkgname, const char *fname,
 	infobox_printf(_("Package %s is not loaded"), pkgname);
 	return 0;
     }
-    
+
     if (resp == 0) {
 	/* unload the package from memory */
 	function_package_unload_full_by_filename(fname);
@@ -873,7 +873,7 @@ static int gui_delete_fn_pkg (const char *pkgname, const char *fname,
 	} else {
 	    /* remove package from GUI listing */
 	    browser_delete_current_row(vwin);
-	}	    
+	}
     }
 
     return err;
@@ -883,7 +883,7 @@ static int get_info_width (const char *buf)
 {
     char line[1024];
     int n, width = 66;
-    
+
     bufgets_init(buf);
 
     while (bufgets(line, sizeof line, buf)) {
@@ -899,7 +899,7 @@ static int get_info_width (const char *buf)
 }
 
 windata_t *display_function_package_data (const char *pkgname,
-					  const char *path, 
+					  const char *path,
 					  int role)
 {
     windata_t *vwin = NULL;
@@ -917,7 +917,7 @@ windata_t *display_function_package_data (const char *pkgname,
     } else {
 	err = print_function_package_code(path, tabwidth, prn);
     }
-	
+
     if (err) {
 	gretl_print_destroy(prn);
 	gui_errmsg(err);
@@ -966,7 +966,7 @@ static void fix_selected_row (GtkTreeModel *model,
 }
 
 /* callback from the file selector where the user has chosen
-   a directory at which to point the gfn browser 
+   a directory at which to point the gfn browser
 */
 
 void set_alternate_gfn_dir (windata_t *vwin, char *path)
@@ -975,9 +975,9 @@ void set_alternate_gfn_dir (windata_t *vwin, char *path)
     int replace = 1;
     int nfn = 0;
 
-#if GFN_DEBUG    
+#if GFN_DEBUG
     fprintf(stderr, "set_alternate_gfn_dir: '%s'\n", path);
-#endif    
+#endif
 
     dir = gretl_opendir(path);
     if (dir == NULL) {
@@ -994,7 +994,7 @@ void set_alternate_gfn_dir (windata_t *vwin, char *path)
     } else {
 	/* give the user a chance to back out */
 	gchar *msg;
-    
+
 	msg = g_strdup_printf(_("Found %d function file(s).\n"
 				"Replace the current listing?"),
 			      nfn);
@@ -1011,8 +1011,8 @@ void set_alternate_gfn_dir (windata_t *vwin, char *path)
 	GtkListStore *store;
 	GtkTreeIter iter;
 	int nfn0 = nfn;
-	
-	store = GTK_LIST_STORE(gtk_tree_view_get_model 
+
+	store = GTK_LIST_STORE(gtk_tree_view_get_model
 			       (GTK_TREE_VIEW(vwin->listbox)));
 	rewinddir(dir);
 	gtk_list_store_clear(store);
@@ -1041,7 +1041,7 @@ void set_alternate_gfn_dir (windata_t *vwin, char *path)
 	    g_free(msg);
 	}
     }
-	    
+
     closedir(dir);
 }
 
@@ -1089,11 +1089,11 @@ static void browser_functions_handler (windata_t *vwin, int task)
 	return;
     }
 
-    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
+    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var,
 			 0, &pkgname);
 
     if (dircol != 0) {
-	tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
+	tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var,
 			     dircol, &dir);
 	if (task == VIEW_PKG_RESOURCES) {
 	    build_path(path, dir, "examples", NULL);
@@ -1114,7 +1114,7 @@ static void browser_functions_handler (windata_t *vwin, int task)
 
 	build_path(test, dir, pkgname, ".gfn");
 	if (function_package_is_loaded(test, &loaded)) {
-	    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
+	    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var,
 				 1, &version);
 	    if (loaded != NULL && version != NULL &&
 		strcmp(version, loaded)) {
@@ -1168,40 +1168,42 @@ static void show_addon_info (GtkWidget *w, gpointer data)
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), v, 0, &pkgname);
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), v, 4, &descrip);
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), v, 3, &status);
-    
+
     if (pkgname == NULL || descrip == NULL) {
 	gui_errmsg(E_DATA);
     } else {
 	gchar *localver = NULL;
+	int done = 0;
 
-	if (status != NULL && !strcmp(status, _("Not up to date"))) {
+	if (status != NULL) {
 	    char *path = gretl_function_package_get_path(pkgname, PKG_SUBDIR);
 	    gchar *ver = NULL, *date = NULL;
 	    fnpkg *pkg = NULL;
 	    int err = 0;
 
-	    if (path != NULL) {
+	    if (path != NULL && !strcmp(status, _("Not up to date"))) {
 		/* FIXME just get header here? */
 		pkg = get_function_package_by_filename(path, &err);
 		err = function_package_get_properties(pkg, "version", &ver,
 						      "date", &date,
 						      NULL);
 		if (!err) {
-		    localver = g_strdup_printf("Installed version is %s (%s)", 
+		    localver = g_strdup_printf("Installed version is %s (%s)",
 					       ver, date);
 		    g_free(ver);
 		    g_free(date);
 		}
-		free(path);
+	    } else if (path != NULL && !strcmp(status, _("Up to date")) &&
+		       display_function_package_data(pkgname, path, VIEW_PKG_INFO)) {
+		done = 1;
 	    }
+	    free(path);
 	}
-
-	/* FIXME give more info on addons here? */
 
 	if (localver != NULL) {
 	    infobox_printf("%s:\n%s\n%s", pkgname, descrip, localver);
 	    g_free(localver);
-	} else {
+	} else if (!done) {
 	    infobox_printf("%s:\n%s", pkgname, descrip);
 	}
     }
@@ -1218,7 +1220,7 @@ static void install_addon_callback (GtkWidget *w, gpointer data)
     int v = vwin->active_var;
 
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), v, 0, &pkgname);
-    
+
     if (pkgname == NULL) {
 	gui_errmsg(E_DATA);
     } else {
@@ -1229,13 +1231,13 @@ static void install_addon_callback (GtkWidget *w, gpointer data)
 	    list_store_set_string(GTK_TREE_VIEW(vwin->listbox), v, 3,
 				  _("Up to date"));
 	    /* if there was an old version of the addon loaded,
-	       we need to unload it now so as to get correct 
+	       we need to unload it now so as to get correct
 	       information in response to a subsequent call to
 	       "check for addons"
 	    */
 	    function_package_unload_full_by_filename(local_path);
 	    free(local_path);
-	} 
+	}
 
 	g_free(pkgname);
     }
@@ -1304,7 +1306,7 @@ static void add_func_to_menu (GtkWidget *w, gpointer data)
 static void gfn_registry_remove (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
-    
+
     browser_functions_handler(vwin, MENU_REMOVE_FN_PKG);
 }
 
@@ -1324,7 +1326,7 @@ windata_t *get_local_viewer (int remote_role)
 void start_new_function_package (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
-    
+
     functions_selection_wrapper(vwin_toplevel(vwin));
 }
 
@@ -1332,11 +1334,11 @@ static void build_datafiles_popup (windata_t *vwin)
 {
     if (vwin->popup == NULL) {
 	vwin->popup = gtk_menu_new();
-	add_popup_item(_("Info"), vwin->popup, 
-		       G_CALLBACK(show_datafile_info), 
+	add_popup_item(_("Info"), vwin->popup,
+		       G_CALLBACK(show_datafile_info),
 		       vwin);
-	add_popup_item(_("Open"), vwin->popup, 
-		       G_CALLBACK(browser_open_data), 
+	add_popup_item(_("Open"), vwin->popup,
+		       G_CALLBACK(browser_open_data),
 		       vwin);
     }
 }
@@ -1347,9 +1349,9 @@ static int get_menu_add_ok (windata_t *vwin)
     gchar *dirname = NULL;
     int ret = 0;
 
-    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
+    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var,
 			 0, &pkgname);
-    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
+    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var,
 			 GFN_DIRNAME_COL, &dirname);
 
     if (pkgname != NULL && dirname != NULL) {
@@ -1390,7 +1392,7 @@ static void check_extra_buttons_state (GtkTreeSelection *sel, windata_t *vwin)
     button = g_object_get_data(G_OBJECT(vwin->mbar), "doc-button");
     if (button != NULL) {
 	gtk_widget_set_sensitive(button, flags & PKG_ATTR_DOC);
-    }    
+    }
 }
 
 static void connect_menu_adjust_signal (windata_t *vwin)
@@ -1400,7 +1402,7 @@ static void connect_menu_adjust_signal (windata_t *vwin)
     sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(vwin->listbox));
 
     g_signal_connect(G_OBJECT(sel), "changed",
-		     G_CALLBACK(check_extra_buttons_state), 
+		     G_CALLBACK(check_extra_buttons_state),
 		     vwin);
 }
 
@@ -1430,59 +1432,59 @@ static void build_funcfiles_popup (windata_t *vwin)
 	    doc_ok = 1;
 	}
 
-	add_popup_item(_("Info"), vwin->popup, 
-		       G_CALLBACK(show_function_info), 
+	add_popup_item(_("Info"), vwin->popup,
+		       G_CALLBACK(show_function_info),
 		       vwin);
-	add_popup_item(_("Sample script"), vwin->popup, 
-		       G_CALLBACK(show_function_sample), 
+	add_popup_item(_("Sample script"), vwin->popup,
+		       G_CALLBACK(show_function_sample),
 		       vwin);
-	add_popup_item(_("View code"), vwin->popup, 
-		       G_CALLBACK(show_function_code), 
+	add_popup_item(_("View code"), vwin->popup,
+		       G_CALLBACK(show_function_code),
 		       vwin);
-	add_popup_item(_("Execute"), vwin->popup, 
-		       G_CALLBACK(browser_call_func), 
+	add_popup_item(_("Execute"), vwin->popup,
+		       G_CALLBACK(browser_call_func),
 		       vwin);
 	if (res_ok) {
-	    add_popup_item(_("Resources..."), vwin->popup, 
-			   G_CALLBACK(show_package_resources), 
+	    add_popup_item(_("Resources..."), vwin->popup,
+			   G_CALLBACK(show_package_resources),
 			   vwin);
 	}
 	if (add_ok) {
-	    add_popup_item(_("Add to menu"), vwin->popup, 
-			   G_CALLBACK(add_func_to_menu), 
+	    add_popup_item(_("Add to menu"), vwin->popup,
+			   G_CALLBACK(add_func_to_menu),
 			   vwin);
 	}
 	if (doc_ok) {
-	    add_popup_item(_("Help"), vwin->popup, 
-			   G_CALLBACK(show_package_doc), 
+	    add_popup_item(_("Help"), vwin->popup,
+			   G_CALLBACK(show_package_doc),
 			   vwin);
-	}	
-	add_popup_item(_("Unload/delete..."), vwin->popup, 
-		       G_CALLBACK(browser_del_func), 
+	}
+	add_popup_item(_("Unload/delete..."), vwin->popup,
+		       G_CALLBACK(browser_del_func),
 		       vwin);
     } else if (vwin->role == REMOTE_FUNC_FILES) {
 	/* files on server: limited menu */
-	add_popup_item(_("Info"), vwin->popup, 
-		       G_CALLBACK(pkg_info_from_server), 
+	add_popup_item(_("Info"), vwin->popup,
+		       G_CALLBACK(pkg_info_from_server),
 		       vwin);
-	add_popup_item(_("Install"), vwin->popup, 
-		       G_CALLBACK(install_file_from_server), 
+	add_popup_item(_("Install"), vwin->popup,
+		       G_CALLBACK(install_file_from_server),
 		       vwin);
     } else if (vwin->role == REMOTE_ADDONS) {
-	add_popup_item(_("Info"), vwin->popup, 
-		       G_CALLBACK(show_addon_info), 
+	add_popup_item(_("Info"), vwin->popup,
+		       G_CALLBACK(show_addon_info),
 		       vwin);
-	add_popup_item(_("Install"), vwin->popup, 
-		       G_CALLBACK(install_addon_callback), 
+	add_popup_item(_("Install"), vwin->popup,
+		       G_CALLBACK(install_addon_callback),
 		       vwin);
     } else if (vwin->role == PKG_REGISTRY) {
-	add_popup_item(_("Remove"), vwin->popup, 
-		       G_CALLBACK(gfn_registry_remove), 
+	add_popup_item(_("Remove"), vwin->popup,
+		       G_CALLBACK(gfn_registry_remove),
 		       vwin);
-    }	
+    }
 }
 
-static gboolean 
+static gboolean
 funcfiles_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer data)
 {
     if (right_click(event)) {
@@ -1499,7 +1501,7 @@ funcfiles_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer data)
 	    gtk_menu_popup(GTK_MENU(vwin->popup), NULL, NULL, NULL, NULL,
 			   event->button, event->time);
 	    g_signal_connect(G_OBJECT(vwin->popup), "destroy",
-			     G_CALLBACK(gtk_widget_destroyed), 
+			     G_CALLBACK(gtk_widget_destroyed),
 			     &vwin->popup);
 	}
 
@@ -1514,21 +1516,21 @@ static void build_db_popup (windata_t *vwin)
     if (vwin->popup == NULL) {
 	vwin->popup = gtk_menu_new();
 	if (vwin->role == NATIVE_DB) {
-	    add_popup_item(_("List series"), vwin->popup, 
-			   G_CALLBACK(open_db_index), 
+	    add_popup_item(_("List series"), vwin->popup,
+			   G_CALLBACK(open_db_index),
 			   vwin);
-	    add_popup_item(_("Find..."), vwin->popup, 
-			   G_CALLBACK(listbox_find), 
+	    add_popup_item(_("Find..."), vwin->popup,
+			   G_CALLBACK(listbox_find),
 			   vwin);
 	} else {
-	    add_popup_item(_("List series"), vwin->popup, 
-			   G_CALLBACK(open_remote_db_index), 
+	    add_popup_item(_("List series"), vwin->popup,
+			   G_CALLBACK(open_remote_db_index),
 			   vwin);
-	    add_popup_item(_("Install"), vwin->popup, 
-			   G_CALLBACK(install_file_from_server), 
+	    add_popup_item(_("Install"), vwin->popup,
+			   G_CALLBACK(install_file_from_server),
 			   vwin);
-	    add_popup_item(_("Find..."), vwin->popup, 
-			   G_CALLBACK(listbox_find), 
+	    add_popup_item(_("Find..."), vwin->popup,
+			   G_CALLBACK(listbox_find),
 			   vwin);
 	}
     }
@@ -1538,8 +1540,8 @@ static void build_data_pkg_popup (windata_t *vwin)
 {
     if (vwin->popup == NULL) {
 	vwin->popup = gtk_menu_new();
-	add_popup_item(_("Install"), vwin->popup, 
-		       G_CALLBACK(install_file_from_server), 
+	add_popup_item(_("Install"), vwin->popup,
+		       G_CALLBACK(install_file_from_server),
 		       vwin);
     }
 }
@@ -1592,7 +1594,7 @@ static void alt_funcs_dir (GtkWidget *w, windata_t *vwin)
 	int resp;
 
 	resp = radio_dialog(NULL, NULL, opts, 2, 0, 0, vwin->main);
-	
+
 	if (resp == GRETL_CANCEL) {
 	    return;
 	} else if (resp == 1) {
@@ -1608,14 +1610,14 @@ static void alt_funcs_dir (GtkWidget *w, windata_t *vwin)
        dialog to let the user select a directory: the
        callback from that is set_alternate_gfn_dir().
     */
-    
-    file_selector_with_parent(SET_FDIR, FSEL_DATA_VWIN, vwin, 
+
+    file_selector_with_parent(SET_FDIR, FSEL_DATA_VWIN, vwin,
                               vwin->main);
 }
 
 static void alt_db_dir (GtkWidget *w, windata_t *vwin)
 {
-    file_selector_with_parent(SET_DBDIR, FSEL_DATA_VWIN, vwin, 
+    file_selector_with_parent(SET_DBDIR, FSEL_DATA_VWIN, vwin,
                               vwin->main);
 }
 
@@ -1679,7 +1681,7 @@ static int files_item_get_callback (GretlToolItem *item, int role)
 	    return 1;
 	} else {
 	    item->func = G_CALLBACK(install_file_from_server);
-	    return (role == REMOTE_DB || 
+	    return (role == REMOTE_DB ||
 		    role == REMOTE_FUNC_FILES ||
 		    role == REMOTE_DATA_PKGS);
 	}
@@ -1712,7 +1714,7 @@ static int files_item_get_callback (GretlToolItem *item, int role)
 	    item->func = G_CALLBACK(open_db_index);
 	} else if (role == REMOTE_DB) {
 	    item->func = G_CALLBACK(open_remote_db_index);
-	} 
+	}
     } else if (item->flag == BTN_WWW) {
 	if (role == FUNC_FILES) {
 	    item->func = G_CALLBACK(show_server_funcs);
@@ -1724,10 +1726,10 @@ static int files_item_get_callback (GretlToolItem *item, int role)
     } else if (item->flag == BTN_HOME) {
 	/* home: show only for on-server items */
 	if (role == REMOTE_FUNC_FILES) {
-	    item->func = G_CALLBACK(show_local_funcs);	
+	    item->func = G_CALLBACK(show_local_funcs);
 	} else if (role == REMOTE_DB) {
 	    item->func = G_CALLBACK(show_local_dbs);
-	} 
+	}
     } else if (item->flag == BTN_DIR) {
 	if (role == FUNC_FILES) {
 	    item->func = G_CALLBACK(alt_funcs_dir);
@@ -1768,13 +1770,13 @@ static void maybe_add_gfn_filter (windata_t *vwin,
 {
     char *getbuf = NULL;
     int err;
-	
+
     err = list_remote_function_categories(&getbuf);
     if (!err && (getbuf == NULL || *getbuf != 'C')) {
 	free(getbuf);
 	err = 1;
     }
-    
+
     if (!err) {
 	GtkWidget *combo, *button;
 	char line[128];
@@ -1785,7 +1787,7 @@ static void maybe_add_gfn_filter (windata_t *vwin,
 	combo = gtk_combo_box_text_new();
 	g_object_set_data(G_OBJECT(vwin->main), "filter-combo", combo);
 	widget_set_int(combo, "filter", 0);
-	
+
 	combo_box_append_text(combo, _("All packages"));
 	while (bufgets(line, sizeof line, getbuf)) {
 	    combo_box_append_text(combo, tailstrip(line));
@@ -1830,7 +1832,7 @@ static void make_files_toolbar (windata_t *vwin)
 	    } else if (item->flag == BTN_DOC) {
 		g_object_set_data(G_OBJECT(vwin->mbar), "doc-button", button);
 		gtk_widget_set_sensitive(button, FALSE);
-	    }		
+	    }
 	}
     }
 
@@ -1874,7 +1876,7 @@ static gchar *files_title (int code)
    local one
 */
 
-static void  
+static void
 remote_window_handle_drag (GtkWidget *widget,
 			   GdkDragContext *context,
 			   gint x,
@@ -1995,20 +1997,20 @@ void display_files (int role, gpointer data)
 
     gtk_box_pack_start(GTK_BOX(vwin->vbox), filebox, TRUE, TRUE, 0);
 
-    if (role == TEXTBOOK_DATA) { 
+    if (role == TEXTBOOK_DATA) {
 	file_collection *collection;
 
 	build_datafiles_popup(vwin);
 	while ((collection = pop_file_collection(role))) {
 	    g_signal_connect(G_OBJECT(collection->listbox), "button-press-event",
-			     G_CALLBACK(popup_menu_handler), 
+			     G_CALLBACK(popup_menu_handler),
 			     vwin->popup);
 	}
 	reset_files_stack(role);
     } else if (role == FUNC_FILES || role == REMOTE_FUNC_FILES ||
 	       role == REMOTE_ADDONS || role == PKG_REGISTRY) {
 	g_signal_connect(G_OBJECT(vwin->listbox), "button-press-event",
-			 G_CALLBACK(funcfiles_popup_handler), 
+			 G_CALLBACK(funcfiles_popup_handler),
 			 vwin);
 	if (role == FUNC_FILES) {
 	    connect_menu_adjust_signal(vwin);
@@ -2016,14 +2018,14 @@ void display_files (int role, gpointer data)
     } else if (role == NATIVE_DB || role == REMOTE_DB) {
 	build_db_popup(vwin);
 	g_signal_connect(G_OBJECT(vwin->listbox), "button-press-event",
-			 G_CALLBACK(popup_menu_handler), 
+			 G_CALLBACK(popup_menu_handler),
 			 vwin->popup);
     } else if (role == REMOTE_DATA_PKGS)  {
 	build_data_pkg_popup(vwin);
 	g_signal_connect(G_OBJECT(vwin->listbox), "button-press-event",
-			 G_CALLBACK(popup_menu_handler), 
+			 G_CALLBACK(popup_menu_handler),
 			 vwin->popup);
-    } 
+    }
 
     if (REMOTE_ACTION(role)) {
 	GtkWidget *hbox;
@@ -2033,7 +2035,7 @@ void display_files (int role, gpointer data)
 	vwin->status = gtk_label_new(_("Network status: OK"));
 	gtk_label_set_justify(GTK_LABEL(vwin->status), GTK_JUSTIFY_LEFT);
 	gtk_box_pack_start(GTK_BOX(hbox), vwin->status, FALSE, FALSE, 0);
-    } 
+    }
 
     /* put stuff into list box(es) */
     if (role == TEXTBOOK_DATA || role == PS_FILES) {
@@ -2048,7 +2050,7 @@ void display_files (int role, gpointer data)
 	    gtk_widget_get_size_request(filebox, &w, &h);
 	    h += 100;
 	    gtk_widget_set_size_request(filebox, w, h);
-	}	    
+	}
     } else {
 	err = populate_filelist(vwin, NULL);
     }
@@ -2056,11 +2058,11 @@ void display_files (int role, gpointer data)
     if (err) {
 	gtk_widget_destroy(vwin->main);
     } else {
-	gtk_widget_show_all(vwin->main); 
+	gtk_widget_show_all(vwin->main);
 	gtk_widget_grab_focus(vwin->listbox);
 	if (role == NATIVE_DB || role == FUNC_FILES) {
 	    set_up_viewer_drag_target(vwin);
-	} 
+	}
     }
 
     if (err) {
@@ -2092,7 +2094,7 @@ static int display_files_code (const gchar *s)
 }
 
 /* make a browser window to display a set of files: textbook
-   data files, practice scripts, databases...  
+   data files, practice scripts, databases...
 */
 
 void show_files (GtkAction *action, gpointer p)
@@ -2119,7 +2121,7 @@ static int populate_gfn_registry_list (windata_t *vwin)
     int modelwin;
     int i, n;
 
-    store = GTK_LIST_STORE(gtk_tree_view_get_model 
+    store = GTK_LIST_STORE(gtk_tree_view_get_model
 			   (GTK_TREE_VIEW(vwin->listbox)));
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
@@ -2141,7 +2143,7 @@ static int populate_gfn_registry_list (windata_t *vwin)
 		fullpath = g_strdup_printf("%s/%s", s, label);
 	    }
 	    gtk_list_store_append(store, &iter);
-	    gtk_list_store_set(store, &iter, 
+	    gtk_list_store_set(store, &iter,
 			       0, name,
 			       1, modelwin ? "Model" : "Main",
 			       2, fullpath,
@@ -2154,7 +2156,7 @@ static int populate_gfn_registry_list (windata_t *vwin)
     return 0;
 }
 
-static int get_func_info (const char *path, char **pdesc, 
+static int get_func_info (const char *path, char **pdesc,
 			  char **pver, char **pdate,
 			  char **pauthor, int *pdfdoc)
 {
@@ -2176,14 +2178,14 @@ static int real_duplicate (const char *fname,
 			   GtkTreeIter *iter)
 {
     gchar *dupdir = NULL;
-    
+
     gtk_tree_model_get(model, iter, GFN_DIRNAME_COL, &dupdir, -1);
 
     if (!strcmp(dirname, dupdir)) {
 	/* it's actually the same file */
 	return 0;
     }
-    
+
     fprintf(stderr, "duplicated function package: %s %s\n",
 	    fname, version);
     fprintf(stderr, " %s [first instance found]\n %s [duplicate]\n\n",
@@ -2193,7 +2195,7 @@ static int real_duplicate (const char *fname,
     return 1;
 }
 
-static int fn_file_is_duplicate (const char *fname, 
+static int fn_file_is_duplicate (const char *fname,
 				 const char *version,
 				 const char *dirname,
 				 GtkListStore *store,
@@ -2211,19 +2213,19 @@ static int fn_file_is_duplicate (const char *fname,
 	gchar *fname_i;
 	gchar *version_i;
 	int i, n;
-	
+
 	n = strlen(fname) - 4;
 
 	for (i=0; i<imax; i++) {
-	    gtk_tree_model_get(model, &iter, 
-			       0, &fname_i, 
+	    gtk_tree_model_get(model, &iter,
+			       0, &fname_i,
 			       1, &version_i,
 			       -1);
 	    if (strncmp(fname, fname_i, n) == 0 &&
 		strcmp(version, version_i) == 0 &&
 		real_duplicate(fname, version, dirname, model, &iter)) {
 		ret = 1;
-	    } 
+	    }
 	    g_free(fname_i);
 	    g_free(version_i);
 	    if (ret || !gtk_tree_model_iter_next(model, &iter)) {
@@ -2299,7 +2301,7 @@ static void browser_insert_gfn_info (const char *pkgname,
 	if (pdfdoc) {
 	    flags |= PKG_ATTR_DOC;
 	}
-    }    
+    }
 
     if (g_utf8_strlen(author, -1) > 26) {
 	tmp = gretl_strdup(author);
@@ -2307,12 +2309,12 @@ static void browser_insert_gfn_info (const char *pkgname,
     }
     maybe_ellipsize_string(summary, 68);
 
-    gtk_list_store_set(store, iter, 
-		       0, pkgname, 
+    gtk_list_store_set(store, iter,
+		       0, pkgname,
 		       1, version,
 		       2, date,
 		       3, tmp ? tmp : author,
-		       4, summary, 
+		       4, summary,
 		       5, dirname,
 		       6, flags,
 		       -1);
@@ -2352,12 +2354,12 @@ static void check_loaded_gfn (const char *pkgname,
    something is amiss, return 0.
 */
 
-static int ok_gfn_path (const char *fullname, 
+static int ok_gfn_path (const char *fullname,
 			const char *shortname,
 			const char *dirname,
-			GtkListStore *store, 
+			GtkListStore *store,
 			GtkTreeIter *iter,
-			int imax, 
+			int imax,
 			int subdir)
 {
     char *descrip = NULL;
@@ -2383,7 +2385,7 @@ static int ok_gfn_path (const char *fullname,
 #if GFN_DEBUG > 1
     fprintf(stderr, "%s: %s: dups_ok=%d, is_dup=%d\n", dirname,
 	    shortname, dups_ok, is_dup);
-#endif    
+#endif
 
     if (!err && !is_dup) {
 	if (store != NULL && iter != NULL) {
@@ -2425,7 +2427,7 @@ static int ok_gfn_path (const char *fullname,
 */
 
 static void
-read_fn_files_in_dir (DIR *dir, const char *path, 
+read_fn_files_in_dir (DIR *dir, const char *path,
 		      GtkListStore *store,
 		      GtkTreeIter *iter,
 		      int *nfn)
@@ -2444,7 +2446,7 @@ read_fn_files_in_dir (DIR *dir, const char *path,
     if (is_functions_dir(path)) {
 	while ((dirent = readdir(dir)) != NULL) {
 	    const char *basename = dirent->d_name;
-	
+
 	    if (!strcmp(basename, ".") ||
 		!strcmp(basename, "..")) {
 		continue;
@@ -2467,10 +2469,10 @@ read_fn_files_in_dir (DIR *dir, const char *path,
 		    g_free(realpath);
 		} else {
 		    gretl_error_clear();
-		}	
+		}
 	    }
 	}
-    
+
 	imax = *nfn;
 	rewinddir(dir);
     }
@@ -2537,7 +2539,7 @@ static gint populate_gfn_list (windata_t *vwin)
 
     for (i=0; i<n_dirs; i++) {
 	DIR *dir = gretl_opendir(dnames[i]);
-	
+
 	if (dir != NULL) {
 	    read_fn_files_in_dir(dir, dnames[i], store, &iter, &nfn);
 	    closedir(dir);
@@ -2563,7 +2565,7 @@ static int gfn_paths_match (const char *p0, const char *p1,
 			    const char *pkgname)
 {
     int ret = 0;
-    
+
     if (!strcmp(p0, p1)) {
 	ret = 1;
     } else {
@@ -2654,7 +2656,7 @@ static void update_gfn_browser (const char *pkgname,
     g_free(summary);
 }
 
-/* Update function package status, if needed, either after 
+/* Update function package status, if needed, either after
    a call to save a function package, or after deleting a
    package by CLI means; the latter case is flagged by
    NULL values for @version and @descrip.
@@ -2719,58 +2721,58 @@ gint populate_filelist (windata_t *vwin, gpointer p)
     }
 }
 
-static GtkWidget *files_vbox (windata_t *vwin) 
+static GtkWidget *files_vbox (windata_t *vwin)
 {
     const char *data_titles[] = {
-	N_("File"), 
+	N_("File"),
 	N_("Summary")
     };
     const char *remote_data_titles[] = {
-	N_("File"), 
+	N_("File"),
 	N_("Source"),
 	N_("Date")
     };
     const char *ps_titles[] = {
-	N_("Script"), 
-	N_("Topic"), 
+	N_("Script"),
+	N_("Topic"),
 	N_("Data")
     };
     const char *db_titles[] = {
-	N_("Database"), 
+	N_("Database"),
 	N_("Source")
     };
     const char *remote_db_titles[] = {
-	N_("Database"), 
-	N_("Source"), 
+	N_("Database"),
+	N_("Source"),
 	N_("Local status")
     };
     const char *func_titles[] = {
-	N_("Package"), 
+	N_("Package"),
 	N_("Version"),
 	N_("Date"),
 	N_("Author"),
-	N_("Summary") 
+	N_("Summary")
     };
     const char *remote_func_titles[] = {
-	N_("Package"), 
+	N_("Package"),
 	N_("Version"),
 	N_("Date"),
 	N_("Author"),
-	N_("Summary"), 
+	N_("Summary"),
 	N_("Local status")
     };
     const char *addons_titles[] = {
-	N_("Package"), 
+	N_("Package"),
 	N_("Version"),
 	N_("Date"),
 	N_("Local status")
     };
     const char *registry_titles[] = {
-	N_("Package"), 
+	N_("Package"),
 	N_("Window"),
 	N_("Menu")
     };
-    
+
     GType types_2[] = {
 	G_TYPE_STRING,
 	G_TYPE_STRING
@@ -2863,7 +2865,7 @@ static GtkWidget *files_vbox (windata_t *vwin)
 	titles = registry_titles;
 	cols = 3;
 	full_width = 600;
-	break;	
+	break;
     default:
 	break;
     }
@@ -2878,16 +2880,16 @@ static GtkWidget *files_vbox (windata_t *vwin)
     vbox = gtk_vbox_new(FALSE, 0);
     gtk_widget_set_size_request(vbox, full_width, file_height);
     /* note: the following packs and attaches vwin->listbox */
-    vwin_add_list_box(vwin, GTK_BOX(vbox), cols, hidden_cols, 
+    vwin_add_list_box(vwin, GTK_BOX(vbox), cols, hidden_cols,
 		      types, titles, use_tree);
     gtk_widget_show(vbox);
 
     return vbox;
 }
 
-static void switch_files_page (GtkNotebook *notebook, 
+static void switch_files_page (GtkNotebook *notebook,
 			       GtkWidget *page,
-			       guint pgnum, 
+			       guint pgnum,
 			       windata_t *vwin)
 {
     GtkWidget *tab = gtk_notebook_get_nth_page(notebook, pgnum);
@@ -2912,7 +2914,7 @@ static GtkWidget *files_notebook (windata_t *vwin, int role)
 	/* we shouldn't be here! */
 	return NULL;
     }
-    
+
     /* assemble the info we'll need */
     err = build_file_collections();
     if (err) {
@@ -2929,7 +2931,7 @@ static GtkWidget *files_notebook (windata_t *vwin, int role)
 	gtk_widget_show(label);
 	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), page, label);
 	collection->listbox = vwin->listbox;
-	g_object_set_data(G_OBJECT(collection->listbox), "collection", 
+	g_object_set_data(G_OBJECT(collection->listbox), "collection",
 			  collection);
 	g_object_set_data(G_OBJECT(page), "listbox", collection->listbox);
 	g_signal_connect(G_OBJECT(collection->listbox), "key-press-event",
@@ -2955,7 +2957,7 @@ static GtkWidget *files_notebook (windata_t *vwin, int role)
    then select the page to display
 */
 
-static int populate_notebook_filelists (windata_t *vwin, 
+static int populate_notebook_filelists (windata_t *vwin,
 					GtkWidget *notebook,
 					int role)
 {
@@ -3000,4 +3002,4 @@ static int populate_notebook_filelists (windata_t *vwin,
     gtk_widget_grab_focus(vwin->listbox);
 
     return 0;
-} 
+}
