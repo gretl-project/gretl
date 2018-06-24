@@ -24,14 +24,15 @@
 
 #define NA_IS_NAN 0
 
+#ifndef isfinite
+# define isfinite(x) (!isnan(x) && !isinf(x))
+#endif
+
 #if NA_IS_NAN
 # ifdef NAN
 #  define NADBL NAN
 # else
 #  define NADBL 0.0/0.0
-# endif
-# ifndef isfinite
-#  define isfinite(x) (!isnan(x) && !isinf(x))
 # endif
 # define na(x) !isfinite(x)
 # define xna(x) !isfinite(x)
