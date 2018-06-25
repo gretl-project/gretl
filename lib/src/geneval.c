@@ -18008,6 +18008,9 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 
     if (autoreg(p)) {
 	/* e.g. y = b*y(-1) : evaluate dynamically */
+#if NA_IS_NAN
+	int initted = 0;
+#endif
 	int t;
 
 	for (t=p->dset->t1; t<=p->dset->t2 && !p->err; t++) {
@@ -18021,12 +18024,19 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 	    p->ret = eval(p->tree, p);
 	    if (p->ret != NULL && p->ret->t == SERIES) {
 		x = p->ret->v.xvec;
+#if NA_IS_NAN
+		if (initted || !na(x[t])) {
+#else
 		if (!na(x[t])) {
+#endif
 #if EDEBUG
 		    fprintf(stderr, "writing xvec[%d] = %g into Z[%d][%d]\n",
 			    t, x[t], p->lh.vnum, t);
 #endif
 		    p->dset->Z[p->lh.vnum][t] = x[t];
+#if NA_IS_NAN
+		    initted = 1;
+#endif
 		}
 	    } else {
 		autoreg_error(p, t);
