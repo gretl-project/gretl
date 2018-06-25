@@ -4858,9 +4858,7 @@ static double real_apply_func (double x, int f, parser *p)
 	case F_MISSZERO:
 	    return 0.0;
 	default:
-	    if (na(x)) {
-		return NADBL;
-	    }
+	    return NADBL;
 	}
     }
 
