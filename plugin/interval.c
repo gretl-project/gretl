@@ -1053,25 +1053,35 @@ static int tobit_add_lo_hi (MODEL *pmod, double llim, double rlim,
 	return err;
     }
 
+    if (na(llim)) {
+	llim = -1.0e300;
+    }
+    if (na(rlim)) {
+	rlim = 1.0e300;
+    }
+
     lv = dset->v - 2;
     hv = dset->v - 1;
-
     lo = dset->Z[lv];
     hi = dset->Z[hv];
     y = dset->Z[pmod->list[1]];
 
     for (t=pmod->t1; t<=pmod->t2 && !err; t++) {
 	if (na(y[t])) {
+	    /* y missing */
 	    lo[t] = hi[t] = NADBL;
 	} else if (y[t] > llim && y[t] < rlim) {
+	    /* y in uncensored region */
 	    lo[t] = hi[t] = y[t];
 	} else if (y[t] >= rlim) {
+	    /* y at or above right bound */
 	    lo[t] = rlim;
 	    hi[t] = NADBL;
 	} else if (y[t] <= llim) {
+	    /* y at or below left bound */
 	    lo[t] = NADBL;
 	    hi[t] = llim;
-	} 
+	}
     }
 
     list = gretl_list_new(pmod->list[0] + 1);
@@ -1129,6 +1139,7 @@ MODEL tobit_via_intreg (int *list, double llim, double rlim,
     }
 
 #if INTDEBUG
+    pprintf(prn, "tobit: llim=%g, rlim=%g\n", llim, rlim);
     pprintf(prn, "tobit_via_intreg: initial OLS\n");
     printmodel(&model, dset, OPT_S, prn);
 #endif

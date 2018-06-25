@@ -9239,10 +9239,12 @@ static int dot_assign_to_matrix (gretl_matrix *m, parser *p,
     if (p->ret->t == NUM) {
 	double x = p->ret->v.xval;
 
+#if !NA_IS_NAN
 	if (na(x)) {
 	    x = M_NA;
 	    set_gretl_warning(W_GENNAN);
 	}
+#endif
 	gretl_matrix_fill(m, x);
 	if (prechecked != NULL) {
 	    *prechecked = 1;
@@ -9891,12 +9893,14 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 
 	    if (!p->err) {
 		x = xy_calc(x, y, p->op, MAT, p);
+#if !NA_IS_NAN
 		if (xna(x)) {
 		    if (na(x)) {
 			x = M_NA;
 		    }
 		    set_gretl_warning(W_GENNAN);
 		}
+#endif
 	    }
 	    m1->val[i] = x;
 	}
@@ -9906,12 +9910,14 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
     if (rhs_scalar && p->op == B_ASN) {
 	/* straight assignment of a scalar value to a
 	   non-scalar submatrix */
+#if !NA_IS_NAN
 	if (xna(y)) {
 	    if (na(y)) {
 		y = M_NA;
 	    }
 	    set_gretl_warning(W_GENNAN);
 	}
+#endif
 	p->err = assign_scalar_to_submatrix(m1, y, spec);
 	return p->err; /* we're done */
     }
@@ -16482,7 +16488,7 @@ static int series_compatible (const gretl_matrix *m, parser *p)
     return ok;
 }
 
-#define GENMISS_VERBOSE 0
+#if !NA_IS_NAN
 
 /* below: note that the node we're checking is p->ret, which may
    differ in type from the target to which it will be
@@ -16505,9 +16511,6 @@ static void gen_check_errvals (parser *p)
     if (r->t == NUM) {
 	if (!isfinite(r->v.xval)) {
 #if SCALARS_ENSURE_FINITE
-# if GENMISS_VERBOSE
-	    fprintf(stderr, "scalar return = %g\n", r->v.xval);
-# endif
 	    r->v.xval = NADBL;
 	    set_gretl_warning(W_GENMISS);
 #else
@@ -16520,9 +16523,6 @@ static void gen_check_errvals (parser *p)
 	for (t=p->dset->t1; t<=p->dset->t2; t++) {
 	    if (!isfinite(r->v.xvec[t])) {
 #if SERIES_ENSURE_FINITE
-# if GENMISS_VERBOSE
-		fprintf(stderr, "series return: xvec[%d] = %g\n", t, r->v.xvec[t]);
-# endif
 		r->v.xvec[t] = NADBL;
 		set_gretl_warning(W_GENMISS);
 #else
@@ -16560,6 +16560,8 @@ static void gen_check_errvals (parser *p)
 	}
     }
 }
+
+#endif /* not-NA_IS_NAN */
 
 /* This supports the "backdoor" (not recommended) way of
    turning a series into a matrix -- "matrix m = s", for
@@ -16610,8 +16612,12 @@ static gretl_matrix *series_to_matrix (const double *x,
 	for (t=t1; t<=t2; t++) {
 	    if (na(x[t])) {
 		if (!respect_skip) {
+#if NA_IS_NAN
+		    v->val[i++] = x[t];
+#else
 		    set_gretl_warning(W_GENNAN);
 		    v->val[i++] = M_NA;
+#endif
 		}
 	    } else {
 		v->val[i++] = x[t];
@@ -18048,7 +18054,9 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 # endif
 #endif
 
+#if !NA_IS_NAN
     gen_check_errvals(p);
+#endif
 
     return p->err;
 }
