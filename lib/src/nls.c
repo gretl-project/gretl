@@ -294,7 +294,7 @@ static int nls_genr_setup (nlspec *s)
 
     /* We now loop across the "generators", setting them up
        and checking them. We hook up any auxiliary genrs
-       first, then the criterion function, then the anaytical
+       first, then the criterion function, then the analytical
        derivatives, if any.
     */
 
@@ -1117,6 +1117,10 @@ static double get_mle_ll (const double *b, void *p)
 	    s->crit += x;
 	}
     }
+
+#if 0
+    fprintf(stderr, "get_mle_ll: crit=%g\n", s->crit);
+#endif
 
     return s->crit;
 }
