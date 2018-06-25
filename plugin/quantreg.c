@@ -638,7 +638,7 @@ static int br_info_alloc (struct br_info *rq, int n, int p,
     rq->p = p;
     rq->tau = tau;
     rq->tol = calc_eps23;
-    rq->big = NADBL / 100;
+    rq->big = DBL_MAX / 100;
     rq->rmax = libset_get_int(RQ_MAXITER);
 
     if (opt & OPT_L) {

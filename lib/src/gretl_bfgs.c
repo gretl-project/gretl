@@ -1514,7 +1514,7 @@ int LBFGS_max (double *b, int n,
 	   less than some ridiculously large number */
 	for (i=0; i<n; i++) {
 	    nbd[i] = 3; /* case 3: upper bound only */
-	    u[i] = NADBL / 100;
+	    u[i] = DBL_MAX / 100;
 	}
     }
 
