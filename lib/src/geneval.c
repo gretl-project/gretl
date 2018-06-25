@@ -18030,8 +18030,8 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 		if (!na(x[t])) {
 #endif
 #if EDEBUG
-		    fprintf(stderr, "writing xvec[%d] = %g into Z[%d][%d]\n",
-			    t, x[t], p->lh.vnum, t);
+		    fprintf(stderr, "writing xvec[%d] = %g into Z[%d][%d] (was %g)\n",
+			    t, x[t], p->lh.vnum, t, p->dset->Z[p->lh.vnum][t]);
 #endif
 		    p->dset->Z[p->lh.vnum][t] = x[t];
 #if NA_IS_NAN
