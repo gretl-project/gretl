@@ -691,7 +691,7 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
     if (opt & OPT_N) {
 	/* handle the number-of-processes option */
 	int np = get_optval_int(MPI, OPT_N, &err);
-
+	
 	if (!err && (np <= 0 || np > 9999999)) {
 	    err = E_DATA;
 	}
@@ -704,15 +704,17 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	const char *mpiexec = gretl_mpiexec();
 	gchar *mpiprog = gretl_mpi_binary();
 	const char *hostsopt = NULL;
-	char *argv[10];
-	int i = 0;
+	char *argv[11];
+	int npmax, i = 0;
+
+	npmax = gretl_n_processors();
 
 	if (!(opt & OPT_L) && hostfile != NULL && *hostfile != '\0') {
 	    hostsopt = (mpi_variant == MPI_MPICH)? "-machinefile" :
 		"--hostfile";
 	} else if (*npnum == '\0') {
 	    /* no hosts file: supply a default np value */
-	    sprintf(npnum, "%d", gretl_n_processors());
+	    sprintf(npnum, "%d", npmax);
 	}
 
 	argv[i++] = (char *) mpiexec;
@@ -723,6 +725,9 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	if (*npnum != '\0') {
 	    argv[i++] = "-np";
 	    argv[i++] = npnum;
+	    if (atoi(npnum) > npmax/2 && mpi_variant == MPI_OPENMPI) {
+		argv[i++] = "--oversubscribe";
+	    }
 	}
 	argv[i++] = mpiprog;
 	if (opt & OPT_S) {
