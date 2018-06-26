@@ -725,7 +725,7 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	if (*npnum != '\0') {
 	    argv[i++] = "-np";
 	    argv[i++] = npnum;
-	    if (atoi(npnum) > npmax/2 && mpi_variant == MPI_OPENMPI) {
+	    if (mpi_variant == MPI_OPENMPI && atoi(npnum) > npmax/2) {
 		argv[i++] = "--oversubscribe";
 	    }
 	}
