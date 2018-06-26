@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "gretl.h"
@@ -59,7 +59,7 @@ void initialize_file_lists (void)
     int i;
 
     /* initialize lists of recently opened files */
-    for (i=0; i<MAXRECENT; i++) { 
+    for (i=0; i<MAXRECENT; i++) {
 	datalist[i][0] = '\0';
 	sessionlist[i][0] = '\0';
 	scriptlist[i][0] = '\0';
@@ -71,7 +71,7 @@ void initialize_file_lists (void)
 void init_fileptrs (void)
 {
     int i;
-    
+
     for (i=0; i<MAXRECENT; i++) {
 	datap[i] = datalist[i];
 	sessionp[i] = sessionlist[i];
@@ -127,7 +127,7 @@ static void write_filename_to_list (int filetype, int i, char *fname)
    the user's .gretl2rc. We process that line (@prev)
    first, then look for more.
 
-   Return 1 if we manage to read any "recent files", 
+   Return 1 if we manage to read any "recent files",
    else 0.
 */
 
@@ -183,7 +183,7 @@ void rc_save_file_lists (FILE *fp)
     rc_print_filelist(FILE_LIST_SCRIPT, fp);
     rc_print_filelist(FILE_LIST_GFN, fp);
     rc_print_filelist(FILE_LIST_WDIR, fp);
-}    
+}
 
 static void clear_files_list (int ftype, char **filep)
 {
@@ -302,6 +302,60 @@ int fnamecmp (const char *f1, const char *f2)
 
 #endif
 
+/* handle the case where we got an incoming filename without
+   a path specification (command-line use)
+*/
+
+static char *maybe_expand_path (char *fullname, const char *fname,
+				size_t len)
+{
+#ifdef G_OS_WIN32
+    wchar_t *buf = NULL;
+    int done = 0;
+
+    if (_wgetcwd(buf, 0) != NULL) {
+	/* try to ensure UTF-8 validity while we're at it */
+	gchar *trbuf = g_utf16_to_utf8(buf, -1, NULL, NULL, NULL);
+	gchar *trname = NULL;
+
+	if (trbuf != NULL) {
+	    if (!g_utf8_validate(fname, -1, NULL)) {
+		gsize bytes;
+
+		trname = g_locale_to_utf8(fname, -1, NULL, &bytes, NULL);
+	    } else {
+		trname = g_strdup(fname);
+	    }
+	}
+
+	if (trbuf != NULL && trname != NULL &&
+	    strlen(trbuf) + strlen(trname) < len) {
+	    strcat(fullname, trbuf);
+	    slash_terminate(fullname);
+	    strcat(fullname, trname);
+	    done = 1;
+	}
+
+	free(buf);
+	g_free(trbuf);
+	g_free(trname);
+    }
+    if (!done) {
+	strncat(fullname, fname, len);
+    }
+#else
+    if (getcwd(fullname, len) != NULL &&
+	strlen(fullname) + strlen(fname) < len) {
+	slash_terminate(fullname);
+	strcat(fullname, fname);
+    } else {
+	strncat(fullname, fname, len);
+    }
+#endif
+
+    return fullname;
+}
+
 void mkfilelist (int filetype, const char *fname)
 {
     char fullname[FILENAME_MAX];
@@ -310,12 +364,16 @@ void mkfilelist (int filetype, const char *fname)
     int i, pos = -1;
 
 #if FDEBUG
-    fprintf(stderr, "mkfilelist: type=%d, fname='%s'\n", 
+    fprintf(stderr, "mkfilelist: type=%d, fname='%s'\n",
 	    filetype, fname);
 #endif
 
     *fullname = '\0';
-    strncat(fullname, fname, FILENAME_MAX-1);
+    if (g_path_is_absolute(fname)) {
+	strncat(fullname, fname, FILENAME_MAX-1);
+    } else {
+	maybe_expand_path(fullname, fname, FILENAME_MAX-1);
+    }
     gretl_normalize_path(fullname);
 
 #if FDEBUG
@@ -340,12 +398,12 @@ void mkfilelist (int filetype, const char *fname)
 
     if (pos == 0) {
 	/* file is on top: no change is needed */
-	return; 
+	return;
     }
 
     /* clear menu files list before rebuilding */
     clear_files_list(filetype, filep);
-    
+
     /* save pointers to current order */
     for (i=0; i<MAXRECENT-1; i++) {
 	tmp[i] = filep[i];
@@ -366,7 +424,7 @@ void mkfilelist (int filetype, const char *fname)
 	    pos = MAXRECENT - 1;
 	    strcpy(filep[pos], fullname);
 	}
-    } 
+    }
 
     /* set first pointer to newest file */
     filep[0] = filep[pos];
@@ -499,7 +557,7 @@ static void real_add_files_to_menus (int ftype)
 	    filep = gfnp;
 	    id = gfn_id;
 	    fword = "Gfn";
-	}	    
+	}
 
 	/* See if there are any files to add */
 	if (filep == NULL || *filep[0] == '\0') {
@@ -515,7 +573,7 @@ static void real_add_files_to_menus (int ftype)
 	    gchar *fname, *apath;
 
 	    /* note: if the filename is already valid UTF-8, this just
-	       gives us a copy of filep[i] 
+	       gives us a copy of filep[i]
 	    */
 	    fname = my_filename_to_utf8(filep[i]);
 
@@ -524,13 +582,13 @@ static void real_add_files_to_menus (int ftype)
 		   know how that happened, but we'll try to recover by
 		   blanking out the rubbish and continuing.
 		*/
-		fprintf(stderr, "%s %d: got corrupted filename\n", 
+		fprintf(stderr, "%s %d: got corrupted filename\n",
 			mpath[j], i);
 		filep[i][0] = '\0';
 		continue;
 	    } else {
 		aname = g_strdup_printf("%s %d", fword, k);
-		alabel = g_strdup_printf("%d. %s", k+1, 
+		alabel = g_strdup_printf("%d. %s", k+1,
 					 gretl_basename(tmp, fname, 1));
 		entry.name = aname;
 		entry.label = alabel;
@@ -539,7 +597,7 @@ static void real_add_files_to_menus (int ftype)
 		w = gtk_ui_manager_get_widget(mdata->ui, apath);
 		if (w != NULL) {
 		    gretl_tooltips_add(w, fname);
-		} 		
+		}
 		g_free(fname);
 		g_free(aname);
 		g_free(alabel);
