@@ -478,7 +478,7 @@ int gretl_n_processors (void)
     GetSystemInfo(&sysinfo);
     n_proc = sysinfo.dwNumberOfProcessors;
 #elif defined(OS_OSX)
-    int mib[2] = {CTL_HW, HW_NCPU}; /* or CTL_KERN, KERN_MAXPROC ? */
+    int mib[2] = {CTL_HW, HW_NCPU};
     size_t len = sizeof n_proc;
 
     if (sysctl(mib, 2, &n_proc, &len, NULL, 0) == -1) {
