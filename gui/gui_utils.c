@@ -4213,7 +4213,7 @@ static void system_forecast_callback (GtkAction *action, gpointer p)
     GRETL_VAR *var = NULL;
     equation_system *sys = NULL;
     FITRESID *fr;
-    int t1, t2, t2est, resp;
+    int t1, t2, t2est, yno, resp;
     int premax, pre_n, dyn_ok;
     int static_model = 0;
     gretlopt opt = OPT_NONE;
@@ -4225,9 +4225,11 @@ static void system_forecast_callback (GtkAction *action, gpointer p)
     if (ci == VAR || ci == VECM) {
 	var = (GRETL_VAR *) vwin->data;
 	t2est = gretl_VAR_get_t2(var);
+	yno = var->ylist[i+1];
     } else if (ci == SYSTEM) {
 	sys = (equation_system *) vwin->data;
 	t2est = sys->t2;
+	yno = sys->ylist[i+1];
 	static_model = (sys->order == 0);
     } else {
 	return;
@@ -4289,7 +4291,15 @@ static void system_forecast_callback (GtkAction *action, gpointer p)
     if (err) {
 	gui_errmsg(err);
     } else {
+	char obs1[OBSLEN];
+	char obs2[OBSLEN];
 	PRN *prn;
+
+	ntodate(obs1, t1, dataset);
+	ntodate(obs2, t2, dataset);
+	lib_command_sprintf("fcast %s %s %s%s", obs1, obs2, dataset->varname[yno],
+			    print_flags(opt, FCAST));
+	record_command_verbatim();
 
 	if (bufopen(&prn)) {
 	    return;
