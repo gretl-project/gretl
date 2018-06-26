@@ -225,7 +225,22 @@ static void add_files_to_menu (int ftype)
 
 #ifdef G_OS_WIN32
 
-/* make comparison case-insensitive */
+/* standardize on backslash as path separator */
+
+static char *bslash (char *fname)
+{
+    char *s = fname;
+
+    while (*s) {
+	if (*s == '/') *s = '\\';
+	s++;
+    }
+
+    return fname;
+}
+
+/* make comparison case-insensitive, and also insensitive to
+   the distinction between forward and back slashes */
 
 static int fnamencmp (const char *f1, const char *f2, int n)
 {
@@ -255,8 +270,8 @@ static int fnamencmp (const char *f1, const char *f2, int n)
 	gchar *c1 = g_utf8_casefold(u1, -1);
 	gchar *c2 = g_utf8_casefold(u2, -1);
 
-	trim_slash(c1);
-	trim_slash(c2);
+	trim_slash(bslash(c1));
+	trim_slash(bslash(c2));
 
 	if (n > 0) {
 	    ret = strncmp(c1, c2, n);
@@ -313,7 +328,7 @@ static char *maybe_expand_path (char *fullname, const char *fname,
     wchar_t *buf = NULL;
     int done = 0;
 
-    if (_wgetcwd(buf, 0) != NULL) {
+    if ((buf =_wgetcwd(NULL, 0)) != NULL) {
 	/* try to ensure UTF-8 validity while we're at it */
 	gchar *trbuf = g_utf16_to_utf8(buf, -1, NULL, NULL, NULL);
 	gchar *trname = NULL;
