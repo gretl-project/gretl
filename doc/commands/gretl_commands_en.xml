@@ -3849,29 +3849,31 @@
       </para>
 
       <para context="cli">
-	Must follow an estimation command.  Forecasts are generated for a
-	certain range of observations: if <repl>startobs</repl> and
-	<repl>endobs</repl> are given, for that range (if possible); otherwise
-	if the <opt>out-of-sample</opt> option is given, for observations
-	following the range over which the model was estimated; otherwise over
-	the currently defined sample range.  If an out-of-sample forecast is
-	requested but no relevant observations are available, an error is
-	flagged. Depending on the nature of the model, standard errors may
-	also be generated; see below.  Also see below for the special effect
-	of the <opt>recursive</opt> option.
+	Must follow an estimation command.  Forecasts are generated
+	for a certain range of observations: if <repl>startobs</repl>
+	and <repl>endobs</repl> are given, for that range (if
+	possible); otherwise if the <opt>out-of-sample</opt> option is
+	given, for observations following the range over which the
+	model was estimated; otherwise over the currently defined
+	sample range.  If an out-of-sample forecast is requested but
+	no relevant observations are available, an error is
+	flagged. Depending on the nature of the model, standard errors
+	may also be generated; see below.  Also see below for the
+	special effect of the <opt>recursive</opt> option.
       </para>
 
       <para context="cli">
 	If the last model estimated is a single equation, then the
 	optional <repl>vname</repl> argument has the following effect:
-	the forecast values are not printed, but are saved to the dataset
-	under the given name.  If the last model is a system of equations,
-	<repl>vname</repl> has a different effect, namely selecting a
-	particular endogenous variable for forecasting (the default being
-	to produce forecasts for all the endogenous variables). In the
-	system case, or if <repl>vname</repl> is not given, the forecast
-	values can be retrieved using the accessor <lit>$fcast</lit>, and
-	the standard errors, if available, via <lit>$fcse</lit>.
+	the forecast values are not printed, but are saved to the
+	dataset under the given name.  If the last model is a system
+	of equations, <repl>vname</repl> has a different effect,
+	namely selecting a particular endogenous variable for
+	forecasting (the default being to produce forecasts for all
+	the endogenous variables). In the system case, or if
+	<repl>vname</repl> is not given, the forecast values can be
+	retrieved using the accessor <fncref targ="$fcast"/>, and the
+	standard errors, if available, via <fncref targ="$fcse"/>.
       </para>
 
       <para>
