@@ -2858,7 +2858,7 @@ static int real_matrix_calc (const gretl_matrix *A,
 
 static gretl_matrix *tmp_matrix_from_series (NODE *n, parser *p)
 {
-    int t, T = sample_size(p->dset);
+    int T = sample_size(p->dset);
     const double *x = n->v.xvec;
     gretl_matrix *m = NULL;
 
@@ -2868,9 +2868,9 @@ static gretl_matrix *tmp_matrix_from_series (NODE *n, parser *p)
 	p->err = E_ALLOC;
     } else {
 #if NA_IS_NAN
-	memcpy(m->val, x + dset->t1, T * sizeof *x);
+	memcpy(m->val, x + p->dset->t1, T * sizeof *x);
 #else
-	int i = 0;
+	int t, i = 0;
 
 	for (t=p->dset->t1; t<=p->dset->t2; t++) {
 	    if (na(x[t])) {
