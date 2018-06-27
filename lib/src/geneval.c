@@ -145,8 +145,7 @@ static NODE *eval (NODE *t, parser *p);
 static void node_type_error (int ntype, int argnum, int goodt,
 			     NODE *bad, parser *p);
 static int node_is_true (NODE *n, parser *p);
-static gretl_matrix *series_to_matrix (const double *x, parser *p,
-				       int *prechecked);
+static gretl_matrix *series_to_matrix (const double *x, parser *p);
 static NODE *object_var_node (NODE *t, parser *p);
 static void printnode (NODE *t, parser *p, int value);
 static inline int attach_aux_node (NODE *t, NODE *ret, parser *p);
@@ -2868,6 +2867,9 @@ static gretl_matrix *tmp_matrix_from_series (NODE *n, parser *p)
     if (m == NULL) {
 	p->err = E_ALLOC;
     } else {
+#if NA_IS_NAN
+	memcpy(m->val, x + dset->t1, T * sizeof *x);
+#else
 	int i = 0;
 
 	for (t=p->dset->t1; t<=p->dset->t2; t++) {
@@ -2877,6 +2879,7 @@ static gretl_matrix *tmp_matrix_from_series (NODE *n, parser *p)
 		m->val[i++] = x[t];
 	    }
 	}
+#endif
     }
 
     return m;
@@ -8148,7 +8151,7 @@ static gretl_matrix *real_matrix_from_list (const int *list,
 					    const DATASET *dset,
 					    parser *p)
 {
-    gretl_matrix *M;
+    gretl_matrix *M = NULL;
 
     if (list != NULL && list[0] == 0) {
 	M = gretl_null_matrix_new();
@@ -9866,7 +9869,7 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 	m2 = rhs->v.m;
     } else if (rhs->t == SERIES) {
 	/* legacy: this has long been accepted */
-	m2 = tmp_matrix_from_series(rhs, p);
+	m2 = series_to_matrix(rhs->v.xvec, p);
 	prechecked = 1;
 	free_m2 = 1; /* flag temporary status of @m2 */
     } else {
@@ -9950,8 +9953,8 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 		    /* m2 was temp result of series conversion */
 		    gretl_matrix_free(m2);
 		}
-		free_m2 = 1;
 		m2 = b;
+		free_m2 = 1;
 	    }
 	}
     }
@@ -12470,6 +12473,17 @@ static gretl_matrix *assemble_matrix (GPtrArray *a, int nnodes, parser *p)
 #if EDEBUG
     fprintf(stderr, "assemble_matrix...\n");
 #endif
+
+    if (nnodes == 1 && get_matrix_mask() == NULL) {
+	/* take a shortcut if we just got a single series
+	   and there's no "matrix mask" in place
+	*/
+	n = g_ptr_array_index(a, 0);
+	if (n->t == SERIES) {
+	    m = series_to_matrix(n->v.xvec, p);
+	    return m;
+	}
+    }
 
     /* how many columns will we need? */
     for (i=0; i<nnodes; i++) {
@@ -16561,38 +16575,44 @@ static void gen_check_errvals (parser *p)
 
 #endif /* not-NA_IS_NAN */
 
-/* This supports the "backdoor" (not recommended) way of
-   turning a series into a matrix -- "matrix m = s", for
-   @s a series -- as opposed to the recommended version,
-   "matrix m = {s}". However, even here we should probably
-   respect the set-variable "skip_missing". Modified to
-   do so, 2018-03-22.
+/* This function converts a series to a column vector,
+   respecting the value of the set-variable "skip_missing".
+   In that respect it differs from tmp_matrix_from_series(),
+   which always just grabs the entire sample range.
 */
 
 static gretl_matrix *series_to_matrix (const double *x,
-				       parser *p,
-				       int *prechecked)
+				       parser *p)
 {
     int t, n = sample_size(p->dset);
     int t1 = p->dset->t1;
     int t2 = p->dset->t2;
-    int respect_skip = 1;
-    int obs_info_ok = 1;
+    int skip_na, contiguous = 1;
+#if NA_IS_NAN
+    /* NA to NaN conversion not needed */
+    int convert = 0;
+#else
+    int convert = 1;
+#endif
     gretl_matrix *v;
 
-    if (respect_skip && libset_get_bool(SKIP_MISSING)) {
+    skip_na = libset_get_bool(SKIP_MISSING);
+
+    if (skip_na) {
 	int err = series_adjust_sample(x, &t1, &t2);
 
 	if (!err) {
-	    /* no "embedded" NAs, just use revised sample */
+	    /* no interior NAs, just use (possibly) revised sample */
 	    n = t2 - t1 + 1;
+	    convert = 0;
 	} else {
-	    /* have to count the non-missing values */
+	    /* we have to count the non-missing values */
 	    n = 0;
 	    for (t=t1; t<=t2; t++) {
 		if (!na(x[t])) n++;
 	    }
-	    obs_info_ok = 0;
+	    /* the values we want are not contiguous */
+	    contiguous = 0;
 	}
     }
 
@@ -16605,23 +16625,27 @@ static gretl_matrix *series_to_matrix (const double *x,
     if (v == NULL) {
 	p->err = E_ALLOC;
     } else if (n > 0) {
-	int i = 0;
+	if (contiguous && !convert) {
+	    memcpy(v->val, x + t1, n * sizeof *x);
+	} else {
+	    int i = 0;
 
-	for (t=t1; t<=t2; t++) {
-	    if (na(x[t])) {
-		if (!respect_skip) {
+	    for (t=t1; t<=t2; t++) {
+		if (na(x[t])) {
+		    if (!skip_na) {
 #if NA_IS_NAN
-		    v->val[i++] = x[t];
+			v->val[i++] = x[t];
 #else
-		    set_gretl_warning(W_GENNAN);
-		    v->val[i++] = M_NA;
+			set_gretl_warning(W_GENNAN); /* ? */
+			v->val[i++] = M_NA;
 #endif
+		    }
+		} else {
+		    v->val[i++] = x[t];
 		}
-	    } else {
-		v->val[i++] = x[t];
 	    }
 	}
-	if (obs_info_ok) {
+	if (contiguous) {
 	    gretl_matrix_set_t1(v, t1);
 	    gretl_matrix_set_t2(v, t2);
 	}
@@ -16651,7 +16675,8 @@ static gretl_matrix *retrieve_matrix_result (parser *p,
 	    }
 	}
     } else if (r->t == SERIES) {
-	m = series_to_matrix(r->v.xvec, p, prechecked);
+	m = series_to_matrix(r->v.xvec, p);
+	*prechecked = 1;
     } else if (r->t == LIST) {
 	m = gretl_list_to_vector(r->v.ivec, &p->err);
     } else if (r->t == MAT && is_tmp_node(r)) {
@@ -16688,7 +16713,8 @@ static gretl_matrix *retrieve_matrix_result (parser *p,
 /* Check to see if the existing LHS matrix is of the
    same dimensions as the RHS result */
 
-static int LHS_matrix_reusable (parser *p, gretl_matrix **pm)
+static int LHS_matrix_reusable (parser *p, gretl_matrix **pm,
+				gretl_matrix *tmp)
 {
     gretl_matrix *m = gen_get_lhs_var(p, GRETL_TYPE_MATRIX);
     int ok = 0;
@@ -16698,15 +16724,13 @@ static int LHS_matrix_reusable (parser *p, gretl_matrix **pm)
     } else if (p->ret->t == NUM) {
 	ok = (m->rows == 1 && m->cols == 1);
     } else if (p->ret->t == SERIES) {
-	int T = sample_size(p->dset);
-
-	ok = (m->rows == T && m->cols == 1);
+	ok = (m->rows == tmp->rows && m->cols == 1);
     } else if (p->ret->t == MAT) {
-	gretl_matrix *rm = p->ret->v.m;
+	gretl_matrix *retm = p->ret->v.m;
 
-	ok = (rm != NULL &&
-	      m->rows == rm->rows &&
-	      m->cols == rm->cols);
+	ok = (retm != NULL &&
+	      m->rows == retm->rows &&
+	      m->cols == retm->cols);
     }
 
     *pm = m;
@@ -16721,9 +16745,19 @@ static int LHS_matrix_reusable (parser *p, gretl_matrix **pm)
 static gretl_matrix *assign_to_matrix (parser *p, int *prechecked)
 {
     gretl_matrix *m = NULL;
+    gretl_matrix *tmp = NULL;
+    int free_tmp = 1;
     double x;
 
-    if (LHS_matrix_reusable(p, &m)) {
+    if (p->ret->t == SERIES) {
+	/* a legacy thing */
+	tmp = series_to_matrix(p->ret->v.xvec, p);
+	if (p->err) {
+	    return NULL;
+	}
+    }
+
+    if (LHS_matrix_reusable(p, &m, tmp)) {
 	/* The result is of the same dimensions as the LHS matrix:
 	   this means that we don't need to construct an RHS
 	   matrix if it doesn't already exist as such, nor do we
@@ -16738,27 +16772,32 @@ static gretl_matrix *assign_to_matrix (parser *p, int *prechecked)
 	    m->val[0] = na(x)? M_NA : x;
 	    *prechecked = 1;
 	} else if (p->ret->t == SERIES) {
-	    /* using RHS series */
-	    int i, s = p->dset->t1;
-
-	    for (i=0; i<m->rows; i++) {
-		x = p->ret->v.xvec[s++];
-		m->val[i] = na(x)? M_NA : x;
-	    }
+	    /* using RHS series, converted to @tmp */
+	    p->err = gretl_matrix_copy_data(m, tmp);
 	    *prechecked = 1;
 	} else {
 	    /* using RHS matrix: just copy data across */
 	    p->err = gretl_matrix_copy_data(m, p->ret->v.m);
 	}
     } else {
-	/* Dimensions diff: replace the LHS matrix */
+	/* Dimensions differ: replace the LHS matrix */
 #if EDEBUG
 	fprintf(stderr, "assign_to_matrix: replacing\n");
 #endif
-	m = retrieve_matrix_result(p, prechecked);
-	if (!p->err) {
-	    p->err = gen_replace_lhs(p, GRETL_TYPE_MATRIX, m);
+	if (tmp != NULL) {
+	    p->err = gen_replace_lhs(p, GRETL_TYPE_MATRIX, tmp);
+	    *prechecked = 1;
+	    free_tmp = 0; /* @tmp is the return value */
+	} else {
+	    m = retrieve_matrix_result(p, prechecked);
+	    if (!p->err) {
+		p->err = gen_replace_lhs(p, GRETL_TYPE_MATRIX, m);
+	    }
 	}
+    }
+
+    if (tmp != NULL && free_tmp) {
+	gretl_matrix_free(tmp);
     }
 
     return m;
