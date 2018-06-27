@@ -213,4 +213,6 @@ int midas_term_dialog (const char *name, int m,
 		       gboolean no_beta1,
 		       GtkWidget *parent);
 
+int dbnomics_dialog (char **dbcode, GtkWidget *parent);
+
 #endif /* DIALOGS_H */

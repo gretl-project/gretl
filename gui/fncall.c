@@ -4192,3 +4192,52 @@ char *installed_addon_status_string (const char *path,
 
     return ret;
 }
+
+int exec_dbnomics_call (const char *code)
+{
+    ExecState state;
+    PRN *prn = NULL;
+    char fnline[256] = {0};
+    char *bname;
+    int err = 0;
+
+    prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
+
+    gretl_exec_state_init(&state, SCRIPT_EXEC, fnline, get_lib_cmd(),
+			  NULL, prn);
+    strcpy(fnline, "include dbnomics.gfn");
+    err = gui_exec_line(&state, NULL, NULL);
+
+    if (!err) {
+	bname = temp_name_for_bundle();
+	*fnline = '\0';
+	sprintf(fnline, "bundle %s=dbnomics_get_series(\"%s\")", bname, code);
+	err = gui_exec_line(&state, NULL, NULL);
+    }
+    if (!err) {
+	*fnline = '\0';
+	sprintf(fnline, "dbnomics_bundle_print(%s)", bname);
+	err = gui_exec_line(&state, NULL, NULL);
+    }
+    if (!err) {
+	gretl_bundle *b = get_bundle_by_name(bname);
+	gretl_array *Ap;
+	gretl_matrix *v;
+	int n;
+
+	fprintf(stderr, "dbnomics bundle: b = %p\n", b);
+	if (b != NULL) {
+	    n = gretl_bundle_get_int(b, "actobs", &err);
+	    if (!err) {
+		fprintf(stderr, " n = %d\n", n);
+		Ap = gretl_bundle_get_array(b, "periods", &err);
+		fprintf(stderr, " Ap, err = %d\n", err);
+		v = gretl_bundle_get_matrix(b, "vals", &err);
+		fprintf(stderr, " v, err = %d\n", err);
+		fprintf(stderr, " Ap = %p, v = %p\n", Ap, v);
+	    }
+	}
+    }
+
+    return err;
+}
