@@ -293,14 +293,20 @@ static double controller_get_val (controller *clr,
 				  int *err)
 {
     if (clr->vname[0] != '\0') {
-	if (clr->uv == NULL) {
-	    clr->uv = get_user_var_of_type_by_name(clr->vname, GRETL_TYPE_DOUBLE);
-	}
-	if (clr->uv == NULL) {
-	    gretl_errmsg_sprintf(_("'%s': not a scalar"), clr->vname);
-	    *err = E_TYPES;
+	if (clr->vname[0] == '$') {
+	    /* built-in scalar constant */
+	    clr->val = get_const_by_name(clr->vname, err) * clr->vsign;
 	} else {
-	    clr->val = uvar_get_scalar_value(clr->uv) * clr->vsign;
+	    /* should be scalar uservar */
+	    if (clr->uv == NULL) {
+		clr->uv = get_user_var_of_type_by_name(clr->vname, GRETL_TYPE_DOUBLE);
+	    }
+	    if (clr->uv == NULL) {
+		gretl_errmsg_sprintf(_("'%s': not a scalar"), clr->vname);
+		*err = E_TYPES;
+	    } else {
+		clr->val = uvar_get_scalar_value(clr->uv) * clr->vsign;
+	    }
 	}
     } else if (clr->expr != NULL && gretl_strsub_on()) {
 	int done = 0;
@@ -794,7 +800,7 @@ static int index_get_limit (LOOPSET *loop, controller *clr, const char *s,
 	    strncat(clr->vname, s, VNAMELEN - 1);
 	    clr->val = (int) gretl_scalar_get_value(s, NULL);
 	} else if ((v = current_series_index(dset, s)) >= 0) {
-	    /* found a series by the name of s */
+	    /* found a series by the name of @s */
 	    gretl_errmsg_sprintf(_("'%s': not a scalar"), s);
 	} else if (loop->parent != NULL && strlen(s) == gretl_namechar_spn(s)) {
 	    /* potentially valid varname, but unknown at present */
