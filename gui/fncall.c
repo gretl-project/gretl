@@ -4193,51 +4193,128 @@ char *installed_addon_status_string (const char *path,
     return ret;
 }
 
-int exec_dbnomics_call (const char *code)
+/* the following is temporary: should be a good deal easier
+   once dbnomics is a registered addon
+*/
+
+static ufunc *get_packaged_function (const char *funcname,
+				     const char *pkgname)
 {
-    ExecState state;
-    PRN *prn = NULL;
-    char fnline[256] = {0};
-    char *bname;
-    int err = 0;
+    ufunc *uf = NULL;
+    fnpkg *pkg;
 
-    prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
+    /* already loaded? */
+    pkg = get_function_package_by_name(pkgname);
+    if (pkg == NULL) {
+	/* no, so look it up */
+	char *pkgpath;
+	int err = 0;
 
-    gretl_exec_state_init(&state, SCRIPT_EXEC, fnline, get_lib_cmd(),
-			  NULL, prn);
-    strcpy(fnline, "include dbnomics.gfn");
-    err = gui_exec_line(&state, NULL, NULL);
-
-    if (!err) {
-	bname = temp_name_for_bundle();
-	*fnline = '\0';
-	sprintf(fnline, "bundle %s=dbnomics_get_series(\"%s\")", bname, code);
-	err = gui_exec_line(&state, NULL, NULL);
-    }
-    if (!err) {
-	*fnline = '\0';
-	sprintf(fnline, "dbnomics_bundle_print(%s)", bname);
-	err = gui_exec_line(&state, NULL, NULL);
-    }
-    if (!err) {
-	gretl_bundle *b = get_bundle_by_name(bname);
-	gretl_array *Ap;
-	gretl_matrix *v;
-	int n;
-
-	fprintf(stderr, "dbnomics bundle: b = %p\n", b);
-	if (b != NULL) {
-	    n = gretl_bundle_get_int(b, "actobs", &err);
-	    if (!err) {
-		fprintf(stderr, " n = %d\n", n);
-		Ap = gretl_bundle_get_array(b, "periods", &err);
-		fprintf(stderr, " Ap, err = %d\n", err);
-		v = gretl_bundle_get_matrix(b, "vals", &err);
-		fprintf(stderr, " v, err = %d\n", err);
-		fprintf(stderr, " Ap = %p, v = %p\n", Ap, v);
-	    }
+	pkgpath = gretl_function_package_get_path(pkgname, PKG_ALL);
+	if (pkgpath != NULL) {
+	    pkg = get_function_package_by_filename(pkgpath, &err);
+	    free(pkgpath);
 	}
     }
+    if (pkg != NULL) {
+	uf = get_function_from_package(funcname, pkg);
+    }
+
+    if (uf == NULL) {
+	errbox_printf("Couldn't find function %s", funcname);
+    }    
+
+    return uf;
+}
+
+int exec_dbnomics_call (const char *code)
+{
+    gretl_bundle *b = NULL;
+    ufunc *uf = NULL;
+    fncall *fc = NULL;
+    PRN *prn = NULL;
+    int err = 0;
+
+    err = bufopen(&prn);
+
+    if (!err) {
+	uf = get_packaged_function("dbnomics_get_series", "dbnomics");
+	if (uf == NULL) {
+	    gretl_print_destroy(prn);
+	    err = E_DATA;
+	}
+    }
+
+    if (err) {
+	return err;
+    }
+    
+    if (uf != NULL) {
+	fc = fncall_new(uf);
+    }
+    if (fc != NULL) {
+	err = push_function_arg(fc, NULL, GRETL_TYPE_STRING, (void *) code);
+	if (!err) {
+	    err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, NULL,
+				      &b, NULL, prn);
+	    if (err) {
+		gui_errmsg(err);
+	    } else {
+		/* debugging */
+		gretl_bundle_print(b, prn);
+	    }
+	}
+	fc = NULL;
+    }
+
+    if (b != NULL) {
+	gchar *title = NULL;
+	
+	uf = get_packaged_function("dbnomics_bundle_print", "dbnomics");
+	if (uf != NULL) {
+	    fc = fncall_new(uf);
+	}
+	if (fc != NULL) {
+	    err = push_function_arg(fc, NULL, GRETL_TYPE_BUNDLE, (void *) b);
+	    if (!err) {
+		err = gretl_function_exec(fc, GRETL_TYPE_NONE, NULL,
+					  NULL, NULL, prn);
+		if (err) {
+		    gui_errmsg(err);
+		}
+	    }
+	    fc = NULL;
+	}
+	title = g_strdup_printf("dbnomics: %s", code);
+	view_buffer(prn, 78, 400, title, VIEW_PKG_INFO, NULL);
+	g_free(title);
+	prn = NULL; /* ownership is taken by viewer */
+    }
+
+    if (b != NULL) {
+	gretl_array *Ap;
+	gretl_matrix *v;
+	int T, t;
+	    
+	T = gretl_bundle_get_int(b, "actobs", &err);
+	if (!err) {
+	    fprintf(stderr, " actobs: T = %d\n", T);
+	    Ap = gretl_bundle_get_array(b, "periods", &err);
+	    fprintf(stderr, " periods array: err = %d\n", err);
+	    v = gretl_bundle_get_matrix(b, "vals", &err);
+	    fprintf(stderr, " data values: err = %d\n", err);
+	}
+	if (!err) {
+	    char **S = gretl_array_get_strings(Ap, &T);
+		
+	    for (t=0; t<T; t++) {
+		fprintf(stderr, "%s %g\n", S[t], v->val[t]);
+	    }
+	}
+	gretl_bundle_destroy(b);
+    }
+
+    gretl_print_destroy(prn);
 
     return err;
 }
