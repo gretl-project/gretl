@@ -52,6 +52,7 @@
 #endif
 
 #define DB_SEARCH_DEBUG 0
+#define DBNOMICS 0
 
 /* private functions */
 static GtkWidget *database_window (windata_t *vwin);
@@ -3337,7 +3338,7 @@ static void maybe_prune_db_list (GtkTreeView *tview,
     free(S);
     free(icpy);
 
-#if 0 /* dbnomics: not quite ready yet */
+#if DBNOMICS /* dbnomics: not quite ready yet */
     gtk_list_store_append(store, &iter);
     gtk_list_store_set(store, &iter, 0, "dbnomics",
 		       1, "Various data providers",
