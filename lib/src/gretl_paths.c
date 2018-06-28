@@ -1623,7 +1623,8 @@ static int is_addon (const char *name)
     if (!strcmp(name, "gig") ||
 	!strcmp(name, "SVAR") ||
 	!strcmp(name, "HIP") ||
-	!strcmp(name, "ivpanel")) {
+	!strcmp(name, "ivpanel") ||
+	!strcmp(name, "dbnomics")) {
 	return 1;
     } else {
 	return 0;

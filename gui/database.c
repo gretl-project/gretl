@@ -3291,13 +3291,97 @@ static void maybe_prune_db_list (GtkTreeView *tview,
     free(S);
     free(icpy);
 
-#if 0 /* dbnomics: not ready yet */
+#if 0 /* dbnomics: not quite ready yet */
     gtk_list_store_append(store, &iter);
     gtk_list_store_set(store, &iter, 0, "dbnomics",
 		       1, "Various data providers",
 		       2, "www", -1);
 #endif
 }
+
+/* dbnomics-related functions */
+
+static int prep_dbnomics_series (gretl_bundle *b,
+				 DATASET *dbset)
+{
+    gretl_array *A;
+    gretl_matrix *v;
+    char *id;
+    int T, err = 0;
+
+    T = gretl_bundle_get_int(b, "actobs", &err);
+    A = gretl_bundle_get_array(b, "periods", &err);
+    v = gretl_bundle_get_matrix(b, "vals", &err);
+    id = gretl_bundle_get_string(b, "id", &err);
+
+    if (!err && (T <= 0 || A == NULL || v == NULL)) {
+	err = E_DATA;
+    }
+
+    if (!err) {
+	char **S = gretl_array_get_strings(A, &T);
+	gchar *fname;
+	FILE *fp;
+	int t;
+
+	fname = g_strdup_printf("%sdnomics_tmp.txt", gretl_dotdir());
+	fp = gretl_fopen(fname, "w");
+	if (fp == NULL) {
+	    err = E_FOPEN;
+	} else {
+	    gretl_push_c_numeric_locale();
+	    fputs("obs dbseries\n", fp);
+	    for (t=0; t<T; t++) {
+		fprintf(fp, "%s %.12g\n", S[t], v->val[t]);
+	    }
+	    gretl_pop_c_numeric_locale();
+	    fclose(fp);
+	    err = import_csv(fname, dbset, OPT_NONE, NULL);
+	    if (!err && id != NULL) {
+		series_set_display_name(dbset, 1, id);
+	    }
+	    gretl_remove(fname);
+	}
+	g_free(fname);
+    }
+
+    return err;
+}
+
+int add_dbnomics_data (windata_t *vwin)
+{
+    gretl_bundle *b = vwin->data;
+    DATASET dbset = {0};
+    int err;
+
+    err = prep_dbnomics_series(b, &dbset);
+    /* FIXME: not ready */
+    clear_datainfo(&dbset, CLEAR_FULL);
+
+    return err;
+}
+
+int show_dbnomics_data (windata_t *vwin, int plot)
+{
+    gretl_bundle *b = vwin->data;
+    DATASET dbset = {0};
+    int err;
+
+    err = prep_dbnomics_series(b, &dbset);
+    if (!err) {
+	if (plot) {
+	    graph_dbdata(&dbset);
+	} else {
+	    display_dbdata(&dbset);
+	}
+    }
+
+    clear_datainfo(&dbset, CLEAR_FULL);
+
+    return err;
+}
+
+/* end dbnomics-related functions */
 
 gint populate_dbfilelist (windata_t *vwin, int *pndb)
 {

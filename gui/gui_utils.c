@@ -1679,6 +1679,8 @@ void free_windata (GtkWidget *w, gpointer data)
 	    }
 	} else if (vwin->role == LOESS || vwin->role == NADARWAT) {
 	    gretl_bundle_destroy(vwin->data);
+	} else if (vwin->role == VIEW_DBNOMICS) {
+	    gretl_bundle_destroy(vwin->data);
 	}
 
 	if (window_delete_filename(vwin)) {

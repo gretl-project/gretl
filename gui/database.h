@@ -52,4 +52,8 @@ void open_bn7_window (char *fname);
 
 void sync_db_windows (void);
 
+int add_dbnomics_data (windata_t *vwin);
+
+int show_dbnomics_data (windata_t *vwin, int plot);
+
 #endif

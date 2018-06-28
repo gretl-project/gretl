@@ -35,6 +35,7 @@
 #include "tabwin.h"
 #include "fncall.h"
 #include "fnsave.h"
+#include "database.h"
 #include "toolbar.h"
 
 #include "uservar.h"
@@ -89,6 +90,7 @@ enum {
     PLOT_ITEM,
     EXEC_ITEM,
     COPY_ITEM,
+    PRINT_ITEM,
     TEX_ITEM,
     ADD_DATA_ITEM,
     ADD_MATRIX_ITEM,
@@ -117,7 +119,8 @@ enum {
     COPY_SCRIPT_ITEM,
     BUILD_ITEM,
     HMAP_ITEM,
-    DIGITS_ITEM
+    DIGITS_ITEM,
+    DBN_ITEM
 } viewbar_flags;
 
 struct stock_maker {
@@ -466,6 +469,8 @@ static void add_data_callback (GtkWidget *w, windata_t *vwin)
 	add_fcast_data(vwin, M_FCAST);
     } else if (vwin->role == LOESS || vwin->role == NADARWAT) {
 	add_nonparam_data(vwin);
+    } else if (vwin->role == VIEW_DBNOMICS) {
+	add_dbnomics_data(vwin);
     }
 
     if (dataset->v > oldv) {
@@ -701,9 +706,16 @@ static void toolbar_plot_callback (GtkWidget *w, windata_t *vwin)
 	exec_bundle_plot_function(vwin->data, NULL);
     } else if (vwin->role == CORR) {
 	do_corr_plot(vwin);
+    } else if (vwin->role == VIEW_DBNOMICS) {
+	show_dbnomics_data(vwin, 1);
     } else {
 	do_nonparam_plot(vwin);
     }
+}
+
+static void dbnomics_show_series (GtkWidget *w, windata_t *vwin)
+{
+    show_dbnomics_data(vwin, 0);
 }
 
 static void editor_prefs_callback (GtkWidget *w, windata_t *vwin)
@@ -788,8 +800,9 @@ static GretlToolItem viewbar_items[] = {
     { N_("Save as..."), GTK_STOCK_SAVE_AS, G_CALLBACK(save_as_callback), SAVE_AS_ITEM },
     { N_("Open in script editor"), GTK_STOCK_EDIT, G_CALLBACK(copy_to_editor), COPY_SCRIPT_ITEM },
     { N_("Save bundle content..."), GRETL_STOCK_BUNDLE, NULL, BUNDLE_ITEM },
-    { N_("Print..."), GTK_STOCK_PRINT, G_CALLBACK(window_print_callback), 0 },
+    { N_("Print..."), GTK_STOCK_PRINT, G_CALLBACK(window_print_callback), PRINT_ITEM },
     { N_("Show/hide"), GRETL_STOCK_PIN, G_CALLBACK(session_notes_callback), NOTES_ITEM },
+    { N_("Display values"), GTK_STOCK_MEDIA_PLAY, G_CALLBACK(dbnomics_show_series), DBN_ITEM },
     { N_("Run"), GTK_STOCK_EXECUTE, G_CALLBACK(do_run_script), EXEC_ITEM },
     { N_("Build package"), GRETL_STOCK_TOOLS, G_CALLBACK(build_pkg_callback), BUILD_ITEM },
     { N_("Cut"), GTK_STOCK_CUT, G_CALLBACK(vwin_cut_callback), EDIT_ITEM }, 
@@ -848,7 +861,8 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 		       r != EDIT_PKG_HELP && \
 		       r != EDIT_PKG_GHLP && \
 		       r != CONSOLE && \
-		       r != VIEW_BUNDLE)
+		       r != VIEW_BUNDLE && \
+		       r != VIEW_DBNOMICS)
 
 #define help_ok(r) (r == LEVERAGE || \
 		    r == COINT2 || \
@@ -875,11 +889,13 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 
 #define plot_ok(r) (r == VIEW_SERIES || \
 		    r == LOESS || \
-		    r == NADARWAT)
+		    r == NADARWAT || \
+		    r == VIEW_DBNOMICS)
 
 #define add_data_ok(r) (r == PCA || r == LEVERAGE || \
                         r == MAHAL || r == FCAST || \
-			r == LOESS || r == NADARWAT)
+			r == LOESS || r == NADARWAT || \
+			r == VIEW_DBNOMICS)
 
 #define split_h_ok(r) (r == SCRIPT_OUT || r == FNCALL_OUT || \
 		       r == VIEW_LOG || r == VIEW_PKG_CODE || \
@@ -919,6 +935,14 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
     if (use_toolbar_search_box(r) && f == FIND_ITEM) {
 	/* using an "inline" search box: skip the
 	   "Find" button */
+	return NULL;
+    }
+
+    if (r == VIEW_DBNOMICS) {
+	if (f == PRINT_ITEM || f == FIND_ITEM) {
+	    return NULL;
+	}
+    } else if (f == DBN_ITEM) {
 	return NULL;
     }
 

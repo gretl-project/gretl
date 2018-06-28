@@ -134,6 +134,8 @@ static const gchar *window_list_icon (int role)
 	id = GRETL_STOCK_TABLE;
     } else if (role == SAVE_FUNCTIONS) {
 	id = GRETL_STOCK_TOOLS;
+    } else if (role == VIEW_DBNOMICS) {
+	id = GRETL_STOCK_BUNDLE;
     }
 
     return id;

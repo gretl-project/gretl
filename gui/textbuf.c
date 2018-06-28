@@ -4054,7 +4054,8 @@ void create_text (windata_t *vwin, int hsize, int vsize,
 
     if (help_role(role) || role == VIEW_PKG_INFO ||
 	role == VIEW_BIBITEM || role == VIEW_CODEBOOK ||
-	role == EDIT_PKG_HELP || role == EDIT_PKG_GHLP) {
+	role == EDIT_PKG_HELP || role == EDIT_PKG_GHLP ||
+	role == VIEW_DBNOMICS) {
 	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(w), GTK_WRAP_WORD);
     } else {
 	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(w), GTK_WRAP_NONE);

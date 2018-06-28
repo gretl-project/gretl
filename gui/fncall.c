@@ -4261,7 +4261,7 @@ int exec_dbnomics_call (const char *code)
 		gui_errmsg(err);
 	    } else {
 		/* debugging */
-		gretl_bundle_print(b, prn);
+		//gretl_bundle_print(b, prn);
 	    }
 	}
 	fc = NULL;
@@ -4286,12 +4286,12 @@ int exec_dbnomics_call (const char *code)
 	    fc = NULL;
 	}
 	title = g_strdup_printf("dbnomics: %s", code);
-	view_buffer(prn, 78, 400, title, VIEW_PKG_INFO, NULL);
+	view_buffer(prn, 78, 350, title, VIEW_DBNOMICS, b);
 	g_free(title);
-	prn = NULL; /* ownership is taken by viewer */
+	prn = NULL; /* note: ownership is taken by viewer */
     }
 
-    if (b != NULL) {
+    if (0 && b != NULL) {
 	gretl_array *Ap;
 	gretl_matrix *v;
 	int T, t;
