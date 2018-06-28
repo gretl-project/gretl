@@ -20,8 +20,8 @@ else
   funcsdir = $(datarootdir)/gretl/functions
 endif
 
-SUBDIRS = gig ivpanel SVAR HIP
-ALLSUBDIRS = gig ivpanel SVAR HIP
+SUBDIRS = gig ivpanel SVAR HIP dbnomics
+ALLSUBDIRS = gig ivpanel SVAR HIP dbnomics
 
 .PHONY : subdirs $(SUBDIRS) clean installdirs install install-private
 
@@ -53,6 +53,8 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/SVAR
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/HIP
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/HIP/examples
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/dbnomics
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(funcsdir)/dbnomics/examples
 
 install: $(SUBDIRS) installdirs
 	for d in $(SUBDIRS) ; do $(MAKE) -C $$d install; done
