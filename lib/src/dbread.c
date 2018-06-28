@@ -1568,29 +1568,32 @@ static double *get_compacted_xt (const double *src, int n,
      monthly   -> annual
 */
 
-double *compact_db_series (const double *src, SERIESINFO *sinfo,
-			   int target_pd, CompactMethod method)
+double *compact_db_series (const double *src,
+			   int *ppd, int *pnobs,
+			   char *stobs,
+			   int target_pd,
+			   CompactMethod method)
 {
     int p0, y0, endskip, goodobs;
-    int skip = 0, compfac = sinfo->pd / target_pd;
+    int skip = 0, compfac = *ppd / target_pd;
     double *x;
 
     if (target_pd == 1) {
 	/* figure the annual dates */
-	y0 = atoi(sinfo->stobs);
-	p0 = atoi(sinfo->stobs + 5);
+	y0 = atoi(stobs);
+	p0 = atoi(stobs + 5);
 	if (p0 != 1) {
 	    ++y0;
 	    skip = compfac - (p0 + 1);
 	}
-	sprintf(sinfo->stobs, "%d", y0);
+	sprintf(stobs, "%d", y0);
     } else if (target_pd == 4) {
 	/* figure the quarterly dates */
 	float q;
 	int q0;
 
-	y0 = atoi(sinfo->stobs);
-	p0 = atoi(sinfo->stobs + 5);
+	y0 = atoi(stobs);
+	p0 = atoi(stobs + 5);
 	q = 1.0 + p0 / 3.;
 	q0 = q + .5;
 	skip = ((q0 - 1) * 3) + 1 - p0;
@@ -1598,26 +1601,26 @@ double *compact_db_series (const double *src, SERIESINFO *sinfo,
 	    y0++;
 	    q0 = 1;
 	}
-	sprintf(sinfo->stobs, "%d.%d", y0, q0);
+	sprintf(stobs, "%d.%d", y0, q0);
     } else {
 	return NULL;
     }
 
-    endskip = (sinfo->nobs - skip) % compfac;
-    goodobs = (sinfo->nobs - skip - endskip) / compfac;
-    sinfo->nobs = goodobs;
+    endskip = (*pnobs - skip) % compfac;
+    goodobs = (*pnobs - skip - endskip) / compfac;
+    *pnobs = goodobs;
 
 #if DB_DEBUG
     fprintf(stderr, "startskip = %d\n", skip);
     fprintf(stderr, "endskip = %d\n", endskip);
     fprintf(stderr, "goodobs = %d\n", goodobs);
     fprintf(stderr, "compfac = %d\n", compfac);
-    fprintf(stderr, "starting date = %s\n", sinfo->stobs);
+    fprintf(stderr, "starting date = %s\n", stobs);
 #endif
 
     x = get_compacted_xt(src, goodobs, method, compfac, skip);
 
-    sinfo->pd = target_pd;
+    *ppd = target_pd;
 
     return x;
 }
@@ -1667,21 +1670,24 @@ static double *interpolate_db_series (const double *src,
    Interpolation is supported for cases 1 and 3 only.
 */
 
-double *expand_db_series (const double *src, SERIESINFO *sinfo,
-			  int target_pd, int interpol)
+double *expand_db_series (const double *src,
+			  int *ppd, int *pnobs,
+			  char *stobs, int target_pd,
+			  int interpol)
 {
-    char stobs[OBSLEN] = {0};
-    int oldn = sinfo->nobs;
+    char new_stobs[OBSLEN] = {0};
+    int oldn = *pnobs;
+    int pd = *ppd;
     int mult, newn;
     double *x = NULL;
     int j, t;
     int err = 0;
 
-    mult = target_pd / sinfo->pd;
-    newn = mult * sinfo->nobs;
+    mult = target_pd / pd;
+    newn = mult * oldn;
 
-    if (!((target_pd == 4 && sinfo->pd == 1) ||
-	  (target_pd == 12 && sinfo->pd == 4))) {
+    if (!((target_pd == 4 && pd == 1) ||
+	  (target_pd == 12 && pd == 4))) {
 	interpol = 0;
     }
 
@@ -1703,36 +1709,37 @@ double *expand_db_series (const double *src, SERIESINFO *sinfo,
     }
 
 #if EXPAND_DEBUG
-    fprintf(stderr, "expand_db_series 1: mult=%d, newn=%d, sinfo->stobs='%s'\n",
-	    mult, newn, sinfo->stobs);
+    fprintf(stderr, "expand_db_series 1: mult=%d, newn=%d, stobs='%s'\n",
+	    mult, newn, stobs);
 #endif
 
     if (err) {
 	return NULL;
     }
 
-    if (sinfo->pd == 1) {
-	strcpy(stobs, sinfo->stobs);
+    if (pd == 1) {
+	strcpy(new_stobs, stobs);
 	if (target_pd == 4) {
-	    strcat(stobs, ":1");
+	    strcat(new_stobs, ":1");
 	} else {
-	    strcat(stobs, ":01");
+	    strcat(new_stobs, ":01");
 	}
     } else {
 	int yr, qtr, mo;
 
-	sscanf(sinfo->stobs, "%d.%d", &yr, &qtr);
+	sscanf(stobs, "%d.%d", &yr, &qtr);
 	mo = (qtr - 1) * 3 + 1;
-	sprintf(stobs, "%d:%02d", yr, mo);
+	sprintf(new_stobs, "%d:%02d", yr, mo);
     }
 
-    strcpy(sinfo->stobs, stobs);
-    sinfo->pd = target_pd;
-    sinfo->nobs = newn;
+    /* revise incoming values */
+    strcpy(stobs, new_stobs);
+    *ppd = target_pd;
+    *pnobs = newn;
 
 #if EXPAND_DEBUG
-    fprintf(stderr, "expand_db_series 2: sinfo->pd=%d, sinfo->stobs='%s'\n",
-	    sinfo->pd, sinfo->stobs);
+    fprintf(stderr, "expand_db_series 2: pd=%d, stobs='%s'\n",
+	    *ppd, stobs);
 #endif
 
     return x;
@@ -2597,7 +2604,7 @@ static int get_one_db_series (const char *series,
     }
 
     if (!err) {
-	err = lib_add_db_data(dbZ, &sinfo, dset, this_method,
+	err = lib_add_db_data(dbZ, &sinfo, dset, NULL, this_method,
 			      interpolate, v, prn);
     }
 
@@ -2929,18 +2936,19 @@ int db_delete_series_by_number (const int *list, const char *fname)
     return db_delete_series(NULL, list, fname, NULL);
 }
 
-void get_db_padding (SERIESINFO *sinfo, DATASET *dset,
+void get_db_padding (const char *stobs, int nobs,
+		     const DATASET *dset,
 		     int *pad1, int *pad2)
 {
-    *pad1 = dateton(sinfo->stobs, dset);
+    *pad1 = dateton(stobs, dset);
 #if DB_DEBUG
-    fprintf(stderr, "pad1 = dateton(%s) = %d\n", sinfo->stobs, *pad1);
+    fprintf(stderr, "pad1 = dateton(%s) = %d\n", stobs, *pad1);
 #endif
 
-    *pad2 = dset->n - sinfo->nobs - *pad1;
+    *pad2 = dset->n - nobs - *pad1;
 #if DB_DEBUG
     fprintf(stderr, "pad2 = dset->n - sinfo->nobs - pad1 = %d - %d - %d = %d\n",
-	    dset->n, sinfo->nobs, *pad1, *pad2);
+	    dset->n, nobs, *pad1, *pad2);
 #endif
 }
 
@@ -2960,15 +2968,19 @@ static void obs_to_ymd (const char *obs, int pd, int *y, int *m, int *d)
     }
 }
 
-int db_range_check (SERIESINFO *sinfo, DATASET *dset)
+int db_range_check (int db_pd,
+		    const char *db_stobs,
+		    const char *db_endobs,
+		    const char *varname,
+		    DATASET *dset)
 {
     double sd0_orig, sdn_orig, sd0, sdn;
     int err = 0;
 
-    sd0 = get_date_x(sinfo->pd, sinfo->stobs);
-    sdn = get_date_x(sinfo->pd, sinfo->endobs);
+    sd0 = get_date_x(db_pd, db_stobs);
+    sdn = get_date_x(db_pd, db_endobs);
 
-    if (sinfo->pd >= 5 && sinfo->pd <= 7 && !dated_daily_data(dset)) {
+    if (db_pd >= 5 && db_pd <= 7 && !dated_daily_data(dset)) {
 	/* convert 'orig' info to daily dates */
 	int y, m, d;
 
@@ -2984,31 +2996,31 @@ int db_range_check (SERIESINFO *sinfo, DATASET *dset)
     if (sd0 > sdn_orig || sdn < sd0_orig) {
 	gretl_errmsg_sprintf(_("%s: observation range does not overlap\n"
 			       "with the working data set"),
-			     sinfo->varname);
+			     varname);
 	err = 1;
     }
 
     return err;
 }
 
-int check_db_import_conversion (SERIESINFO *sinfo, DATASET *dset)
+int check_db_import_conversion (int pd, DATASET *dset)
 {
     int target = dset->pd;
     int err = 0;
 
-    if (sinfo->pd == target) {
+    if (pd == target) {
 	; /* no conversion needed */
-    } else if (sinfo->pd == 1 && target == 4) {
+    } else if (pd == 1 && target == 4) {
 	; /* annual to quarterly expansion */
-    } else if (sinfo->pd == 1 && target == 12) {
+    } else if (pd == 1 && target == 12) {
 	; /* annual to monthly expansion */
-    } else if (sinfo->pd == 4 && target == 12) {
+    } else if (pd == 4 && target == 12) {
 	; /* quarterly to monthly expansion */
-    } else if (sinfo->pd == 12 && target == 1) {
+    } else if (pd == 12 && target == 1) {
 	; /* monthly to annual compaction */
-    } else if (sinfo->pd == 4 && target == 1) {
+    } else if (pd == 4 && target == 1) {
 	; /* quarterly to annual compaction */
-    } else if (sinfo->pd == 12 && target == 4) {
+    } else if (pd == 12 && target == 4) {
 	; /* monthly to quarterly compaction */
     } else {
 	err = E_DATA;
@@ -3017,15 +3029,19 @@ int check_db_import_conversion (SERIESINFO *sinfo, DATASET *dset)
     return err;
 }
 
-static int check_db_import_full (SERIESINFO *sinfo, DATASET *dset)
+static int check_db_import_full (int pd,
+				 const char *stobs,
+				 const char *endobs,
+				 const char *varname,
+				 DATASET *dset)
 {
-    int err = check_db_import_conversion(sinfo, dset);
+    int err = check_db_import_conversion(pd, dset);
 
     if (err) {
 	gretl_errmsg_sprintf(_("%s: can't handle conversion"),
-			     sinfo->varname);
+			     varname);
     } else {
-	err = db_range_check(sinfo, dset);
+	err = db_range_check(pd, stobs, endobs, varname, dset);
     }
 
 #if DB_DEBUG
@@ -3144,14 +3160,18 @@ static DATASET *make_import_tmpset (const DATASET *dset,
 }
 
 int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
-		     DATASET *dset, CompactMethod cmethod,
-		     int interpolate, int dbv, PRN *prn)
+		     DATASET *dset, DATASET *dbset,
+		     CompactMethod cmethod, int interpolate,
+		     int dbv, PRN *prn)
 {
-    double *xvec = NULL;
+    double **Z, *xvec = NULL;
     int pad1 = 0, pad2 = 0;
-    int t, start, stop;
+    int pd, t, nobs, start, stop;
+    int *ppd, *pnobs;
     int free_xvec = 0;
     int new = (dbv == dset->v);
+    char *stobs, *endobs;
+    char *vname;
     int err = 0;
 
     if (cmethod == COMPACT_SPREAD) {
@@ -3159,6 +3179,12 @@ int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	if (dset == NULL || dset->v == 0) {
 	    gretl_errmsg_set("\"compact=spread\": requires a dataset in place");
 	    err = E_DATA;
+	} else if (dbset != NULL) {
+	    err = compact_data_set(dbset, dset->pd, cmethod, 0, 0);
+	    if (!err) {
+		/* FIXME pointer business? */
+		err = merge_or_replace_data(dset, &dbset, OPT_X | OPT_U, prn);
+	    }
 	} else {
 	    DATASET *tmpset = make_import_tmpset(dset, sinfo, dbZ, &err);
 
@@ -3172,9 +3198,19 @@ int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	return err;
     }
 
+    /* connect things up depending on input */
+    pd = dbset != NULL ? dbset->pd : sinfo->pd;
+    nobs = dbset != NULL ? dbset->n : sinfo->nobs;
+    stobs = dbset != NULL ? dbset->stobs : sinfo->stobs;
+    endobs = dbset != NULL ? dbset->endobs : sinfo->endobs;
+    vname = dbset != NULL ? dbset->varname[1] : sinfo->varname;
+    Z = dbset != NULL ? dbset->Z : dbZ;
+    ppd = &pd;
+    pnobs = &nobs;
+    
     if (dset->n == 0) {
 	/* if the length of the dataset is not defined yet,
-	   initialize it using sinfo
+	   initialize it using info from database
 	*/
 	init_datainfo_from_sinfo(dset, sinfo);
 	dset->v = 0; /* trigger for creating data array below */
@@ -3182,7 +3218,7 @@ int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	    dset->structure = TIME_SERIES;
 	}
     } else {
-	err = check_db_import_full(sinfo, dset);
+	err = check_db_import_full(pd, stobs, endobs, vname, dset);
 	if (err) {
 	    return err;
 	}
@@ -3205,12 +3241,13 @@ int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	    dset->n, dset->v, dbv);
 #endif
 
-    if (sinfo->pd < dset->pd) {
+    if (pd < dset->pd) {
 	/* the series needs to be expanded */
-	xvec = expand_db_series(dbZ[1], sinfo, dset->pd, interpolate);
-    } else if (sinfo->pd > dset->pd) {
+	xvec = expand_db_series(Z[1], ppd, pnobs, stobs, dset->pd,
+				interpolate);
+    } else if (pd > dset->pd) {
 	/* the series needs to be compacted */
-	if (dset->pd != 1 && dset->pd != 4 && sinfo->pd != 12) {
+	if (dset->pd != 1 && dset->pd != 4 && pd != 12) {
 	    gretl_errmsg_set(_("Sorry, can't handle this conversion yet!"));
 	    if (new) {
 		dataset_drop_last_variables(dset, 1);
@@ -3223,7 +3260,8 @@ int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
 		    sinfo->varname);
 	    pputc(prn, '\n');
 	}
-	xvec = compact_db_series(dbZ[1], sinfo, dset->pd, cmethod);
+	xvec = compact_db_series(Z[1], ppd, pnobs, stobs, dset->pd,
+				 cmethod);
 	if (xvec == NULL) {
 	    if (new) {
 		dataset_drop_last_variables(dset, 1);
@@ -3234,14 +3272,14 @@ int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	}
     } else {
 	/* series does not need compacting */
-	xvec = dbZ[1];
+	xvec = Z[1];
     }
 
     /* common stuff for adding a var */
-    strcpy(dset->varname[dbv], sinfo->varname);
+    strcpy(dset->varname[dbv], vname);
     series_set_label(dset, dbv, sinfo->descrip);
     series_set_compact_method(dset, dbv, cmethod);
-    get_db_padding(sinfo, dset, &pad1, &pad2);
+    get_db_padding(stobs, nobs, dset, &pad1, &pad2);
 
     if (pad1 > 0) {
 #if DB_DEBUG
@@ -3288,8 +3326,8 @@ int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
 */
 
 static double *compact_series (const DATASET *dset, int i, int oldn,
-			       int startskip, int min_startskip, int compfac,
-			       CompactMethod method)
+			       int startskip, int min_startskip,
+			       int compfac, CompactMethod method)
 {
     const double *src = dset->Z[i];
     double *x;

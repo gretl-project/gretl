@@ -101,11 +101,15 @@ dbwrapper *dbwrapper_new (int n, const char *fname, int dbtype);
 
 void dbwrapper_destroy (dbwrapper *dw);
 
-double *compact_db_series (const double *src, SERIESINFO *sinfo,
-			   int target_pd, CompactMethod method);
+double *compact_db_series (const double *src,
+			   int *ppd, int *pnobs,
+			   char *stobs, int target_pd,
+			   CompactMethod method);
 
-double *expand_db_series (const double *src, SERIESINFO *sinfo,
-			  int target_pd, int interpol);
+double *expand_db_series (const double *src,
+			  int *ppd, int *pnobs,
+			  char *stobs, int target_pd,
+			  int interpol);
 
 int set_db_name (const char *fname, int filetype, PRN *prn);
 
@@ -122,16 +126,22 @@ int db_delete_series_by_name (const char *line, PRN *prn);
 
 int db_delete_series_by_number (const int *list, const char *fname);
 
-void get_db_padding (SERIESINFO *sinfo, DATASET *dset, 
+void get_db_padding (const char *stobs, int nobs,
+		     const DATASET *dset,
 		     int *pad1, int *pad2);
 
-int db_range_check (SERIESINFO *sinfo, DATASET *dset);
+int db_range_check (int db_pd,
+		    const char *db_stobs,
+		    const char *db_endobs,
+		    const char *varname,
+		    DATASET *dset);
 
-int check_db_import_conversion (SERIESINFO *sinfo, DATASET *dset);
+int check_db_import_conversion (int pd, DATASET *dset);
 
 int lib_add_db_data (double **dbZ, SERIESINFO *sinfo, 
-		     DATASET *dset, CompactMethod cmethod, 
-		     int interpolate, int dbv, PRN *prn);
+		     DATASET *dset, DATASET *dbset,
+		     CompactMethod cmethod, int interpolate,
+		     int dbv, PRN *prn);
 
 int compact_data_set (DATASET *dset, int newpd,
 		      CompactMethod default_method, 

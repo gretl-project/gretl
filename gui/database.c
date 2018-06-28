@@ -249,10 +249,13 @@ static int expand_data_dialog (int src_pd, int targ_pd, int *interpol,
     return resp;
 }
 
-static int obs_overlap_check (SERIESINFO *sinfo)
+static int obs_overlap_check (int pd, const char *stobs,
+			      const char *endobs,
+			      const char *varname)
 {
-    int err = db_range_check(sinfo, dataset);
+    int err;
 
+    err = db_range_check(pd, stobs, endobs, varname, dataset);
     if (err) {
 	gui_errmsg(err);
     }
@@ -260,11 +263,11 @@ static int obs_overlap_check (SERIESINFO *sinfo)
     return err;
 }
 
-static int pd_conversion_check (SERIESINFO *sinfo)
+static int pd_conversion_check (int db_pd)
 {
     int err;
 
-    err = check_db_import_conversion(sinfo, dataset);
+    err = check_db_import_conversion(db_pd, dataset);
 
     if (err) {
 	warnbox(_("Sorry, can't handle this frequency conversion"));
@@ -384,9 +387,8 @@ static int handle_compact_spread (double **dbZ,
 	return E_ALLOC;
     }
 
-    err = lib_add_db_data(dbZ, sinfo, dset,
-			  COMPACT_SPREAD, 0,
-			  v, prn);
+    err = lib_add_db_data(dbZ, sinfo, dset, NULL,
+			  COMPACT_SPREAD, 0, v, prn);
     if (err) {
 	char *buf = gretl_print_steal_buffer(prn);
 
@@ -403,23 +405,44 @@ static int handle_compact_spread (double **dbZ,
 }
 
 static int
-add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
+add_db_series_to_dataset (windata_t *vwin, double **dbZ,
+			  dbwrapper *dw, DATASET *dbset)
 {
-    SERIESINFO *sinfo;
+    GtkWidget *parent = vwin->main;
+    SERIESINFO *sinfo = NULL;
     CompactMethod method = COMPACT_AVG;
+    double **Z;
     int resp, warned = 0, chosen = 0;
+    int vmin, nv;
     int i, t, err = 0;
 
-    err = pd_conversion_check(&dw->sinfo[0]);
+    if (dw != NULL) {
+	sinfo = &dw->sinfo[0];
+	err = pd_conversion_check(sinfo->pd);
+    } else {
+	err = pd_conversion_check(dbset->pd);
+    }
+
     if (err) {
 	return err;
     }
 
-    record_db_open_command(dw);
+    if (dw != NULL) {
+	Z = dbZ;
+	record_db_open_command(dw);
+	vmin = 0;
+	nv = dw->nv;
+    } else {
+	Z = dbset->Z;
+	vmin = 1;
+	nv = 2;
+    }
 
-    for (i=0; i<dw->nv && !err; i++) {
+    for (i=vmin; i<nv && !err; i++) {
 	double x, *xvec = NULL;
-	int v, dbv, start, stop;
+	char *stobs, *endobs, *vname;
+	const char *descrip;
+	int v, dbv, pd, nobs, start, stop;
 	int pad1 = 0, pad2 = 0;
 	int overwrite = 0;
 	int spread = 0;
@@ -427,18 +450,34 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 	int compact = 0;
 	int interpol = 0;
 
-	sinfo = &dw->sinfo[i];
-	v = sinfo->v;
+	if (dw != NULL) {
+	    sinfo = &dw->sinfo[i];
+	    stobs = sinfo->stobs;
+	    endobs = sinfo->endobs;
+	    vname = sinfo->varname;
+	    descrip = sinfo->descrip;
+	    pd = sinfo->pd;
+	    nobs = sinfo->nobs;
+	    v = sinfo->v;
+	} else {
+	    stobs = dbset->stobs;
+	    endobs = dbset->endobs;
+	    vname = dbset->varname[1];
+	    descrip = series_get_label(dbset, 1);
+	    pd = dbset->pd;
+	    nobs = dbset->n;
+	    v = 1;
+	}
 
-	if (obs_overlap_check(sinfo)) {
+	if (obs_overlap_check(pd, stobs, endobs, vname)) {
 	    continue;
 	}
 
-	if (sinfo->pd < dataset->pd) {
+	if (pd < dataset->pd) {
 	    /* the incoming series needs to be expanded */
 	    if (!warned) {
-		resp = expand_data_dialog(sinfo->pd, dataset->pd, &interpol,
-					  vwin->main);
+		resp = expand_data_dialog(pd, dataset->pd, &interpol,
+					  parent);
 		if (resp != GRETL_YES) {
 		    return 0;
 		}
@@ -448,8 +487,8 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 	} else if (sinfo->pd > dataset->pd) {
 	    /* the incoming series needs to be compacted */
 	    if (!chosen) {
-		data_compact_dialog(sinfo->pd, &dataset->pd, NULL,
-				    &method, NULL, vwin->main);
+		data_compact_dialog(pd, &dataset->pd, NULL,
+				    &method, NULL, parent);
 		if (method == COMPACT_NONE) {
 		    /* canceled */
 		    return 0;
@@ -460,7 +499,7 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 	    spread = (method == COMPACT_SPREAD);
 	}
 
-	dbv = series_index(dataset, sinfo->varname);
+	dbv = series_index(dataset, vname);
 
 	if (dbv < dataset->v) {
 	    /* there's already a series of this name */
@@ -486,11 +525,11 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 
 	if (spread) {
 	    /* creating multiple series */
-	    err = handle_compact_spread(dbZ, sinfo, dataset, v);
+	    err = handle_compact_spread(Z, sinfo, dataset, v);
 	    if (err) {
 		break;
 	    } else {
-		record_db_import(sinfo->varname, compact, interpol, method);
+		record_db_import(vname, compact, interpol, method);
 		continue;
 	    }
 	}
@@ -504,15 +543,17 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 	}
 
 	if (expand) {
-	    xvec = expand_db_series(dbZ[v], sinfo, dataset->pd, interpol);
+	    xvec = expand_db_series(Z[v], &pd, &nobs, stobs,
+				    dataset->pd, interpol);
 	} else if (compact) {
-	    xvec = compact_db_series(dbZ[v], sinfo, dataset->pd, method);
+	    xvec = compact_db_series(Z[v], &pd, &nobs, stobs,
+				     dataset->pd, method);
 	} else {
 	    /* the frequency does not need adjustment */
-	    xvec = mymalloc(sinfo->nobs * sizeof *xvec);
+	    xvec = mymalloc(nobs * sizeof *xvec);
 	    if (xvec != NULL) {
-		for (t=0; t<sinfo->nobs; t++) {
-		    xvec[t] = dbZ[v][t];
+		for (t=0; t<nobs; t++) {
+		    xvec[t] = Z[v][t];
 		}
 	    }
 	}
@@ -526,12 +567,12 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 	}
 
 	/* record in command log */
-	record_db_import(sinfo->varname, compact, interpol, method);
+	record_db_import(vname, compact, interpol, method);
 
 	/* common stuff for adding a series */
-	strcpy(dataset->varname[dbv], sinfo->varname);
-	series_set_label(dataset, dbv, sinfo->descrip);
-	get_db_padding(sinfo, dataset, &pad1, &pad2);
+	strcpy(dataset->varname[dbv], vname);
+	series_set_label(dataset, dbv, descrip);
+	get_db_padding(stobs, nobs, dataset, &pad1, &pad2);
 
 	if (pad1 > 0) {
 	    fprintf(stderr, "Padding at start, %d obs\n", pad1);
@@ -576,21 +617,26 @@ static void add_dbdata (windata_t *vwin, DATASET *dbset,
 
     if (data_status) {
 	/* we already have data in gretl's workspace */
-	add_db_series_to_dataset(vwin, dbset->Z, dw);
+	if (dw != NULL) {
+	    add_db_series_to_dataset(vwin, dbset->Z, dw, NULL);
+	} else {
+	    add_db_series_to_dataset(vwin, NULL, NULL, dbset);
+	}
     } else {
 	/* no data open: start new data set from db */
 	destroy_dataset(dataset);
 	dataset = dbset;
 	*freeit = 0;
 
-	record_db_open_command(dw);
-
-	for (i=1; i<=dw->nv && !err; i++) {
-	    sinfo = &dw->sinfo[i-1];
-	    strcpy(dataset->varname[i], sinfo->varname);
-	    series_set_label(dataset, i, sinfo->descrip);
-	    lib_command_sprintf("data %s", sinfo->varname);
-	    record_command_verbatim();
+	if (dw != NULL) {
+	    record_db_open_command(dw);
+	    for (i=1; i<=dw->nv && !err; i++) {
+		sinfo = &dw->sinfo[i-1];
+		strcpy(dataset->varname[i], sinfo->varname);
+		series_set_label(dataset, i, sinfo->descrip);
+		lib_command_sprintf("data %s", sinfo->varname);
+		record_command_verbatim();
+	    }
 	}
 
 	data_status |= (GUI_DATA | MODIFIED_DATA);
@@ -3306,7 +3352,7 @@ static int prep_dbnomics_series (gretl_bundle *b,
 {
     gretl_array *A;
     gretl_matrix *v;
-    char *id;
+    const char *id;
     int T, err = 0;
 
     T = gretl_bundle_get_int(b, "actobs", &err);
@@ -3351,12 +3397,24 @@ static int prep_dbnomics_series (gretl_bundle *b,
 int add_dbnomics_data (windata_t *vwin)
 {
     gretl_bundle *b = vwin->data;
-    DATASET dbset = {0};
+    DATASET *dbset = NULL;
     int err;
 
-    err = prep_dbnomics_series(b, &dbset);
-    /* FIXME: not ready */
-    clear_datainfo(&dbset, CLEAR_FULL);
+    dbset = datainfo_new();
+    if (dbset == NULL) {
+	nomem();
+	return E_ALLOC;
+    } else {
+	int freeit = 1;
+	
+	err = prep_dbnomics_series(b, dbset);
+	if (!err) {
+	    add_dbdata(vwin, dbset, NULL, &freeit);
+	}
+	if (freeit) {
+	    destroy_dataset(dbset);
+	}
+    }
 
     return err;
 }
