@@ -1124,6 +1124,9 @@ if test "${build_addons}" = "yes" ; then
     addons/SVAR/Makefile
     addons/SVAR/pkg.inp
     addons/SVAR/doc/Makefile
+    addons/dbnomics/Makefile
+    addons/dbnomics/pkg.inp
+    addons/dbnomics/doc/Makefile    
   ])
 fi
 

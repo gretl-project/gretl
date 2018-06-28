@@ -3291,7 +3291,7 @@ static void maybe_prune_db_list (GtkTreeView *tview,
     free(S);
     free(icpy);
 
-#if 0 /* not ready yet */
+#if 0 /* dbnomics: not ready yet */
     gtk_list_store_append(store, &iter);
     gtk_list_store_set(store, &iter, 0, "dbnomics",
 		       1, "Various data providers",
