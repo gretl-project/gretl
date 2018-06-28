@@ -1,0 +1,247 @@
+function void dbnomics_bundle_print(const bundle b, bool print_data[0])
+    if !inbundle(b, "actobs")
+        printf "dbnomics_bundle_print: dbnomics bundle appears to contain no data\n"
+	return
+    endif
+    n = b.actobs
+    sn = b.dset_name
+    if inbundle(b, "id")
+        sn ~= sprintf(" (%s)", b.id)
+    endif
+    line = regsub(sn, ".", "-")
+    
+    printf "%s\n%s\n", line, sn
+    if inbundle(b, "provider") && inbundle(b, "database")
+        printf "from %s (%s)\n", b.provider, b.database
+    endif
+    if inbundle(b, "series_name") 
+        printf "%s\n", b.series_name
+    endif
+    printf "%s\n", line
+
+    printf "pd = %d; %d observations, [%s - %s]\n", 
+      b.frequency, n, b.periods[1], b.periods[n]
+    if print_data
+        loop i=1..n -q
+            printf "%s %6.1f\n", b.periods[i], b.vals[i]
+        endloop
+    endif
+    printf "\n"
+end function
+
+### ------------------------------------------------------------------------
+
+function scalar dbnomics_bundle_get_data(const bundle b, series *x)
+    series ret = NA
+    if !inbundle(b, "frequency")
+        printf "dbnomics_bundle_get_data: bundle does not contain a data frequency\n"
+	return 1
+    endif
+    pd = b.frequency
+    if pd != $pd 
+        funcerr "frequency does not match!"
+    endif
+    
+    tmpfile = sprintf("%s/tmp%04d.csv", $dotdir, randgen1(i, 0, 9999))
+    n = b.totobs
+    outfile @tmpfile --write
+    printf "obs\tx\n"
+    loop i=1..n -q
+        printf "%s\t%20.15f\n", b.periods[i], b.vals[i]
+    endloop
+    outfile --close
+    
+    join @tmpfile x
+    if inbundle(b, "series_name")
+        d = b.series_name
+        setinfo x --description="@d" 
+    endif
+    
+    printf "get_data: %s\n", b.series_name
+    return 0
+end function
+
+### ------------------------------------------------------------------------
+
+function bundle dbnomics_get_series (const string datacode, bool verbose[0],
+                                     string *from_json[null])
+                       
+    bundle ret = null
+    ret.error = 0
+    ret.datacode = datacode
+                       
+    string json_src = "https://api.next.nomics.world/series?series_ids="
+    URL = json_src ~ datacode ~ "&offset=0&format=json"
+    if verbose
+        printf "URL = '%s'\n", URL
+    endif
+
+    bundle req = null
+    req.header = "accept: application/json"
+    req.URL = URL
+    err = curl(&req)
+
+    # debugging
+    if verbose
+        print req
+    endif
+    
+    # provisional
+    if err
+        ret.error = err
+        printf "%s", req.errmsg
+        return ret
+    else
+        # curl went OK, but we may still not have data
+        from_json = req.output
+        ret.json = req.output
+	ret.error = bad_json(ret.json)
+        if ret.error
+	    got = 0
+            print "dbnomics_get_series: no data were found"
+	    ret.errmsg = jsonget(ret.json, "$.error_description", &got)
+	    if got
+	        printf "%s\n", ret.errmsg
+	    endif
+            return ret
+        endif
+	
+	strings ser_id = strsplit(datacode, , "/")
+        ret.provider = ser_id[1]
+        ret.database = ser_id[2]
+        ret.id = ser_id[3]
+    endif
+      
+    err = fill_series_bundle(&ret, req.output, 1)  
+    return ret
+end function
+
+### ------------------------------------------------------------------------
+
+function bundles dbnomics_get_multiple(string pcode, string dcode, int limit[0::20], scalar offset[0],
+      bundle spec[null])
+    
+    if !exists(spec)
+        bundle spec = null
+    endif
+    
+    bundle req = null
+    req.header = "accept: application/json"
+    req.URL = build_URL(pcode, dcode, limit, offset, spec)
+    # printf "%s\n", req.URL
+    err = curl(&req)
+    json = req.output
+    n = 0    
+
+    found = jsonget(json, "$.series.num_found", &n)
+    printf "no. of series = %s\n", found
+    nfound = atof(found)
+    if ok(nfound)
+        bundles ret = array(nfound)
+        loop i = 1..nfound --quiet
+            bundle tmp = null
+            err = fill_series_bundle(&tmp, json, i)
+            if !err
+                ret[i] = tmp
+            endif
+        endloop 
+    else
+        bundles ret = null
+    endif
+    
+    return ret
+end function
+
+### ------------------------------------------------------------------------
+
+function bundles dbnomics_providers(bool verbose[0])
+    magic = "providers"
+
+    bundle req
+    req.URL = "https://api.next.nomics.world/"
+    req.header = "accept: application/json"
+    err = curl(&req)
+    json = req.output
+    nprov = 0
+    str = jsonget(json, sprintf("$.%s[*].code", magic), &nprov)
+    bundles ret = array(nprov)
+    
+    k = 0
+    strings fields = defarray("name", "terms_of_use", "code", "region", "description", "website")
+    
+    loop i = 1..nprov --quiet
+        ret[i] = json2bndl(fields, json, magic, i-1)
+    endloop
+
+    if verbose
+        printf "Available providers: \n"
+        loop i = 1..nprov --quiet
+            printf "%3d: %15s", i, ret[i].code
+            if inbundle(ret[i], "name")
+                printf " (%s)", ret[i].name
+            endif
+            printf "\n"
+        endloop
+    endif
+
+    return ret
+end function
+
+### ------------------------------------------------------------------------
+
+function bundles dbnomics_datasets(string s, scalar limit[0::20], scalar offset[0], bool verbose[0])
+    bundle req
+    magic = "datasets"
+    
+    req.URL = sprintf("https://api.next.nomics.world/datasets?q=%s&limit=%d&offset=%d",
+    sanitize_url(s), limit, offset)
+    req.header = "accept: application/json"
+    err = curl(&req)
+    json = req.output
+    n = 0
+    str = jsonget(json, sprintf("$.%s[*].dataset_code", magic), &n)
+    ntot = atof(jsonget(json, "$.num_datasets_found")) 
+
+    bundles ret = array(n)
+
+    k = 0
+    strings fields = defarray("dataset_code", "num_series_found", "dataset_name", "provider_code")
+    
+    loop i = 1 .. n --quiet
+        ret[i] = json2bndl(fields, json, magic, i-1)
+    endloop
+
+    if verbose
+        printf "Datasets containing \"%s\" (%d-%d out of %d): \n\n",
+        s, offset, n, ntot
+        loop i = 1..n --quiet
+            printf "%3d: %s.%s", i, ret[i].provider_code, ret[i].dataset_code
+            printf " (%d series)\n", atof(ret[i].num_series_found)
+        endloop
+    endif
+    return ret
+end function
+
+### ------------------------------------------------------------------------
+
+function bundles dbnomics_categtree(string provider)
+    magic = "categories_tree"
+    bundle req
+    
+    req.URL = sprintf("https://api.next.nomics.world/%s", provider)
+    req.header = "accept: application/json"
+    err = curl(&req)
+    json = req.output
+    n = 0
+    str = jsonget(json, sprintf("$.%s[*].code", magic), &n)
+
+    bundles ret = array(n)
+    k = 0
+    strings fields = defarray("code", "name")
+    
+    loop i = 1..n --quiet
+        ret[i] = json2bndl(fields, json, magic, i-1)
+    endloop
+
+    return ret
+end function

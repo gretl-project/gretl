@@ -1,0 +1,70 @@
+topsrc = @top_srcdir@
+prefix = @prefix@
+datarootdir = @datarootdir@
+win32pkg = @win32pkg@
+tooldir = $(topsrc)/tools
+
+MAKE = @MAKE@
+INSTALL = @INSTALL@
+
+ifeq ($(INSTALL_DATA),)
+  INSTALL_DATA = $(INSTALL) -m 644
+endif
+
+ifeq ($(win32pkg),yes)
+  GFNDIR = $(prefix)/functions
+else
+  GFNDIR = $(datarootdir)/gretl/functions
+endif
+
+GRETLCLI = ../../cli/gretlcli
+
+PKG = dbnomics
+PKGSRC = $(topsrc)/addons/$(PKG)
+
+vpath %.inp $(PKGSRC)
+vpath %.spec $(PKGSRC)
+
+INP = dbnomics_public.inp \
+      dbnomics_private.inp
+
+EXAMP = dbnomics_sample.inp
+
+all: $(PKG).gfn pdfdoc
+
+$(PKG).gfn: links.stamp $(INP) $(PKG).spec $(EXAMP)
+	$(GRETLCLI) -t pkg.inp
+
+links.stamp: Makefile
+	@if [ ! -f $(PKG).spec ] ; then ln -sf $(PKGSRC)/$(PKG).spec . ; fi
+	@if [ ! -f $(EXAMP) ] ; then ln -sf $(PKGSRC)/$(EXAMP) . ; fi
+	@if [ ! -d examples ] ; then ln -s $(PKGSRC)/examples . ; fi
+	@touch $@
+
+$(PKG).zip: $(PKG).gfn pdfdoc
+	echo makepkg $(PKG).zip | $(GRETLCLI) -t -
+
+.PHONY : pdfdoc check install installdirs clean
+
+pdfdoc: $(PKG).gfn
+	$(MAKE) -C doc
+
+check: $(PKG).gfn
+	$(tooldir)/test_addon $(GRETLCLI)
+
+install: $(PKG).gfn doc/$(PKG).pdf installdirs
+	$(INSTALL_DATA) $(PKG).gfn $(DESTDIR)$(GFNDIR)/$(PKG)
+	$(INSTALL_DATA) doc/$(PKG).pdf $(DESTDIR)$(GFNDIR)/$(PKG)
+	for f in examples/* ; do \
+	$(INSTALL_DATA) $$f $(DESTDIR)$(GFNDIR)/$(PKG)/examples ; done
+
+installdirs:
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(GFNDIR)/$(PKG)/examples
+
+clean: 
+	@rm -f $(PKG).gfn $(PKG)-i18n.c $(PKG).xml $(PKG).zip links.stamp
+	@rm -f *.gdt test.out
+	@$(MAKE) -C doc clean
+
+

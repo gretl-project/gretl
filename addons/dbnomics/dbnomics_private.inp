@@ -1,0 +1,181 @@
+function bundle json2bndl(strings fields, string jsonobj, string root, scalar ndx)
+    bundle b = null
+    k = 0
+    loop j = 1..nelem(fields) --quiet
+        f = fields[j]
+        src = sprintf("$.%s[%d].%s", root, ndx, f)
+        str = jsonget(jsonobj, src, &k)
+        if k 
+            b[f] = str
+        endif
+    endloop
+    return b
+end function
+
+### ------------------------------------------------------------------------
+
+function string sanitize_url(string s)
+    ret = strsub(s, " ", "%20")
+    ret = strsub(ret, sprintf("\""), "%22")
+    ret = strsub(ret, ",", "%2C")
+    ret = strsub(ret, ":", "%3A")
+    ret = strsub(ret, "{", "%7B")
+    ret = strsub(ret, "}", "%7D")
+    ret = strsub(ret, "[", "%5B")
+    ret = strsub(ret, "]", "%5D")
+    return ret
+end function
+
+### ------------------------------------------------------------------------
+
+function scalar get_frequency(string json_obj)
+    got_it = 0
+    strings alternatives = defarray(".Frequency", ".FREQ", "['@frequency']")
+    i = 1
+    got = 0    
+    loop while i<=nelem(alternatives) && !got_it --quiet
+        s = sprintf("$.series.data[0]%s", alternatives[i++])
+        frq = jsonget(json_obj, s, &got)
+        if got
+            got_it = 1
+            frq = tolower(frq[1])
+        endif
+    endloop
+    
+    scalar ret = NA
+
+    if got_it
+        if frq == "a"
+            scalar ret = 1
+        elif frq == "q"
+            scalar ret = 4
+        elif frq == "m"
+            scalar ret = 12
+        else # unrecognised
+            printf "frq = \"%s\" unrecognized\n", frq
+            scalar ret = -1
+        endif
+    endif
+    
+    return ret
+end function
+
+### ------------------------------------------------------------------------
+
+function scalar fill_series_bundle(bundle *b, string output, scalar index)
+    got = 0
+    has_index = (index == 0) ? "" : sprintf("[%d]", index-1) # zero-based
+    
+    b.frequency = get_frequency(output)
+    qry = sprintf("$.series.data%s.dataset_name", has_index)
+    b.dset_name = jsonget(output, qry)
+#    qry = sprintf("$.series.data%s..Unit", has_index)
+    qry = sprintf("$.series.data%s.Unit", has_index)
+    tmp = jsonget(output, qry, &got)
+    if got
+        b.unit = tmp
+    endif
+    qry = sprintf("$.series.data%s.series_name", has_index)
+    tmp = jsonget(output, qry, &got)
+    if got
+        b.series_name = tmp
+    endif
+
+    string line
+
+    qry = sprintf("$.series.data%s..period", has_index)
+    s = jsonget(output, qry)
+    
+    strings periods
+    loop while getline(s, line) -q
+        periods += line
+    endloop
+    n = nelem(periods)
+
+    qry = sprintf("$.series.data%s..value", has_index)
+    s = jsonget(output, qry)
+    strings datavals
+    loop while getline(s, line) -q
+        datavals += line
+    endloop
+
+    # skip any leading blank data rows
+    istart = 1
+    loop i=1..n -q
+        if datavals[i] == "" || datavals[i] == "NA"
+            istart++
+        else
+            break
+        endif
+    endloop
+  
+    b.totobs = n
+    b.start = istart
+    actobs = n - istart + 1
+    b.actobs = actobs
+    b.vals = zeros(actobs,1)
+    strings b.periods = array(actobs)
+    scalar j = 1
+    loop i=istart..n -q
+        b.vals[j] = atof(datavals[i])
+        b.periods[j] = periods[i]
+        j++
+    endloop
+
+    return 0
+end function
+
+### ------------------------------------------------------------------------
+
+function string build_URL_mid(bundle spec)
+    string ret = ""
+    if nelem(spec) == 0
+        return ret
+    endif
+    
+    ret = "dimensions={"
+    if inbundle(spec, "geo")
+        strings gspec = spec.geo
+        ret ~= sprintf("\"geo\":[")
+        loop i = 1 .. nelem(gspec) --quiet
+            ret ~= sprintf("\"%s\"", gspec[i])
+            if i<nelem(gspec)
+                ret ~= ","
+            else
+                ret ~= "]}"
+            endif
+        endloop
+    elif inbundle(spec, "moo")
+        #whatever
+    endif
+    # print ret
+    
+    return ret ~ "&"
+end function
+
+### ------------------------------------------------------------------------
+
+function string build_URL(string pcode, string dcode, int limit[0::20], scalar offset[0],
+      bundle spec)
+    string site = "api.next.nomics.world"
+    
+    string head = sprintf("https://%s/series?provider_code=%s&dataset_code=%s&", 
+      site, pcode, dcode)
+    string mid = build_URL_mid(spec)
+    string tail = sprintf("limit=%d&offset=%d&format=json", limit, offset) 
+    
+    ret = head ~ sanitize_url(mid) ~ tail
+    return ret
+end function
+
+### ------------------------------------------------------------------------
+
+function scalar bad_json (const string s)
+    if instring(s, "404 Error") || instring(s, "404 Not Found")
+        return 404
+    elif instring(s, "400 Bad Request")
+        return 400
+    endif
+    return 0
+end function
+
