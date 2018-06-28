@@ -1,0 +1,15 @@
+set verbose off
+include dbnomics_funcs.inp
+
+provlist = dbnomics_providers(1)
+b = provlist[10]
+print b
+
+dsetlist = dbnomics_datasets("interest rates", 30, 10, 1)
+print dsetlist
+b = dsetlist[10]
+print b
+
+ctree = dbnomics_categtree("BLS")
+print ctree
+

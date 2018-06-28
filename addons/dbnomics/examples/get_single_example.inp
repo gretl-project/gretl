@@ -1,0 +1,11 @@
+set verbose off
+include dbnomics.gfn
+
+nulldata 360
+setobs 12 1989:1
+
+bundle b = dbnomics_get_series("ECB/IRS/M.IT.L.L40.CI.0000.EUR.N.Z")
+dbnomics_bundle_print(b)
+series ita_rate = NA
+dbnomics_bundle_get_data(b, &ita_rate)
+print ita_rate -o

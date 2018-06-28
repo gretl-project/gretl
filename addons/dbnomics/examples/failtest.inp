@@ -1,0 +1,14 @@
+set verbose off
+include dbnomics.gfn
+# include dbnomics_funcs.inp
+
+nulldata 360
+setobs 12 1989:1
+
+bundle b = dbnomics_get_series("ECB/Foo/Bar")
+dbnomics_bundle_print(b)
+series ita_rate = NA
+err = dbnomics_bundle_get_data(b, &ita_rate)
+if !err
+    print ita_rate -o
+endif

@@ -1,0 +1,11 @@
+set verbose off
+include dbnomics_funcs.inp
+
+bundle spec = null
+spec.geo = defarray("dnk", "ea12", "ita")
+bs = dbnomics_get_multiple("AMECO", "ZUTN", 20, 0, spec)
+
+loop i = 1..nelem(bs)
+    dbnomics_bundle_print(bs[i], 1)
+endloop
+

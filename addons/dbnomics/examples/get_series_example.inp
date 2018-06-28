@@ -1,0 +1,32 @@
+set verbose off
+include dbnomics_funcs.inp
+
+###
+### ------ example -----------------------------------------
+###
+
+nulldata 360
+setobs 12 1989:1
+
+strings ToDnld = defarray("AMECO/ZUTN/EA19.1.0.0.0.ZUTN", 
+  "ECB/IRS/M.IT.L.L40.CI.0000.EUR.N.Z", 
+  "FED/G17_CAPUTL/129.B50001.SA",
+  "WB/WDI/SL.UEM.TOTL.ZS-AR")
+
+scalar N = nelem(ToDnld)
+
+bundles bs = array(N)
+loop k = 1 .. N --quiet
+    bs[k] = dbnomics_get_series(ToDnld[k])
+    dbnomics_bundle_print(bs[k])
+endloop
+
+series ita_rate = NA
+dbnomics_bundle_get_data(bs[2], &ita_rate)
+series caput = NA
+dbnomics_bundle_get_data(bs[3], &caput)
+
+summary
+
+#moo = get_data(bs[1])      # annual!!!
+    
