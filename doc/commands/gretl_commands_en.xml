@@ -2705,6 +2705,14 @@
 	a particular series within the dataset, in this case the
 	unemployment rate for the European Union as a whole.
       </para>
+      <para>
+	If you enter a series identifier and click <quote>OK</quote>
+	this will bring up a window showing information on the series.
+	You may then use the toolbar buttons in that window to inspect
+	the values of the series, plot the series, or add it to the
+	current dataset (assuming the series is conformable to the
+	dataset).
+      </para>
     </description>
   </command>  
 
