@@ -1,5 +1,5 @@
 set verbose off
-include dbnomics_funcs.inp
+include dbnomics.gfn
 
 bundle spec = null
 spec.geo = defarray("dnk", "ea12", "ita")

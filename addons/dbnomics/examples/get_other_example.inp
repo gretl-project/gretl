@@ -1,5 +1,5 @@
 set verbose off
-include dbnomics_funcs.inp
+include dbnomics.gfn
 
 provlist = dbnomics_providers(1)
 b = provlist[10]

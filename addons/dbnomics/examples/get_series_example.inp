@@ -1,9 +1,5 @@
 set verbose off
-include dbnomics_funcs.inp
-
-###
-### ------ example -----------------------------------------
-###
+include dbnomics.gfn
 
 nulldata 360
 setobs 12 1989:1
