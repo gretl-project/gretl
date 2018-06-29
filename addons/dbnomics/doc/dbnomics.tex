@@ -5,7 +5,7 @@
 \usepackage[pdftex]{graphicx}
 \usepackage{gretl}
 \usepackage[letterpaper,body={6.3in,9.15in},top=.8in,left=1.1in]{geometry}
-%\usepackage[pdftex,hyperfootnotes=false]{hyperref}
+\usepackage[pdftex,hyperfootnotes=false]{hyperref}
 
 %\usepackage[a4paper,body={6.1in,9.7in},top=.8in,left=1.1in]{geometry}
 
@@ -22,8 +22,60 @@
 
 \section{Introduction}
 
-This package offers a preliminary version of an interace to \textsf{dbnomics}
-for gretl.
+This package offers a preliminary version of an interace to
+\textsf{dbnomics} for gretl. For anyone who hasn't yet caught on,
+\textsf{dbnomics} makes available a large number of macroeconomic data
+series from many ``providers'' in Europe, the USA and elsewhere, an
+admirable service.
+
+At this stage the package does not provide a means of browsing the
+offerings of \textsf{dbnomics} within gretl (other than, as proof of
+concept, getting a list of data providers). For the core business of
+accessing individual time-series, users will first of all have to
+browse the (new version of the) \textsf{dbnomics} site
+(\url{https://next.nomics.world/}) themselves to discover the series
+IDs for data of interest.
+
+\section{Command-line usage}
+
+The two functions that are likely to be of greatest interest in the
+first instance are
+\begin{code}
+dbnomics_get_series(const string datacode, bool verbose[0])
+\end{code}
+which returns a gretl bundle, and
+\begin{code}
+dbnomics_bundle_get_data(const bundle b, series *x)
+\end{code}
+which read a bundle (sucessfully) returned by
+\verb|dbnomics_get_series| and writes the data values into the series
+given as the second argument in ``pointer'' form.
+
+The \texttt{datacode} argument to the first of these functions should
+be a slash-separated triplet, \texttt{provider/dataset/series}, for
+example
+\begin{code}
+ECB/IRS/M.IT.L.L40.CI.0000.EUR.N.Z
+\end{code}
+where the provider is \texttt{ECB} (the European Central Bank), the
+dataset is \texttt{IRS} (interest rates) and the series is
+\texttt{M.IT.L.L40.CI.0000.EUR.N.Z} (yes, it's a bit of a mouthful,
+but it identifies the Italian 10-year interest rate). After browsing
+the \textsf{dbnomics} site for a while these fields ahould become more
+familiar!
+
+If you wish to add the above-mentioned series to a suitable gretl
+dataset (or use it to start a dataset when no data are currently
+loaded in gretl), the basic routine would be something like
+\begin{code}
+bundle b = dbnomics_get_series("ECB/IRS/M.IT.L.L40.CI.0000.EUR.N.Z")
+series IT_10yr = NA
+dbnomics_bundle_get_data(b, &IT_10yr)
+\end{code}
+
+
+\section{GUI usage}
+
 
 
 
