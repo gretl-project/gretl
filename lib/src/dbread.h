@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #ifndef DBREAD_H
@@ -29,7 +29,7 @@ typedef enum {
 } DBError;
 
 /**
- * dbnumber: 
+ * dbnumber:
  *
  * The type used for representing primary data in gretl databases.
  */
@@ -82,13 +82,13 @@ typedef struct {
 float retrieve_float (netfloat nf);
 #endif
 
-int get_native_db_data (const char *dbbase, SERIESINFO *sinfo, 
+int get_native_db_data (const char *dbbase, SERIESINFO *sinfo,
 			double **Z);
 
-int get_remote_db_data (const char *dbbase, SERIESINFO *sinfo, 
+int get_remote_db_data (const char *dbbase, SERIESINFO *sinfo,
 			double **Z);
 
-int get_pcgive_db_data (const char *dbbase, SERIESINFO *sinfo, 
+int get_pcgive_db_data (const char *dbbase, SERIESINFO *sinfo,
 			double **Z);
 
 int get_rats_db_data (const char *fname, SERIESINFO *sinfo, double **Z);
@@ -101,16 +101,6 @@ dbwrapper *dbwrapper_new (int n, const char *fname, int dbtype);
 
 void dbwrapper_destroy (dbwrapper *dw);
 
-double *compact_db_series (const double *src,
-			   int *ppd, int *pnobs,
-			   char *stobs, int target_pd,
-			   CompactMethod method);
-
-double *expand_db_series (const double *src,
-			  int *ppd, int *pnobs,
-			  char *stobs, int target_pd,
-			  int interpol);
-
 int set_db_name (const char *fname, int filetype, PRN *prn);
 
 const char *get_db_name (void);
@@ -119,16 +109,12 @@ int set_odbc_dsn (const char *line, PRN *prn);
 
 int db_set_sample (const char *star, const char *stop, DATASET *dset);
 
-int db_get_series (const char *line, DATASET *datainfo, 
+int db_get_series (const char *line, DATASET *datainfo,
 		   gretlopt opt, PRN *prn);
 
 int db_delete_series_by_name (const char *line, PRN *prn);
 
 int db_delete_series_by_number (const int *list, const char *fname);
-
-void get_db_padding (const char *stobs, int nobs,
-		     const DATASET *dset,
-		     int *pad1, int *pad2);
 
 int db_range_check (int db_pd,
 		    const char *db_stobs,
@@ -138,13 +124,19 @@ int db_range_check (int db_pd,
 
 int check_db_import_conversion (int pd, DATASET *dset);
 
-int lib_add_db_data (double **dbZ, SERIESINFO *sinfo, 
+int transcribe_db_data (DATASET *dset, int targv,
+			const double *src, int pd,
+			int nobs, char *stobs,
+			CompactMethod cmethod,
+			int interpolate);
+
+int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
 		     DATASET *dset, DATASET *dbset,
 		     CompactMethod cmethod, int interpolate,
 		     int dbv, PRN *prn);
 
 int compact_data_set (DATASET *dset, int newpd,
-		      CompactMethod default_method, 
+		      CompactMethod default_method,
 		      int monstart, int repday);
 
 int expand_data_set (DATASET *dset, int newpd,

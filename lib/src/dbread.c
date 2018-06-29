@@ -1568,14 +1568,14 @@ static double *get_compacted_xt (const double *src, int n,
      monthly   -> annual
 */
 
-double *compact_db_series (const double *src,
-			   int *ppd, int *pnobs,
-			   char *stobs,
-			   int target_pd,
-			   CompactMethod method)
+static double *compact_db_series (const double *src,
+				  int pd, int *pnobs,
+				  char *stobs,
+				  int target_pd,
+				  CompactMethod method)
 {
     int p0, y0, endskip, goodobs;
-    int skip = 0, compfac = *ppd / target_pd;
+    int skip = 0, compfac = pd / target_pd;
     double *x;
 
     if (target_pd == 1) {
@@ -1619,8 +1619,6 @@ double *compact_db_series (const double *src,
 #endif
 
     x = get_compacted_xt(src, goodobs, method, compfac, skip);
-
-    *ppd = target_pd;
 
     return x;
 }
@@ -1670,14 +1668,13 @@ static double *interpolate_db_series (const double *src,
    Interpolation is supported for cases 1 and 3 only.
 */
 
-double *expand_db_series (const double *src,
-			  int *ppd, int *pnobs,
-			  char *stobs, int target_pd,
-			  int interpol)
+static double *expand_db_series (const double *src,
+				 int pd, int *pnobs,
+				 char *stobs, int target_pd,
+				 int interpol)
 {
     char new_stobs[OBSLEN] = {0};
     int oldn = *pnobs;
-    int pd = *ppd;
     int mult, newn;
     double *x = NULL;
     int j, t;
@@ -1734,7 +1731,6 @@ double *expand_db_series (const double *src,
 
     /* revise incoming values */
     strcpy(stobs, new_stobs);
-    *ppd = target_pd;
     *pnobs = newn;
 
 #if EXPAND_DEBUG
@@ -2062,6 +2058,9 @@ static CompactMethod compact_method_from_option (int *err)
 
     return method;
 }
+
+/* 2-D array of doubles, allocated space in second
+   position (as in a DATASET) */
 
 static double **new_dbZ (int n)
 {
@@ -2515,6 +2514,8 @@ static int update_sinfo_masked (SERIESINFO *sinfo, int nobs)
     return err;
 }
 
+/* called from loop in db_get_series() */
+
 static int get_one_db_series (const char *series,
 			      DATASET *dset,
 			      CompactMethod cmethod,
@@ -2538,7 +2539,7 @@ static int get_one_db_series (const char *series,
     }
 
 #if DB_DEBUG
-    fprintf(stderr, "db_get_series: dset->v = %d, v = %d, series = '%s'\n",
+    fprintf(stderr, "get_one_db_series: dset->v=%d, v=%d, series='%s'\n",
 	    dset->v, v, series);
     fprintf(stderr, "this_var_method = %d\n", this_method);
 #endif
@@ -2553,7 +2554,7 @@ static int get_one_db_series (const char *series,
     }
 
     if (err) {
-	fprintf(stderr, "db_get_series: failed to get series info\n");
+	fprintf(stderr, "get_one_db_series: failed to get series info\n");
 	return 1;
     }
 
@@ -2563,7 +2564,7 @@ static int get_one_db_series (const char *series,
 	nobs = sinfo.nobs;
     }
 
-    /* temporary dataset */
+    /* temporary data array */
     dbZ = new_dbZ(nobs);
     if (dbZ == NULL) {
 	gretl_errmsg_set(_("Out of memory!"));
@@ -2571,7 +2572,7 @@ static int get_one_db_series (const char *series,
     }
 
 #if DB_DEBUG
-    fprintf(stderr, "db_get_series: offset=%d, nobs=%d\n",
+    fprintf(stderr, "get_one_db_series: offset=%d, nobs=%d\n",
 	    sinfo.offset, nobs);
 #endif
 
@@ -2591,7 +2592,7 @@ static int get_one_db_series (const char *series,
     }
 
 #if DB_DEBUG
-    fprintf(stderr, "db_get_series: get_db_data gave %d\n", err);
+    fprintf(stderr, "get_one_db_series: get_db_data gave %d\n", err);
 #endif
 
     if (err == DB_MISSING_DATA) {
@@ -2618,8 +2619,8 @@ static int is_glob (const char *s)
     return strchr(s, '*') || strchr(s, '?');
 }
 
-/* main function for getting a series out of a database, using the
-   command-line client or in script or console mode
+/* main function for getting one or more series out of a
+   database (including ODBC) via command-line/script
 */
 
 int db_get_series (const char *line, DATASET *dset,
@@ -2669,6 +2670,7 @@ int db_get_series (const char *line, DATASET *dset,
 	/* new-style: compaction method supplied as option */
 	cmethod = compact_method_from_option(&err);
     } else {
+	/* legacy */
 	line = get_compact_method_and_advance(line, &cmethod);
     }
 
@@ -2699,7 +2701,7 @@ int db_get_series (const char *line, DATASET *dset,
 	interpolate = 1;
     }
 
-    /* now process the db series individually */
+    /* now process the imports individually */
 
     for (i=0; i<nnames && !err; i++) {
 	if (is_glob(vnames[i])) {
@@ -2936,22 +2938,6 @@ int db_delete_series_by_number (const int *list, const char *fname)
     return db_delete_series(NULL, list, fname, NULL);
 }
 
-void get_db_padding (const char *stobs, int nobs,
-		     const DATASET *dset,
-		     int *pad1, int *pad2)
-{
-    *pad1 = dateton(stobs, dset);
-#if DB_DEBUG
-    fprintf(stderr, "pad1 = dateton(%s) = %d\n", stobs, *pad1);
-#endif
-
-    *pad2 = dset->n - nobs - *pad1;
-#if DB_DEBUG
-    fprintf(stderr, "pad2 = dset->n - sinfo->nobs - pad1 = %d - %d - %d = %d\n",
-	    dset->n, nobs, *pad1, *pad2);
-#endif
-}
-
 static void obs_to_ymd (const char *obs, int pd, int *y, int *m, int *d)
 {
     *y = atoi(obs);
@@ -3054,26 +3040,9 @@ static int check_db_import_full (int pd,
     return err;
 }
 
-static void
-init_datainfo_from_sinfo (DATASET *dset, SERIESINFO *sinfo)
-{
-    dset->pd = sinfo->pd;
-
-    strcpy(dset->stobs, sinfo->stobs);
-    strcpy(dset->endobs, sinfo->endobs);
-    colonize_obs(dset->stobs);
-    colonize_obs(dset->endobs);
-
-    dset->sd0 = get_date_x(dset->pd, dset->stobs);
-    dset->n = sinfo->nobs;
-    dset->v = 2;
-
-    dset->t1 = 0;
-    dset->t2 = dset->n - 1;
-}
-
 /* We'll do "spread" compaction for monthly to quarterly or annual,
-   quarterly to annual, or daily to monthly or quarterly.
+   quarterly to annual, or daily to monthly or quarterly. Other
+   cases are rejected.
 */
 
 static int compact_spread_pd_check (int high, int low)
@@ -3092,6 +3061,24 @@ static int compact_spread_pd_check (int high, int low)
     }
 
     return 0;
+}
+
+static void
+init_datainfo_from_sinfo (DATASET *dset, SERIESINFO *sinfo)
+{
+    dset->pd = sinfo->pd;
+
+    strcpy(dset->stobs, sinfo->stobs);
+    strcpy(dset->endobs, sinfo->endobs);
+    colonize_obs(dset->stobs);
+    colonize_obs(dset->endobs);
+
+    dset->sd0 = get_date_x(dset->pd, dset->stobs);
+    dset->n = sinfo->nobs;
+    dset->v = 2;
+
+    dset->t1 = 0;
+    dset->t2 = dset->n - 1;
 }
 
 /* construct a little dataset as a temporary wrapper for an
@@ -3159,20 +3146,111 @@ static DATASET *make_import_tmpset (const DATASET *dset,
     return tmpset;
 }
 
+static int
+real_transcribe_db_data (const char *stobs, int nobs,
+			 const DATASET *dset, int dbv,
+			 const double *xvec)
+{
+    int t, pad1, pad2;
+    int start, stop;
+    double x;
+
+    pad1 = dateton(stobs, dset);
+    pad2 = dset->n - nobs - pad1;
+
+    if (pad1 > 0) {
+	fprintf(stderr, "Padding at start, %d obs\n", pad1);
+	for (t=0; t<pad1; t++) {
+	    dset->Z[dbv][t] = NADBL;
+	}
+	start = pad1;
+    } else {
+	start = 0;
+    }
+    if (pad2 > 0) {
+	int n = dset->n;
+
+	fprintf(stderr, "Padding at end, %d obs\n", pad2);
+	for (t=n-1; t>=n-1-pad2; t--) {
+	    dset->Z[dbv][t] = NADBL;
+	}
+	stop = n - pad2;
+    } else {
+	stop = dset->n;
+    }
+
+    fprintf(stderr, "Filling in values from %d to %d\n", start, stop - 1);
+    for (t=start; t<stop; t++) {
+	x = xvec[t - pad1];
+	dset->Z[dbv][t] = (x == DBNA)? NADBL : x;
+    }
+
+    return 0;
+}
+
+int transcribe_db_data (DATASET *dset, int targv,
+			const double *src, int pd,
+			int nobs, char *stobs,
+			CompactMethod cmethod,
+			int interpolate)
+{
+    double *xvec = (double *) src;
+    int free_xvec = 0;
+
+    if (pd != dset->pd) {
+	if (pd < dset->pd) {
+	    /* the series needs to be expanded */
+	    xvec = expand_db_series(src, pd, &nobs, stobs, dset->pd,
+				    interpolate);
+	} else {
+	    /* the series needs to be compacted */
+	    xvec = compact_db_series(src, pd, &nobs, stobs, dset->pd,
+				     cmethod);
+	}
+	if (xvec == NULL) {
+	    return E_ALLOC;
+	}
+	free_xvec = 1;
+    }
+
+    real_transcribe_db_data(stobs, nobs, dset, targv, xvec);
+
+    if (free_xvec) {
+	free(xvec);
+    }
+
+    return 0;
+}
+
+/* Processes a single db series, though in the case of
+   COMPACT_SPREAD multiple series are added to the target
+   dataset, @dset.
+
+   There are two calling modes: (1) @dbZ and @sinfo are
+   given and @dbset is NULL, or @dbset is given and both
+   @dbZ and @sinfo are NULL. These cannot be mixed! This
+   should probably be cleaned up at some point. As of
+   June 2018 the second mode is used only with dbnomics
+   data, and only when COMPACT_SPREAD is called for.
+*/
+
 int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
 		     DATASET *dset, DATASET *dbset,
 		     CompactMethod cmethod, int interpolate,
 		     int dbv, PRN *prn)
 {
-    double **Z, *xvec = NULL;
-    int pad1 = 0, pad2 = 0;
-    int pd, t, nobs, start, stop;
-    int *ppd, *pnobs;
-    int free_xvec = 0;
+    double **Z;
+    int pd, nobs;
     int new = (dbv == dset->v);
+    char *vname, *descrip;
     char *stobs, *endobs;
-    char *vname;
     int err = 0;
+
+    if ((sinfo != NULL && dbZ == NULL) ||
+	(sinfo != NULL && dbset != NULL)) {
+	fprintf(stderr, "lib_add_db_data: broken call!\n");
+	return E_DATA;
+    }
 
     if (cmethod == COMPACT_SPREAD) {
 	/* special case: adds multiple series */
@@ -3198,24 +3276,41 @@ int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	return err;
     }
 
-    /* connect things up depending on input */
-    pd = dbset != NULL ? dbset->pd : sinfo->pd;
-    nobs = dbset != NULL ? dbset->n : sinfo->nobs;
-    stobs = dbset != NULL ? dbset->stobs : sinfo->stobs;
-    endobs = dbset != NULL ? dbset->endobs : sinfo->endobs;
-    vname = dbset != NULL ? dbset->varname[1] : sinfo->varname;
-    Z = dbset != NULL ? dbset->Z : dbZ;
-    ppd = &pd;
-    pnobs = &nobs;
-    
+    if (dbset != NULL) {
+	pd = dbset->pd;
+	nobs = dbset->n;
+	stobs = dbset->stobs;
+	endobs = dbset->endobs;
+	vname = dbset->varname[1];
+	descrip = (char *) series_get_label(dbset, 1);
+	Z = dbset->Z;
+    } else {
+	pd = sinfo->pd;
+	nobs = sinfo->nobs;
+	stobs = sinfo->stobs;
+	endobs = sinfo->endobs;
+	vname = sinfo->varname;
+	descrip = sinfo->descrip;
+	Z = dbZ;
+    }
+
+    if (cmethod == COMPACT_NONE) {
+	/* impose default if need be */
+	cmethod = COMPACT_AVG;
+    }
+
     if (dset->n == 0) {
-	/* if the length of the dataset is not defined yet,
-	   initialize it using info from database
+	/* if the existing dataset is empty, initialize it
+	   using info from the database series
 	*/
-	init_datainfo_from_sinfo(dset, sinfo);
-	dset->v = 0; /* trigger for creating data array below */
-	if (dset->pd != 1 || strcmp(dset->stobs, "1")) {
-	    dset->structure = TIME_SERIES;
+	if (sinfo != NULL) {
+	    init_datainfo_from_sinfo(dset, sinfo);
+	    dset->v = 0; /* trigger for creating data array below */
+	    if (dset->pd != 1 || strcmp(dset->stobs, "1")) {
+		dset->structure = TIME_SERIES;
+	    }
+	} else {
+	    *dset = *dbset; /* FIXME */
 	}
     } else {
 	err = check_db_import_full(pd, stobs, endobs, vname, dset);
@@ -3225,7 +3320,7 @@ int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
     }
 
     if (dset->v == 0) {
-	/* the data matrix is still empty */
+	/* the data array is still empty */
 	dset->v = 2;
 	dbv = 1;
 	if (start_new_Z(dset, 0)) {
@@ -3241,80 +3336,17 @@ int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	    dset->n, dset->v, dbv);
 #endif
 
-    if (pd < dset->pd) {
-	/* the series needs to be expanded */
-	xvec = expand_db_series(Z[1], ppd, pnobs, stobs, dset->pd,
-				interpolate);
-    } else if (pd > dset->pd) {
-	/* the series needs to be compacted */
-	if (dset->pd != 1 && dset->pd != 4 && pd != 12) {
-	    gretl_errmsg_set(_("Sorry, can't handle this conversion yet!"));
-	    if (new) {
-		dataset_drop_last_variables(dset, 1);
-	    }
-	    return E_DATA;
-	}
-	if (cmethod == COMPACT_NONE) {
-	    cmethod = COMPACT_AVG;
-	    pprintf(prn, _("%s: using default compaction method: averaging"),
-		    sinfo->varname);
-	    pputc(prn, '\n');
-	}
-	xvec = compact_db_series(Z[1], ppd, pnobs, stobs, dset->pd,
-				 cmethod);
-	if (xvec == NULL) {
-	    if (new) {
-		dataset_drop_last_variables(dset, 1);
-	    }
-	    return E_ALLOC;
-	} else {
-	    free_xvec = 1;
-	}
-    } else {
-	/* series does not need compacting */
-	xvec = Z[1];
-    }
+    err = transcribe_db_data(dset, dbv, Z[1], pd, nobs,
+			     stobs, interpolate, cmethod);
 
-    /* common stuff for adding a var */
-    strcpy(dset->varname[dbv], vname);
-    series_set_label(dset, dbv, sinfo->descrip);
-    series_set_compact_method(dset, dbv, cmethod);
-    get_db_padding(stobs, nobs, dset, &pad1, &pad2);
-
-    if (pad1 > 0) {
-#if DB_DEBUG
-	fprintf(stderr, "Padding at start, %d obs\n", pad1);
-#endif
-	for (t=0; t<pad1; t++) {
-	    dset->Z[dbv][t] = NADBL;
-	}
-	start = pad1;
-    } else {
-	start = 0;
-    }
-
-    if (pad2 > 0) {
-#if DB_DEBUG
-	fprintf(stderr, "Padding at end, %d obs\n", pad2);
-#endif
-	for (t=dset->n - 1; t>=dset->n - 1 - pad2; t--) {
-	    dset->Z[dbv][t] = NADBL;
-	}
-	stop = dset->n - pad2;
-    } else {
-	stop = dset->n;
-    }
-
-    /* fill in actual data values */
-#if DB_DEBUG
-    fprintf(stderr, "Filling in values from %d to %d\n", start, stop - 1);
-#endif
-    for (t=start; t<stop; t++) {
-	dset->Z[dbv][t] = xvec[t-pad1];
-    }
-
-    if (free_xvec) {
-	free(xvec);
+    if (!err) {
+	/* common stuff for adding a var */
+	strcpy(dset->varname[dbv], vname);
+	series_set_label(dset, dbv, descrip);
+	series_set_compact_method(dset, dbv, cmethod);
+    } else if (new) {
+	/* we added a series that has not been filled */
+	dataset_drop_last_variables(dset, 1);
     }
 
     return err;
