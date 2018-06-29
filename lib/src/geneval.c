@@ -5191,7 +5191,7 @@ static NODE *cdummify_func (NODE *n, parser *p)
     return ret;
 }
 
-static NODE *get_series_info (NODE *n, parser *p)
+static NODE *get_info_on_series (NODE *n, parser *p)
 {
     NODE *ret = aux_bundle_node(p);
 
@@ -12766,7 +12766,7 @@ static NODE *gen_series_node (NODE *l, NODE *r, parser *p)
 		}
 	    }
 	    if (!err) {
-		vnum =  p->dset->v - 1;
+		vnum = p->dset->v - 1;
 		strcpy(p->dset->varname[vnum], vname);
 	    }
 	}
@@ -14408,7 +14408,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_GETINFO:
 	/* named series (or ID) argument wanted */
 	if (useries_node(l) || l->t == NUM) {
-	    ret = get_series_info(l, p);
+	    ret = get_info_on_series(l, p);
 	} else {
 	    p->err = E_TYPES;
 	}
