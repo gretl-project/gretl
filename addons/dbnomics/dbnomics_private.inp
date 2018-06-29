@@ -111,13 +111,13 @@ function scalar fill_series_bundle(bundle *b, string output, scalar index)
   
     b.totobs = n
     b.start = istart
-    actobs = n - istart + 1
-    b.actobs = actobs
-    b.vals = zeros(actobs,1)
-    strings b.periods = array(actobs)
+    nobs = n - istart + 1
+    b.nobs = nobs
+    b.values = zeros(nobs,1)
+    strings b.periods = array(nobs)
     scalar j = 1
     loop i=istart..n -q
-        b.vals[j] = atof(datavals[i])
+        b.values[j] = atof(datavals[i])
         b.periods[j] = periods[i]
         j++
     endloop

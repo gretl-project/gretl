@@ -1,9 +1,9 @@
 function void dbnomics_bundle_print(const bundle b, bool print_data[0])
-    if !inbundle(b, "actobs")
+    if !inbundle(b, "nobs")
         printf "dbnomics_bundle_print: dbnomics bundle appears to contain no data\n"
 	return
     endif
-    n = b.actobs
+    n = b.nobs
     sn = b.dset_name
     if inbundle(b, "id")
         sn ~= sprintf(" (%s)", b.id)
@@ -23,7 +23,7 @@ function void dbnomics_bundle_print(const bundle b, bool print_data[0])
       b.frequency, n, b.periods[1], b.periods[n]
     if print_data
         loop i=1..n -q
-            printf "%s %6.1f\n", b.periods[i], b.vals[i]
+            printf "%s %6.1f\n", b.periods[i], b.values[i]
         endloop
     endif
     printf "\n"
@@ -47,7 +47,7 @@ function scalar dbnomics_bundle_get_data(const bundle b, series *x)
     outfile @tmpfile --write
     printf "obs\tx\n"
     loop i=1..n -q
-        printf "%s\t%20.15f\n", b.periods[i], b.vals[i]
+        printf "%s\t%20.15f\n", b.periods[i], b.values[i]
     endloop
     outfile --close
     
