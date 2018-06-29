@@ -2683,6 +2683,31 @@
     </description>
   </command>
 
+  <command name="dbnomics" section="Utilities" label="dbnomics access" context="gui">
+    <description>
+      <para>
+	This dialog allows you to inspect and download data series
+	from the dbnomics server. At present, you will have to visit
+	<url>https://next.nomics.world/</url> to obtain the
+	identifiers or codes for series of interest. These take the
+	form of triplets, three terms separated by slashes. For
+	example
+      </para>
+      <code>
+	AMECO/ZUTN/EU28.1.0.0.0.ZUTN
+      </code>
+      <para>
+	The first term identifies a data provider, here
+	<lit>AMECO</lit> (the Annual macroeconomic database of the
+	European Commission's Directorate General for Economic and
+	Financial Affairs). The second identifies a dataset, here
+	<lit>ZUTN</lit> (unemployment rates), and the third specifies
+	a particular series within the dataset, in this case the
+	unemployment rate for the European Union as a whole.
+      </para>
+    </description>
+  </command>  
+
   <command name="debug" section="Programming" context="cli"
     label="Debugging">
 

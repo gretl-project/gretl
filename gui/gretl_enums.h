@@ -134,6 +134,7 @@ enum extra_cmds {
     MIDAS_LIST,
     MIDAS_PARM,
     PKGHELP,
+    DBNHELP,
     GUI_CMD_MAX
 };
 

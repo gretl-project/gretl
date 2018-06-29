@@ -153,6 +153,7 @@ static struct gui_help_item gui_help_items[] = {
     { MIDAS_LIST,     "MIDAS_list" },
     { MIDAS_PARM,     "MIDAS_parm" },
     { PKGHELP,        "packages" },
+    { DBNHELP,        "dbnomics" },
     { -1,             NULL },
 };
 

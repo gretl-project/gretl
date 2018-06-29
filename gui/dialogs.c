@@ -6651,8 +6651,10 @@ static void dbn_callback (GtkWidget *w, struct dbnomics_info *di)
     if (s != NULL && *s != '\0') {
 	*di->retval = 0;
 	*di->pcode = gretl_strdup(s);
+	gtk_widget_destroy(di->dlg);
+    } else {
+	gtk_widget_grab_focus(di->entry);
     }
-    gtk_widget_destroy(di->dlg);
 }
 
 int dbnomics_dialog (char **dbcode, GtkWidget *parent)
@@ -6660,7 +6662,7 @@ int dbnomics_dialog (char **dbcode, GtkWidget *parent)
     struct dbnomics_info di = {0};
     GtkWidget *dialog, *entry;
     GtkWidget *vbox, *hbox, *tmp;
-    int hcode = 0;
+    int hcode = DBNHELP;
     int ret = GRETL_CANCEL;
 
     if (maybe_raise_dialog()) {
@@ -6676,15 +6678,15 @@ int dbnomics_dialog (char **dbcode, GtkWidget *parent)
 
     hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("series code:"));
-    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 
     di.entry = entry = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(entry), 64);
     gtk_entry_set_width_chars(GTK_ENTRY(entry), 32);
 
-    gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
     gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
     /* buttons */
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
