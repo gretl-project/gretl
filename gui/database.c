@@ -3379,9 +3379,9 @@ static int prep_dbnomics_series (gretl_bundle *b,
     const char *id;
     int T, err = 0;
 
-    T = gretl_bundle_get_int(b, "actobs", &err);
+    T = gretl_bundle_get_int(b, "nobs", &err);
     A = gretl_bundle_get_array(b, "periods", &err);
-    v = gretl_bundle_get_matrix(b, "vals", &err);
+    v = gretl_bundle_get_matrix(b, "values", &err);
     id = gretl_bundle_get_string(b, "id", &err);
 
     if (!err && (T <= 0 || A == NULL || v == NULL)) {
@@ -3400,7 +3400,7 @@ static int prep_dbnomics_series (gretl_bundle *b,
 	    err = E_FOPEN;
 	} else {
 	    gretl_push_c_numeric_locale();
-	    fputs("obs dbseries\n", fp);
+	    fputs("obs dbnomics_data\n", fp);
 	    for (t=0; t<T; t++) {
 		fprintf(fp, "%s %.12g\n", S[t], v->val[t]);
 	    }

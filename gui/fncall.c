@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "gretl.h"
@@ -122,7 +122,7 @@ static void glib_str_array_free (gchar **S, int n)
 
 static int caller_is_model_window (windata_t *vwin)
 {
-    if (vwin != NULL && 
+    if (vwin != NULL &&
 	(vwin->role == VIEW_MODEL ||
 	 vwin->role == VAR ||
 	 vwin->role == VECM ||
@@ -332,12 +332,12 @@ static GtkWidget *label_hbox (call_info *cinfo, GtkWidget *w)
 				      _(cinfo->label));
     } else {
 	const char *funcname;
-	
+
 	funcname = user_function_name_by_index(cinfo->iface);
 	buf = g_markup_printf_escaped("<span weight=\"bold\">%s</span>",
 				      funcname);
     }
-    
+
     lbl = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(lbl), buf);
     g_free(buf);
@@ -410,7 +410,7 @@ static gchar *combo_box_get_trimmed_text (GtkComboBox *combo)
     return ret;
 }
 
-static gboolean update_arg (GtkComboBox *combo, 
+static gboolean update_arg (GtkComboBox *combo,
 			    call_info *cinfo)
 {
     int i = widget_get_int(combo, "argnum");
@@ -428,7 +428,7 @@ static gboolean update_arg (GtkComboBox *combo,
     return FALSE;
 }
 
-static gboolean update_return (GtkComboBox *combo, 
+static gboolean update_return (GtkComboBox *combo,
 			       call_info *cinfo)
 {
     g_free(cinfo->ret);
@@ -437,7 +437,7 @@ static gboolean update_return (GtkComboBox *combo,
     return FALSE;
 }
 
-/* simple heuristic for whether or not a series probably 
+/* simple heuristic for whether or not a series probably
    represents a stochastic variable
 */
 
@@ -486,7 +486,7 @@ static GList *add_series_names (GList *list)
     for (i=1; i<dataset->v; i++) {
 	if (!series_is_hidden(dataset, i)) {
 	    list = g_list_append(list, (gpointer) dataset->varname[i]);
-	} 
+	}
     }
 
     list = g_list_append(list, (gpointer) dataset->varname[0]);
@@ -529,9 +529,9 @@ static windata_t *make_help_viewer (const char *fnname,
 	gchar *p = strrchr(localpdf, '.');
 
 	*p = '\0';
-	strncat(p, ".pdf", 4);
+	strcat(p, ".pdf");
 	pprintf(prn, "<@itl=\"Documentation\">: <@adb=\"%s\">\n", localpdf);
-	g_free(localpdf);	
+	g_free(localpdf);
     }
 
     buf = gretl_print_steal_buffer(prn);
@@ -607,16 +607,16 @@ static int combo_list_index (const gchar *s, GList *list)
 	}
 	tmp = tmp->next;
     }
-    
+
     return -1;
 }
 
 /* Update the combo argument selector(s) for series, matrices
-   lists or scalars after defining a new variable of one of 
+   lists or scalars after defining a new variable of one of
    these types.
 */
 
-static void update_combo_selectors (call_info *cinfo, 
+static void update_combo_selectors (call_info *cinfo,
 				    GtkWidget *refsel,
 				    int ptype)
 {
@@ -663,7 +663,7 @@ static void update_combo_selectors (call_info *cinfo,
 	if (!target) {
 	    /* make a record of the old selected item */
 	    saved = combo_box_get_active_text(sel);
-	} 
+	}
 
 	depopulate_combo_box(sel);
 	set_combo_box_strings_from_list(GTK_WIDGET(sel), newlist);
@@ -673,12 +673,12 @@ static void update_combo_selectors (call_info *cinfo,
 	}
 
 	if (target) {
-	    /* select the newly added var, which will be at the 
+	    /* select the newly added var, which will be at the
 	       end, or thereabouts */
 	    selpos = llen - 1;
 	    if (series_arg(ptype)) {
 		selpos--; /* the const is always in last place */
-	    } 
+	    }
 	    gtk_combo_box_set_active(sel, selpos);
 	} else if (saved != NULL) {
 	    /* reinstate the previous selection */
@@ -696,7 +696,7 @@ static void update_combo_selectors (call_info *cinfo,
 	} else {
 	    /* reinstate empty selection */
 	    gtk_combo_box_set_active(sel, -1);
-	} 
+	}
 
 	sellist = sellist->next;
     }
@@ -783,7 +783,7 @@ static int do_make_list (selector *sr)
 	if (cinfo != NULL) {
 	    if (n_user_lists() > nl) {
 		update_combo_selectors(cinfo, aux, GRETL_TYPE_LIST);
-	    } 
+	    }
 	} else {
 	    infobox(msg);
 	}
@@ -796,7 +796,7 @@ static int do_make_list (selector *sr)
     }
 
     return err;
-} 
+}
 
 static void launch_list_maker (GtkWidget *button, GtkWidget *entry)
 {
@@ -804,14 +804,14 @@ static void launch_list_maker (GtkWidget *button, GtkWidget *entry)
 
     cinfo = g_object_get_data(G_OBJECT(button), "cinfo");
     g_object_set_data(G_OBJECT(cinfo->dlg), "button", button);
-    simple_selection_with_data(DEFINE_LIST, _("Define list"), 
-			       do_make_list, cinfo->dlg, 
+    simple_selection_with_data(DEFINE_LIST, _("Define list"),
+			       do_make_list, cinfo->dlg,
 			       entry);
 }
 
 void gui_define_list (void)
 {
-    simple_selection_with_data(DEFINE_LIST, _("Define list"), 
+    simple_selection_with_data(DEFINE_LIST, _("Define list"),
 			       do_make_list, NULL, NULL);
 }
 
@@ -856,20 +856,20 @@ static void launch_series_maker (GtkWidget *button, call_info *cinfo)
 {
     GtkWidget *combo = g_object_get_data(G_OBJECT(button), "combo");
 
-    edit_dialog(GENR, _("add series"), 
+    edit_dialog(GENR, _("add series"),
 		_("Enter name=formula for new series"), NULL,
-		do_fncall_genr, combo, 
-		VARCLICK_INSERT_NAME, cinfo->dlg);  
+		do_fncall_genr, combo,
+		VARCLICK_INSERT_NAME, cinfo->dlg);
 }
 
 static void launch_scalar_maker (GtkWidget *button, call_info *cinfo)
 {
     GtkWidget *combo = g_object_get_data(G_OBJECT(button), "combo");
 
-    edit_dialog(GENR, _("add scalar"), 
+    edit_dialog(GENR, _("add scalar"),
 		_("Enter name=formula for new scalar"), NULL,
-		do_fncall_genr, combo, 
-		VARCLICK_INSERT_NAME, cinfo->dlg);  
+		do_fncall_genr, combo,
+		VARCLICK_INSERT_NAME, cinfo->dlg);
 }
 
 static GtkWidget *bool_arg_selector (call_info *cinfo, int i,
@@ -882,7 +882,7 @@ static GtkWidget *bool_arg_selector (call_info *cinfo, int i,
 	active = *prior_val == '1';
     } else {
 	double deflt = fn_param_default(cinfo->func, i);
-	
+
 	active = !na(deflt) && deflt != 0.0;
     }
 
@@ -940,7 +940,7 @@ static GtkWidget *xlist_int_selector (call_info *cinfo, int i)
 	}
 	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
 	free(xlist);
-    } 
+    }
 
     return combo;
 }
@@ -998,7 +998,7 @@ static void update_enum_arg (GtkComboBox *combo, call_info *cinfo)
 {
     int val = gtk_combo_box_get_active(combo);
     int i = widget_get_int(combo, "argnum");
-    
+
     val += widget_get_int(combo, "minv");
     g_free(cinfo->args[i]);
     cinfo->args[i] = g_strdup_printf("%d", val);
@@ -1019,19 +1019,19 @@ static GtkWidget *enum_arg_selector (call_info *cinfo, int i,
     for (j=0; j<nvals; j++) {
 	combo_box_append_text(combo, (const char *) S[j]);
     }
-    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), initv - minv);    
+    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), initv - minv);
 
     return combo;
 }
 
 static GtkWidget *spin_arg_selector (call_info *cinfo, int i,
-				     int minv, int maxv, int initv, 
+				     int minv, int maxv, int initv,
 				     GretlType type)
 {
     GtkAdjustment *adj;
     GtkWidget *spin;
 
-    adj = (GtkAdjustment *) gtk_adjustment_new(initv, minv, maxv, 
+    adj = (GtkAdjustment *) gtk_adjustment_new(initv, minv, maxv,
 					       1, 1, 0);
     if (type == GRETL_TYPE_OBS) {
 	spin = obs_button_new(adj, dataset, 0);
@@ -1040,7 +1040,7 @@ static GtkWidget *spin_arg_selector (call_info *cinfo, int i,
     }
     widget_set_int(spin, "argnum", i);
     g_object_set_data(G_OBJECT(spin), "cinfo", cinfo);
-    g_signal_connect(G_OBJECT(spin), "value-changed", 
+    g_signal_connect(G_OBJECT(spin), "value-changed",
 		     G_CALLBACK(update_int_arg), cinfo);
 
     cinfo->args[i] = g_strdup_printf("%d", initv);
@@ -1060,7 +1060,7 @@ static GtkWidget *int_arg_selector (call_info *cinfo,
     if (type == GRETL_TYPE_OBS) {
 	/* the incoming vals will be 1-based */
 	minv = (na(dminv) || dminv < 1)? 0 : (int) dminv - 1;
-	maxv = (na(dmaxv) || dmaxv > dataset->n)? 
+	maxv = (na(dmaxv) || dmaxv > dataset->n)?
 	    (dataset->n - 1) : (int) dmaxv - 1;
     } else {
 	minv = (na(dminv))? INT_MIN : (int) dminv;
@@ -1073,7 +1073,7 @@ static GtkWidget *int_arg_selector (call_info *cinfo,
 	initv = (int) deflt;
     } else if (!na(dminv)) {
 	initv = (int) dminv;
-    } 
+    }
 
     if (type == GRETL_TYPE_INT && !na(dminv) && !na(dmaxv)) {
 	const char **S;
@@ -1120,12 +1120,12 @@ static GtkWidget *double_arg_selector (call_info *cinfo, int i,
 	deflt = minv;
     }
 
-    adj = (GtkAdjustment *) gtk_adjustment_new(deflt, minv, maxv, 
+    adj = (GtkAdjustment *) gtk_adjustment_new(deflt, minv, maxv,
 					       step, step, 0);
     spin = gtk_spin_button_new(adj, 1, ndec);
     widget_set_int(spin, "argnum", i);
     g_object_set_data(G_OBJECT(spin), "cinfo", cinfo);
-    g_signal_connect(G_OBJECT(spin), "value-changed", 
+    g_signal_connect(G_OBJECT(spin), "value-changed",
 		     G_CALLBACK(update_double_arg), cinfo);
     cinfo->args[i] = g_strdup_printf("%g", deflt);
 
@@ -1205,7 +1205,7 @@ static int has_single_arg_of_type (call_info *cinfo,
 */
 
 static void arg_combo_set_default (call_info *cinfo,
-				   GtkComboBox *combo, 
+				   GtkComboBox *combo,
 				   GList *list,
 				   int ptype)
 {
@@ -1226,7 +1226,7 @@ static void arg_combo_set_default (call_info *cinfo,
 	    targname = SELNAME;
 	    tmp = g_list_prepend(tmp, SELNAME);
 	}
-    }    
+    }
 
     for (i=0; tmp != NULL; i++) {
 	gchar *name = tmp->data;
@@ -1250,7 +1250,7 @@ static void arg_combo_set_default (call_info *cinfo,
 	    tmp = g_list_next(tmp);
 	}
     }
- 
+
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), k);
 }
 
@@ -1283,15 +1283,15 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i,
     list = get_selection_list(ptype);
     if (list != NULL) {
 	set_combo_box_strings_from_list(combo, list);
-	arg_combo_set_default(cinfo, GTK_COMBO_BOX(combo), 
+	arg_combo_set_default(cinfo, GTK_COMBO_BOX(combo),
 			      list, ptype);
 	k = g_list_length(list);
 	g_list_free(list);
-    } 
+    }
 
     if (null_OK) {
 	combo_box_append_text(combo, "null");
-	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), k);	
+	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), k);
     }
 
     if (prior_val != NULL) {
@@ -1304,7 +1304,7 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i,
 
 	    gtk_entry_set_text(GTK_ENTRY(entry), tmp);
 	    g_free(tmp);
-	} 
+	}
     } else if (ptype == GRETL_TYPE_DOUBLE &&
 	       fn_param_has_default(cinfo->func, i)) {
 	double x = fn_param_default(cinfo->func, i);
@@ -1343,7 +1343,7 @@ static void add_table_cell (GtkWidget *tbl, GtkWidget *w,
 static GtkWidget *add_object_button (int ptype, GtkWidget *combo,
 				     const char *parname)
 {
-    GtkWidget *img = gtk_image_new_from_stock(GTK_STOCK_ADD, 
+    GtkWidget *img = gtk_image_new_from_stock(GTK_STOCK_ADD,
 					      GTK_ICON_SIZE_MENU);
     GtkWidget *button = gtk_button_new();
 
@@ -1360,7 +1360,7 @@ static GtkWidget *add_object_button (int ptype, GtkWidget *combo,
 	gretl_tooltips_add(button, _("Define matrix"));
     } else if (ptype == GRETL_TYPE_LIST) {
 	gretl_tooltips_add(button, _("Define list"));
-    } 
+    }
 
     return button;
 }
@@ -1445,7 +1445,7 @@ static int function_call_dialog (call_info *cinfo)
     if (cinfo->n_params > 0) {
 	tcols = 3; /* label, selector, add-button */
 	trows = cinfo->n_params + 1;
-	if (show_ret) { 
+	if (show_ret) {
 	    trows += 4;
 	}
 	alist = arglist_lookup(cinfo->pkgname, cinfo->func);
@@ -1543,23 +1543,23 @@ static int function_call_dialog (call_info *cinfo)
 	    widget_set_int(sel, "ptype", GRETL_TYPE_SERIES);
 	    button = add_object_button(ptype, sel, parname);
 	    add_table_cell(tbl, button, 2, 3, row);
-	    g_signal_connect(G_OBJECT(button), "clicked", 
-			     G_CALLBACK(launch_series_maker), 
+	    g_signal_connect(G_OBJECT(button), "clicked",
+			     G_CALLBACK(launch_series_maker),
 			     cinfo);
 	} else if (scalar_arg(ptype) && !spinnable) {
 	    cinfo->ssels = g_list_append(cinfo->ssels, sel);
 	    widget_set_int(sel, "ptype", GRETL_TYPE_DOUBLE);
 	    button = add_object_button(ptype, sel, parname);
 	    add_table_cell(tbl, button, 2, 3, row);
-	    g_signal_connect(G_OBJECT(button), "clicked", 
-			     G_CALLBACK(launch_scalar_maker), 
+	    g_signal_connect(G_OBJECT(button), "clicked",
+			     G_CALLBACK(launch_scalar_maker),
 			     cinfo);
 	} else if (matrix_arg(ptype)) {
 	    cinfo->msels = g_list_append(cinfo->msels, sel);
 	    button = add_object_button(ptype, sel, parname);
 	    add_table_cell(tbl, button, 2, 3, row);
-	    g_signal_connect(G_OBJECT(button), "clicked", 
-			     G_CALLBACK(launch_matrix_maker), 
+	    g_signal_connect(G_OBJECT(button), "clicked",
+			     G_CALLBACK(launch_matrix_maker),
 			     cinfo);
 	} else if (bundle_arg(ptype)) {
 	    cinfo->bsels = g_list_append(cinfo->bsels, sel);
@@ -1567,16 +1567,16 @@ static int function_call_dialog (call_info *cinfo)
 	    cinfo->asels = g_list_append(cinfo->asels, sel);
 	} else if (ptype == GRETL_TYPE_LIST) {
 	    GtkWidget *entry = gtk_bin_get_child(GTK_BIN(sel));
-	    
+
 	    cinfo->lsels = g_list_append(cinfo->lsels, sel);
 	    button = add_object_button(ptype, sel, parname);
 	    add_table_cell(tbl, button, 2, 3, row);
 	    widget_set_int(entry, "argnum", i);
 	    g_object_set_data(G_OBJECT(button), "cinfo", cinfo);
-	    g_signal_connect(G_OBJECT(button), "clicked", 
+	    g_signal_connect(G_OBJECT(button), "clicked",
 			     G_CALLBACK(launch_list_maker),
 			     entry);
-	} 
+	}
     }
 
     if (err) {
@@ -1586,7 +1586,7 @@ static int function_call_dialog (call_info *cinfo)
 	errbox("Setup of function failed");
 	return err;
     }
-	
+
     if (show_ret) {
 	/* selector/entry for return value */
 	GtkWidget *child;
@@ -1595,9 +1595,9 @@ static int function_call_dialog (call_info *cinfo)
 	if (cinfo->n_params > 0) {
 	    /* separator row */
 	    add_table_header(tbl, "", tcols, ++row, 0);
-	}	    
+	}
 
-	add_table_header(tbl, _("Assign return value (optional):"), 
+	add_table_header(tbl, _("Assign return value (optional):"),
 			 tcols, ++row, 5);
 
 	label = gtk_label_new(_("selection (or new variable)"));
@@ -1635,7 +1635,7 @@ static int function_call_dialog (call_info *cinfo)
 	button = gtk_check_button_new_with_label(_("allow access to out-of-sample data"));
 	g_signal_connect(G_OBJECT(button), "toggled",
 			 G_CALLBACK(set_allow_full_data), NULL);
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), 
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button),
 				     allow_full_data);
 	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
@@ -1646,14 +1646,14 @@ static int function_call_dialog (call_info *cinfo)
     button = gtk_check_button_new_with_label(_("close this dialog on \"OK\""));
     g_signal_connect(G_OBJECT(button), "toggled",
 		     G_CALLBACK(set_close_on_OK), NULL);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), 
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button),
 				 close_on_OK);
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
     /* Close button */
     button = close_button(bbox);
-    g_signal_connect(G_OBJECT (button), "clicked", 
+    g_signal_connect(G_OBJECT (button), "clicked",
 		     G_CALLBACK(fncall_close), cinfo);
 
     /* "OK" button */
@@ -1664,11 +1664,11 @@ static int function_call_dialog (call_info *cinfo)
 
     /* Help button */
     button = context_help_button(bbox, -1);
-    g_signal_connect(G_OBJECT(button), "clicked", 
+    g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(fncall_help), cinfo);
 
     if (cinfo->vwin != NULL) {
-	gtk_window_set_transient_for(GTK_WINDOW(cinfo->dlg), 
+	gtk_window_set_transient_for(GTK_WINDOW(cinfo->dlg),
 				     GTK_WINDOW(cinfo->vwin->main));
     }
 
@@ -1687,7 +1687,7 @@ void get_fncall_param_info (GtkWidget *dlg, int *series_ok,
     if (dlg == NULL) {
 	return;
     }
-    
+
     if (series_ok != NULL) {
 	*series_ok = !widget_get_int(dlg, "matrix-no-series");
     }
@@ -1708,7 +1708,7 @@ void get_fncall_param_info (GtkWidget *dlg, int *series_ok,
 		*pname = g_strdup(name);
 	    }
 	}
-    }	
+    }
 }
 
 static int function_data_check (call_info *cinfo,
@@ -1757,7 +1757,7 @@ static int function_data_check (call_info *cinfo,
 }
 
 /* detect the case where we need a "pointer" variable but
-   have been given a scalar or matrix constant 
+   have been given a scalar or matrix constant
 */
 
 static int should_addressify_var (call_info *cinfo, int i)
@@ -1786,7 +1786,7 @@ static int maybe_add_amp (call_info *cinfo, int i, PRN *prn, int *add)
 	return 0;
     }
 
-    /* Handle cases where an "indirect return" variable 
+    /* Handle cases where an "indirect return" variable
        does not yet exist: we need to declare it.
     */
 
@@ -1813,7 +1813,7 @@ static int maybe_add_amp (call_info *cinfo, int i, PRN *prn, int *add)
 		pprintf(prn, "? series %s\n", name);
 	    }
 	}
-    }	
+    }
 
     if (!err) {
 	*add = 1;
@@ -1827,8 +1827,8 @@ static int needs_quoting (call_info *cinfo, int i)
     int t = fn_param_type(cinfo->func, i);
     gchar *s = cinfo->args[i];
 
-    return (t == GRETL_TYPE_STRING && 
-	    strcmp(s, "null") && 
+    return (t == GRETL_TYPE_STRING &&
+	    strcmp(s, "null") &&
 	    get_string_by_name(s) == NULL &&
 	    *s != '"');
 }
@@ -1850,11 +1850,11 @@ static int pre_process_args (call_info *cinfo, int *autolist,
 		g_free(cinfo->args[i]);
 		cinfo->args[i] = g_strdup(auxname);
 		pprintf(prn, "? %s\n", auxline);
-	    } 
+	    }
 	}
-	
+
 	err = maybe_add_amp(cinfo, i, prn, &add);
-	
+
 	if (add) {
 	    strcpy(auxname, "&");
 	    strncat(auxname, cinfo->args[i], VNAMELEN);
@@ -1865,7 +1865,7 @@ static int pre_process_args (call_info *cinfo, int *autolist,
 	    g_free(cinfo->args[i]);
 	    cinfo->args[i] = g_strdup(auxname);
 	}
-	
+
 	if (fn_param_type(cinfo->func, i) == GRETL_TYPE_OBS) {
 	    /* convert integer value from 0- to 1-based */
 	    int val = atoi(cinfo->args[i]) + 1;
@@ -1881,7 +1881,7 @@ static int pre_process_args (call_info *cinfo, int *autolist,
 		cinfo->args[i] = g_strdup(AUTOLIST);
 		*autolist = i;
 	    }
-	}	
+	}
     }
 
     return err;
@@ -1905,7 +1905,7 @@ static void set_genr_model_from_vwin (windata_t *vwin)
    return value, if any.
 */
 
-static void compose_fncall_line (char *line, 
+static void compose_fncall_line (char *line,
 				 call_info *cinfo,
 				 const char *funname,
 				 char **tmpname,
@@ -1919,9 +1919,9 @@ static void compose_fncall_line (char *line,
 	alist = arglist_new(cinfo->pkgname, cinfo->func,
 			    cinfo->n_params);
     }
-    
+
     *line = '\0';
-    
+
     if (cinfo->ret != NULL) {
 	strcat(line, cinfo->ret);
 	strcat(line, " = ");
@@ -1934,7 +1934,7 @@ static void compose_fncall_line (char *line,
 	strcat(line, *tmpname);
 	strcat(line, " = ");
 	*grab_bundle = 1;
-    }	
+    }
 
     strcat(line, funname);
     strcat(line, "(");
@@ -2001,7 +2001,7 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 
 #if FCDEBUG
     fprintf(stderr, "show = %d, grab_bundle = %d\n", show, grab_bundle);
-#endif    
+#endif
 
     if (close_on_OK && cinfo->dlg != NULL) {
 	gtk_widget_hide(cinfo->dlg);
@@ -2024,7 +2024,7 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 	}
 
 	maybe_record_include(cinfo->pkgname, ID);
-	
+
 	if (ID > 0) {
 	    lib_command_sprintf("# %s", fnline);
 	    record_model_command_verbatim(ID);
@@ -2073,7 +2073,7 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 	gretl_print_destroy(prn);
     } else if (outwin == NULL) {
 	/* output window not already in place */
-	view_buffer(prn, 80, 400, title, 
+	view_buffer(prn, 80, 400, title,
 		    (bundle == NULL)? PRINT : VIEW_BUNDLE,
 		    bundle);
     } else {
@@ -2082,7 +2082,7 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 	if (bundle != NULL) {
 	    finalize_script_output_window(VIEW_BUNDLE, bundle);
 	} else {
-	    finalize_script_output_window(0, NULL); 
+	    finalize_script_output_window(0, NULL);
 	}
     }
 
@@ -2090,7 +2090,7 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 
     if (err && !show) {
 	gui_errmsg(err);
-    } 
+    }
 
     if (dataset->v != orig_v) {
 	mark_dataset_as_modified();
@@ -2166,8 +2166,8 @@ static void pkg_select_interface (call_info *cinfo, int npub)
 	if (radios) {
 	    gchar *title = g_strdup_printf("gretl: %s\n", cinfo->pkgname);
 
-	    resp = radio_dialog(title, _("Select function"), 
-				(const char **) opts, 
+	    resp = radio_dialog(title, _("Select function"),
+				(const char **) opts,
 				nopts, 0, 0, parent);
 	    if (resp >= 0) {
 		cinfo->iface = cinfo->publist[resp+1];
@@ -2177,13 +2177,13 @@ static void pkg_select_interface (call_info *cinfo, int npub)
 	    strings_array_free(opts, nopts);
 	    g_free(title);
 	} else {
-	    resp = combo_selector_dialog(ilist, _("Select function"), 
+	    resp = combo_selector_dialog(ilist, _("Select function"),
 					 0, parent);
 	    if (resp >= 0) {
 		cinfo->iface = cinfo->publist[resp+1];
 	    } else {
 		cinfo->iface = -1;
-	    }	
+	    }
 	    g_list_free(ilist);
 	}
     }
@@ -2242,7 +2242,7 @@ static void maybe_set_gui_interface (call_info *cinfo,
 {
     int gmid = -1, fid = -1;
 
-    function_package_get_properties(cinfo->pkg, 
+    function_package_get_properties(cinfo->pkg,
 				    "gui-main-id", &gmid,
 				    NULL);
 
@@ -2263,7 +2263,7 @@ static void maybe_set_gui_interface (call_info *cinfo,
     if (fid >= 0) {
 	/* we found a usable gui-main */
 	gchar *name = NULL, *label = NULL;
-	
+
 	cinfo->iface = fid;
 	cinfo->flags |= SHOW_GUI_MAIN;
 	function_package_get_properties(cinfo->pkg,
@@ -2371,7 +2371,7 @@ static int call_function_package (call_info *cinfo,
     if (!from_browser) {
 	/* Do we have suitable data in place? (This is already
 	   checked if @from_browser is non-zero).
-	*/	
+	*/
 	err = check_function_needs(dataset, cinfo->dreq, cinfo->minver);
 	if (err) {
 	    gui_errmsg(err);
@@ -2397,8 +2397,8 @@ static int call_function_package (call_info *cinfo,
 	    fprintf(stderr, "get_user_function_by_index: failed\n");
 	    errbox(_("Couldn't get function package information"));
 	}
-    }	
-    
+    }
+
     if (!err) {
 	cinfo->n_params = fn_n_params(cinfo->func);
 	err = function_data_check(cinfo, vwin, path);
@@ -2489,7 +2489,7 @@ int open_function_package (const char *pkgname,
 
     /* do we have suitable data in place? */
     err = check_function_needs(dataset, cinfo->dreq, cinfo->minver);
-    
+
     if (err == E_DATA) {
 	/* we might still run the sample script */
 	can_call = 0;
@@ -2527,9 +2527,9 @@ void function_call_cleanup (void)
 }
 
 /* Execute the plotting function made available by the function
-   package that produced bundle @b, possibly inflected by an 
-   integer option -- if an option is present it's packed into 
-   @aname, after a colon. 
+   package that produced bundle @b, possibly inflected by an
+   integer option -- if an option is present it's packed into
+   @aname, after a colon.
 */
 
 int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
@@ -2598,7 +2598,7 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
 
     if (err) {
 	gui_errmsg(err);
-    } 
+    }
 
     return err;
 }
@@ -2619,7 +2619,7 @@ static gchar *get_bundle_special_function (gretl_bundle *b,
 	fnpkg *pkg = get_function_package_by_name(pkgname);
 
 	if (pkg == NULL) {
-	    char *fname = 
+	    char *fname =
 		gretl_function_package_get_path(pkgname, PKG_ALL);
 	    int err = 0;
 
@@ -2737,11 +2737,11 @@ static int query_addons_dir (const char *pkgname, char *sfdir)
 	/* got some sort of garbage */
 	err = E_DATA;
     }
-    
+
     if (!err) {
 	char *p = strchr(buf, ':');
 
-	if (p == NULL || 
+	if (p == NULL ||
 	    sscanf(p + 2, "%15s", sfdir) != 1 ||
 	    strcmp(sfdir, "none") == 0) {
 	    err = E_DATA;
@@ -2753,7 +2753,7 @@ static int query_addons_dir (const char *pkgname, char *sfdir)
     if (err) {
 	errbox_printf("Couldn't find %s for gretl %s",
 		      pkgname, GRETL_VERSION);
-    } 
+    }
 
     return err;
 }
@@ -2801,7 +2801,7 @@ int download_addon (const char *pkgname, char **local_path)
     return err;
 }
 
-#if 0 
+#if 0
 
 /* for a package that's not a (zipfile) addon
    work in progress, 2015-07-21
@@ -2885,13 +2885,13 @@ int n_user_handled_packages (void)
 	    /* a vacant slot */
 	    continue;
 	} else if (gpkgs[i].flags & GPI_SYSFILE) {
-	    /* a file under control of the "system" 
+	    /* a file under control of the "system"
 	       packages.xml file */
 	    continue;
 	} else {
 	    n++;
 	}
-    }    
+    }
 
     return n;
 }
@@ -2915,10 +2915,10 @@ static void gpi_entry_init (gui_package_info *gpi)
 static gchar *packages_xml_path (int which)
 {
     if (which == SYS_PACKAGES) {
-	return g_strdup_printf("%sfunctions%cpackages.xml", 
+	return g_strdup_printf("%sfunctions%cpackages.xml",
 			       gretl_home(), SLASH);
     } else {
-	return g_strdup_printf("%sfunctions%cpackages.xml", 
+	return g_strdup_printf("%sfunctions%cpackages.xml",
 			       gretl_dotdir(), SLASH);
     }
 }
@@ -2936,7 +2936,7 @@ static void write_packages_xml (void)
 {
     char *fname = packages_xml_path(USER_PACKAGES);
     int i, n_write = n_user_handled_packages();
-	
+
     if (n_write == 0) {
 	gretl_remove(fname);
     } else {
@@ -2989,7 +2989,7 @@ void destroy_gui_package_info (void)
 	/* save info to packages.xml first */
 	write_packages_xml();
     }
-    
+
     if (gpkgs != NULL && n_gpkgs > 0) {
 	int i;
 
@@ -3028,7 +3028,7 @@ static gui_package_info *get_gpi_entry (const gchar *pkgname)
 void get_registered_pkg_info (int i, char **name, char **path,
 			      char **label, int *modelwin)
 {
-    if (i < 0 || i >= n_gpkgs || 
+    if (i < 0 || i >= n_gpkgs ||
 	gpkgs[i].pkgname == NULL ||
 	(gpkgs[i].flags & GPI_SYSFILE)) {
 	*name = *path = *label = NULL;
@@ -3128,7 +3128,7 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
 	g_free(msg);
 	if (resp == GRETL_YES) {
 	    int err;
-	    
+
 	    if (official_addon(pkgname)) {
 		/* FIXME maybe record download in command log? */
 		err = download_addon(pkgname, &gpi->filepath);
@@ -3181,7 +3181,7 @@ static void gpi_set_flags (gui_package_info *gpi,
 			   int need_dreq)
 {
     gpi->flags = 0;
-    
+
     if (which == SYS_PACKAGES) {
 	gpi->flags |= GPI_SYSFILE;
     }
@@ -3290,7 +3290,7 @@ static int read_packages_file (const char *fname, int *pn, int which)
 
     if (err) {
 	return (which == SYS_PACKAGES)? err : 0;
-    } 
+    }
 
     cur = cur->xmlChildrenNode;
 
@@ -3430,7 +3430,7 @@ static int fill_gpi_entry (gui_package_info *gpi,
 	free(gpi->menupath);
 	free(gpi->filepath);
     }
-	
+
     gpi->pkgname = gretl_strdup(pkgname);
     gpi->label = gretl_strdup(label);
     gpi->menupath = malloc(9 + strlen(relpath));
@@ -3470,7 +3470,7 @@ static gui_package_info *get_new_package_info (int *err)
 	/* we need to extend the array */
 	gui_package_info *gpkgs_new;
 	int n = n_gpkgs + 1;
-	
+
 	gpkgs_new = realloc(gpkgs, n * sizeof *gpkgs);
 	if (gpkgs_new == NULL) {
 	    *err = E_ALLOC;
@@ -3567,7 +3567,7 @@ static int update_gui_package_info (const char *pkgname,
     if (!err && menu_update && gpi->merge_id > 0) {
 	/* trash stale UI info */
 	destroy_gpi_ui(gpi);
-    }	
+    }
 
     if (!err && update) {
 	err = fill_gpi_entry(gpi,
@@ -3593,7 +3593,7 @@ static int update_gui_package_info (const char *pkgname,
 	/* sync GUI */
 	maybe_update_pkg_registry_window(pkgname, MENU_ADD_FN_PKG);
     }
-    
+
     return err;
 }
 
@@ -3656,7 +3656,7 @@ static void add_package_to_menu (gui_package_info *gpi,
 
     item.name = gpi->pkgname;
     item.label = gpi->label != NULL ? gpi->label : gpi->pkgname;
-    
+
     if (strchr(item.label, '_')) {
 	const char *s = item.label;
 	int n = 0;
@@ -3672,9 +3672,9 @@ static void add_package_to_menu (gui_package_info *gpi,
 
     merge_id = gtk_ui_manager_new_merge_id(vwin->ui);
 
-    gtk_ui_manager_add_ui(vwin->ui, merge_id, gpi->menupath, 
+    gtk_ui_manager_add_ui(vwin->ui, merge_id, gpi->menupath,
 			  _(item.label), item.name,
-			  GTK_UI_MANAGER_MENUITEM, 
+			  GTK_UI_MANAGER_MENUITEM,
 			  FALSE);
 
     if (vwin == mdata) {
@@ -3714,7 +3714,7 @@ static int precheck_error (ufunc *func, windata_t *vwin)
     if (err == 0 && check_err != 0) {
 	err = 1;
     }
-    
+
     return err;
 }
 
@@ -3735,7 +3735,7 @@ static int maybe_add_model_pkg (gui_package_info *gpi,
 	gpi->filepath =
 	    gretl_function_package_get_path(gpi->pkgname, gpi_ptype(gpi));
     }
-	
+
     if (gpi->filepath == NULL) {
 	fprintf(stderr, "%s: couldn't find it\n", gpi->pkgname);
 	return E_FOPEN;
@@ -3756,7 +3756,7 @@ static int maybe_add_model_pkg (gui_package_info *gpi,
 	/* "skip" = skip this package, since it won't work
 	   with the current model */
 	int skip = 0;
-	
+
 	if (modelreq > 0) {
 	    skip = pmod->ci != modelreq;
 	}
@@ -3765,7 +3765,7 @@ static int maybe_add_model_pkg (gui_package_info *gpi,
 	}
 	if (!skip && precheck != NULL) {
 	    ufunc *func = get_function_from_package(precheck, pkg);
-	    
+
 	    if (func == NULL || precheck_error(func, vwin)) {
 		skip = 1;
 	    }
@@ -3862,7 +3862,7 @@ static const gchar *pkg_get_attachment (const gchar *mpath,
 
 #if PKG_DEBUG
     fprintf(stderr, "pkg_get_attachment: mpath = '%s'\n", mpath);
-#endif    
+#endif
 
     if (!strncmp(mpath, "MAINWIN/", 8)) {
 	relpath = mpath + 7;
@@ -3950,7 +3950,7 @@ int gui_function_pkg_revise_status (const gchar *pkgname,
     if (do_update) {
 	const char *relpath;
 	int modelwin = 0;
-	    
+
 	relpath = pkg_get_attachment(mpath, &modelwin);
 	err = update_gui_package_info(pkgname,
 				      fname,
@@ -3981,7 +3981,7 @@ DataReq pkg_get_data_requirement (GtkActionGroup *ag)
     return 0;
 }
 
-/* Remove a package from the in-memory representation of 
+/* Remove a package from the in-memory representation of
    menu-attached packages.
 */
 
@@ -3992,7 +3992,7 @@ void gui_function_pkg_unregister (const gchar *pkgname)
     gpi = get_gpi_entry(pkgname);
     if (gpi != NULL) {
 	clear_gpi_entry(gpi);
-    }     
+    }
 
     /* sync the package registry window, if it happens to
        be open currently */
@@ -4006,7 +4006,7 @@ static int in_own_subdir (const char *pkgname, const char *path)
 
     /* e.g. "mypkg/mypkg" */
     test = g_strdup_printf("%s%c%s", pkgname, SLASH, pkgname);
-    
+
     if (strstr(path, test) != NULL) {
 	ret = 1;
     } else {
@@ -4043,7 +4043,7 @@ static int gui_function_pkg_register (const char *fname,
 
 #if PKG_DEBUG
     fprintf(stderr, "gui_function_pkg_register: %s: err = %d\n", fname, err);
-#endif       
+#endif
 
     if (!err) {
 	int uses_subdir = 0;
@@ -4119,7 +4119,7 @@ int gui_function_pkg_query_register (const char *fname,
 	} else {
 	    const gchar *relpath;
 	    int resp, modelwin = 0;
-	    
+
 	    relpath = pkg_get_attachment(menupath, &modelwin);
 	    resp = pkg_attach_query(pkgname, label, relpath,
 				    modelwin, parent);
@@ -4130,7 +4130,7 @@ int gui_function_pkg_query_register (const char *fname,
 	    }
 	    notified = 1;
 	}
-	
+
 	free(pkgname);
 	free(menupath);
 	free(label);
@@ -4158,8 +4158,8 @@ char *installed_addon_status_string (const char *path,
 	/* @ivstr = installed package version string
 	   @svstr = package version string from server
 	*/
-	err = function_package_get_properties(pkg, 
-					      "version", &ivstr, 
+	err = function_package_get_properties(pkg,
+					      "version", &ivstr,
 					      "min-version", &minver,
 					      NULL);
 	if (!err) {
@@ -4222,7 +4222,7 @@ static ufunc *get_packaged_function (const char *funcname,
 
     if (uf == NULL) {
 	errbox_printf("Couldn't find function %s", funcname);
-    }    
+    }
 
     return uf;
 }
@@ -4248,7 +4248,7 @@ int exec_dbnomics_call (const char *code)
     if (err) {
 	return err;
     }
-    
+
     if (uf != NULL) {
 	fc = fncall_new(uf);
     }
@@ -4259,59 +4259,44 @@ int exec_dbnomics_call (const char *code)
 				      &b, NULL, prn);
 	    if (err) {
 		gui_errmsg(err);
-	    } else {
-		/* debugging */
-		//gretl_bundle_print(b, prn);
 	    }
+#if 0
+	    else {
+		/* debugging */
+		gretl_bundle_print(b, prn);
+	    }
+#endif
 	}
 	fc = NULL;
     }
 
     if (b != NULL) {
-	gchar *title = NULL;
-	
-	uf = get_packaged_function("dbnomics_bundle_print", "dbnomics");
-	if (uf != NULL) {
-	    fc = fncall_new(uf);
-	}
-	if (fc != NULL) {
-	    err = push_function_arg(fc, NULL, GRETL_TYPE_BUNDLE, (void *) b);
-	    if (!err) {
-		err = gretl_function_exec(fc, GRETL_TYPE_NONE, NULL,
-					  NULL, NULL, prn);
-		if (err) {
-		    gui_errmsg(err);
-		}
+	int dberr = gretl_bundle_get_int(b, "error", NULL);
+	gchar *title = g_strdup_printf("dbnomics: %s", code);
+
+	if (dberr) {
+	    view_buffer(prn, 78, 200, title, IMPORT, NULL);
+	    gretl_bundle_destroy(b);
+	} else {
+	    uf = get_packaged_function("dbnomics_bundle_print", "dbnomics");
+	    if (uf != NULL) {
+		fc = fncall_new(uf);
 	    }
-	    fc = NULL;
+	    if (fc != NULL) {
+		err = push_function_arg(fc, NULL, GRETL_TYPE_BUNDLE, (void *) b);
+		if (!err) {
+		    err = gretl_function_exec(fc, GRETL_TYPE_NONE, NULL,
+					  NULL, NULL, prn);
+		    if (err) {
+			gui_errmsg(err);
+		    }
+		}
+		fc = NULL;
+	    }
+	    view_buffer(prn, 78, 350, title, VIEW_DBNOMICS, b);
 	}
-	title = g_strdup_printf("dbnomics: %s", code);
-	view_buffer(prn, 78, 350, title, VIEW_DBNOMICS, b);
 	g_free(title);
 	prn = NULL; /* note: ownership is taken by viewer */
-    }
-
-    if (0 && b != NULL) {
-	gretl_array *Ap;
-	gretl_matrix *v;
-	int T, t;
-	    
-	T = gretl_bundle_get_int(b, "actobs", &err);
-	if (!err) {
-	    fprintf(stderr, " actobs: T = %d\n", T);
-	    Ap = gretl_bundle_get_array(b, "periods", &err);
-	    fprintf(stderr, " periods array: err = %d\n", err);
-	    v = gretl_bundle_get_matrix(b, "vals", &err);
-	    fprintf(stderr, " data values: err = %d\n", err);
-	}
-	if (!err) {
-	    char **S = gretl_array_get_strings(Ap, &T);
-		
-	    for (t=0; t<T; t++) {
-		fprintf(stderr, "%s %g\n", S[t], v->val[t]);
-	    }
-	}
-	gretl_bundle_destroy(b);
     }
 
     gretl_print_destroy(prn);
