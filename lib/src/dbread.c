@@ -124,6 +124,10 @@ float retrieve_float (netfloat nf)
 }
 #endif
 
+static int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
+			    DATASET *dset, CompactMethod cmethod,
+			    int interpolate, int dbv, PRN *prn);
+
 static FILE *open_binfile (const char *dbbase, int code, int offset, int *err)
 {
     char dbbin[MAXLEN];
@@ -404,8 +408,8 @@ static int get_native_series_obs (SERIESINFO *sinfo,
     } else {
 	*sinfo->stobs = '\0';
 	*sinfo->endobs = '\0';
-	strncat(sinfo->stobs, stobs, 8);
-	strncat(sinfo->endobs, endobs, 8);
+	strncat(sinfo->stobs, stobs, OBSLEN-1);
+	strncat(sinfo->endobs, endobs, OBSLEN-1);
     }
 
     return 0;
@@ -2605,8 +2609,12 @@ static int get_one_db_series (const char *series,
     }
 
     if (!err) {
-	err = lib_add_db_data(dbZ, &sinfo, dset, NULL, this_method,
-			      interpolate, v, prn);
+	if (this_method == COMPACT_SPREAD) {
+	    err = lib_spread_db_data(dbZ, &sinfo, dset, NULL, prn);
+	} else {
+	    err = lib_add_db_data(dbZ, &sinfo, dset, this_method,
+				  interpolate, v, prn);
+	}
     }
 
     free_dbZ(dbZ);
@@ -3222,76 +3230,58 @@ int transcribe_db_data (DATASET *dset, int targv,
     return 0;
 }
 
-/* Processes a single db series, though in the case of
-   COMPACT_SPREAD multiple series are added to the target
+/* Processes a single db series in "spread" mode, meaning
+   that multiple series are added to the target
    dataset, @dset.
 
    There are two calling modes: (1) @dbZ and @sinfo are
    given and @dbset is NULL, or @dbset is given and both
-   @dbZ and @sinfo are NULL. These cannot be mixed! This
-   should probably be cleaned up at some point. As of
-   June 2018 the second mode is used only with dbnomics
-   data, and only when COMPACT_SPREAD is called for.
+   @dbZ and @sinfo are NULL. These cannot be mixed!
 */
 
-int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
-		     DATASET *dset, DATASET *dbset,
-		     CompactMethod cmethod, int interpolate,
-		     int dbv, PRN *prn)
+int lib_spread_db_data (double **dbZ, SERIESINFO *sinfo,
+			DATASET *dset, DATASET *dbset,
+			PRN *prn)
 {
-    double **Z;
-    int pd, nobs;
-    int new = (dbv == dset->v);
-    char *vname, *descrip;
-    char *stobs, *endobs;
     int err = 0;
 
-    if ((sinfo != NULL && dbZ == NULL) ||
-	(sinfo != NULL && dbset != NULL)) {
+    if (dset == NULL || dset->v == 0) {
+	gretl_errmsg_set("\"compact=spread\": requires a dataset in place");
+	err = E_DATA;
+    } else if (dbset != NULL) {
+	err = compact_data_set(dbset, dset->pd, COMPACT_SPREAD, 0, 0);
+	if (!err) {
+	    /* FIXME pointer business? */
+	    err = merge_or_replace_data(dset, &dbset, OPT_X | OPT_U, prn);
+	}
+    } else {
+	DATASET *tmpset = make_import_tmpset(dset, sinfo, dbZ, &err);
+
+	if (!err) {
+	    err = compact_data_set(tmpset, dset->pd, COMPACT_SPREAD, 0, 0);
+	}
+	if (!err) {
+	    err = merge_or_replace_data(dset, &tmpset, OPT_X | OPT_U, prn);
+	}
+    }
+
+    return err;
+}
+
+/* Processes a single db series, adding it to @dset if
+   possible (perhaps after compaction or expansion).
+*/
+
+static int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
+			    DATASET *dset, CompactMethod cmethod,
+			    int interpolate, int dbv, PRN *prn)
+{
+    int new = (dbv == dset->v);
+    int err = 0;
+
+    if (sinfo == NULL && dbZ == NULL) {
 	fprintf(stderr, "lib_add_db_data: broken call!\n");
 	return E_DATA;
-    }
-
-    if (cmethod == COMPACT_SPREAD) {
-	/* special case: adds multiple series */
-	if (dset == NULL || dset->v == 0) {
-	    gretl_errmsg_set("\"compact=spread\": requires a dataset in place");
-	    err = E_DATA;
-	} else if (dbset != NULL) {
-	    err = compact_data_set(dbset, dset->pd, cmethod, 0, 0);
-	    if (!err) {
-		/* FIXME pointer business? */
-		err = merge_or_replace_data(dset, &dbset, OPT_X | OPT_U, prn);
-	    }
-	} else {
-	    DATASET *tmpset = make_import_tmpset(dset, sinfo, dbZ, &err);
-
-	    if (!err) {
-		err = compact_data_set(tmpset, dset->pd, cmethod, 0, 0);
-	    }
-	    if (!err) {
-		err = merge_or_replace_data(dset, &tmpset, OPT_X | OPT_U, prn);
-	    }
-	}
-	return err;
-    }
-
-    if (dbset != NULL) {
-	pd = dbset->pd;
-	nobs = dbset->n;
-	stobs = dbset->stobs;
-	endobs = dbset->endobs;
-	vname = dbset->varname[1];
-	descrip = (char *) series_get_label(dbset, 1);
-	Z = dbset->Z;
-    } else {
-	pd = sinfo->pd;
-	nobs = sinfo->nobs;
-	stobs = sinfo->stobs;
-	endobs = sinfo->endobs;
-	vname = sinfo->varname;
-	descrip = sinfo->descrip;
-	Z = dbZ;
     }
 
     if (cmethod == COMPACT_NONE) {
@@ -3303,17 +3293,14 @@ int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	/* if the existing dataset is empty, initialize it
 	   using info from the database series
 	*/
-	if (sinfo != NULL) {
-	    init_datainfo_from_sinfo(dset, sinfo);
-	    dset->v = 0; /* trigger for creating data array below */
-	    if (dset->pd != 1 || strcmp(dset->stobs, "1")) {
-		dset->structure = TIME_SERIES;
-	    }
-	} else {
-	    *dset = *dbset; /* FIXME */
+	init_datainfo_from_sinfo(dset, sinfo);
+	dset->v = 0; /* trigger for creating data array below */
+	if (dset->pd != 1 || strcmp(dset->stobs, "1")) {
+	    dset->structure = TIME_SERIES;
 	}
     } else {
-	err = check_db_import_full(pd, stobs, endobs, vname, dset);
+	err = check_db_import_full(sinfo->pd, sinfo->stobs, sinfo->endobs,
+				   sinfo->varname, dset);
 	if (err) {
 	    return err;
 	}
@@ -3336,13 +3323,13 @@ int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	    dset->n, dset->v, dbv);
 #endif
 
-    err = transcribe_db_data(dset, dbv, Z[1], pd, nobs,
-			     stobs, interpolate, cmethod);
+    err = transcribe_db_data(dset, dbv, dbZ[1], sinfo->pd, sinfo->nobs,
+			     sinfo->stobs, interpolate, cmethod);
 
     if (!err) {
 	/* common stuff for adding a var */
-	strcpy(dset->varname[dbv], vname);
-	series_set_label(dset, dbv, descrip);
+	strcpy(dset->varname[dbv], sinfo->varname);
+	series_set_label(dset, dbv, sinfo->descrip);
 	series_set_compact_method(dset, dbv, cmethod);
     } else if (new) {
 	/* we added a series that has not been filled */

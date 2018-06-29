@@ -379,8 +379,7 @@ static void record_db_import (const char *varname,
 static int handle_compact_spread (double **dbZ,
 				  SERIESINFO *sinfo,
 				  DATASET *dset,
-				  DATASET *dbset,
-				  int v)
+				  DATASET *dbset)
 {
     PRN *prn = NULL;
     int err = 0;
@@ -389,8 +388,8 @@ static int handle_compact_spread (double **dbZ,
 	return E_ALLOC;
     }
 
-    err = lib_add_db_data(dbZ, sinfo, dset, dbset,
-			  COMPACT_SPREAD, 0, v, prn);
+    err = lib_spread_db_data(dbZ, sinfo, dset, dbset, prn);
+
     if (err) {
 	char *buf = gretl_print_steal_buffer(prn);
 
@@ -469,7 +468,7 @@ add_single_series_to_dataset (windata_t *vwin, DATASET *dbset)
 
     if (spread) {
 	/* special case: creating multiple series */
-	return handle_compact_spread(NULL, NULL, dataset, dbset, 1);
+	return handle_compact_spread(NULL, NULL, dataset, dbset);
     }
 
     if (!overwrite) {
@@ -581,7 +580,7 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 
 	if (spread) {
 	    /* creating multiple series */
-	    err = handle_compact_spread(dbZ, sinfo, dataset, NULL, v);
+	    err = handle_compact_spread(dbZ, sinfo, dataset, NULL);
 	    if (err) {
 		break;
 	    } else {

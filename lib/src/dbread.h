@@ -130,10 +130,9 @@ int transcribe_db_data (DATASET *dset, int targv,
 			CompactMethod cmethod,
 			int interpolate);
 
-int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
-		     DATASET *dset, DATASET *dbset,
-		     CompactMethod cmethod, int interpolate,
-		     int dbv, PRN *prn);
+int lib_spread_db_data (double **dbZ, SERIESINFO *sinfo,
+			DATASET *dset, DATASET *dbset,
+			PRN *prn);
 
 int compact_data_set (DATASET *dset, int newpd,
 		      CompactMethod default_method,
