@@ -27,6 +27,8 @@
 #include "gretl_www.h"
 #include "gretl_untar.h"
 #include "gretl_zip.h"
+#include "gretl_string_table.h"
+#include "csvdata.h"
 #include "menustate.h"
 #include "treeutils.h"
 #include "winstack.h"
@@ -35,6 +37,7 @@
 #include "fncall.h"
 #include "dbread.h"
 #include "fncall.h"
+#include "varinfo.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -52,7 +55,7 @@
 #endif
 
 #define DB_SEARCH_DEBUG 0
-#define DBNOMICS 0 /* only for testing right now */
+#define DBNOMICS 1 /* enable for general testing? */
 
 /* private functions */
 static GtkWidget *database_window (windata_t *vwin);
@@ -3361,7 +3364,7 @@ static void maybe_prune_db_list (GtkTreeView *tview,
 #if DBNOMICS
     gtk_list_store_append(store, &iter);
     gtk_list_store_set(store, &iter, 0, "dbnomics",
-		       1, "Various data providers",
+		       1, "Various macro series from many data providers",
 		       2, "www", -1);
 #endif
 }
@@ -3430,7 +3433,27 @@ int add_dbnomics_data (windata_t *vwin)
 
 	err = prep_dbnomics_series(b, dbset);
 	if (!err) {
-	    add_dbdata(vwin, dbset, NULL, &freeit);
+	    char vname[VNAMELEN];
+	    char const *s, *id;
+	    char *descrip = NULL;
+	    int cancel = 0;
+
+	    *vname = '\0';
+	    id = gretl_bundle_get_string(b, "id", &err);
+	    if (!err) {
+		normalize_join_colname(vname, id, 0);
+	    }
+	    s = gretl_bundle_get_string(b, "series_name", &err);
+	    if (!err) {
+		descrip = gretl_strdup(s);
+	    }
+	    name_new_series_dialog(vname, descrip, vwin, &cancel);
+	    if (!cancel && *vname != '\0') {
+		strcpy(dbset->varname[1], vname);
+		series_set_label(dbset, 1, descrip);
+		add_dbdata(vwin, dbset, NULL, &freeit);
+	    }
+	    free(descrip);
 	}
 	if (freeit) {
 	    destroy_dataset(dbset);
