@@ -61,6 +61,28 @@ function scalar get_frequency(string json_obj)
 end function
 
 ### ------------------------------------------------------------------------
+function string get_alternatives(string json_obj, string root, strings alternatives)
+    got_it = 0
+    i = 1
+    got = 0
+    ret = ""
+    loop while i<=nelem(alternatives) && !got_it --quiet
+        s = sprintf("%s%s", root, alternatives[i++])
+        maybe = jsonget(json_obj, s, &got)
+        if got
+            got_it = 1
+        endif
+    endloop
+    
+    if got_it
+	ret = maybe
+    endif
+    
+    return ret
+end function
+
+
+### ------------------------------------------------------------------------
 
 function scalar fill_series_bundle(bundle *b, string output, scalar index)
     got = 0
@@ -83,8 +105,10 @@ function scalar fill_series_bundle(bundle *b, string output, scalar index)
 
     string line
 
-    qry = sprintf("$.series.data%s..period", has_index)
-    s = jsonget(output, qry)
+    string root = sprintf("$.series.data%s", has_index)
+    s = get_alternatives(output, root, defarray(".period", ".periods"))
+    # qry = sprintf("$.series.data%s..period", has_index)
+    # s = jsonget(output, qry)
     
     strings periods
     loop while getline(s, line) -q
@@ -92,8 +116,9 @@ function scalar fill_series_bundle(bundle *b, string output, scalar index)
     endloop
     n = nelem(periods)
 
-    qry = sprintf("$.series.data%s..value", has_index)
-    s = jsonget(output, qry)
+    s = get_alternatives(output, root, defarray(".value", ".values"))
+    # qry = sprintf("$.series.data%s..value", has_index)
+    # s = jsonget(output, qry)
     strings datavals
     loop while getline(s, line) -q
         datavals += line
