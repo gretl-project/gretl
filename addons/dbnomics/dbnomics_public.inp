@@ -157,15 +157,18 @@ end function
 ### ------------------------------------------------------------------------
 
 function bundles dbnomics_providers(bool verbose[0])
-    magic = "providers"
+    magic = "providers.docs"
 
     bundle req
-    req.URL = "https://api.next.nomics.world/"
+    req.URL = "https://api.next.nomics.world/providers"
     req.header = "accept: application/json"
     err = curl(&req)
     json = req.output
     nprov = 0
     str = jsonget(json, sprintf("$.%s[*].code", magic), &nprov)
+    if nprov == 0
+        funcerr "no providers were found"
+    endif
 
     bundles ret = array(nprov)
     strings fields = defarray("name", "terms_of_use", "code", "region", "description", "website")
@@ -192,21 +195,22 @@ end function
 
 function bundles dbnomics_datasets(string s, scalar limit[0::20], scalar offset[0], bool verbose[0])
     bundle req
-    magic = "datasets"
+    magic = "results.docs"
     
-    req.URL = sprintf("https://api.next.nomics.world/datasets?q=%s&limit=%d&offset=%d",
+    req.URL = sprintf("https://api.next.nomics.world/search?q=%s&limit=%d&offset=%d",
     sanitize_url(s), limit, offset)
     req.header = "accept: application/json"
     err = curl(&req)
     json = req.output
     n = 0
-    str = jsonget(json, sprintf("$.%s[*].dataset_code", magic), &n)
-    ntot = atof(jsonget(json, "$.num_datasets_found")) 
+    str = jsonget(json, sprintf("$.%s[*].code", magic), &n)
+    ntot = atof(jsonget(json, "$.results.num_found"))
+    printf "n = %d, ntot = %d\n", n, ntot
 
     bundles ret = array(n)
-    strings fields = defarray("dataset_code", "num_series_found", "dataset_name", "provider_code")
+    strings fields = defarray("code", "nb_matching_series", "name", "provider_code")
     
-    loop i = 1 .. n --quiet
+    loop i = 1..n --quiet
         ret[i] = json2bndl(fields, json, magic, i-1)
     endloop
 
@@ -214,8 +218,8 @@ function bundles dbnomics_datasets(string s, scalar limit[0::20], scalar offset[
         printf "Datasets containing \"%s\" (%d-%d out of %d): \n\n",
         s, offset, n, ntot
         loop i = 1..n --quiet
-            printf "%3d: %s.%s", i, ret[i].provider_code, ret[i].dataset_code
-            printf " (%d series)\n", atof(ret[i].num_series_found)
+            printf "%3d: %s.%s", i, ret[i].provider_code, ret[i].code
+            printf " (%d series)\n", atof(ret[i].nb_matching_series)
         endloop
     endif
     return ret
@@ -223,11 +227,11 @@ end function
 
 ### ------------------------------------------------------------------------
 
-function bundles dbnomics_categtree(string provider)
-    magic = "categories_tree"
+function bundles dbnomics_categtree(const string provider, bool verbose[0])
+    magic = "category_tree"
     bundle req
     
-    req.URL = sprintf("https://api.next.nomics.world/%s", provider)
+    req.URL = sprintf("https://api.next.nomics.world/providers/%s", provider)
     req.header = "accept: application/json"
     err = curl(&req)
     json = req.output
@@ -238,7 +242,11 @@ function bundles dbnomics_categtree(string provider)
     strings fields = defarray("code", "name")
     
     loop i = 1..n --quiet
-        ret[i] = json2bndl(fields, json, magic, i-1)
+        bundle b = json2bndl(fields, json, magic, i-1)
+	if verbose
+	    print b
+	endif
+	ret[i] = b
     endloop
 
     return ret

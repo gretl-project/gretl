@@ -2,14 +2,20 @@ set verbose off
 include dbnomics.gfn
 
 provlist = dbnomics_providers(1)
-b = provlist[10]
-print b
+n = nelem(provlist)
+printf "got %d providers\n", n
+if n >= 10
+    b = provlist[10]
+    print b
+endif
 
 dsetlist = dbnomics_datasets("interest rates", 30, 10, 1)
 print dsetlist
-b = dsetlist[10]
-print b
+if nelem(dsetlist) >= 10
+    b = dsetlist[10]
+    print b
+endif
 
-ctree = dbnomics_categtree("BLS")
+ctree = dbnomics_categtree("BLS", 1)
 print ctree
 
