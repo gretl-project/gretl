@@ -1930,7 +1930,7 @@ void open_dbnomics_provider (GtkWidget *w, gpointer data)
     GtkTreeModel *model;
     GtkTreeSelection *sel;
     gchar *pname = NULL;
-    int ndb = 0;
+    int ndb = 0, err = 0;
 
     sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(vwin->listbox));
     if (!gtk_tree_selection_get_selected(sel, &model, &iter)) {
@@ -1944,23 +1944,22 @@ void open_dbnomics_provider (GtkWidget *w, gpointer data)
     }
 
     if (1) {
-	int err = 0;
 	gretl_array *A = dbnomics_expand_provider_call(pname, &err);
 
 	if (err) {
 	    return;
 	} else {
 	    gretl_bundle *b;
-	    char *dbcode, *nmatch;
+	    char *dbcode, *name;
 	    int i, n;
 
 	    n = gretl_array_get_length(A);
 	    for (i=0; i<n; i++) {
 		b = gretl_array_get_bundle(A, i);
 		dbcode = (char *) gretl_bundle_get_string(b, "code", &err);
-		nmatch = (char *) gretl_bundle_get_string(b, "nb_matching_series", &err);
+		name = (char *) gretl_bundle_get_string(b, "name", &err);
 		if (!err) {
-		    fprintf(stderr, "%s/%s: %s series\n", pname, dbcode, nmatch);
+		    fprintf(stderr, "%s/%s: %s\n", pname, dbcode, name);
 		    ndb++;
 		}
 	    }
