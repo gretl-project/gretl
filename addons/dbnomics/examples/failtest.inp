@@ -4,10 +4,16 @@ include dbnomics.gfn
 nulldata 360
 setobs 12 1989:1
 
-bundle b = dbnomics_get_series("ECB/Foo/Bar")
-dbnomics_bundle_print(b)
-series ita_rate = NA
-err = dbnomics_bundle_get_data(b, &ita_rate)
-if !err
-    print ita_rate -o
-endif
+# probe various pathologies: we should fail gracefully
+# if at all possible
+
+strings ids = defarray("ECB/Foo/Bar", "Baz/Foo/Bar", "Foo")
+
+loop i=1..nelem(ids) -q
+    printf "Sending bad request '%s'\n", ids[i]
+    bundle b = dbnomics_get_series(ids[i])
+    dbnomics_bundle_print(b)
+    series foo = NA
+    err = dbnomics_bundle_get_data(b, &foo)
+    printf "err from dbnomics_bundle_get_data = %d\n\n", err
+endloop
