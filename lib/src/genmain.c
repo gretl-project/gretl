@@ -382,7 +382,7 @@ int series_index (const DATASET *dset, const char *varname)
     if (dset != NULL) {
 	int i;
 
-	ret = dset->v;
+	ret = dset->v; /* initialize to "next" series ID */
 
 	if (s == NULL || *s == '\0' || isdigit(*s)) {
 	    goto bailout;

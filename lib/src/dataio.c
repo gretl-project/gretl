@@ -2277,7 +2277,8 @@ static void maybe_fix_calendar_dates (DATASET *dset)
  * merge_or_replace_data:
  * @dset0: original dataset struct.
  * @pdset1: new dataset struct.
- * @opt: zero or more option flags.
+ * @opt: zero or more option flags (OPT_P presrves @pdset1,
+ * otherwise it is destroyed).
  * @prn: print struct to accept messages.
  *
  * Given a newly-created dataset, pointed to by @pdset1, either 
@@ -2294,6 +2295,7 @@ static void maybe_fix_calendar_dates (DATASET *dset)
 int merge_or_replace_data (DATASET *dset0, DATASET **pdset1,
 			   gretlopt opt, PRN *prn)
 {
+    int preserve = (opt & OPT_P);
     int err = 0;
 
     if (dset0->Z != NULL) {
@@ -2305,6 +2307,7 @@ int merge_or_replace_data (DATASET *dset0, DATASET **pdset1,
 	    merge_opt |= OPT_T;
 	}
 	if (opt & OPT_U) {
+	    /* update overlapping observations */
 	    merge_opt |= OPT_U;
 	}
 	if (opt & OPT_X) {
@@ -2312,7 +2315,9 @@ int merge_or_replace_data (DATASET *dset0, DATASET **pdset1,
 	    merge_opt |= OPT_X;
 	}
 	err = merge_data(dset0, *pdset1, merge_opt, prn);
-	destroy_dataset(*pdset1);
+	if (!preserve) {
+	    destroy_dataset(*pdset1);
+	}
     } else {
 	/* starting from scratch */
 	*dset0 = **pdset1;
@@ -2322,7 +2327,9 @@ int merge_or_replace_data (DATASET *dset0, DATASET **pdset1,
 	}
     }
 
-    *pdset1 = NULL;
+    if (!preserve) {
+	*pdset1 = NULL;
+    }
 
     return err;
 }

@@ -408,14 +408,21 @@ static int handle_compact_spread (double **dbZ,
     return err;
 }
 
+static void maybe_retrieve_compact_method (int v, CompactMethod *pm)
+{
+    int m = series_get_compact_method(dataset, v);
+
+    if (m != COMPACT_NONE) {
+	*pm = m;
+    }
+}
+
 static int
 add_single_series_to_dataset (windata_t *vwin, DATASET *dbset)
 {
     CompactMethod cmethod = COMPACT_AVG;
-    int dbv;
-    int resp, overwrite = 0;
-    int spread = 0;
-    int compact = 0;
+    int dbv, resp, overwrite = 0;
+    int existing = 0;
     int interpol = 0;
     int err = 0;
 
@@ -426,6 +433,13 @@ add_single_series_to_dataset (windata_t *vwin, DATASET *dbset)
     }
     if (err) {
 	return err;
+    }
+
+    /* is there a series of this name already in the dataset? */
+    dbv = series_index(dataset, dbset->varname[1]);
+    if (dbv < dataset->v) {
+	existing = 1;
+	maybe_retrieve_compact_method(dbv, &cmethod);
     }
 
     if (dbset->pd < dataset->pd) {
@@ -440,17 +454,13 @@ add_single_series_to_dataset (windata_t *vwin, DATASET *dbset)
 	data_compact_dialog(dbset->pd, &dataset->pd, NULL,
 			    &cmethod, NULL, vwin->main);
 	if (cmethod == COMPACT_NONE) {
-	    /* canceled */
-	    return 0;
+	    return 0; /* canceled */
+	} else if (cmethod == COMPACT_SPREAD) {
+	    return handle_compact_spread(NULL, NULL, dataset, dbset);
 	}
-	compact = 1;
-	spread = (cmethod == COMPACT_SPREAD);
     }
 
-    dbv = series_index(dataset, dbset->varname[1]);
-
-    if (dbv < dataset->v) {
-	/* there's already a series of this name */
+    if (existing) {
 	resp = yes_no_dialog("gretl",
 			     _("There is already a variable of this name\n"
 			       "in the dataset.  OK to overwrite it?"),
@@ -459,19 +469,6 @@ add_single_series_to_dataset (windata_t *vwin, DATASET *dbset)
 	    return 0;
 	}
 	overwrite = 1;
-	if (compact) {
-	    /* pick up on pre-set method? */
-	    int m = series_get_compact_method(dataset, dbv);
-
-	    if (m != COMPACT_NONE) {
-		cmethod = m;
-	    }
-	}
-    }
-
-    if (spread) {
-	/* special case: creating multiple series */
-	return handle_compact_spread(NULL, NULL, dataset, dbset);
     }
 
     if (!overwrite) {
@@ -519,8 +516,8 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 
     for (i=0; i<dw->nv && !err; i++) {
 	int v, dbv;
+	int existing = 0;
 	int overwrite = 0;
-	int spread = 0;
 	int compact = 0;
 	int interpol = 0;
 
@@ -530,6 +527,12 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 	if (obs_overlap_check(sinfo->pd, sinfo->stobs, sinfo->endobs,
 			      sinfo->varname)) {
 	    continue;
+	}
+
+	dbv = series_index(dataset, sinfo->varname);
+	if (dbv < dataset->v) {
+	    existing = 1;
+	    maybe_retrieve_compact_method(dbv, &cmethod);
 	}
 
 	if (sinfo->pd < dataset->pd) {
@@ -554,13 +557,18 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 		chosen = 1;
 	    }
 	    compact = 1;
-	    spread = (cmethod == COMPACT_SPREAD);
+	    if (cmethod == COMPACT_SPREAD) {
+		err = handle_compact_spread(dbZ, sinfo, dataset, NULL);
+		if (err) {
+		    break;
+		} else {
+		    record_db_import(sinfo->varname, compact, interpol, cmethod);
+		    continue;
+		}
+	    }
 	}
 
-	dbv = series_index(dataset, sinfo->varname);
-
-	if (dbv < dataset->v) {
-	    /* there's already a series of this name */
+	if (existing) {
 	    if (dw->nv == 1) {
 		resp = yes_no_dialog("gretl",
 				     _("There is already a variable of this name\n"
@@ -571,25 +579,6 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 		}
 	    }
 	    overwrite = 1;
-	    if (compact) {
-		/* pick up on pre-set method? */
-		int m = series_get_compact_method(dataset, dbv);
-
-		if (m != COMPACT_NONE) {
-		    cmethod = m;
-		}
-	    }
-	}
-
-	if (spread) {
-	    /* creating multiple series */
-	    err = handle_compact_spread(dbZ, sinfo, dataset, NULL);
-	    if (err) {
-		break;
-	    } else {
-		record_db_import(sinfo->varname, compact, interpol, cmethod);
-		continue;
-	    }
 	}
 
 	if (!overwrite) {
@@ -621,7 +610,7 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 static void add_dbdata (windata_t *vwin, DATASET *dbset,
 			dbwrapper *dw, int *freeit)
 {
-    SERIESINFO *sinfo;
+    SERIESINFO *sinfo = NULL;
     int i, err = 0;
 
     if (data_status) {
@@ -1767,7 +1756,7 @@ gboolean open_named_db_index (char *dbname)
     }
 
     if (action == NATIVE_SERIES && !strcmp(dbname, "dbnomics")) {
-	warnbox("Sorry, not ready yet");
+	warnbox("Sorry, this access to dbnomics not ready yet");
 	return ret;
     }
 
@@ -3451,11 +3440,14 @@ int add_dbnomics_data (windata_t *vwin)
 	    if (!cancel && *vname != '\0') {
 		strcpy(dbset->varname[1], vname);
 		series_set_label(dbset, 1, descrip);
+		fprintf(stderr, "dbnomics: calling add_dbdata\n");
 		add_dbdata(vwin, dbset, NULL, &freeit);
+		fprintf(stderr, "dbnomics: done add_dbdata\n");
 	    }
 	    free(descrip);
 	}
 	if (freeit) {
+	    fprintf(stderr, "dbnomics: destroy dbset\n");
 	    destroy_dataset(dbset);
 	}
     }

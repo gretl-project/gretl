@@ -3251,8 +3251,7 @@ int lib_spread_db_data (double **dbZ, SERIESINFO *sinfo,
     } else if (dbset != NULL) {
 	err = compact_data_set(dbset, dset->pd, COMPACT_SPREAD, 0, 0);
 	if (!err) {
-	    /* FIXME pointer business? */
-	    err = merge_or_replace_data(dset, &dbset, OPT_X | OPT_U, prn);
+	    err = merge_or_replace_data(dset, &dbset, OPT_X | OPT_U | OPT_P, prn);
 	}
     } else {
 	DATASET *tmpset = make_import_tmpset(dset, sinfo, dbZ, &err);

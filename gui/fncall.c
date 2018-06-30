@@ -4193,10 +4193,6 @@ char *installed_addon_status_string (const char *path,
     return ret;
 }
 
-/* the following is temporary: should be a good deal easier
-   once dbnomics is a registered addon
-*/
-
 static ufunc *get_packaged_function (const char *funcname,
 				     const char *pkgname)
 {
