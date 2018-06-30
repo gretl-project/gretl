@@ -8,7 +8,7 @@ label = dbnomics
 data-requirement = no-data-ok
 public = dbnomics_bundle_print dbnomics_bundle_get_data \
   dbnomics_get_series dbnomics_get_multiple dbnomics_fetch \
-  dbnomics_providers dbnomics_datasets dbnomics_categtree
+  dbnomics_providers dbnomics_search dbnomics_categtree
 help = dbnomics.pdf
 sample-script = dbnomics_sample.inp
 min-version = 2018a

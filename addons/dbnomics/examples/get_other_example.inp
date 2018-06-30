@@ -9,7 +9,7 @@ if n >= 10
     print b
 endif
 
-dsetlist = dbnomics_datasets("interest rates", 30, 10, 1)
+dsetlist = dbnomics_search("interest rates", 30, 10, 1)
 print dsetlist
 if nelem(dsetlist) >= 10
     b = dsetlist[10]
