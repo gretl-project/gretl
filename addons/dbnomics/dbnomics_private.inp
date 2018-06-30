@@ -195,12 +195,25 @@ end function
 
 ### ------------------------------------------------------------------------
 
-function scalar bad_json (const string s)
+/* This is tricky: we may not get a recognizable error code,
+   or even an error message, on failure to retrieve any data.
+*/
+
+function scalar bad_json (const string s, string *msg)
+    ret = 0
     if instring(s, "404 Error") || instring(s, "404 Not Found")
-        return 404
+        ret = 404
     elif instring(s, "400 Bad Request")
-        return 400
+        ret = 400
     endif
-    return 0
+    got = 0
+    msg = jsonget(s, "$.error_description", &got)
+    if !got
+       msg = jsonget(s, "$.warnings", &got)
+    endif
+    if ret == 0 && got
+        ret = got
+    endif
+    return ret
 end function
 

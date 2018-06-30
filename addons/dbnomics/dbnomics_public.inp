@@ -93,28 +93,28 @@ function bundle dbnomics_get_series (const string datacode, bool verbose[0],
         ret.error = err
         printf "%s", req.errmsg
         return ret
-    else
-        # curl went OK, but we may still not have data
-        from_json = req.output
-        ret.json = req.output
-	ret.error = bad_json(ret.json)
-        if ret.error
-	    got = 0
-            print "dbnomics_get_series: no data were found"
-	    ret.errmsg = jsonget(ret.json, "$.error_description", &got)
-	    if got
-	        printf "%s\n", ret.errmsg
-	    endif
-            return ret
-        endif
-	
-	strings ser_id = strsplit(datacode, , "/")
-        ret.provider = ser_id[1]
-        ret.database = ser_id[2]
-        ret.id = ser_id[3]
     endif
+
+    # curl went OK, but we may still not have data
+    from_json = req.output
+    ret.json = from_json
+    # print from_json
+    string dbnmsg
+    ret.error = bad_json(from_json, &dbnmsg)
+    if ret.error
+        if dbnmsg != ""
+            ret.errmsg = sprintf("error message from dbnomics:\n%s\n", dbnmsg)
+            printf "%s", ret.errmsg
+        endif
+        return ret
+    endif
+
+    strings ser_id = strsplit(datacode, , "/")
+    ret.provider = ser_id[1]
+    ret.database = ser_id[2]
+    ret.id = ser_id[3]
       
-    err = fill_series_bundle(&ret, req.output, 1)  
+    ret.error = fill_series_bundle(&ret, req.output, 1)
     return ret
 end function
 
