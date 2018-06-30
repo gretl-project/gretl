@@ -27,7 +27,7 @@ enum extra_cmds {
     GR_FBOX,
     GR_3D,
     COMPACT,
-    EXPAND, 
+    EXPAND,
     COEFFINT,
     COVAR,
     STAT_TABLE,
@@ -82,7 +82,7 @@ enum extra_cmds {
     VAR_IRF,
     VAR_DECOMP,
     IRF_BOOT,
-    HTEST, 
+    HTEST,
     HTESTNP,
     MODEL_RESTR,
     SYS_RESTR,
@@ -219,12 +219,14 @@ enum browser_codes {
     REMOTE_FUNC_FILES,
     NATIVE_DB,
     REMOTE_DB,
+    DBNOMICS_TOP,
     DBNOMICS_DB,
     REMOTE_DATA_PKGS,
     NATIVE_SERIES,
     RATS_SERIES,
     PCGIVE_SERIES,
     REMOTE_SERIES,
+    DBNOMICS_SERIES,
     REMOTE_ADDONS,
     PKG_REGISTRY,
     MAINWIN
@@ -239,9 +241,9 @@ enum pref_tabs {
     TAB_EDITOR,
     TAB_NET,
     TAB_VCV,
-#ifdef HAVE_MPI    
+#ifdef HAVE_MPI
     TAB_MPI,
-#endif     
+#endif
     TAB_MAX
 };
 

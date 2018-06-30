@@ -1714,7 +1714,7 @@ static int files_item_get_callback (GretlToolItem *item, int role)
 	    item->func = G_CALLBACK(open_db_index);
 	} else if (role == REMOTE_DB) {
 	    item->func = G_CALLBACK(open_remote_db_index);
-	} else if (role == DBNOMICS_DB) {
+	} else if (role == DBNOMICS_TOP) {
 	    item->func = G_CALLBACK(open_dbnomics_provider);
 	}
     } else if (item->flag == BTN_WWW) {
@@ -1959,7 +1959,7 @@ void display_files (int role, gpointer data)
 	title = g_strdup(_("gretl: data files"));
     } else if (role == REMOTE_DB) {
 	title = g_strdup(_("gretl: databases on server"));
-    } else if (role == DBNOMICS_DB) {
+    } else if (role == DBNOMICS_TOP) {
 	title = g_strdup(_("gretl: DB.nomics providers"));
     } else if (role == REMOTE_FUNC_FILES) {
 	title = g_strdup(_("gretl: function packages on server"));
@@ -2095,7 +2095,7 @@ static int display_files_code (const gchar *s)
     if (!strcmp(s, "SFAddons"))
 	return REMOTE_ADDONS;
     if (!strcmp(s, "DBnomics"))
-	return DBNOMICS_DB;
+	return DBNOMICS_TOP;
 
     return 0;
 }
@@ -2113,7 +2113,7 @@ void show_files (GtkAction *action, gpointer p)
 #if DBN_TEST
     display_files(code, p);
 #else
-    if (code == DBNOMICS_DB) {
+    if (code == DBNOMICS_TOP) {
 	dbnomics_temporary_callback(NULL);
     } else {
 	display_files(code, p);
@@ -2723,7 +2723,7 @@ gint populate_filelist (windata_t *vwin, gpointer p)
 	return populate_dbfilelist(vwin, p);
     } else if (vwin->role == REMOTE_DB) {
 	return populate_remote_db_list(vwin);
-    } else if (vwin->role == DBNOMICS_DB) {
+    } else if (vwin->role == DBNOMICS_TOP) {
 	return populate_dbnomics_provider_list(vwin);
     } else if (vwin->role == REMOTE_FUNC_FILES) {
 	return populate_remote_func_list(vwin, 0);
@@ -2765,9 +2765,13 @@ static GtkWidget *files_vbox (windata_t *vwin)
 	N_("Source"),
 	N_("Local status")
     };
-    const char *dbnomics_titles[] = {
+    const char *dbnomics_top_titles[] = {
 	N_("Code"),
 	N_("Name")
+    };
+    const char *dbnomics_db_titles[] = {
+	N_("Name"),
+	N_("Summary")
     };
     const char *func_titles[] = {
 	N_("Package"),
@@ -2850,8 +2854,13 @@ static GtkWidget *files_vbox (windata_t *vwin)
 	full_width = 580;
 	use_tree = 1;
 	break;
+    case DBNOMICS_TOP:
+	titles = dbnomics_top_titles;
+	full_width = 650;
+	file_height = 300;
+	break;
     case DBNOMICS_DB:
-	titles = dbnomics_titles;
+	titles = dbnomics_db_titles;
 	full_width = 650;
 	file_height = 300;
 	break;
