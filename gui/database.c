@@ -79,6 +79,21 @@ enum db_codebook_type {
     CB_PDF
 };
 
+/* columns of individual database window */
+enum {
+    DBCOL_VARNAME,
+    DBCOL_DESCRIP,
+    DBCOL_OBSINFO,
+    DBCOL_OFFSET
+};
+
+/* columns of list-of-databases window */
+enum {
+    COL_DBNAME,
+    COL_DBINFO,
+    COL_DBPATH
+};
+
 static int utf8_correct (char *orig)
 {
     int err = 0;
@@ -1063,10 +1078,10 @@ maybe_adjust_descrip_column (windata_t *vwin)
     GdkWindow *window;
     gint w0, w1, lw, w1max;
 
-    col = gtk_tree_view_get_column(GTK_TREE_VIEW(vwin->listbox), 0);
+    col = gtk_tree_view_get_column(GTK_TREE_VIEW(vwin->listbox), DBCOL_VARNAME);
     w0 = gtk_tree_view_column_get_width(col);
 
-    col = gtk_tree_view_get_column(GTK_TREE_VIEW(vwin->listbox), 1);
+    col = gtk_tree_view_get_column(GTK_TREE_VIEW(vwin->listbox), DBCOL_DESCRIP);
     w1 = gtk_tree_view_column_get_width(col);
 
     window = gtk_widget_get_window(vwin->listbox);
@@ -1307,8 +1322,11 @@ static int add_local_db_series_list (windata_t *vwin)
 	}
 
 	gtk_list_store_append(store, &iter);
-	gtk_list_store_set(store, &iter, 0, row[0], 1, row[1],
-			   2, row[2], 3, offset * sizeof(dbnumber),
+	gtk_list_store_set(store, &iter,
+			   DBCOL_VARNAME, row[0],
+			   DBCOL_DESCRIP, row[1],
+			   DBCOL_OBSINFO, row[2],
+			   DBCOL_OFFSET,  offset * sizeof(dbnumber),
 			   -1);
 
 	offset += nobs;
@@ -1343,12 +1361,9 @@ static int add_remote_db_series_list (windata_t *vwin, char *buf)
 	if (*line1 == '#') {
 	    continue;
 	}
-
 	tailstrip(line1);
 	gretl_charsub(line1, '\t', ' ');
-
 	err = utf8_correct(line1);
-
 	if (gretl_scan_varname(line1, sername) != 1) {
 	    break;
 	}
@@ -1362,14 +1377,16 @@ static int add_remote_db_series_list (windata_t *vwin, char *buf)
 	}
 
 	row[2] = tailstrip(line2);
-
 	if (!err) {
 	    err = check_serinfo(line2, sername, &nobs);
 	}
 
 	gtk_list_store_append(store, &iter);
-	gtk_list_store_set (store, &iter, 0, row[0], 1, row[1],
-			    2, row[2], 3, nobs * sizeof(dbnumber),
+	gtk_list_store_set (store, &iter,
+			    DBCOL_VARNAME, row[0],
+			    DBCOL_DESCRIP, row[1],
+			    DBCOL_OBSINFO, row[2],
+			    DBCOL_OFFSET, nobs * sizeof(dbnumber),
 			    -1);
 
 	offset += nobs;
@@ -1443,29 +1460,32 @@ static void insert_and_free_dbwrapper (dbwrapper *dw, GtkWidget *w)
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
     for (i=0; i<dw->nv; i++) {
-	gchar *obsinfo, *comment = NULL;
+	gchar *obsinfo;
 
 	gtk_list_store_append(store, &iter);
-	gtk_list_store_set(store, &iter, 0, dw->sinfo[i].varname, -1);
+	gtk_list_store_set(store, &iter, DBCOL_VARNAME,
+			   dw->sinfo[i].varname, -1);
 
 	if (*dw->sinfo[i].descrip != 0) {
+	    gchar *comment;
+
 	    comment = iso_comment_to_utf8(dw->sinfo[i].descrip, perr);
 	    if (perr != NULL && *perr) {
 		/* don't keep displaying error messages */
 		perr = NULL;
 	    }
-	}
-
-	if (comment != NULL) {
-	    gtk_list_store_set(store, &iter, 1, comment, -1);
-	    g_free(comment);
+	    if (comment != NULL) {
+		gtk_list_store_set(store, &iter, DBCOL_DESCRIP,
+				   comment, -1);
+		g_free(comment);
+	    }
 	}
 
 	obsinfo = format_obs_info(&dw->sinfo[i]);
-	gtk_list_store_set(store, &iter, 2, obsinfo, -1);
+	gtk_list_store_set(store, &iter, DBCOL_OBSINFO, obsinfo, -1);
 	g_free(obsinfo);
 
-	gtk_list_store_set(store, &iter, 3, dw->sinfo[i].offset, -1);
+	gtk_list_store_set(store, &iter, DBCOL_OFFSET, dw->sinfo[i].offset, -1);
     }
 
     dbwrapper_destroy(dw);
@@ -1654,23 +1674,23 @@ static dbwrapper *get_db_series_info (windata_t *vwin, int action)
 	gchar *tmp = NULL;
 
 	row = rowlist[i+1];
-	tree_view_get_int(view, row, 3, &sinfo->offset);
+	tree_view_get_int(view, row, DBCOL_OFFSET, &sinfo->offset);
 
 	*sinfo->varname = '\0';
-	tree_view_get_string(view, row, 0, &tmp);
+	tree_view_get_string(view, row, DBCOL_VARNAME, &tmp);
 	strncat(sinfo->varname, tmp, VNAMELEN - 1);
 	g_free(tmp);
 
 	tmp = NULL;
 	*sinfo->descrip = '\0';
-	tree_view_get_string(view, row, 1, &tmp);
+	tree_view_get_string(view, row, DBCOL_DESCRIP, &tmp);
 	if (tmp != NULL) {
 	    strncat(sinfo->descrip, tmp, MAXLABEL - 1);
 	    g_free(tmp);
 	}
 
 	tmp = NULL;
-	tree_view_get_string(view, row, 2, &tmp);
+	tree_view_get_string(view, row, DBCOL_OBSINFO, &tmp);
 	if (sscanf(tmp, "%c %10s %*s %10s %*s %*s %d",
 		   &pdc, stobs, endobs, &sinfo->nobs) != 4) {
 	    errbox(_("Failed to parse series information"));
@@ -1812,7 +1832,7 @@ void open_db_index (GtkWidget *w, gpointer data)
     int idx = 0;
 
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox),
-			 vwin->active_var, 0, &fname);
+			 vwin->active_var, COL_DBNAME, &fname);
 
     if (has_suffix(fname, ".rat")) {
 	action = RATS_SERIES;
@@ -2610,8 +2630,10 @@ read_db_files_in_dir (DIR *dir, int dbtype, const char *path,
 		fprintf(stderr, "  found '%s'\n", name);
 #endif
 		gtk_list_store_append(store, iter);
-		gtk_list_store_set(store, iter, 0, name, 1, descrip,
-				   2, path, -1);
+		gtk_list_store_set(store, iter,
+				   COL_DBNAME, name,
+				   COL_DBINFO, descrip,
+				   COL_DBPATH, path, -1);
 		ndb++;
 	    }
 	    g_free(name);
@@ -3352,9 +3374,10 @@ static void maybe_prune_db_list (GtkTreeView *tview,
 
 #if DBNOMICS
     gtk_list_store_append(store, &iter);
-    gtk_list_store_set(store, &iter, 0, "dbnomics",
-		       1, "Various macro series from many data providers",
-		       2, "www", -1);
+    gtk_list_store_set(store, &iter,
+		       COL_DBNAME, "dbnomics",
+		       COL_DBINFO, "Various macro series from many data providers",
+		       COL_DBPATH, "www", -1);
 #endif
 }
 
@@ -3423,31 +3446,31 @@ int add_dbnomics_data (windata_t *vwin)
 	err = prep_dbnomics_series(b, dbset);
 	if (!err) {
 	    char vname[VNAMELEN];
-	    char const *s, *id;
+	    char const *s1, *s2, *id;
 	    char *descrip = NULL;
 	    int cancel = 0;
 
+	    /* construct a default name for the series */
 	    *vname = '\0';
 	    id = gretl_bundle_get_string(b, "id", &err);
 	    if (!err) {
 		normalize_join_colname(vname, id, 0);
 	    }
-	    s = gretl_bundle_get_string(b, "series_name", &err);
+	    /* construct its description */
+	    s1 = gretl_bundle_get_string(b, "datacode", &err);
+	    s2 = gretl_bundle_get_string(b, "series_name", &err);
 	    if (!err) {
-		descrip = gretl_strdup(s);
+		descrip = g_strdup_printf("%s: %s", s1, s2);
 	    }
 	    name_new_series_dialog(vname, descrip, vwin, &cancel);
-	    if (!cancel && *vname != '\0') {
+	    if (!cancel) {
 		strcpy(dbset->varname[1], vname);
 		series_set_label(dbset, 1, descrip);
-		fprintf(stderr, "dbnomics: calling add_dbdata\n");
 		add_dbdata(vwin, dbset, NULL, &freeit);
-		fprintf(stderr, "dbnomics: done add_dbdata\n");
 	    }
-	    free(descrip);
+	    g_free(descrip);
 	}
 	if (freeit) {
-	    fprintf(stderr, "dbnomics: destroy dbset\n");
 	    destroy_dataset(dbset);
 	}
     }

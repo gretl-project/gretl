@@ -251,3 +251,17 @@ function bundles dbnomics_categtree(const string provider, bool verbose[0])
 
     return ret
 end function
+
+### ------------------------------------------------------------------------
+
+function series dbnomics_fetch (const string id, bool verbose[0])
+  series ret = NA
+  bundle b = dbnomics_get_series(id, verbose)
+  if b.error
+    string s = b.errmsg
+    funcerr "@s"
+  else
+    dbnomics_bundle_get_data(b, &ret, verbose)
+  endif
+  return ret
+end function
