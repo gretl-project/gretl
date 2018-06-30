@@ -45,6 +45,7 @@
 	<menuitem action="RATSDB"/>
 	<menuitem action="PcGiveDB"/>
 	<menuitem action="RemoteDB"/>
+	<menuitem action="DBnomics"/>
       </menu>
       <menu action="Packages">
 	<menuitem action="LocalGfn"/>

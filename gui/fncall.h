@@ -79,6 +79,10 @@ int download_addon (const char *pkgname, char **local_path);
 char *installed_addon_status_string (const char *path,
 				     const char *svstr);
 
-int exec_dbnomics_call (const char *code);
+int dbnomics_get_series_call (const char *datacode);
+
+void *dbnomics_get_providers_call (int *err);
+
+void *dbnomics_expand_provider_call (const char *prov, int *err);
 
 #endif /* FNCALL_H */

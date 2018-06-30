@@ -193,7 +193,7 @@ end function
 
 ### ------------------------------------------------------------------------
 
-function bundles dbnomics_search(string s, scalar limit[0::20], scalar offset[0], bool verbose[0])
+function bundles dbnomics_search(string s, scalar limit[0::100], scalar offset[0], bool verbose[0])
     bundle req
     magic = "results.docs"
     

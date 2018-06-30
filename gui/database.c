@@ -1823,6 +1823,26 @@ gboolean open_named_remote_db_index (char *dbname)
     return ret;
 }
 
+void dbnomics_temporary_callback (gpointer data)
+{
+    char *datacode = NULL;
+    int resp;
+
+    if (data != NULL) {
+	windata_t *vwin = (windata_t *) data;
+
+	resp = dbnomics_dialog(&datacode, vwin->main);
+    } else {
+	resp = dbnomics_dialog(&datacode, NULL);
+    }
+
+    if (!canceled(resp)) {
+	dbnomics_get_series_call(datacode);
+    }
+
+    free(datacode);
+}
+
 void open_db_index (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
@@ -1839,16 +1859,8 @@ void open_db_index (GtkWidget *w, gpointer data)
     }
 
     if (action == NATIVE_SERIES && !strcmp(fname, "dbnomics")) {
-	char *code = NULL;
-	int resp = dbnomics_dialog(&code, vwin->main);
-
-	if (canceled(resp)) {
-	    goto finished;
-	} else {
-	    exec_dbnomics_call(code);
-	    free(code);
-	    return;
-	}
+	dbnomics_temporary_callback(data);
+	return;
     }
 
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox),
@@ -1867,8 +1879,6 @@ void open_db_index (GtkWidget *w, gpointer data)
     }
 
     make_db_index_window(action, dbfile, NULL, idx);
-
- finished:
 
     if (action == NATIVE_SERIES) {
 	/* close the window from which this db was selected */
@@ -1909,6 +1919,59 @@ void open_remote_db_index (GtkWidget *w, gpointer data)
 
     g_free(fname);
     free(getbuf);
+}
+
+/* The following is not ready yet */
+
+void open_dbnomics_provider (GtkWidget *w, gpointer data)
+{
+    windata_t *vwin = (windata_t *) data;
+    GtkTreeIter iter;
+    GtkTreeModel *model;
+    GtkTreeSelection *sel;
+    gchar *pname = NULL;
+    int ndb = 0;
+
+    sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(vwin->listbox));
+    if (!gtk_tree_selection_get_selected(sel, &model, &iter)) {
+	return;
+    }
+
+    gtk_tree_model_get(model, &iter, 0, &pname, -1);
+    if (pname == NULL || *pname == '\0') {
+	g_free(pname);
+	return;
+    }
+
+    if (1) {
+	int err = 0;
+	gretl_array *A = dbnomics_expand_provider_call(pname, &err);
+
+	if (err) {
+	    return;
+	} else {
+	    gretl_bundle *b;
+	    char *dbcode, *nmatch;
+	    int i, n;
+
+	    n = gretl_array_get_length(A);
+	    for (i=0; i<n; i++) {
+		b = gretl_array_get_bundle(A, i);
+		dbcode = (char *) gretl_bundle_get_string(b, "code", &err);
+		nmatch = (char *) gretl_bundle_get_string(b, "nb_matching_series", &err);
+		if (!err) {
+		    fprintf(stderr, "%s/%s: %s series\n", pname, dbcode, nmatch);
+		    ndb++;
+		}
+	    }
+	    gretl_array_destroy(A);
+	}
+    }
+
+    warnbox_printf("Should open dbnomics/%s: sorry, not ready yet!",
+		   pname);
+
+    g_free(pname);
 }
 
 #define INFOLEN 100
@@ -2956,6 +3019,51 @@ gint populate_remote_db_list (windata_t *vwin)
 
     if (!err) {
 	db_drag_connect(vwin, GRETL_REMOTE_DB_PTR);
+    }
+
+    return err;
+}
+
+gint populate_dbnomics_provider_list (windata_t *vwin)
+{
+    gretl_array *A;
+    GtkListStore *store;
+    GtkTreeIter iter;
+    int i, ndb = 0;
+    int err = 0;
+
+    store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox)));
+    gtk_list_store_clear(store);
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+
+    /* call dbnomics package to get listing */
+    A = dbnomics_get_providers_call(&err);
+    if (err) {
+	return err;
+    } else {
+	gretl_bundle *b;
+	char *code, *name;
+	int n;
+
+	n = gretl_array_get_length(A);
+	for (i=0; i<n; i++) {
+	    b = gretl_array_get_bundle(A, i);
+	    code = (char *) gretl_bundle_get_string(b, "code", &err);
+	    name = (char *) gretl_bundle_get_string(b, "name", &err);
+	    if (!err) {
+		gtk_list_store_append(store, &iter);
+		gtk_list_store_set(store, &iter,
+				   COL_DBNAME, code,
+				   COL_DBINFO, name, -1);
+		ndb++;
+	    }
+	}
+	gretl_array_destroy(A);
+    }
+
+    if (ndb == 0) {
+	errbox(_("No database files found"));
+	err = 1;
     }
 
     return err;

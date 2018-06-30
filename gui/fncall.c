@@ -4223,7 +4223,7 @@ static ufunc *get_packaged_function (const char *funcname,
     return uf;
 }
 
-int exec_dbnomics_call (const char *code)
+int dbnomics_get_series_call (const char *datacode)
 {
     gretl_bundle *b = NULL;
     ufunc *uf = NULL;
@@ -4249,7 +4249,7 @@ int exec_dbnomics_call (const char *code)
 	fc = fncall_new(uf);
     }
     if (fc != NULL) {
-	err = push_function_arg(fc, NULL, GRETL_TYPE_STRING, (void *) code);
+	err = push_function_arg(fc, NULL, GRETL_TYPE_STRING, (void *) datacode);
 	if (!err) {
 	    err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, NULL,
 				      &b, NULL, prn);
@@ -4268,7 +4268,7 @@ int exec_dbnomics_call (const char *code)
 
     if (b != NULL) {
 	int dberr = gretl_bundle_get_int(b, "error", NULL);
-	gchar *title = g_strdup_printf("dbnomics: %s", code);
+	gchar *title = g_strdup_printf("dbnomics: %s", datacode);
 
 	if (dberr) {
 	    view_buffer(prn, 78, 200, title, IMPORT, NULL);
@@ -4298,4 +4298,59 @@ int exec_dbnomics_call (const char *code)
     gretl_print_destroy(prn);
 
     return err;
+}
+
+void *dbnomics_get_providers_call (int *err)
+{
+    gretl_array *A = NULL;
+    ufunc *uf = NULL;
+    fncall *fc = NULL;
+
+    uf = get_packaged_function("dbnomics_providers", "dbnomics");
+    if (uf == NULL) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (uf != NULL) {
+	fc = fncall_new(uf);
+    }
+    if (fc != NULL) {
+	*err = gretl_function_exec(fc, GRETL_TYPE_BUNDLES, NULL,
+				   &A, NULL, NULL);
+	if (*err) {
+	    gui_errmsg(*err);
+	}
+    }
+
+    return A;
+}
+
+void *dbnomics_expand_provider_call (const char *prov, int *err)
+{
+    gretl_array *A = NULL;
+    ufunc *uf = NULL;
+    fncall *fc = NULL;
+
+    uf = get_packaged_function("dbnomics_search", "dbnomics");
+    if (uf == NULL) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (uf != NULL) {
+	fc = fncall_new(uf);
+    }
+    if (fc != NULL) {
+	*err = push_function_arg(fc, NULL, GRETL_TYPE_STRING, (void *) prov);
+	if (!*err) {
+	    *err = gretl_function_exec(fc, GRETL_TYPE_BUNDLES, NULL,
+				       &A, NULL, NULL);
+	}
+	if (*err) {
+	    gui_errmsg(*err);
+	}
+    }
+
+    return A;
 }

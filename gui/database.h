@@ -9,6 +9,10 @@ void open_remote_db_index (GtkWidget *w, gpointer data);
 
 gboolean open_named_remote_db_index (char *dbname);
 
+void open_dbnomics_provider (GtkWidget *w, gpointer data);
+
+void dbnomics_temporary_callback (gpointer data);
+
 void install_file_from_server (GtkWidget *w, windata_t *vwin);
 
 void drag_file_from_server (guint info);
@@ -25,6 +29,8 @@ gint populate_dbfilelist (windata_t *vwin, int *pndb);
 void set_db_dir_callback (windata_t *vwin, char *path);
 
 gint populate_remote_db_list (windata_t *vwin);
+
+gint populate_dbnomics_provider_list (windata_t *vwin);
 
 gint populate_remote_func_list (windata_t *win, int filter);
 
