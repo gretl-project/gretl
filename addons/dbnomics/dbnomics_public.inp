@@ -31,7 +31,7 @@ end function
 
 ### ------------------------------------------------------------------------
 
-function scalar dbnomics_bundle_get_data(const bundle b, series *x)
+function scalar dbnomics_bundle_get_data(const bundle b, series *x, bool verbose[0])
     series ret = NA
     if !inbundle(b, "frequency")
         printf "dbnomics_bundle_get_data: bundle does not contain a data frequency\n"
@@ -57,7 +57,9 @@ function scalar dbnomics_bundle_get_data(const bundle b, series *x)
         setinfo x --description="@d" 
     endif
     
-    printf "get_data: %s\n", b.series_name
+    if verbose
+        printf "dbnomics_bundle_get_data:\n%s\n", b.series_name
+    endif
     return 0
 end function
 
@@ -118,8 +120,8 @@ end function
 
 ### ------------------------------------------------------------------------
 
-function bundles dbnomics_get_multiple(string pcode, string dcode, int limit[0::20], scalar offset[0],
-      bundle spec[null])
+function bundles dbnomics_get_multiple(string pcode, string dcode, int limit[0::20],
+      scalar offset[0], bundle spec[null])
     
     if !exists(spec)
         bundle spec = null
@@ -164,9 +166,8 @@ function bundles dbnomics_providers(bool verbose[0])
     json = req.output
     nprov = 0
     str = jsonget(json, sprintf("$.%s[*].code", magic), &nprov)
+
     bundles ret = array(nprov)
-    
-    k = 0
     strings fields = defarray("name", "terms_of_use", "code", "region", "description", "website")
     
     loop i = 1..nprov --quiet
@@ -203,8 +204,6 @@ function bundles dbnomics_datasets(string s, scalar limit[0::20], scalar offset[
     ntot = atof(jsonget(json, "$.num_datasets_found")) 
 
     bundles ret = array(n)
-
-    k = 0
     strings fields = defarray("dataset_code", "num_series_found", "dataset_name", "provider_code")
     
     loop i = 1 .. n --quiet
@@ -236,7 +235,6 @@ function bundles dbnomics_categtree(string provider)
     str = jsonget(json, sprintf("$.%s[*].code", magic), &n)
 
     bundles ret = array(n)
-    k = 0
     strings fields = defarray("code", "name")
     
     loop i = 1..n --quiet
