@@ -133,20 +133,58 @@ function bundles dbnomics_get_multiple(string pcode, string dcode, int limit[0::
     # printf "%s\n", req.URL
     err = curl(&req)
     json = req.output
-    n = 0    
+    n = 0
+    ns = 0
 
     found = jsonget(json, "$.series.num_found", &n)
     printf "no. of series = %s\n", found
     nfound = atof(found)
     if ok(nfound)
-        bundles ret = array(nfound)
-        loop i = 1..nfound --quiet
+        ns = nfound > limit ? limit : nfound
+    endif
+    if ns > 0
+        bundles ret = array(ns)
+        loop i = 1..ns --quiet
             bundle tmp = null
             err = fill_series_bundle(&tmp, json, i)
             if !err
                 ret[i] = tmp
             endif
         endloop 
+    else
+        bundles ret = null
+    endif
+
+    return ret
+end function
+
+### ------------------------------------------------------------------------
+
+function bundles dbnomics_get_dataset_content(string pcode, string dcode,
+   int limit[0::50], scalar offset[0])
+    site = "api.next.nomics.world"
+    bundle req = null
+    req.header = "accept: application/json"
+    req.URL = sprintf("https://%s/%s/%s/series?limit=%d&offset=%d", site, pcode,
+      dcode, limit, offset)
+    # printf "%s\n", req.URL
+    err = curl(&req)
+    json = req.output
+
+    n = 0
+    ns = 0
+    found = jsonget(json, "$.series.num_found", &n)
+    if n > 0
+        nfound = atof(found)
+	ns = nfound > limit ? limit : nfound
+    endif
+    if ns > 0
+        bundles ret = array(ns)
+        strings fields = defarray("name", "code")
+        loop i = 1..ns --quiet
+            ret[i] = json2bndl(fields, json, "series.docs", i-1)
+	    ret[i].num_found = nfound
+        endloop
     else
         bundles ret = null
     endif
