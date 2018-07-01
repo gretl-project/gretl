@@ -63,6 +63,13 @@ static void doubleclick_action (windata_t *vwin)
     case REMOTE_SERIES:
 	display_db_series(vwin);
 	break;
+    case DBNOMICS_TOP:
+	open_dbnomics_provider(NULL, vwin);
+	break;
+    case DBNOMICS_DB:
+    case DBNOMICS_SERIES:
+	dummy_call();
+	break;
     default:
 	break;
     }

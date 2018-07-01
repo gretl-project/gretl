@@ -50,6 +50,7 @@
 #define GRETL_STOCK_SMALLER "gretl-smaller"
 #define GRETL_STOCK_MENU    "gretl-menu"
 #define GRETL_STOCK_HMAP    "gretl-hmap"
+#define GRETL_STOCK_DBN     "gretl-dbnomics"
 
 typedef enum {
     VWIN_HELP_ACTIVE     = 1 << 0,

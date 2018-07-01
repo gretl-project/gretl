@@ -55,7 +55,6 @@
 #endif
 
 #define DB_SEARCH_DEBUG 0
-#define DBNOMICS 1 /* enable for general testing? */
 
 /* private functions */
 static GtkWidget *database_window (windata_t *vwin);
@@ -1926,28 +1925,6 @@ void open_remote_db_index (GtkWidget *w, gpointer data)
     free(getbuf);
 }
 
-/* The following is not ready yet */
-
-/* useful fragment
-
-    gretl_bundle *b;
-    char *dbcode, *name;
-    int i, n;
-
-    n = gretl_array_get_length(A);
-    for (i=0; i<n; i++) {
-	b = gretl_array_get_bundle(A, i);
-	dbcode = (char *) gretl_bundle_get_string(b, "code", &err);
-	name = (char *) gretl_bundle_get_string(b, "name", &err);
-	if (!err) {
-	    fprintf(stderr, "%s/%s: %s\n", pname, dbcode, name);
-	    ndb++;
-	}
-    }
-    gretl_array_destroy(A);
-
-*/
-
 void open_dbnomics_provider (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
@@ -1955,8 +1932,6 @@ void open_dbnomics_provider (GtkWidget *w, gpointer data)
     GtkTreeModel *model;
     GtkTreeSelection *sel;
     gchar *pname = NULL;
-    gretl_array *A = NULL;
-    int ndb = 0, err = 0;
 
     sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(vwin->listbox));
     if (!gtk_tree_selection_get_selected(sel, &model, &iter)) {
@@ -1969,18 +1944,7 @@ void open_dbnomics_provider (GtkWidget *w, gpointer data)
 	return;
     }
 
-    A = dbnomics_expand_provider_call(pname, &err);
-    if (!err) {
-	ndb = gretl_array_get_length(A);
-	if (ndb == 0) {
-	    errbox(_("No database files found"));
-	    err = 1;
-	} else {
-	    display_files(DBNOMICS_DB, A);
-	}
-    }
-
-    g_free(pname);
+    display_files(DBNOMICS_DB, pname);
 }
 
 #define INFOLEN 100
@@ -2997,14 +2961,12 @@ gint populate_remote_db_list (windata_t *vwin)
 		kids = ndb;
 	    }
 	}
-
 	if (parent) {
 	    /* header for child databases */
 	    gtk_tree_store_append(store, &iter, NULL);
 	    gtk_tree_store_set(store, &iter, 0, "", 1, src, -1);
 	    parent = 0;
 	}
-
 	if (kids > 0) {
 	    /* insert child under heading */
 	    gtk_tree_store_insert_before(store, &child_iter,
@@ -3018,7 +2980,6 @@ gint populate_remote_db_list (windata_t *vwin)
 	    gtk_tree_store_set(store, &iter, 0, row[0], 1, row[1],
 			       2, row[2], -1);
 	}
-
 	i++;
     }
 
@@ -3073,6 +3034,77 @@ gint populate_dbnomics_provider_list (windata_t *vwin)
     if (ndb == 0) {
 	errbox(_("No database files found"));
 	err = 1;
+    }
+
+    return err;
+}
+
+gint populate_dbnomics_dataset_list (windata_t *vwin, gpointer p)
+{
+    gchar *provider = (gchar *) p;
+    gretl_array *A = NULL;
+    gretl_bundle *b;
+    char *code, *name, *nstr;
+    GtkListStore *store;
+    GtkTreeIter iter;
+    int max_dsets = 25;
+    int offset = 0;
+    int n = 0, ndb = 0;
+    int ntotal = 0;
+    int i, err = 0;
+
+    store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox)));
+    gtk_list_store_clear(store);
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+
+    A = dbnomics_expand_provider_call(provider, max_dsets, offset, &err);
+    if (!err) {
+	n = gretl_array_get_length(A);
+	if (n == 0) {
+	    errbox(_("No datasets were found"));
+	    err = 1;
+	}
+    }
+
+    if (err) {
+	return err;
+    }
+
+    for (i=0; i<n; i++) {
+	b = gretl_array_get_bundle(A, i);
+	code = (char *) gretl_bundle_get_string(b, "code", &err);
+	name = (char *) gretl_bundle_get_string(b, "name", &err);
+	nstr = (char *) gretl_bundle_get_string(b, "nb_matching_series", &err);
+	if (!err) {
+	    gchar *info = g_strdup_printf("%s (%d series)", name, atoi(nstr));
+
+	    gtk_list_store_append(store, &iter);
+	    gtk_list_store_set(store, &iter,
+			       COL_DBNAME, code,
+			       COL_DBINFO, info, -1);
+	    g_free(info);
+	    ndb++;
+	    if (ntotal == 0) {
+		ntotal = gretl_bundle_get_int(b, "ntot", NULL);
+	    }
+	}
+    }
+
+    gretl_array_destroy(A); /* we're done with this? */
+
+    if (ndb == 0) {
+	errbox(_("No datasets were found"));
+	err = 1;
+    } else {
+	/* show status */
+	gchar *tmp = g_strdup_printf(_("showing datasets %d-%d out of %d"),
+				     offset+1, offset+ndb, ntotal);
+
+	gtk_label_set_text(GTK_LABEL(vwin->status), tmp);
+	while (gtk_events_pending()) {
+	    gtk_main_iteration();
+	}
+	g_free(tmp);
     }
 
     return err;

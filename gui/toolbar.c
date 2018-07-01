@@ -62,6 +62,7 @@
 #include "../pixmaps/mini.winlist.xpm"
 #include "../pixmaps/mini.bundle.xpm"
 #include "../pixmaps/mini.heatmap.xpm"
+#include "../pixmaps/mini.dbnomics.xpm"
 
 /* for main-window toolbar */
 #include "../pixmaps/mini.calc.xpm"
@@ -161,6 +162,7 @@ void gretl_stock_icons_init (void)
 	{ downsize_xpm, GRETL_STOCK_SMALLER},
 	{ open_menu_xpm, GRETL_STOCK_MENU},
 	{ mini_heatmap_xpm, GRETL_STOCK_HMAP},
+	{ mini_dbnomics_xpm, GRETL_STOCK_DBN},
     };
     static GtkIconFactory *gretl_factory;
     int n = G_N_ELEMENTS(stocks);

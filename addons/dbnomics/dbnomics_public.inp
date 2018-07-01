@@ -193,7 +193,7 @@ end function
 
 ### ------------------------------------------------------------------------
 
-function bundles dbnomics_search(string s, scalar limit[0::100], scalar offset[0], bool verbose[0])
+function bundles dbnomics_search(string s, int limit[0::100], int offset[0], bool verbose[0])
     bundle req
     magic = "results.docs"
     
@@ -212,6 +212,7 @@ function bundles dbnomics_search(string s, scalar limit[0::100], scalar offset[0
     
     loop i = 1..n --quiet
         ret[i] = json2bndl(fields, json, magic, i-1)
+	ret[i].ntot = ntot
     endloop
 
     if verbose

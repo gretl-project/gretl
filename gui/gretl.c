@@ -1644,7 +1644,7 @@ GtkActionEntry main_entries[] = {
     { "RATSDB", GTK_STOCK_OPEN, N_("_RATS 4..."), "", NULL, G_CALLBACK(open_data) },
     { "PcGiveDB", GTK_STOCK_OPEN, N_("_PcGive..."), "", NULL, G_CALLBACK(open_data) },
     { "RemoteDB", GTK_STOCK_NETWORK, N_("On database _server..."), NULL, NULL, G_CALLBACK(show_files) },
-    { "DBnomics", GTK_STOCK_NETWORK, N_("DB.NOMICS..."), NULL, NULL, G_CALLBACK(show_files) },
+    { "DBnomics", GRETL_STOCK_DBN, N_("DB.NOMICS..."), NULL, NULL, G_CALLBACK(show_files) },
 
     { "Packages", NULL, N_("_Function packages"), NULL, NULL, NULL },
     { "LocalGfn", GTK_STOCK_OPEN, N_("On _local machine..."), "", NULL, G_CALLBACK(show_files) },

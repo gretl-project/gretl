@@ -4326,7 +4326,9 @@ void *dbnomics_get_providers_call (int *err)
     return A;
 }
 
-void *dbnomics_expand_provider_call (const char *prov, int *err)
+void *dbnomics_expand_provider_call (const char *prov,
+				     int limit, int offset,
+				     int *err)
 {
     gretl_array *A = NULL;
     ufunc *uf = NULL;
@@ -4343,6 +4345,12 @@ void *dbnomics_expand_provider_call (const char *prov, int *err)
     }
     if (fc != NULL) {
 	*err = push_function_arg(fc, NULL, GRETL_TYPE_STRING, (void *) prov);
+	if (!*err && limit != 100) {
+	    *err = push_function_arg(fc, NULL, GRETL_TYPE_INT, (void *) &limit);
+	}
+	if (!*err && offset > 0) {
+	    *err = push_function_arg(fc, NULL, GRETL_TYPE_INT, (void *) &offset);
+	}
 	if (!*err) {
 	    *err = gretl_function_exec(fc, GRETL_TYPE_BUNDLES, NULL,
 				       &A, NULL, NULL);

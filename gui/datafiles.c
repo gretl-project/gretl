@@ -91,7 +91,11 @@ enum {
 #define REMOTE_ACTION(c) (c == REMOTE_DB || \
                           c == REMOTE_FUNC_FILES || \
                           c == REMOTE_DATA_PKGS || \
-                          c == REMOTE_ADDONS)
+                          c == REMOTE_ADDONS || \
+	                  c == DBNOMICS_DB || \
+	                  c == DBNOMICS_SERIES)
+
+#define DBNOMICS_ACTION(c) (c == DBNOMICS_DB || c == DBNOMICS_SERIES)
 
 static void
 read_fn_files_in_dir (DIR *dir, const char *path,
@@ -1548,27 +1552,27 @@ static void build_data_pkg_popup (windata_t *vwin)
 
 static void show_server_dbs (GtkWidget *w, gpointer p)
 {
-    display_files(REMOTE_DB, p);
+    display_files(REMOTE_DB, NULL);
 }
 
 static void show_local_dbs (GtkWidget *w, gpointer p)
 {
-    display_files(NATIVE_DB, p);
+    display_files(NATIVE_DB, NULL);
 }
 
 static void show_server_funcs (GtkWidget *w, gpointer p)
 {
-    display_files(REMOTE_FUNC_FILES, p);
+    display_files(REMOTE_FUNC_FILES, NULL);
 }
 
 static void show_server_data_pkgs (GtkWidget *w, gpointer p)
 {
-    display_files(REMOTE_DATA_PKGS, p);
+    display_files(REMOTE_DATA_PKGS, NULL);
 }
 
 static void show_local_funcs (GtkWidget *w, gpointer p)
 {
-    display_files(FUNC_FILES, p);
+    display_files(FUNC_FILES, NULL);
 }
 
 static void show_gfn_registry (GtkWidget *w, windata_t *vwin)
@@ -1716,6 +1720,10 @@ static int files_item_get_callback (GretlToolItem *item, int role)
 	    item->func = G_CALLBACK(open_remote_db_index);
 	} else if (role == DBNOMICS_TOP) {
 	    item->func = G_CALLBACK(open_dbnomics_provider);
+	    // item->tip = N_("List datasets");
+	} else if (role == DBNOMICS_DB) {
+	    // item->func = G_CALLBACK(open_dbnomics_dataset);
+	    item->func = G_CALLBACK(dummy_call);
 	}
     } else if (item->flag == BTN_WWW) {
 	if (role == FUNC_FILES) {
@@ -1951,13 +1959,6 @@ void display_files (int role, gpointer data)
 	return;
     }
 
-    /* temporary! */
-    if (role == DBNOMICS_DB) {
-	warnbox("Sorry, not ready!");
-	gretl_array_destroy((gretl_array *) data);
-	return;
-    }
-
     if (role == FUNC_FILES || role == NATIVE_DB) {
 	title = files_title(role);
     } else if (role == PS_FILES) {
@@ -1968,8 +1969,6 @@ void display_files (int role, gpointer data)
 	title = g_strdup(_("gretl: databases on server"));
     } else if (role == DBNOMICS_TOP) {
 	title = g_strdup(_("gretl: DB.NOMICS providers"));
-    } else if (role == DBNOMICS_DB) {
-	title = g_strdup(_("gretl: DB.NOMICS datasets"));
     } else if (role == REMOTE_FUNC_FILES) {
 	title = g_strdup(_("gretl: function packages on server"));
     } else if (role == REMOTE_DATA_PKGS) {
@@ -1978,6 +1977,8 @@ void display_files (int role, gpointer data)
 	title = g_strdup(_("gretl: addons"));
     } else if (role == PKG_REGISTRY) {
 	title = g_strdup(_("gretl: packages on menus"));
+    } else if (role == DBNOMICS_DB) {
+	title = g_strdup_printf("gretl: %s datasets", (gchar *) data);
     }
 
     vwin = gretl_browser_new(role, title);
@@ -2045,7 +2046,11 @@ void display_files (int role, gpointer data)
 
 	hbox = gtk_hbox_new(FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
-	vwin->status = gtk_label_new(_("Network status: OK"));
+	if (DBNOMICS_ACTION(role)) {
+	    vwin->status = gtk_label_new("");
+	} else {
+	    vwin->status = gtk_label_new(_("Network status: OK"));
+	}
 	gtk_label_set_justify(GTK_LABEL(vwin->status), GTK_JUSTIFY_LEFT);
 	gtk_box_pack_start(GTK_BOX(hbox), vwin->status, FALSE, FALSE, 0);
     }
@@ -2065,7 +2070,7 @@ void display_files (int role, gpointer data)
 	    gtk_widget_set_size_request(filebox, w, h);
 	}
     } else {
-	err = populate_filelist(vwin, NULL);
+	err = populate_filelist(vwin, data);
     }
 
     if (err) {
@@ -2109,7 +2114,7 @@ static int display_files_code (const gchar *s)
     return 0;
 }
 
-#define DBN_TEST 0
+#define DBN_TEST 1
 
 /* make a browser window to display a set of files: textbook
    data files, practice scripts, databases...
@@ -2734,6 +2739,8 @@ gint populate_filelist (windata_t *vwin, gpointer p)
 	return populate_remote_db_list(vwin);
     } else if (vwin->role == DBNOMICS_TOP) {
 	return populate_dbnomics_provider_list(vwin);
+    } else if (vwin->role == DBNOMICS_DB) {
+	return populate_dbnomics_dataset_list(vwin, p);
     } else if (vwin->role == REMOTE_FUNC_FILES) {
 	return populate_remote_func_list(vwin, 0);
     } else if (vwin->role == REMOTE_DATA_PKGS) {
@@ -2779,8 +2786,8 @@ static GtkWidget *files_vbox (windata_t *vwin)
 	N_("Name")
     };
     const char *dbnomics_db_titles[] = {
-	N_("Name"),
-	N_("Summary")
+	N_("Code"),
+	N_("Content")
     };
     const char *func_titles[] = {
 	N_("Package"),
