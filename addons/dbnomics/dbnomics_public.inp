@@ -38,7 +38,16 @@ function scalar dbnomics_bundle_get_data(const bundle b, series *x, bool verbose
 	return 1
     endif
     pd = b.frequency
-    if pd != $pd 
+    daily = pd == 7
+    
+    printf "pd = %d, $pd = %d\n", pd, $pd
+    if daily #daily data need special treatment
+	match = maxc($pd .= {5;6;7}) 
+    else
+	match = (pd == $pd)
+    endif
+
+    if !match
         funcerr "frequency does not match!"
     endif
     
@@ -46,10 +55,15 @@ function scalar dbnomics_bundle_get_data(const bundle b, series *x, bool verbose
     n = b.totobs
     outfile @tmpfile --write
     printf "obs\tx\n"
+    set warnings off
     loop i=1..n -q
         printf "%s\t%20.15f\n", b.periods[i], b.vals[i]
     endloop
     outfile --close
+
+    if daily
+	setopt join --tkey="obs,%Y-%m-%d"
+    endif
     
     join @tmpfile x
     if inbundle(b, "series_name")
