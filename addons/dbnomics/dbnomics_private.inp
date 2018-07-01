@@ -51,6 +51,8 @@ function scalar get_frequency(string json_obj)
             scalar ret = 4
         elif frq == "m"
             scalar ret = 12
+        elif frq == "d"
+            scalar ret = 7
         else # unrecognised
             printf "frq = \"%s\" unrecognized\n", frq
             scalar ret = -1
