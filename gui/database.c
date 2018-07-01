@@ -1854,6 +1854,11 @@ void open_db_index (GtkWidget *w, gpointer data)
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox),
 			 vwin->active_var, COL_DBNAME, &fname);
 
+    if (vwin->role == DBNOMICS_TOP) {
+	fprintf(stderr, "HERE, DBNOMICS_TOP\n");
+	return;
+    }
+
     if (has_suffix(fname, ".rat")) {
 	action = RATS_SERIES;
     }
@@ -1923,6 +1928,26 @@ void open_remote_db_index (GtkWidget *w, gpointer data)
 
 /* The following is not ready yet */
 
+/* useful fragment
+
+    gretl_bundle *b;
+    char *dbcode, *name;
+    int i, n;
+
+    n = gretl_array_get_length(A);
+    for (i=0; i<n; i++) {
+	b = gretl_array_get_bundle(A, i);
+	dbcode = (char *) gretl_bundle_get_string(b, "code", &err);
+	name = (char *) gretl_bundle_get_string(b, "name", &err);
+	if (!err) {
+	    fprintf(stderr, "%s/%s: %s\n", pname, dbcode, name);
+	    ndb++;
+	}
+    }
+    gretl_array_destroy(A);
+
+*/
+
 void open_dbnomics_provider (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
@@ -1930,6 +1955,7 @@ void open_dbnomics_provider (GtkWidget *w, gpointer data)
     GtkTreeModel *model;
     GtkTreeSelection *sel;
     gchar *pname = NULL;
+    gretl_array *A = NULL;
     int ndb = 0, err = 0;
 
     sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(vwin->listbox));
@@ -1943,32 +1969,16 @@ void open_dbnomics_provider (GtkWidget *w, gpointer data)
 	return;
     }
 
-    if (1) {
-	gretl_array *A = dbnomics_expand_provider_call(pname, &err);
-
-	if (err) {
-	    return;
+    A = dbnomics_expand_provider_call(pname, &err);
+    if (!err) {
+	ndb = gretl_array_get_length(A);
+	if (ndb == 0) {
+	    errbox(_("No database files found"));
+	    err = 1;
 	} else {
-	    gretl_bundle *b;
-	    char *dbcode, *name;
-	    int i, n;
-
-	    n = gretl_array_get_length(A);
-	    for (i=0; i<n; i++) {
-		b = gretl_array_get_bundle(A, i);
-		dbcode = (char *) gretl_bundle_get_string(b, "code", &err);
-		name = (char *) gretl_bundle_get_string(b, "name", &err);
-		if (!err) {
-		    fprintf(stderr, "%s/%s: %s\n", pname, dbcode, name);
-		    ndb++;
-		}
-	    }
-	    gretl_array_destroy(A);
+	    display_files(DBNOMICS_DB, A);
 	}
     }
-
-    warnbox_printf("Should open dbnomics/%s: sorry, not ready yet!",
-		   pname);
 
     g_free(pname);
 }

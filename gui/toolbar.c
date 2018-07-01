@@ -1438,7 +1438,7 @@ static void tbar_new_script (void)
 
 static void tbar_show_funcs (GtkWidget *w, gpointer p)
 {
-    display_files(FUNC_FILES, mdata);
+    display_files(FUNC_FILES, NULL);
 }
 
 /* end toolbar icon callbacks */

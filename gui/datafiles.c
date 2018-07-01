@@ -1951,6 +1951,13 @@ void display_files (int role, gpointer data)
 	return;
     }
 
+    /* temporary! */
+    if (role == DBNOMICS_DB) {
+	warnbox("Sorry, not ready!");
+	gretl_array_destroy((gretl_array *) data);
+	return;
+    }
+
     if (role == FUNC_FILES || role == NATIVE_DB) {
 	title = files_title(role);
     } else if (role == PS_FILES) {
@@ -1960,7 +1967,9 @@ void display_files (int role, gpointer data)
     } else if (role == REMOTE_DB) {
 	title = g_strdup(_("gretl: databases on server"));
     } else if (role == DBNOMICS_TOP) {
-	title = g_strdup(_("gretl: DB.nomics providers"));
+	title = g_strdup(_("gretl: DB.NOMICS providers"));
+    } else if (role == DBNOMICS_DB) {
+	title = g_strdup(_("gretl: DB.NOMICS datasets"));
     } else if (role == REMOTE_FUNC_FILES) {
 	title = g_strdup(_("gretl: function packages on server"));
     } else if (role == REMOTE_DATA_PKGS) {
