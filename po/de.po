@@ -3,14 +3,14 @@
 # first translator: Markus Hahn <markus.hahn@rub.de>, 2004.
 # current (Feb 2008) translator: Sven Schreiber <svetosch ... gmx ... net>
 #  <>, 2008.
-# 
-# 
+#
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2018-02-05 11:55-0500\n"
-"PO-Revision-Date: 2018-02-05 14:21+0100\n"
+"PO-Revision-Date: 2018-07-01 12:20+0200\n"
 "Last-Translator: Sven Schreiber <svetosch (at) gmx (dot) net>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 2.0.4\n"
+"X-Generator: Poedit 2.0.6\n"
 
 #: lib/src/adf_kpss.c:493
 msgid "lagged differences"
@@ -913,9 +913,9 @@ msgid "quarter %s?\n"
 msgstr "Quartal %s?\n"
 
 #: lib/src/csvdata.c:1185
-#, fuzzy, c-format
+#, c-format
 msgid "quarter %d?\n"
-msgstr "Quartal %s?\n"
+msgstr "Quartal %d?\n"
 
 #: lib/src/csvdata.c:1192
 #, c-format
@@ -1188,9 +1188,8 @@ msgid "Series length does not match the dataset"
 msgstr "Reihenlänge nicht übereinstimmend mit Datensatz"
 
 #: lib/src/csvdata.c:6315 lib/src/csvdata.c:6607 lib/src/csvdata.c:6697
-#, fuzzy
 msgid "Invalid join specification"
-msgstr "Ungültige Spaltenspezifikation"
+msgstr "Ungültige Spezifikation für join"
 
 #: lib/src/csvdata.c:6881
 #, c-format
@@ -1630,9 +1629,9 @@ msgid "Matrix %s does not represent a contingency table"
 msgstr "Matrix %s stellt keine Kontingenztabelle dar"
 
 #: lib/src/describe.c:2600
-#, fuzzy, c-format
+#, c-format
 msgid "dropping %s: not a discrete variable\n"
-msgstr "%s: keine Zeichenkettenvariable"
+msgstr "lasse %s aus: keine diskrete Variable\n"
 
 #: lib/src/describe.c:2898 lib/src/describe.c:3083 lib/src/describe.c:3631
 #: lib/src/geneval.c:7514 lib/src/transforms.c:843 lib/src/transforms.c:1390
@@ -3480,9 +3479,8 @@ msgid "%s: duplicated parameter name '%s'"
 msgstr "%s: duplizierter Parametername '%s'"
 
 #: lib/src/gretl_func.c:6212
-#, fuzzy
 msgid "Identifier exceeds the maximum of 31 characters"
-msgstr "Variablenname überschreitet Maximum von 31 Zeichen"
+msgstr "Name überschreitet Maximum von 31 Zeichen"
 
 #: lib/src/gretl_func.c:6624
 #, c-format
@@ -6046,9 +6044,9 @@ msgid "progressive loop: model must be of constant size"
 msgstr "Progressive Schleife: Modell muss konstante Größe haben"
 
 #: lib/src/monte_carlo.c:2353
-#, fuzzy, c-format
+#, c-format
 msgid "The '%s' command is not available in loop mode"
-msgstr "Sorry, dieser Befehl ist im Schleifenmodus nicht verfügbar"
+msgstr "Der '%s'-Befehl ist im Schleifenmodus nicht verfügbar"
 
 #: lib/src/monte_carlo.c:2488
 #, c-format
@@ -11432,17 +11430,14 @@ msgid "No formula was given"
 msgstr "Keine Formel eingegeben"
 
 #: gui/gpt_dialog.c:2383
-#, fuzzy
 msgid "box"
-msgstr "boxes"
+msgstr "Box"
 
 #: gui/gpt_dialog.c:2388
-#, fuzzy
 msgid "c.i. bound"
-msgstr "Rechte Schranke"
+msgstr "K.-I. Grenze"
 
 #: gui/gpt_dialog.c:2390 gui/gpt_dialog.c:2396
-#, fuzzy
 msgid "outliers"
 msgstr "Ausreißer"
 
@@ -11464,9 +11459,8 @@ msgid "type"
 msgstr "Art"
 
 #: gui/gpt_dialog.c:2814
-#, fuzzy
 msgid "line"
-msgstr "lines"
+msgstr "Linie"
 
 #: gui/gpt_dialog.c:2815
 msgid "line width"
@@ -16285,7 +16279,7 @@ msgstr "Schriftart für Menüs und Bezeichner"
 
 #: gui/settings.c:2836
 msgid "Remember this setting"
-msgstr ""
+msgstr "Diese Einstellung merken"
 
 #: gui/settings.c:2846
 msgid "gretl: font scale"
