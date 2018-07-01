@@ -11,6 +11,8 @@ gboolean open_named_remote_db_index (char *dbname);
 
 void open_dbnomics_provider (GtkWidget *w, gpointer data);
 
+void open_dbnomics_dataset (GtkWidget *w, gpointer data);
+
 void dbnomics_temporary_callback (gpointer data);
 
 void install_file_from_server (GtkWidget *w, windata_t *vwin);
@@ -33,6 +35,8 @@ gint populate_remote_db_list (windata_t *vwin);
 gint populate_dbnomics_provider_list (windata_t *vwin);
 
 gint populate_dbnomics_dataset_list (windata_t *vwin, gpointer p);
+
+gint populate_dbnomics_series_list (windata_t *vwin, gpointer p);
 
 gint populate_remote_func_list (windata_t *win, int filter);
 

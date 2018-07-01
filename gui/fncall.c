@@ -4326,9 +4326,9 @@ void *dbnomics_get_providers_call (int *err)
     return A;
 }
 
-void *dbnomics_expand_provider_call (const char *prov,
-				     int limit, int offset,
-				     int *err)
+void *dbnomics_search_call (const char *key,
+			    int limit, int offset,
+			    int *err)
 {
     gretl_array *A = NULL;
     ufunc *uf = NULL;
@@ -4344,7 +4344,48 @@ void *dbnomics_expand_provider_call (const char *prov,
 	fc = fncall_new(uf);
     }
     if (fc != NULL) {
+	*err = push_function_arg(fc, NULL, GRETL_TYPE_STRING, (void *) key);
+	if (!*err && limit != 100) {
+	    *err = push_function_arg(fc, NULL, GRETL_TYPE_INT, (void *) &limit);
+	}
+	if (!*err && offset > 0) {
+	    *err = push_function_arg(fc, NULL, GRETL_TYPE_INT, (void *) &offset);
+	}
+	if (!*err) {
+	    *err = gretl_function_exec(fc, GRETL_TYPE_BUNDLES, NULL,
+				       &A, NULL, NULL);
+	}
+	if (*err) {
+	    gui_errmsg(*err);
+	}
+    }
+
+    return A;
+}
+
+void *dbnomics_probe_series (const char *prov,
+			     const char *dset,
+			     int limit, int offset,
+			     int *err)
+{
+    gretl_array *A = NULL;
+    ufunc *uf = NULL;
+    fncall *fc = NULL;
+
+    uf = get_packaged_function("dbnomics_get_dataset_content", "dbnomics");
+    if (uf == NULL) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (uf != NULL) {
+	fc = fncall_new(uf);
+    }
+    if (fc != NULL) {
 	*err = push_function_arg(fc, NULL, GRETL_TYPE_STRING, (void *) prov);
+	if (!*err) {
+	    *err = push_function_arg(fc, NULL, GRETL_TYPE_STRING, (void *) dset);
+	}
 	if (!*err && limit != 100) {
 	    *err = push_function_arg(fc, NULL, GRETL_TYPE_INT, (void *) &limit);
 	}

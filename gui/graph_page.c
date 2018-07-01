@@ -664,7 +664,7 @@ static gchar *gpage_switch_compiler (int term)
 	/* switch to pdflatex */
 	*latex = '\0';
 	strncat(latex, tmp, len0);
-	strncat(latex, "pdf", 3);
+	strcat(latex, "pdf");
 	strcat(latex, p);
     } else if (term != GP_TERM_PDF && have_pdf) {
 	/* switch to plain latex */

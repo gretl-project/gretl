@@ -1714,16 +1714,16 @@ static int files_item_get_callback (GretlToolItem *item, int role)
 	}
     } else if (item->flag == BTN_INDX) {
 	/* index: databases only */
+	item->tip = N_("List series");
 	if (role == NATIVE_DB) {
 	    item->func = G_CALLBACK(open_db_index);
 	} else if (role == REMOTE_DB) {
 	    item->func = G_CALLBACK(open_remote_db_index);
 	} else if (role == DBNOMICS_TOP) {
 	    item->func = G_CALLBACK(open_dbnomics_provider);
-	    // item->tip = N_("List datasets");
+	    item->tip = N_("List datasets");
 	} else if (role == DBNOMICS_DB) {
-	    // item->func = G_CALLBACK(open_dbnomics_dataset);
-	    item->func = G_CALLBACK(dummy_call);
+	    item->func = G_CALLBACK(open_dbnomics_dataset);
 	}
     } else if (item->flag == BTN_WWW) {
 	if (role == FUNC_FILES) {
@@ -1979,6 +1979,8 @@ void display_files (int role, gpointer data)
 	title = g_strdup(_("gretl: packages on menus"));
     } else if (role == DBNOMICS_DB) {
 	title = g_strdup_printf("gretl: %s datasets", (gchar *) data);
+    } else if (role == DBNOMICS_SERIES) {
+	title = g_strdup_printf("gretl: %s", (gchar *) data);
     }
 
     vwin = gretl_browser_new(role, title);
@@ -2741,6 +2743,8 @@ gint populate_filelist (windata_t *vwin, gpointer p)
 	return populate_dbnomics_provider_list(vwin);
     } else if (vwin->role == DBNOMICS_DB) {
 	return populate_dbnomics_dataset_list(vwin, p);
+    } else if (vwin->role == DBNOMICS_SERIES) {
+	return populate_dbnomics_series_list(vwin, p);
     } else if (vwin->role == REMOTE_FUNC_FILES) {
 	return populate_remote_func_list(vwin, 0);
     } else if (vwin->role == REMOTE_DATA_PKGS) {
@@ -2788,6 +2792,10 @@ static GtkWidget *files_vbox (windata_t *vwin)
     const char *dbnomics_db_titles[] = {
 	N_("Code"),
 	N_("Content")
+    };
+    const char *dbnomics_series_titles[] = {
+	N_("Code"),
+	N_("Description")
     };
     const char *func_titles[] = {
 	N_("Package"),
@@ -2878,6 +2886,11 @@ static GtkWidget *files_vbox (windata_t *vwin)
     case DBNOMICS_DB:
 	titles = dbnomics_db_titles;
 	full_width = 650;
+	file_height = 300;
+	break;
+    case DBNOMICS_SERIES:
+	titles = dbnomics_series_titles;
+	full_width = 600;
 	file_height = 300;
 	break;
     case REMOTE_DATA_PKGS:

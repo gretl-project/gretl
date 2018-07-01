@@ -1937,14 +1937,40 @@ void open_dbnomics_provider (GtkWidget *w, gpointer data)
     if (!gtk_tree_selection_get_selected(sel, &model, &iter)) {
 	return;
     }
-
     gtk_tree_model_get(model, &iter, 0, &pname, -1);
     if (pname == NULL || *pname == '\0') {
 	g_free(pname);
 	return;
     }
-
     display_files(DBNOMICS_DB, pname);
+}
+
+void open_dbnomics_dataset (GtkWidget *w, gpointer data)
+{
+    windata_t *vwin = (windata_t *) data;
+    GtkTreeIter iter;
+    GtkTreeModel *model;
+    GtkTreeSelection *sel;
+    gchar *provider, *arg;
+    gchar *dsname = NULL;
+
+    sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(vwin->listbox));
+    if (!gtk_tree_selection_get_selected(sel, &model, &iter)) {
+	return;
+    }
+    gtk_tree_model_get(model, &iter, 0, &dsname, -1);
+    if (dsname == NULL || *dsname == '\0') {
+	g_free(dsname);
+	return;
+    }
+    provider = g_object_get_data(G_OBJECT(vwin->listbox), "provider");
+    if (provider == NULL) {
+	g_free(dsname);
+	return;
+    }
+    arg = g_strdup_printf("%s/%s", provider, dsname);
+    g_free(dsname);
+    display_files(DBNOMICS_SERIES, arg);
 }
 
 #define INFOLEN 100
@@ -3057,7 +3083,7 @@ gint populate_dbnomics_dataset_list (windata_t *vwin, gpointer p)
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
-    A = dbnomics_expand_provider_call(provider, max_dsets, offset, &err);
+    A = dbnomics_search_call(provider, max_dsets, offset, &err);
     if (!err) {
 	n = gretl_array_get_length(A);
 	if (n == 0) {
@@ -3090,7 +3116,7 @@ gint populate_dbnomics_dataset_list (windata_t *vwin, gpointer p)
 	}
     }
 
-    gretl_array_destroy(A); /* we're done with this? */
+    gretl_array_destroy(A); /* we're done with this */
 
     if (ndb == 0) {
 	errbox(_("No datasets were found"));
@@ -3099,6 +3125,80 @@ gint populate_dbnomics_dataset_list (windata_t *vwin, gpointer p)
 	/* show status */
 	gchar *tmp = g_strdup_printf(_("showing datasets %d-%d out of %d"),
 				     offset+1, offset+ndb, ntotal);
+
+	gtk_label_set_text(GTK_LABEL(vwin->status), tmp);
+	while (gtk_events_pending()) {
+	    gtk_main_iteration();
+	}
+	g_free(tmp);
+
+	/* and make the provider name available downstream */
+	g_object_set_data(G_OBJECT(vwin->listbox), "provider", provider);
+    }
+
+    return err;
+}
+
+gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
+{
+    gchar *dsref = (gchar *) p;
+    gretl_array *A = NULL;
+    gretl_bundle *b;
+    char *s, *prov, *dset;
+    char *code, *name;
+    GtkListStore *store;
+    GtkTreeIter iter;
+    int max_series = 100;
+    int offset = 0;
+    int n = 0, ns = 0;
+    int i, err = 0;
+
+    store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox)));
+    gtk_list_store_clear(store);
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+
+    s = strchr(dsref, '/');
+    dset = g_strdup(s + 1);
+    prov = g_strndup(dsref, s - dsref);
+
+    A = dbnomics_probe_series(prov, dset, max_series, offset, &err);
+    if (!err) {
+	n = gretl_array_get_length(A);
+	if (n == 0) {
+	    errbox(_("No series were found"));
+	    err = 1;
+	}
+    }
+
+    if (err) {
+	return err;
+    }
+
+    for (i=0; i<n; i++) {
+	b = gretl_array_get_bundle(A, i);
+	code = (char *) gretl_bundle_get_string(b, "code", &err);
+	name = (char *) gretl_bundle_get_string(b, "name", &err);
+	if (!err) {
+	    gtk_list_store_append(store, &iter);
+	    gtk_list_store_set(store, &iter,
+			       COL_DBNAME, code,
+			       COL_DBINFO, name, -1);
+	    ns++;
+	    if (ns == 0) {
+		ns = gretl_bundle_get_int(b, "num_found", NULL);
+	    }
+	}
+    }
+
+    gretl_array_destroy(A); /* we're done with this */
+
+    if (ns == 0) {
+	errbox(_("No series were found"));
+	err = 1;
+    } else {
+	/* show status */
+	gchar *tmp = g_strdup_printf(_("showing series %d-%d out of %d"),
+				     offset+1, offset+ns, ns);
 
 	gtk_label_set_text(GTK_LABEL(vwin->status), tmp);
 	while (gtk_events_pending()) {

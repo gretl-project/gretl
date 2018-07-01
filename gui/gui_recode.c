@@ -343,7 +343,7 @@ static int maybe_adjust_cairo (char *line)
 	    if (p != NULL) {
 		strcat(tmp, p + 1);
 	    } else {
-		strncat(tmp, "\n", 1);
+		strcat(tmp, "\n");
 	    }
 	} else {
 	    /* hope for the best */

@@ -2034,7 +2034,7 @@ static void set_oldver_label (GtkWidget *label, int minver)
 
 	vstr[0] = '(';
 	gretl_version_string(vstr + 1, oldv);
-	strncat(vstr, ")", 1);
+	strcat(vstr, ")");
 	gtk_label_set_text(GTK_LABEL(label), vstr);
     }    
 }

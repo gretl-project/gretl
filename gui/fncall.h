@@ -83,8 +83,13 @@ int dbnomics_get_series_call (const char *datacode);
 
 void *dbnomics_get_providers_call (int *err);
 
-void *dbnomics_expand_provider_call (const char *prov,
-				     int limit, int offset,
-				     int *err);
+void *dbnomics_search_call (const char *key,
+			    int limit, int offset,
+			    int *err);
+
+void *dbnomics_probe_series (const char *prov,
+			     const char *dset,
+			     int limit, int offset,
+			     int *err);
 
 #endif /* FNCALL_H */

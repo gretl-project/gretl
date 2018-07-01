@@ -1102,7 +1102,7 @@ void set_workdir_label (void)
 	len = g_utf8_strlen(wdir, -1);
 	if (len > 56) {
 	    gretl_utf8_truncate(wdir, 53);
-	    strncat(wdir, "...", 3);
+	    strcat(wdir, "...");
 	}
 	buf = g_markup_printf_escaped(fmt, wdir);
 	gtk_label_set_markup(GTK_LABEL(wlabel), buf);
