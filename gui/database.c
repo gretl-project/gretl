@@ -55,7 +55,6 @@
 #endif
 
 #define DB_SEARCH_DEBUG 0
-#define DBNOMICS_TEST 1
 
 /* private functions */
 static GtkWidget *database_window (windata_t *vwin);
@@ -1873,11 +1872,6 @@ void open_db_index (GtkWidget *w, gpointer data)
 	action = RATS_SERIES;
     }
 
-    if (action == NATIVE_SERIES && !strcmp(fname, "dbnomics")) {
-	dbnomics_specific_series(NULL, data);
-	return;
-    }
-
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox),
 			 vwin->active_var, (action == RATS_SERIES)? 1 : 2,
 			 &dbdir);
@@ -3144,7 +3138,8 @@ gint populate_dbnomics_dataset_list (windata_t *vwin, gpointer p)
 	g_free(tmp);
 
 	/* and make the provider name available downstream */
-	g_object_set_data(G_OBJECT(vwin->listbox), "provider", provider);
+	g_object_set_data_full(G_OBJECT(vwin->listbox), "provider",
+			       provider, g_free);
     }
 
     return err;
@@ -3217,8 +3212,10 @@ gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
 	    gtk_main_iteration();
 	}
 	g_free(tmp);
+
 	/* and make the 'path' name available downstream */
-	g_object_set_data(G_OBJECT(vwin->listbox), "path", dsref);
+	g_object_set_data_full(G_OBJECT(vwin->listbox), "path",
+			       dsref, g_free);
     }
 
     return err;
@@ -3634,14 +3631,6 @@ static void maybe_prune_db_list (GtkTreeView *tview,
     }
     free(S);
     free(icpy);
-
-#if DBNOMICS_TEST
-    gtk_list_store_append(store, &iter);
-    gtk_list_store_set(store, &iter,
-		       COL_DBNAME, "dbnomics",
-		       COL_DBINFO, "Various macro series from many data providers",
-		       COL_DBPATH, "www", -1);
-#endif
 }
 
 /* dbnomics-related functions */
