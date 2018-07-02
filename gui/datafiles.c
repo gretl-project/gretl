@@ -1625,6 +1625,31 @@ static void alt_db_dir (GtkWidget *w, windata_t *vwin)
                               vwin->main);
 }
 
+static GtkWidget *get_dbn_menu (windata_t *vwin)
+{
+    GtkWidget *menu = gtk_menu_new();
+    GtkAction *action;
+    GtkWidget *item;
+
+    action = gtk_action_new("DBNbrowse", _("Browse..."), NULL, NULL);
+    g_signal_connect(G_OBJECT(action), "activate",
+		     G_CALLBACK(show_files), vwin);
+    item = gtk_action_create_menu_item(action);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+
+    action = gtk_action_new("DBNseries", _("Specific series..."), NULL, NULL);
+    g_signal_connect(G_OBJECT(action), "activate",
+		     G_CALLBACK(dbnomics_specific_series), vwin);
+    item = gtk_action_create_menu_item(action);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+
+    /* don't leak: record pointer to menu so it can
+       be destroyed when the window is closed */
+    vwin_record_toolbar_popup(vwin, menu);
+
+    return menu;
+}
+
 enum {
     BTN_INFO = 1,
     BTN_CODE,
@@ -1640,7 +1665,8 @@ enum {
     BTN_DIR,
     BTN_RES,
     BTN_DOC,
-    BTN_REG
+    BTN_REG,
+    BTN_DBN
 };
 
 static GretlToolItem files_items[] = {
@@ -1659,6 +1685,7 @@ static GretlToolItem files_items[] = {
     { N_("Unload/delete..."), GTK_STOCK_DELETE,   G_CALLBACK(browser_del_func),  BTN_DEL },
     { N_("Look on server"), GTK_STOCK_NETWORK,    NULL,                          BTN_WWW },
     { N_("Local machine"),  GTK_STOCK_HOME,       NULL,                          BTN_HOME },
+    { N_("DB.NOMICS"),      GRETL_STOCK_DBN,      NULL,                          BTN_DBN },
 };
 
 static int n_files_items = G_N_ELEMENTS(files_items);
@@ -1754,6 +1781,10 @@ static int files_item_get_callback (GretlToolItem *item, int role)
 	} else if (role == NATIVE_DB) {
 	    item->func = G_CALLBACK(alt_db_dir);
 	}
+    } else if (item->flag == BTN_DBN) {
+	if (role == NATIVE_DB) {
+	    item->func = G_CALLBACK(dummy_call);
+	}
     }
 
     return (item->func != NULL);
@@ -1839,6 +1870,14 @@ static void make_files_toolbar (windata_t *vwin)
 
     for (i=0; i<n_files_items; i++) {
 	item = &files_items[i];
+	if (item->flag == BTN_DBN) {
+	    if (vwin->role == NATIVE_DB) {
+		GtkWidget *menu = get_dbn_menu(vwin);
+
+		vwin_toolbar_insert(item, NULL, menu, vwin, -1);
+	    }
+	    continue;
+	}
 	if (files_item_get_callback(item, vwin->role)) {
 	    button = gretl_toolbar_insert(vwin->mbar, item, item->func, vwin, -1);
 	    if (item->flag == BTN_ADD) {

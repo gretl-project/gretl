@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "gretl.h"
@@ -77,9 +77,9 @@
 static void set_up_model_view_menu (windata_t *vwin);
 static void add_system_menu_items (windata_t *vwin, int vecm);
 static void add_x12_output_menu_item (windata_t *vwin);
-static gint check_model_menu (GtkWidget *w, GdkEventButton *eb, 
+static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 			      gpointer data);
-static gint check_VAR_menu (GtkWidget *w, GdkEventButton *eb, 
+static gint check_VAR_menu (GtkWidget *w, GdkEventButton *eb,
 			    gpointer data);
 static void model_copy_callback (GtkAction *action, gpointer p);
 static int set_sample_from_model (void *ptr, int role);
@@ -109,8 +109,8 @@ static int arma_by_x12a (const MODEL *pmod)
 
 int latex_is_ok (void)
 {
-    static int latex_ok = -1; 
-  
+    static int latex_ok = -1;
+
     if (latex_ok == -1) {
 	latex_ok = check_for_program(latex);
     }
@@ -120,7 +120,7 @@ int latex_is_ok (void)
 
 static void model_output_save (GtkAction *action, gpointer p)
 {
-    copy_format_dialog((windata_t *) p, W_SAVE);    
+    copy_format_dialog((windata_t *) p, W_SAVE);
 }
 
 static gretlopt tex_eqn_opt;
@@ -172,7 +172,7 @@ static void model_revise_callback (GtkAction *action, gpointer p)
 
     if (vwin->role == VIEW_MODEL) {
 	MODEL *pmod = vwin->data;
-	
+
 	err = model_sample_problem(pmod, dataset);
     }
 
@@ -208,7 +208,7 @@ static void text_eqn_callback (GtkAction *action, gpointer p)
     if (bufopen(&prn)) {
 	return;
     }
-    
+
     err = text_print_equation(pmod, dataset, OPT_NONE, prn);
 
     if (err) {
@@ -217,7 +217,7 @@ static void text_eqn_callback (GtkAction *action, gpointer p)
 	gchar *title = gretl_window_title(_("equation"));
 
 	view_buffer_with_parent(vwin, prn, 78, 200, title, PRINT, NULL);
-	g_free(title);			   
+	g_free(title);
     }
 }
 
@@ -229,25 +229,25 @@ static GtkActionEntry model_items[] = {
     { "Print", GTK_STOCK_PRINT, N_("_Print..."), NULL, NULL, G_CALLBACK(window_print) },
     { "TextEqn", NULL, N_("View as equation"), NULL, NULL, G_CALLBACK(text_eqn_callback) },
     { "Close", GTK_STOCK_CLOSE, N_("_Close"), NULL, NULL, G_CALLBACK(close_model) },
-    { "Edit", NULL, N_("_Edit"), NULL, NULL, NULL },    
+    { "Edit", NULL, N_("_Edit"), NULL, NULL, NULL },
     { "Copy", GTK_STOCK_COPY, N_("_Copy"), NULL, NULL, G_CALLBACK(model_copy_callback) },
-    { "Revise", GTK_STOCK_EDIT, N_("_Modify model..."), NULL, NULL, 
+    { "Revise", GTK_STOCK_EDIT, N_("_Modify model..."), NULL, NULL,
       G_CALLBACK(model_revise_callback) },
 #if 0
     { "Restore", NULL, N_("_Restore model sample"), NULL, NULL, G_CALLBACK(model_sample_callback) },
 #endif
-    { "Tests", NULL, N_("_Tests"), NULL, NULL, NULL },    
+    { "Tests", NULL, N_("_Tests"), NULL, NULL, NULL },
     { "Save", NULL, N_("_Save"), NULL, NULL, NULL },
-    { "Graphs", NULL, N_("_Graphs"), NULL, NULL, NULL },    
-    { "ResidPlot", NULL, N_("_Residual plot"), NULL, NULL, NULL },    
-    { "FittedActualPlot", NULL, N_("_Fitted, actual plot"), NULL, NULL, NULL },    
-    { "Analysis", NULL, N_("_Analysis"), NULL, NULL, NULL }, 
-    { "DisplayAFR", NULL, N_("_Display actual, fitted, residual"), NULL, NULL, 
-      G_CALLBACK(display_fit_resid) },    
-    { "Forecasts", NULL, N_("_Forecasts..."), NULL, NULL, G_CALLBACK(gui_do_forecast) },    
-    { "ConfIntervals", NULL, N_("_Confidence intervals for coefficients"), NULL, NULL, 
-      G_CALLBACK(do_coeff_intervals) },    
-    { "ConfEllipse", NULL, N_("Confidence _ellipse..."), NULL, NULL, G_CALLBACK(selector_callback) },    
+    { "Graphs", NULL, N_("_Graphs"), NULL, NULL, NULL },
+    { "ResidPlot", NULL, N_("_Residual plot"), NULL, NULL, NULL },
+    { "FittedActualPlot", NULL, N_("_Fitted, actual plot"), NULL, NULL, NULL },
+    { "Analysis", NULL, N_("_Analysis"), NULL, NULL, NULL },
+    { "DisplayAFR", NULL, N_("_Display actual, fitted, residual"), NULL, NULL,
+      G_CALLBACK(display_fit_resid) },
+    { "Forecasts", NULL, N_("_Forecasts..."), NULL, NULL, G_CALLBACK(gui_do_forecast) },
+    { "ConfIntervals", NULL, N_("_Confidence intervals for coefficients"), NULL, NULL,
+      G_CALLBACK(do_coeff_intervals) },
+    { "ConfEllipse", NULL, N_("Confidence _ellipse..."), NULL, NULL, G_CALLBACK(selector_callback) },
     { "Covariance", NULL, N_("Coefficient covariance _matrix"), NULL, NULL, G_CALLBACK(do_outcovmx) },
     { "Collinearity", NULL, N_("_Collinearity"), NULL, NULL, G_CALLBACK(do_vif) },
     { "Leverage", NULL, N_("_Influential observations"), NULL, NULL, G_CALLBACK(do_leverage) },
@@ -263,9 +263,9 @@ static GtkActionEntry model_test_items[] = {
     { "modtest:s", NULL, N_("Non-linearity (s_quares)"), NULL, NULL, G_CALLBACK(do_modtest) },
     { "modtest:l", NULL, N_("Non-linearity (_logs)"), NULL, NULL, G_CALLBACK(do_modtest) },
     { "reset", NULL, N_("_Ramsey's RESET"), NULL, NULL, G_CALLBACK(do_reset) },
-    { "Hsk", NULL, N_("_Heteroskedasticity"), NULL, NULL, NULL },    
+    { "Hsk", NULL, N_("_Heteroskedasticity"), NULL, NULL, NULL },
     { "modtest:n", NULL, N_("_Normality of residual"), NULL, NULL, G_CALLBACK(do_resid_freq) },
-    { "chow", NULL, N_("_Chow test"), NULL, NULL, G_CALLBACK(do_chow_cusum) },    
+    { "chow", NULL, N_("_Chow test"), NULL, NULL, G_CALLBACK(do_chow_cusum) },
     { "modtest:a", NULL, N_("_Autocorrelation"), NULL, NULL, G_CALLBACK(do_autocorr) },
     { "dwpval", NULL, N_("_Durbin-Watson p-value"), NULL, NULL, G_CALLBACK(do_dwpval) },
     { "modtest:h", NULL, N_("A_RCH"), NULL, NULL, G_CALLBACK(do_arch) },
@@ -293,7 +293,7 @@ static GtkActionEntry ivreg_hsk_items[] = {
     { "White", NULL, N_("Pesaran-Taylor test"), NULL, NULL, G_CALLBACK(do_modtest) }
 };
 
-const gchar *model_tex_ui = 
+const gchar *model_tex_ui =
     "<ui>"
     "  <menubar>"
     "    <menu action='LaTeX'>"
@@ -328,17 +328,17 @@ const gchar *missing_tex_ui =
     "</ui>";
 
 static GtkActionEntry model_tex_items[] = {
-    { "LaTeX",   NULL, N_("_LaTeX"), NULL, NULL, NULL },      
-    { "TeXView", NULL, N_("_View"), NULL, NULL, NULL },      
-    { "TabView", NULL, N_("_Tabular"), NULL, NULL, G_CALLBACK(model_tex_view) },      
-    { "EqnView", NULL, N_("_Equation"), NULL, NULL, G_CALLBACK(model_tex_view) },      
-    { "TeXCopy", NULL, N_("_Copy"), NULL, NULL, NULL }, 
-    { "TabCopy", NULL, N_("_Tabular"), NULL, NULL, G_CALLBACK(model_tex_copy) },      
-    { "EqnCopy", NULL, N_("_Equation"), NULL, NULL, G_CALLBACK(model_tex_copy) },      
-    { "TeXSave", NULL, N_("_Save"), NULL, NULL, NULL }, 
-    { "TabSave", NULL, N_("_Tabular"), NULL, NULL, G_CALLBACK(model_tex_save) },      
-    { "EqnSave", NULL, N_("_Equation"), NULL, NULL, G_CALLBACK(model_tex_save) },      
-    { "EqnOpts", NULL, N_("_Equation options"), NULL, NULL, NULL }, 
+    { "LaTeX",   NULL, N_("_LaTeX"), NULL, NULL, NULL },
+    { "TeXView", NULL, N_("_View"), NULL, NULL, NULL },
+    { "TabView", NULL, N_("_Tabular"), NULL, NULL, G_CALLBACK(model_tex_view) },
+    { "EqnView", NULL, N_("_Equation"), NULL, NULL, G_CALLBACK(model_tex_view) },
+    { "TeXCopy", NULL, N_("_Copy"), NULL, NULL, NULL },
+    { "TabCopy", NULL, N_("_Tabular"), NULL, NULL, G_CALLBACK(model_tex_copy) },
+    { "EqnCopy", NULL, N_("_Equation"), NULL, NULL, G_CALLBACK(model_tex_copy) },
+    { "TeXSave", NULL, N_("_Save"), NULL, NULL, NULL },
+    { "TabSave", NULL, N_("_Tabular"), NULL, NULL, G_CALLBACK(model_tex_save) },
+    { "EqnSave", NULL, N_("_Equation"), NULL, NULL, G_CALLBACK(model_tex_save) },
+    { "EqnOpts", NULL, N_("_Equation options"), NULL, NULL, NULL },
     { "TabOpts", NULL, N_("_Tabular options..."), NULL, NULL, G_CALLBACK(tex_format_dialog) }
 };
 
@@ -348,34 +348,34 @@ static GtkRadioActionEntry tex_eqn_items[] = {
 };
 
 static GtkActionEntry missing_tex_items[] = {
-    { "LaTeX", NULL, N_("_LaTeX"), NULL, NULL, NULL },    
+    { "LaTeX", NULL, N_("_LaTeX"), NULL, NULL, NULL },
     { "notex", NULL, "No TeX", NULL, NULL, G_CALLBACK(dummy_call) }
 };
 
 static GtkActionEntry system_items[] = {
-    { "File", NULL, N_("_File"), NULL, NULL, NULL },      
-    { "SaveAs", GTK_STOCK_SAVE_AS, N_("_Save as..."), NULL, NULL, G_CALLBACK(model_output_save) },      
-    { "SaveAsIcon", NULL, N_("Save to session as _icon"), NULL, NULL, G_CALLBACK(model_add_as_icon) },      
+    { "File", NULL, N_("_File"), NULL, NULL, NULL },
+    { "SaveAs", GTK_STOCK_SAVE_AS, N_("_Save as..."), NULL, NULL, G_CALLBACK(model_output_save) },
+    { "SaveAsIcon", NULL, N_("Save to session as _icon"), NULL, NULL, G_CALLBACK(model_add_as_icon) },
     { "SaveAndClose", NULL, N_("Save as icon and cl_ose"), NULL, NULL, G_CALLBACK(model_add_as_icon) },
     { "Print", GTK_STOCK_PRINT, N_("_Print..."), NULL, NULL, G_CALLBACK(window_print) },
     { "Close", GTK_STOCK_CLOSE, N_("_Close"), NULL, NULL, G_CALLBACK(close_model) },
-    { "Edit", NULL, N_("_Edit"), NULL, NULL, NULL },      
-    { "Copy", GTK_STOCK_COPY, N_("_Copy"), NULL, NULL, G_CALLBACK(model_copy_callback) }, 
-    { "Revise", GTK_STOCK_EDIT, N_("_Revise specification..."), NULL, NULL, 
-      G_CALLBACK(model_revise_callback) }, 
-    { "Save", NULL, N_("_Save"), NULL, NULL, NULL },    
-    { "Tests", NULL, N_("_Tests"), NULL, NULL, NULL },    
-    { "Graphs", NULL, N_("_Graphs"), NULL, NULL, NULL },    
-    { "Analysis", NULL, N_("_Analysis"), NULL, NULL, NULL },  
-    { "Forecasts", NULL, N_("_Forecasts"), NULL, NULL, NULL },  
+    { "Edit", NULL, N_("_Edit"), NULL, NULL, NULL },
+    { "Copy", GTK_STOCK_COPY, N_("_Copy"), NULL, NULL, G_CALLBACK(model_copy_callback) },
+    { "Revise", GTK_STOCK_EDIT, N_("_Revise specification..."), NULL, NULL,
+      G_CALLBACK(model_revise_callback) },
+    { "Save", NULL, N_("_Save"), NULL, NULL, NULL },
+    { "Tests", NULL, N_("_Tests"), NULL, NULL, NULL },
+    { "Graphs", NULL, N_("_Graphs"), NULL, NULL, NULL },
+    { "Analysis", NULL, N_("_Analysis"), NULL, NULL, NULL },
+    { "Forecasts", NULL, N_("_Forecasts"), NULL, NULL, NULL },
 };
 
 static gint n_system_items = G_N_ELEMENTS(system_items);
 
 static GtkActionEntry sys_tex_items[] = {
-    { "LaTeX",   NULL, N_("_LaTeX"), NULL, NULL, NULL },  
-    { "TeXView", NULL, N_("_View"),  NULL, NULL, G_CALLBACK(model_tex_view) },      
-    { "TeXCopy", NULL, N_("_Copy"),  NULL, NULL, G_CALLBACK(model_tex_copy) },      
+    { "LaTeX",   NULL, N_("_LaTeX"), NULL, NULL, NULL },
+    { "TeXView", NULL, N_("_View"),  NULL, NULL, G_CALLBACK(model_tex_view) },
+    { "TeXCopy", NULL, N_("_Copy"),  NULL, NULL, G_CALLBACK(model_tex_copy) },
     { "TeXSave", NULL, N_("_Save"),  NULL, NULL, G_CALLBACK(model_tex_save) },
 };
 
@@ -407,17 +407,17 @@ static void model_copy_callback (GtkAction *action, gpointer p)
     copy_format_dialog((windata_t *) p, W_COPY);
 }
 
-int copyfile (const char *src, const char *dest) 
+int copyfile (const char *src, const char *dest)
 {
     FILE *srcfd, *destfd;
     char buf[GRETL_BUFSIZE];
     size_t n;
 
     if (!strcmp(src, dest)) return 1;
-   
+
     if ((srcfd = gretl_fopen(src, "rb")) == NULL) {
 	file_read_errbox(src);
-	return 1; 
+	return 1;
     }
 
     if ((destfd = gretl_fopen(dest, "wb")) == NULL) {
@@ -450,7 +450,7 @@ FILE *gretl_tempfile_open (char *fname)
     return fp;
 }
 
-static void delete_file (GtkWidget *widget, char *fname) 
+static void delete_file (GtkWidget *widget, char *fname)
 {
     gretl_remove(fname);
     g_free(fname);
@@ -459,6 +459,30 @@ static void delete_file (GtkWidget *widget, char *fname)
 void delete_widget (GtkWidget *widget, gpointer data)
 {
     gtk_widget_destroy(GTK_WIDGET(data));
+}
+
+void set_wait_cursor (GdkWindow **pcwin)
+{
+    GdkDisplay *disp = gdk_display_get_default();
+    GdkWindow *w;
+    gint x, y;
+
+    *pcwin = w = gdk_display_get_window_at_pointer(disp, &x, &y);
+
+    if (w != NULL) {
+	GdkCursor *cursor = gdk_cursor_new(GDK_WATCH);
+
+	gdk_window_set_cursor(w, cursor);
+	gdk_display_sync(disp);
+	gdk_cursor_unref(cursor);
+    }
+}
+
+void unset_wait_cursor (GdkWindow *cwin)
+{
+    if (cwin != NULL) {
+	gdk_window_set_cursor(cwin, NULL);
+    }
 }
 
 #if USE_SOUND
@@ -504,10 +528,10 @@ void audio_render_window (windata_t *vwin, int key)
     set_or_get_audio_stop(1, 0);
 
     if (key == AUDIO_LISTBOX) {
-	(*read_window_text) (vwin->listbox, vwin->text, vwin->role, 
+	(*read_window_text) (vwin->listbox, vwin->text, vwin->role,
 			     vwin->data, NULL, &should_stop_talking);
     } else {
-	(*read_window_text) (vwin->listbox, vwin->text, vwin->role, 
+	(*read_window_text) (vwin->listbox, vwin->text, vwin->role,
 			     vwin->data, dataset, &should_stop_talking);
     }
 }
@@ -566,8 +590,8 @@ gboolean vwin_copy_callback (GtkWidget *w, windata_t *vwin)
 	window_copy(vwin, GRETL_FORMAT_TXT);
     } else {
 	copy_format_dialog(vwin, W_COPY);
-    } 
-    
+    }
+
     return TRUE;
 }
 
@@ -620,13 +644,13 @@ static void vwin_select_all (windata_t *vwin)
     }
 }
 
-/* Signal attached to editor/viewer windows. Note that @w is 
+/* Signal attached to editor/viewer windows. Note that @w is
    generally the top-level GtkWidget vwin->main; exceptions
    are (a) tabbed windows, where @w is the embedding window,
    and (b) help windows, where @w is the text area.
 */
 
-gint catch_viewer_key (GtkWidget *w, GdkEventKey *event, 
+gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 		       windata_t *vwin)
 {
     int Ctrl = (event->state & GDK_CONTROL_MASK);
@@ -670,7 +694,7 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	       are handled by GTK, so we only need to put our own
 	       "specials" here
 	    */
-	    if (upkey == GDK_S) { 
+	    if (upkey == GDK_S) {
 		/* Ctrl-S: save */
 		vwin_save_callback(NULL, vwin);
 		return TRUE;
@@ -685,19 +709,19 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 			if (query_save_text(NULL, NULL, vwin) == FALSE) {
 			    gtk_widget_destroy(w);
 			}
-		    } else { 
+		    } else {
 			/* unconditional */
 			gtk_widget_destroy(w);
 		    }
 		    return TRUE;
-		} 
+		}
 	    } else if (upkey == GDK_T) {
 		if (window_is_tab(vwin)) {
 		    /* Ctrl-T: open new tab */
 		    do_new_script(vwin->role, NULL);
 		    return TRUE;
 		}
-	    } 
+	    }
 	}
 	if (window_is_tab(vwin)) {
 	    /* note: still conditional on Ctrl */
@@ -717,7 +741,7 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	}
 	if (window_is_tab(vwin)) {
 	    int k = numeric_keyval(upkey);
-	    
+
 	    if (k > 0) {
 		tabwin_navigate(vwin, k);
 		return TRUE;
@@ -726,8 +750,8 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
     }
 
     if (editing || (vwin->finder != NULL && gtk_widget_has_focus(vwin->finder))) {
-	/* we set up "special" responses to some plain keystrokes 
-	   below: this won't do if we're in editing/typing mode 
+	/* we set up "special" responses to some plain keystrokes
+	   below: this won't do if we're in editing/typing mode
 	*/
 	return FALSE;
     }
@@ -748,7 +772,7 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	}
     } else if (upkey == GDK_S && data_status && vwin->role == VIEW_MODEL) {
 	model_add_as_icon(NULL, vwin);
-    } 
+    }
 
 #if USE_SOUND
     /* respond to 'a' and 'x', but not if Ctrl- or Alt-modified */
@@ -769,10 +793,10 @@ void nomem (void)
     errbox(_("Out of memory!"));
 }
 
-void *mymalloc (size_t size) 
+void *mymalloc (size_t size)
 {
     void *mem;
-   
+
     if ((mem = malloc(size)) == NULL) {
 	nomem();
     }
@@ -780,7 +804,7 @@ void *mymalloc (size_t size)
     return mem;
 }
 
-void *myrealloc (void *ptr, size_t size) 
+void *myrealloc (void *ptr, size_t size)
 {
     void *mem;
 
@@ -849,7 +873,7 @@ char *gretl_basename (char *dest, const char *src, int addscore)
 	for (i=0; i<=n; i++) {
 	    if (dest[i] == '_') {
 		mod[j++] = '_';
-	    } 
+	    }
 	    mod[j++] = dest[i];
 	}
 	strcpy(dest, mod);
@@ -858,7 +882,7 @@ char *gretl_basename (char *dest, const char *src, int addscore)
     return dest;
 }
 
-static void gui_record_data_opening (const char *fname, 
+static void gui_record_data_opening (const char *fname,
 				     const int *list)
 {
     const char *recname = (fname != NULL)? fname : datafile;
@@ -906,9 +930,9 @@ static void gui_record_data_opening (const char *fname,
 	                f == OPENED_VIA_CLI || \
                         f == OPENED_VIA_SESSION)
 
-static void real_register_data (int flag, const char *user_fname, 
+static void real_register_data (int flag, const char *user_fname,
 				const int *list)
-{   
+{
     /* basic accounting */
     data_status |= HAVE_DATA;
     orig_vars = dataset->v;
@@ -922,7 +946,7 @@ static void real_register_data (int flag, const char *user_fname,
 		data_status &= ~USER_DATA;
 	    } else {
 		data_status &= ~BOOK_DATA;
-		data_status |= USER_DATA; 
+		data_status |= USER_DATA;
 	    }
 	    if (is_gzipped(datafile)) {
 		data_status |= GZIPPED_DATA;
@@ -940,7 +964,7 @@ static void real_register_data (int flag, const char *user_fname,
 	data_status |= GUI_DATA;
 	mark_dataset_as_modified();
     }
-    
+
     /* sync main window with datafile */
     if (mdata != NULL) {
 	populate_varlist();
@@ -952,13 +976,13 @@ static void real_register_data (int flag, const char *user_fname,
     /* Record the opening of the data file in the GUI recent files
        list and command log; note that we don't do this if the file
        was opened via script or console, or if it was opened as a
-       side effect of re-opening a saved session. And we can't do 
+       side effect of re-opening a saved session. And we can't do
        it if the data file was opened via the initial command line,
        and the gretl GUI is not yet built.
     */
     if (mdata != NULL && flag == DATAFILE_OPENED) {
 	gui_record_data_opening(user_fname, list);
-    } 
+    }
 
     if (mdata != NULL) {
 	/* focus the data window */
@@ -1000,7 +1024,7 @@ static void maybe_offer_daily_options (void)
 		N_("Delete the weekend rows")
 	    };
 
-	    resp = radio_dialog("gretl", _(buf), opts, 2, 
+	    resp = radio_dialog("gretl", _(buf), opts, 2,
 				1, DAILY_PURGE, NULL);
 	    if (resp == 1) {
 		purge_opt = OPT_W;
@@ -1012,7 +1036,7 @@ static void maybe_offer_daily_options (void)
 		N_("Delete all blank rows")
 	    };
 
-	    resp = radio_dialog("gretl", _(buf), opts, 3, 
+	    resp = radio_dialog("gretl", _(buf), opts, 3,
 				2, DAILY_PURGE, NULL);
 	    if (resp == 1) {
 		purge_opt = OPT_W;
@@ -1025,13 +1049,13 @@ static void maybe_offer_daily_options (void)
 		N_("Delete all blank rows")
 	    };
 
-	    resp = radio_dialog("gretl", _(buf), opts, 2, 
+	    resp = radio_dialog("gretl", _(buf), opts, 2,
 				1, DAILY_PURGE, NULL);
 	    if (resp == 1) {
 		purge_opt = OPT_A;
 	    }
 	}
-	
+
 	gretl_print_destroy(prn);
     }
 
@@ -1042,11 +1066,11 @@ static void maybe_offer_daily_options (void)
 }
 
 static void finalize_data_open (const char *fname, int ftype,
-				int import, int append, 
+				int import, int append,
 				const int *list)
 {
     if (import) {
-	if (ftype == GRETL_CSV || ftype == GRETL_DTA || 
+	if (ftype == GRETL_CSV || ftype == GRETL_DTA ||
 	    ftype == GRETL_SAV || ftype == GRETL_SAS ||
 	    ftype == GRETL_XLSX || ftype == GRETL_ODS ||
 	    ftype == GRETL_GNUMERIC || ftype == GRETL_XLS) {
@@ -1058,7 +1082,7 @@ static void finalize_data_open (const char *fname, int ftype,
     if (append) {
 	register_data(DATA_APPENDED);
 	return;
-    } 
+    }
 
     if (strstr(fname, CLIPTEMP)) {
 	real_register_data(DATA_PASTED, NULL, list);
@@ -1069,7 +1093,7 @@ static void finalize_data_open (const char *fname, int ftype,
 	real_register_data(DATAFILE_OPENED, NULL, list);
     }
 
-    if (import && !dataset_is_time_series(dataset) && 
+    if (import && !dataset_is_time_series(dataset) &&
 	!dataset_is_panel(dataset) && mdata != NULL) {
 	int resp;
 
@@ -1110,9 +1134,9 @@ int get_imported_data (char *fname, int ftype, int append)
     PRN *prn = NULL;
     int list[4] = {3, 0, 0, 0};
     int *plist = NULL;
-    int (*ss_importer) (const char *, int *, char *, DATASET *, 
+    int (*ss_importer) (const char *, int *, char *, DATASET *,
 			gretlopt, PRN *);
-    int (*misc_importer) (const char *, DATASET *, 
+    int (*misc_importer) (const char *, DATASET *,
 			  gretlopt, PRN *);
     int err = 0;
 
@@ -1165,7 +1189,7 @@ int get_imported_data (char *fname, int ftype, int append)
 
     /* call the actual importer function */
     if (SPREADSHEET_IMPORT(ftype)) {
-	err = (*ss_importer)(fname, plist, NULL, dataset, 
+	err = (*ss_importer)(fname, plist, NULL, dataset,
 			     OPT_G, prn);
     } else {
 	err = (*misc_importer)(fname, dataset, OPT_G, prn);
@@ -1245,7 +1269,7 @@ static int get_csv_data (char *fname, int ftype, int append)
     return err;
 }
 
-static int get_native_data (char *fname, int ftype, int append, 
+static int get_native_data (char *fname, int ftype, int append,
 			    windata_t *fwin)
 {
     PRN *prn = NULL;
@@ -1268,7 +1292,7 @@ static int get_native_data (char *fname, int ftype, int append,
     if (fwin != NULL) {
 	/* close the files browser window that launched the query */
 	gtk_widget_destroy(fwin->main);
-    }    
+    }
 
     if (err) {
 	if (err == E_FOPEN) {
@@ -1288,7 +1312,7 @@ static int get_native_data (char *fname, int ftype, int append,
 	    infobox(_("Data appended OK\n"));
 	}
 	fputs(buf, stderr);
-    } 
+    }
 
     free(buf);
 
@@ -1322,7 +1346,7 @@ gboolean do_open_data (windata_t *fwin, int code)
 	ftype = detect_filetype(tryfile, OPT_P);
     }
 
-    /* destroy the current data set, etc., unless we're 
+    /* destroy the current data set, etc., unless we're
        explicitly appending */
     if (!append) {
 	close_session(OPT_NONE); /* FIXME opt? */
@@ -1344,7 +1368,7 @@ gboolean do_open_data (windata_t *fwin, int code)
 	err = get_csv_data(tryfile, ftype, append);
     } else if (SPREADSHEET_IMPORT(ftype) || OTHER_IMPORT(ftype)) {
 	err = get_imported_data(tryfile, ftype, append);
-    } else { 
+    } else {
 	err = get_native_data(tryfile, ftype, append, fwin);
     }
 
@@ -1361,8 +1385,8 @@ gboolean verify_open_data (windata_t *vwin, int code)
     }
 
     if (data_status) {
-	int resp = 
-	    yes_no_dialog(_("gretl: open data"), 
+	int resp =
+	    yes_no_dialog(_("gretl: open data"),
 			  _("Opening a new data file will automatically\n"
 			    "close the current one.  Any unsaved work\n"
 			    "will be lost.  Proceed to open data file?"),
@@ -1371,7 +1395,7 @@ gboolean verify_open_data (windata_t *vwin, int code)
 	if (resp != GRETL_YES) {
 	    return FALSE;
 	}
-    } 
+    }
 
     return do_open_data(vwin, code);
 }
@@ -1387,8 +1411,8 @@ gboolean verify_open_session (void)
     }
 
     if (data_status) {
-	int resp = 
-	    yes_no_dialog(_("gretl: open session"), 
+	int resp =
+	    yes_no_dialog(_("gretl: open session"),
 			  _("Opening a new session file will automatically\n"
 			    "close the current session.  Any unsaved work\n"
 			    "will be lost.  Proceed to open session file?"),
@@ -1402,7 +1426,7 @@ gboolean verify_open_session (void)
     return do_open_session();
 }
 
-void mark_vwin_content_changed (windata_t *vwin) 
+void mark_vwin_content_changed (windata_t *vwin)
 {
     if (vwin->active_var == 0) {
 	GtkWidget *w = g_object_get_data(G_OBJECT(vwin->mbar), "save_button");
@@ -1417,7 +1441,7 @@ void mark_vwin_content_changed (windata_t *vwin)
     }
 }
 
-void mark_vwin_content_saved (windata_t *vwin) 
+void mark_vwin_content_saved (windata_t *vwin)
 {
     GtkWidget *w = g_object_get_data(G_OBJECT(vwin->mbar), "save_button");
 
@@ -1455,7 +1479,7 @@ static void buf_edit_save (GtkWidget *w, windata_t *vwin)
     }
 
     /* swap the edited text into the buffer */
-    free(*pbuf); 
+    free(*pbuf);
     *pbuf = text;
 
     if (vwin->role == EDIT_HEADER) {
@@ -1499,7 +1523,7 @@ static void file_edit_save (GtkWidget *w, windata_t *vwin)
 	    file_selector(SAVE_STATA_CMDS, FSEL_DATA_VWIN, vwin);
 	} else if (vwin->role == CONSOLE) {
 	    file_selector(SAVE_CONSOLE, FSEL_DATA_VWIN, vwin);
-	}	    
+	}
     } else if ((vwin->flags & VWIN_SESSION_GRAPH) &&
 	       vwin->role == EDIT_GP) {
 	/* "auto-save" of session graph file */
@@ -1568,7 +1592,7 @@ void vwin_add_child (windata_t *parent, windata_t *child)
 	    err = 1;
 	}
     }
-    
+
     if (!err) {
 	child->gretl_parent = parent;
     }
@@ -1645,8 +1669,8 @@ void free_windata (GtkWidget *w, gpointer data)
 
 	/* data specific to certain windows */
 	if (vwin->role == SUMMARY) {
-	    free_summary(vwin->data); 
-	} else if (vwin->role == CORR || vwin->role == PCA || 
+	    free_summary(vwin->data);
+	} else if (vwin->role == CORR || vwin->role == PCA ||
 		   vwin->role == COVAR) {
 	    free_vmatrix(vwin->data);
 	} else if (vwin->role == FCAST || vwin->role == AFR) {
@@ -1657,7 +1681,7 @@ void free_windata (GtkWidget *w, gpointer data)
 	    free_series_view(vwin->data);
 	} else if (vwin->role == VIEW_MODEL) {
 	    gretl_object_unref(vwin->data, GRETL_OBJ_EQN);
-	} else if (vwin->role == VAR || vwin->role == VECM) { 
+	} else if (vwin->role == VAR || vwin->role == VECM) {
 	    gretl_object_unref(vwin->data, GRETL_OBJ_VAR);
 	} else if (vwin->role == LEVERAGE) {
 	    gretl_matrix_free(vwin->data);
@@ -1708,7 +1732,7 @@ gboolean text_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
 	    gtk_menu_popup(GTK_MENU(vwin->popup), NULL, NULL, NULL, NULL,
 			   event->button, event->time);
 	    g_signal_connect(G_OBJECT(vwin->popup), "destroy",
-			     G_CALLBACK(gtk_widget_destroyed), 
+			     G_CALLBACK(gtk_widget_destroyed),
 			     &vwin->popup);
 	}
 
@@ -1724,7 +1748,7 @@ gchar *title_from_filename (const char *fname, int role, gboolean prepend)
 
     if (strstr(fname, "script_tmp") || strstr(fname, "session.inp")) {
 	if (role == EDIT_GP) {
-	    title = g_strdup(_("gretl: edit plot commands"));	    
+	    title = g_strdup(_("gretl: edit plot commands"));
 	} else if (role == EDIT_R) {
 	    title = g_strdup(_("gretl: edit R script"));
 	} else if (role == EDIT_OX) {
@@ -1793,13 +1817,13 @@ static gchar *make_viewer_title (int role, const char *fname)
     switch (role) {
     case CMD_HELP:
 	title = g_strdup(_("gretl: command reference")); break;
-    case GUI_HELP: 
+    case GUI_HELP:
 	title = g_strdup(_("gretl: help")); break;
     case FUNC_HELP:
 	title = g_strdup(_("gretl: function reference")); break;
     case CMD_HELP_EN:
 	title = g_strdup("gretl: command reference"); break;
-    case GUI_HELP_EN: 
+    case GUI_HELP_EN:
 	title = g_strdup("gretl: help"); break;
     case FUNC_HELP_EN:
 	title = g_strdup("gretl: function reference"); break;
@@ -1815,7 +1839,7 @@ static gchar *make_viewer_title (int role, const char *fname)
     case EDIT_OX:
     case EDIT_OCTAVE:
     case EDIT_PYTHON:
-    case EDIT_JULIA:	
+    case EDIT_JULIA:
     case EDIT_STATA:
     case EDIT_SPEC:
 	title = title_from_filename(fname, role, TRUE);
@@ -1845,7 +1869,7 @@ static void attach_content_changed_signal (windata_t *vwin)
     GtkTextBuffer *tbuf;
 
     tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
-    g_signal_connect(G_OBJECT(tbuf), "changed", 
+    g_signal_connect(G_OBJECT(tbuf), "changed",
 		     G_CALLBACK(content_changed), vwin);
 }
 
@@ -1887,7 +1911,7 @@ void set_reuseable_output_window (int policy, windata_t *vwin)
 	script_out_viewer = NULL;
     } else {
 	script_out_viewer = vwin;
-	g_signal_connect(G_OBJECT(vwin->main), "destroy", 
+	g_signal_connect(G_OBJECT(vwin->main), "destroy",
 			 G_CALLBACK(nullify_script_out),
 			 &script_out_viewer);
     }
@@ -1909,7 +1933,7 @@ static windata_t *reuse_script_out (windata_t *vwin, PRN *prn)
 	gtk_text_buffer_get_end_iter(buf, &iter);
 	mark = gtk_text_buffer_create_mark(buf, NULL, &iter, TRUE);
 	textview_append_text_colorized(vwin->text, newtext, 1);
-	gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(vwin->text), 
+	gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(vwin->text),
 				     mark, 0.0, TRUE, 0, 0.05);
 	gtk_text_buffer_delete_mark(buf, mark);
     } else {
@@ -1930,10 +1954,10 @@ static void vwin_add_closer (windata_t *vwin)
     GtkWidget *b;
 
     b = gtk_button_new_with_label(_("Close"));
-    g_signal_connect(G_OBJECT(b), "clicked", 
+    g_signal_connect(G_OBJECT(b), "clicked",
 		     G_CALLBACK(delete_widget), vwin->main);
     gtk_widget_show(b);
-    gtk_box_pack_end(GTK_BOX(vwin->vbox), b, FALSE, FALSE, 0);    
+    gtk_box_pack_end(GTK_BOX(vwin->vbox), b, FALSE, FALSE, 0);
 }
 
 void set_model_save_state (windata_t *vwin, gboolean s)
@@ -1943,10 +1967,10 @@ void set_model_save_state (windata_t *vwin, gboolean s)
 }
 
 windata_t *
-view_buffer_with_parent (windata_t *parent, PRN *prn, 
-			 int hsize, int vsize, 
-			 const char *title, int role, 
-			 gpointer data) 
+view_buffer_with_parent (windata_t *parent, PRN *prn,
+			 int hsize, int vsize,
+			 const char *title, int role,
+			 gpointer data)
 {
     int width = 0, nlines = 0;
     windata_t *vwin;
@@ -1956,12 +1980,12 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
     }
 
     if (title != NULL) {
-	vwin = gretl_viewer_new_with_parent(parent, role, title, 
+	vwin = gretl_viewer_new_with_parent(parent, role, title,
 					    data);
     } else {
 	gchar *tmp = make_viewer_title(role, NULL);
 
-	vwin = gretl_viewer_new_with_parent(parent, role, tmp, 
+	vwin = gretl_viewer_new_with_parent(parent, role, tmp,
 					    data);
 	g_free(tmp);
     }
@@ -1977,7 +2001,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	add_system_menu_items(vwin, role);
 	vwin_pack_toolbar(vwin);
 	if (role == VAR || role == VECM) {
-	    g_signal_connect(G_OBJECT(vwin->mbar), "button-press-event", 
+	    g_signal_connect(G_OBJECT(vwin->mbar), "button-press-event",
 			     G_CALLBACK(check_VAR_menu), vwin);
 	}
 	gretl_object_ref(data, (role == SYSTEM)? GRETL_OBJ_SYS : GRETL_OBJ_VAR);
@@ -1997,7 +2021,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	vwin_add_viewbar(vwin, VIEWBAR_HAS_TEXT);
     }
 
-    if (role != VIEW_PKG_CODE && 
+    if (role != VIEW_PKG_CODE &&
 	role != EDIT_PKG_CODE &&
 	role != VIEW_PKG_SAMPLE &&
 	role != VIEW_LOG &&
@@ -2007,7 +2031,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	gretl_print_get_size(prn, &width, &nlines);
 	if (width > 0 && width + 2 < hsize) {
 	    hsize = width + 2;
-	}	
+	}
     }
 
     if (role == VIEW_PKG_CODE || role == VIEW_PKG_SAMPLE || role == VIEW_LOG) {
@@ -2028,7 +2052,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	    vwin_add_child((windata_t *) data, vwin);
 	    /* define "top-hbox" here? */
 	}
-	g_signal_connect(G_OBJECT(vwin->main), "destroy", 
+	g_signal_connect(G_OBJECT(vwin->main), "destroy",
 			 G_CALLBACK(nullify_script_out),
 			 &script_out_viewer);
 	script_out_viewer = vwin;
@@ -2038,7 +2062,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
     view_buffer_insert_text(vwin, prn);
     gretl_print_destroy(prn);
 
-    g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
+    g_signal_connect(G_OBJECT(vwin->main), "key-press-event",
 		     G_CALLBACK(catch_viewer_key), vwin);
 
     gtk_widget_show(vwin->vbox);
@@ -2047,7 +2071,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
     if (role == EDIT_PKG_CODE || role == EDIT_PKG_SAMPLE ||
 	role == EDIT_PKG_HELP || role == EDIT_PKG_GHLP) {
 	attach_content_changed_signal(vwin);
-	g_signal_connect(G_OBJECT(vwin->main), "delete-event", 
+	g_signal_connect(G_OBJECT(vwin->main), "delete-event",
 			 G_CALLBACK(query_save_text), vwin);
     } else if (role == SUMMARY) {
 	widget_set_int(vwin->text, "digits", get_gretl_digits());
@@ -2056,7 +2080,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
     if (role == BUILD_PKG) {
 	scroll_to_foot(vwin);
     } else {
-	g_signal_connect(G_OBJECT(vwin->text), "button-press-event", 
+	g_signal_connect(G_OBJECT(vwin->text), "button-press-event",
 			 G_CALLBACK(text_popup_handler), vwin);
 	cursor_to_top(vwin);
     }
@@ -2066,11 +2090,11 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
     return vwin;
 }
 
-windata_t *view_buffer (PRN *prn, int hsize, int vsize, 
-			const char *title, int role, 
+windata_t *view_buffer (PRN *prn, int hsize, int vsize,
+			const char *title, int role,
 			gpointer data)
 {
-    return view_buffer_with_parent(NULL, prn, hsize, 
+    return view_buffer_with_parent(NULL, prn, hsize,
 				   vsize, title,
 				   role, data);
 }
@@ -2113,9 +2137,9 @@ windata_t *hansl_output_viewer_new (PRN *prn, int role,
 	textview_set_text_colorized(vwin->text, buf);
     }
 
-    g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
+    g_signal_connect(G_OBJECT(vwin->main), "key-press-event",
 		     G_CALLBACK(catch_viewer_key), vwin);
-    g_signal_connect(G_OBJECT(vwin->text), "button-press-event", 
+    g_signal_connect(G_OBJECT(vwin->text), "button-press-event",
 		     G_CALLBACK(text_popup_handler), vwin);
 
     gtk_widget_show(vwin->vbox);
@@ -2128,8 +2152,8 @@ windata_t *hansl_output_viewer_new (PRN *prn, int role,
 #define text_out_ok(r) (r == VIEW_DATA || r == VIEW_FILE)
 
 windata_t *
-view_file_with_title (const char *filename, int editable, int del_file, 
-		      int hsize, int vsize, int role, 
+view_file_with_title (const char *filename, int editable, int del_file,
+		      int hsize, int vsize, int role,
 		      const char *given_title)
 {
     windata_t *vwin;
@@ -2153,7 +2177,7 @@ view_file_with_title (const char *filename, int editable, int del_file,
     } else {
 	gchar *title = make_viewer_title(role, filename);
 
-	vwin = gretl_viewer_new(role, (title != NULL)? title : filename, 
+	vwin = gretl_viewer_new(role, (title != NULL)? title : filename,
 				NULL);
 	g_free(title);
     }
@@ -2195,7 +2219,7 @@ view_file_with_title (const char *filename, int editable, int del_file,
     if (vwin_editing_script(role)) {
 	attach_content_changed_signal(vwin);
 	if (!window_is_tab(vwin)) {
-	    g_signal_connect(G_OBJECT(vwin->main), "delete-event", 
+	    g_signal_connect(G_OBJECT(vwin->main), "delete-event",
 			     G_CALLBACK(query_save_text), vwin);
 	}
     }
@@ -2204,19 +2228,19 @@ view_file_with_title (const char *filename, int editable, int del_file,
     if (del_file) {
 	gchar *fname = g_strdup(filename);
 
-	g_signal_connect(G_OBJECT(vwin->main), "destroy", 
+	g_signal_connect(G_OBJECT(vwin->main), "destroy",
 			 G_CALLBACK(delete_file), (gpointer) fname);
     }
 
     if (window_is_tab(vwin)) {
 	show_tabbed_viewer(vwin);
     } else {
-	g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
+	g_signal_connect(G_OBJECT(vwin->main), "key-press-event",
 			 G_CALLBACK(catch_viewer_key), vwin);
 	gtk_widget_show_all(vwin->main);
     }
 
-    g_signal_connect(G_OBJECT(vwin->text), "button-press-event", 
+    g_signal_connect(G_OBJECT(vwin->text), "button-press-event",
 		     G_CALLBACK(text_popup_handler), vwin);
 
     cursor_to_top(vwin);
@@ -2225,14 +2249,14 @@ view_file_with_title (const char *filename, int editable, int del_file,
     return vwin;
 }
 
-windata_t *view_file (const char *filename, int editable, int del_file, 
+windata_t *view_file (const char *filename, int editable, int del_file,
 		      int hsize, int vsize, int role)
 {
     return view_file_with_title(filename, editable, del_file,
 				hsize, vsize, role, NULL);
 }
 
-windata_t *view_script (const char *filename, int editable, 
+windata_t *view_script (const char *filename, int editable,
 			int role)
 {
     if (editable) {
@@ -2263,13 +2287,13 @@ windata_t *console_window (int hsize, int vsize)
     text_table_setup(vwin->vbox, vwin->text);
 
     /* catch some special keystrokes */
-    g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
+    g_signal_connect(G_OBJECT(vwin->main), "key-press-event",
 		     G_CALLBACK(catch_viewer_key), vwin);
 
     gtk_widget_show(vwin->vbox);
     gtk_widget_show(vwin->main);
 
-    g_signal_connect(G_OBJECT(vwin->text), "button-press-event", 
+    g_signal_connect(G_OBJECT(vwin->text), "button-press-event",
 		     G_CALLBACK(text_popup_handler), vwin);
 
     return vwin;
@@ -2291,7 +2315,7 @@ void help_panes_setup (windata_t *vwin, GtkWidget *text)
 				   GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw),
 					GTK_SHADOW_IN);
-    gtk_container_add(GTK_CONTAINER(sw), text); 
+    gtk_container_add(GTK_CONTAINER(sw), text);
 
     gtk_widget_show_all(hp);
 }
@@ -2333,18 +2357,18 @@ windata_t *view_help_file (const char *filename, int role)
 	text_table_setup(vwin->vbox, vwin->text);
     } else {
 	help_panes_setup(vwin, vwin->text);
-    } 
+    }
 
-    g_signal_connect(G_OBJECT(vwin->text), "key-press-event", 
+    g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
 		     G_CALLBACK(catch_viewer_key), vwin);
 
     if (vwin->role == CMD_HELP || vwin->role == CMD_HELP_EN ||
 	vwin->role == FUNC_HELP || vwin->role == FUNC_HELP_EN) {
 	g_signal_connect(G_OBJECT(vwin->text), "button-press-event",
-			 G_CALLBACK(help_popup_handler), 
+			 G_CALLBACK(help_popup_handler),
 			 vwin);
     } else {
-	g_signal_connect(G_OBJECT(vwin->text), "button-press-event", 
+	g_signal_connect(G_OBJECT(vwin->text), "button-press-event",
 			 G_CALLBACK(text_popup_handler), vwin);
     }
 
@@ -2352,7 +2376,7 @@ windata_t *view_help_file (const char *filename, int role)
     gtk_widget_show(vwin->main);
 
     /* make the helpfile variant discoverable via vwin->text */
-    g_object_set_data(G_OBJECT(vwin->text), "role", 
+    g_object_set_data(G_OBJECT(vwin->text), "role",
 		      GINT_TO_POINTER(vwin->role));
 
     gtk_widget_grab_focus(vwin->text);
@@ -2383,7 +2407,7 @@ static gboolean leave_close_button (GtkWidget *button,
 
 static GtkWidget *small_close_button (GtkWidget *targ)
 {
-    GtkWidget *img = gtk_image_new_from_stock(GTK_STOCK_CLOSE, 
+    GtkWidget *img = gtk_image_new_from_stock(GTK_STOCK_CLOSE,
 					      GTK_ICON_SIZE_MENU);
     GtkWidget *button = gtk_button_new();
 
@@ -2437,8 +2461,8 @@ static void add_text_closer (windata_t *vwin)
    GtkTextView (bibliographical popup).
 */
 
-windata_t *view_formatted_text_buffer (const gchar *title, 
-				       const char *buf, 
+windata_t *view_formatted_text_buffer (const gchar *title,
+				       const char *buf,
 				       int hsize, int vsize,
 				       int role)
 {
@@ -2483,8 +2507,8 @@ windata_t *view_formatted_text_buffer (const gchar *title,
 gint query_save_text (GtkWidget *w, GdkEvent *event, windata_t *vwin)
 {
     if (vwin_content_changed(vwin)) {
-	int resp = yes_no_cancel_dialog("gretl", 
-					_("Save changes?"), 
+	int resp = yes_no_cancel_dialog("gretl",
+					_("Save changes?"),
 					vwin_toplevel(vwin));
 
 	if (resp == GRETL_CANCEL) {
@@ -2498,8 +2522,8 @@ gint query_save_text (GtkWidget *w, GdkEvent *event, windata_t *vwin)
     return FALSE;
 }
 
-windata_t *edit_buffer (char **pbuf, int hsize, int vsize, 
-			char *title, int role) 
+windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
+			char *title, int role)
 {
     windata_t *vwin;
 
@@ -2513,15 +2537,15 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
 
     create_source(vwin, hsize, vsize, TRUE);
     text_table_setup(vwin->vbox, vwin->text);
-    
+
     /* insert the buffer text */
     if (pbuf != NULL && *pbuf != NULL) {
 	sourceview_insert_buffer(vwin, *pbuf);
     }
 
-    g_signal_connect(G_OBJECT(vwin->text), "button-press-event", 
+    g_signal_connect(G_OBJECT(vwin->text), "button-press-event",
 		     G_CALLBACK(text_popup_handler), vwin);
-    g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
+    g_signal_connect(G_OBJECT(vwin->main), "key-press-event",
 		     G_CALLBACK(catch_viewer_key), vwin);
 
     attach_content_changed_signal(vwin);
@@ -2538,7 +2562,7 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     return vwin;
 }
 
-windata_t *view_model (PRN *prn, MODEL *pmod, char *title) 
+windata_t *view_model (PRN *prn, MODEL *pmod, char *title)
 {
     int hsize = MODEL_WIDTH;
     int vsize = MODEL_HEIGHT;
@@ -2595,13 +2619,13 @@ windata_t *view_model (PRN *prn, MODEL *pmod, char *title)
     vwin->n_model_tests = pmod->ntests;
 
     /* attach popup */
-    g_signal_connect(G_OBJECT(vwin->text), "button-press-event", 
+    g_signal_connect(G_OBJECT(vwin->text), "button-press-event",
 		     G_CALLBACK(text_popup_handler), vwin);
 
     if (window_is_tab(vwin)) {
 	show_tabbed_viewer(vwin);
     } else {
-	g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
+	g_signal_connect(G_OBJECT(vwin->main), "key-press-event",
 			 G_CALLBACK(catch_viewer_key), vwin);
 	gtk_widget_show_all(vwin->main);
     }
@@ -2622,7 +2646,7 @@ static void mnl_probs_callback (GtkAction *action, gpointer p)
     if (pmod == NULL) return;
 
     P = mn_logit_probabilities(pmod, dataset, &err);
- 
+
     if (err) {
 	gui_errmsg(err);
     } else {
@@ -2763,7 +2787,7 @@ static void set_tests_menu_state (GtkUIManager *ui, const MODEL *pmod)
 static void set_analysis_menu_state (windata_t *vwin, const MODEL *pmod)
 {
     GtkUIManager *ui = vwin->ui;
-    
+
     if (pmod->ci == MLE || pmod->ci == GMM || pmod->ci == BIPROBIT) {
 	/* can we relax some of this later? */
 	flip(ui, "/menubar/Analysis/DisplayAFR", FALSE);
@@ -2805,7 +2829,7 @@ static void set_analysis_menu_state (windata_t *vwin, const MODEL *pmod)
 
     if (!model_test_ok(LEVERAGE, OPT_NONE, pmod, dataset)) {
 	flip(ui, "/menubar/Analysis/Leverage", FALSE);
-    }    
+    }
 }
 
 static void arma_x12_menu_mod (windata_t *vwin)
@@ -2835,7 +2859,7 @@ static void midas_plot_callback (GtkAction *action, gpointer p)
 	    "{set title 'MIDAS coefficients';"
 	    " set xlabel 'high-frequency lag';"
 	    " set ylabel '';}";
-	
+
 	err = matrix_plot(C, NULL, literal,  OPT_P | OPT_S | OPT_G);
 	gui_graph_handler(err);
     }
@@ -2879,7 +2903,7 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 
     if (pmod->ci == ARMA && arma_by_x12a(pmod)) {
 	arma_x12_menu_mod(vwin);
-    }     
+    }
 
     if (pmod->ci == MLE || pmod->ci == GMM || pmod->ci == BIPROBIT) {
 	/* can we relax this later? */
@@ -2896,25 +2920,25 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 }
 
 static GtkActionEntry model_data_base_items[] = {
-    { "yhat", NULL, N_("_Fitted values"), NULL, NULL, 
+    { "yhat", NULL, N_("_Fitted values"), NULL, NULL,
       G_CALLBACK(fit_resid_callback) },
-    { "uhat", NULL, N_("_Residuals"), NULL, NULL, 
+    { "uhat", NULL, N_("_Residuals"), NULL, NULL,
       G_CALLBACK(fit_resid_callback) },
-    { "uhat2", NULL, N_("_Squared residuals"), NULL, NULL, 
+    { "uhat2", NULL, N_("_Squared residuals"), NULL, NULL,
       G_CALLBACK(fit_resid_callback) }
 };
 
 static GtkActionEntry ess_items[] = {
-    { "ess", NULL, N_("_Error sum of squares"), NULL, NULL, 
+    { "ess", NULL, N_("_Error sum of squares"), NULL, NULL,
       G_CALLBACK(model_stat_callback) },
-    { "se", NULL, N_("_Standard error of the regression"), NULL, NULL, 
+    { "se", NULL, N_("_Standard error of the regression"), NULL, NULL,
       G_CALLBACK(model_stat_callback) }
-}; 
+};
 
 static GtkActionEntry r_squared_items[] = {
     { "rsq", NULL, N_("_R-squared"), NULL, NULL, G_CALLBACK(model_stat_callback) },
     { "trsq", NULL, N_("_T*R-squared"), NULL, NULL, G_CALLBACK(model_stat_callback) }
-}; 
+};
 
 static GtkActionEntry lnl_data_items[] = {
     { "lnL", NULL, N_("_Log likelihood"), NULL, NULL,
@@ -2974,7 +2998,7 @@ static void add_model_dataset_items (windata_t *vwin)
 
     vwin_menu_add_items(vwin, path, model_data_base_items,
 			G_N_ELEMENTS(model_data_base_items));
-			
+
     if (gretl_model_get_data(pmod, "ahat") != NULL) {
 	if (pmod->opt & OPT_U) {
 	    vwin_menu_add_items(vwin, path, random_effects_data_items,
@@ -3030,14 +3054,14 @@ static void add_model_tex_items (windata_t *vwin)
 	g_message("building LaTeX menu failed: %s", err->message);
 	g_error_free(err);
 	return;
-    }	
+    }
 
     actions = gtk_action_group_new("ModelTeX");
     gtk_action_group_set_translation_domain(actions, "gretl");
-    gtk_action_group_add_actions(actions, model_tex_items, 
+    gtk_action_group_add_actions(actions, model_tex_items,
 				 G_N_ELEMENTS(model_tex_items),
 				 vwin);
-    gtk_action_group_add_radio_actions(actions, tex_eqn_items, 
+    gtk_action_group_add_radio_actions(actions, tex_eqn_items,
 				       G_N_ELEMENTS(tex_eqn_items),
 				       (get_tex_eqn_opt() == OPT_T),
 				       G_CALLBACK(set_tex_eqn_opt),
@@ -3074,10 +3098,10 @@ static void add_missing_tex_items (windata_t *vwin)
 	g_message("building menus failed: %s", err->message);
 	g_error_free(err);
 	return;
-    }	
+    }
 
     actions = gtk_action_group_new("MissingTeX");
-    gtk_action_group_add_actions(actions, missing_tex_items, 
+    gtk_action_group_add_actions(actions, missing_tex_items,
 				 G_N_ELEMENTS(missing_tex_items),
 				 vwin);
     gtk_ui_manager_insert_action_group(vwin->ui, actions, 0);
@@ -3092,7 +3116,7 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 {
     GtkActionEntry entry;
     const gchar *mpath[] = {
-	"/menubar/Graphs/ResidPlot", 
+	"/menubar/Graphs/ResidPlot",
 	"/menubar/Graphs/FittedActualPlot"
     };
     MODEL *pmod = vwin->data;
@@ -3113,7 +3137,7 @@ static void add_vars_to_plot_menu (windata_t *vwin)
     }
 
     xlist = gretl_model_get_x_list(pmod);
-    
+
     for (i=0; i<2; i++) {
 	/* plot against time/obs number */
 	if (dataset_is_time_series(dataset)) {
@@ -3122,12 +3146,12 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	    entry.label = _("By _observation number");
 	}
 	entry.name = (i == 0)? "r:byobs" : "f:byobs";
-	entry.callback = (i == 0)? G_CALLBACK(resid_plot) : 
+	entry.callback = (i == 0)? G_CALLBACK(resid_plot) :
 	    G_CALLBACK(fit_actual_plot);
 	vwin_menu_add_item(vwin, mpath[i], &entry);
 
-	if (pmod->ci == NLS || 
-	    pmod->ci == MLE || 
+	if (pmod->ci == NLS ||
+	    pmod->ci == MLE ||
 	    pmod->ci == GMM ||
 	    pmod->ci == PANEL) {
 	    continue;
@@ -3163,7 +3187,7 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 		alabel = g_strdup_printf(_("_Against %s"), tmp);
 		entry.name = aname;
 		entry.label = alabel;
-		entry.callback = (i == 0)? G_CALLBACK(resid_plot) : 
+		entry.callback = (i == 0)? G_CALLBACK(resid_plot) :
 		    G_CALLBACK(fit_actual_plot);
 		vwin_menu_add_item(vwin, mpath[i], &entry);
 		g_free(alabel);
@@ -3240,7 +3264,7 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 		double_underscores(tmp2, dataset->varname[v2]);
 	    }
 	    vwin_menu_add_separator(vwin, mpath[1]);
-	    alabel = g_strdup_printf(_("_Against %s and %s"), tmp, tmp2);	
+	    alabel = g_strdup_printf(_("_Against %s and %s"), tmp, tmp2);
 	    entry.name = "splot";
 	    entry.label = alabel;
 	    entry.callback = G_CALLBACK(fit_actual_splot);
@@ -3252,7 +3276,7 @@ static void add_vars_to_plot_menu (windata_t *vwin)
     free(xlist);
 }
 
-static void plot_dummy_call (GtkRadioAction *action, 
+static void plot_dummy_call (GtkRadioAction *action,
 			     GtkRadioAction *current,
 			     windata_t *vwin)
 {
@@ -3282,7 +3306,7 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
 	vi = pmod->list[i];
 	if (vi == LISTSEP) {
 	    break;
-	} else if (vi > 0 && vi < dataset->v && 
+	} else if (vi > 0 && vi < dataset->v &&
 	    gretl_isdummy(dataset->t1, dataset->t2, dataset->Z[vi])) {
 	    gretl_list_append_term(&dlist, vi);
 	}
@@ -3365,7 +3389,7 @@ static void add_tau_plot_menu (windata_t *vwin)
     item.name = "TauMenu";
     item.label = _("tau sequence");
     vwin_menu_add_menu(vwin, "/menubar/Graphs", &item);
-    
+
     item.callback = G_CALLBACK(tau_plot_call);
 
     /* put the independent vars on the menu list */
@@ -3415,7 +3439,7 @@ static gchar *get_model_ui (void)
     return err ? NULL : ui;
 }
 
-static void set_up_model_view_menu (windata_t *vwin) 
+static void set_up_model_view_menu (windata_t *vwin)
 {
     static gchar *model_ui;
     MODEL *pmod = (MODEL *) vwin->data;
@@ -3434,10 +3458,10 @@ static void set_up_model_view_menu (windata_t *vwin)
     actions = gtk_action_group_new("ModelActions");
     gtk_action_group_set_translation_domain(actions, "gretl");
 
-    gtk_action_group_add_actions(actions, model_items, 
-				 G_N_ELEMENTS(model_items), 
+    gtk_action_group_add_actions(actions, model_items,
+				 G_N_ELEMENTS(model_items),
 				 vwin);
-    gtk_action_group_add_actions(actions, model_test_items, 
+    gtk_action_group_add_actions(actions, model_test_items,
 				 G_N_ELEMENTS(model_test_items),
 				 vwin);
 
@@ -3466,30 +3490,30 @@ static void set_up_model_view_menu (windata_t *vwin)
 
     if (dataset_is_panel(dataset)) {
 	if (pmod->ci == OLS) {
-	    vwin_menu_add_items(vwin, "/menubar/Tests/Hsk", 
-				panel_hsk_items, 
+	    vwin_menu_add_items(vwin, "/menubar/Tests/Hsk",
+				panel_hsk_items,
 				G_N_ELEMENTS(panel_hsk_items));
 	} else if (pmod->ci == PANEL && (pmod->opt & OPT_F)) {
 	    /* fixed effects */
-	    vwin_menu_add_items(vwin, "/menubar/Tests/Hsk", 
+	    vwin_menu_add_items(vwin, "/menubar/Tests/Hsk",
 				panel_hsk_items + 1, 1);
 	} else if (0 && pmod->ci == PANEL && (pmod->opt & OPT_U)) {
 	    /* random effects: is this OK?? */
-	    vwin_menu_add_items(vwin, "/menubar/Tests/Hsk", 
+	    vwin_menu_add_items(vwin, "/menubar/Tests/Hsk",
 				panel_hsk_items + 1, 1);
-	}	    
+	}
     } else if (pmod->ci == IVREG) {
-	vwin_menu_add_items(vwin, "/menubar/Tests/Hsk", 
-			    ivreg_hsk_items, 
+	vwin_menu_add_items(vwin, "/menubar/Tests/Hsk",
+			    ivreg_hsk_items,
 			    G_N_ELEMENTS(ivreg_hsk_items));
     } else if (model_test_ok(MODTEST, OPT_W, pmod, dataset)) {
-	vwin_menu_add_items(vwin, "/menubar/Tests/Hsk", 
-			    base_hsk_items, 
+	vwin_menu_add_items(vwin, "/menubar/Tests/Hsk",
+			    base_hsk_items,
 			    G_N_ELEMENTS(base_hsk_items));
 	if (pmod->ncoeff == 1 || (pmod->ifc && pmod->ncoeff == 2)) {
 	    flip(vwin->ui, "/menubar/Tests/Hsk/WhiteSquares", FALSE);
 	}
-    } 
+    }
 
     maybe_add_packages_to_model_menus(vwin);
 
@@ -3503,7 +3527,7 @@ static void set_up_model_view_menu (windata_t *vwin)
 	flip(vwin->ui, "/menubar/File/TextEqn", FALSE);
     }
 
-    if (pmod->ci != ARMA && pmod->ci != GARCH && 
+    if (pmod->ci != ARMA && pmod->ci != GARCH &&
 	pmod->ci != NLS && pmod->ci != MLE && pmod->ci != GMM &&
 	pmod->ci != PANEL && pmod->ci != ARBOND &&
 	pmod->ci != DPANEL && pmod->ci != BIPROBIT) {
@@ -3513,7 +3537,7 @@ static void set_up_model_view_menu (windata_t *vwin)
     toplevel = vwin_toplevel(vwin);
     if (toplevel != NULL) {
 	/* FIXME tabbed case? */
-	gtk_window_add_accel_group(GTK_WINDOW(toplevel), 
+	gtk_window_add_accel_group(GTK_WINDOW(toplevel),
 				   gtk_ui_manager_get_accel_group(vwin->ui));
     }
 
@@ -3522,7 +3546,7 @@ static void set_up_model_view_menu (windata_t *vwin)
     /* disable some menu items if need be */
     adjust_model_menu_state(vwin, pmod);
 
-    g_signal_connect(G_OBJECT(vwin->mbar), "button-press-event", 
+    g_signal_connect(G_OBJECT(vwin->mbar), "button-press-event",
 		     G_CALLBACK(check_model_menu), vwin);
 
     vwin_pack_toolbar(vwin);
@@ -3541,7 +3565,7 @@ static int sys_data_code (GtkAction *action)
     if (!strcmp(s, "uhat")) {
 	return SYS_DATA_RESIDS;
     } else if (!strcmp(s, "yhat")) {
-	return SYS_DATA_FITTED;	
+	return SYS_DATA_FITTED;
     } else if (!strcmp(s, "sigma")) {
 	return SYS_DATA_SIGMA;
     } else {
@@ -3564,7 +3588,7 @@ static void system_data_callback (GtkAction *action, gpointer p)
 	sys = (equation_system *) vwin->data;
     } else {
 	var = (GRETL_VAR *) vwin->data;
-    } 
+    }
 
     if ((var == NULL && sys == NULL) || bufopen(&prn)) {
 	return;
@@ -3623,7 +3647,7 @@ static void system_data_callback (GtkAction *action, gpointer p)
 	if (!err) {
 	    title = (code == SYS_DATA_RESIDS)? titles[0] : titles[1];
 	    wtitle = g_strdup_printf("gretl: %s", _(title));
-	    gretl_matrix_print_with_col_heads(M, _(title), heads, 
+	    gretl_matrix_print_with_col_heads(M, _(title), heads,
 					      dataset, prn);
 	}
 
@@ -3729,7 +3753,7 @@ static void shift_var_up (GtkButton *b, GtkWidget *view)
     GtkTreePath *path;
 
     selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
-    gtk_tree_selection_get_selected(selection, &model, &seliter); 
+    gtk_tree_selection_get_selected(selection, &model, &seliter);
     path = gtk_tree_model_get_path(model, &seliter);
     if (gtk_tree_path_prev(path)) {
 	gtk_tree_model_get_iter(model, &previter, path);
@@ -3747,7 +3771,7 @@ static void shift_var_down (GtkButton *b, GtkWidget *view)
     GtkTreeIter seliter, nextiter;
 
     selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
-    gtk_tree_selection_get_selected(selection, &model, &seliter); 
+    gtk_tree_selection_get_selected(selection, &model, &seliter);
     nextiter = seliter;
     if (gtk_tree_model_iter_next(model, &nextiter)) {
 	gtk_list_store_swap(GTK_LIST_STORE(model), &seliter, &nextiter);
@@ -3781,13 +3805,13 @@ static void dialog_add_order_selector (GtkWidget *dlg, GRETL_VAR *var,
     store = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_INT);
     view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
     g_object_set_data(G_OBJECT(view), "ordvec", ordvec);
-    
+
     renderer = gtk_cell_renderer_text_new();
     column = gtk_tree_view_column_new_with_attributes(NULL,
 						      renderer,
 						      "text", 0,
 						      NULL);
-    gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);	
+    gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
 
     gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(view), FALSE);
     gtk_tree_view_set_reorderable(GTK_TREE_VIEW(view), FALSE);
@@ -3847,8 +3871,8 @@ static void dialog_add_order_selector (GtkWidget *dlg, GRETL_VAR *var,
     g_object_unref(store);
 }
 
-static int 
-impulse_response_setup (GRETL_VAR *var, gretl_matrix *ordvec, int *horizon, 
+static int
+impulse_response_setup (GRETL_VAR *var, gretl_matrix *ordvec, int *horizon,
 			int *bootstrap, double *alpha, gretlopt *gopt,
 			GtkWidget *parent)
 {
@@ -3897,9 +3921,9 @@ impulse_response_setup (GRETL_VAR *var, gretl_matrix *ordvec, int *horizon,
     return resp;
 }
 
-static int FEVD_setup (GRETL_VAR *var, gretl_matrix *ordvec, 
+static int FEVD_setup (GRETL_VAR *var, gretl_matrix *ordvec,
 		       int *horizon, gretlopt *opt,
-		       GtkWidget *parent) 
+		       GtkWidget *parent)
 {
     const char *opts[] = {
 	N_("line graph"),
@@ -3917,7 +3941,7 @@ static int FEVD_setup (GRETL_VAR *var, gretl_matrix *ordvec,
 			      0, NULL, 0, 0, /* no checks */
 			      2, &histo, /* two radio buttons */
 			      &h, _("forecast horizon (periods):"),
-			      2, dataset->n / 2, 0, 
+			      2, dataset->n / 2, 0,
 			      parent, &resp);
 
     g_free(title);
@@ -3945,7 +3969,7 @@ static int FEVD_setup (GRETL_VAR *var, gretl_matrix *ordvec,
     return resp;
 }
 
-static void impulse_params_from_action (GtkAction *action, 
+static void impulse_params_from_action (GtkAction *action,
 					int *targ,
 					int *shock)
 {
@@ -3954,7 +3978,7 @@ static void impulse_params_from_action (GtkAction *action,
     sscanf(s, "Imp:%d:%d", targ, shock);
 }
 
-static void FEVD_param_from_action (GtkAction *action, 
+static void FEVD_param_from_action (GtkAction *action,
 				    int *targ)
 {
     const gchar *s = gtk_action_get_name(action);
@@ -4008,7 +4032,7 @@ static void FEVD_plot_call (GtkAction *action, gpointer p)
     ordvec = cholesky_order_vector(var);
 
     resp = FEVD_setup(var, ordvec, &horizon, &opt, vwin->main);
-    
+
     if (resp < 0) {
 	/* canceled */
 	gretl_matrix_free(ordvec);
@@ -4043,7 +4067,7 @@ static void impulse_plot_call (GtkAction *action, gpointer p)
     impulse_params_from_action(action, &targ, &shock);
     ordvec = cholesky_order_vector(var);
 
-    resp = impulse_response_setup(var, ordvec, &horizon, &bootstrap, 
+    resp = impulse_response_setup(var, ordvec, &horizon, &bootstrap,
 				  &alpha, &gopt, vwin->main);
 
     if (resp < 0) {
@@ -4065,8 +4089,8 @@ static void impulse_plot_call (GtkAction *action, gpointer p)
 	}
     }
 
-    err = gretl_VAR_plot_impulse_response(var, targ, shock, 
-					  horizon, this_alpha, 
+    err = gretl_VAR_plot_impulse_response(var, targ, shock,
+					  horizon, this_alpha,
 					  dataset, gopt);
     gui_graph_handler(err);
 }
@@ -4084,7 +4108,7 @@ static void multiple_irf_plot_call (GtkAction *action, gpointer p)
 
     ordvec = cholesky_order_vector(var);
 
-    resp = impulse_response_setup(var, ordvec, &horizon, 
+    resp = impulse_response_setup(var, ordvec, &horizon,
 				  &bootstrap, &alpha, &gopt,
 				  vwin->main);
 
@@ -4096,7 +4120,7 @@ static void multiple_irf_plot_call (GtkAction *action, gpointer p)
 
     if (bootstrap) {
 	this_alpha = alpha;
-    }   
+    }
 
     if (ordvec != NULL) {
 	if (ordvec_default(ordvec)) {
@@ -4105,9 +4129,9 @@ static void multiple_irf_plot_call (GtkAction *action, gpointer p)
 	} else {
 	    gretl_VAR_set_ordering(var, ordvec);
 	}
-    }    
+    }
 
-    err = gretl_VAR_plot_multiple_irf(var, horizon, this_alpha, 
+    err = gretl_VAR_plot_multiple_irf(var, horizon, this_alpha,
 				      dataset, gopt);
     gui_graph_handler(err);
 }
@@ -4145,15 +4169,15 @@ static void VAR_model_data_callback (GtkAction *action, gpointer p)
     h = default_VAR_horizon(dataset);
     ordvec = cholesky_order_vector(var);
 
-    title = g_strdup_printf("gretl: %s", 
+    title = g_strdup_printf("gretl: %s",
 			    (code == VAR_IRF)? _("impulse responses") :
 			    _("variance decompositions"));
 
-    dlg = build_checks_dialog(title, NULL, 
+    dlg = build_checks_dialog(title, NULL,
 			      NULL, 0, NULL, 0, 0, /* no check-buttons */
 			      0, NULL,             /* no radios */
 			      &h, _("forecast horizon (periods):"),
-			      2, dataset->n / 2, 
+			      2, dataset->n / 2,
 			      0, vwin->main, &resp);
 
     if (dlg == NULL) {
@@ -4176,10 +4200,10 @@ static void VAR_model_data_callback (GtkAction *action, gpointer p)
 	if (ordvec_default(ordvec)) {
 	    gretl_matrix_free(ordvec);
 	    ordvec = NULL;
-	} 
+	}
 	gretl_VAR_set_ordering(var, ordvec);
 	ordvec = NULL;
-    }    
+    }
 
     if (code == VAR_IRF) {
 	err = gretl_VAR_print_all_impulse_responses(var, dataset, h, prn);
@@ -4195,7 +4219,7 @@ static void VAR_model_data_callback (GtkAction *action, gpointer p)
     } else {
 	windata_t *viewer;
 
-	viewer = view_buffer_with_parent(vwin, prn, 80, 400, title, 
+	viewer = view_buffer_with_parent(vwin, prn, 80, 400, title,
 					 code, NULL);
 	/* for use when printing in other formats */
 	viewer->active_var = h;
@@ -4275,7 +4299,7 @@ static void system_forecast_callback (GtkAction *action, gpointer p)
     resp = forecast_dialog(t1, t1, &t1,
 			   t1, t2, &t2, NULL,
 			   0, premax, &pre_n,
-			   dyn_ok, &gopt, &conf, 
+			   dyn_ok, &gopt, &conf,
 			   NULL, vwin->main);
     if (resp < 0) {
 	return;
@@ -4311,7 +4335,7 @@ static void system_forecast_callback (GtkAction *action, gpointer p)
 	err = text_print_forecast(fr, dataset, gopt, prn);
 	gui_graph_handler(err);
 
-	view_buffer(prn, (fr->sderr == NULL)? 50 : 78, 400, 
+	view_buffer(prn, (fr->sderr == NULL)? 50 : 78, 400,
 		    _("gretl: forecasts"), FCAST, fr);
     }
 }
@@ -4376,14 +4400,14 @@ static void system_test_call (GtkAction *action, gpointer p)
 	    gretl_print_destroy(prn);
 	    return;
 	}
-    }	
+    }
 
     if (code == SYS_AUTOCORR_TEST) {
 	title = g_strdup(_("gretl: autocorrelation"));
 	cstr = g_strdup_printf("modtest %d --autocorr", order);
 	if (var != NULL) {
-	    err = gretl_VAR_autocorrelation_test(var, order, 
-						 dataset, 
+	    err = gretl_VAR_autocorrelation_test(var, order,
+						 dataset,
 						 OPT_NONE,
 						 prn);
 	} else {
@@ -4414,7 +4438,7 @@ static void system_test_call (GtkAction *action, gpointer p)
 	gretl_print_destroy(prn);
     } else {
 	add_command_to_stack(cstr, 0);
-	view_buffer(prn, 78, 400, title, PRINT, NULL); 
+	view_buffer(prn, 78, 400, title, PRINT, NULL);
     }
 
     g_free(title);
@@ -4536,7 +4560,7 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	    item.label = N_("Omit exogenous variables...");
 	    item.callback = G_CALLBACK(selector_callback);
 	    vwin_menu_add_item(vwin, tests, &item);
-	} 
+	}
 	if (var->detflags & DET_TREND) {
 	    item.name = "VarOmitTrend";
 	    item.label = N_("Omit time trend");
@@ -4548,7 +4572,7 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	    item.label = N_("Omit seasonal dummies");
 	    item.callback = G_CALLBACK(VAR_omit_auto);
 	    vwin_menu_add_item(vwin, tests, &item);
-	}	
+	}
     }
 
     /* Save residuals */
@@ -4572,7 +4596,7 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	item.name = "yhat";
 	item.label = N_("Display fitted values, all equations");
 	vwin_menu_add_item(vwin, analysis, &item);
-    }  
+    }
 
     if (neqns > 1) {
 	/* Display VCV matrix */
@@ -4609,7 +4633,7 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	item.callback = G_CALLBACK(system_resid_plot_call);
 	vwin_menu_add_item(vwin, "/menubar/Graphs/ResidsMenu", &item);
     }
-    
+
     if (neqns > 1 && neqns <= 6) {
 	/* multiple residual plots in one frame */
 	sprintf(min, "multiresid %s", cmdword);
@@ -4643,7 +4667,7 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	    item.name = "ecplot";
 	    item.label = N_("Combined EC plot");
 	    item.callback = G_CALLBACK(combined_EC_plot_call);
-	    vwin_menu_add_item(vwin, graphs, &item);	    
+	    vwin_menu_add_item(vwin, graphs, &item);
 	}
     }
 
@@ -4725,7 +4749,7 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	    item.callback = G_CALLBACK(FEVD_plot_call);
 	    vwin_menu_add_item(vwin, "/menubar/Graphs/FEVD", &item);
 	}
-    }	
+    }
 
     if (ci == VECM) {
 	/* save ECs items */
@@ -4789,7 +4813,7 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
 	const gretl_matrix *m = val;
 	int t1 = gretl_matrix_get_t1(m);
 	int t2 = gretl_matrix_get_t2(m);
-	
+
 	save_bundled_series(m->val, t1, t2, key, note, vwin);
     } else {
 	char vname[VNAMELEN];
@@ -4803,7 +4827,7 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
 				"Name (max. %d characters):",
 				key, gretl_type_get_name(type),
 				VNAMELEN - 1);
-	resp = object_name_entry_dialog(vname, type, blurb, 
+	resp = object_name_entry_dialog(vname, type, blurb,
 					&show, vwin->main);
 	g_free(blurb);
 
@@ -4907,18 +4931,18 @@ static void add_blist_item_to_menu (gpointer listitem,
     double_underscores(keystr, (gchar *) key);
 
     if (note != NULL) {
-	label = g_strdup_printf("%s (%s: %s)", keystr, 
+	label = g_strdup_printf("%s (%s: %s)", keystr,
 				typestr, note);
     } else {
 	label = g_strdup_printf("%s (%s)", keystr, typestr);
     }
 
     action = gtk_action_new(key, label, NULL, NULL);
-    g_signal_connect(G_OBJECT(action), "activate", 
+    g_signal_connect(G_OBJECT(action), "activate",
 		     G_CALLBACK(save_bundled_item_call),
 		     g_object_get_data(G_OBJECT(menu), "vwin"));
 
-    item = gtk_action_create_menu_item(action); 
+    item = gtk_action_create_menu_item(action);
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 
     g_free(label);
@@ -4953,10 +4977,10 @@ static void add_kalman_items_to_menu (GtkWidget *menu,
     for (i=0; i<ns; i++) {
 	label = g_strdup_printf("%s (matrix)", S[i]);
 	action = gtk_action_new(S[i], label, NULL, NULL);
-	g_signal_connect(G_OBJECT(action), "activate", 
+	g_signal_connect(G_OBJECT(action), "activate",
 			 G_CALLBACK(save_bundled_item_call),
 			 g_object_get_data(G_OBJECT(menu), "vwin"));
-	item = gtk_action_create_menu_item(action); 
+	item = gtk_action_create_menu_item(action);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 	g_free(label);
     }
@@ -4969,10 +4993,10 @@ static void add_kalman_items_to_menu (GtkWidget *menu,
     for (i=0; i<ns; i++) {
 	label = g_strdup_printf("%s (scalar)", S[i]);
 	action = gtk_action_new(S[i], label, NULL, NULL);
-	g_signal_connect(G_OBJECT(action), "activate", 
+	g_signal_connect(G_OBJECT(action), "activate",
 			 G_CALLBACK(save_bundled_item_call),
 			 g_object_get_data(G_OBJECT(menu), "vwin"));
-	item = gtk_action_create_menu_item(action); 
+	item = gtk_action_create_menu_item(action);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 	g_free(label);
     }
@@ -4980,8 +5004,8 @@ static void add_kalman_items_to_menu (GtkWidget *menu,
     strings_array_free(S, ns);
 }
 
-static void check_for_saveable (gpointer key, 
-				gpointer value, 
+static void check_for_saveable (gpointer key,
+				gpointer value,
 				gpointer data)
 {
     int *pn = (int *) data;
@@ -5099,13 +5123,13 @@ GtkWidget *make_bundle_plot_menu (windata_t *vwin)
 	    for (i=0; i<ng; i++) {
 		aname = g_strdup_printf("%s:%d", plotfunc, i);
 		action = gtk_action_new(aname, S[i], NULL, NULL);
-		g_signal_connect(G_OBJECT(action), "activate", 
+		g_signal_connect(G_OBJECT(action), "activate",
 				 G_CALLBACK(bundle_plot_call),
 				 vwin);
-		item = gtk_action_create_menu_item(action); 
+		item = gtk_action_create_menu_item(action);
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 		g_free(aname);
-	    }		
+	    }
 	}
 	g_free(plotfunc);
     }
@@ -5120,18 +5144,18 @@ GtkWidget *make_bundle_save_menu (windata_t *vwin)
     GtkAction *action;
     GtkWidget *item;
 
-    action = gtk_action_new("SaveAs", _("_Save text..."), 
+    action = gtk_action_new("SaveAs", _("_Save text..."),
 			    NULL, NULL);
-    g_signal_connect(G_OBJECT(action), "activate", 
+    g_signal_connect(G_OBJECT(action), "activate",
 		     G_CALLBACK(model_output_save), vwin);
-    item = gtk_action_create_menu_item(action); 
+    item = gtk_action_create_menu_item(action);
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 
-    action = gtk_action_new("SaveAsIcon", _("Save bundle to session as _icon"), 
+    action = gtk_action_new("SaveAsIcon", _("Save bundle to session as _icon"),
 			    NULL, NULL);
-    g_signal_connect(G_OBJECT(action), "activate", 
+    g_signal_connect(G_OBJECT(action), "activate",
 		     G_CALLBACK(bundle_add_as_icon), vwin);
-    item = gtk_action_create_menu_item(action); 
+    item = gtk_action_create_menu_item(action);
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 
     if (get_user_var_by_data(bundle)) {
@@ -5158,7 +5182,7 @@ static int set_sample_from_model (void *ptr, int role)
     /* then, if the model was subsampled, restore the subsample */
     if (!err) {
 	if (pmod != NULL && pmod->submask != NULL) {
-	    err = restrict_sample_from_mask(pmod->submask, dataset, 
+	    err = restrict_sample_from_mask(pmod->submask, dataset,
 					    OPT_NONE);
 	    range_set = 1;
 	} else {
@@ -5193,7 +5217,7 @@ static int set_sample_from_model (void *ptr, int role)
 	    restore_sample_state(FALSE);
 	    lib_command_strcpy("smpl --full");
 	    record_command_verbatim();
-	}	    
+	}
 
 	mark_session_changed();
 	set_sample_label(dataset);
@@ -5225,7 +5249,7 @@ static gboolean maybe_set_sample_from_model (windata_t *vwin)
     return (err == 0);
 }
 
-static gint check_model_menu (GtkWidget *w, GdkEventButton *eb, 
+static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 			      gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
@@ -5249,7 +5273,7 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 	return FALSE;
     }
 
-    if (pmod->ci == MLE || pmod->ci == GMM || 
+    if (pmod->ci == MLE || pmod->ci == GMM ||
 	pmod->ci == MPOLS || pmod->ci == BIPROBIT) {
 	return FALSE;
     }
@@ -5267,7 +5291,7 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
     if (s == ok) {
 	/* no need to flip state */
 	return FALSE;
-    }    
+    }
 
     if (s && !ok) {
 	if (resampled) {
@@ -5302,14 +5326,14 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
     return FALSE;
 }
 
-static gint check_VAR_menu (GtkWidget *w, GdkEventButton *eb, 
+static gint check_VAR_menu (GtkWidget *w, GdkEventButton *eb,
 			    gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
     GtkAction *action;
     gboolean s, ok = TRUE;
 
-    if (complex_subsampled()) { 
+    if (complex_subsampled()) {
 	ok = FALSE;
     }
 
@@ -5373,9 +5397,9 @@ static int object_overwrite_ok (const char *name, GretlType t,
     return (resp == GRETL_YES);
 }
 
-/* note: returns non-zero if the varname is not acceptable */	    
+/* note: returns non-zero if the varname is not acceptable */
 
-static int real_gui_validate_varname (const char *name, 
+static int real_gui_validate_varname (const char *name,
 				      GretlType t,
 				      int allow_overwrite,
 				      GtkWidget *parent)
@@ -5386,7 +5410,7 @@ static int real_gui_validate_varname (const char *name,
     int err = 0;
 
     *namebit = '\0';
-    
+
     if (n > VNAMELEN - 1) {
 	strncat(namebit, name, VNAMELEN - 1);
 	errbox_printf(_("Variable name %s... is too long\n"
@@ -5400,10 +5424,10 @@ static int real_gui_validate_varname (const char *name,
     } else {
 	for (i=1; i<n && !err; i++) {
 	    c = (unsigned char) name[i];
-	
+
 	    if ((!(isalpha(c)) && !(isdigit(c)) && c != '_') || c > 127) {
 		errbox_printf(_("Name contains an illegal char (in place %d)\n"
-				"Use only unaccented letters, digits and underscore"), 
+				"Use only unaccented letters, digits and underscore"),
 			      i + 1);
 		err = 1;
 	    }
@@ -5422,7 +5446,7 @@ static int real_gui_validate_varname (const char *name,
 	    } else {
 		/* the types disgree: won't work */
 		gchar *msg = exists_string(name, t0);
-		
+
 		errbox(msg);
 		g_free(msg);
 		err = 1;
@@ -5476,7 +5500,7 @@ gint popup_menu_handler (GtkWidget *widget, GdkEventButton *event,
 }
 
 void add_popup_item (const gchar *label, GtkWidget *menu,
-		     GCallback callback, 
+		     GCallback callback,
 		     gpointer data)
 {
     GtkWidget *item;
@@ -5488,7 +5512,7 @@ void add_popup_item (const gchar *label, GtkWidget *menu,
     gtk_widget_show(item);
 }
 
-void *gui_get_plugin_function (const char *funcname) 
+void *gui_get_plugin_function (const char *funcname)
 {
     void *func;
 
@@ -5551,9 +5575,9 @@ static void win32_run_R_sync (const char *buf, gretlopt opt)
     if (bufopen(&prn)) {
 	return;
     }
-    
+
     err = execute_R_buffer(buf, dataset, opt, prn);
-    
+
     if (err) {
 	gui_errmsg(err);
     } else {
@@ -5606,7 +5630,7 @@ void run_foreign_script (gchar *buf, int lang)
 	    gretl_chdir(gretl_dotdir());
 	    remove("gretltmp.log");
 	    err = gretl_spawn(cmd);
-	
+
 	    if (g_file_get_contents("gretltmp.log", &buf, NULL, NULL)) {
 		bufopen(&prn);
 		pputs(prn, buf);
@@ -5628,7 +5652,7 @@ void run_foreign_script (gchar *buf, int lang)
 	} else if (err) {
 	    gui_errmsg(err);
 	}
-	    
+
 	g_free(cmd);
     }
 }
@@ -5671,7 +5695,7 @@ int browser_open (const char *url)
     } else {
 	urlcmd = g_strdup_printf("%s -remote \"openURLNewWindow(%s)\"", Browser, url);
     }
-    
+
     fprintf(stderr, "urlcmd='%s'\n", urlcmd);
     err = gretl_spawn(urlcmd);
     fprintf(stderr, " err = %d\n", err);
@@ -5714,18 +5738,18 @@ static void start_R_async (void)
 	GError *error = NULL;
 	gboolean ok;
 	int i = 0;
-    
+
 	argv[i++] = s0;
 	if (n > 1) {
 	    argv[i++] = s1;
-	} 
+	}
 	if (n > 2) {
 	    argv[i++] = s2;
 	}
 	argv[i++] = supp1;
 	argv[i++] = supp2;
 	argv[i++] = NULL;
-	
+
 	ok = g_spawn_async(NULL,
 			   argv,
 			   NULL,
@@ -5742,10 +5766,10 @@ static void start_R_async (void)
 	    gui_errmsg(E_EXTERNAL);
 	    g_error_free(error);
 	}
-    }	
+    }
 
-    free(s0); 
-    free(s1); 
+    free(s0);
+    free(s1);
     free(s2);
 }
 
@@ -5795,7 +5819,7 @@ static void run_prog_sync (char **argv, int lang)
     } else if (lang == LANG_STATA) {
 	/* read log file */
 	gchar *buf = NULL;
-	
+
 	if (g_file_get_contents("gretltmp.log", &buf, NULL, NULL)) {
 	    bufopen(&prn);
 	    pputs(prn, buf);
@@ -5929,7 +5953,7 @@ void start_R (const char *buf, int send_data, int interactive)
     if (interactive) {
 	err = write_gretl_R_files(buf, dataset, Ropt);
     }
-#else   
+#else
     err = write_gretl_R_files(buf, dataset, Ropt);
 #endif
 
@@ -5946,9 +5970,9 @@ void start_R (const char *buf, int send_data, int interactive)
 	/* non-interactive */
 #ifdef G_OS_WIN32
 	win32_run_R_sync(buf, Ropt);
-#else	
+#else
 	run_R_sync();
-#endif	
+#endif
     }
 }
 
@@ -5959,7 +5983,7 @@ void verbose_gerror_report (GError *gerr, const char *src)
 	    src, gerr->message, gerr->domain, gerr->code);
 }
 
-int gretl_file_get_contents (const gchar *fname, gchar **contents, 
+int gretl_file_get_contents (const gchar *fname, gchar **contents,
 			     gsize *size)
 {
     GError *gerr = NULL;

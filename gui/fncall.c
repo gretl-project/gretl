@@ -4256,12 +4256,6 @@ int dbnomics_get_series_call (const char *datacode)
 	    if (err) {
 		gui_errmsg(err);
 	    }
-#if 0
-	    else {
-		/* debugging */
-		gretl_bundle_print(b, prn);
-	    }
-#endif
 	}
 	fc = NULL;
     }
@@ -4305,6 +4299,7 @@ void *dbnomics_get_providers_call (int *err)
     gretl_array *A = NULL;
     ufunc *uf = NULL;
     fncall *fc = NULL;
+    GdkWindow *cwin;
 
     uf = get_packaged_function("dbnomics_providers", "dbnomics");
     if (uf == NULL) {
@@ -4316,8 +4311,10 @@ void *dbnomics_get_providers_call (int *err)
 	fc = fncall_new(uf);
     }
     if (fc != NULL) {
+	set_wait_cursor(&cwin);
 	*err = gretl_function_exec(fc, GRETL_TYPE_BUNDLES, NULL,
 				   &A, NULL, NULL);
+	unset_wait_cursor(cwin);
 	if (*err) {
 	    gui_errmsg(*err);
 	}
@@ -4333,6 +4330,7 @@ void *dbnomics_search_call (const char *key,
     gretl_array *A = NULL;
     ufunc *uf = NULL;
     fncall *fc = NULL;
+    GdkWindow *cwin;
 
     uf = get_packaged_function("dbnomics_search", "dbnomics");
     if (uf == NULL) {
@@ -4348,8 +4346,10 @@ void *dbnomics_search_call (const char *key,
 				  GRETL_TYPE_INT, (void *) &limit, NULL,
 				  GRETL_TYPE_INT, (void *) &offset, NULL, -1);
 	if (!*err) {
+	    set_wait_cursor(&cwin);
 	    *err = gretl_function_exec(fc, GRETL_TYPE_BUNDLES, NULL,
 				       &A, NULL, NULL);
+	    unset_wait_cursor(cwin);
 	}
 	if (*err) {
 	    gui_errmsg(*err);
@@ -4367,6 +4367,7 @@ void *dbnomics_probe_series (const char *prov,
     gretl_array *A = NULL;
     ufunc *uf = NULL;
     fncall *fc = NULL;
+    GdkWindow *cwin;
 
     uf = get_packaged_function("dbnomics_get_dataset_content", "dbnomics");
     if (uf == NULL) {
@@ -4383,8 +4384,10 @@ void *dbnomics_probe_series (const char *prov,
 				  GRETL_TYPE_INT, (void *) &limit, NULL,
 				  GRETL_TYPE_INT, (void *) &offset, NULL, -1);
 	if (!*err) {
+	    set_wait_cursor(&cwin);
 	    *err = gretl_function_exec(fc, GRETL_TYPE_BUNDLES, NULL,
 				       &A, NULL, NULL);
+	    unset_wait_cursor(cwin);
 	}
 	if (*err) {
 	    gui_errmsg(*err);
@@ -4393,4 +4396,3 @@ void *dbnomics_probe_series (const char *prov,
 
     return A;
 }
-

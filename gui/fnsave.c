@@ -3998,11 +3998,8 @@ static void do_pkg_upload (function_info *finfo)
     gchar *buf = NULL;
     char *retbuf = NULL;
     gchar *zipname = NULL;
+    GdkWindow *cwin = NULL;
     login_info linfo;
-    GdkDisplay *disp;
-    GdkCursor *cursor;
-    GdkWindow *w1;
-    gint x, y;
     gsize buflen;
     int error_printed = 0;
     int err;
@@ -4030,15 +4027,8 @@ static void do_pkg_upload (function_info *finfo)
 	return;
     }
 
-    /* set waiting cursor */
-    disp = gdk_display_get_default();
-    w1 = gdk_display_get_window_at_pointer(disp, &x, &y);
-    if (w1 != NULL) {
-	cursor = gdk_cursor_new(GDK_WATCH);
-	gdk_window_set_cursor(w1, cursor);
-	gdk_display_sync(disp);
-	gdk_cursor_unref(cursor);
-    }
+    /* call for the "watch" cursor */
+    set_wait_cursor(&cwin);
 
     err = gretl_file_get_contents(fname, &buf, &buflen);
 
@@ -4051,10 +4041,8 @@ static void do_pkg_upload (function_info *finfo)
 	fprintf(stderr, "upload_function_package: err = %d\n", err);
     }
 
-    /* reset default cursor */
-    if (w1 != NULL) {
-	gdk_window_set_cursor(w1, NULL);
-    }
+    /* restore default cursor */
+    unset_wait_cursor(cwin);
 
     if (err) {
 	if (!error_printed) {

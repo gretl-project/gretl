@@ -50,6 +50,10 @@ FILE *gretl_tempfile_open (char *fname);
 
 void delete_widget (GtkWidget *widget, gpointer data);
 
+void set_wait_cursor (GdkWindow **pcwin);
+
+void unset_wait_cursor (GdkWindow *cwin);
+
 void *mymalloc (size_t size); 
 
 void *myrealloc (void *ptr, size_t size);

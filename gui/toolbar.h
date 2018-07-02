@@ -56,6 +56,12 @@ GtkWidget *gretl_toolbar_insert (GtkWidget *tbar,
 				 gpointer data,
 				 gint pos);
 
+GtkWidget *vwin_toolbar_insert (GretlToolItem *tool,
+				GCallback func,
+				GtkWidget *menu,
+				windata_t *vwin,
+				gint pos);
+
 void vwin_add_tmpbar (windata_t *vwin);
 
 #endif /* TOOLBAR_H */

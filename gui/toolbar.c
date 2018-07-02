@@ -1219,11 +1219,11 @@ static void tool_item_popup (GtkWidget *button, GdkEvent *event,
 		   event->button.button, event->button.time);
 }
 
-static GtkWidget *vwin_toolbar_insert (GretlToolItem *tool,
-				       GCallback func,
-				       GtkWidget *menu,
-				       windata_t *vwin,
-				       gint pos)
+GtkWidget *vwin_toolbar_insert (GretlToolItem *tool,
+				GCallback func,
+				GtkWidget *menu,
+				windata_t *vwin,
+				gint pos)
 {
     GtkToolItem *item;
 
