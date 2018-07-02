@@ -87,6 +87,8 @@ void *dbnomics_search_call (const char *key,
 			    int limit, int offset,
 			    int *err);
 
+void *dbnomics_dataset_list (const char *provider, int *err);
+
 void *dbnomics_probe_series (const char *prov,
 			     const char *dset,
 			     int limit, int offset,

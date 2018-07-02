@@ -4339,6 +4339,32 @@ void *dbnomics_search_call (const char *key,
     return A;
 }
 
+void *dbnomics_dataset_list (const char *provider, int *err)
+{
+    gretl_bundle *b = NULL;
+    fncall *fc = NULL;
+    GdkWindow *cwin;
+
+    fc = get_pkg_function_call("dbnomics_dsets_for_provider", "dbnomics");
+    if (fc == NULL) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    *err = push_function_arg(fc, NULL, GRETL_TYPE_STRING, (void *) provider);
+    if (!*err) {
+	set_wait_cursor(&cwin);
+	*err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, NULL,
+				   &b, NULL, NULL);
+	unset_wait_cursor(cwin);
+    }
+    if (*err) {
+	gui_errmsg(*err);
+    }
+
+    return b;
+}
+
 void *dbnomics_probe_series (const char *prov,
 			     const char *dset,
 			     int limit, int offset,

@@ -3112,7 +3112,7 @@ void dbnomics_pager_call (GtkWidget *w, windata_t *vwin)
 	pgr->offset = newoff < 0 ? 0 : newoff;
     } else {
 	int maxoff = pgr->ntotal - 1;
-	
+
 	newoff = pgr->offset + pgr->chunk;
 	pgr->offset = newoff > maxoff ? maxoff : newoff;
     }
@@ -3156,15 +3156,15 @@ static void set_dbn_pager_status (windata_t *vwin)
 gint populate_dbnomics_dataset_list (windata_t *vwin, gpointer p)
 {
     gchar *provider = (gchar *) p;
-    gretl_array *A = NULL;
+    gretl_array *C, *N;
     gretl_bundle *b;
-    char *code, *name, *nstr;
+    char *code, *name;
     GtkListStore *store;
     GtkTreeIter iter;
     struct dbn_pager *pgr;
     int starting = 1;
-    int alen = 0;
-    int i, err = 0;
+    int i, imin, imax;
+    int err = 0;
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox)));
     gtk_list_store_clear(store);
@@ -3173,18 +3173,26 @@ gint populate_dbnomics_dataset_list (windata_t *vwin, gpointer p)
     if (vwin->data == NULL) {
 	/* starting: we don't have a pager yet */
 	pgr = dbn_pager_new(vwin);
+	b = dbnomics_dataset_list(provider, &err);
+	if (err) {
+	    return err;
+	}
     } else {
+	b = g_object_get_data(G_OBJECT(vwin->listbox), "dset-list");
 	provider = g_object_get_data(G_OBJECT(vwin->listbox), "provider");
 	pgr = vwin->data;
 	starting = 0;
     }
 
-    A = dbnomics_search_call(provider, pgr->chunk, pgr->offset, &err);
     if (!err) {
-	alen = gretl_array_get_length(A);
-	if (alen == 0) {
-	    errbox(_("No datasets were found"));
-	    err = 1;
+	C = gretl_bundle_get_array(b, "codes", &err);
+	N = gretl_bundle_get_array(b, "names", &err);
+	if (!err && starting) {
+	    pgr->ntotal = gretl_array_get_length(C);
+	    if (pgr->ntotal == 0) {
+		errbox(_("No datasets were found"));
+		err = 1;
+	    }
 	}
     }
 
@@ -3192,40 +3200,44 @@ gint populate_dbnomics_dataset_list (windata_t *vwin, gpointer p)
 	return err;
     }
 
-    pgr->n = 0;
-    for (i=0; i<alen; i++) {
-	b = gretl_array_get_bundle(A, i);
-	code = (char *) gretl_bundle_get_string(b, "code", &err);
-	name = (char *) gretl_bundle_get_string(b, "name", &err);
-	nstr = (char *) gretl_bundle_get_string(b, "nb_matching_series", &err);
-	if (!err) {
-	    gchar *info = g_strdup_printf("%s (%d series)", name, atoi(nstr));
+    if (pgr->ntotal <= pgr->chunk) {
+	/* just display everything */
+	imin = 0;
+	imax = pgr->ntotal;
+    } else {
+	/* display the first so many after offset */
+	imin = pgr->offset;
+	imax = imin + pgr->chunk;
+	imax = imax > pgr->ntotal ? pgr->ntotal : imax;
+    }
 
+    pgr->n = imax - imin;
+
+    for (i=imin; i<imax; i++) {
+	code = gretl_array_get_element(C, i, NULL, &err);
+	name = gretl_array_get_element(N, i, NULL, &err);
+	if (!err) {
 	    gtk_list_store_append(store, &iter);
 	    gtk_list_store_set(store, &iter,
 			       COL_DBNAME, code,
-			       COL_DBINFO, info, -1);
-	    g_free(info);
-	    pgr->n += 1;
-	    if (pgr->ntotal == 0) {
-		pgr->ntotal = gretl_bundle_get_int(b, "ntot", NULL);
-	    }
+			       COL_DBINFO, name, -1);
 	}
     }
 
-    gretl_array_destroy(A); /* we're done with this */
+    if (pgr->ntotal <= pgr->chunk) {
+	/* no need to keep the dataset-list bundle */
+	gretl_bundle_destroy(b);
+    } else if (starting) {
+	g_object_set_data_full(G_OBJECT(vwin->listbox), "dset-list", b,
+			       (GDestroyNotify) gretl_bundle_destroy);
+    }
 
-    if (pgr->n == 0) {
-	errbox(_("No datasets were found"));
-	err = 1;
-    } else {
-	/* set and show status */
-	set_dbn_pager_status(vwin);
-	if (starting) {
-	    /* and make the provider name available downstream */
-	    g_object_set_data_full(G_OBJECT(vwin->listbox), "provider",
-				   provider, g_free);
-	}
+    /* set and show status */
+    set_dbn_pager_status(vwin);
+    if (starting) {
+	/* and make the provider name available downstream */
+	g_object_set_data_full(G_OBJECT(vwin->listbox), "provider",
+			       provider, g_free);
     }
 
     return err;
@@ -3256,7 +3268,7 @@ gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
 	dsref = g_object_get_data(G_OBJECT(vwin->listbox), "path");
 	pgr = vwin->data;
 	starting = 0;
-    }    
+    }
 
     s = strchr(dsref, '/');
     dset = g_strdup(s + 1);
