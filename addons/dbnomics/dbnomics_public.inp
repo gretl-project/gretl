@@ -1,9 +1,5 @@
 function void dbnomics_bundle_print(const bundle b, bool print_data[0])
-    if !inbundle(b, "actobs")
-        printf "dbnomics_bundle_print: dbnomics bundle appears to contain no data\n"
-	return
-    endif
-    n = b.actobs
+
     sn = b.dset_name
     if inbundle(b, "id")
         sn ~= sprintf(" (%s)", b.id)
@@ -19,14 +15,20 @@ function void dbnomics_bundle_print(const bundle b, bool print_data[0])
     endif
     printf "%s\n", line
 
-    printf "pd = %d; %d observations, [%s - %s]\n", 
-      b.frequency, n, b.periods[1], b.periods[n]
-    if print_data
-        loop i=1..n -q
-            printf "%s %6.1f\n", b.periods[i], b.vals[i]
-        endloop
+    if b.has_data
+	n = b.actobs
+	printf "pd = %d; %d observations, [%s - %s]\n", 
+	b.frequency, n, b.periods[1], b.periods[n]
+	if print_data
+            loop i=1..n -q
+		printf "%s %6.1f\n", b.periods[i], b.vals[i]
+            endloop
+	endif
+    else
+        printf "bundle appears to contain no data\n"
     endif
     printf "\n"
+    
 end function
 
 ### ------------------------------------------------------------------------
@@ -40,7 +42,6 @@ function scalar dbnomics_bundle_get_data(const bundle b, series *x, bool verbose
     pd = b.frequency
     daily = pd == 7
     
-    printf "pd = %d, $pd = %d\n", pd, $pd
     if daily #daily data need special treatment
 	match = maxc($pd .= {5;6;7}) 
     else
@@ -52,11 +53,11 @@ function scalar dbnomics_bundle_get_data(const bundle b, series *x, bool verbose
     endif
     
     tmpfile = sprintf("%s/tmp%04d.csv", $dotdir, randgen1(i, 0, 9999))
-    n = b.totobs
+    # n = b.totobs
     outfile @tmpfile --write
     printf "obs\tx\n"
     set warnings off
-    loop i=1..n -q
+    loop i=1 .. b.actobs -q
         printf "%s\t%20.15f\n", b.periods[i], b.vals[i]
     endloop
     outfile --close
@@ -85,6 +86,7 @@ function bundle dbnomics_get_series (const string datacode, bool verbose[0],
     bundle ret = null
     ret.error = 0
     ret.datacode = datacode
+    ret.has_data = 0
                        
     string json_src = "https://api.next.nomics.world/series?series_ids="
     URL = json_src ~ datacode ~ "&offset=0&format=json"
