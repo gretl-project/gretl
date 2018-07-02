@@ -1646,7 +1646,7 @@ enum {
 static GretlToolItem files_items[] = {
     { N_("Open"),           GTK_STOCK_OPEN, NULL, BTN_OPEN },
     { N_("Select directory"), GTK_STOCK_DIRECTORY, NULL, BTN_DIR },
-    { N_("Info"),           GTK_STOCK_INFO,       NULL,                          BTN_INFO },
+    { N_("Info"),           GTK_STOCK_INFO,       NULL, BTN_INFO },
     { N_("Sample script"),  GTK_STOCK_JUSTIFY_LEFT, G_CALLBACK(show_function_sample), BTN_CODE },
     { N_("View code"),      GTK_STOCK_PROPERTIES, G_CALLBACK(show_function_code), BTN_CODE },
     { N_("Execute"),        GTK_STOCK_EXECUTE,    G_CALLBACK(browser_call_func),  BTN_EXEC },
@@ -1673,10 +1673,16 @@ static int files_item_get_callback (GretlToolItem *item, int role)
 {
     if (common_item(item->flag)) {
 	return 1;
-    } else if (item->flag == BTN_DEL && role == PKG_REGISTRY) {
-	item->func = G_CALLBACK(gfn_registry_remove);
-	item->tip = N_("Remove from menu");
-	return 1;
+    } else if (item->flag == BTN_DEL) {
+	if (role == PKG_REGISTRY) {
+	    item->func = G_CALLBACK(gfn_registry_remove);
+	    item->tip = N_("Remove from menu");
+	    return 1;
+	} else if (role == FUNC_FILES) {
+	    item->func = G_CALLBACK(browser_del_func);
+	    item->tip = N_("Unload/delete...");
+	    return 1;
+	}
     } else if (local_funcs_item(item->flag)) {
 	return (role == FUNC_FILES);
     } else if (item->flag == BTN_INST) {
@@ -1711,6 +1717,8 @@ static int files_item_get_callback (GretlToolItem *item, int role)
 	    item->func = G_CALLBACK(pkg_info_from_server);
 	} else if (role == REMOTE_ADDONS) {
 	    item->func = G_CALLBACK(show_addon_info);
+	} else if (role == DBNOMICS_SERIES) {
+	    item->func = G_CALLBACK(open_dbnomics_series);
 	}
     } else if (item->flag == BTN_INDX) {
 	/* index: databases only */
@@ -2116,8 +2124,6 @@ static int display_files_code (const gchar *s)
     return 0;
 }
 
-#define DBN_TEST 1
-
 /* make a browser window to display a set of files: textbook
    data files, practice scripts, databases...
 */
@@ -2126,15 +2132,7 @@ void show_files (GtkAction *action, gpointer p)
 {
     int code = display_files_code(gtk_action_get_name(action));
 
-#if DBN_TEST
     display_files(code, p);
-#else
-    if (code == DBNOMICS_TOP) {
-	dbnomics_temporary_callback(NULL);
-    } else {
-	display_files(code, p);
-    }
-#endif
 }
 
 void show_native_dbs (void)

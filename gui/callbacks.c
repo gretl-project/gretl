@@ -70,7 +70,7 @@ static void doubleclick_action (windata_t *vwin)
 	open_dbnomics_dataset(NULL, vwin);
 	break;
     case DBNOMICS_SERIES:
-	dummy_call();
+	open_dbnomics_series(NULL, vwin);
 	break;
     default:
 	break;

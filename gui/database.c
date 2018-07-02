@@ -55,6 +55,7 @@
 #endif
 
 #define DB_SEARCH_DEBUG 0
+#define DBNOMICS_TEST 1
 
 /* private functions */
 static GtkWidget *database_window (windata_t *vwin);
@@ -1842,6 +1843,21 @@ void dbnomics_temporary_callback (gpointer data)
     free(datacode);
 }
 
+void open_dbnomics_series (GtkWidget *w, gpointer data)
+{
+    windata_t *vwin = (windata_t *) data;
+    gchar *scode = NULL, *path = NULL;
+    gchar *datacode;
+
+    path = g_object_get_data(G_OBJECT(vwin->listbox), "path");
+    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox),
+			 vwin->active_var, COL_DBNAME, &scode);
+
+    datacode = g_strdup_printf("%s/%s", path, scode);
+    dbnomics_get_series_call(datacode);
+    g_free(datacode);
+}
+
 void open_db_index (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
@@ -1852,11 +1868,6 @@ void open_db_index (GtkWidget *w, gpointer data)
 
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox),
 			 vwin->active_var, COL_DBNAME, &fname);
-
-    if (vwin->role == DBNOMICS_TOP) {
-	fprintf(stderr, "HERE, DBNOMICS_TOP\n");
-	return;
-    }
 
     if (has_suffix(fname, ".rat")) {
 	action = RATS_SERIES;
@@ -3205,6 +3216,8 @@ gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
 	    gtk_main_iteration();
 	}
 	g_free(tmp);
+	/* and make the 'path' name available downstream */
+	g_object_set_data(G_OBJECT(vwin->listbox), "path", dsref);
     }
 
     return err;
@@ -3621,7 +3634,7 @@ static void maybe_prune_db_list (GtkTreeView *tview,
     free(S);
     free(icpy);
 
-#if DBNOMICS
+#if DBNOMICS_TEST
     gtk_list_store_append(store, &iter);
     gtk_list_store_set(store, &iter,
 		       COL_DBNAME, "dbnomics",
