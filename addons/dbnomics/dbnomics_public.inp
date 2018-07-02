@@ -176,8 +176,8 @@ end function
 
 ### ------------------------------------------------------------------------
 
-function bundles dbnomics_get_dataset_content(string pcode, string dcode,
-   int limit[0::100], scalar offset[0])
+function bundles dbnomics_get_dataset_content(const string pcode, const string dcode,
+                                              int limit[0::100], int offset[0])
     site = "api.next.nomics.world"
     bundle req = null
     req.header = "accept: application/json"

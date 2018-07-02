@@ -2687,7 +2687,7 @@
     <description>
       <para>
 	This dialog allows you to inspect and download data series
-	from the dbnomics server. At present, you will have to visit
+	from the dbnomics server. You can visit
 	<url>https://next.nomics.world/</url> to obtain the
 	identifiers or codes for series of interest. These take the
 	form of triplets, three terms separated by slashes. For
