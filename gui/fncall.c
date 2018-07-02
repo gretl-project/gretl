@@ -4344,13 +4344,9 @@ void *dbnomics_search_call (const char *key,
 	fc = fncall_new(uf);
     }
     if (fc != NULL) {
-	*err = push_function_arg(fc, NULL, GRETL_TYPE_STRING, (void *) key);
-	if (!*err && limit != 100) {
-	    *err = push_function_arg(fc, NULL, GRETL_TYPE_INT, (void *) &limit);
-	}
-	if (!*err && offset > 0) {
-	    *err = push_function_arg(fc, NULL, GRETL_TYPE_INT, (void *) &offset);
-	}
+	*err = push_function_args(fc, GRETL_TYPE_STRING, (void *) key, NULL,
+				  GRETL_TYPE_INT, (void *) &limit, NULL,
+				  GRETL_TYPE_INT, (void *) &offset, NULL, -1);
 	if (!*err) {
 	    *err = gretl_function_exec(fc, GRETL_TYPE_BUNDLES, NULL,
 				       &A, NULL, NULL);
@@ -4382,16 +4378,10 @@ void *dbnomics_probe_series (const char *prov,
 	fc = fncall_new(uf);
     }
     if (fc != NULL) {
-	*err = push_function_arg(fc, NULL, GRETL_TYPE_STRING, (void *) prov);
-	if (!*err) {
-	    *err = push_function_arg(fc, NULL, GRETL_TYPE_STRING, (void *) dset);
-	}
-	if (!*err && limit != 100) {
-	    *err = push_function_arg(fc, NULL, GRETL_TYPE_INT, (void *) &limit);
-	}
-	if (!*err && offset > 0) {
-	    *err = push_function_arg(fc, NULL, GRETL_TYPE_INT, (void *) &offset);
-	}
+	*err = push_function_args(fc, GRETL_TYPE_STRING, (void *) prov, NULL,
+				  GRETL_TYPE_STRING, (void *) dset, NULL,
+				  GRETL_TYPE_INT, (void *) &limit, NULL,
+				  GRETL_TYPE_INT, (void *) &offset, NULL, -1);
 	if (!*err) {
 	    *err = gretl_function_exec(fc, GRETL_TYPE_BUNDLES, NULL,
 				       &A, NULL, NULL);
@@ -4403,3 +4393,4 @@ void *dbnomics_probe_series (const char *prov,
 
     return A;
 }
+

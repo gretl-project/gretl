@@ -15,7 +15,7 @@ void open_dbnomics_dataset (GtkWidget *w, gpointer data);
 
 void open_dbnomics_series (GtkWidget *w, gpointer data);
 
-void dbnomics_temporary_callback (gpointer data);
+void dbnomics_specific_series (GtkAction *action, gpointer data);
 
 void install_file_from_server (GtkWidget *w, windata_t *vwin);
 

@@ -292,6 +292,8 @@ void gretl_functions_cleanup (void);
 int push_function_arg (fncall *fc, const char *name,
 		       GretlType type, void *value);
 
+int push_function_args (fncall *fc, ...);
+
 void adjust_indent (const char *line, int *this_indent,
 		    int *next_indent);
 

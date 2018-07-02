@@ -421,7 +421,7 @@ static int fncall_add_args_array (fncall *fc)
  * @value: pointer to value to add.
  *
  * Writes a new argument of the specified type and value into the
- * argument array of @fun.
+ * argument array of @fc.
  *
  * Returns: 0 on success, non-zero on failure.
  */
@@ -445,6 +445,42 @@ int push_function_arg (fncall *fc, const char *name, GretlType type,
 	err = fn_arg_set_data(&fc->args[fc->argc], name, type, value);
 	fc->argc += 1;
     }
+
+    return err;
+}
+
+/**
+ * push_function_args:
+ * @fc: pointer to function call.
+ *
+ * Writes multiple entries into the argument array of @fc.
+ * Each argument must be given in the form {type, value, name},
+ * where @name may be NULL for anonymous arguments. The
+ * list of entries must be terminated with -1.
+ *
+ * Returns: 0 on success, non-zero on failure.
+ */
+
+int push_function_args (fncall *fc, ...)
+{
+    va_list ap;
+    int argtype;
+    void *value;
+    void *argname;
+    int i, err = 0;
+
+    va_start(ap, fc);
+    for (i=0; !err; i++) {
+	argtype = va_arg(ap, int);
+	if (argtype < 0) {
+	    /* reached the end of the args */
+	    break;
+	}
+	value = va_arg(ap, void *);
+	argname = va_arg(ap, void *);
+	err = push_function_arg(fc, (const char *) argname, argtype, value);
+    }
+    va_end(ap);
 
     return err;
 }

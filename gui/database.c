@@ -1823,7 +1823,7 @@ gboolean open_named_remote_db_index (char *dbname)
     return ret;
 }
 
-void dbnomics_temporary_callback (gpointer data)
+void dbnomics_specific_series (GtkAction *action, gpointer data)
 {
     char *datacode = NULL;
     int resp;
@@ -1874,7 +1874,7 @@ void open_db_index (GtkWidget *w, gpointer data)
     }
 
     if (action == NATIVE_SERIES && !strcmp(fname, "dbnomics")) {
-	dbnomics_temporary_callback(data);
+	dbnomics_specific_series(NULL, data);
 	return;
     }
 

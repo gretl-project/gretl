@@ -2118,7 +2118,7 @@ static int display_files_code (const gchar *s)
 	return REMOTE_FUNC_FILES;
     if (!strcmp(s, "SFAddons"))
 	return REMOTE_ADDONS;
-    if (!strcmp(s, "DBnomics"))
+    if (!strcmp(s, "DBNbrowse"))
 	return DBNOMICS_TOP;
 
     return 0;
