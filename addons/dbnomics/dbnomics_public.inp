@@ -332,7 +332,6 @@ function bundle dbnomics_dsets_for_provider(const string provider, bool verbose[
     bundle ret
     ret.codes = strsplit(dscodes,,"\n")
     ret.names = strsplit(dsnames,,"\n")
-    endif
     return ret
 end function
 
