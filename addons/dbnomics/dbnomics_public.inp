@@ -288,8 +288,10 @@ end function
 function bundles dbnomics_categtree(const string provider, bool verbose[0])
     magic = "category_tree"
     bundle req
-    
     req.URL = sprintf("https://api.next.nomics.world/providers/%s", provider)
+    if verbose
+        printf "URL = '%s'\n", req.URL
+    endif
     req.header = "accept: application/json"
     err = curl(&req)
     json = req.output
@@ -307,6 +309,30 @@ function bundles dbnomics_categtree(const string provider, bool verbose[0])
 	ret[i] = b
     endloop
 
+    return ret
+end function
+
+### ------------------------------------------------------------------------
+
+function bundle dbnomics_dsets_for_provider(const string provider, bool verbose[0])
+    bundle req
+    req.URL = sprintf("https://api.next.nomics.world/providers/%s", provider)
+    if verbose
+        printf "URL = '%s'\n", req.URL
+    endif
+    req.header = "accept: application/json"
+    err = curl(&req)
+    json = req.output
+    n = 0
+    dscodes = jsonget(json, "$.category_tree..children..code", &n)
+    if n == 0
+        funcerr "Found no datasets for provider"
+    endif
+    dsnames = jsonget(json, "$.category_tree..children..name")
+    bundle ret
+    ret.codes = strsplit(dscodes,,"\n")
+    ret.names = strsplit(dsnames,,"\n")
+    endif
     return ret
 end function
 
