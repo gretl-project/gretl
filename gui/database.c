@@ -3161,6 +3161,7 @@ gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
     GtkTreeIter iter;
     int max_series = 100;
     int offset = 0;
+    int nfound = 0;
     int n = 0, ns = 0;
     int i, err = 0;
 
@@ -3195,8 +3196,8 @@ gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
 			       COL_DBNAME, code,
 			       COL_DBINFO, name, -1);
 	    ns++;
-	    if (ns == 0) {
-		ns = gretl_bundle_get_int(b, "num_found", NULL);
+	    if (nfound == 0) {
+		nfound = gretl_bundle_get_int(b, "num_found", NULL);
 	    }
 	}
     }
@@ -3209,7 +3210,7 @@ gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
     } else {
 	/* show status */
 	gchar *tmp = g_strdup_printf(_("showing series %d-%d out of %d"),
-				     offset+1, offset+ns, ns);
+				     offset+1, offset+ns, nfound);
 
 	gtk_label_set_text(GTK_LABEL(vwin->status), tmp);
 	while (gtk_events_pending()) {
