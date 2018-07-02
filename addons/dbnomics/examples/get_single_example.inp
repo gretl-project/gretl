@@ -4,8 +4,12 @@ include dbnomics.gfn
 nulldata 360
 setobs 12 1989:1
 
+# the easy way 
+ger_rate = dbnomics_fetch("ECB/IRS/M.DE.L.L40.CI.0000.EUR.N.Z")
+
+# or with more control on what's going on
 bundle b = dbnomics_get_series("ECB/IRS/M.IT.L.L40.CI.0000.EUR.N.Z")
 dbnomics_bundle_print(b)
 series ita_rate = NA
 dbnomics_bundle_get_data(b, &ita_rate)
-print ita_rate -o
+print ger_rate ita_rate -o
