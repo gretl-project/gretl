@@ -3179,9 +3179,6 @@ gint populate_dbnomics_dataset_list (windata_t *vwin, gpointer p)
 	starting = 0;
     }
 
-    fprintf(stderr, "dbnomics_search: '%s', chunk %d, offset %d\n",
-	    provider, pgr->chunk, pgr->offset);
-
     A = dbnomics_search_call(provider, pgr->chunk, pgr->offset, &err);
     if (!err) {
 	alen = gretl_array_get_length(A);
@@ -3297,7 +3294,7 @@ gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
 
     gretl_array_destroy(A); /* we're done with this */
 
-    if (pgr->n) {
+    if (pgr->n == 0) {
 	errbox(_("No series were found"));
 	err = 1;
     } else {
