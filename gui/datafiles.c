@@ -1685,7 +1685,12 @@ static GretlToolItem files_items[] = {
     { N_("Unload/delete..."), GTK_STOCK_DELETE,   G_CALLBACK(browser_del_func),  BTN_DEL },
     { N_("Look on server"), GTK_STOCK_NETWORK,    NULL,                          BTN_WWW },
     { N_("Local machine"),  GTK_STOCK_HOME,       NULL,                          BTN_HOME },
-    { N_("DB.NOMICS"),      GRETL_STOCK_DBN,      NULL,                          BTN_DBN },
+    { "DB\u00B7NOMICS",     GRETL_STOCK_DBN,      NULL,                          BTN_DBN }
+};
+
+static GretlToolItem pager_items[] = {
+    { N_("Previous"), GTK_STOCK_MEDIA_PREVIOUS, G_CALLBACK(dbnomics_pager_call), 0 },
+    { N_("Next"),     GTK_STOCK_MEDIA_NEXT,     G_CALLBACK(dbnomics_pager_call), 0 }
 };
 
 static int n_files_items = G_N_ELEMENTS(files_items);
@@ -1857,6 +1862,14 @@ static void maybe_add_gfn_filter (windata_t *vwin,
     }
 }
 
+static void add_dbnomics_menu_button (GretlToolItem *item,
+				      windata_t *vwin)
+{
+    GtkWidget *menu = get_dbn_menu(vwin);
+
+    vwin_toolbar_insert(item, NULL, menu, vwin, -1);
+}
+
 static void make_files_toolbar (windata_t *vwin)
 {
     GtkWidget *hbox, *button;
@@ -1872,9 +1885,7 @@ static void make_files_toolbar (windata_t *vwin)
 	item = &files_items[i];
 	if (item->flag == BTN_DBN) {
 	    if (vwin->role == NATIVE_DB) {
-		GtkWidget *menu = get_dbn_menu(vwin);
-
-		vwin_toolbar_insert(item, NULL, menu, vwin, -1);
+		add_dbnomics_menu_button(item, vwin);
 	    }
 	    continue;
 	}
@@ -1891,6 +1902,15 @@ static void make_files_toolbar (windata_t *vwin)
 		gtk_widget_set_sensitive(button, FALSE);
 	    }
 	}
+    }
+
+    if (DBNOMICS_ACTION(vwin->role)) {
+	item = &pager_items[0];
+	button = gretl_toolbar_insert(vwin->mbar, item, item->func, vwin, -1);
+	g_object_set_data(G_OBJECT(vwin->mbar), "prev-button", button);
+	item = &pager_items[1];
+	button = gretl_toolbar_insert(vwin->mbar, item, item->func, vwin, -1);
+	g_object_set_data(G_OBJECT(vwin->mbar), "next-button", button);
     }
 
     gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);

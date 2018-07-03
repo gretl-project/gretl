@@ -341,12 +341,21 @@ function scalar SVAR_coint(bundle *SVARobj, int dcase[1:5:3],
     
   # syntax check
   err = (dcase<1) || (dcase>5)
+  if err
+    errmsg = sprintf("Invalid dcase value %d", dcase)
+    funcerr errmsg
+  endif
 
   # dimensions check
   if dcase%2 # nice, huh?
     err = err || (rows(jbeta) != n)
   else
     err = err || (rows(jbeta) != n+1)
+  endif
+  if err
+    errmsg = sprintf("jbeta: has %d rows, should have %d", rows(jbeta),
+       dcase%2 ? n : n+1)
+    funcerr errmsg
   endif
 
   r = cols(jbeta)
@@ -366,6 +375,9 @@ function scalar SVAR_coint(bundle *SVARobj, int dcase[1:5:3],
     
   # if anything goes wrong, return
   if err
+    outfile stderr --write --quiet
+    printf "SVAR_coint: returning on err = %d\n", err
+    outfile --close
     return err
   endif
 
@@ -390,7 +402,7 @@ function scalar SVAR_coint(bundle *SVARobj, int dcase[1:5:3],
       printf "Unrestricted trend, "
     endif
 	
-	printf "beta =\n%9.5f\n", jbeta
+    printf "beta =\n%9.5f\n", jbeta
 
     if free_a
       printf "alpha is unrestricted\n"

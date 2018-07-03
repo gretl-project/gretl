@@ -4193,9 +4193,10 @@ char *installed_addon_status_string (const char *path,
     return ret;
 }
 
-static ufunc *get_packaged_function (const char *funcname,
-				     const char *pkgname)
+static fncall *get_pkg_function_call (const char *funcname,
+				      const char *pkgname)
 {
+    fncall *fc = NULL;
     ufunc *uf = NULL;
     fnpkg *pkg;
 
@@ -4218,15 +4219,16 @@ static ufunc *get_packaged_function (const char *funcname,
 
     if (uf == NULL) {
 	errbox_printf("Couldn't find function %s", funcname);
+    } else {
+	fc = fncall_new(uf);
     }
 
-    return uf;
+    return fc;
 }
 
 int dbnomics_get_series_call (const char *datacode)
 {
     gretl_bundle *b = NULL;
-    ufunc *uf = NULL;
     fncall *fc = NULL;
     PRN *prn = NULL;
     int err = 0;
@@ -4234,8 +4236,8 @@ int dbnomics_get_series_call (const char *datacode)
     err = bufopen(&prn);
 
     if (!err) {
-	uf = get_packaged_function("dbnomics_get_series", "dbnomics");
-	if (uf == NULL) {
+	fc = get_pkg_function_call("dbnomics_get_series", "dbnomics");
+	if (fc == NULL) {
 	    gretl_print_destroy(prn);
 	    err = E_DATA;
 	}
@@ -4245,19 +4247,13 @@ int dbnomics_get_series_call (const char *datacode)
 	return err;
     }
 
-    if (uf != NULL) {
-	fc = fncall_new(uf);
-    }
-    if (fc != NULL) {
-	err = push_function_arg(fc, NULL, GRETL_TYPE_STRING, (void *) datacode);
-	if (!err) {
-	    err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, NULL,
-				      &b, NULL, prn);
-	    if (err) {
-		gui_errmsg(err);
-	    }
+    err = push_function_arg(fc, NULL, GRETL_TYPE_STRING, (void *) datacode);
+    if (!err) {
+	err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, NULL,
+				  &b, NULL, prn);
+	if (err) {
+	    gui_errmsg(err);
 	}
-	fc = NULL;
     }
 
     if (b != NULL) {
@@ -4268,10 +4264,7 @@ int dbnomics_get_series_call (const char *datacode)
 	    view_buffer(prn, 78, 200, title, IMPORT, NULL);
 	    gretl_bundle_destroy(b);
 	} else {
-	    uf = get_packaged_function("dbnomics_bundle_print", "dbnomics");
-	    if (uf != NULL) {
-		fc = fncall_new(uf);
-	    }
+	    fc = get_pkg_function_call("dbnomics_bundle_print", "dbnomics");
 	    if (fc != NULL) {
 		err = push_function_arg(fc, NULL, GRETL_TYPE_BUNDLE, (void *) b);
 		if (!err) {
@@ -4281,7 +4274,6 @@ int dbnomics_get_series_call (const char *datacode)
 			gui_errmsg(err);
 		    }
 		}
-		fc = NULL;
 	    }
 	    view_buffer(prn, 78, 350, title, VIEW_DBNOMICS, b);
 	}
@@ -4297,27 +4289,21 @@ int dbnomics_get_series_call (const char *datacode)
 void *dbnomics_get_providers_call (int *err)
 {
     gretl_array *A = NULL;
-    ufunc *uf = NULL;
     fncall *fc = NULL;
     GdkWindow *cwin;
 
-    uf = get_packaged_function("dbnomics_providers", "dbnomics");
-    if (uf == NULL) {
+    fc = get_pkg_function_call("dbnomics_providers", "dbnomics");
+    if (fc == NULL) {
 	*err = E_DATA;
 	return NULL;
     }
 
-    if (uf != NULL) {
-	fc = fncall_new(uf);
-    }
-    if (fc != NULL) {
-	set_wait_cursor(&cwin);
-	*err = gretl_function_exec(fc, GRETL_TYPE_BUNDLES, NULL,
-				   &A, NULL, NULL);
-	unset_wait_cursor(cwin);
-	if (*err) {
-	    gui_errmsg(*err);
-	}
+    set_wait_cursor(&cwin);
+    *err = gretl_function_exec(fc, GRETL_TYPE_BUNDLES, NULL,
+			       &A, NULL, NULL);
+    unset_wait_cursor(cwin);
+    if (*err) {
+	gui_errmsg(*err);
     }
 
     return A;
@@ -4328,35 +4314,55 @@ void *dbnomics_search_call (const char *key,
 			    int *err)
 {
     gretl_array *A = NULL;
-    ufunc *uf = NULL;
     fncall *fc = NULL;
     GdkWindow *cwin;
 
-    uf = get_packaged_function("dbnomics_search", "dbnomics");
-    if (uf == NULL) {
+    fc = get_pkg_function_call("dbnomics_search", "dbnomics");
+    if (fc == NULL) {
 	*err = E_DATA;
 	return NULL;
     }
 
-    if (uf != NULL) {
-	fc = fncall_new(uf);
+    *err = push_function_args(fc, GRETL_TYPE_STRING, (void *) key, NULL,
+			      GRETL_TYPE_INT, (void *) &limit, NULL,
+			      GRETL_TYPE_INT, (void *) &offset, NULL, -1);
+    if (!*err) {
+	set_wait_cursor(&cwin);
+	*err = gretl_function_exec(fc, GRETL_TYPE_BUNDLES, NULL,
+				   &A, NULL, NULL);
+	unset_wait_cursor(cwin);
     }
-    if (fc != NULL) {
-	*err = push_function_args(fc, GRETL_TYPE_STRING, (void *) key, NULL,
-				  GRETL_TYPE_INT, (void *) &limit, NULL,
-				  GRETL_TYPE_INT, (void *) &offset, NULL, -1);
-	if (!*err) {
-	    set_wait_cursor(&cwin);
-	    *err = gretl_function_exec(fc, GRETL_TYPE_BUNDLES, NULL,
-				       &A, NULL, NULL);
-	    unset_wait_cursor(cwin);
-	}
-	if (*err) {
-	    gui_errmsg(*err);
-	}
+    if (*err) {
+	gui_errmsg(*err);
     }
 
     return A;
+}
+
+void *dbnomics_dataset_list (const char *provider, int *err)
+{
+    gretl_bundle *b = NULL;
+    fncall *fc = NULL;
+    GdkWindow *cwin;
+
+    fc = get_pkg_function_call("dbnomics_dsets_for_provider", "dbnomics");
+    if (fc == NULL) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    *err = push_function_arg(fc, NULL, GRETL_TYPE_STRING, (void *) provider);
+    if (!*err) {
+	set_wait_cursor(&cwin);
+	*err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, NULL,
+				   &b, NULL, NULL);
+	unset_wait_cursor(cwin);
+    }
+    if (*err) {
+	gui_errmsg(*err);
+    }
+
+    return b;
 }
 
 void *dbnomics_probe_series (const char *prov,
@@ -4365,33 +4371,27 @@ void *dbnomics_probe_series (const char *prov,
 			     int *err)
 {
     gretl_array *A = NULL;
-    ufunc *uf = NULL;
     fncall *fc = NULL;
     GdkWindow *cwin;
 
-    uf = get_packaged_function("dbnomics_get_dataset_content", "dbnomics");
-    if (uf == NULL) {
+    fc = get_pkg_function_call("dbnomics_get_dataset_content", "dbnomics");
+    if (fc == NULL) {
 	*err = E_DATA;
 	return NULL;
     }
 
-    if (uf != NULL) {
-	fc = fncall_new(uf);
+    *err = push_function_args(fc, GRETL_TYPE_STRING, (void *) prov, NULL,
+			      GRETL_TYPE_STRING, (void *) dset, NULL,
+			      GRETL_TYPE_INT, (void *) &limit, NULL,
+			      GRETL_TYPE_INT, (void *) &offset, NULL, -1);
+    if (!*err) {
+	set_wait_cursor(&cwin);
+	*err = gretl_function_exec(fc, GRETL_TYPE_BUNDLES, NULL,
+				   &A, NULL, NULL);
+	unset_wait_cursor(cwin);
     }
-    if (fc != NULL) {
-	*err = push_function_args(fc, GRETL_TYPE_STRING, (void *) prov, NULL,
-				  GRETL_TYPE_STRING, (void *) dset, NULL,
-				  GRETL_TYPE_INT, (void *) &limit, NULL,
-				  GRETL_TYPE_INT, (void *) &offset, NULL, -1);
-	if (!*err) {
-	    set_wait_cursor(&cwin);
-	    *err = gretl_function_exec(fc, GRETL_TYPE_BUNDLES, NULL,
-				       &A, NULL, NULL);
-	    unset_wait_cursor(cwin);
-	}
-	if (*err) {
-	    gui_errmsg(*err);
-	}
+    if (*err) {
+	gui_errmsg(*err);
     }
 
     return A;

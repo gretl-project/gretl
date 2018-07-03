@@ -42,7 +42,7 @@ function scalar dbnomics_bundle_get_data(const bundle b, series *x, bool verbose
     pd = b.frequency
     daily = pd == 7
     
-    if daily #daily data need special treatment
+    if daily # daily data need special treatment
 	match = maxc($pd .= {5;6;7}) 
     else
 	match = (pd == $pd)
@@ -253,6 +253,9 @@ function bundles dbnomics_search(string s, int limit[0::100], int offset[0], boo
     
     req.URL = sprintf("https://api.next.nomics.world/search?q=%s&limit=%d&offset=%d",
     sanitize_url(s), limit, offset)
+    if verbose
+        printf "URL = '%s'\n", req.URL
+    endif
     req.header = "accept: application/json"
     err = curl(&req)
     json = req.output
@@ -271,7 +274,7 @@ function bundles dbnomics_search(string s, int limit[0::100], int offset[0], boo
 
     if verbose
         printf "Datasets containing \"%s\" (%d-%d out of %d): \n\n",
-        s, offset, n, ntot
+        s, offset+1, offset+n, ntot
         loop i = 1..n --quiet
             printf "%3d: %s.%s", i, ret[i].provider_code, ret[i].code
             printf " (%d series)\n", atof(ret[i].nb_matching_series)
@@ -285,8 +288,10 @@ end function
 function bundles dbnomics_categtree(const string provider, bool verbose[0])
     magic = "category_tree"
     bundle req
-    
     req.URL = sprintf("https://api.next.nomics.world/providers/%s", provider)
+    if verbose
+        printf "URL = '%s'\n", req.URL
+    endif
     req.header = "accept: application/json"
     err = curl(&req)
     json = req.output
@@ -304,6 +309,29 @@ function bundles dbnomics_categtree(const string provider, bool verbose[0])
 	ret[i] = b
     endloop
 
+    return ret
+end function
+
+### ------------------------------------------------------------------------
+
+function bundle dbnomics_dsets_for_provider(const string provider, bool verbose[0])
+    bundle req
+    req.URL = sprintf("https://api.next.nomics.world/providers/%s", provider)
+    if verbose
+        printf "URL = '%s'\n", req.URL
+    endif
+    req.header = "accept: application/json"
+    err = curl(&req)
+    json = req.output
+    n = 0
+    dscodes = jsonget(json, "$.category_tree..children..code", &n)
+    if n == 0
+        funcerr "Found no datasets for provider"
+    endif
+    dsnames = jsonget(json, "$.category_tree..children..name")
+    bundle ret
+    ret.codes = strsplit(dscodes,,"\n")
+    ret.names = strsplit(dsnames,,"\n")
     return ret
 end function
 

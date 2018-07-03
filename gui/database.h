@@ -17,6 +17,8 @@ void open_dbnomics_series (GtkWidget *w, gpointer data);
 
 void dbnomics_specific_series (GtkAction *action, gpointer data);
 
+void dbnomics_pager_call (GtkWidget *w, windata_t *vwin);
+
 void install_file_from_server (GtkWidget *w, windata_t *vwin);
 
 void drag_file_from_server (guint info);
