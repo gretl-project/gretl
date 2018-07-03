@@ -202,12 +202,11 @@ end function
 
 ### ------------------------------------------------------------------------
 
-function string build_URL(const string pcode, const string dcode,
-			  int limit[0::20], int offset[0],
-			  bundle spec)
-    string site = "api.next.nomics.world"
-    string head = sprintf("https://%s/series?provider_code=%s&dataset_code=%s&",
-      site, pcode, dcode)
+function string build_parms(const string pcode, const string dcode,
+			    int limit[0::20], int offset[0],
+			    bundle spec)
+    string head = sprintf("series?provider_code=%s&dataset_code=%s&",
+			  pcode, dcode)
     string mid = build_URL_mid(spec)
     string tail = sprintf("limit=%d&offset=%d&format=json", limit, offset)
     ret = head ~ sanitize_url(mid) ~ tail
@@ -239,8 +238,12 @@ end function
 
 ### ------------------------------------------------------------------------
 
-function scalar dbn_get_json (const string URL, string *json,
-			      string *msg[null])
+function scalar dbn_get_json (const string parms, bool verbose[0],
+			      string *json, string *msg[null])
+    URL = "https://api.next.nomics.world/" ~ parms
+    if verbose
+	printf "URL = '%s'\n", URL
+    endif
     req = defbundle("URL", URL, "header", "accept: application/json")
     # check for curl error
     error = curl(&req)
