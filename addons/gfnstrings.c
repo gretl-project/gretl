@@ -10,17 +10,13 @@ int process_strings (const char *pkg)
     sprintf(fname, "./%s/%s-i18n.c", pkg, pkg);
     fp = fopen(fname, "r");
 
-    if (fp == NULL) {
-	fprintf(stderr, "Couldn't open %s\n", fname);
-	return 1;
+    if (fp != NULL) {
+	while (fgets(line, sizeof line, fp)) {
+	    fputs(line, stdout);
+	}
+	fputc('\n', stdout);
+	fclose(fp);
     }
-
-    while (fgets(line, sizeof line, fp)) {
-        fputs(line, stdout);
-    }
-    fputc('\n', stdout);
-
-    fclose(fp);
 
     return 0;
 }

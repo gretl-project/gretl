@@ -8,4 +8,4 @@ string pkgdir = topsrc ~ "/addons/dbnomics"
 include @pkgdir/dbnomics_private.inp
 include @pkgdir/dbnomics_public.inp
 
-makepkg dbnomics.gfn --index --translations --quiet --dtd="@dtd"
+makepkg dbnomics.gfn --index --quiet --dtd="@dtd"
