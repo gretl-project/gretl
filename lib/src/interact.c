@@ -1734,6 +1734,12 @@ static int lib_open_append (ExecState *s,
 	odbc = 1;
     }
 
+    if (!strcmp(cmd->param, "dbnomics")) {
+	dbdata = 1;
+	ftype = GRETL_DBNOMICS;
+	goto next_step;
+    }
+
     err = lib_try_http(cmd->param, newfile, &http);
     if (err) {
 	errmsg(err, prn);
@@ -1782,7 +1788,9 @@ static int lib_open_append (ExecState *s,
 
     if (cmd->ci == OPEN && !dbdata) {
 	lib_clear_data(s, dset);
-    } 
+    }
+
+ next_step:
 
     if (quiet) {
 	/* in case we hit any problems below... */

@@ -45,6 +45,7 @@ typedef enum {
     GRETL_RATS_DB,        /* RATS 4.0 database */
     GRETL_PCGIVE_DB,      /* PcGive bn7/in7 pair */
     GRETL_ODBC,           /* Open DataBase Connectivity */
+    GRETL_DBNOMICS,       /* DB.NOMICS access */
     GRETL_UNRECOGNIZED    /* none of the above */
 } GretlFileType;
 

@@ -9742,6 +9742,10 @@ static int script_open_append (ExecState *s, DATASET *dset,
 	    gui_errmsg(err);
 	    return err;
 	}
+    } else if (!strcmp(cmd->param, "dbnomics")) {
+	strcpy(myfile, "dbnomics");
+	ftype = GRETL_DBNOMICS;
+	got_type = 1;
     } else {
 	err = gui_try_http(cmd->param, myfile, &http);
 	if (err) {
@@ -9764,7 +9768,7 @@ static int script_open_append (ExecState *s, DATASET *dset,
 
     dbdata = (ftype == GRETL_NATIVE_DB || ftype == GRETL_NATIVE_DB_WWW ||
 	      ftype == GRETL_RATS_DB || ftype == GRETL_PCGIVE_DB ||
-	      ftype == GRETL_ODBC);
+	      ftype == GRETL_ODBC || ftype == GRETL_DBNOMICS);
 
     if ((data_status & MODIFIED_DATA) && !dbdata && cmd->ci != APPEND) {
 	/* Requested by Sven: is it a good idea? */

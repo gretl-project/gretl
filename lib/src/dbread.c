@@ -588,25 +588,20 @@ get_native_series_info (const char *series, SERIESINFO *sinfo,
     }
 
     while (fgets(s1, sizeof s1, fp) && !gotit) {
-
 	if (*s1 == '#') {
 	    continue;
 	}
-
 	if (gretl_scan_varname(s1, sername) != 1) {
 	    break;
 	}
-
 	if (!strcmp(series, sername)) {
 	    gotit = 1;
 	    strcpy(sinfo->varname, sername);
 	}
-
 	if (fgets(s2, sizeof s2, fp) == NULL) {
 	    err = DB_PARSE_ERROR;
 	    break;
 	}
-
 	if (gotit) {
 	    get_native_series_comment(sinfo, s1);
 	    if (sscanf(s2, "%c %10s %*s %10s %*s %*s %d",
@@ -1753,6 +1748,11 @@ int set_db_name (const char *fname, int filetype, PRN *prn)
     *saved_db_name = '\0';
     strncat(saved_db_name, fname, MAXLEN - 1);
 
+    if (filetype == GRETL_DBNOMICS) {
+	saved_db_type = filetype;
+	return 0;
+    }
+
     if (filetype == GRETL_NATIVE_DB_WWW) {
 #ifdef USE_CURL
 	int n = strlen(saved_db_name);
@@ -2518,6 +2518,14 @@ static int update_sinfo_masked (SERIESINFO *sinfo, int nobs)
     return err;
 }
 
+static int get_dbnomics_series_info (const char *series,
+				     SERIESINFO *sinfo)
+{
+    gretl_errmsg_sprintf("CLI dbnomics import ('%s'): not ready yet!",
+			 series);
+    return E_DATA;
+}
+
 /* called from loop in db_get_series() */
 
 static int get_one_db_series (const char *series,
@@ -2549,7 +2557,9 @@ static int get_one_db_series (const char *series,
 #endif
 
     /* find the series information in the database */
-    if (saved_db_type == GRETL_RATS_DB) {
+    if (saved_db_type == GRETL_DBNOMICS) {
+	err = get_dbnomics_series_info(series, &sinfo);
+    } else if (saved_db_type == GRETL_RATS_DB) {
 	err = get_rats_series_info(series, &sinfo);
     } else if (saved_db_type == GRETL_PCGIVE_DB) {
 	err = get_pcgive_series_info(series, &sinfo);
@@ -2642,12 +2652,6 @@ int db_get_series (const char *line, DATASET *dset,
     int from_scratch = 0;
     int interpolate = 0;
     int err = 0;
-
-    if (!strncmp(line, "data ", 5)) {
-	/* old-style parser */
-	line += 5;
-	line += strspn(line, " ");
-    }
 
     if (opt & OPT_O) {
 	return odbc_get_series(line, dset, prn);

@@ -602,7 +602,11 @@ static int cli_open_append (CMD *cmd, DATASET *dset,
 	if (err) {
 	    errmsg(err, prn);
 	    return err;
-	}    
+	}
+    } else if (!strcmp(cmd->param, "dbnomics")) {
+	strcpy(newfile, "dbnomics");
+	ftype = GRETL_DBNOMICS;
+	got_type = 1;
     } else {
 	err = cli_try_http(cmd->param, newfile, &http);
 	if (err) {
@@ -625,7 +629,7 @@ static int cli_open_append (CMD *cmd, DATASET *dset,
 
     dbdata = (ftype == GRETL_NATIVE_DB || ftype == GRETL_NATIVE_DB_WWW ||
 	      ftype == GRETL_RATS_DB || ftype == GRETL_PCGIVE_DB ||
-	      ftype == GRETL_ODBC);
+	      ftype == GRETL_ODBC || ftype == GRETL_DBNOMICS);
 
     if (!dbdata && cmd->ci != APPEND) {
 	cli_clear_data(cmd, dset, model);
