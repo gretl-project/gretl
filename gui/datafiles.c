@@ -1660,19 +1660,20 @@ enum {
     BTN_DEL,
     BTN_WWW,
     BTN_HOME,
-    BTN_FIND,
     BTN_OPEN,
     BTN_DIR,
     BTN_RES,
     BTN_DOC,
     BTN_REG,
-    BTN_DBN
+    BTN_DBN,
+    BTN_PROP
 };
 
 static GretlToolItem files_items[] = {
     { N_("Open"),           GTK_STOCK_OPEN, NULL, BTN_OPEN },
     { N_("Select directory"), GTK_STOCK_DIRECTORY, NULL, BTN_DIR },
     { N_("Info"),           GTK_STOCK_INFO,       NULL, BTN_INFO },
+    { N_("Details"),        GTK_STOCK_PROPERTIES, G_CALLBACK(open_dbnomics_series), BTN_PROP },
     { N_("Sample script"),  GTK_STOCK_JUSTIFY_LEFT, G_CALLBACK(show_function_sample), BTN_CODE },
     { N_("View code"),      GTK_STOCK_PROPERTIES, G_CALLBACK(show_function_code), BTN_CODE },
     { N_("Execute"),        GTK_STOCK_EXECUTE,    G_CALLBACK(browser_call_func),  BTN_EXEC },
@@ -1689,13 +1690,15 @@ static GretlToolItem files_items[] = {
 };
 
 static GretlToolItem pager_items[] = {
-    { N_("Previous"), GTK_STOCK_MEDIA_PREVIOUS, G_CALLBACK(dbnomics_pager_call), 0 },
-    { N_("Next"),     GTK_STOCK_MEDIA_NEXT,     G_CALLBACK(dbnomics_pager_call), 0 }
+    { N_("First"),    GTK_STOCK_GOTO_FIRST, G_CALLBACK(dbnomics_pager_call), 1 },
+    { N_("Previous"), GTK_STOCK_GO_BACK,    G_CALLBACK(dbnomics_pager_call), 2 },
+    { N_("Next"),     GTK_STOCK_GO_FORWARD, G_CALLBACK(dbnomics_pager_call), 3 },
+    { N_("Last"),     GTK_STOCK_GOTO_LAST,  G_CALLBACK(dbnomics_pager_call), 4 },
 };
 
 static int n_files_items = G_N_ELEMENTS(files_items);
 
-#define common_item(f) (f == 0 || f == BTN_FIND)
+#define common_item(f) (f == 0)
 
 #define local_funcs_item(f) (f == BTN_DEL || f == BTN_CODE || \
 			     f == BTN_RES || f == BTN_DOC || \
@@ -1729,6 +1732,8 @@ static int files_item_get_callback (GretlToolItem *item, int role)
 	}
     } else if (item->flag == BTN_EXEC || item->flag == BTN_ADD) {
 	return (role == FUNC_FILES);
+    } else if (item->flag == BTN_PROP) {
+	return (role == DBNOMICS_SERIES);
     }
 
     item->func = NULL;
@@ -1749,8 +1754,6 @@ static int files_item_get_callback (GretlToolItem *item, int role)
 	    item->func = G_CALLBACK(pkg_info_from_server);
 	} else if (role == REMOTE_ADDONS) {
 	    item->func = G_CALLBACK(show_addon_info);
-	} else if (role == DBNOMICS_SERIES) {
-	    item->func = G_CALLBACK(open_dbnomics_series);
 	}
     } else if (item->flag == BTN_INDX) {
 	/* index: databases only */
@@ -1905,12 +1908,15 @@ static void make_files_toolbar (windata_t *vwin)
     }
 
     if (DBNOMICS_ACTION(vwin->role)) {
-	item = &pager_items[0];
-	button = gretl_toolbar_insert(vwin->mbar, item, item->func, vwin, -1);
-	g_object_set_data(G_OBJECT(vwin->mbar), "prev-button", button);
-	item = &pager_items[1];
-	button = gretl_toolbar_insert(vwin->mbar, item, item->func, vwin, -1);
-	g_object_set_data(G_OBJECT(vwin->mbar), "next-button", button);
+	const char *ids[] = {
+	    "first-button", "prev-button", "next-button", "last-button"
+	};
+	for (i=0; i<4; i++) {
+	    item = &pager_items[i];
+	    button = gretl_toolbar_insert(vwin->mbar, item, item->func, vwin, -1);
+	    g_object_set_data(G_OBJECT(vwin->mbar), ids[i], button);
+	    widget_set_int(button, "action", item->flag);
+	}
     }
 
     gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);

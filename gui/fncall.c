@@ -4258,7 +4258,8 @@ int dbnomics_get_series_call (const char *datacode)
 
     if (b != NULL) {
 	int dberr = gretl_bundle_get_int(b, "error", NULL);
-	gchar *title = g_strdup_printf("dbnomics: %s", datacode);
+	const char *p = strrchr(datacode, '/');
+	gchar *title = g_strdup_printf("gretl: %s", p + 1);
 
 	if (dberr) {
 	    view_buffer(prn, 78, 200, title, IMPORT, NULL);

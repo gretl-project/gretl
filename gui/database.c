@@ -3099,22 +3099,33 @@ static struct dbn_pager *dbn_pager_new (windata_t *vwin)
     return p;
 }
 
-void dbnomics_pager_call (GtkWidget *w, windata_t *vwin)
+void dbnomics_pager_call (GtkWidget *button, windata_t *vwin)
 {
-    int prev =
-	(w == g_object_get_data(G_OBJECT(vwin->mbar), "prev-button"));
+    int action = widget_get_int(button, "action");
     struct dbn_pager *pgr = vwin->data;
     int oldoff = pgr->offset;
     int newoff;
 
-    if (prev) {
+    /* action: 1-based enumeration; see make_files_toolbar()
+       int datafiles.c
+    */
+
+    if (action == 1) {
+	/* first */
+	pgr->offset = 0;
+    } else if (action == 2) {
+	/* previous */
 	newoff = pgr->offset - pgr->chunk;
 	pgr->offset = newoff < 0 ? 0 : newoff;
-    } else {
+    } else if (action == 3) {
+	/* next */
 	int maxoff = pgr->ntotal - 1;
 
 	newoff = pgr->offset + pgr->chunk;
 	pgr->offset = newoff > maxoff ? maxoff : newoff;
+    } else if (action == 4) {
+	/* last */
+	pgr->offset = pgr->ntotal - pgr->chunk + 1;
     }
 
     if (pgr->offset != oldoff) {
@@ -3128,15 +3139,19 @@ void dbnomics_pager_call (GtkWidget *w, windata_t *vwin)
 
 static void set_dbn_pager_status (windata_t *vwin)
 {
-    GtkWidget *pb = g_object_get_data(G_OBJECT(vwin->mbar), "prev-button");
-    GtkWidget *nb = g_object_get_data(G_OBJECT(vwin->mbar), "next-button");
+    GtkWidget *b1 = g_object_get_data(G_OBJECT(vwin->mbar), "first-button");
+    GtkWidget *b2 = g_object_get_data(G_OBJECT(vwin->mbar), "prev-button");
+    GtkWidget *b3 = g_object_get_data(G_OBJECT(vwin->mbar), "next-button");
+    GtkWidget *b4 = g_object_get_data(G_OBJECT(vwin->mbar), "last-button");
     struct dbn_pager *pgr = vwin->data;
     int first = pgr->offset + 1;
     int last = pgr->offset + pgr->n;
     gchar *tmp;
 
-    gtk_widget_set_sensitive(pb, pgr->offset > 0);
-    gtk_widget_set_sensitive(nb, last < pgr->ntotal);
+    gtk_widget_set_sensitive(b1, pgr->offset > 0);
+    gtk_widget_set_sensitive(b2, pgr->offset > 0);
+    gtk_widget_set_sensitive(b3, last < pgr->ntotal);
+    gtk_widget_set_sensitive(b4, last < pgr->ntotal);
 
     if (vwin->role == DBNOMICS_DB) {
 	tmp = g_strdup_printf(_("showing datasets %d-%d out of %d"),
