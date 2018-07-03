@@ -108,7 +108,6 @@ function bundle dbnomics_get_series (const string datacode, bool verbose[0],
                                      string *from_json[null])
 
     bundle ret
-    ret.error = 0
     ret.datacode = datacode
     ret.has_data = 0
 
@@ -130,8 +129,8 @@ function bundle dbnomics_get_series (const string datacode, bool verbose[0],
     ret.provider = S[1]
     ret.dataset = S[2]
     ret.id = S[3]
-
     ret.error = fill_series_bundle(&ret, json, 1)
+
     return ret
 end function
 
@@ -369,13 +368,13 @@ end function
 ### ------------------------------------------------------------------------
 
 function series dbnomics_fetch (const string id, bool verbose[0])
-  series ret = NA
-  bundle b = dbnomics_get_series(id, verbose)
-  if b.error
-    string s = b.errmsg
-    funcerr "@s"
-  else
-    dbnomics_bundle_get_data(b, &ret, verbose)
-  endif
-  return ret
+    series ret = NA
+    bundle b = dbnomics_get_series(id, verbose)
+    if b.error
+	string str = b.errmsg
+	funcerr str
+    else
+	dbnomics_bundle_get_data(b, &ret, verbose)
+    endif
+    return ret
 end function

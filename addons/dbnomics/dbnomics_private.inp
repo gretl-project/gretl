@@ -1,4 +1,4 @@
-function bundle json2bndl(strings fields, string jsonobj,
+function bundle json2bndl(const strings fields, const string jsonobj,
 			  const string root, int ndx)
     bundle b = null
     k = 0
@@ -29,23 +29,21 @@ end function
 
 ### ------------------------------------------------------------------------
 
-function scalar get_frequency(string json_obj)
-    got_it = 0
+function scalar get_frequency(const string json_obj)
     strings alternatives = defarray(".Frequency", ".FREQ", "['@frequency']")
-    i = 1
     got = 0
-    loop while i<=nelem(alternatives) && !got_it --quiet
-        s = sprintf("$.series.data[0]%s", alternatives[i++])
+    loop i=1..nelem(alternatives) --quiet
+        s = sprintf("$.series.data[0]%s", alternatives[i])
         frq = jsonget(json_obj, s, &got)
         if got
-            got_it = 1
             frq = tolower(frq[1])
+	    break
         endif
     endloop
 
     scalar ret = NA
 
-    if got_it
+    if got
         if frq == "a"
             scalar ret = 1
         elif frq == "q"
@@ -64,6 +62,7 @@ function scalar get_frequency(string json_obj)
 end function
 
 ### ------------------------------------------------------------------------
+
 function string get_alternatives(const string json_obj, const string root,
 				 const strings alternatives)
     got = 0
