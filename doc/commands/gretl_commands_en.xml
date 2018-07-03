@@ -2694,21 +2694,19 @@
 	example
       </para>
       <code>
-	AMECO/ZUTN/EU28.1.0.0.0.ZUTN
+	ECB/IRS/M.IT.L.L40.CI.0000.EUR.N.Z
       </code>
       <para>
-	The first term identifies a data provider, here
-	<lit>AMECO</lit> (the Annual macroeconomic database of the
-	European Commission's Directorate General for Economic and
-	Financial Affairs). The second identifies a dataset, here
-	<lit>ZUTN</lit> (unemployment rates), and the third specifies
-	a particular series within the dataset, in this case the
-	unemployment rate for the European Union as a whole.
+	The first term identifies a data provider, here <lit>ECB</lit>
+	(the European Central Bank).  The second identifies a dataset,
+	here <lit>IRS</lit> (interest rate statistics), and the third
+	specifies a particular series within the dataset, in this case
+	an Italian 10-year interest rate.
       </para>
       <para>
 	If you enter a series identifier and click <quote>OK</quote>
 	this will bring up a window showing information on the series.
-	You may then use the toolbar buttons in that window to inspect
+	You may then use the toolbar buttons in that window to display
 	the values of the series, plot the series, or add it to the
 	current dataset (assuming the series is conformable to the
 	dataset).
