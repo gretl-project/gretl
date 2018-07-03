@@ -3749,8 +3749,6 @@ static void maybe_prune_db_list (GtkTreeView *tview,
     free(icpy);
 }
 
-/* dbnomics-related functions */
-
 static int prep_dbnomics_series (gretl_bundle *b,
 				 DATASET *dbset)
 {
@@ -3865,8 +3863,6 @@ int show_dbnomics_data (windata_t *vwin, int plot)
 
     return err;
 }
-
-/* end dbnomics-related functions */
 
 gint populate_dbfilelist (windata_t *vwin, int *pndb)
 {
