@@ -158,6 +158,25 @@ end function
 
 ### ------------------------------------------------------------------------
 
+function string make_dimensions(bundle spec, string what)
+    ret = ""
+    if inbundle(spec, what)
+	strings ss = spec[what]
+	ret ~= sprintf("\"%s\":[", what)
+	loop i = 1 .. nelem(ss) --quiet
+            ret ~= sprintf("\"%s\"", ss[i])
+            if i<nelem(ss)
+		ret ~= ","
+            else
+		ret ~= "]"
+            endif
+	endloop
+    endif
+    return ret
+end function
+    
+### ------------------------------------------------------------------------
+
 function string build_URL_mid(bundle spec)
     string ret = ""
     if nelem(spec) == 0
@@ -165,23 +184,26 @@ function string build_URL_mid(bundle spec)
     endif
     
     ret = "dimensions={"
-    if inbundle(spec, "geo")
-        strings gspec = spec.geo
-        ret ~= sprintf("\"geo\":[")
-        loop i = 1 .. nelem(gspec) --quiet
-            ret ~= sprintf("\"%s\"", gspec[i])
-            if i<nelem(gspec)
-                ret ~= ","
-            else
-                ret ~= "]}"
-            endif
-        endloop
-    elif inbundle(spec, "moo")
-        #whatever
-    endif
-    # print ret
-    
-    return ret ~ "&"
+    strings filters = array()
+    strings dims = defarray("freq", "indicator", "geo")
+    n = 0
+    loop i = 1 .. nelem(dims) --quiet
+	s = make_dimensions(spec, dims[i])
+	if strlen(s) > 0
+	    n++
+	    filters = filters + defarray(s) 
+	endif
+    endloop
+
+    loop i = 1 .. n --quiet
+	ret ~= filters[i]
+	if (i<n)
+	    ret ~= ", "
+	endif
+    endloop
+
+    ret = ret ~ "}&"
+    return ret 
 end function
 
 ### ------------------------------------------------------------------------

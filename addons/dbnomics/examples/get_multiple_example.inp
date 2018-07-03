@@ -1,11 +1,24 @@
 set verbose off
 include dbnomics.gfn
 
+nulldata 58
+setobs 1 1960
+
 bundle spec = null
 spec.geo = defarray("dnk", "ea12", "ita")
 bs = dbnomics_get_multiple("AMECO", "ZUTN", 20, 0, spec)
 
+list X = null
+
 loop i = 1..nelem(bs)
-    dbnomics_bundle_print(bs[i], 1)
+    sn = fixname(bs[i].series_name)
+    sdes = bs[i].dset_name ~ " " ~ bs[i].unit
+    series tmp = NA
+    x$i = dbnomics_bundle_get_data(bs[i], &tmp)
+    X += genseries(sn, tmp)
+    setinfo @sn --description="@sdes"
 endloop
+delete tmp
+
+summary X
 
