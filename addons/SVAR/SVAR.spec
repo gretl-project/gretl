@@ -1,8 +1,8 @@
 author = Riccardo "Jack" Lucchetti and Sven Schreiber
 email = r.lucchetti@univpm.it
 tags = C32
-version = 1.35
-date = 2018-06-08
+version = 1.36
+date = 2018-07-03
 description = Structural VARs
 public = SVAR_setup SVAR_restrict SVAR_ident SVAR_estimate \
     SVAR_cumulate SVAR_boot SVAR_hd SVAR_coint \
@@ -17,7 +17,6 @@ bundle-print = SVAR_bundle_print
 label = Structural VARs
 
 help = SVAR.pdf
-# to be added to the changelog: IRFsave et al. with 0 index (Sven, v1.35)
 
 sample-script = examples/simple_C.inp
 min-version = 2017a

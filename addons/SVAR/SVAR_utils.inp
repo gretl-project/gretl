@@ -193,13 +193,13 @@ function scalar vecm_est(bundle *SVARobj)
     matrix mu = {}
     scalar nd = 0
   elif dcase == 2
-    matrix mu = jalpha * jbeta[n+1,]
+    matrix mu = jbeta[n+1,] * jalpha'
     scalar nd = 0
   elif dcase == 3
     matrix mu = olspar[1,]
     scalar nd = 1
   elif dcase == 4
-    matrix mu =  olspar[1,] | (jalpha * jbeta[n+1,])'
+    matrix mu =  olspar[1,] |(jbeta[n+1,] * jalpha')
     scalar nd = 1
   elif dcase == 5
     matrix mu = olspar[1:2,]
