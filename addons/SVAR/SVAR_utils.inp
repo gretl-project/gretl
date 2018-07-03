@@ -111,7 +111,7 @@ function scalar vecm_est(bundle *SVARobj)
   endif
 
   err = (SVARobj.type != 4)
-    
+
   if err
     printf "Wrong model type!\n"
     return err
@@ -128,7 +128,7 @@ function scalar vecm_est(bundle *SVARobj)
   scalar r      = cols(jbeta)
   scalar dcase   = SVARobj.jcase
   scalar ols_al = rows(jalpha) == 0
-    
+
   scalar T      = SVARobj.T
 
   # --- first thing: do we have a pre-set value for alpha?
