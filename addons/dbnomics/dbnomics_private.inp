@@ -1,11 +1,12 @@
-function bundle json2bndl(strings fields, string jsonobj, string root, scalar ndx)
+function bundle json2bndl(strings fields, string jsonobj,
+			  const string root, int ndx)
     bundle b = null
     k = 0
     loop j = 1..nelem(fields) --quiet
         f = fields[j]
         src = sprintf("$.%s[%d].%s", root, ndx, f)
         str = jsonget(jsonobj, src, &k)
-        if k 
+        if k
             b[f] = str
         endif
     endloop
@@ -14,7 +15,7 @@ end function
 
 ### ------------------------------------------------------------------------
 
-function string sanitize_url(string s)
+function string sanitize_url(const string s)
     ret = strsub(s, " ", "%20")
     ret = strsub(ret, sprintf("\""), "%22")
     ret = strsub(ret, ",", "%2C")
@@ -32,7 +33,7 @@ function scalar get_frequency(string json_obj)
     got_it = 0
     strings alternatives = defarray(".Frequency", ".FREQ", "['@frequency']")
     i = 1
-    got = 0    
+    got = 0
     loop while i<=nelem(alternatives) && !got_it --quiet
         s = sprintf("$.series.data[0]%s", alternatives[i++])
         frq = jsonget(json_obj, s, &got)
@@ -41,7 +42,7 @@ function scalar get_frequency(string json_obj)
             frq = tolower(frq[1])
         endif
     endloop
-    
+
     scalar ret = NA
 
     if got_it
@@ -58,28 +59,22 @@ function scalar get_frequency(string json_obj)
             scalar ret = -1
         endif
     endif
-    
+
     return ret
 end function
 
 ### ------------------------------------------------------------------------
-function string get_alternatives(string json_obj, string root, strings alternatives)
-    got_it = 0
-    i = 1
+function string get_alternatives(const string json_obj, const string root,
+				 const strings alternatives)
     got = 0
     ret = ""
-    loop while i<=nelem(alternatives) && !got_it --quiet
-        s = sprintf("%s%s", root, alternatives[i++])
-        maybe = jsonget(json_obj, s, &got)
+    loop i=1..nelem(alternatives) --quiet
+        s = sprintf("%s%s", root, alternatives[i])
+        ret = jsonget(json_obj, s, &got)
         if got
-            got_it = 1
+            break
         endif
     endloop
-    
-    if got_it
-	ret = maybe
-    endif
-    
     return ret
 end function
 
@@ -89,11 +84,11 @@ end function
 function scalar fill_series_bundle(bundle *b, string output, scalar index)
     got = 0
     has_index = (index == 0) ? "" : sprintf("[%d]", index-1) # zero-based
-    
+
     b.frequency = get_frequency(output)
     qry = sprintf("$.series.data%s.dataset_name", has_index)
     b.dset_name = jsonget(output, qry)
-#    qry = sprintf("$.series.data%s..Unit", has_index)
+    # qry = sprintf("$.series.data%s..Unit", has_index)
     qry = sprintf("$.series.data%s.Unit", has_index)
     tmp = jsonget(output, qry, &got)
     if got
@@ -111,7 +106,7 @@ function scalar fill_series_bundle(bundle *b, string output, scalar index)
     s = get_alternatives(output, root, defarray(".period", ".periods"))
     # qry = sprintf("$.series.data%s..period", has_index)
     # s = jsonget(output, qry)
-    
+
     strings periods
     loop while getline(s, line) -q
         periods += line
@@ -135,7 +130,7 @@ function scalar fill_series_bundle(bundle *b, string output, scalar index)
             break
         endif
     endloop
-  
+
     b.totobs = n
     b.start = istart
     actobs = n - istart + 1
@@ -152,7 +147,7 @@ function scalar fill_series_bundle(bundle *b, string output, scalar index)
             j++
 	endloop
     endif
-    
+
     return 0
 end function
 
@@ -163,14 +158,14 @@ function string build_URL_mid(bundle spec)
     if nelem(spec) == 0
         return ret
     endif
-    
+
     ret = "dimensions={"
     if inbundle(spec, "geo")
         strings gspec = spec.geo
         ret ~= sprintf("\"geo\":[")
-        loop i = 1 .. nelem(gspec) --quiet
+        loop i = 1..nelem(gspec) --quiet
             ret ~= sprintf("\"%s\"", gspec[i])
-            if i<nelem(gspec)
+            if i < nelem(gspec)
                 ret ~= ","
             else
                 ret ~= "]}"
@@ -180,30 +175,28 @@ function string build_URL_mid(bundle spec)
         #whatever
     endif
     # print ret
-    
+
     return ret ~ "&"
 end function
 
 ### ------------------------------------------------------------------------
 
-function string build_URL(string pcode, string dcode, int limit[0::20], scalar offset[0],
-      bundle spec)
+function string build_URL(const string pcode, const string dcode,
+			  int limit[0::20], int offset[0],
+			  bundle spec)
     string site = "api.next.nomics.world"
-    
-    string head = sprintf("https://%s/series?provider_code=%s&dataset_code=%s&", 
+    string head = sprintf("https://%s/series?provider_code=%s&dataset_code=%s&",
       site, pcode, dcode)
     string mid = build_URL_mid(spec)
-    string tail = sprintf("limit=%d&offset=%d&format=json", limit, offset) 
-    
+    string tail = sprintf("limit=%d&offset=%d&format=json", limit, offset)
     ret = head ~ sanitize_url(mid) ~ tail
     return ret
 end function
 
 ### ------------------------------------------------------------------------
 
-/* This is tricky: we may not get a recognizable error code,
-   or even an error message, on failure to retrieve any data.
-*/
+# This is tricky: we may not get a recognizable error code,
+# or even an error message, on failure to retrieve any data.
 
 function scalar bad_json (const string s, string *msg)
     ret = 0
@@ -223,3 +216,30 @@ function scalar bad_json (const string s, string *msg)
     return ret
 end function
 
+### ------------------------------------------------------------------------
+
+function scalar dbn_get_json (const string URL, string *json,
+			      string *msg[null])
+    req = defbundle("URL", URL, "header", "accept: application/json")
+    # check for curl error
+    error = curl(&req)
+    string mymsg
+    if error
+	mymsg = req.errmsg
+    else
+	# also check for dbnomics error condition
+        json = req.output
+	string dbnmsg
+	error = bad_json(json, &dbnmsg)
+	if error
+	    mymsg = sprintf("error message from dbnomics:\n\"%s\"\n", dbnmsg)
+	endif
+    endif
+    if error
+	printf "%s", mymsg
+	if exists(msg)
+	    msg = mymsg
+	endif
+    endif
+    return error
+end function
