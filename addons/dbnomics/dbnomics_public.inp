@@ -343,7 +343,6 @@ end function
 ### ------------------------------------------------------------------------
 
 function bundle dbnomics_dsets_for_provider(const string provider, bool verbose[0])
-    bundle ret
     URL = sprintf("https://api.next.nomics.world/providers/%s", provider)
     if verbose
         printf "URL = '%s'\n", URL
@@ -351,7 +350,6 @@ function bundle dbnomics_dsets_for_provider(const string provider, bool verbose[
     n = 0
     string json
     err = dbn_get_json(URL, &json)
-
     if !err
 	dscodes = jsonget(json, "$.category_tree..children..code", &n)
     endif
@@ -359,8 +357,8 @@ function bundle dbnomics_dsets_for_provider(const string provider, bool verbose[
         funcerr "Found no datasets for provider"
     endif
 
-    dsnames = jsonget(json, "$.category_tree..children..name")
     bundle ret
+    dsnames = jsonget(json, "$.category_tree..children..name")
     ret.error = 0
     ret.codes = strsplit(dscodes,,"\n")
     ret.names = strsplit(dsnames,,"\n")
