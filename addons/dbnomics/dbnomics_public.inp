@@ -325,17 +325,28 @@ end function
 
 function bundle dbnomics_dsets_for_provider(const string provider, bool verbose[0])
     n = 0
+    children = 1
     string json
     err = dbn_get_json("providers/" ~ provider, verbose, &json)
     if !err
 	dscodes = jsonget(json, "$.category_tree..children..code", &n)
+	if n == 0
+	    # maybe there are no "children" nodes, just series
+	    dscodes = jsonget(json, "$.category_tree..code", &n)
+	    children = 0
+	endif
     endif
     if n == 0
-        funcerr "Found no datasets for provider"
+	msg = sprintf("Found no datasets for provider %s", provider)
+        funcerr msg
     endif
 
     bundle ret
-    dsnames = jsonget(json, "$.category_tree..children..name")
+    if children
+	dsnames = jsonget(json, "$.category_tree..children..name")
+    else
+	dsnames = jsonget(json, "$.category_tree..name")
+    endif
     ret.error = 0
     ret.codes = strsplit(dscodes,,"\n")
     ret.names = strsplit(dsnames,,"\n")
