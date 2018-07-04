@@ -115,6 +115,10 @@ static const gchar *window_list_icon (int role)
 	id = GRETL_STOCK_SCATTER;
     } else if (role == PKG_REGISTRY) {
 	id = GTK_STOCK_PREFERENCES;
+    } else if (role == DBNOMICS_TOP ||
+	       role == DBNOMICS_DB ||
+	       role == DBNOMICS_SERIES) {
+	id = GRETL_STOCK_DBN;
     } else if (BROWSER_ROLE(role)) {
 	id = GTK_STOCK_INDEX;
     } else if (help_role(role)) {

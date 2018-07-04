@@ -1686,7 +1686,7 @@ static GretlToolItem files_items[] = {
     { N_("Unload/delete..."), GTK_STOCK_DELETE,   G_CALLBACK(browser_del_func),  BTN_DEL },
     { N_("Look on server"), GTK_STOCK_NETWORK,    NULL,                          BTN_WWW },
     { N_("Local machine"),  GTK_STOCK_HOME,       NULL,                          BTN_HOME },
-    { "DB\u00B7NOMICS",     GRETL_STOCK_DBN,      NULL,                          BTN_DBN }
+    { "DB.NOMICS",          GRETL_STOCK_DBN,      NULL,                          BTN_DBN }
 };
 
 static GretlToolItem pager_items[] = {
