@@ -4790,7 +4790,7 @@ static void print_package_info (const fnpkg *pkg, const char *fname, PRN *prn)
 	    gchar *p = strrchr(localpdf, '.');
 
 	    *p = '\0';
-	    strncat(p, ".pdf", 4);
+	    strcat(p, ".pdf");
 	    pprintf(prn, "<@itl=\"Documentation\">: <@adb=\"%s\">\n\n", localpdf);
 	    g_free(localpdf);
 	}

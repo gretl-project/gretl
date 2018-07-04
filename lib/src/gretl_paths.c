@@ -1344,7 +1344,7 @@ static int try_open_file (char *targ, const char *finddir,
 	    err = gretl_test_fopen(tmp, "r");
 	    if (err) {
 		/* try .gdtb also */
-		strncat(tmp, "b", 1);
+		strcat(tmp, "b");
 		err = gretl_test_fopen(tmp, "r");
 	    }
 	}
@@ -2405,14 +2405,14 @@ const char *gretl_bindir (void)
 	p = strstr(bindir, "share/gretl");
 	if (p != NULL) {
 	    *p = '\0';
-	    strncat(p, "bin/", 4);
+	    strcat(p, "bin/");
 	}
 #ifdef WIN32
 	if (p == NULL) {
 	    p = strstr(bindir, "share\\gretl");
 	    if (p != NULL) {
 		*p = '\0';
-		strncat(p, "bin\\", 4);
+		strcat(p, "bin\\");
 	    }
 	}
 #endif

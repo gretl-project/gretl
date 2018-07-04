@@ -1757,11 +1757,11 @@ char *maybe_trim_varname (char *targ, const char *src)
 	    int fore = p - src;
 
 	    strncat(targ, src, fore - snip);
-	    strncat(targ, "~", 1);
+	    strcat(targ, "~");
 	    strncat(targ, p, strlen(p));
 	} else {
 	    strncat(targ, src, NAMETRUNC - 2);
-	    strncat(targ, "~", 1);
+	    strcat(targ, "~");
 	}
     }
 
