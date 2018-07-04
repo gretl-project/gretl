@@ -2,6 +2,8 @@
 #include "gretl_string_table.h" /* for csvdata */
 #include "csvdata.h"
 
+/* call hansl code from dbnomics.gfn to get a series bundle */
+
 static gretl_bundle *get_dbn_series_bundle (const char *datacode,
 					    int *err)
 {
@@ -36,8 +38,13 @@ static gretl_bundle *get_dbn_series_bundle (const char *datacode,
     return b;
 }
 
+/* write the info from @P (periods) and @v (values) to
+   CSV, then grab it back using the gretl CSV reader
+   to populate @dbset
+*/
+
 static int dbn_dset_from_csv (DATASET *dbset,
-			      gretl_array *A,
+			      gretl_array *P,
 			      gretl_matrix *v)
 {
     gchar *fname;
@@ -50,7 +57,7 @@ static int dbn_dset_from_csv (DATASET *dbset,
     if (fp == NULL) {
 	err = E_FOPEN;
     } else {
-	char **S = gretl_array_get_strings(A, &T);
+	char **S = gretl_array_get_strings(P, &T);
 	int t;
 
 	gretl_push_c_numeric_locale();
@@ -70,12 +77,16 @@ static int dbn_dset_from_csv (DATASET *dbset,
     return err;
 }
 
+/* obtain a dbnomics series bundle and process the info
+   it contains into a SERIESINFO struct
+*/
+
 static int
 get_dbnomics_series_info (const char *id, SERIESINFO *sinfo)
 {
     gretl_bundle *b;
     DATASET dbset = {0};
-    gretl_array *A;
+    gretl_array *P;
     gretl_matrix *v;
     int T, err = 0;
 
@@ -88,7 +99,7 @@ get_dbnomics_series_info (const char *id, SERIESINFO *sinfo)
     }
 
     T = gretl_bundle_get_int(b, "actobs", &err);
-    A = gretl_bundle_get_array(b, "periods", &err);
+    P = gretl_bundle_get_array(b, "periods", &err);
     v = gretl_bundle_get_matrix(b, "vals", &err);
     if (!err && (T <= 0 || A == NULL || v == NULL)) {
 	fprintf(stderr, "get_dbnomics_series_info: invalid bundle content\n");
@@ -98,7 +109,7 @@ get_dbnomics_series_info (const char *id, SERIESINFO *sinfo)
 
     /* write bundle content as CSV and use CSV reader to
        construct a one-series dataset */
-    err = dbn_dset_from_csv(&dbset, A, v);
+    err = dbn_dset_from_csv(&dbset, P, v);
 
     if (!err) {
 	/* transcribe info to SERIESINFO format */
@@ -130,6 +141,8 @@ get_dbnomics_series_info (const char *id, SERIESINFO *sinfo)
 
     return err;
 }
+
+/* transfer the data stored on @sinfo into @Z */
 
 static int get_dbnomics_data (const char *fname,
 			      SERIESINFO *sinfo,
