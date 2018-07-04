@@ -207,6 +207,12 @@ end function
 
 ### ------------------------------------------------------------------------
 
+# hopefully this is a temporary thing!
+
+function scalar blacklisted (const string s)
+    return s == "DREES" || s == "ONS"
+end function
+
 function bundles dbnomics_providers(bool verbose[0])
     magic = "providers.docs"
     nprov = 0
@@ -224,16 +230,29 @@ function bundles dbnomics_providers(bool verbose[0])
 	funcerr "no providers were found"
     endif
 
-    bundles ret = array(nprov)
+    # apply blacklist mechanism
+    codes = strsplit(str,,"\n")
+    n_ok = nprov
+    loop i = 1..nprov --quiet
+	if blacklisted(codes[i])
+	    n_ok--
+	endif
+    endloop
+
+    bundles ret = array(n_ok)
     strings fields = defarray("name", "terms_of_use", "code", "region", "description", "website")
 
+    j = 1
     loop i = 1..nprov --quiet
-        ret[i] = json2bndl(fields, json, magic, i-1)
+	if !blacklisted(codes[i])
+            ret[j] = json2bndl(fields, json, magic, i-1)
+	    j++
+	endif
     endloop
 
     if verbose
         printf "Available providers: \n"
-        loop i = 1..nprov --quiet
+        loop i = 1..n_ok --quiet
             printf "%3d: %15s", i, ret[i].code
             if inbundle(ret[i], "name")
                 printf " (%s)", ret[i].name
