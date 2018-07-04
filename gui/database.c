@@ -3859,6 +3859,7 @@ int show_dbnomics_data (windata_t *vwin, int plot)
 	}
     }
 
+    free_Z(&dbset);
     clear_datainfo(&dbset, CLEAR_FULL);
 
     return err;

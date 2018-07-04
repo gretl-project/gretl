@@ -133,6 +133,7 @@ get_dbnomics_series_info (const char *id, SERIESINFO *sinfo)
 	dbset.Z[1] = NULL;
     }
 
+    free_Z(&dbset);
     clear_datainfo(&dbset, CLEAR_FULL);
 
  bailout:
@@ -149,6 +150,7 @@ static int get_dbnomics_data (const char *fname,
 			      double **Z)
 {
     memcpy(Z[1], sinfo->data, sinfo->nobs * sizeof(double));
+    free(sinfo->data);
     sinfo->data = NULL;
 
     return 0;

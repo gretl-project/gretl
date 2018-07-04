@@ -269,8 +269,8 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
   is returned (using the C locale for doubles).
 */
 
-char *json_get (const char *data, const char *path, int *n_objects,
-		int *err)
+char *json_get (const char *data, const char *path,
+		int *n_objects, int *err)
 {
     GError *gerr = NULL;
     JsonParser *parser;
