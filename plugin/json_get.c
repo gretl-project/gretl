@@ -29,6 +29,8 @@
 			 t == G_TYPE_DOUBLE || \
 			 t == G_TYPE_INT64)
 
+#define EXPLORE_OBJECT 0
+
 static int non_empty_array (JsonArray *array)
 {
     return array != NULL && json_array_get_length(array) > 0;
@@ -38,6 +40,40 @@ static int null_node (JsonNode *node)
 {
     return node == NULL || json_node_is_null(node);
 }
+
+#if EXPLORE_OBJECT
+
+static void explore_json_object_node (JsonNode *node, int level)
+{
+    JsonObject *obj = json_node_get_object(node);
+    GList *nlist = json_object_get_members(obj);
+    GList *vlist = json_object_get_values(obj);
+    int i, sublevel = level + 1;
+    const gchar *subname, *typename;
+    JsonNode *subnode;
+    GType type;
+
+    for (i=0; i<level; i++) fputc(' ', stderr);
+    fprintf(stderr, "JsonObject members (level %d):\n", level);
+    while (nlist != NULL && vlist != NULL) {
+	subname = nlist->data;
+	subnode = vlist->data;
+	type = json_node_get_value_type(subnode);
+	typename = g_type_name(type);
+	for (i=0; i<level; i++) fputc(' ', stderr);
+	fprintf(stderr, "name '%s' (%s)\n", subname, typename);
+	if (!strcmp(typename, "JsonObject")) {
+	    explore_json_object_node(subnode, sublevel);
+	}
+	nlist = nlist->next;
+	vlist = vlist->next;
+    }
+
+    g_list_free(nlist);
+    g_list_free(vlist);
+}
+
+#endif
 
 static int output_json_node_value (JsonNode *node,
 				   PRN *prn)
@@ -57,8 +93,14 @@ static int output_json_node_value (JsonNode *node,
 #endif
 
     if (!handled_type(type)) {
-	gretl_errmsg_sprintf("jsonget: unhandled object type '%s'",
-			     g_type_name(type));
+	const char *s = g_type_name(type);
+
+	gretl_errmsg_sprintf("jsonget: unhandled object type '%s'", s);
+#if EXPLORE_OBJECT
+	if (!strcmp(s, "JsonObject")) {
+	    explore_json_object_node(node, 0);
+	}
+#endif
 	err = E_DATA;
     } else if (type == G_TYPE_STRING) {
 	const gchar *s = json_node_get_string(node);
