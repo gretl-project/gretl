@@ -325,26 +325,29 @@ static const char *trimmed_db_name (const char *fname)
 
 static void record_db_open_command (dbwrapper *dw)
 {
-    if (dw->fname != NULL) {
-	const char *current_db = get_db_name();
-	char *dbpath;
+    const char *dbname = (dw == NULL)? "dbnomics" : dw->fname;
+    int dbtype = (dw == NULL)? GRETL_DBNOMICS : dw->dbtype;
 
-	if (dw->dbtype == GRETL_PCGIVE_DB) {
-	    dbpath = g_strdup_printf("%s.bn7", dw->fname);
-	} else if (dw->dbtype == GRETL_NATIVE_DB) {
-	    dbpath = g_strdup_printf("%s.bin", dw->fname);
+    if (dbname != NULL) {
+	const char *current_db = get_db_name();
+	char *dbpath = NULL;
+
+	if (dbtype == GRETL_PCGIVE_DB) {
+	    dbpath = g_strdup_printf("%s.bn7", dbname);
+	} else if (dbtype == GRETL_NATIVE_DB) {
+	    dbpath = g_strdup_printf("%s.bin", dbname);
 	} else {
-	    dbpath = g_strdup(dw->fname);
+	    dbpath = g_strdup(dbname);
 	}
 
 	/* record the "open" command if the database in
 	   question is not already open */
 
 	if (strcmp(current_db, dbpath)) {
-	    int err = set_db_name(dbpath, dw->dbtype, NULL);
+	    int err = set_db_name(dbpath, dbtype, NULL);
 	    int done = 0;
 
-	    if (!err && dw->dbtype == GRETL_NATIVE_DB) {
+	    if (!err && dbtype == GRETL_NATIVE_DB) {
 		const char *s = trimmed_db_name(dbpath);
 
 		if (s != NULL) {
@@ -354,7 +357,7 @@ static void record_db_open_command (dbwrapper *dw)
 	    }
 
 	    if (!err && !done) {
-		if (dw->dbtype == GRETL_NATIVE_DB_WWW) {
+		if (dbtype == GRETL_NATIVE_DB_WWW) {
 		    lib_command_sprintf("open %s --www", dbpath);
 		} else if (strchr(dbpath, ' ') != NULL) {
 		    lib_command_sprintf("open \"%s\"", dbpath);
@@ -372,22 +375,47 @@ static void record_db_open_command (dbwrapper *dw)
     }
 }
 
+static char *dbnomics_id;
+
+static void set_dbnomics_id (const char *s)
+{
+    dbnomics_id = g_strdup(s);
+}
+
+static void unset_dbnomics_id (void)
+{
+    free(dbnomics_id);
+    dbnomics_id = NULL;
+}
+
 /* record successful importation in command log */
 
-static void record_db_import (const char *varname,
+static void record_db_import (const char *vname,
 			      int compact,
 			      int interpol,
 			      CompactMethod method)
 {
     const char *cstr = NULL;
 
-    if (compact && (cstr = compact_method_string(method)) != NULL) {
-	lib_command_sprintf("data %s --compact=%s", varname,
-			    cstr);
-    } else if (interpol) {
-	lib_command_sprintf("data %s --interpolate", varname);
+    if (dbnomics_id != NULL) {
+	if (compact && (cstr = compact_method_string(method)) != NULL) {
+	    lib_command_sprintf("data %s --name=%s --compact=%s",
+				dbnomics_id, vname, cstr);
+	} else if (interpol) {
+	    lib_command_sprintf("data %s --name=%s --interpolate",
+				dbnomics_id, vname);
+	} else {
+	    lib_command_sprintf("data %s --name=%s", dbnomics_id, vname);
+	}
     } else {
-	lib_command_sprintf("data %s", varname);
+	if (compact && (cstr = compact_method_string(method)) != NULL) {
+	    lib_command_sprintf("data %s --compact=%s", vname,
+				cstr);
+	} else if (interpol) {
+	    lib_command_sprintf("data %s --interpolate", vname);
+	} else {
+	    lib_command_sprintf("data %s", vname);
+	}
     }
 
     record_command_verbatim();
@@ -437,6 +465,7 @@ add_single_series_to_dataset (windata_t *vwin, DATASET *dbset)
     CompactMethod cmethod = COMPACT_AVG;
     int dbv, resp, overwrite = 0;
     int existing = 0;
+    int compact = 0;
     int interpol = 0;
     int err = 0;
 
@@ -448,6 +477,8 @@ add_single_series_to_dataset (windata_t *vwin, DATASET *dbset)
     if (err) {
 	return err;
     }
+
+    record_db_open_command(NULL);
 
     /* is there a series of this name already in the dataset? */
     dbv = series_index(dataset, dbset->varname[1]);
@@ -472,6 +503,7 @@ add_single_series_to_dataset (windata_t *vwin, DATASET *dbset)
 	} else if (cmethod == COMPACT_SPREAD) {
 	    return handle_compact_spread(NULL, NULL, dataset, dbset);
 	}
+	compact = 1;
     }
 
     if (existing) {
@@ -500,6 +532,7 @@ add_single_series_to_dataset (windata_t *vwin, DATASET *dbset)
     if (!err) {
 	strcpy(dataset->varname[dbv], dbset->varname[1]);
 	series_set_label(dataset, dbv, series_get_label(dbset, 1));
+	record_db_import(dbset->varname[1], compact, interpol, cmethod);
     } else {
 	if (!overwrite) {
 	    dataset_drop_last_variables(dataset, 1);
@@ -649,6 +682,9 @@ static void add_dbdata (windata_t *vwin, DATASET *dbset,
 		lib_command_sprintf("data %s", sinfo->varname);
 		record_command_verbatim();
 	    }
+	} else {
+	    record_db_open_command(NULL);
+	    record_db_import(dbset->varname[1], 0, 0, 0);
 	}
 
 	data_status |= (GUI_DATA | MODIFIED_DATA);
@@ -3830,9 +3866,12 @@ int add_dbnomics_data (windata_t *vwin)
 	    }
 	    name_new_series_dialog(vname, descrip, vwin, &cancel);
 	    if (!cancel) {
+		set_dbnomics_id(s1);
 		strcpy(dbset->varname[1], vname);
 		series_set_label(dbset, 1, descrip);
+		series_set_display_name(dbset, 1, "");
 		add_dbdata(vwin, dbset, NULL, &freeit);
+		unset_dbnomics_id();
 	    }
 	    g_free(descrip);
 	}
