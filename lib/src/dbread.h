@@ -47,6 +47,7 @@ typedef struct SERIESINFO_ {
     int offset;
     int err;
     int undated;
+    void *data;
 } SERIESINFO;
 
 typedef struct dbwrapper_ {

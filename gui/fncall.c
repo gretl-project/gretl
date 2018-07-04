@@ -4193,39 +4193,6 @@ char *installed_addon_status_string (const char *path,
     return ret;
 }
 
-static fncall *get_pkg_function_call (const char *funcname,
-				      const char *pkgname)
-{
-    fncall *fc = NULL;
-    ufunc *uf = NULL;
-    fnpkg *pkg;
-
-    /* already loaded? */
-    pkg = get_function_package_by_name(pkgname);
-    if (pkg == NULL) {
-	/* no, so look it up */
-	char *pkgpath;
-	int err = 0;
-
-	pkgpath = gretl_function_package_get_path(pkgname, PKG_ALL);
-	if (pkgpath != NULL) {
-	    pkg = get_function_package_by_filename(pkgpath, &err);
-	    free(pkgpath);
-	}
-    }
-    if (pkg != NULL) {
-	uf = get_function_from_package(funcname, pkg);
-    }
-
-    if (uf == NULL) {
-	errbox_printf("Couldn't find function %s", funcname);
-    } else {
-	fc = fncall_new(uf);
-    }
-
-    return fc;
-}
-
 int dbnomics_get_series_call (const char *datacode)
 {
     gretl_bundle *b = NULL;
@@ -4240,6 +4207,7 @@ int dbnomics_get_series_call (const char *datacode)
 	if (fc == NULL) {
 	    gretl_print_destroy(prn);
 	    err = E_DATA;
+	    gui_errmsg(err);
 	}
     }
 

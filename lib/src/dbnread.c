@@ -1,5 +1,6 @@
-/* needed for get_pkg_function_call */
 #include "gretl_func.h"
+#include "gretl_string_table.h" /* for csvdata */
+#include "csvdata.h"
 
 static gretl_bundle *get_dbn_series_bundle (const char *datacode,
 					    int *err)
@@ -15,13 +16,14 @@ static gretl_bundle *get_dbn_series_bundle (const char *datacode,
 				 (void *) datacode);
 	if (!*err) {
 	    *err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, NULL,
-				       &b, NULL, prn);
+				       &b, NULL, NULL);
 	}
 	if (b != NULL) {
 	    int dberr = gretl_bundle_get_int(b, "error", NULL);
 
 	    if (dberr) {
-		char *msg = gretl_bundle_get_string(b, "errmsg", NULL);
+		const char *msg =
+		    gretl_bundle_get_string(b, "errmsg", NULL);
 
 		*err = E_DATA;
 		gretl_errmsg_set(msg);
@@ -38,50 +40,34 @@ static int dbn_dset_from_csv (DATASET *dbset,
 			      gretl_array *A,
 			      gretl_matrix *v)
 {
-    char **S = gretl_array_get_strings(A, &T);
     gchar *fname;
     FILE *fp;
-    int t;
+    int T, err = 0;
 
     fname = g_strdup_printf("%sdnomics_tmp.txt", gretl_dotdir());
     fp = gretl_fopen(fname, "w");
-    if (fp == NULL) {
-	return E_FOPEN;
-    }
 
-    gretl_push_c_numeric_locale();
-    fputs("obs dbnomics_data\n", fp);
-    for (t=0; t<T; t++) {
-	fprintf(fp, "%s %.12g\n", S[t], v->val[t]);
+    if (fp == NULL) {
+	err = E_FOPEN;
+    } else {
+	char **S = gretl_array_get_strings(A, &T);
+	int t;
+
+	gretl_push_c_numeric_locale();
+	fputs("obs dbnomics_data\n", fp);
+	for (t=0; t<T; t++) {
+	    fprintf(fp, "%s %.12g\n", S[t], v->val[t]);
+	}
+	gretl_pop_c_numeric_locale();
+
+	fclose(fp);
+	err = import_csv(fname, dbset, OPT_NONE, NULL);
+	gretl_remove(fname);
     }
-    gretl_pop_c_numeric_locale();
     
-    fclose(fp);
-    err = import_csv(fname, &dbset, OPT_NONE, NULL);
-    gretl_remove(fname);
     g_free(fname);
 
     return err;
-}
-
-static int set_dbn_name_and_descrip (const char *id,
-				     const char *str,
-				     SERIESINFO *sinfo)
-{
-    const char *rawname;
-    gchar *descrip = NULL;
-
-    /* construct a default name for the series */
-    rawname = strrchr(id, '/') + 1;
-    normalize_join_colname(sinfo->varname, rawname, 0);
-
-    /* construct its description */
-    s2 = gretl_bundle_get_string(b, "series_name", &err);
-    if (!err) {
-	descrip = g_strdup_printf("%s: %s", id, s2);
-    }
-
-    g_free(descrip);
 }
 
 static int
@@ -123,9 +109,9 @@ get_dbnomics_series_info (const char *id, SERIESINFO *sinfo)
 	sinfo->t1 = dbset.t1;
 	sinfo->t2 = dbset.t2;
 	sinfo->nobs = dbset.n;
-	sinfo->pd = dset.pd;
-	strcpy(sinfo->stobs, dset.stobs);
-	strcpy(sinfo->endobs, dset.endobs);
+	sinfo->pd = dbset.pd;
+	strcpy(sinfo->stobs, dbset.stobs);
+	strcpy(sinfo->endobs, dbset.endobs);
 	/* set up name and description */
 	normalize_join_colname(sinfo->varname, rawname, 0);
 	descrip = g_strdup_printf("%s: %s", id, s2);
@@ -151,6 +137,6 @@ static int get_dbnomics_data (const char *fname,
 {
     memcpy(Z[1], sinfo->data, sinfo->nobs * sizeof(double));
     sinfo->data = NULL;
-    
+
     return 0;
 }
