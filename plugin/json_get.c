@@ -600,10 +600,14 @@ gretl_bundle *json_get_bundle (const char *data,
     jb.b0 = gretl_bundle_new();
     jb.curr = jb.b0;
 
+    gretl_push_c_numeric_locale();
+
     reader = json_reader_new(json_parser_get_root(parser));
     if (json_reader_is_object(reader)) {
 	*err = jb_do_object(reader, &jb);
     }
+
+    gretl_pop_c_numeric_locale();
 
     g_object_unref(reader);
     g_object_unref(parser);
