@@ -2276,7 +2276,7 @@ static void open_bundle (gui_obj *obj)
     done = try_exec_bundle_print_function(b, prn);
 
     if (!done) {
- 	gretl_bundle_print(b, prn);
+	gretl_bundle_print(b, OPT_NONE, prn);
     }
 
     view_buffer(prn, 80, 400, name, VIEW_BUNDLE, b);

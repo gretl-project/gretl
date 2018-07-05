@@ -497,6 +497,7 @@ struct gretl_option gretl_opts[] = {
     { PRINT,    OPT_U, "numeric", 0 },
     { PRINT,    OPT_M, "midas", 0 },
     { PRINT,    OPT_C, "complex", 0 },
+    { PRINT,    OPT_T, "tree", 0 },
     { PROBIT,   OPT_P, "p-values", 0 },
     { PROBIT,   OPT_R, "robust", 0 },
     { PROBIT,   OPT_C, "cluster", 2 },

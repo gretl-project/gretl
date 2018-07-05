@@ -6792,7 +6792,9 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
     if (starting(p)) {
 	const char *sr, *sl = l->v.str;
 
-	if (f == F_XMLGET && r->t == ARRAY) {
+	if (f == F_JSONGETB) {
+	    ; /* checks done below */
+	} else if (f == F_XMLGET && r->t == ARRAY) {
 	    if (gretl_array_get_type(r->v.a) != GRETL_TYPE_STRINGS) {
 		p->err = E_TYPES;
 	    }
@@ -6802,6 +6804,7 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
 
 	if (!p->err) {
 	    ret = (f == F_INSTRING)? aux_scalar_node(p) :
+		(f == F_JSONGETB)? aux_bundle_node(p) :
 		aux_string_node(p);
 	}
 
@@ -6847,7 +6850,7 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
 		uv = ptr_node_get_uvar(x, NUM, p);
 	    }
 	    if (!p->err) {
-		jfunc = get_plugin_function("json_get");
+		jfunc = get_plugin_function("json_get_string");
 		if (jfunc == NULL) {
 		    p->err = E_FOPEN;
 		}
@@ -6860,6 +6863,26 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
 		if (!p->err && uv != NULL) {
 		    user_var_set_scalar_value(uv, (double) *pnobj);
 		}
+	    }
+	} else if (f == F_JSONGETB) {
+	    gretl_bundle *(*jfunc) (const char *, gretl_array *, int *);
+	    gretl_array *a = NULL;
+
+	    if (!null_or_empty(r)) {
+		if (gretl_array_get_type(r->v.a) != GRETL_TYPE_STRINGS) {
+		    p->err = E_TYPES;
+		} else {
+		    a = r->v.a;
+		}
+	    }
+	    if (!p->err) {
+		jfunc = get_plugin_function("json_get_bundle");
+		if (jfunc == NULL) {
+		    p->err = E_FOPEN;
+		}
+	    }
+	    if (!p->err) {
+		ret->v.b = jfunc(l->v.str, a, &p->err);
 	    }
 	} else if (f == F_XMLGET) {
 	    char *(*xfunc) (const char *, void *, GretlType,
@@ -15380,6 +15403,14 @@ static NODE *eval (NODE *t, parser *p)
 			    STR, (l->t == STR)? m : l, p);
 	}
 	break;
+    case F_JSONGETB:
+	if (l->t == STR && (null_or_empty(r) || r->t == ARRAY)) {
+	    ret = two_string_func(l, r, NULL, t->t, p);
+	} else {
+	    fprintf(stderr, "HERE 1\n");
+	    p->err = E_TYPES;
+	}
+	break;
     case F_STRSTR:
     case F_INSTRING:
 	if (l->t == STR && r->t == STR) {
@@ -15712,7 +15743,7 @@ static void printnode (NODE *t, parser *p, int value)
 	    gretl_matrix_print_to_prn(t->v.m, NULL, p->prn);
 	}
     } else if (t->t == BUNDLE) {
-	gretl_bundle_print(t->v.b, p->prn);
+	gretl_bundle_print(t->v.b, OPT_NONE, p->prn);
     } else if (t->t == DBUNDLE) {
 	pputs(p->prn, bvarname(t->v.idnum));
     } else if (t->t == ARRAY) {
@@ -17801,7 +17832,7 @@ void gen_save_or_print (parser *p, PRN *prn)
 		pprintf(p->prn, "%s\n", p->ret->v.str);
 	    }
 	} else if (p->ret->t == BUNDLE) {
-	    gretl_bundle_print(p->ret->v.b, prn);
+	    gretl_bundle_print(p->ret->v.b, OPT_NONE, prn);
 	} else if (p->ret->t == ARRAY) {
 	    gretl_array_print(p->ret->v.a, prn);
 	} else {

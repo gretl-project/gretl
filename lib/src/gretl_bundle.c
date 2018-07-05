@@ -1633,6 +1633,27 @@ static void print_bundled_item (gpointer key, gpointer value, gpointer p)
     }
 }
 
+static void print_bundle_tree (gretl_bundle *b, int level, PRN *prn)
+{
+    gretl_array *K = gretl_bundle_get_keys(b, NULL);
+    gretl_bundle *child;
+    GretlType type;
+    char **keys;
+    int i, n = 0;
+
+    keys = gretl_array_get_strings(K, &n);
+
+    gretl_bundle_print(b, level == 0 ? OPT_NONE : OPT_C, prn);
+
+    for (i=0; i<n; i++) {
+	child = gretl_bundle_get_data(b, keys[i], &type, NULL, NULL);
+	if (type == GRETL_TYPE_BUNDLE) {
+	    pprintf(prn, "child bundle '%s' (level %d):\n", keys[i], level + 1);
+	    print_bundle_tree(child, level + 1, prn);
+	}
+    }
+}
+
 /**
  * gretl_bundle_print:
  * @bundle: gretl bundle.
@@ -1644,14 +1665,33 @@ static void print_bundled_item (gpointer key, gpointer value, gpointer p)
  * Returns: 0 on success, non-zero code on failure.
  */
 
-int gretl_bundle_print (gretl_bundle *bundle, PRN *prn)
+int gretl_bundle_print (gretl_bundle *bundle, gretlopt opt, PRN *prn)
 {
     if (bundle == NULL) {
 	return E_DATA;
+    } else if (opt & OPT_T) {
+	/* --tree */
+	print_bundle_tree(bundle, 0, prn);
+    } else if (opt & OPT_C) {
+	/* child, when printing tree */
+	int n_items = g_hash_table_size(bundle->ht);
+
+	if (bundle->type == BUNDLE_PLAIN && n_items == 0) {
+	    pputs(prn, "empty\n");
+	} else if (bundle->type == BUNDLE_KALMAN) {
+	    print_kalman_bundle_info(bundle->data, prn);
+	    if (n_items > 0) {
+		pputs(prn, "\nOther content\n");
+		g_hash_table_foreach(bundle->ht, print_bundled_item, prn);
+	    }
+	} else if (n_items > 0) {
+	    g_hash_table_foreach(bundle->ht, print_bundled_item, prn);
+	}
+	pputc(prn, '\n');
     } else {
 	int n_items = g_hash_table_size(bundle->ht);
 	user_var *u = get_user_var_by_data(bundle);
-	const char *name = NULL;
+	const char *name;
 
 	if (u != NULL) {
 	    name = user_var_get_name(u);
@@ -1679,9 +1719,9 @@ int gretl_bundle_print (gretl_bundle *bundle, PRN *prn)
 	    }
 	    pputc(prn, '\n');
 	}
-
-	return 0;
     }
+
+    return 0;
 }
 
 /* Called from gretl_func.c on return, to remove

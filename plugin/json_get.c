@@ -29,8 +29,6 @@
 			 t == G_TYPE_DOUBLE || \
 			 t == G_TYPE_INT64)
 
-#define EXPLORE_OBJECT 0
-
 static int non_empty_array (JsonArray *array)
 {
     return array != NULL && json_array_get_length(array) > 0;
@@ -40,40 +38,6 @@ static int null_node (JsonNode *node)
 {
     return node == NULL || json_node_is_null(node);
 }
-
-#if EXPLORE_OBJECT
-
-static void explore_json_object_node (JsonNode *node, int level)
-{
-    JsonObject *obj = json_node_get_object(node);
-    GList *nlist = json_object_get_members(obj);
-    GList *vlist = json_object_get_values(obj);
-    int i, sublevel = level + 1;
-    const gchar *subname, *typename;
-    JsonNode *subnode;
-    GType type;
-
-    for (i=0; i<level; i++) fputc(' ', stderr);
-    fprintf(stderr, "JsonObject members (level %d):\n", level);
-    while (nlist != NULL && vlist != NULL) {
-	subname = nlist->data;
-	subnode = vlist->data;
-	type = json_node_get_value_type(subnode);
-	typename = g_type_name(type);
-	for (i=0; i<level; i++) fputc(' ', stderr);
-	fprintf(stderr, "name '%s' (%s)\n", subname, typename);
-	if (!strcmp(typename, "JsonObject")) {
-	    explore_json_object_node(subnode, sublevel);
-	}
-	nlist = nlist->next;
-	vlist = vlist->next;
-    }
-
-    g_list_free(nlist);
-    g_list_free(vlist);
-}
-
-#endif
 
 static int output_json_node_value (JsonNode *node,
 				   PRN *prn)
@@ -96,11 +60,6 @@ static int output_json_node_value (JsonNode *node,
 	const char *s = g_type_name(type);
 
 	gretl_errmsg_sprintf("jsonget: unhandled object type '%s'", s);
-#if EXPLORE_OBJECT
-	if (!strcmp(s, "JsonObject")) {
-	    explore_json_object_node(node, 0);
-	}
-#endif
 	err = E_DATA;
     } else if (type == G_TYPE_STRING) {
 	const gchar *s = json_node_get_string(node);
@@ -311,8 +270,8 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
   is returned (using the C locale for doubles).
 */
 
-char *json_get (const char *data, const char *path,
-		int *n_objects, int *err)
+char *json_get_string (const char *data, const char *path,
+		       int *n_objects, int *err)
 {
     GError *gerr = NULL;
     JsonParser *parser;
@@ -370,4 +329,190 @@ char *json_get (const char *data, const char *path,
     g_object_unref(parser);
 
     return ret;
+}
+
+/* start code subserving json_get_bundle() */
+
+#define JB_DEBUG 0
+
+struct jbundle_ {
+    gretl_bundle *b0;
+    gretl_bundle *bcurr;
+    char **targets;
+    int n_targets;
+};
+
+typedef struct jbundle_ jbundle;
+
+static int do_object (JsonReader *reader, jbundle *jb);
+static int do_array (JsonReader *reader, jbundle *jb);
+static int do_value (JsonReader *reader, jbundle *jb);
+
+static int jb_add_bundle (jbundle *jb, const char *name)
+{
+    gretl_bundle *b = gretl_bundle_new();
+    int err;
+
+    if (b == NULL) {
+	err = E_ALLOC;
+    } else {
+	err = gretl_bundle_donate_data(jb->bcurr, name, b,
+				       GRETL_TYPE_BUNDLE, 0);
+	if (!err) {
+	    jb->bcurr = b;
+	}
+    }
+
+    return err;
+}
+
+static int do_object (JsonReader *reader, jbundle *jb)
+{
+    gretl_bundle *btop = jb->bcurr;
+    const gchar *name;
+    gchar **S = NULL;
+    int i, n, err = 0;
+
+    n = json_reader_count_members(reader);
+    name = json_reader_get_member_name(reader);
+#if JB_DEBUG
+    fprintf(stderr, "got object, %d members, name '%s'\n", n,
+	    name == NULL ? "NULL" : name);
+#endif
+    S = json_reader_list_members(reader);
+
+    for (i=0; i<n && !err; i++) {
+	json_reader_read_member(reader, S[i]);
+	if (json_reader_is_object(reader)) {
+	    err = jb_add_bundle(jb, S[i]);
+	    if (!err) {
+		err = do_object(reader, jb);
+	    }
+	    jb->bcurr = btop;
+	} else if (json_reader_is_array(reader)) {
+	    err = do_array(reader, jb);
+	} else if (json_reader_is_value(reader)) {
+	    err = do_value(reader, jb);
+	}
+	json_reader_end_member(reader);
+    }
+
+    g_strfreev(S);
+
+    return err;
+}
+
+static int do_array (JsonReader *reader, jbundle *jb)
+{
+    const gchar *name;
+    int i, n = json_reader_count_elements(reader);
+    gboolean ok;
+
+    name = json_reader_get_member_name(reader);
+#if JB_DEBUG
+    fprintf(stderr, "got array, %d elements, name %s\n", n,
+	   name == NULL ? "NULL" : name);
+#endif
+    for (i=0; i<n; i++) {
+	fprintf(stderr, "  element %d: ", i);
+	ok = json_reader_read_element(reader, i);
+	fprintf(stderr, "%s\n", ok ? "OK" : "not OK");
+	json_reader_end_element(reader);
+    }
+
+    return 0;
+}
+
+static int do_value (JsonReader *reader, jbundle *jb)
+{
+    JsonNode *node = json_reader_get_value(reader);
+    const gchar *name, *typename;
+    GType type;
+
+    name = json_reader_get_member_name(reader);
+    type = json_node_get_value_type(node);
+    typename = g_type_name(type);
+
+#if JB_DEBUG
+    fprintf(stderr, "  got value (%s), type %s\n", name, typename);
+#endif
+    if (type == G_TYPE_INT64) {
+	int k = (int) json_reader_get_int_value(reader);
+
+	gretl_bundle_set_int(jb->bcurr, name, k);
+    } else if (type == G_TYPE_DOUBLE) {
+	gdouble x = json_reader_get_int_value(reader);
+
+	gretl_bundle_set_scalar(jb->bcurr, name, x);
+    } else if (type == G_TYPE_STRING) {
+	const gchar *s = json_reader_get_string_value(reader);
+
+	gretl_bundle_set_string(jb->bcurr, name, s);
+    }
+
+    return 0;
+}
+
+/* end code subserving json_get_bundle() */
+
+/*
+  @data: JSON buffer.
+  @targets: array of strings identifying members to retrieve,
+  or NULL to retrieve all.
+  @err: location to receive error code.
+
+  On success, returns an allocated gretl_bundle whose
+  structure mirrors that of the root JSON object.
+*/
+
+gretl_bundle *json_get_bundle (const char *data,
+			       gretl_array *targets,
+			       int *err)
+{
+    jbundle jb = {0};
+    GError *gerr = NULL;
+    JsonParser *parser;
+    JsonReader *reader;
+
+    if (data == NULL) {
+	gretl_errmsg_set("json_get_bundle: no data supplied");
+	*err = E_DATA;
+	return NULL;
+    }
+
+    parser = json_parser_new();
+    if (parser == NULL) {
+	gretl_errmsg_set("json_get_bundle: couldn't allocate parser");
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    json_parser_load_from_data(parser, data, -1, &gerr);
+
+    if (gerr != NULL) {
+	gretl_errmsg_sprintf("Couldn't parse JSON input: %s",
+			     gerr->message);
+	g_error_free(gerr);
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (targets != NULL) {
+	jb.targets = gretl_array_get_strings(targets, &jb.n_targets);
+	fprintf(stderr, "json_get_bundle: found %d targets\n",
+		jb.n_targets);
+    }
+
+    jb.b0 = gretl_bundle_new();
+    jb.bcurr = jb.b0;
+
+    reader = json_reader_new(json_parser_get_root(parser));
+    if (json_reader_is_object(reader)) {
+	*err = do_object(reader, &jb);
+    }
+
+    g_object_unref(reader);
+    g_object_unref(parser);
+
+    return jb.b0;
 }

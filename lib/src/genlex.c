@@ -452,6 +452,7 @@ struct str_table funcs[] = {
     { F_GENSERIES, "genseries" },
     { F_CURL,      "curl" },
     { F_JSONGET,   "jsonget" },
+    { F_JSONGETB,  "jsongetb" },
     { F_XMLGET,    "xmlget" },
     { F_NLINES,    "nlines" },
     { F_KPSSCRIT,  "kpsscrit" },

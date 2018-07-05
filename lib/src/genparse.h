@@ -382,6 +382,7 @@ enum {
     F_COR,
     F_STRSCRAPE,
     F_LRCOVAR,
+    F_JSONGETB,
     HF_CMMULT,
     HF_CFFT,
     HF_CMATRIX,

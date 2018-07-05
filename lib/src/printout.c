@@ -1886,7 +1886,7 @@ static int print_listed_objects (const char *s,
 	gretl_bundle *b = get_sysinfo_bundle(&err);
 
 	if (b != NULL) {
-	    gretl_bundle_print(b, prn);
+	    gretl_bundle_print(b, OPT_NONE, prn);
 	}
 	return err;
     }
