@@ -354,6 +354,11 @@ static int jb_do_array (JsonReader *reader, jbundle *jb);
 static int jb_do_value (JsonReader *reader, jbundle *jb,
 			gretl_array *a, int i);
 
+/* Add a new bundle to the tree -- either as a named
+   member of the bundle jb->curr, or, if @a is non-NULL,
+   as an anonymous element in an array of bundles.
+*/
+
 static int jb_add_bundle (jbundle *jb, const char *name,
 			  gretl_array *a, int i)
 {
@@ -375,6 +380,8 @@ static int jb_add_bundle (jbundle *jb, const char *name,
 
     return err;
 }
+
+/* Process a JSON object node: it becomes a gretl bundle */
 
 static int jb_do_object (JsonReader *reader, jbundle *jb)
 {
@@ -422,8 +429,11 @@ static int jb_transmute_array (gretl_array **pa, int n)
     return err;
 }
 
-/* process a JSON array node: we'll construct either an
-   array of strings or an array of bundles */
+/* Process a JSON array node: we'll construct either an
+   array of strings or an array of bundles. Since gretl
+   arrays cannot be nested we're somewat more restrictive
+   here than in the JSON spec.
+*/
 
 static int jb_do_array (JsonReader *reader, jbundle *jb)
 {
@@ -447,10 +457,15 @@ static int jb_do_array (JsonReader *reader, jbundle *jb)
 
     for (i=0; i<n && !err; i++) {
 	ok = json_reader_read_element(reader, i);
-	if (ok && json_reader_is_value(reader)) {
+	if (!ok) {
+	    gretl_errmsg_set("JSON array: couldn't read element");
+	    err = E_DATA;
+	    break;
+	}
+	if (json_reader_is_value(reader)) {
 	    if (nb > 0) {
 		/* we already switched to bundles! */
-		fprintf(stderr, "element %d: can't mix types in array!\n", i);
+		gretl_errmsg_set("JSON array: can't mix types");
 		err = E_DATA;
 	    } else {
 		err = jb_do_value(reader, jb, a, i);
@@ -458,7 +473,7 @@ static int jb_do_array (JsonReader *reader, jbundle *jb)
 	    }
 	} else if (json_reader_is_object(reader)) {
 	    if (ns > 0) {
-		fprintf(stderr, "element %d: can't mix types in array!\n", i);
+		gretl_errmsg_set("JSON array: can't mix types");
 		err = E_DATA;
 	    } else {
 		/* switch to bundles if we haven't already got
@@ -472,11 +487,10 @@ static int jb_do_array (JsonReader *reader, jbundle *jb)
 	    }
 	} else if (json_reader_is_array(reader)) {
 	    /* the gretl_array type cannot be nested */
-	    fprintf(stderr, "element %d: nesting of arrays is not handled!\n", i);
+	    gretl_errmsg_set("JSON array: arrays cannot be nested");
 	    err = E_DATA;
 	} else {
-	    /* ?? */
-	    fprintf(stderr, "array: element %d not handled!\n", i);
+	    gretl_errmsg_set("JSON array: unrecognized type");
 	    err = E_DATA;
 	}
 	json_reader_end_element(reader);
@@ -492,7 +506,7 @@ static int jb_do_array (JsonReader *reader, jbundle *jb)
     return err;
 }
 
-/* process a JSON value node: we convert all values to strings */
+/* Process a JSON value node: we convert all values to strings */
 
 static int jb_do_value (JsonReader *reader, jbundle *jb,
 			gretl_array *a, int i)
@@ -562,6 +576,7 @@ gretl_bundle *json_get_bundle (const char *data,
 			       gretl_array *targets,
 			       int *err)
 {
+    gretl_bundle *ret = NULL;
     jbundle jb = {0};
     GError *gerr = NULL;
     JsonParser *parser;
@@ -612,5 +627,12 @@ gretl_bundle *json_get_bundle (const char *data,
     g_object_unref(reader);
     g_object_unref(parser);
 
-    return jb.b0;
+    if (*err) {
+	/* clean up on failure */
+	gretl_bundle_destroy(jb.b0);
+    } else {
+	ret = jb.b0;
+    }
+
+    return ret;
 }
