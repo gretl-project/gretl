@@ -3540,8 +3540,11 @@ static int post_process_sprintf_command (CMD *cmd,
     *line = '\0';
 
     if (cmd->vstart != NULL) {
-	sprintf(line, "%s=sprintf(\"%s\",%s)", cmd->param,
-		cmd->parm2, cmd->vstart);
+	gchar *tmp = g_strdup_printf("%s=sprintf(\"%s\",%s)", cmd->param,
+				     cmd->parm2, cmd->vstart);
+
+	strcpy(line, tmp);
+	g_free(tmp);
     } else {
 	sprintf(line, "%s=sprintf(\"%s\")", cmd->param, cmd->parm2);
     }

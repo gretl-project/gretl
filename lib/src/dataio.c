@@ -2295,7 +2295,7 @@ static void maybe_fix_calendar_dates (DATASET *dset)
 int merge_or_replace_data (DATASET *dset0, DATASET **pdset1,
 			   gretlopt opt, PRN *prn)
 {
-    int preserve = (opt & OPT_P);
+    int preserve = 0; /* FIXME (opt & OPT_P) */
     int err = 0;
 
     if (dset0->Z != NULL) {
