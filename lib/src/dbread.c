@@ -3168,8 +3168,13 @@ int lib_spread_db_data (double **dbZ, SERIESINFO *sinfo,
     } else if (dbset != NULL) {
 	err = compact_data_set(dbset, dset->pd, COMPACT_SPREAD, 0, 0);
 	if (!err) {
-	    /* we add OPT_K ("keep") to prevent destruction of @dbset */
-	    err = merge_or_replace_data(dset, &dbset, OPT_X | OPT_U | OPT_K, prn);
+	    /* we add OPT_K ("keep") to prevent destruction of @dbset:
+	       we're bypassing get_merge_opts(), so we'd better know
+	       what we're doing!
+	    */
+	    gretlopt merge_opt = (OPT_X | OPT_U | OPT_K);
+		
+	    err = merge_or_replace_data(dset, &dbset, merge_opt, prn);
 	}
     } else {
 	DATASET *tmpset = make_import_tmpset(dset, sinfo, dbZ, &err);
