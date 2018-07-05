@@ -337,62 +337,73 @@ char *json_get_string (const char *data, const char *path,
 
 struct jbundle_ {
     gretl_bundle *b0;
-    gretl_bundle *bcurr;
+    gretl_bundle *curr;
     char **targets;
     int n_targets;
 };
 
+/* The idea with "targets" is that we could ignore some stuff
+   if it's not wanted, and just add the target elements.
+   But this is not implemented at all right now.
+*/
+
 typedef struct jbundle_ jbundle;
 
-static int do_object (JsonReader *reader, jbundle *jb);
-static int do_array (JsonReader *reader, jbundle *jb);
-static int do_value (JsonReader *reader, jbundle *jb);
+static int jb_do_object (JsonReader *reader, jbundle *jb);
+static int jb_do_array (JsonReader *reader, jbundle *jb);
+static int jb_do_value (JsonReader *reader, jbundle *jb,
+			gretl_array *a, int i);
 
-static int jb_add_bundle (jbundle *jb, const char *name)
+static int jb_add_bundle (jbundle *jb, const char *name,
+			  gretl_array *a, int i)
 {
     gretl_bundle *b = gretl_bundle_new();
     int err;
 
     if (b == NULL) {
 	err = E_ALLOC;
+    } else if (a != NULL) {
+	err = gretl_array_set_bundle(a, i, b, 0);
     } else {
-	err = gretl_bundle_donate_data(jb->bcurr, name, b,
+	err = gretl_bundle_donate_data(jb->curr, name, b,
 				       GRETL_TYPE_BUNDLE, 0);
-	if (!err) {
-	    jb->bcurr = b;
-	}
+    }
+
+    if (!err) {
+	jb->curr = b;
     }
 
     return err;
 }
 
-static int do_object (JsonReader *reader, jbundle *jb)
+static int jb_do_object (JsonReader *reader, jbundle *jb)
 {
-    gretl_bundle *btop = jb->bcurr;
-    const gchar *name;
+    gretl_bundle *btop = jb->curr;
     gchar **S = NULL;
     int i, n, err = 0;
 
     n = json_reader_count_members(reader);
-    name = json_reader_get_member_name(reader);
+
 #if JB_DEBUG
+    const gchar *name = json_reader_get_member_name(reader);
     fprintf(stderr, "got object, %d members, name '%s'\n", n,
 	    name == NULL ? "NULL" : name);
 #endif
+
     S = json_reader_list_members(reader);
 
     for (i=0; i<n && !err; i++) {
 	json_reader_read_member(reader, S[i]);
 	if (json_reader_is_object(reader)) {
-	    err = jb_add_bundle(jb, S[i]);
+	    err = jb_add_bundle(jb, S[i], NULL, 0);
 	    if (!err) {
-		err = do_object(reader, jb);
+		err = jb_do_object(reader, jb);
 	    }
-	    jb->bcurr = btop;
+	    jb->curr = btop;
 	} else if (json_reader_is_array(reader)) {
-	    err = do_array(reader, jb);
+	    err = jb_do_array(reader, jb);
 	} else if (json_reader_is_value(reader)) {
-	    err = do_value(reader, jb);
+	    err = jb_do_value(reader, jb, NULL, 0);
 	}
 	json_reader_end_member(reader);
     }
@@ -402,32 +413,95 @@ static int do_object (JsonReader *reader, jbundle *jb)
     return err;
 }
 
-static int do_array (JsonReader *reader, jbundle *jb)
+static int jb_transmute_array (gretl_array **pa, int n)
 {
-    const gchar *name;
-    int i, n = json_reader_count_elements(reader);
-    gboolean ok;
+    int err;
 
+    gretl_array_destroy(*pa);
+    *pa = gretl_array_new(GRETL_TYPE_BUNDLES, n, &err);
+    return err;
+}
+
+/* process a JSON array node: we'll construct either an
+   array of strings or an array of bundles */
+
+static int jb_do_array (JsonReader *reader, jbundle *jb)
+{
+    gretl_bundle *btop = jb->curr;
+    const gchar *name;
+    gretl_array *a;
+    gboolean ok;
+    int ns = 0, nb = 0;
+    int i, n, err = 0;
+
+    n = json_reader_count_elements(reader);
     name = json_reader_get_member_name(reader);
+
 #if JB_DEBUG
     fprintf(stderr, "got array, %d elements, name %s\n", n,
 	   name == NULL ? "NULL" : name);
 #endif
-    for (i=0; i<n; i++) {
-	fprintf(stderr, "  element %d: ", i);
+
+    /* we'll assume strings by default */
+    a = gretl_array_new(GRETL_TYPE_STRINGS, n, &err);
+
+    for (i=0; i<n && !err; i++) {
 	ok = json_reader_read_element(reader, i);
-	fprintf(stderr, "%s\n", ok ? "OK" : "not OK");
+	if (ok && json_reader_is_value(reader)) {
+	    if (nb > 0) {
+		/* we already switched to bundles! */
+		fprintf(stderr, "element %d: can't mix types in array!\n", i);
+		err = E_DATA;
+	    } else {
+		err = jb_do_value(reader, jb, a, i);
+		ns++;
+	    }
+	} else if (json_reader_is_object(reader)) {
+	    if (ns > 0) {
+		fprintf(stderr, "element %d: can't mix types in array!\n", i);
+		err = E_DATA;
+	    } else {
+		/* switch to bundles if we haven't already got
+		   any string elements
+		*/
+		err = jb_transmute_array(&a, n);
+		jb_add_bundle(jb, NULL, a, i);
+		err = jb_do_object(reader, jb);
+		jb->curr = btop;
+		nb++;
+	    }
+	} else if (json_reader_is_array(reader)) {
+	    /* the gretl_array type cannot be nested */
+	    fprintf(stderr, "element %d: nesting of arrays is not handled!\n", i);
+	    err = E_DATA;
+	} else {
+	    /* ?? */
+	    fprintf(stderr, "array: element %d not handled!\n", i);
+	    err = E_DATA;
+	}
 	json_reader_end_element(reader);
     }
 
-    return 0;
+    if (!err) {
+	err = gretl_bundle_donate_data(jb->curr, name, a,
+				       GRETL_TYPE_ARRAY, 0);
+    } else if (a != NULL) {
+	gretl_array_destroy(a);
+    }
+
+    return err;
 }
 
-static int do_value (JsonReader *reader, jbundle *jb)
+/* process a JSON value node: we convert all values to strings */
+
+static int jb_do_value (JsonReader *reader, jbundle *jb,
+			gretl_array *a, int i)
 {
     JsonNode *node = json_reader_get_value(reader);
     const gchar *name, *typename;
+    char tmp[32];
     GType type;
+    int err = 0;
 
     name = json_reader_get_member_name(reader);
     type = json_node_get_value_type(node);
@@ -436,21 +510,40 @@ static int do_value (JsonReader *reader, jbundle *jb)
 #if JB_DEBUG
     fprintf(stderr, "  got value (%s), type %s\n", name, typename);
 #endif
+
     if (type == G_TYPE_INT64) {
 	int k = (int) json_reader_get_int_value(reader);
 
-	gretl_bundle_set_int(jb->bcurr, name, k);
+	if (a != NULL) {
+	    sprintf(tmp, "%d", k);
+	    gretl_array_set_string(a, i, tmp, 1);
+	} else {
+	    gretl_bundle_set_int(jb->curr, name, k);
+	}
     } else if (type == G_TYPE_DOUBLE) {
-	gdouble x = json_reader_get_int_value(reader);
+	gdouble x = json_reader_get_double_value(reader);
 
-	gretl_bundle_set_scalar(jb->bcurr, name, x);
+	if (a != NULL) {
+	    sprintf(tmp, "%.15g", x);
+	    gretl_array_set_string(a, i, tmp, 1);
+	} else {
+	    gretl_bundle_set_scalar(jb->curr, name, x);
+	}
     } else if (type == G_TYPE_STRING) {
 	const gchar *s = json_reader_get_string_value(reader);
 
-	gretl_bundle_set_string(jb->bcurr, name, s);
+	if (a != NULL) {
+	    gretl_array_set_string(a, i, (char *) s, 1);
+	} else {
+	    gretl_bundle_set_string(jb->curr, name, s);
+	}
+    } else {
+	gretl_errmsg_sprintf("Unhandled JSON value of type %s\n",
+			     typename);
+	err = E_DATA;
     }
 
-    return 0;
+    return err;
 }
 
 /* end code subserving json_get_bundle() */
@@ -498,17 +591,18 @@ gretl_bundle *json_get_bundle (const char *data,
     }
 
     if (targets != NULL) {
+	/* doesn't do anything yet! */
 	jb.targets = gretl_array_get_strings(targets, &jb.n_targets);
 	fprintf(stderr, "json_get_bundle: found %d targets\n",
 		jb.n_targets);
     }
 
     jb.b0 = gretl_bundle_new();
-    jb.bcurr = jb.b0;
+    jb.curr = jb.b0;
 
     reader = json_reader_new(json_parser_get_root(parser));
     if (json_reader_is_object(reader)) {
-	*err = do_object(reader, &jb);
+	*err = jb_do_object(reader, &jb);
     }
 
     g_object_unref(reader);
