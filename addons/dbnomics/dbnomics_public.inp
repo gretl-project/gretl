@@ -120,6 +120,10 @@ function bundle dbnomics_get_series (const string datacode, bool verbose[0],
         return ret
     endif
 
+    if exists(from_json)
+	from_json = json
+    endif
+
     strings S = strsplit(datacode,, "/")
     ret.provider = S[1]
     ret.dataset = S[2]
