@@ -101,6 +101,8 @@ int is_gzipped (const char *fname);
 
 int gretl_is_pkzip_file (const char *fname);
 
+gretlopt get_merge_opts (gretlopt opt);
+
 int merge_or_replace_data (DATASET *dset0, DATASET **pdset1,
 			   gretlopt opt, PRN *prn);
 

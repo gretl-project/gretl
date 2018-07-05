@@ -1859,7 +1859,7 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 	}
     }
 
-    err = merge_or_replace_data(dset, &newset, opt, prn);
+    err = merge_or_replace_data(dset, &newset, get_merge_opts(opt), prn);
 
     if (!err && !merge) {
 	dataset_add_import_info(dset, fname, GRETL_XLS);

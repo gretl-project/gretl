@@ -621,7 +621,7 @@ static int finalize_gnumeric_import (DATASET *dset,
 
     if (!err) {
 	err = merge_or_replace_data(dset, &sheet->dset,
-				    opt, prn);
+				    get_merge_opts(opt), prn);
     }
 
     if (!err && !merge) {

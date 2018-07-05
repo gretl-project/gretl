@@ -3152,7 +3152,8 @@ int transcribe_db_data (DATASET *dset, int targv,
 
    There are two calling modes: (1) @dbZ and @sinfo are
    given and @dbset is NULL, or @dbset is given and both
-   @dbZ and @sinfo are NULL. These cannot be mixed!
+   @dbZ and @sinfo are NULL. These cannot be mixed! The
+   @dbset cases comes only from GUI dbnomics import.
 */
 
 int lib_spread_db_data (double **dbZ, SERIESINFO *sinfo,
@@ -3167,7 +3168,8 @@ int lib_spread_db_data (double **dbZ, SERIESINFO *sinfo,
     } else if (dbset != NULL) {
 	err = compact_data_set(dbset, dset->pd, COMPACT_SPREAD, 0, 0);
 	if (!err) {
-	    err = merge_or_replace_data(dset, &dbset, OPT_X | OPT_U | OPT_P, prn);
+	    /* we add OPT_K ("keep") to prevent destruction of @dbset */
+	    err = merge_or_replace_data(dset, &dbset, OPT_X | OPT_U | OPT_K, prn);
 	}
     } else {
 	DATASET *tmpset = make_import_tmpset(dset, sinfo, dbZ, &err);

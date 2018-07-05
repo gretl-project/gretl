@@ -3943,7 +3943,8 @@ static int real_read_gdt (const char *fname, const char *srcname,
 	    srcname = fname;
 	}
 	data_read_message(srcname, tmpset, prn);
-	err = merge_or_replace_data(dset, &tmpset, opt, prn);
+	err = merge_or_replace_data(dset, &tmpset,
+				    get_merge_opts(opt), prn);
     }
 
  bailout:

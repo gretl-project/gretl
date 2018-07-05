@@ -3794,7 +3794,7 @@ static int real_import_csv (const char *fname,
 	int newdata = (dset->Z == NULL);
 
 	/* not doing a special "join" operation */
-	err = merge_or_replace_data(dset, &c->dset, opt, prn);
+	err = merge_or_replace_data(dset, &c->dset, get_merge_opts(opt), prn);
 
 	if (!err && newdata && c->descrip != NULL) {
 	    dset->descrip = c->descrip;

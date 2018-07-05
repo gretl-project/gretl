@@ -1519,7 +1519,8 @@ static int finalize_xlsx_import (DATASET *dset,
     }
 
     if (!err) {
-	err = merge_or_replace_data(dset, &xinfo->dset, opt, prn);
+	err = merge_or_replace_data(dset, &xinfo->dset,
+				    get_merge_imports(opt), prn);
     } 
 
     if (!err && !merge) {

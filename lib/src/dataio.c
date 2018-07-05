@@ -2274,6 +2274,37 @@ static void maybe_fix_calendar_dates (DATASET *dset)
 }
 
 /**
+ * get_merge_opts:
+ * @opt: gretl options flags.
+ * 
+ * Returns: just those components of @opt (if any) that
+ * can be passed to merge_or_replace_data(); may be 
+ * useful when calling that function in the context
+ * of a command only some of whose options should be
+ * forwarded.
+ */
+
+gretlopt get_merge_opts (gretlopt opt)
+{
+    gretlopt merge_opt = OPT_NONE;
+
+    if (opt & OPT_T) {
+	/* panel, common time-series */
+	merge_opt |= OPT_T;
+    }
+    if (opt & OPT_U) {
+	/* update overlapping observations */
+	merge_opt |= OPT_U;
+    }
+    if (opt & OPT_X) {
+	/* fixed sample range */
+	merge_opt |= OPT_X;
+    }
+
+    return merge_opt;
+}
+
+/**
  * merge_or_replace_data:
  * @dset0: original dataset struct.
  * @pdset1: new dataset struct.
@@ -2295,7 +2326,7 @@ static void maybe_fix_calendar_dates (DATASET *dset)
 int merge_or_replace_data (DATASET *dset0, DATASET **pdset1,
 			   gretlopt opt, PRN *prn)
 {
-    int preserve = 0; /* FIXME (opt & OPT_P) */
+    int keep = (opt & OPT_K);
     int err = 0;
 
     if (dset0->Z != NULL) {
@@ -2304,6 +2335,7 @@ int merge_or_replace_data (DATASET *dset0, DATASET **pdset1,
 	gretlopt merge_opt = OPT_NONE;
 
 	if (opt & OPT_T) {
+	    /* panel, common time-series */
 	    merge_opt |= OPT_T;
 	}
 	if (opt & OPT_U) {
@@ -2315,7 +2347,7 @@ int merge_or_replace_data (DATASET *dset0, DATASET **pdset1,
 	    merge_opt |= OPT_X;
 	}
 	err = merge_data(dset0, *pdset1, merge_opt, prn);
-	if (!preserve) {
+	if (!keep) {
 	    destroy_dataset(*pdset1);
 	}
     } else {
@@ -2327,7 +2359,7 @@ int merge_or_replace_data (DATASET *dset0, DATASET **pdset1,
 	}
     }
 
-    if (!preserve) {
+    if (!keep) {
 	*pdset1 = NULL;
     }
 
