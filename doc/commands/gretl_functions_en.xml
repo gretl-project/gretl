@@ -4944,6 +4944,45 @@
       </description>
     </function>
 
+    <function name="jsongetb" section="data-utils" output="bundle">
+      <fnargs>
+	<fnarg type="string">buf</fnarg>
+	<fnarg type="strings" optional="true">excludes</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  The argument <argname>buf</argname> should be a JSON buffer,
+	  as may be retrieved from a suitable website via the <fncref
+	  targ="curl"/> function. The <argname>excludes</argname>
+	  argument, if supplied, should be an array of strings holding
+	  the names of JSON objects or arrays to exclude.
+	</para>
+	<para>
+	  The return value is a bundle whose stucture basically
+	  mirrors that of the input: JSON objects become gretl bundles
+	  and JSON arrays become gretl arrays, each of which holds
+	  either strings or bundles. JSON <quote>value</quote> nodes
+	  become either members of bundles or elements of arrays; in
+	  the latter case numerical values are converted to strings
+	  using <lit>sprintf</lit>.  Please note that since gretl
+	  arrays cannot be nested, the input accepted by this function
+	  is somewhat more restrictive than the JSON specification,
+	  which permits nesting of arrays.
+	</para>
+	<para>
+	  The optional <argname>excludes</argname> argument should be
+	  used with care: the effect is to exclude not only objects
+	  and arrays with matching names but also any children they
+	  may have.
+	</para>
+	<para>
+	  See also the string-oriented <fncref targ="jsonget"/>;
+	  depending on your purpose one of these functions may be more
+	  helpful than the other.
+	</para>
+      </description>
+    </function>
+
     <function name="juldate" section="calendar" output="seebelow">
       <fnargs>
 	<fnarg type="scalar-or-series">ed</fnarg>

@@ -338,14 +338,9 @@ char *json_get_string (const char *data, const char *path,
 struct jbundle_ {
     gretl_bundle *b0;
     gretl_bundle *curr;
-    char **targets;
-    int n_targets;
+    char **excludes;
+    int n_exclude;
 };
-
-/* The idea with "targets" is that we could ignore some stuff
-   if it's not wanted, and just add the target elements.
-   But this is not implemented at all right now.
-*/
 
 typedef struct jbundle_ jbundle;
 
@@ -353,6 +348,21 @@ static int jb_do_object (JsonReader *reader, jbundle *jb);
 static int jb_do_array (JsonReader *reader, jbundle *jb);
 static int jb_do_value (JsonReader *reader, jbundle *jb,
 			gretl_array *a, int i);
+
+static int is_excluded (jbundle *jb, const char *name)
+{
+    if (jb->n_exclude > 0) {
+	int i;
+	
+	for (i=0; i<jb->n_exclude; i++) {
+	    if (!strcmp(name, jb->excludes[i])) {
+		return 1;
+	    }
+	}
+    }
+
+    return 0;
+}
 
 /* Add a new bundle to the tree -- either as a named
    member of the bundle jb->curr, or, if @a is non-NULL,
@@ -386,13 +396,14 @@ static int jb_add_bundle (jbundle *jb, const char *name,
 static int jb_do_object (JsonReader *reader, jbundle *jb)
 {
     gretl_bundle *btop = jb->curr;
+    const gchar *name;
     gchar **S = NULL;
     int i, n, err = 0;
 
     n = json_reader_count_members(reader);
 
 #if JB_DEBUG
-    const gchar *name = json_reader_get_member_name(reader);
+    name = json_reader_get_member_name(reader);
     fprintf(stderr, "got object, %d members, name '%s'\n", n,
 	    name == NULL ? "NULL" : name);
 #endif
@@ -402,13 +413,19 @@ static int jb_do_object (JsonReader *reader, jbundle *jb)
     for (i=0; i<n && !err; i++) {
 	json_reader_read_member(reader, S[i]);
 	if (json_reader_is_object(reader)) {
-	    err = jb_add_bundle(jb, S[i], NULL, 0);
-	    if (!err) {
-		err = jb_do_object(reader, jb);
+	    name = json_reader_get_member_name(reader);
+	    if (name == NULL || !is_excluded(jb, name)) {
+		err = jb_add_bundle(jb, S[i], NULL, 0);
+		if (!err) {
+		    err = jb_do_object(reader, jb);
+		}
+		jb->curr = btop;
 	    }
-	    jb->curr = btop;
 	} else if (json_reader_is_array(reader)) {
-	    err = jb_do_array(reader, jb);
+	    name = json_reader_get_member_name(reader);
+	    if (name == NULL || !is_excluded(jb, name)) {	    
+		err = jb_do_array(reader, jb);
+	    }
 	} else if (json_reader_is_value(reader)) {
 	    err = jb_do_value(reader, jb, NULL, 0);
 	}
@@ -446,6 +463,9 @@ static int jb_do_array (JsonReader *reader, jbundle *jb)
 
     n = json_reader_count_elements(reader);
     name = json_reader_get_member_name(reader);
+    if (name != NULL && is_excluded(jb, name)) {
+	return 0;
+    }    
 
 #if JB_DEBUG
     fprintf(stderr, "got array, %d elements, name %s\n", n,
@@ -573,7 +593,7 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
 */
 
 gretl_bundle *json_get_bundle (const char *data,
-			       gretl_array *targets,
+			       gretl_array *excludes,
 			       int *err)
 {
     gretl_bundle *ret = NULL;
@@ -605,11 +625,9 @@ gretl_bundle *json_get_bundle (const char *data,
 	return NULL;
     }
 
-    if (targets != NULL) {
+    if (excludes != NULL) {
 	/* doesn't do anything yet! */
-	jb.targets = gretl_array_get_strings(targets, &jb.n_targets);
-	fprintf(stderr, "json_get_bundle: found %d targets\n",
-		jb.n_targets);
+	jb.excludes = gretl_array_get_strings(excludes, &jb.n_exclude);
     }
 
     jb.b0 = gretl_bundle_new();
