@@ -1091,7 +1091,7 @@ char *gretl_list_get_names (const int *list, const DATASET *dset,
 	    strncat(buf, dset->varname[vi], strlen(dset->varname[vi]));
 	}
 	if (i < list[0]) {
-	    strncat(buf, ",", 1);
+	    strcat(buf, ",");
 	}
     }    
 	

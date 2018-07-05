@@ -6201,7 +6201,7 @@ int gretl_model_set_param_name (MODEL *pmod, int i, const char *name)
 	pmod->params[i][0] = '\0';
 	if (strlen(name) >= PNAMELEN) {
 	    strncat(pmod->params[i], name, PNAMELEN - 2);
-	    strncat(pmod->params[i], "~", 1);
+	    strcat(pmod->params[i], "~");
 	} else {
 	    strncat(pmod->params[i], name, PNAMELEN - 1);
 	}

@@ -4138,7 +4138,7 @@ static void plot_colname (char *s, const char **colnames, int j)
 	*s = '\0';
 	if (strlen(name) >= 16) {
 	    strncat(s, name, 14);
-	    strncat(s, "~", 1);
+	    strcat(s, "~");
 	} else {
 	    strncat(s, name, 15);
 	}

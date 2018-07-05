@@ -1451,7 +1451,7 @@ static void make_numstr (char *s, double x)
 	    p++;
 	}
 	if (n > 0 && n < 5) {
-	    strncat(s, "0", 1);
+	    strcat(s, "0");
 	}
     }
 }
@@ -1739,7 +1739,7 @@ static void revise_integer_format (char *ifmt)
 
     if (p != NULL) {
 	*p = '\0';
-	strncat(p, "d", 1);
+	strcat(p, "d");
     } else {
 	ifmt[strlen(ifmt)-1] = 'd';
     }

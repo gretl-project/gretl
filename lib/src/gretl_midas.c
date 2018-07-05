@@ -2535,7 +2535,7 @@ static void append_pname (char *s, const char *pname)
 	char c = s[strlen(s) - 1];
 
 	if (c != ' ' && c != '"') {
-	    strncat(s, " ", 1);
+	    strcat(s, " ");
 	}
     }
 
