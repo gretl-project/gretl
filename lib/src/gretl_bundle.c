@@ -1641,10 +1641,9 @@ static void print_bundle_tree (gretl_bundle *b, int level, PRN *prn)
     char **keys;
     int i, n = 0;
 
-    keys = gretl_array_get_strings(K, &n);
-
     gretl_bundle_print(b, level == 0 ? OPT_NONE : OPT_C, prn);
 
+    keys = gretl_array_get_strings(K, &n);
     for (i=0; i<n; i++) {
 	child = gretl_bundle_get_data(b, keys[i], &type, NULL, NULL);
 	if (type == GRETL_TYPE_BUNDLE) {
@@ -1652,6 +1651,8 @@ static void print_bundle_tree (gretl_bundle *b, int level, PRN *prn)
 	    print_bundle_tree(child, level + 1, prn);
 	}
     }
+
+    gretl_array_destroy(K);
 }
 
 /**
