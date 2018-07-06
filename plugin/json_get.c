@@ -29,14 +29,120 @@
 			 t == G_TYPE_DOUBLE || \
 			 t == G_TYPE_INT64)
 
-static int non_empty_array (JsonArray *array)
+#define non_empty_array(a) (a != NULL && json_array_get_length(a) > 0)
+#define null_node(n) (n == NULL || json_node_is_null(n))
+
+/* We don't want to leak memory allocated for @node, but it
+   should not be freed directory if it's the root node of
+   @parser.
+*/
+
+static void json_deallocate (JsonNode *node, JsonParser *parser)
 {
-    return array != NULL && json_array_get_length(array) > 0;
+    if (node != NULL) {
+	if (parser != NULL && node == json_parser_get_root(parser)) {
+	    ; /* don't touch it! */
+	} else {
+	    json_node_free(node);
+	}
+    }
+    if (parser != NULL) {
+	g_object_unref(parser);
+    }
 }
 
-static int null_node (JsonNode *node)
+/* common starting point for our json_get* functions */
+
+static JsonNode *get_root_for_path (JsonNode *node,
+				    const char *pathstr,
+				    int allow_empty,
+				    int *err)
 {
-    return node == NULL || json_node_is_null(node);
+    JsonPath *path = json_path_new();
+    GError *gerr = NULL;
+    JsonNode *match = NULL;
+
+    if (json_path_compile(path, pathstr, &gerr)) {
+	/* compilation went OK */
+	match = json_path_match(path, node);
+	if (null_node(match)) {
+	    if (match != NULL) {
+		json_node_free(match);
+		match = NULL;
+	    }
+	    if (!allow_empty) {
+		*err = E_DATA;
+	    }
+	}
+    } else {
+	/* compilation failed */
+	if (gerr != NULL) {
+	    gretl_errmsg_sprintf("jsonget: failed to compile JsonPath: %s",
+				 gerr->message);
+	    g_error_free(gerr);
+	} else {
+	    gretl_errmsg_set("jsonget: failed to compile JsonPath");
+	}
+	*err = E_DATA;
+    }
+
+    g_object_unref(path);
+
+    return match;
+}
+
+static JsonNode *get_root_for_data (const char *data,
+				    const char *path,
+				    JsonParser **pjp,
+				    int allow_empty,
+				    int *err)
+{
+    GError *gerr = NULL;
+    JsonParser *parser;
+    JsonNode *root = NULL;
+    JsonNode *ret = NULL;
+
+    parser = json_parser_new();
+    if (parser == NULL) {
+	gretl_errmsg_set("json_get_bundle: couldn't allocate parser");
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    json_parser_load_from_data(parser, data, -1, &gerr);
+
+    if (gerr != NULL) {
+	gretl_errmsg_sprintf("Couldn't parse JSON input: %s",
+			     gerr->message);
+	g_error_free(gerr);
+	g_object_unref(parser);
+	*err = E_DATA;
+    } else {
+	/* check status of @root */
+	root = json_parser_get_root(parser);
+	if (root == NULL || json_node_is_null(root)) {
+	    gretl_errmsg_set("jsonget: got null root node");
+	    g_object_unref(parser);
+	    *err = E_DATA;
+	}
+    }
+
+    if (!*err) {
+	if (path != NULL) {
+	    ret = get_root_for_path(root, path, allow_empty, err);
+	    /* clean-up on fail? */
+	} else {
+	    /* note: this node belong to @parser */
+	    ret = root;
+	}
+    }
+
+    if (pjp != NULL) {
+	/* pass back a pointer to enable correct clean-up */
+	*pjp = parser;
+    }
+
+    return ret;
 }
 
 static int output_json_node_value (JsonNode *node,
@@ -135,48 +241,16 @@ static int excavate_json_object (JsonNode *node,
     return err;
 }
 
-static int real_json_get (JsonParser *parser, const char *pathstr,
-			  int *n_objects, int allow_fail,
+static int real_json_get (JsonNode *match,
+			  int *n_objects,
+			  int allow_empty,
 			  PRN *prn)
 {
-    GError *gerr = NULL;
-    JsonNode *match, *node;
-    JsonPath *path;
+    JsonNode *node;
     GType ntype;
     int err = 0;
 
     *n_objects = 0;
-
-    node = json_parser_get_root(parser);
-
-    if (node == NULL || json_node_is_null(node)) {
-	gretl_errmsg_set("jsonget: got null root node");
-	return E_DATA;
-    }
-
-    path = json_path_new();
-
-    if (!json_path_compile(path, pathstr, &gerr)) {
-	if (gerr != NULL) {
-	    gretl_errmsg_sprintf("jsonget: failed to compile JsonPath: %s",
-				 gerr->message);
-	    g_error_free(gerr);
-	} else {
-	    gretl_errmsg_set("jsonget: failed to compile JsonPath");
-	}
-	g_object_unref(path);
-	return E_DATA;
-    }
-
-    match = json_path_match(path, node);
-
-    if (null_node(match)) {
-	if (match != NULL) {
-	    json_node_free(match);
-	}
-	g_object_unref(path);
-	return allow_fail ? 0 : E_DATA;
-    }
 
     /* in case we get floating-point output */
     gretl_push_c_numeric_locale();
@@ -197,7 +271,7 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
 	if (null_node(node)) {
 	    gretl_errmsg_set("jsonget: failed to match JsonPath");
 	    ntype = 0;
-	    err = allow_fail ? 0 : E_DATA;
+	    err = allow_empty ? 0 : E_DATA;
 	    goto bailout;
 	} else {
 	    ntype = json_node_get_value_type(node);
@@ -250,9 +324,6 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
 
     gretl_pop_c_numeric_locale();
 
-    json_node_free(match);
-    g_object_unref(path);
-
     return err;
 }
 
@@ -273,8 +344,9 @@ static int real_json_get (JsonParser *parser, const char *pathstr,
 char *json_get_string (const char *data, const char *path,
 		       int *n_objects, int *err)
 {
-    GError *gerr = NULL;
-    JsonParser *parser;
+    JsonNode *root;
+    JsonParser *parser = NULL;
+    int allow_empty;
     char *ret = NULL;
     int n = 0;
 
@@ -286,29 +358,16 @@ char *json_get_string (const char *data, const char *path,
 	return NULL;
     }
 
-    parser = json_parser_new();
-    if (parser == NULL) {
-	gretl_errmsg_set("json_parser_new returned NULL!\n");
-	*err = 1;
-	return NULL;
-    }
+    allow_empty = n_objects != NULL;
+    root = get_root_for_data(data, path, &parser, allow_empty, err);
 
-    json_parser_load_from_data(parser, data, -1, &gerr);
-
-    if (gerr != NULL) {
-	gretl_errmsg_sprintf("Couldn't parse JSON input: %s",
-			     gerr->message);
-	g_error_free(gerr);
-	*err = E_DATA;
-    } else {
+    if (!*err) {
 	PRN *prn = gretl_print_new(GRETL_PRINT_BUFFER, err);
 
 	if (!*err) {
-	    int allow_fail = n_objects != NULL;
-
-	    *err = real_json_get(parser, path, &n, allow_fail, prn);
+	    *err = real_json_get(root, &n, allow_empty, prn);
 	    if (!*err) {
-		if (n == 0 && allow_fail) {
+		if (n == 0 && allow_empty) {
 		    ret = gretl_strdup("");
 		} else {
 		    ret = gretl_print_steal_buffer(prn);
@@ -318,6 +377,8 @@ char *json_get_string (const char *data, const char *path,
 	}
     }
 
+    json_deallocate(root, parser);
+
     if (*err) {
 	fprintf(stderr, "json_get: err = %d\n", *err);
     }
@@ -325,8 +386,6 @@ char *json_get_string (const char *data, const char *path,
     if (n_objects != NULL) {
 	*n_objects = n;
     }
-
-    g_object_unref(parser);
 
     return ret;
 }
@@ -353,7 +412,7 @@ static int is_excluded (jbundle *jb, const char *name)
 {
     if (jb->n_exclude > 0) {
 	int i;
-	
+
 	for (i=0; i<jb->n_exclude; i++) {
 	    if (!strcmp(name, jb->excludes[i])) {
 		return 1;
@@ -423,7 +482,7 @@ static int jb_do_object (JsonReader *reader, jbundle *jb)
 	    }
 	} else if (json_reader_is_array(reader)) {
 	    name = json_reader_get_member_name(reader);
-	    if (name == NULL || !is_excluded(jb, name)) {	    
+	    if (name == NULL || !is_excluded(jb, name)) {
 		err = jb_do_array(reader, jb);
 	    }
 	} else if (json_reader_is_value(reader)) {
@@ -465,7 +524,7 @@ static int jb_do_array (JsonReader *reader, jbundle *jb)
     name = json_reader_get_member_name(reader);
     if (name != NULL && is_excluded(jb, name)) {
 	return 0;
-    }    
+    }
 
 #if JB_DEBUG
     fprintf(stderr, "got array, %d elements, name %s\n", n,
@@ -599,8 +658,8 @@ gretl_bundle *json_get_bundle (const char *data,
 {
     gretl_bundle *ret = NULL;
     jbundle jb = {0};
-    GError *gerr = NULL;
-    JsonParser *parser;
+    JsonNode *root;
+    JsonParser *parser = NULL;
     JsonReader *reader;
 
     if (data == NULL) {
@@ -609,20 +668,8 @@ gretl_bundle *json_get_bundle (const char *data,
 	return NULL;
     }
 
-    parser = json_parser_new();
-    if (parser == NULL) {
-	gretl_errmsg_set("json_get_bundle: couldn't allocate parser");
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    json_parser_load_from_data(parser, data, -1, &gerr);
-
-    if (gerr != NULL) {
-	gretl_errmsg_sprintf("Couldn't parse JSON input: %s",
-			     gerr->message);
-	g_error_free(gerr);
-	*err = E_DATA;
+    root = get_root_for_data(data, NULL, &parser, 1, err);
+    if (*err) {
 	return NULL;
     }
 
@@ -635,7 +682,7 @@ gretl_bundle *json_get_bundle (const char *data,
 
     gretl_push_c_numeric_locale();
 
-    reader = json_reader_new(json_parser_get_root(parser));
+    reader = json_reader_new(root);
     if (json_reader_is_object(reader)) {
 	*err = jb_do_object(reader, &jb);
     }
@@ -643,10 +690,10 @@ gretl_bundle *json_get_bundle (const char *data,
     gretl_pop_c_numeric_locale();
 
     g_object_unref(reader);
-    g_object_unref(parser);
+    json_deallocate(root, parser);
 
     if (*err) {
-	/* clean up on failure */
+	/* trash bundle on failure */
 	gretl_bundle_destroy(jb.b0);
     } else {
 	ret = jb.b0;
