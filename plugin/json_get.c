@@ -448,7 +448,7 @@ static int jb_transmute_array (gretl_array **pa, int n)
 
 /* Process a JSON array node: we'll construct either an
    array of strings or an array of bundles. Since gretl
-   arrays cannot be nested we're somewat more restrictive
+   arrays cannot be nested we're somewhat more restrictive
    here than in the JSON spec.
 */
 
@@ -526,7 +526,8 @@ static int jb_do_array (JsonReader *reader, jbundle *jb)
     return err;
 }
 
-/* Process a JSON value node: we convert all values to strings */
+/* Process a JSON value node: we convert all array values
+   to strings */
 
 static int jb_do_value (JsonReader *reader, jbundle *jb,
 			gretl_array *a, int i)
@@ -626,7 +627,6 @@ gretl_bundle *json_get_bundle (const char *data,
     }
 
     if (excludes != NULL) {
-	/* doesn't do anything yet! */
 	jb.excludes = gretl_array_get_strings(excludes, &jb.n_exclude);
     }
 
