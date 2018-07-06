@@ -15407,7 +15407,6 @@ static NODE *eval (NODE *t, parser *p)
 	if (l->t == STR && (null_or_empty(r) || r->t == ARRAY)) {
 	    ret = two_string_func(l, r, NULL, t->t, p);
 	} else {
-	    fprintf(stderr, "HERE 1\n");
 	    p->err = E_TYPES;
 	}
 	break;
