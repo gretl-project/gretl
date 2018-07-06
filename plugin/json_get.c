@@ -526,7 +526,6 @@ static int jb_transmute_array (gretl_array **pa,
 
 static int jb_do_array (JsonReader *reader, jbundle *jb)
 {
-    gretl_bundle *btop = jb->curr;
     GretlType atype;
     const gchar *name;
     gretl_array *a;
@@ -538,8 +537,8 @@ static int jb_do_array (JsonReader *reader, jbundle *jb)
     name = json_reader_get_member_name(reader);
 
 #if JB_DEBUG
-    fprintf(stderr, "got array, %d elements, name %s\n", n,
-	   name == NULL ? "NULL" : name);
+    fprintf(stderr, "got array, %d element(s), name %s\n", n,
+	    name == NULL ? "NULL" : name);
 #endif
 
     /* Arrays can be packed only into bundles, and that
@@ -578,9 +577,11 @@ static int jb_do_array (JsonReader *reader, jbundle *jb)
 		err = jb_transmute_array(&a, &atype, n, ns);
 	    }
 	    if (!err) {
+		gretl_bundle *bsave = jb->curr;
+
 		jb_add_bundle(jb, NULL, a, i);
 		err = jb_do_object(reader, jb);
-		jb->curr = btop;
+		jb->curr = bsave;
 	    }
 	} else if (json_reader_is_array(reader)) {
 	    /* the gretl_array type cannot be nested */
@@ -624,9 +625,7 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
 #endif
 
     if (a == NULL && name == NULL) {
-	/* can't happen ? */
-	fprintf(stderr, "Problem: trying to add anonymous data to bundle!\n");
-	return E_DATA;
+	name = "anon";
     }
 
     if (type == G_TYPE_INT64) {
@@ -693,24 +692,13 @@ gretl_bundle *json_get_bundle (const char *data,
 	return NULL;
     }
 
-    if (excludes != NULL) {
-	if (0) {
-	    /* experiment!! */
-	    const char *s;
-
-	    s = gretl_array_get_element(excludes, 0, NULL, err);
-	    if (!*err) {
-		path = s;
-		fprintf(stderr, "*** using path = '%s'\n", path);
-	    }
-	} else {
-	    jb.excludes = gretl_array_get_strings(excludes, &jb.n_exclude);
-	}
-    }
-
     root = get_root_for_data(data, path, &parser, 1, err);
     if (*err) {
 	return NULL;
+    }
+
+    if (excludes != NULL) {
+	jb.excludes = gretl_array_get_strings(excludes, &jb.n_exclude);
     }
 
     jb.b0 = gretl_bundle_new();
@@ -719,10 +707,13 @@ gretl_bundle *json_get_bundle (const char *data,
     gretl_push_c_numeric_locale();
 
     reader = json_reader_new(root);
+
     if (json_reader_is_object(reader)) {
 	*err = jb_do_object(reader, &jb);
-    } else if (path != NULL && json_reader_is_array(reader)) {
+    } else if (json_reader_is_array(reader)) {
 	*err = jb_do_array(reader, &jb);
+    } else if (json_reader_is_value(reader)) {
+	*err = jb_do_value(reader, &jb, NULL, 0);
     }
 
     gretl_pop_c_numeric_locale();

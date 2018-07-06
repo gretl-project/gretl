@@ -4955,7 +4955,7 @@
 	  as may be retrieved from a suitable website via the <fncref
 	  targ="curl"/> function. The <argname>excludes</argname>
 	  argument, if supplied, should be an array of strings holding
-	  the names of JSON objects or arrays to exclude.
+	  the names of JSON objects to exclude.
 	</para>
 	<para>
 	  The return value is a bundle whose stucture basically
@@ -4971,9 +4971,8 @@
 	</para>
 	<para>
 	  The optional <argname>excludes</argname> argument should be
-	  used with care: the effect is to exclude not only objects
-	  and arrays with matching names but also any children they
-	  may have.
+	  used with care: in excluding objects with matching names
+	  one also excludes any children they may have.
 	</para>
 	<para>
 	  See also the string-oriented <fncref targ="jsonget"/>;
