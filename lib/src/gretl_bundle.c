@@ -1087,12 +1087,14 @@ static int real_bundle_set_data (gretl_bundle *b, const char *key,
 {
     int err, done = 0;
 
+#if 0 /* allow arbitrarily long keys? */
     err = strlen(key) >= VNAMELEN ? E_DATA : 0;
 
     if (err) {
 	gretl_errmsg_sprintf("'%s': invalid key string", key);
 	return err;
     }
+#endif
 
     if (b->type == BUNDLE_KALMAN) {
 	done = maybe_set_kalman_element(b->data, key,
