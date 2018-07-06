@@ -179,7 +179,8 @@ function string build_URL_mid(const bundle spec)
 
     ret = "dimensions={"
     strings filters = array()
-    strings dims = defarray("freq", "indicator", "geo")
+    # strings dims = defarray("freq", "indicator", "geo")
+    strings dims = getkeys(spec)
     n = 0
     loop i = 1..nelem(dims) --quiet
 	s = make_dimensions(spec, dims[i])
