@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -154,9 +154,9 @@ struct plugin_info plugins[] = {
     { P_XML_GET,         "xml_get",         NULL },
     { P_STATA_EXPORT,    "stata_export",    NULL },
     { P_SVM,             "svm",             NULL },
-};  
+};
 
-struct plugin_function_info plugin_functions[] = { 
+struct plugin_function_info plugin_functions[] = {
     /* data importers */
     { "xls_get_data",      P_XLS_IMPORT },
     { "xlsx_get_data",     P_XLSX_IMPORT },
@@ -223,7 +223,7 @@ struct plugin_function_info plugin_functions[] = {
     { "linearize_series", P_TRAMO_X12A },
 
     /* NIST test suite */
-    { "run_nist_tests", P_NISTCHECK },    
+    { "run_nist_tests", P_NISTCHECK },
 
     /* modeling */
     { "arma_model",        P_ARMA },
@@ -249,19 +249,19 @@ struct plugin_function_info plugin_functions[] = {
     { "kernel_density_matrix", P_KERNEL },
 
     /* Hurst exponent estimation */
-    { "hurst_exponent",    P_FRACTAL },
+    { "hurst_exponent", P_FRACTAL },
 
     /* Send email */
-    { "email_file",    P_MAILER },
+    { "email_file", P_MAILER },
 
     /* zip and unzip */
-    { "gretl_native_make_zipfile",       P_ZIPFILE},
-    { "gretl_native_unzip",              P_ZIPFILE},
-    { "gretl_native_zip_datafile",       P_ZIPFILE},
+    { "gretl_native_make_zipfile", P_ZIPFILE},
+    { "gretl_native_unzip",        P_ZIPFILE},
+    { "gretl_native_zip_datafile", P_ZIPFILE},
 
     /* Dynamic panel data estimation */
-    { "arbond_estimate",    P_ARBOND},
-    { "dpd_estimate",       P_ARBOND},
+    { "arbond_estimate", P_ARBOND},
+    { "dpd_estimate",    P_ARBOND},
 
     /* ODBC */
     { "gretl_odbc_check_dsn", P_ODBC},
@@ -313,7 +313,7 @@ static GHashTable *gretl_plugin_hash_init (void)
     */
 
     for (i=0; plugin_functions[i].name != NULL; i++) {
-	g_hash_table_insert(ht, (gpointer) plugin_functions[i].name, 
+	g_hash_table_insert(ht, (gpointer) plugin_functions[i].name,
 			    GINT_TO_POINTER(plugin_functions[i].index));
     }
 
@@ -324,7 +324,7 @@ static int plugin_index_lookup (const char *name)
 {
     static GHashTable *pht;
     gpointer ptr;
- 
+
     if (name == NULL) {
 	/* cleanup signal */
 	if (pht != NULL) {
@@ -338,7 +338,7 @@ static int plugin_index_lookup (const char *name)
 	/* construct hash table if not already done */
 	pht = gretl_plugin_hash_init();
     }
-    
+
     ptr = g_hash_table_lookup(pht, name);
 
     return ptr == NULL ? 0 : GPOINTER_TO_INT(ptr);
@@ -347,7 +347,7 @@ static int plugin_index_lookup (const char *name)
 /**
  * gretl_dlopen:
  * @path: full path to the shared object to be opened.
- * @now: on *nix, if non-zero we call dlopen with the flag 
+ * @now: on *nix, if non-zero we call dlopen with the flag
  * RTLD_NOW, else we use RTLD_LAZY.
  *
  * Cross-platform wrapper for opening a shared code object
@@ -445,7 +445,7 @@ static void *get_function_address (void *handle,
 	    fprintf(stderr, "%s\n", dlerror());
 	}
     }
-#endif   
+#endif
 
     return funp;
 }
@@ -516,7 +516,7 @@ static void *get_plugin_handle_by_name (const char *name)
 }
 
 void *get_packaged_C_function (const char *pkgname,
-			       const char *funcname, 
+			       const char *funcname,
 			       void **handle)
 {
     void *funp;
@@ -537,6 +537,13 @@ void *get_packaged_C_function (const char *pkgname,
     return funp;
 }
 
+/* For use with valgrind: if you want to trace memory
+   leaks into plugin code you have to keep the plugins
+   open at program termination. So you can define this
+   as non-zero temporarily.
+*/
+#define KEEP_PLUGINS_OPEN 0
+
 /**
  * close_plugin:
  * @handle: pointer obtained via the handle argument to
@@ -547,6 +554,9 @@ void *get_packaged_C_function (const char *pkgname,
 
 void close_plugin (void *handle)
 {
+#if KEEP_PLUGINS_OPEN
+    return;
+#endif
     if (handle != NULL) {
 #ifdef WIN32
 	FreeLibrary(handle);
