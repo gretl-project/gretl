@@ -2697,18 +2697,17 @@
       <description>
 	<para>
 	  Xera unha lista (de series xa definidas) dados un ou máis argumentos
-	  apropiados. Cada argumento debe de ser, ben unha serie xa definida
-	  (indicada polo seu nome ou número enteiro ID) ou ben unha lista
-	  (indicada polo nome dunha lista definida previamente ou por unha
-	  expresión que se corresponda cunha lista).
+	  apropiados. Cada argumento debe de ser, unha serie xa definida
+	  (indicada polo seu nome ou o número enteiro ID), unha lista xa definida
+	  ou unha expresión que se corresponda cunha lista (incluíndo un vector que
+	  pode interpretarse como un conxunto de números ID de series).
 	</para>
 	<para>
 	  Un punto a ter en conta é que esta función simplemente encadea
-	  as series e/ou listas indicadas como argumentos, para producir a
-	  lista que devolve. Cando se pretende que o valor que devolva non
-	  teña duplicados (que non se refira a ningunha serie máis dunha
-	  vez), depende do solicitante asegurarse de que se satisfaga ese
-	  requirimento.
+	  os seus argumentos para producir a lista que devolve. Cando se
+	  pretende que o valor que devolva non conteña duplicados (que non
+	  se refira a ningunha serie máis dunha vez), depende do solicitante
+	  asegurarse de que se satisfaga ese requirimento.
 	</para>
       </description>
     </function>

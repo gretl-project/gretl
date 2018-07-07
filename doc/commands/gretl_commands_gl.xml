@@ -69,9 +69,9 @@
       </para>
       <para context="cli">
 	A opción <opt>both</opt> é específica do método de estimación de
-	Mínimos Cadrados en 2 etapas. Indica que as novas variables
+	Mínimos Cadrados en 2 Etapas. Indica que as novas variables
 	deben de engadirse tanto á lista dos regresores como á lista dos
-	instrumentos, posto que cando non se indica nada engádense por
+	instrumentos, posto que cando non se indica nada, engádense por
 	defecto só á de regresores.
       </para>
       <para context="gui">
@@ -83,7 +83,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Fiestra de modelo: Probas/Engadir variables</menu-path>
+      <menu-path>Xanela de modelo: Probas/Engadir variables</menu-path>
     </gui-access>
 
   </command>
@@ -97,7 +97,7 @@
 	definida mediante unha fórmula que debe de ser unha expresión
 	admisible para Gnuplot. Debes de usar <lit>x</lit> para denotar o valor da
 	variable do eixe de abscisas. Ten en conta que Gnuplot utiliza <lit>**</lit>
-	para a elevar á potencia, e que o carácter decimal debe de indicarse
+	para elevar á potencia, e que o carácter decimal debe de indicarse
 	con <quote>.</quote>. Exemplos:
       </para>
       <code>
@@ -185,7 +185,7 @@
       </para>
 
       <para context="cli">
-	As opcións que se amosan abaixo e a discusión que segue correspóndense
+	As opcións que se amosan abaixo e a discusión que segue, correspóndense
 	co uso da instrución <lit>adf</lit> con datos de series temporais típicos.
 	Para utilizar esta instrución con datos de panel, mira máis abaixo.
       </para>
@@ -207,7 +207,7 @@
       </para>
 
       <para context="cli">
-	Podes utilizar a opción <opt>gls</opt> xuntamente con algunha das dúas
+	Podes utilizar a opción <opt>gls</opt> xunto con algunha das dúas
 	opcións <opt>c</opt> e <opt>ct</opt> (o modelo con constante, ou o
 	modelo con constante máis tendencia). O efecto desta opción é que a
 	detracción da media ou da tendencia da variable que se quere probar, faise
@@ -238,7 +238,7 @@
 	Se o argumento <repl>nivel</repl> (de aquí en diante chamarémoslle nivel
 	ou orde <math>k</math>) é maior ca 0, entón inclúense <math>k</math>
 	retardos da variable dependente no lado dereito da regresión que se estima
-	para calcular o estatístico de proba de cada caso. Cando indicas o nivel de
+	para calcular o estatístico de proba en cada caso. Cando indicas o nivel de
 	retardos como &minus;1, <math>k</math> establécese seguindo o aconsellado
 	por <cite key="schwert89">Schwert (1989)</cite>: concretamente tómase a
 	parte enteira de calcular 12(<math>T</math>/100)<sup>0.25</sup>, onde
@@ -310,7 +310,7 @@
 
       <para>
 	Os valores <emphasis>P</emphasis> para as probas de Dickey&ndash;Fuller
-	están baseadas en <cite key="mackinnon96">MacKinnon (1996)</cite>;
+	están baseados en <cite key="mackinnon96">MacKinnon (1996)</cite>;
 	e o código relevante inclúese co amable permiso do propio autor.
 	No caso da proba coa tendencia linear utilizando MCX (GLS),
 	estes valores <emphasis>P</emphasis> non son aplicables;
@@ -390,8 +390,8 @@
       <para context="cli">
 	Agás cando indicas a opción <opt>quiet</opt>, esta instrución presenta
 	unha táboa amosando as sumas de cadrados e os cadrados da media xunto
-	cunha proba <math>F</math>. Podes recuperar o estatístico dunha proba
-	<math>F</math> e a súa probabilidade asociada utilizando os accesorios
+	cunha proba <math>F</math>. Podes recuperar o estatístico da proba
+	<math>F</math> e a súa probabilidade asociada, utilizando os accesorios
 	<fncref targ="$test"/> e <fncref targ="$pvalue"/>, respectivamente.
       </para>
       <para>
@@ -482,9 +482,9 @@
       </para>
       <para>
 	Admítese unha característica especial cando se engaden datos a un
-	conxunto de datos de panel. Se <math>n</math> denota o
-	número de unidades atemporais no panel, <math>T</math> denota
-	o número de períodos de tempo, e <math>m</math> denota o
+	conxunto de datos de panel. Sirva <math>n</math> para denotar o
+	número de unidades atemporais no panel, <math>T</math> para denotar
+	o número de períodos de tempo, e <math>m</math> para denotar o
 	número de observacións dos novos datos. Se <math>m = n</math>,
 	os novos datos considéranse invariantes no tempo, e cópianse
 	repetidos para cada período de tempo. Por outra banda, se
@@ -554,7 +554,7 @@
       </para>
 
       <para context="gui">
-	Coa <quote>lista de retardos AR</quote> especificas a estrutura
+	Coa <quote>Lista de retardos AR</quote> especificas a estrutura
 	do proceso xerador do termo de perturbación. Por exemplo, a
 	indicación <quote>1 3 4</quote> correspóndese co proceso:
 	<equation status="display"
@@ -716,18 +716,18 @@
 	variable dependente) utilizando o método MXM-DIF establecido
 	por <cite key="arellano-bond91">Arellano e Bond (1991)</cite>.
 	Consulta <cmdref targ="dpanel"/> para ver os detalles dunha
-	versión actualizada e máis flexible desta instrución que permite
+	versión actualizada e máis flexible desta instrución, que permite
 	manexar tanto MXM-SIS coma MXM-DIF.
       </para>
       <para>
-	O parámetro <repl>p</repl> representa a orde da autorregresión da
+	O parámetro <repl>p</repl> representa o alcance da autorregresión da
 	variable dependente. O parámetro <repl>q</repl> (opcional) indica o
 	retardo máximo no nivel da variable dependente que se vai utilizar
 	como instrumento. Cando omites este argumento ou indicas que é 0,
 	utilízanse todos os retardos dispoñibles.
       </para>
       <para>
-	Debes de indicar a variable dependente no seu nivel pois xa se vai
+	Debes de indicar a variable dependente no seu nivel, pois xa se vai
 	calcular automaticamente a súa diferenza (posto que este estimador
 	utiliza a diferenciación para eliminar os efectos individuais). As
 	diferenzas das variables independentes non se van calcular
@@ -765,8 +765,8 @@
 	No caso da estimación en 2 etapas, as desviacións padrón calcúlanse
 	por defecto utilizando a corrección de mostra finita suxerida por
 	<cite key="windmeijer05">Windmeijer (2005)</cite>. As desviacións
-	padrón asintóticas estándar asociadas ao estimador do método en 2
-	etapas xeralmente considérase que son unha guía pouco fiable para
+	padrón asintóticas estándar, asociadas ao estimador do método en 2
+	etapas, xeralmente considérase que son unha guía pouco fiable para
 	a inferencia, pero se queres velas por algunha razón podes utilizar
 	a opción <opt>asymptotic</opt> para inhabilitar así a corrección de
 	Windmeijer.
@@ -813,8 +813,8 @@
 	seus propios valores retardados. O paso final é a estimación por
 	mínimos cadrados ponderados, utilizando como ponderacións as
 	inversas das varianzas dos erros axustados coa regresión auxiliar.
-	(Se varianza que se predí para algunha observación coa regresión
-	auxiliar non é positiva, entón utilízase no seu lugar o erro cadrado
+	(Se a varianza que se predí para algunha observación da regresión
+	auxiliar, non é positiva, entón utilízase no seu lugar o erro cadrado
 	correspondente).
       </para>
       <para>
@@ -902,8 +902,8 @@
 	Cando non indicas a lista <repl>indepvars</repl>, estímase
 	un modelo univariante ARIMA (Autorregresivo, Integrado, de
 	Medias móbiles). Os valores <repl>p</repl>, <repl>d</repl>
-	e <repl>q</repl> representan a orde autorregresiva (AR), a
-	orde de diferenciación e a orde de medias móbiles (MA),
+	e <repl>q</repl> representan o nivel autorregresivo (AR), a
+	orde de diferenciación e o nivel de medias móbiles (MA),
 	respectivamente. Podes indicar estes valores en formato
 	numérico, ou como nomes de variables escalares xa existentes.
 	Por exemplo, un valor de 1 para <repl>d</repl> significa que,
@@ -922,8 +922,8 @@
 
       <para context="cli">
 	Os valores enteiros <repl>P</repl>, <repl>D</repl> e
-	<repl>Q</repl> (opcionais) representan a orde AR estacional,
-	a orde de diferenciación estacional e a orde MA estacional,
+	<repl>Q</repl> (opcionais) representan o nivel AR estacional,
+	a orde de diferenciación estacional e o nivel MA estacional,
 	respectivamente. Estas ordes só as podes aplicar cando os
 	datos teñen unha frecuencia maior ca 1 (por exemplo, con
 	datos trimestrais ou mensuais); e podes indicalas en formato
@@ -931,8 +931,8 @@
       </para>
 
       <para context="cli">
-	No caso univariante, por defecto inclúese unha ordenada
-	na orixe no modelo pero podes eliminar isto por medio da
+	No caso univariante, por defecto inclúese no modelo
+	unha ordenada na orixe, pero podes eliminar isto por medio da
 	opción <opt>nc</opt>. Cando engades <repl>indepvars</repl>,
 	o modelo vólvese un ARMAX; neste caso, debes de incluír a
 	constante explicitamente se queres ter a ordenada na orixe
@@ -988,13 +988,13 @@
 	opción <opt>opg</opt> forza a utilización do método PEG, sen intentar
 	calcular a matriz Hessiana, a opción <opt>hessian</opt> inhabilita
 	o último recurso a PEG. Ten en conta que un fallo no cálculo da matriz
-	Hessiana numérica é xeralmente un indicador de que un modelo está
+	Hessiana numérica, é xeralmente un indicador de que un modelo está
 	mal especificado.
       </para>
 
       <para context="cli">
 	A opción <opt>lbfgs</opt> é específica da estimación que utiliza
-	código ARMA propio e Máxima Verosimilitude exacta, e solicita
+	código ARMA propio e Máxima Verosimilitude exacta; e solicita
 	que se utilice o algoritmo de <quote>memoria limitada</quote>
 	L-BFGS-B en vez do maximizador BFGS habitual. Isto pode ser de
 	axuda nalgúns casos nos que a converxencia é difícil de acadar.
@@ -1002,22 +1002,22 @@
 
       <para context="cli">
 	A opción <opt>y-diff-only</opt> é específica da estimación de modelos
-	ARIMAX (modelos cunha orde de integración non nula, nos que se inclúen
+	ARIMAX (modelos con orde de integración non nula, nos que se inclúen
 	regresores esóxenos) e aplícase só cando se utiliza a Máxima Verosimilitude
 	exacta propia de Gretl. Para eses modelos, o comportamento por defecto
 	consiste en calcular as primeiras diferenzas tanto da variable dependente
-	como dos regresores, pero cando indicas esta opción, só se calcula para
+	como dos regresores; pero cando indicas esta opción, só se calcula para
 	a variable dependente, quedando os regresores en niveis.
       </para>
 
       <para>O valor do AIC de Akaike indicado en conexión
 	con modelos ARIMA, calcúlase de acordo coa definición que
 	utiliza o <program>ARIMA X-12</program>, concretamente
-	  <equation status="display" 
+	  <equation status="display"
 	  tex="\[\mbox{AIC}=-2\ell + 2k\]"
 	  ascii="AIC = -2L + 2k"
 	  graphic="aic"/> onde 
-	<equation status="inline" 
+	<equation status="inline"
 	  tex="$\ell$" ascii="L"
 	  graphic="ell"/> é o
 	logaritmo da verosimilitude e <math>k</math> é o número total de
@@ -1045,7 +1045,7 @@
 
       <para context="tex">
 	A cantidade <quote>Frecuencia</quote> presentada en
-	conexión coas raíces AR e MA é o valor $\lambda$ que
+	conexión coas raíces AR e MA, é o valor $\lambda$ que
 	soluciona $z=re^{i2\pi\lambda}$, onde $z$ é a raíz en
 	cuestión e $r$ é o seu módulo.
       </para>
@@ -1072,7 +1072,7 @@
 
       <para context="notex">
 	A cantidade <quote>Frecuencia</quote> presentada en
-	conexión coas raíces AR e MA é o valor &lgr; que soluciona
+	conexión coas raíces AR e MA, é o valor &lgr; que soluciona
 	<math>z</math> = <math>r</math> * exp(i*2*&pi;*&lgr;)
 	onde <math>z</math> é a raíz en cuestión e <math>r</math>
 	é o seu módulo.
@@ -1100,7 +1100,7 @@
       <para>
 	Este diálogo te permite controlar algúns aspectos do funcionamento do
 	maximizador BFGS. No caso de que o maximizador falle na converxencia,
-	pode mellorar a cousa, nalgúns casos, ao aumentar o número de iteracións
+	pode mellorar a cousa (nalgúns casos) ao aumentar o número de iteracións
 	permitidas e/ou ao aumentar (facer máis permisiva) a tolerancia da
 	converxencia. Porén, debes de sospeitar dos resultados que obteñas
 	utilizando unha tolerancia elevada e considerar a posibilidade de que o
@@ -1169,7 +1169,7 @@
       <para>
 	A lista de argumentos comeza coas dúas variables (binarias)
 	dependentes, seguidas dunha lista de regresores. Cando indicas
-	unha segunda lista, separada por un punto e coma, esta se
+	unha segunda lista (separada por un punto e coma) se
 	entende como un grupo de regresores específicos da segunda
 	ecuación, sendo <repl>indepvars1</repl> específica da primeira
 	ecuación; noutro caso, <repl>indepvars1</repl> considérase
@@ -1228,11 +1228,11 @@
 	    <cite key="davidson-mackinnon04">Economic Theory and Methods</cite>
 	    (ETM, capítulo 5): en cada repetición do bootstrap fórmase
 	    unha razón <math>t</math> que se calcula collendo a
-	    diferenza na estimación dos coeficientes obtida mediante
-	    bootstrap e de partida, e dividíndoa entre a desviación
-	    padrón mediante bootstrap. O intervalo de confianza 
+	    diferenza entre a estimación dos coeficientes obtida mediante
+	    bootstrap e a de partida, e dividíndoa entre a desviación
+	    padrón de bootstrap. O intervalo de confianza 
 	    baséase entón nos cuantís desta razón <math>t</math>
-	    de bootstrap, como se explica nese ETM. A opción valor p
+	    de bootstrap, como se explica no citado ETM. A opción valor p
 	    baséase na distribución da razón <math>t</math> de bootstrap:
 	    é a proporción das repeticións nas que o valor absoluto
 	    deste estatístico excede o valor absoluto da razón
@@ -1249,7 +1249,7 @@
 	    filas de datos (<math>y</math>, <math>X</math>). Na terceira
 	    opción, os erros orixinais transfórmanse primeiro consonte a
 	    <cite key="davidson-flachaire01">Davidson e Flachaire (2001)</cite>;
-	    entón en cada repetición do bootstrap cada erro transformado
+	    entón, en cada repetición do bootstrap, cada erro transformado
 	    multiplícase por 1 ou &minus;1, con probabilidade igual
 	    a 0.5 en cada caso. Na opción final, xéranse valores
 	    normais pseudoaleatorios utilizando a varianza dos erros
@@ -1315,7 +1315,7 @@
       <para>
 	Estas gráficas amosan a distribución dunha variable. Unha
 	caixa central encerra o 50 por cento central dos datos; &ie;
-	está deslindado polo primeiro e terceiro cuartís. Un
+	está deslindada polo primeiro e terceiro cuartís. Un
 	<quote>bigote</quote> esténdese desde cada límite da caixa cun
 	rango igual a 1.5 veces o rango intercuartil. As observacións
 	que están fóra dese rango considéranse valores atípicos e
@@ -1333,7 +1333,7 @@
 	Por exemplo, se un conxunto de datos contén unha variable cos salarios
 	e unha variable ficticia co xénero, podes escoller a dos salarios como
 	obxectivo e a do xénero como o factor, para ver así as gráficas de
-	caixas de salarios de homes e mulleres unha a carón da outra.
+	caixas de salarios de homes e mulleres, unha a carón da outra.
       </para>
 
       <para context="cli">
@@ -1342,7 +1342,7 @@
 	Por exemplo, se un conxunto de datos contén unha variable cos salarios
 	e unha variable ficticia co xénero, podes escoller a dos salarios como
 	obxectivo e a do xénero como o factor, para ver así as gráficas de
-	caixas de salarios de homes e mulleres unha a carón da outra, como en
+	caixas de salarios de homes e mulleres, unha a carón da outra, como en
       </para>
       <code context="cli">
 	boxplot salario xenero --factorized
@@ -1362,8 +1362,8 @@
       <para context="cli">
 	Xeralmente requírese o argumento <repl>listavariables</repl> que se refire
 	a unha ou máis series do conxunto vixente de datos (indicadas ben
-	polo nome ou ben polo número ID). Pero se indicas mediante a opción
-	<opt>matrix</opt> unha matriz xa definida, este argumento convértese
+	polo nome ou ben polo número ID). Pero se, mediante a opción
+	<opt>matrix</opt>, indicas unha matriz xa definida, este argumento convértese
 	en opcional pois, por defecto, debúxase unha gráfica para cada columna
 	da matriz especificada.
       </para>
@@ -1378,7 +1378,7 @@
 
       <para context="cli">
 	En modo interactivo, o resultado amósase inmediatamente. En modo de
-	procesamento por	lotes, o proceder por defecto é que se escribe un
+	procesamento por lotes, o proceder por defecto consiste en escribir un
 	ficheiro de instrucións de Gnuplot no cartafol de traballo do usuario,
 	cun nome co padrón <filename>gpttmpN.plt</filename>, comezando con
 	N = <lit>01</lit>. Podes xerar as gráficas máis tarde utilizando o
@@ -1414,7 +1414,7 @@
     <description>
       <para>
 	O filtro de Butterworth é unha aproximación a un filtro ideal de ondas
-	cadradas que permite pasar con total potencia ás frecuencias que
+	cadradas, que permite pasar con total potencia ás frecuencias que
 	superan un certo rango, mentres detén todas as outras.
       </para>
       <para>
@@ -1448,20 +1448,20 @@
     </usage>
     <description>
       <para>
-	Esta non é unha instrución por si mesma pero podes utilizala como
+	Esta non é unha instrución por si mesma, pero podes utilizala como
 	prefixo na maioría das instrucións habituais: o seu efecto é o de
 	previr que remate dun guión de instrucións se ocorre un fallo ao
 	executar unha delas. Se aparece un fallo, isto rexístrase cun código
 	de fallo interno ao que podes acceder con <lit>$error</lit> (un valor
 	de 0 indica éxito). Inmediatamente despois de utilizar <lit>catch</lit>
-	debería de verificarse sempre cal é o valor de <lit>$error</lit>, e
-	tomarse unha acción axeitada se fallou unha das instrucións.
+	deberías de verificar sempre cal é o valor de <lit>$error</lit>, e
+	realizar unha acción axeitada se fallou unha das instrucións.
       </para>
       <para>
 	Non podes utilizar a palabra chave <lit>catch</lit> antes de
 	<lit>if</lit>, <lit>elif</lit> ou <lit>endif</lit>. Ademais, non
-	debe de utilizarse en peticións a funcións definidas polo usuario
-	pois preténdese utilizar só coas instrucións de Gretl e coas
+	debe de utilizarse en peticións a funcións definidas polo usuario,
+	pois preténdese utilizala só coas instrucións de Gretl e coas
 	peticións aos operadores ou funcións <quote>internos</quote>.
       </para>
     </description>
@@ -1499,7 +1499,7 @@
     <description>
       <para context="gui">
 	Esta instrución necesita ben un número de observación (ou unha data,
-	con datos que as teñan), ou ben o nome dunha variable ficticia.
+	se usas datos que as teñan), ou ben o nome dunha variable ficticia.
       </para>
 
       <para>
@@ -1510,7 +1510,7 @@
 	de corte especificado por <repl>obs</repl> ata o final da mostra, e 0 noutro
 	caso, así como xerar termos de interacción entre esa ficticia e os regresores
 	orixinais. Se indicas unha ficticia, próbase esa hipótese nula de homoxeneidade
-	estrutural respecto desa variable ficticia e tamén engádense termos de interacción.
+	estrutural respecto desa variable ficticia, e tamén engádense termos de interacción.
 	En cada caso execútase unha regresión ampliada incluíndo os termos adicionais.
       </para>
       <para>
@@ -1518,20 +1518,20 @@
 	regresión ampliada como o modelo sen restricións e o modelo orixinal
 	como o restrinxido. Pero se o modelo orixinal utilizou un estimador
 	robusto para a matriz de covarianzas, o estatístico de proba é un de
-	Wald con distribución khi-cadrado e co seu valor baseado nun estimador
+	Wald con distribución khi-cadrado; co seu valor baseado nun estimador
 	robusto da matriz de covarianzas da regresión ampliada.
       </para>
       <para context="cli">
 	Podes utilizar a opción <opt>limit-to</opt> para limitar o conxunto de
-	termos de interacción coa variable ficticia de corte a un subconxunto
+	termos de interacción coa variable ficticia de corte, a un subconxunto
 	dos regresores orixinais. O argumento para esta opción debe de ser
 	unha lista xa definida na que todos os seus elementos estean entre os
-	regresores orixinais e non debe de incluír a constante.
+	regresores orixinais, e non debe de incluír a constante.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>Fiestra de modelo: Probas/Proba de Chow</menu-path>
+      <menu-path>Xanela de modelo: Probas/Proba de Chow</menu-path>
     </gui-access>
   </command>
 
@@ -1549,14 +1549,14 @@
       <para>
 	Sen ningunha opción, quita da memoria todos os obxectos gardados,
 	incluíndo o conxunto de datos (se hai algún). Ten en conta que tamén
-	tes este efecto ao abrir un novo conxunto de datos ou ao utilizar a
+	tes este efecto ao abrir un novo conxunto de datos, ou ao utilizar a
 	instrución <cmd>nulldata</cmd> para crear un conxunto de datos baleiro;
 	por iso normalmente non necesitas utilizar <cmd>clear</cmd>.
       </para>
       <para>
 	Cando indicas a opción <opt>dataset</opt>, entón só se limpa
 	o conxunto de datos (máis calquera lista de series definida); outros
-	obxectos gardados como matrices e escalares xa definidos vanse
+	obxectos gardados como matrices e escalares xa definidos, vanse
 	conservar.
       </para>
     </description>
@@ -1578,7 +1578,7 @@
 	que tome a variable seleccionada. En lugar do suposto clásico de que
 	o termo de perturbación está independente e identicamente distribuído,
 	este estimador permite que as varianzas das perturbacións difiran por
-	grupos e tamén permite un grao de dependencia da perturbación dentro
+	grupos, e tamén permite un grao de dependencia da perturbación dentro
 	de cada grupo.
       </para>
     </description>
@@ -1621,7 +1621,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Fiestra de modelo: Probas/Suma dos coeficientes</menu-path>
+      <menu-path>Xanela de modelo: Probas/Suma dos coeficientes</menu-path>
     </gui-access>
 
   </command>
@@ -1686,7 +1686,7 @@
 	Se o nivel especificado de retardos é positivo, todas as probas de
 	Dickey&ndash;Fuller usan ese nivel pero con este requisito: cando se
 	indica a opción <opt>test-down</opt>, o valor indicado tómase como
-	un máximo, e o nivel de retardos concreto que se utilizará en cada caso
+	un máximo, e o nivel concreto de retardos que se utilizará en cada caso
 	obtense probando cara abaixo. Consulta a instrución <cmdref targ="adf"/>
 	para obter máis detalles sobre este procedemento.
       </para>
@@ -1713,8 +1713,8 @@
 	<math>k</math> retardos da variable dependente no lado dereito da
 	regresión que se fai para cada proba, agás que marques o cadriño titulado
 	<quote>Probar desde o máximo nivel de retardos cara abaixo</quote>. Nese
-	caso o nivel de retardos que indicas tómase como máximo, e o nivel de
-	retardos concreto que se utilizará, obtense probando cara abaixo. Consulta a
+	caso o nivel de retardos que indicas tómase como máximo, e o nivel concreto
+	de retardos que se utilizará, obtense probando cara abaixo. Consulta a
 	instrución <cmdref targ="adf"/> para ter máis detalles sobre este procedemento.
       </para>
       <para context="gui">
@@ -1862,7 +1862,7 @@
 
       <para context="gui">
 	Podes controlar as variables esóxenas engadíndoas á caixa da lista
-	inferior. Por defecto, estas entran a formar parte do modelo en forma
+	inferior. Por defecto, estas entran a formar parte do modelo de forma
 	non restrinxida (indicada por un <lit>U</lit> á beira do nome da
 	variable). Se queres que unha determinada variable esóxena estea
 	restrinxida ao espazo de cointegración, preme co botón dereito do
@@ -1880,7 +1880,7 @@
       <para context="gui">
 	Se os datos son trimestrais ou mensuais, amósase un cadriño de verificación que
 	te permite incluír un conxunto de variables ficticias estacionais centradas. En
-	todos os casos, un cadriño de verificación adicional (<quote>Amosar os detalles</quote>)
+	tódolos casos, un cadriño de verificación adicional (<quote>Amosar os detalles</quote>)
 	permite a presentación das regresións auxiliares que forman o punto de comezo
 	do procedemento de estimación máximo verosímil de Johansen.
       </para>
@@ -1947,7 +1947,7 @@
       </para>
       <para>
 	Ademais, ás veces podes querer compactar un conxunto enteiro de
-	datos cara a unha frecuencia menor (quizais antes de engadir unha
+	datos para que teñan unha frecuencia menor (quizais antes de engadir unha
 	variable de baixa frecuencia ao conxunto de datos).
       </para>
       <para>Gretl ofrece 5 opcións para compactar:</para>
@@ -1960,17 +1960,17 @@
 	</li>
 	<li><para>Sumando: O valor que se escribe no conxunto de datos vai ser a
 	    suma dos valores pertinentes de maior frecuencia. Por exemplo, o valor do
-	    primeiro cuarto vai ser a suma dos valores de xaneiro, febreiro e marzo.
+	    primeiro trimestre vai ser a suma dos valores de xaneiro, febreiro e marzo.
 	    </para>
 	</li>
 	<li><para>Valores final-de-período: O valor que se escribe no conxunto de
 	    datos é o último valor pertinente dos datos de frecuencia maior. Por
-	    exemplo, o primeiro cuarto de 1990 vai ter o valor de marzo de 1990.
+	    exemplo, o primeiro trimestre de 1990 vai ter o valor de marzo de 1990.
 	    </para>
 	</li>
 	<li><para>Valores principio-de-período: O valor que se escribe no conxunto
 	    de datos é o primeiro valor pertinente dos datos de frecuencia maior. Por
-	    exemplo, o primeiro cuarto de 1990 vai ter o valor de xaneiro de 1990.
+	    exemplo, o primeiro trimestre de 1990 vai ter o valor de xaneiro de 1990.
 	    </para>
 	</li>
 	<li>
@@ -2009,12 +2009,12 @@
       <para>
 	Esta instrución require a selección de 3 variables: unha para
 	o eixe X, outra para o eixe Y e outra para o que queres controlar
-	(chámalle Z). A gráfica amosa o Y corrixido fronte ao X corrixido,
-	onde a versión corrixida da variable é o erro dunha regresión
+	(chamémoslle Z). A gráfica amosa o Y axustado fronte ao X axustado,
+	onde a versión axustada da variable é o erro dunha regresión
 	MCO sobre Z.
       </para>
       <para>
-	Exemplo: Tes datos de salarios, experiencia e nivel de educación para
+	Exemplo: Tes datos de salarios, experiencia laboral e nivel de educación para
 	unha mostra de persoas. Queres debuxar os salarios fronte ao nivel de
 	educación, controlados pola experiencia. Nese caso, seleccionarías
 	salarios para o eixe Y, nivel de educación para o eixe X e experiencia
@@ -2068,7 +2068,7 @@
       <para>
 	Presenta os coeficientes de correlación (correlación produto-momento
 	de Pearson) por pares das variables escollidas. O comportamento por
-	defecto desta instrución consiste en utilizar todas as observacións
+	defecto desta instrución consiste en utilizar tódalas observacións
 	dispoñibles para calcular cada coeficiente por parellas de variables,
 	pero se marcas o cadriño de opcións, a mostra limítase (se é necesario)
 	de xeito que se utiliza o mesmo conxunto de observacións para todos
@@ -2083,7 +2083,7 @@
 	produto-momento de Pearson) por pares das variables de 
 	<repl>listavariables</repl>, ou de tódalas variables do conxunto de datos
 	se non indicas <repl>listavariables</repl>. O comportamento típico desta
-	instrución consiste en utilizar todas as observacións dispoñibles
+	instrución consiste en utilizar tódalas observacións dispoñibles
 	para calcular cada coeficiente por parellas de variables, pero cando
 	indicas a opción <flag>--uniform</flag>, a mostra limítase (se é
 	necesario) de xeito que se utiliza o mesmo conxunto de observacións
@@ -2126,7 +2126,7 @@
 
     <gui-access>
       <menu-path>/Ver/Matriz de correlacións</menu-path>
-      <other-access>Fiestra principal: Menú emerxente (selección múltiple)</other-access>
+      <other-access>Xanela principal: Menú emerxente (tras selección múltiple)</other-access>
     </gui-access>
 
   </command>
@@ -2156,22 +2156,22 @@
 
     <description>
       <para context="notex">
-	Presenta os valores da función de autocorrelación (FAC ou ACF) do
+	Presenta os valores da función de autocorrelación (FAC) do
 	argumento <repl>serie</repl>, que pode especificarse polo seu nome
-	ou número. Os valores defínense como &rgr;(<math>u</math><sub>t</sub>,
+	ou seu número. Os valores defínense como &rgr;(<math>u</math><sub>t</sub>,
 	<math>u</math><sub>t-s</sub>) onde <math>u</math><sub>t</sub> é a
 	<math>t</math>-ésima observación da variable <math>u</math> e <math>s</math>
 	denota o número de retardos.
       </para>
       <para context="tex">
-	Presenta os valores da función de autocorrelación (FAC ou ACF) do
+	Presenta os valores da función de autocorrelación (FAC) do
 	argumento <repl>serie</repl>, que pode especificarse polo seu nome
-	ou número. Os valores defínense como $\hat{\rho}(u_t, u_{t-s})$, onde
+	ou seu número. Os valores defínense como $\hat{\rho}(u_t, u_{t-s})$, onde
 	$u_t$ é a $t$-ésima observación da variable $u$ e $s$ denota o número
 	de retardos.
       </para>
       <para>
-	Tamén se presentan as autocorrelacións parciais (FACP ou PACF,
+	Tamén se presentan as autocorrelacións parciais (FACP,
 	que se calculan utilizando o algoritmo de Durbin&ndash;Levinson),
 	e que están libres dos efectos dos retardos intermedios. Ademais,
 	preséntase o estatístico <math>Q</math> de Ljung&ndash;Box que
@@ -2228,7 +2228,7 @@
 
     <gui-access>
       <menu-path>/Variable/Correlograma</menu-path>
-      <other-access>Fiestra principal: Menú emerxente (selección única)</other-access>
+      <other-access>Xanela principal: Menú emerxente (selección única)</other-access>
     </gui-access>
 
   </command>
@@ -2254,8 +2254,8 @@
 	Por exemplo, se asumes que o número de accidentes de tráfico é proporcional
 	ao volume de tráfico (co demais constante), nese caso podes especificar
 	o volume de tráfico como unha variable de <quote>exposición</quote> nun
-	modelo para o cociente entre os accidentes e o volume. A variable de
-	exposición debe de ser estritamente positiva.
+	modelo para o cociente dos accidentes. A variable de exposición debe de ser
+	estritamente positiva.
       </para>
       <para>
 	Por defecto, as desviacións padrón calcúlanse utilizando unha aproximación
@@ -2288,7 +2288,7 @@
       <para>
 	Para poñer unha liña adicional nunha gráfica xerada deste xeito, preme
 	co botón dereito do rato na gráfica e escolle <quote>Editar</quote>,
-	selecciona o tabulador <quote>Liñas</quote> no cadro de diálogo de
+	selecciona a lapela <quote>Liñas</quote> no cadro de diálogo de
 	edición de gráficas, e utiliza o botón <quote>Engadir liña</quote>.
       </para>
     </description>
@@ -2315,11 +2315,11 @@
 	permite levar adiante a proba CUSUM de estabilidade dos parámetros
 	(ou a proba CUSUMSQ se indicas a opción <opt>squares</opt>).
 	Vas obter unha serie cos erros de predición adiantados un
-	paso, executando unha serie de regresións: na primeira
+	paso, executando unha serie de regresións. Na primeira
 	regresión se utilizan as primeiras <math>k</math> observacións
 	e permíteche xerar a predición da variable dependente na
 	observación <math>k</math> + 1; na segunda se utilizan as
-	primeiras <math>k</math> + 1 observacións e xera unha
+	primeiras <math>k</math> + 1 observacións e xérase unha
 	predición para a observación <math>k</math> + 2, e así
 	sucesivamente (onde <math>k</math> é o número de parámetros
 	do modelo orixinal).
@@ -2343,7 +2343,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Fiestra de modelo: Probas/Proba CUSUM(SQ)</menu-path>
+      <menu-path>Xanela de modelo: Probas/Proba CUSUM(SQ)</menu-path>
     </gui-access>
 
   </command>
@@ -2352,7 +2352,7 @@
 	   label="Depurar datos diarios" context="gui">
     <description>
       <para>
-	Cando un conxunto de datos diario está nominalmente nun
+	Cando un conxunto de datos diarios está nominalmente nun
 	calendario de 7 días, pero de feito unicamente inclúe datos de
 	días laborables, recoméndase que elimines as filas en branco
 	dos días do fin de semana, pasando así a un calendario de 5 días.
@@ -2361,8 +2361,8 @@
 	Cando un conxunto de datos de días laborables contén un número
 	relativamente pequeno de filas sen datos (presuntamente debido a
 	festivos comerciais) poderías querer eliminar esas filas. Isto
-	significa, de feito, tratar os valores ausentes por festivos como non
-	existentes máis ca como verdadeiramente <quote>ausentes</quote>, e
+	significa, de feito, tratar os valores ausentes por festividades como non
+	existentes, máis ca como verdadeiramente <quote>ausentes</quote>, e
 	tratar os días comerciais como se formasen unha serie temporal continua.
       </para>
       <para>
@@ -2417,7 +2417,7 @@
 	As instrucións de arriba abren un banco de datos chamado <filename>macrodat.rat</filename>,
 	determinan que os datos son de tipo trimestral, que comezan no primeiro
 	trimestre de 1959, que a mostra finaliza no cuarto trimestre de 1999, e
-	logo importan as series denominadas <lit>GDP_JP</lit> e <lit>GDP_UK</lit>.
+	logo se importan as series denominadas <lit>GDP_JP</lit> e <lit>GDP_UK</lit>.
 	    </para>
       <para>
 	Se non especificas <lit>setobs</lit> e <lit>smpl</lit> deste xeito,
@@ -2480,12 +2480,12 @@
     <description>
       <para>
 	Este diálogo te permite especificar ficheiros adicionais para
-	incluír cun paquete de funcións. Se inclúes ese material iso
+	incluír cun paquete de funcións. Se inclúes ese material, iso
 	implica que o paquete vai tomar a forma dun ficheiro zip. Cando
 	Gretl vaia a crear o ficheiro zip para ti, todos os ficheiros
 	aos que se fai referencia aquí deben de estar presentes no mesmo
 	cartafol ca o ficheiro gfn. Os subcartafoles poden indicarse
-	igual que ficheiros normais e nese caso, iso implica que todo
+	igual que ficheiros normais e, nese caso, iso implica que todo
 	o seu contido deberá de incluírse no paquete zip.
       </para>
       <para>
@@ -2494,7 +2494,7 @@
 	mostra do paquete, se non é adecuado ningún dos ficheiros de datos
 	ofrecidos coa distribución de Gretl. Neste caso, os datos deben de
 	estar no formato propio de Gretl (<lit>gdt</lit> ou <lit>gdtb</lit>
-	binario). Segundo, se o teu paquete require unha gran matriz (por
+	binario). Segundo, se o teu paquete require unha matriz grande (por
 	exemplo, que conteña todos os puntos críticos dun estatístico de
 	proba especial), poderá ser más conveniente incluíla como un ficheiro
 	matricial de Gretl (<lit>mat</lit>) que integrar a matriz mediante
@@ -2556,7 +2556,7 @@
 	<lit>sortby</lit>, <lit>dsortby</lit>, <lit>resample</lit>,
 	<lit>renumber</lit> ou <lit>pad-daily</lit>. Advertencia: Coa
 	excepción da opción <lit>clear</lit>, estas accións non están
-	dispoñibles mentres teñas unha submostra do conxunto de datos
+	dispoñibles mentres teñas unha submostra do conxunto de datos,
 	escollida por selección dos casos segundo algún criterio booleano.
       </para>
       <para>
@@ -2565,12 +2565,12 @@
 	datos de traballo. Isto está pensado principalmente co propósito de facer
 	predicións. Os valores da maioría das variables ao longo do rango engadido
 	vanse estipular como ausentes, pero certas variables determinísticas se
-	recoñecen e o seu contido esténdese ao rango engadido, en concreto, as
+	recoñecen e o seu contido esténdese ao rango engadido; en concreto, as
 	variables con tendencia linear simple e as variables ficticias periódicas.
       </para>
       <para>
-	<lit>insobs</lit>: Debe de estar seguido dun enteiro positivo non
-	maior ca o número vixente de observacións, que especifica a posición
+	<lit>insobs</lit>: Debe de estar seguido dun enteiro positivo (non
+	maior ca o número vixente de observacións) que especifica a posición
 	na que se insire unha única observación. Todos os datos posteriores
 	desprázanse un lugar e o conxunto de datos amplíase nunha observación.
 	Agás á constante, dánselle valores ausentes a todas as variables na
@@ -2591,7 +2591,7 @@
 	de datos a unha nova frecuencia. Tamén podes indicar un segundo
 	parámetro, en concreto un de entre <lit>sum</lit>, <lit>first</lit>,
 	<lit>last</lit> ou <lit>spread</lit>. Estes permiten especificar que
-	se vai compactar, respectivamente: utilizando a suma dos valores de
+	se vai compactar utilizando, respectivamente: a suma dos valores de
 	frecuencia maior, o valor de inicio-de-período, o valor de fin-de-período,
 	ou espallando os valores de frecuencia maior entre varias series
 	(unha por cada subperíodo), pois por defecto faise usando a media.
@@ -2654,7 +2654,7 @@
 	efecto encher os datos nun calendario completo inserindo filas en
 	branco (é dicir, filas que non conteñen nada agás <lit>NA</lit>s).
 	Esta opción require un número enteiro como parámetro, concretamente
-	o número de días por semana (5, 6 ou 7) e que debe de ser maior ou
+	o número de días por semana (5, 6 ou 7), e que debe de ser maior ou
 	igual que a frecuencia vixente dos datos. Cando se completa con
 	éxito, o calendario de datos vai estar <quote>completo</quote> en
 	relación a este valor. Por exemplo, se días-por-semana é igual a 5,
@@ -2688,7 +2688,7 @@
 
     <usage>
       <arguments>
-        <argument>función</argument>
+        <argument>funcion</argument>
       </arguments>
     </usage>
 
@@ -2749,14 +2749,14 @@
       </para>
       <para>
 	Na segunda variante, podes indicar o nome dun escalar, dunha matriz,
-	dunha cadea de texto ou dun feixe para que se elimine. A opción
+	dunha cadea de texto ou dun feixe, para que se elimine. A opción
 	<opt>db</opt> non pode aplicarse neste caso. Ten en conta que non
 	debes de mesturar series e variables de diferentes tipos nunha mesma
 	chamada a <lit>delete</lit>.
       </para>
       <para>
 	Na terceira variante, a opción <opt>type</opt> debes de
-	acompañala por algún dos seguintes nomes de tipos: <lit>matrix</lit>,
+	acompañala con algún dos seguintes nomes de tipos: <lit>matrix</lit>,
 	<lit>bundle</lit>, <lit>string</lit>, <lit>list</lit>, <lit>scalar</lit>
 	ou <lit>array</lit>; e o seu efecto consiste en eliminar tódalas
 	variables do tipo indicado. Neste caso non debes de indicar ningún
@@ -2777,7 +2777,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Fiestra principal: Menú emerxente (selección única)</menu-path>
+      <menu-path>Xanela principal: Menú emerxente (selección única)</menu-path>
     </gui-access>
 
   </command>
@@ -2787,7 +2787,7 @@
 
     <description>
 
-      <para>A estimación da densidade do Kernel realízase definindo
+      <para>A estimación da densidade Kernel realízase definindo
 	un conxunto de puntos de referencia separados de xeito uniforme
 	sobre un rango apropiado relacionado co rango dos datos, e atribuíndo
 	unha densidade a cada punto de referencia baseada nas observacións
@@ -2800,14 +2800,14 @@
 	ascii="f(x) = (1/nh) sum(t=1 to n) k((x - x(t)) / h)"
 	graphic="kernel1"/>
 	onde <math>n</math> denota o número de puntos con datos,
-	<math>h</math> e un parámetro de <quote>largo de banda</quote>,
-	e <math>k</math>() é a función kernel. Canto maior sexa o valor
+	<math>h</math> é un parámetro de <quote>largo de banda</quote>,
+	e <math>k</math>() é a función Kernel. Canto maior sexa o valor
 	do parámetro de largo de banda, máis suave vai ser a densidade
 	estimada.
       </para>
       <para>
-	Se te ofrece a posibilidade de utilizar un kernel Gaussiano
-	(a densidade Normal estándar) ou o kernel de Epanechnikov.
+	Se te ofrece a posibilidade de utilizar un Kernel Gaussiano
+	(a densidade Normal estándar) ou o Kernel de Epanechnikov.
 	Por defecto, o largo de banda é o suxerido como norma xeral por
 	<cite key="silverman96">Silverman (1986)</cite>, concretamente
 	<equation status="display"
@@ -2815,8 +2815,8 @@
 	  ascii="h = 0.9 min(s, IQR/1.349) n^{1/5}"
 	  graphic="kernel2"/>
 	onde <math>s</math> representa a desviación padrón dos datos e IQR
-	denota o rango intercuartil. Podes ampliar ou encoller o largo de
-	banda mediante o <quote>factor de axuste do ancho de banda</quote>,
+	denota o rango intercuartil. Podes ampliar ou reducir o largo de
+	banda mediante o <quote>Factor de axuste do ancho de banda</quote>,
 	posto que entón o largo real de banda que se vai utilizar, obtense
 	multiplicando o valor de Silverman polo factor de
 	axuste.
@@ -2878,14 +2878,14 @@
 	de <quote>Establecer por defecto</quote>, a variable que escolliches
 	vaise preseleccionar como a dependente cando se volva a abrir a caixa
 	de diálogo do modelo. Atallo: preme un dobre clic nunha variable da
-	esquerda para escollela como a variable dependente e tamén fixala
+	esquerda para escollela como a variable dependente, e tamén fixala
 	por defecto.
       </para>
       <para>
 	Para escoller as variables independentes, saliéntaas no lado
 	esquerdo e preme o botón <quote>Engadir</quote> (ou preme un
 	clic co botón dereito do rato). Podes salientar varias variables
-	contiguas arrastrando co rato e podes salientar un grupo de
+	contiguas arrastrando co rato, e podes salientar un grupo de
 	variables non contiguas premendo un clic en cada unha delas
 	mentres mantés pulsada a tecla <lit>Ctrl</lit>.
       </para>
@@ -2988,13 +2988,13 @@
       </para>
       <para>
 	Coa opción <opt>signed-rank</opt>, realízase a proba dos rangos con
-	signo de Wilcoxon, que está ideada para pares de datos emparellados
+	signo de Wilcoxon, que está ideada para pares de datos ligados
 	como, por exemplo, os pares de valores dunha mesma variable nunha
 	mostra de individuos, antes e despois dalgún tratamento. A proba
 	desenvólvese calculando as diferenzas entre as observacións emparelladas
 	<math>x</math><sub>i</sub> &minus; <math>y</math><sub>i</sub>,
 	e determinando o rango destas diferenzas segundo o seu valor absoluto,
-	ademais de asignándolle a cada par un rango cun signo que coincide
+	ademais de asignándolle a cada par, un rango cun signo que coincide
 	co signo da diferenza. A continuación calcúlase a suma dos rangos
 	con signo positivo (<math>W</math><sub>+</sub>). De igual xeito
 	que na proba da suma de rangos, baixo a hipótese nula de que a
@@ -3008,7 +3008,7 @@
 	selecciona a proba dos signos.)
       </para>
       <para>
-	Ao completarse con éxito, van estar dispoñibles os accesorios
+	Ao completarse con éxito, vas a ter dispoñibles os accesorios
 	<fncref targ="$test"/> e <fncref targ="$pvalue"/>. Se unicamente
 	queres obter estes valores, podes engadir a opción <opt>quiet</opt>
 	á instrución.
@@ -3274,7 +3274,7 @@
     </description>
 
     <gui-access>
-      <other-access>Fiestra principal: Menú emerxente (selección única)</other-access>
+      <other-access>Xanela principal: Menú emerxente (selección única)</other-access>
     </gui-access>
 
   </command>
@@ -3290,7 +3290,7 @@
       <options>
         <option>
           <flag>--exponential</flag>
-          <effect>Utiliza a distribución exponential</effect>
+          <effect>Utiliza a distribución exponencial</effect>
         </option>
         <option>
           <flag>--loglogistic</flag>
@@ -3484,7 +3484,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Fiestra de modelo: LaTeX</menu-path>
+      <menu-path>Xanela de modelo: LaTeX</menu-path>
     </gui-access>
 
   </command>
@@ -3849,29 +3849,31 @@
       </para>
 
       <para context="cli">
-	Debe de ir despois dunha instrución de estimación. As predicións xéranse
-	para certo rango de observacións que será, ben o definido cando indicas
-	<repl>obsinicio</repl> e <repl>obsfin</repl> (de ser posible), ben o
-	definido polas observacións que van a continuación do rango sobre o que
-	se estimou o modelo cando indicas a opción <opt>out-of-sample</opt>, ou
-	ben, noutro caso, o rango da mostra definido nese momento. Cando solicitas
-	unha predición 'out-of-sample' pero non hai dispoñibles observacións
-	relevantes, amósase un fallo. Dependendo da natureza do modelo, tamén
-	poden xerarse as desviacións padrón (mira abaixo). Tamén mira abaixo
-	para indagar sobre o efecto especial da opción <opt>recursive</opt>.
+	Debe de ir despois dunha instrución de estimación. As predicións
+	xéranse para certo rango de observacións que será, ben o definido
+	cando indicas <repl>obsinicio</repl> e <repl>obsfin</repl> (de ser
+	posible), ben o definido polas observacións que van a continuación
+	do rango sobre o que se estimou o modelo cando indicas a opción
+	<opt>out-of-sample</opt>, ou ben, noutro caso, o rango da mostra
+	definido nese momento. Cando solicitas unha predición 'out-of-sample'
+	pero non hai dispoñibles observacións relevantes, amósase un fallo.
+	Dependendo da natureza do modelo, tamén poden xerarse as desviacións
+	padrón (mira abaixo). Tamén mira abaixo para indagar sobre o efecto
+	especial da opción <opt>recursive</opt>.
       </para>
 
       <para context="cli">
-	Se o derradeiro modelo estimado ten unha única ecuación, entón o
-	argumento <repl>nomev</repl> (opcional) ten o seguinte efecto: non se
-	presentan os valores da predición, senón que se gardan no conxunto de
-	datos co nome indicado. Se o último modelo é un sistema de ecuacións,
-	<repl>nomev</repl> ten un efecto distinto xa que concretamente escolle
-	unha variable endóxena en particular para facer a predición (pois por
-	defecto xéranse as predicións para todas as variables endóxenas). No
-	caso dun sistema ou se non indicas <repl>nomev</repl>, podes recuperar
-	os valores de predición utilizando o accesorio <lit>$fcast</lit> e, se
-	están dispoñibles, as desviacións padrón mediante <lit>$fcse</lit>.
+	Se o derradeiro modelo estimado ten unha única ecuación, entón
+	o argumento <repl>nomev</repl> (opcional) ten o seguinte efecto:
+	non se presentan os valores da predición, senón que se gardan no
+	conxunto de datos co nome indicado. Se o último modelo é un sistema
+	de ecuacións, <repl>nomev</repl> ten un efecto distinto xa que
+	concretamente escolle unha variable endóxena en particular para facer
+	a predición (pois por defecto xéranse as predicións para todas as
+	variables endóxenas). No caso dun sistema ou se non indicas
+	<repl>nomev</repl>, podes recuperar os valores de predición utilizando
+	o accesorio <fncref targ="$fcast"/> e, se están dispoñibles, as
+	desviacións padrón mediante <fncref targ="$fcse"/>.
       </para>
 
       <para>
@@ -4112,7 +4114,7 @@
       </para>
       <para>
 	Cando non indicas o argumento <repl>nivel</repl> (opcional), o nivel
-	para a(s) probas(s) establécese automaticamente como o número menor
+	para a(s) proba(s) establécese automaticamente como o número menor
 	entre <math>T</math>/2 e <math>T</math><sup>0.6</sup>.
       </para>
       <para>
@@ -4481,7 +4483,7 @@
 	desde que se escribiu o seguinte texto de axuda, por iso para
 	comprender e actualizar a información sobre esta instrución, deberás
 	de seguir a referencia do <guideref targ="chap:genr"/>. Por outra banda,
-	esta	axuda non contén nada actualmente incorrecto, polo que interpreta
+	esta axuda non contén nada actualmente incorrecto, polo que interpreta
 	o que sigue como <quote>tes isto, e máis</quote>.
       </para>
 
@@ -5241,7 +5243,7 @@
 
     <gui-access>
       <menu-path>/Ver/Gráfica de variables indicadas</menu-path>
-      <other-access>Fiestra principal: Menú emerxente, botón de gráficas na barra de ferramentas</other-access>
+      <other-access>Xanela principal: Menú emerxente, botón de gráficas na barra de ferramentas</other-access>
     </gui-access>
 
   </command>
@@ -5353,7 +5355,7 @@
     <description>
 
       <para>
-	A sesión <quote>Paxina de gráficas</quote> vai funcionar só cando
+	A sesión <quote>Páxina de gráficas</quote> vai funcionar só cando
 	teñas instalado o sistema de composición tipográfica &latex;, e podas
 	xerar e ver un resultado PDF ou PostScript.
       </para>
@@ -5640,8 +5642,8 @@
 	<li>
 	  <para>
 	    <emphasis>Proba dos rangos con signo</emphasis>: Realízase
-	    a proba dos rangos con signo	de Wilcoxon, que está ideada
-	    para pares de datos emparellados como, por exemplo, os pares
+	    a proba dos rangos con signo de Wilcoxon, que está ideada
+	    para pares de datos ligados como, por exemplo, os pares
 	    de valores dunha mesma variable nunha mostra de individuos,
 	    antes e despois dalgún tratamento. A proba desenvólvese
 	    calculando as diferenzas entre as observacións emparelladas
@@ -6053,7 +6055,7 @@
 	Como punto de referencia, se <math>x</math> é unha variable ruído
 	branco (con media e persistencia nulas) entón o rango do seu
 	<quote>paseo</quote> (forma un paseo aleatorio) acumulado e
-	escalado pola súa desviación típica, ten un crecemento igual á
+	escalado pola súa desviación padrón, ten un crecemento igual á
 	raíz cadrada do tamaño da mostra, proporcionando un expoñente
 	de Hurst agardado de 0.5. Os valores do expoñente que estean
 	significativamente por encima de 0.5 indican persistencia, e os
@@ -6181,7 +6183,7 @@
 
     <gui-access>
       <menu-path>/Datos/Información do conxunto de datos</menu-path>
-      <other-access>Fiestras do procurador de datos</other-access>
+      <other-access>Xanelas do procurador de datos</other-access>
     </gui-access>
 
   </command>
@@ -6802,7 +6804,7 @@
       <para>
 	A opción <opt>bylag</opt> ten sentido só cando <repl>listavariables</repl>
 	contén máis dunha serie e o nivel máximo de retardos é maior ca 1.
-	Por defecto, engádense os termos	retardados ao conxunto de datos
+	Por defecto, engádense os termos retardados ao conxunto de datos
 	por variable: primeiro todos os retardos da primeira serie da lista,
 	despois todos os retardos da segunda serie, etcétera. Pero cando
 	indicas <opt>bylag</opt>, a ordenación faise por retardos: primeiro
@@ -8471,7 +8473,7 @@
       </para>
       <para>
 	Por defecto, o programa presenta a regresión auxiliar na que se
-	basea o estatístico de proba, sé é aplicable. Podes eliminar isto
+	basea o estatístico de proba, se é aplicable. Podes eliminar isto
 	utilizando a opción <opt>quiet</opt> (presentación mínima de
 	resultados) ou a opción <opt>silent</opt> (non presenta ningún
 	resultado). Podes recuperar o estatístico de proba e a súa
@@ -8495,7 +8497,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Fiestra de modelo: Probas</menu-path>
+      <menu-path>Xanela de modelo: Probas</menu-path>
     </gui-access>
 
   </command>
@@ -9902,7 +9904,7 @@
 
     <gui-access>
       <menu-path>/Ver/Compoñentes principais</menu-path>
-      <other-access>Xanela principal: Menú emerxente (selección múltiple)</other-access>
+      <other-access>Xanela principal: Menú emerxente (tras selección múltiple)</other-access>
     </gui-access>
 
   </command>
@@ -10740,7 +10742,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Fiestra de modelo: Probas/Proba QLR</menu-path>
+      <menu-path>Xanela de modelo: Probas/Proba QLR</menu-path>
     </gui-access>
 
   </command>
@@ -10980,7 +10982,7 @@
 
     <gui-access>
       <menu-path>/Variable/Editar atributos</menu-path>
-      <other-access>Fiestra principal: Menú emerxente (selección única)</other-access>
+      <other-access>Xanela principal: Menú emerxente (selección única)</other-access>
     </gui-access>
 
   </command>
@@ -11096,7 +11098,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Fiestra de modelo: Probas/Proba RESET de Ramsey</menu-path>
+      <menu-path>Xanela de modelo: Probas/Proba RESET de Ramsey</menu-path>
     </gui-access>
 
   </command>
@@ -11209,7 +11211,7 @@
 	estimacións dos coeficientes restrinxidos; para eliminar isto, engade a
 	opción <opt>quiet</opt> á instrución <lit>restrict</lit> inicial. Como
 	alternativa á proba de Wald, para modelos estimados mediante MCO ou MCP
-	unicamente, podes indicar a opción <opt>bootstrap</opt> para realizar a
+	unicamente, podes indicar a opción <opt>bootstrap</opt> para realizar
 	a proba da restrición con remostraxe automática (bootstrap).
       </para>
       <para>
@@ -11283,7 +11285,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Fiestra de modelo: Probas/Restricións lineais</menu-path>
+      <menu-path>Xanela de modelo: Probas/Restricións lineais</menu-path>
     </gui-access>
 
   </command>
@@ -11802,7 +11804,7 @@
       <para>
 	<emphasis>Habilitar autorecheo</emphasis>: Se marcas isto, se te
 	ofrecerá a posibilidade de completar a palabra que esteas tecleando,
-	en basea ás palabras que xa introduciches na xanela ou lapela do
+	en base ás palabras que xa introduciches na xanela ou lapela do
 	editor. Para escoller unha das posibilidades, utiliza as teclas de
 	frechas arriba/abaixo e a tecla <lit>Intro</lit>; ou simplemente
 	segue tecleando para descartar os termos suxeridos.
@@ -13383,7 +13385,7 @@
 
     <gui-access>
       <menu-path>/Ver/Estatísticos principais</menu-path>
-      <other-access>Fiestra principal: Menú emerxente</other-access>
+      <other-access>Xanela principal: Menú emerxente</other-access>
     </gui-access>
 
   </command>
@@ -14438,7 +14440,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Fiestra de modelo: Análise/Multicolinearidade</menu-path>
+      <menu-path>Xanela de modelo: Análise/Multicolinearidade</menu-path>
     </gui-access>
 
   </command>
@@ -14667,7 +14669,7 @@
 
     <gui-access>
       <menu-path>/Ver/Correlograma cruzado</menu-path>
-      <other-access>Xanela principal: Menú emerxente (selección múltiple)</other-access>
+      <other-access>Xanela principal: Menú emerxente (tras selección múltiple)</other-access>
     </gui-access>
 
   </command>
