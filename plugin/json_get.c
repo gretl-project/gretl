@@ -458,7 +458,6 @@ static int jb_add_bundle (jbundle *jb, const char *name,
 
 static int jb_do_object (JsonReader *reader, jbundle *jb)
 {
-    gretl_bundle *btop = jb->curr;
     const gchar *name;
     gchar **S = NULL;
     int i, n, err = 0;
@@ -478,15 +477,15 @@ static int jb_do_object (JsonReader *reader, jbundle *jb)
     for (i=0; i<n && !err; i++) {
 	json_reader_read_member(reader, S[i]);
 	if (json_reader_is_object(reader)) {
-	    if (is_excluded (jb, reader)) {
-		json_reader_end_member(reader);
-		continue;
+	    if (!is_excluded (jb, reader)) {
+		gretl_bundle *bsave = jb->curr;
+
+		err = jb_add_bundle(jb, S[i], NULL, 0);
+		if (!err) {
+		    err = jb_do_object(reader, jb);
+		}
+		jb->curr = bsave;
 	    }
-	    err = jb_add_bundle(jb, S[i], NULL, 0);
-	    if (!err) {
-		err = jb_do_object(reader, jb);
-	    }
-	    jb->curr = btop;
 	} else if (json_reader_is_array(reader)) {
 	    err = jb_do_array(reader, jb);
 	} else if (json_reader_is_value(reader)) {
@@ -578,8 +577,10 @@ static int jb_do_array (JsonReader *reader, jbundle *jb)
 	    if (!err) {
 		gretl_bundle *bsave = jb->curr;
 
-		jb_add_bundle(jb, NULL, a, i);
-		err = jb_do_object(reader, jb);
+		err = jb_add_bundle(jb, NULL, a, i);
+		if (!err) {
+		    err = jb_do_object(reader, jb);
+		}
 		jb->curr = bsave;
 	    }
 	} else if (json_reader_is_array(reader)) {
