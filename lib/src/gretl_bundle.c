@@ -1085,7 +1085,7 @@ static int real_bundle_set_data (gretl_bundle *b, const char *key,
 				 int size, int copy,
 				 const char *note)
 {
-    int err, done = 0;
+    int err = 0, done = 0;
 
 #if 0 /* allow arbitrarily long keys? */
     err = strlen(key) >= VNAMELEN ? E_DATA : 0;

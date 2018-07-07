@@ -1,3 +1,5 @@
+include dbnomics_private.inp
+
 function void dbnomics_bundle_print(const bundle b, bool print_data[0])
     if b.error
         printf "dbnomics_bundle_print: bundle has error flag set\n"
@@ -121,15 +123,16 @@ function bundle dbnomics_get_series (const string datacode, bool verbose[0],
     string msg
     string parms = "series?series_ids=" ~ datacode ~ "&offset=0&format=json"
     ret.error = dbn_get_json(parms, verbose, &json, &msg)
-    if ret.error
-        ret.errmsg = msg
-        return ret
-    endif
 
     if exists(from_json)
         from_json = json
     endif
 
+    if ret.error
+        ret.errmsg = msg
+        return ret
+    endif
+    
     strings S = strsplit(datacode,, "/")
     ret.provider = S[1]
     ret.dataset = S[2]

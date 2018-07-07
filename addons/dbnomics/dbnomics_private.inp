@@ -1,5 +1,5 @@
 function bundle json2bndl(const strings fields, const string jsonobj,
-			  const string root, int ndx)
+      const string root, int ndx)
     bundle b = null
     k = 0
     loop j = 1..nelem(fields) --quiet
@@ -37,7 +37,7 @@ function scalar get_frequency(const string json_obj)
         frq = jsonget(json_obj, s, &got)
         if got
             frq = tolower(frq[1])
-	    break
+            break
         endif
     endloop
 
@@ -64,7 +64,7 @@ end function
 ### ------------------------------------------------------------------------
 
 function string get_alternatives(const string json_obj, const string root,
-				 const strings alternatives)
+      const strings alternatives)
     got = 0
     ret = ""
     loop i=1..nelem(alternatives) --quiet
@@ -137,14 +137,14 @@ function scalar fill_series_bundle(bundle *b, const string json, int idx)
     b.has_data = (actobs > 0)
 
     if b.has_data
-	b.vals = zeros(actobs,1)
-	strings b.periods = array(actobs)
-	scalar j = 1
-	loop i=istart..n -q
+        b.vals = zeros(actobs,1)
+        strings b.periods = array(actobs)
+        scalar j = 1
+        loop i=istart..n -q
             b.vals[j] = atof(datavals[i])
             b.periods[j] = periods[i]
             j++
-	endloop
+        endloop
     endif
 
     return 0
@@ -155,16 +155,16 @@ end function
 function string make_dimensions(const bundle spec, const string what)
     ret = ""
     if inbundle(spec, what)
-	strings ss = spec[what]
-	ret ~= sprintf("\"%s\":[", what)
-	loop i = 1 .. nelem(ss) --quiet
+        strings ss = spec[what]
+        ret ~= sprintf("\"%s\":[", what)
+        loop i = 1 .. nelem(ss) --quiet
             ret ~= sprintf("\"%s\"", ss[i])
             if i < nelem(ss)
-		ret ~= ","
+                ret ~= ","
             else
-		ret ~= "]"
+                ret ~= "]"
             endif
-	endloop
+        endloop
     endif
     return ret
 end function
@@ -183,18 +183,18 @@ function string build_URL_mid(const bundle spec)
     strings dims = getkeys(spec)
     n = 0
     loop i = 1..nelem(dims) --quiet
-	s = make_dimensions(spec, dims[i])
-	if strlen(s) > 0
-	    n++
-	    filters = filters + defarray(s)
-	endif
+        s = make_dimensions(spec, dims[i])
+        if strlen(s) > 0
+            n++
+            filters = filters + defarray(s)
+        endif
     endloop
 
     loop i = 1..n --quiet
-	ret ~= filters[i]
-	if i < n
-	    ret ~= ", "
-	endif
+        ret ~= filters[i]
+        if i < n
+            ret ~= ", "
+        endif
     endloop
 
     ret = ret ~ "}&"
@@ -204,10 +204,10 @@ end function
 ### ------------------------------------------------------------------------
 
 function string build_parms(const string pcode, const string dcode,
-			    int limit[0::20], int offset[0],
-			    bundle spec)
+      int limit[0::20], int offset[0],
+      bundle spec)
     string head = sprintf("series?provider_code=%s&dataset_code=%s&",
-			  pcode, dcode)
+      pcode, dcode)
     string mid = build_URL_mid(spec)
     string tail = sprintf("limit=%d&offset=%d&format=json", limit, offset)
     ret = head ~ sanitize_url(mid) ~ tail
@@ -217,7 +217,7 @@ end function
 ### ------------------------------------------------------------------------
 
 # This is tricky: we may not get a recognizable error code,
-# or even an error message, on failure to retrieve any data.
+  # or even an error message, on failure to retrieve any data.
 
 function scalar bad_json (const string s, string *msg)
     ret = 0
@@ -229,7 +229,7 @@ function scalar bad_json (const string s, string *msg)
     got = 0
     msg = jsonget(s, "$.error_description", &got)
     if !got
-       msg = jsonget(s, "$.warnings", &got)
+        msg = jsonget(s, "$.warnings", &got)
     endif
     if ret == 0 && got
         ret = got
@@ -240,31 +240,31 @@ end function
 ### ------------------------------------------------------------------------
 
 function scalar dbn_get_json (const string parms, bool verbose[0],
-			      string *json, string *msg[null])
+      string *json, string *msg[null])
     URL = "https://api.next.nomics.world/" ~ parms
     if verbose
-	printf "URL = '%s'\n", URL
+        printf "URL = '%s'\n", URL
     endif
     req = defbundle("URL", URL, "header", "accept: application/json")
     # check for curl error
     error = curl(&req)
     string mymsg
     if error
-	mymsg = req.errmsg
+        mymsg = req.errmsg
     else
-	# also check for dbnomics error condition
+        # also check for dbnomics error condition
         json = req.output
-	string dbnmsg
-	error = bad_json(json, &dbnmsg)
-	if error
-	    mymsg = sprintf("error message from dbnomics:\n\"%s\"\n", dbnmsg)
-	endif
+        string dbnmsg
+        error = bad_json(json, &dbnmsg)
+        if error
+            mymsg = sprintf("error message from dbnomics:\n\"%s\"\n", dbnmsg)
+        endif
     endif
     if error
-	printf "%s", mymsg
-	if exists(msg)
-	    msg = mymsg
-	endif
+        printf "%s", mymsg
+        if exists(msg)
+            msg = mymsg
+        endif
     endif
     return error
 end function
