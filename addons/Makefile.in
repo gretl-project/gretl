@@ -21,6 +21,7 @@ else
 endif
 
 SUBDIRS = gig ivpanel SVAR HIP dbnomics
+XMLSUBDIRS = gig ivpanel SVAR HIP
 ALLSUBDIRS = gig ivpanel SVAR HIP dbnomics
 
 .PHONY : subdirs $(SUBDIRS) clean installdirs install install-private
@@ -30,11 +31,11 @@ subdirs: $(SUBDIRS)
 $(SUBDIRS):
 	$(MAKE) -C $@
 
-addons.xml: gfnindex $(SUBDIRS)
-	./gfnindex $(SUBDIRS) > $@
+addons.xml: gfnindex $(XMLSUBDIRS)
+	./gfnindex $(XMLSUBDIRS) > $@
 
-addons-i18n.c: gfnstrings $(SUBDIRS)
-	./gfnstrings $(SUBDIRS) > $@
+addons-i18n.c: gfnstrings $(XMLSUBDIRS)
+	./gfnstrings $(XMLSUBDIRS) > $@
 
 gfnindex: gfnindex.c
 	$(CC) -o $@ $<
