@@ -33,7 +33,7 @@
 #define null_node(n) (n == NULL || json_node_is_null(n))
 
 /* We don't want to leak memory allocated for @node, but it
-   should not be freed directory if it's the root node of
+   should not be freed directly if it's the root node of
    @parser.
 */
 
@@ -679,7 +679,6 @@ gretl_bundle *json_get_bundle (const char *data,
 			       int *err)
 {
     gretl_bundle *ret = NULL;
-    const char *path = NULL;
     jbundle jb = {0};
     JsonNode *root;
     JsonParser *parser = NULL;
@@ -691,7 +690,7 @@ gretl_bundle *json_get_bundle (const char *data,
 	return NULL;
     }
 
-    root = get_root_for_data(data, path, &parser, 1, err);
+    root = get_root_for_data(data, NULL, &parser, 1, err);
     if (*err) {
 	return NULL;
     }
@@ -703,9 +702,8 @@ gretl_bundle *json_get_bundle (const char *data,
     jb.b0 = gretl_bundle_new();
     jb.curr = jb.b0;
 
-    gretl_push_c_numeric_locale();
-
     reader = json_reader_new(root);
+    gretl_push_c_numeric_locale();
 
     if (json_reader_is_object(reader)) {
 	*err = jb_do_object(reader, &jb);
@@ -716,8 +714,8 @@ gretl_bundle *json_get_bundle (const char *data,
     }
 
     gretl_pop_c_numeric_locale();
-
     g_object_unref(reader);
+
     json_deallocate(root, parser);
 
     if (*err) {
