@@ -452,7 +452,9 @@ static int jb_add_bundle (jbundle *jb, const char *name,
 	}
     }
 
-    if (!err) {
+    if (err) {
+	gretl_bundle_destroy(b);
+    } else {
 	jb->curr = b;
     }
 
