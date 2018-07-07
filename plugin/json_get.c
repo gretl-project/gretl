@@ -443,8 +443,13 @@ static int jb_add_bundle (jbundle *jb, const char *name,
     } else if (a != NULL) {
 	err = gretl_array_set_bundle(a, i, b, 0);
     } else {
-	err = gretl_bundle_donate_data(jb->curr, name, b,
-				       GRETL_TYPE_BUNDLE, 0);
+	if (name == NULL || *name == '\0') {
+	    gretl_errmsg_set("JSON object member name is missing");
+	    err = E_DATA;
+	} else {
+	    err = gretl_bundle_donate_data(jb->curr, name, b,
+					   GRETL_TYPE_BUNDLE, 0);
+	}
     }
 
     if (!err) {
