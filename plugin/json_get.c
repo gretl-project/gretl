@@ -623,7 +623,7 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
     fprintf(stderr, "  got value: name='%s', type %s\n", name, typename);
 #endif
 
-    if (a == NULL && name == NULL) {
+    if (a == NULL && (name == NULL || name[0] == '\0')) {
 	name = "anon";
     }
 
