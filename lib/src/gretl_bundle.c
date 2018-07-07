@@ -1094,6 +1094,11 @@ static int real_bundle_set_data (gretl_bundle *b, const char *key,
 	gretl_errmsg_sprintf("'%s': invalid key string", key);
 	return err;
     }
+#else
+    if (key == NULL || key[0] == '\0') {
+	gretl_errmsg_sprintf("real_bundle_set_data: missing key string");
+	return E_DATA;
+    }
 #endif
 
     if (b->type == BUNDLE_KALMAN) {

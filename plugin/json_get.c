@@ -544,10 +544,9 @@ static int jb_do_array (JsonReader *reader, jbundle *jb)
     /* Arrays can be packed only into bundles, and that
        requires a key, so it's a problem if an array
        node doesn't have a name. Hopefully this should
-       occur only if we're using a path spec, such that
-       the "root" node becomes an array.
+       occur only if the "root" node is itself an array.
     */
-    if (name == NULL) {
+    if (name == NULL || name[0] == '\0') {
 	name = "anon";
     }
 
