@@ -52,7 +52,7 @@ function scalar get_frequency(const string json_obj)
             scalar ret = 12
         elif frq == "d"
             scalar ret = 7
-        else # unrecognised
+        else
             printf "frq = \"%s\" unrecognized\n", frq
             scalar ret = -1
         endif
@@ -60,23 +60,6 @@ function scalar get_frequency(const string json_obj)
 
     return ret
 end function
-
-### ------------------------------------------------------------------------
-
-function string get_alternatives(const string json_obj, const string root,
-      const strings alternatives)
-    got = 0
-    ret = ""
-    loop i=1..nelem(alternatives) --quiet
-        s = sprintf("%s%s", root, alternatives[i])
-        ret = jsonget(json_obj, s, &got)
-        if got
-            break
-        endif
-    endloop
-    return ret
-end function
-
 
 ### ------------------------------------------------------------------------
 
@@ -101,10 +84,8 @@ function scalar fill_series_bundle(bundle *b, const string json, int idx)
 
     string line
 
-    string root = sprintf("$.series.data%s", istr)
-    s = get_alternatives(json, root, defarray(".period", ".periods"))
-    # qry = sprintf("$.series.data%s..period", istr)
-    # s = jsonget(json, qry)
+    qry = sprintf("$.series.data%s..period", istr)
+    s = jsonget(json, qry)
 
     strings periods
     loop while getline(s, line) -q
@@ -112,9 +93,8 @@ function scalar fill_series_bundle(bundle *b, const string json, int idx)
     endloop
     n = nelem(periods)
 
-    s = get_alternatives(json, root, defarray(".value", ".values"))
-    # qry = sprintf("$.series.data%s..value", istr)
-    # s = jsonget(json, qry)
+    qry = sprintf("$.series.data%s..value", istr)
+    s = jsonget(json, qry)
     strings datavals
     loop while getline(s, line) -q
         datavals += line
