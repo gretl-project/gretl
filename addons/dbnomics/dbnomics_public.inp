@@ -187,30 +187,34 @@ end function
 ### ------------------------------------------------------------------------
 
 function void dbnomics_get_dataset_dimensions(const string pcode,
-    const string dcode)
+      const string dcode)
     
     URL = sprintf("https://api.next.nomics.world/%s/%s/series?limit=0&offset=0", \
       pcode, dcode)
       
     s = readfile(URL)
     b = jsongetb(s)
-    bb = b.series_dimensions_facets
 
-    dims = getkeys(bb)
-    loop i = 1 .. nelem(dims) --quiet
-        di = dims[i]
-        v = bb[di]
-        vv = v["values"]
-        nv = nelem(vv)
-        kv = getkeys(vv)
-        printf "%s (%s); %d elements\n", di, v.label, nv
+    c_order = strsplit(jsonget(s, "$.dataset.dimensions_codes_order"),"\n")
+    c_labels = jsonget(s, "$.dataset.dimensions_labels") # wrong order!
+    ndims = nelem(c_order)
+
+    bf = b["series_dimensions_facets"]
+    loop i = 1 .. ndims --quiet # loop over dimensions
+        ci = c_order[i]
+        bfi = bf[ci]
+        string label = inbundle(bfi, "label") ? " (" ~ bfi.label ~ ")" : ""
+        vals = bfi.values
+        nv = nelem(vals)
+        printf "%s%s; %d elements\n", ci, label, nv
         loop j = 1 .. nv --quiet
-            kvj = kv[j]
-            if inbundle(vv[kvj], "label")
-                desc = vv[kvj].label
-                printf "\t%s (%s)\n", kvj, desc
+            kvj = vals[j]
+            code = kvj.code
+            if inbundle(kvj, "label")
+                desc = kvj.label
+                printf "\t%s (%s)\n", code, desc
             else
-                printf "\t%s\n", kvj
+                printf "\t%s\n", code
             endif
         endloop
         printf("\n")
