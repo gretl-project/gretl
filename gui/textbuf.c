@@ -2610,6 +2610,21 @@ static int line_broken (const char *s)
     return ret;
 }
 
+static void strip_trailing_whitespace (char *s)
+{
+    int i, n = strlen(s);
+
+    for (i=n-1; i>=0; i--) {
+	if (s[i] == '\n' || s[i] == ' ' || s[i] == '\t') {
+	    s[i] = '\0';
+	} else {
+	    break;
+	}
+    }
+
+    strcat(s, "\n");
+}
+
 static void normalize_indent (GtkTextBuffer *tbuf, 
 			      const gchar *buf,
 			      GtkTextIter *start,
@@ -2635,6 +2650,8 @@ static void normalize_indent (GtkTextBuffer *tbuf,
 
     while (bufgets(line, sizeof line, buf)) {
 	int handled = 0;
+
+	strip_trailing_whitespace(line);
 
 	if (string_is_blank(line)) {
 	    gtk_text_buffer_insert(tbuf, start, line, -1);
