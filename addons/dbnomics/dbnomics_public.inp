@@ -144,8 +144,8 @@ end function
 
 ### ------------------------------------------------------------------------
 
-function bundles dbnomics_get_multiple(const string pcode,
-      const string dcode,
+function bundles dbnomics_get_multiple(const string provider,
+      const string dset,
       int limit[0::20],
       int offset[0],
       bundle spec[null])
@@ -155,7 +155,7 @@ function bundles dbnomics_get_multiple(const string pcode,
 
     bundles ret = null
     string json
-    string parms = build_parms(pcode, dcode, limit, offset, spec)
+    string parms = build_parms(provider, dset, limit, offset, spec)
     err = dbn_get_json(parms, 0, &json)
     if err
         return ret # or use funcerr?
@@ -186,11 +186,11 @@ end function
 
 ### ------------------------------------------------------------------------
 
-function bundles dbnomics_get_dataset_dimensions(const string pcode,
-      const string dcode, bool verbose[0])
+function bundles dbnomics_get_dataset_dimensions(const string provider,
+      const string dset, bool verbose[0])
     
     URL = sprintf("https://api.next.nomics.world/%s/%s/series?limit=0&offset=0", \
-      pcode, dcode)
+      provider, dset)
       
     s = readfile(URL)
     n = 0
@@ -240,14 +240,14 @@ end function
 
 ### ------------------------------------------------------------------------
 
-function bundles dbnomics_get_dataset_content(const string pcode,
-      const string dcode,
+function bundles dbnomics_get_dataset_content(const string provider,
+      const string dset,
       int limit[0::100],
       int offset[0])
     bundles ret = null
     string json
-    parms = sprintf("%s/%s/series?limit=%d&offset=%d", pcode,
-      dcode, limit, offset)
+    parms = sprintf("%s/%s/series?limit=%d&offset=%d", provider,
+      dset, limit, offset)
     err = dbn_get_json(parms, 0, &json)
     if err
         return ret
