@@ -72,4 +72,6 @@ int add_dbnomics_data (windata_t *vwin);
 
 int show_dbnomics_data (windata_t *vwin, int plot);
 
+void dbnomics_search (gchar *key, windata_t *vwin);
+
 #endif

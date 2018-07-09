@@ -1893,6 +1893,50 @@ void open_dbnomics_series (GtkWidget *w, gpointer data)
     g_free(datacode);
 }
 
+void dbnomics_search (gchar *key, windata_t *vwin)
+{
+    gretl_array *a;
+    PRN *prn = NULL;
+    int err = 0;
+
+    a = dbnomics_search_call(key, 50, 0, &err);
+
+    if (!err) {
+	err = bufopen(&prn);
+    }
+
+    if (!err) {
+	const char *pcode, *dcode, *name;
+	int i, n, n_ok = 0;
+	gretl_bundle *b;
+
+	n = gretl_array_get_length(a);
+
+	pprintf(prn, "Results of DB.NOMICS search on '%s'\n\n", key);
+
+	for (i=0; i<n; i++) {
+	    b = gretl_array_get_bundle(a, i);
+	    pcode = gretl_bundle_get_string(b, "provider_code", NULL);
+	    dcode = gretl_bundle_get_string(b, "code", NULL);
+	    name = gretl_bundle_get_string(b, "name", NULL);
+	    if (pcode != NULL && dcode != NULL && name != NULL) {
+		pprintf(prn, "%d %s/%s : %s\n\n", i+1, pcode, dcode, name);
+		n_ok++;
+	    }
+	}
+	if (n_ok > 0) {
+	    const char *title = "gretl: DB.NOMICS search results";
+
+	    view_buffer(prn, 78, 350, title, VIEW_DOC, NULL);
+	} else {
+	    gretl_print_destroy(prn);
+	}
+    }
+
+    /* it's a GTK-allocated string */
+    g_free(key);
+}
+
 void open_db_index (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;

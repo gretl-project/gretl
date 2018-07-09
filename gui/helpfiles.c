@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* helpfiles.c for gretl */
@@ -27,6 +27,7 @@
 #include "menustate.h"
 #include "toolbar.h"
 #include "winstack.h"
+#include "database.h"
 
 #ifdef G_OS_WIN32
 # include "gretlwin32.h"
@@ -54,11 +55,11 @@ static void helpwin_set_topic_index (windata_t *hwin, int idx);
 static void find_in_text (GtkWidget *button, GtkWidget *dialog);
 static void find_in_listbox (GtkWidget *button, GtkWidget *dialog);
 static void find_string_dialog (void (*findfunc)(), windata_t *vwin);
-static gboolean real_find_in_text (GtkTextView *view, const gchar *s, 
+static gboolean real_find_in_text (GtkTextView *view, const gchar *s,
 				   gboolean sensitive,
-				   gboolean from_cursor, 
+				   gboolean from_cursor,
 				   gboolean search_all);
-static gboolean real_find_in_listbox (windata_t *vwin, const gchar *s, 
+static gboolean real_find_in_listbox (windata_t *vwin, const gchar *s,
 				      gboolean sensitive,
 				      gboolean vnames);
 static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin);
@@ -129,8 +130,8 @@ static struct gui_help_item gui_help_items[] = {
     { DATASORT,       "datasort" },
     { WORKDIR,        "workdir" },
     { DFGLS,          "dfgls" },
-    { GPT_ADDLINE,    "addline" }, 
-    { GPT_CURVE,      "curve" }, 
+    { GPT_ADDLINE,    "addline" },
+    { GPT_CURVE,      "curve" },
     { SAVE_SESSION,   "save-session" },
     { SAVE_CMD_LOG,   "save-script" },
     { BFGS_CONFIG,    "bfgs-config" },
@@ -157,7 +158,7 @@ static struct gui_help_item gui_help_items[] = {
     { -1,             NULL },
 };
 
-/* state the topic headings from the script help files so they 
+/* state the topic headings from the script help files so they
    can be translated */
 
 const char *intl_topics[] = {
@@ -264,7 +265,7 @@ enum {
     NUM_COLS
 };
 
-static void help_tree_select_row (GtkTreeSelection *selection, 
+static void help_tree_select_row (GtkTreeSelection *selection,
 				  windata_t *hwin)
 {
     GtkTreeIter iter;
@@ -277,8 +278,8 @@ static void help_tree_select_row (GtkTreeSelection *selection,
     if (!gtk_tree_model_iter_has_child(model, &iter)) {
 	int pos, idx;
 
-	gtk_tree_model_get(model, &iter, 
-			   POSITION_COL, &pos, 
+	gtk_tree_model_get(model, &iter,
+			   POSITION_COL, &pos,
 			   INDEX_COL, &idx,
 			   -1);
 
@@ -286,10 +287,10 @@ static void help_tree_select_row (GtkTreeSelection *selection,
 	    /* not already in position */
 	    real_do_help(idx, pos, hwin->role);
 	}
-    }    
+    }
 }
 
-static int get_section_iter (GtkTreeModel *model, const char *s, 
+static int get_section_iter (GtkTreeModel *model, const char *s,
 			     GtkTreeIter *iter)
 {
     gchar *sect;
@@ -358,7 +359,7 @@ static GtkTreeStore *make_help_topics_tree (int role)
     char word[16], sect[32];
     const char *heading;
     int pos = 0, idx = 0;
-    int err; 
+    int err;
 
     if (role == CMD_HELP) {
 	fname = helpfile_path(GRETL_CMDREF, 0, 0);
@@ -374,7 +375,7 @@ static GtkTreeStore *make_help_topics_tree (int role)
 	fname = helpfile_path(GRETL_FUNCREF, 0, 1);
     } else {
 	return NULL;
-    } 
+    }
 
     err = gretl_file_get_contents(fname, &buf, NULL);
     if (err) {
@@ -391,7 +392,7 @@ static GtkTreeStore *make_help_topics_tree (int role)
     s = buf;
 
     while (*s) {
-	if (*s == '\n' && *(s+1) == '#' && 
+	if (*s == '\n' && *(s+1) == '#' &&
 	    *(s+2) != '#' && *(s+2) != '\0') {
 	    if (sscanf(s+2, "%15s %31s", word, sect) == 2) {
 		if (funcref_role(role)) {
@@ -401,12 +402,12 @@ static GtkTreeStore *make_help_topics_tree (int role)
 		}
 		if (!get_section_iter(GTK_TREE_MODEL(store), heading, &parent)) {
 		    gtk_tree_store_append(store, &parent, NULL);
-		    gtk_tree_store_set(store, &parent, 
+		    gtk_tree_store_set(store, &parent,
 				       STRING_COL, heading,
-				       POSITION_COL, 0, 
+				       POSITION_COL, 0,
 				       INDEX_COL, 0,
 				       -1);
-		} 
+		}
 		gtk_tree_store_append(store, &iter, &parent);
 		if (funcref_role(role)) {
 		    ++idx;
@@ -414,10 +415,10 @@ static GtkTreeStore *make_help_topics_tree (int role)
 		    idx = gui_help_topic_index(word);
 		} else {
 		    idx = gretl_command_number(word);
-		} 
-		gtk_tree_store_set(store, &iter, 
+		}
+		gtk_tree_store_set(store, &iter,
 				   STRING_COL, word,
-				   POSITION_COL, pos + 1, 
+				   POSITION_COL, pos + 1,
 				   INDEX_COL, idx,
 				   -1);
 	    }
@@ -425,7 +426,7 @@ static GtkTreeStore *make_help_topics_tree (int role)
 	s++;
 	pos++;
     }
-    
+
     g_free(buf);
 
     return store;
@@ -485,7 +486,7 @@ int add_help_navigator (windata_t *vwin, GtkWidget *hp)
     g_object_set(view, "enable-tree-lines", TRUE, NULL);
 
     renderer = gtk_cell_renderer_text_new();
-    
+
     column = gtk_tree_view_column_new_with_attributes("",
 						      renderer,
 						      "text", 0,
@@ -513,7 +514,7 @@ int add_help_navigator (windata_t *vwin, GtkWidget *hp)
     return 0;
 }
 
-static int help_attr_from_word (const char *word, 
+static int help_attr_from_word (const char *word,
 				int role, int col)
 {
     GtkTreeModel *model;
@@ -535,7 +536,7 @@ static int help_attr_from_word (const char *word,
 		    gtk_tree_model_get(model, &child, col, &attr, -1);
 		    g_free(s);
 		    return attr;
-		} 
+		}
 		g_free(s);
 		if (!gtk_tree_model_iter_next(model, &child)) {
 		    break;
@@ -576,7 +577,7 @@ static int help_pos_from_index (int idx, int role)
 		if (tidx == idx) {
 		    gtk_tree_model_get(model, &child, POSITION_COL, &pos, -1);
 		    return pos;
-		} 
+		}
 		if (!gtk_tree_model_iter_next(model, &child)) {
 		    break;
 		}
@@ -606,7 +607,7 @@ static int help_index_from_pos (int pos, int role)
 		if (tpos == pos) {
 		    gtk_tree_model_get(model, &child, INDEX_COL, &idx, -1);
 		    return idx;
-		} 
+		}
 		if (!gtk_tree_model_iter_next(model, &child)) {
 		    break;
 		}
@@ -636,7 +637,7 @@ static gboolean help_iter_from_index (int idx, int role,
 		gtk_tree_model_get(model, iter, INDEX_COL, &fnum, -1);
 		if (idx == fnum) {
 		    return TRUE;
-		} 
+		}
 		if (!gtk_tree_model_iter_next(model, iter)) {
 		    break;
 		}
@@ -709,7 +710,7 @@ void notify_string_not_found (GtkWidget *entry)
     gtk_widget_grab_focus(entry);
     gtk_editable_select_region(GTK_EDITABLE(entry), 0, -1);
     g_signal_connect(G_OBJECT(entry), "changed",
-		     G_CALLBACK(normalize_style), context);    
+		     G_CALLBACK(normalize_style), context);
 }
 
 #endif
@@ -765,7 +766,7 @@ static gboolean finder_key_handler (GtkEntry *entry, GdkEventKey *event,
 #define starts_topic(s) (s[0]=='\n' && s[1]=='#' && s[2]==' ')
 
 /* apparatus for permitting the user to search across all the
-   "pages" in a help file 
+   "pages" in a help file
 */
 
 static int maybe_switch_page (const char *s, windata_t *hwin)
@@ -806,7 +807,7 @@ static int maybe_switch_page (const char *s, windata_t *hwin)
 	} else if (newpos != currpos && !strncmp(s, src, n)) {
 	    /* found the text on a different page */
 	    ok = 1;
-	} 
+	}
 	k++;
 	src++;
     }
@@ -850,7 +851,7 @@ static int all_lower_case (const char *s)
 static int maybe_go_to_page (windata_t *vwin)
 {
     gboolean ret = FALSE;
-    int idx, pos = 0; 
+    int idx, pos = 0;
 
     if (funcref_role(vwin->role)) {
 	/* looking for a function */
@@ -864,12 +865,12 @@ static int maybe_go_to_page (windata_t *vwin)
 	if (idx > 0) {
 	    pos = help_pos_from_index(idx, vwin->role);
 	}
-    } 
+    }
 
     if (pos > 0) {
 	real_do_help(idx, pos, vwin->role);
 	ret = TRUE;
-    }    
+    }
 
     return ret;
 }
@@ -890,17 +891,22 @@ static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin)
     sensitive = !all_lower_case(needle);
 
     if (g_object_get_data(G_OBJECT(entry), "search-all")) {
-	search_all = TRUE;
+	if (vwin->role == DBNOMICS_TOP) {
+	    dbnomics_search(needle, vwin);
+	    return;
+	} else {
+	    search_all = TRUE;
+	}
     }
 
     if (vwin->text != NULL) {
-	found = real_find_in_text(GTK_TEXT_VIEW(vwin->text), needle, 
+	found = real_find_in_text(GTK_TEXT_VIEW(vwin->text), needle,
 				  sensitive, TRUE, search_all);
     } else {
 	found = real_find_in_listbox(vwin, needle, sensitive, 0);
     }
 
-    if (!found && (vwin->role == CMD_HELP || 
+    if (!found && (vwin->role == CMD_HELP ||
 		   vwin->role == CMD_HELP_EN ||
 		   vwin->role == FUNC_HELP ||
 		   vwin->role == FUNC_HELP_EN)) {
@@ -909,7 +915,7 @@ static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin)
 
     if (!found && search_all) {
 	if (maybe_switch_page(needle, vwin)) {
-	    found = real_find_in_text(GTK_TEXT_VIEW(vwin->text), needle, 
+	    found = real_find_in_text(GTK_TEXT_VIEW(vwin->text), needle,
 				      sensitive, TRUE, TRUE);
 	}
     }
@@ -940,7 +946,21 @@ static void finder_add_options (GtkWidget *hbox, GtkWidget *entry)
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
 
     g_signal_connect(G_OBJECT(combo), "changed",
-		     G_CALLBACK(toggle_search_all_help), 
+		     G_CALLBACK(toggle_search_all_help),
+		     entry);
+}
+
+static void finder_add_dbn_options (GtkWidget *hbox, GtkWidget *entry)
+{
+    GtkWidget *combo = gtk_combo_box_text_new();
+
+    combo_box_append_text(combo, _("this window"));
+    combo_box_append_text(combo, _("all DB.NOMICS"));
+    gtk_box_pack_end(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
+
+    g_signal_connect(G_OBJECT(combo), "changed",
+		     G_CALLBACK(toggle_search_all_help),
 		     entry);
 }
 
@@ -978,13 +998,15 @@ void vwin_add_finder (windata_t *vwin)
 	vwin->role == FUNC_HELP ||
 	vwin->role == FUNC_HELP_EN) {
 	finder_add_options(hbox, entry);
+    } else if (vwin->role == DBNOMICS_TOP) {
+	finder_add_dbn_options(hbox, entry);
     }
 
     gtk_entry_set_width_chars(GTK_ENTRY(entry), 16);
     gtk_box_pack_end(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
 
 #ifdef USE_ENTRY_ICON
-    gtk_entry_set_icon_from_stock(GTK_ENTRY(entry), 
+    gtk_entry_set_icon_from_stock(GTK_ENTRY(entry),
 				  GTK_ENTRY_ICON_SECONDARY,
 				  GTK_STOCK_FIND);
     gtk_entry_set_icon_activatable(GTK_ENTRY(entry),
@@ -992,7 +1014,7 @@ void vwin_add_finder (windata_t *vwin)
 				   TRUE);
     g_signal_connect(G_OBJECT(entry), "icon-press",
 		     G_CALLBACK(finder_icon_press),
-		     vwin);    
+		     vwin);
 #else
     label = gtk_label_new(_("Find:"));
     gtk_box_pack_end(GTK_BOX(hbox), label, FALSE, FALSE, 5);
@@ -1009,7 +1031,7 @@ void vwin_add_finder (windata_t *vwin)
 #define SHOW_EN_BUTTON(r) ((translated_cmdref && (r==CMD_HELP || r==GUI_HELP)) || \
 			   (translated_fnref && r == FUNC_HELP))
 
-void set_up_helpview_menu (windata_t *hwin) 
+void set_up_helpview_menu (windata_t *hwin)
 {
     GretlToolItem *item = NULL;
     GtkWidget *hbox;
@@ -1024,7 +1046,7 @@ void set_up_helpview_menu (windata_t *hwin)
 	    continue;
 	}
 	gretl_toolbar_insert(hwin->mbar, item, item->func, hwin, -1);
-    }	
+    }
 
     gtk_box_pack_start(GTK_BOX(hwin->vbox), hbox, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox), hwin->mbar, FALSE, FALSE, 0);
@@ -1092,8 +1114,8 @@ GtkWidget *context_help_button (GtkWidget *hbox, int helpcode)
 	/* passing helpcode < 0 is a way of reserving
 	   the callback for something special
 	*/
-	g_signal_connect(G_OBJECT(button), "clicked", 
-			 G_CALLBACK(context_help), 
+	g_signal_connect(G_OBJECT(button), "clicked",
+			 G_CALLBACK(context_help),
 			 GINT_TO_POINTER(helpcode));
     }
 
@@ -1111,7 +1133,7 @@ static gboolean nullify_hwin (GtkWidget *w, windata_t **phwin)
 
 static void helpwin_set_topic_index (windata_t *hwin, int idx)
 {
-    GtkWidget *w = 
+    GtkWidget *w =
 	g_object_get_data(G_OBJECT(hwin->text), "tview");
     GtkTreeView *view = GTK_TREE_VIEW(w);
 
@@ -1125,7 +1147,7 @@ static void helpwin_set_topic_index (windata_t *hwin, int idx)
 	if (idx == 0) {
 	    ok = gtk_tree_model_get_iter_first(model, &iter);
 	} else {
-	    ok = help_iter_from_index(idx, hwin->role, &iter, 
+	    ok = help_iter_from_index(idx, hwin->role, &iter,
 				      &parent);
 	}
 
@@ -1196,7 +1218,7 @@ static windata_t *real_do_help (int idx, int pos, int role)
 	hwin = en_func_hwin;
 	fname = helpfile_path(GRETL_FUNCREF, 0, 1);
 	en = 1;
-    }	
+    }
 
     if (hwin != NULL) {
 	gtk_window_present(GTK_WINDOW(hwin->main));
@@ -1223,7 +1245,7 @@ static windata_t *real_do_help (int idx, int pos, int role)
 	    } else if (role == FUNC_HELP_EN) {
 		en_func_hwin = hwin;
 		phwin = &en_func_hwin;
-	    }		
+	    }
 
 	    g_signal_connect(G_OBJECT(hwin->main), "destroy",
 			     G_CALLBACK(nullify_hwin), phwin);
@@ -1277,7 +1299,7 @@ void command_help_callback (int idx, int en)
 	show_gui_help(idx);
 	return;
     }
-    
+
     if (idx > 0) {
 	pos = help_pos_from_index(idx, role);
 	if (pos < 0 && !en && translated_cmdref) {
@@ -1297,7 +1319,7 @@ void function_help_callback (int idx, int en)
     int role = (en)? FUNC_HELP_EN : FUNC_HELP;
     int pos = help_pos_from_index(idx, role);
 
-    real_do_help(idx, pos, role); 
+    real_do_help(idx, pos, role);
 }
 
 /* below: must return > 0 to do anything useful */
@@ -1341,7 +1363,7 @@ static int help_pos_from_string (const char *s, int *idx, int *role)
 gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 			      windata_t *vwin)
 {
-    if (!window_help_is_active(vwin)) { 
+    if (!window_help_is_active(vwin)) {
 	/* command help not activated */
 	return FALSE;
     } else {
@@ -1379,11 +1401,11 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 		gchar *dtest = NULL;
 
 		if (gtk_text_iter_backward_char(&dstart)) {
-		    dtest = gtk_text_buffer_get_text(buf, &dstart, 
+		    dtest = gtk_text_buffer_get_text(buf, &dstart,
 						     &w_start, FALSE);
 		    if (*dtest == '$') {
 			gchar *s = g_strdup_printf("$%s", text);
-			
+
 			g_free(text);
 			text = s;
 			got_dollar = 1;
@@ -1395,7 +1417,7 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 	    /* special: "coint2" command */
 	    if (!got_dollar && text != NULL && !strcmp(text, "coint")) {
 		if (gtk_text_iter_forward_char(&w_end)) {
-		    gchar *s = gtk_text_buffer_get_text(buf, &w_start, 
+		    gchar *s = gtk_text_buffer_get_text(buf, &w_start,
 							&w_end, FALSE);
 
 		    if (s != NULL) {
@@ -1408,11 +1430,11 @@ gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 		    }
 		}
 	    }
-	} 
+	}
 
 	if (text != NULL && *text != '\0') {
 	    pos = help_pos_from_string(text, &idx, &role);
-	} 
+	}
 
 	g_free(text);
 	unset_window_help_active(vwin);
@@ -1456,7 +1478,7 @@ void text_find (gpointer unused, gpointer data)
 
     if (vwin->finder != NULL) {
 	gtk_widget_grab_focus(vwin->finder);
-	gtk_editable_select_region(GTK_EDITABLE(vwin->finder), 
+	gtk_editable_select_region(GTK_EDITABLE(vwin->finder),
 				   0, -1);
     } else {
 	find_string_dialog(find_in_text, vwin);
@@ -1469,7 +1491,7 @@ void listbox_find (gpointer unused, gpointer data)
 
     if (vwin->finder != NULL) {
 	gtk_widget_grab_focus(vwin->finder);
-	gtk_editable_select_region(GTK_EDITABLE(vwin->finder), 
+	gtk_editable_select_region(GTK_EDITABLE(vwin->finder),
 				   0, -1);
     } else {
 	find_string_dialog(find_in_listbox, vwin);
@@ -1482,7 +1504,7 @@ static gint close_find_dialog (GtkWidget *widget, gpointer data)
     return FALSE;
 }
 
-static int string_match_pos (const char *haystack, const char *needle, 
+static int string_match_pos (const char *haystack, const char *needle,
 			     gboolean sensitive, int start)
 {
     int hlen = strlen(haystack);
@@ -1495,7 +1517,7 @@ static int string_match_pos (const char *haystack, const char *needle,
 	} else {
 	    found = !g_ascii_strncasecmp(&haystack[pos], needle, nlen);
 	}
-        if (found) { 
+        if (found) {
              return pos;
 	}
     }
@@ -1505,7 +1527,7 @@ static int string_match_pos (const char *haystack, const char *needle,
 
 /* search for string @s in text buffer associated with @view */
 
-static gboolean real_find_in_text (GtkTextView *view, const gchar *s, 
+static gboolean real_find_in_text (GtkTextView *view, const gchar *s,
 				   gboolean sensitive,
 				   gboolean from_cursor,
 				   gboolean search_all)
@@ -1521,18 +1543,18 @@ static gboolean real_find_in_text (GtkTextView *view, const gchar *s,
     buf = gtk_text_view_get_buffer(view);
 
  text_search_wrap:
-	
+
     if (from_cursor) {
 	GtkTextIter sel_bound;
-		
+
 	gtk_text_buffer_get_iter_at_mark(buf, &iter,
 					 gtk_text_buffer_get_mark(buf,
 								  "insert"));
 	gtk_text_buffer_get_iter_at_mark(buf, &sel_bound,
 					 gtk_text_buffer_get_mark(buf,
 								  "selection_bound"));
-	gtk_text_iter_order(&sel_bound, &iter);		
-    } else {		
+	gtk_text_iter_order(&sel_bound, &iter);
+    } else {
 	gtk_text_buffer_get_iter_at_offset(buf, &iter, 0);
     }
 
@@ -1600,13 +1622,13 @@ static void find_in_text (GtkWidget *button, GtkWidget *dialog)
 
     found = real_find_in_text(GTK_TEXT_VIEW(vwin->text), needle,
 			      sensitive, TRUE, FALSE);
-    
+
     if (!found) {
 	notify_string_not_found(find_entry);
     }
 }
 
-static void 
+static void
 get_tree_model_haystack (GtkTreeModel *mod, GtkTreeIter *iter, int col,
 			 char *haystack)
 {
@@ -1621,8 +1643,8 @@ get_tree_model_haystack (GtkTreeModel *mod, GtkTreeIter *iter, int col,
     }
 }
 
-static gboolean real_find_in_listbox (windata_t *vwin, 
-				      const gchar *s, 
+static gboolean real_find_in_listbox (windata_t *vwin,
+				      const gchar *s,
 				      gboolean sensitive,
 				      gboolean vnames)
 {
@@ -1707,7 +1729,7 @@ static gboolean real_find_in_listbox (windata_t *vwin,
 	    goto search_wrap;
 	}
     }
-    
+
     if (pos >= 0) {
 	GtkTreePath *path = gtk_tree_model_get_path(model, &iter);
 
@@ -1720,7 +1742,7 @@ static gboolean real_find_in_listbox (windata_t *vwin,
 	if (wrapped) {
 	    infobox(_("Search wrapped"));
 	}
-    } 
+    }
 
     return (pos >= 0);
 }
@@ -1730,7 +1752,7 @@ static gboolean real_find_in_listbox (windata_t *vwin,
    Return TRUE if found, FALSE otherwise.
 */
 
-gboolean find_package_in_viewer (windata_t *vwin, 
+gboolean find_package_in_viewer (windata_t *vwin,
 				 const gchar *targ)
 {
     char haystack[MAXLEN];
@@ -1761,7 +1783,7 @@ gboolean find_package_in_viewer (windata_t *vwin,
 				 path, NULL, FALSE);
 	vwin->active_var = tree_path_get_row_number(path);
 	gtk_tree_path_free(path);
-    } 
+    }
 
     return (pos >= 0);
 }
@@ -1868,7 +1890,7 @@ static void find_string_dialog (void (*findfunc)(), windata_t *vwin)
 	gtk_editable_select_region(GTK_EDITABLE(find_entry), 0, -1);
     }
 
-    g_signal_connect(G_OBJECT(find_entry), "activate", 
+    g_signal_connect(G_OBJECT(find_entry), "activate",
 		     G_CALLBACK(findfunc), find_dialog);
 
     gtk_widget_show(find_entry);
@@ -1966,8 +1988,8 @@ static int get_writable_doc_path (char *path, const char *fname)
 		sysdoc_writable = 1;
 		fclose(fp);
 		gretl_remove(path);
-	    } 
-	} 
+	    }
+	}
     }
 
     if (!sysdoc_writable && userdoc_writable < 0) {
@@ -1981,8 +2003,8 @@ static int get_writable_doc_path (char *path, const char *fname)
 		userdoc_writable = 1;
 		fclose(fp);
 		gretl_remove(path);
-	    } 
-	} 
+	    }
+	}
     }
 
     if (!sysdoc_writable && !userdoc_writable) {
@@ -2056,7 +2078,7 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
     const char *gretlMPI_files[] = {
 	"gretl-mpi.pdf",
 	"gretl-mpi-a4.pdf"
-    };    
+    };
     const char *fname;
     FILE *fp;
     int gotit = 0;
@@ -2114,7 +2136,7 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 		gotit = 1;
 	    }
 	}
-    }	
+    }
 
     if (!gotit) {
 	/* or maybe in user's dotdir? */
@@ -2211,7 +2233,7 @@ void display_guide_chapter (const char *dest)
     if (!err) {
 	gretl_show_pdf(fname, dest);
     }
-#else /* Linux */    
+#else /* Linux */
     if (!err) {
 	gchar *tmp = NULL;
 
@@ -2229,7 +2251,7 @@ void display_guide_chapter (const char *dest)
 	}
 	g_free(tmp);
     }
-#endif    
+#endif
 }
 
 void display_gnuplot_help (void)
@@ -2255,4 +2277,3 @@ void display_x12a_help (void)
 	gretl_show_pdf(fname, NULL);
     }
 }
-
