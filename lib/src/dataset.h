@@ -349,6 +349,8 @@ void copy_dataset_obs_info (DATASET *targ, const DATASET *src);
 
 void copy_varinfo (VARINFO *targ, const VARINFO *src);
 
+int shrink_varinfo (DATASET *dset, int nv);
+
 void set_sorted_markers (DATASET *dset, int v, char **S);
 
 void dataset_set_regular_markers (DATASET *dset);

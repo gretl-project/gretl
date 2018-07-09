@@ -465,7 +465,6 @@ static int jb_add_bundle (jbundle *jb, const char *name,
 
 static int jb_do_object (JsonReader *reader, jbundle *jb)
 {
-    const gchar *name;
     gchar **S = NULL;
     int i, n, err = 0;
 
@@ -473,7 +472,7 @@ static int jb_do_object (JsonReader *reader, jbundle *jb)
     S = json_reader_list_members(reader);
 
 #if JB_DEBUG
-    name = json_reader_get_member_name(reader);
+    const gchar *name = json_reader_get_member_name(reader);
     fprintf(stderr, "got object, %d members, name '%s'\n", n,
 	    name == NULL ? "NULL" : name);
     for (i=0; i<n; i++) {

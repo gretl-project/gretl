@@ -394,27 +394,10 @@ int remove_model_subsample_info (MODEL *pmod)
 
 static int resample_sync_dataset (DATASET *dset)
 {
+    int err = 0;
+
     if (dset->v > fullset->v) {
-	char **varname;
-	VARINFO **varinfo;
-	int i, nv = fullset->v;
-
-	for (i=fullset->v; i<dset->v; i++) {
-	    free(dset->varname[i]);
-	    free(dset->varinfo[i]);
-	}
-
-	varname = realloc(dset->varname, nv * sizeof *varname);
-	if (varname == NULL) {
-	    return E_ALLOC;
-	}
-	dset->varname = varname;
-
-	varinfo = realloc(dset->varinfo, nv * sizeof *varinfo);
-	if (varinfo == NULL) {
-	    return E_ALLOC;
-	}
-	dset->varinfo = varinfo;
+	err = shrink_varinfo(dset, fullset->v);
     }
 
     /* sync */
@@ -422,7 +405,7 @@ static int resample_sync_dataset (DATASET *dset)
     fullset->varinfo = dset->varinfo;
     fullset->descrip = dset->descrip;
 
-    return 0;
+    return err;
 }
 
 /* Apparatus for updating full dataset when restoring full sample

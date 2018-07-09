@@ -342,6 +342,46 @@ void copy_varinfo (VARINFO *targ, const VARINFO *src)
     }
 }
 
+/* For use in the context of returning from a sub-sampled
+   dataset to the full one: trim off series names and
+   "varinfo" beyond the index @nv, which gives the number
+   of series in the full dataset.
+*/
+
+int shrink_varinfo (DATASET *dset, int nv)
+{
+    char **vnames;
+    VARINFO **vi;
+    int i, err = 0;
+
+    if (nv > dset->v) {
+	return E_DATA;
+    } else if (nv == dset->v) {
+	return 0;
+    }
+
+    for (i=nv; i<dset->v; i++) {
+	free(dset->varname[i]);
+	free(dset->varinfo[i]);
+    }
+
+    vnames = realloc(dset->varname, nv * sizeof *vnames);
+    if (vnames == NULL) {
+	err = E_ALLOC;
+    } else {
+	dset->varname = vnames;
+    }
+
+    vi = realloc(dset->varinfo, nv * sizeof *vi);
+    if (vi == NULL) {
+	err = E_ALLOC;
+    } else {
+	dset->varinfo = vi;
+    }
+
+    return err;
+}
+
 /**
  * dataset_allocate_varnames:
  * @dset: pointer to dataset.
