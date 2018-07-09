@@ -7,12 +7,13 @@
 \usepackage[letterpaper,body={6.3in,9.15in},top=.8in,left=1.1in]{geometry}
 \usepackage[pdftex,hyperfootnotes=false]{hyperref}
 
-%\usepackage[a4paper,body={6.1in,9.7in},top=.8in,left=1.1in]{geometry}
+% \usepackage[a4paper,body={6.1in,9.7in},top=.8in,left=1.1in]{geometry}
 
 \begin{document}
 
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{1ex}
+\setcounter{secnumdepth}{1}
 
 \newcommand{\argname}[1]{\textsl{#1}}
 
@@ -22,61 +23,289 @@
 
 \section{Introduction}
 
-This package offers a preliminary version of an interace to
-\textsf{dbnomics} for gretl. For anyone who hasn't yet caught on,
-\textsf{dbnomics} makes available a large number of macroeconomic data
-series from many ``providers'' in Europe, the USA and elsewhere, an
-admirable service.
+This package offers an interface to \textsf{dbnomics} for gretl. For
+anyone who hasn't yet caught on, \textsf{dbnomics} makes available, in
+a uniform manner, a huge number of macroeconomic data series drawn
+from many sources around the world---a truly admirable service!
 
-At this stage the package does not provide a means of browsing the
-offerings of \textsf{dbnomics} within gretl (other than, as proof of
-concept, getting a list of data providers). For the core business of
-accessing individual time-series, users will first of all have to
-browse the (new version of the) \textsf{dbnomics} site
-(\url{https://next.nomics.world/}) themselves to discover the series
-IDs for data of interest.
+There are at present two variants of the \textsf{dbnomics} site: the
+original version at \url{https://db.nomics.world/} and the new or
+``next'' version at \url{https://next.nomics.world/}. This package
+targets the ``next'' version, which encompasses many more data
+providers than the original. Interested users are encouraged to visit
+the site to get a better sense of what's available.  But please note:
+the new version is still work in progress, which means that some
+aspects of this package are likely to change as bugs are discovered
+and fixed at \textsf{dbnomics}. We will endeavor to keep our package
+up to date and will push out any updates with gretl snapshots.
 
-\section{Command-line usage}
+There are three main layers to the \textsf{dbnomics} ``space,'' as
+follows:
+\begin{itemize}
+\item \textit{Providers}: the various statistical agencies that are
+  the primary sources of the data. As of this writing 31 providers
+  are included.
+\item \textit{Datasets}: sets of related series offered by a given
+  provider. Over 8000 datasets are available.
+\item \textit{Series}: specific time series such as the Bulgarian
+  unemployment rate. Hundreds of millions of series are available.
+\end{itemize}
 
-The two functions that are likely to be of greatest interest in the
-first instance are
-\begin{code}
-dbnomics_get_series(const string datacode, bool verbose[0])
-\end{code}
-which returns a gretl bundle, and
-\begin{code}
-dbnomics_bundle_get_data(const bundle b, series *x)
-\end{code}
-which read a bundle (sucessfully) returned by
-\verb|dbnomics_get_series| and writes the data values into the series
-given as the second argument in ``pointer'' form.
-
-The \texttt{datacode} argument to the first of these functions should
-be a slash-separated triplet, \texttt{provider/dataset/series}, for
-example
+A specific series in \textsf{dbnomics} is identified by a triplet
+of the form \texttt{provider/dataset/series}, for example
 \begin{code}
 ECB/IRS/M.IT.L.L40.CI.0000.EUR.N.Z
 \end{code}
-where the provider is \texttt{ECB} (the European Central Bank), the
-dataset is \texttt{IRS} (interest rates) and the series is
-\texttt{M.IT.L.L40.CI.0000.EUR.N.Z} (yes, it's a bit of a mouthful,
-but it identifies the Italian 10-year interest rate). After browsing
-the \textsf{dbnomics} site for a while these fields ahould become more
-familiar!
+Here the provider is \texttt{ECB} (the European Central Bank); the
+dataset is \texttt{IRS} (interest rate statistics); and the particular
+series is \texttt{M.IT.L.L40.CI.0000.EUR.N.Z}, an Italian 10-year
+interest rate.
 
-If you wish to add the above-mentioned series to a suitable gretl
-dataset (or use it to start a dataset when no data are currently
-loaded in gretl), the basic routine would be something like
+This package provides means of downloading a specific series if you
+know its identifying triplet, and also means of navigating the
+\textsf{dbnomics} space. There are three ways of accessing the
+functionality of the package:
+\begin{itemize}
+\item Via the gretl commands \cmd{open} and \cmd{data}, as with native
+  gretl databases.
+\item By means of the gretl GUI.
+\item By calling the public functions of the package yourself, in
+  command-line or scripting mode.
+\end{itemize}
+The following three sections expand on these methods in turn.
+
+\section{The \texttt{open} and \texttt{data} commands}
+\label{sec:open-data}
+
+To exploit this method you need to know the identifying triplet(s) for
+the series you want. Given that, you can initiate \textsf{dbnomics}
+access via the command
 \begin{code}
+open dbnomics
+\end{code}
+From this point the \cmd{data} command will target \textsf{dbnomics}
+data until you ``\texttt{open}'' some other data source. So, for
+example, you could download the Italian 10-year interest rate
+mentioned above in this way:
+\begin{code}
+data ECB/IRS/M.IT.L.L40.CI.0000.EUR.N.Z
+\end{code}
+Ah, but what about the name of the series within gretl? The full
+triplet is obviously not acceptable as a gretl series-name, and even
+its third component won't work since gretl identifiers cannot contain
+the dot character. What happens by default is that gretl takes the
+third portion of the triplet and squeezes out any illegal characters.
+In the case above this would give a name of
+\texttt{MITLL40CI0000EURNZ}---not very nice-looking. However, you can
+take charge of the naming of the imported series yourself, using the
+\option{name} option to the \cmd{data} command, as in
+\begin{code}
+data ECB/IRS/M.IT.L.L40.CI.0000.EUR.N.Z --name="IT_10yr"
+\end{code}
+In this case the series will be known to gretl as \texttt{IT\_10yr}.
+Note that when you import a series from \textsf{dbnomics} its
+descriptive ``label'' starts with the full triplet so you won't lose
+that information of record, regardless of the naming of the series.
+
+\section{dbnomics via the gretl GUI}
+\label{sec:dbn-gui}
+
+GUI access to \textsf{dbnomics} is provided in two places:
+\begin{itemize}
+\item Via the \textsf{Databases} item under the \textsf{File} menu in
+  the gretl main window.
+\item From the gretl databases window (opened by the database icon on
+  the toolbar at the foot of the main window): click the ``DB'' icon
+  on the toolbar in this window.
+\end{itemize}
+In both cases you get a little sub-menu with entries
+``\textsf{Browse}'' and ``\textsf{Specific series}.'' The latter entry
+takes you to a dialog box in which you can enter a series triplet (see
+section~\ref{sec:open-data}). The \textsf{Browse} entry takes you to a
+window which displays the available \textsf{dbnomics} providers: their
+codes and their descriptions. From here you have two options:
+\begin{itemize}
+\item Select a provider and double-click to browse the datasets it
+  supplies.
+\item In the search box in the top panel of the window, enter a string
+  and search all providers for datasets that match your
+  specification.\footnote{If you wish to use this facility to find a
+    string in the providers window itself, first select ``\textsf{this
+      window}'' to the right of the search box, the default being
+    ``\textsf{all DB.NOMICS}.''}
+\end{itemize}
+
+In each case a \textsf{dbnomics} datasets window will open. With some
+providers or searches more datasets will be found than can comfortably
+be displayed at once. In that case the toolbar includes buttons that
+let you page forward or back through the listing; you should also get
+a status message at the foot of the window indicating the current
+position in the listing.
+
+From a datasets window two more steps are available:
+\begin{itemize}
+\item Double-click on a dataset to open a window showing the series it
+  contains (or one ``page'' of its full list of series if there are
+  too many).
+\item In a window showing \textsf{dbnomics} series, double-click to
+  activate a particular series. This will give you detailed
+  information on the series and allow you to display its values,
+  create a time-series plot, or add the series to your gretl dataset.
+\end{itemize}
+
+To summarize, there are three layers to gretl's GUI representation of
+the \textsf{dbnomics} space:
+\begin{enumerate}
+\item The providers window
+\item Datasets window (for a given provider, or via search)
+\item Series window (for a given dataset)
+\end{enumerate}
+
+\section{Public functions}
+\label{sec:dbn-funcs}
+
+The package contains several public functions which both subserve the
+modes of access described in sections~\ref{sec:open-data} and
+\ref{sec:dbn-gui}, and can be called directly by the user.
+
+At this point we just offer an ``as is'' listing of the signatures of
+these functions with brief commentary. We can expand on the finer
+points later if there's sufficient interest. Note that this package
+contains several test scripts that exemplify calls to the functions
+listed below; this can be found in the \texttt{examples} subdirectory
+of the installation directory. Likely locations for this are
+
+{\small
+\begin{tabular}{ll}
+  Linux & \texttt{/usr/share/gretl/functions/dbnomics} \\
+  Windows & \verb|C:\Program Files\gretl\functions\dbnomics| \\
+  Mac & \texttt{/Applications/Gretl.app/Contents/Resources/share/gretl/functions/dbnomics}
+\end{tabular}
+}
+
+\subsection{dbnomics\_providers}
+
+\begin{code}
+function bundles dbnomics_providers(bool verbose[0])
+\end{code}
+Returns an array of bundles, one per provider. Each bundle contains
+XXX.
+
+\subsection{dbnomics\_dsets\_for\_provider}
+
+\begin{code}
+function bundle dbnomics_dsets_for_provider(const string provider,
+                                            bool verbose[0])
+\end{code}
+Returns a bundle containing information on the datasets associated
+with a given provider.
+\begin{code}
+# example
+bundle b = dbnomics_dsets_for_provider("AMECO")
+\end{code}
+
+\subsection{dbnomics\_get\_dataset\_content}
+
+\begin{code}
+function bundles dbnomics_get_dataset_content(const string provider,
+                                              const string dataset,
+                                              int limit[0::100],
+                                              int offset[0])
+\end{code}
+Returns an array of bundles each containing information on a series
+contained in the dataset specified by the \texttt{provider} and
+\texttt{dataset} codes. The \texttt{limit} and \texttt{offset}
+arguments permit specification ``paging'': so many results, starting
+at a given offset into the full listing.
+\begin{code}
+# example
+bundles B = dbnomics_get_dataset_content("ECB", "IRS", 50, 100)
+\end{code}
+
+\subsection{dbnomics\_get\_series}
+
+\begin{code}
+function bundle dbnomics_get_series (const string datacode,
+                                     bool verbose[0],
+                                     string *from_json[null])
+\end{code}
+Returns a bundle containing information on the series specified by
+\texttt{datacode}, which must be a \textsf{dbnomics} triplet as
+described above.
+\begin{code}
+# example
+bundle b = dbnomics_get_series("ECB/IRS/M.IT.L.L40.CI.0000.EUR.N.Z")
+\end{code}
+
+\subsection{dbnomics\_bundle\_print}
+
+\begin{code}
+function void dbnomics_bundle_print(const bundle b,
+                                    bool print_data[0])
+\end{code}
+Displays the content of a bundle obtained by
+\texttt{dbnomics\_get\_series}. Give a non-zero value for the second
+argument to print the actual values, otherwise just the metadata is
+shown.
+
+\subsection{dbnomics\_bundle\_get\_data}
+
+\begin{code}
+function scalar dbnomics_bundle_get_data(const bundle b,
+                                         series *x,
+					 bool verbose[0])
+\end{code}
+Given a bundle obtained by \texttt{dbnomics\_get\_series}, writes the
+actual data values (and description) into the series \texttt{x}, which
+must exist already and be given in ``pointer'' form. Returns zero on
+success, non-zero on error.
+\begin{code}
+# example
 bundle b = dbnomics_get_series("ECB/IRS/M.IT.L.L40.CI.0000.EUR.N.Z")
 series IT_10yr = NA
 dbnomics_bundle_get_data(b, &IT_10yr)
 \end{code}
 
+\subsection{dbnomics\_get\_multiple}
 
-\section{GUI usage}
+\begin{code}
+function bundles dbnomics_get_multiple(const string provider,
+                                       const string dataset,
+                                       int limit[0::20],
+                                       int offset[0],
+                                       bundle spec[null])
+\end{code}
 
+\subsection{dbnomics\_get\_dataset\_dimensions}
 
+\begin{code}
+function void dbnomics_get_dataset_dimensions(const string provider,
+                                              const string dataset)
+\end{code}
+
+\subsection{dbnomics\_search}
+
+\begin{code}
+function bundles dbnomics_search(const string key,
+                                 int limit[0::100],
+                                 int offset[0],
+				 bool verbose[0])
+\end{code}
+
+\subsection{dbnomics\_categtree}
+
+\begin{code}
+function bundles dbnomics_categtree(const string provider,
+                                    bool verbose[0])
+\end{code}
+
+\subsection{dbnomics\_fetch}
+
+\begin{code}
+function series dbnomics_fetch (const string id, bool verbose[0])
+\end{code}
+This is just a convenience wrapper for \texttt{dbnomics\_get\_series}
+followed by \texttt{dbnomics\_bundle\_get\_data}.
 
 
 \end{document}
