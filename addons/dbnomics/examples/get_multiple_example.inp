@@ -1,18 +1,43 @@
 set verbose off
 include dbnomics.gfn
 
+### set up the dataset first
+
 nulldata 58
 setobs 1 1960
 
+### the DBnomics dataset we're drawing from
+
+provider = "IMF-WEO"
+database = "WEO"
+
+verbose = 0
+dims = dbnomics_get_dataset_dimensions(provider, database, 0)
+
+###
+### Here we build the "spec" bundle
+### Note: the bundle keys must match the "id" fields in the
+### "dims" bundle, and the items should come from the corresponding
+### values[i].code
+###
+
 bundle spec = null
-spec.geo = defarray("dnk", "ea12", "ita")
-bs = dbnomics_get_multiple("AMECO", "ZUTN", 20, 0, spec)
+spec["weo-country"] = defarray("FRA", "DEU", "ITA")
+spec["weo-subject"] = defarray("LP", "LE")
+
+### now we get the series
+
+bs = dbnomics_get_multiple(provider, database, 20, 0, spec)
 
 list X = null
 
 loop i = 1..nelem(bs)
     sn = fixname(bs[i].series_name)
-    sdes = bs[i].dset_name ~ " " ~ bs[i].unit
+    sdes = bs[i].dset_name
+    if inbundle(bs[i], "unit")
+        sdes = sdes ~ " " ~ bs[i].unit
+    endif
+    
     series tmp = NA
     x$i = dbnomics_bundle_get_data(bs[i], &tmp)
     X += genseries(sn, tmp)

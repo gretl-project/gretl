@@ -201,7 +201,6 @@ function bundles dbnomics_get_dataset_dimensions(const string pcode,
         
     b = jsongetb(s)
     c_order = strsplit(jsonget(s, "$.dataset.dimensions_codes_order"),"\n")
-    c_labels = jsonget(s, "$.dataset.dimensions_labels") # wrong order!
     ndims = nelem(c_order)
 
     bf = b["series_dimensions_facets"]
