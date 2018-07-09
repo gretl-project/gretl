@@ -220,31 +220,34 @@ end function
 ### ------------------------------------------------------------------------
 
 function scalar dbn_get_json (const string parms, bool verbose[0],
-      string *json, string *msg[null])
-    URL = "https://api.next.nomics.world/" ~ parms
+			      string *json, string *msg[null])
+    
+    string URL = "https://api.next.nomics.world/" ~ parms
     if verbose
         printf "URL = '%s'\n", URL
     endif
-    req = defbundle("URL", URL, "header", "accept: application/json")
+    bundle req = defbundle("URL", URL, "header", "accept: application/json")
     # check for curl error
-    error = curl(&req)
-    string mymsg
+    scalar error = curl(&req)
+
     if error
-        mymsg = req.errmsg
+        string mymsg = req.errmsg
     else
         # also check for dbnomics error condition
         json = req.output
         string dbnmsg
         error = bad_json(json, &dbnmsg)
         if error
-            mymsg = sprintf("error message from dbnomics:\n\"%s\"\n", dbnmsg)
+            string mymsg = sprintf("error message from dbnomics:\n\"%s\"\n", dbnmsg)
         endif
     endif
+    
     if error
         printf "%s", mymsg
         if exists(msg)
             msg = mymsg
         endif
     endif
+    
     return error
 end function

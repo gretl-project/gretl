@@ -4223,16 +4223,18 @@ int dbnomics_get_series_call (const char *datacode)
 	    gui_errmsg(err);
 	}
     }
-
+    
     if (b != NULL) {
-	int dberr = gretl_bundle_get_int(b, "error", NULL);
-	const char *p = strrchr(datacode, '/');
-	gchar *title = g_strdup_printf("gretl: %s", p + 1);
-
+	gchar *title;
+	int dberr = gretl_bundle_get_int(b, "error", &err);
+	
 	if (dberr) {
+	    title = g_strdup_printf("gretl: %s", datacode);
 	    view_buffer(prn, 78, 200, title, IMPORT, NULL);
 	    gretl_bundle_destroy(b);
 	} else {
+	    const char *p = strrchr(datacode, '/');
+	    title = g_strdup_printf("gretl: %s", p + 1);
 	    fc = get_pkg_function_call("dbnomics_bundle_print", "dbnomics");
 	    if (fc != NULL) {
 		err = push_function_arg(fc, NULL, GRETL_TYPE_BUNDLE, (void *) b);
