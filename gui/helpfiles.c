@@ -950,17 +950,29 @@ static void finder_add_options (GtkWidget *hbox, GtkWidget *entry)
 		     entry);
 }
 
+static void toggle_search_this_help (GtkComboBox *box, GtkWidget *entry)
+{
+    gint i = gtk_combo_box_get_active(box);
+
+    if (i > 0) {
+	g_object_steal_data(G_OBJECT(entry), "search-all");
+    } else {
+	g_object_set_data(G_OBJECT(entry), "search-all", GINT_TO_POINTER(1));
+    }
+}
+
 static void finder_add_dbn_options (GtkWidget *hbox, GtkWidget *entry)
 {
     GtkWidget *combo = gtk_combo_box_text_new();
 
-    combo_box_append_text(combo, _("this window"));
     combo_box_append_text(combo, _("all DB.NOMICS"));
+    combo_box_append_text(combo, _("this window"));
     gtk_box_pack_end(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
 
+    g_object_set_data(G_OBJECT(entry), "search-all", GINT_TO_POINTER(1));
     g_signal_connect(G_OBJECT(combo), "changed",
-		     G_CALLBACK(toggle_search_all_help),
+		     G_CALLBACK(toggle_search_this_help),
 		     entry);
 }
 
