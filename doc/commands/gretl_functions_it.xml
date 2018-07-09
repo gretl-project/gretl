@@ -4869,6 +4869,44 @@
       </description>
     </function>    
 
+    <function name="jsongetb" section="data-utils" output="bundle">
+      <fnargs>
+	<fnarg type="string">buf</fnarg>
+	<fnarg type="strings" optional="true">esclusioni</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  L'argomento <argname>buf</argname> dev'essere un buffer
+	  JSON, così come ad esempio può esser preso da un sito
+	  attraverso la funzione <fncref targ="curl"/>. L'argomento opzionale
+	  <argname>esclusioni</argname> è un array di stringhe
+	  contenente le chiavi JSON da escludere.
+	</para>
+	<para>
+	  La funzione restituisce un bundle la cui struttura riproduce
+	  quella dell'input: gli oggetti JSON diventano bundle e gli
+	  array JSON diventano array gretl, contenenti stringhe o a
+	  loro volta bundle. I nodi JSON <quote>valore</quote>
+	  diventano membri di bundle o elementi di array; nel secondo
+	  caso, i valori numerici sono convertiti in stringhe via
+	  <lit>sprintf</lit>.  Si noti che, dal momento che in gretl
+	  gli array non possono essere annidati, l'input per questa
+	  funzione è un po' più restrittivo della specificazione JSON
+	  completa, in cui ciò è possibile.
+	</para>
+	<para>
+	  L'argomento opzionale <argname>esclusioni</argname> va usato
+	  con cautela: l'esclusione di un oggetto comporta quella di
+	  tutti gli oggetti al di sotto di esso.
+	</para>
+	<para>
+	  Vedi anche la funzione stringa <fncref targ="jsonget"/>;
+	  ognuna di queste due può essere più utile dell'altra, a
+	  seconda dei casi.
+	</para>
+      </description>
+    </function>
+
     <function name="juldate" section="calendar" output="seebelow">
       <fnargs>
 	<fnarg type="scalar-or-series">ed</fnarg>
