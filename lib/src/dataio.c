@@ -1222,12 +1222,13 @@ static int real_write_data (const char *fname, int *list, const DATASET *dset,
 	}
     } else if (fmt == GRETL_FMT_JM) { 
 	/* JMulti: ascii with comments and date info */
-	const char *vlabel = series_get_label(dset, v);
+	const char *vlabel;
 	int maj, min;
 
 	fputs("/*\n", fp);
 	for (i=1; i<=list[0]; i++) {
 	    v = list[i];
+	    vlabel = series_get_label(dset, v);
 	    fprintf(fp, " %s: %s\n", dset->varname[v],
 		    vlabel == NULL ? "" : vlabel);
 	}
