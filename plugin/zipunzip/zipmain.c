@@ -283,12 +283,12 @@ static FILE *ztempfile (char *templ)
 	}
 #else
 	if (lastchar(templ) != '/') {
-	    strncat(templ, "/", 1);
+	    strcat(templ, "/");
 	}
 #endif
     } 
 
-    strncat(templ, "ziXXXXXX", 8);
+    strcat(templ, "ziXXXXXX");
     fp = gretl_mktemp(templ, "wb");
 
     return fp;

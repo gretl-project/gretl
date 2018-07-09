@@ -313,7 +313,7 @@ static gint32 get_stata_t0 (const DATASET *dset,
     if (*timevar != '\0') {
 	/* don't collide with regular series */
 	if (current_series_index(dset, timevar) > 0) {
-	    strncat(timevar, "_t", 2);
+	    strcat(timevar, "_t");
 	}
     }
 
