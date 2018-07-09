@@ -4367,4 +4367,3 @@ void *dbnomics_probe_series (const char *prov,
 
     return A;
 }
-

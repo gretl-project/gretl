@@ -1917,7 +1917,7 @@ void dbnomics_search (gchar *key, windata_t *vwin)
 
 	n = gretl_array_get_length(a);
 
-	pprintf(prn, "Results of DB.NOMICS search on '%s'\n", key);
+	pprintf(prn, _("Results of DB.NOMICS search on '%s'\n"), key);
 	pputs(prn, "Provider/Dataset : description\n\n");
 
 	for (i=0; i<n; i++) {

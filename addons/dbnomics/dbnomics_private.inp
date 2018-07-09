@@ -7,7 +7,12 @@ function bundle json2bndl(const strings fields, const string jsonobj,
         src = sprintf("$.%s[%d].%s", root, ndx, f)
         str = jsonget(jsonobj, src, &k)
         if k
-            b[f] = str
+	    if f == "name"
+		# hopefully this can be trashed later
+		b[f] = strsub(str, "&#44;", ",")
+	    else
+		b[f] = str
+	    endif
         endif
     endloop
     return b
