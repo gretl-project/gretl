@@ -1,0 +1,9 @@
+set verbose off
+include dbnomics.gfn
+
+prov = "OECD"
+dset = "EO"
+B = dbnomics_get_dataset_content(prov, dset, 10, 0)
+loop i=1..nelem(B) -q
+  printf "%s\n  %s\n", B[i].code, B[i].name
+endloop
