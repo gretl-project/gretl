@@ -117,7 +117,8 @@ static const gchar *window_list_icon (int role)
 	id = GTK_STOCK_PREFERENCES;
     } else if (role == DBNOMICS_TOP ||
 	       role == DBNOMICS_DB ||
-	       role == DBNOMICS_SERIES) {
+	       role == DBNOMICS_SERIES ||
+	       role == VIEW_DBSEARCH) {
 	id = GRETL_STOCK_DBN;
     } else if (BROWSER_ROLE(role)) {
 	id = GTK_STOCK_INDEX;

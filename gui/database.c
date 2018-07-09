@@ -1893,6 +1893,11 @@ void open_dbnomics_series (GtkWidget *w, gpointer data)
     g_free(datacode);
 }
 
+/* The @key string is passed here when "all DB.NOMICS"
+   is selected as the search space in the dbnomics
+   providers window.
+*/
+
 void dbnomics_search (gchar *key, windata_t *vwin)
 {
     gretl_array *a;
@@ -1912,7 +1917,8 @@ void dbnomics_search (gchar *key, windata_t *vwin)
 
 	n = gretl_array_get_length(a);
 
-	pprintf(prn, "Results of DB.NOMICS search on '%s'\n\n", key);
+	pprintf(prn, "Results of DB.NOMICS search on '%s'\n", key);
+	pputs(prn, "Provider/Dataset : description\n\n");
 
 	for (i=0; i<n; i++) {
 	    b = gretl_array_get_bundle(a, i);
@@ -1920,14 +1926,15 @@ void dbnomics_search (gchar *key, windata_t *vwin)
 	    dcode = gretl_bundle_get_string(b, "code", NULL);
 	    name = gretl_bundle_get_string(b, "name", NULL);
 	    if (pcode != NULL && dcode != NULL && name != NULL) {
-		pprintf(prn, "%d %s/%s : %s\n\n", i+1, pcode, dcode, name);
+		pprintf(prn, "%d <@dbn=\"%s/%s\"> : %s\n\n", i+1,
+			pcode, dcode, name);
 		n_ok++;
 	    }
 	}
 	if (n_ok > 0) {
-	    const char *title = "gretl: DB.NOMICS search results";
+	    const char *title = "gretl: DB.NOMICS search";
 
-	    view_buffer(prn, 78, 350, title, VIEW_DOC, NULL);
+	    view_buffer(prn, 78, 350, title, VIEW_DBSEARCH, NULL);
 	} else {
 	    gretl_print_destroy(prn);
 	}
@@ -2022,12 +2029,12 @@ void open_dbnomics_provider (GtkWidget *w, gpointer data)
     if (!gtk_tree_selection_get_selected(sel, &model, &iter)) {
 	return;
     }
+
     gtk_tree_model_get(model, &iter, 0, &pname, -1);
-    if (pname == NULL || *pname == '\0') {
-	g_free(pname);
-	return;
+    if (pname != NULL && *pname != '\0') {
+	display_files(DBNOMICS_DB, pname);
     }
-    display_files(DBNOMICS_DB, pname);
+    g_free(pname);
 }
 
 void open_dbnomics_dataset (GtkWidget *w, gpointer data)
@@ -2056,6 +2063,7 @@ void open_dbnomics_dataset (GtkWidget *w, gpointer data)
     arg = g_strdup_printf("%s/%s", provider, dsname);
     g_free(dsname);
     display_files(DBNOMICS_SERIES, arg);
+    g_free(arg);
 }
 
 #define INFOLEN 100
@@ -3214,6 +3222,7 @@ void dbnomics_pager_call (GtkWidget *button, windata_t *vwin)
 	} else {
 	    populate_dbnomics_series_list(vwin, NULL);
 	}
+	listbox_select_first(vwin);
     }
 }
 

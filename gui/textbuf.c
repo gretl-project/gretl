@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "gretl.h"
@@ -65,6 +65,7 @@
 #define EXT_PAGE    995
 #define PDF_PAGE    994
 #define MNU_PAGE    993
+#define DBN_PAGE    992
 
 enum {
     PLAIN_TEXT,
@@ -92,7 +93,7 @@ int script_auto_bracket = 0;
 static gboolean script_electric_enter (windata_t *vwin);
 static gboolean script_tab_handler (windata_t *vwin, GdkModifierType mods);
 static gboolean script_bracket_handler (windata_t *vwin, guint keyval);
-static gboolean 
+static gboolean
 script_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p);
 static gchar *textview_get_current_line_with_newline (GtkWidget *view);
 static gboolean
@@ -115,13 +116,13 @@ void text_set_cursor (GtkWidget *w, GdkCursorType cspec)
 
 	gdk_window_set_cursor(win, cursor);
 	gdk_cursor_unref(cursor);
-    } 
+    }
 }
 
 void cursor_to_top (windata_t *vwin)
 {
     GtkTextView *view = GTK_TEXT_VIEW(vwin->text);
-    GtkTextBuffer *buf = gtk_text_view_get_buffer(view); 
+    GtkTextBuffer *buf = gtk_text_view_get_buffer(view);
     GtkTextIter start;
     GtkTextMark *mark;
 
@@ -135,7 +136,7 @@ void cursor_to_top (windata_t *vwin)
 void cursor_to_end (windata_t *vwin)
 {
     GtkTextView *view = GTK_TEXT_VIEW(vwin->text);
-    GtkTextBuffer *buf = gtk_text_view_get_buffer(view); 
+    GtkTextBuffer *buf = gtk_text_view_get_buffer(view);
     GtkTextIter end;
 
     gtk_text_buffer_get_end_iter(buf, &end);
@@ -145,7 +146,7 @@ void cursor_to_end (windata_t *vwin)
 void scroll_to_foot (windata_t *vwin)
 {
     GtkTextView *view = GTK_TEXT_VIEW(vwin->text);
-    GtkTextBuffer *buf = gtk_text_view_get_buffer(view); 
+    GtkTextBuffer *buf = gtk_text_view_get_buffer(view);
     GtkTextIter end;
     GtkTextMark *mark;
 
@@ -158,7 +159,7 @@ void scroll_to_foot (windata_t *vwin)
 void cursor_to_mark (windata_t *vwin, GtkTextMark *mark)
 {
     GtkTextView *view = GTK_TEXT_VIEW(vwin->text);
-    GtkTextBuffer *buf = gtk_text_view_get_buffer(view); 
+    GtkTextBuffer *buf = gtk_text_view_get_buffer(view);
     GtkTextIter iter;
 
     gtk_text_buffer_get_iter_at_mark(buf, &iter, mark);
@@ -337,7 +338,7 @@ int textview_set_cursor_at_line (GtkWidget *view, int line)
 {
     GtkTextBuffer *tbuf;
     GtkTextIter iter;
-    
+
     g_return_val_if_fail(GTK_IS_TEXT_VIEW(view), 1);
 
     tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
@@ -450,7 +451,7 @@ static int source_buffer_load_buf (GtkSourceBuffer *sbuf, const char *buf)
 
 static void sourceview_apply_language (windata_t *vwin)
 {
-    GtkSourceLanguageManager *lm; 
+    GtkSourceLanguageManager *lm;
     GtkSourceLanguage *lang = NULL;
     const char *id = NULL;
 
@@ -506,17 +507,17 @@ static void set_sourceview_complete_words (windata_t *vwin)
 {
     GtkSourceCompletionWords *prov_words;
     GtkSourceCompletion *comp;
-	
+
     comp = gtk_source_view_get_completion(GTK_SOURCE_VIEW(vwin->text));
     prov_words = gtk_source_completion_words_new(NULL, NULL);
     g_object_set(prov_words, "priority", 1, NULL);
     gtk_source_completion_words_register(prov_words,
 					 gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text)));
     g_object_set_data(G_OBJECT(vwin->text), "prov_words", prov_words);
-    
+
     if (script_auto_complete) {
-	gtk_source_completion_add_provider(comp, 
-					   GTK_SOURCE_COMPLETION_PROVIDER(prov_words), 
+	gtk_source_completion_add_provider(comp,
+					   GTK_SOURCE_COMPLETION_PROVIDER(prov_words),
 					   NULL);
     }
 }
@@ -581,13 +582,13 @@ void sourceview_print (windata_t *vwin)
 
     mainwin = vwin_toplevel(vwin);
 
-    res = gtk_print_operation_run(print, 
+    res = gtk_print_operation_run(print,
 				  GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG,
-				  GTK_WINDOW(mainwin), 
+				  GTK_WINDOW(mainwin),
 				  &error);
 
     if (res == GTK_PRINT_OPERATION_RESULT_ERROR) {
-	GtkWidget *dlg; 
+	GtkWidget *dlg;
 
 	dlg = gtk_message_dialog_new(GTK_WINDOW(mainwin),
 				     GTK_DIALOG_DESTROY_WITH_PARENT,
@@ -595,7 +596,7 @@ void sourceview_print (windata_t *vwin)
 				     GTK_BUTTONS_CLOSE,
 				     "Error printing file:\n%s",
 				     error->message);
-	g_signal_connect(G_OBJECT(dlg), "response", 
+	g_signal_connect(G_OBJECT(dlg), "response",
 			 G_CALLBACK(gtk_widget_destroy), NULL);
 	gtk_widget_show(dlg);
 	g_error_free(error);
@@ -682,7 +683,7 @@ script_key_handler (GtkWidget *w, GdkEventKey *event, windata_t *vwin)
 	if (keyval == GDK_F1) {
 	    set_window_help_active(vwin);
 	    interactive_script_help(NULL, NULL, vwin);
-	} else if (editing_hansl(vwin->role)) {    
+	} else if (editing_hansl(vwin->role)) {
 	    if (keyval == GDK_Return) {
 		ret = script_electric_enter(vwin);
 	    } else if (tabkey(keyval)) {
@@ -691,7 +692,7 @@ script_key_handler (GtkWidget *w, GdkEventKey *event, windata_t *vwin)
 		ret = script_bracket_handler(vwin, keyval);
 	    }
 	}
-    } 
+    }
 
     return ret;
 }
@@ -740,7 +741,7 @@ static gchar *ensure_utf8_path (gchar *path)
 
    On Windows we need to ensure that the "set_search_path"
    functions are fed a UTF-8 path, since gtksourceview uses
-   g_open() internally and the Glib filename encoding is 
+   g_open() internally and the Glib filename encoding is
    always UTF-8 on Windows.
 */
 
@@ -803,7 +804,7 @@ static void ensure_sourceview_path (GtkSourceLanguageManager *lm)
 
 	g_free(dirs[0]);
 	g_free(dirs[1]);
-	
+
 	done = 1;
     }
 }
@@ -847,7 +848,7 @@ void set_style_for_textview (GtkWidget *text, const char *id)
 			      r == EDIT_PKG_SAMPLE || \
 			      r == VIEW_PKG_SAMPLE)
 
-void create_source (windata_t *vwin, int hsize, int vsize, 
+void create_source (windata_t *vwin, int hsize, int vsize,
 		    gboolean editable)
 {
     GtkSourceLanguageManager *lm = NULL;
@@ -897,22 +898,22 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     gtk_text_view_set_editable(view, editable);
     gtk_text_view_set_cursor_visible(view, editable);
 
-    gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(vwin->text), 
+    gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(vwin->text),
 					  script_line_numbers);
 
     if (lm != NULL) {
 	set_style_for_buffer(sbuf, get_sourceview_style());
     }
 
-#if COMPLETION_OK    
+#if COMPLETION_OK
     set_sourceview_complete_words(vwin);
-#endif    
+#endif
 
     if (gretl_script_role(vwin->role)) {
 	g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
 			 G_CALLBACK(script_key_handler), vwin);
 	g_signal_connect(G_OBJECT(vwin->text), "button-press-event",
-			 G_CALLBACK(script_popup_handler), 
+			 G_CALLBACK(script_popup_handler),
 			 vwin);
 	g_signal_connect(G_OBJECT(vwin->text), "button-release-event",
 			 G_CALLBACK(interactive_script_help), vwin);
@@ -920,12 +921,12 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 	g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
 			 G_CALLBACK(foreign_script_key_handler), vwin);
 	g_signal_connect(G_OBJECT(vwin->text), "button-press-event",
-			 G_CALLBACK(script_popup_handler), 
+			 G_CALLBACK(script_popup_handler),
 			 vwin);
     } else if (vwin->role == VIEW_LOG) {
 	g_signal_connect(G_OBJECT(vwin->text), "button-release-event",
 			 G_CALLBACK(interactive_script_help), vwin);
-    }	
+    }
 }
 
 /* Manufacture a little sampler sourceview for use in the
@@ -950,7 +951,7 @@ GtkWidget *create_sample_source (const char *style)
     if (lm == NULL) {
 	return NULL;
     }
-    
+
     ensure_sourceview_path(lm);
 
     lang = gtk_source_language_manager_get_language(lm, "gretl");
@@ -980,14 +981,14 @@ GtkWidget *create_sample_source (const char *style)
 void update_script_editor_options (windata_t *vwin)
 {
     ensure_sourceview_path(NULL);
-    
-    gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(vwin->text), 
+
+    gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(vwin->text),
 					  script_line_numbers);
 #if COMPLETION_OK
     if (vwin_is_editing(vwin)) {
 	toggle_auto_complete(vwin, script_auto_complete);
     }
-#endif    
+#endif
 
     set_style_for_buffer(vwin->sbuf, get_sourceview_style());
 }
@@ -1047,12 +1048,12 @@ static GtkTextTagTable *gretl_tags_new (void)
     bigsize = 15 * PANGO_SCALE;
     smallsize = 8 * PANGO_SCALE;
 
-    table = gtk_text_tag_table_new(); 
+    table = gtk_text_tag_table_new();
 
     tag = gtk_text_tag_new("bluetext");
     g_object_set(tag, "foreground", "blue", NULL);
     gtk_text_tag_table_add(table, tag);
-    
+
     tag = gtk_text_tag_new("redtext");
     g_object_set(tag, "foreground", "red", NULL);
     gtk_text_tag_table_add(table, tag);
@@ -1076,7 +1077,7 @@ static GtkTextTagTable *gretl_tags_new (void)
 
     tag = gtk_text_tag_new("italic");
     g_object_set(tag, "family", helpfont,
-		 "style", PANGO_STYLE_ITALIC, 
+		 "style", PANGO_STYLE_ITALIC,
 		 NULL);
     gtk_text_tag_table_add(table, tag);
 
@@ -1109,7 +1110,7 @@ static GtkTextTagTable *gretl_tags_new (void)
 		 "size", smallsize,
 		 NULL);
     gtk_text_tag_table_add(table, tag);
-		 
+
     tag = gtk_text_tag_new("literal");
     g_object_set(tag, "family", "monospace", NULL);
     gtk_text_tag_table_add(table, tag);
@@ -1135,7 +1136,7 @@ static GtkTextTagTable *gretl_tags_new (void)
 
     tag = gtk_text_tag_new("mono");
     g_object_set(tag, "family", "monospace", NULL);
-    gtk_text_tag_table_add(table, tag);    
+    gtk_text_tag_table_add(table, tag);
 
     return table;
 }
@@ -1143,7 +1144,7 @@ static GtkTextTagTable *gretl_tags_new (void)
 GtkTextBuffer *gretl_text_buf_new (void)
 {
     static GtkTextTagTable *tags = NULL;
-    GtkTextBuffer *tbuf; 
+    GtkTextBuffer *tbuf;
 
     if (tags == NULL) {
 	tags = gretl_tags_new();
@@ -1154,12 +1155,12 @@ GtkTextBuffer *gretl_text_buf_new (void)
     return tbuf;
 }
 
-static void 
+static void
 real_textview_add_colorized (GtkWidget *view, const char *buf,
 			     int append, int trim)
 {
     GtkTextBuffer *tbuf;
-    GtkTextIter iter; 
+    GtkTextIter iter;
     int nextcolor, thiscolor = PLAIN_TEXT;
     int in_comment = 0;
     char readbuf[4096];
@@ -1188,18 +1189,18 @@ real_textview_add_colorized (GtkWidget *view, const char *buf,
 	    nextcolor = PLAIN_TEXT;
 	}
 
-	if (*readbuf == '#' || *readbuf == '?' || 
+	if (*readbuf == '#' || *readbuf == '?' ||
 	    *readbuf == '>' || in_comment) {
 	    thiscolor = BLUE_TEXT;
 	} else if (!strncmp(readbuf, "/*", 2)) {
 	    in_comment = 1;
 	    thiscolor = nextcolor = BLUE_TEXT;
-	} 
+	}
 
 	if (strstr(readbuf, "*/")) {
 	    in_comment = 0;
 	    nextcolor = PLAIN_TEXT;
-	}	
+	}
 
 	if (thiscolor == BLUE_TEXT) {
 	    gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
@@ -1237,7 +1238,7 @@ void textview_set_text_report (GtkWidget *view, const char *buf)
 
     tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
     gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
-    
+
     while ((p = strstr(buf, "<@"))) {
 	gtk_text_buffer_insert(tbuf, &iter, buf, p - buf);
 	if (!strncmp(p, "<@ok>", 5)) {
@@ -1254,11 +1255,47 @@ void textview_set_text_report (GtkWidget *view, const char *buf)
     gtk_text_buffer_insert(tbuf, &iter, buf, -1);
 }
 
+void textview_set_text_dbsearch (windata_t *vwin, const char *buf)
+{
+    GtkTextBuffer *tbuf;
+    GtkTextTagTable *tab;
+    GtkTextIter iter;
+    GtkTextTag *tag;
+    gchar *dsname;
+    const char *p, *q;
+
+    /* plain text except for "<@dbn>" tags for links */
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+    tab = gtk_text_buffer_get_tag_table(tbuf);
+    gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
+
+    while ((p = strstr(buf, "<@dbn"))) {
+	gtk_text_buffer_insert(tbuf, &iter, buf, p - buf);
+	p += 7;
+	q = strchr(p, '"');
+	dsname = g_strndup(p, q-p);
+	tag = gtk_text_tag_table_lookup(tab, dsname);
+	if (tag == NULL) {
+	    tag = gtk_text_buffer_create_tag(tbuf, dsname, "foreground", "blue",
+					     NULL);
+	    g_object_set_data(G_OBJECT(tag), "page", GINT_TO_POINTER(DBN_PAGE));
+	}
+	gtk_text_buffer_insert_with_tags(tbuf, &iter, dsname, -1, tag, NULL);
+	g_free(dsname);
+	buf = q + 2;
+    }
+
+    gtk_text_buffer_insert(tbuf, &iter, buf, -1);
+
+    connect_link_signals(vwin);
+}
+
 void textview_delete_processing_message (GtkWidget *view)
 {
     GtkTextBuffer *tbuf;
     GtkTextMark *mark;
-    GtkTextIter i0, i1; 
+    GtkTextIter i0, i1;
 
     g_return_if_fail(GTK_IS_TEXT_VIEW(view));
 
@@ -1282,11 +1319,11 @@ void textview_add_processing_message (GtkWidget *view)
 
     tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
     gtk_text_buffer_get_end_iter(tbuf, &iter);
-    mark = gtk_text_buffer_create_mark(tbuf, "procmark", &iter, TRUE); 
+    mark = gtk_text_buffer_create_mark(tbuf, "procmark", &iter, TRUE);
     gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
 					     _(msg), -1,
 					     "redtext", NULL);
-    gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(view), mark, 0.0, 
+    gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(view), mark, 0.0,
 				 FALSE, 0, 0);
 }
 
@@ -1306,7 +1343,7 @@ void textview_insert_file (windata_t *vwin, const char *fname)
 {
     FILE *fp;
     GtkTextBuffer *tbuf;
-    GtkTextIter iter;    
+    GtkTextIter iter;
     int thiscolor, nextcolor;
     char fline[MAXSTR], *chunk;
     int links = 0;
@@ -1359,7 +1396,7 @@ void textview_insert_file (windata_t *vwin, const char *fname)
 		thiscolor = (vwin->role == CONSOLE)? RED_TEXT : BLUE_TEXT;
 	    } else if (*chunk == '#') {
 		thiscolor = BLUE_TEXT;
-	    } 
+	    }
 
 	    switch (thiscolor) {
 	    case PLAIN_TEXT:
@@ -1420,8 +1457,8 @@ static char *get_pkghelp_string (const char *key)
 
 #define TAGLEN 128
 
-static gboolean insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter, 
-			     const char *text, gint page, 
+static gboolean insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
+			     const char *text, gint page,
 			     const char *indent)
 {
     GtkTextTagTable *tab = gtk_text_buffer_get_tag_table(tbuf);
@@ -1471,20 +1508,20 @@ static gboolean insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
 
     if (tag == NULL) {
 	if (page == GUIDE_PAGE || page == BIB_PAGE || page == MNU_PAGE) {
-	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue", 
+	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue",
 					     "family", helpfont, NULL);
 	} else if (page == SCRIPT_PAGE || page == EXT_PAGE ||
 		   page == PDF_PAGE) {
-	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue", 
+	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue",
 					     "family", "monospace", NULL);
 	} else if (indent != NULL) {
-	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue", 
+	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue",
 					     "left_margin", 30, NULL);
 	} else {
 	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue", NULL);
 	}
 	g_object_set_data(G_OBJECT(tag), "page", GINT_TO_POINTER(page));
-    } 
+    }
 
     if (show != NULL) {
 	gtk_text_buffer_insert_with_tags(tbuf, iter, show, -1, tag, NULL);
@@ -1498,8 +1535,8 @@ static gboolean insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
     return TRUE;
 }
 
-static gboolean insert_xlink (GtkTextBuffer *tbuf, GtkTextIter *iter, 
-			      const char *text, gint page, 
+static gboolean insert_xlink (GtkTextBuffer *tbuf, GtkTextIter *iter,
+			      const char *text, gint page,
 			      const char *indent)
 {
     GtkTextTagTable *tab = gtk_text_buffer_get_tag_table(tbuf);
@@ -1520,17 +1557,17 @@ static gboolean insert_xlink (GtkTextBuffer *tbuf, GtkTextIter *iter,
     if (tag == NULL) {
 	/* the required tag is not already in the table */
 	if (gfr) {
-	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue", 
+	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue",
 					     "family", helpfont, NULL);
 	} else if (indent != NULL) {
-	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue", 
+	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue",
 					     "left_margin", 30, NULL);
 	} else {
 	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue", NULL);
 	}
 	g_object_set_data(G_OBJECT(tag), "page", GINT_TO_POINTER(page));
 	g_object_set_data(G_OBJECT(tag), "xref", GINT_TO_POINTER(1));
-    } 
+    }
 
     gtk_text_buffer_insert_with_tags(tbuf, iter, text, -1, tag, NULL);
 
@@ -1545,14 +1582,14 @@ static void open_script_link (GtkTextTag *tag)
     FILE *fp;
 
     g_object_get(G_OBJECT(tag), "name", &fname, NULL);
-    sprintf(fullname, "%sscripts%cmisc%c%s", gretldir, 
+    sprintf(fullname, "%sscripts%cmisc%c%s", gretldir,
 	    SLASH, SLASH, fname);
 
     fp = gretl_fopen(fullname, "r");
     if (fp != NULL) {
 	fclose(fp);
     } else {
-	sprintf(fullname, "%sscripts%c%s", gretldir, 
+	sprintf(fullname, "%sscripts%c%s", gretldir,
 		SLASH, fname);
     }
 
@@ -1572,7 +1609,7 @@ static void make_bibitem_window (const char *buf,
     top = gtk_widget_get_toplevel(tview);
     gtk_window_set_transient_for(GTK_WINDOW(vmain), GTK_WINDOW(top));
     gtk_window_set_destroy_with_parent(GTK_WINDOW(vmain), TRUE);
-    gtk_window_set_position(GTK_WINDOW(vmain), 
+    gtk_window_set_position(GTK_WINDOW(vmain),
 			    GTK_WIN_POS_CENTER_ON_PARENT);
     gtk_widget_show(vmain);
 }
@@ -1605,7 +1642,7 @@ static void open_bibitem_link (GtkTextTag *tag, GtkWidget *tview)
 	}
 
 	fclose(fp);
-    }    
+    }
 
     g_free(key);
 }
@@ -1662,6 +1699,18 @@ static void open_menu_item (GtkTextTag *tag)
     }
 }
 
+static void open_dbn_link (GtkTextTag *tag)
+{
+    gchar *name = NULL;
+
+    g_object_get(G_OBJECT(tag), "name", &name, NULL);
+
+    if (name != NULL) {
+	display_files(DBNOMICS_SERIES, name);
+	g_free(name);
+    }
+}
+
 static void open_pdf_file (GtkTextTag *tag)
 {
     gchar *name = NULL;
@@ -1674,7 +1723,7 @@ static void open_pdf_file (GtkTextTag *tag)
     }
 }
 
-static void follow_if_link (GtkWidget *tview, GtkTextIter *iter, 
+static void follow_if_link (GtkWidget *tview, GtkTextIter *iter,
 			    gpointer en_ptr)
 {
     GSList *tags = NULL, *tagp = NULL;
@@ -1690,7 +1739,7 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter,
 	if (page != 0 || xref != 0) {
 	    if (page == GUIDE_PAGE) {
 		gchar *name = NULL;
-		
+
 		g_object_get(tag, "name", &name, NULL);
 		if (name != NULL && strstr(name, "chap:")) {
 		    display_guide_chapter(name);
@@ -1708,12 +1757,14 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter,
 		open_pdf_file(tag);
 	    } else if (page == MNU_PAGE) {
 		open_menu_item(tag);
+	    } else if (page == DBN_PAGE) {
+		open_dbn_link(tag);
 	    } else {
 		int role = object_get_int(tview, "role");
 
 		if (function_help(role)) {
 		    if (xref) {
-			command_help_callback(page, en); 
+			command_help_callback(page, en);
 		    } else {
 			function_help_callback(page, en);
 		    }
@@ -1722,7 +1773,7 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter,
 		    if (xref) {
 			function_help_callback(page, en);
 		    } else {
-			command_help_callback(page, en); 
+			command_help_callback(page, en);
 		    }
 		}
 	    }
@@ -1744,10 +1795,10 @@ static gboolean cmdref_key_press (GtkWidget *tview, GdkEventKey *ev,
     GtkTextBuffer *tbuf;
 
     switch (ev->keyval) {
-    case GDK_Return: 
+    case GDK_Return:
     case GDK_KP_Enter:
 	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tview));
-	gtk_text_buffer_get_iter_at_mark(tbuf, &iter, 
+	gtk_text_buffer_get_iter_at_mark(tbuf, &iter,
 					 gtk_text_buffer_get_insert(tbuf));
 	follow_if_link(tview, &iter, en_ptr);
 	break;
@@ -1816,7 +1867,7 @@ set_cursor_if_appropriate (GtkTextView *view, gint x, gint y)
 	gint page = object_get_int(tag, "page");
 	gint xref = object_get_int(tag, "xref");
 
-	if (page != 0 || xref != 0) { 
+	if (page != 0 || xref != 0) {
 	    hovering = TRUE;
 	    break;
         }
@@ -1825,10 +1876,10 @@ set_cursor_if_appropriate (GtkTextView *view, gint x, gint y)
     if (hovering != hovering_over_link) {
 	hovering_over_link = hovering;
 	if (hovering_over_link) {
-	    gdk_window_set_cursor(gtk_text_view_get_window(view, GTK_TEXT_WINDOW_TEXT), 
+	    gdk_window_set_cursor(gtk_text_view_get_window(view, GTK_TEXT_WINDOW_TEXT),
 				  hand_cursor);
 	} else {
-	    gdk_window_set_cursor(gtk_text_view_get_window(view, GTK_TEXT_WINDOW_TEXT), 
+	    gdk_window_set_cursor(gtk_text_view_get_window(view, GTK_TEXT_WINDOW_TEXT),
 				  regular_cursor);
 	}
     }
@@ -1838,7 +1889,7 @@ set_cursor_if_appropriate (GtkTextView *view, gint x, gint y)
     }
 }
 
-static gboolean 
+static gboolean
 cmdref_motion_notify (GtkWidget *w, GdkEventMotion *event)
 {
     GtkTextView *view = GTK_TEXT_VIEW(w);
@@ -1873,21 +1924,21 @@ static void connect_link_signals (windata_t *vwin)
 
     if (regular_cursor == NULL) {
 	regular_cursor = gdk_cursor_new(GDK_XTERM);
-    }    
+    }
 
-    g_signal_connect(G_OBJECT(vwin->text), "key-press-event", 
+    g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
 		     G_CALLBACK(cmdref_key_press), NULL);
-    g_signal_connect(G_OBJECT(vwin->text), "event-after", 
+    g_signal_connect(G_OBJECT(vwin->text), "event-after",
 		     G_CALLBACK(cmdref_event_after), NULL);
-    g_signal_connect(G_OBJECT(vwin->text), "motion-notify-event", 
+    g_signal_connect(G_OBJECT(vwin->text), "motion-notify-event",
 		     G_CALLBACK(cmdref_motion_notify), NULL);
-    g_signal_connect(G_OBJECT(vwin->text), "visibility-notify-event", 
+    g_signal_connect(G_OBJECT(vwin->text), "visibility-notify-event",
 		     G_CALLBACK(cmdref_visibility_notify), NULL);
 }
 
 static void maybe_connect_help_signals (windata_t *hwin, int en)
 {
-    int done = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(hwin->text), 
+    int done = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(hwin->text),
 						 "sigs_connected"));
 
     if (hand_cursor == NULL) {
@@ -1896,32 +1947,32 @@ static void maybe_connect_help_signals (windata_t *hwin, int en)
 
     if (regular_cursor == NULL) {
 	regular_cursor = gdk_cursor_new(GDK_XTERM);
-    }    
+    }
 
     if (!done) {
 	gpointer en_ptr = GINT_TO_POINTER(en);
 
-	g_signal_connect(G_OBJECT(hwin->text), "key-press-event", 
+	g_signal_connect(G_OBJECT(hwin->text), "key-press-event",
 			 G_CALLBACK(cmdref_key_press), en_ptr);
-	g_signal_connect(G_OBJECT(hwin->text), "event-after", 
+	g_signal_connect(G_OBJECT(hwin->text), "event-after",
 			 G_CALLBACK(cmdref_event_after), en_ptr);
-	g_signal_connect(G_OBJECT(hwin->text), "motion-notify-event", 
+	g_signal_connect(G_OBJECT(hwin->text), "motion-notify-event",
 			 G_CALLBACK(cmdref_motion_notify), NULL);
-	g_signal_connect(G_OBJECT(hwin->text), "visibility-notify-event", 
+	g_signal_connect(G_OBJECT(hwin->text), "visibility-notify-event",
 			 G_CALLBACK(cmdref_visibility_notify), NULL);
-	g_object_set_data(G_OBJECT(hwin->text), "sigs_connected", 
+	g_object_set_data(G_OBJECT(hwin->text), "sigs_connected",
 			  GINT_TO_POINTER(1));
     }
 }
 
 static void maybe_set_help_tabs (windata_t *hwin)
 {
-    int done = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(hwin->text), 
+    int done = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(hwin->text),
 						 "tabs_set"));
 
     if (!done) {
 	PangoTabArray *tabs;
-	
+
 	tabs = pango_tab_array_new(1, TRUE);
 	pango_tab_array_set_tab(tabs, 0, PANGO_TAB_LEFT, 50);
 	gtk_text_view_set_tabs(GTK_TEXT_VIEW(hwin->text), tabs);
@@ -2057,7 +2108,7 @@ static gint help_popup_click (GtkWidget *w, gpointer p)
     int page = 0;
 
     if (action == 2) {
-	page = pop_backpage(hwin->text); 
+	page = pop_backpage(hwin->text);
     }
 
     if (function_help(hwin->role)) {
@@ -2102,7 +2153,7 @@ static GtkWidget *build_help_popup (windata_t *hwin)
     return pmenu;
 }
 
-gboolean 
+gboolean
 help_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
 {
     if (right_click(event)) {
@@ -2123,7 +2174,7 @@ help_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
 	    gtk_menu_popup(GTK_MENU(hwin->popup), NULL, NULL, NULL, NULL,
 			   event->button, event->time);
 	    g_signal_connect(G_OBJECT(hwin->popup), "destroy",
-			     G_CALLBACK(gtk_widget_destroyed), 
+			     G_CALLBACK(gtk_widget_destroyed),
 			     &hwin->popup);
 	}
 
@@ -2218,7 +2269,7 @@ static gboolean next_double_nl (GtkTextIter *pos,
 
     if (gtk_text_iter_get_char(pos) == '\n') {
 	nlcount = 1;
-    }    
+    }
 
     while (gtk_text_iter_forward_char(&cpos)) {
 	c = gtk_text_iter_get_char(&cpos);
@@ -2287,7 +2338,7 @@ static int not_in_para (GtkTextBuffer *buf,
 		    break;
 		}
 	    }
-	}	    
+	}
     }
 
     return !got_text;
@@ -2308,7 +2359,7 @@ static gboolean textbuf_get_para_limits (GtkTextBuffer *buf,
 
     if (!next_double_nl(pos, end)) {
 	gtk_text_buffer_get_end_iter(buf, end);
-    }    
+    }
 
     return TRUE;
 }
@@ -2322,7 +2373,7 @@ void textview_format_paragraph (GtkWidget *view)
     buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
 
     /* find where the cursor is */
-    gtk_text_buffer_get_iter_at_mark(buf, &pos, 
+    gtk_text_buffer_get_iter_at_mark(buf, &pos,
 				     gtk_text_buffer_get_insert(buf));
 
     /* find start and end of paragraph, if we're in one */
@@ -2340,7 +2391,7 @@ void textview_format_paragraph (GtkWidget *view)
 	gtk_text_buffer_insert(buf, &start, para, -1);
 	gtk_text_buffer_end_user_action(buf);
 	g_free(para);
-	
+
     }
 }
 
@@ -2351,10 +2402,10 @@ gchar *textview_get_current_line (GtkWidget *view)
     gchar *ret = NULL;
 
     buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
-    gtk_text_buffer_get_iter_at_mark(buf, &start, 
+    gtk_text_buffer_get_iter_at_mark(buf, &start,
 				     gtk_text_buffer_get_insert(buf));
     gtk_text_iter_set_line_offset(&start, 0);
-    gtk_text_buffer_get_iter_at_mark(buf, &end, 
+    gtk_text_buffer_get_iter_at_mark(buf, &end,
 				     gtk_text_buffer_get_insert(buf));
     if (!gtk_text_iter_ends_line(&end)) {
 	/* N.B. don't skip on to the end of the _next_ line */
@@ -2362,7 +2413,7 @@ gchar *textview_get_current_line (GtkWidget *view)
     }
 
     ret = gtk_text_buffer_get_text(buf, &start, &end, FALSE);
-    
+
     if (string_is_blank(ret)) {
 	g_free(ret);
 	ret = NULL;
@@ -2440,7 +2491,7 @@ static int text_is_commented (const gchar *s)
 	    if (*(s+1)) {
 		lines++;
 	    }
-	} 
+	}
 	s++;
     }
 
@@ -2534,7 +2585,7 @@ static int spaces_to_tab_stop (const char *s, int targ)
 	    if (ret < 0) ret = 0;
 	} else {
 	    ret = (n / tabwidth) * tabwidth;
-	} 
+	}
     }
 
     return ret;
@@ -2625,7 +2676,7 @@ static void strip_trailing_whitespace (char *s)
     strcat(s, "\n");
 }
 
-static void normalize_indent (GtkTextBuffer *tbuf, 
+static void normalize_indent (GtkTextBuffer *tbuf,
 			      const gchar *buf,
 			      GtkTextIter *start,
 			      GtkTextIter *end)
@@ -2641,7 +2692,7 @@ static void normalize_indent (GtkTextBuffer *tbuf,
 
     if (buf == NULL) {
 	return;
-    }    
+    }
 
     gtk_text_buffer_delete(tbuf, start, end);
 
@@ -2697,7 +2748,7 @@ static void normalize_indent (GtkTextBuffer *tbuf,
 	strcpy(lastline, line);
     }
 
-    bufgets_finalize(buf); 
+    bufgets_finalize(buf);
 }
 
 static int in_foreign_land (GtkWidget *text_widget)
@@ -2710,7 +2761,7 @@ static int in_foreign_land (GtkWidget *text_widget)
 
     tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_widget));
     gtk_text_buffer_get_start_iter(tbuf, &start);
-    gtk_text_buffer_get_iter_at_mark(tbuf, &end, 
+    gtk_text_buffer_get_iter_at_mark(tbuf, &end,
 				     gtk_text_buffer_get_insert(tbuf));
     buf = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
 
@@ -2846,14 +2897,14 @@ static struct textbit *vwin_get_textbit (windata_t *vwin, int mode)
 	}
 	tb->chunk = gtk_text_buffer_get_text(tb->buf, &tb->start, &tb->end, FALSE);
     } else {
-	gtk_text_buffer_get_iter_at_mark(tb->buf, &tb->start, 
+	gtk_text_buffer_get_iter_at_mark(tb->buf, &tb->start,
 					 gtk_text_buffer_get_insert(tb->buf));
 	gtk_text_iter_set_line_offset(&tb->start, 0);
-	gtk_text_buffer_get_iter_at_mark(tb->buf, &tb->end, 
+	gtk_text_buffer_get_iter_at_mark(tb->buf, &tb->end,
 					 gtk_text_buffer_get_insert(tb->buf));
 	gtk_text_iter_forward_to_line_end(&tb->end);
 	tb->chunk = gtk_text_buffer_get_text(tb->buf, &tb->start, &tb->end, FALSE);
-    } 
+    }
 
     return tb;
 }
@@ -2916,7 +2967,7 @@ static int incremental_leading_spaces (const char *prevword,
 	if (*thisword != '\0') {
 	    adjust_indent(thisword, &this_indent, &next_indent);
 #if TABDEBUG > 1
-	    fprintf(stderr, "adjust_indent 2: thisword='%s', this=%d\n", 
+	    fprintf(stderr, "adjust_indent 2: thisword='%s', this=%d\n",
 		    thisword, this_indent);
 #endif
 	    this_indent -= prev_indent;
@@ -2939,7 +2990,7 @@ static int line_continues (const gchar *s)
 	if (s[i] != ' ' && s[i] != '\t') {
 	    return (s[i] == '\\');
 	}
-    } 
+    }
 
     return 0;
 }
@@ -2986,7 +3037,7 @@ static int line_continues_previous (GtkTextBuffer *tbuf,
 /* get "command word", max 8 characters: work backwards up script
    to find this */
 
-static char *get_previous_line_start_word (char *word, 
+static char *get_previous_line_start_word (char *word,
 					   GtkTextBuffer *tbuf,
 					   GtkTextIter iter,
 					   int *leadspace,
@@ -3067,11 +3118,11 @@ static int maybe_insert_smart_tab (windata_t *vwin)
 	if (s != NULL) {
 #if TABDEBUG > 1
 	    fprintf(stderr, "*** maybe_insert_smart_tab: "
-		    "current line = '%s'\n", s);	    
+		    "current line = '%s'\n", s);
 #endif
 	    sscanf(s, "%8s", thisword);
 	    g_free(s);
-	} 
+	}
 
 	get_previous_line_start_word(prevword, tbuf, prev, &nsp, &contd);
 
@@ -3080,7 +3131,7 @@ static int maybe_insert_smart_tab (windata_t *vwin)
 	} else {
 #if TABDEBUG > 1
 	    fprintf(stderr, "*** maybe_insert_smart_tab: "
-		    "getting leading spaces\n");	    
+		    "getting leading spaces\n");
 #endif
 	    nsp += incremental_leading_spaces(prevword, thisword);
 	}
@@ -3090,7 +3141,7 @@ static int maybe_insert_smart_tab (windata_t *vwin)
 	}
 	for (i=0; i<nsp; i++) {
 	    gtk_text_buffer_insert(tbuf, &start, " ", -1);
-	}	
+	}
 	if (pos > 0) {
 	    s = chunk + strspn(chunk, " \t");
 	    gtk_text_buffer_insert(tbuf, &start, s, -1);
@@ -3138,12 +3189,12 @@ static int maybe_insert_auto_bracket (windata_t *vwin,
 
     mark = gtk_text_buffer_get_insert(tbuf);
     gtk_text_buffer_get_iter_at_mark(tbuf, &start, mark);
-    
+
     if (gtk_text_iter_ends_line(&start)) {
 	ret = 1;
     } else {
 	GtkTextIter end = start;
-	
+
 	gtk_text_iter_forward_to_line_end(&end);
 	chunk = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
 	if (chunk != NULL) {
@@ -3187,10 +3238,10 @@ static gboolean script_electric_enter (windata_t *vwin)
 #endif
 
     s = textview_get_current_line(vwin->text);
- 
+
     if (s != NULL && *s != '\0') {
 	/* work on the line that starts with @thisword, and
-	   is ended by the current Enter 
+	   is ended by the current Enter
 	*/
 	GtkTextBuffer *tbuf;
 	GtkTextMark *mark;
@@ -3242,7 +3293,7 @@ static gboolean script_electric_enter (windata_t *vwin)
 	diff = nsp - targsp;
 
 #if TABDEBUG
-	fprintf(stderr, "incr = %d: after increment targsp = %d, diff = %d\n", 
+	fprintf(stderr, "incr = %d: after increment targsp = %d, diff = %d\n",
 		incr, targsp, diff);
 #endif
 
@@ -3339,12 +3390,12 @@ static void toggle_auto_complete (windata_t *vwin, gboolean s)
     words = g_object_get_data(G_OBJECT(vwin->text), "prov_words");
 
     if (s) {
-	ok = gtk_source_completion_add_provider(comp, 
-						GTK_SOURCE_COMPLETION_PROVIDER(words), 
+	ok = gtk_source_completion_add_provider(comp,
+						GTK_SOURCE_COMPLETION_PROVIDER(words),
 						NULL);
     } else {
-	ok = gtk_source_completion_remove_provider(comp, 
-						   GTK_SOURCE_COMPLETION_PROVIDER(words), 
+	ok = gtk_source_completion_remove_provider(comp,
+						   GTK_SOURCE_COMPLETION_PROVIDER(words),
 						   NULL);
     }
 
@@ -3352,10 +3403,10 @@ static void toggle_auto_complete (windata_t *vwin, gboolean s)
 	script_auto_complete = s;
     }
 
-#if 0    
+#if 0
     fprintf(stderr, "toggle_auto_complete: comp=%p, prov=%p, auto_complete=%d, ok=%d\n",
 	    (void *) comp, (void *) words, script_auto_complete, ok);
-#endif    
+#endif
 }
 
 #endif /* COMPLETION_OK */
@@ -3377,7 +3428,7 @@ const char **get_sourceview_style_ids (int *n)
     mgr = gtk_source_style_scheme_manager_get_default();
     if (mgr != NULL) {
 	int i = 0;
-	
+
 	ids = gtk_source_style_scheme_manager_get_scheme_ids(mgr);
 	if (ids != NULL) {
 	    while (ids[i] != NULL) i++;
@@ -3449,9 +3500,9 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 
     if (editing_hansl(vwin->role) && tb->commented >= 0) {
 	/* material is either all commented or all uncommented:
-	   allow comment/uncomment option 
+	   allow comment/uncomment option
 	*/
-	int i = (tb->selected && !tb->commented)? 2 : 
+	int i = (tb->selected && !tb->commented)? 2 :
 	    (tb->selected && tb->commented)? 3 :
 	    (!tb->selected && !tb->commented)? 0 : 1;
 
@@ -3465,7 +3516,7 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 
     if (editing_hansl(vwin->role)) {
 	if (tb->selected) {
-	    item = gtk_menu_item_new_with_label(smarttab? 
+	    item = gtk_menu_item_new_with_label(smarttab?
 						_("Auto-indent region") :
 						_("Indent region"));
 	    g_signal_connect(G_OBJECT(item), "activate",
@@ -3507,7 +3558,7 @@ build_script_popup (windata_t *vwin, struct textbit **ptb)
 	add_undock_popup_item(pmenu, vwin);
     } else if (window_is_dockable(vwin)) {
 	add_dock_popup_item(pmenu, vwin);
-    }	
+    }
 
     return pmenu;
 }
@@ -3523,7 +3574,7 @@ static gboolean destroy_textbit (GtkWidget **pw, struct textbit *tc)
     return FALSE;
 }
 
-static gboolean 
+static gboolean
 script_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
 {
     if (right_click(event)) {
@@ -3541,7 +3592,7 @@ script_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
 	    gtk_menu_popup(GTK_MENU(vwin->popup), NULL, NULL, NULL, NULL,
 			   event->button, event->time);
 	    g_signal_connect(G_OBJECT(vwin->popup), "destroy",
-			     G_CALLBACK(destroy_textbit), 
+			     G_CALLBACK(destroy_textbit),
 			     tc);
 	}
 
@@ -3604,7 +3655,7 @@ static void insert_math_content (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	PangoFontDescription *pfd;
 
 	pfd = pango_font_description_from_string(helpfont);
-	
+
 	if (font_has_symbol(pfd, 0x2212)) {
 	    /* preferred: unicode minus */
 	    minus[0] = 0xE2;
@@ -3682,7 +3733,7 @@ static void insert_tagged_text (GtkTextBuffer *tbuf, GtkTextIter *iter,
 
 #ifdef G_OS_WIN32
     if (ins == INSERT_OPT) {
-	/* Unicode word joiner not supported? Try zero width 
+	/* Unicode word joiner not supported? Try zero width
 	   non breaking space instead */
 	char tmp[32];
 
@@ -3775,7 +3826,7 @@ static int get_code_skip (const char *s)
 	    skip++;
 	}
 	s++;
-    } 
+    }
 
     return skip;
 }
@@ -3954,7 +4005,7 @@ int set_help_topic_buffer (windata_t *hwin, int pos, int en)
 
     maybe_connect_help_signals(hwin, en);
     maybe_set_help_tabs(hwin);
-    
+
     gtk_text_buffer_get_iter_at_offset(textb, &iter, 0);
 
     hbuf = (gchar *) hwin->data + pos;
@@ -4023,7 +4074,7 @@ void gretl_viewer_set_formatted_buffer (windata_t *vwin, const char *buf)
 
     if (links) {
 	connect_link_signals(vwin);
-    }    
+    }
 }
 
 static int get_screen_height (void)
@@ -4058,7 +4109,7 @@ static void set_max_text_width (windata_t *vwin,
 
 #define HDEBUG 0
 
-void create_text (windata_t *vwin, int hsize, int vsize, 
+void create_text (windata_t *vwin, int hsize, int vsize,
 		  int nlines, gboolean editable)
 {
     GtkTextBuffer *tbuf = gretl_text_buf_new();
@@ -4072,12 +4123,13 @@ void create_text (windata_t *vwin, int hsize, int vsize,
     if (help_role(role) || role == VIEW_PKG_INFO ||
 	role == VIEW_BIBITEM || role == VIEW_CODEBOOK ||
 	role == EDIT_PKG_HELP || role == EDIT_PKG_GHLP ||
-	role == VIEW_DBNOMICS || role == IMPORT) {
+	role == VIEW_DBNOMICS || role == IMPORT ||
+	role == VIEW_DBSEARCH) {
 	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(w), GTK_WRAP_WORD);
     } else {
 	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(w), GTK_WRAP_NONE);
     }
-    
+
     gtk_text_view_set_left_margin(GTK_TEXT_VIEW(w), 4);
     gtk_text_view_set_right_margin(GTK_TEXT_VIEW(w), 4);
 
@@ -4136,12 +4188,12 @@ static GtkTextTagTable *gretl_console_tags_new (void)
     GtkTextTagTable *table;
     GtkTextTag *tag;
 
-    table = gtk_text_tag_table_new(); 
+    table = gtk_text_tag_table_new();
 
     tag = gtk_text_tag_new("bluetext");
     g_object_set(tag, "foreground", "blue", NULL);
     gtk_text_tag_table_add(table, tag);
-    
+
     tag = gtk_text_tag_new("redtext");
     g_object_set(tag, "foreground", "red", NULL);
     gtk_text_tag_table_add(table, tag);
@@ -4166,7 +4218,7 @@ void create_console (windata_t *vwin, int hsize, int vsize)
 	console_tags = gretl_console_tags_new();
     }
 
-    /* new as of 2018-06-09 */
+    /* new as of 2018-06-09: add syntax highlighting */
     lm = gtk_source_language_manager_get_default();
     ensure_sourceview_path(lm);
 
@@ -4228,7 +4280,7 @@ void text_table_setup (GtkWidget *vbox, GtkWidget *w)
 				   GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw),
 					GTK_SHADOW_IN);
-    gtk_container_add(GTK_CONTAINER(sw), w); 
+    gtk_container_add(GTK_CONTAINER(sw), w);
     gtk_widget_show(w);
     gtk_widget_show(sw);
 }
@@ -4293,7 +4345,7 @@ void viewer_split_pane (windata_t *vwin, int vertical)
     set_pane_text_properties(GTK_TEXT_VIEW(view2),
 			     GTK_TEXT_VIEW(view1));
 
-    g_signal_connect(G_OBJECT(view2), "button-press-event", 
+    g_signal_connect(G_OBJECT(view2), "button-press-event",
 		     G_CALLBACK(text_popup_handler), vwin);
 
     gtk_paned_add1(GTK_PANED(paned), sw);

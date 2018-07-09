@@ -2014,11 +2014,12 @@ void listbox_select_first (windata_t *vwin)
     gtk_widget_grab_focus(vwin->listbox);
 }
 
-void display_files (int role, gpointer data)
+void display_files (int role, const gchar *path)
 {
     GtkWidget *filebox;
     windata_t *vwin;
     gchar *title = NULL;
+    gchar *mypath = NULL;
     int err = 0;
 
     vwin = get_browser_for_role(role);
@@ -2051,9 +2052,11 @@ void display_files (int role, gpointer data)
     } else if (role == PKG_REGISTRY) {
 	title = g_strdup(_("gretl: packages on menus"));
     } else if (role == DBNOMICS_DB) {
-	title = g_strdup_printf("gretl: %s datasets", (gchar *) data);
+	mypath = g_strdup(path);
+	title = g_strdup_printf("gretl: %s datasets", path);
     } else if (role == DBNOMICS_SERIES) {
-	title = g_strdup_printf("gretl: %s", (gchar *) data);
+	mypath = g_strdup(path);
+	title = g_strdup_printf("gretl: %s", path);
     }
 
     vwin = gretl_browser_new(role, title);
@@ -2145,7 +2148,7 @@ void display_files (int role, gpointer data)
 	    gtk_widget_set_size_request(filebox, w, h);
 	}
     } else {
-	err = populate_filelist(vwin, data);
+	err = populate_filelist(vwin, mypath);
     }
 
     if (err) {

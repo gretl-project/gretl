@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* toolbar.c: main-window toolbar, viewer window toolbars, etc. */
@@ -217,7 +217,7 @@ static void copy_to_editor (GtkWidget *w, windata_t *vwin)
     } else {
 	do_new_script(EDIT_HANSL, buf);
     }
-    
+
     g_free(buf);
 }
 
@@ -233,7 +233,7 @@ static void save_as_callback (GtkWidget *w, windata_t *vwin)
 	};
 	int resp;
 
-	resp = radio_dialog(_("gretl: save text"), _("Save text"), 
+	resp = radio_dialog(_("gretl: save text"), _("Save text"),
 			    opts, 2, 0, 0, vmain);
 	if (resp < 0) {
 	    return;
@@ -289,7 +289,7 @@ static void display_digits_callback (GtkWidget *w, windata_t *vwin)
 	/* desciptive statistics window */
 	Summary *s = vwin->data;
 	int dmax = (s->opt & OPT_S)? 4 : 5;
- 
+
 	digits = (digits > dmax)? dmax : digits;
 	resp = spin_dialog(NULL, NULL, &digits,
 			   _("Number of digits to show for statistics"),
@@ -332,7 +332,7 @@ static void mail_script_callback (GtkWidget *w, windata_t *vwin)
     if (query_save_text(NULL, NULL, vwin)) {
 	return;
     }
-    
+
     send_file(vwin->fname);
 }
 
@@ -432,10 +432,10 @@ static void add_matrix_callback (GtkWidget *w, windata_t *vwin)
 	gretl_matrix *m;
 	int err, cancel = 0;
 
-	blocking_edit_dialog(0, _("gretl: save matrix"), 
+	blocking_edit_dialog(0, _("gretl: save matrix"),
 			     _("Enter a name"), NULL,
-			     set_matrix_name, mname, 
-			     VARCLICK_NONE, 
+			     set_matrix_name, mname,
+			     VARCLICK_NONE,
 			     vwin_toplevel(vwin),
 			     &cancel);
 	if (!cancel) {
@@ -478,7 +478,7 @@ static void add_data_callback (GtkWidget *w, windata_t *vwin)
     if (dataset->v > oldv) {
 	populate_varlist();
 	mark_dataset_as_modified();
-    }	
+    }
 }
 
 static void real_coeffint_set_alpha (GtkWidget *w, GtkWidget *dialog)
@@ -500,7 +500,7 @@ static void real_coeffint_set_alpha (GtkWidget *w, GtkWidget *dialog)
     buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
     gtk_text_buffer_set_text(buf, "", -1);
     textview_set_text(vwin->text, newtext);
-    gretl_print_destroy(prn); 
+    gretl_print_destroy(prn);
 
     gtk_widget_destroy(dialog);
 }
@@ -517,7 +517,7 @@ static void alpha_button_callback (GtkToggleButton *b, double *x)
 	} else if (i == 2) {
 	    *x = 0.99;
 	}
-    } 
+    }
 }
 
 static void reformat_callback (GtkWidget *w, windata_t *vwin)
@@ -557,10 +557,10 @@ static void split_pane_callback (GtkWidget *w, windata_t *vwin)
 	}
 	gtk_widget_set_sensitive(hb, !vertical);
 	if (vertical) {
-	    gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(vb), 
+	    gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(vb),
 					 GRETL_STOCK_JOIN_V);
 	} else {
-	    gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(hb), 
+	    gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(hb),
 					 GRETL_STOCK_JOIN_H);
 	}
     } else {
@@ -577,10 +577,10 @@ static void split_pane_callback (GtkWidget *w, windata_t *vwin)
 		gtk_widget_set_sensitive(vb, TRUE);
 	    }
 	    if (vertical) {
-		gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(vb), 
+		gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(vb),
 					     GRETL_STOCK_SPLIT_V);
 	    } else {
-		gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(hb), 
+		gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(hb),
 					     GRETL_STOCK_SPLIT_H);
 	    }
 	}
@@ -608,7 +608,7 @@ static void coeffint_set_alpha (GtkWidget *w, windata_t *vwin)
 	return;
     }
 
-    dialog = gretl_dialog_new(_("gretl: coefficient confidence intervals"), 
+    dialog = gretl_dialog_new(_("gretl: coefficient confidence intervals"),
 			      vwin_toplevel(vwin), GRETL_DLG_BLOCK);
 
     hbox = gtk_hbox_new(FALSE, 5);
@@ -641,8 +641,8 @@ static void coeffint_set_alpha (GtkWidget *w, windata_t *vwin)
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), FALSE);
 	}
 	g_object_set_data(G_OBJECT(b), "i", GINT_TO_POINTER(i));
-	g_signal_connect(G_OBJECT(b), "toggled", 
-			 G_CALLBACK(alpha_button_callback), 
+	g_signal_connect(G_OBJECT(b), "toggled",
+			 G_CALLBACK(alpha_button_callback),
 			 &x);
     }
 
@@ -654,10 +654,10 @@ static void coeffint_set_alpha (GtkWidget *w, windata_t *vwin)
     gtk_box_pack_start(GTK_BOX(hb2), b, FALSE, FALSE, 0);
     adj = (GtkAdjustment *) gtk_adjustment_new(x, 0.60, 0.99, 0.01, 0, 0);
     tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 0.01, 2);
-    g_signal_connect(G_OBJECT(tmp), "value-changed", 
+    g_signal_connect(G_OBJECT(tmp), "value-changed",
 		     G_CALLBACK(set_double_from_spinner), &x);
     gtk_widget_set_sensitive(tmp, !defset);
-    g_signal_connect(G_OBJECT(b), "toggled", 
+    g_signal_connect(G_OBJECT(b), "toggled",
 		     G_CALLBACK(toggle_alpha_spin),
 		     tmp);
     gtk_entry_set_activates_default(GTK_ENTRY(tmp), TRUE);
@@ -679,7 +679,7 @@ static void coeffint_set_alpha (GtkWidget *w, windata_t *vwin)
 
     /* "OK" button */
     tmp = ok_button(hbox);
-    g_signal_connect(G_OBJECT(tmp), "clicked", 
+    g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(real_coeffint_set_alpha), dialog);
     gtk_widget_grab_default(tmp);
 
@@ -729,7 +729,7 @@ static void build_pkg_callback (GtkWidget *w, windata_t *vwin)
 {
     if (vwin_content_changed(vwin)) {
 	int resp;
-	
+
 	resp = yes_no_cancel_dialog("gretl", _("Save changes?"),
 				    vwin->main);
 	if (resp == GRETL_CANCEL) {
@@ -771,7 +771,7 @@ static void activate_script_help (GtkWidget *widget, windata_t *vwin)
 static int edit_script_popup_item (GretlToolItem *item)
 {
     if (item->icon == NULL) return 0;
-    
+
     return !strcmp(item->icon, GTK_STOCK_COPY) ||
 	!strcmp(item->icon, GTK_STOCK_PASTE) ||
 	!strcmp(item->icon, GTK_STOCK_FIND) ||
@@ -807,14 +807,14 @@ static GretlToolItem viewbar_items[] = {
     { N_("Display values"), GTK_STOCK_MEDIA_PLAY, G_CALLBACK(dbnomics_show_series), DBN_ITEM },
     { N_("Run"), GTK_STOCK_EXECUTE, G_CALLBACK(do_run_script), EXEC_ITEM },
     { N_("Build package"), GRETL_STOCK_TOOLS, G_CALLBACK(build_pkg_callback), BUILD_ITEM },
-    { N_("Cut"), GTK_STOCK_CUT, G_CALLBACK(vwin_cut_callback), EDIT_ITEM }, 
-    { N_("Copy"), GTK_STOCK_COPY, G_CALLBACK(vwin_copy_callback), COPY_ITEM }, 
+    { N_("Cut"), GTK_STOCK_CUT, G_CALLBACK(vwin_cut_callback), EDIT_ITEM },
+    { N_("Copy"), GTK_STOCK_COPY, G_CALLBACK(vwin_copy_callback), COPY_ITEM },
     { N_("Paste"), GTK_STOCK_PASTE, G_CALLBACK(text_paste), EDIT_ITEM },
     { N_("Find..."), GTK_STOCK_FIND, G_CALLBACK(text_find), FIND_ITEM },
     { N_("Replace..."), GTK_STOCK_FIND_AND_REPLACE, G_CALLBACK(text_replace), EDIT_ITEM },
     { N_("Undo"), GTK_STOCK_UNDO, G_CALLBACK(text_undo), EDIT_ITEM },
     { N_("Redo"), GTK_STOCK_REDO, G_CALLBACK(text_redo), EDIT_ITEM },
-    { N_("Sort"), GTK_STOCK_SORT_ASCENDING, G_CALLBACK(series_view_toggle_sort), SORT_ITEM },    
+    { N_("Sort"), GTK_STOCK_SORT_ASCENDING, G_CALLBACK(series_view_toggle_sort), SORT_ITEM },
     { N_("Sort by..."), GTK_STOCK_SORT_ASCENDING, G_CALLBACK(multi_series_view_sort_by), SORT_BY_ITEM },
     { N_("Preferences..."), GTK_STOCK_PREFERENCES, G_CALLBACK(editor_prefs_callback), EDIT_HANSL_ITEM },
     { N_("Send To..."), GRETL_STOCK_MAIL, G_CALLBACK(mail_script_callback), MAIL_ITEM },
@@ -910,7 +910,7 @@ static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
    context.
 */
 
-static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin, 
+static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 					 int latex_ok, int sortby_ok,
 					 int format_ok, int save_ok)
 {
@@ -996,7 +996,7 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	return NULL;
     } else if (r != VIEW_SERIES && f == EDITOR_ITEM) {
 	return NULL;
-    } else if (r != EDIT_HANSL && r != EDIT_PKG_CODE && 
+    } else if (r != EDIT_HANSL && r != EDIT_PKG_CODE &&
 	       r != EDIT_PKG_SAMPLE && f == EDIT_HANSL_ITEM) {
 	return NULL;
     } else if (r != VIEW_SCRIPT && f == INDEX_ITEM) {
@@ -1122,10 +1122,10 @@ GtkWidget *gretl_toolbar_new (GtkWidget *sibling)
 
     if (sibling == NULL) {
 	/* if we're not alongside a menu bar ("sibling"),
-	   show the toolbar without a shadow 
+	   show the toolbar without a shadow
 	*/
 	gretl_toolbar_flat(tb);
-    }       
+    }
 
     return tb;
 }
@@ -1174,7 +1174,7 @@ static void gretl_tool_item_set_tip (GtkWidget *item,
 	g_free(s);
     } else {
 	gtk_widget_set_tooltip_text(item, _(tool->tip));
-    }    
+    }
 }
 
 GtkWidget *gretl_toolbar_insert (GtkWidget *tbar,
@@ -1204,17 +1204,17 @@ static void button_menu_pos (GtkMenu *menu,
     gint wx, wy, tx, ty;
 
     gdk_window_get_origin(gtk_widget_get_window(button), &wx, &wy);
-    gtk_widget_translate_coordinates(button, gtk_widget_get_toplevel(button), 
+    gtk_widget_translate_coordinates(button, gtk_widget_get_toplevel(button),
 				     0, 0, &tx, &ty);
     *x = wx + tx;
     *y = wy + ty + 26;
     *push_in = TRUE;
 }
 
-static void tool_item_popup (GtkWidget *button, GdkEvent *event, 
+static void tool_item_popup (GtkWidget *button, GdkEvent *event,
 			     GtkWidget *menu)
 {
-    gtk_menu_popup(GTK_MENU(menu), NULL, NULL, 
+    gtk_menu_popup(GTK_MENU(menu), NULL, NULL,
 		   button_menu_pos, button,
 		   event->button.button, event->button.time);
 }
@@ -1230,9 +1230,9 @@ GtkWidget *vwin_toolbar_insert (GretlToolItem *tool,
     if (menu != NULL) {
 	/* make and insert a button that pops down a menu */
 	GtkWidget *button;
-	
+
 	item = gretl_menu_button(tool->icon, tool->tip, &button);
-	g_signal_connect(G_OBJECT(button), "button-press-event", 
+	g_signal_connect(G_OBJECT(button), "button-press-event",
 			 G_CALLBACK(tool_item_popup), menu);
     } else {
 	/* make and insert a regular callback button */
@@ -1262,11 +1262,10 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
     GretlToolItem *item;
     GCallback func;
     int i;
- 
+
     for (i=0; i<n_viewbar_items; i++) {
 	func = NULL;
 	menu = NULL;
-
 	item = &viewbar_items[i];
 
 	/* Is there anything to hook up, in context? We
@@ -1280,6 +1279,7 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 					  format_ok, save_ok);
 	}
 	if (func == NULL && menu == NULL) {
+	    /* nothing to hook up */
 	    continue;
 	}
 
@@ -1297,10 +1297,10 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 	    }
 	}
 
-	if (item->flag == SAVE_ITEM) { 
+	if (item->flag == SAVE_ITEM) {
 	    if (vwin->role != CONSOLE && vwin->role != VIEW_BUNDLE) {
 		/* nothing to save just yet */
-		g_object_set_data(G_OBJECT(vwin->mbar), "save_button", button); 
+		g_object_set_data(G_OBJECT(vwin->mbar), "save_button", button);
 		gtk_widget_set_sensitive(button, FALSE);
 	    }
 	} else if (item->flag == SAVE_AS_ITEM) {
@@ -1323,7 +1323,7 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 void vwin_add_viewbar (windata_t *vwin, ViewbarFlags flags)
 {
     if ((flags & VIEWBAR_HAS_TEXT) || vwin->role == SCRIPT_OUT) {
-	g_object_set_data(G_OBJECT(vwin->main), "text_out", 
+	g_object_set_data(G_OBJECT(vwin->main), "text_out",
 			  GINT_TO_POINTER(1));
     }
 
@@ -1395,7 +1395,7 @@ static void tbar_calc (void)
     create_child_process(calculator);
 #else
     gretl_fork("calculator", NULL, NULL);
-#endif 
+#endif
 }
 
 static void tbar_open_data (void)
@@ -1416,7 +1416,7 @@ static void tbar_xy_graph (void)
 	} else if (mdata_selection_count() == 2) {
 	    plot_from_selection(GR_XY);
 	} else {
-	    selection_dialog(GR_XY, _("gretl: define graph"), 
+	    selection_dialog(GR_XY, _("gretl: define graph"),
 			     NULL, do_graph_from_selector);
 	}
     } else {
@@ -1486,9 +1486,9 @@ void add_mainwin_toolbar (GtkWidget *vbox)
 void vwin_add_tmpbar (windata_t *vwin)
 {
     GretlToolItem item = {
-	N_("Stop"), 
-	GTK_STOCK_STOP, 
-	G_CALLBACK(do_stop_script), 
+	N_("Stop"),
+	GTK_STOCK_STOP,
+	G_CALLBACK(do_stop_script),
 	0
     };
     GtkWidget *hbox, *tmp;

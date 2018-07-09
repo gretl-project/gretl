@@ -1890,6 +1890,8 @@ static void view_buffer_insert_text (windata_t *vwin, PRN *prn)
 	    textview_set_text_colorized(vwin->text, buf);
 	} else if (vwin->role == BUILD_PKG) {
 	    textview_set_text_report(vwin->text, buf);
+	} else if (vwin->role == VIEW_DBSEARCH) {
+	    textview_set_text_dbsearch(vwin, buf);
 	} else {
 	    textview_set_text(vwin->text, buf);
 	}
@@ -2008,6 +2010,7 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
     } else if (role == VIEW_PKG_CODE ||
 	       role == VIEW_PKG_SAMPLE ||
 	       role == VIEW_LOG ||
+	       role == VIEW_DBSEARCH ||
 	       role == VIEW_MODELTABLE) {
 	vwin_add_viewbar(vwin, 0);
     } else if (role == EDIT_PKG_CODE ||
@@ -2039,8 +2042,10 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
     } else if (role == EDIT_PKG_CODE || role == EDIT_PKG_SAMPLE) {
 	create_source(vwin, hsize, vsize, TRUE);
     } else if (role == EDIT_PKG_HELP || role == EDIT_PKG_GHLP) {
+	/* editable text */
 	create_text(vwin, hsize, vsize, nlines, TRUE);
     } else {
+	/* non-editable text */
 	create_text(vwin, hsize, vsize, nlines, FALSE);
     }
 

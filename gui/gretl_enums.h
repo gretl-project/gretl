@@ -49,6 +49,7 @@ enum extra_cmds {
     VIEW_FILE,
     VIEW_DOC,
     VIEW_BIBITEM,
+    VIEW_DBSEARCH,
     DATA_REPORT,
     SCRIPT_OUT,
     FNCALL_OUT,

@@ -91,6 +91,8 @@ void textview_append_text_colorized (GtkWidget *view, const char *buf,
 
 void textview_set_text_report (GtkWidget *view, const char *buf);
 
+void textview_set_text_dbsearch (windata_t *vwin, const char *buf);
+
 void textview_insert_file (windata_t *vwin, const char *fname);
 
 void create_text (windata_t *vwin, int hsize, int vsize, 
