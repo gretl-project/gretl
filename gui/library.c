@@ -5170,9 +5170,11 @@ int do_rename_variable (int v, const char *newname,
 int record_varlabel_change (int v, int desc, int gname)
 {
     if (desc) {
+	const char *vlabel = series_get_label(dataset, v);
+
 	lib_command_sprintf("setinfo %s --description=\"%s\"", 
 			    dataset->varname[v],
-			    series_get_label(dataset, v));
+			    vlabel == NULL ? "" : vlabel);
     } else if (gname) {
 	lib_command_sprintf("setinfo %s --graph-name=\"%s\"", 
 			    dataset->varname[v],
@@ -9031,15 +9033,15 @@ int osx_open_url (const char *url)
 
 static void clean_up_varlabels (DATASET *dset)
 {
-    const char *label;
+    const char *vlabel;
     gchar *conv;
     gsize wrote;
     int i;
 
     for (i=1; i<dset->v; i++) {
-	label = series_get_label(dset, i);
-	if (!g_utf8_validate(label, -1, NULL)) {
-	    conv = g_convert(label, -1,
+	vlabel = series_get_label(dset, i);
+	if (vlabel != NULL && !g_utf8_validate(vlabel, -1, NULL)) {
+	    conv = g_convert(vlabel, -1,
 			     "UTF-8",
 			     "ISO-8859-1",
 			     NULL, &wrote, NULL);

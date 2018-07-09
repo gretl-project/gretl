@@ -513,7 +513,9 @@ static PLOTGROUP *plotgroup_new (const int *list,
 	    grp->nplots = list[0];
 	}
 	if ((opt & OPT_P) && dset != NULL) {
-	    strcpy(grp->ylabel, series_get_label(dset, 1));
+	    const char *vlabel = series_get_label(dset, 1);
+
+	    strcpy(grp->ylabel, vlabel == NULL ? "" : vlabel);
 	    strcpy(grp->xlabel, _("group"));
 	}
     }

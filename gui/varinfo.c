@@ -143,14 +143,16 @@ static int formula_ok (int v)
 {
     if (series_is_generated(dataset, v)) {
 	const char *s = series_get_label(dataset, v);
-	int n = strlen(s);
 
-	/* note: the test for a trailing dot here is to check
-	   that we don't have a long genr formula that has been
-	   truncated into the variable's description */
+	if (s != NULL) {
+	    int n = strlen(s);
 
-	if (n > 0 && s[n-1] != '.') {
-	    return 1;
+	    /* note: the test for a trailing dot here is to check
+	       that we don't have a long genr formula that has been
+	       truncated into the variable's description */
+	    if (n > 0 && s[n-1] != '.') {
+		return 1;
+	    }
 	}
     }
 
@@ -191,9 +193,11 @@ static void show_varinfo_changes (int v)
     }
 
     if (iptr != NULL) {
+	const char *vlabel = series_get_label(dataset, v);
+
         gtk_tree_store_set(GTK_TREE_STORE(model), iptr, 
                            1, dataset->varname[v],
-                           2, series_get_label(dataset, v),
+                           2, vlabel == NULL ? "" : vlabel,
                            -1);
     }
 }
@@ -476,6 +480,7 @@ static void sensitize_up_down_buttons (gui_varinfo *vset)
 static void varinfo_insert_info (gui_varinfo *vset, int v)
 {
     int is_parent;
+    const char *vlabel;
 
     if (v <= 0 || v >= dataset->v) {
 	return;
@@ -484,6 +489,7 @@ static void varinfo_insert_info (gui_varinfo *vset, int v)
     vset->varnum = v;
     vset->use_formula = 0;
     is_parent = series_is_parent(dataset, v);
+    vlabel = series_get_label(dataset, v);
 
     if (!is_parent && formula_ok(v)) {
 	gtk_widget_hide(vset->label_label);
@@ -503,8 +509,8 @@ static void varinfo_insert_info (gui_varinfo *vset, int v)
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(vset->id_spin), v);
     }
 
-    gtk_entry_set_text(GTK_ENTRY(vset->label_entry), 
-		       series_get_label(dataset, v));
+    gtk_entry_set_text(GTK_ENTRY(vset->label_entry),
+		       vlabel == NULL ? "" : vlabel);
 
     if (vset->display_entry != NULL) {
 	gtk_entry_set_text(GTK_ENTRY(vset->display_entry), 
@@ -621,7 +627,7 @@ static void varinfo_text_changed (GtkEditable *e, gui_varinfo *vset)
 {
     GtkWidget *w = GTK_WIDGET(e);
     gchar *newstr = entry_get_trimmed_text(w);
-    const char *orig = dataset->varname[vset->varnum];
+    const char *orig = NULL;
     int f = VSET_VARNAME;
     gboolean s;
 
@@ -631,9 +637,16 @@ static void varinfo_text_changed (GtkEditable *e, gui_varinfo *vset)
     } else if (w == vset->display_entry) {
 	orig = series_get_display_name(dataset, vset->varnum);
 	f = VSET_DISPLAY;
+    } else {
+	orig = dataset->varname[vset->varnum];
     }
 
-    s = (newstr == NULL || strcmp(orig, newstr));
+    if (orig != NULL && newstr != NULL) {
+	s = strcmp(orig, newstr);
+    } else {
+	s = (orig == NULL && newstr != NULL) ||
+	    (orig != NULL && newstr == NULL);
+    }
     varinfo_set_field_changed(vset, f, s);
 
     g_free(newstr);
@@ -733,6 +746,7 @@ static void varinfo_add_toolbar (gui_varinfo *vset, GtkWidget *hbox)
 void varinfo_dialog (int varnum)
 {
     const char *idstr = N_("ID number:");
+    const char *vlabel = NULL;
     GtkWidget *tmp, *vbox, *hbox;
     gui_varinfo *vset;
     unsigned char flags;
@@ -756,6 +770,7 @@ void varinfo_dialog (int varnum)
     if (!is_parent && formula_ok(varnum)) {
 	vset->use_formula = 1;
     }
+    vlabel = series_get_label(dataset, varnum);
 
     g_signal_connect(vset->dlg, "destroy", G_CALLBACK(free_vsettings), vset);
 
@@ -848,8 +863,8 @@ void varinfo_dialog (int varnum)
     hbox = gtk_hbox_new(FALSE, 5);
     vset->label_entry = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(vset->label_entry), MAXLABEL-1);
-    gtk_entry_set_text(GTK_ENTRY(vset->label_entry), 
-		       series_get_label(dataset, varnum));
+    gtk_entry_set_text(GTK_ENTRY(vset->label_entry),
+		       vlabel == NULL ? "" : vlabel);
     g_signal_connect(vset->label_entry, "changed", 
 		     G_CALLBACK(varinfo_text_changed), vset);
     gtk_box_pack_start(GTK_BOX(hbox), vset->label_entry, TRUE, TRUE, 5);

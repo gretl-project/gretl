@@ -486,8 +486,12 @@ int stata_export (const char *fname,
     }     
     for (i=1; i<dset->v; i++) {
 	if (include_var(list, i)) {
+	    const char *vlabel = series_get_label(dset, i);
+
 	    memset(buf, 0, 81);
-	    asciify_to_length(buf, series_get_label(dset, i), 80);
+	    if (vlabel != NULL && *vlabel != '\0') {
+		asciify_to_length(buf, vlabel, 80);
+	    }
 	    w += write(fd, buf, 81);
 	}
     }

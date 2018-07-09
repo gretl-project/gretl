@@ -670,6 +670,7 @@ static int graph_series (const DATASET *dset, tx_request *req)
 static void copy_variable (DATASET *targ, int targv,
 			   DATASET *src, int srcv)
 {
+    const char *vlabel;
     int t;
 
     for (t=0; t<targ->n; t++) {
@@ -677,7 +678,10 @@ static void copy_variable (DATASET *targ, int targv,
     }
 
     strcpy(targ->varname[targv], src->varname[srcv]);
-    series_set_label(targ, targv, series_get_label(src, srcv));
+    vlabel = series_get_label(src, srcv);
+    if (vlabel != NULL && *vlabel != '\0') {
+	series_set_label(targ, targv, vlabel);
+    }
 }
 
 static void clear_tramo_files (const char *path, const char *vname)

@@ -3687,7 +3687,9 @@ int gnuplot (const int *plotlist, const char *literal,
 	    no_key = 0;
 	}
 	if (gi.flags & GPT_RESIDS && !(gi.flags & GPT_DUMMY)) {
-	    make_gtitle(&gi, GTITLE_RESID, series_get_label(dset, list[1]),
+	    const char *vlabel = series_get_label(dset, list[1]);
+
+	    make_gtitle(&gi, GTITLE_RESID, vlabel == NULL ? "residual" : vlabel,
 			NULL, fp);
 	    fprintf(fp, "set ylabel '%s'\n", _("residual"));
 	} else {
@@ -3697,7 +3699,9 @@ int gnuplot (const int *plotlist, const char *literal,
 	    strcpy(keystr, "set nokey\n");
 	}
     } else if ((gi.flags & GPT_RESIDS) && (gi.flags & GPT_DUMMY)) {
-	make_gtitle(&gi, GTITLE_RESID, series_get_label(dset, list[1]),
+	const char *vlabel = series_get_label(dset, list[1]);
+
+	make_gtitle(&gi, GTITLE_RESID, vlabel == NULL ? "residual" : vlabel,
 		    NULL, fp);
 	fprintf(fp, "set ylabel '%s'\n", _("residual"));
     } else if (gi.flags & GPT_FA) {

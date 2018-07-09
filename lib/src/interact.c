@@ -808,7 +808,7 @@ static void showlabels (const int *list, gretlopt opt,
 	v = list == NULL ? i : list[i];
 	if (v >= 0 && v < dset->v) {
 	    label = series_get_label(dset, v);
-	    if (*label != '\0') {
+	    if (label != NULL && *label != '\0') {
 		nl++;
 	    }
 	}
@@ -827,7 +827,7 @@ static void showlabels (const int *list, gretlopt opt,
 	v = list == NULL ? i : list[i];
 	if (v >= 0 && v < dset->v) {
 	    label = series_get_label(dset, v);
-	    if (*label != '\0') {
+	    if (label != NULL && *label != '\0') {
 		if (opt & OPT_Q) {
 		    pprintf(prn, "%s: %s\n", dset->varname[v], label);
 		} else {

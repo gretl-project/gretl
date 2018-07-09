@@ -186,6 +186,7 @@ static int output_db_var (int v, const DATASET *dset,
 			  FILE *fidx, FILE *fbin) 
 {
     char stobs[OBSLEN], endobs[OBSLEN];
+    const char *vlabel;
     int t1 = dset->t1;
     int t2 = dset->t2;
     int dskip = 0, npad = 0;
@@ -221,7 +222,9 @@ static int output_db_var (int v, const DATASET *dset,
 	nobs += dskip;
     }
 
-    fprintf(fidx, "%s  %s\n", dset->varname[v], series_get_label(dset, v));
+    vlabel = series_get_label(dset, v);
+    fprintf(fidx, "%s  %s\n", dset->varname[v],
+	    vlabel == NULL ? "" : vlabel);
     fprintf(fidx, "%c  %s - %s  n = %d\n", pd_char(dset),
 	    stobs, endobs, nobs);
 

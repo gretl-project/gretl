@@ -1165,11 +1165,14 @@ void populate_varlist (void)
     gtk_tree_model_get_iter_first(model, &iter);
 
     for (i=0; i<dataset->v; i++) {
+	const char *vlabel;
 	int pv = 0;
 
 	if (series_is_hidden(dataset, i)) {
 	    continue;
 	}
+
+	vlabel = series_get_label(dataset, i);
 
 	if (i > 0) {
 	    pv = get_lag_or_dummy_parent(i);
@@ -1185,7 +1188,7 @@ void populate_varlist (void)
 		gtk_tree_store_set(store, &child_iter,
 				   0, id,
 				   1, dataset->varname[i],
-				   2, series_get_label(dataset, i),
+				   2, vlabel == NULL ? "" : vlabel,
 				   -1);
 	    } else {
 		pv = 0;
@@ -1198,7 +1201,7 @@ void populate_varlist (void)
 	    gtk_tree_store_set(store, &iter,
 			       0, id,
 			       1, dataset->varname[i],
-			       2, series_get_label(dataset, i),
+			       2, vlabel == NULL ? "" : vlabel,
 			       -1);
 	}
     }

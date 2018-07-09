@@ -2362,7 +2362,7 @@ static int real_write_gdt (const char *fname, const int *list,
 	}
 
 	vstr = series_get_label(dset, v);
-	if (*vstr) {
+	if (vstr != NULL && *vstr != '\0') {
 	    uerr = gretl_xml_encode_to_buf(xmlbuf, vstr, sizeof xmlbuf);
 	    if (!uerr) {
 		if (gz) {
@@ -2374,7 +2374,7 @@ static int real_write_gdt (const char *fname, const int *list,
 	}
 
 	vstr = series_get_display_name(dset, v);
-	if (*vstr) {
+	if (vstr != NULL && *vstr != '\0') {
 	    uerr = gretl_xml_encode_to_buf(xmlbuf, vstr, sizeof xmlbuf);
 	    if (!uerr) {
 		if (gz) {
@@ -3650,6 +3650,10 @@ static int lag_from_label (int v, const DATASET *dset, int *lag)
     char pm, fmt[20], vname[VNAMELEN];
     int pv = 0;
 
+    if (test == NULL) {
+	return 0;
+    }
+
     sprintf(fmt, "= %%%d[^(](t %%c %%d)", VNAMELEN - 1);
 
     if (sscanf(test, fmt, vname, &pm, lag) == 3) {
@@ -3666,6 +3670,10 @@ static int dummy_child_from_label (int v, const DATASET *dset)
     char vname[VNAMELEN];
     double val;
     int pv = 0;
+
+    if (test == NULL) {
+	return 0;
+    }
 
     if (sscanf(test, _("dummy for %s = %lf"), vname, &val) == 2 ||
 	sscanf(test, "dummy for %s = %lf", vname, &val) == 2) {

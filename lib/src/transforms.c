@@ -593,10 +593,11 @@ static int transform_handle_duplicate (int ci, int lag, int v,
 				       const double *x, const char *label,
 				       DATASET *dset, int origv)
 {
+    const char *vlabel = series_get_label(dset, v);
     int ret = VARNAME_DUPLICATE;
     int t, ok = 0;
 
-    if (!strcmp(label, series_get_label(dset, v))) {
+    if (vlabel != NULL && !strcmp(label, vlabel)) {
 	/* labels identical, so OK? */
 	ok = 1;
     }

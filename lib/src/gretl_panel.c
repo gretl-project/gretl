@@ -4536,8 +4536,10 @@ static void panel_copy_var (DATASET *targ, int targv,
 	strcpy(targ->varname[targv], "uhat");
 	series_set_label(targ, targv, _("residual"));
     } else {
+	const char *vlabel = series_get_label(src, srcv);
+
 	strcpy(targ->varname[targv], src->varname[srcv]);
-	series_set_label(targ, targv, series_get_label(src, srcv));
+	series_set_label(targ, targv, vlabel == NULL ? "" : vlabel);
     }
 }
 

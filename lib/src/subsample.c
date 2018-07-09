@@ -3073,6 +3073,7 @@ int data_report (const DATASET *dset, const char *fname, PRN *prn)
 {
     char startdate[OBSLEN], enddate[OBSLEN], tmp[MAXLEN];
     char tstr[48];
+    const char *vlabel;
     int i;
 
     ntodate(startdate, 0, dset);
@@ -3104,8 +3105,9 @@ int data_report (const DATASET *dset, const char *fname, PRN *prn)
     pprintf(prn, "%s:\n\n", _("Listing of variables"));
 
     for (i=1; i<dset->v; i++) {
+	vlabel = series_get_label(dset, i);
 	pprintf(prn, "%*s  %s\n", VNAMELEN, dset->varname[i], 
-		series_get_label(dset, i));
+		vlabel == NULL ? "" : vlabel);
     }
 
     return 0;

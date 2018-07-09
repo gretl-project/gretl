@@ -1222,12 +1222,14 @@ static int real_write_data (const char *fname, int *list, const DATASET *dset,
 	}
     } else if (fmt == GRETL_FMT_JM) { 
 	/* JMulti: ascii with comments and date info */
+	const char *vlabel = series_get_label(dset, v);
 	int maj, min;
 
 	fputs("/*\n", fp);
 	for (i=1; i<=list[0]; i++) {
 	    v = list[i];
-	    fprintf(fp, " %s: %s\n", dset->varname[v], series_get_label(dset, v));
+	    fprintf(fp, " %s: %s\n", dset->varname[v],
+		    vlabel == NULL ? "" : vlabel);
 	}
 	fputs("*/\n", fp);
 	date_maj_min(dset->t1, dset, &maj, &min);
@@ -2510,19 +2512,21 @@ int add_obs_markers_from_file (DATASET *dset, const char *fname)
 
 int dataset_has_var_labels (const DATASET *dset)
 {
-    const char *label;
+    const char *vlabel;
     int i, imin = 1;
 
     if (dset->v > 1) {
-	if (!strcmp(dset->varname[1], "index") &&
-	    !strcmp(series_get_label(dset, 1), _("index variable"))) {
-	    imin = 2;
+	if (!strcmp(dset->varname[1], "index")) {
+	    vlabel = series_get_label(dset, 1);
+	    if (vlabel != NULL && !strcmp(vlabel, _("index variable"))) {
+		imin = 2;
+	    }
 	}
     }
 
     for (i=imin; i<dset->v; i++) {
-	label = series_get_label(dset, i);
-	if (*label != '\0') {
+	vlabel = series_get_label(dset, i);
+	if (vlabel != NULL && *vlabel != '\0') {
 	    return 1;
 	}
     }
@@ -2543,6 +2547,7 @@ int dataset_has_var_labels (const DATASET *dset)
 
 int save_var_labels_to_file (const DATASET *dset, const char *fname)
 {
+    const char *vlabel;
     FILE *fp;
     int i, err = 0;
 
@@ -2552,7 +2557,8 @@ int save_var_labels_to_file (const DATASET *dset, const char *fname)
 	err = E_FOPEN;
     } else {
 	for (i=1; i<dset->v; i++) {
-	    fprintf(fp, "%s\n", series_get_label(dset, i));
+	    vlabel = series_get_label(dset, i);
+	    fprintf(fp, "%s\n", vlabel == NULL ? "" : vlabel);
 	}
 	fclose(fp);
     }

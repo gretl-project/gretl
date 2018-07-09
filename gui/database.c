@@ -530,8 +530,12 @@ add_single_series_to_dataset (windata_t *vwin, DATASET *dbset)
 			     interpol);
 
     if (!err) {
+	const char *vlabel = series_get_label(dbset, 1);
+
 	strcpy(dataset->varname[dbv], dbset->varname[1]);
-	series_set_label(dataset, dbv, series_get_label(dbset, 1));
+	if (vlabel != NULL && *vlabel != '\0') {
+	    series_set_label(dataset, dbv, vlabel);
+	}
 	record_db_import(dbset->varname[1], compact, interpol, cmethod);
     } else {
 	if (!overwrite) {

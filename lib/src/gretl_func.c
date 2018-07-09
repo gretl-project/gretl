@@ -7125,7 +7125,13 @@ static int handle_series_return (const char *vname, void *ptr,
     *(double **) ptr = x;
 
     if (!err && label != NULL) {
-	*label = gretl_strdup(series_get_label(dset, v));
+	const char *vstr = series_get_label(dset, v);
+
+	if (vstr != NULL) {
+	    *label = gretl_strdup(vstr);
+	} else {
+	    *label = gretl_strdup("");
+	}
     }
 
     return err;
@@ -7208,6 +7214,7 @@ static int handle_array_return (fncall *call, void *ptr, int copy)
 
 static void replace_caller_series (int targ, int src, DATASET *dset)
 {
+    const char *vlabel = series_get_label(dset, src);
     int t;
 
     /* replace data values */
@@ -7216,7 +7223,7 @@ static void replace_caller_series (int targ, int src, DATASET *dset)
     }
 
     /* replace variable info? */
-    series_set_label(dset, targ, series_get_label(dset, src));
+    series_set_label(dset, targ, vlabel == NULL ? "" : vlabel);
     series_set_display_name(dset, targ, series_get_display_name(dset, src));
 }
 

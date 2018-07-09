@@ -2827,8 +2827,10 @@ static int real_seasonals (DATASET *dset, int ref, int center,
 	seas_name_and_label(i, dset, opt, vname, vlabel);
 	vi = series_index(dset, vname);
 	if (vi < dset->v) {
+	    const char *orig = series_get_label(dset, vi);
+
 	    list[k] = vi;
-	    if (strcmp(vlabel, series_get_label(dset, vi))) {
+	    if (orig == NULL || strcmp(vlabel, orig)) {
 		series_set_label(dset, vi, vlabel);
 		nfix++;
 	    }
