@@ -169,11 +169,12 @@ modes of access described in sections~\ref{sec:open-data} and
 \ref{sec:dbn-gui}, and can be called directly by the user.
 
 At this point we just offer an ``as is'' listing of the signatures of
-these functions with brief commentary. We can expand on the finer
-points later if there's sufficient interest. Note that this package
-contains several test scripts that exemplify calls to the functions
-listed below; this can be found in the \texttt{examples} subdirectory
-of the installation directory. Likely locations for this are
+these functions with brief commentary. The finer points are subject to
+change; we can expand on them later if there's sufficient
+interest. Note that this package contains several test scripts that
+exemplify calls to the functions listed below; this can be found in
+the \texttt{examples} subdirectory of the installation
+directory. Likely locations for this are
 
 {\small
 \begin{tabular}{ll}
@@ -215,8 +216,8 @@ function bundles dbnomics_get_dataset_content(const string provider,
 Returns an array of bundles each containing information on a series
 contained in the dataset specified by the \texttt{provider} and
 \texttt{dataset} codes. The \texttt{limit} and \texttt{offset}
-arguments permit specification ``paging'': so many results, starting
-at a given offset into the full listing.
+arguments allow ``paging'': retrieve so many results, starting at a
+given offset into the full listing.
 \begin{code}
 # example
 bundles B = dbnomics_get_dataset_content("ECB", "IRS", 50, 100)
@@ -291,6 +292,16 @@ function bundles dbnomics_search(const string key,
                                  int offset[0],
 				 bool verbose[0])
 \end{code}
+Returns an array of bundles, each holding information on a dataset
+which matches (in some way or other) the \texttt{key} string. The
+\texttt{limit} and \texttt{offset} argument should in principle work
+to allow paging, as in \texttt{dbnomics\_get\_dataset\_content}, but
+as of this writing the \texttt{offset} argument doesn't work due to a
+\textsf{dbnomics} bug.
+\begin{code}
+# example
+bundles B = dbnomics_search("interest rates", 50)
+\end{code}
 
 \subsection{dbnomics\_categtree}
 
@@ -302,7 +313,8 @@ function bundles dbnomics_categtree(const string provider,
 \subsection{dbnomics\_fetch}
 
 \begin{code}
-function series dbnomics_fetch (const string id, bool verbose[0])
+function series dbnomics_fetch (const string datacode,
+                                bool verbose[0])
 \end{code}
 This is just a convenience wrapper for \texttt{dbnomics\_get\_series}
 followed by \texttt{dbnomics\_bundle\_get\_data}.
