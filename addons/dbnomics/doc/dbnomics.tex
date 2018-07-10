@@ -303,7 +303,7 @@ bundles dbnomics_get_multiple (const string provider,
                                const string dset,
                                int limit[0::50],
                                int offset[0],
-                               bundle spec[null])}
+                               bundle spec[null])
 \end{verbatim}
   Returns an array of bundles (defaulting to a maximum of 50), each of
   which contains information (data + metadata) on a series from
@@ -317,7 +317,7 @@ bundles dbnomics_get_multiple (const string provider,
 \begin{verbatim}
 bundles dbnomics_get_dataset_dimensions (const string provider,
                                          const string dset,
-                                         bool verbose[0])}
+                                         bool verbose[0])
 \end{verbatim}
 Returns an array of bundles, with all the ``dimensions'' for a given
 dataset, and prints it out if the \texttt{verbose} is nonzero. The
