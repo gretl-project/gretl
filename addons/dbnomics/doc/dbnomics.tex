@@ -193,7 +193,7 @@ may differ by locale and otherwise):
 
 \begin{funcdoc}{dbnomics\_providers(bool verbose[0])}
 Returns an array of bundles, one per provider. Each bundle contains
-basic info about the provider, notably its dbnomics code undetr the
+basic info about the provider, notably its dbnomics code under the
 \texttt{code} key and its full name under the \texttt{name} key.
 \end{funcdoc}
 
@@ -268,14 +268,14 @@ dbnomics_bundle_get_data(b, &IT_10yr)
   information (data + metadata) on a series from dataset
   \texttt{provider/dset}. The bundle \texttt{spec}, if present, can be
   used to limit the query to certain dimensions. In order to find the
-  dimensions avaliable for a given dataset, use the function
+  dimensions available for a given dataset, use the function
   \cmd{dbnomics\_get\_dataset\_dimensions()}.
   
   
 \end{funcdoc}
 
 \begin{funcdoc}{dbnomics\_get\_dataset\_dimensions(const string provider,
-    const string dset)}
+    const string dset, bool verbose[0])}
 
 Returns an array of bundles, with all the ``dimensions'' for a given
 dataset, and prints it out if the \texttt{verbose} is nonzero. The
