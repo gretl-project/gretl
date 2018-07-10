@@ -379,7 +379,7 @@ end function
 
 ### ------------------------------------------------------------------------
 
-function bundles dbnomics_categtree(const string provider,
+function bundles dbnomics_category_tree(const string provider,
       bool verbose[0])
     bundles ret = null
     string json

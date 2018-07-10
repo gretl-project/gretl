@@ -16,6 +16,6 @@ if nelem(dsetlist) >= 10
     print b
 endif
 
-ctree = dbnomics_categtree("BLS", 1)
+ctree = dbnomics_category_tree("BLS", 1)
 print ctree
 

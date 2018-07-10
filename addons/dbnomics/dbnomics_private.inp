@@ -244,6 +244,12 @@ function scalar dbn_get_json (const string parms, bool verbose[0],
     else
         # also check for dbnomics error condition
         json = req.output
+	dbg = ngetenv("DBNOMICS_DEBUG")
+	if ok(dbg) && dbg > 0
+	    outfile dbn_debug.json --write --quiet
+	    json
+	    outfile --close
+	endif
         string dbnmsg
         error = bad_json(json, &dbnmsg)
         if error
