@@ -1476,14 +1476,16 @@ static int get_rats_series_info (const char *series_name, SERIESINFO *sinfo)
 /* For importation of database series */
 
 static double *get_compacted_xt (const double *src, int n,
-				 CompactMethod method, int compfac,
-				 int skip)
+				 CompactMethod method,
+				 int compfac, int skip)
 {
     int p, t;
     double *x;
 
     x = malloc(n * sizeof *x);
-    if (x == NULL) return NULL;
+    if (x == NULL) {
+	return NULL;
+    }
 
     for (t=0; t<n; t++) {
 	p = (t + 1) * compfac;
@@ -2500,6 +2502,11 @@ static int get_one_db_series (const char *sername,
 	err = 0;
     }
 
+#if DB_DEBUG
+    fprintf(stderr, "sinfo.varname='%s', this_method=%d, interpolate=%d\n",
+	    sinfo.varname, this_method, interpolate);
+#endif
+
     if (!err) {
 	if (*altname != '\0') {
 	    /* switch the recorded name now */
@@ -2626,6 +2633,7 @@ int db_get_series (const char *line, DATASET *dset,
 
     for (i=0; i<nnames && !err; i++) {
 	if (is_glob(vnames[i])) {
+	    /* globbing works only for native databases */
 	    if (*altname != '\0') {
 		/* can't do it */
 		err = E_BADOPT;
@@ -3173,7 +3181,7 @@ int lib_spread_db_data (double **dbZ, SERIESINFO *sinfo,
 	       what we're doing!
 	    */
 	    gretlopt merge_opt = (OPT_X | OPT_U | OPT_K);
-		
+
 	    err = merge_or_replace_data(dset, &dbset, merge_opt, prn);
 	}
     } else {
@@ -3246,7 +3254,7 @@ static int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
 #endif
 
     err = transcribe_db_data(dset, dbv, dbZ[1], sinfo->pd, sinfo->nobs,
-			     sinfo->stobs, interpolate, cmethod);
+			     sinfo->stobs, cmethod, interpolate);
 
     if (!err) {
 	/* common stuff for adding a var */

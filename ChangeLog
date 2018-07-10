@@ -2,6 +2,10 @@ version 2018b, in progress
 - Substantial speed-up of AR(I)MA estimation, using
   Melard's algorithm AS 197; also improvements to the
   initialization for such estimation
+- New option --name for the "data" command: rename a series
+  on importation
+- New option --tree for "print": show content of bundles
+  recursively
 - New function lrcovar(): long-run covariance
 - New function fevd(): forecast error variance decomposition
   following estimation via "var" or "vecm"
