@@ -3,13 +3,17 @@ TEXDIR = $(topsrc)/doc/tex
 
 PKG = dbnomics
 DOCDIR = $(topsrc)/addons/$(PKG)/doc
+FIG1 = db-access-1.png
+FIG2 = db-access-2.png
 
-$(PKG).pdf: links.stamp $(PKG).tex
+$(PKG).pdf: links.stamp $(PKG).tex $(FIG1) $(FIG2)
 	@pdflatex $(PKG)
 	@if grep 'Rerun to get' $(PKG).log ; then pdflatex $(PKG) ; fi
 
 links.stamp: Makefile
 	@if [ ! -f gretl.sty ] ; then ln -sf ../../../doc/gretl.sty . ; fi
+	@if [ ! -f $(FIG1) ] ; then ln -sf $(DOCDIR)/$(FIG1) . ; fi
+	@if [ ! -f $(FIG2) ] ; then ln -sf $(DOCDIR)/$(FIG2) . ; fi
 	@touch $@
 
 $(PKG).tex:
