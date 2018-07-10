@@ -15,6 +15,10 @@
 \setlength{\parskip}{1ex}
 \setcounter{secnumdepth}{1}
 
+\newenvironment{funcdoc}[1]
+{\noindent\hrulefill\newline\texttt{#1}\par\noindent\hrulefill\par\medskip\par}
+{\bigskip}
+
 \newcommand{\argname}[1]{\textsl{#1}}
 
 \title{dbnomics for gretl, version 0.1}
@@ -185,35 +189,30 @@ may differ by locale and otherwise):
 \end{tabular}
 }
 
-\subsection{dbnomics\_providers}
+\bigskip
 
-\begin{code}
-function bundles dbnomics_providers(bool verbose[0])
-\end{code}
+\begin{funcdoc}{dbnomics\_providers(bool verbose[0])}
 Returns an array of bundles, one per provider. Each bundle contains
-XXX.
+basic info about the provider, notably its dbnomics code undetr the
+\texttt{code} key and its full name under the \texttt{name} key.
+\end{funcdoc}
 
-\subsection{dbnomics\_dsets\_for\_provider}
-
-\begin{code}
-function bundle dbnomics_dsets_for_provider(const string provider,
-                                            bool verbose[0])
-\end{code}
+\begin{funcdoc}{dbnomics\_dsets\_for\_provider(const string provider,
+    bool verbose[0])}
+  
 Returns a bundle containing information on the datasets associated
 with a given provider.
 \begin{code}
 # example
 bundle b = dbnomics_dsets_for_provider("AMECO")
 \end{code}
+\end{funcdoc}
 
-\subsection{dbnomics\_get\_dataset\_content}
-
-\begin{code}
-function bundles dbnomics_get_dataset_content(const string provider,
-                                              const string dset,
-                                              int limit[0::100],
-                                              int offset[0])
-\end{code}
+\begin{funcdoc}{dbnomics\_get\_dataset\_content(const string provider,
+                                              const string dset, \\
+                                              int limit[0::100], 
+                                              int offset[0])}
+                                            
 Returns an array of bundles each containing information on a series
 contained in the dataset specified by the \texttt{provider} and
 \texttt{dset} codes. The \texttt{limit} and \texttt{offset}
@@ -223,14 +222,10 @@ given offset into the full listing.
 # example
 bundles B = dbnomics_get_dataset_content("ECB", "IRS", 50, 100)
 \end{code}
+\end{funcdoc}
 
-\subsection{dbnomics\_get\_series}
-
-\begin{code}
-function bundle dbnomics_get_series (const string datacode,
-                                     bool verbose[0],
-                                     string *from_json[null])
-\end{code}
+\begin{funcdoc}{dbnomics\_get\_series (const string datacode, bool
+    verbose[0], string *from\_json[null])}
 Returns a bundle containing information on the series specified by
 \texttt{datacode}, which must be a \textsf{dbnomics} triplet as
 described above.
@@ -238,25 +233,19 @@ described above.
 # example
 bundle b = dbnomics_get_series("ECB/IRS/M.IT.L.L40.CI.0000.EUR.N.Z")
 \end{code}
+\end{funcdoc}
 
-\subsection{dbnomics\_bundle\_print}
-
-\begin{code}
-function void dbnomics_bundle_print(const bundle b,
-                                    bool print_data[0])
-\end{code}
+\begin{funcdoc}{dbnomics\_bundle\_print(const bundle b,
+                                    bool print\_data[0])}
 Displays the content of a bundle obtained by
 \texttt{dbnomics\_get\_series}. Give a non-zero value for the second
 argument to print the actual values, otherwise just the metadata is
 shown.
+\end{funcdoc}
 
-\subsection{dbnomics\_bundle\_get\_data}
-
-\begin{code}
-function scalar dbnomics_bundle_get_data(const bundle b,
+\begin{funcdoc}{dbnomics\_bundle\_get\_data(const bundle b,
                                          series *x,
-					 bool verbose[0])
-\end{code}
+					 bool verbose[0])}
 Given a bundle obtained by \texttt{dbnomics\_get\_series}, writes the
 actual data values (and description) into the series \texttt{x}, which
 must exist already and be given in ``pointer'' form. Returns zero on
@@ -267,32 +256,70 @@ bundle b = dbnomics_get_series("ECB/IRS/M.IT.L.L40.CI.0000.EUR.N.Z")
 series IT_10yr = NA
 dbnomics_bundle_get_data(b, &IT_10yr)
 \end{code}
+\end{funcdoc}
 
-\subsection{dbnomics\_get\_multiple}
+\begin{funcdoc}{dbnomics\_get\_multiple(const string provider,
+    const string dset,
+    int limit[0::50], \\
+    int offset[0],
+    bundle spec[null])}
+  
+  Returns an array of bundles (max 50), each of which contains
+  information (data + metadata) on a series from dataset
+  \texttt{provider/dset}. The bundle \texttt{spec}, if present, can be
+  used to limit the query to certain dimensions. In order to find the
+  dimensions avaliable for a given dataset, use the function
+  \cmd{dbnomics\_get\_dataset\_dimensions()}.
+  
+  
+\end{funcdoc}
 
+\begin{funcdoc}{dbnomics\_get\_dataset\_dimensions(const string provider,
+    const string dset)}
+
+Returns an array of bundles, with all the ``dimensions'' for a given
+dataset, and prints it out if the \texttt{verbose} is nonzero. The
+dimensions typically contain lists of the different periodicities of
+the series contained in the datasets, the geographical units they
+refer to, and so on.
+
+Therefore, each resulting bundle will have a key called \texttt{code},
+which identifies the dimension and an array of bundles called
+\texttt{values}, describing each dimension via the keys \texttt{code}
+and \texttt{label}. For example, the following code
 \begin{code}
-function bundles dbnomics_get_multiple(const string provider,
-                                       const string dset,
-                                       int limit[0::20],
-                                       int offset[0],
-                                       bundle spec[null])
+set verbose off
+include dbnomics.gfn
+
+dims = dbnomics_get_dataset_dimensions("ECB", "AME")
+code = dims[2].code
+vals = dims[2].values
+printf "%s\n\n", code
+loop i = 1 .. 4 --quiet
+    printf "%s - %s\n", vals[i].code, vals[i].label
+endloop
 \end{code}
 
-\subsection{dbnomics\_get\_dataset\_dimensions}
+returns
 
 \begin{code}
-function void dbnomics_get_dataset_dimensions(const string provider,
-                                              const string dset)
+AME_REF_AREA
+
+AUT - Austria
+BEL - Belgium
+BGR - Bulgaria
+HRV - Croatia
 \end{code}
 
-\subsection{dbnomics\_search}
+\textbf{Note}: This may not work with some providers.
 
-\begin{code}
-function bundles dbnomics_search(const string key,
+\end{funcdoc}
+
+\begin{funcdoc}{dbnomics\_search(const string key,
                                  int limit[0::100],
                                  int offset[0],
-				 bool verbose[0])
-\end{code}
+				 bool verbose[0])}
+
 Returns an array of bundles, each holding information on a dataset
 which matches (in some way or other) the \texttt{key} string. The
 \texttt{limit} and \texttt{offset} argument should in principle work
@@ -303,22 +330,25 @@ as of this writing the \texttt{offset} argument doesn't work due to a
 # example
 bundles B = dbnomics_search("interest rates", 50)
 \end{code}
+\end{funcdoc}
+\begin{funcdoc}{dbnomics\_categtree(const string provider,
+    bool verbose[0])}
 
-\subsection{dbnomics\_categtree}
+Returns an array of bundles containing a list of the datasets for
+provider \texttt{provider}, verbosely if so wanted.
 
-\begin{code}
-function bundles dbnomics_categtree(const string provider,
-                                    bool verbose[0])
-\end{code}
+\end{funcdoc}
 
-\subsection{dbnomics\_fetch}
-
-\begin{code}
-function series dbnomics_fetch (const string datacode,
-                                bool verbose[0])
-\end{code}
+\begin{funcdoc}{dbnomics\_fetch(const string datacode,
+                                bool verbose[0])}
 This is just a convenience wrapper for \texttt{dbnomics\_get\_series}
 followed by \texttt{dbnomics\_bundle\_get\_data}.
+\end{funcdoc}
 
 
 \end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:

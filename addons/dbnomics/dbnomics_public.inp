@@ -145,10 +145,9 @@ end function
 ### ------------------------------------------------------------------------
 
 function bundles dbnomics_get_multiple(const string provider,
-      const string dset,
-      int limit[0::20],
-      int offset[0],
+      const string dset, int limit[0::50], int offset[0],
       bundle spec[null])
+    
     if !exists(spec)
         bundle spec = null
     endif
@@ -219,7 +218,7 @@ function bundles dbnomics_get_dataset_dimensions(const string provider,
 	loop i = 1 .. ndims --quiet
 	    r = ret[i]
 	    nv = r.nvalues
-            printf "%s%s; %d elements\n", r.id, r.label, nv
+            printf "%s%s; %d elements\n", r.code, r.label, nv
             loop j = 1 .. nv --quiet
 		bundle val_j = r.values[j]
 		string code = val_j.code
@@ -398,7 +397,7 @@ function bundles dbnomics_categtree(const string provider,
         loop i = 1..n --quiet
             bundle b = json2bndl(fields, json, magic, i-1)
             if verbose
-                print b
+                printf "\t%16s: %s\n", b.code, b.name
             endif
             ret[i] = b
         endloop
