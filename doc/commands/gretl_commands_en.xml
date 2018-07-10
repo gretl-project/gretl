@@ -10354,6 +10354,10 @@
 	  <flag>--midas</flag>
 	  <effect>see below</effect>
 	</option>
+	<option>
+	  <flag>--tree</flag>
+	  <effect>specific to bundles; see below</effect>
+	</option>
       </options>
       <examples>
 	<example>print x1 x2 --byobs</example>
@@ -10416,6 +10420,13 @@
 	a <cmdref targ="MIDAS_list"/>. If one such list is given as
 	argument and this option is appended, the series is printed by
 	observation at its <quote>native</quote> frequency.
+      </para>
+      <para>
+	The <opt>tree</opt> option is specific to the printing of a
+	gretl bundle: the effect is that if the specified bundle
+	contains further bundles, or arrays of bundles, their contents
+	are listed. Otherwise only the top-level members of the
+	bundle are listed.
       </para>
     </description>
 

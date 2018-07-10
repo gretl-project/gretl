@@ -1643,10 +1643,12 @@ static void print_bundled_item (gpointer key, gpointer value, gpointer p)
 static void print_bundle_tree (gretl_bundle *b, int level, PRN *prn)
 {
     gretl_array *K = gretl_bundle_get_keys(b, NULL);
-    gretl_bundle *child;
+    gretl_array *A;
+    gretl_bundle *bj;
+    void *child;
     GretlType type;
     char **keys;
-    int i, n = 0;
+    int i, j, nb, n = 0;
 
     gretl_bundle_print(b, level == 0 ? OPT_NONE : OPT_C, prn);
 
@@ -1655,7 +1657,19 @@ static void print_bundle_tree (gretl_bundle *b, int level, PRN *prn)
 	child = gretl_bundle_get_data(b, keys[i], &type, NULL, NULL);
 	if (type == GRETL_TYPE_BUNDLE) {
 	    pprintf(prn, "child bundle '%s' (level %d):\n", keys[i], level + 1);
-	    print_bundle_tree(child, level + 1, prn);
+	    print_bundle_tree((gretl_bundle *) child, level + 1, prn);
+	} else if (type == GRETL_TYPE_ARRAY) {
+	    A = (gretl_array *) child;
+	    type = gretl_array_get_content_type(A);
+	    if (type == GRETL_TYPE_BUNDLE) {
+		nb = gretl_array_get_length(A);
+		for (j=0; j<nb; j++) {
+		    bj = gretl_array_get_bundle(A, j);
+		    pprintf(prn, "bundle %d under array '%s' (level %d):\n",
+			    j + 1, keys[i], level + 2);
+		    print_bundle_tree(bj, level + 2, prn);
+		}
+	    }
 	}
     }
 
