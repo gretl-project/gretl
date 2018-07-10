@@ -68,6 +68,17 @@ end function
 
 ### ------------------------------------------------------------------------
 
+function scalar maybe_put_into_bundle(bundle *b, const string json, string key, string qry)
+    scalar got = 0
+    tmp = jsonget(json, qry, &got)
+    if got
+        b[key] = tmp
+    endif
+    return got
+end function
+
+### ------------------------------------------------------------------------
+
 function scalar fill_series_bundle(bundle *b, const string json, int idx)
     got = 0
     istr = (idx == 0) ? "" : sprintf("[%d]", idx-1) # zero-based
@@ -75,17 +86,10 @@ function scalar fill_series_bundle(bundle *b, const string json, int idx)
     b.frequency = get_frequency(json)
     qry = sprintf("$.series.data%s.dataset_name", istr)
     b.dset_name = jsonget(json, qry)
-    # qry = sprintf("$.series.data%s..Unit", istr)
-    qry = sprintf("$.series.data%s.Unit", istr)
-    tmp = jsonget(json, qry, &got)
-    if got
-        b.unit = tmp
-    endif
-    qry = sprintf("$.series.data%s.series_name", istr)
-    tmp = jsonget(json, qry, &got)
-    if got
-        b.series_name = tmp
-    endif
+
+    maybe_put_into_bundle(&b, json, "unit", sprintf("$.series.data%s.Unit", istr))
+    maybe_put_into_bundle(&b, json, "series_name", sprintf("$.series.data%s.series_name", istr))
+    maybe_put_into_bundle(&b, json, "series_code", sprintf("$.series.data%s.series_code", istr))
 
     string line
 

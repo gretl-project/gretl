@@ -208,7 +208,7 @@ function bundles dbnomics_get_dataset_dimensions(const string provider,
     bundles ret = array(ndims)
     loop i = 1 .. ndims --quiet # loop over dimensions
         ci = c_order[i]
-        ret[i].id = ci
+        ret[i].code = ci
         bundle bfi = bf[ci]
         ret[i].label = inbundle(bfi, "label") ? " (" ~ bfi.label ~ ")" : ""
 	ret[i].values = bfi.values

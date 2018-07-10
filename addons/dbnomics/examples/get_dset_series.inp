@@ -3,7 +3,20 @@ include dbnomics.gfn
 
 prov = "OECD"
 dset = "EO"
-B = dbnomics_get_dataset_content(prov, dset, 10, 0)
-loop i=1..nelem(B) -q
-  printf "%s\n  %s\n", B[i].code, B[i].name
+ini = 10
+fin = 20
+
+printf "Dataset %s from %s\n", dset, prov
+
+printf "\n--- Dimensions ---------------------------\n\n"
+Dimensions = dbnomics_get_dataset_dimensions(prov, dset)
+loop i=1..nelem(Dimensions) -q
+  printf "%s %s\n", Dimensions[i].code, Dimensions[i].label
+endloop
+
+Series = dbnomics_get_dataset_content(prov, dset, fin - ini + 1, ini)
+total = Series[1].num_found
+printf "\n--- series from %d to %d (out of %d) -----\n\n", ini, fin, total
+loop i=1..nelem(Series) -q
+  printf "%s\n  %s\n", Series[i].code, Series[i].name
 endloop
