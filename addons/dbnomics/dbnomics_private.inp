@@ -278,7 +278,7 @@ function bundles general_search(const string key, int limit[0::100],
     string json
     parms = sprintf("search?q=%s&limit=%d&offset=%d", sanitize_url(key),
       limit, offset)
-    err = dbn_get_json(parms, verbose, &json)
+    err = dbn_get_json(parms, 0, &json)
     if err
         return ret
     endif
@@ -286,7 +286,8 @@ function bundles general_search(const string key, int limit[0::100],
     n = 0
     str = jsonget(json, sprintf("$.%s[*].code", magic), &n)
     ntot = atof(jsonget(json, "$.results.num_found"))
-    printf "n = %d, ntot = %d\n", n, ntot
+    
+    #printf "n = %d, ntot = %d\n", n, ntot
 
     if n == 0
         if verbose
@@ -327,7 +328,7 @@ function bundles dset_search(const string key, const string pcode,
     parms = sprintf("%s/%s/series?q=%s&limit=%d&offset=%d", pcode, dcode,
       sanitize_url(key),limit, offset)
 
-    err = dbn_get_json(parms, verbose, &json)
+    err = dbn_get_json(parms, 0, &json)
 
     if !err
         bundle bj = jsongetb(json)
@@ -338,7 +339,7 @@ function bundles dset_search(const string key, const string pcode,
             got = nelem(ret)
             if got > 0
                 printf "listing series %d - %d out of %d\n",
-                  offset, offset+got, tot
+                  offset+1, offset+got, tot
                 loop i = 1 .. got --quiet
                     bundle desc_i = ret[i]
                     printf "%s - %s\n", desc_i.code, desc_i.name
