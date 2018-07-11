@@ -281,20 +281,16 @@ function bundles dbnomics_providers(bool verbose[0])
         funcerr "no providers were found"
     endif
 
-    bundles ret = array(n_ok)
+    bundles ret = array(nprov)
     strings fields = defarray("name", "terms_of_use", "code", "region", "description", "website")
 
-    j = 1
     loop i = 1..nprov --quiet
-        if !blacklisted(codes[i])
-            ret[j] = json2bndl(fields, json, magic, i-1)
-            j++
-        endif
+        ret[i] = json2bndl(fields, json, magic, i-1)
     endloop
 
     if verbose
         printf "Available providers: \n"
-        loop i = 1..n_ok --quiet
+        loop i = 1..nprov --quiet
             printf "%3d: %15s", i, ret[i].code
             if inbundle(ret[i], "name")
                 printf " (%s)", ret[i].name
