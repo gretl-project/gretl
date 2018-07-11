@@ -928,18 +928,41 @@ windata_t *get_viewer_for_data (const gpointer data)
     return ret;
 }
 
-windata_t *get_browser_for_role (int role)
+static int paths_match (const char *path, windata_t *vwin)
+{
+    const char *wstr = NULL;
+
+    if (vwin->role == DBNOMICS_DB) {
+	wstr = g_object_get_data(G_OBJECT(vwin->listbox), "provider");
+    } else {
+	wstr = g_object_get_data(G_OBJECT(vwin->listbox), "path");
+    }
+
+    return wstr != NULL && !strcmp(path, wstr);
+}
+
+windata_t *get_browser_for_role (int role, const char *path)
 {
     windata_t *ret = NULL;
 
     if (n_listed_windows > 1) {
 	GList *list = gtk_action_group_list_actions(window_group);
+	int checkpath = 0;
 	windata_t *vwin;
 
+	if (path != NULL && (role == DBNOMICS_DB || role == DBNOMICS_SERIES)) {
+	    checkpath = 1;
+	}
 	while (list != NULL && ret == NULL) {
 	    vwin = vwin_from_action((GtkAction *) list->data);
 	    if (vwin != NULL && vwin->role == role) {
-		ret = vwin;
+		if (checkpath) {
+		    /* "path" should match */
+		    ret = paths_match(path, vwin) ? vwin : NULL;
+		} else {
+		    /* it's sufficient to match on role */
+		    ret = vwin;
+		}
 	    }
 	    list = list->next;
 	}

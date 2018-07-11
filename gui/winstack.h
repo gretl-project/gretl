@@ -38,7 +38,7 @@ windata_t *get_browser_for_database (const char *filename);
 
 windata_t *get_browser_for_gretl_database (const char *filename);
 
-windata_t *get_browser_for_role (int role);
+windata_t *get_browser_for_role (int role, const char *path);
 
 windata_t *get_viewer_for_data (const gpointer data);
 

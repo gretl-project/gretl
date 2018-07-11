@@ -2606,13 +2606,13 @@ void maybe_update_pkgview (const char *filename,
     windata_t *vwin;
 
     /* update local package browser? */
-    vwin = get_browser_for_role(FUNC_FILES);
+    vwin = get_browser_for_role(FUNC_FILES, NULL);
     if (vwin != NULL) {
 	populate_filelist(vwin, NULL);
     }
 
     /* update remote package browser? */
-    vwin = get_browser_for_role(REMOTE_FUNC_FILES);
+    vwin = get_browser_for_role(REMOTE_FUNC_FILES, NULL);
     if (vwin != NULL && find_package_in_viewer(vwin, pkgname)) {
 	list_store_set_string(GTK_TREE_VIEW(vwin->listbox),
 			      vwin->active_var, STATUS_COLUMN,

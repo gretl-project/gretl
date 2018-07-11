@@ -1051,7 +1051,7 @@ void set_alternate_gfn_dir (windata_t *vwin, char *path)
 
 gchar *gfn_browser_get_alt_path (void)
 {
-    windata_t *vwin = get_browser_for_role(FUNC_FILES);
+    windata_t *vwin = get_browser_for_role(FUNC_FILES, NULL);
     gchar *path = NULL;
 
     if (vwin != NULL && widget_get_int(vwin->listbox, "altdir")) {
@@ -1319,9 +1319,9 @@ windata_t *get_local_viewer (int remote_role)
     windata_t *vwin = NULL;
 
     if (remote_role == REMOTE_DB) {
-	vwin = get_browser_for_role(NATIVE_DB);
+	vwin = get_browser_for_role(NATIVE_DB, NULL);
     } else if (remote_role == REMOTE_FUNC_FILES) {
-	vwin = get_browser_for_role(FUNC_FILES);
+	vwin = get_browser_for_role(FUNC_FILES, NULL);
     }
 
     return vwin;
@@ -2022,7 +2022,7 @@ void display_files (int role, const gchar *path)
     gchar *mypath = NULL;
     int err = 0;
 
-    vwin = get_browser_for_role(role);
+    vwin = get_browser_for_role(role, path);
     if (vwin != NULL) {
 	gtk_window_present(GTK_WINDOW(vwin->main));
 	return;
@@ -2770,7 +2770,7 @@ void maybe_update_gfn_browser (const char *pkgname,
 			       int uses_subdir,
 			       int pdfdoc)
 {
-    windata_t *vwin = get_browser_for_role(FUNC_FILES);
+    windata_t *vwin = get_browser_for_role(FUNC_FILES, NULL);
     int del = (version == NULL && descrip == NULL);
 
     if (vwin != NULL && vwin->listbox != NULL) {
@@ -2787,7 +2787,7 @@ void maybe_update_gfn_browser (const char *pkgname,
 void maybe_update_pkg_registry_window (const char *pkgname,
 				       int code)
 {
-    windata_t *vwin = get_browser_for_role(PKG_REGISTRY);
+    windata_t *vwin = get_browser_for_role(PKG_REGISTRY, NULL);
 
     if (vwin != NULL && vwin->listbox != NULL) {
 	if (code == MENU_ADD_FN_PKG) {
