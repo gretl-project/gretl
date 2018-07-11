@@ -162,7 +162,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="$dwpval" section="access" output="scalar">
       <description>
 	<para>
@@ -918,7 +918,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="$T" section="access" output="int">
       <description>
 	<para>
@@ -1227,7 +1227,7 @@
 	  Se <argname>x</argname> e <argname>byvar</argname> são ambas
       séries individuais, e é indicado um terceiro argumento,
       o valor retornado é uma matriz com três colunas contendo,
-      respectivamente, os valores distintos de 
+      respectivamente, os valores distintos de
 	  <argname>byvar</argname>, por ordem crescente; a contagem das
       observações em que o <argname>byvar</argname>
 	  toma em cada um desses valores; e os valores da
@@ -2197,7 +2197,7 @@
 	  será sinalizado um erro.
 	</para>
 	<para>
-	  Se não se indicar o segundo argumento, retornará um vetor de texto 
+	  Se não se indicar o segundo argumento, retornará um vetor de texto
       que contém os nomes das colunas de <argname>M</argname>,
 	  ou um vetor de texto vazio se <argname>M</argname> não tiver nomes
       de colunas atribuídos.
@@ -3704,7 +3704,7 @@
     <function name="getinfo" section="data-utils" output="bundle">
       <fnargs>
 	<fnarg type="series">y</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para>
 	  Retorna, na forma de um pacote (<quote>bundle</quote>quote>) informações
@@ -3736,7 +3736,7 @@
 	  lag = 2
 	  parent = QNC
 	  name = QNC_2
-	  graph_name = 
+	  graph_name =
 	  coded = 0
 	  discrete = 0
 	  transform = lags
@@ -3758,11 +3758,11 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="getkeys" section="data-utils" output="strings">
       <fnargs>
     <fnarg type="bundle">b</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
     <para>
       Retorna um vetor de textos contendo os códigos que identificam os
@@ -3771,7 +3771,7 @@
     </para>
       </description>
     </function>
-      
+
     <function name="getline" section="strings" output="scalar">
       <fnargs>
 	<fnarg type="string">source</fnarg>
@@ -3974,7 +3974,7 @@
     </para>
     <para>
       O terceiro argumento, que é opcional, pode ser utlizado para
-      ajustar a convergência, isto é, a largura máxima aceitável 
+      ajustar a convergência, isto é, a largura máxima aceitável
       do intervalo final do parâmetro. Se esse argumento não for
       fornecido, será utilizado o valor 0,0001.
     </para>
@@ -4192,7 +4192,7 @@
 	<code>
 	  series hptrend = y - hfilt(y)
 	</code>
-	<para>      
+	<para>
 	  <seelist>
             <fncref targ="bkfilt"/>
             <fncref targ="bwfilt"/>
@@ -4654,7 +4654,7 @@
 	<fnarg type="int">shock</fnarg>
 	<fnarg type="pscalar" optional="true">alpha</fnarg>
 	<fnarg type="bundle" optional="true">sys</fnarg>
-      </fnargs>  
+      </fnargs>
       <description>
 	<para>
 	  Sem utilizar o argumento <argname>sys</argname>, opcional, essa
@@ -4944,6 +4944,44 @@
       </description>
     </function>
 
+    <function name="jsongetb" section="data-utils" output="bundle">
+      <fnargs>
+	<fnarg type="string">buf</fnarg>
+	<fnarg type="strings" optional="true">excludes</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  O argumento <argname>buf</argname> deve ser um buffer JSON que,
+	  por sua vez, pode ser obtido de um website apropriado via função
+	  <fncref targ="curl"/>. O argumento <argname>excludes</argname>,
+	  se fornecido, deve ser um arranjo (<quote>array</quote>) de textos
+	  (<quote>strings</quote>) contendo os nomes dos objetos JSON a serem excluídos.
+	</para>
+	<para>
+	  O valor retornado pela função é um pacote (<quote>bundle</quote>) em
+	  que a estrutura basicamente emula a da entrada: objetos JSON se tornam
+	  pacotes (<quote>bundles</quote>) do Gretl e arrays JASON se tornam
+	  arranjos (<quote>arrays</quote>) do Gretl, com cada um armazenando
+	  tanto textos (<quote>strings</quote>) quanto pacotes (<quote>bundles</quote>).
+	  Nós de <quote>valor</quote> JSON se tornam ou membros de pacotes ou elementos
+	  de arranjos. No último caso, valores numéricos são convertidos para texto
+	  via função <lit>sprintf</lit>. Note que uma vez que arranjos do Gretl não
+	  podem ser aninhados, a entrada aceita por essa função é um pouco mais
+	  restritiva que a especificação JSON, que permite aninhamento de arrays.
+	</para>
+	<para>
+	  O argumento opcional <argname>excludes</argname> deve ser utilizado com
+	  cautela: ao excluir-se objetos com correspondência (matching) de nomes
+	  também são excluídos quaisquer <quote>children</quote> que eles possam ter.
+	</para>
+	<para>
+	  Veja também a função orientada à textos <fncref targ="jsonget"/>.
+	  A depender de seu objetivo uma dessas funções pode ser mais útil que a
+	  outra.
+	</para>
+      </description>
+    </function>
+
     <function name="juldate" section="calendar" output="seebelow">
       <fnargs>
 	<fnarg type="scalar-or-series">ed</fnarg>
@@ -4951,27 +4989,27 @@
       </fnargs>
       <description>
 	<para>
-	  The argument <argname>ed</argname> is interpreted as an
-	  epoch day, which equals 1 for the first of January in the
-	  year AD 1 on the proleptic Gregorian calendar. The default
-	  return value &mdash; of the same type as
-	  <argname>ed</argname> &mdash; is an 8-digit number, or a
-	  series of such numbers, on the pattern <lit>YYYYMMDD</lit>
-	  (ISO 8601 <quote>basic</quote> format), giving the Julian
-	  calendar date corresponding to the epoch day.
+	  O argumento <argname>ed</argname> é interpretado como um dia
+	  de época que é igual a 1 no primeiro dia de janeiro do ano 1
+	  depois de Cristo no calendário gregoriano proléptico. O valor
+	  de retorno padrão&mdash;do mesmo tipo de <argname>ed</argname>
+	  &mdash;é um número de 8 dígitos, ou uma série de tais números,
+	  seguindo o padrão <lit>YYYYMMDD</lit> (formato ISO 8601
+	  <quote>básico</quote>), fornecendo a data correspondente ao
+	  dia de época no calendário juliano.
 	</para>
 	<para>
-	  If <argname>ed</argname> is a scalar (only) and the optional
-	  second argument <argname>as-string</argname> is non-zero,
-	  the return value is not numeric but rather a string on the
-	  pattern <lit>YYYY-MM-DD</lit> (ISO 8601
-	  <quote>extended</quote> format).
+	  Se <argname>ed</argname> for (apenas) um escalar e o segundo
+	  parâmetro <argname>as-string</argname> (que é opcional) for não-nulo,
+	  o valor retornado não será numérico e sim um texto (string)
+	  seguindo o padrão <lit>YYYY-MM-DD</lit> (formato ISO 8601
+	  <quote>extendido</quote>).
 	</para>
 	<para>
-	  See also <fncref targ="isodate"/>.
+	  Veja também <fncref targ="isodate"/>.
 	</para>
       </description>
-    </function>
+    </function>    
 
     <function name="kdensity" section="stats" output="matrix">
       <fnargs>
@@ -5012,24 +5050,24 @@
       </fnargs>
       <description>
 	<para>
-	  Performs disturbance smoothing for a Kalman bundle
-	  previously set up by means of <fncref targ="ksetup"/>
-	  and returns 0 on successful completion or 1 if numerical
-	  problems are encountered.
+	  Realiza a suavização dos distúrbios para um pacote (bundle) de
+	  Kalman previamente definido via função <fncref targ="ksetup"/>
+	  e retorna 0 caso a execução tenha sucesso ou 1 se se forem
+	  encontrados problemas numéricos.
 	</para>
 	<para>
-	  On successful completion, the smoothed disturbances will be
-	  available as <lit>Mod.smdist</lit>.
+	  Se a operação for completada com sucesso os distúrbios
+	  suavizados estarão disponíveis como <lit>Mod.smdist</lit>.
 	</para>
 	<para>
-	  The optional <argname>MSE</argname> argument determines the
-	  contents of the <lit>Mod.smdisterr</lit> key. If 0 or
-	  omitted, this matrix will contain the unconditional standard
-	  errors of the smoothed disturbances, which are normally used
-	  to compute the so-called <emphasis>auxiliary
-	  residuals</emphasis>. Otherwise, <lit>Mod.smdisterr</lit>
-	  will contain the estimated root mean square deviations of
-	  the auxiliary residuals from their true value.
+	  O argumento opcional <argname>MSE</argname> determina os conteúdos
+	  de <lit>Mod.smdisterr</lit>. Se for omitido ou for igual a 0, essa
+	  matriz irá conter os erros padrão não-condicionais dos distúrbios
+	  suavizados que, por sua vez, normalmente, são utilizados para
+	  calcular os chamados <emphasis>resíduos auxiliares</emphasis>.
+	  Caso contrário, <lit>Mod.smdisterr</lit> irá conter a raiz do erro
+	  quadrado médio estimado dos resíduos auxiliares em relação aos seus
+	  valores verdadeiros.
 	</para>
 	<para>
 	  Para maiores detalhes veja <guideref targ="chap:kalman"/>.
@@ -5043,7 +5081,7 @@
 	  </seelist>
 	</para>
       </description>
-    </function>
+    </function> 
 
     <function name="kfilter" section="sspace" output="scalar">
       <fnargs>
@@ -5051,18 +5089,18 @@
       </fnargs>
       <description>
 	<para>
-	  Performs a forward, filtering pass on a Kalman bundle
-	  previously set up by means of <fncref targ="ksetup"/>
-	  and returns 0 on successful completion or 1 if numerical
-	  problems are encountered.
+	  Realiza a filtragem em um pacote (bundle) de Kalman
+	  previamente definido via <fncref targ="ksetup"/> e
+	  retorna 0 caso a execução tenha sucesso ou 1 se forem
+	  encontrados problemas numéricos.
 	</para>
 	<para>
 	  Se a operação for completada com sucesso os erros de
 	  previsão de 1 passo à frente estarão disponíveis como
 	  <lit>Mod.prederr</lit> e a sequência de suas variâncias
 	  como <lit>Mod.pevar</lit>. Além disso, <lit>Mod.llt</lit>
-	  dará acesso a um <math>T</math>-vector contendo o log
-	  da verossimilhança por observação.
+	  dará acesso a um vetor de ordem <math>T</math> contendo
+	  o log da verossimilhança por observação.
 	</para>
 	<para>
 	  Para maiores detalhes veja <guideref targ="chap:kalman"/>.
@@ -5148,34 +5186,34 @@
       </fnargs>
       <description>
 	<para>
-	  Sets up a Kalman bundle, that is an object which contains
-	  all the information needed to define a linear state space
-	  model of the form
-	  <equation status="display"
+	  Especifica um pacote (bundle) de Kalman, isto é, um objeto que contém
+	  todas as informações necessárias para se definir um modelo linear de
+	  espaço de estados na forma
+	  <equation status="display" 
 		    tex="\[y_t=H'\alpha_t\]"
 		    ascii="y(t) = H'a(t)"
-		    graphic="kalman1"/>
-	  and state transition equation
-	  <equation status="display"
+		    graphic="kalman1"/> 
+	  e com a equação de transição de estados
+	  <equation status="display" 
 		    tex="\[\alpha_{t+1}=F \alpha_t + u_t\]"
 		    ascii="a(t+1) = F a(t) + u(t)"
-		    graphic="kalman2"/>
+		    graphic="kalman2"/> 
 	  onde Var<math>(u) = Q</math>.
 	</para>
 	<para>
-	  Objects created via this function can be later used via the
-	  dedicated functions <fncref targ="kfilter"/> for filtering,
-	  <fncref targ="ksmooth"/> and <fncref targ="kdsmooth"/> for
-	  smoothing and <fncref targ="ksimul"/> for performing
-	  simulations.
+	  Objetos criados através dessa função podem ser posteriormente
+	  utilizados via funções dedicadas <fncref targ="kfilter"/> para
+	  filtragem, <fncref targ="ksmooth"/> e <fncref targ="kdsmooth"/>
+	  para suavização e <fncref targ="ksimul"/> para realizar
+	  simulações.
 	</para>
 	<para>
-	  The class of models that gretl can handle is in fact much
-	  wider than the one implied by the representation above: it
-	  is possible to have time-varying models, models with diffuse
-	  priors and exogenous variável in the measurement equation
-	  and models with cross-correlated innovations. For further
-	  details, see <guideref targ="chap:kalman"/>.
+	  A amplitude de classes de modelos que o Gretl pode manusear é,
+	  de fato, bem mais abrangente que o implicado pela representação
+	  acima: é possível a estimação de modelos com parâmetros variando
+	  no tempo, com prioris difusas, com variáveis exógenas na equação
+	  de medida e modelos com resíduos interrelacionados. Para maiores
+	  detalhes veja <guideref targ="chap:kalman"/>.
 	</para>
 	<para>
 	  <seelist>
@@ -5186,7 +5224,7 @@
 	  </seelist>
 	</para>
       </description>
-    </function>
+    </function> 
 
     <function name="ksimul" section="sspace" output="scalar">
       <fnargs>
@@ -5216,27 +5254,27 @@
       </fnargs>
       <description>
 	<para>
-	  Performs a fixed-point smoothing (backward) pass on a
-	  Kalman bundle previously set up by means of <fncref
-	  targ="ksetup"/> and returns 0 on successful completion or 1
-	  if numerical problems are encountered.
+	  Realiza uma suavização de ponto fixo em um pacote (bundle)
+	  de Kalman previamente definido via função <fncref targ="ksetup"/>
+	  e retorna 0 caso a operação tenha sido realizada com sucesso
+	  ou 1 se surgirem problemas numéricos.
 	</para>
 	<para>
-	  On successful completion, the smoothed states will be
-	  available as <lit>Mod.state</lit> and the sequence of their
-	  covariance matrizes as <lit>Mod.stvar</lit>. Para maiores detalhes
+	  Em caso de sucesso, os estados suavizados estarão disponíveis
+	  como <lit>Mod.state</lit> e a sequência de suas matrizes de
+	  covariância como <lit>Mod.stvar</lit>.  Para maiores detalhes
 	  veja <guideref targ="chap:kalman"/>.
 	</para>
 	<para>
 	  <seelist>
-            <fncref targ="ksetup"/>
+	    <fncref targ="ksetup"/>
             <fncref targ="kdsmooth"/>
             <fncref targ="kfilter"/>
             <fncref targ="ksimul"/>
 	  </seelist>
 	</para>
       </description>
-    </function>
+    </function> 
 
     <function name="kurtosis" section="stats" output="scalar">
       <fnargs>
@@ -5610,13 +5648,13 @@
 	  Fórmula:
 	  \[ \hat{\omega}^2(k) = \frac{1}{T} \sum_{t=k}^{T-k}
 	  \left[ \sum_{i=-k}^k w_i (y_t - \bar{X}) (y_{t-i} - \bar{Y})
-	  \right] \] 
-	  com 
+	  \right] \]
+	  com
 	  \[ w_i = 1 - \frac{|i|}{k + 1} \]
 	</para>
 	<para>
 	  Ver a função <fncref targ="lrcovar"/> para o caso multivariado.
-	</para>	
+	</para>
       </description>
     </function>
 
@@ -5976,43 +6014,43 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Shifts up or down the rows of <argname>X</argname>.  If
-	  <argname>p</argname> is a positive scalar, retorna uma matrix
-	  in which the columns of <argname>X</argname> are shifted
-	  down by <argname>p</argname> rows and the first
-	  <argname>p</argname> rows are filled with the value
-	  <argname>m</argname>. If <argname>p</argname> is a negative
-	  number, <argname>X</argname> is shifted up and the last rows
-	  are filled with the value <argname>m</argname>. If
-	  <argname>m</argname> is omitted, it is understood to be
-	  zero.
+	  Desloca para cima ou para baixo as linhas de <argname>X
+	  </argname>. Se <argname>p</argname> for um número positivo,
+	  retorna uma matriz na qual as colunas de <argname>X</argname>
+	  são deslocadas <argname>p</argname> linhas para baixo e as
+	  primeiras <argname>p</argname> linhas são preenchidas com o
+	  valor <argname>m</argname>. Se <argname>p</argname> for um
+	  número negativo, <argname>X</argname> é deslocado para cima
+	  e as últimas linhas são preenchidas com o valor <argname>m
+	  </argname>. Se <argname>m</argname> não for fornecido, será
+	  considerado como sendo igual a zero.
 	</para>
 	<para context="tex">
-	  Shifts up or down the rows of <argname>X</argname>. If $p$
-	  is a positive scalar, the returned matrix $Y$ has typical
-	  element $Y_{i,j} = X_{i-p,j}$ for $i \ge p$ and zero
-	  otherwise. In other words, the columns of
-	  <argname>X</argname> are shifted down by
-	  <argname>p</argname> rows and the first <argname>p</argname>
-	  rows are filled with the value <argname>m</argname>. If
-	  <argname>p</argname> is a negative number,
-	  <argname>X</argname> is shifted up and the last rows are
-	  filled with the value <argname>m</argname>. If
-	  <argname>m</argname> is omitted, it is understood to be
-	  zero.
+	  Desloca para cima ou para baixo as linhas de <argname>X
+	  </argname>. Se $p$ for um número positivo, a matriz retornada
+	  $Y$ terá como elementos $Y_{i,j} = X_{i-p,j}$ para $i \ge p$
+	  e zero caso contrário. Em outras palavras, as colunas de
+	  <argname>X</argname> são deslocadas <argname>p</argname>
+	  linhas para baixo e as primeiras <argname>p</argname> linhas
+	  são preenchidas com o valor <argname>m</argname>. Se
+	  <argname>p</argname> for um número negativo, <argname>X
+	  </argname> é deslocado para cima e as últimas linhas são
+	  preenchidas com o valor <argname>m</argname>. Se <argname>m
+	  </argname> não for fornecido, será considerado como sendo
+	  igual a zero.
 	</para>
 	<para context="notex">
-	  If <argname>p</argname> is a vector, the above operation is
-	  carried out for each element in <argname>p</argname>,
-	  joining the resulting matrizes horizontally.
+	  Se <argname>p</argname> for um vetor, a operação acima
+	  é realizada para cada elemento em <argname>p</argname>,
+	  combinando as matrizes resultantes horizontalmente.
 	</para>
 	<para context="tex">
-	  If $p$ is a vector, the above operation is carried out for
-	  each element in $p$, joining the resulting matrices
-	  horizontally.
+	  Se $p$ for um vetor, a operação acima é realizada para
+	  cada elemento em $p$, combinando as matrizes resultantes
+	  horizontalmente.
 	</para>
 	<para>
-	  See also <fncref targ="lags"/>.
+	  Veja também <fncref targ="lags"/>.
 	</para>
       </description>
     </function>
@@ -6479,9 +6517,9 @@
             <fncref targ="mgradient"/>
 	    <fncref targ="mlincomb"/>
 	  </seelist>
-	</para>	
+	</para>
       </description>
-    </function>    
+    </function>
 
     <function name="mwrite" section="data-utils" output="int">
       <fnargs>
@@ -6834,11 +6872,11 @@
       </fnargs>
       <description>
 	<para>
-	  Generates a series of Gaussian pseudo-random variates with
-	  mean &mu; and desvio padrão &sigma;. If no arguments
-	  are supplied, standard normal variates <math>N</math>(0,1)
-	  are produced.  The values are produced using the Ziggurat
-	  method <cite key="marsaglia00" p="true">(Marsaglia and
+	  Cria uma série de números gaussianos pseudo-aleatórios com
+	  média &mu; e desvio padrão &sigma;. Se não forem fornecidos
+	  argumentos, será produzida uma série padrão normalizada
+	  <math>N</math>(0,1). Os valores são calculados utilizando
+	  o método Ziggurat <cite key="marsaglia00" p="true">(Marsaglia e
 	  Tsang, 2000)</cite>.
 	</para>
 	<para>
@@ -7088,7 +7126,7 @@
 	<fnarg type="cvec">b</fnarg>
 	<fnarg type="fncall">fcall</fnarg>
 	<fnarg optional="true" type="scalar">d</fnarg>
-      </fnargs> 
+      </fnargs>
       <description>
 	<para>
 	  Calcula uma aproximação numérica para a hessiana associada
@@ -7123,7 +7161,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="obs" section="data-utils" output="series">
       <description>
 	<para>
@@ -8192,7 +8230,7 @@
             <para>
               ExponenCial (exp): escala
             </para>
-	  </li>	  
+	  </li>
 	  <li>
             <para>
               Weibull (w ou W): forma, escala
@@ -8202,7 +8240,7 @@
             <para>
               Laplace (l ou L): média, escala
             </para>
-	  </li>	  
+	  </li>
 	  <li>
             <para>
               Erro Generalizado (E): forma
@@ -8593,7 +8631,7 @@
 	  será sinalizado um erro.
 	</para>
 	<para>
-	  Se não se indicar o segundo argumento, retornará um vetor de texto 
+	  Se não se indicar o segundo argumento, retornará um vetor de texto
       que contém os nomes das linhas de <argname>M</argname>,
 	  ou um vetor de texto vazio se <argname>M</argname> não tiver nomes
       de linhas atribuídos.
@@ -8605,7 +8643,7 @@
 	  matrix A = { 11, 23, 13 ; 54, 15, 46 }
 	  rnameset(A, "First Second")
 	  string name = rnameget(A, 2)
-	  print name	
+	  print name
 	</code>
 	<para>
 	  <seelist>
@@ -8614,7 +8652,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="rnameset" section="matbuild" output="int">
       <fnargs>
 	<fnarg type="matrix">M</fnarg>
@@ -9030,7 +9068,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="sort" section="matshape" output="asinput">
       <fnargs>
 	<fnarg type="series-or-vec">x</fnarg>
@@ -9348,7 +9386,7 @@
       <fnargs>
 	<fnarg type="string">s</fnarg>
 	<fnarg optional="true" type="int">i</fnarg>
-    <fnarg optional="true" type="string">sep</fnarg>   
+    <fnarg optional="true" type="string">sep</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -10381,7 +10419,7 @@
 	<para>
 	  Entretanto, um erro ainda é sinalizado no caso de uma consulta
 	  (query) mal formada.
-	</para>	
+	</para>
 	<para>
 	  Uma boa introdução sobre a utilização da sintaxe de XPath
 	  pode ser encontrada em
@@ -10398,7 +10436,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="zeromiss" section="data-utils" output="asinput">
       <fnargs>
 	<fnarg type="scalar-or-series">x</fnarg>
