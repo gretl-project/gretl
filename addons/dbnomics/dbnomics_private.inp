@@ -85,7 +85,10 @@ function scalar fill_series_bundle(bundle *b, const string json, int idx)
 
     b.frequency = get_frequency(json)
     qry = sprintf("$.series.data%s.dataset_name", istr)
-    b.dset_name = jsonget(json, qry)
+    b.dset_name = jsonget(json, qry, &got)
+    if !got
+	b.dset_name = "untitled"
+    endif
 
     maybe_put_into_bundle(&b, json, "unit", sprintf("$.series.data%s.Unit", istr))
     maybe_put_into_bundle(&b, json, "series_name", sprintf("$.series.data%s.series_name", istr))
