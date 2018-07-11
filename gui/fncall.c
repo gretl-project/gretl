@@ -4284,6 +4284,7 @@ void *dbnomics_search_call (const char *key,
 			    int limit, int offset,
 			    int *err)
 {
+    const char *dset = NULL;
     gretl_array *A = NULL;
     fncall *fc = NULL;
     GdkWindow *cwin;
@@ -4295,6 +4296,7 @@ void *dbnomics_search_call (const char *key,
     }
 
     *err = push_function_args(fc, GRETL_TYPE_STRING, (void *) key, NULL,
+			      GRETL_TYPE_STRING, (void *) dset, NULL,
 			      GRETL_TYPE_INT, (void *) &limit, NULL,
 			      GRETL_TYPE_INT, (void *) &offset, NULL, -1);
     if (!*err) {

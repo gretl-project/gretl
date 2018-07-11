@@ -266,3 +266,88 @@ function scalar dbn_get_json (const string parms, bool verbose[0],
     
     return error
 end function
+
+### ------------------------------------------------------------------------
+
+function bundles general_search(const string key, int limit[0::100],
+				int offset[0], bool verbose[0])
+
+    magic = "results.docs"
+    bundles ret = null
+
+    string json
+    parms = sprintf("search?q=%s&limit=%d&offset=%d", sanitize_url(key),
+      limit, offset)
+    err = dbn_get_json(parms, verbose, &json)
+    if err
+        return ret
+    endif
+
+    n = 0
+    str = jsonget(json, sprintf("$.%s[*].code", magic), &n)
+    ntot = atof(jsonget(json, "$.results.num_found"))
+    printf "n = %d, ntot = %d\n", n, ntot
+
+    if n == 0
+        if verbose
+            printf "No matches found"
+        endif
+        return ret
+    endif
+
+    bundles ret = array(n)
+    strings fields = defarray("code", "nb_matching_series", "name", \
+      "provider_code")
+    loop i = 1..n --quiet
+        ret[i] = json2bndl(fields, json, magic, i-1)
+        ret[i].ntot = ntot
+    endloop
+
+    if verbose
+        printf "Datasets containing \"%s\" (%d-%d out of %d): \n\n",
+          key, offset+1, offset+n, ntot
+        loop i = 1..n --quiet
+            printf "%3d: %s.%s", i, ret[i].provider_code, ret[i].code
+            printf " (%d series)\n", atof(ret[i].nb_matching_series)
+        endloop
+    endif
+
+    return ret
+end function
+
+### ------------------------------------------------------------------------
+
+function bundles dset_search(const string key, const string pcode,
+      const string dcode, int limit[0::100],
+      int offset[0], bool verbose[0])
+
+
+    bundles ret = null
+    string json
+    parms = sprintf("%s/%s/series?q=%s&limit=%d&offset=%d", pcode, dcode,
+      sanitize_url(key),limit, offset)
+
+    err = dbn_get_json(parms, verbose, &json)
+
+    if !err
+        bundle bj = jsongetb(json)
+        ret = bj["series"].docs
+        tot = bj["series"].num_found
+
+        if verbose
+            got = nelem(ret)
+            if got > 0
+                printf "listing series %d - %d out of %d\n",
+                  offset, offset+got, tot
+                loop i = 1 .. got --quiet
+                    bundle desc_i = ret[i]
+                    printf "%s - %s\n", desc_i.code, desc_i.name
+                endloop
+            else
+                printf "no series found\n"
+            endif
+        endif
+    endif
+
+    return ret
+end function

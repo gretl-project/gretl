@@ -98,7 +98,7 @@ function scalar dbnomics_bundle_get_data(const bundle b, series *x, bool verbose
         x = dbseries
     endif
     outfile --close
-    
+
     if inbundle(b, "series_name")
         d = b.series_name
         setinfo x --description="@d"
@@ -132,7 +132,7 @@ function bundle dbnomics_get_series (const string datacode, bool verbose[0],
         ret.errmsg = msg
         return ret
     endif
-    
+
     strings S = strsplit(datacode,, "/")
     ret.provider = S[1]
     ret.dataset = S[2]
@@ -147,7 +147,7 @@ end function
 function bundles dbnomics_get_multiple(const string provider,
       const string dset, int limit[0::50], int offset[0],
       bundle spec[null])
-    
+
     if !exists(spec)
         bundle spec = null
     endif
@@ -187,50 +187,50 @@ end function
 
 function bundles dbnomics_get_dataset_dimensions(const string provider,
       const string dset, bool verbose[0])
-    
+
     URL = sprintf("https://api.next.nomics.world/%s/%s/series?limit=0&offset=0", \
       provider, dset)
-      
+
     s = readfile(URL)
     n = 0
     errstr = jsonget(s, "$.error_description", &n)
     if n
         funcerr errstr
     endif
-        
+
     b = jsongetb(s)
     c_order = strsplit(jsonget(s, "$.dataset.dimensions_codes_order"),"\n")
     ndims = nelem(c_order)
 
     bf = b["series_dimensions_facets"]
-    
+
     bundles ret = array(ndims)
     loop i = 1 .. ndims --quiet # loop over dimensions
         ci = c_order[i]
         ret[i].code = ci
         bundle bfi = bf[ci]
         ret[i].label = inbundle(bfi, "label") ? " (" ~ bfi.label ~ ")" : ""
-	ret[i].values = bfi.values
-	ret[i].nvalues = nelem(bfi.values)
+        ret[i].values = bfi.values
+        ret[i].nvalues = nelem(bfi.values)
     endloop
 
     if verbose
-	loop i = 1 .. ndims --quiet
-	    r = ret[i]
-	    nv = r.nvalues
+        loop i = 1 .. ndims --quiet
+            r = ret[i]
+            nv = r.nvalues
             printf "%s%s; %d elements\n", r.code, r.label, nv
             loop j = 1 .. nv --quiet
-		bundle val_j = r.values[j]
-		string code = val_j.code
-		if inbundle(val_j, "label")
+                bundle val_j = r.values[j]
+                string code = val_j.code
+                if inbundle(val_j, "label")
                     desc = val_j.label
                     printf "\t%s (%s)\n", code, desc
-		else
+                else
                     printf "\t%s\n", code
-		endif
+                endif
             endloop
             printf("\n")
-	endloop
+        endloop
     endif
 
     return ret
@@ -332,46 +332,24 @@ end function
 
 ### ------------------------------------------------------------------------
 
-function bundles dbnomics_search(const string key, int limit[0::100],
-      int offset[0], bool verbose[0])
-    magic = "results.docs"
+function bundles dbnomics_search(const string key, const string dset[null],
+      int limit[0::100], int offset[0],
+      bool verbose[0])
+
     bundles ret = null
 
-    string json
-    parms = sprintf("search?q=%s&limit=%d&offset=%d", sanitize_url(key),
-      limit, offset)
-    err = dbn_get_json(parms, verbose, &json)
-    if err
-        return ret
-    endif
-
-    n = 0
-    str = jsonget(json, sprintf("$.%s[*].code", magic), &n)
-    ntot = atof(jsonget(json, "$.results.num_found"))
-    printf "n = %d, ntot = %d\n", n, ntot
-
-    if n == 0
-        if verbose
-            printf "No matches found"
+    if exists(dset) && dset != ""
+        # make search specific to a dataset
+        strings codes = strsplit(dset, "/")
+        if nelem(codes) < 2
+            funcerr "Invalid dataset code (should be provider/dataset)"
+        else
+            ret = dset_search(key, codes[1], codes[2],
+              limit, offset, verbose)
         endif
-        return ret
-    endif
-
-    bundles ret = array(n)
-    strings fields = defarray("code", "nb_matching_series", "name", \
-      "provider_code")
-    loop i = 1..n --quiet
-        ret[i] = json2bndl(fields, json, magic, i-1)
-        ret[i].ntot = ntot
-    endloop
-
-    if verbose
-        printf "Datasets containing \"%s\" (%d-%d out of %d): \n\n",
-          key, offset+1, offset+n, ntot
-        loop i = 1..n --quiet
-            printf "%3d: %s.%s", i, ret[i].provider_code, ret[i].code
-            printf " (%d series)\n", atof(ret[i].nb_matching_series)
-        endloop
+    else
+        # search all providers
+        ret = general_search(key, limit, offset, verbose)
     endif
 
     return ret
