@@ -734,3 +734,71 @@ gretl_bundle *json_get_bundle (const char *data,
 
     return ret;
 }
+
+static int filter_bundle_tree (gretl_bundle *b, gretl_array *A)
+{
+    gretl_array *K, *ai;
+    gretl_bundle *bj;
+    void *child;
+    GretlType type;
+    char **keys;
+    int addit = 1;
+    int i, j, nb, n = 0;
+    int err = 0;
+
+    K = gretl_bundle_get_keys(b, NULL);
+    keys = gretl_array_get_strings(K, &n);
+
+    for (i=0; i<n; i++) {
+	/* FIXME hard-wired "category_tree" ? */
+	if (!strcmp(keys[i], "children") || !strcmp(keys[i], "category_tree")) {
+	    /* bundle has children: not terminal */
+	    addit = 0;
+	    break;
+	}
+    }
+
+    if (addit) {
+	/* push copy of bundle onto array */
+	err = gretl_array_append_bundle(A, b, 1);
+    }
+
+    for (i=0; i<n && !err; i++) {
+	child = gretl_bundle_get_data(b, keys[i], &type, NULL, NULL);
+	if (type == GRETL_TYPE_BUNDLE) {
+	    filter_bundle_tree((gretl_bundle *) child, A);
+	} else if (type == GRETL_TYPE_ARRAY) {
+	    ai = (gretl_array *) child;
+	    type = gretl_array_get_content_type(ai);
+	    if (type == GRETL_TYPE_BUNDLE) {
+		nb = gretl_array_get_length(ai);
+		for (j=0; j<nb; j++) {
+		    bj = gretl_array_get_bundle(ai, j);
+		    filter_bundle_tree(bj, A);
+		}
+	    }
+	}
+    }
+
+    gretl_array_destroy(K);
+
+    return err;
+}
+
+gretl_array *json_bundle_get_terminals (gretl_bundle *b, int *err)
+{
+    gretl_array *a;
+
+    a = gretl_array_new(GRETL_TYPE_BUNDLES, 0, err);
+
+    if (!*err) {
+	*err = filter_bundle_tree(b, a);
+    }
+
+    if (*err) {
+	gretl_array_destroy(a);
+	a = NULL;
+    }
+
+    return a;
+}

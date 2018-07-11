@@ -322,7 +322,6 @@ function bundles dset_search(const string key, const string pcode,
       const string dcode, int limit[0::100],
       int offset[0], bool verbose[0])
 
-
     bundles ret = null
     string json
     parms = sprintf("%s/%s/series?q=%s&limit=%d&offset=%d", pcode, dcode,

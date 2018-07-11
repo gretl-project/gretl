@@ -286,6 +286,7 @@ struct plugin_function_info plugin_functions[] = {
     /* parsing JSON data */
     { "json_get_string", P_JSON_GET},
     { "json_get_bundle", P_JSON_GET},
+    { "json_bundle_get_terminals", P_JSON_GET},
 
     /* parsing XML data */
     { "xml_get", P_XML_GET},
