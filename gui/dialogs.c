@@ -6681,8 +6681,8 @@ int dbnomics_dialog (char **dbcode, GtkWidget *parent)
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 
     di.entry = entry = gtk_entry_new();
-    gtk_entry_set_max_length(GTK_ENTRY(entry), 64);
-    gtk_entry_set_width_chars(GTK_ENTRY(entry), 32);
+    gtk_entry_set_max_length(GTK_ENTRY(entry), 128);
+    gtk_entry_set_width_chars(GTK_ENTRY(entry), 48);
 
     gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
     gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
