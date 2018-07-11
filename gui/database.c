@@ -1721,10 +1721,9 @@ static dbwrapper *get_db_series_info (windata_t *vwin, int action)
 	g_free(tmp);
 
 	tmp = NULL;
-	*sinfo->descrip = '\0';
 	tree_view_get_string(view, row, DBCOL_DESCRIP, &tmp);
 	if (tmp != NULL) {
-	    strncat(sinfo->descrip, tmp, MAXLABEL - 1);
+	    series_info_set_description(sinfo, tmp);
 	    g_free(tmp);
 	}
 

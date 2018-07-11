@@ -126,7 +126,7 @@ get_dbnomics_series_info (const char *id, SERIESINFO *sinfo)
 	/* set up name and description */
 	normalize_join_colname(sinfo->varname, rawname, 0);
 	descrip = g_strdup_printf("%s: %s", id, s2);
-	strncat(sinfo->descrip, descrip, MAXLABEL-1);
+	series_info_set_description(sinfo, descrip);
 	g_free(descrip);
 	/* steal the data array */
 	sinfo->data = dbset.Z[1];

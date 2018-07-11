@@ -220,6 +220,39 @@ gchar *textview_get_trimmed_text (GtkWidget *view)
     return g_strchug(g_strchomp(textview_get_text(view)));
 }
 
+static gchar *normalize_line (const char *s)
+{
+    int i, j = 0, n = strlen(s);
+    gchar *ret = g_malloc0(n);
+
+     for (i=0; s[i]; i++) {
+	if (isspace(s[i])) {
+	    ret[j++] = ' ';
+	    while (isspace(s[i])) i++;
+	}
+        ret[j++] = s[i];
+    }
+
+    return ret;
+}
+
+gchar *textview_get_normalized_line (GtkWidget *view)
+{
+    gchar *ret = NULL;
+
+    g_return_val_if_fail(GTK_IS_TEXT_VIEW(view), NULL);
+
+    ret = g_strchug(g_strchomp(textview_get_text(view)));
+    if (strchr(ret, '\n') != NULL || strstr(ret, "  ") != NULL) {
+	gchar *alt = normalize_line(ret);
+
+	g_free(ret);
+	ret = alt;
+    }
+
+    return ret;
+}
+
 /* Special: handle the case where text has been line-wrapped
    in an editor window and we want to save the text as
    wrapped -- that is, forcibly to truncate excessively

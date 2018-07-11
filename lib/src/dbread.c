@@ -312,8 +312,7 @@ static void get_native_series_comment (SERIESINFO *sinfo, const char *s)
     s += strcspn(s, " "); /* skip varname */
     s += strspn(s, " ");  /* skip space */
 
-    *sinfo->descrip = 0;
-    strncat(sinfo->descrip, s, MAXLABEL - 1);
+    series_info_set_description(sinfo, s);
     tailstrip(sinfo->descrip);
 }
 
@@ -522,9 +521,9 @@ static char **native_db_match_series (const char *glob, int *nmatch,
     return S;
 }
 
-static int
-get_native_series_info (const char *series, SERIESINFO *sinfo,
-			const char *idxname)
+static int get_native_series_info (const char *series,
+				   SERIESINFO *sinfo,
+				   const char *idxname)
 {
     FILE *fp = NULL;
     char sername[VNAMELEN];
@@ -693,7 +692,6 @@ get_pcgive_series_info (const char *series, SERIESINFO *sinfo)
     while (fgets(line, sizeof line, fp) && !gotit) {
 	if (*line == '>') {
 	    *sinfo->varname = 0;
-	    *sinfo->descrip = 0;
 	    nf = sscanf(line + 1, fmt, sinfo->varname, &y0, &p0,
 			&y1, &p1, &sinfo->pd, &sinfo->offset);
 	    fprintf(stderr, "in7: varname='%s'\n", sinfo->varname);
@@ -706,12 +704,8 @@ get_pcgive_series_info (const char *series, SERIESINFO *sinfo)
 		sinfo->pd >= 1 && sinfo->offset > 0) {
 		while (fgets(line, sizeof line, fp)) {
 		    if (*line == ';') {
-			int rem = MAXLABEL - strlen(sinfo->descrip) - 1;
-
-			if (rem > 0) {
-			    gretl_strstrip(line);
-			    strncat(sinfo->descrip, line + 1, rem);
-			}
+			gretl_strstrip(line);
+			series_info_set_description(sinfo, line + 1);
 		    } else {
 			break;
 		    }
@@ -852,7 +846,7 @@ static int dinfo_to_sinfo (const DATEINFO *dinfo, SERIESINFO *sinfo,
     sinfo->offset = offset;
 
     strncat(sinfo->varname, varname, VNAMELEN - 1);
-    strncat(sinfo->descrip, comment, MAXLABEL - 1);
+    series_info_set_description(sinfo, comment);
 
 #if DB_DEBUG
     fprintf(stderr, "dinfo_to_sinfo: '%s': set sinfo->offset = %d\n", varname,
@@ -892,7 +886,7 @@ static int in7_to_sinfo (const char *varname, const char *comment,
     if (!err) {
 	strcpy(sinfo->varname, varname);
 	if (comment != NULL && *comment != 0) {
-	    strcpy(sinfo->descrip, comment);
+	    series_info_set_description(sinfo, comment);
 	}
 	sinfo->pd = pd;
 	sinfo->offset = offset;
@@ -1025,11 +1019,28 @@ static void series_info_init (SERIESINFO *sinfo)
     sinfo->undated = 0;
 
     sinfo->varname[0] = '\0';
-    sinfo->descrip[0] = '\0';
     sinfo->stobs[0] = '\0';
     sinfo->endobs[0] = '\0';
 
+    sinfo->descrip = NULL;
     sinfo->data = NULL;
+}
+
+void series_info_set_description (SERIESINFO *sinfo,
+				  const char *s)
+{
+    if (sinfo->descrip != NULL) {
+	free(sinfo->descrip);
+	sinfo->descrip = NULL;
+    }
+    if (s != NULL && *s != '\0') {
+	sinfo->descrip = gretl_strdup(s);
+    }
+}
+
+static void series_info_clear (SERIESINFO *sinfo)
+{
+    free(sinfo->descrip);
 }
 
 #define DB_INIT_ROWS 32
@@ -2430,7 +2441,7 @@ static int get_one_db_series (const char *sername,
 {
     CompactMethod this_method = cmethod;
     const char *impname;
-    SERIESINFO sinfo;
+    SERIESINFO sinfo; /* sinfo declared */
     double **dbZ;
     int v, err = 0;
 
@@ -2520,6 +2531,7 @@ static int get_one_db_series (const char *sername,
 	}
     }
 
+    series_info_clear(&sinfo);
     free_dbZ(dbZ);
 
     return err;

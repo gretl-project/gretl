@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -27,12 +27,18 @@
 #define DDEBUG 0
 #define FULLDEBUG 0
 
+#define LONG_LABELS
+
 #define Z_COLS_BORROWED 2
 
 #define dset_zcols_borrowed(d) (d->auxiliary == Z_COLS_BORROWED)
 
 struct VARINFO_ {
+#ifdef LONG_LABELS
+    char *label;
+#else
     char label[MAXLABEL];
+#endif
     char display_name[MAXDISP];
     char parent[VNAMELEN];
     VarFlags flags;
@@ -85,7 +91,7 @@ static void dataset_set_nobs (DATASET *dset, int n)
     if (n != dset->n) {
 	/* if the total number of observations in the dataset
 	   has changed, the current "matrix_mask", if present
-	   (see libset.c), will now be invalid 
+	   (see libset.c), will now be invalid
 	*/
 	destroy_matrix_mask();
 	dset->n = n;
@@ -127,13 +133,13 @@ void dataset_destroy_obs_markers (DATASET *dset)
     int i;
 
     if (dset->S != NULL) {
-	for (i=0; i<dset->n; i++) { 
-	   free(dset->S[i]); 
+	for (i=0; i<dset->n; i++) {
+	   free(dset->S[i]);
 	}
 	free(dset->S);
 	dset->S = NULL;
 	dset->markers = NO_MARKERS;
-    } 
+    }
 }
 
 static void free_varinfo (DATASET *dset, int v)
@@ -141,6 +147,11 @@ static void free_varinfo (DATASET *dset, int v)
     if (dset->varinfo[v]->st != NULL) {
 	series_table_destroy(dset->varinfo[v]->st);
     }
+#ifdef LONG_LABELS
+    if (dset->varinfo[v]->label != NULL) {
+	free(dset->varinfo[v]->label);
+    }
+#endif
     free(dset->varinfo[v]);
 }
 
@@ -161,7 +172,7 @@ void clear_datainfo (DATASET *dset, int code)
 
     if (dset->S != NULL) {
 	dataset_destroy_obs_markers(dset);
-    } 
+    }
 
     if (dset->submask != NULL) {
 	free_subsample_mask(dset->submask);
@@ -181,14 +192,14 @@ void clear_datainfo (DATASET *dset, int code)
     if (dset->pangrps != NULL) {
 	free(dset->pangrps);
 	dset->pangrps = NULL;
-    }	
+    }
 
     /* if this is not a sub-sample datainfo, free varnames, labels, etc. */
 
     if (code == CLEAR_FULL) {
 	if (dset->varname != NULL) {
 	    for (i=0; i<dset->v; i++) {
-		free(dset->varname[i]); 
+		free(dset->varname[i]);
 	    }
 	    free(dset->varname);
 	    dset->varname = NULL;
@@ -208,7 +219,7 @@ void clear_datainfo (DATASET *dset, int code)
 	maybe_free_full_dataset(dset);
 
 	dset->v = dset->n = 0;
-    } 
+    }
 }
 
 /**
@@ -222,7 +233,7 @@ void destroy_dataset (DATASET *dset)
 {
     if (dset != NULL) {
 	free_Z(dset);
-	clear_datainfo(dset, CLEAR_FULL); 
+	clear_datainfo(dset, CLEAR_FULL);
 	free(dset);
     }
 }
@@ -269,7 +280,7 @@ void dataset_obs_info_default (DATASET *dset)
  *
  * Allocates space in @dset for strings indentifying the
  * observations and initializes all of the markers to empty
- * strings.  Note that These strings have a fixed maximum 
+ * strings.  Note that These strings have a fixed maximum
  * length of #OBSLEN - 1.
  *
  * Returns: 0 on success, E_ALLOC on error.
@@ -299,7 +310,11 @@ int dataset_allocate_obs_markers (DATASET *dset)
 
 static void gretl_varinfo_init (VARINFO *vinfo)
 {
+#ifdef LONG_LABELS
+    vinfo->label = NULL;
+#else
     vinfo->label[0] = '\0';
+#endif
     vinfo->display_name[0] = '\0';
     vinfo->parent[0] = '\0';
     vinfo->flags = 0;
@@ -311,6 +326,38 @@ static void gretl_varinfo_init (VARINFO *vinfo)
     vinfo->mtime = 0;
     vinfo->stack_level = gretl_function_depth();
     vinfo->st = NULL;
+}
+
+static void copy_label (char **targ, const char *src)
+{
+#ifdef LONG_LABELS
+    free(*targ);
+    if (src == NULL) {
+	*targ = NULL;
+    } else {
+	*targ = gretl_strdup(src);
+    }
+#else
+    (*targ)[0] = '\0';
+    if (src != NULL) {
+	strncat(*targ, src, MAXLABEL - 1);
+    }
+#endif
+}
+
+static int labels_differ (const char *s1, const char *s2)
+{
+#ifdef LONG_LABELS
+    if ((s1 == NULL && s2 != NULL) || (s1 != NULL && s2 == NULL)) {
+	return 1;
+    } else if (s1 != NULL && s2 != NULL) {
+	return strcmp(s1, s2) != 0;
+    } else {
+	return 0;
+    }
+#else
+    return strcmp(s1, s2) != 0;
+#endif
 }
 
 /**
@@ -326,8 +373,7 @@ void copy_varinfo (VARINFO *targ, const VARINFO *src)
     if (src == NULL || targ == NULL) {
 	return;
     }
-
-    strcpy(targ->label, src->label);
+    copy_label(&targ->label, src->label);
     strcpy(targ->display_name, src->display_name);
     strcpy(targ->parent, src->parent);
     targ->flags = src->flags;
@@ -391,7 +437,7 @@ int shrink_varinfo (DATASET *dset, int nv)
  * The @v member of @dset (representing the number of variables,
  * including the automatically added constant at position 0) must be
  * set before calling this function.
- * 
+ *
  * Returns: 0 on sucess, E_ALLOC on failure.
  */
 
@@ -429,7 +475,7 @@ int dataset_allocate_varnames (DATASET *dset)
     if (!err) {
 	strcpy(dset->varname[0], "const");
 	series_set_label(dset, 0, _("auto-generated constant"));
-    } 
+    }
 
     return err;
 }
@@ -438,8 +484,8 @@ int dataset_allocate_varnames (DATASET *dset)
  * datainfo_init:
  * @dset: pointer to DATASET struct.
  *
- * Zeros all members of @dset and sets it as a plain cross-section. 
- * Designed for use with a DATASET structure that has not been 
+ * Zeros all members of @dset and sets it as a plain cross-section.
+ * Designed for use with a DATASET structure that has not been
  * obtained via datainfo_new().
  */
 
@@ -457,7 +503,7 @@ void datainfo_init (DATASET *dset)
 
     dset->Z = NULL;
     dset->varname = NULL;
-    dset->varinfo = NULL;    
+    dset->varinfo = NULL;
 
     dset->markers = NO_MARKERS;
     dset->modflag = 0;
@@ -480,7 +526,7 @@ void datainfo_init (DATASET *dset)
  *
  * Creates a new data information struct pointer from scratch,
  * properly initialized as empty (no variables, no observations).
- * 
+ *
  * Returns: pointer to data information struct, or NULL on error.
  */
 
@@ -495,7 +541,7 @@ DATASET *datainfo_new (void)
     return dset;
 }
 
-static DATASET *real_create_new_dataset (int nvar, int nobs, 
+static DATASET *real_create_new_dataset (int nvar, int nobs,
 					 gretlopt opt)
 {
     DATASET *dset = datainfo_new();
@@ -516,7 +562,7 @@ static DATASET *real_create_new_dataset (int nvar, int nobs,
 	    free_datainfo(dset);
 	    return NULL;
 	}
-    } 
+    }
 
     dataset_obs_info_default(dset);
 
@@ -527,12 +573,12 @@ static DATASET *real_create_new_dataset (int nvar, int nobs,
  * create_new_dataset:
  * @nvar: number of variables.
  * @nobs: number of observations per variable.
- * @markers: 1 if space should be allocated for "case markers" for 
+ * @markers: 1 if space should be allocated for "case markers" for
  * the observations, 0 otherwise.
  *
- * Allocates space in the dataset to hold the specified number 
+ * Allocates space in the dataset to hold the specified number
  * of variables and observations.
- * 
+ *
  * Returns: pointer to dataset struct, or NULL on error.
  */
 
@@ -592,7 +638,7 @@ static double **make_borrowed_Z (int v, int n)
  *
  * Allocates the two-dimensional data array Z,
  * based on the v (number of variables) and n (number of
- * observations) members of @dset.  The variable at 
+ * observations) members of @dset.  The variable at
  * position 0 is initialized to all 1s; other variables
  * are initialized to #NADBL (unless OPT_B is given).
  *
@@ -635,7 +681,7 @@ int allocate_Z (DATASET *dset, gretlopt opt)
  *
  * Initializes the data array within @dset (adding the constant in
  * position 0).
- * 
+ *
  * Returns: 0 on successful completion, non-zero on error.
  */
 
@@ -645,7 +691,7 @@ int start_new_Z (DATASET *dset, gretlopt opt)
 	return E_ALLOC;
     }
 
-    dset->t1 = 0; 
+    dset->t1 = 0;
     dset->t2 = dset->n - 1;
 
     if (opt & OPT_R) {
@@ -670,7 +716,7 @@ int start_new_Z (DATASET *dset, gretlopt opt)
     if (!(opt & OPT_R)) {
 	dset->pangrps = NULL;
     }
-    
+
     return 0;
 }
 
@@ -695,7 +741,7 @@ static int reallocate_markers (DATASET *dset, int n)
 	    free(S);
 	    return 1;
 	}
-	S[t][0] = '\0';	    
+	S[t][0] = '\0';
     }
 
     dset->S = S;
@@ -704,7 +750,7 @@ static int reallocate_markers (DATASET *dset, int n)
 }
 
 /* Allow for the possibility of centered seasonal dummies: usually
-   xon = 1 and xoff = 0, but in the centered case xon = 1 - 1/pd 
+   xon = 1 and xoff = 0, but in the centered case xon = 1 - 1/pd
    and xoff = -1/pd.
 */
 
@@ -742,7 +788,7 @@ static int get_xon_xoff (const double *x, int n, int pd, double *xon, double *xo
 }
 
 static int real_periodic_dummy (const double *x, int n,
-				int *pd, int *offset, 
+				int *pd, int *offset,
 				double *pxon, double *pxoff)
 {
     double xon = 1.0, xoff = 0.0;
@@ -828,7 +874,7 @@ int is_periodic_dummy (const double *x, const DATASET *dset)
 static int is_linear_trend (const double *x, int n)
 {
     int t, ret = 1;
-    
+
     for (t=1; t<n; t++) {
 	if (x[t] != x[t-1] + 1.0) {
 	    ret = 0;
@@ -843,7 +889,7 @@ static int is_quadratic_trend (const double *x, int n)
 {
     double t2;
     int t, ret = 1;
-    
+
     for (t=0; t<n; t++) {
 	t2 = (t + 1) * (t + 1);
 	if (x[t] != t2) {
@@ -862,7 +908,7 @@ static int is_quadratic_trend (const double *x, int n)
  *
  * Returns: 1 if @x is a simple linear trend variable, with each
  * observation equal to the preceding observation plus 1, or
- * if @x is a quadratic trend starting at 1 for the first 
+ * if @x is a quadratic trend starting at 1 for the first
  * observation in the data set, and 0 otherwise.
  */
 
@@ -892,7 +938,7 @@ static void maybe_extend_trends (DATASET *dset, int oldn)
 	    for (t=oldn; t<dset->n; t++) {
 		dset->Z[i][t] = (t + 1) * (t + 1);
 	    }
-	}	    
+	}
     }
 }
 
@@ -917,8 +963,8 @@ static void maybe_extend_dummies (DATASET *dset, int oldn)
  * @dset: pointer to dataset.
  * @n: number of observations to add.
  * @opt: use OPT_A to attempt to recognize and
- * automatically extend simple deterministic variables such 
- * as a time trend and periodic dummy variables; 
+ * automatically extend simple deterministic variables such
+ * as a time trend and periodic dummy variables;
  * use OPT_D to drop any observation markers rather than
  * expanding the set of markers and padding it out with
  * dummy values.
@@ -961,9 +1007,9 @@ int dataset_add_observations (DATASET *dset, int n, gretlopt opt)
 	dset->Z[i] = x;
 	for (t=dset->n; t<bign; t++) {
 	    dset->Z[i][t] = (i == 0)? 1.0 : NADBL;
-	}	    
+	}
     }
-    
+
     if (dataset_has_markers(dset)) {
 	if (opt & OPT_D) {
 	    dataset_destroy_obs_markers(dset);
@@ -1012,13 +1058,13 @@ static int real_insert_observation (int pos, DATASET *dset)
 	}
 	dset->Z[i][pos] = (i == 0)? 1.0 : NADBL;
     }
-    
+
     if (dataset_has_markers(dset)) {
 	if (reallocate_markers(dset, n)) {
 	    return E_ALLOC;
 	}
 	for (t=dset->n; t>pos; t--) {
-	    strcpy(dset->S[t], dset->S[t-1]); 
+	    strcpy(dset->S[t], dset->S[t-1]);
 	}
 	sprintf(dset->S[pos], "%d", pos + 1);
     }
@@ -1038,7 +1084,7 @@ static int real_insert_observation (int pos, DATASET *dset)
  * @dset: pointer to dataset.
  * @n: number of observations to drop.
  *
- * Deletes @n observations from the end of each series in the 
+ * Deletes @n observations from the end of each series in the
  * dataset.
  *
  * Returns: 0 on success, non-zero code on error.
@@ -1071,7 +1117,7 @@ int dataset_drop_observations (DATASET *dset, int n)
 	}
 	dset->Z[i] = x;
     }
-    
+
     if (dataset_has_markers(dset)) {
 	if (reallocate_markers(dset, newn)) {
 	    return E_ALLOC;
@@ -1149,7 +1195,7 @@ int dataset_shrink_obs_range (DATASET *dset)
     return err;
 }
 
-static int 
+static int
 dataset_expand_varinfo (int v0, int newvars, DATASET *dset)
 {
     char **varname = NULL;
@@ -1199,7 +1245,7 @@ dataset_expand_varinfo (int v0, int newvars, DATASET *dset)
    that is the responsibility of the caller
 */
 
-static int real_add_series (int newvars, double *x, 
+static int real_add_series (int newvars, double *x,
 			    DATASET *dset)
 {
     double **newZ;
@@ -1211,20 +1257,20 @@ static int real_add_series (int newvars, double *x,
 	return 0;
     }
 
-    newZ = realloc(dset->Z, (v0 + newvars) * sizeof *newZ); 
+    newZ = realloc(dset->Z, (v0 + newvars) * sizeof *newZ);
 
 #if DDEBUG
     fprintf(stderr, "real_add_series: add %d vars, Z = %p\n",
 	    newvars, (void *) newZ);
 #endif
-	    
+
 
     if (newZ == NULL) {
 	err = E_ALLOC;
     } else {
 	dset->Z = newZ;
     }
-    
+
     if (!err) {
 	if (newvars == 1 && x != NULL) {
 	    /* a single new var, storage pre-allocated */
@@ -1234,7 +1280,7 @@ static int real_add_series (int newvars, double *x,
 		newZ[v0+i] = malloc(dset->n * sizeof **newZ);
 		if (newZ[v0+i] == NULL) {
 		    err = E_ALLOC;
-		} 
+		}
 	    }
 	}
     }
@@ -1401,7 +1447,7 @@ int dataset_add_series_as (DATASET *dset, double *x, const char *name)
  *
  * Makes a copy of series @v under the name @name.
  * The copy exists in a variable namespace one level "deeper"
- * (in terms of function execution) than the variable being copied. 
+ * (in terms of function execution) than the variable being copied.
  * This is for use with user-defined functions: a variable
  * supplied to a function as an argument is copied into the
  * function's namespace under the name it was given as a
@@ -1464,7 +1510,7 @@ static int shrink_dataset_to_size (DATASET *dset, int nv, int drop)
     if (drop == DROP_NORMAL) {
 	char **varname;
 	VARINFO **varinfo;
-    
+
 	varname = realloc(dset->varname, nv * sizeof *varname);
 	if (varname == NULL) {
 	    return E_ALLOC;
@@ -1478,7 +1524,7 @@ static int shrink_dataset_to_size (DATASET *dset, int nv, int drop)
 	dset->varinfo = varinfo;
     }
 
-    newZ = realloc(dset->Z, nv * sizeof *newZ); 
+    newZ = realloc(dset->Z, nv * sizeof *newZ);
     if (newZ == NULL) {
 	return E_ALLOC;
     }
@@ -1516,7 +1562,7 @@ int overwrite_err (const char *name)
  * series_is_parent:
  * @dset: dataset information.
  * @v: ID number of series to test.
- * 
+ *
  * Returns: 1 if variable @v is "parent" to a transformed
  * variable (e.g. a log, lag or difference), othewise 0.
  */
@@ -1544,7 +1590,7 @@ int series_is_parent (const DATASET *dset, int v)
  * @dset: dataset information.
  * @v: ID number of the series to be renamed.
  * @name: new name to give the series.
- * 
+ *
  * Returns: 0 on success, non-zero on error.
  */
 
@@ -1597,8 +1643,8 @@ int dataset_rename_series (DATASET *dset, int v, const char *name)
  * with @x, otherwise copy the values in @x to dset->Z[@v].
  *
  * Replaces the description and numerical content of
- * series @v with the information provided. 
- * 
+ * series @v with the information provided.
+ *
  * Returns: 0 on success, non-zero on error.
  */
 
@@ -1646,8 +1692,8 @@ int dataset_replace_series (DATASET *dset, int v,
  *
  * Replaces the description and numerical content of
  * series @v over the given sample range, with the
- * information provided. 
- * 
+ * information provided.
+ *
  * Returns: 0 on success, non-zero on error.
  */
 
@@ -1657,7 +1703,7 @@ int dataset_replace_series_data (DATASET *dset, int v,
 				 const char *descrip)
 {
     int t, s;
-    
+
     if (v < 0 || v >= dset->v) {
 	/* out of bounds */
 	return E_DATA;
@@ -1681,15 +1727,15 @@ int dataset_replace_series_data (DATASET *dset, int v,
     return 0;
 }
 
-static int real_drop_listed_vars (int *list, DATASET *dset, 
-				  int *renumber, int drop, 
+static int real_drop_listed_vars (int *list, DATASET *dset,
+				  int *renumber, int drop,
 				  PRN *prn)
 {
     int oldv = dset->v, vmax = dset->v;
     char vname[VNAMELEN] = {0};
     int d0, d1;
     int delmin = oldv;
-    int i, v, ndel = 0; 
+    int i, v, ndel = 0;
     int err = 0;
 
     if (renumber != NULL) {
@@ -1740,7 +1786,7 @@ static int real_drop_listed_vars (int *list, DATASET *dset,
 
     if (renumber != NULL) {
 	*renumber = vars_renumbered(list, dset, delmin);
-    }    
+    }
 
 #if DDEBUG
     fprintf(stderr, "real_drop_listed_variables: lowest ID of deleted var"
@@ -1782,7 +1828,7 @@ static int real_drop_listed_vars (int *list, DATASET *dset,
 			dset->varinfo[i] = dset->varinfo[i + gap];
 		    }
 		    dset->Z[i] = dset->Z[i + gap];
-		}		    
+		}
 	    } else {
 		/* deleting all subsequent vars: done */
 		break;
@@ -1856,8 +1902,8 @@ static int *make_dollar_list (DATASET *dset, int *err)
  * Returns: 0 on success, E_ALLOC on error.
  */
 
-int dataset_drop_listed_variables (int *list, 
-				   DATASET *dset, 
+int dataset_drop_listed_variables (int *list,
+				   DATASET *dset,
 				   int *renumber,
 				   PRN *prn)
 {
@@ -1929,12 +1975,12 @@ int dataset_drop_listed_variables (int *list,
  * @v: ID number of variable to drop.
  * @dset: pointer to dataset.
  *
- * Deletes variable @v from the dataset.  
+ * Deletes variable @v from the dataset.
  *
  * Returns: 0 on success, E_ALLOC on error.
  */
 
-int dataset_drop_variable (int v, DATASET *dset) 
+int dataset_drop_variable (int v, DATASET *dset)
 {
     int list[2] = {1, v};
 
@@ -1957,13 +2003,13 @@ int dataset_drop_variable (int v, DATASET *dset)
  * @dset: dataset information.
  *
  * Moves the variable that was originally at position @v_old
- * in the datset to position @v_new, renumbering other 
+ * in the datset to position @v_new, renumbering other
  * variables as required.
  *
  * Returns: 0 on success, error code on error;
  */
 
-int dataset_renumber_variable (int v_old, int v_new, 
+int dataset_renumber_variable (int v_old, int v_new,
 			       DATASET *dset)
 {
     double *x;
@@ -2061,7 +2107,7 @@ int dataset_destroy_hidden_variables (DATASET *dset, int vmin)
 		if (series_is_hidden(dset, i)) {
 		    list[j++] = i;
 		}
-	    }	    
+	    }
 	    err = dataset_drop_listed_variables(list, dset, NULL, NULL);
 	    free(list);
 	}
@@ -2121,7 +2167,7 @@ const char *dataset_period_label (const DATASET *dset)
     }
 }
 
-/* intended for use with newly imported data: trash any 
+/* intended for use with newly imported data: trash any
    series that contain nothing but NAs
 */
 
@@ -2186,7 +2232,8 @@ int maybe_prune_dataset (DATASET **pdset, void *p)
 		if (!mask[i]) {
 		    memcpy(newset->Z[k], dset->Z[i], ssize);
 		    strcpy(newset->varname[k], dset->varname[i]);
-		    strcpy(newset->varinfo[k]->label, dset->varinfo[i]->label);
+		    copy_label(&newset->varinfo[k]->label,
+			       dset->varinfo[i]->label);
 		    if (st != NULL && k < i) {
 			gretl_string_table_reset_column_id(st, i, k);
 		    }
@@ -2295,7 +2342,7 @@ int dataset_sort_by (DATASET *dset, const int *list, gretlopt opt)
     if (x == NULL) {
 	free_spoints(sv, dset->n);
 	return E_ALLOC;
-    }    
+    }
 
     if (dset->S != NULL) {
 	S = strings_array_new_with_length(dset->n, OBSLEN);
@@ -2367,7 +2414,7 @@ static int dataset_sort (DATASET *dset, const int *list,
  * @dset: pointer to dataset.
  * @delvars: number of variables to be dropped.
  *
- * Deletes from the dataset the number @delvars of variables 
+ * Deletes from the dataset the number @delvars of variables
  * that were added most recently (that have the highest ID numbers).
  *
  * Returns: 0 on success, E_ALLOC on error.
@@ -2397,19 +2444,19 @@ int dataset_drop_last_variables (DATASET *dset, int delvars)
 #if FULLDEBUG
     for (i=0; i<dset->v; i++) {
 	if (dset->Z[i] == NULL) {
-	    fprintf(stderr, "var %d (%s, level %d, val = NULL) %s\n", 
-		    i, dset->varname[i], dset->varinfo[i]->stack_level, 
+	    fprintf(stderr, "var %d (%s, level %d, val = NULL) %s\n",
+		    i, dset->varname[i], dset->varinfo[i]->stack_level,
 		    (i >= newv)? "deleting" : "");
 	} else {
-	    fprintf(stderr, "var %d (%s, level %d, val[0] = %g) %s\n", 
-		    i, dset->varname[i], dset->varinfo[i]->stack_level, 
+	    fprintf(stderr, "var %d (%s, level %d, val[0] = %g) %s\n",
+		    i, dset->varname[i], dset->varinfo[i]->stack_level,
 		    dset->Z[i][0], (i >= newv)? "deleting" : "");
 	}
     }
 #endif
 
 #if 0
-    fprintf(stderr, "dataset_drop_last_variables: origv=%d, newv=%d\n", 
+    fprintf(stderr, "dataset_drop_last_variables: origv=%d, newv=%d\n",
 	    dset->v, newv);
     for (i=1; i<dset->v; i++) {
 	fprintf(stderr, "before: var[%d] = '%s'\n", i, dset->varname[i]);
@@ -2438,8 +2485,8 @@ int dataset_drop_last_variables (DATASET *dset, int delvars)
     if (!err && complex_subsampled()) {
 	DATASET *fset = fetch_full_dataset();
 
-	/* 
-	   Context: we're deleting @delvars variables at the end of 
+	/*
+	   Context: we're deleting @delvars variables at the end of
 	   dset->Z, leaving @newv variables.  The dataset is currently
 	   subsampled.
 
@@ -2448,13 +2495,13 @@ int dataset_drop_last_variables (DATASET *dset, int delvars)
 
 	   If @newv < fset->v, this must mean that at least some of
 	   the extra vars we're deleting from the current sub-sampled
-	   Z have already been synced to the full Z, so we should do 
+	   Z have already been synced to the full Z, so we should do
 	   the deletion from full Z.
 	*/
 
-	if (newv < fset->v) { 
+	if (newv < fset->v) {
 #if FULLDEBUG
-	    fprintf(stderr, "prior fset->v = %d: shrinking full Z to %d vars\n", 
+	    fprintf(stderr, "prior fset->v = %d: shrinking full Z to %d vars\n",
 		    fset->v, newv);
 #endif
 	    for (i=newv; i<fset->v; i++) {
@@ -2462,7 +2509,7 @@ int dataset_drop_last_variables (DATASET *dset, int delvars)
 		fset->Z[i] = NULL;
 	    }
 	    err = shrink_dataset_to_size(fset, newv, DROP_SPECIAL);
-	} 
+	}
     }
 
     return err;
@@ -2533,7 +2580,7 @@ static int get_stack_param_val (const char *s, const DATASET *dset)
     return val;
 }
 
-static int get_optional_offset (const char *s, const DATASET *dset, 
+static int get_optional_offset (const char *s, const DATASET *dset,
 				int *err)
 {
     const char *p = strstr(s, "--o");
@@ -2553,7 +2600,7 @@ static int get_optional_offset (const char *s, const DATASET *dset,
     return off;
 }
 
-static int get_optional_length (const char *s, const DATASET *dset, 
+static int get_optional_length (const char *s, const DATASET *dset,
 				int *err)
 {
     const char *p = strstr(s, "--l");
@@ -2722,7 +2769,7 @@ int dataset_stack_variables (const char *vname, const char *line,
 	    free(list);
 	}
 	done = 1;
-    }    
+    }
 
     if (!done) {
 	/* or (special) a comma-separated list of vars? */
@@ -2787,7 +2834,7 @@ int dataset_stack_variables (const char *vname, const char *line,
 	    bign = dset->n;
 	}
     } else {
-	/* calculate required series length */	
+	/* calculate required series length */
 	maxok = 0;
 	for (i=0; i<nv; i++) {
 	    int j = (vnum == NULL)? i + v1 : vnum[i];
@@ -2828,7 +2875,7 @@ int dataset_stack_variables (const char *vname, const char *line,
 	    free(bigx);
 	    goto bailout;
 	}
-    }    
+    }
 
     /* construct stacked series */
     for (i=0; i<nv; i++) {
@@ -2854,8 +2901,8 @@ int dataset_stack_variables (const char *vname, const char *line,
 	if (i == nv - 1) {
 	    for (t=bigt; t<bign; t++) {
 		bigx[bigt++] = NADBL;
-	    }	
-	}    
+	    }
+	}
     }
 
     /* add stacked series to dataset */
@@ -2872,12 +2919,18 @@ int dataset_stack_variables (const char *vname, const char *line,
 	dset->Z[genv] = bigx;
 	gretl_varinfo_init(dset->varinfo[genv]);
     }
-    
+
     /* complete the details */
     if (!err) {
+	char *tmp = calloc(MAXLABEL, 1);
+
 	strcpy(dset->varname[genv], vname);
-	make_stack_label(dset->varinfo[genv]->label, scpy);
-	pprintf(prn, "%s %s %s (ID %d)\n", 
+	if (tmp != NULL) {
+	    make_stack_label(tmp, scpy);
+	    copy_label(&dset->varinfo[genv]->label, tmp);
+	    free(tmp);
+	}
+	pprintf(prn, "%s %s %s (ID %d)\n",
 		(genv == dset->v - 1)? _("Generated") : _("Replaced"),
 		_("series"), vname, genv);
     }
@@ -2949,13 +3002,13 @@ int series_is_log (const DATASET *dset, int i, char *parent)
  * series_set_discrete:
  * @dset: pointer to data information struct.
  * @i: index number of series.
- * @s: non-zero to mark variable as discrete, zero to 
+ * @s: non-zero to mark variable as discrete, zero to
  * mark as not discrete.
  *
  * Mark a variable as being discrete or not.
  */
 
-void series_set_discrete (DATASET *dset, int i, int s) 
+void series_set_discrete (DATASET *dset, int i, int s)
 {
     if (i > 0 && i < dset->v) {
 	int flags = dset->varinfo[i]->flags;
@@ -2971,13 +3024,12 @@ void series_set_discrete (DATASET *dset, int i, int s)
 }
 
 int series_record_label (DATASET *dset, int i,
-			 const char *s) 
+			 const char *s)
 {
     char *targ = dset->varinfo[i]->label;
 
-    if (strcmp(targ, s)) {
-	*targ = 0;
-	strncat(targ, s, MAXLABEL - 1);
+    if (labels_differ(targ, s)) {
+	copy_label(&dset->varinfo[i]->label, s);
 	set_dataset_is_changed();
     }
 
@@ -2985,12 +3037,12 @@ int series_record_label (DATASET *dset, int i,
 }
 
 int series_record_display_name (DATASET *dset, int i,
-				const char *s) 
+				const char *s)
 {
     char *targ = dset->varinfo[i]->display_name;
 
     if (strcmp(targ, s)) {
-	*targ = 0;
+	*targ = '\0';
 	strncat(targ, s, MAXDISP - 1);
 	set_dataset_is_changed();
     }
@@ -3090,7 +3142,7 @@ int dataset_op_from_string (const char *s)
     return op;
 }
 
-static int dataset_int_param (const char **ps, int op, 
+static int dataset_int_param (const char **ps, int op,
 			      DATASET *dset, int *err)
 {
     const char *s = *ps;
@@ -3154,7 +3206,7 @@ static int dataset_int_param (const char **ps, int op,
     return k;
 }
 
-static int compact_data_set_wrapper (const char *s, DATASET *dset, 
+static int compact_data_set_wrapper (const char *s, DATASET *dset,
 				     int k)
 {
     CompactMethod method = COMPACT_AVG;
@@ -3264,7 +3316,7 @@ int dataset_resample (DATASET *dset, int n, unsigned int seed)
     if (S != NULL) {
 	rset->S = S;
 	rset->markers = REGULAR_MARKERS;
-    } 
+    }
 
     rset->varname = dset->varname;
     rset->varinfo = dset->varinfo;
@@ -3295,7 +3347,7 @@ int dataset_resample (DATASET *dset, int n, unsigned int seed)
 /* note: @list should contain a single series ID, that of the
    target series, and @param should hold a numeric string
    giving the position to which @targ should be moved;
-   @fixmax is the greatest series ID number that cannot be 
+   @fixmax is the greatest series ID number that cannot be
    changed (based on saved models, etc., as determined by the
    caller)
 */
@@ -3344,7 +3396,7 @@ int renumber_series_with_checks (const int *list,
     } else if (v_new <= fixmax) {
 	gretl_errmsg_sprintf(_("Target ID %d is not available"), v_new);
 	err = E_DATA;
-    } else {		
+    } else {
 	err = dataset_renumber_variable(v_old, v_new, dset);
     }
 
@@ -3367,14 +3419,14 @@ int renumber_series_with_checks (const int *list,
    dataset transpose
    dataset sortby     x1
    dataset resample          500
-   dataset clear 
-   dataset renumber   orig   2  
+   dataset clear
+   dataset renumber   orig   2
    dataset insobs            13
    dataset pad-daily         7
 
 */
 
-int modify_dataset (DATASET *dset, int op, const int *list, 
+int modify_dataset (DATASET *dset, int op, const int *list,
 		    const char *param, PRN *prn)
 {
     static int resampled;
@@ -3430,7 +3482,7 @@ int modify_dataset (DATASET *dset, int op, const int *list,
 
  proceed:
 
-    if (op == DS_ADDOBS || op == DS_INSOBS || 
+    if (op == DS_ADDOBS || op == DS_INSOBS ||
 	op == DS_COMPACT || op == DS_RESAMPLE ||
 	op == DS_PAD_DAILY) {
 	if (param == NULL) {
@@ -3513,7 +3565,7 @@ int dataset_get_structure (const DATASET *dset)
 /**
  * panel_sample_size:
  * @dset: pointer to data information struct.
- * 
+ *
  * Returns: the numbers of units/individuals in the current
  * sample range, or 0 if the dataset is not a panel.
  */
@@ -3532,7 +3584,7 @@ int panel_sample_size (const DATASET *dset)
 /**
  * multi_unit_panel_sample:
  * @dset: pointer to dataset.
- * 
+ *
  * Returns: 1 if the dataset is a panel and the current sample
  * range includes two or more individuals, otherwise 0.
  */
@@ -3551,7 +3603,7 @@ int multi_unit_panel_sample (const DATASET *dset)
 /**
  * dataset_purge_missing_rows:
  * @dset: pointer to dataset.
- * 
+ *
  * Removes empty rows from the dataset -- that is, observations
  * at which there are no non-missing values.  This is intended
  * for daily data only.
@@ -3623,7 +3675,7 @@ int dataset_purge_missing_rows (DATASET *dset)
 		}
 	    }
 	}
-    } 
+    }
 
     new_n = dset->n - totmiss;
 
@@ -3673,7 +3725,7 @@ int dataset_purge_missing_rows (DATASET *dset)
  * Returns: 0 on success, non-zero code on error.
  */
 
-int dataset_set_time_series (DATASET *dset, int pd, 
+int dataset_set_time_series (DATASET *dset, int pd,
 			     int yr0, int minor0)
 {
     int err = 0;
@@ -3700,7 +3752,7 @@ int dataset_set_time_series (DATASET *dset, int pd,
 	}
 
 	dset->sd0 = dot_atof(stobs);
-	ntodate(dset->stobs, 0, dset); 
+	ntodate(dset->stobs, 0, dset);
 	ntodate(dset->endobs, dset->n - 1, dset);
     }
 
@@ -3966,7 +4018,7 @@ int series_get_lag (const DATASET *dset, int i)
 
 int series_get_transform (const DATASET *dset, int i)
 {
-    if (i > 0 && i < dset->v) { 
+    if (i > 0 && i < dset->v) {
 	return dset->varinfo[i]->transform;
     } else {
 	return 0;
@@ -4023,18 +4075,15 @@ gint64 series_get_mtime (const DATASET *dset, int i)
     }
 }
 
-void series_set_label (DATASET *dset, int i, 
+void series_set_label (DATASET *dset, int i,
 		       const char *s)
 {
     if (i > 0 && i < dset->v) {
-	char *targ = dset->varinfo[i]->label;
-
-	*targ = '\0';
-	strncat(targ, s, MAXLABEL-1);
+	copy_label(&dset->varinfo[i]->label, s);
     }
 }
 
-void series_set_display_name (DATASET *dset, int i, 
+void series_set_display_name (DATASET *dset, int i,
 			      const char *s)
 {
     if (i > 0 && i < dset->v) {
@@ -4045,7 +4094,7 @@ void series_set_display_name (DATASET *dset, int i,
     }
 }
 
-void series_set_compact_method (DATASET *dset, int i, 
+void series_set_compact_method (DATASET *dset, int i,
 				int method)
 {
     if (i > 0 && i < dset->v) {
@@ -4053,7 +4102,7 @@ void series_set_compact_method (DATASET *dset, int i,
     }
 }
 
-void series_set_parent (DATASET *dset, int i, 
+void series_set_parent (DATASET *dset, int i,
 			const char *parent)
 {
     if (i > 0 && i < dset->v) {
@@ -4061,7 +4110,7 @@ void series_set_parent (DATASET *dset, int i,
     }
 }
 
-void series_set_transform (DATASET *dset, int i, 
+void series_set_transform (DATASET *dset, int i,
 			   int transform)
 {
     if (i > 0 && i < dset->v) {
@@ -4132,7 +4181,7 @@ int is_string_valued (const DATASET *dset, int i)
  * @i: index number of series.
  *
  * Returns: the string table attched to series @i or NULL if
- * there is no such table. 
+ * there is no such table.
  */
 
 series_table *series_get_string_table (const DATASET *dset, int i)
@@ -4154,15 +4203,15 @@ series_table *series_get_string_table (const DATASET *dset, int i)
  * series @i at observation @t, or NULL if there is no such string.
  */
 
-const char *series_get_string_for_obs (const DATASET *dset, int i, 
+const char *series_get_string_for_obs (const DATASET *dset, int i,
 				       int t)
 {
     const char *ret = NULL;
 
     if (i > 0 && i < dset->v && dset->varinfo[i]->st != NULL) {
-	ret = series_table_get_string(dset->varinfo[i]->st, 
+	ret = series_table_get_string(dset->varinfo[i]->st,
 				      dset->Z[i][t]);
-    } 
+    }
 
     return ret;
 }
@@ -4184,7 +4233,7 @@ const char *series_get_string_for_value (const DATASET *dset, int i,
 
     if (i > 0 && i < dset->v && dset->varinfo[i]->st != NULL) {
 	ret = series_table_get_string(dset->varinfo[i]->st, val);
-    } 
+    }
 
     return ret;
 }
@@ -4284,7 +4333,7 @@ double series_decode_string (const DATASET *dset, int i, const char *s)
 
     if (i > 0 && i < dset->v && dset->varinfo[i]->st != NULL) {
 	ret = series_table_get_value(dset->varinfo[i]->st, s);
-    } 
+    }
 
     return ret;
 }
@@ -4297,7 +4346,7 @@ double series_decode_string (const DATASET *dset, int i, const char *s)
  *
  * Returns: the array of strings associated with distinct numerical
  * values of series @i, or NULL if there's no such array. The returned
- * array should not be modified in any way; copy the strings first if 
+ * array should not be modified in any way; copy the strings first if
  * you need to modify them.
  */
 
@@ -4309,13 +4358,13 @@ char **series_get_string_vals (const DATASET *dset, int i,
 
     if (i > 0 && i < dset->v && dset->varinfo[i]->st != NULL) {
 	strs = series_table_get_strings(dset->varinfo[i]->st, &n);
-    } 
+    }
 
     if (n_strs != NULL) {
 	*n_strs = n;
     }
 
-    return strs;    
+    return strs;
 }
 
 /**
@@ -4338,7 +4387,7 @@ int series_get_string_width (const DATASET *dset, int i)
 	if (dset->varinfo[i]->st != NULL) {
 	    char **S;
 	    int j, ns, m;
-	    
+
 	    S = series_table_get_strings(dset->varinfo[i]->st, &ns);
 	    for (j=0; j<ns; j++) {
 		m = g_utf8_strlen(S[j], -1);
@@ -4349,7 +4398,7 @@ int series_get_string_width (const DATASET *dset, int i)
 	}
     }
 
-    return n;    
+    return n;
 }
 
 /**
@@ -4377,10 +4426,11 @@ int steal_string_table (DATASET *l_dset, int lvar,
     return 0;
 }
 
-static void maybe_adjust_label (DATASET *dset, int v, 
+static void maybe_adjust_label (DATASET *dset, int v,
 				char **S, int ns)
 {
     int i, len = 3 * ns; /* "=" + ", " */
+    char *tmp;
 
     if (len < MAXLABEL) {
 	for (i=0; i<ns; i++) {
@@ -4388,19 +4438,21 @@ static void maybe_adjust_label (DATASET *dset, int v,
 	}
     }
 
-    if (len < MAXLABEL) {
-	char *s = dset->varinfo[v]->label;
+    tmp = calloc(len + 1, 1);
+
+    if (tmp != NULL) {
 	char bit[16];
 
-	*s = '\0';
 	for (i=0; i<ns; i++) {
 	    sprintf(bit, "%d=", i+1);
-	    strcat(s, bit);
-	    strcat(s, S[i]);
+	    strcat(tmp, bit);
+	    strcat(tmp, S[i]);
 	    if (i < ns - 1) {
-		strcat(s, ", ");
+		strcat(tmp, ", ");
 	    }
 	}
+	copy_label(&dset->varinfo[v]->label, tmp);
+	free(tmp);
     }
 }
 
@@ -4525,7 +4577,7 @@ int panel_group_names_ok (const DATASET *dset)
 {
 #if GRPS_DEBUG
     int n, v;
-    
+
     fputs("panel_group_names_ok ?\n", stderr);
     if (!dataset_is_panel(dset)) {
 	fputs(" no, not a panel\n", stderr);
@@ -4694,7 +4746,7 @@ static int pad_daily_data (DATASET *dset, int pd, PRN *prn)
 	dset->descrip = NULL;
 	dataset_destroy_obs_markers(dset);
 	free_Z(dset);
-	clear_datainfo(dset, CLEAR_SUBSAMPLE); 
+	clear_datainfo(dset, CLEAR_SUBSAMPLE);
 
 	*dset = *bigset;
     }
@@ -4822,8 +4874,12 @@ void *series_info_bundle (const DATASET *dset, int i,
 	VARINFO *vinfo = dset->varinfo[i];
 
 	gretl_bundle_set_string(b, "name", dset->varname[i]);
-	gretl_bundle_set_string(b, "description", vinfo->label);
-	gretl_bundle_set_string(b, "graph_name", vinfo->display_name);
+	if (vinfo->label != NULL) {
+	    gretl_bundle_set_string(b, "description", vinfo->label);
+	}
+	if (vinfo->display_name[0] != '\0') {
+	    gretl_bundle_set_string(b, "graph_name", vinfo->display_name);
+	}
 	gretl_bundle_set_int(b, "discrete", vinfo->flags & VAR_DISCRETE ?
 			     1 : 0);
 	gretl_bundle_set_int(b, "coded", vinfo->flags & VAR_CODED ?
@@ -4834,7 +4890,7 @@ void *series_info_bundle (const DATASET *dset, int i,
 				    gretl_command_word(vinfo->transform));
 	} else {
 	    gretl_bundle_set_string(b, "transform", "none");
-	}	    
+	}
 	gretl_bundle_set_int(b, "lag", vinfo->lag);
 	gretl_bundle_set_int(b, "has_string_table", vinfo->st != NULL);
 	if (vinfo->midas_period > 0) {

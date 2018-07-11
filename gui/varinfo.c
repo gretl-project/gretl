@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* varinfo.c for gretl : edit attributes of data series */
@@ -24,6 +24,7 @@
 #include "ssheet.h"
 #include "toolbar.h"
 #include "winstack.h"
+#include "textbuf.h"
 #include "varinfo.h"
 
 #include "uservar.h"
@@ -59,6 +60,7 @@ struct gui_varinfo_ {
     GtkWidget *apply;
     GtkWidget *up;
     GtkWidget *down;
+    GtkTextBuffer *tbuf;
     char changed[VSET_MAX];
 };
 
@@ -97,10 +99,11 @@ static void gui_varinfo_init (gui_varinfo *vset, int v)
     vset->id_spin = NULL;
     vset->up = vset->down = NULL;
     vset->apply = NULL;
+    vset->tbuf = NULL;
     varinfo_set_unchanged(vset);
 }
 
-static void name_setter_init (name_setter *nset, char *vname, 
+static void name_setter_init (name_setter *nset, char *vname,
 			      char *descrip, int *cancel)
 {
     nset->cancel = cancel;
@@ -167,7 +170,7 @@ static int got_var_row (int v, gchar *s)
     return ret;
 }
 
-static void show_varinfo_changes (int v) 
+static void show_varinfo_changes (int v)
 {
     GtkTreeModel *model;
     GtkTreeIter top, kid, *iptr = NULL;
@@ -195,7 +198,7 @@ static void show_varinfo_changes (int v)
     if (iptr != NULL) {
 	const char *vlabel = series_get_label(dataset, v);
 
-        gtk_tree_store_set(GTK_TREE_STORE(model), iptr, 
+        gtk_tree_store_set(GTK_TREE_STORE(model), iptr,
                            1, dataset->varname[v],
                            2, vlabel == NULL ? "" : vlabel,
                            -1);
@@ -248,6 +251,16 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
     gchar *newstr = NULL;
     int ival, v = vset->varnum;
     int err = 0;
+
+    if (vset->tbuf != NULL) {
+	/* long label: we didn't key off a "changed" signal */
+	newstr = textview_get_normalized_line(vset->label_entry);
+	if (strcmp(newstr, series_get_label(dataset, v))) {
+	    series_record_label(dataset, v, newstr);
+	    record_varlabel_change(v, 1, 0);
+	}
+	g_free(newstr);
+    }
 
     if (!varinfo_any_changed(vset)) {
 	/* no-op */
@@ -356,7 +369,7 @@ static void set_series_name_and_desc (GtkWidget *w, name_setter *nset)
     *nset->cancel = 0;
 
     if (nset->changed[0]) {
-	/* series name: take care in allowing overwrite of existing 
+	/* series name: take care in allowing overwrite of existing
 	   series */
 	int allow_overwrite = 1;
 	int v;
@@ -370,7 +383,7 @@ static void set_series_name_and_desc (GtkWidget *w, name_setter *nset)
 		allow_overwrite = 0;
 	    } else if (v <= max_untouchable_series_ID()) {
 		allow_overwrite = 0;
-	    } 
+	    }
 	}
 
 	if (allow_overwrite) {
@@ -448,7 +461,7 @@ static void vset_toggle_formula (GtkComboBox *box, gui_varinfo *vset)
 
 static void sensitize_up_down_buttons (gui_varinfo *vset)
 {
-    GtkTreeModel *model = 
+    GtkTreeModel *model =
 	gtk_tree_view_get_model(GTK_TREE_VIEW(mdata->listbox));
     GtkTreeIter iter;
     gchar *idstr;
@@ -471,6 +484,11 @@ static void sensitize_up_down_buttons (gui_varinfo *vset)
 
     gtk_widget_set_sensitive(vset->up, vrow > 1);
     gtk_widget_set_sensitive(vset->down, vrow < n - 1);
+}
+
+static int is_long_label (const char *s)
+{
+    return (s != NULL && strlen(s) > 128);
 }
 
 /* On selecting a different variable via Up/Down, insert the
@@ -500,7 +518,7 @@ static void varinfo_insert_info (gui_varinfo *vset, int v)
 	gtk_widget_show(vset->label_label);
     }
 
-    gtk_entry_set_text(GTK_ENTRY(vset->name_entry), 
+    gtk_entry_set_text(GTK_ENTRY(vset->name_entry),
 		       dataset->varname[v]);
     gtk_widget_set_sensitive(vset->name_entry, !is_parent);
     gtk_entry_set_activates_default(GTK_ENTRY(vset->name_entry), !is_parent);
@@ -509,11 +527,16 @@ static void varinfo_insert_info (gui_varinfo *vset, int v)
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(vset->id_spin), v);
     }
 
-    gtk_entry_set_text(GTK_ENTRY(vset->label_entry),
-		       vlabel == NULL ? "" : vlabel);
+    if (vset->tbuf != NULL) {
+	textview_set_text(vset->label_entry,
+			  vlabel == NULL ? "" : vlabel);
+    } else {
+	gtk_entry_set_text(GTK_ENTRY(vset->label_entry),
+			   vlabel == NULL ? "" : vlabel);
+    }
 
     if (vset->display_entry != NULL) {
-	gtk_entry_set_text(GTK_ENTRY(vset->display_entry), 
+	gtk_entry_set_text(GTK_ENTRY(vset->display_entry),
 			   series_get_display_name(dataset, v));
     }
 
@@ -647,6 +670,7 @@ static void varinfo_text_changed (GtkEditable *e, gui_varinfo *vset)
 	s = (orig == NULL && newstr != NULL) ||
 	    (orig != NULL && newstr == NULL);
     }
+
     varinfo_set_field_changed(vset, f, s);
 
     g_free(newstr);
@@ -655,7 +679,7 @@ static void varinfo_text_changed (GtkEditable *e, gui_varinfo *vset)
 static void varinfo_id_changed (GtkSpinButton *b, gui_varinfo *vset)
 {
     int id = gtk_spin_button_get_value_as_int(b);
-    
+
     varinfo_set_field_changed(vset, VSET_IDNUM, id != vset->varnum);
 }
 
@@ -727,7 +751,7 @@ static void varinfo_add_toolbar (gui_varinfo *vset, GtkWidget *hbox)
     gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, -1);
     vset->up = GTK_WIDGET(item);
     gretl_tooltips_add(vset->up, _("Previous series"));
-    
+
     item = gtk_tool_button_new_from_stock(GTK_STOCK_GO_DOWN);
     g_signal_connect(item, "clicked", G_CALLBACK(varinfo_up_down), vset);
     gtk_widget_set_size_request(GTK_WIDGET(item), 30, -1);
@@ -738,7 +762,7 @@ static void varinfo_add_toolbar (gui_varinfo *vset, GtkWidget *hbox)
     sensitize_up_down_buttons(vset);
 
     gtk_box_pack_end(GTK_BOX(hbox), tbar, FALSE, FALSE, 5);
-    gtk_widget_show_all(tbar); 
+    gtk_widget_show_all(tbar);
 }
 
 /* edit information for the variable with ID number @varnum */
@@ -762,7 +786,7 @@ void varinfo_dialog (int varnum)
     }
 
     flags = GRETL_DLG_BLOCK | GRETL_DLG_RESIZE;
-    vset->dlg = gretl_dialog_new(_("gretl: variable attributes"), 
+    vset->dlg = gretl_dialog_new(_("gretl: variable attributes"),
 				 NULL, flags);
     gui_varinfo_init(vset, varnum);
 
@@ -771,6 +795,9 @@ void varinfo_dialog (int varnum)
 	vset->use_formula = 1;
     }
     vlabel = series_get_label(dataset, varnum);
+    if (is_long_label(vlabel)) {
+	vset->tbuf = gtk_text_buffer_new(NULL);
+    }
 
     g_signal_connect(vset->dlg, "destroy", G_CALLBACK(free_vsettings), vset);
 
@@ -783,14 +810,14 @@ void varinfo_dialog (int varnum)
     vset->name_entry = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(vset->name_entry), VNAMELEN-1);
     gtk_entry_set_width_chars(GTK_ENTRY(vset->name_entry), VNAMELEN+3);
-    gtk_entry_set_text(GTK_ENTRY(vset->name_entry), 
+    gtk_entry_set_text(GTK_ENTRY(vset->name_entry),
 		       dataset->varname[varnum]);
-    g_signal_connect(vset->name_entry, "changed", 
+    g_signal_connect(vset->name_entry, "changed",
 		     G_CALLBACK(varinfo_text_changed), vset);
-    
-    gtk_box_pack_start(GTK_BOX(hbox), 
+
+    gtk_box_pack_start(GTK_BOX(hbox),
 		       vset->name_entry, FALSE, FALSE, 0);
-    gtk_widget_show(vset->name_entry); 
+    gtk_widget_show(vset->name_entry);
     if (is_parent) {
 	gtk_widget_set_sensitive(vset->name_entry, FALSE);
     } else {
@@ -815,7 +842,7 @@ void varinfo_dialog (int varnum)
 	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(tmp), varnum);
 	    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
 	    gtk_widget_show(tmp);
-	    g_signal_connect(tmp, "value-changed", 
+	    g_signal_connect(tmp, "value-changed",
 			     G_CALLBACK(varinfo_id_changed), vset);
 	    vset->id_spin = tmp;
 	}
@@ -835,44 +862,69 @@ void varinfo_dialog (int varnum)
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(vset->dlg));
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-    gtk_widget_show(hbox); 
+    gtk_widget_show(hbox);
 
-    /* descriptive string, or genr formula */
+    /* descriptive string, or genr formula? */
     hbox = gtk_hbox_new(FALSE, 5);
-    tmp = gtk_combo_box_text_new();
-    combo_box_append_text(tmp, _("Description:"));
-    combo_box_append_text(tmp, _("Formula:"));
-    gtk_combo_box_set_active(GTK_COMBO_BOX(tmp), 0);
-    g_signal_connect(tmp, "changed", 
-		     G_CALLBACK(vset_toggle_formula), vset);
-    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-    vset->label_combo = tmp;
-    tmp = gtk_label_new(_("Description:"));
-    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-    vset->label_label = tmp;
-    if (vset->use_formula) {
-	gtk_widget_show(vset->label_combo);
-	vset->use_formula = !vset->use_formula;
+    if (vset->tbuf != NULL) {
+	/* don't offer this choice if we got a long label */
+	tmp = gtk_label_new(_("Description:"));
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	gtk_widget_show(tmp);
     } else {
-	gtk_widget_show(vset->label_label);
+	tmp = gtk_combo_box_text_new();
+	combo_box_append_text(tmp, _("Description:"));
+	combo_box_append_text(tmp, _("Formula:"));
+	gtk_combo_box_set_active(GTK_COMBO_BOX(tmp), 0);
+	g_signal_connect(tmp, "changed",
+			 G_CALLBACK(vset_toggle_formula), vset);
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	vset->label_combo = tmp;
+	tmp = gtk_label_new(_("Description:"));
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	vset->label_label = tmp;
+	if (vset->use_formula) {
+	    gtk_widget_show(vset->label_combo);
+	    vset->use_formula = !vset->use_formula;
+	} else {
+	    gtk_widget_show(vset->label_label);
+	}
     }
-
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
     gtk_widget_show(hbox);
 
     hbox = gtk_hbox_new(FALSE, 5);
-    vset->label_entry = gtk_entry_new();
-    gtk_entry_set_max_length(GTK_ENTRY(vset->label_entry), MAXLABEL-1);
-    gtk_entry_set_text(GTK_ENTRY(vset->label_entry),
-		       vlabel == NULL ? "" : vlabel);
-    g_signal_connect(vset->label_entry, "changed", 
-		     G_CALLBACK(varinfo_text_changed), vset);
-    gtk_box_pack_start(GTK_BOX(hbox), vset->label_entry, TRUE, TRUE, 5);
-    gtk_widget_show(vset->label_entry);
-    gtk_entry_set_activates_default(GTK_ENTRY(vset->label_entry), TRUE);
+    if (vset->tbuf != NULL) {
+	/* long label */
+	GtkWidget *frame = gtk_frame_new(NULL);
 
+	vset->label_entry = gtk_text_view_new_with_buffer(vset->tbuf);
+	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(vset->label_entry),
+				    GTK_WRAP_WORD);
+	gtk_text_view_set_left_margin(GTK_TEXT_VIEW(vset->label_entry), 5);
+	gtk_text_view_set_right_margin(GTK_TEXT_VIEW(vset->label_entry), 5);
+	gtk_text_view_set_pixels_above_lines(GTK_TEXT_VIEW(vset->label_entry), 5);
+	gtk_text_view_set_pixels_below_lines(GTK_TEXT_VIEW(vset->label_entry), 5);
+	textview_set_text(vset->label_entry, vlabel);
+	gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_IN);
+	gtk_container_add(GTK_CONTAINER(frame), vset->label_entry);
+	gtk_box_pack_start(GTK_BOX(hbox), frame, TRUE, TRUE, 5);
+	gtk_widget_show(vset->label_entry);
+	gtk_widget_show(frame);
+    } else {
+	/* short label */
+	vset->label_entry = gtk_entry_new();
+	gtk_entry_set_max_length(GTK_ENTRY(vset->label_entry), MAXLABEL-1);
+	gtk_entry_set_text(GTK_ENTRY(vset->label_entry),
+			   vlabel == NULL ? "" : vlabel);
+	g_signal_connect(vset->label_entry, "changed",
+			 G_CALLBACK(varinfo_text_changed), vset);
+	gtk_entry_set_activates_default(GTK_ENTRY(vset->label_entry), TRUE);
+	gtk_box_pack_start(GTK_BOX(hbox), vset->label_entry, TRUE, TRUE, 5);
+	gtk_widget_show(vset->label_entry);
+    }
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-    gtk_widget_show(hbox); 
+    gtk_widget_show(hbox);
 
     /* focus the most likely field for editing */
     gtk_widget_grab_focus(vset->label_entry);
@@ -884,23 +936,23 @@ void varinfo_dialog (int varnum)
     gtk_widget_show(tmp);
 
     vset->display_entry = gtk_entry_new();
-    gtk_entry_set_max_length(GTK_ENTRY(vset->display_entry), 
+    gtk_entry_set_max_length(GTK_ENTRY(vset->display_entry),
 			     MAXDISP-1);
-    gtk_entry_set_width_chars(GTK_ENTRY(vset->display_entry), 
+    gtk_entry_set_width_chars(GTK_ENTRY(vset->display_entry),
 			      MAXDISP+4);
-    gtk_entry_set_text(GTK_ENTRY(vset->display_entry), 
+    gtk_entry_set_text(GTK_ENTRY(vset->display_entry),
 		       series_get_display_name(dataset, varnum));
-    g_signal_connect(vset->display_entry, "changed", 
+    g_signal_connect(vset->display_entry, "changed",
 		     G_CALLBACK(varinfo_text_changed), vset);
-    gtk_box_pack_start(GTK_BOX(hbox), 
+    gtk_box_pack_start(GTK_BOX(hbox),
 		       vset->display_entry, FALSE, FALSE, 5);
-    gtk_widget_show(vset->display_entry); 
+    gtk_widget_show(vset->display_entry);
     gtk_entry_set_activates_default(GTK_ENTRY(vset->display_entry), TRUE);
 
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-    gtk_widget_show(hbox); 
+    gtk_widget_show(hbox);
 
-    if (dataset_is_time_series(dataset)) {  
+    if (dataset_is_time_series(dataset)) {
 	/* compaction method */
 	int i, method;
 
@@ -912,7 +964,7 @@ void varinfo_dialog (int varnum)
 	vset->compaction_menu = gtk_combo_box_text_new();
 
 	for (i=COMPACT_NONE; i<=COMPACT_SPREAD; i++) {
-	    combo_box_append_text(vset->compaction_menu, 
+	    combo_box_append_text(vset->compaction_menu,
 				  _(comp_int_to_string(i)));
 	}
 
@@ -920,15 +972,15 @@ void varinfo_dialog (int varnum)
 	if (method == 0 && series_get_midas_period(dataset, varnum) > 0) {
 	    method = COMPACT_SPREAD;
 	}
-	gtk_combo_box_set_active(GTK_COMBO_BOX(vset->compaction_menu), 
+	gtk_combo_box_set_active(GTK_COMBO_BOX(vset->compaction_menu),
 				 method);
 	g_signal_connect(vset->compaction_menu, "changed",
 			 G_CALLBACK(varinfo_compact_changed), vset);
 	gtk_box_pack_start(GTK_BOX(hbox), vset->compaction_menu, FALSE, FALSE, 5);
-	gtk_widget_show(vset->compaction_menu); 
+	gtk_widget_show(vset->compaction_menu);
 
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-	gtk_widget_show(hbox); 
+	gtk_widget_show(hbox);
     }
 
     if (1) {
@@ -941,7 +993,7 @@ void varinfo_dialog (int varnum)
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), d);
 	if (!d && !gretl_isdiscrete(0, dataset->n - 1, dataset->Z[varnum])) {
 	    gtk_widget_set_sensitive(tmp, FALSE);
-	} 
+	}
 	g_signal_connect(tmp, "toggled",
 			 G_CALLBACK(varinfo_discrete_changed), vset);
 	gtk_widget_show(tmp);
@@ -976,7 +1028,7 @@ void varinfo_dialog (int varnum)
 
     /* Cancel/Close button */
     tmp = close_button(hbox);
-    g_signal_connect(tmp, "clicked", 
+    g_signal_connect(tmp, "clicked",
 		     G_CALLBACK(varinfo_cancel), vset);
     gtk_widget_show(tmp);
 
@@ -1019,7 +1071,7 @@ void name_new_series_dialog (char *vname, char *descrip,
     make_varname_unique(vname, 0, dataset);
     name_setter_init(nset, vname, descrip, cancel);
 
-    g_signal_connect(nset->dlg, "destroy", 
+    g_signal_connect(nset->dlg, "destroy",
 		     G_CALLBACK(free_name_setter), nset);
 
     /* read/set name of variable */
@@ -1032,18 +1084,18 @@ void name_new_series_dialog (char *vname, char *descrip,
     gtk_entry_set_max_length(GTK_ENTRY(nset->name_entry), VNAMELEN-1);
     gtk_entry_set_width_chars(GTK_ENTRY(nset->name_entry), VNAMELEN+3);
     gtk_entry_set_text(GTK_ENTRY(nset->name_entry), nset->vname);
-    g_signal_connect(nset->name_entry, "changed", 
+    g_signal_connect(nset->name_entry, "changed",
 		     G_CALLBACK(nset_text_changed), nset);
-    
-    gtk_box_pack_start(GTK_BOX(hbox), 
+
+    gtk_box_pack_start(GTK_BOX(hbox),
 		       nset->name_entry, FALSE, FALSE, 0);
-    gtk_widget_show(nset->name_entry); 
+    gtk_widget_show(nset->name_entry);
     gtk_entry_set_activates_default(GTK_ENTRY(nset->name_entry), TRUE);
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(nset->dlg));
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-    gtk_widget_show(hbox); 
-    
+    gtk_widget_show(hbox);
+
     /* set descriptive string */
     hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("Description:"));
@@ -1057,14 +1109,14 @@ void name_new_series_dialog (char *vname, char *descrip,
     nset->label_entry = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(nset->label_entry), MAXLABEL-1);
     gtk_entry_set_text(GTK_ENTRY(nset->label_entry), nset->descrip);
-    g_signal_connect(nset->label_entry, "changed", 
+    g_signal_connect(nset->label_entry, "changed",
 		     G_CALLBACK(nset_text_changed), nset);
     gtk_box_pack_start(GTK_BOX(hbox), nset->label_entry, TRUE, TRUE, 5);
     gtk_widget_show(nset->label_entry);
     gtk_entry_set_activates_default(GTK_ENTRY(nset->label_entry), TRUE);
 
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-    gtk_widget_show(hbox); 
+    gtk_widget_show(hbox);
 
     /* focus choice of name */
     gtk_widget_grab_focus(nset->name_entry);
@@ -1073,7 +1125,7 @@ void name_new_series_dialog (char *vname, char *descrip,
 
     /* Cancel button */
     tmp = cancel_button(hbox);
-    g_signal_connect(tmp, "clicked", 
+    g_signal_connect(tmp, "clicked",
 		     G_CALLBACK(name_setter_cancel), nset);
     gtk_widget_show(tmp);
 

@@ -39,7 +39,7 @@ typedef float dbnumber;
 typedef struct SERIESINFO_ {
     int t1, t2, v;
     char varname[VNAMELEN];
-    char descrip[MAXLABEL];
+    char *descrip;
     int nobs;
     char stobs[OBSLEN];
     char endobs[OBSLEN];
@@ -82,6 +82,9 @@ typedef struct {
 
 float retrieve_float (netfloat nf);
 #endif
+
+void series_info_set_description (SERIESINFO *sinfo,
+				  const char *s);
 
 int get_native_db_data (const char *dbbase, SERIESINFO *sinfo,
 			double **Z);

@@ -528,6 +528,32 @@ static void new_trim_to_length (char *s, int len)
     }
 }
 
+static void basic_trim_to_length (char *s, int len)
+{
+    int n = strlen(s);
+
+    if (n > len) {
+	int i;
+	int bp0 = 0, bp1 = 0;
+
+	for (i=1; i<n-1; i++) {
+	    if (s[i] == ' ') {
+		if (i < len) {
+		    bp0 = i;
+		} else {
+		    bp1 = i;
+		    break;
+		}
+	    }
+	}
+	if (bp0 > 0) {
+	    s[bp0] = '\0';
+	} else if (bp1 > 0) {
+	    s[bp1] = '\0';
+	}
+    }
+}
+
 #define TESTLEN 256
 #define LINELEN 70
 
@@ -791,10 +817,48 @@ static int set_var_info (const int *list,
     return err;
 }
 
+static void reflow_label (const char *line, PRN *prn)
+{
+    int maxline = 72;
+
+    if (strlen(line) < maxline) {
+	pputc(prn, ' ');
+	pputs(prn, line);
+	pputc(prn, '\n');
+    } else {
+	const char *p = line;
+	char buf[TESTLEN];
+	int lnum = 0;
+
+	while (*p) {
+	    *buf = '\0';
+	    strncat(buf, p, TESTLEN - 1);
+	    if (lnum == 1) {
+		maxline -= 2;
+	    }
+	    basic_trim_to_length(buf, maxline);
+	    p += strlen(buf);
+	    if (!string_is_blank(buf)) {
+		if (lnum == 0) {
+		    pputc(prn, ' ');
+		} else {
+		    pputs(prn, "   ");
+		}
+		pputs(prn, (*buf == ' ')? buf + 1 : buf);
+		pputc(prn, '\n');
+	    } else {
+		pputc(prn, '\n');
+	    }
+	    lnum++;
+	}
+    }
+}
+
 static void showlabels (const int *list, gretlopt opt,
 			const DATASET *dset, PRN *prn)
 {
     const char *label;
+    gchar *tmp;
     int i, v, vmax, nl = 0;
 
     if (dset == NULL || dset->v == 0) {
@@ -831,7 +895,9 @@ static void showlabels (const int *list, gretlopt opt,
 		if (opt & OPT_Q) {
 		    pprintf(prn, "%s: %s\n", dset->varname[v], label);
 		} else {
-		    pprintf(prn, " %s: %s\n", dset->varname[v], label);
+		    tmp = g_strdup_printf("%s: %s", dset->varname[v], label);
+		    reflow_label(tmp, prn);
+		    g_free(tmp);
 		}
 	    }
 	}
