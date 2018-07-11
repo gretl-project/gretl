@@ -186,6 +186,43 @@ the \textsf{dbnomics} space:
 \item Series window (for a given dataset)
 \end{enumerate}
 
+\section{Searching a \textsf{dbnomics}}
+\label{sec:search}
+
+TBW
+
+Example:
+\begin{code}
+set verbose off
+include dbnomics.gfn --force
+
+key = "remittances Iraq"
+
+bundles generic = dbnomics_search(key, "", 10, 0, 1)
+
+dataset_code = "WB/WDI"
+bundles specific = dbnomics_search(key, dataset_code, 10, 0, 1)
+\end{code}
+
+produces
+
+\begin{code}
+Datasets containing "remittances Iraq" (1-5 out of 3): 
+
+  1: Eurostat.bop_rem6 (42 series)
+  2: WB.WDI (5 series)
+  3: IMF.BOP (54 series)
+  4: CEPII.BOP (54 series)
+  5: ECB.BOP (54 series)
+
+listing series 1 - 5 out of 5
+BM.TRF.PWKR.CD.DT-IQ - Personal remittances, paid (current US$) – Iraq
+BX.TRF.PWKR.CD.DT-IQ - Personal remittances, received (current US$) – Iraq
+BX.TRF.PWKR.DT.GD.ZS-IQ - Personal remittances, received (% of GDP) – Iraq
+SI.RMT.COST.IB.ZS-IQ - Average transaction cost of sending remittances to a specific country (%) – Iraq
+SI.RMT.COST.OB.ZS-IQ - Average transaction cost of sending remittances from a specific country (%) – Iraq
+\end{code}
+
 \section{Public functions}
 \label{sec:dbn-funcs}
 
@@ -320,10 +357,10 @@ bundles dbnomics_get_dataset_dimensions (const string provider,
                                          bool verbose[0])
 \end{verbatim}
 Returns an array of bundles, with all the ``dimensions'' for a given
-dataset, and prints it out if the \texttt{verbose} is nonzero. The
-dimensions typically contain lists of the different periodicities of
-the series contained in the datasets, the geographical units they
-refer to, and so on.
+dataset, and prints it out if the \texttt{verbose} argument is
+nonzero. The dimensions typically contain lists of the different
+periodicities of the series contained in the datasets, the
+geographical units they refer to, and so on.
 
 Therefore, each resulting bundle will have a key called \texttt{code},
 which identifies the dimension, and an array of bundles called
@@ -359,19 +396,30 @@ HRV - Croatia
 \begin{funcdoc}
 \begin{verbatim}
 bundles dbnomics_search (const string key,
+                         const string dset[null],
                          int limit[0::100],
                          int offset[0],
                          bool verbose[0])
 \end{verbatim}
-  Returns an array of bundles, each holding information on a dataset
-  which matches (in some way or other) the \texttt{key} string. The
-  \texttt{limit} and \texttt{offset} argument should in principle work
-  to allow paging, as in \texttt{dbnomics\_get\_dataset\_content}, but
-  as of this writing the \texttt{offset} argument has no effect due to
-  a \textsf{dbnomics} bug.
+  The behavior of this function is dictated by the second parameter
+  \texttt{dset}.
+
+  If \texttt{dset} is null, or an empty string, the function
+  returns an array of bundles, each holding information on a dataset
+  which matches (in some way or other) the \texttt{key} string. If,
+  conversely, \texttt{dset} contains a valid dataset representation
+  (eg ``\texttt{AMECO/ZUTN}''), then the query will be limited to that
+  particular dataset, and the bundles returned will contain the series
+  matching the query.
+
+  The \texttt{limit} and \texttt{offset} argument should in principle
+  work to allow paging, as in
+  \texttt{dbnomics\_get\_dataset\_content}, but as of this writing the
+  \texttt{offset} argument has no effect due to a \textsf{dbnomics}
+  bug.
 \begin{code}
 # example
-bundles B = dbnomics_search("interest rates", 50)
+bundles B = dbnomics_search("interest rates", null, 50)
 \end{code}
 \end{funcdoc}
 
