@@ -2930,6 +2930,8 @@ void do_kernel (void)
 				dataset->varname[v], bw,
 				(opt & OPT_O)? 1 : 0);
 	    record_command_verbatim();
+	    lib_command_strcpy("cnameset(kd__, \"value density\")");
+	    record_command_verbatim();
 	    lib_command_strcpy("gnuplot 2 1 --matrix=kd__ --with-lines "
 			       "--fit=none --output=display");
 	    record_command_verbatim();
