@@ -186,43 +186,6 @@ the \textsf{dbnomics} space:
 \item Series window (for a given dataset)
 \end{enumerate}
 
-\section{Searching a \textsf{dbnomics}}
-\label{sec:search}
-
-TBW
-
-Example:
-\begin{code}
-set verbose off
-include dbnomics.gfn --force
-
-key = "remittances Iraq"
-
-bundles generic = dbnomics_search(key, "", 10, 0, 1)
-
-dataset_code = "WB/WDI"
-bundles specific = dbnomics_search(key, dataset_code, 10, 0, 1)
-\end{code}
-
-produces
-
-\begin{code}
-Datasets containing "remittances Iraq" (1-5 out of 3): 
-
-  1: Eurostat.bop_rem6 (42 series)
-  2: WB.WDI (5 series)
-  3: IMF.BOP (54 series)
-  4: CEPII.BOP (54 series)
-  5: ECB.BOP (54 series)
-
-listing series 1 - 5 out of 5
-BM.TRF.PWKR.CD.DT-IQ - Personal remittances, paid (current US$) – Iraq
-BX.TRF.PWKR.CD.DT-IQ - Personal remittances, received (current US$) – Iraq
-BX.TRF.PWKR.DT.GD.ZS-IQ - Personal remittances, received (% of GDP) – Iraq
-SI.RMT.COST.IB.ZS-IQ - Average transaction cost of sending remittances to a specific country (%) – Iraq
-SI.RMT.COST.OB.ZS-IQ - Average transaction cost of sending remittances from a specific country (%) – Iraq
-\end{code}
-
 \section{Public functions}
 \label{sec:dbn-funcs}
 
@@ -410,13 +373,12 @@ bundles dbnomics_search (const string key,
   conversely, \texttt{dset} contains a valid dataset representation
   (eg ``\texttt{AMECO/ZUTN}''), then the query will be limited to that
   particular dataset, and the bundles returned will contain the series
-  matching the query.
+  matching the query. See section~\ref{sec:search} below for further
+  details.
 
   The \texttt{limit} and \texttt{offset} argument should in principle
-  work to allow paging, as in
-  \texttt{dbnomics\_get\_dataset\_content}, but as of this writing the
-  \texttt{offset} argument has no effect due to a \textsf{dbnomics}
-  bug.
+  work to allow paging but as of this writing the \texttt{offset}
+  argument has no effect due to a \textsf{dbnomics} bug.
 \begin{code}
 # example
 bundles B = dbnomics_search("interest rates", null, 50)
@@ -442,6 +404,55 @@ series dbnomics_fetch (const string datacode,
   \texttt{dbnomics\_bundle\_get\_data}.
 \end{funcdoc}
 
+\section{Searching \textsf{dbnomics}}
+\label{sec:search}
+
+Given the vast size of the dbnomics space, it's important to have
+effective search tools. This is work in progress, but in this section
+we illustrate the current state of play. The example below shows a
+two-stage search. We first search for relevant datasets across the
+whole population of providers then we home in on a particular dataset
+and search for relevant series, in each case requesting verbose
+results.
+
+\begin{code}
+set verbose off
+include dbnomics.gfn
+
+# target of search
+key = "remittances Iraq"
+
+# search all providers for up to 10 relevant databases
+bundles generic = dbnomics_search(key, null, 10, 0, 1)
+
+# search the "WDI" dataset of the World Bank for up to
+# 10 relevant series
+dataset_code = "WB/WDI"
+bundles specific = dbnomics_search(key, dataset_code, 10, 0, 1)
+\end{code}
+
+The example produces the following output (long lines broken for
+readability):
+
+\begin{code}
+Datasets containing "remittances Iraq" (1-5 out of 5):
+
+  1: Eurostat.bop_rem6 (42 series)
+  2: WB.WDI (5 series)
+  3: IMF.BOP (54 series)
+  4: CEPII.BOP (54 series)
+  5: ECB.BOP (54 series)
+
+Dataset WB/WDI: matching series 1-5 of 5
+
+BM.TRF.PWKR.CD.DT-IQ: Personal remittances, paid (current US$) -- Iraq
+BX.TRF.PWKR.CD.DT-IQ: Personal remittances, received (current US$) -- Iraq
+BX.TRF.PWKR.DT.GD.ZS-IQ: Personal remittances, received (% of GDP) -- Iraq
+SI.RMT.COST.IB.ZS-IQ: Average transaction cost of sending remittances
+  to a specific country (%) -- Iraq
+SI.RMT.COST.OB.ZS-IQ: Average transaction cost of sending remittances
+  from a specific country (%) -- Iraq
+\end{code}
 
 \end{document}
 
