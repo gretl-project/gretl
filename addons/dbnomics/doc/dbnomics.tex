@@ -407,13 +407,13 @@ series dbnomics_fetch (const string datacode,
 \section{Searching \textsf{dbnomics}}
 \label{sec:search}
 
-Given the vast size of the dbnomics space, it's important to have
-effective search tools. This is work in progress, but in this section
-we illustrate the current state of play. The example below shows a
-two-stage search. We first search for relevant datasets across the
-whole population of providers then we home in on a particular dataset
-and search for relevant series, in each case requesting verbose
-results.
+Given the vast size of the \textsf{dbnomics} space, it's important to
+have effective search tools. This is work in progress, but in this
+section we illustrate the current state of play. The example below
+shows a two-stage search. We first search for relevant datasets across
+the whole population of providers then we home in on a particular
+dataset and search for relevant series, in each case requesting
+verbose results.
 
 \begin{code}
 set verbose off
@@ -435,7 +435,7 @@ The example produces the following output (long lines broken for
 readability):
 
 \begin{code}
-Datasets containing "remittances Iraq" (1-5 out of 5):
+Datasets containing "remittances Iraq" (1-5 of 5):
 
   1: Eurostat.bop_rem6 (42 series)
   2: WB.WDI (5 series)
@@ -443,7 +443,7 @@ Datasets containing "remittances Iraq" (1-5 out of 5):
   4: CEPII.BOP (54 series)
   5: ECB.BOP (54 series)
 
-Dataset WB/WDI: matching series 1-5 of 5
+Dataset WB/WDI, matching series 1-5 of 5:
 
 BM.TRF.PWKR.CD.DT-IQ: Personal remittances, paid (current US$) -- Iraq
 BX.TRF.PWKR.CD.DT-IQ: Personal remittances, received (current US$) -- Iraq
