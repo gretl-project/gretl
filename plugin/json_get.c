@@ -750,8 +750,8 @@ static int filter_bundle_tree (gretl_bundle *b, gretl_array *A)
     keys = gretl_array_get_strings(K, &n);
 
     for (i=0; i<n; i++) {
-	/* FIXME hard-wired "category_tree" ? */
-	if (!strcmp(keys[i], "children") || !strcmp(keys[i], "category_tree")) {
+	if (!strcmp(keys[i], "children") ||
+	    !strcmp(keys[i], "category_tree")) {
 	    /* bundle has children: not terminal */
 	    addit = 0;
 	    break;
@@ -784,6 +784,19 @@ static int filter_bundle_tree (gretl_bundle *b, gretl_array *A)
 
     return err;
 }
+
+/* Given a bundle @b produced by json_get_bundle(), this function
+   constructs an array of bundles holding all and only the
+   "terminal" bundles within @b. A "terminal" bundle is one
+   which contains no member named "children" (or "category tree").
+
+   We want this for handling the results from the category_tree
+   of a dbnomics provider: if we're looking to list datasets we
+   don't want to include any intermediate nodes that are not
+   themselves datasets but rather groupings of datasets. The
+   latter can be distinguished by the presence of a "children"
+   node; real dataset nodes never have "children".
+*/
 
 gretl_array *json_bundle_get_terminals (gretl_bundle *b, int *err)
 {
