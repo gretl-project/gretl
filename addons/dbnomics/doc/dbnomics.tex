@@ -24,19 +24,20 @@
 {\medskip}
 
 \newcommand{\argname}[1]{\textsl{#1}}
-
+\newcommand{\DB}{\textsf{dbnomics}}
+  
 \title{dbnomics for gretl, version 0.1}
 \author{Jack Lucchetti \and Allin Cottrell}
 \maketitle
 
 \section{Introduction}
 
-This package offers an interface to \textsf{dbnomics} for gretl. For
-anyone who hasn't yet caught on, \textsf{dbnomics} makes available, in
+This package offers an interface to \DB\ for gretl. For
+anyone who hasn't yet caught on, \DB\  makes available, in
 a uniform manner, a huge number of macroeconomic data series drawn
 from many sources around the world---a truly admirable service!
 
-There are at present two variants of the \textsf{dbnomics} site: the
+There are at present two variants of the \DB\  site: the
 original version at \url{https://db.nomics.world/} and the new or
 ``next'' version at \url{https://next.nomics.world/}. This package
 targets the ``next'' version, which encompasses many more data
@@ -44,10 +45,10 @@ providers than the original. Interested users are encouraged to visit
 the site to get a better sense of what's available.  But please note:
 the new version is still work in progress, which means that some
 aspects of this package are likely to change as bugs are discovered
-and fixed at \textsf{dbnomics}. We will endeavor to keep our package
+and fixed at \DB. We will endeavor to keep our package
 up to date and will push out any updates with gretl snapshots.
 
-There are three main layers to the \textsf{dbnomics} ``space,'' as
+There are three main layers to the \DB\ ``space,'' as
 follows:
 \begin{itemize}
 \item \textit{Providers}: the various statistical agencies that are
@@ -59,7 +60,7 @@ follows:
   unemployment rate. Hundreds of millions of series are available.
 \end{itemize}
 
-A specific series in \textsf{dbnomics} is identified by a triplet
+A specific series in \DB\ is identified by a triplet
 of the form \texttt{provider/dataset/series}, for example
 \begin{code}
 ECB/IRS/M.IT.L.L40.CI.0000.EUR.N.Z
@@ -71,7 +72,7 @@ interest rate.
 
 This package provides means of downloading a specific series if you
 know its identifying triplet, and also means of navigating the
-\textsf{dbnomics} space. There are three ways of accessing the
+\DB\ space. There are three ways of accessing the
 functionality of the package:
 \begin{itemize}
 \item Via the gretl commands \cmd{open} and \cmd{data}, as with native
@@ -86,12 +87,12 @@ The following three sections expand on these methods in turn.
 \label{sec:open-data}
 
 To exploit this method you need to know the identifying triplet(s) for
-the series you want. Given that, you can initiate \textsf{dbnomics}
+the series you want. Given that, you can initiate \DB\ 
 access via the command
 \begin{code}
 open dbnomics
 \end{code}
-From this point the \cmd{data} command will target \textsf{dbnomics}
+From this point the \cmd{data} command will target \DB\ 
 data until you ``\texttt{open}'' some other data source. So, for
 example, you could download the Italian 10-year interest rate
 mentioned above in this way:
@@ -111,14 +112,14 @@ take charge of the naming of the imported series yourself, using the
 data ECB/IRS/M.IT.L.L40.CI.0000.EUR.N.Z --name="IT_10yr"
 \end{code}
 In this case the series will be known to gretl as \texttt{IT\_10yr}.
-Note that when you import a series from \textsf{dbnomics} its
+Note that when you import a series from \DB\ its
 descriptive ``label'' starts with the full triplet so you won't lose
 that information of record, regardless of the naming of the series.
 
 \section{dbnomics via the gretl GUI}
 \label{sec:dbn-gui}
 
-GUI access to \textsf{dbnomics} is provided in two places (see
+GUI access to \DB\ is provided in two places (see
 Figures~\ref{fig:db-access-1} and \ref{fig:db-access-2}):
 \begin{itemize}
 \item Via the \textsf{Databases} item under the \textsf{File} menu in
@@ -147,7 +148,7 @@ In both cases you get a little sub-menu with entries
 ``\textsf{Browse}'' and ``\textsf{Specific series}.'' The latter entry
 takes you to a dialog box in which you can enter a series triplet (see
 section~\ref{sec:open-data}). The \textsf{Browse} entry takes you to a
-window which displays the available \textsf{dbnomics} providers: their
+window which displays the available \DB\ providers: their
 codes and their descriptions. From here you have two options:
 \begin{itemize}
 \item Select a provider and double-click to browse the datasets it
@@ -160,7 +161,7 @@ codes and their descriptions. From here you have two options:
     ``\textsf{all DB.NOMICS}.''}
 \end{itemize}
 
-In each case a \textsf{dbnomics} datasets window will open. With some
+In each case a \DB\ datasets window will open. With some
 providers or searches more datasets will be found than can comfortably
 be displayed at once. In that case the toolbar includes buttons that
 let you page forward or back through the listing; you should also get
@@ -172,14 +173,14 @@ From a datasets window two more steps are available:
 \item Double-click on a dataset to open a window showing the series it
   contains (or one ``page'' of its full list of series if there are
   too many).
-\item In a window showing \textsf{dbnomics} series, double-click to
+\item In a window showing \DB\ series, double-click to
   activate a particular series. This will give you detailed
   information on the series and allow you to display its values,
   create a time-series plot, or add the series to your gretl dataset.
 \end{itemize}
 
 To summarize, there are three layers to gretl's GUI representation of
-the \textsf{dbnomics} space:
+the \DB\ space:
 \begin{enumerate}
 \item The providers window
 \item Datasets window (for a given provider, or via search)
@@ -196,7 +197,65 @@ modes of access described in sections~\ref{sec:open-data} and
 At this point we just offer an ``as is'' listing of the signatures of
 these functions with brief commentary. The finer points are subject to
 change; we can expand on them later if there's sufficient
-interest. Note that this package contains several test scripts that
+interest.
+
+However, the general guiding principle is that, when you download some
+information from \DB, be it a single series or more
+complex objects, the metadata are going to be as important as the data
+themselves. Therefore, in most cases what you get from the functions
+provided by this package are bundles, or arrays of bundles.
+
+For example, the \cmd{dbnomics\_get\_series} function takes as its first
+mandatory argument a series code and returns a bundle containing both
+the data and the metadata: take the series \texttt{Q.AU.C.A.M.USD.A},
+from the ``long series on total credit'' dataset, itself from the Bank
+for International Settlements. The code for the dataset is
+\texttt{BIS/CNFS}. Therefore, this code snippet
+\begin{code}
+  b = dbnomics_get_series("BIS/CNFS/Q.AU.C.A.M.USD.A")
+  print b
+\end{code}
+produces
+\begin{code}
+ bundle b, created by dbnomics:
+ frequency = 4
+ series_name (string, 127 bytes)
+ dset_name = long series on total credit
+ start = 193
+ periods = array of strings, length 119
+ dataset = CNFS
+ id = Q.AU.C.A.M.USD.A
+ error = 0
+ series_code = Q.AU.C.A.M.USD.A
+ totobs = 311
+ has_data = 1
+ provider = BIS
+ vals (matrix: 119 x 1)
+ datacode = BIS/CNFS/Q.AU.C.A.M.USD.A
+ actobs = 119
+\end{code}
+The actual data are stored as a column vector, under the key
+\texttt{vals}; however, there is much more information available to
+you: for example, the \texttt{frequency} key equals 4, thus indicating
+that the data are quarterly, and so on. If you want to have this
+information printed in a more readable way, you'll want to use the
+\cmd{dbnomics\_bundle\_print} function, that yields (long lines broken for
+readability):
+\begin{code}
+------------------------
+Series: Q.AU.C.A.M.USD.A
+Provider: BIS
+Dataset: CNFS (long series on total credit)
+Identifier: BIS/CNFS/Q.AU.C.A.M.USD.A
+
+Quarterly – Australia – Non financial sector – Adjusted for breaks –
+   Market value – US Dollar – Adjusted for breaks
+------------------------
+pd = 4; 119 observations, 1988-Q2 - 2017-Q4
+  
+\end{code}
+
+Note that this package contains several test scripts that
 exemplify calls to the functions listed below; this can be found in
 the \texttt{examples} subdirectory of the installation
 directory. Likely locations for this are as follows (though the paths
@@ -211,6 +270,8 @@ may differ by locale and otherwise):
 }
 
 \bigskip
+
+\subsection{List of public functions}
 
 \begin{funcdoc}
 \begin{verbatim}
@@ -260,7 +321,7 @@ bundle dbnomics_get_series (const string datacode,
                             string *from_json[null])
 \end{verbatim}
 Returns a bundle containing information on the series specified by
-\texttt{datacode}, which must be a \textsf{dbnomics} triplet as
+\texttt{datacode}, which must be a \DB\ triplet as
 described above.
 \begin{code}
 # example
@@ -378,7 +439,7 @@ bundles dbnomics_search (const string key,
 
   The \texttt{limit} and \texttt{offset} argument should in principle
   work to allow paging but as of this writing the \texttt{offset}
-  argument has no effect due to a \textsf{dbnomics} bug.
+  argument has no effect due to a \DB\ bug.
 \begin{code}
 # example
 bundles B = dbnomics_search("interest rates", null, 50)
@@ -404,10 +465,10 @@ series dbnomics_fetch (const string datacode,
   \texttt{dbnomics\_bundle\_get\_data}.
 \end{funcdoc}
 
-\section{Searching \textsf{dbnomics}}
+\section{Searching \DB}
 \label{sec:search}
 
-Given the vast size of the \textsf{dbnomics} space, it's important to
+Given the vast size of the \DB\ space, it's important to
 have effective search tools. This is work in progress, but in this
 section we illustrate the current state of play. The example below
 shows a two-stage search. We first search for relevant datasets across
