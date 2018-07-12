@@ -245,10 +245,12 @@ function bundles dbnomics_get_dataset_content(const string provider,
 
     n = 0
     ns = 0
+    # note: the following will give the total for the dataset
     found = jsonget(json, "$.series.num_found", &n)
     if n > 0
         nfound = atof(found)
-        ns = nfound > limit ? limit : nfound
+        ns = nfound - offset
+        ns = ns > limit ? limit : ns
     endif
     if ns > 0
         bundles ret = array(ns)
@@ -258,6 +260,7 @@ function bundles dbnomics_get_dataset_content(const string provider,
             ret[i].num_found = nfound
         endloop
     endif
+
 
     return ret
 end function
@@ -359,7 +362,7 @@ end function
 ### ------------------------------------------------------------------------
 
 function bundle dbnomics_dsets_for_provider(const string provider,
-    bool verbose[0])
+      bool verbose[0])
 
     bundle ret
     string json
