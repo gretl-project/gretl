@@ -10511,26 +10511,6 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    rname = (r->t == U_ADDR)? ptr_node_get_matrix_name(r, p) : "null";
 	    A = user_gensymm_eigenvals(m1, m2, rname, &p->err);
 	}
-#if NADARWAT_NEW
-#else
-    } else if (f == F_NADARWAT) {
-	post_process = 0;
-	if (l->t != SERIES) {
-	    node_type_error(f, 1, SERIES, l, p);
-	} else if (m->t != SERIES) {
-	    node_type_error(f, 2, SERIES, m, p);
-	} else if (r->t != NUM) {
-	    node_type_error(f, 3, NUM, r, p);
-	} else {
-	    reset_p_aux(p, save_aux);
-	    ret = aux_series_node(p);
-	    if (!p->err) {
-		p->err = nadaraya_watson(l->v.xvec, m->v.xvec,
-					 r->v.xval, p->dset, 0,
-					 ret->v.xvec);
-	    }
-	}
-#endif
     } else if (f == F_PRINCOMP) {
 	if (l->t != MAT) {
 	    node_type_error(f, 1, MAT, l, p);
@@ -12185,7 +12165,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		ret->v.ivec = full_list;
 	    }
 	}
-#if NADARWAT_NEW
     } else if (t->t == F_NADARWAT) {
 	const double *x = NULL;
 	const double *y = NULL;
@@ -12246,7 +12225,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    p->err = nadaraya_watson(x, y, h, p->dset, LOO,
 				     trim, ret->v.xvec);
 	}
-#endif
     }
 
     return ret;
@@ -15097,10 +15075,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_REGSUB:
     case F_MLAG:
     case F_EIGSOLVE:
-#if NADARWAT_NEW
-#else
-    case F_NADARWAT:
-#endif
     case F_PRINCOMP:
     case F_HALTON:
     case F_AGGRBY:
@@ -15167,9 +15141,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_DEFBUNDLE:
     case F_DEFLIST:
     case F_IRF:
-#if NADARWAT_NEW
     case F_NADARWAT:
-#endif
     case HF_CLOGFI:
 	/* built-in functions taking more than three args */
 	ret = eval_nargs_func(t, p);

@@ -26,7 +26,6 @@
 #include "gretl_array.h"
 
 #define GENDEBUG 0
-#define NADARWAT_NEW 1
 
 /* operators, types, punctuation */
 
@@ -415,10 +414,6 @@ enum {
     F_REGSUB,
     F_MLAG,
     F_EIGSOLVE,
-#if NADARWAT_NEW
-#else
-    F_NADARWAT,
-#endif
     F_SIMANN,
     F_HALTON,
     F_MWRITE,
@@ -473,9 +468,7 @@ enum {
     F_BFGSCMAX,
     F_SVM,
     F_IRF,
-#if NADARWAT_NEW
     F_NADARWAT,
-#endif
     HF_CLOGFI,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
