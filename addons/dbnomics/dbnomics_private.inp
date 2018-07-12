@@ -345,14 +345,13 @@ function bundles dset_search(const string key, const string pcode,
         if verbose
             got = nelem(ret)
             if got > 0
-                printf "listing series %d-%d of %d\n",
-                  offset+1, offset+got, tot
+                printf "Dataset %s/%s: matching series %d-%d of %d\n\n",
+                  pcode, dcode, offset+1, offset+got, tot
                 loop i = 1 .. got --quiet
-                    tmp = sprintf("%s - %s", ret[i].code, ret[i].name)
-                    printf "%s\n", strwrap(tmp, 76, 0, 2)
+                    printf "%s: %s\n", ret[i].code, ret[i].name
                 endloop
             else
-                printf "no series found\n"
+                printf "no matching series found\n"
             endif
         endif
     endif
