@@ -3246,10 +3246,10 @@ static void set_dbn_pager_status (windata_t *vwin)
     gtk_widget_set_sensitive(b4, last < pgr->ntotal);
 
     if (vwin->role == DBNOMICS_DB) {
-	tmp = g_strdup_printf(_("showing datasets %d-%d out of %d"),
+	tmp = g_strdup_printf(_("showing datasets %d-%d of %d"),
 			      first, last, pgr->ntotal);
     } else {
-	tmp = g_strdup_printf(_("showing series %d-%d out of %d"),
+	tmp = g_strdup_printf(_("showing series %d-%d of %d"),
 			      first, last, pgr->ntotal);
     }
 
