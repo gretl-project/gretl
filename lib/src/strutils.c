@@ -3083,7 +3083,7 @@ char *gretl_string_wrap (const char *src, int maxline,
 	for (i=0; i<indent; i++) {
 	    pputc(prn, ' ');
 	}
-	strcat(targ, src);
+	pputs(prn, src);
     } else {
 	const char *q, *p = src;
 	char buf[TESTLEN];
