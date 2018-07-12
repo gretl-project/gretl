@@ -87,7 +87,7 @@ function scalar fill_series_bundle(bundle *b, const string json, int idx)
     qry = sprintf("$.series.data%s.dataset_name", istr)
     b.dset_name = jsonget(json, qry, &got)
     if !got
-	b.dset_name = "untitled"
+        b.dset_name = "untitled"
     endif
 
     maybe_put_into_bundle(&b, json, "unit", sprintf("$.series.data%s.Unit", istr))
@@ -290,6 +290,10 @@ function bundles general_search(const string key, int limit[0::100],
     n = 0
     str = jsonget(json, sprintf("$.%s[*].code", magic), &n)
     ntot = atof(jsonget(json, "$.results.num_found"))
+    # fix possibly nonsensical result
+    if ntot < n
+        ntot = n
+    endif
 
     #printf "n = %d, ntot = %d\n", n, ntot
 
@@ -344,8 +348,8 @@ function bundles dset_search(const string key, const string pcode,
                 printf "listing series %d-%d of %d\n",
                   offset+1, offset+got, tot
                 loop i = 1 .. got --quiet
-                    bundle desc_i = ret[i]
-                    printf "%s - %s\n", desc_i.code, desc_i.name
+                    tmp = sprintf("%s - %s", ret[i].code, ret[i].name)
+                    printf "%s\n", strwrap(tmp, 76, 0, 2)
                 endloop
             else
                 printf "no series found\n"
