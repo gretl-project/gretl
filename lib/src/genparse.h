@@ -381,7 +381,6 @@ enum {
     F_KMEIER,
     F_NORMTEST,
     F_COR,
-    F_STRSCRAPE,
     F_LRCOVAR,
     F_JSONGETB,
     HF_CMMULT,
@@ -474,7 +473,6 @@ enum {
     F_BFGSCMAX,
     F_SVM,
     F_IRF,
-    F_STRWRAP,
 #if NADARWAT_NEW
     F_NADARWAT,
 #endif

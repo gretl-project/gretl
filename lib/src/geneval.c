@@ -10729,21 +10729,6 @@ static NODE *eval_print_scan (NODE *l, NODE *m, NODE *r, int f, parser *p)
     return ret;
 }
 
-static NODE *string_scrape_node (NODE *l, NODE *r, parser *p)
-{
-    NODE *ret = aux_matrix_node(p);
-
-    if (ret != NULL) {
-	int comma = node_get_bool(r, p, 0);
-
-	if (!p->err) {
-	    ret->v.m = scrape_numerical_values(l->v.str, comma, &p->err);
-	}
-    }
-
-    return ret;
-}
-
 static int x_to_period (double x, char c, int *julian, int *err)
 {
     if (julian != NULL && c == 'y') {
@@ -12199,48 +12184,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    if (ret != NULL) {
 		ret->v.ivec = full_list;
 	    }
-	}
-    } else if (t->t == F_STRWRAP) {
-	const char *src = NULL;
-	int maxline = 0;
-	int indent = 0;
-	int add_indent = 0;
-
-	if (k < 2 || k > 4) {
-	    n_args_error(k, 4, t->t, p);
-	}
-
-	for (i=0; i<k && !p->err; i++) {
-	    e = eval(n->v.bn.n[i], p);
-	    if (e == NULL) {
-		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
-	    } else if (i == 0) {
-		if (e->t == STR) {
-		    src = e->v.str;
-		} else {
-		    node_type_error(t->t, 1, STR, e, p);
-		}
-	    } else if (i == 1) {
-		maxline = node_get_int(e, p);
-	    } else if (i == 2) {
-		if (!null_or_empty(e)) {
-		    indent = node_get_int(e, p);
-		}
-	    } else if (i == 3) {
-		if (!null_or_empty(e)) {
-		    add_indent = node_get_int(e, p);
-		}
-	    }
-	}
-
-	if (!p->err) {
-	    reset_p_aux(p, save_aux);
-	    ret = aux_string_node(p);
-	}
-
-	if (!p->err) {
-	    ret->v.str =
-		gretl_string_wrap(src, maxline, indent, add_indent);
 	}
 #if NADARWAT_NEW
     } else if (t->t == F_NADARWAT) {
@@ -15193,15 +15136,6 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, 0, STR, NULL, p);
 	}
 	break;
-    case F_STRSCRAPE:
-	if (l->t == STR && empty_or_num(r)) {
-	    ret = string_scrape_node(l, r, p);
-	} else if (l->t != STR) {
-	    node_type_error(t->t, 0, STR, NULL, p);
-	} else {
-	    p->err = E_TYPES;
-	}
-	break;
     case F_BESSEL:
 	/* functions taking one char, one scalar/series and one
 	   matrix/series/scalar as args */
@@ -15233,7 +15167,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_DEFBUNDLE:
     case F_DEFLIST:
     case F_IRF:
-    case F_STRWRAP:
 #if NADARWAT_NEW
     case F_NADARWAT:
 #endif

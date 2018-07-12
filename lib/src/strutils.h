@@ -212,10 +212,4 @@ char *gretl_literal_replace (const char *orig,
 			     const char *repl,
 			     int *err);
 
-char *gretl_string_wrap (const char *src, int maxline,
-			 int indent, int add_indent);
-
-gretl_matrix *scrape_numerical_values (char *text, int comma,
-				       int *err);
-
 #endif /* STRUTILS_H */
