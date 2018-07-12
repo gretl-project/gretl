@@ -2437,7 +2437,7 @@ char *make_varname_unique (char *vname, int v, DATASET *dset)
 	if (conflict) {
 	    sprintf(tmp, "%d", k);
 	    vname[n] = '\0';
-	    strncat(vname, tmp, strlen(tmp));
+	    strcat(vname, tmp);
 	} else {
 	    /* name is unique */
 	    break;
@@ -2948,8 +2948,7 @@ char *gretl_literal_replace (const char *orig,
 	/* no replacement needed */
 	mod = gretl_strdup(orig);
     } else {
-	int rlen = strlen(repl);
-	int ldiff = nrep * (rlen - mlen);
+	int ldiff = nrep * (strlen(repl) - mlen);
 
 	mod = malloc(strlen(orig) + ldiff + 1);
 	if (mod != NULL) {
@@ -2957,11 +2956,11 @@ char *gretl_literal_replace (const char *orig,
 	    *mod = '\0';
 	    while ((r = strstr(q, match)) != NULL) {
 		strncat(mod, q, r - q);
-		strncat(mod, repl, rlen);
+		strcat(mod, repl);
 		q = r + mlen;
 	    }
 	    if (*q) {
-		strncat(mod, q, strlen(q));
+		strcat(mod, q);
 	    }
 	}
     }
@@ -2980,7 +2979,7 @@ char *gretl_literal_replace (const char *orig,
  * @last: 1-based index of final character.
  * @err: location to receive error code.
  *
- * Returns a substring of @str, from @first to @last.
+ * Returns: a substring of @str, from @first to @last.
  */
 
 char *gretl_substring (const char *str, int first, int last, int *err)
@@ -3025,6 +3024,100 @@ char *gretl_substring (const char *str, int first, int last, int *err)
     }
 
     return ret;
+}
+
+#define TESTLEN 256
+
+static void trim_to_length (char *s, int len)
+{
+    int n = strlen(s);
+
+    if (n > len) {
+	int i, bp0 = 0, bp1 = 0;
+
+	for (i=1; i<n-1; i++) {
+	    if (s[i] == ' ') {
+		if (i < len) {
+		    bp0 = i;
+		} else {
+		    bp1 = i;
+		    break;
+		}
+	    }
+	}
+	if (bp0 > 0) {
+	    s[bp0] = '\0';
+	} else if (bp1 > 0) {
+	    s[bp1] = '\0';
+	}
+    }
+}
+
+/**
+ * gretl_string wrap:
+ * @src: the string to operate on.
+ * @maxline: the desired maximum number of characters per line.
+ * @indent: indent in bytes.
+ * @add_indent: additional indent for all lines besides the first.
+ *
+ * Returns: a version of @src which is word-wrapped to a
+ * a maximum line length of @maxline, whenever possible, or
+ * NULL on failure.
+ */
+
+char *gretl_string_wrap (const char *src, int maxline,
+			 int indent, int add_indent)
+{
+    char *targ;
+    PRN *prn;
+    int i;
+
+    prn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
+    if (prn == NULL) {
+	return NULL;
+    }
+
+    src += strspn(src, " \t\n");
+
+    if (strlen(src) < maxline) {
+	for (i=0; i<indent; i++) {
+	    pputc(prn, ' ');
+	}
+	strcat(targ, src);
+    } else {
+	const char *q, *p = src;
+	char buf[TESTLEN];
+	int lnum = 0;
+
+	while (*p) {
+	    *buf = '\0';
+	    strncat(buf, p, TESTLEN - 1);
+	    if (lnum == 1) {
+		maxline -= add_indent;
+		indent += add_indent;
+	    }
+	    trim_to_length(buf, maxline);
+	    p += strlen(buf);
+	    if (!string_is_blank(buf)) {
+		for (i=0; i<indent; i++) {
+		    pputc(prn, ' ');
+		}
+		q = buf;
+		if (*q == ' ') q++;
+		pputs(prn, q);
+		if (!string_is_blank(p)) {
+		    /* there's more to come */
+		    pputc(prn, '\n');
+		}
+	    }
+	    lnum++;
+	}
+    }
+
+    targ = gretl_print_steal_buffer(prn);
+    gretl_print_destroy(prn);
+
+    return targ;
 }
 
 gretl_matrix *scrape_numerical_values (char *text, int comma,

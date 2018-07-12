@@ -474,6 +474,7 @@ enum {
     F_BFGSCMAX,
     F_SVM,
     F_IRF,
+    F_STRWRAP,
 #if NADARWAT_NEW
     F_NADARWAT,
 #endif

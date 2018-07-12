@@ -341,7 +341,7 @@ function bundles dset_search(const string key, const string pcode,
         if verbose
             got = nelem(ret)
             if got > 0
-                printf "listing series %d - %d out of %d\n",
+                printf "listing series %d-%d of %d\n",
                   offset+1, offset+got, tot
                 loop i = 1 .. got --quiet
                     bundle desc_i = ret[i]

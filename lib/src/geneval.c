@@ -12200,6 +12200,48 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		ret->v.ivec = full_list;
 	    }
 	}
+    } else if (t->t == F_STRWRAP) {
+	const char *src = NULL;
+	int maxline = 0;
+	int indent = 0;
+	int add_indent = 0;
+
+	if (k < 2 || k > 4) {
+	    n_args_error(k, 4, t->t, p);
+	}
+
+	for (i=0; i<k && !p->err; i++) {
+	    e = eval(n->v.bn.n[i], p);
+	    if (e == NULL) {
+		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
+	    } else if (i == 0) {
+		if (e->t == STR) {
+		    src = e->v.str;
+		} else {
+		    node_type_error(t->t, 1, STR, e, p);
+		}
+	    } else if (i == 1) {
+		maxline = node_get_int(e, p);
+	    } else if (i == 2) {
+		if (!null_or_empty(e)) {
+		    indent = node_get_int(e, p);
+		}
+	    } else if (i == 3) {
+		if (!null_or_empty(e)) {
+		    add_indent = node_get_int(e, p);
+		}
+	    }
+	}
+
+	if (!p->err) {
+	    reset_p_aux(p, save_aux);
+	    ret = aux_string_node(p);
+	}
+
+	if (!p->err) {
+	    ret->v.str =
+		gretl_string_wrap(src, maxline, indent, add_indent);
+	}
 #if NADARWAT_NEW
     } else if (t->t == F_NADARWAT) {
 	const double *x = NULL;
@@ -12233,7 +12275,8 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		} else {
 		    h = node_get_scalar(e, p);
 		    if (k > 3 && h < 0) {
-			gretl_errmsg_sprintf(_("Bandwidth cannot be negative with more than 3 arguments"));
+			gretl_errmsg_sprintf(_("Bandwidth cannot be negative "
+					       "with more than 3 arguments"));
 			p->err = E_INVARG;
 			break;
 		    }
@@ -15190,6 +15233,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_DEFBUNDLE:
     case F_DEFLIST:
     case F_IRF:
+    case F_STRWRAP:
 #if NADARWAT_NEW
     case F_NADARWAT:
 #endif
