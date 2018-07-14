@@ -340,17 +340,22 @@ function bundles dset_search(const string key, const string pcode,
 
     if !err
         bundle bj = jsongetb(json)
-        scalar tot = bj["series"].num_found
-        if tot > 0
+        scalar ntot = bj["series"].num_found
+        if ntot > 0
             ret = bj["series"].docs
             got = nelem(ret)
+            if ntot < got
+                # just in case of breakage
+                ntot = got
+            endif
+        endif
+        if got > 0
+            loop i = 1..got --quiet
+                ret[i].ntot = ntot
+            endloop
         endif
         if verbose
             if got > 0
-                if tot < got
-                    # just in case of breakage
-                    tot = got
-                endif
                 printf "Dataset %s/%s, matching series %d-%d of %d:\n\n",
                   pcode, dcode, offset+1, offset+got, tot
                 loop i = 1 .. got --quiet

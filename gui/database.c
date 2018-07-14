@@ -1899,16 +1899,21 @@ void open_dbnomics_series (GtkWidget *w, gpointer data)
 static int dbn_general_search_results (const gchar *key,
 				       gretl_array *a)
 {
+    int n = gretl_array_get_length(a);
     PRN *prn = NULL;
-    int err = bufopen(&prn);
-    int n_ok = 0;
+    int err, n_ok = 0;
+
+    if (n == 0) {
+	return 0;
+    }
+
+    err = bufopen(&prn);
 
     if (!err) {
 	const char *pcode, *dcode, *name;
 	gretl_bundle *b;
-	int i, n;
+	int i;
 
-	n = gretl_array_get_length(a);
 	pprintf(prn, _("Results of DB.NOMICS search on '%s'\n"), key);
 	pputs(prn, "Provider/Dataset : description\n\n");
 
@@ -1945,21 +1950,31 @@ static int dbn_general_search_results (const gchar *key,
 static int dbn_dataset_search_results (const char *key,
 				       const char *prov,
 				       const char *dset,
+				       int offset,
 				       gretl_array *a)
 {
+    int n = gretl_array_get_length(a);
     PRN *prn = NULL;
-    int err = bufopen(&prn);
-    int n_ok = 0;
+    int err, n_ok = 0;
+
+    if (n == 0) {
+	return 0;
+    }
+
+    err = bufopen(&prn);
 
     if (!err) {
 	const char *scode, *name;
 	gretl_bundle *b;
-	int i, n;
+	int i, ntot;
 
-	n = gretl_array_get_length(a);
+	b = gretl_array_get_bundle(a, 0);
+	ntot = gretl_bundle_get_int(b, "ntot", NULL);
+
 	pprintf(prn, _("DB.NOMICS search on '%s' in dataset %s/%s\n"),
 		key, prov, dset);
-	pputs(prn, "Series : description\n\n");
+	pprintf(prn, "Matching series %d to %d of %d\n\n", offset + 1,
+		offset + n, ntot);
 
 	for (i=0; i<n; i++) {
 	    b = gretl_array_get_bundle(a, i);
@@ -1999,11 +2014,12 @@ void dbnomics_search (gchar *key, windata_t *vwin)
 	const gchar *prov = g_object_get_data(G_OBJECT(vwin->listbox),
 					       "provider");
 	gchar *dset = NULL;
+	int offset = 0;
 
 	tree_view_get_string(GTK_TREE_VIEW(vwin->listbox),
 			     vwin->active_var, COL_DBNAME, &dset);
-	a = dbnomics_search_call(key, prov, dset, 80, 0, &err);
-	n_found = dbn_dataset_search_results(key, prov, dset, a);
+	a = dbnomics_search_call(key, prov, dset, 80, offset, &err);
+	n_found = dbn_dataset_search_results(key, prov, dset, offset, a);
 	g_free(dset);
     } else {
 	a = dbnomics_search_call(key, NULL, NULL, 80, 0, &err);
