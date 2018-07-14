@@ -357,7 +357,7 @@ function bundles dset_search(const string key, const string pcode,
         if verbose
             if got > 0
                 printf "Dataset %s/%s, matching series %d-%d of %d:\n\n",
-                  pcode, dcode, offset+1, offset+got, tot
+                  pcode, dcode, offset+1, offset+got, ntot
                 loop i = 1 .. got --quiet
                     printf "%s: %s\n", ret[i].code, ret[i].name
                 endloop
