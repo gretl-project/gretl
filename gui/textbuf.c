@@ -26,6 +26,7 @@
 #include "guiprint.h"
 #include "gretl_func.h"
 #include "datafiles.h"
+#include "database.h"
 #include "fncall.h"
 
 #ifdef G_OS_WIN32
@@ -68,6 +69,7 @@
 #define MNU_PAGE    993
 #define DBN_PAGE    992
 #define DBS_PAGE    991
+#define NEXT_PAGE   990
 
 enum {
     PLAIN_TEXT,
@@ -1290,6 +1292,17 @@ void textview_set_text_report (GtkWidget *view, const char *buf)
     gtk_text_buffer_insert(tbuf, &iter, buf, -1);
 }
 
+static const char *semicolon_pos (const char *s)
+{
+    while (*s != '\0' && *s != '"') {
+	if (*s == ';') {
+	    return s;
+	}
+	s++;
+    }
+    return NULL;
+}
+
 void textview_set_text_dbsearch (windata_t *vwin, const char *buf)
 {
     GtkTextBuffer *tbuf;
@@ -1310,7 +1323,7 @@ void textview_set_text_dbsearch (windata_t *vwin, const char *buf)
     while ((p = strstr(buf, "<@dbn"))) {
 	gtk_text_buffer_insert(tbuf, &iter, buf, p - buf);
 	p += 7;
-	q = strchr(p, ';');
+	q = semicolon_pos(p);
 	if (q != NULL) {
 	    /* should be show;tagname */
 	    page = DBS_PAGE;
@@ -1319,11 +1332,15 @@ void textview_set_text_dbsearch (windata_t *vwin, const char *buf)
 	    q = strchr(p, '"');
 	    dsname = g_strndup(p, q-p);
 	} else {
-	    /* in this case show = tagname */
-	    page = DBN_PAGE;
-	    show = NULL;
 	    q = strchr(p, '"');
 	    dsname = g_strndup(p, q-p);
+	    if (!strcmp(dsname, "_NEXT_")) {
+		page = NEXT_PAGE;
+		show = g_strdup(_("Next results"));
+	    } else {
+		page = DBN_PAGE;
+		show = NULL;
+	    }
 	}
 	tag = gtk_text_tag_table_lookup(tab, dsname);
 	if (tag == NULL) {
@@ -1392,6 +1409,17 @@ void textview_append_text (GtkWidget *view, const char *text)
     tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
     gtk_text_buffer_get_end_iter(tbuf, &iter);
     gtk_text_buffer_insert(tbuf, &iter, text, -1);
+}
+
+void textview_clear_text (GtkWidget *view)
+{
+    GtkTextBuffer *tbuf;
+    GtkTextIter iter;
+
+    g_return_if_fail(GTK_IS_TEXT_VIEW(view));
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
+    gtk_text_buffer_set_text (tbuf, "", -1);
 }
 
 void textview_insert_file (windata_t *vwin, const char *fname)
@@ -1784,6 +1812,18 @@ static void open_dbs_link (GtkTextTag *tag)
     }
 }
 
+/* opening next "page" pf dbnomics search results */
+
+static void open_next_link (GtkTextTag *tag, GtkWidget *tview)
+{
+    windata_t *vwin;
+
+    vwin = g_object_get_data(G_OBJECT(tview), "vwin");
+    if (vwin != NULL) {
+	dbnomics_search(NULL, vwin);
+    }
+}
+
 static void open_pdf_file (GtkTextTag *tag)
 {
     gchar *name = NULL;
@@ -1834,6 +1874,8 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter,
 		open_dbn_link(tag);
 	    } else if (page == DBS_PAGE) {
 		open_dbs_link(tag);
+	    } else if (page == NEXT_PAGE) {
+		open_next_link(tag, tview);
 	    } else {
 		int role = object_get_int(tview, "role");
 
@@ -4203,6 +4245,11 @@ void create_text (windata_t *vwin, int hsize, int vsize,
 	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(w), GTK_WRAP_WORD);
     } else {
 	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(w), GTK_WRAP_NONE);
+    }
+
+    if (role == VIEW_DBSEARCH) {
+	/* make @vwin discoverable via @w */
+	g_object_set_data(G_OBJECT(w), "vwin", vwin);
     }
 
     gtk_text_view_set_left_margin(GTK_TEXT_VIEW(w), 4);

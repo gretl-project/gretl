@@ -31,6 +31,7 @@
 #include "csvdata.h"
 #include "menustate.h"
 #include "treeutils.h"
+#include "textbuf.h"
 #include "winstack.h"
 #include "toolbar.h"
 #include "dlgutils.h"
@@ -1951,7 +1952,8 @@ static int dbn_dataset_search_results (const char *key,
 				       const char *prov,
 				       const char *dset,
 				       int offset,
-				       gretl_array *a)
+				       gretl_array *a,
+				       windata_t *prev_vwin)
 {
     int n = gretl_array_get_length(a);
     PRN *prn = NULL;
@@ -1966,6 +1968,7 @@ static int dbn_dataset_search_results (const char *key,
     if (!err) {
 	const char *scode, *name;
 	gretl_bundle *b;
+	int more = 0;
 	int i, ntot;
 
 	b = gretl_array_get_bundle(a, 0);
@@ -1973,8 +1976,15 @@ static int dbn_dataset_search_results (const char *key,
 
 	pprintf(prn, _("DB.NOMICS search on '%s' in dataset %s/%s\n"),
 		key, prov, dset);
-	pprintf(prn, "Matching series %d to %d of %d\n\n", offset + 1,
+	pprintf(prn, "Matching series %d to %d of %d", offset + 1,
 		offset + n, ntot);
+
+	if (ntot > offset + n) {
+	    pputs(prn, " [ <@dbn=\"_NEXT_\"> ]\n\n");
+	    more = 1;
+	} else {
+	    pputs(prn, "\n\n");
+	}
 
 	for (i=0; i<n; i++) {
 	    b = gretl_array_get_bundle(a, i);
@@ -1986,10 +1996,33 @@ static int dbn_dataset_search_results (const char *key,
 		n_ok++;
 	    }
 	}
-	if (n_ok > 0) {
-	    const char *title = "gretl: DB.NOMICS search";
 
-	    view_buffer(prn, 78, 350, title, VIEW_DBSEARCH, NULL);
+	if (prev_vwin != NULL) {
+	    /* we should replace the content of @prev_vwin */
+	    char *buf = gretl_print_steal_buffer(prn);
+
+	    /* update the offset record on prev_vwin->text */
+	    widget_set_int(prev_vwin->text, "offset", offset);
+	    /* clear and replace with new results */
+	    textview_clear_text(prev_vwin->text);
+	    textview_set_text_dbsearch(prev_vwin, buf);
+	    gretl_print_destroy(prn);
+	    return 1;
+	} else if (n_ok > 0) {
+	    const char *title = "gretl: DB.NOMICS search";
+	    windata_t *vwin;
+
+	    vwin = view_buffer(prn, 78, 350, title, VIEW_DBSEARCH, NULL);
+	    if (vwin != NULL && more) {
+		widget_set_int(vwin->text, "offset", offset);
+		widget_set_int(vwin->text, "ntot", ntot);
+		g_object_set_data_full(G_OBJECT(vwin->text), "key",
+				       g_strdup(key), g_free);
+		g_object_set_data_full(G_OBJECT(vwin->text), "prov",
+				       g_strdup(prov), g_free);
+		g_object_set_data_full(G_OBJECT(vwin->text), "dset",
+				       g_strdup(dset), g_free);
+	    }
 	} else {
 	    gretl_print_destroy(prn);
 	}
@@ -1997,6 +2030,8 @@ static int dbn_dataset_search_results (const char *key,
 
     return n_ok;
 }
+
+#define SEARCH_CHUNK 80
 
 /* The @key string is passed here when "all DB.NOMICS"
    is selected as the search space in the dbnomics
@@ -2010,7 +2045,22 @@ void dbnomics_search (gchar *key, windata_t *vwin)
     int n_found = 0;
     int err = 0;
 
-    if (vwin->role == DBNOMICS_DB) {
+    if (vwin->role == VIEW_DBSEARCH) {
+	/* we're called in "next results" mode */
+	const gchar *key, *prov, *dset;
+	int offset, ntot;
+
+	key = g_object_get_data(G_OBJECT(vwin->text), "key");
+	prov = g_object_get_data(G_OBJECT(vwin->text), "prov");
+	dset = g_object_get_data(G_OBJECT(vwin->text), "dset");
+	offset = widget_get_int(vwin->text, "offset");
+	ntot = widget_get_int(vwin->text, "ntot");
+
+	offset += SEARCH_CHUNK;
+	a = dbnomics_search_call(key, prov, dset, SEARCH_CHUNK, offset, &err);
+	n_found = dbn_dataset_search_results(key, prov, dset, offset, a, vwin);
+	key = NULL; /* don't free it! */
+    } else if (vwin->role == DBNOMICS_DB) {
 	const gchar *prov = g_object_get_data(G_OBJECT(vwin->listbox),
 					       "provider");
 	gchar *dset = NULL;
@@ -2018,11 +2068,11 @@ void dbnomics_search (gchar *key, windata_t *vwin)
 
 	tree_view_get_string(GTK_TREE_VIEW(vwin->listbox),
 			     vwin->active_var, COL_DBNAME, &dset);
-	a = dbnomics_search_call(key, prov, dset, 80, offset, &err);
-	n_found = dbn_dataset_search_results(key, prov, dset, offset, a);
+	a = dbnomics_search_call(key, prov, dset, SEARCH_CHUNK, offset, &err);
+	n_found = dbn_dataset_search_results(key, prov, dset, offset, a, NULL);
 	g_free(dset);
     } else {
-	a = dbnomics_search_call(key, NULL, NULL, 80, 0, &err);
+	a = dbnomics_search_call(key, NULL, NULL, SEARCH_CHUNK, 0, &err);
 	if (!err) {
 	    n_found = dbn_general_search_results(key, a);
 	}
@@ -2033,8 +2083,11 @@ void dbnomics_search (gchar *key, windata_t *vwin)
     }
 
     gretl_array_destroy(a);
-    /* this arg is a GTK-allocated string */
-    g_free(key);
+
+    /* only if this arg is a GTK-allocated string */
+    if (key != NULL) {
+	g_free(key);
+    }
 }
 
 void open_db_index (GtkWidget *w, gpointer data)
