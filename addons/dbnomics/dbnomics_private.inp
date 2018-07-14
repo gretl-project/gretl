@@ -236,7 +236,7 @@ function scalar dbn_get_json (const string parms, bool verbose[0],
 
     string URL = "https://api.next.nomics.world/" ~ parms
     if verbose
-        printf "URL = '%s'\n", URL
+        printf "URL: %s\n", URL
     endif
     bundle req = defbundle("URL", URL, "header", "accept: application/json")
     # check for curl error
@@ -282,7 +282,7 @@ function bundles general_search(const string key, int limit[0::100],
     string json
     parms = sprintf("search?q=%s&limit=%d&offset=%d", sanitize_url(key),
       limit, offset)
-    err = dbn_get_json(parms, 0, &json)
+    err = dbn_get_json(parms, verbose, &json)
     if err
         return ret
     endif
@@ -330,21 +330,27 @@ function bundles dset_search(const string key, const string pcode,
       const string dcode, int limit[0::100],
       int offset[0], bool verbose[0])
 
-    bundles ret = null
+    bundles ret = array(0)
+    scalar got = 0
     string json
     parms = sprintf("%s/%s/series?q=%s&limit=%d&offset=%d", pcode, dcode,
       sanitize_url(key),limit, offset)
 
-    err = dbn_get_json(parms, 0, &json)
+    err = dbn_get_json(parms, verbose, &json)
 
     if !err
         bundle bj = jsongetb(json)
-        ret = bj["series"].docs
-        tot = bj["series"].num_found
-
-        if verbose
+        scalar tot = bj["series"].num_found
+        if tot > 0
+            ret = bj["series"].docs
             got = nelem(ret)
+        endif
+        if verbose
             if got > 0
+                if tot < got
+                    # just in case of breakage
+                    tot = got
+                endif
                 printf "Dataset %s/%s, matching series %d-%d of %d:\n\n",
                   pcode, dcode, offset+1, offset+got, tot
                 loop i = 1 .. got --quiet
