@@ -4281,10 +4281,10 @@ void *dbnomics_get_providers_call (int *err)
 }
 
 void *dbnomics_search_call (const char *key,
+			    const char *dset,
 			    int limit, int offset,
 			    int *err)
 {
-    const char *dset = NULL;
     gretl_array *A = NULL;
     fncall *fc = NULL;
     GdkWindow *cwin;

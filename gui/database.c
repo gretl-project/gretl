@@ -1896,22 +1896,11 @@ void open_dbnomics_series (GtkWidget *w, gpointer data)
     g_free(datacode);
 }
 
-/* The @key string is passed here when "all DB.NOMICS"
-   is selected as the search space in the dbnomics
-   providers window.
-*/
-
-void dbnomics_search (gchar *key, windata_t *vwin)
+static void dbn_general_search (const gchar *key,
+				gretl_array *a)
 {
-    gretl_array *a;
     PRN *prn = NULL;
-    int err = 0;
-
-    a = dbnomics_search_call(key, 50, 0, &err);
-
-    if (!err) {
-	err = bufopen(&prn);
-    }
+    int err = bufopen(&prn);
 
     if (!err) {
 	const char *pcode, *dcode, *name;
@@ -1942,6 +1931,77 @@ void dbnomics_search (gchar *key, windata_t *vwin)
 	    gretl_print_destroy(prn);
 	}
     }
+}
+
+static void dbn_dataset_search (const gchar *key,
+				const char *dset,
+				gretl_array *a)
+{
+    PRN *prn = NULL;
+    int err = bufopen(&prn);
+
+    if (!err) {
+	const char *scode, *name;
+	int i, n, n_ok = 0;
+	gretl_bundle *b;
+
+	n = gretl_array_get_length(a);
+
+	pprintf(prn, _("DB.NOMICS search on '%s' in %s\n"), key, dset);
+	pputs(prn, "Series : description\n\n");
+
+	for (i=0; i<n; i++) {
+	    gretl_bundle_print(b, OPT_NONE, prn);
+	    scode = gretl_bundle_get_string(b, "code", NULL);
+	    name = gretl_bundle_get_string(b, "name", NULL);
+	    if (scode != NULL && name != NULL) {
+		pprintf(prn, "%d %s : %s\n\n", i+1,
+			scode, name);
+		n_ok++;
+	    }
+	}
+	if (1 || n_ok > 0) {
+	    const char *title = "gretl: DB.NOMICS search";
+
+	    view_buffer(prn, 78, 350, title, VIEW_DBSEARCH, NULL);
+	} else {
+	    warnbox(_("No matching series were found"));
+	    gretl_print_destroy(prn);
+	}
+    }
+}
+
+/* The @key string is passed here when "all DB.NOMICS"
+   is selected as the search space in the dbnomics
+   providers window, or when "this database" is selected
+   in a dbnomics dataset window.
+*/
+
+void dbnomics_search (gchar *key, windata_t *vwin)
+{
+    gretl_array *a = NULL;
+    int err = 0;
+
+    if (vwin->role == DBNOMICS_DB) {
+	const gchar *prov = g_object_get_data(G_OBJECT(vwin->listbox),
+					       "provider");
+	gchar *dset, *datacode;
+
+	tree_view_get_string(GTK_TREE_VIEW(vwin->listbox),
+			     vwin->active_var, COL_DBNAME, &dset);
+	datacode = g_strdup_printf("%s/%s", prov, dset);
+	a = dbnomics_search_call(key, datacode, 50, 0, &err);
+	dbn_dataset_search(key, datacode, a);
+	g_free(datacode);
+	g_free(dset);
+    } else {
+	a = dbnomics_search_call(key, NULL, 50, 0, &err);
+	if (!err) {
+	    dbn_general_search(key, a);
+	}
+    }
+
+    gretl_array_destroy(a);
 
     /* it's a GTK-allocated string */
     g_free(key);
@@ -3259,6 +3319,8 @@ static void set_dbn_pager_status (windata_t *vwin)
     }
     g_free(tmp);
 }
+
+/* list the datasets available for a given provider */
 
 gint populate_dbnomics_dataset_list (windata_t *vwin, gpointer p)
 {

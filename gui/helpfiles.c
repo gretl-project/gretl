@@ -891,7 +891,8 @@ static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin)
     sensitive = !all_lower_case(needle);
 
     if (g_object_get_data(G_OBJECT(entry), "search-all")) {
-	if (vwin->role == DBNOMICS_TOP) {
+	if (vwin->role == DBNOMICS_TOP ||
+	    vwin->role == DBNOMICS_DB) {
 	    dbnomics_search(needle, vwin);
 	    return;
 	} else {
@@ -961,11 +962,17 @@ static void toggle_search_this_help (GtkComboBox *box, GtkWidget *entry)
     }
 }
 
-static void finder_add_dbn_options (GtkWidget *hbox, GtkWidget *entry)
+static void finder_add_dbn_options (windata_t *vwin,
+				    GtkWidget *hbox,
+				    GtkWidget *entry)
 {
     GtkWidget *combo = gtk_combo_box_text_new();
 
-    combo_box_append_text(combo, _("all DB.NOMICS"));
+    if (vwin->role == DBNOMICS_DB) {
+	combo_box_append_text(combo, _("selected dataset"));
+    } else {
+	combo_box_append_text(combo, _("all DB.NOMICS"));
+    }
     combo_box_append_text(combo, _("this window"));
     gtk_box_pack_end(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
@@ -1010,8 +1017,9 @@ void vwin_add_finder (windata_t *vwin)
 	vwin->role == FUNC_HELP ||
 	vwin->role == FUNC_HELP_EN) {
 	finder_add_options(hbox, entry);
-    } else if (vwin->role == DBNOMICS_TOP) {
-	finder_add_dbn_options(hbox, entry);
+    } else if (vwin->role == DBNOMICS_TOP ||
+	       vwin->role == DBNOMICS_DB) {
+	finder_add_dbn_options(vwin, hbox, entry);
     }
 
     gtk_entry_set_width_chars(GTK_ENTRY(entry), 16);
