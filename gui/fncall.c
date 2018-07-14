@@ -4223,11 +4223,11 @@ int dbnomics_get_series_call (const char *datacode)
 	    gui_errmsg(err);
 	}
     }
-    
+
     if (b != NULL) {
 	gchar *title;
 	int dberr = gretl_bundle_get_int(b, "error", &err);
-	
+
 	if (dberr) {
 	    title = g_strdup_printf("gretl: %s", datacode);
 	    view_buffer(prn, 78, 200, title, IMPORT, NULL);
@@ -4281,6 +4281,7 @@ void *dbnomics_get_providers_call (int *err)
 }
 
 void *dbnomics_search_call (const char *key,
+			    const char *prov,
 			    const char *dset,
 			    int limit, int offset,
 			    int *err)
@@ -4288,17 +4289,31 @@ void *dbnomics_search_call (const char *key,
     gretl_array *A = NULL;
     fncall *fc = NULL;
     GdkWindow *cwin;
+    int use_dset = 0;
 
-    fc = get_pkg_function_call("dbnomics_search", "dbnomics");
+    if (prov != NULL && dset != NULL) {
+	use_dset = 1;
+	fc = get_pkg_function_call("dset_search", "dbnomics");
+    } else {
+	fc = get_pkg_function_call("general_search", "dbnomics");
+    }
     if (fc == NULL) {
 	*err = E_DATA;
 	return NULL;
     }
 
-    *err = push_function_args(fc, GRETL_TYPE_STRING, (void *) key, NULL,
-			      GRETL_TYPE_STRING, (void *) dset, NULL,
-			      GRETL_TYPE_INT, (void *) &limit, NULL,
-			      GRETL_TYPE_INT, (void *) &offset, NULL, -1);
+    if (use_dset) {
+	*err = push_function_args(fc, GRETL_TYPE_STRING, (void *) key, NULL,
+				  GRETL_TYPE_STRING, (void *) prov, NULL,
+				  GRETL_TYPE_STRING, (void *) dset, NULL,
+				  GRETL_TYPE_INT, (void *) &limit, NULL,
+				  GRETL_TYPE_INT, (void *) &offset, NULL, -1);
+    } else {
+	*err = push_function_args(fc, GRETL_TYPE_STRING, (void *) key, NULL,
+				  GRETL_TYPE_INT, (void *) &limit, NULL,
+				  GRETL_TYPE_INT, (void *) &offset, NULL, -1);
+    }
+
     if (!*err) {
 	set_wait_cursor(&cwin);
 	*err = gretl_function_exec(fc, GRETL_TYPE_BUNDLES, NULL,

@@ -1896,19 +1896,19 @@ void open_dbnomics_series (GtkWidget *w, gpointer data)
     g_free(datacode);
 }
 
-static void dbn_general_search (const gchar *key,
-				gretl_array *a)
+static int dbn_general_search_results (const gchar *key,
+				       gretl_array *a)
 {
     PRN *prn = NULL;
     int err = bufopen(&prn);
+    int n_ok = 0;
 
     if (!err) {
 	const char *pcode, *dcode, *name;
-	int i, n, n_ok = 0;
 	gretl_bundle *b;
+	int i, n;
 
 	n = gretl_array_get_length(a);
-
 	pprintf(prn, _("Results of DB.NOMICS search on '%s'\n"), key);
 	pputs(prn, "Provider/Dataset : description\n\n");
 
@@ -1931,44 +1931,56 @@ static void dbn_general_search (const gchar *key,
 	    gretl_print_destroy(prn);
 	}
     }
+
+    return n_ok;
 }
 
-static void dbn_dataset_search (const gchar *key,
-				const char *dset,
-				gretl_array *a)
+/* This function could be rolled together with the above,
+   dbn_general_search_results(), except that we might choose
+   to display series-within-dataset results in a different
+   manner (listbox?), so we'll the two functions distinct
+   for now.
+*/
+
+static int dbn_dataset_search_results (const char *key,
+				       const char *prov,
+				       const char *dset,
+				       gretl_array *a)
 {
     PRN *prn = NULL;
     int err = bufopen(&prn);
+    int n_ok = 0;
 
     if (!err) {
 	const char *scode, *name;
-	int i, n, n_ok = 0;
 	gretl_bundle *b;
+	int i, n;
 
 	n = gretl_array_get_length(a);
-
-	pprintf(prn, _("DB.NOMICS search on '%s' in %s\n"), key, dset);
+	pprintf(prn, _("DB.NOMICS search on '%s' in dataset %s/%s\n"),
+		key, prov, dset);
 	pputs(prn, "Series : description\n\n");
 
 	for (i=0; i<n; i++) {
-	    gretl_bundle_print(b, OPT_NONE, prn);
+	    b = gretl_array_get_bundle(a, i);
 	    scode = gretl_bundle_get_string(b, "code", NULL);
 	    name = gretl_bundle_get_string(b, "name", NULL);
 	    if (scode != NULL && name != NULL) {
-		pprintf(prn, "%d %s : %s\n\n", i+1,
-			scode, name);
+		pprintf(prn, "%d <@dbn=\"%s;%s/%s/%s\"> : %s\n\n", i+1,
+			scode, prov, dset, scode, name);
 		n_ok++;
 	    }
 	}
-	if (1 || n_ok > 0) {
+	if (n_ok > 0) {
 	    const char *title = "gretl: DB.NOMICS search";
 
 	    view_buffer(prn, 78, 350, title, VIEW_DBSEARCH, NULL);
 	} else {
-	    warnbox(_("No matching series were found"));
 	    gretl_print_destroy(prn);
 	}
     }
+
+    return n_ok;
 }
 
 /* The @key string is passed here when "all DB.NOMICS"
@@ -1980,30 +1992,32 @@ static void dbn_dataset_search (const gchar *key,
 void dbnomics_search (gchar *key, windata_t *vwin)
 {
     gretl_array *a = NULL;
+    int n_found = 0;
     int err = 0;
 
     if (vwin->role == DBNOMICS_DB) {
 	const gchar *prov = g_object_get_data(G_OBJECT(vwin->listbox),
 					       "provider");
-	gchar *dset, *datacode;
+	gchar *dset = NULL;
 
 	tree_view_get_string(GTK_TREE_VIEW(vwin->listbox),
 			     vwin->active_var, COL_DBNAME, &dset);
-	datacode = g_strdup_printf("%s/%s", prov, dset);
-	a = dbnomics_search_call(key, datacode, 50, 0, &err);
-	dbn_dataset_search(key, datacode, a);
-	g_free(datacode);
+	a = dbnomics_search_call(key, prov, dset, 80, 0, &err);
+	n_found = dbn_dataset_search_results(key, prov, dset, a);
 	g_free(dset);
     } else {
-	a = dbnomics_search_call(key, NULL, 50, 0, &err);
+	a = dbnomics_search_call(key, NULL, NULL, 80, 0, &err);
 	if (!err) {
-	    dbn_general_search(key, a);
+	    n_found = dbn_general_search_results(key, a);
 	}
     }
 
-    gretl_array_destroy(a);
+    if (!err && n_found == 0) {
+	warnbox(_("No matches were found"));
+    }
 
-    /* it's a GTK-allocated string */
+    gretl_array_destroy(a);
+    /* this arg is a GTK-allocated string */
     g_free(key);
 }
 

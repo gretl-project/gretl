@@ -26,6 +26,7 @@
 #include "guiprint.h"
 #include "gretl_func.h"
 #include "datafiles.h"
+#include "fncall.h"
 
 #ifdef G_OS_WIN32
 # include "gretlwin32.h" /* for browser_open() */
@@ -66,6 +67,7 @@
 #define PDF_PAGE    994
 #define MNU_PAGE    993
 #define DBN_PAGE    992
+#define DBS_PAGE    991
 
 enum {
     PLAIN_TEXT,
@@ -1294,7 +1296,9 @@ void textview_set_text_dbsearch (windata_t *vwin, const char *buf)
     GtkTextTagTable *tab;
     GtkTextIter iter;
     GtkTextTag *tag;
-    gchar *dsname;
+    gchar *dsname = NULL;
+    gchar *show = NULL;
+    int page;
     const char *p, *q;
 
     /* plain text except for "<@dbn>" tags for links */
@@ -1306,16 +1310,34 @@ void textview_set_text_dbsearch (windata_t *vwin, const char *buf)
     while ((p = strstr(buf, "<@dbn"))) {
 	gtk_text_buffer_insert(tbuf, &iter, buf, p - buf);
 	p += 7;
-	q = strchr(p, '"');
-	dsname = g_strndup(p, q-p);
+	q = strchr(p, ';');
+	if (q != NULL) {
+	    /* should be show;tagname */
+	    page = DBS_PAGE;
+	    show = g_strndup(p, q-p);
+	    p = q + 1;
+	    q = strchr(p, '"');
+	    dsname = g_strndup(p, q-p);
+	} else {
+	    /* in this case show = tagname */
+	    page = DBN_PAGE;
+	    show = NULL;
+	    q = strchr(p, '"');
+	    dsname = g_strndup(p, q-p);
+	}
 	tag = gtk_text_tag_table_lookup(tab, dsname);
 	if (tag == NULL) {
 	    tag = gtk_text_buffer_create_tag(tbuf, dsname, "foreground", "blue",
 					     NULL);
-	    g_object_set_data(G_OBJECT(tag), "page", GINT_TO_POINTER(DBN_PAGE));
+	    g_object_set_data(G_OBJECT(tag), "page", GINT_TO_POINTER(page));
 	}
-	gtk_text_buffer_insert_with_tags(tbuf, &iter, dsname, -1, tag, NULL);
+	gtk_text_buffer_insert_with_tags(tbuf, &iter,
+					 show == NULL ? dsname : show,
+					 -1, tag, NULL);
 	g_free(dsname);
+	if (show != NULL) {
+	    g_free(show);
+	}
 	buf = q + 2;
     }
 
@@ -1732,6 +1754,9 @@ static void open_menu_item (GtkTextTag *tag)
     }
 }
 
+/* opening a series-listing window, coming from a dbnomics
+   dataset window */
+
 static void open_dbn_link (GtkTextTag *tag)
 {
     gchar *name = NULL;
@@ -1740,6 +1765,21 @@ static void open_dbn_link (GtkTextTag *tag)
 
     if (name != NULL) {
 	display_files(DBNOMICS_SERIES, name);
+	g_free(name);
+    }
+}
+
+/* opening a specific series info window, coming from a
+   dbnomics dataset-search window */
+
+static void open_dbs_link (GtkTextTag *tag)
+{
+    gchar *name = NULL;
+
+    g_object_get(G_OBJECT(tag), "name", &name, NULL);
+
+    if (name != NULL) {
+	dbnomics_get_series_call(name);
 	g_free(name);
     }
 }
@@ -1792,6 +1832,8 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter,
 		open_menu_item(tag);
 	    } else if (page == DBN_PAGE) {
 		open_dbn_link(tag);
+	    } else if (page == DBS_PAGE) {
+		open_dbs_link(tag);
 	    } else {
 		int role = object_get_int(tview, "role");
 

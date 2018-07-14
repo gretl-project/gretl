@@ -84,6 +84,7 @@ int dbnomics_get_series_call (const char *datacode);
 void *dbnomics_get_providers_call (int *err);
 
 void *dbnomics_search_call (const char *key,
+			    const char *prov,
 			    const char *dset,
 			    int limit, int offset,
 			    int *err);
