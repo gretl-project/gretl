@@ -2061,17 +2061,29 @@ void dbnomics_search (gchar *key, windata_t *vwin)
 	n_found = dbn_dataset_search_results(key, prov, dset, offset, a, vwin);
 	key = NULL; /* don't free it! */
     } else if (vwin->role == DBNOMICS_DB) {
+	/* searching "selected dataset" in datasets window */
 	const gchar *prov = g_object_get_data(G_OBJECT(vwin->listbox),
 					       "provider");
 	gchar *dset = NULL;
-	int offset = 0;
 
 	tree_view_get_string(GTK_TREE_VIEW(vwin->listbox),
 			     vwin->active_var, COL_DBNAME, &dset);
-	a = dbnomics_search_call(key, prov, dset, SEARCH_CHUNK, offset, &err);
-	n_found = dbn_dataset_search_results(key, prov, dset, offset, a, NULL);
+	a = dbnomics_search_call(key, prov, dset, SEARCH_CHUNK, 0, &err);
+	n_found = dbn_dataset_search_results(key, prov, dset, 0, a, NULL);
 	g_free(dset);
+    } else if (vwin->role == DBNOMICS_SERIES) {
+	/* searching from a particular dataset window */
+	const gchar *path = g_object_get_data(G_OBJECT(vwin->listbox),
+					      "path");
+	const gchar *p = strchr(path, '/');
+	const gchar *dset = p + 1;
+	gchar *prov = g_strndup(path, p - path);
+
+	a = dbnomics_search_call(key, prov, dset, SEARCH_CHUNK, 0, &err);
+	n_found = dbn_dataset_search_results(key, prov, dset, 0, a, NULL);
+	g_free(prov);
     } else {
+	/* top-level search */
 	a = dbnomics_search_call(key, NULL, NULL, SEARCH_CHUNK, 0, &err);
 	if (!err) {
 	    n_found = dbn_general_search_results(key, a);

@@ -892,7 +892,8 @@ static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin)
 
     if (g_object_get_data(G_OBJECT(entry), "search-all")) {
 	if (vwin->role == DBNOMICS_TOP ||
-	    vwin->role == DBNOMICS_DB) {
+	    vwin->role == DBNOMICS_DB ||
+	    vwin->role == DBNOMICS_SERIES) {
 	    dbnomics_search(needle, vwin);
 	    return;
 	} else {
@@ -970,6 +971,8 @@ static void finder_add_dbn_options (windata_t *vwin,
 
     if (vwin->role == DBNOMICS_DB) {
 	combo_box_append_text(combo, _("selected dataset"));
+    } else if (vwin->role == DBNOMICS_SERIES) {
+	combo_box_append_text(combo, _("this dataset"));
     } else {
 	combo_box_append_text(combo, _("all DB.NOMICS"));
     }
@@ -1018,7 +1021,8 @@ void vwin_add_finder (windata_t *vwin)
 	vwin->role == FUNC_HELP_EN) {
 	finder_add_options(hbox, entry);
     } else if (vwin->role == DBNOMICS_TOP ||
-	       vwin->role == DBNOMICS_DB) {
+	       vwin->role == DBNOMICS_DB ||
+	       vwin->role == DBNOMICS_SERIES) {
 	finder_add_dbn_options(vwin, hbox, entry);
     }
 
