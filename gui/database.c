@@ -2009,13 +2009,13 @@ static int dbn_dataset_search_results (const char *key,
 	    gretl_print_destroy(prn);
 	    return 1;
 	} else if (n_ok > 0) {
+	    /* we'll open a new window */
 	    const char *title = "gretl: DB.NOMICS search";
 	    windata_t *vwin;
 
 	    vwin = view_buffer(prn, 78, 350, title, VIEW_DBSEARCH, NULL);
 	    if (vwin != NULL && more) {
 		widget_set_int(vwin->text, "offset", offset);
-		widget_set_int(vwin->text, "ntot", ntot);
 		g_object_set_data_full(G_OBJECT(vwin->text), "key",
 				       g_strdup(key), g_free);
 		g_object_set_data_full(G_OBJECT(vwin->text), "prov",
@@ -2048,13 +2048,12 @@ void dbnomics_search (gchar *key, windata_t *vwin)
     if (vwin->role == VIEW_DBSEARCH) {
 	/* we're called in "next results" mode */
 	const gchar *key, *prov, *dset;
-	int offset, ntot;
+	int offset;
 
 	key = g_object_get_data(G_OBJECT(vwin->text), "key");
 	prov = g_object_get_data(G_OBJECT(vwin->text), "prov");
 	dset = g_object_get_data(G_OBJECT(vwin->text), "dset");
 	offset = widget_get_int(vwin->text, "offset");
-	ntot = widget_get_int(vwin->text, "ntot");
 
 	offset += SEARCH_CHUNK;
 	a = dbnomics_search_call(key, prov, dset, SEARCH_CHUNK, offset, &err);
