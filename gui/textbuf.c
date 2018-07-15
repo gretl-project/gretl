@@ -1414,7 +1414,6 @@ void textview_append_text (GtkWidget *view, const char *text)
 void textview_clear_text (GtkWidget *view)
 {
     GtkTextBuffer *tbuf;
-    GtkTextIter iter;
 
     g_return_if_fail(GTK_IS_TEXT_VIEW(view));
 
