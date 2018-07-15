@@ -2503,7 +2503,7 @@ static void print_NR_status (int status, double crittol, double gradtol,
    with the absolute values of H_{i,i} plus one.
 */
 
-#define SPECTRAL 0
+#define SPECTRAL 1
 
 static int NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
 {
@@ -2523,7 +2523,9 @@ static int NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
     }
 
 #if SPECTRAL
+    int neg_diag = 0;
     if (err) {
+	neg_diag = 1;
         fprintf(stderr, "NR_invert_hessian: non-positive "
 		"diagonal (hii=%g)\n", hii);
     } else {
@@ -2537,14 +2539,14 @@ static int NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
 	double fix;
 	
 	fprintf(stderr, "newton hessian fixup: spectral method\n");
-	gretl_matrix_print(H, "before naive spectral fixup");
+	// gretl_matrix_print(H, "before naive spectral fixup");
 	
 	evecs = gretl_matrix_copy(Hcpy);
 	tmp = gretl_matrix_alloc(n, n);
 	evals = gretl_symmetric_matrix_eigenvals(evecs, 1, &err);
 	
 	if (!err) {
-	    fix = gretl_vector_get(evals, 0) * 1.1 - 1;
+	    fix = gretl_vector_get(evals, 0) * 1.1 + 0.001;
 	    fprintf(stderr, "fix = %g\n", fix);
 	    
 	    for (i=0; i<n; i++) {
@@ -2552,10 +2554,12 @@ static int NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
 		gretl_matrix_set(H, i, i, x - fix);
 	    }
 	    
-	    gretl_matrix_print(H, "after naive spectral fixup");
+	    // gretl_matrix_print(H, "after naive spectral fixup");
 	}
-	   
-	err = gretl_invert_symmetric_matrix(H);
+	
+	if (!neg_diag) {   
+	    err = gretl_invert_symmetric_matrix(H);
+	}
 	gretl_matrix_free(evals);
 	gretl_matrix_free(evecs);
 	gretl_matrix_free(tmp);
