@@ -1011,6 +1011,7 @@ void vwin_add_finder (windata_t *vwin)
 #endif
     GtkWidget *entry;
     GtkWidget *hbox;
+    int fwidth = 16;
 
     hbox = gtk_widget_get_parent(vwin->mbar);
     vwin->finder = entry = gtk_entry_new();
@@ -1024,9 +1025,10 @@ void vwin_add_finder (windata_t *vwin)
 	       vwin->role == DBNOMICS_DB ||
 	       vwin->role == DBNOMICS_SERIES) {
 	finder_add_dbn_options(vwin, hbox, entry);
+	fwidth = 28;
     }
 
-    gtk_entry_set_width_chars(GTK_ENTRY(entry), 16);
+    gtk_entry_set_width_chars(GTK_ENTRY(entry), fwidth);
     gtk_box_pack_end(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
 
 #ifdef USE_ENTRY_ICON
