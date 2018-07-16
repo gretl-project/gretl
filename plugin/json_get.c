@@ -722,8 +722,7 @@ static int jb_do_array (JsonReader *reader, jbundle *jb)
 		jb->curr = bsave;
 	    }
 	} else if (json_reader_is_array(reader)) {
-	    /* the gretl_array type cannot be nested */
-	    gretl_errmsg_set("JSON array: arrays cannot be nested");
+	    gretl_errmsg_set("JSON array: gretl arrays cannot be nested");
 	    err = E_DATA;
 	} else {
 	    gretl_errmsg_set("JSON array: unrecognized type");
