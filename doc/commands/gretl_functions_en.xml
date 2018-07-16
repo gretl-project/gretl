@@ -4947,15 +4947,15 @@
     <function name="jsongetb" section="data-utils" output="bundle">
       <fnargs>
 	<fnarg type="string">buf</fnarg>
-	<fnarg type="strings" optional="true">excludes</fnarg>
+	<fnarg type="string" optional="true">path</fnarg>
       </fnargs>
       <description>
 	<para>
 	  The argument <argname>buf</argname> should be a JSON buffer,
 	  as may be retrieved from a suitable website via the <fncref
-	  targ="curl"/> function. The <argname>excludes</argname>
-	  argument, if supplied, should be an array of strings holding
-	  the names of JSON objects to exclude.
+	  targ="curl"/> function. The specification and effect of the
+	  optional <argname>path</argname> argument are described
+	  below.
 	</para>
 	<para>
 	  The return value is a bundle whose stucture basically
@@ -4970,10 +4970,39 @@
 	  which permits nesting of arrays.
 	</para>
 	<para>
-	  The optional <argname>excludes</argname> argument should be
-	  used with care: in excluding objects with matching names
-	  one also excludes any children they may have.
+	  The <argname>path</argname> argument can be used to limit
+	  the JSON elements included in the returned bundle. Please
+	  note that this is not a <quote>JsonPath</quote> as described
+	  in the help for <fncref targ="jsonget"/>; it is a simple
+	  construct subject to the following specification.
 	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      <argname>path</argname> is a slash-separated array of
+	      elements where slash (<quote>/</quote>) indicates moving
+	      to one level <quote>deeper</quote> in the JSON tree
+	      represented by <argname>buf</argname>. A leading slash
+	      is allowed but not required; implicitly the path always
+	      starts at the root. No extraneous white-space characters
+	      should be included.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      Each slash-separated element must take one of the
+	      following forms: (a) a single name, in which case only a
+	      JSON element whose name matches at the given structural
+	      level will be included; or (b) <quote>*</quote>
+	      (asterisk), in which case all elements at the given
+	      level are included; or (c) an array of comma-separated
+	      names, enclosed in braces (<quote>{</quote> and
+	      <quote>}</quote>), in which case only JSON elements
+	      whose names match one of the given names will be
+	      included.
+	    </para>
+	  </li>
+	</ilist>
 	<para>
 	  See also the string-oriented <fncref targ="jsonget"/>;
 	  depending on your purpose one of these functions may be more

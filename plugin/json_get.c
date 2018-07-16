@@ -22,6 +22,7 @@
 #include "libgretl.h"
 #include "version.h"
 
+#include <glib/gprintf.h>
 #include <glib-object.h>
 #include <json-glib/json-glib.h>
 
@@ -397,34 +398,135 @@ char *json_get_string (const char *data, const char *path,
 struct jbundle_ {
     gretl_bundle *b0;
     gretl_bundle *curr;
-    char **excludes;
-    int n_exclude;
+    gchar ***a;
+    int nlev;
+    int level;
 };
 
 typedef struct jbundle_ jbundle;
 
-static int jb_do_object (JsonReader *reader, jbundle *jb);
+static void free_pathbits (gchar ***a, int nlev)
+{
+    int i;
+
+    for (i=0; i<nlev; i++) {
+	if (a[i] != NULL) {
+	    g_strfreev(a[i]);
+	}
+    }
+    g_free(a);
+}
+
+#if JB_DEBUG
+
+static void print_pathbits (gchar ***a, int nlev)
+{
+    int i, j, n;
+
+    fprintf(stderr, "parsed pathbits:\n");
+    for (i=0; i<nlev; i++) {
+	n = g_strv_length(a[i]);
+	fprintf(stderr, "i=%d: ", i);
+	for (j=0; j<n; j++) {
+	    fprintf(stderr, "'%s'", a[i][j]);
+	}
+	fputc('\n', stderr);
+    }
+    fputc('\n', stderr);
+}
+
+#endif
+
+static int jb_make_pathbits (jbundle *jb, const char *path)
+{
+    gchar **S = g_strsplit(path, "/", -1);
+    gchar ***a = NULL;
+    int i, nlev, n;
+    int err = 0;
+
+    nlev = g_strv_length(S);
+    if (nlev == 0) {
+	return 0;
+    }
+
+    a = g_malloc0(nlev * sizeof *a);
+
+    for (i=0; i<nlev && !err; i++) {
+	g_strstrip(S[i]);
+	if (*S[i] == '{') {
+	    n = strlen(S[i]);
+	    if (S[i][n-1] == '}') {
+		S[i][0] = S[i][n-1] = ' ';
+		g_strstrip(S[i]);
+		a[i] = g_strsplit(S[i], ",", -1);
+	    } else {
+		err = 1;
+	    }
+	} else {
+	    a[i] = g_malloc(2 * sizeof **a);
+	    a[i][0] = g_strdup(S[i]);
+	    a[i][1] = NULL;
+	}
+    }
+
+    g_strfreev(S);
+
+    if (err) {
+	free_pathbits(a, nlev);
+    } else {
+#if JB_DEBUG
+	print_pathbits(a, nlev);
+#endif
+	jb->a = a;
+	jb->nlev = nlev;
+    }
+
+    return err;
+}
+
+static int jb_do_object (JsonReader *reader, jbundle *jb,
+			 gretl_array *a);
 static int jb_do_array (JsonReader *reader, jbundle *jb);
 static int jb_do_value (JsonReader *reader, jbundle *jb,
 			gretl_array *a, int i);
 
-static int is_excluded (jbundle *jb, JsonReader *reader)
+static int is_wanted (jbundle *jb, JsonReader *reader)
 {
-    if (jb->n_exclude > 0) {
-	const gchar *name = json_reader_get_member_name(reader);
-	int i;
+    int i = jb->level - 1;
+    int ret = 1;
 
-	if (name == NULL) {
-	    return 0;
-	}
-	for (i=0; i<jb->n_exclude; i++) {
-	    if (!strcmp(name, jb->excludes[i])) {
-		return 1;
+    if (jb->a != NULL && i < jb->nlev) {
+	const gchar *name = json_reader_get_member_name(reader);
+
+	if (name != NULL) {
+	    int j, n = g_strv_length(jb->a[i]);
+
+#if JB_DEBUG
+	    fprintf(stderr, "test for inclusion of %s at level %d: ",
+		    name, jb->level);
+#endif
+	    if (strlen(jb->a[i][0]) == 0 || !strcmp(jb->a[i][0], "*")) {
+		/* everything "matches" */
+		ret = 1;
+		goto finish;
 	    }
+	    for (j=0; j<n; j++) {
+		if (!strcmp(name, jb->a[i][j])) {
+		    ret = 1;
+		    goto finish;
+		}
+	    }
+	    ret = 0;
 	}
     }
 
-    return 0;
+ finish:
+
+#if JB_DEBUG
+    fprintf(stderr, "%s\n", ret ? "yes" : "no");
+#endif
+
+    return ret;
 }
 
 /* Add a new bundle to the tree -- either as a named
@@ -463,7 +565,8 @@ static int jb_add_bundle (jbundle *jb, const char *name,
 
 /* Process a JSON object node: it becomes a gretl bundle */
 
-static int jb_do_object (JsonReader *reader, jbundle *jb)
+static int jb_do_object (JsonReader *reader, jbundle *jb,
+			 gretl_array *a)
 {
     gchar **S = NULL;
     int i, n, err = 0;
@@ -472,30 +575,53 @@ static int jb_do_object (JsonReader *reader, jbundle *jb)
     S = json_reader_list_members(reader);
 
 #if JB_DEBUG
-    const gchar *name = json_reader_get_member_name(reader);
-    fprintf(stderr, "got object, %d members, name '%s'\n", n,
-	    name == NULL ? "NULL" : name);
+    if (a == NULL) {
+	const gchar *name = json_reader_get_member_name(reader);
+	fprintf(stderr, "level %d: got object, name '%s', %d member(s)\n",
+		jb->level, name == NULL ? "NULL" : name, n);
+    } else {
+	fprintf(stderr, "level %d: got object (array element), %d member(s)\n",
+		jb->level, n);
+    }
+# if 0
     for (i=0; i<n; i++) {
 	fprintf(stderr, "  %s\n", S[i]);
     }
+# endif
 #endif
 
     for (i=0; i<n && !err; i++) {
 	json_reader_read_member(reader, S[i]);
 	if (json_reader_is_object(reader)) {
-	    if (!is_excluded (jb, reader)) {
+	    int lsave = jb->level;
+
+	    jb->level += 1;
+	    if (is_wanted(jb, reader)) {
 		gretl_bundle *bsave = jb->curr;
 
 		err = jb_add_bundle(jb, S[i], NULL, 0);
 		if (!err) {
-		    err = jb_do_object(reader, jb);
+		    err = jb_do_object(reader, jb, NULL);
 		}
 		jb->curr = bsave;
 	    }
+	    jb->level = lsave;
 	} else if (json_reader_is_array(reader)) {
-	    err = jb_do_array(reader, jb);
+	    int lsave = jb->level;
+
+	    jb->level += 1;
+	    if (is_wanted(jb, reader)) {
+		err = jb_do_array(reader, jb);
+	    }
+	    jb->level = lsave;
 	} else if (json_reader_is_value(reader)) {
-	    err = jb_do_value(reader, jb, NULL, 0);
+	    int lsave = jb->level;
+
+	    jb->level += 1;
+	    if (is_wanted(jb, reader)) {
+		err = jb_do_value(reader, jb, NULL, 0);
+	    }
+	    jb->level = lsave;
 	}
 	json_reader_end_member(reader);
     }
@@ -542,8 +668,8 @@ static int jb_do_array (JsonReader *reader, jbundle *jb)
     name = json_reader_get_member_name(reader);
 
 #if JB_DEBUG
-    fprintf(stderr, "got array, %d element(s), name %s\n", n,
-	    name == NULL ? "NULL" : name);
+    fprintf(stderr, "level %d: got array, name '%s', %d element(s)\n",
+	    jb->level, name == NULL ? "NULL" : name, n);
 #endif
 
     /* Arrays can be packed only into bundles, and that
@@ -581,11 +707,17 @@ static int jb_do_array (JsonReader *reader, jbundle *jb)
 		err = jb_transmute_array(&a, &atype, n, ns);
 	    }
 	    if (!err) {
+		/* note: since array elements do not have names it's
+		   not possible to include/exclude them by name
+		*/
 		gretl_bundle *bsave = jb->curr;
+		int lsave = jb->level;
 
 		err = jb_add_bundle(jb, NULL, a, i);
 		if (!err) {
-		    err = jb_do_object(reader, jb);
+		    jb->level += 1;
+		    err = jb_do_object(reader, jb, a);
+		    jb->level = lsave;
 		}
 		jb->curr = bsave;
 	    }
@@ -682,7 +814,7 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
 */
 
 gretl_bundle *json_get_bundle (const char *data,
-			       gretl_array *excludes,
+			       const char *path,
 			       int *err)
 {
     gretl_bundle *ret = NULL;
@@ -702,8 +834,14 @@ gretl_bundle *json_get_bundle (const char *data,
 	return NULL;
     }
 
-    if (excludes != NULL) {
-	jb.excludes = gretl_array_get_strings(excludes, &jb.n_exclude);
+    if (path != NULL) {
+	if (*path == '/') {
+	    path++;
+	}
+	*err = jb_make_pathbits(&jb, path);
+	if (*err) {
+	    return NULL;
+	}
     }
 
     jb.b0 = gretl_bundle_new();
@@ -713,7 +851,7 @@ gretl_bundle *json_get_bundle (const char *data,
     gretl_push_c_numeric_locale();
 
     if (json_reader_is_object(reader)) {
-	*err = jb_do_object(reader, &jb);
+	*err = jb_do_object(reader, &jb, NULL);
     } else if (json_reader_is_array(reader)) {
 	*err = jb_do_array(reader, &jb);
     } else if (json_reader_is_value(reader)) {
@@ -724,6 +862,9 @@ gretl_bundle *json_get_bundle (const char *data,
     g_object_unref(reader);
 
     json_deallocate(root, parser);
+    if (jb.a != NULL) {
+	free_pathbits(jb.a, jb.nlev);
+    }
 
     if (*err) {
 	/* trash bundle on failure */

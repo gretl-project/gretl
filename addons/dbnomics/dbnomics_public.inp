@@ -189,8 +189,7 @@ function bundles dbnomics_get_dataset_dimensions(const string provider,
         funcerr errstr
     endif
 
-    strings exclude = defarray("provider", "_meta", "series", "dataset")
-    b = jsongetb(s, exclude)
+    b = jsongetb(s, "series_dimensions_facets")
     c_order = strsplit(jsonget(s, "$.dataset.dimensions_codes_order"),"\n")
     ndims = nelem(c_order)
 
@@ -370,7 +369,7 @@ function bundle dbnomics_dsets_for_provider(const string provider,
     err = dbn_get_json("providers/" ~ provider, verbose, &json)
 
     if !err
-        bundle b = jsongetb(json, defarray("_meta", "provider"))
+        bundle b = jsongetb(json, "category_tree")
         bundles B = _jbterms(b)
         n = nelem(B)
         if n == 0

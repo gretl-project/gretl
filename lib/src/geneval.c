@@ -6865,24 +6865,15 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
 		}
 	    }
 	} else if (f == F_JSONGETB) {
-	    gretl_bundle *(*jfunc) (const char *, gretl_array *, int *);
-	    gretl_array *a = NULL;
+	    gretl_bundle *(*jfunc) (const char *, const char *, int *);
+	    const char *path = null_or_empty(r) ? NULL: r->v.str;
 
-	    if (!null_or_empty(r)) {
-		if (gretl_array_get_type(r->v.a) != GRETL_TYPE_STRINGS) {
-		    p->err = E_TYPES;
-		} else {
-		    a = r->v.a;
-		}
+	    jfunc = get_plugin_function("json_get_bundle");
+	    if (jfunc == NULL) {
+		p->err = E_FOPEN;
 	    }
 	    if (!p->err) {
-		jfunc = get_plugin_function("json_get_bundle");
-		if (jfunc == NULL) {
-		    p->err = E_FOPEN;
-		}
-	    }
-	    if (!p->err) {
-		ret->v.b = jfunc(l->v.str, a, &p->err);
+		ret->v.b = jfunc(l->v.str, path, &p->err);
 	    }
 	} else if (f == F_XMLGET) {
 	    char *(*xfunc) (const char *, void *, GretlType,
@@ -15366,7 +15357,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_JSONGETB:
-	if (l->t == STR && (null_or_empty(r) || r->t == ARRAY)) {
+	if (l->t == STR && (null_or_empty(r) || r->t == STR)) {
 	    ret = two_string_func(l, r, NULL, t->t, p);
 	} else {
 	    p->err = E_TYPES;

@@ -339,9 +339,7 @@ function bundles dset_search(const string key, const string pcode,
     err = dbn_get_json(parms, verbose, &json)
 
     if !err
-        strings exclude = defarray("provider", "_meta",
-          "series_dimension_facets", "dataset")
-        bundle bj = jsongetb(json, exclude)
+        bundle bj = jsongetb(json, "series")
         scalar ntot = bj["series"].num_found
         if ntot > 0
             ret = bj["series"].docs
