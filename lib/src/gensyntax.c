@@ -514,7 +514,6 @@ static void unwrap_string_arg (parser *p)
 static NODE *get_final_string_arg (parser *p, NODE *t, int sym, 
 				   int eat_last)
 {
-    char p0 = '(', p1 = ')';
     const char *src = NULL;
     int n, wrapped = 0;
     int strvar = 0;
@@ -524,8 +523,9 @@ static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
     }
 
     if (!varargs_func(sym)) {
-	/* check for a nested function call (2013-08-25) or
-	   bundle/array member (2015-09-25)
+	/* Check for a nested function call (2013-08-25) or
+	   bundle/array member (2015-09-25). Further fix
+	   applied 2018-07-17.
 	*/
 	src = p->point - 1;
 	n = gretl_namechar_spn(src);
@@ -538,12 +538,15 @@ static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
 	    src = NULL;
 	    if (c == '(') {
 		if (function_lookup(tmp) || get_user_function_by_name(tmp)) {
-		    return base(p, t);
+		    lex(p);
+		    return expr(p);
 		}
 	    } else if (gretl_is_bundle(tmp)) {
-		return base(p, t);
+		lex(p);
+		return expr(p);
 	    } else if (c == '[' && get_array_by_name(tmp)) {
-		return base(p, t);
+		lex(p);
+		return expr(p);
 	    }
 	}
     }
@@ -555,7 +558,7 @@ static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
 	}
     }
 
-    if (p->ch == p1) {
+    if (p->ch == ')') {
 	if (wrapped) {
 	    p->err = E_PARSE;
 	    return NULL;
@@ -563,6 +566,7 @@ static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
 	/* handle empty arg */
 	p->idstr = gretl_strdup("");
     } else {
+	char p0 = '(', p1 = ')';
 	int i, paren = 1, quoted = wrapped;
 	int close = -1, started = 0;
 	const char *s = p->point;
