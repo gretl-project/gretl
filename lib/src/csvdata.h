@@ -70,7 +70,8 @@ int gretl_join_data (const char *fname,
 int probe_csv (const char *fname, char ***varnames,
 	       int *nvars, gretlopt *opt);
 
-void normalize_join_colname (char *targ, const char *src, int k);
+void normalize_join_colname (char *targ, const char *src,
+			     int underscore, int k);
 
 int csv_open_needs_matrix (gretlopt opt);
 

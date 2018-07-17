@@ -6718,7 +6718,7 @@ static NODE *do_getenv (NODE *l, int f, parser *p)
     return ret;
 }
 
-static NODE *single_string_func (NODE *n, int f, parser *p)
+static NODE *single_string_func (NODE *n, NODE *x, int f, parser *p)
 {
     NODE *ret = aux_string_node(p);
 
@@ -6732,8 +6732,13 @@ static NODE *single_string_func (NODE *n, int f, parser *p)
 	} else if (f == F_STRSTRIP) {
 	    ret->v.str = gretl_strstrip_copy(s, &p->err);
 	} else if (f == F_FIXNAME) {
+	    int uscore = 0;
+
+	    if (!null_or_empty(x)) {
+		uscore = node_get_bool(x, p, 0);
+	    }
 	    ret->v.str = calloc(VNAMELEN, 1);
-	    normalize_join_colname(ret->v.str, s, 0);
+	    normalize_join_colname(ret->v.str, s, uscore, 0);
 	} else {
 	    p->err = E_DATA;
 	}
@@ -15291,7 +15296,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_STRSTRIP:
     case F_FIXNAME:
 	if (l->t == STR) {
-	    ret = single_string_func(l, t->t, p);
+	    ret = single_string_func(l, r, t->t, p);
 	} else if (t->t == F_ARGNAME && (uscalar_node(l) || useries_node(l))) {
 	    ret = argname_from_uvar(l, p);
 	} else {
@@ -15370,8 +15375,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_STRSTR:
     case F_INSTRING:
 	if (l->t == STR && r->t == STR) {
-	    ret = two_string_func(l, r, NULL, t->t, p);
-	} else if (l->t == STR && r->t == ARRAY && t->t == F_XMLGET) {
 	    ret = two_string_func(l, r, NULL, t->t, p);
 	} else {
 	    node_type_error(t->t, (l->t == STR)? 2 : 1,

@@ -2790,7 +2790,8 @@ static int skip_data_column (csvdata *c, int k)
    function
 */
 
-void normalize_join_colname (char *targ, const char *src, int k)
+void normalize_join_colname (char *targ, const char *src,
+			     int underscore, int k)
 {
     const char *letters = "abcdefghijklmnopqrstuvwxyz"
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -2803,7 +2804,7 @@ void normalize_join_colname (char *targ, const char *src, int k)
 	if (strspn(src, letters) > 0 || isdigit(*src) || *src == '_') {
 	    /* transcribe valid characters */
 	    targ[i++] = *src;
-	} else if (*src == ' ') {
+	} else if (*src == ' ' || underscore) {
 	    /* convert space to underscore */
 	    if (i > 0 && targ[i-1] == '_') {
 		; /* skip */
@@ -2879,7 +2880,7 @@ static int handle_join_varname (csvdata *c, int k, int *pj)
 	sprintf(okname, "col%d", k);
     } else {
 	/* convert to valid gretl identifier */
-	normalize_join_colname(okname, c->str, k);
+	normalize_join_colname(okname, c->str, 0, k);
     }
 
 #if CDEBUG

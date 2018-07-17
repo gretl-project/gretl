@@ -4068,7 +4068,7 @@ int add_dbnomics_data (windata_t *vwin)
 	    *vname = '\0';
 	    id = gretl_bundle_get_string(b, "id", &err);
 	    if (!err) {
-		normalize_join_colname(vname, id, 0);
+		normalize_join_colname(vname, id, 0, 0);
 	    }
 	    /* construct its description */
 	    s1 = gretl_bundle_get_string(b, "datacode", &err);
