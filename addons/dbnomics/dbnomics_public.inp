@@ -10,8 +10,8 @@ function void dbnomics_bundle_print(const bundle b, bool print_data[0])
     endif
 
     scalar nf = 0
-    if inbundle(b, "id")
-        sn = sprintf("Series: %s", b.id)
+    if inbundle(b, "series_code")
+        sn = sprintf("Series: %s", b.series_code)
         nf++
     else
         sn = b.dataset_name
@@ -21,20 +21,21 @@ function void dbnomics_bundle_print(const bundle b, bool print_data[0])
 
     print dashline
     printf "%s\n", sn
-    if inbundle(b, "provider")
-        printf "Provider: %s\n", b.provider
+    if inbundle(b, "provider_code")
+        printf "Provider: %s\n", b.provider_code
         nf++
     endif
-    if inbundle(b, "dataset")
+    if inbundle(b, "dataset_code")
         nf++
         if inbundle(b, "dataset_name")
-            printf "Dataset: %s (%s)\n", b.dataset, b.dataset_name
+            printf "Dataset: %s (%s)\n", b.dataset_code, b.dataset_name
         else
-            printf "Dataset: %s\n", b.dataset
+            printf "Dataset: %s\n", b.dataset_code
         endif
     endif
     if nf == 3
-        printf "Identifier: %s/%s/%s\n\n", b.provider, b.dataset, b.id
+        printf "Identifier: %s/%s/%s\n\n", b.provider_code,
+	  b.dataset_code, b.series_code
     endif
     if inbundle(b, "series_name")
         # this is actually the description of the series
@@ -115,19 +116,44 @@ end function
 function bundle dbnomics_get_series (const string datacode, bool verbose[0])
 
     bundle ret
-    ret.datacode = datacode
+    ret.error = 0
     ret.has_data = 0
-
-    string json
     string parms = "series?series_ids=" ~ datacode ~ "&offset=0&format=json"
+    string json
     ret.error = dbn_get_json(parms, verbose, &json)
 
-    if !ret.error
-        strings S = strsplit(datacode,, "/")
-        ret.provider = S[1]
-        ret.dataset = S[2]
-        ret.id = S[3]
-        ret.error = fill_series_bundle(&ret, json, 1)
+    bundle b = jsongetb(json, "series")
+    n = b.series.num_found
+    if n == 0
+        return ret
+    endif
+
+    ret = b.series.data[1]
+    ret.error = 0
+    ret.frequency = bundle_get_frequency(ret)
+    t1 = 1
+    t2 = nelem(ret.period)
+    loop j=1..t2 -q
+        if ret.value[j] == "" || ret.value[j] == "NA"
+            t1++
+        else
+            break
+        endif
+    endloop
+    T = t2 - t1 + 1
+    ret.T = T
+    ret.has_data = T > 0
+    if T > 0
+        if t1 > 1
+            ret.period = ret.period[t1:t2]
+        endif
+        matrix vals = zeros(T, 1)
+	j = 1
+        loop t=t1..t2 -q
+            vals[j] = atof(ret.value[t])
+	    j++
+        endloop
+        ret.value = vals
     endif
 
     return ret
@@ -143,34 +169,49 @@ function bundles dbnomics_get_multiple(const string provider,
         bundle spec = null
     endif
 
-    bundles ret = null
-    string json
+    bundles ret = array(0)
     string parms = build_parms(provider, dset, limit, offset, spec)
+    string json
     err = dbn_get_json(parms, 0, &json)
     if err
         return ret # or use funcerr?
     endif
 
-    n = 0
-    ns = 0
-    found = jsonget(json, "$.series.num_found", &n)
-    printf "number of series = %s\n", found
-    nfound = atof(found)
-    if ok(nfound)
-        ns = nfound > limit ? limit : nfound
-    endif
-    if ns > 0
-        bundles ret = array(ns)
-        loop i = 1..ns --quiet
-            bundle tmp = null
-            err = fill_series_bundle(&tmp, json, i)
-            if !err
-                tmp.error = 0
-                ret[i] = tmp
-            endif
-        endloop
+    bundle b = jsongetb(json, "series")
+    n = b.series.num_found
+    if n == 0
+        return ret
     endif
 
+    n = nelem(b.series.data)
+    ret = b.series.data
+    loop i=1..n -q
+        ret[i].frequency = bundle_get_frequency(ret[i])
+	t1 = 1
+        t2 = nelem(ret[i].period)
+        loop j=1..t2 -q
+            if ret[i].value[j] == "" || ret[i].value[j] == "NA"
+                t1++
+            else
+                break
+            endif
+        endloop
+        T = t2 - t1 + 1
+        ret[i].T = T
+        ret[i].has_data = T > 0
+        if T > 0
+            if t1 > 1
+                ret[i].period = ret[i].period[t1:t2]
+            endif
+            matrix vals = zeros(T, 1)
+	    j = 1
+            loop t=t1..t2 -q
+                vals[j] = atof(ret[i].value[t])
+		j++
+            endloop
+            ret[i].value = vals
+        endif
+    endloop
     return ret
 end function
 

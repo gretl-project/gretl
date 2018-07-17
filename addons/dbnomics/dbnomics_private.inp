@@ -34,112 +34,35 @@ end function
 
 ### ------------------------------------------------------------------------
 
-function scalar get_frequency(const string json_obj)
-    strings alternatives = defarray(".Frequency", ".FREQ", "['@frequency']")
-    got = 0
-    loop i=1..nelem(alternatives) --quiet
-        s = sprintf("$.series.data[0]%s", alternatives[i])
-        frq = jsonget(json_obj, s, &got)
-        if got
-            frq = tolower(frq[1])
+function scalar bundle_get_frequency (const bundle b)
+    set warnings off
+    strings alts = defarray("Frequency", "FREQ", "@frequency")
+    string frq = ""
+    loop i=1..nelem(alts) -q
+        if inbundle(b, alts[i])
+            frq = tolower(b[alts[i]][1])
             break
         endif
     endloop
 
-    scalar ret = NA
+    scalar ret
 
-    if got
-        if frq == "a"
-            scalar ret = 1
-        elif frq == "q"
-            scalar ret = 4
-        elif frq == "m"
-            scalar ret = 12
-        elif frq == "d"
-            scalar ret = 7
-        else
-            printf "frq = \"%s\" unrecognized\n", frq
-            scalar ret = -1
-        endif
+    if frq == ""
+        ret = NA
+    elif frq == "a"
+        ret = 1
+    elif frq == "q"
+        ret = 4
+    elif frq == "m"
+        ret = 12
+    elif frq == "d"
+        ret = 7
+    else
+        printf "frq = \"%s\" unrecognized\n", frq
+        ret = -1
     endif
 
     return ret
-end function
-
-### ------------------------------------------------------------------------
-
-function scalar maybe_put_into_bundle(bundle *b, const string json, string key, string qry)
-    scalar got = 0
-    tmp = jsonget(json, qry, &got)
-    if got
-        b[key] = tmp
-    endif
-    return got
-end function
-
-### ------------------------------------------------------------------------
-
-function scalar fill_series_bundle(bundle *b, const string json, int idx)
-    got = 0
-    istr = (idx == 0) ? "" : sprintf("[%d]", idx-1) # zero-based
-
-    b.frequency = get_frequency(json)
-    qry = sprintf("$.series.data%s.dataset_name", istr)
-    b.dataset_name = jsonget(json, qry, &got)
-    if !got
-        b.dataset_name = "untitled"
-    endif
-
-    maybe_put_into_bundle(&b, json, "unit", sprintf("$.series.data%s.Unit", istr))
-    maybe_put_into_bundle(&b, json, "series_name", sprintf("$.series.data%s.series_name", istr))
-    maybe_put_into_bundle(&b, json, "series_code", sprintf("$.series.data%s.series_code", istr))
-
-    string line
-
-    qry = sprintf("$.series.data%s..period", istr)
-    s = jsonget(json, qry)
-
-    strings periods
-    loop while getline(s, line) -q
-        periods += line
-    endloop
-    n = nelem(periods)
-
-    qry = sprintf("$.series.data%s..value", istr)
-    s = jsonget(json, qry)
-    strings datavals
-    loop while getline(s, line) -q
-        datavals += line
-    endloop
-
-    # skip any leading blank data rows
-    istart = 1
-    loop i=1..n -q
-        if datavals[i] == "" || datavals[i] == "NA"
-            istart++
-        else
-            break
-        endif
-    endloop
-
-    b.totobs = n
-    b.start = istart
-    T = n - istart + 1
-    b.T = T
-    b.has_data = (T > 0)
-
-    if b.has_data
-        b.value = zeros(T,1)
-        strings b.period = array(T)
-        scalar j = 1
-        loop i=istart..n -q
-            b.value[j] = atof(datavals[i])
-            b.period[j] = periods[i]
-            j++
-        endloop
-    endif
-
-    return 0
 end function
 
 ### ------------------------------------------------------------------------

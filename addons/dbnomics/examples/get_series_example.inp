@@ -4,10 +4,8 @@ include dbnomics.gfn
 nulldata 360
 setobs 12 1989:1
 
-strings ToDnld = defarray("AMECO/ZUTN/EA19.1.0.0.0.ZUTN", 
-  "ECB/IRS/M.IT.L.L40.CI.0000.EUR.N.Z", 
-  "FED/G17_CAPUTL/129.B50001.SA",
-  "WB/WDI/SL.UEM.TOTL.ZS-AR")
+strings ToDnld = defarray("ECB/IRS/M.IT.L.L40.CI.0000.EUR.N.Z",
+  "FED/G17_CAPUTL/129.B50001.SA")
 
 scalar N = nelem(ToDnld)
 
@@ -18,11 +16,8 @@ loop k = 1 .. N --quiet
 endloop
 
 series ita_rate = NA
-dbnomics_bundle_get_data(bs[2], &ita_rate)
+dbnomics_bundle_get_data(bs[1], &ita_rate)
 series caput = NA
-dbnomics_bundle_get_data(bs[3], &caput)
+dbnomics_bundle_get_data(bs[2], &caput)
 
-summary
-
-#moo = get_data(bs[1])      # annual!!!
-    
+summary ita_rate caput
