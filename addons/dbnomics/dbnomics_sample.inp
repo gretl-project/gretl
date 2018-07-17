@@ -22,4 +22,6 @@ dbnomics_bundle_get_data(bs[2], &ita_rate)
 series caput = NA
 dbnomics_bundle_get_data(bs[3], &caput)
 
-summary
+list L = ita_rate caput
+labels L
+summary L
