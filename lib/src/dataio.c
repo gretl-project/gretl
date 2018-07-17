@@ -2584,7 +2584,8 @@ int save_var_labels_to_file (const DATASET *dset, const char *fname)
 int add_var_labels_from_file (DATASET *dset, const char *fname)
 {
     FILE *fp;
-    char line[256], label[MAXLABEL];
+    char line[1024];
+    gchar *label;
     int nlabels = 0;
     int i, err = 0;
 
@@ -2596,15 +2597,26 @@ int add_var_labels_from_file (DATASET *dset, const char *fname)
     for (i=1; i<dset->v && !err; i++) {
 	if (fgets(line, sizeof line, fp) == NULL) {
 	    break;
-	} else if (sscanf(line, "%127[^\n\r]", label) != 1) {
-	    continue;
 	} else {
-	    g_strstrip(label);
-	    err = check_imported_string(label, i+1, MAXLABEL);
-	    if (!err) {
-		series_set_label(dset, i, label);
-		nlabels++;
+	    label = g_strstrip(g_strdup(line));
+	    if (strlen(label) > 0) {
+		if (!g_utf8_validate(label, -1, NULL)) {
+		    gchar *trstr = NULL;
+		    gsize bytes;
+
+		    trstr = g_locale_to_utf8(label, -1, NULL,
+					     &bytes, NULL);
+		    if (trstr != NULL) {
+			series_set_label(dset, i, trstr);
+			nlabels++;
+			g_free(trstr);
+		    }
+		} else {
+		    series_set_label(dset, i, label);
+		    nlabels++;
+		}
 	    }
+	    g_free(label);
 	}
     }
 
