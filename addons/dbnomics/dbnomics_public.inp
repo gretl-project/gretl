@@ -43,12 +43,12 @@ function void dbnomics_bundle_print(const bundle b, bool print_data[0])
     print dashline
 
     if b.has_data
-        n = b.actobs
+        n = b.T
         printf "pd = %d; %d observations, %s - %s\n",
-          b.frequency, n, b.periods[1], b.periods[n]
+          b.frequency, n, b.period[1], b.period[n]
         if print_data
             loop i=1..n -q
-                printf "%s %6.1f\n", b.periods[i], b.vals[i]
+                printf "%s %6.1f\n", b.period[i], b.value[i]
             endloop
         endif
     else
@@ -83,8 +83,8 @@ function scalar dbnomics_bundle_get_data(const bundle b, series *x, bool verbose
     outfile @tmpfile --write
     printf "obs\tdbseries\n"
     set warnings off
-    loop i=1 .. b.actobs -q
-        printf "%s\t%20.15f\n", b.periods[i], b.vals[i]
+    loop i=1 .. b.T -q
+        printf "%s\t%20.15f\n", b.period[i], b.value[i]
     endloop
     outfile --close
 

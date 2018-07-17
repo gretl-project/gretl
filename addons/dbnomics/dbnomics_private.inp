@@ -124,17 +124,17 @@ function scalar fill_series_bundle(bundle *b, const string json, int idx)
 
     b.totobs = n
     b.start = istart
-    actobs = n - istart + 1
-    b.actobs = actobs
-    b.has_data = (actobs > 0)
+    T = n - istart + 1
+    b.T = T
+    b.has_data = (T > 0)
 
     if b.has_data
-        b.vals = zeros(actobs,1)
-        strings b.periods = array(actobs)
+        b.value = zeros(T,1)
+        strings b.period = array(T)
         scalar j = 1
         loop i=istart..n -q
-            b.vals[j] = atof(datavals[i])
-            b.periods[j] = periods[i]
+            b.value[j] = atof(datavals[i])
+            b.period[j] = periods[i]
             j++
         endloop
     endif

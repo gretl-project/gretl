@@ -98,9 +98,9 @@ get_dbnomics_series_info (const char *id, SERIESINFO *sinfo)
 	goto bailout;
     }
 
-    T = gretl_bundle_get_int(b, "actobs", &err);
-    P = gretl_bundle_get_array(b, "periods", &err);
-    v = gretl_bundle_get_matrix(b, "vals", &err);
+    T = gretl_bundle_get_int(b, "T", &err);
+    P = gretl_bundle_get_array(b, "period", &err);
+    v = gretl_bundle_get_matrix(b, "value", &err);
     if (!err && (T <= 0 || P == NULL || v == NULL)) {
 	fprintf(stderr, "get_dbnomics_series_info: invalid bundle content\n");
 	err = E_DATA;

@@ -4005,9 +4005,9 @@ static int prep_dbnomics_series (gretl_bundle *b,
     const char *id;
     int T, err = 0;
 
-    T = gretl_bundle_get_int(b, "actobs", &err);
-    A = gretl_bundle_get_array(b, "periods", &err);
-    v = gretl_bundle_get_matrix(b, "vals", &err);
+    T = gretl_bundle_get_int(b, "T", &err);
+    A = gretl_bundle_get_array(b, "period", &err);
+    v = gretl_bundle_get_matrix(b, "value", &err);
     id = gretl_bundle_get_string(b, "id", &err);
 
     if (!err && (T <= 0 || A == NULL || v == NULL)) {
