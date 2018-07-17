@@ -5800,21 +5800,82 @@
 	</para>
 	<para context="tex">
 	  The returned matrix is given by
-	  \[\sum_{j=-p}^{p} \sum_j w_{|j|} (X_t' u_t
-	  u_{t-j} X_{t-j})\]
+	  \[\sum_{j=-p}^{p} \sum_j w_{|j|} (X_t u_t
+	  u_{t-j} X_{t-j}')\]
 	</para>
 	<para context="notex">
-	  The returned matrix is given by
-	</para>
-	<para context="notex">  
-	  sum_{j=-p}^p sum_j w_{|j|} (X_t' u_t u_{t-j} X_{t-j})
+	  The returned matrix is the sum for <math>j</math> from
+	  <math>-p</math> to <math>p</math> of <math>w(|j|) *
+	  X(t)X(t-j)' * u(t)u(t-j)</math>, where <math>X(t)'</math> is
+	  the <math>t</math>-th row of <argname>X</argname>.
 	</para>
 	<para>
 	  If <argname>u</argname> is given as <lit>null</lit> the
 	  <math>u</math> terms are omitted, and if
-	  <argname>w</argname> is given as <lit>null</lit> all the weights
-	  are taken to be 1.0.
+	  <argname>w</argname> is given as <lit>null</lit> all the
+	  weights are taken to be 1.0.
 	</para>
+	<para>
+	  For example, the following piece of code
+	</para>
+	<code>
+	  set seed 123
+
+	  X    = mnormal(6,2)
+	  Lag  = mlag(X,1)
+	  Lead = mlag(X,-1)
+
+	  print X Lag Lead
+
+	  eval X'X
+	  eval mcovg(X, , , 0)
+
+	  eval X'(X + Lag + Lead)
+	  eval mcovg(X, , , 1)
+	</code>
+	<para>
+	  returns
+	</para>
+	<code>
+          X (6 x 2)
+           
+              -0.76587      -1.0600 
+              -0.43188      0.30687 
+              -0.82656      0.40681 
+               0.39246      0.75479 
+               0.36875       2.5498 
+               0.28855     -0.55251 
+           
+          Lag (6 x 2)
+           
+                0.0000       0.0000 
+              -0.76587      -1.0600 
+              -0.43188      0.30687 
+              -0.82656      0.40681 
+               0.39246      0.75479 
+               0.36875       2.5498 
+           
+          Lead (6 x 2)
+           
+              -0.43188      0.30687 
+              -0.82656      0.40681 
+               0.39246      0.75479 
+               0.36875       2.5498 
+               0.28855     -0.55251 
+                0.0000       0.0000 
+           
+                1.8295       1.4201 
+                1.4201       8.7596 
+           
+                1.8295       1.4201 
+                1.4201       8.7596 
+           
+                3.0585       2.5603 
+                2.5603       10.004 
+           
+                3.0585       2.5603 
+                2.5603       10.004
+	</code>
       </description>
     </function>
 
