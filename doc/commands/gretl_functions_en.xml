@@ -3563,10 +3563,11 @@
     <function name="fixname" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">rawname</fnarg>
+	<fnarg type="bool" optional="true">underscore</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Intended for use in connection with the <cmdref
+	  Primarily intended for use in connection with the <cmdref
 	  targ="join"/> command.  Returns the result of converting
 	  <argname>rawname</argname> to a valid gretl identifier,
 	  which must start with a letter, contain nothing but (ASCII)
@@ -3583,6 +3584,17 @@
 	  replace one or more consecutive spaces with an underscore,
 	  unless the previous character transcribed is an underscore in
 	  which case space is skipped.
+	</para>
+	<para>
+	  If you are confident that the input is not too long (and
+	  hence subject to truncation), you may wish to have sequences
+	  of one or more illegal characters replaced with an
+	  underscore rather than just being deleted; this may produce
+	  a more readable identifier. To get this effect, supply a
+	  nonzero value for the optional second argument. But this is
+	  not advisable in the context of the <cmdref targ="join"/>
+	  command, since the automatically <quote>fixed</quote> name
+	  will not use underscores in this way.
 	</para>
       </description>
     </function>
