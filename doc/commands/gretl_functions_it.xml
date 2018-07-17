@@ -4872,15 +4872,14 @@
     <function name="jsongetb" section="data-utils" output="bundle">
       <fnargs>
 	<fnarg type="string">buf</fnarg>
-	<fnarg type="strings" optional="true">esclusioni</fnarg>
+	<fnarg type="string" optional="true">percorso</fnarg>
       </fnargs>
       <description>
 	<para>
 	  L'argomento <argname>buf</argname> dev'essere un buffer
 	  JSON, così come ad esempio può esser preso da un sito
 	  attraverso la funzione <fncref targ="curl"/>. L'argomento opzionale
-	  <argname>esclusioni</argname> è un array di stringhe
-	  contenente le chiavi JSON da escludere.
+	  <argname>percorso</argname> è discusso più sotto.
 	</para>
 	<para>
 	  La funzione restituisce un bundle la cui struttura riproduce
@@ -4895,15 +4894,44 @@
 	  completa, in cui ciò è possibile.
 	</para>
 	<para>
-	  L'argomento opzionale <argname>esclusioni</argname> va usato
-	  con cautela: l'esclusione di un oggetto comporta quella di
-	  tutti gli oggetti al di sotto di esso.
+	  L'argomento opzionale <argname>percorso</argname> viene usato
+	  per limitare gli elementi JSON compresi nel bundle. Si noti
+	  che questo non è un <quote>JsonPath</quote> come descritto
+	  alla funzione <fncref targ="jsonget"/>; invece, è un
+	  semplice costrutto descritto qui nel seguito. 
 	</para>
-	<para>
-	  Vedi anche la funzione stringa <fncref targ="jsonget"/>;
-	  ognuna di queste due può essere più utile dell'altra, a
-	  seconda dei casi.
-	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      <argname>path</argname> è una stringa contenente
+	      elementi separati da una barra (<quote>/</quote>) che
+	      indica il movimento <quote>in profondità</quote>
+	      nell'albero JSON contenuto in
+	      <argname>buf</argname>. Il percorso inizia
+	      implicitamente dal nodo radice, per cui una barra
+	      iniziale è ammessa ma non richiesta. Il percorso non può
+	      contenere spazi.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      Ogni elemento del percorso deve essere formato in uno
+	      dei seguenti tre modi: (a) un nome, nel qual caso il
+	      bundle conterrà solo l'elemento JSON di nome
+	      corrispondente a quel dato livello; oppure (b) <quote>*</quote>
+	      (asterisco), che indica l'inclusione di tutti gli
+	      elementi a quel livello; o infine (c), una lista di
+	      elementi separati da virgole, compresa fra graffe (<quote>{</quote> e
+	      <quote>}</quote>), nel qual caso verrano inclusi solo
+	      quei certi elementi JSON.
+	    </para>
+	  </li>
+	</ilist>
+        <para>
+          Vedi anche la funzione stringa <fncref targ="jsonget"/>;
+          ognuna di queste due può essere più utile dell'altra, a
+          seconda dei casi.
+        </para>
       </description>
     </function>
 

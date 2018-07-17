@@ -2503,7 +2503,7 @@ static void print_NR_status (int status, double crittol, double gradtol,
    with the absolute values of H_{i,i} plus one.
 */
 
-#define SPECTRAL 1
+#define SPECTRAL 0
 
 static int NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
 {
