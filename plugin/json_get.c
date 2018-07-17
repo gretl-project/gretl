@@ -437,6 +437,11 @@ static void print_pathbits (gchar ***a, int nlev)
 
 #endif
 
+/* Given a user-suppled @path string, parse it into chunks
+   specific to levels in the JSON tree; each of these should
+   be a single name or {name1,name2,...} or "*".
+*/
+
 static int jb_make_pathbits (jbundle *jb, const char *path)
 {
     gchar **S = g_strsplit(path, "/", -1);
@@ -460,7 +465,7 @@ static int jb_make_pathbits (jbundle *jb, const char *path)
 		g_strstrip(S[i]);
 		a[i] = g_strsplit(S[i], ",", -1);
 	    } else {
-		err = 1;
+		err = E_PARSE;
 	    }
 	} else {
 	    a[i] = g_malloc(2 * sizeof **a);
@@ -490,12 +495,20 @@ static int jb_do_array (JsonReader *reader, jbundle *jb);
 static int jb_do_value (JsonReader *reader, jbundle *jb,
 			gretl_array *a, int i);
 
+/* Check whether a given JSON element is wanted in the
+   context of json_get_bundle(). We treat every element
+   as wanted by default, but if we have a path spec for
+   the current structural level (jb->level) and the
+   current node has a name, we need to check for a match.
+*/
+
 static int is_wanted (jbundle *jb, JsonReader *reader)
 {
     int i = jb->level - 1;
     int ret = 1;
 
     if (jb->a != NULL && i < jb->nlev) {
+	/* there's a relevant path spec */
 	const gchar *name = json_reader_get_member_name(reader);
 
 	if (name != NULL) {
@@ -505,26 +518,24 @@ static int is_wanted (jbundle *jb, JsonReader *reader)
 	    fprintf(stderr, "test for inclusion of %s at level %d: ",
 		    name, jb->level);
 #endif
+	    ret = 0;
 	    if (strlen(jb->a[i][0]) == 0 || !strcmp(jb->a[i][0], "*")) {
 		/* everything "matches" */
 		ret = 1;
-		goto finish;
-	    }
-	    for (j=0; j<n; j++) {
-		if (!strcmp(name, jb->a[i][j])) {
-		    ret = 1;
-		    goto finish;
+	    } else {
+		/* look for a specific match */
+		for (j=0; j<n; j++) {
+		    if (!strcmp(name, jb->a[i][j])) {
+			ret = 1;
+			break;
+		    }
 		}
 	    }
-	    ret = 0;
+#if JB_DEBUG
+	    fprintf(stderr, "%s\n", ret ? "yes" : "no");
+#endif
 	}
     }
-
- finish:
-
-#if JB_DEBUG
-    fprintf(stderr, "%s\n", ret ? "yes" : "no");
-#endif
 
     return ret;
 }
@@ -631,19 +642,20 @@ static int jb_do_object (JsonReader *reader, jbundle *jb,
     return err;
 }
 
-static int jb_transmute_array (gretl_array **pa,
-			       GretlType *pt,
-			       int n, int ns)
-{
-    int err = 0;
+/* Switch the type of the array @a from strings to bundles,
+   but only if we haven't already added any strings.
+*/
 
-    if (ns > 0) {
+static int jb_transmute_array (gretl_array *a,
+			       GretlType *pt)
+{
+    int err;
+
+    err = gretl_array_set_type(a, GRETL_TYPE_BUNDLES);
+    if (err) {
 	gretl_errmsg_set("JSON array: can't mix types");
-	err = E_DATA;
     } else {
-	gretl_array_destroy(*pa);
 	*pt = GRETL_TYPE_BUNDLES;
-	*pa = gretl_array_new(*pt, n, &err);
     }
 
     return err;
@@ -661,7 +673,6 @@ static int jb_do_array (JsonReader *reader, jbundle *jb)
     const gchar *name;
     gretl_array *a;
     gboolean ok;
-    int ns = 0;
     int i, n, err = 0;
 
     n = json_reader_count_elements(reader);
@@ -699,22 +710,22 @@ static int jb_do_array (JsonReader *reader, jbundle *jb)
 		err = E_DATA;
 	    } else {
 		err = jb_do_value(reader, jb, a, i);
-		ns++;
 	    }
 	} else if (json_reader_is_object(reader)) {
 	    if (atype != GRETL_TYPE_BUNDLES) {
 		/* try switching to bundles */
-		err = jb_transmute_array(&a, &atype, n, ns);
+		err = jb_transmute_array(a, &atype);
 	    }
 	    if (!err) {
 		/* note: since array elements do not have names it's
 		   not possible to include/exclude them by name
 		*/
 		gretl_bundle *bsave = jb->curr;
-		int lsave = jb->level;
 
 		err = jb_add_bundle(jb, NULL, a, i);
 		if (!err) {
+		    int lsave = jb->level;
+
 		    jb->level += 1;
 		    err = jb_do_object(reader, jb, a);
 		    jb->level = lsave;
@@ -935,7 +946,7 @@ static int filter_bundle_tree (gretl_bundle *b, gretl_array *A)
    don't want to include any intermediate nodes that are not
    themselves datasets but rather groupings of datasets. The
    latter can be distinguished by the presence of a "children"
-   node; real dataset nodes never have "children".
+   node; an actual dataset node never has "children".
 */
 
 gretl_array *json_bundle_get_terminals (gretl_bundle *b, int *err)
