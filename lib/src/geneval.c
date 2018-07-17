@@ -9318,6 +9318,10 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	    (void *) bundle, key);
 #endif
 
+    if (p->op == B_ASN && rhs->t == EMPTY) {
+	return gretl_bundle_delete_data(bundle, key);
+    }
+
     if (p->op != B_ASN) {
 	/* We must have an existing bundle member under @key, and
 	   its type will determine the type of the result of
