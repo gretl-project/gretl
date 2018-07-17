@@ -14,7 +14,7 @@ function void dbnomics_bundle_print(const bundle b, bool print_data[0])
         sn = sprintf("Series: %s", b.id)
         nf++
     else
-        sn = b.dset_name
+        sn = b.dataset_name
     endif
     # make a line of dashes the same length as @sn
     dashline = regsub(sn, ".", "-")
@@ -27,8 +27,8 @@ function void dbnomics_bundle_print(const bundle b, bool print_data[0])
     endif
     if inbundle(b, "dataset")
         nf++
-        if inbundle(b, "dset_name")
-            printf "Dataset: %s (%s)\n", b.dataset, b.dset_name
+        if inbundle(b, "dataset_name")
+            printf "Dataset: %s (%s)\n", b.dataset, b.dataset_name
         else
             printf "Dataset: %s\n", b.dataset
         endif

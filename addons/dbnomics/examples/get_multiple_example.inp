@@ -31,13 +31,13 @@ bs = dbnomics_get_multiple(provider, database, 20, 0, spec)
 
 list X = null
 
-loop i = 1..nelem(bs)
-    sn = fixname(bs[i].series_name)
-    sdes = bs[i].dset_name
+loop i = 1..nelem(bs) --quiet
+    sn = fixname(bs[i].series_code, 1)
+    sdes = bs[i].dataset_name
+    sdes = sdes ~ ": " ~ bs[i].series_name
     if inbundle(bs[i], "unit")
         sdes = sdes ~ " " ~ bs[i].unit
     endif
-    
     series tmp = NA
     x$i = dbnomics_bundle_get_data(bs[i], &tmp)
     X += genseries(sn, tmp)
@@ -45,5 +45,6 @@ loop i = 1..nelem(bs)
 endloop
 delete tmp
 
+labels
 summary X
 
