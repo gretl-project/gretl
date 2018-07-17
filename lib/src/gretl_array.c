@@ -1,24 +1,24 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #define FULL_XML_HEADERS 1
- 
+
 #include "libgretl.h"
 #include "uservar.h"
 #include "gretl_func.h"
@@ -58,7 +58,7 @@ static void gretl_array_destroy_data (gretl_array *A)
 	    for (i=0; i<A->n; i++) {
 		gretl_bundle_destroy(A->data[i]);
 	    }
-	}   
+	}
 	free(A->data);
 	A->data = NULL;
     }
@@ -85,7 +85,7 @@ static int array_allocate_storage (gretl_array *A)
     int i, err = 0;
 
     A->data = malloc(A->n * sizeof *A->data);
-    
+
     if (A->data == NULL) {
 	err = E_ALLOC;
     } else {
@@ -109,7 +109,7 @@ static int array_extend_content (gretl_array *A, int plus)
 	int i, err = 0;
 
 	data = realloc(A->data, n * sizeof *A->data);
-    
+
 	if (data == NULL) {
 	    err = E_ALLOC;
 	} else {
@@ -153,7 +153,7 @@ gretl_array *gretl_array_new (GretlType type, int n, int *err)
     }
 
     A = malloc(sizeof *A);
-    
+
     if (A == NULL) {
 	*err = E_ALLOC;
     } else {
@@ -237,7 +237,7 @@ char **gretl_array_get_strings (gretl_array *A, int *ns)
     return AS;
 }
 
-void *gretl_array_get_element (gretl_array *A, int i, 
+void *gretl_array_get_element (gretl_array *A, int i,
 			       GretlType *type,
 			       int *err)
 {
@@ -264,15 +264,15 @@ void *gretl_array_get_element (gretl_array *A, int i,
 	} else if (A->type == GRETL_TYPE_MATRICES) {
 	    if (A->data[i] == NULL) {
 		A->data[i] = gretl_null_matrix_new();
-	    }	    
+	    }
 	} else if (A->type == GRETL_TYPE_BUNDLES) {
 	    if (A->data[i] == NULL) {
 		A->data[i] = gretl_bundle_new();
-	    }	    
+	    }
 	} else {
 	    if (A->data[i] == NULL) {
 		A->data[i] = gretl_list_new(0);
-	    }	    
+	    }
 	}
 	ret = A->data[i];
 	if (ret == NULL) {
@@ -351,7 +351,7 @@ gretl_matrix *gretl_matrix_array_flatten (gretl_array *A,
     int sum_c = 0;
     int r0 = 0, c0 = 0;
     int i;
-    
+
     if (A->type != GRETL_TYPE_MATRICES) {
 	*err = E_TYPES;
 	return NULL;
@@ -373,7 +373,7 @@ gretl_matrix *gretl_matrix_array_flatten (gretl_array *A,
 		if (!common_r && !common_c) {
 		    *err = E_NONCONF;
 		    break;
-		}		
+		}
 	    }
 	    sum_r += m->rows;
 	    sum_c += m->cols;
@@ -436,23 +436,39 @@ gretl_matrix *gretl_matrix_array_flatten (gretl_array *A,
 	    }
 	}
     }
-    
+
     return ret;
 }
 
 int gretl_array_set_type (gretl_array *A, GretlType type)
 {
-    if (A == NULL || A->n > 0) {
-	return E_DATA;
+    int err = 0;
+
+    if (A == NULL) {
+	err = E_DATA;
     } else if (type != GRETL_TYPE_STRINGS &&
 	       type != GRETL_TYPE_MATRICES &&
 	       type != GRETL_TYPE_BUNDLES &&
 	       type != GRETL_TYPE_LISTS) {
-	return E_TYPES;
-    } else {
-	A->type = type;
-	return 0;
+	err = E_TYPES;
+    } else if (A->n > 0) {
+	/* we can (re-)set the type only if no data have
+	   been entered already */
+	int i;
+
+	for (i=0; i<A->n; i++) {
+	    if (A->data[i] != NULL) {
+		err = E_DATA;
+		break;
+	    }
+	}
     }
+
+    if (!err) {
+	A->type = type;
+    }
+
+    return err;
 }
 
 GretlType gretl_array_get_type (gretl_array *A)
@@ -462,7 +478,7 @@ GretlType gretl_array_get_type (gretl_array *A)
 
 GretlType gretl_array_get_content_type (gretl_array *A)
 {
-    return (A != NULL)? gretl_type_get_singular(A->type) : GRETL_TYPE_NONE;    
+    return (A != NULL)? gretl_type_get_singular(A->type) : GRETL_TYPE_NONE;
 }
 
 int gretl_array_get_length (gretl_array *A)
@@ -527,7 +543,7 @@ static int set_list (gretl_array *A, int i,
 	A->data[i] = gretl_list_copy(L);
 	if (A->data[i] == NULL) {
 	    err = E_ALLOC;
-	}	
+	}
     } else {
 	A->data[i] = L;
     }
@@ -538,13 +554,13 @@ static int set_list (gretl_array *A, int i,
 /* In the functions below I assume the @copy parameter
    will be set appropriately by "genr": if the incoming
    object is a named variable in its own right it should
-   be copied, but if it's on on-the-fly thing there's 
+   be copied, but if it's on on-the-fly thing there's
    no need to copy it, just "donate" it to the array.
 */
 
 /* respond to A[i] = s */
 
-int gretl_array_set_string (gretl_array *A, int i, 
+int gretl_array_set_string (gretl_array *A, int i,
 			    char *s, int copy)
 {
     int err = 0;
@@ -588,7 +604,7 @@ int gretl_array_append_string (gretl_array *A,
 
 /* respond to A[i] = m */
 
-int gretl_array_set_matrix (gretl_array *A, int i, 
+int gretl_array_set_matrix (gretl_array *A, int i,
 			    gretl_matrix *m,
 			    int copy)
 {
@@ -633,7 +649,7 @@ int gretl_array_append_matrix (gretl_array *A,
 
 /* respond to A[i] = b */
 
-int gretl_array_set_bundle (gretl_array *A, int i, 
+int gretl_array_set_bundle (gretl_array *A, int i,
 			    gretl_bundle *b,
 			    int copy)
 {
@@ -678,7 +694,7 @@ int gretl_array_append_bundle (gretl_array *A,
 
 /* respond to A[i] = L */
 
-int gretl_array_set_list (gretl_array *A, int i, 
+int gretl_array_set_list (gretl_array *A, int i,
 			  int *L, int copy)
 {
     int err = 0;
@@ -709,7 +725,7 @@ int gretl_array_append_list (gretl_array *A,
 	err = E_DATA;
     } else if (A->type != GRETL_TYPE_LISTS) {
 	err = E_TYPES;
-	
+
     } else {
 	err = array_extend_content(A, 1);
 	if (!err) {
@@ -720,12 +736,12 @@ int gretl_array_append_list (gretl_array *A,
     return err;
 }
 
-int gretl_array_set_element (gretl_array *A, int i, 
+int gretl_array_set_element (gretl_array *A, int i,
 			     void *ptr, GretlType type,
 			     int copy)
 {
     int err = 0;
-    
+
     if (type == GRETL_TYPE_MATRIX) {
 	err = gretl_array_set_matrix(A, i, ptr, copy);
     } else if (type == GRETL_TYPE_STRING) {
@@ -757,12 +773,12 @@ int gretl_array_append_object (gretl_array *A,
 	gretl_array_append_bundle(A, ptr, copy);
     } else if (A->type == GRETL_TYPE_LISTS) {
 	gretl_array_append_list(A, ptr, copy);
-    }	
+    }
 
     return err;
 }
 
-static int 
+static int
 gretl_array_copy_content (gretl_array *Acpy, const gretl_array *A,
 			  int write_offset)
 {
@@ -817,7 +833,7 @@ int gretl_array_append_array (gretl_array *A1,
 	err = E_TYPES;
     } else {
 	old_n = A1->n;
-	err = array_extend_content(A1, A2->n);	
+	err = array_extend_content(A1, A2->n);
     }
 
     if (!err) {
@@ -933,7 +949,7 @@ gretl_array *get_array_by_name (const char *name)
     gretl_array *a = NULL;
 
     if (name != NULL && *name != '\0') {
-	user_var *u = 
+	user_var *u =
 	    get_user_var_of_type_by_name(name, GRETL_TYPE_ARRAY);
 
 	if (u != NULL) {
@@ -958,7 +974,7 @@ gretl_array *gretl_array_pull_from_stack (const char *name,
 
     if (a == NULL) {
 	*err = E_DATA;
-    } 
+    }
 
     return a;
 }
@@ -987,7 +1003,7 @@ static void print_array_elements (gretl_array *A, PRN *prn)
 	    pputs(prn, "null\n");
 	} else if (A->type == GRETL_TYPE_STRINGS) {
 	    const char *s = A->data[i];
-	    
+
 	    print_array_string(s, prn);
 	} else if (A->type == GRETL_TYPE_MATRICES) {
 	    const gretl_matrix *m = A->data[i];
@@ -999,7 +1015,7 @@ static void print_array_elements (gretl_array *A, PRN *prn)
 	    gretl_list_print(list, NULL, prn);
 	}
     }
-    
+
     pputc(prn, '\n');
 }
 
@@ -1033,7 +1049,7 @@ void gretl_array_serialize (gretl_array *A, FILE *fp)
     subname = gretl_type_get_name(type);
 
     fprintf(fp, "<gretl-array type=\"%s\" length=\"%d\">\n",
-	    gretl_type_get_name(A->type), A->n); 
+	    gretl_type_get_name(A->type), A->n);
 
     for (i=0; i<A->n; i++) {
 	ptr = A->data[i];
@@ -1048,9 +1064,9 @@ void gretl_array_serialize (gretl_array *A, FILE *fp)
 	} else if (type == GRETL_TYPE_LIST) {
 	    gretl_xml_put_tagged_list("list", ptr, fp);
 	}
-    }	    
+    }
 
-    fputs("</gretl-array>\n", fp); 
+    fputs("</gretl-array>\n", fp);
 }
 
 static int name_matches_array_type (char *s, GretlType type)
