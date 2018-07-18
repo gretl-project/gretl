@@ -4749,16 +4749,85 @@ static int test_for_single_range (matrix_subspec *spec,
 
 /* stricter variant of test_for_single_range */
 
-static int test_for_single_element (matrix_subspec *spec,
-				    parser *p)
+static int get_single_element (matrix_subspec *spec,
+			       parser *p)
 {
     int ret = 0;
 
     if (spec->type[0] == SEL_SINGLE) {
 	ret = spec->sel[0].range[0];
     } else {
-	p->err = E_TYPES;
+	if (p != NULL) {
+	    p->err = E_TYPES;
+	}
 	ret = -1;
+    }
+
+    return ret;
+}
+
+static void *OSL_get_data (NODE *t, GretlType *ptype)
+{
+    NODE *l = t->v.b2.l, *r = t->v.b2.r;
+    NODE *lb = l->v.b1.b;
+    gretl_array *a = lb->v.ptr;
+    GretlType type = 0;
+    void *elem;
+    int idx, err = 0;
+
+    /* FIXME: t->v.b2.r is the original MSLRAW, not the
+       MSPEC (aux node) which was computed prior to calling
+       check_OSL_address: so we can't get the right index
+       here!
+    */
+
+    idx = get_single_element(r->v.mspec, NULL);
+    elem = gretl_array_get_element(a, idx-1, &type, &err);
+    *ptype = (elem == NULL)? GRETL_TYPE_NONE :
+	gretl_type_get_ref_type(type);
+
+    fprintf(stderr, "OSL_get_data: idx=%d, a=%p, type=%d, err=%d\n",
+	    idx, a, type, err);
+
+    return elem;
+}
+
+static NODE *check_OSL_address (NODE *t, NODE *l, NODE *r, parser *p)
+{
+    int idx = get_single_element(r->v.mspec, p);
+    NODE *lb = l->v.b1.b;
+    NODE *ret = NULL;
+
+    /* FIXME: this function should _not_ just return node @t,
+       since the @r has been evaluated (MSLRAW -> MSPEC)
+       But what exactly should it return?
+    */
+
+    if (lb->t != OSL || lb->uv == NULL || idx <= 0) {
+	p->err = E_TYPES;
+    } else {
+	GretlType type = user_var_get_type(lb->uv);
+
+	if (type == GRETL_TYPE_ARRAY) {
+	    gretl_array *a = lb->v.ptr;
+	    void *elem;
+
+	    elem = gretl_array_get_element(a, idx-1, &type, &p->err);
+	    fprintf(stderr, "OSL: got array of %s at %p: elem[%d] = %p\n",
+		    gretl_type_get_name(type), lb->v.ptr, idx-1, elem);
+	    /* temporary: stop the rot here! */
+	    fprintf(stderr, "address of (%s[%d]), not supported yet\n",
+		    lb->vname != NULL ? lb->vname : "object", idx);
+	    p->err = E_TYPES;
+	} else {
+	    p->err = E_TYPES;
+	}
+    }
+
+    if (p->err) {
+	gretl_errmsg_set(_("Wrong type of operand for unary '&'"));
+    } else {
+	ret = t;
     }
 
     return ret;
@@ -4830,17 +4899,6 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
 		    }
 		}
 	    }
-	} else if (l->t == U_ADDR && r->t == MSPEC) {
-	    int idx = test_for_single_element(r->v.mspec, p);
-	    NODE *lb = l->v.b1.b;
-
-	    if (lb->t == OSL && idx >= 1) {
-		fprintf(stderr, "address of (%s[%d]), not supported yet\n",
-			lb->vname != NULL ? lb->vname : "object", idx);
-	    } else {
-		gretl_errmsg_set(_("Wrong type of operand for unary '&'"));
-	    }
-	    p->err = E_TYPES;
 	} else {
 	    fprintf(stderr, "subobject_node: l='%s', r='%s'\n",
 		    getsymb(l->t), getsymb(r->t));
@@ -8287,6 +8345,8 @@ static void *arg_get_data (NODE *n, int ref, GretlType *type)
     } else if (n->t == LIST) {
 	*type = GRETL_TYPE_LIST;
 	data = n->v.ivec;
+    } else if (n->t == OSL) {
+	data = OSL_get_data(n, type);
     } else {
 	*type = GRETL_TYPE_NONE;
     }
@@ -8320,7 +8380,7 @@ static NODE *suitable_ufunc_ret_node (parser *p,
 #define ok_ufunc_sym(s) (s == NUM || s == SERIES || s == MAT || \
                          s == LIST || s == U_ADDR || s == DUM || \
                          s == STR || s == EMPTY || s == BUNDLE || \
-			 s == ARRAY)
+			 s == ARRAY || s == OSL)
 
 /* evaluate a user-defined function */
 
@@ -8406,6 +8466,8 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 
 	if (p->err || arg == NULL) {
 	    fprintf(stderr, "%s: failed to evaluate arg %d\n", funname, i+1);
+	    fprintf(stderr, " (input node was of type %d, '%s')\n", ni->t,
+		    getsymb(ni->t));
 	    p->err = (p->err == 0)? E_DATA : p->err;
 	} else if (!ok_ufunc_sym(arg->t)) {
 	    gretl_errmsg_sprintf("%s: invalid argument type %s", funname,
@@ -14546,6 +14608,8 @@ static NODE *eval (NODE *t, parser *p)
 	/* object plus subspec */
 	if (t->flags & LHT_NODE) {
 	    ret = lhs_terminal_node(t, l, r, p);
+	} else if (l->t == U_ADDR) {
+	    ret = check_OSL_address(t, l, r, p);
 	} else {
 	    ret = subobject_node(l, r, p);
 	}

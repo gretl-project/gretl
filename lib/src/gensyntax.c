@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* parser module for 'genr' and related commands */
@@ -38,10 +38,10 @@
 static void notify (const char *s, NODE *n, parser *p)
 {
     if (n == NULL) {
-	fprintf(stderr, "%-8s: returning NULL node, err = %d\n", 
+	fprintf(stderr, "%-8s: returning NULL node, err = %d\n",
 		s, p->err);
     } else {
-	fprintf(stderr, "%-8s: returning node of type %d (%s) at %p, err = %d\n", 
+	fprintf(stderr, "%-8s: returning node of type %d (%s) at %p, err = %d\n",
 		s, n->t, getsymb(n->t), (void *) n, p->err);
     }
 }
@@ -52,7 +52,7 @@ NODE *new_node (int t)
     NODE *n = malloc(sizeof *n);
 
 #if MDEBUG
-    fprintf(stderr, "new_node: allocated node of type %d (%s) at %p\n", 
+    fprintf(stderr, "new_node: allocated node of type %d (%s) at %p\n",
 	    t, getsymb(t), (void *) n);
 #endif
 
@@ -70,7 +70,7 @@ NODE *new_node (int t)
 }
 
 NODE *newempty (void)
-{  
+{
     NODE *n = new_node(EMPTY);
 
     if (n != NULL) {
@@ -94,18 +94,25 @@ static NODE *newref (parser *p, int t)
 	    }
 	} else if (t == NUM || t == NUM_P || t == NUM_M) {
 	    user_var *u = p->data;
-	    
+
 	    n->vname = p->idstr;
 	    n->v.xval = *(double *) u->ptr;
 	    n->uv = u;
 	} else if (t == MAT || t == LIST || t == BUNDLE ||
 		   t == ARRAY || t == STR) {
 	    user_var *u = p->data;
-	    
+
 	    n->vname = p->idstr;
 	    n->v.ptr = u->ptr;
 	    n->uv = u;
-	} else if (t == PTR || t == OSL) {
+	} else if (t == OSL) {
+	    user_var *u = p->data;
+
+	    n->vname = p->idstr;
+	    n->v.ptr = u->ptr;
+	    n->uv = u;
+	    n->flags |= LHT_NODE;
+	} else if (t == PTR) {
 	    n->vname = p->idstr;
 	    n->v.ptr = p->data;
 	} else if (t == DBUNDLE) {
@@ -125,7 +132,7 @@ static NODE *newref (parser *p, int t)
 /* node storing an anonymous string value */
 
 static NODE *newstr (char *s)
-{  
+{
     NODE *n = NULL;
 
     if (s == NULL) {
@@ -144,7 +151,7 @@ static NODE *newstr (char *s)
 /* node storing an anonymous floating point value */
 
 NODE *newdbl (double x)
-{  
+{
     NODE *n = new_node(NUM);
 
     if (n != NULL) {
@@ -157,7 +164,7 @@ NODE *newdbl (double x)
 /* node for unary operator, or single-argument function */
 
 static NODE *newb1 (int t, NODE *b)
-{  
+{
     NODE *n = new_node(t);
 
     if (n != NULL) {
@@ -170,7 +177,7 @@ static NODE *newb1 (int t, NODE *b)
 /* node for binary operator or two-argument function */
 
 NODE *newb2 (int t, NODE *l, NODE *r)
-{  
+{
     NODE *n = new_node(t);
 
     if (n != NULL) {
@@ -184,7 +191,7 @@ NODE *newb2 (int t, NODE *l, NODE *r)
 /* node for ternary operator */
 
 static NODE *newb3 (int t, NODE *l)
-{  
+{
     NODE *n = new_node(t);
 
     if (n != NULL) {
@@ -199,7 +206,7 @@ static NODE *newb3 (int t, NODE *l)
 /* node for unknown number of subnodes */
 
 static NODE *newbn (int t)
-{  
+{
     NODE *n = new_node(t);
 
     if (n != NULL) {
@@ -226,7 +233,7 @@ static int push_bn_node (NODE *t, NODE *n)
 
 #if SDEBUG
     fprintf(stderr, "push_bn_node: n_nodes now = %d, "
-	    "added node of type %d (vnum = %d)\n", 
+	    "added node of type %d (vnum = %d)\n",
 	    t->v.bn.n_nodes, n->t, n->vnum);
 #endif
 
@@ -242,7 +249,7 @@ static void expected_symbol_error (int c, parser *p)
     if (found == NULL || *found == '\0') {
 	gretl_errmsg_sprintf(_("Expected '%c' but formula ended\n"), c);
     } else {
-	gretl_errmsg_sprintf(_("Expected '%c' but found '%s'\n"), c, 
+	gretl_errmsg_sprintf(_("Expected '%c' but found '%s'\n"), c,
 			     found);
     }
 
@@ -262,7 +269,7 @@ static void unmatched_symbol_error (int c, parser *p)
 }
 
 static NODE *base (parser *p, NODE *up)
-{ 
+{
     NODE *t = NULL;
 
     if (p->err) {
@@ -270,12 +277,12 @@ static NODE *base (parser *p, NODE *up)
     }
 
 #if SDEBUG
-    fprintf(stderr, "base(): on input sym = %d ('%s'), ch = '%c'\n", 
+    fprintf(stderr, "base(): on input sym = %d ('%s'), ch = '%c'\n",
 	    p->sym, getsymb_full(p->sym, p), p->ch? p->ch : '0');
 #endif
 
     switch (p->sym) {
-    case CNUM: 
+    case CNUM:
 	t = newdbl(p->xval);
 	lex(p);
 	break;
@@ -283,14 +290,14 @@ static NODE *base (parser *p, NODE *up)
 	t = newstr(p->idstr);
 	lex(p);
 	break;
-    case NUM: 
+    case NUM:
     case SERIES:
     case MAT:
     case BUNDLE:
     case ARRAY:
     case STR:
     case UOBJ:
-    case CON: 
+    case CON:
     case DVAR:
     case MVAR:
     case OBS:
@@ -346,14 +353,14 @@ static NODE *base (parser *p, NODE *up)
 	    expected_symbol_error(']', p);
 	}
 	break;
-    default: 
+    default:
     deferr:
 	context_error(0, p, "base");
 	break;
     }
 
-#if 0 
-    /* This check ought to be redundant, and I believe it is 
+#if 0
+    /* This check ought to be redundant, and I believe it is
        now redundant, but I'm leaving it here for the present,
        just in case. AC 2011-09-05
     */
@@ -365,14 +372,14 @@ static NODE *base (parser *p, NODE *up)
 	*/
 	fprintf(stderr, "gensytax: base: bad exit-sym = %d\n", p->sym);
 	p->err = E_PARSE;
-    } 
+    }
 #endif
 
 #if SDEBUG
     notify("base", t, p);
-    fprintf(stderr, "on exit from base, p->sym = %d (p->err = %d)\n", 
+    fprintf(stderr, "on exit from base, p->sym = %d (p->err = %d)\n",
 	    p->sym, p->err);
-#endif    
+#endif
 
     return t;
 }
@@ -393,7 +400,7 @@ static NODE *u_addr_base (parser *p)
 		p->err = E_TYPES;
 	    }
 	    break;
-	case NUM: 
+	case NUM:
 	case MAT:
 	case BUNDLE:
 	case ARRAY:
@@ -476,7 +483,7 @@ static NODE *listvar_node (parser *p)
 	lex(p);
     }
 
-    return ret;    
+    return ret;
 }
 
 static void unwrap_string_arg (parser *p)
@@ -510,12 +517,12 @@ static void unwrap_string_arg (parser *p)
 
    Added 2013-08-25: The above is all very well, but it breaks the
    case where a function that returns a string is given as an
-   argument, rather than a plain string variable or string literal -- 
+   argument, rather than a plain string variable or string literal --
    the function call was getting passed as a string literal. A block
    is now inserted to test for this case.
 */
 
-static NODE *get_final_string_arg (parser *p, NODE *t, int sym, 
+static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
 				   int eat_last)
 {
     const char *src = NULL;
@@ -566,7 +573,7 @@ static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
 	if (wrapped) {
 	    p->err = E_PARSE;
 	    return NULL;
-	} 
+	}
 	/* handle empty arg */
 	p->idstr = gretl_strdup("");
     } else {
@@ -628,13 +635,13 @@ static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
     if (!varargs_func(sym)) {
 	if (wrapped) {
 	    unwrap_string_arg(p);
-	} else if (sym != F_ISDISCR && 
+	} else if (sym != F_ISDISCR &&
 		   sym != F_ISNULL &&
 		   sym != F_TYPEOF &&
 		   sym != F_EXISTS &&
 		   sym != F_ISSTRING) {
 	    /* not quoted: give priority to string variables
-	       unless we need the _names_ of string variables 
+	       unless we need the _names_ of string variables
 	       rather then their content
 	    */
 	    p->data = get_user_var_of_type_by_name(p->idstr,
@@ -731,12 +738,12 @@ static NODE *get_literal_string_arg (parser *p, int opt)
 	if (i2 < 0) {
 	    unmatched_symbol_error('(', p);
 	    return NULL;
-	} 
+	}
 	close = (i1 > 0 && i1 < i2)? i1 : i2;
 	p->idstr = gretl_strndup(p->point - 1, close + 1);
     } else {
 	/* handle the function-call case: the terminator of
-	   the argument will be a bare comma (unquoted, not 
+	   the argument will be a bare comma (unquoted, not
 	   in parentheses) or a right paren which matches
 	   the paren that opens the argument list of
 	   the function call.
@@ -757,7 +764,7 @@ static NODE *get_literal_string_arg (parser *p, int opt)
 	    if (*s == '"') {
 		anyquote = 1;
 		quoted = !quoted;
-	    } 
+	    }
 	    if (!quoted) {
 		if (*s == '(') {
 		    gotparen++;
@@ -854,7 +861,7 @@ static NODE *get_bundle_member_name (parser *p)
 		ret = newstr(p->idstr);
 	    }
 	}
-    }	
+    }
 
     return ret;
 }
@@ -867,7 +874,7 @@ static void get_matrix_def (NODE *t, parser *p, int *sub)
 #if SDEBUG
     fprintf(stderr, "get_matrix_def, p->sym = %d ('%s')\n",
 	    p->sym, getsymb(p->sym));
-#endif    
+#endif
 
     if (p->sym == G_LCB) {
 	lex(p);
@@ -911,7 +918,7 @@ static void get_matrix_def (NODE *t, parser *p, int *sub)
 #if SDEBUG
     fprintf(stderr, " after processing, sym = %d, err = %d\n",
 	    p->sym, p->err);
-#endif     
+#endif
 
     if (!p->err && cexp == 0) {
 	if (p->sym == G_RCB) {
@@ -920,7 +927,7 @@ static void get_matrix_def (NODE *t, parser *p, int *sub)
 	    unmatched_symbol_error('{', p);
 	}
     }
-	    
+
     if (cexp && !p->err) {
 	expected_symbol_error(cexp, p);
     }
@@ -938,7 +945,7 @@ static void get_slice_parts (NODE *t, parser *p)
 
 #if SDEBUG
     fprintf(stderr, "get_slice_parts, p->sym = %d\n", p->sym);
-#endif  
+#endif
 
     set_slice_on(p);
 
@@ -998,7 +1005,7 @@ static void get_slice_parts (NODE *t, parser *p)
     } else {
 	cexp = '[';
     }
-	    
+
     if (cexp && !p->err) {
 	expected_symbol_error(cexp, p);
     }
@@ -1125,7 +1132,7 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 #if SDEBUG
     fprintf(stderr, "get_args: f=%s, k=%d, point='%s'\n", getsymb(f),
 	    k, p->point);
-#endif    
+#endif
 
     if (p->sym != G_LPR) {
 	expected_symbol_error('(', p);
@@ -1195,7 +1202,7 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 	} else if (p->sym == G_RPR) {
 	    if (i < k) {
 		pad_parent(t, k, i, p);
-	    } 
+	    }
 	    lex(p);
 	    if (p->sym == G_LBR) {
 		*next = '[';
@@ -1205,7 +1212,7 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 
 #if SDEBUG
     fprintf(stderr, "get_args: returning with p->err=%d\n", p->err);
-#endif    
+#endif
 }
 
 static void get_ovar_ref (NODE *t, parser *p)
@@ -1237,7 +1244,7 @@ static void get_ovar_ref (NODE *t, parser *p)
 NODE *powterm (parser *p, NODE *l)
 {
     /* watch out for unary operators */
-    int sym = p->sym == B_SUB ? U_NEG : 
+    int sym = p->sym == B_SUB ? U_NEG :
 	p->sym == B_ADD ? U_POS : p->sym;
     int opt = OPT_NONE;
     int next = 0;
@@ -1278,7 +1285,7 @@ NODE *powterm (parser *p, NODE *l)
 
     if (string_last_func(sym)) {
 	opt |= RIGHT_STR;
-    } 
+    }
 
     if (string_mid_func(sym)) {
 	opt |= MID_STR;
@@ -1346,7 +1353,7 @@ NODE *powterm (parser *p, NODE *l)
 	if (t != NULL) {
 	    lex(p);
 	    t->v.b1.b = get_final_string_arg(p, t, sym, 1);
-	}	
+	}
     } else if (func1_symb(sym)) {
 	t = newb1(sym, NULL);
 	if (t != NULL) {
@@ -1365,7 +1372,7 @@ NODE *powterm (parser *p, NODE *l)
 	}
 	if (sym == LAG) {
 	    set_lag_parse_off(p);
-	}	
+	}
     } else if (sym == MSL || sym == DMSL || sym == OSL) {
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
@@ -1394,7 +1401,7 @@ NODE *powterm (parser *p, NODE *l)
 	if (t != NULL) {
 	    t->v.b2.l = newref(p, DBUNDLE);
 	    t->v.b2.r = get_bundle_member_name(p);
-	}	
+	}
     } else if (sym == OVAR) {
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
@@ -1436,7 +1443,7 @@ NODE *powterm (parser *p, NODE *l)
 			lex(p);
 			get_slice_parts(t->v.b2.r, p);
 		    }
-		}		
+		}
 	    }
 	}
     } else if (sym == UFUN || sym == RFUN) {
@@ -1489,7 +1496,7 @@ NODE *powterm (parser *p, NODE *l)
 	    if (t->v.b2.r != NULL) {
 		get_slice_parts(t->v.b2.r, p);
 	    }
-	}	
+	}
     } else if (t != NULL) {
 	if (p->sym == BMEMB || p->sym == DBMEMB) {
 	    t = powterm(p, t);
@@ -1519,8 +1526,8 @@ NODE *powterm (parser *p, NODE *l)
 			  t == P_COL)
 
 static NODE *factor (parser *p)
-{  
-    int sym = p->sym == B_SUB ? U_NEG : 
+{
+    int sym = p->sym == B_SUB ? U_NEG :
 	p->sym == B_ADD ? U_POS : p->sym;
     NODE *t;
 
@@ -1547,7 +1554,7 @@ static NODE *factor (parser *p)
 	if (t != NULL) {
 	    int upsym = p->sym;
 
-	    while (!p->err && (p->sym == B_POW || 
+	    while (!p->err && (p->sym == B_POW ||
 			       p->sym == B_DOTPOW ||
 			       p->sym == B_TRMUL)) {
 		t = newb2(p->sym, t, NULL);
@@ -1575,7 +1582,7 @@ static NODE *factor (parser *p)
 }
 
 static NODE *term (parser *p)
-{  
+{
     NODE *t;
 
 #if SDEBUG
@@ -1586,9 +1593,9 @@ static NODE *term (parser *p)
 	return NULL;
     }
 
-    while (!p->err && (p->sym == B_MUL || p->sym == B_DIV || 
-		       p->sym == B_LDIV || p->sym == B_MOD || 
-		       p->sym == B_DOTMULT || p->sym == B_DOTDIV || 
+    while (!p->err && (p->sym == B_MUL || p->sym == B_DIV ||
+		       p->sym == B_LDIV || p->sym == B_MOD ||
+		       p->sym == B_DOTMULT || p->sym == B_DOTDIV ||
 		       p->sym == B_KRON)) {
 	t = newb2(p->sym, t, NULL);
 	if (t != NULL) {
@@ -1605,7 +1612,7 @@ static NODE *term (parser *p)
 }
 
 static NODE *expr4 (parser *p)
-{  
+{
     NODE *t;
 
 #if SDEBUG
@@ -1616,7 +1623,7 @@ static NODE *expr4 (parser *p)
 	return NULL;
     }
 
-    while (!p->err && (p->sym == B_ADD || p->sym == B_SUB || 
+    while (!p->err && (p->sym == B_ADD || p->sym == B_SUB ||
 		       p->sym == B_DOTADD || p->sym == B_DOTSUB ||
 		       p->sym == B_HCAT || p->sym == B_VCAT ||
 		       p->sym == B_LCAT || p->sym == B_RANGE ||
@@ -1636,7 +1643,7 @@ static NODE *expr4 (parser *p)
 }
 
 static NODE *expr3 (parser *p)
-{  
+{
     NODE *t;
 
 #if SDEBUG
@@ -1647,8 +1654,8 @@ static NODE *expr3 (parser *p)
 	return NULL;
     }
 
-    while (!p->err && (p->sym == B_GT || p->sym == B_LT || 
-		       p->sym == B_DOTGT || p->sym == B_DOTLT || 
+    while (!p->err && (p->sym == B_GT || p->sym == B_LT ||
+		       p->sym == B_DOTGT || p->sym == B_DOTLT ||
 		       p->sym == B_GTE || p->sym == B_LTE ||
 		       p->sym == B_DOTGTE || p->sym == B_DOTLTE)) {
 	t = newb2(p->sym, t, NULL);
@@ -1666,7 +1673,7 @@ static NODE *expr3 (parser *p)
 }
 
 static NODE *expr2 (parser *p)
-{  
+{
     NODE *t;
 
 #if SDEBUG
@@ -1694,7 +1701,7 @@ static NODE *expr2 (parser *p)
 }
 
 static NODE *expr1 (parser *p)
-{  
+{
     NODE *t;
 
 #if SDEBUG
@@ -1721,7 +1728,7 @@ static NODE *expr1 (parser *p)
 }
 
 static NODE *expr0 (parser *p)
-{  
+{
     NODE *t;
 
 #if SDEBUG
@@ -1748,7 +1755,7 @@ static NODE *expr0 (parser *p)
 }
 
 NODE *expr (parser *p)
-{  
+{
     NODE *t;
 
 #if SDEBUG
@@ -1785,4 +1792,3 @@ NODE *expr (parser *p)
 
     return t;
 }
-
