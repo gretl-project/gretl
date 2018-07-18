@@ -105,7 +105,7 @@ static NODE *newref (parser *p, int t)
 	    n->vname = p->idstr;
 	    n->v.ptr = u->ptr;
 	    n->uv = u;
-	} else if (t == PTR) {
+	} else if (t == PTR || t == OSL) {
 	    n->vname = p->idstr;
 	    n->v.ptr = p->data;
 	} else if (t == DBUNDLE) {
@@ -299,6 +299,7 @@ static NODE *base (parser *p, NODE *up)
     case DBUNDLE:
     case NUM_P:
     case NUM_M:
+    case OSL:
     case UNDEF:
 	if (p->sym == OBS) {
 	    fprintf(stderr, "*** gensyntax: base: sym = OBS\n");
@@ -400,6 +401,9 @@ static NODE *u_addr_base (parser *p)
 	    if (t->uv == NULL) {
 		p->err = E_TYPES;
 	    }
+	    break;
+	case OSL:
+	    /* FIXME! */
 	    break;
 	case UNDEF:
 	    break;

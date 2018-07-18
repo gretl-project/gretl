@@ -4747,6 +4747,23 @@ static int test_for_single_range (matrix_subspec *spec,
     return ret;
 }
 
+/* stricter variant of test_for_single_range */
+
+static int test_for_single_element (matrix_subspec *spec,
+				    parser *p)
+{
+    int ret = 0;
+
+    if (spec->type[0] == SEL_SINGLE) {
+	ret = spec->sel[0].range[0];
+    } else {
+	p->err = E_TYPES;
+	ret = -1;
+    }
+
+    return ret;
+}
+
 static NODE *subobject_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = NULL;
@@ -4813,6 +4830,17 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
 		    }
 		}
 	    }
+	} else if (l->t == U_ADDR && r->t == MSPEC) {
+	    int idx = test_for_single_element(r->v.mspec, p);
+	    NODE *lb = l->v.b1.b;
+
+	    if (lb->t == OSL && idx >= 1) {
+		fprintf(stderr, "address of (%s[%d]), not supported yet\n",
+			lb->vname != NULL ? lb->vname : "object", idx);
+	    } else {
+		gretl_errmsg_set(_("Wrong type of operand for unary '&'"));
+	    }
+	    p->err = E_TYPES;
 	} else {
 	    fprintf(stderr, "subobject_node: l='%s', r='%s'\n",
 		    getsymb(l->t), getsymb(r->t));
@@ -8389,6 +8417,9 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	fprintf(stderr, "%s: arg %d is of type %s (err=%d)\n", funname, i+1,
 		arg == NULL ? "?" : getsymb(arg->t), p->err);
 #endif
+	if (p->err) {
+	    break;
+	}
 
 	if (!p->err && arg->t == U_ADDR) {
 	    /* address node: switch to the 'content' sub-node */
@@ -14117,7 +14148,7 @@ static NODE *eval (NODE *t, parser *p)
 	ret = maybe_rescue_undef_node(t, p);
 	break;
     case U_ADDR:
-	if (!uvar_node(t->v.b1.b)) {
+	if (!uvar_node(t->v.b1.b) && t->v.b1.b->t != OSL) {
 	    p->err = E_DATA;
 	} else if (compiled(p) && starting(p)) {
 	    node_reattach_data(t->v.b1.b, p);
