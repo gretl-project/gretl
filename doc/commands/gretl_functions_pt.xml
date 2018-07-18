@@ -3259,22 +3259,22 @@
       </fnargs>
       <description>
 	<para>
-	  Calcula uma aproximação numérica para a jacobiana associada ao vetor
-	  <argname>b</argname> de ordem <math>n</math> e a função de transformação
-	  especificada pelo argumento <argname>fcall</argname>. A chamada da
-	  função deve ter <argname>b</argname> como primeiro argumento
-	  (tanto na forma direta quanto na forma de ponteiro),
-	  seguido por quaisquer argumentos adicionais que podem ser necessários
-	  e o valor retornado deverá ser uma matriz de ordem <by r="m" c="1"/>.
-	  Se executada com sucesso, <lit>fdjac</lit> retorna uma matriz de ordem
-	  <by r="m" c="n"/> contendo a jacobiana.
+	  Calcula uma aproximação numérica para a jacobiana associada ao
+	  vetor <argname>b</argname> de ordem <math>n</math> e a função de
+	  transformação especificada pelo argumento <argname>fcall</argname>.
+	  A chamada da função deve ter <argname>b</argname> como primeiro
+	  argumento (tanto na forma direta quanto na forma de ponteiro),
+	  seguido por quaisquer argumentos adicionais que podem ser
+	  necessários e o valor retornado deverá ser uma matriz de ordem
+	  <by r="m" c="1"/>. Se executada com sucesso, <lit>fdjac</lit>
+	  retorna uma matriz de ordem <by r="m" c="n"/> contendo a jacobiana.
 	  Exemplo:
 	</para>
 	<para>
-	  Pode-se utilizar o terceiro argumento (opcional) para determinar o
-	  tamanho da medida <math>h</math> que se usa no mecanismo de
-	  aproximação (ver mais abaixo). Quando se omite este argumento, o
-	  tamanho da medida determina-se automaticamente.
+	  Pode-se utilizar o terceiro argumento (opcional) para determinar
+	  o tamanho da medida <math>h</math> que se usa no mecanismo de
+	  aproximação (ver mais abaixo). Quando se omite este argumento,
+	  o tamanho da medida determina-se automaticamente.
 	</para>
 	<para>
 	  Aqui está um exemplo do seu uso:
@@ -3563,26 +3563,38 @@
     <function name="fixname" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">rawname</fnarg>
+	<fnarg type="bool" optional="true">underscore</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Tem a intenção de ser utilizada em conjunto com o comando
-    <cmdref targ="join"/>. Retorna o resultado da conversão de
+	  Tem como intuito principal a utilização em conjunto com o comando
+	  <cmdref targ="join"/>. Retorna o resultado da conversão de
 	  <argname>rawname</argname> em um identificador válido do Gretl,
 	  que deve ser iniciado por uma letra, conter apenas letras ASCII,
 	  dígitos e traço inferior (<quote>underscore</quote>), e não deve
 	  ter mais que 31 caracteres. As regras utilizadas na conversão são:
 	</para>
 	<para>
-	  1. Remover quaisquer caracteres que não sejam letras no início do nome.
+	  1. Remover quaisquer caracteres que não sejam letras no início do
+	  nome.
 	</para>
 	<para>
-	  2. Até o limite de 31 caracteres não ter sido ultrapassado ou a entrada
-	  tiver sido exaurida: transcreve os caracteres <quote>legais</quote>, omite
-	  os caracteres <quote>ilegais</quote>, com exceção dos espaços, e
-	  substitui os espaços por traços inferiores. Se o
-	  o caractere anterior for um traço inferior o espaço será
-    omitido.
+	  2. Até o limite de 31 caracteres não ter sido ultrapassado ou a
+	  entrada tiver sido exaurida: transcreve os caracteres <quote>legais
+	  </quote>, omite os caracteres <quote>ilegais</quote>, com exceção
+	  dos espaços, e substitui os espaços por traços inferiores. Se o
+	  caractere anterior for um traço inferior o espaço será omitido.
+	</para>
+	<para>
+	  Se você estiver seguro de que a entrada não é muito extensa (e, dessa
+	  forma, não está sujeita a truncagem), você pode querer que um ou mais
+	  dos caracteres ilegais sejam substituídos por um traço inferior ao
+	  invés de simplesmente deletá-los. Isto pode produzir um identificador
+	  mais legível. Para que isso ocorra, forneça um valor diferente de 0
+	  para o segundo argumento (que é opcional). Vale salientar que esse
+	  procedimento não é aconselhável quando o comando <cmdref targ="join"/>
+	  for utilizado, uma vez que os nomes automaticamente <quote>corrigidos
+	  </quote> não utilizarão o traço inferior.
 	</para>
       </description>
     </function>
@@ -5039,6 +5051,38 @@
 	</para>
       </description>
     </function>    
+
+    <function name="kdensity" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="series-or-vec">x</fnarg>
+	<fnarg type="scalar" optional="true">scale</fnarg>
+	<fnarg type="bool" optional="true">control</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Calcula a estimativa de densidade pelo método do núcleo (kernel) para
+	  a série ou vetor <argname>x</argname>. A matriz retornada tem duas
+	  colunas, com a primeira contendo um conjunto abscissas uniformemente
+	  espaçadas e a segunda a densidade estimada em cada um desses pontos.
+	</para>
+	<para>
+	  O parâmetro opcional <argname>scale</argname> pode ser utilizado
+	  para ajustar o grau de suavização em relação ao valor padrão 1.0
+	  (maiores valores geram resultados mais suavizados). O parâmetro
+	  <argname>control</argname> age como um booleano: 0 (que é o padrão)
+	  implica na utilização do núcleo gaussiano, enquanto que um valor
+	  não-nulo implica na utilização do núcleo de Epanechnikov.
+	</para>
+	<para>
+	  Um gráfico dos resultados pode ser obtido via comando <cmdref
+	  targ="gnuplot"/>, como por exemplo:
+	</para>
+	<code>
+	  matrix d = kdensity(x)
+	  gnuplot 2 1 --matrix=d --with-lines --fit=none
+	</code>
+      </description>
+    </function>
       
     <function name="kdsmooth" section="sspace" output="scalar">
       <fnargs>
@@ -5113,6 +5157,44 @@
       </description>
     </function>
 
+    <function name="kmeier" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="series-or-vec">d</fnarg>
+	<fnarg type="series-or-vec" optional="true">cens</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Dada uma amostra de dados de duração, <argname>d</argname>,
+	  possivelmente acompanhada por um registro de status de
+	  censura, <argname>cens</argname>, calcula o estimador
+	  não-paramétrico de Kaplan&ndash;Meier da função de sobrevivência
+	  (<cite key="kaplan-meier">Kaplan e Meier, 1958</cite>). A
+	  matriz retornada possui três colunas contendo, respectivamente,
+	  os valores únicos de <argname>d</argname> de forma ordenada, a
+	  função de sobrevivência estimada correspondente ao valor de
+	  duração na coluna 1 e o (elevado) erro padrão do estimador,
+	  calculado via método de <cite key="greenwood26">Greenwood
+	  (1926)</cite>.
+	</para>
+	<para>
+	  Se a série <argname>cens</argname> for dada, um valor 0 serve
+	  para indicar uma observação não-censurada, enquanto que um
+	  valor 1 indica uma observação censurada à direita (isto é, o
+	  período de observação do indivíduo em questão terminou antes
+	  que a duração ou o período tenham sido registrados como
+	  finalizados). Se <argname>cens</argname> não for dado é assumido
+	  que todas as observações são não-censuradas. Observação: a
+	  interpretação de <argname>cens</argname> pode ser estendida em
+	  algum momento de forma a cobrir outros tipos de censura.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="naalen"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+      
     <function name="kpsscrit" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="scalar">T</fnarg>
@@ -5436,6 +5518,48 @@
       </description>
     </function>
 
+    <function name="loess" section="stats" output="series">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+	<fnarg type="series">x</fnarg>
+	<fnarg optional="true" type="int">d</fnarg>
+	<fnarg optional="true" type="scalar">q</fnarg>
+	<fnarg optional="true" type="bool">robust</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Realiza a regressão polinomial localmente ponderada (LOESS) e
+	  retorna uma série contendo os valores previstos de <argname>y
+	  </argname> para cada valor não-ausente de <argname>x</argname>.
+	  O método utilizado é o descrito por <cite key="cleveland79">
+	  Cleveland (1979)</cite>.
+	</para>
+	<para>
+	  Os argumentos opcionais <argname>d</argname> e <argname>q
+	  </argname> especificam, respectivamente, a ordem do polinômio
+	  em <argname>x</argname> e a proporção dos pontos de dados a ser
+	  utilizada na estimação local. Por padrão os valores são <argname>
+	  d</argname> = 1 e <argname>q</argname> = 0,5. Os outros valores
+	  aceitáveis para <argname>d</argname> são 0 e 2. Definir <argname>
+	  d</argname> = 0 reduz a regressão local para a forma de uma média
+	  móvel. O valor de <argname>q</argname> deve ser maior que 0 e não
+	  pode exceder 1. Valores maiores produzem saídas mais suaves.
+	</para>
+	<para>
+	  Se um valor não-nulo for dado ao argumento <argname>robust
+	  </argname> as regressões locais serão iteradas duas vezes, com os
+	  pesos sendo modificados com base nos resíduos da iteração prévia
+	  de forma a reduzir a influência das observações aberrantes (<quote>
+	  outliers</quote>).
+	</para>
+	<para>
+	  Veja também <fncref targ="nadarwat"/> e, para maiores detalhes
+	  sobre métodos não-paramétricos, veja <guideref
+	  targ="chap:nonparam"/>.
+	</para>
+      </description>
+    </function>
+      
     <function name="log" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat-or-list">x</fnarg>
@@ -5688,24 +5812,83 @@
 	</para>
 	<para context="tex">
 	  A matriz retornada é dada por
-	  \[\sum_{j=-p}^{p} \sum_j w_{|j|} (X_t' u_t
-	  u_{t-j} X_{t-j})\]
+	  \[\sum_{j=-p}^{p} \sum_j w_{|j|} (X_t u_t
+	  u_{t-j} X_{t-j}')\]
 	</para>
 	<para context="notex">
-	  A matriz retornada é dada por
-	</para>
-	<para context="notex">
-	  sum_{j=-p}^p sum_j w_{|j|} (X_t' u_t u_{t-j} X_{t-j})
+	  A matriz retornada é o somatório com <math>j</math> indo de
+	  <math>-p</math> até <math>p</math> de <math>w(|j|) *
+	  X(t)X(t-j)' * u(t)u(t-j)</math>, onde <math>X(t)'</math> é
+	  a <math>t</math>-ésima linha de <argname>X</argname>.
 	</para>
 	<para>
-	  Se <argname>u</argname> for definido como <lit>null</lit>, os termos
-	  <math>u</math> são omitidos e se
-	  <argname>w</argname> for definido como <lit>null</lit>, todos o pesos
-	  são considerados iguais a 1.
+	  Se <argname>u</argname> for <lit>null</lit> os termos
+	  <math>u</math> são omitidos, e se <argname>w</argname>
+	  for <lit>null</lit> todos os pesos são considerados
+	  como sendo iguais a 1,0.
 	</para>
-    <para>
-	  [N. do T.: Texto sob revisão devido ao erro de exibição na equação]
-    </para>
+	<para>
+	  Por exemplo, o seguinte código
+	</para>
+	<code>
+	  set seed 123
+	  X    = mnormal(6,2)
+	  Lag  = mlag(X,1)
+	  Lead = mlag(X,-1)
+	  print X Lag Lead
+	  eval X'X
+	  eval mcovg(X, , , 0)
+	  eval X'(X + Lag + Lead)
+	  eval mcovg(X, , , 1)
+	</code>
+	<para>
+	  produz estes resultados:
+	</para>
+	<code>
+	  ? print X Lag Lead
+	  X (6 x 2)
+
+	    -0.76587      -1.0600
+	    -0.43188      0.30687
+	    -0.82656      0.40681
+	     0.39246      0.75479
+	     0.36875       2.5498
+	     0.28855     -0.55251
+
+	  Lag (6 x 2)
+
+	      0.0000       0.0000
+	    -0.76587      -1.0600
+	    -0.43188      0.30687
+	    -0.82656      0.40681
+	     0.39246      0.75479
+	     0.36875       2.5498
+
+	  Lead (6 x 2)
+
+	    -0.43188      0.30687
+	    -0.82656      0.40681
+	     0.39246      0.75479
+	     0.36875       2.5498
+	     0.28855     -0.55251
+	      0.0000       0.0000
+
+	  ? eval X'X
+	      1.8295       1.4201
+	      1.4201       8.7596
+
+	  ? eval mcovg(X,,, 0)
+	      1.8295       1.4201
+	      1.4201       8.7596
+
+	  ? eval X'(X + Lag + Lead)
+	      3.0585       2.5603
+	      2.5603       10.004
+
+	  ? eval mcovg(X,,, 1)
+	      3.0585       2.5603
+	      2.5603       10.004
+	</code>
       </description>
     </function>
 
@@ -6547,6 +6730,43 @@
       </description>
     </function>
       
+    <function name="naalen" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="series-or-vec">d</fnarg>
+	<fnarg type="series-or-vec" optional="true">cens</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Dada uma amostra de dados de duração, <argname>d</argname>,
+	  possivelmente acompanhada por um registro de status de censura,
+	  <argname>cens</argname>, calcula o estimador não-paramétrico
+	  de Nelson&ndash;Aalen da função de risco (<cite
+	  key="nelson72">Nelson, 1972</cite>; <cite
+	  key="aalen78">Aalen, 1978</cite>). A matriz retornada possui
+	  três colunas contendo, respectivamente, os valores únicos de
+	  <argname>d</argname> de forma ordenada, a função de risco
+	  acumulada estimada correspondendo ao valor de duração na coluna
+	  1 e o erro padrão do estimador.
+	</para>
+	<para>
+	  Se a série <argname>cens</argname> for dada, um valor 0 serve
+	  para indicar uma observação não-censurada, enquanto que um
+	  valor 1 indica uma observação censurada à direita (isto é, o
+	  período de observação do indivíduo em questão terminou antes que
+	  a duração ou o período tenham sido registrados como finalizados).
+	  Se <argname>cens</argname> não for dado é assumido que todas as
+	  observações são não-censuradas. Observação: a interpretação de
+	  <argname>cens</argname> pode ser estendida em algum momento de
+	  forma a cobrir outros tipos de censura.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="kmeier"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+      
     <function name="nadarwat" section="stats" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
@@ -7180,6 +7400,42 @@
       </description>
     </function>
 
+    <function name="orthdev" section="transforms" output="series">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+      </fnargs>
+      <description>
+	<para context="notex">
+	  Aplicável apenas quando o conjunto de dados atualmente aberto é composto
+	  por dados em painel. Calcula os desvios ortogonais anteriores (ou seja, o
+	  desvio entre <math>t</math> e <math>t+1</math>) da variável <argname>y
+	  </argname>.
+	</para>
+	<para context="tex">
+	  Aplicável apenas quando o conjunto de dados atualmente aberto é composto
+	  por dados em painel. Calcula os desvios ortogonais anteriores (ou seja, o
+	  desvio entre $t$ e $t+1$) da variável <argname>y</argname>, isto é 
+	  \[ \tilde{y}_{i,t} =
+	  \sqrt{ \frac{T_i - t}{T_i - t + 1}} \left( y_{i,t} -
+	  \frac{1}{T_i - t} \sum_{s=t+1}^{T_i} y_{i,s} \right) \]
+	</para>
+	<para>
+	  Esta transformação é realizada algumas vezes ao invés da diferenciação
+	  para remover efeitos individuais do dado em painel. Para fins de
+	  compatibilidade com a primeira diferença, os desvios são armazenados
+	  um paso à frente em relação à sua verdadeira localização temporal (isto
+	  é, o valor na observação <math>t</math> é o desvio que, estritamente
+	  falando, pertence ao tempo <math>t</math> &minus;1). Assim, perde-se a
+	  primeira observação em cada série de tempo, e não a última.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="diff"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+      
     <function name="pdf" section="probdist" output="asinput">
       <fnargs>
 	<fnarg type="string">d</fnarg>
@@ -7847,6 +8103,144 @@
       </description>
     </function>
 
+    <function name="quadtable" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="int">n</fnarg>
+	<fnarg type="int" optional="true">type</fnarg>
+	<fnarg type="scalar" optional="true">a</fnarg>
+	<fnarg type="scalar" optional="true">b</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Retorna uma matriz de ordem <by r="n" c="2"/> para utilização
+	  a quadratura gaussiana (integração numérica). A primeira
+	  coluna contém os nós ou abscissas e a segunda os pesos.
+	</para>
+	<para>
+	  O primeiro argumento especifica o número de pontos (linhas)
+	  a serem computados. O segundo argumento indica o tipo de
+	  quadratura: use 1 para Gauss&ndash;Hermite (tipo padrão);
+	  2 para Gauss&ndash;Legendre; ou 3 para Gauss&ndash;Laguerre.
+	  O significado dos parâmetros opcionais <argname>a</argname>
+	  e <argname>b</argname> dependem da escolha do argumento
+	  <argname>type</argname>, conforme explicado a seguir.
+	</para>
+	<para context="notex">
+	  A quadratura gaussiana é um método para aproximar numericamente
+	  a integral definida de dada função de interesse. Seja a
+	  função representada pelo produto <math>f(x)W(x)</math>.
+	  Os tipos de quadratura diferem de acordo com a especificação
+	  do componente <math>W(x)</math>: no caso de Hermite ela é
+	  definida como exp(&minus;<math>x</math><sup>2</sup>); no caso
+	  de Laguerre, exp(&minus;<math>x</math>); e no caso de Legendre
+	  como <math>W(x)</math> = 1.
+	</para>
+	<para context="tex">
+	  A quadratura gaussiana é um método para aproximar numericamente
+	  a integral definida de dada função de interesse. Seja a
+	  função representada pelo produto $f(x)W(x)$. Os tipos de
+	  quadratura diferem de acordo com a especificação do componente
+	  $W(x)$: no caso de Hermite ela é definida como $W(x) = \exp(-x^2)$;
+	  no caso de Laguerre, $W(x) = \exp(-x)$; e no caso de Legendre
+	  $W(x) = 1$.
+	</para>
+	<para context="notex">
+	  Para cada especificação de <math>W</math>, pode-se calcular um
+	  conjunto de abscissas, <math>x</math><sub>i</sub>, e pesos,
+	  <math>w</math><sub>i</sub>, tais que o somatório de
+	  <math>i</math>=1 até <math>n</math> de
+	  <math>w</math><sub>i</sub>
+	  <math>f</math>(<math>x</math><sub>i</sub>) se aproxima da
+	  integral desejada. O método de <cite key="golub69">Golub
+	  e Welsch (1969)</cite> é utilizado.
+	</para>
+	<para context="tex">
+	  Para cada especificação de $W(x)$, pode-se calcular um conjunto
+	  de abscissas, $x_i$, e pesos, $w_i$, tais que $\sum_{i=1}^n
+	  f(x_i) w_i$ se aproxima da integral desejada. O método de
+	  <cite key="golub69">Golub e Welsch (1969)</cite> é utilizado.
+	</para>
+	<para context="notex">
+	  Quando o tipo Gauss&ndash;Legendre é selecionado, os argumentos
+	  opcionais <argname>a</argname> e <argname>b</argname> podem ser
+	  utilizados para controlar os limites inferior e superior de
+	  integração, sendo os valores padrão &minus;1 e 1. Na quadratura
+	  de Hermite os limites são fixados entre menos infinito e mais
+	  infinito, enquanto que no caso de Laguerre eles são fixados
+	  entre zero e infinito.
+	</para>
+	<para context="tex">
+	  Quando o tipo Gauss&ndash;Legendre é selecionado, os argumentos
+	  opcionais <argname>a</argname> e <argname>b</argname> podem ser
+	  utilizados para controlar os limites inferior e superior de
+	  integração, sendo os valores padrão $-1$ e 1. Na quadratura de
+	  Hermite os limites são fixados entre $-\infty$ e $+\infty$,
+	  enquanto que no caso de Laguerre eles são fixados entre 0 e $\infty$.)
+	</para>
+	<para context="notex">
+	  No caso de Hermite <argname>a</argname> e <argname>b
+	  </argname> exercem um papel diferente: eles podem ser
+	  utilizados para substituir a forma padrão de <math>W
+	  </math>(<math>x</math>) pela (proximanente relacionada)
+	  distribuição normal com média <argname>a</argname> e
+	  desvio padrão <argname>b</argname>. Fornecendo os
+	  valores de 0 e 1 para estes parâmetros, por exemplo,
+	  tem o efeito de transformar <math>W</math>(<math>x
+	  </math>) em uma FDP normal padrão, que é equivalente
+	  a multiplicar as abscissas padrão pela raiz quadrada
+	  de dois e dividir os pesos pela raiz quadrada de &pi;.
+	</para>
+	<para context="tex">
+	  No caso de Hermite <argname>a</argname> e <argname>b
+	  </argname> exercem um papel diferente: eles podem ser
+	  utilizados para substituir a forma padrão de $W(x)$
+	  pela (proximamente relacionada) distribuição normal
+	  com média <argname>a</argname> desvio padrão <argname>
+	  b</argname>. Fornecendo os valores de 0 e 1 para estes
+	  parâmetros, por exemplo, tem o efeito de transformar
+	  $W(x)$ em uma FDP normal padrão, que é equivalente a
+	  multiplicar os valores padrão $x_i$ por $\sqrt{2}$ e
+	  dividir os valores padrão de $w_i$ por $\sqrt{\pi}$.
+	</para>
+      </description>
+    </function>    
+      
+    <function name="quantile" section="stats" output="scalar" altout="matrix">
+      <fnargs>
+	<fnarg type="series-or-mat">y</fnarg>
+	<fnarg type="pscalar">p</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Se <argname>y</argname> for uma série, retorna o quantil
+	  <argname>p</argname> da série. Por exemplo, quando <math>
+	  p</math> = 0,5, a mediana é retornada.
+	</para>
+	<para>
+	  Se <argname>y</argname> for uma matriz, retorna um vetor
+	  linha contendo os <argname>p</argname>-quantis das colunas
+	  de <argname>y</argname>. Isto é, cada coluna é tratada
+	  como sendo uma série.
+	</para>
+	<para>
+	  Adicionalmente, para a matriz <argname>y</argname> existe uma
+	  segunda alternativa para o segundo argumento: <argname>p
+	  </argname> pode ser dado como um vetor. Nesse caso o valor de
+	  retorno é uma matriz de ordem <by r="m" c="n"/> onde <repl>m
+	  </repl> representa o número de elementos em <argname>p</argname>
+	  e <repl>n</repl> é o número de colunas em <argname>y</argname>.
+	</para>
+	<para context="tex">
+	  Para uma série de comprimento $n$, o $p$-ésimo quantil, $q$, é
+	  definido como:
+	  \[q = y_{[k]} + [(n+1) \cdot p - k] (y_{[k+1]} - y_{[k]})\] 
+	  onde $k$ é a parte inteira de $(n+1) \cdot p$ e 
+	  $y_{[i]}$ é o $i$-ésimo elemento da série quando ordenada do
+	  menor para o maior valor.
+	</para>
+      </description>
+    </function>
+      
     <function name="randgen" section="probdist" output="series">
       <fnargs>
 	<fnarg type="string">d</fnarg>
@@ -8613,6 +9007,39 @@
       </description>
     </function>
 
+    <function name="simann" section="numerical" output="scalar">
+      <fnargs>
+	<fnarg type="matrixref">&amp;b</fnarg>
+	<fnarg type="fncall">f</fnarg>
+	<fnarg type="int" optional="true">maxit</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Implementa o algoritmo <quote>simulated annealing</quote>
+	  (conhecido também por recozimento simulado) que pode ser útil
+	  para melhorar a questão da inicialização em problemas de
+	  otimização numérica.
+	</para>
+	<para>
+	  O primeiro argumento contém o valor inicial de vetor de parâmetros
+	  e o segundo especifica uma chamada de função que retorna o valor
+	  (escalar) valor da variável a ser maximizada. O terceiro argumento,
+	  que é opcional, especifica o número máximo de iterações (a quantidade
+	  padrão é 1024). Caso seja executada com sucesso, a função <lit>simann
+	  </lit> retorna o valor final da variável a ser maximizada e <argname>
+	  b</argname> armazena o vetor de parâmetros associado.
+	</para>
+	<para>
+	  Para maiores detalhes e exemplo veja <guideref
+	  targ="chap:numerical"/>.
+	  <seelist>
+            <fncref targ="BFGSmax"/>
+            <fncref targ="NRmax"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+      
     <function name="sin" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -8779,7 +9206,7 @@
 	</para>
       </description>
     </function>
-
+      
     <function name="sqrt" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -9170,6 +9597,55 @@
       </description>
     </function>
 
+    <function name="svd" section="linalg" output="rvec">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;U</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;V</fnarg>
+      </fnargs>
+      <description>
+	<para context="notex">
+	  Realiza a decomposição em valores singulares da matriz
+	  <argname>X</argname>.
+	</para>
+	<para context="tex">
+	  Realiza a decomposição em valores singulares da matriz
+	  $X$ de ordem $r \times c$:
+	  \[ X = U \left[
+	  \begin{array}{cccc} 
+	  \sigma_1 \\ 
+	  &amp; \sigma_2 \\ 
+	  &amp; &amp; \ddots \\ 
+	  &amp; &amp; &amp; \sigma_n ,
+	  \end{array}
+	  \right] V \] 
+	  onde $n = \min(r,c)$. $U$ tem ordem $r \times
+	  n$ e $V$ tem ordem $n \times c$, com $U'U = I$ e $VV' = I$.
+	</para>
+	<para>
+	  Os valores singulares são retornados em um vetor linha. Os vetores
+	  singulares à esquerda e/ou à direta <math>U</math> e <math>V</math>
+	  podem ser obtidos ao se fornecer valores não-nulos para os argumentos
+	  2 e 3, respectivamente. Para qualquer matriz <lit>A</lit>, o código
+	</para>
+	<code>
+	  s = svd(A, &amp;U, &amp;V) 
+	  B = (U .* s) * V
+	</code>
+	<para>
+	  deve gerar <lit>B</lit> idêntico a <lit>A</lit> (desconsiderando as
+	  possíveis discrepâncias geradas pela questão da precisão de máquina).
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="eigengen"/>
+            <fncref targ="eigensym"/>
+            <fncref targ="qrdecomp"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+      
     <function name="tan" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -9207,6 +9683,41 @@
       </description>
     </function>
 
+    <function name="toepsolv" section="linalg" output="cvec">
+      <fnargs>
+	<fnarg type="vector">c</fnarg>
+	<fnarg type="vector">r</fnarg>
+	<fnarg type="vector">b</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Resolve um sistema de Toeplitz de equações lineares, isto é
+	  <math>Tx = b</math> onde <math>T </math> é uma matriz quadrada
+	  cujo elemento <math>T</math><sub>i,j</sub> é igual a
+	  <math>c</math><sub>i-j</sub> para
+	  <equation status="inline"
+	  ascii="i&gt;=j" tex="$i\ge j$"/>
+	  e <math>r</math><sub>j-i</sub> para
+	  <equation status="inline" ascii="i&lt;=j"
+	  tex="$i\le j$"/>. 
+	  Note que os primeiros elementos de <math>c</math> e
+	  <math>r</math> precisam ser iguais, caso contrário um erro é
+	  retornado. Se executada com sucesso, a função retorna o vetor
+	  <math>x</math>.
+	</para>
+	<para>
+	  O algoritmo utilizado por esta função se aproveita da estrutura
+	  especial que a matriz <math>T</math> possui, o que o torna bem
+	  mais eficiente que outros algoritmos não especializados, em
+	  especial para grandes problemas. Atenção! Em certos casos a função
+	  pode, de forma espúria, emitir uma mensagem apontando que a matriz
+	  tem problemas de singularidade quando na verdade <math>T</math> é
+	  não-singular. Este problema, entretanto, não pode ocorrer quando
+	  <math>T</math> é definida positiva.
+	</para>
+      </description>
+    </function>
+      
     <function name="tolower" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">s</fnarg>
