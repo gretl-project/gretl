@@ -9207,6 +9207,63 @@
       </description>
     </function>
       
+    <function name="sprintf" section="strings" output="string">
+      <fnargs>
+	<fnarg type="string">format</fnarg>
+	<fnarg type="varargs"/>
+      </fnargs>     
+      <description>
+	<para>
+	  O texto (string) retornado é construído pela exibição dos valores dos
+	  argumentos finais, indicados pelas reticências acima, sob o controle
+	  do argumento <argname>format</argname>. Esta função tem como objetivo
+	  oferecer mais flexibilidade na criação de textos. O argumento <argname>
+	  format</argname> é utilizado para especificar de uma maneira precisa a
+	  forma como você deseja que os argumentos sejam exibidos.
+	</para>
+	<para>
+	  Em geral, o argumento <argname>format</argname> (que pode ser chamado
+	  de texto de formatação) deve ser uma expressão avaliada como um texto,
+	  mas na maioria dos casos será apenas um texto literal (uma sequência
+	  alfanumérica delimitada por aspas duplas). Algumas sequências de caracteres
+	  em <argname>format</argname> têm um significado especial: aqueles iniciados
+	  pelo símbolo de porcentagem (%) são interpretados como <quote>espaços
+	  reservados</quote> para os ítens contidos na lista de argumentos. Além
+	  disso, caracteres especiais, tal como o que indica nova linha (<lit>\n
+	  </lit>), são representados através da combinação com uma barra invertida.
+	</para>
+	<para>
+	  Por exemplo, o código a seguir
+	</para>	
+	<code>
+	  scalar x = sqrt(5)
+	  string claim = sprintf("sqrt(%d) é (aproximadamente) %6.4f.\n", 5, x)
+	  print claim
+	</code>
+	<para>
+	  irá produzir
+	</para>
+	<code>
+	  sqrt(5) é (aproximadamente) 2.2361.
+	</code>
+	<para>
+	  A expressão <lit>%d</lit> dentro do argumento <argname>format</argname>
+	  indica que queremos na saída um número inteiro neste local. Como é a
+	  expressão <quote>porcento</quote> mais a esquerda, ela então tem efeito
+	  sobre o primeiro argumento, isto é, 5. A segunda sequência especial é
+	  <lit>%6.4f</lit>, que indica um valor decimal com ao menos 6 dígitos de
+	  largura e com ao menos 4 casas decimais.
+	  A quantidade de sequências como estas deve coincidir com o número de
+	  argumentos após o texto de formatação.
+	</para>
+	<para>
+	  Ver também a ajuda para o comando <cmdref targ="printf"/> para
+	  maiores detalhes sobre a sintaxe que você pode utilizar para a
+	  formatação de textos (strings).
+	</para>
+      </description>
+    </function>
+      
     <function name="sqrt" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -9246,6 +9303,101 @@
       </description>
     </function>
 
+    <function name="sscanf" section="strings" output="int">
+      <fnargs>
+	<fnarg type="string">src</fnarg>
+	<fnarg type="string">format</fnarg>
+	<fnarg type="varargs"/>
+      </fnargs>  
+      <description>
+	<para>
+	  Lê os valores de <argname>src</argname> sob controle do argumeto
+	  <argname>format</argname> e os usa para determinar os valores de
+	  um ou mais argumentos subsequentes, indicados pelas reticências
+	  acima. A função retorna o número de valores determinados. Esta é
+	  uma versão simplificada da função <lit>sscanf</lit> na linguagem
+	  de programação C.
+	</para>
+	<para>
+	  O argumento <repl>src</repl> pode ser tanto um texto literal,
+	  delimitado por aspas duplas, ou o nome de uma variável de texto
+	  (string) previamente definida. O <repl>format</repl> é definido
+	  de forma similar ao texto de formatação utilizado em <cmdref
+	  targ="printf"/> (mais detalhes serão dados abaixo). Os demais
+	  argumentos, representados acima pelas reticências devem ser uma
+	  lista separada por vírgulas contendo os nomes de variáveis
+	  pré-definidas: estas são os alvos da conversão de <repl>src</repl>.
+	  Para os usuários com familiaridade com a linguagem C, pode-se
+	  prefixar os nomes de variáveis numéricas com <lit>&amp;</lit>, mas
+	  isso não é uma exigência.
+	</para>
+	<para>
+	  O texto literal em <repl>format</repl> é comparado com <repl>src
+	  </repl>. Especificadores de conversão começam com <lit>%</lit>,
+	  sendo os especificadores reconhecidos <lit>%f</lit>, <lit>%g</lit>
+	  ou <lit>%lf</lit> para números de ponto flutuante; <lit>%d</lit>
+	  para inteiros; <lit>%s</lit> para textos; e <lit>%m</lit> para
+	  matrizes. Você pode inserir um número inteiro positivo após o símbolo
+	  de porcentagem: isso ajusta o número máximo de caracteres a serem
+	  lidos por dado especificador de conversão (ou o número máximo de
+	  linhas no caso de conversão de matrizes). Alternativamente, você pode
+	  inserir um asterisco (<lit>*</lit>) após o símbolo de porcentagem
+	  para suprimir a conversão (ignorando assim quaisquer caracteres que
+	  teriam sido convertidos para um dado tipo). Por exemplo, <lit>%3d</lit>
+	  converte os próximos 3 caracteres de <repl>source</repl> em um número
+	  inteiro, se possível; <lit>%*g</lit> ignora a quantidade necessária
+	  de caracteres de <repl>source</repl> para que se obtenha apenas um
+	  número de ponto flutuante.
+	</para>
+	<para>
+	  A conversão de matrizes funciona da seguinte forma: a função lê uma
+	  linha da entrada e conta (com base na separação por espaço ou por
+	  tabulação) o número de campos numéricos. Isto define o número de
+	  colunas na matriz. Por padrão a leitura continua sendo feita enquanto
+	  enquanto a leitura de linhas devolver a mesma quantidade de colunas
+	  numéricas, mas o número máximo de linhas a serem lidas pode ser
+	  limitado de acorodo com o descrito acima.
+	</para>
+	<para>
+	  No caso de textos, em adição especificador <lit>%s</lit>, também é
+	  possível utilizar uma versão simplificada do formato utilizado na
+	  linguagem C: <lit>%</lit><repl>N</repl><lit>[</lit><repl>chars
+	  </repl><lit>]</lit>. Neste formato <repl>N</repl> é o número máximo
+	  de caracteres a serem lidos <repl>chars</repl> é um conjunto de
+	  caracteres aceitáveis, delimitados por colchetes: a leitura para se
+	  <repl>N</repl> for atingido ou se um caractere que não está em <repl>
+	  chars</repl> for encontrado. O comportamento de <repl>chars</repl>
+	  pode ser revertido se for utilizado um circunflexo, <lit>^</lit>,
+	  como sendo o primeiro caractere. Neste caso a leitura para se um
+	  caractere no dado conjunto for encontrado. Diferentemente de C, o
+	  hífen não exerce papel especial no conjunto
+	  <repl>chars</repl>.
+	</para>
+	<para>
+	  Se o texto fonte (<repl>src</repl>) não apresentar correspondência
+	  (completa) com o texto de formatação (<repl>format</repl>), o número
+	  de conversões pode ficar abaixo do número de argumentos dados. Isto
+	  não é por si só um erro no que diz respeito ao Gretl. Caso queira
+	  verificar o número de conversões realizadas basta utilizar o valor
+	  retornado pela função.
+	</para>
+	<para>
+	  Alguns exemplos:
+	</para>
+	<code>
+	  scalar x
+	  scalar y
+	  sscanf("123456", "%3d%3d", x, y)
+
+	  S = sprintf("1 2 3 4\n5 6 7 8")
+	  S
+	  matrix m
+	  sscanf(S, "%m", m)
+	  print m
+	</code>
+      </description>
+    </function>
+      
     <function name="sst" section="stats" output="scalar">
       <fnargs>
 	<fnarg type="series">y</fnarg>
@@ -10344,15 +10496,15 @@
 	  especificação única ou um vetor de especificações.
 	</para>
 	<para>
-	  Esta função retorna uma variável de texto (string)
-	  representando os dados encontrados no buffer XML no path especificado.
-	  Se múltiplos nós corresponderem com a expressão path, os itens dos
-	  dados são apresentados em linhas separadas no texto retornado. Se
-	  um vetor de paths for utilizado como segundo argumento, o texto
-	  retornado assume a forma de um buffer separado por vírgulas, com
-	  a coluna <math>i</math> contendo as correspondências do path
-	  <math>i</math>. Nesse caso, se um texto obtido do buffer XML
-	  contiver quaisquer espaços ou vírgulas ela ficará entre aspas duplas.
+	  Esta função retorna uma variável de texto (string) representando os
+	  dados encontrados no buffer XML no path especificado. Se múltiplos
+	  nós corresponderem com a expressão path, os itens dos dados são
+	  apresentados em linhas separadas no texto retornado. Se um vetor de
+	  paths for utilizado como segundo argumento, o texto retornado assume
+	  a forma de um buffer separado por vírgulas, com a coluna <math>i
+	  </math> contendo as correspondências do path <math>i</math>. Nesse caso,
+	  se um texto obtido do buffer XML contiver quaisquer espaços ou vírgulas
+	  ela ficará entre aspas duplas.
 	</para>
 	<para>
 	  Por padrão um erro é sinalizado se <argname>path</argname> não encontrar
