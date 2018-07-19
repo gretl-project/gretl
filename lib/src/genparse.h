@@ -123,6 +123,7 @@ enum {
 	      IVEC,       /* array of ints, not a varlist */
 	      OSL,        /* "slice" of object other than matrix */
 	      USERIES,    /* named series (defined only for error reporting) */
+	      SUB_ADDR,   /* "address" of (e.g.) array element */
               INC,        /* increment */
               DEC,        /* decrement */
 	      QUERY,      /* ternary "?" expression */

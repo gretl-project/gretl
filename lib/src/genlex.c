@@ -2050,6 +2050,8 @@ const char *getsymb_full (int t, const parser *p)
 	return "MSL";
     } else if (t == OSL) {
 	return "OSL";
+    } else if (t == SUB_ADDR) {
+	return "SUB_ADDR";
     } else if (t == DMSL) {
 	return "DMSL";
     } else if (t == DMSTR) {

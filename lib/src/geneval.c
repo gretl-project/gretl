@@ -4766,28 +4766,22 @@ static int get_single_element (matrix_subspec *spec,
     return ret;
 }
 
-static void *OSL_get_data (NODE *t, GretlType *ptype)
+static void *sub_addr_get_data (NODE *t, GretlType *ptype)
 {
     NODE *l = t->v.b2.l, *r = t->v.b2.r;
-    NODE *lb = l->v.b1.b;
-    gretl_array *a = lb->v.ptr;
+    gretl_array *a = l->v.ptr;
     GretlType type = 0;
     void *elem;
     int idx, err = 0;
-
-    /* FIXME: t->v.b2.r is the original MSLRAW, not the
-       MSPEC (aux node) which was computed prior to calling
-       check_OSL_address: so we can't get the right index
-       here!
-    */
 
     idx = get_single_element(r->v.mspec, NULL);
     elem = gretl_array_get_element(a, idx-1, &type, &err);
     *ptype = (elem == NULL)? GRETL_TYPE_NONE :
 	gretl_type_get_ref_type(type);
-
-    fprintf(stderr, "OSL_get_data: idx=%d, a=%p, type=%d, err=%d\n",
+#if 1
+    fprintf(stderr, "sub_addr_get_data: idx=%d, a=%p, type=%d, err=%d\n",
 	    idx, a, type, err);
+#endif
 
     return elem;
 }
@@ -4797,11 +4791,6 @@ static NODE *check_OSL_address (NODE *t, NODE *l, NODE *r, parser *p)
     int idx = get_single_element(r->v.mspec, p);
     NODE *lb = l->v.b1.b;
     NODE *ret = NULL;
-
-    /* FIXME: this function should _not_ just return node @t,
-       since the @r has been evaluated (MSLRAW -> MSPEC)
-       But what exactly should it return?
-    */
 
     if (lb->t != OSL || lb->uv == NULL || idx <= 0) {
 	p->err = E_TYPES;
@@ -4815,10 +4804,21 @@ static NODE *check_OSL_address (NODE *t, NODE *l, NODE *r, parser *p)
 	    elem = gretl_array_get_element(a, idx-1, &type, &p->err);
 	    fprintf(stderr, "OSL: got array of %s at %p: elem[%d] = %p\n",
 		    gretl_type_get_name(type), lb->v.ptr, idx-1, elem);
-	    /* temporary: stop the rot here! */
+#if 0 /* not yet! */
+	    if (!p->err) {
+		ret = aux_b2_node(p);
+		ret->t = SUB_ADDR;
+		ret->v.b2.l = lb; /* extracted left-hand */
+		ret->v.b2.r = r;  /* evaluated right-hand */
+		/* prevent double-freeing of children @l and @r */
+		ret->flags |= LHT_NODE;
+	    }
+#else
+	    /* temporary: for now, too dangerous to proceed */
 	    fprintf(stderr, "address of (%s[%d]), not supported yet\n",
 		    lb->vname != NULL ? lb->vname : "object", idx);
 	    p->err = E_TYPES;
+#endif
 	} else {
 	    p->err = E_TYPES;
 	}
@@ -4826,8 +4826,6 @@ static NODE *check_OSL_address (NODE *t, NODE *l, NODE *r, parser *p)
 
     if (p->err) {
 	gretl_errmsg_set(_("Wrong type of operand for unary '&'"));
-    } else {
-	ret = t;
     }
 
     return ret;
@@ -8345,8 +8343,8 @@ static void *arg_get_data (NODE *n, int ref, GretlType *type)
     } else if (n->t == LIST) {
 	*type = GRETL_TYPE_LIST;
 	data = n->v.ivec;
-    } else if (n->t == OSL) {
-	data = OSL_get_data(n, type);
+    } else if (n->t == SUB_ADDR) {
+	data = sub_addr_get_data(n, type);
     } else {
 	*type = GRETL_TYPE_NONE;
     }
@@ -8380,7 +8378,7 @@ static NODE *suitable_ufunc_ret_node (parser *p,
 #define ok_ufunc_sym(s) (s == NUM || s == SERIES || s == MAT || \
                          s == LIST || s == U_ADDR || s == DUM || \
                          s == STR || s == EMPTY || s == BUNDLE || \
-			 s == ARRAY || s == OSL)
+			 s == ARRAY || s == SUB_ADDR)
 
 /* evaluate a user-defined function */
 
