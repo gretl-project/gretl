@@ -293,7 +293,11 @@ int package_needs_zipping (const char *fname,
 void gretl_functions_cleanup (void);
 
 int push_function_arg (fncall *fc, const char *name,
-		       GretlType type, void *value);
+		       void *uvar, GretlType type,
+		       void *value);
+
+int push_anon_function_arg (fncall *fc, GretlType type,
+			    void *value);
 
 int push_function_args (fncall *fc, ...);
 

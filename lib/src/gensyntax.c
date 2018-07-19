@@ -410,7 +410,6 @@ static NODE *u_addr_base (parser *p)
 	    }
 	    break;
 	case OSL:
-	    /* FIXME! */
 	    break;
 	case UNDEF:
 	    break;

@@ -197,10 +197,11 @@ enum {
 /* structure representing an argument to a user-defined function */
 
 struct fn_arg_ {
-    char type;             /* argument type */
-    char flags;            /* ARG_OPTIONAL, ARG_CONST as appropriate */
-    const char *name;      /* name as function param */
-    char upname[VNAMELEN]; /* name of supplied arg at caller level */
+    char type;            /* argument type */
+    char flags;           /* ARG_OPTIONAL, ARG_CONST as appropriate */
+    const char *name;     /* name as function param */
+    const char *upname;   /* name of supplied arg at caller level */
+    user_var *uvar;       /* reference to "parent", if any */
     union {
 	int idnum;        /* named series arg (series ID) */
 	double x;         /* scalar arg */
@@ -344,18 +345,16 @@ static void adjust_array_arg_type (fn_arg *arg)
 }
 
 static int fn_arg_set_data (fn_arg *arg, const char *name,
-			    GretlType type, void *p)
+			    user_var *uvar, GretlType type,
+			    void *p)
 {
     int err = 0;
 
     arg->type = type;
     arg->flags = 0;
     arg->name = NULL;
-    arg->upname[0] = '\0';
-
-    if (name != NULL) {
-	strcpy(arg->upname, name);
-    }
+    arg->upname = name;
+    arg->uvar = uvar;
 
     if (type == GRETL_TYPE_NONE) {
 	arg->val.x = 0;
@@ -406,7 +405,8 @@ static int fncall_add_args_array (fncall *fc)
 	    fc->args[i].type = 0;
 	    fc->args[i].flags = 0;
 	    fc->args[i].name = NULL;
-	    fc->args[i].upname[0] = '\0';
+	    fc->args[i].upname = NULL;
+	    fc->args[i].uvar = NULL;
 	}
     }
 
@@ -416,7 +416,8 @@ static int fncall_add_args_array (fncall *fc)
 /**
  * push_function_arg:
  * @fc: pointer to function call.
- * @name: name of variable (or NULL for anonymous)
+ * @name: name of variable (or NULL for anonymous).
+ * @uvar: reference to user_var or NULL.
  * @type: type of argument to add.
  * @value: pointer to value to add.
  *
@@ -426,7 +427,8 @@ static int fncall_add_args_array (fncall *fc)
  * Returns: 0 on success, non-zero on failure.
  */
 
-int push_function_arg (fncall *fc, const char *name, GretlType type,
+int push_function_arg (fncall *fc, const char *name,
+		       void *uvar, GretlType type,
 		       void *value)
 {
     int err = 0;
@@ -442,7 +444,42 @@ int push_function_arg (fncall *fc, const char *name, GretlType type,
     }
 
     if (!err) {
-	err = fn_arg_set_data(&fc->args[fc->argc], name, type, value);
+	err = fn_arg_set_data(&fc->args[fc->argc], name, uvar, type, value);
+	fc->argc += 1;
+    }
+
+    return err;
+}
+
+/**
+ * push_function_arg:
+ * @fc: pointer to function call.
+ * @type: type of argument to add.
+ * @value: pointer to value to add.
+ *
+ * Writes a new argument of the specified type and value into the
+ * argument array of @fc.
+ *
+ * Returns: 0 on success, non-zero on failure.
+ */
+
+int push_anon_function_arg (fncall *fc, GretlType type,
+			    void *value)
+{
+    int err = 0;
+
+    if (fc == NULL || fc->fun == NULL) {
+	err = E_DATA;
+    } else if (fc->argc >= fc->fun->n_params) {
+	fprintf(stderr, "function %s has %d parameters but argc = %d\n",
+		fc->fun->name, fc->fun->n_params, fc->argc);
+	err = E_DATA;
+    } else if (fc->args == NULL) {
+	err = fncall_add_args_array(fc);
+    }
+
+    if (!err) {
+	err = fn_arg_set_data(&fc->args[fc->argc], NULL, NULL, type, value);
 	fc->argc += 1;
     }
 
@@ -454,9 +491,8 @@ int push_function_arg (fncall *fc, const char *name, GretlType type,
  * @fc: pointer to function call.
  *
  * Writes multiple entries into the argument array of @fc.
- * Each argument must be given in the form {type, value, name},
- * where @name may be NULL for anonymous arguments. The
- * list of entries must be terminated with -1.
+ * Each argument must be given in the form {type, value},
+ * The list of entries must be terminated with -1.
  *
  * Returns: 0 on success, non-zero on failure.
  */
@@ -466,7 +502,6 @@ int push_function_args (fncall *fc, ...)
     va_list ap;
     int argtype;
     void *value;
-    void *argname;
     int i, err = 0;
 
     va_start(ap, fc);
@@ -477,8 +512,7 @@ int push_function_args (fncall *fc, ...)
 	    break;
 	}
 	value = va_arg(ap, void *);
-	argname = va_arg(ap, void *);
-	err = push_function_arg(fc, (const char *) argname, argtype, value);
+	err = push_function_arg(fc, NULL, NULL, argtype, value);
     }
     va_end(ap);
 
@@ -6613,7 +6647,7 @@ static int localize_list (fncall *call, fn_arg *arg,
 	int tmp[] = {1, arg->val.idnum};
 
 	list = copy_list_as_arg(fp->name, tmp, &err);
-	arg->upname[0] = '\0';
+	arg->upname = NULL;
     } else {
 	/* "can't happen" */
 	err = E_DATA;
@@ -6658,15 +6692,38 @@ static void maybe_set_arg_const (fn_arg *arg, fn_param *fp)
     }
 }
 
-/* handle the case where the GUI passed an anonymous
-   bundle as a "bundle *" argument */
+static void *arg_get_data (fn_arg *arg, GretlType type)
+{
+    void *data = NULL;
 
-static int localize_bundle_as_shell (fn_arg *arg,
+    if (type == 0) {
+	type = arg->type;
+    }
+
+    if (type == GRETL_TYPE_MATRIX) {
+	data = arg->val.m;
+    } else if (type == GRETL_TYPE_BUNDLE) {
+	data = arg->val.b;
+    } else if (type == GRETL_TYPE_STRING) {
+	data = arg->val.str;
+    } else if (gretl_is_array_type(type)) {
+	data = arg->val.a;
+    }
+
+    return data;
+}
+
+/* handle the case where the GUI passed an anonymous
+   object in "pointerized" form */
+
+static int localize_object_as_shell (fn_arg *arg,
 				     fn_param *fp)
 {
-    int err = 0;
+    GretlType type = gretl_type_get_plain_type(arg->type);
+    void *data = arg_get_data(arg, type);
+    int err;
 
-    err = arg_add_as_shell(fp->name, GRETL_TYPE_BUNDLE, arg->val.b);
+    err = arg_add_as_shell(fp->name, type, data);
 
     if (!err) {
 	arg->name = fp->name;
@@ -6675,44 +6732,22 @@ static int localize_bundle_as_shell (fn_arg *arg,
     return err;
 }
 
-static void *arg_get_data (fn_arg *arg)
-{
-    void *data = NULL;
-
-    if (arg->type == GRETL_TYPE_MATRIX) {
-	data = arg->val.m;
-    } else if (arg->type == GRETL_TYPE_BUNDLE) {
-	data = arg->val.b;
-    } else if (arg->type == GRETL_TYPE_STRING) {
-	data = arg->val.str;
-    } else if (gretl_is_array_type(arg->type)) {
-	data = arg->val.a;
-    }
-
-    return data;
-}
-
 static int localize_const_object (fn_arg *arg, fn_param *fp)
 {
-    void *data = arg_get_data(arg);
-    user_var *u = NULL;
+    void *data = arg_get_data(arg, 0);
     int err = 0;
 
     if (data == NULL) {
-	err = E_TYPES;
-    } else {
-	u = get_user_var_by_data(data);
-    }
-
-    if (u == NULL) {
+	err = E_DATA;
+    } else if (arg->uvar == NULL) {
 	/* the const argument is an anonymous object */
 	err = arg_add_as_shell(fp->name, arg->type, data);
     } else {
 	/* a named object: in view of its "const-ness" we
 	   don't need to copy the data
 	*/
-	user_var_adjust_level(u, 1);
-	user_var_set_name(u, fp->name);
+	user_var_adjust_level(arg->uvar, 1);
+	user_var_set_name(arg->uvar, fp->name);
     }
 
     if (!err) {
@@ -6865,6 +6900,7 @@ static int duplicated_pointer_arg_check (fn_arg *args, int argc)
 	    for (j=i+1; j<argc && !err; j++) {
 		aj = &args[j];
 		if (gretl_ref_type(aj->type) &&
+		    ai->upname != NULL && /* FIXME? */
 		    !strcmp(ai->upname, aj->upname)) {
 		    gretl_errmsg_set(_("Duplicated pointer argument: not allowed"));
 		    err = E_DATA;
@@ -6934,17 +6970,18 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 	    if (fp->flags & ARG_CONST) {
 		err = localize_const_object(arg, fp);
 	    } else {
-		err = copy_as_arg(fp->name, fp->type, arg_get_data(arg));
+		err = copy_as_arg(fp->name, fp->type,
+				  arg_get_data(arg, 0));
 	    }
 	} else if (fp->type == GRETL_TYPE_LIST) {
 	    err = localize_list(call, arg, fp, dset);
 	} else if (fp->type == GRETL_TYPE_SERIES_REF) {
 	    err = localize_series_ref(call, arg, fp, dset);
 	} else if (gretl_ref_type(fp->type)) {
-	    if (fp->type == GRETL_TYPE_BUNDLE_REF && arg->upname[0] == '\0') {
-		err = localize_bundle_as_shell(arg, fp);
-	    } else {
+	    if (arg->upname != NULL) {
 		err = user_var_localize(arg->upname, fp->name, fp->type);
+	    } else {
+		err = localize_object_as_shell(arg, fp);
 	    }
 	    if (!err) {
 		maybe_set_arg_const(arg, fp);
@@ -7353,6 +7390,51 @@ static int handle_string_return (const char *sname, void *ptr)
     return err;
 }
 
+static int check_sub_object_return (fn_arg *arg, fn_param *fp)
+{
+    GretlType type = gretl_type_get_plain_type(arg->type);
+    void *orig = arg_get_data(arg, type);
+    void *curr = user_var_get_value_by_name(fp->name);
+    int err = 0;
+
+    if (curr == NULL) {
+	fprintf(stderr, "sub_object return: value has disappeared!\n");
+	err = E_DATA;
+    } else if (curr != orig) {
+	/* reattachment is needed */
+	GretlType uptype = user_var_get_type(arg->uvar);
+	void *updata = user_var_get_value(arg->uvar);
+
+	fprintf(stderr, "need to reattach object of type %s "
+		"to variable of type %s at %p\n",
+		gretl_type_get_name(type),
+		gretl_type_get_name(uptype), updata);
+	if (uptype == GRETL_TYPE_ARRAY) {
+	    gretl_array *a = updata;
+	    int i, n = gretl_array_get_length(a);
+	    int found = 0;
+
+	    for (i=0; i<n; i++) {
+		if (gretl_array_get_data(a, i) == orig) {
+		    gretl_array_set_data(a, i, curr);
+		    found = 1;
+		}
+	    }
+	    if (!found) {
+		err = E_DATA;
+	    }
+	} else if (uptype == GRETL_TYPE_BUNDLE) {
+	    fprintf(stderr, "sub_object return: uptype = bundle, not handled\n");
+	    err = E_DATA;
+	} else {
+	    /* no other types handled */
+	    err = E_TYPES;
+	}
+    }
+
+    return err;
+}
+
 static int is_pointer_arg (fncall *call, int rtype)
 {
     ufunc *u = call->fun;
@@ -7444,36 +7526,38 @@ function_assign_returns (fncall *call, int rtype,
     for (i=0; i<call->argc; i++) {
 	fn_arg *arg = &call->args[i];
 	fn_param *fp = &u->params[i];
+	int ierr = 0;
 
 	if (needs_dataset(fp->type) && dset == NULL) {
-	    err = E_DATA;
+	    ierr = E_DATA;
 	} else if (gretl_ref_type(fp->type)) {
-	    if (arg->type == GRETL_TYPE_BUNDLE_REF &&
-		arg->upname[0] == '\0') {
-		; /* pointer to anonymous bundle: no-op */
-	    } else if (arg->type == GRETL_TYPE_SERIES_REF) {
+	    if (arg->type == GRETL_TYPE_SERIES_REF) {
 		int v = arg->val.idnum;
 
 		series_decrement_stack_level(dset, v);
 		strcpy(dset->varname[v], arg->upname);
-	    } else if (gretl_ref_type(arg->type)) {
-		user_var_unlocalize(fp->name, arg->upname, fp->type);
+	    } else if (arg->upname != NULL) {
+		user_var_adjust_level(arg->uvar, -1);
+		user_var_set_name(arg->uvar, arg->upname);
+	    } else if (arg->uvar != NULL) {
+		ierr = check_sub_object_return(arg, fp);
+	    } else {
+		; /* pure "shell" object: no-op */
 	    }
 	} else if ((fp->type == GRETL_TYPE_MATRIX ||
 		    fp->type == GRETL_TYPE_BUNDLE ||
 		    fp->type == GRETL_TYPE_STRING ||
 		    gretl_array_type(fp->type))) {
-	    if ((fp->flags & ARG_CONST) && arg->upname[0] != '\0') {
+	    if ((fp->flags & ARG_CONST) && arg->upname != NULL) {
 		/* non-pointerized const object argument */
-		user_var *u = get_user_var_by_data(arg_get_data(arg));
-
-		if (u != NULL) {
-		    user_var_adjust_level(u, -1);
-		    user_var_set_name(u, arg->upname);
-		}
+		user_var_adjust_level(arg->uvar, -1);
+		user_var_set_name(arg->uvar, arg->upname);
 	    }
 	} else if (fp->type == GRETL_TYPE_LIST) {
 	    unlocalize_list(fp->name, arg, NULL, dset);
+	}
+	if (ierr) {
+	    *perr = err = ierr;
 	}
     }
 
@@ -8565,7 +8649,11 @@ char *gretl_func_get_arg_name (const char *argvar, int *err)
 	for (i=0; i<n; i++) {
 	    if (!strcmp(argvar, u->params[i].name)) {
 		*err = 0;
-		ret = gretl_strdup(call->args[i].upname);
+		if (call->args[i].upname != NULL) {
+		    ret = gretl_strdup(call->args[i].upname);
+		} else {
+		    ret = gretl_strdup("");
+		}
 		if (ret == NULL) {
 		    *err = E_ALLOC;
 		}
@@ -8592,7 +8680,7 @@ int object_is_const (const char *name)
 {
     fncall *call = current_function_call();
 
-    if (call != NULL) {
+    if (call != NULL && name != NULL) {
 	int i, n = call->argc;
 
 	for (i=0; i<n; i++) {

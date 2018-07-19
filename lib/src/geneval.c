@@ -4766,7 +4766,8 @@ static int get_single_element (matrix_subspec *spec,
     return ret;
 }
 
-static void *sub_addr_get_data (NODE *t, GretlType *ptype)
+static void *sub_addr_get_data (NODE *t, GretlType *ptype,
+				user_var **puv)
 {
     NODE *l = t->v.b2.l, *r = t->v.b2.r;
     gretl_array *a = l->v.ptr;
@@ -4778,7 +4779,8 @@ static void *sub_addr_get_data (NODE *t, GretlType *ptype)
     elem = gretl_array_get_element(a, idx-1, &type, &err);
     *ptype = (elem == NULL)? GRETL_TYPE_NONE :
 	gretl_type_get_ref_type(type);
-#if 1
+    *puv = l->uv;
+#if 0
     fprintf(stderr, "sub_addr_get_data: idx=%d, a=%p, type=%d, err=%d\n",
 	    idx, a, type, err);
 #endif
@@ -4786,7 +4788,7 @@ static void *sub_addr_get_data (NODE *t, GretlType *ptype)
     return elem;
 }
 
-static NODE *check_OSL_address (NODE *t, NODE *l, NODE *r, parser *p)
+static NODE *process_OSL_address (NODE *t, NODE *l, NODE *r, parser *p)
 {
     int idx = get_single_element(r->v.mspec, p);
     NODE *lb = l->v.b1.b;
@@ -4798,27 +4800,14 @@ static NODE *check_OSL_address (NODE *t, NODE *l, NODE *r, parser *p)
 	GretlType type = user_var_get_type(lb->uv);
 
 	if (type == GRETL_TYPE_ARRAY) {
-	    gretl_array *a = lb->v.ptr;
-	    void *elem;
-
-	    elem = gretl_array_get_element(a, idx-1, &type, &p->err);
-	    fprintf(stderr, "OSL: got array of %s at %p: elem[%d] = %p\n",
-		    gretl_type_get_name(type), lb->v.ptr, idx-1, elem);
-#if 0 /* not yet! */
-	    if (!p->err) {
-		ret = aux_b2_node(p);
+	    ret = aux_b2_node(p);
+	    if (ret != NULL) {
 		ret->t = SUB_ADDR;
 		ret->v.b2.l = lb; /* extracted left-hand */
 		ret->v.b2.r = r;  /* evaluated right-hand */
 		/* prevent double-freeing of children @l and @r */
 		ret->flags |= LHT_NODE;
 	    }
-#else
-	    /* temporary: for now, too dangerous to proceed */
-	    fprintf(stderr, "address of (%s[%d]), not supported yet\n",
-		    lb->vname != NULL ? lb->vname : "object", idx);
-	    p->err = E_TYPES;
-#endif
 	} else {
 	    p->err = E_TYPES;
 	}
@@ -8309,9 +8298,12 @@ static gretl_matrix *matrix_from_list (NODE *n, parser *p)
     return M;
 }
 
-static void *arg_get_data (NODE *n, int ref, GretlType *type)
+static void *arg_get_data (NODE *n, int ref, GretlType *type,
+			   user_var **puv)
 {
     void *data = NULL;
+
+    *puv = n->uv;
 
     if (n->t == SERIES) {
 	if (ref) {
@@ -8344,7 +8336,7 @@ static void *arg_get_data (NODE *n, int ref, GretlType *type)
 	*type = GRETL_TYPE_LIST;
 	data = n->v.ivec;
     } else if (n->t == SUB_ADDR) {
-	data = sub_addr_get_data(n, type);
+	data = sub_addr_get_data(n, type, puv);
     } else {
 	*type = GRETL_TYPE_NONE;
     }
@@ -8493,8 +8485,10 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 
 	if (!p->err) {
 	    /* assemble info and push argument */
-	    data = arg_get_data(arg, reftype, &argt);
-	    p->err = push_function_arg(fc, arg->vname, argt, data);
+	    user_var *uv = NULL;
+
+	    data = arg_get_data(arg, reftype, &argt, &uv);
+	    p->err = push_function_arg(fc, arg->vname, uv, argt, data);
 	}
 
 	if (p->err) {
@@ -14011,6 +14005,8 @@ static void node_reattach_data (NODE *n, parser *p)
 	    n->v.str = data;
 	} else if (n->t == ARRAY && type == GRETL_TYPE_ARRAY) {
 	    n->v.a = data;
+	} else if (n->t == OSL) {
+	    n->v.ptr = data;
 	} else {
 	    reattach_data_error(n, p);
 	}
@@ -14607,7 +14603,7 @@ static NODE *eval (NODE *t, parser *p)
 	if (t->flags & LHT_NODE) {
 	    ret = lhs_terminal_node(t, l, r, p);
 	} else if (l->t == U_ADDR) {
-	    ret = check_OSL_address(t, l, r, p);
+	    ret = process_OSL_address(t, l, r, p);
 	} else {
 	    ret = subobject_node(l, r, p);
 	}
