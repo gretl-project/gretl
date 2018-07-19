@@ -1153,7 +1153,7 @@ int create_user_var (const char *name, GretlType type)
  * @value: the value pointer
  *
  * The value in question is added to the stack of named
- * variables matrices under the name @name with the shell flag 
+ * variables under the name @name with the shell flag
  * set. This is used (a) when an anonymous matrix is given as 
  * a %const argument to a user-defined function and (b) when
  * an anonymous bundle is given as the argument corresponding
