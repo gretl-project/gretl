@@ -535,8 +535,8 @@ static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
 
     if (!varargs_func(sym)) {
 	/* Check for a nested function call (2013-08-25) or
-	   bundle/array member (2015-09-25). Further fix
-	   applied 2018-07-17.
+	   bundle/array member (2015-09-25). Further fixes
+	   applied 2018-07-17 and 2018-07-19.
 	*/
 	src = p->point - 1;
 	n = gretl_namechar_spn(src);
@@ -549,8 +549,8 @@ static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
 	    src = NULL;
 	    if (c == '(') {
 		if (function_lookup(tmp) || get_user_function_by_name(tmp)) {
-		    lex(p);
-		    return expr(p);
+		    /* this is finicky! */
+		    return base(p, t);
 		}
 	    } else if (gretl_is_bundle(tmp)) {
 		lex(p);
