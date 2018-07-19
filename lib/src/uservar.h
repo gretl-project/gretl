@@ -105,10 +105,6 @@ int user_var_localize (const char *origname,
 
 void switch_uservar_hash (int level);
 
-int user_var_unlocalize (const char *localname,
-			 const char *origname,
-			 GretlType type);
-
 int copy_as_arg (const char *param_name, GretlType type, 
 		 void *value);
 

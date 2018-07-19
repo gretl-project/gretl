@@ -666,7 +666,7 @@ user_var *get_user_var_by_data (const void *data)
 
 const char *user_var_get_name (user_var *uvar)
 {
-    return uvar->name;
+    return uvar == NULL ? NULL : uvar->name;
 }
 
 const char *user_var_get_name_by_data (const void *data)
@@ -834,48 +834,6 @@ int user_var_localize (const char *origname,
     } else {
 	user_var_set_name(u, localname);
 	u->level += 1;
-    }
-
-    return err;
-}
-
-/**
- * user_var_unlocalize:
- * @localname: name of variable within function.
- * @origname: name used at caller level.
- *
- * On exit from a function, restores the original name and
- * level of a variable which has been made available as an argument.
- * 
- * Returns: 0 on success, non-zero on error.
- */
-
-int user_var_unlocalize (const char *localname,
-			 const char *origname,
-			 GretlType type)
-{
-    user_var *u;
-    int err = 0;
-
-    if (type == GRETL_TYPE_SCALAR_REF) {
-	type = GRETL_TYPE_DOUBLE;
-    } else if (type == GRETL_TYPE_MATRIX_REF) {
-	type = GRETL_TYPE_MATRIX;
-    } else if (type == GRETL_TYPE_BUNDLE_REF) {
-	type = GRETL_TYPE_BUNDLE;
-    } else if (type == GRETL_TYPE_STRING_REF) {
-	type = GRETL_TYPE_STRING;
-    } else if (array_ref_type(type)) {
-	type = GRETL_TYPE_ARRAY;
-    }
-
-    u = get_user_var_of_type_by_name(localname, type);
-
-    if (u == NULL) {
-	err = E_DATA;
-    } else {
-	user_var_set_name(u, origname);
-	u->level -= 1;
     }
 
     return err;
