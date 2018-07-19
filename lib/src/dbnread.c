@@ -14,8 +14,8 @@ static gretl_bundle *get_dbn_series_bundle (const char *datacode,
     if (fc == NULL) {
 	*err = E_DATA;
     } else {
-	*err = push_function_arg(fc, NULL, GRETL_TYPE_STRING,
-				 (void *) datacode);
+	*err = push_anon_function_arg(fc, GRETL_TYPE_STRING,
+				      (void *) datacode);
 	if (!*err) {
 	    *err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, NULL,
 				       &b, NULL, NULL);

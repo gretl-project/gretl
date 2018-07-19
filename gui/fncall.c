@@ -198,8 +198,7 @@ static int lmaker_run (ufunc *func, call_info *cinfo)
 	/* pass full dataset list as argument */
 	biglist = full_var_list(dataset, NULL);
 	if (biglist != NULL) {
-	    push_function_arg(fcall, NULL, GRETL_TYPE_LIST,
-			      biglist);
+	    push_anon_function_arg(fcall, GRETL_TYPE_LIST, biglist);
 	}
     }
 
@@ -2564,13 +2563,14 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
     if (func == NULL) {
 	err = E_DATA;
     } else {
-	const char *bname = user_var_get_name_by_data(b);
+	user_var *uv = get_user_var_by_data(b);
+	const char *bname = user_var_get_name(uv);
 #if 1
 	fprintf(stderr, "bundle plot: using bundle %p (%s)\n",
 		(void *) b, bname);
 #endif
 	fc = fncall_new(func);
-	err = push_function_arg(fc, bname, GRETL_TYPE_BUNDLE_REF, b);
+	err = push_function_arg(fc, bname, uv, GRETL_TYPE_BUNDLE_REF, b);
 
 	if (!err && iopt >= 0) {
 	    /* add the option flag, if any, to args */
@@ -2578,7 +2578,7 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
 
 	    if (!na(minv)) {
 		iopt += (int) minv;
-		err = push_function_arg(fc, NULL, GRETL_TYPE_INT, &iopt);
+		err = push_anon_function_arg(fc, GRETL_TYPE_INT, &iopt);
 	    }
 	}
     }
@@ -4215,7 +4215,7 @@ int dbnomics_get_series_call (const char *datacode)
 	return err;
     }
 
-    err = push_function_arg(fc, NULL, GRETL_TYPE_STRING, (void *) datacode);
+    err = push_anon_function_arg(fc, GRETL_TYPE_STRING, (void *) datacode);
     if (!err) {
 	err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, NULL,
 				  &b, NULL, prn);
@@ -4234,13 +4234,14 @@ int dbnomics_get_series_call (const char *datacode)
 	    gretl_bundle_destroy(b);
 	} else {
 	    const char *p = strrchr(datacode, '/');
+
 	    title = g_strdup_printf("gretl: %s", p + 1);
 	    fc = get_pkg_function_call("dbnomics_bundle_print", "dbnomics");
 	    if (fc != NULL) {
-		err = push_function_arg(fc, NULL, GRETL_TYPE_BUNDLE, (void *) b);
+		err = push_anon_function_arg(fc, GRETL_TYPE_BUNDLE, (void *) b);
 		if (!err) {
 		    err = gretl_function_exec(fc, GRETL_TYPE_NONE, NULL,
-					  NULL, NULL, prn);
+					      NULL, NULL, prn);
 		    if (err) {
 			gui_errmsg(err);
 		    }
@@ -4303,15 +4304,15 @@ void *dbnomics_search_call (const char *key,
     }
 
     if (use_dset) {
-	*err = push_function_args(fc, GRETL_TYPE_STRING, (void *) key, NULL,
-				  GRETL_TYPE_STRING, (void *) prov, NULL,
-				  GRETL_TYPE_STRING, (void *) dset, NULL,
-				  GRETL_TYPE_INT, (void *) &limit, NULL,
-				  GRETL_TYPE_INT, (void *) &offset, NULL, -1);
+	*err = push_function_args(fc, GRETL_TYPE_STRING, (void *) key,
+				  GRETL_TYPE_STRING, (void *) prov,
+				  GRETL_TYPE_STRING, (void *) dset,
+				  GRETL_TYPE_INT, (void *) &limit,
+				  GRETL_TYPE_INT, (void *) &offset, -1);
     } else {
-	*err = push_function_args(fc, GRETL_TYPE_STRING, (void *) key, NULL,
-				  GRETL_TYPE_INT, (void *) &limit, NULL,
-				  GRETL_TYPE_INT, (void *) &offset, NULL, -1);
+	*err = push_function_args(fc, GRETL_TYPE_STRING, (void *) key,
+				  GRETL_TYPE_INT, (void *) &limit,
+				  GRETL_TYPE_INT, (void *) &offset, -1);
     }
 
     if (!*err) {
@@ -4339,7 +4340,7 @@ void *dbnomics_dataset_list (const char *provider, int *err)
 	return NULL;
     }
 
-    *err = push_function_arg(fc, NULL, GRETL_TYPE_STRING, (void *) provider);
+    *err = push_anon_function_arg(fc, GRETL_TYPE_STRING, (void *) provider);
     if (!*err) {
 	set_wait_cursor(&cwin);
 	*err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, NULL,
@@ -4368,10 +4369,10 @@ void *dbnomics_probe_series (const char *prov,
 	return NULL;
     }
 
-    *err = push_function_args(fc, GRETL_TYPE_STRING, (void *) prov, NULL,
-			      GRETL_TYPE_STRING, (void *) dset, NULL,
-			      GRETL_TYPE_INT, (void *) &limit, NULL,
-			      GRETL_TYPE_INT, (void *) &offset, NULL, -1);
+    *err = push_function_args(fc, GRETL_TYPE_STRING, (void *) prov,
+			      GRETL_TYPE_STRING, (void *) dset,
+			      GRETL_TYPE_INT, (void *) &limit,
+			      GRETL_TYPE_INT, (void *) &offset, -1);
     if (!*err) {
 	set_wait_cursor(&cwin);
 	*err = gretl_function_exec(fc, GRETL_TYPE_BUNDLES, NULL,
