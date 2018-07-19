@@ -283,6 +283,25 @@ void *gretl_array_get_element (gretl_array *A, int i,
     return ret;
 }
 
+void *gretl_array_get_data (gretl_array *A, int i)
+{
+    if (A == NULL || i < 0 || i >= A->n) {
+	return NULL;
+    } else {
+	return A->data[i];
+    }
+}
+
+int gretl_array_set_data (gretl_array *A, int i, void *ptr)
+{
+    if (A == NULL || i < 0 || i >= A->n) {
+	return E_DATA;
+    } else {
+	A->data[i] = ptr;
+	return 0;
+    }
+}
+
 gretl_array *gretl_array_copy_range (gretl_array *A,
 				     int r1, int r2,
 				     int *err)
