@@ -5537,7 +5537,7 @@ static int process_outer_key (const char *s, int n_keys,
 	    if (n2 >= VNAMELEN) {
 		err = E_PARSE;
 	    } else {
-		strncat(name2, s, n2);
+		strcat(name2, s);
 	    }
 	}
 

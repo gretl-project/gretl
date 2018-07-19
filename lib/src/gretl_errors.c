@@ -420,7 +420,7 @@ void gretl_errmsg_sprintf (const char *fmt, ...)
 	    if (gretl_errmsg[len0 - 1] != '\n') {
 		strcat(gretl_errmsg, "\n");
 	    }
-	    strncat(gretl_errmsg, tmp, strlen(tmp));
+	    strcat(gretl_errmsg, tmp);
 	} 
     }
 }
