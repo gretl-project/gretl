@@ -4324,6 +4324,31 @@
 
   </command>
 
+  <command name="funcerr" section="Programming"
+    label="Exit on error" context="cli">
+
+    <usage>
+      <arguments>
+        <argument optional="true">message</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+	Applicable only in the context of a user-defined function (see
+	<cmdref targ="function"/>). Causes execution of the current
+	function to terminate with an error condition flagged.
+      </para>
+      <para>
+	The optional <argname>message</argname> argument can take the
+	form of a string literal or the name of a string variable; if
+	present it is printed as part of the error message shown to
+	the caller of the function.
+      </para>
+    </description>
+
+  </command>
+
   <command name="function" section="Programming"
     label="Define a function" context="cli">
 
@@ -4336,7 +4361,7 @@
     <description>
       <para>
 	Opens a block of statements in which a function is defined.  This
-	block must be closed with <lit>end function</lit>.  Please see
+	block must be closed with <lit>end function</lit>.  See
 	<guideref targ="chap:functions"/> for details.
       </para>
     </description>
