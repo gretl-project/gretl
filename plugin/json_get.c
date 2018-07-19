@@ -769,7 +769,8 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
     typename = g_type_name(type);
 
 #if JB_DEBUG
-    fprintf(stderr, "  got value: name='%s', type %s\n", name, typename);
+    fprintf(stderr, "  got value: name='%s', type %s (%d)\n",
+	    name, typename, type);
 #endif
 
     if (a == NULL && (name == NULL || name[0] == '\0')) {
@@ -801,6 +802,12 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
 	    gretl_array_set_string(a, i, (char *) s, 1);
 	} else {
 	    gretl_bundle_set_string(jb->curr, name, s);
+	}
+    } else if (type == 0) {
+	if (a != NULL) {
+	    gretl_array_set_string(a, i, "", 1);
+	} else {
+	    gretl_bundle_set_string(jb->curr, name, "");
 	}
     } else {
 	gretl_errmsg_sprintf("Unhandled JSON value of type %s\n",
