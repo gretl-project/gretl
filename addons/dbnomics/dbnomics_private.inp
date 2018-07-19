@@ -154,18 +154,12 @@ end function
 
 ### ------------------------------------------------------------------------
 
-function scalar dbn_get_json (const string parms, bool verbose[0],
-      string *json)
+function scalar dbn_get_json_from_URL (const string URL, string *json, string *msg)
 
-    string URL = "https://api.next.nomics.world/" ~ parms
-    if verbose
-        printf "URL: %s\n", URL
-    endif
     bundle req = defbundle("URL", URL, "header", "accept: application/json")
     # check for curl error
     scalar error = curl(&req)
 
-    string msg
     if error
         msg = req.errmsg
     else
@@ -184,6 +178,22 @@ function scalar dbn_get_json (const string parms, bool verbose[0],
         endif
     endif
 
+    return error
+end function
+
+### ------------------------------------------------------------------------
+
+function scalar dbn_get_json (const string parms, bool verbose[0],
+      string *json)
+
+    string URL = "https://api.next.nomics.world/" ~ parms
+    if verbose
+        printf "URL: %s\n", URL
+    endif
+
+    string msg
+    error = dbn_get_json_from_URL (URL, &json, &msg)
+
     if error
         if msg == ""
             msg = "Failed to get the requested information from dbnomics"
@@ -196,11 +206,56 @@ end function
 
 ### ------------------------------------------------------------------------
 
+function bundles multiple_from_json (const string json, bool verbose[0])
+
+    bundles ret = null
+    bundle b = jsongetb(json, "series")
+    n = b.series.num_found
+    
+    if n == 0
+        return ret
+    endif
+
+    n = nelem(b.series.data)
+    ret = b.series.data
+    loop i=1..n -q
+        ret[i].frequency = bundle_get_frequency(ret[i])
+	t1 = 1
+        t2 = nelem(ret[i].period)
+        loop j=1..t2 -q
+            if ret[i].value[j] == "" || ret[i].value[j] == "NA"
+                t1++
+            else
+                break
+            endif
+        endloop
+        T = t2 - t1 + 1
+        ret[i].T = T
+        ret[i].has_data = T > 0
+        if T > 0
+            if t1 > 1
+                ret[i].period = ret[i].period[t1:t2]
+            endif
+            matrix vals = zeros(T, 1)
+	    j = 1
+            loop t=t1..t2 -q
+                vals[j] = atof(ret[i].value[t])
+		j++
+            endloop
+            ret[i].value = vals
+        endif
+    endloop
+    return ret
+
+end function
+
+### ------------------------------------------------------------------------
+
 function bundles general_search(const string key, int limit[0::100],
       int offset[0], bool verbose[0])
 
     magic = "results.docs"
-    bundles ret = null
+    bundles ret = array(0)
 
     string json
     parms = sprintf("search?q=%s&limit=%d&offset=%d", sanitize_url(key),

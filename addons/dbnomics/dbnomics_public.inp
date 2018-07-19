@@ -161,6 +161,23 @@ end function
 
 ### ------------------------------------------------------------------------
 
+function bundles dbnomics_get_cart(const string URL)
+
+    string json
+    bundles ret = null
+    string msg = ""
+    err = dbn_get_json_from_URL(URL, &json, &msg)
+    
+    if !err
+        ret = multiple_from_json(json, 0)
+    endif
+
+    return ret
+    
+end function
+
+### ------------------------------------------------------------------------
+
 function bundles dbnomics_get_multiple(const string provider,
       const string dset, int limit[0::50], int offset[0],
       bundle spec[null])
@@ -173,45 +190,10 @@ function bundles dbnomics_get_multiple(const string provider,
     string parms = build_parms(provider, dset, limit, offset, spec)
     string json
     err = dbn_get_json(parms, 0, &json)
-    if err
-        return ret # or use funcerr?
+    if !err
+        ret = multiple_from_json(json, 0)
     endif
 
-    bundle b = jsongetb(json, "series")
-    n = b.series.num_found
-    if n == 0
-        return ret
-    endif
-
-    n = nelem(b.series.data)
-    ret = b.series.data
-    loop i=1..n -q
-        ret[i].frequency = bundle_get_frequency(ret[i])
-	t1 = 1
-        t2 = nelem(ret[i].period)
-        loop j=1..t2 -q
-            if ret[i].value[j] == "" || ret[i].value[j] == "NA"
-                t1++
-            else
-                break
-            endif
-        endloop
-        T = t2 - t1 + 1
-        ret[i].T = T
-        ret[i].has_data = T > 0
-        if T > 0
-            if t1 > 1
-                ret[i].period = ret[i].period[t1:t2]
-            endif
-            matrix vals = zeros(T, 1)
-	    j = 1
-            loop t=t1..t2 -q
-                vals[j] = atof(ret[i].value[t])
-		j++
-            endloop
-            ret[i].value = vals
-        endif
-    endloop
     return ret
 end function
 
