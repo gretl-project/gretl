@@ -3593,7 +3593,7 @@ void print_pvalue (int dist, const double *parm, double x,
 	break;
 
     case D_LAPLACE:
-	pprintf(prn, _("Laplace (mean = %g, shape = %g): "), parm[0], parm[1]);
+	pprintf(prn, _("Laplace (mean = %g, scale = %g): "), parm[0], parm[1]);
 	err = print_pv_string(x, pv, prn);
 	if (err) return;
 	pc = laplace_cdf(parm[0], parm[1], x);
