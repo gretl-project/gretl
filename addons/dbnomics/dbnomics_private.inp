@@ -174,7 +174,7 @@ function scalar dbn_get_json_from_URL (const string URL, string *json, string *m
         string dbnmsg
         error = bad_json(json, &dbnmsg)
         if error
-            msg = sprintf("error message from dbnomics:\n\"%s\"\n", dbnmsg)
+            msg = sprintf("dbnomics says:\n\"%s\"\n", dbnmsg)
         endif
     endif
 
@@ -192,13 +192,14 @@ function scalar dbn_get_json (const string parms, bool verbose[0],
     endif
 
     string msg
-    error = dbn_get_json_from_URL (URL, &json, &msg)
+    error = dbn_get_json_from_URL(URL, &json, &msg)
 
     if error
         if msg == ""
             msg = "Failed to get the requested information from dbnomics"
         endif
         funcerr msg
+        # print msg
     endif
 
     return error
@@ -212,7 +213,7 @@ function bundles multiple_from_json (const string json, bool verbose[0])
     bundle b = jsongetb(json, "series")
     b = b.series
     n = b.num_found
-    
+
     if n == 0
         return ret
     endif
@@ -220,9 +221,9 @@ function bundles multiple_from_json (const string json, bool verbose[0])
     n = nelem(b.data)
     ret = b.data
     loop i=1..n -q
-	ret[i].error = 0
+        ret[i].error = 0
         ret[i].frequency = bundle_get_frequency(ret[i])
-	t1 = 1
+        t1 = 1
         t2 = nelem(ret[i].period)
         loop j=1..t2 -q
             if ret[i].value[j] == "" || ret[i].value[j] == "NA"
@@ -239,10 +240,10 @@ function bundles multiple_from_json (const string json, bool verbose[0])
                 ret[i].period = ret[i].period[t1:t2]
             endif
             matrix vals = zeros(T, 1)
-	    j = 1
+            j = 1
             loop t=t1..t2 -q
                 vals[j] = atof(ret[i].value[t])
-		j++
+                j++
             endloop
             ret[i].value = vals
         endif

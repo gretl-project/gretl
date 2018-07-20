@@ -35,7 +35,7 @@ function void dbnomics_bundle_print(const bundle b, bool print_data[0])
     endif
     if nf == 3
         printf "Identifier: %s/%s/%s\n\n", b.provider_code,
-	  b.dataset_code, b.series_code
+          b.dataset_code, b.series_code
     endif
     if inbundle(b, "series_name")
         # this is actually the description of the series
@@ -121,6 +121,9 @@ function bundle dbnomics_get_series (const string datacode, bool verbose[0])
     string parms = "series?series_ids=" ~ datacode ~ "&offset=0&format=json"
     string json
     ret.error = dbn_get_json(parms, verbose, &json)
+    if ret.error
+        return ret
+    endif
 
     bundle b = jsongetb(json, "series")
     n = b.series.num_found
@@ -148,10 +151,10 @@ function bundle dbnomics_get_series (const string datacode, bool verbose[0])
             ret.period = ret.period[t1:t2]
         endif
         matrix vals = zeros(T, 1)
-	j = 1
+        j = 1
         loop t=t1..t2 -q
             vals[j] = atof(ret.value[t])
-	    j++
+            j++
         endloop
         ret.value = vals
     endif
@@ -167,13 +170,12 @@ function bundles dbnomics_get_cart(const string URL)
     bundles ret = null
     string msg = ""
     err = dbn_get_json_from_URL(URL, &json, &msg)
-    
+
     if !err
         ret = multiple_from_json(json, 0)
     endif
 
     return ret
-    
 end function
 
 ### ------------------------------------------------------------------------
@@ -362,7 +364,7 @@ function bundles dbnomics_category_tree(const string provider,
     magic = "category_tree"
     err = dbn_get_json("providers/" ~ provider, verbose, &json)
     if err
-        return ret # funcerr?
+        return ret
     endif
 
     n = 0
@@ -389,9 +391,9 @@ function bundle dbnomics_dsets_for_provider(const string provider,
 
     bundle ret
     string json
-    err = dbn_get_json("providers/" ~ provider, verbose, &json)
+    ret.error = dbn_get_json("providers/" ~ provider, verbose, &json)
 
-    if !err
+    if !ret.error
         bundle b = jsongetb(json, "category_tree")
         bundles B = _jbterms(b)
         n = nelem(B)

@@ -8,7 +8,7 @@ setobs 12 1989:1
 
 strings ids = defarray("ECB/Foo/Bar", "Baz/Foo/Bar", "Foo")
 
-loop i=1..nelem(ids)
+loop i=1..nelem(ids) --quiet
     printf "*** Sending bad request '%s' ***\n", ids[i]
     bundle b = dbnomics_get_series(ids[i])
     dbnomics_bundle_print(b)
