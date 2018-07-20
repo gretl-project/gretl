@@ -7405,10 +7405,6 @@ static int check_sub_object_return (fn_arg *arg, fn_param *fp)
 	GretlType uptype = user_var_get_type(arg->uvar);
 	void *updata = user_var_get_value(arg->uvar);
 
-	fprintf(stderr, "need to reattach object of type %s "
-		"to variable of type %s at %p\n",
-		gretl_type_get_name(type),
-		gretl_type_get_name(uptype), updata);
 	if (uptype == GRETL_TYPE_ARRAY) {
 	    gretl_array *a = updata;
 	    int i, n = gretl_array_get_length(a);
