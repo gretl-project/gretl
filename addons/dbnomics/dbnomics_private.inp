@@ -210,15 +210,17 @@ function bundles multiple_from_json (const string json, bool verbose[0])
 
     bundles ret = null
     bundle b = jsongetb(json, "series")
-    n = b.series.num_found
+    b = b.series
+    n = b.num_found
     
     if n == 0
         return ret
     endif
 
-    n = nelem(b.series.data)
-    ret = b.series.data
+    n = nelem(b.data)
+    ret = b.data
     loop i=1..n -q
+	ret[i].error = 0
         ret[i].frequency = bundle_get_frequency(ret[i])
 	t1 = 1
         t2 = nelem(ret[i].period)
