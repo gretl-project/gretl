@@ -535,11 +535,12 @@ static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
     if (!varargs_func(sym)) {
 	/* Check for a nested function call (2013-08-25) or
 	   bundle/array member (2015-09-25). Further fixes
-	   applied 2018-07-17 and 2018-07-19.
+	   applied July 2018.
 	*/
 	src = p->point - 1;
 	n = gretl_namechar_spn(src);
 	if (n > 0 && n < VNAMELEN && testc(src[n])) {
+	    NODE *ret = NULL;
 	    char tmp[VNAMELEN];
 	    char c = src[n];
 
@@ -548,15 +549,25 @@ static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
 	    src = NULL;
 	    if (c == '(') {
 		if (function_lookup(tmp) || get_user_function_by_name(tmp)) {
-		    /* this is finicky! */
-		    return base(p, t);
+		    /* watch out: this is VERY finicky! */
+		    /* was: ret = base(p, t); */
+		    lex(p);
+		    ret = expr(p);
 		}
 	    } else if (gretl_is_bundle(tmp)) {
 		lex(p);
-		return expr(p);
+		ret = expr(p);
 	    } else if (c == '[' && get_array_by_name(tmp)) {
 		lex(p);
-		return expr(p);
+		ret = expr(p);
+	    }
+	    if (ret != NULL) {
+		if (eat_last) {
+		    /* consume trailing right paren */
+		    /* note: was parser_getc(p); */
+		    lex(p);
+		}
+		return ret;
 	    }
 	}
     }

@@ -507,8 +507,8 @@ enum {
 #define string_arg_func(s) (s == F_ISNULL || s == F_ISDISCR || \
 			    s == F_OBSNUM || s == F_BACKTICK || \
 			    s == F_VARNUM || s == F_ARGNAME || \
-                            s == F_REMOVE || s == F_TYPEOF || \
-			    s == F_ISSTRING || s == F_EXISTS)
+                            s == F_TYPEOF || s == F_ISSTRING || \
+			    s == F_EXISTS || s == F_REMOVE)
 
 /* function with multiple args, string for first arg */
 #define str0_func(s) (s == F_PVAL || s == F_CDF || s == F_INVCDF || \
@@ -560,11 +560,6 @@ enum {
 #define b3sym(s) (s == QUERY || func3_symb(s))
 
 #define bnsym(s) (s == MDEF || s == FARGS)
-
-#define bare_data_type(s) (s > PUNCT_MAX && s < DTYPE_MAX)
-
-#define closing_sym(s) (s == G_RPR || s == G_RBR || s == G_RCB)
-
 
 /* functions where the right-hand argument is actually a return
    location */
