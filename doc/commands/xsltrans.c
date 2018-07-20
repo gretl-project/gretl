@@ -100,12 +100,14 @@ int real_apply_xslt (xmlDocPtr doc,
 		     char const **params)
 {
     xmlDocPtr result;
-    int err = 0;
+    int wrote, err = 0;
 
     result = xsltApplyStylesheet(style, doc, params);
 
     if (result != NULL) {
-	xsltSaveResultToFile(stdout, result, style);
+	wrote = xsltSaveResultToFile(stdout, result, style);
+	fflush(stdout);
+	fprintf(stderr, "xsltrans: wrote %d bytes\n", wrote);
 	xmlFreeDoc(result);
     } else {
 	err = 1;
