@@ -37,6 +37,10 @@
 
 #define defining_list(p) (p->flags & P_LISTDEF)
 
+#define bare_data_type(s) (s > PUNCT_MAX && s < DTYPE_MAX)
+
+#define closing_sym(s) (s == G_RPR || s == G_RBR || s == G_RCB)
+
 const char *wordchars = "abcdefghijklmnopqrstuvwxyz"
                         "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                         "0123456789_";
