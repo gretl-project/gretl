@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2018-07-20 07:46-0400\n"
-"PO-Revision-Date: 2018-07-19 16:50+0200\n"
-"Last-Translator: JCEN <ecadrian.estevez@usc.es>\n"
+"PO-Revision-Date: 2018-07-20 18:46+0200\n"
+"Last-Translator: JCEN <ecadrian@hotmail.com>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.0.6\n"
+"X-Generator: Poedit 2.0.9\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 
@@ -1206,7 +1206,7 @@ msgstr "Os datos engadíronse correctamente\n"
 #: lib/src/dataio.c:110
 #, c-format
 msgid "'%s' shadows a function of the same name"
-msgstr ""
+msgstr "'%s' sombrea unha función do mesmo nome"
 
 #: lib/src/dataio.c:135
 msgid "Varname exceeds the maximum of 31 characters"
@@ -2298,7 +2298,7 @@ msgstr "Serie *%s* xerada (ID %d)"
 #: lib/src/geneval.c:1525
 #, c-format
 msgid "arg %d is missing or of invalid type"
-msgstr ""
+msgstr "O argumento %d está ausente ou é dun tipo non válido"
 
 #: lib/src/geneval.c:2103 lib/src/gretl_foreign.c:105
 msgid "MPI is not supported in this gretl build"
@@ -2394,7 +2394,7 @@ msgstr "O operador '%s' é incorrecto neste contexto"
 
 #: lib/src/geneval.c:12285
 msgid "Bandwidth cannot be negative with more than 3 arguments"
-msgstr ""
+msgstr "O largo de banda non pode ser negativo con máis de 3 argumentos"
 
 #: lib/src/geneval.c:12874
 msgid "array: no type was specified"
@@ -2468,7 +2468,7 @@ msgstr "Neste contexto non é aceptable unha variable de tipo %s"
 #: lib/src/geneval.c:16158
 #, c-format
 msgid "Incompatible types in assignment: %s %s %s"
-msgstr ""
+msgstr "Tipos incompatibles na asigación: %s %s %s"
 
 #: lib/src/geneval.c:16237
 #, c-format
@@ -2754,7 +2754,7 @@ msgstr "Xerouse a cadea de caracteres *%s*"
 #: lib/src/genmain.c:304
 #, c-format
 msgid "'%s' is a reserved word"
-msgstr ""
+msgstr "'%s' é unha palabra reservada"
 
 #: lib/src/genmain.c:582
 msgid "Periodic dummy variables generated.\n"
@@ -3183,9 +3183,9 @@ msgstr "Fallou *xmlDocGetRootElement*"
 
 #: lib/src/gretl_bundle.c:2330 lib/src/gretl_bundle.c:2458
 #: lib/src/gretl_bundle.c:2465
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no data available"
-msgstr "*%s* non é unha variable de cadea"
+msgstr "*%s*: sen datos dispoñibles"
 
 #: lib/src/gretl_errors.c:40
 msgid "Data error"
@@ -3405,9 +3405,9 @@ msgid "MPI is already initialized"
 msgstr "MPI xa se iniciou"
 
 #: lib/src/gretl_func.c:575
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't find function %s"
-msgstr "Non podo atoparse a función '%s'"
+msgstr "Non puido atoparse a función *%s*"
 
 #: lib/src/gretl_func.c:1551
 msgid "Missing function return type"
@@ -3433,7 +3433,7 @@ msgstr "Non se puido abrir *%s*"
 #: lib/src/gretl_func.c:3333
 #, c-format
 msgid "PDF doc should be called %s.pdf"
-msgstr ""
+msgstr "O documento PDF debe chamarse %s.pdf"
 
 #: lib/src/gretl_func.c:3715 gui/fnsave.c:3933
 #, c-format
@@ -3476,9 +3476,9 @@ msgid "'%s' is the name of a built-in function"
 msgstr "'%s' é o nome dunha función interna"
 
 #: lib/src/gretl_func.c:5753 lib/src/gretl_func.c:5756
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is the name of a variable"
-msgstr "'%s' non é o nome dunha variable"
+msgstr "'%s' é o nome dunha variable"
 
 #: lib/src/gretl_func.c:5801
 #, c-format
@@ -3884,9 +3884,8 @@ msgid "with asymptotic p-value"
 msgstr "con valor p asintótico"
 
 #: lib/src/gretl_model.c:4406
-#, fuzzy
 msgid "with bootstrap p-value"
-msgstr "con valor p ="
+msgstr "con valor p de bootstrap"
 
 #: lib/src/gretl_model.c:6765
 msgid "Can't retrieve uhat: data set has changed"
@@ -5449,9 +5448,9 @@ msgid "= MLE"
 msgstr "= EMV"
 
 #: lib/src/modelprint.c:1788
-#, fuzzy, c-format
+#, c-format
 msgid "Estimated using AS %d"
-msgstr "Estimado usando o método BHHH"
+msgstr "Estimado usando AS %d"
 
 #: lib/src/modelprint.c:1790
 msgid "Estimated using Kalman filter"
@@ -6879,11 +6878,8 @@ msgid "Criterion"
 msgstr "Criterio"
 
 #: lib/src/printout.c:2951
-#, fuzzy
 msgid "FINAL VALUES"
-msgstr ""
-"\n"
-"--- VALORES FINAIS: \n"
+msgstr "VALORES FINAIS"
 
 #: lib/src/printout.c:2953
 msgid "Iteration"
@@ -7022,9 +7018,9 @@ msgid "GED (shape = %g): "
 msgstr "GED (forma = %g):  "
 
 #: lib/src/pvalues.c:3596
-#, fuzzy, c-format
+#, c-format
 msgid "Laplace (mean = %g, shape = %g): "
-msgstr "Weibull (Forma=%g, Escala=%g): "
+msgstr "Laplace (Media=%g, Escala=%g): "
 
 #: lib/src/strutils.c:703 lib/src/strutils.c:722 lib/src/tokenize.c:3195
 #, c-format
@@ -8924,17 +8920,16 @@ msgstr "Observacións"
 #: gui/database.c:1918
 #, c-format
 msgid "Results of DB.NOMICS search on '%s'\n"
-msgstr ""
+msgstr "Resultados da procura DB.NOMICS de '%s'\n"
 
 #: gui/database.c:1977
 #, c-format
 msgid "DB.NOMICS search on '%s' in dataset %s/%s\n"
-msgstr ""
+msgstr "Procura DB.NOMICS de '%s' no banco de datos %s/%s\n"
 
 #: gui/database.c:2093
-#, fuzzy
 msgid "No matches were found"
-msgstr "Non se atoparon observacións"
+msgstr "Non se atoparon coincidencias"
 
 #: gui/database.c:2411
 msgid ""
@@ -8978,22 +8973,20 @@ msgstr "Non se atoparon ficheiros de banco de datos"
 #: gui/database.c:3403
 #, c-format
 msgid "showing datasets %d-%d of %d"
-msgstr ""
+msgstr "Amosando os bancos de datos %d-%d de %d"
 
 #: gui/database.c:3406
 #, c-format
 msgid "showing series %d-%d of %d"
-msgstr ""
+msgstr "Amosando as series %d-%d de %d"
 
 #: gui/database.c:3456
-#, fuzzy
 msgid "No datasets were found"
-msgstr "Non se atoparon datos utilizables"
+msgstr "Non se atoparon bancos de datos"
 
 #: gui/database.c:3544 gui/database.c:3573
-#, fuzzy
 msgid "No series were found"
-msgstr "Non se atoparon observacións"
+msgstr "Non se atoparon series"
 
 #: gui/database.c:3691 gui/database.c:3814
 msgid "No function packages found"
@@ -9125,18 +9118,16 @@ msgid "Browse..."
 msgstr "Revisar..."
 
 #: gui/datafiles.c:1640 gui/gretl.c:1652
-#, fuzzy
 msgid "Specific series..."
-msgstr "_Series Temporais..."
+msgstr "Serie específica..."
 
 #: gui/datafiles.c:1674
 msgid "Select directory"
 msgstr "Seleccionar un cartafol"
 
 #: gui/datafiles.c:1676
-#, fuzzy
 msgid "Details"
-msgstr "Amosar os detalles"
+msgstr "Detalles"
 
 #: gui/datafiles.c:1684
 msgid "Package registry"
@@ -9152,27 +9143,25 @@ msgstr "Máquina local"
 
 #: gui/datafiles.c:1693
 msgid "First"
-msgstr ""
+msgstr "Primeiro"
 
 #: gui/datafiles.c:1694
-#, fuzzy
 msgid "Previous"
-msgstr "Serie anterior"
+msgstr "Previo"
 
 #: gui/datafiles.c:1695
 msgid "Next"
-msgstr ""
+msgstr "Seguinte"
 
 #: gui/datafiles.c:1696
 msgid "Last"
-msgstr ""
+msgstr "Derradeiro"
 
 #: gui/datafiles.c:1714
 msgid "Remove from menu"
 msgstr "Quitar do menú"
 
 #: gui/datafiles.c:1767
-#, fuzzy
 msgid "List datasets"
 msgstr "Listar bancos de datos"
 
@@ -9216,7 +9205,7 @@ msgstr "Gretl: Bancos de datos no servidor"
 
 #: gui/datafiles.c:2045
 msgid "gretl: DB.NOMICS providers"
-msgstr ""
+msgstr "gretl: provedores de DB.NOMICS"
 
 #: gui/datafiles.c:2047
 msgid "gretl: function packages on server"
@@ -9281,13 +9270,12 @@ msgid "Local status"
 msgstr "Estado local"
 
 #: gui/datafiles.c:2855 gui/datafiles.c:2859 gui/datafiles.c:2863
-#, fuzzy
 msgid "Code"
-msgstr "Libro de códigos"
+msgstr "Código"
 
 #: gui/datafiles.c:2860
 msgid "Content"
-msgstr ""
+msgstr "Contido"
 
 #: gui/datafiles.c:2867 gui/datafiles.c:2874 gui/datafiles.c:2882
 #: gui/datafiles.c:2888
@@ -10309,9 +10297,8 @@ msgid "Lags"
 msgstr "Retardos"
 
 #: gui/dialogs.c:6680
-#, fuzzy
 msgid "series code:"
-msgstr "Serie"
+msgstr "Código de serie:"
 
 #: gui/dlgutils.c:758
 msgid "Add equation"
@@ -10571,14 +10558,14 @@ msgid "Residual from EMA of %s (current weight %g)"
 msgstr "Erros da media móbil exponencial de *%s* (ponderación actual %g)"
 
 #: gui/filters.c:232
-#, fuzzy, c-format
+#, c-format
 msgid "Filtered %s: one-sided Hodrick-Prescott trend (lambda = %g)"
-msgstr "%s filtrada: Tendencia de Hodrick-Prescott (lambda = %g)"
+msgstr "%s filtrada: Tendencia de Hodrick-Prescott dunha parte (lambda = %g)"
 
 #: gui/filters.c:235
-#, fuzzy, c-format
+#, c-format
 msgid "Filtered %s: one-sided Hodrick-Prescott cycle (lambda = %g)"
-msgstr "%s filtrada: Ciclo de Hodrick-Prescott (lambda = %g)"
+msgstr "%s filtrada: Ciclo de Hodrick-Prescott dunha parte (lambda = %g)"
 
 #: gui/filters.c:240
 #, c-format
@@ -10705,7 +10692,7 @@ msgstr "Lambda (valores máis altos -> tendencia máis suave):"
 
 #: gui/filters.c:743
 msgid "One-sided"
-msgstr ""
+msgstr "Unha parte"
 
 #: gui/filters.c:754
 msgid "k (higher values -> better approximation):"
@@ -11025,7 +11012,7 @@ msgstr "Aquí non podes trocar o nome dunha función"
 #: gui/fnsave.c:1113
 #, c-format
 msgid "Can't find the function '%s'"
-msgstr "Non podo atoparse a función '%s'"
+msgstr "Non puido atoparse a función '%s'"
 
 #: gui/fnsave.c:1318
 msgid ""
@@ -11822,13 +11809,12 @@ msgid "graph page options"
 msgstr "opcións da páxina de gráfica"
 
 #: gui/gretl.c:122
-#, fuzzy
 msgid ""
 "\n"
 "You may supply the name of a data or script file on the command line"
 msgstr ""
 "\n"
-"Podes indicar o nome dun ficheiro de datos na liña de instrucións"
+"Podes indicar o nome dun ficheiro de datos ou de guión na liña de instrucións"
 
 #: gui/gretl.c:126
 msgid "open a script file on startup"
@@ -13920,23 +13906,20 @@ msgid "all pages"
 msgstr "Todas as páxinas"
 
 #: gui/helpfiles.c:973
-#, fuzzy
 msgid "selected dataset"
-msgstr "Renovar a mostra do conxunto de datos"
+msgstr "Conxunto de datos seleccionado"
 
 #: gui/helpfiles.c:975
-#, fuzzy
 msgid "this dataset"
-msgstr "Engadir ao conxunto de datos"
+msgstr "Este conxunto de datos"
 
 #: gui/helpfiles.c:977
 msgid "all DB.NOMICS"
-msgstr ""
+msgstr "Todo DB.NOMICS"
 
 #: gui/helpfiles.c:979
-#, fuzzy
 msgid "this window"
-msgstr "Xanela principal"
+msgstr "Esta xanela"
 
 #: gui/helpfiles.c:1045 gui/textutil.c:288
 msgid "Find:"
@@ -16767,9 +16750,8 @@ msgid "OK"
 msgstr "Aceptado"
 
 #: gui/textbuf.c:1339
-#, fuzzy
 msgid "Next results"
-msgstr "Serie seguinte"
+msgstr "Seguintes resultados"
 
 #: gui/textbuf.c:1385
 msgid "processing...\n"
@@ -17057,9 +17039,8 @@ msgid "OLS model"
 msgstr "Modelo MCO"
 
 #: gui/toolbar.c:1457
-#, fuzzy
 msgid "databases"
-msgstr "_Bancos de datos"
+msgstr "Bancos de datos"
 
 #: gui/toolbar.c:1458
 msgid "open dataset"
@@ -17443,9 +17424,8 @@ msgid "MA estimate(s) out of bounds\n"
 msgstr "As estimacións de medias móbiles están fóra dos límites\n"
 
 #: plugin/arma.c:1299
-#, fuzzy
 msgid "BFGS iteration"
-msgstr "iteración"
+msgstr "Iteración BFGS"
 
 #: plugin/arma.c:1365
 msgid "ARMA initialization"
@@ -17472,9 +17452,8 @@ msgid "using linear AR model"
 msgstr "utilizando un modelo AR linear"
 
 #: plugin/arma_cml.c:701
-#, fuzzy
 msgid "BHHH iteration"
-msgstr "iteración"
+msgstr "Iteración BHHH"
 
 #: plugin/arma_common.c:520
 msgid "No usable data were found"
@@ -17487,7 +17466,7 @@ msgstr "Fallo na instrución ARMA"
 #: plugin/arma_init.c:94
 #, c-format
 msgid "Scaling y by %g\n"
-msgstr ""
+msgstr "Escalando 'y' mediante %g\n"
 
 #: plugin/arma_x12.c:916
 msgid "Failed to execute x12arima"

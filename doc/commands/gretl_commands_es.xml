@@ -293,14 +293,11 @@
 	Se estima la regresión de Dickey&ndash;Fuller utilizando <math>k</math> retardos de la variable dependiente.
       </para>
 	</li>
-	<li><para> ¿Es significativo el último retardo? Si lo es, se
-	ejecuta el contraste con un orden de retardos
-	<math>k</math>. Si no lo es, se hace que <math>k</math> =
-	<math>k</math> &minus; 1, y se vuelve al paso 1 con un retardo
-	menos. El proceso se repite hasta que sea significativo el
-	último retardo de una regresión, o hasta que <math>k</math>
-	sea 0 (se haría el contraste con un orden de retardos igual a
-	0).
+	<li><para>
+	¿Es significativo el último retardo? Si lo es, se ejecuta el contraste con un orden de retardos
+	<math>k</math>. Si no lo es, se hace que <math>k</math> = <math>k</math> &minus; 1,
+	y se vuelve al paso 1 con un retardo menos. El proceso se repite hasta que sea significativo
+	el último retardo de una regresión, o hasta que <math>k</math> sea 0 (se haría el contraste con un orden de retardos igual a 0).
 	    </para>
 	</li>
       </nlist>
@@ -9975,7 +9972,6 @@
 
     <gui-access>
       <menu-path>/Ver/Componentes principales</menu-path>
-      <other-access>Ventana principal: Menú emergente (tras selección múltiple)</other-access>
     </gui-access>
 
   </command>
@@ -10941,22 +10937,20 @@
       <para>
 	Regresión de cuantiles. Por defecto, las desviaciones típicas
 	se calculan de acuerdo con la fórmula asintótica indicada por
-	<cite key="koenker-bassett78">Koenker y Bassett (<book>Econometrica</book>, 1978)</cite>,
-	pero si marcas el cuadradito de
-	<quote>Desviaciones típicas robustas</quote>,
+	<cite key="koenker-bassett78">Koenker y Bassett (1978)</cite>, pero
+	si marcas el cuadradito de <quote>Desviaciones típicas robustas</quote>,
 	se utiliza la variante robusta a la heterocedasticidad
-	de
-	<cite key="koenker-zhao94">Koenker y Zhao (<book>Journal of Nonparametric Statistics</book>, 1994)</cite>.
+	de <cite key="koenker-zhao94">Koenker y Zhao (1994)</cite>.
       </para>
       <para>
 	Si marcas la opción <quote>Calcular los intervalos de confianza</quote>,
-	Gretl calcula los intervalos de confianza para los coeficientes en
-	lugar de las desviaciones típicas. Y el cuadradito de validación de
-	<quote>Desviaciones típicas robustas</quote> tiene otro efecto: si
-	no se marca, los intervalos se calculan bajo el supuesto de perturbaciones
-	IID; y al marcarlo, Gretl utiliza el estimador robusto desarrollado por
-	<cite key="koenker-machado99">Koenker y Machado
-	(<book>Journal of the American Statistical Association</book>, 1999)</cite>.
+	Gretl calcula los intervalos de confianza para los coeficientes
+	en lugar de las desviaciones típicas. Y el cuadradito de validación
+	de <quote>Desviaciones típicas robustas</quote> tiene otro efecto:
+	si no se marca, los intervalos se calculan bajo el supuesto de
+	perturbaciones IID; y al marcarlo, Gretl utiliza el estimador
+	robusto desarrollado por
+	<cite key="koenker-machado99">Koenker y Machado (1999)</cite>.
 	Ten en cuenta que estos intervalos no son exactamente
 	<quote>más o menos tantas desviaciones típicas</quote> pues, en general,
 	son asimétricos respecto a las estimaciones puntuales de los coeficientes.

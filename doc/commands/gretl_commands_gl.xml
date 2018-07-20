@@ -9972,7 +9972,6 @@
 
     <gui-access>
       <menu-path>/Ver/Compoñentes principais</menu-path>
-      <other-access>Xanela principal: Menú emerxente (tras selección múltiple)</other-access>
     </gui-access>
 
   </command>
@@ -10938,22 +10937,20 @@
       <para>
 	Regresión de cuantís. Por defecto, as desviacións padrón
 	calcúlanse de acordo coa fórmula asintótica indicada por
-	<cite key="koenker-bassett78">Koenker e Bassett (<book>Econometrica</book>, 1978)</cite>,
-	pero se marcas o cadriño de
-	<quote>Desviacións padrón robustas</quote>,
+	<cite key="koenker-bassett78">Koenker e Bassett (1978)</cite>, pero
+	se marcas o cadriño de <quote>Desviacións padrón robustas</quote>,
 	utilízase a variante robusta á heterocedasticidade
-	de
-	<cite key="koenker-zhao94">Koenker e Zhao (<book>Journal of Nonparametric Statistics</book>, 1994)</cite>.
+	de <cite key="koenker-zhao94">Koenker e Zhao (1994)</cite>.
       </para>
       <para>
 	Se marcas a opción <quote>Calcular os intervalos de confianza</quote>,
-	Gretl calcula os intervalos de confianza para os coeficientes en
-	lugar das desviacións padrón. E o cadriño de validación de
-	<quote>Desviacións padrón robustas</quote> ten outro efecto: se
-	non se marca, os intervalos calcúlanse baixo o suposto de perturbacións
-	IID; e ao marcalo, Gretl utiliza o estimador robusto desenvolvido por
-	<cite key="koenker-machado99">Koenker e Machado
-	(<book>Journal of the American Statistical Association</book>, 1999)</cite>.
+	Gretl calcula os intervalos de confianza para os coeficientes
+	en troques das desviacións padrón. E o cadriño de validación
+	de <quote>Desviacións padrón robustas</quote> ten outro efecto:
+	se non se marca, os intervalos calcúlanse baixo o suposto
+	de perturbacións IID; e ao marcalo, Gretl utiliza o estimador
+	robusto desenvolvido por
+	<cite key="koenker-machado99">Koenker e Machado (1999)</cite>.
 	Ten en conta que estes intervalos non son exactamente
 	<quote>máis ou menos tantas desviacións padrón</quote> pois, en xeral,
 	son asimétricos a respecto das estimacións puntuais dos coeficientes.
