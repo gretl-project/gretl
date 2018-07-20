@@ -374,7 +374,9 @@ help-pt: $(CHAPREFS) $(PT_CMDREF_STAMP) $(PT_FNREF_STAMP)
 
 help-gl: $(CHAPREFS) $(GL_CMDREF_STAMP) $(GL_FNREF_STAMP)
 
-help-all: help-en help-it help-pt help-gl $(HELPREFS)
+help-es: $(CHAPREFS) $(ES_CMDREF_STAMP)
+
+help-all: help-en help-it help-pt help-gl help-es $(HELPREFS)
 
 # Validate the commands "master" XML files against libgretl
 # By default we check the English-language files
@@ -393,6 +395,9 @@ check-pt: validate
 check-gl: validate
 	-./validate $(GL_SRC)
 	-./validate $(GL_FNSRC)
+
+check-es: validate
+	-./validate $(ES_SRC)
 
 xmlcheck:
 	cd $(CMDSDIR) && ./checkxml.sh
