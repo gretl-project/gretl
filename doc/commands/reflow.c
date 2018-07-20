@@ -607,7 +607,7 @@ static int get_pre_skip (const char *s)
 
 int process_para (char *s, char *inbuf, int ptype, int markup)
 {
-    char line[128];
+    char line[1024];
     const char *starts[] = { 
 	"[PARA]", 
 	"[ILISTPAR]", 
