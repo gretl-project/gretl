@@ -4267,6 +4267,31 @@
 
   </command>
 
+  <command name="funcerr" section="Programming"
+    label="Uscita dopo errore" context="cli">
+
+    <usage>
+      <arguments>
+	<argument optional="true">messaggio</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+       Questo comando è utilizzabile soltanto nel contesto di funzioni
+       difinite dall'utente (vedi <cmdref targ="function"/>); esso
+       provoca un'interruzione della funzione con errore.
+      </para>
+      <para>
+       Il parametro opzionale <argname>messaggio</argname> dev'essere
+       una stringa (anche sotto forma di variabile); se presente,
+       viene stampato assieme al messaggio di errore inviato alla
+       funzione chiamante.
+      </para>
+    </description>
+
+  </command>
+
   <command name="function" section="Programming" label="Definisce una funzione" context="cli">
 
     <usage>
