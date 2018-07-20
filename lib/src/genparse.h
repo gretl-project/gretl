@@ -519,7 +519,8 @@ enum {
 #define string_last_func(s) (s == F_DESEAS || s == F_AGGRBY || \
 			     s == F_PRINTF || s == F_SPRINTF || \
 			     s == F_ALLREDUCE || s == F_NORMTEST || \
-			     s == F_SSCANF || s == F_NPCORR)
+			     s == F_SSCANF || s == F_NPCORR || \
+			     s == F_INBUNDLE)
 
 /* functions taking string arg in middle position */
 #define string_mid_func(s) (s == F_REDUCE || s == F_SCATTER)
