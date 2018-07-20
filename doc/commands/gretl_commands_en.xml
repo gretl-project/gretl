@@ -2474,7 +2474,7 @@
       <para>
 	The <opt>name</opt> option can be used to set a name for the
 	imported series other than the original name in the database.
-	The parameter must be a valid gretl indentifier. This option
+	The parameter must be a valid gretl identifier. This option
 	is restricted to the case where a single series is specified
 	for importation.
       </para>
@@ -5013,7 +5013,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/GMM</menu-path>
+      <menu-path>/Model/Instrumental variables/GMM</menu-path>
     </gui-access>
 
   </command>
@@ -8881,7 +8881,7 @@
 	begins with the keyword <cmd>deriv</cmd>, gives the name of a
 	parameter, an equals sign, and an expression whereby the
 	derivative can be calculated. As an alternative to supplying
-	numerical derivatives, you could substitute the following for
+	analytical derivatives, you could substitute the following for
 	lines 7 to 9:
       </para>
       <code>
@@ -9972,7 +9972,6 @@
 
     <gui-access>
       <menu-path>/View/Principal components</menu-path>
-      <other-access>Main window pop-up (multiple selection)</other-access>
     </gui-access>
 
   </command>
@@ -10938,31 +10937,29 @@
       <para>
 	Quantile regression.  By default standard errors are computed
 	according to the asymptotic formula given by <cite
-	key="koenker-bassett78">Koenker and Bassett
-	(<book>Econometrica</book>, 1978)</cite>, but if the
-	<quote>robust</quote> box is checked we use the
+	key="koenker-bassett78">Koenker and Bassett (1978)</cite>, but
+	if the <quote>robust</quote> box is checked we use the
 	heteroskedasticity-robust variant from <cite
-	key="koenker-zhao94">Koenker and Zhao (<book>Journal of
-	Nonparametric Statistics</book>, 1994)</cite>.
+	key="koenker-zhao94">Koenker and Zhao (1994)</cite>.
       </para>
       <para>
 	If the <quote>Compute confidence intervals</quote> option is
 	checked gretl will calculate confidence intervals for the
 	coefficients, in place of standard errors. The
-	<quote>robust</quote> check-box still has an effect: if it is not
-	checked, the intervals are computed on the assumption of IID
-	errors; with it, gretl uses the robust estimator developed by
-	<cite key="koenker-machado99">Koenker and Machado (<book>Journal
-	of the American Statistical Association</book>, 1999)</cite>.
-	Note that these intervals are not just <quote>plus or minus so
-	many standard errors</quote>; in general, they are asymmetrical
-	about the point estimates of the coefficients.
+	<quote>robust</quote> check-box still has an effect: if it is
+	not checked, the intervals are computed on the assumption of
+	IID errors; with it, gretl uses the robust estimator developed
+	by <cite key="koenker-machado99">Koenker and Machado
+	(1999)</cite>.  Note that these intervals are not just
+	<quote>plus or minus so many standard errors</quote>; in
+	general, they are asymmetrical about the point estimates of
+	the coefficients.
       </para>
       <para>
-	You may give a list of quantiles (see the drop-down list for some
-	pre-defined possibilities).  In that case gretl will calculate
-	quantile estimates and either standard errors or confidence intervals
-	for each of the specified values.
+	You may give a list of quantiles (see the drop-down list for
+	some pre-defined possibilities).  In that case gretl will
+	calculate quantile estimates and either standard errors or
+	confidence intervals for each of the specified values.
       </para>
       <para>
 	To Follow up on the references given above, please see
