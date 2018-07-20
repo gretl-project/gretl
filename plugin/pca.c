@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -100,14 +100,14 @@ static gretlopt pca_flag_dialog (VMatrix *cmat, int *nsave)
     finfo->nsave = nsave;
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
-    
-    gtk_window_set_title(GTK_WINDOW(dialog), _("gretl: save data")); 
+
+    gtk_window_set_title(GTK_WINDOW(dialog), _("gretl: save data"));
     gtk_window_set_resizable(GTK_WINDOW(dialog), FALSE);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
     gtk_box_set_spacing(GTK_BOX(vbox), 5);
     gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_MOUSE);
 
-    g_signal_connect(G_OBJECT(dialog), "destroy", 
+    g_signal_connect(G_OBJECT(dialog), "destroy",
 		     G_CALLBACK(destroy_pca_dialog), finfo);
 
     internal_vbox = gtk_vbox_new(FALSE, 5);
@@ -118,13 +118,13 @@ static gretlopt pca_flag_dialog (VMatrix *cmat, int *nsave)
     gtk_box_pack_start(GTK_BOX(internal_vbox), hbox, TRUE, TRUE, 5);
 
     /* Only those with eigenvalues > 1.0 */
-    button = gtk_radio_button_new_with_label(NULL, 
+    button = gtk_radio_button_new_with_label(NULL,
 					     _("Components with eigenvalues > mean"));
     gtk_box_pack_start(GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_pca_flag), finfo);
-    g_object_set_data(G_OBJECT(button), "opt", GINT_TO_POINTER(PCA_SAVE_MAIN)); 
+    g_object_set_data(G_OBJECT(button), "opt", GINT_TO_POINTER(PCA_SAVE_MAIN));
 
     /* All components */
     group = gtk_radio_button_get_group (GTK_RADIO_BUTTON(button));
@@ -244,7 +244,7 @@ static void pca_print (VMatrix *cmat, gretl_matrix *E,
     todo = n;
 
     while (todo > 0) {
-	int ncols = todo > PCA_COLS ? PCA_COLS : todo; 
+	int ncols = todo > PCA_COLS ? PCA_COLS : todo;
 
 	pprintf(prn, "%-*s", namelen + 1, " ");
 
@@ -269,7 +269,8 @@ static void pca_print (VMatrix *cmat, gretl_matrix *E,
 }
 
 static int standardize (double *sy, const double *y,
-			VMatrix *v, int i)
+			VMatrix *v, int n, int i,
+			const char *mask)
 {
     int t;
 
@@ -281,13 +282,21 @@ static int standardize (double *sy, const double *y,
     if (v->ci == CORR) {
 	double sd = sqrt(v->ssx[i] / (v->n - 1));
 
-	for (t=0; t<v->n; t++) {
-	    sy[t] = (y[t] - v->xbar[i]) / sd;
+	for (t=0; t<n; t++) {
+	    if (mask != NULL && mask[t]) {
+		sy[t] = NADBL;
+	    } else {
+		sy[t] = (y[t] - v->xbar[i]) / sd;
+	    }
 	}
     } else {
 	/* using the covariance matrix: just center */
-	for (t=0; t<v->n; t++) {
-	    sy[t] = y[t] - v->xbar[i];
+	for (t=0; t<n; t++) {
+	    if (mask != NULL && mask[t]) {
+		sy[t] = NADBL;
+	    } else {
+		sy[t] = y[t] - v->xbar[i];
+	    }
 	}
     }
 
@@ -295,22 +304,23 @@ static int standardize (double *sy, const double *y,
 }
 
 /* Add components to the dataset, either "major" ones (eigenvalues
-   greater than 1.0), or a specified number (if @nsave > 0), or 
+   greater than 1.0), or a specified number (if @nsave > 0), or
    all of them.
 */
 
-static int pca_save_components (VMatrix *cmat, 
-				gretl_matrix *E, 
-				gretl_matrix *C, 
+static int pca_save_components (VMatrix *cmat,
+				gretl_matrix *E,
+				gretl_matrix *C,
 				DATASET *dset,
 				int nsave,
 				gretlopt opt)
 {
     int save_all = (opt & OPT_A);
-    double *xi, **sX = NULL;
-    int m = 0, v = dset->v;
+    double **sX = NULL;
+    char *mask = NULL;
+    int n, m = 0, v = dset->v;
     int k = cmat->dim;
-    int i, j, t, vi;
+    int i, j, s, t, vi;
     int err = 0;
 
     if (save_all) {
@@ -320,27 +330,44 @@ static int pca_save_components (VMatrix *cmat,
     } else {
 	for (i=0; E->val[i] > 1.0; i++) {
 	    m++;
-	} 
+	}
     }
 
-    /* Note that cmat->t1 and cmat->t2 may differ from
-       dset->t1 and dset->t2 if the PCA sample was
-       restricted by the presence of NAs. Here it's
-       the cmat values that should be used.
-    */
+    if (cmat->missing > 0) {
+	/* If NAs have been compressed out, then cmat->n
+	   will be less than (cmat->t2 - cmat->t1 + 1) and
+	   we'll need a missing-values mask
+	*/
+	n = cmat->n + cmat->missing;
+	mask = calloc(n, 1);
+	for (s=0; s<n; s++) {
+	    for (i=0; i<k; i++) {
+		vi = cmat->list[i+1];
+		if (na(dset->Z[vi][s + cmat->t1])) {
+		    /* flag missing row */
+		    mask[s] = 1;
+		    break;
+		}
+	    }
+	}
+    } else {
+	n = cmat->n;
+    }
 
     err = dataset_add_series(dset, m);
 
     if (!err) {
 	/* construct standardized versions of all variables */
-	sX = doubles_array_new(k, cmat->n);
+	sX = doubles_array_new(k, n);
 	if (sX == NULL) {
 	    err = E_ALLOC;
 	} else {
+	    double *xi;
+
 	    for (i=0; i<k && !err; i++) {
 		vi = cmat->list[i+1];
 		xi = dset->Z[vi] + cmat->t1;
-		err = standardize(sX[i], xi, cmat, i);
+		err = standardize(sX[i], xi, cmat, n, i, mask);
 	    }
 	}
     }
@@ -348,7 +375,6 @@ static int pca_save_components (VMatrix *cmat,
     if (!err) {
 	gchar *label;
 	double x, load;
-	int s;
 
 	for (i=0; i<m; i++) {
 	    vi = v + i;
@@ -367,7 +393,7 @@ static int pca_save_components (VMatrix *cmat,
 		dset->Z[vi][t] = 0.0;
 		for (j=0; j<k; j++) {
 		    x = sX[j][s];
-		    if (na(x)) {
+		    if (xna(x)) {
 			dset->Z[vi][t] = NADBL;
 			break;
 		    } else {
@@ -381,19 +407,20 @@ static int pca_save_components (VMatrix *cmat,
     }
 
     doubles_array_free(sX, k);
+    free(mask);
 
     return err;
 }
 
-/* The incoming options here: 
+/* The incoming options here:
 
    CLI: the option may be OPT_O (save the first XX components) or
    OPT_A (save all the components). OPT_Q suppresses printing of
    the results.
 
    GUI: no option (simply display the results) or OPT_D. The latter
-   means that we should not display the results, but should put up a 
-   dialog box allowing the user to decide what to save. 
+   means that we should not display the results, but should put up a
+   dialog box allowing the user to decide what to save.
 
    Note that depending on the original option supplied to the pca
    command, the incoming matrix may be either a correlation matrix
@@ -402,7 +429,7 @@ static int pca_save_components (VMatrix *cmat,
    member of the VMatrix struct.
 */
 
-int pca_from_cmatrix (VMatrix *cmat, DATASET *dset, 
+int pca_from_cmatrix (VMatrix *cmat, DATASET *dset,
 		      gretlopt opt, PRN *prn)
 {
     gretl_matrix *C;
@@ -414,11 +441,11 @@ int pca_from_cmatrix (VMatrix *cmat, DATASET *dset,
     double x;
     int err = 0;
 
-    if (opt & OPT_D) { 
+    if (opt & OPT_D) {
 	saveopt = pca_flag_dialog(cmat, &nsave);
 	if (saveopt == OPT_NONE) {
 	    /* canceled */
-	    return 0; 
+	    return 0;
 	}
     } else if (opt & OPT_O) {
 	nsave = get_optval_int(PCA, OPT_O, &err);
