@@ -1,4 +1,5 @@
 version 2018b, in progress
+- New feature: support for data access via dbnomics
 - Substantial speed-up of AR(I)MA estimation, using
   Melard's algorithm AS 197; also improvements to the
   initialization for such estimation
@@ -6,6 +7,8 @@ version 2018b, in progress
   on importation
 - New option --tree for "print": show content of bundles
   recursively
+- New function jsongetb(): construct a bundle mirroring the
+  content of a JSON tree
 - New function lrcovar(): long-run covariance
 - New function fevd(): forecast error variance decomposition
   following estimation via "var" or "vecm"
@@ -28,6 +31,8 @@ version 2018b, in progress
 - Fix bug: crash on Windows when using Tab key in the data
   editor window
 - Fix bug: crash in "modprint" under some conditions
+- Fix bug: wrong handling of intra-sample missing values
+  with "pca" command
 - Fix bug: files written by third-party programs under
   gretl's "foreign" could end up not visible to users
 - Fix quasi-bug: failure on calling gnuplot when there's
