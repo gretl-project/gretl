@@ -173,7 +173,7 @@ $(ES_CMDREF_STAMP): xsltrans reflow $(ES_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(C
 	./xsltrans --cmds --plain $(ES_SRC) > es1.tmp && \
 	./reflow < es1.tmp > $(SHAREDIR)/$(CLI_CMDREF).es && \
 	./xsltrans --cmds --pango $(ES_SRC) > es1.tmp && \
-	./reflow -m < es1.tmp > $(SHAREDIR)/$(GUI_CMDREF).es \
+	./reflow -m < es1.tmp > $(SHAREDIR)/$(GUI_CMDREF).es && \
 	./xsltrans --gui --pango $(ES_SRC) > es1.tmp && \
 	./reflow -m < es1.tmp > $(SHAREDIR)/$(GUI_HELP).es && \
 	touch $@ && rm -f es1.tmp
