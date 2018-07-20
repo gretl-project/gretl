@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2018-02-05 11:55-0500\n"
-"PO-Revision-Date: 2018-05-04 12:21+0200\n"
+"PO-Revision-Date: 2018-07-19 16:50+0200\n"
 "Last-Translator: JCEN <ecadrian.estevez@usc.es>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -8464,7 +8464,7 @@ msgstr "Gretl: Buscador de valor p"
 
 #: gui/calculator.c:3062
 msgid "gretl: test calculator"
-msgstr "Gretl: Calculadora de probas"
+msgstr "Gretl: Calculadora de estatísticos de proba"
 
 #: gui/calculator.c:3063
 msgid "gretl: nonparametric tests"
@@ -10165,7 +10165,7 @@ msgstr "Beta normalizada, un parámetro"
 #: gui/dialogs.c:6565
 #, c-format
 msgid "High-frequency regressor %s"
-msgstr "Regresor *%s* de alta frecuencia"
+msgstr "Regresor de alta frecuencia *%s*"
 
 #: gui/dialogs.c:6578
 msgid "Parameterization"

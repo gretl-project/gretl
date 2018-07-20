@@ -1504,9 +1504,9 @@
       <description>
 	<para>
 	  Devolve un escalar co resultado dunha maximización numérica feita co
-	  método de Broyden, Fletcher, Goldfarb e Shanno. O argumento
+	  método de Broyden, Fletcher, Goldfarb e Shanno. O argumento vectorial
 	  <argname>b</argname> debe de conter os valores iniciais dun conxunto
-	  de parámetros e o argumento <argname>f</argname> debe de especificar
+	  de parámetros, e o argumento <argname>f</argname> debe de especificar
 	  unha chamada á función que vai calcular o criterio obxectivo (escalar)
 	  que se quere maximizar, dados os valores actuais dos parámetros, así
 	  como calquera outros datos que sexan relevantes. Se o que pretendes
@@ -1559,11 +1559,11 @@
 	<para>
 	  Devolve un escalar co resultado dunha maximización con restricións por
 	  medio do método L-BFGS-B (BFGS con memoria limitada, consulta
-	  <cite key="byrd-etal95">Byrd, Lu, Nocedal e Zhu, 1995</cite>). O
-	  argumento <argname>b</argname> debe de conter os valores iniciais dun
+	  <cite key="byrd-etal95">Byrd, Lu, Nocedal e Zhu, 1995</cite>). O argumento 
+	  vectorial <argname>b</argname> debe de conter os valores iniciais dun
 	  conxunto de parámetros, o argumento <argname>bounds</argname> debe de
 	  conter as restricións aplicadas aos valores dos parámetros (consulta
-	  máis abaixo) e o argumento <argname>f</argname> debe de especificar
+	  máis abaixo), e o argumento <argname>f</argname> debe de especificar
 	  unha chamada á función que vai calcular o criterio obxectivo (escalar)
 	  que se quere maximizar, dados os valores actuais dos parámetros así
 	  como calquera outros datos que sexan relevantes. Se o que pretendes
@@ -3563,10 +3563,11 @@
     <function name="fixname" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">rawname</fnarg>
+	<fnarg type="bool" optional="true">underscore</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Esta función está ideada para utilizarse en conxunto coa instrución
+	  En principio, esta función está ideada para utilizarse en conxunto coa instrución
 	  <cmdref targ="join"/>. Devolve unha cadea co resultado da conversión
 	  de <argname>rawname</argname> nun identificador válido de Gretl;
 	  debe iniciarse cunha letra, debe conter só letras ASCII, díxitos
@@ -3583,6 +3584,17 @@
 	  (agás que o carácter anterior transcrito sexa un trazo baixo,
 	  pois entón elimínase o espazo) e omite os outros tipos de caracteres
 	  <quote>ilegais</quote>.
+	</para>
+	<para>
+	  Se estás convencido de que a entrada non é demasiado longa (entón
+	  susceptible de ser tronzada), podes querer substituír secuencias
+	  de un ou máis caracteres ilícitos mediante unha barra de subliñado,
+	  en troques de só eliminalos, pois isto podería xerar un identificador
+	  máis lexible. Para acadar este efecto, proporciona un valor non
+	  nulo para o segundo argumento (opcional). Mais isto non é
+	  recomendable no contexto da instrución <cmdref targ="join"/>,
+	  posto que o nome <quote>fixado</quote> automaticamente non
+	  vai utilizar barras de subliñado deste xeito.
 	</para>
       </description>
     </function>
@@ -4944,6 +4956,73 @@
       </description>
     </function>
 
+    <function name="jsongetb" section="data-utils" output="bundle">
+      <fnargs>
+	<fnarg type="string">buf</fnarg>
+	<fnarg type="string" optional="true">path</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Como argumento <argname>buf</argname> deberás utilizar un búfer
+	  JSON, tal como pode recuperarse dun sitio web adecuado por medio
+	  da función <fncref targ="curl"/>. A especificación e o efecto do
+	  argumento opcional <argname>path</argname> descríbese
+	  máis abaixo.
+	</para>
+	<para>
+	  O que se devolve é un feixe (bundle) cuxa estrutura basicamente
+	  reflicte a da entrada: os obxectos JSON tórnanse feixes de Gretl,
+	  e os arranxos JSON tórnanse arranxos de Gretl, cada un deles
+	  contendo cadeas de texto ou feixes. Os nodos de <quote>valor</quote>
+	  JSON tórnanse compoñentes de feixes ou elementos de arranxos;
+	  no último caso, os valores numéricos convértense en cadeas de texto
+	  utilizando <lit>sprintf</lit>. Cae na conta de que, dado que non
+	  podes aniñar os arranxos (arrays) de Gretl, o argumento que acepta
+	  esta función é un pouco máis restritivo que a especificación JSON,
+	  pois esta admite aniñar os arranxos.
+	</para>
+	<para>
+	  Podes usar o argumento <argname>path</argname> para limitar
+	  os elementos JSON incluídos no feixe que se devolve. Ten en
+	  conta que isto non é un <quote>JsonPath</quote> tal como se
+	  describe na axuda para <fncref targ="jsonget"/>; isto é unha
+	  sinxela composición suxeita á seguinte especificación:
+	</para>
+	<ilist>
+	  <li>
+	    <para>
+	      <argname>path</argname> é unha formación de elementos separados
+	      por unha barra, onde esta barra (<quote>/</quote>) indica o
+	      desprazamento a un nivel <quote>máis baixo</quote> na árbore
+	      JSON representada por <argname>buf</argname>. Permítese unha
+	      barra inicial pero non é necesaria, pois implicitamente a ruta
+	      sempre comeza na raíz. Non debes de incluír caracteres estraños
+	      para espazos en branco.
+	    </para>
+	  </li>
+	  <li>
+	    <para>
+	      Cada elemento que se separa con unha barra debe de ter
+	      unha das seguintes formas: (a) un nome unicamente, en
+	      cuxo caso só se vai incluír un elemento JSON cuxo nome
+	      coincida no nivel estrutural indicado; ou (b) <quote>*</quote>
+	      (asterisco), en cuxo caso vanse incluír todos aqueles
+	      elementos do nivel indicado; ou (c) un arranxo de nomes
+	      separados con comas e contornados entre chaves
+	      (<quote>{</quote> e <quote>}</quote>), en cuxo caso só
+	      se van incluír os elementos JSON cuxos nomes coincidan
+	      con un dos nomes indicados.
+	    </para>
+	  </li>
+	</ilist>
+	<para>
+	  Consulta tamén a función orientada a cadeas <fncref targ="jsonget"/>;
+	  pois, dependendo da túa intención, unha destas funcións pódeche ser
+	  de máis axuda que a outra.
+	</para>
+      </description>
+    </function>
+
     <function name="juldate" section="calendar" output="seebelow">
       <fnargs>
 	<fnarg type="scalar-or-series">ed</fnarg>
@@ -5733,21 +5812,83 @@
 	</para>
 	<para context="tex">
 	  A matriz que se devolve ven dada por
-	  \[\sum_{j=-p}^{p} \sum_j w_{|j|} (X_t' u_t
-	  u_{t-j} X_{t-j})\]
+	  \[\sum_{j=-p}^{p} \sum_j w_{|j|} (X_t u_t
+	  u_{t-j} X_{t-j}')\]
 	</para>
 	<para context="notex">
-	  A matriz que se devolve ven dada por
-	</para>
-	<para context="notex">
-	  sum_{j=-p}^p sum_j w_{|j|} (X_t' u_t u_{t-j} X_{t-j})
+	  A matriz que se devolve é a suma para <math>j</math> dende
+	  <math>-p</math> ata <math>p</math> de <math>w(|j|) *
+	  X(t)X(t-j)' * u(t)u(t-j)</math>, onde <math>X(t)'</math> é
+	  a <math>t</math>-ésima fila de <argname>X</argname>.
 	</para>
 	<para>
-	  Cando se establece que <argname>u</argname> é <lit>null</lit>,
-	  omítense todos os elementos de <math>u</math>; e cando se indica
-	  que <argname>w</argname> é <lit>null</lit>, suponse que todas as
-	  ponderacións son 1.0.
+	  Se <argname>u</argname> ven indicado como <lit>nulo</lit>,
+	  os termos <math>u</math> omítense, e se
+	  <argname>w</argname> ven indicado como <lit>nulo</lit>,
+	  todas as ponderacións asúmese que son 1.0.
 	</para>
+	<para>
+	  Por exemplo, o seguinte anaco de código
+	</para>
+	<code>
+	  set seed 123
+	  X    = mnormal(6,2)
+	  Retardo  = mlag(X,1)
+	  Adianto = mlag(X,-1)
+	  print X Retardo Adianto
+	  eval X'X
+	  eval mcovg(X, , , 0)
+	  eval X'(X + Retardo + Adianto)
+	  eval mcovg(X, , , 1)
+	</code>
+	<para>
+	  produce este resultado:
+	</para>
+	<code>
+	  ? print X Retardo Adianto
+	  X (6 x 2)
+
+	    -0.76587      -1.0600
+	    -0.43188      0.30687
+	    -0.82656      0.40681
+	     0.39246      0.75479
+	     0.36875       2.5498
+	     0.28855     -0.55251
+
+	  Retardo (6 x 2)
+
+	      0.0000       0.0000
+	    -0.76587      -1.0600
+	    -0.43188      0.30687
+	    -0.82656      0.40681
+	     0.39246      0.75479
+	     0.36875       2.5498
+
+	  Adianto (6 x 2)
+
+	    -0.43188      0.30687
+	    -0.82656      0.40681
+	     0.39246      0.75479
+	     0.36875       2.5498
+	     0.28855     -0.55251
+	      0.0000       0.0000
+
+	  ? eval X'X
+	      1.8295       1.4201
+	      1.4201       8.7596
+
+	  ? eval mcovg(X,,, 0)
+	      1.8295       1.4201
+	      1.4201       8.7596
+
+	  ? eval X'(X + Retardo + Adianto)
+	      3.0585       2.5603
+	      2.5603       10.004
+
+	  ? eval mcovg(X,,, 1)
+	      3.0585       2.5603
+	      2.5603       10.004
+	</code>
       </description>
     </function>
 

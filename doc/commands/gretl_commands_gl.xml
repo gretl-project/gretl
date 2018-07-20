@@ -270,7 +270,7 @@
 	<opt>gls</opt>: cando se especifica a detracción con MCX (GLS) da
 	tendencia, os AIC e BIC son as versións <quote>modificadas</quote>
 	descritas en <cite key="ng-perron01">Ng e Perron (2001)</cite>;
-	noutro caso, son as versións estándar. No caso de MCX, dispós dun
+	se non, son as versións estándar. No caso de MCX, dispós dun
 	refinamento pois cando indicas a opción adicional <opt>perron-qu</opt>,
 	calcúlanse estes criterios de información modificados de acordo
 	co método revisado que recomendaron
@@ -353,7 +353,7 @@
 	seguinte: se o nivel de retardo para a proba non é cero, amósase o seu
 	estatístico <math>W</math>; por outra banda, se as longuras das series
 	de tempo difiren dun individuo a outro, amósase o seu estatístico
-	<math>Z</math>; noutro caso, amósase o seu estatístico <math>t</math>-barra.
+	<math>Z</math>; se non, amósase o seu estatístico <math>t</math>-barra.
       </para>
 
     </description>
@@ -504,7 +504,7 @@
 	en común entre as dúas orixes. Cando indicas a opción
 	<opt>update-overlap</opt>, a instrución <lit>append</lit>
 	substitúe calquera observación solapada cos valores do ficheiro
-	de datos escollido; noutro caso, os valores que nese momento xa
+	de datos escollido; se non, os valores que nese momento xa
 	están no seu sitio non se ven afectados.
       </para>
       <para>
@@ -1172,7 +1172,7 @@
 	unha segunda lista (separada por un punto e coma) se
 	entende como un grupo de regresores específicos da segunda
 	ecuación, sendo <repl>indepvars1</repl> específica da primeira
-	ecuación; noutro caso, <repl>indepvars1</repl> considérase
+	ecuación; se non, <repl>indepvars1</repl> considérase
 	que representa un conxunto de regresores común.
       </para>
       <para>
@@ -2031,7 +2031,7 @@
     <usage>
       <altforms>
 	<altform><lit>corr [</lit> <repl>listavariables</repl> ]</altform>
-	<altform><lit>corr --matrix=</lit><repl>nomematr</repl></altform>
+	<altform><lit>corr --matrix=</lit><repl>nomematriz</repl></altform>
       </altforms>
       <options>
 	<option>
@@ -2101,7 +2101,7 @@
       <para>
 	Cando se calcula unha correlación por rangos, podes utilizar a
 	opción <opt>verbose</opt> para presentar os datos orixinais e
-	a súa xerarquía (noutro caso, esta alternativa ignórase).
+	a súa xerarquía (se non, esta alternativa ignórase).
       </para>
       <para>
 	Se <repl>listavariables</repl> contén máis de dúas series e o programa non
@@ -2200,7 +2200,7 @@
       <para context="cli">
 	Se especificas un valor para <repl>nivel</repl>, a lonxitude
 	do correlograma limítase ata ese número de retardos como
-	máximo; noutro caso, a longura determínase automaticamente
+	máximo; se non, a longura determínase automaticamente
 	como unha función da frecuencia dos datos e do número de
 	observacións.
       </para>
@@ -2385,7 +2385,7 @@
       <options>
 	<option>
 	  <flag>--compact</flag>
-	  <optparm>metodo</optparm>
+	  <optparm>método</optparm>
 	  <effect>Especifica o método para compactar</effect>
 	</option>
 	<option>
@@ -2396,13 +2396,18 @@
 	  <flag>--quiet</flag>
 	  <effect>Non amosa os resultados agás no caso de fallo</effect>
 	</option>
+	<option>
+	  <flag>--name</flag>
+	  <optparm>identificador</optparm>
+	  <effect>Renomea series importadas</effect>
+	</option>
       </options>
     </usage>
 
     <description>
       <para>
-	Le as variables de <repl>listavariables</repl> dun banco de datos (Gretl, RATS
-	4.0 ou PcGive) que debe de abrirse previamente utilizando a instrución
+	Le as variables de <repl>listavariables</repl> dun banco de datos (Gretl, dbnomics,
+	RATS 4.0 ou PcGive) que debe de abrirse previamente utilizando a instrución
 	<cmdref targ="open"/>. Podes establecer a frecuencia dos datos e o rango
 	da mostra mediante as instrucións <cmdref targ="setobs"/> e <cmdref targ="smpl"/>
 	antes de utilizar esta instrución. Este é un exemplo completo:
@@ -2466,6 +2471,13 @@
       <code>
 	data cpi*
       </code>
+      <para>
+	Podes usar a opción <opt>name</opt> para determinar un nome
+	distinto do nome orixinal no banco de datos, para a seire importada.
+	O parámetro debe de ser un identificador válido de Gretl. Esta opción
+	restrínxese ao caso no que especificas unha única serie a
+	importar.
+      </para>
 
     </description>
 
@@ -2530,7 +2542,7 @@
     <usage>
       <arguments>
         <argument>chave</argument>
-	      <argument>parametros</argument>
+	      <argument>parámetros</argument>
       </arguments>
       <examples>
         <example>dataset addobs 24</example>
@@ -2683,12 +2695,43 @@
     </description>
   </command>
 
+  <command name="dbnomics" section="Utilities" label="Acceso a dbnomics" context="gui">
+    <description>
+      <para>
+	Este diálogo te permite inspeccionar e descargar series de datos
+	do servidor 'dbnomics'. Podes visitar
+	<url>https://next.nomics.world/</url> para obter os
+	identificadores ou códigos das series de interese. Estes teñen a
+	forma de 'tripletes' (tres termos separados con barras). Por
+	exemplo
+      </para>
+      <code>
+	ECB/IRS/M.IT.L.L40.CI.0000.EUR.N.Z
+      </code>
+      <para>
+	O primeiro termo identifica un provedor de datos, aquí <lit>ECB</lit>
+	(o Banco Central Europeo). O segundo identifica un banco de datos,
+	aquí <lit>IRS</lit> (de estatísticas de tipos de interese). E o terceiro
+	especifica unha serie concreta do banco de datos, neste caso
+	un tipo de interese italiano de 10 anos.
+      </para>
+      <para>
+	Se introduces un identificador de serie e premes <quote>OK</quote>,
+	isto vai facer emerxer unha xanela que amosará información sobre a serie.
+	Entón, podes utilizar os botóns da barra de ferramentas desa xanela
+	para presentar os valores da serie, debuxar a serie, ou engadila ao banco
+	de datos vixente (asumindo que a serie é axeitada para o banco de
+	datos).
+      </para>
+    </description>
+  </command>
+
   <command name="debug" section="Programming" context="cli"
     label="Depurar">
 
     <usage>
       <arguments>
-        <argument>funcion</argument>
+        <argument>función</argument>
       </arguments>
     </usage>
 
@@ -2763,7 +2806,7 @@
 	argumento que non sexa a opción.
       </para>
       <para>
-	Podes usar a cuarta variante para descargar un paquete de función.
+	Podes usar a cuarta variante para descargar un paquete de funcións.
 	Neste caso, debes de proporcionar o sufixo <lit>.gfn</lit> como
 	en
       </para>
@@ -3041,7 +3084,7 @@
 	a variable para a instrución <cmdref targ="dummify"/>.
       </para>
       <para>
-	Cando especificas a opción <opt>reverse</opt>, a operación invértese,
+	Cando especificas a opción <opt>reverse</opt>, a operación invértese;
 	é dicir, as variables contidas en <repl>listavariables</repl> márcanse como
 	continuas.
       </para>
@@ -3162,7 +3205,7 @@
 	por defecto utilizando a corrección de mostra finita suxerida por
 	<cite key="windmeijer05">Windmeijer (2005)</cite>. Xeralmente
 	considérase que as desviacións padrón asintóticas estándar asociadas
-	ao estimador do método en 2 etapas son unha guía pouco fiable para a
+	ao estimador do método en 2 etapas, son unha guía pouco fiable para a
 	inferencia, pero se por algunha razón queres velas, podes utilizar
 	a opción <opt>asymptotic</opt> para desactivar a corrección de
 	Windmeijer.
@@ -3212,7 +3255,7 @@
 	<math>k</math> categorías queiras xerar unicamente
 	<math>k</math> &minus; 1 variables ficticias, para evitar caer
 	na denominada <quote>trampa das variables ficticias</quote>.
-	De aí que teñas a posibilidade de prescindir da codificación ben
+	De aí que teñas a posibilidade de prescindir da codificación, ben
 	do valor máis baixo ou ben do valor máis alto dos considerados.
       </para>
     </description>
@@ -3466,7 +3509,7 @@
 	Debe de ir despois da estimación dun modelo e presenta o modelo
 	estimado en formato dunha ecuación &latex;. Se especificas o nome
 	dun ficheiro utilizando a opción <opt>output</opt>, o resultado
-	diríxese a ese ficheiro; noutro caso, diríxese a un ficheiro cun
+	diríxese a ese ficheiro; se non, diríxese a un ficheiro cun
 	nome co estilo <filename>equation_N.tex</filename>, onde <lit>N</lit>
 	é o número de modelos estimados ata ese momento na sesión vixente.
 	Consulta tamén <cmdref targ="tabprint"/>.
@@ -3478,7 +3521,7 @@
       </para>
       <para>
 	Cando especificas a opción <opt>complete</opt>, o ficheiro &latex; é
-	un documento completo (listo para procesar); noutro caso, debes de
+	un documento completo (listo para procesar); se non, debes de
 	incluílo nun documento.
       </para>
     </description>
@@ -3506,7 +3549,7 @@
       <para>
 	Te permite especificar unha das ecuacións dun sistema delas (consulta
 	<cmdref targ="system"/>). A sintaxe para especificar unha ecuación dun
-	sistema SUR é o mesmo que para, &eg;, <cmdref targ="ols"/>. Pero para
+	sistema SUR é a mesma que para, &eg;, <cmdref targ="ols"/>. Pero para
 	unha das ecuacións dun sistema a estimar con Mínimos Cadrados en 3 etapas,
 	podes: (a) indicar unha especificación dunha ecuación como se estima con
 	MCO e proporcionar unha lista normal de instrumentos utilizando a palabra
@@ -3564,7 +3607,7 @@
 	<cmd>3sls</cmd>, <cmd>fiml</cmd> ou <cmd>liml</cmd>; e debes
 	de poñerlle antes a cadea de texto <lit>method=</lit>. Estes
 	argumentos son optativos se o sistema en cuestión xa se
-	estimou e ocupa o lugar do <quote>último modelo</quote>;
+	estimou, e ocupa o lugar do <quote>último modelo</quote>;
 	nese caso, o estimador que se toma por defecto será o utilizado
 	previamente.
       </para>
@@ -3574,7 +3617,7 @@
 	estará suxeita ás restricións especificadas.
       </para>
       <para>
-	Se o método de estimación é <cmd>sur</cmd> ou <cmd>3sls</cmd> e
+	Se o método de estimación é <cmd>sur</cmd> ou <cmd>3sls</cmd>, e
 	especificas a opción <opt>iterate</opt>, vaise calcular o estimador
 	iterativamente. No caso de SUR, se o procedemento converxe, os
 	resultados son as estimacións máximo verosímiles. A iteración de
@@ -3588,7 +3631,7 @@
 	ou <cmd>tsls</cmd>, por defecto aplícase unha corrección dos
 	graos de liberdade cando se calculan as desviacións padrón, mais
 	podes eliminar isto utilizando a opción <opt>no-df-corr</opt>. Esta
-	opción non ten efecto cos outros estimadores e así non se aplica a
+	opción non ten efecto cos outros estimadores, e así non se aplica a
 	corrección dos graos de liberdade en ningún caso.
       </para>
       <para>
@@ -3619,7 +3662,7 @@
   <command name="eval" section="Utilities" context="cli">
     <usage>
       <arguments>
-        <argument>Expresión</argument>
+        <argument>expresión</argument>
       </arguments>
       <examples>
         <example>eval x</example>
@@ -3630,7 +3673,7 @@
     <description>
       <para>
 	Esta instrución fai que Gretl funcione como unha sofisticada
-	calculadora. O programa avalía <repl>Expresión</repl> e
+	calculadora. O programa avalía <repl>expresión</repl> e
 	presenta o seu valor. O argumento pode ser o nome dunha
 	variable, ou algo máis complicado. En calquera caso, debe
 	de ser unha expresión que podas poñer correctamente como
@@ -3665,7 +3708,7 @@
 
     <description>
       <para>
-	Se queres engadir a un conxunto de datos unha serie que é de frecuencia
+	Se queres engadir a un conxunto de datos, unha serie que é de frecuencia
 	menor, é necesario <quote>expandir</quote> a nova serie. Por exemplo,
 	terás que expandir unha serie trimestral para axustala a un conxunto
 	de datos mensual. Ademais, ás veces podes querer expandir un conxunto
@@ -3694,7 +3737,7 @@
 	Gástanse catro graos de liberdade con este procedemento.
       </para>
       <para>
-	No método de repetición de valores, supón que tes unha serie
+	Respecto ao método de repetición de valores, supón que tes unha serie
 	trimestral co valor 35.5 en 1990:1 (o primeiro trimestre de
 	1990). Na expansión a mensual, vaise asignar o valor 35.5
 	ás observacións de xaneiro, febreiro e marzo de 1990. En
@@ -3854,7 +3897,7 @@
 	cando indicas <repl>obsinicio</repl> e <repl>obsfin</repl> (de ser
 	posible), ben o definido polas observacións que van a continuación
 	do rango sobre o que se estimou o modelo cando indicas a opción
-	<opt>out-of-sample</opt>, ou ben, noutro caso, o rango da mostra
+	<opt>out-of-sample</opt>, ou ben, se non, o rango da mostra
 	definido nese momento. Cando solicitas unha predición 'out-of-sample'
 	pero non hai dispoñibles observacións relevantes, amósase un fallo.
 	Dependendo da natureza do modelo, tamén poden xerarse as desviacións
@@ -3867,8 +3910,8 @@
 	o argumento <repl>nomev</repl> (opcional) ten o seguinte efecto:
 	non se presentan os valores da predición, senón que se gardan no
 	conxunto de datos co nome indicado. Se o último modelo é un sistema
-	de ecuacións, <repl>nomev</repl> ten un efecto distinto xa que
-	concretamente escolle unha variable endóxena en particular para facer
+	de ecuacións, <repl>nomev</repl> ten un efecto distinto xa que,
+	concretamente, escolle unha variable endóxena en particular para facer
 	a predición (pois por defecto xéranse as predicións para todas as
 	variables endóxenas). No caso dun sistema ou se non indicas
 	<repl>nomev</repl>, podes recuperar os valores de predición utilizando
@@ -3931,7 +3974,7 @@
       </code>
       <para context="cli">
 	vai xerar unha gráfica con formato PDF. Respéctanse os nomes de
-	rutas que non ofrezan dúbidas; noutro caso, os ficheiros escríbense
+	rutas que non ofrezan dúbidas; se non, os ficheiros escríbense
 	no cartafol de traballo de Gretl.
       </para>
       <para>
@@ -3961,7 +4004,7 @@
     <description>
       <para>
 	Esta sinxela instrución (sen argumentos, sen opcións) está ideada para
-	usarse en guións que levan algo de tempo e que deben de executarse coa
+	usarse en guións que levan algo de tempo, e que deben de executarse coa
 	Interface Gráfica de Usuario (GUI) de Gretl (o programa de liñas de
 	instrución o ignora), para darlle ao usuario un indicio visual de que
 	as cousas estanse movendo e Gretl non está <quote>parado</quote>.
@@ -3983,7 +4026,7 @@
 	    <para>
 	   Tras invocacións posteriores, actualízase o texto que se amosa
 	   na xanela de resultados, e engádese unha nova mensaxe
-	   <quote>procesando</quote>.
+	   <quote>Procesando</quote>.
 	    </para>
        </li>
      </ilist>
@@ -3994,9 +4037,9 @@
       <para>
 	Ten en conta que non ten senso que utilices <lit>flush</lit> en
 	guións que tarden menos de (digamos) 5 segundos en executarse.
-	Tamén cae na conta de que non deberías utilizar esta instrución nun
+	Tamén cae na conta de que non deberías de utilizar esta instrución nun
 	lugar do guión onde non hai resultados posteriores que presentar,
-	xa que a mensaxe <quote>procesando</quote> será entón enganosa
+	xa que a mensaxe <quote>Procesando</quote> será entón enganosa
 	para o usuario.
       </para>
       <para>
@@ -4044,8 +4087,8 @@
      <para>
 	Esta instrución abre un modo especial no que se admiten
 	instrucións que van executarse con outro programa. Podes
-	saír deste modo con <lit>end foreign</lit> e nese punto
-	execútanse as instrucións amoreadas.
+	saír deste modo con <lit>end foreign</lit> e, nese punto,
+	execútanse as instrucións acumuladas.
       </para>
       <para>
 	Actualmente os programas <quote>externos</quote> aos que se lles
@@ -4055,7 +4098,7 @@
 	que non distinguen maiúsculas e minúsculas.
       </para>
       <para>
-	En conxunto con R, Octave e Stata, a opción <opt>send-data</opt>
+	Xunto con R, Octave e Stata, a opción <opt>send-data</opt>
 	ten como efecto o de facer accesibles os datos do espazo de
 	traballo do Gretl dentro do programa sinalado. Por defecto, se
 	envía o conxunto completo de datos, pero ti podes limitar os
@@ -4100,8 +4143,8 @@
       <para>
 	Comproba a integración fraccional (<quote>memoria longa</quote>)
 	das series especificadas probando a hipótese nula de que a orde de
-	integración da serie é cero. Por defecto, utilízase o estimador local
-	de Whittle <cite key="robinson95" p="true">(Robinson, 1995)</cite>,
+	integración da serie é cero. Por defecto, utilízase o Estimador Local
+	Whittle <cite key="robinson95" p="true">(Robinson, 1995)</cite>,
 	pero cando indicas a opción <opt>gph</opt>, realízase a proba GPH
 	<cite key="GPH83" p="true">(Geweke e Porter-Hudak, 1983)</cite>
 	en troques. Cando decidas indicar a opción <opt>all</opt>,
@@ -4120,7 +4163,7 @@
       <para>
 	Podes recuperar os resultados utilizando os accesorios <fncref targ="$test"/>
 	e <fncref targ="$pvalue"/>. Estes valores baséanse no Estimador Local
-	de Whittle agás cando indicas a opción
+	Whittle agás cando indicas a opción
 	<opt>gph</opt>.
       </para>
     </description>
@@ -4135,7 +4178,7 @@
 
     <usage>
       <arguments>
-        <argument>Variable</argument>
+        <argument>variable</argument>
       </arguments>
       <options>
         <option>
@@ -4145,7 +4188,7 @@
         </option>
         <option>
 	  <flag>--min</flag>
-	  <optparm>valormin</optparm>
+	  <optparm>valormínimo</optparm>
 	  <effect>Especifica o mínimo, mira abaixo</effect>
         </option>
         <option>
@@ -4167,7 +4210,7 @@
         </option>
         <option>
 	  <flag>--matrix</flag>
-	  <optparm>nomematr</optparm>
+	  <optparm>nomematriz</optparm>
 	  <effect>Utiliza unha columna da matriz indicada</effect>
         </option>
         <option>
@@ -4187,15 +4230,15 @@
     <description context="cli">
       <para>
 	Se non indicas opcións, amosa a distribución de frecuencias da
-	serie <repl>Variable</repl> (indicada polo seu nome ou número), co
+	serie <repl>variable</repl> (indicada polo seu nome ou número), co
 	número de intervalos e os seus tamaños elixidos automaticamente.
       </para>
       <para>
-	Cando indicas a opción <opt>matrix</opt>, entón <repl>Variable</repl>
+	Cando indicas a opción <opt>matrix</opt>, entón <repl>variable</repl>
 	debe de ser un número enteiro e interprétase neste caso como un
 	índice que escolle unha columna da matriz indicada. Se a matriz
 	en cuestión é realmente un vector columna, podes omitir este
-	argumento <repl>Variable</repl>.
+	argumento <repl>variable</repl>.
       </para>
       <para>
 	Para controlar a presentación da distribución podes especificar,
@@ -4206,11 +4249,11 @@
       </para>
       <para>
 	Cando indicas a opción <opt>normal</opt>, calcúlase o estatístico
-	khi-cadrado de Doornik&ndash;Hansen para probar a normalidade.
-	Cando indicas a opción <opt>gamma</opt>, a proba de normalidade
+	khi-cadrado de Doornik&ndash;Hansen para probar a Normalidade.
+	Cando indicas a opción <opt>gamma</opt>, a proba de Normalidade
 	substitúese pola proba non paramétrica de Locke respecto á hipótese
 	nula de que unha variable segue unha distribución Gamma; consulta
-	<cite key="locke76">Locke (1976)</cite> e
+	<cite key="locke76">Locke (1976)</cite>, e tamén
 	<cite key="shapiro-chen01">Shapiro e Chen (2001)</cite>. Cae na
 	conta de que a forma na que se indican en Gretl os parámetros da
 	distribución Gamma utilizada é (forma, escala).
@@ -4261,12 +4304,12 @@
 	queres e bota unha ollada á gráfica que se produce. Se non é do teu
 	agrado, apunta a modificación que se require (por exemplo, facer que
 	o intervalo situado máis á esquerda comece en 100 e impón un ancho
-	de intervalo de 200). Entón fai unha segunda proba especificando o
+	de intervalo de 200). Entón fai unha segunda proba, especificando o
 	límite esquerdo e o ancho do intervalo.
       </para>
       <para>
 	Este diálogo tamén permite elixir unha distribución teórica para representar
-	fronte aos datos: ou a Normal ou a Gamma. Cando escolles a opción Normal,
+	fronte aos datos: a Normal ou a Gamma. Cando escolles a opción Normal,
 	calcúlase o estatístico da proba de Normalidade de Doornik&ndash;Hansen.
 	Cando seleccionas a opción Gamma, Gretl calcula o estatístico da proba non
 	paramétrica de Locke respecto á hipótese nula que sostén que a variable
@@ -4281,12 +4324,37 @@
 
   </command>
 
+  <command name="funcerr" section="Programming"
+    label="Saír ao fallar" context="cli">
+
+    <usage>
+      <arguments>
+        <argument optional="true">mensaxe</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+	Só é aplicable no contexto dunha función definida polo usuario
+	(consulta <cmdref targ="function"/>). Provoca que a execución da
+	function actual, remate coa sinalización dunha condición de fallo.
+      </para>
+      <para>
+	O argumento <argname>mensaxe</argname> (opcional) pode ter
+	a forma dunha cadea de texto literal, ou do nome dunha variable
+	de cadea; se está presente, preséntase como parte da mensaxe
+	de fallo que se lle amosa a quen invoca a función.
+      </para>
+    </description>
+
+  </command>
+
   <command name="function" section="Programming"
     label="Definir unha función" context="cli">
 
     <usage>
       <arguments>
-        <argument>nomefuncion</argument>
+        <argument>nomefunción</argument>
       </arguments>
     </usage>
 
@@ -4364,12 +4432,12 @@
 	Así, o parámetro <repl>p</repl> representa o nivel Xeneralizado
 	(ou <quote>AR</quote>), mentres que <repl>q</repl> representa o nivel
 	normal ARCH (ou <quote>MA</quote>). Cando <repl>p</repl> é non nulo,
-	<repl>q</repl> tamén debe ser non nulo; noutro caso, o modelo non está
+	<repl>q</repl> tamén debe ser non nulo; se non, o modelo non está
 	identificado. Con todo, podes estimar un modelo ARCH normal establecendo
-	que <repl>q</repl> é un valor positivo e que <repl>p</repl> é cero.
+	que <repl>q</repl> é un valor positivo, e que <repl>p</repl> é cero.
 	A suma de <repl>p</repl> e <repl>q</repl> non debe de ser maior ca
 	5. Ten en conta que se inclúe automaticamente unha constante na
-	ecuación media agás que indiques a opción <opt>nc</opt>.
+	ecuación media, agás cando indiques a opción <opt>nc</opt>.
       </para>
 
       <para context="gui">
@@ -4387,9 +4455,9 @@
 	Así, o parámetro <repl>p</repl> representa o nivel Xeneralizado
 	(ou <quote>AR</quote>), mentres que <repl>q</repl> representa o nivel
 	normal ARCH (ou <quote>MA</quote>). Cando <repl>p</repl> é non nulo,
-	<repl>q</repl> tamén debe ser non nulo; noutro caso, o modelo non está
+	<repl>q</repl> tamén debe ser non nulo; se non, o modelo non está
 	identificado. Con todo, podes estimar un modelo ARCH normal establecendo
-	que <repl>q</repl> é un valor positivo e que <repl>p</repl> é cero.
+	que <repl>q</repl> é un valor positivo, e que <repl>p</repl> é cero.
 	A suma de <repl>p</repl> e <repl>q</repl> non debe de ser maior ca
 	5.
       </para>
@@ -4404,8 +4472,8 @@
       </para>
 
       <para context="cli">
-	Dispós de diversas variantes da matriz estimada das covarianzas dos
-	estimadores con esta instrución. Por defecto, utilízase a matriz Hessiana
+	Con esta instrución dispós de diversas variantes da matriz estimada
+	das covarianzas dos estimadores. Por defecto, utilízase a matriz Hessiana
 	agás que indiques a opción <opt>robust</opt>, en cuxo caso vaise usar
 	a matriz de covarianzas CMV (QML de White). Tamén podes especificar
 	outras posibilidades (&eg; a matriz de información ou o estimador de
@@ -4413,8 +4481,8 @@
       </para>
 
       <para context="gui">
-	Dispós de diversas variantes da matriz estimada das covarianzas
-	dos estimadores con esta instrución. Por defecto, utilízase a
+	Con esta instrución dispós de diversas variantes da matriz estimada
+	das covarianzas dos estimadores. Por defecto, utilízase a
 	matriz Hessiana agás que marques o cadriño
 	<quote>Desviacións padrón robustas</quote>, en cuxo caso vaise
 	usar a matriz de covarianzas CMV (QML de White). Tamén podes
@@ -4448,7 +4516,7 @@
       <para context="cli">
 	Podes recuperar os erros GARCH e a varianza condicionada estimada
 	con <lit>$uhat</lit> e <lit>$h</lit>, respectivamente. Por exemplo,
-	para conseguir a varianza condicional:
+	para obter a varianza condicional:
       </para>
       <code context="cli">
 	series ht = $h
@@ -4499,7 +4567,7 @@
 	<cmdref targ="logs"/>, <cmdref targ="lags"/>, <cmdref targ="ldiff"/>,
 	<cmdref targ="sdiff"/> e <cmdref targ="square"/> como atallos.
 	No contexto dunha fórmula <lit>genr</lit>, debes facer referencia
-	ás variables xa existentes mediante o seu nome, non co número ID.
+	ás variables xa existentes mediante o seu nome, non co seu número ID.
 	A fórmula debe de ser unha combinación ben feita de nomes de
 	variables, constantes, operadores e funcións (descrito máis
 	abaixo). Ten en conta que podes atopar máis detalles sobre
@@ -4520,7 +4588,7 @@
 	series c = 10
       </code>
       <para context="gui">
-	(noutro caso, <lit>c = 10</lit> xeraría unha variable escalar).
+	(se non, <lit>c = 10</lit> xeraría unha variable escalar).
       </para>
 
       <para context="cli">
@@ -4584,7 +4652,7 @@
 	  <quote>help functions</quote>.
 	</refnote>
 	<refnote xref="true">
-	  Para ver unha listaxe de funcións e accesorios, consulta o
+	  Para ver unha listaxe de funcións e accesorios, consulta a
 	  <gfr targ="chap:funcref"/>.
 	</refnote>
       </para>
@@ -4599,7 +4667,7 @@
 	    <para>
 	    <cmd>genr time</cmd> xera unha variable de tendencia temporal
 	    (1,2,3,&hellip;) chamada <cmd>time</cmd>. E <cmd>genr index</cmd>
-	    ten o mesmo efecto salvo que a variable chámase <lit>index</lit>.
+	    ten o mesmo efecto, salvo que a variable chámase <lit>index</lit>.
 	    </para>
 	</li>
 	<li>
@@ -4618,8 +4686,8 @@
 	  <para>
 	    <cmd>genr unitdum</cmd> e <cmd>genr timedum</cmd> xeran conxuntos
 	    de variables ficticias especiais para utilizar con datos de panel,
-	    codificando a primeira as unidades de sección cruzada e a segunda
-	    o período de tempo das observacións.
+	    codificando as unidades de sección cruzada coa primeira e o período
+	    de tempo das observacións coa segunda.
 	  </para>
 	</li>
       </ilist>
@@ -4629,13 +4697,13 @@
 	as instrucións <cmd>genr</cmd> que recuperan datos relacionados cun
 	modelo, sempre se refiren ao modelo que se estimou máis recentemente.
 	Isto tamén é certo no programa de Interface Gráfica de Usuario (GUI),
-	cando se utiliza <cmd>genr</cmd> na <quote>consola de Gretl</quote>ou se
-	introduce unha fórmula usando a opción <quote>Definir nova variable</quote>
+	cando utilizas <cmd>genr</cmd> na <quote>consola de Gretl</quote>ou se
+	introduces unha fórmula usando a opción <quote>Definir nova variable</quote>
 	baixo o menú Engadir na xanela principal. Coa GUI, porén, tes a opción
 	de recuperar datos de calquera dos modelos que se amosan nese momento
 	nunha xanela (sexa ou non sexa o modelo estimado máis recentemente).
 	Podes facer isto baixo o menú <quote>Gardar</quote> da xanela do
-	modelo.
+	modelo correspondente.
       </para>
 
       <para>
@@ -4667,8 +4735,8 @@
 
       <para>
 	Podes modificar unha observación individual dunha serie mediante
-	<lit>genr</lit>. Para facer isto, debes de engadir un número de
-	observación ou de data válidos, entre corchetes, ao nome da variable
+	<lit>genr</lit>. Para facer isto, debes de engadir un número válido de
+	observación ou de data, entre corchetes, ao nome da variable
 	no lado esquerdo da fórmula. Por exemplo, <lit>genr x[3] = 30</lit>
 	ou <lit>genr x[1950:04] = 303.7</lit>.
       </para>
@@ -4687,7 +4755,7 @@
 	<row>
 	  <cell><lit>z = x&gt;y</lit></cell>
 	  <cell><lit>z(t)</lit> = 1 se <lit>x(t) &gt; y(t)</lit>,
-	    noutro caso 0</cell>
+	    se non 0</cell>
 	</row>
 	<row>
 	  <cell><lit>y = x(-2)</lit></cell>
@@ -4771,7 +4839,7 @@
 	<row>
 	  <cell><lit>samp = ok(x)</lit></cell>
 	  <cell>= 1 para as observacións onde <lit>x</lit> non está
-	    ausente.</cell>
+	    ausente</cell>
 	</row>
       </table>
 
@@ -4867,7 +4935,7 @@
     </description>
   </command>
 
-  <command name="gmm" section="Estimation" label="Estimación MXM">
+  <command name="gmm" section="Estimation" label="Estimación MXM (GMM)">
 
     <usage>
       <options>
@@ -4917,7 +4985,7 @@
 	end gmm
       </code>
       <para>
-	No exemplo de arriba, asumimos que <lit>y</lit> e <lit>X</lit> son
+	No exemplo de arriba, asumimos que tanto <lit>y</lit> como <lit>X</lit> son
 	matrices de datos, <lit>b</lit> é un vector de valores dos parámetros
 	coa dimensión adecuada, <lit>W</lit> é unha matriz de instrumentos, e
 	<lit>V</lit> é unha matriz axeitada de ponderacións. A expresión
@@ -4926,7 +4994,7 @@
 	orthog e ; W
       </code>
       <para>
-	indica que o vector de erros (<lit>e</lit>) é ortogonal en principio
+	indica que o vector de erros (<lit>e</lit>) é ortogonal, en principio,
 	a cada un dos instrumentos que constitúen as columnas de
 	<lit>W</lit>.
       </para>
@@ -4937,15 +5005,15 @@
 	porén, pode que desexes utilizar etiquetas máis informativas. Podes
 	acadar isto mediante a palabra chave adicional <lit>param_names</lit>
 	dentro do bloque de instrución. Para un modelo con <math>k</math>
-	parámetros, o argumento que sigue a esta palabra chave debe de ser
+	parámetros, o argumento que sigue a esta palabra chave debe de ser,
 	ben unha cadea de texto literal entre comiñas que conteña <math>k</math>
-	nomes separados por espazos ou ben o nome dunha variable de cadea que
+	nomes separados por espazos, ou ben o nome dunha variable de cadea que
 	conteña <math>k</math> deses nomes.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>/Modelar/Método Xeneralizado Momentos</menu-path>
+      <menu-path>/Modelar/Variables Instrumentais/Método Xeneralizado Momentos</menu-path>
     </gui-access>
 
   </command>
@@ -5014,7 +5082,7 @@
         </option>
         <option>
 	  <flag>--matrix</flag>
-	  <optparm>nomematr</optparm>
+	  <optparm>nomematriz</optparm>
 	  <effect>Representa as columnas da matriz indicada</effect>
         </option>
         <option>
@@ -5045,18 +5113,18 @@
 	ou ben utilizar o indicador de opción <opt>time-series</opt>.
       </para>
       <para>
-	Por defecto, os sitios dos datos amósanse con símbolos,
+	Por defecto, as posicións dos datos amósanse con puntos,
 	pero podes anular isto indicando unha das seguintes opcións:
 	<opt>with-lines</opt>, <opt>with-lp</opt>, <opt>with-impulses</opt>
 	ou <opt>with-steps</opt>. Cando vas representar máis dunha
 	variable no eixe da <math>y</math>, podes limitar o efecto
 	destas opcións a un subconxunto das variables utilizando o
 	parámetro <repl>varspec</repl>. Este deberá de ter o formato
-	dunha listaxe cos nomes ou números (ambos separados por
+	dunha listaxe cos nomes ou números (en ambos casos separados por
 	comas) das variables que se van representar de xeito alternativo.
 	Poñamos por caso, no último exemplo de arriba se amosa como
 	representar <lit>y1</lit> e <lit>y2</lit> fronte a <lit>x</lit>,
-	de tal xeito que <lit>y2</lit> represéntase cunha liña pero
+	de tal xeito que <lit>y2</lit> represéntase cunha liña mentres
 	<lit>y1</lit> con símbolos.
       </para>
       <para>
@@ -5077,8 +5145,8 @@
 	matriz xa definida, estes argumentos convértense en opcionais:
 	se a matriz especificada ten <math>k</math> columnas, por
 	defecto trátanse as primeiras <math>k</math> &minus; 1
-	columnas como as <repl>yvars</repl> e as últimas columnas
-	trátanse como <repl>xvar</repl>. Porén, cando indicas a opción
+	columnas como as <repl>yvars</repl>, e a última columna
+	trátase como <repl>xvar</repl>. Porén, cando indicas a opción
 	<opt>time-series</opt>, todas as <math>k</math> columnas
 	represéntanse fronte ao tempo. Se queres representar columnas
 	escollidas da matriz, debes de especificar <repl>yvars</repl>
@@ -5093,13 +5161,13 @@
       <para>
 	A opción <opt>fit</opt> é só aplicable en gráficas de dispersión de dúas
 	variables e en gráficas de series temporais individuais. Por defecto, o
-	proceder nunha gráfica de dispersión consiste en amosar o axuste MCO se
+	procedemento nunha gráfica de dispersión consiste en amosar o axuste MCO se
 	o coeficiente da pendente é significativo a un nivel do 10 por cento,
 	mentres que o proceder para as series temporais é non amosar ningunha
 	liña de axuste. Podes solicitar un comportamento diferente utilizando
 	esta opción xunto con algún dos seguintes valores dos parámetros
 	<repl>espaxuste</repl>. Ten en conta que se a gráfica é para unha serie
-	temporal individual, o lugar de <math>x</math> o ocupa o tempo.
+	temporal individual, o lugar de <math>x</math> o ocupa 'time'.
       </para>
       <ilist>
 	<li>
@@ -5141,7 +5209,7 @@
 	require dous parámetros separados cunha coma: o nome ou o número
 	ID dunha serie que represente o centro da franxa, e o nome ou ID
 	dunha serie que indique o largo da franxa: o efecto disto consiste
-	en debuxar unha franxa con ordenadas <math>y</math> iguais ao
+	en debuxar unha franxa con ordenadas <math>y</math> que son iguais ao
 	centro máis/menos o largo. Podes utilizar un terceiro parámetro
 	opcional (de novo separado cunha coma) co formato dunha constante
 	numérica ou o nome dunha variable escalar, para indicar un múltiplo
@@ -5158,8 +5226,8 @@
 	da franxa. Por defecto, os límites superior e inferior amósanse
 	con liñas sólidas, pero os parámetros <lit>fill</lit>,
 	<lit>dash</lit>, <lit>bars</lit> ou <lit>step</lit> provocan que a
-	franxa se debuxe como unha área sombreada, utilizando liñas con raias,
-	utilizando barras de erro ou utilizando pasos, respectivamente.
+	franxa se debuxe respectivamente como unha área sombreada,
+	utilizando liñas con raias, utilizando barras de erro ou utilizando chanzos.
 	Ademais, podes engadir (despois dunha coma) ou substituír unha
 	especificación da cor. Aquí tes algúns exemplos de estilo:
       </para>
@@ -5171,10 +5239,10 @@
       </code>
       <para>
 	O primeiro exemplo produce unha área sombreada na cor establecida
-	por defecto, o segundo cambia a liñas con raias cunha cor específica
-	gris azulada, o terceiro utiliza liñas negras sólidas, e o derradeiro
+	por defecto; o segundo pasa a usar liñas con raias cunha cor específica
+	gris azulada; o terceiro utiliza liñas negras sólidas; e o derradeiro
 	amosa barras azuis. Ten en conta que podes indicar as cores ben como
-	valores RGB hexadecimais ou ben polo nome; e podes acceder á lista
+	valores RGB hexadecimais, ou ben polo nome; e podes acceder á lista
 	de nomes de cores recoñecidas por Gnuplot dando a instrución
 	<quote><lit>show colornames</lit></quote> no propio Gnuplot
 	ou, na propia consola de Gretl, facendo
@@ -5225,7 +5293,7 @@
       </para>
       <subhead>Engadindo instrucións Gnuplot</subhead>
       <para>
-	Dispós dunha opción engadida desta instrución pois a continuación
+	Dispós dunha opción engadida desta instrución pois, a continuación
 	da especificación das variables que se van debuxar e do indicador de
 	opción (se hai algún), podes engadir instrucións literais de Gnuplot
 	para controlar a aparencia da gráfica (por exemplo, establecendo
@@ -5275,7 +5343,7 @@
 	</li>
 	<li>
 	  <para>
-	    Gardar como postscript: Garda a gráfica en formato 'Encapsulated
+	    Gardar como postscript (EPS): Garda a gráfica en formato 'Encapsulated
 	    postscript' (EPS)
 	  </para>
 	</li>
@@ -5356,8 +5424,8 @@
 
       <para>
 	A sesión <quote>Páxina de gráficas</quote> vai funcionar só cando
-	teñas instalado o sistema de composición tipográfica &latex;, e podas
-	xerar e ver un resultado PDF ou PostScript.
+	teñas instalado o sistema de composición tipográfica &latex;, e ademas
+	podas xerar e ver un resultado PDF ou PostScript.
       </para>
       <para>
 	Na xanela de iconas da sesión, podes arrastrar ata 8 gráficas sobre a
@@ -5378,7 +5446,7 @@
 	Ferramentas da xanela principal).
       </para>
       <para>
-	Tamén é posible traballar na páxina de gráficas mediante guión, ou
+	Tamén é posible traballar na páxina de gráficas mediante un guión, ou
 	utilizando a consola (no programa de Interface Gráfica de Usuario,
 	GUI). Dáselle apoio ás seguintes instrucións e opcións:
       </para>
@@ -5449,8 +5517,8 @@
       </para>
       <para>
 	Ao contrario da maioría das gráficas de Gretl, unha gráfica interactiva
-	3-D contrólase mediante Gnuplot e non co propio Gretl. O menú de edición
-	de gráficas de Gretl non está dispoñible.
+	3-D contrólase mediante Gnuplot e non co propio Gretl. O menú de
+	edición de gráficas de Gretl non está dispoñible.
       </para>
     </description>
   </command>
@@ -5463,13 +5531,13 @@
 	dentro dun paquete que deben de asignarse a certos roles especiais.
 	Ten en conta que podes asignar unha determinada función como moito
 	a un dos seguintes roles; e que unha función ten que satisfacer certos
-	criterios para cualificala como candidata para un deses roles.
+	criterios para cualificala como candidata a un deses roles.
       </para>
       <ilist>
 	<li>
 	  <para>
 	    <lit>bundle-print</lit>: Presenta o resultado baseado no
-	    contido dun feixe producido polo teu paquete. Criterios:
+	    contido dun feixe (bundle) producido polo teu paquete. Criterios:
 	    Esta función debe de ter como primeiro parámetro un
 	    punteiro-feixe (<quote>bundle</quote>). Cando se presenta
 	    un segundo parámetro, debe de ter o formato dun conmutador
@@ -5479,14 +5547,14 @@
 	<li>
 	  <para>
 	    <lit>bundle-plot</lit>: Xera unha ou máis gráficas utilizando
-	    un feixe producido polo teu paquete. Criterios: Igual que para
+	    un feixe (bundle) producido polo teu paquete. Criterios: Igual que para
 	    <lit>bundle-print</lit>.
 	  </para>
 	</li>
 	<li>
 	  <para>
 	    <lit>bundle-test</lit>: Realiza algún tipo de proba estatística
-	    utilizando un feixe producido polo teu paquete. Criterios:
+	    utilizando un feixe (bundle) producido polo teu paquete. Criterios:
 	    Igual que para <lit>bundle-print</lit>.
 	  </para>
 	</li>
@@ -5501,7 +5569,7 @@
 	  <para>
 	    <lit>gui-precheck</lit>: Función gardián que devolve 0
 	    se a funcionalidade do teu paquete é aplicable no contexto
-	    vixente, e noutro caso devolve non cero. Isto está pensado
+	    vixente, e se non devolve non cero. Isto está pensado
 	    para utilizar con paquetes que afectan a un modelo dalgún
 	    xeito, para diferenciar os tipos de modelos que non se
 	    manexan co paquete.
@@ -5520,7 +5588,7 @@
 	como <quote>menu-only</quote>. Isto indícalle a Gretl que a función
 	en cuestión está deseñada especificamente para que se invoque desde
 	o menú da Interface Gráfica de Usuario (GUI) á que está unida, e non
-	debe de presentarse aos usuarios a non ser nese caso.
+	debe de presentarse aos usuarios, a non ser nese caso.
       </para>
     </description>
   </command>
@@ -5554,12 +5622,12 @@
 	especificar unha restrición sobre a variable escollida (é
 	dicir, definindo unha submostra). Por exemplo, supón que tes
 	datos de salarios nunha variable chamada <lit>salario</lit>,
-	e tamén tes unha variable ficticia chamada <lit>xenero</lit>
+	e tamén tes unha variable ficticia chamada <lit>xénero</lit>
 	que é igual a 1 para homes e a 0 para mulleres (ou viceversa).
 	Entón, na proba da diferenza entre as dúas medias, podes
 	escoller <lit>salario</lit> en ambas caixas pero engade á
-	mesma caixa de arriba <lit>(xenero=0)</lit> e á de abaixo
-	<lit>(xenero=1)</lit>. Así, isto ofréceche unha proba da
+	mesma caixa de arriba <lit>(xénero=0)</lit> e á de abaixo
+	<lit>(xénero=1)</lit>. Así, isto ofréceche unha proba da
 	diferenza entre o ingreso medio masculino e o ingreso medio
 	feminino. Cae na conta de que cando tecleas unha restrición
 	deste xeito, entón debes de premer a tecla Intro para obter
@@ -5603,7 +5671,7 @@
       <para>
 	Baixo a lapela <quote>Proba de diferenzas</quote> podes efectuar
 	unha proba non paramétrica da diferenza entre dúas poboacións ou
-	grupos, dependendo a proba concreta da opción que selecciones.
+	grupos dependendo, a proba concreta, da opción que selecciones.
       </para>
       <ilist>
 	<li>
@@ -5617,7 +5685,7 @@
 	    a 0.5. O estatístico de proba é <math>w</math>, é dicir,
 	    o número de observacións para as que se cumpre que
 	    <math>x</math><sub>i</sub> &gt; <math>y</math><sub>i</sub>.
-	    Baixo a hipótese nula este estatístico segue unha distribución
+	    Baixo a hipótese nula, este estatístico segue unha distribución
 	    de probabilidade Binomial con parámetros (<math>n</math>, 0.5),
 	    onde <math>n</math> indica o número de
 	    observacións.
@@ -5653,7 +5721,7 @@
 	    que coincide co signo da diferenza. A continuación calcúlase a
 	    suma dos rangos con signo positivo (<math>W</math><sub>+</sub>).
 	    De igual xeito que na proba da suma de rangos, baixo a hipótese
-	    nula de que a diferenza das medianas é cero, este estatístico
+	    nula de que a diferenza de medianas é cero, este estatístico
 	    segue unha distribución de probabilidade ben definida, que
 	    converxe á Normal para mostras de tamaño razoable.
 	  </para>
@@ -5700,7 +5768,7 @@
 	Esta proba está dispoñible unicamente despois de estimar un modelo
 	con datos de panel utilizando MCO (consulta tamén <cmd>setobs</cmd>).
 	Comproba o modelo combinado simple fronte ás principais alternativas,
-	os modelos de efectos fixos e de efectos aleatorios.
+	o modelo de efectos fixos e o de efectos aleatorios.
       </para>
       <para>
 	O modelo de efectos fixos permite que a ordenada na orixe da regresión
@@ -5713,14 +5781,14 @@
 	unidades de sección cruzada no conxunto de datos supera ao número
 	de parámetros a estimar.) O estatístico de Multiplicadores de Lagrange
 	de Breusch&ndash;Pagan comproba a hipótese nula de que o estimador
-	combinado de MCO é axeitado fronte á alternativa de efecto aleatorios.
+	combinado de MCO é axeitado fronte á alternativa de efectos aleatorios.
       </para>
       <para>
 	O modelo combinado de MCO pode rexeitarse fronte a ambas as dúas
 	alternativas, a de efectos fixos e a de efectos aleatorios. En tanto que
 	a perturbación específica por unidade ou grupo non estea correlacionada
 	coas variables independentes, o estimador de efectos aleatorios será
-	máis eficiente que o estimador de efectos fixos; noutro caso, o estimador
+	máis eficiente que o estimador de efectos fixos; se non, o estimador
 	de efectos aleatorios será inconsistente polo que prefírese o estimador
 	de efectos fixos. A hipótese nula da proba de Hausman indica que a
 	perturbación específica de grupo non está así correlacionada (e por iso
@@ -5730,8 +5798,8 @@
       </para>
       <para>
 	As dúas opcións desta instrución pertencen ao modelo de efectos
-	aleatorios. Por defecto, utilízase o método de Swamy e Arora, e
-	calcúlase o estatístico de proba de Hausman utilizando o método
+	aleatorios. Por defecto, utilízase o método de Swamy e Arora, mediante
+	o cálculo do estatístico de proba de Hausman, utilizando o método
 	de regresión. As opcións permiten utilizar o estimador alternativo
 	da varianza de Nerlove, e /ou a aproximación da matriz-diferenza
 	ao estatístico de Hausman.
@@ -5762,7 +5830,7 @@
 	ou
 	<cite key="davidson-mackinnon04">Davidson e MacKinnon, Econometric Theory and Methods (Oxford, 2004)</cite>.
 	As etiquetas que se indican aquí son as utilizadas por Davidson e
-	MacKinnon. A variante <quote>HC3a</quote> é a 'navalla' (jackknife),
+	MacKinnon. A variante <quote>HC3a</quote> é a 'navalla' (jackknife) tal
 	como se describe en MacKinnon e White; e HC3 é unha aproximación
 	estreita á 'navalla'.
       </para>
@@ -5788,7 +5856,7 @@
 	Por defecto, Gretl usa a distribución <math>t</math>-Student ao calcular
 	as probabilidades asociadas (valores p) baseadas en desviacións padrón
 	robustas no contexto de estimadores de mínimos cadrados. A opción titulada
-	<quote>Utilizar a distribución Normal para valores p robustos</quote>
+	<quote>Utilizar a distribución Normal para obter valores p robustos</quote>
 	pode usarse para modificar este comportamento.
       </para>
     </description>
@@ -5974,10 +6042,10 @@
     <description>
       <para>
 	Esta instrución é aplicable cando existe heterocedasticidade en forma
-	dunha función descoñecida dos regresores que pode aproximarse por
+	dunha función descoñecida dos regresores, que pode aproximarse por
 	medio dunha relación cuadrática. Nese contexto, ofrece a posibilidade
 	de obter desviacións padrón consistentes e estimacións máis eficientes
-	dos parámetros en comparación con MCO.
+	dos parámetros, en comparación con MCO.
       </para>
       <para>
 	O procedemento implica (a) a estimación MCO do modelo de interese,
@@ -5987,22 +6055,22 @@
       </para>
       <para context="cli">
 	Na regresión auxiliar de (b), se regresa o logaritmo dos erros
-	cadrados da primeira estimación MCO sobre os regresores
+	cadrados da primeira estimación MCO, sobre os regresores
 	orixinais e os seus cadrados (por defecto), ou só sobre os
 	regresores orixinais (se indicas a opción <opt>no-squares</opt>).
 	A transformación logarítmica realízase para asegurar que
 	as varianzas estimadas son todas non negativas. Denominando
 	<math>u</math><sup>*</sup> aos valores axustados por esta
-	regresión, a serie coas ponderacións para a estimación MCO (WLS)
+	regresión, a serie coas ponderacións para a estimación MCP (WLS)
 	final fórmase entón como 1/exp(<math>u</math><sup>*</sup>).
       </para>
       <para context="gui">
 	Na regresión auxiliar de (b), se regresa o logaritmo dos erros cadrados
-	da primeira estimación MCO sobre os regresores orixinais e os seus
-	cadrados (por defecto), ou só sobre os regresores orixinais (se non
-	marcas o cadriño <quote>Incluír cadrados</quote>). A transformación
-	logarítmica realízase para asegurar que as varianzas estimadas son
-	todas non negativas. Denominando <math>u</math><sup>*</sup>
+	da primeira estimación MCO, sobre os regresores orixinais e os seus
+	cadrados (por defecto), ou só sobre os regresores orixinais (se non marcas
+	o cadriño <quote>A ecuación de varianza inclúe cadrados</quote>). A
+	transformación logarítmica realízase para asegurar que as varianzas estimadas
+	son todas non negativas. Denominando <math>u</math><sup>*</sup>
 	aos valores axustados por esta regresión, a serie coas ponderacións
 	para a estimación MCP (WLS) final fórmase entón como
 	1/exp(<math>u</math><sup>*</sup>).
@@ -6010,7 +6078,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Modelar/Outros Modelos Lineais/Corrección de Heterocedasticidade</menu-path>
+      <menu-path>/Modelar/Outros Modelos Lineais/Con Corrección de Heterocedasticidade</menu-path>
     </gui-access>
 
   </command>
@@ -6069,7 +6137,7 @@
 	do rango, despois cos 4 cuartos, etcétera. Para tamaños da mostra
 	menores que o rango de datos, o valor RS é a media entre as
 	mostras dispoñibles. O expoñente estímase así como o coeficiente
-	da pendente nunha regresión do logaritmo de RS sobre o logaritmo
+	da pendente, nunha regresión do logaritmo de RS sobre o logaritmo
 	do tamaño da mostra.
       </para>
       <para>
@@ -6153,14 +6221,14 @@
 	Ideado para utilizar nun guión de instrucións, principalmente
 	para incluír definicións de funcións. O nome do ficheiro
 	(<repl>nomeficheiro</repl>) debería de ter a extensión <lit>inp</lit>
-	(un guión de texto plano) ou <lit>gfn</lit> (un paquete de función
+	(un guión de texto plano) ou <lit>gfn</lit> (un paquete de funcións
 	de Gretl). As instrucións de <repl>nomeficheiro</repl> execútanse
 	e logo o control devólvese ao guión principal.
       </para>
       <para>
 	A opción <opt>force</opt> é específica dos ficheiros <lit>gfn</lit> e
 	o seu efecto consiste en forzar a Gretl a que volva ler o paquete de
-	función desde o ficheiro mesmo aínda que xa estea cargado na memoria.
+	funcións desde o ficheiro, mesmo aínda que xa estea cargado na memoria.
 	(Os ficheiros de texto plano <lit>inp</lit> sempre lense e procésanse
 	en resposta a esta instrución.)
       </para>
@@ -6234,20 +6302,20 @@
 	paquete con extensión correcta, que aínda non estea instalado
 	na máquina local. O efecto da instrución consiste en copiar o
 	ficheiro no lugar (<lit>gfn</lit>), ou descomprimilo no lugar
-	(<lit>zip</lit>), querendo dicir con <quote>no lugar</quote>
+	(<lit>zip</lit>), queréndose dicir con <quote>no lugar</quote>
 	onde o atopará a instrución <cmdref targ="include"/>.
       </para>
       <para>
 	Cando non indicas ningunha opción, se <repl>nomepaquete</repl> comeza
 	con <lit>http://</lit>, o efecto da instrución consiste en descargar
-	un ficheiro de paquete do servidor especificado e instalalo localmente.
+	un ficheiro de paquete do servidor especificado, e instalalo localmente.
       </para>
       <para>
 	Coa opción <opt>remove</opt> ou <opt>purge</opt>, realízase a
 	operación inversa; é dicir, quítase un paquete xa instalado.
 	Cando só indicas <opt>remove</opt>, o paquete especificado
 	bótase da memoria e elimínase do menú da Interface Gráfica de
-	Usuario (GUI) á que está anexado, de existir. Cando indicas
+	Usuario (GUI) á que está agregado, de existir. Cando indicas
 	a opción <opt>purge</opt>, entón ademais das accións que se
 	acaban de mencionar, elimínase o ficheiro de paquete. (Se o
 	paquete está instalado no seu propio subcartafol, elimínase
@@ -6414,7 +6482,7 @@
 	</option>
 	<option>
 	  <flag>--aggr</flag>
-	  <optparm>metodo</optparm>
+	  <optparm>método</optparm>
 	  <effect>Mira abaixo</effect>
 	</option>
 	<option>
@@ -6431,7 +6499,7 @@
 
     <description>
       <para>
-	Esta instrución importa unha serie co nome <repl>nomevar</repl>
+	Esta instrución incorpora unha serie co nome <repl>nomevar</repl>
 	con datos, desde a orixe <repl>nomeficheiro</repl> (que debe de ser
 	ben un ficheiro de datos co texto delimitado, ou ben un ficheiro
 	de datos <quote>propio</quote> de Gretl). Para obter máis detalles,
@@ -6441,7 +6509,7 @@
       <para>
 	Podes utilizar a opción <opt>data</opt> para especificar o
 	encabezamento dos datos do ficheiro de orixe, se difire do
-	nome polo que os datos deberan de coñecerse no Gretl.
+	nome polo que os datos deberan de coñecerse en Gretl.
       </para>
       <para>
 	Podes usar a opción <opt>filter</opt> para especificar un
@@ -6452,7 +6520,7 @@
 	Podes utilizar as opcións <opt>ikey</opt> e <opt>okey</opt> para
 	especificar unha equivalencia entre as observacións do conxunto
 	vixente de datos e as observacións da fonte de datos (por exemplo,
-	os individuos poden compararse co fogar ao que pertencen).
+	os individuos poden facerse corresponder co fogar ao que pertencen).
       </para>
       <para>
 	A opción <opt>aggr</opt> utilízase cando a equivalencia entre
@@ -6462,8 +6530,8 @@
       <para>
 	A opción <opt>tkey</opt> aplícase só cando o conxunto vixente
 	de datos ten unha estrutura de serie temporal. Podes usala para
-	especificar ben o nome dunha columna que conteña datas que van
-	ser emparelladas co conxunto de datos e/ou ben o formato no que
+	especificar, ben o nome dunha columna que conteña datas que van
+	ser emparelladas co conxunto de datos, e/ou ben o formato no que
 	as datas se representan nesa columna.
       </para>
       <para>
@@ -6484,7 +6552,7 @@
     </para>
     <para>
 	    Na esquerda deberías de ver unha listaxe das series do conxunto de datos
-	    vixente. Aquí podes escoller unha serie e utilizar os botóns coas frechas
+	    vixente. Aquí podes escoller unha serie, e utilizar os botóns coas frechas
 	    para especificala como unha ou outra das <quote>claves internas</quote>
 	    (opcionais). As claves funcionan para emparellar filas entre o conxunto
 	    vixente de datos e o ficheiro do que esteas importando datos.
@@ -6518,7 +6586,7 @@
       <li>
 	<para>
 	  Un método de agregación. Este requírese só cando o emparellamento
-	  mediante as claves selecciona más dun valor externo para cada
+	  mediante as claves selecciona máis dun valor externo para cada
 	  observación interna.
 	</para>
       </li>
@@ -6575,7 +6643,7 @@
 
       <para context="cli">
 	Para utilizar esta instrución con datos de panel, consulta a sección
-	final desta anotación.
+	final destas anotacións.
       </para>
 
       <para context="cli">
@@ -6623,7 +6691,7 @@
 	críticos coa axuda do programa.
       </para>
 
-      <subhead context="cli">Panel data</subhead>
+      <subhead context="cli">Datos de panel</subhead>
 
       <para context="cli">
 	Cando se utiliza a instrución <lit>kpss</lit> con datos de panel, para
@@ -6632,25 +6700,25 @@
 	habitual de series temporais, podes indicar unha lista de variables
 	para comprobar, con datos de panel só podes comprobar unha variable
 	por cada instrución. E a opción <opt>verbose</opt> ten un significado
-	diferente pois xera unha breve presentación da proba para cada serie
-	temporal individual (pois por defecto só se amosa o resultado global).
+	diferente, pois xera unha breve presentación da proba para cada serie
+	temporal individual (xa que, por defecto, só se amosa o resultado global).
       </para>
       <para context="cli">
 	Cando é posible, calcúlase a proba global (Hipótese nula:
-	A serie en cuestión é estacionaria para todas unidades do
+	O PE da serie en cuestión é estacionario para todas as unidades do
 	panel) utilizando para elo o método de
 	<cite key="choi01">Choi (Journal of International Money and Finance, 2001)</cite>.
-	Isto non sempre é sinxelo pois a dificultade está en que mentres
+	Isto non sempre é sinxelo pois a dificultade está en que, mentres
 	que a proba de Choi se basea nas probabilidades asociadas das
-	probas sobre as series individuais, non temos actualmente un
+	probas coas series individuais, non temos actualmente un
 	xeito de calcular as probabilidades asociadas para o estatístico
 	de proba KPSS; debemos de apoiarnos nuns poucos puntos críticos.
       </para>
       <para context="cli">
-	Se o estatístico de proba para unha determinada serie, cae entre os puntos críticos
+	Se o estatístico de proba con unha determinada serie, cae entre os puntos críticos
 	do 1 e do 10 por cento, podemos interpolar unha probabilidade asociada.
 	Pero se o valor do estatístico da proba cae por debaixo do correspondente
-	ao 10 por cento ou excede ao do 1 por cento, non se pode interpolar e como
+	ao 10 por cento ou se excede ao do 1 por cento, non se pode interpolar e como
 	moito pódese establecer un límite sobre a proba de Choi global. Se o valor
 	do estatístico de proba individual cae por debaixo do correspondente ao 10
 	por cento para unhas unidades e excede ao do 1 por cento para outras, nin
@@ -6746,7 +6814,7 @@
 	Dadas unha variable dependente <lit>y</lit> e unha lista <lit>X</lit>
 	de regresores, as seguintes instrucións son basicamente equivalentes,
 	coa excepción de que o método "quantreg" utiliza o algoritmo máis
-	rápido de Frisch&ndash;Newton e que proporciona as desviacións
+	rápido de Frisch&ndash;Newton, e que proporciona as desviacións
 	padrón analíticas en lugar das de "bootstrapping".
       </para>
       <code>
@@ -6804,7 +6872,7 @@
       <para>
 	A opción <opt>bylag</opt> ten sentido só cando <repl>listavariables</repl>
 	contén máis dunha serie e o nivel máximo de retardos é maior ca 1.
-	Por defecto, engádense os termos retardados ao conxunto de datos
+	Por defecto, engádense os termos retardados ao conxunto de datos,
 	por variable: primeiro todos os retardos da primeira serie da lista,
 	despois todos os retardos da segunda serie, etcétera. Pero cando
 	indicas <opt>bylag</opt>, a ordenación faise por retardos: primeiro
@@ -6827,7 +6895,7 @@
 	Neste diálogo podes elixir o nivel de retardos para as variables independentes
 	do modelo de series temporais e, nalgúns casos, tamén para a variable dependente.
 	(Pero ten en conta que o nivel de retardos habitual para modelos de vectores
-	como VARs e VECMs manéxase separadamente, mediante un botón con frechas
+	como VARs e VECMs manéxase por separado, mediante un botón con frechas
 	arriba/abaixo de selección, na caixa de diálogo principal do modelo.)
       </para>
       <para>
@@ -6840,12 +6908,12 @@
       <para>
 	A fila titulada <quote>Por defecto</quote> te ofrece un xeito rápido de
 	establecer unha especificación de retardos común para todas as variables
-	independentes pois os valores colocados nesa fila cópianse a todas as
+	independentes, pois os valores colocados nesa fila cópianse a todas as
 	outras (agás da variable dependente, se está presente).
       </para>
       <para>
 	A variable dependente trátase de xeito especial: o retardo mínimo
-	debe de ser cero, o que sitúa o valor actual da variable no lado
+	debe de ser cero, o que sitúa ao valor actual da variable no lado
 	esquerdo do modelo. Calquera retardo maior aparece coas variables
 	independentes no lado dereito do modelo.
       </para>
@@ -6952,7 +7020,7 @@
 	<opt>quiet</opt> para eliminar a presentación dos resultados. Os
 	nomes por defecto das series gardadas son <lit>lever</lit>,
 	<lit>influ</lit> e <lit>dffits</lit>, respectivamente. Porén, se xa
-	existen series con eses nomes, os das series gardadas recentemente
+	existen series con eses nomes, os das novas series gardadas
 	axústanse para garantir a unicidade; en calquera caso, estas serán
 	as 3 series con números ID máis grandes do conxunto de datos.
       </para>
@@ -7056,13 +7124,13 @@
       <para context="cli">
 	Podes indicar o nivel de retardo con <repl>nivel</repl> (non negativo)
 	para facer a proba (controlando así o número de retardos da variable
-	dependente a incluír nas regresións do ADF) cunha forma de dúas.
+	dependente a incluír nas regresións do ADF) con unha destas dúas formas.
 	Cando indicas un valor escalar, isto aplícase a tódolos individuos
 	do panel. A alternativa é proporcionar unha matriz que conteña un
 	nivel específico de retardos para cada individuo; esta debe de ser
 	un vector con tantos elementos como individuos haxa no rango da
 	mostra vixente. Podes especificar esa matriz co nome ou construíla
-	utilizando chaves como se explicou no último exemplo de
+	utilizando chaves, como se ilustrou no último exemplo de
 	arriba.
       </para>
 
@@ -7086,14 +7154,14 @@
       <para>
 	Os controis te permiten que especifiques o nivel do polinomio
 	da variable independente e a proporción de puntos de datos que
-	se utilizan en cada regresión local (o largo de banda). Os
+	se utilizan en cada regresión local (o largo da banda). Os
 	valores máis grandes do largo de banda producen un resultado
 	máis suave.
       </para>
       <para>
 	Se marcas o cadriño de ponderacións robustas, o procedemento
 	de regresión local reitérase dúas veces, coa modificación das
-	ponderacións en base aos erros da iteración previa de xeito que
+	ponderacións en base aos erros da iteración previa, de xeito que
 	se lle dea menos influencia aos valores atípicos.
       </para>
      </description>
@@ -7149,7 +7217,7 @@
       </para>
 
       <para context="gui">
-	Podes especificar un valor máximo diferente <math>y</math>.
+	Podes especificar un valor máximo diferente para <math>y</math>.
 	Ten en conta que o valor que indiques debe de ser maior ca
 	todos os valores observados da variable dependente.
       </para>
@@ -7174,7 +7242,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Modelar/Variable Dependente Limitada/Loxístico</menu-path>
+      <menu-path>/Modelar/Variable Dependente Limitada/Loxística</menu-path>
     </gui-access>
 
   </command>
@@ -7224,7 +7292,7 @@
 	o método de Newton&ndash;Raphson. Como o modelo é non linear,
 	as pendentes están condicionadas polos valores das variables
 	independentes. Por defecto, calcúlanse as pendentes con respecto a
-	cada unha das variables independentes (nas medias desas variables)
+	cada unha das variables independentes (nas medias desas variables),
 	e estas pendentes substitúen os valores p habituais no resultado
 	da regresión. Podes prescindir deste proceder indicando a opción
 	<opt>p-values</opt>. O estatístico khi-cadrado proba a hipótese
@@ -7257,7 +7325,7 @@
 	interprétase como unha resposta ordinal e obtéñense as estimacións cun
 	Logit Ordenado. Porén, cando indicas a opción <opt>multinomial</opt>,
 	a variable dependente interprétase como unha resposta sen ordenar e
-	xéranse as estimacións cun Logit Multinomial. (En calquera caso, se
+	xéranse as estimacións cun Logit Multinomial. (Noutro caso, se
 	a variable escollida como dependente non é de tipo discreto, amósase
 	un fallo.) No caso multinomial, o accesorio <lit>$mnlprobs</lit> está
 	dispoñible despois da estimación, para conseguir unha matriz que
@@ -7266,9 +7334,9 @@
 	posibles valores por columnas).
       </para>
       <para>
-	Se queres utilizar un Logit para a análise de proporcións, onde para
-	cada observación a variable dependente é a proporción de casos
-	que teñen unha determinada característica (máis que unha variable
+	Se queres utilizar un Logit para a análise de proporcións onde, para
+	cada observación, a variable dependente é a proporción de casos
+	que teñen unha determinada característica (en vez dunha variable
 	con 1 ou 0 para indicar se está presente ou non a característica),
 	non debes de utilizar a instrución <cmd>logit</cmd>, senón máis
 	ben construír a variable logit, como en
@@ -7300,7 +7368,7 @@
       <para>
 	Permite obter o logaritmo natural de cada unha das series de
 	<repl>listavariables</repl> e o resultado gárdase nunha nova serie co
-	prefixo <lit>l_</lit> (<quote>l</quote> e barra baixa). Por
+	prefixo <lit>l_</lit> (<quote>ele</quote> e barra baixa). Por
 	exemplo, <cmd>logs x y</cmd> xera as novas variables
 	<lit>l_x</lit> = ln(<lit>x</lit>) e <lit>l_y</lit> = ln(<lit>y</lit>).
       </para>
@@ -7365,7 +7433,7 @@
 	e exemplos. Aí explícase o efecto da opción <opt>progressive</opt>
 	(que está deseñada para utilizarse con simulacións de tipo Monte
 	Carlo). Non podes utilizar todas as instrucións de Gretl dentro dun
-	bucle; entón as instrucións dispoñibles neste contexto tamén se
+	bucle; por iso as instrucións dispoñibles neste contexto tamén se
 	expoñen aí.
       </para>
     </description>
@@ -7414,7 +7482,7 @@
 	matriz identidade.
       </para>
       <para>
-	O espazo para o que se calculan as distancias defínese polas
+	O espazo para o que se calculan as distancias está definido polas
 	variables seleccionadas. Para cada observación do rango
 	vixente da mostra, a distancia calcúlase entre a observación
 	e o centroide das variables escollidas. Esta distancia é a
@@ -7447,7 +7515,7 @@
   </command>
 
   <command name="makepkg" section="Programming" context="cli"
-    label="Facer un paquete de función">
+    label="Facer un paquete de funcións">
 
     <usage>
       <arguments>
@@ -7456,11 +7524,11 @@
       <options>
         <option>
 	  <flag>--index</flag>
-	  <effect>Escribe o ficheiro índice auxiliar</effect>
+	  <effect>Escribe o ficheiro índice, auxiliar</effect>
         </option>
         <option>
 	  <flag>--translations</flag>
-	  <effect>Escribe o ficheiro de cadeas de texto auxiliar</effect>
+	  <effect>Escribe o ficheiro de cadeas de texto, auxiliar</effect>
         </option>
       </options>
     </usage>
@@ -7485,9 +7553,9 @@
 	Escribe un ficheiro comprimido zip dun paquete (un gfn máis outros
 	elementos). En caso de acharse un ficheiro gfn co mesmo nome base
 	que <repl>nomeficheiro</repl>, Gretl comproba os ficheiros correspondentes
-	<lit>inp</lit> e <lit>spec</lit>, e se os atopa a ambos sendo polo
+	<lit>inp</lit> e <lit>spec</lit>, e se os atopa a ambos, sendo polo
 	menos un deles máis novo ca o ficheiro gfn, entón vólvese xerar
-	o gfn; noutro caso, utilízase o gfn existente. Cando non se atopa
+	o gfn; se non, utilízase o gfn existente. Cando non se atopa
 	ese ficheiro, Gretl tenta primeiro xerar o gfn.
       </para>
       <subhead>Opcións de gfn</subhead>
@@ -7495,17 +7563,17 @@
 	Os indicadores de opcións admiten a escritura de ficheiros auxiliares,
 	pensados para utilizar cos <quote>engadidos</quote> de Gretl. O
 	ficheiro índice é un curto documento XML que contén información
-	básica sobre o paquete, e que ten o seu mesmo nome como base e
-	a extensión <lit>.xml</lit>. O ficheiro de traducións contén as
-	cadeas de texto do paquete (en formato C) que poderían ser
+	básica sobre o paquete, e que ten o seu mesmo nome como base
+	ademáis da extensión <lit>.xml</lit>. O ficheiro de traducións contén
+	as cadeas de texto do paquete (en formato C) que poderían ser
 	apropiadas para a tradución; para un paquete <lit>foo</lit>
 	este ficheiro chámase <lit>foo-i18n.c</lit>. Estes ficheiros
-	non se xeran se a instrución opera en modo zip e se utiliza
+	non se xeran se a instrución opera en modo zip, e se utiliza
 	un ficheiro gfn que xa existía.
       </para>
       <para>
-	Para obter máis detalles sobre todo isto, consulta o <mnu>PkgHelp:Pkgbook</mnu>
-	(baixo o menú Axuda)..
+	Para obter máis detalles sobre todo isto, consulta a <mnu>PkgHelp:Pkgbook</mnu>
+	(baixo o menú Axuda).
       </para>
     </description>
 
@@ -7598,7 +7666,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Ferramentas/Calculadora de probas</menu-path>
+      <menu-path>/Ferramentas/Calculadora de estatísticos de proba</menu-path>
     </gui-access>
 
   </command>
@@ -7626,8 +7694,8 @@
       </para>
       <para>
 	Ademais, estes membros da lista deben de estar dispostos na orde
-	particular <emphasis>primeiro as máis recentes</emphasis>, en
-	concreto. Continuando co exemplo trimestral/mensual, a orde debe
+	particular <emphasis>primeiro os máis recentes</emphasis>, en
+	concreto. Continuando co exemplo mensual/trimestral, a orde debe
 	de ser: mes 3, mes 2, mes 1. Aínda que isto podería semellar
 	<quote>ao revés</quote> é a orde que se require para poder
 	xerar as listas de retardos, que é a característica distintiva
@@ -7796,8 +7864,8 @@
       </code>
       <para context="cli">
 	Os tipos de disposición de parámetros que se admiten amósanse
-	abaixo. No contexto das especificacións <lit>mds</lit> e <lit>mdsl</lit>
-	podes indicalos en forma dos códigos numéricos ou das cadeas de texto
+	abaixo. No contexto das especificacións <lit>mds</lit> e <lit>mdsl</lit>,
+	podes indicalos en forma dos códigos numéricos, ou das cadeas de texto
 	entre comiñas que se amosan despois dos números:
       </para>
       <para context="cli">
@@ -7845,7 +7913,7 @@
       <para context="cli">
 	O método de estimación que utiliza esta instrución depende da
 	especificación dos elementos de alta frecuencia. No caso de U-MIDAS,
-	o método é MCO (OLS); noutro caso é mínimos cadrados non lineais
+	o método é MCO (OLS); noutro caso, é mínimos cadrados non lineais
 	(MCNL ou NLS). Cando especificas as disposicións de parámetros
 	Almon exponencial normalizada ou Beta normalizada, o método MCNL
 	por defecto é unha combinación de BFGS restrinxido e MCO, pero
@@ -7855,7 +7923,7 @@
       <para context="gui">
 	O método de estimación que utiliza esta instrución depende da
 	especificación dos elementos de alta frecuencia. No caso de U-MIDAS,
-	o método é MCO (OLS); noutro caso é mínimos cadrados non lineais
+	o método é MCO (OLS); noutro caso, é mínimos cadrados non lineais
 	(MCNL ou NLS). Cando especificas as disposicións de parámetros
 	Almon exponencial normalizada ou Beta normalizada, o método MCNL
 	por defecto é unha combinación de BFGS restrinxido e MCO, agás
@@ -7902,13 +7970,13 @@
       <subhead>1. Etiqueta</subhead>
       <para>
 	Isto require unha curta cadea de texto como etiqueta, que aparecerá como
-	acceso ao paquete no menú.
+	acceso ao paquete, no menú.
       </para>
       <subhead>2. Xanela</subhead>
       <para>
 	Selecciona <quote>Xanela de modelo</quote> para un paquete de
 	funcións que fai algo cun modelo de Gretl, e deba de aparecer
-	na barra de menús dunha xanela de modelos de Gretl. Noutro caso,
+	na barra de menús dunha xanela de modelos de Gretl. Se non,
 	selecciona <quote>Xanela principal</quote>.
       </para>
       <subhead>3. Árbore do menú</subhead>
@@ -7996,7 +8064,7 @@
 	valores 0 ou 1, e queremos obter a estimación máximo verosímil da
 	probabilidade (<lit>p</lit>) de que <lit>X</lit> = 1. (Neste caso
 	sinxelo, pódese adiantar que a estimación MV de <lit>p</lit> será
-	simplemente equivalente á proporción de Xs iguais a 1 na mostra.)
+	simplemente equivalente á proporción de Xs iguais a 1, na mostra.)
       </para>
       <para>
 	Debes primeiro engadir o parámetro <lit>p</lit> ao conxunto de datos e
@@ -8044,7 +8112,7 @@
 	utilizando ben o algoritmo BFGS (Broyden, Fletcher, Goldfarb,
 	Shanno) ou ben o método de Newton. Debes de especificar a
 	función logaritmo de verosimilitude. E debes de expresar os
-	parámetros desta función e asignarlles valores iniciais antes
+	parámetros desta función, e asignarlles valores iniciais antes
 	da estimación. Opcionalmente, o usuario pode especificar as
 	derivadas da función logaritmo de verosimilitude con respecto a
 	cada un dos parámetros; se non indicas as derivadas analíticas,
@@ -8053,7 +8121,7 @@
       <para>
 	Este texto de axuda asume que se utiliza, por defecto, o maximizador
 	BFGS. Para obter máis información sobre o uso do método de Newton,
-	por favor consulta <guideref targ="chap:mle"/>.
+	por favor consulta el <guideref targ="chap:mle"/>.
       </para>
       <para>
 	Exemplo sinxelo: Supón que temos unha serie <lit>X</lit>
@@ -8061,10 +8129,10 @@
 	verosímil da probabilidade (<lit>p</lit>) de que <lit>X</lit> = 1.
 	(Neste caso sinxelo, pódese adiantar que a estimación MV
 	de <lit>p</lit> será simplemente equivalente á proporción
-	de Xs iguais a 1 na mostra.)
+	de Xs iguais a 1, na mostra.)
       </para>
       <para>
-	Débese primeiro engadir o parámetro <lit>p</lit> ao conxunto de datos e
+	Débese primeiro engadir o parámetro <lit>p</lit> ao conxunto de datos, e
 	indicar o seu valor inicial. Por exemplo,
         <lit>scalar p = 0.5</lit>.
       </para>
@@ -8089,7 +8157,7 @@
 	que identifique os parámetros libres: estes enuméranse nunha
 	liña, separados por espazos e poden ser ben escalares, ben
 	vectores, ou ben calquera combinación dos dous. Por exemplo,
-	podes mudar o de arriba en:
+	podes mudar o de arriba por:
       </para>
       <code>
 	mle loglik = X*log(p) + (1-X)*log(1-p)
@@ -8143,7 +8211,7 @@
 	lograr mediante a palabra chave adicional <lit>param_names</lit>
 	dentro do bloque de instrucións. Para un modelo con <math>k</math>
 	parámetros, o argumento que sigue a esta palabra chave debe de ser
-	ben unha cadea de texto literal contornada entre comiñas que conteña
+	ben unha cadea de texto literal contornada entre comiñas, que conteña
 	<math>k</math> nomes separados por espazos, ou ben o nome dunha
 	variable de cadea que conteña <math>k</math> deses nomes.
       </para>
@@ -8179,12 +8247,12 @@
 	conveniente presentar os resultados da regresión en forma dunha
 	táboa, na que cada columna conteña os resultados (as estimacións
 	dos coeficientes e das desviacións padrón) para un modelo dado,
-	e cada fila conteña as estimacións para unha determinada variable
-	nos diferentes modelos.
+	e na que cada fila conteña as estimacións para unha determinada
+	variable nos diferentes modelos.
       </para>
 
       <para>
-	Gretl proporciona un medio de elaborar unha táboa deste tipo
+	Gretl proporciona un medio para elaborar unha táboa deste tipo
 	(e de copiala en texto plano, &latex; ou Rich Text Format).
 	Aquí tes como facelo:
       </para>
@@ -8219,23 +8287,23 @@
 	    <quote>Táboa de modelos</quote>. Decide o modelo que queres
 	    que apareza na columna máis á esquerda da Táboa de modelos e
 	    engádeo á táboa, ben arrastrando a súa icona sobre a icona da
-	    Táboa de modelos, ou ben premendo o botón dereito do rato na icona
-	    do modelo e escollendo <quote>Engadir á táboa de modelos</quote>
+	    Táboa de modelos, ou ben premendo o botón dereito do rato sobre a icona
+	    do modelo, e escollendo <quote>Engadir á táboa de modelos</quote>
 	    do menú emerxente.
     </para>
 	</li>
 	<li>
 	  <para>
-	    Repite o paso 4 para os demais modelos que queres incluír na
+	    Repite o paso 4 para os demais modelos que queras incluír na
 	    táboa; así o segundo modelo que selecciones vai aparecer
-	    na segunda columna empezando pola esquerda, etcétera.
+	    na segunda columna, empezando pola esquerda; etcétera.
     </para>
 	</li>
 	<li>
 	  <para>
 	    Cando remates de compoñer a táboa de modelos, amósaa
 	    premendo un dobre clic sobre a súa icona. Baixo o menú
-	    Copiar da xanela que aparece, tes a posibilidade de
+	    'Copiar' da xanela que aparece, tes a posibilidade de
 	    copiar a táboa ao portapapeis en varios tipos de formato.
     </para>
 	</li>
@@ -8243,7 +8311,7 @@
 	  <para>
 	    Se a orde dos modelos na táboa non é a que querías,
 	    preme o botón dereito do rato sobre a icona da táboa de
-	    modelos e escolle <quote>Librar</quote>. Entón volve ao
+	    modelos, e escolle <quote>Librar</quote>. Entón volve ao
 	    paso 4 de arriba e inténtao de novo.
     </para>
 	</li>
@@ -8265,7 +8333,7 @@
 	do ficheiro teña o sufixo <quote><lit>.tex</lit></quote>, o
 	resultado vai estar en formato &tex;; cando o sufixo sexa
 	<quote><lit>.rtf</lit></quote>, o resultado terá formato RTF; e
-	noutro caso, vai estar en texto plano. No caso dun resultado
+	se non, vai estar en texto plano. No caso dun resultado
 	&tex;, por defecto xérase un <quote>anaco</quote> axeitado
 	para incluír nun documento; en cambio, se queres un documento
 	independente, usa a opción <opt>complete</opt>, como por exemplo
@@ -8288,7 +8356,7 @@
       <arguments>
         <argument>matrizcoef</argument>
         <argument>nomes</argument>
-	      <argument optional="true">estatadicionais</argument>
+	      <argument optional="true">estadicionais</argument>
       </arguments>
       <options>
 	<option>
@@ -8317,7 +8385,7 @@
 	arranxo xa definido de cadeas de texto.
       </para>
       <para>
-	O argumento <repl>estatadicionais</repl> (opcional) é un vector que
+	O argumento <repl>estadicionais</repl> (opcional) é un vector que
 	contén <math>p</math> estatísticos adicionais que se amosan
 	debaixo da táboa de coeficientes. Se indicas este argumento,
 	entón <repl>nomes</repl> debe de conter <math>k + p</math>
@@ -8330,7 +8398,7 @@
 	de ficheiro teña o sufixo <quote><lit>.tex</lit></quote>, o
 	resultado vai estar en formato &tex;; cando o sufixo sexa
 	<quote><lit>.rtf</lit></quote>, o resultado terá formato RTF;
-	e noutro caso, vai estar en texto plano. No caso dun resultado
+	e se non, vai estar en texto plano. No caso dun resultado
 	&tex;, por defecto xérase un <quote>anaco</quote> axeitado
 	para incluír nun documento; en cambio, se queres un documento
 	independente, usa a opción <opt>complete</opt>.
@@ -8420,18 +8488,18 @@
 	como opera <cmd>modtest</cmd> despois da estimación dun VAR.
       </para>
       <para>
-	Dependendo da opción que indiques, esta instrución efectúa unha destas:
-	a proba de Normalidade da perturbación de Doornik&ndash;Hansen; unha
-	proba de non linearidade (logaritmos ou cadrados) con multiplicadores
-	de Lagrange; a proba de heterocedasticidade de White (con ou sen
+	Dependendo da opción que indiques, esta instrución efectúa unha destas
+	accións: a proba de Normalidade da perturbación de Doornik&ndash;Hansen;
+	unha proba de Non Linearidade (logaritmos ou cadrados) con Multiplicadores
+	de Lagrange; a proba de Heterocedasticidade de White (con ou sen
 	produtos cruzados) ou a de Breusch&ndash;Pagan
 	(<cite key="breusch-pagan79">Breusch e Pagan, 1979</cite>); a proba LMF
-	de autocorrelación <cite key="kiviet86" p="true">(Kiviet, 1986)</cite>;
+	de Autocorrelación <cite key="kiviet86" p="true">(Kiviet, 1986)</cite>;
 	unha proba de ARCH (Heterocedasticidade Condicional Autorregresiva;
 	consulta tamén a instrución <cmd>arch</cmd>); unha proba da restrición
-	de factor común implícita na estimación AR(1); ou unha proba de
-	dependencia de sección cruzada en modelos con datos de panel. Coa
-	excepción das probas de Normalidade, de factor común e de dependencia
+	de Factor Común implícita na estimación AR(1); ou unha proba de
+	Dependencia de sección cruzada en modelos con datos de panel. Coa
+	excepción das probas de Normalidade, de Factor Común e de Dependencia
 	de sección cruzada, a meirande parte das opcións destas probas só
 	están dispoñibles para modelos estimados mediante MCO, pero mira máis
 	abaixo para obter máis detalles en relación con Mínimos Cadrados en 2
@@ -8454,8 +8522,8 @@
       <para>
 	A opción <opt>panel</opt> está dispoñible só cando o modelo se
 	estima con datos de panel; e neste caso, realízase unha proba de
-	heterocedasticidade por grupos (é dicir, de varianzas diferentes
-	das perturbacións entre as unidades de sección cruzada).
+	heterocedasticidade por grupos (é dicir, de varianzas das perturbacións
+	diferentes entre as unidades de sección cruzada).
       </para>
       <para>
 	A opción <opt>comfac</opt> está dispoñible só cando o modelo se
@@ -8556,7 +8624,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Modelar/Outros Modelos Lineais/MCO lineais de alta precisión</menu-path>
+      <menu-path>/Modelar/Outros Modelos Lineais/MCO Lineais de Alta Precisión</menu-path>
     </gui-access>
 
   </command>
@@ -8573,7 +8641,7 @@
       <para>
 	A función kernel <math>K</math> ven dada por
 	<math>K = exp(-x</math><sup>2</sup><math> / 2h)</math>
-	para <math>|x| &lt; T</math> e cero noutro caso.
+	para <math>|x| &lt; T</math>, e cero noutro caso.
       </para>
       <para>
 	O largo de banda, que habitualmente é un número pequeno, controla
@@ -8723,7 +8791,7 @@
       </para>
       <para>
 	En primeiro lugar, debes de engadir os parámetros alfa, beta
-	e gamma ao conxunto de datos e de darlles os seus valores iniciais.
+	e gamma ao conxunto de datos, ademais de darlles uns valores iniciais.
 	Podes escribir as liñas apropiadas na xanela de especificacións de
 	MC Non Lineais antes de definir a función.
       </para>
@@ -8763,7 +8831,7 @@
 	ou NLS) utilizando unha versión modificada do algoritmo de
 	Levenberg&ndash;Marquardt. Debes de indicar a especificación
 	dunha función e de enunciar os parámetros desta, ademais de
-	darlles os seus valores iniciais antes da estimación. Como
+	darlles uns valores iniciais antes da estimación. Como
 	opción, podes especificar as derivadas da función de regresión
 	con respecto a cada un dos parámetros. Se non proporcionas
 	as derivadas, no seu lugar debes de indicar unha lista dos
@@ -8803,7 +8871,7 @@
 	para calquera punto de inicio que se te antolle.
       </para>
       <para>
-	As auténticas instrucións MCNL ocupan as liñas da 6 ata a 10.
+	As auténticas instrucións de MCNL ocupan as liñas da 6 ata a 10.
 	Na liña 6 indícase a instrución <cmd>nls</cmd> na que se declara
 	a variable dependente, cun signo de igualdade a continuación, e
 	seguido este da especificación dunha función. A sintaxe para o
@@ -8813,8 +8881,8 @@
 	de un en un. Cada liña comeza coa palabra chave <cmd>deriv</cmd>,
 	establece o nome dun parámetro, un signo de igualdade e unha
 	expresión pola que pode calcularse a derivada. En lugar de
-	proporcionar as derivadas numéricas, como alternativa podes
-	substituír as liñas da 7 á 9 polo seguinte:
+	proporcionar as derivadas analíticas, como alternativa podes
+	substituír as liñas da 7 á 9, polo seguinte:
       </para>
       <code>
 	params alfa beta gamma
@@ -8840,7 +8908,7 @@
 	pode que desexes utilizar etiquetas máis informativas. Isto o podes
 	lograr mediante a palabra chave adicional <lit>param_names</lit>
 	dentro do bloque de instrucións. Para un modelo con <math>k</math>
-	parámetros, o argumento que sigue a esta palabra chave debe de ser
+	parámetros, o argumento que sigue a esta palabra chave debe de ser,
 	ben unha cadea de texto literal contornada entre comiñas que conteña
 	<math>k</math> nomes separados por espazos, ou ben o nome dunha
 	variable de cadea que conteña <math>k</math> deses nomes.
@@ -8893,8 +8961,8 @@
 
     <description>
       <para>
-	Realiza unha proba de normalidade para a <repl>serie</repl> indicada.
-	O tipo de proba en concreto contrólase polo indicador de opción (e
+	Realiza unha proba de Normalidade para a <repl>serie</repl> indicada.
+	O tipo concreto de proba contrólase co indicador de opción (e
 	execútase a proba de Doornik&ndash;Hansen cando non indicas ningunha
 	opción). Advertencia: As probas de Doornik&ndash;Hansen e Shapiro&ndash;Wilk
 	son máis recomendables que as outras, tendo en conta as súas mellores
@@ -8941,7 +9009,7 @@
 	<cmd>uniform()</cmd> e <cmd>normal()</cmd> xeran series artificiais
 	comezando polo principio, para reencher o conxunto de datos. Esta
 	instrución pode ser moi útil en combinación con <cmd>loop</cmd>.
-	Consulta tamén a opción <quote>semente</quote> da instrución
+	Consulta tamén a opción <quote>seed</quote> (semente) da instrución
 	<cmdref targ="set"/>.
       </para>
       <para>
@@ -9020,9 +9088,9 @@
 
       <para context="cli">
 	Calcula as estimacións de mínimos cadrados ordinarios (MCO ou OLS)
-	sendo <repl>depvar</repl> a variable dependente e <repl>indepvars</repl>
+	sendo <repl>depvar</repl> a variable dependente, e <repl>indepvars</repl>
 	unha lista de variables independentes. Podes especificar as variables
-	co nome ou co número; e utiliza o número cero para indicar o termo
+	co nome ou co número; e utilizar o número cero para indicar o termo
 	constante.
       </para>
 
@@ -9165,13 +9233,13 @@
       </para>
       <para>
 	Por defecto, rexístrase a forma <math>F</math> da proba de Wald;
-	pero podes utilizar a opción <opt>chi-square</opt> para recoller a
+	pero podes utilizar a opción <opt>chi-square</opt> para recoller
 	a forma khi-cadrado no seu lugar.
       </para>
       <para>
-	Se ben estimas como tamén representas o modelo restrinxido, a opción
+	Se tanto estimas como representas o modelo restrinxido, a opción
 	<opt>vcv</opt> ten o efecto de presentar a súa matriz de covarianzas;
-	noutro caso, esta opción ignórase.
+	se non, esta opción ignórase.
       </para>
       <para>
 	Como alternativa, cando indicas a opción <opt>auto</opt>, lévase
@@ -9182,7 +9250,7 @@
 	colas) e podes axustalo engadindo <quote><lit>=</lit></quote> e un
 	valor entre 0 e 1 (sen espazos), como no cuarto exemplo de arriba.
 	Se indicas <repl>listavariables</repl>, este proceso limítase só ás variables
-	da lista; noutro caso, todas as variables se tratan como candidatas
+	da lista; se non, todas as variables se tratan como candidatas
 	á exclusión. Cae na conta de que as opcións <opt>auto</opt> e
 	<opt>test-only</opt> non podes combinalas.
       </para>
@@ -9208,7 +9276,7 @@
 	opción <quote>No servidor de bancos de datos</quote>. Debera de
 	aparecer unha xanela, amosando unha listaxe dos bancos de datos
 	de Gretl dispoñibles na Wake Forest. (Dependendo da túa localización
-	e da velocidade da túa conexión a Internet, isto pode levar uns
+	e da velocidade da túa conexión a Internet, isto pode tardar uns
 	poucos segundos.) Xunto co nome do banco de datos e unha curta
 	descrición, aparece unha anotación <quote>Estado local</quote>:
 	esta indica se tes instalado localmente un dos bancos de datos
@@ -9221,9 +9289,9 @@
 	actualizado, non tes ningunha vantaxe accedendo a el por medio do
 	servidor. Pero para un banco de datos que non está aínda instalado
 	nin actualizado, poderías querer obter unha listaxe das súas series
-	de datos, entón preme un clic sobre <quote>Listar as series</quote>.
+	de datos; entón preme un clic sobre <quote>Listar as series</quote>.
 	Isto abre unha xanela máis, desde a que podes representar os valores
-	dunha das series que elixas de datos, debuxar eses valores ou mesmo
+	dunha das series de datos que elixas, debuxar eses valores ou mesmo
 	importalos ao espazo de traballo de Gretl. Podes completar estas
 	tarefas utilizando o menú <quote>Series</quote>, ou mediante o menú
 	emerxente que aparece cando premes o botón dereito do rato sobre
@@ -9231,7 +9299,7 @@
 	de interese (no elemento <quote>Buscar</quote> do menú).
       </para>
       <para>
-	Se queres un acceso máis rápido aos datos ou desexas acceder ao
+	Se queres un acceso máis rápido aos datos, ou desexas acceder ao
 	banco de datos fóra de liña, entón escolle a liña que amosa o banco
 	de datos que queres (na xanela inicial do banco de datos) e preme
 	o botón <quote>Instalar</quote>. Isto vai descargar o banco de
@@ -9297,12 +9365,12 @@
       <para>
 	Cando se utiliza a opción <opt>frompkg</opt>, Gretl vai procurar o
 	ficheiro especificado de datos no subcartafol asociado ao paquete
-	de función especificado por <repl>nomepaquete</repl>.
+	de funcións especificado por <repl>nomepaquete</repl>.
       </para>
       <para>
 	Se o argumento <repl>nomeficheiro</repl> toma a forma dun identificador
 	de recursos uniforme (URI) que comeza por <lit>http://</lit>, entón
-	Gretl tratará de descargar o ficheiro de datos indicado antes de abrilo.
+	Gretl tratará de descargar o ficheiro de datos indicado, antes de abrilo.
       </para>
       <para>
 	Por defecto, ao abrir un novo ficheiro de datos líbrase a sesión
@@ -9315,7 +9383,7 @@
       <para>
 	Tamén podes utilizar a instrución <lit>open</lit> para abrir un banco
 	de datos (de Gretl, RATS 4.0 ou PcGive) para lelo. Nese caso, deberá
-	de ir seguida da instrución  <cmdref targ="data"/> para extraer series
+	de ir seguida da instrución <cmdref targ="data"/> para extraer series
 	concretas do banco de datos. Cando indicas a opción <lit>www</lit>,
 	o programa vai tratar de acceder ao banco de datos do nome indicado
 	no servidor de Gretl (por exemplo, o banco de datos dos tipos de
@@ -9325,7 +9393,7 @@
 	Ao abrir un ficheiro de folla de cálculo (Gnumeric, Open Document
 	ou MS Excel), podes facilitar tres parámetros adicionais despois do
 	nome do ficheiro. Primeiro, podes escoller unha folla de cálculo
-	concreta dentro do ficheiro. Isto faise ben indicando o número
+	concreta dentro do ficheiro. Isto faise, ben indicando o número
 	de folla por medio da sintaxe (&eg;, <opt>sheet=2</opt>), ou
 	ben indicando o nome da folla (se o sabes) entre comiñas, como
 	en <opt>sheet="MacroData"</opt> pois, por defecto, vaise ler
@@ -9456,11 +9524,11 @@
       </para>
       <para>
 	O ficheiro resultante vaise escribir no cartafol (<cmdref targ="workdir"/>)
-	establecido nese momento, agás que a cadea <repl>nomeficheiro</repl> conteña
-	unha especificación completa da ruta.
+	establecido nese momento, agás que a cadea <repl>nomeficheiro</repl>
+	conteña unha especificación completa da ruta.
       </para>
       <para>
-	Na primeira instrución de exemplo indicada arriba, ábrese o
+	Na primeira instrución indicada arriba como exemplo, ábrese o
 	ficheiro <filename>regress.txt</filename> para escribilo, e na
 	segunda péchase. Isto podería ter sentido como unha secuencia
 	só se algunhas instrucións se propoñen antes de <opt>close</opt>.
@@ -9554,7 +9622,7 @@
       <para>
 	Neste caso, a variable <lit>mybuf</lit> captura o resultado da
 	instrución <lit>labels</lit>. Esta prestación pode resultar de
-	utilidade para os redactores de paquetes de función.
+	utilidade para os redactores de paquetes de funcións.
       </para>
     </description>
 
@@ -9564,14 +9632,14 @@
     <description>
       <para>
 	Podes ampliar as prestacións de Gretl mediante a utilización de
-	paquetes de función que son de dúas clases: os <quote>Engadidos</quote>
+	paquetes de funcións que son de dúas clases: os <quote>Engadidos</quote>
 	oficiais e os paquetes de contribucións. En conxunto, cobren moitos
 	estimadores e utilidades que non están dispoñibles como instrucións
 	ou funcións integradas no programa.
       </para>
       <para>
 	Os 'Engadidos' oficiais están incluídos nos instaladores de Gretl
-	para Windows e para Mac. Para Linux, se non se instalan previamente
+	para Windows e para Mac. Para Linux, se non se instalan previamente,
 	entón descárganse cando se solicite (por exemplo, se escolles o
 	elemento do menú /Modelar/Series temporais/GARCH, entón Gretl
 	vai descargar o 'Engadido' <lit>gig</lit> (GARCH in Gretl). Podes
@@ -9586,7 +9654,7 @@
 	elementos atópanse baixo o elemento /Ficheiro/Paquetes de funcións.
       </para>
       <para>
-	Moitos paquetes propoñen anexarse por si mesmos aos menús da Interface
+	Moitos paquetes propoñen agregarse por si mesmos aos menús da Interface
 	Gráfica de Usuario (GUI). Podes revisar estas anexións mediante
 	<mnu>PkgHelp:Registry</mnu> (accede mediante o botón de Preferencias
 	no navegador para paquetes instalados).
@@ -9618,7 +9686,7 @@
         </option>
         <option>
 	  <flag>--random-effects</flag>
-	  <effect>Efectos aleatorios ou modelo MCX (GLS)</effect>
+	  <effect>Modelo de efectos aleatorios ou MCX (GLS)</effect>
         </option>
         <option>
 	  <flag>--nerlove</flag>
@@ -9677,8 +9745,8 @@
 	neste caso, a opción <opt>matrix-diff</opt> forza o uso do método
 	da matriz-diferenza (en contraposición ao método de regresión)
 	para levar adiante a proba de Hausman sobre a consistencia do
-	estimador de efectos aleatorios. Tamén específica do estimador
-	de efectos aleatorios é a opción <opt>nerlove</opt> , que escolle
+	estimador de efectos aleatorios. Tamén é específica do estimador
+	de efectos aleatorios, a opción <opt>nerlove</opt> que escolle
 	o método de <cite key="nerlove71">Nerlove (1971)</cite> en
 	contraposición ao de Swamy e Arora.
       </para>
@@ -9688,7 +9756,7 @@
 	ponderacións baseadas na varianza residual para as unidades
 	respectivas de sección cruzada da mostra. Unicamente neste caso,
 	podes engadir a opción <opt>iterate</opt> para xerar estimacións
-	iterativas e se a iteración converxe, as estimacións resultantes
+	iterativas e, se a iteración converxe, as estimacións resultantes
 	son Máximo Verosímiles.
       </para>
       <para context="cli">
@@ -9698,7 +9766,7 @@
       </para>
       <para context="cli">
 	O procedemento por defecto para calcular desviacións padrón robustas
-	en modelos con datos de panel, é o estimador HAC de Arellano HAC, pero
+	en modelos con datos de panel, é o estimador HAC de Arellano, pero
 	podes escoller as <quote>Desviacións Padrón Corrixidas de Panel</quote>
 	de Beck&ndash;Katz mediante a instrución <lit>set pcse on</lit>. Cando
 	especificas a opción robusta, execútase a proba conxunta <math>F</math>
@@ -9714,17 +9782,17 @@
 	tamén é unha opción adicional, pois no caso dun panel non equilibrado
 	fai unha chamada a unha modificación do método de Swamy-Arora ideada
 	por <cite key="baltagi-chang94">Baltagi and Chang (1994)</cite>.
-	Noutro caso, simplemente é equivalente ao método normal de
+	Se non, simplemente é equivalente ao método normal de
 	Swamy-Arora.
       </para>
       <para context="cli">
 	A opción <opt>unbalanced</opt> está dispoñible só para modelos
-	con efectos aleatorios e podes usala para elixir o método ANOVA
+	con efectos aleatorios, e podes usala para elixir o método ANOVA
 	que empregar cun panel desequilibrado. Por defecto, Gretl emprega
 	o método de Swamy&ndash;Arora igual que se fai para os paneis
 	equilibrados, agás que utiliza a media armónica das longuras das
 	series de tempo individuais en vez da <math>T</math> habitual.
-	Baixo esta opción podes especificar ben <lit>bc</lit> para usar o
+	Baixo esta opción podes especificar, ben <lit>bc</lit> para usar o
 	método de <cite key="baltagi-chang94">Baltagi e Chang (1994)</cite>,
 	ou ben usar <lit>stata</lit> para emular a opción <lit>sa</lit> da
 	instrución <lit>xtreg</lit> de Stata.
@@ -9770,7 +9838,7 @@
       </para>
       <para>
 	<emphasis>Serie temporais amontoadas</emphasis>: Supón que <repl>N</repl>
-	é o total de unidades de sección cruzada do conxunto de datos e que
+	é o total de unidades de sección cruzada do conxunto de datos, e que
 	<repl>T</repl> = o número observacións das series temporais por unidade.
 	Escollendo esta opción estaslle indicando a Gretl que o conxunto de datos
 	componse nese momento de <repl>N</repl> bloques consecutivos de
@@ -9813,11 +9881,11 @@
       </para>
       <para>
 	Cando seleccionas a opción de iteración, o procedemento repítese. En
-	cada volta, os erros vólvense calcular utilizando as estimacións MCP
-	actuais dos parámetros, con eles xérase un novo conxunto de estimacións
+	cada ciclo, os erros vólvense calcular utilizando as estimacións MCP
+	actuais dos parámetros; con eles xérase un novo conxunto de estimacións
 	das varianzas das perturbacións e, a parir delas, un novo conxunto de
 	ponderacións. As iteracións rematan cando (a) a máxima diferenza nas
-	estimacións dos parámetros dunha volta á seguinte, cae por debaixo de
+	estimacións dos parámetros dun ciclo ao seguinte, cae por debaixo de
 	0.0001, ou (b) o número de iteracións chega a 20. Se a iteración converxe,
 	as estimacións resultantes son Máximo Verosímiles.
       </para>
@@ -9864,7 +9932,7 @@
       </para>
       <para>
 	Na xanela que presenta os resultados, tes a posibilidade de gardar
-	as compoñentes principais como series no conxunto de datos.
+	as Compoñentes Principais como series, no conxunto de datos.
       </para>
     </description>
 
@@ -9947,9 +10015,9 @@
 	indícase o periodograma da mostra, pero utilízase opcionalmente
 	unha xanela de retardo de Bartlett ao estimar o espectro, (consulta
 	por exemplo, o libro de Greene <book>Econometric Analysis</book>
-	para ver unha discusión sobre isto). A longura por defecto da xanela
-	de Bartlett é dúas veces a raíz cadrada do tamaño da mostra pero se
-	pode establecer isto de xeito manual utilizando o parámetro
+	para ver unha discusión sobre isto). A largura por defecto da xanela
+	de Bartlett é de dúas veces a raíz cadrada do tamaño da mostra, pero
+	podes establecer isto de xeito manual utilizando o parámetro
 	<repl>anchobanda</repl>, ata un máximo da metade do tamaño da mostra.
       </para>
       <para>
@@ -10067,8 +10135,8 @@
       </para>
       <para>
 	A opción de proporcionar o nome dunha soa serie restrínxese aos
-	datos de series temporais, en cuxo caso asúmese que se quere
-	unha gráfica de series temporais; noutro caso, amósase un fallo.
+	datos de series temporais, en cuxo caso asúmese que queres
+	unha gráfica de series temporais; se non, amósase un fallo.
       </para>
       <para>
 	A liña de comezo pódese preceder da expresión
@@ -10187,9 +10255,9 @@
 	unha fracción central de 0.4. Isto significa que o 40 por cento
 	central dos datos teñen unha ponderación de 1.0. Se seleccionas
 	a forma <quote>steps</quote>, o primeiro e o último 30 por cento
-	das observacións teñen unha ponderación de 3.0; noutro caso, para
-	o primeiro 30 por cento de observacións as ponderacións declinan
-	gradualmente desde 3.0 ata 1.0, e para o último 30 por cento as
+	das observacións teñen unha ponderación de 3.0; se non, para
+	o primeiro 30 por cento de observacións, as ponderacións declinan
+	gradualmente desde 3.0 ata 1.0 e, para o último 30 por cento, as
 	ponderacións aumentan desde 1.0 ata 3.0.
       </para>
     </description>
@@ -10311,6 +10379,10 @@
 	  <flag>--midas</flag>
 	  <effect>Mira abaixo</effect>
 	</option>
+	<option>
+	  <flag>--tree</flag>
+	  <effect>Específico para feixes (bundles); mira abaixo</effect>
+	</option>
       </options>
       <examples>
 	<example>print x1 x2 --byobs</example>
@@ -10347,14 +10419,14 @@
       </para>
       <para>
 	Cando non indicas ningún argumento (a segunda variante amosada arriba)
-	entón o efecto é similar ao primeiro caso excepto que se van presentar
+	entón o efecto é similar ao primeiro caso, agás que se van presentar
 	<emphasis>todas</emphasis> as series do conxunto vixente de datos.
 	As opcións que se admiten son como se describiron máis arriba.
       </para>
       <para>
 	A terceira variante (co argumento <repl>nomesobxectos</repl>;
-	mira o segundo exemplo) agarda unha lista de nomes separados
-	por espazos, de obxectos fundamentais de Gretl que non sexan
+	mira o segundo exemplo) agarda unha lista de nomes, separados
+	por espazos, de obxectos básicos de Gretl que non sexan
 	series (escalares, matrices, cadeas de texto, feixes, arranxos);
 	e amósase o valor destes obxectos. Neste caso, non se admiten
 	indicadores de opción.
@@ -10373,6 +10445,13 @@
 	<cmdref targ="MIDAS_list"/>. Cando indicas unha desas listas como
 	argumento e agregas esta opción, a serie preséntase por observación
 	da súa frecuencia <quote>orixinal</quote>.
+      </para>
+      <para>
+	A opción <opt>tree</opt> é específica para presentar un feixe
+	(bundle) de Gretl. O efecto diso é que, se o feixe especificado
+	contén outros feixes ou arranxos deles, se presentan os seus
+	contidos. Se non, só se presentan os elementos do nivel superior
+	do feixe.
       </para>
     </description>
 
@@ -10398,7 +10477,7 @@
 	Presenta valores escalares, series, matrices ou cadeas de
 	texto baixo o control dunha cadea de texto para dar formato
 	(ofrecendo unha parte da función <lit>printf</lit> da linguaxe
-	de programación C). Os formatos numéricos recoñecido son
+	de programación C). Os formatos numéricos recoñecidos son
 	<lit>%e</lit>, <lit>%E</lit>, <lit>%f</lit>, <lit>%g</lit>,
 	<lit>%G</lit> e <lit>%d</lit>, en cada caso cos diversos
 	reguladores dispoñibles en C. Exemplos: o formato <lit>%.10g</lit>
@@ -10413,10 +10492,10 @@
 	A propia cadea de formato debe de estar contornada entre comiñas,
 	e os valores que se van presentar deben de ir despois desa cadea
 	de formato, separados por comas. Estes valores deben de ter a forma
-	de ou ben (a) os nomes das variables, ben (b) expresións que xeran
+	de, ou ben (a) os nomes das variables, ou ben (b) unhas expresións que xeran
 	algunha clase de resultado que é presentable, ou ben (c) as funcións
 	especiais <lit>varname()</lit> ou <lit>date()</lit>. O seguinte
-	exemplo presenta os valores de dúas variables máis o dunha expresión
+	exemplo presenta os valores de dúas variables, máis o dunha expresión
 	que se calcula:
       </para>
       <code>
@@ -10427,7 +10506,7 @@
           b, se_b, b/se_b
       </code>
       <para>
-	As seguintes liñas ilustran o uso das funcións varname e date,
+	As seguintes liñas ilustran o uso das funcións 'varname' e 'date',
 	que presentan respectivamente o nome dunha variable (indicado
 	polo seu número ID) e unha cadea de texto cunha data (dada por
 	un número natural positivo que indica unha observación).
@@ -10458,9 +10537,9 @@
 	argumentos correspondentes por orde. Por exemplo:
       </para>
       <code>
-	scalar width = 12
+	scalar largo = 12
 	scalar precision = 6
-	printf "x = %*.*f\n", width, precision, x
+	printf "x = %*.*f\n", largo, precision, x
       </code>
     </description>
 
@@ -10524,7 +10603,7 @@
 	as pendentes están condicionadas polos valores das variables
 	independentes. Por defecto, calcúlanse as pendentes con respecto a
 	cada unha das variables independentes (nas medias desas variables)
-	e estas pendentes substitúen os valores p habituais no resultado
+	e estas pendentes substitúen aos valores p habituais no resultado
 	da regresión. Podes prescindir deste proceder indicando a opción
 	<opt>p-values</opt>. O estatístico khi-cadrado proba a hipótese
 	nula de que todos os coeficientes son cero, agás o da constante.
@@ -10567,7 +10646,7 @@
 	de funcións de variables Normais. Podes escoller o número de puntos
 	de cuadratura utilizados mediante a opción <opt>quadpoints</opt>
 	(por defecto é de 32). Utilizando máis puntos mellórase a precisión
-	dos resultados, pero co custo de máis tempo de cálculo; así con
+	dos resultados, pero co custo de máis tempo de cálculo; así, con
 	moitos puntos de cuadratura, a estimación cun conxunto de datos
 	moi grande pode consumir tempo de máis.
       </para>
@@ -10642,12 +10721,12 @@
 	para a <math>t</math> de Student, <lit>X</lit> para a Khi-cadrado,
 	<lit>F</lit> para a <math>F</math>, <lit>G</lit> para a Gamma,
 	<lit>B</lit> para a Binomial, <lit>P</lit> para a Poisson,
-	<lit>exp</lit> para Exponencial, ou <lit>W</lit> para a Weibull).
+	<lit>exp</lit> para a Exponencial, ou <lit>W</lit> para a Weibull).
       </para>
       <para>
 	Dependendo do tipo de distribución, debes de indicar a seguinte
 	información antes do valor <repl>xvalor</repl>: para as distribucións
-	<math>t</math>e khi-cadrado, os graos de liberdade; para a
+	<math>t</math> e khi-cadrado, os graos de liberdade; para a
 	<math>F</math>, os graos de liberdade de numerador e denominador;
 	para a Gamma, os parámetros de forma e de escala; para a distribución
 	Binomial, a probabilidade de <quote>éxito</quote> e o número de
@@ -10674,7 +10753,7 @@
 
   </command>
 
-  <command name="qlrtest" section="Tests" label="Proba de razón de verosimilitudes de Quandt">
+  <command name="qlrtest" section="Tests" label="Proba de Razón de Verosimilitudes de Quandt">
 
     <usage>
       <options>
@@ -10698,14 +10777,14 @@
     <description>
       <para>
 	Para un modelo estimado con datos de series temporais mediante
-	MCO, realiza a proba da razón de verosimilitude de Quandt (QLR)
+	MCO, realiza a proba da Razón de Verosimilitudes de Quandt (QLR)
 	para un cambio estrutural nun punto descoñecido no tempo, cun 15
 	por cento de recorte ao comezo e ao final do período da mostra.
       </para>
       <para>
 	Para cada punto potencial de cambio dentro do 70 por cento
 	central das observacións, realízase unha proba de Chow. Consulta
-	<cmdref targ="chow"/> para obter máis detalles; pois de igual
+	<cmdref targ="chow"/> para obter máis detalles; pois, de igual
 	xeito que coa proba común de Chow, esta é unha proba robusta
 	de Wald cando o modelo orixinal se estima coa opción
 	<opt>robust</opt>, e unha proba F noutro caso. Entón o estatístico
@@ -10731,7 +10810,7 @@
       </para>
       <para>
 	Cando executas de xeito interactivo (unicamente) esta instrución,
-	amósase por defecto unha gráfica do estatístico de proba de Chow
+	amósase por defecto unha gráfica do estatístico de proba de Chow,
 	pero podes axustar isto mediante a opción <opt>plot</opt>. Os
 	parámetros que se admiten nesta opción son <lit>none</lit> (para
 	eliminar a gráfica), <lit>display</lit> (para amosar unha gráfica mesmo
@@ -10742,7 +10821,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Xanela de modelo: Probas/Proba QLR</menu-path>
+      <menu-path>Xanela de modelo: Probas/Proba de RV de Quandt</menu-path>
     </gui-access>
 
   </command>
@@ -10774,7 +10853,7 @@
     <description>
       <para context="gui">
 	Cunha única serie seleccionada, amosa unha gráfica dos cuantís
-	empíricos desa serie dada fronte aos cuantís da distribución Normal.
+	empíricos desa serie dada, fronte aos cuantís da distribución Normal.
 	A serie debe de incluír cando menos 20 observacións válidas no rango
 	vixente da mostra. Por defecto, os cuantís empíricos debúxanse fronte
 	aos cuantís dunha distribución Normal que ten as mesmas media e
@@ -10832,7 +10911,7 @@
         </option>
         <option>
 	  <flag>--intervals</flag>
-	  <optparm optional="true">level</optparm>
+	  <optparm optional="true">nivelconf</optparm>
 	  <effect>Calcula os intervalos de confianza</effect>
         </option>
         <option>
@@ -10894,8 +10973,8 @@
     <description context="cli">
       <para>
 	Regresión de cuantís. O primeiro argumento (<repl>tau</repl>) é o cuantil
-	condicionado para o que se quere a estimación. Podes indicalo ben cun
-	valor numérico ou ben co nome dunha variable escalar definida previamente;
+	condicionado para o que se quere a estimación. Podes indicalo, ben cun
+	valor numérico, ou ben co nome dunha variable escalar definida previamente;
 	e o valor debe de estar no rango de 0.01 a 0.99. (Como alternativa, podes
 	indicar un vector de valores para <repl>tau</repl>; mira abaixo para obter
 	máis detalles.) O segundo e subseguintes argumentos compoñen unha lista
@@ -10908,7 +10987,7 @@
 	<cite key="koenker-bassett78">Koenker e Bassett (1978)</cite>,
 	pero cando indicas a opción <opt>robust</opt>, calcúlanse
 	as desviacións padrón que son robustas con respecto á
-	heterocedasticidade utilizando o método de
+	heterocedasticidade, utilizando o método de
 	<cite key="koenker-zhao94">Koenker e Zhao (1994)</cite>.
       </para>
       <para>
@@ -10929,11 +11008,11 @@
 	decimal) á opción de intervalos, como en <opt>intervals=0.95</opt>.
       </para>
       <para>
-	Vector <repl>tau</repl> de valores: en vez de proporcionar un escalar,
+	Vector <repl>tau</repl> de valores: en troques de proporcionar un escalar,
 	podes indicar o nome dunha matriz definida previamente. Neste caso, as
-	estimacións calcúlanse para todos os valores <repl>tau</repl> indicados
+	estimacións calcúlanse para todos os valores <repl>tau</repl> indicados,
 	e os resultados preséntanse nun formato especial, amosando a secuencia
-	das estimacións de cuantís para cada regresor de un en un.
+	das estimacións de cuantís para cada regresor, de un en un.
       </para>
     </description>
 
@@ -10971,7 +11050,7 @@
 
     <description>
       <para>
-	Cambia o nome de <repl>serie</repl> (identificado polo seu
+	Cambia o nome de <repl>serie</repl> (identificada polo seu
 	nome ou seu número ID) a <repl>novonome</repl>. O novo nome
 	debe de ter 31 caracteres como máximo, comezar cunha letra
 	e estar formado só por letras, díxitos e o carácter de barra
@@ -11078,7 +11157,7 @@
 
     <description>
       <para>
-	Debe de seguir a estimación dun modelo mediante MCO. Leva a
+	Debe de ir despois da estimación dun modelo mediante MCO. Leva a
 	cabo a proba RESET de Ramsey sobre a especificación (non linear)
 	dun modelo, engadíndolle á regresión os cadrados e/ou os cubos
 	dos valores axustados, e calculando o estatístico <math>F</math>
@@ -11148,7 +11227,7 @@
       <para>
 	No caso dun sistema de ecuacións (definido mediante a instrución
 	<cmdref targ="system"/>), podes poñer o nome do sistema de
-	ecuacións definido previamente despois do <quote>restrict</quote>
+	ecuacións definido previamente, despois do <quote>restrict</quote>
 	inicial. Cando omites iso e o último modelo foi un sistema, entón
 	as restricións aplícanse a ese derradeiro modelo. Por defecto, as
 	restricións avalíanse cando o sistema acaba de estimarse, usando
@@ -11163,7 +11242,7 @@
 	queiras probar. O máis simple é como se indica deseguido: cada restrición
 	exprésase como unha ecuación, cunha combinación linear de parámetros á
 	esquerda do signo de igualdade e un valor escalar á dereita (ben
-	unha constante numérica ou ben o nome dunha variable escalar).
+	unha constante numérica, ou ben o nome dunha variable escalar).
       </para>
       <para>
 	No caso dunha única ecuación, podes referirte aos seus parámetros co
@@ -11174,7 +11253,7 @@
 	dun sistema, a referencia aos parámetros faise utilizando a letra
 	<lit>b</lit> xunto con dous números colocados entre corchetes.
 	O primeiro número representa a posición da ecuación dentro do
-	sistema e o segundo número indica a posición do regresor dentro
+	sistema, e o segundo número indica a posición do regresor dentro
 	da lista deles. Por exemplo, <lit>b[2,1]</lit> denota o primeiro
 	parámetro da segunda ecuación, mentres que <lit>b[3,2]</lit>
 	denota o segundo parámetro da terceira ecuación. Podes antepoñer
@@ -11210,8 +11289,8 @@
 	cuestión. Se estimaches o modelo orixinal con MCO, entón preséntanse as
 	estimacións dos coeficientes restrinxidos; para eliminar isto, engade a
 	opción <opt>quiet</opt> á instrución <lit>restrict</lit> inicial. Como
-	alternativa á proba de Wald, para modelos estimados mediante MCO ou MCP
-	unicamente, podes indicar a opción <opt>bootstrap</opt> para realizar
+	alternativa á proba de Wald, para modelos estimados unicamente mediante
+	MCO ou MCP, podes indicar a opción <opt>bootstrap</opt> para realizar
 	a proba da restrición con remostraxe automática (bootstrap).
       </para>
       <para>
@@ -11239,12 +11318,12 @@
       <para>
 	En segundo lugar, se queres probar unha restrición non linear (o que
 	actualmente só está dispoñible para modelos dunha única ecuación),
-	debes de indicar a restrición como o nome dunha función precedida por
+	debes de indicar a restrición co nome dunha función, precedida por
 	<quote><lit>rfunc = </lit></quote>, como en
       </para>
       <code>
 	restrict
-	  rfunc = myfunction
+	  rfunc = nosafuncion
 	end restrict
       </code>
       <para>
@@ -11253,7 +11332,7 @@
 	de devolver un vector que é cero baixo a hipótese nula, e non nulo
 	noutro caso. A dimensión do vector é igual ao número de restricións.
 	Esta función utilízase como unha <quote>chamada de volta</quote> da
-	rutina numérica para o Jacobiano de Gretl, que calcula o estatístico
+	rutina numérica para o Jacobiano, de Gretl, que calcula o estatístico
 	de proba de Wald mediante o método delta.
       </para>
       <para>
@@ -11276,7 +11355,7 @@
 	Cando se proban restricións sobre un modelo dunha única ecuación que foi
 	estimado mediante MCO ou sobre un Modelo de Vectores de Corrección do
 	Erro (VECM), podes utilizar a opción <opt>full</opt> para dispoñer que
-	as estimacións restrinxidas sexan o <quote>último modelo</quote> coa
+	as estimacións restrinxidas sexan o <quote>último modelo</quote>, coa
 	intención de facer probas máis adiante ou de usar accesorios como
 	<lit>$coeff</lit> e <lit>$vcv</lit>. Cae na conta de que se aplican algúns
 	detalles especiais no caso de que probes restricións sobre un VECM.
@@ -11329,7 +11408,7 @@
 	combinación linear de parámetros á esquerda do signo de igualdade e un
 	valor numérico á dereita. A referencia aos parámetros faise utilizando a
 	letra <lit>b</lit> xunto con dous números colocados entre corchetes. O
-	primeiro número representa a posición da ecuación dentro do sistema e
+	primeiro número representa a posición da ecuación dentro do sistema, e
 	o segundo número indica a posición do regresor dentro da lista deles,
 	comezando por 1 en ambos casos. Por exemplo, <lit>b[2,1]</lit> denota
 	o primeiro parámetro da segunda ecuación, mentres que <lit>b[3,2]</lit>
@@ -11372,7 +11451,7 @@
 	o formato <lit>b[</lit><repl>i</repl><lit>]</lit>, onde <repl>i</repl>
 	representa a posición no vector de cointegración, comezando en 1. Por
 	exemplo, <lit>b[2]</lit> denota o segundo elemento de beta. Pero se o
-	rango é maior ca 1, se utiliza <lit>b</lit> xunto con dous números
+	rango é maior ca 1, utiliza <lit>b</lit> xunto con dous números
 	colocados entre corchetes. Por exemplo, <lit>b[2,1]</lit> denota o
 	primeiro elemento do segundo vector de cointegración.
       </para>
@@ -11430,12 +11509,12 @@
 	A primeira submostra está composta por
 	<math>y</math>(1),...,<math>y</math>(k), a segunda por
 	<math>y</math>(k+1), ..., <math>y</math>(2k), etcétera.
-	Para cada submostra, calcúlase a media da mostra e o rango
+	Para cada submostra, calcúlase a media da serie na mostra e o rango
 	(= máximo menos mínimo), e constrúese unha gráfica coas medias
 	no eixe horizontal e os rangos no vertical. Así cada submostra
-	se representa mediante un punto neste plano. Se a varianza das
-	series é constante, agardaríase que o rango da submostra sexa
-	independente da media da submostra; por iso se observamos que
+	se representa mediante un punto neste plano. Se a varianza da
+	serie é constante, agardaríase que o rango da submostra sexa
+	independente da media da submostra. Por iso, se observamos que
 	os puntos se aproximan a unha liña con pendente positiva, isto
 	suxire que a varianza das series aumenta a medida que o fai a
 	media; e se os puntos se aproximan a unha liña con pendente
@@ -11462,7 +11541,7 @@
       <para context="cli">
 	Cando indicas a opción <opt>quiet</opt>, non se amosa a gráfica nin se
 	presenta o resultado; só se indican o estatístico <math>t</math> e a súa
-	probabilidade asociada (valor p). Noutro caso, podes controlar o formato
+	probabilidade asociada (valor p). Por outra banda, podes controlar o formato
 	da gráfica mediante a opción <opt>output</opt>; e isto funciona como se
 	describe en conexión coa instrución <cmdref targ="gnuplot"/>.
       </para>
@@ -11542,7 +11621,7 @@
       <para>
 	Cando indicas a opción <opt>equal</opt>, a hipótese nula tamén
 	incorpora o suposto de que os valores positivos e negativos son
-	igual de probables; noutro caso, o estatístico de proba resulta
+	igual de probables; se non, o estatístico de proba resulta
 	invariante con respecto á <quote>neutralidade</quote> do proceso
 	que xerou a secuencia de valores, e a proba céntrase unicamente
 	na independencia.
@@ -11568,17 +11647,17 @@
 	é necesario que indiques unha expresión booleana (lóxica), do mesmo
 	tipo que usarías para definir unha variable ficticia. Por exemplo, a
 	expresión <quote>sqft > 1400</quote> seleccionará só os casos nos que
-	a variable sqft ten un valor maior ca 1400. Podes encadear as condicións
+	a variable 'sqft' ten un valor maior ca 1400. Podes encadear as condicións
 	utilizando os operadores lóxicos <quote>&amp;&amp;</quote> (AND)
 	e <quote>||</quote> (OR), e podes aplicar a negación utilizando
 	<quote>!</quote> (NOT). Se o conxunto de datos xa contén variables
 	ficticias, tamén tes a posibilidade de escoller unha delas para
 	definir a mostra (as observacións que teñan o valor 1 na variable
-	ficticia escollida vanse incluír, e as outras vanse excluír).
+	ficticia escollida, vanse incluír, e as outras vanse excluír).
       </para>
       <para>
 	O elemento do menú <quote>Mostra/Prescindir das observacións con valores ausentes</quote>
-	volve definir a mostra para excluír todas as observacións para as que os valores
+	volve definir a mostra, para excluír todas as observacións para as que os valores
 	dunha ou máis variables están ausentes (deixando só os casos completos).
       </para>
       <para>
@@ -11598,8 +11677,8 @@
 	mostra en base a unha variable ficticia, a unha expresión booleana ou ao
 	criterio de valores ausentes. Calquera información <quote>estrutural</quote>
 	no ficheiro cabeceira dos datos pérdese (en relación á temporalidade das series
-	ou á natureza de panel dos datos). Pero podes volver forzar a estrutura co elemento
-	<quote>Estrutura do conxunto de datos</quote> do menú de Datos.
+	ou á natureza de panel dos datos). Pero podes volver forzar a estrutura co
+	elemento <quote>Estrutura do conxunto de datos</quote> do menú de Datos.
       </para>
       <para>
 	Consulta o <guideref targ="chap:sampling"/> para obter outros detalles.
@@ -11632,7 +11711,7 @@
       <para>
 	Se aquí escolles a opción 'Si', se te ofrece unha caixa de diálogo para
 	abrir ficheiros, co fin de que selecciones un de texto plano que conteña
-	as etiquetas descritivas das series do conxunto vixente de datos. O
+	as etiquetas descritivas para as series do conxunto vixente de datos. O
 	ficheiro deberá de conter unha etiqueta por liña, e unha liña en branco
 	significará que non hai etiqueta. Gretl tratará de ler tantas etiquetas
 	como series haxa no conxunto de datos, excluíndo a constante.
@@ -11653,7 +11732,7 @@
       </para>
       <para>
 	Se non che importa que se te avise para gardar un rexistro das instrucións
-	ao saír, non poñas a marca na caixa no diálogo de gardar instrucións.
+	ao saír, non poñas a marca na caixa do diálogo para gardar instrucións.
       </para>
     </description>
   </command>
@@ -11664,7 +11743,7 @@
       <para>
 	Se aquí escolles 'Si', Gretl escribe un ficheiro que contén unha
 	<quote>foto instantánea</quote> da sesión vixente, incluíndo unha copia
-	do conxunto de datos co que se traballa xunto con calquera modelo, gráfica
+	do conxunto de datos co que se traballa, xunto con calquera modelo, gráfica
 	ou outro obxecto que gardaras <quote>como icona</quote>. Podes volver abrir este
 	ficheiro máis tarde para recrear o estado de Gretl tal como era no momento no que
 	saíches da sesión (consulta o menú <quote>Ficheiro/Ficheiros de sesión</quote>).
@@ -11674,14 +11753,14 @@
 	instrucións (o que se recomenda para un traballo econométrico
 	<quote>serio</quote>), probablemente non necesites gardar a
 	sesión, pero debes de asegurarte de gardar calquera cambio no
-	teu guión que queiras manter. Tamén podes querer gardar calquera
+	teu guión, que queiras manter. Tamén podes querer gardar calquera
 	cambio no teu conxunto de datos, agás que sexa dun tipo que podas
 	repetir doadamente executando un guión.
       </para>
       <para>
 	Se traballas con guións e non che importa que se te avise para
-	gardar a túa sesión ao saír, non poñas a marca na caixa no
-	diálogo de gardar sesión.
+	gardar a túa sesión ao saír, non poñas a marca na caixa do
+	diálogo para gardar sesión.
       </para>
     </description>
   </command>
@@ -11702,7 +11781,7 @@
 	</option>
         <option>
 	  <flag>--matrix</flag>
-	  <optparm>nomematr</optparm>
+	  <optparm>nomematriz</optparm>
 	  <effect>Representa as columnas da matriz indicada</effect>
         </option>
         <option>
@@ -11724,7 +11803,7 @@
 	a todas as variables de <repl>xvars</repl>, ou ben de todas as
 	variables de <repl>yvars</repl> fronte a <repl>xvar</repl>. No
 	primeiro exemplo de arriba, se coloca a variable 1 no eixe
-	<math>y</math> e se debuxan 4 gráficas: a primeira que ten a
+	<math>y</math> e se debuxan 4 gráficas: a primeira ten a
 	variable 2 no eixe <math>x</math>, a segunda coa variable 3 no
 	eixe <math>x</math>, etcétera. O segundo exemplo representa
 	cada unha das variables da 1 á 6, fronte á variable 7 no eixe
@@ -11744,13 +11823,13 @@
       <para context="cli">
 	Se especificas unha matriz xa definida como orixe dos datos, debes
 	de expresar as listas <repl>x</repl> e <repl>y</repl> con números
-	naturais positivos que indiquen a columna; ou en caso contrario, se
+	naturais positivos que indiquen a columna; ou, en caso contrario, se
 	non indicas eses números, represéntanse todas as columnas fronte
 	ao tempo ou a unha variable índice.
       </para>
       <para context="gui">
 	Xera gráficas de dúas variables, da <quote>Variable do eixe Y</quote>
-	escollida fronte a cada unha das <quote>Variables do eixe X</quote>
+	escollida, fronte a cada unha das <quote>Variables do eixe X</quote>
 	escollidas, unha por unha. (Ou podes escoller varias variables para
 	o eixe Y e unha para o eixe X.) Repasar un conxunto desas gráficas
 	pode ser un paso conveniente na análise exploratoria de datos. O
@@ -11783,7 +11862,7 @@
       <para>
 	<emphasis>Tabulador e Intro espelidos</emphasis>: Se marcas
 	esta opción, entón cando premes a tecla <lit>Tabulador</lit> ao
-	comezo dunha liña nun guión de Hansl, en lugar de introducir tan
+	comezo dunha liña nun guión de Hansl, en troques de introducir tan
 	só un salto de tabulación, o programa vai tratar de axustar o
 	nivel de sangrado da liña consistentemente con outras liñas que
 	xa se introduciran antes. Igualmente, cando premes a tecla
@@ -11799,7 +11878,7 @@
 	ao comportamento do programa cando esteas editando máis dun
 	guión ao mesmo tempo. Se marcas isto, entón amósase cada guión
 	nunha <quote>lapela</quote> dunha xanela con estilo de caderno
-	de notas; e noutro caso, cada guión ten a súa propia xanela.
+	de notas; e se non, cada guión ten a súa propia xanela.
       </para>
       <para>
 	<emphasis>Habilitar autorecheo</emphasis>: Se marcas isto, se te
@@ -11813,17 +11892,17 @@
 	<emphasis>Habilitar autocorchetes</emphasis>: Se marcas isto,
 	entón cando tecleas unha paréntese, corchete ou chave esquerdos
 	ao final dunha liña, vaise engadir automaticamente o delimitador
-	correspondente do lado dereito e vaise colocar o cursor entre os
+	correspondente do lado dereito, e vaise colocar o cursor entre os
 	dous delimitadores.
       </para>
       <para>
 	<emphasis>Número de espazos por tabulador</emphasis>: Canto queres
-	que sexa de largo un salto de tabulador ou o nivel de sangría? Un
+	que sexa de longo un salto de tabulador ou o nivel de sangría? Un
 	valor enteiro de 2 a 8.
       </para>
       <para>
 	<emphasis>Estilo de resalte</emphasis>: Proporciona unha lista que
-	se desprega cara abaixo con estilos para resaltar a sintaxe. Algúns
+	se desprega cara abaixo, con estilos para resaltar a sintaxe. Algúns
 	destes son 'escuro sobre claro' e algúns son 'claro sobre escuro':
 	experimenta e atopa o que che guste.
       </para>
@@ -11877,8 +11956,8 @@
     <description>
       <para>
 	O uso máis común desta instrución é a primeira variante amosada
-	arriba, onde se utiliza para establecer o valor dun parámetro
-	escollido do programa (isto discútese en detalle máis abaixo).
+	arriba, na que se utiliza para establecer o valor dun parámetro
+	escollido do programa (isto discútese con detalle máis abaixo).
 	Os outros usos son: con <opt>to-file</opt> para escribir un
 	ficheiro de guión que conteña todas as configuracións actuais
 	dos parámetros; con <opt>from-file</opt> para ler un ficheiro
@@ -11922,7 +12001,7 @@
 	  <para><lit>use_cwd</lit>: <lit>on</lit> ou <lit>off</lit> (por defecto).
 	  Manexa a configuración do cartafol de traballo (<lit>workdir</lit>)
 	  inicial: se está en <lit>on</lit>, hérdase o cartafol de traballo
-	  desde o intérprete; noutro caso, establécese onde queira que se
+	  desde o intérprete; se non, establécese onde queira que se
 	  seleccionou na sesión previa de Gretl.
 	  </para>
 	</li>
@@ -11960,7 +12039,7 @@
 	</li>
 	<li>
 	  <para><lit>csv_write_na</lit>: A cadea de texto que se utiliza para
-	  representar os valores ausentes cando se escriben datos a un ficheiro
+	  representar os valores ausentes cando se escriben datos nun ficheiro
 	  con formato CSV. Máximo = 7 caracteres; por defecto é <lit>NA</lit>.
 	  </para>
 	</li>
@@ -11974,11 +12053,11 @@
 	  <lit>NA</lit>, <lit>N.A.</lit>, <lit>na</lit>,
 	  <lit>n.a.</lit>, <lit>N/A</lit>, <lit>#N/A</lit>,
 	  <lit>NaN</lit>, <lit>.NaN</lit>, <lit>.</lit>,
-	  <lit>..</lit>, <lit>-999</lit>, e <lit>-9999</lit>. Para datos en
+	  <lit>..</lit>, <lit>-999</lit>, e <lit>-9999</lit>. Para datos con
 	  forma de cadeas de texto con valores, tan só se conta como NA unha
 	  cela en branco ou unha cela que conteña unha cadea baldeira. Podes
 	  volver a impoñer eses valores por defecto indicando <lit>default</lit>
-	  como o valor para <lit>csv_read_na</lit>. Para especificar que tan
+	  como o valor de <lit>csv_read_na</lit>. Para especificar que tan
 	  só se len as celas baldeiras como NAs, indica o valor <lit>""</lit>.
 	  Ten en conta que as celas baldeiras sempre se len como NAs con
 	  independencia de como estea configurada esta variable.
@@ -12027,12 +12106,12 @@
 	<li>
 	  <para><lit>loop_maxiter</lit>: Un valor enteiro non negativo
 	  (por defecto é 100000). Establece o número máximo de iteracións
-	  que se lle permiten a un bucle <lit>while</lit>, antes de parar
+	  que se lle permite a un bucle <lit>while</lit>, antes de parar
 	  (consulta <cmdref targ="loop"/>). Cae na conta de que esta
 	  configuración só afecta á variante <lit>while</lit>; a súa
 	  intención é protexerse ante infinitos bucles que xurdan de
 	  forma inadvertida. Establecer que este valor sexa 0 ten o
-	  efecto de inhabilitar o límite; utilízao con precaución.
+	  efecto de inhabilitar o límite (utilízao con precaución).
 	  </para>
 	</li>
 	<li>
@@ -12064,7 +12143,7 @@
 	<li>
 	  <para><lit>bfgs_verbskip</lit>: Un enteiro. Esta configuración
 	  afecta ao comportamento da opción <opt>verbose</opt> naquelas
-	  instrucións que utilizan BFGS como algoritmo de optimización e se
+	  instrucións que utilizan BFGS como algoritmo de optimización, e se
 	  usa para compactar o resultado. Se <lit>bfgs_verbskip</lit> se
 	  establece en 3, por exemplo, entón a opción <opt>verbose</opt>
 	  vai provocar que se presenten as iteracións 3, 6, 9, etcétera.
@@ -12075,7 +12154,7 @@
 	  ou <lit>off</lit>. Controla o comportamento de Gretl cando
 	  se constrúe unha matriz a partir de series de datos: por
 	  defecto sáltanse as filas de datos que conteñen un ou máis
-	  valores ausentes pero cando se pon <lit>skip_missing</lit>
+	  valores ausentes, pero cando se pon <lit>skip_missing</lit>
 	  en <lit>off</lit>, os valores ausentes convértense en NaNs.
 	  </para>
 	</li>
@@ -12084,7 +12163,7 @@
 	  palabra chave <lit>null</lit>. Ofrece un maior control ca
 	  <lit>skip_missing</lit> cando se constrúen matrices a partir
 	  de series: as filas de datos seleccionadas para as matrices
-	  son aquelas con valores non nulos (e non ausente) das series
+	  son aquelas con valores non nulos (e non ausentes) das series
 	  especificadas. A careta escollida permanece en vigor ata que se
 	  substitúe, ou se elimina mediante a palabra chave <lit>null</lit>.
 	  </para>
@@ -12105,12 +12184,12 @@
 	</para>
       <ilist>
 	<li>
-	  <para><lit>optimizer</lit>: ben <lit>auto</lit> (por defecto),
-	  <lit>BFGS</lit> ou <lit>newton</lit>. Establece o algoritmo de
-	  optimización utilizado para varios estimadores Máximo Verosímiles,
-	  nos casos onde ambos BFGS e o de Newton&ndash;Raphson se
-	  poden aplicar. Por defecto utilízase o de Newton&ndash;Raphson
-	  cando se dispoña dunha matriz Hessiana analítica; noutro caso, BFGS.
+	  <para><lit>optimizer</lit>: ou <lit>auto</lit> (por defecto), ou
+	  <lit>BFGS</lit>, ou ben <lit>newton</lit>. Establece o algoritmo de
+	  optimización que se utiliza para varios estimadores Máximo Verosímiles,
+	  nos casos onde o BFGS e o de Newton&ndash;Raphson se poden
+	  aplicar ambos. Por defecto, utilízase o de Newton&ndash;Raphson
+	  cando se dispoña dunha matriz Hessiana analítica; se non, BFGS.
 	  </para>
 	</li>
 	<li>
@@ -12128,14 +12207,14 @@
 	  O algoritmo remata de repetirse tan pronto como o incremento
 	  no logaritmo da verosimilitude entre iteracións sexa menor ca
 	  <lit>bhhh_toler</lit>. O valor por defecto é 1.0E&minus;06,
-	  pero podes volver a establecer este valor tecleando
-	  <lit>default</lit> en lugar dun valor numérico.
+	  e podes restablecer este valor tecleando
+	  <lit>default</lit> en troques dun valor numérico.
 	  </para>
 	</li>
 	<li>
 	  <para><lit>bfgs_maxiter</lit>: Un enteiro, o número máximo de
 	  iteracións para a rutina BFGS de Gretl, que se utiliza para
-	  <cmd>mle</cmd> (EMV), <cmd>gmm</cmd> (MXM) e varios
+	  <cmd>mle</cmd> (EMV), <cmd>gmm</cmd> (MGM) e varios
 	  estimadores específicos. Se non se acada a converxencia no
 	  número indicado de iteracións, o programa devolve un fallo.
 	  O valor por defecto depende do contexto, pero habitualmente
@@ -12149,14 +12228,14 @@
 	  algoritmo remata de repetirse tan pronto como a melloría
 	  relativa na función obxectivo entre iteracións sexa menor ca
 	  <lit>bfgs_toler</lit>. O valor por defecto é igual á precisión
-	  de máquina elevada a 3/4, pero podes volver a establecer este
+	  de máquina elevada a 3/4, e podes restablecer este
 	  valor tecleando <lit>default</lit> en lugar dun valor numérico.
 	  </para>
 	</li>
 	<li>
 	  <para><lit>bfgs_maxgrad</lit>: Un valor de punto flotante. Isto
-	  utilízase na rutina interna BFGS de Gretl para verificar se a norma
-	  do vector gradiente está razoablemente preto do cero cando se
+	  utilízase na rutina interna BFGS de Gretl, para verificar se a norma
+	  do vector gradiente está razoablemente preto de cero cando se
 	  acada o criterio <lit>bfgs_toler</lit>. Vaise presentar unha
 	  advertencia cando a norma do vector gradiente exceda de 1; e
 	  amósase un fallo se a norma excede <lit>bfgs_maxgrad</lit>.
@@ -12171,7 +12250,7 @@
 	  </para>
 	</li>
 	<li>
-	  <para><lit>initvals</lit>: Ben <lit>auto</lit> (por defecto)
+	  <para><lit>initvals</lit>: Ou ben <lit>auto</lit> (por defecto),
 	  ou ben o nome dunha matriz especificada previamente. Permite
 	  establecer manualmente as estimacións iniciais dos parámetros
 	  para problemas de optimización numérica (tales como a estimación
@@ -12182,7 +12261,7 @@
 	<li>
 	  <para><lit>lbfgs</lit>: <lit>on</lit> ou <lit>off</lit> (por defecto).
 	  Utiliza a versión de memoria limitada de BFGS (L-BFGS-B)
-	  en vez do algoritmo habitual. Isto pode ser vantaxoso cando
+	  en troques do algoritmo habitual. Isto pode ser vantaxoso cando
 	  a función que se maximiza non é globalmente cóncava.
 	  </para>
 	</li>
@@ -12199,18 +12278,18 @@
 	  tolerancia que se utiliza ao xulgar se a converxencia se acada
 	  ou non, nunha estimación de mínimos cadrados non lineais
 	  utilizando a instrución <cmdref targ="nls"/>. O valor por
-	  defecto é igual á precisión de máquina elevada a 3/4, pero
-	  podes volver a establecer este valor tecleando <lit>default</lit>
+	  defecto é igual á precisión de máquina elevada a 3/4, e
+	  podes restablecer este valor tecleando <lit>default</lit>
 	  en lugar dun valor numérico.
 	</para>
 	</li>
 	<li>
 	  <para>
 	  <lit>svd</lit>: <lit>on</lit> ou <lit>off</lit> (por defecto).
-	  Utiliza SVD en vez da descomposición de Cholesky ou a QR nos
-	  cálculos de mínimos cadrados. Esta opción aplícase á función
-	  <lit>mols</lit> así como a varios cálculos internos, pero non á
-	  instrución <cmdref targ="ols"/> habitual.
+	  Utiliza a Descompisición en Valores Singulares (SVD) en troques das
+	  descomposicións de Cholesky ou a QR, nos cálculos de mínimos cadrados.
+	  Esta opción aplícase á función <lit>mols</lit> así como a varios
+	  cálculos internos, pero non á instrución <cmdref targ="ols"/> habitual.
 	  </para>
 	</li>
 	<li>
@@ -12228,7 +12307,7 @@
 	<li>
 	  <para><lit>fcp</lit>: <lit>on</lit> ou <lit>off</lit> (por defecto).
 	  Utiliza o algoritmo de Fiorentini, Calzolari e Panattoni en vez do
-	  código propio de Gretl cando se calculan as estimacións GARCH.
+	  código propio de Gretl, cando se calculan as estimacións GARCH.
 	  </para>
 	</li>
 	<li>
@@ -12273,11 +12352,11 @@
 	<li>
 	  <para><lit>garch_vcv</lit>: <lit>unset</lit>, <lit>hessian</lit>,
 	  <lit>im</lit> (matriz de información), <lit>op</lit> (matriz de
-	  produto externo), <lit>qml</lit> (estimador CMV) ou <lit>bw</lit>
+	  produto externo), <lit>qml</lit> (estimador CMV ou QML), ou <lit>bw</lit>
 	  (Bollerslev&ndash;Wooldridge). Especifica a variante que se vai
 	  utilizar para estimar a matriz de covarianzas dos coeficientes para
 	  modelos GARCH. Cando indicas <lit>unset</lit> (caso por defecto)
-	  entón utilízase a matriz Hessiana agás que se indique a opción
+	  entón utilízase a matriz Hessiana, agás que se indique a opción
 	  <quote>robust</quote> para a instrución garch, en cuxo caso
 	  utilízase CMV (QML).
 	  </para>
@@ -12297,7 +12376,7 @@
 	  isto forza o cálculo da Matriz de Covarianzas Consistente ante
 	  Heterocedasticidade (HCCM) habitual, que non ten en conta a
 	  autocorrelación. Cae na conta de que os VARs trátanse como
-	  un caso especial pois cando indicas a opción <opt>robust</opt>
+	  un caso especial, pois cando indicas a opción <opt>robust</opt>
 	  o método por defecto é o da HCCM habitual, pero podes utilizar
 	  a opción <opt>robust-hac</opt> para forzar que se empregue un
 	  estimador HAC.
@@ -12307,7 +12386,7 @@
 	  <para><lit>robust_z</lit>: <lit>off</lit> (por defecto) ou <lit>on</lit>.
 	  Isto controla a distribución que se utiliza cando se calculan as
 	  probabilidades asociadas (valores p) baseadas nas desviacións
-	  padrón robustas no contexto dos estimadores de mínimos cadrados.
+	  padrón robustas, no contexto dos estimadores de mínimos cadrados.
 	  Por defecto, Gretl utiliza a distribución <math>t</math> de Student
 	  pero se activas <lit>robust_z</lit>, utilízase unha distribución
 	  Normal.
@@ -12329,7 +12408,7 @@
 	  <equation status="inline"
 	    tex="$p = 4 \times (T/100)^{2/9}$"
 	    ascii="p = 4 * (T/100)^(2/9)"
-	    graphic="nw2"/>. <lit>nw3</lit>
+	    graphic="nw2"/>. A <lit>nw3</lit>
 	  solicita unha elección do largo de banda que se basea nos datos. Consulta
 	  tamén máis abaixo <lit>qs_bandwidth</lit> e <lit>hac_prewhiten</lit>.
 	  </para>
@@ -12343,7 +12422,7 @@
 	</li>
 	<li>
 	  <para><lit>hac_prewhiten</lit>: <lit>on</lit> ou <lit>off</lit> (por defecto).
-	  Utiliza o 'branqueo' previo e a volta a colorear de Andrews-Monahan
+	  Utiliza o 'branqueo' previo e a 'volta a colorear' de Andrews-Monahan
 	  cando se calculan as desviacións padrón HAC. Isto tamén implica
 	  utilizar unha elección do largo de banda que se basea nos datos.
 	  </para>
@@ -12408,7 +12487,7 @@
 	<li>
 	  <para><lit>R_lib</lit>: <lit>on </lit>(por defecto) ou <lit>off</lit>.
 	  Cando se envían instrucións para que as execute R, utiliza
-	  a biblioteca compartida R mellor ca o executable R, se a
+	  a biblioteca compartida de R mellor ca o executable de R, se a
 	  biblioteca está dispoñible.
 	  </para>
 	</li>
@@ -12474,8 +12553,8 @@
     <description context="cli">
       <para>
 	Se activas as opcións <opt>description</opt> ou <opt>graph-name</opt>,
-	o argumento debe de ser unha única serie; noutro caso, poderá ser
-	unha lista de series en cuxo caso a instrución funciona sobre todos
+	o argumento debe de ser unha única serie; se non, poderá ser
+	unha lista de series, en cuxo caso a instrución funciona sobre todos
 	os elementos da lista. Esta instrución configura 4 atributos como se
 	indica deseguido.
       </para>
@@ -12483,7 +12562,7 @@
 	Cando indicas a opción <opt>description</opt> seguida dunha
 	cadea de texto entre comiñas, esa cadea utilízase para establecer
 	a etiqueta descritiva da variable. Esta etiqueta amósase en resposta
-	á instrución <cmdref targ="labels"/> e tamén amósase na xanela
+	á instrución <cmdref targ="labels"/>, e tamén amósase na xanela
 	principal do programa de Interface Gráfica de Usuario (GUI).
       </para>
       <para>
@@ -12522,12 +12601,12 @@
 
 	<para>* Renomear unha variable (tipo serie).</para>
 
-	    <para>* Engadir ou editar unha descrición da variable que aparece ao lado do nome das variables na xanela principal de Gretl.
+	    <para>* Engadir ou editar a descrición da variable que aparece ao lado do nome destas, na xanela principal de Gretl.
 	    </para>
 
 	    <para>* Engadir ou editar o 'nome a amosar' dunha variable (se a variable
 	é unha serie, non un escalar). Esta cadea de texto (de 19 caracteres como
-	máximo) amósase no lugar do nome da variable cando esta se representa nunha
+	máximo) amósase en troques do nome da variable, cando esta se representa nunha
 	gráfica. Así, por exemplo, podes asociar unha cadea máis comprensible tal como
 	'Tipo da letra do tesouro' cunha variable nomeada abreviadamente 'tb3'.
 	    </para>
@@ -12660,7 +12739,7 @@
 
     <description>
       <para>
-	Esta instrución forza ao programa a que interprete que o conxunto
+	Esta instrución forza ao programa a interpretar que o conxunto
 	de datos ten unha estrutura específica.
       </para>
       <para>
@@ -12669,13 +12748,13 @@
 	sexan series temporais (1 = anuais; 4 = trimestrais; 12 = mensuais;
 	52 = semanais; 5, 6, ou 7 = diarios; 24 = horarios). No caso de datos de
 	panel, a periodicidade indica o número de liñas por bloque de datos; polo
-	tanto isto expresa o número de unidades consecutivas cando indicas que
-	son 'seccións cruzadas amontoadas', ou o número de períodos de tempo
+	tanto, isto expresa ou ben o número de unidades consecutivas cando indicas que
+	son 'seccións cruzadas amontoadas', ou ben o número de períodos de tempo
 	consecutivos cando indicas 'series de tempo amontoadas'. No caso de datos
 	simples de sección cruzada, a periodicidade debe de establecerse en 1.
       </para>
       <para>
-	A observación de inicio representa a data inicial no caso de tratarse de
+	A observación de inicio representa a data inicial, no caso de tratarse de
 	datos de series temporais. Podes indicar os anos mediante 2 ou 4 díxitos;
 	e debes de separar os subperíodos (por exemplo, trimestres ou meses) do
 	ano mediante dous puntos. No caso de datos de panel, debes de indicar
@@ -12687,11 +12766,11 @@
       <para>
 	Algunhas periodicidades de series temporais teñen interpretacións
 	estándar (por exemplo, 12 = mensuais e 4 = trimestrais). Pero se
-	tes datos pouco habituais de series temporais para as que non se
+	tes datos de series temporais pouco habituais para as que non se
 	aplica a interpretación estándar, podes sinalar isto indicando a
 	opción <opt>special-time-series</opt>. Nese caso, Gretl non vai
 	advertir de que os teus datos de (por exemplo) frecuencia igual
-	a 12 sexan mensuais.
+	a 12, sexan mensuais.
       </para>
       <para>
 	Cando non seleccionas un indicador de opción explícito para determinar a
@@ -12701,7 +12780,7 @@
       <para>
 	A segunda forma da instrución (que require que indiques a opción
 	<opt>panel-vars</opt>) pode utilizarse para impoñer unha interpretación de
-	panel cando o conxunto de datos contén variables que identifican de forma
+	panel, cando o conxunto de datos contén variables que identifican de forma
 	inequívoca as unidades de sección cruzada e os períodos de tempo. O conxunto
 	de datos vaise ordenar como series de tempo amontoadas, en función dos
 	valores ascendentes da variable de unidades (<repl>varunidades</repl>).
@@ -12716,7 +12795,7 @@
 	A intención da opción <opt>panel-time</opt> é determinar información
 	adicional relacionada coa dimensión temporal do panel. Debes de indicar
 	esta seguindo o padrón do primeiro formato de <lit>setobs</lit> apuntado
-	máis arriba. Por exemplo, podes utilizar a seguinte forma para indicar
+	máis arriba. Por exemplo, podes utilizar a seguinte forma de indicar
 	que a dimensión temporal dun panel é trimestral, comezando no primeiro
 	trimestre de 1990:
       </para>
@@ -12725,7 +12804,7 @@
       </code>
       <para>
 	A intención da opción <opt>panel-groups</opt> é crear unha serie con
-	valores en cadeas de texto que conteña os nomes dos grupos (individuos,
+	valores en cadeas de texto, que conteña os nomes dos grupos (individuos,
 	unidades atemporais) do panel. (Isto vaise utilizar cando sexa adecuado
 	en gráficas de panel.) Con esta opción indicas un ou dous argumentos,
 	como se indica deseguido.
@@ -12788,13 +12867,13 @@
       <para>
 	Esta instrución permite a configuración previa de opcións para unha
 	instrución concreta. Normalmente isto non fai falta, pero pode ser
-	útil para os autores de funcións en Hansl cando queren facer que
+	útil para os autores de funcións en Hansl, cando queren facer que
 	algunhas opcións das instrucións estean condicionadas ao valor dun
-	argumento que proporcione o que as solicita.
+	argumento que proporcione quen as solicita.
       </para>
       <para>
 	Por exemplo, supón que unha función ofrece un interruptor booleano
-	<quote><lit>quiet</lit></quote>, cuxa intención é a de que se
+	<quote><lit>quiet</lit></quote>, cuxa intención é que se
 	suprima a presentación de resultados dunha determinada regresión
 	que se executa dentro da propia función. Nese caso, poderíase
 	escribir:
@@ -12812,7 +12891,7 @@
       </para>
       <para>
 	Por defecto, as opcións que se establecen deste xeito só se aplican
-	á seguinte acaecemento da <repl>instrución</repl>; polo que non son
+	á seguinte petición da <repl>instrución</repl>; polo que non son
 	persistentes. Porén, se indicas <lit>persist</lit> como valor para
 	<repl>acción</repl>, as opcións se continuarán aplicando á instrución
 	indicada ata novo aviso. O 'antídoto' á acción <lit>persist</lit> é
@@ -12821,7 +12900,7 @@
       </para>
       <para>
 	Debes de ter en conta que as opcións establecidas mediante
-	<lit>setopt</lit> combínanse con calquera opción anexada
+	<lit>setopt</lit> combínanse con calquera opción agregada
 	directamente á instrución apuntada. Así, por exemplo, pódese
 	engadir a opción <opt>hessian</opt> a unha instrución <lit>mle</lit>
 	de forma incondicional, pero utilizar <lit>setopt</lit> para engadir
@@ -12961,12 +13040,12 @@
 	Podes empregar as opcións <opt>no-missing</opt> e <opt>no-all-missing</opt>
 	para excluír da mostra aquelas observacións para as que hai ausencia
 	de datos. A primeira variante exclúe aquelas filas do conxunto de
-	datos para as que polo menos unha variable ten un valor ausente,
+	datos para as que, polo menos unha variable, ten un valor ausente;
 	mentres que a segunda variante exclúe unicamente aquelas filas
 	nas que <emphasis>todas</emphasis> as variables teñen valores
 	ausentes. En cada caso, a comprobación limítase ás variables de
-	<repl>listavariables</repl> cando indicas este argumento; noutro
-	caso, aplícase a todas as series (coa reserva de que no caso de non
+	<repl>listavariables</repl> cando indicas este argumento; se non,
+	aplícase a todas as series (coa reserva de que, no caso de non
 	ter <repl>listavariables</repl> e indicar <opt>no-all-missing</opt>,
 	as variables xenéricas <lit>index</lit> e <lit>time</lit>
 	ignóranse).
@@ -12978,8 +13057,8 @@
 	observación ao comezo e ao final do rango da mostra vixente que conteña
 	valores ausentes (ben para as variables de <repl>listavariables</repl>, ou
 	ben para todas as series de datos se non indicas <repl>listavariables</repl>).
-	Entón realízase unha verificación para ver se hai algún valor ausente no
-	rango que queda; e se é así, amósase un fallo.
+	Entón realízase unha verificación para comprobar se hai algún valor ausente
+	no rango que queda; e se é así, amósase un fallo.
       </para>
 
       <para>
@@ -13133,7 +13212,7 @@
 	(ademais das variables cos produtos cruzados entre cada dúas, cando
 	indicas a opción <opt>cross</opt>). Por exemplo, <cmd>square x y</cmd>
 	vai xerar as variables <lit>sq_x</lit> = <lit>x</lit> ao cadrado,
-	<lit>sq_y</lit> = <lit>y</lit> ao cadrado e (opcionalmente)
+	<lit>sq_y</lit> = <lit>y</lit> ao cadrado e (opcionalmente con 'cross')
 	<lit>x_y</lit> = <lit>x</lit> por <lit>y</lit>. Cando unha determinada
 	variable é unha variable ficticia, non se calcula o seu cadrado pois
 	obteríamos a mesma variable.
@@ -13210,7 +13289,7 @@
     <description>
       <para>
 	Garda os datos en <repl>nomeficheiro</repl>. Por defecto, gárdanse
-	todas as series xa definidas nese momento pero podes utilizar o
+	todas as series xa definidas nese momento, pero podes utilizar o
 	argumento <repl>listavariables</repl> (opcional) para escoller un
 	subconxunto de series. Se o conxunto de datos é unha submostra, só
 	se gardan as observacións do rango vixente da mostra.
@@ -13240,12 +13319,12 @@
 	</li>
 	<li>
 	  <para>
-	    <lit>.csv</lit>: Valores Separados con Comas (CSV).
+	    <lit>.csv</lit>: Valores Separados por Comas (CSV).
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    <lit>.txt</lit> ou <lit>.asc</lit>: valores separados con
+	    <lit>.txt</lit> ou <lit>.asc</lit>: valores separados por
 	    espazos.
 	  </para>
 	</li>
@@ -13266,8 +13345,8 @@
 	independencia do nome do ficheiro (ou para lograr que Gretl escriba
 	nos formatos de PcGive ou JMulTi). Porén, se <repl>nomeficheiro</repl>
 	ten unha extensión <lit>.gdt</lit> ou <lit>.gdtb</lit>, isto implica
-	utilizar necesariamente o formato propio e se engades un indicador
-	de opción conflitivo, vai xerar un fallo.
+	utilizar necesariamente o formato propio, e se engades un indicador
+	de opción conflitivo, vai xerarse un fallo.
       </para>
       <para>
 	Cando gardas os datos no formato propio (unicamente), podes utilizar
@@ -13291,7 +13370,7 @@
       <para>
 	O indicador de opción <opt>decimal-comma</opt> está tamén limitado ao
 	caso de que se garden os datos en formato CSV. O efecto desta opción
-	consiste en substituír o punto decimal coa coma decimal; e por engadido,
+	consiste en substituír o punto decimal coa coma decimal; e, por engadido,
 	fórzase a que o separador de columnas sexa o punto e coma.
       </para>
       <para>
@@ -13313,7 +13392,7 @@
 	banco de datos ou en formato CSV. O parámetro que se require é unha
 	cadea nunha liña, entre comiñas, ligada ao indicador de opción mediante
 	un signo de igualdade. A cadea de texto insírese como comentario no
-	ficheiro índice do banco de datos ou no encabezamento do resultado CSV.
+	ficheiro índice do banco de datos ou no encabezamento do CSV.
       </para>
       <para>
 	A instrución <lit>store</lit> compórtase de xeito especial no contexto dun
@@ -13334,7 +13413,7 @@
     <usage>
       <altforms>
 	<altform><lit>summary [</lit> <repl>listavariables</repl> ]</altform>
-	<altform><lit>summary --matrix=</lit><repl>nomematr</repl></altform>
+	<altform><lit>summary --matrix=</lit><repl>nomematriz</repl></altform>
       </altforms>
       <options>
         <option>
@@ -13357,7 +13436,7 @@
     <description>
       <para>
 	Na súa primeira forma, esta instrución presenta un resumo estatístico
-	para as variables de <repl>listavariables</repl>, ou para todas as
+	das variables de <repl>listavariables</repl>, ou de todas as
 	variables do conxunto de datos cando omites <repl>listavariables</repl>.
 	Por defecto, o resultado consiste na media, desviación padrón (sd),
 	coeficiente de variación (= sd/media), mediana, mínimo, máximo,
@@ -13457,7 +13536,7 @@
 	</li>
 	<li><para><cmd>instr</cmd>: Para estimar un sistema mediante
 	    Mínimos Cadrados en 3 etapas, indícase unha lista de instrumentos
-	    (mediante o nome da variable ou seu número). Alternativamente,
+	    (mediante o nome da variable ou o seu número). Alternativamente,
 	    podes poñer esta información na liña <cmd>equation</cmd> usando
 	    a mesma sintaxe que na instrución <cmdref targ="tsls"/>.
 	    </para>
@@ -13465,9 +13544,9 @@
 	<li><para><cmd>endog</cmd>: Para un sistema de ecuacións simultáneas,
 	    indícase unha lista de variables endóxenas. En principio, isto está
 	    pensado para utilizar coa estimación FIML, pero podes utilizar este
-	    enfoque con Mínimos Cadrados en 3 Etapas en substitución de indicar
+	    enfoque con Mínimos Cadrados en 3 Etapas en troques de indicar
 	    unha lista <cmd>instr</cmd>; e entón todas as variables que non se
-	    identifiquen como endóxenas vanse utilizar como instrumentos.
+	    identifiquen como endóxenas, vanse utilizar como instrumentos.
 	    </para>
 	</li>
 	<li><para><cmd>identity</cmd>: Para utilizar con Máxima Verosimilitude
@@ -13517,8 +13596,8 @@
       <para context="cli">
 	Se queres recuperar os erros de estimación ou os valores axustados
 	para unha ecuación en concreto, en forma de serie de datos, escolle
-	unha columna da matriz <lit>$uhat</lit> ou <lit>$yhat</lit> e asígnalle
-	a serie, como en
+	unha columna da matriz <lit>$uhat</lit> ou <lit>$yhat</lit>, e asígnalle
+	a serie como en
       </para>
       <code context="cli">
 	series uh1 = $uhat[,1]
@@ -13589,7 +13668,7 @@
       <subhead>Opcións específicas de resultados en &latex;</subhead>
       <para>
 	Cando indicas a opción <opt>complete</opt>, o ficheiro &latex;
-	é un documento completo, listo para procesar; noutro caso, debe
+	é un documento completo, listo para procesar; se non, debe
 	de incluírse nun documento.
       </para>
       <para>
@@ -13600,7 +13679,7 @@
 	padrón para as cadeas de formato é o seguinte. Existen 4 campos que
 	representan: o coeficiente, a desviación padrón, a razón <math>t</math>
 	e a probabilidade asociada, respectivamente. Debes de separar estes
-	campos mediante barras verticais; e ou ben poden ter unha especificación
+	campos mediante barras verticais; e, ou ben poden ter unha especificación
 	de tipo <lit>printf</lit> para o formato do valor numérico en cuestión,
 	ou ben poden deixarse en branco para eliminar a presentación desa
 	columna (suxeito isto á condición de que non podes deixar todas as
@@ -13616,7 +13695,7 @@
 	A primeira destas especificacións presenta os valores de todas as
 	columnas usando 4 díxitos decimais. A segunda elimina a probabilidade
 	asociada e presenta as razóns <math>t</math> con 3 díxitos decimais.
-	A terceira omite a razón <math>t</math>. A derradeira tamén omite o
+	A terceira omite a razón <math>t</math>. A derradeira tamén omite a
 	<math>t</math>, e presenta tanto o coeficiente como a desviación
 	padrón con 8 cifras significativas.
       </para>
@@ -13669,7 +13748,7 @@
       <para>
 	Coa opción <opt>time-series</opt>, xérase unha gráfica por observación.
 	Neste caso, podes utilizar a opción <opt>one-scale</opt> para forzar o
-	uso dunha escala única; noutro caso, se <repl>listavariables</repl>
+	uso dunha escala única; se non, se <repl>listavariables</repl>
 	contén máis dunha serie, os datos poden escalarse. Cada liña representa
 	unha observación, cos valores dos datos debuxados horizontalmente.
       </para>
@@ -13691,12 +13770,12 @@
       <options>
         <option>
 	  <flag>--llimit</flag>
-	  <optparm>limesq</optparm>
+	  <optparm>cotaesq</optparm>
 	  <effect>Especifica a cota da esquerda</effect>
         </option>
         <option>
 	  <flag>--rlimit</flag>
-	  <optparm>limder</optparm>
+	  <optparm>cotader</optparm>
 	  <effect>Especifica a cota da dereita</effect>
         </option>
         <option>
@@ -13726,7 +13805,7 @@
 	observan valores positivos e nulos na adquisición de bens duradeiros
 	por parte dos fogares, e ningún valor negativo, mesmo pode pensarse
 	que as decisións sobre esas compras son o resultado dunha disposición
-	subxacente e inobservada a comprar que pode ser negativa nalgúns
+	subxacente e inobservada a comprar, que pode ser negativa nalgúns
 	casos.
       </para>
       <para context="cli">
@@ -13766,8 +13845,8 @@
 	Traspón o conxunto vixente de datos. É dicir, cada observación (fila)
 	do conxunto vixente de datos vaise tratar como unha variable (columna),
 	e cada variable como unha observación. Esta instrución pode resultar
-	útil cando se len os datos dalgunha orixe externa na que as filas da
-	táboa de datos representan variables.
+	útil cando se len os datos dalgunha orixe externa, na que as filas
+	da táboa de datos representan variables.
       </para>
       <para>
 	Consulta tamén <cmdref targ="dataset"/>.
@@ -13831,7 +13910,7 @@
 	defecto Mínimos Cadrados en 2 Etapas (TSLS), pero mira máis abaixo para
 	outras opcións. A variable dependente é <repl>depvar</repl>, mentres
 	que <repl>indepvars</repl> expresa unha lista de regresores (presuponse
-	que inclúe cando menos unha variable endóxena) e <repl>instrumentos</repl>
+	que inclúe cando menos unha variable endóxena), e <repl>instrumentos</repl>
 	indica unha lista de instrumentos (variables esóxenas e/ou predeterminadas).
 	Se a lista <repl>instrumentos</repl> non é cando menos tan longa como
 	<repl>indepvars</repl>, o modelo non está identificado.
@@ -13875,10 +13954,10 @@
 	pois instrumentos débiles poden levar a serios problemas na regresión
 	de VI: estimacións nesgadas e/ou tamaño incorrecto das probas de
 	hipóteses baseadas na matriz de covarianzas, con taxas de rexeite
-	que superan con moito o nivel de significación nominal
+	que superan moito o nivel de significación nominal
 	<cite key="stock-wright-yogo02" p="true">(Stock, Wright e Yogo, 2002)</cite>.
 	O estatístico é o da proba <math>F</math> da primeira etapa se o
-	modelo contén tan só un regresor endóxeno; noutro caso, é o valor
+	modelo ten tan só un regresor endóxeno; se non, é o valor
 	propio máis pequeno da matriz de contrapartida do <math>F</math> da
 	primeira etapa. Amósanse os puntos críticos baseados na análise Monte
 	Carlo de <cite key="stock-yogo03">Stock e Yogo (2003)</cite>, cando
@@ -13914,7 +13993,7 @@
       <ilist context="cli">
 	<li>
 	  <para>
-	    <opt>two-step</opt>: Realiza MXM en 2 etapas en vez de facelo
+	    <opt>two-step</opt>: Realiza MXM en 2 etapas en troques de facelo
 	    en 1 etapa (por defecto).
 	  </para>
 	</li>
@@ -14009,21 +14088,21 @@
 	    retardos de cada variable que debería de incluírse no sistema;
 	    </para>
 	</li>
-	<li><para context="gui">calquera variable esóxena (pero ten en conta que: se inclúe
-	    unha constante automaticamente agás que indiques outra cousa; podes engadir
+	<li><para context="gui">calquera variable esóxena (pero ten en conta que se inclúe
+	    unha constante automaticamente, agás que indiques outra cousa; podes engadir
 	    unha tendencia usando o recadro de selección de tendencia; e podes engadir
 	    variables ficticias estacionais usando o recadro de selección da estacionalidade); e
 	    </para>
 	</li>
 	<li><para context="gui">unha lista de variables endóxenas, das que se inclúen
 	    os seus retardos no lado dereito de cada ecuación. (Nota: Non inclúas
-	    variables retardadas nesta lista pois vanse engadir automaticamente).
+	    variables retardadas nesta lista, pois vanse engadir automaticamente).
 	    </para>
 	</li>
       </ilist>
       <para context="gui">
 	Vaise executar unha regresión por separado para cada variable do sistema.
-	O resultado para cada ecuación inclúe as probas F de cero restricións
+	O resultado para cada ecuación inclúe as probas F de restricións cero
 	sobre todos os retardos de cada unha das variables; e unha proba F para
 	o retardo máximo, xunto con (opcionalmente) as descomposicións da
 	varianza de predición e as funcións de resposta ao impulso.
@@ -14032,7 +14111,7 @@
       <para context="cli">
 	Establece e estima (utilizando MCO) unha autorregresión de vectores
 	(VAR). O primeiro argumento especifica o nivel de retardos (ou
-	o nivel máximo de retardos no caso de que indiques a opción
+	o nivel máximo de retardos, no caso de que indiques a opción
 	<opt>lagselect</opt>, mira máis abaixo). O nivel podes indicalo
 	numericamente ou co nome dunha variable escalar preexistente.
 	A continuación segue a configuración da primeira ecuación. Non
@@ -14049,10 +14128,10 @@
 
       <para context="cli">
 	Mentres que unha especificación VAR habitualmente inclúe tódolos
-	retardos desde 1 ata un máximo que indiques, tamén podes escoller un
+	retardos desde 1 ata o máximo que indiques, tamén podes escoller un
 	grupo de retardos. Para facer isto, substitúe o argumento rutineiro
 	<repl>nivel</repl> (escalar), ben co nome dun vector xa definido
-	previamente ou ben cunha lista de retardos separados con comas,
+	previamente, ou ben cunha lista de retardos separados con comas e
 	contornada entre chaves. Debaixo amósanse dous xeitos de especificar
 	que un VAR debe de incluír os retardos 1, 2 e 4 (pero non o 3):
       </para>
@@ -14065,7 +14144,7 @@
       <para context="cli">
 	Devólvese unha regresión por separado para cada unha das variables
 	de <repl>ylista</repl>. Os resultados para cada ecuación inclúen as
-	probas <math>F</math> para cero restricións en todos os retardos
+	probas <math>F</math> para restricións cero en todos os retardos
 	de cada unha das variables, unha proba <math>F</math> sobre a
 	significación do retardo máximo e, cando especificas a opción
 	<opt>impulse-responses</opt>, as descomposicións da varianza da
@@ -14120,7 +14199,7 @@
     <description>
       <para>
 	Nesta caixa de diálogo especifica un VAR como sempre, pero utiliza o botón (con
-	frechas arriba/abaixo) do nivel de retardos para indicar o número máximo a probar.
+	frechas arriba/abaixo) do nivel de retardos, para indicar o número máximo a probar.
       </para>
       <para>
 	O resultado consiste nunha táboa que amosa os valores dos criterios de
@@ -14202,13 +14281,13 @@
     <description>
       <para context="cli">
 	Calcula o estatístico <math>F</math> para probar a hipótese nula de
-	que as varianzas nas poboacións das variables <repl>serie1</repl> e
+	que as varianzas poboacionais das variables <repl>serie1</repl> e
 	<repl>serie2</repl> son iguais, e amosa a súa probabilidade asociada
 	(valor p).
       </para>
       <para context="gui">
 	Calcula o estatístico <math>F</math> para probar a hipótese nula de
-	que as varianzas nas poboacións das dúas series elixidas son iguais, e
+	que as varianzas poboacionais das dúas series elixidas son iguais, e
 	amosa a súa probabilidade asociada (valor p).
       </para>
     </description>
@@ -14329,8 +14408,8 @@
 	endóxenas, expresadas en niveis. A inclusión de termos de tipo
 	determinístico no modelo, contrólase cos indicadores de opción.
 	Por defecto, cando non indicas ningunha opción, inclúese unha
-	<quote>Constante non restrinxida</quote>, o que permite que
-	haxa unha ordenada na orixe non nula nas relacións de cointegración,
+	<quote>Constante non restrinxida</quote>, o que permite que haxa
+	unha ordenada na orixe non nula nas relacións de cointegración,
 	así como unha tendencia nos niveis das variables endóxenas. A
 	literatura derivada do traballo de Johansen (por exemplo, podes
 	consultar o seu libro de 1995) habitualmente refírese a isto como
@@ -14341,7 +14420,7 @@
       </para>
 
       <para context="cli">
-	As listas <repl>xlista</repl> e <repl>rxlista</repl> (opcionais) te
+	As listas (opcionais) <repl>xlista</repl> e <repl>rxlista</repl> te
 	permiten especificar conxuntos de variables esóxenas que forman
 	parte do modelo, ben sen restricións (<repl>xlista</repl>) ou ben
 	restrinxidas ao espazo de cointegración (<repl>rxlista</repl>). Estas
@@ -14384,13 +14463,13 @@
       <para context="gui">
 	Se os datos son trimestrais ou mensuais, amósase un cadro de verificación que
 	te permite incluír un conxunto de variables ficticias estacionais centradas. En
-	todos os casos, outro cadriño de verificación (<quote>Amosar os detalles das regresión</quote>)
+	todos os casos, outro cadriño de verificación (<quote>Amosar os detalles das regresións</quote>)
 	permite presentar as regresións auxiliares que forman o punto de
-	inicio do procedemento de estimación máximo verosímil de Johansen.
+	inicio do procedemento de estimación Máximo Verosímil de Johansen.
       </para>
 
       <para context="cli">
-	O primeiro exemplo de arriba especifica un VECM cun nivel de retardos de 4, e
+	O primeiro exemplo de arriba especifica un VECM, cun nivel de retardos de 4 e
 	un único vector de cointegración. As variables endóxenas son <lit>Y1</lit>,
 	<lit>Y2</lit> e <lit>Y3</lit>. O segundo exemplo usa as mesmas variables pero
 	especifica un nivel de retardos de 3, e dous vectores de cointegración; tamén
@@ -14433,8 +14512,8 @@
 	O factor ten un valor mínimo de 1.0 cando a variable en cuestión
 	é ortogonal con respecto ás outras variables independentes.
 	<cite key="neter-etal90">Neter, Wasserman e Kutner (1990)</cite>
-	suxiren revisar o valor máis grande dos FIV para diagnosticar a
-	multicolinearidade; así, un valor maior ca 10 considérase ás veces
+	suxiren revisar o valor máis grande dos FIV para diagnosticar un alto grao
+	de multicolinearidade; así, un valor maior ca 10 considérase ás veces
 	indicativo dun grao de multicolinearidade problemático.
       </para>
     </description>
@@ -14485,7 +14564,7 @@
 	  tex="\[R^2 = 1 - \frac{\rm ESS}{\rm WTSS}\]"
 	  ascii="R^2 = 1 - ESS / WTSS"
 	  graphic="wlsr2"/>
-	onde ESS é a suma de erros cadrados da regresión ponderada e WTSS
+	onde ESS é a suma de erros cadrados da regresión ponderada, e WTSS
 	denota a <quote>Suma de cadrados totais ponderados</quote>, que é
 	igual á suma de erros cadrados da regresión da variable dependente
 	ponderada sobre unicamente a constante ponderada.
@@ -14494,19 +14573,19 @@
       <para context="cli">
 	Se <repl>varponder</repl> é unha variable ficticia, a estimación MCP
 	é equivalente á que resulta ao eliminar todas as observacións que
-	teñen un valor cero para <repl>varponder</repl>.
+	teñen un valor de cero para <repl>varponder</repl>.
       </para>
 
       <para context="gui">
-	Sexa 'varponder' a variable escollida no cadriño 'Variable de ponderación'.
+	Sexa 'varponder' a variable escollida no cadriño 'Variable de ponderacións'.
 	Execútase unha regresión MCO, onde a variable dependente é o produto
-	da raíz cadrada positiva de varponder e a variable dependente elixida,
+	da raíz cadrada positiva de 'varponder' e a variable dependente elixida,
 	e as variables independentes se multiplican tamén pola raíz cadrada
-	de varponder. Os estatísticos como <emphasis>R</emphasis>-cadrado
-	baséase nos datos ponderados. Se varponder é unha variable ficticia,
+	de 'varponder'. Os estatísticos como <emphasis>R</emphasis>-cadrado
+	baséase nos datos ponderados. Se 'varponder' é unha variable ficticia,
 	a estimación de mínimos cadrados ponderados é equivalente á que
-	resulta ao eliminar todas as observacións que teñen un valor cero
-	para varponder.
+	resulta ao eliminar todas as observacións que teñen un valor de cero
+	para 'varponder'.
       </para>
     </description>
 
@@ -14549,7 +14628,7 @@
 	usando a instrución <cmdref targ="set"/>, como en
       </para>
       <code>
-	set workdir /ruta/a/algúnsitio
+	set workdir /ruta/a/unsitio
       </code>
       <para>
 	Podes revisar o valor vixente da variable <lit>workdir</lit> no
@@ -14598,8 +14677,8 @@
       <para>
 	Se escolles <quote>Executar directamente ARIMA-X-12 </quote> entón
 	Gretl escribe un ficheiro de instrucións para ARIMA X-12, e solicita
-	que o programa x12a execute as instrucións. Neste caso, tes a
-	posibilidade de xerar unha gráfica e/ou gardar series escollidas do
+	que o programa 'x12a' execute as instrucións. Neste caso, tes a
+	posibilidade de xerar unha gráfica, e/ou gardar series escollidas do
 	resultado no conxunto de datos de Gretl.
       </para>
       <para>
@@ -14607,10 +14686,10 @@
 	Gretl escribe un ficheiro de instrucións para ARIMA X-12 (igual que no
 	caso de arriba), pero entón abre este ficheiro nunha xanela do editor.
 	Nesta xanela podes facer cambios e gardar o ficheiro co nome que ti
-	elixas. Tamén podes enviar o ficheiro para que o execute x12a (premendo
+	elixas. Tamén podes enviar o ficheiro para que o execute 'x12a' (premendo
 	un clic no botón <quote>Executar</quote> na barra de ferramentas da
 	xanela do editor) e comprobar o resultado. Pero neste caso, non tes a
-	posibilidade de gardar os datos como series nin de xerar unha gráfica
+	posibilidade de gardar os datos como series, nin de xerar unha gráfica
 	de Gretl.
       </para>
     </description>
@@ -14640,7 +14719,7 @@
     <description>
       <para>
 	Presenta e debuxa o correlograma cruzado de <repl>serie1</repl>
-	con <repl>serie2</repl>, que podes especificar mediante os seus
+	con <repl>serie2</repl>, as que podes especificar mediante os seus
 	nomes ou os seus números. Os valores son os coeficientes de
 	correlación na mostra entre o valor vixente de <repl>serie1</repl>
 	e os sucesivos adiantos e retardos de
@@ -14649,7 +14728,7 @@
       <para>
 	Se especificas un valor para <repl>nivel</repl>, a longura do
 	correlograma cruzado limítase a ese número de adiantos e retardos
-	(cando menos); noutro caso, a longura determínase de forma
+	(cando menos); se non, a longura determínase de forma
 	automática en función da frecuencia dos datos e do número de
 	observacións.
       </para>
@@ -14723,7 +14802,7 @@
 	que todas as variables teñen que estar marcadas como discretas. Como
 	alternativa, cando indicas a opción <opt>matrix</opt>, se trata a matriz
 	indicada como un conxunto calculado previamente de frecuencias a
-	presentar como unha tabulación cruzada (consulta tamén a función
+	presentar como tabulación cruzada (consulta tamén a función
 	<fncref targ="mxtab"/>). Neste caso deberás de omitir o argumento
 	<argname>list</argname>.
       </para>
@@ -14739,8 +14818,8 @@
       <para>
 	A proba de independencia khi-cadrado de Pearson amósase se a frecuencia
 	agardada baixo independencia é cando menos de 1.0e-7 para todas as celas.
-	Unha regra xeral habitual da validez deste estatístico é que polo menos
-	o 80 por cento das celas deben de ter frecuencias agardadas iguais a 5
+	Unha regra xeral habitual da validez deste estatístico é que, polo menos
+	o 80 por cento das celas, deben de ter frecuencias agardadas iguais a 5
 	ou máis; e se este criterio non se cumpre, preséntase unha advertencia.
       </para>
       <para>
@@ -14748,8 +14827,8 @@
 	independencia de Fisher. Cae na conta de que esta proba baséase no
 	suposto de que os totais por fila e por columna son fixos, o que pode
 	ser ou non ser adecuado dependendo de como se xeraron os datos. Debes
-	de utilizar a probabilidade asociada (valor p) da esquerda cando a
-	alternativa á independencia é a asociación negativa (os valores tenden
+	de utilizar a probabilidade asociada (valor p) da esquerda cando a hipótese
+	alternativa á de independencia é a asociación negativa (os valores tenden
 	a agruparse nas celas de abaixo á esquerda e de arriba á dereita); e
 	debes de utilizar o valor p da dereita se a alternativa é a asociación
 	positiva. O valor p de dúas colas para esta proba calcúlase mediante o
@@ -14780,17 +14859,17 @@
       <para>
 	Por defecto, nas celas e nas marxes da táboa amósanse os valores que
 	contan a frecuencia. Porén, podes escoller que se amosen no seu lugar
-	as porcentaxes, ben por filas ou ben por columnas.
+	as porcentaxes, ben por filas, ou ben por columnas.
       </para>
       <para>
 	Por defecto, as celas cun reconto de cero casos amósanse como baldeiras,
-	pero podes escoller que se amose o valor cero explicitamente.
+	pero podes escoller que se amose explicitamente o valor cero.
       </para>
       <para>
 	A proba de independencia khi-cadrado de Pearson amósase se a frecuencia
 	agardada baixo independencia é cando menos de 1.0e-7 para todas as celas.
-	Unha regra xeral habitual da validez deste estatístico é que polo menos
-	o 80 por cento das celas deben de ter frecuencias agardadas iguais a 5
+	Unha regra xeral habitual da validez deste estatístico é que, polo menos
+	o 80 por cento das celas, deben de ter frecuencias agardadas iguais a 5
 	ou máis; e se este criterio non se cumpre, preséntase unha advertencia.
       </para>
       <para>
@@ -14798,8 +14877,8 @@
 	independencia de Fisher. Cae na conta de que esta proba baséase no
 	suposto de que os totais por fila e por columna son fixos, o que pode
 	ser ou non ser adecuado dependendo de como se xeraron os datos. Debes
-	de utilizar a probabilidade asociada (valor p) da esquerda cando a
-	alternativa á independencia é a asociación negativa (os valores tenden
+	de utilizar a probabilidade asociada (valor p) da esquerda cando a hipótese
+	alternativa á de independencia é a asociación negativa (os valores tenden
 	a agruparse nas celas de abaixo á esquerda e de arriba á dereita); e
 	debes de utilizar o valor p da dereita se a alternativa é a asociación
 	positiva. O valor p de dúas colas para esta proba calcúlase mediante o

@@ -10,7 +10,7 @@
  <gentext key="examples"      text="Exemplos:   "/>
  <gentext key="example"       text="Exemplo:    "/>
  <gentext key="output"        text="Resultado:     "/>
- <gentext key="guidebook"     text="Guía de usuario de Gretl"/>
+ <gentext key="guidebook"     text="Manual de usuario de Gretl"/>
  <gentext key="funcchap"      text="Referencia ás funcións de Gretl"/>
  <gentext key="menupath"      text="Ruta do menú:    "/>
  <gentext key="otheraccess"   text="Outro acceso: "/>
