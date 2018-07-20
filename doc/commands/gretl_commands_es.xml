@@ -293,11 +293,14 @@
 	Se estima la regresión de Dickey&ndash;Fuller utilizando <math>k</math> retardos de la variable dependiente.
       </para>
 	</li>
-	<li><para>
-	¿Es significativo el último retardo? Si lo es, se ejecuta el contraste con un orden de retardos
-	<math>k</math>. Si no lo es, se hace que <math>k</math> = <math>k</math> &minus; 1,
-	y se vuelve al paso 1 con un retardo menos. El proceso se repite hasta que sea significativo
-	el último retardo de una regresión, o hasta que <math>k</math> sea 0 (se haría el contraste con un orden de retardos igual a 0).
+	<li><para> ¿Es significativo el último retardo? Si lo es, se
+	ejecuta el contraste con un orden de retardos
+	<math>k</math>. Si no lo es, se hace que <math>k</math> =
+	<math>k</math> &minus; 1, y se vuelve al paso 1 con un retardo
+	menos. El proceso se repite hasta que sea significativo el
+	último retardo de una regresión, o hasta que <math>k</math>
+	sea 0 (se haría el contraste con un orden de retardos igual a
+	0).
 	    </para>
 	</li>
       </nlist>
@@ -8321,7 +8324,7 @@
     <description context="cli">
       <para>
 	Permite manejar la <quote>Tabla de modelos</quote> de Gretl;
-	consulta <guideref targ="chap:muedes"/> para obtener más
+	consulta <guideref targ="chap:modes"/> para obtener más
 	detalles. Las instrucciones subordinadas tienen los siguientes efectos:
 	<cmd>add</cmd> añade el último modelo estimado a la tabla
 	de modelos, cuando sea posible; <cmd>show</cmd> muestra la tabla
