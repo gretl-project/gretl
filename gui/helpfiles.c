@@ -1962,13 +1962,6 @@ static void find_string_dialog (void (*findfunc)(), windata_t *vwin)
 }
 
 enum {
-    EN_LETTER,
-    EN_A4,
-    ITALIAN,
-    SPANISH
-};
-
-enum {
     GRETL_GUIDE = 1,
     GRETL_REF,
     GNUPLOT_REF,
