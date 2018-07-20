@@ -2171,7 +2171,7 @@ static int ivreg_autocorr_test (MODEL *pmod, int order,
 static int lb_autocorr_test (MODEL *pmod, int order, 
 			     gretlopt opt, PRN *prn)
 {
-    double lb, pval;
+    double lb, pval = NADBL;
     int df, err = 0;
 
     df = order - arma_model_get_n_arma_coeffs(pmod);
