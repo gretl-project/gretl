@@ -63,7 +63,11 @@ static int dbn_dset_from_csv (DATASET *dbset,
 	gretl_push_c_numeric_locale();
 	fputs("obs dbnomics_data\n", fp);
 	for (t=0; t<T; t++) {
-	    fprintf(fp, "%s %.12g\n", S[t], v->val[t]);
+	    if (xna(v->val[t])) {
+		fprintf(fp, "%s NA\n", S[t]);
+	    } else {
+		fprintf(fp, "%s %.12g\n", S[t], v->val[t]);
+	    }
 	}
 	gretl_pop_c_numeric_locale();
 

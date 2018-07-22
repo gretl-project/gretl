@@ -4008,7 +4008,7 @@ static int prep_dbnomics_series (gretl_bundle *b,
     T = gretl_bundle_get_int(b, "T", &err);
     A = gretl_bundle_get_array(b, "period", &err);
     v = gretl_bundle_get_matrix(b, "value", &err);
-    id = gretl_bundle_get_string(b, "id", &err);
+    id = gretl_bundle_get_string(b, "series_code", &err);
 
     if (!err && (T <= 0 || A == NULL || v == NULL)) {
 	err = E_DATA;
@@ -4028,7 +4028,11 @@ static int prep_dbnomics_series (gretl_bundle *b,
 	    gretl_push_c_numeric_locale();
 	    fputs("obs dbnomics_data\n", fp);
 	    for (t=0; t<T; t++) {
-		fprintf(fp, "%s %.12g\n", S[t], v->val[t]);
+		if (xna(v->val[t])) {
+		    fprintf(fp, "%s NA\n", S[t]);
+		} else {
+		    fprintf(fp, "%s %.12g\n", S[t], v->val[t]);
+		}
 	    }
 	    gretl_pop_c_numeric_locale();
 	    fclose(fp);
