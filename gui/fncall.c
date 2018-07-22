@@ -4244,13 +4244,14 @@ int dbnomics_get_series_call (const char *datacode)
 					      NULL, NULL, prn);
 		    if (err) {
 			gui_errmsg(err);
+		    } else {
+			view_buffer(prn, 78, 350, title, VIEW_DBNOMICS, b);
+			prn = NULL; /* ownership taken by viewer */
 		    }
 		}
 	    }
-	    view_buffer(prn, 78, 350, title, VIEW_DBNOMICS, b);
 	}
 	g_free(title);
-	prn = NULL; /* note: ownership is taken by viewer */
     }
 
     gretl_print_destroy(prn);

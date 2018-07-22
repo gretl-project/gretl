@@ -4060,25 +4060,28 @@ int add_dbnomics_data (windata_t *vwin)
 	err = prep_dbnomics_series(b, dbset);
 	if (!err) {
 	    char vname[VNAMELEN];
-	    char const *s1, *s2, *id;
+	    const char *S[4];
+	    gchar *full_id = NULL;
 	    char *descrip = NULL;
 	    int cancel = 0;
 
 	    /* construct a default name for the series */
 	    *vname = '\0';
-	    id = gretl_bundle_get_string(b, "id", &err);
+	    S[0] = gretl_bundle_get_string(b, "series_code", &err);
 	    if (!err) {
-		normalize_join_colname(vname, id, 0, 0);
+		normalize_join_colname(vname, S[0], 0, 0);
 	    }
 	    /* construct its description */
-	    s1 = gretl_bundle_get_string(b, "datacode", &err);
-	    s2 = gretl_bundle_get_string(b, "series_name", &err);
+	    S[1] = gretl_bundle_get_string(b, "provider_code", &err);
+	    S[2] = gretl_bundle_get_string(b, "dataset_code", &err);
+	    S[3] = gretl_bundle_get_string(b, "series_name", &err);
 	    if (!err) {
-		descrip = g_strdup_printf("%s: %s", s1, s2);
+		full_id = g_strdup_printf("%s/%s/%s", S[1], S[2], S[0]);
+		descrip = g_strdup_printf("%s: %s", full_id, S[3]);
 	    }
 	    name_new_series_dialog(vname, descrip, vwin, &cancel);
 	    if (!cancel) {
-		set_dbnomics_id(s1);
+		set_dbnomics_id(full_id);
 		strcpy(dbset->varname[1], vname);
 		series_set_label(dbset, 1, descrip);
 		series_set_display_name(dbset, 1, "");
@@ -4086,6 +4089,7 @@ int add_dbnomics_data (windata_t *vwin)
 		unset_dbnomics_id();
 	    }
 	    g_free(descrip);
+	    g_free(full_id);
 	}
 	if (freeit) {
 	    destroy_dataset(dbset);
