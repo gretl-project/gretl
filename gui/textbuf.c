@@ -3200,33 +3200,46 @@ static int maybe_insert_smart_tab (windata_t *vwin)
     GtkTextBuffer *tbuf;
     GtkTextMark *mark;
     GtkTextIter start, end;
-    gchar *chunk = NULL;
+    int curr_nsp = 0;
     int pos = 0, ret = 0;
 
     tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
 
     if (gtk_text_buffer_get_selection_bounds(tbuf, &start, &end)) {
+	/* don't do this if there's a selection in place */
 	return 0;
     }
 
+    /* mark the text insertion point */
     mark = gtk_text_buffer_get_insert(tbuf);
+    /* get a GtkTextIter at that point */
     gtk_text_buffer_get_iter_at_mark(tbuf, &end, mark);
+    /* and determine the offset at that iter */
     pos = gtk_text_iter_get_line_offset(&end);
 
     if (pos == 0) {
+	/* we're at the left margin */
 	ret = 1;
     } else {
+	gchar *chunk;
+
 	start = end;
+	/* make @start point to the start of the relevant line */
 	gtk_text_iter_set_line_offset(&start, 0);
+	/* capture the text between line start and insertion point */
 	chunk = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
+	/* set @ret only if this text is just white space */
 	ret = strspn(chunk, " \t") == strlen(chunk);
+	g_free(chunk);
     }
 
     if (ret) {
+	/* there's no actual text to the left of @pos */
 	GtkTextIter prev = start;
 	char *s, thisword[9];
 	char prevword[9];
-	int i, nsp = 0, contd = 0;
+	int contd = 0;
+	int i, nsp = 0;
 
 	*thisword = '\0';
 
@@ -3237,6 +3250,7 @@ static int maybe_insert_smart_tab (windata_t *vwin)
 		    "current line = '%s'\n", s);
 #endif
 	    sscanf(s, "%8s", thisword);
+	    curr_nsp = strspn(s, " \t");
 	    g_free(s);
 	}
 
@@ -3245,27 +3259,21 @@ static int maybe_insert_smart_tab (windata_t *vwin)
 	if (contd) {
 	    nsp += 2;
 	} else {
-#if TABDEBUG > 1
-	    fprintf(stderr, "*** maybe_insert_smart_tab: "
-		    "getting leading spaces\n");
-#endif
 	    nsp += incremental_leading_spaces(prevword, thisword);
+#if TABDEBUG > 1
+	    fprintf(stderr, "    leading spaces: nsp + incr = %d\n", nsp);
+#endif
 	}
 
-	if (pos > 0) {
+	if (curr_nsp > 0) {
+	    end = start;
+	    gtk_text_iter_set_line_offset(&end, curr_nsp);
 	    gtk_text_buffer_delete(tbuf, &start, &end);
 	}
+	gtk_text_iter_set_line_offset(&start, 0);
 	for (i=0; i<nsp; i++) {
 	    gtk_text_buffer_insert(tbuf, &start, " ", -1);
 	}
-	if (pos > 0) {
-	    s = chunk + strspn(chunk, " \t");
-	    gtk_text_buffer_insert(tbuf, &start, s, -1);
-	}
-    }
-
-    if (chunk != NULL) {
-	g_free(chunk);
     }
 
     return ret;
