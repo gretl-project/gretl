@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2018-07-20 07:46-0400\n"
-"PO-Revision-Date: 2018-02-06 09:23+0100\n"
+"PO-Revision-Date: 2018-07-22 18:24+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -1208,7 +1208,7 @@ msgstr "Dati aggiunti con successo\n"
 #: lib/src/dataio.c:110
 #, c-format
 msgid "'%s' shadows a function of the same name"
-msgstr ""
+msgstr "'%s' si sovrappone a una funzione con lo stesso nome"
 
 #: lib/src/dataio.c:135
 msgid "Varname exceeds the maximum of 31 characters"
@@ -2299,9 +2299,9 @@ msgid "Generated series %s (ID %d)"
 msgstr "Generata la serie %s (ID %d)"
 
 #: lib/src/geneval.c:1525
-#, fuzzy, c-format
+#, c-format
 msgid "arg %d is missing or of invalid type"
-msgstr "Lunghezza della serie di dati mancante o non valida"
+msgstr "arg %d mancante o di tipo non valido"
 
 #: lib/src/geneval.c:2103 lib/src/gretl_foreign.c:105
 msgid "MPI is not supported in this gretl build"
@@ -2397,7 +2397,7 @@ msgstr "L'operatore '%s' non è valido in questo contesto"
 
 #: lib/src/geneval.c:12285
 msgid "Bandwidth cannot be negative with more than 3 arguments"
-msgstr ""
+msgstr "L'ampiezza di banda non può essere negativa, con più di 3 argomenti"
 
 #: lib/src/geneval.c:12874
 msgid "array: no type was specified"
@@ -2471,7 +2471,7 @@ msgstr "Una variabile di tipo %s non è accettabile nel contesto"
 #: lib/src/geneval.c:16158
 #, c-format
 msgid "Incompatible types in assignment: %s %s %s"
-msgstr ""
+msgstr "Tipi incompatibili in assegnamento: %s %s %s"
 
 #: lib/src/geneval.c:16237
 #, c-format
@@ -2756,7 +2756,7 @@ msgstr "Generata la stringa %s"
 #: lib/src/genmain.c:304
 #, c-format
 msgid "'%s' is a reserved word"
-msgstr ""
+msgstr "'%s' è una parola riservata"
 
 #: lib/src/genmain.c:582
 msgid "Periodic dummy variables generated.\n"
@@ -3187,9 +3187,9 @@ msgstr "xmlDocGetRootElement fallito"
 
 #: lib/src/gretl_bundle.c:2330 lib/src/gretl_bundle.c:2458
 #: lib/src/gretl_bundle.c:2465
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no data available"
-msgstr "%s: non è una variabile stringa"
+msgstr "%s: non ci sono dati disponibili"
 
 #: lib/src/gretl_errors.c:40
 msgid "Data error"
@@ -3410,7 +3410,7 @@ msgid "MPI is already initialized"
 msgstr "MPI già inizialiazzato"
 
 #: lib/src/gretl_func.c:575
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't find function %s"
 msgstr "Non trovo la funzione \"%s\""
 
@@ -3438,7 +3438,7 @@ msgstr "Impossibile aprire %s"
 #: lib/src/gretl_func.c:3333
 #, c-format
 msgid "PDF doc should be called %s.pdf"
-msgstr ""
+msgstr "Il file PDF deve chiamarsi %s.pdf"
 
 #: lib/src/gretl_func.c:3715 gui/fnsave.c:3933
 #, c-format
@@ -3479,9 +3479,9 @@ msgid "'%s' is the name of a built-in function"
 msgstr "'%s' è il nome di una funzione interna"
 
 #: lib/src/gretl_func.c:5753 lib/src/gretl_func.c:5756
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is the name of a variable"
-msgstr "'%s' non è il nome di una variabile"
+msgstr "'%s' è il nome di una variabile"
 
 #: lib/src/gretl_func.c:5801
 #, c-format
@@ -3889,9 +3889,8 @@ msgid "with asymptotic p-value"
 msgstr "con p-value asintotico"
 
 #: lib/src/gretl_model.c:4406
-#, fuzzy
 msgid "with bootstrap p-value"
-msgstr "con p-value"
+msgstr "con p-value da bootstrap"
 
 #: lib/src/gretl_model.c:6765
 msgid "Can't retrieve uhat: data set has changed"
@@ -5453,9 +5452,9 @@ msgid "= MLE"
 msgstr "= MLE"
 
 #: lib/src/modelprint.c:1788
-#, fuzzy, c-format
+#, c-format
 msgid "Estimated using AS %d"
-msgstr "Stimato usando il metodo BHHH"
+msgstr "Stimato usando AS %d"
 
 #: lib/src/modelprint.c:1790
 msgid "Estimated using Kalman filter"
@@ -6887,11 +6886,8 @@ msgid "Criterion"
 msgstr "Criterio"
 
 #: lib/src/printout.c:2951
-#, fuzzy
 msgid "FINAL VALUES"
-msgstr ""
-"\n"
-"--- VALORI FINALI: \n"
+msgstr "VALORI FINALI"
 
 #: lib/src/printout.c:2953
 msgid "Iteration"
@@ -7030,9 +7026,9 @@ msgid "GED (shape = %g): "
 msgstr "GED (forma = %g): "
 
 #: lib/src/pvalues.c:3596
-#, fuzzy, c-format
+#, c-format
 msgid "Laplace (mean = %g, shape = %g): "
-msgstr "Weibull (forma = %g, scala = %g): "
+msgstr "Laplace (media = %g, forma = %g): "
 
 #: lib/src/strutils.c:703 lib/src/strutils.c:722 lib/src/tokenize.c:3195
 #, c-format
@@ -8914,17 +8910,16 @@ msgstr "Osservazioni"
 #: gui/database.c:1918
 #, c-format
 msgid "Results of DB.NOMICS search on '%s'\n"
-msgstr ""
+msgstr "Risultati della ricerca in DB.NOMICS di '%s'\n"
 
 #: gui/database.c:1977
 #, c-format
 msgid "DB.NOMICS search on '%s' in dataset %s/%s\n"
-msgstr ""
+msgstr "Ricerca di '%s' nel dataset DB.NOMICS '%s/%s'\n"
 
 #: gui/database.c:2093
-#, fuzzy
 msgid "No matches were found"
-msgstr "Non è stata trovata alcuna osservazione"
+msgstr "Non ho trovato niente"
 
 #: gui/database.c:2411
 msgid ""
@@ -8968,22 +8963,20 @@ msgstr "Non è stato trovato alcun file database"
 #: gui/database.c:3403
 #, c-format
 msgid "showing datasets %d-%d of %d"
-msgstr ""
+msgstr "dataset mostrati: %d-%d (su %d)"
 
 #: gui/database.c:3406
 #, c-format
 msgid "showing series %d-%d of %d"
-msgstr ""
+msgstr "serie mostrate: %d-%d (su %d)"
 
 #: gui/database.c:3456
-#, fuzzy
 msgid "No datasets were found"
-msgstr "Non sono stati trovati dati utilizzabili"
+msgstr "Non sono stati trovati dataset"
 
 #: gui/database.c:3544 gui/database.c:3573
-#, fuzzy
 msgid "No series were found"
-msgstr "Non è stata trovata alcuna osservazione"
+msgstr "Non è stata trovata alcuna serie<"
 
 #: gui/database.c:3691 gui/database.c:3814
 msgid "No function packages found"
@@ -9115,16 +9108,14 @@ msgid "Browse..."
 msgstr "Sfoglia..."
 
 #: gui/datafiles.c:1640 gui/gretl.c:1652
-#, fuzzy
 msgid "Specific series..."
-msgstr "_Serie storiche..."
+msgstr "Serie specifica..."
 
 #: gui/datafiles.c:1674
 msgid "Select directory"
 msgstr "Seleziona directory"
 
 #: gui/datafiles.c:1676
-#, fuzzy
 msgid "Details"
 msgstr "Mostra dettagli"
 
@@ -9142,29 +9133,27 @@ msgstr "Sistema locale"
 
 #: gui/datafiles.c:1693
 msgid "First"
-msgstr ""
+msgstr "Prima"
 
 #: gui/datafiles.c:1694
-#, fuzzy
 msgid "Previous"
-msgstr "Serie precedente"
+msgstr "Precedente"
 
 #: gui/datafiles.c:1695
 msgid "Next"
-msgstr ""
+msgstr "Seguente"
 
 #: gui/datafiles.c:1696
 msgid "Last"
-msgstr ""
+msgstr "Ultima"
 
 #: gui/datafiles.c:1714
 msgid "Remove from menu"
 msgstr "Rimuovi dal menu"
 
 #: gui/datafiles.c:1767
-#, fuzzy
 msgid "List datasets"
-msgstr "Lista dei database"
+msgstr "Lista dei dataset"
 
 #: gui/datafiles.c:1848
 msgid "All packages"
@@ -9206,7 +9195,7 @@ msgstr "gretl: database sul server"
 
 #: gui/datafiles.c:2045
 msgid "gretl: DB.NOMICS providers"
-msgstr ""
+msgstr "gretl: provider DB.NOMICS"
 
 #: gui/datafiles.c:2047
 msgid "gretl: function packages on server"
@@ -9271,13 +9260,12 @@ msgid "Local status"
 msgstr "Stato"
 
 #: gui/datafiles.c:2855 gui/datafiles.c:2859 gui/datafiles.c:2863
-#, fuzzy
 msgid "Code"
-msgstr "Codebook"
+msgstr "Codice"
 
 #: gui/datafiles.c:2860
 msgid "Content"
-msgstr ""
+msgstr "Contenuto"
 
 #: gui/datafiles.c:2867 gui/datafiles.c:2874 gui/datafiles.c:2882
 #: gui/datafiles.c:2888
@@ -10300,9 +10288,8 @@ msgid "Lags"
 msgstr "Ritardi"
 
 #: gui/dialogs.c:6680
-#, fuzzy
 msgid "series code:"
-msgstr "serie"
+msgstr "codice della serie:"
 
 #: gui/dlgutils.c:758
 msgid "Add equation"
@@ -10562,14 +10549,14 @@ msgid "Residual from EMA of %s (current weight %g)"
 msgstr "Residuo della EMA di %s (peso attuale: %g)"
 
 #: gui/filters.c:232
-#, fuzzy, c-format
+#, c-format
 msgid "Filtered %s: one-sided Hodrick-Prescott trend (lambda = %g)"
-msgstr "%s filtrata: trend di Hodrick-Prescott (lambda = %g)"
+msgstr "%s filtrata: trend di Hodrick-Prescott a un lato (lambda = %g)"
 
 #: gui/filters.c:235
-#, fuzzy, c-format
+#, c-format
 msgid "Filtered %s: one-sided Hodrick-Prescott cycle (lambda = %g)"
-msgstr "%s filtrata: ciclo di Hodrick-Prescott (lambda = %g)"
+msgstr "%s filtrata: ciclo di Hodrick-Prescott a un lato (lambda = %g)"
 
 #: gui/filters.c:240
 #, c-format
@@ -10698,7 +10685,7 @@ msgstr "lambda (valori maggiori -> trend più smussato):"
 
 #: gui/filters.c:743
 msgid "One-sided"
-msgstr ""
+msgstr "A un lato"
 
 #: gui/filters.c:754
 msgid "k (higher values -> better approximation):"
@@ -11812,13 +11799,12 @@ msgid "graph page options"
 msgstr "Opzioni per la pagina dei grafici"
 
 #: gui/gretl.c:122
-#, fuzzy
 msgid ""
 "\n"
 "You may supply the name of a data or script file on the command line"
 msgstr ""
 "\n"
-"È possibile indicare il nome di un file di dati sulla riga di comando"
+"È possibile indicare il nome di un file di dati o uno script sulla riga di comando"
 
 #: gui/gretl.c:126
 msgid "open a script file on startup"
@@ -13917,23 +13903,20 @@ msgid "all pages"
 msgstr "tutte le pagine"
 
 #: gui/helpfiles.c:973
-#, fuzzy
 msgid "selected dataset"
-msgstr "Variabili selezionate"
+msgstr "dataset selezionato"
 
 #: gui/helpfiles.c:975
-#, fuzzy
 msgid "this dataset"
-msgstr "Aggiungi al dataset"
+msgstr "questo dataset"
 
 #: gui/helpfiles.c:977
 msgid "all DB.NOMICS"
-msgstr ""
+msgstr "tutto DB.NOMICS"
 
 #: gui/helpfiles.c:979
-#, fuzzy
 msgid "this window"
-msgstr "Finestra principale"
+msgstr "Questa finestra"
 
 #: gui/helpfiles.c:1045 gui/textutil.c:288
 msgid "Find:"
@@ -16772,9 +16755,8 @@ msgid "OK"
 msgstr "OK"
 
 #: gui/textbuf.c:1339
-#, fuzzy
 msgid "Next results"
-msgstr "Serie successiva"
+msgstr "Risultati successivi"
 
 #: gui/textbuf.c:1385
 msgid "processing...\n"
@@ -17063,7 +17045,6 @@ msgid "OLS model"
 msgstr "Modello OLS"
 
 #: gui/toolbar.c:1457
-#, fuzzy
 msgid "databases"
 msgstr "Database"
 
@@ -17449,9 +17430,8 @@ msgid "MA estimate(s) out of bounds\n"
 msgstr "La stima della parte MA è fuori dai limiti.\n"
 
 #: plugin/arma.c:1299
-#, fuzzy
 msgid "BFGS iteration"
-msgstr "iterazione"
+msgstr "iterazione BFGS"
 
 #: plugin/arma.c:1365
 msgid "ARMA initialization"
@@ -17478,9 +17458,8 @@ msgid "using linear AR model"
 msgstr "usando modello AR lineare"
 
 #: plugin/arma_cml.c:701
-#, fuzzy
 msgid "BHHH iteration"
-msgstr "iterazione"
+msgstr "iterazione BHHH"
 
 #: plugin/arma_common.c:520
 msgid "No usable data were found"
@@ -17493,7 +17472,7 @@ msgstr "Errore nel comando arma"
 #: plugin/arma_init.c:94
 #, c-format
 msgid "Scaling y by %g\n"
-msgstr ""
+msgstr "Fattore di scala: %g\n"
 
 #: plugin/arma_x12.c:916
 msgid "Failed to execute x12arima"
