@@ -2757,6 +2757,11 @@ static void check_for_comment (const char *s, int *incomm)
     }
 }
 
+/* determine whether a given line is subject to
+   continuation (i.e. ends with backslash or comma,
+   other then in a comment)
+*/
+
 static int line_broken (const char *s)
 {
     int ret = 0;
@@ -2764,11 +2769,13 @@ static int line_broken (const char *s)
     if (*s != '\0') {
 	int i, n = strlen(s);
 
-	for (i=n-1; i>0; i--) {
+	for (i=n-1; i>=0; i--) {
 	    if (s[i] == '\\' || s[i] == ',') {
 		ret = 1;
+	    } else if (!ret && !isspace(s[i])) {
 		break;
-	    } else if (!isspace(s[i])) {
+	    } else if (ret && s[i] == '#') {
+		ret = 0;
 		break;
 	    }
 	}
@@ -2792,6 +2799,21 @@ static void strip_trailing_whitespace (char *s)
     strcat(s, "\n");
 }
 
+/* determine position of unmatched left parenthesis,
+   when applicable, if @s starts a function definition
+*/
+
+static int left_paren_offset (const char *s)
+{
+    const char *p = strchr(s, '(');
+
+    if (p != NULL && strchr(p, ')') == NULL) {
+	return p - s;
+    } else {
+	return 0;
+    }
+}
+
 static void normalize_indent (GtkTextBuffer *tbuf,
 			      const gchar *buf,
 			      GtkTextIter *start,
@@ -2804,6 +2826,8 @@ static void normalize_indent (GtkTextBuffer *tbuf,
     const char *ins;
     int incomment = 0;
     int inforeign = 0;
+    int lp_pos = 0;
+    int lp_zero = 0;
     int i, nsp;
 
     if (buf == NULL) {
@@ -2846,6 +2870,11 @@ static void normalize_indent (GtkTextBuffer *tbuf,
 		    handled = 1;
 		}
 	    } else {
+		if (!strcmp(word, "function")) {
+		    lp_pos = left_paren_offset(ins);
+		} else if (lp_pos > 0 && strchr(ins, ')') != NULL) {
+		    lp_zero = 1;
+		}
 		adjust_indent(word, &this_indent, &next_indent);
 	    }
 	}
@@ -2854,7 +2883,11 @@ static void normalize_indent (GtkTextBuffer *tbuf,
 	    if (incomment == 2) {
 		nsp += 3;
 	    } else if (line_broken(lastline)) {
-		nsp += 2;
+		if (lp_pos > 0) {
+		    nsp = lp_pos + 1;
+		} else {
+		    nsp += 2;
+		}
 	    }
 	    for (i=0; i<nsp; i++) {
 		gtk_text_buffer_insert(tbuf, start, " ", -1);
@@ -2862,6 +2895,9 @@ static void normalize_indent (GtkTextBuffer *tbuf,
 	    gtk_text_buffer_insert(tbuf, start, ins, -1);
 	}
 	strcpy(lastline, line);
+	if (lp_zero) {
+	    lp_zero = lp_pos = 0;
+	}
     }
 
     bufgets_finalize(buf);
@@ -3047,7 +3083,9 @@ static int count_leading_spaces (const char *s)
    leading spaces are on the line, counting tabs as multiple spaces.
 */
 
-static int leading_spaces_at_iter (GtkTextBuffer *tbuf, GtkTextIter *start)
+static int leading_spaces_at_iter (GtkTextBuffer *tbuf,
+				   GtkTextIter *start,
+				   const char *word)
 {
     GtkTextIter end = *start;
     gchar *s;
@@ -3056,7 +3094,11 @@ static int leading_spaces_at_iter (GtkTextBuffer *tbuf, GtkTextIter *start)
     gtk_text_iter_forward_to_line_end(&end);
     s = gtk_text_buffer_get_text(tbuf, start, &end, FALSE);
     if (s != NULL) {
-	n = count_leading_spaces(s);
+	if (!strcmp(word, "function")) {
+	    n = left_paren_offset(s) - 1;
+	} else {
+	    n = count_leading_spaces(s);
+	}
 	g_free(s);
     }
 
@@ -3104,7 +3146,7 @@ static int line_continues (const gchar *s)
 
     for (i=n-1; i>=0; i--) {
 	if (s[i] != ' ' && s[i] != '\t') {
-	    return (s[i] == '\\');
+	    return (s[i] == '\\' || s[i] == ',');
 	}
     }
 
@@ -3183,7 +3225,7 @@ static char *get_previous_line_start_word (char *word,
 	}
 
 	if (*word != '\0' && leadspace != NULL) {
-	    *leadspace = leading_spaces_at_iter(tbuf, &prev);
+	    *leadspace = leading_spaces_at_iter(tbuf, &prev, word);
 	}
     }
 
@@ -3234,7 +3276,7 @@ static int maybe_insert_smart_tab (windata_t *vwin)
     }
 
     if (ret) {
-	/* there's no actual text to the left of @pos */
+	/* OK, there's no actual text to the left of @pos */
 	GtkTextIter prev = start;
 	char *s, thisword[9];
 	char prevword[9];
