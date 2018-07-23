@@ -140,33 +140,7 @@ function bundle dbnomics_get_series (const string datacode, bool verbose[0])
     endif
 
     ret = b.series.data[1]
-    ret.error = 0
-    ret.frequency = bundle_get_frequency(ret)
-    t1 = 1
-    t2 = nelem(ret.period)
-    loop j=1..t2 -q
-        if ret.value[j] == "" || ret.value[j] == "NA"
-            t1++
-        else
-            break
-        endif
-    endloop
-    T = t2 - t1 + 1
-    ret.T = T
-    ret.has_data = T > 0
-    if T > 0
-        if t1 > 1
-            ret.period = ret.period[t1:t2]
-        endif
-        matrix vals = zeros(T, 1)
-        j = 1
-        loop t=t1..t2 -q
-            vals[j] = atof(ret.value[t])
-            j++
-        endloop
-        ret.value = vals
-    endif
-
+    process_series_bundle(&ret)
     return ret
 end function
 

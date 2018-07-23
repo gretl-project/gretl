@@ -20,6 +20,38 @@ end function
 
 ### ------------------------------------------------------------------------
 
+function void process_series_bundle (bundle *b)
+    set warnings off
+    b.error = 0
+    b.frequency = bundle_get_frequency(b)
+    t1 = 1
+    t2 = nelem(b.period)
+    loop j=1..t2 -q
+        if b.value[j] == "" || b.value[j] == "NA"
+            t1++
+        else
+            break
+        endif
+    endloop
+    T = t2 - t1 + 1
+    b.T = T
+    b.has_data = T > 0
+    if T > 0
+        if t1 > 1
+            b.period = b.period[t1:t2]
+        endif
+        matrix vals = zeros(T, 1)
+        j = 1
+        loop t=t1..t2 -q
+            vals[j] = atof(b.value[t])
+            j++
+        endloop
+        b.value = vals
+    endif
+end function
+
+### ------------------------------------------------------------------------
+
 function string sanitize_url(const string s)
     ret = strsub(s, " ", "%20")
     ret = strsub(ret, sprintf("\""), "%22")
@@ -222,32 +254,7 @@ function bundles multiple_from_json (const string json, bool verbose[0])
     n = nelem(b.data)
     ret = b.data
     loop i=1..n -q
-        ret[i].error = 0
-        ret[i].frequency = bundle_get_frequency(ret[i])
-        t1 = 1
-        t2 = nelem(ret[i].period)
-        loop j=1..t2 -q
-            if ret[i].value[j] == "" || ret[i].value[j] == "NA"
-                t1++
-            else
-                break
-            endif
-        endloop
-        T = t2 - t1 + 1
-        ret[i].T = T
-        ret[i].has_data = T > 0
-        if T > 0
-            if t1 > 1
-                ret[i].period = ret[i].period[t1:t2]
-            endif
-            matrix vals = zeros(T, 1)
-            j = 1
-            loop t=t1..t2 -q
-                vals[j] = atof(ret[i].value[t])
-                j++
-            endloop
-            ret[i].value = vals
-        endif
+        process_series_bundle(&ret[i])
     endloop
     return ret
 
