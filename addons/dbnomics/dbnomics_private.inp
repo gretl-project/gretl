@@ -131,23 +131,23 @@ end function
 
 ### ------------------------------------------------------------------------
 
-# This is tricky: we may not get a recognizable error code,
-  # or even an error message, on failure to retrieve any data.
+# This is tricky: we may not get a recognizable error code
+# or even an error message on failure to retrieve any data.
 
-function scalar bad_json (const string s, string *msg)
+function scalar check_json (const string s, string *msg)
     ret = 0
     if instring(s, "404 Error") || instring(s, "404 Not Found")
         ret = 404
     elif instring(s, "400 Bad Request")
         ret = 400
     endif
-    got = 0
-    msg = jsonget(s, "$.error_description", &got)
-    if !got
-        msg = jsonget(s, "$.warnings", &got)
+    err_got = 0
+    msg = jsonget(s, "$.error_description", &err_got)
+    if !err_got
+        msg = jsonget(s, "$.warnings")
     endif
-    if ret == 0 && got
-        ret = got
+    if ret == 0 && err_got
+        ret = err_got
     endif
     return ret
 end function
@@ -172,8 +172,8 @@ function scalar dbn_get_json_from_URL (const string URL, string *json, string *m
             outfile --close
         endif
         string dbnmsg
-        error = bad_json(json, &dbnmsg)
-        if error
+        error = check_json(json, &dbnmsg)
+        if dbnmsg != ""
             msg = sprintf("dbnomics says:\n\"%s\"\n", dbnmsg)
         endif
     endif
@@ -190,16 +190,16 @@ function scalar dbn_get_json (const string parms, bool verbose[0],
     if verbose
         printf "URL: %s\n", URL
     endif
-
     string msg
     error = dbn_get_json_from_URL(URL, &json, &msg)
-
     if error
         if msg == ""
             msg = "Failed to get the requested information from dbnomics"
         endif
         funcerr msg
-        # print msg
+    elif msg != ""
+        # got a warning but not an actual error
+        print msg
     endif
 
     return error

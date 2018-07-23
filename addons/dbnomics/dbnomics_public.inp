@@ -10,17 +10,22 @@ function void dbnomics_bundle_print(const bundle b, bool print_data[0])
     endif
 
     scalar nf = 0
+    string sn
+    string dashline
+
     if inbundle(b, "series_code")
         sn = sprintf("Series: %s", b.series_code)
         nf++
-    else
+    elif inbundle(b, "dataset_name")
         sn = b.dataset_name
     endif
-    # make a line of dashes the same length as @sn
-    dashline = regsub(sn, ".", "-")
 
-    print dashline
-    printf "%s\n", sn
+    if sn != ""
+        # make a line of dashes the same length as @sn
+        dashline = regsub(sn, ".", "-")
+        print dashline
+        printf "%s\n", sn
+    endif
     if inbundle(b, "provider_code")
         printf "Provider: %s\n", b.provider_code
         nf++
@@ -41,7 +46,9 @@ function void dbnomics_bundle_print(const bundle b, bool print_data[0])
         # this is actually the description of the series
         printf "%s\n", b.series_name
     endif
-    print dashline
+    if dashline != ""
+        print dashline
+    endif
 
     if b.has_data
         n = b.T
@@ -128,6 +135,7 @@ function bundle dbnomics_get_series (const string datacode, bool verbose[0])
     bundle b = jsongetb(json, "series")
     n = b.series.num_found
     if n == 0
+        ret.error = 1
         return ret
     endif
 
