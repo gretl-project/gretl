@@ -1941,13 +1941,6 @@ static int dbn_general_search_results (const gchar *key,
     return n_ok;
 }
 
-/* This function could be rolled together with the above,
-   dbn_general_search_results(), except that we might choose
-   to display series-within-dataset results in a different
-   manner (listbox?), so we'll the two functions distinct
-   for now.
-*/
-
 static int dbn_dataset_search_results (const char *key,
 				       const char *prov,
 				       const char *dset,
@@ -2057,7 +2050,9 @@ void dbnomics_search (gchar *key, windata_t *vwin)
 
 	offset += SEARCH_CHUNK;
 	a = dbnomics_search_call(key, prov, dset, SEARCH_CHUNK, offset, &err);
-	n_found = dbn_dataset_search_results(key, prov, dset, offset, a, vwin);
+	if (!err) {
+	    n_found = dbn_dataset_search_results(key, prov, dset, offset, a, vwin);
+	}
 	key = NULL; /* don't free it! */
     } else if (vwin->role == DBNOMICS_DB) {
 	/* searching "selected dataset" in datasets window */
@@ -2068,7 +2063,9 @@ void dbnomics_search (gchar *key, windata_t *vwin)
 	tree_view_get_string(GTK_TREE_VIEW(vwin->listbox),
 			     vwin->active_var, COL_DBNAME, &dset);
 	a = dbnomics_search_call(key, prov, dset, SEARCH_CHUNK, 0, &err);
-	n_found = dbn_dataset_search_results(key, prov, dset, 0, a, NULL);
+	if (!err) {
+	    n_found = dbn_dataset_search_results(key, prov, dset, 0, a, NULL);
+	}
 	g_free(dset);
     } else if (vwin->role == DBNOMICS_SERIES) {
 	/* searching from a particular dataset window */
@@ -2079,7 +2076,9 @@ void dbnomics_search (gchar *key, windata_t *vwin)
 	gchar *prov = g_strndup(path, p - path);
 
 	a = dbnomics_search_call(key, prov, dset, SEARCH_CHUNK, 0, &err);
-	n_found = dbn_dataset_search_results(key, prov, dset, 0, a, NULL);
+	if (!err) {
+	    n_found = dbn_dataset_search_results(key, prov, dset, 0, a, NULL);
+	}
 	g_free(prov);
     } else {
 	/* top-level search */

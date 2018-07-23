@@ -4322,6 +4322,7 @@ void *dbnomics_search_call (const char *key,
 				   &A, NULL, NULL);
 	unset_wait_cursor(cwin);
     }
+
     if (*err) {
 	gui_errmsg(*err);
     }
@@ -4380,6 +4381,7 @@ void *dbnomics_probe_series (const char *prov,
 				   &A, NULL, NULL);
 	unset_wait_cursor(cwin);
     }
+
     if (*err) {
 	gui_errmsg(*err);
     }
