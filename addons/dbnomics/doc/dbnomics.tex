@@ -52,7 +52,7 @@ There are three main layers to the \DB\ ``space,'' as
 follows:
 \begin{itemize}
 \item \textit{Providers}: the various statistical agencies that are
-  the primary sources of the data. As of this writing 31 providers
+  the primary sources of the data. As of this writing 33 providers
   are included.
 \item \textit{Datasets}: sets of related series offered by a given
   provider. Over 8000 datasets are available.
@@ -215,27 +215,38 @@ for International Settlements. The code for the dataset is
   b = dbnomics_get_series("BIS/CNFS/Q.AU.C.A.M.USD.A")
   print b
 \end{code}
-produces
+produces the following:
 \begin{code}
- bundle b, created by dbnomics:
- frequency = 4
+bundle b:
+ value (matrix: 119 x 1)
+ Valuation = Market value
  series_name (string, 127 bytes)
- dset_name = long series on total credit
- start = 193
- periods = array of strings, length 119
- dataset = CNFS
- id = Q.AU.C.A.M.USD.A
+ Borrowers' country = Australia
+ VALUATION = M
+ TC_LENDERS = A
+ dataset_name = long series on total credit
+ TC_BORROWERS = C
+ Type of adjustment = Adjusted for breaks
+ UNIT_TYPE = USD
+ period = array of strings, length 119
  error = 0
+ Unit type = US Dollar
  series_code = Q.AU.C.A.M.USD.A
- totobs = 311
+ frequency = 4
+ dataset_code = CNFS
+ Lending sector = Adjusted for breaks
+ provider_code = BIS
+ TC_ADJUST = A
  has_data = 1
- provider = BIS
- vals (matrix: 119 x 1)
- datacode = BIS/CNFS/Q.AU.C.A.M.USD.A
- actobs = 119
+ Frequency = Quarterly
+ BORROWERS_CTY = AU
+ FREQ = Q
+ T = 119
+ @frequency = quarterly
+ Borrowing sector = Non financial sector
 \end{code}
 The actual data are stored as a column vector, under the key
-\texttt{vals}; however, there is much more information available to
+\texttt{value}; however, there is much more information available to
 you: for example, the \texttt{frequency} key equals 4, thus indicating
 that the data are quarterly, and so on. If you want to have this
 information printed in a more readable way, you'll want to use the
@@ -252,7 +263,6 @@ Quarterly – Australia – Non financial sector – Adjusted for breaks –
    Market value – US Dollar – Adjusted for breaks
 ------------------------
 pd = 4; 119 observations, 1988-Q2 - 2017-Q4
-  
 \end{code}
 
 Note that this package contains several test scripts that
