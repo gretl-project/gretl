@@ -144,7 +144,8 @@ function scalar check_json (const string s, string *msg)
     err_got = 0
     msg = jsonget(s, "$.error_description", &err_got)
     if !err_got
-        msg = jsonget(s, "$.warnings")
+        wgot = 0
+        msg = jsonget(s, "$.warnings", &wgot)
     endif
     if ret == 0 && err_got
         ret = err_got
