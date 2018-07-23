@@ -3095,7 +3095,12 @@ static int leading_spaces_at_iter (GtkTextBuffer *tbuf,
     s = gtk_text_buffer_get_text(tbuf, start, &end, FALSE);
     if (s != NULL) {
 	if (!strcmp(word, "function")) {
-	    n = left_paren_offset(s) - 1;
+	    n = left_paren_offset(s);
+	    if (n > 0) {
+		n--;
+	    } else {
+		n = count_leading_spaces(s);
+	    }
 	} else {
 	    n = count_leading_spaces(s);
 	}
