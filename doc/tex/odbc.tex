@@ -133,8 +133,7 @@ is
 \begin{flushleft}
 \texttt{%
   open dsn=\emph{database} [user=\emph{username}]
-  [password=\emph{password}] --odbc
-}
+  [password=\emph{password}]} \option{odbc}
 \end{flushleft}
 The \texttt{user} and \texttt{password} items are optional; the effect
 of this command is to initiate an ODBC connection. It is assumed that
@@ -144,8 +143,7 @@ In order to actually retrieve the data, the \texttt{data} command is
 used. Its syntax is:
 \begin{flushleft}
 \texttt{%
-  data \emph{series} [obs-format=\emph{format-string}] query=\emph{query-string} --odbc
-}
+  data \emph{series} [obs-format=\emph{format-string}] query=\emph{query-string}} \option{odbc}
 \end{flushleft}
 where:
 \begin{description}
@@ -433,3 +431,9 @@ used. Printing out the variable \texttt{bar} thus produces
 \end{code}
 
 \end{script}
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End:
