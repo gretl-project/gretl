@@ -632,7 +632,8 @@ static int command_is_silent (const CMD *cmd, const char *line)
 	return 1;
     }
 
-    if (cmd->ci == OUTFILE && cmd->opt == OPT_C) {
+    if ((cmd->ci == OUTFILE && cmd->opt == OPT_C) ||
+	(cmd->ci == END && !!strcmp(cmd->param, "outfile"))) {
 	return 1;
     }
 
@@ -998,17 +999,17 @@ do_outfile_command (gretlopt opt, const char *fname,
 	return 0;
     }
 
-    if (opt & OPT_B) {
-	/* --buffer: implies --write, incompatible with --append */
-	if (opt & OPT_A) {
-	    return E_BADOPT;
-	} else {
-	    opt |= OPT_W;
-	}
+    /* make --write the default in the absence of a
+       contrary option (--append or --close)
+    */
+    if (!(opt & (OPT_A | OPT_C))) {
+	opt |= OPT_W;
     }
 
-    if (!(opt & (OPT_W | OPT_A | OPT_C))) {
-	return E_ARGS;
+    /* allow at most one of --append, --buffer and --close */
+    err = incompatible_options(opt, (OPT_A | OPT_B | OPT_C));
+    if (err) {
+	return err;
     }
 
     rlevel = print_redirection_level(prn);
@@ -3353,6 +3354,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    err = foreign_execute(dset, cmd->opt, prn);
 	} else if (!strcmp(cmd->param, "plot")) {
 	    err = execute_plot_call(cmd, dset, line, prn);
+	} else if (!strcmp(cmd->param, "outfile")) {
+	    err = do_outfile_command(OPT_C, NULL, NULL, prn);
 	} else {
 	    err = 1;
 	}
