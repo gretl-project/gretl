@@ -1,5 +1,8 @@
 version 2018b, in progress
 - New feature: support for data access via dbnomics
+- New feature: the GUI console now uses syntax highlighting
+- Revised feature: the descriptive "labels" for series can
+  now be of arbitrary length
 - Substantial speed-up of AR(I)MA estimation, using
   Melard's algorithm AS 197; also improvements to the
   initialization for such estimation
@@ -17,7 +20,6 @@ version 2018b, in progress
 - Enhancements for nadarwat() function
 - When R_functions is set "on", accept call to an R function
   without assignment of the return value, if any
-- GUI console: use hansl syntax highlighting
 - Fixes for GUI model specification dialog: breakage in
   selection of GARCH robust variance estimator variant,
   and non-availability of lag selection in some cases
@@ -31,6 +33,8 @@ version 2018b, in progress
 - Fix bug: crash on Windows when using Tab key in the data
   editor window
 - Fix bug: crash in "modprint" under some conditions
+- Fix bug: potential crash in Stata (dta) importer under
+  some conditions
 - Fix bug: wrong handling of intra-sample missing values
   with "pca" command
 - Fix bug: files written by third-party programs under
