@@ -949,11 +949,19 @@ static void csv_data_out (const DATASET *dset, const int *list,
 		fputs(NA, fp);
 	    } else {
 		if (is_string_valued(dset, vi)) {
-		    *tmp = '\0';
-		    strcat(tmp, "\"");
-		    strncat(tmp, series_get_string_for_obs(dset, vi, t), 
-			    TMPLEN - 3);
-		    strcat(tmp, "\"");
+		    const char *st;
+
+		    st = series_get_string_for_obs(dset, vi, t);
+		    if (st != NULL) {
+			*tmp = '\0';
+			strcat(tmp, "\"");
+			strncat(tmp, st, TMPLEN - 3);
+			strcat(tmp, "\"");
+		    } else {
+			fprintf(stderr, "missing string at t=%d, vi=%d, xt=%g\n",
+				t, vi, xt);
+			strcpy(tmp, "\"NA\"");
+		    }
 		} else if (series_is_coded(dset, vi)) {
 		    sprintf(tmp, "\"%d\"", (int) xt);
 		} else {
