@@ -9479,18 +9479,13 @@
     label="Direct printing to file" context="cli">
 
     <usage>
-      <altforms>
-	<altform><lit>outfile</lit> <repl>filename</repl> <repl>option</repl></altform>
-	<altform><lit>outfile --close</lit></altform>
-      </altforms>
+      <arguments>
+	<argument>filename</argument>
+      </arguments>
       <options>
         <option>
 	  <flag>--append</flag>
 	  <effect>append to file</effect>
-        </option>
-        <option>
-	  <flag>--write</flag>
-	  <effect>overwrite file</effect>
         </option>
         <option>
 	  <flag>--quiet</flag>
@@ -9502,25 +9497,19 @@
         </option>
       </options>
       <examples>
-        <example>outfile regress.txt --write</example>
-        <example>outfile --close</example>
+        <example>outfile regress.txt</example>
+        <example>end outfile</example>
       </examples>
     </usage>
 
     <description>
       <para>
-	Diverts output to <repl>filename</repl>, until further notice.
-	Use the flag <opt>append</opt> to append output to an existing
-	file or <opt>write</opt> to start a new file (or overwrite an
-	existing one).
-      </para>
-      <para>
-	The <opt>close</opt> flag is used to close an output file that
-	was previously opened as above.  Output will then revert to
-	the default stream. Note that since only one file can be
-	opened via <lit>outfile</lit> at any given time (but see
-	below), no filename argument need (nor should) be supplied
-	with this variant of the command.
+	Diverts output to <repl>filename</repl>.  By default a new
+	file is created (or an existing one is overwritten); use the
+	<opt>append</opt> flag if you wish to append output to an
+	existing file. Diversion is ended via <quote><lit>end
+	outfile</lit></quote>; output then reverts to the default
+	stream.
       </para>
       <para>
 	The output file will be written in the currently set <cmdref
@@ -9528,29 +9517,26 @@
 	contains a full path specification.
       </para>
       <para>
-	In the first example command above, the file
+	In the first example line above, the file
 	<filename>regress.txt</filename> is opened for writing, and in
 	the second it is closed.  This would make sense as a sequence
-	only if some commands were issued before the <opt>close</opt>.
-	For example if an estimation command intervened, its output
-	would go to <filename>regress.txt</filename> rather than the
-	screen.
+	only if some commands were issued before the closing.  For
+	example if an estimation command intervened, its output would
+	go to <filename>regress.txt</filename> rather than the screen.
       </para>
       <para>
 	Three special variants on the above are available. If you give
-	the keyword <lit>null</lit> in place of a real filename along
-	with the <opt>write</opt> option, the effect is to suppress
-	all printed output until redirection is ended. If either of
-	the keywords <lit>stdout</lit> or <lit>stderr</lit> are given
-	in place of a regular filename the effect is to redirect
-	output to standard output or standard error output
-	respectively.
+	the keyword <lit>null</lit> in place of a real filename the
+	effect is to suppress all printed output until redirection is
+	ended. If either of the keywords <lit>stdout</lit> or
+	<lit>stderr</lit> are given in place of a regular filename the
+	effect is to redirect output to standard output or standard
+	error output respectively.
       </para>
       <para>
-	The <opt>quiet</opt> option is for use with <opt>write</opt>
-	or <opt>append</opt>: its effect is to turn off the echoing
-	of commands and the printing of auxiliary messages while
-	output is redirected. It is equivalent to doing
+	The effect of the <opt>quiet</opt> option is to turn off the
+	echoing of commands and the printing of auxiliary messages
+	while output is redirected. It is equivalent to doing
       </para>
       <code>
 	set echo off
@@ -9565,7 +9551,7 @@
 	In general only one file can be opened in this way at any
 	given time, so calls to this command cannot be
 	nested. However, use of this command is permitted inside
-	user-written functions (provided the output file is also
+	user-defined functions (provided the output file is also
 	closed from inside the same function) such that output can be
 	temporarily diverted and then given back to an original output
 	file, in case <lit>outfile</lit> is currently in use by the
@@ -9573,16 +9559,16 @@
       </para>
       <code>
 	function void f (string s)
-	    outfile inner.txt --write
-	    print s
-	    outfile --close
+	    outfile inner.txt
+	      print s
+	    end outfile
 	end function
 
-	outfile outer.txt --write --quiet
-	print "Outside"
-	f("Inside")
-	print "Outside again"
-	outfile --close
+	outfile outer.txt --quiet
+	  print "Outside"
+	  f("Inside")
+	  print "Outside again"
+	end outfile
       </code>
       <para>
 	will produce a file called <quote>outer.txt</quote> containing
@@ -9602,21 +9588,20 @@
 	As described above, the primary usage of this command is to
 	divert output to a named file. However, the <opt>buffer</opt>
 	option may be used to achieve a different effect, namely
-	directing output to a named string variable. This option
-	implies <opt>write</opt> and is incompatible with
-	<opt>append</opt>. The position of the <repl>filename</repl>
-	argument is occupied by the name of a string variable (which
-	must, of course, conform to the requirements for a valid
-	gretl identifier). If a string variable of the given name
-	already exists, its value will be over-written; if there
-	is no such variable, it will be created automatically. Here
-	is a simple example of usage:
+	directing output to a named string variable. This option is
+	incompatible with <opt>append</opt>. The position of the
+	<repl>filename</repl> argument is occupied by the name of a
+	string variable (which must, of course, conform to the
+	requirements for a valid gretl identifier). If a string
+	variable of the given name already exists, its value will be
+	over-written; if there is no such variable, it will be created
+	automatically. Here is a simple example of usage:
       </para>
       <code>
 	open data4-1
 	outfile mybuf --buffer --quiet
-	labels
-	outfile --close
+	  labels
+	end outfile
 	printf "mybuf = \n'%s'\n", mybuf
       </code>
       <para>

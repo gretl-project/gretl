@@ -188,25 +188,23 @@ processing.
 
 Hansl does not have a file or ``stream'' type as such, but the
 \cmd{outfile} command can be used to divert output to a named text
-file. To start such redirection you must give the name of a file and
-one of the options \option{write} or \option{append}.  The first of
-these options opens a new file, destroying any existing file of the
-same name; the second is used to append material to an existing file.
+file. To start such redirection you must give the name of a file; by
+default a new file is created or an existing one overwritten but the
+\option{append} can be used to append material to an existing file.
 Only one file can be opened in this way at any given time. The
-redirection of output continues until \cmd{outfile} is invoked with
-the \option{close} option, at which point output reverts to the
-default stream.
+redirection of output continues until the command \cmd{end outfile} is
+given; then output reverts to the default stream.
 
 Here's an example of usage:
 \begin{code}
   printf "One!\n"
-  outfile "myfile.txt" --write
-  printf "Two!\n"
-  outfile --close
+  outfile "myfile.txt"
+    printf "Two!\n"
+  end outfile
   printf "Three!\n"
   outfile "myfile.txt" --append
-  printf "Four!\n"
-  outfile --close
+    printf "Four!\n"
+  end outfile
   printf "Five!\n"
 \end{code}
 After execution of the above the file \texttt{myfile.txt} will contain
@@ -223,10 +221,9 @@ is ended. If either of the keywords \texttt{stdout} or \texttt{stderr}
 are given in place of a regular filename the effect is to redirect
 output to standard output or standard error output, respectively.
 
-This command also supports a \option{quiet} option in conjunction with
-\option{write} or \option{append}: its effect is to turn off the
-echoing of commands and the printing of auxiliary messages while
-output is redirected. It is equivalent to doing
+This command also supports a \option{quiet} option: its effect is to
+turn off the echoing of commands and the printing of auxiliary
+messages while output is redirected. It is equivalent to doing
 \begin{code}
   set echo off 
   set messages off
