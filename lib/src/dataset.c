@@ -4452,13 +4452,15 @@ int merge_string_tables (DATASET *l_dset, int lvar,
 	if (na(x[t])) {
 	    continue;
 	}
+	/* get the right-hand side string associated with x[t] */
 	sr = series_get_string_for_value(r_dset, rvar, x[t]);
+	/* and look up its numeric code on the left */
 	dx = series_decode_string(l_dset, lvar, sr);
 	if (!na(dx)) {
-	    /* apply code from @lst */
+	    /* got a match: apply the code from @lst */
 	    x[t] = dx;
 	} else {
-	    /* we need to add a string to @lst */
+	    /* no match: we need to add a string to @lst */
 	    idx = series_table_add_string(lst, sr);
 	    if (idx < 0) {
 		err = E_ALLOC;
