@@ -190,6 +190,16 @@ struct dta_table_ {
     gint64 vallabel_pos;  /* position of value labels */
 };
 
+static void stata_globals_init (void)
+{
+    stata_version = 0;
+    stata_OLD = 0;
+    stata_SE = 0;
+    stata_13 = 0;
+    stata_endian = 0;
+    swapends = 0;
+}
+
 static dta_table *dta_table_new (int *err)
 {
     dta_table *dtab = calloc(1, sizeof *dtab);
@@ -2106,6 +2116,9 @@ int dta_get_data (const char *fname, DATASET *dset,
 	return E_DATA;
     }
 
+    /* (re-)initialize file-scope globals */
+    stata_globals_init();
+
     fp = gretl_fopen(fname, "rb");
     if (fp == NULL) {
 	return E_FOPEN;
@@ -2165,7 +2178,12 @@ int dta_get_data (const char *fname, DATASET *dset,
     }
 
     if (stata_13) {
-	err = read_dta_117_data(fp, newset, &st, dtab, prn, vprn);
+	if (dtab == NULL) {
+	    fprintf(stderr, "Got stata_13 but @dtab is NULL!\n");
+	    err = E_DATA;
+	} else {
+	    err = read_dta_117_data(fp, newset, &st, dtab, prn, vprn);
+	}
     } else {
 	err = read_dta_data(fp, newset, &st, namelen, prn, vprn);
     }
