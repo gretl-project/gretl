@@ -2216,6 +2216,17 @@ static int merge_data (DATASET *dset, DATASET *addset,
 		    series_attach_string_table(dset, v, st);
 		    series_attach_string_table(addset, i, NULL);
 		}
+	    } else {
+		/* not a new series */
+		int lsval = is_string_valued(dset, v);
+		int rsval = is_string_valued(addset, i);
+
+		if (lsval + rsval == 1) {
+		    gretl_errmsg_set(_("Can't concatenate string-valued and numeric series"));
+		    err = E_DATA;
+		} else if (lsval) {
+		    err = merge_string_tables(dset, v, addset, i);
+		}
 	    }
 
 	    if (dayspecial) {

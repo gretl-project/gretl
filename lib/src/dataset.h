@@ -554,6 +554,9 @@ char **series_get_string_vals (const DATASET *dset, int i,
 int steal_string_table (DATASET *l_dset, int lvar,
 			DATASET *r_dset, int rvar);
 
+int merge_string_tables (DATASET *l_dset, int lvar,
+			 DATASET *r_dset, int rvar);
+
 int set_panel_groups_name (DATASET *dset, const char *vname);
 
 const char *get_panel_group_name (const DATASET *dset, int obs);

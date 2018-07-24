@@ -4426,6 +4426,51 @@ int steal_string_table (DATASET *l_dset, int lvar,
     return 0;
 }
 
+/**
+ * merge_string_tables:
+ * @l_dset: pointer to current dataset.
+ * @lvar: index number of target series.
+ * @r_dset: pointer to dataset to be appended.
+ * @rvar: index number of source series.
+ *
+ * Translates the encoding of the string-values of series @rvar
+ * in @r_dset to that of series @lvar in @l_dset, adding extra
+ * strings as needed.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int merge_string_tables (DATASET *l_dset, int lvar,
+			 DATASET *r_dset, int rvar)
+{
+    series_table *lst = l_dset->varinfo[lvar]->st;
+    double dx, *x = r_dset->Z[rvar];
+    const char *sl, *sr;
+    int t, idx, err = 0;
+
+    for (t=0; t<r_dset->n && !err; t++) {
+	if (na(x[t])) {
+	    continue;
+	}
+	sr = series_get_string_for_value(r_dset, rvar, x[t]);
+	dx = series_decode_string(l_dset, lvar, sr);
+	if (!na(dx)) {
+	    /* apply code from @lst */
+	    x[t] = dx;
+	} else {
+	    /* we need to add a string to @lst */
+	    idx = series_table_add_string(lst, sr);
+	    if (idx < 0) {
+		err = E_ALLOC;
+	    } else {
+		x[t] = (double) idx;
+	    }
+	}
+    }
+
+    return err;
+}
+
 static void maybe_adjust_label (DATASET *dset, int v,
 				char **S, int ns)
 {
