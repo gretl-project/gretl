@@ -358,3 +358,46 @@ function bundles dset_search(const string key, const string pcode,
 
     return ret
 end function
+
+### ------------------------------------------------------------------------
+
+function matrix get_widths(bundles bs)
+    w1 = 6
+    w2 = 12
+    w3 = 24
+    loop i = 1..nelem(bs) --quiet
+        l = strlen(bs[i].provider_code) + strlen(bs[i].dataset_code) + 1
+        w1 = xmax(w1, l)
+        l = strlen(bs[i].series_code)
+        w2 = xmax(w2, l)
+        l = strlen(bs[i].series_name)
+        w3 = xmin(xmax(w3, l), 40)
+    endloop
+    
+    return {w1, w2, w3} + 2
+end function
+        
+### ------------------------------------------------------------------------
+
+function string one_line_bprint(bundle b, matrix widths)
+    provider = b.provider_code ~ "/" ~ b.dataset_code
+    scode = fixname(b.series_code, 1)
+    sname = b.series_name
+    if strlen(sname) > 40
+        sname = sname[1:37] ~ "..."
+    endif
+    fmtstring = sprintf("%%-%ds %%-%ds %%-%ds", widths[1], widths[2], widths[3])
+    ret = sprintf(fmtstring, provider, scode, sname)
+    
+    if b.has_data
+        scalar T = b.T
+        print T
+        string span = sprintf("%s:%s", b.period[1], b.period[T])
+        print span
+        ret ~= sprintf(" %d observations (pd = %d) [%s]", T, b.frequency, span) 
+    else
+        ret ~= " has no data"
+    endif
+    
+    return ret
+end function
