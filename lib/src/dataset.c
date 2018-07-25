@@ -4445,7 +4445,7 @@ int merge_string_tables (DATASET *l_dset, int lvar,
 {
     series_table *lst = l_dset->varinfo[lvar]->st;
     double dx, *x = r_dset->Z[rvar];
-    const char *sl, *sr;
+    const char *sr;
     int t, idx, err = 0;
 
     for (t=0; t<r_dset->n && !err; t++) {
