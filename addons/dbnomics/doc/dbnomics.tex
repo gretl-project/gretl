@@ -281,74 +281,7 @@ may differ by locale and otherwise):
 
 \bigskip
 
-\subsection{List of public functions}
-
-\begin{funcdoc}
-\begin{verbatim}
-bundles dbnomics_providers (bool verbose[0])
-\end{verbatim}
-Returns an array of bundles, one per provider. Each bundle contains
-basic info about the provider, notably its dbnomics code under the
-\texttt{code} key and its full name under the \texttt{name} key.
-\end{funcdoc}
-
-\begin{funcdoc}
-\begin{verbatim}
-bundle dbnomics_dsets_for_provider (const string provider,
-                                    bool verbose[0])
-\end{verbatim}
-  Returns a bundle containing basic information on the datasets
-  associated with a given provider, namely two arrays of strings
-  holding the codes and names of the datasets respectively.
-\begin{code}
-# example
-bundle b = dbnomics_dsets_for_provider("AMECO")
-\end{code}
-\end{funcdoc}
-
-\begin{funcdoc}
-\begin{verbatim}
-bundles dbnomics_get_dataset_content (const string provider,
-                                      const string dset,
-                                      int limit[0::100],
-                                      int offset[0])
-\end{verbatim}
-Returns an array of bundles each containing information on a series
-contained in the dataset specified by the \texttt{provider} and
-\texttt{dset} codes. The \texttt{limit} and \texttt{offset}
-arguments allow ``paging'': retrieve so many results, starting at a
-given offset into the full listing.
-\begin{code}
-# example
-bundles B = dbnomics_get_dataset_content("ECB", "IRS", 50, 100)
-\end{code}
-\end{funcdoc}
-
-\begin{funcdoc}
-\begin{verbatim}
-bundle dbnomics_get_series (const string datacode,
-                            bool verbose[0],
-                            string *from_json[null])
-\end{verbatim}
-Returns a bundle containing information on the series specified by
-\texttt{datacode}, which must be a \DB\ triplet as
-described above.
-\begin{code}
-# example
-bundle b = dbnomics_get_series("ECB/IRS/M.IT.L.L40.CI.0000.EUR.N.Z")
-\end{code}
-\end{funcdoc}
-
-\begin{funcdoc}
-\begin{verbatim}
-void dbnomics_bundle_print (const bundle b,
-                            bool print_data[0])
-\end{verbatim}
-Displays the content of a bundle obtained by
-\texttt{dbnomics\_get\_series}. Give a non-zero value for the second
-argument to print the actual values, otherwise just the metadata is
-shown.
-\end{funcdoc}
+\subsection{List of public functions (in alphabetical order)}
 
 \begin{funcdoc}
 \begin{verbatim}
@@ -370,19 +303,90 @@ dbnomics_bundle_get_data(b, &IT_10yr)
 
 \begin{funcdoc}
 \begin{verbatim}
-bundles dbnomics_get_multiple (const string provider,
-                               const string dset,
-                               int limit[0::50],
-                               int offset[0],
-                               bundle spec[null])
+void dbnomics_bundle_print (const bundle b,
+                            bool print_data[0])
 \end{verbatim}
-  Returns an array of bundles (defaulting to a maximum of 50), each of
-  which contains information (data + metadata) on a series from
-  dataset \texttt{provider/dset}. The bundle \texttt{spec}, if
-  present, can be used to limit the query to certain dimensions. In
-  order to find the dimensions available for a given dataset, use the
-  function \cmd{dbnomics\_get\_dataset\_dimensions()}.
+Displays the content of a bundle obtained by
+\texttt{dbnomics\_get\_series}. Give a non-zero value for the second
+argument to print the actual values, otherwise just the metadata is
+shown.
 \end{funcdoc}
+
+\begin{funcdoc}
+\begin{verbatim}
+void dbnomics_bundles_print (const bundles bs)
+\end{verbatim}
+Displays a concise description of the series contained in an array of
+bundles, such as the ones you get from function like
+\cmd{dbnomics\_get\_multiple}. For a more detailed printout of the
+individual bundles, use \cmd{dbnomics\_bundle\_print}.
+\end{funcdoc}
+
+\begin{funcdoc}
+\begin{verbatim}
+bundles dbnomics_category_tree (const string provider,
+                                bool verbose[0])
+\end{verbatim}
+  Returns an array of bundles containing a list of the datasets for
+  provider \texttt{provider}, verbosely if so wanted.
+\end{funcdoc}
+
+\begin{funcdoc}
+\begin{verbatim}
+bundle dbnomics_dsets_for_provider (const string provider,
+                                    bool verbose[0])
+\end{verbatim}
+  Returns a bundle containing basic information on the datasets
+  associated with a given provider, namely two arrays of strings
+  holding the codes and names of the datasets respectively.
+\begin{code}
+# example
+bundle b = dbnomics_dsets_for_provider("AMECO")
+\end{code}
+\end{funcdoc}
+
+\begin{funcdoc}
+\begin{verbatim}
+series dbnomics_fetch (const string datacode,
+                       bool verbose[0])
+\end{verbatim}
+  This is just a convenience wrapper for
+  \texttt{dbnomics\_get\_series} followed by
+  \texttt{dbnomics\_bundle\_get\_data}.
+\end{funcdoc}
+
+\begin{funcdoc}
+\begin{verbatim}
+bundles dbnomics_get_cart (const string URL)
+\end{verbatim}
+This is a convenience function that you can use to select the series
+you want via the ``cart'' facility provided by the DB.nomics website.
+After choosing the series you want, you have to select the ``Copy API
+link'' entry in the ``Download'' menu.
+
+At that point, you can just paste the result into a \app{gretl}
+string, and use that as the argument of this function. See the
+file \texttt{get\_cart\_example.inp} for an example.
+\end{funcdoc}
+
+\begin{funcdoc}
+\begin{verbatim}
+bundles dbnomics_get_dataset_content (const string provider,
+                                      const string dset,
+                                      int limit[0::100],
+                                      int offset[0])
+\end{verbatim}
+Returns an array of bundles each containing information on a series
+contained in the dataset specified by the \texttt{provider} and
+\texttt{dset} codes. The \texttt{limit} and \texttt{offset}
+arguments allow ``paging'': retrieve so many results, starting at a
+given offset into the full listing.
+\begin{code}
+# example
+bundles B = dbnomics_get_dataset_content("ECB", "IRS", 50, 100)
+\end{code}
+\end{funcdoc}
+
 
 \begin{funcdoc}
 \begin{verbatim}
@@ -429,6 +433,46 @@ HRV - Croatia
 
 \begin{funcdoc}
 \begin{verbatim}
+bundles dbnomics_providers (bool verbose[0])
+\end{verbatim}
+Returns an array of bundles, one per provider. Each bundle contains
+basic info about the provider, notably its dbnomics code under the
+\texttt{code} key and its full name under the \texttt{name} key.
+\end{funcdoc}
+
+\begin{funcdoc}
+\begin{verbatim}
+bundles dbnomics_get_multiple (const string provider,
+                               const string dset,
+                               int limit[0::50],
+                               int offset[0],
+                               bundle spec[null])
+\end{verbatim}
+  Returns an array of bundles (defaulting to a maximum of 50), each of
+  which contains information (data + metadata) on a series from
+  dataset \texttt{provider/dset}. The bundle \texttt{spec}, if
+  present, can be used to limit the query to certain dimensions. In
+  order to find the dimensions available for a given dataset, use the
+  function \cmd{dbnomics\_get\_dataset\_dimensions()}.
+\end{funcdoc}
+
+\begin{funcdoc}
+\begin{verbatim}
+bundle dbnomics_get_series (const string datacode,
+                            bool verbose[0],
+                            string *from_json[null])
+\end{verbatim}
+Returns a bundle containing information on the series specified by
+\texttt{datacode}, which must be a \DB\ triplet as
+described above.
+\begin{code}
+# example
+bundle b = dbnomics_get_series("ECB/IRS/M.IT.L.L40.CI.0000.EUR.N.Z")
+\end{code}
+\end{funcdoc}
+
+\begin{funcdoc}
+\begin{verbatim}
 bundles dbnomics_search (const string key,
                          const string dset[null],
                          int limit[0::100],
@@ -454,25 +498,6 @@ bundles dbnomics_search (const string key,
 # example
 bundles B = dbnomics_search("interest rates", null, 50)
 \end{code}
-\end{funcdoc}
-
-\begin{funcdoc}
-\begin{verbatim}
-bundles dbnomics_category_tree (const string provider,
-                                bool verbose[0])
-\end{verbatim}
-  Returns an array of bundles containing a list of the datasets for
-  provider \texttt{provider}, verbosely if so wanted.
-\end{funcdoc}
-
-\begin{funcdoc}
-\begin{verbatim}
-series dbnomics_fetch (const string datacode,
-                       bool verbose[0])
-\end{verbatim}
-  This is just a convenience wrapper for
-  \texttt{dbnomics\_get\_series} followed by
-  \texttt{dbnomics\_bundle\_get\_data}.
 \end{funcdoc}
 
 \section{Searching \DB}
