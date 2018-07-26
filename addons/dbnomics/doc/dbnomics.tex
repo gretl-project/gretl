@@ -27,7 +27,7 @@
 \newcommand{\DB}{\textsf{dbnomics}}
   
 \title{dbnomics for gretl, version 0.1}
-\author{Jack Lucchetti \and Allin Cottrell}
+\author{Allin Cottrell \and Jack Lucchetti}
 \maketitle
 
 \section{Introduction}
@@ -99,6 +99,7 @@ mentioned above in this way:
 \begin{code}
 data ECB/IRS/M.IT.L.L40.CI.0000.EUR.N.Z
 \end{code}
+
 Ah, but what about the name of the series within gretl? The full
 triplet is obviously not acceptable as a gretl series-name, and even
 its third component won't work since gretl identifiers cannot contain
@@ -115,6 +116,34 @@ In this case the series will be known to gretl as \texttt{IT\_10yr}.
 Note that when you import a series from \DB\ its
 descriptive ``label'' starts with the full triplet so you won't lose
 that information of record, regardless of the naming of the series.
+
+Note that the \cmd{data} command takes care automatically of several
+details, such as for example matching date or adjusting for different
+periodicities. For example, the following code snippet will create an
+empty monthly dataset and retrieve from \DB\ the monthly index of
+industrial production for Portugal, as reported by the ``International
+Financial Statistics'' dataset by the International Monetary Fund.
+\begin{code}
+  nulldata 220
+  setobs 12 2007:1
+  open dbnomics
+  data IMF/IFS/M.PT.AIP_IX --name="pt_ip"
+\end{code}
+The \cmd{nulldata} and \cmd{setobs} commands used in the above script
+will generate a dataset that starts in January 2007 and ends in April
+2018, whereas the downloaded series (at the time of this writing)
+starts in January 1955 and ends in December 2017, but the \cmd{data}
+command puts the numbers in the right place. As for periodicities,
+suppose we import the same series into a quarterly dataset, such as
+AWM17:
+\begin{code}
+  open AWM17.gdt --quiet
+  open dbnomics
+  data IMF/IFS/M.PT.AIP_IX --name="pt_ip"
+\end{code}
+In this case, the series is also compacted to a lower frequency by
+averaging, which is the default behavior of the \cmd{data}
+command (see \GUG\ for more details).
 
 \section{dbnomics via the gretl GUI}
 \label{sec:dbn-gui}
@@ -263,6 +292,38 @@ Quarterly – Australia – Non financial sector – Adjusted for breaks –
    Market value – US Dollar – Adjusted for breaks
 ------------------------
 pd = 4; 119 observations, 1988-Q2 - 2017-Q4
+\end{code}
+
+Some functions can be used for retrieving multiple series at once;
+therefore, what they return is an \emph{array} of bundles. The
+following example fetches two series for two countries from the
+``AMECO'' dataset as provided by the European Central Bank. 
+\begin{code}
+set verbose off
+include dbnomics.gfn
+
+bundle spec = null
+spec.AME_ITEM = defarray("UBLGE", "OVGD")
+spec.AME_REF_AREA = defarray("AUT", "BEL")
+bs = dbnomics_get_multiple("ECB", "AME", 20, 0, spec)
+dbnomics_bundles_print(bs)
+\end{code}
+Once the series have been downloaded, a short description of the
+resulting array of bundles is obtained by the
+\cmd{dbnomics\_bundles\_print} (note the plural) function, and this is
+the output (with long lines broken for readability, again):
+\begin{code}
+Contents of bs:
+
+     Provider  Code                    Description                               
+  1: ECB/AME   A_AUT_1_0_0_0_OVGD      Austria - Gross domestic product at 2...
+                                       60 observations (pd = 1) [1960:2019]
+  2: ECB/AME   A_AUT_1_0_319_0_UBLGE   Austria - Net lending (+) or net borr...
+                                       25 observations (pd = 1) [1995:2019]
+  3: ECB/AME   A_BEL_1_0_0_0_OVGD      Belgium - Gross domestic product at 2...
+                                       60 observations (pd = 1) [1960:2019]
+  4: ECB/AME   A_BEL_1_0_319_0_UBLGE   Belgium - Net lending (+) or net borr...
+                                       25 observations (pd = 1) [1995:2019]
 \end{code}
 
 Note that this package contains several test scripts that
@@ -549,6 +610,22 @@ SI.RMT.COST.IB.ZS-IQ: Average transaction cost of sending remittances
 SI.RMT.COST.OB.ZS-IQ: Average transaction cost of sending remittances
   from a specific country (%) -- Iraq
 \end{code}
+
+The same search facilities are also available through the GUI: if you
+go back to Figure \ref{fig:db-access-2}, you will notice a search text
+box at the top. By default, any term you insert will trigger a search
+for that term on the whole \DB\ space, like the \cmd{dbnomics\_search}
+function with a \texttt{null} second argument. If you want to restrict
+the search to a particular dataset instead, you will have to ``click
+to'' that particular data set and use the search text box there, like
+in Figure \ref{fig:db-access-3}.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[scale=0.5]{db-access-3}
+  \caption{Search within a particular dataset}
+  \label{fig:db-access-3}
+\end{figure}
 
 \end{document}
 
