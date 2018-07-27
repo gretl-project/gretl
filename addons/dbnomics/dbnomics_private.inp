@@ -124,27 +124,35 @@ function string build_URL_mid(const bundle spec)
         return ret
     endif
 
-    ret = "dimensions={"
-    strings filters = array()
-    # strings dims = defarray("freq", "indicator", "geo")
-    strings dims = getkeys(spec)
-    n = 0
-    loop i = 1..nelem(dims) --quiet
-        s = make_dimensions(spec, dims[i])
-        if strlen(s) > 0
-            n++
-            filters = filters + defarray(s)
-        endif
-    endloop
+    if inbundle(spec, "mask")
+        # special case: we have a mask
+	ret = "series_code_mask=" ~ spec.mask ~ "&"
+    else
+        # no mask, selection is on dimensions
+	ret = "dimensions={"
+	strings filters = array()
+    
+	strings dims = getkeys(spec) # eg, "freq", "indicator", "geo"
+    
+	n = 0
+	loop i = 1..nelem(dims) --quiet
+            s = make_dimensions(spec, dims[i])
+            if strlen(s) > 0
+		n++
+		filters = filters + defarray(s)
+            endif
+	endloop
 
-    loop i = 1..n --quiet
-        ret ~= filters[i]
-        if i < n
-            ret ~= ", "
-        endif
-    endloop
+	loop i = 1..n --quiet
+            ret ~= filters[i]
+            if i < n
+		ret ~= ", "
+            endif
+	endloop
 
-    ret = ret ~ "}&"
+	ret = ret ~ "}&"
+    endif
+    
     return ret
 end function
 

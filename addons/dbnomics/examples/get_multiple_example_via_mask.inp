@@ -1,0 +1,14 @@
+set verbose off
+include dbnomics.gfn
+
+### the DBnomics dataset we're drawing from
+provider = "IMF"
+database = "CPI"
+
+# the mask: the substring "FR+DE+BE" means "France, Germany and Belgium"
+# an empty field, like "M..PCPIT_IX", means "all"
+bundle spec = defbundle("mask", "Q.FR+DE+BE.PCPIT_IX")
+
+### now we get the series
+bs = dbnomics_get_multiple(provider, database, 20, 0, spec)
+dbnomics_bundles_print(bs)

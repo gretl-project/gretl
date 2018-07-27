@@ -511,10 +511,26 @@ bundles dbnomics_get_multiple (const string provider,
 \end{verbatim}
   Returns an array of bundles (defaulting to a maximum of 50), each of
   which contains information (data + metadata) on a series from
-  dataset \texttt{provider/dset}. The bundle \texttt{spec}, if
-  present, can be used to limit the query to certain dimensions. In
-  order to find the dimensions available for a given dataset, use the
-  function \cmd{dbnomics\_get\_dataset\_dimensions()}.
+  dataset \texttt{provider/dset}.
+
+  The bundle \texttt{spec}, if present, can be used to limit the query
+  to certain dimensions. There are two ways to to this:
+  \begin{itemize}
+  \item you may put a \texttt{mask} key into the bundle, which
+    contains a string specially tailored to the specifics of that
+    particular dataset. For example, the string
+    ``Q.FR+DE+BE.PCPIFBT\_IX'' in the context of the \texttt{IMF/CPI}
+    dataset, corresponds to the quarterly price indices for
+    ``Alcoholic Beverages, Tobacco, and Narcotics'' in France, Germany
+    and Belgium (see the example file
+    \texttt{get\_multiple\_example\_via\_mask});
+  \item alternatively, you may put into the \texttt{spec} bundle one
+    or more string array with the ``dimensions'' for that dataset (see
+    the example file \texttt{get\_multiple\_example}).  In order to
+    find the dimensions available for a given dataset, use the
+    function \cmd{dbnomics\_get\_dataset\_dimensions()}.
+  \end{itemize}
+
 \end{funcdoc}
 
 \begin{funcdoc}
