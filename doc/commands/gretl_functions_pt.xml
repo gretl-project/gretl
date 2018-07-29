@@ -4190,9 +4190,9 @@
 	  para dados trimestrais, 14400 para dados mensais, etc.).
 	</para>
 	<para>
-	  Por padrão o filtro é a versão de dois lados, <quote>two-sided</quote>,
+	  Por padrão o filtro é a versão bilateral, <quote>two-sided</quote>,
 	  mas se o terceiro argumento (opcional) for um valor diferente de zero
-	  é computada a versão de um lado, <quote>one-sided</quote>, (de forma
+	  é computada a versão unilateral, <quote>one-sided</quote>, (de forma
       não prospectiva) é computada na forma proposta por
       <cite key="stock-watson1999">Stock and Watson (1999)</cite>.
 	</para>
