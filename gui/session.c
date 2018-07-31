@@ -1799,6 +1799,7 @@ static int real_save_session_dataset (const char *dname)
 {
     char tmpname[MAXLEN];
     char *mask = NULL;
+    char *restr = NULL;
     int save_t1 = dataset->t1;
     int save_t2 = dataset->t2;
     int write_err = 0;
@@ -1811,6 +1812,9 @@ static int real_save_session_dataset (const char *dname)
 	if (!err && dataset_is_resampled(dataset)) {
 	    /* can't happen? */
 	    mask = NULL;
+	}
+	if (dataset->restriction != NULL) {
+	    restr = gretl_strdup(dataset->restriction);
 	}
     }
 
@@ -1831,6 +1835,9 @@ static int real_save_session_dataset (const char *dname)
 					    OPT_NONE);
 	}
 	free(mask);
+    }
+    if (restr != NULL) {
+	dataset->restriction = restr;
     }
 
     dataset->t1 = save_t1;

@@ -2996,7 +2996,7 @@ void print_sample_status (const DATASET *dset, PRN *prn)
     char tmp[128];
 
     if (complex_subsampled()) {
-	pprintf(prn, "%s\n\n", _("Full dataset"));
+	pprintf(prn, "%s\n", _("Full dataset"));
 	dataset_type_string(tmp, fullset);
 	pprintf(prn, "%s: %s\n", _("Type"), tmp);
 	if (dataset_is_time_series(fullset)) {
@@ -3013,11 +3013,11 @@ void print_sample_status (const DATASET *dset, PRN *prn)
 
 	pprintf(prn, "\n%s\n", _("Subsampled data"));
 	if (dset->restriction != NULL) {
-	    pprintf(prn, "(%s: %s)\n\n", _("restriction"), dset->restriction);
-	} else {
-	    pputc(prn, '\n');
+	    pprintf(prn, "%s: %s\n", _("restriction"), dset->restriction);
 	}
-    }	
+    } else {
+	pprintf(prn, "%s\n", _("Full dataset"));
+    }
 
     dataset_type_string(tmp, dset);
     pprintf(prn, "%s: %s\n", _("Type"), tmp);
