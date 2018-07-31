@@ -902,8 +902,10 @@ static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin)
     }
 
     if (vwin->text != NULL) {
+	gboolean from_cursor = TRUE;
+
 	found = real_find_in_text(GTK_TEXT_VIEW(vwin->text), needle,
-				  sensitive, TRUE, search_all);
+				  sensitive, from_cursor, search_all);
     } else {
 	found = real_find_in_listbox(vwin, needle, sensitive, 0);
     }
@@ -1574,11 +1576,9 @@ static gboolean real_find_in_text (GtkTextView *view, const gchar *s,
 	GtkTextIter sel_bound;
 
 	gtk_text_buffer_get_iter_at_mark(buf, &iter,
-					 gtk_text_buffer_get_mark(buf,
-								  "insert"));
+					 gtk_text_buffer_get_insert(buf));
 	gtk_text_buffer_get_iter_at_mark(buf, &sel_bound,
-					 gtk_text_buffer_get_mark(buf,
-								  "selection_bound"));
+					 gtk_text_buffer_get_selection_bound(buf));
 	gtk_text_iter_order(&sel_bound, &iter);
     } else {
 	gtk_text_buffer_get_iter_at_offset(buf, &iter, 0);
