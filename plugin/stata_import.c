@@ -2030,12 +2030,13 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
     fprintf(stderr, "header step 5: err = %d\n", err);
 #endif     
 
-    if (!err && (dtab->nvar <= 0 || dtab->nobs <= 0)) {
+    if (!err && (dtab->nvar <= 0 || dtab->nobs < 0)) {
 	err = 1;
     }
 
 #if HDR_DEBUG
-    fprintf(stderr, "header step 6: err = %d\n", err);
+    fprintf(stderr, "header step 6: err = %d (nvar = %d, nobs = %d)\n",
+	    err, dtab->nvar, dtab->nobs);
 #endif     
 
     if (!err) {
