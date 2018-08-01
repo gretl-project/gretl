@@ -633,7 +633,7 @@ static int command_is_silent (const CMD *cmd, const char *line)
     }
 
     if ((cmd->ci == OUTFILE && cmd->opt == OPT_C) ||
-	(cmd->ci == END && !!strcmp(cmd->param, "outfile"))) {
+	(cmd->ci == END && !strcmp(cmd->param, "outfile"))) {
 	return 1;
     }
 
@@ -693,6 +693,9 @@ static void real_echo_command (CMD *cmd, const char *line,
     /* certain things don't get echoed at all, if not recording or
        compiling a function or loop */
     if (!recording && !compiling && command_is_silent(cmd, line)) {
+#if ECHO_DEBUG
+	fprintf(stderr, " silent: no echo\n");
+#endif
 	return;
     }
 
