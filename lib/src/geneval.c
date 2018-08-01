@@ -9495,7 +9495,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	targ = gretl_type_from_gen_type(p->targ);
     }
 
-    if (targ == GRETL_TYPE_NONE) {
+    if (targ == GRETL_TYPE_NONE && rhs->t == EMPTY) {
 	/* at this point @targ is indeterminate, but maybe there's
 	   an existing member to fix its value?
 	*/
