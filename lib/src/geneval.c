@@ -5883,6 +5883,27 @@ static NODE *array_op (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
+static NODE *augment_array_node (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_array_node(p);
+
+    if (ret != NULL && starting(p)) {
+	GretlType lt = gretl_array_get_content_type(l->v.a);
+	GretlType rt = gretl_type_from_gen_type(r->t);
+
+	if (rt == lt) {
+	    ret->v.a = gretl_array_copy(l->v.a, &p->err);
+	    if (!p->err) {
+		p->err = gretl_array_append_object(ret->v.a, r->v.ptr, 1);
+	    }
+	} else {
+	    p->err = E_TYPES;
+	}
+    }
+
+    return ret;
+}
+
 /* in case we switched the LHS and RHS in a boolean comparison */
 
 static int reversed_comp (int f)
@@ -9373,6 +9394,8 @@ static int dot_assign_to_matrix (gretl_matrix *m, parser *p,
     return err;
 }
 
+#define empty_rhs_ok(t) (t==GRETL_TYPE_BUNDLE || gretl_is_array_type(t))
+
 /* Setting an object in a bundle under a given key string. We get here
    only if p->lh.expr is non-NULL.
 */
@@ -9408,7 +9431,10 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	    (void *) bundle, key);
 #endif
 
-    if (p->op == B_ASN && rhs->t == EMPTY) {
+    if ((p->flags & P_PRIV) && p->op == B_ASN && rhs->t == EMPTY) {
+	/* this is an internal "special" that implements removal
+	   of a bundle member via the "delete" command
+	*/
 	return gretl_bundle_delete_data(bundle, key);
     }
 
@@ -9467,6 +9493,17 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	targ = p->lh.gtype;
     } else {
 	targ = gretl_type_from_gen_type(p->targ);
+    }
+
+    if (targ == GRETL_TYPE_NONE) {
+	/* at this point @targ is indeterminate, but maybe there's
+	   an existing member to fix its value?
+	*/
+	void *lp = gretl_bundle_get_data(bundle, key, &targ, NULL, NULL);
+
+	if (targ == GRETL_TYPE_ARRAY) {
+	    targ = gretl_array_get_type(lp);
+	}
     }
 
     if (!err && targ == GRETL_TYPE_LIST) {
@@ -9547,6 +9584,25 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 		ptr = rhs->v.ivec;
 		type = GRETL_TYPE_LIST;
 		donate = is_tmp_node(rhs);
+	    }
+	    break;
+	case EMPTY:
+	    /* "null" is OK as (re-)initializer for bundle or array */
+	    if (empty_rhs_ok(targ)) {
+		if (targ == GRETL_TYPE_BUNDLE) {
+		    ptr = gretl_bundle_new();
+		    if (ptr == NULL) {
+			err = E_ALLOC;
+		    }
+		} else {
+		    ptr = gretl_array_new(targ, 0, &err);
+		}
+		if (!err) {
+		    type = targ;
+		    donate = 1;
+		}
+	    } else {
+		err = E_TYPES;
 	    }
 	    break;
 	default:
@@ -14300,6 +14356,8 @@ static NODE *eval (NODE *t, parser *p)
 	} else if ((t->t == B_ADD || t->t == B_SUB) &&
 		   l->t == SERIES && ok_list_node(r, p)) {
 	    ret = series_list_calc(l, r, t->t, p);
+	} else if (t->t == B_ADD && l->t == ARRAY) {
+	    ret = augment_array_node(l, r, p);
 	} else {
 	    p->err = E_TYPES;
 	}

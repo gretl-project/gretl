@@ -49,7 +49,7 @@ static void notify (const char *s, NODE *n, parser *p)
 
 NODE *new_node (int t)
 {
-    NODE *n = malloc(sizeof *n);
+    NODE *n = calloc(1, sizeof *n);
 
 #if MDEBUG
     fprintf(stderr, "new_node: allocated node of type %d (%s) at %p\n",
@@ -58,12 +58,7 @@ NODE *new_node (int t)
 
     if (n != NULL) {
 	n->t = t;
-	n->flags = 0;
 	n->vnum = NO_VNUM;
-	n->vname = NULL;
-	n->uv = NULL;
-	n->aux = NULL;
-	n->refcount = 0;
     }
 
     return n;
