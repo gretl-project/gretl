@@ -7,6 +7,9 @@
 \usepackage[letterpaper,body={6.3in,9.15in},top=.8in,left=1.1in]{geometry}
 \usepackage[pdftex,hyperfootnotes=false]{hyperref}
 
+\usepackage[utf8]{inputenc}
+\DeclareUnicodeCharacter{2212}{-}
+
 % \usepackage[a4paper,body={6.1in,9.7in},top=.8in,left=1.1in]{geometry}
 
 \begin{document}
@@ -538,8 +541,7 @@ bundles dbnomics_get_multiple (const string provider,
 \begin{funcdoc}
 \begin{verbatim}
 bundle dbnomics_get_series (const string datacode,
-                            bool verbose[0],
-                            string *from_json[null])
+                            bool verbose[0])
 \end{verbatim}
 Returns a bundle containing information on the series specified by
 \texttt{datacode}, which must be a \DB\ triplet as
@@ -548,6 +550,8 @@ described above.
 # example
 bundle b = dbnomics_get_series("ECB/IRS/M.IT.L.L40.CI.0000.EUR.N.Z")
 \end{code}
+The \cmd{verbose} switch, if true, prints out the actual URL that the
+funciton sends to the \DB\ website, and can be used for debugging purposes.
 \end{funcdoc}
 
 \begin{funcdoc}
