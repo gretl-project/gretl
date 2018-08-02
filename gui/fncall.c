@@ -3591,6 +3591,9 @@ static int gui_package_info_init (void)
     if (!err) {
 	/* then read the per-user packages.xml, if present */
 	fname = packages_xml_path(USER_PACKAGES);
+#if PKG_DEBUG
+	fprintf(stderr, "now trying '%s'\n", fname);
+#endif
 	if (gretl_file_exists(fname)) {
 	    err = read_packages_file(fname, &n, USER_PACKAGES);
 #if PKG_DEBUG
