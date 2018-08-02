@@ -790,13 +790,13 @@ int main (int argc, char **argv)
     make_main_window();
 
 #if GUI_DEBUG
-    fprintf(stderr, "done make_main_window\n");
+    fprintf(stderr, " done make_main_window\n");
 #endif
 
     add_files_to_menus();
 
 #if GUI_DEBUG
-    fprintf(stderr, "done add_files_to_menus\n");
+    fprintf(stderr, " done add_files_to_menus\n");
 #endif
 
 #ifdef GRETL_PID_FILE
@@ -1456,6 +1456,10 @@ static void make_main_window (void)
 
     gui_scale = get_gui_scale();
 
+#if GUI_DEBUG
+    fprintf(stderr, " gui_scale = %g\n", (double) gui_scale);
+#endif
+
     if (!winsize || mainwin_width <= 200 || mainwin_height <= 200) {
 	/* set default window size */
 	mainwin_width = 650 * gui_scale;
@@ -1477,6 +1481,10 @@ static void make_main_window (void)
     if (mdata->mbar == NULL) {
 	exit(EXIT_FAILURE);
     }
+
+#if GUI_DEBUG
+    fprintf(stderr, " got past make_main_menu()\n");
+#endif
 
     /* put the main menu bar in place */
     box = gtk_hbox_new(FALSE, 0);
@@ -1976,7 +1984,7 @@ static void add_conditional_items (windata_t *vwin)
     GtkUIManager *ui = vwin->ui;
     int add_appfont = 1;
 
-#if 0 /* ifdef G_OS_WIN32 */
+#if 0 /* was: ifdef G_OS_WIN32 */
     if (using_wimp()) {
 	/* disable choice of "Menu font" when using MS-Windows theme */
 	add_appfont = 0;
@@ -2118,6 +2126,9 @@ static GtkWidget *make_main_menu (void)
     GError *error = NULL;
 
     main_ui = get_main_ui();
+#if GUI_DEBUG
+    fprintf(stderr, "   main_ui = %p\n", (void *) main_ui);
+#endif
     if (main_ui == NULL) {
 	return NULL;
     }
@@ -2137,7 +2148,13 @@ static GtkWidget *make_main_menu (void)
 	g_message("building menus failed: %s", error->message);
 	g_error_free(error);
     } else {
+#if GUI_DEBUG
+	fprintf(stderr, "   adding conditional menu items...\n");
+#endif
 	add_conditional_items(mdata);
+#if GUI_DEBUG
+	fprintf(stderr, "   conditional items done\n");
+#endif
 	menu = gtk_ui_manager_get_widget(mdata->ui, "/menubar");
 	if (menu == NULL) {
 	    fprintf(stderr, "/menubar widget is NULL!\n");

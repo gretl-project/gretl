@@ -2801,26 +2801,6 @@ int download_addon (const char *pkgname, char **local_path)
     return err;
 }
 
-#if 0
-
-/* for a package that's not a (zipfile) addon
-   work in progress, 2015-07-21
-*/
-
-static int download_package (const char *pkgname, char **local_path)
-{
-    int err;
-
-    err = script_install_function_package(pkgname, OPT_NONE,
-					  NULL, NULL,
-					  local_path);
-    fprintf(stderr, "d/l package: err=%d, local_path '%s'\n",
-	    err, *local_path);
-    return err;
-}
-
-#endif
-
 /* information about a function package that offers a
    menu attachment point */
 
@@ -2925,7 +2905,7 @@ static gchar *packages_xml_path (int which)
 
 static const char *modelreq_string (int ci)
 {
-    if (ci == 0 ) {
+    if (ci == 0) {
 	return "any";
     } else {
 	return gretl_command_word(ci);
@@ -2934,7 +2914,7 @@ static const char *modelreq_string (int ci)
 
 static void write_packages_xml (void)
 {
-    char *fname = packages_xml_path(USER_PACKAGES);
+    gchar *fname = packages_xml_path(USER_PACKAGES);
     int i, n_write = n_user_handled_packages();
 
     if (n_write == 0) {
@@ -3127,16 +3107,8 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
 
 	g_free(msg);
 	if (resp == GRETL_YES) {
-	    int err;
+	    int err = download_addon(pkgname, &gpi->filepath);
 
-	    if (official_addon(pkgname)) {
-		/* FIXME maybe record download in command log? */
-		err = download_addon(pkgname, &gpi->filepath);
-	    } else {
-		/* ?? err = download_package(pkgname, &gpi->filepath); */
-		err = 1;
-		errbox_printf("Sorry, could not find %s", pkgname);
-	    }
 	    if (err) {
 		return;
 	    }
@@ -3156,7 +3128,6 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
 	}
     } else {
 	errbox_printf("Sorry, could not find %s", pkgname);
-	/* ? */
 	gui_function_pkg_unregister(pkgname);
     }
 }
@@ -3287,7 +3258,6 @@ static int read_packages_file (const char *fname, int *pn, int which)
     int err, n = *pn;
 
     err = gretl_xml_open_doc_root(fname, "gretl-package-info", &doc, &cur);
-
     if (err) {
 	return (which == SYS_PACKAGES)? err : 0;
     }
@@ -3305,6 +3275,10 @@ static int read_packages_file (const char *fname, int *pn, int which)
 	    name = (char *) xmlGetProp(cur, (XUC) "name");
 	    desc = (char *) xmlGetProp(cur, (XUC) "label");
 	    path = (char *) xmlGetProp(cur, (XUC) "path");
+	    if (name == NULL || desc == NULL || path == NULL) {
+		err = E_DATA;
+		break;
+	    }
 
 	    if (!strcmp(name, "SVAR") &&
 		!strcmp(path, "/menubar/Model/TSModels")) {
@@ -3329,9 +3303,7 @@ static int read_packages_file (const char *fname, int *pn, int which)
 		gpkgs_changed = 1;
 	    }
 
-	    if (name == NULL || desc == NULL || path == NULL) {
-		err = E_DATA;
-	    } else if (package_is_unseen(name, n)) {
+	    if (package_is_unseen(name, n)) {
 		gpkgs = myrealloc(gpkgs, (n+1) * sizeof *gpkgs);
 		if (gpkgs == NULL) {
 		    err = E_ALLOC;
@@ -3610,6 +3582,9 @@ static int gui_package_info_init (void)
        always be present */
     fname = packages_xml_path(SYS_PACKAGES);
     err = read_packages_file(fname, &n, SYS_PACKAGES);
+#if PKG_DEBUG
+    fprintf(stderr, "read_packages_file: err=%d from '%s'\n", err, fname);
+#endif
     g_free(fname);
 
     if (!err) {
@@ -3617,6 +3592,9 @@ static int gui_package_info_init (void)
 	fname = packages_xml_path(USER_PACKAGES);
 	if (gretl_file_exists(fname)) {
 	    err = read_packages_file(fname, &n, USER_PACKAGES);
+#if PKG_DEBUG
+	    fprintf(stderr, "read_packages_file: err=%d from '%s'\n", err, fname);
+#endif
 	}
 	g_free(fname);
     }
@@ -3671,12 +3649,10 @@ static void add_package_to_menu (gui_package_info *gpi,
     }
 
     merge_id = gtk_ui_manager_new_merge_id(vwin->ui);
-
     gtk_ui_manager_add_ui(vwin->ui, merge_id, gpi->menupath,
 			  _(item.label), item.name,
 			  GTK_UI_MANAGER_MENUITEM,
 			  FALSE);
-
     if (vwin == mdata) {
 	gpi->merge_id = merge_id;
     }
@@ -3691,6 +3667,9 @@ static void add_package_to_menu (gui_package_info *gpi,
     // g_object_unref(gpi->ag);
 
     free(fixed_label);
+#if PKG_DEBUG
+    fprintf(stderr, " merge_id = %d\n", merge_id);
+#endif
 }
 
 /* run a package's gui-precheck function to determine if
@@ -3789,11 +3768,19 @@ static int maybe_add_model_pkg (gui_package_info *gpi,
 void maybe_add_packages_to_menus (windata_t *vwin)
 {
     gui_package_info *gpi;
-    int i;
+    int i, err = 0;
+
+#if PKG_DEBUG
+    fprintf(stderr, "starting maybe_add_packages_to_menus\n");
+#endif
 
     if (gpkgs == NULL) {
-	gui_package_info_init();
+	err = gui_package_info_init();
     }
+
+#if PKG_DEBUG
+    fprintf(stderr, "  n_gpkgs = %d, err = %d\n", n_gpkgs, err);
+#endif
 
     for (i=0; i<n_gpkgs; i++) {
 	gpi = &gpkgs[i];
@@ -3801,6 +3788,10 @@ void maybe_add_packages_to_menus (windata_t *vwin)
 	    add_package_to_menu(gpi, vwin);
 	}
     }
+
+#if PKG_DEBUG
+    fprintf(stderr, "finished maybe_add_packages_to_menus\n");
+#endif
 }
 
 /* Called from gui_utils.c when setting up the UI for a

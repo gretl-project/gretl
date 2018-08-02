@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* menustate.c: status of menus etc. */
@@ -82,7 +82,7 @@ void gretl_set_window_modal (GtkWidget *w)
 {
     gtk_window_set_modal(GTK_WINDOW(w), TRUE);
     increment_modal_count(w);
-    g_signal_connect(G_OBJECT(w), "destroy", 
+    g_signal_connect(G_OBJECT(w), "destroy",
 		     G_CALLBACK(decrement_modal_count),
 		     NULL);
 }
@@ -90,7 +90,7 @@ void gretl_set_window_modal (GtkWidget *w)
 void gretl_set_window_quasi_modal (GtkWidget *w)
 {
     increment_modal_count(w);
-    g_signal_connect(G_OBJECT(w), "destroy", 
+    g_signal_connect(G_OBJECT(w), "destroy",
 		     G_CALLBACK(decrement_modal_count),
 		     NULL);
 }
@@ -100,7 +100,7 @@ void variable_menu_state (gboolean s)
     if (mdata == NULL || mdata->ui == NULL) return;
 
     flip(mdata->ui, "/menubar/Variable", s);
-    flip(mdata->ui, "/menubar/View/xcorrgm",  
+    flip(mdata->ui, "/menubar/View/xcorrgm",
 	 dataset_is_time_series(dataset));
 }
 
@@ -126,7 +126,7 @@ static void view_items_state (gboolean s)
 
     flip(mdata->ui, "/menubar/View/IconView", have_session_objects());
 
-    flip(mdata->ui, "/menubar/View/xcorrgm",  
+    flip(mdata->ui, "/menubar/View/xcorrgm",
 	 data_status && dataset_is_time_series(dataset));
 }
 
@@ -172,8 +172,8 @@ void dataset_menubar_state (gboolean s)
     if (s || !have_session_objects()) {
 	/* Either we're enabling dataset items, in which
 	   case we should also enable the /View menu, or
-	   we're disabling the dataset items and there are 
-	   no session objects, in which case /View should 
+	   we're disabling the dataset items and there are
+	   no session objects, in which case /View should
 	   be disabled.
 	*/
 	flip(mdata->ui, "/menubar/View", s);
@@ -241,7 +241,7 @@ void time_series_menu_state (gboolean s)
     flip(mdata->ui, "/menubar/Variable/PanPlot", realpan);
 
     /* Variable menu */
-    flip(mdata->ui, "/menubar/Variable/URTests", ur); 
+    flip(mdata->ui, "/menubar/Variable/URTests", ur);
     if (ur && !s) {
 	/* time-series only "ur" option */
 	flip(mdata->ui, "/menubar/Variable/URTests/fractint", s);
@@ -263,12 +263,12 @@ void time_series_menu_state (gboolean s)
 #if 1 /* not ready yet */
     flip(mdata->ui, "/menubar/Model/TSModels/midasreg",
 	 s && OK_MIDAS_PD(dataset->pd));
-#else    
+#else
     flip(mdata->ui, "/menubar/Model/TSModels/midasreg", FALSE);
-#endif    
+#endif
 
     /* Sample menu */
-    flip(mdata->ui, "/menubar/Data/DataCompact", 
+    flip(mdata->ui, "/menubar/Data/DataCompact",
 	 s && (COMPACTABLE(dataset) || dated_weekly_data(dataset)));
     flip(mdata->ui, "/menubar/Data/DataExpand", s && EXPANSIBLE(dataset));
 }
@@ -309,7 +309,7 @@ void ts_or_panel_menu_state (gboolean s)
 	    dataset->panel_pd == 12 ||
 	    dataset->panel_pd == 24;
     }
-    
+
     flip(mdata->ui, "/menubar/Add/sdiff", s);
     flip(mdata->ui, "/menubar/Add/PeriodDums", s);
 }
@@ -406,7 +406,7 @@ static int uniform_corr_option (const gchar *title, gretlopt *popt)
     int uniform = 0;
     int resp;
 
-    resp = checks_only_dialog(title, NULL, opts, 1, 
+    resp = checks_only_dialog(title, NULL, opts, 1,
 			      &uniform, CORR, NULL);
 
     if (!canceled(resp) && uniform) {
@@ -671,10 +671,10 @@ GtkWidget *build_var_popup (int selvar)
 	if (!real_panel && i == MNU_PPLOT) {
 	    /* don't offer panel plot */
 	    continue;
-	}	
+	}
 	if ((i == MNU_CGRAM || i == MNU_PGRAM || i == MNU_IDXV) &&
 	    !dataset_is_time_series(dataset)) {
-	    /* correlogram, periodogram, index values */ 
+	    /* correlogram, periodogram, index values */
 	    continue;
 	}
 	if ((i == MNU_TPLOT || i == MNU_DIFF || i == MNU_PCDIF) &&
@@ -717,24 +717,24 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
 	right_click_corr();
     } else if (ci != 0) {
 	char *buf = main_window_selection_as_string();
-	
+
 	if (buf != NULL) {
 	    do_menu_op(ci, buf, OPT_NONE);
 	    free(buf);
 	}
-    } else if (i == MNU_DISP) { 
+    } else if (i == MNU_DISP) {
 	display_selected();
     } else if (i == MNU_COND) {
 	cond_number_callback();
     } else if (i == MNU_XCORR)  {
 	xcorrgm_callback();
-    } else if (i == MNU_TPLOT) { 
+    } else if (i == MNU_TPLOT) {
 	plot_from_selection(GR_PLOT);
     } else if (i == MNU_SCATR)  {
 	plot_from_selection(GR_XY);
     } else if (i == MNU_EDIT)  {
  	show_spreadsheet(SHEET_EDIT_VARLIST);
-    } else if (i == MNU_CLIPB) { 
+    } else if (i == MNU_CLIPB) {
 	csv_selected_to_clipboard();
     } else if (i == MNU_DELET)  {
 	delete_selected_vars();
@@ -744,9 +744,9 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
 	multi_percent_change_dialog(0);
     } else if (i == MNU_IDXV) {
 	multi_percent_change_dialog(1);
-    } else if (i == MNU_LIST) { 
+    } else if (i == MNU_LIST) {
 	make_list_from_main();
-    } else if (i == MNU_GENR) { 
+    } else if (i == MNU_GENR) {
 	genr_callback();
     }
 
@@ -804,7 +804,7 @@ static gint midas_popup_click (GtkWidget *w, gpointer p)
 
     if (i == MDS_DISP || i == MDS_TPLOT) {
 	int *list = main_window_selection_as_list();
-	
+
 	midas_list_callback(list, NULL, i == MDS_DISP ? PRINT : PLOT);
 	free(list);
     } else if (i == MDS_LOGS || i == MDS_DIFF)  {
@@ -817,9 +817,9 @@ static gint midas_popup_click (GtkWidget *w, gpointer p)
 	show_spreadsheet(SHEET_EDIT_VARLIST);
     } else if (i == MDS_CDEL) {
 	delete_selected_vars();
-    } else if (i == MDS_LIST) { 
+    } else if (i == MDS_LIST) {
 	make_list_from_main();
-    } else if (i == MDS_GENR) { 
+    } else if (i == MDS_GENR) {
 	genr_callback();
     }
 
@@ -904,10 +904,10 @@ void set_main_window_title (const char *name, gboolean modified)
 	} else {
 	    prog = g_strdup("gretl");
 	}
-	
+
 	if (!g_utf8_validate(name, -1, NULL)) {
 	    gchar *trname = my_filename_to_utf8(name);
-	    
+
 	    if (modified) {
 		title = g_strdup_printf("%s: %s *", prog, trname);
 	    } else {
@@ -965,7 +965,7 @@ static const char *get_pd_string (DATASET *dset)
     } else {
 	pdstr = N_("Undated");
     }
-    
+
     return pdstr;
 }
 
@@ -992,7 +992,7 @@ void set_sample_label (DATASET *dset)
     tsubset = dset->t1 > 0 || dset->t2 < dset->n - 1;
 
     /* construct label showing summary of dataset/sample info
-       (this goes at the foot of the window) 
+       (this goes at the foot of the window)
     */
 
     if (complex_subsampled() && !tsubset && dataset_is_cross_section(dset)) {
@@ -1019,13 +1019,13 @@ void set_sample_label (DATASET *dset)
 	    gtk_label_set_text(GTK_LABEL(mdata->status), tmp);
 	} else if (calendar_data(dset) && complex_subsampled()) {
 	    /* ditto, too verbose */
-	    sprintf(tmp, _("%s; sample %s - %s"), _(pdstr), dset->stobs, 
+	    sprintf(tmp, _("%s; sample %s - %s"), _(pdstr), dset->stobs,
 		    dset->endobs);
 	    gtk_label_set_text(GTK_LABEL(mdata->status), tmp);
 	} else {
 	    ntodate(t1str, 0, dset);
 	    ntodate(t2str, dset->n - 1, dset);
-	    sprintf(tmp, _("%s: Full range %s - %s"), _(pdstr), 
+	    sprintf(tmp, _("%s: Full range %s - %s"), _(pdstr),
 		    t1str, t2str);
 	    if (tsubset) {
 		gchar *fulltext;
@@ -1092,11 +1092,11 @@ void set_workdir_label (void)
     wlabel = g_object_get_data(G_OBJECT(mdata->main), "wlabel");
 
     if (wlabel != NULL) {
-	char tmp[MAXLEN];
-	gchar *wdir, *buf;
-	int len;
 	const char fmt[] = "<span color=\"blue\">%s</span>";
-	strcpy(tmp, gretl_workdir());
+	gchar *tmp, *wdir, *buf;
+	int len;
+
+	tmp = g_strdup(gretl_workdir());
 	trim_slash(tmp);
 	wdir = my_filename_to_utf8(tmp);
 	len = g_utf8_strlen(wdir, -1);
@@ -1108,6 +1108,7 @@ void set_workdir_label (void)
 	gtk_label_set_markup(GTK_LABEL(wlabel), buf);
 	g_free(buf);
 	g_free(wdir);
+	g_free(tmp);
     }
 }
 
@@ -1134,7 +1135,7 @@ int vwin_add_ui (windata_t *vwin, GtkActionEntry *entries,
     gtk_ui_manager_insert_action_group(vwin->ui, actions, 0);
     g_object_unref(actions);
 
-    gtk_window_add_accel_group(GTK_WINDOW(vwin->main), 
+    gtk_window_add_accel_group(GTK_WINDOW(vwin->main),
 			       gtk_ui_manager_get_accel_group(vwin->ui));
 
     gtk_ui_manager_add_ui_from_string(vwin->ui, ui_info, -1, &err);
@@ -1149,10 +1150,10 @@ int vwin_add_ui (windata_t *vwin, GtkActionEntry *entries,
 }
 
 static GtkActionGroup *get_named_group (GtkUIManager *uim,
-					const char *name, 
+					const char *name,
 					int *newgroup)
 {
-    GList *list = gtk_ui_manager_get_action_groups(uim); 
+    GList *list = gtk_ui_manager_get_action_groups(uim);
     GtkActionGroup *actions = NULL;
 
     while (list != NULL) {
@@ -1163,7 +1164,7 @@ static GtkActionGroup *get_named_group (GtkUIManager *uim,
 	    break;
 	}
 	list = list->next;
-    } 
+    }
 
     if (actions == NULL) {
 	actions = gtk_action_group_new(name);
@@ -1176,9 +1177,9 @@ static GtkActionGroup *get_named_group (GtkUIManager *uim,
     return actions;
 }
 
-int vwin_menu_add_item_unique (windata_t *vwin, 
-			       const gchar *aname, 
-			       const gchar *path, 
+int vwin_menu_add_item_unique (windata_t *vwin,
+			       const gchar *aname,
+			       const gchar *path,
 			       GtkActionEntry *entry)
 {
     GList *list = gtk_ui_manager_get_action_groups(vwin->ui);
@@ -1205,11 +1206,11 @@ int vwin_menu_add_item_unique (windata_t *vwin,
 
     gtk_ui_manager_insert_action_group(vwin->ui, actions, 0);
     g_object_unref(actions);
-	
+
     return id;
 }
 
-/* Retrieve existing "AdHoc" action group from @uim, or add a 
+/* Retrieve existing "AdHoc" action group from @uim, or add a
    new group of this name to the UIManager and return it.
 */
 
@@ -1223,7 +1224,7 @@ GtkActionGroup *get_ad_hoc_group (GtkUIManager *uim,
    the "merge_id", which can be used to remove the item
 */
 
-int vwin_menu_add_item (windata_t *vwin, const gchar *path, 
+int vwin_menu_add_item (windata_t *vwin, const gchar *path,
 			GtkActionEntry *entry)
 {
     GtkActionGroup *actions;
@@ -1232,7 +1233,7 @@ int vwin_menu_add_item (windata_t *vwin, const gchar *path,
 
     actions = get_ad_hoc_group(vwin->ui, &newgroup);
     gtk_action_group_add_actions(actions, entry, 1, vwin);
-    id = gtk_ui_manager_new_merge_id(vwin->ui); 
+    id = gtk_ui_manager_new_merge_id(vwin->ui);
 
     gtk_ui_manager_add_ui(vwin->ui, id, path, entry->name, entry->name,
 			  GTK_UI_MANAGER_MENUITEM, FALSE);
@@ -1249,7 +1250,7 @@ int vwin_menu_add_item (windata_t *vwin, const gchar *path,
    the "merge_id", which can be used to remove the items
 */
 
-int vwin_menu_add_items (windata_t *vwin, const gchar *path, 
+int vwin_menu_add_items (windata_t *vwin, const gchar *path,
 			 GtkActionEntry *entries, int n)
 {
     GtkActionGroup *actions;
@@ -1262,7 +1263,7 @@ int vwin_menu_add_items (windata_t *vwin, const gchar *path,
     id = gtk_ui_manager_new_merge_id(vwin->ui);
 
     for (i=0; i<n; i++) {
-	gtk_ui_manager_add_ui(vwin->ui, id, path, 
+	gtk_ui_manager_add_ui(vwin->ui, id, path,
 			      entries[i].name, entries[i].name,
 			      GTK_UI_MANAGER_MENUITEM, FALSE);
     }
@@ -1275,7 +1276,7 @@ int vwin_menu_add_items (windata_t *vwin, const gchar *path,
     return id;
 }
 
-int vwin_menu_add_radios (windata_t *vwin, const gchar *path, 
+int vwin_menu_add_radios (windata_t *vwin, const gchar *path,
 			  GtkRadioActionEntry *entries, int n,
 			  int deflt, GCallback callback)
 {
@@ -1290,7 +1291,7 @@ int vwin_menu_add_radios (windata_t *vwin, const gchar *path,
 				       deflt, callback,
 				       vwin);
     for (i=0; i<n; i++) {
-	gtk_ui_manager_add_ui(vwin->ui, id, path, 
+	gtk_ui_manager_add_ui(vwin->ui, id, path,
 			      entries[i].name, entries[i].name,
 			      GTK_UI_MANAGER_MENUITEM, FALSE);
     }
@@ -1300,7 +1301,7 @@ int vwin_menu_add_radios (windata_t *vwin, const gchar *path,
     return id;
 }
 
-int vwin_menu_add_menu (windata_t *vwin, const gchar *path, 
+int vwin_menu_add_menu (windata_t *vwin, const gchar *path,
 			GtkActionEntry *entry)
 {
     guint id = gtk_ui_manager_new_merge_id(vwin->ui);
