@@ -223,7 +223,7 @@ static int maybe_add_suffix (char *fname, const char *sfx)
 /* Heuristic: @s contains characters that are not
    printable ASCII, and validates as UTF-8 */
 
-int string_is_utf8 (const char *s)
+int string_is_utf8 (const unsigned char *s)
 {
     const unsigned char *p = s;
     int ascii_text = 1;
