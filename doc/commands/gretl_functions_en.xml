@@ -6804,17 +6804,18 @@
 	  The argument <argname>h</argname>, known as the
 	  \emph{bandwidth}, is a parameter (a positive real number)
 	  given by the user. This is usually a small number: larger
-	  values of $h$ make $m(x)$ smoother; a popular choice is
-	  $n^{-0.2}$. More details are given in <guideref
+	  values of $h$ make $m(x)$ smoother; a popular choice is $h
+	  \propto n^{-0.2}$. More details are given in <guideref
 	  targ="chap:nonparam"/>.
 	</para>
 	<para context="notex">
 	  The argument <argname>h</argname>, known as the bandwidth,
 	  is a parameter (a positive real number) given by the
-	  user. This is usually a small number: larger values
-	  of <argname>h</argname> make <math>m(x)</math> smoother; a
-	  popular choice is <math>n</math><sup>-0.2</sup>. More
-	  details are given in <guideref targ="chap:nonparam"/>.
+	  user. This is usually a small number: larger values of
+	  <argname>h</argname> make <math>m(x)</math> smoother; a
+	  popular choice is to make <argname>h</argname> proportional
+	  to <math>n</math><sup>-0.2</sup>. More details are given in
+	  <guideref targ="chap:nonparam"/>.
 	</para>
 	<para context="tex">
 	  The scalar $\tau$ is used to prevent numerical problems when

@@ -177,12 +177,19 @@ $m(\cdot)$ function follow the $y_i$ values more closely, so that the
 function appears more ``jagged''. In fact, as $h \to \infty$, $m(x_i)
 \to \bar{Y}$; on the contrary, if $h \to 0$, observations for which
 $x_i \ne X$ are not taken into account at all when computing $m(X)$.
-
 Also, the statistical properties of $m(\cdot)$ vary with $h$: its
 variance can be shown to be decreasing in $h$, while its squared bias
 is increasing in $h$.  It can be shown that choosing $h \sim n^{-1/5}$
 minimizes the RMSE, so that value is customarily taken as a reference
 point.
+
+If $h$ is set to 0, then \app{gretl} will use a default choice, given
+by the following formula:
+\[
+h = 0.9 \cdot \min\left[s, \frac{r}{1.349}\right] \cdot n^{-1/5}
+\]
+where $s$ is the sample standard deviation of $x$ and $r$ is its
+interquartile range.
 
 Note that the kernel function has its tails ``trimmed''. The scalar
 $\tau$, which controls the level at which trimming occurs is set by

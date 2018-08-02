@@ -6716,19 +6716,19 @@
       &lt; T</math> e 0 altrimenti.
     </para>
     <para context="tex">
-      L'argomento <argname>h</argname>, noto come \emph{ampiezza
-      di banda}, è un parametro (reale positivo) indicato
-      dall'utente. Normalmente, è un numero piccolo: valori grandi
-      di $h$ rendono $m(x)$ più liscia; una scelta molto comune è
-      $n^{-0.2}$. Per maggiori dettagli, si veda <guideref
+      L'argomento <argname>h</argname>, noto come \emph{ampiezza di
+      banda}, è un parametro (reale positivo) indicato
+      dall'utente. Normalmente, è un numero piccolo: valori grandi di
+      $h$ rendono $m(x)$ più liscia; una scelta molto comune è $h
+      \propto n^{-0.2}$. Per maggiori dettagli, si veda <guideref
       targ="chap:nonparam"/>.
     </para>
     <para context="notex">
-      L'argomento <argname>h</argname>, noto come ampiezza di
-      banda, è un parametro (reale positivo) indicato
-      dall'utente. Normalmente, è un numero piccolo: valori grandi
-      di <argname>h</argname> rendono <math>m(x)</math> più
-      liscia; una scelta molto comune è
+      L'argomento <argname>h</argname>, noto come ampiezza di banda, è
+      un parametro (reale positivo) indicato dall'utente. Normalmente,
+      è un numero piccolo: valori grandi di <argname>h</argname>
+      rendono <math>m(x)</math> più liscia; una scelta molto comune è
+      rendere <argname>h</argname> proporzionale a
       <math>n</math><sup>-0.2</sup>. Per maggiori dettagli, si veda
       <guideref targ="chap:nonparam"/>.
     </para>
