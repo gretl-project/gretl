@@ -3583,7 +3583,8 @@ static int gui_package_info_init (void)
     fname = packages_xml_path(SYS_PACKAGES);
     err = read_packages_file(fname, &n, SYS_PACKAGES);
 #if PKG_DEBUG
-    fprintf(stderr, "read_packages_file: err=%d from '%s'\n", err, fname);
+    fprintf(stderr, "read_packages_file: n=%d, err=%d from '%s'\n",
+	    n, err, fname);
 #endif
     g_free(fname);
 
@@ -3593,7 +3594,8 @@ static int gui_package_info_init (void)
 	if (gretl_file_exists(fname)) {
 	    err = read_packages_file(fname, &n, USER_PACKAGES);
 #if PKG_DEBUG
-	    fprintf(stderr, "read_packages_file: err=%d from '%s'\n", err, fname);
+	    fprintf(stderr, "read_packages_file: n=%d, err=%d from '%s'\n",
+		    n, err, fname);
 #endif
 	}
 	g_free(fname);

@@ -85,7 +85,7 @@ void set_stdio_use_utf8 (void);
 
 int get_stdio_use_utf8 (void);
 
-int string_is_utf8 (const unsigned char *s);
+int string_is_utf8 (const char *s);
 
 int maybe_recode_path (const char *path, char **pconv, 
 		       int want_utf8);

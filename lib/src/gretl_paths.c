@@ -220,33 +220,29 @@ static int maybe_add_suffix (char *fname, const char *sfx)
     return 0;
 }
 
-/* Heuristic: filename contains non-ascii characters, and
-   validates as UTF-8 */
+/* Heuristic: @s contains characters that are not
+   printable ASCII, and validates as UTF-8 */
 
-int string_is_utf8 (const unsigned char *s)
+int string_is_utf8 (const char *s)
 {
     const unsigned char *p = s;
-    int sevenbit = 1;
+    int ascii_text = 1;
     int ret = 0;
 
     while (*p) {
-	if (*p > 127) {
-	    sevenbit = 0;
+	if (*p < 32 || *p > 126) {
+	    ascii_text = 0;
 	    break;
 	}
 	p++;
     }
 
-    if (!sevenbit && g_utf8_validate((gchar *) s, -1, NULL)) {
+    if (!ascii_text && g_utf8_validate((gchar *) s, -1, NULL)) {
 	ret = 1;
     }
 
     return ret;
 }
-
-#ifdef WIN32
-#define filename_is_utf8(s) g_utf8_validate(s, -1, NULL)
-#endif
 
 static int stdio_use_utf8;
 
@@ -366,7 +362,7 @@ FILE *gretl_fopen (const char *fname, const char *mode)
 #endif
 
 #ifdef WIN32
-    if (filename_is_utf8(fname)) {
+    if (string_is_utf8(fname)) {
 	fp = g_fopen(fname, mode);
     }
 #endif
@@ -408,7 +404,7 @@ FILE *gretl_mktemp (char *pattern, const char *mode)
     gretl_error_clear();
 
 #ifdef WIN32
-    if (filename_is_utf8(pattern)) {
+    if (string_is_utf8(pattern)) {
 	fd = g_mkstemp(pattern);
 	done = 1;
     }
@@ -452,7 +448,7 @@ int gretl_test_fopen (const char *fname, const char *mode)
     gretl_error_clear();
 
 #ifdef WIN32
-    if (filename_is_utf8(fname)) {
+    if (string_is_utf8(fname)) {
 	fp = g_fopen(fname, mode);
 	if (fp == NULL) {
 	    err = errno;
@@ -597,7 +593,7 @@ int gretl_open (const char *pathname, int flags, int mode)
 #ifdef WIN32
     if (!strcmp(pathname, ".")) {
 	return win32_open_fchdir(0);
-    } else if (filename_is_utf8(pathname)) {
+    } else if (string_is_utf8(pathname)) {
 	fd = g_open(pathname, flags, m);
 	done = 1;
     }
@@ -647,8 +643,8 @@ int gretl_stat (const char *fname, struct stat *buf)
     gretl_error_clear();
 
 #ifdef WIN32
-    if (filename_is_utf8(fname)) {
-	GStatBuf gtmp;
+    if (string_is_utf8(fname)) {
+	GStatBuf gtmp = {0};
 
 	return g_stat(fname, buf == NULL ? &gtmp : buf);
     }
@@ -677,8 +673,8 @@ int gretl_file_exists (const char *fname)
     gretl_error_clear();
 
 #ifdef WIN32
-    if (filename_is_utf8(fname)) {
-	GStatBuf gbuf;
+    if (string_is_utf8(fname)) {
+	GStatBuf gbuf = {0};
 
 	err = g_stat(fname, &gbuf);
 	done = 1;
@@ -768,7 +764,7 @@ int gretl_remove (const char *path)
 #ifdef WIN32
     int utf8 = 0;
 
-    if (filename_is_utf8(path)) {
+    if (string_is_utf8(path)) {
 	ret = g_remove(path);
 	tried = utf8 = 1;
     }
@@ -889,7 +885,7 @@ int gretl_chdir (const char *path)
 	ptmp = gretl_strndup(path, len - 1);
 	path = ptmp;
     }
-    if (filename_is_utf8(path)) {
+    if (string_is_utf8(path)) {
 	err = g_chdir(path);
 	tried = 1;
     }
@@ -949,7 +945,7 @@ int gretl_mkdir (const char *path)
     errno = 0;
 
 #ifdef WIN32
-    if (!filename_is_utf8(path)) {
+    if (!string_is_utf8(path)) {
 	gchar *pconv = g_locale_to_utf8(path, -1, NULL, NULL, NULL);
 
 	if (pconv != NULL) {
