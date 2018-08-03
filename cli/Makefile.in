@@ -114,7 +114,7 @@ gretlcli-mpi.o: gretlcli-mpi.c
 
 .PHONY :
 
-install: install-cli $(INSTALL_MPI) $(INSTALL_BC)
+install: install-cli $(INSTALL_MPI)
 
 install-cli: $(CLI) installdirs
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(CLI) $(DESTDIR)$(bindir)/$(CLI)
