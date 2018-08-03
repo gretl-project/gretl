@@ -679,25 +679,7 @@ int gretl_stat (const char *fname, struct stat *buf)
 
 int gretl_file_exists (const char *fname)
 {
-    struct stat buf = {0};
-    int err, done = 0;
-
-    gretl_error_clear();
-
-#ifdef WIN32
-    if (string_is_utf8(fname)) {
-	GStatBuf gbuf = {0};
-
-	err = g_stat(fname, &gbuf);
-	done = 1;
-    }
-#endif
-
-    if (!done) {
-	err = stat(fname, &buf);
-    }
-
-    return err == 0;
+    return gretl_stat(fname, NULL) == 0;
 }
 
 /**
