@@ -3884,9 +3884,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    goto finalize;
 	}
 
-	if (gretl_is_null_matrix(m) && !emptymat_ok(f)) {
-	    p->err = E_DATA;
-	} else if (f == F_RESAMPLE || f == F_MREVERSE || f == F_SDC) {
+	if (f == F_RESAMPLE || f == F_MREVERSE || f == F_SDC) {
 	    /* the r node may be absent, but if present it should
 	       hold a scalar */
 	    if (!empty_or_num(r)) {
@@ -3900,6 +3898,10 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 		/* m must be a vector */
 		p->err = E_TYPES;
 	    }
+	}
+
+	if (!p->err && gretl_is_null_matrix(m) && !emptymat_ok(f)) {
+	    p->err = E_DATA;
 	}
 
 	if (p->err) {
