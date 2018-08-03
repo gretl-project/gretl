@@ -347,7 +347,8 @@ int gretl_spawn (char *cmdline)
 
 /* Retrieve various special paths from the bowels of MS
    Windows.  Note that these paths will be in the locale
-   encoding, not UTF-8.
+   encoding, not UTF-8. TODO: Substitute SHGetFolderPathW
+   and convert the UTF-16 return value to UTF-8.
 */
 
 static char *win_special_path (int folder)
