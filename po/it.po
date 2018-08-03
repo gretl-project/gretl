@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2018-08-03 13:44-0400\n"
-"PO-Revision-Date: 2018-07-22 18:24+0200\n"
+"PO-Revision-Date: 2018-08-03 21:34+0200\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -1003,9 +1003,9 @@ msgid "   warning: missing value for variable %d, obs %d\n"
 msgstr "   attenzione: valore mancante per la variabile %d, osservazione %d\n"
 
 #: lib/src/csvdata.c:2188
-#, fuzzy, c-format
+#, c-format
 msgid "variable %d (%s): non-numeric values = %d (%.2f percent)\n"
-msgstr "ERRORE: variabile %d (%s), osservazione %d, valore non numerico\n"
+msgstr "variabile %d (%s), valori non numerici = %d (%2f per cento)\n"
 
 #: lib/src/csvdata.c:2195
 #, c-format
@@ -1014,9 +1014,8 @@ msgstr "ERRORE: variabile %d (%s), osservazione %d, valore non numerico\n"
 
 #  Comando plotvar, non ancora implementato
 #: lib/src/csvdata.c:2203
-#, fuzzy
 msgid "allocating string table\n"
-msgstr "Variabile dummy per grafici (giornaliera)"
+msgstr "allocazione tabella stringhe\n"
 
 #: lib/src/csvdata.c:2606
 msgid ""
@@ -1327,7 +1326,7 @@ msgstr "Incoerenza nei marcatori delle osservazioni\n"
 
 #: lib/src/dataio.c:2225
 msgid "Can't concatenate string-valued and numeric series"
-msgstr ""
+msgstr "Non si possono concatenare serie numeriche e serie stringa"
 
 #: lib/src/dataio.c:2742
 msgid "No markers are available for writing"
@@ -7041,9 +7040,9 @@ msgid "GED (shape = %g): "
 msgstr "GED (forma = %g): "
 
 #: lib/src/pvalues.c:3596
-#, fuzzy, c-format
+#, c-format
 msgid "Laplace (mean = %g, scale = %g): "
-msgstr "Laplace (media = %g, forma = %g): "
+msgstr "Laplace (media = %g, scala = %g): "
 
 #: lib/src/strutils.c:703 lib/src/strutils.c:722 lib/src/tokenize.c:3195
 #, c-format
