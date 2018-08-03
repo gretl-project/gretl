@@ -103,17 +103,10 @@ enum {
 #define is_tmp_node(n) (n != NULL && (n->flags & TMP_NODE))
 #define is_proxy_node(n) (n != NULL && (n->flags & PRX_NODE))
 
-#define emptymat_for_emptymat(f) (f == F_GINV || f == F_DIAG || f == F_TRANSP || \
-				  f == F_VEC || f == F_VECH || f == F_UNVECH || \
-				  f == F_CHOL || f == F_UPPER || f == F_LOWER || \
-				  f == F_SORT || f == F_DSORT || f == F_VALUES || \
-				  f == F_MREVERSE )
-
-
 #define nullmat_ok(f) (f == F_ROWS || f == F_COLS || f == F_DET || \
-		       f == F_LDET || f == F_DATAOK || \
-		       emptymat_for_emptymat(f))
-
+		       f == F_LDET || f == F_DIAG || f == F_TRANSP || \
+		       f == F_VEC || f == F_VECH || f == F_UNVECH || \
+		       f == F_DATAOK)
 
 #define dataset_dum(n) (n->t == DUM && n->v.idnum == DUM_DATASET)
 
@@ -3914,151 +3907,147 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 
 	gretl_error_clear();
 
-	if (gretl_is_null_matrix(m) && emptymat_for_emptymat(f)) {
-	    ret->v.m = gretl_matrix_alloc(0, 0);
-	} else {
-	    switch (f) {
-	    case F_SUMC:
-		ret->v.m = gretl_matrix_column_sum(m, &p->err);
-		break;
-	    case F_SUMR:
-		ret->v.m = gretl_matrix_row_sum(m, &p->err);
-		break;
-	    case F_PRODC:
-		ret->v.m = gretl_matrix_column_prod(m, &p->err);
-		break;
-	    case F_PRODR:
-		ret->v.m = gretl_matrix_row_prod(m, &p->err);
-		break;
-	    case F_MEANC:
-		ret->v.m = gretl_matrix_column_mean(m, &p->err);
-		break;
-	    case F_MEANR:
-		ret->v.m = gretl_matrix_row_mean(m, &p->err);
-		break;
-	    case F_SD:
-		ret->v.m = gretl_matrix_column_sd(m, &p->err);
-		break;
-	    case F_SDC:
-		if (r != NULL && r->t == NUM) {
-		    ret->v.m = gretl_matrix_column_sd2(m, r->v.xval, &p->err);
-		} else {
-		    ret->v.m = gretl_matrix_column_sd(m, &p->err);
-		}
-		break;
-	    case F_MCOV:
-		ret->v.m = gretl_covariance_matrix(m, 0, &p->err);
-		break;
-	    case F_MCORR:
-		ret->v.m = gretl_covariance_matrix(m, 1, &p->err);
-		break;
-	    case F_CUM:
-		ret->v.m = gretl_matrix_cumcol(m, &p->err);
-		break;
-	    case F_DIFF:
-		ret->v.m = gretl_matrix_diffcol(m, 0, &p->err);
-		break;
-	    case F_DATAOK:
-		ret->v.m = gretl_matrix_isfinite(m, &p->err);
-		break;
-	    case F_RESAMPLE:
-		if (r != NULL && r->t == NUM) {
-		    ret->v.m = gretl_matrix_block_resample(m, r->v.xval, &p->err);
-		} else {
-		    ret->v.m = gretl_matrix_resample(m, &p->err);
-		}
-		break;
-	    case F_CDEMEAN:
-	    case F_CHOL:
-	    case F_PSDROOT:
-	    case F_INV:
-	    case F_INVPD:
-	    case F_GINV:
-	    case F_UPPER:
-	    case F_LOWER:
-		ret->v.m = user_matrix_matrix_func(m, tmpmat, f, &p->err);
-		break;
-	    case F_DIAG:
-		ret->v.m = gretl_matrix_get_diagonal(m, &p->err);
-		break;
-	    case F_TRANSP:
-		if (m->is_complex) {
-		    ret->v.m = gretl_ctran(m, &p->err);
-		} else {
-		    ret->v.m = gretl_matrix_copy_transpose(m);
-		}
-		break;
-	    case F_VEC:
-		ret->v.m = user_matrix_vec(m, &p->err);
-		break;
-	    case F_VECH:
-		ret->v.m = user_matrix_vech(m, &p->err);
-		break;
-	    case F_UNVECH:
-		ret->v.m = user_matrix_unvech(m, &p->err);
-		break;
-	    case F_MREVERSE:
-		if (r != NULL && r->t == NUM && r->v.xval != 0) {
-		    ret->v.m = gretl_matrix_reverse_cols(m);
-		} else {
-		    ret->v.m = gretl_matrix_reverse_rows(m);
-		}
-		break;
-	    case F_NULLSPC:
-		ret->v.m = gretl_matrix_right_nullspace(m, &p->err);
-		break;
-	    case F_MEXP:
-		ret->v.m = gretl_matrix_exp(m, &p->err);
-		break;
-	    case F_FFT:
-		ret->v.m = gretl_matrix_fft(m, &p->err);
-		break;
-	    case F_FFTI:
-		ret->v.m = gretl_matrix_ffti(m, &p->err);
-		break;
-	    case F_POLROOTS:
-		ret->v.m = gretl_matrix_polroots(m, 0, &p->err);
-		break;
-	    case F_RANKING:
-		ret->v.m = rank_vector(m, F_SORT, &p->err);
-		break;
-	    case F_MINC:
-	    case F_MAXC:
-	    case F_MINR:
-	    case F_MAXR:
-	    case F_IMINC:
-	    case F_IMAXC:
-	    case F_IMINR:
-	    case F_IMAXR:
-		matrix_minmax_indices(f, &a, &b, &c);
-		ret->v.m = gretl_matrix_minmax(m, a, b, c, &p->err);
+	switch (f) {
+	case F_SUMC:
+	    ret->v.m = gretl_matrix_column_sum(m, &p->err);
 	    break;
-	    case HF_CMATRIX:
-		ret->v.m = gretl_cmatrix(m, r->v.m, &p->err);
-		break;
-	    case HF_CMMULT:
-		ret->v.m = gretl_zgemm(m, r->v.m, &p->err);
-		break;
-	    case HF_CHPROD:
-		ret->v.m = gretl_complex_hprod(m, r->v.m, &p->err);
-		break;
-	    case HF_CINV:
-		ret->v.m = gretl_zgetri(m, &p->err);
-		break;
-	    case HF_CFFT:
-		ret->v.m = gretl_complex_fft(m, a, &p->err);
-		break;
-	    case HF_CTRAN:
-		ret->v.m = gretl_ctran(m, &p->err);
-		break;
-	    case HF_CEXP:
-		ret->v.m = gretl_cexp(m, &p->err);
-		break;
-	    default:
-		break;
+	case F_SUMR:
+	    ret->v.m = gretl_matrix_row_sum(m, &p->err);
+	    break;
+	case F_PRODC:
+	    ret->v.m = gretl_matrix_column_prod(m, &p->err);
+	    break;
+	case F_PRODR:
+	    ret->v.m = gretl_matrix_row_prod(m, &p->err);
+	    break;
+	case F_MEANC:
+	    ret->v.m = gretl_matrix_column_mean(m, &p->err);
+	    break;
+	case F_MEANR:
+	    ret->v.m = gretl_matrix_row_mean(m, &p->err);
+	    break;
+	case F_SD:
+	    ret->v.m = gretl_matrix_column_sd(m, &p->err);
+	    break;
+	case F_SDC:
+	    if (r != NULL && r->t == NUM) {
+		ret->v.m = gretl_matrix_column_sd2(m, r->v.xval, &p->err);
+	    } else {
+		ret->v.m = gretl_matrix_column_sd(m, &p->err);
 	    }
+	    break;
+	case F_MCOV:
+	    ret->v.m = gretl_covariance_matrix(m, 0, &p->err);
+	    break;
+	case F_MCORR:
+	    ret->v.m = gretl_covariance_matrix(m, 1, &p->err);
+	    break;
+	case F_CUM:
+	    ret->v.m = gretl_matrix_cumcol(m, &p->err);
+	    break;
+	case F_DIFF:
+	    ret->v.m = gretl_matrix_diffcol(m, 0, &p->err);
+	    break;
+	case F_DATAOK:
+	    ret->v.m = gretl_matrix_isfinite(m, &p->err);
+	    break;
+	case F_RESAMPLE:
+	    if (r != NULL && r->t == NUM) {
+		ret->v.m = gretl_matrix_block_resample(m, r->v.xval, &p->err);
+	    } else {
+		ret->v.m = gretl_matrix_resample(m, &p->err);
+	    }
+	    break;
+	case F_CDEMEAN:
+	case F_CHOL:
+	case F_PSDROOT:
+	case F_INV:
+	case F_INVPD:
+	case F_GINV:
+	case F_UPPER:
+	case F_LOWER:
+	    ret->v.m = user_matrix_matrix_func(m, tmpmat, f, &p->err);
+	    break;
+	case F_DIAG:
+	    ret->v.m = gretl_matrix_get_diagonal(m, &p->err);
+	    break;
+	case F_TRANSP:
+	    if (m->is_complex) {
+		ret->v.m = gretl_ctran(m, &p->err);
+	    } else {
+		ret->v.m = gretl_matrix_copy_transpose(m);
+	    }
+	    break;
+	case F_VEC:
+	    ret->v.m = user_matrix_vec(m, &p->err);
+	    break;
+	case F_VECH:
+	    ret->v.m = user_matrix_vech(m, &p->err);
+	    break;
+	case F_UNVECH:
+	    ret->v.m = user_matrix_unvech(m, &p->err);
+	    break;
+	case F_MREVERSE:
+	    if (r != NULL && r->t == NUM && r->v.xval != 0) {
+		ret->v.m = gretl_matrix_reverse_cols(m);
+	    } else {
+		ret->v.m = gretl_matrix_reverse_rows(m);
+	    }
+	    break;
+	case F_NULLSPC:
+	    ret->v.m = gretl_matrix_right_nullspace(m, &p->err);
+	    break;
+	case F_MEXP:
+	    ret->v.m = gretl_matrix_exp(m, &p->err);
+	    break;
+	case F_FFT:
+	    ret->v.m = gretl_matrix_fft(m, &p->err);
+	    break;
+	case F_FFTI:
+	    ret->v.m = gretl_matrix_ffti(m, &p->err);
+	    break;
+	case F_POLROOTS:
+	    ret->v.m = gretl_matrix_polroots(m, 0, &p->err);
+	    break;
+	case F_RANKING:
+	    ret->v.m = rank_vector(m, F_SORT, &p->err);
+	    break;
+	case F_MINC:
+	case F_MAXC:
+	case F_MINR:
+	case F_MAXR:
+	case F_IMINC:
+	case F_IMAXC:
+	case F_IMINR:
+	case F_IMAXR:
+	    matrix_minmax_indices(f, &a, &b, &c);
+	    ret->v.m = gretl_matrix_minmax(m, a, b, c, &p->err);
+	    break;
+	case HF_CMATRIX:
+	    ret->v.m = gretl_cmatrix(m, r->v.m, &p->err);
+	    break;
+	case HF_CMMULT:
+	    ret->v.m = gretl_zgemm(m, r->v.m, &p->err);
+	    break;
+	case HF_CHPROD:
+	    ret->v.m = gretl_complex_hprod(m, r->v.m, &p->err);
+	    break;
+	case HF_CINV:
+	    ret->v.m = gretl_zgetri(m, &p->err);
+	    break;
+	case HF_CFFT:
+	    ret->v.m = gretl_complex_fft(m, a, &p->err);
+	    break;
+	case HF_CTRAN:
+	    ret->v.m = gretl_ctran(m, &p->err);
+	    break;
+	case HF_CEXP:
+	    ret->v.m = gretl_cexp(m, &p->err);
+	    break;
+	default:
+	    break;
 	}
-	
+
 	if (ret->v.m == m && n->t == MAT) {
 	    /* input matrix was recycled: avoid double-freeing */
 	    n->v.m = NULL;
@@ -7835,7 +7824,7 @@ static NODE *vector_sort (NODE *l, int f, parser *p)
 	} else if (l->t == NUM) {
 	    ret->v.m = gretl_matrix_from_scalar(l->v.xval);
 	} else if (gretl_is_null_matrix(l->v.m)) {
-	    ret->v.m = gretl_matrix_alloc(0, 0);
+	    p->err = E_DATA;
 	} else {
 	    int descending = (f == F_DSORT);
 
@@ -7851,12 +7840,6 @@ static NODE *vector_values (NODE *l, int f, parser *p)
     NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
-
-	if (l->t == MAT && gretl_is_null_matrix(l->v.m)) {
-	    ret->v.m = gretl_matrix_alloc(0, 0);
-	    goto done;
-	}
-	
 	const double *x = NULL;
 	int n = 0;
 
@@ -7866,7 +7849,7 @@ static NODE *vector_values (NODE *l, int f, parser *p)
 	} else if (l->t == SERIES) {
 	    n = sample_size(p->dset);
 	    x = l->v.xvec + p->dset->t1;
-	} else {
+	} else if (!gretl_is_null_matrix(l->v.m)) {
 	    n = gretl_vector_get_length(l->v.m);
 	    x = l->v.m->val;
 	}
@@ -7880,8 +7863,6 @@ static NODE *vector_values (NODE *l, int f, parser *p)
 	}
     }
 
- done:
-    
     return ret;
 }
 
