@@ -34,13 +34,12 @@
 
 #ifdef WIN32
 # include "gretl_win32.h"
-#else
-# include <sys/stat.h>
-# include <sys/types.h>
-# include <dirent.h>
-# include <errno.h>
 #endif
 
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <dirent.h>
+#include <errno.h>
 #include <fcntl.h> /* for 'open' */
 
 #include <glib/gstdio.h>
@@ -644,9 +643,22 @@ int gretl_stat (const char *fname, struct stat *buf)
 
 #ifdef WIN32
     if (string_is_utf8(fname)) {
-	GStatBuf gtmp = {0};
+	/* A native stat() call won't work with such a filename:
+	   we should either call g_stat(), which expects UTF-8
+	   on Windows, or convert @fname before calling stat().
+	   Unfortunately g_stat() from GLib 2.36.4 crashes on
+	   (some variants of) 32-bit Windows, so it seems we need
+	   to do the conversion ourselves.
+	*/
+	gunichar2 *wname;
 
-	return g_stat(fname, buf == NULL ? &gtmp : buf);
+	wname = g_utf8_to_utf16(fname, -1, NULL, NULL, NULL);
+	if (wname != NULL) {
+	    int ret = wstat(wname, buf == NULL ? &tmp : buf);
+
+	    g_free(wname);
+	    return ret;
+	}
     }
 #endif
 
