@@ -511,7 +511,7 @@ static void handle_datafile (char *filearg, char *runfile,
 static void check_help_file (void)
 {
     const char *hpath = helpfile_path(GRETL_CMDREF, 1, 0);
-    FILE *fp = fopen(hpath, "r");
+    FILE *fp = gretl_fopen(hpath, "r");
 
     if (fp != NULL) { 
 	printf(_("\n\"help\" gives a list of commands\n"));
@@ -1304,7 +1304,7 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	if (fb != NULL) {
 	    push_input_file(fb);
 	}
-	if ((fb = fopen(runfile, "r")) == NULL) {
+	if ((fb = gretl_fopen(runfile, "r")) == NULL) {
 	    pprintf(prn, _("Error reading %s\n"), runfile);
 	    err = process_command_error(s, E_FOPEN);
 	    fb = pop_input_file();

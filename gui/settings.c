@@ -2442,7 +2442,7 @@ int read_win32_config (int debug)
 
 static int read_gretlrc (void)
 {
-    FILE *fp = fopen(rcfile, "r");
+    FILE *fp = gretl_fopen(rcfile, "r");
 
     if (fp == NULL) {
 	fprintf(stderr, "Couldn't read %s\n", rcfile);

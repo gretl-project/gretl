@@ -100,6 +100,7 @@ static xmlDocPtr gretl_xmlParseFile (const char *fname)
 	gchar *fconv;
 	gsize wrote;
 
+	/* maybe use UTF-16 rather than locale ? */
 	fconv = g_locale_from_utf8(fname, -1, NULL, &wrote, NULL);
 	if (fconv != NULL) {
 	    ptr = xmlParseFile(fconv);
@@ -1440,7 +1441,7 @@ static int get_matrix_values_via_file (gretl_matrix *m, const char *s)
 
     fputs(s, fp);
     fclose(fp);
-    fp = fopen(fname, "r");
+    fp = gretl_fopen(fname, "r");
 
     if (fp == NULL) {
 	err = E_FOPEN;

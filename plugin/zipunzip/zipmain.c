@@ -373,9 +373,9 @@ static int zipfile_write_check (zfile *zf, int task, int *attr)
 	fmode = "r+";
     }
 
-    trace(2, "testing fopen on '%s', mode %s\n", zf->fname, fmode);
+    trace(2, "testing gretl_fopen on '%s', mode %s\n", zf->fname, fmode);
 
-    fp = fopen(zf->fname, fmode);
+    fp = gretl_fopen(zf->fname, fmode);
     if (fp == NULL) {
 	err = ziperr(ZE_CREAT, zf->fname);
     } else {
@@ -603,7 +603,7 @@ static int real_archive_files (const char *targ, const char **filenames,
 
     if (zfiles != NULL || zf.zstart) {
 	trace(1, "opening original zip file for reading\n");
-	fr = fopen(zf.fname, "rb");
+	fr = gretl_fopen(zf.fname, "rb");
 	if (fr == NULL) {
 	    err = ziperr(ZE_NAME, zf.fname);
 	    goto bailout;
@@ -1078,7 +1078,7 @@ static int real_delete_files (zfile *zf)
     }
 
     trace(1, "opening original zip file for reading\n");
-    fr = fopen(zf->fname, "rb");
+    fr = gretl_fopen(zf->fname, "rb");
     if (fr == NULL) {
 	return ziperr(ZE_NAME, zf->fname);
     }

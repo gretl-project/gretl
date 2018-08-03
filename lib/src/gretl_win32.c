@@ -164,7 +164,7 @@ static FILE *cli_rcfile_open (void)
     }
 
     if (rcfile[0] != '\0') {
-	fp = fopen(rcfile, "r");
+	fp = gretl_fopen(rcfile, "r");
     }
 
     return fp;

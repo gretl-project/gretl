@@ -312,11 +312,11 @@ int replace_file (char *dest, char *src)
 	FILE *fs, *fd;
 	int err;
 
-	if ((fs = fopen(src, "rb")) == NULL) {
+	if ((fs = gretl_fopen(src, "rb")) == NULL) {
 	    fprintf(stderr," replace_file: can't open %s for reading\n", src);
 	    return ZE_TEMP;
 	}
-	if ((fd = fopen(dest, "wb")) == NULL) {
+	if ((fd = gretl_fopen(dest, "wb")) == NULL) {
 	    fprintf(stderr," replace_file: can't open %s for writing\n", src);
 	    fclose(fs);
 	    return ZE_CREAT;

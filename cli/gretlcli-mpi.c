@@ -911,7 +911,7 @@ static int cli_exec_line (ExecState *s, int id, DATASET *dset,
 	if (fb != NULL) {
 	    push_input_file(fb);
 	}
-	if ((fb = fopen(runfile, "r")) == NULL) {
+	if ((fb = gretl_fopen(runfile, "r")) == NULL) {
 	    pprintf(prn, _("Error reading %s\n"), runfile);
 	    err = process_command_error(s, E_FOPEN);
 	    fb = pop_input_file();

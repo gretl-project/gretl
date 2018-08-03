@@ -575,7 +575,7 @@ static int read_nist_nls_data (const char *fname)
     int got_model = 0;
     int got_data = -1;
 
-    fp = fopen(fname, "r");
+    fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
 	fprintf(stderr, "Couldn't open %s\n", fname);
 	return 1;

@@ -336,7 +336,7 @@ int zipup (zfile *zf, zlist *z)
 	fsize = 0;
     } else {
 	trace(2, "'%s': is regular file, trying DEFLATE\n", z->name);
-	fin = fopen(z->name, "rb");
+	fin = gretl_fopen(z->name, "rb");
 	if (fin == NULL) {
 	    return ZE_OPEN;
 	}
@@ -727,10 +727,10 @@ static FILE *open_zip_output (const char *name, const char *prefix)
 	    fname = g_strdup_printf("%s%c%s", prefix,
 				    G_DIR_SEPARATOR, name);
 	}
-	fp = fopen(fname, "wb");
+	fp = gretl_fopen(fname, "wb");
 	g_free(fname);
     } else {
-	fp = fopen(name, "wb");
+	fp = gretl_fopen(name, "wb");
     }
 
     return fp;

@@ -9090,7 +9090,7 @@ static int ok_run_file (char *runfile, int *is_gfn)
 	    gchar *tmp = g_strdup(runfile);
 
 	    build_path(runfile, path, tmp, NULL);
-	    fp = fopen(runfile, "r");
+	    fp = gretl_fopen(runfile, "r");
 	    g_free(tmp);
 	    g_free(path);
 	    if (fp != NULL) {

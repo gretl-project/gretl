@@ -969,16 +969,16 @@ static int grab_linearized_series (double *y, const double *x,
     
     if (fp == NULL) {
 	sprintf(sfname, "%s%coutput%c%s.out", path, SLASH, SLASH, vname);
-	fp = fopen(sfname, "r");
+	fp = gretl_fopen(sfname, "r");
 	if (fp != NULL) {
 	    fclose(fp); /* OK ? */
 	    sprintf(sfname, "%s%coutput%csummary.txt", path, SLASH, SLASH);
-	    fp = fopen(sfname, "r");
+	    fp = gretl_fopen(sfname, "r");
 	    if (fp != NULL) {
-		fclose(fp); /* agian, OK ? */
+		fclose(fp); /* again, OK ? */
 		sprintf(sfname, "%s%cgraph%cseries%cxorigt.t", path, SLASH,
 			SLASH, SLASH);
-		fp = fopen(sfname, "r");
+		fp = gretl_fopen(sfname, "r");
 	    }
 	}
     }
