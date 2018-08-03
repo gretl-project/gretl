@@ -2185,8 +2185,8 @@ int non_numeric_check (DATASET *dset, int **plist,
 	}
 
 	nnfrac = (nok == 0)? 1.0 : (double) nnon / (nnon + nok);
-	pprintf(prn, "variable %d (%s): non-numeric values = %d "
-		"(%.2f percent)\n", v, dset->varname[v],
+	pprintf(prn, A_("variable %d (%s): non-numeric values = %d "
+			"(%.2f percent)\n"), v, dset->varname[v],
 		nnon, 100 * nnfrac);
 	if ((nnon < 2 && dset->n > 2) || nnfrac < 0.01) {
 	    /* if we got just a few non-numeric values, we'll assume
@@ -2200,7 +2200,7 @@ int non_numeric_check (DATASET *dset, int **plist,
     }
 
     if (!err) {
-	pputs(prn, "allocating string table\n");
+	pputs(prn, _("allocating string table\n"));
 	*pst = gretl_string_table_new(list);
 	if (*pst == NULL) {
 	    err = E_ALLOC;
