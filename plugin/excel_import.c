@@ -65,12 +65,6 @@ static int allocate_row_col (int row, int col, wbook *book,
 
 int debug_print;
 
-#ifdef WIN32
-char debug_fname[FILENAME_MAX];
-FILE *fdb;
-static void make_debug_fname (void);
-#endif
-
 #define cell_record(r) (r == BIFF_LABEL || \
                         r == BIFF_STRING || \
                         r == BIFF_NUMBER || \
@@ -93,46 +87,17 @@ enum {
 const char *adjust_rc = N_("Perhaps you need to adjust the "
 			   "starting column or row?");
 
-#ifdef WIN32
-static void make_debug_fname (void)
-{
-    read_reg_val(HKEY_CURRENT_USER, "gretl", "userdir", debug_fname);
-    strcat(debug_fname, "xls.log");
-}
-
-static void open_debug_stream (void)
-{
-    if (debug_fname[0] != '\0') {
-	fdb = fopen(debug_fname, "w");
-    }
-}
-#endif
-
 static int dbprintf (const char *format, ...)
 {
     va_list args;
     int len = 0;
 
-#ifdef WIN32
-    if (debug_print) {
-	if (fdb == NULL) {
-	    open_debug_stream();
-	}
-	if (fdb != NULL) {
-	    va_start(args, format);
-	    len = vfprintf(fdb, format, args);
-	    va_end(args);
-	    fflush(fdb);
-	}
-    }
-#else
     if (debug_print) {
 	va_start(args, format);
 	len = vfprintf(stderr, format, args);
 	va_end(args);
 	fflush(stderr);
     }
-#endif
 
     return len;
 }
@@ -1875,12 +1840,6 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
     wbook_free(book);
 
     gretl_pop_c_numeric_locale();
-
-#ifdef WIN32
-    if (fdb != NULL) {
-	fclose(fdb);
-    }
-#endif
 
     if (newset != NULL) {
 	destroy_dataset(newset);
