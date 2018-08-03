@@ -2840,7 +2840,7 @@ static int import_octave (const char *fname, DATASET *dset,
     int maxlen, got_type = 0, got_name = 0;
     int i, t, err = 0;
 
-    fp = fopen(fname, "r");
+    fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
 	return E_FOPEN;
     }

@@ -159,11 +159,9 @@ static int untar (gzFile in)
 	}
       
 	if (getheader == 1) {
-
-	    if (len == 0 || buffer.header.name[0] == 0) {
+	    if (len == 0 || buffer.header.name[0] == '\0') {
 		break;
 	    }
-
 	    tartime = (time_t) getoct(buffer.header.mtime, 12);
 	    strcpy(fname, buffer.header.name);
 	  
@@ -175,7 +173,7 @@ static int untar (gzFile in)
 	    case AREGTYPE:
 		remaining = getoct(buffer.header.size, 12);
 		if (remaining) {
-		    outfile = fopen(fname, "wb");
+		    outfile = gretl_fopen(fname, "wb");
 		    if (outfile == NULL) {
 			/* try creating directory */
 			char *p = strrchr(fname, '/');
@@ -183,7 +181,7 @@ static int untar (gzFile in)
 			    *p = '\0';
 			    makedir(fname);
 			    *p = '/';
-			    outfile = fopen(fname, "wb");
+			    outfile = gretl_fopen(fname, "wb");
 			}
 		    }
 		    fprintf(stderr, "%s %s\n",
