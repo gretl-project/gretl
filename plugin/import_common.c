@@ -545,10 +545,7 @@ void infobox (const char *template, ...)
     gtk_widget_destroy(dialog);
 }
 
-# endif /* !WIN32 */
-
-static 
-void debug_callback (GtkWidget *w, wbook *book)
+static void debug_callback (GtkWidget *w, wbook *book)
 {
     static int done;
 
@@ -557,21 +554,12 @@ void debug_callback (GtkWidget *w, wbook *book)
     }
 
     if (book_debugging(book) && !done) {
-# ifdef WIN32
-	gchar *msg;
-
-	make_debug_fname();
-	msg = g_strdup_printf(I_("Sending debugging output to %s"),
-			      debug_fname);
-	MessageBox(NULL, msg, "gretl", MB_OK | MB_ICONINFORMATION);
-	g_free(msg);	
-# else
 	infobox(_("Sending debugging output to %s"), "stderr");
-# endif
 	done = 1;
     }
 }
 
+# endif /* !WIN32 */
 #endif /* EXCEL_IMPORTER */
 
 static int book_get_min_offset (wbook *book, int k)
@@ -790,7 +778,7 @@ static void wsheet_menu (wbook *book, int multisheet)
 	add_sheets_list(vbox, book);
     }
 
-#ifdef EXCEL_IMPORTER
+#if defined(EXCEL_IMPORTER) && !defined(G_OS_WIN32)
     tmp = gtk_check_button_new_with_label(_("Produce debugging output"));
     g_signal_connect(G_OBJECT(tmp), "toggled", G_CALLBACK(debug_callback), 
 		     book);
