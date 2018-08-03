@@ -607,16 +607,20 @@ double mackinnon_pvalue (double tau, int T, int niv, int itv,
 
 #if URDEBUG
     fdb = fopen("debug.txt", "w");
-    fprintf(fdb, "mackinnon_pvalue: tau=%g, T=%d, niv=%d, itv=%d\n",
-	    tau, T, niv, itv);
-    fprintf(fdb, "mackinnon_pvalue: path='%s'\n", path);
-    fflush(fdb);
+    if (fdb != NULL) {
+	fprintf(fdb, "mackinnon_pvalue: tau=%g, T=%d, niv=%d, itv=%d\n",
+		tau, T, niv, itv);
+	fprintf(fdb, "mackinnon_pvalue: path='%s'\n", path);
+	fflush(fdb);
+    }
 #endif
 
     pval = urcval(niv, itv, T, tau, path, &err);
 
 #if URDEBUG
-    fclose(fdb);
+    if (fdb != NULL) {
+	fclose(fdb);
+    }
 #endif
 
     if (err == E_FOPEN) {
