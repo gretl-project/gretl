@@ -153,12 +153,15 @@ via the gretl GUI.
 \label{sec:Bundles}
 
 A \texttt{bundle} is a container or wrapper for various sorts of
-objects---specifically, scalars, series, matrices, strings, arrays and
-bundles. (Yes, a bundle can contain other bundles). A bundle takes the
-form of a hash table or associative array: each item placed in the
-bundle is associated with a key which can used to retrieve it
-subsequently. We begin by explaining the mechanics of bundles then
-offer some thoughts on what they are good for.
+objects---primarily scalars, matrices, strings, arrays and
+bundles. (Yes, a bundle can contain other bundles). Secondarily,
+series and lists can be placed in bundles but this is subject to
+important qualifications noted below.
+
+A bundle takes the form of a hash table or associative array: each
+item placed in the bundle is associated with a key which can used to
+retrieve it subsequently. We begin by explaining the mechanics of
+bundles then offer some thoughts on what they are good for.
 
 To use a bundle you first either ``declare'' it, as in
 %
@@ -204,10 +207,9 @@ foo["matrix1"] = m
 %
 This syntax is still acceptable, and it offers greater flexibility in
 that the key string does not have to be a valid identifier (for
-example it can include spaces) though it still must adhere to the
-31-character limit. In addition, when using the square bracket syntax
-it is possible to use a string variable to define or access the key in
-question. For example:
+example it can include spaces). In addition, when using the square
+bracket syntax it is possible to use a string variable to define or
+access the key in question. For example:
 %
 \begin{code}
 string s = "matrix 1"
@@ -232,9 +234,10 @@ the given key. It is not required that the type of the replacement
 object is the same as that of the original.
 
 Also note that when you add an object to a bundle, what in fact
-happens is that the bundle acquires a copy of the object. The external
-object retains its own identity and is unaffected if the bundled
-object is replaced by another. Consider the following script fragment:
+happens is that the bundle acquires a \textit{copy} of the object. The
+external object retains its own identity and is unaffected if the
+bundled object is replaced by another. Consider the following script
+fragment:
 
 \begin{code}
 bundle foo
@@ -302,6 +305,118 @@ bundle b:
  mat (matrix)
  inside (bundle)
 \end{code}
+
+\subsection{Series and lists as bundle members}
+
+It is possible to add both series and lists to a bundle, as in
+\begin{code}
+open data4-10
+list X = const CATHOL INCOME
+bundle b
+b.y = ENROLL
+b.X = X
+eval b.y
+eval b.X
+\end{code}
+
+However, it is important to bear in mind the following limitations.
+\begin{itemize}
+\item A series, as such, is inherently a member of a dataset, and a
+  bundle can ``survive'' the replacement or destruction of the dataset
+  from which a series was added. It may then be impossible (or, even
+  if possible, meaningless) to extract a bundled series \textit{as a
+    series}. However it's always possible to retrieve the values of
+  the series in the form of a matrix (column vector).
+\item In gretl commands that call for series arguments you cannot give
+  a bundled series without first extracting it. In the little example
+  above the series \texttt{ENROLL} was added to bundle \texttt{b}
+  under the key \texttt{y}, but \texttt{b.y} is not itself a series
+  (member of a dataset), it's just an anonymous array of values. It
+  therefore cannot be given as, say, the dependent variable in a call
+  to gretl's \texttt{ols} command.
+\item A gretl list is just an array of ID numbers of series in a given
+  dataset, a ``macro'' if you like. So as with series, there's no
+  guarantee that a bundled list can be extracted \textit{as a list}
+  (though it can always be extracted as a row vector).
+\end{itemize}
+
+The points made above are illustrated in Listing~\ref{bunlimits}.  In
+``Case 1'' we open a little dataset with just 14 cross-sectional
+observations and put a series into a bundle. We then open a
+time-series dataset with 64 observations, while preserving the bundle,
+and extract the bundled series. This instance is \textit{legal}, since
+the stored series does not overflow the length of the new dataset (it
+gets written into the first 14 observations), but it's probably not
+meaningful. It's up to the user to decide if such operations make
+sense.
+
+In ``Case 2'' a similar sequence of statements leads to an error
+(trapped by \texttt{catch}) because this time the stored series will
+not fit into the new dataset. We can nonetheless grab the data as a
+vector.
+
+In ``Case 3'' we put a list of three series into a bundle. This does
+not put any actual data values into the bundle, just the ID numbers of
+the specified series, which happen to be 4, 5 and 6. We then switch to
+a dataset that contains just 4 series, so the list cannot be extracted
+as such (IDs 5 and 6 are out of bounds). Once again, however, we can
+retrieve the ID numbers in matrix form if we want.
+
+In some cases putting a gretl list as such into a bundle may be
+appropriate, but in others you are better off adding the
+\textit{content} of the list, in matrix form, as in
+\begin{code}
+open data4-10
+list X = const CATHOL INCOME
+bundle b
+matrix b.X = {X}
+\end{code}
+In this case we're adding a matrix with three columns and as many rows
+as there are in the dataset; we have the actual data, not just a
+reference to the data that might ``go bad''. See
+chapter~\ref{chap:matrices} for more on this.
+
+\begin{script}[htbp]
+  \caption{Series and lists in bundles}
+  \label{bunlimits}
+\begin{scode}
+# Case 1: store and retrieve series, OK?
+open data4-1
+bundle b
+series b.x = sqft
+open data9-7 --preserve
+series x = b.x
+print x --byobs
+
+# Case 2: store and retrieve series: gives an error,
+# but the data can be retrieved in matrix form
+open data9-7
+bundle b
+series b.x = QNC
+open data4-1 --preserve
+catch series x = b.x # wrong, won't fit!
+if $error
+  matrix mx = b.x
+  print mx
+else
+  print x
+endif
+
+# Case 3: store and retrieve list: gives an error,
+# but the ID numbers in the list can be retrieved
+# as a row vector
+open data9-7
+list L = PRIME UNEMP STOCK
+bundle b
+list b.L = L
+open data4-1 --preserve
+catch list L = b.L
+if $error
+  matrix mL = b.L
+  print mL # prints "4 5 6"
+endif
+\end{scode}
+\end{script}
 
 \subsection{What are bundles good for?}
 
