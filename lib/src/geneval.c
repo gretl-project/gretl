@@ -4496,6 +4496,11 @@ static NODE *submatrix_node (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+/* Check a list that has been stored in a bundle or array to see
+   if it can be interpreted as a list given the characteristics
+   of the current dataset (or lack thereof).
+*/
+
 static int stored_list_check (const int *list, const DATASET *dset)
 {
     int badv = 0;
@@ -4554,12 +4559,21 @@ static NODE *array_element_node (gretl_array *a, int i,
 		ret->v.b = data;
 	    }
 	} else if (type == GRETL_TYPE_LIST) {
-	    /* revised 2017-05-21 */
+	    /* last revised 2018-08-04 */
 	    p->err = stored_list_check((const int *) data, p->dset);
 	    if (!p->err) {
 		ret = list_pointer_node(p);
 		if (ret != NULL) {
 		    ret->v.ivec = data;
+		}
+	    } else {
+		/* fallback: extract list as row vector */
+		gretl_error_clear();
+		p->err = 0;
+		ret = aux_matrix_node(p);
+		if (!p->err) {
+		    ret->v.m = gretl_list_to_vector((const int *) data,
+						    &p->err);
 		}
 	    }
 	}
@@ -8896,14 +8910,23 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
     } else if (type == GRETL_TYPE_LIST) {
 	p->err = stored_list_check((const int *) val, p->dset);
 	if (!p->err) {
+	    /* OK, extract list as such */
 	    if (copied) {
 		ret = aux_list_node(p);
 	    } else {
 		ret = list_pointer_node(p);
 	    }
-	}
-	if (!p->err) {
-	    ret->v.ivec = (int *) val;
+	    if (!p->err) {
+		ret->v.ivec = (int *) val;
+	    }
+	} else {
+	    /* fallback: extract list as row vector */
+	    gretl_error_clear();
+	    p->err = 0;
+	    ret = aux_matrix_node(p);
+	    if (!p->err) {
+		ret->v.m = gretl_list_to_vector((const int *) val, &p->err);
+	    }
 	}
     } else {
 	p->err = E_DATA;
