@@ -5688,29 +5688,15 @@ int browser_open (const char *url)
 # if defined(OS_OSX)
     return osx_open_url(url);
 # else
-    gchar *urlcmd;
     int err;
 
     if (getenv("ALTSHOW") != NULL) {
-	return alt_show(url);
-    }
-
-    if (strstr(Browser, "hrom")) {
-	urlcmd = g_strdup_printf("%s \"%s\"\"", Browser, url);
+	err = alt_show(url);
     } else {
-	urlcmd = g_strdup_printf("%s -remote \"openURLNewWindow(%s)\"", Browser, url);
+	err = gretl_fork("Browser", url, NULL);
     }
 
-    fprintf(stderr, "urlcmd='%s'\n", urlcmd);
-    err = gretl_spawn(urlcmd);
-    fprintf(stderr, " err = %d\n", err);
-    g_free(urlcmd);
-
-    if (err) {
-	gretl_fork("Browser", url, NULL);
-    }
-
-    return 0;
+    return err;
 # endif /* !OSX */
 }
 
