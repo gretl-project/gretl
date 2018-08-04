@@ -1284,6 +1284,12 @@ NODE *powterm (parser *p, NODE *l)
 		    get_slice_parts(t->v.b2.r, p);
 		}
 	    }
+	} else if (sym == G_LPR) {
+	    /* bundle member or array element plus lag spec? */
+	    t = newb2(LAG, l, NULL);
+	    if (t != NULL) {
+		t->v.b2.r = expr(p);
+	    }
 	}
 	goto maybe_recurse;
     }
@@ -1505,7 +1511,7 @@ NODE *powterm (parser *p, NODE *l)
     } else if (t != NULL) {
 	if (p->sym == BMEMB || p->sym == DBMEMB) {
 	    t = powterm(p, t);
-	} else if (p->sym == G_LBR) {
+	} else if (p->sym == G_LBR || p->sym == G_LPR) {
 	    t = powterm(p, t);
 	}
     }

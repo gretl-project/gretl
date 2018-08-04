@@ -118,7 +118,6 @@ enum {
 #define umatrix_node(n) (n->t == MAT && n->vname != NULL)
 #define ubundle_node(n) (n->t == BUNDLE && n->vname != NULL)
 #define uarray_node(n)  (n->t == ARRAY && n->vname != NULL)
-#define ulist_node(n)   (n->t == LIST && n->vname != NULL)
 #define ustring_node(n) (n->t == STR && n->vname != NULL)
 #define useries_node(n) (n->t == SERIES && n->vnum >= 0)
 #define uvar_node(n)    (n->vname != NULL)
@@ -5645,8 +5644,8 @@ static NODE *get_lag_list (NODE *l, NODE *r, parser *p)
 	int i, imin = 1, imax = 1;
 	int lv = 0;
 
-	if (!useries_node(l) && !ulist_node(l)) {
-	    /* we need a named series or list on the left */
+	if (!useries_node(l) && l->t != LIST) {
+	    /* we need a named series or a list on the left */
 	    p->err = E_TYPES;
 	} else if (r->t != IVEC && r->t != NUM) {
 	    /* we need one or more integers on the right */
@@ -5657,7 +5656,7 @@ static NODE *get_lag_list (NODE *l, NODE *r, parser *p)
 	    return NULL;
 	}
 
-	if (ulist_node(l)) {
+	if (l->t == LIST) {
 	    srclist = l->v.ivec;
 	    imax = srclist[0];
 	} else {
