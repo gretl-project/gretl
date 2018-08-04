@@ -292,7 +292,89 @@ range; use the \texttt{smpl} command to adjust the range if needed.
 \section{Forecasts based on VAR models}
 \label{sec:fcast-VAR}
 
-To be written.
+To be written properly. For the moment, the following simple example
+script should hopefully provide the main info. The code
+\begin{code}
+# open sample data file
+open sw_ch14.gdt --quiet
+# generate the "inflation" series
+series INFL = 100 * sdiff(log(PUNEW))
+# put last year aside for out-of-sample forecast
+smpl ; -4
+# estimate a 5-lag VAR
+var 5 LHUR INFL --silent
+# store fitted values (note: result is a 2-column matrix)
+YH = $yhat
+# perform out-of-sample forecast (both versions)
+fcast LHUR --static --out-of-sample
+# note that omission of the variable specification means "all" 
+fcast --dynamic --out-of-sample
+\end{code}
+%$
+yields
+\begin{code}
+ For 95% confidence intervals, t(140, 0.025) = 1.977
+
+               LHUR    prediction    std. error        95% interval
+
+1999:1     4.300000     4.335004     0.222784     3.894549 - 4.775460
+1999:2     4.300000     4.243244     0.222784     3.802788 - 4.683699
+1999:3     4.233333     4.290981     0.222784     3.850525 - 4.731436
+1999:4     4.100000     4.178030     0.222784     3.737575 - 4.618486
+
+  Forecast evaluation statistics
+
+  Mean Error                       -0.028481
+  Root Mean Squared Error           0.058861
+  Mean Absolute Error               0.05686
+  Mean Percentage Error            -0.68977
+  Mean Absolute Percentage Error    1.3497
+  Theil's U                         0.75027
+  Bias proportion, UM               0.23414
+  Regression proportion, UR         0.0081804
+  Disturbance proportion, UD        0.75768
+
+
+ For 95% confidence intervals, t(140, 0.025) = 1.977
+
+               LHUR    prediction    std. error        95% interval
+
+1999:1     4.300000     4.335004     0.222784     3.894549 - 4.775460
+1999:2     4.300000     4.312724     0.401960     3.518028 - 5.107421
+1999:3     4.233333     4.272764     0.539582     3.205982 - 5.339547
+1999:4     4.100000     4.223213     0.642001     2.953943 - 5.492482
+
+  Forecast evaluation statistics
+
+  Mean Error                       -0.052593
+  Root Mean Squared Error           0.067311
+  Mean Absolute Error               0.052593
+  Mean Percentage Error            -1.2616
+  Mean Absolute Percentage Error    1.2616
+  Theil's U                         0.87334
+  Bias proportion, UM               0.61049
+  Regression proportion, UR         0.29203
+  Disturbance proportion, UD        0.097478
+
+               INFL    prediction    std. error        95% interval
+
+1999:1     1.651245     1.812250     0.431335     0.959479 - 2.665022
+1999:2     2.048545     2.088185     0.777834     0.550366 - 3.626004
+1999:3     2.298952     2.266445     1.075855     0.139423 - 4.393467
+1999:4     2.604836     2.610037     1.409676    -0.176969 - 5.397043
+
+  Forecast evaluation statistics
+
+  Mean Error                       -0.043335
+  Root Mean Squared Error           0.084525
+  Mean Absolute Error               0.059588
+  Mean Percentage Error            -2.6178
+  Mean Absolute Percentage Error    3.3248
+  Theil's U                         0.095932
+  Bias proportion, UM               0.26285
+  Regression proportion, UR         0.45311
+  Disturbance proportion, UD        0.28404
+\end{code}
 
 \section{Forecasting from simultaneous systems}
 \label{sec:fcast-system}
