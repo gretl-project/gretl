@@ -60,7 +60,8 @@ struct PRN_ {
     int savepos;       /* saved position in stream or buffer */
     GArray *fplist;    /* stack for use with output redirection */
     PrnFormat format;  /* plain, TeX, RTF */
-    int fixed;         /* non-zero for fixed-size buffer */
+    char fixed;        /* non-zero for fixed-size buffer */
+    char gbuf;         /* non-zero for buffer obtained via GLib */
     char delim;        /* CSV field delimiter */
     char *fname;       /* temp file name, or NULL */
 };
@@ -74,11 +75,6 @@ struct fpinfo_ {
 typedef struct fpinfo_ fpinfo;
 
 #define PRN_DEBUG 0
-
-enum {
-    BUF_FIXED = 1,
-    GBUF_FIXED = 2
-};
 
 static void prn_destroy_fp_list (PRN *prn)
 {
@@ -148,7 +144,7 @@ void gretl_print_destroy (PRN *prn)
   	fprintf(stderr, "gretl_print_destroy: freeing buffer at %p\n",
 		(void *) prn->buf);
 #endif
-	if (prn->fixed == GBUF_FIXED) {
+	if (prn->gbuf) {
 	    /* the buffer was obtained from GLib */
 	    g_free(prn->buf);
 	} else {
@@ -191,7 +187,6 @@ static PRN *real_gretl_print_new (PrnType ptype,
 				  const char *fname,
 				  char *buf,
 				  FILE *fp,
-				  int glib,
 				  int *perr)
 {
     PRN *prn = malloc(sizeof *prn);
@@ -212,6 +207,7 @@ static PRN *real_gretl_print_new (PrnType ptype,
     prn->savepos = -1;
     prn->format = GRETL_FORMAT_TXT;
     prn->fixed = 0;
+    prn->gbuf = 0;
     prn->delim = ',';
     prn->fname = NULL;
 
@@ -239,7 +235,7 @@ static PRN *real_gretl_print_new (PrnType ptype,
     } else if (ptype == GRETL_PRINT_BUFFER) {
 	if (buf != NULL) {
 	    prn->buf = buf;
-	    prn->fixed = glib ? GBUF_FIXED : BUF_FIXED;
+	    prn->fixed = 1;
 #if PRN_DEBUG
 	    fprintf(stderr, "prn with fixed buffer\n");
 #endif
@@ -297,7 +293,7 @@ PRN *gretl_print_new (PrnType ptype, int *err)
     fprintf(stderr, "gretl_print_new() called, type = %d\n", ptype);
 #endif
 
-    return real_gretl_print_new(ptype, NULL, NULL, NULL, 0, err);
+    return real_gretl_print_new(ptype, NULL, NULL, NULL, err);
 }
 
 /**
@@ -318,7 +314,7 @@ PRN *gretl_print_new_with_filename (const char *fname, int *err)
 	return NULL;
     }
 
-    return real_gretl_print_new(GRETL_PRINT_FILE, fname, NULL, NULL, 0, err);
+    return real_gretl_print_new(GRETL_PRINT_FILE, fname, NULL, NULL, err);
 }
 
 /**
@@ -334,7 +330,7 @@ PRN *gretl_print_new_with_filename (const char *fname, int *err)
 
 PRN *gretl_print_new_with_tempfile (int *err)
 {
-    return real_gretl_print_new(GRETL_PRINT_TEMPFILE, NULL, NULL, NULL, 0, err);
+    return real_gretl_print_new(GRETL_PRINT_TEMPFILE, NULL, NULL, NULL, err);
 }
 
 /**
@@ -390,7 +386,7 @@ PRN *gretl_print_new_with_buffer (char *buf)
     if (buf == NULL) {
 	return NULL;
     } else {
-	return real_gretl_print_new(GRETL_PRINT_BUFFER, NULL, buf, NULL, 0, NULL);
+	return real_gretl_print_new(GRETL_PRINT_BUFFER, NULL, buf, NULL, NULL);
     }
 }
 
@@ -409,11 +405,16 @@ PRN *gretl_print_new_with_buffer (char *buf)
 
 PRN *gretl_print_new_with_gchar_buffer (gchar *buf)
 {
-    if (buf == NULL) {
-	return NULL;
-    } else {
-	return real_gretl_print_new(GRETL_PRINT_BUFFER, NULL, buf, NULL, 1, NULL);
+    PRN *prn = NULL;
+
+    if (buf != NULL) {
+	prn = real_gretl_print_new(GRETL_PRINT_BUFFER, NULL, buf, NULL, NULL);
+	if (prn != NULL) {
+	    prn->gbuf = 1;
+	}
     }
+
+    return prn;
 }
 
 /**
@@ -434,7 +435,7 @@ PRN *gretl_print_new_with_stream (FILE *fp)
     if (fp == NULL) {
 	return NULL;
     } else {
-	return real_gretl_print_new(GRETL_PRINT_STREAM, NULL, NULL, fp, 0, NULL);
+	return real_gretl_print_new(GRETL_PRINT_STREAM, NULL, NULL, fp, NULL);
     }
 }
 
