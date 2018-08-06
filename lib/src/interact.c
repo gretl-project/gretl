@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* interact.c for gretl */
@@ -153,7 +153,7 @@ static int filter_comments (char *s, CMD *cmd)
     strcpy(s, tmp);
     tailstrip(s);
 
-    if (*s == '\0') { 
+    if (*s == '\0') {
 	filt = 1;
     } else if (!ignore) {
 	/* '#' comments */
@@ -245,12 +245,12 @@ static int ends_foreign_block (const char *s)
  * @ptr: pointer for use with "compilation" of
  * conditionals in loops.
  *
- * Parses @line and fills out @cmd accordingly. 
+ * Parses @line and fills out @cmd accordingly.
  *
  * Returns: 0 on success, non-zero code on error.
  */
 
-int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr) 
+int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
 {
     gretl_cmd_clear(cmd);
     gretl_error_clear();
@@ -292,7 +292,7 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
     if ((cmd->flags & CMD_SUBST) || !gretl_looping_currently()) {
 	/* normalize line spaces */
 	compress_spaces(line);
-	
+
 	/* trap lines that are nothing but comments */
 	if (filter_comments(line, cmd)) {
 	    return 0;
@@ -335,7 +335,7 @@ static int gretl_shell_async (const char *cmdline, PRN *prn)
 	pprintf(prn, "%s\n", gerr->message);
 	g_error_free(gerr);
 	err = 1;
-    }    
+    }
 
     return err;
 }
@@ -357,7 +357,7 @@ static int gretl_shell_sync (const char *arg, gchar **psout,
 #ifdef HAVE_PATHS_H
 	theshell =_PATH_BSHELL;
 #else
-	theshell = "/bin/sh"; 
+	theshell = "/bin/sh";
 #endif
     }
 
@@ -379,7 +379,7 @@ static int gretl_shell_sync (const char *arg, gchar **psout,
     argv[4] = NULL;
 
     g_spawn_sync(gretl_workdir(), argv, NULL, 0, NULL, NULL,
-		 &sout, &serr, &status, &gerr); 
+		 &sout, &serr, &status, &gerr);
 
     g_free(argv[0]);
     g_free(argv[2]);
@@ -417,7 +417,7 @@ static int gretl_shell_sync (const char *arg, gchar **psout,
  *
  * Calls the shell to execute @arg syncronously and captures the
  * standard output, if any, in @sout.
- * 
+ *
  * Returns: 0 on successful completion, non-zero on error.
  */
 
@@ -429,7 +429,7 @@ int gretl_shell_grab (const char *arg, char **sout)
 static int gretl_shell (const char *arg, gretlopt opt, PRN *prn)
 {
     int err = 0;
-    
+
     if (arg == NULL || *arg == '\0') {
 	return 0;
     }
@@ -510,7 +510,7 @@ static void new_trim_to_length (char *s, int len)
 	for (i=1; i<n-1; i++) {
 	    if (s[i] == '"' && s[i-1] != '\\') {
 		quoted = !quoted;
-	    } 
+	    }
 	    if (!quoted && s[i] == ' ') {
 		if (i < len) {
 		    bp0 = i;
@@ -610,7 +610,7 @@ static int command_is_silent (const CMD *cmd, const char *line)
     if (cmd == NULL) {
 	return 0;
     }
-    
+
     if (cmd->ci == FUNCERR || cmd->ci == PRINTF ||
 	(cmd->ci == PRINT && strchr(line, '"'))) {
 	return 1;
@@ -652,12 +652,12 @@ static int command_is_silent (const CMD *cmd, const char *line)
  * @prn: pointer to gretl printing struct.
  *
  * Echoes the user command represented by @cmd and @line to
- * @prn.  This is used for two distinct purposes: to give 
- * visual feedback on the command supplied, and (in some 
+ * @prn.  This is used for two distinct purposes: to give
+ * visual feedback on the command supplied, and (in some
  * contexts) to record a command that was executed interactively.
  */
 
-static void real_echo_command (CMD *cmd, const char *line, 
+static void real_echo_command (CMD *cmd, const char *line,
 			       int recording, PRN *prn)
 {
     const char *leader = NULL;
@@ -677,11 +677,11 @@ static void real_echo_command (CMD *cmd, const char *line,
 
 #if ECHO_DEBUG
     if (cmd != NULL) {
-	fprintf(stderr, "echo_cmd:\n*** line='%s'\n param='%s' parm2='%s'\n", 
+	fprintf(stderr, "echo_cmd:\n*** line='%s'\n param='%s' parm2='%s'\n",
 		line, cmd->param, cmd->parm2);
 	fprintf(stderr, " cmd->opt=%d, recording=%d, compiling=%d\n",
 		cmd->opt, recording, compiling);
-	fprintf(stderr, " cmd->ci = %d (%s), context = %d\n", cmd->ci, 
+	fprintf(stderr, " cmd->ci = %d (%s), context = %d\n", cmd->ci,
 		gretl_command_word(cmd->ci), cmd->context);
 	fprintf(stderr, " cmd->savename = '%s'\n", cmd->savename);
 	if (cmd->list != NULL) {
@@ -802,7 +802,7 @@ static int set_var_info (const int *list,
 	}
     } else if (parm1 != NULL) {
 	/* backward compatibility */
-	series_record_label(dset, v, parm1);	
+	series_record_label(dset, v, parm1);
     }
 
     if (opt & OPT_G) {
@@ -816,7 +816,7 @@ static int set_var_info (const int *list,
     } else if (parm2 != NULL) {
 	/* backward compatibility */
 	series_record_display_name(dset, v, parm2);
-    }    
+    }
 
     return err;
 }
@@ -880,12 +880,12 @@ static void showlabels (const int *list, gretlopt opt,
 		nl++;
 	    }
 	}
-    } 
+    }
 
     if (nl == 0) {
 	pprintf(prn, "No labels\n");
 	return;
-    } 
+    }
 
     if (!(opt & OPT_Q)) {
 	pprintf(prn, _("Listing labels for variables:\n"));
@@ -921,7 +921,7 @@ static int outfile_redirect (PRN *prn, FILE *fp, const char *strvar,
     if (err) {
 	return err;
     }
-    
+
     if (opt & OPT_Q) {
 	parms[0] = gretl_echo_on();
 	parms[1] = gretl_messages_on();
@@ -941,7 +941,7 @@ static void maybe_restore_vparms (int *parms)
     }
     if (parms[1] == 1) {
 	set_gretl_messages(1);
-    }    
+    }
     parms[0] = parms[1] = -1;
 }
 
@@ -961,7 +961,7 @@ static int cwd_is_workdir (void)
 static int redirection_ok (PRN *prn)
 {
     int fd = gretl_function_depth();
-    
+
     if (fd == 0) {
 	return 0;
     } else if (print_redirected_at_level(prn, fd)) {
@@ -989,7 +989,7 @@ static int outbuf_check (const char *name, const DATASET *dset)
     return err;
 }
 
-static int 
+static int
 do_outfile_command (gretlopt opt, const char *fname,
 		    const DATASET *dset, PRN *prn)
 {
@@ -1041,7 +1041,7 @@ do_outfile_command (gretlopt opt, const char *fname,
 	return E_ARGS;
     } else if (!strcmp(fname, "null")) {
 	if (gretl_messages_on()) {
-	    pputs(prn, _("Now discarding output\n")); 
+	    pputs(prn, _("Now discarding output\n"));
 	}
 	err = outfile_redirect(prn, NULL, NULL, opt, vparms);
 	*outname = '\0';
@@ -1065,7 +1065,7 @@ do_outfile_command (gretlopt opt, const char *fname,
 		return err;
 	    } else {
 		gchar *pname = g_strdup_printf("%s.prntmp", fname);
-		
+
 		build_path(tmp, gretl_dotdir(), pname, NULL);
 		g_free(pname);
 		strvar = fname;
@@ -1114,19 +1114,19 @@ do_outfile_command (gretlopt opt, const char *fname,
     return err;
 }
 
-int call_pca_plugin (VMatrix *cmat, DATASET *dset, 
+int call_pca_plugin (VMatrix *cmat, DATASET *dset,
 		     gretlopt opt, PRN *prn)
 {
     int (*pca_from_cmatrix) (VMatrix *, DATASET *,
 			     gretlopt, PRN *);
 
     gretl_error_clear();
-    
+
     pca_from_cmatrix = get_plugin_function("pca_from_cmatrix");
     if (pca_from_cmatrix == NULL) {
         return 1;
     }
-        
+
     return (*pca_from_cmatrix) (cmat, dset, opt, prn);
 }
 
@@ -1186,17 +1186,17 @@ static void print_info (gretlopt opt, DATASET *dset, PRN *prn)
    that's all, but if not then:
 
    (a) print the model (this may require special handling inside
-   loops); 
+   loops);
 
    (b) if the user has employed the "name <- command" mechanism,
-   attach the supplied name to the model; 
+   attach the supplied name to the model;
 
    (c) conditionally add the model to the stack in objstack.c,
    and if this is done, signal the fact by setting the 'pmod'
    member of @ExecState.
 
    (d) if we're called by the GUI program and the model has
-   been assigned a name, activate the callback that adds the 
+   been assigned a name, activate the callback that adds the
    model to the GUI session.
 */
 
@@ -1205,7 +1205,7 @@ static int print_save_model (MODEL *pmod, DATASET *dset,
 			     PRN *prn, ExecState *s)
 {
     int err = pmod->errcode;
-    
+
     if (!err) {
 	set_gretl_errno(0);
 	if (!gretl_looping_currently() || loop_force) {
@@ -1221,7 +1221,7 @@ static int print_save_model (MODEL *pmod, DATASET *dset,
 	    printmodel(pmod, dset, popt, prn);
 	    attach_subsample_to_model(pmod, dset);
 	    s->pmod = maybe_stack_model(pmod, s->cmd, prn, &err);
-	    if (!err && gretl_in_gui_mode() && s->callback != NULL && 
+	    if (!err && gretl_in_gui_mode() && s->callback != NULL &&
 		(havename || window)) {
 		if (s->pmod != NULL && (opt & OPT_Q) && !window) {
 		    /* With OPT_Q (--quiet) and without the --window
@@ -1235,7 +1235,7 @@ static int print_save_model (MODEL *pmod, DATASET *dset,
 		s->callback(s, s->pmod, GRETL_OBJ_EQN);
 	    }
 	}
-    } 
+    }
 
     return err;
 }
@@ -1251,7 +1251,7 @@ static void save_var_vecm (ExecState *s)
 	if (havename || window) {
 	    s->callback(s, s->var, GRETL_OBJ_VAR);
 	}
-    }    
+    }
 }
 
 static void gui_save_system (ExecState *s)
@@ -1261,10 +1261,10 @@ static void gui_save_system (ExecState *s)
        all we have to do is invoke the GUI callback, if
        appropriate
     */
-    if (gretl_in_gui_mode() && s->callback != NULL && 
+    if (gretl_in_gui_mode() && s->callback != NULL &&
 	*s->cmd->savename != '\0') {
 	s->callback(s, s->sys, GRETL_OBJ_SYS);
-    }    
+    }
 }
 
 static int model_test_check (CMD *cmd, DATASET *dset, PRN *prn)
@@ -1312,8 +1312,8 @@ static int get_line_continuation (char *line, FILE *fp, PRN *prn)
     return err;
 }
 
-static int run_script (const char *fname, ExecState *s, 
-		       DATASET *dset, gretlopt opt, 
+static int run_script (const char *fname, ExecState *s,
+		       DATASET *dset, gretlopt opt,
 		       PRN *prn)
 {
     int indent = gretl_if_state_record();
@@ -1351,7 +1351,7 @@ static int run_script (const char *fname, ExecState *s,
     if (opt & OPT_Q) {
 	set_gretl_echo(echo);
 	set_gretl_messages(messages);
-    }    
+    }
 
     iferr = gretl_if_state_check(indent);
     if (iferr && !err) {
@@ -1386,8 +1386,8 @@ static int lib_clear_data (ExecState *s, DATASET *dset)
     int err = 0;
 
     if (dset->Z != NULL) {
-	err = restore_full_sample(dset, NULL); 
-	free_Z(dset); 
+	err = restore_full_sample(dset, NULL);
+	free_Z(dset);
     }
 
     clear_model(s->model);
@@ -1528,11 +1528,11 @@ static int *get_inner_keys (const char *s, DATASET *dset,
     return klist;
 }
 
-static int check_join_import_names (char **S, int ns, 
+static int check_join_import_names (char **S, int ns,
 				    DATASET *dset)
 {
     int i, err = 0;
-    
+
     for (i=0; i<ns && !err; i++) {
 	if (S[i] == NULL || S[i][0] == '\0') {
 	    err = E_DATA;
@@ -1549,7 +1549,7 @@ static int check_join_import_names (char **S, int ns,
     return err;
 }
 
-static char **names_from_array_arg (gretl_array *A, 
+static char **names_from_array_arg (gretl_array *A,
 				    int *ns,
 				    int *err)
 {
@@ -1582,7 +1582,7 @@ static char **strings_array_singleton (const char *s,
     return S;
 }
 
-static int get_join_import_names (const char *s, 
+static int get_join_import_names (const char *s,
 				  DATASET *dset,
 				  char ***pvnames,
 				  int *pnvars)
@@ -1638,7 +1638,7 @@ static int lib_join_data (ExecState *s,
 			  gretlopt opt,
 			  PRN *prn)
 {
-    gretlopt opts[] = { 
+    gretlopt opts[] = {
 	OPT_I, /* ikey: inner key(s) */
 	OPT_O, /* okey: outer key(s) */
 	OPT_F, /* filter: filter expression */
@@ -1648,7 +1648,7 @@ static int lib_join_data (ExecState *s,
 	OPT_X, /* tconvert: date columns for conversion */
 	OPT_T, /* tconv-fmt: format for "tconvert" */
 	OPT_P, /* pd: outer data frequency */
-	0 
+	0
     };
     char *okey = NULL, *filter = NULL;
     const char *param;
@@ -1694,7 +1694,7 @@ static int lib_join_data (ExecState *s,
 	    if (param == NULL) {
 		gretl_errmsg_set("Missing option parameter");
 		err = E_DATA;
-	    } else if (jopt == OPT_I) {		
+	    } else if (jopt == OPT_I) {
 		/* --ikey: the inner key(s) string */
 		ikeyvars = get_inner_keys(param, dset, &err);
 	    } else if (jopt == OPT_O) {
@@ -1705,7 +1705,7 @@ static int lib_join_data (ExecState *s,
 		filter = gretl_strdup(param);
 	    } else if (jopt == OPT_A) {
 		/* --aggr: aggregation */
-		aggr = join_aggregation_method(param, &seqval, 
+		aggr = join_aggregation_method(param, &seqval,
 					       &auxname, &err);
 	    } else if (jopt == OPT_D) {
 		/* --data: string specifying the outer data series */
@@ -1743,11 +1743,11 @@ static int lib_join_data (ExecState *s,
     }
 
     if (!err) {
-	err = gretl_join_data(newfile, 
-			      (const char **) vnames, 
-			      nvars, dset, 
+	err = gretl_join_data(newfile,
+			      (const char **) vnames,
+			      nvars, dset,
 			      ikeyvars, okey, filter,
-			      dataname, aggr, seqval, 
+			      dataname, aggr, seqval,
 			      auxname, tconvstr,
 			      tconvfmt, midas_pd,
 			      opt, prn);
@@ -1767,8 +1767,8 @@ static int lib_join_data (ExecState *s,
 
 #define ALLOW_GUI_OPEN 1
 
-static int lib_open_append (ExecState *s, 
-			    DATASET *dset, 
+static int lib_open_append (ExecState *s,
+			    DATASET *dset,
 			    char *newfile,
 			    PRN *prn)
 {
@@ -1865,7 +1865,7 @@ static int lib_open_append (ExecState *s,
     if (quiet) {
 	/* in case we hit any problems below... */
 	vprn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
-    } 
+    }
 
     if (ftype == GRETL_CSV) {
 	err = import_csv(newfile, dset, opt, vprn);
@@ -1917,7 +1917,7 @@ static int lib_open_append (ExecState *s,
 
     if (dbdata || http || cmd->ci == JOIN) {
 	/* signal to the gretlcli callback that we didn't do
-	   a regular datafile open 
+	   a regular datafile open
 	*/
 	*newfile = '\0';
     }
@@ -1950,7 +1950,7 @@ static void schedule_callback (ExecState *s)
 {
     if (s->callback != NULL) {
 	s->flags |= CALLBACK_EXEC;
-    } 
+    }
 }
 
 static int callback_scheduled (ExecState *s)
@@ -2001,13 +2001,13 @@ static int do_end_restrict (ExecState *s, DATASET *dset)
     if (opt & OPT_F) {
 	/* restrict --full */
 	if (otype == GRETL_OBJ_VAR) {
-	    s->var = gretl_restricted_vecm(s->rset, dset, 
+	    s->var = gretl_restricted_vecm(s->rset, dset,
 					   opt, s->prn, &err);
 	    if (!err && s->var != NULL) {
 		save_var_vecm(s);
 	    }
 	} else if (otype == GRETL_OBJ_EQN) {
-	    err = gretl_restriction_finalize_full(s, s->rset, dset, 
+	    err = gretl_restriction_finalize_full(s, s->rset, dset,
 						  opt, s->prn);
 	    if (!err) {
 		gretlopt printopt = OPT_NONE;
@@ -2015,12 +2015,12 @@ static int do_end_restrict (ExecState *s, DATASET *dset)
 		if (opt & (OPT_Q | OPT_S)) {
 		    printopt = OPT_Q;
 		}
-		print_save_model(s->pmod, dset, printopt, 1, 
+		print_save_model(s->pmod, dset, printopt, 1,
 				 s->prn, s);
 	    }
 	}
     } else {
-	err = gretl_restriction_finalize(s->rset, dset, 
+	err = gretl_restriction_finalize(s->rset, dset,
 					 opt, s->prn);
     }
 
@@ -2029,7 +2029,7 @@ static int do_end_restrict (ExecState *s, DATASET *dset)
     return err;
 }
 
-static int do_debug_command (ExecState *state, const char *param, 
+static int do_debug_command (ExecState *state, const char *param,
 			     gretlopt opt)
 {
     int err = incompatible_options(opt, OPT_C | OPT_N | OPT_Q);
@@ -2050,45 +2050,65 @@ static int do_debug_command (ExecState *state, const char *param,
     } else {
 	/* OPT_Q quits debugging of the given function */
 	return user_function_set_debug(param, !(opt & OPT_Q));
-    } 
+    }
 }
 
 /* Given the name of a discrete variable, perform a command for each
    value of the discrete variable. Note that at present the only
-   command supported in this way is SUMMARY.  
+   command supported in this way is SUMMARY.
 */
 
 static int do_command_by (CMD *cmd, DATASET *dset, PRN *prn)
 {
-    const char *byvar = get_optval_string(cmd->ci, OPT_B);
+    const char *byname = get_optval_string(cmd->ci, OPT_B);
+    int byvar;
     series_table *st = NULL;
     gretl_matrix *xvals = NULL;
     const double *x;
-    int i, v, nvals = 0;
+    int *list = cmd->list;
+    int i, nvals = 0;
     int single, err = 0;
 
-    if (dset == NULL || byvar == NULL) {
+    if (dset == NULL || byname == NULL) {
 	return E_DATA;
     }
 
     /* FIXME accept "unit" and "time"/"period" in place of actual
        variables for panel data? */
 
-    v = current_series_index(dset, byvar);
-    if (v < 0) {
+    byvar = current_series_index(dset, byname);
+    if (byvar < 0) {
 	return E_UNKVAR;
     }
 
-    x = (const double *) dset->Z[v];
+    x = (const double *) dset->Z[byvar];
 
-    if (!series_is_discrete(dset, v) && !gretl_isdiscrete(dset->t1, dset->t2, x)) {
-	gretl_errmsg_sprintf(_("The variable '%s' is not discrete"), byvar);
+    if (!series_is_discrete(dset, byvar) && !gretl_isdiscrete(dset->t1, dset->t2, x)) {
+	gretl_errmsg_sprintf(_("The variable '%s' is not discrete"), byname);
 	return E_DATA;
     }
 
-    single = cmd->list[0] == 1;
+    if (cmd->list == NULL) {
+	/* compose full series list, but exclude the "by" variable */
+	int pos;
 
-    xvals = gretl_matrix_values(x + dset->t1, dset->t2 - dset->t1 + 1, 
+	list = full_var_list(dset, NULL);
+	if (list == NULL) {
+	    return E_ALLOC;
+	}
+	pos = in_gretl_list(list, byvar);
+	if (pos > 0) {
+	    gretl_list_delete_at_pos(list, pos);
+	}
+	if (list[0] == 0) {
+	    free(list);
+	    return E_DATA;
+	}
+    }
+
+    single = (list[0] == 1);
+
+    xvals = gretl_matrix_values(x + dset->t1, dset->t2 - dset->t1 + 1,
 				OPT_S, &err);
 
     if (!err) {
@@ -2096,14 +2116,14 @@ static int do_command_by (CMD *cmd, DATASET *dset, PRN *prn)
 	if (nvals == 0) {
 	    err = E_DATA;
 	} else {
-	    st = series_get_string_table(dset, v);
+	    st = series_get_string_table(dset, byvar);
 	}
     }
 
     if (!err && single) {
 	pputc(prn, '\n');
 	pprintf(prn, _("Summary statistics for %s, by value of %s"),
-		dset->varname[cmd->list[1]], dset->varname[v]);
+		dset->varname[list[1]], byname);
 	pputc(prn, '\n');
     }
 
@@ -2114,12 +2134,12 @@ static int do_command_by (CMD *cmd, DATASET *dset, PRN *prn)
 	double *rv = NULL;
 
 	gretl_push_c_numeric_locale();
-	sprintf(genline, "%s == %g", byvar, xi);
+	sprintf(genline, "%s == %g", byname, xi);
 	gretl_pop_c_numeric_locale();
 	rv = generate_series(genline, dset, prn, &err);
 
 	if (!err) {
-	    summ = get_summary_restricted(cmd->list, dset, rv,
+	    summ = get_summary_restricted(list, dset, rv,
 					  cmd->opt, prn, &err);
 	}
 
@@ -2132,10 +2152,10 @@ static int do_command_by (CMD *cmd, DATASET *dset, PRN *prn)
 	    }
 	    if (st != NULL) {
 		const char *s = series_table_get_string(st, xi);
-		
-		pprintf(prn, "%s = %s (n = %d):\n", byvar, s, summ->n);
+
+		pprintf(prn, "%s = %s (n = %d):\n", byname, s, summ->n);
 	    } else {
-		pprintf(prn, "%s = %g (n = %d):\n", byvar, xi, summ->n);
+		pprintf(prn, "%s = %g (n = %d):\n", byname, xi, summ->n);
 	    }
 	    print_summary(summ, dset, prn);
 	    free_summary(summ);
@@ -2145,6 +2165,9 @@ static int do_command_by (CMD *cmd, DATASET *dset, PRN *prn)
     }
 
     gretl_matrix_free(xvals);
+    if (list != cmd->list) {
+	free(list);
+    }
 
     return err;
 }
@@ -2205,9 +2228,9 @@ int gretl_delete_variables (int *list,
 	    pputs(prn, _("You cannot delete series in this context\n"));
 	    err = E_DATA;
 	} else {
-	    err = dataset_drop_listed_variables(list, dset, 
+	    err = dataset_drop_listed_variables(list, dset,
 						renumber, prn);
-	}	    
+	}
     } else {
 	err = E_DATA;
     }
@@ -2216,8 +2239,8 @@ int gretl_delete_variables (int *list,
 }
 
 /* OMIT and ADD: if we're estimating a revised model, should
-   we be saving it as the "last model", or are we just treating 
-   the command as a stand-alone test? 
+   we be saving it as the "last model", or are we just treating
+   the command as a stand-alone test?
 */
 
 static int add_omit_save (CMD *cmd)
@@ -2238,7 +2261,7 @@ static int VAR_omit_driver (CMD *cmd, DATASET *dset, PRN *prn)
 
     if (cmd->opt & OPT_W) {
 	/* Wald test using VCV */
-	err = gretl_VAR_wald_omit_test(var, cmd->list, dset, 
+	err = gretl_VAR_wald_omit_test(var, cmd->list, dset,
 				       cmd->opt, prn);
     } else {
 	/* the full deal: estimate reduced system */
@@ -2307,7 +2330,7 @@ static int model_print_driver (MODEL *pmod, DATASET *dset,
 
 	    if (ci == EQNPRINT) {
 		texopt |= OPT_E;
-	    }		
+	    }
 	    err = texprint(pmod, dset, fname, texopt);
 	}
 	if (!err) {
@@ -2362,13 +2385,13 @@ static int install_function_package (const char *pkgname,
 	    }
 	} else if (local) {
 	    const char *p;
-	    
+
 	    gretl_maybe_switch_dir(pkgname);
 	    p = strrchr(pkgname, SLASH);
 	    if (p != NULL) {
 		fname = gretl_strdup(p + 1);
 	    }
-	    
+
 	}
     }
 
@@ -2388,7 +2411,7 @@ static int install_function_package (const char *pkgname,
 	    /* get file from default gretl server */
 	    err = retrieve_remote_function_package(basename, fullname);
 	}
-	
+
 	if (!err && filetype == 2) {
 	    err = gretl_unzip_into(fullname, instpath);
 	    if (!err) {
@@ -2396,7 +2419,7 @@ static int install_function_package (const char *pkgname,
 		gretl_remove(fullname);
 	    }
 	}
-	
+
 	g_free(fullname);
 
 	if (!err && gretl_messages_on()) {
@@ -2405,7 +2428,7 @@ static int install_function_package (const char *pkgname,
     }
 
     free(fname);
-    
+
     return err;
 }
 
@@ -2456,7 +2479,7 @@ static int install_function_package (const char *pkgname,
 
 	/* copy file into place */
 	err = gretl_copy_file(pkgname, fullname);
-	
+
 	if (!err && filetype == 2) {
 	    err = gretl_unzip_into(fullname, instpath);
 	    if (!err) {
@@ -2464,7 +2487,7 @@ static int install_function_package (const char *pkgname,
 		gretl_remove(fullname);
 	    }
 	}
-	
+
 	g_free(fullname);
 
 	if (!err && gretl_messages_on()) {
@@ -2473,7 +2496,7 @@ static int install_function_package (const char *pkgname,
     }
 
     free(fname);
-    
+
     return err;
 }
 
@@ -2528,8 +2551,8 @@ static int execute_plot_call (CMD *cmd, DATASET *dset,
     int err = 0;
 
     if (gretl_in_gui_mode() && *cmd->savename != '\0') {
-	/* saving plot "as icon": add internal option to 
-	   override production of a "gpttmp" file 
+	/* saving plot "as icon": add internal option to
+	   override production of a "gpttmp" file
 	*/
 	opt |= OPT_G;
     }
@@ -2540,18 +2563,18 @@ static int execute_plot_call (CMD *cmd, DATASET *dset,
 	return 0;
     }
 #endif
-    
+
     if (cmd->ci == END) {
 	/* end of a "plot" block */
 	err = gretl_plot_finalize(line, dset, opt);
     } else if (opt & OPT_X) {
-	err = matrix_command_driver(cmd->ci, cmd->list, cmd->param, 
+	err = matrix_command_driver(cmd->ci, cmd->list, cmd->param,
 				    dset, opt, prn);
     } else if (cmd->ci == GNUPLOT) {
 	if (opt & OPT_I) {
 	    err = gnuplot_process_file(opt, prn);
 	} else if (opt & OPT_C) {
-	    err = xy_plot_with_control(cmd->list, cmd->param, 
+	    err = xy_plot_with_control(cmd->list, cmd->param,
 				       dset, opt);
 	} else {
 	    err = gnuplot(cmd->list, cmd->param, dset, opt);
@@ -2678,17 +2701,17 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case LEVINLIN:
-	err = llc_test_driver(cmd->param, cmd->list, dset, 
+	err = llc_test_driver(cmd->param, cmd->list, dset,
 			      cmd->opt, prn);
 	break;
 
     case COINT:
-	err = engle_granger_test(cmd->order, cmd->list, dset, 
+	err = engle_granger_test(cmd->order, cmd->list, dset,
 				 cmd->opt, prn);
 	break;
 
     case COINT2:
-	err = johansen_test_simple(cmd->order, cmd->list, 
+	err = johansen_test_simple(cmd->order, cmd->list,
 				   dset, cmd->opt, prn);
 	break;
 
@@ -2713,24 +2736,24 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case CORRGM:
-	err = corrgram(cmd->list[1], cmd->order, 0, dset, 
+	err = corrgram(cmd->list[1], cmd->order, 0, dset,
 		       cmd->opt, prn);
 	break;
 
     case XCORRGM:
-	err = xcorrgram(cmd->list, cmd->order, dset, 
+	err = xcorrgram(cmd->list, cmd->order, dset,
 			cmd->opt, prn);
 	break;
 
     case PERGM:
-	err = periodogram(cmd->list[1], cmd->order, dset, 
+	err = periodogram(cmd->list[1], cmd->order, dset,
 			  cmd->opt, prn);
 	break;
 
     case FRACTINT:
-	err = fractint(cmd->list[1], cmd->order, dset, 
+	err = fractint(cmd->list[1], cmd->order, dset,
 		       cmd->opt, prn);
-	break;	
+	break;
 
     case FUNDEBUG:
 	err = do_debug_command(s, cmd->param, cmd->opt);
@@ -2760,7 +2783,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case ESTIMATE:
-	err = estimate_named_system(cmd->param, cmd->parm2, dset, 
+	err = estimate_named_system(cmd->param, cmd->parm2, dset,
 				    cmd->opt, prn);
 	break;
 
@@ -2791,11 +2814,11 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case DATAMOD:
-	err = modify_dataset(dset, cmd->auxint, cmd->list, 
+	err = modify_dataset(dset, cmd->auxint, cmd->list,
 			     cmd->parm2, prn);
-	if (!err) { 
+	if (!err) {
 	    schedule_callback(s);
-	} 
+	}
 	break;
 
     case DIFF:
@@ -2826,7 +2849,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case LAGS:
 	err = list_laggenr(&listcpy, 1, cmd->order, NULL,
-			   dset, 0, cmd->opt); 
+			   dset, 0, cmd->opt);
 	if (!err) {
 	    maybe_list_series(dset, prn);
 	    set_dataset_is_changed();
@@ -2856,14 +2879,14 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case RMPLOT:
 	err = rmplot(cmd->list, dset, cmd->opt, prn);
 	break;
-	
+
     case HURST:
 	err = hurstplot(cmd->list, dset, cmd->opt, prn);
 	break;
 
     case QQPLOT:
 	err = qq_plot(cmd->list, dset, cmd->opt);
-	break;	
+	break;
 
     case INFO:
 	print_info(cmd->opt, dset, prn);
@@ -2881,7 +2904,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case SETINFO:
-	err = set_var_info(cmd->list, cmd->param, cmd->parm2, 
+	err = set_var_info(cmd->list, cmd->param, cmd->parm2,
 			   cmd->opt, dset);
 	break;
 
@@ -2934,7 +2957,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case PRINTF:
     case SSCANF:
 	err = do_printscan_command(cmd->ci, cmd->param, cmd->parm2,
-				   cmd->vstart, dset, prn); 	 
+				   cmd->vstart, dset, prn);
 	break;
 
     case PVAL:
@@ -2954,7 +2977,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	} else {
 	    err = list_summary_driver(cmd->list, dset, cmd->opt, prn);
 	}
-	break; 
+	break;
 
     case XTAB:
 	if (cmd->opt & OPT_X) {
@@ -2970,7 +2993,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case MEANTEST:
 	err = means_test(cmd->list, dset, cmd->opt, prn);
-	break;	
+	break;
 
     case VARTEST:
 	err = vars_test(cmd->list, dset, prn);
@@ -3019,7 +3042,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	} else if ((cmd->opt & OPT_T) && (cmd->opt & OPT_U)) {
 	    err = perma_sample(dset, cmd->opt, prn, NULL);
 	} else if (smpl_special(cmd->opt)) {
-	    err = restrict_sample(cmd->param, cmd->list, dset, 
+	    err = restrict_sample(cmd->param, cmd->list, dset,
 				  s, cmd->opt, prn, NULL);
 	} else if (cmd->param == NULL && cmd->parm2 == NULL) {
 	    /* no args given: give a report */
@@ -3030,7 +3053,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	}
 	if (!err && !(cmd->opt & OPT_Q)) {
 	    print_smpl(dset, get_full_length_n(), OPT_NONE, prn);
-	}	
+	}
 	break;
 
     case INSTALL:
@@ -3067,7 +3090,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	*model = lsq(cmd->list, dset, cmd->ci, cmd->opt);
 	err = print_save_model(model, dset, cmd->opt, 0, prn, s);
 	break;
-	
+
     case MPOLS:
 	clear_model(model);
 	*model = mp_ols(cmd->list, dset, cmd->opt);
@@ -3084,7 +3107,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	} else if (cmd->ci == AR1) {
 	    *model = ar1_model(cmd->list, dset, cmd->opt, prn);
 	} else if (cmd->ci == ARMA) {
-	    *model = arma(cmd->list, cmd->auxlist, dset, 
+	    *model = arma(cmd->list, cmd->auxlist, dset,
 			  cmd->opt, prn);
 	} else {
 	    *model = arch_model(cmd->list, cmd->order, dset,
@@ -3094,7 +3117,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case ARBOND:
-    case PANEL:	
+    case PANEL:
     case DPANEL:
 	if (!dataset_is_panel(dset)) {
 	    gretl_errmsg_set(_("This estimator requires panel data"));
@@ -3145,10 +3168,10 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	} else if (cmd->ci == PANEL) {
 	    *model = panel_model(cmd->list, dset, cmd->opt, prn);
 	} else if (cmd->ci == ARBOND) {
-	    *model = arbond_model(cmd->list, cmd->param, dset, 
+	    *model = arbond_model(cmd->list, cmd->param, dset,
 				  cmd->opt, prn);
 	} else if (cmd->ci == DPANEL) {
-	    *model = dpd_model(cmd->list, cmd->auxlist, cmd->param, 
+	    *model = dpd_model(cmd->list, cmd->auxlist, cmd->param,
 			       dset, cmd->opt, prn);
 	} else if (cmd->ci == INTREG) {
 	    *model = interval_model(cmd->list, dset, cmd->opt, prn);
@@ -3171,7 +3194,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	err = nl_parse_line(cmd->ci, cmd->vstart, dset, prn);
 	if (!err) {
 	    gretl_cmd_set_context(cmd, cmd->ci);
-	} 
+	}
 	break;
 
     case FOREIGN:
@@ -3195,7 +3218,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	if (!err && !cmd->context) {
 	    gretl_cmd_set_context(cmd, cmd->ci);
 	}
-	break;	
+	break;
 
     case ADD:
     case OMIT:
@@ -3206,10 +3229,10 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
 	    gretl_model_init(&mymod, dset);
 	    if (cmd->ci == ADD) {
-		err = add_test_full(model, &mymod, cmd->list, 
+		err = add_test_full(model, &mymod, cmd->list,
 				    dset, cmd->opt, prn);
 	    } else {
-		err = omit_test_full(model, &mymod, cmd->list, 
+		err = omit_test_full(model, &mymod, cmd->list,
 				     dset, cmd->opt, prn);
 	    }
 	    if (!err) {
@@ -3223,7 +3246,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 		clear_model(model);
 		*model = mymod;
 		print_save_model(model, dset, popt, 1, prn, s);
-	    } 
+	    }
 	} else if (cmd->ci == ADD) {
 	    err = add_test(model, cmd->list, dset, cmd->opt, prn);
 	} else {
@@ -3232,8 +3255,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	if (err == E_NOOMIT) {
 	    /* auto-omit was a no-op */
 	    err = 0;
-	}	
-	break;	
+	}
+	break;
 
     case COEFFSUM:
     case CUSUM:
@@ -3253,7 +3276,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    err = QLR_test(model, dset, cmd->opt, prn);
 	} else if (cmd->ci == VIF) {
 	    err = vif_test(model, dset, prn);
-	} 
+	}
 	break;
 
     case NORMTEST:
@@ -3281,7 +3304,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    pprintf(prn, _("Couldn't format model\n"));
 	} else {
 	    err = model_print_driver(model, dset, cmd->ci,
-				     cmd->param, cmd->opt, 
+				     cmd->param, cmd->opt,
 				     prn);
 	}
 	break;
@@ -3303,14 +3326,14 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    err = restriction_set_parse_line(s->rset, line, dset);
 	    if (err) {
 		s->rset = NULL;
-	    }	
+	    }
 	}
 	break;
 
     case SYSTEM:
 	if (s->sys == NULL) {
 	    /* no equation system is defined currently */
-	    s->sys = equation_system_start(cmd->param, cmd->savename, 
+	    s->sys = equation_system_start(cmd->param, cmd->savename,
 					   cmd->opt, &err);
 	    if (!err) {
 		gretl_cmd_set_context(cmd, SYSTEM);
@@ -3320,7 +3343,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    err = system_parse_line(s->sys, line, dset);
 	    if (err) {
 		s->sys = NULL;
-	    } 
+	    }
 	}
 	break;
 
@@ -3343,7 +3366,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    }
 	    /* clear for next use */
 	    s->sys = NULL;
-	} else if (!strcmp(cmd->param, "mle") || 
+	} else if (!strcmp(cmd->param, "mle") ||
 		   !strcmp(cmd->param, "nls") ||
 		   !strcmp(cmd->param, "gmm")) {
 	    clear_model(model);
@@ -3367,10 +3390,10 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case VAR:
     case VECM:
 	if (cmd->ci == VAR) {
-	    s->var = gretl_VAR(cmd->order, cmd->auxlist, cmd->list, 
+	    s->var = gretl_VAR(cmd->order, cmd->auxlist, cmd->list,
 			       dset, cmd->opt, prn, &err);
 	} else {
-	    s->var = gretl_VECM(cmd->order, cmd->auxint, cmd->list, 
+	    s->var = gretl_VECM(cmd->order, cmd->auxint, cmd->list,
 				dset, cmd->opt, prn, &err);
 	}
 	if (!err && s->var != NULL) {
@@ -3386,9 +3409,9 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    err = get_full_filename(cmd->param, readfile, OPT_I);
 	    cmd->opt |= OPT_Q;
 	}
-	if (err) { 
+	if (err) {
 	    break;
-	} 
+	}
 	if (gretl_messages_on()) {
 	    pprintf(prn, " %s\n", readfile);
 	}
@@ -3398,7 +3421,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	} else if (cmd->ci == INCLUDE && gfn_is_loaded(readfile)) {
 	    break;
 	}
-	if (!strcmp(readfile, s->runfile)) { 
+	if (!strcmp(readfile, s->runfile)) {
 	    pprintf(prn, _("Infinite loop detected in script\n"));
 	    err = 1;
 	    break;
@@ -3414,7 +3437,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    err = 1;
 	} else if (cmd->ci == FUNCERR) {
 	    err = E_FUNCERR;
-	} 
+	}
 	break;
 
     case DELEET:
@@ -3438,7 +3461,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	if (gretl_in_gui_mode()) {
 	    schedule_callback(s);
 	} else {
-	    pprintf(prn, _("%s: command not available\n"), 
+	    pprintf(prn, _("%s: command not available\n"),
 		    gretl_command_word(cmd->ci));
 	}
 	break;
@@ -3474,7 +3497,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     if (callback_scheduled(s)) {
 	callback_exec(s, readfile, err);
-    } 
+    }
 
  bailout:
 
@@ -3525,7 +3548,7 @@ int maybe_exec_line (ExecState *s, DATASET *dset, int *loopstart)
 	return 0; /* nothing there, or a comment */
     }
 
-    if (s->cmd->ci == LOOP || gretl_compiling_loop()) {  
+    if (s->cmd->ci == LOOP || gretl_compiling_loop()) {
 	/* accumulating loop commands */
 	err = gretl_loop_append_line(s, dset);
 	if (err) {
@@ -3533,7 +3556,7 @@ int maybe_exec_line (ExecState *s, DATASET *dset, int *loopstart)
 	    return err;
 	}
 	return 0;
-    } 
+    }
 
     s->pmod = NULL; /* be on the safe side */
 
@@ -3594,7 +3617,7 @@ int get_command_index (char *line, int cmode, CMD *cmd)
 	    if (strlen(s) == gretl_namechar_spn(s)) {
 		cmd->ci = GENR;
 	    }
-	}  
+	}
     }
 
     if (!err && cmd->ci == 0) {
@@ -3611,7 +3634,7 @@ int get_command_index (char *line, int cmode, CMD *cmd)
 	cmd->context = 0;
     } else if (cmd->context) {
 	cmd->ci = cmd->context;
-    }	
+    }
 
     if (cmd->ci == NLS || cmd->ci == MLE ||
 	cmd->ci == GMM || cmd->ci == FOREIGN ||
@@ -3661,7 +3684,7 @@ void gretl_exec_state_init (ExecState *s,
 			    ExecFlags flags,
 			    char *line,
 			    CMD *cmd,
-			    MODEL *model, 
+			    MODEL *model,
 			    PRN *prn)
 {
     s->flags = flags;
@@ -3669,12 +3692,12 @@ void gretl_exec_state_init (ExecState *s,
     s->line = line;
     if (s->line != NULL) {
 	*s->line = '\0';
-    }    
+    }
 
     s->cmd = cmd;
     if (s->cmd != NULL) {
 	s->cmd->ci = 0;
-    }    
+    }
 
     *s->runfile = '\0';
 
@@ -3758,12 +3781,12 @@ void gretl_exec_state_clear (ExecState *s)
     gretl_cmd_free(s->cmd);
 
     if (s->flags & FUNCTION_EXEC) {
-	/* Restore whatever was the 'last model' before 
+	/* Restore whatever was the 'last model' before
 	   function execution. Note that this includes
 	   the case where there was no 'last model', in
 	   which case we restore the null state. Drop
 	   the extra refcount for the model we put into
-	   last model position (if any), so we don't end 
+	   last model position (if any), so we don't end
 	   up leaking memory.
 	*/
 	set_as_last_model(s->prev_model, s->prev_type);
