@@ -2088,7 +2088,7 @@ static int do_command_by (CMD *cmd, DATASET *dset, PRN *prn)
 	return E_DATA;
     }
 
-    if (cmd->list == NULL) {
+    if (list == NULL) {
 	/* compose full series list, but exclude the "by" variable */
 	int pos;
 
