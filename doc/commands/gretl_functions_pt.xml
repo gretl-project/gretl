@@ -162,7 +162,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="$dwpval" section="access" output="scalar">
       <description>
 	<para>
@@ -918,7 +918,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="$T" section="access" output="int">
       <description>
 	<para>
@@ -1227,7 +1227,7 @@
 	  Se <argname>x</argname> e <argname>byvar</argname> são ambas
       séries individuais, e é indicado um terceiro argumento,
       o valor retornado é uma matriz com três colunas contendo,
-      respectivamente, os valores distintos de 
+      respectivamente, os valores distintos de
 	  <argname>byvar</argname>, por ordem crescente; a contagem das
       observações em que o <argname>byvar</argname>
 	  toma em cada um desses valores; e os valores da
@@ -2197,7 +2197,7 @@
 	  erro.
 	</para>
 	<para>
-	  Se não se indicar o segundo argumento, retornará um vetor de 
+	  Se não se indicar o segundo argumento, retornará um vetor de
       texto que contém os nomes das colunas de <argname>M</argname>,
 	  ou um vetor de texto vazio se <argname>M</argname> não tiver
       nomes de colunas atribuídos.
@@ -3716,7 +3716,7 @@
     <function name="getinfo" section="data-utils" output="bundle">
       <fnargs>
 	<fnarg type="series">y</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para>
 	  Retorna, na forma de um pacote (bundle) informações
@@ -3748,7 +3748,7 @@
 	  lag = 2
 	  parent = QNC
 	  name = QNC_2
-	  graph_name = 
+	  graph_name =
 	  coded = 0
 	  discrete = 0
 	  transform = lags
@@ -3770,11 +3770,11 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="getkeys" section="data-utils" output="strings">
       <fnargs>
     <fnarg type="bundle">b</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
     <para>
       Retorna um vetor de textos contendo os códigos que identificam os
@@ -3783,7 +3783,7 @@
     </para>
       </description>
     </function>
-      
+
     <function name="getline" section="strings" output="scalar">
       <fnargs>
 	<fnarg type="string">source</fnarg>
@@ -3986,7 +3986,7 @@
     </para>
     <para>
       O terceiro argumento, que é opcional, pode ser utilizado para
-      ajustar a convergência, isto é, a largura máxima aceitável 
+      ajustar a convergência, isto é, a largura máxima aceitável
       do intervalo final do parâmetro. Se esse argumento não for
       fornecido, será utilizado o valor 0,0001.
     </para>
@@ -4204,7 +4204,7 @@
 	<code>
 	  series hptrend = y - hfilt(y)
 	</code>
-	<para>      
+	<para>
 	  <seelist>
             <fncref targ="bkfilt"/>
             <fncref targ="bwfilt"/>
@@ -4666,7 +4666,7 @@
 	<fnarg type="int">shock</fnarg>
 	<fnarg type="pscalar" optional="true">alpha</fnarg>
 	<fnarg type="bundle" optional="true">sys</fnarg>
-      </fnargs>  
+      </fnargs>
       <description>
 	<para>
 	  Sem utilizar o argumento <argname>sys</argname>, opcional, essa
@@ -5022,7 +5022,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="juldate" section="calendar" output="seebelow">
       <fnargs>
 	<fnarg type="scalar-or-series">ed</fnarg>
@@ -5050,7 +5050,7 @@
 	  Veja também <fncref targ="isodate"/>.
 	</para>
       </description>
-    </function>    
+    </function>
 
     <function name="kdensity" section="stats" output="matrix">
       <fnargs>
@@ -5083,7 +5083,7 @@
 	</code>
       </description>
     </function>
-      
+
     <function name="kdsmooth" section="sspace" output="scalar">
       <fnargs>
 	<fnarg type="bundleref">&amp;Mod</fnarg>
@@ -5122,8 +5122,8 @@
 	  </seelist>
 	</para>
       </description>
-    </function> 
-      
+    </function>
+
     <function name="kfilter" section="sspace" output="scalar">
       <fnargs>
 	<fnarg type="bundleref">&amp;Mod</fnarg>
@@ -5194,7 +5194,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="kpsscrit" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="scalar">T</fnarg>
@@ -5230,15 +5230,15 @@
 	  Especifica um pacote (bundle) de Kalman, isto é, um objeto que contém
 	  todas as informações necessárias para se definir um modelo linear de
 	  espaço de estados na forma
-	  <equation status="display" 
+	  <equation status="display"
 		    tex="\[y_t=H'\alpha_t\]"
 		    ascii="y(t) = H'a(t)"
-		    graphic="kalman1"/> 
+		    graphic="kalman1"/>
 	  e com a equação de transição de estados
-	  <equation status="display" 
+	  <equation status="display"
 		    tex="\[\alpha_{t+1}=F \alpha_t + u_t\]"
 		    ascii="a(t+1) = F a(t) + u(t)"
-		    graphic="kalman2"/> 
+		    graphic="kalman2"/>
 	  onde Var<math>(u) = Q</math>.
 	</para>
 	<para>
@@ -5265,8 +5265,8 @@
 	  </seelist>
 	</para>
       </description>
-    </function> 
-      
+    </function>
+
     <function name="ksimul" section="sspace" output="scalar">
       <fnargs>
 	<fnarg type="bundleref">&amp;Mod</fnarg>
@@ -5315,8 +5315,8 @@
 	  </seelist>
 	</para>
       </description>
-    </function> 
-      
+    </function>
+
     <function name="kurtosis" section="stats" output="scalar">
       <fnargs>
 	<fnarg type="series">x</fnarg>
@@ -5559,7 +5559,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="log" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat-or-list">x</fnarg>
@@ -5689,13 +5689,13 @@
 	  Fórmula:
 	  \[ \hat{\omega}^2(k) = \frac{1}{T} \sum_{t=k}^{T-k}
 	  \left[ \sum_{i=-k}^k w_i (y_t - \bar{X}) (y_{t-i} - \bar{Y})
-	  \right] \] 
-	  com 
+	  \right] \]
+	  com
 	  \[ w_i = 1 - \frac{|i|}{k + 1} \]
 	</para>
 	<para>
 	  Ver a função <fncref targ="lrcovar"/> para o caso multivariado.
-	</para>	
+	</para>
       </description>
     </function>
 
@@ -6007,10 +6007,10 @@
             <fncref targ="mweights"/>
 	    <fncref targ="mlincomb"/>
 	  </seelist>
-	</para>	
+	</para>
       </description>
-    </function>    
-      
+    </function>
+
     <function name="min" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">y</fnarg>
@@ -6169,7 +6169,7 @@
 	  É uma função MIDAS de conveniência, combinando <fncref targ=
 	  "lincomb"/> com <fncref targ="mweights"/>. Dada uma lista
 	  <repl>hfvars</repl>, a função calcula uma série que é uma
-	  soma ponderada dos elementos da lista, com os pesos baseados 
+	  soma ponderada dos elementos da lista, com os pesos baseados
 	  no vetor de hiper-parâmetros <repl>theta</repl> e o tipo de
 	  parametrização. Veja <lit>mweights</lit> para maiores
 	  detalhes. Note que <fncref targ="hflags"/> é, geralmente, a
@@ -6194,8 +6194,8 @@
 	  concisa e eficiente em termos de processamento.
 	</para>
       </description>
-    </function>    
-      
+    </function>
+
     <function name="mnormal" section="matbuild" output="matrix">
       <fnargs>
 	<fnarg type="int">r</fnarg>
@@ -6245,14 +6245,14 @@
 	  pode ser forçada via comando <lit>set svd on</lit>.
 	</para>
 	<para>
-	  <seelist> 
+	  <seelist>
             <fncref targ="mpols"/>
             <fncref targ="mrls"/>
 	  </seelist>
 	</para>
       </description>
     </function>
-      
+
     <function name="monthlen" section="calendar" output="int">
       <fnargs>
 	<fnarg type="int">mês</fnarg>
@@ -6337,7 +6337,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="mpols" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="matrix">Y</fnarg>
@@ -6356,7 +6356,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="mrandgen" section="probdist" output="matrix">
       <fnargs>
 	<fnarg type="string">d</fnarg>
@@ -6620,9 +6620,9 @@
             <fncref targ="mgradient"/>
 	    <fncref targ="mlincomb"/>
 	  </seelist>
-	</para>	
+	</para>
       </description>
-    </function>    
+    </function>
 
     <function name="mwrite" section="data-utils" output="int">
       <fnargs>
@@ -6689,7 +6689,7 @@
 	      convertidos para little-endian na escrita e convertidos para
 	      big-endian na leitura.
 	    </para>
-	  </li>	  
+	  </li>
 	</ilist>
 	<para>
 	  Note que se o armazenamento da matriz em um arquivo for para seu uso
@@ -6707,7 +6707,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="mxtab" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="series-or-vec">x</fnarg>
@@ -6729,7 +6729,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="naalen" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="series-or-vec">d</fnarg>
@@ -6766,7 +6766,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="nadarwat" section="stats" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
@@ -6797,15 +6797,15 @@
 	</para>
 	<para context="notex">
 	  A função núcleo (ou função kernel) <math>K</math> é dada por
-	  <math>K = exp(-x</math><sup>2</sup><math> / 2h)</math>
-	  para <math>|x| &lt; T</math> e, caso contrário, zero.
+	  <math>K = exp(-x</math><sup>2</sup><math> / 2h)</math> para
+	  <math>|x| &lt; T</math> e, caso contrário, zero.
 	</para>
 	<para context="tex">
-	  O argumento <argname>h</argname>, conhecido como \emph{largura de banda}
-	  (\emph{bandwidth}), é um número real positivo escolhido
-	  pelo usuário. Normalmente este é um número pequeno: maiores
-	  valores de $h$ tornam $m(x)$ mais suave. Uma escolha comumente
-	  utilizada é $n^{-0.2}$. Mais detalhes podem ser encontrados no
+	  O argumento <argname>h</argname>, conhecido como \emph{largura de
+	  banda} (\emph{bandwidth}), é um número real positivo escolhido
+	  pelo usuário. Normalmente este é um número pequeno: maiores valores
+	  de $h$ tornam $m(x)$ mais suave. Uma escolha comumente utilizada
+	  é $h \propto n^{-0.2}$. Mais detalhes podem ser encontrados no
 	  <guideref targ="chap:nonparam"/>.
 	</para>
 	<para context="notex">
@@ -6813,8 +6813,9 @@
 	  (bandwidth), é um número real positivo escolhido pelo usuário.
 	  Normalmente este é um número pequeno: maiores valores de <argname>h
 	  </argname> tornam <math>m(x)</math> mais suave. Uma escolha comumente
-	  utilizada é <math>n</math><sup>-0.2</sup>. Mais detalhes podem ser
-	  encontrados no <guideref targ="chap:nonparam"/>.
+	  utilizada é definir <argname>h</argname> como sendo proporcional a
+	  <math>n</math><sup>-0.2</sup>. Mais detalhes podem ser encontrados
+	  no <guideref targ="chap:nonparam"/>.
 	</para>
 	<para context="tex">
 	  O escalar $\tau$ é utilizado para prevenir problemas numéricos
@@ -6829,7 +6830,7 @@
 	<para>
 	  O parâmetro de truncagem pode ser alterado através do ajuste
 	  de <lit>nadarwat_trim</lit>, como um múltiplo de <argname>h
-	  </argname>. O valor padrão é 4.  
+	  </argname>. O valor padrão é 4.
 	</para>
 	<para>
 	  O usuário pode fornecer valores negativos para a largura de
@@ -6850,9 +6851,10 @@
           x_j)} {\sum_{j \ne i} K_h(x_i - x_j)}
           \]
 	</para>
+
       </description>
     </function>
-      
+
     <function name="nelem" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="listetc">L</fnarg>
@@ -6945,7 +6947,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="NMmin" section="numerical" output="scalar">
       <description>
 	<para>
@@ -6990,7 +6992,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="normtest" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="series-or-vec">y</fnarg>
@@ -7026,7 +7028,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="npcorr" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="series-or-vec">x</fnarg>
@@ -7052,8 +7054,8 @@
 	  Veja também <fncref targ="corr"/> para a correlação de Pearson.
 	</para>
       </description>
-    </function>    
-      
+    </function>
+
     <function name="npv" section="math" output="scalar">
       <fnargs>
 	<fnarg type="series-or-vec">x</fnarg>
@@ -7082,7 +7084,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="NRmax" section="numerical" output="scalar">
       <fnargs>
 	<fnarg type="matrixref">&amp;b</fnarg>
@@ -7136,7 +7138,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="nullspace" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
@@ -7167,7 +7169,7 @@
 	  \item $AB = [0]$, exceto quando $A$
 	  tem posto completo, nesse caso uma matriz vazia é retornada.
 	  Caso contrário, se $A$ é uma matriz $m \times n$, $B$ será
-	  uma matriz $n \times (n-r)$, onde $r$ é o posto de $A$.  
+	  uma matriz $n \times (n-r)$, onde $r$ é o posto de $A$.
 	  \item Se $A$ não tiver posto completo a concatenação vertical
 	  de $A$ com $B'$ produz uma matriz de posto completo.
 	  \end{itemize}
@@ -7192,24 +7194,24 @@
       ? print A B C
       A (2 x 3)
 
-      1   3   5 
-      2   4   6 
+      1   3   5
+      2   4   6
 
       B (3 x 1)
 
-      -0.5 
-         1 
-      -0.5 
+      -0.5
+         1
+      -0.5
 
       C (3 x 3)
 
-         1      3      5 
-         2      4      6 
-      -0.5      1   -0.5 
+         1      3      5
+         2      4      6
+      -0.5      1   -0.5
 
       ? eval A*B
-      -4.4409e-16 
-      -4.4409e-16 
+      -4.4409e-16
+      -4.4409e-16
 
       ? eval rank(C)
       3
@@ -7222,13 +7224,13 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="numhess" section="numerical" output="matrix">
       <fnargs>
 	<fnarg type="cvec">b</fnarg>
 	<fnarg type="fncall">fcall</fnarg>
 	<fnarg optional="true" type="scalar">d</fnarg>
-      </fnargs> 
+      </fnargs>
       <description>
 	<para>
 	  Calcula uma aproximação numérica para a hessiana associada
@@ -7280,7 +7282,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="obslabel" section="data-utils" output="string">
       <fnargs>
 	<fnarg type="int">t</fnarg>
@@ -7356,7 +7358,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="onenorm" section="linalg" output="scalar">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
@@ -7414,7 +7416,7 @@
 	<para context="tex">
 	  Aplicável apenas quando o conjunto de dados atualmente aberto é composto
 	  por dados em painel. Calcula os desvios ortogonais anteriores (ou seja, o
-	  desvio entre $t$ e $t+1$) da variável <argname>y</argname>, isto é 
+	  desvio entre $t$ e $t+1$) da variável <argname>y</argname>, isto é
 	  \[ \tilde{y}_{i,t} =
 	  \sqrt{ \frac{T_i - t}{T_i - t + 1}} \left( y_{i,t} -
 	  \frac{1}{T_i - t} \sum_{s=t+1}^{T_i} y_{i,s} \right) \]
@@ -7435,7 +7437,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="pdf" section="probdist" output="asinput">
       <fnargs>
 	<fnarg type="string">d</fnarg>
@@ -7825,7 +7827,7 @@
 	  quadrada é sinalizado um erro, apesar disso, a simetria é assumida
 	  pela função, mas não verificada. Apenas o triângulo inferior de
 	  <argname>A</argname> é lido. O resultado é uma matriz triangular
-	  inferior <math>L</math> que satisfaz <equation status="inline" 
+	  inferior <math>L</math> que satisfaz <equation status="inline"
 	  ascii="A = LL'" tex="$A = LL'$"/>. Elementos indeterminados na
 	  solução são zerados.
 	</para>
@@ -7835,7 +7837,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="pshrink" section="data-utils" output="matrix">
       <fnargs>
 	<fnarg type="series">y</fnarg>
@@ -8026,7 +8028,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="qlrpval" section="probdist" output="scalar">
       <fnargs>
 	<fnarg type="scalar">X2</fnarg>
@@ -8054,14 +8056,14 @@
 	  <argname>p2</argname> igual a 0.85.
 	</para>
 	<para>
-	  <seelist> 
+	  <seelist>
             <fncref targ="pvalue"/>
 	    <fncref targ="urcpval"/>
 	  </seelist>
 	</para>
       </description>
     </function>
-      
+
     <function name="qnorm" section="probdist" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -8203,8 +8205,8 @@
 	  dividir os valores padrão de $w_i$ por $\sqrt{\pi}$.
 	</para>
       </description>
-    </function>    
-      
+    </function>
+
     <function name="quantile" section="stats" output="scalar" altout="matrix">
       <fnargs>
 	<fnarg type="series-or-mat">y</fnarg>
@@ -8233,14 +8235,14 @@
 	<para context="tex">
 	  Para uma série de comprimento $n$, o $p$-ésimo quantil, $q$, é
 	  definido como:
-	  \[q = y_{[k]} + [(n+1) \cdot p - k] (y_{[k+1]} - y_{[k]})\] 
-	  onde $k$ é a parte inteira de $(n+1) \cdot p$ e 
+	  \[q = y_{[k]} + [(n+1) \cdot p - k] (y_{[k+1]} - y_{[k]})\]
+	  onde $k$ é a parte inteira de $(n+1) \cdot p$ e
 	  $y_{[i]}$ é o $i$-ésimo elemento da série quando ordenada do
 	  menor para o maior valor.
 	</para>
       </description>
     </function>
-      
+
     <function name="randgen" section="probdist" output="series">
       <fnargs>
 	<fnarg type="string">d</fnarg>
@@ -8332,7 +8334,7 @@
             <para>
               ExponenCial (exp): escala
             </para>
-	  </li>	  
+	  </li>
 	  <li>
             <para>
               Weibull (w ou W): forma, escala
@@ -8342,7 +8344,7 @@
             <para>
               Laplace (l ou L): média, escala
             </para>
-	  </li>	  
+	  </li>
 	  <li>
             <para>
               Erro Generalizado (E): forma
@@ -8477,7 +8479,7 @@
 	</para>
       </description>
     </function>
-  
+
     <function name="rcond" section="linalg" output="scalar">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
@@ -8496,7 +8498,7 @@
 	</para>
 	<para context="tex">
 	  Dado que <math>A</math> é não-singular, podemos definir
-	  \[\kappa(A) = ||A||_1 \cdot ||A^{-1}||_1\] 
+	  \[\kappa(A) = ||A||_1 \cdot ||A^{-1}||_1\]
 	  Essa função retorna $\kappa(A)^{-1}$.
 	</para>
 	<para>
@@ -8508,7 +8510,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="readfile" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">fname</fnarg>
@@ -8654,7 +8656,7 @@
       <fnargs>
 	<fnarg type="series-or-mat">x</fnarg>
 	<fnarg optional="true" type="int">blocksize</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para>
 	  A descrição inicial desta função refere-se aos dados de corte
@@ -8696,7 +8698,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="round" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -8745,7 +8747,7 @@
 	  matrix A = { 11, 23, 13 ; 54, 15, 46 }
 	  rnameset(A, "First Second")
 	  string name = rnameget(A, 2)
-	  print name	
+	  print name
 	</code>
 	<para>
 	  <seelist>
@@ -8754,7 +8756,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="rnameset" section="matbuild" output="int">
       <fnargs>
 	<fnarg type="matrix">M</fnarg>
@@ -9039,7 +9041,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="sin" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -9103,7 +9105,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="smplspan" section="data-utils" output="scalar">
       <fnargs>
 	<fnarg type="string">startobs</fnarg>
@@ -9170,7 +9172,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="sort" section="matshape" output="asinput">
       <fnargs>
 	<fnarg type="series-or-vec">x</fnarg>
@@ -9206,12 +9208,12 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="sprintf" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">format</fnarg>
 	<fnarg type="varargs"/>
-      </fnargs>     
+      </fnargs>
       <description>
 	<para>
 	  O texto (string) retornado é construído pela exibição dos valores dos
@@ -9234,7 +9236,7 @@
 	</para>
 	<para>
 	  Por exemplo, o código a seguir
-	</para>	
+	</para>
 	<code>
 	  scalar x = sqrt(5)
 	  string claim = sprintf("sqrt(%d) é (aproximadamente) %6.4f.\n", 5, x)
@@ -9263,7 +9265,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="sqrt" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -9308,7 +9310,7 @@
 	<fnarg type="string">src</fnarg>
 	<fnarg type="string">format</fnarg>
 	<fnarg type="varargs"/>
-      </fnargs>  
+      </fnargs>
       <description>
 	<para>
 	  Lê os valores de <argname>src</argname> sob controle do argumeto
@@ -9397,7 +9399,7 @@
 	</code>
       </description>
     </function>
-      
+
     <function name="sst" section="stats" output="scalar">
       <fnargs>
 	<fnarg type="series">y</fnarg>
@@ -9417,7 +9419,7 @@
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="strings">S</fnarg>
-      </fnargs>  
+      </fnargs>
       <description>
 	<para>
 	  Fornece uma maneira de definir valores de texto para a série
@@ -9428,9 +9430,9 @@
 	  <math>n</math> é o maior valor em <argname>y</argname>.
 	  Adicionalmente, cada elemento de <argname>S</argname> deve estar
 	  representado com base na codificação UTF-8.
-	  <seelist> 
+	  <seelist>
             <fncref targ="strvals"/>
-	  </seelist>	  
+	  </seelist>
 	</para>
 	<para>
 	  O valor retornado é zero em caso de sucesso ou um código positivo
@@ -9438,7 +9440,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="strlen" section="strings" output="int">
       <fnargs>
 	<fnarg type="string">s</fnarg>
@@ -9488,7 +9490,7 @@
       <fnargs>
 	<fnarg type="string">s</fnarg>
 	<fnarg optional="true" type="int">i</fnarg>
-    <fnarg optional="true" type="string">sep</fnarg>   
+    <fnarg optional="true" type="string">sep</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -9611,7 +9613,7 @@
     <function name="strvals" section="strings" output="strings">
       <fnargs>
 	<fnarg type="series">y</fnarg>
-      </fnargs>  
+      </fnargs>
       <description>
 	<para>
 	  Se uma série <argname>y</argname> for não-numérica, retorna um arranjo (array)
@@ -9619,13 +9621,13 @@
 	  associados iniciados em 1. Se <argname>y</argname> não for não-numérico, retorna
 	  um arranjo de texto (strings) vazio. Observação: variáveis não-numéricas surgem,
 	  normalmente, quando existem séries cujas observações são textos.
-	  <seelist> 
+	  <seelist>
             <fncref targ="stringify"/>
 	  </seelist>
 	</para>
       </description>
     </function>
-      
+
     <function name="substr" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">s</fnarg>
@@ -9764,13 +9766,13 @@
 	  Realiza a decomposição em valores singulares da matriz
 	  $X$ de ordem $r \times c$:
 	  \[ X = U \left[
-	  \begin{array}{cccc} 
-	  \sigma_1 \\ 
-	  &amp; \sigma_2 \\ 
-	  &amp; &amp; \ddots \\ 
+	  \begin{array}{cccc}
+	  \sigma_1 \\
+	  &amp; \sigma_2 \\
+	  &amp; &amp; \ddots \\
 	  &amp; &amp; &amp; \sigma_n ,
 	  \end{array}
-	  \right] V \] 
+	  \right] V \]
 	  onde $n = \min(r,c)$. $U$ tem ordem $r \times
 	  n$ e $V$ tem ordem $n \times c$, com $U'U = I$ e $VV' = I$.
 	</para>
@@ -9781,7 +9783,7 @@
 	  2 e 3, respectivamente. Para qualquer matriz <lit>A</lit>, o código
 	</para>
 	<code>
-	  s = svd(A, &amp;U, &amp;V) 
+	  s = svd(A, &amp;U, &amp;V)
 	  B = (U .* s) * V
 	</code>
 	<para>
@@ -9797,7 +9799,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="tan" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -9851,7 +9853,7 @@
 	  ascii="i&gt;=j" tex="$i\ge j$"/>
 	  e <math>r</math><sub>j-i</sub> para
 	  <equation status="inline" ascii="i&lt;=j"
-	  tex="$i\le j$"/>. 
+	  tex="$i\le j$"/>.
 	  Note que os primeiros elementos de <math>c</math> e
 	  <math>r</math> precisam ser iguais, caso contrário um erro é
 	  retornado. Se executada com sucesso, a função retorna o vetor
@@ -9869,7 +9871,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="tolower" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">s</fnarg>
@@ -9994,7 +9996,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="typestr" section="data-utils" output="string">
       <fnargs>
 	<fnarg type="int">typecode</fnarg>
@@ -10161,7 +10163,7 @@
     <function name="var" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">x</fnarg>
-      </fnargs>     
+      </fnargs>
       <description>
 	<para>
 	  Se <argname>x</argname> for uma série, retorna a variância
@@ -10188,7 +10190,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="varname" section="strings" output="string">
       <fnargs>
 	<fnarg type="int-or-list">v</fnarg>
@@ -10262,48 +10264,49 @@
       </fnargs>
       <description>
 	<para>
-	  Simula um VAR de ordem <math>p</math> com <math>n</math>
-	  variáveis, ou seja,
+	  Simula um VAR de ordem <math>p</math> com <math>n</math> variáveis,
+	  ou seja,
 	  <equation status="inline"
-		    ascii="y(t) = A1 y(t-1) + ... + Ap y(t-p) + u(t)." 
+		    ascii="y(t) = A1 y(t-1) + ... + Ap y(t-p) + u(t)."
 		    tex="$y_t = \sum_{i=1}^p A_i y_{t-i} + u_t$."/>
-	  A matriz de coeficientes <argname>A</argname> é composta
-	  através do empilhamento das matrizes <math>A</math><sub>i
-	  </sub> horizontalmente, e tem ordem <by r="n" c="np"/>,
-	  com uma linha por equação. Isso corresponde as primeiras
-	  <math>n</math> linhas da matriz companheira, acessada via
-	  <lit>$compan</lit> após o uso dos comandos <lit>var</lit>
+	  A matriz de coeficientes <argname>A</argname> é composta através do
+	  empilhamento das matrizes <math>A</math><sub>i</sub> horizontalmente,
+	  e tem ordem <by r="n" c="np"/>, com uma linha por equação. Isso
+	  corresponde as primeiras <math>n</math> linhas da matriz companheira,
+	  acessada via <lit>$compan</lit> após o uso dos comandos <lit>var</lit>
 	  e <lit>vecm</lit>.
 	</para>
 	<para>
-	  Os vetores <math>u_t</math> estão contidos (como linhas) em
-	  <argname>U</argname> (<by r="T" c="n"/>). Valores iniciais
-	  estão contidos em <argname>y0</argname> (<by r="p" c="n"/>).
+	  Os vetores <math>u_t</math> estão contidos (como linhas) em <argname>
+	  U</argname> (<by r="T" c="n"/>). Valores iniciais estão contidos em
+	  <argname>y0</argname> (<by r="p" c="n"/>).
 	</para>
 	<para>
-	  Se o VAR contiver termos determinísticos e/ou regressores
-	  exógenos, estes podem ser incluídos na matriz <argname>U
-	  </argname>. Cada linha de <argname>U</argname> passa a
+	  Se o VAR contiver termos determinísticos e/ou regressores exógenos,
+	  estes podem ser incluídos na matriz <argname>U</argname>.
+	  Cada linha de <argname>U</argname> passa a
 	  incluir esses termos, ou seja,
 	  <equation status="inline"
-		    ascii="u(t) = B'x(t) + e(t)." 
+		    ascii="u(t) = B'x(t) + e(t)."
 		    tex="$u_t = B' x_t + e_t$."/>
 	</para>
 	<para>
-	  A matriz de saída tem <math>T</math> + <math>p</math> linhas
-	  e <math>n</math> colunas e armazena os <math>p</math> valores
-	  iniciais das variáveis endógenas mais <math>T</math> valores simulados.
+	  A matriz de saída tem <math>T</math> + <math>p</math> linhas e
+	  <math>n</math> colunas e armazena os <math>p</math> valores
+	  iniciais das variáveis endógenas mais <math>T</math> valores
+	  simulados.
 	</para>
 	<para>
-	  <seelist> 
+	  <seelist>
             <fncref targ="$compan"/>
             <cmdref targ="var"/>
             <cmdref targ="vecm"/>
 	  </seelist>
 	</para>
+
       </description>
     </function>
-      
+
     <function name="vec" section="matbuild" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
@@ -10520,7 +10523,7 @@
 	<para>
 	  Entretanto, um erro ainda é sinalizado no caso de uma consulta
 	  (query) mal formada.
-	</para>	
+	</para>
 	<para>
 	  Uma boa introdução sobre a utilização da sintaxe de XPath
 	  pode ser encontrada em
@@ -10537,7 +10540,7 @@
 	</para>
       </description>
     </function>
-      
+
     <function name="zeromiss" section="data-utils" output="asinput">
       <fnargs>
 	<fnarg type="scalar-or-series">x</fnarg>
