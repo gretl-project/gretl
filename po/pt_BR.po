@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2018-08-03 13:44-0400\n"
-"PO-Revision-Date: 2018-07-29 12:55-0300\n"
+"PO-Revision-Date: 2018-08-06 22:02-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
@@ -1002,9 +1002,9 @@ msgid "   warning: missing value for variable %d, obs %d\n"
 msgstr "   aviso: valor ausente para a variável %d, observação %d\n"
 
 #: lib/src/csvdata.c:2188
-#, fuzzy, c-format
+#, c-format
 msgid "variable %d (%s): non-numeric values = %d (%.2f percent)\n"
-msgstr "ERRO: variável %d (%s), observação %d, não-numérico\n"
+msgstr "variável %d (%s): valores não-numéricos = %d (%.2f por cento)\n"
 
 #: lib/src/csvdata.c:2195
 #, c-format
@@ -1014,6 +1014,8 @@ msgstr "ERRO: variável %d (%s), observação %d, não-numérico\n"
 #: lib/src/csvdata.c:2203
 msgid "allocating string table\n"
 msgstr ""
+"alocando tabela de texto (string)\n"
+" \n"
 
 #: lib/src/csvdata.c:2606
 msgid ""
@@ -1327,6 +1329,8 @@ msgstr "Inconsistência nos marcadores de observações\n"
 #: lib/src/dataio.c:2225
 msgid "Can't concatenate string-valued and numeric series"
 msgstr ""
+"Não é possível concatenar séries cujos valores representam texto e séries "
+"numéricas"
 
 #: lib/src/dataio.c:2742
 msgid "No markers are available for writing"
@@ -2395,7 +2399,7 @@ msgstr "Esperado %s mas encontrou-se %s"
 #: lib/src/geneval.c:9246
 #, c-format
 msgid "Specified type %s does not match array type %s"
-msgstr "Tipo %s especificado não corresponde ao tipo \"array\" %s"
+msgstr "Tipo %s especificado não corresponde ao tipo arranjo/array %s"
 
 #: lib/src/geneval.c:9829 lib/src/geneval.c:9887 lib/src/geneval.c:16321
 #: lib/src/geneval.c:16329
@@ -2419,7 +2423,7 @@ msgstr "Largura de banda não pode ser negativa com mais de 3 argumentos"
 # I'm not sure about translating the term "array" to Portuguese.
 #: lib/src/geneval.c:12940
 msgid "array: no type was specified"
-msgstr "\"array\": nenhum tipo foi especificado"
+msgstr "arranjo/array: nenhum tipo foi especificado"
 
 #: lib/src/geneval.c:13666
 #, c-format
@@ -2510,7 +2514,7 @@ msgstr "'%s' : não está implementado para cadeias de texto"
 #: lib/src/geneval.c:16317
 #, c-format
 msgid "'%s' : not implemented for arrays"
-msgstr "'%s' : não está implementado para \"arrays\""
+msgstr "'%s' : não está implementado para arranjos/arrays"
 
 #: lib/src/geneval.c:16325
 #, c-format
@@ -3125,7 +3129,7 @@ msgstr "com ajuste de mínimos quadrados"
 #: lib/src/gretl_array.c:1046
 #, c-format
 msgid "Array of %s, length %d\n"
-msgstr "\"Array\" de %s, comprimento %d\n"
+msgstr "Arranjo/array de %s, comprimento %d\n"
 
 #: lib/src/gretl_bfgs.c:511 lib/src/gretl_bfgs.c:550
 msgid "Failed to compute numerical Hessian"
@@ -3285,7 +3289,7 @@ msgstr "Não foram adicionadas novas variáveis independentes"
 
 #: lib/src/gretl_errors.c:60
 msgid "One or more \"added\" vars were already present"
-msgstr "Uma ou mais variáveis \"added\" já existiam"
+msgstr "Uma ou mais variáveis \"adicionadas\" já existiam"
 
 #: lib/src/gretl_errors.c:61
 msgid "Error generating logarithms"
@@ -3627,7 +3631,7 @@ msgstr ""
 #: lib/src/gretl_help.c:427
 #, c-format
 msgid "\"%s\" is not a gretl command.\n"
-msgstr "\"%s\" não é um comando Gretl.\n"
+msgstr "\"%s\" não é um comando do Gretl.\n"
 
 #: lib/src/gretl_intl.c:102 gui/gretl.c:1619
 msgid "_Open data"
@@ -7041,9 +7045,9 @@ msgid "GED (shape = %g): "
 msgstr "GED (forma = %g): "
 
 #: lib/src/pvalues.c:3596
-#, fuzzy, c-format
+#, c-format
 msgid "Laplace (mean = %g, scale = %g): "
-msgstr "Laplace (forma = %g, escala = %g): "
+msgstr "Laplace (média = %g, escala = %g): "
 
 #: lib/src/strutils.c:703 lib/src/strutils.c:722 lib/src/tokenize.c:3195
 #, c-format
@@ -7830,7 +7834,7 @@ msgid ""
 "gretlcli: error executing script: halting\n"
 msgstr ""
 "\n"
-"Gretlcli: erro ao executar script: terminando\n"
+"gretlcli: erro ao executar script: terminando\n"
 
 #: cli/gretlcli.c:517
 #, c-format
@@ -7941,7 +7945,7 @@ msgid ""
 "gretlmpi: error executing script: halting\n"
 msgstr ""
 "\n"
-"Gretlcli: erro ao executar sequência de comandos: terminando\n"
+"gretlcli: erro ao executar sequência de comandos: terminando\n"
 
 #: gui/about.c:31
 msgid "\"By econometricians, for econometricians.\""
@@ -13690,7 +13694,7 @@ msgstr "_Salvar texto..."
 
 #: gui/gui_utils.c:5159
 msgid "Save bundle to session as _icon"
-msgstr "Salvar pacote (\"bundle\") para sessão como í_cone"
+msgstr "Salvar pacote/bundle para sessão como í_cone"
 
 #: gui/gui_utils.c:5240
 msgid ""
@@ -13742,12 +13746,12 @@ msgstr "Já existe uma variável de texto com o nome %s"
 #: gui/gui_utils.c:5383
 #, c-format
 msgid "A bundle named %s already exists"
-msgstr "Já existe um  pacote (\"bundle\") com o nome %s"
+msgstr "Já existe um pacote/bundle com o nome %s"
 
 #: gui/gui_utils.c:5385
 #, c-format
 msgid "An array named %s already exists"
-msgstr "Já existe um \"array\" com o nome %s"
+msgstr "Já existe um arranjo/array com o nome %s"
 
 #: gui/gui_utils.c:5421
 #, c-format
@@ -13790,7 +13794,7 @@ msgstr "objeto de séries temporais múltiplas (mts)"
 
 #: gui/gui_utils.c:5941
 msgid "data frame"
-msgstr "quadro de dados (\"data frame\")"
+msgstr "data frame"
 
 #: gui/gui_utils.c:5945
 msgid "Send data as"
@@ -16027,7 +16031,7 @@ msgstr "versus"
 
 #: gui/session.c:2275
 msgid "Bundle is empty"
-msgstr "Pacote (\"bundle\") está vazio"
+msgstr "Pacote/bundle está vazio"
 
 #: gui/session.c:2645 gui/session.c:2671
 #, c-format
@@ -16894,7 +16898,7 @@ msgstr "﻿Abrir no editor de scripts"
 
 #: gui/toolbar.c:804
 msgid "Save bundle content..."
-msgstr "Salvar conteúdo do pacote (\"bundle”)…"
+msgstr "Salvar conteúdo do pacote/bundle…"
 
 #: gui/toolbar.c:805
 msgid "Print..."
