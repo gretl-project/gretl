@@ -35,7 +35,7 @@ function void process_series_bundle (bundle *b)
         endif
     endloop
     # trim trailing NAs
-    loop j=t2..t1 -q
+    loop for (j=t2; j>=t1; j--) -q
         if b.value[j] == "" || b.value[j] == "NA"
 	    t2--
 	else
