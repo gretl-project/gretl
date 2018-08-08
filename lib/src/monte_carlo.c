@@ -108,7 +108,8 @@ typedef enum {
     LOOP_ATTACHED    = 1 << 4,
     LOOP_RENAMING    = 1 << 5,
     LOOP_ERR_CAUGHT  = 1 << 6,
-    LOOP_CONDITIONAL = 1 << 7
+    LOOP_CONDITIONAL = 1 << 7,
+    LOOP_IDX_DOWN    = 1 << 8
 } LoopFlags;
 
 struct controller_ {
@@ -202,6 +203,8 @@ struct LOOPSET_ {
 #define loop_is_renaming(l)     (l->flags & LOOP_RENAMING)
 #define loop_set_renaming(l)    (l->flags |= LOOP_RENAMING)
 #define loop_err_caught(l)      (l->flags |= LOOP_ERR_CAUGHT)
+#define loop_is_descending(l)   (l->flags & LOOP_IDX_DOWN)
+#define loop_set_descending(l)  (l->flags |= LOOP_IDX_DOWN)
 #define loop_has_cond(l)        (l->flags & LOOP_CONDITIONAL)
 #define loop_set_has_cond(l)    (l->flags |= LOOP_CONDITIONAL)
 
@@ -1557,7 +1560,11 @@ static int loop_condition (LOOPSET *loop, DATASET *dset, int *err)
 	if (loop->iter < loop->itermax) {
 	    ok = 1;
 	    if (indexed_loop(loop) && loop->iter > 0) {
-		loop->idxval += 1;
+		if (loop_is_descending(loop)) {
+		    loop->idxval -= 1;
+		} else {
+		    loop->idxval += 1;
+		}
 		uvar_set_scalar_value(loop->idxvar, loop->idxval);
 	    }
 	}
@@ -2883,7 +2890,12 @@ static int top_of_loop (LOOPSET *loop, DATASET *dset)
 	    fprintf(stderr, "loop: got NA for init and/or final value\n");
 	    err = E_DATA;
 	} else {
-	    loop->itermax = loop->final.val - loop->init.val + 1;
+	    if (loop->final.val < loop->init.val) {
+		loop_set_descending(loop);
+		loop->itermax = loop->init.val - loop->final.val + 1;
+	    } else {
+		loop->itermax = loop->final.val - loop->init.val + 1;
+	    }
 #if LOOP_DEBUG > 1
 	    fprintf(stderr, "*** itermax = %g - %g + 1 = %d\n",
 		    loop->final.val, loop->init.val, loop->itermax);
