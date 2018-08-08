@@ -2890,12 +2890,16 @@ static int top_of_loop (LOOPSET *loop, DATASET *dset)
 	    fprintf(stderr, "loop: got NA for init and/or final value\n");
 	    err = E_DATA;
 	} else {
+#if 0 /* not yet! */
 	    if (loop->final.val < loop->init.val) {
 		loop_set_descending(loop);
 		loop->itermax = loop->init.val - loop->final.val + 1;
 	    } else {
 		loop->itermax = loop->final.val - loop->init.val + 1;
 	    }
+#else
+	    loop->itermax = loop->final.val - loop->init.val + 1;
+#endif
 #if LOOP_DEBUG > 1
 	    fprintf(stderr, "*** itermax = %g - %g + 1 = %d\n",
 		    loop->final.val, loop->init.val, loop->itermax);
