@@ -26,12 +26,21 @@ function void process_series_bundle (bundle *b)
     b.frequency = bundle_get_frequency(b)
     t1 = 1
     t2 = nelem(b.period)
+    # trim leading NAs
     loop j=1..t2 -q
         if b.value[j] == "" || b.value[j] == "NA"
             t1++
         else
             break
         endif
+    endloop
+    # trim trailing NAs
+    loop j=t2..t1 -q
+        if b.value[j] == "" || b.value[j] == "NA"
+	    t2--
+	else
+	    break
+	endif
     endloop
     T = t2 - t1 + 1
     b.T = T
@@ -208,9 +217,9 @@ function scalar dbn_get_json_from_URL (const string URL, string *json, string *m
         json = req.output
         dbg = ngetenv("DBNOMICS_DEBUG")
         if ok(dbg) && dbg > 0
-            outfile dbn_debug.json --write --quiet
+            outfile dbn_debug.json --quiet
             json
-            outfile --close
+            end outfile
         endif
         string dbnmsg
         error = check_json(json, &dbnmsg)
