@@ -68,12 +68,6 @@
 # include "gretlwin32.h"
 #endif
 
-#if defined(HAVE_FLITE) || defined(WIN32_SAPI)
-# define USE_SOUND 1
-#else
-# define USE_SOUND 0
-#endif
-
 static void set_up_model_view_menu (windata_t *vwin);
 static void add_system_menu_items (windata_t *vwin, int vecm);
 static void add_x12_output_menu_item (windata_t *vwin);
@@ -485,59 +479,6 @@ void unset_wait_cursor (GdkWindow *cwin)
     }
 }
 
-#if USE_SOUND
-
-static int set_or_get_audio_stop (int set, int val)
-{
-    static int audio_quit;
-
-    if (set) audio_quit = val;
-
-    return audio_quit;
-}
-
-static int should_stop_talking (void)
-{
-    while (gtk_events_pending()) {
-	gtk_main_iteration();
-    }
-
-    return set_or_get_audio_stop(0, 0);
-}
-
-void stop_talking (void)
-{
-    set_or_get_audio_stop(1, 1);
-}
-
-void audio_render_window (windata_t *vwin, int key)
-{
-    int (*read_window_text) (GtkWidget *, GtkWidget *, int, gpointer,
-			     const DATASET *, int (*)());
-
-    if (vwin == NULL) {
-	stop_talking();
-	return;
-    }
-
-    read_window_text = gui_get_plugin_function("read_window_text");
-    if (read_window_text == NULL) {
-        return;
-    }
-
-    set_or_get_audio_stop(1, 0);
-
-    if (key == AUDIO_LISTBOX) {
-	(*read_window_text) (vwin->listbox, vwin->text, vwin->role,
-			     vwin->data, NULL, &should_stop_talking);
-    } else {
-	(*read_window_text) (vwin->listbox, vwin->text, vwin->role,
-			     vwin->data, dataset, &should_stop_talking);
-    }
-}
-
-#endif
-
 static gboolean not_space (gunichar c, gpointer p)
 {
     return !g_unichar_isspace(c);
@@ -773,17 +714,6 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
     } else if (upkey == GDK_S && data_status && vwin->role == VIEW_MODEL) {
 	model_add_as_icon(NULL, vwin);
     }
-
-#if USE_SOUND
-    /* respond to 'a' and 'x', but not if Ctrl- or Alt-modified */
-    else if (!Ctrl && !Alt) {
-	if (upkey == GDK_A) {
-	    audio_render_window(vwin, AUDIO_TEXT);
-	} else if (upkey == GDK_X) {
-	    stop_talking();
-	}
-    }
-#endif
 
     return FALSE;
 }

@@ -33,9 +33,6 @@ GMP_LIBS = @GMP_LIBS@
 MPFR_CFLAGS = @MPFR_CFLAGS@
 MPFR_LIBS = @MPFR_LIBS@
 LAPACK_LIBS = @LAPACK_LIBS@
-HAVE_AUDIO = @HAVE_AUDIO@
-FLITE_CFLAGS = @FLITE_CFLAGS@
-FLITE_LIBS = @FLITE_LIBS@
 JSON_GLIB_CFLAGS = @JSON_GLIB_CFLAGS@
 JSON_GLIB_LIBS = @JSON_GLIB_LIBS@
 SVM_CFLAGS = @SVM_CFLAGS@
@@ -189,11 +186,6 @@ ifeq ($(build_gui),yes)
   ifeq ($(build_mailer),yes)
      PLUGINS += $(MAILER_PLUGIN)
   endif
-  ifeq ($(HAVE_AUDIO),1)
-     PLUGINS += audio.la
-     AUDIO_CFLAGS = $(FLITE_CFLAGS)
-     AUDIO_LIBS = $(FLITE_LIBS)
-  endif  
 endif
 
 ifeq ($(use_gsf),no)
@@ -244,8 +236,8 @@ URCDATA = $(topsrc)/plugin/data/urcdata.bin
 DWDATA = $(topsrc)/plugin/data/dwdata.gz
 
 override CFLAGS += $(GRETLINC) $(GTK_CFLAGS) $(GMP_CFLAGS) $(MPFR_CFLAGS) \
-	$(XML_CFLAGS) $(GRETL_LIBOLE2_CFLAGS) $(ZIP_CFLAGS) $(AUDIO_CFLAGS) \
-	$(ODBC_CFLAGS) $(JSON_GLIB_CFLAGS) $(SVM_CFLAGS) $(GTK_HUSH) -I.
+	$(XML_CFLAGS) $(GRETL_LIBOLE2_CFLAGS) $(ZIP_CFLAGS) $(ODBC_CFLAGS) \
+	$(JSON_GLIB_CFLAGS) $(SVM_CFLAGS) $(GTK_HUSH) -I.
 
 %.lo: %.c
 	$(CCECHO)
@@ -333,9 +325,6 @@ garch.la: garch.lo fcp.lo mod_garch.lo
 
 gretlzip.la: gretlzip.lo $(ZIPOBJ)
 	$(LINK) -o $@ $^ $(ZIP_LIBS) $(GRETLLIB)
-
-audio.la: audio.lo midi_utils.lo
-	$(LINK) -o $@ $^ $(GRETLLIB) $(AUDIO_LIBS)
 
 odbc_import.la: odbc_import.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(ODBC_LIBS)

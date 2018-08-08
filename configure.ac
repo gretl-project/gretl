@@ -52,7 +52,6 @@ have_fftw3="no"
 seek_inet_addr="no"
 have_tramo="yes"
 have_x12a="yes"
-have_audio="no"
 have_sourceview="no"
 fake_gtkspinner="yes"
 fake_mono_time="no"
@@ -325,17 +324,6 @@ then
 fi,
 try_libsvm=yes)
 
-AC_ARG_WITH(audio,
-[  --with-audio           include audio graph support (experimental)],
-if test "$withval" = "yes"
-then
-  AC_DEFINE(HAVE_AUDIO)
-  HAVE_AUDIO=1
-  AC_SUBST(HAVE_AUDIO)
-  have_audio=yes
-fi,
-have_audio=no)
-
 AC_PROG_CC
 
 AC_CANONICAL_HOST
@@ -570,16 +558,6 @@ then
   if test $darwin_build = no ; then
     RT_LIB="-lrt"
   fi
-fi
-
-dnl
-dnl Check for FLITE?
-dnl
-if test "$have_audio" = "yes" ; then
-  AM_PATH_FLITE(, 
-    have_flite="yes"
-    AC_DEFINE(HAVE_FLITE)
-  )
 fi
 
 dnl
@@ -881,7 +859,6 @@ AC_SUBST(win32pkg)
 AC_SUBST(have_sourceview)
 AC_SUBST(fake_gtkspinner)
 AC_SUBST(have_gnu_regex)
-AC_SUBST(have_audio)
 AC_SUBST(have_odbc)
 AC_SUBST(have_mpi)
 AC_SUBST(build_mailer)
@@ -1221,7 +1198,6 @@ Configuration:
   libsvm support:                         ${have_libsvm}
   ODBC support:                           ${have_odbc}
   JSON parsing support:                   ${have_json_glib}
-  Experimental audio support:             ${have_audio}
   Use xdg-utils in installation:          ${xdg_utils_msg}
   
   LAPACK libraries:

@@ -191,14 +191,4 @@ const char *print_today (void);
 int browser_open (const char *url);
 #endif
 
-#if defined(HAVE_FLITE) || defined(G_OS_WIN32)
-enum {
-    AUDIO_TEXT = 0,
-    AUDIO_LISTBOX
-} audio_render_keys;
-
-void audio_render_window (windata_t *vwin, int key);
-void stop_talking (void);
-#endif
-
 #endif /* GUI_UTILS_H */

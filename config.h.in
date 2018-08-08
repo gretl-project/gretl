@@ -163,12 +163,6 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Do we have immintrin.h? */
 #undef HAVE_IMMINTRIN_H
 
-/* Enable audio graphs */
-#undef HAVE_AUDIO
-
-/* Use flite for speech synthesis */
-#undef HAVE_FLITE
-
 /* Have Jacobi SVD in Lapack 3.2 or higher */
 #undef HAVE_LAPACK_3_2
 

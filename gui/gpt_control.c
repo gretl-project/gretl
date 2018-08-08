@@ -3896,30 +3896,6 @@ void activate_plot_font_choice (png_plot *plot, const char *grfont)
     g_free(fstr);
 }
 
-#ifdef HAVE_AUDIO
-
-static void audio_render_plot (png_plot *plot)
-{
-# ifdef G_OS_WIN32
-    const char *player = NULL;
-# else
-    const char *player = midiplayer;
-# endif
-    int (*midi_play_graph) (const char *, const char *, const char *);
-
-    if (plot_not_editable(plot)) {
-	return;
-    }
-
-    midi_play_graph = gui_get_plugin_function("midi_play_graph");
-
-    if (midi_play_graph != NULL) {
-	(*midi_play_graph) (plot->spec->fname, gretl_dotdir(), player);
-    }
-}
-
-#endif
-
 static const gchar *menu_item_get_text (GtkMenuItem *item)
 {
     GtkWidget *label = gtk_bin_get_child(GTK_BIN(item));
@@ -4725,12 +4701,6 @@ plot_key_handler (GtkWidget *w, GdkEventKey *key, png_plot *plot)
 #ifdef G_OS_WIN32
     case GDK_c:
 	win32_process_graph(plot->spec, WIN32_TO_CLIPBOARD);
-	break;
-#endif
-#ifdef HAVE_AUDIO
-    case GDK_a:
-    case GDK_A:
-	audio_render_plot(plot);
 	break;
 #endif
     default:

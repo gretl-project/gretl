@@ -67,7 +67,6 @@ enum {
     P_ARMA,
     P_ARMA_X12,
     P_GARCH,
-    P_AUDIO,
     P_URCDIST,
     P_KERNEL,
     P_FRACTAL,
@@ -127,7 +126,6 @@ struct plugin_info plugins[] = {
     { P_ARMA,            "arma",            NULL },
     { P_ARMA_X12,        "arma_x12",        NULL },
     { P_GARCH,           "garch",           NULL },
-    { P_AUDIO,           "audio",           NULL },
     { P_URCDIST,         "urcdist",         NULL },
     { P_KERNEL,          "kernel",          NULL },
     { P_FRACTAL,         "fractals",        NULL },
@@ -235,10 +233,6 @@ struct plugin_function_info plugin_functions[] = {
     { "tobit_via_intreg",  P_INTREG },
     { "biprobit_estimate", P_BIPROBIT },
     { "reprobit_estimate", P_REPROBIT },
-
-    /* audio graphs etc */
-    { "midi_play_graph",   P_AUDIO },
-    { "read_window_text",  P_AUDIO },
 
     /* MacKinnon Dickey-Fuller p-values */
     { "mackinnon_pvalue",  P_URCDIST },
