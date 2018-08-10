@@ -12858,12 +12858,12 @@ static NODE *gen_series_from_string (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static double *xvec_from_matrix (gretl_matrix *m,
-				 parser *p,
-				 int *subset,
-				 int *err)
+static const double *xvec_from_matrix (gretl_matrix *m,
+				       parser *p,
+				       int *subset,
+				       int *err)
 {
-    double *ret = NULL;
+    const double *ret = NULL;
 
     if (gretl_is_null_matrix(m) || m->cols != 1) {
 	*err = E_TYPES;
@@ -12892,9 +12892,9 @@ static NODE *gen_series_node (NODE *l, NODE *r, parser *p)
     } else {
 	char *vname = l->v.str;
 	int vnum = current_series_index(p->dset, vname);
-	int subset = 0;
-	double *xvec = NULL;
+	const double *xvec = NULL;
 	double xval = NADBL;
+	int subset = 0;
 	int err = 0;
 
 	if (r->t == SERIES) {
