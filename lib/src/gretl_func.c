@@ -547,6 +547,18 @@ void fncall_destroy (fncall *call)
     }
 }
 
+/* Portmanteau function to get a caller struct for a
+   function named @funcname from a function package
+   named @pkgname. We first check if the specified package
+   is already in memory; if not we try to find it in
+   th local filesystem, and load it into memory if
+   successful.
+
+   If/once the package is in fact loaded we look up the
+   specified function; and if that's successful we
+   allocate a caller struct and return it.
+*/
+
 fncall *get_pkg_function_call (const char *funcname,
 			       const char *pkgname)
 {

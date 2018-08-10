@@ -45,6 +45,7 @@
 #include <errno.h>
 
 #define FCDEBUG 0
+#define PKG_DEBUG 0
 
 enum {
     SHOW_GUI_MAIN = 1 << 0,
@@ -2713,8 +2714,6 @@ int query_addons (void)
     return err;
 }
 
-#define PKG_DEBUG 0
-
 static int query_addons_dir (const char *pkgname, char *sfdir)
 {
     gchar *query;
@@ -3773,18 +3772,18 @@ static int maybe_add_model_pkg (gui_package_info *gpi,
 void maybe_add_packages_to_menus (windata_t *vwin)
 {
     gui_package_info *gpi;
-    int i, err = 0;
+    int i;
 
 #if PKG_DEBUG
     fprintf(stderr, "starting maybe_add_packages_to_menus\n");
 #endif
 
     if (gpkgs == NULL) {
-	err = gui_package_info_init();
+	gui_package_info_init();
     }
 
 #if PKG_DEBUG
-    fprintf(stderr, "  n_gpkgs = %d, err = %d\n", n_gpkgs, err);
+    fprintf(stderr, "  n_gpkgs = %d\n", n_gpkgs);
 #endif
 
     for (i=0; i<n_gpkgs; i++) {
@@ -4189,12 +4188,47 @@ char *installed_addon_status_string (const char *path,
     return ret;
 }
 
+#ifndef PKGBUILD
+
+/* Note: if PKGBUILD is defined that means we're in a
+   Windows or Mac packaging of gretl and the dbnomics
+   addon will be included in the package, so this
+   check should be redundant.
+*/
+
+static int check_for_dbnomics (void)
+{
+    static char *pkgpath;
+    int err = 0;
+
+    if (pkgpath == NULL) {
+	pkgpath = gretl_addon_get_path("dbnomics");
+	if (pkgpath == NULL) {
+	    /* not found locally */
+	    err = download_addon("dbnomics", &pkgpath);
+	}
+    }
+
+    return err;
+}
+
+#endif
+
+/* below: callbacks from regular gretl GUI menu items/buttons
+   that invoke calls to the dbnomics package in the background
+*/
+
 int dbnomics_get_series_call (const char *datacode)
 {
     gretl_bundle *b = NULL;
     fncall *fc = NULL;
     PRN *prn = NULL;
     int err = 0;
+
+#ifndef PKGBUILD
+    err = check_for_dbnomics();
+    if (err) return err;
+#endif
 
     err = bufopen(&prn);
 
@@ -4260,6 +4294,11 @@ void *dbnomics_get_providers_call (int *err)
     gretl_array *A = NULL;
     fncall *fc = NULL;
     GdkWindow *cwin;
+
+#ifndef PKGBUILD
+    *err = check_for_dbnomics();
+    if (*err) return NULL;
+#endif
 
     fc = get_pkg_function_call("dbnomics_providers", "dbnomics");
     if (fc == NULL) {

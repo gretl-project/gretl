@@ -1553,7 +1553,7 @@ char **get_plausible_search_dirs (SearchType stype, int *n_dirs)
    duplicates.
 */
 
-static char *gretl_addon_get_path (const char *name)
+char *gretl_addon_get_path (const char *name)
 {
     char *ret = NULL;
     char path[FILENAME_MAX];
