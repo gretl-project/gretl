@@ -12887,19 +12887,22 @@ static NODE *gen_series_node (NODE *l, NODE *r, parser *p)
 	no_data_error(p);
     } else if (l->t == STR && r->t == STR) {
 	return gen_series_from_string(l, r, p);
-    } else if (l->t != STR || (r->t != SERIES && r->t != MAT)) {
+    } else if (l->t != STR || (r->t != SERIES && r->t != MAT && r->t != NUM)) {
 	p->err = E_TYPES;
     } else {
 	char *vname = l->v.str;
 	int vnum = current_series_index(p->dset, vname);
 	int subset = 0;
-	double *xvec;
+	double *xvec = NULL;
+	double xval = NADBL;
 	int err = 0;
 
 	if (r->t == SERIES) {
 	    xvec = r->v.xvec;
-	} else {
+	} else if (r->t == MAT) {
 	    xvec = xvec_from_matrix(r->v.m, p, &subset, &err);
+	} else {
+	    xval = r->v.xval;
 	}
 
 	if (!err && vnum > 0) {
@@ -12907,11 +12910,10 @@ static NODE *gen_series_node (NODE *l, NODE *r, parser *p)
 	    int t, i = 0;
 
 	    for (t=p->dset->t1; t<=p->dset->t2; t++) {
-		if (subset) {
-		    p->dset->Z[vnum][t] = xvec[i++];
-		} else {
-		    p->dset->Z[vnum][t] = xvec[t];
+		if (xvec != NULL) {
+		    xval = subset ? xvec[i++] : xvec[t];
 		}
+		p->dset->Z[vnum][t] = xval;
 	    }
 	} else if (!err) {
 	    /* creating a new series */
@@ -12930,11 +12932,10 @@ static NODE *gen_series_node (NODE *l, NODE *r, parser *p)
 		int t, i = 0, v = p->dset->v - 1;
 
 		for (t=p->dset->t1; t<=p->dset->t2; t++) {
-		    if (subset) {
-			p->dset->Z[v][t] = xvec[i++];
-		    } else {
-			p->dset->Z[v][t] = xvec[t];
+		    if (xvec != NULL) {
+			xval = subset ? xvec[i++] : xvec[t];
 		    }
+		    p->dset->Z[v][t] = xval;
 		}
 	    }
 	    if (!err) {
