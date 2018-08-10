@@ -1,5 +1,7 @@
 set verbose off
 include dbnomics.gfn
+nulldata 120
+setobs 4 1990:1
 
 ### the DBnomics dataset we're drawing from
 provider = "IMF"
@@ -12,3 +14,5 @@ bundle spec = defbundle("mask", "Q.FR+DE+BE.PCPIT_IX")
 ### now we get the series
 bs = dbnomics_get_multiple(provider, database, 20, 0, spec)
 dbnomics_bundles_print(bs)
+list X = dbnomics_bundles_to_list(bs, "Reference Area")
+
