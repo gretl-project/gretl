@@ -4210,9 +4210,7 @@ static fncall *get_dbnomics_function_call (const char *funcname)
     }
 
     if (!err) {
-	fc = get_pkg_function_call("dbnomics_get_series",
-				   "dbnomics",
-				   pkgpath);
+	fc = get_pkg_function_call(funcname, "dbnomics", pkgpath);
     }
 
     return fc;
