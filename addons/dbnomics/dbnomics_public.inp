@@ -445,3 +445,44 @@ function series dbnomics_fetch (const string id, bool verbose[0])
     endif
     return ret
 end function
+
+### ------------------------------------------------------------------------
+
+function list dbnomics_bundles_to_list(bundles bs, string key[null])
+    n = nelem(bs)
+    list RET = null
+    given_names = 0
+    if exists(key) 
+        given_names = strlen(key) > 0
+    endif
+    
+    digits = floor(log10(n)) + 1
+    fmt = "series_" ~ sprintf("%%0%dd", digits)
+
+    loop i = 1 .. n --quiet
+        b = bs[i]
+        if b.has_data && b.frequency == $pd
+            valid_name = 0
+            if given_names
+                if inbundle(b, key) 
+                    l$i = b[key]
+                    if typeof(l$i) == 4
+                        valid_name = 1
+                    endif
+                endif
+            endif
+            sname = valid_name ? fixname(l$i) : sprintf(fmt, i)
+            series tmp = NA
+            err = dbnomics_bundle_get_data(b, &tmp)
+            if (!err)
+                RET += genseries(sname, tmp)
+                desc = b.series_name
+                setinfo @sname --description="@desc"
+            endif
+
+        endif
+
+    endloop
+    return RET
+end function
+

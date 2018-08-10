@@ -390,6 +390,19 @@ individual bundles, use \cmd{dbnomics\_bundle\_print}.
 
 \begin{funcdoc}
 \begin{verbatim}
+list dbnomics_bundles_to_list(bundles bs, string key[null])
+\end{verbatim}
+Creates a list from an array of bundles containing data, as generated
+by functions such as, for example, \cmd{dbnomics\_get\_multiple}. The
+second optional argument is a string: if the bundle contains a key
+with the same name, and the value is a string, that string will be
+used as the series identifier. Otherwise, an automatic name will be
+provided.
+\end{funcdoc}
+
+
+\begin{funcdoc}
+\begin{verbatim}
 bundles dbnomics_category_tree (const string provider,
                                 bool verbose[0])
 \end{verbatim}
