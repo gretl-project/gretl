@@ -1567,60 +1567,68 @@ int gretl_bundle_copy_as (const char *name, const char *copyname)
     return err;
 }
 
+struct b_item_printer {
+    PRN *prn;
+    int indent;
+};
+
 static void print_bundled_item (gpointer key, gpointer value, gpointer p)
 {
     bundled_item *item = value;
     const gchar *kstr = key;
+    struct b_item_printer *bip = p;
+    PRN *prn = bip->prn;
     gretl_array *a;
     gretl_matrix *m;
     double x;
     int i, n;
     char *s;
-    PRN *prn = p;
+
+    bufspace(2 + 2*bip->indent, prn);
 
     switch (item->type) {
     case GRETL_TYPE_DOUBLE:
 	x = *(double *) item->data;
 	if (na(x)) {
-	    pprintf(prn, " %s = NA", kstr);
+	    pprintf(prn, "%s = NA", kstr);
 	} else {
-	    pprintf(prn, " %s = %g", kstr, x);
+	    pprintf(prn, "%s = %g", kstr, x);
 	}
 	break;
     case GRETL_TYPE_INT:
 	i = *(int *) item->data;
-	pprintf(prn, " %s = %d", kstr, i);
+	pprintf(prn, "%s = %d", kstr, i);
 	break;
     case GRETL_TYPE_STRING:
 	s = (char *) item->data;
 	n = strlen(s);
 	if (n < 68) {
-	    pprintf(prn, " %s = %s", kstr, s);
+	    pprintf(prn, "%s = %s", kstr, s);
 	} else {
-	    pprintf(prn, " %s (%s, %d bytes)", kstr,
+	    pprintf(prn, "%s (%s, %d bytes)", kstr,
 		    gretl_type_get_name(item->type), n);
 	}
 	break;
     case GRETL_TYPE_BUNDLE:
-	pprintf(prn, " %s (%s)", kstr,
+	pprintf(prn, "%s (%s)", kstr,
 		gretl_type_get_name(item->type));
 	break;
     case GRETL_TYPE_MATRIX:
 	m = item->data;
 	if (m->rows == 1 && m->cols == 1) {
-	    pprintf(prn, " %s = %g", kstr, m->val[0]);
+	    pprintf(prn, "%s = %g", kstr, m->val[0]);
 	} else {
-	    pprintf(prn, " %s (%s: %d x %d)", kstr,
+	    pprintf(prn, "%s (%s: %d x %d)", kstr,
 		    gretl_type_get_name(item->type),
 		    m->rows, m->cols);
 	}
 	break;
     case GRETL_TYPE_SERIES:
-	pprintf(prn, " %s (%s: length %d)", kstr,
+	pprintf(prn, "%s (%s: length %d)", kstr,
 		gretl_type_get_name(item->type), item->size);
 	break;
     case GRETL_TYPE_LIST:
-	pprintf(prn, " %s (%s)", kstr, gretl_type_get_name(item->type));
+	pprintf(prn, "%s (%s)", kstr, gretl_type_get_name(item->type));
 	break;
     case GRETL_TYPE_ARRAY:
 	a = item->data;
@@ -1628,7 +1636,7 @@ static void print_bundled_item (gpointer key, gpointer value, gpointer p)
 	    GretlType t = gretl_array_get_type(a);
 	    int n = gretl_array_get_length(a);
 
-	    pprintf(prn, " %s = array of %s, length %d", kstr,
+	    pprintf(prn, "%s = array of %s, length %d", kstr,
 		    gretl_type_get_name(t), n);
 	}
 	break;
@@ -1637,67 +1645,20 @@ static void print_bundled_item (gpointer key, gpointer value, gpointer p)
     }
 
     if (item->note != NULL) {
-	pprintf(prn, " %s\n", item->note);
+	pprintf(prn, "%s\n", item->note);
     } else {
 	pputc(prn, '\n');
     }
 }
 
-static void print_bundle_tree (gretl_bundle *b, int level, PRN *prn)
+static int real_bundle_print (gretl_bundle *bundle, int indent,
+			      PRN *prn)
 {
-    gretl_array *K = gretl_bundle_get_keys(b, NULL);
-    gretl_array *A;
-    gretl_bundle *bj;
-    void *child;
-    GretlType type;
-    char **keys;
-    int i, j, nb, n = 0;
+    struct b_item_printer bip = {prn, indent};
 
-    gretl_bundle_print(b, level == 0 ? OPT_NONE : OPT_C, prn);
-
-    keys = gretl_array_get_strings(K, &n);
-    for (i=0; i<n; i++) {
-	child = gretl_bundle_get_data(b, keys[i], &type, NULL, NULL);
-	if (type == GRETL_TYPE_BUNDLE) {
-	    pprintf(prn, "child bundle '%s' (level %d):\n", keys[i], level + 1);
-	    print_bundle_tree((gretl_bundle *) child, level + 1, prn);
-	} else if (type == GRETL_TYPE_ARRAY) {
-	    A = (gretl_array *) child;
-	    type = gretl_array_get_content_type(A);
-	    if (type == GRETL_TYPE_BUNDLE) {
-		nb = gretl_array_get_length(A);
-		for (j=0; j<nb; j++) {
-		    bj = gretl_array_get_bundle(A, j);
-		    pprintf(prn, "bundle %d under array '%s' (level %d):\n",
-			    j + 1, keys[i], level + 2);
-		    print_bundle_tree(bj, level + 2, prn);
-		}
-	    }
-	}
-    }
-
-    gretl_array_destroy(K);
-}
-
-/**
- * gretl_bundle_print:
- * @bundle: gretl bundle.
- * @prn: gretl printer.
- *
- * Prints to @prn a list of the keys defined in @bundle, along
- * with descriptive notes, if any.
- *
- * Returns: 0 on success, non-zero code on failure.
- */
-
-int gretl_bundle_print (gretl_bundle *bundle, gretlopt opt, PRN *prn)
-{
     if (bundle == NULL) {
 	return E_DATA;
-    } else if (opt & OPT_T) {
-	/* --tree */
-	print_bundle_tree(bundle, 0, prn);
-    } else if (opt & OPT_C) {
+    } else if (indent > 0) {
 	/* child, when printing tree */
 	int n_items = g_hash_table_size(bundle->ht);
 
@@ -1707,12 +1668,11 @@ int gretl_bundle_print (gretl_bundle *bundle, gretlopt opt, PRN *prn)
 	    print_kalman_bundle_info(bundle->data, prn);
 	    if (n_items > 0) {
 		pputs(prn, "\nOther content\n");
-		g_hash_table_foreach(bundle->ht, print_bundled_item, prn);
+		g_hash_table_foreach(bundle->ht, print_bundled_item, &bip);
 	    }
 	} else if (n_items > 0) {
-	    g_hash_table_foreach(bundle->ht, print_bundled_item, prn);
+	    g_hash_table_foreach(bundle->ht, print_bundled_item, &bip);
 	}
-	pputc(prn, '\n');
     } else {
 	int n_items = g_hash_table_size(bundle->ht);
 	user_var *u = get_user_var_by_data(bundle);
@@ -1737,16 +1697,97 @@ int gretl_bundle_print (gretl_bundle *bundle, gretlopt opt, PRN *prn)
 		print_kalman_bundle_info(bundle->data, prn);
 		if (n_items > 0) {
 		    pputs(prn, "\nOther content\n");
-		    g_hash_table_foreach(bundle->ht, print_bundled_item, prn);
+		    g_hash_table_foreach(bundle->ht, print_bundled_item, &bip);
 		}
 	    } else if (n_items > 0) {
-		g_hash_table_foreach(bundle->ht, print_bundled_item, prn);
+		g_hash_table_foreach(bundle->ht, print_bundled_item, &bip);
 	    }
-	    pputc(prn, '\n');
 	}
     }
 
     return 0;
+}
+
+static int print_bundle_tree (gretl_bundle *b, int level, PRN *prn)
+{
+    gretl_array *K = gretl_bundle_get_keys(b, NULL);
+    gretl_array *A;
+    gretl_bundle *bj;
+    void *child;
+    GretlType type;
+    char **keys;
+    int i, j, nb, n = 0;
+
+    real_bundle_print(b, level, prn);
+
+    keys = gretl_array_get_strings(K, &n);
+    if (n == 0) {
+	bufspace(2*(level+1), prn);
+	pputs(prn, "empty\n");
+    }
+
+    for (i=0; i<n; i++) {
+	child = gretl_bundle_get_data(b, keys[i], &type, NULL, NULL);
+	if (type == GRETL_TYPE_BUNDLE) {
+	    bufspace(2*(level+1), prn);
+	    pprintf(prn, "child bundle '%s':\n", keys[i]);
+	    print_bundle_tree((gretl_bundle *) child, level + 1, prn);
+	} else if (type == GRETL_TYPE_ARRAY) {
+	    A = (gretl_array *) child;
+	    type = gretl_array_get_content_type(A);
+	    if (type == GRETL_TYPE_BUNDLE) {
+		nb = gretl_array_get_length(A);
+		for (j=0; j<nb; j++) {
+		    bj = gretl_array_get_bundle(A, j);
+		    bufspace(2*(level+2), prn);
+		    pprintf(prn, "%s[%d]:\n", keys[i], j + 1);
+		    print_bundle_tree(bj, level + 2, prn);
+		}
+	    }
+	}
+    }
+
+    gretl_array_destroy(K);
+
+    return 0;
+}
+
+/**
+ * gretl_bundle_print:
+ * @bundle: gretl bundle.
+ * @prn: gretl printer.
+ *
+ * Prints to @prn a list of the keys defined in @bundle, along
+ * with descriptive notes, if any.
+ *
+ * Returns: 0 on success, non-zero code on failure.
+ */
+
+int gretl_bundle_print (gretl_bundle *bundle, PRN *prn)
+{
+    int err = real_bundle_print(bundle, 0, prn);
+
+    if (!err) {
+	pputc(prn, '\n');
+    }
+
+    return err;
+}
+
+int gretl_bundle_print_tree (gretl_bundle *bundle, PRN *prn)
+{
+    int err;
+
+    if (bundle == NULL) {
+	err = E_DATA;
+    } else {
+	err = print_bundle_tree(bundle, 0, prn);
+	if (!err) {
+	    pputc(prn, '\n');
+	}
+    }
+
+    return err;
 }
 
 /* Called from gretl_func.c on return, to remove

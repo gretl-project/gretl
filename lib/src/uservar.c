@@ -2308,7 +2308,11 @@ int print_user_var_by_name (const char *name,
 	    gretl_matrix_print_to_prn(u->ptr, name, prn);
 	}
     } else if (u->type == GRETL_TYPE_BUNDLE) {
-	gretl_bundle_print(u->ptr, opt, prn);
+	if (opt & OPT_T) {
+	    gretl_bundle_print_tree(u->ptr, prn);
+	} else {
+	    gretl_bundle_print(u->ptr, prn);
+	}
     } else if (u->type == GRETL_TYPE_ARRAY) {
 	gretl_array_print(u->ptr, prn);
     } else if (u->type == GRETL_TYPE_LIST) {

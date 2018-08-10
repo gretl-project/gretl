@@ -225,7 +225,7 @@ char **gretl_array_get_strings (gretl_array *A, int *ns)
 
     *ns = 0;
 
-    if (A->type == GRETL_TYPE_STRINGS) {
+    if (A != NULL && A->type == GRETL_TYPE_STRINGS) {
 	int err = strings_array_null_check(A);
 
 	if (!err) {

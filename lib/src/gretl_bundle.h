@@ -142,7 +142,9 @@ gretl_bundle *gretl_bundle_copy (const gretl_bundle *bundle, int *err);
 
 int gretl_bundle_set_creator (gretl_bundle *b, const char *name);
 
-int gretl_bundle_print (gretl_bundle *bundle, gretlopt opt, PRN *prn);
+int gretl_bundle_print (gretl_bundle *bundle, PRN *prn);
+
+int gretl_bundle_print_tree (gretl_bundle *bundle, PRN *prn);
 
 int gretl_bundle_is_stacked (gretl_bundle *b);
 

@@ -15882,7 +15882,7 @@ static void printnode (NODE *t, parser *p, int value)
 	    gretl_matrix_print_to_prn(t->v.m, NULL, p->prn);
 	}
     } else if (t->t == BUNDLE) {
-	gretl_bundle_print(t->v.b, OPT_NONE, p->prn);
+	gretl_bundle_print(t->v.b, p->prn);
     } else if (t->t == DBUNDLE) {
 	pputs(p->prn, bvarname(t->v.idnum));
     } else if (t->t == ARRAY) {
@@ -17971,7 +17971,7 @@ void gen_save_or_print (parser *p, PRN *prn)
 		pprintf(p->prn, "%s\n", p->ret->v.str);
 	    }
 	} else if (p->ret->t == BUNDLE) {
-	    gretl_bundle_print(p->ret->v.b, OPT_NONE, prn);
+	    gretl_bundle_print(p->ret->v.b, prn);
 	} else if (p->ret->t == ARRAY) {
 	    gretl_array_print(p->ret->v.a, prn);
 	} else {
