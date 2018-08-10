@@ -4188,17 +4188,17 @@ char *installed_addon_status_string (const char *path,
     return ret;
 }
 
-#ifndef PKGBUILD
-
-/* Note: if PKGBUILD is defined that means we're in a
-   Windows or Mac packaging of gretl and the dbnomics
-   addon will be included in the package, so this
-   check should be redundant.
+/* We invoke this function on the two GUI "entry-points" to
+   dbnomics, namely retrieving a specified series and getting
+   the current list of providers. We thereby ensure that if
+   the dbnomics function package is not found on the local
+   machine we try to download and install it.
 */
 
-static int check_for_dbnomics (void)
+static fncall *get_dbnomics_function_call (const char *funcname)
 {
     static char *pkgpath;
+    fncall *fc = NULL;
     int err = 0;
 
     if (pkgpath == NULL) {
@@ -4209,10 +4209,14 @@ static int check_for_dbnomics (void)
 	}
     }
 
-    return err;
-}
+    if (!err) {
+	fc = get_pkg_function_call("dbnomics_get_series",
+				   "dbnomics",
+				   pkgpath);
+    }
 
-#endif
+    return fc;
+}
 
 /* below: callbacks from regular gretl GUI menu items/buttons
    that invoke calls to the dbnomics package in the background
@@ -4225,19 +4229,13 @@ int dbnomics_get_series_call (const char *datacode)
     PRN *prn = NULL;
     int err = 0;
 
-#ifndef PKGBUILD
-    err = check_for_dbnomics();
-    if (err) return err;
-#endif
-
     err = bufopen(&prn);
 
     if (!err) {
-	fc = get_pkg_function_call("dbnomics_get_series", "dbnomics");
+	fc = get_dbnomics_function_call("dbnomics_get_series");
 	if (fc == NULL) {
 	    gretl_print_destroy(prn);
 	    err = E_DATA;
-	    gui_errmsg(err);
 	}
     }
 
@@ -4266,7 +4264,7 @@ int dbnomics_get_series_call (const char *datacode)
 	    const char *p = strrchr(datacode, '/');
 
 	    title = g_strdup_printf("gretl: %s", p + 1);
-	    fc = get_pkg_function_call("dbnomics_bundle_print", "dbnomics");
+	    fc = get_pkg_function_call("dbnomics_bundle_print", "dbnomics", NULL);
 	    if (fc != NULL) {
 		err = push_anon_function_arg(fc, GRETL_TYPE_BUNDLE, (void *) b);
 		if (!err) {
@@ -4295,12 +4293,7 @@ void *dbnomics_get_providers_call (int *err)
     fncall *fc = NULL;
     GdkWindow *cwin;
 
-#ifndef PKGBUILD
-    *err = check_for_dbnomics();
-    if (*err) return NULL;
-#endif
-
-    fc = get_pkg_function_call("dbnomics_providers", "dbnomics");
+    fc = get_dbnomics_function_call("dbnomics_providers");
     if (fc == NULL) {
 	*err = E_DATA;
 	return NULL;
@@ -4330,9 +4323,9 @@ void *dbnomics_search_call (const char *key,
 
     if (prov != NULL && dset != NULL) {
 	use_dset = 1;
-	fc = get_pkg_function_call("dset_search", "dbnomics");
+	fc = get_pkg_function_call("dset_search", "dbnomics", NULL);
     } else {
-	fc = get_pkg_function_call("general_search", "dbnomics");
+	fc = get_pkg_function_call("general_search", "dbnomics", NULL);
     }
     if (fc == NULL) {
 	*err = E_DATA;
@@ -4371,7 +4364,8 @@ void *dbnomics_dataset_list (const char *provider, int *err)
     fncall *fc = NULL;
     GdkWindow *cwin;
 
-    fc = get_pkg_function_call("dbnomics_dsets_for_provider", "dbnomics");
+    fc = get_pkg_function_call("dbnomics_dsets_for_provider",
+			       "dbnomics", NULL);
     if (fc == NULL) {
 	*err = E_DATA;
 	return NULL;
@@ -4400,7 +4394,8 @@ void *dbnomics_probe_series (const char *prov,
     fncall *fc = NULL;
     GdkWindow *cwin;
 
-    fc = get_pkg_function_call("dbnomics_get_dataset_content", "dbnomics");
+    fc = get_pkg_function_call("dbnomics_get_dataset_content",
+			       "dbnomics", NULL);
     if (fc == NULL) {
 	*err = E_DATA;
 	return NULL;

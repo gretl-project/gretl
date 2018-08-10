@@ -10,7 +10,7 @@ static gretl_bundle *get_dbn_series_bundle (const char *datacode,
     gretl_bundle *b = NULL;
     fncall *fc;
 
-    fc = get_pkg_function_call("dbnomics_get_series", "dbnomics");
+    fc = get_pkg_function_call("dbnomics_get_series", "dbnomics", NULL);
     if (fc == NULL) {
 	*err = E_DATA;
     } else {

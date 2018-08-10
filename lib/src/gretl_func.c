@@ -557,28 +557,42 @@ void fncall_destroy (fncall *call)
    If/once the package is in fact loaded we look up the
    specified function; and if that's successful we
    allocate a caller struct and return it.
+
+   The @pkgpath argument can be given as NULL, but if
+   the path to the package is known to the caller and
+   is provided via this argument this will speed up the
+   look-up in case the package is not already loaded.
 */
 
 fncall *get_pkg_function_call (const char *funcname,
-			       const char *pkgname)
+			       const char *pkgname,
+			       const char *pkgpath)
 {
     fncall *fc = NULL;
     ufunc *uf = NULL;
     fnpkg *pkg;
 
-    /* already loaded? */
+    /* is the package already loaded? */
     pkg = get_function_package_by_name(pkgname);
     if (pkg == NULL) {
 	/* no, so look it up */
-	char *pkgpath;
 	int err = 0;
 
-	pkgpath = gretl_function_package_get_path(pkgname, PKG_ALL);
 	if (pkgpath != NULL) {
+	    /* path was supplied by caller */
 	    pkg = get_function_package_by_filename(pkgpath, &err);
-	    free(pkgpath);
+	} else {
+	    /* we need to search */
+	    char *mypath;
+
+	    mypath = gretl_function_package_get_path(pkgname, PKG_ALL);
+	    if (mypath != NULL) {
+		pkg = get_function_package_by_filename(mypath, &err);
+		free(mypath);
+	    }
 	}
     }
+
     if (pkg != NULL) {
 	uf = get_function_from_package(funcname, pkg);
     }

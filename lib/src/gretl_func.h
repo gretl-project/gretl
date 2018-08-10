@@ -86,7 +86,8 @@ fncall *fncall_new (ufunc *fun);
 void fncall_destroy (fncall *call);
 
 fncall *get_pkg_function_call (const char *funcname,
-			       const char *pkgname);
+			       const char *pkgname,
+			       const char *pkgpath);
 
 int fn_n_params (const ufunc *fun);
 
