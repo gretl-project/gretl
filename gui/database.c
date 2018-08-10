@@ -3632,7 +3632,8 @@ gint populate_remote_addons_list (windata_t *vwin)
     }
 
 #if 0
-    fprintf(stderr, "getbuf: '%s'\n", getbuf);
+    fprintf(stderr, "populate_remote_addons_list: got XML:\n");
+    fprintf(stderr, "'%s'\n", getbuf);
 #endif
 
     xmlKeepBlanksDefault(0);
