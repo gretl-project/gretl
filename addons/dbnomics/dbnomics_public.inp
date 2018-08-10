@@ -358,30 +358,14 @@ end function
 
 ### ------------------------------------------------------------------------
 
-function bundles dbnomics_category_tree(const string provider,
+function bundle dbnomics_category_tree(const string provider,
       bool verbose[0])
-    bundles ret = null
+    bundle ret
     string json
-    magic = "category_tree"
-    err = dbn_get_json("providers/" ~ provider, verbose, &json)
-    if err
-        return ret
+    ret.error = dbn_get_json("providers/" ~ provider, verbose, &json)
+    if !ret.error
+        ret = jsongetb(json, "category_tree")
     endif
-
-    n = 0
-    str = jsonget(json, sprintf("$.%s[*].code", magic), &n)
-    if n > 0
-        bundles ret = array(n)
-        strings fields = defarray("code", "name")
-        loop i = 1..n --quiet
-            bundle b = json2bndl(fields, json, magic, i-1)
-            if verbose
-                printf "\t%16s: %s\n", b.code, b.name
-            endif
-            ret[i] = b
-        endloop
-    endif
-
     return ret
 end function
 
@@ -479,9 +463,7 @@ function list dbnomics_bundles_to_list(bundles bs, string key[null])
                 desc = b.series_name
                 setinfo @sname --description="@desc"
             endif
-
         endif
-
     endloop
     return RET
 end function

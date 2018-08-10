@@ -392,22 +392,34 @@ individual bundles, use \cmd{dbnomics\_bundle\_print}.
 \begin{verbatim}
 list dbnomics_bundles_to_list(bundles bs, string key[null])
 \end{verbatim}
-Creates a list from an array of bundles containing data, as generated
-by functions such as, for example, \cmd{dbnomics\_get\_multiple}. The
-second optional argument is a string: if the bundle contains a key
-with the same name, and the value is a string, that string will be
-used as the series identifier. Otherwise, an automatic name will be
-provided.
+  Creates a list of series from an array of bundles containing series
+  data, as returned by functions such as
+  \cmd{dbnomics\_get\_multiple}. By default the names of the series
+  will be constructed automatically but the second, optional string
+  argument can be used to impose a chosen naming scheme: for each
+  bundle, if it contains a string value under the specified
+  \texttt{key}, that string will be used as the name of the
+  corresponding series.
 \end{funcdoc}
-
 
 \begin{funcdoc}
 \begin{verbatim}
-bundles dbnomics_category_tree (const string provider,
-                                bool verbose[0])
+bundle dbnomics_category_tree (const string provider,
+                               bool verbose[0])
 \end{verbatim}
-  Returns an array of bundles containing a list of the datasets for
-  provider \texttt{provider}, verbosely if so wanted.
+  Returns a bundle containing a representation of the ``category
+  tree'' for the specified provider. For some providers this tree just
+  amounts to a list of datasets but for others it is a hierarchy in
+  which related datasets are grouped under one or more levels of
+  headings. Each bundle in the tree will have members \texttt{code}
+  and \texttt{name}; those that represent groups of datasets rather
+  then datasets proper will in addition have a \texttt{children}
+  member.
+\begin{code}
+# example
+bundle b = dbnomics_category_tree("BLS")
+print b --tree
+\end{code}
 \end{funcdoc}
 
 \begin{funcdoc}
