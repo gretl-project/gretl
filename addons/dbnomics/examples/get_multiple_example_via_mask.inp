@@ -14,5 +14,7 @@ bundle spec = defbundle("mask", "Q.FR+DE+BE.PCPIT_IX")
 ### now we get the series
 bs = dbnomics_get_multiple(provider, database, 20, 0, spec)
 dbnomics_bundles_print(bs)
+# we use "Reference Area" (country name) to name the series
 list X = dbnomics_bundles_to_list(bs, "Reference Area")
-
+printf "\nHere are the series in list X:\n"
+list X print
