@@ -1570,6 +1570,7 @@ int gretl_bundle_copy_as (const char *name, const char *copyname)
 struct b_item_printer {
     PRN *prn;
     int indent;
+    int tree;
 };
 
 static void print_bundled_item (gpointer key, gpointer value, gpointer p)
@@ -1583,6 +1584,10 @@ static void print_bundled_item (gpointer key, gpointer value, gpointer p)
     double x;
     int i, n;
     char *s;
+
+    if (bip->tree && item->type == GRETL_TYPE_BUNDLE) {
+	return;
+    }
 
     bufspace(2 + 2*bip->indent, prn);
 
@@ -1652,9 +1657,9 @@ static void print_bundled_item (gpointer key, gpointer value, gpointer p)
 }
 
 static int real_bundle_print (gretl_bundle *bundle, int indent,
-			      PRN *prn)
+			      int tree, PRN *prn)
 {
-    struct b_item_printer bip = {prn, indent};
+    struct b_item_printer bip = {prn, indent, tree};
 
     if (bundle == NULL) {
 	return E_DATA;
@@ -1713,12 +1718,10 @@ static int print_bundle_tree (gretl_bundle *b, int level, PRN *prn)
     gretl_array *K = gretl_bundle_get_keys(b, NULL);
     gretl_array *A;
     gretl_bundle *bj;
-    void *child;
-    GretlType type;
     char **keys;
     int i, j, nb, n = 0;
 
-    real_bundle_print(b, level, prn);
+    real_bundle_print(b, level, 1, prn);
 
     keys = gretl_array_get_strings(K, &n);
     if (n == 0) {
@@ -1727,22 +1730,34 @@ static int print_bundle_tree (gretl_bundle *b, int level, PRN *prn)
     }
 
     for (i=0; i<n; i++) {
-	child = gretl_bundle_get_data(b, keys[i], &type, NULL, NULL);
-	if (type == GRETL_TYPE_BUNDLE) {
+	const char *key = keys[i];
+	bundled_item *item = g_hash_table_lookup(b->ht, key);
+
+	if (item->type == GRETL_TYPE_BUNDLE) {
+	    int nmemb = gretl_bundle_get_n_members(item->data);
+
 	    bufspace(2*(level+1), prn);
-	    pprintf(prn, "child bundle '%s':\n", keys[i]);
-	    print_bundle_tree((gretl_bundle *) child, level + 1, prn);
-	} else if (type == GRETL_TYPE_ARRAY) {
-	    A = (gretl_array *) child;
-	    type = gretl_array_get_content_type(A);
-	    if (type == GRETL_TYPE_BUNDLE) {
+	    if (nmemb == 0) {
+		pprintf(prn, "%s = bundle (empty)\n", key);
+	    } else {
+		pprintf(prn, "%s = bundle (%d members)\n", key, nmemb);
+		print_bundle_tree((gretl_bundle *) item->data, level + 1, prn);
+	    }
+	    continue;
+	} else if (item->type == GRETL_TYPE_ARRAY) {
+	    GretlType atype;
+
+	    A = (gretl_array *) item->data;
+	    atype = gretl_array_get_content_type(A);
+	    if (atype == GRETL_TYPE_BUNDLE) {
 		nb = gretl_array_get_length(A);
 		for (j=0; j<nb; j++) {
 		    bj = gretl_array_get_bundle(A, j);
 		    bufspace(2*(level+2), prn);
-		    pprintf(prn, "%s[%d]:\n", keys[i], j + 1);
+		    pprintf(prn, "%s[%d]:\n", key, j + 1);
 		    print_bundle_tree(bj, level + 2, prn);
 		}
+		continue;
 	    }
 	}
     }
@@ -1765,7 +1780,7 @@ static int print_bundle_tree (gretl_bundle *b, int level, PRN *prn)
 
 int gretl_bundle_print (gretl_bundle *bundle, PRN *prn)
 {
-    int err = real_bundle_print(bundle, 0, prn);
+    int err = real_bundle_print(bundle, 0, 0, prn);
 
     if (!err) {
 	pputc(prn, '\n');
