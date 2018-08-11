@@ -66,7 +66,7 @@ int main (void)
        in the current working directory. Note that PREFIX is
        defined in the Makefile 
     */
-    err = gretl_read_native_data(PREFIX "/share/gretl/data/data9-7.gdt", dset);
+    err = gretl_read_native_data(PREFIX "/share/gretl/data/ramanathan/data9-7.gdt", dset);
 
     if (err) {
 	errmsg(err, prn);
