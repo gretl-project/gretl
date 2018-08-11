@@ -1,4 +1,4 @@
-version 2018b, in progress
+2018-08-11 version 2018b
 - New feature: support for data access via dbnomics
 - New feature: the GUI console now uses syntax highlighting
 - Revised feature: the descriptive "labels" for series can
