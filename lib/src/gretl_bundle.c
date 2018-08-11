@@ -1582,14 +1582,15 @@ static void print_bundled_item (gpointer key, gpointer value, gpointer p)
     gretl_array *a;
     gretl_matrix *m;
     double x;
-    int i, n;
+    int i, n, indent;
     char *s;
 
     if (bip->tree && item->type == GRETL_TYPE_BUNDLE) {
 	return;
     }
 
-    bufspace(2 + 2*bip->indent, prn);
+    indent = 2 + 2 * bip->indent;
+    bufspace(indent, prn);
 
     switch (item->type) {
     case GRETL_TYPE_DOUBLE:
@@ -1607,7 +1608,7 @@ static void print_bundled_item (gpointer key, gpointer value, gpointer p)
     case GRETL_TYPE_STRING:
 	s = (char *) item->data;
 	n = strlen(s);
-	if (n < 68) {
+	if (n + indent < 70) {
 	    pprintf(prn, "%s = %s", kstr, s);
 	} else {
 	    pprintf(prn, "%s (%s, %d bytes)", kstr,
@@ -1639,8 +1640,8 @@ static void print_bundled_item (gpointer key, gpointer value, gpointer p)
 	a = item->data;
 	{
 	    GretlType t = gretl_array_get_type(a);
-	    int n = gretl_array_get_length(a);
 
+	    n = gretl_array_get_length(a);
 	    pprintf(prn, "%s = array of %s, length %d", kstr,
 		    gretl_type_get_name(t), n);
 	}
