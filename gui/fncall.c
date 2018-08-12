@@ -4258,6 +4258,7 @@ int dbnomics_get_series_call (const char *datacode)
 	    title = g_strdup_printf("gretl: %s", datacode);
 	    view_buffer(prn, 78, 200, title, IMPORT, NULL);
 	    gretl_bundle_destroy(b);
+	    prn = NULL; /* don't double-free! */
 	} else {
 	    const char *p = strrchr(datacode, '/');
 
