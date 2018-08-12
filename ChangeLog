@@ -1,3 +1,6 @@
+version 2018c, in progress
+- Line plots via gnuplot: show gaps for missing values.
+
 2018-08-11 version 2018b
 - New feature: support for data access via dbnomics
 - New feature: the GUI console now uses syntax highlighting
