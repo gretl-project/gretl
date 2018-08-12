@@ -144,7 +144,7 @@ function bundle dbnomics_get_series (const string datacode, bool verbose[0])
     bundle ret
     ret.error = 0
     ret.has_data = 0
-    string parms = "series?series_ids=" ~ datacode ~ "&offset=0&format=json"
+    string parms = "series?series_ids=" ~ datacode ~ "&format=json"
     string json
     ret.error = dbn_get_json(parms, verbose, &json)
     if ret.error
@@ -154,6 +154,10 @@ function bundle dbnomics_get_series (const string datacode, bool verbose[0])
     bundle b = jsongetb(json, "series")
     n = b.series.num_found
     if n == 0
+        ret.error = 1
+        return ret
+    elif nelem(b.series.data) == 0
+        # allow for misleading "num_found" value
         ret.error = 1
         return ret
     endif
