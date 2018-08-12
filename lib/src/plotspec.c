@@ -1127,7 +1127,7 @@ static void plotspec_print_data (GPT_SPEC *spec,
 	for (t=0; t<spec->nobs; t++) {
 	    /* print x-axis value */
 	    if (na(x[0][t])) {
-		fputs("? ", fp);
+		write_gp_dataval(NADBL, fp, 0);
 		*miss = 1;
 	    } else if (spec->flags & GPT_TIMEFMT) {
 		fprintf(fp, "%.0f ", x[0][t]);
@@ -1137,11 +1137,9 @@ static void plotspec_print_data (GPT_SPEC *spec,
 	    /* print y-axis value(s) */
 	    for (j=1; j<ncols; j++) {
 		if (na(x[j][t])) {
-		    fputs("? ", fp);
 		    *miss = 1;
-		} else {
-		    fprintf(fp, "%.10g ", x[j][t]);
 		}
+		write_gp_dataval(x[j][t], fp, 0);
 	    }
 	    /* append markers if applicable */
 	    if (spec->markers != NULL && i == 0) {
@@ -1208,7 +1206,7 @@ static void plotspec_print_heredata (GPT_SPEC *spec,
 	for (i=0; i<m->cols; i++) {
 	    mti = gretl_matrix_get(m, t, i);
 	    if (na(mti)) {
-		fputs("? ", fp);
+		write_gp_dataval(NADBL, fp, 0);
 		*miss = 1;
 	    } else if (i == 0 && (spec->flags & GPT_TIMEFMT)) {
 		fprintf(fp, "%.0f ", mti);

@@ -1142,6 +1142,8 @@ static int read_plot_outliers (PLOTGROUP *grp, char *line,
     return err;
 }
 
+#define is_misscode(s) (strcmp(s, "?") == 0 || strcmp(s, "NaN") == 0)
+
 static int scan_five (BOXPLOT *plot, int *j, const char *s)
 {
     char lq[16], uq[16];
@@ -1154,13 +1156,13 @@ static int scan_five (BOXPLOT *plot, int *j, const char *s)
 	if (nf == 6) {
 	    plot->n = nobs;
 	}
-	if (!strcmp(lq, "?")) {
+	if (is_misscode(lq)) {
 	    plot->lq = NADBL;
 	} else {
 	    nf--;
 	    nf += sscanf(lq, "%lf", &plot->lq);
 	}
-	if (!strcmp(uq, "?")) {
+	if (is_misscode(uq)) {
 	    plot->uq = NADBL;
 	} else {
 	    nf--;
@@ -1179,7 +1181,7 @@ static int scan_two (int *j, double *x, const char *s)
     nf = sscanf(s, "%d %15s", j, test);
 
     if (nf == 2) {
-	if (!strcmp(test, "?")) {
+	if (is_misscode(test)) {
 	    *x = NADBL;
 	} else {
 	    nf--;

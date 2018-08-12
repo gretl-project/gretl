@@ -592,6 +592,52 @@ static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
     return err;
 }
 
+#define GP_USE_NAN 1
+
+/* With gnuplot 5, if we represent NAs by "?" (flagging that we're
+   doing so with 'set datafile missing "?"')  then in "with-lines"
+   plots the lines are continuous across the missing values (joining
+   the successive non-missing values), so giving no visual clue that
+   there's anything missing. If we want lines to have gaps in case of
+   missing values we need to write "NaN" rather than "?" into the
+   gnuplot data block. See the gnuplot 5 doc for "missing":
+
+   "Gnuplot makes a distinction between missing data and invalid data
+   (e.g. "NaN", 1/0.).  For example invalid data causes a gap in a
+   line drawn through sequential data points; missing data does not."
+
+   This represents a change from gnuplot 4 behavior, which I didn't
+   notice for quite a while. But I think we want the gaps, hence
+   the following function.
+
+   Allin, 2018-08-12
+*/
+
+void write_gp_dataval (double x, FILE *fp, int final)
+{
+    if (final) {
+	if (na(x)) {
+#if GP_USE_NAN
+	    fputs("NaN\n", fp);
+#else
+	    fputs("?\n", fp);
+#endif
+	} else {
+	    fprintf(fp, "%.10g\n", x);
+	}
+    } else {
+	if (na(x)) {
+#if GP_USE_NAN
+	    fputs("NaN ", fp);
+#else
+	    fputs("? ", fp);
+#endif
+	} else {
+	    fprintf(fp, "%.10g ", x);
+	}
+    }
+}
+
 static void printvars (FILE *fp, int t,
 		       const int *list,
 		       const DATASET *dset,
@@ -614,15 +660,11 @@ static void printvars (FILE *fp, int t,
 
     for (i=1; i<=list[0]; i++) {
 	xt = dset->Z[list[i]][t];
-	if (na(xt)) {
-	    fputs("? ", fp);
-	} else {
-	    if (x == NULL && i == 1) {
-		/* the x variable */
-		xt += offset;
-	    }
-	    fprintf(fp, "%.10g ", xt);
+	if (!na(xt) && x == NULL && i == 1) {
+	    /* the x variable */
+	    xt += offset;
 	}
+	write_gp_dataval(xt, fp, 0);
     }
 
     if (label != NULL) {
@@ -4076,22 +4118,11 @@ int multi_scatters (const int *list, const DATASET *dset,
 	fputc('\n', fp);
 
 	for (t=dset->t1; t<=dset->t2; t++) {
-	    double xt, yt;
+	    double xt = yvar ? dset->Z[j][t] : xvar ? x[t] : obs[t];
+	    double yt = yvar ? y[t] : dset->Z[j][t];
 
-	    xt = yvar ? dset->Z[j][t] : xvar ? x[t] : obs[t];
-	    yt = yvar ? y[t] : dset->Z[j][t];
-
-	    if (na(xt)) {
-		fputs("? ", fp);
-	    } else {
-		fprintf(fp, "%.10g ", xt);
-	    }
-
-	    if (na(yt)) {
-		fputs("?\n", fp);
-	    } else {
-		fprintf(fp, "%.10g\n", yt);
-	    }
+	    write_gp_dataval(xt, fp, 0);
+	    write_gp_dataval(yt, fp, 1);
 	}
 	fputs("e\n", fp);
     }
@@ -4338,23 +4369,12 @@ int matrix_scatters (const gretl_matrix *m, const int *list,
 	fputc('\n', fp);
 
 	for (t=t1; t<=t2; t++) {
-	    double xt, yt;
 	    int s = t - t1;
+	    double xt = ycol ? zj[s] : xcol ? x[s] : get_obsx(obs, t, s);
+	    double yt = (y != NULL)? y[s] : zj[s];
 
-	    xt = ycol ? zj[s] : xcol ? x[s] : get_obsx(obs, t, s);
-	    yt = (y != NULL)? y[s] : zj[s];
-
-	    if (xna(xt)) {
-		fputs("? ", fp);
-	    } else {
-		fprintf(fp, "%.10g ", xt);
-	    }
-
-	    if (xna(yt)) {
-		fputs("?\n", fp);
-	    } else {
-		fprintf(fp, "%.10g\n", yt);
-	    }
+	    write_gp_dataval(xt, fp, 0);
+	    write_gp_dataval(yt, fp, 1);
 	}
 	fputs("e\n", fp);
     }
@@ -4948,7 +4968,7 @@ int plot_corrmat (VMatrix *corr, gretlopt opt)
     for (i=0; i<n; i++) {
 	for (j=0; j<n; j++) {
 	    if ((opt & OPT_T) && j > n-i-1) {
-		fputs("? ", fp);
+		write_gp_dataval(NADBL, fp, 0);
 	    } else {
 		idx = ijton(n-i-1, j, n);
 		fprintf(fp, "%.4f ", corr->vec[idx]);
@@ -7500,11 +7520,7 @@ int gretl_system_residual_mplot (void *p, int ci, const DATASET *dset)
 
 	    fprintf(fp, "%.10g\t", obs[t+t1]);
 	    eti = gretl_matrix_get(E, t, i);
-	    if (na(eti)) {
-		fputs("?\n", fp);
-	    } else {
-		fprintf(fp, "%.10g\n", eti);
-	    }
+	    write_gp_dataval(eti, fp, 1);
 	}
 	fputs("e\n", fp);
     }
