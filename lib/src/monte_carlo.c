@@ -55,6 +55,7 @@ enum loop_types {
 };
 
 #define DEFAULT_NOBS 512
+#define ALLOW_DECR 0
 
 #define indexed_loop(l) (l->type == INDEX_LOOP || \
                          l->type == DATED_LOOP || \
@@ -2890,8 +2891,8 @@ static int top_of_loop (LOOPSET *loop, DATASET *dset)
 	    fprintf(stderr, "loop: got NA for init and/or final value\n");
 	    err = E_DATA;
 	} else {
-#if 0 /* not yet! */
-	    if (loop->final.val < loop->init.val) {
+#if ALLOW_DECR /* not wanted? */
+	    if (loop->type == INDEX_LOOP && loop->final.val < loop->init.val) {
 		loop_set_descending(loop);
 		loop->itermax = loop->init.val - loop->final.val + 1;
 	    } else {
