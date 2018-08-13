@@ -1651,7 +1651,7 @@ static void print_bundled_item (gpointer key, gpointer value, gpointer p)
     }
 
     if (item->note != NULL) {
-	pprintf(prn, "%s\n", item->note);
+	pprintf(prn, " %s\n", item->note);
     } else {
 	pputc(prn, '\n');
     }
