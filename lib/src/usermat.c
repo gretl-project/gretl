@@ -857,7 +857,7 @@ double matrix_get_element (const gretl_matrix *M, int i, int *err)
     if (M == NULL) {
 	*err = E_DATA;
     } else if (i < 0 || i >= M->rows * M->cols) {
-	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), i);
+	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), i+1);
 	*err = E_INVARG;
     } else {
 	x = M->val[i];
