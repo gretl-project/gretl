@@ -3728,9 +3728,22 @@ static void omitzero (MODEL *pmod, const DATASET *dset,
     }
 }
 
+static int not_equal (double y, double x)
+{
+    if (na(y) && na(x)) {
+	/* y and x are equal for the current purpose */
+	return 0;
+    } else {
+	return y != x;
+    }
+}
+
 /* lagdepvar: attempt to detect presence of a lagged dependent
    variable among the regressors -- if found, return the position of
-   this lagged var in the list; otherwise return 0
+   this lagged var in the list; otherwise return 0.
+
+   FIXME: use inside a function, when the name of the dependent
+   variable may be changed if it was a function argument?
 */
 
 static int lagdepvar (const int *list, const DATASET *dset) 
@@ -3756,14 +3769,14 @@ static int lagdepvar (const int *list, const DATASET *dset)
 		/* strong candidate for lagged depvar, but make sure */
 		ret = i;
 		for (t=dset->t1+1; t<=dset->t2; t++) {
-		    if (dset->Z[yno][t-1] != dset->Z[xno][t]) {
+		    if (not_equal(dset->Z[yno][t-1], dset->Z[xno][t])) {
 			ret = 0; /* nope */
 			break;
 		    }
 		}
 	    }
 	}
-    } 
+    }
 
     return ret;
 }
