@@ -81,11 +81,11 @@ static void real_rndebug (const char *format, ...)
 
 #define ONE_BY_ONE_CAST 1
 
-#if NA_IS_NAN /* NADBL equivalent to NaN */
+#if NA_IS_NAN /* NADBL is equivalent to NaN */
 # define MATRIX_NA_CHECK 0
 # define SCALARS_ENSURE_FINITE 0
 # define SERIES_ENSURE_FINITE 0
-#else      /* NADBL distinct from NaN */
+#else        /* NADBL is distinct from NaN */
 # define MATRIX_NA_CHECK 1
 # define SCALARS_ENSURE_FINITE 1 /* debatable, but watch out for read/write */
 # define SERIES_ENSURE_FINITE 1  /* debatable */
