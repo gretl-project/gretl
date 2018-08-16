@@ -289,21 +289,24 @@ respects. In this case we may write
   C_i = C^*_i + u_i + v_i
 \]
 where $C_i$ is some variable cost indicator, $C_i^*$ is its
-``theoretical'' value, $u_i$ is a zero-mean disturbance term and
-$v_i$ is the inefficiency term, which is supposed to be nonnegative
-by its very nature.
-
-A linear specification for $C_i^*$ is often chosen. For example, the
-Cobb--Douglas cost function arises when $C_i^*$ is a linear function
-of the logarithms of the input prices and the output quantities.
+``theoretical'' value, $u_i$ is a zero-mean disturbance term and $v_i$
+is the inefficiency term, which is supposed to be nonnegative by its
+very nature. A linear specification for $C_i^*$ is often chosen. For
+example, the Cobb--Douglas cost function arises when $C_i^*$ is a
+linear function of the logarithms of the input prices and the output
+quantities.
 
 The \emph{stochastic frontier} model is a linear model of the form
 $y_i = x_i \beta + \varepsilon_i$ in which the error term
-$\varepsilon_i$ is the sum of $u_i$ and $v_i$.  A common postulate is
-that $u_i \sim N(0,\sigma_u^2)$ and $v_i \sim
-\left|N(0,\sigma_v^2)\right|$. If independence between $u_i$ and $v_i$
-is also assumed, then it is possible to show that the density function
-of $\varepsilon_i$ has the form:
+$\varepsilon_i$ is the sum of $u_i$ and $v_i$.  
+
+This class of models can be effectively dealt with in \app{gretl} by
+using the \cmd{frontier} function package. However, a simple version
+makes for a non-trivial yet simple illustration of the \cmd{mle}
+command. A common postulate is that $u_i \sim N(0,\sigma_u^2)$ and
+$v_i \sim \left|N(0,\sigma_v^2)\right|$. If independence between $u_i$
+and $v_i$ is also assumed, then it is possible to show that the
+density function of $\varepsilon_i$ has the form:
 \begin{equation}
   \label{eq:frontdens}
   f(\varepsilon_i) = 
