@@ -1502,7 +1502,11 @@ double win32_sscan_nonfinite (const char *s, int *err)
 
     if (!strncmp(test, "nan", 3) ||
 	!strncmp(test, "-nan", 4)) {
+#if NA_IS_NAN
+	return NA;
+#else
 	return M_NA;
+#endif
     } else if (!strncmp(test, "inf", 3)) {
 	return 1.0 / 0.0;
     } else if (!strncmp(test, "-inf", 4)) {
@@ -1515,6 +1519,15 @@ double win32_sscan_nonfinite (const char *s, int *err)
 
 void win32_fprint_nonfinite (double x, FILE *fp)
 {
+#if NA_IS_NAN
+    if (isnan(x)) {
+	fputs("nan ", fp);
+    } else if (x < 0) {
+	fputs("-inf ", fp);
+    } else {
+	fputs("inf ", fp);
+    }
+#else
     if (isnan(x) || na(x)) {
 	fputs("nan ", fp);
     } else if (x < 0) {
@@ -1522,10 +1535,20 @@ void win32_fprint_nonfinite (double x, FILE *fp)
     } else {
 	fputs("inf ", fp);
     }
+#endif
 }
 
 void win32_pprint_nonfinite (double x, PRN *prn)
 {
+#if NA_IS_NAN
+    if (isnan(x)) {
+	pputs(prn, "nan ");
+    } else if (x < 0) {
+	pputs(prn, "-inf ");
+    } else {
+	pputs(prn, "inf ");
+    }
+#else
     if (isnan(x) || na(x)) {
 	pputs(prn, "nan ");
     } else if (x < 0) {
@@ -1533,6 +1556,7 @@ void win32_pprint_nonfinite (double x, PRN *prn)
     } else {
 	pputs(prn, "inf ");
     }
+#endif
 }
 
 static LARGE_INTEGER timer_freq;
