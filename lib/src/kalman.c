@@ -4406,7 +4406,7 @@ int kalman_serialize (void *kptr, FILE *fp)
 	name = kalman_output_scalar_names[i];
 	px = kalman_output_scalar(K, name);
 	if (px != NULL && !na(*px)) {
-	    gretl_scalar_serialize(*px, name, fp);
+	    gretl_finite_scalar_serialize(*px, name, fp);
 	}
     }
 

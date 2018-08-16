@@ -587,6 +587,7 @@ void gretl_matrix_serialize (const gretl_matrix *m,
 #ifdef WIN32
 	    if (xna(x)) {
 		win32_fprint_nonfinite(x, fp);
+		fputc(' ', fp);
 		continue;
 	    }
 #endif
@@ -599,14 +600,15 @@ void gretl_matrix_serialize (const gretl_matrix *m,
 }
 
 /**
- * gretl_scalar_serialize:
+ * gretl_finite_scalar_serialize:
  * @x: numerical value.
  * @name: name of object.
  * @fp: stream for writing.
  *
+ * Note: not suitable for writing non-finite values.
  */
 
-void gretl_scalar_serialize (double x, const char *name, FILE *fp)
+void gretl_finite_scalar_serialize (double x, const char *name, FILE *fp)
 {
     fprintf(fp, "<scalar name=\"%s\" value=\"%.16g\"/>\n", name, x);
 }

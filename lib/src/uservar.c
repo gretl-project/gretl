@@ -1,17 +1,17 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
   */
@@ -51,7 +51,7 @@ static int scalar_imin;
 
 static void (*scalar_edit_callback)(void);
 
-/* callback for adding or deleting icons representing 
+/* callback for adding or deleting icons representing
    things in the GUI session window */
 
 static USER_VAR_FUNC user_var_callback;
@@ -72,7 +72,7 @@ static double *na_ptr (void)
     return px;
 }
 
-static user_var *user_var_new (const char *name, int type, 
+static user_var *user_var_new (const char *name, int type,
 			       void *value, int *err)
 {
     user_var *u;
@@ -148,7 +148,7 @@ static user_var *user_var_new (const char *name, int type,
 	free(u);
 	u = NULL;
     }
-    
+
     return u;
 }
 
@@ -211,7 +211,7 @@ static void uvar_hash_destroy (void)
     if (uvh1 != NULL) {
 #if HDEBUG
 	fprintf(stderr, " destroying uvh1\n");
-#endif	
+#endif
 	g_hash_table_destroy(uvh1);
 	uvh1 = NULL;
     }
@@ -269,7 +269,7 @@ static int resize_uvar_stack (int n)
 static void set_nvars (int n, const char *caller)
 {
 #if UVDEBUG
-    fprintf(stderr, "%s: setting n_vars = %d (was %d)\n", 
+    fprintf(stderr, "%s: setting n_vars = %d (was %d)\n",
 	    caller, n, n_vars);
 #endif
     n_vars = n;
@@ -280,9 +280,9 @@ static int bname_is_temp (const char *name)
     return !strncmp(name, "btmp___", 7) && isdigit(name[7]);
 }
 
-static int real_user_var_add (const char *name, 
-			      GretlType type, 
-			      void *value, 
+static int real_user_var_add (const char *name,
+			      GretlType type,
+			      void *value,
 			      gretlopt opt)
 {
     user_var *u;
@@ -316,7 +316,7 @@ static int real_user_var_add (const char *name,
 	    }
 	    if (opt & OPT_C) {
 		u->flags |= UV_NODECL;
-	    }	    
+	    }
 	    uvars[n_vars] = u;
 	    set_nvars(n_vars + 1, "user_var_add");
 	}
@@ -339,7 +339,7 @@ static int real_user_var_add (const char *name,
  * @type: the type of the variable.
  * @value: pointer to value for variable.
  *
- * Adds a new user-variable with the given characteristics. 
+ * Adds a new user-variable with the given characteristics.
  * Note that the user-variable takes ownership of the
  * supplied @value; this should be copied first if need be.
  *
@@ -365,10 +365,10 @@ int private_scalar_add (double val, const char *name)
 	err = E_ALLOC;
     } else {
 	*px = val;
-	err = real_user_var_add(name, GRETL_TYPE_DOUBLE, 
+	err = real_user_var_add(name, GRETL_TYPE_DOUBLE,
 				px, OPT_P);
     }
-    
+
     return err;
 }
 
@@ -408,11 +408,11 @@ int user_var_delete_by_name (const char *name, PRN *prn)
     }
 
     if (user_var_callback != NULL && level == 0 &&
-	!var_is_private(targ) && 
+	!var_is_private(targ) &&
 	(targ->type == GRETL_TYPE_MATRIX ||
 	 targ->type == GRETL_TYPE_BUNDLE)) {
 	/* run this deletion through the GUI program to ensure
-	   that things stay in sync 
+	   that things stay in sync
 	*/
 	return (*user_var_callback)(name, targ->type,
 				    UVAR_DELETE);
@@ -429,7 +429,7 @@ int user_var_delete_by_name (const char *name, PRN *prn)
     if (prn != NULL && gretl_messages_on()) {
 	pprintf(prn, _("Deleted %s"), name);
 	pputc(prn, '\n');
-    } 
+    }
     if (level == 0 && type == GRETL_TYPE_DOUBLE &&
 	scalar_edit_callback != NULL) {
 	scalar_edit_callback();
@@ -515,12 +515,12 @@ user_var *get_user_var_of_type_by_name (const char *name,
 # if HDEBUG > 2
     fputs("uvars list:\n", stderr);
     for (i=0; i<n_vars; i++) {
-	fprintf(stderr, " %d: '%s', %s, level %d, ptr %p\n", i, 
+	fprintf(stderr, " %d: '%s', %s, level %d, ptr %p\n", i,
 		uvars[i]->name, gretl_type_get_name(uvars[i]->type),
 		uvars[i]->level, uvars[i]->ptr);
     }
-# endif    
-#endif    
+# endif
+#endif
 
     if (d != previous_d) {
 	if (d == 0) {
@@ -530,15 +530,15 @@ user_var *get_user_var_of_type_by_name (const char *name,
 #if HDEBUG
 		fprintf(stderr, "uvh0: d=0, prev=%d, allocated at %p\n",
 			previous_d, uvh0);
-#endif		
+#endif
 	    }
 	    if (uvh1 != NULL) {
 #if HDEBUG
 		fprintf(stderr, "d=0, prev=%d: clear uvh1 at %p\n",
 			previous_d, uvh1);
-#endif		
+#endif
 		g_hash_table_remove_all(uvh1);
-	    }	    
+	    }
 	    uvars_hash = uvh0;
 	} else if (!use_uvh1()) {
 	    /* exec'ing a function, hash table not wanted */
@@ -553,12 +553,12 @@ user_var *get_user_var_of_type_by_name (const char *name,
 #if HDEBUG
 		fprintf(stderr, "uvh1: d=%d, prev=%d, allocated at %p\n",
 			d, previous_d, uvh1);
-#endif		
+#endif
 	    } else if (previous_d > 0 && uvh1 != NULL) {
 #if HDEBUG
 		fprintf(stderr, "d=%d, prev=%d: clear uvh1 at %p\n",
 			d, previous_d, uvh1);
-#endif		
+#endif
 		g_hash_table_remove_all(uvh1);
 	    }
 	    uvars_hash = uvh1;
@@ -575,7 +575,7 @@ user_var *get_user_var_of_type_by_name (const char *name,
 	}
 #if HDEBUG > 1
 	if (u != NULL) hfound = 1;
-#endif	
+#endif
     }
 
     if (u == NULL) {
@@ -584,7 +584,7 @@ user_var *get_user_var_of_type_by_name (const char *name,
 	   insert it into the uservars hash table.
 	*/
 	for (i=imin; i<n_vars; i++) {
-	    if (uvars[i]->level == d && 
+	    if (uvars[i]->level == d &&
 		(type == GRETL_TYPE_ANY || uvars[i]->type == type) &&
 		!strcmp(uvars[i]->name, name)) {
 		u = uvars[i];
@@ -602,7 +602,7 @@ user_var *get_user_var_of_type_by_name (const char *name,
 		uvars_hash == uvh1 ? "uvh1" : "uvh0");
     else if (u != NULL)
 	fprintf(stderr, "found at pos %d via regular search\n\n", uvar_index(u));
-    else 
+    else
 	fprintf(stderr, "not found\n\n");
 #endif
 
@@ -797,10 +797,10 @@ static int array_ref_type (GretlType type)
  * @origname: name of variable at caller level.
  * @localname: name to be used within function.
  *
- * On entry to a function, renames the named variable (provided 
+ * On entry to a function, renames the named variable (provided
  * as an argument) and sets its level so that is is accessible
  * within the function.
- * 
+ *
  * Returns: 0 on success, non-zero on error.
  */
 
@@ -888,7 +888,7 @@ int user_var_replace_value (user_var *uvar, void *value,
 			    GretlType type)
 {
     int err = 0;
-    
+
     if (uvar == NULL) {
 	err = E_UNKVAR;
     } else if (value != uvar->ptr && (uvar->flags & UV_NOREPL)) {
@@ -912,7 +912,7 @@ int user_var_replace_value (user_var *uvar, void *value,
     if (!err && value != uvar->ptr) {
 	if (uvar->ptr != NULL) {
 	    uvar_free_value(uvar);
-	}	
+	}
 	uvar->ptr = value;
     }
 
@@ -973,7 +973,7 @@ static int check_array_type_compat (GretlType type,
 	if (type != gretl_array_get_type(u->ptr)) {
 	    err = E_TYPES;
 	}
-    }    
+    }
 
     return err;
 }
@@ -1036,7 +1036,7 @@ void *user_var_unstack_value (user_var *uvar)
     return ret;
 }
 
-int user_matrix_replace_matrix_by_name (const char *name, 
+int user_matrix_replace_matrix_by_name (const char *name,
 					gretl_matrix *m)
 {
     user_var *u = get_user_var_by_name(name);
@@ -1081,19 +1081,19 @@ GList *user_var_list_for_type (GretlType type)
  * @callback: function function to put in place.
  *
  * Sets the callback function to be invoked when a user-defined
- * matrix is added to or removed from the stack of saved objects.  
+ * matrix is added to or removed from the stack of saved objects.
  * Intended for synchronizing the GUI program with the saved object
  * state.
  */
 
 void set_user_var_callback (USER_VAR_FUNC callback)
 {
-    user_var_callback = callback; 
+    user_var_callback = callback;
 }
 
 void set_scalar_edit_callback (void (*callback))
 {
-    scalar_edit_callback = callback; 
+    scalar_edit_callback = callback;
 }
 
 /* used in response to bare declaration of a user variable
@@ -1112,7 +1112,7 @@ int create_user_var (const char *name, GretlType type)
  *
  * The value in question is added to the stack of named
  * variables under the name @name with the shell flag
- * set. This is used (a) when an anonymous matrix is given as 
+ * set. This is used (a) when an anonymous matrix is given as
  * a %const argument to a user-defined function and (b) when
  * an anonymous bundle is given as the argument corresponding
  * to a bundle-pointer parameter. The @value becomes
@@ -1135,10 +1135,10 @@ int arg_add_as_shell (const char *name, GretlType type,
  * @fnarg: 0 for regular use.
  *
  * A copy of matrix @m is added to the stack of saved matrices
- * under the name @newname.  
+ * under the name @newname.
  *
  * The @fnarg argument should be non-zero only if this function
- * is used to handle the case where a matrix is given as the argument 
+ * is used to handle the case where a matrix is given as the argument
  * to a user-defined function.
  *
  * Returns: 0 on success, non-zero on error.
@@ -1182,7 +1182,7 @@ int copy_as_arg (const char *param_name, GretlType type, void *value)
 	    err = E_ALLOC;
 	} else {
 	    copyval = lcpy;
-	}	
+	}
     } else if (type == GRETL_TYPE_STRING) {
 	char *scpy = gretl_strdup((char *) value);
 
@@ -1208,7 +1208,7 @@ int copy_as_arg (const char *param_name, GretlType type, void *value)
 	}
     } else if (gretl_array_type(type)) {
 	gretl_array *acpy = gretl_array_copy(value, &err);
-	
+
 	if (!err) {
 	    copyval = acpy;
 	    cpytype = gretl_array_get_type(acpy);
@@ -1243,7 +1243,7 @@ void destroy_user_vars (void)
     fprintf(stderr, "destroy_user_vars, uvars_hash = %p (uvh0 %p, uvh1 %p)\n",
 	    (void *) uvars_hash, (void *) uvh0, (void *) uvh1);
 #endif
-    
+
     for (i=0; i<n_vars; i++) {
 	if (uvars[i] == NULL) {
 	    break;
@@ -1291,7 +1291,7 @@ static int real_destroy_user_vars_at_level (int level, int type,
 	    "type %d (%s), imin=%d\n", level, type,
 	    gretl_type_get_name(type), imin);
 #endif
-    
+
     for (i=imin; i<n_vars; i++) {
 	if (uvars[i] == NULL) {
 	    break;
@@ -1346,11 +1346,11 @@ static int destroy_user_vars_via_callback (int type)
 	if (uvars[i]->level == 0 && uvars[i]->type == type) {
 	    delvars[j++] = uvars[i];
 	}
-    }    
+    }
 
     for (j=0; j<n && !err; j++) {
-	err = (*user_var_callback)(delvars[j]->name, 
-				   delvars[j]->type, 
+	err = (*user_var_callback)(delvars[j]->name,
+				   delvars[j]->type,
 				   UVAR_DELETE);
     }
 
@@ -1364,7 +1364,7 @@ static int destroy_user_vars_via_callback (int type)
  * @level: stack level of function execution.
  *
  * Destroys and removes from the stack of user matrices all
- * matrices that were created at the given @level.  This is 
+ * matrices that were created at the given @level.  This is
  * part of the cleanup that is performed when a user-defined
  * function terminates.
  *
@@ -1378,14 +1378,14 @@ int destroy_user_vars_at_level (int level)
 
 int destroy_private_uvars (void)
 {
-    return real_destroy_user_vars_at_level(LEV_PRIVATE, 0, 0);    
+    return real_destroy_user_vars_at_level(LEV_PRIVATE, 0, 0);
 }
 
 int destroy_private_matrices (void)
 {
-    return real_destroy_user_vars_at_level(LEV_PRIVATE, 
+    return real_destroy_user_vars_at_level(LEV_PRIVATE,
 					   GRETL_TYPE_MATRIX,
-					   0);    
+					   0);
 }
 
 int delete_user_vars_of_type (GretlType type, PRN *prn)
@@ -1403,7 +1403,7 @@ int delete_user_vars_of_type (GretlType type, PRN *prn)
 	if (level == 0 && user_var_callback != NULL &&
 	    (type == GRETL_TYPE_MATRIX || type == GRETL_TYPE_BUNDLE)) {
 	    err = destroy_user_vars_via_callback(type);
-	} else {	
+	} else {
 	    err = real_destroy_user_vars_at_level(level, type, 0);
 	}
 
@@ -1427,7 +1427,7 @@ int delete_user_vars_of_type (GretlType type, PRN *prn)
 
 void destroy_private_scalars (void)
 {
-    real_destroy_user_vars_at_level(LEV_PRIVATE, 
+    real_destroy_user_vars_at_level(LEV_PRIVATE,
 				    GRETL_TYPE_DOUBLE,
 				    0);
 }
@@ -1452,6 +1452,48 @@ static void xml_put_user_matrix (user_var *u, FILE *fp)
     if (u != NULL && u->ptr != NULL) {
 	gretl_matrix_serialize(u->ptr, u->name, fp);
     }
+}
+
+static void write_scalar_value (double x, const char *fmt, PRN *prn)
+{
+#if NA_IS_NAN
+    if (na(x)) {
+# ifdef WIN32
+	win32_pprint_nonfinite(x, prn, 1);
+# else
+	pprintf(prn, "%g\n", x);
+# endif
+    } else {
+	pprintf(prn, fmt, x);
+    }
+#else /* !NA_IS_NAN */
+    if (na(x)) {
+	pputs(prn, " NA\n");
+    } else {
+	pprintf(prn, fmt, x);
+    }
+#endif
+}
+
+static void serialize_scalar_value (double x, FILE *fp)
+{
+#if NA_IS_NAN
+    if (na(x)) {
+# ifdef WIN32
+	win32_fprint_nonfinite(x, fp);
+# else
+	fprintf(fp, "%g", x);
+# endif
+    } else {
+	fprintf(fp, "%.16g", x);
+    }
+#else /* !NA_IS_NAN */
+    if (na(x)) {
+	fputs("NA", prn);
+    } else {
+	fprintf(fp, "%.16g", x);
+    }
+#endif
 }
 
 /**
@@ -1490,7 +1532,8 @@ void print_scalars (PRN *prn)
 	if (uvars[i]->type == GRETL_TYPE_DOUBLE &&
 	    uvars[i]->level == level) {
 	    x = *(double *) uvars[i]->ptr;
-	    pprintf(prn, " %*s = %.16g\n", maxlen, uvars[i]->name, x);
+	    pprintf(prn, " %*s = ", maxlen, uvars[i]->name);
+	    write_scalar_value(x, "%.16g\n", prn);
 	}
     }
 
@@ -1507,11 +1550,7 @@ void print_scalar_by_name (const char *name, PRN *prn)
 	double x = *(double *) u->ptr;
 
 	pprintf(prn, "\n%15s = ", u->name);
-	if (na(x)) {
-	    pputs(prn, " NA\n");
-	} else {
-	    pprintf(prn, "% #.8g\n", x);
-	}
+	write_scalar_value(x, "% #.8g\n", prn);
     }
 }
 
@@ -1553,7 +1592,7 @@ static int real_scalar_add (const char *name, double val,
 	    err = E_ALLOC;
 	} else {
 	    *px = val;
-	    err = real_user_var_add(name, GRETL_TYPE_DOUBLE, 
+	    err = real_user_var_add(name, GRETL_TYPE_DOUBLE,
 				    px, opt);
 	}
 
@@ -1615,14 +1654,14 @@ int add_auxiliary_scalar (const char *name, double val)
     /* Note that unlike gretl_scalar_add() above, this function
        adds a new scalar variable unconditionally; it never
        modifies the value of an existing scalar of the same
-       name. 
+       name.
     */
 
     if (px == NULL) {
 	err = E_ALLOC;
     } else {
 	*px = val;
-	err = real_user_var_add(name, GRETL_TYPE_DOUBLE, 
+	err = real_user_var_add(name, GRETL_TYPE_DOUBLE,
 				px, OPT_NONE);
     }
 
@@ -1781,7 +1820,7 @@ char *get_string_by_name (const char *name)
  * @name: the name of the string variable to access.
  * @err: location to receive error code.
  *
- * Returns: a copy of the value of string variable @name, 
+ * Returns: a copy of the value of string variable @name,
  * or %NULL on failure.
  */
 
@@ -1863,7 +1902,7 @@ int max_varno_in_saved_lists (void)
 		}
 	    }
 	}
-    }    
+    }
 
     return vmax;
 }
@@ -1887,8 +1926,8 @@ static int var_is_deleted (const int *dlist, int dmin, int i)
  *
  * Goes through any saved lists, adjusting the ID numbers
  * they contain to reflect the deletion from the dataset of
- * certain variables: those referenced in @dlist, if given, 
- * or if @dlist is NULL, those variables with IDs greater 
+ * certain variables: those referenced in @dlist, if given,
+ * or if @dlist is NULL, those variables with IDs greater
  * than or equal to @dmin.
  *
  * Returns: 0 on success, non-zero code on failure.
@@ -1996,8 +2035,9 @@ static void write_user_scalars (FILE *fp)
     for (i=0; i<n_vars; i++) {
 	if (uvars[i]->type == GRETL_TYPE_DOUBLE) {
 	    x = *(double *) uvars[i]->ptr;
-	    fprintf(fp, " <gretl-scalar name=\"%s\" value=\"%.16g\"/>\n", 
-		    uvars[i]->name, x);
+	    fprintf(fp, " <gretl-scalar name=\"%s\" value=\"", uvars[i]->name);
+	    serialize_scalar_value(x, fp);
+	    fputs("\"/>\n", fp);
 	}
     }
 }
@@ -2032,19 +2072,22 @@ static void write_user_bundles (FILE *fp)
 
     for (i=0; i<n_vars; i++) {
 	if (uvars[i]->type == GRETL_TYPE_BUNDLE) {
-	    gretl_bundle_serialize(uvars[i]->ptr, 
-				   uvars[i]->name, 
+	    gretl_bundle_serialize(uvars[i]->ptr,
+				   uvars[i]->name,
 				   fp);
 	}
     }
 }
 
-static int read_user_scalars (xmlDocPtr doc, xmlNodePtr cur) 
+static int read_user_scalars (xmlDocPtr doc, xmlNodePtr cur)
 {
     char *name, *val;
-    int err = 0;
+    double x;
+    int n, err = 0;
 
     cur = cur->xmlChildrenNode;
+
+    gretl_push_c_numeric_locale();
 
     while (cur != NULL && !err) {
         if (!xmlStrcmp(cur->name, (XUC) "gretl-scalar")) {
@@ -2053,7 +2096,15 @@ static int read_user_scalars (xmlDocPtr doc, xmlNodePtr cur)
 	    if (name == NULL || val == NULL) {
 		err = 1;
 	    } else {
-		err = gretl_scalar_add(name, dot_atof(val));
+		n = sscanf(val, "%lf", &x);
+		if (n < 1) {
+#ifdef WIN32
+		    x = win32_sscan_nonfinite(val, &err);
+#else
+		    x = NADBL;
+#endif
+		}
+		err = gretl_scalar_add(name, x);
 	    }
 	    free(name);
 	    free(val);
@@ -2061,10 +2112,12 @@ static int read_user_scalars (xmlDocPtr doc, xmlNodePtr cur)
 	cur = cur->next;
     }
 
+    gretl_pop_c_numeric_locale();
+
     return err;
 }
 
-static int read_user_matrices (xmlDocPtr doc, xmlNodePtr cur) 
+static int read_user_matrices (xmlDocPtr doc, xmlNodePtr cur)
 {
     gretl_matrix *m;
     char *name;
@@ -2134,7 +2187,7 @@ static int read_user_bundles (xmlDocPtr doc, xmlNodePtr cur)
 	    } else {
 		char *creator = NULL;
 		gretl_bundle *b;
-		
+
 		b = gretl_bundle_deserialize(cur, doc, &err);
 		if (!err) {
 		    creator = (char *) xmlGetProp(cur, (XUC) "creator");
@@ -2212,7 +2265,7 @@ int serialize_user_vars (const char *dirname)
 	fprintf(stderr, "Failed writing %d user_var files\n", err);
 	err = E_FOPEN;
     }
-	    
+
     return err;
 }
 
@@ -2282,7 +2335,7 @@ int deserialize_user_vars (const char *dirname)
     if (n_failed > 0) {
 	fprintf(stderr, "Failed reading %d user_var files\n", n_failed);
     }
-	    
+
     return err;
 }
 
@@ -2361,7 +2414,7 @@ int list_user_vars_of_type (const DATASET *dset,
 	    if (uvars[i]->type == t) {
 		if (n == 0) {
 		    pputc(prn, '\n');
-		}		
+		}
 		pprintf(prn, "  %s\n", uvars[i]->name);
 		n++;
 	    }
@@ -2435,7 +2488,7 @@ const char *get_listname_by_consecutive_content (int l0, int l1)
 	    list = uvars[i]->ptr;
 	    if (list[0] == l0 && list[1] == l1) {
 		int found = 1;
-		
+
 		for (j=2; j<=l0; j++) {
 		    if (list[j] != list[j-1] + 1) {
 			found = 0;

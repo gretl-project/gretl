@@ -1423,6 +1423,32 @@ static void scalars_changed_callback (void)
     }
 }
 
+static double scalar_from_sheet_string (const char *s)
+{
+    double x = NADBL;
+
+    if (*s != '\0' && strcmp(s, "NA")) {
+	if (strstr(s, "nan") || strstr(s, "NAN") || strstr(s, "NaN")) {
+	    x = NADBL;
+	} else if (strstr(s, "inf") || strstr(s, "INF")) {
+	    x = (*s == '-') ? -1.0/0.0 : 1.0/0.0;
+	} else {
+	    x = atof(s);
+	}
+    }
+
+    return x;
+}
+
+static int scalars_differ (double x, double y)
+{
+    if (isnan(x) && isnan(y)) {
+	return 0;
+    } else {
+	return x != y;
+    }
+}
+
 /* put modified values from the spreadsheet into the array
    of saved scalars */
 
@@ -1445,9 +1471,9 @@ static void update_scalars_from_sheet (Spreadsheet *sheet)
     for (i=0; i<sheet->datarows && !err; i++) {
 	gtk_tree_model_get(model, &iter, 0, &vname, 1, &val, -1);
 	if (vname != NULL && *vname != '\0') {
-	    x = (*val == '\0')? NADBL : atof(val);
+	    x = scalar_from_sheet_string(val);
 	    if (gretl_is_scalar(vname)) {
-		if (x != gretl_scalar_get_value(vname, NULL)) {
+		if (scalars_differ(x, gretl_scalar_get_value(vname, NULL))) {
 		    gretl_scalar_set_value(vname, x);
 		    sheet_set_modified(sheet, TRUE);
 		}
@@ -1984,7 +2010,17 @@ static int add_scalars_to_sheet (Spreadsheet *sheet)
 	strcpy(vname, user_var_get_name(u)); /* underscores? */
 	x = user_var_get_scalar_value(u);
 	if (na(x)) {
-	    *val = '\0';
+#if NA_IS_NAN
+	    if (isnan(x)) {
+		strcpy(val, "nan");
+	    } else if (x < 0) {
+		strcpy(val, "-inf");
+	    } else {
+		strcpy(val, "inf");
+	    }
+#else
+	    strcpy(val, "NA");
+#endif
 	} else {
 	    sprintf(val, sheet->numfmt, sheet->digits, x);
 	}
