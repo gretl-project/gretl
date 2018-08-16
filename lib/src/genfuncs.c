@@ -4062,7 +4062,7 @@ static int x_sectional_extremum (int f, double *x, const int *list,
     int i, t, err = 0;
 
     for (t=dset->t1; t<=dset->t2; t++) {
-	xx = (f == F_MIN)? NADBL : -NADBL;
+	xx = (f == F_MIN)? DBL_MAX : -DBL_MAX;
 	for (i=1; i<=list[0]; i++) {
 	    xit = dset->Z[list[i]][t];
 	    if (!na(xit)) {
@@ -4073,7 +4073,7 @@ static int x_sectional_extremum (int f, double *x, const int *list,
 		}
 	    }
 	}
-	if (xx == -NADBL) {
+	if (xx == DBL_MAX || xx == -DBL_MAX) {
 	    x[t] = NADBL;
 	} else {
 	    x[t] = xx;
