@@ -31,6 +31,10 @@
 #include "uservar_priv.h"
 #include "gretl_cmatrix.h"
 
+#ifdef WIN32
+# include "gretl_win32.h"
+#endif
+
 #define UVDEBUG 0
 #define HDEBUG 0
 
@@ -1489,7 +1493,7 @@ static void serialize_scalar_value (double x, FILE *fp)
     }
 #else /* !NA_IS_NAN */
     if (na(x)) {
-	fprintf(fp, "NA");
+	fputs("NA", fp);
     } else {
 	fprintf(fp, "%.16g", x);
     }

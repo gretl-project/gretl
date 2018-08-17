@@ -1503,7 +1503,7 @@ double win32_sscan_nonfinite (const char *s, int *err)
     if (!strncmp(test, "nan", 3) ||
 	!strncmp(test, "-nan", 4)) {
 #if NA_IS_NAN
-	return NA;
+	return NADBL;
 #else
 	return M_NA;
 #endif
@@ -1512,7 +1512,7 @@ double win32_sscan_nonfinite (const char *s, int *err)
     } else if (!strncmp(test, "-inf", 4)) {
 	return -1.0 / 0.0;
     } else if (!strncmp(test, "NA", 2)) {
-	return NA;
+	return NADBL;
     } else {
 	*err = E_DATA;
 	return 0;
