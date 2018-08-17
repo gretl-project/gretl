@@ -1489,7 +1489,7 @@ static void serialize_scalar_value (double x, FILE *fp)
     }
 #else /* !NA_IS_NAN */
     if (na(x)) {
-	fputs("NA", prn);
+	fprintf(fp, "NA");
     } else {
 	fprintf(fp, "%.16g", x);
     }
