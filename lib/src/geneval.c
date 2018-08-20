@@ -4719,8 +4719,9 @@ static int mspec_get_series_index (matrix_subspec *s,
 {
     int t = -1;
 
-    if (s->type[0] == SEL_RANGE &&
-	s->type[1] == SEL_NULL) {
+    if (s->type[0] == SEL_SINGLE && s->type[1] == SEL_NULL) {
+	t = s->sel[0].range[0];
+    } else if (s->type[0] == SEL_RANGE && s->type[1] == SEL_NULL) {
 	if (s->sel[0].range[0] == s->sel[0].range[1]) {
 	    t = s->sel[0].range[0];
 	} else {
@@ -9955,20 +9956,26 @@ static int set_series_obs_value (NODE *lhs, NODE *rhs, parser *p)
     int op = p->op;
     int v, t;
 
-    if (lh1->t != SERIES || lh2->t != NUM) {
-	return E_TYPES;
+    if (lh1->t == SERIES && (lh2->t == NUM || lh2->t == MSPEC)) {
+	; /* OK */
     } else {
-	v = lh1->vnum;
-	if (v <= 0 || v >= p->dset->v) {
-	    return E_DATA;
-	}
-	t = node_get_int(lh2, p);
-	if (t < 1 || t > p->dset->n) {
-	    return E_DATA;
-	}
-	/* convert to 0-based */
-	t--;
+	return E_TYPES;
     }
+
+    v = lh1->vnum;
+    if (v <= 0 || v >= p->dset->v) {
+	return E_DATA;
+    }
+    if (lh2->t == MSPEC) {
+	t = mspec_get_series_index(lh2->v.mspec, p);
+    } else {
+	t = node_get_int(lh2, p);
+    }
+    if (t < 1 || t > p->dset->n) {
+	return E_DATA;
+    }
+    /* convert to 0-based */
+    t--;
 
     if (rhs == NULL) {
 	if (p->op == INC) {
@@ -10032,7 +10039,9 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
     matrix_subspec *spec;
     double y = NADBL;
     int rhs_scalar = 0;
+#if !NA_IS_NAN
     int prechecked = 0;
+#endif
     int free_m2 = 0;
 
     if (p->op == B_HCAT || p->op == B_VCAT) {
@@ -10078,7 +10087,9 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
     } else if (rhs->t == SERIES) {
 	/* legacy: this has long been accepted */
 	m2 = series_to_matrix(rhs->v.xvec, p);
+#if !NA_IS_NAN
 	prechecked = 1;
+#endif
 	free_m2 = 1; /* flag temporary status of @m2 */
     } else {
 	p->err = E_TYPES;
@@ -10150,7 +10161,9 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 		   freeing */
 		m2 = a;
 		free_m2 = 1;
+#if !NA_IS_NAN
 		prechecked = 1;
+#endif
 	    } else {
 		gretl_matrix *b = NULL;
 
@@ -17463,6 +17476,8 @@ static int save_generated_var (parser *p, PRN *prn)
 		p->err = set_string_value(p->lhres, r, p);
 	    } else if (lh1->t == BUNDLE) {
 		p->err = set_bundle_value(p->lhres, r, p);
+	    } else if (lh1->t == SERIES) {
+		p->err = set_series_obs_value(p->lhres, r, p);
 	    } else if (lh1->t == MAT) {
 		/* is this ever reached?? */
 		p->err = set_matrix_value(p->lhres, r, p);
