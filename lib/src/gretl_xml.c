@@ -48,8 +48,9 @@
 #if NA_IS_NAN
 /* mark change by bumping GDT version */
 #define GRETLDATA_VERSION "1.4"
+#define GRETLDATA_COMPAT  "1.3" /* for --oldbinary */
 #else
-/* status quo as of June 2018 */
+/* status quo as of gretl 2018b */
 #define GRETLDATA_VERSION "1.3"
 #endif
 
@@ -1931,7 +1932,8 @@ static int write_binary_header (FILE *fp)
 }
 
 static int write_binary_data (const char *fname, const DATASET *dset,
-			      const int *list, int nvars, int nrows)
+			      const int *list, int nvars, int nrows,
+			      gretlopt opt)
 {
     char *bname;
     FILE *fp;
@@ -1955,6 +1957,7 @@ static int write_binary_data (const char *fname, const DATASET *dset,
 	int uv = 0, tv = 0;
 	int s, t, nv = 0;
 
+	/* add unit and time variables (initialized to zero) */
 	err = dataset_add_series((DATASET *) dset, 2);
 	if (!err) {
 	    tmp = malloc(nrows * sizeof *tmp);
@@ -1984,9 +1987,21 @@ static int write_binary_data (const char *fname, const DATASET *dset,
 		v = (i == nvars + 1)? uv : tv;
 	    }
 	    s = 0;
-	    for (t=dset->t1; t<=dset->t2 && !err; t++) {
-		if (dset->Z[uv][t] != 0.0) {
-		    tmp[s++] = dset->Z[v][t];
+	    if (opt & OPT_O) {
+		/* --oldbinary */
+		double zvt;
+
+		for (t=dset->t1; t<=dset->t2 && !err; t++) {
+		    if (dset->Z[uv][t] != 0.0) {
+			zvt = dset->Z[v][t];
+			tmp[s++] = na(zvt) ? DBL_MAX : zvt;
+		    }
+		}
+	    } else {
+		for (t=dset->t1; t<=dset->t2 && !err; t++) {
+		    if (dset->Z[uv][t] != 0.0) {
+			tmp[s++] = dset->Z[v][t];
+		    }
 		}
 	    }
 	    wrote = fwrite(tmp, sizeof(double), nrows, fp);
@@ -1998,6 +2013,24 @@ static int write_binary_data (const char *fname, const DATASET *dset,
 	free(tmp);
 	if (uv > 0) {
 	    dataset_drop_last_variables((DATASET *) dset, 2);
+	}
+    } else if (opt & OPT_O) {
+	/* --oldbinary: convert NAs to DBL_MAX */
+	const double *zv;
+	double zvt;
+	int t;
+
+	for (i=1; i<=nvars && !err; i++) {
+	    v = savenum(list, i);
+	    zv = dset->Z[v] + dset->t1;
+	    wrote = 0;
+	    for (t=0; t<T; t++) {
+		zvt = na(zv[t]) ? DBL_MAX : zv[t];
+		wrote += fwrite(&zvt, sizeof(double), 1, fp);
+	    }
+	    if (wrote != T) {
+		err = E_DATA;
+	    }
 	}
     } else {
 	for (i=1; i<=nvars && !err; i++) {
@@ -2185,6 +2218,7 @@ static int real_write_gdt (const char *fname, const int *list,
     char startdate[OBSLEN], enddate[OBSLEN];
     char datname[MAXLEN], freqstr[32];
     char numstr[128], xmlbuf[256];
+    const char *gdtver;
     int (*show_progress) (double, double, int) = NULL;
     double dsize = 0;
     int i, t, v, nvars, ntabs;
@@ -2265,18 +2299,30 @@ static int real_write_gdt (const char *fname, const int *list,
 	sprintf(freqstr, "%d", dset->pd);
     }
 
+    gdtver = GRETLDATA_VERSION;
+
+#if NA_IS_NAN
+    /* support --oldbinary option */
+    if (binary && (opt & OPT_O)) {
+	gdtver = GRETLDATA_COMPAT;
+    }
+#else
+    /* scrub OPT_O if present */
+    opt &= ~OPT_O;
+#endif
+
     if (gz) {
 	gzprintf(fz, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 		 "<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
 		 "<gretldata version=\"%s\" name=\"%s\" frequency=\"%s\" "
 		 "startobs=\"%s\" endobs=\"%s\" ",
-		 GRETLDATA_VERSION, xmlbuf, freqstr, startdate, enddate);
+		 gdtver, xmlbuf, freqstr, startdate, enddate);
     } else {
 	fprintf(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 		"<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
 		"<gretldata version=\"%s\" name=\"%s\" frequency=\"%s\" "
 		"startobs=\"%s\" endobs=\"%s\" ",
-		GRETLDATA_VERSION, xmlbuf, freqstr, startdate, enddate);
+		gdtver, xmlbuf, freqstr, startdate, enddate);
     }
 
     if (gz) {
@@ -2481,7 +2527,7 @@ static int real_write_gdt (const char *fname, const int *list,
     alt_puts(">\n", fp, fz);
 
     if (binary) {
-	err = write_binary_data(fname, dset, list, nvars, tsamp);
+	err = write_binary_data(fname, dset, list, nvars, tsamp, opt);
 	if (!have_markers) {
 	    goto binary_done;
 	}

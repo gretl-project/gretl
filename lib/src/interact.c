@@ -661,6 +661,7 @@ static void real_echo_command (CMD *cmd, const char *line,
 			       int recording, PRN *prn)
 {
     const char *leader = NULL;
+    int commented_store = 0;
     int compiling = 0;
 
     if (line == NULL || *line == '\0' || prn == NULL) {
@@ -702,7 +703,7 @@ static void real_echo_command (CMD *cmd, const char *line,
     /* print leading string before echo? */
     if (recording) {
 	if (cmd != NULL && cmd->ci == STORE) {
-	    leader = "# ";
+	    commented_store = 1;
 	}
     } else if (compiling) {
 	leader = "> ";
@@ -710,7 +711,10 @@ static void real_echo_command (CMD *cmd, const char *line,
 	leader = "? ";
     }
 
-    if (cmd != NULL && (cmd->context == FOREIGN || cmd->context == MPI)) {
+    if (commented_store) {
+	pputs(prn, "# ");
+	pputs(prn, line);
+    } else if (cmd != NULL && (cmd->context == FOREIGN || cmd->context == MPI)) {
 	if (leader != NULL) {
 	    pputs(prn, leader);
 	}

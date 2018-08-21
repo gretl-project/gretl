@@ -8706,6 +8706,26 @@ static int maybe_back_up_datafile (const char *fname)
     return err;
 }
 
+static void maybe_add_compat_option (gretlopt *optp,
+				     int *cancel)
+{
+    if (any_missing_user_values(dataset)) {
+	const char *opts[] = {
+            N_("new style (faster)"),
+	    N_("old style (compatible with gretl < 2018c)"),
+	};
+	const char *label = _("Missing values should be stored:");
+	int resp;
+	
+	resp = radio_dialog(NULL, label, opts, 2, 0, 0, NULL);
+	if (resp == GRETL_CANCEL) {
+	    *cancel = 1;
+	} else if (resp == 1) {
+	    *optp |= OPT_O;
+	}
+    }
+}
+
 /* Note that in this context "exporting" means that we're saving
    a file that is not necessarily synced with the current dataset
    in memory (e.g. it may contain a subset of the currently defined
@@ -8714,7 +8734,7 @@ static int maybe_back_up_datafile (const char *fname)
 */
 
 static gretlopt store_action_to_opt (const char *fname, int action,
-				     int *exporting)
+				     int *exporting, int *cancel)
 {
     gretlopt opt = OPT_NONE;
     int err = 0;
@@ -8769,6 +8789,10 @@ static gretlopt store_action_to_opt (const char *fname, int action,
 	if (level > 0) {
 	    opt |= OPT_Z;
 	}
+	/* offer binary compatibility option? */
+	if (has_suffix(fname, ".gdtb")) {
+	    maybe_add_compat_option(&opt, cancel);
+	}
     }    
 
     if (action == SAVE_DATA_AS) {
@@ -8808,6 +8832,7 @@ int do_store (char *filename, int action, gpointer data)
 {
     gretlopt opt = OPT_NONE;
     int exporting = 0;
+    int cancel = 0;
     int err = 0;
 
     /* If the dataset is sub-sampled, give the user a chance to
@@ -8817,7 +8842,10 @@ int do_store (char *filename, int action, gpointer data)
 	return 0; /* canceled */
     }
 
-    opt = store_action_to_opt(filename, action, &exporting);
+    opt = store_action_to_opt(filename, action, &exporting, &cancel);
+    if (cancel) {
+	return 0;
+    }
 
     if (action == AUTO_SAVE_DATA) {
 	/* we've now dealt with the specifics of auto_save */
@@ -8849,11 +8877,7 @@ int do_store (char *filename, int action, gpointer data)
 	    opt |= OPT_X;
 	}
 	lib_command_strcat(print_flags(opt, STORE));
-    } else if (has_suffix(filename, ".dat")) { 
-	/* saving in "traditional" ESL mode as ".dat" */
-	lib_command_strcat(" -t");
-	opt = OPT_T;
-    } 
+    }
 
     err = parse_lib_command();
 

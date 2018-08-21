@@ -22,7 +22,7 @@
 
 #include <float.h>
 
-#define NA_IS_NAN 0
+#define NA_IS_NAN 1
 
 #ifndef isfinite
 # define isfinite(x) (!isnan(x) && !isinf(x))

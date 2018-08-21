@@ -1048,8 +1048,9 @@ static int write_dta_data (const char *fname, const int *list,
 
 #define DEFAULT_CSV_DIGITS 15
 
-static int real_write_data (const char *fname, int *list, const DATASET *dset, 
-			    gretlopt opt, int progress, PRN *prn)
+static int real_write_data (const char *fname, int *list,
+			    const DATASET *dset, gretlopt opt,
+			    int progress, PRN *prn)
 {
     int i, t, v, l0;
     GretlDataFormat fmt;
