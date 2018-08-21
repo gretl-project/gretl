@@ -682,16 +682,14 @@ smpl psd(x) > 0 --restrict
 
 \subsection{Representation and handling}
 
-Missing values are represented internally as \verb+DBL_MAX+, the
-largest floating-point number that can be represented on the system
-(which is likely to be at least 10 to the power 300, and so should not
-be confused with legitimate data values).  In a native-format data
-file they should be represented as \verb+NA+. When importing CSV data
-gretl accepts several common representations of missing values
-including $-$999, the string \verb+NA+ (in upper or lower case), a
-single dot, or simply a blank cell.  Blank cells should, of course, be
-properly delimited, e.g.\ \verb+120.6,,5.38+, in which the middle
-value is presumed missing.
+Missing values are represented internally as \verb+NaN+ (``not a
+number''), as defined in the IEEE 754 floating-point standard. In a
+native-format data file they should be represented as \verb+NA+. When
+importing CSV data gretl accepts several common representations of
+missing values including $-$999, the string \verb+NA+ (in upper or
+lower case), a single dot, or simply a blank cell.  Blank cells
+should, of course, be properly delimited, e.g.\ \verb+120.6,,5.38+, in
+which the middle value is presumed missing.
 
 As for handling of missing values in the course of statistical
 analysis, gretl does the following:
@@ -752,16 +750,12 @@ scalar x0 = min(zeromiss(time * ok(x)))
 \end{code}
 
 The function \verb+misszero()+ does the opposite of \verb+zeromiss+,
-that is, it converts all missing values to zero.  
+that is, it converts all missing values to zero.
 
-It may be worth commenting on the propagation of missing values within
-\verb+genr+ formulae.  The general rule is that in arithmetical
-operations involving two variables, if either of the variables has a
-missing value at observation $t$ then the resulting series will also
-have a missing value at $t$.  The one exception to this rule is
-multiplication by zero: zero times a missing value produces zero
-(since this is mathematically valid regardless of the unknown value).
-
+If missing values get involved in calculations, they propagate
+according to the IEEE rules: notably, if one of the operands to an
+arithmetical operation is a \texttt{NaN}, the result will also be
+\texttt{NaN}.
     
 \section{Maximum size of data sets}
 \label{data-limits}

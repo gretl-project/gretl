@@ -233,14 +233,14 @@ inflected assignment, as in \texttt{a += b}, which is equivalent to
 \texttt{a = a + b}; several other similar operators are available,
 such as \texttt{-=}, \texttt{*=} and more. See the \GCR{} for details.
 
-The internal representation for a missing value is \texttt{DBL\_MAX},
-the largest double-precision number (generally in the neighborhood of
-1.7E+308). This is what you get if you try to compute quantities like
-the square root or the logarithm of a negative number. You can also
-set a value to ``missing'' directly using the keyword \texttt{NA}.
-The function \cmd{ok} can be used to determine whether a scalar is
-\texttt{NA}, as in the following example, which assigns a value of
-zero to the variable named \texttt{test}:
+The internal representation for a missing value is \texttt{NaN} (``not
+a number''), as defined by the IEEE 754 floating point standard.  This
+is what you get if you try to compute quantities like the square root
+or the logarithm of a negative number. You can also set a value to
+``missing'' directly using the keyword \texttt{NA}.  The complementary
+functions \cmd{missing} and \cmd{ok} can be used to determine whether
+a scalar is \texttt{NA}. In the following example a value of zero is
+assigned to the variable named \texttt{test}:
 \begin{code}
   scalar not_really = NA
   scalar test = ok(not_really)
