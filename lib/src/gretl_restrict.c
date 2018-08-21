@@ -1717,7 +1717,7 @@ static int parse_restriction_row (gretl_restriction *rset,
 	       variable of scalar type */
 	    rhs = generate_scalar(s+1, NULL, &err);
 	    if (!err) {
-		if (xna(rhs)) {
+		if (na(rhs)) {
 		    err = E_DATA;
 		} else {
 		    row->rhs += rhs;

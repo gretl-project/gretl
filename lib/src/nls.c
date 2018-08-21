@@ -1100,7 +1100,7 @@ static double get_mle_ll (const double *b, void *p)
 	k = gretl_vector_get_length(s->lvec);
 	for (t=0; t<k; t++) {
 	    x = s->lvec->val[t];
-	    if (xna(x)) {
+	    if (na(x)) {
 		s->crit = NADBL;
 		break;
 	    }
@@ -1110,7 +1110,7 @@ static double get_mle_ll (const double *b, void *p)
 	k = s->lhv;
 	for (t=s->t1; t<=s->t2; t++) {
 	    x = s->dset->Z[k][t];
-	    if (xna(x)) {
+	    if (na(x)) {
 		s->crit = NADBL;
 		break;
 	    }

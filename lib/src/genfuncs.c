@@ -1424,7 +1424,7 @@ int panel_expand (const gretl_matrix *x, double *y,
 		xi = x->val[i++];
 		ubak = u;
 	    }
-	    if (xna(xi)) {
+	    if (na(xi)) {
 		y[t] = NADBL;
 	    } else {
 		y[t] = xi;
@@ -5288,7 +5288,7 @@ static int theil_decomp (double *m, double MSE,
     int t, err = 0;
 
     if (MSE <= 0.0) {
-	m[0] = m[1] = m[2] = M_NA;
+	m[0] = m[1] = m[2] = NADBL;
 	return E_DATA;
     }
 
@@ -5318,7 +5318,7 @@ static int theil_decomp (double *m, double MSE,
 
     if (sa == 0.0 || sp == 0.0) {
 	err = E_DATA;
-	m[0] = m[1] = m[2] = M_NA;
+	m[0] = m[1] = m[2] = NADBL;
     } else {
 	m[0] = (Abar - Pbar) * (Abar - Pbar) / MSE; /* U^M */
 	m[1] = (sp - r * sa) * (sp - r * sa) / MSE; /* U^R */
@@ -5349,7 +5349,7 @@ static int fill_fcstats_column (gretl_matrix *m,
     u[0] = u[1] = 0.0;
 
     for (t=0; t<T; t++) {
-	if (xna(y[t]) || xna(f[t])) {
+	if (na(y[t]) || na(f[t])) {
 	    err = E_MISSDATA;
 	    break;
 	}
@@ -5358,7 +5358,7 @@ static int fill_fcstats_column (gretl_matrix *m,
 	MSE += x * x;
 	MAE += fabs(x);
 	if (y[t] == 0.0) {
-	    MPE = MAPE = U = M_NA;
+	    MPE = MAPE = U = NADBL;
 	} else {
 	    MPE += 100 * x / y[t];
 	    MAPE += 100 * fabs(x / y[t]);
@@ -5588,7 +5588,7 @@ static int durations_squeeze (gretl_matrix **pA, gretl_matrix **pTmp,
     return err;
 }
 
-#define cmissing(c,t) (c != NULL && xna(c[t]))
+#define cmissing(c,t) (c != NULL && na(c[t]))
 
 /*
   Given a series of duration values @y and (possibly) a series of
@@ -5624,7 +5624,7 @@ gretl_matrix *duration_func (const double *y, const double *cens,
     int d, r, ni, ibak;
 
     for (t=t1; t<=t2; t++) {
-	if (xna(y[t]) || cmissing(cens, t)) {
+	if (na(y[t]) || cmissing(cens, t)) {
 	    n--;
 	}
     }
@@ -5643,7 +5643,7 @@ gretl_matrix *duration_func (const double *y, const double *cens,
 
     i = 0;
     for (t=t1; t<=t2; t++) {
-	if (n < nmax && (xna(y[t]) || cmissing(cens, t))) {
+	if (n < nmax && (na(y[t]) || cmissing(cens, t))) {
 	    continue;
 	}
 	gretl_matrix_set(Tmp, i, 0, y[t]);
@@ -6229,7 +6229,7 @@ static int xy_get_sample (const double *y, const double *x,
     int t, nxy, err = 0;
 
     for (t=*t1; t<=*t2; t++) {
-	if (xna(x[t])) {
+	if (na(x[t])) {
 	    *t1 += 1;
 	} else {
 	    break;
@@ -6237,7 +6237,7 @@ static int xy_get_sample (const double *y, const double *x,
     }
 
     for (t=*t2; t>=*t1; t--) {
-	if (xna(x[t])) {
+	if (na(x[t])) {
 	    *t2 -= 1;
 	} else {
 	    break;
@@ -6251,9 +6251,9 @@ static int xy_get_sample (const double *y, const double *x,
     nxy = *n = 0;
 
     for (t=*t1; t<=*t2; t++) {
-	if (!xna(x[t])) {
+	if (!na(x[t])) {
 	    *n += 1;
-	    if (!xna(y[t])) {
+	    if (!na(y[t])) {
 		nxy++;
 	    }
 	}
@@ -6271,7 +6271,7 @@ static int get_dataset_t (const double *x, int pos, int t1)
     int t, k = 0;
 
     for (t=t1; k<=pos; t++) {
-	if (!xna(x[t])) {
+	if (!na(x[t])) {
 	    if (k == pos) {
 		return t;
 	    }
@@ -6317,7 +6317,7 @@ int gretl_loess (const double *y, const double *x, int poly_order,
     } else {
 	s = 0;
 	for (t=t1; t<=t2; t++) {
-	    if (!xna(x[t])) {
+	    if (!na(x[t])) {
 		my->val[s] = y[t];
 		mx->val[s] = x[t];
 		s++;
@@ -6352,7 +6352,7 @@ double series_get_nobs (int t1, int t2, const double *x)
     int t, n = 0;
 
     for (t=t1; t<=t2; t++) {
-	if (!xna(x[t])) n++;
+	if (!na(x[t])) n++;
     }
 
     return n;
@@ -6534,9 +6534,6 @@ static gretl_matrix *real_aggregate_by (const double *x,
 		} else {
 		    tmpset->t2 = ni-1;
 		    fx = generate_scalar(usercall, tmpset, err);
-		}
-		if (na(fx)) {
-		    fx = M_NA;
 		}
 		gretl_matrix_set(m, ii, ny+k+countcol, fx);
 	    }

@@ -4028,7 +4028,7 @@ static int prep_dbnomics_series (gretl_bundle *b,
 	    gretl_push_c_numeric_locale();
 	    fputs("obs dbnomics_data\n", fp);
 	    for (t=0; t<T; t++) {
-		if (xna(v->val[t])) {
+		if (na(v->val[t])) {
 		    fprintf(fp, "%s NA\n", S[t]);
 		} else {
 		    fprintf(fp, "%s %.12g\n", S[t], v->val[t]);

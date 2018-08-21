@@ -81,16 +81,6 @@ static void real_rndebug (const char *format, ...)
 
 #define ONE_BY_ONE_CAST 1
 
-#if NA_IS_NAN /* NADBL is equivalent to NaN */
-# define MATRIX_NA_CHECK 0
-# define SCALARS_ENSURE_FINITE 0
-# define SERIES_ENSURE_FINITE 0
-#else        /* NADBL is distinct from NaN */
-# define MATRIX_NA_CHECK 1
-# define SCALARS_ENSURE_FINITE 1 /* debatable, but watch out for read/write */
-# define SERIES_ENSURE_FINITE 1  /* debatable */
-#endif
-
 enum {
     FR_TREE = 1,
     FR_RET,
@@ -1211,14 +1201,6 @@ static double xy_calc (double x, double y, int op, int targ, parser *p)
 	    x, y, op, getsymb(op));
 #endif
 
-#if SERIES_ENSURE_FINITE
-    if (targ == SERIES) {
-	/* this may be questionable */
-	if (isnan(x)) x = NADBL;
-	if (isnan(y)) y = NADBL;
-    }
-#endif
-
     /* assignment */
     if (op == B_ASN) {
 	return y;
@@ -1542,7 +1524,7 @@ static gretl_matrix *node_get_matrix (NODE *n, parser *p,
 	    }
 	}
 	ret = mm[i];
-	ret->val[0] = na(x) ? M_NA : x;
+	ret->val[0] = x;
 	return ret;
     }
 }
@@ -2867,19 +2849,7 @@ static gretl_matrix *tmp_matrix_from_series (NODE *n, parser *p)
     if (m == NULL) {
 	p->err = E_ALLOC;
     } else {
-#if NA_IS_NAN
 	memcpy(m->val, x + p->dset->t1, T * sizeof *x);
-#else
-	int t, i = 0;
-
-	for (t=p->dset->t1; t<=p->dset->t2; t++) {
-	    if (na(x[t])) {
-		m->val[i++] = M_NA;
-	    } else {
-		m->val[i++] = x[t];
-	    }
-	}
-#endif
     }
 
     return m;
@@ -3427,7 +3397,7 @@ static void lag_calc (double *y, const double *x,
 	s = t - k;
 	if (dated_daily_data(p->dset)) {
 	    if (s >= 0 && s < p->dset->n) {
-		while (s >= 0 && xna(x[s])) {
+		while (s >= 0 && na(x[s])) {
 		    s--;
 		}
 	    }
@@ -7256,7 +7226,7 @@ static NODE *isodate_node (NODE *l, NODE *r, int f, parser *p)
 	    if (ret != NULL) {
 		double x = node_get_scalar(l, p);
 
-		if (!as_string && xna(x)) {
+		if (!as_string && na(x)) {
 		    ret->v.xval = NADBL;
 		} else if (x >= 1 && x <= UINT_MAX) {
 		    if (as_string) {
@@ -7375,7 +7345,7 @@ static int series_get_start (int t1, int t2, const double *x)
     int t;
 
     for (t=t1; t<=t2; t++) {
-	if (!xna(x[t])) {
+	if (!na(x[t])) {
 	    break;
 	}
     }
@@ -7388,7 +7358,7 @@ static int series_get_end (int t1, int t2, const double *x)
     int t;
 
     for (t=t2; t>=t1; t--) {
-	if (!xna(x[t])) {
+	if (!na(x[t])) {
 	    break;
 	}
     }
@@ -8255,9 +8225,6 @@ static gretl_matrix *matrix_from_scalars (GPtrArray *a, int m,
 		    n = g_ptr_array_index(a, k++);
 		}
 		x = node_get_scalar(n, p);
-		if (na(x)) {
-		    x = M_NA;
-		}
 		gretl_matrix_set(M, i, j, x);
 	    }
 	}
@@ -9402,24 +9369,14 @@ static void *get_mod_assign_result (void *lp, GretlType ltype,
 
 /* ".=" : we need a scalar on the RHS */
 
-static int dot_assign_to_matrix (gretl_matrix *m, parser *p,
-				 int *prechecked)
+static int dot_assign_to_matrix (gretl_matrix *m, parser *p)
 {
     int err = 0;
 
     if (p->ret->t == NUM) {
 	double x = p->ret->v.xval;
 
-#if !NA_IS_NAN
-	if (na(x)) {
-	    x = M_NA;
-	    set_gretl_warning(W_GENNAN);
-	}
-#endif
 	gretl_matrix_fill(m, x);
-	if (prechecked != NULL) {
-	    *prechecked = 1;
-	}
     } else {
 	err = E_TYPES;
     }
@@ -9488,7 +9445,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
 	    /* accepted only for matrices */
 	    if (!err) {
 		if (ltype == GRETL_TYPE_MATRIX) {
-		    err = dot_assign_to_matrix(lp, p, NULL);
+		    err = dot_assign_to_matrix(lp, p);
 		} else {
 		    err = E_TYPES;
 		}
@@ -9748,7 +9705,7 @@ static int set_array_value (NODE *lhs, NODE *rhs, parser *p)
 	if (p->op == B_DOTASN) {
 	    if (!err) {
 		if (ltype == GRETL_TYPE_MATRIX) {
-		    err = dot_assign_to_matrix(lp, p, NULL);
+		    err = dot_assign_to_matrix(lp, p);
 		} else {
 		    err = E_TYPES;
 		}
@@ -10039,9 +9996,6 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
     matrix_subspec *spec;
     double y = NADBL;
     int rhs_scalar = 0;
-#if !NA_IS_NAN
-    int prechecked = 0;
-#endif
     int free_m2 = 0;
 
     if (p->op == B_HCAT || p->op == B_VCAT) {
@@ -10087,9 +10041,6 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
     } else if (rhs->t == SERIES) {
 	/* legacy: this has long been accepted */
 	m2 = series_to_matrix(rhs->v.xvec, p);
-#if !NA_IS_NAN
-	prechecked = 1;
-#endif
 	free_m2 = 1; /* flag temporary status of @m2 */
     } else {
 	p->err = E_TYPES;
@@ -10106,21 +10057,13 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 	int i = mspec_get_element(spec);
 
 	if (p->op == B_ASN) {
-	    m1->val[i] = na(y) ? M_NA : y;
+	    m1->val[i] = y;
 	} else {
 	    /* inflected */
 	    double x = matrix_get_element(m1, i, &p->err);
 
 	    if (!p->err) {
 		x = xy_calc(x, y, p->op, MAT, p);
-#if !NA_IS_NAN
-		if (xna(x)) {
-		    if (na(x)) {
-			x = M_NA;
-		    }
-		    set_gretl_warning(W_GENNAN);
-		}
-#endif
 	    }
 	    m1->val[i] = x;
 	}
@@ -10130,14 +10073,6 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
     if (rhs_scalar && p->op == B_ASN) {
 	/* straight assignment of a scalar value to a
 	   non-scalar submatrix */
-#if !NA_IS_NAN
-	if (xna(y)) {
-	    if (na(y)) {
-		y = M_NA;
-	    }
-	    set_gretl_warning(W_GENNAN);
-	}
-#endif
 	p->err = assign_scalar_to_submatrix(m1, y, spec);
 	return p->err; /* we're done */
     }
@@ -10161,9 +10096,6 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 		   freeing */
 		m2 = a;
 		free_m2 = 1;
-#if !NA_IS_NAN
-		prechecked = 1;
-#endif
 	    } else {
 		gretl_matrix *b = NULL;
 
@@ -10189,13 +10121,6 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 	   submatrix.
 	*/
 	p->err = matrix_replace_submatrix(m1, m2, spec);
-#if MATRIX_NA_CHECK
-	if (!p->err && !prechecked) {
-	    if (gretl_matrix_xna_check(m2)) {
-		set_gretl_warning(W_GENNAN);
-	    }
-	}
-#endif
     }
 
     if (free_m2) {
@@ -13066,7 +12991,7 @@ static int vec_branch (const double *c, parser *p)
     ret = (c1)? FORK_L : FORK_R;
 
     for (t=t1; t<=t2; t++) {
-	if (!xna(c[t])) {
+	if (!na(c[t])) {
 	    if ((c1 && c[t] == 0) || (!c1 && c[t] != 0)) {
 		ret = FORK_BOTH;
 		break;
@@ -13133,7 +13058,7 @@ static NODE *query_eval_series (const double *c, NODE *n, parser *p)
     t2 = autoreg(p) ? p->obs : p->dset->t2;
 
     for (t=t1; t<=t2; t++) {
-	if (xna(c[t])) {
+	if (na(c[t])) {
 	    ret->v.xvec[t] = NADBL;
 	} else {
 	    xt = (xvec != NULL)? xvec[t] : x;
@@ -13243,18 +13168,15 @@ static NODE *query_eval_matrix (gretl_matrix *m, NODE *n, parser *p)
 	for (j=0; j<m->cols; j++) {
 	    for (i=0; i<m->rows; i++) {
 		x = gretl_matrix_get(m, i, j);
-		if (na(x)) x = M_NA;
 		if (isnan(x)) {
 		    gretl_matrix_set(mret, i, j, x);
 		} else if (x != 0.0) {
 		    y = l->t == NUM ? l->v.xval :
 			gretl_matrix_get(l->v.m, i, j);
-		    if (na(y)) y = M_NA;
 		    gretl_matrix_set(mret, i, j, y);
 		} else {
 		    y = r->t == NUM ? r->v.xval :
 			gretl_matrix_get(r->v.m, i, j);
-		    if (na(y)) y = M_NA;
 		    gretl_matrix_set(mret, i, j, y);
 		}
 	    }
@@ -16683,81 +16605,6 @@ static int series_compatible (const gretl_matrix *m, parser *p)
     return ok;
 }
 
-#if !NA_IS_NAN
-
-/* below: note that the node we're checking is p->ret, which may
-   differ in type from the target to which it will be
-   assigned/converted
-*/
-
-static void gen_check_errvals (parser *p)
-{
-    NODE *r = p->ret;
-
-    if (r == NULL || (r->t == SERIES && r->v.xvec == NULL)) {
-	return;
-    }
-
-    if (p->targ == MAT) {
-	/* the matrix target is handled separately */
-	return;
-    }
-
-    if (r->t == NUM) {
-	if (!isfinite(r->v.xval)) {
-#if SCALARS_ENSURE_FINITE
-	    r->v.xval = NADBL;
-	    set_gretl_warning(W_GENMISS);
-#else
-	    set_gretl_warning(W_GENNAN);
-#endif
-	}
-    } else if (r->t == SERIES) {
-	int t;
-
-	for (t=p->dset->t1; t<=p->dset->t2; t++) {
-	    if (!isfinite(r->v.xvec[t])) {
-#if SERIES_ENSURE_FINITE
-		r->v.xvec[t] = NADBL;
-		set_gretl_warning(W_GENMISS);
-#else
-		set_gretl_warning(W_GENNAN);
-#endif
-		break;
-	    }
-	}
-    } else if (r->t == MAT) {
-	/* note: but p->targ != MAT */
-	const gretl_matrix *m = r->v.m;
-	int i, k = gretl_matrix_rows(m) * gretl_matrix_cols(m);
-
-	if (p->targ == NUM && k == 1) {
-	    if (!isfinite(m->val[0])) {
-#if SCALARS_ENSURE_FINITE
-		m->val[0] = NADBL;
-		set_gretl_warning(W_GENMISS);
-#else
-		set_gretl_warning(W_GENNAN);
-#endif
-	    }
-	} else {
-#if MATRIX_NA_CHECK
-	    /* convert any NAs to NaNs */
-	    for (i=0; i<k; i++) {
-		if (na(m->val[i])) {
-		    m->val[i] = M_NA;
-		    set_gretl_warning(W_GENNAN);
-		} else if (!isfinite(m->val[i])) {
-		    set_gretl_warning(W_GENNAN);
-		}
-	    }
-#endif
-	}
-    }
-}
-
-#endif /* not-NA_IS_NAN */
-
 /* This function converts a series to a column vector,
    respecting the value of the set-variable "skip_missing".
    In that respect it differs from tmp_matrix_from_series(),
@@ -16771,12 +16618,6 @@ static gretl_matrix *series_to_matrix (const double *x,
     int t1 = p->dset->t1;
     int t2 = p->dset->t2;
     int skip_na, contiguous = 1;
-#if NA_IS_NAN
-    /* NA to NaN conversion not needed */
-    int convert = 0;
-#else
-    int convert = 1;
-#endif
     gretl_matrix *v;
 
     skip_na = libset_get_bool(SKIP_MISSING);
@@ -16787,7 +16628,6 @@ static gretl_matrix *series_to_matrix (const double *x,
 	if (!err) {
 	    /* no interior NAs, just use (possibly) revised sample */
 	    n = t2 - t1 + 1;
-	    convert = 0;
 	} else {
 	    /* we have to count the non-missing values */
 	    n = 0;
@@ -16808,7 +16648,7 @@ static gretl_matrix *series_to_matrix (const double *x,
     if (v == NULL) {
 	p->err = E_ALLOC;
     } else if (n > 0) {
-	if (contiguous && !convert) {
+	if (contiguous) {
 	    memcpy(v->val, x + t1, n * sizeof *x);
 	} else {
 	    int i = 0;
@@ -16816,12 +16656,7 @@ static gretl_matrix *series_to_matrix (const double *x,
 	    for (t=t1; t<=t2; t++) {
 		if (na(x[t])) {
 		    if (!skip_na) {
-#if NA_IS_NAN
 			v->val[i++] = x[t];
-#else
-			set_gretl_warning(W_GENNAN); /* ? */
-			v->val[i++] = M_NA;
-#endif
 		    }
 		} else {
 		    v->val[i++] = x[t];
@@ -16837,8 +16672,7 @@ static gretl_matrix *series_to_matrix (const double *x,
     return v;
 }
 
-static gretl_matrix *retrieve_matrix_result (parser *p,
-					     int *prechecked)
+static gretl_matrix *retrieve_matrix_result (parser *p)
 {
     NODE *r = p->ret;
     gretl_matrix *m = NULL;
@@ -16853,13 +16687,9 @@ static gretl_matrix *retrieve_matrix_result (parser *p,
 	    p->err = E_ALLOC;
 	} else if (na(r->v.xval)) {
 	    set_gretl_warning(W_GENNAN);
-	    if (prechecked != NULL) {
-		*prechecked = 1;
-	    }
 	}
     } else if (r->t == SERIES) {
 	m = series_to_matrix(r->v.xvec, p);
-	*prechecked = 1;
     } else if (r->t == LIST) {
 	m = gretl_list_to_vector(r->v.ivec, &p->err);
     } else if (r->t == MAT && is_tmp_node(r)) {
@@ -16881,9 +16711,6 @@ static gretl_matrix *retrieve_matrix_result (parser *p,
 #endif
 	if (m == NULL) {
 	    p->err = E_ALLOC;
-	}
-	if (!p->err && prechecked != NULL) {
-	    *prechecked = 1;
 	}
     } else {
 	fprintf(stderr, "Looking for matrix, but r->t = %d\n", r->t);
@@ -16925,7 +16752,7 @@ static int LHS_matrix_reusable (parser *p, gretl_matrix **pm,
    we re-use the left-hand side matrix if possible.
 */
 
-static gretl_matrix *assign_to_matrix (parser *p, int *prechecked)
+static gretl_matrix *assign_to_matrix (parser *p)
 {
     gretl_matrix *m = NULL;
     gretl_matrix *tmp = NULL;
@@ -16951,13 +16778,10 @@ static gretl_matrix *assign_to_matrix (parser *p, int *prechecked)
 #endif
 	if (p->ret->t == NUM) {
 	    /* using RHS scalar */
-	    x = p->ret->v.xval;
-	    m->val[0] = na(x)? M_NA : x;
-	    *prechecked = 1;
+	    m->val[0] = x = p->ret->v.xval;
 	} else if (p->ret->t == SERIES) {
 	    /* using RHS series, converted to @tmp */
 	    p->err = gretl_matrix_copy_data(m, tmp);
-	    *prechecked = 1;
 	} else {
 	    /* using RHS matrix: just copy data across */
 	    p->err = gretl_matrix_copy_data(m, p->ret->v.m);
@@ -16969,10 +16793,9 @@ static gretl_matrix *assign_to_matrix (parser *p, int *prechecked)
 #endif
 	if (tmp != NULL) {
 	    p->err = gen_replace_lhs(p, GRETL_TYPE_MATRIX, tmp);
-	    *prechecked = 1;
 	    free_tmp = 0; /* @tmp is the return value */
 	} else {
-	    m = retrieve_matrix_result(p, prechecked);
+	    m = retrieve_matrix_result(p);
 	    if (!p->err) {
 		p->err = gen_replace_lhs(p, GRETL_TYPE_MATRIX, m);
 	    }
@@ -16992,8 +16815,7 @@ static gretl_matrix *assign_to_matrix (parser *p, int *prechecked)
 */
 
 static gretl_matrix *assign_to_matrix_mod (gretl_matrix *m1,
-					   parser *p,
-					   int *prechecked)
+					   parser *p)
 {
     gretl_matrix *m2 = NULL;
 
@@ -17003,10 +16825,10 @@ static gretl_matrix *assign_to_matrix_mod (gretl_matrix *m1,
 
     if (!p->err) {
 	if (p->op == B_DOTASN) {
-	    p->err = dot_assign_to_matrix(m1, p, prechecked);
+	    p->err = dot_assign_to_matrix(m1, p);
 	    m2 = m1; /* no change in matrix pointer */
 	} else {
-	    gretl_matrix *tmp = retrieve_matrix_result(p, prechecked);
+	    gretl_matrix *tmp = retrieve_matrix_result(p);
 
 	    if (tmp != NULL) {
 		p->err = real_matrix_calc(m1, tmp, p->op, &m2);
@@ -17303,27 +17125,6 @@ static int gen_allocate_storage (parser *p)
     return p->err;
 }
 
-#if SERIES_ENSURE_FINITE
-
-static void series_make_finite (double *x, int n)
-{
-    int i;
-
-    /* This may be questionable (converting NaNs and infinities to
-       NA), but is necessary for backward compatibility (e.g. when
-       taking logs of a series that contains zeros).
-    */
-
-    for (i=0; i<n; i++) {
-	if (!isfinite(x[i])) {
-	    x[i] = NADBL;
-	    set_gretl_warning(W_GENMISS);
-	}
-    }
-}
-
-#endif
-
 static void align_matrix_to_series (double *y, const gretl_matrix *m,
 				    parser *p)
 {
@@ -17589,11 +17390,6 @@ static int save_generated_var (parser *p, PRN *prn)
 	    } else {
 		p->err = E_TYPES;
 	    }
-#if SCALARS_ENSURE_FINITE
-	    if (!p->err && !isfinite(x)) {
-		x = NADBL;
-	    }
-#endif
 	    if (!p->err) {
 		if (no_decl) {
 		    p->err = gretl_scalar_add_mutable(p->lh.name, x);
@@ -17618,7 +17414,7 @@ static int save_generated_var (parser *p, PRN *prn)
 		int t1 = p->dset->t1;
 
 		if (autoreg(p) && p->op == B_ASN) {
-		    while (xna(x[t1]) && t1 <= p->dset->t2) {
+		    while (na(x[t1]) && t1 <= p->dset->t2) {
 			/* don't overwite initializer */
 			t1++;
 		    }
@@ -17672,11 +17468,6 @@ static int save_generated_var (parser *p, PRN *prn)
 		}
 	    }
 	}
-#if SERIES_ENSURE_FINITE
-	if (!p->err) {
-	    series_make_finite(Z[v], p->dset->n);
-	}
-#endif
 	strcpy(p->dset->varname[v], p->lh.name);
 #if EDEBUG
 	fprintf(stderr, "var %d: gave generated series the name '%s'\n",
@@ -17690,36 +17481,27 @@ static int save_generated_var (parser *p, PRN *prn)
     } else if (p->targ == MAT) {
 	/* we're writing a matrix */
 	gretl_matrix *m = NULL;
-	int prechecked = 0;
 
 	if (p->lh.uv == NULL) {
 	    /* there's no pre-existing left-hand side matrix */
-	    m = retrieve_matrix_result(p, &prechecked);
+	    m = retrieve_matrix_result(p);
 	    if (!p->err) {
 		p->err = gen_add_uvar(p, GRETL_TYPE_MATRIX, m);
 	    }
 	} else if (p->op == B_ASN) {
 	    /* uninflected assignment to an existing matrix */
-	    m = assign_to_matrix(p, &prechecked);
+	    m = assign_to_matrix(p);
 	} else {
 	    /* inflected assignment to entire existing matrix */
 	    gretl_matrix *m1 = gen_get_lhs_var(p, GRETL_TYPE_MATRIX);
 
-	    m = assign_to_matrix_mod(m1, p, &prechecked);
+	    m = assign_to_matrix_mod(m1, p);
 	    if (!p->err) {
 		p->err = gen_replace_lhs(p, GRETL_TYPE_MATRIX, m);
 	    }
 	}
 	/* note: for use by genr_get_output_matrix() */
 	p->lh.mret = m;
-#if MATRIX_NA_CHECK
-	if (!p->err && !prechecked && m != NULL) {
-	    if (gretl_matrix_xna_check(m)) {
-		set_gretl_warning(W_GENNAN);
-	    }
-	    prechecked = 1;
-	}
-#endif
     } else if (p->targ == LIST) {
 	create_or_edit_list(p);
     } else if (p->targ == STR) {
@@ -18232,9 +18014,7 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 
     if (autoreg(p)) {
 	/* e.g. y = b*y(-1) : evaluate dynamically */
-#if NA_IS_NAN
 	int initted = 0;
-#endif
 	int t;
 
 	for (t=p->dset->t1; t<=p->dset->t2 && !p->err; t++) {
@@ -18248,19 +18028,13 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 	    p->ret = eval(p->tree, p);
 	    if (p->ret != NULL && p->ret->t == SERIES) {
 		x = p->ret->v.xvec;
-#if NA_IS_NAN
 		if (initted || !na(x[t])) {
-#else
-		if (!na(x[t])) {
-#endif
 #if EDEBUG
 		    fprintf(stderr, "writing xvec[%d] = %g into Z[%d][%d] (was %g)\n",
 			    t, x[t], p->lh.vnum, t, p->dset->Z[p->lh.vnum][t]);
 #endif
 		    p->dset->Z[p->lh.vnum][t] = x[t];
-#if NA_IS_NAN
 		    initted = 1;
-#endif
 		}
 	    } else {
 		autoreg_error(p, t);
@@ -18284,10 +18058,6 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
     printnode(p->ret, p, 0);
     pputc(prn, '\n');
 # endif
-#endif
-
-#if !NA_IS_NAN
-    gen_check_errvals(p);
 #endif
 
     return p->err;

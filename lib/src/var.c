@@ -3735,7 +3735,7 @@ static gretl_matrix *alt_VECM_get_EC_matrix (const GRETL_VAR *vecm,
 	    }
 
 	    if (na(xj)) {
-		gretl_matrix_set(EC, s, j, M_NA);
+		gretl_matrix_set(EC, s, j, NADBL);
 	    } else {
 		gretl_matrix_set(EC, s, j, xj);
 	    }

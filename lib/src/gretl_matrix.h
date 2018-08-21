@@ -26,12 +26,6 @@
 extern "C" {
 #endif
 
-#ifdef NAN
-# define M_NA NAN
-#else
-# define M_NA (0.0/0.0)
-#endif
-
 /* minimum value of diagonal element of R (as in X = QR) that counts
    as non-zero for the purpose of determining the rank of X */
 
@@ -204,7 +198,7 @@ void clear_gretl_matrix_err (void);
 
 void gretl_matrix_print (const gretl_matrix *m, const char *msg);
 
-int gretl_matrix_xna_check (const gretl_matrix *m);
+int gretl_matrix_na_check (const gretl_matrix *m);
 
 int gretl_matrix_is_symmetric (const gretl_matrix *m);
 

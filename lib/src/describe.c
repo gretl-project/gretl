@@ -3458,13 +3458,13 @@ static gretl_matrix *real_xcf_vec (const double *x, const double *y,
     int i;
 
     xbar = gretl_mean(0, T-1, x);
-    if (xna(xbar)) {
+    if (na(xbar)) {
 	*err = E_DATA;
 	return NULL;
     }
 
     ybar = gretl_mean(0, T-1, y);
-    if (xna(ybar)) {
+    if (na(ybar)) {
 	*err = E_DATA;
 	return NULL;
     }
@@ -6992,8 +6992,7 @@ static int skew_kurt_test (const double *x, int t1, int t2,
 	}
     }
 
-    if (!err && xna(*test)) {
-	*test = NADBL;
+    if (!err && na(*test)) {
 	err = E_NAN;
     }
 
@@ -7162,8 +7161,8 @@ gretl_matrix *gretl_normtest_matrix (const double *y,
 	if (ret == NULL) {
 	    *err = E_ALLOC;
 	} else {
-	    ret->val[0] = na(test)? M_NA : test;
-	    ret->val[1] = na(pval)? M_NA : pval;
+	    ret->val[0] = test;
+	    ret->val[1] = pval;
 	}
     }
 

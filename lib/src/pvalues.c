@@ -1359,12 +1359,12 @@ static int poisson_pmf_array (double lambda, double *x, int n)
     for (i=0; i<n; i++) {
 	k = x[i];
 	den = x_factorial((double) k);
-	if (xna(den)) {
+	if (na(den)) {
 	    p = NADBL;
 	} else {
 	    p = l0 * pow(lambda, (double) k) / den;
 	}
-	if (xna(p)) {
+	if (na(p)) {
 	    p = l0;
 	    for (j=1; j<=k; j++) {
 		p *= lambda / j;
@@ -1396,13 +1396,13 @@ double poisson_pmf (double lambda, int k)
     den = x_factorial((double) k);
     l0 = exp(-lambda);
 
-    if (xna(den)) {
+    if (na(den)) {
 	p = NADBL;
     } else {
 	p = l0 * pow(lambda, (double) k) / den;
     }
 
-    if (xna(p)) {
+    if (na(p)) {
 	int i;
 
 	p = l0;
@@ -2024,7 +2024,7 @@ static int nc_chisq_pdf_array (double p, double c, double *x, int n)
     k = p/2.0 - 1;
 
     for (i=0; i<n; i++) {
-	if (xna(x[i]) || x[i] < 0) {
+	if (na(x[i]) || x[i] < 0) {
 	    x[i] = NADBL;
 	} else {
 	    a = exp(-0.5*(x[i]+c) + k/2.0 * log(x[i]/c)) / 2.0;
@@ -2308,7 +2308,7 @@ static int ncf_pdf_array (double dfn, double dfd, double c,
     k = log(dfn) - log(dfd);
     
     for(t=0; t<n; t++) {
-	if(xna(x[t]) || x[t] < 0) {
+	if (na(x[t]) || x[t] < 0) {
 	    vx[t] = vz[t] = NADBL;
 	} else {
 	    vx[t] = log(x[t]);
@@ -2328,7 +2328,7 @@ static int ncf_pdf_array (double dfn, double dfd, double c,
     b = (k1 + start) * k;
 
     for (t=0; t<n; t++) {
-	if (xna(x[t]) || x[t] < 0) {
+	if (na(x[t]) || x[t] < 0) {
 	    x[t] = NADBL;
 	} else {
 	    l = b + (start + k1 - 1) * vx[t] + (start + k2) * vz[t];

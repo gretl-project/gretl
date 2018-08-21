@@ -151,7 +151,7 @@ static gretl_matrix *polfromroots (const gretl_matrix *r)
     } else {
 	copy_row(tmp, 0, r, n-1, 0);
 	if (tmp->val[0] == 0 && tmp->val[1] == 0) {
-	    tmp->val[0] = tmp->val[1] = M_NA;
+	    tmp->val[0] = tmp->val[1] = NADBL;
 	    ret = tmp;
         } else {
 	    gretl_matrix *ix = cinv(tmp);

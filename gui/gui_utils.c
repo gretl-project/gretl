@@ -2613,7 +2613,7 @@ static void mnl_probs_callback (GtkAction *action, gpointer p)
 		print_obs_marker(t, dataset, obslen, prn);
 		for (j=0; j<P->cols; j++) {
 		    x = gretl_matrix_get(P, i, j);
-		    if (xna(x)) {
+		    if (na(x)) {
 			pprintf(prn, "%9s", " ");
 		    } else {
 			pprintf(prn, "%9.4f", x);

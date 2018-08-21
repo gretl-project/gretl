@@ -278,7 +278,7 @@ static int rq_attach_intervals (MODEL *pmod, struct br_info *rq,
     for (i=0; i<p; i++) {
 	blo = gretl_matrix_get(ci, 1, i);
 	bhi = gretl_matrix_get(ci, 2, i);
-	if (xna(blo) || xna(bhi) || (blo == 0.0 && bhi == 0.0)) {
+	if (na(blo) || na(bhi) || (blo == 0.0 && bhi == 0.0)) {
 	    err = E_NOCONV;
 	    break;
 	}
@@ -372,7 +372,7 @@ static int rq_interpolate_intervals (struct br_info *rq)
 	c2j -= fabs(c1j - c2j) * (rq->cut - fabs(tn2)) / fabs(tn1 - tn2);
 
 	/* check for garbage */
-	if (xna(c3j) || xna(c2j)) {
+	if (na(c3j) || na(c2j)) {
 	    fprintf(stderr, "rq_interpolate_intervals: coeff %d: low = %g, "
 		    "high = %g\n", j, c2j, c3j);
 	    gretl_matrix_print(rq->ci, "rq->ci");
@@ -802,7 +802,7 @@ static int rq_write_variance (const gretl_matrix *V,
     if (se != NULL) {
 	for (i=0; i<V->cols; i++) {
 	    x = gretl_matrix_get(V, i, i);
-	    if (xna(x) || x < 0) {
+	    if (na(x) || x < 0) {
 		se[i] = NADBL;
 	    } else {
 		se[i] = sqrt(x);
@@ -1094,7 +1094,7 @@ write_tbeta_block_fn (gretl_matrix *tbeta, int nt, double *x,
     int i;
 
     for (i=0; i<p; i++) {
-	if (xna(x[i])) {
+	if (na(x[i])) {
 	    fprintf(stderr, "write_tbeta_block_fn: x[%d] = %g\n", i, x[i]);
 	    return E_NAN;
 	}

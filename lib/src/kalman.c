@@ -1875,7 +1875,7 @@ int kalman_forecast (kalman *K, PRN *prn)
 	    err = kalman_iter_1(K, missobs, &llt);
 	    if (K->LL != NULL) {
 		if (na(llt) || missobs) {
-		    llt = M_NA;
+		    llt = NADBL;
 		} else {
 		    llt -= 0.5 * (K->n * LN_2_PI + ldet);
 		}

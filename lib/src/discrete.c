@@ -2012,7 +2012,7 @@ gretl_matrix *mn_logit_probabilities (const MODEL *pmod,
 	    if (!ok) {
 		/* one or more regressors missing */
 		for (j=0; j<m; j++) {
-		    gretl_matrix_set(P, t, j, M_NA);
+		    gretl_matrix_set(P, t, j, NADBL);
 		}
 	    } else {
 		/* base case */
@@ -3488,7 +3488,7 @@ static double choose (double n, double k, int *err)
 	c *= (n - i) / (k - i);
     }
 
-    if (xna(c)) {
+    if (na(c)) {
 	*err = 1;
     }
 
@@ -3510,7 +3510,7 @@ static double table_prob (double a, double b, double c, double d,
 
     if (!*err) {
 	P = p1 * p2 / p3;
-	if (xna(P)) {
+	if (na(P)) {
 	    *err = 1;
 	    P = NADBL;
 	}

@@ -97,14 +97,12 @@ gretl_vector *gretl_vector_from_series (const double *x,
 {
     gretl_matrix *v = NULL;
     int i, n = t2 - t1 + 1;
-    double xi;
 
     if (n > 0) {
 	v = gretl_column_vector_alloc(n);
 	if (v != NULL) {
 	    for (i=0; i<n; i++) {
-		xi = x[i + t1];
-		v->val[i] = na(xi) ? M_NA : xi;
+		v->val[i] = x[i + t1];
 	    }	    
 	    gretl_matrix_set_t1(v, t1);
 	    gretl_matrix_set_t2(v, t2);
@@ -149,18 +147,13 @@ gretl_matrix *gretl_matrix_from_2d_array (const double **X,
  *
  * Returns: allocated 1 x 1 gretl_matrix, the single element
  * of which is set to @x, or NULL on allocation failure.
- * If @x = #NADBL the matrix value is #M_NA.
  */
 
 gretl_matrix *gretl_matrix_from_scalar (double x) 
 {
     gretl_matrix *m = gretl_matrix_alloc(1, 1);
 
-    if (na(x)) {
-	m->val[0] = M_NA;
-    } else {
-	m->val[0] = x;
-    }
+    m->val[0] = x;
 
     return m;
 }
@@ -593,10 +586,7 @@ real_gretl_matrix_data_subset (const int *list,
 
 	for (j=0; j<n && !*err; j++) {
 	    if (na(M->val[j])) {
-		if (op == M_MISSING_OK) {
-		    /* convert NA to NAN */
-		    M->val[j] = M_NA;
-		} else {
+		if (op != M_MISSING_OK) {
 		    *err = E_MISSDATA;
 		}
 	    }
@@ -738,7 +728,6 @@ gretl_matrix_data_subset_special (const int *list,
 	
 	if (X != NULL && T > 0) {
 	    const double *xi;
-	    double xti;
 	    int i, s, t;
 
 	    for (i=0; i<k; i++) {
@@ -746,16 +735,12 @@ gretl_matrix_data_subset_special (const int *list,
 		s = 0;
 		for (t=dset->t1; t<=dset->t2; t++) {
 		    if (mmask->val[t] != 0) {
-			xti = xi[t];
-			if (na(xti)) {
-			    xti = M_NA;
-			}
 			if (s == 0) {
 			    gretl_matrix_set_t1(X, t);
 			} else if (s == T - 1) {
 			    gretl_matrix_set_t2(X, t);
 			}
-			gretl_matrix_set(X, s++, i, xti);
+			gretl_matrix_set(X, s++, i, xi[t]);
 		    }
 		}
 	    }
@@ -814,7 +799,7 @@ DATASET *gretl_dataset_from_matrix (const gretl_matrix *m,
 		/* try borrowing? */
 		for (t=0; t<T; t++) {
 		    x = gretl_matrix_get(m, t, col-1);
-		    if (xna(x)) {
+		    if (na(x)) {
 			opt = OPT_NONE;
 			break;
 		    }
@@ -826,7 +811,7 @@ DATASET *gretl_dataset_from_matrix (const gretl_matrix *m,
 	int N = T * nv;
 
 	for (i=0; i<N; i++) {
-	    if (xna(m->val[i])) {
+	    if (na(m->val[i])) {
 		opt = OPT_NONE;
 		break;
 	    }
@@ -853,7 +838,7 @@ DATASET *gretl_dataset_from_matrix (const gretl_matrix *m,
 	} else {
 	    for (t=0; t<T; t++) {
 		x = gretl_matrix_get(m, t, col);
-		if (xna(x)) {
+		if (na(x)) {
 		    x = NADBL;
 		}
 		dset->Z[i][t] = x;
@@ -1109,7 +1094,7 @@ static double unix_scan_NA (FILE *fp, int *err)
 	*err = E_DATA;
 	return 0;
     } else if (!strcmp(test, "NA") || !strcmp(test, ".")) {
-	return M_NA;
+	return NADBL;
     } else {
 	gretl_errmsg_sprintf(_("got invalid field '%s'"), test);
 	*err = E_DATA;
@@ -1384,7 +1369,7 @@ int gretl_matrix_write_to_file (gretl_matrix *A, const char *fname,
 	    pad = (j == c-1)? '\n' : d;
 	    x = gretl_matrix_get(A, i, j);
 #ifdef WIN32
-	    if (xna(x)) {
+	    if (na(x)) {
 		win32_xna_out(x, fz, fp, pad);
 		continue;
 	    }
@@ -2499,7 +2484,7 @@ static int legendre_scale (int n, double *x, double *w,
     double shft, slp;
     int i;
 
-    if (xna(a) || xna(b)) {
+    if (na(a) || na(b)) {
 	return E_INVARG;
     }
 
@@ -2525,7 +2510,7 @@ static int hermite_scale (int n, double *x, double *w,
     double rtpi = sqrt(M_PI);
     int i;
 
-    if (xna(mu) || xna(sigma) || sigma <= 0.0) {
+    if (na(mu) || na(sigma) || sigma <= 0.0) {
 	return E_INVARG;
     }
 

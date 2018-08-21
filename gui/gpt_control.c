@@ -2727,7 +2727,7 @@ static int push_z_row (gretl_matrix *z, int i, int n, char *line)
 	    p++;
 	}
 	if (*p == '?') {
-	    x = M_NA;
+	    x = NADBL;
 	    p += 2;
 	} else {
 	    x = strtod(p, &p);

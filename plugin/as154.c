@@ -253,7 +253,7 @@ int karma (int ip, int iq, int ir, int np, double *phi,
 	    }
 	}
 	if (isnan(wnext)) {
-	    resid[i] = M_NA;
+	    resid[i] = NADBL;
 	    skip = 1;
 	    continue;
 	}

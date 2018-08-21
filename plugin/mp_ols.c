@@ -638,7 +638,7 @@ static void mp_ll_stats (const MPMODEL *mpmod, MODEL *pmod)
 
     pmod->lnL = mpfr_get_d(mll, GMP_RNDN);
 
-    if (xna(pmod->lnL)) {
+    if (na(pmod->lnL)) {
 	pmod->lnL = NADBL;
 	mle_criteria(pmod, 0);
     } else {

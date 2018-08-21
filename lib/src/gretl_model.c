@@ -2359,7 +2359,7 @@ static double vcv_get_se (double vii, int restricted)
 	vii = fabs(vii) < 1.0e-17 ? 0.0 : vii;
     }
 
-    return (xna(vii) || vii < 0)? NADBL : sqrt(vii);
+    return (na(vii) || vii < 0)? NADBL : sqrt(vii);
 }
 
 /**
@@ -6121,7 +6121,7 @@ double coeff_pval (int ci, double x, int df)
 {
     double p = NADBL;
 
-    if (!xna(x)) {
+    if (!na(x)) {
 	if (df == 0 || ci == MODPRINT || ASYMPTOTIC_MODEL(ci)) {
 	    p = normal_pvalue_2(x);
 	} else {
@@ -6136,7 +6136,7 @@ double model_coeff_pval (const MODEL *pmod, double x)
 {
     double p = NADBL;
 
-    if (!xna(x)) {
+    if (!na(x)) {
 	if (model_use_zscore(pmod)) {
 	    p = normal_pvalue_2(x);
 	} else if (pmod->ci == AR) {

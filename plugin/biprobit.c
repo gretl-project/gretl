@@ -1099,13 +1099,13 @@ static int bp_add_hat_matrices (MODEL *pmod, bp_container *bp,
 	for (t=0; t<T; t++) {
 
 	    if (na(pmod->uhat[t + pmod->t1])) {
-		gretl_matrix_set(Uh, t, 0, M_NA);
-		gretl_matrix_set(Uh, t, 1, M_NA);
-		gretl_matrix_set(Yh, t, 0, M_NA);
-		gretl_matrix_set(Yh, t, 1, M_NA);
+		gretl_matrix_set(Uh, t, 0, NADBL);
+		gretl_matrix_set(Uh, t, 1, NADBL);
+		gretl_matrix_set(Yh, t, 0, NADBL);
+		gretl_matrix_set(Yh, t, 1, NADBL);
 		if (Yhcols == 4) {
-		    gretl_matrix_set(Yh, t, 2, M_NA);
-		    gretl_matrix_set(Yh, t, 3, M_NA);
+		    gretl_matrix_set(Yh, t, 2, NADBL);
+		    gretl_matrix_set(Yh, t, 3, NADBL);
 		}		    
 		continue;
 	    }

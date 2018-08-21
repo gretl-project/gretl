@@ -2158,7 +2158,7 @@ real_kpss_test (int order, int varno, DATASET *dset,
 	    pprintf(prn, "%s > .10\n", _("P-value"));
 	} else if (pval == PV_LT01) {
 	    pprintf(prn, "%s < .01\n", _("P-value"));
-	} else if (!xna(pval)) {
+	} else if (!na(pval)) {
 	    pprintf(prn, "%s %.3f\n", _("Interpolated p-value"), pval);
 	}
 	pputc(prn, '\n');
@@ -2246,7 +2246,7 @@ static int panel_kpss_test (int order, int v, DATASET *dset,
 		}
 	    }
 
-	    if (xna(pval)) {
+	    if (na(pval)) {
 		ppv = zpv = lpv = NADBL;
 	    } else if (!na(ppv)) {
 		ppv += log(pval);

@@ -45,14 +45,8 @@
 
 #undef XML_DEBUG
 
-#if NA_IS_NAN
-/* mark change by bumping GDT version */
 #define GRETLDATA_VERSION "1.4"
-#define GRETLDATA_COMPAT  "1.3" /* for --oldbinary */
-#else
-/* status quo as of gretl 2018b */
-#define GRETLDATA_VERSION "1.3"
-#endif
+#define GRETLDATA_COMPAT  "1.3" /* status quo as of gretl 2018b */
 
 #define GDT_DEBUG 0
 
@@ -586,7 +580,7 @@ void gretl_matrix_serialize (const gretl_matrix *m,
 	for (j=0; j<m->cols; j++) {
 	    x = gretl_matrix_get(m, i, j);
 #ifdef WIN32
-	    if (xna(x)) {
+	    if (na(x)) {
 		win32_fprint_nonfinite(x, fp);
 		fputc(' ', fp);
 		continue;
@@ -2093,8 +2087,6 @@ static int read_binary_header (FILE *fp, int order)
     return err;
 }
 
-#if NA_IS_NAN
-
 static void na_convert (double *x, int n)
 {
     int i;
@@ -2105,8 +2097,6 @@ static void na_convert (double *x, int n)
 	}
     }
 }
-
-#endif
 
 static int read_binary_data (const char *fname,
 			     DATASET *dset,
@@ -2138,12 +2128,10 @@ static int read_binary_data (const char *fname,
 		if (got != T) {
 		    err = E_DATA;
 		}
-#if NA_IS_NAN
 		if (!err && gdtversion < 1.4) {
 		    /* we need to convert old-style NAs */
 		    na_convert(dset->Z[k], dset->n);
 		}
-#endif
 		k++;
 	    } else {
 		fseek(fp, offset, SEEK_CUR);
@@ -2301,15 +2289,10 @@ static int real_write_gdt (const char *fname, const int *list,
 
     gdtver = GRETLDATA_VERSION;
 
-#if NA_IS_NAN
     /* support --oldbinary option */
     if (binary && (opt & OPT_O)) {
 	gdtver = GRETLDATA_COMPAT;
     }
-#else
-    /* scrub OPT_O if present */
-    opt &= ~OPT_O;
-#endif
 
     if (gz) {
 	gzprintf(fz, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"

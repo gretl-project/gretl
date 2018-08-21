@@ -1706,7 +1706,7 @@ static void regular_fixed_effects_F (panelmod_t *pan, MODEL *wmod)
 
     pan->Ffe = (pan->pooled->ess - wmod->ess) * pan->Fdfd /
 	(wmod->ess * pan->Fdfn);
-    if (xna(pan->Ffe)) {
+    if (na(pan->Ffe)) {
 	pan->Ffe = NADBL;
     } else if (pan->Ffe < 0) {
 	pan->Ffe = 0;
@@ -1800,7 +1800,7 @@ static int fix_within_stats (MODEL *fmod, panelmod_t *pan)
     wrsq = fmod->rsq;
     if (wrsq < 0.0) {
 	wrsq = 0.0;
-    } else if (xna(wrsq)) {
+    } else if (na(wrsq)) {
 	wrsq = NADBL;
     }
 
@@ -1825,7 +1825,7 @@ static int fix_within_stats (MODEL *fmod, panelmod_t *pan)
 	}
     }
 
-    if (!xna(wfstt) && wfstt >= 0.0) {
+    if (!na(wfstt) && wfstt >= 0.0) {
 	ModelTest *test = model_test_new(GRETL_TEST_WITHIN_F);
 	int wdfd = fmod->dfd;
 
@@ -2634,7 +2634,7 @@ static void fix_gls_stats (MODEL *pmod, panelmod_t *pan)
     ls_criteria(pmod);
     pmod->ncoeff = nc;
 
-    if (!xna(chisq) && chisq >= 0.0) {
+    if (!na(chisq) && chisq >= 0.0) {
 	ModelTest *test = model_test_new(GRETL_TEST_RE_WALD);
 
 	if (test != NULL) {

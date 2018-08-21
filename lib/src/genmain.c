@@ -922,7 +922,7 @@ gretl_matrix *generate_matrix (const char *s, DATASET *dset,
 		}
 	    }
 	} else if (n->t == NUM) {
-	    if (xna(n->v.xval)) {
+	    if (na(n->v.xval)) {
 		*err = E_NAN;
 	    } else {
 		m = gretl_matrix_alloc(1, 1);

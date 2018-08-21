@@ -43,7 +43,7 @@ static double get_vif (MODEL *mod, const int *xlist,
     *mod = lsq(vlist, dset, OLS, OPT_A); 
     *err = mod->errcode;
 
-    if (!*err && !xna(mod->rsq) && mod->rsq != 1.0) {
+    if (!*err && !na(mod->rsq) && mod->rsq != 1.0) {
 	vk = 1.0 / (1.0 - mod->rsq);
     }
 

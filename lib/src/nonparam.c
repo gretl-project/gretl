@@ -563,7 +563,7 @@ gretl_matrix *kendall_tau_func (const double *x,
 
     /* count valid pairs */
     for (i=0; i<n; i++) {
-	if (!xna(x[i]) && !xna(y[i])) {
+	if (!na(x[i]) && !na(y[i])) {
 	    nn++;
 	}
     }
@@ -1578,7 +1578,7 @@ static void weight_local_data (struct loess_info *lo)
 static int next_ok_obs (const double *y, int i)
 {
     i++;
-    while (xna(y[i])) i++;
+    while (na(y[i])) i++;
     return i;
 }
 
@@ -1616,7 +1616,7 @@ static int loess_get_local_data (int i, int *pa,
 	   with valid y-values
 	*/
 	for (m=0, b=a+1; ; b++) {
-	    if (!xna(y[b]) && ++m == n) {
+	    if (!na(y[b]) && ++m == n) {
 		break;
 	    }
 	}
@@ -1713,7 +1713,7 @@ static int loess_count_usable_obs (const gretl_matrix *y,
     int i, n_ok = 0;
 
     for (i=0; i<N; i++) {
-	if (!xna(y->val[i])) {
+	if (!na(y->val[i])) {
 	    if (n_ok == 0) {
 		/* record the first usable obs index */
 		*amin = i;
@@ -1890,7 +1890,7 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
 		}
 		if (robust && k < iters - 1) {
 		    /* save residual for robustness weights */
-		    if (xna(y->val[i])) {
+		    if (na(y->val[i])) {
 			rw->val[i] = NADBL;
 		    } else {
 			rw->val[i] = y->val[i] - yh->val[i];

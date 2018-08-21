@@ -393,7 +393,7 @@ static int pca_save_components (VMatrix *cmat,
 		dset->Z[vi][t] = 0.0;
 		for (j=0; j<k; j++) {
 		    x = sX[j][s];
-		    if (xna(x)) {
+		    if (na(x)) {
 			dset->Z[vi][t] = NADBL;
 			break;
 		    } else {

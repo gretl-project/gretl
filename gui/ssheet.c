@@ -476,7 +476,7 @@ static void update_sheet_matrix (Spreadsheet *sheet)
 	for (j=0; j<sheet->datacols; j++) {
 	    gtk_tree_model_get(model, &iter, j + 1, &numstr, -1);
 	    if (!strcmp(numstr, "nan")) {
-		x = M_NA;
+		x = NADBL;
 	    } else {
 		x = atof(numstr);
 	    }
@@ -567,7 +567,7 @@ static void update_sheet_matrix_element (Spreadsheet *sheet,
     double x = atof(new_text);
 
     if (!strcmp(new_text, "nan")) {
-	x = M_NA;
+	x = NADBL;
     } else {
 	x = atof(new_text);
     }
@@ -2010,7 +2010,6 @@ static int add_scalars_to_sheet (Spreadsheet *sheet)
 	strcpy(vname, user_var_get_name(u)); /* underscores? */
 	x = user_var_get_scalar_value(u);
 	if (na(x)) {
-#if NA_IS_NAN
 	    if (isnan(x)) {
 		strcpy(val, "nan");
 	    } else if (x < 0) {
@@ -2018,9 +2017,6 @@ static int add_scalars_to_sheet (Spreadsheet *sheet)
 	    } else {
 		strcpy(val, "inf");
 	    }
-#else
-	    strcpy(val, "NA");
-#endif
 	} else {
 	    sprintf(val, sheet->numfmt, sheet->digits, x);
 	}
@@ -3861,7 +3857,7 @@ static int matrix_from_spec (struct gui_matrix_spec *s)
     gchar *genline;
     int err;
 
-    if (xna(s->fill)) {
+    if (na(s->fill)) {
 	genline = g_strdup_printf("matrix %s = ones(%d,%d) * 0/0",
 				  s->name, s->rows, s->cols);
     } else {

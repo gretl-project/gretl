@@ -784,7 +784,7 @@ static double durbins_h (const MODEL *pmod)
 	; /* can't calculate h */
     } else {
 	h = pmod->rho * sqrt(T / (1 - T * se * se));
-	if (xna(h)) {
+	if (na(h)) {
 	    h = NADBL;
 	}
     }
@@ -2792,7 +2792,7 @@ static char *print_eight (char *s, struct middletab *mt, int i)
 	return s;
     }    
 
-    if (xna(x)) {
+    if (na(x)) {
 	sprintf(s, "%9s", "NA");
 	return s;
     }
@@ -3086,7 +3086,7 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
     if (pmod->aux == AUX_VECM || pmod->aux == AUX_COINT) {
 	/* VECM equation or Engle-Granger test: suppress F-test */
 	val[6] = val[7] = NADBL;
-    } else if (!xna(pmod->fstt) && pmod->dfd > 0) {
+    } else if (!na(pmod->fstt) && pmod->dfd > 0) {
 	/* format F-stat and get its p-value */
 	if (tex) {
 	    sprintf(teststr, "$F(%d, %d)$", pmod->dfn, pmod->dfd);
@@ -3567,13 +3567,13 @@ prepare_model_coeff (const MODEL *pmod, const DATASET *dset,
 	gretl_model_get_param_name(pmod, dset, i, mc->name);
     }
 
-    if (xna(pmod->coeff[i])) {
+    if (na(pmod->coeff[i])) {
 	gotnan = 1;
     } else {
 	mc->b = pmod->coeff[i];
     }
 
-    if (!xna(pmod->sderr[i])) {
+    if (!na(pmod->sderr[i])) {
 	mc->se = pmod->sderr[i];
     }
 
@@ -3587,7 +3587,7 @@ prepare_model_coeff (const MODEL *pmod, const DATASET *dset,
 
     if (!na(mc->b) && !na(mc->se) && mc->se > 0.0) {
 	mc->tval = mc->b / mc->se;
-	if (xna(mc->tval)) {
+	if (na(mc->tval)) {
 	    mc->tval = NADBL;
 	}
     }
@@ -4252,7 +4252,7 @@ static int alt_print_aux_coeffs (const double *b, const double *se,
     int i;
 
     for (i=0; i<nc; i++) {
-	if (xna(b[i])) {
+	if (na(b[i])) {
 	    return E_NAN;
 	}
     }
@@ -4323,7 +4323,7 @@ static int plain_print_aux_coeffs (const double *b,
     for (i=0; i<nc; i++) {
 	double sei = isnan(se[i]) ? NADBL : se[i];
 
-	if (xna(b[i])) {
+	if (na(b[i])) {
 	    err = E_NAN;
 	    goto bailout;
 	}
@@ -4464,7 +4464,7 @@ static int plain_print_mp_coeffs (const MODEL *pmod,
     minus = (gretl_print_has_minus(prn))? MINUS_UTF : MINUS_HYPHEN;
 
     for (i=0; i<nc; i++) {
-	if (xna(b[i])) {
+	if (na(b[i])) {
 	    err = E_NAN;
 	    goto bailout;
 	}
@@ -4732,7 +4732,7 @@ static int plain_print_coeffs (const MODEL *pmod,
     coeff_digits = get_gretl_digits();
 
     for (i=0; i<nc; i++) {
-	if (xna(b[i])) {
+	if (na(b[i])) {
 	    err = E_NAN;
 	    goto bailout;
 	}

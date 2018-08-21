@@ -5019,7 +5019,7 @@ static void print_user_y_data (const double *x,
     int t;
 
     for (t=t1; t<=t2; t++) {
-	if (xna(y[t])) {
+	if (na(y[t])) {
 	    fprintf(fp, "%.10g ?\n", x[t]);
 	} else {
 	    fprintf(fp, "%.10g %.10g\n", x[t], y[t]);
@@ -5107,7 +5107,7 @@ static void print_user_pm_data (const double *x,
     int t;
 
     for (t=t1; t<=t2; t++) {
-	if (xna(c[t]) || xna(w[t])) {
+	if (na(c[t]) || na(w[t])) {
 	    fprintf(fp, "%.10g ? ?\n", x[t]);
 	} else {
 	    fprintf(fp, "%.10g %.10g %.10g\n", x[t], c[t], w[t]);
@@ -5445,7 +5445,7 @@ static int process_band_matrix (const int *list,
 
     g_strfreev(S);
 
-    if (!err && (pm->factor < 0 || xna(pm->factor))) {
+    if (!err && (pm->factor < 0 || na(pm->factor))) {
 	err = E_INVARG;
     }
 

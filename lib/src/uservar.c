@@ -1460,44 +1460,28 @@ static void xml_put_user_matrix (user_var *u, FILE *fp)
 
 static void write_scalar_value (double x, const char *fmt, PRN *prn)
 {
-#if NA_IS_NAN
     if (na(x)) {
-# ifdef WIN32
+#ifdef WIN32
 	win32_pprint_nonfinite(x, prn, 1);
-# else
+#else
 	pprintf(prn, "%g\n", x);
-# endif
-    } else {
-	pprintf(prn, fmt, x);
-    }
-#else /* !NA_IS_NAN */
-    if (na(x)) {
-	pputs(prn, " NA\n");
-    } else {
-	pprintf(prn, fmt, x);
-    }
 #endif
+    } else {
+	pprintf(prn, fmt, x);
+    }
 }
 
 static void serialize_scalar_value (double x, FILE *fp)
 {
-#if NA_IS_NAN
     if (na(x)) {
-# ifdef WIN32
+#ifdef WIN32
 	win32_fprint_nonfinite(x, fp);
-# else
+#else
 	fprintf(fp, "%g", x);
-# endif
-    } else {
-	fprintf(fp, "%.16g", x);
-    }
-#else /* !NA_IS_NAN */
-    if (na(x)) {
-	fputs("NA", fp);
-    } else {
-	fprintf(fp, "%.16g", x);
-    }
 #endif
+    } else {
+	fprintf(fp, "%.16g", x);
+    }
 }
 
 /**

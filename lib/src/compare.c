@@ -553,7 +553,7 @@ static int add_or_omit_compare (MODEL *pmodA, MODEL *pmodB,
 	}
     }
 
-    if (!err && (xna(cmp.test) || xna(cmp.pval))) {
+    if (!err && (na(cmp.test) || na(cmp.pval))) {
 	err = E_DATA;
     }
 

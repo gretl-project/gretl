@@ -1809,7 +1809,7 @@ int *gretl_list_product (const int *X, const int *Y,
 			    v = newv++;
 			}
 			for (t=dset->t1; t<=dset->t2; t++) {
-			    if (na(x[t]) || xna(xik)) {
+			    if (na(x[t]) || na(xik)) {
 				dset->Z[v][t] = NADBL;
 			    } else {
 				dset->Z[v][t] = (x[t] == xik)? y[t] : 0;

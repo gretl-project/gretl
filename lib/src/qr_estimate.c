@@ -934,7 +934,7 @@ static int vcv_is_broken (const gretl_matrix *V)
 
 	for (i=0; i<V->rows; i++) {
 	    v = gretl_matrix_get(V, i, i);
-	    if (v < 0 || xna(v)) {
+	    if (v < 0 || na(v)) {
 		return 1;
 	    }
 	}

@@ -341,7 +341,7 @@ static int arma_analytical_score (arma_info *ainfo,
 	x = e[t] / s2; /* sqrt(s2)? does it matter? */
 	for (i=0; i<ainfo->nc; i++) {
 	    Gsi = -de[i][0] * x;
-	    if (xna(Gsi) || Gsi == -NADBL) {
+	    if (na(Gsi)) {
 		fprintf(stderr, "arma score, bad value at t=%d, i=%d\n", t, i);
 		err = E_NAN;
 		break;

@@ -6889,9 +6889,7 @@ static int do_scalar_matrix_cast (fn_arg *arg, fn_param *param)
     if (m == NULL) {
 	err = E_ALLOC;
     } else {
-	double x = arg->val.x;
-
-	m->val[0] = na(x) ? M_NA : x;
+	m->val[0] = arg->val.x;
 	err = copy_as_arg(param->name, GRETL_TYPE_MATRIX, m);
 	gretl_matrix_free(m);
     }

@@ -2434,7 +2434,7 @@ static int smpl_get_int (const char *s, DATASET *dset, int *err)
 	    x = generate_scalar(s, dset, err);
 	}
 
-	if (!xna(x) && x < INT_MAX) {
+	if (!na(x) && x < INT_MAX) {
 	    k = (int) x;
 	}
     }

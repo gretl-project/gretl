@@ -233,7 +233,7 @@ static double *get_sorted_x (const double *y, int *pn, int *err)
     }
 
     for (i=0; i<*pn; i++) {
-	if (!xna(y[i])) {
+	if (!na(y[i])) {
 	    x[n++] = y[i];
 	}
     }

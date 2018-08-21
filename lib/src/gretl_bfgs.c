@@ -955,7 +955,7 @@ static double quad_slen (int n, int *pndelta, double *b,
 	       inspired by Kelley (1999), "Iterative Methods for Optimization",
 	       especially section 3.2.1.
 	    */
-	    if (xna(f1)) {
+	    if (na(f1)) {
 		/* function goes into NA zone, presumably outside the
 		   admissible parameter space; hence, try a much smaller
 		   step. FIXME execution can come back here indefinitely.
@@ -2321,7 +2321,7 @@ gretl_matrix *user_fdjac (gretl_matrix *theta, const char *fncall,
 
     for (i=0; i<m; i++) {
 	fvec[i] = u->fm_out->val[i];
-	if (xna(fvec[i])) {
+	if (na(fvec[i])) {
 	    nnf++;
 	}
     }
@@ -2417,7 +2417,7 @@ static int broken_matrix (const gretl_matrix *m)
     int i, n = m->rows * m->cols;
 
     for (i=0; i<n; i++) {
-	if (xna(m->val[i])) {
+	if (na(m->val[i])) {
 	    return 1;
 	}
     }
@@ -3415,7 +3415,7 @@ static int gretl_gss (double *theta, int n, double tol,
 	    pprintf(prn, "%d: bracket={%g,%g}, values={%g,%g}\n",
 		    iter, c, d, fc, fd);
 	}
-	if (xna(fc) || xna(fd)) {
+	if (na(fc) || na(fd)) {
 	    err = E_NAN;
 	    break;
 	}

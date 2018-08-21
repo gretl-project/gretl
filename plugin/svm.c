@@ -2997,7 +2997,7 @@ static int sv_trim_missing (int *list, int fvar, DATASET *dset)
 	int t, yno = list[1];
 
 	for (t=t1; t<=t2 && !err; t++) {
-	    if (xna(dset->Z[yno][t])) {
+	    if (na(dset->Z[yno][t])) {
 		gretl_errmsg_sprintf("Dependent variable is NA at obs %d", t+1);
 		err = E_MISSDATA;
 	    }

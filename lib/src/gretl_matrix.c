@@ -425,24 +425,19 @@ gretl_matrix *gretl_matrix_block_get_matrix (gretl_matrix_block *B,
     }
 }
 
-int gretl_matrix_xna_check (const gretl_matrix *m)
+int gretl_matrix_na_check (const gretl_matrix *m)
 {
-    int ret = 0;
-
     if (m != NULL) {
 	int i, n = m->rows * m->cols;
 
 	for (i=0; i<n; i++) {
 	    if (na(m->val[i])) {
-		m->val[i] = M_NA;
-	    }
-	    if (!ret && !isfinite(m->val[i])) {
-		ret = E_NAN;
+		return E_NAN;
 	    }
 	}
     }
 
-    return ret;
+    return 0;
 }
 
 int gretl_matrix_get_structure (const gretl_matrix *m)
@@ -3555,8 +3550,7 @@ static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval,
 	}
     }
 
-    if (!*err && xna(det)) {
-	det = NADBL;
+    if (!*err && na(det)) {
 	*err = E_NAN;
     }
 
@@ -3569,8 +3563,7 @@ static double det_22 (const double *a, int *err)
 {
     double d = a[0]*a[3] - a[1]*a[2];
 
-    if (xna(d)) {
-	d = NADBL;
+    if (na(d)) {
 	*err = E_NAN;
     }
     
@@ -3583,8 +3576,7 @@ static double det_33 (const double *a, int *err)
 	+ a[3]*a[7]*a[2] - a[3]*a[1]*a[8]
 	+ a[6]*a[1]*a[5] - a[6]*a[4]*a[2];
 
-    if (xna(d)) {
-	d = NADBL;
+    if (na(d)) {
 	*err = E_NAN;
     }
     
@@ -12453,7 +12445,7 @@ gretl_matrix *gretl_matrix_isfinite (const gretl_matrix *m, int *err)
 	int i, n = m->rows * m->cols;
 
 	for (i=0; i<n; i++) {
-	    f->val[i] = (xna(m->val[i]))? 0 : 1;
+	    f->val[i] = (na(m->val[i]))? 0 : 1;
 	}
     }
 
@@ -12592,7 +12584,7 @@ real_gretl_covariance_matrix (const gretl_matrix *m, int corr,
 		    x = ssx->val[i] * ssx->val[j];
 		    vv /= sqrt(x);
 		} else {
-		    vv = M_NA;
+		    vv = NADBL;
 		}
 	    } else {
 		vv /= den;

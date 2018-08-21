@@ -656,10 +656,6 @@ int gretl_scalar_mpi_reduce (double x,
 	return E_DATA;
     }
 
-    /* convert NA to NaN for use with MPI's built-in
-       reduction functions */
-    x = na(x) ? M_NA : x;
-
     if (opt & OPT_A) {
 	ret = mpi_allreduce(&x, xp, 1, mpi_double, mpi_op,
 			    mpi_comm_world);

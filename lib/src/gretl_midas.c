@@ -1946,7 +1946,7 @@ static int midas_gss (double *theta, int n, midas_info *mi,
 	theta[1] = d;
 	fd = cond_ols_callback(theta, NULL, n, mi);
 	*fncount += 2;
-	if (xna(fc) || xna(fd)) {
+	if (na(fc) || na(fd)) {
 	    err = E_NAN;
 	    break;
 	}

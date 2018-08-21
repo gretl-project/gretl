@@ -515,7 +515,7 @@ int stata_export (const char *fname,
 	for (i=1; i<dset->v; i++) {
 	    if (include_var(list, i)) {
 		xit = dset->Z[i][t];
-		missing = xna(xit);
+		missing = na(xit);
 		if (types[j] == STATA_BYTE) {
 		    i8 = missing ? STATA_BYTE_NA : xit;
 		    w += write(fd, &i8, 1);

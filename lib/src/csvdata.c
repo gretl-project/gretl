@@ -4339,7 +4339,7 @@ static int evaluate_filter (jr_filter *filter, DATASET *r_dset,
 
 static gint64 dtoll (double x, int *err)
 {
-    if (xna(x) || fabs(x) >  G_MAXINT64) {
+    if (na(x) || fabs(x) >  G_MAXINT64) {
 	*err = E_DATA;
 	return -1;
     } else {
@@ -4349,7 +4349,7 @@ static gint64 dtoll (double x, int *err)
 
 static gint64 dtoll_full (double x, int key, int row, int *err)
 {
-    if (xna(x) || fabs(x) >  G_MAXINT64) {
+    if (na(x) || fabs(x) >  G_MAXINT64) {
 	if (key == 2) {
 	    gretl_errmsg_sprintf("%s: invalid secondary outer key value (%.12g) on row %d",
 				 "join", x, row);
@@ -5053,7 +5053,7 @@ static int get_inner_key_values (joiner *jr, int i,
 	if (jr->n_keys == 2) {
 	    dk2 = dset->Z[ikeyvars[2]][i];
 	}
-	if (xna(dk1) || xna(dk2)) {
+	if (na(dk1) || na(dk2)) {
 	    *missing = 1;
 	} else {
 	    k1 = dtoll(dk1, &err);

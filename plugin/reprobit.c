@@ -188,11 +188,11 @@ static int params_init_from_pooled (MODEL *pmod,
 	if (t / C->T > (t-1) / C->T) {
 	    /* first obs of a new unit */
 	    elag = pmod->uhat[t];
-	    elag = xna(elag) ? 0.0 : elag;
+	    elag = na(elag) ? 0.0 : elag;
 	    continue;
 	}
 	e = pmod->uhat[t];
-	if (!xna(e)) {
+	if (!na(e)) {
 	    num += e * elag;
 	    den += e * e;
 	    elag = e;

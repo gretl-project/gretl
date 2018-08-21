@@ -1819,7 +1819,7 @@ user_matrix_eigen_analysis (const gretl_matrix *m, const char *rname,
 	return NULL;
     }
 
-    if (gretl_matrix_xna_check(m)) {
+    if (gretl_matrix_na_check(m)) {
 	*err = E_NAN;
 	return NULL;
     }
@@ -1872,7 +1872,7 @@ gretl_matrix *user_gensymm_eigenvals (const gretl_matrix *A,
 	return NULL;
     }
 
-    if (gretl_matrix_xna_check(A) || gretl_matrix_xna_check(B)) {
+    if (gretl_matrix_na_check(A) || gretl_matrix_na_check(B)) {
 	*err = E_NAN;
 	return NULL;
     }
