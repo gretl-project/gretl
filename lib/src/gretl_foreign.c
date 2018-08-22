@@ -994,7 +994,10 @@ static int write_julia_io_file (void)
 #else
 	    fprintf(fp, "gretl_dotdir = \"%s\"\n\n", dotdir);
 #endif
-
+	    /* Julia > 0.6 requires the Printf library */
+	    fputs("if VERSION > v\"0.6\"\n", fp);
+	    fputs("  using Printf\n", fp);
+	    fputs("end\n\n", fp);
 	    fputs("function gretl_export(M, fname, autodot=1)\n", fp);
 	    fputs("  r,c = size(M)\n", fp);
 	    fputs("  if autodot != 0\n", fp);
