@@ -995,7 +995,7 @@ static int write_julia_io_file (void)
 	    fprintf(fp, "gretl_dotdir = \"%s\"\n\n", dotdir);
 #endif
 	    /* Julia 1.0 requires more library-loading */
-	    fputs("v1 = VERSION > v\"0.6\"\n", fp);
+	    fputs("v1 = VERSION > v\"0.6.9\"\n", fp);
 	    fputs("if v1\n", fp);
 	    fputs("  using Printf\n", fp);
 	    fputs("  using DelimitedFiles\n", fp);
