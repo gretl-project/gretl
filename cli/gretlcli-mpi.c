@@ -680,6 +680,8 @@ static int cli_open_append (CMD *cmd, DATASET *dset,
     if (err) {
 	errmsg(err, prn);
 	return err;
+    } else if (check_gretl_warning()) {
+	warnmsg(prn);
     }
 
     if (!dbdata && !http && cmd->ci != APPEND && *newfile != '\0') {

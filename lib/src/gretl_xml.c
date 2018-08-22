@@ -3821,6 +3821,16 @@ static int replace_panel_padding (DATASET *dset)
     return err;
 }
 
+static void future_datafile_warning (double v1, double v2)
+{
+    const char *fmt =
+	_("The version of this datafile (%g) is higher than that fully\n"
+	  "supported by this build of gretl (%g). Some features may not be\n"
+	  "correctly recognized.\n");
+
+    gretl_warnmsg_sprintf(fmt, v1, v2);
+}
+
 static int real_read_gdt (const char *fname, const char *srcname,
 			  DATASET *dset, gretlopt opt, PRN *prn)
 {
@@ -3830,6 +3840,7 @@ static int real_read_gdt (const char *fname, const char *srcname,
     int gotvars = 0, gotobs = 0, err = 0;
     int caldata = 0, repad = 0;
     double gdtversion = 1.0;
+    double myversion;
     int in_c_locale = 0;
     int gz, binary = 0;
     long fsz;
@@ -3861,6 +3872,10 @@ static int real_read_gdt (const char *fname, const char *srcname,
     }
 
     gdtversion = get_gdt_version(cur);
+    myversion = dot_atof(GRETLDATA_VERSION);
+    if (gdtversion > myversion) {
+	future_datafile_warning(gdtversion, myversion);
+    }
 
     /* optional */
     gretl_xml_get_prop_as_unsigned_int(cur, "rseed", &tmpset->rseed);
