@@ -994,9 +994,11 @@ static int write_julia_io_file (void)
 #else
 	    fprintf(fp, "gretl_dotdir = \"%s\"\n\n", dotdir);
 #endif
-	    /* Julia > 0.6 requires the Printf library */
-	    fputs("if VERSION > v\"0.6\"\n", fp);
+	    /* Julia 1.0 requires more library-loading */
+	    fputs("v1 = VERSION > v\"0.6\"\n", fp);
+	    fputs("if v1\n", fp);
 	    fputs("  using Printf\n", fp);
+	    fputs("  using DelimitedFiles\n", fp);
 	    fputs("end\n\n", fp);
 	    fputs("function gretl_export(M, fname, autodot=1)\n", fp);
 	    fputs("  r,c = size(M)\n", fp);
@@ -1004,7 +1006,11 @@ static int write_julia_io_file (void)
 	    fputs("    fname = gretl_dotdir * fname\n", fp);
 	    fputs("  end\n", fp);
 	    fputs("  f = open(fname, \"w\")\n", fp);
-	    fputs("  n = endof(fname)\n", fp);
+	    fputs("  if v1\n", fp);
+	    fputs("    n = lastindex(fname)\n", fp);
+	    fputs("  else\n", fp);
+	    fputs("    n = endof(fname)\n", fp);
+	    fputs("  end\n", fp);
 	    fputs("  if fname[n-3:n] == \".bin\"\n", fp);
 	    fputs("    # binary mode\n", fp);
 	    fputs("    write(f, b\"gretl_binary_matrix\")\n", fp);
@@ -1039,7 +1045,11 @@ static int write_julia_io_file (void)
 	    fputs("  if autodot != 0\n", fp);
 	    fputs("    fname = gretl_dotdir * fname\n", fp);
 	    fputs("  end\n", fp);
-	    fputs("  n = endof(fname)\n", fp);
+	    fputs("  if v1\n", fp);
+	    fputs("    n = lastindex(fname)\n", fp);
+	    fputs("  else\n", fp);
+	    fputs("    n = endof(fname)\n", fp);
+	    fputs("  end\n", fp);
 	    fputs("  if fname[n-3:n] == \".bin\"\n", fp);
 	    fputs("    # binary mode\n", fp);
 	    fputs("    f = open(fname, \"r\")\n", fp);
