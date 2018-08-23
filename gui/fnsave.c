@@ -1,20 +1,20 @@
 /*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "gretl.h"
@@ -49,6 +49,7 @@
 #define PKG_DEBUG 0
 #define NENTRIES 5
 #define N_FILE_ENTRIES 4
+#define N_DEP_ENTRIES 4
 #define N_SPECIALS (UFUN_ROLE_MAX - 1)
 #define HELP_HEIGHT 400
 
@@ -76,6 +77,8 @@ struct function_info_ {
     GtkWidget *entries[NENTRIES];
     /* entry boxes for data file names */
     GtkWidget *file_entries[N_FILE_ENTRIES];
+    /* entry boxes for dependency names */
+    GtkWidget *dep_entries[N_DEP_ENTRIES];
     GtkWidget *codesel;    /* code-editing selector */
     GtkWidget *popup;      /* popup menu */
     GtkWidget *extra;      /* extra properties child dialog */
@@ -114,9 +117,11 @@ struct function_info_ {
     char **privnames;      /* names of private functions */
     char **specials;       /* names of special functions */
     char **datafiles;      /* names of included data files */
+    char **depends;        /* names of dependencies */
     int n_pub;             /* number of public functions */
     int n_priv;            /* number of private functions */
-    int n_files;           /* number of include data files */
+    int n_files;           /* number of included data files */
+    int n_depends;         /* number of dependencies */
     gboolean uses_subdir;  /* the package has its own subdir (0/1) */
     gboolean data_access;  /* the package wants access to full data range */
     gboolean pdfdoc;       /* the package has PDF documentation */
@@ -146,7 +151,7 @@ struct login_info_ {
 static int validate_package_file (const char *fname,
 				  int verbose);
 static void finfo_set_menuwin (function_info *finfo);
-static gint query_save_package (GtkWidget *w, GdkEvent *event, 
+static gint query_save_package (GtkWidget *w, GdkEvent *event,
 				function_info *finfo);
 static int finfo_save (function_info *finfo);
 static void gfn_to_script_callback (function_info *finfo);
@@ -221,14 +226,16 @@ function_info *finfo_new (void)
     finfo->help_fname = NULL;
     finfo->gui_help_fname = NULL;
     finfo->pdfname = NULL;
-    
+
     finfo->pubnames = NULL;
     finfo->privnames = NULL;
     finfo->datafiles = NULL;
+    finfo->depends = NULL;
 
     finfo->n_pub = 0;
     finfo->n_priv = 0;
     finfo->n_files = 0;
+    finfo->n_depends = 0;
 
     finfo->dreq = 0;
     finfo->minver = 10900;
@@ -246,7 +253,7 @@ static const char *funname_from_filename (const char *fname)
     return p + 1;
 }
 
-static char *filename_from_funname (char *fname, 
+static char *filename_from_funname (char *fname,
 				    const char *funname)
 {
     build_path(fname, gretl_dotdir(), "pkgedit", NULL);
@@ -278,14 +285,14 @@ static void finfo_free (function_info *finfo)
     g_free(finfo->help_fname);
     g_free(finfo->gui_help_fname);
     g_free(finfo->pdfname);
-    
+
     g_free(finfo->menupath);
     g_free(finfo->menulabel);
 
     if (finfo->pubnames != NULL) {
 	strings_array_free(finfo->pubnames, finfo->n_pub);
     }
-	
+
     if (finfo->privnames != NULL) {
 	strings_array_free(finfo->privnames, finfo->n_priv);
     }
@@ -296,7 +303,11 @@ static void finfo_free (function_info *finfo)
 
     if (finfo->datafiles != NULL) {
 	strings_array_free(finfo->datafiles, finfo->n_files);
-    }    
+    }
+
+    if (finfo->depends != NULL) {
+	strings_array_free(finfo->depends, finfo->n_depends);
+    }
 
     if (finfo->samplewin != NULL) {
 	gtk_widget_destroy(finfo->samplewin->main);
@@ -304,11 +315,11 @@ static void finfo_free (function_info *finfo)
 
     if (finfo->helpwin != NULL) {
 	gtk_widget_destroy(finfo->helpwin->main);
-    }      
+    }
 
     if (finfo->gui_helpwin != NULL) {
 	gtk_widget_destroy(finfo->gui_helpwin->main);
-    }    
+    }
 
     if (finfo->codewins != NULL) {
 	g_list_foreach(finfo->codewins, (GFunc) destroy_code_window, NULL);
@@ -344,7 +355,7 @@ static void pkg_save_action (GtkAction *action, function_info *finfo)
     }
 }
 
-const gchar *pkgsave_ui = 
+const gchar *pkgsave_ui =
     "<ui>"
     "  <popup>"
     "    <menuitem action='Save'/>"
@@ -373,7 +384,7 @@ static void save_popup_pos (GtkMenu *menu,
     gint wx, wy, tx, ty;
 
     gdk_window_get_origin(gtk_widget_get_window(button), &wx, &wy);
-    gtk_widget_translate_coordinates(button, gtk_widget_get_toplevel(button), 
+    gtk_widget_translate_coordinates(button, gtk_widget_get_toplevel(button),
 				     0, 0, &tx, &ty);
     *x = wx + tx - 80;
     *y = wy + ty - 128;
@@ -388,7 +399,7 @@ static void pkg_save_popup (GtkWidget *button,
 
     if (finfo->ui == NULL) {
 	GtkActionGroup *actions;
-	
+
 	finfo->ui = gtk_ui_manager_new();
 	actions = gtk_action_group_new("PkgActions");
 	gtk_action_group_set_translation_domain(actions, "gretl");
@@ -412,14 +423,14 @@ static void pkg_save_popup (GtkWidget *button,
     gtk_menu_popup(GTK_MENU(menu), NULL, NULL,
 		   save_popup_pos,
 		   button, 0,
-		   gtk_get_current_event_time());    
+		   gtk_get_current_event_time());
 }
 
 static void finfo_set_modified (function_info *finfo, gboolean s)
 {
     if (s != finfo->modified) {
 	gchar *tmp;
-    
+
 	finfo->modified = s;
 	if (s) {
 	    tmp = g_strdup_printf("gretl: %s *", finfo_pkgname(finfo));
@@ -535,7 +546,7 @@ void get_default_package_name (char *fname, gpointer p, int mode)
 static int check_email_string (const char *s)
 {
     int err = 0;
-    
+
     if (strchr(s, ' ') != NULL) {
 	/* no spaces allowed */
 	err = 1;
@@ -618,7 +629,7 @@ static int save_gfn_dialog (function_info *finfo)
     const char *opts[] = {
 	N_("Save the file to its standard \"installed\" location"),
 	N_("Save it to a location of your own choosing")
-    };    
+    };
     GtkWidget *dialog;
     GtkWidget *vbox, *hbox, *label;
     GtkWidget *button = NULL;
@@ -658,12 +669,12 @@ static int save_gfn_dialog (function_info *finfo)
     button = cancel_button(hbox);
     gtk_widget_set_can_default(button, FALSE);
     g_object_set_data(G_OBJECT(button), "dialog", dialog);
-    g_signal_connect(G_OBJECT(button), "clicked", 
+    g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(save_gfn_cancel), &ret);
 
     /* "OK" */
     button = ok_button(hbox);
-    g_signal_connect(G_OBJECT(button), "clicked", 
+    g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(save_gfn_ok), dialog);
     gtk_widget_grab_default(button);
 
@@ -680,7 +691,7 @@ static int overwrite_gfn_check (const char *fname,
 
     if (gretl_file_exists(fname)) {
 	gchar *msg;
-	
+
 	msg = g_strdup_printf("%s\n\n%s\n%s", fname,
 			      _("A file of this name already exists."),
 			      _("OK to overwrite it?"));
@@ -688,7 +699,7 @@ static int overwrite_gfn_check (const char *fname,
 	g_free(msg);
 	if (notified != NULL) {
 	    *notified = 1;
-	}	
+	}
     }
 
     return resp;
@@ -709,7 +720,7 @@ static int install_gfn (function_info *finfo)
     int err = 0;
 
     get_default_dir_for_action(savepath, SAVE_FUNCTIONS);
-    
+
     if (finfo->uses_subdir) {
 	strcat(savepath, finfo_pkgname(finfo));
 	err = gretl_mkdir(savepath);
@@ -722,7 +733,7 @@ static int install_gfn (function_info *finfo)
 
     if (!err) {
 	int resp;
-	
+
 	strcat(savepath, finfo_pkgname(finfo));
 	strcat(savepath, ".gfn");
 	resp = overwrite_gfn_check(savepath, finfo->dlg,
@@ -738,7 +749,7 @@ static int install_gfn (function_info *finfo)
 	msgbox(msg, GTK_MESSAGE_INFO, finfo->dlg);
 	g_free(msg);
     }
-    
+
     return err;
 }
 
@@ -770,7 +781,7 @@ static int finfo_save (function_info *finfo)
 	    gtk_editable_select_region(GTK_EDITABLE(finfo->entries[i]), 0, -1);
 	    gtk_widget_grab_focus(finfo->entries[i]);
 	    return 1;
-	} 
+	}
     }
 
     if (!finfo->pdfdoc) {
@@ -836,10 +847,10 @@ static int finfo_save (function_info *finfo)
     }
 
     if (finfo->fname == NULL) {
-	/* note: the callback from the file selector is 
+	/* note: the callback from the file selector is
 	   save_function_package()
 	*/
-	file_selector_with_parent(SAVE_FUNCTIONS, FSEL_DATA_MISC, 
+	file_selector_with_parent(SAVE_FUNCTIONS, FSEL_DATA_MISC,
 				  finfo, finfo->dlg);
     } else {
 	err = save_function_package(finfo->fname, finfo);
@@ -857,7 +868,7 @@ static void finfo_destroy (GtkWidget *w, function_info *finfo)
     finfo_free(finfo);
 }
 
-static gboolean update_active_func (GtkComboBox *menu, 
+static gboolean update_active_func (GtkComboBox *menu,
 				    function_info *finfo)
 {
     int i = 0;
@@ -879,7 +890,7 @@ static gboolean update_active_func (GtkComboBox *menu,
 }
 
 /* Given a line "function ..." get the function name, with
-   some error checking.  The @s we are given here is at an 
+   some error checking.  The @s we are given here is at an
    offset of 9 bytes into the line, skipping "function ".
 */
 
@@ -948,7 +959,7 @@ static int pretest_funcname (char *buf, const char *origname)
 
 /* callback used when editing a function in the context of the package
    editor: save window-content to file and pass this to gretl_func to
-   revise the function definition.  
+   revise the function definition.
 */
 
 int update_func_code (windata_t *vwin)
@@ -977,7 +988,7 @@ int update_func_code (windata_t *vwin)
     } else {
 	mark_vwin_content_saved(vwin);
 	finfo_set_modified(finfo, TRUE);
-    }    
+    }
 
     return err;
 }
@@ -994,7 +1005,7 @@ static gboolean funcname_limit (gunichar c, gpointer p)
     return (!isalpha(c) && c != '_');
 }
 
-static gint catch_codewin_key (GtkWidget *w, GdkEventKey *event, 
+static gint catch_codewin_key (GtkWidget *w, GdkEventKey *event,
 			       function_info *finfo)
 {
     if (finfo->n_pub + finfo->n_priv < 2) {
@@ -1010,7 +1021,7 @@ static gint catch_codewin_key (GtkWidget *w, GdkEventKey *event,
 	/* Alt + dot */
 	windata_t *vwin = g_object_get_data(G_OBJECT(w), "vwin");
 	GtkTextView *view = GTK_TEXT_VIEW(vwin->text);
-	GtkTextBuffer *buf = gtk_text_view_get_buffer(view); 
+	GtkTextBuffer *buf = gtk_text_view_get_buffer(view);
 	GtkTextMark *mark = gtk_text_buffer_get_insert(buf);
 	GtkTextIter iter, istart, iend;
 	gchar *word = NULL;
@@ -1057,7 +1068,7 @@ static void finfo_add_codewin (function_info *finfo, windata_t *vwin)
     finfo->codewins = g_list_append(finfo->codewins, vwin);
 
     g_object_set_data(G_OBJECT(vwin->main), "vwin", vwin);
-    g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 
+    g_signal_connect(G_OBJECT(vwin->main), "key-press-event",
 		     G_CALLBACK(catch_codewin_key), finfo);
     g_signal_connect(G_OBJECT(vwin->main), "destroy",
 		     G_CALLBACK(finfo_remove_codewin),
@@ -1116,11 +1127,11 @@ static void edit_code_callback (GtkWidget *w, function_info *finfo)
 
     if (bufopen(&prn)) {
 	return;
-    }    
+    }
 
     gretl_function_print_code(fun, tabwidth, prn);
 
-    vwin = view_buffer(prn, SCRIPT_WIDTH, SCRIPT_HEIGHT, 
+    vwin = view_buffer(prn, SCRIPT_WIDTH, SCRIPT_HEIGHT,
 		       finfo->active, EDIT_PKG_CODE, finfo);
 
     if (vwin != NULL) {
@@ -1170,19 +1181,19 @@ gchar *package_sample_get_script (windata_t *vwin)
 		if (!strncmp(p, pkgname, n)) {
 		    g_strlcat(ret, "# ", retsize);
 		    done = 1;
-		} 
+		}
 	    }
 	}
 	g_strlcat(ret, line, retsize);
     }
 
-    bufgets_finalize(buf);   
+    bufgets_finalize(buf);
     g_free(buf);
 
     n = strlen(ret);
     if (ret[n-1] != '\n') {
 	g_strlcat(ret, "\n", retsize);
-    }    
+    }
 
     return ret;
 }
@@ -1238,7 +1249,7 @@ void update_gfn_help_text (windata_t *vwin)
 		text = NULL;
 	    }
 	}
-	
+
 	g_free(text);
 	mark_vwin_content_saved(vwin);
 	finfo_set_modified(finfo, TRUE);
@@ -1286,7 +1297,7 @@ static void edit_sample_callback (GtkWidget *w, function_info *finfo)
     } else {
 	pputs(prn, finfo->sample);
 	pputc(prn, '\n');
-    } 
+    }
 
     finfo->samplewin = view_buffer(prn, 78, 350, title,
 				   EDIT_PKG_SAMPLE, finfo);
@@ -1332,7 +1343,7 @@ static void add_remove_callback (GtkWidget *w, function_info *finfo)
 static void gfn_to_script_callback (function_info *finfo)
 {
     gint resp;
-    
+
     if (finfo->n_pub + finfo->n_priv == 0) {
 	warnbox("No code to save");
 	return;
@@ -1343,7 +1354,7 @@ static void gfn_to_script_callback (function_info *finfo)
 				    _("Saving packaged functions as script:\n"
 				      "include the sample script?"),
 				    finfo->dlg);
-	
+
 	if (canceled(resp)) {
 	    return;
 	}
@@ -1355,7 +1366,7 @@ static void gfn_to_script_callback (function_info *finfo)
 	}
     }
 
-    file_selector_with_parent(SAVE_FUNCTIONS_AS, FSEL_DATA_MISC, 
+    file_selector_with_parent(SAVE_FUNCTIONS_AS, FSEL_DATA_MISC,
 			      finfo, finfo->dlg);
 }
 
@@ -1434,7 +1445,7 @@ static void sensitize_auxname_entry (GtkToggleButton *button,
 				     GtkWidget *w)
 {
     gboolean s = gtk_toggle_button_get_active(button);
-	
+
     gtk_widget_set_sensitive(w, s);
 }
 
@@ -1460,7 +1471,7 @@ static int gfn_spec_save_dialog (function_info *finfo,
 	WRITE_SAMPFILE,
 	WRITE_HELPFILE,
 	WRITE_GUI_HELP
-    };    
+    };
     struct spec_info sinfo;
     GtkWidget *dialog, *entry;
     GtkWidget *vbox, *hbox, *w;
@@ -1477,7 +1488,7 @@ static int gfn_spec_save_dialog (function_info *finfo,
 	gretl_dialog_new(NULL, finfo->dlg, GRETL_DLG_BLOCK);
     g_signal_connect(G_OBJECT(dialog), "destroy",
 		     G_CALLBACK(nullify_spec_dialog), finfo);
-    
+
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
     pkgname = finfo_pkgname(finfo);
@@ -1514,7 +1525,7 @@ static int gfn_spec_save_dialog (function_info *finfo,
 	gtk_entry_set_max_length(GTK_ENTRY(entry), 64);
 	gtk_entry_set_width_chars(GTK_ENTRY(entry), 28);
 	gtk_entry_set_text(GTK_ENTRY(entry), tmp);
-	g_signal_connect(G_OBJECT(w), "toggled", 
+	g_signal_connect(G_OBJECT(w), "toggled",
 			 G_CALLBACK(sensitize_auxname_entry),
 			 entry);
 	gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, j, j+1);
@@ -1526,7 +1537,7 @@ static int gfn_spec_save_dialog (function_info *finfo,
 
     cancel_delete_button(hbox, dialog);
     w = ok_button(hbox);
-    g_signal_connect(G_OBJECT(w), "clicked", 
+    g_signal_connect(G_OBJECT(w), "clicked",
 		     G_CALLBACK(spec_save_ok), &sinfo);
     gtk_widget_grab_default(w);
 
@@ -1570,8 +1581,8 @@ static void gfn_to_spec_callback (function_info *finfo)
     if (finfo->specdlg != NULL) {
 	gtk_window_present(GTK_WINDOW(finfo->specdlg));
 	return;
-    }    
-    
+    }
+
     if (finfo->pkg == NULL) {
 	warnbox(_("Please save your package first"));
 	return;
@@ -1582,7 +1593,7 @@ static void gfn_to_spec_callback (function_info *finfo)
     }
     if (texts[1] != NULL && finfo->pdfdoc) {
 	texts[1] = NULL;
-    }    
+    }
     if (texts[2] == NULL) {
 	texts[2] = function_package_get_string(finfo->pkg, "gui-help");
     }
@@ -1592,7 +1603,7 @@ static void gfn_to_spec_callback (function_info *finfo)
     }
 
     if (!canceled(resp)) {
-	file_selector_with_parent(SAVE_GFN_SPEC, FSEL_DATA_MISC, 
+	file_selector_with_parent(SAVE_GFN_SPEC, FSEL_DATA_MISC,
 				  finfo, finfo->dlg);
     }
 }
@@ -1698,7 +1709,7 @@ static int finfo_set_function_names (function_info *finfo,
     return err;
 }
 
-static void func_selector_set_strings (function_info *finfo, 
+static void func_selector_set_strings (function_info *finfo,
 				       GtkWidget *ifmenu)
 {
     int i, n = 0;
@@ -1736,7 +1747,7 @@ static void dreq_select (GtkComboBox *menu, function_info *finfo)
     finfo_set_modified(finfo, TRUE);
 }
 
-static void add_data_requirement_menu (GtkWidget *tbl, int i, 
+static void add_data_requirement_menu (GtkWidget *tbl, int i,
 				       function_info *finfo)
 {
     const char *datareq[] = {
@@ -1790,12 +1801,12 @@ static void pdf_toggled_callback (GtkToggleButton *button,
    finfo->pdfname. Now the user is trying to build a
    zipfile, so we need to determine if the PDF is already
    in place or has to be copied from somewhere else,
-   then do the copying if need be. 
+   then do the copying if need be.
 
    "Already in place" means that the basename of the PDF is
    the same as the package name, and the file is either in
    the same directory as the gfn or in a subdirectory named
-   "doc". 
+   "doc".
 */
 
 static int maybe_copy_pdf_file (function_info *finfo)
@@ -1803,9 +1814,9 @@ static int maybe_copy_pdf_file (function_info *finfo)
     char *p, targ[FILENAME_MAX];
     int copy = 1;
     int err = 0;
-    
+
     switch_ext(targ, finfo->fname, "pdf");
-    
+
     if (!strcmp(targ, finfo->pdfname)) {
 	copy = 0;
     } else if ((p = path_last_slash(targ)) != NULL) {
@@ -1825,7 +1836,7 @@ static int maybe_copy_pdf_file (function_info *finfo)
 	switch_ext(targ, targ, "pdf");
 	if (!strcmp(targ, finfo->pdfname)) {
 	    copy = 0;
-	}	    
+	}
     }
 
     if (copy) {
@@ -1862,7 +1873,7 @@ static gboolean pdf_press_callback (GtkWidget *button,
 		  "will be lost when the package is saved.\n\n");
 
 	query = N_("Switch to PDF help now?");
-	
+
 	text = g_strconcat(_(msg1), _(msg2), _(query), NULL);
 	resp = yes_no_dialog(NULL, text, finfo->dlg);
 	g_free(text);
@@ -1897,7 +1908,7 @@ void get_gfn_pdf_dir (char *dirname, gpointer p)
 	    *s = '\0';
 	} else {
 	    *dirname = '\0';
-	}	
+	}
     } else if (finfo->fname != NULL) {
 	strcpy(dirname, finfo->fname);
 	s = path_last_slash(dirname);
@@ -1938,14 +1949,14 @@ static void add_help_radios (GtkWidget *tbl, int i,
     htab = gtk_table_new(2, 2, TRUE);
     gtk_table_set_row_spacings(GTK_TABLE(htab), 4);
     gtk_table_set_col_spacings(GTK_TABLE(htab), 2);
-   
+
     rb = gtk_radio_button_new_with_label(group, _("Plain text"));
     gtk_table_attach_defaults(GTK_TABLE(htab), rb, 0, 1, 0, 1);
     w = gtk_button_new_from_stock(GTK_STOCK_EDIT);
     g_signal_connect(G_OBJECT(w), "clicked",
 		     G_CALLBACK(regular_help_text_callback), finfo);
     gtk_table_attach_defaults(GTK_TABLE(htab), w, 1, 2, 0, 1);
-    sensitize_conditional_on(w, rb);    
+    sensitize_conditional_on(w, rb);
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(rb));
     rb = gtk_radio_button_new_with_label(group, _("PDF file"));
@@ -1972,7 +1983,7 @@ enum {
     OLD_TO_NEW,
     NEW_TO_OLD,
     FOR_DISPLAY
-};   
+};
 
 static int translate_program_version (int v, int trans)
 {
@@ -2017,7 +2028,7 @@ static int translate_program_version (int v, int trans)
 	}
 	if (trans == NEW_TO_OLD && v < vtrans[0][1]) {
 	    return vtrans[0][0];
-	}	
+	}
     }
 
     return trans == FOR_DISPLAY ? 0 : 20151;
@@ -2036,7 +2047,7 @@ static void set_oldver_label (GtkWidget *label, int minver)
 	gretl_version_string(vstr + 1, oldv);
 	strcat(vstr, ")");
 	gtk_label_set_text(GTK_LABEL(label), vstr);
-    }    
+    }
 }
 
 static void adjust_minver (GtkSpinButton *b, function_info *finfo)
@@ -2079,7 +2090,7 @@ static char int_to_letter (int i)
     return 'a';
 }
 
-static gint version_input (GtkSpinButton *spin, 
+static gint version_input (GtkSpinButton *spin,
 			   gdouble *new_val,
 			   gpointer p)
 {
@@ -2103,7 +2114,7 @@ static gboolean version_output (GtkSpinButton *spin, gpointer p)
     return TRUE;
 }
 
-static void add_minver_selector (GtkWidget *tbl, int i, 
+static void add_minver_selector (GtkWidget *tbl, int i,
 				 function_info *finfo)
 {
     GtkWidget *label, *spin, *hbox;
@@ -2144,14 +2155,14 @@ static void add_minver_selector (GtkWidget *tbl, int i,
     g_signal_connect(G_OBJECT(spin), "value-changed",
    		     G_CALLBACK(adjust_minver), finfo);
     g_signal_connect(G_OBJECT(spin), "input",
-		     G_CALLBACK(version_input), NULL);	
+		     G_CALLBACK(version_input), NULL);
     g_signal_connect(G_OBJECT(spin), "output",
-		     G_CALLBACK(version_output), NULL);	
+		     G_CALLBACK(version_output), NULL);
     gtk_entry_set_width_chars(GTK_ENTRY(spin), 5);
 #if GTK_MAJOR_VERSION == 3 && GTK_MINOR_VERSION >= 12
     /* remedy required for gtk3 */
     gtk_entry_set_max_width_chars(GTK_ENTRY(spin), 5);
-#endif    
+#endif
     gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 2);
 
     /* translation to old-style version? */
@@ -2297,7 +2308,7 @@ static void tagsel_callback (GtkComboBox *combo,
     }
 }
 
-static void add_tag_selectors (GtkWidget *tbl, int i, 
+static void add_tag_selectors (GtkWidget *tbl, int i,
 			       function_info *finfo)
 {
     GtkWidget *tmp, *hbox, *combo;
@@ -2306,7 +2317,7 @@ static void add_tag_selectors (GtkWidget *tbl, int i,
     char **S = NULL;
     int n_tags = 0;
     int j, err;
-	
+
     err = list_remote_function_categories(&getbuf);
 
     if (err || getbuf == NULL || *getbuf != 'C') {
@@ -2339,8 +2350,8 @@ static void add_tag_selectors (GtkWidget *tbl, int i,
 	}
 	gtk_misc_set_alignment(GTK_MISC(tmp), 1.0, 0.5);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, i, i+1);
-	gtk_widget_show(tmp);    
-    
+	gtk_widget_show(tmp);
+
 	finfo->tagsel[j] = combo = gtk_combo_box_text_new();
 	combo_box_append_text(combo, _("none"));
 	while (bufgets(line, sizeof line, getbuf)) {
@@ -2357,7 +2368,7 @@ static void add_tag_selectors (GtkWidget *tbl, int i,
 	if (j > 0 && n_tags == 0) {
 	    gtk_widget_set_sensitive(combo, FALSE);
 	}
-	
+
 	hbox = gtk_hbox_new(FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 2);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 1, 2, i, i+1);
@@ -2395,7 +2406,7 @@ static const gchar *get_user_string (void)
 
 static void insert_today (GtkWidget *w, GtkWidget *entry)
 {
-    gtk_entry_set_text(GTK_ENTRY(entry), print_today());    
+    gtk_entry_set_text(GTK_ENTRY(entry), print_today());
 }
 
 static gint today_popup (GtkWidget *entry, GdkEventButton *event,
@@ -2413,13 +2424,13 @@ static gint today_popup (GtkWidget *entry, GdkEventButton *event,
 	*popup = menu;
     }
 
-    gtk_menu_popup(GTK_MENU(*popup), NULL, NULL, NULL, NULL, 
+    gtk_menu_popup(GTK_MENU(*popup), NULL, NULL, NULL, NULL,
 		   event->button, event->time);
 
     return TRUE;
 }
 
-static gint query_save_package (GtkWidget *w, GdkEvent *event, 
+static gint query_save_package (GtkWidget *w, GdkEvent *event,
 				function_info *finfo)
 {
     if (finfo->modified) {
@@ -2445,7 +2456,7 @@ static GtkTreeStore *make_menu_attachment_tree (function_info *finfo,
 						GtkTreePath **ppath,
 						int modelwin)
 {
-    const char *main_items = 
+    const char *main_items =
 	"0 Tools\n"
 	"0 Data\n"
 	"0 View\n"
@@ -2457,7 +2468,7 @@ static GtkTreeStore *make_menu_attachment_tree (function_info *finfo,
 	"1 URTests\n"
 	"1 Filter\n"
 	"0 Model\n"
-	"1 ivreg\n"  
+	"1 ivreg\n"
 	"1 LinearModels\n"
 	"1 LimdepModels\n"
 	"2 logit\n"
@@ -2467,7 +2478,7 @@ static GtkTreeStore *make_menu_attachment_tree (function_info *finfo,
 	"2 TSMulti\n"
 	"1 PanelModels\n"
 	"1 RobustModels\n";
-    const char *model_items = 
+    const char *model_items =
 	"0 Tests\n"
 	"0 Save\n"
 	"0 Graphs\n"
@@ -2503,13 +2514,13 @@ static GtkTreeStore *make_menu_attachment_tree (function_info *finfo,
 	    gtk_tree_store_append(store, &parents[0], NULL);
 	    iterp = &parents[0];
 	} else if (level == 1) {
-	    path = g_strdup_printf("%s/%s/%s", leader, words[0], 
+	    path = g_strdup_printf("%s/%s/%s", leader, words[0],
 				   words[1]);
 	    gtk_tree_store_append(store, &parents[1], &parents[0]);
 	    iterp = &parents[1];
 	} else {
-	    path = g_strdup_printf("%s/%s/%s/%s", leader, words[0], 
-				   words[1], words[2]); 
+	    path = g_strdup_printf("%s/%s/%s/%s", leader, words[0],
+				   words[1], words[2]);
 	    gtk_tree_store_append(store, &iter, &parents[1]);
 	    iterp = &iter;
 	}
@@ -2517,7 +2528,7 @@ static GtkTreeStore *make_menu_attachment_tree (function_info *finfo,
 	if (finfo->menupath != NULL && !strcmp(path, finfo->menupath)) {
 	    /* record the path of pre-selected menu entry */
 	    *ppath = gtk_tree_model_get_path(GTK_TREE_MODEL(store), iterp);
-	}	
+	}
 	g_free(path);
 	g_free(ustr);
 	s += strlen(word) + 1;
@@ -2526,7 +2537,7 @@ static GtkTreeStore *make_menu_attachment_tree (function_info *finfo,
     return store;
 }
 
-static GtkWidget *add_menu_navigator (GtkWidget *holder, 
+static GtkWidget *add_menu_navigator (GtkWidget *holder,
 				      function_info *finfo,
 				      int modelwin)
 {
@@ -2570,7 +2581,7 @@ static GtkWidget *add_menu_navigator (GtkWidget *holder,
 
 	sw = finfo->treewin = gtk_scrolled_window_new(NULL, NULL);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw),
-				       GTK_POLICY_AUTOMATIC, 
+				       GTK_POLICY_AUTOMATIC,
 				       GTK_POLICY_AUTOMATIC);
 	gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw),
 					    GTK_SHADOW_IN);
@@ -2646,7 +2657,7 @@ access_request_button (GtkWidget *holder,
 }
 
 static void switch_menu_view (GtkComboBox *combo,
-			      function_info *finfo) 
+			      function_info *finfo)
 {
     int w = gtk_combo_box_get_active(combo);
     GtkWidget *sw = finfo->treewin;
@@ -2678,7 +2689,7 @@ static void switch_menu_view (GtkComboBox *combo,
     if (finfo->mreq_combo != NULL) {
 	GtkWidget *l = g_object_get_data(G_OBJECT(finfo->mreq_combo),
 					 "label");
-	
+
 	gtk_widget_set_sensitive(finfo->mreq_combo,
 				 w == MODEL_WINDOW);
 	gtk_widget_set_sensitive(l, w == MODEL_WINDOW);
@@ -2711,6 +2722,33 @@ static void add_data_files_entries (GtkWidget *holder,
     }
 }
 
+static void add_dependency_entries (GtkWidget *holder,
+				    function_info *finfo)
+{
+    const char *msg = N_("You may add or delete names of packages "
+			 "to be recorded as dependencies.\nInclude the "
+			 ".gfn or .zip suffix.");
+    GtkWidget *w, *hbox, *entry;
+    int i;
+
+    w = gtk_label_new(_(msg));
+    gtk_label_set_line_wrap(GTK_LABEL(w), TRUE);
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
+
+    for (i=0; i<N_DEP_ENTRIES; i++) {
+	hbox = gtk_hbox_new(FALSE, 5);
+	finfo->dep_entries[i] = entry = gtk_entry_new();
+	gtk_entry_set_width_chars(GTK_ENTRY(entry), 32);
+	if (i < finfo->n_depends) {
+	    gtk_entry_set_text(GTK_ENTRY(entry), finfo->depends[i]);
+	}
+	gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
+    }
+}
+
 static void gui_help_text_callback (GtkButton *b, function_info *finfo)
 {
     const char *pkgname;
@@ -2723,7 +2761,7 @@ static void gui_help_text_callback (GtkButton *b, function_info *finfo)
     }
 
     if (finfo->gui_help == NULL) {
-	const char *msg = 
+	const char *msg =
 	    N_("This package has no GUI-specific help text at present.\n"
 	       "Would you like to add some?");
 
@@ -2742,7 +2780,7 @@ static void gui_help_text_callback (GtkButton *b, function_info *finfo)
     if (finfo->gui_help != NULL) {
 	pputs(prn, finfo->gui_help);
 	pputc(prn, '\n');
-    } 
+    }
 
     finfo->gui_helpwin = view_buffer(prn, HELP_WIDTH, HELP_HEIGHT, title,
 				     EDIT_PKG_GHLP, finfo);
@@ -2775,7 +2813,7 @@ static void regular_help_text_callback (GtkButton *b, function_info *finfo)
     if (finfo->help != NULL) {
 	pputs(prn, finfo->help);
 	pputc(prn, '\n');
-    } 
+    }
 
     finfo->helpwin = view_buffer(prn, HELP_WIDTH, HELP_HEIGHT, title,
 				 EDIT_PKG_HELP, finfo);
@@ -2811,9 +2849,9 @@ static void add_menu_attach_top (GtkWidget *holder,
     w = gtk_label_new(_("Window"));
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
     combo = gtk_combo_box_text_new();
-    combo_box_append_text(combo, _("none"));    
-    combo_box_append_text(combo, _("main window"));    
-    combo_box_append_text(combo, _("model window"));    
+    combo_box_append_text(combo, _("none"));
+    combo_box_append_text(combo, _("main window"));
+    combo_box_append_text(combo, _("model window"));
     gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), finfo->menuwin);
     g_signal_connect(G_OBJECT(combo), "changed",
@@ -2860,7 +2898,7 @@ static int process_menu_attachment (function_info *finfo,
     int changed = 0;
 
     view = finfo->currtree;
-    
+
     entry = g_object_get_data(G_OBJECT(finfo->extra), "label-entry");
     label = entry_box_get_trimmed_text(entry);
 
@@ -2894,7 +2932,7 @@ static int process_menu_attachment (function_info *finfo,
 	}
 	finfo->menuwin = NO_WINDOW;
 	goto finish;
-    }	
+    }
 
     selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
 
@@ -2988,7 +3026,7 @@ static int process_special_functions (function_info *finfo,
 
     c_array = g_object_get_data(G_OBJECT(finfo->extra), "combo-array");
 
-    /* For each special function slot, check to see if the 
+    /* For each special function slot, check to see if the
        currently selected function differs from what was
        present originally, and if so update the record in
        @finfo->specials. The changes are not yet saved to
@@ -2997,7 +3035,7 @@ static int process_special_functions (function_info *finfo,
 
     for (i=0; i<N_SPECIALS && !err; i++) {
 	int role = i + 1;
-	
+
 	if (gtk_widget_is_sensitive(c_array[i])) {
 	    int fn_changed = 0, attr_changed = 0;
 	    int newnull = 0, oldnull = 0;
@@ -3006,12 +3044,12 @@ static int process_special_functions (function_info *finfo,
 
 	    /* retrieve and check the selected name */
 	    newfun = combo_box_get_active_text(GTK_COMBO_BOX(c_array[i]));
-	    newnull = (newfun == NULL || *newfun == '\0' || 
+	    newnull = (newfun == NULL || *newfun == '\0' ||
 		       !strcmp(newfun, "none"));
 
 	    /* retrieve and check what was there before */
 	    oldfun = finfo->specials[i];
-	    oldnull = (oldfun == NULL || *oldfun == '\0' || 
+	    oldnull = (oldfun == NULL || *oldfun == '\0' ||
 		       !strcmp(oldfun, "none"));
 
 	    if (want_no_print_toggle(role)) {
@@ -3055,7 +3093,7 @@ static int process_special_functions (function_info *finfo,
 	    if (fn_changed || attr_changed) {
 		n_changed++;
 	    }
-	    
+
 	    g_free(newfun);
 	}
     }
@@ -3128,7 +3166,7 @@ static int data_file_check_existence (function_info *finfo,
 	gchar *msg;
 
 	msg = g_strdup_printf(_("Couldn't find %s"), test);
-	msgbox(msg, GTK_MESSAGE_WARNING, finfo->extra);	
+	msgbox(msg, GTK_MESSAGE_WARNING, finfo->extra);
 	g_free(msg);
 	return 1;
     }
@@ -3178,7 +3216,7 @@ static int process_data_file_names (function_info *finfo,
 
 	if (finfo->datafiles != NULL) {
 	    int j = 0, err = 0;
-	    
+
 	    for (i=0; i<N_FILE_ENTRIES; i++) {
 		fname = entry_box_get_trimmed_text(finfo->file_entries[i]);
 		if (fname != NULL) {
@@ -3189,7 +3227,63 @@ static int process_data_file_names (function_info *finfo,
 		}
 		g_free(fname);
 	    }
-	}	
+	}
+    }
+
+    return changed;
+}
+
+/* pertaining to the "extra properties" dialog: check for
+   any changes in relation to dependencies
+*/
+
+static int process_dependency_names (function_info *finfo,
+				     gboolean make_changes)
+{
+    gchar *dname;
+    int i, nd = 0;
+    int changed = 0;
+
+    for (i=0; i<N_DEP_ENTRIES; i++) {
+	dname = entry_box_get_trimmed_text(finfo->dep_entries[i]);
+	if (dname != NULL) {
+	    nd++;
+	    if (i < finfo->n_depends &&
+		strcmp(dname, finfo->depends[i])) {
+		changed = 1;
+	    }
+	}
+	g_free(dname);
+    }
+
+    if (!changed && nd != finfo->n_depends) {
+	/* added or deleted */
+	changed = 1;
+    }
+
+    if (changed && make_changes) {
+	strings_array_free(finfo->depends, finfo->n_depends);
+	if (nd == 0) {
+	    finfo->depends = NULL;
+	    finfo->n_depends = 0;
+	} else {
+	    finfo->depends = strings_array_new(nd);
+	    if (finfo->depends != NULL) {
+		finfo->n_depends = nd;
+	    }
+	}
+
+	if (finfo->depends != NULL) {
+	    int j = 0, err = 0;
+
+	    for (i=0; i<N_DEP_ENTRIES; i++) {
+		dname = entry_box_get_trimmed_text(finfo->dep_entries[i]);
+		if (dname != NULL) {
+		    finfo->depends[j++] = gretl_strdup(dname);
+		}
+		g_free(dname);
+	    }
+	}
     }
 
     return changed;
@@ -3211,6 +3305,7 @@ static int process_extra_properties (function_info *finfo,
     }
 
     changed += process_data_file_names(finfo, make_changes);
+    changed += process_dependency_names(finfo, make_changes);
 
     if (changed && make_changes) {
 	finfo_set_modified(finfo, TRUE);
@@ -3238,11 +3333,11 @@ static void extra_properties_close (GtkWidget *w, function_info *finfo)
 	    process_extra_properties(finfo, TRUE);
 	}
     }
-    
+
     gtk_widget_destroy(finfo->extra);
 }
 
-static gint query_save_extra_props (GtkWidget *w, GdkEvent *event, 
+static gint query_save_extra_props (GtkWidget *w, GdkEvent *event,
 				    function_info *finfo)
 {
     int changed = process_extra_properties(finfo, FALSE);
@@ -3257,7 +3352,7 @@ static gint query_save_extra_props (GtkWidget *w, GdkEvent *event,
 	    process_extra_properties(finfo, TRUE);
 	}
     }
-    
+
     return FALSE;
 }
 
@@ -3273,7 +3368,7 @@ static void sensitize_attr_toggles (GObject *obj, gboolean s)
     cb = g_object_get_data(obj, "mo-toggle");
     if (cb != NULL) {
 	gtk_widget_set_sensitive(cb, s);
-    }    
+    }
 }
 
 /* Prevent the user from assigning a given function to more
@@ -3282,7 +3377,7 @@ static void sensitize_attr_toggles (GObject *obj, gboolean s)
    role, deselect it in that role.
 */
 
-static void special_changed_callback (GtkComboBox *this, 
+static void special_changed_callback (GtkComboBox *this,
 				      function_info *finfo)
 {
     GtkWidget **c_array;
@@ -3324,13 +3419,15 @@ static void finfo_extra_help (GtkWidget *w, function_info *finfo)
 
     notebook = g_object_get_data(G_OBJECT(finfo->extra), "book");
     page = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
-    
+
     if (page == 0) {
 	show_gui_help(GUI_FUNCS);
     } else if (page == 1) {
 	show_gui_help(MENU_ATTACH);
-    } else {
+    } else if (page == 2) {
 	show_gui_help(PKG_FILES);
+    } else {
+	show_gui_help(PKG_DEPS);
     }
 }
 
@@ -3379,7 +3476,7 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
 			   GRETL_DLG_BLOCK | GRETL_DLG_RESIZE);
     finfo->extra = dlg;
     g_signal_connect(G_OBJECT(dlg), "delete-event",
-		     G_CALLBACK(query_save_extra_props), finfo);    
+		     G_CALLBACK(query_save_extra_props), finfo);
     g_signal_connect(G_OBJECT(dlg), "destroy",
 		     G_CALLBACK(gtk_widget_destroyed), &finfo->extra);
     g_signal_connect(G_OBJECT(dlg), "destroy",
@@ -3393,7 +3490,7 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     vbox = gtk_vbox_new(FALSE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 5);
     tmp = gtk_label_new(_("Special functions"));
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, tmp);  
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, tmp);
 
     table = gtk_table_new(N_SPECIALS, tabcols, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(table), 5);
@@ -3401,7 +3498,7 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
 
     nfuns = finfo->n_priv + finfo->n_pub;
     combo_array = g_malloc(N_SPECIALS * sizeof *combo_array);
-    g_object_set_data_full(G_OBJECT(dlg), "combo-array", 
+    g_object_set_data_full(G_OBJECT(dlg), "combo-array",
 			   combo_array, g_free);
 
     /* For each "special" function role, test the functions
@@ -3445,8 +3542,8 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
 	if (n_cands == 0) {
 	    gtk_widget_set_sensitive(combo, FALSE);
 	} else {
-	    g_signal_connect(G_OBJECT(combo), "changed", 
-			     G_CALLBACK(special_changed_callback), 
+	    g_signal_connect(G_OBJECT(combo), "changed",
+			     G_CALLBACK(special_changed_callback),
 			     finfo);
 	}
 	combo_array[i] = combo;
@@ -3469,7 +3566,7 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
 	    gtk_widget_set_sensitive(cb, selected > 0);
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(cb),
 					 finfo->gui_attrs[i] & UFUN_MENU_ONLY);
-	}	
+	}
     }
 
     hbox = gtk_hbox_new(FALSE, 5);
@@ -3493,26 +3590,34 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     gtk_widget_set_sensitive(finfo->currtree, finfo->menuwin != NO_WINDOW);
 
     /* the data files page */
-    
+
     vbox = gtk_vbox_new(FALSE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 5);
     tmp = gtk_label_new(_("Data files"));
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, tmp);
     add_data_files_entries(vbox, finfo);
 
+    /* the dependencies page */
+
+    vbox = gtk_vbox_new(FALSE, 0);
+    gtk_container_set_border_width(GTK_CONTAINER(vbox), 5);
+    tmp = gtk_label_new(_("Dependencies"));
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, tmp);
+    add_dependency_entries(vbox, finfo);
+
     /* the common buttons area */
-    
+
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
 
     /* Apply button */
     tmp = apply_button(hbox);
-    g_signal_connect(G_OBJECT(tmp), "clicked", 
+    g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(extra_properties_apply), finfo);
     gtk_widget_grab_default(tmp);
 
     /* Close button */
     tmp = close_button(hbox);
-    g_signal_connect(G_OBJECT(tmp), "clicked", 
+    g_signal_connect(G_OBJECT(tmp), "clicked",
                      G_CALLBACK(extra_properties_close), finfo);
 
     /* Help button */
@@ -3520,7 +3625,7 @@ static void extra_properties_dialog (GtkWidget *w, function_info *finfo)
     gtk_container_add(GTK_CONTAINER(hbox), tmp);
     gtk_button_box_set_child_secondary(GTK_BUTTON_BOX(hbox),
 				       tmp, TRUE);
-    g_signal_connect(G_OBJECT(tmp), "clicked", 
+    g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(finfo_extra_help),
 		     finfo);
 
@@ -3532,7 +3637,7 @@ int package_editor_exit_check (GtkWidget *w)
     function_info *finfo;
 
     finfo = g_object_get_data(G_OBJECT(w), "finfo");
-    
+
     if (finfo != NULL && finfo->modified) {
 	gtk_window_present(GTK_WINDOW(w));
 	return query_save_package(w, NULL, finfo);
@@ -3550,10 +3655,10 @@ int query_package_editor (GtkWidget *w, const char *pkgname)
     function_info *finfo;
 
     finfo = g_object_get_data(G_OBJECT(w), "finfo");
-    
+
     if (finfo != NULL && finfo->pkg != NULL) {
 	const char *myname = function_package_get_name(finfo->pkg);
-	
+
 	return strcmp(pkgname, myname) == 0;
     }
 
@@ -3573,7 +3678,7 @@ void *package_editor_get_pkg (GtkWidget *w)
     return NULL;
 }
 
-static void delete_dlg_callback (GtkWidget *button, function_info *finfo) 
+static void delete_dlg_callback (GtkWidget *button, function_info *finfo)
 {
     gint resp = 0;
 
@@ -3582,7 +3687,7 @@ static void delete_dlg_callback (GtkWidget *button, function_info *finfo)
     }
 
     if (!resp) {
-	gtk_widget_destroy(finfo->dlg); 
+	gtk_widget_destroy(finfo->dlg);
     }
 }
 
@@ -3630,7 +3735,7 @@ static void finfo_dialog (function_info *finfo)
     gtk_widget_set_name(finfo->dlg, "pkg-editor");
     g_signal_connect(G_OBJECT(finfo->dlg), "delete-event",
 		     G_CALLBACK(query_save_package), finfo);
-    g_signal_connect(G_OBJECT(finfo->dlg), "destroy", 
+    g_signal_connect(G_OBJECT(finfo->dlg), "destroy",
 		     G_CALLBACK(finfo_destroy), finfo);
 
     vbox = gtk_vbox_new(FALSE, 5);
@@ -3726,7 +3831,7 @@ static void finfo_dialog (function_info *finfo)
     /* 1: edit code button */
     button = gtk_button_new_with_label(_("Edit function code"));
     gtk_table_attach_defaults(GTK_TABLE(tbl), button, 0, 1, 0, 1);
-    g_signal_connect(G_OBJECT(button), "clicked", 
+    g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(edit_code_callback), finfo);
 
     /* 2: interface selector */
@@ -3740,7 +3845,7 @@ static void finfo_dialog (function_info *finfo)
     /* 3: extra package properties button */
     button = gtk_button_new_with_label(_("Extra properties"));
     gtk_table_attach_defaults(GTK_TABLE(tbl), button, 2, 3, 0, 1);
-    g_signal_connect(G_OBJECT(button), "clicked", 
+    g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(extra_properties_dialog), finfo);
 
     /* 4: save-menu button */
@@ -3748,21 +3853,21 @@ static void finfo_dialog (function_info *finfo)
     button = gtk_button_new_with_label(tmp);
     g_free(tmp);
     gtk_table_attach_defaults(GTK_TABLE(tbl), button, 3, 4, 0, 1);
-    g_signal_connect(G_OBJECT(button), "clicked", 
-		     G_CALLBACK(pkg_save_popup), finfo);    
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(pkg_save_popup), finfo);
 
     /* second button row */
 
     /* 1: edit sample script button */
     button = gtk_button_new_with_label(_("Edit sample script"));
     gtk_table_attach_defaults(GTK_TABLE(tbl), button, 0, 1, 1, 2);
-    g_signal_connect(G_OBJECT(button), "clicked", 
+    g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(edit_sample_callback), finfo);
 
     /* 2: add/remove functions button */
     button = gtk_button_new_with_label(_("Add/remove functions"));
     gtk_table_attach_defaults(GTK_TABLE(tbl), button, 1, 2, 1, 2);
-    g_signal_connect(G_OBJECT(button), "clicked", 
+    g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(add_remove_callback), finfo);
 
     /* 3: validate button */
@@ -3776,8 +3881,8 @@ static void finfo_dialog (function_info *finfo)
     /* 4: close button */
     button = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
     gtk_table_attach_defaults(GTK_TABLE(tbl), button, 3, 4, 1, 2);
-    g_signal_connect(G_OBJECT(button), "clicked", 
-		     G_CALLBACK(delete_dlg_callback), finfo);       
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(delete_dlg_callback), finfo);
 
     finfo_set_modified(finfo, finfo->fname == NULL);
 
@@ -3839,7 +3944,7 @@ static void login_dialog (login_info *linfo, GtkWidget *parent)
 	}
     }
 
-    label_hbox(vbox, 
+    label_hbox(vbox,
 	       _("If you don't have a login to the gretl server\n"
 		 "please see http://gretl.ecn.wfu.edu/cgi-bin/apply/.\n"
 		 "The 'Website' button below should open this page\n"
@@ -3850,7 +3955,7 @@ static void login_dialog (login_info *linfo, GtkWidget *parent)
 
     /* Cancel */
     button = cancel_button(hbox);
-    g_signal_connect(G_OBJECT(button), "clicked", 
+    g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(delete_widget), linfo->dlg);
 
     /* OK */
@@ -3865,7 +3970,7 @@ static void login_dialog (login_info *linfo, GtkWidget *parent)
     gtk_container_add(GTK_CONTAINER(hbox), button);
     gtk_button_box_set_child_secondary(GTK_BUTTON_BOX(hbox),
 				       button, TRUE);
-    g_signal_connect(G_OBJECT(button), "clicked", 
+    g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(web_get_login), NULL);
 
     gtk_widget_show_all(linfo->dlg);
@@ -3893,7 +3998,7 @@ static int validate_package_file (const char *fname, int verbose)
     }
 
     sprintf(dtdname, "%sfunctions%cgretlfunc.dtd", gretldir, SLASH);
-    dtd = xmlParseDTD(NULL, (const xmlChar *) dtdname); 
+    dtd = xmlParseDTD(NULL, (const xmlChar *) dtdname);
 
     if (dtd == NULL) {
 	if (verbose) {
@@ -3938,7 +4043,7 @@ static int validate_package_file (const char *fname, int verbose)
 	gretl_print_destroy(prn);
 	xmlFreeValidCtxt(cvp);
 	xmlFreeDtd(dtd);
-    } 
+    }
 
     xmlFreeDoc(doc);
 
@@ -3982,7 +4087,7 @@ static int gui_pkg_make_zipfile (function_info *finfo,
 			       finfo->n_files,
 			       pzipname, dest,
 			       OPT_G, prn);
-    
+
     /* show details of operation */
     vwin = view_buffer(prn, 78, 300, _("build zip file"), BUILD_PKG, NULL);
     gtk_window_set_transient_for(GTK_WINDOW(vwin->main),
@@ -4035,7 +4140,7 @@ static void do_pkg_upload (function_info *finfo)
     if (err) {
 	error_printed = 1;
     } else {
-	err = upload_function_package(linfo.login, linfo.pass, 
+	err = upload_function_package(linfo.login, linfo.pass,
 				      path_last_element(fname),
 				      buf, buflen, &retbuf);
 	fprintf(stderr, "upload_function_package: err = %d\n", err);
@@ -4057,7 +4162,7 @@ static void do_pkg_upload (function_info *finfo)
 	gretl_remove(zipname);
 	g_free(zipname);
     }
-    
+
     g_free(buf);
     free(retbuf);
 
@@ -4071,12 +4176,12 @@ static int upload_precheck_gfn (const char *fname,
     int pdfdoc = 0;
     int n_files = 0;
     int err;
-	    
+
     err = validate_package_file(fname, 0);
     if (err) {
 	return err;
     }
-    
+
     if (package_needs_zipping(fname, &pdfdoc, &datafiles, &n_files)) {
 	int resp;
 
@@ -4165,7 +4270,7 @@ void upload_specified_package (const char *fname)
     if (err) {
 	error_printed = 1;
     } else {
-	err = upload_function_package(linfo.login, linfo.pass, 
+	err = upload_function_package(linfo.login, linfo.pass,
 				      path_last_element(realname),
 				      buf, buflen, &retbuf);
 	fprintf(stderr, "upload_function_package: err = %d\n", err);
@@ -4240,7 +4345,7 @@ static int check_package_filename (const char *fname,
 		     "must be less than 32 characters in length, and must include\n"
 		     "only ASCII letters, numbers and '_'."),
 		   GTK_MESSAGE_ERROR, parent);
-	}	    
+	}
     }
 
     return err;
@@ -4254,7 +4359,7 @@ static int pkg_save_special_functions (function_info *finfo)
     for (i=0; i<N_SPECIALS && !err; i++) {
 	role = i + 1;
 	key = package_role_get_key(role);
-	err = function_set_package_role(finfo->specials[i], 
+	err = function_set_package_role(finfo->specials[i],
 					finfo->pkg,
 					key,
 					NULL);
@@ -4273,7 +4378,7 @@ static int pkg_save_special_functions (function_info *finfo)
 
 /* We're saving a previously saved/installed package, and it
    (now) ought to be in its own subdir (PDF doc or data files
-   have been specified). We check to see if the gfn file is 
+   have been specified). We check to see if the gfn file is
    actually just sitting in /some/path/functions.
 
    If so, we try to move it into its own subdir and adjust
@@ -4318,7 +4423,7 @@ static int maybe_fix_package_location (function_info *finfo)
 	}
 
 	fprintf(stderr, "maybe_fix_package_location: err = %d\n", err);
-    } 
+    }
 
     return err;
 }
@@ -4351,7 +4456,7 @@ int save_function_package (const char *fname, gpointer p)
 	    return err;
 	}
 	finfo->fname = g_strdup(fname);
-    }	
+    }
 
     if (finfo->pkg == NULL) {
 	/* starting from scratch */
@@ -4408,6 +4513,9 @@ int save_function_package (const char *fname, gpointer p)
 	function_package_set_data_files(finfo->pkg,
 					finfo->datafiles,
 					finfo->n_files);
+	function_package_set_depends(finfo->pkg,
+				     finfo->depends,
+				     finfo->n_depends);
     }
 
     if (!err && finfo->uses_subdir) {
@@ -4430,7 +4538,7 @@ int save_function_package (const char *fname, gpointer p)
 	gui_errmsg(err);
     } else {
 	const char *pkgname = function_package_get_name(finfo->pkg);
-	
+
 	retitle_gfn_dialog(finfo, pkgname);
 	finfo_set_modified(finfo, FALSE);
 	gtk_widget_set_sensitive(finfo->validate, TRUE);
@@ -4447,7 +4555,7 @@ int save_function_package (const char *fname, gpointer p)
 	/* destroy the temporary pkgname variable */
 	g_free(finfo->ininame);
 	finfo->ininame = NULL;
-	
+
 	/* revise stored gui package info in accordance with any
 	   changes above, as needed */
 	gui_function_pkg_revise_status(pkgname,
@@ -4523,7 +4631,7 @@ int save_function_package_as_script (const char *fname, gpointer p)
     return 0;
 }
 
-static void maybe_print (PRN *prn, const char *key, 
+static void maybe_print (PRN *prn, const char *key,
 			 const char *arg)
 {
     if (arg != NULL && *arg != '\0') {
@@ -4563,7 +4671,7 @@ static int maybe_write_aux_file (function_info *finfo,
 	    if (path_last_slash_const(fname)) {
 		/* package fname has directory component */
 		char *s, tmp[FILENAME_MAX];
-		
+
 		strcpy(tmp, fname);
 		s = path_last_slash(tmp);
 		*(s + 1) = '\0';
@@ -4572,7 +4680,7 @@ static int maybe_write_aux_file (function_info *finfo,
 	    } else {
 		fp = gretl_fopen(auxname, "wb"); /* 21017-02-22: was "w" */
 	    }
-	    
+
 	    if (fp != NULL) {
 		fputs(content, fp);
 		fputc('\n', fp);
@@ -4641,8 +4749,8 @@ int save_function_package_spec (const char *fname, gpointer p)
     } else {
 	gretl_version_string(vstr, finfo->minver);
     }
-    
-    pprintf(prn,"min-version = %s\n", vstr); 
+
+    pprintf(prn,"min-version = %s\n", vstr);
 
     if (finfo->dreq == FN_NEEDS_TS) {
 	reqstr = NEEDS_TS;
@@ -4652,7 +4760,7 @@ int save_function_package_spec (const char *fname, gpointer p)
 	reqstr = NEEDS_PANEL;
     } else if (finfo->dreq == FN_NODATA_OK) {
 	reqstr = NO_DATA_OK;
-    } 
+    }
 
     if (reqstr != NULL) {
 	pprintf(prn, "data-requirement = %s\n", reqstr);
@@ -4700,7 +4808,7 @@ int save_function_package_spec (const char *fname, gpointer p)
 	}
 	if (user_func_is_menu_only(fun)) {
 	    nmo++;
-	}	
+	}
     }
     pputc(prn, '\n');
 
@@ -4772,6 +4880,15 @@ int save_function_package_spec (const char *fname, gpointer p)
 	}
     }
 
+    /* write out dependency listing? */
+    if (finfo->depends != NULL) {
+	pputs(prn, "depends = ");
+	for (i=0; i<finfo->n_depends; i++) {
+	    pputs(prn, finfo->depends[i]);
+	    pputc(prn, (i == finfo->n_files - 1)? '\n' : ' ');
+	}
+    }
+
     gretl_print_destroy(prn);
 
     return 0;
@@ -4780,7 +4897,7 @@ int save_function_package_spec (const char *fname, gpointer p)
 int save_function_package_zipfile (const char *fname, gpointer p)
 {
     function_info *finfo = p;
-    
+
     gui_pkg_make_zipfile(finfo, NULL, fname);
 
     return 0;
@@ -4819,7 +4936,7 @@ void edit_new_function_package (gchar *pkgname,
     }
 }
 
-/* callback from GUI selector to add/remove functions 
+/* callback from GUI selector to add/remove functions
    when editing a package */
 
 void revise_function_package (void *p, char **pubnames, int npub,
@@ -4846,7 +4963,7 @@ void revise_function_package (void *p, char **pubnames, int npub,
 	verify_selected_specials(finfo);
 	if (finfo->pkg != NULL) {
 	    /* sync with gretl_func.c */
-	    function_package_connect_funcs(finfo->pkg, 
+	    function_package_connect_funcs(finfo->pkg,
 					   finfo->pubnames,
 					   finfo->n_pub,
 					   finfo->privnames,
@@ -4894,6 +5011,21 @@ static int finfo_set_data_files (function_info *finfo)
     if (S != NULL) {
 	finfo->datafiles = S;
 	finfo->n_files = n;
+    }
+
+    return 0;
+}
+
+static int finfo_set_dependencies (function_info *finfo)
+{
+    char **S;
+    int n = 0;
+
+    S = function_package_get_depends(finfo->pkg, &n);
+
+    if (S != NULL) {
+	finfo->depends = S;
+	finfo->n_depends = n;
     }
 
     return 0;
@@ -4982,6 +5114,10 @@ void edit_function_package (const char *fname)
 	err = finfo_set_data_files(finfo);
     }
 
+    if (!err) {
+	err = finfo_set_dependencies(finfo);
+    }
+
     if (is_pdf_reference(finfo->help)) {
 	g_free(finfo->help);
 	finfo->help = NULL;
@@ -5001,7 +5137,7 @@ void edit_function_package (const char *fname)
 	errbox("Couldn't get function package information");
 	finfo_free(finfo);
 	goto bailout;
-    } 
+    }
 
     finfo->fname = g_strdup(fname);
 
@@ -5021,7 +5157,7 @@ gboolean edit_specified_package (const char *fname)
 {
     FILE *fp = gretl_fopen(fname, "rb"); /* 2017-02-22: was "r" */
     gboolean ret = FALSE;
-    
+
     if (fp == NULL) {
 	file_read_errbox(fname);
 	delete_from_filelist(FILE_LIST_GFN, fname);
@@ -5050,7 +5186,7 @@ int no_user_functions_check (GtkWidget *parent)
 	if (resp == GRETL_YES) {
 	    do_new_script(FUNC, NULL);
 	}
-    } 
+    }
 
     return err;
 }
@@ -5068,12 +5204,12 @@ void build_package_from_spec_file (windata_t *vwin)
     err = gretl_test_fopen(inpname, "rb"); /* 2017-02-22: was "r" */
     if (err) {
 	gchar *msg = g_strdup_printf(_("Couldn't open %s"), inpname);
-	
+
 	msgbox(msg, GTK_MESSAGE_ERROR, vwin->main);
 	g_free(msg);
 	return;
     }
-    
+
     switch_ext(gfnname, vwin->fname, "gfn");
     resp = overwrite_gfn_check(gfnname, vwin->main, NULL);
 

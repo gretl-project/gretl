@@ -131,6 +131,7 @@ enum extra_cmds {
     DAILY_PURGE,
     BUILD_PKG,
     PKG_FILES,
+    PKG_DEPS,
     EDITOR,
     MIDAS_LIST,
     MIDAS_PARM,

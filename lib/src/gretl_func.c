@@ -4477,6 +4477,21 @@ char **function_package_get_data_files (fnpkg *pkg, int *n)
     return S;
 }
 
+char **function_package_get_depends (fnpkg *pkg, int *n)
+{
+    char **S = NULL;
+
+    *n = 0;
+    if (pkg->depends != NULL) {
+	S = strings_array_dup(pkg->depends, pkg->n_depends);
+	if (S != NULL) {
+	    *n = pkg->n_depends;
+	}
+    }
+
+    return S;
+}
+
 int function_package_set_data_files (fnpkg *pkg, char **S, int n)
 {
     int err = 0;
@@ -4497,6 +4512,32 @@ int function_package_set_data_files (fnpkg *pkg, char **S, int n)
 	    } else {
 		pkg->n_files = n;
 		pkg->uses_subdir = 1;
+	    }
+	}
+    }
+
+    return err;
+}
+
+int function_package_set_depends (fnpkg *pkg, char **S, int n)
+{
+    int err = 0;
+
+    if (pkg->depends != NULL) {
+	strings_array_free(pkg->depends, pkg->n_depends);
+	pkg->depends = NULL;
+	pkg->n_depends = 0;
+    }
+
+    if (n > 0) {
+	if (S == NULL) {
+	    err = E_DATA;
+	} else {
+	    pkg->depends = strings_array_dup(S, n);
+	    if (pkg->depends == NULL) {
+		err = E_ALLOC;
+	    } else {
+		pkg->n_depends = n;
 	    }
 	}
     }
@@ -4609,6 +4650,10 @@ static void real_function_package_free (fnpkg *pkg, int full)
 
 	if (pkg->datafiles != NULL && pkg->n_files > 0) {
 	    strings_array_free(pkg->datafiles, pkg->n_files);
+	}
+
+	if (pkg->depends != NULL && pkg->n_depends > 0) {
+	    strings_array_free(pkg->depends, pkg->n_depends);
 	}
 
 	free(pkg->pub);

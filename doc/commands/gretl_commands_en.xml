@@ -10035,6 +10035,34 @@
 
   </command>
 
+  <command name="pkg-depends" section="Programming"
+	   label="Dependencies" context="gui">
+    <description>
+      <para>
+	By <quote>dependencies</quote> we mean function packages
+	upon which your package depends for some of its
+	functionality, and which must therefore be installed and
+	loaded in order for your package to work correctly. You
+	may specify up to four such packages in this dialog.
+      </para>
+      <para>
+	For example, suppose you make use of one or more functions
+	from the <lit>extra</lit> package, which contains various
+	utilities for hansl scripting. Then you would enter
+      </para>
+      <code>
+	extra.zip
+      </code>
+      <para>
+	in one of the available slots, the first slot if there are no
+	other dependencies. Note that you should include the suffix
+	<lit>.gfn</lit> or <lit>.zip</lit> as appropriate, but you
+	should not give the full path to the package in question, just
+	its plain name.
+      </para>
+    </description>
+  </command>
+
   <command name="plot" section="Graphs" context="cli">
     <usage>
       <arguments>
