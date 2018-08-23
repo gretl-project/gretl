@@ -161,7 +161,9 @@ struct fnpkg_ {
     int n_pub;        /* number of public functions */
     int n_priv;       /* number of private functions */
     char **datafiles; /* names of packaged data files */
+    char **depends;   /* names of dependencies */
     int n_files;      /* number of data files */
+    int n_depends;    /* number of dependencies */
     void *editor;     /* for GUI use */
 };
 
@@ -650,6 +652,8 @@ static fnpkg *function_package_alloc (const char *fname)
     pkg->n_pub = pkg->n_priv = 0;
     pkg->datafiles = NULL;
     pkg->n_files = 0;
+    pkg->depends = NULL;
+    pkg->n_depends = 0;
     pkg->editor = NULL;
 
     return pkg;
@@ -2894,6 +2898,12 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
 				    pkg->n_files, fp);
     }
 
+    if (pkg->depends != NULL) {
+	gretl_xml_put_strings_array("depends",
+				    (const char **) pkg->depends,
+				    pkg->n_depends, fp);
+    }
+
     if (pkg->pub != NULL) {
 	for (i=0; i<pkg->n_pub; i++) {
 	    write_function_xml(pkg->pub[i], fp);
@@ -3041,6 +3051,27 @@ static int pkg_set_datafiles (fnpkg *pkg, const char *s)
 
     if (!err) {
 	pkg->uses_subdir = 1;
+    }
+
+    return err;
+}
+
+static int pkg_set_depends (fnpkg *pkg, const char *s)
+{
+    int err = 0;
+
+    if (string_is_blank(s)) {
+	err = E_DATA;
+    } else {
+	int n = 0;
+
+	pkg->depends = gretl_string_split(s, &n, NULL);
+	if (pkg->depends == NULL) {
+	    pkg->n_depends = 0;
+	    err = E_ALLOC;
+	} else {
+	    pkg->n_depends = n;
+	}
     }
 
     return err;
@@ -3521,6 +3552,11 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 		    pprintf(prn, "Recording data-file list: %s\n", p);
 		}
 		err = pkg_set_datafiles(pkg, p);
+	    } else if (!strncmp(line, "depends", 7)) {
+		if (!quiet) {
+		    pprintf(prn, "Recording dependency list: %s\n", p);
+		}
+		err = pkg_set_depends(pkg, p);
 	    } else if (!strncmp(line, "data-requirement", 16)) {
 		err = pkg_set_dreq(pkg, p);
 	    } else if (!strncmp(line, "model-requirement", 17)) {
@@ -5057,6 +5093,10 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname,
 	} else if (!xmlStrcmp(cur->name, (XUC) "data-files")) {
 	    pkg->datafiles =
 		gretl_xml_get_strings_array(cur, doc, &pkg->n_files,
+					    0, err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "depends")) {
+	    pkg->depends =
+		gretl_xml_get_strings_array(cur, doc, &pkg->n_depends,
 					    0, err);
 	}
 
