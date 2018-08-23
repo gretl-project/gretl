@@ -9479,18 +9479,13 @@
     label="Dirixir a presentación a un ficheiro" context="cli">
 
     <usage>
-      <altforms>
-	<altform><lit>outfile</lit> <repl>nomeficheiro</repl> <repl>opción</repl></altform>
-	<altform><lit>outfile --close</lit></altform>
-      </altforms>
+      <arguments>
+	<argument>nomeficheiro</argument>
+      </arguments>
       <options>
         <option>
 	  <flag>--append</flag>
 	  <effect>Engade ao ficheiro</effect>
-        </option>
-        <option>
-	  <flag>--write</flag>
-	  <effect>Sobrescribe o ficheiro</effect>
         </option>
         <option>
 	  <flag>--quiet</flag>
@@ -9502,25 +9497,19 @@
         </option>
       </options>
       <examples>
-        <example>outfile regress.txt --write</example>
-        <example>outfile --close</example>
+        <example>outfile regress.txt</example>
+        <example>end outfile</example>
       </examples>
     </usage>
 
     <description>
       <para>
-	Desvía o resultado a <repl>nomeficheiro</repl>, ata ter un aviso posterior.
-	Utiliza a opción <opt>append</opt> para engadir o resultado a un
-	ficheiro xa existente, ou <opt>write</opt> para empezar un ficheiro
-	novo (ou sobrescribir un xa existente co mesmo nome).
-      </para>
-      <para>
-	A opción <opt>close</opt> se usa para pechar un ficheiro de resultados
-	que xa abriches como se indica arriba. Os resultados entón van volver ao
-	proceso por defecto. Ten en conta que dado que só podes abrir un único
-	ficheiro mediante <lit>outfile</lit> nun momento calquera (agás o indicado
-	máis abaixo), non necesitas indicar (nin debes facelo) ningún argumento
-	de nome de ficheiro con esta variante da instrución.
+	Desvía o resultado a <repl>nomeficheiro</repl>. Por defecto, xérase
+	un novo ficheiro (ou sobrescríbese un xa existente); utiliza a opción
+	<opt>append</opt> se queres engadir o resultado a un ficheiro xa
+	existente. O desvío remata mediante <quote><lit>end outfile</lit></quote>;
+	entón, o resultado volve ao fluxo establecido por
+	defecto.
       </para>
       <para>
 	O ficheiro resultante vaise escribir no cartafol (<cmdref targ="workdir"/>)
@@ -9528,27 +9517,24 @@
 	conteña unha especificación completa da ruta.
       </para>
       <para>
-	Na primeira instrución indicada arriba como exemplo, ábrese o
+	Na primeira liña indicada arriba como exemplo, ábrese o
 	ficheiro <filename>regress.txt</filename> para escribilo, e na
 	segunda péchase. Isto podería ter sentido como unha secuencia
-	só se algunhas instrucións se propoñen antes de <opt>close</opt>.
-	Por exemplo, cando se interpón unha instrución de estimación,
-	o seu resultado iría a <filename>regress.txt</filename> en lugar
-	de ir á pantalla.
+	só se algunhas instrucións se propoñen antes do peche. Por exemplo,
+	cando se interpón unha instrución de estimación, o seu resultado
+	iría a <filename>regress.txt</filename> en lugar de ir á pantalla.
       </para>
       <para>
-	Dispós de 3 variantes especiais do exposto arriba. Cando indicas
-	a palabra chave <lit>null</lit> en vez dun nome real de ficheiro
-	xunto coa opción <opt>write</opt>, a consecuencia é que se
-	eliminan todos os resultados presentados ata que a redirección
-	remate. Se indicas algunha das palabras chave <lit>stdout</lit>
-	ou <lit>stderr</lit> en lugar dun nome típico de ficheiro, o seu
-	efecto consiste en volver a dirixir o resultado a un resultado
-	estándar ou a un resultado de erro estándar, respectivamente.
+	Dispós de 3 variantes especiais do exposto arriba. Cando indicas a
+	palabra chave <lit>null</lit> en vez dun nome real de ficheiro, a
+	consecuencia é que se eliminan todos os resultados presentados
+	ata que a redirección remate. Se indicas algunha das palabras chave
+	<lit>stdout</lit> ou <lit>stderr</lit> en lugar dun nome típico de
+	ficheiro, o seu efecto consiste en volver a dirixir o resultado a un
+	resultado estándar ou a un resultado de erro estándar, respectivamente.
       </para>
       <para>
-	A opción <opt>quiet</opt> é para utilizar con <opt>write</opt> ou
-	<opt>append</opt>, e o seu efecto consiste tanto en eliminar a
+	O efecto da opción <opt>quiet</opt> consiste tanto en eliminar a
 	repetición visual das instrucións como a presentación de mensaxes
 	auxiliares mentres o resultado se volve a dirixir. Isto é equivalente a facer
       </para>
@@ -9564,7 +9550,7 @@
       <para>
 	En xeral, podes abrir un só ficheiro deste xeito en calquera momento
 	dado, polo que non podes aniñar as solicitudes desta instrución. Porén,
-	permítese a utilización desta instrución dentro das funcións que escribe
+	permítese a utilización desta instrución dentro das funcións que define
 	o usuario (posto que o ficheiro de resultados tamén se pecha desde
 	dentro da mesma función), de xeito que podes derivar temporalmente ese
 	resultado e logo devolvelo a un ficheiro de resultados orixinal, no caso
@@ -9573,16 +9559,16 @@
       </para>
       <code>
 	function void f (string s)
-	    outfile inner.txt --write
-	    print s
-	    outfile --close
+	    outfile inner.txt
+	      print s
+	    end outfile
 	end function
 
-	outfile outer.txt --write --quiet
-	print "Fóra"
-	f("Dentro")
-	print "Fóra de novo"
-	outfile --close
+	outfile outer.txt --quiet
+	  print "Fóra"
+	  f("Dentro")
+	  print "Fóra de novo"
+	end outfile
       </code>
       <para>
 	vai xerar un ficheiro denominado <quote>outer.txt</quote> que contén
@@ -9603,20 +9589,19 @@
 	desviar resultados ao ficheiro designado. Porén, podes utilizar a
 	opción <opt>buffer</opt> para acadar un efecto distinto; en
 	concreto dirixir os resultados a unha variable indicada de cadea.
-	Esta opción implica <opt>write</opt> e non é compatible con
-	<opt>append</opt>. A posición do argumento <repl>nomeficheiro</repl>
-	ocúpase co nome dunha variable de cadea (que, por suposto, debe
-	de axustarse aos requirimentos dun identificador válido de Gretl).
-	Cando xa existe unha variable de cadea co nome indicado, o seu
-	valor vaise sobrescribir; e cando non existe esa variable, vaise
-	xerar automaticamente. Aquí tes un exemplo sinxelo de
-	utilización:
+	Esta opción non é compatible con <opt>append</opt>. A posición do
+	argumento <repl>nomeficheiro</repl> ocúpase co nome dunha variable
+	de cadea (que, por suposto, debe de axustarse aos requirimentos dun
+	identificador válido de Gretl). Cando xa existe unha variable de
+	cadea co nome indicado, o seu valor vaise sobrescribir; e cando non
+	existe esa variable, vaise xerar automaticamente. Aquí tes un exemplo
+	sinxelo de utilización:
       </para>
       <code>
 	open data4-1
 	outfile mybuf --buffer --quiet
-	labels
-	outfile --close
+	  labels
+	end outfile
 	printf "mybuf = \n'%s'\n", mybuf
       </code>
       <para>

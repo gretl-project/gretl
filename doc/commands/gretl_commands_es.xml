@@ -9479,18 +9479,13 @@
     label="Dirigir la presentación a un archivo" context="cli">
 
     <usage>
-      <altforms>
-	<altform><lit>outfile</lit> <repl>nombrearchivo</repl> <repl>opción</repl></altform>
-	<altform><lit>outfile --close</lit></altform>
-      </altforms>
+      <arguments>
+	<argument>nombrearchivo</argument>
+      </arguments>
       <options>
         <option>
 	  <flag>--append</flag>
 	  <effect>Añade al archivo</effect>
-        </option>
-        <option>
-	  <flag>--write</flag>
-	  <effect>Sobrescribe el archivo</effect>
         </option>
         <option>
 	  <flag>--quiet</flag>
@@ -9502,25 +9497,19 @@
         </option>
       </options>
       <examples>
-        <example>outfile regress.txt --write</example>
-        <example>outfile --close</example>
+        <example>outfile regress.txt</example>
+        <example>end outfile</example>
       </examples>
     </usage>
 
     <description>
       <para>
-	Desvía el resultado a <repl>nombrearchivo</repl>, hasta tener un aviso posterior.
-	Utiliza la opción <opt>append</opt> para añadir el resultado a un
-	archivo ya existente, o <opt>write</opt> para empezar un archivo
-	nuevo (o sobrescribir uno ya existente con el mismo nombre).
-      </para>
-      <para>
-	La opción <opt>close</opt> se usa para cerrar un archivo de resultados
-	que ya has abierto como se indica arriba. Los resultados entonces van a volver al
-	proceso por defecto. Ten en cuenta que dado que solo puedes abrir un único
-	archivo mediante <lit>outfile</lit> en un momento cualquiera (excepto lo indicado
-	más abajo), no necesitas indicar (ni debes hacerlo) ningún argumento
-	de nombre de archivo con esta variante de la instrucción.
+	Desvía el resultado a <repl>nombrearchivo</repl>. Por defecto, se genera
+	un nuevo archivo (o se sobreescribe uno ya existente); utiliza la opción
+	<opt>append</opt> si quieres añadir el resultado a un ficheiro ya
+	existente. El desvío se termina mediante <quote><lit>end outfile</lit></quote>;
+	entonces, el resultado vuelve al flujo establecido por
+	defecto.
       </para>
       <para>
 	El archivo resultante se va a escribir en el directorio (<cmdref targ="workdir"/>)
@@ -9528,27 +9517,24 @@
 	contenga una especificación completa de la ruta.
       </para>
       <para>
-	En la primera instrucción indicada arriba como ejemplo, se abre el
+	En la primera línea indicada arriba como ejemplo, se abre el
 	archivo <filename>regress.txt</filename> para escribirlo, y en la
 	segunda se cierra. Esto podría tener sentido como una secuencia
-	solo si algunas instrucciones se proponen antes de <opt>close</opt>.
-	Por ejemplo, cuando se interpone una instrucción de estimación,
-	su resultado iría a <filename>regress.txt</filename> en lugar
-	de ir a la pantalla.
+	solo si algunas instrucciones se proponen antes del cierre. Por ejemplo,
+	cuando se interpone una instrucción de estimación, su resultado
+	iría a <filename>regress.txt</filename> en lugar de ir a la pantalla.
       </para>
       <para>
 	Dispones de 3 variantes especiales de lo expuesto arriba. Cuando indicas
-	la palabra clave <lit>null</lit> en lugar de un nombre real de archivo
-	junto con la opción <opt>write</opt>, la consecuencia es que se
-	eliminan todos los resultados presentados hasta que la redirección
-	acabe. Si indicas alguna de las palabras clave <lit>stdout</lit>
-	o <lit>stderr</lit> en lugar de un nombre típico de archivo, su
-	efecto consiste en volver a dirigir el resultado a un resultado
-	estándar o a un resultado de error estándar, respectivamente.
+	la palabra clave <lit>null</lit> en lugar de un nombre real de archivo,
+	la consecuencia es que se eliminan todos los resultados presentados
+	hasta que la redirección acabe. Si indicas alguna de las palabras clave
+	<lit>stdout</lit> o <lit>stderr</lit> en lugar de un nombre típico de
+	archivo, su efecto consiste en volver a dirigir el resultado a un
+	resultado estándar o a un resultado de error estándar, respectivamente.
       </para>
       <para>
-	La opción <opt>quiet</opt> es para utilizar con <opt>write</opt> o
-	<opt>append</opt>, y su efecto consiste tanto en eliminar la
+	El efecto de la opción <opt>quiet</opt> consiste tanto en eliminar la
 	repetición visual de las instrucciones como la presentación de mensajes
 	auxiliares mientras el resultado se vuelve a dirigir. Esto es equivalente a hacer
       </para>
@@ -9564,7 +9550,7 @@
       <para>
 	En general, puedes abrir un solo archivo de este modo en cualquier momento
 	dado, por lo que no puedes anidar las solicitudes de esta instrucción. Sin embargo,
-	se permite la utilización de esta instrucción dentro de las funciones que escribe
+	se permite la utilización de esta instrucción dentro de las funciones que define
 	el usuario (puesto que el archivo de resultados también se cierra desde
 	dentro de la misma función), de modo que puedes derivar temporalmente ese
 	resultado y luego devolverlo a un archivo de resultados original, en caso
@@ -9573,16 +9559,16 @@
       </para>
       <code>
 	function void f (string s)
-	    outfile inner.txt --write
-	    print s
-	    outfile --close
+	    outfile inner.txt
+	      print s
+	    end outfile
 	end function
 
-	outfile outer.txt --write --quiet
-	print "Fuera"
-	f("Dentro")
-	print "Fuera de nuevo"
-	outfile --close
+	outfile outer.txt --quiet
+	  print "Fuera"
+  	f("Dentro")
+	  print "Fuera de nuevo"
+	end outfile
       </code>
       <para>
 	va a generar un archivo denominado <quote>outer.txt</quote> que contiene
@@ -9603,20 +9589,19 @@
 	desviar resultados al archivo designado. Sin embargo, puedes utilizar la
 	opción <opt>buffer</opt> para lograr un efecto distinto; en
 	concreto dirigir los resultados a una variable indicada de cadena.
-	Esta opción implica <opt>write</opt> y no es compatible con
-	<opt>append</opt>. La posición del argumento <repl>nombrearchivo</repl>
-	se ocupa con el nombre de una variable de cadena (que, por supuesto, debe
-	de ajustarse a los requerimientos de un identificador válido de Gretl).
-	Cuando ya existe una variable de cadena con el nombre indicado, su
-	valor se va a sobrescribir; y cuando no existe esa variable, se va a
-	generar automáticamente. Aquí tienes un ejemplo sencillo de
-	utilización:
+	Esta no es compatible con <opt>append</opt>. La posición del argumento
+	<repl>nombrearchivo</repl> se ocupa con el nombre de una variable de
+	cadena (que, por supuesto, debe de ajustarse a los requerimientos
+	de un identificador válido de Gretl). Cuando ya existe una variable
+	de cadena con el nombre indicado, su valor se va a sobrescribir; y
+	cuando no existe esa variable, se va a generar automáticamente.
+	Aquí tienes un ejemplo sencillo de utilización:
       </para>
       <code>
 	open data4-1
 	outfile mybuf --buffer --quiet
-	labels
-	outfile --close
+	  labels
+	end outfile
 	printf "mybuf = \n'%s'\n", mybuf
       </code>
       <para>

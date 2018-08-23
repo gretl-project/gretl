@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2018-08-03 13:44-0400\n"
-"PO-Revision-Date: 2018-07-20 18:46+0200\n"
+"PO-Revision-Date: 2018-08-23 14:01+0200\n"
 "Last-Translator: JCEN <ecadrian@hotmail.com>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.0.9\n"
+"X-Generator: Poedit 2.1.1\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 
@@ -997,9 +997,9 @@ msgid "   warning: missing value for variable %d, obs %d\n"
 msgstr "   Aviso: Valor ausente para a variable %d, observación %d\n"
 
 #: lib/src/csvdata.c:2188
-#, fuzzy, c-format
+#, c-format
 msgid "variable %d (%s): non-numeric values = %d (%.2f percent)\n"
-msgstr "Fallo: Variable %d (%s), observación %d; valor non numérico\n"
+msgstr "Variable %d (%s): valores non numéricos = %d (%.2f por cento)\n"
 
 #: lib/src/csvdata.c:2195
 #, c-format
@@ -1008,7 +1008,7 @@ msgstr "Fallo: Variable %d (%s), observación %d; valor non numérico\n"
 
 #: lib/src/csvdata.c:2203
 msgid "allocating string table\n"
-msgstr ""
+msgstr "Asignando táboa de códigos de cadea\n"
 
 #: lib/src/csvdata.c:2606
 msgid ""
@@ -1215,7 +1215,7 @@ msgstr "Os datos engadíronse correctamente\n"
 #: lib/src/dataio.c:110
 #, c-format
 msgid "'%s' shadows a function of the same name"
-msgstr "'%s' sombrea unha función do mesmo nome"
+msgstr "'%s' superpón unha función do mesmo nome"
 
 #: lib/src/dataio.c:135
 msgid "Varname exceeds the maximum of 31 characters"
@@ -1323,7 +1323,7 @@ msgstr "Inconsistencia nos marcadores de observación\n"
 
 #: lib/src/dataio.c:2225
 msgid "Can't concatenate string-valued and numeric series"
-msgstr ""
+msgstr "Non poden concatenarse valores de cadea con series numéricas"
 
 #: lib/src/dataio.c:2742
 msgid "No markers are available for writing"
@@ -3747,7 +3747,7 @@ msgstr "[A relación é linear]"
 
 #: lib/src/gretl_model.c:3927 gui/gui_utils.c:4430
 msgid "Test for normality of residual"
-msgstr "Proba de normalidade das perturbacións"
+msgstr "Proba de Normalidade das perturbacións"
 
 #: lib/src/gretl_model.c:3928
 msgid "error is normally distributed"
@@ -6367,7 +6367,7 @@ msgid ""
 "Sample is too small to calculate a p-value based on the normal distribution\n"
 msgstr ""
 "A mostra é demasiado pequena para calcular un valor p baseado na "
-"distribución normal\n"
+"distribución Normal\n"
 
 #: lib/src/nonparam.c:658 gui/calculator.c:2622
 msgid "Kendall's tau"
@@ -7031,7 +7031,7 @@ msgid "GED (shape = %g): "
 msgstr "GED (forma = %g):  "
 
 #: lib/src/pvalues.c:3596
-#, fuzzy, c-format
+#, c-format
 msgid "Laplace (mean = %g, scale = %g): "
 msgstr "Laplace (Media=%g, Escala=%g): "
 
@@ -8239,7 +8239,7 @@ msgid ""
 "The assumption of a normal sampling distribution\n"
 "is not justified here.  Abandoning the test."
 msgstr ""
-"O suposto de distribución normal da mostra\n"
+"O suposto de distribución Normal da mostra\n"
 "non está xustificado aquí.  Deixando a proba."
 
 #: gui/calculator.c:1991 gui/filters.c:522
@@ -8549,11 +8549,11 @@ msgstr "Dominio de x"
 
 #: gui/calculator.c:3342
 msgid "normal CDF"
-msgstr "FDA normal"
+msgstr "FDA Normal"
 
 #: gui/calculator.c:3343
 msgid "logistic CDF"
-msgstr "FDA loxística"
+msgstr "FDA Loxística"
 
 #: gui/calculator.c:3414
 msgid "gretl: plot CDF"
@@ -9659,7 +9659,7 @@ msgstr "Wild bootstrap"
 
 #: gui/dialogs.c:1116
 msgid "Simulate normal errors"
-msgstr "Simular erros normais"
+msgstr "Simular erros Normais"
 
 #: gui/dialogs.c:1128
 msgid "Number of replications:"
@@ -12083,7 +12083,7 @@ msgstr "Debuxar unha _función de X"
 
 #: gui/gretl.c:1687
 msgid "_Test statistic calculator"
-msgstr "_Calculadora de probas"
+msgstr "_Calculadora de estatísticos de proba"
 
 #: gui/gretl.c:1688
 msgid "_Nonparametric tests"

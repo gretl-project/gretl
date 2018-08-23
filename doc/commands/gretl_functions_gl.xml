@@ -2032,7 +2032,7 @@
 	<para>
 	  Por exemplo, supón que <argname>L</argname> contén unha serie
 	  codificada chamada <lit>C1</lit> cos valores &minus;9, &minus;7,
-	  0, 1 and 2. Entón, as variables ficticias xeradas van ser
+	  0, 1 e 2. Entón, as variables ficticias xeradas van ser
 	  <lit>DC1_m7</lit> (que codifica cando C1 = &minus;7),
 	  <lit>DC1_0</lit> (que codifica cando C1 = 0), etcétera.
 	</para>
@@ -6805,15 +6805,16 @@
 	  banda ou \emph{bandwidth}, é un parámetro que determina o usuario
 	  cun número real positivo. Habitualmente este é un número pequeno
 	  pois valores máis grandes de $h$ fan que $m(x)$ sexa máis suave;
-	  unha escolla popular é $n^{-0.2}$. Podes obter máis detalles no
+	  unha escolla popular é $h \propto n^{-0.2}$. Podes obter máis detalles no
 	  <guideref targ="chap:nonparam"/>.
 	</para>
 	<para context="notex">
-	  O argumento <argname>h</argname>, que se coñece como o ancho de banda
-	  (<quote>bandwidth</quote>), é un parámetro que determina o usuario
-	  cun número real positivo. Habitualmente este é un número pequeno pois
-	  valores máis grandes de <argname>h</argname> fan que <math>m(x)</math>
-	  sexa máis suave; unha escolla popular é <math>n</math><sup>-0.2</sup>.
+	  O argumento <argname>h</argname>, que se coñece como o ancho
+	  de banda (<quote>bandwidth</quote>), é un parámetro que determina
+	  o usuario cun número real positivo. Habitualmente este é un número
+	  pequeno pois valores máis grandes de <argname>h</argname> fan que
+	  <math>m(x)</math> sexa máis suave; unha escolla popular é facer que
+	  <argname>h</argname> sexa proporcional a <math>n</math><sup>-0.2</sup>.
 	  Podes obter máis detalles no <guideref targ="chap:nonparam"/>.
 	</para>
 	<para context="tex">
@@ -7847,7 +7848,7 @@
 	  panel, e devolve un vector que contén cada unha das primeiras
 	  observacións válidas da serie <argname>y</argname> en cada unidade
 	  de corte transversal no panel, ao longo do rango da mostra actual.
-	  Se a serie ten algunha unidade que sen observacións válidas, esa
+	  Se a serie ten algunha unidade sen observacións válidas, esa
 	  unidade ignórase.
 	</para>
 	<para>
