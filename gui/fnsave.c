@@ -3274,7 +3274,7 @@ static int process_dependency_names (function_info *finfo,
 	}
 
 	if (finfo->depends != NULL) {
-	    int j = 0, err = 0;
+	    int j = 0;
 
 	    for (i=0; i<N_DEP_ENTRIES; i++) {
 		dname = entry_box_get_trimmed_text(finfo->dep_entries[i]);

@@ -622,6 +622,9 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	if (upkey == GDK_F) {
 	    text_find(NULL, vwin);
 	    return TRUE;
+	} else if (upkey == GDK_G) {
+	    text_find_again(NULL, vwin);
+	    return TRUE;
 	} else if (upkey == GDK_C) {
 	    /* Ctrl-C: copy */
 	    if (editing) {

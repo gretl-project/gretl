@@ -1514,6 +1514,19 @@ void text_find (gpointer unused, gpointer data)
     }
 }
 
+void text_find_again (gpointer unused, gpointer data)
+{
+    windata_t *vwin = (windata_t *) data;
+
+    if (vwin->finder != NULL) {
+	fprintf(stderr, "finder at %p\n", (void *) vwin->finder);
+    } else if (find_dialog != NULL) {
+	if (vwin == g_object_get_data(G_OBJECT(find_dialog), "windat")) {
+	    find_in_text(NULL, find_dialog);
+	}
+    }
+}
+
 void listbox_find (gpointer unused, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
@@ -1919,9 +1932,7 @@ static void find_string_dialog (void (*findfunc)(), windata_t *vwin)
 
     g_signal_connect(G_OBJECT(find_entry), "activate",
 		     G_CALLBACK(findfunc), find_dialog);
-
     gtk_widget_show(find_entry);
-
     gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, TRUE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), find_entry, TRUE, TRUE, 5);
     gtk_widget_show(hbox);
