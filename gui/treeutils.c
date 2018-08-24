@@ -430,13 +430,17 @@ static gint catch_listbox_key (GtkWidget *w, GdkEventKey *event,
 	    gtk_widget_destroy(vwin->main);
 	}
 	return TRUE;
-    } else if (key == GDK_f) {
-	/* F = find */
+    } else if (key == GDK_f || key == GDK_g) {
+	/* F = find, G = find again */
 	if (vwin == mdata && !data_status) {
 	    return TRUE;
 	}
 	if (event->state & GDK_CONTROL_MASK) {
-	    listbox_find(NULL, vwin);
+	    if (key == GDK_f) {
+		listbox_find(NULL, vwin);
+	    } else {
+		listbox_find_again(NULL, vwin);
+	    }
 	    return TRUE;
 	}	
     } 

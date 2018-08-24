@@ -47,6 +47,8 @@ void display_x12a_help (void);
 
 void listbox_find (gpointer unused, gpointer data);
 
+void listbox_find_again (gpointer unused, gpointer data);
+
 void text_find (gpointer unused, gpointer data);
 
 void text_find_again (gpointer unused, gpointer data);

@@ -828,10 +828,6 @@ static int maybe_switch_page (const char *s, windata_t *hwin)
 
 	set_help_topic_buffer(hwin, newpos, en);
 	helpwin_set_topic_index(hwin, idx);
-
-	if (wrapped) {
-	    infobox(_("Search wrapped"));
-	}
     }
 
     return ok;
@@ -1519,7 +1515,7 @@ void text_find_again (gpointer unused, gpointer data)
     windata_t *vwin = (windata_t *) data;
 
     if (vwin->finder != NULL) {
-	fprintf(stderr, "finder at %p\n", (void *) vwin->finder);
+	g_signal_emit_by_name(G_OBJECT(vwin->finder), "activate", NULL);
     } else if (find_dialog != NULL) {
 	if (vwin == g_object_get_data(G_OBJECT(find_dialog), "windat")) {
 	    find_in_text(NULL, find_dialog);
@@ -1537,6 +1533,19 @@ void listbox_find (gpointer unused, gpointer data)
 				   0, -1);
     } else {
 	find_string_dialog(find_in_listbox, vwin);
+    }
+}
+
+void listbox_find_again (gpointer unused, gpointer data)
+{
+    windata_t *vwin = (windata_t *) data;
+
+    if (vwin->finder != NULL) {
+	g_signal_emit_by_name(G_OBJECT(vwin->finder), "activate", NULL);
+    } else if (find_dialog != NULL) {
+	if (vwin == g_object_get_data(G_OBJECT(find_dialog), "windat")) {
+	    find_in_listbox(NULL, find_dialog);
+	}
     }
 }
 
@@ -1601,7 +1610,7 @@ static gboolean real_find_in_text (GtkTextView *view, const gchar *s,
     start = end = iter;
 
     if (!gtk_text_iter_forward_chars(&end, n)) {
-	/* already at end of buffer */
+	/* we're already at end of the buffer */
 	if (from_cursor && !wrapped && !search_all) {
 	    from_cursor = FALSE;
 	    wrapped = 1;
@@ -1639,10 +1648,6 @@ static gboolean real_find_in_text (GtkTextView *view, const gchar *s,
 	from_cursor = FALSE;
 	wrapped = 1;
 	goto text_search_wrap;
-    }
-
-    if (found && wrapped) {
-	infobox(_("Search wrapped"));
     }
 
     return found;
@@ -1701,7 +1706,6 @@ static gboolean real_find_in_listbox (windata_t *vwin,
     if (vwin->listbox != NULL) {
 	model = gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox));
     }
-
     if (model == NULL) {
 	return FALSE;
     }
@@ -1779,9 +1783,6 @@ static gboolean real_find_in_listbox (windata_t *vwin,
 				 path, NULL, FALSE);
 	vwin->active_var = tree_path_get_row_number(path);
 	gtk_tree_path_free(path);
-	if (wrapped) {
-	    infobox(_("Search wrapped"));
-	}
     }
 
     return (pos >= 0);
@@ -1897,6 +1898,18 @@ static void toggle_vname_search (GtkToggleButton *tb, GtkWidget *w)
     }
 }
 
+static gint maybe_find_again (GtkWidget *w, GdkEventKey *event,
+			      GtkWidget *button)
+{
+    if ((event->state & GDK_CONTROL_MASK) &&
+	(event->keyval == GDK_g || event->keyval == GDK_G)) {
+	g_signal_emit_by_name(G_OBJECT(button), "clicked", NULL);
+	return TRUE;
+    } else {
+	return FALSE;
+    }
+}
+
 static void find_string_dialog (void (*findfunc)(), windata_t *vwin)
 {
     GtkWidget *parent;
@@ -1968,6 +1981,9 @@ static void find_string_dialog (void (*findfunc)(), windata_t *vwin)
 		     G_CALLBACK(findfunc), find_dialog);
     gtk_widget_grab_default(button);
     gtk_widget_show(button);
+
+    g_signal_connect(G_OBJECT(find_entry), "key-press-event",
+		     G_CALLBACK(maybe_find_again), button);
 
     gtk_widget_grab_focus(find_entry);
     gtk_widget_show(find_dialog);
