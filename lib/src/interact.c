@@ -2347,6 +2347,48 @@ static int model_print_driver (MODEL *pmod, DATASET *dset,
 
 #ifdef USE_CURL
 
+#if 0 /* not yet! */
+
+static int get_install_info (const char *pkgname,
+			     char **pfname,
+			     char ***pdepends,
+			     int *pn_depends)
+{
+    char *fname = NULL;
+    char **depends = NULL;
+    char *buf = NULL;
+    int n_depends = 0;
+    int err = 0;
+
+    buf = retrieve_install_info(pkgname, &err);
+
+    if (buf != NULL) {
+	char *p, *q;
+
+	if (!strncmp(buf, "fname='", 7)) {
+	    p = buf + 8;
+	    q = strchr(p, '\'');
+	    if (q != NULL) {
+		fname = gretl_strndup(p, q - p);
+	    } else {
+		err = E_DATA;
+	    }
+	}
+    }
+
+    if (!err) {
+	*pfname = fname;
+	*pdepends = depends;
+	*pn_depends = n_depends;
+    } else {
+	free(fname);
+    }
+
+    return err;
+}
+
+#endif
+
 static int install_function_package (const char *pkgname,
 				     gretlopt opt,
 				     PRN *prn)

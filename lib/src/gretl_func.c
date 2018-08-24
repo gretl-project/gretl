@@ -4900,6 +4900,7 @@ static void print_package_info (const fnpkg *pkg, const char *fname, PRN *prn)
 {
     char vstr[8];
     int remote, pdfdoc;
+    int i;
 
     remote = (strstr(fname, "dltmp.") != NULL);
 
@@ -4927,6 +4928,13 @@ static void print_package_info (const fnpkg *pkg, const char *fname, PRN *prn)
     pprintf(prn, "<@itl=\"Required gretl version\">: %s\n", vstr);
     pprintf(prn, "<@itl=\"Data requirement\">: %s\n", _(data_needs_string(pkg->dreq)));
     pprintf(prn, "<@itl=\"Description\">: %s\n", gretl_strstrip(pkg->descrip));
+    if (pkg->n_depends > 0) {
+	pputs(prn, "<@itl=\"Dependencies\">: ");
+	for (i=0; i<pkg->n_depends; i++) {
+	    pprintf(prn, "%s%s", pkg->depends[i],
+		    (i < pkg->n_depends-1)? ", " : "\n");
+	}
+    }
 
     if (pdfdoc) {
 	const char *s = strrchr(pkg->help, ':');
@@ -4955,8 +4963,6 @@ static void print_package_info (const fnpkg *pkg, const char *fname, PRN *prn)
 		pputs(prn, "</mono>\n\n");
 	    }
 	} else {
-	    int i;
-
 	    pputs(prn, "<@itl=\"Public interfaces\">:\n\n");
 	    pputs(prn, "<mono>\n");
 	    for (i=0; i<pkg->n_pub; i++) {
