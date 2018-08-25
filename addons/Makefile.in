@@ -34,9 +34,6 @@ $(SUBDIRS):
 addons.xml: gfnindex $(SUBDIRS)
 	./gfnindex $(SUBDIRS) > $@
 
-addons.html: addons.xml
-	xsltproc -o $@ $(topsrc)/addons/addons.xsl $<
-
 addons-i18n.c: gfnstrings $(XMLSUBDIRS)
 	./gfnstrings $(XMLSUBDIRS) > $@
 

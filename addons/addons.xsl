@@ -12,7 +12,7 @@
       href="http://ricardo.ecn.wfu.edu/gretl/style/server.css"/>
     </head>
     <body>
-      <p>[<a href="./index.html">gretl main page</a>]</p>
+      <p>[<a href="http://gretl.sourceforge.net/">gretl main page</a>]</p>
 
       <h1>gretl addons: &#8220;official&#8221; function packages</h1>
       <p>These packages should be installed or updated from within gretl.
