@@ -69,6 +69,10 @@
 #define starts_comment(p) (*p == '/' && *(p+1) == '*')
 #define ends_comment(p)   (*p == '*' && *(p+1) == '/')
 
+static int install_function_package (const char *pkgname,
+				     gretlopt opt,
+				     PRN *prn);
+
 static int strip_inline_comments (char *s)
 {
     int ret = 0;
@@ -2345,49 +2349,38 @@ static int model_print_driver (MODEL *pmod, DATASET *dset,
     return err;
 }
 
-#ifdef USE_CURL
+#if USE_CURL
 
-#if 0 /* not yet! */
-
-static int get_install_info (const char *pkgname,
-			     char **pfname,
-			     char ***pdepends,
-			     int *pn_depends)
+static int package_check_dependencies (const char *fname,
+				       PRN *prn)
 {
-    char *fname = NULL;
-    char **depends = NULL;
-    char *buf = NULL;
-    int n_depends = 0;
+    fnpkg *pkg;
     int err = 0;
 
-    buf = retrieve_install_info(pkgname, &err);
+    pkg = get_function_package_by_filename(fname, &err);
 
-    if (buf != NULL) {
-	char *p, *q;
+    if (pkg != NULL) {
+	char **depends = NULL;
+	int ndeps = 0;
 
-	if (!strncmp(buf, "fname='", 7)) {
-	    p = buf + 8;
-	    q = strchr(p, '\'');
-	    if (q != NULL) {
-		fname = gretl_strndup(p, q - p);
-	    } else {
-		err = E_DATA;
+	depends = function_package_get_depends(pkg, &ndeps);
+	if (depends != NULL) {
+	    char *pkgpath;
+	    int i;
+
+	    for (i=0; i<ndeps && !err; i++) {
+		pkgpath = gretl_function_package_get_path(depends[i], PKG_ALL);
+		if (pkgpath == NULL) {
+		    err = install_function_package(depends[i], OPT_D, prn);
+		}
+		free(pkgpath);
 	    }
+	    strings_array_free(depends, ndeps);
 	}
-    }
-
-    if (!err) {
-	*pfname = fname;
-	*pdepends = depends;
-	*pn_depends = n_depends;
-    } else {
-	free(fname);
     }
 
     return err;
 }
-
-#endif
 
 static int install_function_package (const char *pkgname,
 				     gretlopt opt,
@@ -2466,10 +2459,18 @@ static int install_function_package (const char *pkgname,
 	    }
 	}
 
+	if (!err) {
+	    package_check_dependencies(fullname, prn);
+	}
+
 	g_free(fullname);
 
 	if (!err && gretl_messages_on()) {
-	    pprintf(prn, "Installed %s\n", basename);
+	    if (opt & OPT_D) {
+		pprintf(prn, "Installed dependency %s\n", basename);
+	    } else {
+		pprintf(prn, "Installed %s\n", basename);
+	    }
 	}
     }
 

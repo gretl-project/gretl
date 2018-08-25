@@ -2726,7 +2726,7 @@ static void add_dependency_entries (GtkWidget *holder,
 				    function_info *finfo)
 {
     const char *msg = N_("You may add or delete names of packages "
-			 "to be recorded as dependencies.\nInclude the "
+			 "to be recorded as dependencies.\nLeave off the "
 			 ".gfn or .zip suffix.");
     GtkWidget *w, *hbox, *entry;
     int i;
