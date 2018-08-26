@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -57,7 +57,7 @@
  * likely to be required in econometric calculation.  For basics
  * such as decomposition and inversion we use LAPACK as the
  * underlying engine.
- * 
+ *
  * To get yourself a gretl matrix, use gretl_matrix_alloc() or
  * one of the more specialized constructors; to free such a
  * matrix use gretl_matrix_free().
@@ -100,9 +100,15 @@ static inline void *mval_realloc (void *ptr, size_t sz)
 
 #define SVD_SMIN 1.0e-9
 
+#define TRY_DGELSY 0
+
 static int add_scalar_to_matrix (gretl_matrix *targ, double x);
 static int gretl_matrix_copy_info (gretl_matrix *targ,
 				   const gretl_matrix *src);
+
+#if TRY_DGELSY
+static int gretl_dgelsy (gretl_matrix *A, gretl_matrix *B, int *rank);
+#endif
 
 /* matrix metadata struct, not allocated by default */
 
@@ -151,7 +157,7 @@ static int wspace_fail (integer info, double w0)
    operations: this should be used _only_ for temporary allocations
    that would ordinarily be freed before returning from the function
    in question.  In this mode we keep the chunk around for future use,
-   expanding it as needed. 
+   expanding it as needed.
 */
 
 static void *lapack_mem_chunk;
@@ -194,7 +200,7 @@ static void *lapack_realloc (void *p, size_t sz)
  * lapack_mem_free:
  *
  * Cleanup function, called by libgretl_cleanup(). Frees
- * any memory that has been allocated internally as 
+ * any memory that has been allocated internally as
  * temporary workspace for LAPACK functions.
  */
 
@@ -326,7 +332,7 @@ gretl_matrix_block *gretl_matrix_block_new (gretl_matrix **pm, ...)
 	return NULL;
     }
 
-    /* first pass: determine the number of 
+    /* first pass: determine the number of
        (pointer, int, int) triples */
     va_start(ap, pm);
     for (i=1; ; i++) {
@@ -348,7 +354,7 @@ gretl_matrix_block *gretl_matrix_block_new (gretl_matrix **pm, ...)
     }
 
     /* NULL everything in case we fail */
-    B->val = NULL;    
+    B->val = NULL;
     for (i=0; i<B->n; i++) {
 	B->matrix[i] = NULL;
     }
@@ -375,7 +381,7 @@ gretl_matrix_block *gretl_matrix_block_new (gretl_matrix **pm, ...)
 	} else {
 	    targ = va_arg(ap, gretl_matrix **);
 	    *targ = m;
-	}	
+	}
 	m->rows = va_arg(ap, int);
 	m->cols = va_arg(ap, int);
 	if (m->rows < 0 || m->cols < 0) {
@@ -405,7 +411,7 @@ gretl_matrix_block *gretl_matrix_block_new (gretl_matrix **pm, ...)
 	    B->matrix[i]->val = m->val + (m->rows * m->cols);
 	    B->matrix[i]->is_complex = 0;
 	}
-    } 
+    }
 
     return B;
 }
@@ -454,7 +460,7 @@ int gretl_matrix_get_structure (const gretl_matrix *m)
 	    if (m->rows == 1) {
 		ret = GRETL_MATRIX_SCALAR;
 	    }
-	} 
+	}
     }
 
     if (ret == GRETL_MATRIX_SQUARE) {
@@ -517,17 +523,17 @@ int gretl_matrix_get_structure (const gretl_matrix *m)
  * @cols: desired number of columns in "new" matrix, or -1
  * to leave the current value unchanged.
  *
- * An "experts only" memory-conservation trick. If @m is an 
- * already-allocated gretl matrix, you can "resize" it by 
- * specifying a new number of rows and columns.  This works 
- * only if the product of @rows and @cols is less than or equal 
- * to the product of the number of rows and columns in the 
- * matrix as originally allocated; no actual reallocation of memory 
+ * An "experts only" memory-conservation trick. If @m is an
+ * already-allocated gretl matrix, you can "resize" it by
+ * specifying a new number of rows and columns.  This works
+ * only if the product of @rows and @cols is less than or equal
+ * to the product of the number of rows and columns in the
+ * matrix as originally allocated; no actual reallocation of memory
  * is performed.  If you "reuse" with an excessive number of rows
  * or columns you will surely crash your program or smash the
- * stack. Note also that the matrix-pointer returned is not really 
+ * stack. Note also that the matrix-pointer returned is not really
  * new, and when the matrix is to be freed, gretl_matrix_free()
- * should be applied only once. 
+ * should be applied only once.
  *
  * Returns: pointer to the "resized" gretl_matrix.
  */
@@ -646,7 +652,7 @@ void gretl_matrix_init (gretl_matrix *m)
  * Returns: the replacement matrix.
  */
 
-gretl_matrix *gretl_matrix_replace (gretl_matrix **pa, 
+gretl_matrix *gretl_matrix_replace (gretl_matrix **pa,
 				    gretl_matrix *b)
 {
     gretl_matrix_free(*pa);
@@ -665,7 +671,7 @@ gretl_matrix *gretl_matrix_replace (gretl_matrix **pa,
  * Returns: 0 on success, non-zero on error.
  */
 
-int gretl_matrix_replace_content (gretl_matrix *targ, 
+int gretl_matrix_replace_content (gretl_matrix *targ,
 				  gretl_matrix *donor)
 {
     if (is_block_matrix(targ) || is_block_matrix(donor)) {
@@ -677,7 +683,7 @@ int gretl_matrix_replace_content (gretl_matrix *targ,
 	targ->rows = donor->rows;
 	targ->cols = donor->cols;
 	targ->val = donor->val;
-	donor->val = NULL;    
+	donor->val = NULL;
 	return 0;
     }
 }
@@ -744,7 +750,7 @@ gretl_matrix *gretl_DW_matrix_new (int n)
 		}
 	    } else if (j == i + 1 || i == j + 1) {
 		gretl_matrix_set(m, i, j, -1.0);
-	    } 
+	    }
 	}
     }
 
@@ -881,7 +887,7 @@ gretl_matrix *gretl_matrix_seq (double start, double end,
     if (n == 0) {
 	*err = E_DATA;
 	return NULL;
-    }	
+    }
     v = gretl_vector_alloc(n);
 
     if (v == NULL) {
@@ -960,7 +966,7 @@ gretl_matrix_copy_mod (const gretl_matrix *m, int mod)
 		gretl_matrix_set(c, j, i, x);
 	    }
 	}
-    } else { 
+    } else {
 	/* not transposing */
 	int n = rows * cols;
 
@@ -969,7 +975,7 @@ gretl_matrix_copy_mod (const gretl_matrix *m, int mod)
     }
 
     c->is_complex = m->is_complex;
-    
+
     return c;
 }
 
@@ -997,7 +1003,7 @@ static gretl_matrix *matrix_copy_plain (const gretl_matrix *m)
  * gretl_matrix_copy:
  * @m: source matrix to be copied.
  *
- * Returns: an allocated copy of matrix @m, or NULL on failure.  
+ * Returns: an allocated copy of matrix @m, or NULL on failure.
  */
 
 gretl_matrix *gretl_matrix_copy (const gretl_matrix *m)
@@ -1009,7 +1015,7 @@ gretl_matrix *gretl_matrix_copy (const gretl_matrix *m)
  * gretl_matrix_copy_transpose:
  * @m: source matrix to be copied.
  *
- * Returns: an allocated copy of the tranpose of @m, or NULL on failure.  
+ * Returns: an allocated copy of the tranpose of @m, or NULL on failure.
  */
 
 gretl_matrix *gretl_matrix_copy_transpose (const gretl_matrix *m)
@@ -1067,7 +1073,7 @@ int gretl_matrix_copy_row (gretl_matrix *dest, int di,
     } else {
 	double x;
 	int j;
-	
+
 	for (j=0; j<src->cols; j++) {
 	    x = gretl_matrix_get(src, si, j);
 	    gretl_matrix_set(dest, di, j, x);
@@ -1083,7 +1089,7 @@ static void maybe_preserve_names (gretl_matrix *targ,
 {
     char **srcnames;
     int n, err = 0;
-    
+
     if (src->info != NULL) {
 	if (cols) {
 	    srcnames = src->info->colnames;
@@ -1114,7 +1120,7 @@ static void maybe_preserve_names (gretl_matrix *targ,
  * gretl_matrix_reverse_rows:
  * @m: source matrix whose rows are to be reversed.
  *
- * Returns: a matrix with the same rows as @m, last to first.  
+ * Returns: a matrix with the same rows as @m, last to first.
  */
 
 gretl_matrix *gretl_matrix_reverse_rows (const gretl_matrix *m)
@@ -1150,7 +1156,7 @@ gretl_matrix *gretl_matrix_reverse_rows (const gretl_matrix *m)
  * gretl_matrix_reverse_cols:
  * @m: source matrix whose columns are to be reversed.
  *
- * Returns: a matrix with the same columns as @m, last to first.  
+ * Returns: a matrix with the same columns as @m, last to first.
  */
 
 gretl_matrix *gretl_matrix_reverse_cols (const gretl_matrix *m)
@@ -1252,7 +1258,7 @@ void gretl_matrix_zero (gretl_matrix *m)
  * @err: location to receive error code.
  *
  * Returns: a column vector containing the diagonal elements of
- * @m, otherwise NULL.  A non-zero value is assigned via @err 
+ * @m, otherwise NULL.  A non-zero value is assigned via @err
  * on failure.
  */
 
@@ -1276,7 +1282,7 @@ gretl_matrix *gretl_matrix_get_diagonal (const gretl_matrix *m, int *err)
 	for (i=0; i<n; i++) {
 	    d->val[i] = gretl_matrix_get(m, i, i);
 	}
-    } 
+    }
 
     return d;
 }
@@ -1311,7 +1317,7 @@ int gretl_matrix_get_row (const gretl_matrix *m, int i, gretl_vector *v)
  * gretl_matrix_trace:
  * @m: square input matrix.
  *
- * Returns: the trace (sum of diagonal elements) of @m, if 
+ * Returns: the trace (sum of diagonal elements) of @m, if
  * @m is square, otherwise #NADBL.
  */
 
@@ -1323,7 +1329,7 @@ double gretl_matrix_trace (const gretl_matrix *m)
     if (gretl_is_null_matrix(m) || m->rows != m->cols) {
 	return NADBL;
     }
-    
+
     for (i=0; i<m->rows; i++) {
 	tr += gretl_matrix_get(m, i, i);
     }
@@ -1369,8 +1375,8 @@ int gretl_matrix_random_fill (gretl_matrix *m, int dist)
  * @c: number of columns.
  * @dist: either %D_UNIFORM or %D_NORMAL.
  *
- * Creates a new $r x @c matrix and filles it with pseudo-random 
- * values from either the uniform or the standard normal 
+ * Creates a new $r x @c matrix and filles it with pseudo-random
+ * values from either the uniform or the standard normal
  * distribution.
  *
  * Returns: allocated matrix or NULL on failure.
@@ -1430,7 +1436,7 @@ double gretl_vector_mean (const gretl_vector *v)
 	if (!na(v->val[i])) {
 	    num += v->val[i];
 	    den++;
-	} 
+	}
     }
 
     return (den > 0)? (num / den) : NADBL;
@@ -1457,13 +1463,13 @@ double gretl_vector_variance (const gretl_vector *v)
     n = gretl_vector_get_length(v);
     if (n == 0) {
 	return NADBL;
-    }    
+    }
 
     for (i=0; i<n; i++) {
 	if (!na(v->val[i])) {
 	    xbar += v->val[i];
 	    den++;
-	} 
+	}
     }
 
     if (den == 0) {
@@ -1477,7 +1483,7 @@ double gretl_vector_variance (const gretl_vector *v)
 	if (!na(x)) {
 	    x -= xbar;
 	    s2 += x * x;
-	} 
+	}
     }
 
     return s2 / den;
@@ -1493,7 +1499,7 @@ double gretl_vector_variance (const gretl_vector *v)
  * failure.
  */
 
-gretl_matrix *gretl_matrix_resample (const gretl_matrix *m, 
+gretl_matrix *gretl_matrix_resample (const gretl_matrix *m,
 				     int *err)
 {
     gretl_matrix *R = NULL;
@@ -1534,7 +1540,7 @@ gretl_matrix *gretl_matrix_resample (const gretl_matrix *m,
     if (t1 > 0) {
 	gretl_matrix_set_t1(R, t1);
 	gretl_matrix_set_t2(R, t1 + r - 1);
-    }	
+    }
 
     free(z);
 
@@ -1553,8 +1559,8 @@ gretl_matrix *gretl_matrix_resample (const gretl_matrix *m,
  * failure.
  */
 
-gretl_matrix *gretl_matrix_block_resample (const gretl_matrix *m, 
-					   int blocklen, 
+gretl_matrix *gretl_matrix_block_resample (const gretl_matrix *m,
+					   int blocklen,
 					   int *err)
 {
     gretl_matrix *R = NULL;
@@ -1571,14 +1577,14 @@ gretl_matrix *gretl_matrix_block_resample (const gretl_matrix *m,
 
     if (blocklen == 1) {
 	return gretl_matrix_resample(m, err);
-    }    
+    }
 
     r = m->rows;
 
     /* Let n represent the number of blocks of @blocklen
        contiguous rows which we need to select; the
        last of these may not be fully used.
-    */   
+    */
     n = r / blocklen + (r % blocklen > 0);
 
     rmax = r - blocklen;
@@ -1689,7 +1695,7 @@ static int gretl_matrix_zero_triangle (gretl_matrix *m, char t)
 {
     int i, j;
 
-    if (gretl_is_null_matrix(m)) 
+    if (gretl_is_null_matrix(m))
 	return E_DATA;
 
     if (m->rows != m->cols) {
@@ -1718,7 +1724,7 @@ static int gretl_matrix_zero_triangle (gretl_matrix *m, char t)
  * @m: square matrix to operate on.
  *
  * Sets the elements of @m outside of the lower triangle to zero.
- * 
+ *
  * Returns: 0 on success, non-zero error code otherwise.
  */
 
@@ -1732,7 +1738,7 @@ int gretl_matrix_zero_upper (gretl_matrix *m)
  * @m: square matrix to operate on.
  *
  * Sets the elements of @m outside of the upper triangle to zero.
- * 
+ *
  * Returns: 0 on success, non-zero error code otherwise.
  */
 
@@ -1895,7 +1901,7 @@ gretl_matrix *gretl_matrix_exp (const gretl_matrix *m, int *err)
     D = gretl_identity_matrix_new(n);
     W = gretl_matrix_alloc(n, n);
 
-    if (A == NULL || X == NULL || N == NULL || 
+    if (A == NULL || X == NULL || N == NULL ||
 	D == NULL || W == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
@@ -2057,12 +2063,12 @@ gretl_matrix *gretl_matrix_polroots (const gretl_matrix *a,
  *
  * Copies the elements of @src into the corresponding elements
  * of @targ.
- * 
- * Returns: 0 on successful completion, or %E_NONCONF if the 
+ *
+ * Returns: 0 on successful completion, or %E_NONCONF if the
  * two vectors are not of the same length.
  */
 
-int gretl_vector_copy_values (gretl_vector *targ, 
+int gretl_vector_copy_values (gretl_vector *targ,
 			      const gretl_vector *src)
 {
     int n;
@@ -2097,13 +2103,13 @@ int gretl_vector_copy_values (gretl_vector *targ,
  *
  * Copies the elements of @src into the corresponding elements
  * of @targ.
- * 
+ *
  * Returns: 0 on successful completion, or
  * %E_NONCONF if the two matrices are not
  * conformable for the operation.
  */
 
-int gretl_matrix_copy_values (gretl_matrix *targ, 
+int gretl_matrix_copy_values (gretl_matrix *targ,
 			      const gretl_matrix *src)
 {
     int n;
@@ -2141,12 +2147,12 @@ int gretl_matrix_copy_values (gretl_matrix *targ,
  * Copies all data from @src to @targ: this does the same
  * as gretl_matrix_copy_values() but also transcribes
  * t1, t2, colnames and rownames information, if present.
- * 
+ *
  * Returns: 0 on successful completion, non-zero code on
  * failure.
  */
 
-int gretl_matrix_copy_data (gretl_matrix *targ, 
+int gretl_matrix_copy_data (gretl_matrix *targ,
 			    const gretl_matrix *src)
 {
     int err;
@@ -2167,13 +2173,13 @@ int gretl_matrix_copy_data (gretl_matrix *targ,
  *
  * Copies the elements of @src into @targ, column
  * by column.
- * 
- * Returns: 0 on successful completion, or %E_NONCONF if 
+ *
+ * Returns: 0 on successful completion, or %E_NONCONF if
  * the two matrices do not contain the same number of
  * elements.
  */
 
-int gretl_matrix_copy_values_shaped (gretl_matrix *targ, 
+int gretl_matrix_copy_values_shaped (gretl_matrix *targ,
 				     const gretl_matrix *src)
 {
     int n = targ->rows * targ->cols;
@@ -2205,7 +2211,7 @@ static int add_scalar_to_matrix (gretl_matrix *targ, double x)
 static int subtract_scalar_from_matrix (gretl_matrix *targ, double x)
 {
     int i, n = targ->rows * targ->cols;
-    
+
     for (i=0; i<n; i++) {
 	targ->val[i] -= x;
     }
@@ -2253,15 +2259,15 @@ int get_simd_mn_min (void)
  *
  * Adds the elements of @src to the corresponding elements
  * of @targ.
- * 
- * Returns: 0 on successful completion, or %E_NONCONF if the 
+ *
+ * Returns: 0 on successful completion, or %E_NONCONF if the
  * two matrices are not conformable for the operation.
- * In the special case where @src is in fact a scalar, the 
- * operation always goes through OK, with the scalar being 
+ * In the special case where @src is in fact a scalar, the
+ * operation always goes through OK, with the scalar being
  * added to each element of @targ.
  */
 
-int 
+int
 gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src)
 {
     int i, n;
@@ -2285,10 +2291,10 @@ gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src)
 #pragma omp parallel for private(i)
     for (i=0; i<n; i++) {
 	targ->val[i] += src->val[i];
-    } 
+    }
     return 0;
 
- st_mode: 
+ st_mode:
 #endif
 
 #if defined(USE_SIMD)
@@ -2311,12 +2317,12 @@ gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src)
  * @c: target matrix.
  *
  * Adds the elements of @a and @b, the result going to @c.
- * 
- * Returns: 0 on successful completion, or %E_NONCONF if the 
+ *
+ * Returns: 0 on successful completion, or %E_NONCONF if the
  * matrices are not conformable for the operation.
  */
 
-int 
+int
 gretl_matrix_add (const gretl_matrix *a, const gretl_matrix *b,
 		  gretl_matrix *c)
 {
@@ -2349,14 +2355,14 @@ gretl_matrix_add (const gretl_matrix *a, const gretl_matrix *b,
  * @targ: target matrix.
  * @src: source matrix.
  *
- * Adds the elements of @src, transposed, to the corresponding 
+ * Adds the elements of @src, transposed, to the corresponding
  * elements of @targ.
- * 
- * Returns: 0 on successful completion, or %E_NONCONF if the 
+ *
+ * Returns: 0 on successful completion, or %E_NONCONF if the
  * two matrices are not conformable for the operation.
  */
 
-int gretl_matrix_add_transpose_to (gretl_matrix *targ, 
+int gretl_matrix_add_transpose_to (gretl_matrix *targ,
 				   const gretl_matrix *src)
 {
     int i, j, k = 0;
@@ -2374,7 +2380,7 @@ int gretl_matrix_add_transpose_to (gretl_matrix *targ,
 	for (j=0; j<src->cols; j++) {
 	    targ->val[k++] += gretl_matrix_get(src, i, j);
 	}
-    } 
+    }
 
     return 0;
 }
@@ -2386,15 +2392,15 @@ int gretl_matrix_add_transpose_to (gretl_matrix *targ,
  *
  * Subtracts the elements of @src from the corresponding elements
  * of @targ.
- * 
- * Returns: 0 on successful completion, or %E_NONCONF if the 
+ *
+ * Returns: 0 on successful completion, or %E_NONCONF if the
  * two matrices are not conformable for the operation.
- * In the special case where @src is in fact a scalar, the 
- * operation always goes through OK, with the scalar being 
+ * In the special case where @src is in fact a scalar, the
+ * operation always goes through OK, with the scalar being
  * subtracted from each element of @targ.
  */
 
-int 
+int
 gretl_matrix_subtract_from (gretl_matrix *targ, const gretl_matrix *src)
 {
     int i, n;
@@ -2416,10 +2422,10 @@ gretl_matrix_subtract_from (gretl_matrix *targ, const gretl_matrix *src)
 #pragma omp parallel for private(i)
     for (i=0; i<n; i++) {
 	targ->val[i] -= src->val[i];
-    } 
+    }
     return 0;
 
- st_mode: 
+ st_mode:
 #endif
 
 #if defined(USE_SIMD)
@@ -2443,12 +2449,12 @@ gretl_matrix_subtract_from (gretl_matrix *targ, const gretl_matrix *src)
  *
  * Subtracts the elements of @b from the corresponding elements
  * of @a, the result going to @c.
- * 
- * Returns: 0 on successful completion, or %E_NONCONF if the 
+ *
+ * Returns: 0 on successful completion, or %E_NONCONF if the
  * matrices are not conformable for the operation.
  */
 
-int 
+int
 gretl_matrix_subtract (const gretl_matrix *a, const gretl_matrix *b,
 		       gretl_matrix *c)
 {
@@ -2482,12 +2488,12 @@ gretl_matrix_subtract (const gretl_matrix *a, const gretl_matrix *b,
  * @b: m x n matrix.
  *
  * Operates on @b such that b_{ij} = a_{ij} - b_{ij}.
- * 
- * Returns: 0 on successful completion, or %E_NONCONF if the 
+ *
+ * Returns: 0 on successful completion, or %E_NONCONF if the
  * two matrices are not conformable for the operation.
  */
 
-int 
+int
 gretl_matrix_subtract_reversed (const gretl_matrix *a, gretl_matrix *b)
 {
     int i, n;
@@ -2505,12 +2511,12 @@ gretl_matrix_subtract_reversed (const gretl_matrix *a, gretl_matrix *b)
 #pragma omp parallel for private(i)
     for (i=0; i<n; i++) {
 	b->val[i] = a->val[i] - b->val[i];
-    } 
+    }
     return 0;
 
- st_mode: 
+ st_mode:
 #endif
-    
+
     for (i=0; i<n; i++) {
 	b->val[i] = a->val[i] - b->val[i];
     }
@@ -2524,7 +2530,7 @@ gretl_matrix_subtract_reversed (const gretl_matrix *a, gretl_matrix *b)
  *
  * Rewrites @m as (I - m), where I is the n x n identity
  * matrix.
- * 
+ *
  * Returns: 0 on successful completion, or %E_NONCONF if @m is
  * not square.
  */
@@ -2548,7 +2554,7 @@ int gretl_matrix_I_minus (gretl_matrix *m)
 	    }
 	}
     }
-    
+
     return 0;
 }
 
@@ -2558,11 +2564,11 @@ int gretl_matrix_I_minus (gretl_matrix *m)
  * @row: top row for insertion.
  * @col: leftmost row for insertion.
  * @n: dimension (rows and columns) of identity matrix.
- * 
+ *
  * Writes an n x n identity matrix into matrix @m, the top left-hand
  * corner of the insertion being given by @row and @col (which are
  * 0-based).
- * 
+ *
  * Returns: 0 on successful completion, or %E_NONCONF if an identity
  * matrix of the specified size cannot be fitted into @m at the
  * specified location.
@@ -2591,7 +2597,7 @@ int gretl_matrix_inscribe_I (gretl_matrix *m, int row, int col, int n)
 	    gretl_matrix_set(m, mi, mj, (i == j)? 1.0 : 0.0);
 	}
     }
-    
+
     return 0;
 }
 
@@ -2618,7 +2624,7 @@ int gretl_matrix_transpose_in_place (gretl_matrix *m)
 	m->rows = c;
 	return 0;
     }
-    
+
     if (r == c) {
 	double mij, mji;
 	int n = r - 1;
@@ -2631,7 +2637,7 @@ int gretl_matrix_transpose_in_place (gretl_matrix *m)
 		gretl_matrix_set(m, j, i, mij);
 	    }
 	}
-    } else {	
+    } else {
 	size_t sz = r * c * sizeof(double);
 	double *val;
 	int k = 0;
@@ -2651,7 +2657,7 @@ int gretl_matrix_transpose_in_place (gretl_matrix *m)
 		gretl_matrix_set(m, j, i, val[k++]);
 	    }
 	}
-	
+
 	mval_free(val);
     }
 
@@ -2704,7 +2710,7 @@ int gretl_square_matrix_transpose (gretl_matrix *m)
     int i, j;
 
     if (m->rows != m->cols) {
-	fputs("gretl_square_matrix_transpose: matrix must be square\n", 
+	fputs("gretl_square_matrix_transpose: matrix must be square\n",
 	      stderr);
 	return 1;
     }
@@ -2727,7 +2733,7 @@ int gretl_square_matrix_transpose (gretl_matrix *m)
  * gretl_matrix_xtr_symmetric:
  * @m: gretl_matrix.
  *
- * Computes the symmetric part of @m by averaging its off-diagonal 
+ * Computes the symmetric part of @m by averaging its off-diagonal
  * elements.
  */
 
@@ -2754,7 +2760,7 @@ void gretl_matrix_xtr_symmetric (gretl_matrix *m)
  *
  * Adds the transpose of @m to @m itself, yielding a symmetric
  * matrix.
- * 
+ *
  * Returns: 0 on successful completion, or
  * 1 if the source matrix is not square.
  */
@@ -2766,7 +2772,7 @@ int gretl_matrix_add_self_transpose (gretl_matrix *m)
     int i, j;
 
     if (m->rows != m->cols) {
-	fputs("gretl_matrix_add_self_transpose: matrix must be square\n", 
+	fputs("gretl_matrix_add_self_transpose: matrix must be square\n",
 	      stderr);
 	return E_NONCONF;
     }
@@ -2791,12 +2797,12 @@ int gretl_matrix_add_self_transpose (gretl_matrix *m)
  *
  * Writes into @targ vec(@src), that is, a column vector
  * formed by stacking the columns of @src.
- * 
+ *
  * Returns: 0 on successful completion, or %E_NONCONF if
  * @targ is not correctly dimensioned.
  */
 
-int 
+int
 gretl_matrix_vectorize (gretl_matrix *targ, const gretl_matrix *src)
 {
     int n;
@@ -2830,7 +2836,7 @@ gretl_matrix *gretl_matrix_vectorize_new (const gretl_matrix *m)
 
     if (gretl_is_null_matrix(m)) {
 	return NULL;
-    } 
+    }
 
     n = m->rows * m->cols;
 
@@ -2847,15 +2853,15 @@ gretl_matrix *gretl_matrix_vectorize_new (const gretl_matrix *m)
  * @targ: target matrix, m x n.
  * @src: source vector, (m * n) x 1.
  *
- * Writes successive blocks of length m from @src into 
+ * Writes successive blocks of length m from @src into
  * the successive columns of @targ (that is, performs the
  * inverse of the vec() operation).
- * 
+ *
  * Returns: 0 on successful completion, or %E_NONCONF if
  * @targ is not correctly dimensioned.
  */
 
-int 
+int
 gretl_matrix_unvectorize (gretl_matrix *targ, const gretl_matrix *src)
 {
     int n;
@@ -2882,14 +2888,14 @@ gretl_matrix_unvectorize (gretl_matrix *targ, const gretl_matrix *src)
  *
  * Writes into @targ vech(@src), that is, a column vector
  * containing the lower-triangular elements of @src.
- * This is only useful for symmetric matrices, but for the 
+ * This is only useful for symmetric matrices, but for the
  * sake of performance we don't check for that.
- * 
+ *
  * Returns: 0 on successful completion, or %E_NONCONF if
  * @targ is not correctly dimensioned.
  */
 
-int 
+int
 gretl_matrix_vectorize_h (gretl_matrix *targ, const gretl_matrix *src)
 {
     int n = src->rows;
@@ -2915,15 +2921,15 @@ gretl_matrix_vectorize_h (gretl_matrix *targ, const gretl_matrix *src)
  * @targ: target matrix, n x n.
  * @src: source vector, m x 1.
  *
- * Rearranges successive blocks of decreasing length from @src into 
+ * Rearranges successive blocks of decreasing length from @src into
  * the successive columns of @targ (that is, performs the
  * inverse of the vech() operation): @targ comes out symmetric.
- * 
+ *
  * Returns: 0 on successful completion, or %E_NONCONF if
  * @targ is not correctly dimensioned.
  */
 
-int 
+int
 gretl_matrix_unvectorize_h (gretl_matrix *targ, const gretl_matrix *src)
 {
     int n = targ->rows, m = src->rows;
@@ -2959,7 +2965,7 @@ gretl_matrix_unvectorize_h (gretl_matrix *targ, const gretl_matrix *src)
  * inscription of @src at the specified point.  If @mod
  * is %GRETL_MOD_TRANSPOSE it is in fact the transpose of
  * @src that is written into @targ.
- * 
+ *
  * Returns: 0 on success, %E_NONCONF if the matrices are
  * not conformable for the operation.
  */
@@ -3014,9 +3020,9 @@ int gretl_matrix_inscribe_matrix (gretl_matrix *targ,
  * Writes into @targ a sub-matrix of @src, taken from the
  * offset @row, @col.  The @targ matrix must be large enough
  * to provide a sub-matrix of the dimensions of @src.
- * If @mod is %GRETL_MOD_TRANSPOSE it is in fact the transpose 
+ * If @mod is %GRETL_MOD_TRANSPOSE it is in fact the transpose
  * of the sub-matrix that that is written into @targ.
- * 
+ *
  * Returns: 0 on success, %E_NONCONF if the matrices are
  * not conformable for the operation.
  */
@@ -3045,7 +3051,7 @@ int gretl_matrix_extract_matrix (gretl_matrix *targ,
 	fprintf(stderr, "extract_matrix: requested starting col=%d, but "
 		"src has %d cols\n", col, src->cols);
 	return E_NONCONF;
-    }    
+    }
 
 
     if (row + m > src->rows || col + n > src->cols) {
@@ -3076,7 +3082,7 @@ int gretl_matrix_extract_matrix (gretl_matrix *targ,
  *
  * "Steals" the allocated data from @m, which is left with a
  * NULL data pointer.
- * 
+ *
  * Returns: a pointer to the "stolen" data.
  */
 
@@ -3104,7 +3110,7 @@ double *gretl_matrix_steal_data (gretl_matrix *m)
  * Prints the given matrix to stderr.
  */
 
-void gretl_matrix_print (const gretl_matrix *m, const char *msg) 
+void gretl_matrix_print (const gretl_matrix *m, const char *msg)
 {
     char *fmt = "%#12.5g ";
     char *envstr;
@@ -3162,7 +3168,7 @@ static double eq_tol = DEFAULT_EQTOL;
  * @tol: tolerance value.
  *
  * Sets the tolerance for judging whether or not a matrix is symmetric
- * (see gretl_matrix_is_symmetric() and also 
+ * (see gretl_matrix_is_symmetric() and also
  * gretl_invert_symmetric_matrix()).  The tolerance is the maximum
  * relative difference between corresponding off-diagonal elements that
  * is acceptable in a supposedly "symmetric" matrix.  The default
@@ -3348,8 +3354,8 @@ double gretl_matrix_one_norm (const gretl_matrix *m)
  * @err: location to receive error code.
  *
  * Compute the log determinant of the symmetric positive-definite
- * matrix @m using Cholesky decomposition.  
- * 
+ * matrix @m using Cholesky decomposition.
+ *
  * Returns: the log determinant, or #NADBL on failure.
  */
 
@@ -3363,7 +3369,7 @@ double gretl_vcv_log_determinant (const gretl_matrix *m, int *err)
 
     if (gretl_is_null_matrix(m)) {
 	return NADBL;
-    }    
+    }
 
     n = m->rows;
 
@@ -3392,7 +3398,7 @@ double gretl_vcv_log_determinant (const gretl_matrix *m, int *err)
 	if (info > 0) {
 	    *err = E_NOTPD;
 	} else {
-	    fputs("gretl_vcv_log_determinant: illegal argument to dpotrf\n", 
+	    fputs("gretl_vcv_log_determinant: illegal argument to dpotrf\n",
 		  stderr);
 	    *err = E_INVARG;
 	}
@@ -3412,7 +3418,7 @@ double gretl_vcv_log_determinant (const gretl_matrix *m, int *err)
     return det;
 }
 
-/* This is really only necessary when using OpenBLAS: 
+/* This is really only necessary when using OpenBLAS:
    when the matrix under analysis contains NaN values
    the pivot values calculated by dgetrf() can go out
    of bounds. We could flag an error here if we find
@@ -3442,8 +3448,8 @@ static void pivot_check (integer *ipiv, int n)
 /* calculate determinant using LU factorization.
    if logdet != 0, return the log of the determinant.
    if logdet != 0 and absval != 0, return the log of the
-   absolute value of the determinant.  
-*/   
+   absolute value of the determinant.
+*/
 
 static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval,
 				    int *err)
@@ -3456,7 +3462,7 @@ static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval,
     if (gretl_is_null_matrix(a)) {
 	*err = E_DATA;
 	return NADBL;
-    }  
+    }
 
     *err = 0;
     n = a->rows;
@@ -3497,7 +3503,7 @@ static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval,
 	    return 0;
 	}
     } else if (info < 0) {
-	fprintf(stderr, "gretl_LU_determinant: dgetrf gave info = %d\n", 
+	fprintf(stderr, "gretl_LU_determinant: dgetrf gave info = %d\n",
 		(int) info);
 	free(ipiv);
 	*err = E_DATA;
@@ -3512,7 +3518,7 @@ static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval,
 	/* not sure if this is worth the bother: but do we get a bit
 	   more numerical accuracy in some cases by adding logs,
 	   rather than by multiplying terms then taking the log of the
-	   product? 
+	   product?
 	*/
 
 	det = 0.0;
@@ -3566,7 +3572,7 @@ static double det_22 (const double *a, int *err)
     if (na(d)) {
 	*err = E_NAN;
     }
-    
+
     return d;
 }
 
@@ -3579,7 +3585,7 @@ static double det_33 (const double *a, int *err)
     if (na(d)) {
 	*err = E_NAN;
     }
-    
+
     return d;
 }
 
@@ -3591,7 +3597,7 @@ static double det_33 (const double *a, int *err)
  * Compute the determinant of the square matrix @a using the LU
  * factorization.  Matrix @a is not preserved: it is overwritten
  * by the factorization.
- * 
+ *
  * Returns: the determinant, or #NADBL on failure.
  */
 
@@ -3616,7 +3622,7 @@ double gretl_matrix_determinant (gretl_matrix *a, int *err)
  * Compute the log of the determinant of the square matrix @a using LU
  * factorization.  Matrix @a is not preserved: it is overwritten
  * by the factorization.
- * 
+ *
  * Returns: the determinant, or #NADBL on failure.
  */
 
@@ -3630,10 +3636,10 @@ double gretl_matrix_log_determinant (gretl_matrix *a, int *err)
  * @a: gretl_matrix.
  * @err: location to receive error code.
  *
- * Compute the log of the absolute value of the determinant of the 
- * square matrix @a using LU factorization.  Matrix @a is not 
+ * Compute the log of the absolute value of the determinant of the
+ * square matrix @a using LU factorization.  Matrix @a is not
  * preserved: it is overwritten by the factorization.
- * 
+ *
  * Returns: the determinant, or #NADBL on failure.
  */
 
@@ -3646,7 +3652,7 @@ static void matrix_grab_content (gretl_matrix *targ, gretl_matrix *src)
 {
     targ->rows = src->rows;
     targ->cols = src->cols;
-    
+
     mval_free(targ->val);
     targ->val = src->val;
     src->val = NULL;
@@ -3681,7 +3687,7 @@ static int SVD_solve (gretl_matrix *a, gretl_matrix *b,
     work = lapack_malloc(sizeof *work);
     if (work == NULL) {
 	return E_ALLOC;
-    } 
+    }
 
     dgelsd_(&m, &n, &nrhs, a->val, &lda, b->val, &ldb, work,
 	    &rcond, &rank, work, &lwork, &isize, &info);
@@ -3696,7 +3702,7 @@ static int SVD_solve (gretl_matrix *a, gretl_matrix *b,
 	if (work == NULL) {
 	    err = E_ALLOC;
 	}
-    } 
+    }
 
     if (!err) {
 	S = work + lwork;
@@ -3704,15 +3710,15 @@ static int SVD_solve (gretl_matrix *a, gretl_matrix *b,
 	if (iwork == NULL) {
 	    err = E_ALLOC;
 	}
-    }	
+    }
 
     dgelsd_(&m, &n, &nrhs, a->val, &lda, b->val, &ldb, S,
 	    &rcond, &rank, work, &lwork, iwork, &info);
     if (info != 0) {
-	fprintf(stderr, "svd_solve: dgelsd gave info = %d\n", 
+	fprintf(stderr, "svd_solve: dgelsd gave info = %d\n",
 		(int) info);
 	err = E_DATA;
-    } 
+    }
 
     if (!err && m > n) {
 	gretl_matrix *c;
@@ -3753,9 +3759,9 @@ static int QR_solve (gretl_matrix *a, gretl_matrix *b,
     work = lapack_malloc(sizeof *work);
     if (work == NULL) {
 	return E_ALLOC;
-    }  
-    
-    dgels_(&trans, &m, &n, &nrhs, a->val, &lda, b->val, &ldb, 
+    }
+
+    dgels_(&trans, &m, &n, &nrhs, a->val, &lda, b->val, &ldb,
 	   work, &lwork, &info);
     if (info != 0) {
 	return wspace_fail(info, work[0]);
@@ -3766,15 +3772,15 @@ static int QR_solve (gretl_matrix *a, gretl_matrix *b,
     work = lapack_realloc(work, lwork * sizeof *work);
     if (work == NULL) {
 	return E_ALLOC;
-    }      
+    }
 
-    dgels_(&trans, &m, &n, &nrhs, a->val, &lda, b->val, &ldb, 
+    dgels_(&trans, &m, &n, &nrhs, a->val, &lda, b->val, &ldb,
 	   work, &lwork, &info);
     if (info != 0) {
-	fprintf(stderr, "QR_solve: dgels gave info = %d\n", 
+	fprintf(stderr, "QR_solve: dgels gave info = %d\n",
 		(int) info);
 	err = E_DATA;
-    } 
+    }
 
     /* Note: we could retrieve the sum(s) of squared errors from
        b on output if we wanted to.  But for now we'll trim
@@ -3806,9 +3812,9 @@ static int QR_solve (gretl_matrix *a, gretl_matrix *b,
  * decomposition proceeds via partial pivoting with row
  * interchanges.
  *
- * On exit, @b is replaced by the solution and @a is replaced 
+ * On exit, @b is replaced by the solution and @a is replaced
  * by its inverse.
- * 
+ *
  * Returns: 0 on successful completion, non-zero code on error.
  */
 
@@ -3822,7 +3828,7 @@ int gretl_LU_solve_invert (gretl_matrix *a, gretl_matrix *b)
     integer *ipiv;
     int err = 0;
 
-    if (gretl_is_null_matrix(a) || 
+    if (gretl_is_null_matrix(a) ||
 	gretl_is_null_matrix(b) ||
 	a->rows != a->cols) {
 	return E_DATA;
@@ -3847,7 +3853,7 @@ int gretl_LU_solve_invert (gretl_matrix *a, gretl_matrix *b)
     dgetrf_(&n, &n, a->val, &n, ipiv, &info);
 
     if (info != 0) {
-	fprintf(stderr, "gretl_LU_solve_invert: dgetrf gave info = %d\n", 
+	fprintf(stderr, "gretl_LU_solve_invert: dgetrf gave info = %d\n",
 		(int) info);
 	err = (info < 0)? E_DATA : E_SINGULAR;
     } else {
@@ -3857,7 +3863,7 @@ int gretl_LU_solve_invert (gretl_matrix *a, gretl_matrix *b)
     if (!err) {
 	dgetrs_(&trans, &n, &nrhs, a->val, &n, ipiv, b->val, &ldb, &info);
 	if (info != 0) {
-	    fprintf(stderr, "gretl_LU_solve_invert: dgetrs gave info = %d\n", 
+	    fprintf(stderr, "gretl_LU_solve_invert: dgetrs gave info = %d\n",
 		    (int) info);
 	    err = E_DATA;
 	}
@@ -3868,7 +3874,7 @@ int gretl_LU_solve_invert (gretl_matrix *a, gretl_matrix *b)
 	if (work == NULL) {
 	    err = E_ALLOC;
 	}
-    } 
+    }
 
     if (!err) {
 	dgetri_(&n, a->val, &n, ipiv, work, &lwork, &info);
@@ -3880,17 +3886,17 @@ int gretl_LU_solve_invert (gretl_matrix *a, gretl_matrix *b)
 	    if (work == NULL) {
 		err = E_ALLOC;
 	    }
-	}	    
+	}
     }
 
     if (!err) {
 	dgetri_(&n, a->val, &n, ipiv, work, &lwork, &info);
 	if (info != 0) {
-	    fprintf(stderr, "gretl_LU_solve_invert: dgetri gave info = %d\n", 
+	    fprintf(stderr, "gretl_LU_solve_invert: dgetri gave info = %d\n",
 		    (int) info);
 	    err = E_DATA;
 	}
-    }    
+    }
 
     free(ipiv);
     lapack_free(work);
@@ -3907,10 +3913,10 @@ int gretl_LU_solve_invert (gretl_matrix *a, gretl_matrix *b)
  *
  * Solves ax = b for the unknown x, via LU decomposition
  * using partial pivoting with row interchanges.
- * On exit, @b is replaced by the solution and @a is replaced 
- * by its decomposition. Calls the LAPACK functions dgetrf() 
+ * On exit, @b is replaced by the solution and @a is replaced
+ * by its decomposition. Calls the LAPACK functions dgetrf()
  * and dgetrs().
- * 
+ *
  * Returns: 0 on successful completion, non-zero code on error.
  */
 
@@ -3929,7 +3935,7 @@ int gretl_LU_solve (gretl_matrix *a, gretl_matrix *b)
     debug = (envstr != NULL && atoi(envstr) > 0);
 #endif
 
-    if (gretl_is_null_matrix(a) || 
+    if (gretl_is_null_matrix(a) ||
 	gretl_is_null_matrix(b) ||
 	a->rows != a->cols) {
 	return E_DATA;
@@ -3960,7 +3966,7 @@ int gretl_LU_solve (gretl_matrix *a, gretl_matrix *b)
     dgetrf_(&n, &n, a->val, &n, ipiv, &info);
 
     if (info != 0) {
-	fprintf(stderr, "gretl_LU_solve: dgetrf gave info = %d\n", 
+	fprintf(stderr, "gretl_LU_solve: dgetrf gave info = %d\n",
 		(int) info);
 	err = (info < 0)? E_DATA : E_SINGULAR;
     } else {
@@ -3970,7 +3976,7 @@ int gretl_LU_solve (gretl_matrix *a, gretl_matrix *b)
     if (!err) {
 	dgetrs_(&trans, &n, &nrhs, a->val, &n, ipiv, b->val, &ldb, &info);
 	if (info != 0) {
-	    fprintf(stderr, "gretl_LU_solve: dgetrs gave info = %d\n", 
+	    fprintf(stderr, "gretl_LU_solve: dgetrs gave info = %d\n",
 		    (int) info);
 	    err = E_DATA;
 	}
@@ -3997,9 +4003,9 @@ int gretl_LU_solve (gretl_matrix *a, gretl_matrix *b)
  * If m > n the QR decomposition is used to find the least
  * squares solution.
  *
- * On exit, @b is replaced by the solution and @a is replaced 
+ * On exit, @b is replaced by the solution and @a is replaced
  * by its decomposition.
- * 
+ *
  * Returns: 0 on successful completion, non-zero code on error.
  */
 
@@ -4085,7 +4091,7 @@ static int native_cholesky_decomp_solve (gretl_matrix *a, gretl_matrix *b)
 	    return E_SINGULAR;
         } else if (test < CHOL_SMALL) {
 	    fprintf(stderr, "cholesky: test[%d] = %g\n", j, test);
-	} 
+	}
 
         e = 1 / sqrt(d2);
         xtx[kk] = e;
@@ -4123,10 +4129,10 @@ static int native_cholesky_decomp_solve (gretl_matrix *a, gretl_matrix *b)
 	if (isnan(xty[j])) {
 	    fprintf(stderr, "%s %d: coeff %d is NaN\n", __FILE__, __LINE__, j);
 	    return E_NAN;
-	} 
+	}
     }
 
-    return 0; 
+    return 0;
 }
 
 #define CHOL_RCOND_MIN 1.0e-6
@@ -4138,10 +4144,10 @@ static int native_cholesky_decomp_solve (gretl_matrix *a, gretl_matrix *b)
  *
  * Solves ax = b for the unknown vector x, using Cholesky decomposition
  * via the LAPACK functions dpotrf() and dpotrs().
- * 
- * On exit, @b is replaced by the solution and @a is replaced by its 
+ *
+ * On exit, @b is replaced by the solution and @a is replaced by its
  * Cholesky decomposition.
- * 
+ *
  * Returns: 0 on successful completion, or non-zero code on error.
  */
 
@@ -4158,17 +4164,17 @@ int gretl_cholesky_decomp_solve (gretl_matrix *a, gretl_matrix *b)
 
     if (gretl_is_null_matrix(a) || gretl_is_null_matrix(b)) {
 	return E_DATA;
-    }    
+    }
 
     n = a->cols;
     m = b->cols;
 
-    dpotrf_(&uplo, &n, a->val, &n, &info);   
+    dpotrf_(&uplo, &n, a->val, &n, &info);
     if (info != 0) {
 	fprintf(stderr, "gretl_cholesky_decomp_solve: "
 		"dpotrf failed with info = %d (n = %d)\n", (int) info, (int) n);
 	err = (info > 0)? E_NOTPD : E_DATA;
-    } 
+    }
 
     if (!err) {
 	work = lapack_malloc(3 * n * sizeof *work);
@@ -4181,12 +4187,12 @@ int gretl_cholesky_decomp_solve (gretl_matrix *a, gretl_matrix *b)
     if (!err) {
 	dtrcon_(&norm, &uplo, &diag, &n, a->val, &n, &rcond, work, iwork, &info);
 	if (rcond < CHOL_RCOND_MIN) {
-#if 0	    
+#if 0
 	    fprintf(stderr, "gretl_cholesky_decomp_solve: rcond = %g (info = %d)\n",
 		    rcond, (int) info);
-#endif	    
+#endif
 	    err = E_SINGULAR;
-	} 
+	}
     }
 
     if (!err) {
@@ -4195,8 +4201,8 @@ int gretl_cholesky_decomp_solve (gretl_matrix *a, gretl_matrix *b)
 	    fprintf(stderr, "gretl_cholesky_decomp_solve:\n"
 		    " dpotrs failed with info = %d (n = %d)\n", (int) info, (int) n);
 	    err = E_SINGULAR;
-	}  
-    }  
+	}
+    }
 
     lapack_free(work);
     free(iwork);
@@ -4210,9 +4216,9 @@ int gretl_cholesky_decomp_solve (gretl_matrix *a, gretl_matrix *b)
  * @b: vector 'x'.
  *
  * Solves ax = b for the unknown vector x, using the pre-computed
- * Cholesky decomposition of @a. On exit, @b is replaced by the 
+ * Cholesky decomposition of @a. On exit, @b is replaced by the
  * solution.
- * 
+ *
  * Returns: 0 on successful completion, or non-zero code on error.
  */
 
@@ -4223,7 +4229,7 @@ int gretl_cholesky_solve (const gretl_matrix *a, gretl_vector *b)
 
     if (gretl_is_null_matrix(a) || gretl_is_null_matrix(b)) {
 	return E_DATA;
-    }    
+    }
 
     n = a->cols;
 
@@ -4232,20 +4238,20 @@ int gretl_cholesky_solve (const gretl_matrix *a, gretl_vector *b)
 	fprintf(stderr, "gretl_cholesky_solve:\n"
 		" dpotrs failed with info = %d (n = %d)\n", (int) info, (int) n);
 	return E_SINGULAR;
-    }     
+    }
 
     return 0;
-} 
+}
 
 /**
  * gretl_cholesky_invert:
  * @a: Cholesky-decomposed symmetric positive-definite matrix.
  *
- * Inverts @a, which must contain the pre-computed Cholesky 
- * decomposition of a p.d. matrix, as may be obtained using 
- * gretl_cholesky_decomp_solve(). For speed there's no error 
+ * Inverts @a, which must contain the pre-computed Cholesky
+ * decomposition of a p.d. matrix, as may be obtained using
+ * gretl_cholesky_decomp_solve(). For speed there's no error
  * checking of the input -- the caller should make sure it's OK.
- * 
+ *
  * Returns: 0 on successful completion, or non-zero code on error.
  */
 
@@ -4298,17 +4304,17 @@ int gretl_cholesky_invert (gretl_matrix *a)
 
 #define TOEPLITZ_SMALL 1.0e-20
 
-static int tsld1 (const double *a1, const double *a2, 
+static int tsld1 (const double *a1, const double *a2,
 		  const double *b, double *x, int m)
 {
     double r1, r2, r3, r5, r6;
     int n, i, n1;
     double *c1 = NULL;
-    double *c2 = NULL;  
+    double *c2 = NULL;
 
     if (fabs(a1[0]) < TOEPLITZ_SMALL) {
 	return E_SINGULAR;
-    } 
+    }
 
     /* solve the system with principal minor of order 1 */
 
@@ -4336,7 +4342,7 @@ static int tsld1 (const double *a1, const double *a2,
     for (n=1; n<m; n++) {
 
         /* compute multiples of the first and last columns of
-           the inverse of the principal minor of order n + 1 
+           the inverse of the principal minor of order n + 1
 	*/
 	n1 = n - 1;
 	r5 = a2[n1];
@@ -4357,7 +4363,7 @@ static int tsld1 (const double *a1, const double *a2,
 	    free(c1);
 	    free(c2);
 	    return E_SINGULAR;
-	} 
+	}
 
 	if (n > 1) {
 	    r6 = c2[0];
@@ -4388,7 +4394,7 @@ static int tsld1 (const double *a1, const double *a2,
     free(c2);
 
     return 0;
-} 
+}
 
 /**
  * gretl_toeplitz_solve:
@@ -4400,17 +4406,17 @@ static int tsld1 (const double *a1, const double *a2,
  * Solves Tx = b for the unknown vector x, where T is a Toeplitz
  * matrix, that is (zero-based)
  *
- * T_{ij} = c_{i-j} for i <= j  
- * T_{ij} = r_{i-j} for i > j   
+ * T_{ij} = c_{i-j} for i <= j
+ * T_{ij} = r_{i-j} for i > j
  *
- * Note that c[0] should equal r[0]. 
+ * Note that c[0] should equal r[0].
  *
  * Returns: a newly allocated vector, containing the solution, x.
  */
 
-gretl_vector *gretl_toeplitz_solve (const gretl_vector *c, 
-				    const gretl_vector *r, 
-				    const gretl_vector *b, 
+gretl_vector *gretl_toeplitz_solve (const gretl_vector *c,
+				    const gretl_vector *r,
+				    const gretl_vector *b,
 				    int *err)
 {
     int m = gretl_vector_get_length(c);
@@ -4419,7 +4425,7 @@ gretl_vector *gretl_toeplitz_solve (const gretl_vector *c,
     /* a few sanity checks */
 
     if (m == 0 ||
-	m != gretl_vector_get_length(r) || 
+	m != gretl_vector_get_length(r) ||
 	m != gretl_vector_get_length(b)) {
 	*err = E_NONCONF;
 	return NULL;
@@ -4444,7 +4450,7 @@ gretl_vector *gretl_toeplitz_solve (const gretl_vector *c,
     }
 
     return y;
-} 
+}
 
 #define gretl_matrix_cum(m,i,j,x) (m->val[(j)*m->rows+(i)]+=x)
 
@@ -4462,14 +4468,14 @@ static int blas_mnk_min = -1;
  *
  * By default all matrix multiplication within libgretl is
  * done using native code, but there is the possibility of
- * farming out multiplication to the BLAS. 
- * 
+ * farming out multiplication to the BLAS.
+ *
  * When multiplying an m x n matrix into an n x k matrix
  * libgretl finds the product of the dimensions, m*n*k,
- * and compares this with an internal threshhold variable, 
+ * and compares this with an internal threshhold variable,
  * blas_mnk_min. If and only if blas_mnk_min >= 0 and
  * n*m*k >= blas_mnk_min, then we use the BLAS. By default
- * blas_mnk_min is set to -1 (BLAS never used). 
+ * blas_mnk_min is set to -1 (BLAS never used).
  *
  * If you have an optimized version of the BLAS you may want
  * to set blas_mnk_min to some suitable positive value. (Setting
@@ -4550,7 +4556,7 @@ static void gretl_blas_dsyrk (const gretl_matrix *a, int atr,
     }
     return;
 
-   st_mode: 
+   st_mode:
 #endif
 
     for (i=0; i<n; i++) {
@@ -4573,10 +4579,10 @@ static void gretl_blas_dsyrk (const gretl_matrix *a, int atr,
 	    gretl_matrix_set(c,i,j,x);			\
 	    gretl_matrix_set(c,j,i,x);			\
 	}						\
-    } while (0);      
+    } while (0);
 
 
-static int 
+static int
 matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
 				gretl_matrix *c, GretlMatrixMod cmod)
 {
@@ -4627,7 +4633,7 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
 		}
 		gretl_st_result(c,i,j,x,cmod);
 	    }
-	} 
+	}
     } else {
 #pragma omp parallel for private(i, j, k, idx1, idx2, x)
 	for (i=0; i<nc; i++) {
@@ -4642,7 +4648,7 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
 		}
 		gretl_st_result(c,i,j,x,cmod);
 	    }
-	} 
+	}
     }
 
     return 0;
@@ -4662,7 +4668,7 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
 		}
 		gretl_st_result(c,i,j,x,cmod);
 	    }
-	} 
+	}
     } else {
 	for (i=0; i<nc; i++) {
 	    for (j=i; j<nc; j++) {
@@ -4676,13 +4682,13 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
 		}
 		gretl_st_result(c,i,j,x,cmod);
 	    }
-	} 
-    }    
+	}
+    }
 
     return 0;
 }
 
-static int 
+static int
 matrix_multiply_self_transpose_single (const gretl_matrix *a,
 				       int atr,
 				       gretl_matrix *c,
@@ -4720,7 +4726,7 @@ matrix_multiply_self_transpose_single (const gretl_matrix *a,
 		}
 		gretl_st_result(c,i,j,x,cmod);
 	    }
-	} 
+	}
     } else {
 	for (i=0; i<nc; i++) {
 	    for (j=i; j<nc; j++) {
@@ -4734,8 +4740,8 @@ matrix_multiply_self_transpose_single (const gretl_matrix *a,
 		}
 		gretl_st_result(c,i,j,x,cmod);
 	    }
-	} 
-    }    
+	}
+    }
 
     return 0;
 }
@@ -4857,8 +4863,8 @@ static void gretl_blas_dgemm (const gretl_matrix *a, int atr,
 	beta = 1.0;
     }
 
-    dgemm_(&TransA, &TransB, &m, &n, &k, 
-	   &alpha, a->val, &a->rows, b->val, &b->rows, &beta, 
+    dgemm_(&TransA, &TransB, &m, &n, &k,
+	   &alpha, a->val, &a->rows, b->val, &b->rows, &beta,
 	   c->val, &c->rows);
 }
 
@@ -4900,13 +4906,13 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
     if (!btr) {
 	if (!atr) {
 	    /* C := alpha*A*B + beta*C */
-#pragma omp parallel for private(j, i, l, x) 
+#pragma omp parallel for private(j, i, l, x)
 	    for (j=0; j<n; j++) {
 		if (beta == 0) {
 		    for (i=0; i<m; i++) {
 			C[j*cr+i] = 0.0;
 		    }
-		} 
+		}
 		for (l=0; l<k; l++) {
 		    if (B[j*br+l] != 0.0) {
 			x = alpha * B[j*br+l];
@@ -4932,7 +4938,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 		    }
 		}
 	    }
-	} 
+	}
     } else {
 	if (!atr) {
 	    /* C := alpha*A*B' + beta*C */
@@ -4942,7 +4948,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 		    for (i=0; i<m; i++) {
 			C[j*cr+i] = 0.0;
 		    }
-		} 
+		}
 		for (l=0; l<k; l++) {
 		    if (B[l*br+j] != 0.0) {
 			x = alpha * B[l*br+j];
@@ -4992,7 +4998,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 		    for (i=0; i<m; i++) {
 			C[j*cr+i] = 0.0;
 		    }
-		} 
+		}
 		for (l=0; l<k; l++) {
 		    if (B[j*br+l] != 0.0) {
 			x = alpha * B[j*br+l];
@@ -5017,7 +5023,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 		    }
 		}
 	    }
-	} 
+	}
     } else {
 	if (!atr) {
 	    /* C := alpha*A*B' + beta*C */
@@ -5026,7 +5032,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 		    for (i=0; i<m; i++) {
 			C[j*cr+i] = 0.0;
 		    }
-		} 
+		}
 		for (l=0; l<k; l++) {
 		    if (B[l*br+j] != 0.0) {
 			x = alpha * B[l*br+j];
@@ -5094,7 +5100,7 @@ static void gretl_dgemm_single (const gretl_matrix *a, int atr,
 		    for (i=0; i<m; i++) {
 			C[j*cr+i] = 0.0;
 		    }
-		} 
+		}
 		for (l=0; l<k; l++) {
 		    if (B[j*br+l] != 0.0) {
 			x = alpha * B[j*br+l];
@@ -5119,7 +5125,7 @@ static void gretl_dgemm_single (const gretl_matrix *a, int atr,
 		    }
 		}
 	    }
-	} 
+	}
     } else {
 	if (!atr) {
 	    /* C := alpha*A*B' + beta*C */
@@ -5128,7 +5134,7 @@ static void gretl_dgemm_single (const gretl_matrix *a, int atr,
 		    for (i=0; i<m; i++) {
 			C[j*cr+i] = 0.0;
 		    }
-		} 
+		}
 		for (l=0; l<k; l++) {
 		    if (B[l*br+j] != 0.0) {
 			x = alpha * B[l*br+j];
@@ -5157,7 +5163,7 @@ static void gretl_dgemm_single (const gretl_matrix *a, int atr,
     }
 }
 
-static int 
+static int
 matmul_mod_w_scalar (double x, const gretl_matrix *m, int mtr,
 		     gretl_matrix *c, GretlMatrixMod cmod)
 {
@@ -5198,7 +5204,7 @@ matmul_mod_w_scalar (double x, const gretl_matrix *m, int mtr,
 	    } else {
 		c->val[i] = xm;
 	    }
-	}	
+	}
     }
 
     return 0;
@@ -5212,7 +5218,7 @@ matmul_mod_w_scalar (double x, const gretl_matrix *m, int mtr,
  * @bmod: modifier: %GRETL_MOD_NONE or %GRETL_MOD_TRANSPOSE.
  * @c: matrix to hold the product.
  * @cmod: modifier: %GRETL_MOD_NONE or %GRETL_MOD_CUMULATE to
- * add the result to the existing value of @c, or 
+ * add the result to the existing value of @c, or
  * %GRETL_MOD_DECREMENT to subtract from the existing value
  * of @c.
  *
@@ -5241,7 +5247,7 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
     if (a == c || b == c) {
 	fputs("gretl_matrix_multiply:\n product matrix must be "
 	      "distinct from both input matrices\n", stderr);
-	fprintf(stderr, "a = %p, b = %p, c = %p\n", 
+	fprintf(stderr, "a = %p, b = %p, c = %p\n",
 		(void *) a, (void *) b, (void *) c);
 	return 1;
     }
@@ -5305,7 +5311,7 @@ int gretl_matrix_multiply_mod_single (const gretl_matrix *a,
     if (a == c || b == c) {
 	fputs("gretl_matrix_multiply:\n product matrix must be "
 	      "distinct from both input matrices\n", stderr);
-	fprintf(stderr, "a = %p, b = %p, c = %p\n", 
+	fprintf(stderr, "a = %p, b = %p, c = %p\n",
 		(void *) a, (void *) b, (void *) c);
 	return 1;
     }
@@ -5350,7 +5356,7 @@ int gretl_matrix_multiply_mod_single (const gretl_matrix *a,
  * @B: right-hand matrix, r x s.
  * @K: target matrix, (p * r) x (p * s).
  *
- * Writes the Kronecker product of the identity matrix 
+ * Writes the Kronecker product of the identity matrix
  * of order @r and @B into @K.
  *
  * Returns: 0 on success, %E_NONCONF if matrix @K is
@@ -5377,7 +5383,7 @@ gretl_matrix_I_kronecker (int p, const gretl_matrix *B,
     if (K->rows != p * r || K->cols != p * s) {
 	return E_NONCONF;
     }
-    
+
     for (i=0; i<p; i++) {
 	ioff = i * r;
 	for (j=0; j<p; j++) {
@@ -5408,7 +5414,7 @@ gretl_matrix_I_kronecker (int p, const gretl_matrix *B,
  * @B: right-hand matrix, r x s.
  * @err: location to receive error code.
  *
- * Writes the Kronecker product of the identity matrix 
+ * Writes the Kronecker product of the identity matrix
  * of order @r and @B into a newly allocated matrix.
  *
  * Returns: the new matrix, or NULL on failure.
@@ -5468,7 +5474,7 @@ gretl_matrix_kronecker_I (const gretl_matrix *A, int r,
     if (K->rows != p * r || K->cols != q * r) {
 	return E_NONCONF;
     }
-    
+
     for (i=0; i<p; i++) {
 	ioff = i * r;
 	for (j=0; j<q; j++) {
@@ -5499,7 +5505,7 @@ gretl_matrix_kronecker_I (const gretl_matrix *A, int r,
  * @r: dimension of right-hand identity matrix.
  * @err: location to receive error code.
  *
- * Writes into a newl allocated matrix the Kronecker 
+ * Writes into a newl allocated matrix the Kronecker
  * product of @A and the identity matrix of order @r.
  *
  * Returns: the new matrix, or NULL on failure.
@@ -5548,8 +5554,8 @@ gretl_matrix_kronecker_product (const gretl_matrix *A, const gretl_matrix *B,
     int ioff, joff;
     int Ki, Kj;
 
-    if (gretl_is_null_matrix(A) || 
-	gretl_is_null_matrix(B) || 
+    if (gretl_is_null_matrix(A) ||
+	gretl_is_null_matrix(B) ||
 	gretl_is_null_matrix(K)) {
 	return E_DATA;
     }
@@ -5562,7 +5568,7 @@ gretl_matrix_kronecker_product (const gretl_matrix *A, const gretl_matrix *B,
     if (K->rows != p * r || K->cols != q * s) {
 	return E_NONCONF;
     }
-    
+
     for (i=0; i<p; i++) {
 	ioff = i * r;
 	for (j=0; j<q; j++) {
@@ -5592,14 +5598,14 @@ gretl_matrix_kronecker_product (const gretl_matrix *A, const gretl_matrix *B,
  * @A: left-hand matrix, p x q.
  * @B: right-hand matrix, r x s.
  * @err: location to receive error code.
- * 
- * Returns: A newly allocated (p * r) x (q * s) matrix which 
- * is the Kronecker product of matrices @A and @B, or NULL 
+ *
+ * Returns: A newly allocated (p * r) x (q * s) matrix which
+ * is the Kronecker product of matrices @A and @B, or NULL
  * on failure.
  */
 
 gretl_matrix *
-gretl_matrix_kronecker_product_new (const gretl_matrix *A, 
+gretl_matrix_kronecker_product_new (const gretl_matrix *A,
 				    const gretl_matrix *B,
 				    int *err)
 {
@@ -5614,8 +5620,8 @@ gretl_matrix_kronecker_product_new (const gretl_matrix *A,
     p = A->rows;
     q = A->cols;
     r = B->rows;
-    s = B->cols;    
-    
+    s = B->cols;
+
     K = gretl_matrix_alloc(p * r, q * s);
 
     if (K == NULL) {
@@ -5633,7 +5639,7 @@ gretl_matrix_kronecker_product_new (const gretl_matrix *A,
  * @B: right-hand matrix, p x s.
  * @C: target matrix, p x (q * r).
  *
- * Writes into @C the horizontal direct product of @A and @B. 
+ * Writes into @C the horizontal direct product of @A and @B.
  * That is, $C_i' = A_i' \otimes B_i'$ (in TeX notation)
  *
  * Returns: 0 on success, %E_NONCONF if @A and @B have different
@@ -5641,7 +5647,7 @@ gretl_matrix_kronecker_product_new (const gretl_matrix *A,
  * operation.
  */
 
-int gretl_matrix_hdproduct (const gretl_matrix *A, 
+int gretl_matrix_hdproduct (const gretl_matrix *A,
 			    const gretl_matrix *B,
 			    gretl_matrix *C)
 {
@@ -5650,8 +5656,8 @@ int gretl_matrix_hdproduct (const gretl_matrix *A,
     int i, j, k;
     int joff;
 
-    if (gretl_is_null_matrix(A) || 
-	gretl_is_null_matrix(B) || 
+    if (gretl_is_null_matrix(A) ||
+	gretl_is_null_matrix(B) ||
 	gretl_is_null_matrix(C)) {
 	return E_DATA;
     }
@@ -5663,7 +5669,7 @@ int gretl_matrix_hdproduct (const gretl_matrix *A,
     if (B->rows != p || C->rows != p || C->cols != q * r) {
 	return E_NONCONF;
     }
-    
+
     for (i=0; i<p; i++) {
 	for (j=0; j<q; j++) {
 	    aij = gretl_matrix_get(A, i, j);
@@ -5673,7 +5679,7 @@ int gretl_matrix_hdproduct (const gretl_matrix *A,
 		    bik = gretl_matrix_get(B, i, k);
 		    gretl_matrix_set(C, i, joff + k, aij*bik);
 		}
-	    } 
+	    }
 	}
     }
 
@@ -5685,14 +5691,14 @@ int gretl_matrix_hdproduct (const gretl_matrix *A,
  * @A: left-hand matrix, p x q.
  * @B: right-hand matrix, p x r.
  * @err: location to receive error code.
- * 
+ *
  * Returns: A newly allocated p x (r * s) matrix which is the
  * horizontal direct product of matrices @A and @B, or NULL on
  * failure.
  */
 
 gretl_matrix *
-gretl_matrix_hdproduct_new (const gretl_matrix *A, 
+gretl_matrix_hdproduct_new (const gretl_matrix *A,
 			    const gretl_matrix *B,
 			    int *err)
 {
@@ -5712,8 +5718,8 @@ gretl_matrix_hdproduct_new (const gretl_matrix *A,
     }
 
     q = A->cols;
-    r = B->cols;    
-    
+    r = B->cols;
+
     K = gretl_zero_matrix_new(p, q * r);
 
     if (K == NULL) {
@@ -5725,7 +5731,7 @@ gretl_matrix_hdproduct_new (const gretl_matrix *A,
     return K;
 }
 
-/* 
+/*
    returns the sequence of bits in the binary expansion of s
 */
 
@@ -5762,14 +5768,14 @@ static char *binary_expansion (int s, int *t, int *pow2)
  * @A: square source matrix.
  * @s: exponent >= 0.
  * @err: location to receive error code.
- * 
+ *
  * Calculates the matrix A^k using Golub and Van Loan's Algorithm
  * 11.2.2 ("Binary Powering").
  *
  * Returns: allocated matrix, or NULL on failure.
  */
 
-gretl_matrix *gretl_matrix_pow (const gretl_matrix *A, 
+gretl_matrix *gretl_matrix_pow (const gretl_matrix *A,
 				int s, int *err)
 {
     gretl_matrix *B = NULL;
@@ -5797,7 +5803,7 @@ gretl_matrix *gretl_matrix_pow (const gretl_matrix *A,
 	    *err = E_ALLOC;
 	}
 	return B;
-    }	
+    }
 
     bits = binary_expansion(s, &t, &pow2);
     if (bits == NULL) {
@@ -5860,7 +5866,7 @@ gretl_matrix *gretl_matrix_pow (const gretl_matrix *A,
  * @b: second vector.
  * @err: pointer to receive error code (zero on success,
  * non-zero on failure), or NULL.
- * 
+ *
  * Returns: The dot (scalar) product of @a and @b, or #NADBL on
  * failure.
  */
@@ -5900,7 +5906,7 @@ double gretl_vector_dot_product (const gretl_vector *a, const gretl_vector *b,
  * @bmod: modifier: %GRETL_MOD_NONE or %GRETL_MOD_TRANSPOSE.
  * @err: pointer to receive error code (zero on success,
  * non-zero on failure), or NULL.
- * 
+ *
  * Returns: The dot (scalar) product of @a (or @a-transpose) and
  * @b (or @b-transpose), or #NADBL on failure.
  */
@@ -5915,7 +5921,7 @@ double gretl_matrix_dot_product (const gretl_matrix *a, GretlMatrixMod amod,
 
     if (gretl_is_null_matrix(a) || gretl_is_null_matrix(b)) {
 	return NADBL;
-    }    
+    }
 
     if (gretl_is_vector(a) && gretl_is_vector(b)) {
 	return gretl_vector_dot_product(a, b, err);
@@ -5927,14 +5933,14 @@ double gretl_matrix_dot_product (const gretl_matrix *a, GretlMatrixMod amod,
     }
 
     if (!myerr) {
-	myerr = gretl_matrix_multiply_mod(a, amod, b, bmod, 
+	myerr = gretl_matrix_multiply_mod(a, amod, b, bmod,
 					  c, GRETL_MOD_NONE);
     }
 
     if (!myerr) {
 	ret = c->val[0];
     }
-	
+
     gretl_matrix_free(c);
 
     if (err != NULL) {
@@ -5965,7 +5971,7 @@ enum {
  * @cb: columns of B
  * @r: pointer to rows of result
  * @c: pointer to columns of result
- * 
+ *
  * Used to establish the dimensions of the result of a "dot" operation.
  *
  * Returns: a numeric code identifying the convention to be used;
@@ -6035,7 +6041,7 @@ static int dot_op_conf (int ra, int ca, int rb, int cb, int *r, int *c)
 static double x_op_y (double x, double y, int op)
 {
     switch (op) {
-    case '*': 
+    case '*':
 	return x * y;
     case '/':
 	return x / y;
@@ -6067,7 +6073,7 @@ static void math_err_init (void)
     errno = 0;
 #ifdef HAVE_FENV_H
     feclearexcept(FE_ALL_EXCEPT);
-#endif    
+#endif
 }
 
 /* the following is called after math operations only
@@ -6077,7 +6083,7 @@ static int math_err_check (const char *msg, int errnum)
 {
 #ifdef HAVE_FENV_H
     int err = E_DATA;
-    
+
     if (!fetestexcept(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW)) {
 	/* we'll let "pure" underflow pass */
 	fprintf(stderr, "warning: calculation underflow\n");
@@ -6092,7 +6098,7 @@ static int math_err_check (const char *msg, int errnum)
     gretl_errmsg_set_from_errno(msg, errnum);
     errno = 0;
     return E_DATA;
-#endif    
+#endif
 }
 
 /**
@@ -6101,13 +6107,13 @@ static int math_err_check (const char *msg, int errnum)
  * @b: right-hand matrix.
  * @op: operator.
  * @err: location to receive error code.
- * 
+ *
  * Returns: a new matrix, each of whose elements is the result
- * of (x op y), where x and y are the  corresponding elements of 
+ * of (x op y), where x and y are the  corresponding elements of
  * the matrices @a and @b (or NULL on failure).
  */
 
-gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a, 
+gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 				   const gretl_matrix *b,
 				   int op, int *err)
 {
@@ -6128,7 +6134,7 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
     m = a->rows;
     n = a->cols;
     p = b->rows;
-    q = b->cols;    
+    q = b->cols;
 
     conftype = dot_op_conf(m, n, p, q, &nr, &nc);
 
@@ -6138,7 +6144,7 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 		(char) op, a->rows, a->cols, b->rows, b->cols);
 	*err = E_NONCONF;
 	return NULL;
-    }	
+    }
 
     c = gretl_matrix_alloc(nr, nc);
     if (c == NULL) {
@@ -6152,7 +6158,7 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
     if (conftype == CONF_ELEMENTS) {
 	nv = m * n;
 	psize = (guint64) m * n;
-    } else if (conftype == CONF_A_ROWVEC || 
+    } else if (conftype == CONF_A_ROWVEC ||
 	       conftype == CONF_B_ROWVEC ||
 	       conftype == CONF_AR_BC) {
 	psize = nc;
@@ -6371,7 +6377,7 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 }
 
 static gretl_matrix *
-gretl_matrix_complex_multdiv (const gretl_matrix *a, 
+gretl_matrix_complex_multdiv (const gretl_matrix *a,
 			      const gretl_matrix *b,
 			      int multiply,
 			      int force_complex,
@@ -6393,7 +6399,7 @@ gretl_matrix_complex_multdiv (const gretl_matrix *a,
     m = a->rows;
     n = a->cols;
     p = b->rows;
-    q = b->cols;    
+    q = b->cols;
 
     if (m != p) {
 	*err = E_NONCONF;
@@ -6419,13 +6425,13 @@ gretl_matrix_complex_multdiv (const gretl_matrix *a,
 
     math_err_init();
 
-    ar = a->val; 
+    ar = a->val;
     ai = (a->cols == 2)? ar + m : NULL;
 
-    br = b->val; 
+    br = b->val;
     bi = (b->cols == 2)? br + m : NULL;
 
-    cr = c->val; 
+    cr = c->val;
     ci = (c->cols == 2)? cr + m : NULL;
 
     for (i=0; i<m; i++) {
@@ -6481,7 +6487,7 @@ gretl_matrix_complex_multdiv (const gretl_matrix *a,
 	if (*err) {
 	    gretl_matrix_free(c);
 	    c = NULL;
-	}	    
+	}
     }
 
     return c;
@@ -6496,16 +6502,16 @@ gretl_matrix_complex_multdiv (const gretl_matrix *a,
  *
  * Computes the complex product of @a and @b.  The first
  * column in these matrices is assumed to contain real
- * values, and the second column (if present) imaginary 
+ * values, and the second column (if present) imaginary
  * coefficients.
- * 
- * Returns: a matrix with the result of the multiplication 
- * of the two vectors of complex numbers. If both @a and @b have no 
+ *
+ * Returns: a matrix with the result of the multiplication
+ * of the two vectors of complex numbers. If both @a and @b have no
  * imaginary part and the @force_complex flag is zero, the return
  * value will be m x 1, otherwise it will be m x 2.
  */
 
-gretl_matrix *gretl_matrix_complex_multiply (const gretl_matrix *a, 
+gretl_matrix *gretl_matrix_complex_multiply (const gretl_matrix *a,
 					     const gretl_matrix *b,
 					     int force_complex,
 					     int *err)
@@ -6522,16 +6528,16 @@ gretl_matrix *gretl_matrix_complex_multiply (const gretl_matrix *a,
  *
  * Computes the complex division of @a over @b.  The first
  * column in these matrices is assumed to contain real
- * values, and the second column (if present) imaginary 
+ * values, and the second column (if present) imaginary
  * coefficients.
- * 
- * Returns: a matrix with the result of the division of the 
- * two vectors of complex numbers. If both @a and @b have no 
+ *
+ * Returns: a matrix with the result of the division of the
+ * two vectors of complex numbers. If both @a and @b have no
  * imaginary part and the @force_complex flag is zero, the return
  * value will be m x 1, otherwise it will be m x 2.
  */
 
-gretl_matrix *gretl_matrix_complex_divide (const gretl_matrix *a, 
+gretl_matrix *gretl_matrix_complex_divide (const gretl_matrix *a,
 					   const gretl_matrix *b,
 					   int force_complex,
 					   int *err)
@@ -6597,7 +6603,7 @@ static gretl_matrix *gretl_matrix_sum (const gretl_matrix *m, int bycol,
 	dim = m->rows;
 	s = gretl_matrix_alloc(dim, 1);
     }
-    
+
     if (s == NULL) {
 	*err = E_ALLOC;
     } else {
@@ -6693,7 +6699,7 @@ static gretl_matrix *gretl_matrix_prod (const gretl_matrix *m, int bycol,
 	dim = m->rows;
 	s = gretl_matrix_alloc(dim, 1);
     }
-    
+
     if (s == NULL) {
 	*err = E_ALLOC;
     } else {
@@ -6786,13 +6792,13 @@ gretl_matrix *gretl_matrix_column_mean (const gretl_matrix *m, int *err)
  * @err: location to receive error code.
  *
  * Returns: a row vector containing the standard deviations of
- * the columns of @m, or NULL on failure. If @df is positive 
+ * the columns of @m, or NULL on failure. If @df is positive
  * it is used as the divisor when calculating the column
  * variance, otherwise the divisor is the number of rows in
  * @m.
  */
 
-gretl_matrix *gretl_matrix_column_sd2 (const gretl_matrix *m, 
+gretl_matrix *gretl_matrix_column_sd2 (const gretl_matrix *m,
 				       int df, int *err)
 {
     gretl_matrix *s;
@@ -6842,7 +6848,7 @@ gretl_matrix *gretl_matrix_column_sd2 (const gretl_matrix *m,
  * @err: location to receive error code.
  *
  * Returns: a row vector containing the standard deviations of
- * the columns of @m (without a degrees of freedom correction), 
+ * the columns of @m (without a degrees of freedom correction),
  * or NULL on failure.
  */
 
@@ -6886,7 +6892,7 @@ double gretl_matrix_column_j_mean (const gretl_matrix *m, int j)
 
     if (!na(x)) {
 	x /= (double) m->rows;
-    }    
+    }
 
     return x;
 }
@@ -6894,14 +6900,14 @@ double gretl_matrix_column_j_mean (const gretl_matrix *m, int j)
 /**
  * gretl_matrix_demean_by_row:
  * @m: matrix on which to operate.
- * 
- * For each row of @m, subtracts the row mean from each 
+ *
+ * For each row of @m, subtracts the row mean from each
  * element on the row.
  */
 
 void gretl_matrix_demean_by_row (gretl_matrix *m)
 {
-    double rowmean;  
+    double rowmean;
     int i, j;
 
     for (i=0; i<m->rows; i++) {
@@ -6909,20 +6915,20 @@ void gretl_matrix_demean_by_row (gretl_matrix *m)
 	for (j=0; j<m->cols; j++) {
 	    gretl_matrix_cum(m, i, j, -rowmean);
 	}
-    }    
+    }
 }
 
 /**
  * gretl_matrix_demean_by_column:
  * @m: matrix on which to operate.
- * 
- * For each column of @m, subtracts the column mean from each 
+ *
+ * For each column of @m, subtracts the column mean from each
  * element in the column.
  */
 
 void gretl_matrix_demean_by_column (gretl_matrix *m)
 {
-    double colmean; 
+    double colmean;
     int i, j;
 
     for (j=0; j<m->cols; j++) {
@@ -6930,7 +6936,7 @@ void gretl_matrix_demean_by_column (gretl_matrix *m)
 	for (i=0; i<m->rows; i++) {
 	    gretl_matrix_cum(m, i, j, -colmean);
 	}
-    }    
+    }
 }
 
 /**
@@ -6942,7 +6948,7 @@ void gretl_matrix_demean_by_column (gretl_matrix *m)
  * (2) multiply @m-transpose into @m; and
  * (3) divide the elements of the product by the number of rows
  *   in @m.
- * 
+ *
  * Returns: the allocated variance-covariance matrix, or NULL
  * on failure.  Note that on return the column means have
  * been subtracted from @m.
@@ -6987,7 +6993,7 @@ gretl_matrix *gretl_matrix_vcv (gretl_matrix *m)
  * @m: matrix on which to operate.
  * @p: vector of desired quantiles.
  * @err: location to receive error code.
- * 
+ *
  * Returns: a matrix containing the @p quantiles
  * of the columns of @m, or NULL on failure.
  */
@@ -7011,7 +7017,7 @@ gretl_matrix *gretl_matrix_quantiles (const gretl_matrix *m,
     if (plen == 0) {
 	*err = E_INVARG;
 	return NULL;
-    }    
+    }
 
     for (i=0; i<plen; i++) {
 	if (p->val[i] <= 0 || p->val[i] >= 1) {
@@ -7069,7 +7075,7 @@ gretl_matrix *gretl_matrix_quantiles (const gretl_matrix *m,
  * @a: left-hand matrix.
  * @b: right-hand matrix.
  * @c: matrix to hold the product.
- * 
+ *
  * Multiplies @a into @b, with the result written into @c.
  *
  * Returns: 0 on success; non-zero error code on
@@ -7081,7 +7087,7 @@ int gretl_matrix_multiply (const gretl_matrix *a, const gretl_matrix *b,
 {
     int err = 0;
 
-    if (gretl_is_null_matrix(a) || 
+    if (gretl_is_null_matrix(a) ||
 	gretl_is_null_matrix(b) ||
 	gretl_is_null_matrix(c)) {
 	return E_DATA;
@@ -7112,7 +7118,7 @@ int gretl_matrix_multiply_single (const gretl_matrix *a,
 {
     int err = 0;
 
-    if (gretl_is_null_matrix(a) || 
+    if (gretl_is_null_matrix(a) ||
 	gretl_is_null_matrix(b) ||
 	gretl_is_null_matrix(c)) {
 	return E_DATA;
@@ -7142,14 +7148,14 @@ int gretl_matrix_multiply_single (const gretl_matrix *a,
  * @a: left-hand matrix.
  * @b: right-hand matrix.
  * @err: location for error code.
- * 
+ *
  * Multiplies @a into @b, with the result written into a newly
  * allocated matrix.
  *
  * Returns: matrix product on success, or NULL on failure.
  */
 
-gretl_matrix *gretl_matrix_multiply_new (const gretl_matrix *a, 
+gretl_matrix *gretl_matrix_multiply_new (const gretl_matrix *a,
 					 const gretl_matrix *b,
 					 int *err)
 {
@@ -7172,7 +7178,7 @@ gretl_matrix *gretl_matrix_multiply_new (const gretl_matrix *a,
 	*err = E_ALLOC;
 	return NULL;
     }
-    
+
     *err = gretl_matrix_multiply_mod(a, GRETL_MOD_NONE,
 				     b, GRETL_MOD_NONE,
 				     c, GRETL_MOD_NONE);
@@ -7192,63 +7198,94 @@ gretl_matrix *gretl_matrix_multiply_new (const gretl_matrix *a,
  * @mod: %GRETL_MOD_NONE for left division, or
  * %GRETL_MOD_TRANSPOSE for right division.
  * @err: location to receive error code.
- * 
+ *
  * Follows the semantics of Matlab/Octave for left and right
  * matrix "division". In left division, A \ B is in principle
  * equivalent to A^{-1} * B, and in right division A / B is
  * in principle equivalent to A * B^{-1}, but the result is
  * obtained without explicit computation of the inverse.
- * 
- * In left division @a and @b must have the same number of 
+ *
+ * In left division @a and @b must have the same number of
  * rows; in right division they must have the same number
  * of columns.
  *
  * Returns: the "quotient" matrix, or NULL on failure.
  */
 
-gretl_matrix *gretl_matrix_divide (const gretl_matrix *a, 
+gretl_matrix *gretl_matrix_divide (const gretl_matrix *a,
 				   const gretl_matrix *b,
 				   GretlMatrixMod mod,
 				   int *err)
 {
     gretl_matrix *Q = NULL;
-    gretl_matrix *AT = NULL, *BT = NULL; 
+    gretl_matrix *AT = NULL, *BT = NULL;
     gretl_matrix *Tmp;
     int den_scalar = 0;
 
-    if (gretl_is_null_matrix(a) || 
+    if (gretl_is_null_matrix(a) ||
 	gretl_is_null_matrix(b)) {
 	*err = E_DATA;
 	return NULL;
     }
 
-    if (mod == GRETL_MOD_NONE) {
-	den_scalar = gretl_matrix_is_scalar(a);
-	if (a->rows != b->rows && !den_scalar) {
-	    *err = E_NONCONF;
-	} else if (den_scalar) {
-	    Q = gretl_matrix_copy(b);
-	    if (Q == NULL) {
-		*err = E_ALLOC;
-	    } else {
-		gretl_matrix_divide_by_scalar(Q, a->val[0]);
-	    }
+    /* detect and handle scalar cases */
+    if (mod == GRETL_MOD_NONE && gretl_matrix_is_scalar(a)) {
+	Q = gretl_matrix_copy(b);
+	if (Q == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    gretl_matrix_divide_by_scalar(Q, a->val[0]);
 	}
-    } else {
-	den_scalar = gretl_matrix_is_scalar(b);
-	if (a->cols != b->cols && !den_scalar) {
-	    *err = E_NONCONF;
-	} else if (den_scalar) {	
-	    Q = gretl_matrix_copy(a);
-	    if (Q == NULL) {
-		*err = E_ALLOC;
-	    } else {
-		gretl_matrix_divide_by_scalar(Q, b->val[0]);
-	    }
-	}    
+	return Q;
+    } else if (mod == GRETL_MOD_TRANSPOSE && gretl_matrix_is_scalar(b)) {
+	Q = gretl_matrix_copy(a);
+	if (Q == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    gretl_matrix_divide_by_scalar(Q, b->val[0]);
+	}
+	return Q;
     }
 
-    if (*err || den_scalar) {
+#if TRY_DGELSY
+    if (mod == GRETL_MOD_NONE && a->rows > a->cols) {
+	/* OLS experiment */
+	gretl_matrix *A = gretl_matrix_copy(a);
+	gretl_matrix *B = gretl_matrix_copy(b);
+	gretl_matrix *X = NULL;
+	double xij;
+	int i, j, rank = 0;
+
+	*err = gretl_dgelsy(A, B, &rank);
+	if (!*err) {
+	    X = gretl_matrix_alloc(A->cols, B->cols);
+	    if (X == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		/* transcribe the solution */
+		for (j=0; j<X->cols; j++) {
+		    for (i=0; i<X->rows; i++) {
+			xij = gretl_matrix_get(B, i, j);
+			gretl_matrix_set(X, i, j, xij);
+		    }
+		}
+	    }
+	}
+
+	gretl_matrix_free(A);
+	gretl_matrix_free(B);
+
+	return X;
+    }
+#endif
+
+    if (mod == GRETL_MOD_NONE && a->rows != b->rows) {
+	*err = E_NONCONF;
+    } else if (mod == GRETL_MOD_TRANSPOSE && a->cols != b->cols) {
+	*err = E_NONCONF;
+    }
+
+    if (*err) {
 	return Q;
     }
 
@@ -7262,7 +7299,7 @@ gretl_matrix *gretl_matrix_divide (const gretl_matrix *a,
 	    a = AT;
 	    b = BT;
 	}
-    } 
+    }
 
     Q = gretl_matrix_copy(b);
     if (Q == NULL) {
@@ -7282,7 +7319,7 @@ gretl_matrix *gretl_matrix_divide (const gretl_matrix *a,
 	Q = gretl_matrix_copy_transpose(Tmp);
 	if (Q == NULL) {
 	    *err = E_ALLOC;
-	} 
+	}
 	gretl_matrix_free(Tmp);
     }
 
@@ -7305,15 +7342,15 @@ gretl_matrix *gretl_matrix_divide (const gretl_matrix *a,
  * gretl_general_matrix_rcond:
  * @m: matrix to examine.
  * @err: location to receive error code.
- * 
+ *
  * Estimates the reciprocal condition number of the general
- * real matrix @m (in the 1-norm), using the LAPACK 
+ * real matrix @m (in the 1-norm), using the LAPACK
  * functions dgetrf() and dgecon().
  *
  * Returns: the estimate, or #NADBL on failure to allocate memory.
  */
 
-static double gretl_general_matrix_rcond (const gretl_matrix *A, 
+static double gretl_general_matrix_rcond (const gretl_matrix *A,
 					  int *err)
 {
     gretl_matrix *a = NULL;
@@ -7344,7 +7381,7 @@ static double gretl_general_matrix_rcond (const gretl_matrix *A,
 	goto bailout;
     }
 
-    dgetrf_(&m, &n, a->val, &lda, ipiv, &info);   
+    dgetrf_(&m, &n, a->val, &lda, ipiv, &info);
 
     if (info != 0) {
 	fprintf(stderr, "gretl_general_matrix_rcond:\n"
@@ -7355,7 +7392,7 @@ static double gretl_general_matrix_rcond (const gretl_matrix *A,
     } else {
 	pivot_check(ipiv, min(m, n));
     }
-    
+
     if (!*err) {
 	double anorm = gretl_matrix_one_norm(A);
 
@@ -7380,9 +7417,9 @@ static double gretl_general_matrix_rcond (const gretl_matrix *A,
  * gretl_symmetric_matrix_rcond:
  * @m: matrix to examine.
  * @err: location to receive error code.
- * 
+ *
  * Estimates the reciprocal condition number of the real symmetric
- * positive definite matrix @m (in the 1-norm), using the LAPACK 
+ * positive definite matrix @m (in the 1-norm), using the LAPACK
  * functions dpotrf() and dpocon().
  *
  * Returns: the estimate, or #NADBL on failure to allocate memory.
@@ -7415,7 +7452,7 @@ double gretl_symmetric_matrix_rcond (const gretl_matrix *m, int *err)
 	goto bailout;
     }
 
-    dpotrf_(&uplo, &n, a->val, &n, &info);   
+    dpotrf_(&uplo, &n, a->val, &n, &info);
 
     if (info != 0) {
 	fprintf(stderr, "gretl_symmetric_matrix_rcond: "
@@ -7444,8 +7481,8 @@ double gretl_symmetric_matrix_rcond (const gretl_matrix *m, int *err)
  * gretl_matrix_rcond:
  * @m: matrix to examine.
  * @err: location to receive error code.
- * 
- * Estimates the reciprocal condition number of the real 
+ *
+ * Estimates the reciprocal condition number of the real
  * matrix @m (in the 1-norm).
  *
  * Returns: the estimate, or #NADBL on failure to allocate memory.
@@ -7460,8 +7497,8 @@ double gretl_matrix_rcond (const gretl_matrix *m, int *err)
  * gretl_matrix_cond_index:
  * @m: matrix to examine.
  * @err: location to receive error code.
- * 
- * Estimates the condition number (a la Belsley) of the real 
+ *
+ * Estimates the condition number (a la Belsley) of the real
  * matrix @m.
  *
  * Returns: the estimate, or #NADBL on failure.
@@ -7514,7 +7551,7 @@ double gretl_matrix_cond_index (const gretl_matrix *m, int *err)
     if (!*err) {
 	cidx = sqrt(v->val[c-1] / v->val[0]);
     }
-	
+
     gretl_matrix_free(X);
     gretl_matrix_free(XX);
     gretl_matrix_free(v);
@@ -7525,11 +7562,11 @@ double gretl_matrix_cond_index (const gretl_matrix *m, int *err)
 /**
  * gretl_matrix_cholesky_decomp:
  * @a: matrix to operate on.
- * 
+ *
  * Computes the Cholesky factorization of the symmetric,
- * positive definite matrix @a.  On exit the lower triangle of 
+ * positive definite matrix @a.  On exit the lower triangle of
  * @a is replaced by the factor L, as in a = LL', and the
- * upper triangle is set to zero.  Uses the lapack function 
+ * upper triangle is set to zero.  Uses the lapack function
  * dpotrf.
  *
  * Returns: 0 on success; 1 on failure.
@@ -7555,7 +7592,7 @@ int gretl_matrix_cholesky_decomp (gretl_matrix *a)
     dpotrf_(&uplo, &n, a->val, &lda, &info);
 
     if (info != 0) {
-	fprintf(stderr, "gretl_matrix_cholesky_decomp: info = %d\n", 
+	fprintf(stderr, "gretl_matrix_cholesky_decomp: info = %d\n",
 		(int) info);
 	err = (info > 0)? E_NOTPD : E_DATA;
     } else {
@@ -7773,11 +7810,11 @@ static int lapack_psd_root (gretl_matrix *a, const gretl_matrix *a0)
  * gretl_matrix_psd_root:
  * @a: matrix to operate on.
  * @a0: copy of @a, for comparison, or NULL.
- * 
+ *
  * Computes the LL' factorization of the symmetric,
- * positive semidefinite matrix @a.  On successful exit 
+ * positive semidefinite matrix @a.  On successful exit
  * the lower triangle of @a is replaced by the factor L
- * and the upper triangle is set to zero.  
+ * and the upper triangle is set to zero.
  *
  * Returns: 0 on success; non-zero on failure.
  */
@@ -7876,7 +7913,7 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,
     for (i=0; i<n; i++) {
 	for (j=0; j<n; j++) {
 	    if (i <= j) {
-		gretl_matrix_set(R, i, j, 
+		gretl_matrix_set(R, i, j,
 				 gretl_matrix_get(M, i, j));
 	    } else {
 		gretl_matrix_set(R, i, j, 0.0);
@@ -7890,7 +7927,7 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,
 	fprintf(stderr, "dorgqr: info = %d\n", (int) info);
 	err = 1;
 	goto bailout;
-    } 
+    }
 
  bailout:
 
@@ -7920,15 +7957,110 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,
     return err;
 }
 
+#if TRY_DGELSY
+
+/* lapack:
+
+   SUBROUTINE DGELSY(M, N, NRHS, A, LDA, B, LDB, JPVT, RCOND, RANK,
+                     WORK, LWORK, INFO)
+
+   computes the minimum-norm solution to a real linear least
+   squares problem:
+       minimize || A * X - B ||
+   using a complete orthogonal factorization of A.  A is an M-by-N
+   matrix which may be rank-deficient.
+*/
+
+static int gretl_dgelsy (gretl_matrix *A,
+			 gretl_matrix *B,
+			 int *rank)
+{
+    integer m, n, lda, nrhs;
+    integer info = 0;
+    integer lwork = -1;
+    integer *jpvt = NULL;
+    doublereal *tau = NULL;
+    doublereal *work = NULL;
+    doublereal rcond = 1.0e-14; /* ? */
+    int i, err = 0;
+
+    if (gretl_is_null_matrix(A) || gretl_is_null_matrix(B)) {
+	return E_DATA;
+    }
+
+    lda = m = A->rows;
+    n = A->cols;
+    nrhs = B->cols;
+
+    if (n > m || B->rows != m) {
+	return E_NONCONF;
+    }
+
+    jpvt = malloc(n * sizeof *jpvt);
+    work = lapack_malloc(sizeof *work);
+    if (jpvt == NULL || work == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    for (i=0; i<n; i++) {
+	jpvt[i] = 0;
+    }
+
+    /* workspace query */
+    dgelsy_(&m, &n, &nrhs, A->val, &lda, B->val, &lda,
+	    jpvt, &rcond, rank, work, &lwork, &info);
+    if (info != 0) {
+	fprintf(stderr, "dgeqrf: info = %d\n", (int) info);
+	err = 1;
+	goto bailout;
+    }
+
+    /* optimally sized work array */
+    lwork = (integer) work[0];
+    work = lapack_realloc(work, (size_t) lwork * sizeof *work);
+    if (work == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* run actual computation */
+    dgelsy_(&m, &n, &nrhs, A->val, &lda, B->val, &lda,
+	    jpvt, &rcond, rank, work, &lwork, &info);
+    if (info != 0) {
+	fprintf(stderr, "dgelsy: info = %d\n", (int) info);
+	err = 1;
+	goto bailout;
+    }
+
+#if 1  
+    B->rows = n;
+    fprintf(stderr, "dgelsy: rank=%d, info=%d\n", *rank, info);
+    for (i=0; i<n; i++) {
+	fprintf(stderr, " b[%d] = %g, jpvt[%d] = %d\n",
+		i, gretl_matrix_get(B, i, 0), i, jpvt[i]);
+    }
+#endif    
+
+ bailout:
+
+    free(jpvt);
+    lapack_free(work);
+
+    return err;
+}
+
+#endif /* TRY_DGELSY */
+
 /**
  * gretl_matrix_QR_decomp:
  * @M: m x n matrix to be decomposed.
  * @R: n x n matrix into which to write R, as in M = Q * R,
  * or NULL if this is not wanted.
- * 
+ *
  * Computes the QR factorization of @M.  On successful exit
- * the matrix @M holds Q, and, if @R is not NULL, the upper 
- * triangle of @R holds R.  Uses the LAPACK functions 
+ * the matrix @M holds Q, and, if @R is not NULL, the upper
+ * triangle of @R holds R.  Uses the LAPACK functions
  * dgeqrf() and dorgqr().
  *
  * Returns: 0 on success, non-zero on failure.
@@ -8014,7 +8146,7 @@ int gretl_matrix_QR_decomp (gretl_matrix *M, gretl_matrix *R)
 	fprintf(stderr, "dorgqr: info = %d\n", (int) info);
 	err = 1;
 	goto bailout;
-    } 
+    }
 
  bailout:
 
@@ -8053,8 +8185,8 @@ static int get_R_rank (const gretl_matrix *R)
  * @R: matrix R from QR decomposition.
  * @err: location to receive error code.
  * @rcnd: location to receive reciprocal condition number.
- * 
- * Checks the reciprocal condition number of R and calculates 
+ *
+ * Checks the reciprocal condition number of R and calculates
  * the rank of the matrix QR.  If @rcnd is not NULL it receives
  * the reciprocal condition number.
  *
@@ -8088,7 +8220,7 @@ int gretl_check_QR_rank (const gretl_matrix *R, int *err, double *rcnd)
 	goto bailout;
     }
 
-    dtrcon_(&norm, &uplo, &diag, &n, R->val, &n, &rcond, work, 
+    dtrcon_(&norm, &uplo, &diag, &n, R->val, &n, &rcond, work,
 	    iwork, &info);
 
     if (info != 0) {
@@ -8097,7 +8229,7 @@ int gretl_check_QR_rank (const gretl_matrix *R, int *err, double *rcnd)
 	goto bailout;
     }
 
-    if (rcond < QR_RCOND_MIN) { 
+    if (rcond < QR_RCOND_MIN) {
 	fprintf(stderr, "gretl_matrix_QR_rank: rcond = %g\n", rcond);
 	rank = get_R_rank(R);
     }
@@ -8132,7 +8264,7 @@ static double svd_smin (const gretl_matrix *a, double smax)
  * gretl_matrix_rank:
  * @a: matrix to examine.
  * @err: location to receive error code on failure.
- * 
+ *
  * Computes the rank of @a via its SV decomposition.
  *
  * Returns: the rank of @a, or 0 on failure.
@@ -8159,7 +8291,7 @@ int gretl_matrix_rank (const gretl_matrix *a, int *err)
 		rank++;
 	    }
 	}
-    } 
+    }
 
     gretl_matrix_free(S);
 
@@ -8170,9 +8302,9 @@ int gretl_matrix_rank (const gretl_matrix *a, int *err)
  * gretl_invert_triangular_matrix:
  * @a: triangular matrix to invert.
  * @uplo: 'L' for lower triangular @a, 'U' for upper.
- * 
+ *
  * Computes the inverse of a triangular matrix.  On exit
- * @a is overwritten with the inverse.  Uses the lapack 
+ * @a is overwritten with the inverse.  Uses the lapack
  * function dtrtri.
  *
  * Returns: 0 on success; non-zero error code on failure.
@@ -8208,7 +8340,7 @@ int gretl_invert_triangular_matrix (gretl_matrix *a, char uplo)
 /**
  * gretl_invert_general_matrix:
  * @a: matrix to invert.
- * 
+ *
  * Computes the inverse of a general matrix using LU
  * factorization.  On exit @a is overwritten with the inverse.
  * Uses the LAPACK functions dgetrf() and dgetri().
@@ -8228,9 +8360,9 @@ int gretl_invert_general_matrix (gretl_matrix *a)
     if (gretl_is_null_matrix(a) || (a->rows != a->cols)) {
 	return E_DATA;
     }
-    
+
     n = a->rows;
- 
+
     ipiv = malloc(n * sizeof *ipiv);
     if (ipiv == NULL) {
 	return E_ALLOC;
@@ -8240,9 +8372,9 @@ int gretl_invert_general_matrix (gretl_matrix *a)
     if (work == NULL) {
 	free(ipiv);
 	return E_ALLOC;
-    }    
+    }
 
-    dgetrf_(&n, &n, a->val, &n, ipiv, &info);   
+    dgetrf_(&n, &n, a->val, &n, ipiv, &info);
 
     if (info != 0) {
 	free(ipiv);
@@ -8270,7 +8402,7 @@ int gretl_invert_general_matrix (gretl_matrix *a)
     if (work == NULL) {
 	free(ipiv);
 	return E_ALLOC;
-    }  
+    }
 
     dgetri_(&n, a->val, &n, ipiv, work, &lwork, &info);
 
@@ -8293,7 +8425,7 @@ int gretl_invert_general_matrix (gretl_matrix *a)
  * gretl_matrix_mirror:
  * @m: matrix to expand.
  * @uplo: 'L' or 'U'.
- * 
+ *
  * If @uplo = 'L', copy the lower triangle of @m into
  * the upper triangle; or if @uplo = 'U' copy the upper
  * triangle into the lower, in either case producing a
@@ -8334,9 +8466,9 @@ int gretl_matrix_mirror (gretl_matrix *m, char uplo)
 /**
  * gretl_invert_diagonal_matrix:
  * @a: matrix to invert.
- * 
+ *
  * Computes the inverse of a diagonal matrix.
- * On exit @a is overwritten with the inverse. 
+ * On exit @a is overwritten with the inverse.
  *
  * Returns: 0 on success; non-zero error code on failure.
  */
@@ -8373,10 +8505,10 @@ int gretl_invert_diagonal_matrix (gretl_matrix *a)
 /**
  * gretl_invert_matrix:
  * @a: matrix to invert.
- * 
- * Computes the inverse of matrix @a: on exit @a is 
+ *
+ * Computes the inverse of matrix @a: on exit @a is
  * overwritten with the inverse.  If @a is diagonal
- * or symmetric, appropriate simple inversion routines 
+ * or symmetric, appropriate simple inversion routines
  * are called.
  *
  * Returns: 0 on success; non-zero error code on failure.
@@ -8391,7 +8523,7 @@ int gretl_invert_matrix (gretl_matrix *a)
     }
 
     s = gretl_matrix_get_structure(a);
-    
+
     if (s == GRETL_MATRIX_IDENTITY) {
 	return 0;
     } else if (s == GRETL_MATRIX_DIAGONAL) {
@@ -8419,9 +8551,9 @@ int gretl_invert_matrix (gretl_matrix *a)
 /**
  * gretl_invert_symmetric_indef_matrix:
  * @a: matrix to invert.
- * 
- * Computes the inverse of a real symmetric matrix via the 
- * Bunch-Kaufman diagonal pivoting method.  Uses the LAPACK 
+ *
+ * Computes the inverse of a real symmetric matrix via the
+ * Bunch-Kaufman diagonal pivoting method.  Uses the LAPACK
  * functions dsytrf() and dsytri().  On exit @a is overwritten
  * with the inverse.
  *
@@ -8457,12 +8589,12 @@ int gretl_invert_symmetric_indef_matrix (gretl_matrix *a)
     if (ipiv == NULL || iwork == NULL || work == NULL) {
 	err = E_ALLOC;
 	goto bailout;
-    }  
+    }
 
     anorm = gretl_matrix_one_norm(a);
 
     /* workspace query */
-    dsytrf_(&uplo, &n, a->val, &n, ipiv, work, &lwork, &info);   
+    dsytrf_(&uplo, &n, a->val, &n, ipiv, work, &lwork, &info);
     if (info != 0 || work[0] <= 0.0) {
 	err = wspace_fail(info, work[0]);
 	goto bailout;
@@ -8481,10 +8613,10 @@ int gretl_invert_symmetric_indef_matrix (gretl_matrix *a)
     if (work == NULL) {
 	err = E_ALLOC;
 	goto bailout;
-    }  
+    }
 
     /* decompose */
-    dsytrf_(&uplo, &n, a->val, &n, ipiv, work, &lwork, &info); 
+    dsytrf_(&uplo, &n, a->val, &n, ipiv, work, &lwork, &info);
     if (info != 0) {
 	fprintf(stderr, "dsytrf: matrix is singular\n");
 	err = E_SINGULAR;
@@ -8532,9 +8664,9 @@ int gretl_invert_symmetric_indef_matrix (gretl_matrix *a)
 /**
  * gretl_invert_symmetric_matrix:
  * @a: matrix to invert.
- * 
+ *
  * Computes the inverse of a symmetric positive definite matrix
- * using Cholesky factorization.  On exit @a is overwritten with 
+ * using Cholesky factorization.  On exit @a is overwritten with
  * the inverse. Uses the LAPACK functions dpotrf() and dpotri().
  *
  * Returns: 0 on success; non-zero error code on failure.
@@ -8579,13 +8711,13 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
 
     memcpy(aval, a->val, bytes);
 
-    dpotrf_(&uplo, &n, a->val, &n, &info);   
+    dpotrf_(&uplo, &n, a->val, &n, &info);
 
     if (info != 0) {
 	fprintf(stderr, "gretl_invert_symmetric_matrix: "
 		"dpotrf failed with info = %d (n = %d)\n", (int) info, (int) n);
 	err = (info > 0)? E_NOTPD : E_DATA;
-    } 
+    }
 
     if (!err) {
 	dpotri_(&uplo, &n, a->val, &n, &info);
@@ -8604,7 +8736,7 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
 	    gretl_matrix_print(a, "input matrix");
 	}
     }
-    
+
     lapack_free(aval);
 
     return err;
@@ -8629,16 +8761,16 @@ int real_gretl_invpd (gretl_matrix *a, int verbose)
 	return 0;
     }
 
-    dpotrf_(&uplo, &n, a->val, &n, &info);   
+    dpotrf_(&uplo, &n, a->val, &n, &info);
 
     if (info != 0) {
 	if (verbose) {
 	    fprintf(stderr, "real_gretl_invpd: "
-		    "dpotrf failed with info = %d (n = %d)\n", 
+		    "dpotrf failed with info = %d (n = %d)\n",
 		    (int) info, (int) n);
 	}
 	err = info > 0 ? E_NOTPD : E_DATA;
-    } 
+    }
 
     if (!err) {
 	dpotri_(&uplo, &n, a->val, &n, &info);
@@ -8657,9 +8789,9 @@ int real_gretl_invpd (gretl_matrix *a, int verbose)
 /**
  * gretl_invpd:
  * @a: matrix to invert.
- * 
+ *
  * Computes the inverse of a symmetric positive definite matrix
- * using Cholesky factorization.  On exit @a is overwritten with 
+ * using Cholesky factorization.  On exit @a is overwritten with
  * the inverse. Uses the LAPACK functions dpotrf() and dpotri().
  * Little checking is done, for speed: we assume the caller
  * knows what he's doing.
@@ -8675,9 +8807,9 @@ int gretl_invpd (gretl_matrix *a)
 /**
  * gretl_maybe_invpd:
  * @a: matrix to invert.
- * 
+ *
  * Attempts to compute the inverse of a matrix which may be
- * positive definite.  On exit @a is overwritten with 
+ * positive definite.  On exit @a is overwritten with
  * the inverse. Uses the LAPACK functions dpotrf() and dpotri().
  * Little checking is done, for speed: we assume the caller
  * knows what he's doing.  Unlike gretl_invpd() this function
@@ -8696,15 +8828,15 @@ int gretl_maybe_invpd (gretl_matrix *a)
  * gretl_inverse_from_cholesky_decomp:
  * @targ: matrix to hold inverse.
  * @src: Cholesky-decomposed matrix.
- * 
- * Computes in @targ the inverse of a symmetric positive definite 
- * matrix, on the assumption that the original matrix this has already 
+ *
+ * Computes in @targ the inverse of a symmetric positive definite
+ * matrix, on the assumption that the original matrix this has already
  * been Cholesky-decomposed in @src.
  *
  * Returns: 0 on success; non-zero error code on failure.
  */
 
-int gretl_inverse_from_cholesky_decomp (gretl_matrix *targ, 
+int gretl_inverse_from_cholesky_decomp (gretl_matrix *targ,
 					const gretl_matrix *src)
 {
     integer info, n;
@@ -8740,11 +8872,11 @@ int gretl_inverse_from_cholesky_decomp (gretl_matrix *targ,
  * gretl_invert_symmetric_matrix2:
  * @a: matrix to invert.
  * @ldet: location to recieve log determinant, or NULL.
- * 
+ *
  * Computes the inverse of a symmetric positive definite matrix
- * using Cholesky factorization, computing the log-determinant 
- * in the process.  On exit @a is overwritten with the inverse 
- * and if @ldet is not NULL the log-determinant is written to 
+ * using Cholesky factorization, computing the log-determinant
+ * in the process.  On exit @a is overwritten with the inverse
+ * and if @ldet is not NULL the log-determinant is written to
  * that location.  Uses the LAPACK functions dpotrf() and dpotri().
  *
  * Returns: 0 on success; non-zero error code on failure.
@@ -8781,13 +8913,13 @@ int gretl_invert_symmetric_matrix2 (gretl_matrix *a, double *ldet)
 	return 1;
     }
 
-    dpotrf_(&uplo, &n, a->val, &n, &info);   
+    dpotrf_(&uplo, &n, a->val, &n, &info);
 
     if (info != 0) {
 	fprintf(stderr, "gretl_invert_symmetric_matrix2: "
 		"dpotrf failed with info = %d (n = %d)\n", (int) info, (int) n);
 	return (info > 0)? E_NOTPD : E_DATA;
-    } 
+    }
 
     if (ldet != NULL) {
 	double x = 0.0;
@@ -8829,7 +8961,7 @@ static int invert_packed_symm_indef_matrix (gretl_matrix *v,
 	goto bailout;
     }
 
-    dsptrf_(&uplo, &n, v->val, ipiv, &info);   
+    dsptrf_(&uplo, &n, v->val, ipiv, &info);
 
     if (info != 0) {
 	fprintf(stderr, "invert_packed_symm_indef_matrix:\n"
@@ -8839,14 +8971,14 @@ static int invert_packed_symm_indef_matrix (gretl_matrix *v,
 	}
 	err = E_SINGULAR;
 	goto bailout;
-    } 
+    }
 
     dsptri_(&uplo, &n, v->val, ipiv, work, &info);
     if (info != 0) {
 	err = E_SINGULAR;
 	fprintf(stderr, "invert_packed_symm_indef_matrix:\n"
 		" dsptri failed with info = %d\n", (int) info);
-    } 
+    }
 
  bailout:
 
@@ -8861,9 +8993,9 @@ static int invert_packed_symm_indef_matrix (gretl_matrix *v,
  * gretl_invert_packed_symmetric_matrix:
  * @v: symmetric matrix in vech form (lower triangle packed
  * as a column vector).
- * 
+ *
  * Computes the inverse of a symmetric positive definite matrix,
- * stored in vech form, using Cholesky factorization.  On exit 
+ * stored in vech form, using Cholesky factorization.  On exit
  * @v is overwritten with the lower triangle of the inverse.
  * Uses the LAPACK functions dpptrf() and dpptri().
  *
@@ -8898,7 +9030,7 @@ int gretl_invert_packed_symmetric_matrix (gretl_matrix *v)
 
     n = (integer) ((sqrt(1.0 + 8.0 * v->rows) - 1.0) / 2.0);
 
-    dpptrf_(&uplo, &n, v->val, &info);   
+    dpptrf_(&uplo, &n, v->val, &info);
 
     if (info != 0) {
 	fprintf(stderr, "gretl_invert_packed_symmetric_matrix:\n"
@@ -8913,7 +9045,7 @@ int gretl_invert_packed_symmetric_matrix (gretl_matrix *v)
 	    gretl_matrix_print(vcpy, "input matrix");
 	}
 	return err;
-    } 
+    }
 
     dpptri_(&uplo, &n, v->val, &info);
 
@@ -8921,8 +9053,8 @@ int gretl_invert_packed_symmetric_matrix (gretl_matrix *v)
 	err = E_SINGULAR;
 	fprintf(stderr, "gretl_invert_packed_symmetric_matrix:\n"
 		" dpptri failed with info = %d\n", (int) info);
-	
-    } 
+
+    }
 
     gretl_matrix_free(vcpy);
 
@@ -8934,22 +9066,22 @@ int gretl_invert_packed_symmetric_matrix (gretl_matrix *v)
  * @m: square matrix on which to operate.
  * @eigenvecs: non-zero to calculate eigenvectors, 0 to omit.
  * @err: location to receive error code.
- * 
- * Computes the eigenvalues of the general matrix @m.  
+ *
+ * Computes the eigenvalues of the general matrix @m.
  * If @eigenvecs is non-zero, also compute the right
- * eigenvectors of @m, which are stored in @m. Uses the lapack 
+ * eigenvectors of @m, which are stored in @m. Uses the lapack
  * function dgeev.
- * 
+ *
  * Returns: allocated matrix containing the eigenvalues, or NULL
  * on failure.  The returned matrix, on successful completion,
  * is n x 2 (where n = the number of rows and columns in the
- * matrix @m); the first column contains the real parts of 
- * the eigenvalues of @m, and the second holds the 
+ * matrix @m); the first column contains the real parts of
+ * the eigenvalues of @m, and the second holds the
  * imaginary parts.
  */
 
 gretl_matrix *
-gretl_general_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err) 
+gretl_general_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 {
     gretl_matrix *evals = NULL;
     integer n, info, lwork;
@@ -9004,16 +9136,16 @@ gretl_general_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 	vr = nullvr;
 	nvr = 2;
 	jvr = 'N';
-    }	
+    }
 
     lwork = -1; /* find optimal workspace size */
-    dgeev_(&jvl, &jvr, &n, m->val, &n, wr, wi, nullvl, 
+    dgeev_(&jvl, &jvr, &n, m->val, &n, wr, wi, nullvl,
 	   &nvl, vr, &nvr, work, &lwork, &info);
 
     if (info != 0 || work[0] <= 0.0) {
 	*err = wspace_fail(info, work[0]);
 	goto bailout;
-    }	
+    }
 
     lwork = (integer) work[0];
 
@@ -9021,14 +9153,14 @@ gretl_general_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
     if (work == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
-    } 
+    }
 
-    dgeev_(&jvl, &jvr, &n, m->val, &n, wr, wi, nullvl, 
+    dgeev_(&jvl, &jvr, &n, m->val, &n, wr, wi, nullvl,
 	   &nvl, vr, &nvr, work, &lwork, &info);
 
     if (info != 0) {
 	*err = 1;
-    } 
+    }
 
  bailout:
 
@@ -9043,7 +9175,7 @@ gretl_general_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
     } else if (eigenvecs) {
 	memcpy(m->val, vr, n * n * sizeof(double));
 	free(vr);
-    }	
+    }
 
     return evals;
 }
@@ -9053,17 +9185,17 @@ gretl_general_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
  * @evals: array of real eigenvalues from symmetric matrix.
  * @evecs: matrix of eigenvectors.
  * @rank: desired number of columns in output.
- * 
- * Sorts the eigenvalues in @evals from largest to smallest, and 
- * rearranges the columns in @evecs correspondingly.  If @rank is 
- * greater than zero and less than the number of columns in @evecs, 
- * then on output @evecs is shrunk so that it contains only the 
+ *
+ * Sorts the eigenvalues in @evals from largest to smallest, and
+ * rearranges the columns in @evecs correspondingly.  If @rank is
+ * greater than zero and less than the number of columns in @evecs,
+ * then on output @evecs is shrunk so that it contains only the
  * columns associated with the largest @rank eigenvalues.
  *
  * Returns: 0 on success; non-zero error code on failure.
  */
 
-int gretl_symmetric_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs, 
+int gretl_symmetric_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs,
 				int rank)
 {
     double *tmp = NULL;
@@ -9135,10 +9267,10 @@ int gretl_symmetric_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs,
  * @m: n x n matrix to operate on.
  * @eigenvecs: non-zero to calculate eigenvectors, 0 to omit.
  * @err: location to receive error code.
- * 
- * Computes the eigenvalues of the real symmetric matrix @m.  
+ *
+ * Computes the eigenvalues of the real symmetric matrix @m.
  * If @eigenvecs is non-zero, also compute the orthonormal
- * eigenvectors of @m, which are stored in @m. Uses the lapack 
+ * eigenvectors of @m, which are stored in @m. Uses the lapack
  * function dsyev().
  *
  * Returns: n x 1 matrix containing the eigenvalues in ascending
@@ -9146,7 +9278,7 @@ int gretl_symmetric_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs,
  */
 
 gretl_matrix *
-gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err) 
+gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 {
     integer n, info, lwork;
     gretl_matrix *evals = NULL;
@@ -9185,23 +9317,23 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
     w = evals->val;
 
     lwork = -1L; /* find optimal workspace size */
-    dsyev_(&jobz, &uplo, &n, m->val, &n, 
+    dsyev_(&jobz, &uplo, &n, m->val, &n,
 	   w, work, &lwork, &info);
 
     if (info != 0 || work[0] <= 0.0) {
 	*err = wspace_fail(info, work[0]);
 	goto bailout;
-    }	
+    }
 
     lwork = (integer) work[0];
 
     work = lapack_realloc(work, lwork * sizeof *work);
     if (work == NULL) {
 	*err = E_ALLOC;
-    } 
+    }
 
     if (!*err) {
-	dsyev_(&jobz, &uplo, &n, m->val, &n, 
+	dsyev_(&jobz, &uplo, &n, m->val, &n,
 	       w, work, &lwork, &info);
 	if (info != 0) {
 	    fprintf(stderr, "dsyev: info = %d\n", info);
@@ -9226,10 +9358,10 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
  * @m: n x n matrix to operate on.
  * @eigenvecs: non-zero to calculate eigenvectors, 0 to omit.
  * @err: location to receive error code.
- * 
- * Computes the eigenvalues of the real symmetric matrix @m.  
+ *
+ * Computes the eigenvalues of the real symmetric matrix @m.
  * If @eigenvecs is non-zero, also compute the orthonormal
- * eigenvectors of @m, which are stored in @m. Uses the lapack 
+ * eigenvectors of @m, which are stored in @m. Uses the lapack
  * function dsyev().
  *
  * Returns: n x 1 matrix containing the eigenvalues in descending
@@ -9237,11 +9369,11 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
  */
 
 gretl_matrix *
-gretl_symm_matrix_eigenvals_descending (gretl_matrix *m, 
-					int eigenvecs, 
+gretl_symm_matrix_eigenvals_descending (gretl_matrix *m,
+					int eigenvecs,
 					int *err)
 {
-    gretl_matrix *v = 
+    gretl_matrix *v =
 	gretl_symmetric_matrix_eigenvals(m, eigenvecs, err);
 
     if (!*err) {
@@ -9252,10 +9384,10 @@ gretl_symm_matrix_eigenvals_descending (gretl_matrix *m,
     if (*err && v != NULL) {
 	gretl_matrix_free(v);
 	v = NULL;
-    }	
+    }
 
     return v;
-} 
+}
 
 static double get_extreme_eigenvalue (gretl_matrix *m, int getmax,
 				      int *err)
@@ -9268,7 +9400,7 @@ static double get_extreme_eigenvalue (gretl_matrix *m, int getmax,
     if (!*err) {
 	int n = gretl_vector_get_length(v);
 
-	/* the eigenvalues, from lapack's dsyev(), 
+	/* the eigenvalues, from lapack's dsyev(),
 	   are in ascending order */
 
 	if (getmax) {
@@ -9284,7 +9416,7 @@ static double get_extreme_eigenvalue (gretl_matrix *m, int getmax,
 	/* reconstitute full matrix */
 	gretl_matrix_mirror(m, 'L');
     }
-    
+
     return ev;
 }
 
@@ -9292,7 +9424,7 @@ static double get_extreme_eigenvalue (gretl_matrix *m, int getmax,
  * gretl_symm_matrix_lambda_min:
  * @m: n x n matrix to operate on.
  * @err: location to receive error code.
- * 
+ *
  * Returns: the minimum eigenvalue of the real symmetric matrix @m,
  * or %NaN on error.
  */
@@ -9306,7 +9438,7 @@ double gretl_symm_matrix_lambda_min (const gretl_matrix *m, int *err)
  * gretl_symm_matrix_lambda_max:
  * @m: n x n matrix to operate on.
  * @err: location to receive error code.
- * 
+ *
  * Returns: the maximum eigenvalue of the real symmetric matrix @m,
  * or %NaN on error.
  */
@@ -9320,19 +9452,19 @@ static int gensymm_conformable (const gretl_matrix *A,
 				const gretl_matrix *B)
 {
     if (!real_gretl_matrix_is_symmetric(A, 1)) {
-	fputs("gretl_gensymm_eigenvals: matrix A is not symmetric\n", 
+	fputs("gretl_gensymm_eigenvals: matrix A is not symmetric\n",
 	      stderr);
 	return 0;
     }
 
     if (!real_gretl_matrix_is_symmetric(B, 1)) {
-	fputs("gretl_gensymm_eigenvals: matrix B is not symmetric\n", 
+	fputs("gretl_gensymm_eigenvals: matrix B is not symmetric\n",
 	      stderr);
 	return 0;
     }
 
     if (B->rows != A->rows) {
-	fputs("gretl_gensymm_eigenvals: matrices A and B have different size\n", 
+	fputs("gretl_gensymm_eigenvals: matrices A and B have different size\n",
 	      stderr);
 	return 0;
     }
@@ -9349,7 +9481,7 @@ static int gensymm_conformable (const gretl_matrix *A,
  * @V: matrix to hold the generalized eigenvectors, or NULL if
  * these are not required.
  * @err: location to receive error code.
- * 
+ *
  * Solves the generalized eigenvalue problem
  * | A - \lambda B | = 0 , where both A and B are symmetric
  * and B is positive definite.
@@ -9358,9 +9490,9 @@ static int gensymm_conformable (const gretl_matrix *A,
  * ascending order, or NULL on failure.
  */
 
-gretl_matrix *gretl_gensymm_eigenvals (const gretl_matrix *A, 
-				       const gretl_matrix *B, 
-				       gretl_matrix *V, 
+gretl_matrix *gretl_gensymm_eigenvals (const gretl_matrix *A,
+				       const gretl_matrix *B,
+				       gretl_matrix *V,
 				       int *err)
 {
     gretl_matrix *K = NULL;
@@ -9382,7 +9514,7 @@ gretl_matrix *gretl_gensymm_eigenvals (const gretl_matrix *A,
 	*err = E_NONCONF;
 	return NULL;
     }
-    
+
     n = A->rows;
     K = gretl_matrix_copy_tmp(B);
     tmp = gretl_matrix_alloc(n, n);
@@ -9394,7 +9526,7 @@ gretl_matrix *gretl_gensymm_eigenvals (const gretl_matrix *A,
 
     *err = gretl_matrix_cholesky_decomp(K);
     if (*err) {
-	fputs("gretl_gensymm_eigenvals: matrix B not p.d.\n", 
+	fputs("gretl_gensymm_eigenvals: matrix B not p.d.\n",
 	      stderr);
 	*err = E_NONCONF;
 	goto bailout;
@@ -9402,7 +9534,7 @@ gretl_matrix *gretl_gensymm_eigenvals (const gretl_matrix *A,
 
     *err = gretl_invert_triangular_matrix(K, 'L');
     if (*err) {
-	fputs("gretl_gensymm_eigenvals: matrix B only p.s.d.\n", 
+	fputs("gretl_gensymm_eigenvals: matrix B only p.s.d.\n",
 	      stderr);
 	*err = E_NONCONF;
 	goto bailout;
@@ -9420,8 +9552,8 @@ gretl_matrix *gretl_gensymm_eigenvals (const gretl_matrix *A,
     }
 
     if (V != NULL) {
-	*err = gretl_matrix_multiply_mod(K, GRETL_MOD_TRANSPOSE, 
-					 tmp, GRETL_MOD_NONE, 
+	*err = gretl_matrix_multiply_mod(K, GRETL_MOD_TRANSPOSE,
+					 tmp, GRETL_MOD_NONE,
 					 V, GRETL_MOD_NONE);
 #if GSDEBUG
 	gretl_matrix_print(V, "V");
@@ -9452,15 +9584,15 @@ enum {
  * @pu: location for matrix U, or NULL if not wanted.
  * @ps: location for vector of singular values, or NULL if not wanted.
  * @pvt: location for matrix V (transposed), or NULL if not wanted.
- * 
+ *
  * Computes SVD factorization of a general matrix using the lapack
  * function dgesvd. A = u * diag(s) * vt.
  *
  * Returns: 0 on success; non-zero error code on failure.
  */
 
-static int 
-real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu, 
+static int
+real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
 		       gretl_vector **ps, gretl_matrix **pvt,
 		       int smod)
 {
@@ -9508,7 +9640,7 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
 	err = E_ALLOC;
 	goto bailout;
     }
-    
+
     if (pu != NULL) {
 	if (smod == SVD_FULL) {
 	    u = gretl_matrix_alloc(m, m);
@@ -9523,7 +9655,7 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
 	    uval = u->val;
 	    jobu = (smod == SVD_FULL)? 'A' : 'S';
 	}
-    } 
+    }
 
     if (pvt != NULL) {
 	vt = gretl_matrix_alloc(n, n);
@@ -9539,30 +9671,30 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
 
     work = lapack_malloc(sizeof *work);
     if (work == NULL) {
-	err = E_ALLOC; 
+	err = E_ALLOC;
 	goto bailout;
     }
 
     /* workspace query */
     lwork = -1;
-    dgesvd_(&jobu, &jobvt, &m, &n, b->val, &lda, s->val, uval, &ldu, 
+    dgesvd_(&jobu, &jobvt, &m, &n, b->val, &lda, s->val, uval, &ldu,
 	    vtval, &ldvt, work, &lwork, &info);
 
     if (info != 0 || work[0] <= 0.0) {
 	err = wspace_fail(info, work[0]);
 	goto bailout;
-    }	
+    }
 
     lwork = (integer) work[0];
 
     work = lapack_realloc(work, lwork * sizeof *work);
     if (work == NULL) {
-	err = E_ALLOC; 
+	err = E_ALLOC;
 	goto bailout;
-    } 
+    }
 
     /* actual computation */
-    dgesvd_(&jobu, &jobvt, &m, &n, b->val, &lda, s->val, uval, &ldu, 
+    dgesvd_(&jobu, &jobvt, &m, &n, b->val, &lda, s->val, uval, &ldu,
 	    vtval, &ldvt, work, &lwork, &info);
 
     if (info != 0) {
@@ -9587,7 +9719,7 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
     }
 
  bailout:
-    
+
     lapack_free(work);
     gretl_matrix_free(b);
     gretl_matrix_free(s);
@@ -9603,14 +9735,14 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
  * @pu: location for matrix U, or NULL if not wanted.
  * @ps: location for vector of singular values, or NULL if not wanted.
  * @pvt: location for matrix V (transposed), or NULL if not wanted.
- * 
+ *
  * Computes SVD factorization of a general matrix using the lapack
  * function dgesvd. A = u * diag(s) * vt.
  *
  * Returns: 0 on success; non-zero error code on failure.
  */
 
-int gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu, 
+int gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
 		      gretl_vector **ps, gretl_matrix **pvt)
 {
     return real_gretl_matrix_SVD(a, pu, ps, pvt, SVD_FULL);
@@ -9624,11 +9756,11 @@ int gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
  * @B: matrix to hold \beta, or NULL if not wanted.
  * @A: matrix to hold \alpha, or NULL if not wanted.
  * @jrank: cointegration rank, <= p.
- * 
+ *
  * Solves the Johansen generalized eigenvalue problem via
- * SVD decomposition.  See J. A. Doornik and R. J. O'Brien, 
- * "Numerically stable cointegration analysis", Computational 
- * Statistics and Data Analysis, 41 (2002), pp. 185-193, 
+ * SVD decomposition.  See J. A. Doornik and R. J. O'Brien,
+ * "Numerically stable cointegration analysis", Computational
+ * Statistics and Data Analysis, 41 (2002), pp. 185-193,
  * Algorithm 4.
  *
  * If @B is non-null it should be p1 x p on input; it will
@@ -9674,7 +9806,7 @@ int gretl_matrix_SVD_johansen_solve (const gretl_matrix *R0,
     if (evals != NULL && gretl_vector_get_length(evals) < r) {
 	fprintf(stderr, "Johansen SVD: evals is too short\n");
 	return E_NONCONF;
-    } 
+    }
 
     if (B != NULL && (B->rows != p1 || B->cols != p)) {
 	fprintf(stderr, "Johansen SVD: B is wrong size\n");
@@ -9684,7 +9816,7 @@ int gretl_matrix_SVD_johansen_solve (const gretl_matrix *R0,
     if (A != NULL && (A->rows != p || A->cols != p)) {
 	fprintf(stderr, "Johansen SVD: A is wrong size\n");
 	return E_NONCONF;
-    } 
+    }
 
     err = real_gretl_matrix_SVD(R0, &U0, NULL, NULL, SVD_THIN);
 
@@ -9710,7 +9842,7 @@ int gretl_matrix_SVD_johansen_solve (const gretl_matrix *R0,
     if (!err) {
 	double x, si;
 	int i, j;
-	
+
 	if (evals != NULL) {
 	    for (i=0; i<r; i++) {
 		evals->val[i] = Sz->val[i] * Sz->val[i];
@@ -9719,7 +9851,7 @@ int gretl_matrix_SVD_johansen_solve (const gretl_matrix *R0,
 
 	if (B != NULL) {
 	    /* \hat{\beta} = T^{1/2} V_1 {\Sigma_1}^{-1} U_z */
-	    
+
 	    for (i=0; i<p1; i++) {
 		si = S1->val[i];
 		for (j=0; j<p1; j++) {
@@ -9760,9 +9892,9 @@ int gretl_matrix_SVD_johansen_solve (const gretl_matrix *R0,
     gretl_matrix_free(U1);
     gretl_matrix_free(Uz);
     gretl_matrix_free(S1);
-    gretl_matrix_free(Sz); 
+    gretl_matrix_free(Sz);
     gretl_matrix_free(V1);
-    gretl_matrix_free(Z); 
+    gretl_matrix_free(Z);
 
     return err;
 }
@@ -9771,7 +9903,7 @@ int gretl_matrix_SVD_johansen_solve (const gretl_matrix *R0,
    matrix X that has the greatest absolute magnitude
 */
 
-static int max_abs_index (const gretl_matrix *X, int col) 
+static int max_abs_index (const gretl_matrix *X, int col)
 {
     double aij, tmp = 0.0;
     int i, idx = 0;
@@ -9792,7 +9924,7 @@ static int max_abs_index (const gretl_matrix *X, int col)
 static void normalize_nullspace (gretl_matrix *M)
 {
     int i, j, k, idx;
-    double x, y; 
+    double x, y;
 
     /* FIXME? */
 
@@ -9821,7 +9953,7 @@ static void normalize_nullspace (gretl_matrix *M)
  * gretl_matrix_right_nullspace:
  * @M: matrix to operate on.
  * @err: location to receive error code.
- * 
+ *
  * Given an m x n matrix @M, construct a conformable matrix
  * R such that MR = 0 (that is, all the columns of R are
  * orthogonal to the space spanned by the rows of @M).
@@ -9877,7 +10009,7 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M, int *err)
 	    }
 	    normalize_nullspace(R);
 	}
-    } 
+    }
 
 #if 0
     gretl_matrix_print(S, "S");
@@ -9896,7 +10028,7 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M, int *err)
  * @M: matrix to operate on.
  * @mod: %GRETL_MOD_NONE or %GRETL_MOD_TRANSPOSE
  * @err: location to receive error code.
- * 
+ *
  * Given an m x n matrix @M, construct a conformable matrix
  * L such that LM = 0 (that is, all the columns of @M are
  * orthogonal to the space spanned by the rows of L).
@@ -9905,7 +10037,7 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M, int *err)
  * %GRETL_MOD_TRANSPOSE, L', or NULL on failure.
  */
 
-gretl_matrix *gretl_matrix_left_nullspace (const gretl_matrix *M, 
+gretl_matrix *gretl_matrix_left_nullspace (const gretl_matrix *M,
 					   GretlMatrixMod mod,
 					   int *err)
 {
@@ -9947,8 +10079,8 @@ gretl_matrix *gretl_matrix_left_nullspace (const gretl_matrix *M,
  * @a: upper source matrix (m x n).
  * @b: lower source matrix (p x n).
  * @err: location to receive error code.
- * 
- * Returns: newly allocated matrix ((m+p) x n) that results from 
+ *
+ * Returns: newly allocated matrix ((m+p) x n) that results from
  * the row-wise concatenation of @a and @b, or NULL on failure.
  */
 
@@ -10000,14 +10132,14 @@ gretl_matrix_row_concat (const gretl_matrix *a, const gretl_matrix *b,
 		for (j=0; j<b->cols; j++) {
 		    gretl_matrix_set(c, 0, j, x);
 		}
-	    } else {		
+	    } else {
 		for (i=0; i<a->rows; i++) {
 		    for (j=0; j<a->cols; j++) {
 			x = gretl_matrix_get(a, i, j);
 			gretl_matrix_set(c, i, j, x);
 		    }
-		}  
-	    } 
+		}
+	    }
 
 	    k = a->rows;
 
@@ -10016,21 +10148,21 @@ gretl_matrix_row_concat (const gretl_matrix *a, const gretl_matrix *b,
 		for (j=0; j<a->cols; j++) {
 		    gretl_matrix_set(c, k, j, x);
 		}
-	    } else {		
+	    } else {
 		for (i=0; i<b->rows; i++) {
 		    for (j=0; j<b->cols; j++) {
 			x = gretl_matrix_get(b, i, j);
 			gretl_matrix_set(c, k, j, x);
 		    }
 		    k++;
-		}  
-	    } 
+		}
+	    }
 	}
     }
 
     if (!*err && c == NULL) {
 	*err = E_ALLOC;
-    }    
+    }
 
     return c;
 }
@@ -10040,8 +10172,8 @@ gretl_matrix_row_concat (const gretl_matrix *a, const gretl_matrix *b,
  * @a: left-hand source matrix (m x n).
  * @b: right-hand source matrix (m x p).
  * @err: location to receive error code.
- * 
- * Returns: newly allocated matrix (m x (n+p)) that results from 
+ *
+ * Returns: newly allocated matrix (m x (n+p)) that results from
  * the column-wise concatenation of @a and @b, or NULL on failure.
  */
 
@@ -10107,12 +10239,12 @@ gretl_matrix_col_concat (const gretl_matrix *a, const gretl_matrix *b,
 		memcpy(c->val, a->val, asize);
 		memcpy(c->val + anelem, b->val, bsize);
 	    }
-	} 
+	}
     }
 
     if (!*err && c == NULL) {
 	*err = E_ALLOC;
-    }     
+    }
 
     return c;
 }
@@ -10181,11 +10313,11 @@ gretl_matrix *gretl_matrix_direct_sum (const gretl_matrix *a,
  *
  * Concatenates onto @a the selected columns of @b, if the
  * two matrices are conformable.
- * 
- * Returns: 0 on success, non-zero code on error. 
+ *
+ * Returns: 0 on success, non-zero code on error.
  */
 
-int gretl_matrix_inplace_colcat (gretl_matrix *a, 
+int gretl_matrix_inplace_colcat (gretl_matrix *a,
 				 const gretl_matrix *b,
 				 const char *mask)
 {
@@ -10242,8 +10374,8 @@ int gretl_matrix_inplace_colcat (gretl_matrix *a,
  * gretl_matrix_cumcol:
  * @m: source matrix.
  * @err: error code.
- * 
- * Returns: a matrix of the same dimensions as @m, containing 
+ *
+ * Returns: a matrix of the same dimensions as @m, containing
  * the cumulated columns of @m.
  */
 
@@ -10281,13 +10413,13 @@ gretl_matrix *gretl_matrix_cumcol (const gretl_matrix *m, int *err)
  * @m: source matrix.
  * @missval: value to represent missing observations.
  * @err: error code.
- * 
- * Returns: a matrix of the same dimensions as @m, containing 
- * @missval in the first row and the difference between consecutive 
+ *
+ * Returns: a matrix of the same dimensions as @m, containing
+ * @missval in the first row and the difference between consecutive
  * rows of @m afterwards.
  */
 
-gretl_matrix *gretl_matrix_diffcol (const gretl_matrix *m, 
+gretl_matrix *gretl_matrix_diffcol (const gretl_matrix *m,
 				    double missval, int *err)
 {
     gretl_matrix *a;
@@ -10328,13 +10460,13 @@ gretl_matrix *gretl_matrix_diffcol (const gretl_matrix *m,
  * @k: vector of lag orders (> 0 for lags, < 0 for leads).
  * @opt: use OPT_L to arrange multiple lags by lag rather than by variable.
  * @missval: value to represent missing observations.
- * 
+ *
  * Returns: A matrix of the same dimensions as @m, containing lags
  * of the variables in the columns of @m, with missing values set
  * to @missval.
  */
 
-gretl_matrix *gretl_matrix_lag (const gretl_matrix *m, 
+gretl_matrix *gretl_matrix_lag (const gretl_matrix *m,
 				const gretl_vector *k,
 				gretlopt opt,
 				double missval)
@@ -10405,7 +10537,7 @@ gretl_matrix *gretl_matrix_lag (const gretl_matrix *m,
  * Fills out @targ (if it is of the correct dimensions),
  * with (columnwise) lags of @src, using 0 for missing
  * values.
- * 
+ *
  * Returns: 0 on success, non-zero code otherwise.
  */
 
@@ -10482,14 +10614,14 @@ static int gretl_matrix_copy_info (gretl_matrix *targ,
 	targ->info->colnames = NULL;
 	targ->info->rownames = NULL;
 	if (src->info->colnames != NULL) {
-	    targ->info->colnames = strings_array_dup(src->info->colnames, 
+	    targ->info->colnames = strings_array_dup(src->info->colnames,
 						     src->cols);
 	    if (targ->info->colnames == NULL) {
 		err = E_ALLOC;
 	    }
 	}
 	if (!err && src->info->rownames != NULL) {
-	    targ->info->rownames = strings_array_dup(src->info->rownames, 
+	    targ->info->rownames = strings_array_dup(src->info->rownames,
 						     src->rows);
 	    if (targ->info->rownames == NULL) {
 		err = E_ALLOC;
@@ -10519,7 +10651,7 @@ static int gretl_matrix_add_info (gretl_matrix *m)
  * gretl_matrix_set_t1:
  * @m: matrix to operate on.
  * @t: integer value to set.
- * 
+ *
  * Sets an integer value on @m, which can be retrieved using
  * gretl_matrix_get_t1().
  *
@@ -10529,7 +10661,7 @@ static int gretl_matrix_add_info (gretl_matrix *m)
 int gretl_matrix_set_t1 (gretl_matrix *m, int t)
 {
     if (m == NULL) {
-	return E_DATA;   
+	return E_DATA;
     } else if (is_block_matrix(m)) {
 	return matrix_block_error("gretl_matrix_set_t1");
     } else if (m->info == NULL && gretl_matrix_add_info(m)) {
@@ -10545,17 +10677,17 @@ int gretl_matrix_set_t1 (gretl_matrix *m, int t)
  * gretl_matrix_set_t2:
  * @m: matrix to operate on.
  * @t: integer value to set.
- * 
+ *
  * Sets an integer value on @m, which can be retrieved using
  * gretl_matrix_get_t2().
- *   
+ *
  * Returns: 0 on success, non-ero on error.
  */
 
 int gretl_matrix_set_t2 (gretl_matrix *m, int t)
 {
     if (m == NULL) {
-	return E_DATA;   
+	return E_DATA;
     } else if (is_block_matrix(m)) {
 	return matrix_block_error("gretl_matrix_set_t2");
     } else if (m->info == NULL && gretl_matrix_add_info(m)) {
@@ -10570,7 +10702,7 @@ int gretl_matrix_set_t2 (gretl_matrix *m, int t)
 /**
  * gretl_matrix_get_t1:
  * @m: matrix to read from.
- * 
+ *
  * Returns: the integer that has been set on @m using
  * gretl_matrix_set_t1(), or zero if no such value has
  * been set.
@@ -10588,7 +10720,7 @@ int gretl_matrix_get_t1 (const gretl_matrix *m)
 /**
  * gretl_matrix_get_t2:
  * @m: matrix to read from.
- * 
+ *
  * Returns: the integer that has been set on @m using
  * gretl_matrix_set_t2(), or zero if no such value has
  * been set.
@@ -10606,7 +10738,7 @@ int gretl_matrix_get_t2 (const gretl_matrix *m)
 /**
  * gretl_matrix_is_dated:
  * @m: matrix to examine.
- * 
+ *
  * Returns: 1 if matrix @m has integer indices recorded
  * via gretl_matrix_set_t1() and gretl_matrix_set_t2(),
  * such that t1 >= 0 and t2 > t1, otherwise zero.
@@ -10659,14 +10791,14 @@ get_SVD_ols_vcv (const gretl_matrix *A, const gretl_matrix *B,
 	    sigma2 += B->val[i] * B->val[i];
 	}
 	sigma2 /= T - m;
-	gretl_matrix_multiply_by_scalar(V, sigma2);  
+	gretl_matrix_multiply_by_scalar(V, sigma2);
 	*s2 = sigma2;
     }
 
     return 0;
 }
 
-static double 
+static double
 get_ols_error_variance (const gretl_vector *y, const gretl_matrix *X,
 			const gretl_vector *b, int nr)
 {
@@ -10789,7 +10921,7 @@ static int svd_bound_check (const gretl_matrix *y,
     tant = sint / cost;
     errbd = epsmch * (2.0/(rcond * cost) + tant / (rcond * rcond));
     if (errbd > ERRBD_MAX) {
-	fprintf(stderr, "dgelss: bnorm = %g, rnorm = %g, rcond = %g\n", 
+	fprintf(stderr, "dgelss: bnorm = %g, rnorm = %g, rcond = %g\n",
 		bnorm, rnorm, rcond);
 	fprintf(stderr, " Error Bound = %g\n", errbd);
     }
@@ -10806,7 +10938,7 @@ static int svd_bound_check (const gretl_matrix *y,
  * @b: vector to hold coefficient estimates.
  * @vcv: matrix to hold the covariance matrix of the coefficients,
  * or NULL if this is not needed.
- * @uhat: vector to hold the regression residuals, or NULL if 
+ * @uhat: vector to hold the regression residuals, or NULL if
  * these are not needed.
  * @s2: pointer to receive residual variance, or NULL.  Note:
  * if @s2 is NULL, the vcv estimate will be plain (X'X)^{-1}.
@@ -10814,7 +10946,7 @@ static int svd_bound_check (const gretl_matrix *y,
  * Computes OLS estimates using SVD decomposition, and puts the
  * coefficient estimates in @b.  Optionally, calculates the
  * covariance matrix in @vcv and the residuals in @uhat.
- * 
+ *
  * Returns: 0 on success, non-zero error code on failure.
  */
 
@@ -10865,15 +10997,15 @@ int gretl_matrix_SVD_ols (const gretl_vector *y, const gretl_matrix *X,
     /* for singular values of A */
     s = malloc(k * sizeof *s);
     if (s == NULL) {
-	err = E_ALLOC; 
+	err = E_ALLOC;
 	goto bailout;
     }
 
     work = lapack_malloc(sizeof *work);
     if (work == NULL) {
-	err = E_ALLOC; 
+	err = E_ALLOC;
 	goto bailout;
-    } 
+    }
 
     /* workspace query */
     dgelss_(&m, &n, &nrhs, A->val, &lda, B->val, &ldb, s, &rcond,
@@ -10882,15 +11014,15 @@ int gretl_matrix_SVD_ols (const gretl_vector *y, const gretl_matrix *X,
     if (info != 0 || work[0] <= 0.0) {
 	err = wspace_fail(info, work[0]);
 	goto bailout;
-    }	
+    }
 
     lwork = (integer) work[0];
 
     work = lapack_realloc(work, lwork * sizeof *work);
     if (work == NULL) {
-	err = E_ALLOC; 
+	err = E_ALLOC;
 	goto bailout;
-    } 
+    }
 
     /* get actual solution */
     dgelss_(&m, &n, &nrhs, A->val, &lda, B->val, &ldb, s, &rcond,
@@ -10902,9 +11034,9 @@ int gretl_matrix_SVD_ols (const gretl_vector *y, const gretl_matrix *X,
 
     if (rank < k) {
 	fprintf(stderr, "gretl_matrix_SVD_ols:\n"
-		" dgelss: data matrix X (%d x %d) has column rank %d\n", 
+		" dgelss: data matrix X (%d x %d) has column rank %d\n",
 		X->rows, X->cols, (int) rank);
-    } 
+    }
 
 #if SVD_CHECK_BOUND
     if (!err && rank == k) {
@@ -10941,20 +11073,20 @@ int gretl_matrix_SVD_ols (const gretl_vector *y, const gretl_matrix *X,
  * @y: T x g matrix of dependent variables.
  * @X: T x k matrix of independent variables.
  * @B: k x g matrix to hold coefficient estimates.
- * @E: T x g matrix to hold the regression residuals, or NULL if these are 
+ * @E: T x g matrix to hold the regression residuals, or NULL if these are
  * not needed.
  * @XTXi: location to receive (X'X)^{-1}, or NULL if this is not needed.
  *
  * Computes OLS estimates using SVD decomposition, and puts the
  * coefficient estimates in @B.  Optionally, calculates the
  * residuals in @E, (X'X)^{-1} in @XTXi.
- * 
+ *
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y, 
+int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
 				const gretl_matrix *X,
-				gretl_matrix *B, 
+				gretl_matrix *B,
 				gretl_matrix *E,
 				gretl_matrix **XTXi)
 {
@@ -11005,15 +11137,15 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
     /* for singular values of A */
     s = malloc(k * sizeof *s);
     if (s == NULL) {
-	err = E_ALLOC; 
+	err = E_ALLOC;
 	goto bailout;
     }
 
     work = lapack_malloc(sizeof *work);
     if (work == NULL) {
-	err = E_ALLOC; 
+	err = E_ALLOC;
 	goto bailout;
-    } 
+    }
 
     /* workspace query */
     dgelss_(&m, &n, &nrhs, A->val, &lda, C->val, &ldb, s, &rcond,
@@ -11022,13 +11154,13 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
     if (info != 0 || work[0] <= 0.0) {
 	err = wspace_fail(info, work[0]);
 	goto bailout;
-    }	
+    }
 
     lwork = (integer) work[0];
 
     work = lapack_realloc(work, lwork * sizeof *work);
     if (work == NULL) {
-	err = E_ALLOC; 
+	err = E_ALLOC;
 	goto bailout;
     }
 
@@ -11042,7 +11174,7 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
 
     if (rank < k) {
 	fprintf(stderr, "gretl_matrix_multi_SVD_ols:\n"
-		" dgelss: data matrix X (%d x %d) has column rank %d\n", 
+		" dgelss: data matrix X (%d x %d) has column rank %d\n",
 		T, k, (int) rank);
 #if 0
 	gretl_matrix_print(X, "X");
@@ -11095,10 +11227,10 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
 /**
  * gretl_matrix_moore_penrose:
  * @a: m x n matrix.
- * 
+ *
  * Computes the generalized inverse of matrix @a via its SVD
- * factorization, with the help of the lapack function 
- * dgesvd.  On exit the original matrix is overwritten by 
+ * factorization, with the help of the lapack function
+ * dgesvd.  On exit the original matrix is overwritten by
  * the inverse.
  *
  * Returns: 0 on success; non-zero error code on failure.
@@ -11140,7 +11272,7 @@ int gretl_matrix_moore_penrose (gretl_matrix *A)
 		    x = gretl_matrix_get(U, j, i);
 		    gretl_matrix_set(SUt, i, j, x / S->val[i]);
 		}
-	    } 
+	    }
 	}
 
 	/* A^{+} = VS^{-1}U' */
@@ -11152,7 +11284,7 @@ int gretl_matrix_moore_penrose (gretl_matrix *A)
     }
 
  bailout:
-    
+
     gretl_matrix_free(U);
     gretl_matrix_free(S);
     gretl_matrix_free(Vt);
@@ -11164,12 +11296,12 @@ int gretl_matrix_moore_penrose (gretl_matrix *A)
 /**
  * gretl_SVD_invert_matrix:
  * @a: n x n matrix to invert.
- * 
- * Computes the inverse (or generalized inverse) of a general square 
- * matrix using SVD factorization, with the help of the lapack function 
+ *
+ * Computes the inverse (or generalized inverse) of a general square
+ * matrix using SVD factorization, with the help of the lapack function
  * dgesvd.  If any of the singular values of @a are less than 1.0e-9
  * the Moore-Penrose generalized inverse is computed instead of the
- * standard inverse.  On exit the original matrix is overwritten by 
+ * standard inverse.  On exit the original matrix is overwritten by
  * the inverse.
  *
  * Returns: 0 on success; non-zero error code on failure.
@@ -11201,7 +11333,7 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
     err = gretl_matrix_SVD(a, &u, &s, &vt);
 
     if (!err) {
-#if 1 
+#if 1
 	double smin = svd_smin(a, s->val[0]);
 #else
 	double smin = SVD_SMIN;
@@ -11213,12 +11345,12 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
 	    } else {
 		break;
 	    }
-	}	
+	}
 
 	if (rank < n) {
 	    gretl_matrix *vt2;
 
-	    fprintf(stderr, "gretl_SVD_invert_matrix: rank = %d (dim = %d)\n", 
+	    fprintf(stderr, "gretl_SVD_invert_matrix: rank = %d (dim = %d)\n",
 		    rank, n);
 	    fputs("Warning: computing Moore-Penrose generalized inverse\n", stderr);
 
@@ -11236,7 +11368,7 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
 	    gretl_matrix_free(vt);
 	    vt = vt2;
 	    gretl_matrix_reuse(u, n, rank);
-	}	    
+	}
     }
 
     if (!err) {
@@ -11253,7 +11385,7 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
     }
 
  bailout:
-    
+
     gretl_matrix_free(u);
     gretl_matrix_free(s);
     gretl_matrix_free(vt);
@@ -11268,22 +11400,22 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
  * @b: vector to hold coefficient estimates.
  * @vcv: matrix to hold the covariance matrix of the coefficients,
  * or NULL if this is not needed.
- * @uhat: vector to hold the regression residuals, or NULL if 
+ * @uhat: vector to hold the regression residuals, or NULL if
  * these are not needed.
  * @s2: pointer to receive residual variance, or NULL.  Note:
  * if @s2 is NULL, the "vcv" estimate will be plain (X'X)^{-1}.
  *
- * Computes OLS estimates using Cholesky factorization by default, 
+ * Computes OLS estimates using Cholesky factorization by default,
  * but with a fallback to QR decomposition if the data are highly
- * ill-conditioned, and puts the coefficient estimates in @b.  
- * Optionally, calculates the covariance matrix in @vcv and the 
+ * ill-conditioned, and puts the coefficient estimates in @b.
+ * Optionally, calculates the covariance matrix in @vcv and the
  * residuals in @uhat.
- * 
+ *
  * Returns: 0 on success, non-zero error code on failure.
  */
 
 int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
-		      gretl_vector *b, gretl_matrix *vcv, 
+		      gretl_vector *b, gretl_matrix *vcv,
 		      gretl_vector *uhat, double *s2)
 {
     gretl_matrix *XTX = NULL;
@@ -11314,7 +11446,7 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 
     if (vcv != NULL && (vcv->rows != k || vcv->cols != k)) {
 	return E_NONCONF;
-    } 
+    }
 
     XTX = gretl_matrix_packed_XTX_new(X, &nasty);
     if (XTX == NULL) {
@@ -11365,22 +11497,22 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
  * @y: T x g matrix of dependent variables.
  * @X: T x k matrix of independent variables.
  * @B: k x g matrix to hold coefficient estimates.
- * @E: T x g matrix to hold the regression residuals, or NULL if these are 
+ * @E: T x g matrix to hold the regression residuals, or NULL if these are
  * not needed.
  * @XTXi: location to receive (X'X)^{-1} on output, or NULL if this is not
  * needed.
  *
  * Computes OLS estimates using Cholesky decomposition by default, but
  * with a fallback to QR decomposition if the data are highly
- * ill-conditioned, and puts the coefficient estimates in @B.  
+ * ill-conditioned, and puts the coefficient estimates in @B.
  * Optionally, calculates the residuals in @E.
- * 
+ *
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int gretl_matrix_multi_ols (const gretl_matrix *Y, 
+int gretl_matrix_multi_ols (const gretl_matrix *Y,
 			    const gretl_matrix *X,
-			    gretl_matrix *B, 
+			    gretl_matrix *B,
 			    gretl_matrix *E,
 			    gretl_matrix **XTXi)
 {
@@ -11417,7 +11549,7 @@ int gretl_matrix_multi_ols (const gretl_matrix *Y,
 	err = E_NONCONF;
     } else if (k > T) {
 	err = E_DF;
-    } 
+    }
 
     if (!err) {
 	XTX = gretl_matrix_XTX_new(X);
@@ -11469,7 +11601,7 @@ static gretl_matrix *build_augmented_XTX (const gretl_matrix *X,
 					  const gretl_matrix *R,
 					  int *err)
 {
-    gretl_matrix *XTX, *W;    
+    gretl_matrix *XTX, *W;
     int k = X->cols;
     int kW = k + R->rows;
 
@@ -11500,21 +11632,21 @@ static gretl_matrix *build_augmented_XTX (const gretl_matrix *X,
 		gretl_matrix_set(W, j, i+k, x);
 	    }
 	}
-    } 
+    }
 
     gretl_matrix_free(XTX);
 
     return W;
 }
 
-/* constrained least squares using lapack: 
+/* constrained least squares using lapack:
 
-    minimize || y - X*b ||_2  subject to R*b = q 
+    minimize || y - X*b ||_2  subject to R*b = q
 */
 
-static int gretl_matrix_gglse (const gretl_vector *y, 
+static int gretl_matrix_gglse (const gretl_vector *y,
 			       const gretl_matrix *X,
-			       const gretl_matrix *R, 
+			       const gretl_matrix *R,
 			       const gretl_vector *q,
 			       gretl_vector *b)
 {
@@ -11540,14 +11672,14 @@ static int gretl_matrix_gglse (const gretl_vector *y,
 
     work = lapack_malloc(sizeof *work);
 
-    if (A == NULL || B == NULL || c == NULL || 
+    if (A == NULL || B == NULL || c == NULL ||
 	d == NULL || work == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
 
     /* determine optimal workspace */
-    dgglse_(&m, &n, &p, A->val, &m, B->val, &p, c->val, 
+    dgglse_(&m, &n, &p, A->val, &m, B->val, &p, c->val,
 	    d->val, b->val, work, &lwork, &info);
 
     if (info != 0) {
@@ -11558,11 +11690,11 @@ static int gretl_matrix_gglse (const gretl_vector *y,
 	if (work == NULL) {
 	    err = E_ALLOC;
 	}
-    } 
+    }
 
     if (!err) {
 	/* do constrained calculation */
-	dgglse_(&m, &n, &p, A->val, &m, B->val, &p, c->val, 
+	dgglse_(&m, &n, &p, A->val, &m, B->val, &p, c->val,
 		d->val, b->val, work, &lwork, &info);
 	if (info != 0) {
 	    fprintf(stderr, "dgglse gave info = %d\n", (int) info);
@@ -11645,15 +11777,15 @@ static int *get_exact_list (const gretl_matrix *R)
  * @s2: pointer to receive residual variance, or NULL.  If vcv is non-NULL
  * and s2 is NULL, the vcv estimate is just W^{-1}.
  *
- * Computes OLS estimates restricted by R and q, using the lapack 
- * function dgglse(), and puts the coefficient estimates in @b.  
+ * Computes OLS estimates restricted by R and q, using the lapack
+ * function dgglse(), and puts the coefficient estimates in @b.
  * Optionally, calculates the covariance matrix in @vcv. If @q is
  * NULL this is taken as equivalent to a zero vector.
- * 
+ *
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int 
+int
 gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
 			     const gretl_matrix *R, const gretl_vector *q,
 			     gretl_vector *b, gretl_matrix *vcv,
@@ -11744,14 +11876,14 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
  * g*k columns; each row represents a linear restriction;
  * @q must be a column vector of length equal to the
  * number of rows of @R.
- * 
+ *
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int 
-gretl_matrix_restricted_multi_ols (const gretl_matrix *Y, 
+int
+gretl_matrix_restricted_multi_ols (const gretl_matrix *Y,
 				   const gretl_matrix *X,
-				   const gretl_matrix *R, 
+				   const gretl_matrix *R,
 				   const gretl_matrix *q,
 				   gretl_matrix *B,
 				   gretl_matrix *U,
@@ -11772,7 +11904,7 @@ gretl_matrix_restricted_multi_ols (const gretl_matrix *Y,
 
     if (X->rows != T) {
 	return E_NONCONF;
-    } 
+    }
 
     if (B->rows != k || B->cols != g) {
 	return E_NONCONF;
@@ -11791,7 +11923,7 @@ gretl_matrix_restricted_multi_ols (const gretl_matrix *Y,
 			       &XYq, p, 1,
 			       &Yi,  T, 1,
 			       &XYi, k, 1,
-			       NULL);  
+			       NULL);
     if (M == NULL) {
 	return E_ALLOC;
     }
@@ -11819,7 +11951,7 @@ gretl_matrix_restricted_multi_ols (const gretl_matrix *Y,
 	gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
 				  Yi, GRETL_MOD_NONE,
 				  XYi, GRETL_MOD_NONE);
-	gretl_matrix_inscribe_matrix(XYq, XYi, r, 0, 
+	gretl_matrix_inscribe_matrix(XYq, XYi, r, 0,
 				     GRETL_MOD_NONE);
 	r += k;
 	offset += T;
@@ -11845,7 +11977,7 @@ gretl_matrix_restricted_multi_ols (const gretl_matrix *Y,
 	    dsize = nc * sizeof(double);
 	    memcpy(B->val, XYq->val, dsize);
 	}
-    }    
+    }
 
     if (!err && U != NULL) {
 	/* compute residuals */
@@ -11922,7 +12054,7 @@ static int QR_OLS_work (gretl_matrix *Q, gretl_matrix *R)
  * @y: T x g matrix of dependent variables.
  * @X: T x k matrix of independent variables.
  * @B: k x g matrix to hold coefficient estimates.
- * @E: T x g matrix to hold the regression residuals, or NULL if these are 
+ * @E: T x g matrix to hold the regression residuals, or NULL if these are
  * not needed.
  * @XTXi: location to receive (X'X)^{-1}, or NULL if this is not needed.
  * @Qout: location to receive Q on output, or NULL.
@@ -11931,7 +12063,7 @@ static int QR_OLS_work (gretl_matrix *Q, gretl_matrix *R)
  * coefficient estimates in @B.  Optionally, calculates the
  * residuals in @E, (X'X)^{-1} in @XTXi, and/or the matrix Q
  * in @Qout.
- * 
+ *
  * Returns: 0 on success, non-zero error code on failure.
  */
 
@@ -11974,9 +12106,9 @@ int gretl_matrix_QR_ols (const gretl_matrix *Y,
     }
 
     if (!err) {
-	/* make "G" into gamma-hat */    
+	/* make "G" into gamma-hat */
 	gretl_matrix_multiply_mod(Q, GRETL_MOD_TRANSPOSE,
-				  Y, GRETL_MOD_NONE, 
+				  Y, GRETL_MOD_NONE,
 				  G, GRETL_MOD_NONE);
     }
 
@@ -12017,7 +12149,7 @@ int gretl_matrix_QR_ols (const gretl_matrix *Y,
     gretl_matrix_free(R);
     gretl_matrix_free(G);
 
-    return err;    
+    return err;
 }
 
 /**
@@ -12027,7 +12159,7 @@ int gretl_matrix_QR_ols (const gretl_matrix *Y,
  * @b: coefficients, k-vector.
  * @err: location to receive error code.
  *
- * Returns: the unadjusted R-squared, based on the regression 
+ * Returns: the unadjusted R-squared, based on the regression
  * represented by @y, @X and @b, or #NADBL on failure.
  */
 
@@ -12070,9 +12202,9 @@ double gretl_matrix_r_squared (const gretl_matrix *y,
  *
  * If @S is NULL, computes a columnwise product in k blocks, each
  * of n columns. The first block consists of the Hadamard product
- * of the first column of @A and the matrix @B, the second block 
- * holds the Hadamard product of the second column of @A and 
- * matrix @B, and so on. 
+ * of the first column of @A and the matrix @B, the second block
+ * holds the Hadamard product of the second column of @A and
+ * matrix @B, and so on.
  *
  * A non-NULL @S matrix may be used to filter the column-pairs for
  * multiplication: @C will include the product of column i of @A
@@ -12138,12 +12270,12 @@ int gretl_matrix_columnwise_product (const gretl_matrix *A,
 	    }
 	}
     }
-	    
+
     return 0;
 }
 
 static int alt_qform (const gretl_matrix *A, GretlMatrixMod amod,
-		      const gretl_matrix *X, gretl_matrix *C, 
+		      const gretl_matrix *X, gretl_matrix *C,
 		      GretlMatrixMod cmod, int r)
 {
     gretl_matrix *Tmp;
@@ -12158,7 +12290,7 @@ static int alt_qform (const gretl_matrix *A, GretlMatrixMod amod,
 	gretl_matrix_multiply_mod(A, GRETL_MOD_TRANSPOSE,
 				  X, GRETL_MOD_NONE,
 				  Tmp, GRETL_MOD_NONE);
-	gretl_matrix_multiply_mod(Tmp, GRETL_MOD_NONE, 
+	gretl_matrix_multiply_mod(Tmp, GRETL_MOD_NONE,
 				  A, GRETL_MOD_NONE,
 				  C, cmod);
     } else {
@@ -12171,7 +12303,7 @@ static int alt_qform (const gretl_matrix *A, GretlMatrixMod amod,
 
     gretl_matrix_xtr_symmetric(C);
     gretl_matrix_free(Tmp);
-	
+
     return 0;
 }
 
@@ -12186,7 +12318,7 @@ static int alt_qform (const gretl_matrix *A, GretlMatrixMod amod,
  * add the result to the existing value of @C.
  *
  * Computes either A * X * A' (if amod = %GRETL_MOD_NONE) or
- * A' * X * A (if amod = %GRETL_MOD_TRANSPOSE), with the result 
+ * A' * X * A (if amod = %GRETL_MOD_TRANSPOSE), with the result
  * written into @C.  The matrix @X must be symmetric, but this
  * is not checked, to save time.  If you are in doubt on this
  * point you can call gretl_matrix_is_symmetric() first.
@@ -12194,10 +12326,10 @@ static int alt_qform (const gretl_matrix *A, GretlMatrixMod amod,
  * Returns: 0 on success; non-zero error code on failure.
  */
 
-#define QFORM_SMALL 1.0e-20 
+#define QFORM_SMALL 1.0e-20
 
 int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
-			const gretl_matrix *X, gretl_matrix *C, 
+			const gretl_matrix *X, gretl_matrix *C,
 			GretlMatrixMod cmod)
 {
     register int i, j, ii, jj;
@@ -12215,7 +12347,7 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
     k = (amod)? A->rows : A->cols;
 
     if (k != X->rows) {
-	fprintf(stderr, "gretl_matrix_qform: %s is (%d x %d) but X is (%d x %d)\n", 
+	fprintf(stderr, "gretl_matrix_qform: %s is (%d x %d) but X is (%d x %d)\n",
 		(amod)? "A'" : "A", m, k, X->rows, X->cols);
 	return E_NONCONF;
     }
@@ -12290,13 +12422,13 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
  * @err: pointer to receive error code.
  *
  * Computes the scalar product bXb', or b'Xb if @b is a column
- * vector. The content of @err is set to a non-zero code on 
+ * vector. The content of @err is set to a non-zero code on
  * failure.
- * 
+ *
  * Returns: the scalar product, or #NADBL on failure.
  */
 
-double gretl_scalar_qform (const gretl_vector *b, 
+double gretl_scalar_qform (const gretl_vector *b,
 			   const gretl_matrix *X,
 			   int *err)
 {
@@ -12306,7 +12438,7 @@ double gretl_scalar_qform (const gretl_vector *b,
     if (gretl_is_null_matrix(b) || gretl_is_null_matrix(X)) {
 	*err = E_DATA;
 	return NADBL;
-    } 
+    }
 
     k = gretl_vector_get_length(b);
 
@@ -12336,7 +12468,7 @@ double gretl_scalar_qform (const gretl_vector *b,
  * Computes in @DXD (which must be pre-allocated), the matrix
  * product D * X * D, where D is a diagonal matrix with elements
  * given by the vector @d.
- * 
+ *
  * Returns: 0 on success, non-zero code on error.
  */
 
@@ -12472,7 +12604,7 @@ int gretl_matrices_are_equal (const gretl_matrix *a, const gretl_matrix *b,
     if (a == NULL || b == NULL) {
 	*err = E_DATA;
 	return -1;
-    }	
+    }
 
     if (a->rows != b->rows || a->cols != b->cols) {
 	*err = E_NONCONF;
@@ -12500,7 +12632,7 @@ int gretl_matrices_are_equal (const gretl_matrix *a, const gretl_matrix *b,
 
 static gretl_matrix *
 real_gretl_covariance_matrix (const gretl_matrix *m, int corr,
-			      gretl_matrix **pxbar, 
+			      gretl_matrix **pxbar,
 			      gretl_matrix **pssx,
 			      int *err)
 {
@@ -12515,8 +12647,8 @@ real_gretl_covariance_matrix (const gretl_matrix *m, int corr,
     if (gretl_is_null_matrix(m)) {
 	myerr = E_DATA;
 	goto bailout;
-    }	
-    
+    }
+
     if (err != NULL) {
 	*err = 0;
     }
@@ -12535,7 +12667,7 @@ real_gretl_covariance_matrix (const gretl_matrix *m, int corr,
 	V->val[0] = 1;
 	goto bailout;
     }
-    
+
     xbar = gretl_vector_alloc(k);
 
     if (V == NULL || xbar == NULL) {
@@ -12621,7 +12753,7 @@ real_gretl_covariance_matrix (const gretl_matrix *m, int corr,
 
 /**
  * gretl_covariance_matrix:
- * @m: (x x n) matrix containing n observations on each of k 
+ * @m: (x x n) matrix containing n observations on each of k
  * variables.
  * @corr: flag for computing correlations.
  * @err: pointer to receive non-zero error code in case of
@@ -12726,7 +12858,7 @@ void gretl_matrix_array_free (gretl_matrix **A, int n)
  * @err: location to receive error code.
  *
  * Returns: an allocated matrix containing the distinct
- * values in array @x, or NULL on failure. 
+ * values in array @x, or NULL on failure.
  */
 
 gretl_matrix *gretl_matrix_values (const double *x, int n,
@@ -12742,7 +12874,7 @@ gretl_matrix *gretl_matrix_values (const double *x, int n,
 	*err = E_ALLOC;
 	return NULL;
     }
-	
+
     k = 0;
     for (i=0; i<n; i++) {
 	if (!na(x[i])) {
@@ -12754,8 +12886,8 @@ gretl_matrix *gretl_matrix_values (const double *x, int n,
 	*err = E_DATA;
 	goto bailout;
     }
-	
-    qsort(sorted, k, sizeof *sorted, gretl_compare_doubles); 
+
+    qsort(sorted, k, sizeof *sorted, gretl_compare_doubles);
     m = count_distinct_values(sorted, k);
 
     v = gretl_column_vector_alloc(m);
@@ -12793,7 +12925,7 @@ gretl_matrix *gretl_matrix_values (const double *x, int n,
 		}
 	    }
 	}
-    }	
+    }
 
  bailout:
 
@@ -12810,14 +12942,14 @@ gretl_matrix *gretl_matrix_values (const double *x, int n,
  *
  * Creates an (r x c) matrix containing the re-arranged
  * values of A.  Elements are read from A by column and
- * written into the target, also by column.  If A contains 
- * less elements than n = r*c, they are repeated cyclically; 
+ * written into the target, also by column.  If A contains
+ * less elements than n = r*c, they are repeated cyclically;
  * if A has more elements, only the first n are used.
  *
  * Returns: the generated matrix, or NULL on failure.
  */
 
-gretl_matrix *gretl_matrix_shape (const gretl_matrix *A, 
+gretl_matrix *gretl_matrix_shape (const gretl_matrix *A,
 				  int r, int c, int *err)
 {
     gretl_matrix *B;
@@ -12831,7 +12963,7 @@ gretl_matrix *gretl_matrix_shape (const gretl_matrix *A,
     if (r == 0 && c == 0) {
 	return gretl_null_matrix_new();
     }
-    
+
     B = gretl_matrix_alloc(r, c);
     if (B == NULL) {
 	*err = E_ALLOC;
@@ -12859,14 +12991,14 @@ gretl_matrix *gretl_matrix_shape (const gretl_matrix *A,
  * @tbot: rows to trim at bottom.
  * @err: location to receive error code.
  *
- * Creates a new matrix which is a copy of @A with @ttop rows 
+ * Creates a new matrix which is a copy of @A with @ttop rows
  * trimmed from the top and @tbot rows trimmed from the
  * bottom.
  *
  * Returns: the generated matrix, or NULL on failure.
  */
 
-gretl_matrix *gretl_matrix_trim_rows (const gretl_matrix *A, 
+gretl_matrix *gretl_matrix_trim_rows (const gretl_matrix *A,
 				      int ttop, int tbot,
 				      int *err)
 {
@@ -12885,7 +13017,7 @@ gretl_matrix *gretl_matrix_trim_rows (const gretl_matrix *A,
 	*err = E_DATA;
 	return NULL;
     }
-    
+
     B = gretl_matrix_alloc(m, A->cols);
     if (B == NULL) {
 	*err = E_ALLOC;
@@ -12919,14 +13051,14 @@ gretl_matrix *gretl_matrix_trim_rows (const gretl_matrix *A,
  * Returns: the generated matrix, or NULL on failure.
  */
 
-gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A, 
+gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
 				   int mm, int rc, int idx,
 				   int *err)
 {
     gretl_matrix *B;
     double d, x;
     int i, j, k;
-    
+
     if (gretl_is_null_matrix(A)) {
 	*err = E_DATA;
 	return NULL;
@@ -12952,7 +13084,7 @@ gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
 		if ((mm > 0 && x > d) || (mm == 0 && x < d)) {
 		    d = x;
 		    k = j;
-		} 
+		}
 	    }
 	    B->val[i] = (idx > 0)? (double) k + 1 : d;
 	}
@@ -12965,11 +13097,11 @@ gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
 		if ((mm > 0 && x > d) || (mm == 0 && x < d)) {
 		    d = x;
 		    k = i;
-		} 
+		}
 	    }
 	    B->val[j] = (idx > 0)? (double) k + 1 : d;
 	}
-    }	
+    }
 
     return B;
 }
@@ -12990,7 +13122,7 @@ double gretl_matrix_global_minmax (const gretl_matrix *A,
 {
     double x, ret = NADBL;
     int i, n, started = 0;
-    
+
     if (gretl_is_null_matrix(A)) {
 	*err = E_DATA;
 	return NADBL;
@@ -13030,7 +13162,7 @@ double gretl_matrix_global_sum (const gretl_matrix *A,
 {
     double ret = 0.0;
     int i, n;
-    
+
     if (gretl_is_null_matrix(A)) {
 	*err = E_DATA;
 	return NADBL;
@@ -13066,7 +13198,7 @@ double gretl_matrix_global_sum (const gretl_matrix *A,
  * Returns: the generated matrix, or NULL on failure.
  */
 
-gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p, 
+gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p,
 				gretlopt opt, int *err)
 {
     gretl_matrix *C = NULL;
@@ -13150,7 +13282,7 @@ gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p,
     }
 
  bailout:
-    
+
     gretl_matrix_free(xbar);
     gretl_matrix_free(ssx);
     gretl_matrix_free(C);
@@ -13170,11 +13302,11 @@ static int ok_xy_count (int t1, int t2, const double *x, const double *y)
 	    n++;
 	}
     }
-    
+
     return n;
 }
 
-static void make_matrix_xtab (double **X, int n, 
+static void make_matrix_xtab (double **X, int n,
 			      const gretl_matrix *vx,
 			      const gretl_matrix *vy,
 			      gretl_matrix *tab)
@@ -13191,7 +13323,7 @@ static void make_matrix_xtab (double **X, int n,
     xc = (int) gretl_vector_get(vy, 0);
 
     for (i=0; i<n; i++) {
-	while (X[i][0] > xr) { 
+	while (X[i][0] > xr) {
 	    /* skip row */
 	    gretl_matrix_set(tab, rndx, cndx, counter);
 	    counter = 0;
@@ -13199,7 +13331,7 @@ static void make_matrix_xtab (double **X, int n,
 	    cndx = 0;
 	    xc = gretl_vector_get(vy, 0);
 	}
-	while (X[i][1] > xc) { 
+	while (X[i][1] > xc) {
 	    /* skip column */
 	    gretl_matrix_set(tab, rndx, cndx, counter);
 	    counter = 0;
@@ -13294,7 +13426,7 @@ gretl_matrix *matrix_matrix_xtab (const gretl_matrix *x,
  * Returns: the generated matrix, or NULL on failure.
  */
 
-gretl_matrix *gretl_matrix_xtab (int t1, int t2, const double *x, 
+gretl_matrix *gretl_matrix_xtab (int t1, int t2, const double *x,
 				 const double *y, int *err)
 {
     gretl_matrix *tab = NULL;
@@ -13343,7 +13475,7 @@ gretl_matrix *gretl_matrix_xtab (int t1, int t2, const double *x,
 	goto bailout;
     }
 
-    tab = gretl_zero_matrix_new(gretl_matrix_rows(vx), 
+    tab = gretl_zero_matrix_new(gretl_matrix_rows(vx),
 				gretl_matrix_rows(vy));
     if (tab == NULL) {
 	*err = E_ALLOC;
@@ -13384,20 +13516,20 @@ gretl_matrix *gretl_matrix_xtab (int t1, int t2, const double *x,
  * @rowsel: row/column mode selector.
  * @err: location to receive error code.
  *
- * If @rowsel = 1, constructs a matrix which contains the rows 
- * of A corresponding to non-zero values in the vector @sel; 
+ * If @rowsel = 1, constructs a matrix which contains the rows
+ * of A corresponding to non-zero values in the vector @sel;
  * if @rowsel = 0, does the same thing but column-wise.
  *
  * Returns: the generated matrix, or NULL on failure.
  */
 
-gretl_matrix *gretl_matrix_bool_sel (const gretl_matrix *A, 
-				     const gretl_matrix *sel, 
+gretl_matrix *gretl_matrix_bool_sel (const gretl_matrix *A,
+				     const gretl_matrix *sel,
 				     int rowsel, int *err)
 {
     gretl_matrix *ret = NULL;
     int ra, ca, rs, cs;
-    int nonzero = 0; 
+    int nonzero = 0;
     int i, j, k, n;
     double x;
 
@@ -13443,10 +13575,10 @@ gretl_matrix *gretl_matrix_bool_sel (const gretl_matrix *A,
     } else if (nonzero == 0) {
 	ret = gretl_null_matrix_new();
 	goto bailout;
-    } 
+    }
 
     /* copy selected row/columns */
-	
+
     if (rowsel) {
 	ret = gretl_matrix_alloc(nonzero, ca);
 	if (ret == NULL) {
@@ -13540,18 +13672,18 @@ static int inverse_compare_values (const void *a, const void *b)
  *
  * Produces a matrix which contains the rows of @m, re-
  * ordered by increasing value of the elements in column
- * @k.  
+ * @k.
  *
  * Returns: the generated matrix, or NULL on failure.
  */
 
-gretl_matrix *gretl_matrix_sort_by_column (const gretl_matrix *m, 
+gretl_matrix *gretl_matrix_sort_by_column (const gretl_matrix *m,
 					   int k, int *err)
 {
     struct rsort {
 	double x;
 	int row;
-    } *rs; 
+    } *rs;
     gretl_matrix *a;
     double x;
     int i, j;
@@ -13642,11 +13774,11 @@ static int vector_copy_marginal_names (gretl_vector *v,
     int err = gretl_matrix_add_info(v);
 
     /* note: we assume v->info is NULL on entry */
-    
+
     if (!err) {
 	char ***pS;
 	int i;
-	    
+
 	pS = v->cols > 1 ? &v->info->colnames : &v->info->rownames;
 	*pS = strings_array_new(n);
 	if (*pS != NULL) {
@@ -13674,7 +13806,7 @@ gretl_matrix *gretl_vector_sort (const gretl_matrix *v,
     }
 
     vs = matrix_copy_plain(v);
-    
+
     if (vs == NULL) {
 	*err = E_ALLOC;
     } else {
@@ -13696,7 +13828,7 @@ gretl_matrix *gretl_vector_sort (const gretl_matrix *v,
 
 	if (nvals != NULL) {
 	    int i;
-	    
+
 	    qsort(nvals, n, sizeof *nvals, descending ?
 		  inverse_compare_values : compare_values);
 	    for (i=0; i<n; i++) {
@@ -13706,18 +13838,18 @@ gretl_matrix *gretl_vector_sort (const gretl_matrix *v,
  	    free(nvals);
 	} else if (!*err) {
 	    double *x = vs->val;
-	    
+
 	    qsort(x, n, sizeof *x, descending ? gretl_inverse_compare_doubles :
 		  gretl_compare_doubles);
 	}
-    }    
+    }
 
     return vs;
  }
 
 /* Calculate X(t)-transpose * X(t-lag) */
 
-static void xtxlag (gretl_matrix *wt, const gretl_matrix *X, 
+static void xtxlag (gretl_matrix *wt, const gretl_matrix *X,
 		    int n, int t, int lag)
 {
     double xi, xj;
@@ -13742,7 +13874,7 @@ static void xtxlag (gretl_matrix *wt, const gretl_matrix *X,
  *
  * Produces the matrix covariogram,
  *
- * \sum_{j=-p}^{p} \sum_j w_{|j|} (X_t' u_t u_{t-j} X_{t-j}) 
+ * \sum_{j=-p}^{p} \sum_j w_{|j|} (X_t' u_t u_{t-j} X_{t-j})
  *
  * If @u is not given the u terms are omitted, and if @w
  * is not given, all the weights are 1.0.
@@ -13750,7 +13882,7 @@ static void xtxlag (gretl_matrix *wt, const gretl_matrix *X,
  * Returns: the generated matrix, or NULL on failure.
  */
 
-gretl_matrix *gretl_matrix_covariogram (const gretl_matrix *X, 
+gretl_matrix *gretl_matrix_covariogram (const gretl_matrix *X,
 					const gretl_matrix *u,
 					const gretl_matrix *w,
 					int p, int *err)
@@ -13833,7 +13965,7 @@ gretl_matrix *gretl_matrix_covariogram (const gretl_matrix *X,
  * function intended for producing an approximation to
  * the Hessian given a gradient matrix.
  *
- * Returns: the newly allocated k x k inverse on success, 
+ * Returns: the newly allocated k x k inverse on success,
  * or NULL on error.
  */
 
@@ -13848,11 +13980,11 @@ gretl_matrix *gretl_matrix_GG_inverse (const gretl_matrix *G, int *err)
 	return NULL;
     }
 
-    gretl_matrix_multiply_mod(G, GRETL_MOD_TRANSPOSE, 
-			      G, GRETL_MOD_NONE, 
+    gretl_matrix_multiply_mod(G, GRETL_MOD_TRANSPOSE,
+			      G, GRETL_MOD_NONE,
 			      H, GRETL_MOD_NONE);
 
-    *err = gretl_invert_symmetric_matrix(H); 
+    *err = gretl_invert_symmetric_matrix(H);
 
     if (*err) {
 	fprintf(stderr, "gretl_matrix_GG_inverse: H not pd\n");
@@ -13885,7 +14017,7 @@ void gretl_matrix_transcribe_obs_info (gretl_matrix *targ,
     }
 }
 
-static gretl_matrix *reorder_A (const gretl_matrix *A, 
+static gretl_matrix *reorder_A (const gretl_matrix *A,
 				int n, int np, int *err)
 {
     gretl_matrix *B;
@@ -13900,7 +14032,7 @@ static gretl_matrix *reorder_A (const gretl_matrix *A,
 	int i, j, k;
 	int from, to;
 	double x, y;
-	
+
 	for (j=0; j<n; j++) {
 	    for (k=0; k<=p/2; k++) {
 		from = k*n;
@@ -13913,7 +14045,7 @@ static gretl_matrix *reorder_A (const gretl_matrix *A,
 		}
 	    }
 	}
-    } 
+    }
 
     return B;
 }
@@ -13927,11 +14059,11 @@ static gretl_matrix *reorder_A (const gretl_matrix *A,
  *
  * Simulates a p-order n-variable VAR:
  * x_t = \sum A_i x_{t-i} + u_t
- * 
+ *
  * The A_i matrices must be stacked horizontally into the @A
- * argument, that is: A = A_1 ~ A_2 ~ A_p. The u_t vectors are 
+ * argument, that is: A = A_1 ~ A_2 ~ A_p. The u_t vectors are
  * contained (as rows) in @U. Initial values are in @x0.
- * 
+ *
  * Note the that the arrangement of the @A matrix is somewhat
  * sub-optimal computationally, since its elements have to be
  * reordered by the function reorder_A (see above). However, the
@@ -13942,9 +14074,9 @@ static gretl_matrix *reorder_A (const gretl_matrix *A,
  * row is (x_t)', or NULL on error.
  */
 
-gretl_matrix *gretl_matrix_varsimul (const gretl_matrix *A, 
-				     const gretl_matrix *U, 
-				     const gretl_matrix *x0, 
+gretl_matrix *gretl_matrix_varsimul (const gretl_matrix *A,
+				     const gretl_matrix *U,
+				     const gretl_matrix *x0,
 				     int *err)
 {
     gretl_matrix *A2, *X, *UT;
@@ -13993,7 +14125,7 @@ gretl_matrix *gretl_matrix_varsimul (const gretl_matrix *A,
     }
 
     *err = gretl_matrix_transpose_in_place(X);
-    
+
     if (!*err) {
 	/* set dates on output matrix if possible */
 	int t1 = gretl_matrix_get_t1(U) - p;
@@ -14020,17 +14152,17 @@ gretl_matrix *gretl_matrix_varsimul (const gretl_matrix *A,
  * contain as many strings as @m has columns. The matrix
  * takes ownership of @S, which should be allocated and
  * not subsequently touched by the caller.
- * 
+ *
  * Returns: 0 on success, non-zero code on error.
  */
 
 int gretl_matrix_set_colnames (gretl_matrix *m, char **S)
 {
     if (m == NULL) {
-	return E_DATA;   
+	return E_DATA;
     } else if (is_block_matrix(m)) {
 	return matrix_block_error("gretl_matrix_set_colnames");
-    } else if (S != NULL && m->info == NULL && 
+    } else if (S != NULL && m->info == NULL &&
 	       gretl_matrix_add_info(m)) {
 	return E_ALLOC;
     }
@@ -14038,7 +14170,7 @@ int gretl_matrix_set_colnames (gretl_matrix *m, char **S)
     if (m->info != NULL) {
 	if (m->info->colnames != NULL) {
 	    strings_array_free(m->info->colnames, m->cols);
-	}	
+	}
 	m->info->colnames = S;
     }
 
@@ -14049,23 +14181,23 @@ int gretl_matrix_set_colnames (gretl_matrix *m, char **S)
  * gretl_matrix_set_rownames:
  * @m: target matrix.
  * @S: array of strings.
- * 
+ *
  * Sets an array of strings on @m which can be retrieved
  * using gretl_matrix_get_rownames(). Note that @S must
  * contain as many strings as @m has rows. The matrix
  * takes ownership of @S, which should be allocated and
  * not subsequently touched by the caller.
- * 
+ *
  * Returns: 0 on success, non-zero code on error.
  */
 
 int gretl_matrix_set_rownames (gretl_matrix *m, char **S)
 {
     if (m == NULL) {
-	return E_DATA;   
+	return E_DATA;
     } else if (is_block_matrix(m)) {
 	return matrix_block_error("gretl_matrix_set_rownames");
-    } else if (S != NULL && m->info == NULL && 
+    } else if (S != NULL && m->info == NULL &&
 	       gretl_matrix_add_info(m)) {
 	return E_ALLOC;
     }
@@ -14073,7 +14205,7 @@ int gretl_matrix_set_rownames (gretl_matrix *m, char **S)
     if (m->info != NULL) {
 	if (m->info->rownames != NULL) {
 	    strings_array_free(m->info->rownames, m->rows);
-	}	
+	}
 	m->info->rownames = S;
     }
 
@@ -14083,10 +14215,10 @@ int gretl_matrix_set_rownames (gretl_matrix *m, char **S)
 /**
  * gretl_matrix_get_colnames:
  * @m: matrix
- * 
- * Returns: The array of strings set on @m using 
+ *
+ * Returns: The array of strings set on @m using
  * gretl_matrix_set_colnames(), or NULL if no such
- * strings have been set. The returned array will 
+ * strings have been set. The returned array will
  * contain as many strings as @m has columns.
  */
 
@@ -14102,8 +14234,8 @@ const char **gretl_matrix_get_colnames (const gretl_matrix *m)
 /**
  * gretl_matrix_get_rownames:
  * @m: matrix
- * 
- * Returns:The array of strings set on @m using 
+ *
+ * Returns:The array of strings set on @m using
  * gretl_matrix_set_rownames(), or NULL if no such
  * strings have been set. The returned array will
  * contain as many strings as @m has rows.
