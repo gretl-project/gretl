@@ -4,6 +4,7 @@ version 2018c, in progress
   as well as some new functionality
 - Internal representation of missing values: switch to
   using NaN
+- Matrix "division": handle the rank-deficient case properly
 
 2018-08-11 version 2018b
 - New feature: support for data access via dbnomics

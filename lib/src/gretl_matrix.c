@@ -100,15 +100,13 @@ static inline void *mval_realloc (void *ptr, size_t sz)
 
 #define SVD_SMIN 1.0e-9
 
-#define TRY_DGELSY 0
+/* maybe experiment with these? */
+#define QR_RCOND_MIN  1.0e-14
+#define QR_RCOND_WARN 1.0e-07
 
 static int add_scalar_to_matrix (gretl_matrix *targ, double x);
 static int gretl_matrix_copy_info (gretl_matrix *targ,
 				   const gretl_matrix *src);
-
-#if TRY_DGELSY
-static int gretl_dgelsy (gretl_matrix *A, gretl_matrix *B, int *rank);
-#endif
 
 /* matrix metadata struct, not allocated by default */
 
@@ -3738,64 +3736,85 @@ static int SVD_solve (gretl_matrix *a, gretl_matrix *b,
 
 #endif /* unused */
 
-/* least squares solution using QR */
+/* least squares solution using QR, with column pivoting and
+   detection of rank deficiency, using lapack dgelsy
+*/
 
-static int QR_solve (gretl_matrix *a, gretl_matrix *b,
-		     integer m, integer n, integer nrhs,
-		     integer ldb)
+static int QR_solve (gretl_matrix *A, gretl_matrix *B)
 {
-    char trans = 'N';
-    integer info;
-    integer lda = m;
+    integer m, n, lda, nrhs;
+    integer rank, info = 0;
     integer lwork = -1;
-    double *work;
-    int err = 0;
+    integer *jpvt = NULL;
+    doublereal *work = NULL;
+    doublereal rcond = QR_RCOND_MIN;
+    int i, err = 0;
 
-    if (m > n && is_block_matrix(b)) {
+    lda = m = A->rows;
+    n = A->cols;
+    nrhs = B->cols;
+
+    if (m > n && is_block_matrix(B)) {
 	matrix_block_error("QR solve");
 	return E_DATA;
     }
 
+    if (n > m || B->rows != m) {
+	return E_NONCONF;
+    }
+
+    jpvt = malloc(n * sizeof *jpvt);
     work = lapack_malloc(sizeof *work);
-    if (work == NULL) {
-	return E_ALLOC;
+    if (jpvt == NULL || work == NULL) {
+	err = E_ALLOC;
+	goto bailout;
     }
 
-    dgels_(&trans, &m, &n, &nrhs, a->val, &lda, b->val, &ldb,
-	   work, &lwork, &info);
+    for (i=0; i<n; i++) {
+	jpvt[i] = 0;
+    }
+
+    /* workspace query */
+    dgelsy_(&m, &n, &nrhs, A->val, &lda, B->val, &lda,
+	    jpvt, &rcond, &rank, work, &lwork, &info);
     if (info != 0) {
-	return wspace_fail(info, work[0]);
+	fprintf(stderr, "dgelsy: info = %d\n", (int) info);
+	err = 1;
+	goto bailout;
     }
 
+    /* optimally sized work array */
     lwork = (integer) work[0];
-
-    work = lapack_realloc(work, lwork * sizeof *work);
+    work = lapack_realloc(work, (size_t) lwork * sizeof *work);
     if (work == NULL) {
-	return E_ALLOC;
+	err = E_ALLOC;
+	goto bailout;
     }
 
-    dgels_(&trans, &m, &n, &nrhs, a->val, &lda, b->val, &ldb,
-	   work, &lwork, &info);
+    /* run actual computation */
+    dgelsy_(&m, &n, &nrhs, A->val, &lda, B->val, &lda,
+	    jpvt, &rcond, &rank, work, &lwork, &info);
     if (info != 0) {
-	fprintf(stderr, "QR_solve: dgels gave info = %d\n",
-		(int) info);
-	err = E_DATA;
+	fprintf(stderr, "dgelsy: info = %d\n", (int) info);
+	err = 1;
+    } else if (rank < n) {
+	fprintf(stderr, "dgelsy: cols(A) = %d, rank(A) = %d\n",
+		A->cols, rank);
     }
-
-    /* Note: we could retrieve the sum(s) of squared errors from
-       b on output if we wanted to.  But for now we'll trim
-       b to contain just the solution. */
 
     if (!err && m > n) {
-	gretl_matrix *c;
+	gretl_matrix *C;
 
-	c = gretl_matrix_trim_rows(b, 0, m - n, &err);
+	C = gretl_matrix_trim_rows(B, 0, m - n, &err);
 	if (!err) {
-	    matrix_grab_content(b, c);
-	    gretl_matrix_free(c);
+	    matrix_grab_content(B, C);
+	    gretl_matrix_free(C);
 	}
     }
 
+ bailout:
+
+    free(jpvt);
     lapack_free(work);
 
     return err;
@@ -4018,17 +4037,7 @@ static int gretl_matrix_solve (gretl_matrix *a, gretl_matrix *b)
     if (a->rows == a->cols) {
 	return gretl_LU_solve(a, b);
     } else if (a->rows > a->cols) {
-	integer ldb, nrhs = 1;
-
-	if (b->cols == 1) {
-	    ldb = b->rows;
-	} else if (b->rows == 1) {
-	    ldb = b->cols;
-	} else {
-	    nrhs = b->cols;
-	    ldb = b->rows;
-	}
-	return QR_solve(a, b, a->rows, a->cols, nrhs, ldb);
+	return QR_solve(a, b);
     } else {
 	return E_DATA;
     }
@@ -7220,7 +7229,6 @@ gretl_matrix *gretl_matrix_divide (const gretl_matrix *a,
     gretl_matrix *Q = NULL;
     gretl_matrix *AT = NULL, *BT = NULL;
     gretl_matrix *Tmp;
-    int den_scalar = 0;
 
     if (gretl_is_null_matrix(a) ||
 	gretl_is_null_matrix(b)) {
@@ -7246,38 +7254,6 @@ gretl_matrix *gretl_matrix_divide (const gretl_matrix *a,
 	}
 	return Q;
     }
-
-#if TRY_DGELSY
-    if (mod == GRETL_MOD_NONE && a->rows > a->cols) {
-	/* OLS experiment */
-	gretl_matrix *A = gretl_matrix_copy(a);
-	gretl_matrix *B = gretl_matrix_copy(b);
-	gretl_matrix *X = NULL;
-	double xij;
-	int i, j, rank = 0;
-
-	*err = gretl_dgelsy(A, B, &rank);
-	if (!*err) {
-	    X = gretl_matrix_alloc(A->cols, B->cols);
-	    if (X == NULL) {
-		*err = E_ALLOC;
-	    } else {
-		/* transcribe the solution */
-		for (j=0; j<X->cols; j++) {
-		    for (i=0; i<X->rows; i++) {
-			xij = gretl_matrix_get(B, i, j);
-			gretl_matrix_set(X, i, j, xij);
-		    }
-		}
-	    }
-	}
-
-	gretl_matrix_free(A);
-	gretl_matrix_free(B);
-
-	return X;
-    }
-#endif
 
     if (mod == GRETL_MOD_NONE && a->rows != b->rows) {
 	*err = E_NONCONF;
@@ -7957,101 +7933,6 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,
     return err;
 }
 
-#if TRY_DGELSY
-
-/* lapack:
-
-   SUBROUTINE DGELSY(M, N, NRHS, A, LDA, B, LDB, JPVT, RCOND, RANK,
-                     WORK, LWORK, INFO)
-
-   computes the minimum-norm solution to a real linear least
-   squares problem:
-       minimize || A * X - B ||
-   using a complete orthogonal factorization of A.  A is an M-by-N
-   matrix which may be rank-deficient.
-*/
-
-static int gretl_dgelsy (gretl_matrix *A,
-			 gretl_matrix *B,
-			 int *rank)
-{
-    integer m, n, lda, nrhs;
-    integer info = 0;
-    integer lwork = -1;
-    integer *jpvt = NULL;
-    doublereal *tau = NULL;
-    doublereal *work = NULL;
-    doublereal rcond = 1.0e-14; /* ? */
-    int i, err = 0;
-
-    if (gretl_is_null_matrix(A) || gretl_is_null_matrix(B)) {
-	return E_DATA;
-    }
-
-    lda = m = A->rows;
-    n = A->cols;
-    nrhs = B->cols;
-
-    if (n > m || B->rows != m) {
-	return E_NONCONF;
-    }
-
-    jpvt = malloc(n * sizeof *jpvt);
-    work = lapack_malloc(sizeof *work);
-    if (jpvt == NULL || work == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    for (i=0; i<n; i++) {
-	jpvt[i] = 0;
-    }
-
-    /* workspace query */
-    dgelsy_(&m, &n, &nrhs, A->val, &lda, B->val, &lda,
-	    jpvt, &rcond, rank, work, &lwork, &info);
-    if (info != 0) {
-	fprintf(stderr, "dgeqrf: info = %d\n", (int) info);
-	err = 1;
-	goto bailout;
-    }
-
-    /* optimally sized work array */
-    lwork = (integer) work[0];
-    work = lapack_realloc(work, (size_t) lwork * sizeof *work);
-    if (work == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    /* run actual computation */
-    dgelsy_(&m, &n, &nrhs, A->val, &lda, B->val, &lda,
-	    jpvt, &rcond, rank, work, &lwork, &info);
-    if (info != 0) {
-	fprintf(stderr, "dgelsy: info = %d\n", (int) info);
-	err = 1;
-	goto bailout;
-    }
-
-#if 1  
-    B->rows = n;
-    fprintf(stderr, "dgelsy: rank=%d, info=%d\n", *rank, info);
-    for (i=0; i<n; i++) {
-	fprintf(stderr, " b[%d] = %g, jpvt[%d] = %d\n",
-		i, gretl_matrix_get(B, i, 0), i, jpvt[i]);
-    }
-#endif    
-
- bailout:
-
-    free(jpvt);
-    lapack_free(work);
-
-    return err;
-}
-
-#endif /* TRY_DGELSY */
-
 /**
  * gretl_matrix_QR_decomp:
  * @M: m x n matrix to be decomposed.
@@ -8174,11 +8055,6 @@ static int get_R_rank (const gretl_matrix *R)
 
     return rank;
 }
-
-/* experiment with these? */
-
-#define QR_RCOND_MIN  1.0e-14
-#define QR_RCOND_WARN 1.0e-07
 
 /**
  * gretl_check_QR_rank:
