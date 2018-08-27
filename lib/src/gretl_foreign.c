@@ -1836,7 +1836,12 @@ static void write_R_io_funcs (FILE *fp)
     fputs("gretl.loadmat <- function(mname) {\n", fp);
     fprintf(fp, "  prefix <- \"%s\"\n", gretl_dot_dir);
     fputs("  fname <- paste(prefix, mname, sep=\"\")\n", fp);
+#ifdef G_OS_WIN32
+    /* assume that filenames coming from gretl will be in UTF-8 */
+    fputs("  m <- as.matrix(read.table(fname, skip=1, encoding=\"utf-8\"))\n", fp);
+#else
     fputs("  m <- as.matrix(read.table(fname, skip=1))\n", fp);
+#endif
     fputs("  return(m)\n", fp);
     fputs("}\n", fp);
 }
