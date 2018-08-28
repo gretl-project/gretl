@@ -5340,23 +5340,11 @@ static int not_mpi_duplicate (void)
 #endif
 }
 
-/**
- * load_function_package_by_filename:
- * @fname: full path to gfn file.
- * @opt: may include OPT_F to force loading even when
- * the package is already loaded.
- * @prn: gretl printer.
- *
- * Loads the function package located by @fname into
- * memory, if possible. Supports gretl's "include" command
- * for gfn files.
- *
- * Returns: 0 on success, non-zero code on error.
- */
-
-int load_function_package_by_filename (const char *fname,
-				       gretlopt opt,
-				       PRN *prn)
+int load_gfn_by_filename_full (const char *fname,
+			       int *preloaded,
+			       fnpkg **ppkg,
+			       gretlopt opt,
+			       PRN *prn)
 {
     fnpkg *pkg;
     int err = 0;
@@ -5373,6 +5361,10 @@ int load_function_package_by_filename (const char *fname,
 	    fprintf(stderr, "load_function_package_by_filename:\n"
 		    " '%s' is already loaded\n", fname);
 	}
+    }
+
+    if (pkg != NULL && preloaded != NULL) {
+	*preloaded = 1;
     }
 
     if (pkg == NULL) {
@@ -5394,12 +5386,38 @@ int load_function_package_by_filename (const char *fname,
 
     if (err) {
 	fprintf(stderr, "load function package: failed on %s\n", fname);
-    } else if (pkg != NULL && prn != NULL && not_mpi_duplicate()) {
-	pprintf(prn, "%s %s, %s (%s)\n", pkg->name, pkg->version,
-		pkg->date, pkg->author);
+    } else if (pkg != NULL) {
+	if (ppkg != NULL) {
+	    *ppkg = pkg;
+	}
+	if (prn != NULL && not_mpi_duplicate()) {
+	    pprintf(prn, "%s %s, %s (%s)\n", pkg->name, pkg->version,
+		    pkg->date, pkg->author);
+	}
     }
 
     return err;
+}
+
+/**
+ * load_function_package_by_filename:
+ * @fname: full path to gfn file.
+ * @opt: may include OPT_F to force loading even when
+ * the package is already loaded.
+ * @prn: gretl printer.
+ *
+ * Loads the function package located by @fname into
+ * memory, if possible. Supports gretl's "include" command
+ * for gfn files.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int load_function_package_by_filename (const char *fname,
+				       gretlopt opt,
+				       PRN *prn)
+{
+    return load_gfn_by_filename_full(fname, NULL, NULL, opt, prn);
 }
 
 /**
@@ -9177,7 +9195,7 @@ int delete_function_package (const char *gfnname)
 /**
  * uninstall_function_package:
  * @package: name of package (with or without .gfn extension).
- * @opt: option flag(s).
+ * @opt: may include OPT_P to "purge" the package.
  * @prn: gretl printer.
  *
  * Returns: 0 on success, non-zero code on error.
@@ -9218,9 +9236,9 @@ int uninstall_function_package (const char *package, gretlopt opt,
 
     if (!err && gretl_messages_on()) {
 	if (opt & OPT_P) {
-	    pprintf(prn, "Purged %s\n", pkgname);
+	    pprintf(prn, _("Removed %s\n"), pkgname);
 	} else {
-	    pprintf(prn, "Removed %s\n", pkgname);
+	    pprintf(prn, _("Unloaded %s\n"), pkgname);
 	}
     }
 
