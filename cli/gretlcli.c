@@ -801,10 +801,10 @@ int main (int argc, char *argv[])
 	} else {
 	    if (!isalpha(filearg[0]) || filearg[1] == ':') {
 		/* some sort of path: install local file */
-		sprintf(line, "install %s --local\n", filearg);
+		sprintf(line, "pkg install %s --local\n", filearg);
 	    } else {
 		/* plain filename or http: install from server */
-		sprintf(line, "install %s\n", filearg);
+		sprintf(line, "pkg install %s\n", filearg);
 	    }
 	}
 	cli_exec_line(&state, dset, cmdprn);
