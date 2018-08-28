@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* library.c for gretl -- main interface to libgretl functions */
@@ -64,7 +64,7 @@
 #include "varinfo.h"
 #include "fncall.h"
 
-#ifdef G_OS_WIN32 
+#ifdef G_OS_WIN32
 # include <io.h>
 # include "gretlwin32.h"
 #else
@@ -118,7 +118,7 @@ void set_original_n (int n)
 int get_original_n (void)
 {
     return original_n;
-} 
+}
 
 /* the following two functions are called from gretl.c,
    at start-up and at exit respectively */
@@ -164,7 +164,7 @@ int lib_command_strcpy (const char *s)
 {
     memset(libline, 0, MAXLINE);
     strncat(libline, s, MAXLINE - 1);
-    
+
     return 0;
 }
 
@@ -212,7 +212,7 @@ gint bufopen (PRN **pprn)
 
 	if (has_minus > 0) {
 	    gretl_print_set_has_minus(*pprn);
-	}	
+	}
     }
 
     return err;
@@ -255,8 +255,8 @@ static char *cmd_to_buf (CMD *cmd, const char *line)
    The MORE COMPLEX variant uses parse_lib_command() followed by
    record_lib_command(). The first of these functions runs the stored
    @libline through the libgretl command parser, and the second calls
-   the libgretl function gretl_record_command() to produce the 
-   "canonical form" of the command, which is then entered in the 
+   the libgretl function gretl_record_command() to produce the
+   "canonical form" of the command, which is then entered in the
    command log.
 
    Why bother with the more complex variant? First, parsing the
@@ -338,9 +338,9 @@ static int record_model_command (int model_ID)
     return real_record_lib_command(model_ID);
 }
 
-/* log a "simple" command when we already know that it 
-   worked OK; doesn't require that parse_lib_command 
-   has been called 
+/* log a "simple" command when we already know that it
+   worked OK; doesn't require that parse_lib_command
+   has been called
 */
 
 int record_command_verbatim (void)
@@ -349,7 +349,7 @@ int record_command_verbatim (void)
 }
 
 /* variant of the above for commands that pertain to a
-   given model 
+   given model
 */
 
 int record_model_command_verbatim (int model_ID)
@@ -358,7 +358,7 @@ int record_model_command_verbatim (int model_ID)
 }
 
 /* parses @libline and fills out @libcmd, but does
-   not of itself record (or execute) the command 
+   not of itself record (or execute) the command
 */
 
 static int parse_lib_command (void)
@@ -369,15 +369,15 @@ static int parse_lib_command (void)
     fprintf(stderr, "parse_lib_command: '%s'\n", libline);
 #endif
 
-    err = parse_gui_command(libline, &libcmd, dataset); 
+    err = parse_gui_command(libline, &libcmd, dataset);
     if (err) {
 	gui_errmsg(err);
-    } 
+    }
 
     return err;
 }
 
-/* checks command line @s for errors, and if OK returns 
+/* checks command line @s for errors, and if OK returns
    an allocated copy of the command list */
 
 int *command_list_from_string (const char *s, int *err)
@@ -388,9 +388,9 @@ int *command_list_from_string (const char *s, int *err)
 
     if (*err) {
 	gui_errmsg(*err);
-    } 
+    }
 
-    return list;    
+    return list;
 }
 
 static int gui_exact_fit_check (MODEL *pmod)
@@ -457,7 +457,7 @@ static int add_or_replace_series_data (const double *x,
     } else {
 	/* adding */
 	int t, s = 0;
-	
+
 	err = dataset_add_series(dataset, 1);
 	if (err) {
 	    gui_errmsg(err);
@@ -519,7 +519,7 @@ void add_mahalanobis_data (windata_t *vwin)
 	    lib_command_sprintf("mahal%s --save", liststr);
 	    record_command_verbatim();
 	    free(liststr);
-	}	
+	}
     }
 }
 
@@ -652,7 +652,7 @@ static int get_summary_stats_option (gretlopt *popt)
 	N_("Show full statistics")
     };
     int resp;
-    
+
     resp = radio_dialog(NULL, NULL, opts, 2, deflt,
 			0, mdata->main);
 
@@ -770,14 +770,14 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt)
 	    if (ci == CORR) {
 		print_corrmat(obj, dataset, prn);
 	    } else {
-		err = call_pca_plugin((VMatrix *) obj, dataset, 
+		err = call_pca_plugin((VMatrix *) obj, dataset,
 				      OPT_NONE, prn);
 	    }
-	}	    
+	}
 	break;
     case XTAB:
 	if (libcmd.list[0] == 2) {
-	    obj = single_crosstab(libcmd.list, dataset, opt, 
+	    obj = single_crosstab(libcmd.list, dataset, opt,
 				  prn, &err);
 	} else {
 	    err = crosstab(libcmd.list, dataset, opt, prn);
@@ -788,7 +788,7 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt)
 	if (libcmd.list[0] <= 4) {
 	    opt = OPT_V;
 	}
-	obj = get_mahal_distances(libcmd.list, dataset, opt, 
+	obj = get_mahal_distances(libcmd.list, dataset, opt,
 				  prn, &err);
 	break;
     case SUMMARY:
@@ -821,10 +821,10 @@ static void do_qq_xyplot (const char *buf, gretlopt opt)
 
     err = qq_plot(libcmd.list, dataset, opt);
     gui_graph_handler(err);
-    
+
     if (!err) {
 	record_command_verbatim();
-    }     
+    }
 }
 
 int menu_op_wrapper (selector *sr)
@@ -890,7 +890,7 @@ void menu_op_action (GtkAction *action, gpointer p)
 	title = gretl_window_title(_(str));
 	simple_selection(ci, title, menu_op_wrapper, NULL);
 	g_free(title);
-    } 
+    }
 }
 
 int do_coint (selector *sr)
@@ -911,17 +911,17 @@ int do_coint (selector *sr)
 	lib_command_sprintf("coint %s%s", buf, flagstr);
     } else {
 	lib_command_sprintf("coint2 %s%s", buf, flagstr);
-    }	
+    }
 
     if (parse_lib_command() || bufopen(&prn)) {
 	return 1;
     }
 
     if (action == COINT) {
-	err = engle_granger_test(libcmd.order, libcmd.list, dataset, 
+	err = engle_granger_test(libcmd.order, libcmd.list, dataset,
 				 libcmd.opt, prn);
     } else {
-	jvar = johansen_test(libcmd.order, libcmd.list, dataset, 
+	jvar = johansen_test(libcmd.order, libcmd.list, dataset,
 			     libcmd.opt, prn);
 	if (jvar == NULL) {
 	    err = E_DATA;
@@ -935,7 +935,7 @@ int do_coint (selector *sr)
 	gretl_print_destroy(prn);
     } else {
 	record_lib_command();
-	view_buffer(prn, 78, 400, _("gretl: cointegration test"), 
+	view_buffer(prn, 78, 400, _("gretl: cointegration test"),
 		    action, (action == COINT2)? jvar : NULL);
     }
 
@@ -962,7 +962,7 @@ static int ok_obs_in_series (int v)
 }
 
 static void switch_test_down_opt (GtkComboBox *combo,
-				  int *option) 
+				  int *option)
 {
     *option = gtk_combo_box_get_active(combo);
 }
@@ -977,22 +977,22 @@ static GtkWidget *adf_test_down_selector (int ci, int *option)
     combo = gtk_combo_box_text_new();
     gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
     if (ci == DFGLS) {
-	combo_box_append_text(combo, _("modified AIC"));    
+	combo_box_append_text(combo, _("modified AIC"));
 	combo_box_append_text(combo, _("modified BIC"));
     } else {
-	combo_box_append_text(combo, _("AIC"));    
+	combo_box_append_text(combo, _("AIC"));
 	combo_box_append_text(combo, _("BIC"));
 	combo_box_append_text(combo, _("t-statistic"));
     }
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), *option);
     g_signal_connect(G_OBJECT(combo), "changed",
-		     G_CALLBACK(switch_test_down_opt), 
+		     G_CALLBACK(switch_test_down_opt),
 		     option);
 
     return hbox;
 }
 
-static int adf_get_options (const char *title, int panel, 
+static int adf_get_options (const char *title, int panel,
 			    int omax, int *order,
 			    gretlopt *popt)
 {
@@ -1047,11 +1047,11 @@ static int adf_get_options (const char *title, int panel,
        check boxes in the dialog box produced by checks_dialog()
     */
 
-    retval = checks_dialog(_(title), NULL, 
-			   opts, nchecks, active, 
+    retval = checks_dialog(_(title), NULL,
+			   opts, nchecks, active,
 			   check_min, check_max,
-			   nradios, radio_var, order, 
-			   _("Lag order for ADF test:"), 
+			   nradios, radio_var, order,
+			   _("Lag order for ADF test:"),
 			   0, omax, panel ? 0 : ADF, NULL);
 
     if (retval == 0) {
@@ -1079,7 +1079,7 @@ static int adf_get_options (const char *title, int panel,
 	    set_optval_string(ADF, OPT_E, "AIC");
 	} else if (test_down_opt == 1) {
 	    /* BIC */
-	    set_optval_string(ADF, OPT_E, "BIC"); 
+	    set_optval_string(ADF, OPT_E, "BIC");
 	} else {
 	    set_optval_string(ADF, OPT_E, "tstat");
 	}
@@ -1092,7 +1092,7 @@ static int adf_get_options (const char *title, int panel,
     return retval;
 }
 
-static int dfgls_get_options (const char *title, int panel, 
+static int dfgls_get_options (const char *title, int panel,
 			      int omax, int *order,
 			      gretlopt *popt)
 {
@@ -1128,10 +1128,10 @@ static int dfgls_get_options (const char *title, int panel,
     tdown = adf_test_down_selector(DFGLS, &test_down_opt);
     set_checks_dialog_extra(0, tdown);
 
-    retval = checks_dialog(_(title), NULL, 
+    retval = checks_dialog(_(title), NULL,
 			   opts, nchecks, active, 0, 0,
-			   nradios, radio_var, order, 
-			   _("Lag order for ADF test:"), 
+			   nradios, radio_var, order,
+			   _("Lag order for ADF test:"),
 			   0, omax, panel? 0 : DFGLS, NULL);
 
     if (retval == 0) {
@@ -1160,16 +1160,16 @@ static int dfgls_get_options (const char *title, int panel,
 	    set_optval_string(ADF, OPT_E, "AIC");
 	} else if (test_down_opt == 1) {
 	    /* BIC */
-	    set_optval_string(ADF, OPT_E, "BIC"); 
+	    set_optval_string(ADF, OPT_E, "BIC");
 	} else {
 	    set_optval_string(ADF, OPT_E, "tstat");
 	}
-    }    
+    }
 
     return retval;
 }
 
-static int kpss_get_options (const char *title, int panel, 
+static int kpss_get_options (const char *title, int panel,
 			     int omax, int *order,
 			     gretlopt *popt)
 {
@@ -1205,10 +1205,10 @@ static int kpss_get_options (const char *title, int panel,
 	ts_active[1] = -1;
     }
 
-    retval = checks_dialog(_(title), NULL, 
+    retval = checks_dialog(_(title), NULL,
 			   opts, nchecks, active, 0, 0,
-			   nradios, rvar, order, 
-			   _("Lag order for KPSS test:"), 
+			   nradios, rvar, order,
+			   _("Lag order for KPSS test:"),
 			   0, omax, panel ? 0 : KPSS, NULL);
 
     if (retval == 0) {
@@ -1224,16 +1224,16 @@ static int kpss_get_options (const char *title, int panel,
 	    if (difference) opt |= OPT_F;
 	}
 	*popt = opt;
-    }	
+    }
 
     if (ts_active[1] < 0) {
 	ts_active[1] = save_seas;
     }
 
-    return retval;	
+    return retval;
 }
 
-static int levin_lin_get_options (const char *title,  int panel, 
+static int levin_lin_get_options (const char *title,  int panel,
 				  int omax, int *order,
 				  gretlopt *popt)
 {
@@ -1247,10 +1247,10 @@ static int levin_lin_get_options (const char *title,  int panel,
     gretlopt opt = OPT_NONE;
     int retval;
 
-    retval = checks_dialog(_(title), NULL, 
+    retval = checks_dialog(_(title), NULL,
 			   opts, 0, NULL, 0, 0,
-			   3, &llc_case, order, 
-			   _("Lag order for ADF test:"), 
+			   3, &llc_case, order,
+			   _("Lag order for ADF test:"),
 			   0, omax, LEVINLIN, NULL);
 
     if (retval == 0) {
@@ -1305,7 +1305,7 @@ void unit_root_test (int ci)
     }
 
     /* hand off to a specific function to gather the
-       relevant options for the given sort of test 
+       relevant options for the given sort of test
     */
 
     if (ci == ADF) {
@@ -1320,7 +1320,7 @@ void unit_root_test (int ci)
     } else {
 	title = titles[3];
 	err = levin_lin_get_options(title, panel, omax, &order, &opt);
-    }	
+    }
 
     if (err < 0) {
 	/* canceled */
@@ -1356,7 +1356,7 @@ void unit_root_test (int ci)
     } else {
 	int rci = (ci == DFGLS)? ADF : ci;
 
-	lib_command_sprintf("%s %d %s%s", gretl_command_word(rci), 
+	lib_command_sprintf("%s %d %s%s", gretl_command_word(rci),
 			    order, dataset->varname[v],
 			    print_flags(opt, rci));
 	record_command_verbatim();
@@ -1368,12 +1368,12 @@ void unit_root_test (int ci)
 	}
 
 	view_buffer(prn, 78, 350, title, ci, NULL);
-    }    
+    }
 }
 
 static int ur_code (const gchar *s)
 {
-    if (!strcmp(s, "dfgls")) { 
+    if (!strcmp(s, "dfgls")) {
 	return DFGLS;
     } else {
 	return gretl_command_number(s);
@@ -1437,14 +1437,14 @@ int do_xcorrgm (selector *sr)
     if (parse_lib_command() || bufopen(&prn)) {
 	err = 1;
     } else {
-	err = xcorrgram(libcmd.list, order, dataset, 
+	err = xcorrgram(libcmd.list, order, dataset,
 			OPT_NONE, prn);
 	if (err) {
 	    gui_errmsg(err);
 	    gretl_print_destroy(prn);
 	} else {
 	    record_lib_command();
-	    view_buffer(prn, 60, 300, title, XCORRGM, NULL); 
+	    view_buffer(prn, 60, 300, title, XCORRGM, NULL);
 	    register_graph();
 	}
     }
@@ -1457,9 +1457,9 @@ int do_xcorrgm (selector *sr)
 void dataset_info (void)
 {
     if (dataset->descrip == NULL) {
-	if (yes_no_dialog(_("gretl: add info"), 
+	if (yes_no_dialog(_("gretl: add info"),
 			  _("The data file contains no informative comments.\n"
-			    "Would you like to add some now?"), 
+			    "Would you like to add some now?"),
 			  NULL) == GRETL_YES) {
 	    edit_buffer(&dataset->descrip, 80, 400, _("gretl: edit data info"),
 			EDIT_HEADER);
@@ -1467,7 +1467,7 @@ void dataset_info (void)
     } else if (data_status & BOOK_DATA) {
 	char *buf = g_strdup(dataset->descrip);
 	PRN *prn;
-	
+
 	if (buf != NULL) {
 	    prn = gretl_print_new_with_buffer(buf);
 	    view_buffer(prn, 80, 400, _("gretl: data info"), INFO, NULL);
@@ -1475,7 +1475,7 @@ void dataset_info (void)
     } else {
 	edit_buffer(&dataset->descrip, 80, 400, _("gretl: edit data info"),
 		    EDIT_HEADER);
-    }	
+    }
 }
 
 void gui_errmsg (int errcode)
@@ -1507,7 +1507,7 @@ void gui_warnmsg (int errcode)
 
     if (msg != NULL && *msg != '\0') {
 	warnbox(msg);
-    } 
+    }
 }
 
 static int perma_sample_options (const char *param, int *list,
@@ -1531,17 +1531,17 @@ static int perma_sample_options (const char *param, int *list,
 			  "Do you want to go ahead with the "
 			  "subsampling now?"),
 			*n_dropped);
-	
+
     resp = yes_no_dialog(NULL, msg, NULL);
     g_free(msg);
-	
+
     if (resp == GRETL_YES) {
 	*n_dropped = 0;
 	if (opt & OPT_U) {
 	    /* freezing current restriction */
 	    err = perma_sample(dset, opt, prn, NULL);
 	} else {
-	    err = restrict_sample(param, list, dataset, NULL, 
+	    err = restrict_sample(param, list, dataset, NULL,
 				  opt | OPT_F, prn, n_dropped);
 	}
 	if (!err) {
@@ -1582,13 +1582,13 @@ int bool_subsample (const char *param, gretlopt opt,
 	/* freezing current restriction */
 	err = perma_sample(dataset, opt, prn, &n_dropped);
     } else {
-	err = restrict_sample(param, NULL, dataset, NULL, 
+	err = restrict_sample(param, NULL, dataset, NULL,
 			      opt, prn, &n_dropped);
     }
 
     if (err == E_CANCEL && (opt & OPT_T)) {
 	int cancel = 0;
-	
+
 	err = perma_sample_options(param, NULL, dataset,
 				   opt, prn, &n_dropped,
 				   &cancel);
@@ -1666,7 +1666,7 @@ static int any_all_missing (void)
 	allmiss = 1;
 	for (i=1; i<dataset->v; i++) {
 	    if (!series_is_hidden(dataset, i) &&
-		i != vt && i != vi && 
+		i != vt && i != vi &&
 		!na(dataset->Z[i][t])) {
 		allmiss = 0;
 		break;
@@ -1699,10 +1699,10 @@ void drop_missing_data (void)
 	int deflt = 0;
 
 	if (complex_subsampled()) {
-	    resp = radio_dialog("gretl", _("Drop missing data"), 
-				opts, 2, deflt, 0, NULL);	    
+	    resp = radio_dialog("gretl", _("Drop missing data"),
+				opts, 2, deflt, 0, NULL);
 	} else {
-	    resp = radio_dialog_with_check("gretl", _("Drop missing data"), 
+	    resp = radio_dialog_with_check("gretl", _("Drop missing data"),
 					   opts, 2, deflt, 0,
 					   &permanent,
 					   _("Make this permanent"),
@@ -1716,8 +1716,8 @@ void drop_missing_data (void)
 	    N_("Make this permanent"),
 	    NULL
 	};
-	
-	resp = checks_only_dialog("gretl", 
+
+	resp = checks_only_dialog("gretl",
 				  _("Drop observations with missing values"),
 				  opts, 1, &permanent, 0, NULL);
     }
@@ -1765,7 +1765,7 @@ void count_missing (void)
     mc = count_missing_values(dataset, opt, prn, &err);
 
     if (!err && mc > 0) {
-	view_buffer(prn, 78, 300, _("gretl: missing values info"), 
+	view_buffer(prn, 78, 300, _("gretl: missing values info"),
 		    SMPL, NULL);
     } else {
 	if (err) {
@@ -1777,7 +1777,7 @@ void count_missing (void)
     }
 }
 
-void do_add_markers (const char *fname) 
+void do_add_markers (const char *fname)
 {
     int err = add_obs_markers_from_file(dataset, fname);
 
@@ -1820,7 +1820,7 @@ int do_save_markers (const char *fname)
 
 /* called from main window Data menu */
 
-void markers_callback (void) 
+void markers_callback (void)
 {
     if (dataset->S != NULL) {
 	/* we have markers in place */
@@ -1851,7 +1851,7 @@ void markers_callback (void)
     }
 }
 
-void do_add_labels (const char *fname) 
+void do_add_labels (const char *fname)
 {
     int err = add_var_labels_from_file(dataset, fname);
 
@@ -1874,7 +1874,7 @@ int do_save_labels (const char *fname)
     } else {
 	lib_command_sprintf("labels --to-file=\"%s\"", fname);
 	record_command_verbatim();
-    }	
+    }
 
     return err;
 }
@@ -1893,7 +1893,7 @@ static void gui_remove_var_labels (void)
     mark_dataset_as_modified();
 }
 
-void labels_callback (void) 
+void labels_callback (void)
 {
     if (dataset_has_var_labels(dataset)) {
 	/* we have (some) labels in place */
@@ -1913,7 +1913,7 @@ void labels_callback (void)
 	}
     } else {
 	if (yes_no_help_dialog(_("The dataset has no variable labels.\n"
-				 "Add some from file now?"), 
+				 "Add some from file now?"),
 			       OPEN_LABELS) == GRETL_YES) {
 	    file_selector(OPEN_LABELS, FSEL_DATA_NONE, NULL);
 	}
@@ -1922,7 +1922,7 @@ void labels_callback (void)
 
 int out_of_sample_info (int add_ok, int *t2)
 {
-    const char *can_add = 
+    const char *can_add =
 	N_("There are no observations available for forecasting\n"
 	   "out of sample.  You can add some observations now\n"
 	   "if you wish.");
@@ -1945,7 +1945,7 @@ int out_of_sample_info (int add_ok, int *t2)
 		drop_obs_state(TRUE);
 		*t2 += n;
 	    }
-	} 
+	}
     } else {
 	infobox(_("There are no observations available for forecasting\n"
 		  "out of sample.  If you wish, you can add observations\n"
@@ -1956,7 +1956,7 @@ int out_of_sample_info (int add_ok, int *t2)
     return err;
 }
 
-void gui_do_forecast (GtkAction *action, gpointer p) 
+void gui_do_forecast (GtkAction *action, gpointer p)
 {
     static gretlopt gopt = OPT_P | OPT_H;
     windata_t *vwin = (windata_t *) p;
@@ -1982,7 +1982,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     }
 
     /* try to figure which options might be applicable */
-    forecast_options_for_model(pmod, dataset, &flags, 
+    forecast_options_for_model(pmod, dataset, &flags,
 			       &dt2, &st2);
 
     if (flags & (FC_DYNAMIC_OK | FC_AUTO_OK)) {
@@ -2043,9 +2043,9 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     } else if (resp == 3) {
 	recursive = 1;
     }
-    
+
     if (gopt & OPT_I) {
-	/* transfer OPT_I (integrate forecast) from graph 
+	/* transfer OPT_I (integrate forecast) from graph
 	   to general options */
 	opt |= OPT_I;
 	gopt &= ~OPT_I;
@@ -2068,7 +2068,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
 	if (parse_lib_command()) {
 	    return;
 	}
-	fr = get_forecast(pmod, t1, t2, pre_n, dataset, 
+	fr = get_forecast(pmod, t1, t2, pre_n, dataset,
 			  opt, &err);
 	if (!err) {
 	    record_lib_command();
@@ -2092,7 +2092,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
 		ols_special = gretl_is_simple_OLS(pmod);
 	    }
 	    if (LIMDEP(pmod->ci) || ols_special) {
-		/* don't generate plot via text_print_forecast() */ 
+		/* don't generate plot via text_print_forecast() */
 		gopt &= ~OPT_P;
 	    } else {
 		gopt |= OPT_P;
@@ -2102,7 +2102,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
 	}
 
 	if (ols_special) {
-	    err = plot_simple_fcast_bands(pmod, fr, 
+	    err = plot_simple_fcast_bands(pmod, fr,
 					  dataset,
 					  gopt);
 	    gopt |= OPT_P;
@@ -2113,8 +2113,8 @@ void gui_do_forecast (GtkAction *action, gpointer p)
 	if (!recursive && fr->sderr == NULL) {
 	    width = 60;
 	}
-	view_buffer_with_parent(vwin, prn, width, 400, 
-				_("gretl: forecasts"), 
+	view_buffer_with_parent(vwin, prn, width, 400,
+				_("gretl: forecasts"),
 				FCAST, fr);
     }
 
@@ -2122,7 +2122,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     gopt &= ~OPT_M;
 }
 
-void do_bootstrap (GtkAction *action, gpointer p) 
+void do_bootstrap (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
@@ -2153,8 +2153,8 @@ void do_bootstrap (GtkAction *action, gpointer p)
     } else {
 	windata_t *w;
 
-	w = view_buffer_with_parent(vwin, prn, 78, 300, 
-				    _("gretl: bootstrap analysis"), 
+	w = view_buffer_with_parent(vwin, prn, 78, 300,
+				    _("gretl: bootstrap analysis"),
 				    PRINT, NULL);
 	if (opt & OPT_G) {
 	    register_graph();
@@ -2192,8 +2192,8 @@ int do_coeff_sum (selector *sr)
 	gchar *title = gretl_window_title(_("Sum of coefficients"));
 
 	record_model_command(pmod->ID);
-	view_buffer_with_parent(vwin, prn, 78, 200, title, 
-				COEFFSUM, NULL); 
+	view_buffer_with_parent(vwin, prn, 78, 200, title,
+				COEFFSUM, NULL);
 	g_free(title);
     }
 
@@ -2236,7 +2236,7 @@ static void trim_dataset (MODEL *pmod, int origv)
 	    pmod->dataset = NULL;
 	}
     } else if (origv > 0) {
-	dataset_drop_last_variables(dataset, dataset->v - origv); 
+	dataset_drop_last_variables(dataset, dataset->v - origv);
     }
 }
 
@@ -2338,10 +2338,10 @@ int do_add_omit (selector *sr)
 	if (newmod == NULL) {
 	    err = E_ALLOC;
 	} else if (ci == ADD) {
-	    err = add_test_full(pmod, newmod, libcmd.list, 
+	    err = add_test_full(pmod, newmod, libcmd.list,
 				dset, opt, prn);
 	} else {
-	    err = omit_test_full(pmod, newmod, libcmd.list, 
+	    err = omit_test_full(pmod, newmod, libcmd.list,
 				 dset, opt, prn);
 	}
     }
@@ -2399,7 +2399,7 @@ int do_VAR_omit (selector *sr)
        auto-added trend or seasonals. The selector gives the option of
        just a Wald test (OPT_W) or estimation of the reduced model.
     */
- 
+
     if (buf == NULL) {
 	return 1;
     }
@@ -2412,10 +2412,10 @@ int do_VAR_omit (selector *sr)
 
     if (!err) {
 	if (opt & OPT_W) {
-	    err = gretl_VAR_wald_omit_test(var, omitlist, dataset, 
+	    err = gretl_VAR_wald_omit_test(var, omitlist, dataset,
 					   OPT_NONE, prn);
 	} else {
-	    vnew = gretl_VAR_omit_test(var, omitlist, dataset, 
+	    vnew = gretl_VAR_omit_test(var, omitlist, dataset,
 				       OPT_NONE, prn, &err);
 	}
 	free(omitlist);
@@ -2427,12 +2427,12 @@ int do_VAR_omit (selector *sr)
     } else if (opt & OPT_W) {
 	lib_command_sprintf("omit%s --test-only", buf);
 	record_command_verbatim();
-	view_buffer(prn, 78, 200, _("gretl: Wald omit test"), 
+	view_buffer(prn, 78, 200, _("gretl: Wald omit test"),
 		    PRINT, NULL);
     } else {
 	lib_command_sprintf("omit%s", buf);
 	record_command_verbatim();
-	view_buffer(prn, 78, 450, _("gretl: vector autoregression"), 
+	view_buffer(prn, 78, 450, _("gretl: vector autoregression"),
 		    VAR, vnew);
     }
 
@@ -2449,7 +2449,7 @@ void VAR_omit_auto (GtkAction *action, gpointer p)
     int err;
 
     /* Here we're omitting an "auto-added" term: either
-       a trend or a set of seasonal dummies. 
+       a trend or a set of seasonal dummies.
     */
 
     if (bufopen(&prn)) {
@@ -2462,7 +2462,7 @@ void VAR_omit_auto (GtkAction *action, gpointer p)
 	opt = OPT_E;
     }
 
-    err = gretl_VAR_wald_omit_test(var, NULL, dataset, 
+    err = gretl_VAR_wald_omit_test(var, NULL, dataset,
 				   opt, prn);
     if (err) {
         gui_errmsg(err);
@@ -2471,7 +2471,7 @@ void VAR_omit_auto (GtkAction *action, gpointer p)
 	lib_command_sprintf("omit --%s --test-only", (opt & OPT_T)?
 			    "trend" : "seasonals");
 	record_command_verbatim();
-	view_buffer(prn, 78, 200, _("gretl: Wald omit test"), 
+	view_buffer(prn, 78, 200, _("gretl: Wald omit test"),
 		    PRINT, NULL);
     }
 }
@@ -2605,9 +2605,9 @@ void do_modtest (GtkAction *action, gpointer p)
 	err = groupwise_hetero_test(pmod, dset, opt | OPT_S, prn);
     } else if (opt & (OPT_S | OPT_L)) {
 	int aux = (opt == OPT_S)? AUX_SQ : AUX_LOG;
-	
+
 	strcat(title, _("(non-linearity)"));
-	if (aux == AUX_SQ) { 
+	if (aux == AUX_SQ) {
 	    lib_command_strcpy("modtest --squares");
 	} else {
 	    lib_command_strcpy("modtest --logs");
@@ -2626,11 +2626,11 @@ void do_modtest (GtkAction *action, gpointer p)
     if (err) {
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
-    } else {	
+    } else {
 	update_model_tests(vwin);
 	record_model_command_verbatim(pmod->ID);
-	view_buffer_with_parent(vwin, prn, 78, 400, 
-				title, MODTEST, NULL); 
+	view_buffer_with_parent(vwin, prn, 78, 400,
+				title, MODTEST, NULL);
     }
 
     trim_dataset(pmod, 0);
@@ -2646,16 +2646,16 @@ void do_arch (GtkAction *action, gpointer p)
 
     if (gui_exact_fit_check(pmod)) {
 	return;
-    }    
+    }
 
     order = default_lag_order(dataset);
 
     resp = spin_dialog(_("gretl: ARCH test"), NULL,
 		       &order, _("Lag order for ARCH test:"),
-		       1, dataset->n / 2, 0, 
+		       1, dataset->n / 2, 0,
 		       vwin_toplevel(vwin));
 
-    if (canceled(resp) || bufopen(&prn)) { 
+    if (canceled(resp) || bufopen(&prn)) {
 	return;
     }
 
@@ -2668,9 +2668,9 @@ void do_arch (GtkAction *action, gpointer p)
 	update_model_tests(vwin);
 	lib_command_sprintf("modtest %d --arch", order);
 	record_model_command_verbatim(pmod->ID);
-	view_buffer_with_parent(vwin, prn, 78, 400, 
-				_("gretl: ARCH test"), 
-				MODTEST, NULL); 
+	view_buffer_with_parent(vwin, prn, 78, 400,
+				_("gretl: ARCH test"),
+				MODTEST, NULL);
     }
 }
 
@@ -2697,8 +2697,8 @@ void do_panel_tests (GtkAction *action, gpointer p)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
-	view_buffer_with_parent(vwin, prn, 78, 400, 
-				_("gretl: panel model diagnostics"), 
+	view_buffer_with_parent(vwin, prn, 78, 400,
+				_("gretl: panel model diagnostics"),
 				PANEL, NULL);
     }
 }
@@ -2744,7 +2744,7 @@ void do_leverage (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
-    gretl_matrix *(*model_leverage) (const MODEL *, DATASET *, 
+    gretl_matrix *(*model_leverage) (const MODEL *, DATASET *,
 				     gretlopt, PRN *, int *);
     PRN *prn;
     gretl_matrix *m;
@@ -2761,8 +2761,8 @@ void do_leverage (GtkAction *action, gpointer p)
 
     if (bufopen(&prn)) {
 	return;
-    }	
-	
+    }
+
     m = (*model_leverage)(pmod, dataset, OPT_NONE, prn, &err);
 
     if (err) {
@@ -2771,14 +2771,14 @@ void do_leverage (GtkAction *action, gpointer p)
     } else {
 	windata_t *vbuf;
 
-	vbuf = view_buffer_with_parent(vwin, prn, 78, 400, 
-				       _("gretl: leverage and influence"), 
-				       LEVERAGE, m); 
+	vbuf = view_buffer_with_parent(vwin, prn, 78, 400,
+				       _("gretl: leverage and influence"),
+				       LEVERAGE, m);
 	set_model_id_on_vwin(vbuf, pmod->ID);
 	register_graph();
 	lib_command_strcpy("leverage");
 	record_model_command_verbatim(pmod->ID);
-    } 
+    }
 }
 
 void do_vif (GtkAction *action, gpointer p)
@@ -2805,20 +2805,20 @@ void do_vif (GtkAction *action, gpointer p)
     if (bufopen(&prn)) {
 	trim_dataset(pmod, 0);
 	return;
-    }	
-	
+    }
+
     err = (*print_vifs)(pmod, dset, prn);
 
     if (err) {
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
-	view_buffer_with_parent(vwin, prn, 78, 400, 
-				_("gretl: collinearity"), 
-				PRINT, NULL); 
+	view_buffer_with_parent(vwin, prn, 78, 400,
+				_("gretl: collinearity"),
+				PRINT, NULL);
 	lib_command_strcpy("vif");
 	record_model_command_verbatim(pmod->ID);
-    } 
+    }
 
     trim_dataset(pmod, 0);
 }
@@ -2845,7 +2845,7 @@ void do_gini (void)
 	view_buffer(prn, 78, 200, title, PRINT, NULL);
 	g_free(title);
 	register_graph();
-    } 
+    }
 }
 
 void do_qqplot (void)
@@ -2861,7 +2861,7 @@ void do_qqplot (void)
     int resp;
 
     title = gretl_window_title(_("Q-Q plot"));
-    resp = radio_dialog(title, _("Normal Q-Q plot"), opts, 3, 0, 
+    resp = radio_dialog(title, _("Normal Q-Q plot"), opts, 3, 0,
 			QQPLOT, NULL);
     g_free(title);
 
@@ -2875,7 +2875,7 @@ void do_qqplot (void)
 	opt |= OPT_R;
     }
 
-    lib_command_sprintf("qqplot %s%s", dataset->varname[v], 
+    lib_command_sprintf("qqplot %s%s", dataset->varname[v],
 			print_flags(opt, QQPLOT));
 
     if (parse_lib_command() == 0) {
@@ -2887,12 +2887,12 @@ void do_qqplot (void)
 	if (!err) {
 	    record_lib_command();
 	}
-    } 
+    }
 }
 
 void do_kernel (void)
 {
-    int (*kernel_density) (const double *, int, double, 
+    int (*kernel_density) (const double *, int, double,
 			   const char *, gretlopt);
     gretlopt opt = OPT_NONE;
     double bw = 1.0;
@@ -2914,12 +2914,12 @@ void do_kernel (void)
 	opt |= OPT_O;
     }
 
-    kernel_density = gui_get_plugin_function("kernel_density"); 
+    kernel_density = gui_get_plugin_function("kernel_density");
 
     if (kernel_density != NULL) {
 	const double *y = dataset->Z[v] + dataset->t1;
 
-	err = (*kernel_density)(y, T, bw, 
+	err = (*kernel_density)(y, T, bw,
 				dataset->varname[v],
 				opt);
 	gui_graph_handler(err);
@@ -2946,13 +2946,13 @@ static int chow_cusum_ci (GtkAction *action)
 {
     const gchar *s = gtk_action_get_name(action);
 
-    if (!strcmp(s, "chow")) 
+    if (!strcmp(s, "chow"))
 	return CHOW;
-    else if (!strcmp(s, "qlrtest")) 
+    else if (!strcmp(s, "qlrtest"))
 	return QLRTEST;
-    else if (!strcmp(s, "cusum")) 
+    else if (!strcmp(s, "cusum"))
 	return CUSUM;
-    else if (!strcmp(s, "cusum:r")) 
+    else if (!strcmp(s, "cusum:r"))
 	return CUSUMSQ;
     else
 	return CHOW;
@@ -3027,7 +3027,7 @@ static int real_limited_chow (selector *sr)
 	} else {
 	    update_model_tests(vwin);
 	    record_model_command_verbatim(pmod->ID);
-	    view_buffer_with_parent(vwin, prn, 78, 400, 
+	    view_buffer_with_parent(vwin, prn, 78, 400,
 				    _("gretl: Chow test output"),
 				    CHOW, NULL);
 	}
@@ -3081,7 +3081,7 @@ void do_chow_cusum (GtkAction *action, gpointer p)
 	    cp->splitdum = splitdum;
 	    cp->splitbrk = splitbrk;
 	    g_object_set_data(G_OBJECT(vwin->main), "chowparms", cp);
-	    simple_selection_for_viewer(CHOW, _("gretl: chow test"), 
+	    simple_selection_for_viewer(CHOW, _("gretl: chow test"),
 					real_limited_chow, vwin);
 	    /* execution resumes with real_limited_chow() */
 	    return;
@@ -3136,11 +3136,11 @@ void do_chow_cusum (GtkAction *action, gpointer p)
 	update_model_tests(vwin);
 	record_model_command_verbatim(pmod->ID);
 
-	view_buffer_with_parent(vwin, prn, 78, 400, 
+	view_buffer_with_parent(vwin, prn, 78, 400,
 				(ci == CHOW)?
-				_("gretl: Chow test output") : 
+				_("gretl: Chow test output") :
 				(ci == QLRTEST)?
-				_("gretl: QLR test output") : 
+				_("gretl: QLR test output") :
 				(ci == CUSUM)?
 				_("gretl: CUSUM test output") :
 				_("gretl: CUSUMSQ test output"),
@@ -3171,7 +3171,7 @@ void do_reset (GtkAction *action, gpointer p)
 
     resp = radio_dialog(_("gretl: RESET test"),
 			_("RESET specification test"),
-			optstrs, 4, 0, RESET, 
+			optstrs, 4, 0, RESET,
 			vwin_toplevel(vwin));
 
     if (canceled(resp) || bufopen(&prn)) {
@@ -3219,9 +3219,9 @@ void do_reset (GtkAction *action, gpointer p)
 	    update_model_tests(vwin);
 	}
 	record_model_command_verbatim(pmod->ID);
-	view_buffer_with_parent(vwin, prn, width, height, 
-				_("gretl: RESET test"), 
-				RESET, NULL); 
+	view_buffer_with_parent(vwin, prn, width, height,
+				_("gretl: RESET test"),
+				RESET, NULL);
     }
 
     trim_dataset(pmod, 0);
@@ -3243,7 +3243,7 @@ void do_autocorr (GtkAction *action, gpointer p)
 
     resp = spin_dialog(_("gretl: autocorrelation"), NULL,
 		       &order, _("Lag order for test:"),
-		       1, dataset->n / 2, 0, 
+		       1, dataset->n / 2, 0,
 		       vwin_toplevel(vwin));
 
     if (canceled(resp) || bufopen(&prn)) {
@@ -3267,8 +3267,8 @@ void do_autocorr (GtkAction *action, gpointer p)
 	update_model_tests(vwin);
 	lib_command_sprintf("modtest --autocorr %d", order);
 	record_model_command_verbatim(pmod->ID);
-	view_buffer_with_parent(vwin, prn, 78, 400, 
-				title, MODTEST, NULL); 
+	view_buffer_with_parent(vwin, prn, 78, 400,
+				title, MODTEST, NULL);
 	g_free(title);
     }
 }
@@ -3300,8 +3300,8 @@ void do_dwpval (GtkAction *action, gpointer p)
 	} else {
 	    pprintf(prn, "%s = %g\n", _("p-value"), pv);
 	}
-	view_buffer_with_parent(vwin, prn, 78, 200, 
-				title, PRINT, NULL); 
+	view_buffer_with_parent(vwin, prn, 78, 200,
+				title, PRINT, NULL);
 	g_free(title);
     }
 }
@@ -3427,7 +3427,7 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
 
 	if (my_rset == NULL) {
 	    if (pmod != NULL) {
-		my_rset = eqn_restriction_set_start(bufline, pmod, 
+		my_rset = eqn_restriction_set_start(bufline, pmod,
 						    dataset, opt);
 	    } else if (sys != NULL) {
 		my_rset = cross_restriction_set_start(bufline, sys);
@@ -3469,12 +3469,12 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
 	gretl_restriction_set_boot_params(B, bootopt);
     }
 
-    if (bufopen(&prn)) return; 
+    if (bufopen(&prn)) return;
 
     if (pmod != NULL) {
 	dataset->t1 = pmod->t1;
 	dataset->t2 = pmod->t2;
-    } 
+    }
 
     if (opt & OPT_F) {
 	vnew = gretl_restricted_vecm(my_rset, dataset, opt, prn, &err);
@@ -3505,8 +3505,8 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
 	view_buffer(prn, 78, 450, _("gretl: VECM"), VECM, vnew);
     } else {
 	gchar *title = gretl_window_title(_("linear restrictions"));
-	
-	view_buffer_with_parent(vwin, prn, 78, height, title, 
+
+	view_buffer_with_parent(vwin, prn, 78, height, title,
 				PRINT, NULL);
 	g_free(title);
     }
@@ -3581,18 +3581,18 @@ void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 	if (!strcmp(bufline, "end system")) {
 	    got_end = 1;
 	    break;
-	}	    
+	}
 
 	if (!strncmp(bufline, "system ", 7)) {
 	    maybe_grab_system_name(bufline, sysname);
 	    continue;
-	} 
+	}
 
 	if (my_sys == NULL) {
-	    startline = g_strdup_printf("system method=%s", 
+	    startline = g_strdup_printf("system method=%s",
 					system_method_short_string(method));
 	    /* FIXME opt? */
-	    my_sys = equation_system_start(startline + 7, NULL, 
+	    my_sys = equation_system_start(startline + 7, NULL,
 					   OPT_NONE, &err);
 	}
 
@@ -3609,7 +3609,7 @@ void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 		if (err) {
 		    /* note: sys is destroyed on error */
 		    gui_errmsg(err);
-		} 
+		}
 	    }
 	} else {
 	    err = system_parse_line(my_sys, bufline, dataset);
@@ -3617,7 +3617,7 @@ void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 		/* sys is destroyed on error */
 		gui_errmsg(err);
 	    }
-	} 
+	}
     }
 
     bufgets_finalize(buf);
@@ -3631,7 +3631,7 @@ void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 
     if (bufopen(&prn)) {
 	g_free(buf);
-	return; 
+	return;
     }
 
     err = equation_system_finalize(my_sys, dataset, opt, prn);
@@ -3649,9 +3649,9 @@ void do_eqn_system (GtkWidget *w, dialog_t *dlg)
     g_free(buf);
     g_free(startline);
 
-    view_buffer(prn, 78, 450, 
-		(my_sys->name != NULL)? my_sys->name: 
-		_("gretl: simultaneous equations system"), 
+    view_buffer(prn, 78, 450,
+		(my_sys->name != NULL)? my_sys->name:
+		_("gretl: simultaneous equations system"),
 		SYSTEM, my_sys);
 }
 
@@ -3673,20 +3673,20 @@ void do_saved_eqn_system (GtkWidget *w, dialog_t *dlg)
     edit_dialog_close(dlg);
 
     if (bufopen(&prn)) {
-	return; 
+	return;
     }
 
     err = equation_system_estimate(my_sys, dataset,
 				   opt, prn);
     if (err) {
 	errmsg(err, prn);
-    } 
+    }
 
     view_buffer(prn, 78, 450, my_sys->name, SYSTEM, my_sys);
 }
 
 /* Try for the most informative possible error message
-   from genr, but also try to avoid duplication. In context, 
+   from genr, but also try to avoid duplication. In context,
    @plus is (or may be) a specific message from "genr".
 */
 
@@ -3707,7 +3707,7 @@ void errmsg_plus (int err, const char *plus)
 	if (*s1 != '\0' && *s2 != '\0' && strcmp(s1, s2)) {
 	    if (s3 != NULL) {
 		errbox_printf("%s\n\n%s", s1, _(s3));
-	    } else {   
+	    } else {
 		errbox_printf("%s\n\n%s", s1, s2);
 	    }
 	    handled = 1;
@@ -3721,7 +3721,7 @@ void errmsg_plus (int err, const char *plus)
 	}
 
 	g_free(s2);
-    } 
+    }
 
     if (!handled) {
 	/* fallback */
@@ -3746,14 +3746,14 @@ int gui_run_genr (const char *line, DATASET *dset,
 
     if (sscanf(line, "%31s", word)) {
 	GretlType t = gretl_get_gen_type(word);
-	
+
 	if (t > 0) {
 	    gtype = t;
 	    line += strlen(word);
 	    line += strspn(line, " ");
 	}
     }
-	
+
     return generate(line, dset, gtype, opt, prn);
 }
 
@@ -3828,7 +3828,7 @@ static int is_genr_line (char *s)
 	return 1;
     } else if (!strncmp(s, "param ", 6) && strchr(s, '=')) {
 	gchar *tmp = g_strdup_printf("genr %s", s + 6);
-	
+
 	strcpy(s, tmp);
 	g_free(tmp);
 	return 1;
@@ -3898,7 +3898,7 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
 	}
 
 	if (!started && is_genr_line(realline)) {
-	    /* handle possible "genr" lines before the actual 
+	    /* handle possible "genr" lines before the actual
 	       command block: for such lines the recording
 	       or error message is handled by finish_genr
 	    */
@@ -3915,7 +3915,7 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
 	    *realline = '\0';
 	    strncat(realline, tmp, MAXLINE - 1);
 	    g_free(tmp);
-	} 
+	}
 
 	err = nl_parse_line(ci, realline, dataset, NULL);
 
@@ -3937,11 +3937,11 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
     if (!err && !ended) {
 	/* if the user didn't give "end XXX", add it for the record */
 	strings_array_add(&lines, &n_lines, endstr);
-    }    
+    }
 
     if (!err && bufopen(&prn)) {
 	err = 1;
-    } 
+    }
 
     if (!err) {
 	pmod = gretl_model_new();
@@ -3988,7 +3988,7 @@ void do_gmm_model (GtkWidget *w, dialog_t *dlg)
     real_do_nonlinear_model(dlg, GMM);
 }
 
-static int do_straight_anova (void) 
+static int do_straight_anova (void)
 {
     PRN *prn;
     int err;
@@ -4008,12 +4008,12 @@ static int do_straight_anova (void)
 	view_buffer(prn, 78, 400, title, PRINT, NULL);
 	g_free(title);
 	record_lib_command();
-    } 
+    }
 
-    return err;    
+    return err;
 }
 
-static int real_do_model (int action) 
+static int real_do_model (int action)
 {
     int orig_v = dataset->v;
     MODEL *pmod;
@@ -4049,12 +4049,12 @@ static int real_do_model (int action)
 	break;
     case ARBOND:
 	/* FIXME instrument spec */
-	*pmod = arbond_model(libcmd.list, NULL, dataset, 
+	*pmod = arbond_model(libcmd.list, NULL, dataset,
 			     libcmd.opt, prn);
 	break;
     case DPANEL:
 	/* FIXME ylags, instrument spec */
-	*pmod = dpd_model(libcmd.list, NULL, NULL, dataset, 
+	*pmod = dpd_model(libcmd.list, NULL, NULL, dataset,
 			  libcmd.opt, prn);
 	break;
     case HSK:
@@ -4090,29 +4090,29 @@ static int real_do_model (int action)
 			       prn);
 	break;
     case ARMA:
-	*pmod = arma(libcmd.list, libcmd.auxlist, dataset, 
+	*pmod = arma(libcmd.list, libcmd.auxlist, dataset,
 		     libcmd.opt, prn);
 	break;
     case ARCH:
-	*pmod = arch_model(libcmd.list, libcmd.order, dataset, 
-			   libcmd.opt); 
+	*pmod = arch_model(libcmd.list, libcmd.order, dataset,
+			   libcmd.opt);
 	break;
     case GARCH:
-	*pmod = garch(libcmd.list, dataset, libcmd.opt, prn); 
+	*pmod = garch(libcmd.list, dataset, libcmd.opt, prn);
 	break;
     case LOGISTIC:
 	*pmod = logistic_driver(libcmd.list, dataset, libcmd.opt);
-	break;	
+	break;
     case LAD:
 	*pmod = lad_model(libcmd.list, dataset, libcmd.opt);
-	break;	
+	break;
     case QUANTREG:
-	*pmod = quantreg_driver(libcmd.param, libcmd.list, dataset, 
+	*pmod = quantreg_driver(libcmd.param, libcmd.list, dataset,
 				libcmd.opt, prn);
-	break;	
+	break;
     case INTREG:
 	*pmod = interval_model(libcmd.list, dataset, libcmd.opt, prn);
-	break;	
+	break;
     case MPOLS:
 	*pmod = mp_ols(libcmd.list, dataset, libcmd.opt);
 	break;
@@ -4144,7 +4144,7 @@ static int real_do_model (int action)
     } else {
 	record_model_command(pmod->ID);
 	attach_subsample_to_model(pmod, dataset);
-	view_model(prn, pmod, NULL); 
+	view_model(prn, pmod, NULL);
     }
 
     if (dataset->v > orig_v) {
@@ -4232,7 +4232,7 @@ static gchar *compose_midas_param (gpointer p,
 	    }
 	    remember_list(list, si->listname, NULL);
 	    user_var_privatize_by_name(si->listname);
-	    
+
 	}
 	if (umidas) {
 	    tmp = g_strdup_printf("mds(%s,%d,%d,%d)",
@@ -4264,7 +4264,7 @@ static gchar *compose_midas_param (gpointer p,
     return buf;
 }
 
-int do_model (selector *sr) 
+int do_model (selector *sr)
 {
     gretlopt opt, addopt = OPT_NONE;
     gpointer extra_data;
@@ -4319,7 +4319,7 @@ int do_model (selector *sr)
 	    addopt = OPT_L;
 	} else if (ci == IV_GMM) {
 	    addopt = OPT_G;
-	}	
+	}
 	ci = IVREG;
     } else if (ci == COUNTMOD) {
 	if (opt & (OPT_M | OPT_N)) {
@@ -4335,7 +4335,7 @@ int do_model (selector *sr)
     if (err) {
 	return err;
     }
-	
+
     strcpy(estimator, gretl_command_word(ci));
 
     libcmd.opt = opt | addopt;
@@ -4359,7 +4359,7 @@ int do_model (selector *sr)
     }
 }
 
-int do_nonparam_model (selector *sr) 
+int do_nonparam_model (selector *sr)
 {
     gretl_bundle *bundle = NULL;
     double *m = NULL;
@@ -4418,7 +4418,7 @@ int do_nonparam_model (selector *sr)
 
 	if ((s = strstr(buf, "q=")) != NULL) {
 	    q = atof(s + 2);
-	}	
+	}
 
 	err = gretl_loess(y, x, d, q, robust, dataset, m);
 	if (!err) {
@@ -4443,7 +4443,7 @@ int do_nonparam_model (selector *sr)
 	    gretl_bundle_set_string(bundle, "function", "nadarwat");
 	    gretl_bundle_set_scalar(bundle, "h", h);
 	    gretl_bundle_set_series(bundle, "m", m, dataset->n);
-	}	    
+	}
     }
 
     if (err) {
@@ -4517,7 +4517,7 @@ void add_nonparam_data (windata_t *vwin)
 	    strcpy(vname, "nw_fit");
 	    sprintf(descrip, "nadarwat(%s, %s, %.3f)",
 		    yname, xname, h);
-	}	
+	}
 
 	name_new_series_dialog(vname, descrip, vwin, &cancel);
 
@@ -4528,10 +4528,10 @@ void add_nonparam_data (windata_t *vwin)
 	if (!cancel && !err) {
 	    gretl_push_c_numeric_locale();
 	    if (!strcmp(func, "loess")) {
-		lib_command_sprintf("%s = loess(%s, %s, %d, %g, %d)", 
+		lib_command_sprintf("%s = loess(%s, %s, %d, %g, %d)",
 				    vname, yname, xname, d, q, robust);
 	    } else {
-		lib_command_sprintf("%s = nadarwat(%s, %s, %g)", 
+		lib_command_sprintf("%s = nadarwat(%s, %s, %g)",
 				    vname, yname, xname, h);
 	    }
 	    record_command_verbatim();
@@ -4575,7 +4575,7 @@ void do_nonparam_plot (windata_t *vwin)
 	    x = (j == 0)? dataset->Z[vy] : (j == 1)? m : dataset->Z[vx];
 	    for (i=0; i<n; i++) {
 		gretl_matrix_set(plotmat, i, j, x[i+dataset->t1]);
-		if (!need_sort && j == 2 && i > 0 && 
+		if (!need_sort && j == 2 && i > 0 &&
 		    !na(x[i]) && !na(x[i]) && x[i] < x[i-1]) {
 		    need_sort = 1;
 		}
@@ -4612,7 +4612,7 @@ void do_nonparam_plot (windata_t *vwin)
 	    } else {
 		title = g_strdup_printf(_("%s versus %s with Nadaraya_Watson fit"),
 					yname, xname);
-	    }	
+	    }
 	    literal = g_strdup_printf("{ set title \"%s\"; }", title);
 	    set_optval_string(GNUPLOT, OPT_O, "fitted");
 	    err = matrix_plot(plotmat, NULL, literal, OPT_O | OPT_G);
@@ -4625,7 +4625,7 @@ void do_nonparam_plot (windata_t *vwin)
     }
 }
 
-int do_vector_model (selector *sr) 
+int do_vector_model (selector *sr)
 {
     GRETL_VAR *var;
     char estimator[9];
@@ -4668,27 +4668,27 @@ int do_vector_model (selector *sr)
 	gui_errmsg(E_TOOFEW);
 	gretl_print_destroy(prn);
 	return 1;
-    }    
+    }
 
     if (action == VAR && !(libcmd.opt & OPT_L)) {
 	/* regular VAR, not VAR lag selection */
-	var = gretl_VAR(libcmd.order, libcmd.auxlist, libcmd.list, dataset, 
+	var = gretl_VAR(libcmd.order, libcmd.auxlist, libcmd.list, dataset,
 			libcmd.opt, prn, &err);
 	if (!err) {
-	    view_buffer(prn, 78, 450, _("gretl: vector autoregression"), 
+	    view_buffer(prn, 78, 450, _("gretl: vector autoregression"),
 			VAR, var);
 	}
     } else if (action == VAR) {
 	/* VAR lag selection */
-	gretl_VAR(libcmd.order, NULL, libcmd.list, dataset, 
+	gretl_VAR(libcmd.order, NULL, libcmd.list, dataset,
 		  libcmd.opt, prn, &err);
 	if (!err) {
-	    view_buffer(prn, 72, 350, _("gretl: VAR lag selection"), 
+	    view_buffer(prn, 72, 350, _("gretl: VAR lag selection"),
 			PRINT, NULL);
-	}	
+	}
     } else if (action == VECM) {
 	/* Vector Error Correction Model */
-	var = gretl_VECM(libcmd.order, libcmd.auxint, libcmd.list, 
+	var = gretl_VECM(libcmd.order, libcmd.auxint, libcmd.list,
 			 dataset, libcmd.opt, prn, &err);
 	if (!err) {
 	    view_buffer(prn, 78, 450, _("gretl: VECM"), VECM, var);
@@ -4739,7 +4739,7 @@ static char *alt_list_buf (const int *src, int fit,
 	list[1] = yvar;
 	list[2] = 0;
 	list[3] = addv;
-    }	
+    }
 
     buf = gretl_list_to_string(list, dataset, err);
 
@@ -4799,7 +4799,7 @@ void do_graph_model (const int *list, int fit)
 	attach_subsample_to_model(pmod, dataset);
 	view_model(prn, pmod, NULL);
     }
-    
+
     if (dataset->v > orig_v) {
 	refresh_data();
     }
@@ -4807,7 +4807,7 @@ void do_graph_model (const int *list, int fit)
 
 /* budget version of gretl console */
 
-void do_minibuf (GtkWidget *w, dialog_t *dlg) 
+void do_minibuf (GtkWidget *w, dialog_t *dlg)
 {
     char *buf = gretl_strdup(edit_dialog_get_text(dlg));
     ExecState state;
@@ -4824,7 +4824,7 @@ void do_minibuf (GtkWidget *w, dialog_t *dlg)
     ci = gretl_command_number(cword);
 
     /* actions we can't/won't handle here (should be more?) */
-    if (ci == LOOP || ci == RESTRICT || ci == SYSTEM || 
+    if (ci == LOOP || ci == RESTRICT || ci == SYSTEM ||
 	ci == EQUATION || ci == VAR || ci == VECM ||
 	ci == NLS || ci == MLE || ci == GMM ||
 	is_model_ref_cmd(ci)) {
@@ -4840,7 +4840,7 @@ void do_minibuf (GtkWidget *w, dialog_t *dlg)
 	return;
     }
 
-    gretl_exec_state_init(&state, CONSOLE_EXEC, libline, &libcmd, 
+    gretl_exec_state_init(&state, CONSOLE_EXEC, libline, &libcmd,
 			  model, NULL);
     lib_command_strcpy(buf);
     free(buf);
@@ -4855,7 +4855,7 @@ void do_minibuf (GtkWidget *w, dialog_t *dlg)
 	if (check_dataset_is_changed()) {
 	    mark_dataset_as_modified();
 	    populate_varlist();
-	}    
+	}
 	/* update sample info and options if needed */
 	if (console_sample_changed(dataset)) {
 	    set_sample_label(dataset);
@@ -4894,7 +4894,7 @@ static gchar *maybe_fix_decimal_comma (const gchar *s)
 	} else if (*p == '"') {
 	    inquotes = !inquotes;
 	}
-	if (*p == ',' && !inparens && !inbrackets && 
+	if (*p == ',' && !inparens && !inbrackets &&
 	    !inbraces && !inquotes && isdigit(*(p+1))) {
 	    *p = '.';
 	}
@@ -4944,12 +4944,12 @@ static int is_full_genr_command (const char *s)
 	if (!strcmp(word1, "genr") || word_is_genr_alias(word1)) {
 	    return 1;
 	}
-    }    
+    }
 
     return 0;
 }
 
-void do_genr (GtkWidget *w, dialog_t *dlg) 
+void do_genr (GtkWidget *w, dialog_t *dlg)
 {
     gchar *s = get_genr_string(NULL, dlg);
     int err, edit = 0;
@@ -4973,7 +4973,7 @@ void do_genr (GtkWidget *w, dialog_t *dlg)
     } else {
 	lib_command_strcpy(s);
     }
-    
+
     g_free(s);
 
     err = finish_genr(NULL, dlg);
@@ -4984,7 +4984,7 @@ void do_genr (GtkWidget *w, dialog_t *dlg)
     }
 }
 
-void do_selector_genr (GtkWidget *w, dialog_t *dlg) 
+void do_selector_genr (GtkWidget *w, dialog_t *dlg)
 {
     gchar *s = get_genr_string(NULL, dlg);
     gpointer p = edit_dialog_get_data(dlg);
@@ -5015,7 +5015,7 @@ void do_selector_genr (GtkWidget *w, dialog_t *dlg)
    from the GUI function-call dialog
 */
 
-void do_fncall_genr (GtkWidget *w, dialog_t *dlg) 
+void do_fncall_genr (GtkWidget *w, dialog_t *dlg)
 {
     gchar *s = get_genr_string(NULL, dlg);
     gpointer p = edit_dialog_get_data(dlg);
@@ -5060,7 +5060,7 @@ void do_fncall_genr (GtkWidget *w, dialog_t *dlg)
     }
 }
 
-void do_model_genr (GtkWidget *w, dialog_t *dlg) 
+void do_model_genr (GtkWidget *w, dialog_t *dlg)
 {
     gchar *s = get_genr_string(NULL, dlg);
     windata_t *vwin = (windata_t *) edit_dialog_get_data(dlg);
@@ -5079,7 +5079,7 @@ void do_range_dummy_genr (const gchar *buf)
     finish_genr(NULL, NULL);
 }
 
-static int real_do_setmiss (double missval, int varno) 
+static int real_do_setmiss (double missval, int varno)
 {
     int i, t, count = 0;
     int start = 1, end = dataset->v;
@@ -5095,7 +5095,7 @@ static int real_do_setmiss (double missval, int varno)
 		dataset->Z[i][t] = NADBL;
 		count++;
 	    }
-	}	
+	}
     }
 
     return count;
@@ -5125,7 +5125,7 @@ void do_global_setmiss (GtkWidget *w, dialog_t *dlg)
 	mark_dataset_as_modified();
     } else {
 	errbox(_("Didn't find any matching observations"));
-    }	
+    }
 }
 
 void do_variable_setmiss (GtkWidget *w, dialog_t *dlg)
@@ -5141,7 +5141,7 @@ void do_variable_setmiss (GtkWidget *w, dialog_t *dlg)
     if ((err = check_atof(buf))) {
 	gui_errmsg(err);
 	return;
-    }    
+    }
 
     missval = atof(buf);
     count = real_do_setmiss(missval, v);
@@ -5188,14 +5188,14 @@ int record_varlabel_change (int v, int desc, int gname)
     if (desc) {
 	const char *vlabel = series_get_label(dataset, v);
 
-	lib_command_sprintf("setinfo %s --description=\"%s\"", 
+	lib_command_sprintf("setinfo %s --description=\"%s\"",
 			    dataset->varname[v],
 			    vlabel == NULL ? "" : vlabel);
     } else if (gname) {
-	lib_command_sprintf("setinfo %s --graph-name=\"%s\"", 
+	lib_command_sprintf("setinfo %s --graph-name=\"%s\"",
 			    dataset->varname[v],
 			    series_get_display_name(dataset, v));
-    }	
+    }
 
     return record_command_verbatim();
 }
@@ -5255,7 +5255,7 @@ void do_resid_freq (GtkAction *action, gpointer p)
     if (dset == dataset) {
 	dataset->t1 = pmod->t1;
 	dataset->t2 = pmod->t2;
-    }	
+    }
 
     if (!err) {
 	err = genr_fit_resid(pmod, dset, M_UHAT);
@@ -5269,7 +5269,7 @@ void do_resid_freq (GtkAction *action, gpointer p)
 	return;
     }
 
-    freq = get_freq(dset->v - 1, dset, NADBL, NADBL, 0, 
+    freq = get_freq(dset->v - 1, dset, NADBL, NADBL, 0,
 		    pmod->ncoeff, OPT_Z, &err);
 
     if (err) {
@@ -5284,8 +5284,8 @@ void do_resid_freq (GtkAction *action, gpointer p)
 
 	if (!err) {
 	    print_freq(freq, 0, NULL, prn);
-	    view_buffer_with_parent(vwin, prn, 78, 300, 
-				    _("gretl: residual dist."), 
+	    view_buffer_with_parent(vwin, prn, 78, 300,
+				    _("gretl: residual dist."),
 				    MODTEST, NULL);
 	    /* show the graph too */
 	    if (plot_freq(freq, D_NORMAL, OPT_NONE) == 0) {
@@ -5335,7 +5335,7 @@ void do_freq_dist (void)
 	int n, resp;
 
 	if (discrete) {
-	    n = gretl_minmax(dataset->t1, dataset->t2, y, 
+	    n = gretl_minmax(dataset->t1, dataset->t2, y,
 			     &xmin, &xmax);
 	    if (n == 0) {
 		err = E_MISSDATA;
@@ -5357,12 +5357,12 @@ void do_freq_dist (void)
 
 	if (discrete) {
 	    /* minimal dialog */
-	    resp = freq_dialog(tmp, bintxt, NULL, n, NULL, NULL, 
+	    resp = freq_dialog(tmp, bintxt, NULL, n, NULL, NULL,
 			       xmin, xmax, &dist, &plot);
 	} else {
 	    /* full dialog */
 	    if (n % 2 == 0) n--;
-	    resp = freq_dialog(tmp, bintxt, &nbins, n, &fmin, &fwid, 
+	    resp = freq_dialog(tmp, bintxt, &nbins, n, &fmin, &fwid,
 			       xmin, xmax, &dist, &plot);
 	}
 
@@ -5385,11 +5385,11 @@ void do_freq_dist (void)
     if (!discrete) {
 	if (!na(fmin) && !na(fwid)) {
 	    gretl_push_c_numeric_locale();
-	    lib_command_sprintf("freq %s --min=%g --binwidth=%g%s", 
+	    lib_command_sprintf("freq %s --min=%g --binwidth=%g%s",
 				vname, fmin, fwid, diststr);
 	    gretl_pop_c_numeric_locale();
 	} else if (nbins != auto_nbins) {
-	    lib_command_sprintf("freq %s --nbins=%d%s", 
+	    lib_command_sprintf("freq %s --nbins=%d%s",
 				vname, nbins, diststr);
 	} else {
 	    lib_command_sprintf("freq %s%s", vname, diststr);
@@ -5496,18 +5496,18 @@ static gchar *retrieve_tx_output (const char *fname, int *err)
 	remove(fname);
     } else if (!g_utf8_validate(buf, -1, NULL)) {
 	/* here we assume that the text encoding in both x12a
-	   and tramo output will be ISO-8859 (if not ASCII) 
+	   and tramo output will be ISO-8859 (if not ASCII)
 	*/
 	GError *gerr = NULL;
 	gsize bytes;
 
-	ret = g_convert(buf, -1, "UTF-8", "ISO-8859-1", 
+	ret = g_convert(buf, -1, "UTF-8", "ISO-8859-1",
 			NULL, &bytes, &gerr);
 	if (gerr != NULL) {
 	    errbox(gerr->message);
 	    g_error_free(gerr);
 	    *err = 1;
-	}	
+	}
 	g_free(buf);
     } else {
 	ret = buf;
@@ -5533,7 +5533,7 @@ static void display_tx_output (const char *fname, int graph_ok,
 	}
 
 	prn = gretl_print_new_with_buffer(buf);
-	view_buffer(prn, (tramo)? 106 : 84, 500, 
+	view_buffer(prn, (tramo)? 106 : 84, 500,
 		    (tramo)? _("gretl: TRAMO analysis") :
 		    _("gretl: X-12-ARIMA analysis"),
 		    (tramo)? TRAMO : X12A, NULL);
@@ -5561,7 +5561,7 @@ static void real_do_tramo_x12a (int v, int tramo)
     int oldv = dataset->v;
     int save_t1 = dataset->t1;
     int save_t2 = dataset->t2;
-    int (*write_tx_data) (char *, int, DATASET *, gretlopt *, 
+    int (*write_tx_data) (char *, int, DATASET *, gretlopt *,
 			  int, int *, GtkWindow *, void *);
     char outfile[MAXLEN] = {0};
     int warning = 0;
@@ -5585,7 +5585,7 @@ static void real_do_tramo_x12a (int v, int tramo)
 
     err = write_tx_data(outfile, v, dataset, &opt, tramo,
 			&warning, GTK_WINDOW(mdata->main),
-			x12a_help); 
+			x12a_help);
 
     dataset->t1 = save_t1;
     dataset->t2 = save_t2;
@@ -5645,7 +5645,7 @@ static void run_x12a_script (const gchar *buf)
 
     if (err) {
 	gui_errmsg(err);
-    } 
+    }
 
     if (*outfile != '\0') {
 	display_tx_output(outfile, 0, 0, 0, OPT_NONE);
@@ -5657,7 +5657,7 @@ static void run_x12a_script (const gchar *buf)
 void do_range_mean (void)
 {
     int v = mdata_active_var();
-    int (*range_mean_graph) (int, const DATASET *, 
+    int (*range_mean_graph) (int, const DATASET *,
 			     gretlopt opt, PRN *);
     const char *opts[] = {
 	N_("Trim maximum and minimum in sub-samples"),
@@ -5681,7 +5681,7 @@ void do_range_mean (void)
     }
 
     if (bufopen(&prn)) {
-	return; 
+	return;
     }
 
     opt = active ? OPT_T : OPT_NONE;
@@ -5697,7 +5697,7 @@ void do_range_mean (void)
 	    lib_command_strcat(" --trim");
 	}
 	record_command_verbatim();
-	view_buffer(prn, 60, 350, _("gretl: range-mean statistics"), 
+	view_buffer(prn, 60, 350, _("gretl: range-mean statistics"),
 		    RMPLOT, NULL);
     }
 }
@@ -5715,7 +5715,7 @@ void do_hurst (void)
     }
 
     if (bufopen(&prn)) {
-	return; 
+	return;
     }
 
     err = hurst_exponent(v, dataset, OPT_NONE, prn);
@@ -5727,7 +5727,7 @@ void do_hurst (void)
 	record_command_verbatim();
     }
 
-    view_buffer(prn, 60, 350, _("gretl: Hurst exponent"), 
+    view_buffer(prn, 60, 350, _("gretl: Hurst exponent"),
 		HURST, NULL);
 }
 
@@ -5752,17 +5752,17 @@ static void real_do_corrgm (DATASET *dset, int code,
     opts[0] = N_("Use Bartlett standard errors");
 
     err = checks_dialog(title, NULL, opts,
-			1, &bartlett, 
+			1, &bartlett,
 			0, 0,
-			0, NULL, 
-			&order, _("Maximum lag:"), 
-			1, T - 1, 
-			CORRGM, parent); 
+			0, NULL,
+			&order, _("Maximum lag:"),
+			1, T - 1,
+			CORRGM, parent);
 #if 0
     err = spin_dialog(title, NULL, &order, _("Maximum lag:"),
 		      1, T - 1, CORRGM, parent);
 #endif
-    
+
     if (err < 0 || bufopen(&prn)) {
 	g_free(title);
 	return;
@@ -5779,7 +5779,7 @@ static void real_do_corrgm (DATASET *dset, int code,
 	    g_free(title);
 	    return;
 	}
-	err = corrgram(libcmd.list[1], order, 0, 
+	err = corrgram(libcmd.list[1], order, 0,
 		       dset, opt, prn);
 	if (!err) {
 	    record_lib_command();
@@ -5866,10 +5866,10 @@ static void real_do_pergm (DATASET *dset, int code,
 
     if (canceled(resp) || bufopen(&prn)) {
 	return;
-    }  
+    }
 
     if (code == SELECTED_VAR) {
-	lib_command_sprintf("pergm %s %d%s", selected_varname(), 
+	lib_command_sprintf("pergm %s %d%s", selected_varname(),
 			    width, print_flags(opt, PERGM));
 	if (parse_lib_command()) {
 	    gretl_print_destroy(prn);
@@ -5919,7 +5919,7 @@ void residual_periodogram_callback (GtkAction *action, gpointer p)
 
     if (!err) {
 	real_do_pergm(dset, MODEL_VAR, vwin_toplevel(vwin));
-	trim_dataset(pmod, origv); 
+	trim_dataset(pmod, origv);
     }
 }
 
@@ -5929,7 +5929,7 @@ void do_fractint (GtkAction *action)
     int T = sample_size(dataset);
     gretlopt opt = OPT_A;
     int width, err;
-    PRN *prn;    
+    PRN *prn;
 
     width = auto_spectrum_order(T, OPT_NONE);
 
@@ -5938,14 +5938,14 @@ void do_fractint (GtkAction *action)
 
     if (err < 0 || bufopen(&prn)) {
 	return;
-    }   
+    }
 
-    lib_command_sprintf("fractint %s %d%s", selected_varname(), 
+    lib_command_sprintf("fractint %s %d%s", selected_varname(),
 			width, print_flags(opt, FRACTINT));
     err = parse_lib_command();
 
     if (!err) {
-	err = fractint(libcmd.list[1], width, dataset, 
+	err = fractint(libcmd.list[1], width, dataset,
 		       libcmd.opt, prn);
 	if (err) {
 	    gui_errmsg(err);
@@ -5976,14 +5976,14 @@ void residual_qq_plot (GtkAction *action, gpointer p)
     }
 
     if (!err) {
-	/* uhat will be the last variable in dset */ 
+	/* uhat will be the last variable in dset */
 	int list[2] = {1, dset->v - 1};
 
 	err = qq_plot(list, dset, OPT_NONE);
 	gui_graph_handler(err);
     }
 
-    trim_dataset(pmod, origv); 
+    trim_dataset(pmod, origv);
 }
 
 void do_coeff_intervals (GtkAction *action, gpointer p)
@@ -5999,8 +5999,8 @@ void do_coeff_intervals (GtkAction *action, gpointer p)
 
     if (cf != NULL) {
 	text_print_model_confints(cf, prn);
-	view_buffer_with_parent(vwin, prn, 78, 300, 
-				_("gretl: coefficient confidence intervals"), 
+	view_buffer_with_parent(vwin, prn, 78, 300,
+				_("gretl: coefficient confidence intervals"),
 				COEFFINT, cf);
     }
 }
@@ -6025,8 +6025,8 @@ void do_outcovmx (GtkAction *action, gpointer p)
 	errbox(_("Error generating covariance matrix"));
     } else {
 	text_print_vmatrix(vcv, prn);
-	view_buffer_with_parent(vwin, prn, 80, 300, 
-				_("gretl: coefficient covariances"), 
+	view_buffer_with_parent(vwin, prn, 80, 300,
+				_("gretl: coefficient covariances"),
 				COVAR, vcv);
     }
 }
@@ -6047,7 +6047,7 @@ void do_anova (GtkAction *action, gpointer p)
     } else {
 	gchar *title = gretl_window_title(_("ANOVA"));
 
-	view_buffer_with_parent(vwin, prn, 80, 300, 
+	view_buffer_with_parent(vwin, prn, 80, 300,
 				title, PRINT, NULL);
 	g_free(title);
     }
@@ -6073,7 +6073,7 @@ static int *get_discrete_list (void)
 /* for use when we have more than one candidate series
    to select from */
 
-static int dummify_target_dialog (const int *dlist, 
+static int dummify_target_dialog (const int *dlist,
 				  gretlopt *opt)
 {
     dialog_opts *opts;
@@ -6093,7 +6093,7 @@ static int dummify_target_dialog (const int *dlist,
 			   opt, vals, strs);
 
     if (opts != NULL) {
-	v = select_var_from_list_with_opt(dlist, 
+	v = select_var_from_list_with_opt(dlist,
 					  _("Variable to dummify"),
 					  opts, DUMMIFY, NULL);
 	dialog_opts_free(opts);
@@ -6119,7 +6119,7 @@ static int dummify_option_dialog (int selvar, gretlopt *opt)
 	label = g_strdup(_("Encoding variables as dummies"));
     }
 
-    ret = radio_dialog(_("gretl: create dummy variables"), 
+    ret = radio_dialog(_("gretl: create dummy variables"),
 		       label, opts, 3, 0, DUMMIFY, NULL);
 
     g_free(label);
@@ -6139,7 +6139,7 @@ void add_discrete_dummies (int target)
 	resp = dummify_option_dialog(target, &opt);
 	if (canceled(resp)) {
 	    target = 0;
-	}	
+	}
     } else {
 	/* coming from main window menu */
 	int *dlist = get_discrete_list();
@@ -6151,7 +6151,7 @@ void add_discrete_dummies (int target)
 	    resp = dummify_option_dialog(target, &opt);
 	    if (canceled(resp)) {
 		target = 0;
-	    }	    
+	    }
 	} else {
 	    target = dummify_target_dialog(dlist, &opt);
 	    free(dlist);
@@ -6322,7 +6322,7 @@ void add_logs_etc (int ci, int varnum, int midas)
 	/* FIXME! */
 	warnbox("Please use console or script when transforming MIDAS series");
 	return;
-    }    
+    }
 
     if (varnum > 0 && varnum < dataset->v) {
 	liststr = gretl_strdup_printf(" %s", dataset->varname[varnum]);
@@ -6339,7 +6339,7 @@ void add_logs_etc (int ci, int varnum, int midas)
 
 	order = default_lag_order(dataset);
 	resp = spin_dialog(_("gretl: generate lags"), NULL,
-			   &order, _("Number of lags to create:"), 
+			   &order, _("Number of lags to create:"),
 			   1, dataset->n - 1, 0, NULL);
 	if (canceled(resp)) {
 	    free(liststr);
@@ -6396,17 +6396,17 @@ static int logs_etc_code (GtkAction *action)
 {
     const gchar *s = gtk_action_get_name(action);
 
-    if (!strcmp(s, "logs")) 
+    if (!strcmp(s, "logs"))
 	return LOGS;
     else if (!strcmp(s, "square"))
 	return SQUARE;
-    else if (!strcmp(s, "lags")) 
+    else if (!strcmp(s, "lags"))
 	return LAGS;
-    else if (!strcmp(s, "diff")) 
+    else if (!strcmp(s, "diff"))
 	return DIFF;
-    else if (!strcmp(s, "ldiff")) 
+    else if (!strcmp(s, "ldiff"))
 	return LDIFF;
-    else if (!strcmp(s, "sdiff")) 
+    else if (!strcmp(s, "sdiff"))
 	return SDIFF;
     else
 	return LOGS;
@@ -6532,7 +6532,7 @@ void add_system_resid (GtkAction *action, gpointer p)
 	equation_system *sys = vwin->data;
 
 	uhat = system_get_resid_series(sys, j, dataset, &err);
-    }	
+    }
 
     if (err) {
 	gui_errmsg(err);
@@ -6596,7 +6596,7 @@ void add_model_stat (MODEL *pmod, int which, windata_t *vwin)
 
     switch (which) {
     case M_ESS:
-	descrip = N_("Sum of squared residuals"); 
+	descrip = N_("Sum of squared residuals");
 	val = pmod->ess;
 	statname = "$ess";
 	break;
@@ -6611,12 +6611,12 @@ void add_model_stat (MODEL *pmod, int which, windata_t *vwin)
 	statname = "$trsq";
 	break;
     case M_DF:
-	descrip = N_("degrees of freedom"); 
+	descrip = N_("degrees of freedom");
 	val = (double) pmod->dfd;
 	statname = "$df";
 	break;
     case M_SIGMA:
-	descrip = N_("Standard error of the regression"); 
+	descrip = N_("Standard error of the regression");
 	val = pmod->sigma;
 	statname = "$sigma";
 	break;
@@ -6624,19 +6624,19 @@ void add_model_stat (MODEL *pmod, int which, windata_t *vwin)
 	descrip = N_("Log-likelihood");
 	val = pmod->lnL;
 	statname = "$lnl";
-	break;	
+	break;
     case M_AIC:
-	descrip = N_("Akaike Information Criterion"); 
+	descrip = N_("Akaike Information Criterion");
 	val = pmod->criterion[C_AIC];
 	statname = "$aic";
 	break;
     case M_BIC:
-	descrip = N_("Schwarz Bayesian criterion"); 
+	descrip = N_("Schwarz Bayesian criterion");
 	val = pmod->criterion[C_BIC];
 	statname = "$bic";
 	break;
     case M_HQC:
-	descrip = N_("Hannan-Quinn Information Criterion"); 
+	descrip = N_("Hannan-Quinn Information Criterion");
 	val = pmod->criterion[C_HQC];
 	statname = "$hqc";
 	break;
@@ -6648,13 +6648,13 @@ void add_model_stat (MODEL *pmod, int which, windata_t *vwin)
     sprintf(vname, "%s_%d", statname + 1, pmod->ID);
 
     blurb = g_strdup_printf(_("Statistic from model %d\n"
-			      "%s (value = %g)\n" 
+			      "%s (value = %g)\n"
 			      "Name (max. %d characters):"),
 			    pmod->ID, _(descrip), val,
 			    VNAMELEN -1);
 
-    blocking_edit_dialog(0, _("add scalar"), blurb, vname, 
-			 set_scalar_name, vname, VARCLICK_NONE, 
+    blocking_edit_dialog(0, _("add scalar"), blurb, vname,
+			 set_scalar_name, vname, VARCLICK_NONE,
 			 vwin_toplevel(vwin), &cancel);
 
     g_free(blurb);
@@ -6693,7 +6693,7 @@ void resid_plot (GtkAction *action, gpointer p)
     int plotlist[4];
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
-    int pdum = vwin->active_var; 
+    int pdum = vwin->active_var;
     int xvar = 0;
     int uhatno, yno = 0;
     int boxplot = 0;
@@ -6756,20 +6756,20 @@ void resid_plot (GtkAction *action, gpointer p)
 	gui_graph_handler(err);
 	trim_dataset(pmod, origv);
 	return;
-    }    
+    }
 
-    if (xvar) { 
+    if (xvar) {
 	/* plot against specified xvar */
 	plotlist[0] = 2;
 	plotlist[2] = xvar;
-    } else {    
+    } else {
 	/* plot against obs index or time */
 	opt |= OPT_T;
 	if (dataset_is_time_series(dset) ||
 	    dataset_is_panel(dset)) {
 	    opt |= OPT_O; /* use lines */
 	}
-    } 
+    }
 
     /* plot separated by dummy variable? */
     if (pdum) {
@@ -6780,7 +6780,7 @@ void resid_plot (GtkAction *action, gpointer p)
     /* generate graph */
     err = gnuplot(plotlist, NULL, dset, opt);
     gui_graph_handler(err);
-    
+
     trim_dataset(pmod, origv);
 }
 
@@ -6857,17 +6857,17 @@ void fit_actual_plot (GtkAction *action, gpointer p)
     /* depvar from regression */
     plotlist[2] = gretl_model_get_depvar(pmod);
 
-    if (xvar) { 
+    if (xvar) {
 	/* plot against specified xvar */
 	plotlist[3] = xvar;
-    } else { 
+    } else {
 	/* plot against obs */
 	plotlist[0] -= 1;
 	opt |= OPT_T;
 	if (dataset_is_time_series(dset)) {
 	    opt |= OPT_O; /* use lines */
 	}
-    } 
+    }
 
     err = gnuplot(plotlist, NULL, dset, opt);
     gui_graph_handler(err);
@@ -6905,7 +6905,7 @@ void fit_actual_splot (GtkAction *action, gpointer p)
     } else {
 	list[1] = xlist[2];
 	list[2] = xlist[1];
-    }	
+    }
 
     free(xlist);
 
@@ -6914,7 +6914,7 @@ void fit_actual_splot (GtkAction *action, gpointer p)
        (note: you can't rotate plots with aquaterm)
     */
     plotopt |= OPT_I;
-#endif    
+#endif
 
     err = gnuplot_3d(list, NULL, dset, &plotopt);
 
@@ -6940,21 +6940,21 @@ static PRN *data_prn_via_file (const int *list)
     if (user_fopen("data_display_tmp", fname, &prn)) {
 	return NULL;
     }
-    
+
     err = printdata(list, NULL, dataset, OPT_O, prn);
     gretl_print_destroy(prn);
     prn = NULL;
-    
+
     if (!err) {
 	err = gretl_file_get_contents(fname, &buf, &sz);
     }
-    
+
     if (err) {
 	gui_errmsg(err);
     } else {
 	prn = gretl_print_new_with_gchar_buffer(buf);
     }
-    
+
     remove(fname);
 
     return prn;
@@ -6996,7 +6996,7 @@ void display_selected (void)
 	if (prn == NULL) {
 	    err = 1;
 	}
-    } else { 
+    } else {
 	/* use buffer */
 	if (bufopen(&prn)) {
 	    goto display_exit;
@@ -7011,7 +7011,7 @@ void display_selected (void)
     if (!err) {
 	series_view *sview = multi_series_view_new(list);
 
-	view_buffer(prn, 78, 400, _("gretl: display data"), 
+	view_buffer(prn, 78, 400, _("gretl: display data"),
 		    PRINT, sview);
     }
 
@@ -7044,16 +7044,16 @@ void display_fit_resid (GtkAction *action, gpointer p)
     } else {
 	text_print_fit_resid(fr, dset, prn);
 	if (pmod->dataset == NULL) {
-	    view_buffer_with_parent(vwin, prn, 78, 350, 
-				    _("gretl: display data"), 
+	    view_buffer_with_parent(vwin, prn, 78, 350,
+				    _("gretl: display data"),
 				    AFR, fr);
 	} else {
-	    view_buffer_with_parent(vwin, prn, 78, 350, 
-				    _("gretl: display data"), 
+	    view_buffer_with_parent(vwin, prn, 78, 350,
+				    _("gretl: display data"),
 				    PRINT, NULL);
 	    trim_dataset(pmod, 0);
 	}
-    }  
+    }
 }
 
 /* determine the series ID number such that it is OK
@@ -7080,13 +7080,13 @@ int max_untouchable_series_ID (void)
     vmax = highest_numbered_var_in_saved_object(dataset);
     if (vmax > vsave) {
 	vsave = vmax;
-    }    
+    }
 
     return vsave;
 }
 
 /* Before deleting specified variables, check that they are not
-   required by any saved models; also, don't delete variables 
+   required by any saved models; also, don't delete variables
    whose deletion would result in the renumbering of variables
    used in saved models.
 */
@@ -7096,7 +7096,7 @@ static int maybe_prune_delete_list (int *list)
     int i, vsave, pruned = 0;
 
     vsave = max_untouchable_series_ID();
-    
+
     for (i=1; i<=list[0]; i++) {
 	if (list[i] <= vsave) {
 	    gretl_list_delete_at_pos(list, i--);
@@ -7172,7 +7172,7 @@ static void real_delete_vars (int selvar)
 	} else {
 	    dellist[1] = selvar;
 	}
-    }	
+    }
 
     if (!err) {
 	/* set-up for command log */
@@ -7180,8 +7180,8 @@ static void real_delete_vars (int selvar)
 	    cmdstr = g_strdup_printf("delete %s", vname);
 	} else {
 	    cmdstr = g_strdup_printf("delete%s", liststr);
-	} 
-	err = dataset_drop_listed_variables(dellist, dataset, 
+	}
+	err = dataset_drop_listed_variables(dellist, dataset,
 					    &renumber, NULL);
     }
 
@@ -7221,7 +7221,7 @@ static int regular_ts_plot (int v)
     err = gnuplot(list, NULL, dataset, OPT_G | OPT_O | OPT_T);
 
     if (!err) {
-	lib_command_sprintf("gnuplot %s --time-series --with-lines", 
+	lib_command_sprintf("gnuplot %s --time-series --with-lines",
 			    dataset->varname[v]);
 	record_command_verbatim();
     }
@@ -7237,7 +7237,7 @@ static void do_panel_plot (int varnum)
     int save_t2 = dataset->t2;
     int handled = 0;
     int sel, err = 0;
-    
+
     sel = panel_graph_dialog(&t1, &t2);
 
     if (sel < 0) {
@@ -7296,7 +7296,7 @@ void do_graph_var (int varnum)
 	do_panel_plot(varnum);
     } else {
 	int err = regular_ts_plot(varnum);
-    
+
 	gui_graph_handler(err);
     }
 }
@@ -7317,7 +7317,7 @@ static int do_per_unit_plots (int v)
 	int s0 = dataset->t1 / T;
 	int tvary;
 	int i, t, s;
-	
+
 	ret = 1;
 	for (i=0; i<N; i++) {
 	    s = s0 + i * T;
@@ -7445,9 +7445,9 @@ int do_factorized_boxplot (selector *sr)
 	return 1;
     }
 
-    if (libcmd.list[0] != 2 || 
+    if (libcmd.list[0] != 2 ||
 	(!series_is_discrete(dataset, libcmd.list[2]) &&
-	 !gretl_isdiscrete(dataset->t1, dataset->t2, 
+	 !gretl_isdiscrete(dataset->t1, dataset->t2,
 			   dataset->Z[libcmd.list[2]]))) {
 	errbox(_("You must supply two variables, the second of "
 		 "which is discrete"));
@@ -7478,9 +7478,9 @@ int do_dummy_graph (selector *sr)
 	return 1;
     }
 
-    if (libcmd.list[0] != 3 || 
+    if (libcmd.list[0] != 3 ||
 	(!series_is_discrete(dataset, libcmd.list[3]) &&
-	 !gretl_isdiscrete(dataset->t1, dataset->t2, 
+	 !gretl_isdiscrete(dataset->t1, dataset->t2,
 			   dataset->Z[libcmd.list[3]]))) {
 	errbox(_("You must supply three variables, the last of "
 		 "which is discrete"));
@@ -7515,7 +7515,7 @@ int do_xyz_graph (selector *sr)
 	return 1;
     }
 
-    err = xy_plot_with_control(libcmd.list, NULL, 
+    err = xy_plot_with_control(libcmd.list, NULL,
 			       dataset, OPT_NONE);
     gui_graph_handler(err);
     if (!err) {
@@ -7539,7 +7539,7 @@ int do_graph_from_selector (selector *sr)
     if (code == GR_IMP) {
 	lib_command_strcat(" --with-impulses");
 	opt |= OPT_M;
-    } else if (code == GR_PLOT) { 
+    } else if (code == GR_PLOT) {
 	lib_command_strcat(" --time-series --with-lines");
 	opt |= (OPT_T | OPT_O);
     }
@@ -7686,8 +7686,8 @@ void plot_from_selection (int code)
 	    };
 	    int ret;
 
-	    ret = radio_dialog(_("gretl: define graph"), 
-			       _("Plot the series"), 
+	    ret = radio_dialog(_("gretl: define graph"),
+			       _("Plot the series"),
 			       opts, 2, 0, 0, NULL);
 	    if (ret < 0) {
 		cancel = 1;
@@ -7709,7 +7709,7 @@ void plot_from_selection (int code)
 	    lib_command_sprintf("scatters %s --with-lines", liststr);
 	} else {
 	    /* FIXME pan_between and CLI? */
-	    lib_command_sprintf("gnuplot%s%s", liststr, 
+	    lib_command_sprintf("gnuplot%s%s", liststr,
 				(code == GR_PLOT)? " --time-series --with-lines" : "");
 	}
 
@@ -7722,7 +7722,7 @@ void plot_from_selection (int code)
 		err = panel_means_XY_scatter(libcmd.list, dataset, opt);
 	    } else {
 		err = gnuplot(libcmd.list, NULL, dataset, opt);
-	    } 
+	    }
 	    gui_graph_handler(err);
 	    if (!err && !pan_between) {
 		record_lib_command();
@@ -7736,7 +7736,7 @@ void plot_from_selection (int code)
 static int all_missing (int v)
 {
     int t, os = 0;
-    
+
     for (t=0; t<dataset->n; t++) {
 	if (!na(dataset->Z[v][t])) {
 	    if (t >= dataset->t1 && t <= dataset->t2) {
@@ -7772,13 +7772,13 @@ void display_var (void)
     list[1] = v;
     n = sample_size(dataset);
 
-    if (n > MAXDISPLAY) { 
+    if (n > MAXDISPLAY) {
 	/* use disk file */
 	prn = data_prn_via_file(list);
 	if (prn == NULL) {
 	    err = 1;
-	}	
-    } else { 
+	}
+    } else {
 	/* use buffer */
 	if (bufopen(&prn)) {
 	    return;
@@ -7792,8 +7792,8 @@ void display_var (void)
 
     if (!err) {
 	windata_t *vwin;
-	
-	vwin = view_buffer(prn, 36, 400, dataset->varname[v], 
+
+	vwin = view_buffer(prn, 36, 400, dataset->varname[v],
 			   VIEW_SERIES, NULL);
 	series_view_connect(vwin, v);
     }
@@ -7906,7 +7906,7 @@ void start_wait_for_output (windata_t *vwin, GtkWidget *w)
 
     if (GTK_IS_TEXT_VIEW(vwin->text)) {
 	/* @vwin is a reusable output window */
-	if (get_script_output_policy() == OUTPUT_POLICY_REPLACE) { 
+	if (get_script_output_policy() == OUTPUT_POLICY_REPLACE) {
 	    textview_set_text(vwin->text, NULL);
 	}
 	gretl_viewer_present(vwin);
@@ -7948,17 +7948,17 @@ static gint block_deletion (GtkWidget *w, GdkEvent *event, gpointer p)
 }
 
 /* When we're in the process of "flushing" (a time-
-   consuming script is sending output to a window 
+   consuming script is sending output to a window
    incrementally) we must ensure that the output window
    doesn't get closed prematurely (?)
 */
 
 static void output_handler_block_deletion (void)
 {
-    oh.handler_id = 
-	g_signal_connect(G_OBJECT(oh.vwin->main), 
-			 "delete-event", 
-			 G_CALLBACK(block_deletion), 
+    oh.handler_id =
+	g_signal_connect(G_OBJECT(oh.vwin->main),
+			 "delete-event",
+			 G_CALLBACK(block_deletion),
 			 NULL);
 }
 
@@ -8022,7 +8022,7 @@ static int start_script_output_handler (PRN *prn, int role,
 		err = E_ALLOC;
 	    }
 	}
-	
+
 	if (!err) {
 	    oh.prn = prn;
 	    oh.vwin = vwin;
@@ -8073,7 +8073,7 @@ static int maybe_stop_script (GtkWidget *parent)
 	gtk_widget_hide(oh.vwin->main);
     }
 
-    resp = yes_no_dialog(_("gretl: open data"), 
+    resp = yes_no_dialog(_("gretl: open data"),
 			 _("Opening a new data file will automatically\n"
 			   "close the current one.  Any unsaved work\n"
 			   "will be lost.  Proceed to open data file?"),
@@ -8162,7 +8162,7 @@ static void run_native_script (windata_t *vwin, gchar *buf)
     }
 
     if (!err && vwin->role != EDIT_PKG_SAMPLE &&
-	vwin->role != VIEW_PKG_SAMPLE && 
+	vwin->role != VIEW_PKG_SAMPLE &&
 	*vwin->fname != '\0' && !strstr(vwin->fname, "script_tmp")) {
 	mkfilelist(FILE_LIST_SCRIPT, vwin->fname);
 	lib_command_sprintf("run %s", vwin->fname);
@@ -8208,7 +8208,7 @@ void run_script_fragment (windata_t *vwin, gchar *buf)
     set_gretl_echo(1);
 }
 
-int exec_line_with_output_handler (ExecState *s, 
+int exec_line_with_output_handler (ExecState *s,
 				   DATASET *dset,
 				   const char *title,
 				   windata_t **outwin)
@@ -8224,7 +8224,7 @@ int exec_line_with_output_handler (ExecState *s,
 	if (outwin != NULL && *outwin != NULL) {
 	    parent = vwin_toplevel(*outwin);
 	}
-	
+
 	err = gui_exec_line(s, dataset, parent);
     }
 
@@ -8241,7 +8241,7 @@ static void run_R_script (gchar *buf, GtkWidget *parent)
     int resp;
 
     if (send_data) {
-	resp = radio_dialog_with_check("gretl: R", _("R mode"), 
+	resp = radio_dialog_with_check("gretl: R", _("R mode"),
 				       opts, 2, 0, 0,
 				       &send_data, _("pre-load data"),
 				       parent);
@@ -8277,8 +8277,8 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
 
     *cwd = '\0';
 
-    if (vwin->role == EDIT_GP || 
-	vwin->role == EDIT_R || 
+    if (vwin->role == EDIT_GP ||
+	vwin->role == EDIT_R ||
 	vwin->role == EDIT_OX ||
 	vwin->role == EDIT_OCTAVE ||
         vwin->role == EDIT_PYTHON ||
@@ -8383,12 +8383,12 @@ gboolean do_open_script (int action)
 	}
     } else {
 	view_script(tryfile, 1, action);
-    } 
+    }
 
     return TRUE;
 }
 
-void do_new_script (int code, const char *buf) 
+void do_new_script (int code, const char *buf)
 {
     int action = (code == FUNC)? EDIT_HANSL : code;
     windata_t *vwin;
@@ -8415,7 +8415,7 @@ void do_new_script (int code, const char *buf)
     if (action == EDIT_HANSL) {
 	strcpy(scriptfile, temp);
     }
-    
+
     vwin = view_file(temp, 1, 1, SCRIPT_WIDTH, SCRIPT_HEIGHT, action);
 
     if (buf != NULL && *buf != '\0') {
@@ -8423,7 +8423,7 @@ void do_new_script (int code, const char *buf)
     }
 }
 
-void new_script_callback (GtkAction *action) 
+void new_script_callback (GtkAction *action)
 {
     const gchar *s = gtk_action_get_name(action);
     int etype = EDIT_HANSL;
@@ -8457,7 +8457,7 @@ void maybe_display_string_table (void)
 	if (mdata == NULL) {
 	    s_table_waiting = 1;
 	    return;
-	} 
+	}
 
 	s_table_waiting = 0;
 	build_path(stname, gretl_workdir(), "string_table.txt", NULL);
@@ -8470,7 +8470,7 @@ int dataset_is_subsampled (void)
     int ret = 0;
 
     if (mdata->ui != NULL) {
-	GtkWidget *w = gtk_ui_manager_get_widget(mdata->ui, 
+	GtkWidget *w = gtk_ui_manager_get_widget(mdata->ui,
 						 "/menubar/Sample/FullRange");
 
 	if (w != NULL && GTK_IS_WIDGET(w) && gtk_widget_is_sensitive(w)) {
@@ -8497,17 +8497,17 @@ int maybe_restore_full_data (int action)
 	int r = GRETL_CANCEL;
 
 	if (action == SAVE_DATA) {
-	    r = yes_no_cancel_dialog(_("gretl: save data"), 
+	    r = yes_no_cancel_dialog(_("gretl: save data"),
 				     _("The data set is currently sub-sampled.\n"
 				       "Would you like to restore the full range?"),
 				     NULL);
 	} else if (action == COMPACT) {
-	    r = yes_no_cancel_dialog(_("gretl: Compact data"), 
+	    r = yes_no_cancel_dialog(_("gretl: Compact data"),
 				     _("The data set is currently sub-sampled.\n"
 				       "You must restore the full range before compacting.\n"
 				       "Restore the full range now?"), NULL);
 	} else if (action == EXPAND) {
-	    r = yes_no_cancel_dialog(_("gretl: Expand data"), 
+	    r = yes_no_cancel_dialog(_("gretl: Expand data"),
 				     _("The data set is currently sub-sampled.\n"
 				       "You must restore the full range before expanding.\n"
 				       "Restore the full range now?"), NULL);
@@ -8518,7 +8518,7 @@ int maybe_restore_full_data (int action)
 	} else if (r == GRETL_CANCEL || action == COMPACT || action == EXPAND) {
 	    return 1;
 	}
-    } 
+    }
 
     return 0;
 }
@@ -8527,7 +8527,7 @@ void gui_transpose_data (void)
 {
     int resp;
 
-    resp = yes_no_dialog(_("gretl: transpose data"), 
+    resp = yes_no_dialog(_("gretl: transpose data"),
 			 _("Transposing means that each variable becomes interpreted\n"
 			   "as an observation, and each observation as a variable.\n"
 			   "Do you want to proceed?"),
@@ -8535,7 +8535,7 @@ void gui_transpose_data (void)
 
     if (resp == GRETL_YES) {
 	int err = transpose_data(dataset);
-    
+
 	if (err) {
 	    gui_errmsg(err);
 	} else {
@@ -8599,8 +8599,8 @@ void gui_resample_data (void)
     gchar *title = gretl_window_title(_("resample dataset"));
     int resp, n = dataset->n;
 
-    resp = spin_dialog(title, _("Resampling with replacement"), 
-		       &n, _("Number of cases"), 
+    resp = spin_dialog(title, _("Resampling with replacement"),
+		       &n, _("Number of cases"),
 		       1, 1000000, 0, NULL);
     g_free(title);
 
@@ -8608,7 +8608,7 @@ void gui_resample_data (void)
 	gchar *nstr = g_strdup_printf("%d", n);
 	int err;
 
-	err = modify_dataset(dataset, DS_RESAMPLE, NULL, nstr, 
+	err = modify_dataset(dataset, DS_RESAMPLE, NULL, nstr,
 			     NULL);
 	if (err) {
 	    gui_errmsg(err);
@@ -8635,7 +8635,7 @@ static int db_write_response (const char *filename, const int *list)
 	ret = write_db_data(filename, list, OPT_F, dataset);
     }
 
-    g_free(msg);  
+    g_free(msg);
 
     return ret;
 }
@@ -8668,7 +8668,7 @@ static void maybe_shrink_dataset (const char *newname)
     if (datafile == newname || !strcmp(datafile, newname)) {
 	shrink = 1;
     } else {
-	resp = yes_no_dialog(_("gretl: revised data set"), 
+	resp = yes_no_dialog(_("gretl: revised data set"),
 			     _("You have saved a reduced version of the current data set.\n"
 			       "Do you want to switch to the reduced version now?"),
 			     NULL);
@@ -8682,7 +8682,7 @@ static void maybe_shrink_dataset (const char *newname)
 	if (datafile != newname) {
 	    strcpy(datafile, newname);
 	}
-    }	
+    }
 }
 
 static int maybe_back_up_datafile (const char *fname)
@@ -8694,7 +8694,7 @@ static int maybe_back_up_datafile (const char *fname)
 	if (fgetc(fp) != EOF) {
 	    /* the file is not empty */
 	    gchar *backup = g_strdup_printf("%s~", fname);
-	    
+
 	    fclose(fp);
 	    err = copyfile(fname, backup);
 	    g_free(backup);
@@ -8716,7 +8716,7 @@ static void maybe_add_compat_option (gretlopt *optp,
 	};
 	const char *label = _("Missing values should be stored:");
 	int resp;
-	
+
 	resp = radio_dialog(NULL, label, opts, 2, 0, 0, NULL);
 	if (resp == GRETL_CANCEL) {
 	    *cancel = 1;
@@ -8747,14 +8747,14 @@ static gretlopt store_action_to_opt (const char *fname, int action,
     case SAVE_DATA_AS:
 	*exporting = 0;
 	break;
-    case EXPORT_OCTAVE:  
-	opt = OPT_M; 
+    case EXPORT_OCTAVE:
+	opt = OPT_M;
 	break;
     case EXPORT_R:
-	opt = OPT_R; 
+	opt = OPT_R;
 	break;
     case EXPORT_CSV:
-	opt = OPT_C; 
+	opt = OPT_C;
 	break;
     case EXPORT_DAT:
 	opt = OPT_G; /* PcGive */
@@ -8766,7 +8766,7 @@ static gretlopt store_action_to_opt (const char *fname, int action,
 	opt = OPT_D; /* gretl database */
 	break;
     case EXPORT_GDT:
-	opt = OPT_X; 
+	opt = OPT_X;
 	break;
     default: break;
     }
@@ -8793,7 +8793,7 @@ static gretlopt store_action_to_opt (const char *fname, int action,
 	if (has_suffix(fname, ".gdtb")) {
 	    maybe_add_compat_option(&opt, cancel);
 	}
-    }    
+    }
 
     if (action == SAVE_DATA_AS) {
 	if (session_file_is_open()) {
@@ -8870,7 +8870,7 @@ int do_store (char *filename, int action, gpointer data)
 
     if (opt & OPT_X) {
 	; /* inside a session: "exporting" gdt */
-    } else if (opt != OPT_NONE) { 
+    } else if (opt != OPT_NONE) {
 	/* not a bog-standard native save */
 	if (action == EXPORT_CSV && csv_exclude_obs) {
 	    /* pick up option to exclude obs column */
@@ -8888,7 +8888,7 @@ int do_store (char *filename, int action, gpointer data)
 	    /* the error message is already handled */
 	    return err;
 	}
-    } 
+    }
 
     if (!err) {
 	/* actually write the data to file */
@@ -8900,8 +8900,8 @@ int do_store (char *filename, int action, gpointer data)
 	    err = db_write_response(filename, libcmd.list);
 	} else {
 	    gui_errmsg(err);
-	} 
-    }  
+	}
+    }
 
     if (!err && !exporting) {
 	/* record the fact that data have been saved, etc. */
@@ -8914,7 +8914,7 @@ int do_store (char *filename, int action, gpointer data)
 	data_status = (HAVE_DATA | USER_DATA);
 	if (is_gzipped(datafile)) {
 	    data_status |= GZIPPED_DATA;
-	} 
+	}
 	set_sample_label(dataset);
     }
 
@@ -8940,7 +8940,7 @@ int osx_open_file (const char *path)
 {
     FSRef ref;
     int err;
-    
+
     err = FSPathMakeRef((const UInt8 *) path, &ref, NULL);
     if (!err) {
 	err = LSOpenFSRef(&ref, NULL);
@@ -8955,7 +8955,7 @@ int osx_open_file (const char *path)
 {
     CFURLRef u;
     int err = 0;
-    
+
     u = CFURLCreateFromFileSystemRepresentation(NULL,
 						(const UInt8 *) path,
 						strlen(path),
@@ -8983,16 +8983,16 @@ int osx_open_pdf (const char *path, const char *dest)
     if (!err) {
 	guint8 exe[PATH_MAX] = {0};
 	FSRef appref;
-    
+
 	err = LSGetApplicationForItem(&ref, kLSRolesViewer | kLSRolesEditor,
 				      &appref, NULL);
 
 	if (!err) {
 	    FSRefMakePath(&appref, exe, PATH_MAX);
 	}
-    
+
 	if (!err && strstr((const char *) exe, "Adobe") != NULL) {
-	    /* Adobe Acrobat or Acrobat Reader: try passing an 
+	    /* Adobe Acrobat or Acrobat Reader: try passing an
 	       option to open at the specified chapter.
 	    */
 	    LSLaunchFSRefSpec rspec;
@@ -9053,9 +9053,9 @@ int osx_open_url (const char *url)
     CFStringRef s;
     CFURLRef u;
     int err;
-    
-    s = CFStringCreateWithBytes(NULL, (const UInt8 *) url, strlen(url), 
-                                kCFStringEncodingASCII, 
+
+    s = CFStringCreateWithBytes(NULL, (const UInt8 *) url, strlen(url),
+                                kCFStringEncodingASCII,
 				0);
     if (s == NULL) {
         err = 1;
@@ -9093,7 +9093,7 @@ static void clean_up_varlabels (DATASET *dset)
 		series_set_label(dset, i, conv);
 		g_free(conv);
 	    }
-	} 
+	}
     }
 }
 
@@ -9165,7 +9165,7 @@ static int gui_get_include_file (const char *fname, char *fullname)
 
 	if (path != NULL) {
 	    int err;
-	    
+
 	    build_path(fullname, path, fname, NULL);
 	    err = gretl_test_fopen(fullname, "r");
 	    if (err) {
@@ -9177,11 +9177,11 @@ static int gui_get_include_file (const char *fname, char *fullname)
 	    }
 	}
     }
-    
+
     return get_full_filename(fname, fullname, OPT_I);
 }
 
-static void gui_output_line (const char *line, ExecState *s, PRN *prn) 
+static void gui_output_line (const char *line, ExecState *s, PRN *prn)
 {
     int coding, n;
 
@@ -9271,10 +9271,10 @@ int execute_script (char *runfile, const char *buf,
     debug_print_model_info(model, "Start of execute_script, model");
 #endif
 
-    if (runfile != NULL) { 
+    if (runfile != NULL) {
 	/* we'll get commands from file */
 	int file_is_gfn = 0;
-	
+
 	if (!ok_run_file(runfile, &file_is_gfn)) {
 	    return -1;
 	} else if (file_is_gfn) {
@@ -9282,11 +9282,11 @@ int execute_script (char *runfile, const char *buf,
 	} else {
 	    fb = gretl_fopen(runfile, "r");
 	}
-    } else { 
+    } else {
 	/* no runfile, commands from buffer */
 	if (buf == NULL || *buf == '\0') {
 	    errbox(_("No commands to execute"));
-	    return -1;	
+	    return -1;
 	}
 	bufgets_init(buf);
 	bufread = 1;
@@ -9300,12 +9300,12 @@ int execute_script (char *runfile, const char *buf,
     indent0 = gretl_if_state_record();
 
     while (libcmd.ci != QUIT) {
-	if (gretl_execute_loop()) { 
+	if (gretl_execute_loop()) {
 	    exec_err = gretl_loop_exec(&state, dataset, NULL);
 	    if (exec_err) {
 		goto endwhile;
 	    }
-	} else { 
+	} else {
 	    char *gotline = NULL;
 	    int contd;
 
@@ -9344,8 +9344,8 @@ int execute_script (char *runfile, const char *buf,
 	    }
 
 	    if (!exec_err) {
-		if (!strncmp(line, "(* saved objects:", 17)) { 
-		    strcpy(line, "quit"); 
+		if (!strncmp(line, "(* saved objects:", 17)) {
+		    strcpy(line, "quit");
 		} else if (gretl_echo_on() && !including) {
 		    gui_output_line(line, &state, prn);
 		}
@@ -9406,6 +9406,41 @@ int execute_script (char *runfile, const char *buf,
     return exec_err;
 }
 
+static GtkWidget *pkgview_parent;
+
+static void set_pkgview_parent (GtkWidget *w)
+{
+    pkgview_parent = w;
+}
+
+/* Below: assemble data to pass to:
+
+   void maybe_update_pkgview (const char *filename,
+			      const char *pkgname,
+			      int zipfile,
+			      GtkWidget *parent)
+   in database.c.
+*/
+
+static void handle_gui_pkg_install (gretl_bundle *b)
+{
+    const char *filename;
+    const char *pkgname;
+    int zipfile;
+    int err = 0;
+
+    filename = gretl_bundle_get_string(b, "filename", &err);
+    pkgname = gretl_bundle_get_string(b, "pkgname", &err);
+    zipfile = gretl_bundle_get_int(b, "zipfile", &err);
+
+    if (!err) {
+	maybe_update_pkgview(filename, pkgname, zipfile,
+			     pkgview_parent);
+    }
+
+    gretl_bundle_destroy(b);
+}
+
 static void gui_exec_callback (ExecState *s, void *ptr,
 			       GretlObjType type)
 {
@@ -9439,6 +9474,8 @@ static void gui_exec_callback (ExecState *s, void *ptr,
 	populate_varlist();
     } else if (ci == MARKERS) {
 	mark_dataset_as_modified();
+    } else if (ci == PKG) {
+	handle_gui_pkg_install(ptr);
     } else if (ci == MODELTAB) {
 	err = modeltab_exec(s->cmd->param, s->cmd->opt, s->prn);
     } else if (ci == GRAPHPG) {
@@ -9526,7 +9563,7 @@ GList *get_or_send_gui_models (GList *list)
 	/* handle list returned by objstack */
 	windata_t *vwin;
 	void *ptr;
-    
+
 	while (1) {
 	    ptr = list->data;
 	    fprintf(stderr, "*** deleting gui model %p\n", ptr);
@@ -9598,7 +9635,7 @@ static int script_delete_function_package (const char *param,
 		maybe_update_gfn_browser(pkgname, NULL, NULL, NULL,
 					 NULL, fname, 0, 0);
 	    }
-	}	
+	}
     }
 
     if (err) {
@@ -9615,129 +9652,9 @@ static int script_delete_function_package (const char *param,
     return err;
 }
 
-int script_exec_pkg_command (const char *action,
-			     const char *pkgname,
-			     gretlopt opt,
-			     PRN *prn,
-			     GtkWidget *parent,
-			     char **gfnpath)
-{
-    char *fname = NULL;
-    int filetype = 0;
-    int local = (opt & OPT_L);
-    int http = 0;
-    int err = 0;
-
-    if (!strcmp(action, "unload")) {
-	return script_delete_function_package(pkgname, OPT_NONE, prn);
-    } else if (!strcmp(action, "remove")) {
-	return script_delete_function_package(pkgname, OPT_P, prn);
-    } else if (strcmp(action, "install")) {
-	return E_PARSE;
-    }
-
-    if (!strncmp(pkgname, "http://", 7) ||
-	!strncmp(pkgname, "https://", 8)) {
-	http = 1;
-    }
-
-    if (strstr(pkgname, ".gfn")) {
-	filetype = 1;
-    } else if (strstr(pkgname, ".zip")) {
-	filetype = 2;
-    } else if (local || http) {
-	/* must have suitable suffix */
-	err = E_DATA;
-    } else {
-	/* from gretl server: determine the correct suffix */
-	fname = retrieve_remote_pkg_filename(pkgname, &err);
-	if (!err) {
-	    filetype = strstr(fname, ".zip") ? 2 : 1;
-	}
-    }
-
-    if (!err) {
-	if (http) {
-	    /* get @fname as last portion of URL */
-	    const char *p = strrchr(pkgname, '/');
-
-	    if (p == NULL) {
-		err = E_DATA;
-	    } else {
-		fname = gretl_strdup(p + 1);
-	    }
-	} else if (local) {
-	    const char *p;
-
-	    gretl_maybe_switch_dir(pkgname);
-	    p = path_last_slash_const(pkgname);
-	    if (p != NULL) {
-		fname = gretl_strdup(p + 1);
-	    }
-	}
-    }
-
-    /* FIXME "install" and dependencies? */
-
-    if (!err && filetype) {
-	const char *basename = fname != NULL ? fname : pkgname;
-	const char *instpath = gretl_function_package_path();
-	gchar *fullname;
-
-	fullname = gretl_strdup_printf("%s%s", instpath, basename);
-
-	if (local) {
-	    /* copy file into place */
-	    err = gretl_copy_file(pkgname, fullname);
-	} else if (http) {
-	    /* get file from a specified server */
-	    err = retrieve_public_file(pkgname, fullname);
-	} else {
-	    /* get file from default gretl server */
-	    err = retrieve_remote_function_package(basename, fullname);
-	}
-	
-	if (!err && filetype == 2) {
-	    err = gretl_unzip_into(fullname, instpath);
-	    if (!err) {
-		/* delete the zipfile */
-		gretl_remove(fullname);
-	    }
-	}
-
-	if (!err) {
-	    gchar *p, *trimmed = g_strdup(basename);
-
-	    p = strrchr(trimmed, '.');
-	    if (p != NULL) *p = '\0';
-	    
-	    maybe_update_pkgview(fullname, trimmed, filetype == 2,
-				 parent);
-	    if (gretl_messages_on()) {
-		pprintf(prn, _("Installed %s\n"), trimmed);
-	    }
-	    g_free(trimmed);
-	}
-
-	if (!err && gfnpath != NULL) {
-	    *gfnpath = gretl_strdup(fullname);
-	}
-	
-	g_free(fullname);
-    }
-
-    if (err) {
-	gui_errmsg(err);
-    }
-
-    free(fname);
-    
-    return err;
-}
-
 static int script_renumber_series (const int *list,
 				   const char *parm,
-				   DATASET *dset, 
+				   DATASET *dset,
 				   PRN *prn)
 {
     int err, fixmax = max_untouchable_series_ID();
@@ -9759,13 +9676,13 @@ static int gui_try_http (const char *s, char *fname, int *http)
 	err = retrieve_public_file(s, fname);
 	if (!err) {
 	    *http = 1;
-	} 
+	}
     }
 
     return err;
 }
 
-static int script_open_append (ExecState *s, DATASET *dset, 
+static int script_open_append (ExecState *s, DATASET *dset,
 			       PRN *prn, GtkWidget *parent)
 {
     gretlopt opt = s->cmd->opt;
@@ -9804,7 +9721,7 @@ static int script_open_append (ExecState *s, DATASET *dset,
 	if (err) {
 	    gui_errmsg(err);
 	    return err;
-	}  
+	}
 	if (!http) {
 	    /* not using http: local file */
 	    err = get_full_filename(cmd->param, myfile, OPT_NONE);
@@ -9842,14 +9759,14 @@ static int script_open_append (ExecState *s, DATASET *dset,
     if (cmd->opt & OPT_Q) {
 	/* --quiet, but in case we hit any problems below... */
 	vprn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
-    } 
+    }
 
     if (ftype == GRETL_CSV) {
 	err = import_csv(myfile, dset, opt, vprn);
     } else if (ftype == GRETL_XML_DATA || ftype == GRETL_BINARY_DATA) {
 	err = gretl_read_gdt(myfile, dset, opt | OPT_B, vprn);
     } else if (SPREADSHEET_IMPORT(ftype)) {
-	err = import_spreadsheet(myfile, ftype, cmd->list, cmd->parm2, dset, 
+	err = import_spreadsheet(myfile, ftype, cmd->list, cmd->parm2, dset,
 				 opt, vprn);
     } else if (OTHER_IMPORT(ftype)) {
 	err = import_other(myfile, ftype, dset, opt, vprn);
@@ -9879,7 +9796,7 @@ static int script_open_append (ExecState *s, DATASET *dset,
 	    pprintf(prn, _("Read datafile %s\n"), myfile);
 	}
 	gretl_print_destroy(vprn);
-    } 
+    }
 
     if (err) {
 	gui_errmsg(err);
@@ -9895,7 +9812,7 @@ static int script_open_append (ExecState *s, DATASET *dset,
 	strncpy(datafile, myfile, MAXLEN - 1);
     }
 
-    if (ftype == GRETL_CSV || SPREADSHEET_IMPORT(ftype) || 
+    if (ftype == GRETL_CSV || SPREADSHEET_IMPORT(ftype) ||
 	OTHER_IMPORT(ftype)) {
 	data_status |= IMPORT_DATA;
 	maybe_display_string_table();
@@ -9907,7 +9824,7 @@ static int script_open_append (ExecState *s, DATASET *dset,
 	} else {
 	    register_data(OPENED_VIA_CLI);
 	}
-	if (!(cmd->opt & OPT_Q)) { 
+	if (!(cmd->opt & OPT_Q)) {
 	    list_series(dset, prn);
 	}
     }
@@ -10014,7 +9931,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 	}
     }
 
-    if (gretl_compiling_loop()) { 
+    if (gretl_compiling_loop()) {
 	/* when stacking commands for a loop, parse "lightly" */
 	err = get_command_index(line, LOOP, cmd);
     } else {
@@ -10022,18 +9939,18 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
     }
 
 #if CMD_DEBUG
-    fprintf(stderr, "gui_exec_line: '%s'\n cmd = %p, cmd->ci = %d, param = '%s'\n", 
+    fprintf(stderr, "gui_exec_line: '%s'\n cmd = %p, cmd->ci = %d, param = '%s'\n",
 	    line, (void *) cmd, cmd->ci, cmd->param);
 #endif
 
     if (err) {
 	int catch = 0;
-	
+
 	gretl_exec_state_uncomment(s);
 	if (err != E_ALLOC && (cmd->flags & CMD_CATCH)) {
 	    set_gretl_errno(err);
 	    catch = 1;
-	}	
+	}
         errmsg(err, prn);
 	return (catch)? 0 : err;
     }
@@ -10059,7 +9976,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 		     "Type 'endloop' to get out\n"));
     }
 
-    if (cmd->ci == LOOP || gretl_compiling_loop()) {  
+    if (cmd->ci == LOOP || gretl_compiling_loop()) {
 	/* accumulating loop commands */
 	err = gretl_loop_append_line(s, dset);
 	if (err) {
@@ -10069,12 +9986,12 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 	    record_command_verbatim();
 	}
 	return err;
-    } 
+    }
 
     /* Set up to save output to a specific buffer, if wanted */
     if (*cmd->savename != '\0' && TEXTSAVE_OK(cmd->ci)) {
 	ppos = gretl_print_tell(prn);
-    } 
+    }
 
     check_for_loop_only_options(cmd->ci, cmd->opt, prn);
 
@@ -10082,7 +9999,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 
     case DATA:
 	err = db_get_series(cmd->param, dset, cmd->opt, prn);
-        if (!err) { 
+        if (!err) {
 	    clean_up_varlabels(dset);
 	    register_data(DATA_APPENDED);
 	    if (gretl_messages_on()) {
@@ -10146,11 +10063,6 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 	err = script_open_append(s, dset, prn, parent);
 	break;
 
-    case PKG:
-	err = script_exec_pkg_command(cmd->param, cmd->parm2, cmd->opt,
-				      prn, parent, NULL);
-	break;
-
     case NULLDATA:
 	if (dataset_locked()) {
 	    break;
@@ -10160,9 +10072,9 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 	    pputs(prn, _("Data series length count missing or invalid\n"));
 	} else {
 	    close_session(cmd->opt);
-	    err = open_nulldata(dset, data_status, cmd->order, 
+	    err = open_nulldata(dset, data_status, cmd->order,
 				OPT_NONE, prn);
-	    if (err) { 
+	    if (err) {
 		errmsg(err, prn);
 	    } else {
 		register_data(NULLDATA_STARTED);
@@ -10197,7 +10109,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 	} else if (cmd->ci == INCLUDE && gfn_is_loaded(runfile)) {
 	    break;
 	}
-	if (!strcmp(runfile, s->runfile)) { 
+	if (!strcmp(runfile, s->runfile)) {
 	    pprintf(prn, _("Infinite loop detected in script\n"));
 	    err = 1;
 	} else {
@@ -10271,7 +10183,15 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 	/* Falls through. */
 
     default:
+	if (cmd->ci == PKG) {
+	    /* ancillary to gui_callback on success */
+	    set_pkgview_parent(parent);
+	}
 	err = gretl_cmd_exec(s, dset);
+	if (cmd->ci == PKG) {
+	    /* forestall use of stale information */
+	    set_pkgview_parent(NULL);
+	}
 	break;
     } /* end of command switch */
 

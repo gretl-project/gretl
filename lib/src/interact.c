@@ -71,6 +71,7 @@
 
 static int install_function_package (const char *pkgname,
 				     gretlopt opt,
+				     ExecState *s,
 				     PRN *prn);
 
 static int strip_inline_comments (char *s)
@@ -1180,12 +1181,13 @@ static int do_pca (int *list, DATASET *dset,
 static int do_pkg_command (const char *action,
 			   const char *pkgname,
 			   gretlopt opt,
+			   ExecState *s,
 			   PRN *prn)
 {
     int err = 0;
 
     if (!strcmp(action, "install")) {
-	install_function_package(pkgname, opt, prn);
+	err = install_function_package(pkgname, opt, s, prn);
     } else if (!strcmp(action, "unload")) {
 	err = uninstall_function_package(pkgname, OPT_NONE, prn);
     } else if (!strcmp(action, "remove")) {
@@ -2372,6 +2374,7 @@ static int model_print_driver (MODEL *pmod, DATASET *dset,
 #if USE_CURL
 
 static int package_check_dependencies (const char *fname,
+				       ExecState *s,
 				       PRN *prn)
 {
     fnpkg *pkg;
@@ -2391,7 +2394,7 @@ static int package_check_dependencies (const char *fname,
 	    for (i=0; i<ndeps && !err; i++) {
 		pkgpath = gretl_function_package_get_path(depends[i], PKG_ALL);
 		if (pkgpath == NULL) {
-		    err = install_function_package(depends[i], OPT_D, prn);
+		    err = install_function_package(depends[i], OPT_D, s, prn);
 		}
 		free(pkgpath);
 	    }
@@ -2404,6 +2407,7 @@ static int package_check_dependencies (const char *fname,
 
 static int install_function_package (const char *pkgname,
 				     gretlopt opt,
+				     ExecState *s,
 				     PRN *prn)
 {
     char *fname = NULL;
@@ -2480,10 +2484,8 @@ static int install_function_package (const char *pkgname,
 	}
 
 	if (!err) {
-	    package_check_dependencies(fullname, prn);
+	    package_check_dependencies(fullname, s, prn);
 	}
-
-	g_free(fullname);
 
 	if (!err && gretl_messages_on()) {
 	    if (opt & OPT_D) {
@@ -2492,6 +2494,24 @@ static int install_function_package (const char *pkgname,
 		pprintf(prn, "Installed %s\n", basename);
 	    }
 	}
+
+	if (!err && s != NULL && gui_callback != NULL && !(opt & OPT_D)) {
+	    /* FIXME: handling of OPT_D here? */
+	    gretl_bundle *b = gretl_bundle_new();
+	    char *p, *nosfx = gretl_strdup(basename);
+
+	    p = strrchr(nosfx, '.');
+	    if (p != NULL) {
+		*p = '\0';
+	    }
+	    gretl_bundle_set_string(b, "filename", fullname);
+	    gretl_bundle_set_string(b, "pkgname", nosfx);
+	    gretl_bundle_set_int(b, "zipfile", filetype == 2);
+	    gui_callback(s, b, GRETL_OBJ_BUNDLE);
+	    free(nosfx);
+	}
+
+	g_free(fullname);
     }
 
     free(fname);
@@ -2505,6 +2525,7 @@ static int install_function_package (const char *pkgname,
 
 static int install_function_package (const char *pkgname,
 				     gretlopt opt,
+				     ExecState *s,
 				     PRN *prn)
 {
     char *fname = NULL;
@@ -3124,7 +3145,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case PKG:
-	err = do_pkg_command(cmd->param, cmd->parm2, cmd->opt, prn);
+	err = do_pkg_command(cmd->param, cmd->parm2, cmd->opt, s, prn);
 	break;
 
     case MAKEPKG:
