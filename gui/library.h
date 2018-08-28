@@ -350,12 +350,6 @@ int exec_line_with_output_handler (ExecState *s,
 				   const char *title,
 				   windata_t **outwin);
 
-int script_install_function_package (const char *pkgname,
-				     gretlopt opt,
-				     PRN *prn,
-				     GtkWidget *parent,
-				     char **gfnpath);
-
 void finalize_script_output_window (int role, gpointer data);
 
 void start_wait_for_output (windata_t *vwin, GtkWidget *w);
