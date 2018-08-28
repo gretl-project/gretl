@@ -128,7 +128,6 @@ static struct gretl_cmd gretl_cmds[] = {
     { IF,       "if",       CI_EXPR },
     { INCLUDE,  "include",  CI_PARM1 | CI_FNAME },
     { INFO,     "info",     CI_NOOPT },
-    { INSTALL,  "install",  CI_PARM1 },
     { INTREG,   "intreg",   CI_LIST },
     { JOIN,     "join",     CI_PARM1 | CI_FNAME | CI_EXTRA },
     { KPSS,     "kpss",     CI_ORD1 | CI_LIST },
@@ -212,6 +211,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { FUNDEBUG, "debug",    CI_PARM1 },
     { FUNCRET,  "return",   CI_EXPR },
     { CATCH,    "catch",    0 },
+    { PKG,      "pkg",      CI_PARM1 | CI_PARM2 },
     { NC,       NULL,       0 }
 };
 
@@ -1198,6 +1198,44 @@ static void handle_legacy_gnuplot_options (CMD *c)
     }
 }
 
+/* handle --remove and --purge, which used to be options
+   to the defunct "install" command
+*/
+
+static void handle_legacy_install_options (CMD *c)
+{
+    char optflag[OPTLEN];
+    cmd_token *tok;
+    int i, j, pos;
+    int err, done = 0;
+
+    for (i=1; i<c->ntoks && !done; i++) {
+	tok = &c->toks[i];
+	if (token_done(tok)) {
+	    continue;
+	}
+	if (tok->type == TOK_OPT) {
+	    pos = i;
+	    err = assemble_option_flag(c, tok, optflag, &i, 1);
+	    if (err) {
+		break;
+	    }
+	    if (!strcmp(optflag, "remove")) {
+		c->opt |= OPT_R;
+		done = 1;
+	    } else if (!strcmp(optflag, "purge")) {
+		c->opt |= OPT_P;
+		done = 1;
+	    }
+	    if (done) {
+		for (j=pos; j<=i; j++) {
+		    c->toks[j].flag |= TOK_DONE;
+		}
+	    }
+	}
+    }
+}
+
 static int check_command_options (CMD *c)
 {
     cmd_token *tok;
@@ -1216,6 +1254,8 @@ static int check_command_options (CMD *c)
 	c->ci = gretl_command_number(c->param);
     } else if (c->ci == GNUPLOT) {
 	handle_legacy_gnuplot_options(c);
+    } else if (c->ci == PKG && (c->opt & OPT_B)) {
+	handle_legacy_install_options(c);
     }
 
     for (i=1; i<c->ntoks && !err; i++) {
@@ -1581,6 +1621,27 @@ static int get_param (CMD *c, const DATASET *dset)
     return c->err;
 }
 
+static int pkg_params_compat (CMD *c)
+{
+    /* swap pkgname into second position */
+    c->parm2 = c->param;
+
+    if (c->opt & OPT_R) {
+	/* compat for old --remove */
+	c->param = gretl_strdup("unload");
+	c->opt ^= OPT_R;
+    } else if (c->opt & OPT_P) {
+	/* compat for old --purge */
+	c->param = gretl_strdup("remove");
+	c->opt ^= OPT_P;
+    } else {
+	/* implicit alternative */
+	c->param = gretl_strdup("install");
+    }
+
+    return 0;
+}
+
 /* Get command parameter in last position; may involve
    compositing tokens.
 */
@@ -1599,6 +1660,10 @@ static int get_parm2 (CMD *c, int options_later)
 	       in second place?
 	    */
 	    ;
+	} else if (c->ci == PKG && (c->opt & OPT_B)) {
+	    /* "install" emulating "pkg" */
+	    c->err = pkg_params_compat(c);
+	    c->opt ^= OPT_B; /* scrub temporary option */
 	} else if (!parm2_optional(c->ci)) {
 	    c->err = E_ARGS;
 	    fprintf(stderr, "%s: required parm2 is missing\n",
@@ -2354,6 +2419,9 @@ static int try_for_command_alias (const char *s, CMD *cmd)
     } else if (!strcmp(s, "fcasterr")) {
 	deprecate_alias("fcasterr", "fcast", 1);
 	ci = FCAST;
+    } else if (!strcmp(s, "install")) {
+	ci = PKG;
+	cmd->opt |= OPT_B; /* back-compat */
 #if ALLOW_ADDOBS
     } else if (!strcmp(s, "addobs")) {
 	deprecate_alias("addobs", "dataset addobs", 0);

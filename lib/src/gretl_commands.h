@@ -81,7 +81,6 @@ typedef enum {
     IF,
     INCLUDE,
     INFO,
-    INSTALL,
     INTREG,
     JOIN,
     KPSS,
@@ -165,6 +164,7 @@ typedef enum {
     FUNDEBUG,
     FUNCRET,
     CATCH,
+    PKG,
     NC
 } GretlCmdIndex;
 

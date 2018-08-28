@@ -1177,6 +1177,26 @@ static int do_pca (int *list, DATASET *dset,
     return err;
 }
 
+static int do_pkg_command (const char *action,
+			   const char *pkgname,
+			   gretlopt opt,
+			   PRN *prn)
+{
+    int err = 0;
+
+    if (!strcmp(action, "install")) {
+	install_function_package(pkgname, opt, prn);
+    } else if (!strcmp(action, "unload")) {
+	err = uninstall_function_package(pkgname, OPT_NONE, prn);
+    } else if (!strcmp(action, "remove")) {
+	err = uninstall_function_package(pkgname, OPT_P, prn);
+    } else {
+	err = E_PARSE;
+    }
+
+    return err;
+}
+
 static void print_info (gretlopt opt, DATASET *dset, PRN *prn)
 {
     if (dset != NULL && dset->descrip != NULL) {
@@ -3103,12 +3123,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	}
 	break;
 
-    case INSTALL:
-	if (cmd->opt & (OPT_R | OPT_P)) {
-	    err = uninstall_function_package(cmd->param, cmd->opt, prn);
-	} else {
-	    err = install_function_package(cmd->param, cmd->opt, prn);
-	}
+    case PKG:
+	err = do_pkg_command(cmd->param, cmd->parm2, cmd->opt, prn);
 	break;
 
     case MAKEPKG:

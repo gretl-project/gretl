@@ -9615,11 +9615,12 @@ static int script_delete_function_package (const char *param,
     return err;
 }
 
-int script_install_function_package (const char *pkgname,
-				     gretlopt opt,
-				     PRN *prn,
-				     GtkWidget *parent,
-				     char **gfnpath)
+int script_exec_pkg_command (const char *action,
+			     const char *pkgname,
+			     gretlopt opt,
+			     PRN *prn,
+			     GtkWidget *parent,
+			     char **gfnpath)
 {
     char *fname = NULL;
     int filetype = 0;
@@ -9627,8 +9628,12 @@ int script_install_function_package (const char *pkgname,
     int http = 0;
     int err = 0;
 
-    if (opt & (OPT_R | OPT_P)) {
-	return script_delete_function_package(pkgname, opt, prn);
+    if (!strcmp(action, "unload")) {
+	return script_delete_function_package(pkgname, OPT_NONE, prn);
+    } else if (!strcmp(action, "remove")) {
+	return script_delete_function_package(pkgname, OPT_P, prn);
+    } else if (strcmp(action, "install")) {
+	return E_PARSE;
     }
 
     if (!strncmp(pkgname, "http://", 7) ||
@@ -9672,6 +9677,8 @@ int script_install_function_package (const char *pkgname,
 	}
     }
 
+    /* FIXME "install" and dependencies? */
+
     if (!err && filetype) {
 	const char *basename = fname != NULL ? fname : pkgname;
 	const char *instpath = gretl_function_package_path();
@@ -9707,7 +9714,7 @@ int script_install_function_package (const char *pkgname,
 	    maybe_update_pkgview(fullname, trimmed, filetype == 2,
 				 parent);
 	    if (gretl_messages_on()) {
-		pprintf(prn, "Installed %s\n", trimmed);
+		pprintf(prn, _("Installed %s\n"), trimmed);
 	    }
 	    g_free(trimmed);
 	}
@@ -10139,9 +10146,9 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 	err = script_open_append(s, dset, prn, parent);
 	break;
 
-    case INSTALL:
-	err = script_install_function_package(cmd->param, cmd->opt,
-					      prn, parent, NULL);
+    case PKG:
+	err = script_exec_pkg_command(cmd->param, cmd->parm2, cmd->opt,
+				      prn, parent, NULL);
 	break;
 
     case NULLDATA:

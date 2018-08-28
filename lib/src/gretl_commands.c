@@ -91,7 +91,6 @@ static struct gretl_cmd gretl_cmds[] = {
     { IF,       "if" },
     { INCLUDE,  "include" },
     { INFO,     "info" },
-    { INSTALL,  "install" },
     { INTREG,   "intreg" },
     { JOIN,     "join" },
     { KPSS,     "kpss" },
@@ -175,6 +174,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { FUNDEBUG, "debug" },
     { FUNCRET,  "return" },
     { CATCH,    "catch" },
+    { PKG,      "pkg" },
     { NC,       NULL}
 }; 
 
