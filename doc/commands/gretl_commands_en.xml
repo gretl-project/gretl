@@ -6256,79 +6256,6 @@
 
   </command>
 
-  <command name="install" section="Utilities" context="cli">
-
-    <usage>
-      <arguments>
-        <argument>pkgname</argument>
-      </arguments>
-      <options>
-        <option>
-	  <flag>--local</flag>
-	  <effect>install from local file</effect>
-        </option>
-        <option>
-	  <flag>--remove</flag>
-	  <effect>see below</effect>
-        </option>
-        <option>
-	  <flag>--purge</flag>
-	  <effect>see below</effect>
-        </option>
-      </options>
-     <examples>
-        <example>install armax</example>
-        <example>install felogit.gfn</example>
-	<example>install /path/to/myfile.gfn --local</example>
-	<example>install http://foo.bar.net/gretl/myfile.gfn</example>
-     </examples>
-    </usage>
-
-    <description>
-      <para>
-	Installer for gretl function packages (<lit>gfn</lit> or
-	<lit>zip</lit> files).
-      </para>
-      <para>
-	If this command is given the <quote>plain</quote> name of a
-	gretl function package (as in the first two examples) the
-	action is to download the specified package from the gretl
-	server and install it on the local machine. In this case
-	it is not necessary to supply a filename extension.
-      </para>
-      <para>
-	If the <opt>local</opt> option is given, the
-	<repl>pkgname</repl> argument should be the path to an
-	uninstalled package file on the local machine, with the
-	correct extension. The action is to copy the file into place
-	(<lit>gfn</lit>), or unzip it into place (<lit>zip</lit>),
-	<quote>into place</quote> meaning where the <cmdref
-	targ="include"/> command will find it.
-      </para>
-      <para>
-	When no option is given, if <repl>pkgname</repl> begins with
-	<lit>http://</lit>, the effect is to download a package file
-	from a specified server and install it locally.
-      </para>
-      <para>
-	With the <opt>remove</opt> or <opt>purge</opt> option the
-	inverse operation is performed; that is, an installed package
-	is uninstalled. If just <opt>remove</opt> is given, the
-	specified package is unloaded from memory and is removed from
-	the GUI menu to which it is attached, if any. If the
-	<opt>purge</opt> option is given then in addition to the
-	actions just mentioned the package file is deleted. (If the
-	package is installed in its own subdirectory, the whole
-	subdirectory is deleted.)
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>/File/Function packages/On server</menu-path>
-    </gui-access>
-
-  </command>
-
   <command name="intreg" section="Estimation" label="Interval regression model">
 
     <usage>
@@ -10032,8 +9959,68 @@
       <menu-path>/Variable/Periodogram</menu-path>
       <other-access>Main window pop-up menu (single selection)</other-access>
     </gui-access>
-
   </command>
+
+  <command name="pkg" section="Utilities" context="cli">
+    <usage>
+      <arguments>
+	<argument>action</argument>
+        <argument>pkgname</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--local</flag>
+	  <effect>install from local file</effect>
+        </option>
+      </options>
+     <examples>
+        <example>pkg install armax</example>
+	<example>pkg install /path/to/myfile.gfn --local</example>
+	<example>pkg unload armax</example>
+     </examples>
+    </usage>
+
+    <description>
+      <para>
+	This command provides a means of installing, unloading, or
+	deleting gretl function packages. The <repl>action</repl>
+	argument must be one of <lit>install</lit>, <lit>unload</lit>
+	or <lit>remove</lit>.
+      </para>
+      <para>
+	<lit>install</lit>: In the most basic form, with no option
+	flag and the <repl>pkgname</repl> argument given as the
+	<quote>plain</quote> name of a gretl function package (as in
+	the first example above), the effect is to download the
+	specified package from the gretl server and install it on the
+	local machine. In this case it is not necessary to supply a
+	filename extension. If the <opt>local</opt> option is given,
+	however, <repl>pkgname</repl> should be the path to an
+	uninstalled package file on the local machine, with the
+	correct extension (<lit>.gfn</lit> or <lit>.zip</lit>). In
+	this case the effect is to copy the file into place
+	(<lit>gfn</lit>), or unzip it into place (<lit>zip</lit>),
+	<quote>into place</quote> meaning where the <cmdref
+	targ="include"/> command will find it.
+      </para>
+      <para>
+	<lit>unload</lit>: <repl>pkgname</repl> should be given in
+	plain form, without path or suffix as in the last example
+	above.  The effect is to unload the package in question from
+	gretl's memory, if it is currently loaded, and also to remove
+	it from the GUI menu to which it is attached, if any.
+      </para>
+      <para>
+	<lit>remove</lit>: performs the actions noted for
+	<lit>unload</lit> and in addition deletes the file(s)
+	associated with the package from disk.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/File/Function packages/On server</menu-path>
+    </gui-access>
+  </command>  
 
   <command name="pkg-depends" section="Programming"
 	   label="Dependencies" context="gui">
@@ -10705,7 +10692,7 @@
 
   </command>
 
-  <command name="pvalue" section="Utilities"
+  <command name="pvalue" section="Statistics"
     label="Compute p-values" context="cli">
 
     <usage>
