@@ -5,6 +5,8 @@ version 2018c, in progress
 - Internal representation of missing values: switch to
   using NaN
 - Matrix "division": handle the rank-deficient case properly
+- "install" command: replace with new "pkg" command (but the
+  old form still works until further notice)
 
 2018-08-11 version 2018b
 - New feature: support for data access via dbnomics
