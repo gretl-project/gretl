@@ -9592,14 +9592,19 @@ GList *get_or_send_gui_models (GList *list)
     }
 }
 
-static int script_delete_function_package (const char *param,
-					   gretlopt opt,
+static int script_delete_function_package (const char *action,
+					   const char *param,
 					   PRN *prn)
 {
     gchar *gfnname = NULL;
     gchar *pkgname = NULL;
     char *p, fname[MAXLEN];
+    int delfile = 0;
     int err;
+
+    if (!strcmp(action, "remove")) {
+	delfile = 1;
+    }
 
     if (has_suffix(param, ".gfn")) {
 	gfnname = g_strdup(param);
@@ -9624,7 +9629,7 @@ static int script_delete_function_package (const char *param,
 	function_package_unload_full_by_filename(fname);
 	/* remove entry from registry, if present */
 	gui_function_pkg_unregister(pkgname);
-	if (opt & OPT_P) {
+	if (delfile) {
 	    /* delete package file(s) */
 	    err = delete_function_package(fname);
 	    if (!err) {
@@ -9640,10 +9645,10 @@ static int script_delete_function_package (const char *param,
 
     if (err) {
 	errmsg(err, prn);
-    } else if (opt & OPT_P) {
-	pprintf(prn, "Purged %s\n", pkgname);
-    } else {
+    } else if (delfile) {
 	pprintf(prn, "Removed %s\n", pkgname);
+    } else {
+	pprintf(prn, "Unloaded %s\n", pkgname);
     }
 
     g_free(gfnname);
@@ -10172,6 +10177,17 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 	}
 	break;
 
+    case PKG:
+	if (!strcmp(cmd->param, "unload") ||
+	    !strcmp(cmd->param, "remove")) {
+	    err = script_delete_function_package(cmd->param, cmd->parm2, prn);
+	} else {
+	    set_pkgview_parent(parent);
+	    err = gretl_cmd_exec(s, dset);
+	    set_pkgview_parent(NULL);
+	}
+	break;
+
     case DATAMOD:
 	if (cmd->auxint == DS_CLEAR) {
 	    close_session(cmd->opt);
@@ -10183,15 +10199,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 	/* Falls through. */
 
     default:
-	if (cmd->ci == PKG) {
-	    /* ancillary to gui_callback on success */
-	    set_pkgview_parent(parent);
-	}
 	err = gretl_cmd_exec(s, dset);
-	if (cmd->ci == PKG) {
-	    /* forestall use of stale information */
-	    set_pkgview_parent(NULL);
-	}
 	break;
     } /* end of command switch */
 
