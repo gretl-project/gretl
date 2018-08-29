@@ -334,15 +334,16 @@ you'd expect to find it (Figure~\ref{fig:ghegy-hook}).\footnote{You
 \subsection{Installing a package via the command line}
 \label{sec:cli-install}
 
-An alternative mechanism is provided by gretl's \cmd{install} command,
+An alternative mechanism is provided by gretl's \cmd{pkg} command,
 which can be invoked in the gretl console or in the command-line
-program \app{gretlcli}. This command has three modes:
+program \app{gretlcli}. In its ``install'' mode this command has three
+variants:
 
 \begin{enumerate}
 \item If you just type, for example,
 %
 \begin{code}
-install GHegy
+pkg install GHegy
 \end{code}
 %
 the presumption is that you mean to install a package named
@@ -355,7 +356,7 @@ what you want.
   on your own machine using the full URL, as in
 %
 \begin{code}
-install http://somewhere.net/gretl/splendid.gfn
+pkg install http://somewhere.net/gretl/splendid.gfn
 \end{code}
 %
 \item Finally, suppose you have somehow got a copy of a function
@@ -364,12 +365,12 @@ install http://somewhere.net/gretl/splendid.gfn
   (and you need to know the path to the file). So you might type
 %
 \begin{code}
-install /Users/Me/Downloads/splendid.gfn --local
+pkg install /Users/Me/Downloads/splendid.gfn --local
 \end{code}
 %
 \end{enumerate}
 
-We have illustrated variants 2 and 3 of the \cmd{install} command
+We have illustrated variants 2 and 3 of the \cmd{pkg} command
 with \textsf{gfn} files, but note that they will also work for
 packages in \textsf{zip} format.
 
@@ -399,10 +400,10 @@ confusion between functions you have written and those provided by a
 package. The latter is of course more radical, and requires you to
 reinstall the package if you change your mind.
 
-Packages can also be removed via the command line: use the
-\cmd{install} command with the name of an installed package plus
-\option{remove} or \option{purge}. The former option unloads a package
-from memory and also removes its menu attachment, if any (see
+Packages can also be removed via the command line: use the \cmd{pkg}
+command with the name of an installed package plus \option{unload} or
+\option{remove}. The former option unloads a package from memory and
+also removes its menu attachment, if any (see
 section~\ref{manage-menus}); the latter option performs these actions
 but also deletes the package file(s).
 
@@ -881,18 +882,18 @@ simple case of this is shown in Listing~\ref{ex:spec1}.
 author = A. U. Thor
 email = author@somewhere.net
 version = 1.0
-date = 2015-07-12
+date = 2018-07-12
 description = Suitable description goes here
 tags = C13
 public = myfunc
 help = mypkg_help.txt
 sample-script = mypkg_sample.inp
-min-version = 1.9.3
+min-version = 2017a
 \end{code}
 \end{script}
 
 According to this spec, the package has a single public function,
-\texttt{myfunc}, and requires gretl 1.9.3 or higher to run
+\texttt{myfunc}, and requires gretl 2017a or higher to run
 properly. For details on the specification keys used here (e.g.\
 \texttt{tags} or \texttt{min-version}) see
 section~\ref{sec:spec-basic}.
@@ -1031,7 +1032,7 @@ $(PKG).gfn: $(PKG).inp $(PKG).spec $(PKG)_help.txt $(PKG)_sample.inp
 	gretlcli --makepkg $(PKG).inp
 
 install: $(PKG).gfn
-	echo install $(PKG).gfn --local | gretlcli -b -
+	echo pkg install $(PKG).gfn --local | gretlcli -b -
 
 clean: 
 	rm -f $(PKG).gfn
@@ -2304,7 +2305,7 @@ $(PKG).zip: $(PKG).gfn $(PKG).pdf
 	echo makepkg $(PKG).zip | gretlcli -b -
 
 install: $(PKG).zip
-	echo install $(PKG).zip --local | gretlcli -b -
+	echo pkg install $(PKG).zip --local | gretlcli -b -
 
 clean: 
 	rm -f $(PKG).gfn $(PKG).pdf $(PKG).zip
@@ -2465,7 +2466,7 @@ Figure~\ref{fig:package_editor}).
   package might fail and give the user a bad impression). See
   section~\ref{sec:versioning} for further details.
 
-   \ttusage{min-version = 2012a}
+   \ttusage{min-version = 2018a}
 
 \end{description}
 
@@ -2717,9 +2718,9 @@ displaying a \textsf{gig} bundle.
 \section{Extra elements}
 \label{sec:spec-extra}
 
-At present there is only one spec file entry in this category; in the
-GUI package editor it appears under the \textsf{Data files} tab in the
-\textsf{Extra properties} window.
+At present there are two spec file entries in this category; in the
+GUI package editor they appear under the tabs \textsf{Data files} and
+\textsf{Dependencies} in the \textsf{Extra properties} window.
 
 \begin{description}
 
@@ -2730,41 +2731,38 @@ GUI package editor it appears under the \textsf{Data files} tab in the
 
   \ttusage{data-files = special.gdt extradir}
 
+\item \texttt{depends} (optional): Specifies one or more packages upon
+  which the given package depends. This information should be added if
+  the package calls functions that reside in other packages. For
+  example, there's a package named \texttt{extra} which provides
+  various utility functions that are not available as gretl built-ins.
+  If your packages uses functions from \texttt{extra} you should
+  include the following line in its spec file.
+
+  \ttusage{depends = extra}  
+
 \end{description}
+
+In each case multiple elements should be separated by spaces.
+
 
 \section{A note on gretl versioning}
 \label{sec:versioning}
 
-As time passes this note should become redundant, but as of this
-writing (October 2015) gretl is in transition between two versioning
-schemes.
-
-For many years, gretl version identifiers have taken the form
-\texttt{M.N.P}: three integers with the traditional interpretation
-\texttt{M} = ``major version'', \texttt{N} = ``minor version'',
-\texttt{P} = ``patch-level''. However, at the biennial gretl
-conference in Berlin in the summer of 2015 it was suggested (and
-broadly accepted) that this scheme doesn't make a great deal of sense
-for gretl releases (although it does make good sense for software
-\textit{libraries} that are widely used by other programs, for reasons
-that we needn't go into here---but see \url{http://semver.org/} if
-you're interested).
-
-The idea is that the development of gretl is a more or less continuous
-process, and it's more relevant to identify gretl releases by the year
-of the release (e.g.\ 2015) plus a letter to represent the release
-sequence in any given year: so \texttt{2015a}, \texttt{2015b}, and so
-on.\footnote{Not that we're devoted to copying anyone else, but this
-  is how \textsf{Matlab} currently identifies its releases.}
-
-For authors of function packages the question arises: given this
-change, how should you identify the minimal gretl version with which
-your function package is compatible?
+For some years now gretl version identifiers have taken the form
+``year of release plus sequential letter'', as in \texttt{2018a}, \texttt{2018b} and so
+on.  Prior to October 2015, however, a different scheme was in use:
+version identifiers took the form \texttt{M.N.P}: three integers with
+the interpretation \texttt{M} = ``major version'', \texttt{N} =
+``minor version'', \texttt{P} = ``patch-level''.  For authors of
+function packages the question arises: given this change, how should
+you identify the minimal gretl version with which your function
+package is compatible?
 
 In a package \textsf{spec} file the best policy is to use the
-``historical'' identifiers for gretl releases up to 1.10.2, and the
-new style for gretl \texttt{2015d} onward. In the GUI package editor
-only the new style is supported. The gretl ChangeLog
+``historical'' identifiers for gretl releases up to \texttt{1.10.2},
+and the new style for gretl \texttt{2015d} onward. In the GUI package
+editor only the new style is supported. The gretl ChangeLog
 (\url{http://gretl.sourceforge.net/ChangeLog.html}) can be used to map
 from historical identifiers to their new-style equivalents. For
 example, the old-style version number \texttt{1.9.8} maps to
@@ -2774,8 +2772,8 @@ example, the old-style version number \texttt{1.9.8} maps to
 \label{chap:zipfile}
 
 The zip format was originally supported only for officially recognized
-``addons'' such as \textsf{gig} and \textsf{SVAR}, but since gretl
-1.10.1 it is also supported for contributed function packages.
+``addons'' such as \textsf{gig} and \textsf{SVAR}, but since 2015 it
+is also supported for contributed function packages.
 
 \section{Basic specification}
 
