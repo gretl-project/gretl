@@ -33,26 +33,23 @@
 \section{Introduction}
 \label{sec:intro}
 
-This is preliminary documentation for a gretl function named
-\texttt{svm}, which offers an interface to the machine-learning
-functionality provided by \textsf{libsvm} (SVM = Support Vector
-Machine). We assume that the reader knows at least a little about
-machine learning and how it relates to econometrics. If this
-assumption does not hold please take a look at \cite{mull-spiess17},
-or google the topic if you prefer, and come back when you're
-ready.\footnote{For a good account of the technical background on
-  SVMs, see \cite{smola04}.}
+This is documentation for a gretl function named \texttt{svm}, which
+offers an interface to the machine-learning functionality provided by
+\textsf{libsvm} (SVM = Support Vector Machine). We assume that the
+reader knows at least a little about machine learning and how it
+relates to econometrics. If this assumption does not hold please take
+a look at \cite{mull-spiess17}, or google the topic if you prefer, and
+come back when you're ready.\footnote{For a good account of the
+  technical background on SVMs, see \cite{smola04}.}
 
 Libsvm is an open-source library (see
 \url{https://www.csie.ntu.edu.tw/~cjlin/libsvm/}) and gretl (as we
 suppose you know) is an open-source, cross-platform econometrics
 package (\url{http://gretl.sourceforge.net/}). Support for
-\texttt{libsvm} in gretl was added in August, 2017, and is present in
-release \texttt{2017d}, dated 2017-11-07. Since then, however, some
-improvements have been made and at present you'll be better off using
-a current ``snapshot'' (for MS Windows or Mac OS), or gretl built from
-the current git source on Linux or similar OS, to experiment with
-this.
+\texttt{libsvm} in gretl was added in the \texttt{2017d} release
+(2017-11-07). Since then, however, some improvements have been made
+and at present you'll be better off using gretl \texttt{2018a} or
+higher to work with this.
 
 In section~\ref{sec:function} we outline the gretl \texttt{svm}
 function as it stands and illustrate its usage via a few example
@@ -1230,9 +1227,9 @@ there any build-time switch to enable it. The \textsf{libvsm} FAQ at
 
 has a recipe for adding \textsf{OpenMP} support, which involves
 editing the main source file, \texttt{svm.cpp}, as well as the
-project's \texttt{Makefile}. Linux packagers sometimes trouble to
-make that sort of enhancement but it doesn't seem that anyone has done
-so in this case; at any rate there's no \textsf{OpenMP} support in the
+project's \texttt{Makefile}. Linux packagers sometimes trouble to make
+that sort of enhancement but it doesn't seem that anyone has done so
+in this case; at any rate there was no \textsf{OpenMP} support in the
 \texttt{libsvm-3.21-1} package for Fedora 25 or the
 \texttt{libsvm3\_3.21} package for Debian.
 
@@ -1242,7 +1239,7 @@ out---when building \textsf{libsvm} from source, but it will be a good
 deal easier to use this little package containing a modified
 \texttt{Makefile} and \texttt{svm.cpp}:
 
-\url{http://ricardo.ecn.wfu.edu/pub/gretl/svm/svm-3.22-openmp.tar.gz}
+\url{http://ricardo.ecn.wfu.edu/pub/gretl/svm/svm-3.23-openmp.tar.gz}
 
 We show below a shell script to build and install the software. But
 note that by default installation is under \texttt{/usr/local}; if
@@ -1250,14 +1247,14 @@ that doesn't suit you, change the definition of \texttt{PREFIX} in the
 revised \texttt{Makefile} before installing.
 \begin{code}
 #!/bin/sh
-wget http://www.csie.ntu.edu.tw/~cjlin/libsvm/libsvm-3.22.tar.gz
-tar xvf libsvm-3.22.tar.gz
-wget http://ricardo.ecn.wfu.edu/pub/gretl/svm/svm-3.22-openmp.tar.gz
-cd libsvm-3.22
+wget http://www.csie.ntu.edu.tw/~cjlin/libsvm/libsvm-3.23.tar.gz
+tar xvf libsvm-3.23.tar.gz
+wget http://ricardo.ecn.wfu.edu/pub/gretl/svm/svm-3.23-openmp.tar.gz
+cd libsvm-3.23
 mv Makefile Makefile.orig
 mv svm.cpp svm.cpp.orig
 # replace Makefile and svm.cpp
-tar xvf ../svm-3.22-openmp.tar.gz
+tar xvf ../svm-3.23-openmp.tar.gz
 # may want to edit Makefile here?
 make && sudo make install
 \end{code}
