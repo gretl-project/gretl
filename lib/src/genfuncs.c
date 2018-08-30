@@ -1186,7 +1186,7 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 
 	for (i=u1; i<=u2 && !TV; i++) {
 	    xref = NADBL;
-	    for (t=1; t<T && !TV; t++) {
+	    for (t=0; t<T && !TV; t++) {
 		s = i*T + t;
 		if (panel_obs_ok(x, s, mask)) {
 		    if (na(xref)) {
