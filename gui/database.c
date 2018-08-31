@@ -810,7 +810,7 @@ static DATASET *dataset_from_dbwrapper (dbwrapper *dw)
     DATASET *dset = NULL;
     SERIESINFO *sinfo;
     char stobs[OBSLEN], endobs[OBSLEN];
-    double xd, xdmax = 0, xdmin = NADBL;
+    double xd, xdmax = 0, xdmin = DBL_MAX;
     int n0 = 0, nmax = 0;
     int i;
 
