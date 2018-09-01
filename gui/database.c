@@ -3014,8 +3014,8 @@ static void get_local_object_status (const char *fname,
     }
 }
 
-static int read_remote_filetime (char *line, char *fname, time_t *date,
-				 char *buf)
+static int read_remote_filetime (char *line, char *fname,
+				 time_t *date, char *tbuf)
 {
     char month[4], hrs[9];
     int mday, yr, mon = 0;
@@ -3030,8 +3030,13 @@ static int read_remote_filetime (char *line, char *fname, time_t *date,
 
        "<bytes> <day> <mon> <mday> 00:00:00 <year> <filename>"
 
+       e.g.
+
+       "   2719 Foo Dec 17 00:00:00 2010     addlist.gfn"
+
        where <mon> is 3-letter month, <mday> is 2 digits,
-       and <year> is 4-digit year; <day> is not used.
+       and <year> is 4-digit year; in this context we actually
+       discard the first two fields, @bytes and @day.
     */
 
     if (sscanf(line, "%*s%*s%3s%2d%8s%4d%31s",
@@ -3043,10 +3048,6 @@ static int read_remote_filetime (char *line, char *fname, time_t *date,
 	if (!strcmp(month, months[i])) {
 	    mon = i;
 	}
-    }
-
-    if (buf != NULL) {
-	sprintf(buf, "%d-%02d-%02d", yr, mon + 1, mday);
     }
 
     if (date != NULL) {
@@ -3065,6 +3066,10 @@ static int read_remote_filetime (char *line, char *fname, time_t *date,
 	mytime.tm_mon = mon;
 
 	*date = mktime(&mytime);
+    }
+
+    if (tbuf != NULL) {
+	sprintf(tbuf, "%d-%02d-%02d", yr, mon + 1, mday);
     }
 
     return 0;
@@ -3751,10 +3756,10 @@ gint populate_remote_func_list (windata_t *vwin, int filter)
 	char *descrip = NULL;
 	char *version = NULL;
 	char *author = NULL;
-	char date[12];
+	char datestr[12];
 	gboolean zipfile;
 
-	if (read_remote_filetime(line, fname, &remtime, date)) {
+	if (read_remote_filetime(line, fname, &remtime, datestr)) {
 	    continue;
 	}
 
@@ -3793,7 +3798,7 @@ gint populate_remote_func_list (windata_t *vwin, int filter)
 	    gtk_list_store_set(store, &iter,
 			       0, basename,
 			       1, version,
-			       2, date,
+			       2, datestr,
 			       3, author,
 			       4, descrip,
 			       5, _(status),
