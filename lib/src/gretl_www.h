@@ -39,7 +39,8 @@ typedef enum {
     QUERY_SF,
     GRAB_FUNC_INFO,
     FUNC_FULLNAME,
-    LIST_CATS
+    LIST_CATS,
+    ALL_CATS
 } CGIOpt;
 
 int gretl_www_init (const char *host, const char *proxy, int use_proxy);
@@ -50,7 +51,7 @@ int list_remote_dbs (char **getbuf);
 
 int list_remote_function_packages (char **getbuf, int filter);
 
-int list_remote_function_categories (char **getbuf);
+int list_remote_function_categories (char **getbuf, gretlopt opt);
 
 int list_remote_data_packages (char **getbuf);
 

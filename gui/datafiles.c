@@ -1828,11 +1828,15 @@ static void maybe_add_gfn_filter (windata_t *vwin,
     char *getbuf = NULL;
     int err;
 
-    err = list_remote_function_categories(&getbuf);
+    err = list_remote_function_categories(&getbuf, OPT_NONE);
     if (!err && (getbuf == NULL || *getbuf != 'C')) {
 	free(getbuf);
 	err = 1;
     }
+
+#if 0
+    fprintf(stderr, "getbuf: '%s'\n", getbuf);
+#endif
 
     if (!err) {
 	GtkWidget *combo, *button;

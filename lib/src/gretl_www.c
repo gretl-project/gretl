@@ -303,6 +303,8 @@ static const char *print_option (int opt)
 	return "FUNC_FULLNAME";
     case LIST_CATS:
 	return "LIST_CATS";
+    case ALL_CATS:
+	return "ALL_CATS";
     default:
 	break;
     }
@@ -565,7 +567,7 @@ static int retrieve_url (const char *hostname,
 	strcat(u.url, datacgi);
     }
 
-    if (opt == LIST_CATS) {
+    if (opt == LIST_CATS || opt == ALL_CATS) {
 	/* getting gfn tags listing for GUI */
 	u.timeout = 8;
     }
@@ -749,9 +751,11 @@ int list_remote_function_packages (char **getbuf, int filter)
 			NULL, filter, getbuf);
 }
 
-int list_remote_function_categories (char **getbuf)
+int list_remote_function_categories (char **getbuf, gretlopt opt)
 {
-    return retrieve_url(gretlhost, LIST_CATS, NULL, NULL,
+    CGIOpt cval = (opt & OPT_A) ? ALL_CATS : LIST_CATS;
+
+    return retrieve_url(gretlhost, cval, NULL, NULL,
 			NULL, 0, getbuf);
 }
 

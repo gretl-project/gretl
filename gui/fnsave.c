@@ -2318,7 +2318,7 @@ static void add_tag_selectors (GtkWidget *tbl, int i,
     int n_tags = 0;
     int j, err;
 
-    err = list_remote_function_categories(&getbuf);
+    err = list_remote_function_categories(&getbuf, OPT_A);
 
     if (err || getbuf == NULL || *getbuf != 'C') {
 	free(getbuf);
