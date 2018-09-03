@@ -3508,7 +3508,7 @@ static gint identify_point (png_plot *plot, int pixel_x, int pixel_y,
     const double *data_y = NULL;
     double xrange, yrange;
     double xdiff, ydiff;
-    double dist, mindist = NADBL;
+    double dist, mindist = DBL_MAX;
     int best_match = -1;
     int done = 0, bank = 1;
     int t;
@@ -3567,12 +3567,13 @@ static gint identify_point (png_plot *plot, int pixel_x, int pixel_y,
 	if (na(data_x[t]) || na(data_y[t])) {
 	    continue;
 	}
-#if GPDEBUG > 4
-	fprintf(stderr, "considering t=%d: x=%g, y=%g\n", t, data_x[t], data_y[t]);
-#endif
 	xdiff = fabs(data_x[t] - x);
 	ydiff = fabs(data_y[t] - y);
 	dist = sqrt(xdiff * xdiff + ydiff * ydiff);
+#if GPDEBUG > 4
+	fprintf(stderr, " obs %d: x=%g, y=%g, dist=%g\n",
+		t, data_x[t], data_y[t], dist);
+#endif
 	if (dist < mindist) {
 	    mindist = dist;
 	    best_match = t;
@@ -3596,8 +3597,12 @@ static gint identify_point (png_plot *plot, int pixel_x, int pixel_y,
     }
 
 #if GPDEBUG > 2
-    fprintf(stderr, " best_match=%d, with data_x[%d]=%g, data_y[%d]=%g\n",
-	    t, t, data_x[t], t, data_y[t]);
+    if (t >= 0) {
+	fprintf(stderr, " best_match=%d, with data_x[%d]=%g, data_y[%d]=%g\n",
+		t, t, data_x[t], t, data_y[t]);
+    } else {
+	fprintf(stderr, " no 'best match' for %g, %g\n", x, y);
+    }
 #endif
 
     /* if the match is good enough, show the label */

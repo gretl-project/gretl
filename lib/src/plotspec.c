@@ -810,6 +810,8 @@ static int print_data_labels (const GPT_SPEC *spec, FILE *fp)
     const double *x, *y, *y0;
     const double *y1 = NULL;
     double xrange, yrange;
+    double xmin, xmax;
+    double ymin, ymax;
     double yoff;
     int t;
 
@@ -830,12 +832,17 @@ static int print_data_labels (const GPT_SPEC *spec, FILE *fp)
 	y1 = y0 + spec->nobs;
     }
 
-    xrange = spec->range[GP_X_RANGE][1] - spec->range[GP_X_RANGE][0];
-    yrange = spec->range[GP_Y_RANGE][1] - spec->range[GP_Y_RANGE][0];
+    xmin = spec->range[GP_X_RANGE][0];
+    xmax = spec->range[GP_X_RANGE][1];
+    xrange = (na(xmin) || na(xmax)) ? 0.0 : xmax - xmin;
+
+    ymin = spec->range[GP_Y_RANGE][0];
+    ymax = spec->range[GP_Y_RANGE][1];
+    yrange = (na(ymin) || na(ymax)) ? 0.0 : ymax - ymin;
 
     if (xrange == 0.0 || yrange == 0.0) {
-	double ymin = 1.0e+16, ymax = -1.0e+16;
-	double xmin = 1.0e+16, xmax = -1.0e+16;
+	ymin = 1.0e+16; ymax = -1.0e+16;
+	xmin = 1.0e+16; xmax = -1.0e+16;
 
 	for (t=0; t<spec->nobs; t++) {
 	    if (usable_obs(x, y0, y1, t, &y)) {
