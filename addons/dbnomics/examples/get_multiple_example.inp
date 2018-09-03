@@ -8,7 +8,7 @@ setobs 1 1960
 
 ### the DBnomics dataset we're drawing from
 
-provider = "IMF-WEO"
+provider = "IMF"
 database = "WEO"
 
 verbose = 0
