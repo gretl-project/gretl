@@ -1,12 +1,25 @@
-version 2018c, in progress
+version 2018d, in progress
+- Internal representation of missing values: switch to
+  using NaN
+- "install" command: replace with new "pkg" command (but the
+  old form still works until further notice)
 - Line plots via gnuplot: show gaps for missing values.
 - dbnomics: some refinements to handle problematic cases
   as well as some new functionality
-- Internal representation of missing values: switch to
-  using NaN
-- Matrix "division": handle the rank-deficient case properly
-- "install" command: replace with new "pkg" command (but the
-  old form still works until further notice)
+
+2018-09-03 version 2018c
+- Fix bug: the panel-statistic functions pmean() and psd()
+  give wrong results when only the first observation of a
+  cross-sectional unit differs from the others
+- "foreign" support for R: try to handle non-ASCII filenames
+  in the gretl.loadmat function
+- Prevent crash on failure to access a single dbnomics series
+- Correct index shown in an "out-of-bounds" error message
+- Correct alignment in printing "note" for bundle member
+- Support indexing into a list-member series (e.g. "L[i][t]")
+- Read Ctrl-G as "Find again" in find dialog box, and make
+  search wrap silently
+- Matrix "division": handle the reduced-rank case properly
 
 2018-08-11 version 2018b
 - New feature: support for data access via dbnomics
