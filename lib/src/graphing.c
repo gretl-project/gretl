@@ -613,25 +613,23 @@ static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
    Allin, 2018-08-12
 */
 
+#if GP_USE_NAN
+static const char *gpna = "NaN";
+#else
+static const char *gpna = "?";
+#endif
+
 void write_gp_dataval (double x, FILE *fp, int final)
 {
     if (final) {
 	if (na(x)) {
-#if GP_USE_NAN
-	    fputs("NaN\n", fp);
-#else
-	    fputs("?\n", fp);
-#endif
+	    fprintf(fp, "%s\n", gpna);
 	} else {
 	    fprintf(fp, "%.10g\n", x);
 	}
     } else {
 	if (na(x)) {
-#if GP_USE_NAN
-	    fputs("NaN ", fp);
-#else
-	    fputs("? ", fp);
-#endif
+	    fprintf(fp, "%s ", gpna);
 	} else {
 	    fprintf(fp, "%.10g ", x);
 	}
@@ -2705,7 +2703,7 @@ static int print_gp_dummy_data (gnuplot_info *gi,
 	    }
 	    yt = (d[t] == gi->dvals->val[i])? y[t] : NADBL;
 	    if (na(yt)) {
-		fprintf(fp, "%.10g ?\n", xt);
+		fprintf(fp, "%.10g %s\n", xt, gpna);
 	    } else {
 		fprintf(fp, "%.10g %.10g", xt, yt);
 		if (!(gi->flags & GPT_TS)) {
@@ -2739,7 +2737,7 @@ maybe_print_panel_jot (int t, const DATASET *dset, FILE *fp)
     ntodate(obs, t, dset);
     sscanf(obs, "%d:%d", &maj, &min);
     if (maj > 1 && min == 1) {
-	fprintf(fp, "%g ?\n", t + 0.5);
+	fprintf(fp, "%g %s\n", t + 0.5, gpna);
     }
 }
 
@@ -4990,22 +4988,23 @@ int plot_corrmat (VMatrix *corr, gretlopt opt)
     return finalize_plot_input_file(fp);
 }
 
-static void print_y_data (const double *x,
-			  const double *y,
-			  int t0, int t1, int t2,
-			  FILE *fp)
+/* print the y-axis data in the context of a forecast
+   with errors plot
+*/
+
+static void fcast_print_y_data (const double *x,
+				const double *y,
+				int t0, int t1, int t2,
+				FILE *fp)
 {
     int i, t, n = t2 - t0 + 1;
-    double xt;
+    double yt;
 
     for (i=0; i<n; i++) {
 	t = t0 + i;
-	xt = x[t];
-	if (t < t1 || na(y[t])) {
-	    fprintf(fp, "%.10g ?\n", xt);
-	} else {
-	    fprintf(fp, "%.10g %.10g\n", xt, y[t]);
-	}
+	yt = t < t1 ? NADBL : y[t];
+	fprintf(fp, "%.10g ", x[t]);
+	write_gp_dataval(yt, fp, 1);
     }
 
     fputs("e\n", fp);
@@ -5019,11 +5018,8 @@ static void print_user_y_data (const double *x,
     int t;
 
     for (t=t1; t<=t2; t++) {
-	if (na(y[t])) {
-	    fprintf(fp, "%.10g ?\n", x[t]);
-	} else {
-	    fprintf(fp, "%.10g %.10g\n", x[t], y[t]);
-	}
+	fprintf(fp, "%.10g ", x[t]);
+	write_gp_dataval(y[t], fp, 1);
     }
 
     fputs("e\n", fp);
@@ -5050,9 +5046,9 @@ static void print_confband_data (const double *x,
 	xt = x[t];
 	if (t < t1 || na(y[t]) || na(e[t])) {
 	    if (mode == CONF_LOW || mode == CONF_HIGH) {
-		fprintf(fp, "%.10g ?\n", xt);
+		fprintf(fp, "%.10g %s\n", xt, gpna);
 	    } else {
-		fprintf(fp, "%.10g ? ?\n", xt);
+		fprintf(fp, "%.10g %s %s\n", xt, gpna, gpna);
 	    }
 	} else if (mode == CONF_FILL) {
 	    fprintf(fp, "%.10g %.10g %.10g\n", xt, y[t] - e[t], y[t] + e[t]);
@@ -5108,7 +5104,7 @@ static void print_user_pm_data (const double *x,
 
     for (t=t1; t<=t2; t++) {
 	if (na(c[t]) || na(w[t])) {
-	    fprintf(fp, "%.10g ? ?\n", x[t]);
+	    fprintf(fp, "%.10g %s %s\n", x[t], gpna, gpna);
 	} else {
 	    fprintf(fp, "%.10g %.10g %.10g\n", x[t], c[t], w[t]);
 	}
@@ -5129,7 +5125,7 @@ static void print_x_confband_data (const double *x, const double *y,
 	t = order[i];
 	if (na(y[t]) || na(se[t])) {
 	    if (!na(x[t])) {
-		fprintf(fp, "%.10g ?\n", x[t]);
+		fprintf(fp, "%.10g %s\n", x[t], gpna);
 	    }
 	} else {
 	    et = tval * se[t];
@@ -5349,14 +5345,14 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 				t1, yhmin, t2, CONF_FILL, fp);
 	}
 	if (depvar_present) {
-	    print_y_data(obs, fr->actual, t1, t1, t2, fp);
+	    fcast_print_y_data(obs, fr->actual, t1, t1, t2, fp);
 	}
-	print_y_data(obs, fr->fitted, t1, yhmin, t2, fp);
+	fcast_print_y_data(obs, fr->fitted, t1, yhmin, t2, fp);
     } else {
 	if (depvar_present) {
-	    print_y_data(obs, fr->actual, t1, t1, t2, fp);
+	    fcast_print_y_data(obs, fr->actual, t1, t1, t2, fp);
 	}
-	print_y_data(obs, fr->fitted, t1, yhmin, t2, fp);
+	fcast_print_y_data(obs, fr->fitted, t1, yhmin, t2, fp);
 	if (do_errs) {
 	    if (use_lines) {
 		print_confband_data(obs, fr->fitted, maxerr,
@@ -5984,7 +5980,7 @@ static void print_x_ordered_data (const double *x, const double *y,
 	if (na(x[t])) {
 	    continue;
 	} else if (na(y[t])) {
-	    fprintf(fp, "%.10g ?\n", x[t]);
+	    fprintf(fp, "%.10g %s\n", x[t], gpna);
 	} else {
 	    fprintf(fp, "%.10g %.10g\n", x[t], y[t]);
 	}
@@ -6894,7 +6890,7 @@ static int panel_grid_ts_plot (int vnum, DATASET *dset,
 	    }
 	    yt = y[t+t0];
 	    if (na(yt)) {
-		fprintf(fp, "%g ?\n", xt);
+		fprintf(fp, "%g %s\n", xt, gpna);
 	    } else {
 		fprintf(fp, "%g %.10g\n", xt, yt);
 	    }

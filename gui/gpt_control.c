@@ -1230,6 +1230,8 @@ static int get_gpt_marker (const char *line, char *label,
 			p == PLOT_BAR || \
 			p == PLOT_3D)
 
+#define gp_missing(s) (s[0] == '?' || !strcmp(s, "NaN"))
+
 static int get_gpt_data (GPT_SPEC *spec,
 			 int *do_markers,
 			 const char *buf)
@@ -1335,7 +1337,7 @@ static int get_gpt_data (GPT_SPEC *spec,
 	    }
 
 	    for (j=offset; j<nf && !err; j++) {
-		if (test[j][0] == '?') {
+		if (gp_missing(test[j])) {
 		    x[j][t] = NADBL;
 		    missing++;
 		} else if (j == 0 && (spec->flags & GPT_TIMEFMT)) {
@@ -1441,7 +1443,7 @@ static int get_gpt_heredata (GPT_SPEC *spec,
 	for (j=0; j<m->cols && !err; j++) {
 	    s += strspn(s, " ");
 	    sscanf(s, "%31s", test);
-	    if (*s == '?') {
+	    if (gp_missing(test)) {
 		xij = NADBL;
 	    } else if (j == 0 && (spec->flags & GPT_TIMEFMT)) {
 		xij = gnuplot_time_from_date(test, spec->timefmt);
@@ -2729,6 +2731,9 @@ static int push_z_row (gretl_matrix *z, int i, int n, char *line)
 	if (*p == '?') {
 	    x = NADBL;
 	    p += 2;
+	} else if (!strncmp(p, "NaN", 3)) {
+	    x = NADBL;
+	    p += 4;
 	} else {
 	    x = strtod(p, &p);
 	    if (errno) {
