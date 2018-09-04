@@ -26,6 +26,7 @@
 #include <float.h>
 #include <gmp.h>
 #include <mpfr.h>
+#include <mpf2mpfr.h>
 
 #define MP_DEBUG 0
 
@@ -620,7 +621,7 @@ static void mp_ll_stats (const MPMODEL *mpmod, MODEL *pmod)
     mpfr_set_d(mx1, 1.0, GMP_RNDN);           /* 1 */
     mpfr_add(ln2pi1, ln2pi1, mx1, GMP_RNDN);  /* log(2*pi) + 1 */
 
-    mpfr_set_f(mll, mpmod->ess, GMP_RNDN);
+    mpfr_set(mll, mpmod->ess, GMP_RNDN);
     mpfr_set_d(mx1, -.5, GMP_RNDN);
     mpfr_set_d(mx2, n, GMP_RNDN);
 
