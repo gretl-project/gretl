@@ -618,7 +618,6 @@ static int graph_series (const DATASET *dset, tx_request *req)
 	if (req->prog == TRAMO_SEATS && tramo_got_irfin) {
 	    yt /= 100.0;
 	}
-
 	fprintf(fp, "%.10g %.10g\n", obs[t], yt);
     }
     fputs("e\n", fp);
@@ -1159,7 +1158,8 @@ static int x12_get_subperiod (double x, const DATASET *dset)
     return ret;
 }
 
-static int write_spc_file (const char *fname, const double *y,
+static int write_spc_file (const char *fname,
+			   const double *y,
 			   const char *vname,
 			   const DATASET *dset, 
 			   const int *savelist,
@@ -1317,8 +1317,10 @@ static int save_vars_to_dataset (DATASET *dset,
 
 #ifdef WIN32
 
-static int helper_spawn (const char *path, const char *vname,
-			 const char *workdir, int prog)
+static int helper_spawn (const char *path,
+			 const char *vname,
+			 const char *workdir,
+			 int prog)
 {
     char *cmd = NULL;
     int err = 0;
@@ -1345,8 +1347,10 @@ static int helper_spawn (const char *path, const char *vname,
 
 #else
 
-static int helper_spawn (const char *path, const char *vname,
-			 const char *workdir, int prog)
+static int helper_spawn (const char *path,
+			 const char *vname,
+			 const char *workdir,
+			 int prog)
 {
     int err;
 

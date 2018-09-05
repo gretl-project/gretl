@@ -4958,7 +4958,7 @@ int plot_corrmat (VMatrix *corr, gretlopt opt)
     fputs("set link y\n", fp);
     fputs("set grid front mx2tics my2tics lw 2 lt -1 lc rgb 'white'\n", fp);
 
-    fputs("set datafile missing '?'\n", fp);
+    gnuplot_missval_string(fp);
     fprintf(fp, "printcorr = %d\n", n <= 16 ? 1 : 0);
 
     fputs("# start inline data\n", fp);
@@ -6833,7 +6833,7 @@ static int panel_grid_ts_plot (int vnum, DATASET *dset,
     w = panel_ytic_width(ymin, ymax);
 
     fputs("set key left top\n", fp);
-    fputs("set datafile missing \"?\"\n", fp);
+    gnuplot_missval_string(fp)
     fputs("set xtics nomirror\n", fp);
     fputs("set ytics nomirror\n", fp);
     fprintf(fp, "set format y \"%%%dg\"\n", w);
@@ -8100,7 +8100,7 @@ static int qq_plot_two_series (const int *list,
     }
 
     fprintf(fp, "set title \"%s\"\n", _("Q-Q plot"));
-    fputs("set datafile missing '?'\n", fp);
+    gnuplot_missval_string(fp);
     fputs("set key top left\n", fp);
     fprintf(fp, "set xlabel \"%s\"\n", series_get_graph_name(dset, vx));
     fprintf(fp, "set ylabel \"%s\"\n", series_get_graph_name(dset, vy));
@@ -8189,7 +8189,7 @@ static int normal_qq_plot (const int *list,
 
     sprintf(title, _("Q-Q plot for %s"), series_get_graph_name(dset, v));
     fprintf(fp, "set title \"%s\"\n", title);
-    fputs("set datafile missing '?'\n", fp);
+    gnuplot_missval_string(fp);
     fprintf(fp, "set xlabel \"%s\"\n", _("Normal quantiles"));
 
     if (opt & OPT_R) {
