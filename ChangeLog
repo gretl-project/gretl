@@ -6,6 +6,7 @@ version 2018d, in progress
 - Line plots via gnuplot: show gaps for missing values
 - dbnomics: some refinements to handle problematic cases
   as well as some new functionality
+- "foreign": support the changes in Julia version 1.0
 - Windows and Mac packages: update to gmp 6.1.2, mpfr 4.0.1
 
 2018-09-03 version 2018c
