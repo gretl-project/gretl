@@ -238,6 +238,10 @@ int gretl_path_compose (char *targ, int len,
 			const char *s1,
 			const char *s2);
 
+int gretl_build_filename (char *targ,
+			  const gchar *first_element,
+			  ...);
+
 #ifdef WIN32
 
 void win32_set_gretldir (const char *progname);

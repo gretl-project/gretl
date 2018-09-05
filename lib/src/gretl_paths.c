@@ -4120,3 +4120,193 @@ int gretl_path_compose (char *targ, int len,
 	return 0;
     }
 }
+
+/* Code borrowed from Glib (gfileutils.c) and adapted to
+   write to an input char * (@targ) instead of returning
+   a newly allocated string. The code is also somewhat
+   simplified by the assumption that if the platform is
+   not MS Windows the directort separator is always '/':
+   this is a safe assumptions for the platforms supported
+   by gretl.
+*/
+
+#ifdef G_OS_WIN32
+
+static void real_build_path_win32 (char *targ,
+				   const gchar *first_element,
+				   va_list *args)
+{
+    gboolean is_first = TRUE;
+    gboolean have_leading = FALSE;
+    const gchar *single_element = NULL;
+    const gchar *next_element;
+    const gchar *last_trailing = NULL;
+    gchar current_separator = '\\';
+
+    next_element = first_element;
+
+    while (1) {
+	const gchar *element;
+	const gchar *start;
+	const gchar *end;
+
+	if (next_element) {
+	    element = next_element;
+	    next_element = va_arg(*args, gchar *);
+	} else {
+	    break;
+	}
+
+	/* ignore empty elements */
+	if (*element == '\0') {
+	    continue;
+	}
+
+	start = element;
+	while (start && (*start == '\\' || *start == '/')) {
+	    current_separator = *start;
+	    start++;
+	}
+
+	end = start + strlen(start);
+	while (end >= start + 1 && (end[-1] == '\\' || end[-1] == '/')) {
+	    current_separator = end[-1];
+	    end--;
+	}
+
+	last_trailing = end;
+	while (last_trailing >= element + 1 &&
+	       (last_trailing[-1] == '\\' || last_trailing[-1] == '/')) {
+	    last_trailing--;
+	}
+
+	if (!have_leading) {
+	    /* If the leading and trailing separator strings are in the
+	       same element and overlap, the result is exactly that
+	       element
+	    */
+	    if (last_trailing <= start) {
+		single_element = element;
+	    }
+	    strncat(targ, element, start - element);
+	    have_leading = TRUE;
+	} else {
+	    single_element = NULL;
+	}
+
+	if (end == start) {
+	    continue;
+	}
+
+	if (!is_first) {
+	    strncat(targ, &current_separator, 1);
+	}
+	strncat(targ, start, end - start);
+	is_first = FALSE;
+    }
+
+    if (single_element) {
+	*targ = '\0';
+	strcat(targ, single_element);
+    } else if (last_trailing) {
+	strcat(targ, last_trailing);
+    }
+}
+
+#else
+
+static void real_build_path (char *targ,
+			     const gchar *first_element,
+			     va_list *args)
+{
+    gboolean is_first = TRUE;
+    gboolean have_leading = FALSE;
+    const gchar *single_element = NULL;
+    const gchar *next_element;
+    const gchar *last_trailing = NULL;
+
+    next_element = first_element;
+
+    while (1) {
+	const gchar *element;
+	const gchar *start;
+	const gchar *end;
+
+	if (next_element) {
+	    element = next_element;
+	    next_element = va_arg(*args, gchar *);
+	} else {
+	    break;
+	}
+
+	/* ignore empty elements */
+	if (*element == '\0') {
+	    continue;
+	}
+
+	start = element;
+	while (*start == '/') {
+	    start++;
+	}
+
+	end = start + strlen (start);
+	while (end >= start + 1 && end[-1] == '/') {
+	    end--;
+	}
+
+	last_trailing = end;
+	while (last_trailing >= element + 1 && last_trailing[-1] == '/') {
+	    last_trailing--;
+	}
+
+	if (!have_leading) {
+	    /* If the leading and trailing separator strings are in the
+	       same element and overlap, the result is exactly that
+	       element
+	    */
+	    if (last_trailing <= start) {
+		single_element = element;
+	    }
+	    strncat(targ, element, start - element);
+	    have_leading = TRUE;
+	} else {
+	    single_element = NULL;
+	}
+
+	if (end == start) {
+	    continue;
+	}
+
+	if (!is_first) {
+	    strcat(targ, "/");
+	}
+	strncat(targ, start, end - start);
+	is_first = FALSE;
+    }
+
+    if (single_element) {
+	*targ = '\0';
+	strcat(targ, single_element);
+    } else if (last_trailing) {
+	strcat(targ, last_trailing);
+    }
+}
+
+#endif
+
+int gretl_build_filename (char *targ, const gchar *first_element, ...)
+{
+    va_list args;
+
+    *targ = '\0';
+
+    va_start(args, first_element);
+#ifdef G_OS_WIN32
+    real_build_path_win32(targ, first_element, &args);
+#else
+    real_build_path(targ, first_element, &args);
+#endif
+    va_end(args);
+
+    return 0;
+}
