@@ -6833,7 +6833,7 @@ static int panel_grid_ts_plot (int vnum, DATASET *dset,
     w = panel_ytic_width(ymin, ymax);
 
     fputs("set key left top\n", fp);
-    gnuplot_missval_string(fp)
+    gnuplot_missval_string(fp);
     fputs("set xtics nomirror\n", fp);
     fputs("set ytics nomirror\n", fp);
     fprintf(fp, "set format y \"%%%dg\"\n", w);
