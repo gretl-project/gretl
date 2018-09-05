@@ -6256,79 +6256,6 @@
 
   </command>
 
-  <command name="install" section="Utilities" context="cli">
-
-    <usage>
-      <arguments>
-        <argument>nomepaquete</argument>
-      </arguments>
-      <options>
-        <option>
-	  <flag>--local</flag>
-	  <effect>Instala desde un ficheiro local</effect>
-        </option>
-        <option>
-	  <flag>--remove</flag>
-	  <effect>Mira abaixo</effect>
-        </option>
-        <option>
-	  <flag>--purge</flag>
-	  <effect>Mira abaixo</effect>
-        </option>
-      </options>
-     <examples>
-        <example>install armax</example>
-        <example>install felogit.gfn</example>
-	<example>install /path/to/myfile.gfn --local</example>
-	<example>install http://foo.bar.net/gretl/myfile.gfn</example>
-     </examples>
-    </usage>
-
-    <description>
-      <para>
-	Instalador de paquetes de funcións de Gretl (ficheiros <lit>gfn</lit>
-	ou <lit>zip</lit>).
-      </para>
-      <para>
-	Cando indicas esta instrución co nome <quote>plano</quote> dun
-	paquete de funcións de Gretl (como nos dous primeiros exemplos),
-	o efecto da instrución consiste en descargar o paquete que se especifica do
-	servidor de Gretl, e instalalo na máquina local. Neste caso, non
-	é necesario ofrecer unha extensión no nome de ficheiro.
-      </para>
-      <para>
-	Cando indicas a opción <opt>local</opt>, o argumento
-	<repl>nomepaquete</repl> debe de ser a ruta a un ficheiro de
-	paquete con extensión correcta, que aínda non estea instalado
-	na máquina local. O efecto da instrución consiste en copiar o
-	ficheiro no lugar (<lit>gfn</lit>), ou descomprimilo no lugar
-	(<lit>zip</lit>), queréndose dicir con <quote>no lugar</quote>
-	onde o atopará a instrución <cmdref targ="include"/>.
-      </para>
-      <para>
-	Cando non indicas ningunha opción, se <repl>nomepaquete</repl> comeza
-	con <lit>http://</lit>, o efecto da instrución consiste en descargar
-	un ficheiro de paquete do servidor especificado, e instalalo localmente.
-      </para>
-      <para>
-	Coa opción <opt>remove</opt> ou <opt>purge</opt>, realízase a
-	operación inversa; é dicir, quítase un paquete xa instalado.
-	Cando só indicas <opt>remove</opt>, o paquete especificado
-	bótase da memoria e elimínase do menú da Interface Gráfica de
-	Usuario (GUI) á que está agregado, de existir. Cando indicas
-	a opción <opt>purge</opt>, entón ademais das accións que se
-	acaban de mencionar, elimínase o ficheiro de paquete. (Se o
-	paquete está instalado no seu propio subcartafol, elimínase
-	o subcartafol enteiro.)
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>/Ficheiro/Paquetes de funcións/No servidor</menu-path>
-    </gui-access>
-
-  </command>
-
   <command name="intreg" section="Estimation" label="Modelo de regresión por intervalos">
 
     <usage>
@@ -7368,7 +7295,7 @@
       <para>
 	Permite obter o logaritmo natural de cada unha das series de
 	<repl>listavariables</repl> e o resultado gárdase nunha nova serie co
-	prefixo <lit>l_</lit> (<quote>ele</quote> e barra baixa). Por
+	prefixo <lit>l_</lit> (<quote>ele</quote> e guión baixo). Por
 	exemplo, <cmd>logs x y</cmd> xera as novas variables
 	<lit>l_x</lit> = ln(<lit>x</lit>) e <lit>l_y</lit> = ln(<lit>y</lit>).
       </para>
@@ -10032,7 +9959,95 @@
       <menu-path>/Variable/Periodograma</menu-path>
       <other-access>Xanela principal: Menú emerxente (selección única)</other-access>
     </gui-access>
+  </command>
 
+  <command name="pkg" section="Utilities" context="cli">
+    <usage>
+      <arguments>
+      	<argument>acción</argument>
+        <argument>nomepaquete</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--local</flag>
+	  <effect>Instala desde un ficheiro local</effect>
+        </option>
+      </options>
+     <examples>
+        <example>pkg install armax</example>
+        <example>pkg install /path/to/myfile.gfn --local</example>
+        <example>pkg unload armax</example>
+     </examples>
+    </usage>
+
+    <description>
+      <para>
+	Esta instrución proporciona un xeito de instalar, descargar
+	ou eliminar paquetes de funciones de Gretl. O argumento
+	<repl>acción</repl> debe de ser algún de entre <lit>install</lit>,
+	<lit>unload</lit> ou <lit>remove</lit>, respectivamente.
+      </para>
+      <para>
+	<lit>install</lit>: Na súa forma máis elemental, sen ningún indicador
+	de opción e co argumento <repl>nomepaquete</repl> expresado
+	como o nome <quote>plano</quote> dun paquete de funcións de
+	Gretl (como no primeiro exemplo de arriba), o efecto desta instrución
+	consiste en descargar o paquete que se especifica do servidor de
+	Gretl, e instalalo na máquina local. Neste caso, non é necesario
+	expresar unha extensión no nome do ficheiro. Porén, cando indicas
+	a opción <opt>local</opt>, o argumento <repl>nomepaquete</repl>
+	debe de ser a ruta a un ficheiro de paquete na máquina local, que
+	aínda non estea instalado, e expresado con unha extensión correcta
+	(<lit>.gfn</lit> ou <lit>.zip</lit>). Neste caso, o efecto consiste
+	en copiar o ficheiro no seu sitio (<lit>gfn</lit>), ou descomprimilo
+	no seu sitio (<lit>zip</lit>), significando <quote>no seu sitio</quote>
+	alí onde o vai atopar a instrución <cmdref targ="include"/>.
+      </para>
+      <para>
+	<lit>unload</lit>: Debes de indicar o argumento <repl>pkgname</repl>
+	en modo 'plano', sen ruta nin extensión, como no derradeiro exemplo de
+	arriba. A consecuencia disto é a descarga dese paquete en cuestión da
+	memoria de Gretl (se está cargado nese momento), e tamén eliminalo do
+	menú da Interface Gráfica (GUI) ao que estea engadido, se o está a algún.
+      </para>
+      <para>
+	<lit>remove</lit>: Realiza as accións indicadas para <lit>unload</lit>
+	e, ademais, elimina do disco o(s) ficheiro(s) asociado(s) co
+	paquete indicado.
+      </para>
+    </description>
+	
+    <gui-access>
+      <menu-path>/Ficheiro/Paquetes de funcións/No servidor</menu-path>
+    </gui-access>
+  </command>
+
+  <command name="pkg-depends" section="Programming"
+	   label="Dependencias" context="gui">
+    <description>
+      <para>
+	Por <quote>dependencias</quote> queremos referirnos aos paquetes de
+	funcións dos que depende o teu propio paquete para algunha das
+	súas funcionalidades; e que, en consecuencia, debes de ter descargados
+	e instalados co fin de que o teu paquete funcione correctamente. Podes
+	especificar ata catro de eses paquetes neste diálogo.
+      </para>
+      <para>
+	Por exemplo, supón que utilizas unha ou máis funcións do paquete
+	<lit>extra</lit>, que contén varias utilidades para a redacción con
+	Hansl. Nese caso, poderías escribir
+      </para>
+      <code>
+	extra.zip
+      </code>
+      <para>
+	nun dos ocos dispoñibles (no primeiro se non hai ningunha outra
+	dependencia). Advirte que debes de incluír a extensión <lit>.gfn</lit>
+	ou <lit>.zip</lit> segundo conveña, pero non debes de indicar a
+	ruta completa ata o paquete en cuestión, senón unicamente o seu
+	nome 'plano'.
+      </para>
+    </description>
   </command>
 
   <command name="plot" section="Graphs" context="cli">
@@ -10677,7 +10692,7 @@
 
   </command>
 
-  <command name="pvalue" section="Utilities"
+  <command name="pvalue" section="Statistics"
     label="Calcular probabilidades asociadas" context="cli">
 
     <usage>
