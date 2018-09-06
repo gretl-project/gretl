@@ -259,7 +259,7 @@ static int find_pkg_in_dir (const char *targ,
 		continue;
 	    }
 	    if (!strcmp(basename, targ)) {
-		build_path(fullname, path, basename, NULL);
+		gretl_build_path(fullname, path, basename, NULL);
 		if (gretl_isdir(fullname)) {
 		    /* construct functions/foo/foo.pdf */
 		    strcat(fullname, SLASHSTR);
@@ -289,7 +289,7 @@ static int find_pkg_in_dir (const char *targ,
 	if (has_suffix(basename, ".gfn")) {
 	    sprintf(test, "%s.gfn", targ);
 	    if (!strcmp(basename, test)) {
-		build_path(fullname, path, basename, NULL);
+		gretl_build_path(fullname, path, basename, NULL);
 		*gfn = gretl_strdup(fullname);
 		found = 1;
 	    }

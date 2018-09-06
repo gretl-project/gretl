@@ -2663,7 +2663,7 @@ int gretl_write_gdt (const char *fname, const int *list,
 	if (!err) {
 	    char xmlfile[FILENAME_MAX];
 
-	    build_path(xmlfile, zdir, "data.xml", NULL);
+	    gretl_build_path(xmlfile, zdir, "data.xml", NULL);
 	    err = real_write_gdt(xmlfile, list, dset, opt | OPT_B, 0);
 
 	    if (!err) {
@@ -4332,7 +4332,7 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
 	    } else {
 		char xmlfile[FILENAME_MAX];
 
-		build_path(xmlfile, zdir, "data.xml", NULL);
+		gretl_build_path(xmlfile, zdir, "data.xml", NULL);
 		err = real_read_gdt(xmlfile, fname, dset, opt, prn);
 	    }
 	    gretl_deltree(zdir);
@@ -4380,7 +4380,7 @@ int gretl_read_gdt_subset (const char *fname, DATASET *dset,
 	    } else {
 		char xmlfile[FILENAME_MAX];
 
-		build_path(xmlfile, zdir, "data.xml", NULL);
+		gretl_build_path(xmlfile, zdir, "data.xml", NULL);
 		err = real_read_gdt_subset(xmlfile, dset, vlist, opt);
 	    }
 	    gretl_deltree(zdir);
@@ -4431,7 +4431,7 @@ int gretl_read_gdt_varnames (const char *fname,
 	    } else {
 		char xmlfile[FILENAME_MAX];
 
-		build_path(xmlfile, zdir, "data.xml", NULL);
+		gretl_build_path(xmlfile, zdir, "data.xml", NULL);
 		err = real_read_gdt_varnames(xmlfile, vnames,
 					     nvars);
 	    }

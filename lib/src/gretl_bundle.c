@@ -2104,9 +2104,9 @@ int gretl_bundle_write_to_file (gretl_bundle *b,
     if (has_suffix(fname, ".gz")) {
 	char tmp[FILENAME_MAX];
 
-	build_path(fullname, gretl_dotdir(), "_bun_tmp_.xml", NULL);
+	gretl_build_path(fullname, gretl_dotdir(), "_bun_tmp_.xml", NULL);
 	if (to_dotdir) {
-	    build_path(tmp, gretl_dotdir(), fname, NULL);
+	    gretl_build_path(tmp, gretl_dotdir(), fname, NULL);
 	} else {
 	    strcpy(tmp, fname);
 	    gretl_maybe_switch_dir(tmp);
@@ -2114,7 +2114,7 @@ int gretl_bundle_write_to_file (gretl_bundle *b,
 	realzname = g_strdup(tmp);
     } else {
 	if (to_dotdir) {
-	    build_path(fullname, gretl_dotdir(), fname, NULL);
+	    gretl_build_path(fullname, gretl_dotdir(), fname, NULL);
 	} else {
 	    strcpy(fullname, fname);
 	    gretl_maybe_switch_dir(fullname);
@@ -2205,7 +2205,7 @@ gretl_bundle *gretl_bundle_read_from_file (const char *fname,
     gretl_bundle *b = NULL;
 
     if (from_dotdir) {
-	build_path(fullname, gretl_dotdir(), fname, NULL);
+	gretl_build_path(fullname, gretl_dotdir(), fname, NULL);
     } else {
 	strcpy(fullname, fname);
 	gretl_maybe_prepend_dir(fullname);

@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* TRAMO/SEATS, X-12-ARIMA plugin for gretl */
@@ -77,7 +77,7 @@ const char *default_mdl = {
     "(2 1 0)(0 1 1) X\n"
     "(0 2 2)(0 1 1) X\n"
     "(2 1 2)(0 1 1)\n"
-};  
+};
 
 const char *get_tramo_save_string (int i)
 {
@@ -274,8 +274,8 @@ static void add_x12a_options (tx_request *request, GtkBox *vbox)
 		     G_CALLBACK(set_logtrans), request);
     g_object_set_data(G_OBJECT(b[2]), "transval", GINT_TO_POINTER(3));
 
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b[request->xopt.logtrans - 1]), 
-				 TRUE); 
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b[request->xopt.logtrans - 1]),
+				 TRUE);
 
     tmp = gtk_hseparator_new();
     gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
@@ -302,7 +302,7 @@ static void add_x12a_options (tx_request *request, GtkBox *vbox)
 	gtk_widget_set_sensitive(entry, active);
 	gtk_entry_set_max_length(GTK_ENTRY(entry), VNAMELEN-1);
 	gtk_entry_set_width_chars(GTK_ENTRY(entry), VNAMELEN-1);
-	sprintf(request->opts[idx].savename, "%.8s_%s", request->yname, 
+	sprintf(request->opts[idx].savename, "%.8s_%s", request->yname,
 		x12a_save_strings[i]);
 	gtk_entry_set_text(GTK_ENTRY(entry), request->opts[idx].savename);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), entry, 1, 2, i, i+1);
@@ -310,7 +310,7 @@ static void add_x12a_options (tx_request *request, GtkBox *vbox)
 	g_signal_connect(G_OBJECT(chk[i]), "toggled",
 			 G_CALLBACK(sensitize_tx_entry), entry);
 	g_signal_connect(G_OBJECT(GTK_EDITABLE(entry)), "changed",
-			 G_CALLBACK(update_tx_savename), 
+			 G_CALLBACK(update_tx_savename),
 			 request->opts[idx].savename);
     }
 
@@ -318,11 +318,11 @@ static void add_x12a_options (tx_request *request, GtkBox *vbox)
 
     tmp = gtk_hseparator_new();
     gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
-    
+
     chk[3] = gtk_check_button_new_with_label(_("Generate graph"));
     gtk_box_pack_start(vbox, chk[3], FALSE, FALSE, 0);
     request->opts[TRIGRAPH].check = chk[3];
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk[3]), 
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk[3]),
 				 (*request->popt & OPT_G)? TRUE : FALSE);
 
     tmp = gtk_check_button_new_with_label(_("Show full output"));
@@ -344,7 +344,7 @@ static void add_x12a_options (tx_request *request, GtkBox *vbox)
     g_signal_connect(GTK_TOGGLE_BUTTON(b[1]), "toggled",
 		     G_CALLBACK(toggle_edit_script), request);
 
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b[0]), TRUE); 
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b[0]), TRUE);
 }
 
 static GtkWidget *x12a_help_button (GtkWidget *hbox, tx_request *request)
@@ -359,10 +359,10 @@ static GtkWidget *x12a_help_button (GtkWidget *hbox, tx_request *request)
     gtk_button_box_set_child_non_homogeneous(GTK_BUTTON_BOX(hbox),
 					     button, TRUE);
 #endif
-    g_signal_connect(G_OBJECT(button), "clicked", 
-		     G_CALLBACK(request->helpfunc), 
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(request->helpfunc),
 		     NULL);
-    
+
     return button;
 }
 
@@ -426,16 +426,16 @@ static void tx_dialog_callback (GtkDialog *dlg, gint id, int *ret)
 
     if (*ret == GTK_RESPONSE_ACCEPT) {
 	tx_request *request = g_object_get_data(G_OBJECT(dlg), "request");
-	
+
 	err = check_savevars(request);
     }
 
     if (!err) {
 	gtk_main_quit();
     }
-} 
+}
 
-static void nullify_request_dialog (GtkWidget *dlg, 
+static void nullify_request_dialog (GtkWidget *dlg,
 				    tx_request *request)
 {
     request->dialog = NULL;
@@ -455,7 +455,7 @@ static int tx_dialog (tx_request *request, GtkWindow *parent)
 	dflags |= GTK_DIALOG_MODAL;
     }
 
-    request->dialog = 
+    request->dialog =
 	gtk_dialog_new_with_buttons((request->prog == TRAMO_SEATS)?
 				    "TRAMO/SEATS" : "X-12-ARIMA",
 				    parent,
@@ -472,12 +472,12 @@ static int tx_dialog (tx_request *request, GtkWindow *parent)
     g_object_set_data(G_OBJECT(request->dialog), "request",
 		      request);
 
-    vbox = gtk_vbox_new(FALSE, 0);    
+    vbox = gtk_vbox_new(FALSE, 0);
 
     if (request->prog == TRAMO_SEATS) {
-#if GTK_MAJOR_VERSION < 3    
+#if GTK_MAJOR_VERSION < 3
 	gtk_dialog_set_has_separator(GTK_DIALOG(request->dialog), FALSE);
-#endif	
+#endif
 	add_tramo_options(request, vbox);
     } else {
 	add_x12a_options(request, GTK_BOX(vbox));
@@ -494,7 +494,7 @@ static int tx_dialog (tx_request *request, GtkWindow *parent)
 	x12a_help_button(hbox, request);
     }
 
-    g_signal_connect(G_OBJECT(request->dialog), "response", 
+    g_signal_connect(G_OBJECT(request->dialog), "response",
 		     G_CALLBACK(tx_dialog_callback), &ret);
     gtk_widget_show_all(request->dialog);
     gtk_main(); /* note: block */
@@ -568,12 +568,12 @@ static int graph_series (const DATASET *dset, tx_request *req)
 
     if (dset->pd == 4) {
 	if ((dset->t2 - dset->t1) / 4 < 8) {
-	    fputs("set xtics nomirror 0,1\n", fp); 
+	    fputs("set xtics nomirror 0,1\n", fp);
 	    fputs("set mxtics 4\n", fp);
 	}
     } else if (dset->pd == 12) {
 	if ((dset->t2 - dset->t1) / 12 < 8) {
-	    fputs("set xtics nomirror 0,1\n", fp); 
+	    fputs("set xtics nomirror 0,1\n", fp);
 	    fputs("set mxtics 12\n", fp);
 	}
     }
@@ -631,12 +631,12 @@ static int graph_series (const DATASET *dset, tx_request *req)
 	    " '-' using 1:2 title '%s' w l\n",
 	    f1, dset->varname[0], _("trend/cycle"));
 
-    for (t=dset->t1; t<=dset->t2; t++) { 
+    for (t=dset->t1; t<=dset->t2; t++) {
 	fprintf(fp, "%.10g %.10g\n", obs[t], dset->Z[0][t]);
     }
     fputs("e , \\\n", fp);
 
-    for (t=dset->t1; t<=dset->t2; t++) { 
+    for (t=dset->t1; t<=dset->t2; t++) {
 	fprintf(fp, "%.10g %.10g\n", obs[t], dset->Z[v_tr][t]);
     }
     fputs("e\n", fp);
@@ -689,21 +689,21 @@ static void clear_tramo_files (const char *path, const char *vname)
     int i;
 
     for (i=0; tramo_save_strings[i] != NULL; i++) {
-	sprintf(fname, "%s%cgraph%cseries%c%s", path, SLASH, SLASH, SLASH,
-		tramo_save_strings[i]);
+	gretl_build_path(fname, path, "graph", "series",
+			     tramo_save_strings[i], NULL);
 	gretl_remove(fname);
     }
 
     /* just in case, clear "irreg" too */
-    sprintf(fname, "%s%cgraph%cseries%c%s", path, SLASH, SLASH, SLASH,
-	    "irreg.t");
+    gretl_build_path(fname, path, "graph", "series", "irreg.t", NULL);
     gretl_remove(fname);
 
-    sprintf(fname, "%s%coutput%c%s.out", path, SLASH, SLASH, vname);
+    gretl_build_path(fname, path, "output", vname, NULL);
+    strcat(fname, ".out");
     gretl_remove(fname);
 
-    /* clear the genric "summary.txt" */
-    sprintf(fname, "%s%coutput%csummary.txt", path, SLASH, SLASH);
+    /* clear the generic "summary.txt" */
+    gretl_build_path(fname, path, "output", "summary.txt", NULL);
     gretl_remove(fname);
 }
 
@@ -712,21 +712,22 @@ static void clear_x12a_files (const char *path, const char *vname)
     char fname[MAXLEN];
     int i;
 
-    for (i=0; x12a_save_strings[i] != NULL; i++) {
-	sprintf(fname, "%s%c%s.%s", path, SLASH, vname,
-		x12a_save_strings[i]);
-	gretl_remove(fname);
-    }    
+    gretl_build_path(fname, path, vname, NULL);
 
-    sprintf(fname, "%s%c%s.out", path, SLASH, vname);
+    for (i=0; x12a_save_strings[i] != NULL; i++) {
+	switch_ext_in_place(fname, x12a_save_strings[i]);
+	gretl_remove(fname);
+    }
+
+    switch_ext_in_place(fname, "out");
     gretl_remove(fname);
 
-    sprintf(fname, "%s%c%s.err", path, SLASH, vname);
+    switch_ext_in_place(fname, "err");
     gretl_remove(fname);
 }
 
 static int add_series_from_file (const char *path, int src,
-				 DATASET *dset, int targv, 
+				 DATASET *dset, int targv,
 				 tx_request *request)
 {
     FILE *fp;
@@ -747,8 +748,8 @@ static int add_series_from_file (const char *path, int src,
 	}
     } else {
 	tramo_got_irfin = 1;
-	sprintf(sfname, "%s%cgraph%cseries%c%s", path, SLASH, SLASH, SLASH,
-		tramo_save_strings[src]);
+	gretl_build_path(sfname, path, "graph", "series",
+			     tramo_save_strings[src], NULL);
     }
 
     fp = gretl_fopen(sfname, "r");
@@ -764,10 +765,10 @@ static int add_series_from_file (const char *path, int src,
 	   is not always available.
 	*/
 	if (request->prog == TRAMO_SEATS || request->prog == TRAMO_ONLY) {
-	    if (src == TX_IR) { 
+	    if (src == TX_IR) {
 		/* try "irreg" */
-		sprintf(sfname, "%s%cgraph%cseries%c%s", path, SLASH, SLASH, SLASH,
-			"irreg.t");
+		gretl_build_path(sfname, path, "graph", "series",
+				     "irreg.t", NULL);
 		fp = gretl_fopen(sfname, "r");
 		if (fp != NULL) {
 		    gotit = 1;
@@ -775,12 +776,12 @@ static int add_series_from_file (const char *path, int src,
 		tramo_got_irfin = 0;
 	    } else if (src == TX_LN) {
 		/* maybe no linearization was required? */
-		sprintf(sfname, "%s%cgraph%cseries%c%s", path, SLASH, SLASH, SLASH,
-			"xorigt.t");
+		gretl_build_path(sfname, path, "graph", "series",
+				     "xorigt.t", NULL);
 		fp = gretl_fopen(sfname, "r");
 		if (fp != NULL) {
 		    gotit = 1;
-		}		
+		}
 	    } else if (src == TX_SA) {
 		/* scrub all use of seasonal series */
 		request->seasonal_ok = 0;
@@ -802,10 +803,10 @@ static int add_series_from_file (const char *path, int src,
     strcpy(varname, request->opts[src].savename);
     if (*varname == '\0') {
 	if (request->prog == X12A) {
-	    sprintf(varname, "%.8s_%s", dset->varname[0], 
+	    sprintf(varname, "%.8s_%s", dset->varname[0],
 		    x12a_save_strings[src]);
-	} else {	    
-	    sprintf(varname, "%.8s_%.2s", dset->varname[0], 
+	} else {
+	    sprintf(varname, "%.8s_%.2s", dset->varname[0],
 		    tramo_save_strings[src]);
 	}
     }
@@ -839,7 +840,7 @@ static int add_series_from_file (const char *path, int src,
 		    fprintf(stderr, "t = %d >= dset->n = %d\n", t, dset->n);
 		    err = 1;
 		    break;
-		}		
+		}
 		dset->Z[targv][t++] = x;
 	    }
 	}
@@ -850,7 +851,7 @@ static int add_series_from_file (const char *path, int src,
 		continue;
 	    }
 	    if (sscanf(line, "%d %lf", &d, &x) != 2) {
-		err = 1; 
+		err = 1;
 		break;
 	    }
 	    yr = d / 100;
@@ -882,8 +883,8 @@ static int grab_deseasonal_series (double *y, const DATASET *dset,
     int t;
 
     if (prog == TRAMO_SEATS) {
-	sprintf(sfname, "%s%cgraph%cseries%c%s", path, SLASH, SLASH, SLASH,
-		tramo_save_strings[TX_SA]);
+	gretl_build_path(sfname, path, "graph", "series",
+			     tramo_save_strings[TX_SA], NULL);
     } else {
 	char *p;
 
@@ -912,7 +913,7 @@ static int grab_deseasonal_series (double *y, const DATASET *dset,
 		    fprintf(stderr, "t = %d >= dset->n = %d\n", t, dset->n);
 		    err = E_DATA;
 		    break;
-		}		
+		}
 		y[t++] = yt;
 	    }
 	}
@@ -923,7 +924,7 @@ static int grab_deseasonal_series (double *y, const DATASET *dset,
 		continue;
 	    }
 	    if (sscanf(line, "%d %lf", &d, &yt) != 2) {
-		err = 1; 
+		err = 1;
 		break;
 	    }
 	    yr = d / 100;
@@ -956,27 +957,27 @@ static int grab_linearized_series (double *y, const double *x,
     int err = 0;
     int i, t;
 
-    sprintf(sfname, "%s%cgraph%cseries%c%s", path, SLASH, SLASH, SLASH,
-	    tramo_save_strings[TX_LN]);
-
+    gretl_build_path(sfname, path, "graph", "series",
+			 tramo_save_strings[TX_LN], NULL);
     fp = gretl_fopen(sfname, "r");
 
     /* The linearized series may not have been produced: is this
        because a genuine error has occurred, or simply because
        tramo judges that the series doesn't need linearizing?
-    */    
-    
+    */
+
     if (fp == NULL) {
-	sprintf(sfname, "%s%coutput%c%s.out", path, SLASH, SLASH, vname);
+	gretl_build_path(sfname, path, "output", vname, NULL);
+	strcat(sfname, ".out");
 	fp = gretl_fopen(sfname, "r");
 	if (fp != NULL) {
 	    fclose(fp); /* OK ? */
-	    sprintf(sfname, "%s%coutput%csummary.txt", path, SLASH, SLASH);
+	    gretl_build_path(sfname, path, "output", "summary.txt", NULL);
 	    fp = gretl_fopen(sfname, "r");
 	    if (fp != NULL) {
 		fclose(fp); /* again, OK ? */
-		sprintf(sfname, "%s%cgraph%cseries%cxorigt.t", path, SLASH,
-			SLASH, SLASH);
+		gretl_build_path(sfname, path, "graph", "series",
+				     "xorigt.t", NULL);
 		fp = gretl_fopen(sfname, "r");
 	    }
 	}
@@ -990,7 +991,7 @@ static int grab_linearized_series (double *y, const double *x,
 
     i = 0;
     t = dset->t1;
-    
+
     while (fgets(line, 127, fp)) {
 	i++;
 	if (i >= 7 && sscanf(line, " %lf", &yt) == 1) {
@@ -998,7 +999,7 @@ static int grab_linearized_series (double *y, const double *x,
 		fprintf(stderr, "t = %d >= dset->n = %d\n", t, dset->n);
 		err = E_DATA;
 		break;
-	    }		
+	    }
 	    y[t++] = yt;
 	}
     }
@@ -1061,7 +1062,7 @@ static void set_opts (tx_request *request)
 	    }
 	} else {
 	    request->opts[i].save = 0;
-	} 
+	}
     }
 }
 
@@ -1088,14 +1089,14 @@ static void adjust_savevars (tx_request *request,
     }
 }
 
-static int write_tramo_file (const char *fname, 
-			     const double *y, 
-			     const char *vname, 
+static int write_tramo_file (const char *fname,
+			     const double *y,
+			     const char *vname,
 			     const DATASET *dset,
-			     tx_request *request) 
+			     tx_request *request)
 {
     int startyr, startper;
-    int T = dset->t2 - dset->t1 + 1; 
+    int T = dset->t2 - dset->t1 + 1;
     char *p, tmp[16];
     double x;
     FILE *fp;
@@ -1133,7 +1134,7 @@ static int write_tramo_file (const char *fname,
 	fputs("$INPUT rsa=3,out=2,$END\n", fp);
     } else if (print_tramo_options(request, fp) == 0) {
 	/* not running SEATS */
-	request->prog = TRAMO_ONLY; 
+	request->prog = TRAMO_ONLY;
     }
 
     gretl_pop_c_numeric_locale();
@@ -1161,7 +1162,7 @@ static int x12_get_subperiod (double x, const DATASET *dset)
 static int write_spc_file (const char *fname,
 			   const double *y,
 			   const char *vname,
-			   const DATASET *dset, 
+			   const DATASET *dset,
 			   const int *savelist,
 			   x12a_opts *xopt)
 {
@@ -1230,13 +1231,13 @@ static int write_spc_file (const char *fname,
 	fputs("outlier{}\n", fp);
     }
 
-    fputs("automdl{}\n", fp); 
+    fputs("automdl{}\n", fp);
 
     fputs("x11{", fp);
 
     if (savelist[0] > 0) {
 	if (savelist[0] == 1) {
-	    fprintf(fp, " save=%s ", x12a_save_strings[savelist[1]]); 
+	    fprintf(fp, " save=%s ", x12a_save_strings[savelist[1]]);
 	} else {
 	    fputs(" save=( ", fp);
 	    for (i=1; i<=savelist[0]; i++) {
@@ -1273,7 +1274,7 @@ static void form_savelist (int *list, tx_request *request)
 static void copy_basic_data_info (DATASET *targ, DATASET *src)
 {
     targ->sd0 = src->sd0;
-    strcpy(targ->stobs, src->stobs); 
+    strcpy(targ->stobs, src->stobs);
     targ->t1 = src->t1;
     targ->t2 = src->t2;
     targ->pd = src->pd;
@@ -1282,14 +1283,14 @@ static void copy_basic_data_info (DATASET *targ, DATASET *src)
 
 static int save_vars_to_dataset (DATASET *dset,
 				 DATASET *tmpset,
-				 int *varlist, 
+				 int *varlist,
 				 tx_request *request)
 {
     int i, v, j, addvars = 0;
 
     /* how many vars are wanted, and how many are new? */
     for (i=1; i<=varlist[0]; i++) {
-	if (request->opts[varlist[i]].save && 
+	if (request->opts[varlist[i]].save &&
 	    series_index(dset, tmpset->varname[i]) == dset->v) {
 	    addvars++;
 	}
@@ -1419,7 +1420,7 @@ static int check_x12a_model_file (const char *workdir)
 	    fprintf(fp, "%s", default_mdl);
 	    fclose(fp);
 	}
-    } 
+    }
 
     g_free(fname);
 
@@ -1457,36 +1458,37 @@ int exec_tx_script (char *outname, const gchar *buf)
     const char *exepath;
     const char *workdir = NULL;
     const char *tmpname = "x12atmp";
-    gchar *tmppath;
     FILE *fp;
     int err = 0;
 
     *outname = '\0';
-
     exepath = gretl_x12_arima();
     workdir = gretl_x12_arima_dir();
 
-    tmppath = g_strdup_printf("%s%c%s.spc", workdir, SLASH, tmpname);
-    fp = gretl_fopen(tmppath, "w");
+    gretl_build_path(outname, workdir, tmpname, NULL);
+    strcat(outname, ".spc");
+    fp = gretl_fopen(outname, "w");
+    *outname = '\0';
+
     if (fp == NULL) {
-	g_free(tmppath);
 	return E_FOPEN;
     }
 
     fputs(buf, fp);
     fclose(fp);
-    g_free(tmppath);
-	
+
     clear_x12a_files(workdir, tmpname);
     err = helper_spawn(exepath, tmpname, workdir, X12A);
 
     if (err == E_EXTERNAL) {
 	; /* fatal: couldn't run program */
     } else if (err) {
-	sprintf(outname, "%s%c%s.err", workdir, SLASH, tmpname);
+	gretl_build_path(outname, workdir, tmpname, NULL);
+	strcat(outname, ".err");
     } else {
 	/* set the output filename */
-	sprintf(outname, "%s%c%s.out", workdir, SLASH, tmpname); 
+	gretl_build_path(outname, workdir, tmpname, NULL);
+	strcat(outname, ".out");
     }
 
     return err;
@@ -1509,8 +1511,9 @@ int exec_tx_script (char *outname, const gchar *buf)
    generated command file in @fname.
 */
 
-int write_tx_data (char *fname, int varnum, 
-		   DATASET *dset, 
+int write_tx_data (char *fname,
+		   int varnum,
+		   DATASET *dset,
 		   gretlopt *opt, int tramo,
 		   int *warning,
 		   GtkWindow *mainwin,
@@ -1534,8 +1537,8 @@ int write_tx_data (char *fname, int varnum,
 	request.prog = X12A;
 	exepath = gretl_x12_arima();
 	workdir = gretl_x12_arima_dir();
-    }	
-	
+    }
+
     request_opts_init(&request, dset, varnum, help_func);
 
     err = check_sample_bound(request.prog, dset);
@@ -1547,10 +1550,10 @@ int write_tx_data (char *fname, int varnum,
     request.popt = opt;
 
     /* show dialog and get option settings */
-    doit = tx_dialog(&request, mainwin); 
+    doit = tx_dialog(&request, mainwin);
     if (doit) {
 	set_opts(&request);
-    } 
+    }
     if (request.dialog != NULL) {
 	gtk_widget_destroy(request.dialog);
     }
@@ -1577,27 +1580,28 @@ int write_tx_data (char *fname, int varnum,
 
 	copy_basic_data_info(tmpset, dset);
 
-	if (request.prog == X12A) { 
+	if (request.prog == X12A) {
 	    err = check_x12a_model_file(workdir);
 	    if (err) {
 		goto bailout;
 	    }
 	}
-    } 
+    }
 
     strcpy(vname, dset->varname[varnum]);
     form_savelist(savelist, &request);
 
-    if (request.prog == X12A) { 
+    if (request.prog == X12A) {
 	/* write out the .spc file for x12a */
-	sprintf(fname, "%s%c%s.spc", workdir, SLASH, vname);
+	gretl_build_path(fname, workdir, vname, NULL);
+	strcat(fname, ".spc");
 	write_spc_file(fname, dset->Z[varnum], vname, dset, savelist,
 		       &request.xopt);
-    } else { 
+    } else {
 	/* TRAMO, possibly plus SEATS */
 	gretl_lower(vname);
 	gretl_trunc(vname, 8);
-	sprintf(fname, "%s%c%s", workdir, SLASH, vname);
+	gretl_build_path(fname, workdir, vname, NULL);
 	/* next line: this also sets request->prog = TRAMO_ONLY if
 	   SEATS is not to be run */
 	write_tramo_file(fname, dset->Z[varnum], vname, dset, &request);
@@ -1612,13 +1616,13 @@ int write_tx_data (char *fname, int varnum,
     }
 
     /* now run the program(s): we try to ensure that any
-       old output files get deleted first 
+       old output files get deleted first
     */
 
     if (request.prog == X12A) {
 	clear_x12a_files(workdir, vname);
 	err = helper_spawn(exepath, vname, workdir, X12A);
-    } else { 
+    } else {
 	char seats[MAXLEN];
 
 	clear_tramo_files(workdir, vname);
@@ -1639,14 +1643,16 @@ int write_tx_data (char *fname, int varnum,
     if (request.prog == X12A) {
 	/* see if we got a warning -- and if so, whether it
 	   should count as an error */
-	sprintf(fname, "%s%c%s.err", workdir, SLASH, vname);
+	gretl_build_path(fname, workdir, vname, NULL);
+	strcat(fname, ".err");
 	*warning = got_x12a_warning(fname, &err);
 	if (!err) {
 	    /* switch @fname to the .out file */
-	    sprintf(fname, "%s%c%s.out", workdir, SLASH, vname);
+	    switch_ext_in_place(fname, "out");
 	}
     } else {
-	sprintf(fname, "%s%coutput%c%s.out", workdir, SLASH, SLASH, vname);
+	gretl_build_path(fname, workdir, "output", vname, NULL);
+	strcat(fname, ".out");
 	if (request.prog == TRAMO_ONLY) {
 	    /* no graph offered */
 	    request.opts[TRIGRAPH].save = 0;
@@ -1671,7 +1677,7 @@ int write_tx_data (char *fname, int varnum,
 		fprintf(stderr, "i = %d: add_series_from_file() failed\n", i);
 		if (request.prog == X12A) {
 		    /* switch @fname to point to X12A error file */
-		    sprintf(fname, "%s%c%s.err", workdir, SLASH, vname);
+		    switch_ext_in_place(fname, "err");
 		}
 		break;
 	    }
@@ -1712,7 +1718,7 @@ int write_tx_data (char *fname, int varnum,
     return err;
 }
 
-int adjust_series (const double *x, double *y, const DATASET *dset, 
+int adjust_series (const double *x, double *y, const DATASET *dset,
 		   int tramo, int use_log)
 {
     int prog = (tramo)? TRAMO_SEATS : X12A;
@@ -1723,22 +1729,22 @@ int adjust_series (const double *x, double *y, const DATASET *dset,
     char fname[MAXLEN];
     int err = 0;
 
-    if (prog == X12A) { 
+    if (prog == X12A) {
 	exepath = gretl_x12_arima();
 	workdir = gretl_x12_arima_dir();
-    } else { 
+    } else {
 	exepath = gretl_tramo();
 	workdir = gretl_tramo_dir();
-    }    
+    }
 
-    if (prog == X12A) { 
+    if (prog == X12A) {
 	err = check_x12a_model_file(workdir);
 	if (err) {
 	    return err;
 	}
-    } 
+    }
 
-    if (prog == X12A) { 
+    if (prog == X12A) {
 	x12a_opts xopt = { 2, /* log transformation flag (2 == no) */
 			   0, /* don't correct for outliers */
 			   0  /* trading days correction */
@@ -1750,17 +1756,17 @@ int adjust_series (const double *x, double *y, const DATASET *dset,
 	if (dset->pd == 12) {
 	    xopt.trdays = 1;
 	}
-	sprintf(fname, "%s%c%s.spc", workdir, SLASH, vname);
+	gretl_build_path(fname, workdir, vname, NULL);
 	write_spc_file(fname, x, vname, dset, savelist, &xopt);
-    } else { 
-	sprintf(fname, "%s%c%s", workdir, SLASH, vname);
-	write_tramo_file(fname, x, vname, dset, NULL); 
+    } else {
+	gretl_build_path(fname, workdir, vname, NULL);
+	write_tramo_file(fname, x, vname, dset, NULL);
     }
 
     if (prog == X12A) {
 	clear_x12a_files(workdir, vname);
 	err = helper_spawn(exepath, vname, workdir, X12A);
-    } else { 
+    } else {
 	char seats[MAXLEN];
 
 	clear_tramo_files(workdir, vname);
@@ -1791,8 +1797,8 @@ int linearize_series (const double *x, double *y, const DATASET *dset)
     exepath = gretl_tramo();
     workdir = gretl_tramo_dir();
 
-    sprintf(fname, "%s%c%s", workdir, SLASH, vname);
-    write_tramo_file(fname, x, vname, dset, NULL); 
+    gretl_build_path(fname, workdir, vname, NULL);
+    write_tramo_file(fname, x, vname, dset, NULL);
     clear_tramo_files(workdir, vname);
     err = helper_spawn(exepath, vname, workdir, TRAMO_ONLY);
 

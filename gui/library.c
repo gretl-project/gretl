@@ -8460,7 +8460,7 @@ void maybe_display_string_table (void)
 	}
 
 	s_table_waiting = 0;
-	build_path(stname, gretl_workdir(), "string_table.txt", NULL);
+	gretl_build_path(stname, gretl_workdir(), "string_table.txt", NULL);
 	view_file(stname, 0, 0, 78, 350, VIEW_FILE);
     }
 }
@@ -9113,7 +9113,7 @@ static int ok_run_file (char *runfile, int *is_gfn)
 	if (path != NULL) {
 	    gchar *tmp = g_strdup(runfile);
 
-	    build_path(runfile, path, tmp, NULL);
+	    gretl_build_path(runfile, path, tmp, NULL);
 	    fp = gretl_fopen(runfile, "r");
 	    g_free(tmp);
 	    g_free(path);
@@ -9166,7 +9166,7 @@ static int gui_get_include_file (const char *fname, char *fullname)
 	if (path != NULL) {
 	    int err;
 
-	    build_path(fullname, path, fname, NULL);
+	    gretl_build_path(fullname, path, fname, NULL);
 	    err = gretl_test_fopen(fullname, "r");
 	    if (err) {
 		*fullname = '\0';

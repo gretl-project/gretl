@@ -1276,6 +1276,28 @@ char *switch_ext (char *targ, const char *src, const char *ext)
 }
 
 /**
+ * switch_ext_in_place:
+ * @fname: must have sufficient space to add the given extension.
+ * @ext: the extension or suffix to attach, without dot.
+ *
+ * For processing filenames: removes any existing dot-extension on
+ * @fname and appends a dot followed by @ext.
+ *
+ * Returns: the modified string, @fname.
+ */
+
+char *switch_ext_in_place (char *fname, const char *ext)
+{
+    int i = gretl_dotpos(fname);
+
+    fname[i] = '.';
+    fname[i + 1] = '\0';
+    strcat(fname, ext);
+
+    return fname;
+}
+
+/**
  * switch_ext_new:
  * @src: the original string.
  * @ext: the extension or suffix to attach (without leading '.').
@@ -2494,118 +2516,6 @@ char *append_dir (char *fname, const char *dir)
     strcat(fname, SLASHSTR);
 
     return fname;
-}
-
-/**
- * build_path:
- * @targ: target string to write to (must be pre-allocated).
- * @dirname: first part of path.
- * @fname: filename.
- * @ext: filename extension to be appended (or NULL).
- *
- * Writes to @targ a full path composed of @dirname,
- * @fname and (optionally) @ext.  This function ensures
- * that an appropriate separator is inserted between 
- * @dirname and @fname, if @dirname is not already
- * terminated with such a separator.
- *
- * Returns: the target string, @targ.
- */
-
-char *build_path (char *targ, const char *dirname, const char *fname, 
-		  const char *ext)
-{
-    size_t n;
-
-    if (dirname == NULL || fname == NULL || targ == NULL) {
-	return NULL;
-    }
-
-    *targ = '\0';
-    strcat(targ, dirname);
-    n = strlen(targ);
-    if (n == 0) {
-	return targ;
-    }
-
-    /* strip a trailing single dot */
-    if (n > 1 && targ[n-1] == '.' && 
-	(targ[n-2] == '/' || targ[n-2] == '\\')) {
-	    targ[n-1] = '\0';
-    }
-
-    if (targ[n-1] == '/' || targ[n-1] == '\\') {
-        /* dirname is already properly terminated */
-        strcat(targ, fname);
-    } else {
-        /* otherwise put a separator in */
-        strcat(targ, SLASHSTR);
-        strcat(targ, fname);
-    }
-
-    if (ext != NULL) {
-	strcat(targ, ext);
-    }
-
-    return targ;
-}
-
-/**
- * build_path_new:
- * @dirname: first part of path.
- * @fname: filename.
- * @ext: filename extension to be appended (or NULL).
- *
- * Works as build_path() except that the full path is
- * returned in a newly allocated string.
- *
- * Returns: the constructed path, or NULL on failure.
- */
-
-char *build_path_new (const char *dirname, const char *fname, 
-		      const char *ext)
-{
-    char *targ = NULL;
-    size_t n, targlen;
-
-    if (dirname == NULL || fname == NULL) {
-	return NULL;
-    }
-
-    n = strlen(dirname);
-    targlen = n + strlen(fname) + 2;
-    if (ext != NULL) {
-	targlen += strlen(ext);
-    }
-
-    targ = malloc(targlen);
-    if (targ == NULL) {
-	return NULL;
-    }
-
-    *targ = '\0';
-    strcat(targ, dirname);
-
-    /* strip a trailing single dot */
-    if (n > 1 && targ[n-1] == '.' && 
-	(targ[n-2] == '/' || targ[n-2] == '\\')) {
-	    targ[n-1] = '\0';
-    }
-
-    if (targ[n-1] == '/' || targ[n-1] == '\\') {
-        /* dirname is already properly terminated */
-        strcat(targ, fname);
-    } else {
-        /* otherwise put a separator in */
-        strcat(targ, SLASHSTR);
-        strcat(targ, fname);
-    }
-
-    if (ext != NULL) {
-	strcat(targ, ext);
-    }
-
-    return targ;
 }
 
 /**

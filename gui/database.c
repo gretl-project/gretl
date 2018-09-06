@@ -2119,7 +2119,7 @@ void open_db_index (GtkWidget *w, gpointer data)
 			 vwin->active_var, (action == RATS_SERIES)? 1 : 2,
 			 &dbdir);
 
-    build_path(dbfile, dbdir, fname, NULL);
+    gretl_build_path(dbfile, dbdir, fname, NULL);
     g_free(fname);
     g_free(dbdir);
 
@@ -2827,7 +2827,7 @@ real_get_db_description (const char *fullname, const char *binname,
     char *p, *descrip = NULL;
 
     if (fullname == NULL) {
-	build_path(idxname, dbdir, binname, NULL);
+	gretl_build_path(idxname, dbdir, binname, NULL);
     } else {
 	strcpy(idxname, fullname);
     }
@@ -2982,7 +2982,7 @@ static void get_local_object_status (const char *fname,
     dirs = get_plausible_search_dirs(stype, &n_dirs);
 
     for (i=0; i<n_dirs; i++) {
-	build_path(fullname, dirs[i], fname, NULL);
+	gretl_build_path(fullname, dirs[i], fname, NULL);
 	errno = 0;
 	if (gretl_stat(fullname, &fbuf) == 0) {
 	    found = 1;

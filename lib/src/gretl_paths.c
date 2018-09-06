@@ -1495,26 +1495,26 @@ char **get_plausible_search_dirs (SearchType stype, int *n_dirs)
     }
 
     /* system dir first */
-    build_path(dirname, gretl_home(), subdir, NULL);
+    gretl_build_path(dirname, gretl_home(), subdir, NULL);
     err = strings_array_add(&dirs, n_dirs, dirname);
 
 #ifdef OS_OSX
     if (!err) {
 	/* the user's ~/Library */
-	build_path(dirname, gretl_app_support_dir(), subdir, NULL);
+	gretl_build_path(dirname, gretl_app_support_dir(), subdir, NULL);
 	err = strings_array_add(&dirs, n_dirs, dirname);
     }
 #else
     if (!err) {
 	/* the user's dotdir */
-	build_path(dirname, gretl_dotdir(), subdir, NULL);
+	gretl_build_path(dirname, gretl_dotdir(), subdir, NULL);
 	err = strings_array_add(&dirs, n_dirs, dirname);
     }
 #endif
 
     if (!err) {
 	/* the user's working dir */
-	build_path(dirname, gretl_workdir(), subdir, NULL);
+	gretl_build_path(dirname, gretl_workdir(), subdir, NULL);
 	err = strings_array_add(&dirs, n_dirs, dirname);
     }
 
@@ -1531,7 +1531,7 @@ char **get_plausible_search_dirs (SearchType stype, int *n_dirs)
 	const char *wd = maybe_get_default_workdir();
 
 	if (wd != NULL) {
-	    build_path(dirname, wd, subdir, NULL);
+	    gretl_build_path(dirname, wd, subdir, NULL);
 	    err = strings_array_add(&dirs, n_dirs, dirname);
 	    if (!err && stype != FUNCS_SEARCH) {
 		strcpy(dirname, wd);
@@ -1581,9 +1581,7 @@ char *gretl_addon_get_path (const char *name)
 	while ((dirent = readdir(dir)) != NULL && !found) {
 	    dname = dirent->d_name;
 	    if (!strcmp(dname, name)) {
-		build_path(path, fndir, dname, NULL);
-		strcat(path, SLASHSTR);
-		strcat(path, dname);
+		gretl_build_path(path, fndir, dname, dname, NULL);
 		strcat(path, ".gfn");
 		err = gretl_test_fopen(path, "r");
 		if (!err) {
@@ -1895,7 +1893,7 @@ char *gretl_addpath (char *fname, int script)
     }
 
     /* try workdir first */
-    build_path(fname, paths.workdir, orig, NULL);
+    gretl_build_path(fname, paths.workdir, orig, NULL);
     err = gretl_test_fopen(fname, "r");
 
     if (!err) {
@@ -2155,7 +2153,7 @@ int get_full_filename (const char *fname, char *fullname, gretlopt opt)
 	char *ipath = getenv("GRETL_INCLUDE_PATH");
 
 	if (ipath != NULL && *ipath != '\0') {
-	    build_path(fullname, ipath, fname, NULL);
+	    gretl_build_path(fullname, ipath, fname, NULL);
 	    goto test_open;
 	}
     }
@@ -2243,7 +2241,7 @@ static void set_gretl_plugpath (const char *path)
     /* respect the libdir set at compile time, e.g. /usr/lib or
        /usr/lib64
     */
-    build_path(paths.plugpath, LIBDIR, PLUGIN_SFX, NULL);
+    gretl_build_path(paths.plugpath, LIBDIR, PLUGIN_SFX, NULL);
 # else
 #  ifdef WIN32
     char *p = strstr(path, "\\share");
@@ -2285,7 +2283,7 @@ static int set_extra_dot_paths (void)
 
     /* the personal function package directory */
     *dirname = '\0';
-    build_path(dirname, paths.dotdir, "functions", NULL);
+    gretl_build_path(dirname, paths.dotdir, "functions", NULL);
     gretl_mkdir(dirname);
 
     *paths.tramodir = '\0';
@@ -2304,7 +2302,7 @@ static int set_extra_dot_paths (void)
     }
 
 #ifdef HAVE_X12A
-    build_path(paths.x12adir, paths.dotdir, "x12arima", NULL);
+    gretl_build_path(paths.x12adir, paths.dotdir, "x12arima", NULL);
     err = gretl_mkdir(paths.x12adir);
     if (err) {
 	*paths.x12adir = '\0';
@@ -2312,7 +2310,7 @@ static int set_extra_dot_paths (void)
 #endif
 
 #ifdef HAVE_TRAMO
-    build_path(paths.tramodir, paths.dotdir, "tramo", NULL);
+    gretl_build_path(paths.tramodir, paths.dotdir, "tramo", NULL);
     if (gretl_mkdir(paths.tramodir)) {
 	*paths.tramodir = '\0';
 	return 1;
@@ -2567,7 +2565,7 @@ static int validate_writedir (const char *dirname)
 	char testname[FILENAME_MAX];
 	FILE *fp;
 
-	build_path(testname, dirname, "write.chk", NULL);
+	gretl_build_path(testname, dirname, "write.chk", NULL);
 	fp = gretl_fopen(testname, "w");
 	if (fp == NULL) {
 	    gretl_errmsg_sprintf(_("Couldn't write to '%s': "
@@ -3574,10 +3572,10 @@ char *gretl_maybe_prepend_dir (char *fname)
 	char *home = getenv("HOME");
 
 	if (home != NULL) {
-	    build_path(tmp, home, fname + 2, NULL);
+	    gretl_build_path(tmp, home, fname + 2, NULL);
 	}
     } else if (!g_path_is_absolute(fname)) {
-	build_path(tmp, paths.workdir, fname, NULL);
+	gretl_build_path(tmp, paths.workdir, fname, NULL);
     }
 
     if (*tmp != '\0') {
@@ -3638,7 +3636,7 @@ int gretl_normalize_path (char *path)
 	if (getcwd(dirname, FILENAME_MAX - 1) != NULL) {
 	    char *tmp2 = gretl_strdup(path);
 
-	    build_path(path, dirname, tmp2, NULL);
+	    gretl_build_path(path, dirname, tmp2, NULL);
 	    free(tmp2);
 	}
     }
@@ -4294,7 +4292,20 @@ static void real_build_path (char *targ,
 
 #endif
 
-int gretl_build_filename (char *targ, const gchar *first_element, ...)
+/**
+ * gretl_build_path:
+ * @targ: target string to write to (must be pre-allocated).
+ * @first_element: first component of path.
+ *
+ * Writes to @targ a path composed of @first_element
+ * plus any additional string arguments supplied before
+ * a terminating NULL. An appropriate separator is inserted
+ * between the components of the path.
+ *
+ * Returns: the target string, @targ.
+ */
+
+char *gretl_build_path (char *targ, const gchar *first_element, ...)
 {
     va_list args;
 
@@ -4308,5 +4319,5 @@ int gretl_build_filename (char *targ, const gchar *first_element, ...)
 #endif
     va_end(args);
 
-    return 0;
+    return targ;
 }

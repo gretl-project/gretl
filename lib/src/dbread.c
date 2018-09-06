@@ -1752,7 +1752,7 @@ int set_db_name (const char *fname, int filetype, PRN *prn)
 	const char *path = gretl_binbase();
 
 	if (path != NULL && *path != '\0') {
-	    build_path(saved_db_name, path, fname, NULL);
+	    gretl_build_path(saved_db_name, path, fname, NULL);
 	    fp = gretl_fopen(saved_db_name, "rb");
 	}
 

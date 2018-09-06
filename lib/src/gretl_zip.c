@@ -223,7 +223,7 @@ static int gretl_gsf_zip_datafile (const char *fname,
 	int i;
 
 	for (i=0; i<2 && !err; i++) {
-	    build_path(fullname, path, names[i], NULL);
+	    gretl_build_path(fullname, path, names[i], NULL);
 	    zinp = gsf_input_stdio_new(fullname, &gerr);
 	    if (zinp == NULL) {
 		err = 1;
@@ -714,7 +714,7 @@ int package_make_zipfile (const char *gfnname,
 		    pprintf(prn, "Copying %s... ", tmp);
 		    
 		    if (*origdir && !g_path_is_absolute(dest)) {
-			zipname = build_path_new(origdir, dest, NULL);
+			zipname = gretl_build_path(origdir, dest, NULL);
 		    }
 		    if (zipname != NULL) {
 			realdest = zipname;

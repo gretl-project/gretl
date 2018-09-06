@@ -722,8 +722,8 @@ static void graph_display_pdf (GPT_SPEC *spec)
     int err = 0;
 
     spec->termtype = GP_TERM_PDF;
-    build_path(plttmp, gretl_dotdir(), "gptout.tmp", NULL);
-    build_path(pdfname, gretl_dotdir(), GRETL_PDF_TMP, NULL);
+    gretl_build_path(plttmp, gretl_dotdir(), "gptout.tmp", NULL);
+    gretl_build_path(pdfname, gretl_dotdir(), GRETL_PDF_TMP, NULL);
 
     err = revise_plot_file(spec, plttmp, pdfname, NULL);
     if (err) {
@@ -758,12 +758,12 @@ void saver_preview_graph (GPT_SPEC *spec, char *termstr)
     gchar *plotcmd;
     int err = 0;
 
-    build_path(plttmp, gretl_dotdir(), "gptout.tmp", NULL);
+    gretl_build_path(plttmp, gretl_dotdir(), "gptout.tmp", NULL);
 
     if (spec->termtype == GP_TERM_EPS) {
-	build_path(grfname, gretl_dotdir(), GRETL_EPS_TMP, NULL);
+	gretl_build_path(grfname, gretl_dotdir(), GRETL_EPS_TMP, NULL);
     } else {
-	build_path(grfname, gretl_dotdir(), GRETL_PDF_TMP, NULL);
+	gretl_build_path(grfname, gretl_dotdir(), GRETL_PDF_TMP, NULL);
     }
 
     err = revise_plot_file(spec, plttmp, grfname, termstr);
@@ -800,7 +800,7 @@ int saver_save_graph (GPT_SPEC *spec, char *termstr, const char *fname)
     char plttmp[FILENAME_MAX];
     int err;
 
-    build_path(plttmp, gretl_dotdir(), "gptout.tmp", NULL);
+    gretl_build_path(plttmp, gretl_dotdir(), "gptout.tmp", NULL);
     err = revise_plot_file(spec, plttmp, fname, termstr);
 
     if (!err) {
@@ -1041,8 +1041,8 @@ static void win32_process_graph (GPT_SPEC *spec, int dest)
     int err = 0;
 
     spec->termtype = GP_TERM_EMF;
-    build_path(plttmp, gretl_dotdir(), "gptout.tmp", NULL);
-    build_path(emfname, gretl_dotdir(), "gpttmp.emf", NULL);
+    gretl_build_path(plttmp, gretl_dotdir(), "gptout.tmp", NULL);
+    gretl_build_path(emfname, gretl_dotdir(), "gpttmp.emf", NULL);
 
     err = revise_plot_file(spec, plttmp, emfname, NULL);
     if (err) {
@@ -1128,8 +1128,8 @@ int write_plot_for_copy (int target)
 	spec->flags |= GPT_MONO;
     }
 
-    build_path(inpname, gretl_dotdir(), "gptinp.tmp", NULL);
-    build_path(outname, gretl_dotdir(), "gptout.tmp", NULL);
+    gretl_build_path(inpname, gretl_dotdir(), "gptinp.tmp", NULL);
+    gretl_build_path(outname, gretl_dotdir(), "gptout.tmp", NULL);
     err = revise_plot_file(spec, inpname, outname, NULL);
 
     spec->flags = saveflags;
@@ -4481,7 +4481,7 @@ static int repaint_png (png_plot *plot, int view)
 	    return 1;
 	}
 
-	build_path(zoomname, gretl_dotdir(), "zoomplot.gp", NULL);
+	gretl_build_path(zoomname, gretl_dotdir(), "zoomplot.gp", NULL);
 	fpout = gretl_fopen(zoomname, "w");
 	if (fpout == NULL) {
 	    fclose(fpin);
@@ -4829,7 +4829,7 @@ static int render_pngfile (png_plot *plot, int view)
     GdkPixbuf *pbuf;
     char pngname[MAXLEN];
 
-    build_path(pngname, gretl_dotdir(), "gretltmp.png", NULL);
+    gretl_build_path(pngname, gretl_dotdir(), "gretltmp.png", NULL);
     pbuf = gretl_pixbuf_new_from_file(pngname);
 
     if (pbuf == NULL) {
@@ -5450,7 +5450,7 @@ static int get_png_bounds_info (png_bounds *bounds)
     int plot_ret = -1, data_ret = -1;
     int ret = GRETL_PNG_OK;
 
-    build_path(bbname, gretl_dotdir(), "gretltmp.png", ".bounds");
+    gretl_build_path(bbname, gretl_dotdir(), "gretltmp.png.bounds", NULL);
     fp = gretl_fopen(bbname, "r");
 
     if (fp == NULL) {

@@ -1137,7 +1137,7 @@ gretl_matrix *gretl_matrix_read_from_file (const char *fname,
     }
 
     if (import) {
-	build_path(fullname, gretl_dotdir(), fname, NULL);
+	gretl_build_path(fullname, gretl_dotdir(), fname, NULL);
     } else {
 	strcpy(fullname, fname);
 	gretl_maybe_prepend_dir(fullname);
@@ -1146,7 +1146,7 @@ gretl_matrix *gretl_matrix_read_from_file (const char *fname,
     if (gz) {
 	char tmp[FILENAME_MAX];
 
-	build_path(tmp, gretl_dotdir(), "_unztmp_.mat", NULL);
+	gretl_build_path(tmp, gretl_dotdir(), "_unztmp_.mat", NULL);
 	*err = gretl_gunzip(fullname, tmp);
 	if (!*err) {
 	    fp = gretl_fopen(tmp, "rb");
@@ -1310,7 +1310,7 @@ int gretl_matrix_write_to_file (gretl_matrix *A, const char *fname,
     if (export) {
 	char targ[FILENAME_MAX];
 
-	build_path(targ, gretl_dotdir(), fname, NULL);
+	gretl_build_path(targ, gretl_dotdir(), fname, NULL);
 	if (gz) {
 	    fz = gretl_gzopen(targ, "w");
 	} else {

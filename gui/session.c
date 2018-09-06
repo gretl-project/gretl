@@ -1345,7 +1345,7 @@ static void maybe_absolutize_tryfile (void)
 	tmp = getcwd(dirname, FILENAME_MAX - 1);
 	if (tmp != NULL) {
 	    tmp = g_strdup(tryfile);
-	    build_path(tryfile, dirname, tmp, NULL);
+	    gretl_build_path(tryfile, dirname, tmp, NULL);
 	    g_free(tmp);
 	}
     }	

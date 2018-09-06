@@ -270,7 +270,7 @@ static void nls_init (void)
 # if defined(WIN32) && defined(PKGBUILD)
     char localedir[MAXLEN];
 
-    build_path(localedir, gretl_home(), "locale", NULL);
+    gretl_build_path(localedir, gretl_home(), "locale", NULL);
 # else
     const char *localedir = LOCALEDIR;
 # endif /* WIN32 package */

@@ -1075,7 +1075,7 @@ do_outfile_command (gretlopt opt, const char *fname,
 	    } else {
 		gchar *pname = g_strdup_printf("%s.prntmp", fname);
 
-		build_path(tmp, gretl_dotdir(), pname, NULL);
+		gretl_build_path(tmp, gretl_dotdir(), pname, NULL);
 		g_free(pname);
 		strvar = fname;
 	    }

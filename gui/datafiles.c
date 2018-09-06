@@ -689,7 +689,8 @@ static void show_datafile_info (GtkWidget *w, gpointer data)
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var,
 			 0, &filename);
     collection = g_object_get_data(G_OBJECT(vwin->listbox), "collection");
-    build_path(fullname, collection->path, filename, ".gdt");
+    gretl_build_path(fullname, collection->path, filename, NULL);
+    strcat(fullname, ".ext");
     g_free(filename);
 
 #if 0
@@ -721,7 +722,8 @@ void browser_open_data (GtkWidget *w, gpointer data)
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var,
 			 0, &filename);
     collection = g_object_get_data(G_OBJECT(vwin->listbox), "collection");
-    build_path(tryfile, collection->path, filename, ".gdt");
+    gretl_build_path(tryfile, collection->path, filename, NULL);
+    strcat(tryfile, ".gdt");
     g_free(filename);
 
     set_datapage(collection->title);
@@ -738,7 +740,8 @@ void browser_open_ps (GtkWidget *w, gpointer data)
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var,
 			 0, &filename);
     collection = g_object_get_data(G_OBJECT(vwin->listbox), "collection");
-    build_path(scriptfile, collection->path, filename, ".inp");
+    gretl_build_path(scriptfile, collection->path, filename, NULL);
+    strcat(scriptfile, ".inp");
     g_free(filename);
 
     /* close the calling window */
@@ -1100,11 +1103,13 @@ static void browser_functions_handler (windata_t *vwin, int task)
 	tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var,
 			     dircol, &dir);
 	if (task == VIEW_PKG_RESOURCES) {
-	    build_path(path, dir, "examples", NULL);
+	    gretl_build_path(path, dir, "examples", NULL);
 	} else if (task == VIEW_PKG_DOC) {
-	    build_path(path, dir, pkgname, ".pdf");
+	    gretl_build_path(path, dir, pkgname, NULL);
+	    strcat(path, ".pdf");
 	} else {
-	    build_path(path, dir, pkgname, ".gfn");
+	    gretl_build_path(path, dir, pkgname, NULL);
+	    strcat(path, ".gfn");
 	}
     } else {
 	strcpy(path, pkgname);
@@ -1116,7 +1121,8 @@ static void browser_functions_handler (windata_t *vwin, int task)
 	const char *loaded = NULL;
 	gchar *version = NULL;
 
-	build_path(test, dir, pkgname, ".gfn");
+	gretl_build_path(test, dir, pkgname, NULL);
+	strcat(test, ".gfn");
 	if (function_package_is_loaded(test, &loaded)) {
 	    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var,
 				 1, &version);
@@ -1361,7 +1367,8 @@ static int get_menu_add_ok (windata_t *vwin)
     if (pkgname != NULL && dirname != NULL) {
 	char path[FILENAME_MAX];
 
-	build_path(path, dirname, pkgname, ".gfn");
+	gretl_build_path(path, dirname, pkgname, NULL);
+	strcat(path, ".gfn");
 	ret = package_is_available_for_menu(pkgname, path);
     }
 
@@ -2555,7 +2562,7 @@ read_fn_files_in_dir (DIR *dir, const char *path,
 		continue;
 	    }
 
-	    build_path(fullname, path, basename, NULL);
+	    gretl_build_path(fullname, path, basename, NULL);
 	    if (gretl_isdir(fullname)) {
 		/* construct functions/foo/foo.gfn */
 		gchar *realbase, *realpath;
@@ -2591,7 +2598,7 @@ read_fn_files_in_dir (DIR *dir, const char *path,
 	}
 
 	if (has_suffix(basename, ".gfn")) {
-	    build_path(fullname, path, basename, NULL);
+	    gretl_build_path(fullname, path, basename, NULL);
 	    *nfn += ok_gfn_path(fullname, basename, path,
 				store, iter, imax, 0);
 	}

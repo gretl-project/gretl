@@ -111,6 +111,8 @@ char *gretl_strstrip_copy (const char *str, int *err);
 
 char *switch_ext (char *targ, const char *src, const char *ext);
 
+char *switch_ext_in_place (char *fname, const char *ext);
+
 char *switch_ext_new (const char *src, const char *ext);
 
 int equation_get_lhs_and_rhs (const char *s, char **plh, char **prh);
@@ -177,12 +179,6 @@ char *make_varname_unique (char *vname, int v, DATASET *dset);
 int fix_varname_duplicates (DATASET *dset);
 
 char *append_dir (char *fname, const char *dir);
-
-char *build_path (char *targ, const char *dirname, const char *fname, 
-		  const char *ext);
-
-char *build_path_new (const char *dirname, const char *fname, 
-		      const char *ext);
 
 const char *path_last_element (const char *path);
 

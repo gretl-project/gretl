@@ -138,7 +138,7 @@ int gretl_native_zip_datafile (const char *fname, const char *path,
 	fprintf(stderr, " cwd = '%s'\n", thisdir);
 #endif
 	if (!g_path_is_absolute(fname)) {
-	    build_path(zipname, thisdir, fname, NULL);
+	    gretl_build_path(zipname, thisdir, fname, NULL);
 	} else {
 	    strcpy(zipname, fname);
 	}

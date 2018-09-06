@@ -351,7 +351,7 @@ static void real_nls_init (void)
 {
     char localedir[MAXSTR];
 
-    build_path(localedir, gretl_home(), "locale", NULL);
+    gretl_build_path(localedir, gretl_home(), "locale", NULL);
     setlocale(LC_ALL, "");
     set_gretl_charset();
     bindtextdomain(PACKAGE, localedir);
