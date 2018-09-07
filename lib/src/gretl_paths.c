@@ -363,12 +363,12 @@ FILE *gretl_fopen (const char *fname, const char *mode)
 #ifdef WIN32
     if (string_is_utf8(fname)) {
 	fp = g_fopen(fname, mode);
-    }
-#endif
-
-    if (fp == NULL) {
+    } else {
 	fp = fopen(fname, mode);
     }
+#else
+    fp = fopen(fname, mode);
+#endif
 
 #if FDEBUG
     fprintf(stderr, "  after fopen, errno = %d\n", errno);
@@ -398,20 +398,19 @@ FILE *gretl_fopen (const char *fname, const char *mode)
 FILE *gretl_mktemp (char *pattern, const char *mode)
 {
     FILE *fp = NULL;
-    int fd, done = 0;
+    int fd;
 
     gretl_error_clear();
 
 #ifdef WIN32
     if (string_is_utf8(pattern)) {
 	fd = g_mkstemp(pattern);
-	done = 1;
-    }
-#endif
-
-    if (!done) {
+    } else {
 	fd = mkstemp(pattern);
     }
+#else
+    fd = mkstemp(pattern);
+#endif
 
     if (errno != 0) {
 	gretl_errmsg_set_from_errno(NULL, errno);
@@ -491,7 +490,8 @@ int gretl_test_fopen (const char *fname, const char *mode)
  * Returns: file pointer, or %NULL on failure.
  */
 
-FILE *gretl_fopen_with_recode (const char *fname, const char *mode,
+FILE *gretl_fopen_with_recode (const char *fname,
+			       const char *mode,
 			       char **recoded_fname)
 {
     gchar *fconv = NULL;
@@ -682,6 +682,55 @@ int gretl_file_exists (const char *fname)
     return gretl_stat(fname, NULL) == 0;
 }
 
+#ifdef WIN32
+
+static int win32_rename (const char *oldpath,
+			 const char *newpath)
+{
+    int u_old = g_utf8_validate((gchar *) oldpath, -1, NULL);
+    int u_new = g_utf8_validate((gchar *) newpath, -1, NULL);
+    int ret = -1;
+
+    if (u_old && u_new) {
+	/* OK, both names are UTF-8 */
+	ret = g_rename(oldpath, newpath);
+    } else if (u_old || u_new) {
+	/* let's get both names into the locale charset */
+	gchar *tmp = NULL;
+
+	if (u_old) {
+	    /* only the original name is UTF-8 */
+	    tmp = g_win32_locale_filename_from_utf8(oldpath);
+	} else {
+	    /* only the new name is UTF-8 */
+	    tmp = g_win32_locale_filename_from_utf8(newpath);
+	}
+
+	if (tmp == NULL) {
+	    /* couldn't convert a filename */
+	    ret = -1;
+	} else {
+	    /* rename() on Windows sets EEXIST if the target
+	       is already present */
+	    remove(newpath);
+	    if (u_old) {
+		ret = rename(tmp, newpath);
+	    } else {
+		ret = rename(oldpath, tmp);
+	    }
+	    g_free(tmp);
+	}
+    } else {
+	/* neither name is in UTF-8 */
+	remove(newpath);
+	ret = rename(oldpath, newpath);
+    }
+
+    return ret;
+}
+
+#endif
+
 /**
  * gretl_rename:
  * @oldpath: name of file to be opened.
@@ -696,41 +745,15 @@ int gretl_file_exists (const char *fname)
 
 int gretl_rename (const char *oldpath, const char *newpath)
 {
-    gchar *oldconv = NULL, *newconv = NULL;
     int err = 0;
 
     gretl_error_clear();
 
-    err = maybe_recode_path(oldpath, &oldconv, -1);
-
-#if 0
-    fprintf(stderr, "maybe_recode: old='%s' err=%d oldconv=%p\n",
-	    oldpath, err, (void *) oldconv);
-#endif
-
-    if (!err) {
-	err = maybe_recode_path(newpath, &newconv, -1);
-    }
-
-    if (!err) {
-	if (oldconv != NULL) {
-	    oldpath = oldconv;
-	}
-	if (newconv != NULL) {
-	    newpath = newconv;
-	}
 #ifdef WIN32
-	/* rename() on Windows sets EEXIST if the target
-	   is already present */
-	remove(newpath);
+    err = win32_rename(oldpath, newpath);
+#else
+    err = rename(oldpath, newpath);
 #endif
-	err = rename(oldpath, newpath);
-    }
-
-    if (oldconv != NULL || newconv != NULL) {
-	g_free(oldconv);
-	g_free(newconv);
-    }
 
     if (errno != 0) {
 	gretl_errmsg_set_from_errno("gretl_rename", errno);
@@ -752,40 +775,36 @@ int gretl_rename (const char *oldpath, const char *newpath)
 
 int gretl_remove (const char *path)
 {
-    int tried = 0;
     int ret = -1;
 
 #ifdef WIN32
-    int utf8 = 0;
-
-    if (string_is_utf8(path)) {
+    if (g_utf8_validate((gchar *) path, -1, NULL)) {
 	ret = g_remove(path);
-	tried = utf8 = 1;
-    }
-#endif
-
-    if (!tried) {
+    } else {
+	/* @path is in locale encoding */
 	ret = remove(path);
-    }
+	if (ret == -1) {
+	    /* allow for the possibility that we're trying to remove a
+	       directory on win32 -> recode to UTF-8 and use g_remove
+	    */
+	    GError *gerr = NULL;
+	    gchar *pconv = NULL;
+	    gsize sz;
 
-#ifdef WIN32
-    if (ret == -1 && !utf8) {
-	/* allow for the possibility that we're trying to remove a
-	   directory on win32 -> recode to UTF-8 and use g_remove
-	*/
-	gchar *pconv = NULL;
-	int err;
-
-	err = maybe_recode_path(path, &pconv, 1);
-	if (!err) {
-	    if (pconv != NULL) {
+	    pconv = g_locale_to_utf8(path, -1, NULL, &sz, &gerr);
+	    if (pconv == NULL) {
+		if (gerr != NULL) {
+		    gretl_errmsg_set(gerr->message);
+		    g_error_free(gerr);
+		}
+	    } else {
 		ret = g_remove(pconv);
 		g_free(pconv);
-	    } else {
-		ret = g_remove(path);
 	    }
 	}
     }
+#else
+    ret = remove(path);
 #endif
 
     return ret;
@@ -805,47 +824,28 @@ int gretl_remove (const char *path)
 
 gzFile gretl_gzopen (const char *fname, const char *mode)
 {
-    gchar *fconv = NULL;
     gzFile fz = NULL;
-    int err;
 
     gretl_error_clear();
 
-    err = maybe_recode_path(fname, &fconv, -1);
+#ifdef WIN32
+    if (string_is_utf8(fname)) {
+	/* have to convert to locale */
+	gchar *tmp = g_win32_locale_filename_from_utf8(fname);
 
-    if (!err) {
-	if (fconv != NULL) {
-	    fz = gzopen(fconv, mode);
-	    g_free(fconv);
-	} else {
-	    fz = gzopen(fname, mode);
+	if (tmp != NULL) {
+	    fz = gzopen(tmp, mode);
+	    g_free(tmp);
 	}
+    } else {
+	fz = gzopen(fname, mode);
     }
+#else
+    fz = gzopen(fname, mode);
+#endif    
 
     if (errno != 0) {
 	gretl_errmsg_set_from_errno("gzopen", errno);
-    }
-
-    return fz;
-}
-
-static gzFile gretl_try_gzopen (const char *fname, const char *mode)
-{
-    gchar *fconv = NULL;
-    gzFile fz = NULL;
-    int err;
-
-    gretl_error_clear();
-
-    err = maybe_recode_path(fname, &fconv, -1);
-
-    if (!err) {
-	if (fconv != NULL) {
-	    fz = gzopen(fconv, mode);
-	    g_free(fconv);
-	} else {
-	    fz = gzopen(fname, mode);
-	}
     }
 
     return fz;
@@ -1162,7 +1162,7 @@ int gretl_is_xml_file (const char *fname)
     char test[6];
     int ret = 0;
 
-    fz = gretl_try_gzopen(fname, "rb");
+    fz = gretl_gzopen(fname, "rb");
     if (fz != Z_NULL) {
 	if (gzread(fz, test, 5)) {
 	    test[5] = '\0';
@@ -1170,6 +1170,8 @@ int gretl_is_xml_file (const char *fname)
 	}
 	gzclose(fz);
     }
+
+    gretl_error_clear();
 
     return ret;
 }
