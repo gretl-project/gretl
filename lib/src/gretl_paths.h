@@ -85,15 +85,12 @@ void set_stdio_use_utf8 (void);
 
 int get_stdio_use_utf8 (void);
 
-int string_is_utf8 (const unsigned char *s);
+int utf8_encoded (const unsigned char *s);
 
 int maybe_recode_path (const char *path, char **pconv, 
 		       int want_utf8);
 
 FILE *gretl_fopen (const char *fname, const char *mode);
-
-FILE *gretl_fopen_with_recode (const char *fname, const char *mode,
-			       char **recoded_fname);
 
 int gretl_test_fopen (const char *fname, const char *mode);
 

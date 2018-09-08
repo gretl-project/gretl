@@ -336,7 +336,9 @@ char *internal_to_external (const char *iname)
 {
     char *xname = NULL;
 
-    if (!get_stdio_use_utf8() && string_is_utf8((unsigned char *) iname)) {
+#ifdef WIN32
+    /* FIXME should we be doing this?! */
+    if (utf8_encoded((unsigned char *) iname)) {
 	GError *err = NULL;
 	gsize b;
 
@@ -349,6 +351,9 @@ char *internal_to_external (const char *iname)
     } else {
 	xname = g_strdup(iname);
     }
+#else
+    xname = g_strdup(iname);
+#endif
 
 #ifdef WIN32
     if (xname != NULL) {

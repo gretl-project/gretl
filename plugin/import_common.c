@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include <errno.h>
@@ -78,7 +78,7 @@ static int check_imported_varname (char *vname, int vnum,
 	strcpy(tmp, vname);
 	s = tmp;
 	*vname = '\0';
-	
+
 	while (*s && !isalpha(*s)) s++;
 	if (*s == '\0') {
 	    if (vnum > 0) {
@@ -124,13 +124,13 @@ static void import_ts_check (DATASET *dset)
 	if (reversed) {
 	    reverse_data(dset, prn);
 	}
-    } 
+    }
 
 #if ODEBUG
     fprintf(stderr, "dset->pd = %d\n", dset->pd);
 #endif
 
-    if (dset->pd != 1 || strcmp(dset->stobs, "1")) { 
+    if (dset->pd != 1 || strcmp(dset->stobs, "1")) {
         dset->structure = TIME_SERIES;
     }
 
@@ -231,7 +231,7 @@ static int gretl_make_tempdir (char *dname)
     if (s == NULL) {
 	gretl_errmsg_set_from_errno("gretl_make_tempdir", errno);
 	err = E_FOPEN;
-    } 
+    }
 
     return err;
 }
@@ -240,46 +240,54 @@ static int gretl_make_tempdir (char *dname)
 
 /* For ODS and XLSX: unzip the target file in the user's
    "dotdir". On successful completion @dname holds the
-   name of the temporary subdirectory, in the dotdir, 
+   name of the temporary subdirectory, in the dotdir,
    holding the contents of the zipfile.
 */
 
 static int open_import_zipfile (const char *fname, char *dname,
 				PRN *prn)
 {
+#ifdef WIN32
+    gchar *recoded_fname = NULL;
+#endif
     const char *udir = gretl_dotdir();
     const char *real_fname = fname;
-    char *recoded_fname = NULL;
     char *abspath = NULL;
-    FILE *fp;
+    FILE *fp = NULL;
     int err = 0;
 
     errno = 0;
     *dname = '\0';
 
-    /* In case @fname is in UTF-8 but we're on MS Windows (or
-       conceivably on an old non-UTF-8 *nix system), grab the
-       appropriately recoded filename to pass into the
-       zipfile apparatus, since in that context a filename
-       that works with plain system stdio is expected.
+    /* In case @fname is in UTF-8 but we're on MS Windows,
+       grab the appropriately recoded filename to pass into
+       the zipfile apparatus, since in that context a filename
+       that works with plain C-library stdio is expected.
        FIXME: is this right if we're using libgsf to do the
        unzipping? Maybe this doesn't matter if we're using
        libgsf only on UTF-8 systems (e.g. modern Linux), in
        which case no recoding will be required.
     */
+#ifdef WIN32
+    if (utf8_encoded(fname)) {
+	recoded_fname = g_win32_locale_filename_from_utf8(fname);
+	real_fname = recoded_fname;
+	if (real_fname == NULL) {
+	    /* recoding failed */
+	    return E_FOPEN;
+	}
+    }
+#endif
 
-    fp = gretl_fopen_with_recode(fname, "r", &recoded_fname);
+    fp = fopen(real_fname, "r");
     if (fp == NULL) {
-	return E_FOPEN;
+	err = E_FOPEN;
+	goto bailout;
     }
 
     fclose(fp);
 
-    if (recoded_fname != NULL) {
-	real_fname = recoded_fname;
-    }
-
-    /* by doing chdir, we may lose track of the file if 
+    /* by doing chdir, we may lose track of the file if
        its path is relative */
     if (!g_path_is_absolute(real_fname)) {
 	abspath = get_absolute_path(real_fname);
@@ -301,7 +309,7 @@ static int open_import_zipfile (const char *fname, char *dname,
 	    }
 	}
     }
-    
+
     if (!err) {
 	/* if all has gone OK, we're now "in" the temporary
 	   directory under dotdir, and @real_fname is the
@@ -314,7 +322,12 @@ static int open_import_zipfile (const char *fname, char *dname,
     }
 
     free(abspath);
-    free(recoded_fname);
+
+ bailout:
+
+#ifdef WIN32
+    g_free(recoded_fname);
+#endif
 
     return err;
 }
@@ -335,9 +348,9 @@ static int worksheet_start_dataset (DATASET *newinfo)
     }
 }
 
-static int 
+static int
 importer_dates_check (char **labels, BookFlag *pflags,
-		      DATASET *newset, PRN *prn, 
+		      DATASET *newset, PRN *prn,
 		      int *err)
 {
     int d, t;
@@ -391,16 +404,16 @@ importer_dates_check (char **labels, BookFlag *pflags,
 
 # endif /* !gnumeric */
 
-static void wbook_print_info (wbook *book) 
+static void wbook_print_info (wbook *book)
 {
     int i;
 
     fprintf(stderr, "Found %d sheet%s\n", book->nsheets,
 	    (book->nsheets > 1)? "s" : "");
-    
+
     for (i=0; i<book->nsheets; i++) {
 	if (book->byte_offsets != NULL) {
-	    fprintf(stderr, "%d: '%s' at offset %u\n", i, 
+	    fprintf(stderr, "%d: '%s' at offset %u\n", i,
 		    book->sheetnames[i], book->byte_offsets[i]);
 	} else {
 	    fprintf(stderr, "%d: '%s'\n", i, book->sheetnames[i]);
@@ -535,7 +548,7 @@ void infobox (const char *template, ...)
     vsprintf(msg, template, args);
     va_end(args);
 
-    dialog = gtk_message_dialog_new(NULL, 
+    dialog = gtk_message_dialog_new(NULL,
 				    GTK_DIALOG_DESTROY_WITH_PARENT,
 				    GTK_MESSAGE_INFO,
 				    GTK_BUTTONS_CLOSE,
@@ -602,11 +615,11 @@ void wsheet_menu_select_row (GtkTreeSelection *selection, wbook *book)
 	if (offcurr != offmin) {
 	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(book->rowspin),
 				      offmin);
-	}	
+	}
     }
 }
 
-static 
+static
 void wsheet_menu_make_list (GtkTreeView *view, wbook *book)
 {
     GtkTreeModel *model = gtk_tree_view_get_model(view);
@@ -615,45 +628,45 @@ void wsheet_menu_make_list (GtkTreeView *view, wbook *book)
 
     gtk_list_store_clear(GTK_LIST_STORE(model));
     gtk_tree_model_get_iter_first(model, &iter);
-    
+
     for (i=0; i<book->nsheets; i++) {
         gtk_list_store_append(GTK_LIST_STORE(model), &iter);
-        gtk_list_store_set(GTK_LIST_STORE(model), &iter, 
+        gtk_list_store_set(GTK_LIST_STORE(model), &iter,
 			   0, book->sheetnames[i], -1);
     }
 
     gtk_tree_model_get_iter_first(model, &iter);
-    gtk_tree_selection_select_iter(gtk_tree_view_get_selection(view), 
+    gtk_tree_selection_select_iter(gtk_tree_view_get_selection(view),
 				   &iter);
 }
 
-static 
+static
 void wsheet_menu_cancel (GtkWidget *w, wbook *book)
 {
     book->selected = -1;
 }
 
-static 
+static
 void wbook_set_col_offset (GtkWidget *w, wbook *book)
 {
     book->col_offset = gtk_spin_button_get_value_as_int
 	(GTK_SPIN_BUTTON(book->colspin)) - 1;
 }
 
-static 
+static
 void wbook_set_row_offset (GtkWidget *w, wbook *book)
 {
     book->row_offset = gtk_spin_button_get_value_as_int
 	(GTK_SPIN_BUTTON(book->rowspin)) - 1;
 }
 
-static 
+static
 void add_sheets_list (GtkWidget *vbox, wbook *book)
 {
     GtkWidget *label, *view, *sw, *hsep;
     GtkListStore *store;
     GtkTreeSelection *select;
-    GtkCellRenderer *renderer; 
+    GtkCellRenderer *renderer;
     GtkTreeViewColumn *column;
 
     store = gtk_list_store_new(1, G_TYPE_STRING);
@@ -664,9 +677,9 @@ void add_sheets_list (GtkWidget *vbox, wbook *book)
     g_object_set(renderer, "ypad", 0, NULL);
     column = gtk_tree_view_column_new_with_attributes(NULL,
 						      renderer,
-						      "text", 
+						      "text",
 						      0, NULL);
-    gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);   
+    gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
     gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(view), FALSE);
 
     select = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
@@ -693,7 +706,7 @@ void add_sheets_list (GtkWidget *vbox, wbook *book)
 				   GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw),
 					GTK_SHADOW_IN);
-    gtk_container_add(GTK_CONTAINER(sw), view); 
+    gtk_container_add(GTK_CONTAINER(sw), view);
 }
 
 static void make_wmenu_modal (GtkWidget *w, gpointer p)
@@ -726,7 +739,7 @@ static void wsheet_menu (wbook *book, int multisheet)
 
     g_signal_connect_after(G_OBJECT(w), "delete_event",
 			   G_CALLBACK(wsheet_menu_cancel), book);
-    g_signal_connect(G_OBJECT(w), "destroy",  
+    g_signal_connect(G_OBJECT(w), "destroy",
 		     G_CALLBACK(gtk_main_quit), NULL);
     g_signal_connect(G_OBJECT(w), "realize",
 		     G_CALLBACK(make_wmenu_modal), NULL);
@@ -780,7 +793,7 @@ static void wsheet_menu (wbook *book, int multisheet)
 
 #if defined(EXCEL_IMPORTER) && !defined(G_OS_WIN32)
     tmp = gtk_check_button_new_with_label(_("Produce debugging output"));
-    g_signal_connect(G_OBJECT(tmp), "toggled", G_CALLBACK(debug_callback), 
+    g_signal_connect(G_OBJECT(tmp), "toggled", G_CALLBACK(debug_callback),
 		     book);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
     gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
@@ -793,22 +806,22 @@ static void wsheet_menu (wbook *book, int multisheet)
     /* Cancel button */
     tmp = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
     gtk_container_add(GTK_CONTAINER(hbox), tmp);
-    g_signal_connect(G_OBJECT (tmp), "clicked", 
+    g_signal_connect(G_OBJECT (tmp), "clicked",
 		     G_CALLBACK(wsheet_menu_cancel), book);
-    g_signal_connect_swapped(G_OBJECT (tmp), "clicked", 
-			     G_CALLBACK (gtk_widget_destroy), 
+    g_signal_connect_swapped(G_OBJECT (tmp), "clicked",
+			     G_CALLBACK (gtk_widget_destroy),
 			     G_OBJECT (w));
 
     /* OK button */
     tmp = gtk_button_new_from_stock(GTK_STOCK_OK);
     gtk_container_add(GTK_CONTAINER(hbox), tmp);
-    g_signal_connect_swapped(G_OBJECT (tmp), "clicked", 
-			     G_CALLBACK (gtk_widget_destroy), 
+    g_signal_connect_swapped(G_OBJECT (tmp), "clicked",
+			     G_CALLBACK (gtk_widget_destroy),
 			     G_OBJECT (w));
     gtk_widget_set_can_default(tmp, TRUE);
     gtk_widget_grab_default(tmp);
 
-    g_signal_connect(G_OBJECT(w), "key-press-event", 
+    g_signal_connect(G_OBJECT(w), "key-press-event",
 		     G_CALLBACK(esc_cancels), book);
 
     gtk_entry_set_activates_default(GTK_ENTRY(book->colspin), TRUE);
@@ -817,4 +830,3 @@ static void wsheet_menu (wbook *book, int multisheet)
     gtk_widget_show_all(w);
     gtk_main();
 }
-

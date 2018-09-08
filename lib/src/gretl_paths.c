@@ -219,10 +219,16 @@ static int maybe_add_suffix (char *fname, const char *sfx)
     return 0;
 }
 
-/* Heuristic: @s contains characters that are not
-   printable ASCII, and validates as UTF-8 */
+#define valid_utf8(s) g_utf8_validate(s, -1, NULL)
 
-int string_is_utf8 (const unsigned char *s)
+/* Heuristic: @s contains characters that are not
+   printable ASCII, and validates as UTF-8 -- so
+   this is not simply a check for valid UTF-8, it's
+   a check for non-ASCII UTF-8, as opposed to some
+   8-bit locale encoding.
+*/
+
+int utf8_encoded (const unsigned char *s)
 {
     const unsigned char *p = s;
     int ascii_text = 1;
@@ -236,7 +242,7 @@ int string_is_utf8 (const unsigned char *s)
 	p++;
     }
 
-    if (!ascii_text && g_utf8_validate((gchar *) s, -1, NULL)) {
+    if (!ascii_text && valid_utf8(s)) {
 	ret = 1;
     }
 
@@ -306,7 +312,7 @@ int maybe_recode_path (const char *path, char **pconv, int want_utf8)
 #endif
 
     if (want_utf8) {
-	if (!g_utf8_validate(path, -1, NULL)) {
+	if (!valid_utf8(path)) {
 	    /* need to convert from locale to UTF-8 */
 	    GError *gerr = NULL;
 	    gsize sz;
@@ -320,7 +326,7 @@ int maybe_recode_path (const char *path, char **pconv, int want_utf8)
 		err = 1;
 	    }
 	}
-    } else if (string_is_utf8((unsigned char *) path)) {
+    } else if (utf8_encoded((unsigned char *) path)) {
 	/* need to convert from UTF-8 to locale */
 	GError *gerr = NULL;
 	gsize sz;
@@ -361,7 +367,7 @@ FILE *gretl_fopen (const char *fname, const char *mode)
 #endif
 
 #ifdef WIN32
-    if (string_is_utf8(fname)) {
+    if (valid_utf8(fname)) {
 	fp = g_fopen(fname, mode);
     } else {
 	fp = fopen(fname, mode);
@@ -403,7 +409,7 @@ FILE *gretl_mktemp (char *pattern, const char *mode)
     gretl_error_clear();
 
 #ifdef WIN32
-    if (string_is_utf8(pattern)) {
+    if (valid_utf8(pattern)) {
 	fd = g_mkstemp(pattern);
     } else {
 	fd = mkstemp(pattern);
@@ -446,7 +452,7 @@ int gretl_test_fopen (const char *fname, const char *mode)
     gretl_error_clear();
 
 #ifdef WIN32
-    if (string_is_utf8(fname)) {
+    if (valid_utf8(fname)) {
 	fp = g_fopen(fname, mode);
 	if (fp == NULL) {
 	    err = errno;
@@ -471,65 +477,6 @@ int gretl_test_fopen (const char *fname, const char *mode)
     }
 
     return err;
-}
-
-/**
- * gretl_fopen_with_recode:
- * @fname: name of file to be opened.
- * @mode: mode in which to open the file.
- * @recoded_fname: location to receive recoded filename,
- * if recoding is needed.
- *
- * A wrapper for  the C library's fopen(), making allowance for
- * the possibility that @fname has to be converted from
- * UTF-8 to the locale encoding or vice versa. If conversion
- * is carried out, the newly allocated recoded filename is
- * returned via the last argument (otherwise that argument is
- * not touched).
- *
- * Returns: file pointer, or %NULL on failure.
- */
-
-FILE *gretl_fopen_with_recode (const char *fname,
-			       const char *mode,
-			       char **recoded_fname)
-{
-    gchar *fconv = NULL;
-    FILE *fp = NULL;
-    int err;
-
-    gretl_error_clear();
-
-#if FDEBUG
-    fprintf(stderr, "gretl_fopen_with_recode: got '%s'\n", fname);
-#endif
-
-    err = maybe_recode_path(fname, &fconv, -1);
-
-    if (!err) {
-	if (fconv != NULL) {
-	    fp = fopen(fconv, mode);
-#if FDEBUG
-            fprintf(stderr, "using recoded name, fp = %p\n", (void *) fp);
-#endif
-	    if (fp != NULL && recoded_fname != NULL) {
-		*recoded_fname = gretl_strdup(fconv);
-	    }
-	    g_free(fconv);
-	} else {
-	    fp = fopen(fname, mode);
-	}
-    }
-
-#if FDEBUG
-    fprintf(stderr, "after fopen, errno = %d\n", errno);
-#endif
-
-    if (errno != 0) {
-	gretl_errmsg_set_from_errno(fname, errno);
-    }
-
-    return fp;
 }
 
 #ifdef WIN32
@@ -581,7 +528,6 @@ int gretl_open (const char *pathname, int flags, int mode)
 {
     mode_t m = 0;
     int fd = -1;
-    int done = 0;
 
     gretl_error_clear();
 
@@ -592,15 +538,14 @@ int gretl_open (const char *pathname, int flags, int mode)
 #ifdef WIN32
     if (!strcmp(pathname, ".")) {
 	return win32_open_fchdir(0);
-    } else if (string_is_utf8(pathname)) {
+    } else if (valid_utf8(pathname)) {
 	fd = g_open(pathname, flags, m);
-	done = 1;
-    }
-#endif
-
-    if (!done) {
+    } else {
 	fd = open(pathname, flags, m);
     }
+#else
+    fd = open(pathname, flags, m);
+#endif
 
     if (errno != 0) {
 	gretl_errmsg_set_from_errno(pathname, errno);
@@ -642,7 +587,7 @@ int gretl_stat (const char *fname, struct stat *buf)
     gretl_error_clear();
 
 #ifdef WIN32
-    if (string_is_utf8(fname)) {
+    if (utf8_encoded(fname)) {
 	/* A native stat() call won't work with such a filename:
 	   we should either call g_stat(), which expects UTF-8
 	   on Windows, or convert @fname before calling stat().
@@ -687,8 +632,8 @@ int gretl_file_exists (const char *fname)
 static int win32_rename (const char *oldpath,
 			 const char *newpath)
 {
-    int u_old = g_utf8_validate((gchar *) oldpath, -1, NULL);
-    int u_new = g_utf8_validate((gchar *) newpath, -1, NULL);
+    int u_old = valid_utf8(oldpath);
+    int u_new = valid_utf8(newpath);
     int ret = -1;
 
     if (u_old && u_new) {
@@ -778,7 +723,7 @@ int gretl_remove (const char *path)
     int ret = -1;
 
 #ifdef WIN32
-    if (g_utf8_validate((gchar *) path, -1, NULL)) {
+    if (valid_utf8(path)) {
 	ret = g_remove(path);
     } else {
 	/* @path is in locale encoding */
@@ -829,7 +774,7 @@ gzFile gretl_gzopen (const char *fname, const char *mode)
     gretl_error_clear();
 
 #ifdef WIN32
-    if (string_is_utf8(fname)) {
+    if (utf8_encoded(fname)) {
 	/* have to convert to locale */
 	gchar *tmp = g_win32_locale_filename_from_utf8(fname);
 
@@ -842,7 +787,7 @@ gzFile gretl_gzopen (const char *fname, const char *mode)
     }
 #else
     fz = gzopen(fname, mode);
-#endif    
+#endif
 
     if (errno != 0) {
 	gretl_errmsg_set_from_errno("gzopen", errno);
@@ -864,38 +809,34 @@ gzFile gretl_gzopen (const char *fname, const char *mode)
 
 int gretl_chdir (const char *path)
 {
-#ifdef WIN32
-    char *ptmp = NULL;
-    int len = strlen(path);
-#endif
-    int tried = 0;
     int err = 0;
 
     gretl_error_clear();
 
 #ifdef WIN32
-    if (len > 1 && path[len-1] == '\\' && path[len-2] != ':') {
-	/* trim trailing slash for non-root dir */
-	ptmp = gretl_strndup(path, len - 1);
-	path = ptmp;
-    }
-    if (string_is_utf8(path)) {
-	err = g_chdir(path);
-	tried = 1;
-    }
-#endif
+    if (1) {
+	int len = strlen(path);
+	char *ptmp = NULL;
 
-    if (!tried) {
-	err = chdir(path);
+	if (len > 1 && path[len-1] == '\\' && path[len-2] != ':') {
+	    /* trim trailing slash for non-root dir */
+	    ptmp = gretl_strndup(path, len - 1);
+	    path = ptmp;
+	}
+	if (valid_utf8(path)) {
+	    err = g_chdir(path);
+	} else {
+	    err = chdir(path);
+	}
+	free(ptmp);
     }
+#else
+    err = chdir(path);
+#endif
 
     if (errno != 0) {
 	gretl_errmsg_set_from_errno("chdir", errno);
     }
-
-#ifdef WIN32
-    free(ptmp);
-#endif
 
     return err;
 }
@@ -939,7 +880,9 @@ int gretl_mkdir (const char *path)
     errno = 0;
 
 #ifdef WIN32
-    if (!string_is_utf8(path)) {
+    if (valid_utf8(path)) {
+	err = g_mkdir_with_parents(path, 0755);
+    } else {
 	gchar *pconv = g_locale_to_utf8(path, -1, NULL, NULL, NULL);
 
 	if (pconv != NULL) {
@@ -1114,32 +1057,25 @@ int gretl_setenv (const char *name, const char *value)
 
 int gretl_write_access (char *fname)
 {
-    gchar *fconv = NULL;
     int err;
 
     gretl_error_clear();
 
-    err = maybe_recode_path(fname, &fconv, -1);
-    if (err) {
-	return err;
-    }
-
-    if (fconv != NULL) {
 #ifdef WIN32
-	err = !win32_write_access(fconv);
-#else
-	err = access(fconv, W_OK);
-#endif
-	g_free(fconv);
+    if (utf8_encoded(fname)) {
+	gchar *tmp = g_win32_locale_filename_from_utf8(fname);
+
+	if (tmp != NULL) {
+	    err = !win32_write_access(tmp);
+	    g_free(tmp);
+	} else {
+	    err = 1;
+	}
     } else {
-#ifdef WIN32
 	err = !win32_write_access(fname);
-#else
-	err = access(fname, W_OK);
-#endif
     }
-
-#ifndef WIN32
+#else
+    err = access(fname, W_OK);
     if (errno != 0) {
 	gretl_errmsg_set_from_errno(fname, errno);
     }
@@ -1192,8 +1128,8 @@ int gretl_is_xml_file (const char *fname)
 
 int gretl_path_prepend (char *file, const char *path)
 {
-    char temp[MAXLEN];
     int n = strlen(file) + strlen(path) + 1;
+    char temp[MAXLEN];
 
     if (n > MAXLEN) {
 	return 1;
@@ -1258,7 +1194,8 @@ static void make_findname (char *targ, const char *src)
 {
     strcpy(targ, src);
 
-    if (string_is_utf8((const unsigned char *) targ)) {
+    if (utf8_encoded((const unsigned char *) targ)) {
+	/* FIXME : do we want this? */
 	gchar *tmp;
 	gsize sz;
 
