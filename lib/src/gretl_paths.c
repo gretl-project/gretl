@@ -230,7 +230,7 @@ static int maybe_add_suffix (char *fname, const char *sfx)
 
 int utf8_encoded (const char *s)
 {
-    const unsigned char *p = s;
+    const unsigned char *p = (const unsigned char *) s;
     int ascii_text = 1;
     int ret = 0;
 

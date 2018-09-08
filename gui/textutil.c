@@ -927,7 +927,7 @@ int maybe_post_process_buffer (const char *buf, int fmt,
 	rtf_output = 1;
     }
 
-    if (utf8_encoded((const unsigned char *) buf)) {
+    if (utf8_encoded(buf)) {
 	utf8_coded = 1;
     }
 
