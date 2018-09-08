@@ -219,13 +219,21 @@ static int maybe_add_suffix (char *fname, const char *sfx)
     return 0;
 }
 
+/* Simple wrapper for the GLib UTF-8 validation
+   function. If and only if this returns non-zero
+   for a given filename can that name be passed to
+   the gstdio functions on MS Windows.
+*/
+
 #define valid_utf8(s) g_utf8_validate(s, -1, NULL)
 
 /* Heuristic: @s contains characters that are not
    printable ASCII, and validates as UTF-8 -- so
    this is not simply a check for valid UTF-8, it's
    a check for non-ASCII UTF-8, as opposed to some
-   8-bit locale encoding.
+   8-bit locale encoding. If this returns non-zero
+   then @s cannot be passed to a function in the
+   MA Windows API.
 */
 
 int utf8_encoded (const char *s)
