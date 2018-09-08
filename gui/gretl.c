@@ -377,7 +377,8 @@ static void real_nls_init (void)
 	strcpy(p, "share/locale");
     }
 
-    setlocale(LC_ALL, "");
+    p = setlocale(LC_ALL, "");
+    fprintf(stderr, "NLS init: setlocale() gave '%s'\n", p);
     set_gretl_charset();
     bindtextdomain(PACKAGE, localedir);
     textdomain(PACKAGE);
