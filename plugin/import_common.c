@@ -248,7 +248,7 @@ static int open_import_zipfile (const char *fname, char *dname,
 				PRN *prn)
 {
 #ifdef WIN32
-    gchar *recoded_fname = NULL;
+    gchar *fconv = NULL;
 #endif
     const char *udir = gretl_dotdir();
     const char *real_fname = fname;
@@ -270,12 +270,12 @@ static int open_import_zipfile (const char *fname, char *dname,
     */
 #ifdef WIN32
     if (utf8_encoded(fname)) {
-	recoded_fname = g_win32_locale_filename_from_utf8(fname);
-	if (recoded_fname_fname == NULL) {
+	fconv = g_win32_locale_filename_from_utf8(fname);
+	if (fconv == NULL) {
 	    /* recoding failed */
 	    return E_FOPEN;
 	}
-	real_fname = recoded_fname;
+	real_fname = fconv;
     }
 #endif
 
@@ -327,7 +327,7 @@ static int open_import_zipfile (const char *fname, char *dname,
  bailout:
 
 #ifdef WIN32
-    g_free(recoded_fname);
+    g_free(fconv);
 #endif
 
     return err;
