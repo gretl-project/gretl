@@ -271,14 +271,15 @@ static int open_import_zipfile (const char *fname, char *dname,
 #ifdef WIN32
     if (utf8_encoded(fname)) {
 	recoded_fname = g_win32_locale_filename_from_utf8(fname);
-	real_fname = recoded_fname;
-	if (real_fname == NULL) {
+	if (recoded_fname_fname == NULL) {
 	    /* recoding failed */
 	    return E_FOPEN;
 	}
+	real_fname = recoded_fname;
     }
 #endif
 
+    /* note: deliberately not using gretl_fopen here! */
     fp = fopen(real_fname, "r");
     if (fp == NULL) {
 	err = E_FOPEN;
