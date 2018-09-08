@@ -228,7 +228,7 @@ static int maybe_add_suffix (char *fname, const char *sfx)
    8-bit locale encoding.
 */
 
-int utf8_encoded (const unsigned char *s)
+int utf8_encoded (const char *s)
 {
     const unsigned char *p = s;
     int ascii_text = 1;

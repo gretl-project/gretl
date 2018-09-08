@@ -81,7 +81,7 @@ int gretl_normalize_path (char *path);
 
 int slash_terminate (char *path);
 
-int utf8_encoded (const unsigned char *s);
+int utf8_encoded (const char *s);
 
 FILE *gretl_fopen (const char *fname, const char *mode);
 

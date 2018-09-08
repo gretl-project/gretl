@@ -276,6 +276,8 @@ static void asciify (char *targ, const char *src, int n)
     }
 }
 
+#ifdef WIN32
+
 /* g_locale_from_utf8 failed on @iname, so now we try desperate
    measures
 */
@@ -325,6 +327,8 @@ static char *remedial_convert (const char *iname)
 
     return xname;
 }
+
+#endif
 
 /* Convert a zipfile internal name to an external file name, returning
    the allocated string: we convert from UTF-8 to the locale if this
