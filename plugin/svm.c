@@ -2678,17 +2678,29 @@ static sv_model *svm_load_model_wrapper (const char *fname,
 					 int *err)
 {
     sv_model *model = NULL;
-    char *conv = NULL;
 
     fname = gretl_maybe_switch_dir(fname);
-    *err = maybe_recode_path(fname, &conv, -1);
 
-    if (!*err) {
-	model = svm_load_model(conv != NULL ? conv : fname);
-	if (model == NULL) {
-	    *err = E_EXTERNAL;
+#ifdef WIN32
+    if (utf8_encoded(fname)) {
+	/* try to convert to locale for libsvm */
+	gchar *tmp = g_win32_locale_filename_from_utf8(fname);
+
+	if (tmp == NULL) {
+	    *err = E_FOPEN;
+	} else {
+	    model = svm_load_model(tmp);
+	    g_free(tmp);
 	}
-	free(conv);
+    } else {
+	model = svm_load_model(fname);
+    }
+#else
+    model = svm_load_model(fname);
+#endif
+
+    if (!*err && model == NULL) {
+	*err = E_EXTERNAL;
     }
 
     return model;
@@ -2697,19 +2709,27 @@ static sv_model *svm_load_model_wrapper (const char *fname,
 static int svm_save_model_wrapper (const char *fname,
 				   const sv_model *model)
 {
-    char *conv = NULL;
-    int err;
+    int err = 0;
 
     fname = gretl_maybe_switch_dir(fname);
-    err = maybe_recode_path(fname, &conv, -1);
 
-    if (!err) {
-	err = svm_save_model(conv != NULL ? conv : fname, model);
-	if (err) {
-	    err = E_EXTERNAL;
+#ifdef WIN32
+    if (utf8_encoded(fname)) {
+	/* try to convert to locale for libsvm */
+	gchar *tmp = g_win32_locale_filename_from_utf8(fname);
+
+	if (tmp == NULL) {
+	    err = E_FOPEN;
+	} else {
+	    err = svm_save_model(tmp, model);
+	    g_free(tmp);
 	}
-	free(conv);
+    } else {
+	err = svm_save_model(fname, model);
     }
+#else
+    err = svm_save_model(fname, model);
+#endif
 
     return err;
 }

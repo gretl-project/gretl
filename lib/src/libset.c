@@ -1283,7 +1283,11 @@ static int set_workdir (const char *s)
 
 	*workdir = '\0';
 	strncat(workdir, s, MAXLEN - 1);
-#ifdef WIN32
+	/* 2018-09-07: we had code below here to convert a UTF-8
+	   encoded workdir to locale, but that should not ever be
+	   necessary now?
+	*/
+#if 0
 	if (!err) {
 	    char *wconv = NULL;
 
