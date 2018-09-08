@@ -1284,17 +1284,19 @@ static int set_workdir (const char *s)
 	*workdir = '\0';
 	strncat(workdir, s, MAXLEN - 1);
 	/* 2018-09-07: we had code below here to convert a UTF-8
-	   encoded workdir to locale, but that should not ever be
+	   encoded workdir to locale, but that should never be
 	   necessary now?
 	*/
 #if 0
 	if (!err) {
-	    char *wconv = NULL;
+	    gchar *wconv =
+		g_win32_locale_filename_from_utf8(workdir);
 
-	    err = maybe_recode_path(workdir, &wconv, 0);
 	    if (wconv != NULL) {
 		strcpy(workdir, wconv);
-		free(wconv);
+		g_free(wconv);
+	    } else {
+		err = E_DATA;
 	    }
 	}
 #endif

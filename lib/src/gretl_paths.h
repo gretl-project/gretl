@@ -81,14 +81,7 @@ int gretl_normalize_path (char *path);
 
 int slash_terminate (char *path);
 
-void set_stdio_use_utf8 (void);
-
-int get_stdio_use_utf8 (void);
-
 int utf8_encoded (const unsigned char *s);
-
-int maybe_recode_path (const char *path, char **pconv, 
-		       int want_utf8);
 
 FILE *gretl_fopen (const char *fname, const char *mode);
 

@@ -175,10 +175,6 @@ static int native_utf8;
 void set_native_utf8 (int s)
 {
     native_utf8 = s;
-    
-    if (native_utf8) {
-	set_stdio_use_utf8();
-    }
 }
 
 /* Use g_get_charset() to determine the current local character set,
@@ -199,10 +195,6 @@ void set_gretl_charset (void)
 #else
     native_utf8 = g_get_charset(&charset);
 #endif
-
-    if (native_utf8) {
-	set_stdio_use_utf8();
-    }
 
     *gretl_charset = '\0';
 
@@ -1506,16 +1498,17 @@ static gchar *file_get_content (const char *fname,
     int ok = 0;
 
 #ifdef WIN32
-    gchar *tmp = NULL;
+    if (!g_utf8_validate(fname, -1, NULL)) {
+	gchar *tmp = NULL;
+	gsize wrote = 0;
 
-    *err = maybe_recode_path(fname, &tmp, 1);
-    if (!*err) {
+	tmp = g_locale_to_utf8(fname, -1, NULL, &wrote, &gerr);
 	if (tmp != NULL) {
 	    ok = g_file_get_contents(tmp, &buf, bytes, &gerr);
 	    g_free(tmp);
-	} else {
-	    ok = g_file_get_contents(fname, &buf, bytes, &gerr);
 	}
+    } else {
+	ok = g_file_get_contents(fname, &buf, bytes, &gerr);
     }
 #else
     ok = g_file_get_contents(fname, &buf, bytes, &gerr);
@@ -1543,16 +1536,17 @@ static int file_set_content (const char *fname,
     int err = 0;
 
 #ifdef WIN32
-    gchar *tmp = NULL;
+    if (!g_utf8_validate(fname, -1, NULL)) {
+	gchar *tmp = NULL;
+	gsize wrote = 0;
 
-    err = maybe_recode_path(fname, &tmp, 1);
-    if (!err) {
+	tmp = g_locale_to_utf8(fname, -1, NULL, &wrote, &gerr);
 	if (tmp != NULL) {
 	    ok = g_file_set_contents(tmp, buf, buflen, &gerr);
 	    g_free(tmp);
-	} else {
-	    ok = g_file_set_contents(fname, buf, buflen, &gerr);
 	}
+    } else {
+	ok = g_file_set_contents(fname, buf, buflen, &gerr);
     }
 #else
     ok = g_file_set_contents(fname, buf, buflen, &gerr);
