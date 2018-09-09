@@ -1033,32 +1033,51 @@ void write_plot_line_styles (int ptype, FILE *fp)
 
 #ifdef WIN32
 
-static void reslash_filename (char *buf, const char *src)
+/* Here we're looking at a path, @src, that we're going
+   to write into a gnuplot script, as (part of) the
+   plot output filename or the plot bounding-box
+   filename. Since we write "set encoding utf8" into the
+   preamble to our plot scripts we need to ensure that
+   the path is in fact in UTF-8 (even on MS Windows).
+   We also want to ensure use of forward slashes in this
+   context.
+*/
+
+static int adjust_filename (char *targ, const char *src)
 {
-    gchar *tmp = NULL;
-    int tryconv = 0;
+    int err = 0;
 
-    /* For gnuplot 5.1, with "set encoding utf8", ensure
-       that filename is encoded in UTF-8 */
-    if (!gretl_is_ascii(src)) {
-	tryconv = 1;
-	tmp = g_locale_to_utf8(src, -1, NULL, NULL, NULL);
-    }
+    *targ = '\0';
 
-    if (tmp != NULL) {
-	strcpy(buf, tmp);
-	g_free(tmp);
-    } else {
-	if (tryconv) {
-	    fprintf(stderr, "reslash_filename: couldn't convert '%s'\n", src);
+    if (!g_utf8_validate(src, -1, NULL)) {
+	GError *gerr = NULL;
+	gchar *tmp;
+	gsize sz;
+
+	tmp = g_locale_to_utf8(src, -1, NULL, &sz, &gerr);
+	if (tmp != NULL) {
+	    strcpy(targ, tmp);
+	    g_free(tmp);
+	} else {
+	    err = 1;
+	    if (gerr != NULL) {
+		gretl_errmsg_set(gerr->message);
+		g_error_free(gerr);
+	    }
 	}
-	strcpy(buf, src);
+    } else {
+	/* OK, @src is already UTF-8 */
+	strcpy(targ, src);
     }
 
-    while (*buf) {
-	if (*buf == '\\') *buf = '/';
-	buf++;
+    if (!err) {
+	while (*targ) {
+	    if (*targ == '\\') *targ = '/';
+	    targ++;
+	}
     }
+
+    return err;
 }
 
 #endif
@@ -1067,30 +1086,43 @@ static void reslash_filename (char *buf, const char *src)
    of both pixels and data bounds (gnuplot >= 4.4.0).
 */
 
-void write_plot_bounding_box_request (FILE *fp)
+int write_plot_bounding_box_request (FILE *fp)
 {
 #ifdef WIN32
     char buf[FILENAME_MAX];
+    int err;
 
-    reslash_filename(buf, gretl_dotdir());
-    fprintf(fp, "set print \"%sgretltmp.png.bounds\"\n", buf);
+    err = adjust_filename(buf, gretl_dotdir());
+    if (!err) {
+	fprintf(fp, "set print \"%sgretltmp.png.bounds\"\n", buf);
+    } else {
+	return err;
+    }
 #else
     fprintf(fp, "set print \"%sgretltmp.png.bounds\"\n", gretl_dotdir());
 #endif
+
     fputs("print \"pixel_bounds: \", GPVAL_TERM_XMIN, GPVAL_TERM_XMAX, "
 	  "GPVAL_TERM_YMIN, GPVAL_TERM_YMAX\n", fp);
     fputs("print \"data_bounds: \", GPVAL_X_MIN, GPVAL_X_MAX, "
 	  "GPVAL_Y_MIN, GPVAL_Y_MAX\n", fp);
+
+    return 0;
 }
 
-static void do_plot_bounding_box (void)
+static int do_plot_bounding_box (void)
 {
     FILE *fp = gretl_fopen(gretl_plotfile(), "a");
+    int err = 0;
 
     if (fp != NULL) {
-	write_plot_bounding_box_request(fp);
+	err = write_plot_bounding_box_request(fp);
 	fclose(fp);
+    } else {
+	err = E_FOPEN;
     }
+
+    return err;
 }
 
 static void maybe_set_eps_pdf_dims (char *s, PlotType ptype, GptFlags flags)
@@ -1515,27 +1547,36 @@ void reset_plot_count (void)
 }
 
 /* if @path is non-NULL we use it, otherwise we make a path
-   using dotdir and gretltmp.png
+   using @dotdir and "gretltmp.png"
 */
 
-void write_plot_output_line (const char *path, FILE *fp)
+int write_plot_output_line (const char *path, FILE *fp)
 {
 #ifdef WIN32
     char buf[FILENAME_MAX];
+    int err = 0;
 
     if (path == NULL) {
-	reslash_filename(buf, gretl_dotdir());
-	fprintf(fp, "set output \"%sgretltmp.png\"\n", buf);
+	err = adjust_filename(buf, gretl_dotdir());
+	if (!err) {
+	    fprintf(fp, "set output \"%sgretltmp.png\"\n", buf);
+	}
     } else {
-	reslash_filename(buf, path);
-	fprintf(fp, "set output \"%s\"\n", buf);
+	err = adjust_filename(buf, path);
+	if (!err) {
+	    fprintf(fp, "set output \"%s\"\n", buf);
+	}
     }
+
+    return err;
 #else
     if (path == NULL) {
 	fprintf(fp, "set output \"%sgretltmp.png\"\n", gretl_dotdir());
     } else {
 	fprintf(fp, "set output \"%s\"\n", path);
     }
+
+    return 0;
 #endif
 }
 

@@ -219,39 +219,43 @@ static int maybe_add_suffix (char *fname, const char *sfx)
     return 0;
 }
 
-/* Simple wrapper for the GLib UTF-8 validation
-   function. If and only if this returns non-zero
-   for a given filename can that name be passed to
-   the gstdio functions on MS Windows.
+/* Convenience wrapper macro for the GLib UTF-8 validation
+   function. If and only if this returns non-zero for a
+   given filename can that name be passed to GLib's gstdio
+   functions on MS Windows.
 */
 
 #define valid_utf8(s) g_utf8_validate(s, -1, NULL)
 
-/* Heuristic: @s contains characters that are not
-   printable ASCII, and validates as UTF-8 -- so
-   this is not simply a check for valid UTF-8, it's
-   a check for non-ASCII UTF-8, as opposed to some
-   8-bit locale encoding. If this returns non-zero
-   then @s cannot be passed to a function in the
-   MA Windows API.
-*/
+/**
+ * utf8_encoded:
+ * @s: the string to examine.
+ *
+ * The primary use of this function is to determine
+ * whether a filename can be passed to regular C-library
+ * functions on MS Windows: if it's in UTF-8 the answer
+ * is No -- unless it's in the ASCII subset of UTF-8.
+ *
+ * Returns: non-zero if @s validates as UTF-8 and
+ * contains bytes that are not printable ASCII,
+ * otherwise zero.
+ */
 
 int utf8_encoded (const char *s)
 {
-    const unsigned char *p = (const unsigned char *) s;
-    int ascii_text = 1;
     int ret = 0;
 
-    while (*p) {
-	if (*p < 32 || *p > 126) {
-	    ascii_text = 0;
-	    break;
-	}
-	p++;
-    }
+    if (g_utf8_validate(s, -1, NULL)) {
+	const unsigned char *p = (const unsigned char *) s;
 
-    if (!ascii_text && valid_utf8(s)) {
-	ret = 1;
+	while (*p) {
+	    if (*p < 32 || *p > 126) {
+		/* not printable ASCII */
+		ret = 1;
+		break;
+	    }
+	    p++;
+	}
     }
 
     return ret;

@@ -180,13 +180,13 @@ void gnuplot_cleanup (void);
 
 int specified_gp_output_format (void);
 
-void write_plot_output_line (const char *path, FILE *fp);
+int write_plot_output_line (const char *path, FILE *fp);
 
 int write_plot_type_string (PlotType ptype, GptFlags flags, FILE *fp);
 
 void write_plot_line_styles (int ptype, FILE *fp);
 
-void write_plot_bounding_box_request (FILE *fp);
+int write_plot_bounding_box_request (FILE *fp);
 
 void set_effective_plot_ci (int ci);
 

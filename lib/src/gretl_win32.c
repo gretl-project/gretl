@@ -256,9 +256,35 @@ void win_copy_last_error (void)
     LocalFree(buf);
 }
 
-/* covers the cases of (a) execing a console application
+/* If the command-line (@s1) and/or current directory
+   (@s2) are UTF-8, convert them to locale encoding.
+*/
+
+static int encoding_check (const char *s1, gchar **ls1,
+			   const char *s2, gchar **ls2)
+{
+    int err = 0;
+
+    if (s1 != NULL && utf8_encoded(s1)) {
+	*ls1 = g_locale_from_utf8(s1, -1, NULL, NULL, NULL);
+	if (*ls1 == NULL) {
+	    err = 1;
+	}
+    }
+
+    if (!err && s2 != NULL && utf8_encoded(s2)) {
+	*ls2 = g_locale_from_utf8(s2, -1, NULL, NULL, NULL);
+	if (*ls2 == NULL) {
+	    err = 1;
+	}
+    }
+
+    return err;
+}
+
+/* covers the cases of (a) exec'ing a console application
    as "slave" (without opening a console window) and (b)
-   execing a GUI app (in fact, just wgnuplot.exe) as slave
+   exec'ing a GUI app (in fact, just wgnuplot.exe) as slave
 */
 
 static int real_win_run_sync (char *cmdline, const char *currdir,
@@ -268,7 +294,21 @@ static int real_win_run_sync (char *cmdline, const char *currdir,
     PROCESS_INFORMATION pinfo;
     DWORD exitcode;
     DWORD flags;
+    gchar *ls1 = NULL;
+    gchar *ls2 = NULL;
     int ok, err = 0;
+
+    err = encoding_check(cmdline, &ls1, currdir, &ls2);
+    if (err) {
+	return err;
+    } else {
+	if (ls1 != NULL) {
+	    cmdline = ls1;
+	}
+	if (ls2 != NULL) {
+	    currdir = (const char *) ls2;
+	}
+    }
 
     ZeroMemory(&sinfo, sizeof sinfo);
     ZeroMemory(&pinfo, sizeof pinfo);
@@ -317,6 +357,9 @@ static int real_win_run_sync (char *cmdline, const char *currdir,
 
     CloseHandle(pinfo.hProcess);
     CloseHandle(pinfo.hThread);
+
+    g_free(ls1);
+    g_free(ls2);
 
     return err;
 }
