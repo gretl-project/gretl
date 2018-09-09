@@ -436,10 +436,12 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 	    mspec_set_row_index(spec, 1);
 	}
     } else if (spec->type[1] == SEL_ALL) {
+	/* select all columns */
 	spec->type[1] = SEL_RANGE;
 	spec->sel[1].range[0] = 1;
 	spec->sel[1].range[1] = m->cols;
     } else if (spec->type[0] == SEL_ALL) {
+	/* select all rows */
 	spec->type[0] = SEL_RANGE;
 	spec->sel[0].range[0] = 1;
 	spec->sel[0].range[1] = m->rows;
