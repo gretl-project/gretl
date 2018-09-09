@@ -26,7 +26,7 @@
 #include "uservar.h"
 
 #define MDEBUG 0
-#define CONTIG_DEBUG 1
+#define CONTIG_DEBUG 0
 
 #define mspec_get_offset(m) (m->sel[0].range[0])
 #define mspec_get_n_elem(m) (m->sel[0].range[1])
