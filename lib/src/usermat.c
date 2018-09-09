@@ -26,7 +26,7 @@
 #include "uservar.h"
 
 #define MDEBUG 0
-#define CONTIG_DEBUG 0
+#define CONTIG_DEBUG 1
 
 #define mspec_get_offset(m) (m->sel[0].range[0])
 #define mspec_get_n_elem(m) (m->sel[0].range[1])
@@ -114,25 +114,6 @@ gretl_matrix *get_matrix_copy_by_name (const char *name, int *err)
     return ret;
 }
 
-static int msel_out_of_bounds (int *range, int n)
-{
-    int *bad = NULL;
-
-    if (range[0] < 1 || range[0] > n) {
-	bad = &range[0];
-    } else if (range[1] < 1 || range[1] > n) {
-	bad = &range[1];
-    }
-
-    if (bad != NULL) {
-	gretl_errmsg_sprintf(_("Index value %d is out of bounds"),
-			     *bad);
-	return 1;
-    } else {
-	return 0;
-    }
-}
-
 static int vec_is_exclusion (const gretl_matrix *m, int n,
 			     gretl_matrix **pv, int *err)
 {
@@ -192,6 +173,46 @@ static int vec_is_exclusion (const gretl_matrix *m, int n,
     return 0;
 }
 
+static int bad_sel_vector (const gretl_matrix *v, int n)
+{
+    int i, len = gretl_vector_get_length(v);
+
+    for (i=0; i<len; i++) {
+	if (v->val[i] < 1 || v->val[i] > n) {
+	    gretl_errmsg_sprintf(_("Index value %g is out of bounds"),
+				 v->val[i]);
+	    return E_INVARG;
+	}
+    }
+
+    return 0;
+}
+
+static int bad_sel_range (int *range, int n)
+{
+    int i;
+
+    for (i=0; i<2; i++) {
+	if (range[i] < 1 || range[i] > n) {
+	    gretl_errmsg_sprintf(_("Index value %d is out of bounds"),
+				 range[i]);
+	    return E_INVARG;
+	}
+    }
+
+    return 0;
+}
+
+static int bad_sel_single (int k, int n)
+{
+    if (k < 1 || k > n) {
+	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), k);
+	return E_INVARG;
+    }
+
+    return 0;
+}
+
 /* convert a matrix subspec component into list of rows
    or columns */
 
@@ -237,7 +258,7 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 		ns = n - 1;
 		exclude = sr0;
 	    }
-	} else if (msel_out_of_bounds(sel->range, n)) {
+	} else if (bad_sel_range(sel->range, n)) {
 	    *err = E_DATA;
 	} else {
 	    ns = sr1 - sr0 + 1;
@@ -318,7 +339,8 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 			    (m->cols == 1 && all_or_null(s->type[1])) || \
 			    (s->type[1] == SEL_RANGE && singleton_range(s->sel[1])))
 
-static int element_get_index (matrix_subspec *spec, const gretl_matrix *m)
+static int set_element_index (matrix_subspec *spec,
+			      const gretl_matrix *m)
 
 {
     int i = spec->sel[0].range[0];
@@ -333,10 +355,51 @@ static int element_get_index (matrix_subspec *spec, const gretl_matrix *m)
     }
 
 #if CONTIG_DEBUG
-    fprintf(stderr, "Get element: i=%d, j=%d, k=%d\n", i, j, k);
+    fprintf(stderr, "element_get_index: i=%d, j=%d, k=%d\n",
+	    i, j, k);
 #endif
 
-    return k;
+    /* write single (zero-based) index into sel[0] */
+    spec->sel[0].range[0] = k;
+
+    return 0;
+}
+
+static int spec_check_dimensions (matrix_subspec *spec,
+				  const gretl_matrix *m)
+{
+    int colvec = m->cols == 1 && m->rows > 1;
+    int st0 = spec->type[0];
+    int st1 = spec->type[1];
+    int err = 0;
+
+    if (colvec || st1 != SEL_NULL) {
+	/* spec->sel[0] must pertain to rows */
+	if (st0 == SEL_MATRIX) {
+	    err = bad_sel_vector(spec->sel[0].m, m->rows);
+	} else if (st0 == SEL_RANGE || st0 == SEL_ELEMENT) {
+	    err = bad_sel_range(spec->sel[0].range, m->rows);
+	}
+	if (!err) {
+	    /* check spec->sel[1] against cols */
+	    if (st1 == SEL_MATRIX) {
+		err = bad_sel_vector(spec->sel[1].m, m->cols);
+	    } else if (st1 == SEL_RANGE || st1 == SEL_ELEMENT) {
+		err = bad_sel_range(spec->sel[1].range, m->cols);
+	    }
+	}
+    } else {
+	/* spec->sel[0] must pertain to cols */
+	if (st0 == SEL_MATRIX) {
+	    err = bad_sel_vector(spec->sel[0].m, m->cols);
+	} else if (st0 == SEL_RANGE || st0 == SEL_ELEMENT) {
+	    err = bad_sel_range(spec->sel[0].range, m->cols);
+	}
+    }
+
+    fprintf(stderr, "spec_check_dimensions: err=%d\n", err);
+
+    return err;
 }
 
 /* Catch the case of an implicit column or row specification for
@@ -354,36 +417,51 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 #if CONTIG_DEBUG
     fprintf(stderr, "types = (%d,%d), ",  spec->type[0], spec->type[1]);
     if (spec->type[0] == SEL_MATRIX) {
-	fputs("matrix sel, ", stderr);
-    } else {
+	fputs("vector sel, ", stderr);
+    } else if (spec->type[0] != SEL_NULL) {
 	fprintf(stderr, "S0 = (%d,%d), ", spec->sel[0].range[0], spec->sel[0].range[1]);
     }
     if (spec->type[1] == SEL_MATRIX) {
-	fputs("matrix sel, ", stderr);
-    } else {
+	fputs("vector sel, ", stderr);
+    } else if (spec->type[1] != SEL_NULL) {
 	fprintf(stderr, "S1 = (%d,%d), ", spec->sel[1].range[0], spec->sel[1].range[1]);
     }
-    fprintf(stderr, "m is %dx%d\n", m->rows, m->cols);
+    fprintf(stderr, "m is %d x %d\n", m->rows, m->cols);
     fprintf(stderr, "lh scalar %d, rh scalar %d\n",
 	    lhs_is_scalar(spec, m), rhs_is_scalar(spec, m));
 #endif
 
     if (spec->type[0] == SEL_DIAG) {
-	/* nothing to check */
+	/* there's nothing to check, since this is OK even
+	   for an empty matrix argument, and for a non-empty
+	   matrix the data will not be contiguous
+	*/
 	return 0;
-    } else if (spec->type[0] == SEL_SINGLE) {
+    }
+
+    if (spec->type[0] == SEL_SINGLE) {
 	if (!isvec) {
 	    gretl_errmsg_set(_("Ambiguous matrix index"));
-	    return E_DATA;
+	    err = E_DATA;
 	} else {
-	    spec->type[0] = spec->type[1] = SEL_ELEMENT;
-	    spec->sel[0].range[0] -= 1; /* 0-based offset */
-	    spec->sel[1].range[0] = 1;
-	    return 0;
+	    err = bad_sel_single(spec->sel[0].range[0], isvec);
+	    if (!err) {
+		spec->type[0] = spec->type[1] = SEL_ELEMENT;
+		spec->sel[0].range[0] -= 1; /* 0-based offset */
+		spec->sel[1].range[0] = 1;
+	    }
 	}
+	/* dims checked, nothing more to do */
+	return err;
+    }
+
+    err = spec_check_dimensions(spec, m);
+    if (err) {
+	return err;
     }
 
     if (m->rows == 0 || m->cols == 0) {
+	/* dims checked, nothing more to do */
 	return 0;
     }
 
@@ -392,7 +470,7 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
     if (lhs_is_scalar(spec, m)) {
 	if (rh_scalar || (m->rows == 1 && spec->type[1] == SEL_NULL)) {
 	    /* we're looking at just one element */
-	    spec->sel[0].range[0] = element_get_index(spec, m);
+	    set_element_index(spec, m);
 	    spec->type[0] = spec->type[1] = SEL_ELEMENT;
 	    spec->sel[1].range[0] = 1;
 	    return 0;
@@ -401,8 +479,8 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 
     if ((isvec || rh_scalar) &&
 	(spec->type[0] == SEL_RANGE || spec->type[0] == SEL_ALL)) {
-	/* flag as contiguous values provided the rh spec does not take
-	   the form of a matrix or column exclusion
+	/* flag as contiguous values provided the rh spec doesn't
+	   take the form of a matrix or column exclusion
 	*/
 	get_contig = spec->type[1] != SEL_MATRIX && spec->type[1] != SEL_EXCL;
 #if CONTIG_DEBUG
@@ -436,10 +514,12 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 	    mspec_set_row_index(spec, 1);
 	}
     } else if (spec->type[1] == SEL_ALL) {
+	/* select all columns */
 	spec->type[1] = SEL_RANGE;
 	spec->sel[1].range[0] = 1;
 	spec->sel[1].range[1] = m->cols;
     } else if (spec->type[0] == SEL_ALL) {
+	/* select all rows */
 	spec->type[0] = SEL_RANGE;
 	spec->sel[0].range[0] = 1;
 	spec->sel[0].range[1] = m->rows;
