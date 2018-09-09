@@ -397,8 +397,6 @@ static int spec_check_dimensions (matrix_subspec *spec,
 	}
     }
 
-    fprintf(stderr, "spec_check_dimensions: err=%d\n", err);
-
     return err;
 }
 
