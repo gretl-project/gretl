@@ -254,6 +254,8 @@ char *external_to_internal (const char *name, zfile *zf, GError **gerr)
     return iname;
 }
 
+#ifdef WIN32
+
 /* convert @from src to a printable ASCII version in @targ, either
    processing @n bytes of @src or all of it if @n < 0  
 */
@@ -275,8 +277,6 @@ static void asciify (char *targ, const char *src, int n)
         }
     }
 }
-
-#ifdef WIN32
 
 /* g_locale_from_utf8 failed on @iname, so now we try desperate
    measures
