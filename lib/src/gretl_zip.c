@@ -547,47 +547,6 @@ static int pkg_zipfile_add (const char *fname,
     return err;
 }
 
-/* FIXME do we need this?? */
-
-static char *build_zip_path (const char *dirname,
-			     const char *fname)
-{
-    char *targ = NULL;
-    size_t n, targlen;
-
-    if (dirname == NULL || fname == NULL) {
-	return NULL;
-    }
-
-    n = strlen(dirname);
-    targlen = n + strlen(fname) + 2;
-
-    targ = malloc(targlen);
-    if (targ == NULL) {
-	return NULL;
-    }
-
-    *targ = '\0';
-    strcat(targ, dirname);
-
-    /* strip a trailing single dot */
-    if (n > 1 && targ[n-1] == '.' && 
-	(targ[n-2] == '/' || targ[n-2] == '\\')) {
-	    targ[n-1] = '\0';
-    }
-
-    if (targ[n-1] == '/' || targ[n-1] == '\\') {
-        /* dirname is already properly terminated */
-        strcat(targ, fname);
-    } else {
-        /* otherwise put a separator in */
-        strcat(targ, SLASHSTR);
-        strcat(targ, fname);
-    }
-
-    return targ;
-}
-
 /**
  * package_make_zipfile:
  * @gfnname: name of the gfn file to be zip-packaged.
@@ -746,26 +705,23 @@ int package_make_zipfile (const char *gfnname,
 		} else {
 		    /* If we get here dest must be non-NULL,
 		       but it may be a relative path, in which
-		       case it must be absolutized for the
+		       case we need to prepend @origdir for the
 		       zipfile copying operation.
 		    */
 		    const char *realdest = dest;
-		    char *zipname = NULL;
+		    char zipname[MAXLEN];
 
 		    pprintf(prn, "Copying %s... ", tmp);
 		    
 		    if (*origdir && !g_path_is_absolute(dest)) {
-			zipname = build_zip_path(origdir, dest);
-			if (zipname != NULL) {
-			    realdest = zipname;
-			}
+			gretl_build_path(zipname, origdir, dest, NULL);
+			realdest = zipname;
 		    }
 		    err = gretl_copy_file(tmp, realdest);
 		    zip_report(err, 0, opt, prn);
 		    if (strcmp(tmp, realdest)) {
 			gretl_remove(tmp);
 		    }
-		    free(zipname);
 		}
 	    }
 	    g_free(tmp);
