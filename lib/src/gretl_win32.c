@@ -709,6 +709,8 @@ int gretl_shell (const char *arg, gretlopt opt, PRN *prn)
     return err;
 }
 
+#define USE_UFT16 1
+
 /* unlike access(), returns 1 on success */
 
 int win32_write_access (char *path)
@@ -721,7 +723,12 @@ int win32_write_access (char *path)
     DWORD sidsize = 0, dlen = 0;
     SID_NAME_USE stype;
     ACCESS_MASK amask;
-    const char *username;
+    const gchar *username;
+#if USE_UTF16
+    gunichar2 *acname = NULL;
+#else
+    gchar *acname = NULL;
+#endif
     int ret, ok = 0, err = 0;
 
     /* screen for the read-only attribute first */
@@ -729,11 +736,21 @@ int win32_write_access (char *path)
 	return 0;
     }
 
+    /* note: the following always returns UTF-8 */
     username = g_get_user_name();
 
+#if USE_UTF16
+    acname = g_utf8_to_utf16(username, -1, NULL, NULL, NULL);
     /* get the size of the SID and domain */
-    LookupAccountName(NULL, username, NULL, &sidsize,
+    LookupAccountNameW(NULL, acname, NULL, &sidsize,
+		       NULL, &dlen, &stype);
+#else
+    gsize sz;
+    acname = g_locale_from_utf8(username, -1, NULL, &sz, NULL);
+    /* get the size of the SID and domain */
+    LookupAccountName(NULL, acname, NULL, &sidsize,
 		      NULL, &dlen, &stype);
+#endif
 
     sid = LocalAlloc(0, sidsize);
     domain = LocalAlloc(0, dlen * sizeof *domain);
@@ -743,8 +760,13 @@ int win32_write_access (char *path)
 
     if (!err) {
 	/* call the function for real */
-	ret = LookupAccountName(NULL, username, sid, &sidsize,
+#if USE_UTF16
+	ret = LookupAccountNameW(NULL, acname, sid, &sidsize,
+				 domain, &dlen, &stype);
+#else
+	ret = LookupAccountName(NULL, acname, sid, &sidsize,
 				domain, &dlen, &stype);
+#endif
 	err = (ret == 0);
     }
 
@@ -770,6 +792,8 @@ int win32_write_access (char *path)
 	    ok = 1;
 	}
     }
+
+    g_free(acname);
 
     if (sid != NULL) {
 	LocalFree(sid);
