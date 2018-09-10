@@ -93,8 +93,6 @@ FILE *gretl_mktemp (char *pattern, const char *mode);
 
 int gretl_open (const char *pathname, int flags, int mode);
 
-int gretl_fchdir (int fd);
-
 int gretl_rename (const char *oldpath, const char *newpath);
 
 int gretl_remove (const char *path);

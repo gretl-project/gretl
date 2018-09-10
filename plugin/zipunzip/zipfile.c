@@ -7,7 +7,6 @@
 */
 
 #include "zunz_private.h"
-#include <glib/gstdio.h> /* for g_fopen */
 
 /* Macros for converting integers in little-endian to machine format */
 #define SH(a) ((guint16)(((guint16)(guchar)(a)[0])|(((guint16)(guchar)(a)[1])<< 8)))
@@ -507,16 +506,7 @@ int read_zipfile (zfile *zf, int task)
 	return 0;
     }
 
-#ifdef G_OS_WIN32
-    /* handle the case where fname is in UTF-8 */
-    if (g_utf8_validate(zf->fname, -1, NULL)) {
-	zf->fp = g_fopen(zf->fname, "rb");
-    } else {
-	zf->fp = fopen(zf->fname, "rb");
-    }
-#else
-    zf->fp = fopen(zf->fname, "rb");
-#endif
+    zf->fp = gretl_fopen(zf->fname, "rb");
 
     if (zf->fp == NULL) {
 	if (task == ZIP_DO_ZIP) {

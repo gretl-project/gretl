@@ -41,6 +41,7 @@
 
 #include <errno.h>
 #include <glib.h>
+#include <glib/gstdio.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -3425,9 +3426,9 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 				       PRN *prn)
 {
     const char *okstr, *failed;
+    gchar *currdir = NULL;
     int quiet = (opt & OPT_Q);
     char *p, line[1024];
-    int dfd = -1;
     int got = 0;
     int err = 0;
 
@@ -3441,12 +3442,13 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
     }
 
     if (strrchr(fname, SLASH) != NULL) {
+	/* directory change needed */
 	char dirname[FILENAME_MAX];
 
 	strcpy(dirname, fname);
 	p = strrchr(dirname, SLASH);
 	*p = '\0';
-	dfd = gretl_open(".", O_RDONLY, 0);
+	currdir = g_get_current_dir();
 	err = gretl_chdir(dirname);
     }
 
@@ -3590,9 +3592,10 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 	}
     }
 
-    if (dfd >= 0) {
+    if (currdir != NULL) {
 	/* go back where we came from */
-	gretl_fchdir(dfd);
+	g_chdir(currdir);
+	g_free(currdir);
     }
 
     if (!err && got < 7) {

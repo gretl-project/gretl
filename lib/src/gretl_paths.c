@@ -398,37 +398,6 @@ int gretl_test_fopen (const char *fname, const char *mode)
     return err;
 }
 
-#ifdef WIN32
-
-static int win32_open_fchdir (int fd)
-{
-    static char savedir[FILENAME_MAX];
-    int ret = 0;
-
-    if (fd == 0) {
-	/* call to record current directory */
-	if (getcwd(savedir, FILENAME_MAX - 1) == NULL) {
-	    *savedir = '\0';
-	    /* return invalid value */
-	    ret = -1;
-	} else {
-	    /* return fake positive file id! */
-	    ret = 1;
-	}
-    } else {
-	/* call to change back to prior directory */
-	if (*savedir == '\0') {
-	    ret = -1;
-	} else {
-	    ret = gretl_chdir(savedir);
-	}
-    }
-
-    return ret;
-}
-
-#endif
-
 /**
  * gretl_open:
  * @pathname: name of file to be opened.
@@ -455,9 +424,7 @@ int gretl_open (const char *pathname, int flags, int mode)
     }
 
 #ifdef WIN32
-    if (!strcmp(pathname, ".")) {
-	return win32_open_fchdir(0);
-    } else if (valid_utf8(pathname)) {
+    if (valid_utf8(pathname)) {
 	fd = g_open(pathname, flags, m);
     } else {
 	fd = open(pathname, flags, m);
@@ -471,18 +438,6 @@ int gretl_open (const char *pathname, int flags, int mode)
     }
 
     return fd;
-}
-
-/* On MS Windows support cheap fakery of fchdir, otherwise
-   call the real fchdir() */
-
-int gretl_fchdir (int fd)
-{
-#ifdef WIN32
-    return win32_open_fchdir(fd);
-#else
-    return fchdir(fd);
-#endif
 }
 
 /**
@@ -733,7 +688,9 @@ int gretl_chdir (const char *path)
     gretl_error_clear();
 
 #ifdef WIN32
-    if (1) {
+    if (valid_utf8(path)) {
+	err = g_chdir(path);
+    } else {
 	int len = strlen(path);
 	char *ptmp = NULL;
 
@@ -742,11 +699,7 @@ int gretl_chdir (const char *path)
 	    ptmp = gretl_strndup(path, len - 1);
 	    path = ptmp;
 	}
-	if (valid_utf8(path)) {
-	    err = g_chdir(path);
-	} else {
-	    err = chdir(path);
-	}
+	err = chdir(path);
 	free(ptmp);
     }
 #else
