@@ -1,9 +1,13 @@
-version 2018c, in progress
+version 2018d, in progress
 
 Replace "install" command with new "pkg" command: this has
 the same functionality but is more extensible for future use.
 The old "install" syntax is still supported for backward
 compatibility until further notice.
+
+2018-09-03 version 2018c
+
+No incompatible changes.
 
 2018-08-11 version 2018b
 
