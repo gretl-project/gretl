@@ -28,7 +28,9 @@ static gretl_bundle *get_dbn_series_bundle (const char *datacode,
 		    gretl_bundle_get_string(b, "errmsg", NULL);
 
 		*err = E_DATA;
-		gretl_errmsg_set(msg);
+		if (msg != NULL) {
+		    gretl_errmsg_set(msg);
+		}
 		gretl_bundle_destroy(b);
 		b = NULL;
 	    }
