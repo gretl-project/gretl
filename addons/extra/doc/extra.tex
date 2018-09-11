@@ -1,7 +1,5 @@
 \documentclass[11pt,english]{article}
 \usepackage{mathpazo}
-\usepackage[T1]{fontenc}
-\usepackage[latin9]{inputenc}
 \usepackage[a4paper]{geometry}
 \geometry{verbose,tmargin=3cm,bmargin=3cm,lmargin=3cm,rmargin=3cm}
 \usepackage{array}
@@ -63,7 +61,7 @@ Arguments: \texttt{matrix} pointer \texttt{{*}m}, \texttt{scalar epsilon}
 \noindent Return type: \texttt{scalar}
 
 Forces the matrix $m$ into the positive semi-definite region. Algorithm
-ported from \textquotedbl DomPazz\textquotedbl{} in Stackoverflow,
+ported from ``DomPazz'' in Stackoverflow,
 apparently mimicking the nearPD() function in R. Because of re-scaling
 (to correlation matrix), the \texttt{epsilon} criterion value should
 implicitly apply to the correlation-based eigenvalues. The return
@@ -151,7 +149,7 @@ Concerns the distribution of Wilcoxon's signed rank test statistic for
 \texttt{n} trials (at least 4). Tries to find the critical values
 (low/hi) where the two-sided area to the outside is as close as
 possible to the given \texttt{prob} (default: 0.05). (Note that
-\textquotedbl outside\textquotedbl{} means including the critical
+``outside'' means including the critical
 values themselves in the exact/discrete case.) If we end up in the
 interior region not covered by the exact table (for \texttt{prob} far
 away from 0 and also from 1), we fall back to the normal
@@ -215,7 +213,7 @@ phi} (optional)
 
 \noindent Return type: \texttt{series}
 
-Returns a trimmed (\textquotedbl winsorized\textquotedbl ) version
+Returns a trimmed (``winsorized'') version
 of the series, where outliers are replaced with implicit threshold
 values. Truncation quantiles are determined according to relative
 tail frequencies \texttt{p} and \texttt{phi}. Default lower and upper
