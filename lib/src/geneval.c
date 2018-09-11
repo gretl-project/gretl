@@ -7040,15 +7040,6 @@ static NODE *one_string_func (NODE *n, int f, parser *p)
     return ret;
 }
 
-static const char *advance_to_split (const char *s,
-				     const char *sep)
-{
-    int n = strcspn(s, sep);
-    int m = strlen(s);
-
-    return (n == m)? NULL : s + n;
-}
-
 static char *escape_strsplit_sep (const char *s)
 {
     char *ret = calloc(strlen(s) + 1, 1);
@@ -7090,26 +7081,36 @@ static NODE *strsplit_node (int f, NODE *l, NODE *m, NODE *r, parser *p)
 	char *sep = NULL;
 	int k = 0;
 
-	if ((r == NULL || r->t == EMPTY) && m != NULL && m->t == STR) {
-	    /* got primary arg plus separator, only */
-	    sep0 = m->v.str;
-	} else if (null_or_empty(m) && r != NULL && r->t == STR) {
-	    /* got primary arg, blank, separator */
-	    sep0 = r->v.str;
-	} else {
-	    if (m != NULL && m->t != EMPTY) {
-		/* second arg must be index */
+	/* We'll accept the two trailing optional arguments,
+	   string separator and integer index, in either order.
+	*/
+	if (m != NULL) {
+	    if (m->t == STR) {
+		sep0 = m->v.str;
+	    } else if (m->t != EMPTY) {
 		k = node_get_int(m, p);
 		if (k < 1) {
-		    p->err = E_DATA;
+		    p->err = E_INVARG;
 		}
 	    }
-	    if (r != NULL && r->t != EMPTY) {
-		/* third arg must be separator */
-		if (r->t != STR) {
-		    p->err = E_TYPES;
-		} else {
+	}
+	if (!p->err && r != NULL) {
+	    if (r->t == STR) {
+		if (sep0 == NULL) {
+		    /* OK, didn't get @sep0 yet */
 		    sep0 = r->v.str;
+		} else {
+		    p->err = E_INVARG;
+		}
+	    } else if (r->t != EMPTY) {
+		if (k == 0) {
+		    /* OK, didn't get @k yet */
+		    k = node_get_int(r, p);
+		    if (k < 1) {
+			p->err = E_INVARG;
+		    }
+		} else {
+		    p->err = E_INVARG;
 		}
 	    }
 	}
@@ -7129,27 +7130,7 @@ static NODE *strsplit_node (int f, NODE *l, NODE *m, NODE *r, parser *p)
 	    }
 	}
 
-	if (!p->err && k > 0) {
-	    /* returning a single string */
-	    const char *q;
-	    int i;
-
-	    for (i=1; i<k; i++) {
-		q = advance_to_split(s, sep);
-		if (q != NULL) {
-		    q += strspn(q, sep);
-		    s = q;
-		} else {
-		    s = "";
-		    break;
-		}
-	    }
-	    ret->v.str = gretl_strndup(s, strcspn(s, sep));
-	    if (!p->err && ret->v.str == NULL) {
-		p->err = E_ALLOC;
-	    }
-	} else if (!p->err) {
-	    /* returning an array of strings */
+	if (!p->err) {
 	    char **S = NULL;
 	    int ns = 0;
 
@@ -7160,7 +7141,12 @@ static NODE *strsplit_node (int f, NODE *l, NODE *m, NODE *r, parser *p)
 		S = gretl_string_split(s, &ns, sep);
 	    }
 	    if (!p->err) {
-		ret->v.a = gretl_array_from_strings(S, ns, 0, &p->err);
+		if (k > 0) {
+		    ret->v.str = gretl_strdup(k > ns ? "" : S[k-1]);
+		    strings_array_free(S, ns);
+		} else {
+		    ret->v.a = gretl_array_from_strings(S, ns, 0, &p->err);
+		}
 	    }
 	}
 
@@ -15497,12 +15483,10 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_STRSPLIT:
-	if (l->t == STR && empty_or_num(m) && empty_or_string(r)) {
-	    ret = strsplit_node(t->t, l, m, r, p);
-	} else if (l->t == STR && m->t == STR && null_or_empty(r)) {
+	if (l->t == STR) {
 	    ret = strsplit_node(t->t, l, m, r, p);
 	} else {
-	    p->err = E_TYPES;
+	    node_type_error(t->t, 1, STR, l, p);
 	}
 	break;
     case F_GETLINE:

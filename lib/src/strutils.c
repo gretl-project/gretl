@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* strutils.c for gretl */
@@ -49,7 +49,7 @@ int string_is_blank (const char *s)
 
     if (s != NULL) {
 	while (*s) {
-	    if (!isspace((unsigned char) *s) && 
+	    if (!isspace((unsigned char) *s) &&
 		*s != '\r' && *s != CTRLZ) {
 		ret = 0;
 		break;
@@ -73,7 +73,7 @@ void set_atof_point (char c)
  * @s: the string to convert.
  *
  * Returns: the double-precision numeric interpretation of @s,
- * where the decimal point character is forced to be '.', 
+ * where the decimal point character is forced to be '.',
  * regardless of the current locale.
  **/
 
@@ -112,12 +112,12 @@ double dot_atof (const char *s)
  */
 
 int gretl_dotpos (const char *str)
-{ 
+{
     int i, p = 0;
 
     if (str != NULL && *str != '\0') {
 	p = strlen(str);
-	for (i=p-1; i>0; i--) { 
+	for (i=p-1; i>0; i--) {
 	    if (str[i] == '/' || str[i] == '\\') {
 		break;
 	    } else if (str[i] == '.') {
@@ -127,7 +127,7 @@ int gretl_dotpos (const char *str)
 	}
     }
 
-    return p;    
+    return p;
 }
 
 /**
@@ -139,7 +139,7 @@ int gretl_dotpos (const char *str)
  */
 
 int gretl_slashpos (const char *str)
-{ 
+{
     int i, p = 0;
 
     if (str != NULL && *str != '\0') {
@@ -152,7 +152,7 @@ int gretl_slashpos (const char *str)
 	}
     }
 
-    return p;    
+    return p;
 }
 
 /**
@@ -301,7 +301,7 @@ char *gretl_charsub (char *str, char find, char repl)
  * Returns: the (possibly modified) string.
  */
 
-char *comma_separate_numbers (char *s) 
+char *comma_separate_numbers (char *s)
 {
     const char *numstart = "+-.0123456789";
     char *p = s;
@@ -332,7 +332,7 @@ char *comma_separate_numbers (char *s)
  * @sfx: the suffix to check for, including the leading '.'
  *
  * Returns: 1 if @str ends with @sfx (on a case-insensitive
- * comparison), 0 otherwise.  
+ * comparison), 0 otherwise.
  */
 
 int has_suffix (const char *str, const char *sfx)
@@ -354,7 +354,7 @@ int has_suffix (const char *str, const char *sfx)
 	    }
 	}
     }
-    
+
     return ret;
 }
 
@@ -414,7 +414,7 @@ int numeric_string (const char *str)
     errno = 0;
     strtod(str, &test);
     gretl_pop_c_numeric_locale();
-    
+
     if (*test != '\0' || errno == ERANGE) {
 	ret = 0;
     }
@@ -523,7 +523,7 @@ char *gretl_strdup (const char *src)
  * @src: the string to be copied.
  * @n: the maximum number of characters to copy.
  *
- * Returns: an allocated copy of at most @n characters from 
+ * Returns: an allocated copy of at most @n characters from
  * @src, or NULL on error.
  */
 
@@ -554,7 +554,7 @@ char *gretl_strndup (const char *src, size_t n)
  * @Varargs: arguments to be printed.
  *
  * Print the arguments according to @format.
- * 
+ *
  * Returns: allocated result of the printing, or NULL on failure.
  */
 
@@ -571,7 +571,7 @@ char *gretl_strdup_printf (const char *format, ...)
     if (len < 0) {
 	buf = NULL;
     }
-#else 
+#else
     int bsize = 2048;
 
     buf = malloc(bsize);
@@ -579,7 +579,7 @@ char *gretl_strdup_printf (const char *format, ...)
 	return NULL;
     }
 
-    memset(buf, 0, 1); 
+    memset(buf, 0, 1);
 
     va_start(args, format);
     len = vsnprintf(buf, bsize, format, args);
@@ -745,8 +745,8 @@ char *gretl_word_strdup (const char *src, const char **ptr,
  * @s: the source string.
  * @ptr: location to receive end pointer, or NULL.
  *
- * If @s starts with a quote (double or single), return a copy of  
- * the portion of @s that is enclosed in quotes.  That is, 
+ * If @s starts with a quote (double or single), return a copy of
+ * the portion of @s that is enclosed in quotes.  That is,
  * from @s + 1 up to but not including the next matching quote.
  * If @ptr is not NULL, on output it receives a pointer to
  * the next byte in @s after the closing quote.
@@ -792,6 +792,61 @@ char *gretl_quoted_string_strdup (const char *s, const char **ptr)
     return ret;
 }
 
+/* variant of gretl_string_split() that respects
+   empty fields, including them in the output array
+*/
+
+static char **string_split_2 (const char *s, int *n,
+			      const char *sep)
+{
+    char **S = NULL;
+    gchar **tmp;
+    gchar *mysep;
+    int i, m = 0;
+
+    *n = 0;
+
+    mysep = g_strstrip(g_strdup(sep));
+
+    tmp = g_strsplit(s, mysep, -1);
+    if (tmp != NULL) {
+	for (i=0; tmp[i]; i++) {
+	    m++;
+	}
+	if (m > 0) {
+	    S = strings_array_new(m);
+	    if (S != NULL) {
+		for (i=0; i<m; i++) {
+		    S[i] = gretl_strdup(g_strstrip(tmp[i]));
+		}
+	    }
+	}
+	g_strfreev(tmp);
+    }
+
+    g_free(mysep);
+    *n = m;
+
+    return S;
+}
+
+/* Re. the separator given to gretl_string_split():
+   if it contains anything other than whitespace
+   characters we'll respect empty fields
+*/
+
+static int respect_empty_fields (const char *s)
+{
+    while (*s) {
+	if (!isspace(*s)) {
+	    return 1;
+	}
+	s++;
+    }
+
+    return 0;
+}
+
 /**
  * gretl_string_split:
  * @s: the source string.
@@ -800,9 +855,9 @@ char *gretl_quoted_string_strdup (const char *s, const char **ptr)
  * field separators, or NULL. If @sep is NULL only the
  * space character counts.
  *
- * Parses @s into a set of zero or more substrings and 
+ * Parses @s into a set of zero or more substrings and
  * creates an array of those substrings. On sucessful exit
- * @n holds the number of substrings. 
+ * @n holds the number of substrings.
  *
  * Returns: the allocated array or NULL in case of failure.
  */
@@ -810,12 +865,22 @@ char *gretl_quoted_string_strdup (const char *s, const char **ptr)
 char **gretl_string_split (const char *s, int *n,
 			   const char *sep)
 {
-    int i, k, m = count_fields(s, sep);
+    int i, k, m;
     char *word;
     char **S;
 
     *n = 0;
+    if (s == NULL) {
+	return NULL;
+    }
 
+    if (sep == NULL) {
+	sep = " ";
+    } else if (respect_empty_fields(sep)) {
+	return string_split_2(s, n, sep);
+    }
+
+    m = count_fields(s, sep);
     if (m == 0) {
 	return NULL;
     }
@@ -823,10 +888,6 @@ char **gretl_string_split (const char *s, int *n,
     S = strings_array_new(m);
     if (S == NULL) {
 	return NULL;
-    }
-
-    if (sep == NULL) {
-	sep = " ";
     }
 
     for (i=0; i<m; i++) {
@@ -930,7 +991,7 @@ char **gretl_string_split_lines (const char *s, int *n)
  * Returns: allocated array of substrings or NULL in case of failure.
  */
 
-char **gretl_string_split_quoted (const char *s, int *n, 
+char **gretl_string_split_quoted (const char *s, int *n,
 				  const char *sep, int *err)
 {
     const char *ignore;
@@ -990,7 +1051,7 @@ char **gretl_string_split_quoted (const char *s, int *n,
 	    grabit = quoted = 1;
 	    p++;
 	    len = strcspn(p, "\"");
-	} else {	    
+	} else {
 	    len = strcspn(p, ignore);
 	    grabit = (len > 0);
 	}
@@ -1001,9 +1062,9 @@ char **gretl_string_split_quoted (const char *s, int *n,
 		strings_array_free(S, m);
 		return NULL;
 	    }
-	    S[i++] = substr;	    
+	    S[i++] = substr;
 	    p += len + quoted;
-	}	    
+	}
     }
 
     *n = m;
@@ -1081,7 +1142,7 @@ int double_quote_position (const char *s)
 		/* got an unescaped double-quote */
 		n = i;
 		break;
-	    }	    
+	    }
 	}
     }
 
@@ -1093,7 +1154,7 @@ int double_quote_position (const char *s)
  * @s: the string to process.
  * @sep: string containing the character(s) to count as
  * field separators, or NULL. If @sep is NULL only the
- * space character counts. 
+ * space character counts.
  *
  * Returns: the number of fields in @s.
  */
@@ -1129,7 +1190,7 @@ int count_fields (const char *s, const char *sep)
 	    }
 	}
     }
-	    
+
     return nf;
 }
 
@@ -1216,7 +1277,7 @@ char *gretl_strstrip (char *str)
  * gretl_strstrip_copy:
  * @str: the string to process.
  *
- * Returns: a copy of @str, from which both leading and 
+ * Returns: a copy of @str, from which both leading and
  * trailing white space have been removed.
  */
 
@@ -1317,7 +1378,7 @@ char *switch_ext_new (const char *src, const char *ext)
 
     if (p != NULL) {
 	len -= strlen(p);
-    } 
+    }
 
     ret = calloc(len, 1);
 
@@ -1363,9 +1424,9 @@ static int ends_in_comment (const char *s, int n)
  * Drop leading space and trailing space and newline from string,
  * then replace a trailing backslash (if any) with a space.
  * If @str does not end with a newline within the limit set by
- * @maxlen, and @err is not NULL, then E_TOOLONG is written 
+ * @maxlen, and @err is not NULL, then E_TOOLONG is written
  * to @err.
- * 
+ *
  * Returns: 1 if a trailing backslash, comma or left parenthesis
  * was found, otherwise 0.
  */
@@ -1402,7 +1463,7 @@ int top_n_tail (char *str, size_t maxlen, int *err)
 	   (NBSP is 0xA0 in Windows CP1252)
 	*/
 	i = 0;
-	while (isspace((unsigned char) str[i]) || 
+	while (isspace((unsigned char) str[i]) ||
 	       str[i] == '?' ||
 	       str[i] == (char) 0xC2 ||
 	       str[i] == (char) 0xA0) {
@@ -1424,12 +1485,12 @@ int top_n_tail (char *str, size_t maxlen, int *err)
 	    if (cont && str[n] == '\\') {
 		/* replace backslash */
 		str[n] = ' ';
-	    }		    
+	    }
 	}
     }
 
     return cont;
-}  
+}
 
 /**
  * equation_get_lhs_and_rhs:
@@ -1438,7 +1499,7 @@ int top_n_tail (char *str, size_t maxlen, int *err)
  * @prh: pointer to receive right-hand side expression.
  *
  * Given a string @s, parse it into a left-hand side and a right-hand
- * side, separated by an equals sign.  Return in @plh and @prh 
+ * side, separated by an equals sign.  Return in @plh and @prh
  * allocated copies of the respective sides, with any leading or trailing
  * white space trimmed.
  *
@@ -1494,7 +1555,7 @@ int equation_get_lhs_and_rhs (const char *s, char **plh, char **prh)
 	    if (rh == NULL) {
 		err = 1;
 	    }
-	}	
+	}
     }
 
     if (err) {
@@ -1537,7 +1598,7 @@ char *tailstrip (char *str)
     }
 
     return str;
-}  
+}
 
 /**
  * compress_spaces:
@@ -1545,7 +1606,7 @@ char *tailstrip (char *str)
  *
  * Reduce multiple contiguous space characters to single spaces
  * within @s.
- * 
+ *
  * Returns: the compressed string.
  */
 
@@ -1582,14 +1643,14 @@ char *compress_spaces (char *s)
     }
 
     return q;
-} 
+}
 
 /**
  * space_to_score:
  * @s: the string to process.
  *
  * Replace any spaces with underscores in @s.
- * 
+ *
  * Returns: the (possibly) modified string.
  */
 
@@ -1609,9 +1670,9 @@ char *space_to_score (char *s)
  * strings_array_new:
  * @nstrs: number of strings in array.
  *
- * Allocates storage for @nstrs strings and initializes all 
+ * Allocates storage for @nstrs strings and initializes all
  * to NULL.
- * 
+ *
  * Returns: the allocated array, or NULL on failure.
  */
 
@@ -1643,7 +1704,7 @@ char **strings_array_new (int nstrs)
  * Allocates storage for an extra member of @S and adds a
  * copy of string @p in the last position.  On success,
  * the content of @n is incremented by 1.
- * 
+ *
  * Returns: 0 on success, %E_ALLOC on failure.
  */
 
@@ -1667,7 +1728,7 @@ int strings_array_add (char ***pS, int *n, const char *p)
     } else {
 	Tmp[m] = NULL;
     }
-    
+
     *n += 1;
 
     return 0;
@@ -1683,7 +1744,7 @@ int strings_array_add (char ***pS, int *n, const char *p)
  * string @p in the last position. Unlike strings_array_add(),
  * the array takes ownnership of @p rather than copying it.
  * On success, the content of @n is incremented by 1.
- * 
+ *
  * Returns: 0 on success, %E_ALLOC on failure.
  */
 
@@ -1707,7 +1768,7 @@ int strings_array_donate (char ***pS, int *n, char *p)
     } else {
 	Tmp[m] = NULL;
     }
-    
+
     *n += 1;
 
     return 0;
@@ -1723,7 +1784,7 @@ int strings_array_donate (char ***pS, int *n, char *p)
  * allocates storage for an extra member of @pS and adds a
  * copy of string @p in the last position. On successful
  * addition the content of @n is incremented by 1.
- * 
+ *
  * Returns: 0 on success, %E_ALLOC on failure.
  */
 
@@ -1754,7 +1815,7 @@ int strings_array_add_uniq (char ***pS, int *n, const char *p)
     } else {
 	Tmp[m] = NULL;
     }
-    
+
     *n += 1;
 
     return 0;
@@ -1765,10 +1826,10 @@ int strings_array_add_uniq (char ***pS, int *n, const char *p)
  * @nstrs: number of strings in array.
  * @len: number of bytes per string.
  *
- * Allocates storage for @nstrs strings, each of them 
+ * Allocates storage for @nstrs strings, each of them
  * @len bytes long.  The first byte of each string is
  * initialized to 0.
- * 
+ *
  * Returns: the allocated array, or NULL on failure.
  */
 
@@ -1807,16 +1868,16 @@ char **strings_array_new_with_length (int nstrs, int len)
  * @len: number of bytes per string.
  *
  * Adjusts the storage in @pS to a size of @newn
- * strings, each of them @len bytes long.  The first 
+ * strings, each of them @len bytes long.  The first
  * byte of any additional strings is initialized to 0.
  * This function may be used either to expand or to
  * shrink an existing array of strings.
- * 
+ *
  * Returns: the new array, or NULL on failure.
  */
 
-char **strings_array_realloc_with_length (char ***pS, 
-					  int oldn, 
+char **strings_array_realloc_with_length (char ***pS,
+					  int oldn,
 					  int newn,
 					  int len)
 {
@@ -1913,7 +1974,7 @@ static int compare_strings (const void *a, const void *b)
 {
     const char **sa = (const char **) a;
     const char **sb = (const char **) b;
-     
+
     return strcmp(*sa, *sb);
 }
 
@@ -1966,7 +2027,7 @@ int strings_array_sort (char ***pS, int *n, gretlopt opt)
 
 	    if (tmp != NULL) {
 		*pS = tmp;
-	    } 
+	    }
 	    *n = m;
 	}
     }
@@ -2039,7 +2100,7 @@ int strings_array_position (char **strs, int n, const char *s)
  *
  * Fills out @extra with any strings present in @strs2
  * but not in @strs1.
- * 
+ *
  * Returns: 0 on success, non-zero otherwise.
  */
 
@@ -2135,7 +2196,7 @@ void strings_array_free (char **strs, int nstrs)
 
 char *get_obs_string (char *obs, int t, const DATASET *dset)
 {
-    if (dataset_has_markers(dset)) { 
+    if (dataset_has_markers(dset)) {
 	strcpy(obs, dset->S[t]);
     } else {
 	ntodate(obs, t, dset);
@@ -2172,7 +2233,7 @@ double obs_str_to_double (const char *obs)
     gretl_push_c_numeric_locale();
     ret = strtod(tmp, &test);
     gretl_pop_c_numeric_locale();
- 
+
     if (*test != '\0' || errno == ERANGE) {
 	ret = NADBL;
     }
@@ -2227,7 +2288,7 @@ void modify_date_for_csv (char *s, int pd)
  * print_time:
  * @s: string into which to print: must be at least 48 bytes.
  *
- * Returns: @s, which will contain a locale-dependent representation 
+ * Returns: @s, which will contain a locale-dependent representation
  * of the current time.  In English, this will be in the format Y-m-d H:M.
  */
 
@@ -2247,7 +2308,7 @@ char *print_time (char *s)
  * @s: string to be tested.
  *
  * Returns: 1 if @s is acceptable for insertion into an XML file
- * as is, 0 if it contains special characters that need to be 
+ * as is, 0 if it contains special characters that need to be
  * escaped.  See also gretl_xml_encode().
  */
 
@@ -2294,7 +2355,7 @@ char *gretl_xml_encode (const char *str)
 
     s = str;
     p = targ;
-    
+
     while (*s) {
 	if (*s == '&') {
 	    strcpy(p, "&amp;");
@@ -2334,10 +2395,10 @@ char *gretl_xml_encode (const char *str)
  * gretl_xml_encode() for the case where the encoding of @src is
  * of unknown size at compile time.
  *
- * Returns: 0 on success or 1 on error.  An error occurs if (a) the 
- * encoded version of @src is longer than @n bytes (allowing for NUL 
+ * Returns: 0 on success or 1 on error.  An error occurs if (a) the
+ * encoded version of @src is longer than @n bytes (allowing for NUL
  * termination), or (b) @src does not validate as UTF-8.  On error
- * the conversion is not done.  
+ * the conversion is not done.
  */
 
 int gretl_xml_encode_to_buf (char *targ, const char *src, int n)
@@ -2359,14 +2420,14 @@ int gretl_xml_encode_to_buf (char *targ, const char *src, int n)
     }
 
     *targ = '\0';
-    
+
     if (len > n) {
 	fprintf(stderr, "gretl_xml_encode_to_buf: buffer too small\n");
 	return 1;
     }
 
     s = src;
-    
+
     while (*s) {
 	if (*s == '&') {
 	    strcpy(targ, "&amp;");
@@ -2391,7 +2452,7 @@ int gretl_xml_encode_to_buf (char *targ, const char *src, int n)
     return 0;
 }
 
-static char x2c (char *s) 
+static char x2c (char *s)
 {
     register char digit;
 
@@ -2407,7 +2468,7 @@ static char x2c (char *s)
  *
  */
 
-void unescape_url (char *url) 
+void unescape_url (char *url)
 {
     register int x, y;
 
@@ -2430,14 +2491,14 @@ void unescape_url (char *url)
  * is not a duplicate of an existing varname.  If it is,
  * modify the new name so that it becomes unique. The ID
  * number @v is required so that, if the variable has already
- * been added to the dataset, its name does not appear to 
+ * been added to the dataset, its name does not appear to
  * conflict with itself!  If the name to be tested is not
  * associated with an existing variable, pass 0 for @v.
  *
  * Returns: the (possibly modified) variable name.
  */
 
-char *make_varname_unique (char *vname, int v, DATASET *dset) 
+char *make_varname_unique (char *vname, int v, DATASET *dset)
 {
     size_t n = strlen(vname);
     size_t nmax = VNAMELEN - 8;
@@ -2465,10 +2526,10 @@ char *make_varname_unique (char *vname, int v, DATASET *dset)
 	    break;
 	}
     }
-    
+
     if (conflict) {
 	fprintf(stderr, "make_varname_unique: unresolved conflict!\n");
-    }    
+    }
 
     return vname;
 }
@@ -2483,7 +2544,7 @@ int fix_varname_duplicates (DATASET *dset)
 	for (j=i+1; j<dset->v; j++) {
 	    if (!strcmp(dset->varname[i], dset->varname[j])) {
 		if (!msg_done) {
-		    fprintf(stderr, "'%s' duplicated variable name\n", 
+		    fprintf(stderr, "'%s' duplicated variable name\n",
 			    dset->varname[i]);
 		    msg_done = 1;
 		}
@@ -2522,7 +2583,7 @@ char *append_dir (char *fname, const char *dir)
  * path_last_element:
  * @path: path to work on.
  *
- * Returns: a pointer to the last element of @path, that is, 
+ * Returns: a pointer to the last element of @path, that is,
  * the element following the last path separator character, if any.
  * If @path does not contain a separator, @path itself is returned.
  * Note that the return value may be the empty string, if @path
@@ -2749,7 +2810,7 @@ char *gretl_utf8_truncate_b (char *s, size_t bmax)
 	    p = g_utf8_prev_char(p);
 	    *p = '\0';
 	    break;
-	}	    
+	}
     }
 
     return s;
@@ -2802,7 +2863,7 @@ char *gretl_regexp_replace (const char *orig,
     char *mod = NULL;
 
     regex = g_regex_new(match, 0, 0, &error);
-    
+
     if (error == NULL) {
 	mod = g_regex_replace(regex, orig, -1, 0, repl, 0, &error);
     }
@@ -2812,7 +2873,7 @@ char *gretl_regexp_replace (const char *orig,
 	gretl_errmsg_set(error->message);
 	g_error_free(error);
     }
-    
+
     if (regex != NULL) {
 	g_regex_unref(regex);
     }
