@@ -9489,8 +9489,8 @@
     <function name="strsplit" section="strings" output="string-or-strings">
       <fnargs>
 	<fnarg type="string">s</fnarg>
-	<fnarg optional="true" type="int">i</fnarg>
 	<fnarg optional="true" type="string">sep</fnarg>
+	<fnarg optional="true" type="int">i</fnarg>
       </fnargs>  
       <description>
 	<para>
@@ -9500,28 +9500,17 @@
 	  combination of the space, tab and/or newline characters).
 	</para>
 	<para>
-	  If an integer value greater than zero is given as the second
-	  argument, the return value is a single string, namely the
-	  (1-based) element <argname>i</argname> of the array that
-	  would otherwise be produced. If <argname>i</argname> is less
-	  than 1 that provokes an error, but if <argname>i</argname>
-	  is greater than the implied number of elements an empty
-	  string is returned.
-	</para>
-	<para>
-	  The optional third argument can be used to adjust the
+	  The optional second argument can be used to specify the
 	  separator used for splitting <argname>s</argname>. For
 	  example
 	</para>
 	<code>
 	  string basket = "banana,apple,jackfruit,orange"
-	  strings S = strsplit(basket,,",")
+	  strings S = strsplit(basket, ",")
 	</code>
 	<para>
 	  will split the input into an array of four strings using
-	  comma as separator. The <quote>extra</quote> comma in the
-	  input above indicates that the <argname>i</argname> argument
-	  is omitted.
+	  comma as separator.
 	</para>
 	<para>
 	  The backslash-escape sequences <quote><lit>\n</lit></quote>
@@ -9535,6 +9524,22 @@
 	  string s = "c:\fiddle\sticks"
 	  strings S = strsplit(s, "\\")
 	</code>
+	<para>
+	  Regardless of the separator, the members of the returned
+	  array are trimmed of any leading or trailing white space.
+	  Correspondingly, if <argname>sep</argname> contains
+	  non-whitespace characters then it is stripped of any leading
+	  or trailing space.
+	</para>
+	<para>
+	  If an integer value greater than zero is given as the third
+	  argument the return value is a single string, namely the
+	  (1-based) element <argname>i</argname> of the array that
+	  would otherwise be produced. If <argname>i</argname> is less
+	  than 1 that provokes an error, but if <argname>i</argname>
+	  is greater than the implied number of elements an empty
+	  string is returned.
+	</para>
       </description>
     </function>
 

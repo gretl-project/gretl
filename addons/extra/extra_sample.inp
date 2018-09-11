@@ -1,0 +1,87 @@
+# extra_sample.inp
+# Sample script for the extra.gfn package
+
+include extra.gfn --force
+set verbose off
+
+######## Examples for functions not needing a dataset ##########
+
+# nearPSD
+matrix mc = {1, -1.2; -1.2, 1}	# eigenvalues -0.2 and 2.2
+eval nearPSD(&mc)
+print mc
+
+# zeroifclose
+mc = {1, 1e-12}
+eval zeroifclose(&mc, 1e-10)
+print mc
+
+# sepstr2arr
+eval sepstr2arr("hey,ho,lets,go")
+eval sepstr2arr("hey ho lets go", " ")	# with non-comma sep string
+
+# truncnorm
+m = 0.5
+s = 1
+matrix left = truncnorm(20, m, s, NA, 1)
+matrix right = truncnorm(20, m, s, -1, NA)
+matrix both = truncnorm(20, m, s, -1, 1)
+print left right both
+
+## commute
+# vec application
+eval commute( vec( I(2) ~ ones(2,1) ), 2, 3)
+# commutation of the Kronecker product
+matrix A = mnormal(4,1)
+matrix B = mnormal(1,5)
+eval B**A
+matrix temp = commute(A**B, rows(B), rows(A))	
+eval commute(temp, cols(B), cols(A), 1) # post-multipl.; should give B**A
+
+## scores2x2
+eval scores2x2({24, 4; 12, 9})
+
+## WSRpvalue()
+print "============================="
+print "Some examples for WSRpvalue()"
+loop N=11..14 -q            # loop over n
+  loop i = 6..7 -q        # loop over W
+    printf "n=$N, W=$i\n"
+    printf "try exact: %g, approx: %g\n", WSRpvalue(N, i), WSRpvalue(N, i, 1)
+  endloop
+      
+  Wmax = N * (N + 1) / 2
+  loop i = (Wmax - 7)..(Wmax - 6) -q 
+    printf "n=$N, W=$i\n"
+    printf "try exact: %g, approx: %g\n", WSRpvalue(N, i), WSRpvalue(N, i, 1)
+  endloop
+      
+endloop 
+
+## WSRcritical()
+print "----------------------------------------"
+print "Some examples for WSRcritical()"
+loop N=11..13 -q            # loop over n
+  Wmax = N * (N + 1) / 2
+  loop i=3..4 -q        # loop over W
+    printf "n = $N, Pr = %g\n", i/100
+    printf "try exact:"
+    eval WSRcritical(N, i/100)' 
+    printf "approx:"
+    eval WSRcritical(N, i/100, 1)' 
+  endloop
+endloop
+
+######## Examples that require a dataset ############
+
+open denmark	# get some data
+
+# gap_filler
+series play = LRM
+play[10] = NA	# insert missing
+series playout = gap_filler(play, 2)
+print playout
+
+# winsor
+series winDM = winsor(ldiff(LRM))
+series winDM_asy = winsor(ldiff(LRM), 0.01, 0.8)

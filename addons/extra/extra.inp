@@ -1,0 +1,384 @@
+# author='The gretl team'
+# email='<use the mailing list or trackers>'
+# version='0.41'
+# date='2018-02-03'
+
+function matrix WPtable (int n[4::12] "number of trials")
+   /*
+   Upper and Lower Percentiles of the Wilcoxon Signed
+   Rank Statistic W
+   Returns a 3 x M matrix of critical values:
+   (M differs for each n.)
+   1st row: lower crit. vals, always ascending
+   2nd row: upper crit. vals, always descending
+   3rd row: corresponding P(X <= lower crit.val)
+   ( equal to P(X >= upper crit.val) )
+    */
+    if n == 4
+        return {0, 1} | {10, 9} | {0.062, 0.125}
+    elif n == 5
+        return seq(0, 3) | seq(15, 12) | {0.031,0.062,0.094,0.156}
+    elif n == 6
+        return seq(0, 5) | seq(21, 16) | {0.016,0.031,0.047,0.078,0.109,0.156}
+    elif n == 7
+        return seq(0, 7) | seq(28, 21) | {0.008,0.016,0.023,0.039,0.055,0.078,0.109,0.148}
+    elif n == 8
+        return seq(0, 9) | seq(36, 27) | {0.004,0.008,0.012,0.020,0.027,0.039,0.055,0.074,0.098,0.125}
+    elif n == 9
+        return seq(1, 12) | seq(44, 33) | {0.004,0.006,0.010,0.014,0.020,0.027,0.037,0.049,0.064,0.082,0.102,0.125}
+    elif n == 10
+        return seq(3, 16) | seq(52, 39) | {0.005,0.007,0.010,0.014,0.019,0.024,0.032,0.042, 0.053,0.065,0.080,0.097,0.116,0.138}
+    elif n == 11
+        return seq(5, 20) | seq(61, 46) | {0.005,0.007,0.009,0.012,0.016,0.021,0.027,0.034, 0.042,0.051,0.062,0.074,0.087,0.103,0.120,0.139}
+    elif n == 12
+        return seq(7, 24) | seq(71, 54) | {0.005,0.006,0.008,0.010,0.013,0.017,0.021,0.026, 0.032,0.039,0.046,0.055,0.065,0.076,0.088,0.102,0.117,0.133}
+    endif
+end function
+
+function series lin_int (series y)
+    series DOK = diff(ok(y))
+    series Beg = DOK == -1
+    series End = DOK(+1) == 1
+    series splen = 0
+    splen = DOK == -1 ? 1 : DOK==1 ? 0 : (splen(-1) == 0 ? 0 : splen(-1) + 1)
+    series y0 = NA
+    series y0 = Beg ? y(-1) : y0(-1)
+    series y1 = NA
+    series y1 = End ? y(+1) : y1(-1)
+    set skip_missing off
+    matrix A = {y, y0, y1, splen}
+    scalar t = lastobs(y)
+    loop while t>firstobs(y) --quiet
+        if ok(End[t]) && (End[t] == 1)
+            scalar l = A[t, 4]
+            dy = (A[t,3] - A[t,2]) / (l + 1)
+            patch = A[t,2] + dy * seq(1,l)'
+            A[t-l+1:t,1] = patch
+            t -= l
+        else
+            t--
+        endif
+    endloop
+    return A[,1]
+end function
+
+function series gap_filler (series x "Series to fill",
+                            int method[0:2:0] "Fill method" {"Don't", "Repetition", "Linear interpolation"})
+    string lbl = argname(x)
+    if method == 0 # do nothing
+        series ret = x
+    elif method == 1 # get previous value
+        genr time
+        series OK = ok(x)
+        series ret = x
+        series tmp = OK ? time : NA
+        scalar ini = min(tmp)
+        scalar fin = max(tmp)
+        smpl ini fin
+        ret = OK ? x : ret(-1)
+        string lbl = sprintf("gap-filled version of %s (with repetition)", argname(x))
+        setinfo ret --description="@lbl"
+    elif method == 2 # interpolate_linearly
+        set warnings off
+        series ret = lin_int(x)
+        string lbl = sprintf("gap-filled version of %s (with interpolation)", argname(x))
+        setinfo ret --description="@lbl"
+    endif
+    return ret
+end function
+
+function series winsor (series x,
+                        scalar p[0:1:0.05],
+                        scalar phi[0:1:0])
+    # phi (as in p-high) is optional and defines an upper tail mass
+    #  different from lower (the default phi == 0 means ignore)
+    #
+    # This is a rewrite of the function in the winsor.gfn package
+    # (originally by JoshuaHe2015@163.com)
+    smpl --no-missing x
+    # standard symmetric or asymmetric case?
+    phi = !phi ? 1 - p : phi
+    # determine bounds
+    matrix lowhi = quantile({x}, {p, phi})
+    # lower end (and address non-existing extreme quantiles)
+    scalar low = ok(lowhi[1]) ? lowhi[1] : min(x)
+    x = (x < low) ? low : x
+    # upper end
+    scalar hi = ok(lowhi[2]) ? lowhi[2] : max(x)
+    x = (x > hi) ? hi : x
+    # prepare output
+    string label = sprintf("winsorized %s (%g,%g)", argname(x), p, phi)
+    setinfo x --description="@label"
+    return x
+end function
+
+function scalar nearPSD (matrix *m,
+                         scalar epsilon[0::0])
+    # FIXME: cover the case with some variances == 0
+    # (use misszero() after scaling, or something)
+    #
+    # Forces the matrix m into the positive semi-definite region.
+    #
+    # Ported from "DomPazz" in Stackoverflow, apparently
+    # mimicking the nearPD() function in R.
+    # Because of re-scaling ( to correlation matrix ), the
+    # epsilon should implicitly apply to the correlation-based
+    # eigenvalues.
+    #
+    # The return value 0 or 1 indicates whether m was altered or not.
+    matrix s = sqrt(diag(m)) # std dev
+    matrix scaling = s * s'
+    matrix ms = m ./ scaling	# rescaled
+    matrix eigvec
+    matrix eigval = eigensym(ms, &eigvec)
+    matrix val = (eigval .> epsilon) ? eigval : epsilon	# like xmax
+    if sum(val .> eigval)	# actually something was changed
+        matrix T = 1 / ( (eigvec .^2) * val )
+        # transform vector T to a diagonal matrix
+        matrix temp = I(rows(T))
+        temp[diag] = sqrt(T)
+        # and also val
+        matrix temp2 = I(rows(T))
+        temp2[diag] = sqrt(val)
+        matrix B = temp * eigvec * temp2
+        ms = B * B'
+        # undo the re-scaling
+        m = ms .* scaling
+        return 1
+    else
+        return 0
+    endif
+end function
+
+function scalar zeroifclose (matrix *m,
+                             scalar thresh[0::1e-50])
+    # Sets elements to zero if they are really close.
+    # The return value 0 or 1 indicates whether m was altered or not.
+    # (an older version copied and returned the matrix)
+    matrix indicator = (abs(m) .< thresh)
+    m = indicator ? 0 : m
+    if sum(indicator)
+        return 1
+    else
+        return 0
+    endif
+end function
+
+function strings sepstr2arr (string in,
+                             string sep[null])
+    # Transforms comma-separated string to an array of strings.
+    # (The comma as separation character can be overridden with
+    #  the sep argument, but only the first character is used.)
+    if !exists(sep)
+        string sep = ","
+    else
+        sep = substr(sep,1,1)	# only first char
+    endif
+    strings out = strsplit(strsub(in, sep, " "))
+    return out
+end function
+
+function matrix commute (const matrix A,
+                         int m[1::],
+                         int n[0::0],
+                         bool post[0])
+    # returns A premultiplied by K_mn,
+    # K_mn being the commutation matrix, see Magnus/Neudecker
+    # (more efficient than explicit pre-multiplication,
+    # just reshuffles stuff)
+    # If post != 0, does post-multiplication:
+    # if n == 0 (default), then it's understood to be equal to m,
+    # as per Magnus/Neudecker convention: K_nn = K_n
+    n = n ? n : m
+    matrix e = vec(mshape(seq(1, m*n), m, n)')
+    return post ? A[,e] : A[e,]
+end function
+
+function matrix truncnorm (int n[1::],
+                           scalar m[0],
+                           scalar sigma[0::1],
+                           scalar below,
+                           scalar above)
+    # Generates truncated normal random values.
+    # Set 'below' and/or 'above' to NA to skip.
+    scalar l = ok(below) ? cnorm((below - m)/sigma) : 0
+    scalar r = ok(above) ? cnorm((above - m)/sigma) : 1
+    matrix u = l + (r-l) .* muniform(n,1)
+    return invcdf(z, u) .* sigma + m
+end function
+
+function matrix scores2x2 (matrix in,
+                           bool verbose[0])
+    /*
+       Computes some standard score measures for a 2x2
+       contingency table of the form:
+       Observed
+       1      0
+       --------------
+       Predicted  1 | h(its)  f(alse)
+       0 | m(iss)  z(eros)
+       and n = h + f + m + z (total observations)
+       1) POD / prob of detection = h / (h + m)
+       2) POFD / prob of false detection = f / (f + z)
+       3) HR / hit rate = (h + z) / n
+       4) FAR / false alarm rate = f / (h + f)
+       5) CSI / critical success index = h / (h + f + m)
+       6) OR / odds ratio = h*z / (f*m)
+       7) BIAS / bias score = (h + f) / (h + m)
+       8) TSS / true skill stat = POD - POFD
+       9) HSS / Heidke skill score = 2 * (h*z - f*m) /
+       ( (h+m)*(m+z) + (h+f)*(f+z) )
+       10) ETS / equitable threat score = (h*z - f*m) /
+       ( (f+m)*n + (h*z - f*m) )
+       11) PRC / precision = h / (h + f)
+       12) FSC / F-Score = 2 * (PRC*POD) / (PRC + POD)
+       The TSS is also known as the Hanssen-Kuipers score,and is = h / (h+m) - f / (f+z).
+       The F-Score can also be expressed as 2 * h / (1 + h + m).
+       The input is always sanitized by taking the upper 2x2 part,
+       using absolute values, and integer-ization.
+       Warnings are issued if verbose == 1.
+    */
+    # (Skip the checks for efficiency if not verbose)
+    if verbose
+        if rows(in) != 2 || cols(in) != 2
+            print "Warning: Discarding input beyond 2x2"
+        endif
+        if minr(minc(in)) < 0
+            print "Warning: Converting negative entries"
+        endif
+        if sum(abs( in - int(in) )) > 1e-6
+            print "Warning: Rounding non-integers"
+        endif
+    endif
+    in = int(abs( in[1:2, 1:2] ))
+    scalar h = in[1,1]
+    scalar m = in[2,1]
+    scalar f = in[1,2]
+    scalar z = in[2,2]
+    scalar n = sum(in)
+    h_m = h + m
+    f_z = f + z
+    h_z = h + z
+    h_f = h + f
+    m_z = m + z
+    f_m = f + m
+    hz = h * z
+    fm = f * m
+    hzMfm = hz - fm
+    POD = h / h_m
+    POFD = f / f_z
+    HR = h_z / n
+    FAR = f / h_f
+    CSI = h / (h_f + m)
+    OR = hz / fm
+    BIAS = h_f / h_m
+    TSS = POD - POFD
+    HSS = 2 * hzMfm / ( h_m * m_z + h_f * f_z )
+    ETS = hzMfm / ( f_m * n + hzMfm )
+    PRC = h / h_f
+    FSC = 2 * h / (1 + h_m)
+    matrix out = {POD; POFD; HR; FAR; CSI; OR; BIAS; TSS; HSS; ETS; PRC; FSC}
+    rownames(out, "POD POFD HR FAR CSI OR BIAS TSS HSS ETS PRC FSC")
+    return out
+end function
+
+function matrix WSRcritical (int n[4::] "number of trials",
+                             scalar prob[0:1:0.05] "two-sided prob mass",
+                             bool forcenorm[0] "always use normal approx")
+    /* Tries to find the critical values (low/hi) where the
+       two-sided area to the outside is as close as possible
+       to the given prob.
+       (Note that "outside" means including the critical values
+       themselves in the exact/discrete case.)
+       If we end up in the interior region not covered by the
+       exact table (for prob far away from 0 and also from 1), we fall back to the normal approx.
+       Returned is col vector {low; hi; epv}, where epv is the actual probability mass
+       (close to prob but not equal in general for small samples).
+       'low' and 'hi' can be non-integers in the normal
+       approximation case.
+       The normal approximation instead of the exact table values can be
+       enforced with the 'forcenorm' argument.
+    */
+    approxtol = 0.05
+    if n <= 12 && !forcenorm
+        matrix lohiP = WPtable(n)
+        lohiP[3, ] *= 2	# from one-sided to two-sided pv
+        # find the min deviation from the p-value
+        scalar ix = iminr(abs( lohiP[3, ] - prob ))
+        # now check if we are too far in the interior region
+        # where the exact table doesn't apply and the result
+        # would be misleading;
+        if abs(lohiP[3, ix] - prob ) <= approxtol
+            return lohiP[, ix]
+        else
+            forcenorm = 1 # fall back to normal approx.
+        endif
+    endif
+    if n > 12 || forcenorm # normal approx.
+        Wmean = n * (n + 1) / 4
+        Wsigma = sqrt(Wmean * (2 * n + 1) / 6)
+        cv = critical(N, prob/2) # upper critical value
+        hi = cv * Wsigma + Wmean
+        lo = Wmean - (hi - Wmean) # symmetric lower
+        return {lo; hi; prob}
+    endif
+end function
+
+function scalar WSRpvalue (int n[4::] "number of trials",
+                           scalar W[0::] "W test stat",
+                           bool forcenorm[0] "always use normal approx")
+    /* We return P(X >= W), _not_ strict inequality!
+       (in contrast to an earlier version!)
+       In the interior region not covered by the exact table, the true value is
+       >= 12.5% according to WPtable, so typically based on such a p-value
+       H0 would not be rejected.
+       We fall back to the normal approximation in this region.
+       In the extreme outer regions not explicitly covered by the table, the deviation
+       from 0 or 1 will be smaller than 0.5% = 0.005. We return
+       values 1e-3 or 1 - 1e-3 as an approximation here.
+       The normal approximation instead of the exact table values can be
+       enforced with the 'forcenorm' argument.
+    */
+    # input check
+    if W > n * (n+1) / 2
+        printf "Warning: stat %d out of range for %d trials!\n", W, n
+        return NA
+    endif
+    if W != int(W)
+        # for a non-integer input (only possible for bindings?)
+        # we always fall back to the normal approx
+        forcenorm = 1
+    else
+        W = int(W)	# should be redundant, but who knows (numerically)
+    endif
+    approxdiff = 1e-3
+    if n <= 12 && !forcenorm
+        if W == 0	# trivial but possible case
+            return 1
+        endif
+        matrix lohiP = WPtable(n)
+        if W > lohiP[1, cols(lohiP)]  &&  W < lohiP[2, cols(lohiP)]
+            # (> max left, or < min right) no exact values possible,
+            # fall back to normal approx
+            forcenorm = 1
+        elif W <= lohiP[1, 1]	# extreme lower tail
+            return 1 - approxdiff
+        elif W > lohiP[2, 1]	# extreme upper tail
+            return approxdiff
+        elif W <= lohiP[1, cols(lohiP)] # covered in lower tail
+            # get the <= W-1 prob
+            scalar P = selifc( lohiP[3,], lohiP[1,] .= (W - 1) )
+            # convert to > (W-1) ==: >= W prob
+            return 1 - P
+        elif W >= lohiP[2, cols(lohiP)]	# covered in upper tail
+            scalar P = selifc( lohiP[3,], lohiP[2,] .= W )
+            return P
+        endif
+    endif # exact values
+    if n > 12 || forcenorm # normal approx.
+        Wmean = n * (n + 1) / 4
+        Wsigma = sqrt(Wmean * (2 * n + 1) / 6)
+        Wstar = (W - Wmean) / Wsigma
+        return pvalue(N, Wstar)
+    endif
+end function

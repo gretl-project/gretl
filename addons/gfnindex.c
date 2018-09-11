@@ -38,6 +38,7 @@ int main (int argc, char **argv)
     int i, err = 0;
 
     fputs("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n", stdout);
+    fputs("<?xml-stylesheet type=\"text/xsl\" href=\"addons.xsl\"?>\n", stdout);
     fputs("<gretl-addons>\n", stdout);
 
     for (i=1; i<argc && !err; i++) {
