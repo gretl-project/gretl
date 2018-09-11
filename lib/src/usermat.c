@@ -190,12 +190,12 @@ static int bad_sel_vector (const gretl_matrix *v, int n)
 
 static int bad_sel_range (int *range, int n)
 {
-    int i;
+    int i, k;
 
     for (i=0; i<2; i++) {
-	if (range[i] < 1 || range[i] > n) {
-	    gretl_errmsg_sprintf(_("Index value %d is out of bounds"),
-				 range[i]);
+	k = range[i];
+	if (k != MSEL_MAX && (k < 1 || k > n)) {
+	    gretl_errmsg_sprintf(_("Index value %d is out of bounds"), k);
 	    return E_INVARG;
 	}
     }
@@ -205,7 +205,7 @@ static int bad_sel_range (int *range, int n)
 
 static int bad_sel_single (int k, int n)
 {
-    if (k < 1 || k > n) {
+    if (k != MSEL_MAX && (k < 1 || k > n)) {
 	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), k);
 	return E_INVARG;
     }
