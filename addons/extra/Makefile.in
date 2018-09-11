@@ -19,7 +19,7 @@ endif
 
 GRETLCLI = ../../cli/gretlcli
 
-PKG = ivpanel
+PKG = extra
 PKGSRC = $(topsrc)/addons/extra
 
 vpath %.inp $(PKGSRC)

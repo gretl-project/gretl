@@ -361,12 +361,12 @@ AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS(stdint.h unistd.h dirent.h fnmatch.h fenv.h byteswap.h sys/times.h)
 AC_CHECK_HEADERS(libproc.h sys/proc_info.h)
 AC_C_CONST
-AC_C_LONG_DOUBLE 
+AC_C_LONG_DOUBLE
 AC_CHECK_FUNCS(vasprintf)
 AC_CHECK_FUNCS(posix_memalign)
 AC_CHECK_SIZEOF(int)
-AC_TYPE_SIGNAL 
-AC_C_BIGENDIAN 
+AC_TYPE_SIGNAL
+AC_C_BIGENDIAN
 
 AC_ARG_VAR(HOSTCC, host compiler (for cross-build))
 AC_ARG_VAR(MKLANG, builder for gtksourceview files (cross-build))
@@ -391,7 +391,7 @@ fi
 
 dnl Check for MPI apparatus?
 if test "$try_mpi" = "yes" ; then
-  if test x"${MPICC}" = x ; then 
+  if test x"${MPICC}" = x ; then
     AC_DEFUN([AC_PROG_MPICC],
     [AC_CHECK_PROG(HAVE_MPICC,mpicc,yes)])
 
@@ -404,7 +404,7 @@ if test "$try_mpi" = "yes" ; then
       MPI_LIBS="-lmsmpi"
       have_mpi="yes"
       AC_DEFINE(HAVE_MPI)
-    else 
+    else
       AC_C_MPI
     fi
   fi
@@ -495,7 +495,7 @@ dnl Check for LAPACK
 dnl
 LAPACK_CFLAGS="-I${srcdir}/lib/src"
 case $host_os in
-  *arwin*) 
+  *arwin*)
     LAPACK_LIBS="-Wl,-framework -Wl,Accelerate"
     have_lapack="yes"
     darwin_build="yes"
@@ -504,14 +504,14 @@ case $host_os in
   *mingw*)
     have_lapack="yes"
   ;;
-  *cygwin*) 
-    AM_PATH_LAPACK(, have_lapack="yes") 
+  *cygwin*)
+    AM_PATH_LAPACK(, have_lapack="yes")
     if test "$have_lapack" = "yes" ; then
       LAPACK_LIBS="${LAPACK_LIBS} -XCClinker,-lgfortran"
     fi
   ;;
   *)
-    AM_PATH_LAPACK(, have_lapack="yes") 
+    AM_PATH_LAPACK(, have_lapack="yes")
     if test "$have_lapack" = "yes" ; then
       SAVE_LIBS=$LIBS
       LIBS=$LAPACK_LIBS
@@ -565,7 +565,7 @@ dnl Check for unixODBC?
 dnl
 if test "$try_odbc" = "yes" ; then
   case $host_os in
-    *arwin*) 
+    *arwin*)
       ODBC_LIBS="-liodbc"
       have_odbc="yes"
     ;;
@@ -574,7 +574,7 @@ if test "$try_odbc" = "yes" ; then
       have_odbc="yes"
     ;;
     *)
-      AM_PATH_ODBC(, 
+      AM_PATH_ODBC(,
         have_odbc="yes",
         have_odbc="no"
       )
@@ -691,7 +691,7 @@ dnl
 if test "$darwin_build" = "no" ; then
   PKG_CHECK_MODULES(GLIB28, glib-2.0 >= 2.28.0,
      fake_mono_time="no",
-     fake_mono_time="yes",      
+     fake_mono_time="yes",
   )
 fi
 if test "$fake_mono_time" = "yes" ; then
@@ -711,7 +711,7 @@ dnl see if we have json-glib-1.0 (not a hard dependency, yet)
 dnl
 if test "$try_json_glib" = "yes" ; then
    PKG_CHECK_MODULES(JSON_GLIB, json-glib-1.0 >= 0.14,
-   have_json_glib="yes", 
+   have_json_glib="yes",
    have_json_glib="no")
    if test $have_json_glib = "no" ; then
 echo "
@@ -721,7 +721,7 @@ you can disable this by using the option --disable-json when
 running configure.
 "
       exit 1
-   fi 
+   fi
 fi
 
 dnl
@@ -734,7 +734,7 @@ if test "$prefer_gtk2" = "yes" ; then
       CFLAGS="$CFLAGS $GTK_CFLAGS"
       LIBS="$LIBS $GTK_LIBS"
       gtk_version="2.0",
-      echo "GTK 2 >= 2.14.0 not found"     
+      echo "GTK 2 >= 2.14.0 not found"
     )
 elif test "$build_gui" = "yes" ; then
     PKG_CHECK_MODULES(GTK3, gtk+-3.0 >= 3.0.1,
@@ -745,7 +745,7 @@ elif test "$build_gui" = "yes" ; then
       AC_DEFINE(USE_GTK3)
       gtk_version="3.0"
       fake_gtkspinner="no",
-      echo "GTK 3 >= 3.0.1 not found"     
+      echo "GTK 3 >= 3.0.1 not found"
     )
 fi
 
@@ -759,10 +759,10 @@ if test "$prefer_gtk2" = "no" && test "$gtk_version" = "none" ; then
         LIBS="$LIBS $GTK_LIBS"
         gtk_version="2.0",
         build_gui="no"
-        echo "GTK 2 >= 2.14.0 not found"     
+        echo "GTK 2 >= 2.14.0 not found"
     )
    fi
-fi     
+fi
 
 dnl
 dnl Mac: check for Quartz version of GTK
@@ -772,13 +772,13 @@ if test "$darwin_build" = "yes" ; then
     PKG_CHECK_EXISTS(gtk+-quartz-3.0,
      echo "Found quartz-based GTK"
      AC_DEFINE(MAC_NATIVE)
-     mac_native="yes", 
+     mac_native="yes",
      mac_native="no")
   elif test "$gtk_version" = "2.0" ; then
     PKG_CHECK_EXISTS(gtk+-quartz-2.0,
      echo "Found quartz-based GTK"
      AC_DEFINE(MAC_NATIVE)
-     mac_native="yes", 
+     mac_native="yes",
      mac_native="no")
      PKG_CHECK_EXISTS(gretl-mac-themes,
      AC_DEFINE(HAVE_MAC_THEMES),)
@@ -791,7 +791,7 @@ dnl
 if test "$mac_native" = "yes" ; then
     PKG_CHECK_MODULES(GTKMAC, gtk-mac-integration >= 2.0.1,
       have_mac_integration="no",
-      have_mac_integration="yes",      
+      have_mac_integration="yes",
     )
 fi
 
@@ -802,7 +802,7 @@ dnl
 if test "$gtk_version" = "2.0" ; then
     PKG_CHECK_MODULES(GTKSPINNER, gtk+-2.0 >= 2.20.0,
       fake_gtkspinner="no",
-      fake_gtkspinner="yes",      
+      fake_gtkspinner="yes",
     )
     GTK_PREFIX=`$PKG_CONFIG --variable=prefix gtk+-2.0`
 fi
@@ -893,7 +893,7 @@ PKG_CHECK_MODULES(XML, libxml-2.0 >= 2.5.0)
 
 dnl Check for libxslt (for the helpfiles)
 if test "${build_docs}" = "yes" ; then
-  PKG_CHECK_MODULES(XSLT, libxslt >= 1.0.15,	
+  PKG_CHECK_MODULES(XSLT, libxslt >= 1.0.15,
     have_xslt="yes",
     have_xslt="no"
   )
@@ -911,14 +911,14 @@ if test "$try_libR" = "yes" ; then
         RLIBDIR=`echo $RLIB_LIBS | cut -b 3- | awk '{ print $1 }'`
       else
         RLIBDIR="/usr/lib"
-      fi 
+      fi
       if test "$darwin_build" = "yes" ; then
         RLIBNAME="libR.dylib"
-      else 
+      else
         RLIBNAME="libR.so"
       fi
       RLIB="${RLIBDIR}/${RLIBNAME}"
-      AC_DEFINE_UNQUOTED(RLIBPATH, "$RLIB") 
+      AC_DEFINE_UNQUOTED(RLIBPATH, "$RLIB")
       have_libR="yes",
       have_libR="no"
     )
@@ -934,7 +934,7 @@ if test "$try_gsf" = "yes" ; then
       LIBS="$LIBS $GSF_LIBS"
       AC_DEFINE(USE_GSF)
       use_gsf="yes",
-      echo "libgsf >= 1.14.31 not found"     
+      echo "libgsf >= 1.14.31 not found"
     )
 fi
 
@@ -973,7 +973,7 @@ AC_SUBST(GTK_HUSH)
 
 if test "$gtk_version" = "3.0" ; then
    plugsub="gretl-gtk3"
-else 
+else
    plugsub="gretl-gtk2"
 fi
 AC_SUBST(plugsub)
@@ -1004,18 +1004,18 @@ fi
 CFLAGS="$orig_CFLAGS"
 
 AC_CONFIG_FILES([
-Makefile 
+Makefile
 gretl_sh
-gretl.pc 
+gretl.pc
 gui/Makefile
 gui/debug
 xdg/gretl.desktop
 xdg/Makefile
-cli/Makefile 
+cli/Makefile
 cli/debug
-lib/Makefile 
+lib/Makefile
 plugin/Makefile
-po/Makefile.in 
+po/Makefile.in
 share/Makefile
 share/bcih/Makefile
 tests/Makefile
@@ -1103,7 +1103,10 @@ if test "${build_addons}" = "yes" ; then
     addons/SVAR/doc/Makefile
     addons/dbnomics/Makefile
     addons/dbnomics/pkg.inp
-    addons/dbnomics/doc/Makefile    
+    addons/dbnomics/doc/Makefile
+    addons/extra/pkg.inp
+    addons/extra/Makefile
+    addons/extra/doc/Makefile
   ])
 fi
 
@@ -1177,7 +1180,7 @@ else
   fi
 echo "
 Configuration:
-  
+
   Installation path:                      ${prefix}
   Use readline library:                   ${have_readline}
   Use gnuplot for graphs:                 ${have_gnuplot}
@@ -1199,7 +1202,7 @@ Configuration:
   ODBC support:                           ${have_odbc}
   JSON parsing support:                   ${have_json_glib}
   Use xdg-utils in installation:          ${xdg_utils_msg}
-  
+
   LAPACK libraries:
     ${LAPACK_LIBS}
 
