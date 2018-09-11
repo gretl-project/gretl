@@ -3208,6 +3208,8 @@ static char *get_previous_line_start_word (char *word,
 {
     GtkTextIter end, prev = iter;
     int *pcont = contd;
+    int rparen = 0;
+    int i = 0;
     gchar *s;
 
     *word = '\0';
@@ -3217,6 +3219,9 @@ static char *get_previous_line_start_word (char *word,
 	if (gtk_text_iter_forward_to_line_end(&end)) {
 	    s = gtk_text_buffer_get_text(tbuf, &prev, &end, FALSE);
 	    if (s != NULL) {
+		if (i == 0 && s[strlen(s)-1] == ')') {
+		    rparen = 1;
+		}
 		if (get_word_and_cont(s, word, pcont)) {
 		    pcont = NULL;
 		}
@@ -3232,6 +3237,13 @@ static char *get_previous_line_start_word (char *word,
 	if (*word != '\0' && leadspace != NULL) {
 	    *leadspace = leading_spaces_at_iter(tbuf, &prev, word);
 	}
+	i++;
+    }
+
+    if (rparen && !strcmp(word, "function")) {
+	/* revise our judgement: looks like we must be on the
+	   first line following a function signature */
+	*leadspace = 0;
     }
 
     return word;
