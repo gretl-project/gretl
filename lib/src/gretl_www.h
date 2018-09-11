@@ -93,6 +93,8 @@ int retrieve_public_file (const char *uri, char *localname);
 char *retrieve_public_file_as_buffer (const char *uri, size_t *len,
 				      int *err);
 
+char *get_uri_for_addon (const char *pkgname, int *err);
+
 int query_sourceforge (const char *query, char **getbuf);
 
 int gretl_curl (const char *url, const char *header, 

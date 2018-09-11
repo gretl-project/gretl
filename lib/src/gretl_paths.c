@@ -1417,19 +1417,6 @@ char *gretl_addon_get_path (const char *name)
     return ret;
 }
 
-static int is_addon (const char *name)
-{
-    if (!strcmp(name, "gig") ||
-	!strcmp(name, "SVAR") ||
-	!strcmp(name, "HIP") ||
-	!strcmp(name, "ivpanel") ||
-	!strcmp(name, "dbnomics")) {
-	return 1;
-    } else {
-	return 0;
-    }
-}
-
 /**
  * gretl_function_package_get_path:
  * @name: the name of the package to find, without the .gfn extension.
@@ -1455,7 +1442,7 @@ char *gretl_function_package_get_path (const char *name,
     int err, found = 0;
     int i, n_dirs;
 
-    if (type == PKG_ALL && is_addon(name)) {
+    if (type == PKG_ALL && package_is_addon(name)) {
 	type = PKG_SUBDIR;
     }
 

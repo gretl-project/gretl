@@ -2411,10 +2411,22 @@ static int install_function_package (const char *pkgname,
 				     PRN *prn)
 {
     char *fname = NULL;
+    gchar *gfname = NULL;
     int filetype = 0;
     int local = (opt & OPT_L);
+    int addon = 1;
     int http = 0;
     int err = 0;
+
+    if (!local && package_is_addon(pkgname)) {
+	addon = 1;
+	filetype = 2;
+	if (strchr(pkgname, '.') == NULL) {
+	    gfname = g_strdup_printf("%s.zip", pkgname);
+	    fname = gfname;
+	}
+	goto next_step;
+    }
 
     if (!strncmp(pkgname, "http://", 7) ||
 	!strncmp(pkgname, "https://", 8)) {
@@ -2458,6 +2470,8 @@ static int install_function_package (const char *pkgname,
 	}
     }
 
+ next_step:
+
     if (!err && filetype) {
 	const char *basename = fname != NULL ? fname : pkgname;
 	const char *instpath = gretl_function_package_path();
@@ -2465,7 +2479,14 @@ static int install_function_package (const char *pkgname,
 
 	fullname = g_strdup_printf("%s%s", instpath, basename);
 
-	if (local) {
+	if (addon) {
+	    gchar *uri = get_uri_for_addon(basename, &err);
+
+	    if (!err) {
+		err = retrieve_public_file(uri, fullname);
+	    }
+	    g_free(uri);
+	} else if (local) {
 	    err = gretl_copy_file(pkgname, fullname);
 	} else if (http) {
 	    /* get file from a specified server */
@@ -2483,7 +2504,7 @@ static int install_function_package (const char *pkgname,
 	    }
 	}
 
-	if (!err) {
+	if (!err && !addon) {
 	    package_check_dependencies(fullname, s, prn);
 	}
 
@@ -2495,7 +2516,8 @@ static int install_function_package (const char *pkgname,
 	    }
 	}
 
-	if (!err && s != NULL && gui_callback != NULL && !(opt & OPT_D)) {
+	if (!err && s != NULL && gui_callback != NULL &&
+	    !addon && !(opt & OPT_D)) {
 	    /* FIXME: handling of OPT_D here? */
 	    gretl_bundle *b = gretl_bundle_new();
 	    char *p, *nosfx = gretl_strdup(basename);
@@ -2514,7 +2536,11 @@ static int install_function_package (const char *pkgname,
 	g_free(fullname);
     }
 
-    free(fname);
+    if (addon) {
+	g_free(gfname);
+    } else {
+	free(fname);
+    }
 
     return err;
 }

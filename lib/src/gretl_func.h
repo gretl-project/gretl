@@ -301,6 +301,8 @@ int package_needs_zipping (const char *fname,
 			   char ***datafiles,
 			   int *n_files);
 
+int package_is_addon (const char *name);
+
 void gretl_functions_cleanup (void);
 
 int push_function_arg (fncall *fc, const char *name,

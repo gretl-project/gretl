@@ -2714,61 +2714,15 @@ int query_addons (void)
     return err;
 }
 
-static int query_addons_dir (const char *pkgname, char *sfdir)
-{
-    gchar *query;
-    char *buf = NULL;
-    int err = 0;
-
-    *sfdir = '\0';
-
-    query = g_strdup_printf("/addons-data/pkgdir.php?gretl_version=%s"
-			    "&pkg=%s", GRETL_VERSION, pkgname);
-    err = query_sourceforge(query, &buf);
-    g_free(query);
-
-    if (!err && buf == NULL) {
-	/* shouldn't happen */
-	err = E_DATA;
-    }
-
-    if (!err && buf != NULL && strstr(buf, "<head>")) {
-	/* got some sort of garbage */
-	err = E_DATA;
-    }
-
-    if (!err) {
-	char *p = strchr(buf, ':');
-
-	if (p == NULL ||
-	    sscanf(p + 2, "%15s", sfdir) != 1 ||
-	    strcmp(sfdir, "none") == 0) {
-	    err = E_DATA;
-	}
-    }
-
-    free(buf);
-
-    if (err) {
-	errbox_printf("Couldn't find %s for gretl %s",
-		      pkgname, GRETL_VERSION);
-    }
-
-    return err;
-}
-
 int download_addon (const char *pkgname, char **local_path)
 {
-    const char *SF = "http://downloads.sourceforge.net/"
-	"project/gretl/addons";
-    char pkgdir[16];
-    int err;
+    char *uri;
+    int err = 0;
 
-    err = query_addons_dir(pkgname, pkgdir);
+    uri = get_uri_for_addon(pkgname, &err);
 
     if (!err) {
 	const char *path = gretl_function_package_path();
-	gchar *uri = g_strdup_printf("%s/%s/%s.zip", SF, pkgdir, pkgname);
 	gchar *fullname = g_strdup_printf("%s%s.zip", path, pkgname);
 
 #if 1
@@ -2787,15 +2741,18 @@ int download_addon (const char *pkgname, char **local_path)
 	    gui_errmsg(err);
 	} else if (local_path != NULL) {
 	    /* return local path to gfn file */
-	    *local_path =
-		gretl_strdup_printf("%s%s%s%s.gfn", path,
-				    pkgname, SLASHSTR,
-				    pkgname);
+	    gchar *tmp;
+
+	    tmp = g_build_filename(path, pkgname, pkgname, NULL);
+	    *local_path = calloc(strlen(tmp) + 5, 1);
+	    sprintf(*local_path, "%s.gfn", tmp);
+	    g_free(tmp);
 	    fprintf(stderr, "local_path: '%s'\n", *local_path);
 	}
-	g_free(uri);
 	g_free(fullname);
     }
+
+    free(uri);
 
     return err;
 }

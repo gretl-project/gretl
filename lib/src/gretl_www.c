@@ -928,6 +928,65 @@ char *retrieve_remote_pkg_filename (const char *pkgname,
     return fname;
 }
 
+char *get_uri_for_addon (const char *pkgname, int *err)
+{
+    const char *SF = "http://downloads.sourceforge.net/"
+	"project/gretl/addons";
+    char *p, pkgdir[16];
+    gchar *query, *pkgbase;
+    char *buf = NULL;
+    char *uri = NULL;
+
+    /* we want the plain package name: allow for the
+       possibility that @pkgname has been passed with
+       its ".zip" extension
+    */
+    pkgbase = g_strdup(pkgname);
+    if ((p = strrchr(pkgbase, '.')) != NULL) {
+	*p = '\0';
+    }
+
+    query = g_strdup_printf("/addons-data/pkgdir.php?gretl_version=%s"
+			    "&pkg=%s", GRETL_VERSION, pkgbase);
+    *err = query_sourceforge(query, &buf);
+    g_free(query);
+
+    if (!*err && buf == NULL) {
+	/* shouldn't happen */
+	*err = E_DATA;
+    }
+
+    if (!*err && buf != NULL && strstr(buf, "<head>")) {
+	/* got some sort of garbage */
+	*err = E_DATA;
+    }
+
+    if (!*err) {
+	p = strchr(buf, ':');
+	if (p == NULL ||
+	    sscanf(p + 2, "%15s", pkgdir) != 1 ||
+	    strcmp(pkgdir, "none") == 0) {
+	    *err = E_DATA;
+	}
+    }
+
+    free(buf);
+
+    if (*err) {
+	gretl_errmsg_sprintf(_("Couldn't find %s for gretl %s"),
+			     pkgbase, GRETL_VERSION);
+    } else {
+	int n = strlen(SF) + strlen(pkgdir) + strlen(pkgbase) + 7;
+
+	uri = calloc(n + 7, 1);
+	sprintf(uri, "%s/%s/%s.zip", SF, pkgdir, pkgbase);
+    }
+
+    g_free(pkgbase);
+
+    return uri;
+}
+
 /**
  * retrieve_remote_datafiles_package:
  * @pkgname: name of data files package to retrieve, e.g.
