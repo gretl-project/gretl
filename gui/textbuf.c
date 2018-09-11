@@ -3241,8 +3241,11 @@ static char *get_previous_line_start_word (char *word,
     }
 
     if (rparen && !strcmp(word, "function")) {
-	/* revise our judgement: looks like we must be on the
-	   first line following a function signature */
+	/* Revise our judgement: looks like we must be on the
+	   first line following a function signature, so we do
+	   not want the deep indent suitable for a continuation
+	   signature line.
+	*/
 	*leadspace = 0;
     }
 
