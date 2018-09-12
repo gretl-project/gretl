@@ -438,12 +438,20 @@ static char *win_special_path_new (int folder)
     return ret;
 }
 
-#endif
+#endif /* maybe later */
+
+#define TESTHACK 0
 
 static char *win_special_path (int folder)
 {
     gunichar2 wpath[MAX_PATH] = {0};
     char *ret = NULL;
+
+#if TESTHACK
+    if (folder == CSIDL_APPDATA) {
+	return gretl_strdup("c:\\users\\cottrell\\desktop\\dôtdir");
+    }
+#endif    
 
     if (SHGetFolderPathW(NULL, folder | CSIDL_FLAG_CREATE,
 			 NULL, 0, wpath) == S_OK) {
@@ -1118,7 +1126,7 @@ int win32_check_for_program (const char *prog)
 /* the following needed since mingw does not include strptime */
 
 /*
- * Copyright (c) 1999 Kungliga Tekniska H�gskolan
+ * Copyright (c) 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
