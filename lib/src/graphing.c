@@ -4876,14 +4876,14 @@ int plot_freq (FreqDist *freq, DistCode dist, gretlopt opt)
 	fprintf(fp, "'-' using 1:2 title \"%s\" %s, \\\n"
 		"1.0/(sqrt(2.0*pi)*sigma)*exp(-.5*((x-mu)/sigma)**2) "
 		"title \"%s\" w lines\n",
-		freq->varname, withstr, label);
+		_("relative frequency"), withstr, label);
     } else if (dist == D_GAMMA) {
 	print_freq_dist_label(label, dist, alpha, beta);
 	fputs("plot \\\n", fp);
 	fprintf(fp, "'-' using 1:2 title '%s' %s, \\\n"
 		"x**(alpha-1.0)*exp(-x/beta)/(exp(lgamma(alpha))*(beta**alpha)) "
 		"title \"%s\" w lines\n",
-		freq->varname, withstr, label);
+		_("relative frequency"), withstr, label);
     }
 
     for (i=0; i<K; i++) {

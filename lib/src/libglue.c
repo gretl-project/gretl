@@ -772,7 +772,6 @@ int matrix_freq_driver (const int *list,
     }
 
     mname = get_optval_string(FREQ, OPT_X);
-
     if (mname != NULL) {
 	m = get_matrix_by_name(mname);
     }
