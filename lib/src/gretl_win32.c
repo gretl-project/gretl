@@ -430,7 +430,7 @@ static char *win_special_path_new (int folder)
 	upath = g_utf16_to_utf8(wpath, -1, NULL, NULL, NULL);
 	if (upath != NULL) {
 	    ret = gretl_strdup(upath);
-	    g_free(ret);
+	    g_free(upath);
 	}
 	CoTaskMemFree(wpath);
     }
@@ -438,7 +438,7 @@ static char *win_special_path_new (int folder)
     return ret;
 }
 
-#endif /* maybe later */
+#endif /* 0, maybe later */
 
 #define TESTHACK 0
 
@@ -451,7 +451,7 @@ static char *win_special_path (int folder)
     if (folder == CSIDL_APPDATA) {
 	return gretl_strdup("c:\\users\\cottrell\\desktop\\dôtdir");
     }
-#endif    
+#endif
 
     if (SHGetFolderPathW(NULL, folder | CSIDL_FLAG_CREATE,
 			 NULL, 0, wpath) == S_OK) {
@@ -460,7 +460,7 @@ static char *win_special_path (int folder)
 	upath = g_utf16_to_utf8(wpath, -1, NULL, NULL, NULL);
 	if (upath != NULL) {
 	    ret = gretl_strdup(upath);
-	    g_free(ret);
+	    g_free(upath);
 	}	
     }
 
