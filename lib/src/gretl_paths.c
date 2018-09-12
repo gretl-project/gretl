@@ -34,6 +34,7 @@
 
 #ifdef WIN32
 # include "gretl_win32.h"
+# include <direct.h> /* for _mkdir() */
 #endif
 
 #include <sys/stat.h>
