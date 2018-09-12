@@ -747,7 +747,7 @@ int gretl_isdir (const char *path)
 
 int gretl_mkdir (const char *path)
 {
-    int err, tried = 0;
+    int err;
 
     errno = 0;
 
@@ -755,19 +755,21 @@ int gretl_mkdir (const char *path)
     if (valid_utf8(path)) {
 	err = g_mkdir_with_parents(path, 0755);
     } else {
-	gchar *pconv = g_locale_to_utf8(path, -1, NULL, NULL, NULL);
+	gchar *pconv;
+	gsize bytes;
 
+	pconv = g_locale_to_utf8(path, -1, NULL, &bytes, NULL);
 	if (pconv != NULL) {
-	    err = g_mkdir_with_parents(path, 0755);
+	    err = g_mkdir_with_parents(pconv, 0755);
 	    g_free(pconv);
-	    tried = 1;
+	} else {
+	    /* won't work if parents have to be created! */
+	    err = _mkdir(path);
 	}
     }
+#else
+    err = g_mkdir_with_parents(path, 0755);
 #endif
-
-    if (!tried) {
-	err = g_mkdir_with_parents(path, 0755);
-    }
 
     if (err) {
 	fprintf(stderr, "%s: %s\n", path, gretl_strerror(errno));
