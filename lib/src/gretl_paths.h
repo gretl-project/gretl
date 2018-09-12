@@ -107,7 +107,7 @@ int gretl_mkdir (const char *path);
 
 int gretl_chdir (const char *path);
 
-DIR *gretl_opendir (const char *name);
+GDir *gretl_opendir (const char *name);
 
 int gretl_deltree (const char *path);
 

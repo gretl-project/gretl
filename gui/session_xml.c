@@ -115,7 +115,7 @@ static int restore_session_graphs (xmlNodePtr node)
 		if (!err) {
 		    normalize_graph_filename((char *) fname, ++gnum);
 		}
-	    } 
+	    }
 	}
 
 	if (!err) {
@@ -209,8 +209,8 @@ static int data_restrict_from_xml (xmlNodePtr node, xmlDocPtr doc,
     return 0;
 }
 
-static int rebuild_session_model (const char *fname, 
-				  const char *name, 
+static int rebuild_session_model (const char *fname,
+				  const char *name,
 				  GretlObjType type,
 				  int tablepos)
 {
@@ -220,7 +220,7 @@ static int rebuild_session_model (const char *fname,
     xmlNodePtr node;
     int iflag, err;
 
-    err = gretl_xml_open_doc_root(fname, 
+    err = gretl_xml_open_doc_root(fname,
 				  (type == GRETL_OBJ_EQN)? "gretl-model" :
 				  (type == GRETL_OBJ_VAR)? "gretl-VAR" :
 				  "gretl-equation-system", &doc, &node);
@@ -273,12 +273,12 @@ static int rebuild_session_model (const char *fname,
 
 	if (!err && (flags & IN_NAMED_STACK)) {
 	    err = gretl_stack_object(ptr, type);
-	} 
+	}
 
 	if (!err && (flags & IS_LAST_MODEL)) {
 	    set_as_last_model(ptr, type);
-	} 
-    }   
+	}
+    }
 
     /* need to clean up on error here (also: clean up XML parser?) */
 
@@ -320,7 +320,7 @@ static int restore_session_models (xmlNodePtr node, xmlDocPtr doc)
 		gretl_xml_get_prop_as_int(cur, "tablepos", &tablepos);
 	    }
 	    fprintf(stderr, "model file: fname='%s', type=%d\n", fullname, type);
-	    err = rebuild_session_model(fullname, (const char *) name, 
+	    err = rebuild_session_model(fullname, (const char *) name,
 					type, tablepos);
 	}
 
@@ -384,8 +384,8 @@ static int get_session_datafile_name (const char *fname, struct sample_info *sin
 /* (having previously grabbed the data file name) get the rest
    of the info from session.xml */
 
-static int 
-read_session_xml (const char *fname, struct sample_info *sinfo) 
+static int
+read_session_xml (const char *fname, struct sample_info *sinfo)
 {
     xmlDocPtr doc = NULL;
     xmlNodePtr cur = NULL;
@@ -443,7 +443,7 @@ read_session_xml (const char *fname, struct sample_info *sinfo)
 		free(tmp);
 		if (session.nmodels > 0) {
 		    object_errs += restore_session_models(cur, doc);
-		}		
+		}
 	    }
         } else if (!xmlStrcmp(cur->name, (XUC) "graphs")) {
 	    tmp = xmlGetProp(cur, (XUC) "count");
@@ -453,7 +453,7 @@ read_session_xml (const char *fname, struct sample_info *sinfo)
 		if (session.ngraphs > 0) {
 		    object_errs += restore_session_graphs(cur);
 		}
-	    }	    
+	    }
 	} else if (!xmlStrcmp(cur->name, (XUC) "texts")) {
 	    tmp = xmlGetProp(cur, (XUC) "count");
 	    if (tmp != NULL) {
@@ -461,10 +461,10 @@ read_session_xml (const char *fname, struct sample_info *sinfo)
 		free(tmp);
 		if (session.ntexts > 0) {
 		    object_errs += restore_session_texts(cur, doc);
-		}		
+		}
 	    }
 	} else if (!xmlStrcmp(cur->name, (XUC) "notes")) {
-	    session.notes = 
+	    session.notes =
 		(char *) xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
 	    if (session.notes == NULL) {
 		object_errs++;
@@ -492,7 +492,7 @@ read_session_xml (const char *fname, struct sample_info *sinfo)
     return err;
 }
 
-static int maybe_read_functions_file (const char *fname) 
+static int maybe_read_functions_file (const char *fname)
 {
     FILE *fp;
 
@@ -507,7 +507,7 @@ static int maybe_read_functions_file (const char *fname)
     return read_session_functions_file(fname);
 }
 
-static int maybe_read_settings_file (const char *fname) 
+static int maybe_read_settings_file (const char *fname)
 {
     FILE *fp;
 
@@ -535,7 +535,7 @@ static int model_in_session (const void *ptr)
     return 0;
 }
 
-static SavedObjectFlags model_save_flags (const void *ptr, 
+static SavedObjectFlags model_save_flags (const void *ptr,
 					  GretlObjType type)
 {
     SavedObjectFlags flags = 0;
@@ -607,32 +607,32 @@ static int session_graph_wanted (const char *fname)
 
 static void trash_old_session_files (const char *path)
 {
-    DIR *sdir = gretl_opendir(path);     
+    GDir *sdir = gretl_opendir(path);
 
     if (sdir != NULL) {
-	struct dirent *dirent;
+	const gchar *dname;
 	char tmp[2*MAXLEN];
 	int fnum;
-	
-	while ((dirent = readdir(sdir)) != NULL) {
-	    if (!strncmp(dirent->d_name, "model.", 6)) {
-		fnum = atoi(dirent->d_name + 6);
+
+	while ((dname = g_dir_read_name(sdir)) != NULL) {
+	    if (!strncmp(dname, "model.", 6)) {
+		fnum = atoi(dname + 6);
 		sprintf(tmp, "model.%d", fnum);
-		if (!strcmp(dirent->d_name, tmp)) {
+		if (!strcmp(dname, tmp)) {
 		    sprintf(tmp, "%s%cmodel.%d", path, SLASH, fnum);
 		    gretl_remove(tmp);
 		}
-	    } else if (!strncmp(dirent->d_name, "graph.", 6)) {
-		fnum = atoi(dirent->d_name + 6);
+	    } else if (!strncmp(dname, "graph.", 6)) {
+		fnum = atoi(dname + 6);
 		sprintf(tmp, "graph.%d", fnum);
-		if (!strcmp(dirent->d_name, tmp) &&
+		if (!strcmp(dname, tmp) &&
 		    !session_graph_wanted(tmp)) {
 		    sprintf(tmp, "%s%cgraph.%d", path, SLASH, fnum);
 		    gretl_remove(tmp);
-		}		    
+		}
 	    }
 	}
-	closedir(sdir);
+	g_dir_close(sdir);
     }
 }
 
@@ -665,7 +665,7 @@ static int write_session_xml (const char *datname)
 	/* ensure UTF-8 inside XML file */
 	gchar *trname = my_filename_to_utf8(datname);
 
-	fprintf(fp, "<gretl-session datafile=\"%s\" date=\"%s\">\n", 
+	fprintf(fp, "<gretl-session datafile=\"%s\" date=\"%s\">\n",
 		trname, print_today());
 	g_free(trname);
     } else {
@@ -716,12 +716,12 @@ static int write_session_xml (const char *datname)
 		tablepos = model_table_position(ptr);
 	    }
 	    if (tablepos > 0) {
-		fprintf(fp, "  <session-model name=\"%s\" fname=\"%s\" type=\"%d\" tablepos=\"%d\"/>\n", 
+		fprintf(fp, "  <session-model name=\"%s\" fname=\"%s\" type=\"%d\" tablepos=\"%d\"/>\n",
 			xmlname, tmpname, type, tablepos);
 	    } else {
-		fprintf(fp, "  <session-model name=\"%s\" fname=\"%s\" type=\"%d\"/>\n", 
+		fprintf(fp, "  <session-model name=\"%s\" fname=\"%s\" type=\"%d\"/>\n",
 			xmlname, tmpname, type);
-	    }	
+	    }
 	    if (xmlname != objname) {
 		free(xmlname);
 	    }
@@ -759,13 +759,13 @@ static int write_session_xml (const char *datname)
 		    break;
 		}
 		sprintf(tmpname, "model.%d", modnum++);
-		fprintf(fp, "  <session-model name=\"%s\" fname=\"%s\" type=\"%d\" tablepos=\"%d\"/>\n", 
+		fprintf(fp, "  <session-model name=\"%s\" fname=\"%s\" type=\"%d\" tablepos=\"%d\"/>\n",
 			(xmlname != NULL)? xmlname : "none", tmpname, GRETL_OBJ_EQN, tablepos);
 		if (xmlname != NULL && xmlname != objname) {
 		    free(xmlname);
 		}
 		gretl_xml_header(fq);
-		gretl_model_serialize(pmod, model_save_flags(pmod, GRETL_OBJ_EQN), 
+		gretl_model_serialize(pmod, model_save_flags(pmod, GRETL_OBJ_EQN),
 				      fq);
 		fclose(fq);
 	    }
@@ -788,7 +788,7 @@ static int write_session_xml (const char *datname)
 	if (err) {
 	    break;
 	}
-	fprintf(fp, "  <session-graph name=\"%s\" fname=\"%s\" type=\"%d\"", 
+	fprintf(fp, "  <session-graph name=\"%s\" fname=\"%s\" type=\"%d\"",
 		xmlname, session.graphs[i]->fname, session.graphs[i]->type);
 	if (xmlname != objname) {
 	    free(xmlname);
@@ -798,7 +798,7 @@ static int write_session_xml (const char *datname)
 	} else {
 	    fputs("/>\n", fp);
 	}
-    } 
+    }
     fputs(" </graphs>\n", fp);
 
     fprintf(fp, " <texts count=\"%d\">\n", session.ntexts);
@@ -808,14 +808,14 @@ static int write_session_xml (const char *datname)
 	xmlname = get_xmlname(objname, &err);
 	if (err) {
 	    break;
-	}	
+	}
 	fprintf(fp, "  <session-text name=\"%s\">", xmlname);
 	if (xmlname != objname) {
 	    free(xmlname);
-	}	
+	}
 	gretl_xml_put_string(session.texts[i]->buf, fp);
 	fputs("</session-text>\n", fp);
-    }    
+    }
     fputs(" </texts>\n", fp);
 
     if (session.notes != NULL) {
@@ -826,7 +826,7 @@ static int write_session_xml (const char *datname)
 	}
 	gretl_xml_put_string(session.notes, fp);
 	fputs("</notes>\n", fp);
-    } 
+    }
 
     fputs("</gretl-session>\n", fp);
 

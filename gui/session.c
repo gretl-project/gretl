@@ -1259,8 +1259,8 @@ session_name_from_session_file (char *sname, const char *fname)
 
 static int get_session_dataname (char *fname, struct sample_info *sinfo)
 {
-    struct dirent *dirent;
-    DIR *dir;
+    const gchar *dname;
+    GDir *dir;
     FILE *fp;
     gchar *tmp;
     int n, err = E_FOPEN;
@@ -1272,12 +1272,12 @@ static int get_session_dataname (char *fname, struct sample_info *sinfo)
 	tmp[n-1] = '\0';
     }
 
-    dir = opendir(tmp);
+    dir = gretl_opendir(tmp);
 
     if (dir != NULL) {
-	while ((dirent = readdir(dir)) != NULL) {
-	    if (has_suffix(dirent->d_name, ".gdt")) {
-		session_file_make_path(fname, dirent->d_name);
+	while ((dname = g_dir_read_name(dir)) != NULL) {
+	    if (has_suffix(dname, ".gdt")) {
+		session_file_make_path(fname, dname);
 		fp = gretl_fopen(fname, "r");
 		if (fp != NULL) {
 		    fclose(fp);
@@ -1286,7 +1286,7 @@ static int get_session_dataname (char *fname, struct sample_info *sinfo)
 		break;
 	    }
 	}	
-	closedir(dir);
+	g_dir_close(dir);
     }
 
     g_free(tmp);

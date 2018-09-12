@@ -538,7 +538,7 @@ static int make_dirs_in_path (const char *fname,
 {
     char *dtarg, dirname[FILENAME_MAX];
     const char *p = fname;
-    DIR *dir;
+    GDir *dir;
     int len = 0;
     int err = 0;
 
@@ -568,19 +568,13 @@ static int make_dirs_in_path (const char *fname,
 	*dtarg = '\0';
 	strncat(dtarg, fname, len);
 	trace(2, "got dirname = '%s'\n", dirname);
-	dir = opendir(dirname);
+	dir = gretl_opendir(dirname);
 	if (dir != NULL) {
-	    closedir(dir);
+	    g_dir_close(dir);
 	} else if (errno == ENOENT) {
-#ifdef WIN32
-	    if (mkdir(dirname)) {
+	    if (gretl_mkdir(dirname) != 0) {
 		err = ZE_CREAT;
 	    }
-#else
-	    if (mkdir(dirname, 0755)) {
-		err = ZE_CREAT;
-	    }
-#endif
 	} else {
 	    err = ZE_READ;
 	}

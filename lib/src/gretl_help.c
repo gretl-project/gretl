@@ -238,11 +238,10 @@ static int is_functions_dir (const char *path)
 }
 
 static int find_pkg_in_dir (const char *targ,
-			    DIR *dir, const char *path,
+			    GDir *dir, const char *path,
 			    char **gfn, char **pdf)
 {
-    struct dirent *dirent;
-    const char *basename;
+    const gchar *basename;
     char fullname[MAXLEN];
     char test[128];
     int found = 0;
@@ -252,8 +251,7 @@ static int find_pkg_in_dir (const char *targ,
     /* first look for pdf or gfn in own subdir */
 
     if (is_functions_dir(path)) {
-	while ((dirent = readdir(dir)) != NULL && !found) {
-	    basename = dirent->d_name;
+	while ((basename = g_dir_read_name(dir)) != NULL && !found) {
 	    if (!strcmp(basename, ".") ||
 		!strcmp(basename, "..")) {
 		continue;
@@ -279,13 +277,12 @@ static int find_pkg_in_dir (const char *targ,
 		gretl_error_clear();
 	    }
 	}
-	rewinddir(dir);
+	g_dir_rewind(dir);
     }
 
     /* then look for "plain gfn" files */
 
-    while (!found && (dirent = readdir(dir)) != NULL) {
-	basename = dirent->d_name;
+    while (!found && (basename = g_dir_read_name(dir)) != NULL) {
 	if (has_suffix(basename, ".gfn")) {
 	    sprintf(test, "%s.gfn", targ);
 	    if (!strcmp(basename, test)) {
@@ -337,11 +334,11 @@ static int find_function_package_help (const char *targ,
     dnames = get_plausible_search_dirs(FUNCS_SEARCH, &n_dirs);
 
     for (i=0; i<n_dirs && !found; i++) {
-	DIR *dir = gretl_opendir(dnames[i]);
+	GDir *dir = gretl_opendir(dnames[i]);
 
 	if (dir != NULL) {
 	    found = find_pkg_in_dir(targ, dir, dnames[i], &gfn, &pdf);
-	    closedir(dir);
+	    g_dir_close(dir);
 	}
     }
 

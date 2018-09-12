@@ -782,16 +782,9 @@ int gretl_mkdir (const char *path)
 
 #ifndef WIN32
 
-static const char *gretl_readd (DIR *d)
-{
-    struct dirent *e = readdir(d);
-
-    return (e == NULL)? NULL : e->d_name;
-}
-
 static int real_deltree (const char *path)
 {
-    DIR *dir;
+    GDir *dir;
     int err = 0;
 
     errno = 0;
@@ -800,10 +793,10 @@ static int real_deltree (const char *path)
     if (dir == NULL) {
 	err = 1;
     } else {
-	const char *fname;
+	const gchar *fname;
 
 	err = chdir(path);
-	while ((fname = gretl_readd(dir)) != NULL && !err) {
+	while ((fname = g_dir_read_name(dir)) != NULL && !err) {
 	    /* recursively delete dir's contents */
 	    if (strcmp(fname, ".") && strcmp(fname, "..")) {
 		if (gretl_isdir(fname)) {
@@ -814,7 +807,7 @@ static int real_deltree (const char *path)
 	    }
 	}
 	if (!err) {
-	    closedir(dir);
+	    g_dir_close(dir);
 	    /* delete the directory itself */
 	    if (chdir("..") == 0) {
 		err = gretl_remove(path);
@@ -862,36 +855,30 @@ int gretl_deltree (const char *path)
 #endif
 }
 
-DIR *gretl_opendir (const char *name)
+GDir *gretl_opendir (const char *name)
 {
+    GDir *dir = NULL;
+
 #ifdef WIN32
-    int n = strlen(name);
-    int fixit = 0;
+    if (valid_utf8(path)) {
+	dir = g_dir_open(name, 0, NULL);
+    } else {
+	gchar *pconv;
+	gsize bytes;
 
-    if (n > 0 && name[n-1] == ':') {
-	/* opendir doesn't work on e.g. "f:" */
-	fixit = 1;
-    } else if (n > 3 && name[n-1] == '\\') {
-	/* and neither does it work on e.g. "c:\foo\" */
-	fixit = 2;
-    }
-
-    if (fixit) {
-	char tmp[MAXLEN];
-
-	*tmp = '\0';
-	strncat(tmp, name, MAXLEN - 2);
-	if (fixit == 1) {
-	    /* append backslash */
-	    strcat(tmp, "\\");
+	pconv = g_locale_to_utf8(name, -1, NULL, &bytes, NULL);
+	if (pconv != NULL) {
+	    dir = g_dir_open(pconv, 0, NULL);
+	    g_free(pconv);
 	} else {
-	    /* chop trailing backslash */
-	    tmp[strlen(tmp)-1] = '\0';
+	    err = -1;
 	}
-	return opendir(tmp);
     }
+#else
+    dir = g_dir_open(name, 0, NULL);
 #endif
-    return opendir(name);
+
+    return dir;
 }
 
 /**
@@ -1131,13 +1118,13 @@ static int find_in_subdir (const char *topdir, char *fname, int flags)
 #else /* end of win32 file-finding, on to posix */
 
 static int try_open_file (char *targ, const char *finddir,
-			  struct dirent *dirent, int flags)
+			  const gchar *dname, int flags)
 {
     char tmp[MAXLEN];
     int err, found = 0;
 
     strcpy(tmp, finddir);
-    strcat(tmp, dirent->d_name);
+    strcat(tmp, dname);
     strcat(tmp, "/");
     strcat(tmp, targ);
 
@@ -1173,19 +1160,19 @@ static void make_findname (char *targ, const char *src)
     }
 }
 
-static int got_subdir (const char *topdir, struct dirent *dirent)
+static int got_subdir (const char *topdir, const gchar *dname)
 {
     int ret = 0;
 
-    if (strcmp(dirent->d_name, ".") && strcmp(dirent->d_name, "..")) {
+    if (strcmp(dname, ".") && strcmp(dname, "..")) {
 	char tmp[MAXLEN];
-	DIR *sub;
+	GDir *sub;
 
 	strcpy(tmp, topdir);
-	strcat(tmp, dirent->d_name);
-	sub = opendir(tmp);
+	strcat(tmp, dname);
+	sub = gretl_opendir(tmp);
 	if (sub != NULL) {
-	    closedir(sub);
+	    g_dir_close(sub);
 	    ret = 1;
 	}
     }
@@ -1195,22 +1182,22 @@ static int got_subdir (const char *topdir, struct dirent *dirent)
 
 static int find_in_subdir (const char *topdir, char *fname, int flags)
 {
-    DIR *dir;
-    struct dirent *dirent;
+    GDir *dir;
+    const gchar *dname;
     char finddir[MAXLEN];
     int found = 0;
 
     /* make find target */
     make_findname(finddir, topdir);
 
-    dir = opendir(finddir);
+    dir = gretl_opendir(finddir);
     if (dir != NULL) {
-	while (!found && (dirent = readdir(dir))) {
-	    if (got_subdir(finddir, dirent)) {
-		found = try_open_file(fname, finddir, dirent, flags);
+	while (!found && (dname = g_dir_read_name(dir))) {
+	    if (got_subdir(finddir, dname)) {
+		found = try_open_file(fname, finddir, dname, flags);
 	    }
 	}
-	closedir(dir);
+	g_dir_close(dir);
     }
 
     return found;
@@ -1383,17 +1370,15 @@ char *gretl_addon_get_path (const char *name)
 
     for (i=0; i<n_dirs; i++) {
 	const char *fndir = dirs[i];
-	struct dirent *dirent;
 	const char *dname;
-	DIR *dir;
+	GDir *dir;
 	int found = 0;
 
 	if ((dir = gretl_opendir(fndir)) == NULL) {
 	    continue;
 	}
 
-	while ((dirent = readdir(dir)) != NULL && !found) {
-	    dname = dirent->d_name;
+	while ((dname = g_dir_read_name(dir)) != NULL && !found) {
 	    if (!strcmp(dname, name)) {
 		gretl_build_path(path, fndir, dname, dname, NULL);
 		strcat(path, ".gfn");
@@ -1410,7 +1395,7 @@ char *gretl_addon_get_path (const char *name)
 	    }
 	}
 
-	closedir(dir);
+	g_dir_close(dir);
     }
 
     gretl_pop_c_numeric_locale();
@@ -1459,10 +1444,9 @@ char *gretl_function_package_get_path (const char *name,
 
     for (i=0; i<n_dirs && !found; i++) {
 	const char *fndir = dirs[i];
-	struct dirent *dirent;
 	const char *dname;
 	char *p, test[NAME_MAX+1];
-	DIR *dir;
+	GDir *dir;
 
 	if ((dir = gretl_opendir(fndir)) == NULL) {
 	    continue;
@@ -1471,8 +1455,7 @@ char *gretl_function_package_get_path (const char *name,
 	if (type != PKG_TOPLEV) {
 	    /* look preferentially for .gfn files in their own
 	       subdirectories */
-	    while ((dirent = readdir(dir)) != NULL && !found) {
-		dname = dirent->d_name;
+	    while ((dname = g_dir_read_name(dir)) != NULL && !found) {
 		if (!strcmp(dname, name)) {
 		    sprintf(path, "%s%c%s%c%s.gfn", fndir, SLASH,
 			    dname, SLASH, dname);
@@ -1489,9 +1472,8 @@ char *gretl_function_package_get_path (const char *name,
 	if (!found && type != PKG_SUBDIR) {
 	    /* look for .gfn files in the top-level functions
 	       directory */
-	    rewinddir(dir);
-	    while ((dirent = readdir(dir)) != NULL && !found) {
-		dname = dirent->d_name;
+	    g_dir_rewind(dir);
+	    while ((dname = g_dir_read_name(dir)) != NULL && !found) {
 		if (has_suffix(dname, ".gfn")) {
 		    strcpy(test, dname);
 		    p = strrchr(test, '.');
@@ -1504,7 +1486,7 @@ char *gretl_function_package_get_path (const char *name,
 	    }
 	}
 
-	closedir(dir);
+	g_dir_close(dir);
     }
 
     strings_array_free(dirs, n_dirs);
@@ -1530,9 +1512,9 @@ static int find_file_in_dir (const char *fname,
 			     int depth)
 {
     char tmp[FILENAME_MAX];
-    struct dirent *entry;
+    const gchar *dname;
     struct stat sbuf;
-    DIR *dir;
+    GDir *dir;
     int found = 0;
 
     dir = gretl_opendir(dirname);
@@ -1542,16 +1524,16 @@ static int find_file_in_dir (const char *fname,
     }
 
     /* look for top-level plain file first */
-    while (!found && (entry = readdir(dir))) {
-	if (!strcmp(entry->d_name, ".") ||
-	    !strcmp(entry->d_name, "..")) {
+    while (!found && (dname = g_dir_read_name(dir))) {
+	if (!strcmp(dname, ".") ||
+	    !strcmp(dname, "..")) {
 	    continue;
 	}
-	sprintf(tmp, "%s%c%s", dirname, SLASH, entry->d_name);
+	sprintf(tmp, "%s%c%s", dirname, SLASH, dname);
 	if (gretl_stat(tmp, &sbuf) < 0) {
 	    continue;
 	} else if ((sbuf.st_mode & S_IFREG) &&
-		   !strcmp(entry->d_name, fname)) {
+		   !strcmp(dname, fname)) {
 	    strcpy(fullname, tmp);
 	    found = 1;
 	}
@@ -1559,14 +1541,14 @@ static int find_file_in_dir (const char *fname,
 
     if (!found && depth < maxdepth) {
 	/* then look in subdirs */
-	rewinddir(dir);
+	g_dir_rewind(dir);
 	depth++;
-	while (!found && (entry = readdir(dir))) {
-	    if (!strcmp(entry->d_name, ".") ||
-		!strcmp(entry->d_name, "..")) {
+	while (!found && (dname = g_dir_read_name(dir))) {
+	    if (!strcmp(dname, ".") ||
+		!strcmp(dname, "..")) {
 		continue;
 	    }
-	    sprintf(tmp, "%s%c%s", dirname, SLASH, entry->d_name);
+	    sprintf(tmp, "%s%c%s", dirname, SLASH, dname);
 	    if (gretl_stat(tmp, &sbuf) < 0) {
 		continue;
 	    } else if (sbuf.st_mode & S_IFDIR) {
@@ -1576,7 +1558,7 @@ static int find_file_in_dir (const char *fname,
 	}
     }
 
-    closedir(dir);
+    g_dir_close(dir);
 
     return found;
 }
@@ -2286,10 +2268,10 @@ static const char *win32_default_workdir (void)
     if (base != NULL) {
 	sprintf(default_workdir, "%s\\gretl\\", base);
 	if (strcmp(default_workdir, paths.workdir)) {
-	    DIR *dir = gretl_opendir(default_workdir);
+	    GDir *dir = gretl_opendir(default_workdir);
 
 	    if (dir != NULL) {
-		closedir(dir);
+		g_dir_close(dir);
 		retval = default_workdir;
 	    }
 	}
@@ -2310,10 +2292,10 @@ static const char *regular_default_workdir (void)
     if (home != NULL) {
 	sprintf(default_workdir, "%s/gretl/", home);
 	if (strcmp(default_workdir, paths.workdir)) {
-	    DIR *dir = opendir(default_workdir);
+	    GDir *dir = gretl_opendir(default_workdir);
 
 	    if (dir != NULL) {
-		closedir(dir);
+		g_dir_close(dir);
 		retval = default_workdir;
 	    }
 	}
@@ -2388,7 +2370,7 @@ static int validate_writedir (const char *dirname)
 
 int set_gretl_work_dir (const char *path)
 {
-    DIR *test;
+    GDir *test;
     int err = 0;
 
     errno = 0;
@@ -2400,7 +2382,7 @@ int set_gretl_work_dir (const char *path)
 	fprintf(stderr, "set_gretl_work_dir: '%s': failed\n", path);
 	err = E_FOPEN;
     } else {
-	closedir(test);
+	g_dir_close(test);
 	strcpy(paths.workdir, path);
 	slash_terminate(paths.workdir);
 	gretl_insert_builtin_string("workdir", paths.workdir);

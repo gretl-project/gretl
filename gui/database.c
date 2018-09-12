@@ -2922,16 +2922,14 @@ int write_db_description (const char *binname, const char *descrip)
 }
 
 static int
-read_db_files_in_dir (DIR *dir, int dbtype, const char *path,
+read_db_files_in_dir (GDir *dir, int dbtype, const char *path,
 		      GtkListStore *store, GtkTreeIter *iter)
 {
-    struct dirent *dirent;
-    const char *fname;
+    const gchar *fname;
     gchar *name, *descrip;
     int len, ndb = 0;
 
-    while ((dirent = readdir(dir)) != NULL) {
-	fname = dirent->d_name;
+    while ((fname = g_dir_read_name(dir)) != NULL) {
 	len = strlen(fname);
 	if (!g_ascii_strcasecmp(fname + len - 4, ".bin")) {
 	    name = g_strndup(fname, len - 4);
@@ -4134,7 +4132,7 @@ gint populate_dbfilelist (windata_t *vwin, int *pndb)
     GtkListStore *store;
     GtkTreeIter iter;
     char **dirnames;
-    DIR *dir;
+    GDir *dir;
     int i, n_dirs;
     int nf, ndb = 0;
     int err = 0;
@@ -4157,7 +4155,7 @@ gint populate_dbfilelist (windata_t *vwin, int *pndb)
 	    fprintf(stderr, " found %d db files in '%s'\n", nf, dirnames[i]);
 #endif
 	    ndb += nf;
-	    closedir(dir);
+	    g_dir_close(dir);
 	}
     }
 
@@ -4180,7 +4178,7 @@ gint populate_dbfilelist (windata_t *vwin, int *pndb)
 
 void set_db_dir_callback (windata_t *vwin, char *path)
 {
-    DIR *dir = gretl_opendir(path);
+    GDir *dir = gretl_opendir(path);
     int ndb = 0;
 
     if (dir != NULL) {
@@ -4190,7 +4188,7 @@ void set_db_dir_callback (windata_t *vwin, char *path)
 	store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox)));
 	gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 	ndb = read_db_files_in_dir(dir, vwin->role, path, store, &iter);
-	closedir(dir);
+	g_dir_close(dir);
     }
 
     if (ndb == 0) {

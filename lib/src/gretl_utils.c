@@ -2199,13 +2199,11 @@ static void dotdir_cleanup (void)
     int err = gretl_chdir(gretl_dotdir());
 
     if (!err) {
-	DIR *dir = gretl_opendir(".");
-	struct dirent *dirent;
-	const char *fname;
+	GDir *dir = gretl_opendir(".");
+	const gchar *fname;
 
 	if (dir != NULL) {
-	    while ((dirent = readdir(dir)) != NULL) {
-		fname = dirent->d_name;
+	    while ((fname = g_dir_read_name(dir)) != NULL) {
 		if (strcmp(fname, "..") &&
 		    strcmp(fname, ".") &&
 		    strcmp(fname, ".gretl2rc") &&
@@ -2214,7 +2212,7 @@ static void dotdir_cleanup (void)
 		    remove(fname);
 		}
 	    }
-	    closedir(dir);
+	    g_dir_close(dir);
 	}
     }
 }

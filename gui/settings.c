@@ -2882,7 +2882,7 @@ void dump_rc (void)
 {
     char dumper[MAXLEN];
     const char *hname;
-    DIR *test;
+    GDir *test;
     FILE *fp;
     char *tmp;
     char val[6];
@@ -2924,7 +2924,7 @@ void dump_rc (void)
 
     if (test != NULL) {
 	fprintf(fp, "Directory '%s' exists, OK\n", hname);
-	closedir(test);
+	g_dir_close(test);
     } else {
 	fprintf(fp, "Directory '%s' does not exist\n", hname);
     }

@@ -43,7 +43,6 @@
 
 #include <sys/stat.h>
 #include <unistd.h>
-#include <dirent.h>
 #include <errno.h>
 
 static GtkWidget *files_vbox (windata_t *vwin);
@@ -98,7 +97,7 @@ enum {
 #define DBNOMICS_ACTION(c) (c == DBNOMICS_DB || c == DBNOMICS_SERIES)
 
 static void
-read_fn_files_in_dir (DIR *dir, const char *path,
+read_fn_files_in_dir (GDir *dir, const char *path,
 		      GtkListStore *store,
 		      GtkTreeIter *iter,
 		      int *nfn);
@@ -372,23 +371,23 @@ static void sort_files_stack (int role)
    occurs
 */
 
-static int get_file_collections_from_dir (const char *path, DIR *dir,
+static int get_file_collections_from_dir (const char *path, GDir *dir,
 					  int *err)
 {
     file_collection *coll;
-    struct dirent *dirent;
+    const gchar *dname;
     int n = 0;
 
-    while (!*err && (dirent = readdir(dir))) {
+    while (!*err && (dname = g_dir_read_name(dir))) {
 	/* we're looking for a filename that ends with "descriptions" */
-	if (strstr(dirent->d_name, "descriptions")) {
-	    size_t len = strlen(dirent->d_name);
+	if (strstr(dname, "descriptions")) {
+	    size_t len = strlen(dname);
 
 #if COLL_DEBUG
-	    fprintf(stderr, "   %s: looking at '%s'\n", path, dirent->d_name);
+	    fprintf(stderr, "   %s: looking at '%s'\n", path, dname);
 #endif
-	    if (!strcmp(dirent->d_name + len - 12, "descriptions")) {
-		coll = file_collection_new(path, dirent->d_name, err);
+	    if (!strcmp(dname + len - 12, "descriptions")) {
+		coll = file_collection_new(path, dname, err);
 		if (coll != NULL) {
 		    *err = push_collection(coll);
 		    if (!*err) {
@@ -423,8 +422,8 @@ static int seek_file_collections (const char *basedir,
 				  int *err)
 {
     char *path = NULL;
-    DIR *topdir;
-    struct dirent *dirent;
+    GDir *topdir;
+    const char *dname;
     int n_coll = 0;
 
 #if COLL_DEBUG
@@ -457,16 +456,16 @@ static int seek_file_collections (const char *basedir,
     fprintf(stderr, "*** seek_file_collections: path='%s'\n", path);
 #endif
 
-    while (!*err && (dirent = readdir(topdir))) {
-	if (!dont_go_there(dirent->d_name)) {
+    while (!*err && (dname = g_dir_read_name(topdir))) {
+	if (!dont_go_there(dname)) {
 	    char *subpath;
-	    DIR *subdir;
+	    GDir *subdir;
 
 #if COLL_DEBUG > 1
-	    fprintf(stderr, " dname = '%s'\n", dirent->d_name);
+	    fprintf(stderr, " dname = '%s'\n", dname);
 #endif
-	    if (strcmp(dirent->d_name, ".")) {
-		subpath = full_path(path, dirent->d_name);
+	    if (strcmp(dname, ".")) {
+		subpath = full_path(path, dname);
 	    } else {
 		subpath = path;
 	    }
@@ -481,12 +480,12 @@ static int seek_file_collections (const char *basedir,
 		    fprintf(stderr, " result: err = %d\n", *err);
 		}
 #endif
-		closedir(subdir);
+		g_dir_close(subdir);
 	    }
 	}
     }
 
-    closedir(topdir);
+    g_dir_close(topdir);
     free(path);
 
 #if COLL_DEBUG
@@ -978,7 +977,7 @@ static void fix_selected_row (GtkTreeModel *model,
 
 void set_alternate_gfn_dir (windata_t *vwin, char *path)
 {
-    DIR *dir;
+    GDir *dir;
     int replace = 1;
     int nfn = 0;
 
@@ -1021,7 +1020,7 @@ void set_alternate_gfn_dir (windata_t *vwin, char *path)
 
 	store = GTK_LIST_STORE(gtk_tree_view_get_model
 			       (GTK_TREE_VIEW(vwin->listbox)));
-	rewinddir(dir);
+	g_dir_rewind(dir);
 	gtk_list_store_clear(store);
 	nfn = 0;
 	gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
@@ -1049,7 +1048,7 @@ void set_alternate_gfn_dir (windata_t *vwin, char *path)
 	}
     }
 
-    closedir(dir);
+    g_dir_close(dir);
 }
 
 gchar *gfn_browser_get_alt_path (void)
@@ -2537,12 +2536,12 @@ static int ok_gfn_path (const char *fullname,
 */
 
 static void
-read_fn_files_in_dir (DIR *dir, const char *path,
+read_fn_files_in_dir (GDir *dir, const char *path,
 		      GtkListStore *store,
 		      GtkTreeIter *iter,
 		      int *nfn)
 {
-    struct dirent *dirent;
+    const gchar *basename;
     char fullname[MAXLEN];
     int imax = *nfn;
 
@@ -2554,14 +2553,11 @@ read_fn_files_in_dir (DIR *dir, const char *path,
     */
 
     if (is_functions_dir(path)) {
-	while ((dirent = readdir(dir)) != NULL) {
-	    const char *basename = dirent->d_name;
-
+	while ((basename = g_dir_read_name(dir)) != NULL) {
 	    if (!strcmp(basename, ".") ||
 		!strcmp(basename, "..")) {
 		continue;
 	    }
-
 	    gretl_build_path(fullname, path, basename, NULL);
 	    if (gretl_isdir(fullname)) {
 		/* construct functions/foo/foo.gfn */
@@ -2584,19 +2580,16 @@ read_fn_files_in_dir (DIR *dir, const char *path,
 	}
 
 	imax = *nfn;
-	rewinddir(dir);
+	g_dir_rewind(dir);
     }
 
     /* then look for "plain gfn" files */
 
-    while ((dirent = readdir(dir)) != NULL) {
-	const char *basename = dirent->d_name;
-
+    while ((basename = g_dir_read_name(dir)) != NULL) {
 	if (!strcmp(basename, ".") ||
 	    !strcmp(basename, "..")) {
 	    continue;
 	}
-
 	if (has_suffix(basename, ".gfn")) {
 	    gretl_build_path(fullname, path, basename, NULL);
 	    *nfn += ok_gfn_path(fullname, basename, path,
@@ -2648,11 +2641,11 @@ static gint populate_gfn_list (windata_t *vwin)
 #endif
 
     for (i=0; i<n_dirs; i++) {
-	DIR *dir = gretl_opendir(dnames[i]);
+	GDir *dir = gretl_opendir(dnames[i]);
 
 	if (dir != NULL) {
 	    read_fn_files_in_dir(dir, dnames[i], store, &iter, &nfn);
-	    closedir(dir);
+	    g_dir_close(dir);
 	}
     }
 

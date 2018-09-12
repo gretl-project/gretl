@@ -400,7 +400,10 @@ int gretl_spawn (char *cmdline)
 #if CSIDL_UTF16
 
 /* Retrieve various special paths from the bowels of MS
-   Windows, in Unicode form, using the recommened API.
+   Windows in UTF-16 form. We first show the currently
+   recommended Windows API but it's def'd out for now
+   because it's avaibale only in Windows Vista and higher,
+   and we're trying to support Windows XP still.
 */
 
 #if 0 /* maybe later? */
@@ -447,18 +450,12 @@ static char *win_special_path_new (int folder)
 
 #endif /* 0, maybe later */
 
-#define TESTHACK 0
+/* The following variant should maybe work on XP? */
 
 static char *win_special_path (int folder)
 {
     gunichar2 wpath[MAX_PATH] = {0};
     char *ret = NULL;
-
-#if TESTHACK
-    if (folder == CSIDL_APPDATA) {
-	return gretl_strdup("c:\\users\\cottrell\\desktop\\dôtdir");
-    }
-#endif
 
     if (SHGetFolderPathW(NULL, folder | CSIDL_FLAG_CREATE,
 			 NULL, 0, wpath) == S_OK) {
@@ -478,7 +475,8 @@ static char *win_special_path (int folder)
 
 /* Retrieve various special paths from the bowels of MS
    Windows, old "ANSI" version. These paths will be in the
-   locale encoding.
+   locale encoding, and will be broken if the paths include
+   characters that are not present in the locale codepage.
 */
 
 static char *win_special_path (int folder)

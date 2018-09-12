@@ -64,16 +64,6 @@ static int lsstat (const char *fname, struct stat *buf, zfile *zf)
 
 #endif /* WIN32? */
 
-/* Return a pointer to the next name in the directory stream d, or
-   NULL if there are no more entries or an error occurs. */
-
-static const char *readd (DIR *d)
-{
-    struct dirent *e = readdir(d);
-
-    return (e == NULL)? NULL : e->d_name;
-}
-
 /* Process a (supposed) disk filename, which may refer to nothing, to
    a regular file, a symlink, or a directory.  Recurse into
    directories if this is wanted.  Return an error code in the ZE_
@@ -82,7 +72,7 @@ static const char *readd (DIR *d)
 
 int add_filenames (const char *fname, zfile *zf)
 {
-    struct stat s; 
+    struct stat s;
     int err = 0;
 
      if (lsstat(fname, &s, zf)) {
@@ -105,9 +95,9 @@ int add_filenames (const char *fname, zfile *zf)
 
     if ((s.st_mode & S_IFDIR) == S_IFDIR) {
 	char *path, *dpath;
-	const char *dirname;
+	const gchar *dirname;
         int sz, n = strlen(fname);
-	DIR *d; 
+	GDir *d;
 
 	trace(2, "add_filenames: running newname on directory '%s'\n", fname);
 
@@ -129,8 +119,8 @@ int add_filenames (const char *fname, zfile *zf)
 	}
 
 	/* recurse into directory */
-	if (!err && recurse(zf->opt) && (d = opendir(fname)) != NULL) {
-	    while (!err && (dirname = readd(d)) != NULL) {
+	if (!err && recurse(zf->opt) && (d = gretl_opendir(fname)) != NULL) {
+	    while (!err && (dirname = g_dir_read_name(d)) != NULL) {
 		if (strcmp(dirname, ".") && strcmp(dirname, "..")) {
 		    dpath = malloc(strlen(path) + strlen(dirname) + 1);
 		    if (dpath == NULL) {
@@ -142,7 +132,7 @@ int add_filenames (const char *fname, zfile *zf)
 		    }
 		}
 	    }
-	    closedir(d);
+	    g_dir_close(d);
 	}
 	free(path);
     } /* (s.st_mode & S_IFDIR) */
@@ -180,7 +170,7 @@ static gchar *gretl_filename_to_utf8 (const char *fname, GError **gerr)
 	/* On Windows, with GTK >= 2.6, the GLib filename
 	   encoding is UTF-8; however, filenames coming from
 	   a native Windows file dialog will be in the
-	   locale charset 
+	   locale charset
 	*/
 #ifdef WIN32
 	ret = g_locale_to_utf8(fname, -1, NULL, &bytes, gerr);
@@ -198,9 +188,9 @@ static gchar *gretl_filename_to_utf8 (const char *fname, GError **gerr)
 char *external_to_internal (const char *name, zfile *zf, GError **gerr)
 {
     const char *xname = name;
-    char *iname = NULL; 
-    const char *t = NULL; 
-    const char *p;   
+    char *iname = NULL;
+    const char *t = NULL;
+    const char *p;
 
 #ifdef WIN32
     char *tmp = reslash(xname);
@@ -212,7 +202,7 @@ char *external_to_internal (const char *name, zfile *zf, GError **gerr)
 #endif
 
     /* Find starting point in name before copying:
-       strip "//host/share/" part of a UNC name 
+       strip "//host/share/" part of a UNC name
     */
     if (!strncmp(xname, "//", 2) && (xname[2] != '\0' && xname[2] != '/')) {
 	p = xname + 2;
@@ -257,7 +247,7 @@ char *external_to_internal (const char *name, zfile *zf, GError **gerr)
 #ifdef WIN32
 
 /* convert @from src to a printable ASCII version in @targ, either
-   processing @n bytes of @src or all of it if @n < 0  
+   processing @n bytes of @src or all of it if @n < 0
 */
 
 static void asciify (char *targ, const char *src, int n)
@@ -269,7 +259,7 @@ static void asciify (char *targ, const char *src, int n)
     }
 
     while (*targ) targ++;
-                
+
     for (i=0; i<n; i++) {
         c = src[i];
         if (c >= 32 && c < 128 && isprint(c)) {
@@ -316,7 +306,7 @@ static char *remedial_convert (const char *iname)
         } else {
             asciify(xname, p + 1, -1);
         }
-    } 
+    }
 
     if (*xname == '\0') {
         free(xname);
@@ -330,34 +320,14 @@ static char *remedial_convert (const char *iname)
 
 #endif
 
-/* Convert a zipfile internal name to an external file name, returning
-   the allocated string: we convert from UTF-8 to the locale if this
-   seems to be required, and convert from forward slashes to
-   backslashes on MS Windows.  
+/* Convert a zipfile internal name to an external file name,
+   returning the allocated string: we convert from forward
+   slashes to backslashes on MS Windows.
 */
 
 char *internal_to_external (const char *iname)
 {
-    char *xname = NULL;
-
-#ifdef WIN32
-    /* FIXME should we be doing this?! */
-    if (utf8_encoded((unsigned char *) iname)) {
-	GError *err = NULL;
-	gsize b;
-
-	xname = g_locale_from_utf8(iname, -1, NULL, &b, &err);
-        if (err != NULL) {
-            fprintf(stderr, "internal_to_external: '%s'\n", err->message);
-            g_error_free(err);
-            xname = remedial_convert(iname);
-        }
-    } else {
-	xname = g_strdup(iname);
-    }
-#else
-    xname = g_strdup(iname);
-#endif
+    char *xname = g_strdup(iname);
 
 #ifdef WIN32
     if (xname != NULL) {
@@ -398,7 +368,7 @@ void time_stamp_file (const char *fname, guint32 dost)
    creation times are stored there as UNIX time_t values.
 */
 
-guint32 file_mod_time (const char *fname, guint32 *attr, long *fsize, 
+guint32 file_mod_time (const char *fname, guint32 *attr, long *fsize,
 		       iztimes *t, zfile *zf)
 {
     struct stat s;
@@ -458,7 +428,7 @@ guint32 file_mod_time (const char *fname, guint32 *attr, long *fsize,
 #define EF_C_UNIX_SIZE  (EB_C_UT_SIZE + EB_C_UX2_SIZE)
 
 /* store full data in local header but just modification time stamp info
-   in central header 
+   in central header
 */
 
 int set_extra_field (zfile *zf, zlist *z, iztimes *z_utim)
@@ -521,4 +491,3 @@ int set_extra_field (zfile *zf, zlist *z, iztimes *z_utim)
 
     return ZE_OK;
 }
-
