@@ -263,20 +263,26 @@ void win_copy_last_error (void)
 static int encoding_check (const char *s1, gchar **ls1,
 			   const char *s2, gchar **ls2)
 {
+    GError *gerr = NULL;
     int err = 0;
 
     if (s1 != NULL && utf8_encoded(s1)) {
-	*ls1 = g_locale_from_utf8(s1, -1, NULL, NULL, NULL);
+	*ls1 = g_locale_from_utf8(s1, -1, NULL, NULL, &gerr);
 	if (*ls1 == NULL) {
 	    err = 1;
 	}
     }
 
     if (!err && s2 != NULL && utf8_encoded(s2)) {
-	*ls2 = g_locale_from_utf8(s2, -1, NULL, NULL, NULL);
+	*ls2 = g_locale_from_utf8(s2, -1, NULL, NULL, &gerr);
 	if (*ls2 == NULL) {
 	    err = 1;
 	}
+    }
+
+    if (gerr != NULL) {
+	gretl_errmsg_set(gerr->message);
+	g_error_free(gerr);
     }
 
     return err;
@@ -302,6 +308,7 @@ static int real_win_run_sync (char *cmdline, const char *currdir,
     if (err) {
 	return err;
     } else {
+	/* use locale-encoded forms, if applicable */
 	if (ls1 != NULL) {
 	    cmdline = ls1;
 	}
