@@ -860,7 +860,7 @@ GDir *gretl_opendir (const char *name)
     GDir *dir = NULL;
 
 #ifdef WIN32
-    if (valid_utf8(path)) {
+    if (valid_utf8(name)) {
 	dir = g_dir_open(name, 0, NULL);
     } else {
 	gchar *pconv;
@@ -870,8 +870,6 @@ GDir *gretl_opendir (const char *name)
 	if (pconv != NULL) {
 	    dir = g_dir_open(pconv, 0, NULL);
 	    g_free(pconv);
-	} else {
-	    err = -1;
 	}
     }
 #else
