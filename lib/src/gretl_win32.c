@@ -388,10 +388,82 @@ int gretl_spawn (char *cmdline)
     return real_win_run_sync(cmdline, NULL, 0);
 }
 
+#define CSIDL_UTF16 1
+
+#if CSIDL_UTF16
+
 /* Retrieve various special paths from the bowels of MS
-   Windows.  Note that these paths will be in the locale
-   encoding, not UTF-8. TODO: Substitute SHGetFolderPathW
-   and convert the UTF-16 return value to UTF-8.
+   Windows, in Unicode form, using the recommened API.
+*/
+
+#if 0 /* maybe later? */
+
+static REFKNOWNFOLDERID get_rfid (int folder)
+{
+    if (folder == CSIDL_DESKTOPDIRECTORY) {
+	return FOLDERID_Desktop;
+    } else if (folder == CSIDL_APPDATA) {
+	return FOLDERID_RoamingAppData;
+    } else if (folder == CSIDL_PERSONAL) {
+	return FOLDERID_Documents;
+    } else if (folder == CSIDL_PROGRAM_FILES) {
+	return FOLDERID_ProgramFiles;
+    } else if (folder == CSIDL_PROGRAM_FILESX86) {
+	return FOLDERID_ProgramFilesX86;
+    } else {
+	return 0;
+    }
+}
+
+static char *win_special_path_new (int folder)
+{
+    REFKNOWNFOLDERID rfid;
+    PWSTR wpath = NULL;
+    char *ret = NULL;
+
+    rfid = get_rfid(folder);
+
+    if (SHGetKnownFolderPath(rfid, KF_FLAG_CREATE,
+			     NULL, &wpath) == S_OK) {
+	gchar *upath;
+
+	upath = g_utf16_to_utf8(wpath, -1, NULL, NULL, NULL);
+	if (upath != NULL) {
+	    ret = gretl_strdup(upath);
+	    g_free(ret);
+	}
+	CoTaskMemFree(wpath);
+    }
+
+    return ret;
+}
+
+#endif
+
+static char *win_special_path (int folder)
+{
+    gunichar2 wpath[MAX_PATH] = {0};
+    char *ret = NULL;
+
+    if (SHGetFolderPathW(NULL, folder | CSIDL_FLAG_CREATE,
+			 NULL, 0, wpath) == S_OK) {
+	gchar *upath;
+
+	upath = g_utf16_to_utf8(wpath, -1, NULL, NULL, NULL);
+	if (upath != NULL) {
+	    ret = gretl_strdup(upath);
+	    g_free(ret);
+	}	
+    }
+
+    return ret;
+}
+
+#else
+
+/* Retrieve various special paths from the bowels of MS
+   Windows, old "ANSI" version. These paths will be in the
+   locale encoding.
 */
 
 static char *win_special_path (int folder)
@@ -406,6 +478,8 @@ static char *win_special_path (int folder)
     return gretl_strdup(dpath);
 }
 
+#endif
+
 char *desktop_path (void)
 {
     return win_special_path(CSIDL_DESKTOPDIRECTORY);
@@ -415,15 +489,6 @@ char *appdata_path (void)
 {
     return win_special_path(CSIDL_APPDATA);
 }
-
-#if 0 /* not yet? */
-
-char *local_appdata_path (void)
-{
-    return win_special_path(CSIDL_LOCAL_APPDATA);
-}
-
-#endif
 
 char *mydocs_path (void)
 {
