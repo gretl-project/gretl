@@ -11095,7 +11095,7 @@ static NODE *string_replace (NODE *src, NODE *n0, NODE *n1, int f,
 	for (i=0; i<3; i++) {
 	    /* all nodes must be of string type */
 	    if (n[i]->t != STR) {
-		node_type_error(f, i, STR, n[i], p);
+		node_type_error(f, i+1, STR, n[i], p);
 		return NULL;
 	    } else {
 		S[i] = n[i]->v.str;
