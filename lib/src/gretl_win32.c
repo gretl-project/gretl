@@ -465,7 +465,7 @@ static char *win_special_path (int folder)
 	if (upath != NULL) {
 	    ret = gretl_strdup(upath);
 	    g_free(upath);
-	}	
+	}
     }
 
     return ret;
@@ -893,15 +893,30 @@ int win32_write_access (char *path)
 int win32_delete_dir (const char *path)
 {
     SHFILEOPSTRUCT op;
+    gchar *tmp = NULL;
     char *from;
+    int len = 0;
     int err = 0;
 
-    from = calloc(strlen(path) + 2, 1);
+    if (utf8_encoded(path)) {
+	gsize bytes;
+
+	tmp = g_locale_from_utf8(path, -1, NULL &bytes, NULL);
+    }
+
+    if (tmp != NULL) {
+	len = strlen(tmp) + 2;
+    } else {
+	len = strlen(path) + 2;
+    }
+
+    from = calloc(len, 1);
     if (from == NULL) {
+	g_free(tmp);
 	return E_ALLOC;
     }
 
-    strcpy(from, path);
+    strcpy(from, tmp != NULL ? tmp : path);
 
     op.hwnd = NULL;
     op.wFunc = FO_DELETE;
@@ -915,6 +930,7 @@ int win32_delete_dir (const char *path)
     err = SHFileOperation(&op);
 
     free(from);
+    g_free(tmp);
 
     return err;
 }

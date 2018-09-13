@@ -514,36 +514,36 @@ static int win32_rename (const char *oldpath,
     if (u_old && u_new) {
 	/* OK, both names are UTF-8 */
 	ret = g_rename(oldpath, newpath);
-    } else if (u_old || u_new) {
-	/* let's get both names into the locale charset */
-	gchar *tmp = NULL;
+    } else {
+	/* let's get both names into UTF-8 */
+	const gchar *old_ok = NULL;
+	const gchar *new_ok = NULL;
+	gchar *oldtmp = NULL;
+	gchar *newtmp = NULL;
 
 	if (u_old) {
-	    /* only the original name is UTF-8 */
-	    tmp = g_win32_locale_filename_from_utf8(oldpath);
+	    old_ok = oldpath;
 	} else {
-	    /* only the new name is UTF-8 */
-	    tmp = g_win32_locale_filename_from_utf8(newpath);
+	    oldtmp = g_locale_to_utf8(oldpath, -1, NULL, NULL, NULL);
+	    if (oldtmp != NULL) {
+		old_ok = oldtmp;
+	    }
+	}
+	if (u_new) {
+	    new_ok = newpath;
+	} else {
+	    newtmp = g_locale_to_utf8(newpath, -1, NULL, NULL, NULL);
+	    if (newtmp == NULL) {
+		new_ok = newtmp;
+	    }
 	}
 
-	if (tmp == NULL) {
-	    /* couldn't convert a filename */
-	    ret = -1;
-	} else {
-	    /* rename() on Windows sets EEXIST if the target
-	       is already present */
-	    remove(newpath);
-	    if (u_old) {
-		ret = rename(tmp, newpath);
-	    } else {
-		ret = rename(oldpath, tmp);
-	    }
-	    g_free(tmp);
+	if (old_ok != NULL && new_ok != NULL) {
+	    ret = g_rename(old_ok, new_ok);
 	}
-    } else {
-	/* neither name is in UTF-8 */
-	remove(newpath);
-	ret = rename(oldpath, newpath);
+
+	g_free(oldtmp);
+	g_free(newtmp);
     }
 
     return ret;
@@ -730,9 +730,14 @@ int gretl_isdir (const char *path)
     struct stat buf;
     int err;
 
-    err = gretl_stat(path, &buf);
+    if (valid_utf8(path)) {
+	return g_file_test(path, G_FILE_TEST_IS_DIR);
+    } else {
+	struct stat buf;
+	int err = gretl_stat(path, &buf);
 
-    return err ? 0 : S_ISDIR(buf.st_mode);
+	return err ? 0 : S_ISDIR(buf.st_mode);
+    }
 }
 
 /**
@@ -788,21 +793,21 @@ static int real_deltree (const char *path)
     int err = 0;
 
     errno = 0;
-    dir = gretl_opendir(path);
+    dir = g_dir_open(path, 0, NULL);
 
     if (dir == NULL) {
 	err = 1;
     } else {
 	const gchar *fname;
 
-	err = chdir(path);
+	err = g_chdir(path);
 	while ((fname = g_dir_read_name(dir)) != NULL && !err) {
 	    /* recursively delete dir's contents */
 	    if (strcmp(fname, ".") && strcmp(fname, "..")) {
-		if (gretl_isdir(fname)) {
+		if (g_file_test(fname, G_FILE_TEST_IS_DIR)) {
 		    err = real_deltree(fname);
 		} else {
-		    err = remove(fname);
+		    err = g_remove(fname);
 		}
 	    }
 	}
@@ -810,7 +815,7 @@ static int real_deltree (const char *path)
 	    g_dir_close(dir);
 	    /* delete the directory itself */
 	    if (chdir("..") == 0) {
-		err = gretl_remove(path);
+		err = g_remove(path);
 	    }
 	}
     }
@@ -839,16 +844,15 @@ int gretl_deltree (const char *path)
 #ifdef WIN32
     return win32_delete_dir(path);
 #else
-    char tmp[FILENAME_MAX];
-    char *savedir = NULL;
+    gchar *savedir = NULL;
     int err;
 
-    savedir = getcwd(tmp, FILENAME_MAX - 1);
-
+    savedir = g_get_current_dir();
     err = real_deltree(path);
 
     if (savedir != NULL) {
-	gretl_chdir(savedir);
+	g_chdir(savedir);
+	g_free(savedir);
     }
 
     return err;
