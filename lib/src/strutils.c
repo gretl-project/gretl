@@ -806,7 +806,11 @@ static char **string_split_2 (const char *s, int *n,
 
     *n = 0;
 
-    mysep = g_strstrip(g_strdup(sep));
+    if (sep[0] == '\t' && sep[1] == '\0') {
+	mysep = g_strdup(sep);
+    } else {
+	mysep = g_strstrip(g_strdup(sep));
+    }
 
     tmp = g_strsplit(s, mysep, -1);
     if (tmp != NULL) {
@@ -837,6 +841,10 @@ static char **string_split_2 (const char *s, int *n,
 
 static int respect_empty_fields (const char *s)
 {
+    if (s[0] == '\t' && s[1] == '\0') {
+	/* treat single tab as "true" separator string */
+	return 1;
+    }
     while (*s) {
 	if (!isspace(*s)) {
 	    return 1;
