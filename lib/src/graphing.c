@@ -1043,13 +1043,14 @@ void write_plot_line_styles (int ptype, FILE *fp)
    context.
 */
 
-static int adjust_filename (char *targ, const char *src)
+static int adjust_filename (char *targ, const char *src,
+			    int ensure_utf8)
 {
     int err = 0;
 
     *targ = '\0';
 
-    if (!g_utf8_validate(src, -1, NULL)) {
+    if (ensure_utf8 && !g_utf8_validate(src, -1, NULL)) {
 	GError *gerr = NULL;
 	gchar *tmp;
 	gsize sz;
@@ -1066,7 +1067,7 @@ static int adjust_filename (char *targ, const char *src)
 	    }
 	}
     } else {
-	/* OK, @src is already UTF-8 */
+	/* OK, @src is assumed to be OK already */
 	strcpy(targ, src);
     }
 
@@ -1092,7 +1093,7 @@ int write_plot_bounding_box_request (FILE *fp)
     char buf[FILENAME_MAX];
     int err;
 
-    err = adjust_filename(buf, gretl_dotdir());
+    err = adjust_filename(buf, gretl_dotdir(), 1);
     if (!err) {
 	fprintf(fp, "set print \"%sgretltmp.png.bounds\"\n", buf);
     } else {
@@ -1557,15 +1558,15 @@ int write_plot_output_line (const char *path, FILE *fp)
     int err = 0;
 
     if (path == NULL) {
-	err = adjust_filename(buf, gretl_dotdir());
+	err = adjust_filename(buf, gretl_dotdir(), 0);
 	if (!err) {
-	    fputs("set encoding utf-8\n", fp);
+	    // fputs("set encoding utf-8\n", fp);
 	    fprintf(fp, "set output \"%sgretltmp.png\"\n", buf);
 	}
     } else {
-	err = adjust_filename(buf, path);
+	err = adjust_filename(buf, path, 0);
 	if (!err) {
-	    fputs("set encoding utf-8\n", fp);
+	    // fputs("set encoding utf-8\n", fp);
 	    fprintf(fp, "set output \"%s\"\n", buf);
 	}
     }

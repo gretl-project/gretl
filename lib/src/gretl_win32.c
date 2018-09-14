@@ -456,7 +456,20 @@ char *appdata_path (void)
 {
 #if 1
     if (!strcmp(g_get_user_name(), "cottrell")) {
-	return gretl_strdup("c:\\users\\cottrell\\desktop\\dôtdir");
+	const char *s = "c:\\users\\cottrell\\desktop\\dôtdir";
+
+	if (CSIDL_UTF16) {
+	    return gretl_strdup(s);
+	} else {
+	    gsize bytes;
+	    gchar *tmp = g_locale_from_utf8(s, -1, NULL, &bytes, NULL);
+
+	    if (tmp != NULL) {
+		return gretl_strdup(tmp);
+	    } else {
+		return gretl_strdup("");
+	    }
+	}
     }
 #endif
     return win_special_path(CSIDL_APPDATA);
