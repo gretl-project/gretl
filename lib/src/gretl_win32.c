@@ -260,23 +260,27 @@ void win_copy_last_error (void)
    (@s2) are UTF-8, convert them to locale encoding.
 */
 
-static int encoding_check (const char *s1, gchar **ls1,
-			   const char *s2, gchar **ls2)
+static int encoding_check (const char **ps1, gchar **ls1,
+			   const char **ps2, gchar **ls2)
 {
     GError *gerr = NULL;
     int err = 0;
 
-    if (s1 != NULL && utf8_encoded(s1)) {
-	*ls1 = g_locale_from_utf8(s1, -1, NULL, NULL, &gerr);
+    if (ps1 != NULL && *ps1 != NULL && utf8_encoded(*ps1)) {
+	*ls1 = g_locale_from_utf8(*ps1, -1, NULL, NULL, &gerr);
 	if (*ls1 == NULL) {
 	    err = 1;
+	} else {
+	    *ps1 = ls1;
 	}
     }
 
-    if (!err && s2 != NULL && utf8_encoded(s2)) {
-	*ls2 = g_locale_from_utf8(s2, -1, NULL, NULL, &gerr);
+    if (!err && ps2 != NULL && *ps2 != NULL && utf8_encoded(*ps2)) {
+	*ls2 = g_locale_from_utf8(*ps2, -1, NULL, NULL, &gerr);
 	if (*ls2 == NULL) {
 	    err = 1;
+	} else {
+	    *ps2 = ls2;
 	}
     }
 
@@ -304,17 +308,9 @@ static int real_win_run_sync (char *cmdline, const char *currdir,
     gchar *ls2 = NULL;
     int ok, err = 0;
 
-    err = encoding_check(cmdline, &ls1, currdir, &ls2);
+    err = encoding_check(&cmdline, &ls1, &currdir, &ls2);
     if (err) {
 	return err;
-    } else {
-	/* use locale-encoded forms, if applicable */
-	if (ls1 != NULL) {
-	    cmdline = ls1;
-	}
-	if (ls2 != NULL) {
-	    currdir = (const char *) ls2;
-	}
     }
 
     ZeroMemory(&sinfo, sizeof sinfo);
@@ -543,7 +539,14 @@ run_child_with_pipe (const char *arg, const char *currdir,
     STARTUPINFO sinfo;
     gchar *cmdline = NULL;
     gchar *targdir = NULL;
-    int ok;
+    gchar *ls1 = NULL;
+    gchar *ls2 = NULL;
+    int ok, err;
+
+    err = encoding_check(&arg, &ls1, &currdir, &ls2);
+    if (err) {
+	return err;
+    }
 
     if (flag == SHELL_RUN) {
 	cmdline = compose_command_line(arg);
@@ -591,6 +594,8 @@ run_child_with_pipe (const char *arg, const char *currdir,
 
     g_free(cmdline);
     g_free(targdir);
+    g_free(ls1);
+    g_free(ls2);
 
     return ok;
 }
@@ -631,7 +636,13 @@ static int run_cmd_wait (const char *cmd, PRN *prn)
     STARTUPINFO sinfo;
     PROCESS_INFORMATION pinfo;
     gchar *cmdline = NULL;
+    gchar *ls1 = NULL;
     int ok, err = 0;
+
+    err = encoding_check(&cmd, &ls1, NULL, NULL);
+    if (err) {
+	return err;
+    }
 
     ZeroMemory(&sinfo, sizeof sinfo);
     ZeroMemory(&pinfo, sizeof pinfo);
@@ -663,6 +674,7 @@ static int run_cmd_wait (const char *cmd, PRN *prn)
     }
 
     g_free(cmdline);
+    g_free(ls1);
 
     return err;
 }
@@ -671,8 +683,16 @@ static int run_cmd_async (const char *cmd)
 {
     STARTUPINFO sinfo;
     PROCESS_INFORMATION pinfo;
+    const char *currdir;
     gchar *cmdcpy;
+    gchar *ls1 = NULL;
     int ok, err = 0;
+
+    currdir = gretl_workdir();
+    err = encoding_check(&cmd, &ls1, &currdir, &ls2);
+    if (err) {
+	return err;
+    }
 
     ZeroMemory(&sinfo, sizeof sinfo);
     ZeroMemory(&pinfo, sizeof pinfo);
@@ -687,10 +707,12 @@ static int run_cmd_async (const char *cmd)
 		       FALSE,
 		       0,
 		       NULL,
-		       gretl_workdir(),
+		       currdir,
 		       &sinfo,
 		       &pinfo);
     g_free(cmdcpy);
+    g_free(ls1);
+    g_free(ls2);
 
     if (!ok) {
 	win_show_last_error();

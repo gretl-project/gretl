@@ -52,7 +52,6 @@ static int foreign_lang;
 static gretlopt foreign_opt;
 
 /* "dotdir" filenames */
-static gchar *gretl_dot_dir;
 static gchar *gretl_Rprofile;
 static gchar *gretl_Rsrc;
 static gchar *gretl_Rout;
@@ -75,6 +74,32 @@ void foreign_destroy (void)
     foreign_started = 0;
     foreign_n_lines = 0;
     foreign_opt = OPT_NONE;
+}
+
+/* Get the user's "dotdir" in a form suitable for
+   sending to third-party programs.
+*/
+
+static const char *foreign_get_dotdir (void)
+{
+    static char *fdot;
+
+    if (fdot == NULL) {
+	fdot = gretl_strdup(gretl_dotdir());
+#ifdef G_OS_WIN32
+	/* ensure forward slashes */
+	char *s = fdot;
+
+	while (*s) {
+	    if (*s == '\\') {
+		*s = '/';
+	    }
+	    s++;
+	}
+#endif
+    }
+
+    return fdot;
 }
 
 static int set_foreign_lang (const char *lang, PRN *prn)
@@ -201,7 +226,7 @@ int gretl_max_mpi_processes (void)
 static const gchar *gretl_ox_filename (void)
 {
     if (gretl_ox_prog == NULL) {
-	const char *dotdir = gretl_dotdir();
+	const char *dotdir = foreign_get_dotdir();
 
 	gretl_ox_prog = g_strdup_printf("%sgretltmp.ox", dotdir);
     }
@@ -212,7 +237,7 @@ static const gchar *gretl_ox_filename (void)
 static const gchar *gretl_octave_filename (void)
 {
     if (gretl_octave_prog == NULL) {
-	const char *dotdir = gretl_dotdir();
+	const char *dotdir = foreign_get_dotdir();
 
 	gretl_octave_prog = g_strdup_printf("%sgretltmp.m", dotdir);
     }
@@ -223,7 +248,7 @@ static const gchar *gretl_octave_filename (void)
 static const gchar *gretl_stata_filename (void)
 {
     if (gretl_stata_prog == NULL) {
-	const char *dotdir = gretl_dotdir();
+	const char *dotdir = foreign_get_dotdir();
 
 	gretl_stata_prog = g_strdup_printf("%sgretltmp.do", dotdir);
     }
@@ -234,7 +259,7 @@ static const gchar *gretl_stata_filename (void)
 static const gchar *gretl_python_filename (void)
 {
     if (gretl_python_prog == NULL) {
-	const char *dotdir = gretl_dotdir();
+	const char *dotdir = foreign_get_dotdir();
 
 	gretl_python_prog = g_strdup_printf("%sgretltmp.py", dotdir);
     }
@@ -245,7 +270,7 @@ static const gchar *gretl_python_filename (void)
 static const gchar *gretl_julia_filename (void)
 {
     if (gretl_julia_prog == NULL) {
-	const char *dotdir = gretl_dotdir();
+	const char *dotdir = foreign_get_dotdir();
 
 	gretl_julia_prog = g_strdup_printf("%sgretltmp.jl", dotdir);
     }
@@ -258,7 +283,7 @@ static const gchar *gretl_julia_filename (void)
 static const gchar *gretl_mpi_filename (void)
 {
     if (gretl_mpi_prog == NULL) {
-	const char *dotdir = gretl_dotdir();
+	const char *dotdir = foreign_get_dotdir();
 
 	gretl_mpi_prog = g_strdup_printf("%sgretltmp-mpi.inp", dotdir);
     }
@@ -292,14 +317,12 @@ static void make_gretl_R_names (void)
     static int done;
 
     if (!done) {
-	gretl_dot_dir = g_strdup(gretl_dotdir());
-#ifdef G_OS_WIN32
-	slash_convert(gretl_dot_dir, FROM_BACKSLASH);
-#endif
-	gretl_Rprofile = g_strdup_printf("%sgretl.Rprofile", gretl_dot_dir);
-	gretl_Rsrc = g_strdup_printf("%sRsrc", gretl_dot_dir);
-	gretl_Rout = g_strdup_printf("%sR.out", gretl_dot_dir);
-	gretl_Rmsg = g_strdup_printf("%sR.msg", gretl_dot_dir);
+	const char *dd = foreign_get_dotdir();
+
+	gretl_Rprofile = g_strdup_printf("%sgretl.Rprofile", dd);
+	gretl_Rsrc = g_strdup_printf("%sRsrc", dd);
+	gretl_Rout = g_strdup_printf("%sR.out", dd);
+	gretl_Rmsg = g_strdup_printf("%sR.msg", dd);
 	done = 1;
     }
 }
@@ -331,6 +354,8 @@ static char *get_rscript_path (void)
 
     return rscript;
 }
+
+/* Windows variant */
 
 static int lib_run_R_sync (gretlopt opt, PRN *prn)
 {
@@ -386,6 +411,8 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
 
     return err;
 }
+
+/* Windows variant */
 
 static int lib_run_other_sync (gretlopt opt, PRN *prn)
 {
@@ -520,15 +547,7 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
     return err;
 }
 
-# endif
-
-static char *win32_dotpath (void)
-{
-    gchar *dotpath = g_strdup(gretl_dotdir());
-
-    gretl_charsub(dotpath, '\\', '/');
-    return dotpath;
-}
+# endif /* HAVE_MPI (&& G_OS_WIN32) */
 
 #else /* !G_OS_WIN32 */
 
@@ -691,7 +710,7 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
     if (opt & OPT_N) {
 	/* handle the number-of-processes option */
 	int np = get_optval_int(MPI, OPT_N, &err);
-	
+
 	if (!err && (np <= 0 || np > 9999999)) {
 	    err = E_DATA;
 	}
@@ -759,7 +778,7 @@ static int write_ox_io_file (void)
     static int written;
 
     if (!written) {
-	const char *dotdir = gretl_dotdir();
+	const char *dotdir = foreign_get_dotdir();
 	gchar *fname;
 	FILE *fp;
 
@@ -770,16 +789,10 @@ static int write_ox_io_file (void)
 	if (fp == NULL) {
 	    return E_FOPEN;
 	} else {
-#ifdef G_OS_WIN32
-            gchar *dotcpy = win32_dotpath();
+	    const char *dd = foreign_get_dotdir();
 
 	    fputs("gretl_dotdir ()\n{\n", fp);
-	    fprintf(fp, "  return \"%s\";\n", dotcpy);
-	    g_free(dotcpy);
-#else
-	    fputs("gretl_dotdir ()\n{\n", fp);
-	    fprintf(fp, "  return \"%s\";\n", dotdir);
-#endif
+	    fprintf(fp, "  return \"%s\";\n", dd);
 	    fputs("}\n\n", fp);
 
 	    fputs("gretl_export_nodot (const X, const str)\n{\n", fp);
@@ -810,7 +823,7 @@ static int write_ox_io_file (void)
 
 static int real_write_octave_io_file (void)
 {
-    const char *dotdir = gretl_dotdir();
+    const char *dotdir = foreign_get_dotdir();
     gchar *fname;
     FILE *fp;
 
@@ -821,17 +834,9 @@ static int real_write_octave_io_file (void)
     if (fp == NULL) {
 	return E_FOPEN;
     } else {
-#ifdef G_OS_WIN32
-	gchar *dotcpy = win32_dotpath();
-#endif
 	fputs("# not a 'function file' as such\n1;\n", fp);
 	fputs("function dotdir = gretl_dotdir()\n", fp);
-#ifdef G_OS_WIN32
-	fprintf(fp, "  dotdir = \"%s\";\n", dotcpy);
-	g_free(dotcpy);
-#else
 	fprintf(fp, "  dotdir = \"%s\";\n", dotdir);
-#endif
 	fputs("endfunction\n\n", fp);
 
 	fputs("function gretl_export(X, str, autodot=1)\n", fp);
@@ -888,7 +893,7 @@ static int write_python_io_file (void)
     static int written;
 
     if (!written) {
-	const char *dotdir = gretl_dotdir();
+	const char *dotdir = foreign_get_dotdir();
 	gchar *fname;
 	FILE *fp;
 
@@ -899,14 +904,7 @@ static int write_python_io_file (void)
 	if (fp == NULL) {
 	    return E_FOPEN;
 	} else {
-#ifdef G_OS_WIN32
-            gchar *dotcpy = win32_dotpath();
-
-	    fprintf(fp, "gretl_dotdir = \"%s\"\n\n", dotcpy);
-	    g_free(dotcpy);
-#else
 	    fprintf(fp, "gretl_dotdir = \"%s\"\n\n", dotdir);
-#endif
 	    /* export matrix for reading by gretl */
 	    fputs("def gretl_export(X, fname, autodot=1):\n", fp);
 	    fputs("  binwrite = 0\n", fp);
@@ -975,7 +973,7 @@ static int write_julia_io_file (void)
     static int written;
 
     if (!written) {
-	const char *dotdir = gretl_dotdir();
+	const char *dotdir = foreign_get_dotdir();
 	gchar *fname;
 	FILE *fp;
 
@@ -986,14 +984,8 @@ static int write_julia_io_file (void)
 	if (fp == NULL) {
 	    return E_FOPEN;
 	} else {
-#ifdef G_OS_WIN32
-            gchar *dotcpy = win32_dotpath();
-
-	    fprintf(fp, "gretl_dotdir = \"%s\"\n\n", dotcpy);
-	    g_free(dotcpy);
-#else
 	    fprintf(fp, "gretl_dotdir = \"%s\"\n\n", dotdir);
-#endif
+
 	    /* Julia 1.0 requires more library-loading */
 	    fputs("v1 = VERSION > v\"0.6.9\"\n", fp);
 	    fputs("if v1\n", fp);
@@ -1098,7 +1090,7 @@ static int write_stata_io_file (void)
     static int written;
 
     if (!written) {
-	const char *dotdir = gretl_dotdir();
+	const char *dotdir = foreign_get_dotdir();
 	gchar *fname;
 	FILE *fp;
 
@@ -1138,6 +1130,8 @@ static int write_stata_io_file (void)
 
 static void add_gretl_include (int lang, gretlopt opt, FILE *fp)
 {
+    const char *dotdir;
+
     if (lang == LANG_PYTHON) {
 	fputs("from gretl_io import gretl_dotdir, gretl_loadmat, "
 	      "gretl_export\n", fp);
@@ -1146,27 +1140,13 @@ static void add_gretl_include (int lang, gretlopt opt, FILE *fp)
 
 #ifdef G_OS_WIN32
     if (lang == LANG_STATA) {
-	/* leave path with backslashes */
+	/* leave path with backslashes? */
 	fprintf(fp, "quietly adopath + \"%s\"\n", gretl_dotdir());
-    } else {
-	/* convert to forward slashes */
-	gchar *dotcpy = win32_dotpath();
-
-	if (lang == LANG_OX) {
-	    if (strchr(dotcpy, ' ')) {
-		fprintf(fp, "#include \"%sgretl_io.ox\"\n", dotcpy);
-	    } else {
-		fprintf(fp, "#include <%sgretl_io.ox>\n", dotcpy);
-	    }
-	} else if (lang == LANG_OCTAVE) {
-	    fprintf(fp, "source(\"%sgretl_io.m\")\n", dotcpy);
-	} else if (lang == LANG_JULIA) {
-	    fprintf(fp, "include(\"%sgretl_io.jl\")\n", dotcpy);
-	}
-	g_free(dotcpy);
+	return;
     }
-#else
-    const char *dotdir = gretl_dotdir();
+#endif
+
+    dotdir = foreign_get_dotdir();
 
     if (lang == LANG_OX) {
 	if (strchr(dotdir, ' ')) {
@@ -1184,7 +1164,6 @@ static void add_gretl_include (int lang, gretlopt opt, FILE *fp)
 	}
 	fprintf(fp, "quietly adopath + \"%s\"\n", dotdir);
     }
-#endif
 }
 
 static int get_foreign_indent (void)
@@ -1392,7 +1371,7 @@ static int *get_send_data_list (const DATASET *dset, int ci, int *err)
 
 static int mpi_send_data_setup (const DATASET *dset, FILE *fp)
 {
-    const char *dotdir = gretl_dotdir();
+    const char *dotdir = foreign_get_dotdir();
     int *list = NULL;
     size_t datasize;
     int nvars;
@@ -1433,7 +1412,7 @@ static int mpi_send_data_setup (const DATASET *dset, FILE *fp)
 
 static int mpi_send_funcs_setup (FILE *fp)
 {
-    const char *dotdir = gretl_dotdir();
+    const char *dotdir = foreign_get_dotdir();
     gchar *fname;
     int err;
 
@@ -1524,7 +1503,7 @@ static int write_data_for_stata (const DATASET *dset,
 	*save_na = '\0';
 	strncat(save_na, get_csv_na_write_string(), 7);
 	set_csv_na_write_string(".");
-	sdata = g_strdup_printf("%sstata.csv", gretl_dotdir());
+	sdata = g_strdup_printf("%sstata.csv", foreign_get_dotdir());
 	err = write_data(sdata, list, dset, OPT_C, NULL);
 	set_csv_na_write_string(save_na);
     }
@@ -1600,7 +1579,7 @@ static int write_data_for_octave (const DATASET *dset,
     list = get_send_data_list(dset, FOREIGN, &err);
 
     if (!err) {
-	mdata = g_strdup_printf("%smdata.tmp", gretl_dotdir());
+	mdata = g_strdup_printf("%smdata.tmp", foreign_get_dotdir());
 	err = write_data(mdata, list, dset, OPT_M, NULL);
     }
 
@@ -1706,6 +1685,7 @@ static int write_data_for_R (const DATASET *dset,
 {
     gretl_matrix *coded = NULL;
     int *list = NULL;
+    const char *dd;
     gchar *Rdata;
     int ts, err;
 
@@ -1717,7 +1697,8 @@ static int write_data_for_R (const DATASET *dset,
     /* FIXME: can R's "ts" handle daily data, weekly data, etc.? */
     ts = annual_data(dset) || quarterly_or_monthly(dset);
 
-    Rdata = g_strdup_printf("%sRdata.tmp", gretl_dot_dir);
+    dd = foreign_get_dotdir();
+    Rdata = g_strdup_printf("%sRdata.tmp", dd);
     list = get_send_data_list(dset, FOREIGN, &err);
 
     if (!err) {
@@ -1801,10 +1782,12 @@ static int write_data_for_R (const DATASET *dset,
 
 static void write_R_io_funcs (FILE *fp)
 {
-    fprintf(fp, "gretl.dotdir <- \"%s\"\n", gretl_dot_dir);
+    const char *dd = foreign_get_dotdir();
+
+    fprintf(fp, "gretl.dotdir <- \"%s\"\n", dd);
 
     fputs("gretl.export <- function(x, sx) {\n", fp);
-    fprintf(fp, "  prefix <- \"%s\"\n", gretl_dot_dir);
+    fprintf(fp, "  prefix <- \"%s\"\n", dd);
     fputs("  objname <- as.character(substitute(x))\n", fp);
     fputs("  if (missing(sx)) {\n", fp);
     fputs("    sx <- objname\n", fp);
@@ -1834,7 +1817,7 @@ static void write_R_io_funcs (FILE *fp)
     fputs("}\n", fp);
 
     fputs("gretl.loadmat <- function(mname) {\n", fp);
-    fprintf(fp, "  prefix <- \"%s\"\n", gretl_dot_dir);
+    fprintf(fp, "  prefix <- \"%s\"\n", dd);
     fputs("  fname <- paste(prefix, mname, sep=\"\")\n", fp);
 #ifdef G_OS_WIN32
     /* convert filename from UTF-8 to locale? */
