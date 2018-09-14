@@ -638,6 +638,7 @@ static int run_cmd_wait (const char *cmd, PRN *prn)
     const char *currdir;
     gchar *cmdline = NULL;
     gchar *ls1 = NULL;
+    gchar *ls2 = NULL;
     int ok, err = 0;
 
     currdir = gretl_workdir(); /* FIXME? */
