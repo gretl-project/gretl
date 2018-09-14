@@ -2414,7 +2414,7 @@ static int install_function_package (const char *pkgname,
     gchar *gfname = NULL;
     int filetype = 0;
     int local = (opt & OPT_L);
-    int addon = 1;
+    int addon = 0;
     int http = 0;
     int err = 0;
 
