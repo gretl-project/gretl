@@ -266,12 +266,18 @@ static int encoding_check (const char **ps1, gchar **ls1,
     GError *gerr = NULL;
     int err = 0;
 
+    if (ps1 != NULL) {
+	fprintf(stderr, "encoding check on s1='%s'\n", *ps1);
+    }
+
     if (ps1 != NULL && *ps1 != NULL && utf8_encoded(*ps1)) {
+	fprintf(stderr, "recoding s1 to locale\n");
 	*ls1 = g_locale_from_utf8(*ps1, -1, NULL, NULL, &gerr);
 	if (*ls1 == NULL) {
 	    err = 1;
 	} else {
 	    *ps1 = (const char *) *ls1;
+	    fprintf(stderr, "recoded s1: '%s'\n", *ps1);
 	}
     }
 
