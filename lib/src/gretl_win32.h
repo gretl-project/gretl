@@ -24,6 +24,8 @@
 
 #include <windows.h>
 
+#define CSIDL_UTF16 /* or not! */
+
 enum {
     TO_BACKSLASH,
     FROM_BACKSLASH

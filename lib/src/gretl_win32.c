@@ -271,7 +271,7 @@ static int encoding_check (const char **ps1, gchar **ls1,
 	if (*ls1 == NULL) {
 	    err = 1;
 	} else {
-	    *ps1 = (const char *) ls1;
+	    *ps1 = (const char *) *ls1;
 	}
     }
 
@@ -280,7 +280,7 @@ static int encoding_check (const char **ps1, gchar **ls1,
 	if (*ls2 == NULL) {
 	    err = 1;
 	} else {
-	    *ps2 = (const char *) ls2;
+	    *ps2 = (const char *) *ls2;
 	}
     }
 
@@ -394,9 +394,7 @@ int gretl_spawn (char *cmdline)
 /* 2018-09-14: we should switch to CSIDL_UTF16=1 before long,
    but as of now it needs more testing */
 
-#define CSIDL_UTF16 0
-
-#if CSIDL_UTF16
+#ifdef CSIDL_UTF16
 
 /* Retrieve various special paths from the bowels of MS
    Windows in UTF-16 form.
@@ -450,6 +448,11 @@ char *desktop_path (void)
 
 char *appdata_path (void)
 {
+#if 1
+    if (!strcmp(g_get_user_name(), "cottrell")) {
+	return gretl_strdup("c:\\users\\cottrell\\desktop\\dôtdir");
+    }
+#endif
     return win_special_path(CSIDL_APPDATA);
 }
 
