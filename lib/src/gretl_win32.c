@@ -635,11 +635,13 @@ static int run_cmd_wait (const char *cmd, PRN *prn)
 {
     STARTUPINFO sinfo;
     PROCESS_INFORMATION pinfo;
+    const char *currdir;
     gchar *cmdline = NULL;
     gchar *ls1 = NULL;
     int ok, err = 0;
 
-    err = encoding_check(&cmd, &ls1, NULL, NULL);
+    currdir = gretl_workdir(); /* FIXME? */
+    err = encoding_check(&cmd, &ls1, &currdir, &ls2);
     if (err) {
 	return err;
     }
@@ -660,7 +662,7 @@ static int run_cmd_wait (const char *cmd, PRN *prn)
 		       FALSE,
 		       CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS,
 		       NULL,
-		       gretl_workdir(), /* FIXME? */
+		       currdir,
 		       &sinfo,
 		       &pinfo);
 
@@ -675,6 +677,7 @@ static int run_cmd_wait (const char *cmd, PRN *prn)
 
     g_free(cmdline);
     g_free(ls1);
+    g_free(ls2);
 
     return err;
 }
