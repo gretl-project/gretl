@@ -5919,7 +5919,8 @@ int gretl_file_get_contents (const gchar *fname, gchar **contents,
 
     if (gerr != NULL) {
 	verbose_gerror_report(gerr, "g_file_get_contents");
-	if (g_error_matches(gerr, G_FILE_ERROR, G_FILE_ERROR_INVAL)) {
+	if (g_error_matches(gerr, G_FILE_ERROR, G_FILE_ERROR_INVAL) ||
+	    g_error_matches(gerr, G_FILE_ERROR, G_FILE_ERROR_NOENT)) {
 	    gchar *trfname = NULL;
 	    gsize bytes;
 
