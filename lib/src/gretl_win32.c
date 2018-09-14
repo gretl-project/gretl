@@ -271,7 +271,7 @@ static int encoding_check (const char **ps1, gchar **ls1,
 	if (*ls1 == NULL) {
 	    err = 1;
 	} else {
-	    *ps1 = ls1;
+	    *ps1 = (const char *) ls1;
 	}
     }
 
@@ -280,7 +280,7 @@ static int encoding_check (const char **ps1, gchar **ls1,
 	if (*ls2 == NULL) {
 	    err = 1;
 	} else {
-	    *ps2 = ls2;
+	    *ps2 = (const char *) ls2;
 	}
     }
 
@@ -308,7 +308,7 @@ static int real_win_run_sync (char *cmdline, const char *currdir,
     gchar *ls2 = NULL;
     int ok, err = 0;
 
-    err = encoding_check(&cmdline, &ls1, &currdir, &ls2);
+    err = encoding_check((const char **) &cmdline, &ls1, &currdir, &ls2);
     if (err) {
 	return err;
     }
@@ -686,6 +686,7 @@ static int run_cmd_async (const char *cmd)
     const char *currdir;
     gchar *cmdcpy;
     gchar *ls1 = NULL;
+    gchar *ls2 = NULL;
     int ok, err = 0;
 
     currdir = gretl_workdir();
