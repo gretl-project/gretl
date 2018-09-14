@@ -395,62 +395,16 @@ int gretl_spawn (char *cmdline)
     return real_win_run_sync(cmdline, NULL, 0);
 }
 
-#define CSIDL_UTF16 1
+/* 2018-09-14: we should switch to CSIDL_UTF16=1 before long,
+   but as of now it needs more testing */
+
+#define CSIDL_UTF16 0
 
 #if CSIDL_UTF16
 
 /* Retrieve various special paths from the bowels of MS
-   Windows in UTF-16 form. We first show the currently
-   recommended Windows API but it's def'd out for now
-   because it's avaibale only in Windows Vista and higher,
-   and we're trying to support Windows XP still.
+   Windows in UTF-16 form.
 */
-
-#if 0 /* maybe later? */
-
-static REFKNOWNFOLDERID get_rfid (int folder)
-{
-    if (folder == CSIDL_DESKTOPDIRECTORY) {
-	return FOLDERID_Desktop;
-    } else if (folder == CSIDL_APPDATA) {
-	return FOLDERID_RoamingAppData;
-    } else if (folder == CSIDL_PERSONAL) {
-	return FOLDERID_Documents;
-    } else if (folder == CSIDL_PROGRAM_FILES) {
-	return FOLDERID_ProgramFiles;
-    } else if (folder == CSIDL_PROGRAM_FILESX86) {
-	return FOLDERID_ProgramFilesX86;
-    } else {
-	return 0;
-    }
-}
-
-static char *win_special_path_new (int folder)
-{
-    REFKNOWNFOLDERID rfid;
-    PWSTR wpath = NULL;
-    char *ret = NULL;
-
-    rfid = get_rfid(folder);
-
-    if (SHGetKnownFolderPath(rfid, KF_FLAG_CREATE,
-			     NULL, &wpath) == S_OK) {
-	gchar *upath;
-
-	upath = g_utf16_to_utf8(wpath, -1, NULL, NULL, NULL);
-	if (upath != NULL) {
-	    ret = gretl_strdup(upath);
-	    g_free(upath);
-	}
-	CoTaskMemFree(wpath);
-    }
-
-    return ret;
-}
-
-#endif /* 0, maybe later */
-
-/* The following variant should maybe work on XP? */
 
 static char *win_special_path (int folder)
 {
@@ -901,7 +855,7 @@ int win32_delete_dir (const char *path)
     if (utf8_encoded(path)) {
 	gsize bytes;
 
-	tmp = g_locale_from_utf8(path, -1, NULL &bytes, NULL);
+	tmp = g_locale_from_utf8(path, -1, NULL, &bytes, NULL);
     }
 
     if (tmp != NULL) {
