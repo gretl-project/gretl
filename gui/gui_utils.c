@@ -618,7 +618,7 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
     }
 #endif
 
-    if (Ctrl) {
+    if (Ctrl && !Alt) {
 	if (upkey == GDK_F) {
 	    text_find(NULL, vwin);
 	    return TRUE;
@@ -707,15 +707,17 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	}
     }
 
-    if (upkey == GDK_A && Ctrl) {
-	vwin_select_all(vwin);
-	return TRUE;
-    } else if (upkey == GDK_Q || (upkey == GDK_W && Ctrl)) {
-	if (w == vwin->main) {
-	    gtk_widget_destroy(w);
+    if (!Alt) {
+	if (upkey == GDK_A && Ctrl) {
+	    vwin_select_all(vwin);
+	    return TRUE;
+	} else if (upkey == GDK_Q || (upkey == GDK_W && Ctrl)) {
+	    if (w == vwin->main) {
+		gtk_widget_destroy(w);
+	    }
+	} else if (upkey == GDK_S && data_status && vwin->role == VIEW_MODEL) {
+	    model_add_as_icon(NULL, vwin);
 	}
-    } else if (upkey == GDK_S && data_status && vwin->role == VIEW_MODEL) {
-	model_add_as_icon(NULL, vwin);
     }
 
     return FALSE;
