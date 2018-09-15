@@ -87,25 +87,27 @@ static const gchar *foreign_get_dotdir (void)
     if (fdot == NULL) {
 	fdot = g_strdup(gretl_dotdir());
 #ifdef G_OS_WIN32
-	/* ensure forward slashes? stata OK with this? */
-	char *s = fdot;
-
-	while (*s) {
-	    if (*s == '\\') {
-		*s = '/';
-	    }
-	    s++;
-	}
-
 	/* recode to locale if necessary */
 	if (utf8_encoded(fdot)) {
 	    gsize bytes;
 	    gchar *locdot;
-	
+
 	    locdot = g_locale_from_utf8(fdot, -1, NULL, &bytes, NULL);
 	    if (locdot != NULL) {
-		free(fdot);
+		g_free(fdot);
 		fdot = locdot;
+	    }
+	}
+
+	/* ensure forward slashes? stata OK with this? */
+	if (1) {
+	    char *s = fdot;
+
+	    while (*s) {
+		if (*s == '\\') {
+		    *s = '/';
+		}
+		s++;
 	    }
 	}
 #endif
@@ -329,12 +331,12 @@ static void make_gretl_R_names (void)
     static int done;
 
     if (!done) {
-	const char *dd = foreign_get_dotdir();
+	const char *ddir = foreign_get_dotdir();
 
-	gretl_Rprofile = g_strdup_printf("%sgretl.Rprofile", dd);
-	gretl_Rsrc = g_strdup_printf("%sRsrc", dd);
-	gretl_Rout = g_strdup_printf("%sR.out", dd);
-	gretl_Rmsg = g_strdup_printf("%sR.msg", dd);
+	gretl_Rprofile = g_strdup_printf("%sgretl.Rprofile", ddir);
+	gretl_Rsrc = g_strdup_printf("%sRsrc", ddir);
+	gretl_Rout = g_strdup_printf("%sR.out", ddir);
+	gretl_Rmsg = g_strdup_printf("%sR.msg", ddir);
 	done = 1;
     }
 }
