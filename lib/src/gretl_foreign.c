@@ -1782,12 +1782,12 @@ static int write_data_for_R (const DATASET *dset,
 
 static void write_R_io_funcs (FILE *fp)
 {
-    const char *dd = foreign_get_dotdir();
+    const char *ddir = foreign_get_dotdir();
 
-    fprintf(fp, "gretl.dotdir <- \"%s\"\n", dd);
+    fprintf(fp, "gretl.dotdir <- \"%s\"\n", ddir);
 
     fputs("gretl.export <- function(x, sx) {\n", fp);
-    fprintf(fp, "  prefix <- \"%s\"\n", dd);
+    fprintf(fp, "  prefix <- \"%s\"\n", ddir);
     fputs("  objname <- as.character(substitute(x))\n", fp);
     fputs("  if (missing(sx)) {\n", fp);
     fputs("    sx <- objname\n", fp);
@@ -1817,10 +1817,10 @@ static void write_R_io_funcs (FILE *fp)
     fputs("}\n", fp);
 
     fputs("gretl.loadmat <- function(mname) {\n", fp);
-    fprintf(fp, "  prefix <- \"%s\"\n", dd);
+    fprintf(fp, "  prefix <- \"%s\"\n", ddir);
     fputs("  fname <- paste(prefix, mname, sep=\"\")\n", fp);
-#ifdef G_OS_WIN32
-    /* convert filename from UTF-8 to locale? */
+#if 0 // def G_OS_WIN32
+    /* convert filename from UTF-8 to locale? maybe not! */
     fputs("  fconv <- iconv(fname, from=\"utf-8\", to=\"\")\n", fp);
     fputs("  m <- as.matrix(read.table(fconv, skip=1))\n", fp);
 #else
