@@ -946,22 +946,32 @@ int dump_plot_buffer (const char *buf, const char *fname,
 
 static int real_send_to_gp (const char *fname, int persist)
 {
-    UINT retval;
-    gchar *cmd;
+    const char *prog = gretl_gnuplot_path();
+    gchar *cmd = NULL;
+    UINT retval = 0;
     int err;
 
-    cmd = g_strdup_printf("\"%s\" \"%s\"",
-			  gretl_gnuplot_path(),
-			  fname);
-    retval = WinExec(cmd, SW_SHOWNORMAL);
-    err = (retval < 32);
-    if (err) {
-	fprintf(stderr, "real_send_to_gp: retval=%d, cmd='%s'\n",
-		(int) retval, cmd);
+    if (utf8_encoded(fname)) {
+	gchar *fconv = g_win32_locale_filename_from_utf8(fname);
+
+	if (fconv != NULL) {
+	    cmd = g_strdup_printf("\"%s\" \"%s\"", prog, fconv);
+	    g_free(fconv);
+	}
+    } else {
+	cmd = g_strdup_printf("\"%s\" \"%s\"", prog, fname);
     }
-    g_free(cmd);
+
+    if (cmd == NULL) {
+	err = E_FOPEN;
+    } else {
+	retval = WinExec(cmd, SW_SHOWNORMAL);
+	err = (retval < 32);
+	g_free(cmd);
+    }
 
     if (err) {
+	fprintf(stderr, "real_send_to_gp: retval=%d\n", (int) retval);
 	win_show_last_error();
     }
 
@@ -1035,7 +1045,8 @@ static int real_send_to_gp (const char *fname, int persist)
 #endif
 
 /* Callback for execute icon in window editing gnuplot
-   commands: send script in @buf to gnuplot itself */
+   commands: send script in @buf to gnuplot itself
+*/
 
 void run_gnuplot_script (gchar *buf)
 {
@@ -1046,7 +1057,7 @@ void run_gnuplot_script (gchar *buf)
     err = dump_plot_buffer(buf, tmpfile, 1);
 
     if (!err) {
-	real_send_to_gp(tmpfile, 1);
+	err = real_send_to_gp(tmpfile, 1);
     }
 
     g_free(tmpfile);
@@ -1055,7 +1066,8 @@ void run_gnuplot_script (gchar *buf)
 #ifdef G_OS_WIN32
 
 /* common code for sending an EMF file to the clipboard,
-   or printing an EMF, on MS Windows */
+   or printing an EMF, on MS Windows
+*/
 
 static void win32_process_graph (GPT_SPEC *spec, int dest)
 {
@@ -5381,7 +5393,7 @@ void display_session_graph (const char *fname,
 	sprintf(fullname, "%s%s", gretl_dotdir(), fname);
     }
 
-    fprintf(stderr, "display_session_graph:\n filename='%s'\n",
+    fprintf(stderr, "display_session_graph:\n fullname='%s'\n",
 	    fullname);
 
     err = add_png_term_to_plot(fullname);

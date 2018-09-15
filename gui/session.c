@@ -501,7 +501,7 @@ char *session_graph_make_path (char *path, const char *fname)
 static char *session_file_make_path (char *path, const char *fname)
 {
 #if 1 || SESSION_DEBUG
-    fprintf(stderr, "session_file_make_path: fname = '%s'\n", fname);
+    fprintf(stderr, "session_file_make_path: fname arg = '%s'\n", fname);
 #endif
 
     if (g_path_is_absolute(fname)) {
@@ -511,7 +511,7 @@ static char *session_file_make_path (char *path, const char *fname)
     }
 
 #if 1 || SESSION_DEBUG
-    fprintf(stderr, "session_file_make_path: path = '%s'\n", path);
+    fprintf(stderr, "session_file_make_path: outgoing path = '%s'\n", path);
 #endif
 
     return path;
@@ -3450,13 +3450,14 @@ static void object_popup_callback (GtkWidget *widget, gpointer data)
 	    int err;
 
 	    err = gretl_chdir(gretl_dotdir());
-	    if (!err) {
-		session_file_make_path(fullname, graph->fname);
-		err = remove_png_term_from_plot_by_name(fullname);
-	    }
 	    if (err) {
 		gui_errmsg(err);
 	    } else {
+		session_file_make_path(fullname, graph->fname);
+		/* the following handles error message if needed */
+		err = remove_png_term_from_plot_by_name(fullname);
+	    }
+	    if (!err) {
 		title = object_get_window_title(obj);
 		vwin = view_file_with_title(fullname, 1, 0, 78, 400,
 					    EDIT_GP, title);
