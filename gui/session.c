@@ -880,21 +880,32 @@ int gui_add_graph_to_session (char *fname, char *fullname, int type)
 	return 1;
     }
 
-    gretl_chdir(gretl_dotdir());
-    make_graph_name(shortname, graphname);
-    session_file_make_path(fullname, shortname);
+    err = gretl_chdir(gretl_dotdir());
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	make_graph_name(shortname, graphname);
+	session_file_make_path(fullname, shortname);
 
-    /* move temporary plot file to permanent */
-    if (copyfile(fname, fullname)) {
-	return 1;
+	fprintf(stderr, "gui_add_graph_to_session:\n"
+		"fname '%s', shortname '%s', fullname '%s'\n",
+		fname, shortname, fullname);
+
+	/* copy temporary plot file to permanent */
+	err = copyfile(fname, fullname);
+	if (!err) {
+	    /* remove the original and transcribe the new
+	       name to @fname */
+	    gretl_remove(fname);
+	    strcpy(fname, fullname); /* was @shortname */
+	}
     }
 
-    gretl_remove(fname);
-    strcpy(fname, fullname); /* was @shortname */
-
-    err = real_add_graph_to_session(shortname, graphname, type, NULL);
-    if (err == ADD_OBJECT_FAIL) {
-	err = 1;
+    if (!err) {
+	err = real_add_graph_to_session(shortname, graphname, type, NULL);
+	if (err == ADD_OBJECT_FAIL) {
+	    err = 1;
+	}
     }
 
     return err;

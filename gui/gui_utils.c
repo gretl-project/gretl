@@ -407,17 +407,19 @@ int copyfile (const char *src, const char *dest)
     char buf[GRETL_BUFSIZE];
     size_t n;
 
-    if (!strcmp(src, dest)) return 1;
+    if (!strcmp(src, dest)) {
+	return 0;
+    }
 
     if ((srcfd = gretl_fopen(src, "rb")) == NULL) {
 	file_read_errbox(src);
-	return 1;
+	return E_FOPEN;
     }
 
     if ((destfd = gretl_fopen(dest, "wb")) == NULL) {
 	file_write_errbox(dest);
 	fclose(srcfd);
-	return 1;
+	return E_FOPEN;
     }
 
     while ((n = fread(buf, 1, sizeof buf, srcfd)) > 0) {

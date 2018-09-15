@@ -445,8 +445,10 @@ int send_file (char *fullname)
 int emf_to_clipboard (char *emfname)
 {
     HWND mainw;
-    HENHMETAFILE hemf, hemfclip;
+    HENHMETAFILE hemfclip;
+    HENHMETAFILE hemf = NULL;
     HANDLE htest;
+    gchar *fconv = NULL;
 
     mainw = GDK_WINDOW_HWND(mdata->main->window);
     if (mainw == NULL) {
@@ -461,7 +463,18 @@ int emf_to_clipboard (char *emfname)
 
     EmptyClipboard();
 
-    hemf = GetEnhMetaFile(emfname);
+    if (utf8_encoded(emfname)) {
+	gunichar2 *fconv;
+
+	fconv = g_utf8_to_utf16(emfname, -1, NULL, NULL, NULL);
+	if (fconv != NULL) {
+	    hemf = GetEnhMetaFileW(fconv);
+	    g_free(fconv);
+	}
+    } else {
+	hemf = GetEnhMetaFile(emfname);
+    }
+
     if (hemf == NULL) {
 	errbox("Couldn't get handle to graphic metafile");
 	return 1;
