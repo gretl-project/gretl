@@ -1558,15 +1558,13 @@ int write_plot_output_line (const char *path, FILE *fp)
     int err = 0;
 
     if (path == NULL) {
-	err = adjust_filename(buf, gretl_dotdir(), 0);
+	err = adjust_filename(buf, gretl_dotdir(), 1);
 	if (!err) {
-	    // fputs("set encoding utf-8\n", fp);
 	    fprintf(fp, "set output \"%sgretltmp.png\"\n", buf);
 	}
     } else {
-	err = adjust_filename(buf, path, 0);
+	err = adjust_filename(buf, path, 1);
 	if (!err) {
-	    // fputs("set encoding utf-8\n", fp);
 	    fprintf(fp, "set output \"%s\"\n", buf);
 	}
     }
