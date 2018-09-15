@@ -500,7 +500,7 @@ char *session_graph_make_path (char *path, const char *fname)
 
 static char *session_file_make_path (char *path, const char *fname)
 {
-#if 1 || SESSION_DEBUG
+#if SESSION_DEBUG
     fprintf(stderr, "session_file_make_path: fname arg = '%s'\n", fname);
 #endif
 
@@ -510,7 +510,7 @@ static char *session_file_make_path (char *path, const char *fname)
 	sprintf(path, "%s%c%s", session.dirname, SLASH, fname);
     }
 
-#if 1 || SESSION_DEBUG
+#if SESSION_DEBUG
     fprintf(stderr, "session_file_make_path: outgoing path = '%s'\n", path);
 #endif
 
@@ -886,10 +886,6 @@ int gui_add_graph_to_session (char *fname, char *fullname, int type)
     } else {
 	make_graph_name(shortname, graphname);
 	session_file_make_path(fullname, shortname);
-
-	fprintf(stderr, "gui_add_graph_to_session:\n"
-		"fname '%s', shortname '%s', fullname '%s'\n",
-		fname, shortname, fullname);
 
 	/* copy temporary plot file to permanent */
 	err = copyfile(fname, fullname);

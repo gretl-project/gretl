@@ -665,7 +665,15 @@ static int win32_open_arg (const char *arg, char *ext)
 int win32_open_pdf (const char *fname, const char *dest)
 {
     char *exe = get_exe_for_type(".pdf");
+    gchar *fconv = NULL;
     int err = 0;
+
+    if (utf8_encoded(fname)) {
+	fconv = g_win32_locale_filename_from_utf8(fname);
+	if (fconv != NULL) {
+	    fname = (const char *) fconv;
+	}
+    }
 
     if (exe != NULL && strstr(exe, "Acro") != NULL) {
 	/* give DDE a whirl */
@@ -697,6 +705,7 @@ int win32_open_pdf (const char *fname, const char *dest)
     }
 
     free(exe);
+    g_free(fconv);
 
     return err;
 }
@@ -722,10 +731,17 @@ int win32_open_file (const char *fname)
 	*sfx = '\0';
     }
 
-    err = win32_open_arg(fname, sfx);
+    if (utf8_encoded(fname)) {
+	gchar *fconv = g_win32_locale_filename_from_utf8(fname);
 
-    if (err) {
-	win_show_last_error();
+	if (fconv != NULL) {
+	    err = win32_open_arg(fconv, sfx);
+	    g_free(fconv);
+	} else {
+	    err = E_FOPEN;
+	}
+    } else {
+	err = win32_open_arg(fname, sfx);
     }
 
     return err;

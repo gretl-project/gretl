@@ -957,7 +957,6 @@ static int real_send_to_gp (const char *fname, int persist)
 {
     const char *prog = gretl_gnuplot_path();
     gchar *cmd = NULL;
-    UINT retval = 0;
     int err;
 
     if (utf8_encoded(fname)) {
@@ -974,17 +973,8 @@ static int real_send_to_gp (const char *fname, int persist)
     if (cmd == NULL) {
 	err = E_FOPEN;
     } else {
-	/* We're supposed to use CreateProcess(), but how do
-	   we get it to work asynchronously?
-	*/
-	retval = WinExec(cmd, SW_SHOWNORMAL);
-	err = (retval < 32);
+	err = create_child_process(cmd);
 	g_free(cmd);
-    }
-
-    if (err) {
-	fprintf(stderr, "real_send_to_gp: retval=%d\n", (int) retval);
-	win_show_last_error();
     }
 
     return err;

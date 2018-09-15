@@ -274,10 +274,6 @@ static int encoding_check (const char **ps1, gchar **ls1,
     GError *gerr = NULL;
     int err = 0;
 
-    if (ps1 != NULL) {
-	fprintf(stderr, "encoding check on s1='%s'\n", *ps1);
-    }
-
     if (ps1 != NULL && *ps1 != NULL && utf8_encoded(*ps1)) {
 	fprintf(stderr, "recoding s1 to locale\n");
 	*ls1 = g_locale_from_utf8(*ps1, -1, NULL, NULL, &gerr);
@@ -1065,7 +1061,7 @@ static void append_R_filename (char *s, int which)
 /* See if we can get the R installation path from the Windows
    registry. This is not a sure thing, since at least as of R
    2.11.1 recording the path in the registry on installation
-   is an optional thing.
+   is optional.
 
    To complicate matters, the path within the registry where
    we might find this information changed somewhere between
