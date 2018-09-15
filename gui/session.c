@@ -500,7 +500,7 @@ char *session_graph_make_path (char *path, const char *fname)
 
 static char *session_file_make_path (char *path, const char *fname)
 {
-#if SESSION_DEBUG
+#if 1 || SESSION_DEBUG
     fprintf(stderr, "session_file_make_path: fname = '%s'\n", fname);
 #endif
 
@@ -510,7 +510,7 @@ static char *session_file_make_path (char *path, const char *fname)
 	sprintf(path, "%s%c%s", session.dirname, SLASH, fname);
     } 
 
-#if SESSION_DEBUG
+#if 1 || SESSION_DEBUG
     fprintf(stderr, "session_file_make_path: path = '%s'\n", path);
 #endif
 

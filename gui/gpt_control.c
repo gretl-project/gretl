@@ -393,6 +393,11 @@ static int set_output_line (const char *s)
     return !strncmp(s, "set output", 10);
 }
 
+static int set_encoding_line (const char *s)
+{
+    return !strncmp(s, "set encod", 9);
+}
+
 static int set_print_line (const char *s)
 {
     return (!strncmp(s, "set print ", 10) ||
@@ -478,13 +483,27 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 
 	if (*restore_line != '\0') {
 	    fputs(restore_line, ftmp);
-	} else if (spec != NULL) {
-	    fprintf(ftmp, "%s\n", get_png_line_for_plotspec(spec));
+	    fputs("set encoding utf8\n", ftmp);
 	} else {
-	    fprintf(ftmp, "%s\n", gretl_gnuplot_term_line(GP_TERM_PNG,
-							  PLOT_REGULAR,
-							  flags));
+	    const char *tline;
+
+	    if (spec != NULL) {
+		tline = get_png_line_for_plotspec(spec);
+	    } else {
+		tline = gretl_gnuplot_term_line(GP_TERM_PNG,
+						PLOT_REGULAR,
+						flags);
+	    }
+	    fprintf(ftmp, "%s\n", tline);
+	    if (strstr(tline, "encoding") == NULL) {
+		fputs("set encoding utf8\n", ftmp);
+	    }
 	}
+
+	/* Note: we want "set encoding" to be done before we
+	   write the line specifying the output destination
+	   since the filename may be UTF-8.
+	*/
 	write_plot_output_line(NULL, ftmp);
 
 	if (add_line_styles) {
@@ -499,6 +518,8 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 	    } else if (is_png_term_line(fline)) {
 		; /* handled above */
 	    } else if (commented_term_line(fline)) {
+		; /* handled above */
+	    } else if (set_encoding_line(fline)) {
 		; /* handled above */
 	    } else if (set_output_line(fline)) {
 		; /* handled above */
@@ -5357,7 +5378,11 @@ void display_session_graph (const char *fname,
 	sprintf(fullname, "%s%s", gretl_dotdir(), fname);
     }
 
-    if (add_png_term_to_plot(fullname)) {
+    fprintf(stderr, "display_session_graph:\n filename='%s'\n",
+	    fullname);
+
+    err = add_png_term_to_plot(fullname);
+    if (err) {
 	return;
     }
 
