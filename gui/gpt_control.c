@@ -433,6 +433,7 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
     FILE *fsrc, *ftmp;
     char temp[MAXLEN], fline[MAXLEN];
     GptFlags flags = 0;
+    int err = 0;
 
     sprintf(temp, "%sgpttmp", gretl_dotdir());
     ftmp = gretl_tempfile_open(temp);
@@ -561,9 +562,17 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 
     fclose(fsrc);
     fclose(ftmp);
+
+    /* delete the original */
     gretl_remove(fname);
 
-    return gretl_rename(temp, fname);
+    /* and rename the new to the original name */
+    err = gretl_rename(temp, fname);
+    if (err) {
+	fprintf(stderr, "warning: rename failed\n");
+    }
+
+    return err;
 }
 
 static int add_png_term_to_plot (const char *fname)
@@ -965,6 +974,9 @@ static int real_send_to_gp (const char *fname, int persist)
     if (cmd == NULL) {
 	err = E_FOPEN;
     } else {
+	/* We're supposed to use CreateProcess(), but how do
+	   we get it to work asynchronously?
+	*/
 	retval = WinExec(cmd, SW_SHOWNORMAL);
 	err = (retval < 32);
 	g_free(cmd);
@@ -5398,6 +5410,7 @@ void display_session_graph (const char *fname,
 
     err = add_png_term_to_plot(fullname);
     if (err) {
+	fprintf(stderr, "return on err=%d from add_png_term\n");
 	return;
     }
 
@@ -5406,6 +5419,8 @@ void display_session_graph (const char *fname,
 			      fullname);
     err = gretl_spawn(plotcmd);
     g_free(plotcmd);
+
+    fprintf(stderr, "gretl_spawn gave err = %d\n", err);
 
     if (err) {
 	/* display the bad plot file */

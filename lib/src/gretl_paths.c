@@ -514,6 +514,9 @@ static int win32_rename (const char *oldpath,
     if (u_old && u_new) {
 	/* OK, both names are UTF-8 */
 	ret = g_rename(oldpath, newpath);
+    } else if (!u_old && !n_new) {
+	/* both names in locale? */
+	ret = rename(oldpath, newpath);
     } else {
 	/* let's get both names into UTF-8 */
 	const gchar *old_ok = NULL;
@@ -533,13 +536,18 @@ static int win32_rename (const char *oldpath,
 	    new_ok = newpath;
 	} else {
 	    newtmp = g_locale_to_utf8(newpath, -1, NULL, NULL, NULL);
-	    if (newtmp == NULL) {
+	    if (newtmp != NULL) {
 		new_ok = newtmp;
 	    }
 	}
 
 	if (old_ok != NULL && new_ok != NULL) {
 	    ret = g_rename(old_ok, new_ok);
+	} else {
+	    fprintf(stderr, "old_ok = %p, new_ok = %p\n",
+		    (void *) old_ok, (void *) new_ok);
+	    fprintf(stderr, "oldpath='%s', newpath='%s'\n",
+		    oldpath, newpath);
 	}
 
 	g_free(oldtmp);
