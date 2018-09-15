@@ -5395,12 +5395,8 @@ void display_session_graph (const char *fname,
 	sprintf(fullname, "%s%s", gretl_dotdir(), fname);
     }
 
-    fprintf(stderr, "display_session_graph:\n fullname='%s'\n",
-	    fullname);
-
     err = add_png_term_to_plot(fullname);
     if (err) {
-	fprintf(stderr, "return on err=%d from add_png_term\n");
 	return;
     }
 
@@ -5409,8 +5405,6 @@ void display_session_graph (const char *fname,
 			      fullname);
     err = gretl_spawn(plotcmd);
     g_free(plotcmd);
-
-    fprintf(stderr, "gretl_spawn gave err = %d\n", err);
 
     if (err) {
 	/* display the bad plot file */

@@ -735,9 +735,6 @@ int gretl_chdir (const char *path)
 
 int gretl_isdir (const char *path)
 {
-    struct stat buf;
-    int err;
-
     if (valid_utf8(path)) {
 	return g_file_test(path, G_FILE_TEST_IS_DIR);
     } else {
