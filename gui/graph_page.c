@@ -432,6 +432,7 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
 
     gretl_pop_c_numeric_locale();
 
+    fputs("set encoding utf8\n", fq);
     fprintf(fq, "set output '%s'\n", fname);
 
     filter_gnuplot_file(gpage.mono, fp, fq);

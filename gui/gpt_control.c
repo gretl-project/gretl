@@ -697,6 +697,9 @@ static int revise_plot_file (GPT_SPEC *spec,
 	if (mono) {
 	    fputs("set mono\n", fpout);
 	}
+	if (strstr(termstr, "set encoding") == NULL) {
+	    fputs("set encoding utf8\n", fpout);
+	}
 	write_plot_output_line(outname, fpout);
     }
 
