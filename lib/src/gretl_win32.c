@@ -29,6 +29,14 @@
 
 #define REGDEBUG 0
 
+static int paths_use_unicode;
+
+void win32_set_paths_use_unicode (void)
+{
+    fprintf(stderr, "setting paths_use_unicode\n");
+    paths_use_unicode = 1;
+}
+
 void win_print_last_error (void)
 {
     DWORD dw = GetLastError();
@@ -149,7 +157,7 @@ static FILE *cli_rcfile_open (void)
 	if (home != NULL) {
 	    strcpy(rcfile, home);
 	    slash_terminate(rcfile);
-	    strncat(rcfile, ".gretl2rc", 9);
+	    strcat(rcfile, ".gretl2rc");
 	}
     }
 #endif
@@ -397,16 +405,11 @@ int gretl_spawn (char *cmdline)
     return real_win_run_sync(cmdline, NULL, 0);
 }
 
-/* 2018-09-14: we should switch to CSIDL_UTF16=1 before long,
-   but as of now it needs more testing */
-
-#ifdef CSIDL_UTF16
-
 /* Retrieve various special paths from the bowels of MS
-   Windows in UTF-16 form.
+   Windows in UTF-16 form, and convert to UTF-8.
 */
 
-static char *win_special_path (int folder)
+static char *win_special_path_unicode (int folder)
 {
     gunichar2 wpath[MAX_PATH] = {0};
     char *ret = NULL;
@@ -425,15 +428,13 @@ static char *win_special_path (int folder)
     return ret;
 }
 
-#else
-
 /* Retrieve various special paths from the bowels of MS
    Windows, old "ANSI" version. These paths will be in the
    locale encoding, and will be broken if the paths include
    characters that are not present in the locale codepage.
 */
 
-static char *win_special_path (int folder)
+static char *win_special_path_locale (int folder)
 {
     TCHAR dpath[MAX_PATH];
 
@@ -445,7 +446,14 @@ static char *win_special_path (int folder)
     return gretl_strdup(dpath);
 }
 
-#endif
+static char *win_special_path (int folder)
+{
+    if (paths_use_unicode) {
+	return win_special_path_unicode(folder);
+    } else {
+	return win_special_path_locale(folder);
+    }
+}
 
 char *desktop_path (void)
 {
@@ -454,24 +462,24 @@ char *desktop_path (void)
 
 char *appdata_path (void)
 {
-#if 1
+#if 1 /* testing */
     if (!strcmp(g_get_user_name(), "cottrell")) {
+	/* fake up a non-ASCII dotdir, in UTF-8 */
 	const char *s = "c:\\users\\cottrell\\desktop\\dôtdir";
 
-# ifdef CSIDL_UTF16
-	return gretl_strdup(s);
-# else
-	gsize bytes;
-	gchar *tmp = g_locale_from_utf8(s, -1, NULL, &bytes, NULL);
-
-	if (tmp != NULL) {
-	    return gretl_strdup(tmp);
+	if (paths_use_unicode) {
+	    return gretl_strdup(s);
 	} else {
-	    return gretl_strdup("");
+	    /* use locale code page */
+	    gsize bytes;
+	    gchar *tmp = g_locale_from_utf8(s, -1, NULL, &bytes, NULL);
+
+	    if (tmp != NULL) {
+		return gretl_strdup(tmp);
+	    } else {
+		return gretl_strdup("");
+	    }
 	}
-# endif
-    } else {
-	return win_special_path(CSIDL_APPDATA);
     }
 #else
     return win_special_path(CSIDL_APPDATA);

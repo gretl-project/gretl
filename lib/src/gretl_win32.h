@@ -24,10 +24,6 @@
 
 #include <windows.h>
 
-#if 0
-#define CSIDL_UTF16 /* or not! */
-#endif
-
 enum {
     TO_BACKSLASH,
     FROM_BACKSLASH
@@ -40,6 +36,8 @@ enum {
     RLIB,
     RBASE
 };
+
+void win32_set_paths_use_unicode (void);
 
 int read_reg_val (HKEY tree, const char *base,
 		  char *keyname, char *keyval);

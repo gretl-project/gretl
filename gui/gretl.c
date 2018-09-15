@@ -116,6 +116,7 @@ static char *optdb, *optwebdb, *optpkg;
 static int optrun, opteng, optbasque, optdump, optver;
 #ifdef G_OS_WIN32
 static int optdebug;
+static int optunicode;
 #endif
 
 static gchar *param_msg =
@@ -139,6 +140,8 @@ static GOptionEntry options[] = {
 #ifdef G_OS_WIN32
     { "debug", 'b', 0, G_OPTION_ARG_NONE, &optdebug,
       N_("send debugging info to console"), NULL },
+    { "unicode", 'u', 0, G_OPTION_ARG_NONE, &optunicode,
+      N_("get Windows special paths in unicode"), NULL },
 #endif
     { "version", 'v', 0, G_OPTION_ARG_NONE, &optver,
       N_("print version information"), NULL },
@@ -686,6 +689,9 @@ int main (int argc, char **argv)
 #ifdef G_OS_WIN32
     /* let's call this before doing libgretl_init */
     gretl_win32_debug_init(optdebug);
+    if (optunicode) {
+	win32_set_paths_use_unicode();
+    }
 #elif GTK_MAJOR_VERSION == 3
     quell_glib_spew();
 #endif

@@ -5909,6 +5909,42 @@ void verbose_gerror_report (GError *gerr, const char *src)
 	    src, gerr->message, gerr->domain, gerr->code);
 }
 
+#if 1
+
+int gretl_file_get_contents (const gchar *fname, gchar **contents,
+			     gsize *size)
+{
+    GError *gerr = NULL;
+    gboolean u8 = g_utf8_validate(fname, -1, NULL);
+    gboolean ok = 0;
+
+    if (u8) {
+	ok = g_file_get_contents(fname, contents, size, &gerr);
+    }
+
+#ifdef G_OS_WIN32
+    if (!u8) {
+	gsize bytes;
+	gchar *fconv = g_locale_to_utf8(fname, -1, NULL, &bytes, &gerr);
+
+	if (fconv != NULL) {
+	    ok = g_file_get_contents(fconv, contents, size, &gerr);
+	    g_free(fconv);
+	}
+    }
+#endif
+
+    if (gerr != NULL) {
+	verbose_gerror_report(gerr, "g_file_get_contents");
+	errbox(gerr->message);
+	g_error_free(gerr);
+    }
+
+    return ok ? 0 : E_FOPEN;
+}
+
+#else
+
 int gretl_file_get_contents (const gchar *fname, gchar **contents,
 			     gsize *size)
 {
@@ -5957,6 +5993,8 @@ int gretl_file_get_contents (const gchar *fname, gchar **contents,
 
     return ok ? 0 : E_FOPEN;
 }
+
+#endif
 
 const char *print_today (void)
 {
