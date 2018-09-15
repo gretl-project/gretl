@@ -1820,6 +1820,16 @@ static void view_buffer_insert_text (windata_t *vwin, PRN *prn)
 {
     if (prn != NULL) {
 	const char *buf = gretl_print_get_trimmed_buffer(prn);
+	gchar *bconv = NULL;
+
+	if (!g_utf8_validate(buf, -1, NULL)) {
+	    gsize bytes;
+
+	    bconv = g_locale_to_utf8(buf, -1, NULL, &bytes, NULL);
+	    if (bconv != NULL) {
+		buf = (const char *) bconv;
+	    }
+	}
 
 	if (viewing_source(vwin->role)) {
 	    sourceview_insert_buffer(vwin, buf);
@@ -1832,6 +1842,8 @@ static void view_buffer_insert_text (windata_t *vwin, PRN *prn)
 	} else {
 	    textview_set_text(vwin->text, buf);
 	}
+
+	g_free(bconv);
     }
 }
 
