@@ -80,14 +80,14 @@ void foreign_destroy (void)
    sending to third-party programs.
 */
 
-static const char *foreign_get_dotdir (void)
+static const gchar *foreign_get_dotdir (void)
 {
-    static char *fdot;
+    static gchar *fdot;
 
     if (fdot == NULL) {
-	fdot = gretl_strdup(gretl_dotdir());
+	fdot = g_strdup(gretl_dotdir());
 #ifdef G_OS_WIN32
-	/* ensure forward slashes */
+	/* ensure forward slashes? stata OK with this? */
 	char *s = fdot;
 
 	while (*s) {
@@ -95,6 +95,18 @@ static const char *foreign_get_dotdir (void)
 		*s = '/';
 	    }
 	    s++;
+	}
+
+	/* recode to locale if necessary */
+	if (utf8_encoded(fdot)) {
+	    gsize bytes;
+	    gchar *locdot;
+	
+	    locdot = g_locale_from_utf8(fdot, -1, NULL, &bytes, NULL);
+	    if (locdot != NULL) {
+		free(fdot);
+		fdot = locdot;
+	    }
 	}
 #endif
     }
@@ -1819,13 +1831,7 @@ static void write_R_io_funcs (FILE *fp)
     fputs("gretl.loadmat <- function(mname) {\n", fp);
     fprintf(fp, "  prefix <- \"%s\"\n", ddir);
     fputs("  fname <- paste(prefix, mname, sep=\"\")\n", fp);
-#if 0 // def G_OS_WIN32
-    /* convert filename from UTF-8 to locale? maybe not! */
-    fputs("  fconv <- iconv(fname, from=\"utf-8\", to=\"\")\n", fp);
-    fputs("  m <- as.matrix(read.table(fconv, skip=1))\n", fp);
-#else
     fputs("  m <- as.matrix(read.table(fname, skip=1))\n", fp);
-#endif
     fputs("  return(m)\n", fp);
     fputs("}\n", fp);
 }
