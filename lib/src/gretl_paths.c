@@ -514,7 +514,7 @@ static int win32_rename (const char *oldpath,
     if (u_old && u_new) {
 	/* OK, both names are UTF-8 */
 	ret = g_rename(oldpath, newpath);
-    } else if (!u_old && !n_new) {
+    } else if (!u_old && !u_new) {
 	/* both names in locale? */
 	ret = rename(oldpath, newpath);
     } else {
