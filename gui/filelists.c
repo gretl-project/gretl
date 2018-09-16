@@ -120,9 +120,9 @@ static void write_filename_to_list (int filetype, int i, char *fname)
     if (!g_utf8_validate(fname, -1, NULL)) {
 	gsize bytes;
 
-	fconv = g_locale_to_utf8(src, -1, NULL, &bytes, NULL);
+	fconv = g_locale_to_utf8(fname, -1, NULL, &bytes, NULL);
 	if (fconv != NULL) {
-	    fname = (const char *) fconv;
+	    fname = fconv;
 	}
     }
 #endif

@@ -1392,7 +1392,7 @@ GtkWidget *build_text_popup (windata_t *vwin)
 static void tbar_calc (void)
 {
 #ifdef G_OS_WIN32
-    create_child_process(calculator);
+    create_child_process(calculator, NULL);
 #else
     gretl_fork("calculator", NULL, NULL);
 #endif
