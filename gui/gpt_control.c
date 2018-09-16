@@ -955,29 +955,7 @@ int dump_plot_buffer (const char *buf, const char *fname,
 
 static int real_send_to_gp (const char *fname, int persist)
 {
-    const char *prog = gretl_gnuplot_path();
-    gchar *cmd = NULL;
-    int err;
-
-    if (utf8_encoded(fname)) {
-	gchar *fconv = g_win32_locale_filename_from_utf8(fname);
-
-	if (fconv != NULL) {
-	    cmd = g_strdup_printf("\"%s\" \"%s\"", prog, fconv);
-	    g_free(fconv);
-	}
-    } else {
-	cmd = g_strdup_printf("\"%s\" \"%s\"", prog, fname);
-    }
-
-    if (cmd == NULL) {
-	err = E_FOPEN;
-    } else {
-	err = create_child_process(cmd);
-	g_free(cmd);
-    }
-
-    return err;
+    return create_child_process(gretl_gnuplot_path(), fname);
 }
 
 #else
@@ -5594,10 +5572,7 @@ static void mac_do_gp_script (const char *plotfile)
 void launch_gnuplot_interactive (void)
 {
 #if defined(G_OS_WIN32)
-    gchar *gpline = g_strdup_printf("\"%s\"", gretl_gnuplot_path());
-
-    create_child_process(gpline);
-    g_free(gpline);
+    create_child_process(gretl_gnuplot_path(), NULL);
 #elif defined(MAC_NATIVE)
     const char *gppath = gretl_gnuplot_path();
     gchar *gpline;
@@ -5681,12 +5656,7 @@ void launch_gnuplot_interactive (void)
 void gnuplot_view_3d (const char *plotfile)
 {
 #if defined(G_OS_WIN32)
-    gchar *gpline = g_strdup_printf("\"%s\" \"%s\"",
-				    gretl_gnuplot_path(),
-				    plotfile);
-
-    create_child_process(gpline);
-    g_free(gpline);
+    create_child_process(gretl_gnuplot_path(), plotfile);
 #elif defined(MAC_NATIVE) && !defined(GNUPLOT3D)
     mac_do_gp_script(plotfile);
 #else

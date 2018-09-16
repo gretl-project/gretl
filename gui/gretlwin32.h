@@ -30,7 +30,7 @@ enum {
     WIN32_TO_PRINTER
 };
 
-int create_child_process (char *prog);
+int create_child_process (const char *prog, const char *arg);
 
 void win32_start_R_async (void);
 

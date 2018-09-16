@@ -72,18 +72,43 @@ void redirect_io_to_console (void)
     setvbuf(stderr, NULL, _IONBF, 0);
 }
 
-int real_create_child_process (char *prog, int showerr)
+int real_create_child_process (const char *prog,
+			       const char *arg,
+			       const char *opts,
+			       int showerr)
 {
     PROCESS_INFORMATION proc_info;
     STARTUPINFO start_info;
+    gchar *cmdline = NULL;
+    gchar *aconv = NULL;
     int ret, err = 0;
+
+    /* We'll assume for now that neither @prog not @opts
+       would plausibly need re-encoding */
+
+    if (arg != NULL && utf8_encoded(arg)) {
+	aconv = g_win32_locale_filename_from_utf8(arg);
+	if (aconv != NULL) {
+	    arg = (const char *) aconv;
+	}
+    }
+
+    if (arg == NULL && opts == NULL) {
+	cmdline = g_strdup_printf("\"%s\"", prog);
+    } else if (arg != NULL && opts != NULL) {
+	cmdline = g_strdup_printf("\"%s\" %s \"%s\" %s", prog, opts, arg);
+    } else if (arg != NULL) {
+	cmdline = g_strdup_printf("\"%s\" \"%s\"", prog, arg);
+    } else {
+	cmdline = g_strdup_printf("\"%s\" %s", prog, opts);
+    }
 
     ZeroMemory(&proc_info, sizeof proc_info);
     ZeroMemory(&start_info, sizeof start_info);
     start_info.cb = sizeof start_info;
 
     ret = CreateProcess(NULL,
-			prog,          /* command line */
+			cmdline,       /* command line */
 			NULL,          /* process security attributes  */
 			NULL,          /* primary thread security attributes */
 			FALSE,         /* handles are inherited?  */
@@ -103,17 +128,20 @@ int real_create_child_process (char *prog, int showerr)
 #ifdef CHILD_DEBUG
     if (err) {
 	fprintf(stderr, "gretl: create_child_process():\n"
-		" prog='%s'\n\n", prog);
+		" cmdline='%s'\n\n", cmdline);
 	fprintf(stderr, " return from CreateProcess() = %d\n", ret);
     }
 #endif
 
+    g_free(cmdline);
+    g_free(aconv);
+
     return err;
 }
 
-int create_child_process (char *prog)
+int create_child_process (const char *prog, const char *arg)
 {
-    return real_create_child_process(prog, 1);
+    return real_create_child_process(prog, arg, NULL, 1);
 }
 
 /* try registry for path to Rgui.exe */
@@ -137,13 +165,10 @@ static int Rgui_path_from_registry (void)
 
 void win32_start_R_async (void)
 {
-    const char *supp1 = "--no-init-file";
-    const char *supp2 = "--no-restore-data";
-    gchar *Rline = NULL;
+    const char *opts = "--no-init-file --no-restore-data";
     int err;
 
-    Rline = g_strdup_printf("\"%s\" %s %s", Rcommand, supp1, supp2);
-    err = real_create_child_process(Rline, 0);
+    err = real_create_child_process(Rcommand, NULL, opts, 0);
 
     if (err) {
 	/* The default Rcommand (plain "Rgui.exe"), or the value
@@ -152,15 +177,11 @@ void win32_start_R_async (void)
 	*/
 	err = Rgui_path_from_registry();
 	if (!err) {
-	    g_free(Rline);
-	    Rline = g_strdup_printf("\"%s\" %s %s", Rcommand, supp1, supp2);
-	    real_create_child_process(Rline, 1);
+	    real_create_child_process(Rcommand, NULL, opts, 1);
 	} else {
 	    gui_errmsg(E_EXTERNAL);
 	}
     }
-
-    g_free(Rline);
 }
 
 static void dummy_output_handler (const gchar *log_domain,

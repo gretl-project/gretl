@@ -108,19 +108,40 @@ static const char *file_sections[] = {
 
 static void write_filename_to_list (int filetype, int i, char *fname)
 {
-    if (i < MAXRECENT) {
-	if (filetype == FILE_LIST_DATA) {
-	    strcpy(datalist[i], fname);
-	} else if (filetype == FILE_LIST_SESSION) {
-	    strcpy(sessionlist[i], fname);
-	} else if (filetype == FILE_LIST_SCRIPT) {
-	    strcpy(scriptlist[i], fname);
-	} else if (filetype == FILE_LIST_GFN) {
-	    strcpy(gfnlist[i], fname);
-	} else if (filetype == FILE_LIST_WDIR) {
-	    strcpy(wdirlist[i], fname);
+#ifdef G_OS_WIN32
+    gchar *fconv = NULL;
+#endif
+
+    if (i >=  MAXRECENT) {
+	return;
+    }
+
+#ifdef G_OS_WIN32
+    if (!g_utf8_validate(fname, -1, NULL)) {
+	gsize bytes;
+
+	fconv = g_locale_to_utf8(src, -1, NULL, &bytes, NULL);
+	if (fconv != NULL) {
+	    fname = (const char *) fconv;
 	}
     }
+#endif
+
+    if (filetype == FILE_LIST_DATA) {
+	strcpy(datalist[i], fname);
+    } else if (filetype == FILE_LIST_SESSION) {
+	strcpy(sessionlist[i], fname);
+    } else if (filetype == FILE_LIST_SCRIPT) {
+	strcpy(scriptlist[i], fname);
+    } else if (filetype == FILE_LIST_GFN) {
+	strcpy(gfnlist[i], fname);
+    } else if (filetype == FILE_LIST_WDIR) {
+	strcpy(wdirlist[i], fname);
+    }
+
+#ifdef G_OS_WIN32
+    g_free(fconv);
+#endif
 }
 
 /* We come here on finding a "recent ..." line in
