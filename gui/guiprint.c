@@ -28,6 +28,7 @@
 #include "forecast.h"
 #include "texprint.h"
 #include "guiprint.h"
+#include "gui_recode.h"
 #include "graph_page.h"
 
 #include "uservar.h"
@@ -106,6 +107,22 @@ static char *win32_fixed_font_name (void)
     }
 
     return gretl_strndup(s, n);
+}
+
+static gchar *my_locale_from_utf8 (const gchar *src)
+{
+    GError *gerr = NULL;
+    gchar *ret = NULL;
+    gsize bytes;
+
+    ret = g_locale_from_utf8(src, -1, NULL, &bytes, &gerr);
+
+    if (gerr) {
+	errbox(gerr->message);
+	g_error_free(gerr);
+    }
+
+    return ret;
 }
 
 void print_window_content (gchar *fullbuf, gchar *selbuf, 

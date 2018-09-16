@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "gretl.h"
@@ -23,8 +23,9 @@
 #include "gpt_control.h"
 #include "texprint.h"
 #include "guiprint.h"
+#include "gui_recode.h"
 
-#ifdef G_OS_WIN32 
+#ifdef G_OS_WIN32
 # include <io.h>
 # include "gretlwin32.h"
 #else
@@ -57,7 +58,7 @@ static void gpage_filenames_init (const char *base)
 	const char *p;
 
 	strcpy(gpage_base, base);
-	if (has_suffix(gpage_base, ".tex") || 
+	if (has_suffix(gpage_base, ".tex") ||
 	    has_suffix(gpage_base, ".pdf") ||
 	    has_suffix(gpage_base, ".eps")) {
 	    gpage_base[strlen(gpage_base) - 4] = '\0';
@@ -153,7 +154,7 @@ static int geomline (int ng, FILE *fp)
 
     fprintf(fp, "\\usepackage[body={%g%s,%g%s},"
 	    "top=%g%s,left=%g%s,nohead]{geometry}\n\n",
-	    width, unit, height, unit, 
+	    width, unit, height, unit,
 	    tmarg, unit, lmarg, unit);
 
     gretl_pop_c_numeric_locale();
@@ -217,7 +218,7 @@ static int tex_graph_setup (int ng, FILE *fp)
 	} else {
 	    s = scale[SCALE_MEDIUM];
 	    vspace = 0.25;
-	}	    
+	}
 	fputs("\\begin{tabular}{cc}\n", fp);
 	for (i=0; i<ng; i++) {
 	    if (oddgraph(ng, i)) {
@@ -407,7 +408,7 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
     gretl_push_c_numeric_locale();
 
     /* FIXME: is "dashed" wanted when "mono" is given below? */
-    
+
     if (gpage.term == GP_TERM_PDF) {
 	/* PDF output */
 	int fontsize = gp_cairo_fontsize();
@@ -420,7 +421,7 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
 	int fontsize = gp_cairo_fontsize();
 
 	fprintf(fq, "set term epscairo font \"sans,%d\"%s", fontsize,
-		(gpage.mono)? " mono dashed" : " ");	    
+		(gpage.mono)? " mono dashed" : " ");
 	fname = gpage_fname(".ps", i);
     }
 
@@ -428,20 +429,40 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
 	fprintf(fq, " size %g,%g\n", scale * 5.0, scale * 3.5);
     } else {
 	fputc('\n', fq);
-    }    
+    }
 
     gretl_pop_c_numeric_locale();
 
     fputs("set encoding utf8\n", fq);
-    fprintf(fq, "set output '%s'\n", fname);
 
-    filter_gnuplot_file(gpage.mono, fp, fq);
+#ifdef G_OS_WIN32
+    if (!g_utf8_validate(fname, -1, NULL)) {
+	gchar *fconv = my_filename_to_utf8(fname);
+
+	if (fconv != NULL) {
+	    fprintf(fq, "set output '%s'\n", fconv);
+	    g_free(fconv);
+	} else {
+	    err = E_FOPEN;
+	}
+    } else {
+	fprintf(fq, "set output '%s'\n", fname);
+    }
+#else
+    fprintf(fq, "set output '%s'\n", fname);
+#endif
+
+    if (!err) {
+	filter_gnuplot_file(gpage.mono, fp, fq);
+    }
 
     fclose(fp);
     fclose(fq);
 
-    fname = gpage_fname(".plt", 0);
-    err = gnuplot_compile(fname);
+    if (!err) {
+	fname = gpage_fname(".plt", 0);
+	err = gnuplot_compile(fname);
+    }
 
     return err;
 }
@@ -465,7 +486,7 @@ static int spawn_dvips (char *texsrc)
     GError *error = NULL;
     gchar *sout = NULL;
     gchar *argv[5];
-    char outfile[MAXLEN]; 
+    char outfile[MAXLEN];
     int ok, status;
     int ret = 0;
 
@@ -496,7 +517,7 @@ static int spawn_dvips (char *texsrc)
     } else if (status != 0) {
 	gchar *errmsg;
 
-	errmsg = g_strdup_printf("%s\n%s", 
+	errmsg = g_strdup_printf("%s\n%s",
 				 _("Failed to process TeX file"),
 				 sout);
 	errbox(errmsg);
@@ -531,7 +552,7 @@ int dvips_compile (char *texshort)
     }
 #else
     err = spawn_dvips(texshort);
-#endif 
+#endif
 
     return err;
 }
@@ -560,7 +581,7 @@ static int latex_compile_graph_page (void)
 
     if (gpage.term == GP_TERM_EPS && !err) {
 	err = dvips_compile(gpage_base);
-    }    
+    }
 
     return err;
 }
@@ -569,8 +590,7 @@ static int make_gp_output (void)
 {
     char *fname;
     double scale = 1.0;
-    int i;
-    int err = 0;
+    int i, err = 0;
 
     if (gpage.ngraphs == 3) {
 	scale = 0.8;
@@ -579,11 +599,14 @@ static int make_gp_output (void)
     }
 
     for (i=0; i<gpage.ngraphs && !err; i++) {
+	fprintf(stderr, "make_outfile %d: '%s'\n", i, gpage.fnames[i]);
 	err = gp_make_outfile(gpage.fnames[i], i + 1, scale);
     }
 
-    fname = gpage_fname(".plt", 0);
-    gretl_remove(fname);
+    if (!err) {
+	fname = gpage_fname(".plt", 0);
+	gretl_remove(fname);
+    }
 
     return err;
 }
@@ -700,7 +723,7 @@ int display_graph_page (GtkWidget *parent)
 	return 1;
     }
 
-    resp = radio_dialog(_("graph page options"), NULL, opts, 
+    resp = radio_dialog(_("graph page options"), NULL, opts,
 			2, 0, 0, parent);
     if (resp < 0) {
 	return 0;
@@ -722,7 +745,7 @@ int display_graph_page (GtkWidget *parent)
     err = make_graphpage_tex();
 
     if (!err) {
-	/* transform individual plot files and compile 
+	/* transform individual plot files and compile
 	   using gnuplot */
 	err = make_gp_output();
     }
@@ -769,7 +792,7 @@ int graph_page_get_n_graphs (void)
 }
 
 int save_graph_page (const char *fname)
-{    
+{
     const char *sdir = get_session_dirname();
     char *latex_orig = NULL;
     int err = 0;
@@ -788,7 +811,7 @@ int save_graph_page (const char *fname)
     err = make_graphpage_tex();
 
     if (!err) {
-	/* transform individual plot files and compile 
+	/* transform individual plot files and compile
 	   using gnuplot */
 	err = make_gp_output();
     }
@@ -798,7 +821,7 @@ int save_graph_page (const char *fname)
     return err;
 }
 
-static int print_graph_page_direct (const char *fname, 
+static int print_graph_page_direct (const char *fname,
 				    gretlopt opt)
 {
     char thisdir[MAXLEN];
@@ -824,19 +847,19 @@ static int print_graph_page_direct (const char *fname,
 	gpage.term = GP_TERM_PDF;
 	if (!get_tex_use_pdf()) {
 	    latex_orig = gpage_switch_compiler(gpage.term);
-	}	
+	}
     } else {
 	gpage.term = GP_TERM_EPS;
 	if (get_tex_use_pdf()) {
 	    latex_orig = gpage_switch_compiler(gpage.term);
 	}
-    }	    
+    }
 
     /* write the LaTeX driver file */
     err = make_graphpage_tex();
 
     if (!err) {
-	/* transform individual plot files and compile 
+	/* transform individual plot files and compile
 	   using gnuplot */
 	err = make_gp_output();
     }

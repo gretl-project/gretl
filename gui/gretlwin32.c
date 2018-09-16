@@ -89,7 +89,6 @@ static int real_create_child_process (const char *prog,
     STARTUPINFO start_info;
     gchar *cmdline = NULL;
     gchar *aconv = NULL;
-    int free_cmdline = 1;
     int ret, err = 0;
 
     /* We'll assume for now that neither @prog not @opts
@@ -105,8 +104,7 @@ static int real_create_child_process (const char *prog,
     if (arg == NULL && opts == NULL) {
 	if (*prog == '"') {
 	    /* already wrapped in quotes */
-	    cmdline = prog;
-	    free_cmdline = 0;
+	    cmdline = g_strdup(prog);
 	} else {
 	    cmdline = g_strdup_printf("\"%s\"", prog);
 	}
@@ -148,9 +146,7 @@ static int real_create_child_process (const char *prog,
     }
 #endif
 
-    if (free_cmdline) {
-	g_free(cmdline);
-    }
+    g_free(cmdline);
     g_free(aconv);
 
     return err;

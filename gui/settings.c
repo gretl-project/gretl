@@ -30,6 +30,7 @@
 #include "selector.h"
 #include "gpt_control.h"
 #include "tabwin.h"
+#include "gui_recode.h"
 
 #include "libset.h"
 #include "texprint.h"
@@ -2962,16 +2963,7 @@ struct wdir_setter {
 
 void set_working_dir_callback (GtkWidget *w, char *path)
 {
-    if (!g_utf8_validate(path, -1, NULL)) {
-	gchar *u = my_filename_to_utf8(path);
-
-	if (u != NULL) {
-	    set_combo_box_default_text(GTK_COMBO_BOX(w), u);
-	    g_free(u);
-	}
-    } else {
-	set_combo_box_default_text(GTK_COMBO_BOX(w), path);
-    }
+    set_combo_box_default_text(GTK_COMBO_BOX(w), path);
 }
 
 static void wdir_browse_callback (GtkWidget *w, struct wdir_setter *wset)
@@ -2993,11 +2985,6 @@ static void open_wdir (GtkButton *b, gpointer p)
 #endif
 }
 
-static void free_fname (gchar *s, gpointer p)
-{
-    g_free(s);
-}
-
 static void
 add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset)
 {
@@ -3006,7 +2993,6 @@ add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset)
     GSList *group = NULL;
     GList *list = NULL;
     gchar *deflt;
-    char tmp[MAXLEN];
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
     list = get_working_dir_list();
@@ -3015,15 +3001,25 @@ add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset)
     w = gtk_label_new(_("Working directory:"));
     gtk_box_pack_start(GTK_BOX(hbox), w, 0, 0, 5);
 
-    strcpy(tmp, gretl_workdir());
-    trim_slash(tmp);
-    deflt = my_filename_to_utf8(tmp);
+    deflt = g_strdup(gretl_workdir());
+    trim_slash(deflt);
+
+#ifdef G_OS_WIN32
+    if (!g_utf8_validate(deflt, -1, NULL)) {
+	gchar *tmp = my_filename_to_utf8(deflt);
+
+	g_free(deflt);
+	deflt = tmp;
+    }
+#endif
 
     /* combo + browse button for current working dir */
     w = combo_box_text_new_with_entry();
     gtk_container_add(GTK_CONTAINER(hbox), w);
     set_combo_box_strings_from_list(w, list);
-    set_combo_box_default_text(GTK_COMBO_BOX(w), deflt);
+    if (deflt != NULL) {
+	set_combo_box_default_text(GTK_COMBO_BOX(w), deflt);
+    }
     entry = gtk_bin_get_child(GTK_BIN(w));
     gtk_entry_set_width_chars(GTK_ENTRY(entry), 32);
     gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
@@ -3100,7 +3096,6 @@ add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset)
     gtk_container_add(GTK_CONTAINER(vbox), hbox);
     g_signal_connect(w, "clicked", G_CALLBACK(open_wdir), NULL);
 
-    g_list_foreach(list, (GFunc) free_fname, NULL);
     g_list_free(list);
     g_free(deflt);
 }
@@ -3118,11 +3113,6 @@ apply_wdir_changes (GtkWidget *w, struct wdir_setter *wset)
 	strncat(tmp, str, MAXLEN - 2);
 	g_free(str);
     }
-
-#if 0 // def G_OS_WIN32
-    /* the filename obtained from GTK will be in UTF-8 */
-    my_filename_from_utf8(tmp);
-#endif
 
     err = set_gretl_work_dir(tmp);
 

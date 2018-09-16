@@ -18,122 +18,50 @@
  */
 
 #include "gretl.h"
+#include "gui_recode.h"
+
 #include <glib/gstdio.h>
 
-static int seven_bit_string (const unsigned char *s)
-{
-    while (*s) {
-	if (*s > 127) return 0;
-	s++;
-    }
-    return 1;
-}
-
-/* This is used for converting the UTF-8 datafile name
-   inside a gretl session file to the locale.
-   FIXME should now be redundant?
-*/
-
-gchar *my_filename_from_utf8 (char *fname)
-{
-    const gchar *cset;
-    GError *err = NULL;
-    gsize bytes;
-    gchar *tmp = NULL;
-
-    if (seven_bit_string((unsigned char *) fname)) {
-	return fname;
-    }
-
-    if (g_get_charset(&cset)) {
-	/* locale uses UTF-8, OK */
-	return fname;
-    }
-
 #ifdef G_OS_WIN32
-    /* don't use g_filename_from_utf8 because on Windows
-       GLib uses UTF-8 for filenames and no conversion
-       will take place */
-    tmp = g_locale_from_utf8(fname, -1, NULL, &bytes, &err);
-#else
-    tmp = g_filename_from_utf8(fname, -1, NULL, &bytes, &err);
-#endif
 
-    if (err) {
-	errbox(err->message);
-	g_error_free(err);
-    } else {
-	strcpy(fname, tmp);
-    }
-
-    g_free(tmp);
-
-    return fname;
-}
-
-/* Note: currently used in several gui C files:
+/* Windows-specific, currently used in several gui C files:
    is it now redundant? */
 
 gchar *my_filename_to_utf8 (const char *fname)
 {
-    GError *err = NULL;
-    gchar *ret = NULL;
-
-    if (g_utf8_validate(fname, -1, NULL)) {
-	ret = g_strdup(fname);
-    } else {
-	/* On Windows, with GTK >= 2.6, the GLib filename
-	   encoding is UTF-8; however, filenames coming from
-	   a native Windows source will be in the
-	   locale charset
-	*/
-	gsize bytes;
-
-#ifdef G_OS_WIN32
-	ret = g_locale_to_utf8(fname, -1, NULL, &bytes, &err);
-#else
-	ret = g_filename_to_utf8(fname, -1, NULL, &bytes, &err);
-#endif
-    }
-
-    if (err) {
-	errbox(err->message);
-	g_error_free(err);
-    }
-
-    return ret;
-}
-
-/* Note: used only in guiprint.c, in win32 variant
-   of print_window_content(). FIXME move it?
-*/
-
-gchar *my_locale_from_utf8 (const gchar *src)
-{
-    const gchar *cset;
+    GError *gerr = NULL;
     gsize bytes;
-    GError *err = NULL;
-    gchar *ret = NULL;
+    gchar *ret;
 
-    if (g_get_charset(&cset)) {
-	/* g_get_charset returns TRUE if the returned
-	   charset is UTF-8 */
-	return g_strdup(src);
-    }
+    ret = g_locale_to_utf8(fname, -1, NULL, &bytes, &gerr);
 
-    ret = g_locale_from_utf8(src, -1, NULL, &bytes, &err);
-
-    if (err) {
-	errbox(err->message);
-	g_error_free(err);
+    if (gerr) {
+	errbox(gerr->message);
+	g_error_free(gerr);
     }
 
     return ret;
 }
+
+/* this variant of my_filename_to_utf8() will never
+   return NULL */
+
+gchar *filename_to_utf8_nofail (const char *fname)
+{
+    gchar *ret = my_filename_to_utf8(fname);
+
+    if (ret == NULL) {
+	ret = g_strdup("unknown filename");
+    }
+
+    return ret;
+}
+
+#endif
 
 /* Used when, e.g. loading a script into a GTK window: the
    script might be in a locale encoding other than UTF-8
-   (if it was created in a third-party editor).
+   if it was created in a third-party editor.
 */
 
 static gchar *real_my_locale_to_utf8 (const gchar *src,
@@ -143,30 +71,22 @@ static gchar *real_my_locale_to_utf8 (const gchar *src,
     const gchar *charset = NULL;
     gsize bytes;
     GError *err = NULL;
+    GError **errp = NULL;
     gchar *ret;
 
+    if (starting) {
+	errcount = 0;
+    }
+
+    /* avoid multiple repetition of error message */
+    errp = errcount == 0 ? &err : NULL;
+
     if (g_get_charset(&charset)) {
-	/* in a UTF-8 locale */
-	if (starting) {
-	    errcount = 0;
-	    ret = g_convert(src, -1, "UTF-8", "ISO-8859-15",
-			    NULL, &bytes, &err);
-	} else if (errcount == 0) {
-	    ret = g_convert(src, -1, "UTF-8", "ISO-8859-15",
-			    NULL, &bytes, &err);
-	} else {
-	    ret = g_convert(src, -1, "UTF-8", "ISO-8859-15",
-			    NULL, &bytes, NULL);
-	}
+	/* we're in a UTF-8 locale */
+	ret = g_convert(src, -1, "UTF-8", "ISO-8859-15",
+			NULL, &bytes, errp);
     } else {
-	if (starting) {
-	    errcount = 0;
-	    ret = g_locale_to_utf8(src, -1, NULL, &bytes, &err);
-	} else if (errcount == 0) {
-	    ret = g_locale_to_utf8(src, -1, NULL, &bytes, &err);
-	} else {
-	    ret = g_locale_to_utf8(src, -1, NULL, &bytes, NULL);
-	}
+	ret = g_locale_to_utf8(src, -1, NULL, &bytes, errp);
     }
 
     if (err) {

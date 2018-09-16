@@ -29,6 +29,7 @@
 #include "database.h"
 #include "datafiles.h"
 #include "guiprint.h"
+#include "gui_recode.h"
 #include "graphics.h"
 #include "winstack.h"
 #include "tabwin.h"
@@ -203,32 +204,29 @@ static int post_process_savename (char *fname, int action, gpointer data)
     return err;
 }
 
-static void script_window_update (windata_t *vwin, const char *fname)
+static void script_window_update (windata_t *vwin,
+				  const char *fname)
 {
-    const char *p = path_last_slash_const(fname);
-    gchar *trfname, *title;
+    gchar *basename;
 
     /* update internal filename record */
     strcpy(vwin->fname, fname);
 
-    /* ensure UTF-8 filename for display */
-    if (p != NULL) {
-	trfname = my_filename_to_utf8(p + 1);
-    } else {
-	trfname = my_filename_to_utf8(fname);
-    }
+    /* get basename for display */
+    basename = g_path_get_basename(fname);
 
     if (window_is_tab(vwin)) {
 	/* update the tab label */
-	tabwin_tab_set_title(vwin, trfname);
+	tabwin_tab_set_title(vwin, basename);
     } else {
 	/* update the window title */
-	title = g_strdup_printf("gretl: %s", trfname);
+	gchar *title = g_strdup_printf("gretl: %s", basename);
+
 	gtk_window_set_title(GTK_WINDOW(vwin->main), title);
 	g_free(title);
     }
 
-    g_free(trfname);
+    g_free(basename);
 
     if (vwin->role == EDIT_GP) {
 	/* plot file no longer under session control */
@@ -744,7 +742,7 @@ static GtkFileFilter *get_file_filter (int action, gpointer data)
 static char *win32_correct_path (char *s)
 {
     if (!g_utf8_validate(s, -1, NULL)) {
-	gchar *tmp = my_locale_to_utf8(s);
+	gchar *tmp = my_filename_to_utf8(s);
 
 	if (tmp != NULL) {
 	    strcpy(s, tmp);
@@ -763,10 +761,16 @@ static void set_default_progs_path (GtkFileChooser *fsel)
     char *progs = program_files_path();
 
     if (progs != NULL) {
-	gchar *path = my_filename_to_utf8(progs);
+	if (!g_utf8_validate(progs, -1, NULL)) {
+	    gchar *pconv = my_filename_to_utf8(progs);
 
-	gtk_file_chooser_set_current_folder(fsel, path);
-	g_free(path);
+	    if (pconv != NULL) {
+		gtk_file_chooser_set_current_folder(fsel, pconv);
+		g_free(pconv);
+	    }
+	} else {
+	    gtk_file_chooser_set_current_folder(fsel, progs);
+	}
 	free(progs);
     }
 #else
@@ -776,17 +780,10 @@ static void set_default_progs_path (GtkFileChooser *fsel)
 
 static void set_default_other_path (GtkFileChooser *fsel)
 {
-    char *home = getenv("HOME");
+    const gchar *home = g_get_home_dir();
 
     if (home != NULL) {
-#ifdef G_OS_WIN32
-	gchar *path = my_filename_to_utf8(home);
-
-	gtk_file_chooser_set_current_folder(fsel, path);
-	g_free(path);
-#else
 	gtk_file_chooser_set_current_folder(fsel, home);
-#endif
     }
 }
 

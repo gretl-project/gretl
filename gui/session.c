@@ -26,6 +26,7 @@
 #include "plotspec.h"
 #include "gpt_control.h"
 #include "guiprint.h"
+#include "gui_recode.h"
 #include "model_table.h"
 #include "graph_page.h"
 #include "textbuf.h"

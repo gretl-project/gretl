@@ -22,6 +22,7 @@
 #include "menustate.h"
 #include "toolbar.h"
 #include "fnsave.h"
+#include "gui_recode.h"
 #include "libset.h"
 
 #ifdef G_OS_WIN32
@@ -349,41 +350,45 @@ int fnamecmp (const char *f1, const char *f2)
    a path specification (command-line use)
 */
 
-static char *maybe_expand_path (char *fullname, const char *fname,
+static char *maybe_expand_path (char *fullname,
+				const char *fname,
 				size_t len)
 {
 #ifdef G_OS_WIN32
-    wchar_t *buf = NULL;
+    wchar_t *wdirname = NULL;
     int done = 0;
 
-    if ((buf =_wgetcwd(NULL, 0)) != NULL) {
+    if ((wdirname =_wgetcwd(NULL, 0)) != NULL) {
 	/* try to ensure UTF-8 validity while we're at it */
-	gchar *trbuf = g_utf16_to_utf8(buf, -1, NULL, NULL, NULL);
-	gchar *trname = NULL;
+	gchar *dirname = g_utf16_to_utf8(wdirname, -1, NULL, NULL, NULL);
+	gchar *ufname = NULL;
 
-	if (trbuf != NULL) {
+	if (dirname != NULL) {
 	    if (!g_utf8_validate(fname, -1, NULL)) {
-		gsize bytes;
-
-		trname = g_locale_to_utf8(fname, -1, NULL, &bytes, NULL);
+		ufname = my_filename_to_utf8(fname);
 	    } else {
-		trname = g_strdup(fname);
+		ufname = g_strdup(fname);
 	    }
 	}
 
-	if (trbuf != NULL && trname != NULL &&
-	    strlen(trbuf) + strlen(trname) < len) {
-	    strcat(fullname, trbuf);
+	/* If we managed to get both directory and filename
+	   in UTF-8, and the combined length will fit into
+	   @fullname, composite the two elements.
+	*/
+	if (dirname != NULL && ufname != NULL &&
+	    strlen(dirname) + strlen(ufname) < len) {
+	    strcat(fullname, dirname);
 	    slash_terminate(fullname);
-	    strcat(fullname, trname);
+	    strcat(fullname, ufname);
 	    done = 1;
 	}
 
-	free(buf);
-	g_free(trbuf);
-	g_free(trname);
+	free(wdirname);
+	g_free(dirname);
+	g_free(ufname);
     }
     if (!done) {
+	/* fallback: just transcribe */
 	strncat(fullname, fname, len);
     }
 #else
@@ -564,7 +569,7 @@ static void real_add_files_to_menus (int ftype)
 	"/menubar/File/ScriptFiles/RecentScripts",
 	"/menubar/File/Packages/RecentGfns"
     };
-    gchar *aname, *alabel;
+    gchar *aname, *alabel, *apath;
     int jmin = 0, jmax = NFILELISTS - 1;
     GtkWidget *w;
     int i, j, k;
@@ -611,17 +616,11 @@ static void real_add_files_to_menus (int ftype)
 	   for display purposes */
 
 	k = 0;
-
 	for (i=0; i<MAXRECENT && filep[i][0]; i++) {
-	    gchar *fname, *apath;
+	    const char *fname = filep[i];
 
-	    /* note: if the filename is already valid UTF-8, this just
-	       gives us a copy of filep[i]
-	    */
-	    fname = my_filename_to_utf8(filep[i]);
-
-	    if (fname == NULL) {
-		/* We got a rubbish 'filename'.  It would be nice to
+	    if (!g_utf8_validate(fname, -1, NULL)) {
+		/* We got a rubbish filename.  It would be nice to
 		   know how that happened, but we'll try to recover by
 		   blanking out the rubbish and continuing.
 		*/
@@ -641,7 +640,6 @@ static void real_add_files_to_menus (int ftype)
 		if (w != NULL) {
 		    gretl_tooltips_add(w, fname);
 		}
-		g_free(fname);
 		g_free(aname);
 		g_free(alabel);
 		g_free(apath);
@@ -659,13 +657,11 @@ void add_files_to_menus (void)
 GList *get_working_dir_list (void)
 {
     GList *list = NULL;
-    gchar *fname;
     int i;
 
     for (i=0; i<MAXRECENT && wdirp[i][0]; i++) {
-	fname = my_filename_to_utf8(wdirp[i]);
-	if (fname != NULL) {
-	    list = g_list_append(list, fname);
+	if (g_utf8_validate(wdirp[i], -1, NULL)) {
+	    list = g_list_append(list, wdirp[i]);
 	}
     }
 

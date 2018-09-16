@@ -77,7 +77,6 @@
 #include "library.h"
 #include "settings.h"
 #include "helpfiles.h"
-#include "gui_recode.h"
 
 #ifdef ENABLE_NLS
 # include "locale.h"

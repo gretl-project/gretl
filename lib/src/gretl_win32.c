@@ -264,8 +264,8 @@ void win_copy_last_error (void)
     LocalFree(buf);
 }
 
-/* If the command-line (@s1) and/or current directory
-   (@s2) are UTF-8, convert them to locale encoding.
+/* If the command-line (*ps1) and/or current directory
+   (*ps2) are UTF-8, convert them to locale encoding.
 */
 
 static int encoding_check (const char **ps1, gchar **ls1,
@@ -295,6 +295,7 @@ static int encoding_check (const char **ps1, gchar **ls1,
     }
 
     if (gerr != NULL) {
+	fprintf(stderr, "encoding_check: got GLib error\n");
 	gretl_errmsg_set(gerr->message);
 	g_error_free(gerr);
     }
@@ -307,7 +308,8 @@ static int encoding_check (const char **ps1, gchar **ls1,
    exec'ing a GUI app (in fact, just wgnuplot.exe) as slave
 */
 
-static int real_win_run_sync (char *cmdline, const char *currdir,
+static int real_win_run_sync (char *cmdline,
+			      const char *currdir,
 			      int console_app)
 {
     STARTUPINFO sinfo;

@@ -1,11 +1,32 @@
+/* 
+ *  gretl -- Gnu Regression, Econometrics and Time-series Library
+ *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
+ * 
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ * 
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ * 
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ */
+
 #ifndef GUI_RECODE_H
 #define GUI_RECODE_H
 
-gchar *my_filename_from_utf8 (char *fname);
-
-gchar *my_locale_from_utf8 (const gchar *src);
+#ifdef G_OS_WIN32
 
 gchar *my_filename_to_utf8 (const char *fname);
+
+gchar *filename_to_utf8_nofail (const char *fname);
+
+#endif
 
 gchar *my_locale_to_utf8 (const gchar *src);
 

@@ -24,6 +24,7 @@
 #include "winstack.h"
 #include "tabwin.h"
 #include "guiprint.h"
+#include "gui_recode.h"
 #include "gretl_func.h"
 #include "datafiles.h"
 #include "database.h"

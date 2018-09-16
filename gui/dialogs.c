@@ -32,6 +32,7 @@
 #include "selector.h"
 #include "fileselect.h"
 #include "winstack.h"
+#include "gui_recode.h"
 #include "gretl_panel.h"
 #include "gretl_midas.h"
 #include "texprint.h"
@@ -5496,10 +5497,17 @@ void file_read_errbox (const char *fname)
     if (*msg != '\0') {
 	errbox(msg);
     } else {
-	gchar *uname = my_filename_to_utf8(fname);
+#ifdef G_OS_WIN32
+	if (!g_utf8_validate(fname, -1, NULL)) {
+	    /* ensure UTF-8 in GTK dialog */
+	    gchar *fconv = filename_to_utf8_nofail(fname);
 
-	errbox_printf(_("Couldn't open %s"), uname);
-	g_free(uname);
+	    errbox_printf(_("Couldn't open %s"), fconv);
+	    g_free(fconv);
+	    return;
+	}
+#endif
+	errbox_printf(_("Couldn't open %s"), fname);
     }
 }
 
@@ -5510,10 +5518,17 @@ void file_write_errbox (const char *fname)
     if (*msg != '\0') {
 	errbox(msg);
     } else {
-	gchar *uname = my_filename_to_utf8(fname);
+#ifdef G_OS_WIN32
+	if (!g_utf8_validate(fname, -1, NULL)) {
+	    /* ensure UTF-8 in GTK dialog */
+	    gchar *fconv = filename_to_utf8_nofail(fname);
 
-	errbox_printf(_("Couldn't write to %s"), uname);
-	g_free(uname);
+	    errbox_printf(_("Couldn't write to %s"), fconv);
+	    g_free(fconv);
+	    return;
+	}
+#endif
+	errbox_printf(_("Couldn't write to %s"), fname);
     }
 }
 

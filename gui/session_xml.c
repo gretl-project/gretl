@@ -369,9 +369,6 @@ static int get_session_datafile_name (const char *fname, struct sample_info *sin
 	    *nodata = 1;
 	} else {
 	    strcpy(sinfo->datafile, (char *) tmp);
-#if 0 /* FIXME now not wanted? */
-	    my_filename_from_utf8(sinfo->datafile);
-#endif
 	}
 	free(tmp);
     }
@@ -664,12 +661,22 @@ static int write_session_xml (const char *datname)
     gretl_xml_header(fp);
 
     if (*datname != '\0') {
-	/* ensure UTF-8 inside XML file */
-	gchar *trname = my_filename_to_utf8(datname);
+#ifdef G_OS_WIN32
+	/* ensure UTF-8 inside XML file: now redundant? */
+	if (!g_utf8_validate(datname, -1, NULL)) {
+	    gchar *dconv = filename_to_utf8_nofail(datname);
 
+	    fprintf(fp, "<gretl-session datafile=\"%s\" date=\"%s\">\n",
+		    dconv, print_today());
+	    g_free(dconv);
+	} else {
+	    fprintf(fp, "<gretl-session datafile=\"%s\" date=\"%s\">\n",
+		    datname, print_today());
+	}
+#else
 	fprintf(fp, "<gretl-session datafile=\"%s\" date=\"%s\">\n",
-		trname, print_today());
-	g_free(trname);
+		datname, print_today());
+#endif
     } else {
 	fprintf(fp, "<gretl-session date=\"%s\">\n", print_today());
     }
