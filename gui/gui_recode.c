@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "gretl.h"
@@ -29,54 +29,9 @@ static int seven_bit_string (const unsigned char *s)
     return 1;
 }
 
-/* See if @fname works as an argument to g_fopen in read mode. If so,
-   return 0 and ignore the @fconv argument. If not, try re-encoding
-   into @fconv and if that works then return 0. If we can't get
-   g_fopen to work either way, display an error message and return
-   E_FOPEN.
-*/
-
-int validate_filename_for_glib (const gchar *fname, gchar **fconv)
-{
-    FILE *fp = g_fopen(fname, "r");
-    int err = 0;
-
-    if (fp == NULL) {
-	gsize bytes;
-
-	*fconv = NULL;
-
-#ifdef G_OS_WIN32
-	if (!g_utf8_validate(fname, -1, NULL)) {
-	    /* The Glib filename encoding is UTF-8 on Windows */
-	    *fconv = g_locale_to_utf8(fname, -1, NULL, &bytes, NULL);
-	}
-#else
-	if (g_utf8_validate(fname, -1, NULL)) {
-	    /* *nix: maybe we shouldn't be using UTF-8? */
-	    *fconv = g_filename_from_utf8(fname, -1, NULL, &bytes, NULL);
-	}
-#endif
-	if (*fconv != NULL) {
-	    fp = g_fopen(*fconv, "r");
-	    if (fp == NULL) {
-		g_free(*fconv);
-	    }
-	}
-    }
-
-    if (fp != NULL) {
-	fclose(fp);
-    } else {
-	err = E_FOPEN;
-	errbox_printf(_("Can't open %s for reading"), fname);
-    }
-
-    return err;
-}
-
 /* This is used for converting the UTF-8 datafile name
    inside a gretl session file to the locale.
+   FIXME should now be redundant?
 */
 
 gchar *my_filename_from_utf8 (char *fname)
@@ -116,7 +71,8 @@ gchar *my_filename_from_utf8 (char *fname)
     return fname;
 }
 
-/* returns new copy of fname, converted if need be */
+/* Note: currently used in several gui C files:
+   is it now redundant? */
 
 gchar *my_filename_to_utf8 (const char *fname)
 {
@@ -129,7 +85,7 @@ gchar *my_filename_to_utf8 (const char *fname)
 	/* On Windows, with GTK >= 2.6, the GLib filename
 	   encoding is UTF-8; however, filenames coming from
 	   a native Windows source will be in the
-	   locale charset 
+	   locale charset
 	*/
 	gsize bytes;
 
@@ -143,10 +99,14 @@ gchar *my_filename_to_utf8 (const char *fname)
     if (err) {
 	errbox(err->message);
 	g_error_free(err);
-    } 
+    }
 
     return ret;
 }
+
+/* Note: used only in guiprint.c, in win32 variant
+   of print_window_content(). FIXME move it?
+*/
 
 gchar *my_locale_from_utf8 (const gchar *src)
 {
@@ -156,10 +116,10 @@ gchar *my_locale_from_utf8 (const gchar *src)
     gchar *ret = NULL;
 
     if (g_get_charset(&cset)) {
-	/* g_get_charset returns TRUE if the returned 
-	   charset is UTF-8 */ 
+	/* g_get_charset returns TRUE if the returned
+	   charset is UTF-8 */
 	return g_strdup(src);
-    } 
+    }
 
     ret = g_locale_from_utf8(src, -1, NULL, &bytes, &err);
 
@@ -189,15 +149,15 @@ static gchar *real_my_locale_to_utf8 (const gchar *src,
 	/* in a UTF-8 locale */
 	if (starting) {
 	    errcount = 0;
-	    ret = g_convert(src, -1, "UTF-8", "ISO-8859-15", 
+	    ret = g_convert(src, -1, "UTF-8", "ISO-8859-15",
 			    NULL, &bytes, &err);
 	} else if (errcount == 0) {
-	    ret = g_convert(src, -1, "UTF-8", "ISO-8859-15", 
+	    ret = g_convert(src, -1, "UTF-8", "ISO-8859-15",
 			    NULL, &bytes, &err);
 	} else {
-	    ret = g_convert(src, -1, "UTF-8", "ISO-8859-15", 
+	    ret = g_convert(src, -1, "UTF-8", "ISO-8859-15",
 			    NULL, &bytes, NULL);
-	}	
+	}
     } else {
 	if (starting) {
 	    errcount = 0;
@@ -254,7 +214,7 @@ static gchar *gp_locale_to_utf8 (const gchar *src, int starting)
 	} else {
 	    from = "ISO-8859-1";
 	}
-    } 
+    }
 
     if (starting) {
 	errcount = 0;
@@ -272,33 +232,6 @@ static gchar *gp_locale_to_utf8 (const gchar *src, int starting)
 	errbox(err->message);
 	g_error_free(err);
 	errcount++;
-    }
-
-    return ret;
-}
-
-/* gp_locale_from_utf8: used when taking gnuplot commands
-   from a GTK editor window and sending them to gnuplot
-   or saving to "user file", on non-UTF-8 platforms.
-*/
-
-gchar *gp_locale_from_utf8 (const gchar *src)
-{
-    gsize read, wrote;
-    GError *err = NULL;
-    gchar *ret;
-
-    if (gretl_is_ascii(src)) {
-	return NULL;
-    }
-
-    /* let glib figure out what the target locale is */
-
-    ret = g_locale_from_utf8(src, -1, &read, &wrote, &err);
-
-    if (err) {
-	errbox(err->message);
-	g_error_free(err);
     }
 
     return ret;
@@ -424,7 +357,7 @@ int maybe_rewrite_gp_file (const char *fname)
 
     while (fgets(line, sizeof line, fin)) {
 	int modline = 0;
-	
+
 	if (!strncmp(line, "set missing", 11)) {
 	    fputs("set datafile missing \"?\"\n", fout);
 	    modline = 1;
@@ -452,7 +385,7 @@ int maybe_rewrite_gp_file (const char *fname)
 	    if (trbuf != NULL) {
 		fputs(trbuf, fout);
 		g_free(trbuf);
-	    } 
+	    }
 	    modline = recoded = 1;
 	}
 
@@ -476,4 +409,3 @@ int maybe_rewrite_gp_file (const char *fname)
 
     return err;
 }
-

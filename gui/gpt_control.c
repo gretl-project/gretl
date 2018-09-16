@@ -955,7 +955,7 @@ int dump_plot_buffer (const char *buf, const char *fname,
 
 static int real_send_to_gp (const char *fname, int persist)
 {
-    return create_child_process(gretl_gnuplot_path(), fname);
+    return win32_run_async(gretl_gnuplot_path(), fname);
 }
 
 #else
@@ -4767,25 +4767,27 @@ void plot_expose (GtkWidget *canvas, GdkEventExpose *event,
 static GdkPixbuf *gretl_pixbuf_new_from_file (const gchar *fname)
 {
     GdkPixbuf *pbuf = NULL;
-    gchar *trfname = NULL;
-    int err;
+    GError *gerr = NULL;
 
-    err = validate_filename_for_glib(fname, &trfname);
+#ifdef G_OS_WIN32
+    if (utf8_encoded(fname)) {
+	gchar *fconv = g_win32_locale_filename_from_utf8(fname);
 
-    if (!err) {
-	GError *gerr = NULL;
-
-	if (trfname != NULL) {
-	    pbuf = gdk_pixbuf_new_from_file(trfname, &gerr);
-	    g_free(trfname);
-	} else {
-	    pbuf = gdk_pixbuf_new_from_file(fname, &gerr);
+	if (fconv != NULL) {
+	    pbuf = gdk_pixbuf_new_from_file(fconv, &gerr);
 	}
+    } else {
+	pbuf = gdk_pixbuf_new_from_file(fname, &gerr);
+    }
+#else
+    pbuf = gdk_pixbuf_new_from_file(fname, &gerr);
+#endif
 
-	if (gerr != NULL) {
-	    errbox(gerr->message);
-	    g_error_free(gerr);
-	}
+    if (gerr != NULL) {
+	errbox(gerr->message);
+	g_error_free(gerr);
+    } else if (pbuf == NULL) {
+	file_read_errbox(fname);
     }
 
     return pbuf;
@@ -5572,7 +5574,7 @@ static void mac_do_gp_script (const char *plotfile)
 void launch_gnuplot_interactive (void)
 {
 #if defined(G_OS_WIN32)
-    create_child_process(gretl_gnuplot_path(), NULL);
+    win32_run_async(gretl_gnuplot_path(), NULL);
 #elif defined(MAC_NATIVE)
     const char *gppath = gretl_gnuplot_path();
     gchar *gpline;
@@ -5656,7 +5658,7 @@ void launch_gnuplot_interactive (void)
 void gnuplot_view_3d (const char *plotfile)
 {
 #if defined(G_OS_WIN32)
-    create_child_process(gretl_gnuplot_path(), plotfile);
+    win32_run_async(gretl_gnuplot_path(), plotfile);
 #elif defined(MAC_NATIVE) && !defined(GNUPLOT3D)
     mac_do_gp_script(plotfile);
 #else

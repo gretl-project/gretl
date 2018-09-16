@@ -106,6 +106,13 @@ static const char *file_sections[] = {
     "recent_working_dirs"
 };
 
+/* Note: the Windows-special stuff below should eventually be
+   unnecessary, but for now we want to allow for the possibility
+   that we got a locale-encoded filename on reading the "recent"
+   files from the gretl rc file; we now want to ensure that all
+   such filenames are in UTF-8. (2018-09-16)
+*/
+
 static void write_filename_to_list (int filetype, int i, char *fname)
 {
 #ifdef G_OS_WIN32

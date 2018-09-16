@@ -3119,7 +3119,7 @@ apply_wdir_changes (GtkWidget *w, struct wdir_setter *wset)
 	g_free(str);
     }
 
-#ifdef G_OS_WIN32
+#if 0 // def G_OS_WIN32
     /* the filename obtained from GTK will be in UTF-8 */
     my_filename_from_utf8(tmp);
 #endif

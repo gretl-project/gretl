@@ -1098,6 +1098,7 @@ void set_workdir_label (void)
 
 	tmp = g_strdup(gretl_workdir());
 	trim_slash(tmp);
+	/* FIXME now redundant? */
 	wdir = my_filename_to_utf8(tmp);
 	len = g_utf8_strlen(wdir, -1);
 	if (len > 56) {

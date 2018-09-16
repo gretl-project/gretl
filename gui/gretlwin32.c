@@ -72,15 +72,24 @@ void redirect_io_to_console (void)
     setvbuf(stderr, NULL, _IONBF, 0);
 }
 
-int real_create_child_process (const char *prog,
-			       const char *arg,
-			       const char *opts,
-			       int showerr)
+/* Asynchronous execution of child process. We'll be ready
+   to re-encode @arg if necessary, but in some cases (see
+   the calls below) that will already be handled. This is
+   flagged by the fact that the recoded argument is already
+   composited into @prog, and the @prog string will start
+   with a double quote.
+*/
+
+static int real_create_child_process (const char *prog,
+				      const char *arg,
+				      const char *opts,
+				      int showerr)
 {
     PROCESS_INFORMATION proc_info;
     STARTUPINFO start_info;
     gchar *cmdline = NULL;
     gchar *aconv = NULL;
+    int free_cmdline = 1;
     int ret, err = 0;
 
     /* We'll assume for now that neither @prog not @opts
@@ -94,9 +103,15 @@ int real_create_child_process (const char *prog,
     }
 
     if (arg == NULL && opts == NULL) {
-	cmdline = g_strdup_printf("\"%s\"", prog);
+	if (*prog == '"') {
+	    /* already wrapped in quotes */
+	    cmdline = prog;
+	    free_cmdline = 0;
+	} else {
+	    cmdline = g_strdup_printf("\"%s\"", prog);
+	}
     } else if (arg != NULL && opts != NULL) {
-	cmdline = g_strdup_printf("\"%s\" %s \"%s\" %s", prog, opts, arg);
+	cmdline = g_strdup_printf("\"%s\" %s \"%s\"", prog, opts, arg);
     } else if (arg != NULL) {
 	cmdline = g_strdup_printf("\"%s\" \"%s\"", prog, arg);
     } else {
@@ -133,13 +148,15 @@ int real_create_child_process (const char *prog,
     }
 #endif
 
-    g_free(cmdline);
+    if (free_cmdline) {
+	g_free(cmdline);
+    }
     g_free(aconv);
 
     return err;
 }
 
-int create_child_process (const char *prog, const char *arg)
+int win32_run_async (const char *prog, const char *arg)
 {
     return real_create_child_process(prog, arg, NULL, 1);
 }
@@ -643,6 +660,10 @@ static int get_pdf_service_name (char *service, const char *exe)
     return err;
 }
 
+/* If and when win32_open_arg() gets called, @arg should
+   already be re-encoded to the locale if necessary.
+*/
+
 static int win32_open_arg (const char *arg, char *ext)
 {
     static int initted;
@@ -669,12 +690,15 @@ static int win32_open_arg (const char *arg, char *ext)
 	if (exe == NULL) {
 	    err = 1;
 	} else {
-	    gchar *cmd;
+	    gchar *cmd = g_strdup_printf("\"%s\" \"%s\"", exe, arg);
 
-	    cmd = g_strdup_printf("\"%s\" \"%s\"", exe, arg);
+#if 1
+	    err = real_create_child_process(cmd, NULL, NULL, 1);
+#else
 	    if (WinExec(cmd, SW_SHOW) < 32) {
 		err = 1;
 	    }
+#endif
 	    g_free(cmd);
 	    free(exe);
 	}
@@ -687,6 +711,7 @@ int win32_open_pdf (const char *fname, const char *dest)
 {
     char *exe = get_exe_for_type(".pdf");
     gchar *fconv = NULL;
+    gchar *cmd = NULL;
     int err = 0;
 
     if (utf8_encoded(fname)) {
@@ -702,31 +727,34 @@ int win32_open_pdf (const char *fname, const char *dest)
 	if (err) {
 	    /* but if that fails, try something a bit
 	       less ambitious */
-	    gchar *cmd;
-
 	    err = 0;
 	    cmd = g_strdup_printf("\"%s\" /A \"nameddest=%s\" \"%s\"",
 				  exe, dest, fname);
+#if 1
+	    err = real_create_child_process(cmd, NULL, NULL, 1);
+#else
 	    if (WinExec(cmd, SW_SHOW) < 32) {
 		err = 1;
 	    }
-	    g_free(cmd);
+#endif
 	}
     } else if (exe != NULL && strstr(exe, "umatra") != NULL) {
-	gchar *cmd;
-
 	cmd = g_strdup_printf("\"%s\" -named-dest %s \"%s\"",
 			      exe, dest, fname);
+#if 1
+	err = real_create_child_process(cmd, NULL, NULL, 1);
+#else
 	if (WinExec(cmd, SW_SHOW) < 32) {
 	    err = 1;
 	}
-	g_free(cmd);
+#endif
     } else {
 	err = win32_open_arg(fname, ".pdf");
     }
 
     free(exe);
     g_free(fconv);
+    g_free(cmd);
 
     return err;
 }

@@ -369,7 +369,9 @@ static int get_session_datafile_name (const char *fname, struct sample_info *sin
 	    *nodata = 1;
 	} else {
 	    strcpy(sinfo->datafile, (char *) tmp);
+#if 0 /* FIXME now not wanted? */
 	    my_filename_from_utf8(sinfo->datafile);
+#endif
 	}
 	free(tmp);
     }
