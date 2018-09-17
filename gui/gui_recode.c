@@ -33,6 +33,8 @@ gchar *my_filename_to_utf8 (const char *fname)
     gsize bytes;
     gchar *ret;
 
+    fprintf(stderr, "my_filename_to_utf8: '%s'\n", fname);
+
     ret = g_locale_to_utf8(fname, -1, NULL, &bytes, &gerr);
 
     if (gerr) {
