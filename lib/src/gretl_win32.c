@@ -275,6 +275,7 @@ int ensure_locale_encoding (const char **ps1, gchar **ls1,
     int err = 0;
 
     if (ps1 != NULL && *ps1 != NULL && utf8_encoded(*ps1)) {
+	/* *ps1 will be the command line */
 	fprintf(stderr, "recoding s1 to locale\n");
 	*ls1 = g_locale_from_utf8(*ps1, -1, NULL, NULL, &gerr);
 	if (*ls1 == NULL) {
@@ -286,6 +287,7 @@ int ensure_locale_encoding (const char **ps1, gchar **ls1,
     }
 
     if (!err && ps2 != NULL && *ps2 != NULL && utf8_encoded(*ps2)) {
+	/* *ps2, if present, will be the current directory */
 	*ls2 = g_win32_locale_filename_from_utf8(*ps2);
 	if (*ls2 == NULL) {
 	    err = 1;
