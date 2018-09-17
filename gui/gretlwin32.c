@@ -88,11 +88,21 @@ static int real_create_child_process (const char *prog,
     PROCESS_INFORMATION proc_info;
     STARTUPINFO start_info;
     gchar *cmdline = NULL;
+    gchar *pconv = NULL;
     gchar *aconv = NULL;
     int ret, err = 0;
 
-    /* We'll assume for now that neither @prog not @opts
-       would plausibly need re-encoding */
+    /* We assume that @opts will not need re-encoding */
+
+    err = ensure_locale_encoding(&prog, &pconv, NULL, NULL);
+    if (err) {
+	return err;
+    }
+
+    /* FIXME cross-ref with lib/src/gretl_win32.c and
+       maybe handle both @prog and @arg via the call
+       to ensure_locale_encoding().
+    */
 
     if (arg != NULL && utf8_encoded(arg)) {
 	aconv = g_win32_locale_filename_from_utf8(arg);
@@ -147,6 +157,7 @@ static int real_create_child_process (const char *prog,
 #endif
 
     g_free(cmdline);
+    g_free(pconv);
     g_free(aconv);
 
     return err;
@@ -688,13 +699,7 @@ static int win32_open_arg (const char *arg, char *ext)
 	} else {
 	    gchar *cmd = g_strdup_printf("\"%s\" \"%s\"", exe, arg);
 
-#if 1
 	    err = real_create_child_process(cmd, NULL, NULL, 1);
-#else
-	    if (WinExec(cmd, SW_SHOW) < 32) {
-		err = 1;
-	    }
-#endif
 	    g_free(cmd);
 	    free(exe);
 	}
@@ -711,6 +716,7 @@ int win32_open_pdf (const char *fname, const char *dest)
     int err = 0;
 
     if (utf8_encoded(fname)) {
+	/* note: @exe will be in the locale already */
 	fconv = g_win32_locale_filename_from_utf8(fname);
 	if (fconv != NULL) {
 	    fname = (const char *) fconv;
@@ -726,24 +732,12 @@ int win32_open_pdf (const char *fname, const char *dest)
 	    err = 0;
 	    cmd = g_strdup_printf("\"%s\" /A \"nameddest=%s\" \"%s\"",
 				  exe, dest, fname);
-#if 1
 	    err = real_create_child_process(cmd, NULL, NULL, 1);
-#else
-	    if (WinExec(cmd, SW_SHOW) < 32) {
-		err = 1;
-	    }
-#endif
 	}
     } else if (exe != NULL && strstr(exe, "umatra") != NULL) {
 	cmd = g_strdup_printf("\"%s\" -named-dest %s \"%s\"",
 			      exe, dest, fname);
-#if 1
 	err = real_create_child_process(cmd, NULL, NULL, 1);
-#else
-	if (WinExec(cmd, SW_SHOW) < 32) {
-	    err = 1;
-	}
-#endif
     } else {
 	err = win32_open_arg(fname, ".pdf");
     }

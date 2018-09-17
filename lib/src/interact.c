@@ -428,6 +428,9 @@ static int gretl_shell_sync (const char *arg, gchar **psout,
 
 int gretl_shell_grab (const char *arg, char **sout)
 {
+    /* note: the win32 implementation of gretl_shell_grab()
+       is defined in gretl_win32.c
+    */
     return gretl_shell_sync(arg, sout, NULL);
 }
 

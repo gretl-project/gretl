@@ -268,8 +268,8 @@ void win_copy_last_error (void)
    (*ps2) are UTF-8, convert them to locale encoding.
 */
 
-static int encoding_check (const char **ps1, gchar **ls1,
-			   const char **ps2, gchar **ls2)
+int ensure_locale_encoding (const char **ps1, gchar **ls1,
+			    const char **ps2, gchar **ls2)
 {
     GError *gerr = NULL;
     int err = 0;
@@ -286,6 +286,7 @@ static int encoding_check (const char **ps1, gchar **ls1,
     }
 
     if (!err && ps2 != NULL && *ps2 != NULL && utf8_encoded(*ps2)) {
+	/* use g_win32_locale_filename_from_utf8() here? */
 	*ls2 = g_locale_from_utf8(*ps2, -1, NULL, NULL, &gerr);
 	if (*ls2 == NULL) {
 	    err = 1;
@@ -295,7 +296,7 @@ static int encoding_check (const char **ps1, gchar **ls1,
     }
 
     if (gerr != NULL) {
-	fprintf(stderr, "encoding_check: got GLib error\n");
+	fprintf(stderr, "maybe_recode_to_locale: got GLib error\n");
 	gretl_errmsg_set(gerr->message);
 	g_error_free(gerr);
     }
@@ -320,7 +321,8 @@ static int real_win_run_sync (char *cmdline,
     gchar *ls2 = NULL;
     int ok, err = 0;
 
-    err = encoding_check((const char **) &cmdline, &ls1, &currdir, &ls2);
+    err = ensure_locale_encoding((const char **) &cmdline, &ls1,
+				 &currdir, &ls2);
     if (err) {
 	return err;
     }
@@ -460,7 +462,7 @@ char *desktop_path (void)
 
 char *appdata_path (void)
 {
-#if 0 /* testing */
+#if 1 /* testing */
     if (!strcmp(g_get_user_name(), "cottrell")) {
 	/* fake up a non-ASCII dotdir, in UTF-8 */
 	const char *s = "c:\\users\\cottrell\\desktop\\dôtdir";
@@ -574,7 +576,7 @@ run_child_with_pipe (const char *arg, const char *currdir,
     gchar *ls2 = NULL;
     int ok, err;
 
-    err = encoding_check(&arg, &ls1, &currdir, &ls2);
+    err = ensure_locale_encoding(&arg, &ls1, &currdir, &ls2);
     if (err) {
 	return err;
     }
@@ -662,7 +664,9 @@ static int run_cmd_with_pipes (const char *arg, const char *currdir,
     return 0;
 }
 
-static int run_cmd_wait (const char *cmd, PRN *prn)
+/* used only by gretl_shell() below */
+
+static int run_shell_cmd_wait (const char *cmd, PRN *prn)
 {
     STARTUPINFO sinfo;
     PROCESS_INFORMATION pinfo;
@@ -672,8 +676,8 @@ static int run_cmd_wait (const char *cmd, PRN *prn)
     gchar *ls2 = NULL;
     int ok, err = 0;
 
-    currdir = gretl_workdir(); /* FIXME? */
-    err = encoding_check(&cmd, &ls1, &currdir, &ls2);
+    currdir = gretl_workdir();
+    err = ensure_locale_encoding(&cmd, &ls1, &currdir, &ls2);
     if (err) {
 	return err;
     }
@@ -685,6 +689,7 @@ static int run_cmd_wait (const char *cmd, PRN *prn)
     sinfo.dwFlags = STARTF_USESHOWWINDOW;
     sinfo.wShowWindow = SW_SHOWMINIMIZED;
 
+    /* includes getting path to cmd.exe */
     cmdline = compose_command_line(cmd);
 
     ok = CreateProcess(NULL,
@@ -714,7 +719,7 @@ static int run_cmd_wait (const char *cmd, PRN *prn)
     return err;
 }
 
-static int run_cmd_async (const char *cmd)
+static int run_shell_cmd_async (const char *cmd)
 {
     STARTUPINFO sinfo;
     PROCESS_INFORMATION pinfo;
@@ -725,7 +730,7 @@ static int run_cmd_async (const char *cmd)
     int ok, err = 0;
 
     currdir = gretl_workdir();
-    err = encoding_check(&cmd, &ls1, &currdir, &ls2);
+    err = ensure_locale_encoding(&cmd, &ls1, &currdir, &ls2);
     if (err) {
 	return err;
     }
@@ -768,6 +773,11 @@ int gretl_win32_grab_output (const char *cmdline,
     return run_cmd_with_pipes(cmdline, currdir, sout, NULL, PROG_RUN);
 }
 
+/* note: gretl_shell_grab() is declared in interact.h,
+   and the non-Windows implementation is defined in
+   interact.c
+*/
+
 int gretl_shell_grab (const char *arg, char **sout)
 {
     return run_cmd_with_pipes(arg, NULL, sout, NULL, SHELL_RUN);
@@ -789,17 +799,15 @@ int gretl_shell (const char *arg, gretlopt opt, PRN *prn)
     arg += strspn(arg, " \t");
 
     if (opt & OPT_A) {
-	err = run_cmd_async(arg);
+	err = run_shell_cmd_async(arg);
     } else if (getenv("GRETL_SHELL_NEW")) {
 	err = run_cmd_with_pipes(arg, NULL, NULL, prn, SHELL_RUN);
     } else {
-	err = run_cmd_wait(arg, prn);
+	err = run_shell_cmd_wait(arg, prn);
     }
 
     return err;
 }
-
-#define USE_UFT16 1
 
 /* unlike access(), returns 1 on success */
 
@@ -807,18 +815,14 @@ int win32_write_access (char *path)
 {
     SID *sid = NULL;
     ACL *dacl = NULL;
-    LPTSTR domain = NULL;
+    LPWSTR domain = NULL;
     SECURITY_DESCRIPTOR *sd = NULL;
     TRUSTEE t;
     DWORD sidsize = 0, dlen = 0;
     SID_NAME_USE stype;
     ACCESS_MASK amask;
     const gchar *username;
-#if USE_UTF16
     gunichar2 *acname = NULL;
-#else
-    gchar *acname = NULL;
-#endif
     int ret, ok = 0, err = 0;
 
     /* screen for the read-only attribute first */
@@ -829,18 +833,10 @@ int win32_write_access (char *path)
     /* note: the following always returns UTF-8 */
     username = g_get_user_name();
 
-#if USE_UTF16
     acname = g_utf8_to_utf16(username, -1, NULL, NULL, NULL);
     /* get the size of the SID and domain */
     LookupAccountNameW(NULL, acname, NULL, &sidsize,
 		       NULL, &dlen, &stype);
-#else
-    gsize sz;
-    acname = g_locale_from_utf8(username, -1, NULL, &sz, NULL);
-    /* get the size of the SID and domain */
-    LookupAccountName(NULL, acname, NULL, &sidsize,
-		      NULL, &dlen, &stype);
-#endif
 
     sid = LocalAlloc(0, sidsize);
     domain = LocalAlloc(0, dlen * sizeof *domain);
@@ -850,13 +846,8 @@ int win32_write_access (char *path)
 
     if (!err) {
 	/* call the function for real */
-#if USE_UTF16
 	ret = LookupAccountNameW(NULL, acname, sid, &sidsize,
 				 domain, &dlen, &stype);
-#else
-	ret = LookupAccountName(NULL, acname, sid, &sidsize,
-				domain, &dlen, &stype);
-#endif
 	err = (ret == 0);
     }
 
@@ -911,6 +902,7 @@ int win32_delete_dir (const char *path)
     int err = 0;
 
     if (utf8_encoded(path)) {
+	/* FIXME use UTF-16? */
 	gsize bytes;
 
 	tmp = g_locale_from_utf8(path, -1, NULL, &bytes, NULL);

@@ -5544,22 +5544,32 @@ static void win32_run_R_sync (const char *buf, gretlopt opt)
     }
 }
 
+/* win32 version */
+
 void run_foreign_script (gchar *buf, int lang)
 {
     const char *fname;
     PRN *prn = NULL;
     int err;
 
+    /* note: as things stand, the @fname we obtain here
+       (composed in gretl_foreign.c) will be in the locale
+       encoding, ready to pass on the Windows command line
+       as in "foreign.exe fname"; this composite string is
+       given to gretl_win32_grab_output() or gretl_spawn()
+       below.
+    */
+
     if (lang == LANG_OX) {
-	err = write_gretl_ox_file(buf, OPT_G, &fname);
+	err = write_gretl_ox_script(buf, OPT_G, &fname);
     } else if (lang == LANG_PYTHON) {
-	err = write_gretl_python_file(buf, OPT_G, &fname);
+	err = write_gretl_python_script(buf, OPT_G, &fname);
     } else if (lang == LANG_JULIA) {
-	err = write_gretl_julia_file(buf, OPT_G, &fname);
+	err = write_gretl_julia_script(buf, OPT_G, &fname);
     } else if (lang == LANG_STATA) {
-	err = write_gretl_stata_file(buf, OPT_G, dataset, &fname);
+	err = write_gretl_stata_script(buf, OPT_G, dataset, &fname);
     } else if (lang == LANG_OCTAVE) {
-	err = write_gretl_octave_file(buf, OPT_G, dataset, &fname);
+	err = write_gretl_octave_script(buf, OPT_G, dataset, &fname);
     } else {
 	err = E_DATA;
     }
@@ -5806,15 +5816,15 @@ void run_foreign_script (gchar *buf, int lang)
     int err;
 
     if (lang == LANG_OX) {
-	err = write_gretl_ox_file(buf, OPT_G, &fname);
+	err = write_gretl_ox_script(buf, OPT_G, &fname);
     } else if (lang == LANG_PYTHON) {
-	err = write_gretl_python_file(buf, OPT_G, &fname);
+	err = write_gretl_python_script(buf, OPT_G, &fname);
     } else if (lang == LANG_JULIA) {
-	err = write_gretl_julia_file(buf, OPT_G, &fname);
+	err = write_gretl_julia_script(buf, OPT_G, &fname);
     } else if (lang == LANG_STATA) {
-	err = write_gretl_stata_file(buf, OPT_G, dataset, &fname);
+	err = write_gretl_stata_script(buf, OPT_G, dataset, &fname);
     } else if (lang == LANG_OCTAVE) {
-	err = write_gretl_octave_file(buf, OPT_G, dataset, &fname);
+	err = write_gretl_octave_script(buf, OPT_G, dataset, &fname);
     } else {
 	err = E_DATA;
     }

@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #ifndef GRETL_WIN32_H
@@ -38,6 +38,9 @@ enum {
 };
 
 void win32_set_paths_use_unicode (void);
+
+int ensure_locale_encoding (const char **ps1, gchar **ls1,
+			    const char **ps2, gchar **ls2);
 
 int read_reg_val (HKEY tree, const char *base,
 		  char *keyname, char *keyval);
@@ -84,7 +87,7 @@ int R_path_from_registry (char *s, int which);
 
 int win32_check_for_program (const char *prog);
 
-char *strptime (const char *buf, const char *format, 
+char *strptime (const char *buf, const char *format,
 		struct tm *timeptr);
 
 double win32_fscan_nonfinite (FILE *fp, int *err);
