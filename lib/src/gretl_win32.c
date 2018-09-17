@@ -286,8 +286,7 @@ int ensure_locale_encoding (const char **ps1, gchar **ls1,
     }
 
     if (!err && ps2 != NULL && *ps2 != NULL && utf8_encoded(*ps2)) {
-	/* use g_win32_locale_filename_from_utf8() here? */
-	*ls2 = g_locale_from_utf8(*ps2, -1, NULL, NULL, &gerr);
+	*ls2 = g_win32_locale_filename_from_utf8(*ps2);
 	if (*ls2 == NULL) {
 	    err = 1;
 	} else {
@@ -296,7 +295,8 @@ int ensure_locale_encoding (const char **ps1, gchar **ls1,
     }
 
     if (gerr != NULL) {
-	fprintf(stderr, "maybe_recode_to_locale: got GLib error\n");
+	fprintf(stderr, "maybe_recode_to_locale: got GLib error:\n");
+	fprintf(stderr, " '%s'\n", gerr->message);
 	gretl_errmsg_set(gerr->message);
 	g_error_free(gerr);
     }
