@@ -1347,14 +1347,15 @@ static int set_session_dirname (const char *zdirname)
 static void maybe_absolutize_tryfile (void)
 {
     if (!g_path_is_absolute(tryfile)) {
-	char *tmp, dirname[FILENAME_MAX];
+	gchar *cwd = g_get_current_dir();
 
-	*dirname = '\0';
-	tmp = getcwd(dirname, FILENAME_MAX - 1);
-	if (tmp != NULL) {
-	    tmp = g_strdup(tryfile);
-	    gretl_build_path(tryfile, dirname, tmp, NULL);
+	if (cwd != NULL) {
+	    gchar *tmp = g_build_filename(cwd, tryfile, NULL);
+
+	    *tryfile = '\0';
+	    strncat(tryfile, tmp, MAXLEN - 1);
 	    g_free(tmp);
+	    g_free(cwd);
 	}
     }
 }

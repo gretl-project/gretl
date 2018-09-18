@@ -2554,18 +2554,13 @@ static int unpack_book_data (const char *fname)
     char *p, path[FILENAME_MAX];
     int err = 0;
 
-    errno = 0;
-
     strcpy(path, fname);
     p = path_last_slash(path);
     if (p != NULL) {
 	*p = '\0';
     }
 
-    if (chdir(path) != 0) {
-	if (errno != 0) {
-	    gretl_errmsg_set_from_errno("chdir", errno);
-	}
+    if (gretl_chdir(path) != 0) {
 	err = E_FOPEN;
     }
 

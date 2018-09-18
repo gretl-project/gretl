@@ -1758,8 +1758,8 @@ int set_db_name (const char *fname, int filetype, PRN *prn)
 
 #ifdef OS_OSX
 	if (fp == NULL) {
-	    gchar *tmp = g_build_path(SLASHSTR, gretl_app_support_dir(), "db",
-				      fname, NULL);
+	    gchar *tmp = g_build_filename(gretl_app_support_dir(), "db",
+					  fname, NULL);
 
 	    fp = gretl_fopen(tmp, "rb");
 	    if (fp != NULL) {

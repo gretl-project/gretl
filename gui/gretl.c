@@ -326,8 +326,8 @@ static void maybe_fix_dbname (char *dbname)
     if (fp != NULL) {
 	fclose(fp);
     } else if (!g_path_is_absolute(dbname)) {
-	gchar *tmp = g_build_path(SLASHSTR, gretl_home(), "db",
-				  dbname, NULL);
+	gchar *tmp = g_build_filename(gretl_home(), "db",
+				      dbname, NULL);
 
 	fp = gretl_fopen(tmp, "rb");
 	if (fp != NULL) {

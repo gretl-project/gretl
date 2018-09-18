@@ -3147,17 +3147,14 @@ int import_spreadsheet (const char *fname, GretlFileType ftype,
     if (importer == NULL) {
         err = 1;
     } else {
-	char thisdir[FILENAME_MAX];
-
-	if (!getcwd(thisdir, FILENAME_MAX - 1)) {
-	    *thisdir = '\0';
-	}	
+	gchar *thisdir = g_get_current_dir();
 
 	err = (*importer)(fname, list, sheetname, dset, opt, prn);
 
-	if (*thisdir != '\0') {
+	if (thisdir != NULL) {
 	    /* come back out of dotdir? */
-	    chdir(thisdir);
+	    gretl_chdir(thisdir);
+	    g_free(thisdir);
 	}
     }
 

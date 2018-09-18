@@ -3622,7 +3622,7 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 
     if (currdir != NULL) {
 	/* go back where we came from */
-	g_chdir(currdir);
+	gretl_chdir(currdir);
 	g_free(currdir);
     }
 

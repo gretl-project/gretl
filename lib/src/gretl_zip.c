@@ -23,7 +23,6 @@
 
 #include "libgretl.h"
 #include "gretl_zip.h"
-#include <unistd.h>  /* for getcwd() */
 
 static int handle_zip_error (const char *fname,
 			     GError *gerr, int err,
@@ -584,9 +583,9 @@ int package_make_zipfile (const char *gfnname,
 			  gretlopt opt,
 			  PRN *prn)
 {
-    char origdir[FILENAME_MAX];
     char pkgbase[FILENAME_MAX];
     char pkgname[VNAMELEN];
+    gchar *origdir = NULL;
     gchar *tmp, *dotpath = NULL;
     int len, dir_made = 0;
     int err = 0;
@@ -626,10 +625,7 @@ int package_make_zipfile (const char *gfnname,
     strncat(pkgname, tmp, len);
 
     /* record where we are now */
-    *origdir = '\0';
-    if (getcwd(origdir, FILENAME_MAX - 1) == NULL) {
-	*origdir = '\0';
-    }
+    origdir = g_get_current_dir();
 
 #if 0    
     fprintf(stderr, "origdir: '%s'\n", origdir);    
@@ -709,12 +705,12 @@ int package_make_zipfile (const char *gfnname,
 		       zipfile copying operation.
 		    */
 		    const char *realdest = dest;
-		    char zipname[MAXLEN];
+		    gchar *zipname = NULL;
 
 		    pprintf(prn, "Copying %s... ", tmp);
 		    
-		    if (*origdir && !g_path_is_absolute(dest)) {
-			gretl_build_path(zipname, origdir, dest, NULL);
+		    if (origdir != NULL && !g_path_is_absolute(dest)) {
+			zipname = g_build_filename(origdir, dest, NULL);
 			realdest = zipname;
 		    }
 		    err = gretl_copy_file(tmp, realdest);
@@ -722,15 +718,17 @@ int package_make_zipfile (const char *gfnname,
 		    if (strcmp(tmp, realdest)) {
 			gretl_remove(tmp);
 		    }
+		    g_free(zipname);
 		}
 	    }
 	    g_free(tmp);
 	}
     }
 
-    if (*origdir != '\0') {
+    if (origdir != NULL) {
 	/* get back to where we came from */
 	gretl_chdir(origdir);
+	g_free(origdir);
     }
 
     if (dir_made) {

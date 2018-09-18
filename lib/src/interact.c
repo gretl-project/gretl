@@ -48,7 +48,6 @@
 # include "gretl_www.h"
 #endif
 
-#include <unistd.h> /* for getcwd() */
 #include <errno.h>
 
 /* for the "shell" command */
@@ -959,15 +958,17 @@ static void maybe_restore_vparms (int *parms)
 
 static int cwd_is_workdir (void)
 {
-    char thisdir[MAXLEN];
+    gchar *thisdir = g_get_current_dir();
+    int ret = 0;
 
-    if (getcwd(thisdir, MAXLEN - 1) != NULL) {
+    if (thisdir != NULL) {
 	int n = strlen(thisdir);
 
-	return strncmp(thisdir, gretl_workdir(), n) == 0;
+	ret = (strncmp(thisdir, gretl_workdir(), n) == 0);
+	g_free(thisdir);
     }
 
-    return 0;
+    return ret;
 }
 
 static int redirection_ok (PRN *prn)

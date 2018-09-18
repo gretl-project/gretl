@@ -819,7 +819,7 @@ static int real_deltree (const char *path)
 	if (!err) {
 	    g_dir_close(dir);
 	    /* delete the directory itself */
-	    if (chdir("..") == 0) {
+	    if (g_chdir("..") == 0) {
 		err = g_remove(path);
 	    }
 	}
@@ -2238,25 +2238,9 @@ const char *gretl_dotdir (void)
     return paths.dotdir;
 }
 
-char *gretl_make_dotpath (const char *basename)
+gchar *gretl_make_dotpath (const char *basename)
 {
-    int n = strlen(paths.dotdir);
-    int m = strlen(basename);
-    char *path = NULL;
-
-    if (paths.dotdir[n-1] != SLASH) {
-	path = calloc(n + m + 2, 1);
-	if (path != NULL) {
-	    sprintf(path, "%s%c%s", paths.dotdir, SLASH, basename);
-	}
-    } else {
-	path = calloc(n + m + 1, 1);
-	if (path != NULL) {
-	    sprintf(path, "%s%s", paths.dotdir, basename);
-	}
-    }
-
-    return path;
+    return g_build_filename(paths.dotdir, basename, NULL);
 }
 
 const char *gretl_workdir (void)
@@ -2641,30 +2625,38 @@ static int slash_terminated (const char *s, int n)
 
 void win32_set_gretldir (const char *progname)
 {
+    gchar *pconv = NULL;
     int done = 0;
+
+    if (!g_utf8_validate(progname, -1, NULL)) {
+	gsize bytes;
+
+	pconv = g_locale_to_utf8(progname, -1, NULL, &bytes, NULL);
+	if (pconv != NULL) {
+	    progname = (const char *) pconv;
+	}
+    }
 
     *paths.gretldir = '\0';
 
     if (g_path_is_absolute(progname)) {
 	strncat(paths.gretldir, progname, MAXLEN - 1);
     } else {
-	char *test = getcwd(paths.gretldir, MAXLEN);
+	gchar *cwd = g_get_current_dir();
 
-	if (test != NULL) {
-	    int n = strlen(paths.gretldir);
-	    int m = strlen(progname);
-	    char sep = getsep(paths.gretldir);
+	if (cwd != NULL) {
+	    gchar *abspath = g_build_filename(cwd, progname, NULL);
 
-	    if (n + m + 1 < MAXLEN) {
-		slash_terminate(paths.gretldir);
-		strncat(paths.gretldir, progname, m);
-		if (!gretl_file_exists(paths.gretldir)) {
-		    /* can't be right! */
-		    *paths.gretldir = '\0';
-		}
+	    if (gretl_file_exists(abspath)) {
+		strncat(paths.gretldir, abspath, MAXLEN - 1);
 	    }
+	    g_free(abspath);
+	    g_free(cwd);
 	}
     }
+
+    /* we're done with @progname */
+    g_free(pconv);
 
     if (*paths.gretldir != '\0') {
 	char *s = rslashpos(paths.gretldir);
@@ -3328,7 +3320,7 @@ const char *gretl_maybe_switch_dir (const char *fname)
     if (fname[0] == '~' && fname[1] == '/') {
 	char *home = getenv("HOME");
 
-	if (home != NULL && chdir(home) == 0) {
+	if (home != NULL && gretl_chdir(home) == 0) {
 	    fname += 2;
 	}
     } else if (!g_path_is_absolute(fname)) {
@@ -3421,13 +3413,14 @@ int gretl_normalize_path (char *path)
 
     if (*path == '.') {
 	/* absolutize the path first, if necessary */
-	char dirname[FILENAME_MAX];
+	gchar *cwd = g_get_current_dir();
 
-	if (getcwd(dirname, FILENAME_MAX - 1) != NULL) {
-	    char *tmp2 = gretl_strdup(path);
+	if (cwd != NULL) {
+	    char *tmp = gretl_strdup(path + 1);
 
-	    gretl_build_path(path, dirname, tmp2, NULL);
-	    free(tmp2);
+	    gretl_build_path(path, cwd, tmp, NULL);
+	    free(tmp);
+	    g_free(cwd);
 	}
     }
 
@@ -3450,7 +3443,7 @@ int gretl_normalize_path (char *path)
     }
 #endif
 
-    /* split string s on the path separator and cumulate
+    /* split string @s on the path separator and cumulate
        the pieces in array P, skipping any pieces which
        are just "." */
 
@@ -3472,7 +3465,6 @@ int gretl_normalize_path (char *path)
 	int j;
 
 	/* let each ".." annihilate the preceding path chunk */
-
 	for (i=n-1; i>0; i--) {
 	    if (P[i] != NULL && !strcmp(P[i], "..")) {
 		for (j=i-1; j>0; j--) {
@@ -3485,7 +3477,6 @@ int gretl_normalize_path (char *path)
 	}
 
 	/* re-assemble the path */
-
 	for (i=0; i<n; i++) {
 	    if (P[i] != NULL && strcmp(P[i], "..")) {
 		strcat(tmp, SLASHSTR);
@@ -3586,13 +3577,13 @@ static void handle_use_cwd (int use_cwd, ConfigPaths *cpaths)
     libset_set_bool(USE_CWD, use_cwd);
 
     if (use_cwd) {
-	char *s, cwd[MAXLEN];
+	gchar *cwd = g_get_current_dir();
 
-	s = getcwd(cwd, MAXLEN);
-	if (s != NULL) {
+	if (cwd != NULL) {
 	    *cpaths->workdir = '\0';
-	    strncat(cpaths->workdir, s, MAXLEN - 2);
+	    strncat(cpaths->workdir, cwd, MAXLEN - 2);
 	    slash_terminate(cpaths->workdir);
+	    g_free(cwd);
 	}
     }
 }
@@ -3913,7 +3904,7 @@ int gretl_path_compose (char *targ, int len,
    write to an input char * (@targ) instead of returning
    a newly allocated string. The code is also somewhat
    simplified by the assumption that if the platform is
-   not MS Windows the directort separator is always '/':
+   not MS Windows the directory separator is always '/':
    this is a safe assumptions for the platforms supported
    by gretl.
 */

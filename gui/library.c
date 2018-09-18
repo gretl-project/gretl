@@ -8272,10 +8272,8 @@ static void ensure_newline_termination (gchar **ps)
 void do_run_script (GtkWidget *w, windata_t *vwin)
 {
     gboolean selection = FALSE;
-    char cwd[MAXLEN];
+    gchar *currdir = NULL;
     gchar *buf = NULL;
-
-    *cwd = '\0';
 
     if (vwin->role == EDIT_GP ||
 	vwin->role == EDIT_R ||
@@ -8308,17 +8306,12 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
 	   up any data files it may reference. We'll also arrange
 	   to revert the working directory once we're done.
 	*/
-	char *s, *p, scriptdir[MAXLEN];
+	if (g_path_is_absolute(vwin->fname)) {
+	    gchar *dname = g_path_get_dirname(vwin->fname);
 
-	strcpy(scriptdir, vwin->fname);
-	p = path_last_slash(scriptdir);
-	if (p != NULL) {
-	    s = getcwd(cwd, MAXLEN);
-	    if (s == NULL) {
-		*cwd = '\0';
-	    }
-	    *p = '\0';
-	    gretl_chdir(scriptdir);
+	    currdir = g_get_current_dir();
+	    gretl_chdir(dname);
+	    g_free(dname);
 	}
     }
 
@@ -8350,8 +8343,9 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
 
     g_free(buf);
 
-    if (*cwd != '\0') {
-	gretl_chdir(cwd);
+    if (currdir != NULL) {
+	gretl_chdir(currdir);
+	g_free(currdir);
     }
 }
 

@@ -175,14 +175,13 @@ static int import_prune_columns (DATASET *dset)
 
 /* we want this for unzipping purposes */
 
-static char *get_absolute_path (const char *fname)
+static gchar *get_absolute_path (const char *fname)
 {
-    char buf[FILENAME_MAX];
-    char *s, *ret = NULL;
+    gchar *cwd = g_get_current_dir();
+    gchar *ret = NULL;
 
-    s = getcwd(buf, sizeof buf - strlen(fname) - 2);
-    if (s != NULL) {
-	ret = g_strdup_printf("%s/%s", s, fname);
+    if (cwd != NULL) {
+	ret = g_build_filename(cwd, fname, NULL);
     }
 
     return ret;
@@ -190,17 +189,17 @@ static char *get_absolute_path (const char *fname)
 
 static void remove_temp_dir (char *dname)
 {
-    const char *udir = gretl_dotdir();
-
 # ifdef G_OS_WIN32
-    char *fullpath = g_strdup_printf("%s%s", udir, dname);
+    gchar *fullpath = gretl_make_dotpath(dname);
 
-    gretl_chdir(udir);
-    win32_delete_dir(fullpath);
+    if (gretl_chdir(gretl_dotdir()) == 0) {
+	win32_delete_dir(fullpath);
+    }
     g_free(fullpath);
 # else
-    gretl_chdir(udir);
-    gretl_deltree(dname);
+    if (gretl_chdir(gretl_dotdir()) == 0) {
+	gretl_deltree(dname);
+    }
 # endif
 }
 
@@ -247,46 +246,16 @@ static int gretl_make_tempdir (char *dname)
 static int open_import_zipfile (const char *fname, char *dname,
 				PRN *prn)
 {
-#ifdef WIN32
-    gchar *fconv = NULL;
-#endif
-    const char *udir = gretl_dotdir();
     const char *real_fname = fname;
-    char *abspath = NULL;
-    FILE *fp = NULL;
+    gchar *abspath = NULL;
     int err = 0;
 
     errno = 0;
     *dname = '\0';
 
-    /* In case @fname is in UTF-8 but we're on MS Windows,
-       grab the appropriately recoded filename to pass into
-       the zipfile apparatus, since in that context a filename
-       that works with plain C-library stdio is expected.
-       FIXME: is this right if we're using libgsf to do the
-       unzipping? Maybe this doesn't matter if we're using
-       libgsf only on UTF-8 systems (e.g. modern Linux), in
-       which case no recoding will be required.
-    */
-#ifdef WIN32
-    if (utf8_encoded(fname)) {
-	fconv = g_win32_locale_filename_from_utf8(fname);
-	if (fconv == NULL) {
-	    /* recoding failed */
-	    return E_FOPEN;
-	}
-	real_fname = fconv;
+    if (gretl_test_fopen(real_fname, "r") != 0) {
+	return E_FOPEN;
     }
-#endif
-
-    /* note: deliberately not using gretl_fopen here! */
-    fp = fopen(real_fname, "r");
-    if (fp == NULL) {
-	err = E_FOPEN;
-	goto bailout;
-    }
-
-    fclose(fp);
 
     /* by doing chdir, we may lose track of the file if
        its path is relative */
@@ -297,9 +266,8 @@ static int open_import_zipfile (const char *fname, char *dname,
 	}
     }
 
-    /* cd to user dir and make temporary dir */
-    if (gretl_chdir(udir)) {
-	gretl_errmsg_set_from_errno(udir, errno);
+    /* cd to dotdir and make temporary dir */
+    if (gretl_chdir(gretl_dotdir()) != 0) {
 	err = E_FOPEN;
     } else {
 	err = gretl_make_tempdir(dname);
@@ -312,7 +280,7 @@ static int open_import_zipfile (const char *fname, char *dname,
     }
 
     if (!err) {
-	/* if all has gone OK, we're now "in" the temporary
+	/* if all has gone OK, we're now in the temporary
 	   directory under dotdir, and @real_fname is the
 	   absolute path to the file to be unzipped.
 	*/
@@ -322,13 +290,7 @@ static int open_import_zipfile (const char *fname, char *dname,
 	}
     }
 
-    free(abspath);
-
- bailout:
-
-#ifdef WIN32
-    g_free(fconv);
-#endif
+    g_free(abspath);
 
     return err;
 }

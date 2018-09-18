@@ -728,22 +728,18 @@ void set_gretl_startdir (void)
 {
     if (usecwd) {
 	char *test = getenv("GRETL_STARTDIR");
-	char startdir[MAXLEN];
+	gchar *startdir = NULL;
 
 	/* the environment variable check is mostly for the OS X
 	   package */
 
 	if (test != NULL) {
-	    *startdir = '\0';
-	    strncat(startdir, test, MAXLEN - 1);
+	    startdir = g_strdup(test);
 	} else {
-	    test = getcwd(startdir, MAXLEN);
-	    if (test == NULL) {
-		*startdir = '\0';
-	    }
+	    startdir = g_get_current_dir();
 	}
 
-	if (*startdir != '\0') {
+	if (startdir != NULL) {
 	    int err = set_gretl_work_dir(startdir);
 
 	    if (err) {
@@ -751,6 +747,7 @@ void set_gretl_startdir (void)
 	    } else {
 		fprintf(stderr, "working dir = '%s'\n", startdir);
 	    }
+	    g_free(startdir);
 	}
     }
 }

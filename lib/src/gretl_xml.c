@@ -1420,7 +1420,7 @@ int gretl_xml_child_get_strings_array (xmlNodePtr node, xmlDocPtr doc,
 
 static int get_matrix_values_via_file (gretl_matrix *m, const char *s)
 {
-    char *fname;
+    gchar *fname;
     FILE *fp;
     int err = 0;
 
@@ -1431,7 +1431,7 @@ static int get_matrix_values_via_file (gretl_matrix *m, const char *s)
 
     fp = gretl_fopen(fname, "wb");
     if (fp == NULL) {
-	free(fname);
+	g_free(fname);
 	return E_FOPEN;
     }
 
@@ -1466,7 +1466,7 @@ static int get_matrix_values_via_file (gretl_matrix *m, const char *s)
     }
 
     remove(fname);
-    free(fname);
+    g_free(fname);
 
     return err;
 }

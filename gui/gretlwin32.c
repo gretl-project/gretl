@@ -92,23 +92,11 @@ static int real_create_child_process (const char *prog,
     gchar *aconv = NULL;
     int ret, err = 0;
 
-    /* We assume that @opts will not need re-encoding */
+    /* We assume that @opts will not need recoding */
 
-    err = ensure_locale_encoding(&prog, &pconv, NULL, NULL);
+    err = ensure_locale_encoding(&prog, &pconv, &arg, &aconv);
     if (err) {
 	return err;
-    }
-
-    /* FIXME cross-ref with lib/src/gretl_win32.c and
-       maybe handle both @prog and @arg via the call
-       to ensure_locale_encoding().
-    */
-
-    if (arg != NULL && utf8_encoded(arg)) {
-	aconv = g_win32_locale_filename_from_utf8(arg);
-	if (aconv != NULL) {
-	    arg = (const char *) aconv;
-	}
     }
 
     if (arg == NULL && opts == NULL) {

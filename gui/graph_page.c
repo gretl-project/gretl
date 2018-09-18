@@ -807,8 +807,9 @@ int save_graph_page (const char *fname)
 static int print_graph_page_direct (const char *fname,
 				    gretlopt opt)
 {
-    char thisdir[MAXLEN];
+    gchar *thisdir = NULL;
     char *latex_orig = NULL;
+    int cd_done = 0;
     int err = 0;
 
     if (gpage.ngraphs == 0) {
@@ -816,14 +817,14 @@ static int print_graph_page_direct (const char *fname,
 	return 1;
     }
 
-    if (getcwd(thisdir, MAXLEN - 1) == NULL) {
-	*thisdir = '\0';
+    thisdir = g_get_current_dir();
+
+    if (gretl_chdir(get_session_dirname()) != 0) {
+	g_free(thisdir);
+	return 1;
     }
 
     gpage.mono = (opt & OPT_M) ? 1 : 0;
-
-    gretl_chdir(get_session_dirname());
-
     gpage_filenames_init(NULL);
 
     if (has_suffix(fname, ".pdf")) {
@@ -859,10 +860,12 @@ static int print_graph_page_direct (const char *fname,
 	} else {
 	    output = gpage_fname(".ps", 0);
 	}
-	if (*thisdir != '\0') {
+	if (thisdir != NULL) {
 	    /* come back out of dotdir */
-	    if (chdir(thisdir) == -1) {
+	    if (gretl_chdir(thisdir) != 0) {
 		err = 1;
+	    } else {
+		cd_done = 1;
 	    }
 	}
 	fname = gretl_maybe_switch_dir(fname);
@@ -873,6 +876,11 @@ static int print_graph_page_direct (const char *fname,
 	remove(output);
     }
 
+    if (thisdir != NULL && !cd_done) {
+	gretl_chdir(thisdir);
+    }
+
+    g_free(thisdir);
     gpage_revert_compiler(latex_orig);
     gpage_cleanup();
 

@@ -26,8 +26,6 @@
 #include <string.h>
 #include <glib.h>
 
-#include <unistd.h> /* for getcwd */
-
 #include "strutils.h"
 #include "zipunzip.h"
 
@@ -115,10 +113,12 @@ int gretl_native_make_zipfile (const char *fname,
     return (err != 0);
 }
 
-int gretl_native_zip_datafile (const char *fname, const char *path,
-			       int level, GError **gerr)
+int gretl_native_zip_datafile (const char *fname,
+			       const char *path,
+			       int level,
+			       GError **gerr)
 {
-    char thisdir[FILENAME_MAX];
+    gchar *thisdir;
     int err = 0;
 
 #if ZDEBUG
@@ -126,28 +126,32 @@ int gretl_native_zip_datafile (const char *fname, const char *path,
 	    " fname = '%s', path = '%s'\n", fname, path);
 #endif
 
-    if (getcwd(thisdir, FILENAME_MAX - 1) == NULL) {
+    thisdir = g_get_current_dir();
+
+    if (thisdir == NULL) {
 	err = E_FOPEN; /* ?? */
     } else {
-	char zipname[FILENAME_MAX];
-	const char *array[3] = {
+	const char *datnames[3] = {
 	    "data.xml", "data.bin", NULL
 	};
+	gchar *zipname = NULL;
 
 #if ZDEBUG
 	fprintf(stderr, " cwd = '%s'\n", thisdir);
 #endif
 	if (!g_path_is_absolute(fname)) {
-	    gretl_build_path(zipname, thisdir, fname, NULL);
+	    zipname = g_build_filename(thisdir, fname, NULL);
 	} else {
-	    strcpy(zipname, fname);
+	    zipname = g_strdup(fname);
 	}
 #if ZDEBUG
 	fprintf(stderr, " zipname = '%s'\n", zipname);
 #endif
 	gretl_chdir(path);
-	err = zipfile_archive_files(zipname, array, level, 0, gerr);
+	err = zipfile_archive_files(zipname, datnames, level, 0, gerr);
+	g_free(zipname);
 	gretl_chdir(thisdir);
+	g_free(thisdir);
     }
 
     if (*gerr != NULL && !err) {
