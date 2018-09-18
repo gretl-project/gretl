@@ -27,7 +27,12 @@
 #include <shlobj.h>
 #include <aclapi.h>
 
-#define REGDEBUG 0
+static int windebug;
+
+void set_windebug (int s)
+{
+    windebug = s;
+}
 
 void win_print_last_error (void)
 {
@@ -286,13 +291,17 @@ int ensure_locale_encoding (const char **ps1, gchar **ls1,
 
     if (ps1 != NULL && *ps1 != NULL && utf8_encoded(*ps1)) {
 	/* *ps1 will be the command line */
-	fprintf(stderr, "recoding s1 to locale\n");
+	if (windebug) {
+	    fprintf(stderr, "recoding s1 to locale\n");
+	}
 	*ls1 = g_locale_from_utf8(*ps1, -1, NULL, NULL, &gerr);
 	if (*ls1 == NULL) {
 	    err = 1;
 	} else {
 	    *ps1 = (const char *) *ls1;
-	    fprintf(stderr, "recoded s1: '%s'\n", *ps1);
+	    if (windebug) {
+		fprintf(stderr, "recoded s1: '%s'\n", *ps1);
+	    }
 	}
     }
 
@@ -1090,7 +1099,9 @@ int R_path_from_registry (char *s, int which)
 	*s = '\0';
     }
 
-    fprintf(stderr, "R_path_from_registry: '%s'\n", s);
+    if (windebug) {
+	fprintf(stderr, "R_path_from_registry: '%s'\n", s);
+    }
 
     return err;
 }

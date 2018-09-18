@@ -258,16 +258,17 @@ void get_default_windows_app_font (char *target)
 void gretl_win32_debug_init (int debug)
 {
     if (debug) {
-	/* This doesn't work if gretl is launched
-	   from an MSYS2 terminal window, and in that
-	   context we should have OSTYPE=msys in the
-	   environment.
-	*/
 	char *s = getenv("OSTYPE");
 
 	if (s == NULL || strcmp(s, "msys")) {
+	    /* This doesn't work if gretl is launched
+	       from an MSYS2 terminal window, and in that
+	       context we should have OSTYPE=msys in the
+	       environment.
+	    */
 	    redirect_io_to_console();
 	}
+	set_windebug(1);
     }
 
     set_g_logging(debug);

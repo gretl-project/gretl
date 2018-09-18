@@ -37,6 +37,8 @@ enum {
     RBASE
 };
 
+void set_windebug (int s);
+
 int ensure_locale_encoding (const char **ps1, gchar **ls1,
 			    const char **ps2, gchar **ls2);
 
