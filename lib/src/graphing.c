@@ -1946,7 +1946,12 @@ static int gnuplot_make_graph (void)
     }
 
 #ifdef WIN32
-    sprintf(buf, "\"%s\" \"%s\"", gretl_gnuplot_path(), fname);
+    if (gui || fmt) {
+	sprintf(buf, "\"%s\" \"%s\"", gretl_gnuplot_path(), fname);
+    } else {
+	/* gretlcli, interactive */
+	sprintf(buf, "\"%s\" -persist \"%s\"", gretl_gnuplot_path(), fname);
+    }
     err = gretl_spawn(buf);
 #else /* !WIN32 */
     if (gui || fmt) {
