@@ -156,6 +156,8 @@ void about_dialog (void)
 
     /* Website link */
     ebox = gtk_event_box_new();
+    gtk_event_box_set_visible_window(GTK_EVENT_BOX(ebox), FALSE);
+    gtk_widget_set_can_default(ebox, FALSE);
     buf = g_markup_printf_escaped("<span color=\"blue\">%s</span>",
 				  website);
     label = gtk_label_new(NULL);
