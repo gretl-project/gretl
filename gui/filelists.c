@@ -22,7 +22,6 @@
 #include "menustate.h"
 #include "toolbar.h"
 #include "fnsave.h"
-#include "gui_recode.h"
 #include "libset.h"
 
 #ifdef G_OS_WIN32
@@ -125,6 +124,7 @@ static void write_filename_to_list (int filetype, int i, char *fname)
     }
 
 #ifdef G_OS_WIN32
+    /* guard against old locale-encoded filenames in rc file */
     if (!g_utf8_validate(fname, -1, NULL)) {
 	gsize bytes;
 
@@ -354,52 +354,19 @@ static char *maybe_expand_path (char *fullname,
 				const char *fname,
 				size_t len)
 {
-#ifdef G_OS_WIN32
-    wchar_t *wdirname = NULL;
-    int done = 0;
+    gchar *cwd = g_get_current_dir();
 
-    if ((wdirname =_wgetcwd(NULL, 0)) != NULL) {
-	/* try to ensure UTF-8 validity while we're at it */
-	gchar *dirname = g_utf16_to_utf8(wdirname, -1, NULL, NULL, NULL);
-	gchar *ufname = NULL;
+    *fullname = '\0';
 
-	if (dirname != NULL) {
-	    if (!g_utf8_validate(fname, -1, NULL)) {
-		ufname = my_filename_to_utf8(fname);
-	    } else {
-		ufname = g_strdup(fname);
-	    }
-	}
-
-	/* If we managed to get both directory and filename
-	   in UTF-8, and the combined length will fit into
-	   @fullname, composite the two elements.
-	*/
-	if (dirname != NULL && ufname != NULL &&
-	    strlen(dirname) + strlen(ufname) < len) {
-	    strcat(fullname, dirname);
-	    slash_terminate(fullname);
-	    strcat(fullname, ufname);
-	    done = 1;
-	}
-
-	free(wdirname);
-	g_free(dirname);
-	g_free(ufname);
-    }
-    if (!done) {
-	/* fallback: just transcribe */
-	strncat(fullname, fname, len);
-    }
-#else
-    if (getcwd(fullname, len) != NULL &&
-	strlen(fullname) + strlen(fname) < len) {
+    if (cwd != NULL && strlen(cwd) + strlen(fname) < len - 1) {
+	strcat(fullname, cwd);
 	slash_terminate(fullname);
 	strcat(fullname, fname);
     } else {
 	strncat(fullname, fname, len);
     }
-#endif
+
+    g_free(cwd);
 
     return fullname;
 }

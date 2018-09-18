@@ -22,45 +22,6 @@
 
 #include <glib/gstdio.h>
 
-#ifdef G_OS_WIN32
-
-/* Windows-specific, currently used in several gui C files:
-   is it now redundant? */
-
-gchar *my_filename_to_utf8 (const char *fname)
-{
-    GError *gerr = NULL;
-    gsize bytes;
-    gchar *ret;
-
-    fprintf(stderr, "my_filename_to_utf8: '%s'\n", fname);
-
-    ret = g_locale_to_utf8(fname, -1, NULL, &bytes, &gerr);
-
-    if (gerr) {
-	errbox(gerr->message);
-	g_error_free(gerr);
-    }
-
-    return ret;
-}
-
-/* this variant of my_filename_to_utf8() will never
-   return NULL */
-
-gchar *filename_to_utf8_nofail (const char *fname)
-{
-    gchar *ret = my_filename_to_utf8(fname);
-
-    if (ret == NULL) {
-	ret = g_strdup("unknown filename");
-    }
-
-    return ret;
-}
-
-#endif
-
 /* Used when, e.g. loading a script into a GTK window: the
    script might be in a locale encoding other than UTF-8
    if it was created in a third-party editor.

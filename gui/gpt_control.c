@@ -27,7 +27,6 @@
 #include "fileselect.h"
 #include "calculator.h"
 #include "guiprint.h"
-#include "gui_recode.h"
 #include "textbuf.h"
 #include "graphics.h"
 #include "boxplots.h"
@@ -4770,21 +4769,7 @@ static GdkPixbuf *gretl_pixbuf_new_from_file (const gchar *fname)
     GdkPixbuf *pbuf = NULL;
     GError *gerr = NULL;
 
-#ifdef G_OS_WIN32
-    if (!g_utf8_validate(fname, -1, NULL)) {
-	gchar *fconv = my_filename_to_utf8(fname);
-
-	if (fconv != NULL) {
-	    pbuf = gdk_pixbuf_new_from_file(fconv, &gerr);
-	    g_free(fconv);
-	}
-    } else {
-	pbuf = gdk_pixbuf_new_from_file(fname, &gerr);
-    }
-#else
     pbuf = gdk_pixbuf_new_from_file(fname, &gerr);
-#endif
-
     if (gerr != NULL) {
 	errbox(gerr->message);
 	g_error_free(gerr);

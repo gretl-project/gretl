@@ -59,7 +59,6 @@
 #include "datawiz.h"
 #include "selector.h"
 #include "guiprint.h"
-#include "gui_recode.h"
 #include "fncall.h"
 #include "tabwin.h"
 #include "join-gui.h"
@@ -1709,14 +1708,6 @@ gchar *title_from_filename (const char *fname,
     } else {
 	gchar *tname = g_path_get_basename(fname);
 
-#ifdef G_OS_WIN32
-	if (!g_utf8_validate(tname, -1, NULL)) {
-	    gchar *tconv = filename_to_utf8_nofail(tname);
-
-	    g_free(tname);
-	    tname = tconv;
-	}
-#endif
 	if (prepend) {
 	    title = g_strdup_printf("gretl: %s", tname);
 	    g_free(tname);

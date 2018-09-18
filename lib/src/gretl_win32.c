@@ -29,14 +29,6 @@
 
 #define REGDEBUG 0
 
-static int paths_use_unicode;
-
-void win32_set_paths_use_unicode (void)
-{
-    fprintf(stderr, "setting paths_use_unicode\n");
-    paths_use_unicode = 1;
-}
-
 void win_print_last_error (void)
 {
     DWORD dw = GetLastError();
@@ -411,7 +403,7 @@ int gretl_spawn (char *cmdline)
    Windows in UTF-16 form, and convert to UTF-8.
 */
 
-static char *win_special_path_unicode (int folder)
+static char *win_special_path (int folder)
 {
     gunichar2 wpath[MAX_PATH] = {0};
     char *ret = NULL;
@@ -430,33 +422,6 @@ static char *win_special_path_unicode (int folder)
     return ret;
 }
 
-/* Retrieve various special paths from the bowels of MS
-   Windows, old "ANSI" version. These paths will be in the
-   locale encoding, and will be broken if the paths include
-   characters that are not present in the locale codepage.
-*/
-
-static char *win_special_path_locale (int folder)
-{
-    TCHAR dpath[MAX_PATH];
-
-    if (SHGetFolderPath(NULL, folder | CSIDL_FLAG_CREATE,
-			NULL, 0, dpath) != S_OK) {
-	return NULL;
-    }
-
-    return gretl_strdup(dpath);
-}
-
-static char *win_special_path (int folder)
-{
-    if (paths_use_unicode) {
-	return win_special_path_unicode(folder);
-    } else {
-	return win_special_path_locale(folder);
-    }
-}
-
 char *desktop_path (void)
 {
     return win_special_path(CSIDL_DESKTOPDIRECTORY);
@@ -464,24 +429,12 @@ char *desktop_path (void)
 
 char *appdata_path (void)
 {
-#if 1 /* testing */
+#if 0 /* testing */
     if (!strcmp(g_get_user_name(), "cottrell")) {
 	/* fake up a non-ASCII dotdir, in UTF-8 */
 	const char *s = "c:\\users\\cottrell\\desktop\\dôtdir";
 
-	if (paths_use_unicode) {
-	    return gretl_strdup(s);
-	} else {
-	    /* use locale code page */
-	    gsize bytes;
-	    gchar *tmp = g_locale_from_utf8(s, -1, NULL, &bytes, NULL);
-
-	    if (tmp != NULL) {
-		return gretl_strdup(tmp);
-	    } else {
-		return gretl_strdup("");
-	    }
-	}
+	return gretl_strdup(s);
     }
 #else
     return win_special_path(CSIDL_APPDATA);

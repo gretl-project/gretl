@@ -20,14 +20,6 @@
 #ifndef GUI_RECODE_H
 #define GUI_RECODE_H
 
-#ifdef G_OS_WIN32
-
-gchar *my_filename_to_utf8 (const char *fname);
-
-gchar *filename_to_utf8_nofail (const char *fname);
-
-#endif
-
 gchar *my_locale_to_utf8 (const gchar *src);
 
 gchar *my_locale_to_utf8_next (const gchar *src);

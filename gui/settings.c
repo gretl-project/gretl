@@ -30,7 +30,6 @@
 #include "selector.h"
 #include "gpt_control.h"
 #include "tabwin.h"
-#include "gui_recode.h"
 
 #include "libset.h"
 #include "texprint.h"
@@ -3003,15 +3002,6 @@ add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset)
 
     deflt = g_strdup(gretl_workdir());
     trim_slash(deflt);
-
-#ifdef G_OS_WIN32
-    if (!g_utf8_validate(deflt, -1, NULL)) {
-	gchar *tmp = my_filename_to_utf8(deflt);
-
-	g_free(deflt);
-	deflt = tmp;
-    }
-#endif
 
     /* combo + browse button for current working dir */
     w = combo_box_text_new_with_entry();

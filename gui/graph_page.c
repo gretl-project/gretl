@@ -23,7 +23,6 @@
 #include "gpt_control.h"
 #include "texprint.h"
 #include "guiprint.h"
-#include "gui_recode.h"
 
 #ifdef G_OS_WIN32
 # include <io.h>
@@ -434,23 +433,7 @@ static int gp_make_outfile (const char *gfname, int i, double scale)
     gretl_pop_c_numeric_locale();
 
     fputs("set encoding utf8\n", fq);
-
-#ifdef G_OS_WIN32
-    if (!g_utf8_validate(fname, -1, NULL)) {
-	gchar *fconv = my_filename_to_utf8(fname);
-
-	if (fconv != NULL) {
-	    fprintf(fq, "set output '%s'\n", fconv);
-	    g_free(fconv);
-	} else {
-	    err = E_FOPEN;
-	}
-    } else {
-	fprintf(fq, "set output '%s'\n", fname);
-    }
-#else
     fprintf(fq, "set output '%s'\n", fname);
-#endif
 
     if (!err) {
 	filter_gnuplot_file(gpage.mono, fp, fq);

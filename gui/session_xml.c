@@ -661,22 +661,8 @@ static int write_session_xml (const char *datname)
     gretl_xml_header(fp);
 
     if (*datname != '\0') {
-#ifdef G_OS_WIN32
-	/* ensure UTF-8 inside XML file: now redundant? */
-	if (!g_utf8_validate(datname, -1, NULL)) {
-	    gchar *dconv = filename_to_utf8_nofail(datname);
-
-	    fprintf(fp, "<gretl-session datafile=\"%s\" date=\"%s\">\n",
-		    dconv, print_today());
-	    g_free(dconv);
-	} else {
-	    fprintf(fp, "<gretl-session datafile=\"%s\" date=\"%s\">\n",
-		    datname, print_today());
-	}
-#else
 	fprintf(fp, "<gretl-session datafile=\"%s\" date=\"%s\">\n",
 		datname, print_today());
-#endif
     } else {
 	fprintf(fp, "<gretl-session date=\"%s\">\n", print_today());
     }

@@ -29,7 +29,6 @@
 #include "database.h"
 #include "datafiles.h"
 #include "guiprint.h"
-#include "gui_recode.h"
 #include "graphics.h"
 #include "winstack.h"
 #include "tabwin.h"
@@ -734,43 +733,13 @@ static GtkFileFilter *get_file_filter (int action, gpointer data)
     return filter;
 }
 
-#ifdef G_OS_WIN32
-
-/* Having constructed a path @s for input use with the GTK
-   file chooser, ensure that it's in UTF-8 */
-
-static char *win32_correct_path (char *s)
-{
-    if (!g_utf8_validate(s, -1, NULL)) {
-	gchar *tmp = my_filename_to_utf8(s);
-
-	if (tmp != NULL) {
-	    strcpy(s, tmp);
-	    g_free(tmp);
-	}
-    }
-
-    return s;
-}
-
-#endif /* G_OS_WIN32 */
-
 static void set_default_progs_path (GtkFileChooser *fsel)
 {
 #ifdef G_OS_WIN32
     char *progs = program_files_path();
 
     if (progs != NULL) {
-	if (!g_utf8_validate(progs, -1, NULL)) {
-	    gchar *pconv = my_filename_to_utf8(progs);
-
-	    if (pconv != NULL) {
-		gtk_file_chooser_set_current_folder(fsel, pconv);
-		g_free(pconv);
-	    }
-	} else {
-	    gtk_file_chooser_set_current_folder(fsel, progs);
-	}
+	gtk_file_chooser_set_current_folder(fsel, progs);
 	free(progs);
     }
 #else
@@ -1153,10 +1122,6 @@ static void gtk_file_selector (int action, FselDataSrc src,
     } else {
 	get_default_dir_for_action(startdir, action);
     }
-
-#ifdef G_OS_WIN32
-    win32_correct_path(startdir);
-#endif
 
     if (parent == NULL) {
 	/* by default the file selector is parented by the

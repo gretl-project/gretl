@@ -28,7 +28,6 @@
 #include "uservar.h"
 #include "treeutils.h"
 #include "session.h"
-#include "gui_recode.h"
 #include "gretl_ipc.h"
 #include "fncall.h"
 #include "menustate.h"
@@ -910,19 +909,7 @@ void set_main_window_title (const char *name, gboolean modified)
 	} else {
 	    prog = g_strdup("gretl");
 	}
-
-#ifdef G_OS_WIN32
-	if (!g_utf8_validate(name, -1, NULL)) {
-	    gchar *nconv = filename_to_utf8_nofail(name);
-
-	    title = g_strdup_printf("%s: %s%s", prog, nconv, mod);
-	    g_free(nconv);
-	} else {
-	    title = g_strdup_printf("%s: %s%s", prog, name, mod);
-	}
-#else
 	title = g_strdup_printf("%s: %s%s", prog, name, mod);
-#endif
 	g_free(prog);
     }
 
@@ -1052,15 +1039,6 @@ void set_sample_label (DATASET *dset)
 	    /* data file open already */
 	    gchar *basename = g_path_get_basename(datafile);
 
-#ifdef G_OS_WIN32
-	    if (!g_utf8_validate(basename, -1, NULL)) {
-		/* shouldn't be required any more? */
-		gchar *bconv = filename_to_utf8_nofail(basename);
-
-		g_free(basename);
-		basename = bconv;
-	    }
-#endif
 	    strcpy(tmp, " ");
 	    if (data_status & SESSION_DATA) {
 		sprintf(tmp + 1, "Imported %s", basename);
@@ -1099,15 +1077,6 @@ void set_workdir_label (void)
 
 	wdir = g_strdup(gretl_workdir());
 	trim_slash(wdir);
-#ifdef G_OS_WIN32
-	/* FIXME now redundant? */
-	if (!g_utf8_validate(wdir, -1, NULL)) {
-	    gchar *tmp = my_filename_to_utf8(wdir);
-
-	    g_free(wdir);
-	    wdir = tmp;
-	}
-#endif
 	len = g_utf8_strlen(wdir, -1);
 	if (len > 56) {
 	    gretl_utf8_truncate(wdir, 53);

@@ -37,8 +37,6 @@ enum {
     RBASE
 };
 
-void win32_set_paths_use_unicode (void);
-
 int ensure_locale_encoding (const char **ps1, gchar **ls1,
 			    const char **ps2, gchar **ls2);
 
