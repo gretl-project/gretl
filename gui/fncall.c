@@ -4065,28 +4065,23 @@ int gui_function_pkg_query_register (const char *fname,
 
     if (package_has_menu_attachment(fname, &pkgname, &menupath,
 				    &label)) {
-	if (menupath == NULL || label == NULL) {
-	    msgbox(_("This package lacks a label or menu-path"),
-		   GTK_MESSAGE_ERROR, parent);
-	} else {
-	    const gchar *relpath;
-	    int resp, modelwin = 0;
+	const gchar *relpath;
+	int resp, modelwin = 0;
 
-	    relpath = pkg_get_attachment(menupath, &modelwin);
-	    resp = pkg_attach_query(pkgname, label, relpath,
-				    modelwin, parent);
-	    if (resp == GRETL_YES) {
-		gui_function_pkg_register(fname, pkgname,
-					  label, relpath,
-					  modelwin);
-	    }
-	    notified = 1;
+	relpath = pkg_get_attachment(menupath, &modelwin);
+	resp = pkg_attach_query(pkgname, label, relpath,
+				modelwin, parent);
+	if (resp == GRETL_YES) {
+	    gui_function_pkg_register(fname, pkgname,
+				      label, relpath,
+				      modelwin);
 	}
-
-	free(pkgname);
-	free(menupath);
-	free(label);
+	notified = 1;
     }
+
+    free(pkgname);
+    free(menupath);
+    free(label);
 
     return notified;
 }

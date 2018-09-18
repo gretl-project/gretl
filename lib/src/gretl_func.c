@@ -5708,18 +5708,14 @@ int package_has_menu_attachment (const char *fname,
     xmlNodePtr node = NULL;
     xmlNodePtr sub;
     char *tmp = NULL;
-    int found = 0;
-    int ftarg = 1;
+    int got_label = 0;
+    int got_attach = 0;
     int stop = 0;
     int err = 0;
 
     err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &node);
     if (err) {
 	return 0;
-    }
-
-    if (label != NULL) {
-	ftarg++;
     }
 
     node = node->xmlChildrenNode;
@@ -5734,7 +5730,8 @@ int package_has_menu_attachment (const char *fname,
 		if (!xmlStrcmp(sub->name, (XUC) "menu-attachment")) {
 		    gretl_xml_node_get_trimmed_string(sub, doc, &tmp);
 		    if (tmp != NULL) {
-			if (++found == ftarg) {
+			got_attach = 1;
+			if (got_attach && got_label) {
 			    stop = 1;
 			}
 			if (attach != NULL) {
@@ -5743,12 +5740,18 @@ int package_has_menu_attachment (const char *fname,
 			    free(tmp);
 			}
 		    }
-		} else if (label != NULL &&
-			   !xmlStrcmp(sub->name, (XUC) "label")) {
+		} else if (!xmlStrcmp(sub->name, (XUC) "label")) {
 		    gretl_xml_node_get_trimmed_string(sub, doc, &tmp);
-		    *label = tmp;
-		    if (++found == ftarg) {
-			stop = 1;
+		    if (tmp != NULL) {
+			got_label = 1;
+			if (got_attach && got_label) {
+			    stop = 1;
+			}
+			if (label != NULL) {
+			    *label = tmp;
+			} else {
+			    free(tmp);
+			}
 		    }
 		} else if (!xmlStrcmp(sub->name, (XUC) "help")) {
 		    /* we've overshot */
@@ -5764,7 +5767,7 @@ int package_has_menu_attachment (const char *fname,
 	xmlFreeDoc(doc);
     }
 
-    return found;
+    return got_attach && got_label;
 }
 
 int package_needs_zipping (const char *fname,
