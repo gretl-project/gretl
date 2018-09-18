@@ -56,12 +56,12 @@ int read_reg_val (HKEY tree, const char *base,
 		  char *keyname, char *keyval)
 {
     unsigned long datalen = MAXLEN;
-    char regpath[64];
-    LONG ret;
+    gchar *regpath;
+    LSTATUS ret;
     HKEY regkey;
-    int err = 0;
+    int enc_err = 0;
 
-    sprintf(regpath, "Software\\%s", base);
+    regpath = g_strdup_printf("Software\\%s", base);
 
     ret = RegOpenKeyEx(tree,      /* handle to open key */
 		       regpath,   /* subkey name */
@@ -70,28 +70,51 @@ int read_reg_val (HKEY tree, const char *base,
 		       &regkey    /* key handle */
 		       );
 
-    if (ret != ERROR_SUCCESS) {
-#if REGDEBUG
-	fprintf(stderr, "Couldn't read registry path %s\n", regpath);
-	win_print_last_error();
-#endif
-        return 1;
+    if (ret == ERROR_SUCCESS) {
+	gunichar2 *wkeyname;
+
+	wkeyname = g_utf8_to_utf16(keyname, -1, NULL, NULL, NULL);
+
+	if (wkeyname == NULL) {
+	    enc_err = 1;
+	} else {
+	    gunichar2 wval[MAXLEN/2] = {0};
+
+	    ret = RegQueryValueExW(regkey,
+				   wkeyname,
+				   NULL,
+				   NULL,
+				   (LPBYTE) wval,
+				   &datalen);
+
+	    if (ret == ERROR_SUCCESS) {
+		gchar *result;
+
+		result = g_utf16_to_utf8(wval, -1, NULL, NULL, NULL);
+		if (result != NULL) {
+		    strcpy(keyval, result);
+		    g_free(result);
+		} else {
+		    enc_err = 1;
+		}
+	    }
+	    g_free(wkeyname);
+	}
+
+	RegCloseKey(regkey);
     }
 
-    if (RegQueryValueEx(regkey,
-			keyname,
-			NULL,
-			NULL,
-			(LPBYTE) keyval,
-			&datalen
-			) != ERROR_SUCCESS) {
+    g_free(regpath);
+
+    if (ret != ERROR_SUCCESS || enc_err) {
+	if (ret != ERROR_SUCCESS) {
+	    win_print_last_error();
+	}
 	*keyval = '\0';
-	err = 1;
+	return 1;
     }
 
-    RegCloseKey(regkey);
-
-    return err;
+    return 0;
 }
 
 static char netfile[FILENAME_MAX];
@@ -136,35 +159,30 @@ static FILE *cli_gretlnet_open (const char *prog)
 
 static FILE *cli_rcfile_open (void)
 {
-    char rcfile[FILENAME_MAX];
+    gchar *rcfile = NULL;
     FILE *fp = NULL;
-
-    rcfile[0] = '\0';
 
 #ifndef PKGBUILD
     /* try "HOME" first */
-    if (rcfile[0] == '\0') {
-	char *home = getenv("HOME");
+    char *home = getenv("HOME");
 
-	if (home != NULL) {
-	    strcpy(rcfile, home);
-	    slash_terminate(rcfile);
-	    strcat(rcfile, ".gretl2rc");
-	}
+    if (home != NULL) {
+	rcfile = g_build_filename(home, ".gretl2rc", NULL);
     }
 #endif
 
-    if (rcfile[0] == '\0') {
+    if (rcfile == NULL) {
 	char *appdata = appdata_path();
 
 	if (appdata != NULL) {
-	    sprintf(rcfile, "%s\\gretl\\.gretl2rc", appdata);
+	    rcfile = g_build_filename(appdata, "gretl", ".gretl2rc", NULL);
 	    free(appdata);
 	}
     }
 
-    if (rcfile[0] != '\0') {
+    if (rcfile != NULL) {
 	fp = gretl_fopen(rcfile, "r");
+	g_free(rcfile);
     }
 
     return fp;
