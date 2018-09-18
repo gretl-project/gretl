@@ -1728,6 +1728,11 @@ int cli_set_win32_charset (const char *package)
 	}
     }
 
+    if (windebug) {
+	fprintf(stderr, "h = %p, ttfont = %d\n", (void *) h,
+		ttfont);
+    }
+
     /* The first option below seems to work OK if the Windows console
        is using a TrueType font (e.g. Lucida Console or Consolas)
     */
@@ -1739,12 +1744,18 @@ int cli_set_win32_charset (const char *package)
 	SetConsoleOutputCP(65001);
 	bind_textdomain_codeset(package, "UTF-8");
 	set_native_utf8(1);
+	if (windebug) {
+	    fprintf(stderr, "set console to UTF-8\n");
+	}
     } else {
 	UINT CP = GetConsoleOutputCP();
 	char console_charset[16] = {0};
 
 	sprintf(console_charset, "CP%d", (int) CP);
 	bind_textdomain_codeset(package, console_charset);
+	if (windebug) {
+	    fprintf(stderr, "console uses %s\n", console_charset);
+	}
     }
 
     return 0;

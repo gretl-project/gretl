@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* command-line client program for libgretl */
@@ -49,7 +49,7 @@
 # include <sys/types.h>
 # include <fcntl.h>
 # include <unistd.h>
-#endif 
+#endif
 
 #ifdef HAVE_READLINE
 # include <readline/readline.h>
@@ -71,12 +71,12 @@ char *line_read;
 static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn);
 static int push_input_file (FILE *fp);
 static FILE *pop_input_file (void);
-static int cli_saved_object_action (const char *line, 
-				    DATASET *dset, 
+static int cli_saved_object_action (const char *line,
+				    DATASET *dset,
 				    PRN *prn);
 
-static int parse_options (int *pargc, char ***pargv, gretlopt *popt, 
-			  double *scriptval, char *fname)
+static int parse_options (int *pargc, char ***pargv, gretlopt *popt,
+			  double *scriptval, int *debug, char *fname)
 {
     char **argv;
     int argc, gotfile = 0;
@@ -95,30 +95,30 @@ static int parse_options (int *pargc, char ***pargv, gretlopt *popt,
     while (*++argv) {
 	const char *s = *argv;
 
-	if (!strcmp(s, "-e") || !strncmp(s, "--english", 9)) { 
+	if (!strcmp(s, "-e") || !strncmp(s, "--english", 9)) {
 	    opt |= OPT_ENGLISH;
 	} else if (!strcmp(s, "-b") || !strncmp(s, "--batch", 7)) {
 	    opt |= OPT_BATCH;
-	} else if (!strcmp(s, "-h") || !strcmp(s, "--help")) { 
+	} else if (!strcmp(s, "-h") || !strcmp(s, "--help")) {
 	    opt |= OPT_HELP;
-	} else if (!strcmp(s, "-v") || !strcmp(s, "--version")) { 
+	} else if (!strcmp(s, "-v") || !strcmp(s, "--version")) {
 	    opt |= OPT_VERSION;
-	} else if (!strcmp(s, "-r") || !strncmp(s, "--run", 5)) { 
+	} else if (!strcmp(s, "-r") || !strncmp(s, "--run", 5)) {
 	    opt |= OPT_RUNIT;
-	} else if (!strcmp(s, "-d") || !strncmp(s, "--db", 4)) { 
-	    opt |= OPT_DBOPEN;
-	} else if (!strcmp(s, "-w") || !strncmp(s, "--webdb", 7)) { 
-	    opt |= OPT_WEBDB;
 	} else if (!strcmp(s, "-c") || !strncmp(s, "--dump", 6)) {
 	    opt |= OPT_DUMP;
-	} else if (!strcmp(s, "-q") || !strcmp(s, "--quiet")) { 
+	} else if (!strcmp(s, "-q") || !strcmp(s, "--quiet")) {
 	    opt |= OPT_QUIET;
-	} else if (!strcmp(s, "-m") || !strcmp(s, "--makepkg")) { 
+	} else if (!strcmp(s, "-m") || !strcmp(s, "--makepkg")) {
 	    opt |= OPT_MAKEPKG;
-	} else if (!strcmp(s, "-i") || !strcmp(s, "--instpkg")) { 
+	} else if (!strcmp(s, "-i") || !strcmp(s, "--instpkg")) {
 	    opt |= OPT_INSTPKG;
 	} else if (!strcmp(s, "-t") || !strcmp(s, "--tool")) {
 	    opt |= (OPT_TOOL | OPT_BATCH);
+#ifdef WIN32
+	} else if (!strcmp(s, "-d") || !strcmp(s, "--debug")) {
+	    *debug = 1;
+#endif
 	} else if (!strncmp(s, "--scriptopt=", 12)) {
 	    *scriptval = atof(s + 12);
 	} else if (*s == '-' && *(s+1) != '\0') {
@@ -135,16 +135,16 @@ static int parse_options (int *pargc, char ***pargv, gretlopt *popt,
     }
 
     if (!err) {
-	err = incompatible_options(opt, OPT_BATCH | OPT_RUNIT | 
+	err = incompatible_options(opt, OPT_BATCH | OPT_RUNIT |
 				   OPT_DBOPEN | OPT_WEBDB | OPT_MAKEPKG);
 	if (!err) {
 	    err = incompatible_options(opt, OPT_ENGLISH | OPT_BASQUE);
 	}
 	if (!err) {
 	    err = incompatible_options(opt, OPT_MAKEPKG | OPT_INSTPKG);
-	}	
+	}
     }
-    
+
     *pargc = argc;
     *pargv = argv;
     *popt = opt;
@@ -210,17 +210,17 @@ static void check_blas_threading (int tool, int quiet)
 static void gretl_abort (char *line)
 {
     const char *tokline = get_parser_errline();
-    
+
     fprintf(stderr, _("\ngretlcli: error executing script: halting\n"));
 
     if (tokline != NULL && *tokline != '\0' && strcmp(tokline, line)) {
 	fprintf(stderr, "> %s\n", tokline);
     }
-    
+
     if (*line != '\0') {
 	fprintf(stderr, "> %s\n", line);
     }
-    
+
     exit(EXIT_FAILURE);
 }
 
@@ -236,7 +236,7 @@ static int file_get_line (ExecState *s)
     int len = 0;
 
     memset(line, 0, MAXLINE);
-    
+
     if (fgets(line, MAXLINE, fb) == NULL) {
 	/* no more input from current source */
 	gretl_exec_state_uncomment(s);
@@ -276,7 +276,7 @@ static void nls_init (void)
 # endif /* WIN32 package */
     setlocale(LC_ALL, "");
     bindtextdomain(PACKAGE, localedir);
-    textdomain(PACKAGE); 
+    textdomain(PACKAGE);
     iso_gettext("@CLI_INIT");
 
     gretl_setenv("LC_NUMERIC", "");
@@ -306,8 +306,8 @@ static int cli_clear_data (CMD *cmd, DATASET *dset, MODEL *model)
     *datafile = '\0';
 
     if (dset->Z != NULL) {
-	err = restore_full_sample(dset, NULL); 
-	free_Z(dset); 
+	err = restore_full_sample(dset, NULL);
+	free_Z(dset);
     }
 
     clear_datainfo(dset, CLEAR_FULL);
@@ -411,7 +411,7 @@ static int maybe_get_input_line_continuation (char *line)
 	    rl_gets(&line_read, "> ");
 	    strcpy(tmp, line_read);
 #else
-	    fgets(tmp, MAXLINE, stdin); 
+	    fgets(tmp, MAXLINE, stdin);
 #endif
 	}
 
@@ -480,12 +480,12 @@ static void handle_datafile (char *filearg, char *runfile,
     case GRETL_JMULTI:
     case GRETL_OCTAVE:
     case GRETL_WF1:
-	err = import_other(datafile, ftype, dset, 
+	err = import_other(datafile, ftype, dset,
 			   OPT_NONE, prn);
 	break;
     case GRETL_SCRIPT:
 	runit = 1;
-	strcpy(runfile, datafile); 
+	strcpy(runfile, datafile);
 	memset(datafile, 0, sizeof datafile);
 	load_datafile = 0;
 	break;
@@ -502,7 +502,7 @@ static void handle_datafile (char *filearg, char *runfile,
 	    exit(EXIT_FAILURE);
 	}
 	data_status = 1;
-	if (!batch) { 
+	if (!batch) {
 	    pprintf(cmdprn, "open %s\n", given_file);
 	}
     }
@@ -513,7 +513,7 @@ static void check_help_file (void)
     const char *hpath = helpfile_path(GRETL_CMDREF, 1, 0);
     FILE *fp = gretl_fopen(hpath, "r");
 
-    if (fp != NULL) { 
+    if (fp != NULL) {
 	printf(_("\n\"help\" gives a list of commands\n"));
 	fclose(fp);
     } else {
@@ -566,13 +566,10 @@ int main (int argc, char *argv[])
 	load_datafile = 0;
     } else {
 	gretlopt opt = 0;
+	int debug = 0;
 
-	err = parse_options(&argc, &argv, &opt, &scriptval, filearg);
-
-	if (!err && (opt & (OPT_DBOPEN | OPT_WEBDB))) {
-	    /* catch GUI-only options */
-	    err = E_BADOPT;
-	}
+	err = parse_options(&argc, &argv, &opt, &scriptval,
+			    &debug, filearg);
 
 	if (err) {
 	    /* bad option */
@@ -586,7 +583,7 @@ int main (int argc, char *argv[])
 		exit(EXIT_SUCCESS);
 	    }
 	}
-	    
+
 	if (opt & (OPT_BATCH | OPT_RUNIT | OPT_MAKEPKG | OPT_INSTPKG)) {
 	    if (*filearg == '\0') {
 		/* we're missing a filename argument */
@@ -624,6 +621,12 @@ int main (int argc, char *argv[])
 	    quiet = 1;
 	}
 
+#ifdef WIN32
+	if (debug) {
+	    set_windebug(1);
+	}
+#endif
+
 	if (opt & OPT_ENGLISH) {
 	    force_language(LANG_C);
 	} else {
@@ -642,7 +645,7 @@ int main (int argc, char *argv[])
 
 #if defined(OPENMP_BUILD) && !defined(WIN32) && !defined(OS_OSX)
     check_blas_threading(tool, quiet);
-#endif    
+#endif
 
     prn = gretl_print_new(GRETL_PRINT_STDOUT, &err);
     if (err) {
@@ -677,7 +680,7 @@ int main (int argc, char *argv[])
     /* allocate memory for model */
     model = allocate_working_model();
     if (model == NULL) {
-	noalloc(); 
+	noalloc();
     }
 
     gretl_cmd_init(&cmd);
@@ -705,12 +708,12 @@ int main (int argc, char *argv[])
     } else if (batch_stdin) {
 	fb = stdin;
 	push_input_file(fb);
-    }	
+    }
 
 #ifdef HAVE_READLINE
     initialize_readline();
 #endif
-    
+
     if (batch || runit) {
 	/* re-initialize: will be incremented by "run" cmd */
 	runit = 0;
@@ -733,13 +736,13 @@ int main (int argc, char *argv[])
     *linecopy = '\0';
 
     /* enter main command loop */
-    
+
     while (cmd.ci != QUIT && fb != NULL) {
 	if (err && gretl_error_is_fatal()) {
 	    gretl_abort(linecopy);
 	}
 
-	if (gretl_execute_loop()) { 
+	if (gretl_execute_loop()) {
 	    if (gretl_loop_exec(&state, dset, NULL)) {
 		return 1;
 	    }
@@ -754,7 +757,7 @@ int main (int argc, char *argv[])
 		err = gretl_if_state_check(0);
 		if (err) {
 		    errmsg(err, prn);
-		}		
+		}
 		continue;
 	    }
 	}
@@ -772,7 +775,7 @@ int main (int argc, char *argv[])
 		gretl_compiling_python(line)) {
 		tailstrip(line);
 	    } else {
-		err = maybe_get_input_line_continuation(line); 
+		err = maybe_get_input_line_continuation(line);
 		if (err) {
 		    errmsg(err, prn);
 		    break;
@@ -845,7 +848,7 @@ static void cli_exec_callback (ExecState *s, void *ptr,
     int ci = s->cmd->ci;
 
     if (ci == MODELTAB || ci == GRAPHPG) {
-	pprintf(s->prn, _("%s: command not available\n"), 
+	pprintf(s->prn, _("%s: command not available\n"),
 		gretl_command_word(ci));
     } else if (ci == OPEN) {
 	char *fname = (char *) ptr;
@@ -894,7 +897,7 @@ static int cli_try_http (const char *s, char *fname, int *http)
     return err;
 }
 
-static int cli_open_append (CMD *cmd, DATASET *dset, 
+static int cli_open_append (CMD *cmd, DATASET *dset,
 			    MODEL *model, PRN *prn)
 {
     gretlopt opt = cmd->opt;
@@ -952,7 +955,7 @@ static int cli_open_append (CMD *cmd, DATASET *dset,
 	*newfile != '\0' && strcmp(newfile, datafile)) {
 	fprintf(stderr, _("Opening a new data file closes the "
 			  "present one.  Proceed? (y/n) "));
-	if (fgets(response, sizeof response, stdin) != NULL && 
+	if (fgets(response, sizeof response, stdin) != NULL &&
 	    *response != 'y' && *response != 'Y') {
 	    pprintf(prn, _("OK, staying with current data set\n"));
 	    return 0;
@@ -1041,7 +1044,7 @@ static void maybe_save_session_output (const char *cmdfile)
 	top_n_tail(outfile, 0, NULL);
     }
 
-    if (*outfile != '\0' && *outfile != '\n' && *outfile != '\r' 
+    if (*outfile != '\0' && *outfile != '\n' && *outfile != '\r'
 	&& strcmp(outfile, "q")) {
 	const char *udir = gretl_workdir();
 	char *syscmd;
@@ -1049,11 +1052,11 @@ static void maybe_save_session_output (const char *cmdfile)
 
 	printf(_("writing session output to %s%s\n"), udir, outfile);
 #ifdef WIN32
-	syscmd = gretl_strdup_printf("\"%sgretlcli\" -b \"%s\" > \"%s%s\"", 
+	syscmd = gretl_strdup_printf("\"%sgretlcli\" -b \"%s\" > \"%s%s\"",
 				     gretl_home(), cmdfile, udir, outfile);
 	err = system(syscmd);
 #else
-	syscmd = gretl_strdup_printf("gretlcli -b \"%s\" > \"%s%s\"", 
+	syscmd = gretl_strdup_printf("gretlcli -b \"%s\" > \"%s%s\"",
 				     cmdfile, udir, outfile);
 	err = system(syscmd);
 #endif
@@ -1169,7 +1172,7 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 
     if (s->sys != NULL && cmd->ci != END && cmd->ci != EQUATION &&
 	cmd->ci != SYSTEM) {
-	printf(_("Command '%s' ignored; not valid within equation system\n"), 
+	printf(_("Command '%s' ignored; not valid within equation system\n"),
 	       line);
 	equation_system_destroy(s->sys);
 	s->sys = NULL;
@@ -1181,7 +1184,7 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 		     "Type 'endloop' to get out\n"));
     }
 
-    if (cmd->ci == LOOP || gretl_compiling_loop()) {  
+    if (cmd->ci == LOOP || gretl_compiling_loop()) {
 	/* accumulating loop commands */
 	if (gretl_echo_on() && (!gretl_compiling_loop() || batch || runit)) {
 	    /* straight visual echo */
@@ -1239,9 +1242,9 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	    pputs(prn, _("Data series length count missing or invalid\n"));
 	} else {
 	    cli_clear_data(cmd, dset, model);
-	    err = open_nulldata(dset, data_status, cmd->order, 
+	    err = open_nulldata(dset, data_status, cmd->order,
 				cmd->opt, prn);
-	    if (err) { 
+	    if (err) {
 		errmsg(err, prn);
 	    } else {
 		data_status = 1;
@@ -1298,7 +1301,7 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	} else if (cmd->ci == INCLUDE && gfn_is_loaded(runfile)) {
 	    break;
 	}
-	if (!strcmp(runfile, s->runfile)) { 
+	if (!strcmp(runfile, s->runfile)) {
 	    pprintf(prn, _("Infinite loop detected in script\n"));
 	    err = 1;
 	    break;
