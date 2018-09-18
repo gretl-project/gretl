@@ -248,9 +248,7 @@ int gretl_max_mpi_processes (void)
 static const gchar *get_ox_scriptname (void)
 {
     if (gretl_ox_script == NULL) {
-	const char *dotdir = gretl_dotdir();
-
-	gretl_ox_script = g_strdup_printf("%sgretltmp.ox", dotdir);
+	gretl_ox_script = gretl_make_dotpath("gretltmp.ox");
     }
 
     return gretl_ox_script;
@@ -259,9 +257,7 @@ static const gchar *get_ox_scriptname (void)
 static const gchar *get_octave_scriptname (void)
 {
     if (gretl_octave_script == NULL) {
-	const char *dotdir = gretl_dotdir();
-
-	gretl_octave_script = g_strdup_printf("%sgretltmp.m", dotdir);
+	gretl_octave_script = gretl_make_dotpath("gretltmp.m");
     }
 
     return gretl_octave_script;
@@ -270,9 +266,7 @@ static const gchar *get_octave_scriptname (void)
 static const gchar *get_stata_scriptname (void)
 {
     if (gretl_stata_script == NULL) {
-	const char *dotdir = gretl_dotdir();
-
-	gretl_stata_script = g_strdup_printf("%sgretltmp.do", dotdir);
+	gretl_stata_script = gretl_make_dotpath("gretltmp.do");
     }
 
     return gretl_stata_script;
@@ -281,9 +275,7 @@ static const gchar *get_stata_scriptname (void)
 static const gchar *get_python_scriptname (void)
 {
     if (gretl_python_script == NULL) {
-	const char *dotdir = gretl_dotdir();
-
-	gretl_python_script = g_strdup_printf("%sgretltmp.py", dotdir);
+	gretl_python_script = gretl_make_dotpath("gretltmp.py");
     }
 
     return gretl_python_script;
@@ -292,9 +284,7 @@ static const gchar *get_python_scriptname (void)
 static const gchar *gretl_julia_scriptname (void)
 {
     if (gretl_julia_script == NULL) {
-	const char *dotdir = gretl_dotdir();
-
-	gretl_julia_script = g_strdup_printf("%sgretltmp.jl", dotdir);
+	gretl_julia_script = gretl_make_dotpath("gretltmp.jl");
     }
 
     return gretl_julia_script;
@@ -305,9 +295,7 @@ static const gchar *gretl_julia_scriptname (void)
 static const gchar *get_mpi_scriptname (void)
 {
     if (gretl_mpi_script == NULL) {
-	const char *dotdir = gretl_dotdir();
-
-	gretl_mpi_script = g_strdup_printf("%sgretltmp-mpi.inp", dotdir);
+	gretl_mpi_script = gretl_make_dotpath("gretltmp-mpi.inp");
     }
 
     return gretl_mpi_script;
@@ -797,10 +785,9 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 
 static FILE *write_open_dotfile (const char *fname)
 {
+    gchar *path = gretl_make_dotpath(fname);
     FILE *fp;
-    gchar *path;
 
-    path = g_strdup_printf("%s%s", gretl_dotdir(), fname);
     fp = gretl_fopen(path, "w");
     g_free(path);
 
@@ -1383,7 +1370,6 @@ static int *get_send_data_list (const DATASET *dset, int ci, int *err)
 
 static int mpi_send_data_setup (const DATASET *dset, FILE *fp)
 {
-    const char *dotdir = gretl_dotdir();
     int *list = NULL;
     size_t datasize;
     int nvars;
@@ -1406,9 +1392,9 @@ static int mpi_send_data_setup (const DATASET *dset, FILE *fp)
 
     if (datasize > 10000) {
 	/* write "big" data as binary? */
-	fname = g_strdup_printf("%smpi-data.gdtb", dotdir);
+	fname = gretl_make_dotpath("mpi-data.gdtb");
     } else {
-	fname = g_strdup_printf("%smpi-data.gdt", dotdir);
+	fname = gretl_make_dotpath("mpi-data.gdt");
     }
 
     err = gretl_write_gdt(fname, list, dset, OPT_NONE, 0);
@@ -1429,7 +1415,7 @@ static int mpi_send_funcs_setup (FILE *fp)
     gchar *fname;
     int err;
 
-    fname = g_strdup_printf("%smpi-funcs-tmp.xml", gretl_dotdir());
+    fname = gretl_make_dotpath("mpi-funcs-tmp.xml");
     err = write_loaded_functions_file(fname, 1);
 
     if (!err) {
@@ -1501,7 +1487,6 @@ static int write_data_for_stata (const DATASET *dset,
 				 FILE *fp)
 {
     int *list = NULL;
-    gchar *sdata = NULL;
     char save_na[8];
     int err;
 
@@ -1513,10 +1498,12 @@ static int write_data_for_stata (const DATASET *dset,
     list = get_send_data_list(dset, FOREIGN, &err);
 
     if (!err) {
+	gchar *sdata;
+
 	*save_na = '\0';
 	strncat(save_na, get_csv_na_write_string(), 7);
 	set_csv_na_write_string(".");
-	sdata = g_strdup_printf("%sstata.csv", gretl_dotdir());
+	sdata = gretl_make_dotpath("stata.csv");
 	err = write_data(sdata, list, dset, OPT_C, NULL);
 	set_csv_na_write_string(save_na);
 	g_free(sdata);
@@ -1526,9 +1513,7 @@ static int write_data_for_stata (const DATASET *dset,
 	gretl_errmsg_sprintf("write_data_for_stata: failed with err = %d\n", err);
     } else {
 	fputs("* load data from gretl\n", fp);
-	sdata = g_strdup_printf("%sstata.csv", get_export_dotdir());
-	fprintf(fp, "insheet using \"%s\"\n", sdata);
-	g_free(sdata);
+	fprintf(fp, "insheet using \"%sstata.csv\"\n", get_export_dotdir());
     }
 
     return err;
@@ -1582,7 +1567,6 @@ static int write_data_for_octave (const DATASET *dset,
 				  FILE *fp)
 {
     int *list = NULL;
-    gchar *mdata;
     int err;
 
     err = no_data_check(dset);
@@ -1593,7 +1577,8 @@ static int write_data_for_octave (const DATASET *dset,
     list = get_send_data_list(dset, FOREIGN, &err);
 
     if (!err) {
-	mdata = g_strdup_printf("%smdata.tmp", gretl_dotdir());
+	gchar *mdata = gretl_make_dotpath("mdata.tmp");
+
 	err = write_data(mdata, list, dset, OPT_M, NULL);
 	g_free(mdata);
     }
@@ -1604,8 +1589,6 @@ static int write_data_for_octave (const DATASET *dset,
 	fputs("% load data from gretl\n", fp);
 	fprintf(fp, "load '%smdata.tmp'\n", get_export_dotdir());
     }
-
-    g_free(mdata);
 
     return err;
 }
@@ -1700,7 +1683,6 @@ static int write_data_for_R (const DATASET *dset,
 {
     gretl_matrix *coded = NULL;
     int *list = NULL;
-    gchar *Rdata;
     int ts, err;
 
     err = no_data_check(dset);
@@ -1714,7 +1696,8 @@ static int write_data_for_R (const DATASET *dset,
     list = get_send_data_list(dset, FOREIGN, &err);
 
     if (!err) {
-	Rdata = g_strdup_printf("%sRdata.tmp", gretl_dotdir());
+	gchar *Rdata = gretl_make_dotpath("Rdata.tmp");
+
 	coded = make_coded_vec(list, dset);
 	err = write_data(Rdata, list, dset, OPT_R, NULL);
 	g_free(Rdata);
@@ -1727,14 +1710,14 @@ static int write_data_for_R (const DATASET *dset,
     }
 
     if (coded != NULL) {
-	gchar *tmp = g_strdup_printf("%sRcoded.mat", gretl_dotdir());
-	int mwerr;
+	gchar *tmp = gretl_make_dotpath("Rcoded.mat");
+	int write_err;
 
 	/* ensure we don't load a stale file */
 	gretl_remove(tmp);
 	g_free(tmp);
-	mwerr = gretl_matrix_write_to_file(coded, "Rcoded.mat", 1);
-	if (mwerr) {
+	write_err = gretl_matrix_write_to_file(coded, "Rcoded.mat", 1);
+	if (write_err) {
 	   gretl_matrix_free(coded);
 	   coded = NULL;
 	}
