@@ -2274,6 +2274,12 @@ static int check_R_setting (int *var, int val, const char *key)
     int err = 0;
 
 #ifdef USE_RLIB
+    if (!strcmp(key, R_FUNCTIONS) && val != 0) {
+	/* this depends on having R_lib on, so in
+	   case it's off we should turn it on too
+	*/
+	libset_set_bool(R_LIB, val);
+    }
     *var = val;
 #else
     if (val) {
