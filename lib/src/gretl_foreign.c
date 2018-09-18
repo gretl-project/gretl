@@ -2395,6 +2395,28 @@ static int gretl_Rlib_init (void)
     return err;
 }
 
+#ifdef G_OS_WIN32
+
+static void put_R_output_line (const char *line, PRN *prn)
+{
+    if (gretl_in_gui_mode() && !g_utf8_validate(line, -1, NULL)) {
+	gsize bytes;
+
+	gchar *lconv = g_locale_to_utf8(line, -1, NULL,
+					&bytes, NULL);
+	if (lconv != NULL) {
+	    pputs(prn, lconv);
+	    g_free(lconv);
+	} else {
+	    pputs(prn, "line could not be converted to UTF-8\n");
+	}
+    } else {
+	pputs(prn, line);
+    }
+}
+
+#endif
+
 /* run R's source() function on an R command file written by
    gretl, shared library version */
 
@@ -2440,7 +2462,11 @@ static int lib_run_Rlib_sync (gretlopt opt, PRN *prn)
 	    char line[512];
 
 	    while (fgets(line, sizeof line, fp)) {
+#ifdef G_OS_WIN32
+		put_R_output_line(line, prn);
+#else
 		pputs(prn, line);
+#endif
 	    }
 	    fclose(fp);
 	    gretl_remove(outname);
