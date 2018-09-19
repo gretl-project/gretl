@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "gretl.h"
@@ -26,12 +26,32 @@
 # include "gretlwin32.h"
 #endif
 
-const gchar *copyright = "Copyright (C) 2000-2017 Allin Cottrell and "
+const gchar *copyright = "Copyright (C) 2000-2018 Allin Cottrell and "
                          "Riccardo \"Jack\" Lucchetti";
 const gchar *bonmot = N_("\"By econometricians, for econometricians.\"");
 const gchar *website = "http://gretl.sourceforge.net/";
 
-static GtkWidget *open_logo (void)
+#ifdef PKGBUILD
+# if defined(_WIN64)
+#  define SYSINFO "MS Windows (x86_64)"
+# elif defined(G_OS_WIN32)
+#  define SYSINFO "MS Windows (x86)"
+# elif defined(MAC_NATIVE)
+#  define SYSINFO "Mac OS X (quartz, x86_64)"
+# elif defined(__ppc__)
+#  define SYSINFO "Mac OS X (X11, ppc)"
+# elif defined(OS_OSX)
+#  define SYSINFO "Mac OS X (X11, x86)"
+# endif
+#elif defined(__GNUC__)
+# if defined(linux) && defined(__x86_64__)
+#  define SYSINFO "Linux x86_64"
+# elif defined(__x86_64__)
+#  define SYSINFO "Intel x86_64"
+# endif
+#endif
+
+static GtkWidget *get_logo (void)
 {
     char *fname;
     GdkPixbuf *pbuf;
@@ -79,16 +99,16 @@ static void show_website (GtkWidget *w, gpointer p)
     }
 }
 
-void about_dialog (void) 
+void about_dialog (void)
 {
     GtkWidget *vbox, *hbox, *label;
     GtkWidget *dialog, *image, *button;
     GtkWidget *ebox, *abox;
-    gchar *buf, *sysinfo = NULL;
+    gchar *buf;
 
     dialog = gtk_dialog_new();
-    gtk_window_set_title(GTK_WINDOW(dialog),_("About gretl")); 
-    gtk_window_set_transient_for(GTK_WINDOW(dialog), 
+    gtk_window_set_title(GTK_WINDOW(dialog),_("About gretl"));
+    gtk_window_set_transient_for(GTK_WINDOW(dialog),
 				 GTK_WINDOW(mdata->main));
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
@@ -106,47 +126,26 @@ void about_dialog (void)
 
     vbox = gtk_vbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
-    
-    image = open_logo();
+
+    image = get_logo();
     if (image != NULL) {
 	gtk_box_pack_start(GTK_BOX(vbox), image, FALSE, FALSE, 20);
 	gtk_widget_show(image);
     }
 
-#ifdef PKGBUILD
-# if defined(_WIN64)
-    sysinfo = g_strdup_printf("MS Windows (x86_64)");
-# elif defined(G_OS_WIN32)
-    sysinfo = g_strdup_printf("MS Windows (x86)");
-# elif defined(MAC_NATIVE)
-    sysinfo = g_strdup_printf("Mac OS X (quartz, x86_64)");
-# elif defined(__ppc__)
-    sysinfo = g_strdup_printf("Mac OS X (X11, ppc)");
-# elif defined(OS_OSX)
-    sysinfo = g_strdup_printf("Mac OS X (X11, x86)");
-# endif
-#elif defined(__GNUC__)
-# if defined(linux) && defined(__x86_64__)
-    sysinfo = g_strdup_printf("Linux x86_64");
-# elif defined(__x86_64__)
-    sysinfo = g_strdup_printf("Intel x86_64");
-# endif
+#ifdef SYSINFO
+    buf = g_markup_printf_escaped("<span weight=\"bold\" size=\"x-large\">"
+				  "gretl %s</span>\n"
+				  "%s\n%s %s\n\n%s", GRETL_VERSION,
+				  SYSINFO, _("build date"), BUILD_DATE,
+				  _(bonmot));
+#else    
+    buf = g_markup_printf_escaped("<span weight=\"bold\" size=\"x-large\">"
+				  "gretl %s</span>\n"
+				  "%s %s\n\n%s", GRETL_VERSION,
+				  _("build date"), BUILD_DATE,
+				  _(bonmot));
 #endif
-
-    if (sysinfo == NULL) {
-	buf = g_markup_printf_escaped("<span weight=\"bold\" size=\"x-large\">"
-				      "gretl %s</span>\n"
-				      "%s %s\n%s", GRETL_VERSION, 
-				      _("build date"), BUILD_DATE, 
-				      _(bonmot));
-    } else {
-	buf = g_markup_printf_escaped("<span weight=\"bold\" size=\"x-large\">"
-				      "gretl %s</span>\n"
-				      "%s\n%s %s\n%s", GRETL_VERSION,
-				      sysinfo, _("build date"), BUILD_DATE, 
-				      _(bonmot));
-	g_free(sysinfo);
-    }
 
     label = gtk_label_new(NULL);
     gtk_label_set_markup(GTK_LABEL(label), buf);
@@ -166,7 +165,7 @@ void about_dialog (void)
     gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_CENTER);
     gtk_container_add(GTK_CONTAINER(ebox), label);
     gtk_box_pack_start(GTK_BOX(vbox), ebox, FALSE, FALSE, 0);
-    g_signal_connect(ebox, "button-press-event",
+    g_signal_connect(ebox, "button-release-event",
 		     G_CALLBACK(show_website), NULL);
     g_signal_connect(ebox, "enter-notify-event",
 		     G_CALLBACK(show_link_cursor), NULL);
@@ -194,23 +193,23 @@ void about_dialog (void)
     /* NEWS button */
     button = gtk_button_new_with_label(_("News"));
     gtk_box_pack_start(GTK_BOX(abox), button, FALSE, FALSE, 0);
-    g_signal_connect(G_OBJECT(button), "clicked", 
-		     G_CALLBACK(relnotes_callback), 
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(relnotes_callback),
 		     NULL);
 
     /* GPL button */
     button = gtk_button_new_with_label(_("License"));
     gtk_box_pack_start(GTK_BOX(abox), button, FALSE, FALSE, 0);
-    g_signal_connect(G_OBJECT(button), "clicked", 
-		     G_CALLBACK(license_callback), 
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(license_callback),
 		     NULL);
 
     /* Close button */
     button = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
     gtk_widget_set_can_default(button, TRUE);
     gtk_box_pack_start(GTK_BOX(abox), button, FALSE, FALSE, 0);
-    g_signal_connect(G_OBJECT(button), "clicked", 
-		     G_CALLBACK(delete_widget), 
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(delete_widget),
 		     dialog);
     gtk_widget_grab_default(button);
 
