@@ -6978,7 +6978,9 @@ gretl_matrix *gretl_matrix_vcv (gretl_matrix *m)
     }
 
     v = gretl_matrix_alloc(m->cols, m->cols);
-    if (v == NULL) return NULL;
+    if (v == NULL) {
+	return NULL;
+    }
 
     gretl_matrix_demean_by_column(m);
 
@@ -12579,11 +12581,10 @@ real_gretl_covariance_matrix (const gretl_matrix *m, int corr,
 
     den = n - 1; /* or could use n */
 
-#if 1
-    
+#if 1 /* new version from Jack */
     *err = gretl_matrix_multiply_mod(m, GRETL_MOD_TRANSPOSE,
-				    m, GRETL_MOD_NONE,
-				    V, GRETL_MOD_NONE);
+				     m, GRETL_MOD_NONE,
+				     V, GRETL_MOD_NONE);
     for (i=0; i<k; i++) {
 	mx = xbar->val[i] * n;
 	vv = gretl_matrix_get(V, i, i) - mx*xbar->val[i];
@@ -12606,14 +12607,12 @@ real_gretl_covariance_matrix (const gretl_matrix *m, int corr,
 	    }
 	}
     }
-
 #else
-
     for (i=0; i<k; i++) {
 	for (j=i; j<k; j++) {
-	    vv = gretl_matrix_get(v, t, i);;
+	    vv = 0.0;
 	    for (t=0; t<n; t++) {
-		x = 
+		x = gretl_matrix_get(m, t, i);
 		y = gretl_matrix_get(m, t, j);
 		vv += (x - xbar->val[i]) * (y - xbar->val[j]);
 	    }
@@ -12631,9 +12630,8 @@ real_gretl_covariance_matrix (const gretl_matrix *m, int corr,
 	    gretl_matrix_set(V, j, i, vv);
 	}
     }
-    
 #endif
-    
+
  bailout:
 
     if (!myerr && pxbar != NULL) {
@@ -13106,6 +13104,8 @@ double gretl_matrix_global_sum (const gretl_matrix *A,
  * Returns: the generated matrix, or NULL on failure.
  */
 
+#if 0 /* old version */
+
 gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p,
 				gretlopt opt, int *err)
 {
@@ -13198,6 +13198,96 @@ gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p,
 
     return P;
 }
+
+#else /* now the new version */
+
+gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p,
+				gretlopt opt, int *err)
+{
+    gretl_matrix *D = NULL;
+    gretl_matrix *V = NULL;
+    gretl_matrix *Vs = NULL;
+    gretl_matrix *P = NULL;
+    gretl_matrix *e;
+    double x;
+    int i, j, k, T;
+
+    if (gretl_is_null_matrix(X)) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    k = X->cols;
+    T = X->rows;
+
+    D = gretl_matrix_copy(X);
+    if (D == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    gretl_matrix_demean_by_column(D);
+
+    if (!(opt & OPT_C)) {
+	gretl_matrix *sdc;
+	double d = sqrt(T / (T - 1.0));
+	double m;
+
+	sdc = gretl_matrix_column_sd(D, err);
+
+	for (j=0; j<k; j++) {
+	    m = d * sdc->val[j];
+	    for (i=0; i<T; i++) {
+		x = gretl_matrix_get(D, i, j);
+		gretl_matrix_set(D, i, j, x / m);
+	    }
+	}
+
+	gretl_matrix_free(sdc);
+    }
+
+    V = gretl_matrix_XTX_new(D);
+    if (V == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    e = gretl_symmetric_matrix_eigenvals(V, 1, err);
+    gretl_matrix_free(e); /* prevent a leak */
+    if (*err) {
+	goto bailout;
+    }
+
+    Vs = gretl_matrix_alloc(k, p);
+    if (Vs == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    for (j=0; j<p; j++) {
+	for (i=0; i<k; i++) {
+	    x = gretl_matrix_get(V, i, k-j-1);
+	    gretl_matrix_set(Vs, i, j, x);
+	}
+    }
+
+    P = gretl_matrix_multiply_new(D, Vs, err);
+
+ bailout:
+
+    if (*err) {
+	gretl_matrix_free(P);
+	P = NULL;
+    }
+
+    gretl_matrix_free(D);
+    gretl_matrix_free(V);
+    gretl_matrix_free(Vs);
+
+    return P;
+}
+
+#endif
 
 #define complete_obs(x,y,t) (!na(x[t]) && !na(y[t]))
 
