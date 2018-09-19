@@ -12517,7 +12517,7 @@ real_gretl_covariance_matrix (const gretl_matrix *m, int corr,
     gretl_vector *ssx = NULL;
     int k, n, den;
     int t, i, j;
-    double vv, x, y;
+    double vv, mx, my, x, y;
     int myerr = 0;
 
     if (gretl_is_null_matrix(m)) {
@@ -12579,11 +12579,41 @@ real_gretl_covariance_matrix (const gretl_matrix *m, int corr,
 
     den = n - 1; /* or could use n */
 
+#if 1
+    
+    *err = gretl_matrix_multiply_mod(m, GRETL_MOD_TRANSPOSE,
+				    m, GRETL_MOD_NONE,
+				    V, GRETL_MOD_NONE);
+    for (i=0; i<k; i++) {
+	mx = xbar->val[i] * n;
+	vv = gretl_matrix_get(V, i, i) - mx*xbar->val[i];
+	gretl_matrix_set(V, i, i, vv / den);
+	for (j=i+1; j<k; j++) {
+	    vv = (gretl_matrix_get(V, i, j) - mx*xbar->val[j]) / den;
+	    gretl_matrix_set(V, i, j, vv);
+	    gretl_matrix_set(V, j, i, vv);
+	}
+    }
+
+    if (corr) {
+	for (i=0; i<k; i++) {
+	    mx = sqrt(gretl_matrix_get(V, i, i));
+	    for (j=i; j<k; j++) {
+		my = sqrt(gretl_matrix_get(V, j, j));
+		vv = gretl_matrix_get(V, i, j)/(mx*my);
+		gretl_matrix_set(V, i, j, vv);
+		gretl_matrix_set(V, j, i, vv);
+	    }
+	}
+    }
+
+#else
+
     for (i=0; i<k; i++) {
 	for (j=i; j<k; j++) {
-	    vv = 0.0;
+	    vv = gretl_matrix_get(v, t, i);;
 	    for (t=0; t<n; t++) {
-		x = gretl_matrix_get(m, t, i);
+		x = 
 		y = gretl_matrix_get(m, t, j);
 		vv += (x - xbar->val[i]) * (y - xbar->val[j]);
 	    }
@@ -12601,7 +12631,9 @@ real_gretl_covariance_matrix (const gretl_matrix *m, int corr,
 	    gretl_matrix_set(V, j, i, vv);
 	}
     }
-
+    
+#endif
+    
  bailout:
 
     if (!myerr && pxbar != NULL) {
