@@ -1549,13 +1549,13 @@ void verify_clear_data (void)
 
 static void remove_session_dir (void)
 {
-    const char *dotdir = gretl_dotdir();
-    char *fullpath = g_strdup_printf("%s%s", dotdir,
-				     session.dirname);
+    gchar *dirpath;
 
-    gretl_chdir(dotdir);
-    gretl_deltree(fullpath);
-    g_free(fullpath);
+    dirpath = g_build_filename(gretl_dotdir(),
+			       session.dirname, NULL);
+    gretl_chdir(gretl_dotdir());
+    gretl_deltree(dirpath);
+    g_free(dirpath);
 }
 
 void session_init (void)
@@ -1589,36 +1589,27 @@ void free_session (gretlopt opt)
     }
     session.nmodels = 0;
 
-    /* FIXME OPT_P ? Maybe we should try to preserve
-       graphs and texts, though this would require
-       that we don't trash the session directory, and
-       instead remove only the model files. Perhaps
-       this is just too complicated.
-    */
-
-    if (1 || !(opt & OPT_P)) {
-	if (session.graphs) {
-	    for (i=0; i<session.ngraphs; i++) {
-		free(session.graphs[i]);
-	    }
-	    free(session.graphs);
-	    session.graphs = NULL;
+    if (session.graphs) {
+	for (i=0; i<session.ngraphs; i++) {
+	    free(session.graphs[i]);
 	}
-	session.ngraphs = 0;
+	free(session.graphs);
+	session.graphs = NULL;
+    }
+    session.ngraphs = 0;
 
-	if (session.texts) {
-	    for (i=0; i<session.ntexts; i++) {
-		free_session_text(session.texts[i]);
-	    }
-	    free(session.texts);
-	    session.texts = NULL;
+    if (session.texts) {
+	for (i=0; i<session.ntexts; i++) {
+	    free_session_text(session.texts[i]);
 	}
-	session.ntexts = 0;
+	free(session.texts);
+	session.texts = NULL;
+    }
+    session.ntexts = 0;
 
-	if (session.notes) {
-	    free(session.notes);
-	    session.notes = NULL;
-	}
+    if (session.notes) {
+	free(session.notes);
+	session.notes = NULL;
     }
 
     *session.name = '\0';
@@ -1627,10 +1618,6 @@ void free_session (gretlopt opt)
 	remove_session_dir();
 	*session.dirname = '\0';
     }
-
-#if defined(HAVE_FLITE) || defined(WIN32_SAPI)
-    stop_talking();
-#endif
 }
 
 int highest_numbered_variable_in_session (void)

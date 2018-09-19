@@ -878,31 +878,29 @@ int win32_write_access (char *path)
 int win32_delete_dir (const char *path)
 {
     SHFILEOPSTRUCT op;
-    gchar *tmp = NULL;
+    gchar *pconv = NULL;
     char *from;
     int len = 0;
     int err = 0;
 
     if (utf8_encoded(path)) {
 	/* FIXME use UTF-16? */
-	gsize bytes;
-
-	tmp = g_locale_from_utf8(path, -1, NULL, &bytes, NULL);
+	pconv = g_win32_locale_filename_from_utf8(path);
     }
 
-    if (tmp != NULL) {
-	len = strlen(tmp) + 2;
+    if (pconv != NULL) {
+	len = strlen(pconv) + 2;
     } else {
 	len = strlen(path) + 2;
     }
 
     from = calloc(len, 1);
     if (from == NULL) {
-	g_free(tmp);
+	g_free(pconv);
 	return E_ALLOC;
     }
 
-    strcpy(from, tmp != NULL ? tmp : path);
+    strcpy(from, pconv != NULL ? pconv : path);
 
     op.hwnd = NULL;
     op.wFunc = FO_DELETE;
@@ -916,7 +914,7 @@ int win32_delete_dir (const char *path)
     err = SHFileOperation(&op);
 
     free(from);
-    g_free(tmp);
+    g_free(pconv);
 
     return err;
 }
