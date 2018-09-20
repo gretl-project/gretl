@@ -28,10 +28,28 @@
 #include <aclapi.h>
 
 static int windebug;
+static FILE *fdb;
+
+static void close_debugging (void)
+{
+    if (fdb != NULL) {
+	fclose(fdb);
+    }
+}
 
 void set_windebug (int s)
 {
-    windebug = s;
+    if (s == 2) {
+	/* we're getting this from gretlcli.exe */
+	fdb = fopen("c:\\users\\cottrell\\clidebug.txt", "w");
+	if (fdb != NULL) {
+	    fputs("starting win32 debugging\n", fdb);
+	    windebug = s;
+	    atexit(close_debugging);
+	}
+    } else {
+	windebug = s;
+    }
 }
 
 void win_print_last_error (void)
@@ -1738,12 +1756,12 @@ int cli_set_win32_charset (const char *package)
 	if (GetCurrentConsoleFontEx(h, FALSE, &finfo)) {
 	    if (finfo.FontFamily & TMPF_TRUETYPE) {
 		if (windebug) {
-		    printf("got ttfont from Family\n");
+		    fprintf(fdb, "got ttfont from Family\n");
 		}
 		ttfont = 1;
 	    } else {
 		if (windebug) {
-		    printf("got nFont = %d\n", finfo.nFont);
+		    fprintf(fdb, "got nFont = %d\n", finfo.nFont);
 		}
 		ttfont = finfo.nFont >= 8;
 	    }
@@ -1759,8 +1777,8 @@ int cli_set_win32_charset (const char *package)
     }
 
     if (windebug) {
-	printf("h = %p, ttfont = %d\n", (void *) h,
-	       ttfont);
+	fprintf(fdb, "h = %p, ttfont = %d\n", (void *) h,
+		ttfont);
     }
 
     /* The first option below seems to work OK if the Windows console
@@ -1775,7 +1793,7 @@ int cli_set_win32_charset (const char *package)
 	bind_textdomain_codeset(package, "UTF-8");
 	set_native_utf8(1);
 	if (windebug) {
-	    printf("set console to UTF-8\n");
+	    fprintf(fdb, "set console to UTF-8\n");
 	}
     } else {
 	UINT CP = GetConsoleOutputCP();
@@ -1784,7 +1802,7 @@ int cli_set_win32_charset (const char *package)
 	sprintf(console_charset, "CP%d", (int) CP);
 	bind_textdomain_codeset(package, console_charset);
 	if (windebug) {
-	    printf("console uses %s\n", console_charset);
+	    fprintf(fdb, "console uses %s\n", console_charset);
 	}
     }
 

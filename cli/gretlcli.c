@@ -623,7 +623,7 @@ int main (int argc, char *argv[])
 
 #ifdef WIN32
 	if (debug) {
-	    set_windebug(1);
+	    set_windebug(2);
 	}
 #endif
 
