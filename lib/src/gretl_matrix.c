@@ -13099,7 +13099,14 @@ gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p,
     gretl_matrix *P = NULL;
     gretl_matrix *e;
     int k, T;
-
+    
+    /* using the correlation matrix? */
+    int do_corr = !(opt & OPT_C);
+    /* only needed if do_corr == 1 */
+    gretl_matrix *sdc;
+    double x, s;
+    int i, j;
+    
     if (gretl_is_null_matrix(X)) {
 	*err = E_DATA;
 	return NULL;
@@ -13121,33 +13128,32 @@ gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p,
 
     gretl_matrix_demean_by_column(D);
 
-    if (!(opt & OPT_C)) {
-	/* using the correlation matrix */
-	gretl_matrix *sdc;
-	double x, m, d = sqrt(T / (T - 1.0));
-	double *targ;
-	int i, j;
-
-	sdc = gretl_matrix_column_sd(D, err);
-	if (*err) {
-	    goto bailout;
-	}
-
-	for (j=0; j<k; j++) {
-	    m = d * sdc->val[j];
-	    for (i=0; i<T; i++) {
-		x = gretl_matrix_get(D, i, j);
-		gretl_matrix_set(D, i, j, x / m);
-	    }
-	}
-
-	gretl_matrix_free(sdc);
-    }
-
     V = gretl_matrix_XTX_new(D);
     if (V == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
+    }
+
+    if (do_corr) {
+	sdc = gretl_matrix_get_diagonal(V, err);
+	if (*err) {
+	    goto bailout;
+	}
+
+	for (i=0; i<k; i++) {
+	    x = sqrt(gretl_vector_get(sdc, i) / (T - 1));
+	    gretl_vector_set(sdc, i, x);
+	}
+			      
+	for (i=0; i<k; i++) {
+	    gretl_matrix_set(V, i, i, 1.0);
+	    s = gretl_vector_get(sdc, i);
+	    for (j=i+1; j<k; j++) {
+		x = gretl_matrix_get(V, i, j) / ((T - 1) * s * gretl_vector_get(sdc, j));
+		gretl_matrix_set(V, i, j, x);
+		gretl_matrix_set(V, j, i, x);
+	    }
+	}
     }
 
     /* note: we don't need the eigenvalues of V, but if we
@@ -13162,6 +13168,21 @@ gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p,
 
     /* take the first @p columns of X */
     gretl_matrix_reuse(V, k, p);
+    
+    if (do_corr) {
+	
+	/* rescale eigenvectors */
+	for (i=0; i<k; i++) {
+	    s = gretl_vector_get(sdc, i);
+	    for (j=0; j<p; j++) {
+		x = gretl_matrix_get(V, i, j) / s;
+		gretl_matrix_set(V, i, j, x);
+	    }
+	}
+
+	gretl_matrix_free(sdc);
+    }
+    
     P = gretl_matrix_multiply_new(D, V, err);
 
  bailout:
