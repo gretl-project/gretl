@@ -488,8 +488,6 @@ void gretl_matrix_demean_by_row (gretl_matrix *m);
 
 void gretl_matrix_demean_by_column (gretl_matrix *m);
 
-gretl_matrix *gretl_matrix_vcv (gretl_matrix *m);
-
 gretl_matrix *gretl_matrix_quantiles (const gretl_matrix *m,
 				      const gretl_matrix *p,
 				      int *err);
