@@ -76,7 +76,7 @@ static int cli_saved_object_action (const char *line,
 				    PRN *prn);
 
 static int parse_options (int *pargc, char ***pargv, gretlopt *popt,
-			  double *scriptval, int *debug, char *fname)
+			  double *scriptval, char *fname)
 {
     char **argv;
     int argc, gotfile = 0;
@@ -115,10 +115,6 @@ static int parse_options (int *pargc, char ***pargv, gretlopt *popt,
 	    opt |= OPT_INSTPKG;
 	} else if (!strcmp(s, "-t") || !strcmp(s, "--tool")) {
 	    opt |= (OPT_TOOL | OPT_BATCH);
-#ifdef WIN32
-	} else if (!strcmp(s, "-d") || !strcmp(s, "--debug")) {
-	    *debug = 1;
-#endif
 	} else if (!strncmp(s, "--scriptopt=", 12)) {
 	    *scriptval = atof(s + 12);
 	} else if (*s == '-' && *(s+1) != '\0') {
@@ -283,6 +279,9 @@ static void nls_init (void)
     setlocale(LC_NUMERIC, "");
     reset_local_decpoint();
 # ifdef WIN32
+    if (getenv("CLI_DEBUG")) {
+	set_windebug(2);
+    }
     cli_set_win32_charset(PACKAGE);
 # endif
 }
@@ -566,10 +565,8 @@ int main (int argc, char *argv[])
 	load_datafile = 0;
     } else {
 	gretlopt opt = 0;
-	int debug = 0;
 
-	err = parse_options(&argc, &argv, &opt, &scriptval,
-			    &debug, filearg);
+	err = parse_options(&argc, &argv, &opt, &scriptval, filearg);
 
 	if (err) {
 	    /* bad option */
@@ -620,12 +617,6 @@ int main (int argc, char *argv[])
 	} else if (opt & OPT_QUIET) {
 	    quiet = 1;
 	}
-
-#ifdef WIN32
-	if (debug) {
-	    set_windebug(2);
-	}
-#endif
 
 	if (opt & OPT_ENGLISH) {
 	    force_language(LANG_C);

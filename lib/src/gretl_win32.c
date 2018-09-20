@@ -33,6 +33,7 @@ static FILE *fdb;
 static void close_debugging (void)
 {
     if (fdb != NULL) {
+	fputs("atexit: closing debugging\n", fdb);
 	fclose(fdb);
     }
 }
@@ -1755,7 +1756,7 @@ int cli_set_win32_charset (const char *package)
     if (windebug) {
 	fprintf(fdb, "STD_OUTPUT_HANDLE: h = %s\n",
 		h == NULL ? "NULL" : h == INVALID_HANDLE_VALUE ?
-		"INVALID_HANDLE_VALUE" : "OK");
+		"INVALID_HANDLE_VALUE" : "OK?");
     }
 
     if (h_ok && vista_or_higher()) {
