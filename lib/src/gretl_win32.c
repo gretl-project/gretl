@@ -56,7 +56,7 @@ void set_windebug (int s)
 void win_print_last_error (void)
 {
     DWORD dw = GetLastError();
-    LPVOID buf;
+    LPVOID buf = NULL;
 
     FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
 		  FORMAT_MESSAGE_FROM_SYSTEM |
@@ -69,7 +69,11 @@ void win_print_last_error (void)
 		  NULL);
 
     if (buf != NULL) {
-	fprintf(stderr, "Windows says: %s\n", (char *) buf);
+	if (fdb != NULL) {
+	    fprintf(fdb, "Windows says: %s\n", (char *) buf);
+	} else {
+	    fprintf(stderr, "Windows says: %s\n", (char *) buf);
+	}
 	LocalFree(buf);
     }
 }
@@ -1747,6 +1751,7 @@ static int vista_or_higher (void)
 int cli_set_win32_charset (const char *package)
 {
     int ttfont = 0;
+    int gotinfo = 0;
     HANDLE h;
     int h_ok;
 
@@ -1764,7 +1769,7 @@ int cli_set_win32_charset (const char *package)
     if (h_ok && vista_or_higher()) {
 	CONSOLE_FONT_INFOEX finfo = {0};
 
-	fprintf(fdb, "HERE, banch 1\n");
+	fprintf(fdb, "HERE, branch 1\n");
 	if (GetCurrentConsoleFontEx(h, FALSE, &finfo)) {
 	    if (finfo.FontFamily & TMPF_TRUETYPE) {
 		if (windebug) {
@@ -1777,14 +1782,17 @@ int cli_set_win32_charset (const char *package)
 		}
 		ttfont = finfo.nFont >= 8;
 	    }
+	    gotinfo = 1;
 	} else if (windebug) {
 	    fprintf(fdb, "GetCurrentConsoleFontEx failed\n");
 	    win_print_last_error();
 	}
-    } else if (h_ok) {
+    }
+
+    if (h_ok && !gotinfo) {
 	CONSOLE_FONT_INFO finfo = {0};
 
-	fprintf(fdb, "HERE, banch 2\n");
+	fprintf(fdb, "HERE, branch 2\n");
 	if (GetCurrentConsoleFont(h, FALSE, &finfo)) {
 	    /* a shot in the dark here, based on what I found
 	       on Windows 8 */
