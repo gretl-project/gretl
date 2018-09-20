@@ -1,6 +1,6 @@
 include dbnomics.gfn
 
-CART = "https://api.next.nomics.world/series?series_ids=AMECO%2FNWT2%2FEA19.1.0.0.0.NWT2%2CINEPT%2FA.4%2FA.4.1.4%2CISM%2Fprices%2Fh&format=json"
+CART = "https://api.db.nomics.world/series?series_ids=AMECO%2FNWT2%2FEA19.1.0.0.0.NWT2%2CINEPT%2FA.4%2FA.4.1.4%2CISM%2Fprices%2Fh&format=json"
 
 buns = dbnomics_get_cart(CART)
 dbnomics_bundles_print(buns)

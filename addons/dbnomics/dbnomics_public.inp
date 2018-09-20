@@ -209,7 +209,7 @@ end function
 function bundles dbnomics_get_dataset_dimensions(const string provider,
       const string dset, bool verbose[0])
 
-    URL = sprintf("https://api.next.nomics.world/%s/%s/series?limit=0&offset=0", \
+    URL = sprintf("https://api.db.nomics.world/%s/%s/series?limit=0&offset=0", \
       provider, dset)
     if verbose
         printf "URL: %s\n", URL

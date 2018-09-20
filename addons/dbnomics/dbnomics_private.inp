@@ -236,7 +236,7 @@ end function
 function scalar dbn_get_json (const string parms, bool verbose[0],
       string *json)
 
-    string URL = "https://api.next.nomics.world/" ~ parms
+    string URL = "https://api.db.nomics.world/" ~ parms
     if verbose
         printf "URL: %s\n", URL
     endif
