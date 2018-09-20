@@ -367,6 +367,8 @@ static char *get_rscript_path (void)
 
 /* Windows-specific */
 
+/* FIXME Windows console? */
+
 static void put_R_output_line (const char *line, PRN *prn)
 {
     if (gretl_in_gui_mode() && !g_utf8_validate(line, -1, NULL)) {

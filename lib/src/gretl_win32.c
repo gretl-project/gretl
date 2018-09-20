@@ -1738,12 +1738,12 @@ int cli_set_win32_charset (const char *package)
 	if (GetCurrentConsoleFontEx(h, FALSE, &finfo)) {
 	    if (finfo.FontFamily & TMPF_TRUETYPE) {
 		if (windebug) {
-		    fprintf(stderr, "got ttfont from Family\n");
+		    printf("got ttfont from Family\n");
 		}
 		ttfont = 1;
 	    } else {
 		if (windebug) {
-		    fprintf(stderr, "got nFont = %d\n", finfo.nFont);
+		    printf("got nFont = %d\n", finfo.nFont);
 		}
 		ttfont = finfo.nFont >= 8;
 	    }
@@ -1759,8 +1759,8 @@ int cli_set_win32_charset (const char *package)
     }
 
     if (windebug) {
-	fprintf(stderr, "h = %p, ttfont = %d\n", (void *) h,
-		ttfont);
+	printf("h = %p, ttfont = %d\n", (void *) h,
+	       ttfont);
     }
 
     /* The first option below seems to work OK if the Windows console
@@ -1775,7 +1775,7 @@ int cli_set_win32_charset (const char *package)
 	bind_textdomain_codeset(package, "UTF-8");
 	set_native_utf8(1);
 	if (windebug) {
-	    fprintf(stderr, "set console to UTF-8\n");
+	    printf("set console to UTF-8\n");
 	}
     } else {
 	UINT CP = GetConsoleOutputCP();
@@ -1784,7 +1784,7 @@ int cli_set_win32_charset (const char *package)
 	sprintf(console_charset, "CP%d", (int) CP);
 	bind_textdomain_codeset(package, console_charset);
 	if (windebug) {
-	    fprintf(stderr, "console uses %s\n", console_charset);
+	    printf("console uses %s\n", console_charset);
 	}
     }
 
