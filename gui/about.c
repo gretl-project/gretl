@@ -99,6 +99,15 @@ static void show_website (GtkWidget *w, gpointer p)
     }
 }
 
+static void revert_cursor (GtkWidget *w, gpointer p)
+{
+    GdkWindow *window = gtk_widget_get_window(w);
+
+    if (window != NULL) {
+	gdk_window_set_cursor(window, NULL);
+    }
+}
+
 void about_dialog (void)
 {
     GtkWidget *vbox, *hbox, *label;
@@ -139,7 +148,7 @@ void about_dialog (void)
 				  "%s\n%s %s\n\n%s", GRETL_VERSION,
 				  SYSINFO, _("build date"), BUILD_DATE,
 				  _(bonmot));
-#else    
+#else
     buf = g_markup_printf_escaped("<span weight=\"bold\" size=\"x-large\">"
 				  "gretl %s</span>\n"
 				  "%s %s\n\n%s", GRETL_VERSION,
@@ -169,6 +178,8 @@ void about_dialog (void)
 		     G_CALLBACK(show_website), NULL);
     g_signal_connect(ebox, "enter-notify-event",
 		     G_CALLBACK(show_link_cursor), NULL);
+    g_signal_connect(ebox, "leave-notify-event",
+		     G_CALLBACK(revert_cursor), NULL);
 
     /* Copyright label */
     buf = g_markup_printf_escaped("<span size=\"small\">%s</span>",
