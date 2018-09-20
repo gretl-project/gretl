@@ -1747,10 +1747,18 @@ int cli_set_win32_charset (const char *package)
 {
     int ttfont = 0;
     HANDLE h;
+    int h_ok;
 
     h = GetStdHandle(STD_OUTPUT_HANDLE);
+    h_ok = (h != NULL && h != INVALID_HANDLE_VALUE);
 
-    if (h != NULL && vista_or_higher()) {
+    if (windebug) {
+	fprintf(fdb, "STD_OUTPUT_HANDLE: h = %s\n",
+		h == NULL ? "NULL" : h == INVALID_HANDLE_VALUE ?
+		"INVALID_HANDLE_VALUE" : "OK");
+    }
+
+    if (h_ok && vista_or_higher()) {
 	CONSOLE_FONT_INFOEX finfo = {0};
 
 	if (GetCurrentConsoleFontEx(h, FALSE, &finfo)) {
@@ -1766,7 +1774,7 @@ int cli_set_win32_charset (const char *package)
 		ttfont = finfo.nFont >= 8;
 	    }
 	}
-    } else if (h != NULL) {
+    } else if (h_ok) {
 	CONSOLE_FONT_INFO finfo = {0};
 
 	if (GetCurrentConsoleFont(h, FALSE, &finfo)) {
