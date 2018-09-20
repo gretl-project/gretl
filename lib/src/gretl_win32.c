@@ -1709,6 +1709,22 @@ double win32_stopwatch (void)
     return (double) dt / 1.0e6;
 }
 
+static int vista_or_higher (void)
+{
+    OSVERSIONINFO osv = {0};
+    int ret = 0;
+
+    osv.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+
+    if (GetVersionEx(&osv)) {
+	if (osv.dwMajorVersion >= 6) {
+	    ret = 1;
+	}
+    }
+
+    return ret;
+}
+
 int cli_set_win32_charset (const char *package)
 {
     int ttfont = 0;
@@ -1716,7 +1732,23 @@ int cli_set_win32_charset (const char *package)
 
     h = GetStdHandle(STD_OUTPUT_HANDLE);
 
-    if (h != NULL) {
+    if (h != NULL && vista_or_higher()) {
+	CONSOLE_FONT_INFOEX finfo = {0};
+
+	if (GetCurrentConsoleFontEx(h, FALSE, &finfo)) {
+	    if (finfo.FontFamily & TMPF_TRUETYPE) {
+		if (windebug) {
+		    fprintf(stderr, "got ttfont from Family\n");
+		}
+		ttfont = 1;
+	    } else {
+		if (windebug) {
+		    fprintf(stderr, "got nFont = %d\n", finfo.nFont);
+		}
+		ttfont = finfo.nFont >= 8;
+	    }
+	}
+    } else if (h != NULL) {
 	CONSOLE_FONT_INFO finfo = {0};
 
 	if (GetCurrentConsoleFont(h, FALSE, &finfo)) {
