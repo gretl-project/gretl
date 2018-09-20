@@ -1757,11 +1757,14 @@ int cli_set_win32_charset (const char *package)
 	fprintf(fdb, "STD_OUTPUT_HANDLE: h = %s\n",
 		h == NULL ? "NULL" : h == INVALID_HANDLE_VALUE ?
 		"INVALID_HANDLE_VALUE" : "OK?");
+	fprintf(fdb, "vista or higher ? %s\n", vista_or_higher() ?
+		"yes" : "no");
     }
 
     if (h_ok && vista_or_higher()) {
 	CONSOLE_FONT_INFOEX finfo = {0};
 
+	fprintf(fdb, "HERE, banch 1\n");
 	if (GetCurrentConsoleFontEx(h, FALSE, &finfo)) {
 	    if (finfo.FontFamily & TMPF_TRUETYPE) {
 		if (windebug) {
@@ -1774,14 +1777,21 @@ int cli_set_win32_charset (const char *package)
 		}
 		ttfont = finfo.nFont >= 8;
 	    }
+	} else if (windebug) {
+	    fprintf(fdb, "GetCurrentConsoleFontEx failed\n");
+	    win_print_last_error();
 	}
     } else if (h_ok) {
 	CONSOLE_FONT_INFO finfo = {0};
 
+	fprintf(fdb, "HERE, banch 2\n");
 	if (GetCurrentConsoleFont(h, FALSE, &finfo)) {
 	    /* a shot in the dark here, based on what I found
 	       on Windows 8 */
 	    ttfont = finfo.nFont >= 8;
+	} else if (windebug) {
+	    fprintf(fdb, "GetCurrentConsoleFont failed\n");
+	    win_print_last_error();
 	}
     }
 
