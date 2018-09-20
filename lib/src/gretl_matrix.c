@@ -6948,6 +6948,102 @@ void gretl_matrix_demean_by_column (gretl_matrix *m)
     }
 }
 
+static void gretl_matrix_center (gretl_matrix *m)
+{
+    double x, xbar;
+    int i, j;
+
+#if defined(_OPENMP)
+    if (m->cols == 1 || m->rows * m->cols < 4096) {
+	goto st_mode;
+    }
+#pragma omp parallel for private(i, j, x, xbar)
+    for (j=0; j<m->cols; j++) {
+	xbar = 0;
+	for (i=0; i<m->rows; i++) {
+	    xbar += gretl_matrix_get(m, i, j);
+	}
+	xbar /= m->rows;
+	for (i=0; i<m->rows; i++) {
+	    x = gretl_matrix_get(m, i, j) - xbar;
+	    gretl_matrix_set(m, i, j, x);
+	}
+    }
+    return;
+
+ st_mode:
+#endif
+
+    for (j=0; j<m->cols; j++) {
+	xbar = 0;
+	for (i=0; i<m->rows; i++) {
+	    xbar += gretl_matrix_get(m, i, j);
+	}
+	xbar /= m->rows;
+	for (i=0; i<m->rows; i++) {
+	    x = gretl_matrix_get(m, i, j) - xbar;
+	    gretl_matrix_set(m, i, j, x);
+	}
+    }
+}
+
+static int gretl_matrix_standardize (gretl_matrix *m,
+				     int dfcorr)
+{
+    double x, xbar, sdc;
+    int i, j;
+
+    if (m->rows < 2) {
+	return E_TOOFEW;
+    }
+
+#if defined(_OPENMP)
+    if (m->cols == 1 || m->rows * m->cols < 4096) {
+	goto st_mode;
+    }
+#pragma omp parallel for private(i, j, x, xbar, sdc)
+    for (j=0; j<m->cols; j++) {
+	xbar = sdc = 0;
+	for (i=0; i<m->rows; i++) {
+	    xbar += gretl_matrix_get(m, i, j);
+	}
+	xbar /= m->rows;
+	for (i=0; i<m->rows; i++) {
+	    x = gretl_matrix_get(m, i, j) - xbar;
+	    gretl_matrix_set(m, i, j, x);
+	    sdc += x * x;
+	}
+	sdc = sqrt(sdc / (m->rows - dfcorr));
+	for (i=0; i<m->rows; i++) {
+	    x = gretl_matrix_get(m, i, j) / sdc;
+	    gretl_matrix_set(m, i, j, x);
+	}
+    }
+    return 0;
+
+ st_mode:
+#endif
+
+    for (j=0; j<m->cols; j++) {
+	xbar = sdc = 0;
+	for (i=0; i<m->rows; i++) {
+	    xbar += gretl_matrix_get(m, i, j);
+	}
+	xbar /= m->rows;
+	for (i=0; i<m->rows; i++) {
+	    x = gretl_matrix_get(m, i, j) - xbar;
+	    gretl_matrix_set(m, i, j, x);
+	    sdc += x * x;
+	}
+	sdc = sqrt(sdc / (m->rows - dfcorr));
+	for (i=0; i<m->rows; i++) {
+	    x = gretl_matrix_get(m, i, j) / sdc;
+	    gretl_matrix_set(m, i, j, x);
+	}
+    }
+    return 0;
+}
+
 /**
  * gretl_matrix_quantiles:
  * @m: matrix on which to operate.
@@ -9022,20 +9118,27 @@ gretl_general_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
  * Returns: 0 on success; non-zero error code on failure.
  */
 
-int gretl_symmetric_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs,
+int gretl_symmetric_eigen_sort (gretl_matrix *evals,
+				gretl_matrix *evecs,
 				int rank)
 {
     double *tmp = NULL;
-    int n, err = 0;
+    int n, m, err = 0;
 
     n = gretl_vector_get_length(evals);
     if (n == 0) {
 	return E_DATA;
     }
 
+    if (evecs != NULL && (evecs->rows != n || evecs->cols != n)) {
+	return E_DATA;
+    }
+
+    m = n / 2;
+
     if (evecs != NULL) {
-	if (evecs->rows != n || evecs->cols != n) {
-	    err = E_DATA;
+	if (rank > 0 && rank < m) {
+	    ; /* @tmp storage not needed */
 	} else {
 	    tmp = malloc(n * sizeof *tmp);
 	    if (tmp == NULL) {
@@ -9045,7 +9148,7 @@ int gretl_symmetric_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs,
     }
 
     if (!err) {
-	int i, j, k, m = n / 2;
+	int i, j, k;
 	double x;
 
 	/* reverse the eigenvalues in @evals */
@@ -9058,25 +9161,31 @@ int gretl_symmetric_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs,
 	}
 
 	if (evecs != NULL) {
-	    /* using tmp, reverse the columns of @evecs */
-	    k = n - 1;
-	    for (j=0; j<m; j++) {
-		for (i=0; i<n; i++) {
-		    /* col j -> tmp */
-		    tmp[i] = gretl_matrix_get(evecs, i, j);
-		}
-		for (i=0; i<n; i++) {
-		    /* col k -> col j */
-		    x = gretl_matrix_get(evecs, i, k);
-		    gretl_matrix_set(evecs, i, j, x);
-		}
-		for (i=0; i<n; i++) {
-		    /* tmp -> col k */
-		    gretl_matrix_set(evecs, i, k, tmp[i]);
-		}
-		k--;
+	    size_t colsize = n * sizeof *tmp;
+	    double *colj = evecs->val;
+	    double *colk = evecs->val + (n-1)*n;
+
+	    if (rank > 0 && rank < m) {
+		/* we just have to move the last @rank cols
+		   to the front in reverse order
+		*/
+		m = rank;
 	    }
 
+	    for (j=0; j<m; j++) {
+		if (tmp == NULL) {
+		    memcpy(colj, colk, colsize);
+		} else {
+		    /* col j -> tmp */
+		    memcpy(tmp, colj, colsize);
+		    /* col k -> col j */
+		    memcpy(colj, colk, colsize);
+		    /* tmp -> col k */
+		    memcpy(colk, tmp, colsize);
+		}
+		colj += n;
+		colk -= n;
+	    }
 	    /* and "shrink" @evecs, if wanted */
 	    if (rank > 0 && rank < n) {
 		evecs->cols = rank;
@@ -9180,6 +9289,28 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
     return evals;
 }
 
+static gretl_matrix *
+real_symm_eigenvals_descending (gretl_matrix *m,
+				int eigenvecs,
+				int rank,
+				int *err)
+{
+    gretl_matrix *v =
+	gretl_symmetric_matrix_eigenvals(m, eigenvecs, err);
+
+    if (!*err) {
+	m = eigenvecs ? m : NULL;
+	*err = gretl_symmetric_eigen_sort(v, m, rank);
+    }
+
+    if (*err && v != NULL) {
+	gretl_matrix_free(v);
+	v = NULL;
+    }
+
+    return v;
+}
+
 /**
  * gretl_symm_matrix_eigenvals_descending:
  * @m: n x n matrix to operate on.
@@ -9200,20 +9331,8 @@ gretl_symm_matrix_eigenvals_descending (gretl_matrix *m,
 					int eigenvecs,
 					int *err)
 {
-    gretl_matrix *v =
-	gretl_symmetric_matrix_eigenvals(m, eigenvecs, err);
-
-    if (!*err) {
-	m = eigenvecs ? m : NULL;
-	*err = gretl_symmetric_eigen_sort(v, m, 0);
-    }
-
-    if (*err && v != NULL) {
-	gretl_matrix_free(v);
-	v = NULL;
-    }
-
-    return v;
+    return real_symm_eigenvals_descending(m, eigenvecs,
+					  0, err);
 }
 
 static double get_extreme_eigenvalue (gretl_matrix *m, int getmax,
@@ -12463,7 +12582,7 @@ real_gretl_covariance_matrix (const gretl_matrix *m,
     gretl_vector *ssx = NULL;
     int k, n, den;
     int t, i, j;
-    double vv, mx, my, x, y;
+    double vv, mx, my, x;
     int myerr = 0;
 
     if (gretl_is_null_matrix(m)) {
@@ -12594,37 +12713,21 @@ static gretl_matrix *gretl_matrix_cov_corr (const gretl_matrix *X,
 	return NULL;
     }
 
-    gretl_matrix_demean_by_column(D);
-
     if (corrmat) {
-	/* the correlation matrix is wanted */
-	int i, j, k = X->cols;
-	gretl_matrix *sdc;
-	double x;
-
-	sdc = gretl_matrix_column_sd(D, err);
-	if (*err) {
-	    goto bailout;
-	}
-
-	for (j=0; j<k; j++) {
-	    for (i=0; i<T; i++) {
-		x = gretl_matrix_get(D, i, j);
-		gretl_matrix_set(D, i, j, x / sdc->val[j]);
-	    }
-	}
-
-	gretl_matrix_free(sdc);
+	*err = gretl_matrix_standardize(D, 1);
+    } else {
+	gretl_matrix_center(D);
     }
 
-    V = gretl_matrix_XTX_new(D);
+    if (!*err) {
+	V = gretl_matrix_XTX_new(D);
+	if (V == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    int den = corrmat ? T : (T - df_loss);
 
-    if (V == NULL) {
-	*err = E_ALLOC;
-    } else {
-	int den = corrmat ? T : (T - df_loss);
-
-	gretl_matrix_divide_by_scalar(V, den);
+	    gretl_matrix_divide_by_scalar(V, den);
+	}
     }
 
  bailout:
@@ -13076,10 +13179,8 @@ double gretl_matrix_global_sum (const gretl_matrix *A,
 /**
  * gretl_matrix_pca:
  * @X: T x m data matrix.
- * @p: number of principal components to return: 0 < p <= m,
- * or p = -1 to return components for eigenvalues greater than
- * the mean.
- * @opt: if OPT_C, use the covariance matrix rather than the
+ * @p: number of principal components to return: 0 < p <= m.
+ * @opt: if OPT_V, use the covariance matrix rather than the
  * correlation matrix as basis.
  * @err: location to receive error code.
  *
@@ -13098,24 +13199,13 @@ gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p,
     gretl_matrix *V = NULL;
     gretl_matrix *P = NULL;
     gretl_matrix *e;
-    int k, T;
-    
-    /* using the correlation matrix? */
-    int do_corr = !(opt & OPT_C);
-    /* only needed if do_corr == 1 */
-    gretl_matrix *sdc;
-    double x, s;
-    int i, j;
-    
+
     if (gretl_is_null_matrix(X)) {
 	*err = E_DATA;
 	return NULL;
     }
 
-    k = X->cols;
-    T = X->rows;
-
-    if (p > k) {
+    if (p <= 0 || p > X->cols) {
 	*err = E_INVARG;
 	return NULL;
     }
@@ -13126,7 +13216,14 @@ gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p,
 	return NULL;
     }
 
-    gretl_matrix_demean_by_column(D);
+    if (opt & OPT_V) {
+	gretl_matrix_center(D);
+    } else {
+	*err = gretl_matrix_standardize(D, 1);
+	if (*err) {
+	    goto bailout;
+	}
+    }
 
     V = gretl_matrix_XTX_new(D);
     if (V == NULL) {
@@ -13134,55 +13231,16 @@ gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p,
 	goto bailout;
     }
 
-    if (do_corr) {
-	sdc = gretl_matrix_get_diagonal(V, err);
-	if (*err) {
-	    goto bailout;
-	}
-
-	for (i=0; i<k; i++) {
-	    x = sqrt(gretl_vector_get(sdc, i) / (T - 1));
-	    gretl_vector_set(sdc, i, x);
-	}
-			      
-	for (i=0; i<k; i++) {
-	    gretl_matrix_set(V, i, i, 1.0);
-	    s = gretl_vector_get(sdc, i);
-	    for (j=i+1; j<k; j++) {
-		x = gretl_matrix_get(V, i, j) / ((T - 1) * s * gretl_vector_get(sdc, j));
-		gretl_matrix_set(V, i, j, x);
-		gretl_matrix_set(V, j, i, x);
-	    }
-	}
-    }
-
     /* note: we don't need the eigenvalues of V, but if we
        don't grab and then free the return value below,
        we'll leak a gretl_matrix
     */
-    e = gretl_symm_matrix_eigenvals_descending(V, 1, err);
+    e = real_symm_eigenvals_descending(V, 1, p, err);
     gretl_matrix_free(e);
     if (*err) {
 	goto bailout;
     }
 
-    /* take the first @p columns of X */
-    gretl_matrix_reuse(V, k, p);
-    
-    if (do_corr) {
-	
-	/* rescale eigenvectors */
-	for (i=0; i<k; i++) {
-	    s = gretl_vector_get(sdc, i);
-	    for (j=0; j<p; j++) {
-		x = gretl_matrix_get(V, i, j) / s;
-		gretl_matrix_set(V, i, j, x);
-	    }
-	}
-
-	gretl_matrix_free(sdc);
-    }
-    
     P = gretl_matrix_multiply_new(D, V, err);
 
  bailout:

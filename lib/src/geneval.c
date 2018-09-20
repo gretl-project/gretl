@@ -10618,12 +10618,11 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    node_type_error(f, 3, NUM, r, p);
 	} else {
 	    int cov = (r->t == EMPTY)? 0 : node_get_int(r, p);
+	    gretlopt opt = cov ? OPT_V : OPT_NONE;
 	    int k = node_get_int(m, p);
 
 	    if (!p->err) {
-		A = gretl_matrix_pca(l->v.m, k,
-				     cov ? OPT_C : OPT_NONE,
-				     &p->err);
+		A = gretl_matrix_pca(l->v.m, k, opt, &p->err);
 	    }
 	}
     } else if (f == F_HALTON) {
