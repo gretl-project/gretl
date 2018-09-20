@@ -746,7 +746,7 @@ int gretl_matrices_are_equal (const gretl_matrix *a,
 			      int *err);
 
 gretl_matrix *gretl_covariance_matrix (const gretl_matrix *m,
-				       int corr,
+				       int corr, int dfc,
 				       int *err);
 
 gretl_matrix *gretl_matrix_GG_inverse (const gretl_matrix *G,

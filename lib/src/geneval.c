@@ -3840,6 +3840,8 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
     if (ret != NULL && starting(p)) {
 	gretl_matrix *m = NULL;
 	int tmpmat = 0;
+	int optparm = 0;
+	int gotopt = 0;
 	int a = 0, b, c;
 
 	if (n->t == NUM && cmplx_func(f)) {
@@ -3853,11 +3855,14 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    goto finalize;
 	}
 
-	if (f == F_RESAMPLE || f == F_MREVERSE || f == F_SDC) {
+	if (f == F_RESAMPLE || f == F_MREVERSE || f == F_SDC || f == F_MCOV) {
 	    /* the r node may be absent, but if present it should
 	       hold a scalar */
 	    if (!empty_or_num(r)) {
 		node_type_error(f, 2, NUM, r, p);
+	    } else if (!null_or_empty(r)) {
+		optparm = node_get_int(r, p);
+		gotopt = 1;
 	    }
 	} else if (f == HF_CFFT) {
 	    /* optional scalar (boolean) on the right */
@@ -3907,17 +3912,22 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    ret->v.m = gretl_matrix_column_sd(m, &p->err);
 	    break;
 	case F_SDC:
-	    if (r != NULL && r->t == NUM) {
-		ret->v.m = gretl_matrix_column_sd2(m, r->v.xval, &p->err);
+	    if (gotopt) {
+		ret->v.m = gretl_matrix_column_sd2(m, optparm, &p->err);
 	    } else {
 		ret->v.m = gretl_matrix_column_sd(m, &p->err);
 	    }
 	    break;
 	case F_MCOV:
-	    ret->v.m = gretl_covariance_matrix(m, 0, &p->err);
+	    if (!gotopt) {
+		optparm = 1;
+	    }
+	    ret->v.m = gretl_covariance_matrix(m, f == F_MCORR,
+					       optparm, &p->err);
 	    break;
 	case F_MCORR:
-	    ret->v.m = gretl_covariance_matrix(m, 1, &p->err);
+	    ret->v.m = gretl_covariance_matrix(m, f == F_MCORR,
+					       1, &p->err);
 	    break;
 	case F_CUM:
 	    ret->v.m = gretl_matrix_cumcol(m, &p->err);
@@ -3929,8 +3939,8 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    ret->v.m = gretl_matrix_isfinite(m, &p->err);
 	    break;
 	case F_RESAMPLE:
-	    if (r != NULL && r->t == NUM) {
-		ret->v.m = gretl_matrix_block_resample(m, r->v.xval, &p->err);
+	    if (gotopt) {
+		ret->v.m = gretl_matrix_block_resample(m, optparm, &p->err);
 	    } else {
 		ret->v.m = gretl_matrix_resample(m, &p->err);
 	    }
@@ -3965,7 +3975,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    ret->v.m = user_matrix_unvech(m, &p->err);
 	    break;
 	case F_MREVERSE:
-	    if (r != NULL && r->t == NUM && r->v.xval != 0) {
+	    if (optparm != 0) {
 		ret->v.m = gretl_matrix_reverse_cols(m);
 	    } else {
 		ret->v.m = gretl_matrix_reverse_rows(m);

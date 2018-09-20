@@ -6811,6 +6811,7 @@ gretl_matrix *gretl_matrix_column_sd2 (const gretl_matrix *m,
 				       int df, int *err)
 {
     gretl_matrix *s;
+    double xbar, dev, v;
     int i, j;
 
     if (gretl_is_null_matrix(m)) {
@@ -6830,22 +6831,16 @@ gretl_matrix *gretl_matrix_column_sd2 (const gretl_matrix *m,
     }
 
     for (j=0; j<m->cols; j++) {
-	double dev, v = 0.0, xbar = 0.0;
-
+	xbar = v = 0.0;
 	for (i=0; i<m->rows; i++) {
 	    xbar += gretl_matrix_get(m, i, j);
 	}
-
 	xbar /= m->rows;
-
 	for (i=0; i<m->rows; i++) {
 	    dev = gretl_matrix_get(m, i, j) - xbar;
 	    v += dev * dev;
 	}
-
-	v /= df;
-
-	s->val[j] = sqrt(v);
+	s->val[j] = sqrt(v / df);
     }
 
     return s;
@@ -6927,26 +6922,7 @@ void gretl_matrix_demean_by_row (gretl_matrix *m)
     }
 }
 
-/**
- * gretl_matrix_demean_by_column:
- * @m: matrix on which to operate.
- *
- * For each column of @m, subtracts the column mean from each
- * element in the column.
- */
-
-void gretl_matrix_demean_by_column (gretl_matrix *m)
-{
-    double colmean;
-    int i, j;
-
-    for (j=0; j<m->cols; j++) {
-	colmean = gretl_matrix_column_j_mean(m, j);
-	for (i=0; i<m->rows; i++) {
-	    gretl_matrix_cum(m, i, j, -colmean);
-	}
-    }
-}
+/* subtract the column means */
 
 static void gretl_matrix_center (gretl_matrix *m)
 {
@@ -6987,15 +6963,24 @@ static void gretl_matrix_center (gretl_matrix *m)
     }
 }
 
-static int gretl_matrix_standardize (gretl_matrix *m,
-				     int dfcorr)
+/**
+ * gretl_matrix_demean_by_column:
+ * @m: matrix on which to operate.
+ *
+ * For each column of @m, subtracts the column mean from each
+ * element in the column.
+ */
+
+void gretl_matrix_demean_by_column (gretl_matrix *m)
+{
+    gretl_matrix_center(m);
+}
+
+static void gretl_matrix_standardize (gretl_matrix *m,
+				      int dfcorr)
 {
     double x, xbar, sdc;
     int i, j;
-
-    if (m->rows < 2) {
-	return E_TOOFEW;
-    }
 
 #if defined(_OPENMP)
     if (m->cols == 1 || m->rows * m->cols < 4096) {
@@ -7019,7 +7004,7 @@ static int gretl_matrix_standardize (gretl_matrix *m,
 	    gretl_matrix_set(m, i, j, x);
 	}
     }
-    return 0;
+    return;
 
  st_mode:
 #endif
@@ -7041,7 +7026,6 @@ static int gretl_matrix_standardize (gretl_matrix *m,
 	    gretl_matrix_set(m, i, j, x);
 	}
     }
-    return 0;
 }
 
 /**
@@ -12573,177 +12557,13 @@ int gretl_matrices_are_equal (const gretl_matrix *a, const gretl_matrix *b,
     return 1;
 }
 
-static gretl_matrix *
-real_gretl_covariance_matrix (const gretl_matrix *m,
-			      int corr, int *err)
-{
-    gretl_matrix *V = NULL;
-    gretl_vector *xbar = NULL;
-    gretl_vector *ssx = NULL;
-    int k, n, den;
-    int t, i, j;
-    double vv, mx, my, x;
-    int myerr = 0;
-
-    if (gretl_is_null_matrix(m)) {
-	myerr = E_DATA;
-	goto bailout;
-    }
-
-    if (err != NULL) {
-	*err = 0;
-    }
-
-    k = m->cols;
-    n = m->rows;
-
-    if (n < 2) {
-	myerr = E_TOOFEW;
-	goto bailout;
-    }
-
-    V = gretl_matrix_alloc(k, k);
-
-    if (corr && k == 1) {
-	/* heh! */
-	V->val[0] = 1;
-	goto bailout;
-    }
-
-    xbar = gretl_vector_alloc(k);
-
-    if (V == NULL || xbar == NULL) {
-	myerr = E_ALLOC;
-	goto bailout;
-    }
-
-    if (corr) {
-	ssx = gretl_vector_alloc(k);
-	if (ssx == NULL) {
-	    myerr = E_ALLOC;
-	    goto bailout;
-	}
-    }
-
-    for (i=0; i<k; i++) {
-	xbar->val[i] = 0.0;
-	for (t=0; t<n; t++) {
-	    xbar->val[i] += gretl_matrix_get(m, t, i);
-	}
-	xbar->val[i] /= n;
-    }
-
-    if (ssx != NULL) {
-	for (i=0; i<k; i++) {
-	    ssx->val[i] = 0.0;
-	    for (t=0; t<n; t++) {
-		x = gretl_matrix_get(m, t, i) - xbar->val[i];
-		ssx->val[i] += x * x;
-	    }
-	}
-    }
-
-    den = n - 1; /* or could use n */
-
-    *err = gretl_matrix_multiply_mod(m, GRETL_MOD_TRANSPOSE,
-				     m, GRETL_MOD_NONE,
-				     V, GRETL_MOD_NONE);
-    for (i=0; i<k; i++) {
-	mx = xbar->val[i] * n;
-	vv = gretl_matrix_get(V, i, i) - mx*xbar->val[i];
-	gretl_matrix_set(V, i, i, vv / den);
-	for (j=i+1; j<k; j++) {
-	    vv = (gretl_matrix_get(V, i, j) - mx*xbar->val[j]) / den;
-	    gretl_matrix_set(V, i, j, vv);
-	    gretl_matrix_set(V, j, i, vv);
-	}
-    }
-
-    if (corr) {
-	for (i=0; i<k; i++) {
-	    mx = sqrt(gretl_matrix_get(V, i, i));
-	    for (j=i; j<k; j++) {
-		my = sqrt(gretl_matrix_get(V, j, j));
-		vv = gretl_matrix_get(V, i, j)/(mx*my);
-		gretl_matrix_set(V, i, j, vv);
-		gretl_matrix_set(V, j, i, vv);
-	    }
-	}
-    }
-
- bailout:
-
-    gretl_vector_free(xbar);
-    gretl_vector_free(ssx);
-
-    if (myerr) {
-	if (err != NULL) {
-	    *err = myerr;
-	}
-	gretl_matrix_free(V);
-	V = NULL;
-    }
-
-    return V;
-}
-
-#if 0
-
-/* for testing! but seems to be slower */
-
-static gretl_matrix *gretl_matrix_cov_corr (const gretl_matrix *X,
-					    int df_loss,
-					    int corrmat,
-					    int *err)
-{
-    gretl_matrix *D = NULL;
-    gretl_matrix *V = NULL;
-    int T;
-
-    if (gretl_is_null_matrix(X)) {
-	*err = E_DATA;
-	return NULL;
-    }
-
-    T = X->rows;
-
-    D = gretl_matrix_copy(X);
-    if (D == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    if (corrmat) {
-	*err = gretl_matrix_standardize(D, 1);
-    } else {
-	gretl_matrix_center(D);
-    }
-
-    if (!*err) {
-	V = gretl_matrix_XTX_new(D);
-	if (V == NULL) {
-	    *err = E_ALLOC;
-	} else {
-	    int den = corrmat ? T : (T - df_loss);
-
-	    gretl_matrix_divide_by_scalar(V, den);
-	}
-    }
-
- bailout:
-
-    gretl_matrix_free(D);
-
-    return V;
-}
-
-#endif /* testing */
-
 /**
  * gretl_covariance_matrix:
  * @m: (x x n) matrix containing n observations on each of k
  * variables.
  * @corr: flag for computing correlations.
+ * @dfc: degrees of freedom correction: use 1 for sample
+ * variance, 0 for MLE.
  * @err: pointer to receive non-zero error code in case of
  * failure, or NULL.
  *
@@ -12752,17 +12572,44 @@ static gretl_matrix *gretl_matrix_cov_corr (const gretl_matrix *X,
  */
 
 gretl_matrix *gretl_covariance_matrix (const gretl_matrix *m,
-				       int corr, int *err)
+				       int corr, int dfc,
+				       int *err)
 {
-#if 1
-    return real_gretl_covariance_matrix(m, corr, err);
-#else
-    if (corr) {
-	return gretl_matrix_cov_corr(m, 0, 1, err);
-    } else {
-	return gretl_matrix_cov_corr(m, 1, 0, err);
+    gretl_matrix *D = NULL;
+    gretl_matrix *V = NULL;
+
+    if (gretl_is_null_matrix(m) || dfc < 0 || dfc >= m->rows) {
+	*err = E_INVARG;
+	return NULL;
     }
-#endif
+
+    if (m->rows < 2) {
+	*err = E_TOOFEW;
+	return NULL;
+    }
+
+    D = gretl_matrix_copy(m);
+    if (D == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    if (corr) {
+	gretl_matrix_standardize(D, dfc);
+    } else {
+	gretl_matrix_center(D);
+    }
+
+    V = gretl_matrix_XTX_new(D);
+    if (V == NULL) {
+	*err = E_ALLOC;
+    } else {
+	gretl_matrix_divide_by_scalar(V, m->rows - dfc);
+    }
+
+    gretl_matrix_free(D);
+
+    return V;
 }
 
 /**
@@ -13208,6 +13055,9 @@ gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p,
     if (p <= 0 || p > X->cols) {
 	*err = E_INVARG;
 	return NULL;
+    } else if (X->rows < 2) {
+	*err = E_TOOFEW;
+	return NULL;
     }
 
     D = gretl_matrix_copy(X);
@@ -13217,33 +13067,28 @@ gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p,
     }
 
     if (opt & OPT_V) {
+	/* use covariance matrix */
 	gretl_matrix_center(D);
     } else {
-	*err = gretl_matrix_standardize(D, 1);
-	if (*err) {
-	    goto bailout;
-	}
+	/* use correlation matrix */
+	gretl_matrix_standardize(D, 1);
     }
 
     V = gretl_matrix_XTX_new(D);
     if (V == NULL) {
 	*err = E_ALLOC;
-	goto bailout;
+    } else {
+	/* note: we don't need the eigenvalues of V, but if we
+	   don't grab and then free the return value below,
+	   we'll leak a gretl_matrix
+	*/
+	e = real_symm_eigenvals_descending(V, 1, p, err);
+	gretl_matrix_free(e);
     }
 
-    /* note: we don't need the eigenvalues of V, but if we
-       don't grab and then free the return value below,
-       we'll leak a gretl_matrix
-    */
-    e = real_symm_eigenvals_descending(V, 1, p, err);
-    gretl_matrix_free(e);
-    if (*err) {
-	goto bailout;
+    if (!*err) {
+	P = gretl_matrix_multiply_new(D, V, err);
     }
-
-    P = gretl_matrix_multiply_new(D, V, err);
-
- bailout:
 
     gretl_matrix_free(D);
     gretl_matrix_free(V);
