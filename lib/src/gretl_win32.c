@@ -1797,6 +1797,9 @@ int cli_set_win32_charset (const char *package)
 	    /* a shot in the dark here, based on what I found
 	       on Windows 8 */
 	    ttfont = finfo.nFont >= 8;
+	    if (windebug) {
+		fprintf(fdb, "got nFont = %d\n", finfo.nFont);
+	    }
 	} else if (windebug) {
 	    fprintf(fdb, "GetCurrentConsoleFont failed\n");
 	    win_print_last_error();
