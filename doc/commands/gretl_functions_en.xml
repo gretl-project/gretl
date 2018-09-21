@@ -3095,22 +3095,30 @@
       </fnargs>
       <description>
 	<para>
-	  Works just as <fncref targ="eigengen"/>, but the argument
-	  <argname>A</argname> must be symmetric (in which case the
-	  calculations can be reduced). Unlike <fncref
-	  targ="eigengen"/>, eigenvalues are returned in ascending
-	  order.
+	  Works mostly as <fncref targ="eigengen"/> except that the
+	  argument <argname>A</argname> must be symmetric (in which
+	  case less calculation is required), and the eigenvalues are
+	  returned in ascending order. If you want to get the
+	  eigenvalues in descending order (and have the eigenvectors
+	  reordered correspondingly) you can do the following:
 	</para>
+	<code>
+	  matrix U
+	  e = eigensym(A, &amp;U)
+	  Tmp = msortby((-e' | U)',1)'
+	  e = -Tmp[1,]'
+	  U = Tmp[2:,]
+	  # now largest to smallest eigenvalues
+	  print e U
+	</code>
 	<para>
 	  Note: if you're interested in the eigen-decomposition of a
-	  matrix of the form <math>X'X</math>, where <math>X</math> is
-	  a large matrix, it is preferable to compute it via the prime
-	  operator <lit>X'X</lit> rather than using the more general
-	  syntax <lit>X'*X</lit>. The former expression uses a
-	  specialized algorithm which has the double advantage of
-	  being more efficient computationally and of ensuring that
-	  the result will be free by construction of machine precision
-	  artifacts that may render it numerically non-symmetric.
+	  matrix of the form <math>X'X</math> it's preferable to
+	  compute the argument via the prime operator <lit>X'X</lit>
+	  rather than using the more general syntax
+	  <lit>X'*X</lit>. The former expression uses a specialized
+	  algorithm which offers greater computational efficiency as
+	  well as ensuring that the result is exactly symmetric.
 	</para>
       </description>
     </function>
