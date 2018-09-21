@@ -9118,16 +9118,18 @@ int gretl_symmetric_eigen_sort (gretl_matrix *evals,
 	return E_DATA;
     }
 
+    if (rank <= 0) {
+	rank = n;
+    }
     m = n / 2;
 
-    if (evecs != NULL) {
-	if (rank > 0 && rank < m) {
-	    ; /* @tmp storage not needed */
-	} else {
-	    tmp = malloc(n * sizeof *tmp);
-	    if (tmp == NULL) {
-		err = E_ALLOC;
-	    }
+    if (evecs != NULL && rank >= m) {
+	/* we'll need some temporary storage for
+	   swapping eigenvectors
+	*/
+	tmp = malloc(n * sizeof *tmp);
+	if (tmp == NULL) {
+	    err = E_ALLOC;
 	}
     }
 
@@ -9149,8 +9151,8 @@ int gretl_symmetric_eigen_sort (gretl_matrix *evals,
 	    double *colj = evecs->val;
 	    double *colk = evecs->val + (n-1)*n;
 
-	    if (rank > 0 && rank < m) {
-		/* we just have to move the last @rank cols
+	    if (rank < m) {
+		/* we just have to copy the last @rank cols
 		   to the front in reverse order
 		*/
 		m = rank;
@@ -9158,6 +9160,7 @@ int gretl_symmetric_eigen_sort (gretl_matrix *evals,
 
 	    for (j=0; j<m; j++) {
 		if (tmp == NULL) {
+		    /* col k -> col j */
 		    memcpy(colj, colk, colsize);
 		} else {
 		    /* col j -> tmp */
@@ -9171,7 +9174,7 @@ int gretl_symmetric_eigen_sort (gretl_matrix *evals,
 		colk -= n;
 	    }
 	    /* and "shrink" @evecs, if wanted */
-	    if (rank > 0 && rank < n) {
+	    if (rank < n) {
 		evecs->cols = rank;
 	    }
 	}
