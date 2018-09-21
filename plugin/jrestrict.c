@@ -2245,19 +2245,18 @@ static int set_up_H (Jwrap *J, const gretl_restriction *rset)
 }
 
 /* See H. Peter Boswijk, "Identifiability of Cointegrated Systems",
-   http://www.ase.uva.nl/pp/bin/258fulltext.pdf
+   http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.500.8189
    We're assuming here that vec(\beta) = H\psi + h_0, for
    non-zero h_0.
 */
 
 static int phi_init_nonhomog (Jwrap *J)
 {
-    gretl_matrix *BB = NULL;
     gretl_matrix *BP = NULL;
     gretl_matrix *IBP = NULL;
     gretl_matrix *IBPH = NULL;
     gretl_matrix *IBPh = NULL;
-    gretl_matrix *E = NULL;
+    gretl_matrix *e = NULL;
     int ocols = J->p1 - J->r;
     int err = 0;
 
@@ -2268,34 +2267,26 @@ static int phi_init_nonhomog (Jwrap *J)
 	return 0;
     }
 
-    BB = gretl_matrix_alloc(J->p1, J->p1);
-    BP = gretl_matrix_alloc(J->p1, ocols);
+    BP = gretl_matrix_alloc(J->p1, J->p1);
     IBPH = gretl_matrix_alloc(J->r * ocols, J->blen);
     IBPh = gretl_column_vector_alloc(J->r * ocols);
 
-    if (BB == NULL || BP == NULL ||
-	IBPH == NULL || IBPh == NULL) {
+    if (BP == NULL || IBPH == NULL || IBPh == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
 
     gretl_matrix_multiply_mod(J->beta, GRETL_MOD_NONE,
 			      J->beta, GRETL_MOD_TRANSPOSE,
-			      BB, GRETL_MOD_NONE);
+			      BP, GRETL_MOD_NONE);
 
-    /* find the eigenvectors corresponding to the @ocols zero
-       eigenvalues of BB */
-#if 0 /* order doesn't matter? */
-    E = gretl_symmetric_matrix_eigenvals(BB, 1, &err);
+    e = gretl_symmetric_matrix_eigenvals(BP, 1, &err);
     if (!err) {
-	gretl_matrix_extract_matrix(BP, BB, 0, 0, GRETL_MOD_NONE);
+	/* truncate @BP to just the eigenvectors corresponding
+	   to the @ocols zero eigenvalues
+	*/
+	BP->cols = ocols;
     }
-#else
-    E = gretl_symm_matrix_eigenvals_descending(BB, 1, &err);
-    if (!err) {
-	err = gretl_matrix_extract_matrix(BP, BB, 0, J->r, GRETL_MOD_NONE);
-    }
-#endif
 
     if (!err) {
 	IBP = gretl_matrix_I_kronecker_new(J->r, BP, &err);
@@ -2330,12 +2321,11 @@ static int phi_init_nonhomog (Jwrap *J)
 
  bailout:
 
-    gretl_matrix_free(BB);
     gretl_matrix_free(BP);
     gretl_matrix_free(IBP);
     gretl_matrix_free(IBPH);
     gretl_matrix_free(IBPh);
-    gretl_matrix_free(E);
+    gretl_matrix_free(e);
 
     return err;
 }
