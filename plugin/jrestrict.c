@@ -2257,19 +2257,18 @@ static int phi_init_nonhomog (Jwrap *J)
     gretl_matrix *IBPH = NULL;
     gretl_matrix *IBPh = NULL;
     gretl_matrix *e = NULL;
-    int ocols = J->p1 - J->r;
+    int nzero = J->p1 - J->r;
     int err = 0;
 
-    if (J->h == NULL ||
-	gretl_is_zero_matrix(J->h) ||
-	ocols == 0 || J->blen == 0) {
+    if (J->h == NULL || gretl_is_zero_matrix(J->h) ||
+	nzero == 0 || J->blen == 0) {
 	/* shouldn't be here! */
 	return 0;
     }
 
     BP = gretl_matrix_alloc(J->p1, J->p1);
-    IBPH = gretl_matrix_alloc(J->r * ocols, J->blen);
-    IBPh = gretl_column_vector_alloc(J->r * ocols);
+    IBPH = gretl_matrix_alloc(J->r * nzero, J->blen);
+    IBPh = gretl_column_vector_alloc(J->r * nzero);
 
     if (BP == NULL || IBPH == NULL || IBPh == NULL) {
 	err = E_ALLOC;
@@ -2283,9 +2282,9 @@ static int phi_init_nonhomog (Jwrap *J)
     e = gretl_symmetric_matrix_eigenvals(BP, 1, &err);
     if (!err) {
 	/* truncate @BP to just the eigenvectors corresponding
-	   to the @ocols zero eigenvalues
+	   to the @nzero (in principle) zero eigenvalues
 	*/
-	BP->cols = ocols;
+	BP->cols = nzero;
     }
 
     if (!err) {
