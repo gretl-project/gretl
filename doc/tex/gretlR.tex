@@ -302,51 +302,50 @@ A = \left[
   \end{array}
 \right]
 \] 
-and stores it into the file \texttt{mymatfile.mat}.
+and stores it into the file \texttt{mymatfile.mat} in the user's
+``dotdir''(see section~\ref{sec:named-strings}). Note that writing to
+this special directory, which is sure to exist and be writable by the
+user, is mandated by the non-zero value for the third, optional
+argument to \texttt{mwrite}.
 \begin{code}
   matrix A = mshape(seq(3,14),4,3)
-  err = mwrite(A, "mymatfile.mat")
+  err = mwrite(A, "mymatfile.mat", 1)
 \end{code}
-The \app{R} code to import such a matrix is
+The recommended \app{R} code to import such a matrix is
 \begin{code}
-  A <- as.matrix(read.table("mymatfile.mat", skip=1))
+  A <- gretl.loadmat("mymatfile.mat")
 \end{code}
 
-Although in principle you can give your matrix file any valid
-filename, a couple of conventions may prove useful. First, you may
-want to use an informative file suffix such as ``\texttt{.mat}'', but
-this is a matter of taste. More importantly, the exact location of the
-file created by \texttt{mwrite} could be an issue. By default, if no
-path is specified in the file name, gretl writes matrix files in the
-current working directory. However, it may be wise for the purpose at
-hand to use a directory that is known to be writable by the user,
-namely the user's ``dotdir''(see section~\ref{sec:named-strings}).
-This can be achieved on the gretl side by passing a non-zero integer
-as the (optional) third argument to \texttt{mwrite}; on the \app{R}
-side you can use the function \texttt{gretl.loadmat}, which is
-pre-defined when \app{R} is called from gretl.\footnote{In case you
-  need to do this sort of thing manually, you can use the built-in
-  string variable \texttt{dotdir} in gretl, while in \app{R} you have
-  the same variable under the name \texttt{gretl.dotdir}.}
-So the above example may be rewritten as
+The function \texttt{gretl.loadmat}, which is predefined when \app{R}
+is called from gretl, retrieves the matrix from dotdir.  (The
+``\texttt{.mat}'' extension for gretl matrix files is not compulsory;
+you can name these files as you wish.)
+
+It's also possible to take more control over the details of the
+transer if you wish. You have the built-in string variable
+\verb|$dotdir| in gretl, while in \app{R} you have the same variable
+under the name \texttt{gretl.dotdir}. To use a location other than
+\verb|$dotdir| you may (a) omit the third argument to \texttt{mwrite}
+and supply a full path to the matrix file, and (b) use a more generic
+approach to reading the file in \app{R}. Here's an example:
 
 Gretl side:
 \begin{code}
-  mwrite(A, "mymatfile.mat", 1)
+  mwrite(A, "/path/to/mymatfile.mat")
 \end{code}
 \app{R} side:
 \begin{code}
-  A <- gretl.loadmat("mymatfile.mat")
+  A <- as.matrix(read.table("/path/to/mymatfile.mat", skip=1))
 \end{code}
 
 \subsection{Passing data from \app{R} to gretl}
 \label{sec:Rpassing-data}
 
-For passing data in the opposite direction, gretl defines a
-special function that can be used in the \app{R} environment. An
-\app{R} object will be written as a temporary file in gretl's
-\texttt{dotdir} directory, from where it can be easily retrieved from
-within gretl.
+For passing data in the opposite direction, gretl defines a special
+function that can be used in the \app{R} environment. An \app{R}
+object will be written as a temporary file in
+\verb|$dotdir|, from where it can be easily retrieved from within
+gretl.
 
 The name of this function is \texttt{gretl.export()}; it takes one
 required argument, the object to be exported. At present, the objects
