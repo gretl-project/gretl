@@ -6924,7 +6924,7 @@ void gretl_matrix_demean_by_row (gretl_matrix *m)
 
 /* subtract the column means */
 
-static void gretl_matrix_center (gretl_matrix *m)
+static int gretl_matrix_center (gretl_matrix *m)
 {
     double x, xbar;
     int i, j;
@@ -6945,7 +6945,7 @@ static void gretl_matrix_center (gretl_matrix *m)
 	    gretl_matrix_set(m, i, j, x);
 	}
     }
-    return;
+    return 0;
 
  st_mode:
 #endif
@@ -6961,26 +6961,18 @@ static void gretl_matrix_center (gretl_matrix *m)
 	    gretl_matrix_set(m, i, j, x);
 	}
     }
+    return 0;
 }
 
-/**
- * gretl_matrix_demean_by_column:
- * @m: matrix on which to operate.
- *
- * For each column of @m, subtracts the column mean from each
- * element in the column.
- */
-
-void gretl_matrix_demean_by_column (gretl_matrix *m)
-{
-    gretl_matrix_center(m);
-}
-
-static void gretl_matrix_standardize (gretl_matrix *m,
-				      int dfcorr)
+static int gretl_matrix_standardize (gretl_matrix *m,
+				     int dfcorr)
 {
     double x, xbar, sdc;
     int i, j;
+
+    if (m->rows < 2) {
+	return E_TOOFEW;
+    }
 
 #if defined(_OPENMP)
     if (m->cols == 1 || m->rows * m->cols < 4096) {
@@ -7004,7 +6996,7 @@ static void gretl_matrix_standardize (gretl_matrix *m,
 	    gretl_matrix_set(m, i, j, x);
 	}
     }
-    return;
+    return 0;
 
  st_mode:
 #endif
@@ -7025,6 +7017,25 @@ static void gretl_matrix_standardize (gretl_matrix *m,
 	    x = gretl_matrix_get(m, i, j) / sdc;
 	    gretl_matrix_set(m, i, j, x);
 	}
+    }
+    return 0;
+}
+
+/**
+ * gretl_matrix_demean_by_column:
+ * @m: matrix on which to operate.
+ * @sdt: if non-zero, standardize in addition to centering.
+ *
+ * For each column of @m, subtracts the column mean from each
+ * element in the column.
+ */
+
+int gretl_matrix_demean_by_column (gretl_matrix *m, int std)
+{
+    if (std) {
+	return gretl_matrix_standardize(m, 1);
+    } else {
+	return gretl_matrix_center(m);
     }
 }
 
@@ -7655,17 +7666,17 @@ static void permute_rows (gretl_matrix *L, integer *piv)
 }
 
 static int process_psd_root (gretl_matrix *L,
-			     const gretl_matrix *A0,
+			     const gretl_matrix *A,
 			     integer rank,
 			     integer *piv)
 {
-    gretl_matrix *A = NULL;
+    gretl_matrix *LL = NULL;
     double toler = 1.0e-8;
     int i, j, n = L->rows;
     int err = 0;
 
     if (piv != NULL) {
-	/* processing output from dpstrf */
+	/* processing output from lapack's dpstrf */
 	if (rank < n) {
 	    /* zero the lower right block, beyond the rank */
 	    for (j=rank; j<n; j++) {
@@ -7678,6 +7689,7 @@ static int process_psd_root (gretl_matrix *L,
 	    if ((i == 0 && piv[i] != 1) ||
 		(i > 0 && piv[i] != piv[i-1])) {
 		/* pivoting was done */
+		fprintf(stderr, "psd root: permuting rows\n");
 		permute_rows(L, piv);
 		break;
 	    }
@@ -7686,23 +7698,23 @@ static int process_psd_root (gretl_matrix *L,
 	toler = 1.0e-10;
     }
 
-    if (A0 != NULL) {
-	A = gretl_matrix_alloc(n, n);
-    }
+    LL = gretl_matrix_alloc(n, n);
 
-    if (A != NULL) {
-	/* form A = LL' and compare with A0 to see if L
-	   is really a viable factor
+    if (LL == NULL) {
+	err = E_ALLOC;
+    } else {
+	/* form LL' and compare with A to see if @L is
+	   really a viable factor
 	*/
 	double dj, dmax = 0;
 
 	gretl_matrix_multiply_mod(L, GRETL_MOD_NONE,
 				  L, GRETL_MOD_TRANSPOSE,
-				  A, GRETL_MOD_NONE);
+				  LL, GRETL_MOD_NONE);
 	for (j=0; j<n; j++) {
 	    dj = 0.0;
 	    for (i=0; i<n; i++) {
-		dj += fabs(gretl_matrix_get(A, i, j) - gretl_matrix_get(A0, i, j));
+		dj += fabs(gretl_matrix_get(LL, i, j) - gretl_matrix_get(A, i, j));
 	    }
 	    if (dj > dmax) {
 		dmax = dj;
@@ -7713,10 +7725,12 @@ static int process_psd_root (gretl_matrix *L,
 	    gretl_errmsg_sprintf("psdroot: norm-test of %g exceeds tolerance (%g)",
 				 toler);
 	    err = E_DATA;
+	} else {
+	    fprintf(stderr, "psd root check: dmax = %g (OK)\n", dmax);
 	}
-    }
 
-    gretl_matrix_free(A);
+	gretl_matrix_free(LL);
+    }
 
     return err;
 }
@@ -7793,7 +7807,7 @@ static int lapack_psd_root (gretl_matrix *a, const gretl_matrix *a0)
 	err = E_ALLOC;
     } else {
 	dpstrf_(&uplo, &n, a->val, &n, piv, &rank, &tol, work, &info);
-#if 0
+#if 1
 	fprintf(stderr, "dpstrf: rank = %d, info = %d\n", rank, info);
 #endif
 	if (info < 0) {
@@ -7816,7 +7830,6 @@ static int lapack_psd_root (gretl_matrix *a, const gretl_matrix *a0)
 /**
  * gretl_matrix_psd_root:
  * @a: matrix to operate on.
- * @a0: copy of @a, for comparison, or NULL.
  *
  * Computes the LL' factorization of the symmetric,
  * positive semidefinite matrix @a.  On successful exit
@@ -7826,27 +7839,33 @@ static int lapack_psd_root (gretl_matrix *a, const gretl_matrix *a0)
  * Returns: 0 on success; non-zero on failure.
  */
 
-int gretl_matrix_psd_root (gretl_matrix *a, const gretl_matrix *a0)
+int gretl_matrix_psd_root (gretl_matrix *a)
 {
-    if (gretl_is_null_matrix(a) ||
-	a->rows != a->cols) {
+    gretl_matrix *a0 = NULL;
+    int err = 0;
+
+    if (gretl_is_null_matrix(a) || a->rows != a->cols) {
 	return E_DATA;
     }
 
-    if (a0 != NULL) {
-	if (gretl_is_null_matrix(a0) ||
-	    a0->rows != a0->cols ||
-	    a0->rows != a->rows) {
-	    return E_DATA;
-	}
+    /* make a copy of @a so we can test for its supposed
+       psd attribute
+    */
+    a0 = gretl_matrix_copy(a);
+    if (a0 == NULL) {
+	return E_ALLOC;
     }
 
     if (0) {
 	/* just for testing, at this point */
-	return lapack_psd_root(a, a0);
+	err = lapack_psd_root(a, a0);
     } else {
-	return simple_psd_root(a, a0);
+	err = simple_psd_root(a, a0);
     }
+
+    gretl_matrix_free(a0);
+
+    return err;
 }
 
 int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,

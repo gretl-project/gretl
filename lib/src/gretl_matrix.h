@@ -486,7 +486,7 @@ double gretl_matrix_column_j_mean (const gretl_matrix *m, int col);
 
 void gretl_matrix_demean_by_row (gretl_matrix *m);
 
-void gretl_matrix_demean_by_column (gretl_matrix *m);
+int gretl_matrix_demean_by_column (gretl_matrix *m, int std);
 
 gretl_matrix *gretl_matrix_quantiles (const gretl_matrix *m,
 				      const gretl_matrix *p,
@@ -624,7 +624,7 @@ int gretl_matrix_inplace_lag (gretl_matrix *targ,
 
 int gretl_matrix_cholesky_decomp (gretl_matrix *a);
 
-int gretl_matrix_psd_root (gretl_matrix *a, const gretl_matrix *a0);
+int gretl_matrix_psd_root (gretl_matrix *a);
 
 int gretl_matrix_QR_decomp (gretl_matrix *M,
 			    gretl_matrix *R);

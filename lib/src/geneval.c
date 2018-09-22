@@ -3821,6 +3821,67 @@ static NODE *matrix_imhof (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+/* Here we handle the case where the relevant libgretl
+   function overwrites its matrix argument. If @m is
+   just an on-the-fly matrix it can be passed as arg,
+   but if it's a named user-matrix we'll have to make
+   a copy to pass.
+*/
+
+static gretl_matrix *apply_ovwrite_func (gretl_matrix *m,
+					 int f, int std,
+					 int tmpmat,
+					 int *err)
+{
+    gretl_matrix *R = NULL;
+
+    if (f == F_CHOL && !gretl_is_null_matrix(m) &&
+	!gretl_matrix_is_symmetric(m)) {
+	gretl_errmsg_set(_("Matrix is not symmetric"));
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (tmpmat) {
+	/* it's OK to overwrite @m */
+	R = m;
+    } else {
+	/* @m should not be over-written! */
+	R = gretl_matrix_copy(m);
+	if (R == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (R != NULL) {
+	if (f == F_CDEMEAN) {
+	    *err = gretl_matrix_demean_by_column(R, std);
+	} else if (f == F_CHOL) {
+	    *err = gretl_matrix_cholesky_decomp(R);
+	} else if (f == F_PSDROOT) {
+	    *err = gretl_matrix_psd_root(R);
+	} else if (f == F_INVPD) {
+	    *err = gretl_invpd(R);
+	} else if (f == F_GINV) {
+	    *err = gretl_matrix_moore_penrose(R);
+	} else if (f == F_INV) {
+	    *err = gretl_invert_matrix(R);
+	} else if (f == F_UPPER) {
+	    *err = gretl_matrix_zero_lower(R);
+	} else if (f == F_LOWER) {
+	    *err = gretl_matrix_zero_upper(R);
+	} else {
+	    *err = E_DATA;
+	}
+	if (*err && R != m) {
+	    gretl_matrix_free(R);
+	    R = NULL;
+	}
+    }
+
+    return R;
+}
+
 static void matrix_minmax_indices (int f, int *mm, int *rc, int *idx)
 {
     *mm = (f == F_MAXR || f == F_MAXC || f == F_IMAXR || f == F_IMAXC);
@@ -3855,7 +3916,8 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    goto finalize;
 	}
 
-	if (f == F_RESAMPLE || f == F_MREVERSE || f == F_SDC || f == F_MCOV) {
+	if (f == F_RESAMPLE || f == F_MREVERSE || f == F_SDC ||
+	    f == F_MCOV || f == F_CDEMEAN) {
 	    /* the r node may be absent, but if present it should
 	       hold a scalar */
 	    if (!empty_or_num(r)) {
@@ -3953,7 +4015,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	case F_GINV:
 	case F_UPPER:
 	case F_LOWER:
-	    ret->v.m = user_matrix_matrix_func(m, tmpmat, f, &p->err);
+	    ret->v.m = apply_ovwrite_func(m, f, optparm, tmpmat, &p->err);
 	    break;
 	case F_DIAG:
 	    ret->v.m = gretl_matrix_get_diagonal(m, &p->err);

@@ -99,9 +99,6 @@ char *user_matrix_get_row_name (const gretl_matrix *M, int row,
 double user_matrix_get_determinant (gretl_matrix *m, int tmpmat,
 				    int f, int *err);
 
-gretl_matrix *user_matrix_matrix_func (gretl_matrix *m, int tmpmat,
-				       int f, int *err);
-
 gretl_matrix *user_matrix_vec (const gretl_matrix *m, int *err);
 
 gretl_matrix *user_matrix_vech (const gretl_matrix *m, int *err);

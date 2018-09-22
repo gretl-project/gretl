@@ -1815,11 +1815,14 @@
     <function name="cdemean" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg type="bool" optional="true">standardize</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Centers the columns of matrix <argname>X</argname> around their
-	  means.
+	  Centers the columns of matrix <argname>X</argname> around
+	  their means. If the optional second argument has a non-zero
+	  value then in addition the centered values are divided by
+	  the column standard deviations.
 	</para>
       </description>
     </function>
