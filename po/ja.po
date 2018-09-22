@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: gretl revision 1.405\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2018-08-03 13:44-0400\n"
-"PO-Revision-Date: 2018-05-01 13:36+0900\n"
+"PO-Revision-Date: 2018-09-22 21:31+0900\n"
 "Last-Translator: Shintaro Nakagawa <s-nakagawa@shimonoseki-cu.ac.jp>\n"
-"Language-Team: Shintaro Nakagawa\n"
+"Language-Team: Shintaro Nakagawa <shintaro@center.konan-u.ac.jp>\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.0.7\n"
+"X-Generator: Poedit 1.5.7\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 
 #: lib/src/adf_kpss.c:493
@@ -500,18 +500,19 @@ msgstr "ワルド(Wald)検定"
 #: lib/src/graphing.c:4562 lib/src/gretl_model.c:4215
 #: lib/src/gretl_model.c:4229 lib/src/gretl_model.c:4232
 #: lib/src/gretl_model.c:4257 lib/src/gretl_panel.c:4432
-#: lib/src/gretl_panel.c:4694 lib/src/modelprint.c:202 lib/src/modelprint.c:381
-#: lib/src/modelprint.c:385 lib/src/modelprint.c:475 lib/src/modelprint.c:478
-#: lib/src/modelprint.c:499 lib/src/modelprint.c:502 lib/src/modelprint.c:2580
-#: lib/src/modelprint.c:2585 lib/src/modelprint.c:2607
-#: lib/src/modelprint.c:2612 lib/src/modelprint.c:3102
-#: lib/src/modelprint.c:5377 lib/src/modelprint.c:5400 lib/src/printout.c:329
-#: lib/src/pvalues.c:2802 lib/src/pvalues.c:3519 lib/src/system.c:1250
-#: lib/src/system.c:1303 lib/src/system.c:3461 lib/src/system.c:3483
-#: lib/src/system.c:3555 lib/src/system.c:3573 lib/src/system.c:4684
-#: lib/src/varprint.c:853 lib/src/varprint.c:857 lib/src/varprint.c:1258
-#: lib/src/varprint.c:1266 lib/src/vartest.c:253 lib/src/vartest.c:1213
-#: lib/src/vartest.c:1500 plugin/johansen.c:1842 plugin/jrestrict.c:2835
+#: lib/src/gretl_panel.c:4694 lib/src/modelprint.c:202
+#: lib/src/modelprint.c:381 lib/src/modelprint.c:385 lib/src/modelprint.c:475
+#: lib/src/modelprint.c:478 lib/src/modelprint.c:499 lib/src/modelprint.c:502
+#: lib/src/modelprint.c:2580 lib/src/modelprint.c:2585
+#: lib/src/modelprint.c:2607 lib/src/modelprint.c:2612
+#: lib/src/modelprint.c:3102 lib/src/modelprint.c:5377
+#: lib/src/modelprint.c:5400 lib/src/printout.c:329 lib/src/pvalues.c:2802
+#: lib/src/pvalues.c:3519 lib/src/system.c:1250 lib/src/system.c:1303
+#: lib/src/system.c:3461 lib/src/system.c:3483 lib/src/system.c:3555
+#: lib/src/system.c:3573 lib/src/system.c:4684 lib/src/varprint.c:853
+#: lib/src/varprint.c:857 lib/src/varprint.c:1258 lib/src/varprint.c:1266
+#: lib/src/vartest.c:253 lib/src/vartest.c:1213 lib/src/vartest.c:1500
+#: plugin/johansen.c:1842 plugin/jrestrict.c:2835
 msgid "Chi-square"
 msgstr "カイ二乗"
 
@@ -1129,17 +1130,19 @@ msgstr ""
 msgid "Failed to interpret the data as numeric\n"
 msgstr "データを数字として解釈できませんでした\n"
 
-#: lib/src/csvdata.c:3790 plugin/eviews_import.c:554 plugin/excel_import.c:1831
-#: plugin/jmulti_import.c:379 plugin/sas_import.c:686 plugin/spss_import.c:1975
+#: lib/src/csvdata.c:3790 plugin/eviews_import.c:554
+#: plugin/excel_import.c:1831 plugin/jmulti_import.c:379
+#: plugin/sas_import.c:686 plugin/spss_import.c:1975
 #: plugin/stata_import.c:2201 plugin/xlsx_import.c:1510
 msgid "warning: some variable names were duplicated\n"
 msgstr "警告: 幾つかの変数名が重複しています\n"
 
-#: lib/src/csvdata.c:3832 plugin/eviews_import.c:520 plugin/eviews_import.c:535
-#: plugin/excel_import.c:1665 plugin/jmulti_import.c:350
-#: plugin/jmulti_import.c:367 plugin/sas_import.c:647 plugin/sas_import.c:660
-#: plugin/spss_import.c:1880 plugin/spss_import.c:1901
-#: plugin/stata_import.c:2164 plugin/stata_import.c:2175
+#: lib/src/csvdata.c:3832 plugin/eviews_import.c:520
+#: plugin/eviews_import.c:535 plugin/excel_import.c:1665
+#: plugin/jmulti_import.c:350 plugin/jmulti_import.c:367
+#: plugin/sas_import.c:647 plugin/sas_import.c:660 plugin/spss_import.c:1880
+#: plugin/spss_import.c:1901 plugin/stata_import.c:2164
+#: plugin/stata_import.c:2175
 msgid "Out of memory\n"
 msgstr "メモリーが足りません\n"
 
@@ -1513,7 +1516,8 @@ msgstr "有効な系列が見つかりませんでした"
 #: lib/src/dbread.c:1250 lib/src/dbread.c:1304 lib/src/dbread.c:1319
 #: lib/src/dbread.c:2484 lib/src/gretl_errors.c:50
 #: lib/src/gretl_restrict.c:1817 lib/src/gretl_restrict.c:1843
-#: lib/src/gretl_restrict.c:1866 lib/src/monte_carlo.c:1479 gui/gui_utils.c:793
+#: lib/src/gretl_restrict.c:1866 lib/src/monte_carlo.c:1479
+#: gui/gui_utils.c:793
 msgid "Out of memory!"
 msgstr "メモリーが足りません!"
 
@@ -1528,8 +1532,8 @@ msgid "Invalid null sample"
 msgstr "有効でないヌル(null)・サンプル"
 
 #: lib/src/dbread.c:2027 lib/src/gretl_errors.c:603
-#: lib/src/gretl_restrict.c:2477 lib/src/interact.c:1469 lib/src/options.c:1331
-#: lib/src/options.c:1342
+#: lib/src/gretl_restrict.c:2477 lib/src/interact.c:1469
+#: lib/src/options.c:1331 lib/src/options.c:1342
 #, c-format
 msgid "field '%s' in command is invalid"
 msgstr "コマンドのフィールド'%s'は、有効な入力ではありません"
@@ -1752,12 +1756,14 @@ msgid "(missing values were skipped)"
 msgstr "(欠損値はスキップしました)"
 
 #: lib/src/describe.c:4493 lib/src/describe.c:4678 lib/src/describe.c:4707
-#: gui/guiprint.c:604 gui/guiprint.c:662 gui/guiprint.c:977 gui/guiprint.c:1040
+#: gui/guiprint.c:604 gui/guiprint.c:662 gui/guiprint.c:977
+#: gui/guiprint.c:1040
 msgid "Mean"
 msgstr "平均"
 
 #: lib/src/describe.c:4494 lib/src/describe.c:4679 lib/src/describe.c:4708
-#: gui/guiprint.c:604 gui/guiprint.c:662 gui/guiprint.c:977 gui/guiprint.c:1040
+#: gui/guiprint.c:604 gui/guiprint.c:662 gui/guiprint.c:977
+#: gui/guiprint.c:1040
 msgid "Median"
 msgstr "中央値"
 
@@ -3390,8 +3396,9 @@ msgid "%s: invalid return type for function"
 msgstr "%s: 関数の戻り値の型が有効な型ではありません"
 
 #: lib/src/gretl_func.c:2629 lib/src/gretl_func.c:2689
-#: lib/src/gretl_func.c:2774 lib/src/gretl_utils.c:1919 lib/src/interact.c:1327
-#: gui/dialogs.c:5501 gui/fnsave.c:5070 plugin/tramo-x12a.c:797
+#: lib/src/gretl_func.c:2774 lib/src/gretl_utils.c:1919
+#: lib/src/interact.c:1327 gui/dialogs.c:5501 gui/fnsave.c:5070
+#: plugin/tramo-x12a.c:797
 #, c-format
 msgid "Couldn't open %s"
 msgstr "%sを開けません"
@@ -5911,8 +5918,8 @@ msgstr ""
 msgid "Modulus"
 msgstr ""
 
-#: lib/src/modelprint.c:5161 lib/src/modelprint.c:5169 lib/src/subsample.c:3004
-#: lib/src/subsample.c:3026 lib/src/subsample.c:3082
+#: lib/src/modelprint.c:5161 lib/src/modelprint.c:5169
+#: lib/src/subsample.c:3004 lib/src/subsample.c:3026 lib/src/subsample.c:3082
 msgid "Frequency"
 msgstr "頻度"
 
@@ -6003,7 +6010,8 @@ msgid "Total"
 msgstr ""
 
 #: lib/src/monte_carlo.c:305 lib/src/monte_carlo.c:804
-#: lib/src/monte_carlo.c:1820 lib/src/monte_carlo.c:1983 lib/src/uservar.c:1735
+#: lib/src/monte_carlo.c:1820 lib/src/monte_carlo.c:1983
+#: lib/src/uservar.c:1735
 #, c-format
 msgid "'%s': not a scalar"
 msgstr "'%s': スカラーではありません"
@@ -8187,9 +8195,9 @@ msgid "Variable %d"
 msgstr "変数ID %d"
 
 #: gui/calculator.c:2389 gui/guiprint.c:595 gui/guiprint.c:649
-#: gui/guiprint.c:676 gui/guiprint.c:698 gui/guiprint.c:970 gui/guiprint.c:1029
-#: gui/guiprint.c:1060 gui/guiprint.c:1087 gui/guiprint.c:1906
-#: gui/guiprint.c:1958 gui/selector.c:8562
+#: gui/guiprint.c:676 gui/guiprint.c:698 gui/guiprint.c:970
+#: gui/guiprint.c:1029 gui/guiprint.c:1060 gui/guiprint.c:1087
+#: gui/guiprint.c:1906 gui/guiprint.c:1958 gui/selector.c:8562
 msgid "Variable"
 msgstr "変数"
 
@@ -8426,9 +8434,8 @@ msgid "gretl: warning"
 msgstr "gretl: 警告"
 
 #: gui/callbacks.c:368
-#, fuzzy
 msgid "No MIDAS data were found in the current dataset"
-msgstr "現在のデータセットに追加するよう試みる"
+msgstr "現在にデータセットにはMIDASデータはありません"
 
 #: gui/callbacks.c:405 gui/callbacks.c:570 gui/callbacks.c:728
 #: gui/selector.c:6898
@@ -8447,7 +8454,8 @@ msgstr "gretl: 共和分検定"
 msgid "gretl: VAR"
 msgstr "gretl: ベクトル自己回帰モデル(VAR)"
 
-#: gui/callbacks.c:463 gui/library.c:3505 gui/library.c:4694 gui/selector.c:936
+#: gui/callbacks.c:463 gui/library.c:3505 gui/library.c:4694
+#: gui/selector.c:936
 msgid "gretl: VECM"
 msgstr "gretl: ベクトル誤差修正モデル(VECM)"
 
@@ -8579,24 +8587,20 @@ msgid "Failed to create empty data set"
 msgstr "空のデータセットの作成に失敗しました"
 
 #: gui/callbacks.c:792 gui/callbacks.c:796
-#, fuzzy
 msgid "system gfn directory"
-msgstr "ディレクトリーを選択"
+msgstr "システムgfnディレクトリー"
 
 #: gui/callbacks.c:793 gui/callbacks.c:799
-#, fuzzy
 msgid "personal gfn directory"
-msgstr "ユーザーのgretlディレクトリ"
+msgstr "ユーザーのgfnディレクトリ"
 
 #: gui/callbacks.c:794 gui/callbacks.c:797 gui/callbacks.c:800
-#, fuzzy
 msgid "current working directory"
-msgstr "gretl: 作業ディレクトリ"
+msgstr "現在の作業ディレクトリ"
 
 #: gui/callbacks.c:803
-#, fuzzy
 msgid "Open .gfn file"
-msgstr "%s ファイルを開く"
+msgstr ".gfnファイルを開く"
 
 #: gui/callbacks.c:803
 msgid "Start looking in:"
@@ -8734,9 +8738,10 @@ msgstr "グラフ"
 msgid "Import"
 msgstr "インポート"
 
-#: gui/database.c:997 gui/database.c:1020 gui/menustate.c:546 gui/session.c:159
-#: gui/session.c:178 gui/session.c:185 gui/session.c:210 gui/session.c:217
-#: gui/session.c:3366 gui/session.c:3382 gui/session.c:3462 gui/ssheet.c:2682
+#: gui/database.c:997 gui/database.c:1020 gui/menustate.c:546
+#: gui/session.c:159 gui/session.c:178 gui/session.c:185 gui/session.c:210
+#: gui/session.c:217 gui/session.c:3366 gui/session.c:3382 gui/session.c:3462
+#: gui/ssheet.c:2682
 msgid "Delete"
 msgstr "削除"
 
@@ -8839,14 +8844,12 @@ msgid "showing series %d-%d of %d"
 msgstr ""
 
 #: gui/database.c:3455
-#, fuzzy
 msgid "No datasets were found"
-msgstr "利用できるデータは見つかりませんでした"
+msgstr "データセットは見つかりませんでした"
 
 #: gui/database.c:3543 gui/database.c:3572
-#, fuzzy
 msgid "No series were found"
-msgstr "観測値は、見つかりませんでした"
+msgstr "系列は見つかりませんでした"
 
 #: gui/database.c:3690 gui/database.c:3813
 msgid "No function packages found"
@@ -9552,7 +9555,7 @@ msgstr ""
 
 #: gui/dialogs.c:1490
 msgid "BFGS maximizer"
-msgstr ""
+msgstr "BFGS最大化の設定"
 
 #: gui/dialogs.c:1498
 msgid "Maximum iterations:"
@@ -10037,11 +10040,11 @@ msgstr "クラスター変数を指定して下さい"
 
 #: gui/dialogs.c:5914
 msgid "Select from Regular HCCME options"
-msgstr "Regular HCCME オプションから選択"
+msgstr "標準のHCCMEオプションより設定"
 
 #: gui/dialogs.c:5925
 msgid "Cluster by"
-msgstr ""
+msgstr "クラスター変数"
 
 #: gui/dialogs.c:5998
 msgid "New script output:"
@@ -10057,7 +10060,7 @@ msgstr ""
 
 #: gui/dialogs.c:6061
 msgid "Add to previous output"
-msgstr ""
+msgstr "先の出力結果に追加する"
 
 #: gui/dialogs.c:6062
 msgid "Go to a new window"
@@ -10081,9 +10084,8 @@ msgid "percent change in %s"
 msgstr "%s のパーセント変化"
 
 #: gui/dialogs.c:6301
-#, fuzzy
 msgid "percent changes"
-msgstr "%s のパーセント変化"
+msgstr "パーセント変化"
 
 #: gui/dialogs.c:6310 gui/dialogs.c:6411 gui/ssheet.c:998
 #, c-format
@@ -10107,9 +10109,8 @@ msgid "Monthly, annualized"
 msgstr "月次, 年次化"
 
 #: gui/dialogs.c:6362
-#, fuzzy
 msgid "Calculate using logs"
-msgstr "計算機"
+msgstr "対数を用いて計算する"
 
 #: gui/dialogs.c:6399
 #, c-format
@@ -11167,8 +11168,8 @@ msgstr "拡大"
 msgid "Smaller"
 msgstr "縮小"
 
-#: gui/gpt_control.c:278 gui/session.c:186 gui/session.c:211 gui/session.c:3368
-#: gui/session.c:3493 gui/textutil.c:490 gui/toolbar.c:811
+#: gui/gpt_control.c:278 gui/session.c:186 gui/session.c:211
+#: gui/session.c:3368 gui/session.c:3493 gui/textutil.c:490 gui/toolbar.c:811
 msgid "Copy"
 msgstr "コピー"
 
@@ -12424,10 +12425,9 @@ msgstr "_GARCH"
 
 #: gui/gretl.c:1842
 msgid "_AR errors (GLS)"
-msgstr ""
+msgstr "自己回帰(_AR)モデル(GLS)"
 
 #: gui/gretl.c:1843
-#, fuzzy
 msgid "_AR(1)"
 msgstr "１階の自己回帰過程(AR(1))"
 
@@ -12437,7 +12437,7 @@ msgstr "_AR(一般)"
 
 #: gui/gretl.c:1845
 msgid "_Multivariate"
-msgstr "二変量(_M)"
+msgstr "多変量(_M)"
 
 #: gui/gretl.c:1846
 msgid "_Vector Autoregression"
@@ -12468,9 +12468,8 @@ msgid "_Fixed or random effects"
 msgstr "固定効果あるいは変量効果(_F)"
 
 #: gui/gretl.c:1853
-#, fuzzy
 msgid "_Weighted least squares"
-msgstr "加重最小二乗法"
+msgstr "加重最小二乗法(_W)"
 
 #: gui/gretl.c:1854
 msgid "_Between model"
@@ -14706,7 +14705,6 @@ msgid "Add differences"
 msgstr "階差を取る"
 
 #: gui/menustate.c:555
-#, fuzzy
 msgid "Add percent changes..."
 msgstr "パーセント変化を追加..."
 
@@ -15077,7 +15075,6 @@ msgid "Generalized method of moments"
 msgstr "一般化モーメント法(GMM)"
 
 #: gui/selector.c:4195
-#, fuzzy
 msgid "Autoregressive errors"
 msgstr "自己回帰モデル"
 
@@ -16320,9 +16317,8 @@ msgid "Remember this setting"
 msgstr "この設定を記憶する"
 
 #: gui/settings.c:2844
-#, fuzzy
 msgid "gretl: font scale"
-msgstr "gretl: 標本設定"
+msgstr "gretl: フォントサイズ"
 
 #: gui/settings.c:2849
 msgid "Scale for monospaced and menu fonts"
@@ -16569,9 +16565,8 @@ msgid "untitled"
 msgstr "名称未設定"
 
 #: gui/tabwin.c:575
-#, fuzzy
 msgid "gretl: foreign script editor"
-msgstr "gretl: スクリプト・エディタ"
+msgstr "gretl: 外部スクリプト・エディタ"
 
 #: gui/tabwin.c:579
 msgid "gretl: models"
@@ -17362,7 +17357,8 @@ msgid "No worksheets found"
 msgstr "ワークシートは見つかりませんでした"
 
 #: plugin/excel_import.c:1698 plugin/gnumeric_import.c:674
-#: plugin/ods_import.c:1174 plugin/xlsx_import.c:1256 plugin/xlsx_import.c:1316
+#: plugin/ods_import.c:1174 plugin/xlsx_import.c:1256
+#: plugin/xlsx_import.c:1316
 msgid "Invalid argument for worksheet import"
 msgstr "ワークシートのインポートに関して有効でない入力値"
 
