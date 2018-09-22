@@ -7721,7 +7721,7 @@ static int real_psd_root (gretl_matrix *a, const gretl_matrix *a0)
 /**
  * gretl_matrix_psd_root:
  * @a: matrix to operate on.
- * @check: if non-zero, perform a test for sem-definiteness.
+ * @check: if non-zero, perform a test for psd status.
  *
  * Computes the LL' factorization of the symmetric,
  * positive semidefinite matrix @a.  On successful exit
