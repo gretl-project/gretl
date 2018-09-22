@@ -30,27 +30,13 @@
 static int windebug;
 static FILE *fdb;
 
-static void close_debugging (void)
-{
-    if (fdb != NULL) {
-	fputs("atexit: closing debugging\n", fdb);
-	fclose(fdb);
-    }
-}
-
 void set_windebug (int s)
 {
     if (s == 2) {
 	/* we're getting this from gretlcli.exe */
-	fdb = fopen("c:\\users\\cottrell\\clidebug.txt", "w");
-	if (fdb != NULL) {
-	    fputs("starting win32 debugging\n", fdb);
-	    windebug = s;
-	    atexit(close_debugging);
-	}
-    } else {
-	windebug = s;
+	fdb = stdout;
     }
+    windebug = s;
 }
 
 void win_print_last_error (void)
@@ -1769,7 +1755,7 @@ int cli_set_win32_charset (const char *package)
     if (h_ok && vista_or_higher()) {
 	CONSOLE_FONT_INFOEX finfo = {0};
 
-	fprintf(fdb, "HERE, branch 1\n");
+	finfo.cbSize = sizeof(CONSOLE_FONT_INFOEX);
 	if (GetCurrentConsoleFontEx(h, FALSE, &finfo)) {
 	    if (finfo.FontFamily & TMPF_TRUETYPE) {
 		if (windebug) {
@@ -1792,10 +1778,9 @@ int cli_set_win32_charset (const char *package)
     if (h_ok && !gotinfo) {
 	CONSOLE_FONT_INFO finfo = {0};
 
-	fprintf(fdb, "HERE, branch 2\n");
 	if (GetCurrentConsoleFont(h, FALSE, &finfo)) {
 	    /* a shot in the dark here, based on what I found
-	       on Windows 8 */
+	       on Windows 8 at one time */
 	    ttfont = finfo.nFont >= 8;
 	    if (windebug) {
 		fprintf(fdb, "got nFont = %d\n", finfo.nFont);
@@ -1806,17 +1791,9 @@ int cli_set_win32_charset (const char *package)
 	}
     }
 
-    if (windebug) {
-	fprintf(fdb, "h = %p, ttfont = %d\n", (void *) h,
-		ttfont);
-    }
-
     /* The first option below seems to work OK if the Windows console
        is using a TrueType font (e.g. Lucida Console or Consolas)
     */
-
-    /* FIXME handling of filenames when forcing UTF-8 in the
-       Windows console? */
 
     if (ttfont && IsValidCodePage(65001)) {
 	SetConsoleOutputCP(65001);
