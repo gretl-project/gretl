@@ -7620,51 +7620,6 @@ int gretl_matrix_cholesky_decomp (gretl_matrix *a)
     return err;
 }
 
-/* permute the rows of lower-trangular matrix @L
-   in place according to the information in @piv
-*/
-
-static void permute_rows (gretl_matrix *L, integer *piv)
-{
-    double tmp, val;
-    int n = L->rows;
-    integer *src = piv + n;
-    int i, j, k;
-
-    /* Re-order the lapack @piv array to give, in @src,
-       the source rows in target order, 0-based. That
-       is, src[i] will hold the index of the row that
-       should be swapped into row i, i = 0,1,...n.
-    */
-    for (i=0; i<n; i++) {
-	for (j=0; i<n; j++) {
-	    if (piv[j] - 1 == i) {
-		src[i] = j;
-		break;
-	    }
-	}
-    }
-
-    for (i=0; i<n; i++) {
-	k = src[i];
-	if (k != i) {
-	    for (j=0; j<n; j++) {
-		tmp = gretl_matrix_get(L, i, j);
-		val = gretl_matrix_get(L, k, j);
-		gretl_matrix_set(L, i, j, val);
-		gretl_matrix_set(L, k, j, tmp);
-	    }
-	    for (j=i+1; j<n; j++) {
-		/* we moved a source row, so update */
-		if (src[j] == i) {
-		    src[j] = k;
-		    break;
-		}
-	    }
-	}
-    }
-}
-
 static int process_psd_root (gretl_matrix *L,
 			     const gretl_matrix *A,
 			     integer rank,
@@ -7714,7 +7669,7 @@ static int process_psd_root (gretl_matrix *L,
    Golub and Van Loan.
 */
 
-static int simple_psd_root (gretl_matrix *a, const gretl_matrix *a0)
+static int real_psd_root (gretl_matrix *a, const gretl_matrix *a0)
 {
     double d, x1, x2, x3;
     int i, j, k, n = a->rows;
