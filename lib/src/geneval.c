@@ -3829,7 +3829,7 @@ static NODE *matrix_imhof (NODE *l, NODE *r, parser *p)
 */
 
 static gretl_matrix *apply_ovwrite_func (gretl_matrix *m,
-					 int f, int std,
+					 int f, int flag,
 					 int tmpmat,
 					 int *err)
 {
@@ -3855,11 +3855,11 @@ static gretl_matrix *apply_ovwrite_func (gretl_matrix *m,
 
     if (R != NULL) {
 	if (f == F_CDEMEAN) {
-	    *err = gretl_matrix_demean_by_column(R, std);
+	    *err = gretl_matrix_demean_by_column(R, flag);
 	} else if (f == F_CHOL) {
 	    *err = gretl_matrix_cholesky_decomp(R);
 	} else if (f == F_PSDROOT) {
-	    *err = gretl_matrix_psd_root(R);
+	    *err = gretl_matrix_psd_root(R, flag);
 	} else if (f == F_INVPD) {
 	    *err = gretl_invpd(R);
 	} else if (f == F_GINV) {
@@ -3917,7 +3917,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	}
 
 	if (f == F_RESAMPLE || f == F_MREVERSE || f == F_SDC ||
-	    f == F_MCOV || f == F_CDEMEAN) {
+	    f == F_MCOV || f == F_CDEMEAN || f == F_PSDROOT) {
 	    /* the r node may be absent, but if present it should
 	       hold a scalar */
 	    if (!empty_or_num(r)) {

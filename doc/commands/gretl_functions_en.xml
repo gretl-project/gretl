@@ -7829,19 +7829,32 @@
     <function name="psdroot" section="linalg" output="smatrix">
       <fnargs>
 	<fnarg type="symmat">A</fnarg>
+	<fnarg type="bool" optional="true">psdcheck</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Performs a generalized variant of the Cholesky decomposition of
-	  the matrix <argname>A</argname>, which must be positive
-	  semidefinite (but which may be singular). If the input matrix is
-	  not square an error is flagged, but symmetry is assumed and not
-	  tested; only the lower triangle of <argname>A</argname> is read.
-	  The result is a lower-triangular matrix <math>L</math> which
-	  satisfies <equation status="inline" ascii="A = LL'" tex="$A =
-	  LL'$"/>.  Indeterminate elements in the solution are set to
-	  zero.
+	  Performs a generalized variant of the Cholesky decomposition
+	  of the matrix <argname>A</argname>, which must be positive
+	  semidefinite (but may be singular). If the input matrix is
+	  not square an error is flagged, but symmetry is assumed and
+	  not tested; only the lower triangle of <argname>A</argname>
+	  is read.  The result is a lower-triangular matrix
+	  <math>L</math> which satisfies <equation status="inline"
+	  ascii="A = LL'" tex="$A = LL'$"/>.  Indeterminate elements
+	  in the solution are set to zero.
 	</para>
+	<para>
+	  To force a check on the positive semidefiniteness of
+	  <argname>A</argname>, give a non-zero value for the optional
+	  second argument. In that case an error is flagged if the
+	  maximum absolute value of <equation status="inline" ascii="A
+	  &minus; LL'" tex="$A - LL'$"/> exceeds 1.0e-8. Such a check
+	  can also be performed manually:
+	</para>
+	<code>
+	  L = psdroot(A)
+	  chk = maxc(maxr(abs(A - L*L')))
+	</code>
 	<para>
 	  For the case where <argname>A</argname> is positive definite,
 	  see <fncref targ="cholesky"/>.

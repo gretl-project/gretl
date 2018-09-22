@@ -624,7 +624,7 @@ int gretl_matrix_inplace_lag (gretl_matrix *targ,
 
 int gretl_matrix_cholesky_decomp (gretl_matrix *a);
 
-int gretl_matrix_psd_root (gretl_matrix *a);
+int gretl_matrix_psd_root (gretl_matrix *a, int check);
 
 int gretl_matrix_QR_decomp (gretl_matrix *M,
 			    gretl_matrix *R);

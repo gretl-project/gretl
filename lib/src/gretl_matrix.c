@@ -7675,29 +7675,6 @@ static int process_psd_root (gretl_matrix *L,
     int i, j, n = L->rows;
     int err = 0;
 
-    if (piv != NULL) {
-	/* processing output from lapack's dpstrf */
-	if (rank < n) {
-	    /* zero the lower right block, beyond the rank */
-	    for (j=rank; j<n; j++) {
-		for (i=j; i<n; i++) {
-		    gretl_matrix_set(L, i, j, 0);
-		}
-	    }
-	}
-	for (i=0; i<n; i++) {
-	    if ((i == 0 && piv[i] != 1) ||
-		(i > 0 && piv[i] != piv[i-1])) {
-		/* pivoting was done */
-		fprintf(stderr, "psd root: permuting rows\n");
-		permute_rows(L, piv);
-		break;
-	    }
-	}
-	/* we can enforce relatively high accuracy */
-	toler = 1.0e-10;
-    }
-
     LL = gretl_matrix_alloc(n, n);
 
     if (LL == NULL) {
@@ -7723,10 +7700,8 @@ static int process_psd_root (gretl_matrix *L,
 
 	if (dmax > toler) {
 	    gretl_errmsg_sprintf("psdroot: norm-test of %g exceeds tolerance (%g)",
-				 toler);
+				 dmax, toler);
 	    err = E_DATA;
-	} else {
-	    fprintf(stderr, "psd root check: dmax = %g (OK)\n", dmax);
 	}
 
 	gretl_matrix_free(LL);
@@ -7736,8 +7711,7 @@ static int process_psd_root (gretl_matrix *L,
 }
 
 /* PSD cholesky-type factor via the simple algorithm from
-   Golub and Van Loan. Does not preserve great accuracy
-   when @a is substantially rank-deficient.
+   Golub and Van Loan.
 */
 
 static int simple_psd_root (gretl_matrix *a, const gretl_matrix *a0)
@@ -7782,47 +7756,9 @@ static int simple_psd_root (gretl_matrix *a, const gretl_matrix *a0)
 
     gretl_matrix_zero_triangle(a, 'U');
 
-    if (a0 != NULL) {
+    if (!err && a0 != NULL) {
 	err = process_psd_root(a, a0, 0, NULL);
     }
-
-    return err;
-}
-
-static int lapack_psd_root (gretl_matrix *a, const gretl_matrix *a0)
-{
-    double *work = NULL;
-    integer *piv = NULL;
-    integer n = a->rows;
-    integer info = 0;
-    integer rank = 0;
-    double tol = -1.0;
-    char uplo = 'L';
-    int err = 0;
-
-    piv = malloc(2 * n * sizeof *piv);
-    work = lapack_malloc(2 * n * sizeof *work);
-
-    if (piv == NULL || work == NULL) {
-	err = E_ALLOC;
-    } else {
-	dpstrf_(&uplo, &n, a->val, &n, piv, &rank, &tol, work, &info);
-#if 1
-	fprintf(stderr, "dpstrf: rank = %d, info = %d\n", rank, info);
-#endif
-	if (info < 0) {
-	    err = E_DATA;
-	} else {
-	    gretl_matrix_zero_triangle(a, 'U');
-	    err = process_psd_root(a, a0, rank, piv);
-	}
-    }
-
-    if (err == E_DATA) {
-	gretl_errmsg_set("Matrix is not positive semi-definite");
-    }
-
-    free(piv);
 
     return err;
 }
@@ -7830,6 +7766,7 @@ static int lapack_psd_root (gretl_matrix *a, const gretl_matrix *a0)
 /**
  * gretl_matrix_psd_root:
  * @a: matrix to operate on.
+ * @check: if non-zero, perform a test for sem-definiteness.
  *
  * Computes the LL' factorization of the symmetric,
  * positive semidefinite matrix @a.  On successful exit
@@ -7839,7 +7776,7 @@ static int lapack_psd_root (gretl_matrix *a, const gretl_matrix *a0)
  * Returns: 0 on success; non-zero on failure.
  */
 
-int gretl_matrix_psd_root (gretl_matrix *a)
+int gretl_matrix_psd_root (gretl_matrix *a, int check)
 {
     gretl_matrix *a0 = NULL;
     int err = 0;
@@ -7848,21 +7785,17 @@ int gretl_matrix_psd_root (gretl_matrix *a)
 	return E_DATA;
     }
 
-    /* make a copy of @a so we can test for its supposed
-       psd attribute
-    */
-    a0 = gretl_matrix_copy(a);
-    if (a0 == NULL) {
-	return E_ALLOC;
+    if (check) {
+	/* make a copy of @a so we can test for its
+	   supposed psd attribute
+	*/
+	a0 = gretl_matrix_copy(a);
+	if (a0 == NULL) {
+	    return E_ALLOC;
+	}
     }
 
-    if (0) {
-	/* just for testing, at this point */
-	err = lapack_psd_root(a, a0);
-    } else {
-	err = simple_psd_root(a, a0);
-    }
-
+    err = real_psd_root(a, a0);
     gretl_matrix_free(a0);
 
     return err;

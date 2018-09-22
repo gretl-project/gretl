@@ -3251,8 +3251,7 @@ static int sim_state_0 (kalman *K, const gretl_matrix *U,
     if (Q == NULL) {
 	err = E_ALLOC;
     } else if (getroot) {
-	/* FIXME will this always work? */
-	err = gretl_matrix_psd_root(Q);
+	err = gretl_matrix_psd_root(Q, 0);
     }
 
     if (!err) {
@@ -3689,7 +3688,7 @@ gretl_matrix *kalman_bundle_simdata (gretl_bundle *b,
 			    gretl_matrix_inscribe_matrix(V, K->R, K->r, K->r,
 							 GRETL_MOD_NONE);
 			}
-			*err = gretl_matrix_psd_root(V);
+			*err = gretl_matrix_psd_root(V, 0);
 			if (*err) {
 			    gretl_errmsg_set("Failed to compute factor of Omega_t");
 			} else {
@@ -3711,7 +3710,7 @@ gretl_matrix *kalman_bundle_simdata (gretl_bundle *b,
 		    gretl_matrix_inscribe_matrix(V, K->R, K->r, K->r,
 						 GRETL_MOD_NONE);
 		}
-		*err = gretl_matrix_psd_root(V);
+		*err = gretl_matrix_psd_root(V, 0);
 		if (*err) {
 		    gretl_errmsg_set("Failed to compute factor of Omega");
 		} else {
