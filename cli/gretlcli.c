@@ -429,6 +429,40 @@ static int maybe_get_input_line_continuation (char *line)
     return err;
 }
 
+#ifdef G_OS_WIN32
+
+/* We're looking at an input line here, either in interactive
+   mode or from file, with line-continuation already applied
+   if required.
+*/
+
+static int line_ensure_utf8 (char *s)
+{
+    int err = 0;
+
+    if (!g_utf8_validate(s, -1, NULL)) {
+	gsize bytes;
+	gchar *tmp = g_locale_to_utf8(s, -1, NULL, &bytes, NULL);
+
+	if (tmp == NULL) {
+	    gretl_errmsg_set("Couldn't convert input to UTF-8");
+	    err = E_DATA;
+	} else {
+	    *s = '\0';
+	    if (strlen(tmp) > MAXLINE - 1) {
+		err = E_TOOLONG;
+	    } else {
+		strcpy(s, tmp);
+	    }
+	    g_free(tmp);
+	}
+    }
+
+    return err;
+}
+
+#endif
+
 static int xout;
 
 #ifdef HAVE_RL_DONE
@@ -774,6 +808,9 @@ int main (int argc, char *argv[])
 	    }
 	}
 
+#ifdef G_OS_WIN32
+	line_ensure_utf8(line);
+#endif
 	strcpy(linecopy, line);
 	tailstrip(linecopy);
 	err = cli_exec_line(&state, dset, cmdprn);
