@@ -1822,7 +1822,9 @@
 	  Centers the columns of matrix <argname>X</argname> around
 	  their means. If the optional second argument has a non-zero
 	  value then in addition the centered values are divided by
-	  the column standard deviations.
+	  the column standard deviations (which are calculated using
+	  <math>n</math> &minus; 1 as divisor, where <math>n</math>
+	  is the number of rows of <argname>X</argname>).
 	</para>
       </description>
     </function>
