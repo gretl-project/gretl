@@ -9305,10 +9305,9 @@
 	  <lit>NA</lit> for negative values.
 	</para>
 	<para>
-	  Note that if the argument is a matrix the operation is performed
-	  element by element and, since matrices cannot contain <lit>NA</lit>,
-	  negative values generate an error.  For the <quote>matrix square
-          root</quote> see <fncref targ="cholesky"/>.
+	  Note that if the argument is a matrix the operation is
+	  performed element by element. For the <quote>matrix square
+	  root</quote> see <fncref targ="cholesky"/>.
 	</para>
       </description>
     </function>
