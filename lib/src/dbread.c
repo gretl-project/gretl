@@ -1714,9 +1714,11 @@ int set_db_name (const char *fname, int filetype, PRN *prn)
     int err = 0;
 
     *saved_db_name = '\0';
-    strncat(saved_db_name, fname, MAXLEN - 1);
+    if (fname != NULL) {
+	strncat(saved_db_name, fname, MAXLEN - 1);
+    }
 
-    if (filetype == GRETL_DBNOMICS) {
+    if (filetype == GRETL_DBNOMICS || filetype == 0) {
 	saved_db_type = filetype;
 	return 0;
     }

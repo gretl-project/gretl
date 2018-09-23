@@ -1544,7 +1544,7 @@ void verify_clear_data (void)
 	return;
     }
 
-    close_session(OPT_NONE); /* FIXME opt */
+    close_session(OPT_NONE); /* FIXME opt? */
 }
 
 static void remove_session_dir (void)
@@ -1697,6 +1697,7 @@ void gui_clear_dataset (void)
 
     clear_varlist(mdata->listbox);
     clear_sample_label();
+    set_db_name(NULL, 0, NULL);
 
     data_status = 0;
     orig_vars = 0;
