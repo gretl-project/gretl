@@ -5776,8 +5776,8 @@
       </fnargs>
       <description>
 	<para>
-	  Computes a correlation matrix treating each column of
-	  <argname>X</argname> as a variable. 
+	  Computes a (Pearson) correlation matrix treating each column
+	  of <argname>X</argname> as a variable.
 	  <seelist> 
             <fncref targ="corr"/>
             <fncref targ="cov"/>
@@ -5790,11 +5790,16 @@
     <function name="mcov" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg type="int" optional="true">dfcorr</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Computes a covariance matrix treating each column of
-	  <argname>X</argname> as a variable. 
+	  <argname>X</argname> as a variable. The divisor
+	  is <math>n</math> &minus; 1, where <math>n</math> is the
+	  number of rows of <argname>X</argname>.
+	</para>
+	<para>
 	  <seelist> 
             <fncref targ="corr"/>
             <fncref targ="cov"/>
