@@ -346,6 +346,14 @@ static double controller_get_val (controller *clr,
 	clr->val = generate_scalar(clr->expr, dset, err);
     }
 
+    if (*err && clr->expr != NULL) {
+	gchar *msg;
+
+	msg = g_strdup_printf("Bad loop-control expression '%s'", clr->expr);
+	gretl_errmsg_append(msg, *err);
+	g_free(msg);
+    }
+
 #if LOOP_DEBUG > 1
     fprintf(stderr, "controller_get_val: vname='%s', expr='%s', val=%g, err=%d\n",
 	    clr->vname, clr->expr, clr->val, *err);
@@ -781,8 +789,8 @@ static int loop_attach_index_var (LOOPSET *loop,
    the count for a simple count loop).
 */
 
-static int index_get_limit (LOOPSET *loop, controller *clr, const char *s,
-			    DATASET *dset)
+static int index_get_limit (LOOPSET *loop, controller *clr,
+			    const char *s, DATASET *dset)
 {
     int v, err = 0;
 
@@ -872,6 +880,8 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 
     return err;
 }
+
+/* for example, "loop 100" or "loop K" */
 
 static int parse_as_count_loop (LOOPSET *loop,
 				DATASET *dset,
@@ -1422,12 +1432,9 @@ static int parse_first_loopline (char *s, LOOPSET *loop,
 	err = parse_as_indexed_loop(loop, dset, vname, start, stop);
 	free(start);
 	free(stop);
-    } else if (gretl_scan_varname(s, vname) == 1) {
-	err = parse_as_count_loop(loop, dset, vname);
     } else {
-	printf("parse_first_loopline: failed on '%s'\n", s);
-	gretl_errmsg_set(_("No valid loop condition was given."));
-	err = 1;
+	/* must be a count loop, or erroneous */
+	err = parse_as_count_loop(loop, dset, s);
     }
 
 #if LOOP_DEBUG > 1
