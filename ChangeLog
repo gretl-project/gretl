@@ -1,6 +1,10 @@
 version 2018d, in progress
 - Internal representation of missing values: switch to
   using NaN
+- cdemean() function: add option to standardize in addition
+  to centering
+- psdroot() function: add option to check for positive
+  semidefinite status of matrix argument
 - "install" command: replace with new "pkg" command (but the
   old form still works until further notice)
 - Line plots via gnuplot: show gaps for missing values
@@ -9,6 +13,8 @@ version 2018d, in progress
 - Fix bug: out-of-bounds writes to matrices were not being
   caught under all conditions
 - "foreign": support the changes in Julia version 1.0
+- Windows: improve handling of non-ASCII filenames, including
+  names not representable in the 8-bit code page
 - Windows and Mac packages: update to gmp 6.1.2, mpfr 4.0.1
 
 2018-09-03 version 2018c
