@@ -49,6 +49,7 @@
 #include "matrix_extra.h"
 #include "uservar.h"
 #include "gretl_zip.h"
+#include "dbread.h"
 
 #include <sys/stat.h>
 #include <unistd.h>
