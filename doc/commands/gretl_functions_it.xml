@@ -1782,12 +1782,17 @@
 
     <function name="cdemean" section="stats" output="matrix">
       <fnargs>
-    <fnarg type="matrix">X</fnarg>
+	<fnarg type="matrix">X</fnarg>
+	<fnarg type="bool" optional="true">standardize</fnarg>
       </fnargs>
       <description>
     <para>
       Centra le colonne della matrice <argname>X</argname> attorno
-      alla loro media.
+      alla loro media. Se il secondo argomento (opzionale) è non-zero,
+      allora le colonne vengono standardizzate, usando la deviazione
+      standard aggiustata per gradi di libertà (ossia <math>n</math>
+      &minus;, dove <math>n</math> è il numero di righe di
+      <argname>X</argname>).
     </para>
       </description>
     </function>
@@ -5678,8 +5683,8 @@
       </fnargs>
       <description>
     <para>
-      Calcola la matrice di correlazione considerando ogni colonna di 
-      <argname>X</argname> come una variabile.
+      Calcola la matrice di correlazione di Pearon considerando ogni
+      colonna di <argname>X</argname> come una variabile.
       <seelist> 
         <fncref targ="corr"/>
         <fncref targ="cov"/>
@@ -5691,12 +5696,16 @@
 
     <function name="mcov" section="stats" output="matrix">
       <fnargs>
-    <fnarg type="matrix">X</fnarg>
+	<fnarg type="matrix">X</fnarg>
+	<fnarg type="int" optional="true">dfcorr</fnarg>
       </fnargs>
       <description>
     <para>
       Calcola la matrice di covarianza considerando ogni colonna di 
-      <argname>X</argname> come una variabile. 
+      <argname>X</argname> come una variabile. Il divisore è
+      <math>n</math> &minus; 1, dove <math>n</math> è il numero di
+      righe di <argname>X</argname>; se però l'argomento opzionale
+      <argname>dfcorr</argname> è 0, viene usato <math>n</math>.
       <seelist> 
         <fncref targ="corr"/>
         <fncref targ="cov"/>
@@ -9221,9 +9230,7 @@
     </para>
     <para>
       Si noti che se l'argomento è una matrice l'operazione viene
-      effettuata elemento per elemento e dato che le matrici non
-      possono contenere <lit>NA</lit>, eventuali valori negativi
-      generano un errore. Per la <quote>radice quadrata
+      effettuata elemento per elemento. Per la <quote>radice quadrata
       matriciale</quote>, v. <fncref targ="cholesky"/>.
     </para>
       </description>
