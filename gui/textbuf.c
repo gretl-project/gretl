@@ -541,6 +541,24 @@ static void sourceview_apply_language (windata_t *vwin)
 
 #if COMPLETION_OK
 
+static void unset_sourceview_complete_words (windata_t *vwin)
+{
+    GtkSourceCompletionWords *prov_words;
+    GtkSourceCompletion *comp;
+
+    comp = gtk_source_view_get_completion(GTK_SOURCE_VIEW(vwin->text));
+    prov_words = g_object_get_data(G_OBJECT(vwin->text), "prov_words");
+    if (prov_words != NULL) {
+	gtk_source_completion_words_unregister(prov_words,
+					       gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text)));
+	gtk_source_completion_remove_provider(comp,
+					      GTK_SOURCE_COMPLETION_PROVIDER(prov_words),
+					      NULL);
+	g_object_set_data(G_OBJECT(vwin->text), "prov_words", NULL);
+	// g_object_unref(G_OBJECT(prov_words));
+    }
+}
+
 static void set_sourceview_complete_words (windata_t *vwin)
 {
     GtkSourceCompletionWords *prov_words;
