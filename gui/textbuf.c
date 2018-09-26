@@ -105,9 +105,6 @@ static gboolean
 insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 			 const char *s, int role);
 static void connect_link_signals (windata_t *vwin);
-#if COMPLETION_OK
-static void toggle_auto_complete (windata_t *vwin, gboolean s);
-#endif
 
 void text_set_cursor (GtkWidget *w, GdkCursorType cspec)
 {
@@ -541,44 +538,43 @@ static void sourceview_apply_language (windata_t *vwin)
 
 #if COMPLETION_OK
 
-static void unset_sourceview_complete_words (windata_t *vwin)
+static void set_sv_auto_complete (windata_t *vwin)
 {
-    GtkSourceCompletionWords *prov_words;
+    GtkSourceCompletionWords *words;
     GtkSourceCompletion *comp;
 
-    comp = gtk_source_view_get_completion(GTK_SOURCE_VIEW(vwin->text));
-    prov_words = g_object_get_data(G_OBJECT(vwin->text), "prov_words");
-    if (prov_words != NULL) {
-	gtk_source_completion_words_unregister(prov_words,
+    words = g_object_get_data(G_OBJECT(vwin->text), "prov_words");
+
+    if (script_auto_complete && words == NULL) {
+	/* activate */
+	comp = gtk_source_view_get_completion(GTK_SOURCE_VIEW(vwin->text));
+	words = gtk_source_completion_words_new(NULL, NULL);
+	g_object_set(words, "priority", 1, NULL);
+	gtk_source_completion_words_register(words,
+					     gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text)));
+	gtk_source_completion_add_provider(comp,
+					   GTK_SOURCE_COMPLETION_PROVIDER(words),
+					   NULL);
+	g_object_set_data(G_OBJECT(vwin->text), "prov_words", words);
+    } else if (!script_auto_complete && words != NULL) {
+	/* de-activate */
+	comp = gtk_source_view_get_completion(GTK_SOURCE_VIEW(vwin->text));
+	gtk_source_completion_words_unregister(words,
 					       gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text)));
 	gtk_source_completion_remove_provider(comp,
-					      GTK_SOURCE_COMPLETION_PROVIDER(prov_words),
+					      GTK_SOURCE_COMPLETION_PROVIDER(words),
 					      NULL);
+	g_object_unref(G_OBJECT(words));
 	g_object_set_data(G_OBJECT(vwin->text), "prov_words", NULL);
-	// g_object_unref(G_OBJECT(prov_words));
     }
-}
 
-static void set_sourceview_complete_words (windata_t *vwin)
-{
-    GtkSourceCompletionWords *prov_words;
-    GtkSourceCompletion *comp;
-
-    comp = gtk_source_view_get_completion(GTK_SOURCE_VIEW(vwin->text));
-    prov_words = gtk_source_completion_words_new(NULL, NULL);
-    g_object_set(prov_words, "priority", 1, NULL);
-    gtk_source_completion_words_register(prov_words,
-					 gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text)));
-    g_object_set_data(G_OBJECT(vwin->text), "prov_words", prov_words);
-
-    if (script_auto_complete) {
-	gtk_source_completion_add_provider(comp,
-					   GTK_SOURCE_COMPLETION_PROVIDER(prov_words),
-					   NULL);
-    }
-}
-
+#if 0
+    fprintf(stderr, "set_sv_auto_complete: comp=%p, prov=%p, auto_complete=%d, ok=%d\n",
+	    (void *) comp, (void *) words, script_auto_complete, ok);
 #endif
+}
+
+#endif /* COMPLETION_OK */
 
 static void begin_print (GtkPrintOperation *operation,
                          GtkPrintContext *context,
@@ -962,7 +958,7 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     }
 
 #if COMPLETION_OK
-    set_sourceview_complete_words(vwin);
+    set_sv_auto_complete(vwin);
 #endif
 
     if (gretl_script_role(vwin->role)) {
@@ -1042,7 +1038,7 @@ void update_script_editor_options (windata_t *vwin)
 					  script_line_numbers);
 #if COMPLETION_OK
     if (vwin_is_editing(vwin)) {
-	toggle_auto_complete(vwin, script_auto_complete);
+	set_sv_auto_complete(vwin);
     }
 #endif
 
@@ -3582,40 +3578,6 @@ static gboolean script_bracket_handler (windata_t *vwin, guint keyval)
 	return FALSE;
     }
 }
-
-#if COMPLETION_OK
-
-static void toggle_auto_complete (windata_t *vwin, gboolean s)
-{
-    GtkSourceCompletionWords *words;
-    GtkSourceCompletion *comp;
-    gboolean ok;
-
-    comp = gtk_source_view_get_completion(GTK_SOURCE_VIEW(vwin->text));
-    words = g_object_get_data(G_OBJECT(vwin->text), "prov_words");
-
-    if (s) {
-	ok = gtk_source_completion_add_provider(comp,
-						GTK_SOURCE_COMPLETION_PROVIDER(words),
-						NULL);
-    } else {
-	ok = gtk_source_completion_remove_provider(comp,
-						   GTK_SOURCE_COMPLETION_PROVIDER(words),
-						   NULL);
-    }
-
-    if (ok) {
-	script_auto_complete = s;
-    }
-
-#if 0
-    fprintf(stderr, "toggle_auto_complete: comp=%p, prov=%p, auto_complete=%d, ok=%d\n",
-	    (void *) comp, (void *) words, script_auto_complete, ok);
-#endif
-}
-
-#endif /* COMPLETION_OK */
-
 
 /* Return a listing of the available gtksourceview style
    ids for use in the gretl preferences dialog.
