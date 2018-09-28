@@ -411,10 +411,10 @@
 	<code>
 	  s0 (4 x 4)
 
-          0.019751     0.029816  -0.00044837     -0.12227 
-          0.029816      0.31005     -0.45823     -0.18526 
-	  -0.00044837     -0.45823       1.2169    -0.035437 
-          -0.12227     -0.18526    -0.035437      0.76062 
+          0.019751     0.029816  -0.00044837   -0.12227
+          0.029816     0.31005   -0.45823      -0.18526
+         -0.00044837  -0.45823    1.2169       -0.035437
+         -0.12227     -0.18526   -0.035437      0.76062
 
 	  s1 (5 x 5)
 
@@ -8756,22 +8756,22 @@
     <function name="rnameget" section="strings" output="string-or-strings">
       <fnargs>
 	<fnarg type="matrix">M</fnarg>
-	<fnarg type="int" optional="true">row</fnarg>
+	<fnarg type="int" optional="true">r</fnarg>
       </fnargs>
       <description>
 	<para>
-	  If the <argname>row</argname> argument is given, retrieves
-	  the name for row <argname>row</argname> of matrix
+	  If the <argname>r</argname> argument is given, retrieves
+	  the name for row <argname>r</argname> of matrix
 	  <argname>M</argname>. If <argname>M</argname> has no row
 	  names attached the value returned is an empty string; if
-	  <argname>row</argname> is out of bounds for the given matrix
+	  <argname>r</argname> is out of bounds for the given matrix
 	  an error is flagged.
 	</para>
 	<para>
 	  If no second argument is given, retrieves an array of
-	  strings holding the row names from <argname>M</argname>,
-	  or an empty array if <argname>M</argname> does not have
-	  row names attached.
+	  strings holding the row names from <argname>M</argname>, or
+	  an empty array if the matrix does not have row names
+	  attached.
 	</para>
 	<para>
 	  Example:
@@ -9182,7 +9182,7 @@
 	<code>
 	  scalar T = smplspan("2010-01-01", "2015-12-31", 5)
 	  nulldata T
-	  setobs 7 2010-01-01
+	  setobs 5 2010-01-01
 	</code>
 	<para>
 	  This produces:
@@ -9378,9 +9378,9 @@
 	  conversion (thereby skipping any characters that would
 	  otherwise have been converted for the given type).  For
 	  example, <lit>%3d</lit> converts the next 3 characters in
-	  <repl>source</repl> to an integer, if possible;
+	  <repl>src</repl> to an integer, if possible;
 	  <lit>%*g</lit> skips as many characters in
-	  <repl>source</repl> as could be converted to a single
+	  <repl>src</repl> as could be converted to a single
 	  floating-point number.
 	</para>
 	<para>
