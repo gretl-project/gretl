@@ -546,7 +546,7 @@ static void set_sv_auto_complete (windata_t *vwin)
     words = g_object_get_data(G_OBJECT(vwin->text), "prov_words");
 
     if (script_auto_complete && words == NULL) {
-	/* activate */
+	/* set up and activate */
 	comp = gtk_source_view_get_completion(GTK_SOURCE_VIEW(vwin->text));
 	words = gtk_source_completion_words_new(NULL, NULL);
 	g_object_set(words, "priority", 1, NULL);
@@ -557,7 +557,7 @@ static void set_sv_auto_complete (windata_t *vwin)
 					   NULL);
 	g_object_set_data(G_OBJECT(vwin->text), "prov_words", words);
     } else if (!script_auto_complete && words != NULL) {
-	/* de-activate */
+	/* de-activate and clean up */
 	comp = gtk_source_view_get_completion(GTK_SOURCE_VIEW(vwin->text));
 	gtk_source_completion_words_unregister(words,
 					       gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text)));
