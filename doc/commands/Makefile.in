@@ -45,6 +45,7 @@ GL_SRC = $(CMDSDIR)/gretl_commands_gl.xml
 
 FNCDTD = $(CMDSDIR)/gretl_functions.dtd
 EN_FNSRC = $(CMDSDIR)/gretl_functions_en.xml
+ES_FNSRC = $(CMDSDIR)/gretl_functions_es.xml
 IT_FNSRC = $(CMDSDIR)/gretl_functions_it.xml
 PT_FNSRC = $(CMDSDIR)/gretl_functions_pt.xml
 GL_FNSRC = $(CMDSDIR)/gretl_functions_gl.xml
@@ -224,6 +225,14 @@ $(IT_FNREF_STAMP): xsltrans reflow $(IT_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(
 	./reflow -m < it2.tmp > $(SHAREDIR)/$(GUI_FNREF).it && \
 	touch $@ && rm -f it2.tmp
 
+# Spanish function reference files
+$(ES_FNREF_STAMP): xsltrans reflow $(ES_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --funcs --plain $(ES_FNSRC) > es2.tmp && \
+	./reflow < es2.tmp > $(SHAREDIR)/$(CLI_FNREF).es && \
+	./xsltrans --funcs --pango $(ES_FNSRC) > es2.tmp && \
+	./reflow -m < es2.tmp > $(SHAREDIR)/$(GUI_FNREF).es && \
+	touch $@ && rm -f es2.tmp
+
 # Portuguese function reference files
 $(PT_FNREF_STAMP): xsltrans reflow $(PT_FNSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
 	./xsltrans --funcs --plain $(PT_FNSRC) > pt2.tmp && \
@@ -319,6 +328,10 @@ functex_it: xsltrans reflow $(IT_FNSRC) $(FNCDTD) $(TEXXSL) $(XMLSTRS) $(CHAPREF
 	./xsltrans --funcs --tex $(IT_FNSRC) --lang=it --docdir=$(CMDSDIR) | \
 	./reflow > ../tex_it/funcbody.tex && touch $@
 
+functex_es: xsltrans reflow $(ES_FNSRC) $(FNCDTD) $(TEXXSL) $(XMLSTRS) $(CHAPREFS)
+	./xsltrans --funcs --tex $(ES_FNSRC) --lang=es --docdir=$(CMDSDIR) | \
+	./reflow > ../tex_es/funcbody.tex && touch $@
+
 functex_pt: xsltrans reflow $(PT_FNSRC) $(FNCDTD) $(TEXXSL) $(XMLSTRS) $(CHAPREFS)
 	./xsltrans --funcs --tex $(PT_FNSRC) --lang=pt --docdir=$(CMDSDIR) | \
 	./reflow > ../tex_pt/funcbody.tex && touch $@
@@ -374,7 +387,7 @@ help-pt: $(CHAPREFS) $(PT_CMDREF_STAMP) $(PT_FNREF_STAMP)
 
 help-gl: $(CHAPREFS) $(GL_CMDREF_STAMP) $(GL_FNREF_STAMP)
 
-help-es: $(CHAPREFS) $(ES_CMDREF_STAMP)
+help-es: $(CHAPREFS) $(ES_CMDREF_STAMP) $(ES_FNREF_STAMP)
 
 help-all: help-en help-it help-pt help-gl help-es $(HELPREFS)
 
@@ -398,6 +411,7 @@ check-gl: validate
 
 check-es: validate
 	-./validate $(ES_SRC)
+	-./validate $(ES_FNSRC)
 
 xmlcheck:
 	cd $(CMDSDIR) && ./checkxml.sh
