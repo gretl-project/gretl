@@ -689,7 +689,7 @@ static void show_datafile_info (GtkWidget *w, gpointer data)
 			 0, &filename);
     collection = g_object_get_data(G_OBJECT(vwin->listbox), "collection");
     gretl_build_path(fullname, collection->path, filename, NULL);
-    strcat(fullname, ".ext");
+    strcat(fullname, ".gdt");
     g_free(filename);
 
 #if 0
