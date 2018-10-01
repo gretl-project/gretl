@@ -404,7 +404,7 @@ struct gretl_option gretl_opts[] = {
     { NLS,      OPT_N, "numerical", 0 },
     { NLS,      OPT_R, "robust", 0 },
     { NLS,      OPT_V, "verbose", 0 },
-    { NLS,      OPT_G, "no-gradient-check", 0 },
+    { NLS,      OPT_S, "no-gradient-check", 0 },
     { NORMTEST, OPT_A, "all", 0 },
     { NORMTEST, OPT_D, "dhansen", 0 },
     { NORMTEST, OPT_W, "swilk", 0 },

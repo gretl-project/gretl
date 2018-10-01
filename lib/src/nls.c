@@ -1156,7 +1156,7 @@ static int nl_function_calc (double *f, double *x, void *p)
     /* transcribe from vector or series to array @f */
     for (t=0; t<s->nobs; t++) {
 	if (na(y[t])) {
-	    fprintf(stderr, "nl_calculate_fvec: produced NA at obs %d\n", t);
+	    fprintf(stderr, "nl_calculate_fvec: produced NA at obs %d\n", t+1);
 	    return 1;
 	}
 	f[t] = y[t];
