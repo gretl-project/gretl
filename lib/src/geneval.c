@@ -14480,7 +14480,9 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_LLAG:
-	if (ok_matrix_node(l) && m->t != MAT && ok_list_node(m, p)) {
+	if (null_or_empty(m)) {
+	    p->err = E_ARGS;
+	} else if (ok_matrix_node(l) && m->t != MAT && ok_list_node(m, p)) {
 	    ret = list_make_lags(l, m, r, p);
 	} else if (ok_matrix_node(l) && m->t == MAT) {
 	    ret = matrix_make_lags(l, m, r, p);
