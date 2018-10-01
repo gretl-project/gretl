@@ -37,6 +37,8 @@ AUTO_HELPFILES = \
 	gretl_cli_cmdref.gl \
 	gretl_cli_fnref.en \
 	gretl_gui_fnref.en \
+	gretl_cli_fnref.es \
+	gretl_gui_fnref.es \
 	gretl_cli_fnref.it \
 	gretl_gui_fnref.it \
         gretl_cli_fnref.pt \
