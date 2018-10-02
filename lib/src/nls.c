@@ -48,6 +48,7 @@
 
 #define NLS_DEBUG 0
 #define ML_DEBUG 0
+#define GRAD_DEBUG 0
 
 enum {
     NL_ANALYTICAL = 1 << 0,
@@ -2419,14 +2420,72 @@ static int nls_calc (int m, int n, double *x, double *fvec,
     return 0;
 }
 
+/* Below: copied here from minpack chkder.c, with a view to
+   figuring if it could be improved (lessening the chance
+   of false alarms for correct derivatives).
+*/
+
+static int chkder_2(int m, int n, double *x, double *fvec,
+		    double *fjac, int ldfjac, double *xp,
+		    double *fvecp, int mode, double *err)
+{
+    const double epsmch = DBL_EPSILON;
+    double temp, eps = sqrt(epsmch);
+    int i, j;
+
+    if (mode == 1) {
+	/* mode 1: find a neighboring vector */
+	for (j=0; j<n; j++) {
+	    temp = eps * fabs(x[j]);
+	    if (temp == 0.0) {
+		temp = eps;
+	    }
+	    xp[j] = x[j] + temp;
+	}
+    } else {
+	/* mode 2: assess validity of gradient */
+	const double factor = 100;
+	double d, epsf = factor * epsmch;
+	double epslog = log10(eps);
+
+	for (i=0; i<m; i++) {
+	    err[i] = 0.0;
+	}
+	for (j=0; j<n; j++) {
+	    temp = fabs(x[j]);
+	    if (temp == 0.0) {
+		temp = 1.0;
+	    }
+	    for (i=0; i<m; i++) {
+		err[i] += temp * fjac[i + j * ldfjac];
+	    }
+	}
+	for (i=0; i<m; i++) {
+	    temp = 1.0;
+	    d = fabs(fvecp[i] - fvec[i]);
+	    if (fvec[i] != 0.0 && fvecp[i] != 0.0 &&
+		d >= epsf * fabs(fvec[i])) {
+		d = fabs((fvecp[i] - fvec[i]) / eps - err[i]);
+		temp = eps * d / (fabs(fvec[i]) + fabs(fvecp[i]));
+	    }
+	    err[i] = 1.0;
+	    if (temp > epsmch && temp < eps) {
+		err[i] = (log10(temp) - epslog) / epslog;
+	    }
+	    if (temp >= eps) {
+		err[i] = 0.0;
+	    }
+	}
+    }
+
+    return 0;
+}
+
 /* in case the user supplied analytical derivatives for the
    parameters, check them for sanity */
 
 static int check_derivatives (nlspec *spec, PRN *prn)
 {
-#if NLS_DEBUG > 1
-    int T = spec->nobs * spec->ncoeff;
-#endif
     double *x = spec->coeff;
     double *fvec = spec->fvec;
     double *jac = spec->jac;
@@ -2445,32 +2504,31 @@ static int check_derivatives (nlspec *spec, PRN *prn)
     xerr = xp + n;
     fvecp = xerr + m;
 
-#if NLS_DEBUG > 1
+#if GRAD_DEBUG
     fprintf(stderr, "\nchkder, starting: m=%d, n=%d, ldjac=%d\n",
 	    (int) m, (int) n, (int) ldjac);
     for (i=0; i<spec->ncoeff; i++) {
-	fprintf(stderr, "x[%d] = %.14g\n", i, x[i]);
+	fprintf(stderr, "x[%d] = %.14g\n", i+1, x[i]);
     }
     for (i=0; i<spec->nobs; i++) {
-	fprintf(stderr, "fvec[%d] = %.14g\n", i, fvec[i]);
+	fprintf(stderr, "fvec[%d] = %.14g\n", i+1, fvec[i]);
     }
 #endif
 
     /* mode 1: x contains the point of evaluation of the function; on
        output xp is set to a neighboring point. */
     mode = 1;
-    chkder_(m, n, x, fvec, jac, ldjac, xp, fvecp, mode, xerr);
+    chkder_2(m, n, x, fvec, jac, ldjac, xp, fvecp, mode, xerr);
 
     /* calculate gradient */
     iflag = 2;
     nls_calc(m, n, x, fvec, jac, ldjac, &iflag, spec);
     if (iflag == -1) goto chkderiv_abort;
 
-#if NLS_DEBUG > 1
-    fprintf(stderr, "\nchkder, calculated gradient\n");
-    for (i=0; i<T; i++) {
-	fprintf(stderr, "jac[%d] = %.14g\n", i, jac[i]);
-    }
+#if GRAD_DEBUG
+    gretl_matrix G = {m, n, jac, 0, NULL};
+
+    gretl_matrix_print(&G, "jac");
 #endif
 
     /* calculate function, at neighboring point xp */
@@ -2484,13 +2542,13 @@ static int check_derivatives (nlspec *spec, PRN *prn)
        measures of correctness of the respective gradients.
     */
     mode = 2;
-    chkder_(m, n, x, fvec, jac, ldjac, xp, fvecp, mode, xerr);
+    chkder_2(m, n, x, fvec, jac, ldjac, xp, fvecp, mode, xerr);
 
-#if NLS_DEBUG > 1
+#if GRAD_DEBUG
     fprintf(stderr, "\nchkder, done mode 2:\n");
     for (i=0; i<m; i++) {
-	fprintf(stderr, "%d: fvec = %.14g, fvecp = %.14g, xerr = %g\n", i,
-		fvec[i], fvecp[i], xerr[i]);
+	fprintf(stderr, "%d: dfvec %g, xerr = %g\n",
+		i+1, fvecp[i] - fvec[i], xerr[i]);
     }
 #endif
 
