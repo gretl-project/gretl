@@ -2425,9 +2425,9 @@ static int nls_calc (int m, int n, double *x, double *fvec,
    of false alarms for correct derivatives).
 */
 
-static int chkder_2(int m, int n, double *x, double *fvec,
-		    double *fjac, int ldfjac, double *xp,
-		    double *fvecp, int mode, double *err)
+static int chkder (int m, int n, double *x, double *fvec,
+		   double *fjac, int ldfjac, double *xp,
+		   double *fvecp, int mode, double *err)
 {
     const double epsmch = DBL_EPSILON;
     double temp, eps = sqrt(epsmch);
@@ -2518,7 +2518,7 @@ static int check_derivatives (nlspec *spec, PRN *prn)
     /* mode 1: x contains the point of evaluation of the function; on
        output xp is set to a neighboring point. */
     mode = 1;
-    chkder_2(m, n, x, fvec, jac, ldjac, xp, fvecp, mode, xerr);
+    chkder(m, n, x, fvec, jac, ldjac, xp, fvecp, mode, xerr);
 
     /* calculate gradient */
     iflag = 2;
@@ -2542,7 +2542,7 @@ static int check_derivatives (nlspec *spec, PRN *prn)
        measures of correctness of the respective gradients.
     */
     mode = 2;
-    chkder_2(m, n, x, fvec, jac, ldjac, xp, fvecp, mode, xerr);
+    chkder(m, n, x, fvec, jac, ldjac, xp, fvecp, mode, xerr);
 
 #if GRAD_DEBUG
     fprintf(stderr, "\nchkder, done mode 2:\n");

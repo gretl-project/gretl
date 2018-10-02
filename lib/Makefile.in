@@ -292,8 +292,8 @@ CEPHES_SRC = bdtr.c btdtr.c chbevl.c chdtr.c const.c expx2.c \
 	   iv.c j0.c j1.c jn.c jv.c k0.c k1.c kn.c psi.c struve.c \
 	   yn.c kv.c
 
-MINPACK_SRC = chkder.c enorm.c fdjac2.c lmder.c lmdif.c \
-	lmpar.c qrfac.c qrsolv.c lbfgsb.c
+MINPACK_SRC = enorm.c fdjac2.c lmder.c lmdif.c lmpar.c \
+	qrfac.c qrsolv.c lbfgsb.c
 
 DCMT_SRC = check32.c eqdeg.c genmtrand.c mt19937.c prescr.c seive.c
 

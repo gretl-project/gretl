@@ -14,10 +14,6 @@ typedef int (*S_fp)();
 # define max(a,b) ((a) >= (b) ? (a) : (b))
 #endif
 
-int chkder_(int m, int n, double *x, double *fvec, 
-	    double *fjac, int ldfjac, double *xp, 
-	    double *fvecp, int mode, double *err);
-
 double enorm_(int n, double *x);
 
 int fdjac2_(S_fp fcn, int m, int n, int quality, double *x, 
