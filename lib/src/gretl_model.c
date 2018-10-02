@@ -5176,7 +5176,7 @@ static int gretl_model_set_int_compat (MODEL *pmod,
 
     if (pmod->opt == opt) {
 	/* not handled above */
-	err = gretl_model_set_int(pmod, key,ival);
+	err = gretl_model_set_int(pmod, key, ival);
     }
 
     return err;

@@ -64,8 +64,8 @@ struct nlspec_ {
     parm *params;       /* array of information on function parameters
 			   (see the parm_ struct above) */
     double *fvec;       /* function vector */
-    double *jac;        /* Jacobian array */
     double *coeff;      /* coefficient estimates */
+    gretl_matrix *J;    /* Jacobian matrix */
     gretl_matrix *Hinv; /* negative inverse of Hessian */
     char **aux;         /* auxiliary commands */
     char *hesscall;     /* function call for Hessian */

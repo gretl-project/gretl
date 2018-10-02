@@ -2122,7 +2122,7 @@ static DATASET *make_GNR_dataset (nlspec *spec,
 	    v = i + 2;
 	    j = T * i; /* offset into jac array */
 	    for (t=0; t<T; t++) {
-		gdset->Z[v][t] = spec->jac[j++];
+		gdset->Z[v][t] = spec->J->val[j++];
 	    }
 	}
     }
@@ -2180,8 +2180,9 @@ static int nl_model_allocate (MODEL *pmod, nlspec *spec)
    final model structure.
 */
 
-static int make_nl_model (MODEL *pmod, nlspec *spec,
-			  const DATASET *dset)
+static int make_other_nl_model (MODEL *pmod,
+				nlspec *spec,
+				const DATASET *dset)
 {
     nl_model_allocate(pmod, spec);
     if (pmod->errcode) {
@@ -2206,7 +2207,6 @@ static int make_nl_model (MODEL *pmod, nlspec *spec,
     }
 
     mle_criteria(pmod, 0);
-
     add_coeffs_to_model(pmod, spec->coeff);
 
     if (spec->ci == GMM && (spec->opt & OPT_G)) {
@@ -2285,8 +2285,8 @@ static void clear_nlspec (nlspec *spec)
     free(spec->fvec);
     spec->fvec = NULL;
 
-    free(spec->jac);
-    spec->jac = NULL;
+    gretl_matrix_free(spec->J);
+    spec->J = NULL;
 
     free(spec->coeff);
     spec->coeff = NULL;
@@ -2425,17 +2425,21 @@ static int nls_calc (int m, int n, double *x, double *fvec,
    of false alarms for correct derivatives).
 */
 
-static int chkder (int m, int n, double *x, double *fvec,
-		   double *fjac, int ldfjac, double *xp,
-		   double *fvecp, int mode, double *err)
+static int chkder (const double *x,
+		   double *xp,
+		   const double *fvec,
+		   const double *fvecp,
+		   const gretl_matrix *J,
+		   int mode,
+		   double *err)
 {
     const double epsmch = DBL_EPSILON;
     double temp, eps = sqrt(epsmch);
     int i, j;
 
     if (mode == 1) {
-	/* mode 1: find a neighboring vector */
-	for (j=0; j<n; j++) {
+	/* mode 1: construct a neighboring vector, xp */
+	for (j=0; j<J->cols; j++) {
 	    temp = eps * fabs(x[j]);
 	    if (temp == 0.0) {
 		temp = eps;
@@ -2448,19 +2452,19 @@ static int chkder (int m, int n, double *x, double *fvec,
 	double d, epsf = factor * epsmch;
 	double epslog = log10(eps);
 
-	for (i=0; i<m; i++) {
+	for (i=0; i<J->rows; i++) {
 	    err[i] = 0.0;
 	}
-	for (j=0; j<n; j++) {
+	for (j=0; j<J->cols; j++) {
 	    temp = fabs(x[j]);
 	    if (temp == 0.0) {
 		temp = 1.0;
 	    }
-	    for (i=0; i<m; i++) {
-		err[i] += temp * fjac[i + j * ldfjac];
+	    for (i=0; i<J->rows; i++) {
+		err[i] += temp * gretl_matrix_get(J, i, j);
 	    }
 	}
-	for (i=0; i<m; i++) {
+	for (i=0; i<J->rows; i++) {
 	    temp = 1.0;
 	    d = fabs(fvecp[i] - fvec[i]);
 	    if (fvec[i] != 0.0 && fvecp[i] != 0.0 &&
@@ -2488,14 +2492,15 @@ static int check_derivatives (nlspec *spec, PRN *prn)
 {
     double *x = spec->coeff;
     double *fvec = spec->fvec;
-    double *jac = spec->jac;
+    double *jac = spec->J->val;
     int m = spec->nobs;
     int n = spec->ncoeff;
     int ldjac = m;
-    int mode, iflag;
+    int iflag;
     double *xp, *xerr, *fvecp;
     int i, badcount = 0, zerocount = 0;
 
+    /* note: allocate space for xerr and fvecp too */
     xp = malloc((n + m + m) * sizeof *xp);
     if (xp == NULL) {
 	return E_ALLOC;
@@ -2508,17 +2513,16 @@ static int check_derivatives (nlspec *spec, PRN *prn)
     fprintf(stderr, "\nchkder, starting: m=%d, n=%d, ldjac=%d\n",
 	    (int) m, (int) n, (int) ldjac);
     for (i=0; i<spec->ncoeff; i++) {
-	fprintf(stderr, "x[%d] = %.14g\n", i+1, x[i]);
+	fprintf(stderr, "x[%d] = %.9g\n", i+1, x[i]);
     }
     for (i=0; i<spec->nobs; i++) {
-	fprintf(stderr, "fvec[%d] = %.14g\n", i+1, fvec[i]);
+	fprintf(stderr, "fvec[%d] = %.9g\n", i+1, fvec[i]);
     }
 #endif
 
     /* mode 1: x contains the point of evaluation of the function; on
        output xp is set to a neighboring point. */
-    mode = 1;
-    chkder(m, n, x, fvec, jac, ldjac, xp, fvecp, mode, xerr);
+    chkder(x, xp, fvec, fvecp, spec->J, 1, xerr);
 
     /* calculate gradient */
     iflag = 2;
@@ -2526,9 +2530,7 @@ static int check_derivatives (nlspec *spec, PRN *prn)
     if (iflag == -1) goto chkderiv_abort;
 
 #if GRAD_DEBUG
-    gretl_matrix G = {m, n, jac, 0, NULL};
-
-    gretl_matrix_print(&G, "jac");
+    gretl_matrix_print(spec->J, "spec->J");
 #endif
 
     /* calculate function, at neighboring point xp */
@@ -2541,8 +2543,7 @@ static int check_derivatives (nlspec *spec, PRN *prn)
        contain the functions evaluated at xp.  On output, xerr contains
        measures of correctness of the respective gradients.
     */
-    mode = 2;
-    chkder(m, n, x, fvec, jac, ldjac, xp, fvecp, mode, xerr);
+    chkder(x, xp, fvec, fvecp, spec->J, 2, xerr);
 
 #if GRAD_DEBUG
     fprintf(stderr, "\nchkder, done mode 2:\n");
@@ -2703,7 +2704,7 @@ static int lm_calculate (nlspec *spec, PRN *prn)
     }
 
     /* call minpack */
-    lmder_(nls_calc, m, n, spec->coeff, spec->fvec, spec->jac, ldjac,
+    lmder_(nls_calc, m, n, spec->coeff, spec->fvec, spec->J->val, ldjac,
 	   ftol, xtol, gtol, maxfev, wa, mode, factor, nprint,
 	   &info, &nfev, &njev, ipvt, wa + n, wa + 2*n, wa + 3*n,
 	   wa + 4*n, wa + 5*n, spec);
@@ -2804,7 +2805,7 @@ static int lm_approximate (nlspec *spec, PRN *prn)
     /* call minpack */
     lmdif_(nls_calc_approx, m, n, spec->coeff, spec->fvec,
 	   spec->tol, spec->tol, gtol, maxfev, epsfcn, diag,
-	   mode, factor, nprint, &info, &nfev, spec->jac, ldjac,
+	   mode, factor, nprint, &info, &nfev, spec->J->val, ldjac,
 	   ipvt, qtf, wa1, wa2, wa3, wa4, spec);
 
     spec->iters = nfev;
@@ -2843,7 +2844,7 @@ static int lm_approximate (nlspec *spec, PRN *prn)
 
 	/* call minpack again */
 	fdjac2_(nls_calc_approx, m, n, 0, spec->coeff, spec->fvec,
-		spec->jac, ldjac, &iflag, epsfcn, wa4, spec);
+		spec->J->val, ldjac, &iflag, epsfcn, wa4, spec);
 	spec->crit = ess;
 	spec->iters = iters;
 	spec->opt = opt;
@@ -3383,15 +3384,15 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
 
     if (spec->lhtype == GRETL_TYPE_DOUBLE) {
 	spec->fvec = NULL;
-	spec->jac = NULL;
+	spec->J = NULL;
     } else {
 	/* allocate auxiliary arrays */
 	size_t fvec_bytes = spec->nobs * sizeof *spec->fvec;
 
 	spec->fvec = malloc(fvec_bytes);
-	spec->jac = malloc(spec->nobs * spec->ncoeff * sizeof *spec->jac);
+	spec->J = gretl_matrix_alloc(spec->nobs, spec->ncoeff);
 
-	if (spec->fvec == NULL || spec->jac == NULL) {
+	if (spec->fvec == NULL || spec->J == NULL) {
 	    nlmod.errcode = E_ALLOC;
 	    goto bailout;
 	}
@@ -3457,7 +3458,7 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
 	    }
 	} else {
 	    /* MLE, GMM */
-	    make_nl_model(&nlmod, spec, dset);
+	    make_other_nl_model(&nlmod, spec, dset);
 	}
     } else if (nlmod.errcode == 0) {
 	/* model error code missing */
@@ -3575,7 +3576,7 @@ nlspec *nlspec_new (int ci, const DATASET *dset)
     spec->hesscall = NULL;
 
     spec->fvec = NULL;
-    spec->jac = NULL;
+    spec->J = NULL;
 
     spec->coeff = NULL;
     spec->ncoeff = 0;
@@ -4089,9 +4090,9 @@ int nls_boot_calc (const MODEL *pmod, DATASET *dset,
 
     /* allocate arrays to be passed to minpack */
     spec->fvec = malloc(spec->nobs * sizeof *spec->fvec);
-    spec->jac = malloc(spec->nobs * spec->ncoeff * sizeof *spec->jac);
+    spec->J = gretl_matrix_alloc(spec->nobs, spec->ncoeff);
 
-    if (spec->fvec == NULL || spec->jac == NULL) {
+    if (spec->fvec == NULL || spec->J == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }

@@ -3421,7 +3421,7 @@ int printmodel (MODEL *pmod, const DATASET *dset, gretlopt opt,
 	goto close_format;
     }
 
-    if (opt & OPT_S) {
+    if (pmod->ci == OLS && (opt & OPT_S)) {
 	/* --simple-print */
 	if (pmod->ci == OLS && !na(pmod->rsq) && plain_format(prn)) {
 	    int uc = gretl_model_get_int(pmod, "uncentered");
