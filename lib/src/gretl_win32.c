@@ -890,6 +890,7 @@ static int win32_delete_dir_w (const char *path)
     gunichar2 *pconv;
     gunichar2 *from;
     int i, len = 0;
+    int err = 0;
 
     /* first do UTF-8 to UTF-16 conversion */
     pconv = g_utf8_to_utf16(path, -1, NULL, NULL, NULL);
