@@ -22,7 +22,7 @@
 
 static int lsstat (const char *fname, struct stat *buf, zfile *zf)
 {
-    return stat(fname, buf);
+    return gretl_stat(fname, buf);
 }
 
 /* below: "fname" is as given by caller; "zname" is contructed using
