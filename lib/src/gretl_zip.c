@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -107,8 +107,8 @@ static int clone_gsf_tree (GsfInput *input, GsfOutput *output)
 	    name = gsf_infile_name_by_index(in, i);
 	    is_dir = gsf_is_dir(src);
 #if ZDEBUG
-	    fprintf(stderr, "clone_gsf_tree: i = %d (%s, %s)\n", i, name, 
-		    is_dir ? "directory" : "file"); 
+	    fprintf(stderr, "clone_gsf_tree: i = %d (%s, %s)\n", i, name,
+		    is_dir ? "directory" : "file");
 #endif
 	    modtime = gsf_input_get_modtime(src);
 	    dest = gsf_outfile_new_child_full(out, name, is_dir,
@@ -141,7 +141,7 @@ static int gretl_gsf_make_zipfile (const char *fname,
     ensure_gsf_init();
 
 #if ZDEBUG
-    fprintf(stderr, "gretl_make_zipfile (gsf):\n fname='%s'\n path='%s'\n", 
+    fprintf(stderr, "gretl_make_zipfile (gsf):\n fname='%s'\n path='%s'\n",
 	    fname, path);
 #endif
 
@@ -154,15 +154,15 @@ static int gretl_gsf_make_zipfile (const char *fname,
 	if (output == NULL) {
 	    err = 1;
 	}
-    }  
-    
+    }
+
     if (!err) {
 	outfile = gsf_outfile_zip_new(output, &gerr);
 	g_object_unref(G_OBJECT(output));
 	if (outfile == NULL) {
 	    err = 1;
 	}
-    }  
+    }
 
     if (!err) {
 	ziproot = gsf_outfile_new_child(outfile, path, 1);
@@ -205,14 +205,14 @@ static int gretl_gsf_zip_datafile (const char *fname,
     if (output == NULL) {
 	err = 1;
     }
-     
+
     if (!err) {
 	outfile = gsf_outfile_zip_new(output, &gerr);
 	g_object_unref(G_OBJECT(output));
 	if (outfile == NULL) {
 	    err = 1;
 	}
-    } 
+    }
 
     if (!err) {
 	const char *names[] = { "data.xml", "data.bin" };
@@ -270,6 +270,7 @@ static int gretl_gsf_unzip (const char *fname,
 
 #if ZDEBUG
     fprintf(stderr, "*** gretl_gsf_unzip_file:\n fname='%s'\n", fname);
+    fprintf(stderr, "path='%s', zdirname=%p\n", path, (void *) zdirname);
 #endif
 
     ensure_gsf_init();
@@ -324,6 +325,11 @@ static int gretl_plugin_unzip (const char *fname,
         return 1;
     }
 
+#if ZDEBUG
+    fprintf(stderr, "HERE: fname='%s,\npath='%s'\nzdirname=%p\n",
+	    fname, path, (void *) zdirname);
+#endif
+
     err = (*zfunc)(fname, path, zdirname, &gerr);
 
     return handle_zip_error(fname, gerr, err, "unzipping");
@@ -348,6 +354,9 @@ static int gretl_plugin_make_zipfile (const char *fname,
     }
 
     err = (*zfunc)(fname, path, &gerr);
+#if ZDEBUG
+    fprintf(stderr, "gretl_plugin_make_zipfile: err = %d\n", err);
+#endif
 
     return handle_zip_error(fname, gerr, err, "zipping");
 }
@@ -388,7 +397,7 @@ int gretl_unzip (const char *fname)
     return gretl_gsf_unzip(fname, NULL, NULL);
 #else
     return gretl_plugin_unzip(fname, NULL, NULL);
-#endif    
+#endif
 }
 
 /**
@@ -409,7 +418,7 @@ int gretl_unzip_into (const char *fname, const char *dirname)
     return gretl_gsf_unzip(fname, dirname, NULL);
 #else
     return gretl_plugin_unzip(fname, dirname, NULL);
-#endif 
+#endif
 }
 
 /**
@@ -428,8 +437,8 @@ int gretl_make_zipfile (const char *fname, const char *path)
 #if USE_GSF
     return gretl_gsf_make_zipfile(fname, path);
 #else
-    return gretl_plugin_make_zipfile(fname, path);       
-#endif 
+    return gretl_plugin_make_zipfile(fname, path);
+#endif
 }
 
 /**
@@ -448,8 +457,8 @@ int gretl_unzip_session_file (const char *fname, gchar **zdirname)
 #if USE_GSF
     return gretl_gsf_unzip(fname, NULL, zdirname);
 #else
-    return gretl_plugin_unzip(fname, NULL, zdirname);    
-#endif 
+    return gretl_plugin_unzip(fname, NULL, zdirname);
+#endif
 }
 
 /**
@@ -471,7 +480,7 @@ int gretl_zip_datafile (const char *fname, const char *path,
     return gretl_gsf_zip_datafile(fname, path, level);
 #else
     return gretl_plugin_zip_datafile(fname, path, level);
-#endif 
+#endif
 }
 
 /* below: apparatus for making a zipfile for a function
@@ -483,7 +492,7 @@ static void zip_report (int err, int nf, gretlopt opt, PRN *prn)
     if (opt & OPT_G) {
 	/* GUI use */
 	if (err && nf) {
-	    pprintf(prn, "<@fail> (%s)\n", _("not found"));	
+	    pprintf(prn, "<@fail> (%s)\n", _("not found"));
 	} else if (err) {
 	    pputs(prn, "<@fail>\n");
 	} else {
@@ -491,7 +500,7 @@ static void zip_report (int err, int nf, gretlopt opt, PRN *prn)
 	}
     } else {
 	if (err && nf) {
-	    pprintf(prn, "failed (%s)\n", _("not found"));	
+	    pprintf(prn, "failed (%s)\n", _("not found"));
 	} else if (err) {
 	    pputs(prn, "failed\n");
 	} else {
@@ -531,7 +540,7 @@ static int pkg_zipfile_add (const char *fname,
 	   subdirectory (probably "doc")
 	*/
 	const char *p = strrchr(fname, SLASH);
-	
+
 	if (p != NULL && has_suffix(fname, ".pdf")) {
 	    dest = g_strdup_printf("%s%c%s", dotpath, SLASH, p + 1);
 	} else {
@@ -539,7 +548,7 @@ static int pkg_zipfile_add (const char *fname,
 	}
 	err = gretl_copy_file(fname, dest);
     }
-    
+
     zip_report(err, nf, opt, prn);
     g_free(dest);
 
@@ -598,7 +607,7 @@ int package_make_zipfile (const char *gfnname,
     if (!has_suffix(gfnname, ".gfn")) {
 	gretl_errmsg_set("Input must have extension \".gfn\"");
 	return E_DATA;
-    }    
+    }
 
     /* determine the common path to files for packaging,
        and also the name of the package
@@ -627,11 +636,11 @@ int package_make_zipfile (const char *gfnname,
     /* record where we are now */
     origdir = g_get_current_dir();
 
-#if 0    
-    fprintf(stderr, "origdir: '%s'\n", origdir);    
+#if 0
+    fprintf(stderr, "origdir: '%s'\n", origdir);
     fprintf(stderr, "pkgbase: '%s'\n", pkgbase);
     fprintf(stderr, "pkgname: '%s'\n", pkgname);
-#endif    
+#endif
 
     if (*pkgbase != '\0') {
 	/* get into place for copying */
@@ -647,7 +656,7 @@ int package_make_zipfile (const char *gfnname,
 	err = gretl_mkdir(dotpath);
 	zip_report(err, 0, opt, prn);
     }
-    
+
     if (!err) {
 	dir_made = 1;
     }
@@ -662,7 +671,7 @@ int package_make_zipfile (const char *gfnname,
     if (!err && pdfdoc) {
 	/* copy PDF file into place */
 	struct stat sbuf;
-	
+
 	tmp = g_strdup_printf("%s.pdf", pkgname);
 	if (stat(tmp, &sbuf) != 0) {
 	    g_free(tmp);
@@ -680,7 +689,7 @@ int package_make_zipfile (const char *gfnname,
 	    err = pkg_zipfile_add(datafiles[i],
 				  dotpath, opt, prn);
 	}
-    }	
+    }
 
     if (!err) {
 	/* get into place for making zipfile */
@@ -708,7 +717,7 @@ int package_make_zipfile (const char *gfnname,
 		    gchar *zipname = NULL;
 
 		    pprintf(prn, "Copying %s... ", tmp);
-		    
+
 		    if (origdir != NULL && !g_path_is_absolute(dest)) {
 			zipname = g_build_filename(origdir, dest, NULL);
 			realdest = zipname;
@@ -740,4 +749,3 @@ int package_make_zipfile (const char *gfnname,
 
     return err;
 }
-
