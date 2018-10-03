@@ -884,32 +884,62 @@ int win32_write_access (char *path)
     return ok;
 }
 
-int win32_delete_dir (const char *path)
+static int win32_delete_dir_w (const char *path)
 {
-    SHFILEOPSTRUCT op;
-    gchar *pconv = NULL;
-    char *from;
-    int len = 0;
-    int err = 0;
+    SHFILEOPSTRUCTW op = {0};
+    gunichar2 *pconv;
+    gunichar2 *from;
+    int i, len = 0;
 
-    if (utf8_encoded(path)) {
-	/* FIXME use UTF-16? */
-	pconv = g_win32_locale_filename_from_utf8(path);
+    /* first do UTF-8 to UTF-16 conversion */
+    pconv = g_utf8_to_utf16(path, -1, NULL, NULL, NULL);
+    if (pconv == NULL) {
+	return E_FOPEN; /* ? */
     }
 
-    if (pconv != NULL) {
-	len = strlen(pconv) + 2;
-    } else {
-	len = strlen(path) + 2;
+    for (i=0; pconv[i]; i++) {
+	len++;
     }
 
-    from = calloc(len, 1);
+    from = calloc(len + 2, 2);
     if (from == NULL) {
-	g_free(pconv);
 	return E_ALLOC;
     }
 
-    strcpy(from, pconv != NULL ? pconv : path);
+    for (i=0; pconv[i]; i++) {
+	from[i] = pconv[i];
+    }
+
+    op.hwnd = NULL;
+    op.wFunc = FO_DELETE;
+    op.pFrom = from;
+    op.pTo = NULL;
+    op.fFlags = FOF_SILENT | FOF_NOCONFIRMATION | FOF_NOERRORUI;
+    op.fAnyOperationsAborted = FALSE;
+    op.hNameMappings = NULL;
+    op.lpszProgressTitle = NULL;
+
+    err = SHFileOperationW(&op);
+
+    g_free(pconv);
+    free(from);
+
+    return err;
+}
+
+static int win32_delete_dir_a (const char *path)
+{
+    SHFILEOPSTRUCT op = {0};
+    char *from;
+    int err = 0;
+
+    /* allow for required double-nul termination */
+    from = calloc(strlen(path) + 2, 1);
+    if (from == NULL) {
+	return E_ALLOC;
+    }
+
+    strcpy(from, path);
 
     op.hwnd = NULL;
     op.wFunc = FO_DELETE;
@@ -921,11 +951,18 @@ int win32_delete_dir (const char *path)
     op.lpszProgressTitle = NULL;
 
     err = SHFileOperation(&op);
-
     free(from);
-    g_free(pconv);
 
     return err;
+}
+
+int win32_delete_dir (const char *path)
+{
+    if (utf8_encoded(path)) {
+	return win32_delete_dir_w(path);
+    } else {
+	return win32_delete_dir_a(path);
+    }
 }
 
 static BOOL running_as_admin (void)
