@@ -56,6 +56,8 @@ static gchar *gretl_zipfile_get_topdir (const char *fname)
 	    }
 	}
 	zipinfo_destroy(zinfo);
+    } else {
+	fprintf(stderr, "gretl_zipfile_get_topdir: zinfo is NULL\n");
     }
 
     return topdir;
@@ -71,6 +73,7 @@ int gretl_native_unzip (const char *fname,
     if (zdirname != NULL) {
 	*zdirname = gretl_zipfile_get_topdir(fname);
 	if (*zdirname == NULL) {
+	    fprintf(stderr, "gretl_native_unzip: couldn't get topdir\n");
 	    return 1;
 	}
     }
