@@ -826,7 +826,7 @@ static int real_delete_recursive (const char *path)
 	    /* recursively delete dir's contents */
 	    if (strcmp(fname, ".") && strcmp(fname, "..")) {
 		if (g_file_test(fname, G_FILE_TEST_IS_DIR)) {
-		    err = real_deltree(fname);
+		    err = real_delete_recursive(fname);
 		} else {
 		    err = g_remove(fname);
 		}
@@ -3916,7 +3916,7 @@ int gretl_path_compose (char *targ, int len,
     }
 }
 
-/* Code borrowed from Glib (gfileutils.c) and adapted to
+/* Code borrowed from GLib (gfileutils.c) and adapted to
    write to an input char * (@targ) instead of returning
    a newly allocated string. The code is also somewhat
    simplified by the assumption that if the platform is

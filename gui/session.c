@@ -472,12 +472,11 @@ const char *last_session_graph_name (void)
 
 static void session_switch_log_location (int code)
 {
-    gchar *fullpath;
+    gchar *dirpath;
 
-    fullpath = g_strdup_printf("%s%s%c", gretl_dotdir(),
-			       session.dirname, SLASH);
-    set_session_log(fullpath, code);
-    g_free(fullpath);
+    dirpath = gretl_make_dotpath(session.dirname);
+    set_session_log(dirpath, code);
+    g_free(dirpath);
 }
 
 char *session_graph_make_path (char *path, const char *fname)

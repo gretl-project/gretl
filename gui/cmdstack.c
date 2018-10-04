@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "gretl.h"
@@ -178,15 +178,15 @@ static int session_logfile_init (void)
     if (fp == NULL) {
 	return E_FOPEN;
     }
-    
-    logprn = gretl_print_new_with_stream(fp); 
+
+    logprn = gretl_print_new_with_stream(fp);
     if (logprn == NULL) {
 	fclose(fp);
 	return E_FOPEN;
     }
 
     prev_ID = 0;
-    
+
 #if CMD_DEBUG
     fprintf(stderr, "session_logfile_init: open prn for '%s'\n", logname);
 #endif
@@ -210,7 +210,7 @@ static int scratch_logfile_init (void)
     n_cmds = prev_ID = 0;
     *logname = '\0';
 
-    logprn = gretl_print_new_with_tempfile(&err); 
+    logprn = gretl_print_new_with_tempfile(&err);
     if (err) {
 	return err;
     }
@@ -258,7 +258,7 @@ static void log_trim_to_length (char *s, int len)
 	for (i=1; i<n-1; i++) {
 	    if (s[i] == '"' && s[i-1] != '\\') {
 		quoted = !quoted;
-	    } 
+	    }
 	    if (!quoted && s[i] == ' ') {
 		if (i < len) {
 		    bp0 = i;
@@ -387,10 +387,10 @@ int add_command_to_stack (const char *s, int wrap_done)
     if (!err) {
 #if CMD_DEBUG
 	fprintf(stderr, "Written to log: '%s'\n", s);
-#endif 
+#endif
 	n_cmds++;
 
-	if (strlen(s) > 2 && *s != '#' && 
+	if (strlen(s) > 2 && *s != '#' &&
 	    strcmp(test, "help") &&
 	    strcmp(test, "info") &&
 	    strcmp(test, "open")) {
@@ -412,7 +412,7 @@ int add_model_command_to_stack (const char *s, int model_ID,
 
     if (logprn == NULL) {
 	err = logfile_init();
-    } 
+    }
 
     if (!err) {
 	if (model_ID != prev_ID) {
@@ -428,7 +428,7 @@ int add_model_command_to_stack (const char *s, int model_ID,
     return err;
 }
 
-/* 
+/*
    This function gets called from session.c when when saving a
    session, opening a session file, or closing a session.
 
@@ -447,20 +447,24 @@ int add_model_command_to_stack (const char *s, int model_ID,
 
 void set_session_log (const char *dirname, int code)
 {
-    char tmp[FILENAME_MAX];
-    int err;
+    /* note: @dirname may be NULL, but only if @code is
+       LOG_CLOSE or LOG_NULL */
 
 #if CMD_DEBUG
     fprintf(stderr, "set_session_log: dirname = '%s'\n", dirname);
     fprintf(stderr, "session_open = %d\n", session_open);
 #endif
 
-    if (code == LOG_SAVE_AS && logprn == NULL) {
+    if (code == LOG_CLOSE) {
+	free_command_stack();
+	session_open = 0;
+    } else if (code == LOG_NULL) {
+	session_open = 0;
+    } else if (code == LOG_SAVE_AS && logprn == NULL) {
 	/* previous log file has been closed; we'll
-	   let it reopen as and when needed
+	   let it be reopened as and when needed
 	*/
-	strcpy(logname, dirname);
-	strcat(logname, "session.inp");
+	gretl_build_path(logname, dirname, "session.inp", NULL);
 	session_open = 1;
     } else if (code == LOG_SAVE || code == LOG_SAVE_AS) {
 	if (gretl_print_has_tempfile(logprn)) {
@@ -468,10 +472,13 @@ void set_session_log (const char *dirname, int code)
 	       have been renamed, via the renaming of the
 	       session directory on save
 	    */
-	    strcpy(tmp, dirname);
-	    strcat(tmp, "session.inp");
+	    char tmp[FILENAME_MAX];
+
+	    gretl_build_path(tmp, dirname, "session.inp", NULL);
 	    if (strcmp(logname, tmp)) {
 		if (logprn != NULL) {
+		    int err;
+
 		    err = gretl_print_rename_file(logprn, logname, tmp);
 		    if (err) {
 			free_command_stack();
@@ -483,14 +490,8 @@ void set_session_log (const char *dirname, int code)
 	}
     } else if (code == LOG_OPEN) {
 	free_command_stack();
-	strcpy(logname, dirname);
-	strcat(logname, "session.inp");
+	gretl_build_path(logname, dirname, "session.inp", NULL);
 	session_open = 1;
-    } else if (code == LOG_CLOSE) {
-	free_command_stack();
-	session_open = 0;
-    } else if (code == LOG_NULL) {
-	session_open = 0;
     }
 }
 
@@ -513,4 +514,3 @@ void maybe_suspend_session_log (void)
 	logprn = NULL;
     }
 }
-
