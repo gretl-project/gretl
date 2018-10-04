@@ -1548,15 +1548,19 @@ void verify_clear_data (void)
     close_session(OPT_NONE); /* FIXME opt? */
 }
 
-static void remove_session_dir (void)
+static int remove_session_dir (void)
 {
-    gchar *dirpath;
+    gchar *fullpath;
+    int err;
 
-    dirpath = g_build_filename(gretl_dotdir(),
-			       session.dirname, NULL);
-    gretl_chdir(gretl_dotdir());
-    gretl_deltree(dirpath);
-    g_free(dirpath);
+    fullpath = gretl_make_dotpath(session.dirname);
+    err = gretl_chdir(gretl_dotdir());
+    if (!err) {
+	err = gretl_deltree(fullpath);
+    }
+    g_free(fullpath);
+
+    return err;
 }
 
 void session_init (void)

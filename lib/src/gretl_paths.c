@@ -504,12 +504,23 @@ int gretl_file_exists (const char *fname)
 
 #ifdef WIN32
 
+/* Note: renaming doesn't work on Windows if the target
+   already exists. If we end up trying to rename in this
+   case it presumably means that @newpath represents
+   stale data, and should be removed first.
+*/
+
 static int win32_rename (const char *oldpath,
 			 const char *newpath)
 {
     int u_old = valid_utf8(oldpath);
     int u_new = valid_utf8(newpath);
     int ret = -1;
+
+    if (gretl_file_exists(newpath)) {
+	/* get rid of stale target */
+	win32_delete_recursive(newpath);
+    }
 
     if (u_old && u_new) {
 	/* OK, both names are UTF-8 */
@@ -574,6 +585,11 @@ static int win32_rename (const char *oldpath,
 int gretl_rename (const char *oldpath, const char *newpath)
 {
     int err = 0;
+
+    if (!strcmp(oldpath, newpath)) {
+	/* check for no-op */
+	return 0;
+    }
 
     gretl_error_clear();
 
@@ -792,7 +808,7 @@ int gretl_mkdir (const char *path)
 
 #ifndef WIN32
 
-static int real_deltree (const char *path)
+static int real_delete_recursive (const char *path)
 {
     GDir *dir;
     int err = 0;
@@ -847,13 +863,13 @@ static int real_deltree (const char *path)
 int gretl_deltree (const char *path)
 {
 #ifdef WIN32
-    return win32_delete_dir(path);
+    return win32_delete_recursive(path);
 #else
     gchar *savedir = NULL;
     int err;
 
     savedir = g_get_current_dir();
-    err = real_deltree(path);
+    err = real_delete_recursive(path);
 
     if (savedir != NULL) {
 	g_chdir(savedir);

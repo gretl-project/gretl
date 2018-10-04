@@ -193,7 +193,8 @@ static void remove_temp_dir (char *dname)
     gchar *fullpath = gretl_make_dotpath(dname);
 
     if (gretl_chdir(gretl_dotdir()) == 0) {
-	win32_delete_dir(fullpath);
+	/* use of a full path is recommended */
+	win32_delete_recursive(fullpath);
     }
     g_free(fullpath);
 # else

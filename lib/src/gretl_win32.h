@@ -79,7 +79,7 @@ char *program_files_x86_path (void);
 
 int win32_write_access (char *path);
 
-int win32_delete_dir (const char *path);
+int win32_delete_recursive (const char *path);
 
 int win32_uses_virtual_store (void);
 
@@ -102,7 +102,7 @@ void win32_stopwatch_init (void);
 
 double win32_stopwatch (void);
 
-int cli_set_win32_charset (const char *package);
+int win32_set_console_charset (const char *package);
 
 int windows_is_xp (void);
 

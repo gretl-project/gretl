@@ -223,7 +223,7 @@ static void nls_init (void)
     setlocale(LC_NUMERIC, "");
     reset_local_decpoint();
 # ifdef WIN32
-    cli_set_win32_charset(PACKAGE);
+    win32_set_console_charset(PACKAGE);
 # endif
 }
 

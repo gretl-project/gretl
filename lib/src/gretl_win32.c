@@ -884,7 +884,9 @@ int win32_write_access (char *path)
     return ok;
 }
 
-static int win32_delete_dir_w (const char *path)
+/* handle the case where @path is non-ASCII UTF-8 */
+
+static int win32_delete_w (const char *path)
 {
     SHFILEOPSTRUCTW op = {0};
     gunichar2 *pconv;
@@ -902,6 +904,7 @@ static int win32_delete_dir_w (const char *path)
 	len++;
     }
 
+    /* allow for extra zero-bytes at end */
     from = calloc(len + 2, 2);
     if (from == NULL) {
 	return E_ALLOC;
@@ -928,7 +931,9 @@ static int win32_delete_dir_w (const char *path)
     return err;
 }
 
-static int win32_delete_dir_a (const char *path)
+/* handle the case where @path is ASCII or 8-bit locale */
+
+static int win32_delete_a (const char *path)
 {
     SHFILEOPSTRUCT op = {0};
     char *from;
@@ -957,12 +962,12 @@ static int win32_delete_dir_a (const char *path)
     return err;
 }
 
-int win32_delete_dir (const char *path)
+int win32_delete_recursive (const char *path)
 {
     if (utf8_encoded(path)) {
-	return win32_delete_dir_w(path);
+	return win32_delete_w(path);
     } else {
-	return win32_delete_dir_a(path);
+	return win32_delete_a(path);
     }
 }
 
@@ -1772,7 +1777,7 @@ static int vista_or_higher (void)
     return ret;
 }
 
-int cli_set_win32_charset (const char *package)
+int win32_set_console_charset (const char *package)
 {
     int ttfont = 0;
     int gotinfo = 0;
