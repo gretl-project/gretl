@@ -77,8 +77,8 @@ int add_filenames (const char *fname, zfile *zf)
 
      if (lsstat(fname, &s, zf)) {
 	/* Not a file or directory */
-	trace(2, "add_filenames: ignoring '%s'\n", fname);
-	return 0; /* ZE_MISS? */
+	trace(2, "add_filenames: couldn't stat '%s'\n", fname);
+	return ZE_MISS;
     }
 
     if ((s.st_mode & S_IFREG) == S_IFREG) {
@@ -357,14 +357,14 @@ void time_stamp_file (const char *fname, guint32 dost)
     utime(fname, &u);
 }
 
-/* If file 'fname' does not exist, return 0.  Else, return the file's
+/* If file @fname does not exist, return 0.  Else, return the file's
    last modified date and time as an MSDOS date and time, that is, an
    unsigned 32-bit value with the date most significant to allow
-   unsigned integer comparison of absolute times.  Also, if 'attr' is
+   unsigned integer comparison of absolute times.  Also, if @attr is
    not NULL, store the file attributes there, with the high two bytes
    being the Unix attributes, and the low byte being a mapping of that
-   to DOS attributes.  If 'fsize' is not NULL, store the file size
-   there.  If 't' is not NULL, the file's access, modification and
+   to DOS attributes.  If @fsize is not NULL, store the file size
+   there.  If @t is not NULL, the file's access, modification and
    creation times are stored there as UNIX time_t values.
 */
 
@@ -389,8 +389,8 @@ guint32 file_mod_time (const char *fname, guint32 *attr, long *fsize,
     }
 
     tmp = g_strdup(fname);
-    if (tmp[len - 1] == '/') {
-	tmp[len - 1] = '\0';
+    if (tmp[len-1] == '/') {
+	tmp[len-1] = '\0';
     }
 
     if (lsstat(tmp, &s, zf) != 0) {
