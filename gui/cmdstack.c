@@ -451,7 +451,8 @@ void set_session_log (const char *dirname, int code)
        LOG_CLOSE or LOG_NULL */
 
 #if CMD_DEBUG
-    fprintf(stderr, "set_session_log: dirname = '%s'\n", dirname);
+    fprintf(stderr, "set_session_log: dirname = '%s', code = %d\n",
+	    dirname, code);
     fprintf(stderr, "session_open = %d\n", session_open);
 #endif
 
@@ -467,26 +468,21 @@ void set_session_log (const char *dirname, int code)
 	gretl_build_path(logname, dirname, "session.inp", NULL);
 	session_open = 1;
     } else if (code == LOG_SAVE || code == LOG_SAVE_AS) {
-	if (gretl_print_has_tempfile(logprn)) {
-	    /* if logprn is NOT a tempfile-prn, it will already
-	       have been renamed, via the renaming of the
-	       session directory on save
-	    */
-	    char tmp[FILENAME_MAX];
+	char tmp[FILENAME_MAX];
 
-	    gretl_build_path(tmp, dirname, "session.inp", NULL);
-	    if (strcmp(logname, tmp)) {
-		if (logprn != NULL) {
-		    int err;
+	gretl_build_path(tmp, dirname, "session.inp", NULL);
+	if (strcmp(logname, tmp)) {
+	    if (gretl_print_has_tempfile(logprn)) {
+		/* rename the tempfile attached to logprn */
+		int err;
 
-		    err = gretl_print_rename_file(logprn, logname, tmp);
-		    if (err) {
-			free_command_stack();
-		    }
+		err = gretl_print_rename_file(logprn, logname, tmp);
+		if (err) {
+		    free_command_stack();
 		}
-		strcpy(logname, tmp);
-		session_open = 1;
 	    }
+	    strcpy(logname, tmp);
+	    session_open = 1;
 	}
     } else if (code == LOG_OPEN) {
 	free_command_stack();
