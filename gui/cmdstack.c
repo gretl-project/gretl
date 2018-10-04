@@ -453,7 +453,8 @@ void set_session_log (const char *dirname, int code)
 #if CMD_DEBUG
     fprintf(stderr, "set_session_log: dirname = '%s', code = %d\n",
 	    dirname, code);
-    fprintf(stderr, "session_open = %d\n", session_open);
+    fprintf(stderr, " on entry, session_open = %d\n", session_open);
+    fprintf(stderr, " on entry, logname = '%s'\n", logname);
 #endif
 
     if (code == LOG_CLOSE) {
@@ -473,7 +474,7 @@ void set_session_log (const char *dirname, int code)
 	gretl_build_path(tmp, dirname, "session.inp", NULL);
 	if (strcmp(logname, tmp)) {
 	    if (gretl_print_has_tempfile(logprn)) {
-		/* rename the tempfile attached to logprn */
+		/* rename the file attached to logprn */
 		int err;
 
 		err = gretl_print_rename_file(logprn, logname, tmp);

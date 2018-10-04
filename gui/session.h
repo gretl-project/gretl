@@ -109,7 +109,7 @@ void verify_clear_data (void);
 
 void close_session (gretlopt opt);
 
-void free_session (gretlopt opt);
+void free_session (int on_exit);
 
 int highest_numbered_variable_in_session (void);
 

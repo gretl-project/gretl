@@ -1580,7 +1580,7 @@ void session_init (void)
     set_user_var_callback(gui_user_var_callback);
 }
 
-void free_session (gretlopt opt)
+void free_session (int on_exit)
 {
     int i;
 
@@ -1619,6 +1619,9 @@ void free_session (gretlopt opt)
     *session.name = '\0';
 
     if (*session.dirname != '\0') {
+	if (on_exit) {
+	    set_session_log(NULL, LOG_CLOSE);
+	}
 	remove_session_dir();
 	*session.dirname = '\0';
     }
@@ -1736,7 +1739,7 @@ void close_session (gretlopt opt)
 	session_clear_data(dataset);
     }
 
-    free_session(opt);
+    free_session(0);
 
     clear_model_table(1, NULL);
     clear_graph_page(1);

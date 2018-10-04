@@ -838,7 +838,7 @@ int main (int argc, char **argv)
     gtk_main();
 
     /* clean up before exiting */
-    free_session(OPT_NONE);
+    free_session(1);
 
     destroy_working_model(model);
 
