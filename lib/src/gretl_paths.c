@@ -661,7 +661,7 @@ int gretl_remove (const char *path)
  *
  * A wrapper for zlib's gzopen(), making allowance for
  * the possibility that @fname has to be converted from
- * UTF-8 to the locale encoding or vice versa.
+ * UTF-8 to the locale encoding.
  *
  * Returns: pointer to gzip stream, or %NULL on failure.
  */
@@ -674,7 +674,7 @@ gzFile gretl_gzopen (const char *fname, const char *mode)
 
 #ifdef WIN32
     if (utf8_encoded(fname)) {
-	/* have to convert to locale */
+	/* here we have to convert to locale */
 	gchar *tmp = g_win32_locale_filename_from_utf8(fname);
 
 	if (tmp != NULL) {
@@ -701,7 +701,7 @@ gzFile gretl_gzopen (const char *fname, const char *mode)
  *
  * A wrapper for POSIX chdir(), making allowance for
  * the possibility that @path has to be converted from
- * UTF-8 to the locale encoding or vice versa.
+ * UTF-8 to UTF-16 on Windows.
  *
  * Returns: 0 on sucess, non-zero on failure.
  */
@@ -948,16 +948,17 @@ int gretl_write_access (char *fname)
 
 #ifdef WIN32
     if (utf8_encoded(fname)) {
-	gchar *tmp = g_win32_locale_filename_from_utf8(fname);
+	gunichar2 *tmp = g_utf8_to_utf16(fname, -1, NULL, NULL, NULL);
 
 	if (tmp != NULL) {
-	    err = !win32_write_access(tmp);
+	    err = win32_write_access(NULL, tmp);
 	    g_free(tmp);
 	} else {
 	    err = 1;
 	}
     } else {
-	err = !win32_write_access(fname);
+	/* @fname is ASCII or in locale encoding */
+	err = win32_write_access(fname, NULL);
     }
 #else
     err = access(fname, W_OK);

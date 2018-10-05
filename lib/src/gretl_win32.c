@@ -290,6 +290,8 @@ void win_copy_last_error (void)
 
 /* If the command-line (*ps1) and/or current directory
    (*ps2) are UTF-8, convert them to locale encoding.
+   This is exclusively for the benefit of third-party
+   software that casnnot handle UTF-16.
 */
 
 int ensure_locale_encoding (const char **ps1, gchar **ls1,
@@ -800,9 +802,11 @@ int gretl_shell (const char *arg, gretlopt opt, PRN *prn)
     return err;
 }
 
-/* unlike access(), returns 1 on success */
+/* Note: the return values from the underlying win32 API
+   functions are translated to return 0 on success.
+*/
 
-int win32_write_access (char *path)
+int win32_write_access (char *apath, gunichar2 *wpath)
 {
     SID *sid = NULL;
     ACL *dacl = NULL;
@@ -816,9 +820,23 @@ int win32_write_access (char *path)
     gunichar2 *acname = NULL;
     int ret, ok = 0, err = 0;
 
-    /* screen for the read-only attribute first */
-    if (access(path, W_OK) != 0) {
-	return 0;
+    /* check for invalid call: we must have exactly one
+       of @apath and @wpath non-NULL
+    */
+    if ((apath == NULL && wpath == NULL) ||
+	(apath != NULL && wpath != NULL)) {
+	return -1;
+    }
+
+    /* basic check for the read-write attribute first */
+    if (apath != NULL) {
+	if (_access(apath, 06) != 0) {
+	    return -1;
+	}
+    } else if (wpath != NULL) {
+	if (_waccess(apath, 06) != 0) {
+	    return -1;
+	}
     }
 
     /* note: the following always returns UTF-8 */
@@ -845,10 +863,21 @@ int win32_write_access (char *path)
     if (!err) {
 	/* build a trustee and get the file's DACL */
 	BuildTrusteeWithSid(&t, sid);
-	ret = GetNamedSecurityInfo(path, SE_FILE_OBJECT,
-				   DACL_SECURITY_INFORMATION,
-				   NULL, NULL, &dacl, NULL,
-				   (PSECURITY_DESCRIPTOR) &sd);
+    }
+
+    if (!err && apath != NULL) {
+	/* path to check is ASCII or in the locale */
+	ret = GetNamedSecurityInfoA(apath, SE_FILE_OBJECT,
+				    DACL_SECURITY_INFORMATION,
+				    NULL, NULL, &dacl, NULL,
+				    (PSECURITY_DESCRIPTOR) &sd);
+	err = (ret != ERROR_SUCCESS);
+    } else if (!err && wpath != NULL) {
+	/* path to check is in UTF-16 */
+	ret = GetNamedSecurityInfoW(wpath, SE_FILE_OBJECT,
+				    DACL_SECURITY_INFORMATION,
+				    NULL, NULL, &dacl, NULL,
+				    (PSECURITY_DESCRIPTOR) &sd);
 	err = (ret != ERROR_SUCCESS);
     }
 
@@ -881,7 +910,7 @@ int win32_write_access (char *path)
 	win_show_last_error();
     }
 
-    return ok;
+    return ok ? 0 : -1;
 }
 
 /* handle the case where @path is non-ASCII UTF-8 */
