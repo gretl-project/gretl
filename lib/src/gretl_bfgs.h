@@ -78,7 +78,8 @@ int numerical_hessian (double *b, gretl_matrix *H,
 
 gretl_matrix *numerical_hessian_inverse (const double *b, int n, 
 					 BFGS_CRIT_FUNC func, 
-					 void *data, int *err);
+					 void *data, double d,
+					 int *err);
 
 double user_BFGS (gretl_matrix *b, 
 		  const char *fncall,

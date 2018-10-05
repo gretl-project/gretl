@@ -990,10 +990,11 @@ static int kalman_arma_finish (MODEL *pmod,
     if (!do_opg) {
 	/* base covariance matrix on Hessian (perhaps QML) */
 	gretl_matrix *Hinv;
+	double d = 0.0; /* adjust? */
 
 	kalman_do_ma_check = 0;
 	Hinv = numerical_hessian_inverse(b, ainfo->nc, kalman_arma_ll,
-					 K, &err);
+					 K, d, &err);
 	kalman_do_ma_check = 1;
 	if (!err) {
 	    if (kopt & KALMAN_AVG_LL) {

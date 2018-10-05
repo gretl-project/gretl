@@ -583,9 +583,10 @@ static int as_arma_finish (MODEL *pmod,
     if (!do_opg) {
 	/* base covariance matrix on Hessian (perhaps QML) */
 	gretl_matrix *Hinv;
+	double d = 0.0; /* adjust? */
 
 	Hinv = numerical_hessian_inverse(b, ainfo->nc, as->cfunc,
-					 as, &vcv_err);
+					 as, d, &vcv_err);
 	if (!vcv_err) {
 	    if (QML) {
 		vcv_err = arma_QML_vcv(pmod, Hinv, as, as->algo, b, s2,

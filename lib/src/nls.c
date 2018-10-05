@@ -2634,13 +2634,24 @@ static int mle_calculate (nlspec *s, PRN *prn)
 	/* doing Hessian or QML covariance matrix */
 	if (hessfunc != NULL) {
 	    s->Hinv = mle_hessian_inverse(s, &err);
-	} else if (analytic_mode(s) && !scalar_loglik(s)) {
-	    s->Hinv = hessian_inverse_from_score(s->coeff, s->ncoeff,
-						 gradfunc, get_mle_ll,
-						 s, &err);
 	} else {
-	    s->Hinv = numerical_hessian_inverse(s->coeff, s->ncoeff,
-						get_mle_ll, s, &err);
+	    /* Note 2018-10-05: changed the condition for using
+	       hessian_inverse_from_score(): we were requiring
+	       both analytic_mode and that the loglikelihood
+	       function returns per-observation values (not just
+	       a scalar). But it seems the latter requirement --
+	       code: !scalar_loglik(s) -- is not really necessary.
+	    */
+	    if (analytic_mode(s)) {
+		s->Hinv = hessian_inverse_from_score(s->coeff, s->ncoeff,
+						     gradfunc, get_mle_ll,
+						     s, &err);
+	    } else {
+		double d = 0.0001; /* adjust? */
+
+		s->Hinv = numerical_hessian_inverse(s->coeff, s->ncoeff,
+						    get_mle_ll, s, d, &err);
+	    }
 	}
 
 	if (err && !scalar_loglik(s)) {
