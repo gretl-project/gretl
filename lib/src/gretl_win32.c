@@ -804,6 +804,9 @@ int gretl_shell (const char *arg, gretlopt opt, PRN *prn)
 
 /* Note: the return values from the underlying win32 API
    functions are translated to return 0 on success.
+   Handles either an 8-bit locale filename, via @apath,
+   or a UTF-16 name (@wpath); exactly one of these must
+   be given.
 */
 
 int win32_write_access (char *apath, gunichar2 *wpath)
@@ -866,14 +869,14 @@ int win32_write_access (char *apath, gunichar2 *wpath)
     }
 
     if (!err && apath != NULL) {
-	/* path to check is ASCII or in the locale */
+	/* @apath is ASCII or in the locale */
 	ret = GetNamedSecurityInfoA(apath, SE_FILE_OBJECT,
 				    DACL_SECURITY_INFORMATION,
 				    NULL, NULL, &dacl, NULL,
 				    (PSECURITY_DESCRIPTOR) &sd);
 	err = (ret != ERROR_SUCCESS);
     } else if (!err && wpath != NULL) {
-	/* path to check is in UTF-16 */
+	/* @wpath is UTF-16 */
 	ret = GetNamedSecurityInfoW(wpath, SE_FILE_OBJECT,
 				    DACL_SECURITY_INFORMATION,
 				    NULL, NULL, &dacl, NULL,
