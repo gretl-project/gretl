@@ -834,7 +834,7 @@ int win32_write_access (char *apath, gunichar2 *wpath)
 	    return -1;
 	}
     } else if (wpath != NULL) {
-	if (_waccess(apath, 06) != 0) {
+	if (_waccess(wpath, 06) != 0) {
 	    return -1;
 	}
     }
