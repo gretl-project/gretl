@@ -2339,7 +2339,7 @@ gretl_matrix *user_fdjac (gretl_matrix *theta, const char *fncall,
 	int quality = libset_get_int(FDJAC_QUAL);
 
 	if (eps == 0.0) {
-	    eps = libset_get_double("fdjac_eps");
+	    eps = libset_get_double(FDJAC_EPS);
 	}
 	fdjac2_(user_calc_fvec, m, n, quality, theta->val, fvec, J->val,
 		m, &iflag, eps, wa, u);
