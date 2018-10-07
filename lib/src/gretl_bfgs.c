@@ -332,7 +332,7 @@ int numerical_hessian (double *b, gretl_matrix *H,
     double *h0, *h, *Hd, *D;
     int r = RSTEPS;
     double dsmall = 0.0001;
-    double eps = 1e-4;
+    double ztol, eps = 1e-4;
     double v = 2.0;    /* reduction factor for h */
     double f0, f1, f2;
     double p4m, hij;
@@ -357,6 +357,12 @@ int numerical_hessian (double *b, gretl_matrix *H,
     Hd = h + n;
     D = Hd + n; /* D is of length dn */
 
+#if 0
+    ztol = sqrt(DBL_EPSILON / 7e-7); /* as per R */
+#else
+    ztol = 0.01;
+#endif
+
  try_again:
 
     /* note: numDeriv has
@@ -370,16 +376,11 @@ int numerical_hessian (double *b, gretl_matrix *H,
        double ztol = sqrt(DBL_EPSILON / 7e-7);
        h0[i] = fabs(d*b[i]) + eps * (fabs(b[i]) < ztol);
 
-       The above @ztol is about 1.78e-5. Below, we are
+       The above @ztol is about 1.78e-05. Below, we are
        currently using a bigger value, 0.01.
-
-       Intent: if b[i] is smaller in absolute value than
-       some threshold, just use @eps (1e-4) as the initial
-       step size, otherwise make the step dependent on
-       the size of b[i] via the factor d.
     */
     for (i=0; i<n; i++) {
-	h0[i] = (fabs(b[i]) < 0.01)? eps : fabs(d * b[i]);
+	h0[i] = fabs(d*b[i]) + eps * (fabs(b[i]) < ztol);
     }
 
     f0 = func(b, data);
