@@ -2647,7 +2647,7 @@ static int mle_calculate (nlspec *s, PRN *prn)
 						     gradfunc, get_mle_ll,
 						     s, &err);
 	    } else {
-		double d = 0.0001; /* adjust? */
+		double d = 0.01; /* adjust? */
 
 		s->Hinv = numerical_hessian_inverse(s->coeff, s->ncoeff,
 						    get_mle_ll, s, d, &err);
