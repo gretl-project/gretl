@@ -416,6 +416,49 @@ int fracdiff_series (const double *x, double *y, double d,
     return 0;
 }
 
+static int boxcox_vector (const double *x, double *y, double d,
+			  int t1, int t2)
+{
+    int t, special_case = 999;
+    double tol = 1.0e-12;
+    
+    /* 999 for general case; here we want to avoid 
+       the pow() function whenever possible.
+    */
+
+    if (fabs(d) < tol) {
+	special_case = 0;
+    } else if (fabs(1.0 - d) < tol) {
+	special_case = 1;
+    } else if (fabs(-1.0 - d) < tol) {
+	special_case = -1;
+    } else if (fabs(0.5 - d) < tol) {
+	special_case = 2;
+    } else if (fabs(-0.5 - d) < tol) {
+	special_case = -2;
+    }
+    
+    for (t=t1; t<=t2; t++) {
+	if (na(x[t])) {
+	    y[t] = NADBL;
+	} else if (special_case == -2) {
+	    y[t] = (x[t] > 0)? 2.0 * (1.0 - 1.0/sqrt(x[t])) : NADBL;
+	} else if (special_case == -1) {
+	    y[t] = 1.0 - 1.0/x[t];
+	} else if (special_case == 0) {
+	    y[t] = (x[t] > 0)? log(x[t]) : NADBL;
+	} else if (special_case == 1) {
+	    y[t] = x[t] - 1.0;
+	} else if (special_case == 2) {
+	    y[t] = (x[t] > 0)? 2.0 * (sqrt(x[t]) - 1.0) : NADBL;
+	} else {
+	    y[t] = (pow(x[t], d) - 1) / d;
+	}
+    }
+
+    return 0;
+}
+
 /**
  * boxcox_series:
  * @x: array of original data.
@@ -432,29 +475,7 @@ int fracdiff_series (const double *x, double *y, double d,
 int boxcox_series (const double *x, double *y, double d,
 		   const DATASET *dset)
 {
-    int t;
-    int special_case = -1;
-
-    /* -1 for general case */
-    if (fabs(d) < 1.0e-12) {
-	special_case = 0;
-    } else if (fabs(1-d) < 1.0e-12) {
-	special_case = 1;
-    }
-    
-    for (t=dset->t1; t<=dset->t2; t++) {
-	if (na(x[t])) {
-	    y[t] = NADBL;
-	} else if (special_case == 0) {
-	    y[t] = (x[t] > 0)? log(x[t]) : NADBL;
-	} else if (special_case == 1) {
-	    y[t] = x[t] - 1.0;
-	} else {
-	    y[t] = (pow(x[t], d) - 1) / d;
-	}
-    }
-
-    return 0;
+    return boxcox_vector (x, y, d, dset->t1, dset->t2);
 }
 
 int cum_series (const double *x, double *y, const DATASET *dset)
