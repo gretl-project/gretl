@@ -1664,15 +1664,17 @@
       </description>
     </function>
     
-    <function name="boxcox" section="filters" output="series">
+    <function name="boxcox" section="filters" output="asinput">
       <fnargs>
-	<fnarg type="series">y</fnarg>
+	<fnarg type="series-or-mat">y</fnarg>
 	<fnarg type="scalar">d</fnarg>
       </fnargs>    
       <description>
 	<para>
 	  Returns the Box&ndash;Cox transformation with parameter
-	  <argname>d</argname> for the positive series <argname>y</argname>.
+	  <argname>d</argname> for the positive series
+	  <argname>y</argname> (or the columns of matrix
+	  <argname>y</argname>).
 	</para>   
 	<para context="tex">
 	  \[ y_t^{(d)} = \left\{ \begin{array}{ll} \frac{y_t^d - 1}{d} &amp;
