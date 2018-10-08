@@ -1682,7 +1682,7 @@
 	  \end{array} \right. \]
 	</para>
 	<para context="notex">
-	  The transformed series is (<math>y</math><sup>d</sup> -
+	  The result is (<math>y</math><sup>d</sup> -
 	  1)/<math>d</math> for <math>d</math> not equal to zero, or
 	  log(<math>y</math>) for <math>d</math> = 0.
 	</para>
