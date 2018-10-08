@@ -3,6 +3,7 @@ version 2018d, in progress
   using NaN
 - cdemean() function: add option to standardize in addition
   to centering
+- boxcox() function: accept a matrix argument
 - psdroot() function: add option to check for positive
   semidefinite status of matrix argument
 - "install" command: replace with new "pkg" command (but the
