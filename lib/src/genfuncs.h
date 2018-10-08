@@ -51,6 +51,9 @@ int fracdiff_series (const double *x, double *y, double d,
 int boxcox_series (const double *x, double *y, double d,
 		   const DATASET *dset);
 
+gretl_matrix *boxcox_matrix (const gretl_matrix *m, double d,
+			     int *err);
+
 int filter_series (const double *x, double *y, const DATASET *dset, 
 		   gretl_matrix *A, gretl_matrix *C, double y0);
 

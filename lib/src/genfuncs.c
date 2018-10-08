@@ -421,8 +421,8 @@ static int boxcox_vector (const double *x, double *y, double d,
 {
     int t, special_case = 999;
     double tol = 1.0e-12;
-    
-    /* 999 for general case; here we want to avoid 
+
+    /* 999 for general case; here we want to avoid
        the pow() function whenever possible.
     */
 
@@ -437,7 +437,7 @@ static int boxcox_vector (const double *x, double *y, double d,
     } else if (fabs(-0.5 - d) < tol) {
 	special_case = -2;
     }
-    
+
     for (t=t1; t<=t2; t++) {
 	if (na(x[t])) {
 	    y[t] = NADBL;
@@ -475,7 +475,42 @@ static int boxcox_vector (const double *x, double *y, double d,
 int boxcox_series (const double *x, double *y, double d,
 		   const DATASET *dset)
 {
-    return boxcox_vector (x, y, d, dset->t1, dset->t2);
+    return boxcox_vector(x, y, d, dset->t1, dset->t2);
+}
+
+/**
+ * boxcox_matrix:
+ * @m: matrix of original data.
+ * @d: lambda parameter.
+ *
+ * Returns: a matrix whose columns are Box-Cox transformations
+ * of the columns of @m.
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+gretl_matrix *boxcox_matrix (const gretl_matrix *m, double d,
+			     int *err)
+{
+    gretl_matrix *bc;
+
+    bc = gretl_matrix_alloc(m->rows, m->cols);
+
+    if (bc == NULL) {
+	*err = E_ALLOC;
+    } else {
+	const double *x = m->val;
+	double *y = bc->val;
+	int j, n = m->rows;
+
+	for (j=0; j<m->cols; j++) {
+	    boxcox_vector(x, y, d, 0, n-1);
+	    x += n;
+	    y += n;
+	}
+    }
+
+    return bc;
 }
 
 int cum_series (const double *x, double *y, const DATASET *dset)
@@ -1681,7 +1716,7 @@ int oshp_filter (const double *x, double *hp, const DATASET *dset,
 	lambda = default_hp_lambda(dset);
     }
     sqrt_lam = sqrt(lambda);
-    
+
     /* adjust starting points */
     x += t1;
     hp += t1;

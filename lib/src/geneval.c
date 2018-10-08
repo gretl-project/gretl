@@ -8036,6 +8036,21 @@ static NODE *series_series_func (NODE *l, NODE *r, NODE *o,
 	return NULL;
     }
 
+    if (l->t == MAT && f == F_BOXCOX) {
+	/* Do all columns of matrix input: this could
+	   be generalized to some other functions?
+	*/
+	double d = node_get_scalar(r, p);
+
+	if (!p->err) {
+	    ret = aux_matrix_node(p);
+	}
+	if (!p->err) {
+	    ret->v.m = boxcox_matrix(l->v.m, d, &p->err);
+	}
+	return ret;
+    }
+
     ret = aux_series_node(p);
 
     if (ret != NULL) {
