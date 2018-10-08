@@ -433,12 +433,22 @@ int boxcox_series (const double *x, double *y, double d,
 		   const DATASET *dset)
 {
     int t;
+    int special_case = -1;
 
+    /* -1 for general case */
+    if (fabs(d) < 1.0e-12) {
+	special_case = 0;
+    } else if (fabs(1-d) < 1.0e-12) {
+	special_case = 1;
+    }
+    
     for (t=dset->t1; t<=dset->t2; t++) {
 	if (na(x[t])) {
 	    y[t] = NADBL;
-	} else if (d == 0) {
+	} else if (special_case == 0) {
 	    y[t] = (x[t] > 0)? log(x[t]) : NADBL;
+	} else if (special_case == 1) {
+	    y[t] = x[t] - 1.0;
 	} else {
 	    y[t] = (pow(x[t], d) - 1) / d;
 	}
