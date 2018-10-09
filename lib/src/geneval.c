@@ -12413,11 +12413,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
     return ret;
 }
 
-static int argc_error (int argc, int nparm)
-{
-    return (argc > nparm)? 1 : (argc < nparm)? -1 : 0;
-}
-
 static NODE *eval_feval (NODE *t, parser *p)
 {
     NODE *n = t->v.b1.b;
@@ -12452,16 +12447,16 @@ static NODE *eval_feval (NODE *t, parser *p)
 
 	    tmp.t = f;
 	    if (func1_symb(f)) {
-		if ((kerr = argc_error(argc, 1)) == 0) {
+		if ((kerr = argc - 1) == 0) {
 		    tmp.v.b1.b = n->v.bn.n[1];
 		}
 	    } else if (func2_symb(f)) {
-		if ((kerr = argc_error(argc, 2)) == 0) {
+		if ((kerr = argc - 2) == 0) {
 		    tmp.v.b2.l = n->v.bn.n[1];
 		    tmp.v.b2.r = n->v.bn.n[2];
 		}
 	    } else if (func3_symb(f)) {
-		if ((kerr = argc_error(argc, 3)) == 0) {
+		if ((kerr = argc - 3) == 0) {
 		    tmp.v.b3.l = n->v.bn.n[1];
 		    tmp.v.b3.m = n->v.bn.n[2];
 		    tmp.v.b3.r = n->v.bn.n[3];
@@ -12480,6 +12475,7 @@ static NODE *eval_feval (NODE *t, parser *p)
 		gretl_errmsg_sprintf("%s: too many arguments", e->v.str);
 		p->err = E_DATA;
 	    } else if (kerr < 0) {
+		gretl_errmsg_sprintf("%s: too few arguments", e->v.str);
 		p->err = E_ARGS;
 	    }
 	    if (!p->err) {
