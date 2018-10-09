@@ -2345,6 +2345,10 @@ gretl_matrix_add (const gretl_matrix *a, const gretl_matrix *b,
 	c->val[i] = a->val[i] + b->val[i];
     }
 
+    if (a->is_complex && b->is_complex) {
+	c->is_complex = 1;
+    }
+
     return 0;
 }
 
@@ -2477,6 +2481,9 @@ gretl_matrix_subtract (const gretl_matrix *a, const gretl_matrix *b,
 	c->val[i] = a->val[i] - b->val[i];
     }
 
+    if (a->is_complex && b->is_complex) {
+	c->is_complex = 1;
+    }
     return 0;
 }
 
