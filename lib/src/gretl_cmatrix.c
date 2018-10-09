@@ -258,6 +258,8 @@ gretl_matrix *gretl_zgemm (const gretl_matrix *A, gretl_matrix *B,
     zgemm_(&transa, &transb, &m, &n, &k, &alpha, a, &lda,
 	   b, &ldb, &beta, c, &ldc);
 
+    C->is_complex = 1;
+    
     return C;
 }
 
