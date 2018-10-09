@@ -194,7 +194,8 @@ struct fnpkg_ {
 
 enum {
     ARG_OPTIONAL = 1 << 0,
-    ARG_CONST    = 1 << 1
+    ARG_CONST    = 1 << 1,
+    ARG_SHIFTED  = 1 << 2
 };
 
 /* structure representing an argument to a user-defined function */
@@ -6908,8 +6909,9 @@ static int localize_object_as_shell (fn_arg *arg,
     return err;
 }
 
-static int localize_const_object (fn_arg *arg, fn_param *fp)
+static int localize_const_object (fncall *call, int i, fn_param *fp)
 {
+    fn_arg *arg = &call->args[i];
     void *data = arg_get_data(arg, 0);
     int err = 0;
 
@@ -6919,11 +6921,28 @@ static int localize_const_object (fn_arg *arg, fn_param *fp)
 	/* the const argument is an anonymous object */
 	err = arg_add_as_shell(fp->name, arg->type, data);
     } else {
-	/* a named object: in view of its "const-ness" we
-	   don't need to copy the data
-	*/
-	user_var_adjust_level(arg->uvar, 1);
-	user_var_set_name(arg->uvar, fp->name);
+	/* a named object: in the simplest case we just
+	   adjust the level and name of the object for
+	   the duration of the function call, but note
+	   that we can do this only once for any given
+	   object.
+	 */
+	user_var *thisvar = arg->uvar;
+	int j, done = 0;
+
+	for (j=0; j<i; j++) {
+	    if (call->args[j].uvar == thisvar) {
+		/* we've already localized this one! */
+		err = arg_add_as_shell(fp->name, arg->type, data);
+		done = 1;
+		break;
+	    }
+	}
+	if (!done) {
+	    user_var_adjust_level(thisvar, 1);
+	    user_var_set_name(thisvar, fp->name);
+	    arg->flags |= ARG_SHIFTED;
+	}
     }
 
     if (!err) {
@@ -7142,7 +7161,7 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 		   fp->type == GRETL_TYPE_STRING ||
 		   gretl_array_type(fp->type)) {
 	    if (fp->flags & ARG_CONST) {
-		err = localize_const_object(arg, fp);
+		err = localize_const_object(call, i, fp);
 	    } else {
 		err = copy_as_arg(fp->name, fp->type,
 				  arg_get_data(arg, 0));
@@ -7718,8 +7737,9 @@ function_assign_returns (fncall *call, int rtype,
 		    fp->type == GRETL_TYPE_BUNDLE ||
 		    fp->type == GRETL_TYPE_STRING ||
 		    gretl_array_type(fp->type))) {
-	    if ((fp->flags & ARG_CONST) && arg->upname != NULL) {
-		/* non-pointerized const object argument */
+	    if (arg->flags & ARG_SHIFTED) {
+		/* non-pointerized const object argument,
+		   which we renamed and shifted */
 		user_var_adjust_level(arg->uvar, -1);
 		user_var_set_name(arg->uvar, arg->upname);
 	    }
