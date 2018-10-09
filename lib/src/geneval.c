@@ -12512,6 +12512,15 @@ static NODE *eval_feval (NODE *t, parser *p)
 	}
     }
 
+    if (t->aux != NULL) {
+	/* FIXME there has to be a cleaner way of ensuring
+	   that we don't leak memory!
+	*/
+	t->aux->refcount = 1;
+	free_node(t->aux, p);
+	t->aux = NULL;
+    }
+
     if (!p->err && f == 0 && u == NULL) {
 	gretl_errmsg_sprintf("%s: function not found", e->v.str);
     }
@@ -15841,6 +15850,13 @@ static inline int attach_aux_node (NODE *t, NODE *ret, parser *p)
 	    fprintf(stderr, "boolean: freeing %p\n", (void *) t->aux);
 	    free_node(t->aux, p);
 	    fprintf(stderr, "boolean: attaching %p\n", (void *) ret);
+	    t->aux = ret;
+	    ret->refcount += 1;
+	} else if (is_proxy_node(t->aux)) {
+	    /* an extension to the above */
+	    fprintf(stderr, "proxy: freeing %p\n", (void *) t->aux);
+	    free_node(t->aux, p);
+	    fprintf(stderr, "proxy: attaching %p\n", (void *) ret);
 	    t->aux = ret;
 	    ret->refcount += 1;
 	} else {
