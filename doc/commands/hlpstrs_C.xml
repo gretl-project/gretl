@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="US-ASCII" ?>
+<localization language="C">
+
+ <gentext key="args"          text="Arguments:  "/>
+ <gentext key="arg"           text="Argument:   "/>
+ <gentext key="altforms"      text="Variants:   "/>
+ <gentext key="syntax"        text="Syntax:     "/>
+ <gentext key="opts"          text="Options:    "/>
+ <gentext key="opt"           text="Option:     "/>
+ <gentext key="examples"      text="Examples:   "/>
+ <gentext key="example"       text="Example:    "/>
+ <gentext key="output"        text="Output:     "/>
+ <gentext key="guidebook"     text="the Gretl User's Guide"/>
+ <gentext key="funcchap"      text="the Gretl function reference"/>
+ <gentext key="menupath"      text="Menu path:    "/>
+ <gentext key="otheraccess"   text="Other access: "/>
+ <gentext key="scriptcommand" text="Script command: "/>
+ <gentext key="or"            text=" or "/>
+ <gentext key="Seealso"       text="See also "/>
+ <gentext key="anyfloat"      text="NUM, SERIES, MAT"/>
+ <gentext key="series-or-vec" text="SERIES, MAT"/>
+ <gentext key="series-or-mat" text="SERIES, MAT"/>
+ <gentext key="series-list-or-mat" text="SERIES, LIST, MAT"/>
+ <gentext key="scalar-or-series" text="NUM, SERIES"/>
+ <gentext key="int-or-list"   text="integer or list"/>
+ <gentext key="int-or-string" text="integer or string"/>
+ <gentext key="series-or-list" text="SERIES, LIST"/>
+ <gentext key="scalar-or-vec" text="NUM, MAT"/>
+ <gentext key="scalar-or-matrix" text="NUM, MAT"/>
+ <gentext key="anyfloat-or-list" text="NUM, SERIES, MAT, LIST"/>
+ <gentext key="list-or-string" text="LIST, STR"/>
+ <gentext key="list-or-mat"    text="LIST, MAT"/>
+ <gentext key="matrix-or-bundle" text="MAT, BUNDLE"/>
+ <gentext key="asinput"       text="same type as input"/>
+ <gentext key="bundle"        text="BUNDLE"/> 
+ <gentext key="scalar"        text="NUM"/>
+ <gentext key="pscalar"       text="scalar between 0 and 1"/>
+ <gentext key="int"           text="INT"/>
+ <gentext key="bool"          text="BOOL"/>
+ <gentext key="series"        text="SERIES"/>
+ <gentext key="vector"        text="MAT"/>
+ <gentext key="matrix"        text="MAT"/>
+ <gentext key="smatrix"       text="MAT"/>
+ <gentext key="symmat"        text="MAT"/>
+ <gentext key="pdmat"         text="MAT"/>
+ <gentext key="matrixref"     text="reference to matrix"/>
+ <gentext key="seriesref"     text="reference to series"/>
+ <gentext key="bundleref"     text="reference to bundle"/>
+ <gentext key="scalarref"     text="reference to scalar"/>
+ <gentext key="cvec"          text="MAT"/>
+ <gentext key="rvec"          text="MAT"/>
+ <gentext key="list"          text="LIST"/>
+ <gentext key="string"        text="STR"/>
+ <gentext key="listetc"       text="list, matrix, bundle or array"/>
+ <gentext key="strings"       text="array of strings"/>
+ <gentext key="matrices"      text="array of matrices"/>
+ <gentext key="bundles"       text="array of bundles"/>
+ <gentext key="string-or-strings"  text="string or array of strings"/>
+ <gentext key="strings-or-list"  text="array of strings or list"/>
+ <gentext key="char"          text="character"/>
+ <gentext key="coeffname"     text="name of coefficient"/>
+ <gentext key="sslist"        text="NUM, SERIES, LIST"/>
+ <gentext key="smlist"        text="SERIES, MAT, LIST"/>
+ <gentext key="fncall"        text="function call"/>
+ <gentext key="optional"      text="optional"/>
+ <gentext key="conditional"   text="conditional"/>
+ <gentext key="seebelow"      text="see below"/>
+ <gentext key="varargs"       text="see below"/>  
+ <gentext key="chapter"       text="Chapter"/>
+ <gentext key="applies-to"    text="Applies to"/> 
+
+</localization>

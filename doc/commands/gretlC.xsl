@@ -5,7 +5,7 @@
   <!-- Stylesheet for C output -->
 
 <xsl:param name="hlp">cli</xsl:param>
-<xsl:param name="lang" select="'en'"/>
+<xsl:param name="lang" select="'C'"/>
 
 <xsl:output method="text" encoding="utf-8"/>
 
