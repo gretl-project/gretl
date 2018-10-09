@@ -470,6 +470,7 @@ enum {
     F_SVM,
     F_IRF,
     F_NADARWAT,
+    F_FEVAL,
     HF_CLOGFI,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };

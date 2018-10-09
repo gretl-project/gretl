@@ -259,7 +259,7 @@ gretl_matrix *gretl_zgemm (const gretl_matrix *A, gretl_matrix *B,
 	   b, &ldb, &beta, c, &ldc);
 
     C->is_complex = 1;
-    
+
     return C;
 }
 
@@ -823,9 +823,9 @@ gretl_matrix *gretl_cmatrix (const gretl_matrix *Re,
 	C->val[ic+1] = Im->val[i];
 	ic += 2;
     }
-    
+
     C->is_complex = 1;
-    
+
     return C;
 }
 
@@ -895,7 +895,7 @@ gretl_matrix *gretl_ctran (const gretl_matrix *A, int *err)
     }
 
     C->is_complex = 1;
-    
+
     return C;
 }
 
@@ -930,14 +930,14 @@ int gretl_ctran_in_place (gretl_matrix *A)
 
     A->rows = C->rows;
     A->cols = C->cols;
-    
+
     free(A->val);
     A->val = C->val;
     gretl_matrix_destroy_info(A);
 
     C->val = NULL;
     gretl_matrix_free(C);
-    
+
     return err;
 }
 

@@ -12413,6 +12413,112 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
     return ret;
 }
 
+static int argc_error (int argc, int nparm)
+{
+    return (argc > nparm)? 1 : (argc < nparm)? -1 : 0;
+}
+
+static NODE *eval_feval (NODE *t, parser *p)
+{
+    NODE *n = t->v.b1.b;
+    NODE *e, *ret = NULL;
+    int argc, f = 0;
+    ufunc *u = NULL;
+    int i, k = n->v.bn.n_nodes;
+
+    if (k < 2) {
+	p->err = E_ARGS;
+	return NULL;
+    }
+
+    argc = k - 1;
+
+    /* evaluate the first (string) arg: should be the
+       name of a function
+    */
+    e = eval(n->v.bn.n[0], p);
+    if (!p->err && e->t != STR) {
+	node_type_error(t->t, 1, STR, e, p);
+    }
+
+    if (!p->err) {
+	/* try for a built-in function */
+	f = function_lookup(e->v.str);
+	if (f != 0) {
+	    NODE **nn = NULL;
+	    NODE tmp = {0};
+	    NODE b = {0};
+	    int kerr = 0;
+
+	    tmp.t = f;
+	    if (func1_symb(f)) {
+		if ((kerr = argc_error(argc, 1)) == 0) {
+		    tmp.v.b1.b = n->v.bn.n[1];
+		}
+	    } else if (func2_symb(f)) {
+		if ((kerr = argc_error(argc, 2)) == 0) {
+		    tmp.v.b2.l = n->v.bn.n[1];
+		    tmp.v.b2.r = n->v.bn.n[2];
+		}
+	    } else if (func3_symb(f)) {
+		if ((kerr = argc_error(argc, 3)) == 0) {
+		    tmp.v.b3.l = n->v.bn.n[1];
+		    tmp.v.b3.m = n->v.bn.n[2];
+		    tmp.v.b3.r = n->v.bn.n[3];
+		}
+	    } else {
+		/* multi-arg function */
+		b.t = FARGS;
+		b.v.bn.n_nodes = argc;
+		nn = b.v.bn.n = malloc(argc * sizeof(NODE *));
+		for (i=1; i<k; i++) {
+		    b.v.bn.n[i-1] = n->v.bn.n[i];
+		}
+		tmp.v.b1.b = &b;
+	    }
+	    if (kerr > 0) {
+		gretl_errmsg_sprintf("%s: too many arguments", e->v.str);
+		p->err = E_DATA;
+	    } else if (kerr < 0) {
+		p->err = E_ARGS;
+	    }
+	    if (!p->err) {
+		ret = eval(&tmp, p);
+	    }
+	    free(nn);
+	}
+    }
+
+    if (!p->err && f == 0) {
+	/* try for a user function */
+	u = get_user_function_by_name(e->v.str);
+	if (u != NULL) {
+	    NODE tmp = {0};
+	    NODE l = {0};
+	    NODE r = {0};
+
+	    tmp.t = UFUN;
+	    l.vname = e->v.str;
+	    l.v.ptr = u;
+	    r.v.bn.n_nodes = argc;
+	    r.v.bn.n = malloc(argc * sizeof(NODE *));
+	    for (i=1; i<k; i++) {
+		r.v.bn.n[i-1] = n->v.bn.n[i];
+	    }
+	    tmp.v.b2.l = &l;
+	    tmp.v.b2.r = &r;
+	    ret = eval_ufunc(&tmp, p);
+	    free(r.v.bn.n);
+	}
+    }
+
+    if (!p->err && f == 0 && u == NULL) {
+	gretl_errmsg_sprintf("%s: function not found", e->v.str);
+    }
+
+    return ret;
+}
+
 static gretl_matrix *node_get_matrix_lenient (NODE *n,
 					      int ok,
 					      parser *p)
@@ -15331,9 +15437,14 @@ static NODE *eval (NODE *t, parser *p)
     case F_DEFLIST:
     case F_IRF:
     case F_NADARWAT:
+    case F_FEVAL:
     case HF_CLOGFI:
 	/* built-in functions taking more than three args */
-	ret = eval_nargs_func(t, p);
+	if (t->t == F_FEVAL) {
+	    ret = eval_feval(t, p);
+	} else {
+	    ret = eval_nargs_func(t, p);
+	}
 	break;
     case F_KSETUP:
     case F_KFILTER:
