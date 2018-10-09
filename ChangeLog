@@ -13,6 +13,7 @@ version 2018d, in progress
   as well as some new functionality
 - Fix bug: out-of-bounds writes to matrices were not being
   caught under all conditions
+- "mle": drop the requirement that a dataset is in place
 - "foreign": support the changes in Julia version 1.0
 - Windows: improve handling of non-ASCII filenames, including
   names not representable in the 8-bit code page

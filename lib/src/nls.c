@@ -986,7 +986,7 @@ static int nl_coeff_check (nlspec *s)
 /* Adjust starting and ending points of sample if need be, to avoid
    missing values; abort if there are missing values within the
    (possibly reduced) sample range.  For this purpose we generate the
-   nls residual variable, or the loglikelihood in case of MLE.
+   nls residual, or the loglikelihood in case of MLE.
 */
 
 static int nl_missval_check (nlspec *s, const DATASET *dset)
@@ -2639,8 +2639,8 @@ static int mle_calculate (nlspec *s, PRN *prn)
 	       hessian_inverse_from_score(): we were requiring
 	       both analytic_mode and that the loglikelihood
 	       function returns per-observation values (not just
-	       a scalar). But it seems the latter requirement --
-	       code: !scalar_loglik(s) -- is not really necessary.
+	       a scalar). But it seems the latter requirement,
+	       !scalar_loglik(s), is not really necessary.
 	    */
 	    if (analytic_mode(s)) {
 		s->Hinv = hessian_inverse_from_score(s->coeff, s->ncoeff,
@@ -2657,7 +2657,6 @@ static int mle_calculate (nlspec *s, PRN *prn)
 	if (err && !scalar_loglik(s)) {
 	    pprintf(prn, _("\nError: Hessian non-negative definite? (err = %d); "
 			  "dropping back to OPG\n"), err);
-	    /* try dropping back to OPG */
 	    s->opt &= ~OPT_H;
 	    s->opt &= ~OPT_R;
 	    err = 0;
@@ -3325,7 +3324,7 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
 			    gretlopt opt, PRN *prn)
 {
     MODEL nlmod;
-    int origv;
+    int origv = 0;
     int err = 0;
 
     if (spec == NULL) {
@@ -3335,14 +3334,9 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
 
     gretl_model_init(&nlmod, dset);
 
-    if (dset == NULL || dset->v == 0) {
-	gretl_errmsg_set(_("No dataset is in place"));
-	nlmod.errcode = E_DATA;
-	return nlmod;
+    if (dset != NULL) {
+	origv = dset->v;
     }
-
-    origv = dset->v;
-    gretl_model_smpl_init(&nlmod, dset);
 
     if (spec->nlfunc == NULL && spec->ci != GMM) {
 	gretl_errmsg_set(_("No function has been specified"));
@@ -3380,7 +3374,7 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
 
     if (spec->ci == GMM) {
 	err = gmm_missval_check_etc(spec);
-    } else {
+    } else if (dset != NULL) {
 	err = nl_missval_check(spec, dset);
     }
 
@@ -3411,9 +3405,15 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
 	if (spec->lvec != NULL) {
 	    memcpy(spec->fvec, spec->lvec->val, fvec_bytes);
 	} else {
-	    double *src = spec->dset->Z[spec->lhv] + spec->t1;
+	    /* not scalar or vector: must be a series */
+	    if (dset == NULL || dset->v == 0) {
+		nlmod.errcode = E_NODATA;
+		goto bailout;
+	    } else {
+		double *src = spec->dset->Z[spec->lhv] + spec->t1;
 
-	    memcpy(spec->fvec, src, fvec_bytes);
+		memcpy(spec->fvec, src, fvec_bytes);
+	    }
 	}
     }
 
@@ -3494,7 +3494,7 @@ static MODEL real_nl_model (nlspec *spec, DATASET *dset,
 	    dset->v - origv);
 #endif
 
-    if (!dset->auxiliary) {
+    if (dset != NULL && !dset->auxiliary) {
 	dataset_drop_last_variables(dset, dset->v - origv);
     }
 
