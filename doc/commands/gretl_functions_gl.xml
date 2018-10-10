@@ -411,10 +411,10 @@
 	<code>
 	  s0 (4 x 4)
 
-          0.019751     0.029816  -0.00044837     -0.12227
-          0.029816      0.31005     -0.45823     -0.18526
-	     -0.00044837     -0.45823       1.2169    -0.035437
-          -0.12227     -0.18526    -0.035437      0.76062
+          0.019751     0.029816  -0.00044837   -0.12227
+          0.029816     0.31005   -0.45823      -0.18526
+         -0.00044837  -0.45823    1.2169       -0.035437
+         -0.12227     -0.18526   -0.035437      0.76062
 
 	  s1 (5 x 5)
 
@@ -1663,16 +1663,18 @@
 	</para>
       </description>
     </function>
-
-    <function name="boxcox" section="filters" output="series">
+    
+    <function name="boxcox" section="filters" output="asinput">
       <fnargs>
-	<fnarg type="series">y</fnarg>
+	<fnarg type="series-or-mat">y</fnarg>
 	<fnarg type="scalar">d</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devolve a serie resultante da transformación de Box&ndash;Cox con
-	  parámetro <argname>d</argname> dunha serie positiva <argname>y</argname>.
+	  Devolve o resultado da transformación de Box&ndash;Cox con
+	  parámetro <argname>d</argname> dunha serie positiva
+	  <argname>y</argname> (ou das columnas dunha matriz
+	  <argname>y</argname>).
 	</para>
 	<para context="tex">
 	  \[ y_t^{(d)} = \left\{ \begin{array}{ll} \frac{y_t^d - 1}{d} &amp;
@@ -1680,7 +1682,7 @@
 	  \end{array} \right. \]
 	</para>
 	<para context="notex">
-	  A serie transformada é (<math>y</math><sup>d</sup> - 1)/<math>d</math>
+	  O resultado é (<math>y</math><sup>d</sup> - 1)/<math>d</math>
 	  para <math>d</math> distinto de cero, ou log(<math>y</math>) para
 	  <math>d</math> = 0.
 	</para>
@@ -7360,9 +7362,8 @@
 	  ao menos unha serie da lista ten un valor ausente, e 1 noutro caso.
 	</para>
 	<para>
-	  Cando o argumento <argname>x</argname> é unha matriz, o comportamento
-	  é un pouco diferente, posto que as matrices non poden conter
-	  <lit>NA</lit>s: a función devolve outra matriz da mesma dimensión que
+	  Cando o argumento <argname>x</argname> é unha matriz,
+	  a función devolve outra matriz da mesma dimensión que
 	  <argname>x</argname>, co valor 1 nas posicións que se corresponden
 	  con elementos finitos de <argname>x</argname>, e co valor 0 nas
 	  posicións nas que os elementos non son finitos (ou ben infinitos, ou ben
@@ -8756,22 +8757,22 @@
     <function name="rnameget" section="strings" output="string-or-strings">
       <fnargs>
 	<fnarg type="matrix">M</fnarg>
-	<fnarg type="int" optional="true">fila</fnarg>
+	<fnarg type="int" optional="true">r</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Se indicas o argumento <argname>fila</argname>, devolve unha
-	  cadea co nome desa <argname>fila</argname> da matriz
+	  Se indicas o argumento <argname>r</argname>, devolve unha
+	  cadea co nome da fila <argname>r</argname> da matriz
 	  <argname>M</argname>. Se as filas de <argname>M</argname>
 	  non teñen nome, entón devólvese unha cadea baleira; e se
-	  <argname>fila</argname> está fóra dos límites do número de filas
+	  <argname>r</argname> está fóra dos límites do número de filas
 	  desta matriz, amósase un fallo.
 	</para>
 	<para>
 	  Se non indicas o segundo argumento, devolve un arranxo de cadeas
 	  de texto que contén os nomes das filas de <argname>M</argname>,
-	  ou un arranxo baleiro se <argname>M</argname> non ten asignados
-	  nomes de filas.
+	  ou un arranxo baleiro se a matriz non ten asignados nomes para as súas
+	  filas.
 	</para>
 	<para>
 	  Exemplo:
