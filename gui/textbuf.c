@@ -2890,7 +2890,13 @@ static void normalize_indent (GtkTextBuffer *tbuf,
 		} else if (lp_pos > 0 && strchr(ins, ')') != NULL) {
 		    lp_zero = 1;
 		}
-		adjust_indent(word, &this_indent, &next_indent);
+		if (!strcmp(word, "outfile") && strstr(ins, "--close")) {
+		    /* handle deprecated syntax */
+		    this_indent--;
+		    next_indent--;
+		} else {
+		    adjust_indent(word, &this_indent, &next_indent);
+		}
 	    }
 	}
 	if (!handled) {
