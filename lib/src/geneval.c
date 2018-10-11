@@ -221,7 +221,7 @@ static void free_mspec (matrix_subspec *spec, parser *p)
 
 static void clear_mspec (matrix_subspec *spec, parser *p)
 {
-    if (spec != NULL) {
+   if (spec != NULL) {
 	/* the slice elements may not be reusable as is */
 	if (spec->rslice != NULL) {
 	    free(spec->rslice);
@@ -12413,8 +12413,11 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
     return ret;
 }
 
+#if 0
+
 static NODE *eval_feval (NODE *t, parser *p)
 {
+    NODE *save_aux = p->aux;
     NODE *n = t->v.b1.b;
     NODE *e, *ret = NULL;
     int argc, f = 0;
@@ -12426,6 +12429,11 @@ static NODE *eval_feval (NODE *t, parser *p)
 	return NULL;
     }
 
+#if AUX_NODES_DEBUG
+    fprintf(stderr, "feval: p->aux = %p, t->aux = %p\n",
+	    (void *) p->aux, (void *) t->aux);
+#endif
+
     argc = k - 1;
 
     /* evaluate the first (string) arg: should be the
@@ -12435,6 +12443,14 @@ static NODE *eval_feval (NODE *t, parser *p)
     if (!p->err && e->t != STR) {
 	node_type_error(t->t, 1, STR, e, p);
     }
+
+#if AUX_NODES_DEBUG
+    if (!p->err) {
+	fprintf(stderr, "aux for n->v.bn.n[0] (%p) = %p\n",
+		(void *) n->v.bn.n[0], (void *) n->v.bn.n[0]->aux);
+    }
+#endif
+    reset_p_aux(p, save_aux);
 
     if (!p->err) {
 	/* try for a built-in function */
@@ -12480,6 +12496,8 @@ static NODE *eval_feval (NODE *t, parser *p)
 	    }
 	    if (!p->err) {
 		ret = eval(&tmp, p);
+		/* leak here! */
+		// reset_p_aux(p, save_aux); /* tmp.aux? */
 	    }
 	    free(nn);
 	}
@@ -12504,17 +12522,9 @@ static NODE *eval_feval (NODE *t, parser *p)
 	    tmp.v.b2.l = &l;
 	    tmp.v.b2.r = &r;
 	    ret = eval_ufunc(&tmp, p);
+	    reset_p_aux(p, save_aux); /* tmp.aux? */
 	    free(r.v.bn.n);
 	}
-    }
-
-    if (t->aux != NULL) {
-	/* FIXME there has to be a cleaner way of ensuring
-	   that we don't leak memory!
-	*/
-	t->aux->refcount = 1;
-	free_node(t->aux, p);
-	t->aux = NULL;
     }
 
     if (!p->err && f == 0 && u == NULL) {
@@ -12523,6 +12533,122 @@ static NODE *eval_feval (NODE *t, parser *p)
 
     return ret;
 }
+
+#else
+
+static NODE *eval_feval (NODE *t, parser *p)
+{
+    NODE *save_aux = p->aux;
+    NODE *n = t->v.b1.b;
+    NODE *e, *ret = NULL;
+    int argc, f = 0;
+    ufunc *u = NULL;
+    int i, k = n->v.bn.n_nodes;
+
+    if (k < 2) {
+	p->err = E_ARGS;
+	return NULL;
+    }
+
+#if AUX_NODES_DEBUG
+    fprintf(stderr, "feval: p->aux = %p, t->aux = %p\n",
+	    (void *) p->aux, (void *) t->aux);
+#endif
+
+    argc = k - 1;
+
+    /* evaluate the first (string) arg: should be the
+       name of a function
+    */
+    e = eval(n->v.bn.n[0], p);
+    if (!p->err && e->t != STR) {
+	node_type_error(t->t, 1, STR, e, p);
+    }
+
+    reset_p_aux(p, save_aux);
+
+    if (!p->err) {
+	/* try for a built-in function */
+	f = function_lookup(e->v.str);
+	if (f != 0) {
+	    NODE *fn = aux_b2_node(p);
+	    NODE *args = NULL;
+	    int kerr = 0;
+
+	    fn->t = f;
+	    if (func1_symb(f)) {
+		if ((kerr = argc - 1) == 0) {
+		    fn->v.b1.b = n->v.bn.n[1];
+		}
+	    } else if (func2_symb(f)) {
+		if ((kerr = argc - 2) == 0) {
+		    fn->v.b2.l = n->v.bn.n[1];
+		    fn->v.b2.r = n->v.bn.n[2];
+		}
+	    } else if (func3_symb(f)) {
+		if ((kerr = argc - 3) == 0) {
+		    fn->v.b3.l = n->v.bn.n[1];
+		    fn->v.b3.m = n->v.bn.n[2];
+		    fn->v.b3.r = n->v.bn.n[3];
+		}
+	    } else {
+		/* multi-arg function */
+		args = fn->v.b1.b = newempty(); /* leaks! */
+		args->t = FARGS;
+		args->v.bn.n_nodes = argc;
+		args->v.bn.n = malloc(argc * sizeof(NODE *));
+		for (i=1; i<k; i++) {
+		    args->v.bn.n[i-1] = n->v.bn.n[i];
+		}
+	    }
+	    if (kerr > 0) {
+		gretl_errmsg_sprintf("%s: too many arguments", e->v.str);
+		p->err = E_DATA;
+	    } else if (kerr < 0) {
+		gretl_errmsg_sprintf("%s: too few arguments", e->v.str);
+		p->err = E_ARGS;
+	    }
+	    if (!p->err) {
+		ret = eval(fn, p);
+		/* there was a leak here, OK now? */
+		//reset_p_aux(p, save_aux); /* fn->aux? */
+		t->aux = fn;
+	    }
+	}
+    }
+
+    if (!p->err && f == 0) {
+	/* try for a user function */
+	u = get_user_function_by_name(e->v.str);
+	if (u != NULL) {
+	    NODE tmp = {0};
+	    NODE l = {0};
+	    NODE r = {0};
+
+	    tmp.t = UFUN;
+	    l.vname = e->v.str;
+	    l.v.ptr = u;
+	    r.v.bn.n_nodes = argc;
+	    r.v.bn.n = malloc(argc * sizeof(NODE *));
+	    for (i=1; i<k; i++) {
+		r.v.bn.n[i-1] = n->v.bn.n[i];
+	    }
+	    tmp.v.b2.l = &l;
+	    tmp.v.b2.r = &r;
+	    ret = eval_ufunc(&tmp, p);
+	    reset_p_aux(p, save_aux); /* tmp.aux? */
+	    free(r.v.bn.n);
+	}
+    }
+
+    if (!p->err && f == 0 && u == NULL) {
+	gretl_errmsg_sprintf("%s: function not found", e->v.str);
+    }
+
+    return ret;
+}
+
+#endif
 
 static gretl_matrix *node_get_matrix_lenient (NODE *n,
 					      int ok,
@@ -15775,7 +15901,11 @@ static NODE *eval (NODE *t, parser *p)
  finish:
 
     if (!p->err && ret != NULL && ret != t && is_aux_node(ret)) {
-	p->err = attach_aux_node(t, ret, p);
+	if (t->t == F_FEVAL && ret->refcount > 0) {
+	    ; /* don't attach, it probably belongs elsewhere! */
+	} else {
+	    p->err = attach_aux_node(t, ret, p);
+	}
     }
 
  bailout:

@@ -688,7 +688,7 @@ struct parser_ {
     NODE *tree;        /* RHS syntax tree */
     NODE *ret;         /* result of eval() on @tree */
     /* below: parser state variables */
-    NODE *aux;          /* convenience pointer to current auxiliary node */
+    NODE *aux;         /* convenience pointer to current auxiliary node */
     int callcount;
     int dset_n;
     int obs;
