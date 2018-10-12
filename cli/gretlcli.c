@@ -1343,10 +1343,10 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	    fb = pop_input_file();
 	} else {
 	    strcpy(s->runfile, runfile);
+	    gretl_set_script_dir(runfile);
 	    if (cmd->ci == INCLUDE) {
 		pprintf(cmdprn, "include \"%s\"\n", runfile);
 	    } else {
-		gretl_set_script_dir(runfile);
 		pprintf(cmdprn, "run \"%s\"\n", runfile);
 	    }
 	    runit++;
