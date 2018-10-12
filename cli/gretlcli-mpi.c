@@ -918,7 +918,9 @@ static int cli_exec_line (ExecState *s, int id, DATASET *dset,
 	    err = process_command_error(s, E_FOPEN);
 	    fb = pop_input_file();
 	} else {
-	    gretl_set_current_dir(runfile);
+	    if (cmd->ci == RUN) {
+		gretl_set_script_dir(runfile);
+	    }
 	    strcpy(s->runfile, runfile);
 	    runit++;
 	}

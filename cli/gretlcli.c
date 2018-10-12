@@ -1342,11 +1342,11 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	    err = process_command_error(s, E_FOPEN);
 	    fb = pop_input_file();
 	} else {
-	    gretl_set_current_dir(runfile);
 	    strcpy(s->runfile, runfile);
 	    if (cmd->ci == INCLUDE) {
 		pprintf(cmdprn, "include \"%s\"\n", runfile);
 	    } else {
+		gretl_set_script_dir(runfile);
 		pprintf(cmdprn, "run \"%s\"\n", runfile);
 	    }
 	    runit++;

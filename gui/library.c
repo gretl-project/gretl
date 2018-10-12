@@ -8369,7 +8369,7 @@ gboolean do_open_script (int action)
     if (action == EDIT_HANSL) {
 	strcpy(scriptfile, tryfile);
 	mkfilelist(FILE_LIST_SCRIPT, scriptfile);
-	gretl_set_current_dir(scriptfile);
+	gretl_set_script_dir(scriptfile);
 	if (has_system_prefix(scriptfile, SCRIPT_SEARCH)) {
 	    view_script(scriptfile, 0, VIEW_SCRIPT);
 	} else {
@@ -9851,7 +9851,7 @@ static int try_run_include (ExecState *s, char *runfile,
     if (s->cmd->ci == INCLUDE) {
 	s->flags |= INCLUDE_EXEC;
     } else {
-	gretl_set_current_dir(runfile);
+	gretl_set_script_dir(runfile);
     }
     err = execute_script(runfile, NULL, prn, s->flags,
 			 parent);

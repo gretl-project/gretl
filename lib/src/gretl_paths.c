@@ -81,7 +81,7 @@ struct INTERNAL_PATHS {
 
 static struct INTERNAL_PATHS paths;
 
-static char gretl_currdir[MAXLEN];
+static gchar *gretl_script_dir;
 
 static int force_en_cmdref;
 static int force_en_fnref;
@@ -1706,12 +1706,12 @@ char *gretl_addpath (char *fname, int script)
     if (!err) {
 	return fname;
     } else {
-	const char *gpath = gretl_get_current_dir();
+	const char *gpath = gretl_script_dir;
 	char trydir[MAXLEN];
 
 	strcpy(fname, orig);
 
-	if (*gpath != '\0') {
+	if (gpath != NULL && *gpath != '\0') {
 	    /* try looking where the last-opened script was found */
 	    int flags = script ? 0 : ADD_GDT;
 
@@ -1992,18 +1992,9 @@ int get_full_filename (const char *fname, char *fullname, gretlopt opt)
     if (test != NULL && (opt & OPT_S)) {
 	/* If @test is non-NULL that means we actually found
 	   the file somewhere, so if it's a script we'll set
-	   @gretl_currdir based on the filename.
+	   @gretl_script_dir based on the filename.
 	*/
-	int spos = gretl_slashpos(fullname);
-
-	if (spos) {
-	    *gretl_currdir = '\0';
-	    strncat(gretl_currdir, fullname, spos + 1);
-	} else {
-	    gretl_currdir[0] = '.';
-	    gretl_currdir[1] = SLASH;
-	    gretl_currdir[2] = '\0';
-	}
+	gretl_set_script_dir(fullname);
     }
 
     return err;
@@ -2544,19 +2535,10 @@ const char *gretl_mpiexec (void)
     return paths.mpiexec;
 }
 
-const char *gretl_get_current_dir (void)
+void gretl_set_script_dir (const char *s)
 {
-    return gretl_currdir;
-}
-
-void gretl_set_current_dir (const char *s)
-{
-    int spos = gretl_slashpos(s);
-
-    if (spos) {
-	*gretl_currdir = '\0';
-	strncat(gretl_currdir, s, spos + 1);
-    }
+    g_free(gretl_script_dir);
+    gretl_script_dir = g_path_get_dirname(s);
 }
 
 const char *gretl_png_font (void)
@@ -3280,7 +3262,7 @@ int gretl_set_paths (ConfigPaths *cpaths)
     int err0 = 0, err1 = 0;
     int retval = 0;
 
-    *gretl_currdir = '\0';
+    *gretl_script_dir = '\0';
     *paths.workdir = '\0';
     *paths.plotfile = '\0';
 

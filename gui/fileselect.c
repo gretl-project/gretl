@@ -356,7 +356,7 @@ static void script_open_choice (const char *fname, windata_t *vwin,
 	    if (view_script(tryfile, 1, EDIT_HANSL) != NULL) {
 		strcpy(scriptfile, tryfile);
 		mkfilelist(FILE_LIST_SCRIPT, scriptfile);
-		gretl_set_current_dir(scriptfile);
+		gretl_set_script_dir(scriptfile);
 	    }
 	}
     } else if (resp == 1) {
@@ -418,7 +418,7 @@ static void filesel_open_script (const char *fname, windata_t *vwin)
 	if (view_script(tryfile, 1, EDIT_HANSL) != NULL) {
 	    strcpy(scriptfile, tryfile);
 	    mkfilelist(FILE_LIST_SCRIPT, scriptfile);
-	    gretl_set_current_dir(scriptfile);
+	    gretl_set_script_dir(scriptfile);
 	}
     }
 }
