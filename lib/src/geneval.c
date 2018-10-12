@@ -340,8 +340,8 @@ static void free_node (NODE *t, parser *p)
 	    /* special case: a multi-args function node attached as
 	       auxiliary by feval(): here we should free all and only
 	       those elements that were allocated independently,
-	       namely the array to hold the args (v.bn.n) and the args
-	       node itself.
+	       namely the array to hold the arguments (v.bn.n) and
+	       the args node itself.
 	    */
 	    NODE *args = t->v.b1.b;
 
@@ -12511,8 +12511,8 @@ static NODE *eval_feval (NODE *t, parser *p)
 		ret = eval(fn, p);
 		/* there was a leak here, OK now? */
 #if AUX_NODES_DEBUG
-		fprintf(stderr, "feval: attach aux at %p to %p\n",
-			(void *) fn, (void *) t);
+		fprintf(stderr, "feval: attach aux at %p (%s) to %p\n",
+			(void *) fn, getsymb(fn->t), (void *) t);
 #endif
 		t->aux = fn;
 	    }
@@ -15807,7 +15807,7 @@ static NODE *eval (NODE *t, parser *p)
 
     if (!p->err && ret != NULL && ret != t && is_aux_node(ret)) {
 	if (t->t == F_FEVAL && ret->refcount > 0) {
-	    ; /* don't attach, it probably belongs elsewhere! */
+	    ; /* don't attach, it belongs elsewhere! */
 	} else {
 	    p->err = attach_aux_node(t, ret, p);
 	}
