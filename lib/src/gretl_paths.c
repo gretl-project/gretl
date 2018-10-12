@@ -81,7 +81,7 @@ struct INTERNAL_PATHS {
 
 static struct INTERNAL_PATHS paths;
 
-static char current_dir[MAXLEN];
+static char gretl_currdir[MAXLEN];
 
 static int force_en_cmdref;
 static int force_en_fnref;
@@ -1706,7 +1706,7 @@ char *gretl_addpath (char *fname, int script)
     if (!err) {
 	return fname;
     } else {
-	const char *gpath = gretl_current_dir();
+	const char *gpath = gretl_get_current_dir();
 	char trydir[MAXLEN];
 
 	strcpy(fname, orig);
@@ -1979,23 +1979,6 @@ int get_full_filename (const char *fname, char *fullname, gretlopt opt)
     fprintf(stderr, "get_full_filename: after: '%s'\n", fullname);
 #endif
 
-    /* If @test is non-NULL that means we actually found
-       the file somewhere */
-
-    if (test != NULL && (opt & OPT_S)) {
-	/* set the 'current_dir' based on script name */
-	int spos = gretl_slashpos(fullname);
-
-	if (spos) {
-	    *current_dir = '\0';
-	    strncat(current_dir, fullname, spos + 1);
-	} else {
-	    current_dir[0] = '.';
-	    current_dir[1] = SLASH;
-	    current_dir[2] = '\0';
-	}
-    }
-
  test_open:
 
     if (!err && test == NULL) {
@@ -2003,6 +1986,23 @@ int get_full_filename (const char *fname, char *fullname, gretlopt opt)
 	if (err) {
 	    /* ensure we return a gretl error code */
 	    err = E_FOPEN;
+	}
+    }
+
+    if (test != NULL && (opt & OPT_S)) {
+	/* If @test is non-NULL that means we actually found
+	   the file somewhere, so if it's a script we'll set
+	   @gretl_currdir based on the filename.
+	*/
+	int spos = gretl_slashpos(fullname);
+
+	if (spos) {
+	    *gretl_currdir = '\0';
+	    strncat(gretl_currdir, fullname, spos + 1);
+	} else {
+	    gretl_currdir[0] = '.';
+	    gretl_currdir[1] = SLASH;
+	    gretl_currdir[2] = '\0';
 	}
     }
 
@@ -2544,9 +2544,9 @@ const char *gretl_mpiexec (void)
     return paths.mpiexec;
 }
 
-const char *gretl_current_dir (void)
+const char *gretl_get_current_dir (void)
 {
-    return current_dir;
+    return gretl_currdir;
 }
 
 void gretl_set_current_dir (const char *s)
@@ -2554,8 +2554,8 @@ void gretl_set_current_dir (const char *s)
     int spos = gretl_slashpos(s);
 
     if (spos) {
-	*current_dir = '\0';
-	strncat(current_dir, s, spos + 1);
+	*gretl_currdir = '\0';
+	strncat(gretl_currdir, s, spos + 1);
     }
 }
 
@@ -3280,7 +3280,7 @@ int gretl_set_paths (ConfigPaths *cpaths)
     int err0 = 0, err1 = 0;
     int retval = 0;
 
-    *current_dir = '\0';
+    *gretl_currdir = '\0';
     *paths.workdir = '\0';
     *paths.plotfile = '\0';
 

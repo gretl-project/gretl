@@ -9838,15 +9838,11 @@ static int script_open_append (ExecState *s, DATASET *dset,
 static int try_run_include (ExecState *s, char *runfile,
 			    PRN *prn, GtkWidget *parent)
 {
-    int save_batch, orig_flags, err = 0;
-    FILE *fp;
+    int save_batch, orig_flags, err;
 
-    fp = gretl_fopen(runfile, "r");
-    if (fp == NULL) {
+    if (gretl_test_fopen(runfile, "r") != 0) {
 	pprintf(prn, _("Error reading %s\n"), runfile);
 	return process_command_error(s, E_FOPEN);
-    } else {
-	fclose(fp);
     }
 
     save_batch = gretl_in_batch_mode();
@@ -9854,6 +9850,8 @@ static int try_run_include (ExecState *s, char *runfile,
     s->flags = SCRIPT_EXEC;
     if (s->cmd->ci == INCLUDE) {
 	s->flags |= INCLUDE_EXEC;
+    } else {
+	gretl_set_current_dir(runfile);
     }
     err = execute_script(runfile, NULL, prn, s->flags,
 			 parent);

@@ -209,9 +209,9 @@ const char *gretl_mpi_hosts (void);
 
 const char *gretl_mpiexec (void);
 
-const char *gretl_current_dir (void);
-
 const char *gretl_function_package_path (void);
+
+const char *gretl_get_current_dir (void);
 
 void gretl_set_current_dir (const char *s);
 
