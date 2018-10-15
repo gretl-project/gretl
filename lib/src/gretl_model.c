@@ -2253,7 +2253,7 @@ int *gretl_model_get_y_list (const MODEL *pmod)
     } else {
 	list = gretl_list_new(1);
 	if (list != NULL) {
-	    list[1] = pmod->list[1];
+	    list[1] = gretl_model_get_depvar(pmod);
 	}
     }
 

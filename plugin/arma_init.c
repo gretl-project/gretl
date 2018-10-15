@@ -241,7 +241,8 @@ static gretl_matrix *poly_from_coeff (const double *coeff,
 int flip_poly (double *coeff, arma_info *ainfo,
 	       int ar, int seasonal)
 {
-    gretl_matrix *tmp, *r;
+    gretl_matrix *tmp = NULL;
+    gretl_matrix *r = NULL;
     const char *mask;
     double re, im;
     int n, n_inside = 0;
@@ -266,7 +267,12 @@ int flip_poly (double *coeff, arma_info *ainfo,
 	/* expand to handle gappiness */
 	tmp = poly_from_coeff(coeff, mask, n, ar);
     }
+
     r = gretl_matrix_polroots(tmp, 1, &err);
+
+    if (err) {
+	goto bailout;
+    }
 
     gretl_matrix_zero(tmp);
     for (i=0; i<r->rows; i++) {
@@ -321,6 +327,8 @@ int flip_poly (double *coeff, arma_info *ainfo,
 	gretl_matrix_free(rfix);
 	gretl_matrix_free(ifix);
     }
+
+ bailout:
 
     gretl_matrix_free(r);
     gretl_matrix_free(tmp);
