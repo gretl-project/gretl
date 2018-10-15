@@ -8298,20 +8298,24 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
 	return;
     }
 
-    if (editing_alt_script(vwin->role) &&
-	vwin->fname[0] != '\0' &&
-	strstr(vwin->fname, "script_tmp") == NULL) {
-	/* If there's a "real" (alt) filename in place we should
-	   probably chdir to its location so we're able to pick
-	   up any data files it may reference. We'll also arrange
-	   to revert the working directory once we're done.
-	*/
-	if (g_path_is_absolute(vwin->fname)) {
+    if (vwin->fname[0] != '\0' &&
+	strstr(vwin->fname, "script_tmp") == NULL &&
+	g_path_is_absolute(vwin->fname)) {
+	/* There's a "real" full filename in place */
+	if (editing_alt_script(vwin->role)) {
+	    /* For an "alt" script we should probably chdir
+	       to its location so we're able to pick up any
+	       data files it may reference. We'll also arrange
+	       to revert the working directory once we're done.
+	    */
 	    gchar *dname = g_path_get_dirname(vwin->fname);
 
 	    currdir = g_get_current_dir();
 	    gretl_chdir(dname);
 	    g_free(dname);
+	} else if (vwin->role != EDIT_GP && vwin->role != EDIT_PKG_SAMPLE) {
+	    /* native script */
+	    gretl_set_script_dir(vwin->fname);
 	}
     }
 
