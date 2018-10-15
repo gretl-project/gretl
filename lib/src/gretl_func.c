@@ -108,6 +108,7 @@ struct obsinfo_ {
 struct fncall_ {
     ufunc *fun;    /* the function called */
     int argc;      /* argument count */
+    int orig_v;    /* number of series defined on entry */
     fn_arg *args;  /* argument array */
     int *ptrvars;  /* list of pointer arguments */
     int *listvars; /* list of series included in a list argument */
@@ -7799,8 +7800,7 @@ static int restore_obs_info (obsinfo *oi, DATASET *dset)
 */
 
 static int stop_fncall (fncall *call, int rtype, void *ret,
-			DATASET *dset, PRN *prn, int orig_v,
-			int redir_level)
+			DATASET *dset, PRN *prn, int redir_level)
 {
     int i, d = gretl_function_depth();
     int delv, anyerr = 0;
@@ -7819,20 +7819,20 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
     */
 
     if (dset != NULL) {
-	for (i=orig_v, delv=0; i<dset->v; i++) {
+	for (i=call->orig_v, delv=0; i<dset->v; i++) {
 	    if (series_get_stack_level(dset, i) == d) {
 		delv++;
 	    }
 	}
 	if (delv > 0) {
-	    if (delv == dset->v - orig_v) {
+	    if (delv == dset->v - call->orig_v) {
 		/* deleting all added series */
 		anyerr = dataset_drop_last_variables(dset, delv);
 		if (anyerr && !err) {
 		    err = anyerr;
 		}
 	    } else {
-		for (i=dset->v-1; i>=orig_v; i--) {
+		for (i=dset->v-1; i>=call->orig_v; i--) {
 		    if (series_get_stack_level(dset, i) == d) {
 			anyerr = dataset_drop_variable(i, dset);
 			if (anyerr && !err) {
@@ -8560,7 +8560,6 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
     MODEL *model = NULL;
     char line[MAXLINE];
     CMD cmd;
-    int orig_v = 0;
     int orig_n = 0;
     int orig_t1 = 0;
     int orig_t2 = 0;
@@ -8587,10 +8586,12 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 #endif
 
     if (dset != NULL) {
-	orig_v = dset->v;
+	call->orig_v = dset->v;
 	orig_n = dset->n;
 	orig_t1 = dset->t1;
 	orig_t2 = dset->t2;
+    } else {
+	call->orig_v = 0;
     }
 
     if (!function_is_plugin(u)) {
@@ -8805,7 +8806,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 
     if (started) {
 	int stoperr = stop_fncall(call, rtype, ret, dset, prn,
-				  orig_v, redir_level);
+				  redir_level);
 
 	if (stoperr && !err) {
 	    err = stoperr;
@@ -8954,6 +8955,42 @@ void sample_range_get_extrema (const DATASET *dset, int *t1, int *t2)
     if (t2 != NULL) {
 	*t2 = tvals[1];
     }
+}
+
+/**
+ * series_is_accessible_in_function:
+ * @ID: series ID number (0 = constant).
+ *
+ * Returns: 1 if the series with ID number @ID is accessible
+ * by number at the current level of function execution,
+ * otherwise 0.
+ */
+
+int series_is_accessible_in_function (int ID)
+{
+    fncall *fc = current_function_call();
+    int ret = 1;
+
+    if (fc != NULL) {
+	/* assume not accessible without contrary evidence */
+	ret = 0;
+	if (ID >= fc->orig_v) {
+	    /* the series post-dates the start of execution */
+	    ret = 1;
+	} else if (in_gretl_list(fc->listvars, ID)) {
+	    /* series was given in a list argument */
+	    ret = 1;
+	} else if (in_gretl_list(fc->ptrvars, ID)) {
+	    /* series was given in "pointer" form */
+	    ret = 1;
+	}
+    }
+
+    if (ret == 0) {
+	gretl_errmsg_sprintf("Series %d is not accessible", ID);
+    }
+
+    return ret;
 }
 
 /**

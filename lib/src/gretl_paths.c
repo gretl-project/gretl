@@ -3262,7 +3262,6 @@ int gretl_set_paths (ConfigPaths *cpaths)
     int err0 = 0, err1 = 0;
     int retval = 0;
 
-    gretl_script_dir = NULL;
     *paths.workdir = '\0';
     *paths.plotfile = '\0';
 

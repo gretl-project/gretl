@@ -9926,9 +9926,15 @@ static int set_list_value (NODE *lhs, NODE *rhs, parser *p)
 	p->err = E_TYPES;
     }
 
-    if (!p->err && (v < 0 || v >= p->dset->v)) {
-	gretl_errmsg_set(_("Invalid list element"));
-	p->err = E_DATA;
+    if (!p->err) {
+	if (v < 0 || v >= p->dset->v) {
+	    gretl_errmsg_set(_("Invalid list element"));
+	    p->err = E_DATA;
+	} else if (gretl_function_depth() > 0) {
+	    if (!series_is_accessible_in_function(v)) {
+		p->err = E_DATA;
+	    }
+	}
     }
 
     if (!p->err) {
@@ -17202,6 +17208,17 @@ static int create_or_edit_list (parser *p)
 #if EDEBUG
     printlist(list, "incoming list in edit_list()");
 #endif
+
+    if (gretl_function_depth() > 0) {
+	int i;
+
+	for (i=1; i<=list[0]; i++) {
+	    if (!series_is_accessible_in_function(list[i])) {
+		p->err = E_DATA;
+		break;
+	    }
+	}
+    }
 
     if (!p->err) {
 	if (p->lh.t != LIST) {
