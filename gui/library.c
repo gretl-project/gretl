@@ -9828,7 +9828,7 @@ static int script_open_append (ExecState *s, DATASET *dset,
 	    register_data(OPENED_VIA_CLI);
 	}
 	if (!(cmd->opt & OPT_Q)) {
-	    list_series(dset, prn);
+	    list_series(dset, OPT_NONE, prn);
 	}
     }
 
@@ -10004,7 +10004,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 	    clean_up_varlabels(dset);
 	    register_data(DATA_APPENDED);
 	    if (gretl_messages_on()) {
-		list_series(dset, prn);
+		list_series(dset, OPT_NONE, prn);
 	    }
         }
 	break;

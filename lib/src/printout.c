@@ -1,23 +1,23 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
-/*  printout.c - simple text print routines for some gretl structs */ 
+/*  printout.c - simple text print routines for some gretl structs */
 
 #include "libgretl.h"
 #include "version.h"
@@ -60,7 +60,7 @@ static void printxx (const double xx, char *str, int ci)
 
 static void covhdr (PRN *prn)
 {
-    pprintf(prn, "%s:\n\n", 
+    pprintf(prn, "%s:\n\n",
 	    _("Covariance matrix of regression coefficients"));
 }
 
@@ -84,10 +84,10 @@ void session_time (PRN *prn)
 
     print_time(timestr);
     pprintf(prn, "%s: %s\n", _("Current session"), timestr);
-    
+
     if (myprn != NULL) {
 	gretl_print_destroy(myprn);
-    }    
+    }
 }
 
 /**
@@ -124,7 +124,7 @@ void gui_logo (PRN *prn)
 	myprn = gretl_print_new(GRETL_PRINT_STDOUT, NULL);
 	prn = myprn;
     }
-	
+
     pprintf(prn, _("gretl: gui client for gretl version %s,\n"), GRETL_VERSION);
     pputs(prn, _("Copyright Allin Cottrell and Riccardo \"Jack\" Lucchetti"));
     pputc(prn, '\n');
@@ -166,7 +166,7 @@ void gui_script_logo (PRN *prn)
 
 /* ----------------------------------------------------- */
 
-static void 
+static void
 print_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
 {
     int n = strlen(cf->names[i]);
@@ -188,7 +188,7 @@ print_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
     if (isnan(cf->maxerr[i])) {
 	pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 10), _("undefined"));
     } else {
-	pprintf(prn, " %#12.6g %#12.6g", 
+	pprintf(prn, " %#12.6g %#12.6g",
 		cf->coeff[i] - cf->maxerr[i],
 		cf->coeff[i] + cf->maxerr[i]);
     }
@@ -255,13 +255,13 @@ int max_obs_marker_length (const DATASET *dset)
 	switch (dset->pd) {
 	case 1:   /* annual: YYYY */
 	case 10:  /* decennial: YYYY */
-	    nmax = 4; 
+	    nmax = 4;
 	    break;
 	case 4:   /* quarterly: YYYY:Q */
-	    nmax = 6; 
+	    nmax = 6;
 	    break;
 	case 12:  /* monthly: YYYY:MM */
-	    nmax = 7; 
+	    nmax = 7;
 	    break;
 	default:
 	    break;
@@ -308,7 +308,7 @@ void text_print_model_confints (const CoeffIntervals *cf, PRN *prn)
 
     /* xgettext:no-c-format */
     pprintf(prn, _("      VARIABLE         COEFFICIENT      %g%% CONFIDENCE "
-		   "INTERVAL\n\n"), 100 * (1 - cf->alpha));      
+		   "INTERVAL\n\n"), 100 * (1 - cf->alpha));
 
     for (i=0; i<cf->ncoeff; i++) {
 	print_coeff_interval(cf, i, prn);
@@ -323,16 +323,16 @@ void print_freq_test (const FreqDist *freq, PRN *prn)
 
     if (freq->dist == D_NORMAL) {
 	pval = chisq_cdf_comp(2, freq->test);
-	pprintf(prn, "\n%s:\n", 
+	pprintf(prn, "\n%s:\n",
 		_("Test for null hypothesis of normal distribution"));
-	pprintf(prn, "%s(2) = %.3f %s %.5f\n", 
-		_("Chi-square"), freq->test, 
+	pprintf(prn, "%s(2) = %.3f %s %.5f\n",
+		_("Chi-square"), freq->test,
 		_("with p-value"), pval);
     } else if (freq->dist == D_GAMMA) {
 	pval = normal_pvalue_2(freq->test);
-	pprintf(prn, "\n%s:\n", 
+	pprintf(prn, "\n%s:\n",
 		_("Test for null hypothesis of gamma distribution"));
-	pprintf(prn, "z = %.3f %s %.5f\n", freq->test, 
+	pprintf(prn, "z = %.3f %s %.5f\n", freq->test,
 		_("with p-value"), pval);
     }
 
@@ -353,7 +353,7 @@ void print_freq_test (const FreqDist *freq, PRN *prn)
  * Print frequency distribution to @prn.
  */
 
-void print_freq (const FreqDist *freq, int varno, const DATASET *dset, 
+void print_freq (const FreqDist *freq, int varno, const DATASET *dset,
 		 PRN *prn)
 {
     int i, k, nlw, K;
@@ -378,7 +378,7 @@ void print_freq (const FreqDist *freq, int varno, const DATASET *dset,
 	    print_freq_test(freq, prn);
 	}
 	return;
-    } 
+    }
 
     if (varno > 0 && dset != NULL && is_string_valued(dset, varno)) {
 	strvals = 1;
@@ -424,9 +424,9 @@ void print_freq (const FreqDist *freq, int varno, const DATASET *dset,
 	int len, xlen, mxlen;
 	double x;
 
-	pprintf(prn, _("number of bins = %d, mean = %g, sd = %g\n"), 
+	pprintf(prn, _("number of bins = %d, mean = %g, sd = %g\n"),
 		freq->numbins, freq->xbar, freq->sdx);
-	pputs(prn, 
+	pputs(prn,
 	      _("\n       interval          midpt   frequency    rel.     cum.\n\n"));
 
     tryagain:
@@ -464,7 +464,7 @@ void print_freq (const FreqDist *freq, int varno, const DATASET *dset,
 
 	mxlen++;
 	mxlen = (mxlen > 10)? mxlen : 10;
-	
+
 	for (k=0; k<=K; k++) {
 	    *word = '\0';
 	    if (k == 0) {
@@ -511,7 +511,7 @@ void print_freq (const FreqDist *freq, int varno, const DATASET *dset,
     missing = total - valid;
 
     if (missing > 0) {
-	pprintf(prn, "\n%s = %d (%5.2f%%)\n", _("Missing observations"), 
+	pprintf(prn, "\n%s = %d (%5.2f%%)\n", _("Missing observations"),
 		missing, 100 * (double) missing / total);
     }
 
@@ -574,7 +574,7 @@ void print_xtab (const Xtab *tab, const DATASET *dset,
 
     for (j=0; j<tab->cols; j++) {
 	double cj = tab->cval[j];
-	
+
 	if (col_st == NULL) {
 	    pprintf(prn, "[%4g]", cj);
 	} else {
@@ -590,7 +590,7 @@ void print_xtab (const Xtab *tab, const DATASET *dset,
     for (i=0; i<tab->rows; i++) {
 	if (tab->rtotal[i] > 0) {
 	    double ri = tab->rval[i];
-	    
+
 	    if (row_st == NULL) {
 		pprintf(prn, "[%4g] ", ri);
 	    } else {
@@ -618,7 +618,7 @@ void print_xtab (const Xtab *tab, const DATASET *dset,
 		    } else {
 			pputs(prn, "      ");
 		    }
-		} 
+		}
 		if (!na(pearson)) {
 		    y = ((double) tab->rtotal[i] * tab->ctotal[j]) / tab->n;
 		    if (y < ymin) {
@@ -658,7 +658,7 @@ void print_xtab (const Xtab *tab, const DATASET *dset,
 	    pprintf(prn, "%5d ", tab->ctotal[j]);
 	}
     }
-    
+
     pprintf(prn, "%6d\n", tab->n);
 
     if (tab->missing) {
@@ -681,7 +681,7 @@ void print_xtab (const Xtab *tab, const DATASET *dset,
 	    pearson = NADBL;
 	} else {
 	    pputc(prn, '\n');
-	    pprintf(prn, _("Pearson chi-square test = %g (%d df, p-value = %g)"), 
+	    pprintf(prn, _("Pearson chi-square test = %g (%d df, p-value = %g)"),
 		    pearson, df, pval);
 	    pputc(prn, '\n');
 	    if (n5p < 0.80) {
@@ -742,7 +742,7 @@ void print_smpl (const DATASET *dset, int fulln,
     if (fulln) {
 	pprintf(prn, _("Full data set: %d observations\n"), fulln);
     } else {
-	pprintf(prn, "%s: %s - %s (n = %d)\n", _("Full data range"), 
+	pprintf(prn, "%s: %s - %s (n = %d)\n", _("Full data range"),
 		dset->stobs, dset->endobs, dset->n);
     }
 
@@ -765,7 +765,7 @@ static void print_var_smpl (int v, const DATASET *dset, PRN *prn)
 
 	pprintf(prn, "%s:  %s - %s", _("Current sample"), d1, d2);
     } else {
-	pprintf(prn, "%s: %s - %s", _("Full data range"), 
+	pprintf(prn, "%s: %s - %s", _("Full data range"),
 		dset->stobs, dset->endobs);
     }
 
@@ -781,7 +781,7 @@ static void print_var_smpl (int v, const DATASET *dset, PRN *prn)
 /**
  * gretl_fix_exponent:
  * @s: string representation of floating-point number.
- * 
+ *
  * Some C libraries (e.g. MS) print an "extra" zero in the exponent
  * when using scientific notation, e.g. "1.45E-002".  This function
  * checks for this and cuts it out if need be.
@@ -810,7 +810,7 @@ char *gretl_fix_exponent (char *s)
 }
 
 /* determine the max number of characters that will be output when
-   printing Z[v] over the current sample range using format %.*f 
+   printing Z[v] over the current sample range using format %.*f
    or %#.*g, with precision 'digits'
 */
 
@@ -848,7 +848,7 @@ static int max_number_length (int v, const DATASET *dset,
 
 	if (l10 >= digits) {
 	    amaxn += 5 + maxsgn;
-	} 
+	}
 	l10 = log10(amin);
 	if (l10 < -4) {
 	    aminn += 5 + minsgn;
@@ -959,8 +959,8 @@ void gretl_sprint_fullwidth_double (double x, int digits, char *targ,
 /* The following function formats a double in such a way that the
    decimal point will be printed in the same position for all
    numbers printed this way.  The total width of the number
-   string (including possible padding on left or right) is 
-   2 * P + 5 characters, where P denotes the precision ("digits"). 
+   string (including possible padding on left or right) is
+   2 * P + 5 characters, where P denotes the precision ("digits").
 */
 
 void gretl_print_fullwidth_double (double x, int digits, PRN *prn)
@@ -1041,13 +1041,13 @@ void gretl_print_value (double x, PRN *prn)
  * @m: covariance matrix.
  * @ldet: log-determinant of @m.
  * @prn: gretl printing struct.
- * 
+ *
  * Print to @prn the covariance matrix @m, with correlations
  * above the diagonal, and followed by the log determinant.
  */
 
 void
-print_contemp_covariance_matrix (const gretl_matrix *m, 
+print_contemp_covariance_matrix (const gretl_matrix *m,
 				 double ldet, PRN *prn)
 {
     int tex = tex_format(prn);
@@ -1083,11 +1083,11 @@ print_contemp_covariance_matrix (const gretl_matrix *m,
 	    x = gretl_matrix_get(m, i, i) * gretl_matrix_get(m, j, j);
 	    x = sqrt(x);
 	    x = gretl_matrix_get(m, i, j) / x;
-	    sprintf(numstr,"(%.3f)", x); 
+	    sprintf(numstr,"(%.3f)", x);
 	    pprintf(prn, "%13s", numstr);
 	    if (tex && j < cols - 1) {
 		pputs(prn, " & ");
-	    }	    
+	    }
 	}
 	if (tex) {
 	    pputs(prn, "\\\\\n");
@@ -1101,7 +1101,7 @@ print_contemp_covariance_matrix (const gretl_matrix *m,
 
     if (tex) {
 	pputs(prn, "\\end{array}\n\\]\n");
-    }    
+    }
 
     if (!na(ldet)) {
 	if (tex) {
@@ -1118,7 +1118,7 @@ print_contemp_covariance_matrix (const gretl_matrix *m,
 
     if (tex) {
 	pputs(prn, "\n\\end{center}\n");
-    } 
+    }
 }
 
 /**
@@ -1126,7 +1126,7 @@ print_contemp_covariance_matrix (const gretl_matrix *m,
  * @pmod: pointer to model.
  * @dset: data information struct.
  * @prn: gretl printing struct.
- * 
+ *
  * Print to @prn the variance-covariance matrix for the parameter
  * estimates in @pmod.
  *
@@ -1145,16 +1145,16 @@ int outcovmx (MODEL *pmod, const DATASET *dset, PRN *prn)
     } else {
 	text_print_vmatrix(vmat, prn);
 	free_vmatrix(vmat);
-    }  
+    }
 
     return err;
 }
 
 static void outxx (double x, int ci, int wid, PRN *prn)
 {
-    if (isnan(x) || na(x)) { 
+    if (isnan(x) || na(x)) {
 	if (ci == CORR) {
-	    pprintf(prn, "%*s", UTF_WIDTH(_("NA"), wid), 
+	    pprintf(prn, "%*s", UTF_WIDTH(_("NA"), wid),
 		    _("NA"));
 	} else {
 	    bufspace(wid, prn);
@@ -1236,7 +1236,7 @@ void text_print_vmatrix (VMatrix *vmat, PRN *prn)
 	    } else {
 		bufspace(fwidth - n, prn);
 		pputs(prn, s);
-	    } 
+	    }
 	}
 	pputc(prn, '\n');
 
@@ -1269,14 +1269,14 @@ void text_print_vmatrix (VMatrix *vmat, PRN *prn)
 		pprintf(prn, " %.*s~\n", fwidth - 2, vmat->names[ij2]);
 	    } else {
 		pprintf(prn, " %s\n", vmat->names[ij2]);
-	    }	    
+	    }
 	}
 	pputc(prn, '\n');
     }
 }
 
-static int fit_resid_head (const FITRESID *fr, 
-			   const DATASET *dset, 
+static int fit_resid_head (const FITRESID *fr,
+			   const DATASET *dset,
 			   int obslen,
 			   PRN *prn)
 {
@@ -1286,7 +1286,7 @@ static int fit_resid_head (const FITRESID *fr,
     int ywidth;
 
     if (kstep) {
-	ntodate(obs1, fr->model_t1, dset);   
+	ntodate(obs1, fr->model_t1, dset);
 	pprintf(prn, _("Recursive %d-step ahead forecasts"), fr->k);
 	pputs(prn, "\n\n");
 	pprintf(prn, _("The forecast for time t is based on (a) coefficients obtained by\n"
@@ -1305,7 +1305,7 @@ static int fit_resid_head (const FITRESID *fr,
 	if (fr->std) {
 	    pprintf(prn, "%s\n", _("The residuals are standardized"));
 	} else if (!na(fr->sigma)) {
-	    pprintf(prn, "%s = %.*g\n", _("Standard error of the regression"), 
+	    pprintf(prn, "%s = %.*g\n", _("Standard error of the regression"),
 		    gretl_digits, fr->sigma);
 	}
     }
@@ -1336,8 +1336,8 @@ static int fit_resid_head (const FITRESID *fr,
 
 /* prints a heading with the names of the variables in @list */
 
-static void varheading (const int *list, int leader, int wid, 
-			const DATASET *dset, char delim, 
+static void varheading (const int *list, int leader, int wid,
+			const DATASET *dset, char delim,
 			PRN *prn)
 {
     int i, vi;
@@ -1346,25 +1346,25 @@ static void varheading (const int *list, int leader, int wid,
 	if (leader >= 0) {
 	    pprintf(prn, "obs%c", delim);
 	}
-	for (i=1; i<=list[0]; i++) { 
+	for (i=1; i<=list[0]; i++) {
 	    vi = list[i];
 	    pputs(prn, dset->varname[vi]);
 	    if (i < list[0]) {
 		pputc(prn, delim);
-	    } 
+	    }
 	}
 	pputc(prn, '\n');
     } else if (rtf_format(prn)) {
 	pputs(prn, "{obs\\cell ");
-	for (i=1; i<=list[0]; i++) { 
+	for (i=1; i<=list[0]; i++) {
 	    vi = list[i];
 	    pprintf(prn, "%s\\cell ", dset->varname[vi]);
 	}
-	pputs(prn, "}\n");	
+	pputs(prn, "}\n");
     } else {
 	pputc(prn, '\n');
 	bufspace(leader, prn);
-	for (i=1; i<=list[0]; i++) { 
+	for (i=1; i<=list[0]; i++) {
 	    vi = list[i];
 	    pprintf(prn, "%*s", wid, dset->varname[vi]);
 	}
@@ -1492,7 +1492,7 @@ static void print_series_by_var (const DATASET *dset, int v, PRN *prn)
  * get_signif:
  * @x: array to examine
  * @n: length of the array
- * 
+ *
  * Examines array @x from the point of view of printing the
  * data.  Tries to determine the most economical yet faithful
  * string representation of the data.
@@ -1508,7 +1508,7 @@ static void print_series_by_var (const DATASET *dset, int v, PRN *prn)
 static int get_signif (const double *x, int n)
 {
     static char numstr[48];
-    int i, j, s, smax = 0; 
+    int i, j, s, smax = 0;
     int lead, leadmax = 0, leadmin = 99;
     int gotdec, trail, trailmax = 0;
     double xx;
@@ -1527,7 +1527,7 @@ static int get_signif (const double *x, int n)
 
 	if (xx > 0 && (xx < 1.0e-6 || xx > 1.0e+8)) {
 	    return PMAX_NOT_AVAILABLE;
-	}	
+	}
 
 	if (xx >= 1.0) {
 	    allfrac = 0;
@@ -1587,7 +1587,7 @@ static int get_signif (const double *x, int n)
 	if (lead < leadmin) {
 	    leadmin = lead;
 	}
-    } 
+    }
 
     if (smax > SMAX) {
 	smax = SMAX;
@@ -1597,9 +1597,9 @@ static int get_signif (const double *x, int n)
 	smax = -trailmax;
     } else if ((leadmin < leadmax) && (leadmax < smax)) {
 #if PDEBUG
-	fprintf(stderr, "get_signif: setting smax = -(%d - %d)\n", 
+	fprintf(stderr, "get_signif: setting smax = -(%d - %d)\n",
 		smax, leadmax);
-#endif	
+#endif
 	smax = -1 * (smax - leadmax); /* # of decimal places */
     } else if (leadmax == smax) {
 	smax = 0;
@@ -1608,7 +1608,7 @@ static int get_signif (const double *x, int n)
 	fprintf(stderr, "get_signif: setting smax = -(%d - 1)\n", smax);
 #endif
 	smax = -1 * (smax - 1);
-    } 
+    }
 
     return smax;
 }
@@ -1619,7 +1619,7 @@ static int g_too_long (double x, int signif)
 
     sprintf(n1, "%.*G", signif, x);
     sprintf(n2, "%.0f", x);
-    
+
     return (strlen(n1) > strlen(n2));
 }
 
@@ -1667,8 +1667,8 @@ static char *bufprintnum (char *buf, double x, int signif,
 #endif
 
 	if (l == 6 && signif < 6) {
-	   sprintf(numstr, "%.0f", x); 
-	} else if (l >= signif) { 
+	   sprintf(numstr, "%.0f", x);
+	} else if (l >= signif) {
 #if PDEBUG
 	    fprintf(stderr, " printing with '%%.%dG'\n", signif);
 #endif
@@ -1705,7 +1705,7 @@ static char *bufprintnum (char *buf, double x, int signif,
     return buf;
 }
 
-static void real_print_obs_marker (int t, const DATASET *dset, 
+static void real_print_obs_marker (int t, const DATASET *dset,
 				   int len, int pad, PRN *prn)
 {
     char tmp[OBSLEN] = {0};
@@ -1789,17 +1789,30 @@ int max_namelen_in_list (const int *list, const DATASET *dset)
     return n;
 }
 
+static int show_series (int i, int fd, const DATASET *dset,
+			int debug)
+{
+    if (debug) {
+	/* show all */
+	return 1;
+    } else {
+	return (i == 0 || fd == 0 || series_get_stack_level(dset, i) == fd);
+    }
+}
+
 /**
  * list_series:
  * @dset: data information struct.
+ * @opt: may contain OPT_D for debugging.
  * @prn: gretl printing struct
  *
  * Prints a list of the names of the series currently defined.
  */
 
-void list_series (const DATASET *dset, PRN *prn)
+void list_series (const DATASET *dset, gretlopt opt, PRN *prn)
 {
     int fd = gretl_function_depth();
+    int debug = (opt & OPT_D);
     const char *name;
     int len, maxlen = 0;
     int nv = 4;
@@ -1811,8 +1824,10 @@ void list_series (const DATASET *dset, PRN *prn)
     }
 
     for (i=0; i<dset->v; i++) {
-	if (i == 0 || fd == 0 || series_get_stack_level(dset, i) == fd) {
-	    if (series_is_listarg(dset, i)) {
+	if (show_series(i, fd, dset, debug)) {
+	    if (debug) {
+		name = dset->varname[i];
+	    } else if (series_is_listarg(dset, i)) {
 		name = "[masked]";
 	    } else {
 		name = dset->varname[i];
@@ -1837,15 +1852,22 @@ void list_series (const DATASET *dset, PRN *prn)
 
     j = 1;
     for (i=0; i<dset->v; i++) {
-	if (i == 0 || fd == 0 || series_get_stack_level(dset, i) == fd) {
-	    if (series_is_listarg(dset, i)) {
+	if (show_series(i, fd, dset, debug)) {
+	    if (debug) {
+		name = dset->varname[i];
+	    } else if (series_is_listarg(dset, i)) {
 		name = "[masked]";
 	    } else {
 		name = dset->varname[i];
 	    }
-	    pprintf(prn, "%3d) %-*s", i, maxlen + 2, name);
-	    if (j % nv == 0) {
-		pputc(prn, '\n');
+	    if (debug) {
+		pprintf(prn, "%3d) %-*s level %d\n", i, maxlen + 2,
+			name, series_get_stack_level(dset, i));
+	    } else {
+		pprintf(prn, "%3d) %-*s", i, maxlen + 2, name);
+		if (j % nv == 0) {
+		    pputc(prn, '\n');
+		}
 	    }
 	    j++;
 	}
@@ -1870,11 +1892,11 @@ void list_series (const DATASET *dset, PRN *prn)
 void maybe_list_series (const DATASET *dset, PRN *prn)
 {
     if (gretl_messages_on() && !gretl_looping_quietly()) {
-	list_series(dset, prn);
+	list_series(dset, OPT_NONE, prn);
     }
 }
 
-static int print_listed_objects (const char *s, 
+static int print_listed_objects (const char *s,
 				 const DATASET *dset,
 				 gretlopt opt,
 				 PRN *prn)
@@ -1976,7 +1998,7 @@ static void bufprint_string (char *buf, const char *s, int width)
     int i, n = width - g_utf8_strlen(s, -1);
 
     *buf = '\0';
-		    
+
     if (n > 0) {
 	for (i=0; i<n; i++) {
 	    strcat(buf, " ");
@@ -1990,7 +2012,7 @@ static void bufprint_string (char *buf, const char *s, int width)
 
 #if 0
     fprintf(stderr, "bufprint_string: '%s' ->\n '%s'\n", s, buf);
-#endif    
+#endif
 }
 
 #else
@@ -2036,7 +2058,7 @@ int column_width_from_list (const int *list, const DATASET *dset)
 
 /* print the series referenced in 'list' by observation */
 
-static int print_by_obs (int *list, const DATASET *dset, 
+static int print_by_obs (int *list, const DATASET *dset,
 			 gretlopt opt, int screenvar,
 			 PRN *prn)
 {
@@ -2078,7 +2100,7 @@ static int print_by_obs (int *list, const DATASET *dset,
 	}
 
 	varheading(blist, obslen, colwidth, dset, 0, prn);
-	
+
 	for (t=dset->t1; t<=dset->t2; t++) {
 	    if (screenvar && dset->Z[screenvar][t] == 0.0) {
 		/* screened out by boolean */
@@ -2111,8 +2133,8 @@ static int print_by_obs (int *list, const DATASET *dset,
 		}
 	    }
 	    pputc(prn, '\n');
-	} 
-    } 
+	}
+    }
 
     pputc(prn, '\n');
 
@@ -2121,7 +2143,7 @@ static int print_by_obs (int *list, const DATASET *dset,
     return err;
 }
 
-static int print_by_var (const int *list, const DATASET *dset, 
+static int print_by_var (const int *list, const DATASET *dset,
 			 gretlopt opt, PRN *prn)
 {
     int i, vi;
@@ -2160,7 +2182,7 @@ static int midas_print_list (const int *list,
 
     if (!err) {
 	int mlist[2] = {1, 0};
-	
+
 	err = print_by_obs(mlist, tmpset, OPT_NONE, 0, prn);
 	destroy_dataset(tmpset);
     }
@@ -2184,8 +2206,8 @@ static int midas_print_list (const int *list,
  * Returns: 0 on successful completion, non-zero code on error.
  */
 
-int printdata (const int *list, const char *mstr, 
-	       const DATASET *dset, 
+int printdata (const int *list, const char *mstr,
+	       const DATASET *dset,
 	       gretlopt opt, PRN *prn)
 {
     int screenvar = 0;
@@ -2211,7 +2233,7 @@ int printdata (const int *list, const char *mstr,
 	    }
 	} else {
 	    goto endprint;
-	} 
+	}
     } else {
 	plist = gretl_list_copy(list);
     }
@@ -2265,9 +2287,9 @@ int printdata (const int *list, const char *mstr,
     return err;
 }
 
-int print_series_with_format (const int *list, 
-			      const DATASET *dset, 
-			      char fmt, int digits, 
+int print_series_with_format (const int *list,
+			      const DATASET *dset,
+			      char fmt, int digits,
 			      PRN *prn)
 {
     int i, j, j0, v, t, k, nrem = 0;
@@ -2355,7 +2377,7 @@ int print_series_with_format (const int *list,
 		x = dset->Z[v][t];
 		if (na(x)) {
 		    bufspace(colwidths[j], prn);
-		} else { 
+		} else {
 		    sprintf(buf, format, x);
 		    if (fmt == 'g') {
 			/* post-process ugliness */
@@ -2397,7 +2419,7 @@ static void rtf_print_row_spec (int ncols, int type, PRN *prn)
 
     if (type == RTF_TRAILER) {
 	pputs(prn, "\\row }\n");
-    }    
+    }
 }
 
 /**
@@ -2410,17 +2432,17 @@ static void rtf_print_row_spec (int ncols, int type, PRN *prn)
  * @prn: gretl printing struct.
  *
  * Print the data for the variables in @list.  If @obsvec is not %NULL,
- * it should specify a sort order; the first element of @obsvec must 
- * contain the number of observations that follow.  By default, printing is 
- * plain text, formatted in columns using space characters, but if the @prn 
- * format is set to %GRETL_FORMAT_CSV then printing respects the user's 
+ * it should specify a sort order; the first element of @obsvec must
+ * contain the number of observations that follow.  By default, printing is
+ * plain text, formatted in columns using space characters, but if the @prn
+ * format is set to %GRETL_FORMAT_CSV then printing respects the user's
  * choice of column delimiter, and if the format is set to %GRETL_FORMAT_RTF
  * the data are printed as an RTF table.
  *
  * Returns: 0 on successful completion, non-zero code on error.
  */
 
-int print_data_in_columns (const int *list, const int *obsvec, 
+int print_data_in_columns (const int *list, const int *obsvec,
 			   const DATASET *dset, gretlopt opt,
 			   PRN *prn)
 {
@@ -2429,7 +2451,7 @@ int print_data_in_columns (const int *list, const int *obsvec,
     const char *csv_na = "";
     int print_obs = 1;
     char delim = 0;
-    int *pmax = NULL; 
+    int *pmax = NULL;
     double xx;
     char obs_string[OBSLEN];
     char buf[128];
@@ -2555,7 +2577,7 @@ int print_data_in_columns (const int *list, const int *obsvec,
 		    } else {
 			bufspace(colwidth, prn);
 		    }
-		} else { 
+		} else {
 		    if (rtf) {
 			bufprintnum(buf, xx, pmax[i-1], gprec, 0);
 			pprintf(prn, "\\qr %s\\cell ", buf);
@@ -2575,7 +2597,7 @@ int print_data_in_columns (const int *list, const int *obsvec,
 	} else {
 	    pputc(prn, '\n');
 	}
-    } 
+    }
 
     if (rtf) {
 	pputs(prn, "}\n");
@@ -2626,7 +2648,7 @@ static int print_fcast_stats (const FITRESID *fr, gretlopt opt,
     for (i=0; i<len; i++) {
 	x = gretl_vector_get(m, i);
 	if (!isnan(x)) {
-	    n = g_utf8_strlen(_(strs[i]), -1);	    
+	    n = g_utf8_strlen(_(strs[i]), -1);
 	    if (n > nmax) {
 		nmax = n;
 	    }
@@ -2646,7 +2668,7 @@ static int print_fcast_stats (const FITRESID *fr, gretlopt opt,
 	}
     }
     pputc(prn, '\n');
-    
+
     gretl_matrix_free(m);
 
     return err;
@@ -2655,7 +2677,7 @@ static int print_fcast_stats (const FITRESID *fr, gretlopt opt,
 #define SIGMA_MIN 1.0e-18
 
 int text_print_fit_resid (const FITRESID *fr,
-			  const DATASET *dset, 
+			  const DATASET *dset,
 			  PRN *prn)
 {
     int kstep = fr->method == FC_KSTEP;
@@ -2705,7 +2727,7 @@ int text_print_fit_resid (const FITRESID *fr,
 			fr->pmax, yt, fr->pmax, yf, fr->pmax, et,
 			(ast)? " *" : "");
 	    } else {
-		pprintf(prn, "%#*g%#13g%#13g%s\n", 
+		pprintf(prn, "%#*g%#13g%#13g%s\n",
 			ywidth, yt, yf, et,
 			(ast)? " *" : "");
 	    }
@@ -2743,11 +2765,11 @@ int text_print_fit_resid (const FITRESID *fr,
  * %OPT_F or %OPT_L may be given to use "fill" style or lines,
  * respectively, for the confidence bands (the default style
  * being vertical bars per observation).
- * 
+ *
  * Returns: 0 on success, non-zero error code on error.
  */
 
-int text_print_forecast (const FITRESID *fr, DATASET *dset, 
+int text_print_forecast (const FITRESID *fr, DATASET *dset,
 			 gretlopt opt, PRN *prn)
 {
     int do_errs = (fr->sderr != NULL);
@@ -2784,10 +2806,10 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
 
 	if (!quiet) {
 	    if (fr->asymp) {
-		pprintf(prn, _(" For %g%% confidence intervals, z(%g) = %.2f\n"), 
+		pprintf(prn, _(" For %g%% confidence intervals, z(%g) = %.2f\n"),
 			conf, a2, tval);
 	    } else {
-		pprintf(prn, _(" For %g%% confidence intervals, t(%d, %g) = %.3f\n"), 
+		pprintf(prn, _(" For %g%% confidence intervals, t(%d, %g) = %.3f\n"),
 			conf, fr->df, a2, tval);
 	    }
 	}
@@ -2883,7 +2905,7 @@ int text_print_forecast (const FITRESID *fr, DATASET *dset,
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int print_fit_resid (const MODEL *pmod, const DATASET *dset, 
+int print_fit_resid (const MODEL *pmod, const DATASET *dset,
 		     PRN *prn)
 {
     FITRESID *fr;
@@ -2922,13 +2944,13 @@ static void print_iter_val (double x, int i, int k, PRN *prn)
  * @sl: step length.
  * @prn: gretl printing struct.
  *
- * Print to @prn information pertaining to step @iter of an 
+ * Print to @prn information pertaining to step @iter of an
  * iterative estimation process.
  */
 
-void 
-print_iter_info (int iter, double crit, int type, int k, 
-		 const double *b, const double *g, 
+void
+print_iter_info (int iter, double crit, int type, int k,
+		 const double *b, const double *g,
 		 double sl, PRN *prn)
 {
     const char *cstrs[] = {
@@ -2961,7 +2983,7 @@ print_iter_info (int iter, double crit, int type, int k,
 
     if (sl > 0.0 && !na(sl)) {
 	pprintf(prn, _(" (steplength = %g)"), sl);
-    }	
+    }
 
     pputc(prn, '\n');
 
@@ -3038,7 +3060,7 @@ static readbuf *matching_buffer (const char *s)
  * bufgets_init:
  * @buf: source buffer.
  *
- * Initializes a text buffer for use with bufgets(). 
+ * Initializes a text buffer for use with bufgets().
  *
  * Returns: 0 on success, non-zero on error.
  */
@@ -3063,7 +3085,7 @@ int bufgets_init (const char *buf)
 	    rbuf[i].start = rbuf[i].point = buf;
 	    return 0;
 	}
-    }    
+    }
 
     tmp = realloc(rbuf, (n_bufs + 1) * sizeof *tmp);
 
@@ -3125,13 +3147,13 @@ void bufgets_finalize (const char *buf)
  * @size: maximum number of characters to read.
  * @buf: source buffer.
  *
- * This function works much like fgets, reading successive lines 
- * from a buffer rather than a file.  
- * Important note: use of bufgets() on a particular buffer must be 
+ * This function works much like fgets, reading successive lines
+ * from a buffer rather than a file.
+ * Important note: use of bufgets() on a particular buffer must be
  * preceded by a call to bufgets_init() on the same buffer, and must be
  * followed by a call to bufgets_finalize(), again on the same
  * buffer.
- * 
+ *
  * Returns: @s (or %NULL if nothing more can be read from @buf).
  */
 
@@ -3178,7 +3200,7 @@ char *bufgets (char *s, size_t size, const char *buf)
 	    break;
 	}
 	if (i == size - 1) {
-	    fprintf(stderr, "*** bufgets: line too long: max %d characters\n", 
+	    fprintf(stderr, "*** bufgets: line too long: max %d characters\n",
 		    (int) size);
 	    s[i] = '\0';
 	    fprintf(stderr, " '%.16s...'\n", s);
@@ -3208,7 +3230,7 @@ size_t bufgets_peek_line_length (const char *buf)
 {
     const char *p = rbuf_get_point(buf);
     size_t len = 0;
- 
+
     if (p == NULL || *p == '\0') {
 	return 0;
     }
@@ -3232,7 +3254,7 @@ size_t bufgets_peek_line_length (const char *buf)
  *
  * Buffer equivalent of fseek() with SEEK_SET.  Note that @buf
  * must first be initialized via bufgets_init().
- * 
+ *
  * Returns: 0 on success, 1 on error.
  */
 
@@ -3270,7 +3292,7 @@ void buf_rewind (const char *buf)
  * Moves the reading point of @buf for bufgets() back by @n lines,
  * if possible, or to the start of the buffer if @n is greater than
  * the number of previous lines.
- * 
+ *
  * Returns: 0 on success, 1 on error.
  */
 
@@ -3306,7 +3328,7 @@ int buf_back_lines (const char *buf, int n)
  *
  * Buffer equivalent of ftell.  Note that @buf
  * must first be initialized via bufgets_init().
- * 
+ *
  * Returns: offset from start of buffer.
  */
 

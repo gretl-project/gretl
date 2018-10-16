@@ -691,7 +691,7 @@ static int cli_open_append (CMD *cmd, DATASET *dset,
     data_status = 1;
 
     if (dset->v > 0 && !dbdata && !(opt & OPT_Q)) {
-	list_series(dset, prn);
+	list_series(dset, OPT_NONE, prn);
     }
 
     if (http) {

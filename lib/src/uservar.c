@@ -2388,7 +2388,7 @@ int list_user_vars_of_type (const DATASET *dset,
     }
 
     if (t == GRETL_TYPE_SERIES) {
-	list_series(dset, prn);
+	list_series(dset, OPT_NONE, prn);
     } else if (t == GRETL_TYPE_DOUBLE) {
 	print_scalars(prn);
     } else if (t == GRETL_TYPE_LIST ||
