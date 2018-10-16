@@ -6813,6 +6813,22 @@ static int add_empty_list (fncall *call, fn_param *fp,
     return err;
 }
 
+static void localize_list_members (fncall *call, int *list,
+				   DATASET *dset)
+{
+    int i, vi, level = fn_executing + 1;
+
+    for (i=1; i<=list[0]; i++) {
+	vi = list[i];
+	if (vi > 0) {
+	    if (!in_gretl_list(call->listvars, vi)) {
+		gretl_list_append_term(&call->listvars, vi);
+	    }
+	    series_set_stack_level(dset, vi, level);
+	}
+    }
+}
+
 static int localize_list (fncall *call, fn_arg *arg,
 			  fn_param *fp, DATASET *dset)
 {
@@ -6839,23 +6855,33 @@ static int localize_list (fncall *call, fn_arg *arg,
     }
 
     if (!err) {
-	int i, vi, level = fn_executing + 1;
-
-	for (i=1; i<=list[0]; i++) {
-	    vi = list[i];
-	    if (vi > 0) {
-		if (!in_gretl_list(call->listvars, vi)) {
-		    gretl_list_append_term(&call->listvars, vi);
-		}
-		series_set_stack_level(dset, vi, level);
-	    }
-	}
+	localize_list_members(call, list, dset);
     }
 
 #if UDEBUG
     fprintf(stderr, "localize_list (%s): returning %d\n",
 	    fp->name, err);
 #endif
+
+    return err;
+}
+
+static int localize_bundled_lists (fncall *call, fn_arg *arg,
+				   fn_param *fp, DATASET *dset)
+{
+    gretl_bundle *b = arg->val.b;
+    GList *ll = gretl_bundle_get_lists(b);
+    int err = 0;
+
+    if (ll != NULL) {
+	GList *lli = g_list_first(ll);
+
+	while (lli != NULL) {
+	    localize_list_members(call, lli->data, dset);
+	    lli = g_list_next(lli);
+	}
+	g_list_free(ll);
+    }
 
     return err;
 }
@@ -7183,6 +7209,10 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 	    if (!err) {
 		maybe_set_arg_const(arg, fp);
 	    }
+	}
+	if (!err && (fp->type == GRETL_TYPE_BUNDLE ||
+		     fp->type == GRETL_TYPE_BUNDLE_REF)) {
+	    err = localize_bundled_lists(call, arg, fp, dset);
 	}
     }
 
@@ -8975,7 +9005,7 @@ int series_is_accessible_in_function (int ID)
     int ret = 1;
 
     /* FIXME!! */
-    return 1;
+    // return 1;
 
     if (fc != NULL) {
 	/* assume not accessible without contrary evidence */

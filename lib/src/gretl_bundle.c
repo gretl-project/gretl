@@ -107,6 +107,29 @@ int gretl_bundle_get_n_members (gretl_bundle *b)
     return nmemb;
 }
 
+static void maybe_append_list (gpointer key, gpointer value, gpointer p)
+{
+    bundled_item *item = (bundled_item *) value;
+    GList **plist = (GList **) p;
+
+    if (item->type == GRETL_TYPE_LIST) {
+	*plist = g_list_append(*plist, item->data);
+    }
+}
+
+/* If bundle @b contains any members of type list, compose
+   and return a GList that contains all of them.
+*/
+
+GList *gretl_bundle_get_lists (gretl_bundle *b)
+{
+    GList *list = NULL;
+
+    g_hash_table_foreach(b->ht, maybe_append_list, &list);
+
+    return list;
+}
+
 int gretl_bundle_has_content (gretl_bundle *b)
 {
     int ret = 0;
