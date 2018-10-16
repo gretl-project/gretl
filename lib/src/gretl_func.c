@@ -8975,7 +8975,7 @@ int series_is_accessible_in_function (int ID)
 	/* assume not accessible without contrary evidence */
 	ret = 0;
 	if (ID == 0) {
-	    /* the constant */
+	    /* the constant, always OK */
 	    ret = 1;
 	} else if (ID >= fc->orig_v) {
 	    /* the series post-dates the start of execution */
