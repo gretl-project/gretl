@@ -8974,7 +8974,10 @@ int series_is_accessible_in_function (int ID)
     if (fc != NULL) {
 	/* assume not accessible without contrary evidence */
 	ret = 0;
-	if (ID >= fc->orig_v) {
+	if (ID == 0) {
+	    /* the constant */
+	    ret = 1;
+	} else if (ID >= fc->orig_v) {
 	    /* the series post-dates the start of execution */
 	    ret = 1;
 	} else if (in_gretl_list(fc->listvars, ID)) {
