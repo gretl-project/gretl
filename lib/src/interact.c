@@ -1942,7 +1942,7 @@ static int lib_open_append (ExecState *s,
     }
 
     if (dset->v > 0 && !dbdata && !quiet) {
-	list_series(dset, prn);
+	list_series(dset, OPT_NONE, prn);
     }
 
     if (http) {
@@ -3056,7 +3056,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	} else if (cmd->opt & OPT_A) {
 	    list_ok_dollar_vars(dset, prn);
 	} else {
-	    list_series(dset, prn);
+	    list_series(dset, cmd->opt, prn);
 	}
 	break;
 
