@@ -1308,7 +1308,7 @@ static int get_mle_gradient (double *b, double *g, int n,
 		fprintf(stderr, "NA in gradient calculation\n");
 		err = 1;
 	    } else {
-		g[i] = x;
+		g[i++] = x;
 	    }
 	} else {
 	    /* the derivative must be a series */
