@@ -4140,6 +4140,17 @@ void series_decrement_stack_level (DATASET *dset, int i)
     dset->varinfo[i]->stack_level -= 1;
 }
 
+void series_ensure_level_zero (DATASET *dset)
+{
+    if (dset != NULL) {
+	int i;
+
+	for (i=1; i<dset->v; i++) {
+	    dset->varinfo[i]->stack_level = 0;
+	}
+    }
+}
+
 void series_attach_string_table (DATASET *dset, int i, void *ptr)
 {
     if (dset != NULL && i > 0 && i < dset->v) {

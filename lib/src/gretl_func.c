@@ -731,6 +731,9 @@ static void set_executing_off (fncall *call, DATASET *dset, PRN *prn)
     if (popcall == NULL) {
 	/* returning to main */
 	switch_uservar_hash(0);
+	if (dset != NULL) {
+	    series_ensure_level_zero(dset);
+	}
     }
 
     if (dbg) {
@@ -8971,11 +8974,14 @@ int series_is_accessible_in_function (int ID)
     fncall *fc = current_function_call();
     int ret = 1;
 
+    /* FIXME!! */
+    return 1;
+
     if (fc != NULL) {
 	/* assume not accessible without contrary evidence */
 	ret = 0;
-	if (ID == 0) {
-	    /* the constant, always OK */
+	if (ID == 0 || ID == LISTSEP) {
+	    /* the constant, always OK; also LISTSEP */
 	    ret = 1;
 	} else if (ID >= fc->orig_v) {
 	    /* the series post-dates the start of execution */
