@@ -176,9 +176,22 @@ static int vec_is_exclusion (const gretl_matrix *m, int n,
 static int bad_sel_vector (const gretl_matrix *v, int n)
 {
     int i, len = gretl_vector_get_length(v);
+    int exclude = 0;
+    int vvi, neg = 0;
 
     for (i=0; i<len; i++) {
-	if (v->val[i] < 1 || v->val[i] > n) {
+	if (v->val[i] < 0) {
+	    neg++;
+	}
+    }
+
+    if (neg == len) {
+	exclude = 1;
+    }
+
+    for (i=0; i<len; i++) {
+	vvi = exclude ? -v->val[i] : v->val[i];
+	if (vvi < 1 || vvi > n) {
 	    gretl_errmsg_sprintf(_("Index value %g is out of bounds"),
 				 v->val[i]);
 	    return E_INVARG;
@@ -413,16 +426,19 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
     int err = 0;
 
 #if CONTIG_DEBUG
-    fprintf(stderr, "types = (%d,%d), ",  spec->type[0], spec->type[1]);
+    fprintf(stderr, "check_matrix_subspec: types = (%d,%d), ",
+	    spec->type[0], spec->type[1]);
     if (spec->type[0] == SEL_MATRIX) {
 	fputs("vector sel, ", stderr);
     } else if (spec->type[0] != SEL_NULL) {
-	fprintf(stderr, "S0 = (%d,%d), ", spec->sel[0].range[0], spec->sel[0].range[1]);
+	fprintf(stderr, "S0 = (%d,%d), ", spec->sel[0].range[0],
+		spec->sel[0].range[1]);
     }
     if (spec->type[1] == SEL_MATRIX) {
 	fputs("vector sel, ", stderr);
     } else if (spec->type[1] != SEL_NULL) {
-	fprintf(stderr, "S1 = (%d,%d), ", spec->sel[1].range[0], spec->sel[1].range[1]);
+	fprintf(stderr, "S1 = (%d,%d), ", spec->sel[1].range[0],
+		spec->sel[1].range[1]);
     }
     fprintf(stderr, "m is %d x %d\n", m->rows, m->cols);
     fprintf(stderr, "lh scalar %d, rh scalar %d\n",
