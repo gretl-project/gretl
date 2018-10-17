@@ -985,28 +985,6 @@ int fn_param_optional (const ufunc *fun, int i)
 }
 
 /**
- * fn_param_set_const:
- * @fun: pointer to user-function.
- * @i: 0-based parameter index.
- *
- * Returns: 0 on successful setting of the "const" flag
- * on parameter @i of function @fun, otherwise non-zero
- * error code.
- */
-
-int fn_param_set_const (ufunc *fun, int i)
-{
-    if (fun == NULL || i < 0 || i >= fun->n_params) {
-	return E_INVARG;
-    } else {
-	if (gretl_ref_type(fun->params[i].type)) {
-	    fun->params[i].flags |= ARG_CONST;
-	}
-	return 0;
-    }
-}
-
-/**
  * fn_param_uses_xlist:
  * @fun: pointer to user-function.
  * @i: 0-based parameter index.
@@ -6781,6 +6759,19 @@ int gretl_function_append_line (const char *line)
 
 /* next block: handling function arguments */
 
+static void maybe_set_arg_const (fn_arg *arg, fn_param *fp)
+{
+    if (fp->flags & ARG_CONST) {
+	/* param is marked CONST directly */
+	arg->name = fp->name;
+	arg->flags |= ARG_CONST;
+    } else if (object_is_const(arg->upname)) {
+	/* param is CONST by inheritance */
+	arg->name = fp->name;
+	arg->flags |= ARG_CONST;
+    }
+}
+
 /* Given a list of variables supplied as an argument to a function,
    copy the list under the name assigned by the function and
    make the variables referenced in that list accessible within
@@ -6855,6 +6846,7 @@ static int localize_list (fncall *call, fn_arg *arg,
     }
 
     if (!err) {
+	maybe_set_arg_const(arg, fp);
 	localize_list_members(call, list, dset);
     }
 
@@ -6884,19 +6876,6 @@ static int localize_bundled_lists (fncall *call, fn_arg *arg,
     }
 
     return err;
-}
-
-static void maybe_set_arg_const (fn_arg *arg, fn_param *fp)
-{
-    if (fp->flags & ARG_CONST) {
-	/* param is marked CONST directly */
-	arg->name = fp->name;
-	arg->flags |= ARG_CONST;
-    } else if (object_is_const(arg->upname)) {
-	/* param is CONST by inheritance */
-	arg->name = fp->name;
-	arg->flags |= ARG_CONST;
-    }
 }
 
 static void *arg_get_data (fn_arg *arg, GretlType type)
@@ -8903,6 +8882,7 @@ char *gretl_func_get_arg_name (const char *argvar, int *err)
 int object_is_const (const char *name)
 {
     fncall *call = current_function_call();
+    int ret = 0;
 
     if (call != NULL && name != NULL) {
 	int i, n = call->argc;
@@ -8911,12 +8891,13 @@ int object_is_const (const char *name)
 	    const char *aname = call->args[i].name;
 
 	    if (aname != NULL && !strcmp(name, aname)) {
-		return call->args[i].flags & ARG_CONST;
+		ret = call->args[i].flags & ARG_CONST;
+		break;
 	    }
 	}
     }
 
-    return 0;
+    return ret;
 }
 
 /**

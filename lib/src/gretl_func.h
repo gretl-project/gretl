@@ -116,8 +116,6 @@ int fn_param_uses_xlist (const ufunc *fun, int i);
 
 int fn_param_uses_mylist (const ufunc *fun, int i);
 
-int fn_param_set_const (ufunc *fun, int i);
-
 int user_func_get_return_type (const ufunc *fun);
 
 int user_func_is_noprint (const ufunc *fun);
