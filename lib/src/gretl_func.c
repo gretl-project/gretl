@@ -6759,7 +6759,7 @@ int gretl_function_append_line (const char *line)
 
 /* next block: handling function arguments */
 
-static void maybe_set_arg_const (fn_arg *arg, fn_param *fp)
+static int maybe_set_arg_const (fn_arg *arg, fn_param *fp)
 {
     if (fp->flags & ARG_CONST) {
 	/* param is marked CONST directly */
@@ -6770,6 +6770,8 @@ static void maybe_set_arg_const (fn_arg *arg, fn_param *fp)
 	arg->name = fp->name;
 	arg->flags |= ARG_CONST;
     }
+
+    return arg->flags & ARG_CONST;
 }
 
 /* Given a list of variables supplied as an argument to a function,
@@ -8985,7 +8987,7 @@ int series_is_accessible_in_function (int ID, const DATASET *dset)
     fncall *fc = current_function_call();
     int ret = 1;
 
-    /* FIXME!! */
+    /* FIXME!? */
     return 1; /* temporary reprieve for packages */
 
     if (fc != NULL) {
