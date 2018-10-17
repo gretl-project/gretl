@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "uservar.h"
+#include "gretl_func.h"
 #include "matrix_extra.h"
 
 #define TRDEBUG 0
@@ -678,12 +679,22 @@ check_add_transform (int ci, int lag, int vnum, const double *x,
     return ret;
 }
 
+#define RESPECT_LAG_LEVEL 1
+
 static int get_lag_ID (int srcv, int lag, const DATASET *dset)
 {
+#if RESPECT_LAG_LEVEL
+    int fd = gretl_function_depth();
+#endif
     const char *parent, *vname = dset->varname[srcv];
     int i;
 
     for (i=1; i<dset->v; i++) {
+#if RESPECT_LAG_LEVEL
+	if (series_get_stack_level(dset, i) != fd) {
+	    continue;
+	}
+#endif
 	if (lag == series_get_lag(dset, i)) {
 	    parent = series_get_parent_name(dset, i);
 	    if (parent != NULL && !strcmp(vname, parent)) {
@@ -2201,7 +2212,3 @@ int list_makediscrete (const int *list, DATASET *dset, gretlopt opt)
 
     return err;
 }
-
-
-
-
