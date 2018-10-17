@@ -8999,7 +8999,7 @@ void sample_range_get_extrema (const DATASET *dset, int *t1, int *t2)
  * otherwise 0.
  */
 
-int series_is_accessible_in_function (int ID)
+int series_is_accessible_in_function (int ID, const DATASET *dset)
 {
     fncall *fc = current_function_call();
     int ret = 1;
@@ -9026,7 +9026,8 @@ int series_is_accessible_in_function (int ID)
     }
 
     if (ret == 0) {
-	gretl_errmsg_sprintf("Series %d is not accessible", ID);
+	gretl_errmsg_sprintf("Series %d (%s) is not accessible",
+			     ID, dset->varname[ID]);
     }
 
     return ret;

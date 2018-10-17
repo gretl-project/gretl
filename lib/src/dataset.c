@@ -4127,17 +4127,23 @@ void series_set_lag (DATASET *dset, int i, int lag)
 
 void series_set_stack_level (DATASET *dset, int i, int level)
 {
-    dset->varinfo[i]->stack_level = level;
+    if (i > 0 && i < dset->v) {
+	dset->varinfo[i]->stack_level = level;
+    }
 }
 
 void series_increment_stack_level (DATASET *dset, int i)
 {
-    dset->varinfo[i]->stack_level += 1;
+    if (i > 0 && i < dset->v) {
+	dset->varinfo[i]->stack_level += 1;
+    }
 }
 
 void series_decrement_stack_level (DATASET *dset, int i)
 {
-    dset->varinfo[i]->stack_level -= 1;
+    if (i > 0 && i < dset->v) {
+	dset->varinfo[i]->stack_level -= 1;
+    }
 }
 
 void series_ensure_level_zero (DATASET *dset)

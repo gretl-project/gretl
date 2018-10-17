@@ -149,7 +149,9 @@ static char *get_opstr (int op);
 
 static int ok_list_node (NODE *n, parser *p)
 {
-    if (n->t == LIST) {
+    if (n == NULL) {
+	return 0;
+    } else if (n->t == LIST) {
 	return 1;
     } else if (n->t == SERIES && n->vnum >= 0) {
 	/* can interpret as singleton list */
@@ -9931,7 +9933,7 @@ static int set_list_value (NODE *lhs, NODE *rhs, parser *p)
 	    gretl_errmsg_set(_("Invalid list element"));
 	    p->err = E_DATA;
 	} else if (gretl_function_depth() > 0) {
-	    if (!series_is_accessible_in_function(v)) {
+	    if (!series_is_accessible_in_function(v, p->dset)) {
 		p->err = E_DATA;
 	    }
 	}
@@ -17210,10 +17212,11 @@ static int create_or_edit_list (parser *p)
 #endif
 
     if (gretl_function_depth() > 0) {
-	int i;
+	int i, vi;
 
 	for (i=1; i<=list[0]; i++) {
-	    if (!series_is_accessible_in_function(list[i])) {
+	    vi = list[i];
+	    if (!series_is_accessible_in_function(vi, p->dset)) {
 		p->err = E_DATA;
 		break;
 	    }

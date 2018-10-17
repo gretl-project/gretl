@@ -174,7 +174,7 @@ int object_is_function_arg (const char *name);
 
 void allow_full_data_access (int s);
 
-int series_is_accessible_in_function (int ID);
+int series_is_accessible_in_function (int ID, const DATASET *dset);
 
 void sample_range_get_extrema (const DATASET *dset, int *t1, int *t2);
 
