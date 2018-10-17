@@ -8986,7 +8986,7 @@ int series_is_accessible_in_function (int ID, const DATASET *dset)
     int ret = 1;
 
     /* FIXME!! */
-    // return 1;
+    return 1; /* temporary reprieve for packages */
 
     if (fc != NULL) {
 	/* assume not accessible without contrary evidence */
