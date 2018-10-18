@@ -4149,10 +4149,16 @@ void series_decrement_stack_level (DATASET *dset, int i)
 void series_ensure_level_zero (DATASET *dset)
 {
     if (dset != NULL) {
-	int i;
+	int i, n = 0;
 
 	for (i=1; i<dset->v; i++) {
-	    dset->varinfo[i]->stack_level = 0;
+	    if (dset->varinfo[i]->stack_level > 0) {
+		dset->varinfo[i]->stack_level = 0;
+		n++;
+	    }
+	}
+	if (n > 0) {
+	    fprintf(stderr, "Unauthorized access to series detected!\n");
 	}
     }
 }
