@@ -6848,7 +6848,15 @@ static int localize_list (fncall *call, fn_arg *arg,
     }
 
     if (!err) {
+	/* 2018-10-18: comment this out for now, as it
+	   breaks a few function packages, and also it's
+	   kinda redundant since when a list given as an
+	   argument is modified within a function the
+	   changes do not propagate back to the caller.
+	*/
+#if 0
 	maybe_set_arg_const(arg, fp);
+#endif
 	localize_list_members(call, list, dset);
     }
 
