@@ -9932,12 +9932,16 @@ static int set_list_value (NODE *lhs, NODE *rhs, parser *p)
 	if (v < 0 || v >= p->dset->v) {
 	    gretl_errmsg_set(_("Invalid list element"));
 	    p->err = E_DATA;
-	} else if (gretl_function_depth() > 0) {
-	    if (!series_is_accessible_in_function(v, p->dset)) {
-		p->err = E_DATA;
-	    }
 	}
     }
+
+#if 0 /* we're not applying this check (yet?) */
+    if (!p->err && gretl_function_depth() > 0) {
+	if (!series_is_accessible_in_function(v, p->dset)) {
+	    p->err = E_DATA;
+	}
+    }
+#endif
 
     if (!p->err) {
 	list[idx] = v;
@@ -17218,6 +17222,7 @@ static int create_or_edit_list (parser *p)
     printlist(list, "incoming list in edit_list()");
 #endif
 
+#if 0 /* we'e not applying the following check (yet?) */
     if (gretl_function_depth() > 0) {
 	int i, vi;
 
@@ -17229,6 +17234,7 @@ static int create_or_edit_list (parser *p)
 	    }
 	}
     }
+#endif
 
     if (!p->err) {
 	if (p->lh.t != LIST) {

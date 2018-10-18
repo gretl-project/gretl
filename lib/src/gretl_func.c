@@ -9015,7 +9015,8 @@ int series_is_accessible_in_function (int ID, const DATASET *dset)
        for now (as of 2018-10-18) we will not attempt to
        screen access to series in this way. However, we do
        strive to ensure that series are treated as read-only
-       when they ought to be.
+       when they ought to be. See geneval.c for (potential)
+       uses of this check, currently def'd out.
     */
 #if 1
     return 1; /* allow all */
