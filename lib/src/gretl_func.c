@@ -6765,7 +6765,7 @@ static int maybe_set_arg_const (fn_arg *arg, fn_param *fp)
 	/* param is marked CONST directly */
 	arg->name = fp->name;
 	arg->flags |= ARG_CONST;
-    } else if (object_is_const(arg->upname)) {
+    } else if (object_is_const(arg->upname, -1)) {
 	/* param is CONST by inheritance */
 	arg->name = fp->name;
 	arg->flags |= ARG_CONST;
@@ -8872,32 +8872,53 @@ char *gretl_func_get_arg_name (const char *argvar, int *err)
 
 /**
  * object_is_const:
- * @name: name of object (e.g. matrix).
+ * @name: name of object.
+ * @vnum: ID number (specific to objects of type series).
  *
  * Checks whether the named object currently has 'const' status,
  * by virtue of its being made available as a const argument
- * to a user-defined function.
+ * to a user-defined function. Note that @name is the name by
+ * which the object is known within the function, which will
+ * likely differ from its name in the caller.
  *
  * Returns: non-zero if the object is const, 0 if it is not.
  */
 
-int object_is_const (const char *name)
+int object_is_const (const char *name, int vnum)
 {
     fncall *call = current_function_call();
     int ret = 0;
 
-    if (call != NULL && name != NULL) {
-	int i, n = call->argc;
+    if (call != NULL) {
+	if (name != NULL) {
+	    const char *aname;
+	    int i;
 
-	for (i=0; i<n; i++) {
-	    const char *aname = call->args[i].name;
-
-	    if (aname != NULL && !strcmp(name, aname)) {
-		ret = call->args[i].flags & ARG_CONST;
-		break;
+	    for (i=0; i<call->argc; i++) {
+		aname = call->args[i].name;
+		if (aname != NULL && !strcmp(name, aname)) {
+		    ret = call->args[i].flags & ARG_CONST;
+		    break;
+		}
+	    }
+	}
+	if (!ret && vnum > 0 && vnum < call->orig_v) {
+	    /* We're looking at a series that is not local to
+	       the called function, but not yet identified as
+	       read-only. It probably _should_ be read-only
+	       unless it was given in pointer form.
+	       Note: this check added 2018-10-18.
+	    */
+	    if (!in_gretl_list(call->ptrvars, vnum)) {
+		ret = 1;
 	    }
 	}
     }
+
+#if 0
+    fprintf(stderr, "object_is_const? (%s, %d): %d\n",
+	    name, vnum, ret);
+#endif
 
     return ret;
 }
@@ -8917,11 +8938,11 @@ int object_is_function_arg (const char *name)
     fncall *call = current_function_call();
 
     if (call != NULL) {
-	int i, n = call->argc;
+	const char *aname;
+	int i;
 
-	for (i=0; i<n; i++) {
-	    const char *aname = call->args[i].name;
-
+	for (i=0; i<call->argc; i++) {
+	    aname = call->args[i].name;
 	    if (aname != NULL && !strcmp(name, aname)) {
 		return 1;
 	    }

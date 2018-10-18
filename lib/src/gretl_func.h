@@ -166,7 +166,7 @@ int current_function_size (void);
 
 char *gretl_func_get_arg_name (const char *argvar, int *err);
 
-int object_is_const (const char *name);
+int object_is_const (const char *name, int vnum);
 
 int object_is_function_arg (const char *name);
 

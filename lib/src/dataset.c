@@ -1619,7 +1619,7 @@ int dataset_rename_series (DATASET *dset, int v, const char *name)
 	err = E_DATA;
     }
 
-    if (!err && (object_is_const(dset->varname[v]) ||
+    if (!err && (object_is_const(dset->varname[v], v) ||
 		 series_is_parent(dset, v))) {
 	err = overwrite_err(dset->varname[v]);
     }
@@ -1657,7 +1657,7 @@ int dataset_replace_series (DATASET *dset, int v,
 	return E_DATA;
     }
 
-    if (object_is_const(dset->varname[v]) ||
+    if (object_is_const(dset->varname[v], v) ||
 	series_is_parent(dset, v)) {
 	return overwrite_err(dset->varname[v]);
     }
@@ -1709,7 +1709,7 @@ int dataset_replace_series_data (DATASET *dset, int v,
 	return E_DATA;
     }
 
-    if (object_is_const(dset->varname[v]) ||
+    if (object_is_const(dset->varname[v], v) ||
 	series_is_parent(dset, v)) {
 	return overwrite_err(dset->varname[v]);
     }
@@ -1770,7 +1770,7 @@ static int real_drop_listed_vars (int *list, DATASET *dset,
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
 	if (v > 0 && v < oldv) {
-	    if (object_is_const(dset->varname[v])) {
+	    if (object_is_const(dset->varname[v], v)) {
 		return overwrite_err(dset->varname[v]);
 	    }
 	    if (v < delmin) {

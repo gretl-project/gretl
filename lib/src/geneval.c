@@ -10015,7 +10015,10 @@ static int set_series_obs_value (NODE *lhs, NODE *rhs, parser *p)
     v = lh1->vnum;
     if (v <= 0 || v >= p->dset->v) {
 	return E_DATA;
+    } else if (object_is_const(NULL, v)) {
+	return overwrite_err(p->dset->varname[v]);
     }
+
     if (lh2->t == MSPEC) {
 	t = mspec_get_series_index(lh2->v.mspec, p);
     } else {
@@ -16437,9 +16440,13 @@ static int overwrite_type_check (parser *p)
     return err;
 }
 
-static int overwrite_const_check (const char *s)
+static int overwrite_const_check (const char *name, int vnum)
 {
-    return object_is_const(s) ? overwrite_err(s) : 0;
+    if (object_is_const(name, vnum)) {
+	return overwrite_err(name);
+    } else {
+	return 0;
+    }
 }
 
 /* Check that we're not trying to modify a const object
@@ -16465,7 +16472,7 @@ static int compound_const_check (NODE *lhs, parser *p)
 
     /* do we have a const object at the tip of the tree? */
     if (n->vname != NULL) {
-	err = overwrite_const_check(n->vname);
+	err = overwrite_const_check(n->vname, n->vnum);
     }
 
     return err;
@@ -16726,7 +16733,7 @@ static void gen_preprocess (parser *p, int flags)
 	}
     } else {
 	/* pre-existing var: check for const-ness */
-	p->err = overwrite_const_check(p->lh.name);
+	p->err = overwrite_const_check(p->lh.name, p->lh.vnum);
     }
 
     if (p->err) {

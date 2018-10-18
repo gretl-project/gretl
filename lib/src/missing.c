@@ -563,7 +563,7 @@ int set_miss (const int *list, const char *param,
     } else {
 	for (i=1; i<=list[0]; i++) {
 	    vi = list[i];
-	    if (vi == 0 || object_is_const(dset->varname[vi])) {
+	    if (vi == 0 || object_is_const(dset->varname[vi], vi)) {
 		gretl_errmsg_sprintf(_("The variable %s is read-only"),
 				     dset->varname[vi]);
 		err = E_DATA;
