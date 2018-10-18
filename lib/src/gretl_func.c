@@ -6782,11 +6782,9 @@ static int maybe_set_arg_const (fn_arg *arg, fn_param *fp)
    purposes of the function.
 */
 
-/* Missing or "null" arg -> gives an empty list,
-   rather than no list.
-
-   This is traditional behavior though it's (now)
-   inconsistent with what happens with other types
+/* Missing or "null" arg -> gives an empty list, rather
+   than no list. This is traditional behavior though it's
+   (now) inconsistent with what happens with other types
    of argument.
 */
 
@@ -6945,7 +6943,7 @@ static int localize_const_object (fncall *call, int i, fn_param *fp)
 	   the duration of the function call, but note
 	   that we can do this only once for any given
 	   object.
-	 */
+	*/
 	user_var *thisvar = arg->uvar;
 	int j, done = 0;
 
@@ -9013,11 +9011,17 @@ void sample_range_get_extrema (const DATASET *dset, int *t1, int *t2)
 
 int series_is_accessible_in_function (int ID, const DATASET *dset)
 {
+    /* This is harder to get right than one might think, and
+       for now (as of 2018-10-18) we will not attempt to
+       screen access to series in this way. However, we do
+       strive to ensure that series are treated as read-only
+       when they ought to be.
+    */
+#if 1
+    return 1; /* allow all */
+#else
     fncall *fc = current_function_call();
     int ret = 1;
-
-    /* FIXME!? */
-    return 1; /* temporary reprieve for packages */
 
     if (fc != NULL) {
 	/* assume not accessible without contrary evidence */
@@ -9043,6 +9047,7 @@ int series_is_accessible_in_function (int ID, const DATASET *dset)
     }
 
     return ret;
+#endif
 }
 
 /**
