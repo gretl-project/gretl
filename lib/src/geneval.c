@@ -17222,12 +17222,16 @@ static int create_or_edit_list (parser *p)
     printlist(list, "incoming list in edit_list()");
 #endif
 
-#if 0 /* we'e not applying the following check (yet?) */
+#if 0 /* we're not applying the following check (yet?) */
     if (gretl_function_depth() > 0) {
 	int i, vi;
 
 	for (i=1; i<=list[0]; i++) {
 	    vi = list[i];
+	    if (vi < 0 || vi >= p->dset->v) {
+		/* this error will be caught below */
+		break;
+	    }
 	    if (!series_is_accessible_in_function(vi, p->dset)) {
 		p->err = E_DATA;
 		break;
