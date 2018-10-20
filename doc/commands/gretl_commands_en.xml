@@ -7021,6 +7021,10 @@
 	  <flag>--quiet</flag>
 	  <effect>suppress printing of results</effect>
 	</option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>print per-unit results</effect>
+	</option>
       </options>
       <examples>
 	<example>levinlin 0 y</example>
@@ -7039,7 +7043,6 @@
 	although in other respects the statistical properties of the
 	series are allowed to vary across individuals.)
       </para>
-
       <para context="cli">
 	By default the test ADF regressions include a constant;
 	to suppress the constant use the <opt>nc</opt> option, or
@@ -7047,7 +7050,6 @@
 	(See the <cmdref targ="adf"/> command for explanation of
 	ADF regressions.)
       </para>
-
       <para context="cli">
 	The (non-negative) <repl>order</repl> for the test (governing
 	the number of lags of the dependent variable to include in the
@@ -7060,7 +7062,18 @@
 	name, or constructed using braces as illustrated in the
 	last example above.
       </para>
-
+      <para context="cli">
+	When the <opt>verbose</opt> option is given, the following
+	results are printed for each unit in the panel:
+	<lit>delta</lit>, the coefficient on the lagged level in each
+	ADF regression; <lit>s2e</lit>, the estimated variance of the
+	innovations; and <lit>s2y</lit>, the estimated long-run
+	variance of the differenced series.
+      </para>
+      <para>
+	Note that panel unit-root tests can also be conducted using
+	the <cmdref targ="adf"/> and <cmdref targ="kpss"/> commands.
+      </para>
     </description>
 
     <gui-access>

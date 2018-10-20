@@ -1238,17 +1238,20 @@ static int levin_lin_get_options (const char *title,  int panel,
 				  gretlopt *popt)
 {
     const char *opts[] = {
+	/* check-box item */
+        N_("show individual results"),
 	/* radio-button items */
 	N_("test without constant"),
 	N_("with constant"),
 	N_("with constant and trend")
     };
     static int llc_case = 1;
+    static int active = 1;
     gretlopt opt = OPT_NONE;
     int retval;
 
     retval = checks_dialog(_(title), NULL,
-			   opts, 0, NULL, 0, 0,
+			   opts, 1, &active, 0, 0,
 			   3, &llc_case, order,
 			   _("Lag order for ADF test:"),
 			   0, omax, LEVINLIN, NULL);
@@ -1256,7 +1259,8 @@ static int levin_lin_get_options (const char *title,  int panel,
     if (retval == 0) {
 	/* OK */
 	if (llc_case == 0) opt |= OPT_N; /* no const */
-	if (llc_case == 2) opt |= OPT_T; /* trend */
+        if (llc_case == 2) opt |= OPT_T; /* trend */
+	if (active) opt |= OPT_V; /* verbose */
 	*popt = opt;
     }
 
