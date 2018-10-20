@@ -333,6 +333,7 @@ struct gretl_option gretl_opts[] = {
     { LEVERAGE, OPT_U, "plot", 2 },
     { LEVINLIN, OPT_N, "nc", 0 },
     { LEVINLIN, OPT_T, "ct", 0 },
+    { LEVINLIN, OPT_V, "verbose", 0 },
     { MAKEPKG,  OPT_D, "dtd", 2 },
     { MAKEPKG,  OPT_I, "index", 0 },
     { MAKEPKG,  OPT_T, "translations", 0 },

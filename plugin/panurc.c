@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -35,7 +35,7 @@
 */
 
 static int get_LLC_corrections (int T, int k, double *mu, double *sigma)
-{   
+{
     const double LLCfac[] = {
       /*  T    mu1     s1     mu2     s2     mu3     s3 */
 	 25, 0.004, 1.049, -0.554, 0.919, -0.703, 1.003,
@@ -141,7 +141,7 @@ static double LLC_lrvar (gretl_matrix *vdy, int K, int m, int *err)
 	for (t=0; t<T; t++) {
 	    dy[t] -= dybar;
 	}
-    }	
+    }
 
     for (t=0; t<T; t++) {
 	s21 += dy[t] * dy[t];
@@ -179,7 +179,7 @@ static int LLC_check_plist (const int *list, int N, int *pmax, int *pmin,
 	    if (list[i] < 0) {
 		err = E_DATA;
 		break;
-	    } 
+	    }
 	    if (list[i] > *pmax) {
 		*pmax = list[i];
 	    }
@@ -247,14 +247,15 @@ static const char *DF_test_spec (int m)
 
 /* Levin-Lin-Chu panel unit-root test */
 
-int real_levin_lin (int vnum, const int *plist, DATASET *dset, 
+int real_levin_lin (int vnum, const int *plist, DATASET *dset,
 		    gretlopt opt, PRN *prn)
 {
+    int verbose = opt & OPT_V;
     int u0 = dset->t1 / dset->pd;
     int uN = dset->t2 / dset->pd;
     int N = uN - u0 + 1; /* units in sample range */
     gretl_matrix_block *B;
-    gretl_matrix *y, *yavg, *b;
+    gretl_matrix *y, *b;
     gretl_matrix *dy, *X, *ui;
     gretl_matrix *e, *ei, *v, *vi;
     gretl_matrix *eps;
@@ -265,7 +266,7 @@ int real_levin_lin (int vnum, const int *plist, DATASET *dset,
     int p, pmax, pmin;
     int bigrow, p_varies = 0;
     int err;
-    
+
     err = LLC_check_plist(plist, N, &pmax, &pmin, &pbar);
 
     if (err) {
@@ -292,9 +293,9 @@ int real_levin_lin (int vnum, const int *plist, DATASET *dset,
     k = m + pmax;
 
     t1 = t2 = 0;
-    
+
     /* check that we have a useable common sample */
-    
+
     for (i=0; i<N && !err; i++) {
 	int pt1 = (i + u0) * dset->pd;
 	int t1i, t2i;
@@ -315,7 +316,7 @@ int real_levin_lin (int vnum, const int *plist, DATASET *dset,
 
     if (!err) {
 	err = LLC_sample_check(N, t1, t2, m, plist, &NT);
-    } 
+    }
 
     if (!err) {
 	int Tbar = NT / N;
@@ -327,13 +328,12 @@ int real_levin_lin (int vnum, const int *plist, DATASET *dset,
 	K = (int) floor(3.21 * pow(Tbar, 1.0/3));
 	if (K > Tbar - 3) {
 	    K = Tbar - 3;
-	}	
+	}
 
 	/* full length of dy vector */
 	dyT = t2 - t1;
 
 	B = gretl_matrix_block_new(&y, T, 1,
-				   &yavg, T+1+p, 1,
 				   &dy, dyT, 1,
 				   &X, T, k,
 				   &b, k, 1,
@@ -365,28 +365,19 @@ int real_levin_lin (int vnum, const int *plist, DATASET *dset,
 	for (t=0; t<T; t++) {
 	    gretl_matrix_set(X, t, 1, t+1);
 	}
-    }    
-
-    gretl_matrix_zero(yavg);
-
-    /* compute period sums of y for time-demeaning */
-
-    for (i=0; i<N; i++) {
-	pt1 = t1 + (i + u0) * dset->pd;
-	pt2 = t2 + (i + u0) * dset->pd;
-	s = 0;
-	for (t=pt1; t<=pt2; t++) {
-	    yavg->val[s++] += dset->Z[vnum][t];
-	}
     }
 
-    gretl_matrix_divide_by_scalar(yavg, N);
+    if (verbose) {
+	pputs(prn, "\nStep 1 results\n");
+	pputs(prn, "unit    delta       s2u        s2y\n");
+    }
+
     bigrow = 0;
 
     for (i=0; i<N && !err; i++) {
-	double yti, yti_1;
+	double yti, yti_1, delta;
 	int p_i, T_i, k_i;
-	int pt0, ss;
+	int pt0;
 
 	if (p_varies) {
 	    p_i = plist[i+1];
@@ -411,18 +402,17 @@ int real_levin_lin (int vnum, const int *plist, DATASET *dset,
 	/* build (full length) \delta y_t in dy */
 	s = 0;
 	for (t=pt1+1; t<=pt2; t++) {
-	    ss = t - pt1;
-	    yti = dset->Z[vnum][t] - gretl_vector_get(yavg, ss);
-	    yti_1 = dset->Z[vnum][t-1] - gretl_vector_get(yavg, ss-1);
+	    yti = dset->Z[vnum][t];
+	    yti_1 = dset->Z[vnum][t-1];
 	    gretl_vector_set(dy, s++, yti - yti_1);
 	}
 
 	/* build y_{t-1} in y */
 	s = 0;
 	for (t=pt0; t<=pt2; t++) {
-	    yti_1 = dset->Z[vnum][t-1] - gretl_vector_get(yavg, t - pt1 - 1);
+	    yti_1 = dset->Z[vnum][t-1];
 	    gretl_vector_set(y, s++, yti_1);
-	}	
+	}
 
 	/* augmented case: write lags of dy into X */
 	for (j=1; j<=p_i; j++) {
@@ -448,16 +438,25 @@ int real_levin_lin (int vnum, const int *plist, DATASET *dset,
 #endif
 
 	if (p_i > 0) {
-	    /* "virtual trimming" of dy for regressions */
+	    /* "virtual trimming" of dy for regressions
+	       note: we reset these values below
+	    */
 	    dy->val += p_i;
 	    dy->rows -= p_i;
 	}
 
-	/* run (A)DF regression */
+	/* run (A)DF regression: LLC eqn (1') */
 	err = gretl_matrix_ols(dy, X, b, NULL, ui, NULL);
 	if (err) {
 	    break;
 	}
+
+	/* for verbose reporting */
+	delta = b->val[b->rows-1];
+
+#if LLC_DEBUG > 1
+	gretl_matrix_print(b, "ADF coeffs");
+#endif
 
 	if (k_i > 1) {
 	    /* reduced regressor matrix for auxiliary regressions:
@@ -467,8 +466,10 @@ int real_levin_lin (int vnum, const int *plist, DATASET *dset,
 	    gretl_matrix_reuse(b, k_i - 1, 1);
 
 	    err = gretl_matrix_ols(dy, X, b, NULL, ei, NULL);
+	    // gretl_matrix_print(b, "aux 1 coeffs");
 	    if (!err) {
 		err = gretl_matrix_ols(y, X, b, NULL, vi, NULL);
+		// gretl_matrix_print(b, "aux 2 coeffs");
 	    }
 
 	    gretl_matrix_reuse(X, T, k);
@@ -492,7 +493,7 @@ int real_levin_lin (int vnum, const int *plist, DATASET *dset,
 		s2ui += ui->val[t] * ui->val[t];
 	    }
 
-	    s2ui /= (T_i - 1);
+	    s2ui /= T_i;
 	    sui = sqrt(s2ui);
 
 	    /* write normalized per-unit ei and vi into big matrices */
@@ -508,9 +509,10 @@ int real_levin_lin (int vnum, const int *plist, DATASET *dset,
 		SN += sqrt(s2yi) / sui;
 	    }
 
-#if LLC_DEBUG
-	    pprintf(prn, "s2ui = %.8f, s2yi = %.8f\n", s2ui, s2yi);
-#endif
+	    if (verbose) {
+		pprintf(prn, "%3d %#10.5g %#10.5g %#10.5g\n",
+			i+1, delta, s2ui, s2yi);
+	    }
 	}
 
 	if (p_varies) {
@@ -519,7 +521,7 @@ int real_levin_lin (int vnum, const int *plist, DATASET *dset,
 	    gretl_matrix_reuse(b, k, 1);
 	    gretl_matrix_reuse(ei, T, 1);
 	    gretl_matrix_reuse(vi, T, 1);
-	}	    
+	}
     }
 
     if (!err) {
@@ -540,7 +542,7 @@ int real_levin_lin (int vnum, const int *plist, DATASET *dset,
 	    SN /= N;
 	    delta = b->val[0];
 	    s2e = ee / NT;
-	    STD = sqrt(s2e) / sqrt(vv);
+	    STD = sqrt(s2e / vv);
 	    td = delta / STD;
 
 	    /* fetch the Levin-Lin-Chu corrections factors */
@@ -551,10 +553,7 @@ int real_levin_lin (int vnum, const int *plist, DATASET *dset,
 	    double z = (td - NT * (SN / s2e) * STD * mstar) / sstar;
 	    double pval = normal_cdf(z);
 
-#if LLC_DEBUG
-	    pprintf(prn, "mustar = %g, sigstar = %g\n", mstar, sstar);
-	    pprintf(prn, "SN = %g, se = %g, STD = %g\n", SN, sqrt(s2e), STD);
-#endif
+	    pprintf(prn, "\nS_N = %g, mu* = %g, s* = %g\n", SN, mstar, sstar);
 
 	    if (!(opt & OPT_Q)) {
 		const char *heads[] = {
@@ -566,7 +565,7 @@ int real_levin_lin (int vnum, const int *plist, DATASET *dset,
 		char NTstr[32];
 		int sp[3] = {0, 3, 5};
 		int w[3] = {4, 6, 0};
- 
+
 		pputc(prn, '\n');
 		pprintf(prn, _("Levin-Lin-Chu pooled ADF test for %s\n"), s);
 		pprintf(prn, "%s ", _(DF_test_spec(m)));
@@ -592,7 +591,7 @@ int real_levin_lin (int vnum, const int *plist, DATASET *dset,
 		}
 		pputc(prn, '\n');
 
-		pprintf(prn, "%*.5g %*.3f %*.6g [%.4f]\n\n", 
+		pprintf(prn, "%*.5g %*.3f %*.6g [%.4f]\n\n",
 			w[0], delta, w[1], td, w[2], z, pval);
 	    }
 
