@@ -466,10 +466,8 @@ int real_levin_lin (int vnum, const int *plist, DATASET *dset,
 	    gretl_matrix_reuse(b, k_i - 1, 1);
 
 	    err = gretl_matrix_ols(dy, X, b, NULL, ei, NULL);
-	    // gretl_matrix_print(b, "aux 1 coeffs");
 	    if (!err) {
 		err = gretl_matrix_ols(y, X, b, NULL, vi, NULL);
-		// gretl_matrix_print(b, "aux 2 coeffs");
 	    }
 
 	    gretl_matrix_reuse(X, T, k);
@@ -526,7 +524,6 @@ int real_levin_lin (int vnum, const int *plist, DATASET *dset,
 
     if (!err) {
 	/* the final step: full-length regression of e on v */
-	double ee = 0, vv = 0;
 	double delta, s2e, STD, td;
 	double mstar, sstar;
 
@@ -534,6 +531,8 @@ int real_levin_lin (int vnum, const int *plist, DATASET *dset,
 	err = gretl_matrix_ols(e, v, b, NULL, eps, NULL);
 
 	if (!err) {
+	    double ee = 0, vv = 0;
+
 	    for (t=0; t<NT; t++) {
 		ee += eps->val[t] * eps->val[t];
 		vv += v->val[t] * v->val[t];
