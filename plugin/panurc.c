@@ -214,7 +214,8 @@ static int LLC_sample_check (int N, int t1, int t2, int m,
 	}
 
 	/* T_i denotes the regression-usable series length, after
-	   accounting for required lags */
+	   accounting for required lags
+	*/
 	T = t2 - t1 + 1 - (1 + p);
 	if (T < minT) {
 	    err = E_DATA;
@@ -324,7 +325,7 @@ int real_levin_lin (int vnum, const int *plist, DATASET *dset,
 	/* the biggest T we'll need for regressions */
 	T = t2 - t1 + 1 - (1 + pmin);
 
-	/* Bartlett lag truncation (Andrews, 1991) */
+	/* Bartlett lag truncation (LLC, p. 14) */
 	K = (int) floor(3.21 * pow(Tbar, 1.0/3));
 	if (K > Tbar - 3) {
 	    K = Tbar - 3;
@@ -369,7 +370,7 @@ int real_levin_lin (int vnum, const int *plist, DATASET *dset,
 
     if (verbose) {
 	pputs(prn, "\nStep 1 results\n");
-	pputs(prn, "unit    delta       s2u        s2y\n");
+	pputs(prn, "unit    delta       s2e        s2y\n");
     }
 
     bigrow = 0;
