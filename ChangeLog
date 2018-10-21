@@ -8,6 +8,8 @@ version 2018d, in progress
   semidefinite status of matrix argument
 - "install" command: replace with new "pkg" command (but the
   old form still works until further notice)
+- "levinlin" command: add a --verbose option and fix some
+  bugs
 - Line plots via gnuplot: show gaps for missing values
 - dbnomics: some refinements to handle problematic cases
   as well as some new functionality
