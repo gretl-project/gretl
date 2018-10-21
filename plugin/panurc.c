@@ -26,12 +26,11 @@
    correction factors for mean (mu) and standard deviation (s)
    in context of panel unit-root statistic.
 
-   T = sample size
+   T = sample size (actually \tilde{T})
 
    k = 1: no constant
    k = 2: constant included
    k = 3: constant plus trend
-
 */
 
 static int get_LLC_corrections (int T, int k, double *mu, double *sigma)
@@ -110,12 +109,7 @@ static int LLC_detrend (gretl_matrix *dy)
     return err;
 }
 
-/* We could use gretl_long_run_variance() here, except that it
-   would have to be generalized to cover the cases (m == 1),
-   where we're _not_ subtracting the mean (on the maintained
-   hypothesis that the mean = 0), and (m == 3), where we have to
-   subtract a linear trend before computing the variance.
-*/
+/* long-run variance calculation as per LLC */
 
 static double LLC_lrvar (gretl_matrix *vdy, int K, int m, int *err)
 {
@@ -200,7 +194,7 @@ static int LLC_check_plist (const int *list, int N, int *pmax, int *pmin,
 static int LLC_sample_check (int N, int t1, int t2, int m,
 			     const int *plist, int *NT)
 {
-    int i, p, minT, T;
+    int i, p, minT, Ti;
     int err = 0;
 
     *NT = 0;
@@ -208,21 +202,19 @@ static int LLC_sample_check (int N, int t1, int t2, int m,
     for (i=1; i<=plist[0] && !err; i++) {
 	p = plist[i];
 	minT = m + p + 1; /* ensure df > 0 */
-
 	if (minT < 4) {
 	    minT = 4;
 	}
-
-	/* T_i denotes the regression-usable series length, after
+	/* Ti is the regression-usable series length, after
 	   accounting for required lags
 	*/
-	T = t2 - t1 + 1 - (1 + p);
-	if (T < minT) {
+	Ti = t2 - t1 + 1 - (1 + p);
+	if (Ti < minT) {
 	    err = E_DATA;
 	} else if (plist[0] == 1) {
-	    *NT = N * T;
+	    *NT = N * Ti;
 	} else {
-	    *NT += T;
+	    *NT += Ti;
 	}
     }
 
@@ -524,7 +516,7 @@ int real_levin_lin (int vnum, const int *plist, DATASET *dset,
     }
 
     if (!err) {
-	/* the final step: full-length regression of e on v */
+	/* the final step: pooled regression of e on v */
 	double delta, s2e, STD, td;
 	double mstar, sstar;
 
@@ -545,7 +537,7 @@ int real_levin_lin (int vnum, const int *plist, DATASET *dset,
 	    STD = sqrt(s2e / vv);
 	    td = delta / STD;
 
-	    /* fetch the Levin-Lin-Chu corrections factors */
+	    /* fetch the Levin-Lin-Chu correction factors */
 	    err = get_LLC_corrections(T, m, &mstar, &sstar);
 	}
 
