@@ -6815,6 +6815,10 @@
 	  <flag>--quiet</flag>
 	  <effect>non mostra i risultati</effect>
 	</option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>stampa i risultati per unità</effect>
+	</option>
       </options>
       <examples>
 	<example>levinlin 0 y</example>
@@ -6834,25 +6838,37 @@
 	proprietà statistiche delle serie possono variare da un'unità
 	di osservazione all'altra.)
       </para>
-	
       <para context="cli">
-	Di default le regressioni dei test ADF contengono una costante;
-	per eliminarla usate l'opzione <opt>nc</opt>; per aggiungere 
-	un trend lineare usate l'opzione <opt>ct</opt>. 
-	(V. il comando <cmdref targ="adf"/> per una spiegazione delle 
+	Di default le regressioni dei test ADF contengono una
+	costante; per eliminarla usate l'opzione <opt>nc</opt>; per
+	aggiungere un trend lineare usate l'opzione <opt>ct</opt>.
+	(V. il comando <cmdref targ="adf"/> per una spiegazione delle
 	regressioni ADF.)
       </para>
-
       <para context="cli">
-	Il valore (non negativo) <repl>order</repl> del numero di ritardi
-	della variabile dipendente da usare nel test può essere indicato
-	in due modi diversi. Se si fornisce uno scalare, questo viene applicato
-	a tutte le serie nel panel. In alternativa è possibile fornire
-	una matrice che contiene un particolare ordine di ritardo per ogni
-	serie. La matrice deve essere un vettore con numero di elementi
-	pari a quello delle unità di osservazione nel sottoinsieme corrente
-	del campione, e può essere indicata per nome o costruita usando
-	parentesi graffe come illustrato nell'ultimo degli esempi precedenti.
+	Il valore (non negativo) <repl>order</repl> del numero di
+	ritardi della variabile dipendente da usare nel test può
+	essere indicato in due modi diversi. Se si fornisce uno
+	scalare, questo viene applicato a tutte le serie nel panel. In
+	alternativa è possibile fornire una matrice che contiene un
+	particolare ordine di ritardo per ogni serie. La matrice deve
+	essere un vettore con numero di elementi pari a quello delle
+	unità di osservazione nel sottoinsieme corrente del campione,
+	e può essere indicata per nome o costruita usando parentesi
+	graffe come illustrato nell'ultimo degli esempi precedenti.
+      </para>
+      <para context="cli">
+	Con l'opzione <opt>verbose</opt>, vengono stampate per ogni
+	unità nel panel le seguenti statistiche: <lit>delta</lit>, il
+	coefficiente sul livello ritardato in ognuna delle regressioni
+	ADF; <lit>s2e</lit>, la varianza stimata delle innovazioni; e
+	<lit>s2y</lit>, la varianza di lungo periodo stimata per la
+	serie in differenze.
+      </para>
+      <para>
+	Si noti che test di radice unitaria in panel pèossono anche
+	essere condiotti mediante i comandi <cmdref targ="adf"/> e
+	<cmdref targ="kpss"/>.
       </para>
 
     </description>
