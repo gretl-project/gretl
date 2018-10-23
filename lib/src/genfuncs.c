@@ -3921,7 +3921,7 @@ int check_declarations (char ***pS, parser *p)
 	    /* variable already exists */
 	    exists = 1;
 	    p->err = E_DATA;
-	} else if (check_varname(S[i])) {
+	} else if (check_identifier(S[i])) {
 	    /* invalid name */
 	    badname = 1;
 	    p->err = E_DATA;

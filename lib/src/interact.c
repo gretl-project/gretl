@@ -213,7 +213,7 @@ int plausible_genr_start (const char *s, const DATASET *dset)
 	if (sscanf(s, fmt, word)) {
 	    s += strlen(word);
 	    while (*s == ' ') s++;
-	    if (strspn(s, ok) > 0 && check_varname(word) == 0) {
+	    if (strspn(s, ok) > 0 && check_identifier(word) == 0) {
 		ret = 1;
 	    }
 	}
@@ -993,7 +993,7 @@ static int outbuf_check (const char *name, const DATASET *dset)
     if (t != GRETL_TYPE_NONE && t != GRETL_TYPE_STRING) {
 	err = E_TYPES;
     } else if (t == GRETL_TYPE_NONE) {
-	err = check_varname(name);
+	err = check_identifier(name);
 	if (!err) {
 	    err = create_user_var(name, GRETL_TYPE_STRING);
 	}

@@ -142,6 +142,8 @@ gretlopt data_save_opt_from_suffix (const char *fname);
 
 int check_varname (const char *varname);
 
+int check_identifier (const char *varname);
+
 int check_atof (const char *numstr);
 
 int check_atoi (const char *numstr);

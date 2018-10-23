@@ -16435,6 +16435,8 @@ static int overwrite_type_check (parser *p)
 {
     int err = 0;
 
+    /* FIXME check for series/function collision here */
+
     if (p->targ != p->lh.t) {
 	/* don't overwrite one type with another */
 	maybe_do_type_errmsg(p->lh.name, p->lh.t);
@@ -16733,7 +16735,7 @@ static void gen_preprocess (parser *p, int flags)
     if (newvar) {
 	/* new variable: check name for legality */
 	if (!(flags & P_PRIV)) {
-	    p->err = check_varname(p->lh.name);
+	    p->err = check_identifier(p->lh.name);
 	}
     } else {
 	/* pre-existing var: check for const-ness */

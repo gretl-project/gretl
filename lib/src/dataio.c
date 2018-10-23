@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -46,7 +46,7 @@
  * The following data handling functions are basically internal to
  * gretl and not in a state where they can be readily
  * documented as public APIs.
- * 
+ *
  */
 
 typedef enum {
@@ -69,7 +69,7 @@ typedef enum {
  * get_date_x:
  * @pd: frequency of data.
  * @obs: observation string.
- * 
+ *
  * Returns: the floating-point representation of @obs.
  */
 
@@ -77,7 +77,7 @@ double get_date_x (int pd, const char *obs)
 {
     double x = 1.0;
 
-    if ((pd == 5 || pd == 6 || pd == 7 || pd == 52) && strlen(obs) > 4) { 
+    if ((pd == 5 || pd == 6 || pd == 7 || pd == 52) && strlen(obs) > 4) {
 	/* calendar data */
 	guint32 ed = get_epoch_day(obs);
 
@@ -85,45 +85,14 @@ double get_date_x (int pd, const char *obs)
 	    x = ed;
 	}
     } else {
-	x = obs_str_to_double(obs); 
+	x = obs_str_to_double(obs);
     }
 
     return x;
 }
 
-static void namespace_check (const char *vname)
-{
-    const char *execname = NULL;
-    int warn = 1;
-
-    current_function_info(&execname, NULL);
-    if (execname != NULL && !strcmp(execname, vname)) {
-	/* We don't issue a warning if @vname is the name of
-	   a variable inside a function of the same name. That
-	   should be harmless unless the function is used
-	   recursively.
-	*/
-	warn = 0;
-    }
-
-    if (warn) {
-	gretl_warnmsg_sprintf(_("'%s' shadows a function of the same name"),
-			      vname);
-    }
-}
-
-/**
- * check_varname:
- * @varname: putative name for variable (or object).
- * 
- * Check a variable/object name for legality: the name
- * must start with a letter, and be composed of letters,
- * numbers or the underscore character, and nothing else.
- * 
- * Returns: 0 if name is OK, non-zero if not.
- */
-
-int check_varname (const char *varname)
+static int real_check_varname (const char *varname,
+			       int is_series)
 {
     int testchar = 'a';
     int firstbad = 0;
@@ -140,13 +109,14 @@ int check_varname (const char *varname)
 	firstbad = 1;
 	testchar = *varname;
         err = E_DATA;
-    } else if (get_user_function_by_name(varname)) {
-	namespace_check(varname);
+    } else if (is_series && get_user_function_by_name(varname)) {
+	gretl_warnmsg_sprintf(_("'%s' shadows a function of the same name"),
+			      varname);
     } else {
 	const char *p = varname;
 
 	while (*p && testchar == 'a') {
-	    if (!(isalpha((unsigned char) *p))  
+	    if (!(isalpha((unsigned char) *p))
 		&& !(isdigit((unsigned char) *p))
 		&& *p != '_') {
 		testchar = *p;
@@ -160,28 +130,50 @@ int check_varname (const char *varname)
 	if (isprint((unsigned char) testchar)) {
 	    if (firstbad) {
 		gretl_errmsg_sprintf(_("First char of varname '%s' is bad\n"
-				       "(first must be alphabetical)"), 
+				       "(first must be alphabetical)"),
 				     varname);
 	    } else {
 		gretl_errmsg_sprintf(_("Varname '%s' contains illegal character '%c'\n"
-				       "Use only letters, digits and underscore"), 
+				       "Use only letters, digits and underscore"),
 				     varname, (unsigned char) testchar);
 	    }
 	} else {
 	    if (firstbad) {
 		gretl_errmsg_sprintf(_("First char of varname (0x%x) is bad\n"
-				       "(first must be alphabetical)"), 
+				       "(first must be alphabetical)"),
 				     (unsigned) testchar);
 	    } else {
 		gretl_errmsg_sprintf(_("Varname contains illegal character 0x%x\n"
-				       "Use only letters, digits and underscore"), 
+				       "Use only letters, digits and underscore"),
 				     (unsigned) testchar);
 	    }
 	}
     }
 
     return err;
-}   
+}
+
+/**
+ * check_varname:
+ * @varname: putative name for variable (or object).
+ *
+ * Check a variable/object name for legality: the name
+ * must start with a letter, and be composed of letters,
+ * numbers or the underscore character, and nothing else.
+ *
+ * Returns: 0 if name is OK, non-zero if not.
+ */
+
+int check_varname (const char *varname)
+{
+    return real_check_varname(varname, 1);
+}
+
+int check_identifier (const char *varname)
+{
+    /* FIXME series case? */
+    return real_check_varname(varname, 0);
+}
 
 static int bad_date_string (const char *s)
 {
@@ -322,7 +314,7 @@ static int datecmp (const char *s1, int y21, int slash1,
     }
 }
 
-static int 
+static int
 real_dateton (const char *date, const DATASET *dset, int nolimit)
 {
     int handled = 0;
@@ -360,7 +352,7 @@ real_dateton (const char *date, const DATASET *dset, int nolimit)
 	    /* automatic calendar dates */
 	    n = calendar_obs_number(date, dset);
 	    handled = 1;
-	} 
+	}
     } else if (dataset_is_daily(dset) ||
 	       dataset_is_weekly(dset)) {
 #if DATES_DEBUG
@@ -376,7 +368,7 @@ real_dateton (const char *date, const DATASET *dset, int nolimit)
 	if (t > 0) {
 	    n = (t - dset->sd0) / 10;
 	    handled = 1;
-	}	
+	}
     } else if (dataset_has_markers(dset)) {
 	t = match_obs_marker(date, dset);
 	if (t >= 0) {
@@ -417,7 +409,7 @@ real_dateton (const char *date, const DATASET *dset, int nolimit)
 	    int maj, min;
 
 	    *tmp = '\0';
-	    strncat(tmp, date, OBSLEN-1); 
+	    strncat(tmp, date, OBSLEN-1);
 	    tmp[pos1] = '\0';
 	    maj = positive_int_from_string(tmp);
 	    min = positive_int_from_string(tmp + pos1 + 1);
@@ -430,11 +422,11 @@ real_dateton (const char *date, const DATASET *dset, int nolimit)
 		int maj0, min0;
 
 		*tmp = '\0';
-		strncat(tmp, dset->stobs, OBSLEN-1); 
+		strncat(tmp, dset->stobs, OBSLEN-1);
 		tmp[pos2] = '\0';
 		maj0 = atoi(tmp);
 		min0 = atoi(tmp + pos2 + 1);
-	    
+
 		n = dset->pd * (maj - maj0) + (min - min0);
 	    }
 	}
@@ -443,7 +435,7 @@ real_dateton (const char *date, const DATASET *dset, int nolimit)
     if (!nolimit && dset->n > 0 && n >= dset->n) {
 	fprintf(stderr, "n = %d, dset->n = %d: out of bounds\n", n, dset->n);
 	gretl_errmsg_set(_("Observation number out of bounds"));
-	n = -1; 
+	n = -1;
     }
 
 #if DATES_DEBUG
@@ -457,12 +449,12 @@ real_dateton (const char *date, const DATASET *dset, int nolimit)
  * dateton:
  * @date: string representation of date for processing.
  * @dset: pointer to data information struct.
- * 
+ *
  * Determines the observation number corresponding to @date,
- * relative to @dset. It is an error if @date represents an 
- * observation that lies outside of the full data range 
+ * relative to @dset. It is an error if @date represents an
+ * observation that lies outside of the full data range
  * specified in @dset.
- * 
+ *
  * Returns: zero-based observation number, or -1 on error.
  */
 
@@ -475,13 +467,13 @@ int dateton (const char *date, const DATASET *dset)
  * merge_dateton:
  * @date: string representation of date for processing.
  * @dset: pointer to data information struct.
- * 
+ *
  * Works just as dateton(), except that for this function it
  * is not an error if @date represents an observation that
- * lies beyond the data range specified in @dset. This is 
+ * lies beyond the data range specified in @dset. This is
  * inended for use when merging data, or when creating a new
  * dataset.
- * 
+ *
  * Returns: zero-based observation number, or -1 on error.
  */
 
@@ -510,10 +502,10 @@ static char *panel_obs (char *s, int t, const DATASET *dset)
  * @datestr: char array to which date is to be printed.
  * @t: zero-based observation number.
  * @dset: data information struct.
- * 
+ *
  * Prints to @datestr (which must be at least #OBSLEN bytes)
  * the calendar representation of observation number @t.
- * 
+ *
  * Returns: the observation string.
  */
 
@@ -534,7 +526,7 @@ char *ntodate (char *datestr, int t, const DATASET *dset)
 	    calendar_date_string(datestr, t, dset);
 	}
 	return datestr;
-    } else if (dataset_is_daily(dset) || 
+    } else if (dataset_is_daily(dset) ||
 	       dataset_is_weekly(dset)) {
 	/* undated time series */
 	x = date_as_double(t, 1, dset->sd0);
@@ -582,12 +574,12 @@ char *ntodate_8601 (char *datestr, int t, const DATASET *dset)
     } else if (dataset_is_decennial(dset)) {
 	double x = dset->sd0 + 10 * t;
 	int yr = lrint(x);
-	
+
 	sprintf(datestr, "%d-01-01", yr);
     } else {
 	double x = date_as_double(t, dset->pd, dset->sd0);
 	int maj = lrint(floor(x));
-	
+
 	if (dset->pd == 1) {
 	    sprintf(datestr, "%d-01-01", maj);
 	} else if (dset->pd == 12) {
@@ -601,7 +593,7 @@ char *ntodate_8601 (char *datestr, int t, const DATASET *dset)
 	    sprintf(datestr, "%d-%02d-01", maj, mo);
 	}
     }
-    
+
     return datestr;
 }
 
@@ -612,14 +604,14 @@ char *ntodate_8601 (char *datestr, int t, const DATASET *dset)
  * @t: zero-based observation number.
  * @dset: data information struct.
  * @err: location to receive error code, or NULL.
- * 
- * For "seasonal" time series data (in a broad sense), 
- * determines the sub-period at observation @t. The "sub-period" 
+ *
+ * For "seasonal" time series data (in a broad sense),
+ * determines the sub-period at observation @t. The "sub-period"
  * might be a quarter, month, hour or whatever.  The value
  * returned is zero-based (e.g. first quarter = 0).
  * If the data are not "seasonal", 0 is returned and if
  * @err is non-NULL it receives a non-zero error code.
- * 
+ *
  * Returns: the sub-period.
  */
 
@@ -642,7 +634,7 @@ int get_subperiod (int t, const DATASET *dset, int *err)
 	char datestr[12];
 
 	calendar_date_string(datestr, t, dset);
-	ret = weekday_from_date(datestr); 
+	ret = weekday_from_date(datestr);
     } else if (dataset_is_daily(dset)) {
 	/* bodge, again */
 	ret = t % dset->pd;
@@ -657,8 +649,8 @@ int get_subperiod (int t, const DATASET *dset, int *err)
 	}
 	ret = xround(x) - 1;
     }
-    
-    return ret;    
+
+    return ret;
 }
 
 /**
@@ -669,7 +661,7 @@ int get_subperiod (int t, const DATASET *dset, int *err)
  *
  * Find the number of decimal places required to represent a given
  * data series uniformly and accurately, if possible.
- * 
+ *
  * Returns: the required number of decimal places or
  * #PMAX_NOT_AVAILABLE if it can't be done.
  */
@@ -733,7 +725,7 @@ gretlopt data_save_opt_from_suffix (const char *fname)
 	       has_suffix(fname, ".txt") ||
 	       has_suffix(fname, ".asc")) {
 	opt = OPT_C;
-    } 
+    }
 
     return opt;
 }
@@ -820,13 +812,13 @@ GretlFileType data_file_type_from_name (const char *fname)
 
 #define non_native(o) (o & (OPT_M | OPT_R | OPT_C | OPT_D | OPT_G | OPT_J))
 
-static GretlDataFormat 
+static GretlDataFormat
 format_from_opt_or_name (gretlopt opt, const char *fname,
 			 char *delim, int *add_ext,
 			 int *err)
 {
     GretlDataFormat fmt = GRETL_FMT_GDT;
-    
+
     if (has_suffix(fname, ".gdt")) {
 	if (non_native(opt)) {
 	    *err = E_BADOPT;
@@ -835,10 +827,10 @@ format_from_opt_or_name (gretlopt opt, const char *fname,
     } else if (has_suffix(fname, ".gdtb")) {
 	if (non_native(opt)) {
 	    *err = E_BADOPT;
-	}	
+	}
 	return GRETL_FMT_BINARY;
     }
-    
+
     if (opt & OPT_M) {
 	fmt = GRETL_FMT_OCTAVE;
     } else if (opt & OPT_R) {
@@ -913,7 +905,7 @@ void date_maj_min (int t, const DATASET *dset, int *maj, int *min)
 #define TMPLEN 64
 
 static void csv_data_out (const DATASET *dset, const int *list,
-			  int print_obs, int digits, char decpoint, 
+			  int print_obs, int digits, char decpoint,
 			  char delim, FILE *fp)
 {
     const char *NA = get_csv_na_write_string();
@@ -942,7 +934,7 @@ static void csv_data_out (const DATASET *dset, const int *list,
 	    }
 	}
 
-	for (i=1; i<=list[0]; i++) { 
+	for (i=1; i<=list[0]; i++) {
 	    vi = list[i];
 	    xt = dset->Z[vi][t];
 	    if (na(xt)) {
@@ -1010,7 +1002,7 @@ static void R_data_out (const DATASET *dset, const int *list,
     for (t=dset->t1; t<=dset->t2; t++) {
 	if (print_markers) {
 	    fprintf(fp, "\"%s\" ", dset->S[t]);
-	} 
+	}
 	for (i=1; i<=list[0]; i++) {
 	    vi = list[i];
 	    xt = dset->Z[vi][t];
@@ -1106,7 +1098,7 @@ static int real_write_data (const char *fname, int *list,
 	/* Stata */
 	err = write_dta_data(fname, list, opt, dset);
 	goto write_exit;
-    }    
+    }
 
     strcpy(datfile, fname);
 
@@ -1164,7 +1156,7 @@ static int real_write_data (const char *fname, int *list,
 
 	csv_data_out(dset, list, print_obs, csv_digits,
 		     decpoint, delim, fp);
-    } else if (fmt == GRETL_FMT_R) { 
+    } else if (fmt == GRETL_FMT_R) {
 	/* friendly to GNU R */
 	if (dataset_is_time_series(dset)) {
 	    char datestr[OBSLEN];
@@ -1180,13 +1172,13 @@ static int real_write_data (const char *fname, int *list,
 	fprintf(fp, "%s\n", dset->varname[list[l0]]);
 
 	R_data_out(dset, list, csv_digits, fp);
-    } else if (fmt == GRETL_FMT_OCTAVE) { 
+    } else if (fmt == GRETL_FMT_OCTAVE) {
 	/* GNU Octave: write out data as several matrices (one per
 	   series) in the same file */
 
 	for (i=1; i<=list[0]; i++) {
 	    v = list[i];
-	    fprintf(fp, "# name: %s\n# type: matrix\n# rows: %d\n# columns: 1\n", 
+	    fprintf(fp, "# name: %s\n# type: matrix\n# rows: %d\n# columns: 1\n",
 		    dset->varname[v], n);
 	    for (t=dset->t1; t<=dset->t2; t++) {
 		xx = dset->Z[v][t];
@@ -1197,7 +1189,7 @@ static int real_write_data (const char *fname, int *list,
 		}
 	    }
 	}
-    } else if (fmt == GRETL_FMT_DAT) { 
+    } else if (fmt == GRETL_FMT_DAT) {
 	/* PcGive: data file with load info */
 	int pd = dset->pd;
 
@@ -1214,7 +1206,7 @@ static int real_write_data (const char *fname, int *list,
 	    } else {
 		fprintf(fp, "%d 1 %d 1 1", dset->t1, dset->t2);
 	    }
-			   
+
 	    fputc('\n', fp);
 
 	    for (t=dset->t1; t<=dset->t2; t++) {
@@ -1229,7 +1221,7 @@ static int real_write_data (const char *fname, int *list,
 	    }
 	    fputc('\n', fp);
 	}
-    } else if (fmt == GRETL_FMT_JM) { 
+    } else if (fmt == GRETL_FMT_JM) {
 	/* JMulti: ascii with comments and date info */
 	const char *vlabel;
 	int maj, min;
@@ -1300,20 +1292,20 @@ static int real_write_data (const char *fname, int *list,
  * @dset: dataset struct.
  * @opt: option flag indicating format in which to write the data.
  * @prn: gretl printer or NULL.
- * 
+ *
  * Write out a data file containing the values of the given set
  * of variables.
- * 
+ *
  * Returns: 0 on successful completion, non-zero on error.
  */
 
-int write_data (const char *fname, int *list, const DATASET *dset, 
+int write_data (const char *fname, int *list, const DATASET *dset,
 		gretlopt opt, PRN *prn)
 {
     return real_write_data(fname, list, dset, opt, 0, prn);
 }
 
-int gui_write_data (const char *fname, int *list, const DATASET *dset, 
+int gui_write_data (const char *fname, int *list, const DATASET *dset,
 		    gretlopt opt)
 {
     return real_write_data(fname, list, dset, opt, 1, NULL);
@@ -1322,12 +1314,12 @@ int gui_write_data (const char *fname, int *list, const DATASET *dset,
 /**
  * is_gzipped:
  * @fname: filename to examine.
- * 
+ *
  * Determine if the given file is gzipped.
- * 
+ *
  * Returns: 1 in case of a gzipped file, 0 if not gzipped or
  * inaccessible.
- * 
+ *
  */
 
 int is_gzipped (const char *fname)
@@ -1359,11 +1351,11 @@ int is_gzipped (const char *fname)
  * @dset: dataset struct.
  * @opt: option flags.
  * @prn: where messages should be written.
- * 
- * Read "native" data from file into gretl's work space, 
+ *
+ * Read "native" data from file into gretl's work space,
  * allocating space as required. This function handles
  * both native XML data format and native binary format.
- * It also handles incomplete information: it can perform 
+ * It also handles incomplete information: it can perform
  * path-searching on @fname, and will try adding the .gdt
  * or .gdtb extension to @fname if this is not given.
  *
@@ -1376,12 +1368,12 @@ int is_gzipped (const char *fname)
  * that case we try to interpret the new data as time
  * series, in common across all panel units. In most
  * cases, just give OPT_NONE.
- * 
+ *
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int gretl_get_data (char *fname, DATASET *dset, 
-		    gretlopt opt, PRN *prn) 
+int gretl_get_data (char *fname, DATASET *dset,
+		    gretlopt opt, PRN *prn)
 {
     gretlopt append_opt = OPT_NONE;
     int gdtsuff;
@@ -1393,7 +1385,7 @@ int gretl_get_data (char *fname, DATASET *dset,
 #if 0
     fprintf(stderr, "gretl_get_data: calling addpath\n");
 #endif
-    
+
     test = gretl_addpath(fname, 0);
     if (test == NULL) {
 	return E_FOPEN;
@@ -1424,15 +1416,15 @@ int gretl_get_data (char *fname, DATASET *dset,
  * @length: desired length of data series.
  * @opt: may contain OPT_N to suppress addition of an index series.
  * @prn: gretl printing struct.
- * 
+ *
  * Create an empty "dummy" data set, suitable for simulations.
- * 
+ *
  * Returns: 0 on successful completion, non-zero otherwise.
  *
  */
 
 int open_nulldata (DATASET *dset, int data_status, int length,
-		   gretlopt opt, PRN *prn) 
+		   gretlopt opt, PRN *prn)
 {
     int t;
 
@@ -1467,12 +1459,12 @@ int open_nulldata (DATASET *dset, int data_status, int length,
     if (prn != NULL && gretl_messages_on()) {
 	/* print basic info */
 	pprintf(prn, A_("periodicity: %d, maxobs: %d\n"
-			"observations range: %s to %s\n"), 
+			"observations range: %s to %s\n"),
 		dset->pd, dset->n, dset->stobs, dset->endobs);
     }
 
     /* Set sample range to entire length of data-set by default */
-    dset->t1 = 0; 
+    dset->t1 = 0;
     dset->t2 = dset->n - 1;
 
     return 0;
@@ -1482,7 +1474,7 @@ static int extend_markers (DATASET *dset, int old_n, int new_n)
 {
     char **S = realloc(dset->S, new_n * sizeof *S);
     int t, err = 0;
-	   
+
     if (S == NULL) {
 	err = 1;
     } else {
@@ -1491,7 +1483,7 @@ static int extend_markers (DATASET *dset, int old_n, int new_n)
 	    S[t] = malloc(OBSLEN);
 	    if (S[t] == NULL) {
 		err = 1;
-	    } 
+	    }
 	}
     }
 
@@ -1648,7 +1640,7 @@ static int compare_ranges (const DATASET *targ,
 	       the current sample range in @targ; we therefore have
 	       no information with which to match rows for new
 	       series
-	    */	    
+	    */
 	    gretl_errmsg_set(_("append: don't know how to align the new series!"));
 	    *err = E_DATA;
 	    return -1;
@@ -1661,7 +1653,7 @@ static int compare_ranges (const DATASET *targ,
 #if DATES_DEBUG
     fprintf(stderr, "compare_ranges:\n"
 	    " targ->n = %d, src->n = %d\n"
-	    " targ->stobs = '%s', src->stobs = '%s'\n" 
+	    " targ->stobs = '%s', src->stobs = '%s'\n"
 	    " sd1 = %d, ed1 = %d\n",
 	    targ->n, src->n, targ->stobs, src->stobs,
 	    sd1, ed1);
@@ -1762,7 +1754,7 @@ static int check_for_overlap (const DATASET *dset,
    that case we'll take the new data to be time-series, which should
    be replicated for each panel unit.
 
-   A second possibility arises if the length of the new series 
+   A second possibility arises if the length of the new series
    equals the panel n: in that case we could treat it as a time-
    invariant characteristic of the panel unit, which should be
    replicated for each time period.  But note that if OPT_T is
@@ -1780,7 +1772,7 @@ static int panel_expand_ok (DATASET *dset, DATASET *addinfo,
     if (addinfo->n == T) {
 	ok = 1;
     } else if (!(opt & OPT_T) &&
-	       addinfo->n == n && 
+	       addinfo->n == n &&
 	       addinfo->pd == 1) {
 	ok = 1;
     }
@@ -1788,8 +1780,8 @@ static int panel_expand_ok (DATASET *dset, DATASET *addinfo,
     return ok;
 }
 
-static int panel_append_special (int addvars, 
-				 DATASET *dset, 
+static int panel_append_special (int addvars,
+				 DATASET *dset,
 				 DATASET *addset,
 				 gretlopt opt,
 				 PRN *prn)
@@ -1816,7 +1808,7 @@ static int panel_append_special (int addvars,
 	    v = k++;
 	    strcpy(dset->varname[v], addset->varname[i]);
 	    copy_varinfo(dset->varinfo[v], addset->varinfo[i]);
-	} 
+	}
 
 	s = 0;
 	for (j=0; j<n; j++) {
@@ -1824,7 +1816,7 @@ static int panel_append_special (int addvars,
 	    for (t=0; t<T; t++) {
 		/* loop across periods */
 		p = (tsdata)? t : j;
-		dset->Z[v][s++] = addset->Z[i][p]; 
+		dset->Z[v][s++] = addset->Z[i][p];
 	    }
 	}
     }
@@ -1891,7 +1883,7 @@ static int markers_compatible (const DATASET *d1, DATASET *d2,
     return ret;
 }
 
-static int 
+static int
 just_append_rows (const DATASET *targ, DATASET *src, int *offset)
 {
     int ret = 0;
@@ -1971,7 +1963,7 @@ static int merge_lengthen_series (DATASET *dset,
 	dset->Z[i] = x;
     }
 
-    if (!err) { 
+    if (!err) {
 	dset->n = new_n;
 	ntodate(dset->endobs, new_n - 1, dset);
 	dset->t2 = dset->n - 1;
@@ -2049,10 +2041,10 @@ int basic_data_merge_check (const DATASET *dset,
  * when appending to a panel dataset; may include OPT_U to update
  * values of overlapping observations.
  * @prn: print struct to accept messages.
- * 
+ *
  * Attempt to merge the content of a newly opened data file into
- * gretl's current working data set.  
- * 
+ * gretl's current working data set.
+ *
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
@@ -2083,12 +2075,12 @@ static int merge_data (DATASET *dset, DATASET *addset,
 
 #if MERGE_DEBUG
     fprintf(stderr, " new series count = %d\n", addvars);
-#endif    
+#endif
 
     if (dated_daily_data(dset) && dated_daily_data(addset)) {
-#if MERGE_DEBUG	
+#if MERGE_DEBUG
 	fprintf(stderr, " special: merging daily data\n");
-#endif	
+#endif
 	dayspecial = 1;
     }
 
@@ -2099,10 +2091,10 @@ static int merge_data (DATASET *dset, DATASET *addset,
 	   dateset, sideways, provided the number of observations
 	   matches OK */
 	addsimple = 1;
-    } else if (dataset_is_panel(dset) && 
+    } else if (dataset_is_panel(dset) &&
 	       panel_expand_ok(dset, addset, opt)) {
 	/* allow appending to panel when the number of obs matches
-	   either the cross-section size or the time-series length 
+	   either the cross-section size or the time-series length
 	*/
 	addpanel = 1;
     } else if (dset->pd != addset->pd) {
@@ -2127,15 +2119,15 @@ static int merge_data (DATASET *dset, DATASET *addset,
 	if (!addsimple && !addpanel) {
 	    addobs = compare_ranges(dset, addset, addvars, &offset,
 				    &yrspecial, &err);
-#if MERGE_DEBUG	    
+#if MERGE_DEBUG
 	    fprintf(stderr, " added obs, from compare_ranges: %d\n", addobs);
-#endif	    
+#endif
 	}
 	if (!err && addobs <= 0 && addvars == 0) {
 	    addobs = just_append_rows(dset, addset, &offset);
-#if MERGE_DEBUG	    
+#if MERGE_DEBUG
 	    fprintf(stderr, " added obs, from just_append_rows: %d\n", addobs);
-#endif	    
+#endif
 	}
     }
 
@@ -2167,12 +2159,12 @@ static int merge_data (DATASET *dset, DATASET *addset,
 		addvars, addobs);
     } else {
 	fprintf(stderr, " after preliminaries: err = %d\n", err);
-    }	
+    }
 #endif
 
     /* if checks are passed, try merging the data */
 
-    if (!err && addobs > 0) { 
+    if (!err && addobs > 0) {
 	err = merge_lengthen_series(dset, addset, addobs, offset);
 	if (err) {
 	    merge_error(_("Out of memory!\n"), prn);
@@ -2180,7 +2172,7 @@ static int merge_data (DATASET *dset, DATASET *addset,
     }
 
     if (!err && addpanel) {
-	err = panel_append_special(addvars, dset, addset, 
+	err = panel_append_special(addvars, dset, addset,
 				   opt, prn);
     } else if (!err) {
 	int k = dset->v;
@@ -2209,7 +2201,7 @@ static int merge_data (DATASET *dset, DATASET *addset,
 		    addset->n == dset->n && offset == 0 &&
 		    addobs == 0) {
 		    /* attach the string table to the target
-		       series and detach it from @addset 
+		       series and detach it from @addset
 		    */
 		    series_table *st;
 
@@ -2256,7 +2248,7 @@ static int merge_data (DATASET *dset, DATASET *addset,
 		    if (t >= tmin && t < dset->n) {
 			dset->Z[v][t] = addset->Z[i][s];
 		    }
-		}		
+		}
 	    } else {
 		for (t=tmin; t<dset->n; t++) {
 		    if (t >= offset && t - offset < addset->n) {
@@ -2277,7 +2269,7 @@ static int merge_data (DATASET *dset, DATASET *addset,
 }
 
 /* We want to ensure that calendar dates are recorded as per
-   ISO 8601 -- that is, YYYY-MM-DD; here we remedy dates 
+   ISO 8601 -- that is, YYYY-MM-DD; here we remedy dates
    recorded in the form YYYY/MM/DD.
 */
 
@@ -2299,9 +2291,9 @@ static void maybe_fix_calendar_dates (DATASET *dset)
 /**
  * get_merge_opts:
  * @opt: gretl options flags.
- * 
+ *
  * Returns: just those components of @opt (if any) that
- * can be passed to merge_or_replace_data(); may be 
+ * can be passed to merge_or_replace_data(); may be
  * useful when calling that function in the context
  * of a command only some of whose options should be
  * forwarded.
@@ -2335,14 +2327,14 @@ gretlopt get_merge_opts (gretlopt opt)
  * otherwise it is destroyed).
  * @prn: print struct to accept messages.
  *
- * Given a newly-created dataset, pointed to by @pdset1, either 
- * attempt to merge it with @dset0, if the original data array 
+ * Given a newly-created dataset, pointed to by @pdset1, either
+ * attempt to merge it with @dset0, if the original data array
  * is non-NULL, or replace the content of the original pointer
  * with the new dataset.
  *
  * In case merging is not successful, the new dataset is
  * destroyed.
- * 
+ *
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
@@ -2435,13 +2427,13 @@ static int count_markers (FILE *fp, char *line, int linelen,
  * add_obs_markers_from_file:
  * @dset: data information struct.
  * @fname: name of file containing case markers.
- * 
+ *
  * Read case markers (strings of %OBSLEN - 1 characters or less that identify
- * the observations) from a file, and associate them with the 
+ * the observations) from a file, and associate them with the
  * current data set.  The file should contain one marker per line,
  * with a number of lines equal to the number of observations in
  * the current data set.
- * 
+ *
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
@@ -2496,7 +2488,7 @@ int add_obs_markers_from_file (DATASET *dset, const char *fname)
     if (!done) {
 	for (t=0; t<dset->n && !err; t++) {
 	    if (fgets(line, sizeof line, fp) == NULL) {
-		gretl_errmsg_sprintf("Expected %d markers; found %d\n", 
+		gretl_errmsg_sprintf("Expected %d markers; found %d\n",
 				     dset->n, t);
 		err = E_DATA;
 	    } else if (sscanf(line, "%31[^\n\r]", marker) != 1) {
@@ -2515,7 +2507,7 @@ int add_obs_markers_from_file (DATASET *dset, const char *fname)
     } else {
 	if (dset->S != NULL) {
 	    strings_array_free(dset->S, dset->n);
-	} 
+	}
 	dset->markers = REGULAR_MARKERS;
 	dset->S = S;
     }
@@ -2526,7 +2518,7 @@ int add_obs_markers_from_file (DATASET *dset, const char *fname)
 /**
  * dataset_has_var_labels:
  * @dset: data information struct.
- * 
+ *
  * Returns: 1 if at least one variable in the current dataset
  * has a descriptive label, otherwise 0.
  */
@@ -2559,10 +2551,10 @@ int dataset_has_var_labels (const DATASET *dset)
  * save_var_labels_to_file:
  * @dset: data information struct.
  * @fname: name of file containing labels.
- * 
+ *
  * Writes to @fname the descriptive labels for the series in
  * the current dataset.
- * 
+ *
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
@@ -2591,13 +2583,13 @@ int save_var_labels_to_file (const DATASET *dset, const char *fname)
  * add_var_labels_from_file:
  * @dset: data information struct.
  * @fname: name of file containing labels.
- * 
- * Read descriptive variables for labels (strings of %MAXLABEL - 1 
- * characters or less) from a file, and associate them with the 
+ *
+ * Read descriptive variables for labels (strings of %MAXLABEL - 1
+ * characters or less) from a file, and associate them with the
  * current data set.  The file should contain one label per line,
  * with a number of lines equal to the number of variables in
  * the current data set, excluding the constant.
- * 
+ *
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
@@ -2653,7 +2645,7 @@ int read_or_write_var_labels (gretlopt opt, DATASET *dset, PRN *prn)
     const char *fname = NULL;
     int err;
 
-    err = incompatible_options(opt, OPT_D | OPT_T | OPT_F); 
+    err = incompatible_options(opt, OPT_D | OPT_T | OPT_F);
     if (err) {
 	return err;
     }
@@ -2673,7 +2665,7 @@ int read_or_write_var_labels (gretlopt opt, DATASET *dset, PRN *prn)
 
 	for (i=1; i<dset->v; i++) {
 	    series_set_label(dset, i, "");
-	}	
+	}
     } else if (opt & OPT_T) {
 	/* to-file */
 	if (!dataset_has_var_labels(dset)) {
@@ -2690,7 +2682,7 @@ int read_or_write_var_labels (gretlopt opt, DATASET *dset, PRN *prn)
 	err = add_var_labels_from_file(dset, fname);
 	if (!err && gretl_messages_on() && !gretl_looping_quietly()) {
 	    pprintf(prn, "Labels loaded OK\n");
-	}	
+	}
     }
 
     return err;
@@ -2720,7 +2712,7 @@ int read_or_write_obs_markers (gretlopt opt, DATASET *dset, PRN *prn)
     const char *fname = NULL;
     int err;
 
-    err = incompatible_options(opt, OPT_D | OPT_T | OPT_F); 
+    err = incompatible_options(opt, OPT_D | OPT_T | OPT_F);
     if (err) {
 	return err;
     }
@@ -2753,13 +2745,13 @@ int read_or_write_obs_markers (gretlopt opt, DATASET *dset, PRN *prn)
 	err = add_obs_markers_from_file(dset, fname);
 	if (!err && gretl_messages_on() && !gretl_looping_quietly()) {
 	    pprintf(prn, "Markers loaded OK\n");
-	}	
+	}
     }
 
     return err;
 }
 
-static void 
+static void
 octave_varname (char *name, const char *s, int nnum, int v)
 {
     char nstr[12];
@@ -2819,7 +2811,7 @@ static int get_max_line_length (FILE *fp, PRN *prn)
 
     if (maxlen == 0) {
 	pprintf(prn, A_("Data file is empty\n"));
-    } 
+    }
 
     if (maxlen > 0) {
 	/* allow for newline and null terminator */
@@ -2829,7 +2821,7 @@ static int get_max_line_length (FILE *fp, PRN *prn)
     return maxlen;
 }
 
-static int import_octave (const char *fname, DATASET *dset, 
+static int import_octave (const char *fname, DATASET *dset,
 			  gretlopt opt, PRN *prn)
 {
     DATASET *octset = NULL;
@@ -2893,8 +2885,8 @@ static int import_octave (const char *fname, DATASET *dset,
 			nrows = brows;
 		    }
 		    continue;
-		}	    
-	    } 
+		}
+	    }
 	    if (bcols == 0) {
 		if (sscanf(line, "# columns: %d", &bcols) == 1) {
 		    if (!got_name || !got_type || bcols <= 0) {
@@ -2921,7 +2913,7 @@ static int import_octave (const char *fname, DATASET *dset,
 	pputs(prn, A_("Invalid data file\n"));
 	err = E_DATA;
 	goto oct_bailout;
-    } 
+    }
 
     /* initialize datainfo and Z */
 
@@ -2939,13 +2931,13 @@ static int import_octave (const char *fname, DATASET *dset,
 	pputs(prn, A_("Out of memory!\n"));
 	err = E_ALLOC;
 	goto oct_bailout;
-    }  
+    }
 
     rewind(fp);
 
     pprintf(prn, A_("   number of variables: %d\n"), ncols);
     pprintf(prn, A_("   number of observations: %d\n"), nrows);
-    pprintf(prn, A_("   number of data blocks: %d\n"), nblocks); 
+    pprintf(prn, A_("   number of data blocks: %d\n"), nblocks);
 
     i = 1;
     t = 0;
@@ -2965,7 +2957,7 @@ static int import_octave (const char *fname, DATASET *dset,
 		i += oldbcols;
 		oldbcols = bcols;
 	    }
-	} 
+	}
 
 	if (*s == '#' || string_is_blank(s)) {
 	    continue;
@@ -2992,7 +2984,7 @@ static int import_octave (const char *fname, DATASET *dset,
 	    } else {
 		octset->Z[v][t] = x;
 		while (!isspace(*s)) s++;
-	    }	
+	    }
 	}
 	t++;
     }
@@ -3034,9 +3026,9 @@ static int import_octave (const char *fname, DATASET *dset,
  * @dset: pointer to dataset struct.
  * @opt: option flag; see gretl_get_data().
  * @prn: gretl printing struct.
- * 
+ *
  * Open a data file of a type that requires a special plugin.
- * 
+ *
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
@@ -3044,7 +3036,7 @@ int import_other (const char *fname, GretlFileType ftype,
 		  DATASET *dset, gretlopt opt, PRN *prn)
 {
     FILE *fp;
-    int (*importer) (const char *, DATASET *, 
+    int (*importer) (const char *, DATASET *,
 		     gretlopt, PRN *);
     int err = 0;
 
@@ -3100,15 +3092,15 @@ int import_other (const char *fname, GretlFileType ftype,
  * @dset: dataset struct.
  * @opt: option flag; see gretl_get_data().
  * @prn: gretl printing struct.
- * 
+ *
  * Open a data file of a type that requires a special plugin.
  * Acceptable values for @ftype are %GRETL_GNUMERIC,
  * %GRETL_XLS, %GRETL_XLSX and %GRETL_ODS.
- * 
+ *
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int import_spreadsheet (const char *fname, GretlFileType ftype, 
+int import_spreadsheet (const char *fname, GretlFileType ftype,
 			int *list, char *sheetname,
 			DATASET *dset, gretlopt opt, PRN *prn)
 {
@@ -3194,9 +3186,9 @@ static int is_jmulti_datafile (const char *fname)
 		ret = 1;
 		break;
 	    }
-	} 
+	}
 	fclose(fp);
-    } 
+    }
 
     return ret;
 }
@@ -3204,7 +3196,7 @@ static int is_jmulti_datafile (const char *fname)
 /**
  * gretl_is_pkzip_file:
  * @fname: name of file to examine.
- * 
+ *
  * Returns: 1 if @fname is readable and is a PKZIP file,
  * else 0.
  */
@@ -3219,9 +3211,9 @@ int gretl_is_pkzip_file (const char *fname)
     if (fp != NULL) {
 	if (fread(test, 1, 2, fp) == 2) {
 	    if (!strcmp(test, "PK")) ret = 1;
-	} 
+	}
 	fclose(fp);
-    } 
+    }
 
     return ret;
 }
@@ -3232,13 +3224,13 @@ int gretl_is_pkzip_file (const char *fname)
  * @opt: OPT_P may be included to permit path-searching if @fname
  * is not an absolute path; in that case the @fname argument
  * may be modified, otherwise it will be left unchanged.
- * 
+ *
  * Attempts to determine the type of a file to be opened in gretl:
  * data file (of various formats), or command script. If OPT_P
- * is given, the @fname argument must be an array of length 
+ * is given, the @fname argument must be an array of length
  * at least %MAXLEN: a path may be prepended and in some cases
  * an extension may be appended.
- * 
+ *
  * Returns: integer code indicating the type of file.
  */
 
@@ -3249,7 +3241,7 @@ GretlFileType detect_filetype (char *fname, gretlopt opt)
 
     if (ext != NULL) {
 	/* First try judging the type by extension */
-	if (!strcmp(ext, ".inp")) { 
+	if (!strcmp(ext, ".inp")) {
 	    ftype = GRETL_SCRIPT;
 	} else if (!strcmp(ext, ".gretl")) {
 	    if (gretl_is_pkzip_file(fname)) {
@@ -3291,9 +3283,9 @@ GretlFileType detect_filetype (char *fname, gretlopt opt)
     if (ftype == GRETL_UNRECOGNIZED) {
 	/* last gasp */
 	if (gretl_is_xml_file(fname)) {
-	    ftype = GRETL_XML_DATA;  
+	    ftype = GRETL_XML_DATA;
 	} else if (has_suffix(fname, ".dat") && is_jmulti_datafile(fname)) {
-	    ftype = GRETL_JMULTI; 
+	    ftype = GRETL_JMULTI;
 	} else {
 	    /* default to assuming plain text data */
 	    ftype = GRETL_CSV;
@@ -3388,7 +3380,7 @@ int check_atoi (const char *numstr)
     return 1;
 }
 
-static int transpose_varname_used (const char *vname, 
+static int transpose_varname_used (const char *vname,
 				   DATASET *dinfo,
 				   int imax)
 {
@@ -3580,7 +3572,7 @@ static int is_weekend (int t, int pd, int sat0, int sun0)
 
 /* Scan imported daily data for missing values, so as to
    be able to offer the user some options.
-   
+
    Return values:
 
    0 : no missing values
@@ -3644,7 +3636,7 @@ int analyse_daily_import (const DATASET *dset, PRN *prn)
 	    if (!all_missing) {
 		/* not all weekend data are missing */
 		all_weekends_blank = 0;
-	    }	    
+	    }
 	} else {
 	    n_weekdays++;
 	}
@@ -3659,7 +3651,7 @@ int analyse_daily_import (const DATASET *dset, PRN *prn)
 
     if (all_weekends_blank) {
 	double misspc = 100.0 * blank_weekdays / (double) n_weekdays;
-	    
+
 	if (pd == 7) {
 	    pputs(prn, "This dataset is on 7-day calendar, but weekends are blank.");
 	} else {
@@ -3676,7 +3668,7 @@ int analyse_daily_import (const DATASET *dset, PRN *prn)
 	    } else {
 		pprintf(prn, "%g percent of weekday observations are missing.",
 			misspc);
-	    }	    
+	    }
 	    if (misspc < 10.0) {
 		ret = 2;
 	    }
@@ -3695,9 +3687,8 @@ int analyse_daily_import (const DATASET *dset, PRN *prn)
 	}
 	if (misspc < 10) {
 	    ret = 3;
-	}	
+	}
     }
 
     return ret;
 }
-
