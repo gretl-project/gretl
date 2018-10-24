@@ -38,6 +38,7 @@
 #include "gretl_cmatrix.h"
 #include "gretl_btree.h"
 #include "qr_estimate.h"
+#include "gretl_foreign.h"
 #include "var.h"
 
 #ifdef USE_CURL
@@ -46,10 +47,6 @@
 
 #ifdef HAVE_MPI
 # include "gretl_mpi.h"
-#endif
-
-#ifdef USE_RLIB
-# include "gretl_foreign.h"
 #endif
 
 #include <errno.h>
