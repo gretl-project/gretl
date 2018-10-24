@@ -2659,17 +2659,12 @@ int try_exec_bundle_print_function (gretl_bundle *b, PRN *prn)
 
     if (funname != NULL) {
 	const char *name = user_var_get_name_by_data(b);
-	char fnline[MAXLINE];
-	ExecState state;
+	gchar *genline;
 	int err;
 
-	sprintf(fnline, "%s(&%s)", funname, name);
-	g_free(funname);
-	gretl_exec_state_init(&state, SCRIPT_EXEC, NULL, get_lib_cmd(),
-			      NULL, prn);
-	state.line = fnline;
-	err = gui_exec_line(&state, dataset, NULL);
-
+	genline = g_strdup_printf("%s(&%s)", funname, name);
+	err = generate_void(genline, dataset, prn);
+	g_free(genline);
 	if (err) {
 	    gui_errmsg(err);
 	} else {

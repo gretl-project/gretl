@@ -864,6 +864,18 @@ int generate_int (const char *s, DATASET *dset, int *err)
     return ret;
 }
 
+int generate_void (const char *s, DATASET *dset, PRN *prn)
+{
+    parser p;
+    int err;
+
+    err = realgen(s, &p, dset, prn, P_PRIV | P_VOID, EMPTY);
+
+    gen_cleanup(&p);
+
+    return err;
+}
+
 /* retrieve a series result directly */
 
 double *generate_series (const char *s, DATASET *dset, PRN *prn,

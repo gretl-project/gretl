@@ -181,6 +181,8 @@ double generate_boolean (const char *s, DATASET *dset, int *err);
 
 int generate_int (const char *s, DATASET *dset, int *err);
 
+int generate_void (const char *s, DATASET *dset, PRN *prn);
+
 double *generate_series (const char *s, DATASET *dset, PRN *prn,
 			 int *err);
 
