@@ -91,7 +91,7 @@ double get_date_x (int pd, const char *obs)
     return x;
 }
 
-static int real_check_varname (const char *varname,
+static int real_check_varname (const char *vname,
 			       int is_series)
 {
     int testchar = 'a';
@@ -100,20 +100,22 @@ static int real_check_varname (const char *varname,
 
     gretl_error_clear();
 
-    if (strlen(varname) >= VNAMELEN) {
+    if (strlen(vname) >= VNAMELEN) {
 	gretl_errmsg_set(_("Varname exceeds the maximum of 31 characters"));
 	err = E_DATA;
-    } else if (gretl_reserved_word(varname)) {
+    } else if (gretl_reserved_word(vname)) {
 	err = E_DATA;
-    } else if (!(isalpha((unsigned char) *varname))) {
+    } else if (!(isalpha((unsigned char) *vname))) {
 	firstbad = 1;
-	testchar = *varname;
+	testchar = *vname;
         err = E_DATA;
-    } else if (is_series && get_user_function_by_name(varname)) {
+    } else if (is_series && (function_lookup(vname) ||
+			     get_user_function_by_name(vname) ||
+			     is_function_alias(vname))) {
 	gretl_warnmsg_sprintf(_("'%s' shadows a function of the same name"),
-			      varname);
+			      vname);
     } else {
-	const char *p = varname;
+	const char *p = vname;
 
 	while (*p && testchar == 'a') {
 	    if (!(isalpha((unsigned char) *p))
@@ -131,11 +133,11 @@ static int real_check_varname (const char *varname,
 	    if (firstbad) {
 		gretl_errmsg_sprintf(_("First char of varname '%s' is bad\n"
 				       "(first must be alphabetical)"),
-				     varname);
+				     vname);
 	    } else {
 		gretl_errmsg_sprintf(_("Varname '%s' contains illegal character '%c'\n"
 				       "Use only letters, digits and underscore"),
-				     varname, (unsigned char) testchar);
+				     vname, (unsigned char) testchar);
 	    }
 	} else {
 	    if (firstbad) {

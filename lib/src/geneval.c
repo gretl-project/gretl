@@ -17373,7 +17373,7 @@ static int gen_check_return_type (parser *p)
 /* Allocate storage if saving a series to the dataset:
    lh.vnum <= 0 means that the LHS series does not already
    exist. If this is a new series we also check for
-   collision with the name of a user-function and issue
+   collision with the name of a function and issue
    a warning if need be.
 */
 
@@ -17390,6 +17390,9 @@ static int gen_allocate_storage (parser *p)
 	}
 	if (!p->err && gretl_function_depth() == 0 &&
 	    get_user_function_by_name(p->lh.name) != NULL) {
+	    gretl_warnmsg_sprintf(_("'%s' shadows a function of the same name"),
+				  p->lh.name);
+	} else if (!p->err && function_lookup(p->lh.name)) {
 	    gretl_warnmsg_sprintf(_("'%s' shadows a function of the same name"),
 				  p->lh.name);
 	}
