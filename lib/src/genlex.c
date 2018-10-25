@@ -1280,7 +1280,7 @@ static void handle_lpnext (const char *s, parser *p,
 	/* unambiguous: function */
 	p->sym = UFUN;
     } else if (u != NULL) {
-	/* ambiguous case */
+	/* ambiguous case! */
 	if (gretl_function_depth() > 0) {
 	    /* function writers should avoid collisions
 	       when naming series
