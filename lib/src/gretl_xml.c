@@ -2195,13 +2195,14 @@ static int p15_OK (const DATASET *dset, int v)
     return ret;
 }
 
-static int real_write_gdt (const char *fname, const int *list,
+static int real_write_gdt (const char *fname, const int *inlist,
 			   const DATASET *dset, gretlopt opt,
 			   int progress)
 {
     FILE *fp = NULL;
     gzFile fz = Z_NULL;
     int tsamp = dset->t2 - dset->t1 + 1;
+    int *list = NULL;
     char *p15 = NULL;
     char startdate[OBSLEN], enddate[OBSLEN];
     char datname[MAXLEN], freqstr[32];
@@ -2209,12 +2210,31 @@ static int real_write_gdt (const char *fname, const int *list,
     const char *gdtver;
     int (*show_progress) (double, double, int) = NULL;
     double dsize = 0;
-    int i, t, v, nvars, ntabs;
+    int i, t, v, ntabs, nvars = 0;
     int gz, have_markers, in_c_locale = 0;
     int binary = 0, skip_padding = 0;
     int gdt_digits = 17;
     int uerr = 0;
     int err;
+
+    /* what are we supposed to be saving? */
+    if (inlist != NULL) {
+	int lzero[] = {1, 0};
+
+	list = gretl_list_drop(inlist, lzero, &err);
+	if (err) {
+	    return err;
+	}
+	nvars = list[0];
+    } else {
+	nvars = dset->v - 1;
+    }
+
+    if (nvars <= 0) {
+	gretl_errmsg_sprintf("No data to save!");
+	free(list);
+	return E_DATA;
+    }
 
     if (opt & OPT_B) {
 	binary = G_BYTE_ORDER;
@@ -2235,13 +2255,8 @@ static int real_write_gdt (const char *fname, const int *list,
 
     if (err) {
 	gretl_errmsg_sprintf(_("Couldn't open %s for writing"), fname);
+	free(list);
 	return err;
-    }
-
-    if (list != NULL) {
-	nvars = list[0];
-    } else {
-	nvars = dset->v - 1;
     }
 
     dsize = tsamp * nvars * sizeof(double);
@@ -2629,6 +2644,7 @@ static int real_write_gdt (const char *fname, const int *list,
     if (p15) free(p15);
     if (fp != NULL) fclose(fp);
     if (fz != Z_NULL) gzclose(fz);
+    free(list);
 
     return err;
 }
@@ -2717,7 +2733,7 @@ static int process_varlist (xmlNodePtr node, DATASET *dset, int probe)
 	    err = E_ALLOC;
 	}
 	if (!err && !probe) {
-	    dset->Z = malloc(dset->v * sizeof *dset->Z);
+	    dset->Z = doubles_array_new(dset->v, 0);
 	    if (dset->Z == NULL) {
 		err = E_ALLOC;
 	    }
@@ -2751,8 +2767,16 @@ static int process_varlist (xmlNodePtr node, DATASET *dset, int probe)
         if (!xmlStrcmp(cur->name, (XUC) "variable")) {
 	    tmp = xmlGetProp(cur, (XUC) "name");
 	    if (tmp != NULL) {
-		err = check_varname((const char *) tmp);
-		transcribe_string(dset->varname[i], (char *) tmp, VNAMELEN);
+		if (strcmp((char *) tmp, "catch") && strcmp((char *) tmp, "const")) {
+		    /* temporary hack: allow 'catch', even though it's
+		       officially reserved, on account of Ramanathan
+		       data file data6-2.gdt
+		    */
+		    err = check_varname((const char *) tmp);
+		}
+		if (!err) {
+		    transcribe_string(dset->varname[i], (char *) tmp, VNAMELEN);
+		}
 		free(tmp);
 	    } else {
 		gretl_errmsg_sprintf(_("Variable %d has no name"), i);
