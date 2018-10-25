@@ -2750,11 +2750,15 @@ static int process_varlist (xmlNodePtr node, DATASET *dset, int probe)
         if (!xmlStrcmp(cur->name, (XUC) "variable")) {
 	    tmp = xmlGetProp(cur, (XUC) "name");
 	    if (tmp != NULL) {
+		err = check_varname((const char *) tmp);
 		transcribe_string(dset->varname[i], (char *) tmp, VNAMELEN);
 		free(tmp);
 	    } else {
 		gretl_errmsg_sprintf(_("Variable %d has no name"), i);
-		return E_DATA;
+		err = E_DATA;
+	    }
+	    if (err) {
+		return err;
 	    }
 	    tmp = xmlGetProp(cur, (XUC) "label");
 	    if (tmp != NULL) {

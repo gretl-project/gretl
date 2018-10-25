@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* lexer module for 'genr' and related commands */
@@ -138,7 +138,7 @@ struct str_table mvars[] = {
     { M_VMA,     "$vma" },
     { M_FEVD,    "$fevd" },
     { M_EVALS,   "$evals" },
-    { M_JALPHA,  "$jalpha" }, 
+    { M_JALPHA,  "$jalpha" },
     { M_JBETA,   "$jbeta" },
     { M_JVBETA,  "$jvbeta" },
     { M_JS00,    "$s00" },
@@ -200,17 +200,17 @@ struct str_table funcs[] = {
     { F_ROUND,    "round" },
     { F_CEIL,     "ceil" },
     { F_FLOOR,    "floor" },
-    { F_SORT,     "sort" }, 
-    { F_DSORT,    "dsort" }, 
-    { F_SORTBY,   "sortby" }, 
+    { F_SORT,     "sort" },
+    { F_DSORT,    "dsort" },
+    { F_SORTBY,   "sortby" },
     { F_RANKING,  "ranking" },
     { F_ODEV,     "orthdev" },
     { F_NOBS,     "nobs" },
     { F_T1,       "firstobs" },
     { F_T2,       "lastobs" },
-    { F_RUNIFORM, "uniform" }, 
-    { F_RNORMAL,  "normal" }, 
-    { F_CUM,      "cum" }, 
+    { F_RUNIFORM, "uniform" },
+    { F_RNORMAL,  "normal" },
+    { F_CUM,      "cum" },
     { F_MISSING,  "missing" },
     { F_DATAOK,   "ok" },        /* opposite of missing */
     { F_MISSZERO, "misszero" },
@@ -277,7 +277,7 @@ struct str_table funcs[] = {
     { F_IMINC,    "iminc" },
     { F_IMAXC,    "imaxc" },
     { F_IMINR,    "iminr" },
-    { F_IMAXR,    "imaxr" }, 
+    { F_IMAXR,    "imaxr" },
     { F_FFT,      "fft" },
     { F_FFTI,     "ffti" },
     { F_CMULT,    "cmult" },
@@ -565,12 +565,12 @@ static GHashTable *gretl_function_hash_init (void)
     ht = g_hash_table_new(g_str_hash, g_str_equal);
 
     for (i=0; funcs[i].str != NULL; i++) {
-	g_hash_table_insert(ht, (gpointer) funcs[i].str, 
+	g_hash_table_insert(ht, (gpointer) funcs[i].str,
 			    GINT_TO_POINTER(funcs[i].id));
     }
 
     for (i=0; hidden_funcs[i].str != NULL; i++) {
-	g_hash_table_insert(ht, (gpointer) hidden_funcs[i].str, 
+	g_hash_table_insert(ht, (gpointer) hidden_funcs[i].str,
 			    GINT_TO_POINTER(hidden_funcs[i].id));
     }
 
@@ -611,7 +611,7 @@ static int real_function_lookup (const char *s, int aliases,
 		}
 		return func_alias[i].id;
 	    }
-	} 
+	}
     }
 
     return 0;
@@ -936,10 +936,10 @@ int genr_function_word (const char *s)
     }
     if (!ret) {
 	ret = bvar_lookup(s);
-    }    
+    }
     if (!ret) {
 	ret = const_lookup(s);
-    }    
+    }
 
     return ret;
 }
@@ -990,16 +990,16 @@ void context_error (int c, parser *p, const char *func)
     } else if (p->sym == EOT) {
 	parser_print_input(p);
 	pputs(p->prn, _("Incomplete expression\n"));
-    } else {	
+    } else {
 	const char *s = getsymb_full(p->sym, p);
 
 	if (s != NULL && *s != '\0' && strcmp(s, "unknown")) {
-	    pprintf(p->prn, _("The symbol '%s' is not valid in this context\n"), 
+	    pprintf(p->prn, _("The symbol '%s' is not valid in this context\n"),
 		    getsymb_full(p->sym, p));
 	} else {
-	    pprintf(p->prn, "The symbol %d is not valid in this context\n", 
+	    pprintf(p->prn, "The symbol %d is not valid in this context\n",
 		    p->sym);
-	}	    
+	}
     }
 
     if (!p->err) {
@@ -1064,7 +1064,7 @@ static char *get_quoted_string (parser *p)
 
     if (!p->err) {
 	if (p->ch == '.' && *p->point == '$') {
-	    /* maybe quoted name of saved object followed by 
+	    /* maybe quoted name of saved object followed by
 	       dollar variable? */
 	    p->sym = OVAR;
 	} else {
@@ -1083,7 +1083,7 @@ static int might_be_date_string (const char *s, int n)
 #if LDEBUG
     fprintf(stderr, "might_be_date_string: s='%s', n=%d\n", s, n);
 #endif
-    
+
     if (n > 10) {
 	return 0;
     }
@@ -1120,7 +1120,7 @@ NODE *obs_node (parser *p)
     close = gretl_charpos(']', s);
 
 #if LDEBUG
-    fprintf(stderr, "obs_node: s='%s', ch='%c', close=%d\n", 
+    fprintf(stderr, "obs_node: s='%s', ch='%c', close=%d\n",
 	    s, (char) p->ch, close);
 #endif
 
@@ -1138,7 +1138,7 @@ NODE *obs_node (parser *p)
     } else if (might_be_date_string(s, close)) {
 	strncat(word, s, close);
 	special = 1;
-    } 
+    }
 
     if (special && !p->err) {
 	t = get_t_from_obs_string(word, p->dset);
@@ -1186,7 +1186,7 @@ int is_gretl_accessor (const char *s)
 	if (!strncmp(s, bvars[i].str, n)) {
 	    return !isalpha(s[n]);
 	}
-    }    
+    }
 
     return 0;
 }
@@ -1263,6 +1263,51 @@ static int parser_next_char (parser *p, int skip)
     return 0;
 }
 
+static void handle_lpnext (const char *s, parser *p,
+			   int have_dset)
+{
+    ufunc *u = get_user_function_by_name(s);
+    int vnum = -1;
+
+    if (have_dset) {
+	vnum = current_series_index(p->dset, s);
+    }
+
+    if (u == NULL && vnum >= 0) {
+	/* unambiguous: series */
+	p->sym = SERIES;
+    } else if (u != NULL && vnum < 0) {
+	/* unambiguous: function */
+	p->sym = UFUN;
+    } else if (u != NULL) {
+	/* ambiguous case */
+	if (gretl_function_depth() > 0) {
+	    /* function writers should avoid collisions
+	       when naming series
+	    */
+	    p->sym = SERIES;
+	} else if (p->targ != UNK && p->targ == LIST && p->targ != SERIES) {
+	    /* target not compatible with series lag? */
+	    p->sym = UFUN;
+	} else if (defining_list(p) || p->targ == SERIES) {
+	    /* debatable */
+	    p->sym = SERIES;
+	} else {
+	    /* debatable */
+	    p->sym = UFUN;
+	}
+    }
+
+    if (p->sym != 0) {
+	p->idstr = gretl_strdup(s);
+	if (p->sym == UFUN) {
+	    p->data = u;
+	} else {
+	    p->idnum = vnum;
+	}
+    }
+}
+
 static int is_function_word (const char *s)
 {
     return function_lookup_with_alias(s, NULL) != 0 ||
@@ -1286,23 +1331,14 @@ static void look_up_word (const char *s, parser *p)
     /* initialize */
     p->sym = 0;
 
-    /* In a function call the function identifier must be
-       followed by left parenthesis, and there are few
-       other cases where left-paren is OK following an
-       identifier, so we favour function lookup if @lpnext
-       is non-zero.
-    */
     if (lpnext) {
+	/* identifier is immediately followed by left paren:
+	   most likely a function call but could be the name
+	   of a series followed by a lag specifier
+	*/
 	p->sym = function_lookup_with_alias(s, p);
 	if (p->sym == 0) {
-	    /* could be user-function, or possibly series
-	       identifier plus lag specification: give
-	       first dibs to user-function?
-	    */
-	    if ((p->data = get_user_function_by_name(s)) != NULL) {
-		p->sym = UFUN;
-		p->idstr = gretl_strdup(s);
-	    }
+	    handle_lpnext(s, p, have_dset);
 	}
     }
 
@@ -1323,7 +1359,7 @@ static void look_up_word (const char *s, parser *p)
 		p->idnum = DUM_TREND;
 	    } else if ((p->data = get_user_var_by_name(s)) != NULL) {
 		user_var *u = p->data;
-		    
+
 		if (u->type == GRETL_TYPE_DOUBLE) {
 		    p->sym = NUM;
 		} else if (u->type == GRETL_TYPE_MATRIX) {
@@ -1452,20 +1488,20 @@ static void word_check_next_char (parser *p)
 	} else if (p->sym == MVAR && model_data_matrix(p->idnum)) {
 	    /* old-style "$coeff(x1)" etc. */
 	    p->sym = DMSTR;
-	} else if (!func1_symb(p->sym) && 
+	} else if (!func1_symb(p->sym) &&
 		   !func2_symb(p->sym) &&
 		   !func3_symb(p->sym) &&
-		   !funcn_symb(p->sym) && 
-		   p->sym != UFUN && 
+		   !funcn_symb(p->sym) &&
+		   p->sym != UFUN &&
 		   p->sym != RFUN) {
 	    p->err = E_PARSE;
-	} 
+	}
     } else if (p->ch == '[') {
 	p->upsym = p->sym;
 	if (p->sym == MAT) {
 	    /* slice of user matrix */
 	    p->sym = MSL;
-	} else if ((p->sym == MVAR || p->sym == DVAR) && 
+	} else if ((p->sym == MVAR || p->sym == DVAR) &&
 		   could_be_matrix(p->idnum)) {
 	    /* slice of $ matrix */
 	    p->sym = DMSL;
@@ -1489,18 +1525,18 @@ static void word_check_next_char (parser *p)
 	    p->sym = DBMEMB;
 	} else {
 	    p->err = E_PARSE;
-	} 
+	}
     } else if (p->ch == '.' && *p->point == '$') {
 	if (p->sym == UOBJ) {
 	    /* name of saved object followed by dollar variable? */
 	    p->sym = OVAR;
 	} else if (p->sym == CSTR) {
-	    /* maybe quoted name of saved object followed by 
+	    /* maybe quoted name of saved object followed by
 	       dollar variable? */
 	    p->sym = OVAR;
 	} else {
 	    p->err = E_PARSE;
-	}	    
+	}
     } else if (p->ch == '.' && isalpha(*p->point)) {
 	if (p->sym == LIST) {
 	    p->sym = LISTVAR;
@@ -1515,11 +1551,11 @@ static void word_check_next_char (parser *p)
 	maybe_treat_as_postfix(p);
     } else if (p->ch == '-' && *p->point == '-') {
 	maybe_treat_as_postfix(p);
-    }	
+    }
 
     if (p->err) {
 	context_error(p->ch, p, "word_check_next_char");
-    } 
+    }
 }
 
 static int is_word_char (parser *p)
@@ -1529,13 +1565,13 @@ static int is_word_char (parser *p)
     } else if (defining_list(p) && !doing_genseries &&
 	       (p->ch == '*' || p->ch == '?')) {
 	return 1;
-    } 
+    }
 
     return 0;
 }
 
 static void getword (parser *p)
-{  
+{
     char word[32];
     int i = 0;
 
@@ -1598,8 +1634,8 @@ static int colon_ok (parser *p, char *s, int n)
     int i;
 
     if (p->flags & P_SLICING) {
-	/* calculating a matrix "slice": colon is a separator in 
-	   this context, cannot be part of a time/panel observation 
+	/* calculating a matrix "slice": colon is a separator in
+	   this context, cannot be part of a time/panel observation
 	   string
 	*/
 #if LDEBUG
@@ -1644,7 +1680,7 @@ static int ok_dbl_char (parser *p, char *s, int i)
 	    !strchr(s, 'e') && !strchr(s, 'E');
     case 'e':
     case 'E':
-	return !strchr(s, 'e') && !strchr(s, 'E') && 
+	return !strchr(s, 'e') && !strchr(s, 'E') &&
 	    !strchr(s, ':');
     case ':':
 	/* allow for obs numbers in the form, e.g., "1995:10" */
@@ -1668,17 +1704,17 @@ static void parse_number (parser *p)
 	    gotcol = 1;
 	}
 	parser_getc(p);
-    }  
+    }
 
     while (p->ch >= '0' && p->ch <= '9') {
 	/* flush excess numeric characters */
 	parser_getc(p);
-    } 
+    }
 
 #if LDEBUG
     fprintf(stderr, "parse_number: xstr = '%s'\n", xstr);
 #endif
-    
+
     if (gotcol) {
 #if LDEBUG
 	fprintf(stderr, " got colon: obs identifier?\n");
@@ -1799,23 +1835,23 @@ void lex (parser *p)
 	    p->sym = B_TRMUL;
 	    parser_getc(p);
 	    return;
-        case '/': 
+        case '/':
 	    p->sym = B_DIV;
 	    parser_getc(p);
 	    return;
-        case '\\': 
+        case '\\':
 	    p->sym = B_LDIV;
 	    parser_getc(p);
 	    return;
-        case '%': 
+        case '%':
 	    p->sym = B_MOD;
 	    parser_getc(p);
 	    return;
-        case '^': 
+        case '^':
 	    p->sym = B_POW;
 	    parser_getc(p);
 	    return;
-        case '&': 
+        case '&':
 	    parser_getc(p);
 	    if (p->ch == '&') {
 		p->sym = B_AND;
@@ -1824,7 +1860,7 @@ void lex (parser *p)
 		p->sym = U_ADDR;
 	    }
 	    return;
-        case '|': 
+        case '|':
 	    parser_getc(p);
 	    if (p->ch == '|') {
 		p->sym = B_OR;
@@ -1833,7 +1869,7 @@ void lex (parser *p)
 		p->sym = B_VCAT;
 	    }
 	    return;
-        case '!': 
+        case '!':
 	    parser_getc(p);
 	    if (p->ch == '=') {
 		p->sym = B_NEQ;
@@ -1842,7 +1878,7 @@ void lex (parser *p)
 		p->sym = U_NOT;
 	    }
 	    return;
-        case '=': 
+        case '=':
 	    parser_getc(p);
 	    if (p->ch == '=') {
 		parser_getc(p);
@@ -1853,7 +1889,7 @@ void lex (parser *p)
 	    }
 	    p->sym = B_EQ;
 	    return;
-        case '>': 
+        case '>':
 	    parser_getc(p);
 	    if (p->ch == '=') {
 		p->sym = B_GTE;
@@ -1862,7 +1898,7 @@ void lex (parser *p)
 		p->sym = B_GT;
 	    }
 	    return;
-        case '<': 
+        case '<':
 	    parser_getc(p);
 	    if (p->ch == '=') {
 		p->sym = B_LTE;
@@ -1874,27 +1910,27 @@ void lex (parser *p)
 		p->sym = B_LT;
 	    }
 	    return;
-        case '(': 
+        case '(':
 	    p->sym = G_LPR;
 	    parser_getc(p);
 	    return;
-        case ')': 
+        case ')':
 	    p->sym = G_RPR;
 	    parser_getc(p);
 	    return;
-        case '[': 
+        case '[':
 	    p->sym = G_LBR;
 	    parser_getc(p);
 	    return;
-        case '{': 
+        case '{':
 	    p->sym = G_LCB;
 	    parser_getc(p);
 	    return;
-        case '}': 
+        case '}':
 	    p->sym = G_RCB;
 	    parser_getc(p);
 	    return;
-        case ']': 
+        case ']':
 	    p->sym = G_RBR;
 	    parser_getc(p);
 	    return;
@@ -1902,11 +1938,11 @@ void lex (parser *p)
 	    p->sym = B_HCAT;
 	    parser_getc(p);
 	    return;
-        case ',': 
+        case ',':
 	    p->sym = P_COM;
 	    parser_getc(p);
 	    return;
-        case ';': 
+        case ';':
 	    if (defining_list(p)) {
 		p->sym = B_JOIN;
 	    } else {
@@ -1915,7 +1951,7 @@ void lex (parser *p)
 	    }
 	    parser_getc(p);
 	    return;
-        case ':': 
+        case ':':
 	    p->sym = P_COL;
 	    parser_getc(p);
 	    return;
@@ -1995,18 +2031,18 @@ void lex (parser *p)
 		parser_ungetc(p);
 	    }
 	    /* Falls through. */
-        default: 
+        default:
 	    if (defining_list(p) && lag_range_sym(p)) {
 		p->sym = B_RANGE;
 		parser_getc(p);
 		parser_getc(p);
 		return;
 	    }
-	    if (defining_list(p) && !doing_genseries && 
+	    if (defining_list(p) && !doing_genseries &&
 		(bare_data_type(p->sym) || closing_sym(p->sym) ||
 		 p->sym == LAG) && *(p->point - 2) == ' ') {
-		/* may be forming a list, but only if there are 
-		   spaces between the terms 
+		/* may be forming a list, but only if there are
+		   spaces between the terms
 		*/
 		p->sym = B_LCAT;
 		return;
@@ -2014,7 +2050,7 @@ void lex (parser *p)
 	    if (isdigit(p->ch) || (p->ch == '.' && isdigit(*p->point))) {
 		parse_number(p);
 		return;
-	    } else if (islower(p->ch) || isupper(p->ch) || 
+	    } else if (islower(p->ch) || isupper(p->ch) ||
 		       word_start_special(p->ch)) {
 		getword(p);
 		return;
@@ -2037,7 +2073,7 @@ void lex (parser *p)
 }
 
 const char *getsymb_full (int t, const parser *p)
-{  
+{
     if ((t > F1_MIN && t < F1_MAX) ||
 	(t > F1_MAX && t < F2_MAX) ||
 	(t > F2_MAX && t < FN_MAX)) {
@@ -2045,7 +2081,7 @@ const char *getsymb_full (int t, const parser *p)
     }
 
     if (t == EOT) {
-	return "";
+	return "EOT";
     }
 
     /* yes, well */
@@ -2149,42 +2185,42 @@ const char *getsymb_full (int t, const parser *p)
 	} else if (t == CSTR) {
 	    return "CSTR";
 	}
-    }	
+    }
 
     switch (t) {
     case B_ASN:
 	return "=";
-    case B_ADD: 
+    case B_ADD:
     case U_POS:
 	return "+";
-    case B_SUB: 
+    case B_SUB:
     case U_NEG:
 	return "-";
-    case B_MUL: 
+    case B_MUL:
 	return "*";
-    case B_TRMUL: 
+    case B_TRMUL:
 	return "'";
-    case B_DIV: 
+    case B_DIV:
 	return "/";
     case B_LDIV:
 	return "\\";
-    case B_MOD: 
+    case B_MOD:
 	return "%";
-    case B_POW: 
+    case B_POW:
 	return "^";
-    case B_EQ: 
+    case B_EQ:
 	return "==";
-    case B_NEQ: 
+    case B_NEQ:
 	return "!=";
-    case B_GT: 
+    case B_GT:
 	return ">";
-    case B_LT: 
+    case B_LT:
 	return "<";
-    case B_GTE: 
+    case B_GTE:
 	return ">=";
-    case B_LTE: 
+    case B_LTE:
 	return "<=";
-    case B_AND: 
+    case B_AND:
 	return "&&";
     case B_JOIN:
 	return "JOIN";
@@ -2192,65 +2228,65 @@ const char *getsymb_full (int t, const parser *p)
 	return " to ";
     case U_ADDR:
 	return "&";
-    case B_OR: 
-	return "||";	
-    case U_NOT: 
+    case B_OR:
+	return "||";
+    case U_NOT:
 	return "!";
-    case G_LPR: 
+    case G_LPR:
 	return "(";
-    case G_RPR: 
+    case G_RPR:
 	return ")";
-    case G_LBR: 
+    case G_LBR:
 	return "[";
-    case G_RBR: 
+    case G_RBR:
 	return "]";
-    case G_LCB: 
+    case G_LCB:
 	return "{";
-    case G_RCB: 
+    case G_RCB:
 	return "}";
-    case B_DOTMULT: 
+    case B_DOTMULT:
 	return ".*";
-    case B_DOTDIV: 
+    case B_DOTDIV:
 	return "./";
-    case B_DOTPOW: 
+    case B_DOTPOW:
 	return ".^";
-    case B_DOTADD: 
+    case B_DOTADD:
 	return ".+";
-    case B_DOTSUB: 
+    case B_DOTSUB:
 	return ".-";
-    case B_DOTEQ: 
+    case B_DOTEQ:
 	return ".=";
-    case B_DOTGT: 
+    case B_DOTGT:
 	return ".>";
-    case B_DOTLT: 
+    case B_DOTLT:
 	return ".<";
-    case B_DOTGTE: 
+    case B_DOTGTE:
 	return ".>=";
-    case B_DOTLTE: 
+    case B_DOTLTE:
 	return ".<=";
     case B_DOTNEQ:
 	return ".!=";
-    case B_KRON: 
+    case B_KRON:
 	return "**";
-    case B_HCAT: 
+    case B_HCAT:
 	return "~";
-    case B_VCAT: 
+    case B_VCAT:
 	return "|";
     case B_LCAT:
 	return "LCAT";
-    case P_COM: 
+    case P_COM:
 	return ",";
-    case P_DOT: 
+    case P_DOT:
 	return ".";
-    case P_SEMI: 
+    case P_SEMI:
 	return ";";
-    case P_COL: 
+    case P_COL:
 	return ":";
-    case QUERY: 
+    case QUERY:
 	return "query";
     case LAG:
 	return "lag";
-    default: 
+    default:
 	break;
     }
 
