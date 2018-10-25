@@ -7759,28 +7759,34 @@ static NODE *series_obs (NODE *l, NODE *r, parser *p)
 
 	if (r->t == STR) {
 	    t = dateton(r->v.str, p->dset);
+	    if (t < 0) {
+		if (dataset_has_markers(p->dset)) {
+		    gretl_errmsg_sprintf_replace(_("Invalid observation specifier \"%s\""),
+						 r->v.str);
+		}
+		p->err = E_DATA;
+	    }
 	} else {
 	    /* plain integer */
 	    t = node_get_int(r, p);
-	    if (!p->err && t > 0 && t <= p->dset->n) {
-		t--; /* convert to zero based */
+	    if (!p->err) {
+		if (t > 0 && t <= p->dset->n) {
+		    t--; /* OK, convert to zero based */
+		} else {
+		    gretl_errmsg_sprintf(_("Index value %d is out of bounds"), t);
+		    p->err = E_DATA;
+		}
 	    }
 	}
 
 	if (!p->err) {
-	    if (t >= 0 && t < p->dset->n) {
-		if (strval) {
-		    const char *s =
-			series_get_string_for_obs(p->dset, l->vnum, t);
+	    if (strval) {
+		const char *s =
+		    series_get_string_for_obs(p->dset, l->vnum, t);
 
-		    ret->v.str = gretl_strdup(s);
-		} else {
-		    ret->v.xval = l->v.xvec[t];
-		}
-	    } else if (strval) {
-		ret->v.str = gretl_strdup("");
+		ret->v.str = gretl_strdup(s);
 	    } else {
-		ret->v.xval = NADBL;
+		ret->v.xval = l->v.xvec[t];
 	    }
 	}
     }

@@ -425,6 +425,16 @@ void gretl_errmsg_sprintf (const char *fmt, ...)
     }
 }
 
+void gretl_errmsg_sprintf_replace (const char *fmt, ...)
+{
+    va_list ap;
+
+    gretl_errmsg[0] = '\0';
+    va_start(ap, fmt);
+    vsnprintf(gretl_errmsg, ERRLEN, fmt, ap);
+    va_end(ap);
+}
+
 /**
  * gretl_warnmsg_sprintf:
  * @fmt: format string.

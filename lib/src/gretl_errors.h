@@ -103,6 +103,8 @@ void gretl_warnmsg_set (const char *str);
 
 void gretl_errmsg_sprintf (const char *fmt, ...);
 
+void gretl_errmsg_sprintf_replace (const char *fmt, ...);
+
 void gretl_warnmsg_sprintf (const char *fmt, ...);
 
 char *gretl_strerror (int errnum);
