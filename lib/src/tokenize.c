@@ -2341,7 +2341,7 @@ static int check_list_sepcount (int ci, int nsep)
    command-word.
 */
 
-static int test_for_genr (CMD *c, int i, DATASET *dset)
+static int test_for_genr (CMD *c, int i, char cnext, DATASET *dset)
 {
     cmd_token *toks = c->toks;
     char *s = toks[i].s;
@@ -2349,9 +2349,9 @@ static int test_for_genr (CMD *c, int i, DATASET *dset)
 
     if (j > i && (toks[j].type == TOK_EQUALS || toks[j].type == TOK_EQMOD)) {
 	c->ci = GENR;
-    } else if (dset != NULL && current_series_index(dset, s) >= 0) {
+    } else if (dset != NULL && cnext != '(' && current_series_index(dset, s) >= 0) {
 	c->ci = GENR;
-    } else if (gretl_is_user_var(s)) {
+    } else if (cnext != '(' && gretl_is_user_var(s)) {
 	c->ci = GENR;
     } else if (toks[i].type == TOK_NAME && c->ntoks > i + 1) {
 	cmd_token *nexttok = &toks[i+1];
@@ -2541,7 +2541,9 @@ static int try_for_command_index (CMD *cmd, int i,
  gentest:
 
     if (cmd->ci <= 0 && cmd->ntoks < 5) {
-	cmd->ci = test_for_genr(cmd, i, dset);
+	char cnext = peek_next_char(cmd, i);
+
+	cmd->ci = test_for_genr(cmd, i, cnext, dset);
     }
 
     if (cmd->ci > 0) {
