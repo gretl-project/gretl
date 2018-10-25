@@ -864,6 +864,12 @@ int generate_int (const char *s, DATASET *dset, int *err)
     return ret;
 }
 
+/* Execute statement @s, bypassing the command tokenizer,
+   when we know that it contains a call to a function whose
+   return value (if any) we do not want to assign. Prime
+   example: the bundle-print function for a function package.
+*/
+
 int generate_void (const char *s, DATASET *dset, PRN *prn)
 {
     parser p;
