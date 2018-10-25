@@ -350,6 +350,7 @@ gretl_matrix *VAR_coeff_matrix_from_VECM (GRETL_VAR *var)
 {
     gretl_matrix *C0 = NULL;
     gretl_matrix *rbeta = NULL;
+    gretl_matrix *B = var->B;
     int order = var->order + 1;
     int nexo = (var->xlist != NULL)? var->xlist[0] : 0;
     int utrend = jcode(var) == J_UNREST_TREND;
@@ -361,17 +362,26 @@ gretl_matrix *VAR_coeff_matrix_from_VECM (GRETL_VAR *var)
     double aij;
     int i, j, k;
 
-    /* Is B required? And if so how many B rows do we need? */
-    nb = var->ifc + nexo + nseas + utrend;
-    if (nb > 0 && (var->B == NULL || var->B->rows != nb)) {
-	gretl_errmsg_set("irf: coefficient matrix B is missing or wrong!");
-	fprintf(stderr, "B should have %d rows, has %d\n",
-		nb, var->B == NULL? 0 : var->B->rows);
-	return NULL;
-    }
-
     /* total coeffs in VAR representation */
     ncoeff = var->ncoeff + (var->neqns - var->jinfo->rank) + nr;
+
+    /* Is var->B required? And if so how many B rows do we need? */
+    nb = var->ifc + nexo + nseas + utrend;
+
+    if (nb > 0) {
+	if (B == NULL) {
+	    gretl_errmsg_set("VAR coefficient matrix B is missing!");
+	    return NULL;
+	} else if (B->rows != nb && B->rows != var->ncoeff) {
+	    gretl_errmsg_set("VAR coefficient matrix B is of wrong size!");
+	    fprintf(stderr, "B should have %d or %d rows, but has %d\n",
+		    nb, var->ncoeff, B->rows);
+	    gretl_matrix_print(B, "var->B");
+	    return NULL;
+	} else {
+	    nb = B->rows;
+	}
+    }
 
     if (nr > 0) {
 	rbeta = make_restricted_coeff_matrix(var);
@@ -398,7 +408,7 @@ gretl_matrix *VAR_coeff_matrix_from_VECM (GRETL_VAR *var)
 	int col = 0;
 
 	if (nb > 0) {
-	    coeff = var->B->val + i * nb;
+	    coeff = B->val + i * nb;
 	}
 
 	/* constant, if present */
