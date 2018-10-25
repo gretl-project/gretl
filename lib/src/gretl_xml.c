@@ -977,8 +977,9 @@ int *gretl_xml_get_list (xmlNodePtr node, xmlDocPtr doc, int *err)
 	if (sscanf(p, "%d", &n) != 1) {
 	    *err = E_DATA;
 	} else if (n == 0) {
+	    list = gretl_null_list();
 	    free(tmp);
-	    return NULL;
+	    return list;
 	} else if (n < 0) {
 	    *err = E_DATA;
 	} else {
