@@ -164,7 +164,13 @@ static int maybe_record_lag_info (parser *p)
 	if (s != NULL && string_is_blank(s + 1)) {
 	    int pv = series_index(p->dset, vname);
 
-	    if (pv < p->dset->v) {
+	    if (pv < p->dset->v && function_lookup(vname)) {
+		/* rule out the case of a series name shadowing
+		   a built-in function
+		*/
+		pv = -1;
+	    }
+	    if (pv > 0 && pv < p->dset->v) {
 		series_set_parent(p->dset, p->lh.vnum, p->dset->varname[pv]);
 		series_set_transform(p->dset, p->lh.vnum, LAGS);
 		series_set_lag(p->dset, p->lh.vnum, -lag);
