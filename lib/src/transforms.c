@@ -351,7 +351,7 @@ static int get_lag (int v, int lag, double *xlag,
 	xlag[t] = NADBL;
     }
 
-    if (dated_daily_data(dset)) {
+    if (0 && dated_daily_data(dset)) {
 	for (t=t1; t<=t2; t++) {
 	    s = t - lag;
 	    miss = 0;

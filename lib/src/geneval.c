@@ -3406,7 +3406,7 @@ static void lag_calc (double *y, const double *x,
 
     for (t=t1; t<=t2; t++) {
 	s = t - k;
-	if (dated_daily_data(p->dset)) {
+	if (0 && dated_daily_data(p->dset)) {
 	    if (s >= 0 && s < p->dset->n) {
 		while (s >= 0 && na(x[s])) {
 		    s--;
