@@ -16,7 +16,7 @@
 \title{The extra package\\
 (a collection of various convenience functions for hansl programming) }
 
-\date{February 2018, release 0.41, this is still small but growing... }
+\date{October 2018, release 0.5, this is still small but growing... }
 
 \author{The \noun{gretl} team\thanks{Currently co-ordinated by Sven Schreiber.}}
 
@@ -29,7 +29,7 @@ This package is intended for hansl scripting, not for gretl's GUI.
 (But of course other contributed function packages that make use of
 functions in extra.gfn can provide GUI access for themselves.)
 
-The usual one-time requirement is to do \texttt{install extra.zip}
+The usual one-time requirement is to do \texttt{pkg install extra.zip}
 to get a copy on the local system (or install it via gretl's graphical
 mechanism), and then in the respective hansl script have a line \texttt{include
 extra.gfn}.
@@ -49,9 +49,34 @@ post} (optional)
 
 Returns $A$ premultiplied by $K_{mn}$ (the commutation matrix; more
 efficient than explicit multiplication). In particular, \texttt{commute(vec(B),
-rows(B))} gives $vec(B')$. The optional argument $n$ defaults to
+rows(B), cols(B))} gives $vec(B')$. The optional argument $n$ defaults to
 $m$ (giving $K_{mm}=K_{m}$). If the optional arg \texttt{post} is
 non-zero, then does post-multiplication ($A\times K_{mn}$). 
+
+\subsection{eliminate}
+
+Arguments: \texttt{matrix vecA}
+
+Each column of the input vecA is assumed to come from the operation vec(A) 
+on a square matrix, thus rows(vecA) must be a square number.
+Returns vech(A), which is the result of pre-multiplying vec(A) with the 
+"elimination" matrix $L_m$.
+If vecA has several columns, each column is 
+treated separately as described above (and the results stacked side-by-side).
+
+\noindent Return type: \texttt{matrix}
+
+
+\subsection{duplicate}
+
+Arguments: \texttt{matrix vechA}
+
+The input is a vector assumed to come from an operation like vech(A).
+Returns vec(A), which is the result of pre-multiplying vech(A) with the 
+"duplication" matrix $D_m$. If vechA has several columns, each column is 
+treated separately as described above (and the results stacked side-by-side).
+
+\noindent Return type: \texttt{matrix}
 
 \subsection{nearPSD}
 
@@ -110,15 +135,18 @@ is 1.
 
 \subsection{sepstr2arr}
 
-Arguments: \texttt{string in, string sep }(optional)
+% Arguments: \texttt{string in, string sep }(optional)
 
-\noindent Return type: \texttt{strings} array
+% \noindent Return type: \texttt{strings} array
 
-Transforms comma-separated string to an array of strings. (The comma
-as separation character can be overridden with the sep argument, but
-only the first character is used.) 
+Transforms comma-separated string to an array of strings. 
+(Retired as of v0.5, use the extended functionality of gretl's built-in 
+strsplit function.)
+%(The comma
+%as separation character can be overridden with the sep argument, but
+%only the first character is used.) 
 
-\subsection{truncnorm }
+\subsection{truncnorm}
 
 Arguments: \texttt{int n, scalar m, scalar sigma, scalar below, scalar
 above}
@@ -140,7 +168,7 @@ Arguments: \texttt{matrix} pointer \texttt{{*}m}, \texttt{scalar thresh}
 Sets elements of \texttt{m} to zero if they are really close. The
 return value 0 or 1 indicates whether \texttt{m} was altered or not.
 
-\subsection{WSRcritical }
+\subsection{WSRcritical}
 
 Arguments: \texttt{int n, scalar prob }(optional)\texttt{, bool forcenorm}
 (optional)
@@ -160,7 +188,7 @@ normal approximation case. The normal approximation instead of the
 exact table values can be enforced with the \texttt{forcenorm}
 argument (default: zero, do not enforce).
 
-Return type: \texttt{matrix}
+\noindent Return type: \texttt{matrix}
 
 See also the sister function WSRpvalue.
 
@@ -187,9 +215,20 @@ The normal approximation instead of the exact table values can be
 enforced with the \texttt{forcenorm} argument (default: zero, do not
 enforce).
 
-Return type: \texttt{scalar}
+\noindent Return type: \texttt{scalar}
 
 See also the sister function WSRcritical.
+
+\subsection{powerset}
+
+Arguments: \texttt{strings S}
+
+Computes the powerset of the input S, i.e. all possible combinations 
+of the string elements in S. (Including the empty set / 
+empty string "".) Each combination yields one string in the output 
+array. Being a set, the ordering is not defined and arbitrary. 
+
+\noindent Return type: \texttt{strings} (array)
 
 \section{Functions requiring a dataset}
 
@@ -223,14 +262,16 @@ determines only the lower frequency and \texttt{phi} the upper.
 
 \section{Authors}
 \begin{itemize}
-\item gap\_filler, commute, truncnorm: Jack Lucchetti
-\item nearPSD, zeroifclose, sepstr2arr, scores2x2, WSRcritical, WSRpvalue:
+\item gap\_filler, commute, eliminate, duplicate, truncnorm, powerset: Jack Lucchetti
+\item nearPSD, zeroifclose, scores2x2, WSRcritical, WSRpvalue:
 Sven Schreiber 
 \item winsor: Sven Schreiber, original code JoshuaHe
 \end{itemize}
 
 \section{Changelog }
 \begin{itemize}
+\item October 2018: 0.5, fix small commute bug; retire sepstr2arr; add powerset,
+  eliminate, duplicate
 \item February 2018: 0.41, allow non-integer input in WSRpvalue
 \item January 2018: 0.4, add WSRcritical, WSRpvalue
 \item December 2017: 0.3, add scores2x2; switch to pdf help document

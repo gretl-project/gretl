@@ -1,7 +1,42 @@
 # author='The gretl team'
 # email='<use the mailing list or trackers>'
-# version='0.41'
-# date='2018-02-03'
+# version='0.5'
+# date='2018-10-27'
+
+function strings powerset(strings S)
+  # Computes the powerset of the input S,
+  # i.e. all possible cominations of the 
+  # string elements in S. (Including the
+  # empty set / empty string "".) 
+  # Each combination
+  # yields one string in the output array. 
+  # Being a set, the ordering is not
+  # defined. 
+    l = nelem(S)
+    N = 2^l
+    matrix P = zeros(N,l)
+    matrix s = seq(0, N-1)'
+
+    loop i=1..l --quiet
+        matrix a = s % 2
+        P[,i] = a
+        s = (s - a) / 2
+    endloop
+
+    strings PS = array(N)
+
+    loop i = 1..N --quiet
+        string c = ""
+        loop j = 1..l --quiet
+            if P[i, j]
+                c = c ~ " " ~ S[j]
+            endif
+        endloop
+        PS[i] = c
+    endloop
+
+    return PS
+end function 
 
 function matrix WPtable (int n[4::12] "number of trials")
    /*
@@ -36,6 +71,7 @@ function matrix WPtable (int n[4::12] "number of trials")
 end function
 
 function series lin_int (series y)
+    # originally from Jack's yahoo_get function
     series DOK = diff(ok(y))
     series Beg = DOK == -1
     series End = DOK(+1) == 1
@@ -190,8 +226,47 @@ function matrix commute (const matrix A,
     # if n == 0 (default), then it's understood to be equal to m,
     # as per Magnus/Neudecker convention: K_nn = K_n
     n = n ? n : m
+    if !post && (rows(A) != n*m)
+        funcerr "m*n doesn't match row dim of input"
+    elif post && (cols(A) != n*m)
+        funcerr "m*n doesn't match col dim of input"
+    endif
+     
     matrix e = vec(mshape(seq(1, m*n), m, n)')
     return post ? A[,e] : A[e,]
+end function
+
+function matrix eliminate(const matrix vecA)
+  # Each column of the input vecA is assumed to 
+  # come from the operation vec(A) on a square 
+  # matrix, thus rows(vecA) must be a square number.
+  # Returns vech(A), which is the result of pre-
+  # multiplying vec(A) with the "elimination"
+  # matrix L_m.
+  # If vecA has several columns, each column is 
+  # treated separately as described above 
+  # (and the results stacked side-by-side).
+  
+  r = sqrt(rows(vecA))
+  if r != round(r)
+    funcerr "input must have a square number of rows"
+  endif
+  e = vech(mshape(seq(1,r^2), r, r)')
+  return vecA[e,]
+end function 
+
+function matrix duplicate(const matrix vechA)
+  # The input is a vector assumed to come from 
+  # an operation like vech(A).
+  # Returns vec(A), which is the result of pre-
+  # multiplying vech(A) with the "duplication"
+  # matrix D_m. 
+  # If vechA has several columns, each column is 
+  # treated separately as described above 
+  # (and the results stacked side-by-side).
+
+  e = vec(unvech(seq(1,rows(vechA))'))
+  return vechA[e,]
 end function
 
 function matrix truncnorm (int n[1::],
@@ -338,6 +413,10 @@ function scalar WSRpvalue (int n[4::] "number of trials",
        values 1e-3 or 1 - 1e-3 as an approximation here.
        The normal approximation instead of the exact table values can be
        enforced with the 'forcenorm' argument.
+       
+       Source of the table: Wilfrid J Dixon and Frank J. Massey, Jr., 
+         Introduction to Statistical Analysis, 2nd ed. (New York: McGraw-Hill, 1957), 
+         pp. 443-444.
     */
     # input check
     if W > n * (n+1) / 2

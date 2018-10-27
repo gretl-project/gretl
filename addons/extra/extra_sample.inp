@@ -16,10 +16,6 @@ mc = {1, 1e-12}
 eval zeroifclose(&mc, 1e-10)
 print mc
 
-# sepstr2arr
-eval sepstr2arr("hey,ho,lets,go")
-eval sepstr2arr("hey ho lets go", " ")	# with non-comma sep string
-
 # truncnorm
 m = 0.5
 s = 1
@@ -37,6 +33,12 @@ matrix B = mnormal(1,5)
 eval B**A
 matrix temp = commute(A**B, rows(B), rows(A))	
 eval commute(temp, cols(B), cols(A), 1) # post-multipl.; should give B**A
+
+## eliminate
+eval eliminate(vec(I(3)))
+
+## duplicate
+eval duplicate(vech(I(3)))
 
 ## scores2x2
 eval scores2x2({24, 4; 12, 9})
@@ -70,6 +72,12 @@ loop N=11..13 -q            # loop over n
     printf "approx:"
     eval WSRcritical(N, i/100, 1)' 
   endloop
+endloop
+
+## powerset
+strings pp =  powerset(defarray("a", "b", "c", "x", "y", "z"))  
+loop i=1..nelem(pp) -q
+  eval pp[i]
 endloop
 
 ######## Examples that require a dataset ############
