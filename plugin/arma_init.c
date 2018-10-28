@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "uservar.h"
+#include "libset.h"
 #include "arma_priv.h"
 
 #define AINIT_DEBUG 0
@@ -1392,6 +1393,9 @@ static int arma_get_nls_model (MODEL *amod, arma_info *ainfo,
     }
 
     if (!err) {
+	double save_tol = libset_get_double(NLS_TOLER);
+
+	libset_set_double(NLS_TOLER, 1.0e-5);
 	set_auxiliary_scalars();
 	err = aux_nlspec_add_param_list(spec, nparam, parms, pnames);
 	if (!err) {
@@ -1404,6 +1408,7 @@ static int arma_get_nls_model (MODEL *amod, arma_info *ainfo,
 #endif
 	}
 	unset_auxiliary_scalars();
+	libset_set_double(NLS_TOLER, save_tol);
     }
 
  bailout:
