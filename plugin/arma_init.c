@@ -85,7 +85,8 @@ void maybe_set_yscale (arma_info *ainfo)
 	} else {
 	    ainfo->yscale = 10 / abs_ybar;
 	}
-    } else if (abs_ybar < 0.01 && abs_ybar > 0) {
+    } else if (abs_ybar < 0.01 && abs_ybar > 1.0e-9) {
+	/* avoid too small denominators */
 	ainfo->yscale = 10 / abs_ybar;
     }
 
