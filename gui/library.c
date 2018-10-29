@@ -3068,7 +3068,8 @@ void do_chow_cusum (GtkAction *action, gpointer p)
     if (ci == CHOW) {
 	int resp;
 
-	splitbrk = (pmod->t2 - pmod->t1) / 2;
+	splitbrk = pmod->t1 + (pmod->t2 - pmod->t1) / 2;
+
 	if (pmod->ncoeff > 2) {
 	    resp = chow_dialog(pmod->t1 + 1, pmod->t2 - 1, &splitbrk,
 			       &splitdum, &opt, vwin_toplevel(vwin));
