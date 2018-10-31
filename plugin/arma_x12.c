@@ -325,35 +325,52 @@ static int get_roots (const char *fname, MODEL *pmod,
 */
 
 #if 0
-static int get_x12a_vcv (const char *fname, MODEL *pmod, int nc)
+static int get_x12a_vcv (char *fname, const char *path,
+			 MODEL *pmod, arma_info *ainfo)
 {
-    FILE *fp;
+    FILE *fpa = NULL;
+    FILE *fpr = NULL;
     char line[1024], valstr[24];
     double x;
+    int na = ainfo->np + ainfo->P + ainfo->nq + ainfo->Q;
+    int nc = pmod->ncoeff;
     int i, j, k, nt = (nc * nc + nc) / 2;
     int err = 0;
 
-    fp = gretl_fopen(fname, "r");
-    if (fp == NULL) return 1;
+    gretl_path_compose(fname, MAXLEN, path, ".acm");
+
+    fpa = gretl_fopen(fname, "r");
+    if (fpa == NULL) {
+	return E_FOPEN;
+    }
+
+    if (nc > na) {
+	gretl_path_compose(fname, MAXLEN, path, ".rcm");
+	fpr = gretl_fopen(fname, "r");
+	if (fpr == NULL) {
+	    err = E_FOPEN;
+	    goto bailout;
+	}
+    }
 
     pmod->vcv = malloc(nt * sizeof *pmod->vcv);
     if (pmod->vcv == NULL) {
-	fclose(fp);
-	return 1;
+	err = E_ALLOC;
+	goto bailout;
     }
 
     for (i=0; i<nt; i++) {
-	pmod->vcv[i] = NADBL;
+	pmod->vcv[i] = 0.0;
     }
 
     gretl_push_c_numeric_locale();
 
-    j = 1;
-    while (fgets(line, sizeof line, fp)) {
-	if (!strncmp(line, "Nonseas", 7)) {
+    j = 0;
+    while (fgets(line, sizeof line, fpa)) {
+	if (!strncmp(line, "Nonse", 5) || !strncmp(line, "Seas", 4)) {
 	    char *p = line + strcspn(line, "+-");
 
-	    for (i=1; i<nc; i++) {
+	    for (i=0; i<na; i++) {
 		sscanf(p, "%22s", valstr);
 		p += 22;
 		if (i >= j) {
@@ -368,10 +385,18 @@ static int get_x12a_vcv (const char *fname, MODEL *pmod, int nc)
 
     gretl_pop_c_numeric_locale();
 
-    fclose(fp);
+ bailout:
+
+    if (fpa != NULL) {
+	fclose(fpa);
+    }
+    if (fpr != NULL) {
+	fclose(fpr);
+    }
 
     return err;
 }
+
 #endif
 
 /* Below: parse the coefficient estimates and standard errors from
@@ -537,10 +562,8 @@ populate_x12a_arma_model (MODEL *pmod, const char *path,
 
 #if 0
     if (!err) {
-	gretl_path_compose(fname, MAXLEN, path, ".acm");
-	sprintf(fname, "%s.acm", path);
-	err = get_x12a_vcv(fname, pmod, nc);
-	/* also .rcm */
+	/* access .acm and .rcm */
+	err = get_x12a_vcv(fname, path, pmod, ainfo);
     }
 #endif
 
