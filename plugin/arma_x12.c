@@ -319,22 +319,26 @@ static int get_roots (const char *fname, MODEL *pmod,
     return err;
 }
 
+#define X12A_VCV 1
+
 /* Note: X12ARIMA does not give the full covariance matrix: it gives
    it only for the ARMA terms, and not for the constant.  Also the
    signs of off-diagonal elements are hard to disentangle.
 */
 
-#if 0
+#if X12A_VCV
+
 static int get_x12a_vcv (char *fname, const char *path,
 			 MODEL *pmod, arma_info *ainfo)
 {
     FILE *fpa = NULL;
     FILE *fpr = NULL;
-    char line[1024], valstr[24];
+    char *p, *q, line[1024];
+    gretl_matrix *V = NULL;
     double x;
-    int na = ainfo->np + ainfo->P + ainfo->nq + ainfo->Q;
-    int nc = pmod->ncoeff;
-    int i, j, k, nt = (nc * nc + nc) / 2;
+    int nc, narma, nr, apos, xpos;
+    int mapos;
+    int i, j, k, li;
     int err = 0;
 
     gretl_path_compose(fname, MAXLEN, path, ".acm");
@@ -344,7 +348,11 @@ static int get_x12a_vcv (char *fname, const char *path,
 	return E_FOPEN;
     }
 
-    if (nc > na) {
+    nc = pmod->ncoeff;
+    narma = ainfo->np + ainfo->P + ainfo->nq + ainfo->Q;
+    nr = nc - narma;
+
+    if (nr >= 2) {
 	gretl_path_compose(fname, MAXLEN, path, ".rcm");
 	fpr = gretl_fopen(fname, "r");
 	if (fpr == NULL) {
@@ -353,37 +361,82 @@ static int get_x12a_vcv (char *fname, const char *path,
 	}
     }
 
-    pmod->vcv = malloc(nt * sizeof *pmod->vcv);
-    if (pmod->vcv == NULL) {
+    V = gretl_zero_matrix_new(nc, nc);
+    if (V == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
 
-    for (i=0; i<nt; i++) {
-	pmod->vcv[i] = 0.0;
-    }
+    li = 0;
+    i = apos = ainfo->ifc;
+    mapos = apos + ainfo->np + ainfo->P;
 
     gretl_push_c_numeric_locale();
 
-    j = 0;
+    /* fill in the ARMA terms first */
     while (fgets(line, sizeof line, fpa)) {
-	if (!strncmp(line, "Nonse", 5) || !strncmp(line, "Seas", 4)) {
-	    char *p = line + strcspn(line, "+-");
+	if (li > 1) {
+	    p = line + strcspn(line, "+-");
+	    for (j=0; j<narma; j++) {
+		x = strtod(p, &q);
+		k = j + apos;
+		if ((i < mapos && k >= mapos) ||
+		    (i >= mapos && k < mapos)) {
+		    /* flip sign of phi/theta covariances */
+		    x = -x;
+		}
+		gretl_matrix_set(V, i, k, x);
+		p = q;
+	    }
+	    i++;
+	}
+	li++;
+    }
 
-	    for (i=0; i<na; i++) {
-		sscanf(p, "%22s", valstr);
-		p += 22;
-		if (i >= j) {
-		    x = atof(valstr);
-		    k = ijton(i, j, nc);
-		    pmod->vcv[k] = x;
+    /* then the regression terms, if any */
+    if (nr >= 2) {
+	int xpos = apos + narma;
+
+	i = ainfo->ifc ? 0 : xpos;
+	li = 0;
+	while (fgets(line, sizeof line, fpr)) {
+	    if (li > 1) {
+		p = line + strcspn(line, "+-");
+		k = ainfo->ifc ? 0 : xpos;
+		for (j=0; j<nr; j++) {
+		    x = strtod(p, &q);
+		    gretl_matrix_set(V, i, k, x);
+		    if (k == 0) {
+			k = xpos;
+		    } else {
+			k++;
+		    }
+		    p = q;
+		}
+		if (i == 0) {
+		    i = xpos;
+		} else {
+		    i++;
 		}
 	    }
-	    j++;
+	    li++;
 	}
+    } else if (ainfo->ifc) {
+	x = pmod->sderr[0];
+	gretl_matrix_set(V, 0, 0, x*x);
+    } else if (ainfo->nexo > 0) {
+	k = nc - 1;
+	x = pmod->sderr[k];
+	gretl_matrix_set(V, k, k, x*x);
     }
 
     gretl_pop_c_numeric_locale();
+
+#if 0
+    gretl_matrix_print(V, "V (x12a)");
+#endif
+    err = gretl_model_write_vcv(pmod, V);
+    gretl_matrix_free(V);
 
  bailout:
 
@@ -560,7 +613,7 @@ populate_x12a_arma_model (MODEL *pmod, const char *path,
 	err = get_roots(fname, pmod, ainfo);
     }
 
-#if 0
+#if X12A_VCV
     if (!err) {
 	/* access .acm and .rcm */
 	err = get_x12a_vcv(fname, path, pmod, ainfo);
