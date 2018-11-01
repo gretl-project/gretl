@@ -319,14 +319,12 @@ static int get_roots (const char *fname, MODEL *pmod,
     return err;
 }
 
-#define X12A_VCV 1
-
-/* Note: X12ARIMA does not give the full covariance matrix: it gives
-   it only for the ARMA terms, and not for the constant.  Also the
-   signs of off-diagonal elements are hard to disentangle.
+/* Note: X12ARIMA does not give the full covariance matrix: it
+   doesn't calculate covariances between the ARMA terms and any
+   regression terms. But the ARMA covariance matrix is found in
+   the *.acm file and if there are at least two regression terms
+   their covariance matrix is written to an *.rcm file.
 */
-
-#if X12A_VCV
 
 static int get_x12a_vcv (char *fname, const char *path,
 			 MODEL *pmod, arma_info *ainfo)
@@ -336,21 +334,21 @@ static int get_x12a_vcv (char *fname, const char *path,
     char *p, *q, line[1024];
     gretl_matrix *V = NULL;
     double x;
-    int nc, narma, nr, apos, xpos;
-    int mapos;
+    int nc, narma, nr, apos;
     int i, j, k, li;
     int err = 0;
-
-    gretl_path_compose(fname, MAXLEN, path, ".acm");
-
-    fpa = gretl_fopen(fname, "r");
-    if (fpa == NULL) {
-	return E_FOPEN;
-    }
 
     nc = pmod->ncoeff;
     narma = ainfo->np + ainfo->P + ainfo->nq + ainfo->Q;
     nr = nc - narma;
+
+    if (narma >= 2) {
+	gretl_path_compose(fname, MAXLEN, path, ".acm");
+	fpa = gretl_fopen(fname, "r");
+	if (fpa == NULL) {
+	    return E_FOPEN;
+	}
+    }
 
     if (nr >= 2) {
 	gretl_path_compose(fname, MAXLEN, path, ".rcm");
@@ -367,30 +365,39 @@ static int get_x12a_vcv (char *fname, const char *path,
 	goto bailout;
     }
 
-    li = 0;
-    i = apos = ainfo->ifc;
-    mapos = apos + ainfo->np + ainfo->P;
+    apos = ainfo->ifc;
 
     gretl_push_c_numeric_locale();
 
     /* fill in the ARMA terms first */
-    while (fgets(line, sizeof line, fpa)) {
-	if (li > 1) {
-	    p = line + strcspn(line, "+-");
-	    for (j=0; j<narma; j++) {
-		x = strtod(p, &q);
-		k = j + apos;
-		if ((i < mapos && k >= mapos) ||
-		    (i >= mapos && k < mapos)) {
-		    /* flip sign of phi/theta covariances */
-		    x = -x;
+    if (narma >= 2) {
+	int mapos = apos + ainfo->np + ainfo->P;
+
+	i = apos;
+	li = 0;
+	while (fgets(line, sizeof line, fpa)) {
+	    if (li > 1) {
+		p = line + strcspn(line, "+-");
+		for (j=0; j<narma; j++) {
+		    x = strtod(p, &q);
+		    k = j + apos;
+		    if ((i < mapos && k >= mapos) ||
+			(i >= mapos && k < mapos)) {
+			/* flip sign of AR/MA covariances */
+			x = -x;
+		    }
+		    gretl_matrix_set(V, i, k, x);
+		    p = q;
 		}
-		gretl_matrix_set(V, i, k, x);
-		p = q;
+		i++;
 	    }
-	    i++;
+	    li++;
 	}
-	li++;
+    } else {
+	/* there must be a single AR or MA term */
+	k = ainfo->ifc;
+	x = pmod->sderr[k];
+	gretl_matrix_set(V, k, k, x*x);
     }
 
     /* then the regression terms, if any */
@@ -422,9 +429,11 @@ static int get_x12a_vcv (char *fname, const char *path,
 	    li++;
 	}
     } else if (ainfo->ifc) {
+	/* just an intercept */
 	x = pmod->sderr[0];
 	gretl_matrix_set(V, 0, 0, x*x);
     } else if (ainfo->nexo > 0) {
+	/* single exogenous variable */
 	k = nc - 1;
 	x = pmod->sderr[k];
 	gretl_matrix_set(V, k, k, x*x);
@@ -432,9 +441,6 @@ static int get_x12a_vcv (char *fname, const char *path,
 
     gretl_pop_c_numeric_locale();
 
-#if 0
-    gretl_matrix_print(V, "V (x12a)");
-#endif
     err = gretl_model_write_vcv(pmod, V);
     gretl_matrix_free(V);
 
@@ -447,10 +453,12 @@ static int get_x12a_vcv (char *fname, const char *path,
 	fclose(fpr);
     }
 
+    if (err) {
+	fprintf(stderr, "x12a: failed to retrieve covariance matrix\n");
+    }
+
     return err;
 }
-
-#endif
 
 /* Below: parse the coefficient estimates and standard errors from
    the X-12-ARIMA output file foo.est
@@ -613,12 +621,10 @@ populate_x12a_arma_model (MODEL *pmod, const char *path,
 	err = get_roots(fname, pmod, ainfo);
     }
 
-#if X12A_VCV
     if (!err) {
-	/* access .acm and .rcm */
-	err = get_x12a_vcv(fname, path, pmod, ainfo);
+	/* if this fails we won't count it as a show-stopper */
+	get_x12a_vcv(fname, path, pmod, ainfo);
     }
-#endif
 
     if (err) {
 	fprintf(stderr, "problem reading X-12-ARIMA model info\n");
