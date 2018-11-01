@@ -75,6 +75,54 @@ static int init_transform_const (arma_info *ainfo)
    "too big" or "too small"
 */
 
+#if 1 /* experimental!! */
+
+void maybe_set_yscale (arma_info *ainfo)
+{
+    double ybar, sdy;
+    int err;
+
+    if (arima_levels(ainfo)) {
+	/* not sure about this clause! */
+	ybar = gretl_mean(ainfo->t1, ainfo->t2, ainfo->y);
+	if (fabs(ybar) > 250) {
+	    set_arma_avg_ll(ainfo);
+	}
+	return;
+    }
+
+    err = gretl_moments(ainfo->t1, ainfo->t2, ainfo->y,
+			NULL, &ybar, &sdy, NULL, NULL, 1);
+
+    if (!err && sdy > 0) {
+	/* try to catch cases where (a) the overall scale is
+	   too big or (b) the coefficient of variation is
+	   too small: in such cases set up conversion to
+	   1 + (y - ybar) / sdy
+	*/
+	double abs_ybar = fabs(ybar);
+
+	if (abs_ybar > 250 || abs_ybar < 0.01 || sdy/abs_ybar < 0.01) {
+	    double m = 10;
+
+	    ainfo->yshift = ybar - m*sdy; /* subtract */
+	    ainfo->yscale = m / sdy;      /* multiply */
+#if 0
+	    fprintf(stderr, "scale: subtract %g, mul by %g\n",
+		    ainfo->yshift, ainfo->yscale);
+#endif
+	}
+    }
+
+    if (!err && ainfo->prn != NULL && ainfo->yscale != 1.0) {
+	pputc(ainfo->prn, '\n');
+	pprintf(ainfo->prn, _("Shifting by %d, scaling y by %g\n"),
+		ainfo->yshift, ainfo->yscale);
+    }
+}
+
+#else
+
 void maybe_set_yscale (arma_info *ainfo)
 {
     double ybar = gretl_mean(ainfo->t1, ainfo->t2, ainfo->y);
@@ -96,6 +144,8 @@ void maybe_set_yscale (arma_info *ainfo)
 	pprintf(ainfo->prn, _("Scaling y by %g\n"), ainfo->yscale);
     }
 }
+
+#endif
 
 #define apply_yscaling(a,x) (arma_exact_ml(a) && \
 			     !arma_cml_init(a) && \
@@ -431,14 +481,15 @@ static int pre_sample_count (arma_info *ainfo,
     return n;
 }
 
-static double *prescale_y (double *y, double scale, int n)
+static double *prescale_y (double *y, arma_info *ainfo, int n)
 {
     double *ys = copyvec(y, n);
     int t;
 
     for (t=0; t<n; t++) {
 	if (!na(ys[t])) {
-	    ys[t] *= scale;
+	    ys[t] -= ainfo->yshift;
+	    ys[t] *= ainfo->yscale;
 	}
     }
 
@@ -516,7 +567,7 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
 #endif
 
     if (ainfo->yscale != 1.0 && !arma_cml_init(ainfo)) {
-	y = prescale_y(y, ainfo->yscale, dset->n);
+	y = prescale_y(y, ainfo, dset->n);
 	if (y == NULL) {
 	    err = E_ALLOC;
 	    goto bailout;
@@ -764,7 +815,7 @@ static double get_y_mean (arma_info *ainfo)
     for (t=ainfo->t1; t<=ainfo->t2; t++) {
 	if (!na(ainfo->y[t])) {
 	    if (ainfo->yscale != 1.0) {
-		ysum += ainfo->yscale * ainfo->y[t];
+		ysum += (ainfo->y[t] - ainfo->yshift) * ainfo->yscale;
 	    } else {
 		ysum += ainfo->y[t];
 	    }
@@ -1016,7 +1067,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
 	int miss = 0;
 
 	if (apply_yscaling(ainfo, y[realt])) {
-	    aZ[1][t] = y[realt] * ainfo->yscale;
+	    aZ[1][t] = (y[realt] - ainfo->yshift) * ainfo->yscale;
 	} else {
 	    aZ[1][t] = y[realt];
 	}
@@ -1038,6 +1089,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
 	    } else {
 		aZ[k][t] = y[s];
 		if (apply_yscaling(ainfo, y[s])) {
+		    aZ[k][t] -= ainfo->yshift;
 		    aZ[k][t] *= ainfo->yscale;
 		}
 		k++;
@@ -1061,6 +1113,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
 	    } else {
 		aZ[k][t] = y[s];
 		if (apply_yscaling(ainfo, y[s])) {
+		    aZ[k][t] -= ainfo->yshift;
 		    aZ[k][t] *= ainfo->yscale;
 		}
 		for (k=0; k<narmax; k++) {
@@ -1081,6 +1134,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
 		} else {
 		    aZ[ky][t] = y[s];
 		    if (apply_yscaling(ainfo, y[s])) {
+			aZ[ky][t] -= ainfo->yshift;
 			aZ[ky][t] *= ainfo->yscale;
 		    }
 		    ky++;

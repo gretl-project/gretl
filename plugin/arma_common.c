@@ -82,6 +82,7 @@ arma_info_init (arma_info *ainfo, gretlopt opt,
     ainfo->e = NULL;
     ainfo->Z = NULL;
     ainfo->yscale = 1.0;
+    ainfo->yshift = 0.0;
 
     ainfo->xlist = NULL;
     ainfo->misslist = NULL;

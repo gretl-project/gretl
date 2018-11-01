@@ -79,6 +79,7 @@ struct arma_info_ {
     double *e;          /* forecast errors */
     const double **Z;   /* virtual dataset */
     double yscale;      /* scale factor for y */
+    double yshift;      /* shift factor for y */
     int *xlist;         /* list of regressors (ARMAX) */
     int *misslist;      /* list of missing observations */
     gretl_matrix *dX;   /* differenced regressors (ARIMAX) */

@@ -506,6 +506,7 @@ static int as_undo_y_scaling (arma_info *ainfo,
 
     if (ainfo->ifc) {
 	b[0] /= ainfo->yscale;
+	b[0] += ainfo->yshift;
     }
 
     for (i=0; i<ainfo->nexo; i++) {
@@ -515,8 +516,10 @@ static int as_undo_y_scaling (arma_info *ainfo,
     for (t=0; t<ainfo->fullT; t++) {
 	if (!isnan(as->y[t])) {
 	    as->y[t] /= ainfo->yscale;
+	    as->y[t] += ainfo->yshift;
 	    if (as->y0 != NULL) {
 		as->y0[t] /= ainfo->yscale;
+		as->y0[t] += ainfo->yshift;
 	    }
 	}
     }

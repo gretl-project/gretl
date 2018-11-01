@@ -376,6 +376,7 @@ static int get_x12a_vcv (char *fname, const char *path,
 	i = apos;
 	li = 0;
 	while (fgets(line, sizeof line, fpa)) {
+	    /* skip the first two lines */
 	    if (li > 1) {
 		p = line + strcspn(line, "+-");
 		for (j=0; j<narma; j++) {
@@ -407,6 +408,7 @@ static int get_x12a_vcv (char *fname, const char *path,
 	i = ainfo->ifc ? 0 : xpos;
 	li = 0;
 	while (fgets(line, sizeof line, fpr)) {
+	    /* skip the first two lines */
 	    if (li > 1) {
 		p = line + strcspn(line, "+-");
 		k = ainfo->ifc ? 0 : xpos;

@@ -492,6 +492,7 @@ static int kalman_matrices_init (arma_info *ainfo,
 	    /* lagged data */
 	    y0 = y[ainfo->t1 - 1 - i];
 	    if (ainfo->yscale != 1.0 && !na(y0)) {
+		y0 -= ainfo->yshift;
 		y0 *= ainfo->yscale;
 	    }
 	    gretl_vector_set(kh->S, r0 + i, y0);
@@ -1061,17 +1062,19 @@ static int kalman_arma_finish (MODEL *pmod,
     return err;
 }
 
-static void kalman_rescale_y (gretl_vector *y, double scale)
+static void kalman_rescale_y (gretl_vector *y, arma_info *ainfo)
 {
     int i;
 
 #if ARMA_DEBUG
-    fprintf(stderr, "kalman_rescale_y: multiplying by %g\n", scale);
+    fprintf(stderr, "kalman_rescale_y: multiplying by %g\n",
+	    ainfo->yscale);
 #endif
 
     for (i=0; i<y->rows; i++) {
 	if (!isnan(y->val[i])) {
-	    y->val[i] *= scale;
+	    y->val[i] -= ainfo->yshift;
+	    y->val[i] *= ainfo->yscale;
 	}
     }
 }
@@ -1090,7 +1093,7 @@ static gretl_matrix *form_arma_y_vector (arma_info *ainfo,
 	*err = E_ALLOC;
     } else {
 	if (ainfo->yscale != 1.0) {
-	    kalman_rescale_y(yvec, ainfo->yscale);
+	    kalman_rescale_y(yvec, ainfo);
 	}
 #if ARMA_DEBUG
 	gretl_matrix_print(yvec, "arma y vector");
@@ -1139,6 +1142,7 @@ static int kalman_undo_y_scaling (arma_info *ainfo,
 
     if (ainfo->ifc) {
 	b[0] /= ainfo->yscale;
+	b[0] += ainfo->yshift;
     }
 
     for (i=0; i<ainfo->nexo; i++) {
@@ -1148,6 +1152,7 @@ static int kalman_undo_y_scaling (arma_info *ainfo,
     i = ainfo->t1;
     for (t=0; t<T; t++) {
 	y->val[t] /= ainfo->yscale;
+	y->val[t] += ainfo->yshift;
     }
 
     if (na(kalman_arma_ll(b, K))) {
