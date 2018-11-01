@@ -23,9 +23,10 @@
 #include "gretl_string_table.h"
 #include "texprint.h"
 
-#ifdef USE_RLIB
+#if defined(USE_RLIB) || defined(HAVE_MPI)
 # include "gretl_foreign.h"
 #endif
+
 #ifdef USE_CURL
 # include "gretl_www.h"
 #endif
