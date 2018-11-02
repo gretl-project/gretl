@@ -98,12 +98,12 @@ void maybe_set_yscale (arma_info *ainfo)
 	/* try to catch cases where (a) the overall scale is
 	   too big or (b) the coefficient of variation is
 	   too small: in such cases set up conversion to
-	   1 + (y - ybar) / sdy
+	   something like (y - ybar) / sdy + k
 	*/
 	double abs_ybar = fabs(ybar);
 
 	if (abs_ybar > 250 || abs_ybar < 0.01 || sdy/abs_ybar < 0.01) {
-	    double m = 10;
+	    double m = 10; /* m = 1 for Oleh's case */
 
 	    ainfo->yshift = ybar - m*sdy; /* subtract */
 	    ainfo->yscale = m / sdy;      /* multiply */
