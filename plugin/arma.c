@@ -1630,6 +1630,48 @@ static void maybe_set_xdiff_flag (arma_info *ainfo, gretlopt opt)
     }
 }
 
+#define STD_X 0 /* not ready yet! */
+
+#if STD_X
+
+static int arma_standardize_x (arma_info *ainfo,
+			       DATASET *dset)
+{
+    int orig_v = dset->v;
+    int err = 0;
+
+    /* FIXME preserve original ainfo->xlist? */
+
+    err = dataset_add_series(dset, ainfo->nexo);
+
+    if (!err) {
+	double xbar, sdx;
+	int i, vi, vj, t;
+
+	for (i=1; i<=ainfo->nexo && !err; i++) {
+	    vi = ainfo->xlist[i];
+	    err = gretl_moments(ainfo->t1, ainfo->t2, dset->Z[vi],
+				NULL, &xbar, &sdx, NULL, NULL, 1);
+	    if (!err) {
+		vj = orig_v + i - 1;
+		for (t=0; t<dset->n; t++) {
+		    dset->Z[vj][t] = (dset->Z[vi][t] - xbar) / sdx;
+		}
+		/* replace x-ref with standardized version */
+		ainfo->xlist[i] = vj;
+	    }
+	}
+    }
+
+    if (err && dset->v > orig_v) {
+	dataset_drop_last_variables(dset, ainfo->nexo);
+    }
+
+    return err;
+}
+
+#endif
+
 /* Set flag to allow NAs within the sample range for an
    ARMA model using native exact ML.
 */
@@ -1674,6 +1716,9 @@ MODEL arma_model (const int *list, const int *pqspec,
     MODEL armod;
     arma_info ainfo_s, *ainfo;
     int missv = 0, misst = 0;
+#if STD_X
+    int orig_v = dset->v;
+#endif
     int err = 0;
 
     ainfo = &ainfo_s;
@@ -1717,6 +1762,12 @@ MODEL arma_model (const int *list, const int *pqspec,
 	    set_arma_missvals(ainfo);
 	}
     }
+
+#if STD_X /* experimental */
+    if (!err && ainfo->nexo > 0 && arma_exact_ml(ainfo)) {
+	arma_standardize_x(ainfo, (DATASET *) dset);
+    }
+#endif
 
     if (!err) {
 	/* allocate initial coefficient vector */
@@ -1849,6 +1900,12 @@ MODEL arma_model (const int *list, const int *pqspec,
 
     free(coeff);
     arma_info_cleanup(ainfo);
+
+#if STD_X
+    if (dset->v > orig_v) {
+	dataset_drop_last_variables((DATASET *) dset, dset->v - orig_v);
+    }
+#endif
 
     return armod;
 }

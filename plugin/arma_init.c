@@ -103,7 +103,7 @@ void maybe_set_yscale (arma_info *ainfo)
 	double abs_ybar = fabs(ybar);
 
 	if (abs_ybar > 250 || abs_ybar < 0.01 || sdy/abs_ybar < 0.01) {
-	    double m = 10; /* m = 1 for Oleh's case */
+	    double m = 1; /* m = 1 for Oleh's case */
 
 	    ainfo->yshift = ybar - m*sdy; /* subtract */
 	    ainfo->yscale = m / sdy;      /* multiply */
@@ -116,7 +116,7 @@ void maybe_set_yscale (arma_info *ainfo)
 
     if (!err && ainfo->prn != NULL && ainfo->yscale != 1.0) {
 	pputc(ainfo->prn, '\n');
-	pprintf(ainfo->prn, _("Shifting by %d, scaling y by %g\n"),
+	pprintf(ainfo->prn, _("Shifting y by %d, scaling by %g\n"),
 		ainfo->yshift, ainfo->yscale);
     }
 }
@@ -997,17 +997,17 @@ static int arma_init_add_dummies (arma_info *ainfo,
     return err;
 }
 
-static const int *xlist;
-
 /* X, if non-NULL, holds the differenced regressors */
 
-static double get_xti (const DATASET *dset, int i, int t,
+static double get_xti (const DATASET *dset,
+		       int i, int t,
+		       const int *xlist,
 		       const gretl_matrix *X)
 {
     if (X != NULL) {
 	return gretl_matrix_get(X, t, i);
     } else {
-	return dset->Z[xlist[i]][t];
+	return dset->Z[xlist[i+1]][t];
     }
 }
 
@@ -1027,6 +1027,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
     double **aZ = aset->Z;
     const double *y;
     const gretl_matrix *X = NULL;
+    const int *xlist = ainfo->xlist;
     int i, j, k, kx, ky;
     int t, s, k0 = 2;
     int undo_diff = 0;
@@ -1058,9 +1059,6 @@ static int arma_init_build_dataset (arma_info *ainfo,
     } else {
 	xstart = (arma_has_seasonal(ainfo))? 8 : 5;
     }
-
-    /* set "local" globals */
-    xlist = list + xstart;
 
     for (t=0; t<aset->n; t++) {
 	int realt = t + ainfo->t1;
@@ -1094,7 +1092,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
 		}
 		k++;
 		for (j=0; j<narmax; j++) {
-		    aZ[kx++][t] = get_xti(dset, j, s, X);
+		    aZ[kx++][t] = get_xti(dset, j, s, xlist, X);
 		}
 	    }
 	}
@@ -1117,7 +1115,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
 		    aZ[k][t] *= ainfo->yscale;
 		}
 		for (k=0; k<narmax; k++) {
-		    aZ[kx++][t] = get_xti(dset, k, s, X);
+		    aZ[kx++][t] = get_xti(dset, k, s, xlist, X);
 		}
 	    }
 	    for (i=0; i<ainfo->p; i++) {
@@ -1139,7 +1137,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
 		    }
 		    ky++;
 		    for (k=0; k<narmax; k++) {
-			aZ[kx++][t] = get_xti(dset, k, s, X);
+			aZ[kx++][t] = get_xti(dset, k, s, xlist, X);
 		    }
 		}
 	    }
@@ -1148,7 +1146,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
 	kx = ptotal + k0;
 
 	for (i=0; i<ainfo->nexo; i++) {
-	    aZ[kx++][t] = get_xti(dset, i, realt, X);
+	    aZ[kx++][t] = get_xti(dset, i, realt, xlist, X);
 	}
 
 	if (miss) {
