@@ -715,7 +715,6 @@ gretl_matrix *gretl_identity_matrix_new (int n)
 	}
     }
 
-
     return m;
 }
 
