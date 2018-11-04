@@ -494,6 +494,74 @@ static const double *as154_llt_callback (const double *b, int i,
     return (err)? NULL : as->e;
 }
 
+#if 0 /* not ready yet! */
+
+static int unscramble_scalings (arma_info *ainfo, double *b,
+				const gretl_matrix *V0)
+{
+    gretl_matrix *difmat, *V;
+    double *xbar, *sdx;
+    double lnl, sdy;
+    int nc = ainfo->nc;
+    int nx = ainfo->nexo;
+    int i, j, xpos;
+    int err = 0;
+
+    difmat = gretl_identity_matrix_new(nc);
+    V = gretl_matrix_alloc(nc, nc);
+
+    if (difmat == NULL || V == NULL) {
+	gretl_matrix_free(difmat);
+	gretl_matrix_free(V);
+	return E_ALLOC;
+    }
+
+    sdy = 1 / ainfo->yscale;
+
+    if (ainfo->xstats != NULL) {
+	xbar = ainfo->xstats->val;
+	sdx = xbar + nx;
+	xpos = nc - nx;
+	for (i=xpos; i<nc; i++) {
+	    b[i] = sdy * (b[i] / sdx[i]);
+	}
+    }
+
+    if (ainfo->ifc) {
+	b[0] /= ainfo->yscale;
+	b[0] += ainfo->yshift;
+    }
+
+    difmat->val[0] = sdy;
+
+    if (ainfo->xstats != NULL) {
+	for (i=0; i<nx; i++) {
+	    j = xpos + i;
+	    gretl_matrix_set(difmat, j, j, sdy / sdx[i]);
+	}
+	for (i=0; i<nx; i++) {
+	    if (ainfo->ifc) {
+		b[0] -= xbar[i] * b[xpos+i];
+	    }
+	    gretl_matrix_set(difmat, 0, xpos+i, -sdy * xbar[i] / sdx[i]);
+	}
+    }
+
+    err = gretl_matrix_qform(difmat, GRETL_MOD_NONE,
+			     V0, V, GRETL_MOD_NONE);
+
+    if (ainfo->yscale != 1.0) {
+	lnl -= ainfo->T * log(sdy);
+    }
+
+    gretl_matrix_free(difmat);
+    gretl_matrix_free(V);
+
+    return err;
+}
+
+#endif
+
 static int as_undo_y_scaling (arma_info *ainfo,
 			      gretl_matrix *y,
 			      double *b,

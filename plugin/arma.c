@@ -1640,7 +1640,12 @@ static int arma_standardize_x (arma_info *ainfo,
     int orig_v = dset->v;
     int err = 0;
 
-    /* FIXME preserve original ainfo->xlist? */
+    /* FIXME do we need to preserve the original ainfo->xlist? */
+
+    ainfo->xstats = gretl_matrix_alloc(ainfo->nexo, 2);
+    if (ainfo->xstats == NULL) {
+	return E_ALLOC;
+    }
 
     err = dataset_add_series(dset, ainfo->nexo);
 
@@ -1648,17 +1653,20 @@ static int arma_standardize_x (arma_info *ainfo,
 	double xbar, sdx;
 	int i, vi, vj, t;
 
-	for (i=1; i<=ainfo->nexo && !err; i++) {
-	    vi = ainfo->xlist[i];
+	for (i=0; i<ainfo->nexo && !err; i++) {
+	    vi = ainfo->xlist[i+1];
 	    err = gretl_moments(ainfo->t1, ainfo->t2, dset->Z[vi],
 				NULL, &xbar, &sdx, NULL, NULL, 1);
 	    if (!err) {
-		vj = orig_v + i - 1;
+		vj = orig_v + i;
 		for (t=0; t<dset->n; t++) {
 		    dset->Z[vj][t] = (dset->Z[vi][t] - xbar) / sdx;
 		}
 		/* replace x-ref with standardized version */
-		ainfo->xlist[i] = vj;
+		ainfo->xlist[i+1] = vj;
+		/* and record the stats used */
+		gretl_matrix_set(ainfo->xstats, i, 0, xbar);
+		gretl_matrix_set(ainfo->xstats, i, 1, sdx);
 	    }
 	}
     }

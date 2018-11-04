@@ -82,6 +82,7 @@ struct arma_info_ {
     double yshift;      /* shift factor for y */
     int *xlist;         /* list of regressors (ARMAX) */
     int *misslist;      /* list of missing observations */
+    gretl_matrix *xstats; /* mean and std dev of regressors */
     gretl_matrix *dX;   /* differenced regressors (ARIMAX) */
     gretl_matrix *G;    /* score matrix */
     gretl_matrix *V;    /* covariance matrix */
