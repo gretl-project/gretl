@@ -20,6 +20,8 @@
 #ifndef ARMA_PRIV_H
 #define ARMA_PRIV_H
 
+#define STD_X 0 /* standardize regressors experiment */
+
 typedef enum {
     ARMA_SEAS   = 1 << 0, /* includes seasonal component */
     ARMA_DSPEC  = 1 << 1, /* input list includes differences */

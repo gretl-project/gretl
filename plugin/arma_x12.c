@@ -394,7 +394,7 @@ static int get_x12a_vcv (char *fname, const char *path,
 	    }
 	    li++;
 	}
-    } else {
+    } else if (narma > 0) {
 	/* there must be a single AR or MA term */
 	k = ainfo->ifc;
 	x = pmod->sderr[k];

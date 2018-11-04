@@ -494,18 +494,23 @@ static const double *as154_llt_callback (const double *b, int i,
     return (err)? NULL : as->e;
 }
 
-#if 0 /* not ready yet! */
+#if STD_X /* not ready yet! */
 
-static int unscramble_scalings (arma_info *ainfo, double *b,
-				const gretl_matrix *V0)
+static int unscramble_scalings (arma_info *ainfo, MODEL *pmod)
 {
-    gretl_matrix *difmat, *V;
-    double *xbar, *sdx;
-    double lnl, sdy;
+    gretl_matrix *difmat, *V, *V0;
+    double *xbar, *sdx, *b;
+    double sdy;
     int nc = ainfo->nc;
     int nx = ainfo->nexo;
     int i, j, xpos;
     int err = 0;
+
+#if 0
+    fprintf(stderr, "\nHERE, unscrambling!\n");
+    fprintf(stderr, " sdy=%g, xstats=%p, nx=%d\n", 1 / ainfo->yscale,
+	    (void *) ainfo->xstats, nx);
+#endif
 
     difmat = gretl_identity_matrix_new(nc);
     V = gretl_matrix_alloc(nc, nc);
@@ -517,17 +522,22 @@ static int unscramble_scalings (arma_info *ainfo, double *b,
     }
 
     sdy = 1 / ainfo->yscale;
+    b = pmod->coeff;
+    V0 = gretl_vcv_matrix_from_model(pmod, NULL, &err);
+    if (err) {
+	goto bailout;
+    }
 
     if (ainfo->xstats != NULL) {
 	xbar = ainfo->xstats->val;
 	sdx = xbar + nx;
 	xpos = nc - nx;
-	for (i=xpos; i<nc; i++) {
-	    b[i] = sdy * (b[i] / sdx[i]);
+	for (i=xpos, j=0; i<nc; i++, j++) {
+	    b[i] = sdy * b[i] / sdx[j];
 	}
     }
 
-    if (ainfo->ifc) {
+    if (ainfo->ifc && ainfo->yscale != 1.0) {
 	b[0] /= ainfo->yscale;
 	b[0] += ainfo->yshift;
     }
@@ -549,18 +559,20 @@ static int unscramble_scalings (arma_info *ainfo, double *b,
 
     err = gretl_matrix_qform(difmat, GRETL_MOD_NONE,
 			     V0, V, GRETL_MOD_NONE);
-
-    if (ainfo->yscale != 1.0) {
-	lnl -= ainfo->T * log(sdy);
+    if (!err) {
+	err = gretl_model_write_vcv(pmod, V);
     }
+
+ bailout:
 
     gretl_matrix_free(difmat);
     gretl_matrix_free(V);
+    gretl_matrix_free(V0);
 
     return err;
 }
 
-#endif
+#else
 
 static int as_undo_y_scaling (arma_info *ainfo,
 			      gretl_matrix *y,
@@ -601,6 +613,8 @@ static int as_undo_y_scaling (arma_info *ainfo,
 
     return err;
 }
+
+#endif
 
 static int as_arma_finish (MODEL *pmod,
 			   arma_info *ainfo,
@@ -684,6 +698,12 @@ static int as_arma_finish (MODEL *pmod,
 	}
     }
 
+#if STD_X
+    if (!err && ainfo->yscale != 1.0) {
+	pmod->lnL -= ainfo->T * log(1/ainfo->yscale);
+    }
+#endif
+
     if (!err) {
 	write_arma_model_stats(pmod, ainfo, dset);
 	arma_model_add_roots(pmod, ainfo, b);
@@ -693,6 +713,12 @@ static int as_arma_finish (MODEL *pmod,
 	    pmod->opt |= OPT_Y;
 	}
     }
+
+#if STD_X
+    if (ainfo->yscale != 1 || ainfo->xstats != NULL) {
+	unscramble_scalings(ainfo, pmod);
+    }
+#endif
 
     return err;
 }
@@ -803,7 +829,9 @@ static int as_arma (const double *coeff,
 	if (!err) {
 	    if (ainfo->yscale != 1.0) {
 		/* note: this implies recalculation of loglik */
+#if !STD_X
 		as_undo_y_scaling(ainfo, y, b, &as);
+#endif
 	    } else if (!as.use_loglik) {
 		/* we haven't already computed this */
 		as.loglik = as_loglikelihood(&as);

@@ -1630,8 +1630,6 @@ static void maybe_set_xdiff_flag (arma_info *ainfo, gretlopt opt)
     }
 }
 
-#define STD_X 0 /* not ready yet! */
-
 #if STD_X
 
 static int arma_standardize_x (arma_info *ainfo,
