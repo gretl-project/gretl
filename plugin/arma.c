@@ -1598,7 +1598,16 @@ static int arma_via_OLS (arma_info *ainfo, const double *coeff,
 	write_arma_model_stats(pmod, ainfo, dset);
 	if (arma_exact_ml(ainfo)) {
 #if ML_COMPAT
-	    mle_criteria(pmod, 1);
+	    /* In the case of ainfo->nc == 0 (no coefficients
+	       actually estimated), pmod->ncoeff will be 1, since
+	       we add a dummy constant with value 0. That "1"
+	       will account for the variance estimate so that
+	       addk should be zero. Otherwise we add 1 for the
+	       variance estimate.
+	    */
+	    int addk = ainfo->nc == 0 ? 0 : 1;
+
+	    mle_criteria(pmod, addk);
 #else
 	    ls_criteria(pmod);
 #endif
