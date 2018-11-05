@@ -4339,12 +4339,11 @@ int get_x12a_maxpd (void)
  */
 
 MODEL arma (const int *list, const int *pqlags, 
-	    const DATASET *dset, gretlopt opt, 
+	    DATASET *dset, gretlopt opt, 
 	    PRN *prn)
 {
     MODEL (*arma_model) (const int *, const int *,
-			 const DATASET *, 
-			 gretlopt, PRN *);
+			 DATASET *, gretlopt, PRN *);
     MODEL (*arma_x12_model) (const int *, const int *,
 			     const DATASET *, 
 			     int, gretlopt, PRN *);

@@ -506,7 +506,6 @@ static double *prescale_y (double *y, arma_info *ainfo, int n)
 static int real_hr_arma_init (double *coeff, const DATASET *dset,
 			      arma_info *ainfo, PRN *prn)
 {
-    const int *list = ainfo->alist;
     double *y, *dest, *src;
     DATASET *aset = NULL;
     MODEL armod;
@@ -517,7 +516,7 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
     int np2p, np2q;
     int m, xpos, pos, mapos;
     size_t datalen;
-    int xstart, free_y = 0;
+    int free_y = 0;
     int i, j, T, t1;
     int err = 0;
 
@@ -595,13 +594,6 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
     /* adjust the list for pass 1 */
     hrlist[0] = nv1;
 
-    /* starting position for reading exogeneous vars */
-    if (ainfo->d > 0 || ainfo->D > 0) {
-	xstart = (arma_has_seasonal(ainfo))? 10 : 6;
-    } else {
-	xstart = (arma_has_seasonal(ainfo))? 8 : 5;
-    }
-
     /* recorder array, etc. */
     done = calloc(p1lags, 1);
     datalen = T * sizeof(double);
@@ -613,7 +605,7 @@ static int real_hr_arma_init (double *coeff, const DATASET *dset,
     pos = 2;
     for (i=0; i<ainfo->nexo; i++) {
 	sprintf(aset->varname[pos], "x%d", i);
-	xpos = list[xstart + i];
+	xpos = ainfo->xlist[i+1];
 	memcpy(aset->Z[pos], dset->Z[xpos] + t1, datalen);
 	pos++;
     }
@@ -1031,7 +1023,6 @@ static int arma_init_build_dataset (arma_info *ainfo,
     int i, j, k, kx, ky;
     int t, s, k0 = 2;
     int undo_diff = 0;
-    int xstart;
     int err = 0;
 
     if (arima_levels(ainfo)) {
@@ -1052,13 +1043,6 @@ static int arma_init_build_dataset (arma_info *ainfo,
 
     /* add variable names to auxiliary dataset */
     arma_init_add_varnames(ainfo, ptotal, narmax, aset);
-
-    /* starting position for reading exogeneous vars */
-    if (ainfo->d > 0 || ainfo->D > 0) {
-	xstart = (arma_has_seasonal(ainfo))? 10 : 6;
-    } else {
-	xstart = (arma_has_seasonal(ainfo))? 8 : 5;
-    }
 
     for (t=0; t<aset->n; t++) {
 	int realt = t + ainfo->t1;

@@ -39,7 +39,7 @@ MODEL quantreg (const gretl_matrix *tau, const int *list,
 		DATASET *dset, gretlopt opt, PRN *prn);
 
 MODEL arma (const int *list, const int *pqlags,
-	    const DATASET *dset, gretlopt opt, PRN *prn);
+	    DATASET *dset, gretlopt opt, PRN *prn);
 
 MODEL garch (const int *list, DATASET *dset, gretlopt opt,
 	     PRN *prn);

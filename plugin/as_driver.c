@@ -494,7 +494,10 @@ static const double *as154_llt_callback (const double *b, int i,
     return (err)? NULL : as->e;
 }
 
-#if STD_X /* not ready yet! */
+/* Undo scalings, allowing for standardization of exogenous
+   regressors. At present we come here only if such
+   standardization has been done.
+*/
 
 static int unscramble_scalings (arma_info *ainfo, MODEL *pmod)
 {
@@ -505,12 +508,6 @@ static int unscramble_scalings (arma_info *ainfo, MODEL *pmod)
     int nx = ainfo->nexo;
     int i, j, xpos;
     int err = 0;
-
-#if 0
-    fprintf(stderr, "\nHERE, unscrambling!\n");
-    fprintf(stderr, " sdy=%g, xstats=%p, nx=%d\n", 1 / ainfo->yscale,
-	    (void *) ainfo->xstats, nx);
-#endif
 
     difmat = gretl_identity_matrix_new(nc);
     V = gretl_matrix_alloc(nc, nc);
@@ -528,13 +525,11 @@ static int unscramble_scalings (arma_info *ainfo, MODEL *pmod)
 	goto bailout;
     }
 
-    if (ainfo->xstats != NULL) {
-	xbar = ainfo->xstats->val;
-	sdx = xbar + nx;
-	xpos = nc - nx;
-	for (i=xpos, j=0; i<nc; i++, j++) {
-	    b[i] = sdy * b[i] / sdx[j];
-	}
+    xbar = ainfo->xstats->val;
+    sdx = xbar + nx;
+    xpos = nc - nx;
+    for (i=xpos, j=0; i<nc; i++, j++) {
+	b[i] = sdy * b[i] / sdx[j];
     }
 
     if (ainfo->ifc && ainfo->yscale != 1.0) {
@@ -544,17 +539,16 @@ static int unscramble_scalings (arma_info *ainfo, MODEL *pmod)
 
     difmat->val[0] = sdy;
 
-    if (ainfo->xstats != NULL) {
-	for (i=0; i<nx; i++) {
-	    j = xpos + i;
-	    gretl_matrix_set(difmat, j, j, sdy / sdx[i]);
+    for (i=0; i<nx; i++) {
+	j = xpos + i;
+	gretl_matrix_set(difmat, j, j, sdy / sdx[i]);
+    }
+    for (i=0; i<nx; i++) {
+	if (ainfo->ifc) {
+	    b[0] -= xbar[i] * b[xpos+i];
 	}
-	for (i=0; i<nx; i++) {
-	    if (ainfo->ifc) {
-		b[0] -= xbar[i] * b[xpos+i];
-	    }
-	    gretl_matrix_set(difmat, 0, xpos+i, -sdy * xbar[i] / sdx[i]);
-	}
+	/* the following line also conditional on ifc? */
+	gretl_matrix_set(difmat, 0, xpos+i, -sdy * xbar[i] / sdx[i]);
     }
 
     err = gretl_matrix_qform(difmat, GRETL_MOD_NONE,
@@ -572,7 +566,9 @@ static int unscramble_scalings (arma_info *ainfo, MODEL *pmod)
     return err;
 }
 
-#else
+/* Undo y scaling, on the assumption that standardization of
+   exogenous regressors has NOT been done.
+*/
 
 static int as_undo_y_scaling (arma_info *ainfo,
 			      gretl_matrix *y,
@@ -594,6 +590,7 @@ static int as_undo_y_scaling (arma_info *ainfo,
     }
 
     for (t=0; t<ainfo->fullT; t++) {
+	/* restore original y for loglikelihood calculation */
 	if (!isnan(as->y[t])) {
 	    as->y[t] /= ainfo->yscale;
 	    as->y[t] += ainfo->yshift;
@@ -613,8 +610,6 @@ static int as_undo_y_scaling (arma_info *ainfo,
 
     return err;
 }
-
-#endif
 
 static int as_arma_finish (MODEL *pmod,
 			   arma_info *ainfo,
@@ -698,11 +693,9 @@ static int as_arma_finish (MODEL *pmod,
 	}
     }
 
-#if STD_X
-    if (!err && ainfo->yscale != 1.0) {
+    if (!err && arma_stdx(ainfo) && ainfo->yscale != 1.0) {
 	pmod->lnL -= ainfo->T * log(1/ainfo->yscale);
     }
-#endif
 
     if (!err) {
 	write_arma_model_stats(pmod, ainfo, dset);
@@ -714,11 +707,10 @@ static int as_arma_finish (MODEL *pmod,
 	}
     }
 
-#if STD_X
-    if (ainfo->yscale != 1 || ainfo->xstats != NULL) {
+    if (arma_stdx(ainfo)) {
+	/* maybe: ainfo->yscale != 1 || arma_stdx(ainfo) */
 	unscramble_scalings(ainfo, pmod);
     }
-#endif
 
     return err;
 }
@@ -827,11 +819,9 @@ static int as_arma (const double *coeff,
 	}
 
 	if (!err) {
-	    if (ainfo->yscale != 1.0) {
+	    if (ainfo->yscale != 1.0 && !arma_stdx(ainfo)) {
 		/* note: this implies recalculation of loglik */
-#if !STD_X
 		as_undo_y_scaling(ainfo, y, b, &as);
-#endif
 	    } else if (!as.use_loglik) {
 		/* we haven't already computed this */
 		as.loglik = as_loglikelihood(&as);
