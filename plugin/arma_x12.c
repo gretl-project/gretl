@@ -835,7 +835,7 @@ static int write_arma_spc_file (const char *fname,
     /* arima specification */
     fputs("arima {\n model = ", fp);
     x12_pdq_string(ainfo, fp);
-    if (ainfo->P > 0 || ainfo->Q > 0) {
+    if (ainfo->P > 0 || ainfo->D > 0 || ainfo->Q > 0) {
 	fprintf(fp, "(%d %d %d)\n}\n", ainfo->P, ainfo->D, ainfo->Q);
     } else {
 	fputs("\n}\n", fp);
