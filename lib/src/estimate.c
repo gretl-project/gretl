@@ -1073,6 +1073,10 @@ static int gretl_null_regress (MODEL *pmod, const DATASET *dset)
 	pmod->errcode = E_DATA;
     }
 
+    if (pmod->errcode == 0) {
+	ls_criteria(pmod);
+    }
+
     return pmod->errcode;
 }
 

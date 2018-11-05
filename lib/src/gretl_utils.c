@@ -724,7 +724,7 @@ int gretl_calculate_criteria (double ess, int n, int k,
     double lnl, c[3];
     int err = 0;
 
-    if (na(ess) || ess <= 0.0 || k < 1 || n <= k) {
+    if (na(ess) || ess <= 0.0 || n <= k) {
 	err = 1;
     } else {
 	const double ln2pi1 = 2.837877066409345; /* log(2*pi) + 1 */
