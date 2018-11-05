@@ -339,6 +339,10 @@ static int get_x12a_vcv (char *fname, const char *path,
     int err = 0;
 
     nc = pmod->ncoeff;
+    if (nc == 0) {
+	return 0;
+    }
+
     narma = ainfo->np + ainfo->P + ainfo->nq + ainfo->Q;
     nr = nc - narma;
 
