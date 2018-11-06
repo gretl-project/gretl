@@ -54,6 +54,9 @@ gretlopt delete_option_flags (gretlopt *targ, gretlopt test);
 
 int incompatible_options (gretlopt opt, gretlopt test);
 
+int options_incompatible_with (gretlopt opt, gretlopt base,
+			       gretlopt test);
+
 int option_prereq_missing (gretlopt opt, gretlopt test,
 			   gretlopt prereq);
 

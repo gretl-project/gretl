@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -79,7 +79,7 @@ struct gretl_option {
     const char *longopt; /* "--"-style string representation of option */
     char parminfo;       /* 0 = option can never take a parameter,
                             1 = option may take a parameter,
-                            2 = option requires a parameter 
+                            2 = option requires a parameter
 			 */
 };
 
@@ -89,7 +89,7 @@ struct flag_match {
 };
 
 /* Below: This is used as a one-way mapping from the long form
-   to the index (e.g. OPT_Q), so a given index can have more than 
+   to the index (e.g. OPT_Q), so a given index can have more than
    one long-form counterpart, depending on context.  The last field
    flags whether the given option accepts (1), or requires (2), an
    accompanying parameter value.
@@ -99,11 +99,11 @@ struct gretl_option gretl_opts[] = {
     { ADD,      OPT_B, "both", 0 },
     { ADD,      OPT_I, "silent", 0 },
     { ADD,      OPT_L, "lm", 0 },
-    { ADF,      OPT_N, "nc", 0 }, 
-    { ADF,      OPT_C, "c", 0 }, 
+    { ADF,      OPT_N, "nc", 0 },
+    { ADF,      OPT_C, "c", 0 },
     { ADF,      OPT_D, "seasonals", 0 },
-    { ADF,      OPT_R, "ctt", 0 },     
-    { ADF,      OPT_T, "ct", 0 }, 
+    { ADF,      OPT_R, "ctt", 0 },
+    { ADF,      OPT_T, "ct", 0 },
     { ADF,      OPT_V, "verbose", 0 },
     { ADF,      OPT_F, "difference", 0 },
     { ADF,      OPT_E, "test-down", 1 },
@@ -131,11 +131,11 @@ struct gretl_option gretl_opts[] = {
     { ARMA,     OPT_A, "as154", 0 },
     { ARMA,     OPT_K, "kalman", 0 },
     { ARMA,     OPT_C, "conditional", 0 },
-    { ARMA,     OPT_E, "save-ehat", 0 },    
+    { ARMA,     OPT_E, "save-ehat", 0 },
     { ARMA,     OPT_G, "opg", 0 },
     { ARMA,     OPT_H, "hessian", 0 },
     { ARMA,     OPT_L, "lbfgs", 0 },
-    { ARMA,     OPT_N, "nc", 0 },    
+    { ARMA,     OPT_N, "nc", 0 },
     { ARMA,     OPT_V, "verbose", 0 },
     { ARMA,     OPT_X, "x-12-arima", 0 },
     { ARMA,     OPT_Y, "y-diff-only", 0 },
@@ -145,7 +145,7 @@ struct gretl_option gretl_opts[] = {
     { BIPROBIT, OPT_G, "opg", 0 },
     { BIPROBIT, OPT_R, "robust", 0 },
     { BIPROBIT, OPT_V, "verbose", 0 },
-    { BIPROBIT, OPT_C, "cluster", 2 },    
+    { BIPROBIT, OPT_C, "cluster", 2 },
     { BIPROBIT, OPT_X, "save-xbeta", 0 },
     { BXPLOT,   OPT_O, "notches", 0 },
     { BXPLOT,   OPT_K, "tweaks", 2 },
@@ -160,7 +160,7 @@ struct gretl_option gretl_opts[] = {
     { CLEAR,    OPT_D, "dataset", 0 },
     { COINT,    OPT_E, "test-down", 1 },
     { COINT,    OPT_N, "nc", 0 },
-    { COINT,    OPT_R, "ctt", 0 },     
+    { COINT,    OPT_R, "ctt", 0 },
     { COINT,    OPT_S, "skip-df", 0 },
     { COINT,    OPT_T, "ct", 0 },
     { COINT,    OPT_V, "verbose", 0 },
@@ -199,7 +199,7 @@ struct gretl_option gretl_opts[] = {
     { DIFFTEST, OPT_V, "verbose", 0 },
     { DISCRETE, OPT_R, "reverse", 0 },
     { DPANEL,   OPT_A, "asymptotic", 0 },
-    { DPANEL,   OPT_D, "time-dummies", 1 },    
+    { DPANEL,   OPT_D, "time-dummies", 1 },
     { DPANEL,   OPT_L, "system", 0 },
     { DPANEL,   OPT_T, "two-step", 0 },
     { DPANEL,   OPT_V, "verbose", 0 },
@@ -210,7 +210,7 @@ struct gretl_option gretl_opts[] = {
     { DURATION, OPT_E, "exponential", 0 },
     { DURATION, OPT_L, "loglogistic", 0 },
     { DURATION, OPT_Z, "lognormal", 0 },
-    { DURATION, OPT_M, "medians", 0 },    
+    { DURATION, OPT_M, "medians", 0 },
     { DURATION, OPT_G, "opg", 0 },
     { DURATION, OPT_R, "robust", 0 },
     { DURATION, OPT_C, "cluster", 2 },
@@ -258,8 +258,8 @@ struct gretl_option gretl_opts[] = {
     { FUNDEBUG, OPT_N, "next", 0 },
     { FUNDEBUG, OPT_Q, "quit", 0 },
     { GARCH,    OPT_A, "arma-init", 0 },
-    { GARCH,    OPT_F, "fcp", 0 }, 
-    { GARCH,    OPT_N, "nc", 0 }, 
+    { GARCH,    OPT_F, "fcp", 0 },
+    { GARCH,    OPT_N, "nc", 0 },
     { GARCH,    OPT_R, "robust", 0 },
     { GARCH,    OPT_V, "verbose", 0 },
     { GARCH,    OPT_Z, "stdresid", 0 },
@@ -291,7 +291,7 @@ struct gretl_option gretl_opts[] = {
     { HECKIT,   OPT_M, "ml", 0 },
     { HECKIT,   OPT_G, "opg", 0 },
     { HECKIT,   OPT_R, "robust", 0 },
-    { HECKIT,   OPT_C, "cluster", 2 },    
+    { HECKIT,   OPT_C, "cluster", 2 },
     { HECKIT,   OPT_T, "two-step", 0 },
     { HECKIT,   OPT_V, "verbose", 0 },
     { HELP,     OPT_F, "func", 0 },
@@ -302,13 +302,13 @@ struct gretl_option gretl_opts[] = {
     { HURST,    OPT_U, "plot", 2 },
     { INCLUDE,  OPT_F, "force", 0 },
     { INTREG,   OPT_R, "robust", 0 },
-    { INTREG,   OPT_C, "cluster", 2 },    
+    { INTREG,   OPT_C, "cluster", 2 },
     { INTREG,   OPT_V, "verbose", 0 },
     { IVREG,    OPT_G, "gmm", 0 },
     { IVREG,    OPT_I, "iterate", 0 },
     { IVREG,    OPT_L, "liml", 0 },
     { IVREG,    OPT_N, "no-df-corr", 0 },
-    { IVREG,    OPT_R, "robust", 0 },  
+    { IVREG,    OPT_R, "robust", 0 },
     { IVREG,    OPT_S, "save", 0 },
     { IVREG,    OPT_T, "two-step", 0 },
     { IVREG,    OPT_H, "weights", 2 },
@@ -348,7 +348,7 @@ struct gretl_option gretl_opts[] = {
     { MODTEST,  OPT_H, "arch", 0 },
     { MODTEST,  OPT_L, "logs", 0 },
     { MODTEST,  OPT_N, "normality", 0 },
-    { MODTEST,  OPT_S, "squares", 0 }, 
+    { MODTEST,  OPT_S, "squares", 0 },
     { MODTEST,  OPT_P, "panel", 0 },
     { MODTEST,  OPT_R, "robust", 0 },
     { MODTEST,  OPT_W, "white", 0 },
@@ -417,7 +417,7 @@ struct gretl_option gretl_opts[] = {
     { OLS,      OPT_F, "print-final", 0 },
     { OLS,      OPT_J, "jackknife", 0 },
     { OLS,      OPT_N, "no-df-corr", 0 },
-    { OLS,      OPT_O, "vcv", 0 }, 
+    { OLS,      OPT_O, "vcv", 0 },
     { OLS,      OPT_R, "robust", 0 },
     { OLS,      OPT_Q, "quiet", 0 }, /* note: for the sake of documentation */
     { OLS,      OPT_S, "simple-print", 0 },
@@ -434,7 +434,7 @@ struct gretl_option gretl_opts[] = {
     { OPEN,     OPT_A, "all-cols", 0 },
     { OPEN,     OPT_B, "progress-bar", 0 },
     { OPEN,     OPT_D, "drop-empty", 0 },
-    { OPEN,     OPT_F, "fixed-cols", 2 },    
+    { OPEN,     OPT_F, "fixed-cols", 2 },
     { OPEN,     OPT_O, "odbc", 0 },
     { OPEN,     OPT_P, "preserve", 0 },
     { OPEN,     OPT_R, "rowoffset", 2 },
@@ -559,7 +559,7 @@ struct gretl_option gretl_opts[] = {
     { SMPL,     OPT_O, "dummy", 0 },
     { SMPL,     OPT_M, "no-missing", 0 },
     { SMPL,     OPT_N, "random", 0 },
-    { SMPL,     OPT_P, "replace", 0 }, 
+    { SMPL,     OPT_P, "replace", 0 },
     { SMPL,     OPT_R, "restrict", 0 },
     { SMPL,     OPT_T, "permanent", 0 },
     { SMPL,     OPT_U, "current", 0 },
@@ -600,8 +600,8 @@ struct gretl_option gretl_opts[] = {
     { VAR,      OPT_I, "impulse-responses", 0 },
     { VAR,      OPT_L, "lagselect", 0 },
     { VAR,      OPT_N, "nc", 0 },
-    { VAR,      OPT_R, "robust", 0 }, 
-    { VAR,      OPT_T, "trend", 0 }, 
+    { VAR,      OPT_R, "robust", 0 },
+    { VAR,      OPT_T, "trend", 0 },
     { VAR,      OPT_S, "silent", 0 },
     { VAR,      OPT_M, "minlag", 2 },
     { VARLIST,  OPT_A, "accessors", 0 },
@@ -614,7 +614,7 @@ struct gretl_option gretl_opts[] = {
     { VECM,     OPT_I, "impulse-responses", 1 },
     { VECM,     OPT_N, "nc", 0 },
     { VECM,     OPT_R, "rc", 0 },
-    { VECM,     OPT_C, "uc", 0 },    
+    { VECM,     OPT_C, "uc", 0 },
     { VECM,     OPT_T, "ct", 0 },
     { VECM,     OPT_V, "verbose", 0 },
     { VECM,     OPT_S, "silent", 0 },
@@ -721,7 +721,7 @@ char **get_all_option_strings (int *pn)
 	strings_array_sort(&optstrs, &n, OPT_U);
 	*pn = n;
     }
-    
+
     return optstrs;
 }
 
@@ -770,7 +770,7 @@ const char **get_opts_for_command (int ci, int *nopt)
 	}
 	if (window_opt_ok(ci)) {
 	    ret[j++] = "window";
-	}	
+	}
     }
 
     *nopt = n;
@@ -854,7 +854,7 @@ static int opt_is_valid (gretlopt opt, int ci, char c)
 
     if (c != 0) {
 	gretl_errmsg_sprintf("Invalid option '-%c'", c);
-    } 
+    }
 
     return 0;
 }
@@ -864,10 +864,10 @@ enum {
     OPT_PERSIST = 1 << 1
 };
 
-/* The following apparatus is used for 
+/* The following apparatus is used for
 
    (a) setting and retrieving parameters associated with
-       command options, as in --opt=val, and 
+       command options, as in --opt=val, and
 
    (b) storing options for a specified command via the
        "setopt" command (with or without parameters).
@@ -987,7 +987,7 @@ void setopt_cleanup (void)
 	optinfo = NULL;
     }
 
-    n_stored_opts = n;    
+    n_stored_opts = n;
 }
 
 static stored_opt *matching_stored_opt (int ci, gretlopt opt)
@@ -1000,7 +1000,7 @@ static stored_opt *matching_stored_opt (int ci, gretlopt opt)
 #endif
 
     for (i=0; i<n_stored_opts; i++) {
-	if (optinfo[i].ci == ci && 
+	if (optinfo[i].ci == ci &&
 	    optinfo[i].opt == opt &&
 	    optinfo[i].fd == fd) {
 	    return &optinfo[i];
@@ -1046,7 +1046,7 @@ static int option_parm_status (int ci, gretlopt opt)
 }
 
 /* Handle the case where we got input on the pattern
-   
+
    --option-with-param=eval(foo)
 
    where "foo" is the name of a string variable and the
@@ -1089,7 +1089,7 @@ static int real_push_option (int ci, gretlopt opt, char *val,
 	return E_DATA;
     }
 
-#if OPTDEBUG 
+#if OPTDEBUG
     fprintf(stderr, "push_option_param: ci=%d (%s), fd=%d, opt=%d,"
 	    " val='%s'\n", ci, gretl_command_word(ci), fd, opt, val);
 #endif
@@ -1098,7 +1098,7 @@ static int real_push_option (int ci, gretlopt opt, char *val,
 
     if (so != NULL) {
 	/* got a match for the (ci, opt) pair already */
-#if OPTDEBUG 
+#if OPTDEBUG
 	fprintf(stderr, " push_option_param: replacing\n");
 #endif
 	if (!(flags & OPT_SETOPT)) {
@@ -1114,7 +1114,7 @@ static int real_push_option (int ci, gretlopt opt, char *val,
 
     if (so != NULL) {
 	/* re-use a vacant slot */
-#if OPTDEBUG 
+#if OPTDEBUG
 	fprintf(stderr, " push_option_param: reusing empty\n");
 #endif
 	so->ci = ci;
@@ -1124,7 +1124,7 @@ static int real_push_option (int ci, gretlopt opt, char *val,
 	so->flags = flags;
 	so->fd = fd;
 	goto finish;
-    }    
+    }
 
     /* so we have to extend the array */
     n = n_stored_opts + 1;
@@ -1133,7 +1133,7 @@ static int real_push_option (int ci, gretlopt opt, char *val,
     if (so == NULL) {
 	err = E_ALLOC;
     } else {
-#if OPTDEBUG 
+#if OPTDEBUG
 	fprintf(stderr, " push_option_param: appending\n");
 #endif
 	optinfo = so;
@@ -1181,7 +1181,7 @@ int push_option_param (int ci, gretlopt opt, char *val)
  * @ci: gretl command index.
  * @opt: gretl option value.
  *
- * Returns: the ancillary string value currently 
+ * Returns: the ancillary string value currently
  * associated with option @opt for command @ci, if any,
  * otherwise %NULL.
  */
@@ -1199,10 +1199,10 @@ const char *get_optval_string (int ci, gretlopt opt)
  * @opt: gretl option value.
  * @err: location to receive error code.
  *
- * Returns: the double-precision ancillary value currently 
+ * Returns: the double-precision ancillary value currently
  * associated with option @opt for command @ci, if any,
  * otherwise #NADBL. If @opt is an active option for
- * @ci but the parameter for this option cannot be 
+ * @ci but the parameter for this option cannot be
  * interpreted as a numerical value, E_INVARG is written
  * into @err.
  */
@@ -1232,7 +1232,7 @@ double get_optval_double (int ci, gretlopt opt, int *err)
  * @opt: gretl option value.
  * @err: location to receive error code.
  *
- * Returns: the integer ancillary value currently 
+ * Returns: the integer ancillary value currently
  * associated with option @opt for command @ci, if any,
  * otherwise 0. A non-zero value written to @err if
  * such a value is required for the option in question
@@ -1257,7 +1257,7 @@ int get_optval_int (int ci, gretlopt opt, int *err)
     } else if (status == 2 && err != NULL) {
 	const char *longopt = get_longopt(ci, opt);
 
-	gretl_errmsg_sprintf(_("The option '--%s' requires a parameter"), 
+	gretl_errmsg_sprintf(_("The option '--%s' requires a parameter"),
 			     longopt);
 	*err = E_DATA;
     }
@@ -1281,7 +1281,7 @@ static void set_stored_options (int ci, gretlopt opt, int flags)
     int i, got_ci = 0;
 
 #if OPTDEBUG
-    fprintf(stderr, "setting stored options for %s (%d): ", 
+    fprintf(stderr, "setting stored options for %s (%d): ",
 	    gretl_command_word(ci), ci);
     debug_print_option_flags(NULL, opt);
 #endif
@@ -1561,7 +1561,7 @@ gretlopt valid_long_opt (int ci, const char *s, OptStatus *status)
 	    *status = OPT_AMBIGUOUS;
 	    return OPT_NONE;
 	}
-    }  
+    }
 
     /* backward compatibility */
     if (opt == OPT_NONE && !strcmp(s, "wald")) {
@@ -1592,7 +1592,7 @@ gretlopt valid_short_opt (int ci, char c)
 	    opt = 0;
 	}
     }
-	
+
     return opt;
 }
 
@@ -1638,7 +1638,7 @@ static PRN *flagprn;
  * print_flags:
  * @oflags: options.
  * @ci: command index, for context.
- * 
+ *
  * Returns: a string representation of the options in @oflags,
  * or an empty string if no options are found.  The returned
  * value should not be modified in any way.
@@ -1721,10 +1721,10 @@ void option_printing_cleanup (void)
  * @ci: gretl command index.
  * @opt: option flag to be tested.
  * @prn: gretl printing struct.
- * 
+ *
  * Returns: 1 if option @opt is applicable for command @ci only
  * in the context of a command loop (in which case a warning is
- * printed to @prn), otherwise 0.  
+ * printed to @prn), otherwise 0.
  */
 
 int check_for_loop_only_options (int ci, gretlopt opt, PRN *prn)
@@ -1734,7 +1734,7 @@ int check_for_loop_only_options (int ci, gretlopt opt, PRN *prn)
     if (ci == OLS && (opt & OPT_P)) {
 	const char *flagstr = print_flags(OPT_P, OLS);
 
-	pprintf(prn, _("Warning: option%s ignored outside of loop"), 
+	pprintf(prn, _("Warning: option%s ignored outside of loop"),
 		flagstr);
 	pputc(prn, '\n');
 	ret = 1;
@@ -1751,7 +1751,7 @@ int check_for_loop_only_options (int ci, gretlopt opt, PRN *prn)
  *
  * If the intersection of the flags in @src and @test is non-
  * empty, set the corresponding flags in @targ.
- * 
+ *
  * Returns: the (possibly modified) @targ.
  */
 
@@ -1770,7 +1770,7 @@ gretlopt transcribe_option_flags (gretlopt *targ, gretlopt src,
  *
  * If the intersection of the flags in @targ and @test is non-
  * empty, unset the corresponding flags in @targ.
- * 
+ *
  * Returns: the (possibly modified) @targ.
  */
 
@@ -1785,7 +1785,7 @@ gretlopt delete_option_flags (gretlopt *targ, gretlopt test)
  * incompatible_options:
  * @opt: option flags to be tested.
  * @test: bitwise OR of flags that are incompatible in context.
- * 
+ *
  * Returns: %E_BADOPT if @opt contains more than one of the flags
  * in @test, otherwise 0.
  */
@@ -1808,11 +1808,33 @@ int incompatible_options (gretlopt opt, gretlopt test)
 }
 
 /**
+ * options_incompatible_with:
+ * @opt: option flags to be tested.
+ * @base: "base" option.
+ * @test: bitwise OR of flags that are incompatible with @base.
+ *
+ * Returns: %E_BADOPT if @opt contains both @base and one or more of
+ * the flags in @test, otherwise 0.
+ */
+
+int options_incompatible_with (gretlopt opt, gretlopt base,
+			       gretlopt test)
+{
+    if (opt & base) {
+	if (opt & test) {
+	    return E_BADOPT;
+	}
+    }
+
+    return 0;
+}
+
+/**
  * option_prereq_missing:
  * @opt: option flags to be tested.
- * @test: bitwise OR of flags that have a deinite prequisite.
- * @prereq: bitwise OR of prequisite flags.
- * 
+ * @test: bitwise OR of flags that have a definite prequisite.
+ * @prereq: bitwise OR of prerequisite flags.
+ *
  * Returns: %E_BADOPT if @opt contains at least one element of
  * @test but no elements of @prereq, otherwise 0.
  */
