@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #define FULL_XML_HEADERS
@@ -131,11 +131,11 @@ static const char *test_type_key (ModelTestType t)
     } else if (t == GRETL_TEST_HET_1) {
 	return "het1_test";
     } else if (t == GRETL_TEST_COMFAC) {
-	return "comfac_test";	
+	return "comfac_test";
     } else if (t == GRETL_TEST_INDEP) {
-	return "independence_test";	
+	return "independence_test";
     } else if (t == GRETL_TEST_RE) {
-	return "rho_test";	
+	return "rho_test";
     } else if (t == GRETL_TEST_WITHIN_F) {
 	return "within_F";
     } else if (t == GRETL_TEST_RE_WALD) {
@@ -158,7 +158,7 @@ static void free_model_data_item (model_data_item *item)
     free(item);
 }
 
-static model_data_item *create_data_item (const char *key, void *ptr, 
+static model_data_item *create_data_item (const char *key, void *ptr,
 					  GretlType type, size_t size,
 					  void (*destructor) (void *))
 {
@@ -207,7 +207,7 @@ replicate_data_item (const model_data_item *orig)
 	    free(item);
 	    item = NULL;
 	}
-    }	
+    }
 
     if (item != NULL) {
 	if (orig->type != GRETL_TYPE_MATRIX &&
@@ -235,7 +235,7 @@ replicate_data_item (const model_data_item *orig)
  * Attaches data to @pmod: the data can be retrieved later using
  * gretl_model_get_data().  Note that the data are not "physically"
  * copied to the model; simply, @ptr is recorded on the model.
- * This means that the data referenced by the pointer now in 
+ * This means that the data referenced by the pointer now in
  * effect belong to @pmod.  When @pmod is cleared with clear_model(),
  * @destructor will be invoked with @ptr as its single argument.
  * If a simple "free" is OK for freeing the data, you can use
@@ -249,8 +249,8 @@ replicate_data_item (const model_data_item *orig)
  * Returns: 0 on success, 1 on failure.
  */
 
-int gretl_model_set_data_with_destructor (MODEL *pmod, const char *key, void *ptr, 
-					  GretlType type, size_t size, 
+int gretl_model_set_data_with_destructor (MODEL *pmod, const char *key, void *ptr,
+					  GretlType type, size_t size,
 					  void (*destructor) (void *))
 {
     model_data_item **items;
@@ -273,7 +273,7 @@ int gretl_model_set_data_with_destructor (MODEL *pmod, const char *key, void *pt
 	    /* handled */
 	    return 0;
 	}
-    } 
+    }
 
     n = pmod->n_data_items + 1;
 
@@ -306,8 +306,8 @@ int gretl_model_set_data_with_destructor (MODEL *pmod, const char *key, void *pt
  * Attaches data to @pmod: the data can be retrieved later using
  * gretl_model_get_data().  Note that the data are not "physically"
  * copied to the model; simply, @ptr is recorded on the model.
- * This means that the data referenced by the pointer now in 
- * effect belong to @pmod.  The data pointer will be freed when 
+ * This means that the data referenced by the pointer now in
+ * effect belong to @pmod.  The data pointer will be freed when
  * @pmod is cleared with clear_model().  If the data has deep
  * structure that requires special treatment on freeing, use
  * gretl_model_set_data_with_destructor() instead.
@@ -320,10 +320,10 @@ int gretl_model_set_data_with_destructor (MODEL *pmod, const char *key, void *pt
  * Returns: 0 on success, 1 on failure.
  */
 
-int gretl_model_set_data (MODEL *pmod, const char *key, void *ptr, 
+int gretl_model_set_data (MODEL *pmod, const char *key, void *ptr,
 			  GretlType type, size_t size)
 {
-    return gretl_model_set_data_with_destructor(pmod, key, ptr, type, 
+    return gretl_model_set_data_with_destructor(pmod, key, ptr, type,
 						size, NULL);
 }
 
@@ -338,17 +338,17 @@ static void matrix_free_callback (void *p)
  * @key: key string, used in retrieval.
  * @m: matrix to attach.
  *
- * Attaches @m to @pmod as data, recoverable via the key @key 
+ * Attaches @m to @pmod as data, recoverable via the key @key
  * using gretl_model_get_data().
  *
  * Returns: 0 on success, 1 on failure.
  */
 
-int gretl_model_set_matrix_as_data (MODEL *pmod, const char *key, 
+int gretl_model_set_matrix_as_data (MODEL *pmod, const char *key,
 				    gretl_matrix *m)
 {
-    return gretl_model_set_data_with_destructor(pmod, key, (void *) m, 
-						GRETL_TYPE_MATRIX, 0, 
+    return gretl_model_set_data_with_destructor(pmod, key, (void *) m,
+						GRETL_TYPE_MATRIX, 0,
 						matrix_free_callback);
 }
 
@@ -363,17 +363,17 @@ static void array_free_callback (void *p)
  * @key: key string, used in retrieval.
  * @A: array to attach.
  *
- * Attaches @A to @pmod as data, recoverable via the key @key 
+ * Attaches @A to @pmod as data, recoverable via the key @key
  * using gretl_model_get_data().
  *
  * Returns: 0 on success, 1 on failure.
  */
 
-int gretl_model_set_array_as_data (MODEL *pmod, const char *key, 
+int gretl_model_set_array_as_data (MODEL *pmod, const char *key,
 				   gretl_array *A)
 {
-    return gretl_model_set_data_with_destructor(pmod, key, (void *) A, 
-						GRETL_TYPE_ARRAY, 0, 
+    return gretl_model_set_data_with_destructor(pmod, key, (void *) A,
+						GRETL_TYPE_ARRAY, 0,
 						array_free_callback);
 }
 
@@ -383,7 +383,7 @@ int gretl_model_set_array_as_data (MODEL *pmod, const char *key,
  * @key: key string, used in retrieval.
  * @list: list to attach.
  *
- * Attaches @list to @pmod as data, recoverable via the key @key 
+ * Attaches @list to @pmod as data, recoverable via the key @key
  * using gretl_model_get_list().  Note that the model takes
  * ownership of the supplied list.
  *
@@ -394,8 +394,8 @@ int gretl_model_set_list_as_data (MODEL *pmod, const char *key, int *list)
 {
     size_t size = (list[0] + 1) * sizeof *list;
 
-    return gretl_model_set_data_with_destructor(pmod, key, (void *) list, 
-						GRETL_TYPE_LIST, size, 
+    return gretl_model_set_data_with_destructor(pmod, key, (void *) list,
+						GRETL_TYPE_LIST, size,
 						NULL);
 }
 
@@ -405,7 +405,7 @@ int gretl_model_set_list_as_data (MODEL *pmod, const char *key, int *list)
  * @key: key string, used in retrieval.
  * @str: string to attach.
  *
- * Attaches @str to @pmod as data, recoverable via the key @key 
+ * Attaches @str to @pmod as data, recoverable via the key @key
  * using gretl_model_get_data().
  *
  * Returns: 0 on success, 1 on failure.
@@ -415,8 +415,8 @@ int gretl_model_set_string_as_data (MODEL *pmod, const char *key, char *str)
 {
     size_t size = strlen(str) + 1;
 
-    return gretl_model_set_data_with_destructor(pmod, key, (void *) str, 
-						GRETL_TYPE_STRING, size, 
+    return gretl_model_set_data_with_destructor(pmod, key, (void *) str,
+						GRETL_TYPE_STRING, size,
 						NULL);
 }
 
@@ -426,8 +426,8 @@ int gretl_model_set_string_as_data (MODEL *pmod, const char *key, char *str)
  * @key: key string, used in retrieval.
  * @val: integer value to set.
  *
- * Records an integer value on a model: the value can be retrieved 
- * later using gretl_model_get_int(), using the appropriate @key.  
+ * Records an integer value on a model: the value can be retrieved
+ * later using gretl_model_get_int(), using the appropriate @key.
  *
  * Returns: 0 on success, 1 on failure.
  */
@@ -449,7 +449,7 @@ int gretl_model_set_int (MODEL *pmod, const char *key, int val)
 
     *valp = val;
 
-    err = gretl_model_set_data(pmod, key, valp, GRETL_TYPE_INT, 
+    err = gretl_model_set_data(pmod, key, valp, GRETL_TYPE_INT,
 			       sizeof(int));
     if (err) {
 	free(valp);
@@ -464,9 +464,9 @@ int gretl_model_set_int (MODEL *pmod, const char *key, int val)
  * @key: key string, used in retrieval.
  * @val: double-precision value to set.
  *
- * Records a floating-point value on @pmod: the value can be 
+ * Records a floating-point value on @pmod: the value can be
  * retrieved later using gretl_model_get_double() with the
- * appropriate @key. 
+ * appropriate @key.
  *
  * Returns: 0 on success, 1 on failure.
  */
@@ -524,7 +524,7 @@ int gretl_model_set_full_vcv_info (MODEL *pmod, int vmaj, int vmin,
     int err = 0;
 
     vi = gretl_model_get_data(pmod, "vcv_info");
-    
+
     if (vi == NULL) {
 	vi = vcv_info_new();
 	if (vi == NULL) {
@@ -541,7 +541,7 @@ int gretl_model_set_full_vcv_info (MODEL *pmod, int vmaj, int vmin,
     vi->bw = bw;
 
     if (!prev) {
-	err = gretl_model_set_data(pmod, "vcv_info", vi, 
+	err = gretl_model_set_data(pmod, "vcv_info", vi,
 				   GRETL_TYPE_STRUCT,
 				   sizeof *vi);
     }
@@ -558,7 +558,7 @@ int gretl_model_set_full_vcv_info (MODEL *pmod, int vmaj, int vmin,
 
 int gretl_model_set_vcv_info (MODEL *pmod, int vmaj, int vmin)
 {
-    return gretl_model_set_full_vcv_info(pmod, vmaj, vmin, 
+    return gretl_model_set_full_vcv_info(pmod, vmaj, vmin,
 					 0, 0, 0);
 }
 
@@ -742,7 +742,7 @@ int gretl_model_get_int (const MODEL *pmod, const char *key)
  * @pmod: pointer to model.
  * @key: key string.
  *
- * Returns: the double-precision value identified by @key, or 
+ * Returns: the double-precision value identified by @key, or
  * #NADBL on failure.
  */
 
@@ -773,7 +773,7 @@ double gretl_model_get_double (const MODEL *pmod, const char *key)
  * @pmod: pointer to model.
  * @key: key string.
  *
- * Returns: the list of integers identified by @key, or 
+ * Returns: the list of integers identified by @key, or
  * %NULL on failure.
  */
 
@@ -807,7 +807,7 @@ int *gretl_model_get_list (const MODEL *pmod, const char *key)
  *
  * Arranges for the insertion of the given string (or a blank line if
  * @s is %NULL) at the given position in the array of coefficients,
- * when the model is printed.  The extra line is printed before 
+ * when the model is printed.  The extra line is printed before
  * coefficient @pos, where @pos is interpreted as a zero-based
  * index.
  *
@@ -829,7 +829,7 @@ int gretl_model_set_coeff_separator (MODEL *pmod, const char *s, int pos)
     }
     cs->pos = pos;
 
-    err = gretl_model_set_data(pmod, "coeffsep", cs, GRETL_TYPE_STRUCT, 
+    err = gretl_model_set_data(pmod, "coeffsep", cs, GRETL_TYPE_STRUCT,
 			       sizeof *cs);
     if (err) {
 	free(cs);
@@ -938,7 +938,7 @@ char *gretl_model_get_param_name (const MODEL *pmod,
 	    /* --unit-weights */
 	    strcpy(targ, dset->varname[pmod->list[j]]);
 	} else if (NONLIST_MODEL(pmod->ci) ||
-		   pmod->ci == ARMA || pmod->ci == PANEL || 
+		   pmod->ci == ARMA || pmod->ci == PANEL ||
 		   pmod->ci == ARBOND || pmod->ci == DPANEL ||
 		   pmod->ci == GARCH || pmod->ci == BIPROBIT) {
 	    k = i;
@@ -982,7 +982,7 @@ char *gretl_model_get_param_name (const MODEL *pmod,
  * of a parameter.
  */
 
-int 
+int
 gretl_model_get_param_number (const MODEL *pmod, const DATASET *dset,
 			      const char *s)
 {
@@ -1034,7 +1034,7 @@ void free_coeff_intervals (CoeffIntervals *cf)
  *
  * Recomputes the intervals in @cf using the given value
  * of @alpha.
- * 
+ *
  * Returns: 0 on success, non-zero if @alpha is out of
  * bounds.
  */
@@ -1054,7 +1054,7 @@ int reset_coeff_intervals (CoeffIntervals *cf, double alpha)
 	cf->t = student_cdf_inverse(cf->df, 1 - alpha / 2);
     }
 
-    for (i=0; i<cf->ncoeff; i++) { 
+    for (i=0; i<cf->ncoeff; i++) {
 	if (cf->maxerr[i] > 0) {
 	    se = cf->maxerr[i] / tbak;
 	    cf->maxerr[i] = se * cf->t;
@@ -1073,12 +1073,12 @@ int reset_coeff_intervals (CoeffIntervals *cf, double alpha)
  *
  * Save the 95 percent confidence intervals for the parameter
  * estimates in @pmod.
- * 
+ *
  * Returns: pointer to #CONFINT struct containing the results.
  */
 
 CoeffIntervals *
-gretl_model_get_coeff_intervals (const MODEL *pmod, 
+gretl_model_get_coeff_intervals (const MODEL *pmod,
 				 const DATASET *dset)
 {
     CoeffIntervals *cf;
@@ -1114,7 +1114,7 @@ gretl_model_get_coeff_intervals (const MODEL *pmod,
     if (cf->names == NULL) {
 	err = 1;
 	goto bailout;
-    }    
+    }
 
     cf->alpha = .05;
 
@@ -1126,14 +1126,14 @@ gretl_model_get_coeff_intervals (const MODEL *pmod,
 	cf->t = tcrit95(pmod->dfd);
     }
 
-    for (i=0; i<cf->ncoeff && !err; i++) { 
+    for (i=0; i<cf->ncoeff && !err; i++) {
 	cf->coeff[i] = pmod->coeff[i];
 	cf->maxerr[i] = (pmod->sderr[i] > 0)? cf->t * pmod->sderr[i] : 0.0;
 	gretl_model_get_param_name(pmod, dset, i, pname);
 	cf->names[i] = gretl_strdup(pname);
 	if (cf->names[i] == NULL) {
 	    int j;
-	    
+
 	    for (j=0; j<i; j++) {
 		free(cf->names[i]);
 	    }
@@ -1271,7 +1271,7 @@ int arma_model_max_MA_lag (const MODEL *pmod)
 
 	q = arma_model_nonseasonal_MA_order(pmod);
 	Q = gretl_model_get_int(pmod, "arma_Q");
-	
+
 	if (Q == 0) {
 	    qmax = q;
 	} else {
@@ -1319,7 +1319,7 @@ static int ar_coeff_integrate (double *c0, int d, int D, int s, int pmax)
 	pp += s;
 	for (j=0; j<=pstar; j++) {
 	    c0[j] = c1[j];
-	} 
+	}
     }
 
     for (i=0; d>0 && i<d; i++) {
@@ -1330,7 +1330,7 @@ static int ar_coeff_integrate (double *c0, int d, int D, int s, int pmax)
 		c1[j] = c0[j] - c0[j-1];
 	    } else if (j <= pp + 1) {
 		c1[j] = -c0[j-1];
-	    }		
+	    }
 	}
 	pp += 1;
 	for (j=0; j<=pstar; j++) {
@@ -1457,7 +1457,7 @@ int arma_model_AR_MA_coeffs (const MODEL *pmod,
 		x = (j == 0)? -1 : Phi[j-1];
 		k = 0;
 		for (i=0; i<=p; i++) {
-		    y = (i == 0)? -1 : 
+		    y = (i == 0)? -1 :
 			(arma_included(pmask, i-1))? phi[k++] : 0;
 		    ii = i + s * j;
 		    ac->val[ii] -= x * y;
@@ -1466,14 +1466,14 @@ int arma_model_AR_MA_coeffs (const MODEL *pmod,
 	    if ((opt & OPT_I) && (D > 0 || d > 0)) {
 		ar_coeff_integrate(ac->val, d, D, s, pmax);
 	    }
-	}	
+	}
 
 	if (mc != NULL) {
 	    for (j=0; j<=Q; j++) {
 		x = (j == 0)? 1 : Theta[j-1];
 		k = 0;
 		for (i=0; i<=q; i++) {
-		    y = (i == 0)? 1 : 
+		    y = (i == 0)? 1 :
 			(arma_included(qmask, i-1))? theta[k++] : 0;
 		    ii = i + s * j;
 		    mc->val[ii] += x * y;
@@ -1788,7 +1788,7 @@ int regarma_model_AR_coeffs (const MODEL *pmod,
 	*pp = 0;
 	return 0;
     }
-	
+
     ac = malloc((pmax + 1) * sizeof *ac);
     if (ac == NULL) {
 	return E_ALLOC;
@@ -1805,7 +1805,7 @@ int regarma_model_AR_coeffs (const MODEL *pmod,
 	x = (j == 0)? -1 : Phi[j-1];
 	k = 0;
 	for (i=0; i<=p; i++) {
-	    y = (i == 0)? -1 : 
+	    y = (i == 0)? -1 :
 		(arma_included(pmask, i-1))? phi[k++] : 0;
 	    ii = i + s * j;
 	    ac[ii] -= x * y;
@@ -1983,7 +1983,7 @@ static int arma_depvar_pos (const MODEL *pmod)
 
     return dvpos;
 }
-    
+
 /**
  * gretl_model_get_depvar:
  * @pmod: pointer to gretl model.
@@ -2063,7 +2063,7 @@ static int ordered_model (const MODEL *pmod)
 
 static int longlist_model (const MODEL *pmod)
 {
-    if (pmod->ci == LOGIT || 
+    if (pmod->ci == LOGIT ||
 	pmod->ci == NEGBIN ||
 	pmod->ci == DURATION ||
 	pmod->ci == PANEL) {
@@ -2081,7 +2081,7 @@ static int longlist_model (const MODEL *pmod)
  * @pmod: pointer to gretl model.
  *
  * Returns: an allocated copy of the list of independent
- * variables included in @pmod, or %NULL on failure. 
+ * variables included in @pmod, or %NULL on failure.
  */
 
 int *gretl_model_get_x_list (const MODEL *pmod)
@@ -2109,7 +2109,7 @@ int *gretl_model_get_x_list (const MODEL *pmod)
 		    for (i=1; i<=list[0]; i++) {
 			list[i] = pmod->list[i + start];
 		    }
-		}		    
+		}
 	    }
 	}
     } else if (pmod->ci == GARCH) {
@@ -2174,14 +2174,14 @@ int *gretl_model_get_x_list (const MODEL *pmod)
 	    for (i=1; i<=list[0]; i++) {
 		list[i] = pmod->list[i + 1];
 	    }
-	}	
+	}
     } else if (!NONLIST_MODEL(pmod->ci)) {
 	if (pmod->ci == HECKIT) {
 	    nx = gretl_model_get_int(pmod, "base-coeffs");
 	} else if (longlist_model(pmod)) {
 	    /* models in which the array of coefficients
 	       is (or may be) longer than the list of
-	       regressors 
+	       regressors
 	    */
 	    nx = pmod->list[0] - 1;
 	} else {
@@ -2207,7 +2207,7 @@ int *gretl_model_get_x_list (const MODEL *pmod)
  * Retrieve an allocated copy of the secondary list from
  * @pmod: e.g. the list of instruments in the case of %IVREG, or
  * the selection equation list for %HECKIT.
- * 
+ *
  * Returns: allocated list or %NULL on error.
  */
 
@@ -2230,9 +2230,9 @@ int *gretl_model_get_secondary_list (const MODEL *pmod)
  * @pmod: model to examine.
  *
  * Retrieve an allocated copy of the list of dependent variables
- * for @pmod: in almost all cases this will have a single 
+ * for @pmod: in almost all cases this will have a single
  * element; an exception is biprobit.
- * 
+ *
  * Returns: allocated list or %NULL on error.
  */
 
@@ -2243,7 +2243,7 @@ int *gretl_model_get_y_list (const MODEL *pmod)
     if (pmod->list == NULL) {
 	return NULL;
     }
-    
+
     if (pmod->ci == BIPROBIT) {
 	list = gretl_list_new(2);
 	if (list != NULL) {
@@ -2263,7 +2263,7 @@ int *gretl_model_get_y_list (const MODEL *pmod)
 /**
  * gretl_model_allocate_storage:
  * @pmod: pointer to model.
- * 
+ *
  * Allocates space for coefficients and standard errors,
  * residuals and fitted values in @pmod. The sizes of
  * the arrays are based on the %ncoeff and %full_n
@@ -2292,7 +2292,7 @@ int gretl_model_allocate_storage (MODEL *pmod)
 	}
 	for (i=0; i<k; i++) {
 	    pmod->coeff[i] = pmod->sderr[i] = NADBL;
-	}	
+	}
     }
 
     if (T > 0) {
@@ -2301,7 +2301,7 @@ int gretl_model_allocate_storage (MODEL *pmod)
 	pmod->uhat = malloc(T * sizeof *pmod->uhat);
 	if (pmod->uhat == NULL) {
 	    return E_ALLOC;
-	}    
+	}
 	pmod->yhat = malloc(T * sizeof *pmod->yhat);
 	if (pmod->yhat == NULL) {
 	    return E_ALLOC;
@@ -2319,7 +2319,7 @@ int gretl_model_allocate_storage (MODEL *pmod)
  * @pmod: pointer to model.
  * @nelem: pointer to receive number of elements in
  * the packed array, or %NULL;
- * 
+ *
  * Allocates space for a packed coefficient covariance matrix
  * in @pmod (if such space is not already allocated).  Sets
  * all entries in the array to zero.
@@ -2330,7 +2330,7 @@ int gretl_model_allocate_storage (MODEL *pmod)
 int gretl_model_new_vcv (MODEL *pmod, int *nelem)
 {
     int nv = pmod->ncoeff;
-    int nxpx = (nv * nv + nv) / 2; 
+    int nxpx = (nv * nv + nv) / 2;
     int i, err = 0;
 
     if (pmod->vcv == NULL) {
@@ -2338,7 +2338,7 @@ int gretl_model_new_vcv (MODEL *pmod, int *nelem)
 	pmod->vcv = malloc(nxpx * sizeof *pmod->vcv);
 	if (pmod->vcv == NULL) {
 	    err = E_ALLOC;
-	} 
+	}
     }
 
     if (pmod->vcv != NULL) {
@@ -2348,7 +2348,7 @@ int gretl_model_new_vcv (MODEL *pmod, int *nelem)
 	if (nelem != NULL) {
 	    *nelem = nxpx;
 	}
-    }	
+    }
 
     return err;
 }
@@ -2366,12 +2366,12 @@ static double vcv_get_se (double vii, int restricted)
  * gretl_model_write_vcv:
  * @pmod: pointer to model.
  * @V: covariance matrix.
- * 
+ *
  * Write the covariance matrix @V into the model @pmod, using the
  * special packed format that is required by the MODEL struct,
  * and set the standard errors to the square root of the diagonal
- * elements of this matrix. 
- * 
+ * elements of this matrix.
+ *
  * Returns: 0 on success, non-zero code on error.
  */
 
@@ -2390,7 +2390,7 @@ int gretl_model_write_vcv (MODEL *pmod, const gretl_matrix *V)
     }
 
     k = V->rows;
-    n = (k * k + k) / 2; 
+    n = (k * k + k) / 2;
 
     /* reallocate model vcv in case it's wrongly sized */
     tmp = realloc(pmod->vcv, n * sizeof *tmp);
@@ -2429,7 +2429,7 @@ int gretl_model_write_vcv (MODEL *pmod, const gretl_matrix *V)
     return err;
 }
 
-static gretl_matrix *make_cluster_vals (MODEL *pmod, int cvar, 
+static gretl_matrix *make_cluster_vals (MODEL *pmod, int cvar,
 					const DATASET *dset,
 					int *err)
 {
@@ -2485,7 +2485,7 @@ static int model_make_clustered_GG (MODEL *pmod, int ci,
     int i, j, t;
     int err = 0;
 
-    cname = get_optval_string(ci, OPT_C); 
+    cname = get_optval_string(ci, OPT_C);
     if (cname == NULL) {
 	return E_PARSE;
     }
@@ -2556,18 +2556,18 @@ static int model_make_clustered_GG (MODEL *pmod, int ci,
  * clustering).
  * @opt: may include OPT_C for cluster-robust variant.
  * @pV: location to receive the full covariance matrix, or NULL.
- * 
+ *
  * Write a QML covariance matrix into the model @pmod, and set
  * the standard errors to the square root of the diagonal
  * elements of this matrix. The @ci argument, specifying the
  * estimator for @pmod, is required only if @opt includes
  * OPT_C; otherwise it is ignored.
- * 
+ *
  * Returns: 0 on success, non-zero code on error.
  */
 
 int gretl_model_add_QML_vcv (MODEL *pmod, int ci,
-			     const gretl_matrix *H, 
+			     const gretl_matrix *H,
 			     const gretl_matrix *G,
 			     const DATASET *dset,
 			     gretlopt opt,
@@ -2600,7 +2600,7 @@ int gretl_model_add_QML_vcv (MODEL *pmod, int ci,
 	    GG = gretl_matrix_XTX_new(G);
 	    if (GG == NULL) {
 		err = E_ALLOC;
-	    }	    
+	    }
 	}
     }
 
@@ -2645,16 +2645,16 @@ int gretl_model_add_QML_vcv (MODEL *pmod, int ci,
  * gretl_model_add_hessian_vcv:
  * @pmod: pointer to model.
  * @H: inverse of the (negative) Hessian.
- * 
+ *
  * Write @H into the model @pmod as its covariance matrix, and
  * set the standard errors to the square roots of the diagonal
- * elements of this matrix. 
- * 
+ * elements of this matrix.
+ *
  * Returns: 0 on success, non-zero code on error.
  */
 
-int gretl_model_add_hessian_vcv (MODEL *pmod, 
-				 const gretl_matrix *H) 
+int gretl_model_add_hessian_vcv (MODEL *pmod,
+				 const gretl_matrix *H)
 {
     int err = gretl_model_write_vcv(pmod, H);
 
@@ -2669,16 +2669,16 @@ int gretl_model_add_hessian_vcv (MODEL *pmod,
  * gretl_model_add_OPG_vcv:
  * @pmod: pointer to model.
  * @G: T x k gradient matrix.
- * 
+ *
  * Compute (G'G)^{-1}, write this into @pmod as its covariance matrix,
  * and set the standard errors to the square roots of the diagonal
- * elements of this matrix. 
- * 
+ * elements of this matrix.
+ *
  * Returns: 0 on success, non-zero code on error.
  */
 
-int gretl_model_add_OPG_vcv (MODEL *pmod, 
-			     const gretl_matrix *G) 
+int gretl_model_add_OPG_vcv (MODEL *pmod,
+			     const gretl_matrix *G)
 {
     gretl_matrix *GG = gretl_matrix_XTX_new(G);
     int err = 0;
@@ -2733,11 +2733,11 @@ static double *copy_vcv_subset (const MODEL *pmod)
  * gretl_model_get_vcv:
  * @pmod: pointer to model.
  * @dset: dataset information.
- * 
- * Supplies the caller with a copy of the variance-covariance 
+ *
+ * Supplies the caller with a copy of the variance-covariance
  * matrix for the parameter estimates in @pmod, in a format
- * suitable for printing.  See also free_vcv().  To get the 
- * covariance matrix as a gretl_matrix, see 
+ * suitable for printing.  See also free_vcv().  To get the
+ * covariance matrix as a gretl_matrix, see
  * gretl_vcv_matrix_from_model().
  *
  * Returns: #VMatrix struct or %NULL on error.
@@ -2766,7 +2766,7 @@ VMatrix *gretl_model_get_vcv (MODEL *pmod, const DATASET *dset)
 	    k = k2;
 	    special = 1;
 	}
-    } 
+    }
 
     vcv->names = strings_array_new(k);
     if (vcv->names == NULL) {
@@ -2805,7 +2805,7 @@ VMatrix *gretl_model_get_vcv (MODEL *pmod, const DATASET *dset)
     vcv->dim = k;
     vcv->t1 = pmod->t1;
     vcv->t2 = pmod->t2;
-    
+
     return vcv;
 }
 
@@ -2816,13 +2816,13 @@ VMatrix *gretl_model_get_vcv (MODEL *pmod, const DATASET *dset)
  * @j: column(0-based).
  * @np: the number of parameters represented in @pmod's
  * covariance matrix.
- * 
+ *
  * Returns: the (@i, @j) element of @pmod's covariance matrix,
  * or #NADBL on failure.
  */
 
 double gretl_model_get_vcv_element (const MODEL *pmod,
-				    int i, int j, 
+				    int i, int j,
 				    int np)
 {
     if (pmod->vcv == NULL) {
@@ -2839,7 +2839,7 @@ double gretl_model_get_vcv_element (const MODEL *pmod,
  * @pmod: pointer to model.
  * @b: array of coefficients.
  * @k: number of elements in @b.
- * 
+ *
  * Write the coefficients @b into the model @pmod, whose
  * coefficient array is resized appropriately if need be.
  *
@@ -2877,7 +2877,7 @@ int gretl_model_write_coeffs (MODEL *pmod, double *b, int k)
  * Sets on @dset the sample range (starting and ending
  * observations) that was in effect when @pmod was estimated.
  * This is not always the same as the data range over which
- * @pmod was actually estimated (e.g. in case of 
+ * @pmod was actually estimated (e.g. in case of
  * autoregressive models, where observations are dropped
  * to allow for lags).
  */
@@ -2887,7 +2887,7 @@ void impose_model_smpl (const MODEL *pmod, DATASET *dset)
     dset->t1 = pmod->smpl.t1;
     dset->t2 = pmod->smpl.t2;
 #if MDEBUG
-    fprintf(stderr, "impose_model_smpl: set t1=%d, t2=%d\n", 
+    fprintf(stderr, "impose_model_smpl: set t1=%d, t2=%d\n",
 	    dset->t1, dset->t2);
 #endif
 }
@@ -2984,7 +2984,7 @@ static int discard_model_data_item (MODEL *pmod, const char *key,
  * Looks up the data pointer, attached to @pmod, that is
  * identified by @key, and if a pointer is found, frees
  * it (or applies the destructor function that was set for
- * the item, if any) and removes it from the model's list of 
+ * the item, if any) and removes it from the model's list of
  * data items.  If you want to remove the item from the
  * model's list without freeing the underlying data pointer,
  * use gretl_model_detach_data_item().
@@ -3006,7 +3006,7 @@ int gretl_model_destroy_data_item (MODEL *pmod, const char *key)
  * identified by @key, and if an item is found, removes
  * it from the model's list of such items.  The data
  * pointer associated with @key is not touched.  If you
- * want the underlying resources associated with @key to be 
+ * want the underlying resources associated with @key to be
  * freed, use gretl_model_destroy_data_item().
  *
  * Returns: 0 on success, 1 on failure (key not found).
@@ -3038,9 +3038,9 @@ void gretl_model_set_auxiliary (MODEL *pmod, ModelAuxCode aux)
  * @pmod: pointer to model.
  * @nterms: number of autoregressive coefficients.
  *
- * Performs initial setup for structure to hold info 
+ * Performs initial setup for structure to hold info
  * on autoregressive coefficients.
- * 
+ *
  * Returns: 0 on success, 1 on error.
  */
 
@@ -3064,7 +3064,7 @@ int gretl_model_add_arinfo (MODEL *pmod, int nterms)
     if (pmod->arinfo->arlist == NULL) {
 	free(pmod->arinfo);
 	pmod->arinfo = NULL;
-	return 1; 
+	return 1;
     }
 
     pmod->arinfo->rho = malloc(nterms * sizeof *pmod->arinfo->rho);
@@ -3072,7 +3072,7 @@ int gretl_model_add_arinfo (MODEL *pmod, int nterms)
 	free(pmod->arinfo->arlist);
 	free(pmod->arinfo);
 	pmod->arinfo = NULL;
-	return 1; 
+	return 1;
     }
 
     pmod->arinfo->sderr = malloc(nterms * sizeof *pmod->arinfo->sderr);
@@ -3081,7 +3081,7 @@ int gretl_model_add_arinfo (MODEL *pmod, int nterms)
 	free(pmod->arinfo->rho);
 	free(pmod->arinfo);
 	pmod->arinfo = NULL;
-	return 1; 
+	return 1;
     }
 
     for (i=0; i<nterms; i++) {
@@ -3164,7 +3164,7 @@ void gretl_model_init (MODEL *pmod, const DATASET *dset)
 	pmod->smpl.t1 = 0;
 	pmod->smpl.t2 = 0;
 	pmod->smpl.rseed = 0;
-    }	
+    }
 
     pmod->ncoeff = 0;
     pmod->ntests = 0;
@@ -3208,7 +3208,7 @@ void gretl_model_smpl_init (MODEL *pmod, const DATASET *dset)
 
 /**
  * gretl_model_new:
- * 
+ *
  * Allocates memory for a gretl #MODEL struct and initializes the struct,
  * using gretl_model_init().
  *
@@ -3234,8 +3234,8 @@ MODEL *gretl_model_new (void)
 /**
  * gretl_model_array_new:
  * @n: number of models in array.
- * 
- * Allocates memory for an array of @n gretl #MODEL structs and 
+ *
+ * Allocates memory for an array of @n gretl #MODEL structs and
  * initializes each model using gretl_model_init().
  *
  * Returns: pointer to models array (or %NULL if allocation fails).
@@ -3260,14 +3260,14 @@ MODEL **gretl_model_array_new (int n)
 		break;
 	    }
 	}
-    } 
+    }
 
     return models;
 }
 
 /**
  * allocate_working_model:
- * 
+ *
  * Allocates memory for gretl #MODEL struct and initializes it.
  * The model is "protected" against deletion.
  *
@@ -3294,7 +3294,7 @@ MODEL *allocate_working_model (void)
  * gretl_model_array_destroy:
  * @models: array of gretl models.
  * @n: number of models in array.
- * 
+ *
  * Frees all resources associated with an array of models, which
  * should have been obtained via gretl_model_array_new().
  */
@@ -3337,7 +3337,7 @@ static void clear_ar_info (MODEL *pmod)
 
 #if MDEBUG > 1
 
-static void 
+static void
 debug_print_model_info (const MODEL *pmod, const char *msg)
 {
     fprintf(stderr, "%s:\n"
@@ -3355,16 +3355,16 @@ debug_print_model_info (const MODEL *pmod, const char *msg)
 	    " pmod->depvar = %p\n"
 	    " pmod->params = %p\n"
 	    " pmod->arinfo = %p\n"
-	    " pmod->tests = %p\n" 
+	    " pmod->tests = %p\n"
 	    " pmod->data_items = %p\n", msg,
-	    (void *) pmod, (void *) pmod->list, 
-	    (void *) pmod->submask, (void *) pmod->missmask, 
-	    (void *) pmod->coeff, (void *) pmod->sderr, 
-	    (void *) pmod->yhat, (void *) pmod->uhat, 
-	    (void *) pmod->xpx, 
-	    (void *) pmod->vcv, (void *) pmod->name, 
-	    (void *) pmod->depvar, (void *) pmod->params, 
-	    (void *) pmod->arinfo, (void *) pmod->tests, 
+	    (void *) pmod, (void *) pmod->list,
+	    (void *) pmod->submask, (void *) pmod->missmask,
+	    (void *) pmod->coeff, (void *) pmod->sderr,
+	    (void *) pmod->yhat, (void *) pmod->uhat,
+	    (void *) pmod->xpx,
+	    (void *) pmod->vcv, (void *) pmod->name,
+	    (void *) pmod->depvar, (void *) pmod->params,
+	    (void *) pmod->arinfo, (void *) pmod->tests,
 	    (void *) pmod->data_items);
 }
 
@@ -3401,9 +3401,9 @@ void gretl_model_destroy_tests (MODEL *pmod)
  * Clears a gretl #MODEL, freeing all allocated storage and setting
  * pointer members to %NULL.  Also frees any data pointers attached
  * via gretl_model_set_data().  The model pointer itself is not
- * freed, so this function may be called on a #MODEL which has been 
+ * freed, so this function may be called on a #MODEL which has been
  * declared directly by the caller; in that case the caller should
- * pass the address of the #MODEL in question.  
+ * pass the address of the #MODEL in question.
  */
 
 void clear_model (MODEL *pmod)
@@ -3501,7 +3501,7 @@ void gretl_model_free_on_exit (MODEL *pmod)
 static void copy_test (ModelTest *targ, const ModelTest *src)
 {
     targ->type = src->type;
-    
+
     if (src->param != NULL && *src->param != '\0') {
 	targ->param = gretl_strdup(src->param);
     } else {
@@ -3609,7 +3609,7 @@ int attach_model_tests_from_xml (MODEL *pmod, xmlNodePtr node)
 static void serialize_test (const ModelTest *src, FILE *fp)
 {
     fprintf(fp, "<test type=\"%d\" ", src->type);
-    
+
     if (src->param != NULL && *src->param != '\0') {
 	fprintf(fp, "param=\"%s\" ", src->param);
     }
@@ -3620,7 +3620,7 @@ static void serialize_test (const ModelTest *src, FILE *fp)
     fprintf(fp, "order=\"%d\" ", src->order);
     fprintf(fp, "value=\"%.15g\" ", src->value);
     fprintf(fp, "pvalue=\"%.15g\" ", src->pvalue);
-    
+
     if (!na(src->crit)) {
 	fprintf(fp, "crit=\"%g\" ", src->crit);
 	fprintf(fp, "alpha=\"%g\" ", src->alpha);
@@ -3656,14 +3656,14 @@ static gretl_bundle *bundlize_test (const ModelTest *src)
     }
     if (!na(src->value)) {
 	gretl_bundle_set_scalar(b, "test", src->value);
-    }    
+    }
     if (!na(src->pvalue)) {
 	gretl_bundle_set_scalar(b, "pvalue", src->pvalue);
     }
     if (!na(src->crit)) {
 	gretl_bundle_set_scalar(b, "crit", src->crit);
 	gretl_bundle_set_scalar(b, "alpha", src->alpha);
-    }    
+    }
 
     return b;
 }
@@ -3792,7 +3792,7 @@ int maybe_add_test_to_model (MODEL *pmod, ModelTest *test)
 	if (!model_tests_differ(test, &pmod->tests[i])) {
 	    done = 1;
 	}
-    } 
+    }
 
     if (!done) {
 	int n = pmod->ntests + 1;
@@ -3824,7 +3824,7 @@ int gretl_model_get_normality_test (const MODEL *pmod, PRN *prn)
 	    test = &pmod->tests[i];
 	    break;
 	}
-    } 
+    }
 
     if (test == NULL) {
 	err = E_BADSTAT;
@@ -3871,7 +3871,7 @@ void model_test_set_opt (ModelTest *test, gretlopt opt)
     test->opt = opt;
 }
 
-void model_test_set_crit_and_alpha (ModelTest *test, 
+void model_test_set_crit_and_alpha (ModelTest *test,
 				    double crit,
 				    double alpha)
 {
@@ -3969,7 +3969,7 @@ static struct test_strings tstrings[] = {
       N_("Test of independence"),
       N_("rho = 0") },
     { GRETL_TEST_RE,
-      N_("LR test for rho = 0"), 
+      N_("LR test for rho = 0"),
       NULL },
     { GRETL_TEST_WITHIN_F,
       N_("Joint test on named regressors"),
@@ -3982,13 +3982,13 @@ static struct test_strings tstrings[] = {
       N_("The groups have a common intercept") },
     { GRETL_TEST_XDEPEND,
       N_("Pesaran CD test for cross-sectional dependence"),
-      N_("No cross-sectional dependence") },    
+      N_("No cross-sectional dependence") },
     { GRETL_TEST_MAX, NULL, NULL }
-}; 
+};
 
 static const char *test_get_descrip (const ModelTest *test)
 {
-    static const char *dfree = 
+    static const char *dfree =
 	N_("Distribution free Wald test for heteroskedasticity");
 
     if (test->type == GRETL_TEST_GROUPWISE &&
@@ -4035,7 +4035,7 @@ static void print_test_opt (const ModelTest *test, PRN *prn)
     if (optstr != NULL) {
 	pprintf(prn, " (%s)", _(optstr));
     }
-}  
+}
 
 static int gretl_test_print_heading (const ModelTest *test, PRN *prn)
 {
@@ -4132,7 +4132,7 @@ static void gretl_test_print_h_0 (const ModelTest *test, int heading,
     if (H0 == NULL && test->type != GRETL_TEST_WITHIN_F &&
 	test->type != GRETL_TEST_RE_WALD) {
 	return;
-    }    
+    }
 
     if (heading) {
 	pputs(prn, " -");
@@ -4162,10 +4162,10 @@ static void gretl_test_print_h_0 (const ModelTest *test, int heading,
 
     if (test->type == GRETL_TEST_ADD || test->type == GRETL_TEST_OMIT) {
 	print_add_omit_varnames(test->param, prn);
-    } 
+    }
 }
 
-static void 
+static void
 get_test_stat_string (const ModelTest *test, char *str, PRN *prn)
 {
     int tex = tex_format(prn);
@@ -4184,10 +4184,10 @@ get_test_stat_string (const ModelTest *test, char *str, PRN *prn)
 	break;
     case GRETL_STAT_SUP_WALD:
 	if (tex) {
-	    sprintf(str, "max $\\chi^2(%d)$ = %g (%s)", test->dfn, 
+	    sprintf(str, "max $\\chi^2(%d)$ = %g (%s)", test->dfn,
 		    test->value, test->param);
 	} else {
-	    sprintf(str, _("chi-square(%d) = %g at observation %s"), 
+	    sprintf(str, _("chi-square(%d) = %g at observation %s"),
 		    test->dfn, test->value, test->param);
 	}
 	break;
@@ -4200,7 +4200,7 @@ get_test_stat_string (const ModelTest *test, char *str, PRN *prn)
 	} else {
 	    sprintf(str, "Welch F(%d, %.1f) = %g", test->dfn, test->dfd, test->value);
 	}
-	break;	
+	break;
     case GRETL_STAT_HARVEY_COLLIER:
 	if (tex) {
 	    sprintf(str, "Harvey--Collier $t(%d)$ = %g", test->dfn, test->value);
@@ -4210,7 +4210,7 @@ get_test_stat_string (const ModelTest *test, char *str, PRN *prn)
 	break;
     case GRETL_STAT_NORMAL_CHISQ:
 	if (tex) {
-	    sprintf(str, "$\\chi^2(2)$ = %g", test->value); 
+	    sprintf(str, "$\\chi^2(2)$ = %g", test->value);
 	} else {
 	    sprintf(str, "%s(2) = %g", _("Chi-square"), test->value);
 	}
@@ -4223,7 +4223,7 @@ get_test_stat_string (const ModelTest *test, char *str, PRN *prn)
 		sprintf(str, "$\\chi^2(%d)$ = NA (%s)", test->dfn, A_("failed"));
 	    } else {
 		sprintf(str, "$\\chi^2(%d)$ = %g", test->dfn, test->value);
-	    } 
+	    }
 	} else {
 	    if (na(test->value)) {
 		sprintf(str, "%s(%d) = NA (%s)", _("Chi-square"), test->dfn,
@@ -4235,7 +4235,7 @@ get_test_stat_string (const ModelTest *test, char *str, PRN *prn)
 	break;
     case GRETL_STAT_Z:
 	if (tex) {
-	    sprintf(str, "$z$ = %g", test->value); 
+	    sprintf(str, "$z$ = %g", test->value);
 	} else {
 	    sprintf(str, "z = %g", test->value);
 	}
@@ -4245,14 +4245,14 @@ get_test_stat_string (const ModelTest *test, char *str, PRN *prn)
     }
 }
 
-static void 
+static void
 get_test_pval_string (const ModelTest *test, char *str, PRN *prn)
 {
     int tex = tex_format(prn);
 
     switch (test->teststat) {
     case GRETL_STAT_LM:
-	if (tex) sprintf(str, "$P$($\\chi^2(%d) >$ %g) = %g", 
+	if (tex) sprintf(str, "$P$($\\chi^2(%d) >$ %g) = %g",
 			 test->dfn, test->value, test->pvalue);
 	else sprintf(str, "P(%s(%d) > %g) = %g", _("Chi-square"),
 		     test->dfn, test->value, test->pvalue);
@@ -4260,44 +4260,44 @@ get_test_pval_string (const ModelTest *test, char *str, PRN *prn)
     case GRETL_STAT_F:
     case GRETL_STAT_RESET:
 	if (tex) {
-	    sprintf(str, "$P$($F(%d, %g) >$ %g) = %g", 
+	    sprintf(str, "$P$($F(%d, %g) >$ %g) = %g",
 		    test->dfn, test->dfd, test->value, test->pvalue);
 	} else {
-	    sprintf(str, "P(F(%d, %g) > %g) = %g", 
+	    sprintf(str, "P(F(%d, %g) > %g) = %g",
 		    test->dfn, test->dfd, test->value, test->pvalue);
 	}
 	break;
     case GRETL_STAT_WF:
 	if (tex) {
-	    sprintf(str, "$P$($F(%d, %.1f) >$ %g) = %g", 
+	    sprintf(str, "$P$($F(%d, %.1f) >$ %g) = %g",
 		    test->dfn, test->dfd, test->value, test->pvalue);
 	} else {
-	    sprintf(str, "P(F(%d, %.1f) > %g) = %g", 
+	    sprintf(str, "P(F(%d, %.1f) > %g) = %g",
 		    test->dfn, test->dfd, test->value, test->pvalue);
 	}
 	break;
     case GRETL_STAT_LMF:
 	if (tex) {
-	    sprintf(str, "$P$($F(%d, %g) >$ %g) = %g", 
+	    sprintf(str, "$P$($F(%d, %g) >$ %g) = %g",
 		    test->dfn, test->dfd, test->value, test->pvalue);
 	} else {
-	    sprintf(str, "P(F(%d, %g) > %g) = %g", 
+	    sprintf(str, "P(F(%d, %g) > %g) = %g",
 		    test->dfn, test->dfd, test->value, test->pvalue);
 	}
 	break;
     case GRETL_STAT_HARVEY_COLLIER:
 	if (tex) {
-	    sprintf(str, "$P$($t_{%d} >$ %g) = %g", 
+	    sprintf(str, "$P$($t_{%d} >$ %g) = %g",
 		    test->dfn, test->value, test->pvalue);
 	} else {
-	    sprintf(str, "P(t(%d) > %g) = %g", 
+	    sprintf(str, "P(t(%d) > %g) = %g",
 		    test->dfn, test->value, test->pvalue);
 	}
 	break;
     case GRETL_STAT_NORMAL_CHISQ:
     case GRETL_STAT_LR:
     case GRETL_STAT_WALD_CHISQ:
-    case GRETL_STAT_SUP_WALD:	
+    case GRETL_STAT_SUP_WALD:
     case GRETL_STAT_Z:
 	if (na(test->value)) {
 	    *str = '\0';
@@ -4329,7 +4329,7 @@ static void csv_print_test (const ModelTest *src, PRN *prn)
 	    pprintf(prn, "\"%s\"\n", descrip);
 	}
     }
-    
+
     if (src->param != NULL && *src->param != '\0') {
 	pprintf(prn, "\"%s\"%c\"%s\"\n", _("parameter"), c, src->param);
     }
@@ -4347,7 +4347,7 @@ static void csv_print_test (const ModelTest *src, PRN *prn)
     if (!na(src->pvalue)) {
 	pprintf(prn, "\"%s\"%c%.15g\n", _("p-value"), c, src->pvalue);
     }
-    
+
     if (!na(src->crit)) {
 	double a = 100 * src->alpha;
 	gchar *buf;
@@ -4385,7 +4385,7 @@ void gretl_model_test_print_direct (const ModelTest *test, int heading, PRN *prn
 
     gretl_test_print_h_0(test, heading, prn);
 
-    tstr = asy_test(test->teststat)? N_("Asymptotic test statistic") : 
+    tstr = asy_test(test->teststat)? N_("Asymptotic test statistic") :
 	N_("Test statistic");
 
     get_test_stat_string(test, buf, prn);
@@ -4459,13 +4459,13 @@ static ARINFO *copy_ar_info (const ARINFO *src)
 
       	if ((targ->rho = copyvec(src->rho, m)) == NULL) {
 	    free(targ);
-	    return NULL; 
+	    return NULL;
 	}
 
-      	if ((targ->sderr = copyvec(src->sderr, m)) == NULL) { 
+	if ((targ->sderr = copyvec(src->sderr, m)) == NULL) {
 	    free(targ->rho);
 	    free(targ);
-	    return NULL; 
+	    return NULL;
 	}
 
 	targ->arlist = gretl_list_copy(src->arlist);
@@ -4473,9 +4473,9 @@ static ARINFO *copy_ar_info (const ARINFO *src)
 	    free(targ->rho);
 	    free(targ->sderr);
 	    free(targ);
-	    return NULL; 
+	    return NULL;
 	}
-    }    
+    }
 
     return targ;
 }
@@ -4486,7 +4486,7 @@ static int copy_model_params (MODEL *targ, const MODEL *src)
 
     if (src->nparams > 0) {
 	targ->params = strings_array_dup(src->params, src->nparams);
-    
+
 	if (targ->params == NULL) {
 	    err = E_ALLOC;
 	} else {
@@ -4563,7 +4563,7 @@ static int type_from_type_string (const char *s)
 	if (*s == '7') {
 	    /* note: was "chararray" */
 	    return GRETL_TYPE_STRING;
-	}	
+	}
     } else {
 	for (i=0; mapper[i].type != GRETL_TYPE_NONE; i++) {
 	    if (!strcmp(s, mapper[i].name)) {
@@ -4590,7 +4590,7 @@ static const char *gretl_type_name (int t)
 
     return "unknown";
 }
-	
+
 static void serialize_model_data_items (const MODEL *pmod, FILE *fp)
 {
     model_data_item *item;
@@ -4602,7 +4602,7 @@ static void serialize_model_data_items (const MODEL *pmod, FILE *fp)
 	item = pmod->data_items[i];
 	nelem = 0;
 
-	fprintf(fp, "<data-item key=\"%s\" type=\"%s\"", 
+	fprintf(fp, "<data-item key=\"%s\" type=\"%s\"",
 		item->key, gretl_type_name(item->type));
 
 	if (!strcmp(item->key, "coeffsep")) {
@@ -4611,7 +4611,7 @@ static void serialize_model_data_items (const MODEL *pmod, FILE *fp)
 	} else if (!strcmp(item->key, "vcv_info")) {
 	    serialize_vcv_info(item, fp);
 	    continue;
-	}	    
+	}
 
 	if (item->type == GRETL_TYPE_INT_ARRAY) {
 	    nelem = item->size / sizeof(int);
@@ -4644,13 +4644,13 @@ static void serialize_model_data_items (const MODEL *pmod, FILE *fp)
 
 	    for (j=0; j<nelem; j++) {
 		fprintf(fp, "%.15g ", vals[j]);
-	    }	    
+	    }
 	} else if (item->type == GRETL_TYPE_CMPLX_ARRAY) {
 	    cmplx *vals = (cmplx *) item->ptr;
-	    
+
 	    for (j=0; j<nelem; j++) {
 		fprintf(fp, "%.15g %.15g ", vals[j].r, vals[j].i);
-	    }	    
+	    }
 	} else if (item->type == GRETL_TYPE_LIST) {
 	    int *list = (int *) item->ptr;
 
@@ -4672,7 +4672,7 @@ static void serialize_model_data_items (const MODEL *pmod, FILE *fp)
 	}
 
 	fputs("</data-item>\n", fp);
-    }    
+    }
 
     fputs("</data-items>\n", fp);
 }
@@ -4722,11 +4722,48 @@ static char *item_key_to_bundle_key (char *targ,
     return gretl_charsub(targ, '-', '_');
 }
 
+static gretl_matrix *my_matrix_from_list (model_data_item *item)
+{
+    int *list = item->ptr;
+    gretl_matrix *m;
+    int i;
+
+    m = gretl_matrix_alloc(1, list[0]);
+
+    if (m != NULL) {
+	for (i=0; i<list[0]; i++) {
+	    m->val[i] = list[i+1];
+	}
+    }
+
+    return m;
+}
+
+static gretl_matrix *matrix_from_cmplx (model_data_item *item)
+{
+    int nr = item->size / sizeof(cmplx);
+    cmplx *c = item->ptr;
+    gretl_matrix *m;
+    int i;
+
+    m = gretl_matrix_alloc(nr, 2);
+
+    if (m != NULL) {
+	for (i=0; i<nr; i++) {
+	    gretl_matrix_set(m, i, 0, c[i].r);
+	    gretl_matrix_set(m, i, 1, c[i].i);
+	}
+    }
+
+    return m;
+}
+
 int bundlize_model_data_items (const MODEL *pmod, void *ptr)
 {
     gretl_bundle *b = (gretl_bundle *) ptr;
     model_data_item *item;
     char bkey[VNAMELEN];
+    gretl_matrix *m;
     double xval;
     int i, ival;
     int err = 0;
@@ -4747,11 +4784,25 @@ int bundlize_model_data_items (const MODEL *pmod, void *ptr)
 	} else if (item->type == GRETL_TYPE_LIST) {
 	    if (pmod->ci == MIDASREG && !strcmp(bkey, "seplist")) {
 		; /* internal use only, skip it */
+	    } else if (pmod->ci == ARMA && !strcmp(bkey, "ainfo")) {
+		m = my_matrix_from_list(item);
+		if (m != NULL) {
+		    err = gretl_bundle_donate_data(b, bkey, m,
+						   GRETL_TYPE_MATRIX,
+						   0);
+		}
 	    } else {
 		err = gretl_bundle_set_list(b, bkey, item->ptr);
 	    }
 	} else if (item->type == GRETL_TYPE_ARRAY) {
 	    gretl_bundle_set_data(b, bkey, item->ptr, item->type, 0);
+	} else if (item->type == GRETL_TYPE_CMPLX_ARRAY) {
+	    m = matrix_from_cmplx(item);
+	    if (m != NULL) {
+		err = gretl_bundle_donate_data(b, bkey, m,
+					       GRETL_TYPE_MATRIX,
+					       0);
+	    }
 	}
     }
 
@@ -4759,7 +4810,7 @@ int bundlize_model_data_items (const MODEL *pmod, void *ptr)
 	const ModelTest *test;
 	const char *tkey;
 	gretl_bundle *bt;
-	
+
 	for (i=0; i<pmod->ntests && !err; i++) {
 	    test = &pmod->tests[i];
 	    tkey = test_type_key(test->type);
@@ -4840,27 +4891,27 @@ static int copy_model (MODEL *targ, MODEL *src)
     }
 
     if (src->sderr != NULL &&
-	(targ->sderr = copyvec(src->sderr, src->ncoeff)) == NULL) {  
+	(targ->sderr = copyvec(src->sderr, src->ncoeff)) == NULL) {
 	return 1;
     }
 
-    if (src->uhat != NULL && 
+    if (src->uhat != NULL &&
 	(targ->uhat = copyvec(src->uhat, src->full_n)) == NULL) {
 	return 1;
     }
 
-    if (src->yhat != NULL && 
+    if (src->yhat != NULL &&
 	(targ->yhat = copyvec(src->yhat, src->full_n)) == NULL) {
 	return 1;
     }
 
-    if (src->submask != NULL && 
-	(targ->submask = copy_subsample_mask(src->submask, &err)) == NULL) { 
+    if (src->submask != NULL &&
+	(targ->submask = copy_subsample_mask(src->submask, &err)) == NULL) {
 	return 1;
     }
 
-    if (src->missmask != NULL && 
-	(targ->missmask = gretl_strdup(src->missmask)) == NULL) { 
+    if (src->missmask != NULL &&
+	(targ->missmask = gretl_strdup(src->missmask)) == NULL) {
 	return 1;
     }
 
@@ -4872,9 +4923,9 @@ static int copy_model (MODEL *targ, MODEL *src)
 	return 1;
     }
 
-    if (src->arinfo != NULL && 
+    if (src->arinfo != NULL &&
 	(targ->arinfo = copy_ar_info(src->arinfo)) == NULL) {
-	return 1; 
+	return 1;
     }
 
     if (src->ntests > 0 && src->tests != NULL) {
@@ -4890,7 +4941,7 @@ static int copy_model (MODEL *targ, MODEL *src)
 	if (targ->name == NULL) {
 	    return 1;
 	}
-    }    
+    }
 
     if (src->depvar != NULL) {
 	targ->depvar = gretl_strdup(src->depvar);
@@ -4904,7 +4955,7 @@ static int copy_model (MODEL *targ, MODEL *src)
 	if (err) {
 	    return err;
 	}
-    }    
+    }
 
     if (src->n_data_items > 0) {
 	copy_model_data_items(targ, src);
@@ -4914,7 +4965,7 @@ static int copy_model (MODEL *targ, MODEL *src)
 	targ->n_data_items = src->n_data_items;
     }
 
-    if (src->list != NULL && 
+    if (src->list != NULL &&
 	(targ->list = gretl_list_copy(src->list)) == NULL) {
 	return 1;
     }
@@ -4937,7 +4988,7 @@ int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
     int m = k * (k + 1) / 2;
     int err = 0;
 
-    fprintf(fp, "<gretl-model ID=\"%d\" name=\"%s\" saveflags=\"%d\" ", 
+    fprintf(fp, "<gretl-model ID=\"%d\" name=\"%s\" saveflags=\"%d\" ",
 	    pmod->ID, (pmod->name == NULL)? "none" : pmod->name,
 	    (int) flags);
 
@@ -4947,9 +4998,9 @@ int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
 
     fprintf(fp, "t1=\"%d\" t2=\"%d\" nobs=\"%d\" ",
 	    pmod->t1, pmod->t2, pmod->nobs);
-    fprintf(fp, "full_n=\"%d\" ncoeff=\"%d\" dfn=\"%d\" dfd=\"%d\" ", 
+    fprintf(fp, "full_n=\"%d\" ncoeff=\"%d\" dfn=\"%d\" dfd=\"%d\" ",
 	    pmod->full_n, pmod->ncoeff, pmod->dfn, pmod->dfd);
-    fprintf(fp, "ifc=\"%d\" ci=\"%s\" opt=\"%u\" nwt=\"%d\" aux=\"%d\" ", 
+    fprintf(fp, "ifc=\"%d\" ci=\"%s\" opt=\"%u\" nwt=\"%d\" aux=\"%d\" ",
 	    pmod->ifc, gretl_command_word(pmod->ci), pmod->opt,
 	    pmod->nwt, pmod->aux);
 
@@ -5003,7 +5054,7 @@ int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
 	fputs(pmod->missmask, fp);
 	fputs("</missmask>\n", fp);
     }
-	
+
     if (pmod->xpx != NULL) {
 	gretl_xml_put_double_array("xpx", pmod->xpx, m, fp);
     }
@@ -5027,10 +5078,10 @@ int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
     }
 
     if (pmod->nparams > 0 && pmod->params != NULL) {
-	gretl_xml_put_strings_array("params", 
-				    (const char **) pmod->params, 
+	gretl_xml_put_strings_array("params",
+				    (const char **) pmod->params,
 				    pmod->nparams, fp);
-    } 
+    }
 
     if (pmod->list != NULL) {
 	gretl_xml_put_tagged_list("list", pmod->list, fp);
@@ -5067,7 +5118,7 @@ static int model_submask_from_xml (xmlNodePtr node, xmlDocPtr doc,
     return err;
 }
 
-static int 
+static int
 retrieve_model_coeff_separator (xmlNodePtr cur, MODEL *pmod)
 {
     CoeffSep *cs = malloc(sizeof *cs);
@@ -5082,15 +5133,15 @@ retrieve_model_coeff_separator (xmlNodePtr cur, MODEL *pmod)
 	    strcpy(cs->str, tmp);
 	    free(tmp);
 	}
-	err = gretl_model_set_data(pmod, "coeffsep", cs, 
-				   GRETL_TYPE_STRUCT, 
+	err = gretl_model_set_data(pmod, "coeffsep", cs,
+				   GRETL_TYPE_STRUCT,
 				   sizeof *cs);
     }
 
     return err;
 }
 
-static int 
+static int
 retrieve_model_vcv_info (xmlNodePtr cur, MODEL *pmod)
 {
     VCVInfo *vi = vcv_info_new();
@@ -5111,8 +5162,8 @@ retrieve_model_vcv_info (xmlNodePtr cur, MODEL *pmod)
 	if (gretl_xml_get_prop_as_double(cur, "bw", &x)) {
 	    vi->bw = x;
 	}
-	err = gretl_model_set_data(pmod, "vcv_info", vi, 
-				   GRETL_TYPE_STRUCT, 
+	err = gretl_model_set_data(pmod, "vcv_info", vi,
+				   GRETL_TYPE_STRUCT,
 				   sizeof *vi);
     }
 
@@ -5123,8 +5174,8 @@ retrieve_model_vcv_info (xmlNodePtr cur, MODEL *pmod)
    settings to bits in pmod->opt, where applicable
 */
 
-static int gretl_model_set_int_compat (MODEL *pmod, 
-				       const char *key, 
+static int gretl_model_set_int_compat (MODEL *pmod,
+				       const char *key,
 				       int ival)
 {
     gretlopt opt = pmod->opt;
@@ -5224,11 +5275,11 @@ static void compat_compose_vcv_info (MODEL *pmod)
 
     if (vi.vmaj > 0) {
 	VCVInfo *pvi = vcv_info_new();
-	
+
 	if (pvi != NULL) {
 	    *pvi = vi;
-	    gretl_model_set_data(pmod, "vcv_info", pvi, 
-				 GRETL_TYPE_STRUCT, 
+	    gretl_model_set_data(pmod, "vcv_info", pvi,
+				 GRETL_TYPE_STRUCT,
 				 sizeof *pvi);
 	}
     }
@@ -5349,7 +5400,7 @@ static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
 
 		if (!err && list != NULL) {
 		    err = gretl_model_set_list_as_data(pmod, key, list);
-		} 
+		}
 	    }
 	} else if (t == GRETL_TYPE_STRING) {
 	    char *s;
@@ -5386,7 +5437,7 @@ static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
 	    if (nelem > 0) {
 		err = gretl_model_set_data(pmod, key, cvals, t,
 					   nelem * sizeof *cvals);
-	    }	    
+	    }
 	} else if (t == GRETL_TYPE_MATRIX) {
 	    xmlNodePtr child = cur->xmlChildrenNode;
 	    gretl_matrix *m;
@@ -5462,7 +5513,7 @@ static int arinfo_from_xml (xmlNodePtr node, xmlDocPtr doc,
  * Returns: allocated model, or %NULL on failure.
  */
 
-MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc, 
+MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc,
 			     const DATASET *dset,
 			     int *err)
 {
@@ -5588,7 +5639,7 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc,
 	}
 
 	if (*err) {
-	    fprintf(stderr, "gretl_model_from_XML: block 3: err = %d reading '%s'\n", 
+	    fprintf(stderr, "gretl_model_from_XML: block 3: err = %d reading '%s'\n",
 		    *err, cur->name);
 	    break;
 	}
@@ -5661,7 +5712,7 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc,
  * which has its own allocated copies of all the pointer
  * members of @pmod.  The only feature of @pmod that is
  * not duplicated is the reference count, which is set
- * to zero in the copy. 
+ * to zero in the copy.
  *
  * Returns: the copied model, or %NULL on failure.
  */
@@ -5671,7 +5722,7 @@ MODEL *gretl_model_copy (MODEL *pmod)
     MODEL *new = malloc(sizeof *new);
 
 #if MDEBUG
-    fprintf(stderr, "gretl_model_copy: copying %p, allocated at %p\n", 
+    fprintf(stderr, "gretl_model_copy: copying %p, allocated at %p\n",
 	    pmod, new);
 #endif
 
@@ -5721,15 +5772,15 @@ void swap_models (MODEL *targ, MODEL *src)
  *
  * Check to see if the model-related command in question is
  * meaningful and acceptable in the context of the estimator
- * associated with @pmod. Note, though, that this function may 
+ * associated with @pmod. Note, though, that this function may
  * give a "false positive": to be quite sure, we may need to
- * know more about the model (e.g. specific options used).  
+ * know more about the model (e.g. specific options used).
  * See also model_test_ok().
- * 
+ *
  * Returns: 1 if the command seems OK, otherwise 0.
  */
 
-int command_ok_for_model (int test_ci, gretlopt opt, 
+int command_ok_for_model (int test_ci, gretlopt opt,
 			  const MODEL *pmod)
 {
     int between = 0;
@@ -5761,7 +5812,7 @@ int command_ok_for_model (int test_ci, gretlopt opt,
     switch (test_ci) {
 
     case ADD:
-	if (mci == ARMA || mci == GARCH || 
+	if (mci == ARMA || mci == GARCH ||
 	    mci == HECKIT || mci == INTREG) {
 	    ok = 0;
 	} else if (mci == PANEL && (pmod->opt & OPT_B)) {
@@ -5790,7 +5841,7 @@ int command_ok_for_model (int test_ci, gretlopt opt,
     case EQNPRINT:
 	if (mci == ARMA || mci == ARBOND || mci == DPANEL ||
 	    mci == HECKIT || mci == INTREG) {
-	    ok = 0; 
+	    ok = 0;
 	}
 	break;
 
@@ -5809,11 +5860,11 @@ int command_ok_for_model (int test_ci, gretlopt opt,
 	    if (mci == LOGIT || mci == HECKIT || mci == DURATION) {
 		/* POISSON, NEGBIN? */
 		ok = 0;
-	    }	    
+	    }
 	} else if (mci != OLS) {
 	    if (mci == IVREG && (opt & (OPT_A | OPT_W))) {
 		/* Autocorr. and H'sked. supported for IVREG */
-		ok = 1; 
+		ok = 1;
 	    } else if (mci == ARMA && (opt & OPT_A)) {
 		ok = 1;
 	    } else if (mci == PANEL && (opt & OPT_P)) {
@@ -5823,7 +5874,7 @@ int command_ok_for_model (int test_ci, gretlopt opt,
 	    }
 	}
 	break;
-	
+
     case CHOW:
     case CUSUM:
     case QLRTEST:
@@ -5856,13 +5907,13 @@ int command_ok_for_model (int test_ci, gretlopt opt,
  *
  * A more rigorous version of command_ok_for_model().  Use
  * this function if the extra information is available.
- * 
+ *
  * Returns: 1 if the test command @ci (with possible option
- * @opt) is acceptable in the context of the model @pmod, and 
+ * @opt) is acceptable in the context of the model @pmod, and
  * the dataset described by @dset, otherwise 0.
  */
 
-int model_test_ok (int ci, gretlopt opt, const MODEL *pmod, 
+int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
 		   const DATASET *dset)
 {
     int ok = command_ok_for_model(ci, opt, pmod);
@@ -5874,7 +5925,7 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
 
     if (ok && pmod->missmask != NULL) {
 	/* can't do these with embedded missing obs */
-	if (ci == CUSUM || 
+	if (ci == CUSUM ||
 	    (ci == MODTEST && (opt & (OPT_A | OPT_H)))) {
 	    ok = 0;
 	}
@@ -5893,7 +5944,7 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
 
     if (ok && !dataset_is_time_series(dset)) {
 	/* time-series-only tests */
-	if (ci == CUSUM || ci == QLRTEST || 
+	if (ci == CUSUM || ci == QLRTEST ||
 	    (ci == MODTEST && (opt & (OPT_H | OPT_A)))) {
 	    ok = 0;
 	}
@@ -6014,7 +6065,7 @@ void model_list_to_string (int *list, char *buf)
     }
 }
 
-int highest_numbered_var_in_model (const MODEL *pmod, 
+int highest_numbered_var_in_model (const MODEL *pmod,
 				   const DATASET *dset)
 {
     int i, v, vmax = 0;
@@ -6069,7 +6120,7 @@ int highest_numbered_var_in_model (const MODEL *pmod,
     } else if (pmod->ci == DURATION) {
 	v = gretl_model_get_int(pmod, "cens_var");
 	if (v > vmax) vmax = v;
-    }	
+    }
 
     return vmax;
 }
@@ -6160,9 +6211,9 @@ double model_coeff_pval (const MODEL *pmod, double x)
  * gretl_model_allocate_param_names:
  * @pmod: pointer to target model.
  * @k: number of strings to allocate.
- * 
+ *
  * Allocate an array of @k strings to hold the names given to
- * the associated  coefficients, in a model where these strings 
+ * the associated  coefficients, in a model where these strings
  * are not simply given by the names of the independent variables.
  *
  * Returns: 0 on success, non-zero on error.
@@ -6188,13 +6239,13 @@ int gretl_model_allocate_param_names (MODEL *pmod, int k)
  * @pmod: pointer to target model.
  * @i: 0-based index of value to set.
  * @name: string value to set.
- * 
+ *
  * Returns: 0 on success, non-zero on error.
  */
 
 int gretl_model_set_param_name (MODEL *pmod, int i, const char *name)
 {
-    if (pmod->params == NULL || i < 0 || i >= pmod->nparams || 
+    if (pmod->params == NULL || i < 0 || i >= pmod->nparams ||
 	name == NULL) {
 	return E_DATA;
     } else {
@@ -6225,7 +6276,7 @@ static int count_coeffs (int p, const char *pmask,
 	if (arma_included(qmask, i)) {
 	    n++;
 	}
-    }    
+    }
 
     return n;
 }
@@ -6242,7 +6293,7 @@ static int count_coeffs (int p, const char *pmask,
  * @P: seasonal AR order.
  * @Q: seasonal MA order.
  * @r: number of exogenous regressors (excluding the constant).
- * 
+ *
  * Composes a set of names to be given to the regressors in an
  * ARMA model.
  *
@@ -6250,9 +6301,9 @@ static int count_coeffs (int p, const char *pmask,
  */
 
 int gretl_model_add_arma_varnames (MODEL *pmod, const DATASET *dset,
-				   int yno, int p, int q, 
+				   int yno, int p, int q,
 				   const char *pmask, const char *qmask,
-				   int P, int Q, 
+				   int P, int Q,
 				   int r)
 {
     int nullmod = 0;
@@ -6269,7 +6320,7 @@ int gretl_model_add_arma_varnames (MODEL *pmod, const DATASET *dset,
     if (pmod->depvar == NULL) {
 	pmod->errcode = E_ALLOC;
 	return 1;
-    }	
+    }
 
     if (pmod->nparams > 0 && pmod->params != NULL) {
 	for (i=0; i<pmod->nparams; i++) {
@@ -6310,7 +6361,7 @@ int gretl_model_add_arma_varnames (MODEL *pmod, const DATASET *dset,
 
     for (i=0; i<P; i++) {
 	sprintf(pmod->params[j++], "Phi_%d", i + 1);
-    }   
+    }
 
     for (i=0; i<q; i++) {
 	if (arma_included(qmask, i)) {
@@ -6320,13 +6371,13 @@ int gretl_model_add_arma_varnames (MODEL *pmod, const DATASET *dset,
 
     for (i=0; i<Q; i++) {
 	sprintf(pmod->params[j++], "Theta_%d", i + 1);
-    }       
+    }
 
     xstart = arma_depvar_pos(pmod) + 1;
 
     for (i=0; i<r; i++) {
-	strcpy(pmod->params[j++], dset->varname[pmod->list[xstart+i]]); 
-    }   
+	strcpy(pmod->params[j++], dset->varname[pmod->list[xstart+i]]);
+    }
 
     return 0;
 }
@@ -6337,7 +6388,7 @@ int gretl_model_add_arma_varnames (MODEL *pmod, const DATASET *dset,
  * @dset: dataset information.
  * @ulist: list of index numbers of cross-sectional
  * units included in the model.
- * 
+ *
  * Composes a set of names to be given to the regressors in an
  * panel model.
  *
@@ -6354,7 +6405,7 @@ int gretl_model_add_panel_varnames (MODEL *pmod, const DATASET *dset,
     if (pmod->depvar == NULL) {
 	pmod->errcode = E_ALLOC;
 	return 1;
-    }	
+    }
 
     pmod->params = strings_array_new_with_length(np, VNAMELEN);
     if (pmod->params == NULL) {
@@ -6383,7 +6434,7 @@ int gretl_model_add_panel_varnames (MODEL *pmod, const DATASET *dset,
  * gretl_model_add_allocated_varnames:
  * @pmod: pointer to target model.
  * @vnames: array of names of independent variables.
- * 
+ *
  * Attaches an allocated set of variable names to be used
  * when printing model results, for use in special cases
  * where we can't just reference names from the list of
@@ -6405,7 +6456,7 @@ void gretl_model_add_allocated_varnames (MODEL *pmod, char **vnames)
  * gretl_model_add_y_median:
  * @pmod: pointer to target model.
  * @y: array containing the dependent variable.
- * 
+ *
  * Calculates the median of @y using the valid observations
  * with the model's sample range and attaches the median
  * to the model as data under the key %ymedian.
@@ -6442,7 +6493,7 @@ int gretl_model_add_y_median (MODEL *pmod, const double *y)
 	return E_DATA;
     }
 
-    qsort(sy, n, sizeof *sy, gretl_compare_doubles); 
+    qsort(sy, n, sizeof *sy, gretl_compare_doubles);
 
     n2p = (T = n / 2) + 1;
     m = (n % 2)? sy[n2p - 1] : 0.5 * (sy[T - 1] + sy[n2p - 1]);
@@ -6526,25 +6577,25 @@ static int model_is_quadratic (const MODEL *pmod, const int *xlist,
 
 #define fitted_formula_ok(c) (c == OLS || c == WLS || \
                               c == HSK || c == IVREG || \
-                              c == LAD || c == LOGISTIC) 
+                              c == LAD || c == LOGISTIC)
 
 /**
  * gretl_model_get_fitted_formula:
  * @pmod: pointer to target model.
  * @xvar: ID number of variable that _may_ be "x" in the model.
  * @dset: dataset information.
- * 
- * If @pmod is a simple linear, quadratic or logistic model, 
- * and if @xvar is in fact the "x" variable from the model, 
- * returns a string representing the formula for generating the 
- * fitted values as a function of x.  This formula may be used 
+ *
+ * If @pmod is a simple linear, quadratic or logistic model,
+ * and if @xvar is in fact the "x" variable from the model,
+ * returns a string representing the formula for generating the
+ * fitted values as a function of x.  This formula may be used
  * in the context of a fitted versus actual plot.
  *
  * Returns: formula for fitted values, or %NULL if this is
  * not available.
  */
 
-char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar, 
+char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar,
 				      const DATASET *dset)
 {
     const DATASET *mset;
@@ -6558,7 +6609,7 @@ char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar,
     xlist = gretl_model_get_x_list(pmod);
     if (xlist == NULL) {
 	return NULL;
-    } 
+    }
 
     if (pmod->dataset != NULL) {
 	mset = pmod->dataset;
@@ -6574,7 +6625,7 @@ char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar,
 
 	    if (!na(lmax)) {
 		ret = gretl_strdup_printf("yformula: %g/(1.0+exp(-(%g%s%g*x)))",
-					  lmax, pmod->coeff[0], 
+					  lmax, pmod->coeff[0],
 					  (pmod->coeff[1] >= 0)? "+" : "",
 					  pmod->coeff[1]);
 	    }
@@ -6582,14 +6633,14 @@ char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar,
     } else if (!pmod->ifc && pmod->ncoeff == 1 && xvar == xlist[1]) {
 	ret = gretl_strdup_printf("yformula: %g*x", pmod->coeff[0]);
     } else if (pmod->ifc && pmod->ncoeff == 2 && xvar == xlist[2]) {
-	ret = gretl_strdup_printf("yformula: %g%s%g*x", pmod->coeff[0], 
+	ret = gretl_strdup_printf("yformula: %g%s%g*x", pmod->coeff[0],
 				  (pmod->coeff[1] >= 0)? "+" : "",
 				  pmod->coeff[1]);
     } else if (pmod->ifc && pmod->ncoeff == 3 && xvar == xlist[2]) {
 	if (model_is_quadratic(pmod, xlist, mset)) {
-	    ret = gretl_strdup_printf("yformula: %g%s%g*x%s%g*x**2", pmod->coeff[0], 
+	    ret = gretl_strdup_printf("yformula: %g%s%g*x%s%g*x**2", pmod->coeff[0],
 				      (pmod->coeff[1] >= 0)? "+" : "",
-				      pmod->coeff[1], 
+				      pmod->coeff[1],
 				      (pmod->coeff[2] >= 0)? "+" : "",
 				      pmod->coeff[2]);
 	}
@@ -6598,7 +6649,7 @@ char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar,
     gretl_pop_c_numeric_locale();
 
     free(xlist);
-	
+
     return ret;
 }
 
@@ -6606,11 +6657,11 @@ char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar,
  * gretl_model_set_name:
  * @pmod: pointer to target model.
  * @name: the name to give the model.
- * 
+ *
  * Sets the name of the given model; this is used in
  * printing the model and in displaying it in the
  * gretl GUI. Note that a model's name must be no more
- * than #MAXSAVENAME bytes in length, including the 
+ * than #MAXSAVENAME bytes in length, including the
  * terminating NUL byte; @name is truncated if it is
  * too long.
  */
@@ -6623,7 +6674,7 @@ void gretl_model_set_name (MODEL *pmod, const char *name)
 
     if (pmod->name == NULL) {
 	pmod->name = malloc(MAXSAVENAME);
-    } 
+    }
 
     if (pmod->name != NULL) {
 	*pmod->name = '\0';
@@ -6634,7 +6685,7 @@ void gretl_model_set_name (MODEL *pmod, const char *name)
 /**
  * gretl_model_get_name:
  * @pmod: pointer to gretl model.
- * 
+ *
  * Returns: the name that has been set for @pmod, if any.
  * Note that the value returned may be %NULL.
  */
@@ -6654,15 +6705,15 @@ const char *gretl_model_get_name (const MODEL *pmod)
  * @idx: index for the scalar value that is wanted.
  * @dset: dataset struct.
  * @err: location to receive error code (required).
- * 
+ *
  * Retrieves a specified scalar statistic from @pmod:
  * @idx must be less than %M_SCALAR_MAX.
- * 
+ *
  * Returns: the requested statistic, or #NADBL on failure,
  * in which case @err will contain a non-zero error code.
  */
 
-double gretl_model_get_scalar (MODEL *pmod, ModelDataIndex idx, 
+double gretl_model_get_scalar (MODEL *pmod, ModelDataIndex idx,
 			       DATASET *dset, int *err)
 {
     double x = NADBL;
@@ -6675,9 +6726,9 @@ double gretl_model_get_scalar (MODEL *pmod, ModelDataIndex idx,
     if (idx == M_GMMCRIT && pmod->ci != GMM) {
 	*err = E_BADSTAT;
 	return x;
-    }	
+    }
 
-    switch (idx) {  
+    switch (idx) {
     case M_ESS:
     case M_GMMCRIT:
 	x = pmod->ess;
@@ -6743,25 +6794,25 @@ double gretl_model_get_scalar (MODEL *pmod, ModelDataIndex idx,
  * @pmod: pointer to target model.
  * @dset: dataset information.
  * @idx: index for the series that is wanted.
- * 
+ *
  * Retrieves from @pmod a copy of a specified series (for
  * example, regression residuals); @idx must be greater than
  * %M_SCALAR_MAX and less than %M_SERIES_MAX.
- * 
+ *
  * Returns: 0 on success, non-zero code on error.
  */
 
-int gretl_model_get_series (double *x, MODEL *pmod, 
-			    const DATASET *dset, 
+int gretl_model_get_series (double *x, MODEL *pmod,
+			    const DATASET *dset,
 			    ModelDataIndex idx)
 {
     const double *src = NULL;
     int t;
 
-    if (pmod->t2 - pmod->t1 + 1 > dset->n || 
+    if (pmod->t2 - pmod->t1 + 1 > dset->n ||
 	model_sample_problem(pmod, dset)) {
-	gretl_errmsg_set( 
-	       (idx == M_UHAT)? 
+	gretl_errmsg_set(
+	       (idx == M_UHAT)?
 	       _("Can't retrieve uhat: data set has changed") :
 	       (idx == M_YHAT)?
 	       _("Can't retrieve yhat: data set has changed") :
@@ -6813,7 +6864,7 @@ int gretl_model_get_series (double *x, MODEL *pmod,
 	    }
 	}
     }
-	    
+
     return 0;
 }
 
@@ -6885,7 +6936,7 @@ model_get_hatvec (const MODEL *pmod, int idx, int *err)
 	} else {
 	    for (t=pmod->t1; t<=pmod->t2; t++) {
 		gretl_vector_set(v, t - pmod->t1, src[t]);
-	    }	    
+	    }
 	}
     }
 
@@ -6936,8 +6987,8 @@ static gretl_matrix *model_get_rhovec (const MODEL *pmod, int *err)
 	r = gretl_matrix_from_scalar(x);
     } else if (pmod->ci != AR) {
 	r = gretl_matrix_from_scalar(pmod->rho);
-    } else if (pmod->arinfo == NULL || 
-	       pmod->arinfo->arlist == NULL || 
+    } else if (pmod->arinfo == NULL ||
+	       pmod->arinfo->arlist == NULL ||
 	       pmod->arinfo->rho == NULL) {
 	*err = E_INVARG;
     } else {
@@ -6977,7 +7028,7 @@ model_get_intervals_matrix (const MODEL *pmod, int *err)
     return m;
 }
 
-static gretl_matrix *model_get_special_test (const MODEL *pmod, 
+static gretl_matrix *model_get_special_test (const MODEL *pmod,
 					     int type, int *err)
 {
     gretl_matrix *r = NULL;
@@ -6997,11 +7048,11 @@ static gretl_matrix *model_get_special_test (const MODEL *pmod,
 	    break;
 	}
     }
-	
+
     if (!found) {
 	*err = E_BADSTAT;
     }
-	
+
     return r;
 }
 
@@ -7010,16 +7061,16 @@ static gretl_matrix *model_get_special_test (const MODEL *pmod,
  * @pmod: pointer to target model.
  * @idx: index for the matrix that is wanted.
  * @err: location to receive error code (required).
- * 
+ *
  * Retrieves from @pmod a copy of a specified matrix (for
  * example, regression residuals); @idx must be greater than
  * %M_SERIES_MAX and less than %M_MATRIX_MAX.
- * 
+ *
  * Returns: the allocated matrix, or %NULL on failure,
  * in which case @err will contain a non-zero error code.
  */
 
-gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx, 
+gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx,
 				      int *err)
 {
     gretl_matrix *M = NULL;
@@ -7053,7 +7104,7 @@ gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx,
 	return M;
     }
 
-    switch (idx) {  
+    switch (idx) {
     case M_UHAT:
     case M_YHAT:
     case M_LLT:
@@ -7095,8 +7146,8 @@ gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx,
 	} else {
 	    *err = E_BADSTAT;
 	}
-	break;	
-    case M_SARGAN:	
+	break;
+    case M_SARGAN:
 	M = model_get_special_test(pmod, GRETL_TEST_SARGAN, err);
 	break;
     case M_EHAT:
@@ -7122,7 +7173,7 @@ gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx,
     return M;
 }
 
-static double get_vcv_element (MODEL *pmod, const char *s, 
+static double get_vcv_element (MODEL *pmod, const char *s,
 			       const DATASET *dset)
 {
     char v1str[VNAMELEN], v2str[VNAMELEN];
@@ -7182,7 +7233,7 @@ static double get_vcv_element (MODEL *pmod, const char *s,
 /* retrieve a specific element from one of the arrays of data
    on a model */
 
-double 
+double
 gretl_model_get_data_element (MODEL *pmod, int idx, const char *s,
 			      const DATASET *dset, int *err)
 {
@@ -7208,8 +7259,8 @@ gretl_model_get_data_element (MODEL *pmod, int idx, const char *s,
 	    x = gretl_model_get_double(pmod, "rho_in");
 	} else if (k == 1 && pmod->ci != AR) {
 	    x = pmod->rho;
-	} else if (pmod->arinfo == NULL || 
-		   pmod->arinfo->arlist == NULL || 
+	} else if (pmod->arinfo == NULL ||
+		   pmod->arinfo->arlist == NULL ||
 		   pmod->arinfo->rho == NULL) {
 	    *err = E_INVARG;
 	} else {
@@ -7230,7 +7281,7 @@ gretl_model_get_data_element (MODEL *pmod, int idx, const char *s,
 	if (vi < 0) {
 	    *err = E_INVARG;
 	} else {
-	    if (idx == M_COEFF && pmod->coeff != NULL) { 
+	    if (idx == M_COEFF && pmod->coeff != NULL) {
 		x = pmod->coeff[vi];
 	    } else if (idx == M_SE && pmod->sderr != NULL) {
 		x = pmod->sderr[vi];
@@ -7238,7 +7289,7 @@ gretl_model_get_data_element (MODEL *pmod, int idx, const char *s,
 		*err = E_INVARG;
 	    }
 	}
-    } 
+    }
 
     return x;
 }
