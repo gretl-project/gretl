@@ -4357,6 +4357,9 @@ MODEL arma (const int *list, const int *pqlags,
     gretl_model_init(&armod, dset);
 
     err = incompatible_options(opt, OPT_G | OPT_H);
+    if (!err) {
+	err = options_incompatible_with(opt, OPT_X, OPT_R | OPT_S);
+    }
     if (err) {
 	armod.errcode = err;
 	return armod;
@@ -4373,7 +4376,6 @@ MODEL arma (const int *list, const int *pqlags,
 	}
 
 	arma_x12_model = get_plugin_function("arma_x12_model");
-
 	if (arma_x12_model == NULL) {
 	    err = E_FOPEN;
 	} else {
