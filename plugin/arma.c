@@ -1647,8 +1647,6 @@ static int arma_standardize_x (arma_info *ainfo,
     int orig_v = dset->v;
     int err = 0;
 
-    /* FIXME do we need to preserve the original ainfo->xlist? */
-
     ainfo->xstats = gretl_matrix_alloc(ainfo->nexo, 2);
     if (ainfo->xstats == NULL) {
 	return E_ALLOC;
@@ -1700,8 +1698,8 @@ static int check_arma_options (gretlopt opt)
 {
     int err;
 
-    /* you can't specify LBFGS with conditional ML */
-    err = incompatible_options(opt, OPT_C | OPT_L);
+    /* can't specify LBFGS or --robust with conditional ML */
+    err = options_incompatible_with(opt, OPT_C, OPT_L | OPT_R);
 
     if (!err) {
 	/* nor more than one of AS, CML or Kalman */
@@ -1709,13 +1707,8 @@ static int check_arma_options (gretlopt opt)
     }
 
     if (!err) {
-	/* nor --robust with conditional ML */
-	err = incompatible_options(opt, OPT_R | OPT_C);
-    }
-
-    if (!err) {
-	/* nor --robust with X-12-ARIMA */
-	err = incompatible_options(opt, OPT_R | OPT_X);
+	/* nor --stdx with --kalman */
+	err = incompatible_options(opt, OPT_S | OPT_K);
     }
 
     return err;
