@@ -35,7 +35,6 @@ struct as_info {
     int ma_check;
     int iupd; /* specific to AS 154 */
     int ncalls;
-    int use_loglik;
     arma_info *ai;
     gretl_matrix *X;
     int free_X;
@@ -168,7 +167,6 @@ static int as_info_init (struct as_info *as,
 	as->ma_check = 0;
 	as->iupd = 1; /* AS 154: FIXME AR(1) */
 	as->ncalls = 0;
-	as->use_loglik = 0;
     }
 
     return err;
@@ -374,22 +372,7 @@ static double as197_iteration (const double *b, void *data)
     if (isnan(as->sumsq) || isnan(as->fact)) {
 	; /* leave crit as NA */
     } else {
-	/* The criterion used by Melard may work better than
-	   the full loglikelihood in the context of his
-	   algorithm? But if we're on the first iteration
-	   and the sum of squares is too massive, switch to
-	   the loglikelihood.
-	*/
-	if (!as->use_loglik) {
-	    /* Melard's criterion */
-	    crit = -as->fact * as->sumsq;
-	    if (as->ncalls == 1 && crit < -5000) {
-		as->use_loglik = 1;
-	    }
-	}
-	if (as->use_loglik) {
-	    as->loglik = crit = as_loglikelihood(as);
-	}
+	as->loglik = crit = as_loglikelihood(as);
     }
 
     return crit;
@@ -437,16 +420,7 @@ static double as154_iteration (const double *b, void *data)
     if (isnan(as->sumlog) || isnan(as->sumsq) || as->sumsq <= 0) {
 	; // fprintf(stderr, "karma: got NaNs, nit = %d\n", nit);
     } else {
-	/* The criterion used by Gardner at al may work
-	   better than the full loglikelihood in the
-	   context of their algorithm?
-	*/
-	if (as->use_loglik) {
-	    as->loglik = crit = as_loglikelihood(as);
-	} else {
-	    /* Gardner et al criterion */
-	    crit = -(as->ok_n * log(as->sumsq) + as->sumlog);
-	}
+	as->loglik = crit = as_loglikelihood(as);
     }
 
     return crit;
@@ -601,7 +575,6 @@ static int as_undo_y_scaling (arma_info *ainfo,
 	}
     }
 
-    as->use_loglik = 1;
     lnl = as->cfunc(b, as);
 
     if (na(lnl)) {
@@ -657,7 +630,6 @@ static int as_arma_finish (MODEL *pmod,
     pmod->lnL = as->loglik;
 
     /* configure for computing variance matrix */
-    as->use_loglik = 1;
     as->ma_check = 0;
 
     if (!do_opg) {
@@ -786,15 +758,10 @@ static int as_arma (const double *coeff,
 	    if (as.n > 2000) {
 		/* try to avoid slowdown on big samples? */
 		as.toler = 0.0001;
-		as.use_loglik = 1; /* ? */
-	    } else if (!as.ifc) {
-		as.use_loglik = 1;
 	    }
-	    as.use_loglik = 1;
 	} else {
 	    /* AS 154 */
 	    as.cfunc = as154_iteration;
-	    as.use_loglik = 1; /* generally better? */
 	}
 
 	if (as.q > 0 || as.Q > 0) {
@@ -808,23 +775,10 @@ static int as_arma (const double *coeff,
 		       as.cfunc, C_LOGLIK, NULL, &as, NULL,
 		       maxopt, ainfo->prn);
 
-	if (as.algo == 197 && err == E_NOCONV && !as.use_loglik) {
-	    /* see if we can get convergence using the full
-	       loglikelihood as criterion? */
-	    as.use_loglik = 1;
-	    err = BFGS_max(b, ainfo->nc, maxit, toler,
-			   &ainfo->fncount, &ainfo->grcount,
-			   as.cfunc, C_LOGLIK, NULL, &as, NULL,
-			   maxopt, ainfo->prn);
-	}
-
 	if (!err) {
 	    if (ainfo->yscale != 1.0 && !arma_stdx(ainfo)) {
 		/* note: this implies recalculation of loglik */
 		as_undo_y_scaling(ainfo, y, b, &as);
-	    } else if (!as.use_loglik) {
-		/* we haven't already computed this */
-		as.loglik = as_loglikelihood(&as);
 	    }
 	    gretl_model_set_int(pmod, "fncount", ainfo->fncount);
 	    gretl_model_set_int(pmod, "grcount", ainfo->grcount);

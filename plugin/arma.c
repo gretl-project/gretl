@@ -1775,7 +1775,8 @@ MODEL arma_model (const int *list, const int *pqspec,
 
     if (!err && ainfo->nexo > 0 && arma_exact_ml(ainfo)) {
 	/* FIXME check conditionality more rigorously */
-	if (opt & OPT_S) {
+	if ((opt & OPT_S) && !arma_xdiff(ainfo)) {
+	    /* --stdx */
 	    err = arma_standardize_x(ainfo, dset);
 	}
     }
