@@ -10135,7 +10135,7 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 #endif
 
     if (scalar_node(rhs)) {
-	/* single value on RHS */
+	/* single value (could be 1 x 1 matrix) on RHS */
 	y = (rhs->t == NUM)? rhs->v.xval: rhs->v.m->val[0];
 	rhs_scalar = 1;
     } else if (rhs->t == MAT) {
@@ -10153,22 +10153,27 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 	return p->err;
     }
 
-    if (rhs_scalar && spec->type[0] == SEL_ELEMENT) {
-	/* assignment, plain or inflected, of scalar to single
+    if (spec->type[0] == SEL_ELEMENT) {
+	/* assignment, plain or inflected, to a single
 	   element of target matrix
 	*/
-	int i = mspec_get_element(spec);
+	if (rhs_scalar) {
+	    int i = mspec_get_element(spec);
 
-	if (p->op == B_ASN) {
-	    m1->val[i] = y;
-	} else {
-	    /* inflected */
-	    double x = matrix_get_element(m1, i, &p->err);
+	    if (p->op == B_ASN) {
+		m1->val[i] = y;
+	    } else {
+		/* inflected */
+		double x = matrix_get_element(m1, i, &p->err);
 
-	    if (!p->err) {
-		x = xy_calc(x, y, p->op, MAT, p);
+		if (!p->err) {
+		    x = xy_calc(x, y, p->op, MAT, p);
+		}
+		m1->val[i] = x;
 	    }
-	    m1->val[i] = x;
+	} else {
+	    /* the RHS must be 1 x 1 */
+	    p->err = E_NONCONF;
 	}
 	return p->err; /* we're done */
     }
