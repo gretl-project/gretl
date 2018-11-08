@@ -5136,6 +5136,101 @@ static double real_apply_func (double x, int f, parser *p)
     }
 }
 
+/* @n must be of type NUM, MAT or SERIES, pre-ckecked */
+
+static double node_get_double (NODE *n, int i, parser *p)
+{
+    if (n->t == NUM) {
+	return n->v.xval;
+    } else if (n->t == MAT) {
+	return n->v.m->val[i];
+    } else {
+	return n->v.xvec[p->dset->t1 + i];
+    }
+}
+
+/* @n must be of type NUM, MAT or SERIES, pre-ckecked */
+
+static void node_set_double (NODE *n, int i, double x, parser *p)
+{
+    if (n->t == NUM) {
+	n->v.xval = x;
+    } else if (n->t == MAT) {
+	n->v.m->val[i] = x;
+    } else {
+	n->v.xvec[p->dset->t1 + i] = x;
+    }
+}
+
+static NODE *atan2_node (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = NULL;
+    int rettype = 0;
+    int n, nl = 0, nr = 0;
+
+    if (l->t == NUM) {
+	nl = 1;
+    } else if (l->t == MAT) {
+	nl = gretl_vector_get_length(l->v.m);
+    } else {
+	nl = sample_size(p->dset);
+    }
+
+    if (p->err) {
+	return NULL;
+    }
+
+    if (r->t == NUM) {
+	nr = 1;
+    } else if (r->t == MAT) {
+	nr = gretl_vector_get_length(r->v.m);
+    } else {
+	nr = sample_size(p->dset);
+    }
+
+    if (!p->err) {
+	if ((nl == 0 || nr == 0) ||
+	    (nl > 1 && nr > 1 && nr != nl)) {
+	    p->err = E_TYPES;
+	}
+    }
+
+    if (p->err) {
+	return NULL;
+    }
+
+    /* ordering is NUM < SERIES < MAT */
+    rettype = r->t > l->t ? r->t : l->t;
+    n = nr > nl ? nr : nl;
+
+    if (rettype == NUM) {
+	ret = aux_scalar_node(p);
+    } else if (rettype == MAT) {
+	ret = aux_matrix_node(p);
+	if (ret != NULL) {
+	    ret->v.m = gretl_matrix_alloc(n, 1);
+	    if (ret->v.m == NULL) {
+		p->err = E_ALLOC;
+	    }
+	}
+    } else {
+	ret = aux_series_node(p);
+    }
+
+    if (ret != NULL && !p->err) {
+	double y, x;
+	int i;
+
+	for (i=0; i<n; i++) {
+	    y = node_get_double(l, i, p);
+	    x = node_get_double(r, i, p);
+	    node_set_double(ret, i, atan2(y, x), p);
+	}
+    }
+
+    return ret;
+}
+
 static NODE *apply_scalar_func (NODE *n, int f, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
@@ -14739,6 +14834,14 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = apply_matrix_func(l, t->t, p);
 	} else if (ok_list_node(l, p) && t->t == F_LOG) {
 	    ret = apply_list_func(l, NULL, t->t, p);
+	} else {
+	    p->err = E_TYPES;
+	}
+	break;
+    case F_ATAN2:
+	if ((l->t == NUM || l->t == MAT || l->t == SERIES) &&
+	    (r->t == NUM || r->t == MAT || r->t == SERIES)) {
+	    ret = atan2_node(l, r, p);
 	} else {
 	    p->err = E_TYPES;
 	}

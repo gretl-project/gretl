@@ -179,6 +179,7 @@ struct str_table funcs[] = {
     { F_ASIN,     "asin" },
     { F_ACOS,     "acos" },
     { F_ATAN,     "atan" },
+    { F_ATAN2,    "atan2" },
     { F_SINH,     "sinh" },
     { F_COSH,     "cosh" },
     { F_TANH,     "tanh" },
