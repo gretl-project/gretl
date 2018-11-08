@@ -1,6 +1,7 @@
 version 2018d, in progress
 - Internal representation of missing values: switch to
   using NaN
+- Add new function, atan2()
 - cdemean() function: add option to standardize in addition
   to centering
 - boxcox() function: accept a matrix argument

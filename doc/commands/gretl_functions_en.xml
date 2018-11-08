@@ -1396,9 +1396,40 @@
 	</para>
 	<para>
 	  <seelist>
-            <fncref targ="cos"/>
-            <fncref targ="sin"/>
+	    <fncref targ="tan"/>
+	    <fncref targ="atan2"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="atan2" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">y</fnarg>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns the principal value of the arc tangent of
+	  <argname>y</argname>/<argname>x</argname>, using the signs
+	  of the two arguments to determine the quadrant of the
+	  result. The return value is in radians, in the range
+	  [&minus;&pi;, &pi;].
+	</para>
+	<para>
+	  If the two arguments differ in type, the type of the result
+	  is the <quote>higher</quote> of the two, where the ordering
+	  is matrix &gt; series &gt; scalar. For example, if
+	  <argname>y</argname> is a scalar and <argname>x</argname> an
+	  <math>n</math>-vector (or vice versa) the result is an
+	  <math>n</math>-vector. Note that matrix arguments must be
+	  vectors, and if neither argument is a scalar the two
+	  arguments must be of the same length.
+	</para>
+	<para>
+	  <seelist>
             <fncref targ="tan"/>
+            <fncref targ="tanh"/>
 	  </seelist>
 	</para>
       </description>
