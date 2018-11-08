@@ -5140,6 +5140,16 @@ static void root_start (const char *tag, PRN *prn)
     }
 }
 
+static void mod_and_freq (cmplx *c, double *mod, double *frq)
+{
+    if (c->i != 0) {
+	*mod = sqrt(c->r * c->r + c->i * c->i);
+    } else {
+	*mod = fabs(c->r);
+    }
+    *frq = atan2(c->i, c->r) / M_2PI;
+}
+
 static void print_arma_roots (const MODEL *pmod, PRN *prn)
 {
     cmplx *roots = gretl_model_get_data(pmod, "roots");
@@ -5173,13 +5183,7 @@ static void print_arma_roots (const MODEL *pmod, PRN *prn)
 	    k = 1;
 	    root_start(N_("AR"), prn);
 	    for (i=0; i<p; i++) {
-		if (roots[i].i != 0) {
-		    mod = roots[i].r * roots[i].r + roots[i].i * roots[i].i;
-		    mod = sqrt(mod);
-		} else {
-		    mod = fabs(roots[i].r);
-		}
-		fr = atan2(roots[i].i, roots[i].r) / M_2PI;
+		mod_and_freq(&roots[i], &mod, &fr);
 		if (i == p - 1 && q == 0 && P == 0 && Q == 0) {
 		    hline = 1;
 		} else {
@@ -5193,13 +5197,7 @@ static void print_arma_roots (const MODEL *pmod, PRN *prn)
 	    k = 1;
 	    root_start(N_("AR (seasonal)"), prn);
 	    for (i=p; i<p+P; i++) {
-		if (roots[i].i != 0) {
-		    mod = roots[i].r * roots[i].r + roots[i].i * roots[i].i;
-		    mod = sqrt(mod);
-		} else {
-		    mod = fabs(roots[i].r);
-		}
-		fr = atan2(roots[i].i, roots[i].r) / M_2PI;
+		mod_and_freq(&roots[i], &mod, &fr);
 		if (i == p + P - 1 && q == 0 && Q == 0) {
 		    hline = 1;
 		} else {
@@ -5213,13 +5211,7 @@ static void print_arma_roots (const MODEL *pmod, PRN *prn)
 	    k = 1;
 	    root_start(N_("MA"), prn);
 	    for (i=p+P; i<p+P+q; i++) {
-		if (roots[i].i != 0) {
-		    mod = roots[i].r * roots[i].r + roots[i].i * roots[i].i;
-		    mod = sqrt(mod);
-		} else {
-		    mod = fabs(roots[i].r);
-		}
-		fr = atan2(roots[i].i, roots[i].r) / M_2PI;
+		mod_and_freq(&roots[i], &mod, &fr);
 		if (i == p + P + q - 1 && Q == 0) {
 		    hline = 1;
 		} else {
@@ -5233,13 +5225,7 @@ static void print_arma_roots (const MODEL *pmod, PRN *prn)
 	    k = 1;
 	    root_start(N_("MA (seasonal)"), prn);
 	    for (i=p+P+q; i<p+P+q+Q; i++) {
-		if (roots[i].i != 0) {
-		    mod = roots[i].r * roots[i].r + roots[i].i * roots[i].i;
-		    mod = sqrt(mod);
-		} else {
-		    mod = fabs(roots[i].r);
-		}
-		fr = atan2(roots[i].i, roots[i].r) / M_2PI;
+		mod_and_freq(&roots[i], &mod, &fr);
 		if (i == p + P + q + Q - 1) {
 		    hline = 1;
 		} else {
