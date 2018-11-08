@@ -4809,6 +4809,13 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
 	    char *s = gretl_strdup((char *) val);
 
 	    err = user_var_add_or_replace(vname, GRETL_TYPE_STRING, s);
+	} else if (type == GRETL_TYPE_BUNDLE) {
+	    gretl_bundle *orig = (gretl_bundle *) val;
+	    gretl_bundle *b = gretl_bundle_copy(orig, &err);
+
+	    if (!err) {
+		err = user_var_add_or_replace(vname, GRETL_TYPE_BUNDLE, b);
+	    }
 	}
 
 	if (show && !err) {
