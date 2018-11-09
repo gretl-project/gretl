@@ -897,8 +897,6 @@ static NODE *aux_empty_series_node (parser *p)
     }
 }
 
-#define aux_ivec_node(p,n) get_aux_node(p,IVEC,n,TMP_NODE)
-
 static NODE *aux_list_node (parser *p)
 {
     if (p->dset == NULL || p->dset->n == 0) {
@@ -919,6 +917,7 @@ static NODE *list_pointer_node (parser *p)
     }
 }
 
+#define aux_ivec_node(p,n) get_aux_node(p,IVEC,n,TMP_NODE)
 #define aux_matrix_node(p) get_aux_node(p,MAT,0,TMP_NODE)
 #define matrix_pointer_node(p) get_aux_node(p,MAT,0,0)
 #define aux_mspec_node(p) get_aux_node(p,MSPEC,0,0)
