@@ -7139,15 +7139,15 @@ static double real_clogit_fi (int T, int k, int r,
 }
 
 double clogit_fi (int T, int k, gretl_matrix *z,
-		  const char *dfname, int *err)
+		  user_var *uv, int *err)
 {
     gretl_matrix *df = NULL;
     int r = z->rows;
     int newmat = 0;
     double ret;
 
-    if (dfname != NULL) {
-	df = get_matrix_by_name(dfname);
+    if (uv != NULL) {
+	df = user_var_get_value(uv);
 	if (gretl_vector_get_length(df) != r) {
 	    df = gretl_column_vector_alloc(r);
 	    if (df == NULL) {
@@ -7162,7 +7162,7 @@ double clogit_fi (int T, int k, gretl_matrix *z,
     ret = real_clogit_fi(T, k, r, z, df, err);
 
     if (newmat) {
-	user_matrix_replace_matrix_by_name(dfname, df);
+	user_var_replace_value(uv, df, GRETL_TYPE_MATRIX);
     }
 
     return ret;

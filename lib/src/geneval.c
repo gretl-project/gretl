@@ -3164,6 +3164,10 @@ static NODE *cmatrix_printf (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+/* note: allows @n to be either a regular matrix node or a
+   matrix-pointer node
+*/
+
 static gretl_matrix *matrix_node_get_matrix (NODE *n, parser *p)
 {
     if (n->t == U_ADDR) {
@@ -3175,24 +3179,6 @@ static gretl_matrix *matrix_node_get_matrix (NODE *n, parser *p)
     }
 
     return n->v.m;
-}
-
-static gretl_matrix *ptr_node_get_matrix (NODE *n, parser *p)
-{
-    gretl_matrix *m = NULL;
-
-    if (n->t != U_ADDR) {
-	p->err = E_INVARG;
-    } else {
-	n = n->v.b1.b;
-	if (n->t != MAT) {
-	    p->err = E_INVARG;
-	} else {
-	    m = n->v.m;
-	}
-    }
-
-    return m;
 }
 
 static user_var *ptr_node_get_uvar (NODE *n, int t, parser *p)
@@ -3212,6 +3198,13 @@ static user_var *ptr_node_get_uvar (NODE *n, int t, parser *p)
     }
 
     return uv;
+}
+
+static gretl_matrix *ptr_node_get_matrix (NODE *n, parser *p)
+{
+    user_var *uv = ptr_node_get_uvar(n, MAT, p);
+
+    return uv != NULL ? uv->ptr : NULL;
 }
 
 static const char *node_get_fncall (NODE *n, parser *p)
@@ -4197,48 +4190,35 @@ matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
 
     if (ret != NULL && starting(p)) {
 	gretl_matrix *m = node_get_matrix(n, p, 0, 0);
-	const char *rname;
+	user_var *uv = NULL;
 
 	if (!p->err && gretl_is_null_matrix(m)) {
 	    p->err = E_DATA;
+	}
+	if (!p->err && r->t != EMPTY) {
+	    uv = ptr_node_get_uvar(r, MAT, p);
 	}
 	if (p->err) {
 	    goto finalize;
 	}
 
-	gretl_error_clear();
-
-	/* on the right: address of matrix or null */
-	if (r->t == EMPTY) {
-	    rname = "null";
-	} else {
-	    /* note: switch to the 'content' sub-node */
-	    r = r->v.b1.b;
-	    if (umatrix_node(r)) {
-		rname = r->vname;
-	    } else {
-		p->err = E_PARSE;
-		gretl_errmsg_set("Expected the address of a matrix");
-		return ret;
-	    }
-	}
-
 	switch (f) {
 	case F_QR:
-	    ret->v.m = user_matrix_QR_decomp(m, rname, &p->err);
+	    ret->v.m = user_matrix_QR_decomp(m, uv, &p->err);
 	    break;
 	case F_EIGSYM:
-	    ret->v.m = user_matrix_eigen_analysis(m, rname, 1, &p->err);
+	    ret->v.m = user_matrix_eigen_analysis(m, uv, 1, &p->err);
 	    break;
 	case F_EIGGEN:
-	    ret->v.m = user_matrix_eigen_analysis(m, rname, 0, &p->err);
+	    ret->v.m = user_matrix_eigen_analysis(m, uv, 0, &p->err);
 	    break;
 	case HF_CEIGH:
 	    {
+		/* special!! */
 		gretl_matrix *V = NULL;
 
-		if (r->t != EMPTY) {
-		    V = r->v.m;
+		if (uv != NULL) {
+		    V = (gretl_matrix *) uv->ptr;
 		}
 		ret->v.m = gretl_zheev(m, V, &p->err);
 	    }
@@ -10399,40 +10379,6 @@ static gretl_matrix *get_corrgm_matrix (NODE *l,
     return A;
 }
 
-static const char *ptr_node_get_matrix_name (NODE *t, parser *p)
-{
-    const char *name = NULL;
-
-    if (t->t == U_ADDR) {
-	NODE *n = t->v.b1.b;
-
-	if (umatrix_node(n)) {
-	    name = n->vname;
-	} else {
-	    p->err = E_TYPES;
-	}
-    }
-
-    return name;
-}
-
-static user_var *ptr_node_get_matrix_var (NODE *t, parser *p)
-{
-    user_var *uv = NULL;
-
-    if (t->t == U_ADDR) {
-	NODE *n = t->v.b1.b;
-
-	if (umatrix_node(n)) {
-	    uv = n->uv;
-	} else {
-	    p->err = E_TYPES;
-	}
-    }
-
-    return uv;
-}
-
 static gretl_matrix *get_density_matrix (NODE *t, double bws,
 					 int ctrl, parser *p)
 {
@@ -10547,18 +10493,25 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	}
     } else if (f == F_SVD) {
 	gretl_matrix *lm = node_get_matrix(l, p, 0, 1);
+	user_var *uU = NULL;
+	user_var *uV = NULL;
 
-	if (p->err) {
-	    ; /* skip the rest */
-	} else if (m->t != U_ADDR && m->t != EMPTY) {
-	    node_type_error(f, 2, U_ADDR, m, p);
-	} else if (r->t != U_ADDR && r->t != EMPTY) {
-	    node_type_error(f, 3, U_ADDR, r, p);
-	} else {
-	    const char *uname = ptr_node_get_matrix_name(m, p);
-	    const char *vname = ptr_node_get_matrix_name(r, p);
-
-	    A = user_matrix_SVD(lm, uname, vname, &p->err);
+	if (!p->err) {
+	    if (m->t == U_ADDR) {
+		uU = ptr_node_get_uvar(m, MAT, p);
+	    } else if (m->t != EMPTY) {
+		node_type_error(f, 2, U_ADDR, m, p);
+	    }
+	}
+	if (!p->err) {
+	    if (r->t == U_ADDR) {
+		uV = ptr_node_get_uvar(r, MAT, p);
+	    } else if (r->t != EMPTY) {
+		node_type_error(f, 3, U_ADDR, r, p);
+	    }
+	}
+	if (!p->err) {
+	    A = user_matrix_SVD(lm, uU, uV, &p->err);
 	}
     } else if (f == F_TOEPSOLV || f == F_VARSIMUL) {
 	gretl_matrix *m1 = node_get_matrix(l, p, 0, 1);
@@ -10827,10 +10780,14 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    /* optional matrix-pointer */
 	    node_type_error(f, 3, U_ADDR, r, p);
 	} else {
-	    const char *rname;
+	    user_var *uV = NULL;
 
-	    rname = (r->t == U_ADDR)? ptr_node_get_matrix_name(r, p) : "null";
-	    A = user_gensymm_eigenvals(m1, m2, rname, &p->err);
+	    if (r->t == U_ADDR) {
+		uV = ptr_node_get_uvar(r, MAT, p);
+	    }
+	    if (!p->err) {
+		A = user_gensymm_eigenvals(m1, m2, uV, &p->err);
+	    }
 	}
     } else if (f == F_PRINCOMP) {
 	if (l->t != MAT) {
@@ -11836,9 +11793,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		} else if (e->t != U_ADDR) {
 		    node_type_error(t->t, i+1, U_ADDR, e, p);
 		} else if (i == 2) {
-		    uU = ptr_node_get_matrix_var(e, p);
+		    uU = ptr_node_get_uvar(e, MAT, p);
 		} else {
-		    uV = ptr_node_get_matrix_var(e, p);
+		    uV = ptr_node_get_uvar(e, MAT, p);
 		}
 	    }
 	}
@@ -11878,9 +11835,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		} else if (e->t != U_ADDR) {
 		    node_type_error(t->t, i+1, U_ADDR, e, p);
 		} else if (i == 4) {
-		    uU = ptr_node_get_matrix_var(e, p);
+		    uU = ptr_node_get_uvar(e, MAT, p);
 		} else {
-		    uV = ptr_node_get_matrix_var(e, p);
+		    uV = ptr_node_get_uvar(e, MAT, p);
 		}
 	    }
 	}
@@ -12014,7 +11971,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	}
     } else if (t->t == F_GHK) {
 	gretl_matrix *M[4] = {NULL};
-	const char *dP_name = NULL;
+	user_var *udP = NULL;
 
 	if (k < 4 || k > 5) {
 	    n_args_error(k, 5, t->t, p);
@@ -12033,7 +11990,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		} else if (e->t != U_ADDR) {
 		    node_type_error(t->t, i+1, U_ADDR, e, p);
 		} else {
-		    dP_name = ptr_node_get_matrix_name(e, p);
+		    udP = ptr_node_get_uvar(e, MAT, p);
 		}
 	    }
 	}
@@ -12045,11 +12002,11 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    if (ret->v.m != NULL) {
 		gretl_matrix_free(ret->v.m);
 	    }
-	    if (dP_name == NULL) {
+	    if (udP == NULL) {
 		ret->v.m = gretl_GHK(M[0], M[1], M[2], M[3], &p->err);
 	    } else {
 		ret->v.m = user_matrix_GHK(M[0], M[1], M[2], M[3],
-					   dP_name, &p->err);
+					   udP, &p->err);
 	    }
 	}
     } else if (t->t == F_QUADTAB) {
@@ -12290,7 +12247,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    }
 	}
     } else if (t->t == HF_CLOGFI) {
-	const char *dfname = NULL;
+	user_var *uv = NULL;
 	gretl_matrix *z = NULL;
 	int T = 0, K = 0;
 
@@ -12328,7 +12285,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		} else if (e->t != U_ADDR) {
 		    node_type_error(t->t, 4, U_ADDR, e, p);
 		} else {
-		    dfname = ptr_node_get_matrix_name(e, p);
+		    uv = ptr_node_get_uvar(e, MAT, p);
 		}
 	    }
 	}
@@ -12339,7 +12296,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	}
 
 	if (!p->err) {
-	    ret->v.xval = clogit_fi(T, K, z, dfname, &p->err);
+	    ret->v.xval = clogit_fi(T, K, z, uv, &p->err);
 	}
     } else if (t->t == F_DEFARRAY) {
 	GretlType gtype = lh_array_type(p);

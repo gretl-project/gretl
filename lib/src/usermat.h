@@ -107,13 +107,13 @@ gretl_matrix *user_matrix_vech (const gretl_matrix *m, int *err);
 
 gretl_matrix *user_matrix_unvech (const gretl_matrix *m, int *err);
 
-gretl_matrix *
-user_matrix_QR_decomp (const gretl_matrix *m, const char *rname,
-		       int *err);
+gretl_matrix *user_matrix_QR_decomp (const gretl_matrix *m,
+				     user_var *uv,
+				     int *err);
 
 gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
-			       const char *uname,
-			       const char *vname,
+			       user_var *uU,
+			       user_var *uV,
 			       int *err);
 
 gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
@@ -135,16 +135,17 @@ gretl_matrix *user_matrix_GHK (const gretl_matrix *C,
 			       const gretl_matrix *A,
 			       const gretl_matrix *B,
 			       const gretl_matrix *U,
-			       const char *dP_name,
+			       user_var *udP,
 			       int *err);
 
 gretl_matrix *
-user_matrix_eigen_analysis (const gretl_matrix *m, const char *rname, int symm,
-			    int *err);
+user_matrix_eigen_analysis (const gretl_matrix *m,
+			    user_var *uv,
+			    int symm, int *err);
 
 gretl_matrix *user_gensymm_eigenvals (const gretl_matrix *A,
 				      const gretl_matrix *B,
-				      const char *rname,
+				      user_var *uV,
 				      int *err);
 
 double matrix_get_element (const gretl_matrix *M, int i, int *err);
