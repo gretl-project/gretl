@@ -721,6 +721,7 @@ static void clear_tmp_node_data (NODE *n, parser *p)
     if (n->t == LIST) {
 	free(n->v.ivec);
     } else if (n->t == MAT) {
+	/* (how) can we avoid doing this? */
 	gretl_matrix_free(n->v.m);
     } else if (n->t == MSPEC) {
 	clear_mspec(n->v.mspec, p);
@@ -5136,7 +5137,7 @@ static double real_apply_func (double x, int f, parser *p)
     }
 }
 
-/* @n must be of type NUM, MAT or SERIES, pre-ckecked */
+/* @n must be of type NUM, MAT or SERIES, pre-checked */
 
 static double node_get_double (NODE *n, int i, parser *p)
 {
@@ -5149,7 +5150,7 @@ static double node_get_double (NODE *n, int i, parser *p)
     }
 }
 
-/* @n must be of type NUM, MAT or SERIES, pre-ckecked */
+/* @n must be of type NUM, MAT or SERIES, pre-checked */
 
 static void node_set_double (NODE *n, int i, double x, parser *p)
 {
@@ -5166,7 +5167,8 @@ static NODE *atan2_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = NULL;
     int rettype = 0;
-    int n, nl = 0, nr = 0;
+    int nmin, nmax;
+    int nl = 0, nr = 0;
 
     if (l->t == NUM) {
 	nl = 1;
@@ -5174,10 +5176,6 @@ static NODE *atan2_node (NODE *l, NODE *r, parser *p)
 	nl = gretl_vector_get_length(l->v.m);
     } else {
 	nl = sample_size(p->dset);
-    }
-
-    if (p->err) {
-	return NULL;
     }
 
     if (r->t == NUM) {
@@ -5188,30 +5186,23 @@ static NODE *atan2_node (NODE *l, NODE *r, parser *p)
 	nr = sample_size(p->dset);
     }
 
-    if (!p->err) {
-	if ((nl == 0 || nr == 0) ||
-	    (nl > 1 && nr > 1 && nr != nl)) {
-	    p->err = E_TYPES;
-	}
-    }
+    nmin = nr < nl ? nr : nl;
+    nmax = nr > nl ? nr : nl;
 
-    if (p->err) {
+    if (nmin == 0 || (nmin > 1 && nmax != nmin)) {
+	p->err = E_NONCONF;
 	return NULL;
     }
 
-    /* ordering is NUM < SERIES < MAT */
+    /* ordering is MAT > SERIES > NUM */
     rettype = r->t > l->t ? r->t : l->t;
-    n = nr > nl ? nr : nl;
 
     if (rettype == NUM) {
 	ret = aux_scalar_node(p);
     } else if (rettype == MAT) {
 	ret = aux_matrix_node(p);
 	if (ret != NULL) {
-	    ret->v.m = gretl_matrix_alloc(n, 1);
-	    if (ret->v.m == NULL) {
-		p->err = E_ALLOC;
-	    }
+	    node_allocate_matrix(ret, nmax, 1, p);
 	}
     } else {
 	ret = aux_series_node(p);
@@ -5221,7 +5212,7 @@ static NODE *atan2_node (NODE *l, NODE *r, parser *p)
 	double y, x;
 	int i;
 
-	for (i=0; i<n; i++) {
+	for (i=0; i<nmax; i++) {
 	    y = node_get_double(l, i, p);
 	    x = node_get_double(r, i, p);
 	    node_set_double(ret, i, atan2(y, x), p);
