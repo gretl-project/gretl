@@ -895,29 +895,29 @@ static int consistent_qm_labels (DATASET *dset, int reversed,
 }
 
 static int consistent_year_labels (const DATASET *dset,
-				   int convert_pd,
-				   int reversed)
+				   int reversed,
+				   int convert_pd)
 {
     char label[OBSLEN];
-    int s, t, yr, yrbak;
+    int s, t, yr, yprev;
     int ret = 1;
 
     s = (reversed)? (dset->n - 1) : 0;
-    yrbak = atoi(dset->S[s]);
+    yprev = atoi(dset->S[s]);
 
     for (t=1; t<dset->n; t++) {
-	s = (reversed)? (dset->n - 1 - t) : t;
+	s = reversed ? (dset->n - 1 - t) : t;
 	if (convert_pd) {
 	    convert_daily_label(label, dset->S[s], 1);
 	    yr = atoi(label);
 	} else {
 	    yr = atoi(dset->S[s]);
 	}
-	if (yr != yrbak + 1) {
+	if (yr != yprev + 1) {
 	    ret = 0;
 	    break;
 	}
-	yrbak = yr;
+	yprev = yr;
     }
 
     return ret;
@@ -1278,7 +1278,8 @@ static int time_series_label_check (DATASET *dset, int reversed,
     return pd;
 }
 
-static int dates_maybe_reversed (const char *s1, const char *s2,
+static int dates_maybe_reversed (const char *s1,
+				 const char *s2,
 				 PRN *prn)
 {
     char d1[5], d2[5];
