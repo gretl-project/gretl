@@ -1575,6 +1575,8 @@ static gretl_matrix *get_sized_matrix (const char *mname,
 {
     gretl_matrix *m = get_matrix_by_name(mname);
 
+    fprintf(stderr, "usermat: looked up '%s' -> %p\n", mname, (void *) m);
+
     if (m == NULL) {
 	gretl_errmsg_sprintf(_("'%s': no such matrix"), mname);
 	*err = E_UNKVAR;
@@ -1590,22 +1592,31 @@ static gretl_matrix *get_sized_matrix (const char *mname,
     return m;
 }
 
-static int check_vcv_arg (const char *mname)
+static gretl_matrix *get_sized_matrix2 (user_var *uv,
+					int r, int c,
+					int *newmat,
+					int *err)
 {
-    gretl_matrix *m = get_matrix_by_name(mname);
+    gretl_matrix *m = user_var_get_value(uv);
 
     if (m == NULL) {
-	gretl_errmsg_sprintf(_("'%s': no such matrix"), mname);
-	return E_UNKVAR;
-    } else {
-	return 0;
+	*err = E_DATA;
+    } else if (m->rows != r || m->cols != c) {
+	m = gretl_matrix_alloc(r, c);
+	if (m == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    *newmat = 1;
+	}
     }
+
+    return m;
 }
 
 gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 			       const gretl_matrix *X,
-			       const char *Uname,
-			       const char *Vname,
+			       user_var *uU,
+			       user_var *uV,
 			       gretlopt opt,
 			       int *err)
 {
@@ -1636,25 +1647,22 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 	return NULL;
     }
 
-    if (!nullarg(Uname)) {
-	U = get_sized_matrix(Uname, T, g, &newU, err);
+    if (uU != NULL) {
+	U = get_sized_matrix2(uU, T, g, &newU, err);
 	if (*err) {
 	    return NULL;
 	}
     }
 
-    if (!nullarg(Vname)) {
+    if (uV != NULL) {
 	if (g > 1) {
 	    /* multiple dependent variables */
-	    *err = check_vcv_arg(Vname);
-	    if (!*err) {
-		newV = 1;
-	    }
+	    newV = 1;
 	} else {
 	    /* a single dependent variable */
 	    int nv = g * k;
 
-	    V = get_sized_matrix(Vname, nv, nv, &newV, err);
+	    V = get_sized_matrix2(uV, nv, nv, &newV, err);
 	    if (!*err) {
 		ps2 = &s2;
 	    }
@@ -1670,16 +1678,18 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 
     if (!*err) {
 	if (gretl_is_null_matrix(X)) {
+	    /* null model */
 	    if (U != NULL) {
 		gretl_matrix_copy_values(U, Y);
 	    }
-	    if (!nullarg(Vname)) {
+	    if (uV != NULL) {
 		V = gretl_null_matrix_new();
 		if (V == NULL) {
 		    *err = E_ALLOC;
 		}
 	    }
 	} else if (g == 1) {
+	    /* single regressand */
 	    if (opt & OPT_M) {
 		/* use multiple precision */
 		*err = gretl_matrix_mp_ols(Y, X, B, V, U, ps2);
@@ -1687,6 +1697,7 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 		*err = gretl_matrix_ols(Y, X, B, V, U, ps2);
 	    }
 	} else {
+	    /* multiple regressands */
 	    if (newV) {
 		/* note: "V" will actually be (X'X)^{-1} */
 		*err = gretl_matrix_multi_ols(Y, X, B, U, &V);
@@ -1703,10 +1714,10 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 	if (newV) gretl_matrix_free(V);
     } else {
 	if (newU) {
-	    user_matrix_replace_matrix_by_name(Uname, U);
+	    user_var_replace_value(uU, U, GRETL_TYPE_MATRIX);
 	}
 	if (newV) {
-	    user_matrix_replace_matrix_by_name(Vname, V);
+	    user_var_replace_value(uV, V, GRETL_TYPE_MATRIX);
 	}
     }
 
@@ -1717,8 +1728,8 @@ gretl_matrix *user_matrix_rls (const gretl_matrix *Y,
 			       const gretl_matrix *X,
 			       const gretl_matrix *R,
 			       const gretl_matrix *Q,
-			       const char *Uname,
-			       const char *Vname,
+			       user_var *uU,
+			       user_var *uV,
 			       int *err)
 {
     gretl_matrix *B = NULL;
@@ -1741,18 +1752,15 @@ gretl_matrix *user_matrix_rls (const gretl_matrix *Y,
 	return NULL;
     }
 
-    if (!nullarg(Uname)) {
-	U = get_sized_matrix(Uname, T, g, &newU, err);
+    if (uU != NULL) {
+	U = get_sized_matrix2(uU, T, g, &newU, err);
 	if (*err) {
 	    return NULL;
 	}
     }
 
-    if (!nullarg(Vname)) {
-	*err = check_vcv_arg(Vname);
-	if (!*err) {
-	    newV = 1;
-	}
+    if (uV != NULL) {
+	newV = 1;
     }
 
     if (!*err) {
@@ -1778,10 +1786,10 @@ gretl_matrix *user_matrix_rls (const gretl_matrix *Y,
 	if (newV) gretl_matrix_free(V);
     } else {
 	if (newU) {
-	    user_matrix_replace_matrix_by_name(Uname, U);
+	    user_var_replace_value(uU, U, GRETL_TYPE_MATRIX);
 	}
 	if (newV) {
-	    user_matrix_replace_matrix_by_name(Vname, V);
+	    user_var_replace_value(uV, V, GRETL_TYPE_MATRIX);
 	}
     }
 

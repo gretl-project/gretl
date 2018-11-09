@@ -10416,6 +10416,23 @@ static const char *ptr_node_get_matrix_name (NODE *t, parser *p)
     return name;
 }
 
+static user_var *ptr_node_get_matrix_var (NODE *t, parser *p)
+{
+    user_var *uv = NULL;
+
+    if (t->t == U_ADDR) {
+	NODE *n = t->v.b1.b;
+
+	if (umatrix_node(n)) {
+	    uv = n->uv;
+	} else {
+	    p->err = E_TYPES;
+	}
+    }
+
+    return uv;
+}
+
 static gretl_matrix *get_density_matrix (NODE *t, double bws,
 					 int ctrl, parser *p)
 {
@@ -11793,8 +11810,8 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
     } else if (t->t == F_MOLS || t->t == F_MPOLS) {
 	gretlopt opt = (t->t == F_MPOLS)? OPT_M : OPT_NONE;
 	gretl_matrix *M[2] = {NULL};
-	const char *SU = NULL;
-	const char *SV = NULL;
+	user_var *uU = NULL;
+	user_var *uV = NULL;
 	char freemat[2] = {0};
 
 	if (k < 2 || k > 4) {
@@ -11819,9 +11836,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		} else if (e->t != U_ADDR) {
 		    node_type_error(t->t, i+1, U_ADDR, e, p);
 		} else if (i == 2) {
-		    SU = ptr_node_get_matrix_name(e, p);
+		    uU = ptr_node_get_matrix_var(e, p);
 		} else {
-		    SV = ptr_node_get_matrix_name(e, p);
+		    uV = ptr_node_get_matrix_var(e, p);
 		}
 	    }
 	}
@@ -11835,14 +11852,14 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    if (ret->v.m != NULL) {
 		gretl_matrix_free(ret->v.m);
 	    }
-	    ret->v.m = user_matrix_ols(M[0], M[1], SU, SV, opt, &p->err);
+	    ret->v.m = user_matrix_ols(M[0], M[1], uU, uV, opt, &p->err);
 	}
 	if (freemat[0]) gretl_matrix_free(M[0]);
 	if (freemat[1]) gretl_matrix_free(M[1]);
     } else if (t->t == F_MRLS) {
 	gretl_matrix *M[4] = {NULL};
-	const char *SU = NULL;
-	const char *SV = NULL;
+	user_var *uU = NULL;
+	user_var *uV = NULL;
 
 	if (k < 4 || k > 6) {
 	    n_args_error(k, 1, t->t, p);
@@ -11861,9 +11878,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		} else if (e->t != U_ADDR) {
 		    node_type_error(t->t, i+1, U_ADDR, e, p);
 		} else if (i == 4) {
-		    SU = ptr_node_get_matrix_name(e, p);
+		    uU = ptr_node_get_matrix_var(e, p);
 		} else {
-		    SV = ptr_node_get_matrix_name(e, p);
+		    uV = ptr_node_get_matrix_var(e, p);
 		}
 	    }
 	}
@@ -11876,7 +11893,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    if (ret->v.m != NULL) {
 		gretl_matrix_free(ret->v.m);
 	    }
-	    ret->v.m = user_matrix_rls(M[0], M[1], M[2], M[3], SU, SV, &p->err);
+	    ret->v.m = user_matrix_rls(M[0], M[1], M[2], M[3], uU, uV, &p->err);
 	}
     } else if (t->t == F_NRMAX) {
 	gretl_matrix *b = NULL;

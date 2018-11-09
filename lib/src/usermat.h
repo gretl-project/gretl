@@ -1,24 +1,26 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #ifndef USERMAT_H_
 #define USERMAT_H_
+
+#include "uservar.h"
 
 #define MSEL_MAX -999
 
@@ -77,15 +79,15 @@ int matrix_replace_submatrix (gretl_matrix *M,
 			      const gretl_matrix *S,
 			      matrix_subspec *spec);
 
-int umatrix_set_names_from_string (gretl_matrix *M, 
+int umatrix_set_names_from_string (gretl_matrix *M,
 				   const char *s,
 				   int byrow);
 
-int umatrix_set_names_from_array (gretl_matrix *M, 
+int umatrix_set_names_from_array (gretl_matrix *M,
 				  void *data,
 				  int byrow);
 
-int umatrix_set_names_from_list (gretl_matrix *M, 
+int umatrix_set_names_from_list (gretl_matrix *M,
 				 const int *list,
 				 const DATASET *dset,
 				 int byrow);
@@ -106,41 +108,41 @@ gretl_matrix *user_matrix_vech (const gretl_matrix *m, int *err);
 gretl_matrix *user_matrix_unvech (const gretl_matrix *m, int *err);
 
 gretl_matrix *
-user_matrix_QR_decomp (const gretl_matrix *m, const char *rname, 
+user_matrix_QR_decomp (const gretl_matrix *m, const char *rname,
 		       int *err);
 
-gretl_matrix *user_matrix_SVD (const gretl_matrix *m, 
-			       const char *uname, 
-			       const char *vname, 
+gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
+			       const char *uname,
+			       const char *vname,
 			       int *err);
 
-gretl_matrix *user_matrix_ols (const gretl_matrix *Y, 
-			       const gretl_matrix *X, 
-			       const char *Uname, 
-			       const char *Vname,
+gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
+			       const gretl_matrix *X,
+			       user_var *uU,
+			       user_var *uV,
 			       gretlopt opt,
 			       int *err);
 
-gretl_matrix *user_matrix_rls (const gretl_matrix *Y, 
+gretl_matrix *user_matrix_rls (const gretl_matrix *Y,
 			       const gretl_matrix *X,
 			       const gretl_matrix *R,
 			       const gretl_matrix *Q,
-			       const char *Uname, 
-			       const char *Vname, 
+			       user_var *uU,
+			       user_var *uV,
 			       int *err);
 
-gretl_matrix *user_matrix_GHK (const gretl_matrix *C, 
+gretl_matrix *user_matrix_GHK (const gretl_matrix *C,
 			       const gretl_matrix *A,
 			       const gretl_matrix *B,
 			       const gretl_matrix *U,
-			       const char *dP_name, 
+			       const char *dP_name,
 			       int *err);
 
 gretl_matrix *
 user_matrix_eigen_analysis (const gretl_matrix *m, const char *rname, int symm,
 			    int *err);
 
-gretl_matrix *user_gensymm_eigenvals (const gretl_matrix *A, 
+gretl_matrix *user_gensymm_eigenvals (const gretl_matrix *A,
 				      const gretl_matrix *B,
 				      const char *rname,
 				      int *err);
@@ -153,7 +155,7 @@ gretl_matrix *matrix_get_chunk (const gretl_matrix *M,
 
 int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m);
 
-gretl_matrix *matrix_get_submatrix (const gretl_matrix *M, 
+gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 				    matrix_subspec *spec,
 				    int prechecked,
 				    int *err);
