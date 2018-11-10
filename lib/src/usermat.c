@@ -1439,7 +1439,26 @@ real_user_matrix_QR_decomp (const gretl_matrix *m, gretl_matrix **Q,
     return err;
 }
 
-#define nullarg(s) (s == NULL || !strcmp(s, "null"))
+static gretl_matrix *get_sized_matrix (user_var *uv,
+				       int r, int c,
+				       int *newmat,
+				       int *err)
+{
+    gretl_matrix *m = user_var_get_value(uv);
+
+    if (m == NULL) {
+	*err = E_DATA;
+    } else if (m->rows != r || m->cols != c) {
+	m = gretl_matrix_alloc(r, c);
+	if (m == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    *newmat = 1;
+	}
+    }
+
+    return m;
+}
 
 gretl_matrix *
 user_matrix_QR_decomp (const gretl_matrix *m, user_var *uv, int *err)
@@ -1454,7 +1473,6 @@ user_matrix_QR_decomp (const gretl_matrix *m, user_var *uv, int *err)
     }
 
     if (uv != NULL) {
-	/* FIXME sized */
 	pR = &R;
     }
 
@@ -1544,27 +1562,6 @@ gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
     }
 
     return S;
-}
-
-static gretl_matrix *get_sized_matrix (user_var *uv,
-				       int r, int c,
-				       int *newmat,
-				       int *err)
-{
-    gretl_matrix *m = user_var_get_value(uv);
-
-    if (m == NULL) {
-	*err = E_DATA;
-    } else if (m->rows != r || m->cols != c) {
-	m = gretl_matrix_alloc(r, c);
-	if (m == NULL) {
-	    *err = E_ALLOC;
-	} else {
-	    *newmat = 1;
-	}
-    }
-
-    return m;
 }
 
 gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
@@ -1864,6 +1861,7 @@ gretl_matrix *user_gensymm_eigenvals (const gretl_matrix *A,
 				      int *err)
 {
     gretl_matrix *E = NULL, *V = NULL;
+    int newV = 0;
 
     if (gretl_is_null_matrix(A) || gretl_is_null_matrix(B)) {
 	*err = E_DATA;
@@ -1876,17 +1874,14 @@ gretl_matrix *user_gensymm_eigenvals (const gretl_matrix *A,
     }
 
     if (uV != NULL) {
-	/* get sized! */
-	V = gretl_matrix_alloc(B->cols, A->rows);
-	if (V == NULL) {
-	    *err = E_ALLOC;
-	    return NULL;
-	}
+	V = get_sized_matrix(uV, B->cols, A->rows, &newV, err);
     }
 
-    E = gretl_gensymm_eigenvals(A, B, V, err);
+    if (!*err) {
+	E = gretl_gensymm_eigenvals(A, B, V, err);
+    }
 
-    if (V != NULL) {
+    if (newV) {
 	if (*err) {
 	    gretl_matrix_free(V);
 	} else {

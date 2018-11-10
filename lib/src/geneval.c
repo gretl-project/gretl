@@ -12247,8 +12247,8 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    }
 	}
     } else if (t->t == HF_CLOGFI) {
-	user_var *uv = NULL;
 	gretl_matrix *z = NULL;
+	gretl_matrix *df = NULL;
 	int T = 0, K = 0;
 
 	if (k < 3 || k > 4) {
@@ -12285,7 +12285,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		} else if (e->t != U_ADDR) {
 		    node_type_error(t->t, 4, U_ADDR, e, p);
 		} else {
-		    uv = ptr_node_get_uvar(e, MAT, p);
+		    df = ptr_node_get_matrix(e, p);
 		}
 	    }
 	}
@@ -12296,7 +12296,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	}
 
 	if (!p->err) {
-	    ret->v.xval = clogit_fi(T, K, z, uv, &p->err);
+	    ret->v.xval = clogit_fi(T, K, z, df, &p->err);
 	}
     } else if (t->t == F_DEFARRAY) {
 	GretlType gtype = lh_array_type(p);

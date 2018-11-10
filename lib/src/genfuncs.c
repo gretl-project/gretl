@@ -7029,145 +7029,6 @@ int fill_day_of_week_array (double *dow,
     return err;
 }
 
-static double real_clogit_fi (int T, int k, int r,
-			      gretl_matrix *z,
-			      gretl_matrix *df,
-			      int *err)
-{
-    double x, ret = NADBL;
-    int do_score = (df != NULL);
-    int i, j;
-
-    if (do_score) {
-        for (i=0; i<r; i++) {
-	    gretl_vector_set(df, i, 0);
-	}
-    }
-
-    if (T < k) {
-	ret = 0.0;
-    } else if (k == 0) {
-	ret = 1.0;
-    } else if (k == 1) {
-	ret = 0.0;
-	for (i=0; i<T; i++) {
-	    x = exp(gretl_vector_get(z, i));
-	    ret += x;
-	    if (do_score) {
-		gretl_vector_set(df, i, x);
-	    }
-	}
-    } else if (k == 2) {
-	double exi;
-
-	ret = 0.0;
-	for (i=0; i<T-1; i++) {
-	    exi = exp(gretl_vector_get(z, i));
-	    for (j=i+1; j<T; j++) {
-		x = exp(gretl_vector_get(z, j)) * exi;
-		ret += x;
-		if (do_score) {
-		    df->val[i] += x;
-		    df->val[j] += x;
-		}
-	    }
-	}
-    } else if (k == T - 1) {
-	double S = 0.0;
-
-	ret = 0.0;
-	for (i=0; i<T; i++) {
-	    S += gretl_vector_get(z, i);
-	}
-
-	for (i=0; i<T; i++) {
-	    x = exp(S - gretl_vector_get(z, i));
-	    ret += x;
-	    if (do_score) {
-		for (j=0; j<T; j++) {
-		    if (i != j) {
-			df->val[j] += x;
-		    }
-		}
-	    }
-	}
-    } else if (k == T) {
-	ret = 0.0;
-	for (i=0; i<T; i++) {
-	    ret += gretl_vector_get(z, i);
-	}
-	ret = exp(ret);
-	if (do_score) {
-	    for (i=0; i<T; i++) {
-		gretl_vector_set(df, i, ret);
-	    }
-	}
-    } else {
-	double x = exp(gretl_vector_get(z, T-1));
-
-	if (do_score) {
-	    double f2 = real_clogit_fi(T-1, k-1, r, z, df, err);
-	    gretl_matrix *df1 = NULL;
-
-	    if (!*err) {
-		df1 = gretl_vector_alloc(r);
-		if (df1 == NULL) {
-		    ret = NADBL;
-		    *err = E_ALLOC;
-		}
-	    }
-
-	    if (!*err) {
-		ret = real_clogit_fi(T-1, k, r, z, df1, err) + f2 * x;
-		for (i=0; i<T; i++) {
-		    df->val[i] *= x;
-		    df->val[i] += df1->val[i];
-		}
-		df->val[T-1] += x * f2;
-		gretl_matrix_free(df1);
-	    }
-	} else {
-	    double f2 = real_clogit_fi(T-1, k-1, r, z, NULL, err);
-
-	    if (!*err) {
-		ret = real_clogit_fi(T-1, k, r, z, NULL, err) + f2 * x;
-	    }
-	}
-    }
-
-    return ret;
-}
-
-double clogit_fi (int T, int k, gretl_matrix *z,
-		  user_var *uv, int *err)
-{
-    gretl_matrix *df = NULL;
-    int r = z->rows;
-    int newmat = 0;
-    double ret;
-
-    if (uv != NULL) {
-	df = user_var_get_value(uv);
-	if (gretl_vector_get_length(df) != r) {
-	    df = gretl_column_vector_alloc(r);
-	    if (df == NULL) {
-		*err = E_ALLOC;
-		return NADBL;
-	    } else {
-		newmat = 1;
-	    }
-	}
-    }
-
-    ret = real_clogit_fi(T, k, r, z, df, err);
-
-    if (newmat) {
-	user_var_replace_value(uv, df, GRETL_TYPE_MATRIX);
-    }
-
-    return ret;
-}
-
 /**
  * empirical_cdf:
  * @y: array to process
@@ -7407,4 +7268,152 @@ int sample_span (const char *stobs, const char *endobs,
     }
 
     return span;
+}
+
+static double real_clogit_fi (int T, int k, int r,
+			      gretl_matrix *z,
+			      gretl_matrix *df,
+			      int *err)
+{
+    double x, ret = NADBL;
+    int do_score = (df != NULL);
+    int i, j;
+
+    if (do_score) {
+        for (i=0; i<r; i++) {
+	    gretl_vector_set(df, i, 0);
+	}
+    }
+
+    if (T < k) {
+	ret = 0.0;
+    } else if (k == 0) {
+	ret = 1.0;
+    } else if (k == 1) {
+	ret = 0.0;
+	for (i=0; i<T; i++) {
+	    x = exp(gretl_vector_get(z, i));
+	    ret += x;
+	    if (do_score) {
+		gretl_vector_set(df, i, x);
+	    }
+	}
+    } else if (k == 2) {
+	double exi;
+
+	ret = 0.0;
+	for (i=0; i<T-1; i++) {
+	    exi = exp(gretl_vector_get(z, i));
+	    for (j=i+1; j<T; j++) {
+		x = exp(gretl_vector_get(z, j)) * exi;
+		ret += x;
+		if (do_score) {
+		    df->val[i] += x;
+		    df->val[j] += x;
+		}
+	    }
+	}
+    } else if (k == T - 1) {
+	double S = 0.0;
+
+	ret = 0.0;
+	for (i=0; i<T; i++) {
+	    S += gretl_vector_get(z, i);
+	}
+
+	for (i=0; i<T; i++) {
+	    x = exp(S - gretl_vector_get(z, i));
+	    ret += x;
+	    if (do_score) {
+		for (j=0; j<T; j++) {
+		    if (i != j) {
+			df->val[j] += x;
+		    }
+		}
+	    }
+	}
+    } else if (k == T) {
+	ret = 0.0;
+	for (i=0; i<T; i++) {
+	    ret += gretl_vector_get(z, i);
+	}
+	ret = exp(ret);
+	if (do_score) {
+	    for (i=0; i<T; i++) {
+		gretl_vector_set(df, i, ret);
+	    }
+	}
+    } else {
+	double x = exp(gretl_vector_get(z, T-1));
+
+	if (do_score) {
+	    double f2 = real_clogit_fi(T-1, k-1, r, z, df, err);
+	    gretl_matrix *df1 = NULL;
+
+	    if (!*err) {
+		df1 = gretl_vector_alloc(r);
+		if (df1 == NULL) {
+		    ret = NADBL;
+		    *err = E_ALLOC;
+		}
+	    }
+
+	    if (!*err) {
+		ret = real_clogit_fi(T-1, k, r, z, df1, err) + f2 * x;
+		for (i=0; i<T; i++) {
+		    df->val[i] *= x;
+		    df->val[i] += df1->val[i];
+		}
+		df->val[T-1] += x * f2;
+		gretl_matrix_free(df1);
+	    }
+	} else {
+	    double f2 = real_clogit_fi(T-1, k-1, r, z, NULL, err);
+
+	    if (!*err) {
+		ret = real_clogit_fi(T-1, k, r, z, NULL, err) + f2 * x;
+	    }
+	}
+    }
+
+    return ret;
+}
+
+/* FIXME add some documentation here */
+
+double clogit_fi (int T, int k, gretl_matrix *z,
+		  gretl_matrix *df, int *err)
+{
+    gretl_matrix *dfarg = NULL;
+    double ret = NADBL;
+    int r;
+
+    if (gretl_is_null_matrix(z)) {
+	*err = E_DATA;
+	return NADBL;
+    }
+
+    r = z->rows;
+
+    if (df != NULL) {
+	if (df->rows != r || df->cols != 1) {
+	    dfarg = gretl_column_vector_alloc(r);
+	    if (dfarg == NULL) {
+		*err = E_ALLOC;
+	    }
+	} else {
+	    dfarg = df;
+	}
+    }
+
+    if (!*err) {
+	ret = real_clogit_fi(T, k, r, z, dfarg, err);
+    }
+
+    if (dfarg != NULL && dfarg != df) {
+	gretl_matrix_replace_content(df, dfarg);
+	gretl_matrix_free(dfarg);
+    }
+
+    return ret;
 }
