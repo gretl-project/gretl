@@ -1000,12 +1000,12 @@ static int panel_group_boxplots (int vnum, const DATASET *dset,
     DATASET *gdset;
     int nunits, T = dset->pd;
     int *list = NULL;
-    int nv, u0, i, t, s, s0;
+    int nv, u1, i, t, s;
     int err = 0;
 
     nunits = panel_sample_size(dset);
     nv = nunits + 1;
-    u0 = dset->t1 / T;
+    u1 = 1 + dset->t1 / T;
 
     gdset = create_auxiliary_dataset(nv, T, 0);
     if (gdset == NULL) {
@@ -1018,20 +1018,18 @@ static int panel_group_boxplots (int vnum, const DATASET *dset,
 	return E_ALLOC;
     }
 
-    s0 = dset->t1 * dset->pd;
-
     /* record the name of the original variable */
     series_set_label(gdset, 1, dset->varname[vnum]);
 
     for (i=0; i<nunits; i++) {
-	sprintf(gdset->varname[i+1], "%d", u0+i+1);
-	s = s0 + i * T;
+	sprintf(gdset->varname[i+1], "%d", u1 + i);
+	s = dset->t1 + i * T;
 	for (t=0; t<T; t++) {
 	    gdset->Z[i+1][t] = dset->Z[vnum][s++];
 	}
     }
 
-    err = real_boxplots(list, gdset, NULL, u0+1, opt);
+    err = real_boxplots(list, gdset, NULL, u1, opt);
 
     destroy_dataset(gdset);
     free(list);
