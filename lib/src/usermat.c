@@ -1250,31 +1250,26 @@ user_matrix_get_determinant (gretl_matrix *m, int tmpmat,
     return d;
 }
 
-static void matrix_cannibalize (gretl_matrix *targ, gretl_matrix *src)
+static void maybe_replace_content (gretl_matrix *targ,
+				   gretl_matrix *tmp,
+				   int err)
 {
-    gretl_matrix_destroy_info(targ);
-
-    targ->rows = src->rows;
-    targ->cols = src->cols;
-
-    free(targ->val);
-    targ->val = src->val;
-    src->val = NULL;
+    if (!err) {
+	gretl_matrix_replace_content(targ, tmp);
+    }
+    gretl_matrix_free(tmp);
 }
 
 int matrix_invert_in_place (gretl_matrix *m)
 {
-    gretl_matrix *R = gretl_matrix_copy(m);
+    gretl_matrix *tmp = gretl_matrix_copy(m);
     int err = 0;
 
-    if (R == NULL) {
+    if (tmp == NULL) {
 	err = E_ALLOC;
     } else {
-	err = gretl_invert_matrix(R);
-	if (!err) {
-	    matrix_cannibalize(m, R);
-	}
-	gretl_matrix_free(R);
+	err = gretl_invert_matrix(tmp);
+	maybe_replace_content(m, tmp, err);
     }
 
     return err;
@@ -1282,17 +1277,14 @@ int matrix_invert_in_place (gretl_matrix *m)
 
 int matrix_cholesky_in_place (gretl_matrix *m)
 {
-    gretl_matrix *R = gretl_matrix_copy(m);
+    gretl_matrix *tmp = gretl_matrix_copy(m);
     int err = 0;
 
-    if (R == NULL) {
+    if (tmp == NULL) {
 	err = E_ALLOC;
     } else {
-	err = gretl_matrix_cholesky_decomp(R);
-	if (!err) {
-	    matrix_cannibalize(m, R);
-	}
-	gretl_matrix_free(R);
+	err = gretl_matrix_cholesky_decomp(tmp);
+	maybe_replace_content(m, tmp, err);
     }
 
     return err;
@@ -1300,14 +1292,13 @@ int matrix_cholesky_in_place (gretl_matrix *m)
 
 int matrix_transpose_in_place (gretl_matrix *m)
 {
-    gretl_matrix *R = gretl_matrix_copy_transpose(m);
+    gretl_matrix *tmp = gretl_matrix_copy_transpose(m);
     int err = 0;
 
-    if (R == NULL) {
+    if (tmp == NULL) {
 	err = E_ALLOC;
     } else {
-	matrix_cannibalize(m, R);
-	gretl_matrix_free(R);
+	maybe_replace_content(m, tmp, 0);
     }
 
     return err;
@@ -1315,22 +1306,17 @@ int matrix_transpose_in_place (gretl_matrix *m)
 
 int matrix_XTX_in_place (gretl_matrix *m)
 {
-    gretl_matrix *R = gretl_matrix_alloc(m->cols, m->cols);
+    gretl_matrix *tmp = gretl_matrix_alloc(m->cols, m->cols);
     int err;
 
-    if (R == NULL) {
+    if (tmp == NULL) {
 	err = E_ALLOC;
     } else {
 	err = gretl_matrix_multiply_mod(m, GRETL_MOD_TRANSPOSE,
 					m, GRETL_MOD_NONE,
-					R, GRETL_MOD_NONE);
+					tmp, GRETL_MOD_NONE);
+	maybe_replace_content(m, tmp, err);
     }
-
-    if (!err) {
-	matrix_cannibalize(m, R);
-    }
-
-    gretl_matrix_free(R);
 
     return err;
 }
@@ -1439,16 +1425,6 @@ real_user_matrix_QR_decomp (const gretl_matrix *m, gretl_matrix **Q,
     return err;
 }
 
-static void maybe_replace_content (gretl_matrix *targ,
-				   gretl_matrix *tmp,
-				   int *err)
-{
-    if (!*err) {
-	gretl_matrix_replace_content(targ, tmp);
-    }
-    gretl_matrix_free(tmp);
-}
-
 gretl_matrix *user_matrix_QR_decomp (const gretl_matrix *m,
 				     gretl_matrix *R,
 				     int *err)
@@ -1466,7 +1442,7 @@ gretl_matrix *user_matrix_QR_decomp (const gretl_matrix *m,
 
     *err = real_user_matrix_QR_decomp(m, &Q, pR);
     if (Rtmp != NULL) {
-	maybe_replace_content(R, Rtmp, err);
+	maybe_replace_content(R, Rtmp, *err);
     }
 
     return Q;
@@ -1524,13 +1500,13 @@ gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
 	    if (tall > 0) {
 		*err = gretl_matrix_realloc(Utmp, m->rows, minrc);
 	    }
-	    maybe_replace_content(U, Utmp, err);
+	    maybe_replace_content(U, Utmp, *err);
 	}
 	if (Vtmp != NULL) {
 	    if (tall < 0) {
 		*err = revise_SVD_V(&Vtmp, minrc, m->cols);
 	    }
-	    maybe_replace_content(V, Vtmp, err);
+	    maybe_replace_content(V, Vtmp, *err);
 	}
     }
 
@@ -1646,7 +1622,7 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 
 	    *err = gretl_matrix_multi_ols(Y, X, B, U, Vp);
 	    if (Vtmp != NULL) {
-		maybe_replace_content(V, Vtmp, err);
+		maybe_replace_content(V, Vtmp, *err);
 	    }
 	}
     }
@@ -1706,7 +1682,7 @@ gretl_matrix *user_matrix_rls (const gretl_matrix *Y,
 	*err = gretl_matrix_restricted_multi_ols(Y, X, R, Q, B,
 						 U, Vp);
 	if (Vtmp != NULL) {
-	    maybe_replace_content(V, Vtmp, err);
+	    maybe_replace_content(V, Vtmp, *err);
 	}
     }
 
