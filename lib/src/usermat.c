@@ -1455,21 +1455,16 @@ gretl_matrix *user_matrix_QR_decomp (const gretl_matrix *m,
 {
     gretl_matrix *Q = NULL;
     gretl_matrix *Rtmp = NULL;
-    gretl_matrix **pR = NULL;
+    gretl_matrix **pR;
 
     if (gretl_is_null_matrix(m)) {
 	*err = E_DATA;
 	return NULL;
     }
 
-    if (R != NULL) {
-	pR = &Rtmp;
-    }
+    pR = (R != NULL)? &Rtmp : NULL;
 
-    if (!*err) {
-	*err = real_user_matrix_QR_decomp(m, &Q, pR);
-    }
-
+    *err = real_user_matrix_QR_decomp(m, &Q, pR);
     if (Rtmp != NULL) {
 	maybe_replace_content(R, Rtmp, err);
     }
@@ -1509,25 +1504,17 @@ gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
     gretl_matrix *S = NULL;
     gretl_matrix *Utmp = NULL;
     gretl_matrix *Vtmp = NULL;
-    gretl_matrix **pU = NULL;
-    gretl_matrix **pV = NULL;
+    gretl_matrix **pU, **pV;
 
     if (gretl_is_null_matrix(m)) {
 	*err = E_DATA;
 	return NULL;
     }
 
-    if (U != NULL) {
-	pU = &Utmp;
-    }
+    pU = (U != NULL)? &Utmp : NULL;
+    pV = (V != NULL)? &Vtmp : NULL;
 
-    if (V != NULL) {
-	pV = &Vtmp;
-    }
-
-    if (!*err) {
-	*err = gretl_matrix_SVD(m, pU, &S, pV);
-    }
+    *err = gretl_matrix_SVD(m, pU, &S, pV);
 
     if (!*err && (Utmp != NULL || Vtmp != NULL)) {
 	int tall = m->rows - m->cols;
@@ -1681,8 +1668,6 @@ gretl_matrix *user_matrix_rls (const gretl_matrix *Y,
 			       int *err)
 {
     gretl_matrix *B = NULL;
-    gretl_matrix *Vtmp = NULL;
-    gretl_matrix **Vp = NULL;
     int g, k, T;
 
     if (gretl_is_null_matrix(Y) || gretl_is_null_matrix(X)) {
@@ -1706,10 +1691,6 @@ gretl_matrix *user_matrix_rls (const gretl_matrix *Y,
 	}
     }
 
-    if (V != NULL) {
-	Vp = &Vtmp;
-    }
-
     if (!*err) {
 	B = gretl_matrix_alloc(k, g);
 	if (B == NULL) {
@@ -1719,17 +1700,19 @@ gretl_matrix *user_matrix_rls (const gretl_matrix *Y,
 
     if (!*err) {
 	/* note: &V will actually be M (X'X)^{-1} M' */
+	gretl_matrix *Vtmp = NULL;
+	gretl_matrix **Vp = (V != NULL)? &Vtmp : NULL;
+
 	*err = gretl_matrix_restricted_multi_ols(Y, X, R, Q, B,
 						 U, Vp);
+	if (Vtmp != NULL) {
+	    maybe_replace_content(V, Vtmp, err);
+	}
     }
 
     if (*err) {
 	gretl_matrix_free(B);
 	B = NULL;
-    }
-
-    if (Vtmp != NULL) {
-	maybe_replace_content(V, Vtmp, err);
     }
 
     return B;
