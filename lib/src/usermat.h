@@ -20,8 +20,6 @@
 #ifndef USERMAT_H_
 #define USERMAT_H_
 
-#include "uservar.h"
-
 #define MSEL_MAX -999
 
 enum {
@@ -108,18 +106,18 @@ gretl_matrix *user_matrix_vech (const gretl_matrix *m, int *err);
 gretl_matrix *user_matrix_unvech (const gretl_matrix *m, int *err);
 
 gretl_matrix *user_matrix_QR_decomp (const gretl_matrix *m,
-				     user_var *uv,
+				     gretl_matrix *R,
 				     int *err);
 
 gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
-			       user_var *uU,
-			       user_var *uV,
+			       gretl_matrix *U,
+			       gretl_matrix *V,
 			       int *err);
 
 gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 			       const gretl_matrix *X,
-			       user_var *uU,
-			       user_var *uV,
+			       gretl_matrix *U,
+			       gretl_matrix *V,
 			       gretlopt opt,
 			       int *err);
 
@@ -127,25 +125,25 @@ gretl_matrix *user_matrix_rls (const gretl_matrix *Y,
 			       const gretl_matrix *X,
 			       const gretl_matrix *R,
 			       const gretl_matrix *Q,
-			       user_var *uU,
-			       user_var *uV,
+			       gretl_matrix *U,
+			       gretl_matrix *V,
 			       int *err);
 
 gretl_matrix *user_matrix_GHK (const gretl_matrix *C,
 			       const gretl_matrix *A,
 			       const gretl_matrix *B,
 			       const gretl_matrix *U,
-			       user_var *udP,
+			       gretl_matrix *dP,
 			       int *err);
 
 gretl_matrix *
 user_matrix_eigen_analysis (const gretl_matrix *m,
-			    user_var *uv,
+			    gretl_matrix *R,
 			    int symm, int *err);
 
 gretl_matrix *user_gensymm_eigenvals (const gretl_matrix *A,
 				      const gretl_matrix *B,
-				      user_var *uV,
+				      gretl_matrix *V,
 				      int *err);
 
 double matrix_get_element (const gretl_matrix *M, int i, int *err);

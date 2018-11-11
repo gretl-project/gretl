@@ -11715,7 +11715,7 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
  * @q: right-hand restriction matrix.
  * @B: matrix to hold coefficient estimates, k x g.
  * @U: matrix to hold residuals (T x g), if wanted.
- * @W: matrix to hold the RLS counterpart to (X'X)^{-1},
+ * @pW: pointer to matrix to hold the RLS counterpart to (X'X)^{-1},
  * if wanted.
  *
  * Computes LS estimates restricted by @R and @q, putting the
@@ -11734,7 +11734,7 @@ gretl_matrix_restricted_multi_ols (const gretl_matrix *Y,
 				   const gretl_matrix *q,
 				   gretl_matrix *B,
 				   gretl_matrix *U,
-				   gretl_matrix **W)
+				   gretl_matrix **pW)
 {
     gretl_matrix_block *M;
     gretl_matrix *XTX, *RXR, *XYq;
@@ -11808,8 +11808,8 @@ gretl_matrix_restricted_multi_ols (const gretl_matrix *Y,
     gretl_matrix_inscribe_matrix(RXR, R, 0, nc, GRETL_MOD_TRANSPOSE);
     gretl_matrix_inscribe_matrix(XYq, q, nc, 0, GRETL_MOD_NONE);
 
-    if (W != NULL) {
-	/* keep a copy for inversion */
+    if (pW != NULL) {
+	/* keep a copy of @V for inversion */
 	V = gretl_matrix_copy(RXR);
 	if (V == NULL) {
 	    err = E_ALLOC;
@@ -11834,12 +11834,12 @@ gretl_matrix_restricted_multi_ols (const gretl_matrix *Y,
 				  U, GRETL_MOD_DECREMENT);
     }
 
-    if (!err && W != NULL) {
+    if (!err && pW != NULL) {
 	/* compute variance-related matrix */
 	err = gretl_invert_general_matrix(V);
 	if (!err) {
-	    *W = gretl_matrix_alloc(nc, nc);
-	    if (*W == NULL) {
+	    *pW = gretl_matrix_alloc(nc, nc);
+	    if (*pW == NULL) {
 		err = E_ALLOC;
 	    } else {
 		double wij;
@@ -11848,7 +11848,7 @@ gretl_matrix_restricted_multi_ols (const gretl_matrix *Y,
 		for (j=0; j<nc; j++) {
 		    for (i=0; i<nc; i++) {
 			wij = gretl_matrix_get(V, i, j);
-			gretl_matrix_set(*W, i, j, wij);
+			gretl_matrix_set(*pW, i, j, wij);
 		    }
 		}
 	    }
