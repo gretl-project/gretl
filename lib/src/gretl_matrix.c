@@ -570,6 +570,10 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
     int n = rows * cols;
     double *x;
 
+    if (m == NULL) {
+	return E_DATA;
+    }
+
     if (rows == m->rows && cols == m->cols) {
 	/* no-op */
 	return 0;
