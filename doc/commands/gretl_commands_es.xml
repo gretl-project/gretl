@@ -7021,6 +7021,10 @@
 	  <flag>--quiet</flag>
 	  <effect>No presenta los resultados</effect>
 	</option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>Presenta los resultados por unidad</effect>
+	</option>
       </options>
       <examples>
 	<example>levinlin 0 y</example>
@@ -7039,19 +7043,17 @@
 	AR(1), aunque en otros aspectos se permite que las propiedades
 	estadísticas de las series varíen de unos individuos a otros.)
       </para>
-	
-      <para context="cli">
+	    <para context="cli">
 	Por defecto, las regresiones del contraste ADF incluyen una constante.
 	Para eliminar la constante utiliza la opción <opt>nc</opt> y para
 	incluirla junto con una tendencia lineal utiliza la opción <opt>ct</opt>.
 	(Consulta la instrucción <cmdref targ="adf"/> para una explicación
 	de las regresiones del ADF.)
       </para>
-
       <para context="cli">
 	Puedes indicar el orden de retardo con <repl>orden</repl> (no negativo)
 	para hacer el contraste (controlando así el número de retardos de la variable
-	dependiente a incluir en las regresiones del ADF) con una de estas dos formas.
+	dependiente a incluir en las regresiones del ADF) de una de estas dos formas.
 	Cuando indicas un valor escalar, esto se aplica a todos los individuos
 	del panel. La alternativa es proporcionar una matriz que contenga un
 	orden específico de retardos para cada individuo; esta debe ser
@@ -7060,7 +7062,18 @@
 	utilizando llaves, como se ilustró en el último ejemplo de
 	arriba.
       </para>
-
+      <para context="cli">
+	Cuando indicas la opción <opt>verbose</opt>, se presentan los
+	siguientes resultados para cada unidad del panel:
+	<lit>delta</lit>, el coeficiente del nivel retardado en cada
+	regresión ADF; <lit>s2e</lit>, la varianza estimada de las
+	innovaciones; y <lit>s2y</lit>, la varianza estimada a largo
+	plazo de la serie diferenciada.
+      </para>
+      <para>
+	Observa que los contrastes de raíz unitaria en un panel también puedes hacerlos
+	utilizando las instrucciones <cmdref targ="adf"/> y <cmdref targ="kpss"/>.
+      </para>
     </description>
 
     <gui-access>

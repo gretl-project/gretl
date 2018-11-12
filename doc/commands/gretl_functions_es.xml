@@ -1396,9 +1396,40 @@
 	</para>
 	<para>
 	  <seelist>
-            <fncref targ="cos"/>
-            <fncref targ="sin"/>
+	    <fncref targ="tan"/>
+	    <fncref targ="atan2"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="atan2" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">y</fnarg>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devuelve un resultado (del tipo del argumento) con el valor principal
+	  de la arco tanxente de <argname>y</argname>/<argname>x</argname>,
+	  utilizando los signos de los dos argumentos indicados para determinar
+	  el cuadrante del resultado. El valor que se devuelve está en radianes,
+	  dentro del rango [&minus;&pi;, &pi;].
+	</para>
+	<para>
+	  Si los dos argumentos son de tipos difirentes, el tipo del resultado
+	  es el mismo que el del <quote>mayor</quote> de los dos, donde la jerarquía
+	  es matriz &gt; serie &gt; escalar. Por ejemplo, si <argname>y</argname>
+	  es un escalar, y <argname>x</argname> es un vector de dimensión
+	  <math>n</math> (o viceversa), el resultado es un vector de dimensión
+	  <math>n</math>. Ten en cuenta que los argumentos de una matriz
+	  deben ser vectores; y que, si ningún argumento es un escalar, los dos
+	  argumentos deben ser de la misma longitud.
+	</para>
+	<para>
+	  <seelist>
             <fncref targ="tan"/>
+            <fncref targ="tanh"/>
 	  </seelist>
 	</para>
       </description>

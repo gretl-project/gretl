@@ -7021,6 +7021,10 @@
 	  <flag>--quiet</flag>
 	  <effect>Non presenta os resultados</effect>
 	</option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>Presenta os resultados por unidade</effect>
+	</option>
       </options>
       <examples>
 	<example>levinlin 0 y</example>
@@ -7039,19 +7043,17 @@
 	AR(1), aínda que noutros aspectos se permite que as propiedades
 	estatísticas das series varíen duns individuos a outros.)
       </para>
-	
-      <para context="cli">
+	    <para context="cli">
 	Por defecto, as regresións da proba ADF inclúen unha constante.
 	Para eliminar a constante utiliza a opción <opt>nc</opt> e para
 	incluíla xunto cunha tendencia linear utiliza a opción <opt>ct</opt>.
 	(Consulta a instrución <cmdref targ="adf"/> para unha explicación
 	das regresións do ADF.)
       </para>
-
       <para context="cli">
 	Podes indicar o nivel de retardo con <repl>nivel</repl> (non negativo)
 	para facer a proba (controlando así o número de retardos da variable
-	dependente a incluír nas regresións do ADF) con unha destas dúas formas.
+	dependente a incluír nas regresións do ADF) dunha destas dúas formas.
 	Cando indicas un valor escalar, isto aplícase a tódolos individuos
 	do panel. A alternativa é proporcionar unha matriz que conteña un
 	nivel específico de retardos para cada individuo; esta debe de ser
@@ -7060,7 +7062,18 @@
 	utilizando chaves, como se ilustrou no último exemplo de
 	arriba.
       </para>
-
+      <para context="cli">
+	Cando indicas a opción <opt>verbose</opt>, preséntanse os
+	seguintes resultados para cada unidade do panel:
+	<lit>delta</lit>, o coeficiente do nivel retardado en cada
+	regresión ADF; <lit>s2e</lit>, a varianza estimada das
+	innovacións; e <lit>s2y</lit>, a varianza estimada a longo
+	prazo da serie diferenciada.
+      </para>
+      <para>
+	Cae na conta de que as probas de raíz unitaria nun panel tamén podes realizalas
+	utilizando as instrucións <cmdref targ="adf"/> e <cmdref targ="kpss"/>.
+      </para>
     </description>
 
     <gui-access>
