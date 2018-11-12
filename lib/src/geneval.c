@@ -2631,7 +2631,7 @@ static gretl_matrix *calc_get_matrix (gretl_matrix **pM,
 				      int r, int c)
 {
     if (*pM == NULL) {
-	/* just get on with the allocation */
+	/* allocate from scratch */
 	return gretl_matrix_alloc(r, c);
     } else if ((*pM)->rows == r && (*pM)->cols == c) {
 	/* reusable as-is */
@@ -2669,8 +2669,8 @@ static int real_matrix_calc (const gretl_matrix *A,
 	    return E_NONCONF;
 	}
 	if (op == B_MUL || op == B_TRMUL) {
-	    *pM = nullmat_multiply(A, B, op, &err);
-	    return err;
+	    C = nullmat_multiply(A, B, op, &err);
+	    goto finish;
 	}
     }
 
@@ -2838,6 +2838,8 @@ static int real_matrix_calc (const gretl_matrix *A,
 	    gretl_matrix_set_t2(C, Bt2);
 	}
     }
+
+ finish:
 
     if (*pM != NULL && *pM != C) {
 	/* we neither freed nor reused *pM */
@@ -4491,7 +4493,9 @@ static NODE *submatrix_node (NODE *l, NODE *r, parser *p)
 	if (!p->err) {
 	    if (spec->type[0] == SEL_CONTIG) {
 		ret = aux_matrix_node(p);
-		ret->v.m = matrix_get_chunk(m, spec, &p->err);
+		if (!p->err) {
+		    ret->v.m = matrix_get_chunk(m, spec, &p->err);
+		}
 	    } else if (spec->type[0] == SEL_ELEMENT) {
 		int i = mspec_get_element(spec);
 		double x = matrix_get_element(m, i, &p->err);
@@ -8850,9 +8854,6 @@ static NODE *eval_Rfunc (NODE *t, parser *p)
 	    } else if (rtype == GRETL_TYPE_MATRIX) {
 		ret = aux_matrix_node(p);
 		if (ret != NULL) {
-		    if (is_tmp_node(ret)) {
-			gretl_matrix_free(ret->v.m);
-		    }
 		    ret->v.m = (gretl_matrix *) retp;
 		}
 	    } else if (rtype == GRETL_TYPE_STRING) {
@@ -10927,9 +10928,6 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	reset_p_aux(p, save_aux);
 	ret = aux_matrix_node(p);
 	if (!p->err) {
-	    if (ret->v.m != NULL) {
-		gretl_matrix_free(ret->v.m);
-	    }
 	    ret->v.m = A;
 	}
     }
@@ -11749,11 +11747,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    reset_p_aux(p, save_aux);
 	    ret = aux_matrix_node(p);
 	}
-
 	if (!p->err) {
-	    if (ret->v.m != NULL) {
-		gretl_matrix_free(ret->v.m);
-	    }
 	    ret->v.m = gretl_matrix_covariogram(X, u, w, maxlag, &p->err);
 	}
     } else if (t->t == F_MOLS || t->t == F_MPOLS) {
@@ -11796,11 +11790,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    reset_p_aux(p, save_aux);
 	    ret = aux_matrix_node(p);
 	}
-
 	if (!p->err) {
-	    if (ret->v.m != NULL) {
-		gretl_matrix_free(ret->v.m);
-	    }
 	    ret->v.m = user_matrix_ols(M[0], M[1], U, V, opt, &p->err);
 	}
 	if (freemat[0]) gretl_matrix_free(M[0]);
@@ -11839,9 +11829,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    ret = aux_matrix_node(p);
 	}
 	if (!p->err) {
-	    if (ret->v.m != NULL) {
-		gretl_matrix_free(ret->v.m);
-	    }
 	    ret->v.m = user_matrix_rls(M[0], M[1], M[2], M[3], U, V, &p->err);
 	}
     } else if (t->t == F_NRMAX) {
@@ -11991,9 +11978,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    ret = aux_matrix_node(p);
 	}
 	if (!p->err) {
-	    if (ret->v.m != NULL) {
-		gretl_matrix_free(ret->v.m);
-	    }
 	    if (dP == NULL) {
 		ret->v.m = gretl_GHK(M[0], M[1], M[2], M[3], &p->err);
 	    } else {
@@ -12031,9 +12015,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    ret = aux_matrix_node(p);
 	}
 	if (!p->err) {
-	    if (ret->v.m != NULL) {
-		gretl_matrix_free(ret->v.m);
-	    }
 	    ret->v.m = gretl_quadrule_matrix_new(order, method,
 						 a, b, &p->err);
 	}
@@ -12076,9 +12057,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    /* convert indices to zero-based */
 	    targ--;
 	    shock--;
-	    if (ret->v.m != NULL) {
-		gretl_matrix_free(ret->v.m);
-	    }
 	    if (vb != NULL) {
 		ret->v.m = gretl_IRF_from_bundle(vb, targ, shock, alpha,
 						 p->dset, &p->err);
@@ -12149,9 +12127,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    ret = aux_matrix_node(p);
 	}
 	if (!p->err) {
-	    if (ret->v.m != NULL) {
-		gretl_matrix_free(ret->v.m);
-	    }
 	    ret->v.m = last_model_get_boot_ci(cnum, p->dset, B, alpha, method,
 					      studentize, &p->err);
 	}
@@ -12815,11 +12790,7 @@ static NODE *eval_kalman_bundle_func (NODE *t, parser *p)
 	    reset_p_aux(p, save_aux);
 	    ret = aux_matrix_node(p);
 	}
-
 	if (!p->err) {
-	    if (ret->v.m != NULL) {
-		gretl_matrix_free(ret->v.m);
-	    }
 	    ret->v.m = kalman_bundle_simulate(b, U, get_state,
 					      p->prn, &p->err);
 	}
@@ -12840,11 +12811,7 @@ static NODE *kalman_data_node (NODE *l, NODE *r, parser *p)
 	reset_p_aux(p, save_aux);
 	ret = aux_matrix_node(p);
     }
-
     if (!p->err) {
-	if (ret->v.m != NULL) {
-	    gretl_matrix_free(ret->v.m);
-	}
 	ret->v.m = kalman_bundle_simdata(b, r->v.m, p->prn, &p->err);
     }
 

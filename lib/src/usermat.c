@@ -1762,6 +1762,7 @@ user_matrix_eigen_analysis (const gretl_matrix *m,
     }
 
     if (R != NULL) {
+	/* computing eigenvectors */
 	vecs = 1;
     }
 
@@ -1782,7 +1783,7 @@ user_matrix_eigen_analysis (const gretl_matrix *m,
     }
 
     if (!*err && vecs) {
-	gretl_matrix_replace_content(R, C);
+	maybe_replace_content(R, C, 0);
     }
 
     if (!vecs) {
