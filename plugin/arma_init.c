@@ -70,13 +70,6 @@ static int init_transform_const (arma_info *ainfo)
 	!arma_cml_init(ainfo);
 }
 
-/* try to avoid numerical problems when doing exact ML:
-   arrange for scaling of the dependent variable if it's
-   "too big" or "too small"
-*/
-
-#if 1 /* experimental!! */
-
 void maybe_set_yscale (arma_info *ainfo)
 {
     double ybar, sdy;
@@ -98,7 +91,7 @@ void maybe_set_yscale (arma_info *ainfo)
 	/* try to catch cases where (a) the overall scale is
 	   too big or (b) the coefficient of variation is
 	   too small: in such cases set up conversion to
-	   (y - ybar) / sdy + 1.
+	   (y - ybar) / sdy + 1 = (y - (ybar - sdy)) * 1/sdy.
 	*/
 	double abs_ybar = fabs(ybar);
 
@@ -118,32 +111,6 @@ void maybe_set_yscale (arma_info *ainfo)
 		ainfo->yshift, ainfo->yscale);
     }
 }
-
-#else
-
-void maybe_set_yscale (arma_info *ainfo)
-{
-    double ybar = gretl_mean(ainfo->t1, ainfo->t2, ainfo->y);
-    double abs_ybar = fabs(ybar);
-
-    if (abs_ybar > 250) {
-	if (arima_levels(ainfo)) {
-	    set_arma_avg_ll(ainfo); /* is this a good idea? */
-	} else {
-	    ainfo->yscale = 10 / abs_ybar;
-	}
-    } else if (abs_ybar < 0.01 && abs_ybar > 1.0e-9) {
-	/* avoid too small denominators */
-	ainfo->yscale = 10 / abs_ybar;
-    }
-
-    if (ainfo->prn != NULL && ainfo->yscale != 1.0) {
-	pputc(ainfo->prn, '\n');
-	pprintf(ainfo->prn, _("Scaling y by %g\n"), ainfo->yscale);
-    }
-}
-
-#endif
 
 #define apply_yscaling(a,x) (arma_exact_ml(a) && \
 			     !arma_cml_init(a) && \
