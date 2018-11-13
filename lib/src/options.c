@@ -158,6 +158,7 @@ struct gretl_option gretl_opts[] = {
     { CHOW,     OPT_D, "dummy", 0 },
     { CHOW,     OPT_L, "limit-to", 2 },
     { CLEAR,    OPT_D, "dataset", 0 },
+    { COINT,    OPT_D, "seasonals", 0 },
     { COINT,    OPT_E, "test-down", 1 },
     { COINT,    OPT_N, "nc", 0 },
     { COINT,    OPT_R, "ctt", 0 },

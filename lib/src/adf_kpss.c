@@ -277,7 +277,7 @@ static int real_adf_form_list (adf_info *ainfo,
 	int vk = laggenr(ainfo->list[1], k, dset);
 
 	if (vk < 0) {
-	    fprintf(stderr, "Error generating lag variable\n");
+	    fprintf(stderr, "Error generating lags\n");
 	    err = E_DATA;
 	} else {
 	    ainfo->list[j++] = vk;
@@ -1271,7 +1271,9 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	*/
 	int verbose = (opt & OPT_V);
 	int silent = (opt & OPT_I);
-
+#if 0
+	int dummies = (opt & OPT_D);
+#endif
 	eg_opt = opt;
 	opt = OPT_N;
 	if (silent) {
@@ -1279,6 +1281,11 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	} else if (verbose) {
 	    opt |= OPT_V;
 	}
+#if 0 /* do we want this? */
+	if (dummies) {
+	    opt |= OPT_D;
+	}
+#endif
     }
 
     if (opt & OPT_F) {
@@ -2424,6 +2431,10 @@ coint_check_opts (gretlopt opt, int *detcode, gretlopt *adf_opt)
     } else if (opt & OPT_R) {
 	*detcode = UR_QUAD_TREND;
 	*adf_opt = OPT_R;
+    }
+
+    if (opt & OPT_D) {
+	*adf_opt |= OPT_D;
     }
 
     if (opt & OPT_E) {
