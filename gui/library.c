@@ -902,9 +902,21 @@ int do_coint (selector *sr)
     PRN *prn;
     int err = 0;
 
-    if (buf == NULL) return 1;
+    if (buf == NULL) {
+	return 1;
+    }
 
     libcmd.opt = selector_get_opts(sr);
+
+    if (action == COINT && (libcmd.opt & OPT_E)) {
+	/* try for a parameter to the --test-down option */
+	const char *s = selector_get_extra_data(sr);
+
+	if (s != NULL) {
+	    push_option_param(action, OPT_E, gretl_strdup(s));
+	}
+    }
+
     flagstr = print_flags(libcmd.opt, action);
 
     if (action == COINT) {
