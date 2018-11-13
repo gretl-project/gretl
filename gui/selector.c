@@ -6045,6 +6045,13 @@ static void build_selector_switches (selector *sr)
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_S, 0);
 	tmp = gtk_check_button_new_with_label(_("Show details of regressions"));
 	pack_switch(tmp, sr, verbose, FALSE, OPT_V, 0);
+	tmp = gtk_check_button_new_with_label(_("Include seasonal dummies"));
+	pack_switch(tmp, sr,
+		    want_seasonals && (dataset->pd == 4 || dataset->pd == 12),
+		    FALSE, OPT_D, 0);
+	if (dataset->pd != 4 && dataset->pd != 12) {
+	    gtk_widget_set_sensitive(tmp, FALSE);
+	}
     } else if (sr->ci == PANEL_WLS) {
 	tmp = gtk_check_button_new_with_label(_("Iterated weighted least squares"));
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_I, 0);

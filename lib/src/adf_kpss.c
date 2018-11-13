@@ -835,6 +835,14 @@ static int ic_adjust_order (adf_info *ainfo, int kmethod,
     }
 
     for (k=kmax; k>=0; k--) {
+#if 0
+	int i, vi;
+	fprintf(stderr, "\nk = %d\n", k);
+	for (i=1; i<=tmplist[0]; i++) {
+	    vi = tmplist[i];
+	    fprintf(stderr, "  %d: %s\n", vi, dset->varname[vi]);
+	}
+#endif
 	kmod = lsq(tmplist, dset, OLS, kmod_opt);
 	if (!kmod.errcode && kmod.dfd == 0) {
 	    kmod.errcode = E_DF;
@@ -1271,9 +1279,7 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	*/
 	int verbose = (opt & OPT_V);
 	int silent = (opt & OPT_I);
-#if 0
-	int dummies = (opt & OPT_D);
-#endif
+
 	eg_opt = opt;
 	opt = OPT_N;
 	if (silent) {
@@ -1281,11 +1287,6 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	} else if (verbose) {
 	    opt |= OPT_V;
 	}
-#if 0 /* do we want this? */
-	if (dummies) {
-	    opt |= OPT_D;
-	}
-#endif
     }
 
     if (opt & OPT_F) {
@@ -2351,10 +2352,12 @@ int kpss_test (int order, const int *list, DATASET *dset,
     return err;
 }
 
-static int *make_coint_list (const int *list, int detcode, int *nv,
+static int *make_coint_list (const int *list, int detcode,
+			     gretlopt opt, int *nv,
 			     DATASET *dset, int *err)
 {
     int *clist = NULL;
+    int nseas = 0;
     int ifc = 0;
     int i, j = 1;
 
@@ -2373,8 +2376,13 @@ static int *make_coint_list (const int *list, int detcode, int *nv,
 	return NULL;
     }
 
+    /* space for seasonals, if applicable */
+    if (!*err && (opt & OPT_D) && dset->pd > 1) {
+	nseas = dset->pd - 1;
+    }
+
     /* allocate list for cointegrating regression */
-    clist = gretl_list_new(*nv + detcode - 1);
+    clist = gretl_list_new(*nv + detcode - 1 + nseas);
     if (clist == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -2405,7 +2413,19 @@ static int *make_coint_list (const int *list, int detcode, int *nv,
 
     /* add const, if wanted */
     if (!*err && detcode != UR_NO_CONST) {
-	clist[j] = 0;
+	clist[j++] = 0;
+    }
+
+    /* add seasonals, if wanted */
+    if (nseas > 0) {
+	int *slist = seasonals_list(dset, dset->pd, 0, err);
+
+	if (!*err) {
+	    for (i=0; i<nseas; i++) {
+		clist[j++] = slist[i+1];
+	    }
+	    free(slist);
+	}
     }
 
     return clist;
@@ -2542,7 +2562,7 @@ int engle_granger_test (int order, const int *list, DATASET *dset,
 	return err;
     }
 
-    clist = make_coint_list(list, detcode, &nv, dset, &err);
+    clist = make_coint_list(list, detcode, opt, &nv, dset, &err);
     if (err) {
 	return err;
     }
