@@ -1,32 +1,32 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #define ADF_DEBUG 0
 #define KPSS_DEBUG 0
 
-#include "libgretl.h" 
+#include "libgretl.h"
 #include "transforms.h"
 
 /**
  * SECTION:adf_kpss
  * @short_description: unit root and cointegration tests
- * @title: ADF, KPSS, Engle-Granger 
+ * @title: ADF, KPSS, Engle-Granger
  * @include: libgretl.h
  *
  * Implementations of the (Augmented) Dickey-Fuller test
@@ -169,7 +169,7 @@ static int GLS_demean_detrend (double *y, int offset,
     } else {
 	ainfo->g = b;
     }
-    
+
     return err;
 }
 
@@ -207,7 +207,7 @@ static int OLS_demean_detrend (double *y, int offset,
     for (t=0; t<offset; t++) {
 	y[t] = NADBL;
     }
-    y += offset;    
+    y += offset;
 
     for (t=0; t<T; t++) {
 	gretl_vector_set(yd, t, y[t]);
@@ -239,7 +239,7 @@ static int OLS_demean_detrend (double *y, int offset,
     gretl_matrix_free(yd);
     gretl_matrix_free(Xd);
     gretl_matrix_free(b);
-    
+
     return err;
 }
 
@@ -265,7 +265,7 @@ static int real_adf_form_list (adf_info *ainfo,
     }
 
     /* generate lag 1 of series @v: the basic RHS series */
-    ainfo->list[2] = laggenr(v, 1, dset); 
+    ainfo->list[2] = laggenr(v, 1, dset);
     if (ainfo->list[2] < 0) {
 	dset->t1 = save_t1;
 	return E_DATA;
@@ -281,7 +281,7 @@ static int real_adf_form_list (adf_info *ainfo,
 	    err = E_DATA;
 	} else {
 	    ainfo->list[j++] = vk;
-	} 
+	}
     }
 
     if (!err && ainfo->nseas > 0) {
@@ -329,7 +329,7 @@ static int adf_y_offset (adf_info *ainfo, int v, DATASET *dset)
     fprintf(stderr, "adf_y_offset: dset->t1=%d, order=%d, offset=%d\n",
 	    dset->t1, ainfo->order, offset);
 #endif
-    
+
     return offset;
 }
 
@@ -349,7 +349,7 @@ static int adf_prepare_vars (adf_info *ainfo, DATASET *dset,
     if (ainfo->list == NULL) {
 	/* the max number of terms (quadratic trend case) */
 	int len = 5 + ainfo->nseas + ainfo->order;
-	
+
 	ainfo->list = gretl_list_new(len);
 	if (ainfo->list == NULL) {
 	    return E_ALLOC;
@@ -368,19 +368,19 @@ static int adf_prepare_vars (adf_info *ainfo, DATASET *dset,
 	}
 
 	err = dataset_add_series(dset, 1);
-	
+
 	if (!err) {
 	    int offset = adf_y_offset(ainfo, v, dset);
 	    int T = dset->t2 - offset + 1;
 
 	    err = OLS_demean_detrend(dset->Z[v], offset, T, det);
 	}
-	
+
 	if (!err) {
 	    /* replace with OLS-detrended version */
 	    strcpy(dset->varname[v], "ydetols");
 	    ainfo->altv = v;
-	}	
+	}
     } else if (opt & OPT_G) {
 	/* GLS adjustment is wanted */
 	DetCode det = (opt & OPT_T)? UR_TREND : UR_CONST;
@@ -394,7 +394,7 @@ static int adf_prepare_vars (adf_info *ainfo, DATASET *dset,
 	    v = dset->v;
 	    err = dataset_add_series(dset, 1);
 	}
-	
+
 	if (!err) {
 	    int offset = adf_y_offset(ainfo, v, dset);
 	    int T = dset->t2 - offset + 1;
@@ -402,7 +402,7 @@ static int adf_prepare_vars (adf_info *ainfo, DATASET *dset,
 	    err = GLS_demean_detrend(dset->Z[v], offset, T,
 				     det, ainfo);
 	}
-	
+
 	if (!err) {
 	    /* replace with GLS-detrended version */
 	    strcpy(dset->varname[v], "ydetrend");
@@ -490,7 +490,7 @@ static void show_lags_test (MODEL *pmod, int order, PRN *prn)
 
 	if (!na(F)) {
 	    pprintf(prn, "  %s: F(%d, %d) = %.3f [%.4f]\n",
-		    _("lagged differences"), order, pmod->dfd, F, 
+		    _("lagged differences"), order, pmod->dfd, F,
 		    snedecor_cdf_comp(order, pmod->dfd, F));
 	}
 
@@ -509,7 +509,7 @@ static const char *test_down_string (int i, gretlopt opt)
 	}
     } else {
 	int gls = (opt & OPT_G);
-	
+
 	if (i == k_BIC) {
 	    return gls ? _("modified BIC") : _("BIC");
 	} else if (i == k_TSTAT) {
@@ -522,7 +522,7 @@ static const char *test_down_string (int i, gretlopt opt)
 }
 
 static void DF_header (const char *s, int p, int pmax,
-		       int test_down, gretlopt opt, 
+		       int test_down, gretlopt opt,
 		       PRN *prn)
 {
     pputc(prn, '\n');
@@ -624,10 +624,10 @@ static void print_adf_results (adf_info *ainfo, MODEL *dfmod,
     } else {
 	int asy = (ainfo->order > 0 || (opt & OPT_G));
 
-	sprintf(pvstr, "%s %.4g", 
-		(asy)? _("asymptotic p-value") : _("p-value"), 
+	sprintf(pvstr, "%s %.4g",
+		(asy)? _("asymptotic p-value") : _("p-value"),
 		ainfo->pval);
-    } 
+    }
 
     if (*blurb_done == 0) {
 	DF_header(ainfo->vname, ainfo->order, ainfo->kmax,
@@ -643,8 +643,20 @@ static void print_adf_results (adf_info *ainfo, MODEL *dfmod,
     }
 
     if (ainfo->flags & ADF_EG_RESIDS) {
-	/* last step of Engle-Granger test */
-	pprintf(prn, "  %s: %s\n", _("model"), 
+	/* last step of Engle-Granger test: IS THIS RIGHT? */
+	pprintf(prn, "  %s ", _(DF_test_string(0)));
+	pputc(prn, '\n');
+	if (test_down) {
+	    pputs(prn, "  ");
+	    if (ainfo->order == 1) {
+		pprintf(prn, _("including one lag of (1-L)%s"), ainfo->vname);
+	    } else {
+		pprintf(prn, _("including %d lags of (1-L)%s"),
+			ainfo->order, ainfo->vname);
+	    }
+	    pputc(prn, '\n');
+	}
+	pprintf(prn, "  %s: %s\n", _("model"),
 		(ainfo->order > 0)? ADF_model_string(0) :
 		DF_model_string(0));
     } else {
@@ -663,7 +675,7 @@ static void print_adf_results (adf_info *ainfo, MODEL *dfmod,
 	    }
 	    pputc(prn, '\n');
 	}
-	pprintf(prn, "  %s: %s\n", _("model"), 
+	pprintf(prn, "  %s: %s\n", _("model"),
 		(ainfo->order > 0)? ADF_model_string(i) :
 		DF_model_string(i));
     }
@@ -685,20 +697,20 @@ static void print_adf_results (adf_info *ainfo, MODEL *dfmod,
 	get_df_gls_ct_cval(ainfo->T, c);
 	pprintf(prn, "\n  %*s    ", TRANSLATED_WIDTH(_("Critical values")), " ");
 	pprintf(prn, "%g%%     %g%%     %g%%     %g%%\n", 10.0, 5.0, 2.5, 1.0);
-	pprintf(prn, "  %s: %.2f   %.2f   %.2f   %.2f\n", 
+	pprintf(prn, "  %s: %.2f   %.2f   %.2f   %.2f\n",
 		_("Critical values"), c[0], c[1], c[2], c[3]);
     } else {
 	pprintf(prn, "  %s\n", pvstr);
     }
 
     if (!na(dfmod->rho)) {
-	pprintf(prn, "  %s: %.3f\n", _("1st-order autocorrelation coeff. for e"), 
+	pprintf(prn, "  %s: %.3f\n", _("1st-order autocorrelation coeff. for e"),
 		dfmod->rho);
     }
 
     if (ainfo->order > 1) {
 	show_lags_test(dfmod, ainfo->order, prn);
-    } 
+    }
 }
 
 /* test the lag order down using the t-statistic criterion */
@@ -764,7 +776,7 @@ static double get_MIC (MODEL *pmod, int k, double sum_ylag2,
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	s2k += pmod->uhat[t] * pmod->uhat[t];
     }
-    
+
     s2k /= pmod->nobs;
     ttk = g * g * sum_ylag2 / s2k;
     CT = kmethod == k_BIC ? log(T) : 2.0;
@@ -789,8 +801,8 @@ static double get_sum_y2 (adf_info *ainfo, MODEL *pmod,
 }
 
 /* Using modified information criterion, as per Ng and Perron,
-   "Lag Length Selection and the Construction of Unit Root Tests 
-   with Good Size and Power", Econometrica 69/6, Nov 2001, pp. 
+   "Lag Length Selection and the Construction of Unit Root Tests
+   with Good Size and Power", Econometrica 69/6, Nov 2001, pp.
    1519-1554, for the GLS case -- otherwise plain IC (as of
    2015-03-31).
 */
@@ -871,7 +883,7 @@ static int ic_adjust_order (adf_info *ainfo, int kmethod,
 		pputc(prn, '\n');
 	    }
 	    pprintf(prn, "  k = %2d: %s = %#g\n", k, tag, IC);
-	}	    
+	}
 	clear_model(&kmod);
 	gretl_list_delete_at_pos(tmplist, k + 2);
     }
@@ -917,8 +929,8 @@ static void copy_list_values (int *targ, const int *src)
  * @opt: give OPT_G if GLS adjustment was applied in
  * the test from which @tau was obtained.
  *
- * Retrieves the p-value for @tau from the Dickey–Fuller 
- * unit-root test or the Engle–Granger cointegration 
+ * Retrieves the p-value for @tau from the Dickey–Fuller
+ * unit-root test or the Engle–Granger cointegration
  * test, as per James MacKinnon (1996).
  *
  * Returns: p-value, or %NADBL on failure.
@@ -931,7 +943,7 @@ double get_urc_pvalue (double tau, int n, int niv, int itv,
     double (*mackinnon_pvalue)(double, int, int, int, char *);
     double pval = NADBL;
     static int nodata;
-    
+
     if (nodata) {
 	return pval;
     }
@@ -957,7 +969,7 @@ double get_urc_pvalue (double tau, int n, int niv, int itv,
 
     if (*datapath == '\0') {
 	nodata = 1;
-    } 
+    }
 
     return pval;
 }
@@ -1020,7 +1032,7 @@ static int gettrend (DATASET *dset, int square)
     }
 
     for (t=0; t<dset->n; t++) {
-	x = (double) t + 1; 
+	x = (double) t + 1;
 	dset->Z[v][t] = (square)? x * x : x;
     }
 
@@ -1031,7 +1043,7 @@ static int gettrend (DATASET *dset, int square)
 	strcpy(dset->varname[v], "time");
 	series_set_label(dset, v, _("time trend variable"));
     }
-	    
+
     return idx;
 }
 
@@ -1040,12 +1052,12 @@ static void print_df_model (adf_info *ainfo, MODEL *pmod,
 			    PRN *prn)
 {
     pmod->aux = (ainfo->order > 0)? AUX_ADF : AUX_DF;
-    
+
     if (!na(ainfo->pval)) {
 	gretl_model_set_int(pmod, "dfnum", dfnum);
 	gretl_model_set_double(pmod, "dfpval", ainfo->pval);
     }
-    
+
     if (ainfo->flags & ADF_EG_RESIDS) {
 	gretl_model_set_int(pmod, "eg-resids", 1);
     }
@@ -1053,7 +1065,7 @@ static void print_df_model (adf_info *ainfo, MODEL *pmod,
     if (ainfo->g != NULL) {
 	gretl_model_set_int(pmod, "dfgls", 1);
     }
-    
+
     printmodel(pmod, dset, OPT_NONE, prn);
 
     if (ainfo->g != NULL) {
@@ -1066,7 +1078,7 @@ static void print_df_model (adf_info *ainfo, MODEL *pmod,
 		    ainfo->g->val[0]);
 	}
 	pputc(prn, '\n');
-    }    
+    }
 }
 
 static int set_deterministic_terms (adf_info *ainfo,
@@ -1074,9 +1086,9 @@ static int set_deterministic_terms (adf_info *ainfo,
 {
     int i, j;
 
-    /* Note that list[1] and list[2], plus the @order 
-       lagged differences, are in common for all 
-       specifications 
+    /* Note that list[1] and list[2], plus the @order
+       lagged differences, are in common for all
+       specifications
     */
 
     ainfo->list[0] = 1 + ainfo->order + ainfo->det;
@@ -1105,8 +1117,8 @@ static int set_deterministic_terms (adf_info *ainfo,
 	/* preceded by seasonal dummies if wanted */
 	for (j=0; j<ainfo->nseas; j++) {
 	    ainfo->list[i++] = ainfo->slist[j+1];
-	}	    
-    } 
+	}
+    }
 
     return 0;
 }
@@ -1230,7 +1242,7 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
     if (gretl_isconst(dset->t1, dset->t2, dset->Z[ainfo->v])) {
 	gretl_errmsg_sprintf(_("%s is a constant"), ainfo->vname);
 	return E_DATA;
-    }    
+    }
 
     if (opt & OPT_E) {
 	/* --test-down[=...] */
@@ -1252,7 +1264,7 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 
     if (ainfo->flags & ADF_EG_RESIDS) {
 	/* Final step of Engle-Granger test: the (A)DF test
-	   regression will contain no deterministic terms, 
+	   regression will contain no deterministic terms,
 	   but the selection of the p-value is based on the
 	   deterministic terms in the cointegrating
 	   regression, represented by @eg_opt.
@@ -1353,7 +1365,7 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 		ainfo->order = ic_adjust_order(ainfo, test_down,
 					       dset, opt, test_num,
 					       &err, prn);
-	    }	    
+	    }
 	    if (err) {
 		clear_model(&dfmod);
 		goto bailout;
@@ -1361,7 +1373,7 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 		/* swap out the detrended data */
 		ainfo->flags &= ~ADF_OLS_FIRST;
 		err = adf_prepare_vars(ainfo, dset, opt);
-	    }	    
+	    }
 	}
 
 #if ADF_DEBUG
@@ -1376,7 +1388,7 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	    dfmod.errcode = E_DF;
 	}
 	if (dfmod.errcode) {
-	    fprintf(stderr, "adf_test: dfmod.errcode = %d\n", 
+	    fprintf(stderr, "adf_test: dfmod.errcode = %d\n",
 		    dfmod.errcode);
 	    err = dfmod.errcode;
 	    clear_model(&dfmod);
@@ -1391,7 +1403,7 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 
 	if (ainfo->flags & ADF_EG_RESIDS) {
 	    ainfo->det = engle_granger_itv(eg_opt);
-	} 
+	}
 
 	if (getenv("DFGLS_NO_PVALUE")) {
 	    /* to speed up monte carlo stuff */
@@ -1406,7 +1418,7 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	    */
 	    int asymp = (ainfo->order > 0 || (opt & OPT_G));
 
-	    ainfo->pval = get_urc_pvalue(ainfo->tau, asymp ? 0 : dfmod.nobs, 
+	    ainfo->pval = get_urc_pvalue(ainfo->tau, asymp ? 0 : dfmod.nobs,
 					 ainfo->niv, ainfo->det, opt);
 	}
 
@@ -1442,7 +1454,7 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 
     gretl_matrix_free(ainfo->g);
     ainfo->g = NULL;
-    
+
     free(biglist);
 
     dataset_drop_last_variables(dset, dset->v - orig_nvars);
@@ -1452,16 +1464,16 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 
 /* print critical value for ADF-IPS or KPSS */
 
-static void print_critical_values (double *a, double *cv, 
+static void print_critical_values (double *a, double *cv,
 				   int ci, PRN *prn)
 {
     const char *label = N_("Critical values");
     int figs = (ci == ADF)? 2 : 3;
 
     pprintf(prn, "%*s    ", TRANSLATED_WIDTH(_(label)), " ");
-    pprintf(prn, "%g%%      %g%%      %g%%\n", 
+    pprintf(prn, "%g%%      %g%%      %g%%\n",
 	    100*a[0], 100*a[1], 100*a[2]);
-    pprintf(prn, "%s: %.*f   %.*f   %.*f\n", 
+    pprintf(prn, "%s: %.*f   %.*f   %.*f\n",
 	    _(label), figs, cv[0], figs, cv[1], figs, cv[2]);
 }
 
@@ -1469,8 +1481,8 @@ static int panel_adjust_ADF_opt (gretlopt *opt)
 {
     int err = 0;
 
-    /* Has the user selected an option governing the 
-       deterministic terms to be included? If so, don't 
+    /* Has the user selected an option governing the
+       deterministic terms to be included? If so, don't
        mess with it.
     */
     if (*opt & (OPT_N | OPT_C | OPT_R | OPT_T)) {
@@ -1501,7 +1513,7 @@ static int DF_index (gretlopt opt)
    53-74.
 */
 
-static int do_IPS_test (double tbar, int n, const int *Ti, 
+static int do_IPS_test (double tbar, int n, const int *Ti,
 			int order, const int *Oi,
 			gretlopt opt, PRN *prn)
 {
@@ -1541,7 +1553,7 @@ static int do_IPS_test (double tbar, int n, const int *Ti,
 		Vtbar /= n;
 		Wtbar = sqrt(n) * (tbar - Etbar) / sqrt(Vtbar);
 		pprintf(prn, "N = %d, Tmin = %d, Tmax = %d\n", n, Tmin, Tmax);
-		pprintf(prn, "Im-Pesaran-Shin W_tbar = %g [%.4f]\n", Wtbar, 
+		pprintf(prn, "Im-Pesaran-Shin W_tbar = %g [%.4f]\n", Wtbar,
 			normal_pvalue_1(-Wtbar));
 	    }
 	}
@@ -1564,7 +1576,7 @@ static int do_IPS_test (double tbar, int n, const int *Ti,
 		Vtbar /= n;
 		Ztbar = sqrt(n) * (tbar - Etbar) / sqrt(Vtbar);
 		pprintf(prn, "N = %d, Tmin = %d, Tmax = %d\n", n, Tmin, Tmax);
-		pprintf(prn, "Im-Pesaran-Shin Z_tbar = %g [%.4f]\n", Ztbar, 
+		pprintf(prn, "Im-Pesaran-Shin Z_tbar = %g [%.4f]\n", Ztbar,
 			normal_pvalue_1(-Ztbar));
 	    }
 	}
@@ -1578,7 +1590,7 @@ static int do_IPS_test (double tbar, int n, const int *Ti,
 	if (get_IPS_critvals != NULL) {
 	    double a[] = { 0.1, 0.05, 0.01 };
 	    double cv[3];
-		
+
 	    err = (*get_IPS_critvals) (n, Tmax, (opt & OPT_T), cv);
 	    if (!err) {
 		print_critical_values(a, cv, ADF, prn);
@@ -1593,7 +1605,7 @@ static int do_IPS_test (double tbar, int n, const int *Ti,
    International Money and Finance 20 (2001), 249-272.
 */
 
-static void do_choi_test (double ppv, double zpv, double lpv, 
+static void do_choi_test (double ppv, double zpv, double lpv,
 			  int n, PRN *prn)
 {
     double P = -2 * ppv;
@@ -1613,10 +1625,10 @@ static void do_choi_test (double ppv, double zpv, double lpv,
 
 static void panel_unit_DF_print (adf_info *ainfo, int i, PRN *prn)
 {
-    pprintf(prn, "%s %d, T = %d, %s = %d\n", _("Unit"), i, 
+    pprintf(prn, "%s %d, T = %d, %s = %d\n", _("Unit"), i,
 	    ainfo->T, _("lag order"), ainfo->order);
     pprintf(prn, "   %s: %g\n"
-	    "   %s = %g", 
+	    "   %s = %g",
 	    _("estimated value of (a - 1)"), ainfo->b0,
 	    _("test statistic"), ainfo->tau);
     if (na(ainfo->pval)) {
@@ -1626,7 +1638,7 @@ static void panel_unit_DF_print (adf_info *ainfo, int i, PRN *prn)
     }
 }
 
-static int panel_DF_test (int v, int order, DATASET *dset, 
+static int panel_DF_test (int v, int order, DATASET *dset,
 			  gretlopt opt, PRN *prn)
 {
     int u0 = dset->t1 / dset->pd;
@@ -1658,17 +1670,17 @@ static int panel_DF_test (int v, int order, DATASET *dset,
 		free(Ti);
 		return E_ALLOC;
 	    }
-	}	    
+	}
     }
 
     if (!quiet) {
 	int j = DF_index(opt);
 
-	DF_header(dset->varname[v], (opt & OPT_E)? 0 : order, 
+	DF_header(dset->varname[v], (opt & OPT_E)? 0 : order,
 		  0, 0, opt, prn);
 	pprintf(prn, "   %s ", _(DF_test_string(j)));
 	pputc(prn, '\n');
-	pprintf(prn, "   %s: %s\n\n", _("model"), 
+	pprintf(prn, "   %s: %s\n\n", _("model"),
 		(order > 0)? ADF_model_string(j) : DF_model_string(j));
     }
 
@@ -1694,7 +1706,7 @@ static int panel_DF_test (int v, int order, DATASET *dset,
 	    err = real_adf_test(&ainfo, dset, opt, prn);
 	    if (!err && verbose) {
 		panel_unit_DF_print(&ainfo, i+1, prn);
-	    }	    
+	    }
 	}
 
 	if (!err) {
@@ -1703,7 +1715,7 @@ static int panel_DF_test (int v, int order, DATASET *dset,
 	    }
 	    if (Oi != NULL) {
 		Oi[i-u0+1] = ainfo.order;
-	    }	    
+	    }
 	    if (!na(tbar)) {
 		tbar += ainfo.tau;
 	    }
@@ -1748,7 +1760,7 @@ static int panel_DF_test (int v, int order, DATASET *dset,
  * @prn: gretl printing struct.
  *
  * Carries out and prints the results of the Levin-Lin-Chu test
- * for a unit root in panel data. 
+ * for a unit root in panel data.
  *
  * The list @plist should contain either a single lag order
  * to be applied to all units, or a set of unit-specific
@@ -1766,10 +1778,10 @@ static int panel_DF_test (int v, int order, DATASET *dset,
  */
 
 int levin_lin_test (int vnum, const int *plist,
-		    DATASET *dset, gretlopt opt, 
+		    DATASET *dset, gretlopt opt,
 		    PRN *prn)
 {
-    int (*real_levin_lin) (int, const int *, DATASET *, 
+    int (*real_levin_lin) (int, const int *, DATASET *,
 			   gretlopt, PRN *);
     int panelmode;
     int err = 0;
@@ -1788,7 +1800,7 @@ int levin_lin_test (int vnum, const int *plist,
     } else {
 	int save_t1 = dset->t1;
 	int save_t2 = dset->t2;
- 
+
 	err = (*real_levin_lin) (vnum, plist, dset, opt, prn);
 
 	dset->t1 = save_t1;
@@ -1806,18 +1818,18 @@ int levin_lin_test (int vnum, const int *plist,
  * @opt: option flags.
  * @prn: gretl printing struct.
  *
- * Carries out and prints the results of the Augmented Dickey-Fuller 
- * test for a unit root. 
+ * Carries out and prints the results of the Augmented Dickey-Fuller
+ * test for a unit root.
  *
  * By default two tests are performed, one for a model
- * including a constant and one including a linear trend. The 
+ * including a constant and one including a linear trend. The
  * deterministic components of the model can be controlled via
  * flags in @opt as follows: OPT_N, omit the constant; OPT_C,
  * run just one test using the constant; OPT_T, one test including
  * linear trend; OPT_R, one test including a quadratic trend;
  * OPT_D, include seasonal dummy variables.
  *
- * Additional flags that may be given in @opt include: 
+ * Additional flags that may be given in @opt include:
  * OPT_V for verbose operation; OPT_F to apply first-differencing
  * before testing; OPT_G for GLS preprocessing as in Elliott, Rothenberg
  * and Stock (incompatible with OPT_N, OPT_R, OPT_D); OPT_E to
@@ -1827,7 +1839,7 @@ int levin_lin_test (int vnum, const int *plist,
  * Returns: 0 on successful completion, non-zero on error.
  */
 
-int adf_test (int order, const int *list, DATASET *dset, 
+int adf_test (int order, const int *list, DATASET *dset,
 	      gretlopt opt, PRN *prn)
 {
     int save_t1 = dset->t1;
@@ -1888,7 +1900,7 @@ int adf_test (int order, const int *list, DATASET *dset,
     return err;
 }
 
-/* See Peter S. Sephton, "Response surface estimates of the KPSS 
+/* See Peter S. Sephton, "Response surface estimates of the KPSS
    stationarity test", Economics Letters 47 (1995) 255-261.
 
    The estimates below of \beta_\infty and \beta_1 (based on
@@ -1911,7 +1923,7 @@ static void kpss_parms (double a, int trend, double *b)
     } else {
 	b[0] = b0_level[i];
 	b[1] = b1_level[i];
-    }	
+    }
 }
 
 static double kpss_critval (double alpha, int T, int trend)
@@ -1959,7 +1971,7 @@ static double kpss_interp (double s, int T, int trend)
     c01 = kpss_critval(.01, T, trend);
     if (s > c01) {
 	return PV_LT01;
-    }  
+    }
 
     /* OK, p-value must lie between .01 and .10 */
 
@@ -1973,9 +1985,9 @@ static double kpss_interp (double s, int T, int trend)
     return pv;
 }
 
-static int 
-real_kpss_test (int order, int varno, DATASET *dset, 
-		gretlopt opt, kpss_info *kinfo, 
+static int
+real_kpss_test (int order, int varno, DATASET *dset,
+		gretlopt opt, kpss_info *kinfo,
 		PRN *prn)
 {
     MODEL KPSSmod;
@@ -2067,7 +2079,7 @@ real_kpss_test (int order, int varno, DATASET *dset,
 	KPSSmod.aux = AUX_KPSS;
 	printmodel(&KPSSmod, dset, OPT_NONE, prn);
     }
-  
+
     autocov = malloc(order * sizeof *autocov);
     if (autocov == NULL) {
 	return E_ALLOC;
@@ -2093,7 +2105,7 @@ real_kpss_test (int order, int varno, DATASET *dset,
 	    }
 	}
 #if KPSS_DEBUG
-	fprintf(stderr, "%d: %#12.4g %#12.4g %#12.4g %#12.4g \n", 
+	fprintf(stderr, "%d: %#12.4g %#12.4g %#12.4g %#12.4g \n",
 		t, et, KPSSmod.uhat[t-1], s2, cumsum2);
 #endif
     }
@@ -2122,7 +2134,7 @@ real_kpss_test (int order, int varno, DATASET *dset,
 	/* testing individual time series */
 	if (opt & OPT_V) {
 	    pprintf(prn, "  %s: %g\n", _("Robust estimate of variance"), s2);
-	    pprintf(prn, "  %s: %g\n", _("Sum of squares of cumulated residuals"), 
+	    pprintf(prn, "  %s: %g\n", _("Sum of squares of cumulated residuals"),
 		    cumsum2);
 	}
     }
@@ -2179,7 +2191,7 @@ real_kpss_test (int order, int varno, DATASET *dset,
     return err;
 }
 
-static int panel_kpss_test (int order, int v, DATASET *dset, 
+static int panel_kpss_test (int order, int v, DATASET *dset,
 			    gretlopt opt, PRN *prn)
 {
     kpss_info kinfo;
@@ -2217,7 +2229,7 @@ static int panel_kpss_test (int order, int v, DATASET *dset,
 		    } else if (kinfo.pval == PV_LT01) {
 			pprintf(prn, "%s < .01\n", _("p-value"));
 		    } else {
-			pprintf(prn, "%s %.3f\n", _("interpolated p-value"), 
+			pprintf(prn, "%s %.3f\n", _("interpolated p-value"),
 				kinfo.pval);
 		    }
 		    pputc(prn, '\n');
@@ -2270,7 +2282,7 @@ static int panel_kpss_test (int order, int v, DATASET *dset,
 		  "on the true p-values\n");
 	    pprintf(prn, "   (Individual p-values < .01, and recorded as .01: %d)\n",
 		    lt_01);
-	} 
+	}
 	pputc(prn, '\n');
     } else {
 	pprintf(prn, "Choi test: cannot be calculated\n");
@@ -2287,16 +2299,16 @@ static int panel_kpss_test (int order, int v, DATASET *dset,
  * @opt: option flags.
  * @prn: gretl printing struct.
  *
- * Carries out and prints the results of the KPSS test for 
+ * Carries out and prints the results of the KPSS test for
  * stationarity. Flags that may be given in @opt include:
- * OPT_T to include a linear trend; OPT_F to apply 
+ * OPT_T to include a linear trend; OPT_F to apply
  * first-differencing before testing; OPT_V for verbose
  * operation.
  *
  * Returns: 0 on successful completion, non-zero on error.
  */
 
-int kpss_test (int order, const int *list, DATASET *dset, 
+int kpss_test (int order, const int *list, DATASET *dset,
 	       gretlopt opt, PRN *prn)
 {
     int save_t1 = dset->t1;
@@ -2313,7 +2325,7 @@ int kpss_test (int order, const int *list, DATASET *dset,
 	for (i=1; i<=list[0] && !err; i++) {
 	    v = list[i];
 	    vlist[1] = v;
-	    err = list_adjust_sample(vlist, &dset->t1, &dset->t2, 
+	    err = list_adjust_sample(vlist, &dset->t1, &dset->t2,
 				     dset, NULL);
 	    if (!err) {
 		err = real_kpss_test(order, v, dset, opt, NULL, prn);
@@ -2332,7 +2344,7 @@ int kpss_test (int order, const int *list, DATASET *dset,
     return err;
 }
 
-static int *make_coint_list (const int *list, int detcode, int *nv, 
+static int *make_coint_list (const int *list, int detcode, int *nv,
 			     DATASET *dset, int *err)
 {
     int *clist = NULL;
@@ -2366,14 +2378,14 @@ static int *make_coint_list (const int *list, int detcode, int *nv,
 	if (list[i] != 0) {
 	    clist[j++] = list[i];
 	}
-    }    
+    }
 
     /* add trend, if wanted */
     if (detcode >= UR_TREND) {
 	clist[j] = gettrend(dset, 0);
 	if (clist[j++] == 0) {
 	    *err = E_ALLOC;
-	} 
+	}
     }
 
     /* add trend-squared, if wanted */
@@ -2387,12 +2399,12 @@ static int *make_coint_list (const int *list, int detcode, int *nv,
     /* add const, if wanted */
     if (!*err && detcode != UR_NO_CONST) {
 	clist[j] = 0;
-    } 
+    }
 
     return clist;
 }
 
-static int 
+static int
 coint_check_opts (gretlopt opt, int *detcode, gretlopt *adf_opt)
 {
     if (opt & OPT_N) {
@@ -2446,7 +2458,7 @@ static int coint_set_sample (const int *list, int nv, int order,
     }
 
     dset->t1 = t + order + 1;
-    
+
     for (t=dset->t2; t>dset->t1; t--) {
 	anymiss = 0;
 	for (i=1; i<=nv; i++) {
@@ -2476,11 +2488,11 @@ static int coint_set_sample (const int *list, int nv, int order,
  * @opt: option flags.
  * @prn: gretl printing struct.
  *
- * Carries out the Engle-Granger test for cointegration. 
+ * Carries out the Engle-Granger test for cointegration.
  * Flags that may be given in @opt include: OPT_N, do
  * not an include a constant in the cointegrating regression;
  * OPT_T include constant and linear trend; OPT_R, include
- * quadratic trend; OPT_S, skip DF tests for individual variables; 
+ * quadratic trend; OPT_S, skip DF tests for individual variables;
  * OPT_E, test down from maximum lag order (see the entry for
  * "adf" in the Gretl Command Reference for details); OPT_V,
  * verbose operation.
@@ -2489,7 +2501,7 @@ static int coint_set_sample (const int *list, int nv, int order,
  * on error.
  */
 
-int engle_granger_test (int order, const int *list, DATASET *dset, 
+int engle_granger_test (int order, const int *list, DATASET *dset,
 			gretlopt opt, PRN *prn)
 {
 #if EG_MIN_SAMPLE
@@ -2549,14 +2561,14 @@ int engle_granger_test (int order, const int *list, DATASET *dset,
     if (!skip) {
 	/* start by testing all candidate vars for unit root */
 	int uniform_order = (opt & OPT_E)? 0 : order;
-	
+
 	coint_set_sample(clist, nv, uniform_order, dset);
 	for (i=1; i<=nv; i++) {
 	    ainfo.v = clist[i];
 	    ainfo.order = order;
 	    ainfo.niv = 1;
 	    ainfo.flags = ADF_EG_TEST;
-	    
+
 	    if (step == 1) {
 		pputc(prn, '\n');
 	    }
@@ -2615,10 +2627,10 @@ int engle_granger_test (int order, const int *list, DATASET *dset,
     ainfo.v = k;
     ainfo.order = order;
     ainfo.niv = nv;
-    ainfo.flags = ADF_EG_TEST | ADF_EG_RESIDS;    
+    ainfo.flags = ADF_EG_TEST | ADF_EG_RESIDS;
 
     /* Run (A)DF test on the residuals */
-    real_adf_test(&ainfo, dset, adf_opt, prn); 
+    real_adf_test(&ainfo, dset, adf_opt, prn);
 
     if (!silent) {
 	pputs(prn, _("\nThere is evidence for a cointegrating relationship if:\n"
@@ -2629,7 +2641,7 @@ int engle_granger_test (int order, const int *list, DATASET *dset,
     }
 
  bailout:
-    
+
     clear_model(&cmod);
     free(clist);
     if (k > 0) {
