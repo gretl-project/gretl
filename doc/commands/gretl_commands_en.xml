@@ -234,6 +234,8 @@
 	negative.
       </para>
 
+      <subhead context="cli">Selecting the lag order</subhead>
+
       <para context="cli">
 	If the <repl>order</repl> argument (henceforth,
 	<math>k</math>) is greater than 0, then <math>k</math> lags of
@@ -353,7 +355,8 @@
 	for the test is non-zero their <math>W</math> statistic is
 	shown; otherwise if the time-series lengths differ by
 	individual, their <math>Z</math> statistic; otherwise their
-	<math>t</math>-bar statistic.
+	<math>t</math>-bar statistic. See also the <cmdref
+	targ="levinlin"/> command.
       </para>
 
     </description>
@@ -1649,6 +1652,10 @@
 	  <effect>include constant and quadratic trend</effect>
 	</option>
 	<option>
+	  <flag>--seasonals</flag>
+	  <effect>include seasonal dummy variables</effect>
+	</option>	
+	<option>
 	  <flag>--skip-df</flag>
 	  <effect>no DF tests on individual variables</effect>
 	</option>
@@ -1696,7 +1703,9 @@
 	If you wish to augment the list of deterministic terms in the
 	cointegrating regression with a linear or quadratic trend, add
 	the <opt>ct</opt> or <opt>ctt</opt> flag.  These option
-	flags are mutually exclusive.
+	flags are mutually exclusive. You also have the option of
+	adding seasonal dummy variables (in the case of quarterly or
+	monthly data).
       </para>
 
       <para context="gui">
@@ -1720,8 +1729,9 @@
       <para context="gui">
 	By default, the cointegrating regression contains a
 	constant. If you wish to suppress the constant, or to add a
-	linear or quadratic trend, select the appropriate option from
-	the set of radio buttons in the Cointegration dialog box.
+	linear or quadratic trend and/or seasonal dummy variables,
+	select the appropriate options from the set of radio buttons
+	in the Cointegration dialog box.
       </para>
 
       <para>
