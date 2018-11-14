@@ -219,6 +219,8 @@
 	<math>y</math> sia stazionaria il coefficiente è negativo.
       </para>
 
+      <subhead context="cli">Selezione dell'ordine dei ritardi</subhead>
+
       <para context="cli">
         Se l'ordine di ritardi, <math>k</math>, è maggiore di 0, ai
         regressori di ognuna delle regressioni calcolate per il test
@@ -342,7 +344,8 @@
 	positivo, viene riportata la statistica <math>W</math>;
 	altrimenti, viene riportata la statistica <math>Z</math> se la
 	lunghezza delle serie è diversa fra individui, quella
-	<math>t</math> barrato se è uguale per tutte le unità.
+	<math>t</math> barrato se è uguale per tutte le unità. vedi
+	anche il comando <cmdref targ="levinlin"/>.
       </para>
 
     </description>
@@ -1678,16 +1681,25 @@
 	  <effect>include la costante e il trend quadratico</effect>
 	</option>
 	<option>
+	  <flag>--seasonals</flag>
+	  <effect>include dummy stagionali</effect>
+	</option>	
+	<option>
 	  <flag>--skip-df</flag>
 	  <effect>non esegue i test DF sulle variabili individuali</effect>
 	</option>
 	<option>
 	  <flag>--test-down</flag>
+	  <optparm optional="true">criterio</optparm>
 	  <effect>scelta automatica dell'ordine dei ritardi</effect>
 	</option>
 	<option>
 	  <flag>--verbose</flag>
 	  <effect>mostra dettagli extra sulle regressioni</effect>
+	</option>
+	<option>
+	  <flag>--silent</flag>
+	  <effect>non stampa nulla</effect>
 	</option>
       </options>
       <examples>
@@ -1717,12 +1729,13 @@
        <para context="cli">
 	L'impostazione predefinita consiste nell'includere una
 	costante nella regressione di cointegrazione; se si vuole
-	omettere la costante, basta usare l'opzione
-	<opt>nc</opt>. Se si vuole aggiungere all'elenco dei termini
-	deterministici della regressione un trend lineare o
-	quadratico, basta usare le opzioni <opt>ct</opt> o
-	<opt>ctt</opt>. Queste opzioni sono mutualmente esclusive.
-      </para>
+	omettere la costante, basta usare l'opzione <opt>nc</opt>. Se
+	si vuole aggiungere all'elenco dei termini deterministici
+	della regressione un trend lineare o quadratico, basta usare
+	le opzioni <opt>ct</opt> o <opt>ctt</opt>. Queste opzioni sono
+	mutualmente esclusive.  Volendo, se i dati sono trimestrali o
+	mensili, la regressione può comprendere dummy stagionali.
+       </para>
       <para context="cli">
         Test di cointegrazione di Engle&ndash;Granger. La procedura
         predefinita è la seguente: (1) eseguire dei test
@@ -1747,9 +1760,9 @@
       <para context="gui">
 	L'impostazione predefinita consiste nell'includere una
 	costante nella regressione di cointegrazione. Se si vuole
-	omettere la costante, o aggiungere un trend lineare o
-	quadratico, basta selezionare le relative opzioni nella
-	finestra di dialogo.
+	omettere la costante, o aggiungere dummy stagionali oppure un
+	trend lineare o quadratico, basta selezionare le relative
+	opzioni nella finestra di dialogo.
       </para>
       <para>
         I <emphasis>pvalue</emphasis> per questo test si basano su
