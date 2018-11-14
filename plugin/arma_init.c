@@ -94,8 +94,10 @@ void maybe_set_yscale (arma_info *ainfo)
 	   (y - ybar) / sdy + 1 = (y - (ybar - sdy)) * 1/sdy.
 	*/
 	double abs_ybar = fabs(ybar);
+	double hi = 200, lo = 0.01;
+	// double hi = 10, lo = 0.1;
 
-	if (abs_ybar > 200 || abs_ybar < 0.01 || sdy/abs_ybar < 0.01) {
+	if (abs_ybar > hi || abs_ybar < lo || sdy/abs_ybar < lo) {
 	    ainfo->yshift = ybar - sdy; /* subtract */
 	    ainfo->yscale = 1 / sdy;    /* multiply */
 #if 0
