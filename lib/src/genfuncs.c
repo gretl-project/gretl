@@ -6186,11 +6186,11 @@ static double nw_kernel (double x)
  * @x: array with "explanatory variable"
  * @h: double, bandwidth (may be negative; see below)
  * @dset: data set information.
- * @leave_one_out: Boolean flag (see below)
+ * @LOO: Boolean flag (see below)
  * @trim: trim parameter (see below)
  * @m: array to hold results
  *
- * Implements the Nadaraya-Watson non-parametric estimator for the
+ * Implements the Nadaraya-Watson nonparametric estimator for the
  * conditional mean of @y given @x via the formula
  *
  * \widehat{m}_h(x)=\frac{\sum_{i=1}^n K_h(x-X_i)
@@ -6201,11 +6201,10 @@ static double nw_kernel (double x)
  * and j, but since the function K() is assumed to be symmetric, we
  * compute it once to save time.
  *
- * The scalar @h holds the kernel bandwidth; if @leave_one_out is
- * non-zero the "leave-one-out" variant of the estimator (essentially
- * a jackknife estimator; see Pagan and Ullah, Nonparametric
- * Econometrics, page 119) is computed. For compatibility reason, this
- * also happens if h is negative.
+ * The scalar @h holds the kernel bandwidth; if @LOO is non-zero the
+ * "leave-one-out" variant of the estimator (essentially a jackknife
+ * estimator; see Pagan and Ullah, Nonparametric Econometrics, p. 119)
+ * is computed.
  *
  * A rudimentary form of trimming is implemented: the kernel function
  * is set to 0 when the product of the @trim parameter times the
@@ -6216,30 +6215,36 @@ static double nw_kernel (double x)
  */
 
 int nadaraya_watson (const double *y, const double *x, double h,
-		     DATASET *dset, int leave_one_out, double trim,
+		     DATASET *dset, int LOO, double trim,
 		     double *m)
 {
     int t, s, err = 0;
     int t1 = dset->t1, t2 = dset->t2;
     double xt, xs, ys, yt, k;
-    double ah = fabs(h);
-    int LOO = leave_one_out || (h < 0);  /* leave-one-out */
-    double TRIM = trim * ah;
-    int n = t2 + 1;
     double *num, *den;
+    int n = t2 + 1; /* really? */
+
+    if (h < 0.0) {
+	return E_DATA;
+    } else if (h == 0.0) {
+	/* automatic data-based bandwidth */
+	const double *sx = x + dset->t1;
+	int n = sample_size(dset);
+
+	h = kernel_bandwidth(sx, n);
+    }
 
     num = malloc(2 * n * sizeof *num);
-
     if (num == NULL) {
 	return E_ALLOC;
     }
 
     den = num + n;
+    trim *= h;
 
-    /*
-       here we initialize numerator and denominator; we use the
+    /* here we initialize numerator and denominator; we use the
        "diagonal" in the standard case and 0 in the leave-one-out
-       case.
+       case
     */
 
     if (LOO) {
@@ -6265,8 +6270,8 @@ int nadaraya_watson (const double *y, const double *x, double h,
 	    yt = y[t];
 	    for (s=t+1; s<=t2; s++) {
 		xs = x[s];
-		if (!na(xs) && fabs(xs-xt) < TRIM) {
-		    k = nw_kernel((xt - xs)/ah);
+		if (!na(xs) && fabs(xs-xt) < trim) {
+		    k = nw_kernel((xt - xs)/h);
 		    if (!na(yt)) {
 			num[s] += k * yt;
 			den[s] += k;
@@ -6347,6 +6352,11 @@ static int get_dataset_t (const double *x, int pos, int t1)
 
     return 0;
 }
+
+/* note: the following requires that @y and @x are truly dataset
+   series; vectors cannot be accepted given the dependence on
+   dset->t1 and dset->t2 for the range of data to be used
+*/
 
 int gretl_loess (const double *y, const double *x, int poly_order,
 		 double bandwidth, gretlopt opt, DATASET *dset,

@@ -200,7 +200,7 @@ gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
 int list_ok_dollar_vars (DATASET *dset, PRN *prn);
 
 int nadaraya_watson (const double *y, const double *x, double h,
-		     DATASET *dset, int leave_one_out, double trim,
+		     DATASET *dset, int LOO, double trim,
 		     double *m);
 
 int gretl_loess (const double *y, const double *x, int poly_order,

@@ -4376,6 +4376,10 @@ int do_model (selector *sr)
     }
 }
 
+/* callback from selection dialog for two nonparametric
+   estimators, loess and Nadaraya-Watson
+*/
+
 int do_nonparam_model (selector *sr)
 {
     gretl_bundle *bundle = NULL;
@@ -4400,11 +4404,13 @@ int do_nonparam_model (selector *sr)
     ci = selector_code(sr);
     opt = selector_get_opts(sr);
 
+    /* get the two input series */
     vy = current_series_index(dataset, yname);
     vx = current_series_index(dataset, xname);
     y = dataset->Z[vy];
     x = dataset->Z[vx];
 
+    /* storage for the fitted series */
     m = malloc(dataset->n * sizeof *m);
     if (m == NULL) {
 	err = E_ALLOC;
@@ -4415,6 +4421,7 @@ int do_nonparam_model (selector *sr)
     }
 
     if (!err) {
+	/* bundle to hold parameters and results */
 	bundle = gretl_bundle_new();
 	if (bundle == NULL) {
 	    err = E_ALLOC;
@@ -4429,10 +4436,12 @@ int do_nonparam_model (selector *sr)
 	int d = 1;
 	double q = 0.5;
 
+	/* scan the buffer from the selector for
+	   d and q specifications */
+
 	if ((s = strstr(buf, "d=")) != NULL) {
 	    d = atoi(s + 2);
 	}
-
 	if ((s = strstr(buf, "q=")) != NULL) {
 	    q = atof(s + 2);
 	}
@@ -4440,26 +4449,34 @@ int do_nonparam_model (selector *sr)
 	err = gretl_loess(y, x, d, q, robust, dataset, m);
 	if (!err) {
 	    gretl_bundle_set_string(bundle, "function", "loess");
-	    gretl_bundle_set_scalar(bundle, "d", d);
+	    gretl_bundle_set_int(bundle, "d", d);
 	    gretl_bundle_set_scalar(bundle, "q", q);
-	    gretl_bundle_set_scalar(bundle, "robust", robust);
+	    gretl_bundle_set_int(bundle, "robust", robust);
 	    gretl_bundle_set_series(bundle, "m", m, dataset->n);
+	    lib_command_sprintf("loess(%s, %s, %d, %g, %d)",
+				yname, xname, d, q, robust);
+	    record_command_verbatim();
 	}
+
     } else if (!err && ci == NADARWAT) {
 	int LOO = (opt & OPT_O)? 1 : 0;
-	double h, trim = libset_get_double(NADARWAT_TRIM);
+	double trim = libset_get_double(NADARWAT_TRIM);
+	double h = 0; /* automatic */
 
 	if ((s = strstr(buf, "h=")) != NULL) {
 	    h = atof(s + 2);
-	} else {
-	    h = pow(sample_size(dataset), -0.2);
 	}
 
 	err = nadaraya_watson(y, x, h, dataset, LOO, trim, m);
 	if (!err) {
 	    gretl_bundle_set_string(bundle, "function", "nadarwat");
 	    gretl_bundle_set_scalar(bundle, "h", h);
+	    gretl_bundle_set_int(bundle, "LOO", LOO);
+	    gretl_bundle_set_scalar(bundle, "trim", trim);
 	    gretl_bundle_set_series(bundle, "m", m, dataset->n);
+	    lib_command_sprintf("nadarwat(%s, %s, %g, %d, %g)",
+				yname, xname, h, LOO, trim);
+	    record_command_verbatim();
 	}
     }
 
@@ -4518,22 +4535,24 @@ void add_nonparam_data (windata_t *vwin)
 	const char *xname = gretl_bundle_get_string(bundle, "xname", &err);
 	char vname[VNAMELEN];
 	char descrip[MAXLABEL];
-	double q = 0, h = 0;
-	int d = 0, robust = 0;
+	double q = 0, h = 0, trim = 0;
+	int d = 0, robust = 0, LOO = 0;
 	int cancel = 0;
 
 	if (!strcmp(func, "loess")) {
-	    d = gretl_bundle_get_scalar(bundle, "d", &err);
+	    d = gretl_bundle_get_int(bundle, "d", &err);
 	    q = gretl_bundle_get_scalar(bundle, "q", &err);
-	    robust = gretl_bundle_get_scalar(bundle, "robust", &err);
+	    robust = gretl_bundle_get_int(bundle, "robust", &err);
 	    strcpy(vname, "loess_fit");
-	    sprintf(descrip, "loess(%s, %s, %d, %.3f, %d)",
+	    sprintf(descrip, "loess(%s, %s, %d, %g, %d)",
 		    yname, xname, d, q, robust);
 	} else {
 	    h = gretl_bundle_get_scalar(bundle, "h", &err);
+	    LOO = gretl_bundle_get_int(bundle, "LOO", &err);
+	    trim = gretl_bundle_get_scalar(bundle, "trim", &err);
 	    strcpy(vname, "nw_fit");
-	    sprintf(descrip, "nadarwat(%s, %s, %.3f)",
-		    yname, xname, h);
+	    sprintf(descrip, "nadarwat(%s, %s, %g, %d, %g)",
+		    yname, xname, h, LOO, trim);
 	}
 
 	name_new_series_dialog(vname, descrip, vwin, &cancel);
@@ -4627,7 +4646,7 @@ void do_nonparam_plot (windata_t *vwin)
 		title = g_strdup_printf(_("%s versus %s with loess fit"),
 					yname, xname);
 	    } else {
-		title = g_strdup_printf(_("%s versus %s with Nadaraya_Watson fit"),
+		title = g_strdup_printf(_("%s versus %s with Nadaraya-Watson fit"),
 					yname, xname);
 	    }
 	    literal = g_strdup_printf("{ set title \"%s\"; }", title);

@@ -12412,11 +12412,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
     } else if (t->t == F_NADARWAT) {
 	const double *x = NULL;
 	const double *y = NULL;
-	int nobs = p->dset->n;
-	int auto_bw = (k == 2);
 	int LOO = 0;
 	double h = 0;
-	double trim = libset_get_double(NADARWAT_TRIM);
+	double trim = NADBL;
 
 	if (k < 2 || k > 5) {
 	    n_args_error(k, 5, t->t, p);
@@ -12437,18 +12435,22 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    } else if (i == 2) {
 		/* set bandwidth? */
 		if (e->t == EMPTY) {
-		    auto_bw = 1;
+		    ; /* OK */
 		} else {
 		    h = node_get_scalar(e, p);
-		    if (k > 3 && h < 0) {
+		    if (h < 0 && k > 3) {
 			gretl_errmsg_sprintf(_("Bandwidth cannot be negative "
 					       "with more than 3 arguments"));
 			p->err = E_INVARG;
 			break;
+		    } else if (h < 0) {
+			/* it's a legacy thing */
+			LOO = 1;
+			h = -h;
 		    }
 		}
 	    } else if (i == 3) {
-		/* Leave One Out? */
+		/* Leave-one-out */
 		LOO = node_get_bool(e, p, 0);
 	    } else if (i == 4) {
 		/* trim spec? (overrides libset) */
@@ -12456,15 +12458,14 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    }
 	}
 
-	if (auto_bw || h == 0) {
-	    h = kernel_bandwidth(x, nobs);
-	}
-
 	if (!p->err) {
 	    reset_p_aux(p, save_aux);
 	    ret = aux_series_node(p);
 	}
 	if (!p->err) {
+	    if (na(trim)) {
+		trim = libset_get_double(NADARWAT_TRIM);
+	    }
 	    p->err = nadaraya_watson(x, y, h, p->dset, LOO,
 				     trim, ret->v.xvec);
 	}
