@@ -152,14 +152,20 @@ static gretl_matrix *density_matrix (kernel_info *kinfo,
     return m;
 }
 
-static void kernel_xmin_xmax (kernel_info *kinfo, double s)
-
+static int kernel_xmin_xmax (kernel_info *kinfo)
 {
-    double xbar = gretl_mean(0, kinfo->n - 1, kinfo->x);
-    double xm4 = xbar - 4.0 * s;
-    double xp4 = xbar + 4.0 * s;
     const double *x = kinfo->x;
-    int n = kinfo->n;
+    double xbar, sdx, xm4, xp4;
+    int err, n = kinfo->n;
+
+    err = gretl_moments(0, n - 1, kinfo->x, NULL,
+			&xbar, &sdx, NULL, NULL, 1);
+    if (err) {
+	return err;
+    }
+
+    xm4 = xbar - 4.0 * sdx;
+    xp4 = xbar + 4.0 * sdx;
 
     if (xp4 > x[n-1]) {
 	kinfo->xmax = xp4;
@@ -179,6 +185,8 @@ static void kernel_xmin_xmax (kernel_info *kinfo, double s)
     }
 
     kinfo->xstep = (kinfo->xmax - kinfo->xmin) / kinfo->kn;
+
+    return 0;
 }
 
 static int kernel_kn (int nobs)
@@ -198,9 +206,8 @@ static int set_kernel_params (kernel_info *kinfo,
 			      double bwscale,
 			      gretlopt opt)
 {
-
-    double s = gretl_stddev(0, kinfo->n - 1, kinfo->x);
-    double bw = kernel_bandwidth(kinfo->x, s, kinfo->n);
+    double bw = kernel_bandwidth(kinfo->x, kinfo->n);
+    int err = 0;
 
     kinfo->h = bwscale * bw;
 
@@ -212,12 +219,12 @@ static int set_kernel_params (kernel_info *kinfo,
     kinfo->kn = kernel_kn(kinfo->n);
 
     /* range to use */
-    kernel_xmin_xmax(kinfo, s);
+    err = kernel_xmin_xmax(kinfo);
 
     kinfo->type = (opt & OPT_O)? EPANECHNIKOV_KERNEL :
 	GAUSSIAN_KERNEL;
 
-    return 0;
+    return err;
 }
 
 #define MINOBS 30

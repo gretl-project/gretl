@@ -322,6 +322,13 @@ static void call_iters_dialog (GtkWidget *w, GtkWidget *combo);
 static void reset_arma_spinners (selector *sr);
 static void clear_midas_spec (void);
 static int check_midas_rvars2 (GtkTreeModel *model, gboolean *have_beta1);
+static GtkWidget *pack_switch (GtkWidget *b, selector *sr,
+			       gboolean checked, gboolean reversed,
+			       gretlopt opt, int child);
+static void pack_switch_with_extra (GtkWidget *b, selector *sr,
+				    gboolean checked, gretlopt opt,
+				    int child, GtkWidget *extra,
+				    const gchar *extra_text);
 
 static int set_or_get_n_rvars1 (selector *sr, int n)
 {
@@ -5095,7 +5102,8 @@ static void add_np_controls (selector *sr)
 {
     GtkAdjustment *adj;
     GtkWidget *hbox, *w;
-    double b0, bmin, bmax;
+    double bmin = 0.01;
+    double bmax = 1.0;
     const char *optstr;
     int i = 1;
 
@@ -5104,24 +5112,38 @@ static void add_np_controls (selector *sr)
 	w = gtk_label_new(_("Polynomial order"));
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
 	adj = (GtkAdjustment *) gtk_adjustment_new(1, 0, 2, 1, 1, 0);
-    	sr->extra[1] = gtk_spin_button_new(adj, 1, 0);
-	gtk_box_pack_end(GTK_BOX(hbox), sr->extra[1], FALSE, FALSE, 5);
+    	sr->extra[i] = gtk_spin_button_new(adj, 1, 0);
+	gtk_box_pack_end(GTK_BOX(hbox), sr->extra[i], FALSE, FALSE, 5);
 	table_add_right(sr, hbox, 1);
-	i = 2;
+	i++;
     }
 
-    b0   = (sr->ci == LOESS)? 0.5 : pow(sample_size(dataset), -0.2);
-    bmin = 0.01;
-    bmax = 1.0;
+    /* bandwidth specification */
+    if (1 || sr->ci == LOESS) {
+	hbox = gtk_hbox_new(FALSE, 5);
+	w = gtk_label_new(_("Bandwidth"));
+	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+	adj = (GtkAdjustment *) gtk_adjustment_new(0.5, bmin, bmax, 0.01, 0.1, 0);
+	sr->extra[i] = gtk_spin_button_new(adj, 0.01, 2);
+	gtk_box_pack_end(GTK_BOX(hbox), sr->extra[i], FALSE, FALSE, 5);
+	table_add_right(sr, hbox, 1);
+    } else {
+	/* not ready! */
+	double b0 = pow(sample_size(dataset), -0.2);
+	GtkWidget *b1, *b2;
+	GSList *group;
 
-    /* bandwidth spinner */
-    hbox = gtk_hbox_new(FALSE, 5);
-    w = gtk_label_new(_("Bandwidth"));
-    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
-    adj = (GtkAdjustment *) gtk_adjustment_new(b0, bmin, bmax, 0.01, 0.1, 0);
-    sr->extra[i] = gtk_spin_button_new(adj, 0.01, 2);
-    gtk_box_pack_end(GTK_BOX(hbox), sr->extra[i], FALSE, FALSE, 5);
-    table_add_right(sr, hbox, 1);
+	b1 = gtk_radio_button_new_with_label(NULL, _("Automatic bandwidth"));
+	pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 0);
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
+	b2 = gtk_radio_button_new_with_label(group,
+					 _("User-specified"));
+	adj = (GtkAdjustment *) gtk_adjustment_new(b0, bmin, bmax, 0.01, 0.1, 0);
+	sr->extra[i] = gtk_spin_button_new(adj, 0.01, 2);
+	pack_switch_with_extra(b2, sr, FALSE, OPT_NONE, 0, sr->extra[i], NULL);
+	gtk_widget_set_sensitive(sr->extra[i], FALSE);
+	sensitize_conditional_on(sr->extra[i], b2);
+    }
 
     optstr = (sr->ci == LOESS)? N_("Use robust weights") :
 	N_("Use \"leave one out\"");

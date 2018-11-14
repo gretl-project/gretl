@@ -55,7 +55,7 @@ gretl_matrix *loess_fit (const gretl_matrix *x,
 			 gretlopt opt, int *err);
 
 
-double kernel_bandwidth(const double *x, double s, int n);
+double kernel_bandwidth(const double *x, int n);
 
 #endif /* NONPARAM_H */
 

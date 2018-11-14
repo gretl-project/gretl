@@ -1943,11 +1943,12 @@ static double quartiles (const double *x, int n,
     return xx;
 }
 
-double kernel_bandwidth (const double *x, double s, int n)
+double kernel_bandwidth (const double *x, int n)
 {
-    double w, q1, q3, r;
+    double s, w, q1, q3, r;
     double n5 = pow((double) n, -0.20);
 
+    s = gretl_stddev(0, n - 1, x);
     quartiles(x, n, &q1, &q3);
     r = (q3 - q1) / 1.349;
     w = (r < s && r > 0)? r : s;

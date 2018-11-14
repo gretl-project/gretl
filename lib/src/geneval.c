@@ -12415,7 +12415,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	int nobs = p->dset->n;
 	int auto_bw = (k == 2);
 	int LOO = 0;
-	double s, h = 0;
+	double h = 0;
 	double trim = libset_get_double(NADARWAT_TRIM);
 
 	if (k < 2 || k > 5) {
@@ -12451,14 +12451,13 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		/* Leave One Out? */
 		LOO = node_get_bool(e, p, 0);
 	    } else if (i == 4) {
-		/* trim? */
+		/* trim spec? (overrides libset) */
 		trim = node_get_scalar(e, p);
 	    }
 	}
 
 	if (auto_bw || h == 0) {
-	    s = gretl_stddev(0, nobs - 1, x);
-	    h = kernel_bandwidth(x, s, nobs);
+	    h = kernel_bandwidth(x, nobs);
 	}
 
 	if (!p->err) {
