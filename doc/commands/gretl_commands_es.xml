@@ -234,6 +234,8 @@
 	alternativa de que <math>y</math> es estacionaria, este coeficiente es negativo.
       </para>
 
+      <subhead context="cli">Selección del orden de retardos</subhead>
+
       <para context="cli">
 	Si el argumento <repl>orden</repl> (de aquí en adelante le llamaremos
 	<math>k</math>) es mayor que 0, entonces se incluyen <math>k</math>
@@ -354,6 +356,7 @@
 	estadístico <math>W</math>; por otro lado, si las longitudes de las series
 	de tiempo difieren de un individuo a otro, se muestra su estadístico
 	<math>Z</math>; en otro caso, se muestra su estadístico <math>t</math>-barra.
+	Consulta también la instrución <cmdref targ="levinlin"/>.
       </para>
 
     </description>
@@ -1649,6 +1652,10 @@
 	  <effect>Con constante más tendencia cuadrática</effect>
 	</option>
 	<option>
+	  <flag>--seasonals</flag>
+	  <effect>Con variables ficticias estacionales</effect>
+	</option>
+	<option>
 	  <flag>--skip-df</flag>
 	  <effect>Sin contrastes DF sobre las variables individuales</effect>
 	</option>
@@ -1696,7 +1703,9 @@
 	Si quieres ampliar la lista de términos determinísticos en la regresión de
 	cointegración con tendencia lineal (o cuadrática), añade la
 	opción <opt>ct</opt> (o <opt>ctt</opt>). Estos indicadores de
-	opción son mutuamente excluyentes.
+	opción son mutuamente excluyentes. También tienes la posibilidad de
+	añadir variables ficticias estacionales (en caso de utilizar datos
+	trimestrales o mensuales).
       </para>
 
       <para context="gui">
@@ -1720,8 +1729,9 @@
       <para context="gui">
 	Por defecto, la regresión de cointegración contiene una constante. Si
 	quieres eliminar la constante o añadir una tendencia lineal (o
-	cuadrática), escoge la opción adecuada del conjunto que te
-	ofrece el botón de selección en la caja de diálogo Cointegración.
+	cuadrática) y/o variables ficticias estacionales, escoge la opción
+	adecuada del conjunto que te ofrece el botón de selección en la caja
+	de diálogo Cointegración.
       </para>
 
       <para>

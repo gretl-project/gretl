@@ -234,6 +234,8 @@
 	alternativa de que <math>y</math> é estacionaria, este coeficiente é negativo.
       </para>
 
+      <subhead context="cli">Selección do nivel de retardos</subhead>
+
       <para context="cli">
 	Se o argumento <repl>nivel</repl> (de aquí en diante chamarémoslle nivel
 	ou orde <math>k</math>) é maior ca 0, entón inclúense <math>k</math>
@@ -354,6 +356,7 @@
 	estatístico <math>W</math>; por outra banda, se as longuras das series
 	de tempo difiren dun individuo a outro, amósase o seu estatístico
 	<math>Z</math>; se non, amósase o seu estatístico <math>t</math>-barra.
+	Consulta tamén a instrución <cmdref targ="levinlin"/>.
       </para>
 
     </description>
@@ -1649,6 +1652,10 @@
 	  <effect>Con constante máis tendencia linear e cadrada</effect>
 	</option>
 	<option>
+	  <flag>--seasonals</flag>
+	  <effect>Con variables ficticias estacionais</effect>
+	</option>
+	<option>
 	  <flag>--skip-df</flag>
 	  <effect>Sen probas DF sobre as variables individuais</effect>
 	</option>
@@ -1696,7 +1703,9 @@
 	Se queres ampliar a lista de termos determinísticos na regresión de
 	cointegración con tendencia linear (ou linear e cadrada), engade a
 	opción <opt>ct</opt> (ou <opt>ctt</opt>). Estes indicadores de
-	opción son mutuamente excluíntes.
+	opción son mutuamente excluíntes. Tamén tes a posibilidade de engadir
+	variables ficticias estacionais (no caso de utilizar datos trimestrais
+	ou mensuais).
       </para>
 
       <para context="gui">
@@ -1720,8 +1729,9 @@
       <para context="gui">
 	Por defecto, a regresión de cointegración contén unha constante. Se
 	queres eliminar a constante ou engadir unha tendencia linear (ou
-	linear e cadrada), escolle a opción adecuada do conxunto que te
-	ofrece o botón de selección na caixa de diálogo Cointegración.
+	linear e cadrada) e/ou variables ficticias estacionais, escolle a
+	opción adecuada do conxunto que te ofrece o botón de selección na
+	caixa de diálogo Cointegración.
       </para>
 
       <para>

@@ -6824,87 +6824,84 @@
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="series">x</fnarg>
-	<fnarg type="scalar">h</fnarg>
+	<fnarg type="scalar" optional="true">h</fnarg>
+	<fnarg type="bool" optional="true">LOO</fnarg>
+	<fnarg type="scalar" optional="true">recorte</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devuelve una serie con la estimación no paramétrica de la media
+	  Calcula una serie con la estimación no paramétrica de la media
 	  condicional de <argname>y</argname> dado <argname>x</argname>,
-	  de Nadaraya-Watson. La serie que devuelve la función, contiene os
-	  valores de las estimaciones no paramétricas de
-	  <math>E(y</math><sub>i</sub><math>|x</math><sub>i</sub><math>)</math>
+	  de Nadaraya-Watson. La serie que devuelve la función, contiene
+	  <math>m(x</math><sub>i</sub><math>)</math>, los valores de las estimaciones
+	  de <math>E(y</math><sub>i</sub><math>|x</math><sub>i</sub><math>)</math>
 	  para cada uno de los elementos no ausentes de la serie
 	  <argname>x</argname>.
 	</para>
 	<para context="tex">
-	  \[
-	  m(x_i) = \frac{ \sum_{j=1}^{n} y_j \cdot K_h(x_i -
-	  x_j)} {\sum_{j=1}^{n} K_h(x_i - x_j)}
-	  \]
-	  donde la función kernel <math>K_h(\cdot)</math> viene dada
-	  por
-	  \[
-	  K_h(x) = \exp\left(-\frac{x^2}{2h}\right)
-	  \]
-	  para $|x| &lt; \tau$ y cero en otro caso.
+	  \[ m(x_i) = \frac{ \sum_{j=1}^{n} y_j \cdot K_h(x_i - x_j)}
+	  {\sum_{j=1}^{n} K_h(x_i - x_j)} \]
+	  donde la función kernel <math>K_h(\cdot)</math> viene dada por
+	  \[ K_h(x) = \exp\left(-\frac{x^2}{2h}\right) \]
+	  para $|x| &lt; \tau$, y cero en otro caso.
+	  ($\tau$ = Parámetro de recorte.)
 	</para>
 	<para context="notex">
 	  La función núcleo (<quote>kernel</quote>) <math>K</math> viene dada por
 	  <math>K = exp(-x</math><sup>2</sup><math> / 2h)</math> cuando
 	  <math>|x| &lt; T</math>, e igual a cero en otro caso.
-	</para>
-	<para context="tex">
-	  El argumento <argname>h</argname>, que se conoce como el ancho de
-	  banda o \emph{bandwidth}, es un parámetro que determina el usuario
-	  con un número real positivo. Habitualmente este es un número pequeño
-	  pues valores más grandes de $h$ hacen que $m(x)$ sea más suave;
-	  una elección popular es $h \propto n^{-0.2}$. Puedes obtener más detalles en
-	  <guideref targ="chap:nonparam"/>.
-	</para>
-	<para context="notex">
-	  El argumento <argname>h</argname>, que se conoce como el ancho
-	  de banda (<quote>bandwidth</quote>), es un parámetro que determina
-	  el usuario mediante un número real positivo. Habitualmente este es un número
-	  pequeño, pues valores más grandes de <argname>h</argname> hacen que
-	  <math>m(x)</math> sea más suave; una elección popular es hacer que
-	  <argname>h</argname> sea proporcional a <math>n</math><sup>-0.2</sup>.
-	  Puedes obtener más detalles en <guideref targ="chap:nonparam"/>.
-	</para>
-	<para context="tex">
-	  El escalar $\tau$ se utiliza para prevenir problemas numéricos cuando se
-	  evalúa la función núcleo demasiado lejos del cero, y se llama parámetro
-	  trim.
-	</para>
-	<para context="notex">
-	  El escalar <math>T</math> se utiliza para prevenir problemas numéricos
-	  cuando se evalúa la función núcleo demasiado lejos del cero, y se llama
-	  parámetro <quote>trim</quote>.
+	  (<math>T</math> = Parámetro de recorte.)
 	</para>
 	<para>
-	  Este parámetro <quote>trim</quote> puede ajustarse estableciendo
-	  <lit>nadarwat_trim</lit> como múltiplo de <argname>h</argname>.
-	  El valor por defecto es 4.
+	  Los tres argumentos opcionales modulan el comportamiento del
+	  estimador tal como se describe más abajo.
 	</para>
+	<subhead>Ancho de banda</subhead>
 	<para>
-	  El usuario puede indicar un valor negativo para el ancho de banda.
-	  Eso se interpreta como un convencionalismo sintáctico para obtener el
-	  estimador que omite una observación; es decir, una variante del
-	  estimador que no utiliza la observación <math>i</math>-ésima para
-	  evaluar <math>m(x</math><sub>i</sub><math>)</math>. Esto hace que
-	  el estimador de Nadaraya&ndash;Watson sea numéricamente más
-	  robusto, y por eso se recomienda habitualmente utilizarlo cuando se
-	  calcula con la intención de hacer inferencias. Lógicamente, el ancho de
-	  banda que se utiliza en realidad es el valor absoluto de
-	  <argname>h</argname>.
+	  Puedes usar el argumento <argname>h</argname> para controlar el ancho
+	  de banda (<quote>bandwidth</quote>), mediante un número real positivo.
+	  Habitualmente este es un número pequeño, pues valores más grandes de
+	  <argname>h</argname> hacen que <math>m(x)</math> sea más suave. Una
+	  elección popular es hacer que <argname>h</argname> sea proporcional a
+	  <math>n</math><sup>-0.2</sup>. Si omites <argname>h</argname> o lo
+	  igualas a cero, el ancho de banda se establece por defecto con un valor
+	  determinado por los datos, utilizando la proporcionalidad que se acaba de
+	  mencionar, pero introduciendo la dispersión de los datos de <argname>x</argname>
+	  tal como la mide el rango inter-cuartil o la desviación estándar; consulta
+	  <guideref targ="chap:nonparam"/> para obtener más detalles.
+	</para>
+	<subhead>Dejar-una-fuera</subhead>
+	<para>
+	  <quote>Dejar-una-fuera</quote> es una variante del algoritmo,
+	  que omite la observación <math>i</math>-ésima cando se evalúa
+	  <math>m(x</math><sub>i</sub><math>)</math>. Esto hace que el
+	  estimador de Nadaraya&ndash;Watson sea numéricamente más
+	  robusto, y por eso se recomienda habitualmente utilizarlo cuando el
+	  estimador se calcula con intención de hacer inferencias. Esta
+	  variante no está permitida por defecto, pero se activa cuando se
+	  indica un valor no nulo para el argumento <argname>LOO</argname>.
 	</para>
 	<para context="tex">
-          En las fórmulas, el estimador que no utiliza una observación es
+          En las fórmulas, este estimador es
           \[
-          m(x_i) = \frac{ \sum_{j \ne i} y_j \cdot K_h(x_i -
-          x_j)} {\sum_{j \ne i} K_h(x_i - x_j)}
+          m(x_i) = \frac{ \sum_{j \ne i} y_j \cdot K_h(x_i - x_j)}
+          {\sum_{j \ne i} K_h(x_i - x_j)}
           \]
 	</para>
-
+	<subhead>Recorte</subhead>
+	<para>
+	  Puedes usar el argumento <argname>recorte</argname> para controlar
+	  el grao de <quote>recorte</quote> que se impone para prevenir
+	  problemas numéricos, cuando la función 'kernel' se está evaluando
+	  demasiado lejos de cero. Este parámetro se expresa como un
+	  múltiplo de <argname>h</argname>, siendo 4 el valor por defecto.
+	  En algunos casos, puede ser preferible utilizar un valor mayor que 4.
+	  De nuevo, consulta <guideref targ="chap:nonparam"/> para
+	  obtener más detalles.
+	</para>
+	<para>
+	  Consulta también <fncref targ="loess"/>.
+	</para>
       </description>
     </function>
 
