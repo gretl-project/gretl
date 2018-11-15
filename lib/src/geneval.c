@@ -12435,12 +12435,11 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    } else if (i == 2) {
 		/* set bandwidth? */
 		if (e->t == EMPTY) {
-		    ; /* OK */
+		    ; /* OK: will use the default */
 		} else {
 		    h = node_get_scalar(e, p);
 		    if (h < 0 && k > 3) {
-			gretl_errmsg_sprintf(_("Bandwidth cannot be negative "
-					       "with more than 3 arguments"));
+			gretl_errmsg_sprintf(_("Bandwidth must be non-negative"));
 			p->err = E_INVARG;
 			break;
 		    } else if (h < 0) {
@@ -12453,7 +12452,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		/* Leave-one-out */
 		LOO = node_get_bool(e, p, 0);
 	    } else if (i == 4) {
-		/* trim spec? (overrides libset) */
+		/* trim spec? (overrides legacy "set" value) */
 		trim = node_get_scalar(e, p);
 	    }
 	}

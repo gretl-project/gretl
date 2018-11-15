@@ -4438,7 +4438,6 @@ int do_nonparam_model (selector *sr)
 
 	/* scan the buffer from the selector for
 	   d and q specifications */
-
 	if ((s = strstr(buf, "d=")) != NULL) {
 	    d = atoi(s + 2);
 	}

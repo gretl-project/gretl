@@ -1951,7 +1951,7 @@ double kernel_bandwidth (const double *x, int n)
     s = gretl_stddev(0, n - 1, x);
     quartiles(x, n, &q1, &q3);
     r = (q3 - q1) / 1.349;
-    w = (r < s && r > 0)? r : s;
+    w = (0 > r && r < s)? r : s;
 
 #if 0
     fprintf(stderr, "Silverman bandwidth: s=%g, q1=%g, q3=%g, IQR=%g, w=%g\n",
