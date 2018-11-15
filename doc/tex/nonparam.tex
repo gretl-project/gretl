@@ -131,14 +131,62 @@ conditioning variable $X$, and is defined as
 \]
 where $K_h(\cdot)$ is the so-called \emph{kernel function}, which is
 usually some simple transform of a density function that depends on a
-scalar called the \emph{bandwidth}. The one gretl uses is given
-by
+scalar, $h$, known as the \emph{bandwidth}. The one used by gretl
+is
 \[
   K_h(x) = \exp\left(-\frac{x^2}{2h}\right)
 \]
-for $|x| < \tau$ and zero otherwise. The scalar $\tau$ is used to
-prevent numerical problems when the kernel function is evaluated too
-far away from zero and is called the trim parameter.
+for $|x| < \tau$ and zero otherwise. Larger values of $h$ produce a
+smoother function.  The scalar $\tau$, known as the trim parameter, is
+used to prevent numerical problems when the kernel function is
+evaluated too far away from zero.
+
+A common variant of Nadaraya--Watson is the so-called
+``leave-one-out'' estimator, which omits the $i$-th observation when
+evaluating $m(x_i)$. The formula therefore becomes
+\[
+m(x_i) = \frac{ \sum_{j \ne i} y_j \cdot K_h(x_i -
+  x_j)} {\sum_{j \ne i} K_h(x_i - x_j)}
+\]
+This makes the estimator more robust numerically and its usage is
+often advised for inference purposes.
+
+The \texttt{nadarwat()} function in gretl takes up to five arguments
+as follows: the dependent series $y$, the independent series $x$, the
+bandwidth $h$, a Boolean switch to turn on ``leave-one-out'', and a
+value for the trim parameter $\tau$, expressed as a multiple of $h$.
+The last three arguments are optional; if they are omitted the default
+values are, respectively, an automatic data-determined value for $h$
+(see below), leave-one-out not activated, and $\tau = 4$. The default
+value of $\tau$ offers a relatively safe guard against numerical
+problems; in some cases a larger $\tau$ may produce more sensible
+values in regions of $X$ with sparse support.
+
+\subsection{Choice of bandwidth}
+
+As mentioned above, larger values of $h$ lead to a smoother $m(\cdot)$
+function; smaller values make the $m(\cdot)$ function follow the $y_i$
+values more closely, so that the function appears more ``jagged''. In
+fact, as $h \to \infty$, $m(x_i) \to \bar{Y}$; on the contrary, if
+$h \to 0$, observations for which $x_i \ne X$ are not taken into
+account at all when computing $m(X)$.  Also, the statistical
+properties of $m(\cdot)$ vary with $h$: its variance can be shown to
+be decreasing in $h$, while its squared bias is increasing in $h$.  It
+can be shown that choosing $h \sim n^{-1/5}$ minimizes the RMSE, so
+that value is customarily taken as a reference point.
+
+If the argument $h$ is omitted or set to 0, \app{gretl} uses
+the following data-determined value:
+\[
+h = 0.9 \cdot \min\left[s, \frac{r}{1.349}\right] \cdot n^{-1/5}
+\]
+where $s$ is the sample standard deviation of $x$ and $r$ is its
+interquartile range.
+
+\subsection{Example and prediction}
+
+By way of example, Listing~\ref{scr:nadarwat-ex} produces the graph
+shown in Figure~\ref{fig:nadarwat-ex} (after some slight editing).
 
 \begin{script}[htbp]
   \caption{Nadaraya--Watson example}
@@ -167,66 +215,6 @@ gnuplot HA m0 m1 m2 WA --output=display --with-lines=m0,m1,m2
   \caption{Nadaraya--Watson example for several choices of the bandwidth parameter}
   \label{fig:nadarwat-ex}
 \end{figure}
-
-Listing~\ref{scr:nadarwat-ex} produces the graph shown in
-Figure~\ref{fig:nadarwat-ex} (after some slight editing).
-
-The choice of the bandwidth is up to the user: larger values of $h$
-lead to a smoother $m(\cdot)$ function; smaller values make the
-$m(\cdot)$ function follow the $y_i$ values more closely, so that the
-function appears more ``jagged''. In fact, as $h \to \infty$, $m(x_i)
-\to \bar{Y}$; on the contrary, if $h \to 0$, observations for which
-$x_i \ne X$ are not taken into account at all when computing $m(X)$.
-Also, the statistical properties of $m(\cdot)$ vary with $h$: its
-variance can be shown to be decreasing in $h$, while its squared bias
-is increasing in $h$.  It can be shown that choosing $h \sim n^{-1/5}$
-minimizes the RMSE, so that value is customarily taken as a reference
-point.
-
-If $h$ is set to 0, then \app{gretl} will use a default choice, given
-by the following formula:
-\[
-h = 0.9 \cdot \min\left[s, \frac{r}{1.349}\right] \cdot n^{-1/5}
-\]
-where $s$ is the sample standard deviation of $x$ and $r$ is its
-interquartile range.
-
-Note that the kernel function has its tails ``trimmed''. The scalar
-$\tau$, which controls the level at which trimming occurs is set by
-default at $4 \cdot h$; this setting, however, may be changed via the
-\cmd{set} command. For example,
-\begin{code}
-  set nadarwat_trim 10
-\end{code}
-sets $\tau = 10 \cdot h$. This may at times produce more sensible
-results in regions of $X$ with sparse support; however, you should be
-aware that in those same cases machine precision (division by
-numerical zero) may render your results spurious. The default is
-relatively safe, but experimenting with larger values may be a sensible
-strategy in some cases.
-
-A common variant of the Nadaraya--Watson estimator is the so-called
-``leave-one-out'' estimator: this is a variant of the estimator that
-does not use the $i$-th observation for evaluating $m(x_i)$. This
-makes the estimator more robust numerically and its usage is often
-advised for inference purposes.  In formulae, the leave-one-out
-estimator is
-\[
-m(x_i) = \frac{ \sum_{j \ne i} y_j \cdot K_h(x_i -
-  x_j)} {\sum_{j \ne i} K_h(x_i - x_j)}
-\]
-In order to have gretl compute the leave-one-out estimator, just
-reverse the sign of $h$: if we changed example \ref{scr:nadarwat-ex} by
-substituting
-\begin{code}
-  scalar h = $nobs^(-0.2)
-\end{code}
-with
-\begin{code}
-  scalar h = -($nobs^(-0.2))
-\end{code}
-the rest of the example would have stayed unchanged, the only
-difference being the usage of the leave-one-out estimator.
 
 Although $X$ could be, in principle, any value, in the typical usage
 of this estimator you want to compute $m(X)$ for $X$ equal to one or

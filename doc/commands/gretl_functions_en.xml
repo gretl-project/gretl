@@ -6847,10 +6847,10 @@
 	  ($\tau$ = trimming parameter.)
 	</para>
 	<para context="notex">
-	  The kernel function <math>K</math> is given by <math>K =
-	  exp(-x</math><sup>2</sup><math> / 2h)</math> for <math>|x|
-	  &lt; T</math>, and zero otherwise. (<math>T</math> =
-	  trimming parameter.)
+	  The kernel function employed by this estimator is given by
+	  <math>K = exp(-x</math><sup>2</sup><math> / 2h)</math> for
+	  <math>|x| &lt; T</math>, and zero otherwise. (<math>T</math>
+	  = trimming parameter.)
 	</para>
 	<para>
 	  The three optional arguments inflect the behavior of the

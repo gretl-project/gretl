@@ -8589,23 +8589,30 @@
 	independent variable.
       </para>
       <para>
-	The kernel function <math>K</math> is given by <math>K =
-	exp(-x</math><sup>2</sup><math> / 2h)</math> for <math>|x|
-	&lt; T</math> and zero otherwise.
+	The kernel function employed by this estimator is given by
+	<math>K = exp(-x</math><sup>2</sup><math> / 2h)</math> for
+	<math>|x| &lt; T</math>, and zero otherwise. <math>T</math> is
+	a trimming parameter, by default equal to 4<math>h</math>.
       </para>
       <para>
-	The bandwidth, usually a small number, controls the smoothness
-	of <math>m(x)</math> (higher values producing a smoother
-	series); the default value is <math>n</math><sup>-0.2</sup>.
+	The bandwidth <math>h</math>, which is usually a small number,
+	controls the smoothness of <math>m(x)</math> (higher values
+	producing a smoother series); by default this is a
+	data-determined value proportional to
+	<math>n</math><sup>-0.2</sup>, where <math>n</math> is the
+	sample size.
       </para>
       <para>
 	If the <quote>leave-one-out</quote> box is checked, a variant
 	of the estimator is employed in which the <math>i</math>-th
 	observation is not used in evaluating
 	<math>m(x</math><sub>i</sub><math>)</math>. This makes the
-	Nadaraya&ndash;Watson estimator more robust numerically and
-	its usage is normally advised when the estimator is computed
-	for inference purposes.
+	algorithm more robust numerically and its usage is generally
+	advised when the estimator is computed for inference purposes.
+      </para>
+      <para>
+	For more detail on nonparametric estimation see <guideref
+	targ="chap:nonparam"/>.
       </para>
      </description>
   </command>

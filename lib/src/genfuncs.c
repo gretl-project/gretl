@@ -6228,9 +6228,10 @@ int nadaraya_watson (const double *y, const double *x, double h,
 	return E_DATA;
     } else if (h == 0.0) {
 	/* automatic data-based bandwidth */
-	const double *sx = x + dset->t1;
+	const double *sampx = x + dset->t1;
 	int n = sample_size(dset);
-	h = kernel_bandwidth(sx, n);
+
+	h = kernel_bandwidth(sampx, n);
     }
 
     num = malloc(2 * n * sizeof *num);
