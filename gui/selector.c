@@ -5154,10 +5154,6 @@ static void add_np_controls (selector *sr)
     /* option checkbox */
     hbox = gtk_hbox_new(FALSE, 5);
     w = sr->extra[i] = gtk_check_button_new_with_label(_(optstr));
-    if (sr->ci == NADARWAT) {
-	/* make leave-one-out the default */
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), TRUE);
-    }
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
     table_add_right(sr, hbox, 1);
 }

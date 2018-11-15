@@ -6230,7 +6230,6 @@ int nadaraya_watson (const double *y, const double *x, double h,
 	/* automatic data-based bandwidth */
 	const double *sx = x + dset->t1;
 	int n = sample_size(dset);
-
 	h = kernel_bandwidth(sx, n);
     }
 
