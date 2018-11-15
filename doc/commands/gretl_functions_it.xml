@@ -6695,9 +6695,11 @@
 
     <function name="nadarwat" section="stats" output="series">
       <fnargs>
-    <fnarg type="series">y</fnarg>
-    <fnarg type="series">x</fnarg>
-    <fnarg type="scalar">h</fnarg>
+	<fnarg type="series">y</fnarg>
+	<fnarg type="series">x</fnarg>
+	<fnarg type="scalar" optional="true">h</fnarg>
+	<fnarg type="bool" optional="true">LOO</fnarg>
+	<fnarg type="scalar" optional="true">trim</fnarg>
       </fnargs>
       <description>
     <para>
@@ -6718,68 +6720,62 @@
       \[
       K_h(x) = \exp\left(-\frac{x^2}{2h}\right)
       \]
-      per $|x| &lt; \tau$ e 0 altrimenti.
+      per $|x| &lt; \tau$ e 0 altrimenti ($\tau$ è il cosiddetto
+      parametro di trimming).
     </para>
     <para context="notex">
       La funzione kernel <math>K</math> è data da <math>K =
       exp(-x</math><sup>2</sup><math> / 2h)</math> per <math>|x|
       &lt; T</math> e 0 altrimenti.
     </para>
-    <para context="tex">
-      L'argomento <argname>h</argname>, noto come \emph{ampiezza di
-      banda}, è un parametro (reale positivo) indicato
-      dall'utente. Normalmente, è un numero piccolo: valori grandi di
-      $h$ rendono $m(x)$ più liscia; una scelta molto comune è $h
-      \propto n^{-0.2}$. Per maggiori dettagli, si veda <guideref
-      targ="chap:nonparam"/>.
-    </para>
-    <para context="notex">
-      L'argomento <argname>h</argname>, noto come ampiezza di banda, è
-      un parametro (reale positivo) indicato dall'utente. Normalmente,
-      è un numero piccolo: valori grandi di <argname>h</argname>
-      rendono <math>m(x)</math> più liscia; una scelta molto comune è
-      rendere <argname>h</argname> proporzionale a
-      <math>n</math><sup>-0.2</sup>. Per maggiori dettagli, si veda
-      <guideref targ="chap:nonparam"/>.
-    </para>
-    <para context="tex">
-      Lo scalare $\tau$ viene usato per prevenire problemi
-      numerici che si verificano quando la funzione kernel è
-      calcolata troppo lontano dallo zero e viene detto 
-      parametro di taglio.
-    </para>
-    <para context="notex">
-      Lo scalare <math>T</math> viene usato per prevenire problemi
-      numerici che si verificano quando la funzione kernel è
-      calcolata troppo lontano dallo zero e viene detto 
-      parametro di taglio.
-    </para>
     <para>
-      Quest'ultimo può essere modificato a piacere mediante il comando
-      <lit>set nadarwat_trim</lit>; è espresso come multiplo di
-      <argname>h</argname>, e il valore di default è 4.
+      I tre parametri opzionali determinano il risultato come spiegato
+      qui di seguito.
     </para>
+    <subhead>Ampiezza di banda</subhead>
     <para>
-      L'utente può indicare un valore negativo per l'ampiezza di
-      banda: ciò viene interpretato come una sintassi
-      comvenzionale per la cosiddetta variante
-      <quote>leave-one-out</quote> dello stimatore, ossia una
-      variante che non usa la <math>i</math>-esima osservazione
-      per calcolare
-      <math>m(x</math><sub>i</sub><math>)</math>. Questa variante
-      rende il procedimento numericamente più robusto e il suo uso
-      è sovente consigliato quando lo stimatore è usato a fini
-      inferenziali. Ovviamente, l'ampiezza di banda effettivamente
-      usata è il valore assoluto di <argname>h</argname>.
+      L'argomanto <argname>h</argname>, l'ampiezza di banda, è un
+      numero positivo, di solito piccolo.  Più esso è grande, più il
+      risultato <math>m(x)</math> sarà liscio. Comunemente, si sceglie
+      <argname>h</argname> in modo che sia proporzionale a
+      <math>n</math><sup>-0.2</sup>. Se <argname>h</argname> è omesso
+      o pari a zero, la scelta di default usa un valore determinato
+      sulla base della dispersione di <argname>x</argname>, così come
+      misurata dallo scarto quadratico medio o dal range
+      interquartile; vedi <guideref targ="chap:nonparam"/> per
+      maggiori dettagli.
     </para>
-      <para context="tex">
-        In formule, lo stimatore ``leave-one-out'' è
-        \[
-        m(x_i) = \frac{ \sum_{j \ne i} y_j \cdot K_h(x_i -
-        x_j)} {\sum_{j \ne i} K_h(x_i - x_j)}
-        \]
-      </para>
-
+    <subhead>Leave-one-out</subhead>
+    <para>
+      <quote>Leave-one-out</quote> è una variante dell'algoritmo che
+      omette l'<math>i</math>-esima osservazione nel calcolo
+      di <math>m(x</math><sub>i</sub><math>)</math>. Questo rende lo
+      stimatore Nadaraya&ndash;Watson più robusto numericamente ed è
+      in genere consigliato qunado la stima viene fatta a fini
+      inferenziali. Questa variante non è di default, ma viene
+      attivata se l'argomento <argname>LOO</argname> è non-zero.
+    </para>
+    <para context="tex">
+      In formule, questo stimatore è
+      \[
+      m(x_i) = \frac{ \sum_{j \ne i} y_j \cdot K_h(x_i -
+      x_j)} {\sum_{j \ne i} K_h(x_i - x_j)}
+      \]
+    </para>
+	<subhead>Trimming</subhead>
+	<para>
+	  Il parametro <argname>trim</argname> viene usato per
+	  controllare il livello di <quote>taglio</quote>, al fine di
+	  prevenire problemi numerici quando la funzione kernel è
+	  valutata troppo lontano da 0. Questo parametro è espresso
+	  come multiplo di <argname>h</argname>, e il default è 4. In
+	  certi casi, un valore maggiore di 4 potrebbe essere
+	  preferibile. Di nuovo, si veda <guideref
+	  targ="chap:nonparam"/> per dettagli.
+	</para>
+	<para>
+	  Vedi anche <fncref targ="loess"/>.
+	</para>
       </description>
     </function>
 
