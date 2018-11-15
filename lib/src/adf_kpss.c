@@ -285,8 +285,8 @@ static int real_adf_form_list (adf_info *ainfo,
     }
 
     if (!err && ainfo->nseas > 0) {
-	/* should we center these? */
-	ainfo->slist = seasonals_list(dset, dset->pd, 0, &err);
+	/* note: centered */
+	ainfo->slist = seasonals_list(dset, dset->pd, 1, &err);
 	if (err) {
 	    ainfo->nseas = 0;
 	} else {
@@ -661,7 +661,7 @@ static void print_adf_results (adf_info *ainfo, MODEL *dfmod,
 		DF_model_string(0));
     } else {
 	pprintf(prn, "  %s ", _(DF_test_string(i)));
-	if (ainfo->nseas > 0 && i > 0) {
+	if (ainfo->nseas > 0) {
 	    pputs(prn, _("plus seasonal dummies"));
 	}
 	pputc(prn, '\n');
@@ -1096,36 +1096,38 @@ static int set_deterministic_terms (adf_info *ainfo,
 
     /* Note that list[1] and list[2], plus the @order
        lagged differences, are in common for all
-       specifications
+       specifications. So we start adding deterministic
+       terms at position 3 + ainfo->order.
     */
 
-    ainfo->list[0] = 1 + ainfo->order + ainfo->det;
+    ainfo->list[0] = 1 + ainfo->order + ainfo->det + ainfo->nseas;
+    i = 3 + ainfo->order;
 
     if (ainfo->det >= UR_TREND) {
-	i = 3 + ainfo->order;
 	ainfo->list[i] = gettrend(dset, 0);
 	if (ainfo->list[i] == 0) {
 	    return E_ALLOC;
 	}
+	i++;
     }
 
     if (ainfo->det == UR_QUAD_TREND) {
-	i = 4 + ainfo->order;
 	ainfo->list[i] = gettrend(dset, 1);
 	if (ainfo->list[i] == 0) {
 	    return E_ALLOC;
 	}
+	i++;
     }
 
-    if (ainfo->det != UR_NO_CONST) {
-	i = ainfo->list[0];
-	ainfo->list[0] += ainfo->nseas;
-	/* stick constant on end of list */
-	ainfo->list[ainfo->list[0]] = 0;
-	/* preceded by seasonal dummies if wanted */
+    if (ainfo->nseas > 0) {
 	for (j=0; j<ainfo->nseas; j++) {
 	    ainfo->list[i++] = ainfo->slist[j+1];
 	}
+    }
+
+    if (ainfo->det != UR_NO_CONST) {
+	/* stick constant on end of list */
+	ainfo->list[i] = 0;
     }
 
     return 0;
@@ -2056,7 +2058,7 @@ real_kpss_test (int order, int varno, DATASET *dset,
     if (hasseas) {
 	int *slist = NULL;
 
-	slist = seasonals_list(dset, dset->pd, 0, &err);
+	slist = seasonals_list(dset, dset->pd, 1, &err);
 	if (err) {
 	    free(list);
 	    return err;
@@ -2416,9 +2418,9 @@ static int *make_coint_list (const int *list, int detcode,
 	clist[j++] = 0;
     }
 
-    /* add seasonals, if wanted */
+    /* add centered seasonals, if wanted */
     if (nseas > 0) {
-	int *slist = seasonals_list(dset, dset->pd, 0, err);
+	int *slist = seasonals_list(dset, dset->pd, 1, err);
 
 	if (!*err) {
 	    for (i=0; i<nseas; i++) {
