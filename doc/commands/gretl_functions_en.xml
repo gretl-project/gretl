@@ -6824,87 +6824,84 @@
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="series">x</fnarg>
-	<fnarg type="scalar">h</fnarg>
+	<fnarg type="scalar" optional="true">h</fnarg>
+	<fnarg type="bool" optional="true">LOO</fnarg>
+	<fnarg type="scalar" optional="true">trim</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns the Nadaraya&ndash;Watson nonparametric estimator of
-	  the conditional mean of <argname>y</argname> given
-	  <argname>x</argname>. It returns a series holding the
-	  nonparametric estimate of
+	  Computes the Nadaraya&ndash;Watson nonparametric estimator
+	  of the conditional mean of <argname>y</argname> given
+	  <argname>x</argname>. The return value is a series holding
+	  <math>m(x</math><sub>i</sub><math>)</math>, the estimate of
 	  <math>E(y</math><sub>i</sub><math>|x</math><sub>i</sub><math>)</math>
 	  for each non-missing element of the series
 	  <argname>x</argname>.
 	</para>
 	<para context="tex">
-	  \[
-	  m(x_i) = \frac{ \sum_{j=1}^{n} y_j \cdot K_h(x_i -
-	  x_j)} {\sum_{j=1}^{n} K_h(x_i - x_j)}
-	  \]
-	  where the kernel function <math>K_h(\cdot)</math> is given
-	  by
-	  \[
-	  K_h(x) = \exp\left(-\frac{x^2}{2h}\right)
-	  \]
-	  for $|x| &lt; \tau$ and zero otherwise.
+	  \[ m(x_i) = \frac{ \sum_{j=1}^{n} y_j \cdot K_h(x_i - x_j)}
+	  {\sum_{j=1}^{n} K_h(x_i - x_j)} \] where the kernel function
+	  <math>K_h(\cdot)</math> is given by
+	  \[ K_h(x) = \exp\left(-\frac{x^2}{2h}\right)
+	  \] for $|x| &lt; \tau$ and zero otherwise.
+	  ($\tau$ = trimming parameter.)
 	</para>
 	<para context="notex">
-	  The kernel function <math>K</math> is given
-	  by <math>K = exp(-x</math><sup>2</sup><math> / 2h)</math>
-	  for <math>|x| &lt; T</math> and zero otherwise.
-	</para>
-	<para context="tex">
-	  The argument <argname>h</argname>, known as the
-	  \emph{bandwidth}, is a parameter (a positive real number)
-	  given by the user. This is usually a small number: larger
-	  values of $h$ make $m(x)$ smoother; a popular choice is $h
-	  \propto n^{-0.2}$. More details are given in <guideref
-	  targ="chap:nonparam"/>.
-	</para>
-	<para context="notex">
-	  The argument <argname>h</argname>, known as the bandwidth,
-	  is a parameter (a positive real number) given by the
-	  user. This is usually a small number: larger values of
-	  <argname>h</argname> make <math>m(x)</math> smoother; a
-	  popular choice is to make <argname>h</argname> proportional
-	  to <math>n</math><sup>-0.2</sup>. More details are given in
-	  <guideref targ="chap:nonparam"/>.
-	</para>
-	<para context="tex">
-	  The scalar $\tau$ is used to prevent numerical problems when
-	  the kernel function is evaluated too far away from zero
-	  and is called the trim parameter.
-	</para>
-	<para context="notex">
-	  The scalar <math>T</math> is used to prevent numerical
-	  problems when the kernel function is evaluated too far away
-	  from zero and is called the trim parameter.
+	  The kernel function <math>K</math> is given by <math>K =
+	  exp(-x</math><sup>2</sup><math> / 2h)</math> for <math>|x|
+	  &lt; T</math>, and zero otherwise. (<math>T</math> =
+	  trimming parameter.)
 	</para>
 	<para>
-	  The trim parameter can be adjusted via
-	  the <lit>nadarwat_trim</lit> setting, as a multiple
-	  of <argname>h</argname>. The default value is 4.  
+	  The three optional arguments inflect the behavior of the
+	  estimator as described below.
 	</para>
+	<subhead>Bandwidth</subhead>
 	<para>
-	  The user may provide a negative value for the bandwidth:
-	  this is interpreted as conventional syntax to obtain the
-	  leave-one-out estimator, that is a variant of the estimator
-	  that does not use the <math>i</math>-th observation for
+	  The argument <argname>h</argname> can be used to control the
+	  bandwidth, a positive real number. This is usually small;
+	  larger values of <argname>h</argname> make <math>m(x)</math>
+	  smoother. A popular choice is to make <argname>h</argname>
+	  proportional to <math>n</math><sup>-0.2</sup>. If
+	  <argname>h</argname> is omitted or set to zero, the
+	  bandwidth defaults to a data-determined value using the
+	  proportionality just mentioned but incorporating the
+	  dispersion of the <argname>x</argname> data as measured by
+	  the inter-quartile range or standard deviation; see
+	  <guideref targ="chap:nonparam"/> for more details.
+	</para>
+	<subhead>Leave-one-out</subhead>
+	<para>
+	  <quote>Leave-one-out</quote> is a variant of the algorithm
+	  which omits the <math>i</math>-th observation when
 	  evaluating <math>m(x</math><sub>i</sub><math>)</math>. This
 	  makes the Nadaraya&ndash;Watson estimator more robust
-	  numerically and its usage is normally advised when the
-	  estimator is computed for inference purposes. Of course, the
-	  bandwidth actually used is the absolute value of
-	  <argname>h</argname>.
+	  numerically and is generally advised when the estimator is
+	  computed for inference purposes. This variant is not enabled
+	  by default, but is activated if a non-zero value is given
+	  for the <argname>LOO</argname> argument.
 	</para>
 	<para context="tex">
-          In formulae, the leave-one-out estimator is
+          In formulae, this estimator is
           \[
           m(x_i) = \frac{ \sum_{j \ne i} y_j \cdot K_h(x_i -
           x_j)} {\sum_{j \ne i} K_h(x_i - x_j)}
           \]
 	</para>
-
+	<subhead>Trimming</subhead>
+	<para>
+	  The <argname>trim</argname> argument can be used to control
+	  the degree of <quote>trimming</quote>, which is imposed to
+	  prevent numerical problems when the kernel function is
+	  evaluated too far away from zero. This parameter is
+	  expressed as a multiple of <argname>h</argname>, the default
+	  value being 4. In some cases a value greater than 4 may be
+	  preferable. Again see <guideref targ="chap:nonparam"/> for
+	  details.
+	</para>
+	<para>
+	  See also <fncref targ="loess"/>.
+	</para>
       </description>
     </function>
 
