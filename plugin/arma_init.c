@@ -101,15 +101,15 @@ void maybe_set_yscale (arma_info *ainfo)
 	    ainfo->yshift = ybar - sdy; /* subtract */
 	    ainfo->yscale = 1 / sdy;    /* multiply */
 #if 0
-	    fprintf(stderr, "scale: subtract %g, mul by %g\n",
-		    ainfo->yshift, ainfo->yscale);
+	    fprintf(stderr, "scale: ybar %g, sdy %g: subtract %g, mul by %g\n",
+		    ybar, sdy, ainfo->yshift, ainfo->yscale);
 #endif
 	}
     }
 
     if (!err && ainfo->prn != NULL && ainfo->yscale != 1.0) {
 	pputc(ainfo->prn, '\n');
-	pprintf(ainfo->prn, _("Shifting y by %d, scaling by %g\n"),
+	pprintf(ainfo->prn, _("Shifting y by %g, scaling by %g\n"),
 		ainfo->yshift, ainfo->yscale);
     }
 }
