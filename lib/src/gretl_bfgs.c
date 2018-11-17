@@ -963,7 +963,7 @@ static double quad_slen (int n, int *pndelta, double *b,
 		f1 = optim_fncall(cfunc, b, data, minimize);
 		fcount++;
 	    }
-	    d = -g0 * endpoint * acctol;
+	    d = g0 * endpoint * acctol;
 
 	    /* find the optimal steplength by quadratic interpolation;
 	       inspired by Kelley (1999), "Iterative Methods for Optimization",
@@ -1045,7 +1045,8 @@ static double simple_slen (int n, int *pndelta, double *b, double *X, double *t,
 			   double *pf, BFGS_CRIT_FUNC cfunc, void *data,
 			   double g0, double f0, int *pfcount, int minimize)
 {
-    double d, f1 = *pf, steplen = 1.0;
+    double d, steplen = 1.0;
+    double f1 = *pf;
     int i, crit_ok = 0, fcount = 0;
     int ndelta = *pndelta;
 
@@ -1065,8 +1066,8 @@ static double simple_slen (int n, int *pndelta, double *b, double *X, double *t,
 	}
 	if (ndelta > 0) {
 	    f1 = optim_fncall(cfunc, b, data, minimize);
-	    d = -g0 * steplen * acctol;
 	    fcount++;
+	    d = g0 * steplen * acctol;
 	    crit_ok = !na(f1) && (f1 >= f0 + d);
 	    if (!crit_ok) {
 		/* calculated criterion no good: try smaller step */
@@ -1212,7 +1213,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 	}
 #endif
 	if (sumgrad > 0.0) {
-	    /* heading in the right direction */
+	    /* heading in the right direction (uphill) */
 	    if (quad) {
 		steplen = quad_slen(n, &ndelta, b, X, t, &f, cfunc, data,
 				    sumgrad, fmax, &fcount, minimize);
