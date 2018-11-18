@@ -5722,13 +5722,14 @@
       <fnargs>
 	<fnarg type="series-or-vec">y</fnarg>
 	<fnarg type="int" optional="true">k</fnarg>
+	<fnarg type="scalar" optional="true">mu</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Returns the long-run variance of <argname>y</argname>,
 	  calculated using a Bartlett kernel with window size
 	  <argname>k</argname>. If the second argument is omitted, or
-	  given a value less than zero, the window size defaults to
+	  given a negative value, the window size defaults to
 	  the integer part of the cube root of the sample size.
 	</para>
 	<para context="tex">
@@ -5738,6 +5739,12 @@
 	  \right] \] 
 	  with 
 	  \[ w_i = 1 - \frac{|i|}{k + 1} \]
+	</para>
+	<para>
+	  The optional argument <argname>mu</argname> can be given to
+	  impose an assumption regarding the population mean of
+	  <argname>y</argname>, otherwise the sample mean is used in
+	  the variance calculation.
 	</para>
 	<para>
 	  For a multivariate counterpart, see <fncref targ="lrcovar"/>.

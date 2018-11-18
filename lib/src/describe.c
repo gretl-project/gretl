@@ -736,7 +736,7 @@ double gretl_long_run_variance (int t1, int t2, const double *x,
 	return NADBL;
     }
 
-    if (m <= 0) {
+    if (m < 0) {
 	order = (int) exp(log(n) / 3.0);
     } else {
 	order = m;
