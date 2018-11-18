@@ -654,26 +654,6 @@ static NODE *newlist (int flags)
     return n;
 }
 
-static int node_allocate_matrix (NODE *t, int m, int n, parser *p)
-{
-#if AUX_NODES_DEBUG
-    void *in = t->v.m;
-#endif
-
-    t->v.m = gretl_matrix_alloc(m, n);
-
-#if AUX_NODES_DEBUG
-    fprintf(stderr, "%p: node_allocate_matrix: in %p, out %p\n",
-	    (void *) t, in, (void *) t->v.m);
-#endif
-
-    if (t->v.m == NULL) {
-	p->err = E_ALLOC;
-    }
-
-    return p->err;
-}
-
 static NODE *newstring (int flags)
 {
     NODE *n = new_node(STR);
@@ -903,7 +883,10 @@ static NODE *aux_sized_matrix_node (parser *p, int m, int n)
     }
 
     if (!p->err && ret->v.m == NULL) {
-	p->err = node_allocate_matrix(ret, m, n, p);
+	ret->v.m = gretl_matrix_alloc(m, n);
+	if (ret->v.m == NULL) {
+	    p->err = E_ALLOC;
+	}
     }
 
     return ret;
@@ -5203,10 +5186,7 @@ static NODE *atan2_node (NODE *l, NODE *r, parser *p)
     if (rettype == NUM) {
 	ret = aux_scalar_node(p);
     } else if (rettype == MAT) {
-	ret = aux_matrix_node(p);
-	if (ret != NULL) {
-	    node_allocate_matrix(ret, nmax, 1, p);
-	}
+	ret = aux_sized_matrix_node(p, nmax, 1);
     } else {
 	ret = aux_series_node(p);
     }
@@ -8328,24 +8308,19 @@ static NODE *pergm_node (NODE *l, NODE *r, parser *p)
 
 /* application of scalar function to each element of matrix */
 
-static NODE *apply_matrix_func (NODE *n, int f, parser *p)
+static NODE *apply_matrix_func (NODE *t, int f, parser *p)
 {
-    NODE *ret = aux_matrix_node(p);
+    NODE *ret;
+    const gretl_matrix *m = t->v.m;
+    int i, n = m->rows * m->cols;
+    double x;
 
-    if (ret != NULL && starting(p)) {
-	const gretl_matrix *m = n->v.m;
-	int i, n = m->rows * m->cols;
-	double x;
+    ret = aux_sized_matrix_node(p, m->rows, m->cols);
 
-	if (node_allocate_matrix(ret, m->rows, m->cols, p)) {
-	    return NULL;
-	}
-
-	for (i=0; i<n && !p->err; i++) {
-	    /* FIXME error handling? */
-	    x = real_apply_func(m->val[i], f, p);
-	    ret->v.m->val[i] = x;
-	}
+    for (i=0; i<n && !p->err; i++) {
+	/* FIXME error handling? */
+	x = real_apply_func(m->val[i], f, p);
+	ret->v.m->val[i] = x;
     }
 
     return ret;
@@ -11150,34 +11125,30 @@ static NODE *eval_bessel_func (NODE *l, NODE *m, NODE *r, parser *p)
     v = node_get_scalar(m, p);
 
     if (r->t == NUM) {
+	double x = r->v.xval;
+
 	ret = aux_scalar_node(p);
     	if (ret != NULL) {
-	    double x = r->v.xval;
-
 	    ret->v.xval = gretl_bessel(ftype, v, x, &p->err);
     	}
     } else if (r->t == MAT) {
-	ret = aux_matrix_node(p);
+	const gretl_matrix *x = r->v.m;
+	int i, n = x->rows * x->cols;
+
+	ret = aux_sized_matrix_node(p, x->rows, x->cols);
 	if (ret != NULL) {
-	    const gretl_matrix *x = r->v.m;
-	    int i, n = x->rows * x->cols;
-
-	    if (node_allocate_matrix(ret, x->rows, x->cols, p)) {
-		return NULL;
-	    }
-
 	    for (i=0; i<n && !p->err; i++) {
 		ret->v.m->val[i] = gretl_bessel(ftype, v, x->val[i], &p->err);
 	    }
 	}
     } else if (r->t == SERIES) {
+	const double *x = r->v.xvec;
+	int t1 = autoreg(p) ? p->obs : p->dset->t1;
+	int t2 = autoreg(p) ? p->obs : p->dset->t2;
+	int t;
+
 	ret = aux_series_node(p);
 	if (ret != NULL) {
-	    const double *x = r->v.xvec;
-	    int t1 = autoreg(p) ? p->obs : p->dset->t1;
-	    int t2 = autoreg(p) ? p->obs : p->dset->t2;
-	    int t;
-
 	    for (t=t1; t<=t2 && !p->err; t++) {
 		ret->v.xvec[t] = gretl_bessel(ftype, v, x[t], &p->err);
 	    }
