@@ -312,7 +312,6 @@ enum {
     F_EIGSYM,	 
     F_EIGGEN,
     HF_CEIGH,
-    F_LRVAR,
     F_QUANTILE,
     F_CMULT,	  /* complex multiplication */
     F_HDPROD,     /* horizontal direct product */
@@ -442,6 +441,7 @@ enum {
     F_XMLGET,
     F_JSONGET,
     F_FEVD,
+    F_LRVAR,
     HF_CEIGG,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,

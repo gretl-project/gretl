@@ -7729,19 +7729,22 @@ static NODE *matrix_quantiles_node (NODE *l, NODE *r, parser *p)
 */
 
 static NODE *series_scalar_scalar_func (NODE *l, NODE *r,
-					int f, parser *p)
+					NODE *r2, int f,
+					parser *p)
 {
     NODE *ret = NULL;
 
     if (starting(p)) {
 	double rval = -1;
+	double r2val = NADBL;
 	const double *xvec;
 	int t1 = p->dset->t1;
 	int t2 = p->dset->t2;
 	int pd = 1;
 
-	if (r != NULL) {
-	    /* the second arg is optional for lrvar() */
+	if (f == F_LRVAR && null_or_empty(r)) {
+	    ; /* OK, second arg is optional */
+	} else {
 	    rval = node_get_scalar(r, p);
 	}
 
@@ -7765,14 +7768,21 @@ static NODE *series_scalar_scalar_func (NODE *l, NODE *r,
 	    xvec = l->v.xvec;
 	}
 
-	ret = aux_scalar_node(p);
+	if (f == F_LRVAR && !null_or_empty(r2)) {
+	    /* optional third arg */
+	    r2val = node_get_scalar(r2, p);
+	}
+
+	if (!p->err) {
+	    ret = aux_scalar_node(p);
+	}
 	if (p->err) {
 	    return ret;
 	}
 
 	switch (f) {
 	case F_LRVAR:
-	    ret->v.xval = gretl_long_run_variance(t1, t2, xvec, (int) rval);
+	    ret->v.xval = gretl_long_run_variance(t1, t2, xvec, (int) rval, r2val);
 	    break;
 	case F_QUANTILE:
 	    ret->v.xval = gretl_quantile(t1, t2, xvec, rval, OPT_NONE, &p->err);
@@ -7805,7 +7815,7 @@ static NODE *isconst_or_dum_node (NODE *l, NODE *r, parser *p, int f)
 	p->err = E_PDWRONG;
 	return NULL;
     } else {
-	return series_scalar_scalar_func(l, r, f, p);
+	return series_scalar_scalar_func(l, r, NULL, f, p);
     }
 }
 
@@ -15117,14 +15127,14 @@ static NODE *eval (NODE *t, parser *p)
 	if (l->t == SERIES || l->t == MAT) {
 	    if (t->t == F_ISCONST || t->t == F_ISDUMMY ) {
 		ret = isconst_or_dum_node(l, r, p, t->t);
+	    } else if (t->t == F_LRVAR) {
+		ret = series_scalar_scalar_func(l, m, r, t->t, p);
 	    } else if (scalar_node(r)) {
 		if (t->t == F_QUANTILE && l->t == MAT) {
 		    ret = matrix_quantiles_node(l, r, p);
 		} else {
-		    ret = series_scalar_scalar_func(l, r, t->t, p);
+		    ret = series_scalar_scalar_func(l, r, NULL, t->t, p);
 		}
-	    } else if (t->t == F_LRVAR && null_or_empty(r)) {
-		ret = series_scalar_scalar_func(l, NULL, t->t, p);
 	    } else {
 		node_type_error(t->t, 2, NUM, r, p);
 	    }
@@ -15138,13 +15148,13 @@ static NODE *eval (NODE *t, parser *p)
 	} else if (!scalar_node(r)) {
 	    node_type_error(t->t, 2, NUM, r, p);
 	} else {
-	    ret = series_scalar_scalar_func(l, r, t->t, p);
+	    ret = series_scalar_scalar_func(l, r, NULL, t->t, p);
 	}
 	break;
     case F_QUANTILE:
 	if (l->t == SERIES) {
 	    if (scalar_node(r)) {
-		ret = series_scalar_scalar_func(l, r, t->t, p);
+		ret = series_scalar_scalar_func(l, r, NULL, t->t, p);
 	    } else {
 		node_type_error(t->t, 2, NUM, r, p);
 	    }

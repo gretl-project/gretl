@@ -711,16 +711,19 @@ double gretl_restricted_stddev (int t1, int t2, const double *x,
 * @t1: starting observation.
 * @t2: ending observation.
 * @x: data series.
-* @m: bandwidth.
+* @m: bandwidth (<= 0 for automatic).
+* @mu: mean (or NADBL to use sample mean).
 *
 * Returns: the long-run variance of the series @x from obs
 * @t1 to obs @t2, using Bartlett kernel weights, or #NADBL
 * on failure (which includes encountering missing values).
 */
 
-double gretl_long_run_variance (int t1, int t2, const double *x, int m)
+double gretl_long_run_variance (int t1, int t2, const double *x,
+				int m, double mu)
 {
     double zt, wi, xbar, s2 = 0.0;
+    int use_mu = !na(mu);
     int i, t, n, order;
 
     if (series_adjust_sample(x, &t1, &t2) != 0) {
@@ -733,21 +736,32 @@ double gretl_long_run_variance (int t1, int t2, const double *x, int m)
 	return NADBL;
     }
 
-    if (m < 0) {
+    if (m <= 0) {
 	order = (int) exp(log(n) / 3.0);
     } else {
 	order = m;
     }
 
-    xbar = 0.0;
-    for (t=t1; t<=t2; t++) {
-	xbar += x[t];
+    if (use_mu) {
+	xbar = mu;
     }
-    xbar /= n;
 
-    for (t=t1; t<=t2; t++) {
-	zt = x[t] - xbar;
-	s2 += zt * zt;
+    if (use_mu && mu == 0.0) {
+	for (t=t1; t<=t2; t++) {
+	    s2 += x[t] * x[t];
+	}
+    } else {
+	if (!use_mu) {
+	    xbar = 0.0;
+	    for (t=t1; t<=t2; t++) {
+		xbar += x[t];
+	    }
+	    xbar /= n;
+	}
+	for (t=t1; t<=t2; t++) {
+	    zt = x[t] - xbar;
+	    s2 += zt * zt;
+	}
     }
 
     for (i=1; i<=order; i++) {
