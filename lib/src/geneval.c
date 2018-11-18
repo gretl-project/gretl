@@ -660,11 +660,7 @@ static int node_allocate_matrix (NODE *t, int m, int n, parser *p)
     void *in = t->v.m;
 #endif
 
-    if (m == 0 || n == 0) {
-	t->v.m = gretl_null_matrix_new();
-    } else {
-	t->v.m = gretl_matrix_alloc(m, n);
-    }
+    t->v.m = gretl_matrix_alloc(m, n);
 
 #if AUX_NODES_DEBUG
     fprintf(stderr, "%p: node_allocate_matrix: in %p, out %p\n",
@@ -869,7 +865,49 @@ static NODE *get_aux_node (parser *p, int t, int n, int flags)
     return ret;
 }
 
-#define aux_scalar_node(p) get_aux_node(p,NUM,0,0)
+/* We come here by preference to the generic get_aux_node()
+   (above) if we want an aux node holding an allocated matrix
+   of known size (m x n). On the second or subsequent
+   iterations of a loop, with any luck we may find that the
+   aux node already holds a matrix of the required dimensions
+   which can then be reused.
+*/
+
+static NODE *aux_sized_matrix_node (parser *p, int m, int n)
+{
+    NODE *ret = p->aux;
+
+    if (ret != NULL) {
+	/* got a pre-existing node */
+	if (ret->t == NUM) {
+	    /* switch @ret from scalar to matrix */
+	    ret->t = MAT;
+	    ret->v.m = NULL;
+	    ret->flags |= TMP_NODE;
+	} else if (ret->t != MAT) {
+	    p->err = E_TYPES;
+	} else {
+	    /* check for correctly sized matrix */
+	    gretl_matrix *a = ret->v.m;
+
+	    if (a != NULL && (a->rows != m || a->cols != n)) {
+		p->err = gretl_matrix_realloc(ret->v.m, m, n);
+	    }
+	}
+    } else {
+	/* we need to create a new node */
+	ret = newmat(TMP_NODE | AUX_NODE);
+	if (ret == NULL) {
+	    p->err = E_ALLOC;
+	}
+    }
+
+    if (!p->err && ret->v.m == NULL) {
+	p->err = node_allocate_matrix(ret, m, n, p);
+    }
+
+    return ret;
+}
 
 static int no_data_error (parser *p)
 {
@@ -917,6 +955,7 @@ static NODE *list_pointer_node (parser *p)
     }
 }
 
+#define aux_scalar_node(p) get_aux_node(p,NUM,0,0)
 #define aux_ivec_node(p,n) get_aux_node(p,IVEC,n,TMP_NODE)
 #define aux_matrix_node(p) get_aux_node(p,MAT,0,TMP_NODE)
 #define matrix_pointer_node(p) get_aux_node(p,MAT,0,0)
@@ -2931,7 +2970,7 @@ static NODE *matrix_scalar_calc2 (NODE *l, NODE *r, int op,
 	/* one of the operands is a matrix, albeit 1 x 1,
 	   so it's safer to produce a matrix result
 	*/
-	ret = aux_matrix_node(p);
+	ret = aux_sized_matrix_node(p, 1, 1);
     }
 
     if (!p->err) {
@@ -2948,10 +2987,7 @@ static NODE *matrix_scalar_calc2 (NODE *l, NODE *r, int op,
 	if (ret->t == NUM) {
 	    ret->v.xval = xy_calc(x, y, op, NUM, p);
 	} else {
-	    node_allocate_matrix(ret, 1, 1, p);
-	    if (!p->err) {
-		ret->v.m->val[0] = xy_calc(x, y, op, MAT, p);
-	    }
+	    ret->v.m->val[0] = xy_calc(x, y, op, MAT, p);
 	}
     }
 
@@ -2999,8 +3035,10 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 
     if (comp) {
 	ret = aux_scalar_node(p);
-    } else {
+    } else if (op == B_POW) {
 	ret = aux_matrix_node(p);
+    } else {
+	ret = aux_sized_matrix_node(p, m->rows, m->cols);
     }
 
     if (ret == NULL) {
@@ -3039,15 +3077,10 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 		}
 	    }
 	} else {
-	    if (node_allocate_matrix(ret, m->rows, m->cols, p)) {
-		return NULL;
-	    }
-
 	    if (gretl_matrix_is_dated(m)) {
 		gretl_matrix_set_t1(ret->v.m, gretl_matrix_get_t1(m));
 		gretl_matrix_set_t2(ret->v.m, gretl_matrix_get_t2(m));
 	    }
-
 	    if (l->t == NUM) {
 		for (i=0; i<n; i++) {
 		    y = xy_calc(x, m->val[i], op, MAT, p);
@@ -4246,49 +4279,44 @@ static int ok_matrix_dim (int r, int c, int f)
 
 static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
 {
-    NODE *ret = aux_matrix_node(p);
+    int cols = 0, rows = node_get_int(l, p);
+    NODE *ret = NULL;
 
-    if (ret != NULL && starting(p)) {
-	int cols = 0, rows = node_get_int(l, p);
+    if (!p->err) {
+	cols = (f == F_IMAT)? rows : node_get_int(r, p);
+    }
 
-	if (!p->err) {
-	    if (f == F_IMAT) {
-		cols = rows;
-	    } else {
-		cols = node_get_int(r, p);
-	    }
-	}
+    if (!p->err && !ok_matrix_dim(rows, cols, f)) {
+	p->err = E_INVARG;
+	matrix_error(p);
+    }
 
-	if (!p->err && !ok_matrix_dim(rows, cols, f)) {
-	    p->err = E_INVARG;
-	    matrix_error(p);
-	}
+    if (!p->err) {
+	ret = aux_sized_matrix_node(p, rows, cols);
+    }
 
-	if (p->err) {
-	    return ret;
-	}
+    if (p->err || rows * cols == 0) {
+	return ret;
+    }
 
-	switch (f) {
-	case F_IMAT:
-	    ret->v.m = gretl_identity_matrix_new(rows);
-	    break;
-	case F_ZEROS:
-	    ret->v.m = gretl_zero_matrix_new(rows, cols);
-	    break;
-	case F_ONES:
-	    ret->v.m = gretl_unit_matrix_new(rows, cols);
-	    break;
-	case F_MUNIF:
-	    ret->v.m = gretl_random_matrix_new(rows, cols,
-					       D_UNIFORM);
-	    break;
-	case F_MNORM:
-	    ret->v.m = gretl_random_matrix_new(rows, cols,
-					       D_NORMAL);
-	    break;
-	default:
-	    break;
-	}
+    switch (f) {
+    case F_IMAT:
+	gretl_matrix_inscribe_I(ret->v.m, 0, 0, rows);
+	break;
+    case F_ZEROS:
+	gretl_matrix_fill(ret->v.m, 0.0);
+	break;
+    case F_ONES:
+	gretl_matrix_fill(ret->v.m, 1.0);
+	break;
+    case F_MUNIF:
+	gretl_matrix_random_fill(ret->v.m, D_UNIFORM);
+	break;
+    case F_MNORM:
+	gretl_matrix_random_fill(ret->v.m, D_NORMAL);
+	break;
+    default:
+	break;
     }
 
     return ret;
