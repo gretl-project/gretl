@@ -308,41 +308,47 @@ static double controller_get_val (controller *clr,
 		clr->val = uvar_get_scalar_value(clr->uv) * clr->vsign;
 	    }
 	}
-    } else if (clr->expr != NULL && gretl_strsub_on()) {
+    } else if (clr->expr != NULL && clr->subst) {
 	int done = 0;
 
 	if (strchr(clr->expr, '@')) {
 	    /* the expression needs string substitution? */
-	    int subst = 0;
 	    char expr[64];
 
 	    *expr = '\0';
 	    strncat(expr, clr->expr, 63);
-	    *err = substitute_named_strings(expr, &subst);
-	    if (!*err && subst) {
+	    *err = substitute_named_strings(expr, &clr->subst);
+	    if (!*err && clr->subst) {
 		clr->val = generate_scalar(expr, dset, err);
 		done = 1;
 	    }
 	}
 	if (!done && !*err && strchr(clr->expr, '$')) {
 	    /* the expression needs dollar substitution? */
-	    int subst = 0;
 	    char expr[64];
 
 	    *expr = '\0';
 	    strncat(expr, clr->expr, 63);
 	    *err = make_dollar_substitutions(expr, 63, loop, dset,
-					     &subst, OPT_T);
-	    if (!*err && subst) {
+					     &clr->subst, OPT_T);
+	    if (!*err && clr->subst) {
 		clr->val = generate_scalar(expr, dset, err);
 		done = 1;
 	    }
 	}
 	if (!*err && !done) {
+	    clr->subst = 0;
 	    clr->val = generate_scalar(clr->expr, dset, err);
 	}
     } else if (clr->expr != NULL) {
 	/* with no string substitution */
+#if 0 /* not yet */
+	if (clr->genr == NULL) {
+	    clr->genr = genr_compile(clr->expr, dset, GRETL_TYPE_DOUBLE,
+				     OPT_P | OPT_N, NULL, err);
+	    fprintf(stderr, "HERE: clr->genr=%p, err=%d\n", );
+	}
+#endif
 	clr->val = generate_scalar(clr->expr, dset, err);
     }
 
@@ -2952,6 +2958,8 @@ make_dollar_substitutions (char *str, int maxlen,
 			   gretlopt opt)
 {
     int err = 0;
+
+    *subst = 0;
 
     /* if (opt & OPT_T) we're just processing a variable name, at the top
        of a loop, so we can skip to the "parentage" bit

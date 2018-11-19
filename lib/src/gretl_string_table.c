@@ -1146,6 +1146,8 @@ int substitute_named_strings (char *line, int *subst)
     int freeit;
     int i, n, m, err = 0;
 
+    *subst = 0;
+
     if (*s == '#' || strchr(s, '@') == NULL) {
 	return 0;
     }
