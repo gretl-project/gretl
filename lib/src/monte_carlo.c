@@ -342,14 +342,17 @@ static double controller_get_val (controller *clr,
 	}
     } else if (clr->expr != NULL) {
 	/* with no string substitution */
-#if 0 /* not yet */
 	if (clr->genr == NULL) {
 	    clr->genr = genr_compile(clr->expr, dset, GRETL_TYPE_DOUBLE,
-				     OPT_P | OPT_N, NULL, err);
-	    fprintf(stderr, "HERE: clr->genr=%p, err=%d\n", );
+				     OPT_P | OPT_N | OPT_A, NULL, err);
 	}
-#endif
-	clr->val = generate_scalar(clr->expr, dset, err);
+	if (clr->genr != NULL) {
+	    clr->val = evaluate_scalar_genr(clr->genr, dset, err);
+	} else {
+	    /* fallback? */
+	    *err = 0;
+	    clr->val = generate_scalar(clr->expr, dset, err);
+	}
     }
 
     if (*err && clr->expr != NULL) {

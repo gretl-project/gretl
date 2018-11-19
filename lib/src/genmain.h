@@ -173,6 +173,9 @@ int extract_varname (char *targ, const char *src, int *len);
 int genr_fit_resid (const MODEL *pmod, DATASET *dset,
 		    ModelDataIndex idx);
 
+double evaluate_scalar_genr (GENERATOR *genr, DATASET *dset,
+			     int *err);
+
 double evaluate_if_cond (GENERATOR *genr, DATASET *dset, int *err);
 
 double generate_scalar (const char *s, DATASET *dset, int *err);

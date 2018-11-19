@@ -1088,6 +1088,11 @@ parser *genr_compile (const char *s, DATASET *dset,
 	flags |= P_NOEXEC;
     }
 
+    if (opt & OPT_A) {
+	/* anonymous: no assignment to named variable */
+	flags |= P_ANON;
+    }
+
     *err = realgen(s, p, dset, prn, flags, targtype);
 
     if (*err == 0 && p != NULL &&
@@ -1137,7 +1142,7 @@ int execute_genr (parser *p, DATASET *dset, PRN *prn)
     return p->err;
 }
 
-double evaluate_if_cond (parser *p, DATASET *dset, int *err)
+double evaluate_scalar_genr (parser *p, DATASET *dset, int *err)
 {
     double x = NADBL;
 
@@ -1165,6 +1170,13 @@ double evaluate_if_cond (parser *p, DATASET *dset, int *err)
     }
 
     gen_cleanup(p);
+
+    return x;
+}
+
+double evaluate_if_cond (parser *p, DATASET *dset, int *err)
+{
+    double x = evaluate_scalar_genr(p, dset, err);
 
     return *err ? x : (double) (x != 0.0);
 }
