@@ -8,6 +8,7 @@ lib/src/compat.c
 lib/src/csvdata.c
 lib/src/dataio.c
 lib/src/dataset.c
+lib/src/dbnread.c
 lib/src/dbread.c
 lib/src/dbwrite.c
 lib/src/describe.c
@@ -153,8 +154,9 @@ plugin/arma_cml.c
 plugin/arma_common.c
 plugin/arma_init.c
 plugin/arma_x12.c
-plugin/audio.c
-plugin/audioprint.c
+plugin/as154.c
+plugin/as197.c
+plugin/as_driver.c
 plugin/biprobit.c
 plugin/dpanel.c
 plugin/duration.c
@@ -179,7 +181,6 @@ plugin/kernel.c
 plugin/leverage.c
 plugin/liml.c
 plugin/mailer.c
-plugin/midi_utils.c
 plugin/mod_garch.c
 plugin/mp_ols.c
 plugin/odbc_import.c
