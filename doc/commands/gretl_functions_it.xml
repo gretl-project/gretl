@@ -152,6 +152,16 @@
       </description>
     </function>    
 
+    <function name="$dw" section="access" output="scalar">
+      <description>
+	<para>
+	  Restituisce la statistica di Durbin&ndash;Watson per
+	  l'autocorrelazione di primo ordine dall'ultimo modello
+	  stimato, se disponibile.
+	</para>
+      </description>
+    </function>
+
     <function name="$dwpval" section="access" output="scalar">
       <description>
     <para>
@@ -873,6 +883,35 @@
       </description>
     </function>
 
+    <function name="$system" section="access" output="bundle">
+      <description>
+	<para>
+	  Deve seguire la stima di un sistema di equazioni, eseguita
+	  con uno dei comandi <cmdref targ="system"/>, <cmdref targ="var"/>
+	  o <cmdref targ="vecm"/>; restituisce un bundle contenente
+	  svariati elementi relativi al sistema. Sono inclusi tutti
+	  gli accessoriu di sistema rilevanti, sotto chiavi che hanno
+	  lo stesso nome dei normali accessori, a parte il dollaro
+	  iniziale. Ad esempio, i residui compaiono sotto la chiave
+	  <lit>uhat</lit> e i coefficienti sotto <lit>coeff</lit>. Le
+	  altre chiavi dovrebbero essere (si spera)
+	  auto-esplicative. Per vedere il contenuto del bundle, basta
+	  prenderne una copia e stamparne il contenuto, come mostrato
+	  qui di seguito:
+	</para>
+	<code>
+	  var 4 y1 y2 y2
+	  bundle b = $system
+	  print b
+	</code>
+	<para>
+	  Un bundle ottenuto a questo modo può essere passato come
+	  ultimo argomento alle funzioni <fncref targ="fevd"/>
+	  e <fncref targ="irf"/>.
+	</para>
+      </description>
+    </function>
+    
     <function name="$T" section="access" output="int">
       <description>
     <para>
@@ -1372,6 +1411,38 @@
       </description>
     </function>
 
+    <function name="atan2" section="math" output="asinput">
+      <fnargs>
+	<fnarg type="anyfloat">y</fnarg>
+	<fnarg type="anyfloat">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Restituisce il valore principale dell'arcotangente di 
+	  <argname>y</argname>/<argname>x</argname>, usando i segni
+	  dei due argomenti per determinare il quadrante del
+	  risultato, che è espresso in radianti, nell'intervallo
+	  [&minus;&pi;, &pi;].
+	</para>
+	<para>
+	  Se i due argomenti sono di tipo diverso, il risultato è del
+	  tipo <quote>più alto</quote>dei due, dove l'ordinamento è
+	  matrice &gt; serie &gt; scalare. Ad esempio, se
+	  <argname>y</argname> è uno scalare e <argname>x</argname> un
+	  vettore di <math>n</math> elementi (o viceversa), il
+	  risultato è anch'esso un vettore. Si noti che gli argomenti
+	  matriciali debbono essere vettori, e che se nessuno dei due
+	  è uno scalare devono avere la stessa dimensione.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="tan"/>
+            <fncref targ="tanh"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+    
     <function name="atanh" section="math" output="asinput">
       <fnargs>
     <fnarg type="anyfloat">x</fnarg>
@@ -3302,7 +3373,60 @@
       </description>
     </function>
 
-    <function name="fft" section="linalg" output="matrix">
+     <function name="fevd" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="int">target</fnarg>
+	<fnarg type="int">shock</fnarg>
+	<fnarg type="bundle" optional="true">sys</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Questa funzione fornisce un'alternativa più flessibile
+	  all'accessore <fncref targ="$fevd"/> per ottenere la matrice
+	  di scomposizione della varianza dell'errore di previsione
+	  (FEVD)dopo la stima di un VAR o di un VECM. Senza
+	  l'argomento finale (opzionale), è disponibile soltanto
+	  quando l'ultimo modello stimato è un VAR o un VECM. In
+	  alternativa, le informaizoni sul modello possono essere
+	  contenute in un bundle via l'accessore <fncref targ="$system"/>
+	  e poi passate alla funzione <lit>fevd</lit>.
+	</para>
+	<para>
+	  Gli argomenti <argname>target</argname> e
+	  <argname>shock</argname> hanno la forma di indici (a base 1)
+	  per le variabili endogene del sistema, con 0 che significa
+	  <quote>tutte</quote>. L'uso è esemplificato nel frammento di
+	  codice seguente. Nel primo esempio, la matrice
+	  <lit>fe1</lit> contiene le quote di FEVD per <lit>y1</lit>
+	  attribuibili a <lit>y1</lit>, <lit>y2</lit> e <lit>y3</lit>
+	  (con le righe che sommano a 1). Nel secondo, <lit>fe2</lit>
+	  contiene il contrinbuto di <lit>y2</lit> alla varianza di
+	  tutte e tre le variabili (e quindi le righe non sommano a
+	  1). Nel terzo caso, il valore ritornato è un vettore colonna
+	  contenente la <quote>propria quota</quote> di FEVD per
+	  <lit>y1</lit>.
+	</para>
+	<code>
+	  var 4 y1 y2 y3
+	  bundle vb = $system
+	  matrix fe1 = fevd(1, 0, vb)
+	  matrix fe2 = fevd(0, 2, vb)
+	  matrix fe3 = fevd(1, 1, vb)
+	</code>
+	<para>
+	  Il numero di periodi (righe) per cui la scomposizione è
+	  calcolata è determinato in automatico dalla periodicità dei
+	  dati, ma può essere modificato attraverso l'argomento
+	  <lit>horizon</lit> al comando <cmdref targ="set"/>, come ad
+	  esempio in <lit>set horizon 10</lit>.
+	</para>
+	<para>
+	  <seelist><fncref targ="irf"/></seelist>
+	</para>
+      </description>
+     </function>
+     
+   <function name="fft" section="linalg" output="matrix">
       <fnargs>
     <fnarg type="matrix">X</fnarg>
       </fnargs>
@@ -3353,7 +3477,7 @@
       </description>
     </function>
 
-    <function name="filter" section="filters" output="series">
+    <function name="filter" section="filters" output="seebelow">
       <fnargs>
     <fnarg type="series-or-mat">x</fnarg>
     <fnarg optional="true" type="scalar-or-vec">a</fnarg>
@@ -5572,7 +5696,7 @@
       </description>
     </function>
 
-    <function name="lrcovar" section="stats" output="matrix">
+    <function name="lrcovar" section="filters" output="matrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
 	<fnarg type="bool" optional="true">centra</fnarg>
@@ -5604,21 +5728,34 @@
     <function name="lrvar" section="filters" output="scalar">
       <fnargs>
     <fnarg type="series-or-vec">y</fnarg>
-    <fnarg type="int">k</fnarg>
+	<fnarg type="int" optional="true">k</fnarg>
+	<fnarg type="scalar" optional="true">mu</fnarg>
       </fnargs>
       <description>
     <para>
-      Restituisce la varianza di lungo periodo di
-      <argname>y</argname> calcolata utilizzando il kernel di
-      Bartlett con finestra <argname>k</argname>.
+      Restituisce la varianza di lungo periodo di <argname>y</argname>
+      calcolata utilizzando il kernel di Bartlett con finestra
+      <argname>k</argname>. Se il secondo argomento è omesso o
+      negativo l'ampiezza della finestra è pari alla parte intera
+      della radice cubica dell'ampiezza campionaria.
     </para>
     <para context="tex">
       In formule: 
       \[ \hat{\omega}^2(k) = \frac{1}{T} \sum_{t=k}^{T-k}
-      \left[ \sum_{i=-k}^k w_i (y_t - \bar{X}) (y_{t-i} - \bar{Y})
+      \left[ \sum_{i=-k}^k w_i (y_t - \mu) (y_{t-i} - \bar{Y})
       \right] \] 
       con 
       \[ w_i = 1 - \frac{|i|}{k + 1} \]
+    </para>
+    <para>
+      Nel calcolo della varianza, la serie <argname>y</argname> viene
+      centrata sul parametro opzionale <argname>mu</argname>; se
+      questo è omesso o <lit>NA</lit>, viene usata la media
+      campionaria.
+    </para>
+    <para>
+      Per l'equivalente multivariato, si veda <fncref
+      targ="lrcovar"/>.
     </para>
       </description>
     </function>
@@ -5869,18 +6006,22 @@
       </description>
     </function>
 
-    <function name="median" section="stats" output="scalar">
+    <function name="median" section="stats" output="scalar-or-series">
       <fnargs>
     <fnarg type="series">y</fnarg>
       </fnargs>
       <description>
-    <para>
-      Calcola la mediana delle osservazioni non mancanti della variabile
-      <argname>y</argname>. 
-      <seelist>
-        <fncref targ="quantile"/>
-      </seelist>
-    </para>
+	<para>
+	  Se <argname>y</argname> è una serie, calcola la mediana
+	  delle osservazioni non mancanti.
+	</para>
+	<para>
+	  Se <argname>x</argname> è una lista, ritorna una serie
+	  <math>y</math> tale per cui <math>y</math><sub>t</sub> è la
+	  mediana dei valori delle variabili nell lista
+	  all'osservazione <math>t</math>, o <lit>NA</lit> se c'è
+	  almeno un valore mancante all'osservazione <math>t</math>.
+	</para>
       </description>
     </function>
 
@@ -10303,7 +10444,7 @@
       </description>
     </function>
 
-    <function name="weekday" section="calendar" output="int">
+    <function name="weekday" section="calendar" output="asinput">
       <fnargs>
 	<fnarg type="scalar-or-series">anno</fnarg>
 	<fnarg type="scalar-or-series">mese</fnarg>
@@ -10315,7 +10456,7 @@
 	  1, ecc.) corrispondente alla data specificata dai tre
 	  argomenti, o <lit>NA</lit> se la data non è valida. Si noti
 	  che i tre argomenti devono essere dello stesso tipo: o
-	  scalari, oppure serie.
+	  scalari (interi), oppure serie.
 	</para>
       </description>
     </function>

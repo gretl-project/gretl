@@ -2710,7 +2710,7 @@
       <para>
 	This dialog allows you to inspect and download data series
 	from the dbnomics server. You can visit
-	<url>https://next.nomics.world/</url> to obtain the
+	<url>https://db.nomics.world/</url> to obtain the
 	identifiers or codes for series of interest. These take the
 	form of triplets, three terms separated by slashes. For
 	example
@@ -10022,16 +10022,17 @@
 	flag and the <repl>pkgname</repl> argument given as the
 	<quote>plain</quote> name of a gretl function package (as in
 	the first example above), the effect is to download the
-	specified package from the gretl server and install it on the
-	local machine. In this case it is not necessary to supply a
-	filename extension. If the <opt>local</opt> option is given,
-	however, <repl>pkgname</repl> should be the path to an
-	uninstalled package file on the local machine, with the
-	correct extension (<lit>.gfn</lit> or <lit>.zip</lit>). In
-	this case the effect is to copy the file into place
-	(<lit>gfn</lit>), or unzip it into place (<lit>zip</lit>),
-	<quote>into place</quote> meaning where the <cmdref
-	targ="include"/> command will find it.
+	specified package from the gretl server (unless
+	<repl>pkgname</repl> starts with <lit>http://</lit>) and
+	install it on the local machine. In this case it is not
+	necessary to supply a filename extension. If the
+	<opt>local</opt> option is given, however,
+	<repl>pkgname</repl> should be the path to an uninstalled
+	package file on the local machine, with the correct extension
+	(<lit>.gfn</lit> or <lit>.zip</lit>). In this case the effect
+	is to copy the file into place (<lit>gfn</lit>), or unzip it
+	into place (<lit>zip</lit>), <quote>into place</quote> meaning
+	where the <cmdref targ="include"/> command will find it.
       </para>
       <para>
 	<lit>unload</lit>: <repl>pkgname</repl> should be given in
@@ -10722,8 +10723,7 @@
 
   </command>
 
-  <command name="pvalue" section="Statistics"
-    label="Compute p-values" context="cli">
+  <command name="pvalue" section="Statistics" label="Compute p-values" context="cli">
 
     <usage>
       <arguments>

@@ -5735,16 +5735,16 @@
 	<para context="tex">
 	  In formulae: 
 	  \[ \hat{\omega}^2(k) = \frac{1}{T} \sum_{t=k}^{T-k}
-	  \left[ \sum_{i=-k}^k w_i (y_t - \bar{X}) (y_{t-i} - \bar{Y})
+	  \left[ \sum_{i=-k}^k w_i (y_t - \mu) (y_{t-i} - \bar{Y})
 	  \right] \] 
 	  with 
 	  \[ w_i = 1 - \frac{|i|}{k + 1} \]
 	</para>
 	<para>
-	  The optional argument <argname>mu</argname> can be given to
-	  impose an assumption regarding the population mean of
-	  <argname>y</argname>, otherwise the sample mean is used in
-	  the variance calculation.
+	  For the variance calculation, the series
+	  <argname>y</argname> is centered around the optional
+	  parameter <argname>mu</argname>; if this is omitted or
+	  <lit>NA</lit>, the sample mean is used.
 	</para>
 	<para>
 	  For a multivariate counterpart, see <fncref targ="lrcovar"/>.

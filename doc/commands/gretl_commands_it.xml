@@ -2713,6 +2713,38 @@
     </description>
   </command>
 
+  <command name="dbnomics" section="Utilities" label="dbnomics access" context="gui">
+    <description>
+      <para>
+	Questa finestra di dialogo permette di cercare e scaricare
+	serie di dati dal serveri di dbnomics. Visitando il sito
+	<url>https://next.nomics.world/</url> si trovano gli
+	identificatori e i codici di interesse. Essi si compongono in
+	gruppi di tre, con i termini separati da barre. Ad esempio
+      </para>
+      <code>
+	ECB/IRS/M.IT.L.L40.CI.0000.EUR.N.Z
+      </code>
+      <para>
+	Il primo termine identifica il forntore dei dati,
+	<lit>ECB</lit> (la Banca Centrale Europea).  Il secondo
+	identifica un dataset, in questo caso <lit>IRS</lit>
+	(statistiche sui tassi di interesse) e il terzo identifica una
+	serie all'interno del dataset, in questo caso un tasso
+	italiano a 10 anni.
+      </para>
+      <para>
+	Una volta inserito un identificativo di serie, cliccando
+	<quote>OK</quote> si aprirà una finestra contenete
+	informazioni sulla serie. A quel punto, usando i bottoni in
+	alto nella finestra si potranno visualizzare i valori della
+	serie in forma numerica o grafica, oppure aggiungere la serie
+	al dataset corrente (assumendo che la serie sia conformabile
+	ad esso).
+      </para>
+    </description>
+  </command>
+  
   <command name="debug" section="Programming" context="cli"
     label="Debugging">
 
@@ -3636,7 +3668,7 @@
 
   </command>
 
-  <command name="eval" section="Utilities">
+  <command name="eval" section="Utilities" context="cli">
     <usage>
       <arguments>
         <argument>espressione</argument>
@@ -6051,77 +6083,6 @@
     </gui-access>
 
   </command>
-
-  <command name="install" section="Utilities" context="cli">
-
-    <usage>
-      <arguments>
-        <argument>nomepacchetto</argument>
-      </arguments>
-      <options>
-        <option>
-	  <flag>--local</flag>
-	  <effect>installa da file in locale</effect>
-        </option>
-        <option>
-	  <flag>--remove</flag>
-	  <effect>vedi sotto</effect>
-        </option>	
-        <option>
-	  <flag>--purge</flag>
-	  <effect>vedi sotto</effect>
-        </option>
-      </options>
-     <examples>
-        <example>install armax</example>
-        <example>install felogit.gfn</example>
-	<example>install /path/to/myfile.gfn --local</example>
-	<example>install http://foo.bar.net/gretl/myfile.gfn</example>
-     </examples>
-    </usage>    
-
-    <description>
-      <para>
-	Comendo per installare e disinstallare pacchetti di funzioni
-	(file <lit>gfn</lit> o <lit>zip</lit>).
-      </para>
-      <para>
-	Se a questo comando viene dato il nome di un pacchetto senza
-	opzioni (come nei primi due esempi), il pacchetto stesso verrà
-	scaricato dal server di gretl e installato in locale. In
-	questo caso, indicare l'estensione è superfluo.
-      </para>
-      <para>
-	Se viene data l'opzione <opt>local</opt>, l'argomento
-	<repl>nomepacchetto</repl> deve essere il percorso completo di
-	un file di pacchetto sulla macchina locale, completo di
-	estensione. L'azione conseguente al comando è di copiarlo (se
-	<lit>gfn</lit>), o espanderlo (se <lit>zip</lit>) nel posto
-	giusto, ossia dove il comando <cmdref targ="include"/> sia in
-	grado poi di trovarlo.
-      </para>
-      <para>
-	In assenza di opzioni, se <repl>nomepacchetto</repl> comincia
-	con <lit>http://</lit>, l'effetto è di scaricare il pacchetto
-	da un server specificato e poi installarlo localmente.
-      </para>
-      <para>
-	L'operazione inversa (ossia, la disinstallazione) viene
-	effettuata con le opzioni <opt>remove</opt> o
-	<opt>purge</opt>. Con <opt>remove</opt> il pacchetto viene
-	scaricato dalla memoria ed è rimosso dal menu GUI
-	a cui sia eventualmente attaccato. L'opzione
-	<opt>purge</opt> agisce come <opt>remove</opt>, ma cancella
-	anche il file di pacchetto. (Se un pacchetto contiene una sua
-	propria sottocartella, essa stessa viene completamente cancellata.)
-      </para>      
-    </description>
-
-    <gui-access>
-      <menu-path>/Strumenti/Pacchetti/Sul server</menu-path>
-    </gui-access>
-
-  </command>  
 
   <command name="intreg" section="Estimation" label="Modello di regressione per intervalli">
 
@@ -9255,6 +9216,45 @@
 
   </command>
 
+  <command name="packages" section="Utilities" label="Pacchetti di funzioni" context="gui">
+    <description>
+      <para>
+	Le funzionalità di gretl possono essere estese per mezzo dei
+	pacchetti di funzioni. Ce ne sono di due tipi: gli
+	<quote>Addon</quote> ufficiali e i pacchetti contribuiti dalla
+	comunità. Assieme, essi coprono molti metodi statistici e
+	computazionali non disponibili come comandi o funzioni native.
+      </para>
+      <para>
+	Gli Addon ufficiali sono inclusi nell'installazione per
+	Windows e Mac. Su Linux, se non sono preinstallati vengono
+	scaricati alla bisogna (ad esempio, selezionando la voce di
+	menu /Modello/Serie Storiche/GARCH variants, gretl scaricherà
+	l'Addon <lit>gig</lit> (GARCH in gretl). Per verificare se gli
+	Addons sono aggiornati, usare <mnu>PkgHelp:SFAddons</mnu> nel
+	menu Aiuto.
+      </para>
+      <para>
+	La lista dei pacchetti contibuiti installati è disponibile
+	usando la voce di menu <mnu>PkgHelp:LocalGfn</mnu>, e se si è
+	collegati alla rete la lista di tutti quelli disponibili è
+	visulaizzabile tramite <mnu>PkgHelp:RemoteGfn</mnu>. Entrambi
+	si trovano sotto /File/Pacchetti di funzioni.
+      </para>
+      <para>
+	Diversi pacchetti offrono l'opzione di attaccarsi al menu
+	dell'interfaccia grafica. Per ispezionare questa funzionalità,
+	usare <mnu>PkgHelp:Registry</mnu> (accesso via il bottone
+	delle preferenze nella lista dei pacchetti installati).
+      </para>
+      <para>
+	Per più dettagli sull'installazione e il funzionamento dei
+	pacchetti, si veda <mnu>PkgHelp:Pkgbook</mnu> (sotto il menu
+	Aiuto). Questa guida spiega anche come scriverne di propri.
+      </para>
+    </description>
+  </command>
+  
   <command name="panel" section="Estimation" label="Modelli panel">
 
     <usage>
@@ -9538,6 +9538,99 @@
 
   </command>
 
+  <command name="pkg" section="Utilities" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>azione</argument>
+        <argument>nomepacchetto</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--local</flag>
+	  <effect>installa da file in locale</effect>
+        </option>
+      </options>
+     <examples>
+        <example>pkg install armax</example>
+	<example>pkg install /path/to/myfile.gfn --local</example>
+	<example>pkg unload armax</example>
+     </examples>
+    </usage>    
+
+    <description>
+      <para>
+	Comendo per installare, rimuovere dalla memoria e
+	disinstallare pacchetti di funzioni (file <lit>gfn</lit> o
+	<lit>zip</lit>). Il parametro <repl>azione</repl>
+	deve essere uno fra <lit>install</lit>, <lit>unload</lit>
+	o <lit>remove</lit>.
+      </para>
+      <para>
+	<lit>install</lit>: Nella sua forma più semplice, senza
+	opzioni e con l'argomento <repl>pkgname</repl> che corrisponde
+	al nome <quote>semplice</quote> di un pacchetto (come nel
+	primo esempi), il pacchetto stesso verrà scaricato dal server
+	di gretl (a meno che <repl>nomepacchetto</repl> non cominci
+	con <lit>http://</lit>) e installato in locale. In questo
+	caso, indicare l'estensione è superfluo. Se viene data
+	l'opzione <opt>local</opt>, l'argomento
+	<repl>nomepacchetto</repl> deve essere il percorso completo di
+	un file di pacchetto sulla macchina locale, completo di
+	estensione (<lit>.gfn</lit> o <lit>.zip</lit>). L'azione
+	conseguente al comando è di copiarlo (se <lit>gfn</lit>), o
+	espanderlo (se <lit>zip</lit>) nel posto giusto, ossia dove il
+	comando <cmdref targ="include"/> sia in grado poi di trovarlo.
+      </para>
+      <para>
+	<lit>unload</lit>: l'argomento <repl>pkgname</repl> deve
+	essere dato in forma semplice, senza percorso o suffisso (come
+	nell'ultimo esempio). L'effetto è scaricare il pacchetto dalla
+	memoria rimuoverlo dal menu GUI a cui sia eventualmente
+	attaccato.
+      </para>
+      <para>
+	<lit>remove</lit>: come <lit>unload</lit>, ma in aggiunta cancella
+	anche dal disco i file di pacchetto.
+      </para>
+      <para>
+	In assenza di opzioni, 
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Strumenti/Pacchetti/Sul server</menu-path>
+    </gui-access>
+
+  </command>  
+
+  <command name="pkg-depends" section="Programming"
+	   label="Dependencies" context="gui">
+    <description>
+      <para>
+	Ciò che intendiamo come <quote>dipendenze</quote> sono i
+	pacchetti da cui il vostro pacchetto dipende per le
+	funzionare, che ovviamente devono essere installati e caricati
+	affinché il vostro funzioni correttamente. In questa finestra
+	di dialogo, se ne possono indicare fino a quattro.
+      </para>
+      <para>
+	Ed esempio, immaginate che il vostro pacchetto usi delle
+	funzioni contenute nel pacchetto <lit>extra</lit>, che
+	contiene diverse utility per la scrittura di script in
+	hansl. In questo caso, si può inserire
+      </para>
+      <code>
+	extra.zip
+      </code>
+      <para>
+	in una delle caselle disponibili. Si noti che il suffisso 
+	<lit>.gfn</lit> o <lit>.zip</lit> va incluso, ma non il path
+	completo del pacchetto in questione.
+      </para>
+    </description>
+  </command>
+  
   <command name="plot" section="Graphs" context="cli">
     <usage>
       <arguments>
@@ -12509,35 +12602,13 @@
 
   </command>
 
-  <command name="sprintf" section="Printing" 
-    label="Stampa su una stringa" context="cli">
-
-    <usage>
-      <arguments>
-	<argument>var-stringa</argument>
-        <argument>formato</argument>
-	<argpunct>, </argpunct>
-        <argument>argomenti</argument>
-      </arguments>
-    </usage>
-
+  <command name="sprintf" section="Printing" context="cli">
     <description>
       <para>
-	Questo comando funziona esattamente come il comando <cmdref
-	targ="printf"/>, stampando gli argomenti nel modo controllato
-	dalla stringa di formato, tranne per il fatto che il risultato
-	è scritto nella stringa specificata, <repl>var-stringa</repl>.
+	Questo comando è obsoleto: al suo posto, usare la funzione
+	<fncref targ="sprintf"/>.
       </para>
-      <para>
-	Per stampare la variabile stringa, basta usare il suo nome preceduto da
-	<lit>@</lit>, come in questo esempio:
-      </para>
-      <code>
-	sprintf variabile "%g", x
-	print "variabile ha il valore @variabile"
-      </code>
     </description>
-
   </command>
 
   <command name="square" section="Transformations" label="Crea quadrati delle
