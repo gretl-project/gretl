@@ -341,7 +341,7 @@ static double controller_get_val (controller *clr,
 	    clr->val = generate_scalar(clr->expr, dset, err);
 	}
     } else if (clr->expr != NULL) {
-	/* with no string substitution */
+	/* expression with no string substitution */
 	if (clr->genr == NULL) {
 	    clr->genr = genr_compile(clr->expr, dset, GRETL_TYPE_DOUBLE,
 				     OPT_P | OPT_N | OPT_A, NULL, err);
@@ -349,7 +349,7 @@ static double controller_get_val (controller *clr,
 	if (clr->genr != NULL) {
 	    clr->val = evaluate_scalar_genr(clr->genr, dset, err);
 	} else {
-	    /* fallback? */
+	    /* fallback: or should we just flag an error? */
 	    *err = 0;
 	    clr->val = generate_scalar(clr->expr, dset, err);
 	}
