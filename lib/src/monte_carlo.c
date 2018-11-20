@@ -292,7 +292,12 @@ static double controller_get_val (controller *clr,
 				  DATASET *dset,
 				  int *err)
 {
-    if (clr->vname[0] != '\0') {
+    /* note: check for "compiled" variants first */
+    if (clr->uv != NULL) {
+	clr->val = uvar_get_scalar_value(clr->uv) * clr->vsign;
+    } else if (clr->genr != NULL) {
+	clr->val = evaluate_scalar_genr(clr->genr, dset, err);
+    } else if (clr->vname[0] != '\0') {
 	if (clr->vname[0] == '$') {
 	    /* built-in scalar constant */
 	    clr->val = get_const_by_name(clr->vname, err) * clr->vsign;

@@ -6062,6 +6062,206 @@ static int dot_op_conf (int ra, int ca, int rb, int cb, int *r, int *c)
     return ret;
 }
 
+static void vec_x_op_vec_y (double *z, const double *x,
+			    const double *y, int n,
+			    int op)
+{
+    int i;
+    
+    switch (op) {
+    case '*':
+	for (i=0; i<n; i++) {
+	    z[i] = x[i] * y[i];
+	}
+	break;
+    case '/':
+	for (i=0; i<n; i++) {
+	    z[i] = x[i] / y[i];
+	}
+	break;	
+    case '+':
+	for (i=0; i<n; i++) {
+	    z[i] = x[i] + y[i];
+	}
+	break;	
+    case '-':
+	for (i=0; i<n; i++) {
+	    z[i] = x[i] - y[i];
+	}
+	break;	
+    case '^':
+	for (i=0; i<n; i++) {
+	    z[i] = pow(x[i], y[i]);
+	}
+	break;	
+    case '=':
+	for (i=0; i<n; i++) {
+	    z[i] = x[i] == y[i];
+	}
+	break;	
+    case '>':
+	for (i=0; i<n; i++) {
+	    z[i] = x[i] > y[i];
+	}
+	break;	
+    case '<':
+	for (i=0; i<n; i++) {
+	    z[i] = x[i] < y[i];
+	}
+	break;	
+    case ']':
+	for (i=0; i<n; i++) {
+	    z[i] = x[i] >= y[i];
+	}
+	break;	
+    case '[':
+	for (i=0; i<n; i++) {
+	    z[i] = x[i] <= y[i];
+	}
+	break;	
+    case '!':
+	for (i=0; i<n; i++) {
+	    z[i] = x[i] != y[i];
+	}
+	break;	
+    default:
+	break;
+    }
+}
+
+static void vec_x_op_y (double *z, const double *x,
+			double y, int n, int op)
+{
+    int i;
+    
+    switch (op) {
+    case '*':
+	for (i=0; i<n; i++) {
+	    z[i] = x[i] * y;
+	}
+	break;
+    case '/':
+	for (i=0; i<n; i++) {
+	    z[i] = x[i] / y;
+	}
+	break;	
+    case '+':
+	for (i=0; i<n; i++) {
+	    z[i] = x[i] + y;
+	}
+	break;	
+    case '-':
+	for (i=0; i<n; i++) {
+	    z[i] = x[i] - y;
+	}
+	break;	
+    case '^':
+	for (i=0; i<n; i++) {
+	    z[i] = pow(x[i], y);
+	}
+	break;	
+    case '=':
+	for (i=0; i<n; i++) {
+	    z[i] = x[i] == y;
+	}
+	break;	
+    case '>':
+	for (i=0; i<n; i++) {
+	    z[i] = x[i] > y;
+	}
+	break;	
+    case '<':
+	for (i=0; i<n; i++) {
+	    z[i] = x[i] < y;
+	}
+	break;	
+    case ']':
+	for (i=0; i<n; i++) {
+	    z[i] = x[i] >= y;
+	}
+	break;	
+    case '[':
+	for (i=0; i<n; i++) {
+	    z[i] = x[i] <= y;
+	}
+	break;	
+    case '!':
+	for (i=0; i<n; i++) {
+	    z[i] = x[i] != y;
+	}
+	break;	
+    default:
+	break;
+    }
+}
+
+static void x_op_vec_y (double *z, double x,
+			const double *y, int n,
+			int op)
+{
+    int i;
+    
+    switch (op) {
+    case '*':
+	for (i=0; i<n; i++) {
+	    z[i] = x * y[i];
+	}
+	break;
+    case '/':
+	for (i=0; i<n; i++) {
+	    z[i] = x / y[i];
+	}
+	break;	
+    case '+':
+	for (i=0; i<n; i++) {
+	    z[i] = x + y[i];
+	}
+	break;	
+    case '-':
+	for (i=0; i<n; i++) {
+	    z[i] = x - y[i];
+	}
+	break;	
+    case '^':
+	for (i=0; i<n; i++) {
+	    z[i] = pow(x, y[i]);
+	}
+	break;	
+    case '=':
+	for (i=0; i<n; i++) {
+	    z[i] = x == y[i];
+	}
+	break;	
+    case '>':
+	for (i=0; i<n; i++) {
+	    z[i] = x > y[i];
+	}
+	break;	
+    case '<':
+	for (i=0; i<n; i++) {
+	    z[i] = x < y[i];
+	}
+	break;	
+    case ']':
+	for (i=0; i<n; i++) {
+	    z[i] = x >= y[i];
+	}
+	break;	
+    case '[':
+	for (i=0; i<n; i++) {
+	    z[i] = x <= y[i];
+	}
+	break;	
+    case '!':
+	for (i=0; i<n; i++) {
+	    z[i] = x != y[i];
+	}
+	break;	
+    default:
+	break;
+    }
+}
+
 static double x_op_y (double x, double y, int op)
 {
     switch (op) {
@@ -6145,7 +6345,7 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
     double x, y;
     int m, n, p, q, nr, nc;
     int conftype;
-    int i, j, nv;
+    int i, j, nv, off;
 #if defined(_OPENMP)
     guint64 psize;
 #endif
@@ -6298,14 +6498,11 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 
     switch (conftype) {
     case CONF_ELEMENTS:
-	nv = m * n;
-	for (i=0; i<nv; i++) {
-	    c->val[i] = x_op_y(a->val[i], b->val[i], op);
-	}
+	vec_x_op_vec_y(c->val, a->val, b->val, m*n, op);
 	break;
     case CONF_A_COLVEC:
 	for (i=0; i<nr; i++) {
-	    x = gretl_vector_get(a, i);
+	    x = a->val[i];
 	    for (j=0; j<nc; j++) {
 		y = gretl_matrix_get(b, i, j);
 		y = x_op_y(x, y, op);
@@ -6315,7 +6512,7 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 	break;
     case CONF_B_COLVEC:
 	for (i=0; i<nr; i++) {
-	    y = gretl_vector_get(b, i);
+	    y = b->val[i];
 	    for (j=0; j<nc; j++) {
 		x = gretl_matrix_get(a, i, j);
 		x = x_op_y(x, y, op);
@@ -6324,44 +6521,26 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 	}
 	break;
     case CONF_A_ROWVEC:
+	off = 0;
 	for (j=0; j<nc; j++) {
-	    x = gretl_vector_get(a, j);
-	    for (i=0; i<nr; i++) {
-		y = gretl_matrix_get(b, i, j);
-		y = x_op_y(x, y, op);
-		gretl_matrix_set(c, i, j, y);
-	    }
+	    x = a->val[j];
+	    x_op_vec_y(c->val + off, x, b->val + off, nr, op);
+	    off += nr;
 	}
 	break;
     case CONF_B_ROWVEC:
+	off = 0;
 	for (j=0; j<nc; j++) {
-	    y = gretl_vector_get(b, j);
-	    for (i=0; i<nr; i++) {
-		x = gretl_matrix_get(a, i, j);
-		x = x_op_y(x, y, op);
-		gretl_matrix_set(c, i, j, x);
-	    }
+	    y = b->val[j];
+	    vec_x_op_y(c->val + off, a->val + off, y, nr, op);
+	    off += nr;
 	}
 	break;
     case CONF_A_SCALAR:
-	x = a->val[0];
-	for (i=0; i<nr; i++) {
-	    for (j=0; j<nc; j++) {
-		y = gretl_matrix_get(b, i, j);
-		y = x_op_y(x, y, op);
-		gretl_matrix_set(c, i, j, y);
-	    }
-	}
+	x_op_vec_y(c->val, a->val[0], b->val, nr*nc, op);
 	break;
     case CONF_B_SCALAR:
-	y = b->val[0];
-	for (i=0; i<nr; i++) {
-	    for (j=0; j<nc; j++) {
-		x = gretl_matrix_get(a, i, j);
-		x = x_op_y(x, y, op);
-		gretl_matrix_set(c, i, j, x);
-	    }
-	}
+	vec_x_op_y(c->val, a->val, b->val[0], nr*nc, op);
 	break;
     case CONF_AC_BR:
 	for (i=0; i<nr; i++) {
