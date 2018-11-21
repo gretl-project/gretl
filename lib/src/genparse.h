@@ -500,10 +500,17 @@ enum {
 #define GENSTRLEN 128
 #define NO_VNUM -1
 
+#define unary_op(s)  (s >= 1 && s < U_MAX)
+#define binary_op(s) (s > U_MAX && s < OP_MAX)
+#define bool_comp(s) (s >= B_EQ && s <= B_OR)
+#define dot_op(s)    (s >= B_DOTMULT && s <= B_DOTNEQ)
+
 #define func1_symb(s) (s > F1_MIN && s < F1_MAX)
 #define func2_symb(s) (s > F1_MAX && s < F2_MAX)
 #define func3_symb(s) (s > F2_MAX && s < F3_MAX)
 #define funcn_symb(s) (s > F3_MAX && s < FN_MAX)
+
+#define bnsym(s) (s == MDEF || s == FARGS)
 
 /* function with single string argument */
 #define string_arg_func(s) (s == F_ISNULL || s == F_ISDISCR || \
@@ -533,35 +540,10 @@ enum {
 			s == F_BFGSCMAX || s == F_NMMAX || \
 			s == F_GSSMAX || s == F_NUMHESS)
 
+/* maximization functions */
 #define max_func(s) (s == F_BFGSMAX || s == F_NRMAX || \
 		     s == F_SIMANN || s == F_BFGSCMAX || \
 		     s == F_NMMAX || s == F_GSSMAX)
-
-#define unary_op(s)  (s >= 1 && s < U_MAX)
-#define binary_op(s) (s > U_MAX && s < OP_MAX)
-#define bool_comp(s) (s >= B_EQ && s <= B_OR)
-#define dot_op(s)    (s >= B_DOTMULT && s <= B_DOTNEQ)
-
-#define evalb3(s) (func3_symb(s))
-
-#define evalb2(s) (binary_op(s) || func2_symb(s) || s == MSL || \
-                   s == MSLRAW || s == SUBSL || s == LAG || \
-                   s == OBS || s == BMEMB || s == DBMEMB || \
-		   s == OSL)
-
-#define b1sym(s) (unary_op(s) || func1_symb(s) || funcn_symb(s) || \
-                  s == G_LPR)
-
-#define evalb1(s) (b1sym(s) && !(str0_func(s)) && s != U_ADDR && \
-                   !func2_symb(s))
-
-#define b2sym(s) (evalb2(s) || s == DMSTR || s == DMSL || \
-                  s == OVAR || s == UFUN || s == RFUN || \
-                  s == LISTVAR)
-
-#define b3sym(s) (s == QUERY || func3_symb(s))
-
-#define bnsym(s) (s == MDEF || s == FARGS)
 
 /* functions where the right-hand argument is actually a return
    location */
@@ -576,27 +558,12 @@ enum {
 
 typedef struct node NODE;
 
-struct branch1 {
-    NODE *b;  
-};
-
-struct branch2 {
-    NODE *l, *r; 
-};
-
-struct branch3 {
-    NODE *l, *m, *r; 
-};
-
 struct branchn {
     int n_nodes;
     NODE **n;
 };
 
 union val {
-    struct branch1 b1; 
-    struct branch2 b2; 
-    struct branch3 b3; 
     struct branchn bn;
     int idnum;
     char *str;
@@ -628,6 +595,7 @@ struct node {
     char *vname;   /* associated variable name */
     user_var *uv;  /* associated named variable */
     union val v;   /* value (of whatever type) */
+    NODE *L, *M, *R; /* experimental! */
     NODE *aux;     /* auxiliary (result) node */
     int refcount;  /* reference counter, used by aux nodes */
 };

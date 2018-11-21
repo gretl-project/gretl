@@ -59,6 +59,7 @@ NODE *new_node (int t)
     if (n != NULL) {
 	n->t = t;
 	n->vnum = NO_VNUM;
+	n->L = n->M = n->R = NULL;
     }
 
     return n;
@@ -163,7 +164,7 @@ static NODE *newb1 (int t, NODE *b)
     NODE *n = new_node(t);
 
     if (n != NULL) {
-	n->v.b1.b = b;
+	n->L = b;
     }
 
     return n;
@@ -176,8 +177,8 @@ NODE *newb2 (int t, NODE *l, NODE *r)
     NODE *n = new_node(t);
 
     if (n != NULL) {
-	n->v.b2.l = l;
-	n->v.b2.r = r;
+	n->L = l;
+	n->R = r;
     }
 
     return n;
@@ -190,9 +191,7 @@ static NODE *newb3 (int t, NODE *l)
     NODE *n = new_node(t);
 
     if (n != NULL) {
-	n->v.b3.l = l;
-	n->v.b3.m = NULL;
-	n->v.b3.r = NULL;
+	n->L = l;
     }
 
     return n;
@@ -958,24 +957,24 @@ static void get_slice_parts (NODE *t, parser *p)
 	lex(p);
 	if (p->sym == P_COM) {
 	    /* empty row spec, OK */
-	    t->v.b2.l = newempty();
+	    t->L = newempty();
 	} else {
-	    t->v.b2.l = expr(p);
+	    t->L = expr(p);
 	}
 	if (p->sym == P_COL) {
 	    /* second part of colon-separated range */
-	    t->v.b2.l = newb2(SUBSL, t->v.b2.l, NULL);
+	    t->L = newb2(SUBSL, t->L, NULL);
 	    lex(p);
 	    if (p->sym == P_COM || p->sym == G_RBR) {
 		/* reached end: second part implicitly empty */
-		t->v.b2.l->v.b2.r = newempty();
+		t->L->R = newempty();
 	    } else {
-		t->v.b2.l->v.b2.r = expr(p);
+		t->L->R = expr(p);
 	    }
 	}
 	if (p->sym == G_RBR) {
 	    /* no comma, no second arg string: may be OK */
-	    t->v.b2.r = NULL;
+	    t->R = NULL;
 	    lex(p);
 	    set_slice_off(p);
 	    return;
@@ -984,19 +983,19 @@ static void get_slice_parts (NODE *t, parser *p)
 	    lex(p);
 	    if (p->sym == G_RBR) {
 		/* empty column spec, OK */
-		t->v.b2.r = newempty();
+		t->R = newempty();
 	    } else {
-		t->v.b2.r = expr(p);
+		t->R = expr(p);
 	    }
 	    if (p->sym == P_COL) {
 		/* second part of colon-separated range */
-		t->v.b2.r = newb2(SUBSL, t->v.b2.r, NULL);
+		t->R = newb2(SUBSL, t->R, NULL);
 		lex(p);
 		if (p->sym == G_RBR) {
 		    /* reached end: second part implicitly empty */
-		    t->v.b2.r->v.b2.r = newempty();
+		    t->R->R = newempty();
 		} else {
-		    t->v.b2.r->v.b2.r = expr(p);
+		    t->R->R = expr(p);
 		}
 	    }
 	    if (p->sym == G_RBR) {
@@ -1031,22 +1030,22 @@ static void attach_child (NODE *parent, NODE *child, int k, int i,
 
     if (k == 1) {
 	/* 1-place node */
-	parent->v.b1.b = child;
+	parent->L = child;
     } else if (k == 2) {
 	/* 2-place node */
 	if (i == 0) {
-	    parent->v.b2.l = child;
+	    parent->L = child;
 	} else {
-	    parent->v.b2.r = child;
+	    parent->R = child;
 	}
     } else if (k == 3) {
 	/* 3-place node */
 	if (i == 0) {
-	    parent->v.b3.l = child;
+	    parent->L = child;
 	} else if (i == 1) {
-	    parent->v.b3.m = child;
+	    parent->M = child;
 	} else {
-	    parent->v.b3.r = child;
+	    parent->R = child;
 	}
     } else {
 	/* n-place node */
@@ -1239,9 +1238,9 @@ static void get_ovar_ref (NODE *t, parser *p)
 	p->err = E_PARSE;
     } else if (p->sym == DMSL || p->sym == DMSTR) {
 	/* followed by '[' or '(' matrix subspec? */
-	t->v.b2.r = powterm(p, NULL);
+	t->R = powterm(p, NULL);
     } else {
-	t->v.b2.r = newref(p, p->sym);
+	t->R = newref(p, p->sym);
 	lex(p);
     }
 }
@@ -1270,7 +1269,7 @@ NODE *powterm (parser *p, NODE *l)
 	    t = newb2(sym, l, NULL);
 	    if (t != NULL) {
 		parser_ungetc(p);
-		t->v.b2.r = get_bundle_member_name(p);
+		t->R = get_bundle_member_name(p);
 	    }
 	} else if (sym == G_LBR) {
 	    /* "OSL": we're being somewhat agnostic here regarding
@@ -1279,16 +1278,16 @@ NODE *powterm (parser *p, NODE *l)
 	    */
 	    t = newb2(OSL, l, NULL);
 	    if (t != NULL) {
-		t->v.b2.r = newb2(MSLRAW, NULL, NULL);
-		if (t->v.b2.r != NULL) {
-		    get_slice_parts(t->v.b2.r, p);
+		t->R = newb2(MSLRAW, NULL, NULL);
+		if (t->R != NULL) {
+		    get_slice_parts(t->R, p);
 		}
 	    }
 	} else if (sym == G_LPR) {
 	    /* bundle member or array element plus lag spec? */
 	    t = newb2(LAG, l, NULL);
 	    if (t != NULL) {
-		t->v.b2.r = expr(p);
+		t->R = expr(p);
 	    }
 	}
 	goto maybe_recurse;
@@ -1311,9 +1310,11 @@ NODE *powterm (parser *p, NODE *l)
         if (t != NULL) {
             lex(p);
 	    if (sym == U_ADDR) {
-		t->v.b1.b = u_addr_base(p);
+		t->L = u_addr_base(p);
 	    } else {
-		t->v.b1.b = powterm(p, NULL);
+		/* FIXME we never come here? See factor() */
+		t->L = powterm(p, NULL);
+		fprintf(stderr, "unary: L = %p\n", (void *) t->L);
 	    }
         }
     } else if (func2_symb(sym)) {
@@ -1344,26 +1345,26 @@ NODE *powterm (parser *p, NODE *l)
 	t = newb1(sym, NULL);
 	if (t != NULL) {
 	    lex(p);
-	    t->v.b1.b = newbn(FARGS);
+	    t->L = newbn(FARGS);
 	    if (t != NULL) {
 		p->flags |= P_GETSTR;
-		get_args(t->v.b1.b, p, sym, -1, opt, &next);
+		get_args(t->L, p, sym, -1, opt, &next);
 	    }
 	}
     } else if (sym == F_URCPVAL) {
 	t = newb1(sym, NULL);
 	if (t != NULL) {
 	    lex(p);
-	    t->v.b1.b = newbn(FARGS);
+	    t->L = newbn(FARGS);
 	    if (t != NULL) {
-		get_args(t->v.b1.b, p, sym, -1, opt, &next);
+		get_args(t->L, p, sym, -1, opt, &next);
 	    }
 	}
     } else if (string_arg_func(sym)) {
 	t = newb1(sym, NULL);
 	if (t != NULL) {
 	    lex(p);
-	    t->v.b1.b = get_final_string_arg(p, t, sym, 1);
+	    t->L = get_final_string_arg(p, t, sym, 1);
 	}
     } else if (func1_symb(sym)) {
 	t = newb1(sym, NULL);
@@ -1377,9 +1378,9 @@ NODE *powterm (parser *p, NODE *l)
 	}
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
-	    t->v.b2.l = newref(p, p->upsym);
+	    t->L = newref(p, p->upsym);
 	    lex(p);
-	    t->v.b2.r = base(p, t);
+	    t->R = base(p, t);
 	}
 	if (sym == LAG) {
 	    set_lag_parse_off(p);
@@ -1387,36 +1388,36 @@ NODE *powterm (parser *p, NODE *l)
     } else if (sym == MSL || sym == DMSL || sym == OSL) {
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
-	    t->v.b2.l = newref(p, p->upsym);
-	    t->v.b2.r = newb2(MSLRAW, NULL, NULL);
-	    if (t->v.b2.r != NULL) {
+	    t->L = newref(p, p->upsym);
+	    t->R = newb2(MSLRAW, NULL, NULL);
+	    if (t->R != NULL) {
 		lex(p);
-		get_slice_parts(t->v.b2.r, p);
+		get_slice_parts(t->R, p);
 	    }
 	}
     } else if (sym == DMSTR) {
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
-	    t->v.b2.l = newref(p, MVAR);
+	    t->L = newref(p, MVAR);
 	    lex(p);
-	    t->v.b2.r = get_final_string_arg(p, t, sym, 1);
+	    t->R = get_final_string_arg(p, t, sym, 1);
 	}
     } else if (sym == BMEMB) {
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
-	    t->v.b2.l = newref(p, BUNDLE);
-	    t->v.b2.r = get_bundle_member_name(p);
+	    t->L = newref(p, BUNDLE);
+	    t->R = get_bundle_member_name(p);
 	}
     } else if (sym == DBMEMB) {
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
-	    t->v.b2.l = newref(p, DBUNDLE);
-	    t->v.b2.r = get_bundle_member_name(p);
+	    t->L = newref(p, DBUNDLE);
+	    t->R = get_bundle_member_name(p);
 	}
     } else if (sym == OVAR) {
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
-	    t->v.b2.l = newstr(p->idstr);
+	    t->L = newstr(p->idstr);
 	    get_ovar_ref(t, p);
 	}
     } else if (sym == LISTVAR) {
@@ -1428,7 +1429,7 @@ NODE *powterm (parser *p, NODE *l)
 	    if (t != NULL) {
 		parser_ungetc(p);
 		lex(p);
-		t->v.b2.r = base(p, t);
+		t->R = base(p, t);
 	    }
 	}
     } else if (sym == G_LPR) {
@@ -1449,10 +1450,10 @@ NODE *powterm (parser *p, NODE *l)
 	    if (sub) {
 		t = newb2(MSL, t, NULL);
 		if (t != NULL) {
-		    t->v.b2.r = newb2(MSLRAW, NULL, NULL);
-		    if (t->v.b2.r != NULL) {
+		    t->R = newb2(MSLRAW, NULL, NULL);
+		    if (t->R != NULL) {
 			lex(p);
-			get_slice_parts(t->v.b2.r, p);
+			get_slice_parts(t->R, p);
 		    }
 		}
 	    }
@@ -1461,21 +1462,21 @@ NODE *powterm (parser *p, NODE *l)
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
 	    if (sym == UFUN) {
-		t->v.b2.l = newref(p, PTR);
+		t->L = newref(p, PTR);
 	    } else {
-		t->v.b2.l = newstr(p->idstr);
+		t->L = newstr(p->idstr);
 	    }
 	    lex(p);
-	    t->v.b2.r = newbn(FARGS);
+	    t->R = newbn(FARGS);
 	    if (t != NULL) {
-		get_args(t->v.b2.r, p, sym, -1, opt, &next);
+		get_args(t->R, p, sym, -1, opt, &next);
 	    }
 	}
     } else if (funcn_symb(sym)) {
 	t = newb1(sym, NULL);
 	if (t != NULL) {
 	    lex(p);
-	    t->v.b1.b = newbn(FARGS);
+	    t->L = newbn(FARGS);
 	    if (t != NULL) {
 		int k = -1;
 
@@ -1484,7 +1485,7 @@ NODE *powterm (parser *p, NODE *l)
 		    sym == F_MOVAVG) {
 		    k = 4;
 		}
-		get_args(t->v.b1.b, p, sym, k, opt, &next);
+		get_args(t->L, p, sym, k, opt, &next);
 	    }
 	}
     } else {
@@ -1503,9 +1504,9 @@ NODE *powterm (parser *p, NODE *l)
 	/* support func(args)[slice] */
 	t = newb2(OSL, t, NULL);
 	if (t != NULL) {
-	    t->v.b2.r = newb2(MSLRAW, NULL, NULL);
-	    if (t->v.b2.r != NULL) {
-		get_slice_parts(t->v.b2.r, p);
+	    t->R = newb2(MSLRAW, NULL, NULL);
+	    if (t->R != NULL) {
+		get_slice_parts(t->R, p);
 	    }
 	}
     } else if (t != NULL) {
@@ -1558,7 +1559,7 @@ static NODE *factor (parser *p)
         t = newb1(sym, NULL);
         if (t != NULL) {
             lex(p);
-            t->v.b1.b = factor(p);
+            t->L = factor(p);
         }
     } else {
 	t = powterm(p, NULL);
@@ -1576,9 +1577,9 @@ static NODE *factor (parser *p)
 #if SDEBUG
 			fprintf(stderr, "factor: B_TRMUL must in fact be unary\n");
 #endif
-			t->v.b2.r = newempty();
+			t->R = newempty();
 		    } else {
-			t->v.b2.r = factor(p);
+			t->R = factor(p);
 		    }
 		}
 	    }
@@ -1611,7 +1612,7 @@ static NODE *term (parser *p)
 	t = newb2(p->sym, t, NULL);
 	if (t != NULL) {
 	    lex(p);
-	    t->v.b2.r = factor(p);
+	    t->R = factor(p);
 	}
     }
 
@@ -1642,7 +1643,7 @@ static NODE *expr4 (parser *p)
 	t = newb2(p->sym, t, NULL);
 	if (t != NULL) {
 	    lex(p);
-	    t->v.b2.r = term(p);
+	    t->R = term(p);
 	}
     }
 
@@ -1672,7 +1673,7 @@ static NODE *expr3 (parser *p)
 	t = newb2(p->sym, t, NULL);
 	if (t != NULL) {
 	    lex(p);
-	    t->v.b2.r = expr4(p);
+	    t->R = expr4(p);
 	}
     }
 
@@ -1700,7 +1701,7 @@ static NODE *expr2 (parser *p)
 	t = newb2(p->sym, t, NULL);
 	if (t != NULL) {
 	    lex(p);
-	    t->v.b2.r = expr3(p);
+	    t->R = expr3(p);
 	}
     }
 
@@ -1727,7 +1728,7 @@ static NODE *expr1 (parser *p)
 	t = newb2(p->sym, t, NULL);
 	if (t != NULL) {
 	    lex(p);
-	    t->v.b2.r = expr2(p);
+	    t->R = expr2(p);
 	}
     }
 
@@ -1754,7 +1755,7 @@ static NODE *expr0 (parser *p)
 	t = newb2(p->sym, t, NULL);
 	if (t != NULL) {
 	    lex(p);
-	    t->v.b2.r = expr1(p);
+	    t->R = expr1(p);
 	}
     }
 
@@ -1783,11 +1784,11 @@ NODE *expr (parser *p)
 	    set_parsing_query(1);
 	    lex(p);
 	    if (!p->err) {
-		t->v.b3.m = expr(p);
+		t->M = expr(p);
 		if (p->sym == P_COL) {
 		    lex(p);
 		    if (!p->err) {
-			t->v.b3.r = expr(p);
+			t->R = expr(p);
 		    }
 		} else {
 		    expected_symbol_error(':', p);

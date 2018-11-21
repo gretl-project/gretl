@@ -64,7 +64,7 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
     if (p->lhres != NULL) {
 	/* compound LHS object */
 	NODE *lhs = p->lhres;
-	NODE *lh1 = lhs->v.b2.l;
+	NODE *lh1 = lhs->L;
 
 	if (lh1->vname != NULL) {
 	    /* not an "embedded" object */
