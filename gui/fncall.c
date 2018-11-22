@@ -2536,6 +2536,7 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
 {
     ufunc *func = NULL;
     fncall *fc = NULL;
+    char *bname = NULL;
     char funname[32];
     int iopt = -1;
     int err = 0;
@@ -2566,7 +2567,8 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
 	err = E_DATA;
     } else {
 	user_var *uv = get_user_var_by_data(b);
-	const char *bname = user_var_get_name(uv);
+
+	bname = gretl_strdup(user_var_get_name(uv));
 #if 1
 	fprintf(stderr, "bundle plot: using bundle %p (uvar %p, name '%s')\n",
 		(void *) b, (void *) uv, bname);
@@ -2597,6 +2599,8 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
     } else {
 	fncall_destroy(fc);
     }
+
+    free(bname);
 
     if (err) {
 	gui_errmsg(err);
