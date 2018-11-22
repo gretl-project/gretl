@@ -2403,7 +2403,11 @@ int list_user_vars_of_type (const DATASET *dset,
 		if (n == 0) {
 		    pputc(prn, '\n');
 		}
-		pprintf(prn, "  %s\n", uvars[i]->name);
+		if (uvars[i]->name[0] == '\0') {
+		    pputs(prn, "  (unnamed)\n");
+		} else {
+		    pprintf(prn, "  %s\n", uvars[i]->name);
+		}
 		n++;
 	    }
 	}

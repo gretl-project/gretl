@@ -7741,6 +7741,12 @@ function_assign_returns (fncall *call, int rtype,
 	if (needs_dataset(fp->type) && dset == NULL) {
 	    ierr = E_DATA;
 	} else if (gretl_ref_type(fp->type)) {
+#if 0
+	    if (arg->type == GRETL_TYPE_BUNDLE_REF) {
+		fprintf(stderr, "%s: bundle-ref, upname=%s\n",
+			u->name, arg->upname);
+	    }
+#endif
 	    if (arg->type == GRETL_TYPE_SERIES_REF) {
 		int v = arg->val.idnum;
 
@@ -7760,7 +7766,8 @@ function_assign_returns (fncall *call, int rtype,
 		    gretl_array_type(fp->type))) {
 	    if (arg->flags & ARG_SHIFTED) {
 		/* non-pointerized const object argument,
-		   which we renamed and shifted */
+		   which we renamed and shifted
+		*/
 		user_var_adjust_level(arg->uvar, -1);
 		user_var_set_name(arg->uvar, arg->upname);
 	    }

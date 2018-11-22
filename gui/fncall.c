@@ -2562,13 +2562,14 @@ int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
     func = get_user_function_by_name(funname);
 
     if (func == NULL) {
+	fprintf(stderr, "Couldn't find function %s\n", funname);
 	err = E_DATA;
     } else {
 	user_var *uv = get_user_var_by_data(b);
 	const char *bname = user_var_get_name(uv);
 #if 1
-	fprintf(stderr, "bundle plot: using bundle %p (%s)\n",
-		(void *) b, bname);
+	fprintf(stderr, "bundle plot: using bundle %p (uvar %p, name '%s')\n",
+		(void *) b, (void *) uv, bname);
 #endif
 	fc = fncall_new(func);
 	err = push_function_arg(fc, bname, uv, GRETL_TYPE_BUNDLE_REF, b);
