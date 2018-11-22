@@ -1042,7 +1042,11 @@ static int write_julia_io_file (void)
 	    fputs("    else\n", fp);
 	    fputs("      write(f, Int32(r))\n", fp);
 	    fputs("      write(f, Int32(c))\n", fp);
-	    fputs("      write(f, M)\n", fp);
+	    fputs("      for j=1:c\n", fp);
+	    fputs("        for i=1:r\n", fp);
+	    fputs("          write(f, Float64(M[i,j]))\n", fp);
+	    fputs("        end\n", fp);
+	    fputs("      end\n", fp);
 	    fputs("    end\n", fp);
 	    fputs("  else\n", fp);
 	    fputs("    # text mode\n", fp);
