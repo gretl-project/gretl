@@ -4862,27 +4862,27 @@ static int load_private_function (fnpkg *pkg, int i)
    we'll flag an error (otherwise things will get too confusing).
 */
 
-static int load_public_function (ufunc *fun)
+static int load_public_function (fnpkg *pkg, int i)
 {
-    const char *targ = fun->name;
-    int i, done = 0;
+    ufunc *fun = pkg->pub[i];
+    int j, done = 0;
     int err = 0;
 
-    for (i=0; i<n_ufuns; i++) {
-	if (!strcmp(targ, ufuns[i]->name)) {
-	    if (ufuns[i]->pkg == fun->pkg) {
+    for (j=0; j<n_ufuns; j++) {
+	if (!strcmp(fun->name, ufuns[j]->name)) {
+	    if (pkg == ufuns[j]->pkg) {
 		/* name duplication in single package */
-		err = broken_package_error(fun->pkg);
-	    } else if (ufuns[i]->pkg == NULL) {
+		err = broken_package_error(pkg);
+	    } else if (ufuns[j]->pkg == NULL) {
 		/* conflicting unpackaged function */
-		ufunc_free(ufuns[i]);
-		ufuns[i] = fun;
+		ufunc_free(ufuns[j]);
+		ufuns[j] = fun;
 		done = 1;
-	    } else if (!function_is_private(ufuns[i])) {
+	    } else if (!function_is_private(ufuns[j])) {
 		/* got a conflicting package */
 		gretl_errmsg_sprintf("The function %s is already defined "
-				     "by package '%s'", targ,
-				     ufuns[i]->pkg->name);
+				     "by package '%s'", fun->name,
+				     ufuns[j]->pkg->name);
 		err = E_DATA;
 		break;
 	    }
@@ -4921,7 +4921,7 @@ static int real_load_package (fnpkg *pkg)
 
     if (!err && pkg->pub != NULL) {
 	for (i=0; i<pkg->n_pub && !err; i++) {
-	    err = load_public_function(pkg->pub[i]);
+	    err = load_public_function(pkg, i);
 	}
     }
 
