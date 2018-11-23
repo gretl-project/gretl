@@ -26,6 +26,8 @@ version 2018d, in progress
 - Fix bug: VECM forecast failing in some cases
 - Fix bug: panel plot, boxplots by group, was failing when the
   sample range begins at a positive offset
+- Fix bug: "bundle-plot" mechanism for function packages in
+  the GUI broken after the first invocation
 - "mle": drop the requirement that a dataset is in place
 - "foreign": support the changes in Julia version 1.0
 - Windows: improve handling of non-ASCII filenames, including
