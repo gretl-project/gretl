@@ -163,6 +163,7 @@ struct fnpkg_ {
     ufunc **priv;     /* pointers to private functions */
     int n_pub;        /* number of public functions */
     int n_priv;       /* number of private functions */
+    char overrides;   /* number of overrides of built-in functions */
     char **datafiles; /* names of packaged data files */
     char **depends;   /* names of dependencies */
     int n_files;      /* number of data files */
@@ -654,6 +655,7 @@ static fnpkg *function_package_alloc (const char *fname)
 
     pkg->pub = pkg->priv = NULL;
     pkg->n_pub = pkg->n_priv = 0;
+    pkg->overrides = 0;
     pkg->datafiles = NULL;
     pkg->n_files = 0;
     pkg->depends = NULL;
@@ -1203,7 +1205,11 @@ fnpkg *get_active_function_package (void)
 {
     ufunc *u = currently_called_function();
 
-    return u == NULL ? NULL : u->pkg;
+    if (u != NULL && u->pkg != NULL && u->pkg->overrides) {
+	return u->pkg;
+    } else {
+	return NULL;
+    }
 }
 
 fnpkg *gretl_function_get_package (const ufunc *fun)
@@ -1859,8 +1865,8 @@ static void ufunc_unload (ufunc *fun)
 	}
     }
 
-    if (fun->pkg != NULL) {
-	delete_function_override(fun->name);
+    if (fun->pkg != NULL && fun->pkg->overrides) {
+	delete_function_override(fun->name, fun->pkg->name);
     }
     ufunc_free(fun);
 
@@ -4822,15 +4828,15 @@ static int broken_package_error (fnpkg *pkg)
    Obviously this shouldn't happen but we'll whack it if it does.
 */
 
-static int load_private_function (ufunc *fun)
+static int load_private_function (fnpkg *pkg, int i)
 {
-    const char *targ = fun->name;
-    int i, err = 0;
+    ufunc *fun = pkg->priv[i];
+    int j, err = 0;
 
-    for (i=0; i<n_ufuns; i++) {
-	if (!strcmp(targ, ufuns[i]->name)) {
-	    if (fun->pkg == ufuns[i]->pkg) {
-		err = broken_package_error(fun->pkg);
+    for (j=0; j<n_ufuns; j++) {
+	if (!strcmp(fun->name, ufuns[j]->name)) {
+	    if (pkg == ufuns[j]->pkg) {
+		err = broken_package_error(pkg);
 		break;
 	    }
 	}
@@ -4843,7 +4849,8 @@ static int load_private_function (ufunc *fun)
     if (!err && function_lookup(fun->name)) {
 	gretl_warnmsg_sprintf(_("'%s' is the name of a built-in function"),
 			      fun->name);
-	install_function_override(fun->name, fun);
+	install_function_override(fun->name, fun->pkg->name, fun);
+	pkg->overrides += 1;
     }
 
     return err;
@@ -4920,7 +4927,7 @@ static int real_load_package (fnpkg *pkg)
 
     if (!err && pkg->priv != NULL) {
 	for (i=0; i<pkg->n_priv && !err; i++) {
-	    err = load_private_function(pkg->priv[i]);
+	    err = load_private_function(pkg, i);
 	}
     }
 

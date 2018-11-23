@@ -581,6 +581,7 @@ static GHashTable *gretl_function_hash_init (void)
 static GHashTable *oht;
 
 int install_function_override (const char *funname,
+			       const char *pkgname,
 			       gpointer data)
 {
     if (funname == NULL) {
@@ -593,41 +594,52 @@ int install_function_override (const char *funname,
     }
 
     if (oht == NULL) {
-	oht = g_hash_table_new(g_str_hash, g_str_equal);
+	oht = g_hash_table_new_full(g_str_hash, g_str_equal,
+				    g_free, NULL);
     }
 
     if (oht != NULL) {
-	g_hash_table_insert(oht, (gpointer) funname, data);
+	gchar *key = g_strdup_printf("%s::%s", pkgname, funname);
+
+	g_hash_table_insert(oht, (gpointer) key, data);
     }
 
     return 0;
 }
 
-int delete_function_override (const char *funname)
+int delete_function_override (const char *funname,
+			      const char *pkgname)
 {
+    int ret = 0;
+
     if (oht != NULL) {
-	if (g_hash_table_remove(oht, funname)) {
-	    fprintf(stderr, "'%s': deleted override of built-in\n",
-		    funname);
-	    return 1;
+	gchar *key = g_strdup_printf("%s::%s", pkgname, funname);
+
+	if (g_hash_table_remove(oht, key)) {
+	    fprintf(stderr, "'%s': deleted override of built-in\n", key);
+	    ret = 1;
 	}
+	g_free(key);
     }
-    return 0;
+
+    return ret;
 }
 
-static ufunc *get_function_override (const char *s,
+static ufunc *get_function_override (const char *sf,
 				     gpointer p)
 {
-    ufunc *uf = g_hash_table_lookup(oht, s);
+    const char *sp = function_package_get_name(p);
+    gchar *key = g_strdup_printf("%s::%s", sp, sf);
+    ufunc *uf = g_hash_table_lookup(oht, key);
 
-    if (uf != NULL && gretl_function_get_package(uf) == p) {
-#if 0
-	fprintf(stderr, "got package override for %s\n", s);
-#endif
-	return uf;
-    } else {
-	return NULL;
+#if 1
+    if (uf != NULL) {
+	fprintf(stderr, "'%s': using package override\n", key);
     }
+#endif
+    g_free(key);
+
+    return uf;
 }
 
 static int real_function_lookup (const char *s, int aliases,
@@ -673,7 +685,7 @@ static int real_function_lookup (const char *s, int aliases,
 void gretl_function_hash_cleanup (void)
 {
     real_function_lookup(NULL, 0, NULL);
-    install_function_override(NULL, NULL);
+    install_function_override(NULL, NULL, NULL);
 }
 
 int function_lookup (const char *s)
@@ -697,8 +709,10 @@ int is_function_alias (const char *s)
 static int function_lookup_with_alias (const char *s,
 				       parser *p)
 {
-#if 1
     if (oht != NULL) {
+	/* we have a record of one or more package-private
+	   functions whose names collide with built-ins
+	*/
 	gpointer pp = get_active_function_package();
 
 	if (pp != NULL) {
@@ -711,7 +725,6 @@ static int function_lookup_with_alias (const char *s,
 	    }
 	}
     }
-#endif
 
     return real_function_lookup(s, 1, p);
 }

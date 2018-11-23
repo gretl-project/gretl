@@ -711,8 +711,10 @@ int is_gretl_accessor (const char *s);
 int mvar_lookup (const char *s);
 
 int install_function_override (const char *funname,
+			       const char *pkgname,
 			       gpointer data);
-int delete_function_override (const char *funname);
+int delete_function_override (const char *funname,
+			      const char *pkgname);
 
 /* handling declarations of variables */
 int check_declarations (char ***pS, parser *p);
