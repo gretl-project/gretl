@@ -710,6 +710,10 @@ const char *dumname (int t);
 int is_gretl_accessor (const char *s);
 int mvar_lookup (const char *s);
 
+int install_function_override (const char *funname,
+			       gpointer data);
+int delete_function_override (const char *funname);
+
 /* handling declarations of variables */
 int check_declarations (char ***pS, parser *p);
 

@@ -578,6 +578,58 @@ static GHashTable *gretl_function_hash_init (void)
     return ht;
 }
 
+static GHashTable *oht;
+
+int install_function_override (const char *funname,
+			       gpointer data)
+{
+    if (funname == NULL) {
+	/* cleanup signal */
+	if (oht != NULL) {
+	    g_hash_table_destroy(oht);
+	    oht = NULL;
+	}
+	return 0;
+    }
+
+    if (oht == NULL) {
+	oht = g_hash_table_new(g_str_hash, g_str_equal);
+    }
+
+    if (oht != NULL) {
+	g_hash_table_insert(oht, (gpointer) funname, data);
+    }
+
+    return 0;
+}
+
+int delete_function_override (const char *funname)
+{
+    if (oht != NULL) {
+	if (g_hash_table_remove(oht, funname)) {
+	    fprintf(stderr, "'%s': deleted override of built-in\n",
+		    funname);
+	    return 1;
+	}
+    }
+    return 0;
+}
+
+static ufunc *get_function_override (const char *s,
+				     gpointer p)
+{
+    ufunc *uf = g_hash_table_lookup(oht, s);
+
+    if (uf != NULL && gretl_function_get_package(uf) == p) {
+#if 0
+	fprintf(stderr, "got package override for %s\n", s);
+#endif
+	return uf;
+    } else {
+	return NULL;
+    }
+}
+
 static int real_function_lookup (const char *s, int aliases,
 				 parser *p)
 {
@@ -621,6 +673,7 @@ static int real_function_lookup (const char *s, int aliases,
 void gretl_function_hash_cleanup (void)
 {
     real_function_lookup(NULL, 0, NULL);
+    install_function_override(NULL, NULL);
 }
 
 int function_lookup (const char *s)
@@ -644,6 +697,22 @@ int is_function_alias (const char *s)
 static int function_lookup_with_alias (const char *s,
 				       parser *p)
 {
+#if 1
+    if (oht != NULL) {
+	gpointer pp = get_active_function_package();
+
+	if (pp != NULL) {
+	    ufunc *uf = get_function_override(s, pp);
+
+	    if (uf != NULL) {
+		p->idstr = gretl_strdup(s);
+		p->data = uf;
+		return UFUN;
+	    }
+	}
+    }
+#endif
+
     return real_function_lookup(s, 1, p);
 }
 

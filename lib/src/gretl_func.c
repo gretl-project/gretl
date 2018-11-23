@@ -33,6 +33,7 @@
 #include "uservar.h"
 #include "flow_control.h"
 #include "system.h"
+#include "genparse.h"
 #include "genr_optim.h"
 
 #ifdef HAVE_MPI
@@ -1189,11 +1190,25 @@ void current_function_info (char const **funcname,
     ufunc *u = currently_called_function();
 
     if (u != NULL) {
-	*funcname = u->name;
+	if (funcname != NULL) {
+	    *funcname = u->name;
+	}
 	if (pkgname != NULL && u->pkg != NULL) {
 	    *pkgname = u->pkg->name;
 	}
     }
+}
+
+fnpkg *get_active_function_package (void)
+{
+    ufunc *u = currently_called_function();
+
+    return u == NULL ? NULL : u->pkg;
+}
+
+fnpkg *gretl_function_get_package (const ufunc *fun)
+{
+    return fun == NULL ? NULL : fun->pkg;
 }
 
 /* see if a function is currently employed in the call stack */
@@ -1827,6 +1842,11 @@ static void ufunc_unload (ufunc *fun)
 	return;
     }
 
+#if PKG_DEBUG
+    fprintf(stderr, "ufunc_unload: name %s, pkg %p\n",
+	    fun->name, (void *) fun->pkg);
+#endif
+
     /* remove this function from the array of loaded functions */
 
     for (i=0; i<n_ufuns; i++) {
@@ -1839,6 +1859,9 @@ static void ufunc_unload (ufunc *fun)
 	}
     }
 
+    if (fun->pkg != NULL) {
+	delete_function_override(fun->name);
+    }
     ufunc_free(fun);
 
     if (found) {
@@ -1855,15 +1878,17 @@ static void real_function_package_unload (fnpkg *pkg, int full)
     int i, j, found = 0;
 
 #if PKG_DEBUG
-    fprintf(stderr, "function_package_unload: unloading '%s'\n", pkg->name);
+    fprintf(stderr, "function_package_unload: unloading '%s', full=%d\n",
+	    pkg->name, full);
 #endif
 
     /* unload children? */
     if (full) {
-	for (i=0; i<n_ufuns; i++) {
-	    if (ufuns[i]->pkg == pkg) {
-		ufunc_unload(ufuns[i]);
-	    }
+	for (i=0; i<pkg->n_priv; i++) {
+	    ufunc_unload(pkg->priv[i]);
+	}
+	for (i=0; i<pkg->n_pub; i++) {
+	    ufunc_unload(pkg->pub[i]);
 	}
     }
 
@@ -4815,6 +4840,12 @@ static int load_private_function (ufunc *fun)
 	err = add_allocated_ufunc(fun);
     }
 
+    if (!err && function_lookup(fun->name)) {
+	gretl_warnmsg_sprintf(_("'%s' is the name of a built-in function"),
+			      fun->name);
+	install_function_override(fun->name, fun);
+    }
+
     return err;
 }
 
@@ -4849,6 +4880,12 @@ static int load_public_function (ufunc *fun)
 		break;
 	    }
 	}
+    }
+
+    if (!err && !done && function_lookup(fun->name)) {
+	gretl_errmsg_sprintf(_("'%s' is the name of a built-in function"),
+			     fun->name);
+	err = E_DATA;
     }
 
     if (!err && !done) {
