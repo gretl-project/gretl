@@ -103,7 +103,7 @@ static int real_check_varname (const char *vname,
     if (strlen(vname) >= VNAMELEN) {
 	gretl_errmsg_set(_("Varname exceeds the maximum of 31 characters"));
 	err = E_DATA;
-    } else if (gretl_reserved_word(vname)) {
+    } else if (strcmp(vname, "return") && gretl_reserved_word(vname)) {
 	err = E_DATA;
     } else if (!(isalpha((unsigned char) *vname))) {
 	firstbad = 1;
