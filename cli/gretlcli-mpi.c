@@ -454,9 +454,11 @@ int main (int argc, char *argv[])
 	    } else if (cmd.ci == QUIT) {
 		/* no more input available */
 		cli_exec_line(&state, id, dset, progopt);
-		err = gretl_if_state_check(0);
-		if (err) {
-		    errmsg(err, prn);
+		if (runit == 0) {
+		    err = gretl_if_state_check(0);
+		    if (err) {
+			errmsg(err, prn);
+		    }
 		}
 		continue;
 	    }
