@@ -581,23 +581,22 @@ enum {
     AUX_NODE = 1 << 0, /* auxiliary: free on exit */
     TMP_NODE = 1 << 1, /* temporary: free content on exit */
     SVL_NODE = 1 << 2, /* holds string-valued series */
-    PAR_NODE = 1 << 3, /* exponentiation node is parenthesized */
-    PRX_NODE = 1 << 4, /* aux node is proxy (don't reuse!) */
-    ALS_NODE = 1 << 5, /* node holds aliased function call */
-    LHT_NODE = 1 << 6, /* node holds terminal of LHS */
-    MSL_NODE = 1 << 7  /* (scalar) node is matrix element */
+    PRX_NODE = 1 << 3, /* aux node is proxy (don't reuse!) */
+    ALS_NODE = 1 << 4, /* node holds aliased function call */
+    LHT_NODE = 1 << 5, /* node holds terminal of LHS */
+    MSL_NODE = 1 << 6  /* (scalar) node is matrix element */
 };
 
 struct node {
-    short t;       /* type identifier */
+    short t;         /* type identifier */
     unsigned char flags; /* AUX_NODE etc., see above */
-    int vnum;      /* associated series ID number */
-    char *vname;   /* associated variable name */
-    user_var *uv;  /* associated named variable */
-    union val v;   /* value (of whatever type) */
-    NODE *L, *M, *R; /* experimental! */
-    NODE *aux;     /* auxiliary (result) node */
-    int refcount;  /* reference counter, used by aux nodes */
+    int vnum;        /* associated series ID number */
+    char *vname;     /* associated variable name */
+    user_var *uv;    /* associated named variable */
+    union val v;     /* value (of whatever type) */
+    NODE *L, *M, *R; /* up to three child nodes */
+    NODE *aux;       /* auxiliary (result) node */
+    int refcount;    /* reference counter, used by aux nodes */
 };
 
 enum parser_flags {
@@ -671,17 +670,12 @@ struct parser_ {
     int err;
 };
 
-#define starting(p) (p->flags & P_START)
-#define autoreg(p) (p->flags & P_AUTOREG)
-#define setting_obsval(p) (p->flags & P_OBSVAL)
-
 int parser_getc (parser *p);
 void parser_ungetc (parser *p);
 void parser_advance (parser *p, int n);
 int parser_char_index (parser *p, int c);
 int parser_print_input (parser *p);
 void lex (parser *s);
-NODE *powterm (parser *p, NODE *l);
 NODE *new_node (int t);
 NODE *expr (parser *s);
 NODE *newdbl (double x);

@@ -32,7 +32,7 @@
 # define MDEBUG 0
 #endif
 
-#define pow_sym(t) (t == B_POW || t == B_DOTPOW)
+static NODE *powterm (parser *p, NODE *l);
 
 #if SDEBUG
 static void notify (const char *s, NODE *n, parser *p)
@@ -1245,7 +1245,7 @@ static void get_ovar_ref (NODE *t, parser *p)
     }
 }
 
-NODE *powterm (parser *p, NODE *l)
+static NODE *powterm (parser *p, NODE *l)
 {
     /* watch out for unary operators */
     int sym = p->sym == B_SUB ? U_NEG :
@@ -1435,10 +1435,6 @@ NODE *powterm (parser *p, NODE *l)
     } else if (sym == G_LPR) {
 	/* parenthesized expression */
 	t = base(p, NULL);
-	if (t != NULL && pow_sym(t->t)) {
-	    /* protection: don't ignore the parens! */
-	    t->flags |= PAR_NODE;
-	}
     } else if (sym == G_LCB) {
 	/* explicit matrix definition, possibly followed by
 	   a "subslice" specification */

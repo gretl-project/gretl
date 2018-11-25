@@ -33,6 +33,8 @@
 # define GDEBUG 0
 #endif
 
+#define setting_obsval(p) (p->flags & P_OBSVAL)
+
 static void write_scalar_message (const parser *p, PRN *prn)
 {
     double x = gretl_scalar_get_value(p->lh.name, NULL);
@@ -1256,7 +1258,7 @@ int genr_no_assign (const parser *p)
 
 int genr_is_autoregressive (const parser *p)
 {
-    return (autoreg(p));
+    return (p->flags & P_AUTOREG);
 }
 
 void genr_set_na_check (parser *p)

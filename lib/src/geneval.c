@@ -124,6 +124,8 @@ enum {
 			    t == SERIES || t == BUNDLE || t == ARRAY)
 
 #define compiled(p) (p->flags & P_EXEC)
+#define starting(p) (p->flags & P_START)
+#define autoreg(p)  (p->flags & P_AUTOREG)
 
 static void parser_init (parser *p, const char *str, DATASET *dset,
 			 PRN *prn, int flags, int targtype);
@@ -899,7 +901,7 @@ static NODE *list_pointer_node (parser *p)
 #define bundle_pointer_node(p) get_aux_node(p,BUNDLE,0,0)
 #define aux_array_node(p) get_aux_node(p,ARRAY,0,TMP_NODE)
 #define array_pointer_node(p) get_aux_node(p,ARRAY,0,0)
-#define aux_b2_node(p) get_aux_node(p,EMPTY,0,0)
+#define aux_parent_node(p) get_aux_node(p,EMPTY,0,0)
 #define aux_any_node(p) get_aux_node(p,0,0,0)
 
 /* Start of functions that probably should not be needed in
@@ -4812,7 +4814,7 @@ static NODE *process_OSL_address (NODE *t, NODE *l, NODE *r, parser *p)
 	GretlType type = user_var_get_type(lb->uv);
 
 	if (type == GRETL_TYPE_ARRAY) {
-	    ret = aux_b2_node(p);
+	    ret = aux_parent_node(p);
 	    if (ret != NULL) {
 		ret->t = SUB_ADDR;
 		ret->L = lb; /* extracted left-hand */
@@ -12467,7 +12469,7 @@ static NODE *eval_feval (NODE *t, parser *p)
 	/* try for a built-in function */
 	f = function_lookup(e->v.str);
 	if (f != 0) {
-	    NODE *fn = aux_b2_node(p);
+	    NODE *fn = aux_parent_node(p);
 	    NODE *args = NULL;
 	    int kerr = 0;
 
@@ -14116,7 +14118,7 @@ static NODE *lhs_terminal_node (NODE *t, NODE *l, NODE *r,
 {
     /* Pass through eval'd @l and @r subnodes, but don't eval
        the parent @t itself */
-    NODE *ret = aux_b2_node(p);
+    NODE *ret = aux_parent_node(p);
 
     ret->t = t->t; /* transcribe type */
     ret->L = l;    /* evaluated left-hand */
@@ -14346,6 +14348,16 @@ static NODE *eval (NODE *t, parser *p)
     }
 #endif
 
+    /* handle terminals first? */
+    if (t->t == MSPEC || t->t == EMPTY || t->t == PTR) {
+	return t;
+    } else if (t->t >= NUM && t->t <= STR) {
+	if (compiled(p) && starting(p) && uvar_node(t)) {
+	    node_reattach_data(t, p);
+	}
+	return t;
+    }
+
     if (t->t == QUERY) {
 	/* needs special treatment, see eval_query() */
 	goto do_switch;
@@ -14404,25 +14416,8 @@ static NODE *eval (NODE *t, parser *p)
     p->aux = t->aux;
 
     switch (t->t) {
-    case MSPEC:
-    case EMPTY:
-    case PTR:
-	ret = t;
-	break;
     case DBUNDLE:
 	ret = dollar_bundle_node(t, p);
-	break;
-    case NUM:
-    case SERIES:
-    case MAT:
-    case STR:
-    case LIST:
-    case BUNDLE:
-    case ARRAY:
-	if (compiled(p) && starting(p) && uvar_node(t)) {
-	    node_reattach_data(t, p);
-	}
-	ret = t;
 	break;
     case UNDEF:
 	ret = maybe_rescue_undef_node(t, p);
