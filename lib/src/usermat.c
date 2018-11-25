@@ -465,7 +465,7 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 		spec->sel[1].range[0] = 1;
 	    }
 	}
-	/* dims checked, nothing more to do */
+	/* nothing more to do */
 	return err;
     }
 
@@ -475,7 +475,7 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
     }
 
     if (m->rows == 0 || m->cols == 0) {
-	/* dims checked, nothing more to do */
+	/* nothing more to do */
 	return 0;
     }
 
@@ -971,7 +971,6 @@ gretl_matrix *matrix_get_chunk (const gretl_matrix *M,
 {
     int offset = spec->sel[0].range[0];
     int n = spec->sel[0].range[1];
-    size_t sz = n * sizeof(double);
     gretl_matrix *ret;
 
     if (offset < 0) {
@@ -989,6 +988,8 @@ gretl_matrix *matrix_get_chunk (const gretl_matrix *M,
     if (ret == NULL) {
 	*err = E_ALLOC;
     } else {
+	size_t sz = n * sizeof(double);
+
 	memcpy(ret->val, M->val + offset, sz);
 	if (M->rows > 1 && n == M->rows && offset == 0 &&
 	    gretl_matrix_is_dated(M)) {
