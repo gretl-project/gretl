@@ -14797,9 +14797,10 @@ static NODE *eval (NODE *t, parser *p)
     case LAG:
 	if (p->targ == LIST) {
 	    ret = get_lag_list(l, r, p);
-	    break;
+	} else {
+	    ret = series_lag(l, r, p);
 	}
-	/* Falls through. */
+	break;
     case F_LJUNGBOX:
     case F_POLYFIT:
 	/* series on left, scalar on right */
@@ -14807,8 +14808,6 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, 1, SERIES, l, p);
 	} else if (!scalar_node(r)) {
 	    node_type_error(t->t, 2, NUM, r, p);
-	} else if (t->t == LAG) {
-	    ret = series_lag(l, r, p);
 	} else if (t->t == F_LJUNGBOX) {
 	    ret = series_ljung_box(l, r, p);
 	} else if (t->t == F_POLYFIT) {

@@ -1387,6 +1387,10 @@ static void handle_lpnext (const char *s, parser *p,
 	    p->data = u;
 	} else {
 	    p->idnum = vnum;
+	    /* in case of any intervening space */
+	    while (p->ch == ' ') {
+		parser_getc(p);
+	    }
 	}
     }
 }
