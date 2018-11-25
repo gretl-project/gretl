@@ -851,6 +851,8 @@ double generate_scalar (const char *s, DATASET *dset, int *err)
     return x;
 }
 
+/* retrieve a boolean result directly */
+
 double generate_boolean (const char *s, DATASET *dset, int *err)
 {
     double x = generate_scalar(s, dset, err);

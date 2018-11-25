@@ -1553,16 +1553,10 @@ int gretl_int_from_double (double x, int *err)
 {
     int k = -1;
 
-    if (fabs(x) > INT_MAX) {
+    if (na(x) || fabs(x) > INT_MAX || fabs(x - nearbyint(x)) > 0.001) {
 	*err = E_INVARG;
     } else {
-	double slop = 0.001;
-	
-	if (x - floor(x) < slop || ceil(x) - x < slop) {
-	    k = lrint(x);
-	} else {
-	    *err = E_INVARG;
-	}
+	k = lrint(x);
     }
 
     return k;

@@ -126,6 +126,8 @@ enum {
 #define compiled(p) (p->flags & P_EXEC)
 #define starting(p) (p->flags & P_START)
 #define autoreg(p)  (p->flags & P_AUTOREG)
+#define DCHECK (P_EXEC | P_START)
+#define exestart(p) ((p->flags & DCHECK) == DCHECK)
 
 static void parser_init (parser *p, const char *str, DATASET *dset,
 			 PRN *prn, int flags, int targtype);
@@ -222,16 +224,14 @@ static void free_mspec (matrix_subspec *spec, parser *p)
 
 static void clear_mspec (matrix_subspec *spec, parser *p)
 {
-   if (spec != NULL) {
-	/* the slice elements may not be reusable as is */
-	if (spec->rslice != NULL) {
-	    free(spec->rslice);
-	    spec->rslice = NULL;
-	}
-	if (spec->cslice != NULL) {
-	    free(spec->cslice);
-	    spec->cslice = NULL;
-	}
+    /* the slice elements may not be reusable as is */
+    if (spec->rslice != NULL) {
+	free(spec->rslice);
+	spec->rslice = NULL;
+    }
+    if (spec->cslice != NULL) {
+	free(spec->cslice);
+	spec->cslice = NULL;
     }
 }
 
@@ -652,7 +652,9 @@ static void clear_tmp_node_data (NODE *n, parser *p)
 	/* (how) can we avoid doing this? */
 	gretl_matrix_free(n->v.m);
     } else if (n->t == MSPEC) {
-	clear_mspec(n->v.mspec, p);
+	if (n->v.mspec != NULL) {
+	    clear_mspec(n->v.mspec, p);
+	}
 	nullify = 0;
     } else if (n->t == BUNDLE) {
 	gretl_bundle_destroy(n->v.b);
@@ -808,6 +810,11 @@ static NODE *get_aux_node (parser *p, int t, int n, int flags)
 static NODE *aux_sized_matrix_node (parser *p, int m, int n)
 {
     NODE *ret = p->aux;
+
+    if (is_proxy_node(ret)) {
+	/* this node will get freed later */
+	ret = NULL;
+    }
 
     if (ret != NULL) {
 	/* got a pre-existing node */
@@ -14348,11 +14355,11 @@ static NODE *eval (NODE *t, parser *p)
     }
 #endif
 
-    /* handle terminals first? */
+    /* handle terminals first */
     if (t->t == MSPEC || t->t == EMPTY || t->t == PTR) {
 	return t;
     } else if (t->t >= NUM && t->t <= STR) {
-	if (compiled(p) && starting(p) && uvar_node(t)) {
+	if (exestart(p) && uvar_node(t)) {
 	    node_reattach_data(t, p);
 	}
 	return t;
@@ -14425,7 +14432,7 @@ static NODE *eval (NODE *t, parser *p)
     case U_ADDR:
 	if (!uvar_node(t->L) && t->L->t != OSL) {
 	    p->err = E_DATA;
-	} else if (compiled(p) && starting(p)) {
+	} else if (exestart(p)) {
 	    node_reattach_data(t->L, p);
 	}
 	ret = t;
@@ -14445,7 +14452,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case NUM_P:
     case NUM_M:
-	if (compiled(p) && starting(p)) {
+	if (exestart(p)) {
 	    node_reattach_data(t, p);
 	}
 	ret = scalar_postfix_node(t, p);
