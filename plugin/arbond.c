@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -142,7 +142,7 @@ struct ddset_ {
 #define data_index(dpd,i) (i * dpd->T + dpd->t1)
 
 static void dpanel_residuals (ddset *dpd);
-static int dpd_process_list (ddset *dpd, const int *list, 
+static int dpd_process_list (ddset *dpd, const int *list,
 			     const int *ylags);
 
 static void ddset_free (ddset *dpd)
@@ -197,7 +197,7 @@ static int dpd_allocate_matrices (ddset *dpd)
 
     if (dpd->B2 == NULL) {
 	return E_ALLOC;
-    }    
+    }
 
     return 0;
 }
@@ -250,13 +250,13 @@ static int dpd_flags_from_opt (gretlopt opt)
     if (opt & OPT_X) {
 	/* compute H as per Ox/DPD (DPANEL only) */
 	f |= DPD_DPDSTYLE;
-    }	
+    }
 
     return f;
 }
 
 static ddset *ddset_new (int ci, const int *list, const int *ylags,
-			 const DATASET *dset, gretlopt opt, 
+			 const DATASET *dset, gretlopt opt,
 			 diag_info *d, int nzb, int *err)
 {
     ddset *dpd = NULL;
@@ -458,7 +458,7 @@ static int dpd_make_lists (ddset *dpd, const int *list, int xpos)
 	    }
 	    dpd->nzr = nz;
 	}
-    } 
+    }
 
     if (!err) {
 	err = maybe_add_const_to_ilist(dpd);
@@ -495,9 +495,9 @@ static int dpanel_make_laglist (ddset *dpd, const int *list,
 	    dpd->laglist = gretl_consecutive_list_new(1, dpd->p);
 	    if (dpd->laglist == NULL) {
 		err = E_ALLOC;
-	    } 
+	    }
 	}
-    } 	
+    }
 
     if (ylags != NULL && !err) {
 	/* sort lags and check for duplicates */
@@ -537,9 +537,9 @@ static int dpanel_make_laglist (ddset *dpd, const int *list,
 
    dpanel 2 ; y ...   means use lags 1 and 2
    dpanel {2} ; y ... means use lag 2 only
-   
+
    Note that placing a limit on the max lag of y _as instrument_ is
-   done in dpanel via "GMM(y,min,max)". 
+   done in dpanel via "GMM(y,min,max)".
 */
 
 static int dpd_process_list (ddset *dpd, const int *list,
@@ -560,7 +560,7 @@ static int dpd_process_list (ddset *dpd, const int *list,
     xpos = seppos + 2;
 
     if (dpd->ci == DPANEL) {
-	/* the auxiliary 'ylags' list may contain specific y lags, 
+	/* the auxiliary 'ylags' list may contain specific y lags,
 	   otherwise there should be just one field */
 	err = dpanel_make_laglist(dpd, list, seppos, ylags);
     } else {
@@ -580,10 +580,10 @@ static int dpd_process_list (ddset *dpd, const int *list,
 	    fprintf(stderr, "arbond lag order = %d < 1\n", dpd->p);
 	    err = E_INVARG;
 	} else if (dpd->qmax != 0 && dpd->qmax < dpd->p + 1) {
-	    fprintf(stderr, "arbond qmax = %d < dpd->p + 1 = %d\n", 
+	    fprintf(stderr, "arbond qmax = %d < dpd->p + 1 = %d\n",
 		    dpd->qmax, dpd->p + 1);
 	    err = E_INVARG;
-	} 
+	}
     }
 
     if (!err && list[0] >= xpos) {
@@ -612,7 +612,7 @@ static int obs_is_usable (ddset *dpd, const DATASET *dset, int s)
        deviation for time-slot s if we have a value for
        y at s-1 (given that we shift these forward) plus
        one or more valid observations at s, s+1, ...
-       If I'm thinking correctly we don't necessarily 
+       If I'm thinking correctly we don't necessarily
        require a valid value at s, or in other words
        the first block below is too conservative.
     */
@@ -680,12 +680,12 @@ static int arbond_find_t1min (ddset *dpd, const double *y)
 
 /* check the sample for unit/individual i */
 
-static int 
+static int
 arbond_sample_check_unit (ddset *dpd, const DATASET *dset, int i,
 			  int s, int *t1imin, int *t2max)
 {
     unit_info *unit = &dpd->ui[i];
-    int t1i = dpd->T - 1, t2i = 0; 
+    int t1i = dpd->T - 1, t2i = 0;
     int tmin = dpd->p + 1;
     int t;
 
@@ -707,7 +707,7 @@ arbond_sample_check_unit (ddset *dpd, const DATASET *dset, int i,
 	    dpd->used[s+t] = 1;
 	    if (t < t1i) t1i = t;
 	    if (t > t2i) t2i = t;
-	} 
+	}
     }
 
     if (unit->nobs == 0) {
@@ -728,7 +728,7 @@ arbond_sample_check_unit (ddset *dpd, const DATASET *dset, int i,
 
     if (t1i < *t1imin) {
 	*t1imin = t1i;
-    }	
+    }
 
     if (t2i > *t2max) {
 	*t2max = t2i;
@@ -738,7 +738,7 @@ arbond_sample_check_unit (ddset *dpd, const DATASET *dset, int i,
     unit->t2 = t2i;
 
 #if ADEBUG
-    fprintf(stderr, "t1 = %d, t2 = %d, Ti = %d, usable obs = %d\n", 
+    fprintf(stderr, "t1 = %d, t2 = %d, Ti = %d, usable obs = %d\n",
 	    t1i, t2i, t2i - t1i + 1, unit->nobs);
 #endif
 
@@ -785,7 +785,7 @@ static void arbond_compute_Z_cols (ddset *dpd, int t1min, int t2max)
     dpd->nz += dpd->ndum;
 
 #if ADEBUG
-    fprintf(stderr, "total nz = %d (dummies = %d, exog = %d)\n", 
+    fprintf(stderr, "total nz = %d (dummies = %d, exog = %d)\n",
 	    dpd->nz, dpd->ndum, dpd->nzr);
 #endif
 }
@@ -837,7 +837,7 @@ static int arbond_sample_check (ddset *dpd, const DATASET *dset)
     fprintf(stderr, "Number of units with usable observations = %d\n", dpd->effN);
     fprintf(stderr, "Total usable observations = %d\n", dpd->nobs);
     fprintf(stderr, "Max equations for any given unit = %d\n", dpd->maxTi);
-    fprintf(stderr, "Maximal relevant time-series span: %d to %d = %d\n", 
+    fprintf(stderr, "Maximal relevant time-series span: %d to %d = %d\n",
 	    t1min, t2max, t2max - t1min + 1);
 #endif
 
@@ -857,7 +857,7 @@ static int arbond_sample_check (ddset *dpd, const DATASET *dset)
 /* end of arbond book-keeping block */
 
 /* Figure the 0-based index of the position of the constant
-   in the coefficient vector (or return -1 if the constant is 
+   in the coefficient vector (or return -1 if the constant is
    not included).
 */
 
@@ -876,7 +876,7 @@ static int dpd_const_pos (ddset *dpd)
 	}
 
 	if (cpos >= 0) {
-	    /* we have the position in the array of coeffs on 
+	    /* we have the position in the array of coeffs on
 	       exogenous vars, but these follow the lagged
 	       values of the dependent variable.
 	    */
@@ -893,7 +893,7 @@ static int dpd_const_pos (ddset *dpd)
 
 /* We do either one or two tests here: first we test for the joint
    significance of all regular regressors (lags of y plus any
-   exogenous variables, except for the constant, if present).  
+   exogenous variables, except for the constant, if present).
    Then, if time dummies are present, we test for their joint
    significance.
 */
@@ -911,7 +911,7 @@ static int dpd_wald_test (ddset *dpd)
     knd = dpd->k - dpd->ndum;
 
     /* the number of coefficients to be tested at the first step
-       (we exclude the constant) 
+       (we exclude the constant)
     */
     k1 = (cpos > 0)? (knd - 1) : knd;
 
@@ -937,7 +937,7 @@ static int dpd_wald_test (ddset *dpd)
 	    }
 	    ri++;
 	}
-    } 
+    }
 
     err = gretl_invert_symmetric_matrix(V);
 
@@ -951,8 +951,8 @@ static int dpd_wald_test (ddset *dpd)
     }
 
     if (!err && dpd->ndum > 0) {
-	/* time dummies: these are always at the end of the 
-	   coeff vector 
+	/* time dummies: these are always at the end of the
+	   coeff vector
 	*/
 	b = gretl_matrix_reuse(dpd->kmtmp, dpd->ndum, 1);
 	V = gretl_matrix_reuse(dpd->kktmp, dpd->ndum, dpd->ndum);
@@ -970,17 +970,17 @@ static int dpd_wald_test (ddset *dpd)
 	if (!err) {
 	    dpd->wald[1] = x;
 	    dpd->wdf[1] = dpd->ndum;
-	}	
+	}
     }
 
     gretl_matrix_reuse(dpd->kmtmp, dpd->k, dpd->nz);
     gretl_matrix_reuse(dpd->kktmp, dpd->k, dpd->k);
 
     if (err) {
-	fprintf(stderr, "dpd_wald_test failed: %s\n", 
+	fprintf(stderr, "dpd_wald_test failed: %s\n",
 		errmsg_get_with_default(err));
     }
-    
+
     return err;
 }
 
@@ -1008,7 +1008,7 @@ static int dpd_sargan_test (ddset *dpd)
 	if (dpd->flags & DPD_ORTHDEV) {
 	    dpd->sargan /= dpd->s2;
 	} else {
-	    dpd->sargan *= 2.0 / dpd->s2; 
+	    dpd->sargan *= 2.0 / dpd->s2;
 	}
     }
 
@@ -1016,7 +1016,7 @@ static int dpd_sargan_test (ddset *dpd)
     fprintf(stderr, "Sargan (or Hansen) test: Chi-square(%d-%d) = %g\n",
 	    dpd->nz, dpd->k, dpd->sargan);
     if (1) {
-	/* try to replicate the xtabond2 'Sargan test' */ 
+	/* try to replicate the xtabond2 'Sargan test' */
 	double sg;
 
 	gretl_matrix_multiply_mod(dpd->ZT, GRETL_MOD_NONE,
@@ -1033,9 +1033,9 @@ static int dpd_sargan_test (ddset *dpd)
 #endif
 
     gretl_matrix_reuse(dpd->L1, save_rows, save_cols);
-    
+
     if (err) {
-	fprintf(stderr, "dpd_sargan_test failed: %s\n", 
+	fprintf(stderr, "dpd_sargan_test failed: %s\n",
 		errmsg_get_with_default(err));
     }
 
@@ -1062,7 +1062,7 @@ static void make_asy_Hi (ddset *dpd, int i, gretl_matrix *H,
 	gretl_matrix_set(H, t, t, 1);
 	gretl_matrix_set(H, t-1, t, -0.5);
 	gretl_matrix_set(H, t, t-1, -0.5);
-    } 
+    }
 
     gretl_matrix_multiply_by_scalar(H, dpd->s2);
     gretl_matrix_cut_rows_cols(H, mask);
@@ -1078,19 +1078,19 @@ static void make_asy_Hi (ddset *dpd, int i, gretl_matrix *H,
 
   d_1 = \sum_i w_i' H_i w_i
 
-  d_2 = -2(\sum_i w_i' X_i) M^{-1} 
+  d_2 = -2(\sum_i w_i' X_i) M^{-1}
         (\sum_i X_i' Z_i) A_N (\sum Z_i' H_i w_i)
 
   d_3 = (\sum_i w_i' X_i) var(\hat{\beta}) (\sum_i X_i' w_i)
 
-  The matrices with subscript i in the above equations are all 
+  The matrices with subscript i in the above equations are all
   in differences. In the "system" case the last term in d2 is
   modified as
 
   (\sum Z_i^f' u_i^f u_i' w_i)
 
   where the f superscript indicates that all observations are
-  used, differences and levels. 
+  used, differences and levels.
 
   one step:         H_i = \sigma^2 H_{1,i}
   one step, robust: H_i = H_{2,i}; M = M_1
@@ -1135,7 +1135,7 @@ static int dpd_ar_test (ddset *dpd)
 	}
     }
 
-    /* The required size of the workspace matrix ZU depends on 
+    /* The required size of the workspace matrix ZU depends on
        whether or not we're in the system case */
     ZU_cols = (gmm_sys(dpd))? 1 : T;
 
@@ -1209,9 +1209,9 @@ static int dpd_ar_test (ddset *dpd)
 			wi->val[k] = dpd->uhat->val[s-1];
 			nlags_i++;
 		    }
-		} else if (dpd->used[t0+t-2] == 1) {	
+		} else if (dpd->used[t0+t-2] == 1) {
 		    /* m = 2: due to missing values the lag-2
-		       residual might be at slot s-1, not s-2 
+		       residual might be at slot s-1, not s-2
 		    */
 		    s_ = (dpd->used[t0+t-1] == 1)? (s-2) : (s-1);
 		    wi->val[k] = dpd->uhat->val[s_];
@@ -1306,7 +1306,7 @@ static int dpd_ar_test (ddset *dpd)
     }
 
     /* d2 = -2 * w'X * (M^{-1} * XZ * A) * Z'Hw */
-    gretl_matrix_multiply(wX, Tmp, dpd->L1); 
+    gretl_matrix_multiply(wX, Tmp, dpd->L1);
     d2 = gretl_matrix_dot_product(dpd->L1, GRETL_MOD_NONE,
 				  ZHw, GRETL_MOD_NONE, &err);
 
@@ -1322,7 +1322,7 @@ static int dpd_ar_test (ddset *dpd)
 #if ADEBUG
 	fprintf(stderr, "ar_test: m=%d, d0=%g, d1=%g, d2=%g, d3=%g, den=%g\n",
 		m, d0, d1, d2, d3, den);
-#endif	
+#endif
 	if (den <= 0) {
 	    err = E_NAN;
 	} else {
@@ -1349,7 +1349,7 @@ static int dpd_ar_test (ddset *dpd)
     gretl_matrix_reuse(dpd->Zi, save_rows, save_cols);
 
     if (err) {
-	fprintf(stderr, "dpd_ar_test failed: %s\n", 
+	fprintf(stderr, "dpd_ar_test failed: %s\n",
 		errmsg_get_with_default(err));
     } else if (na(dpd->AR1) && na(dpd->AR1)) {
 	fprintf(stderr, "dpd_ar_test: no data\n");
@@ -1378,10 +1378,10 @@ static int windmeijer_correct (ddset *dpd, const gretl_matrix *uhat1,
     gretl_matrix *ui;  /* per-unit residuals */
     gretl_matrix *xij; /* per-unit X_j values */
     gretl_matrix *mT;  /* workspace follows */
-    gretl_matrix *km;  
-    gretl_matrix *k1; 
+    gretl_matrix *km;
+    gretl_matrix *k1;
     gretl_matrix *R1;
-    gretl_matrix *Zui; 
+    gretl_matrix *Zui;
     gretl_matrix *Zxi;
     int i, j, t;
     int err = 0;
@@ -1429,7 +1429,7 @@ static int windmeijer_correct (ddset *dpd, const gretl_matrix *uhat1,
 	    if (ni == 0) {
 		continue;
 	    }
-	
+
 	    gretl_matrix_reuse(ui, ni, 1);
 	    gretl_matrix_reuse(xij, ni, 1);
 	    gretl_matrix_reuse(dpd->Zi, ni, dpd->nz);
@@ -1512,24 +1512,24 @@ static int dpd_variance_2 (ddset *dpd,
 
     if (!err) {
 	gretl_matrix_multiply_by_scalar(dpd->vbeta, dpd->effN);
-    }  
+    }
 
     if (!err && u1 != NULL && V1 != NULL) {
 	err = windmeijer_correct(dpd, u1, V1);
-    } 
+    }
 
     return err;
 }
 
-/* 
+/*
    Compute the robust step-1 robust variance matrix:
 
-   N * M^{-1} * (X'*Z*A_N*\hat{V}_N*A_N*Z'*X) * M^{-1} 
+   N * M^{-1} * (X'*Z*A_N*\hat{V}_N*A_N*Z'*X) * M^{-1}
 
-   where 
+   where
 
-   M = X'*Z*A_N*Z'*X 
-   
+   M = X'*Z*A_N*Z'*X
+
    and
 
    \hat{V}_N = N^{-1} \sum Z_i'*v_i*v_i'*Z_i,
@@ -1577,7 +1577,7 @@ static int dpd_variance_1 (ddset *dpd)
 	gretl_matrix_extract_matrix(dpd->Zi, dpd->ZT, 0, c,
 				    GRETL_MOD_TRANSPOSE);
 	c += ni;
-	
+
 	/* load residuals into the ui vector */
 	for (t=0; t<ni; t++) {
 	    ui->val[t] = dpd->uhat->val[k++];
@@ -1600,7 +1600,7 @@ static int dpd_variance_1 (ddset *dpd)
 
     if (!err) {
 	/* pre- and post-multiply by M^{-1} */
-	gretl_matrix_qform(dpd->M, GRETL_MOD_NONE, dpd->kktmp, 
+	gretl_matrix_qform(dpd->M, GRETL_MOD_NONE, dpd->kktmp,
 			   dpd->vbeta, GRETL_MOD_NONE);
 	gretl_matrix_multiply_by_scalar(dpd->vbeta, dpd->effN);
     }
@@ -1631,7 +1631,7 @@ static void arbond_residuals (ddset *dpd)
 	int Ti = dpd->ui[i].nobs;
 
 	for (t=0; t<Ti; t++) {
-	    ut = dpd->Y->val[k]; 
+	    ut = dpd->Y->val[k];
 	    for (j=0; j<dpd->k; j++) {
 		x = gretl_matrix_get(dpd->X, k, j);
 		ut -= b[j] * x;
@@ -1651,7 +1651,7 @@ static void arbond_residuals (ddset *dpd)
    we preserve is governed by @save_levels.
 */
 
-static int dpanel_adjust_uhat (ddset *dpd, 
+static int dpanel_adjust_uhat (ddset *dpd,
 			       const DATASET *dset,
 			       int save_levels)
 {
@@ -1704,11 +1704,12 @@ static int dpanel_adjust_uhat (ddset *dpd,
 
 static int dpd_finalize_model (MODEL *pmod, ddset *dpd,
 			       const int *list, const int *ylags,
-			       const char *istr, 
+			       const char *istr,
 			       const DATASET *dset,
 			       gretlopt opt)
 {
     const double *y = dset->Z[dpd->yno];
+    int keep_extra = opt & OPT_K;
     char tmp[32];
     int i, j;
     int err = 0;
@@ -1739,7 +1740,7 @@ static int dpd_finalize_model (MODEL *pmod, ddset *dpd,
     pmod->rsq = pmod->adjrsq = NADBL;
     pmod->fstt = pmod->chisq = NADBL;
     pmod->lnL = NADBL;
-  
+
     gretl_model_allocate_param_names(pmod, dpd->k);
     if (pmod->errcode) {
 	return pmod->errcode;
@@ -1749,10 +1750,10 @@ static int dpd_finalize_model (MODEL *pmod, ddset *dpd,
 	j = 0;
 	if (dpd->laglist != NULL) {
 	    for (i=1; i<=dpd->laglist[0]; i++) {
-		sprintf(tmp, "%.10s(-%d)", dset->varname[dpd->yno], 
+		sprintf(tmp, "%.10s(-%d)", dset->varname[dpd->yno],
 			dpd->laglist[i]);
 		gretl_model_set_param_name(pmod, j++, tmp);
-	    }	
+	    }
 	} else {
 	    for (i=0; i<dpd->p; i++) {
 		sprintf(tmp, "%.10s(-%d)", dset->varname[dpd->yno], i+1);
@@ -1765,10 +1766,10 @@ static int dpd_finalize_model (MODEL *pmod, ddset *dpd,
 	j = 0;
 	if (dpd->laglist != NULL) {
 	    for (i=1; i<=dpd->laglist[0]; i++) {
-		sprintf(tmp, "%c%.10s(-%d)", prefix, dset->varname[dpd->yno], 
+		sprintf(tmp, "%c%.10s(-%d)", prefix, dset->varname[dpd->yno],
 			dpd->laglist[i]);
 		gretl_model_set_param_name(pmod, j++, tmp);
-	    }	
+	    }
 	} else {
 	    for (i=0; i<dpd->p; i++) {
 		sprintf(tmp, "%c%.10s(-%d)", prefix, dset->varname[dpd->yno], i+1);
@@ -1854,6 +1855,16 @@ static int dpd_finalize_model (MODEL *pmod, ddset *dpd,
 	}
 	if (dpd->A != NULL) {
 	    gretl_model_set_int(pmod, "ninst", dpd->A->rows);
+	    if (keep_extra) {
+		gretl_matrix *A = gretl_matrix_copy(dpd->A);
+
+		gretl_model_set_matrix_as_data(pmod, "A", A);
+	    }
+	}
+	if (keep_extra && dpd->ZT != NULL) {
+	    gretl_matrix *Z = gretl_matrix_copy(dpd->ZT);
+
+	    gretl_model_set_matrix_as_data(pmod, "Z", Z);
 	}
 	if (opt & OPT_D) {
 	    maybe_suppress_time_dummies(pmod, dpd->ndum);
@@ -1870,7 +1881,7 @@ static int dpd_finalize_model (MODEL *pmod, ddset *dpd,
 	}
 	if (dpd->flags & DPD_TIMEDUM) {
 	    pmod->opt |= OPT_D;
-	}	
+	}
 	if (pmod->ci == DPANEL) {
 	    if (dpd->flags & DPD_SYSTEM) {
 		pmod->opt |= OPT_L;
@@ -1935,18 +1946,18 @@ static int dpd_zero_check (ddset *dpd, const DATASET *dset)
 }
 
 /* Based on reduction of the A matrix, trim ZT to match and
-   adjust the sizes of all workspace matrices that have a 
-   dimension involving dpd->nz. Note that this is called 
+   adjust the sizes of all workspace matrices that have a
+   dimension involving dpd->nz. Note that this is called
    on the first step only, and it is called before computing
    XZ' and Z'Y. The only matrices we need to actually "cut"
-   are A (already done when we get here) and ZT; XZ' and Z'Y 
+   are A (already done when we get here) and ZT; XZ' and Z'Y
    should just have their nz dimension changed.
 */
 
 static void dpd_shrink_matrices (ddset *dpd, const char *mask)
 {
-    fprintf(stderr, "%s: dpd_shrink_matrices: cut nz from %d to %d\n", 
-	    (dpd->ci == DPANEL)? "dpanel" : "arbond", 
+    fprintf(stderr, "%s: dpd_shrink_matrices: cut nz from %d to %d\n",
+	    (dpd->ci == DPANEL)? "dpanel" : "arbond",
 	    dpd->nz, dpd->A->rows);
 
     gretl_matrix_cut_rows(dpd->ZT, mask);
@@ -1974,7 +1985,7 @@ static int dpd_step_2_A (ddset *dpd)
 	err = gretl_SVD_invert_matrix(dpd->V);
 	if (!err) {
 	    gretl_matrix_xtr_symmetric(dpd->V);
-	}	
+	}
     } else {
 	gretl_matrix_copy_values(dpd->Acpy, dpd->V);
  	err = gretl_invert_symmetric_matrix(dpd->V);
@@ -2157,7 +2168,7 @@ static int arbond_make_y_X (ddset *dpd, const DATASET *dset)
 		/* time dummies */
 		x = (t - dpd->t1min - 1 == j)? 1 : 0;
 		gretl_matrix_set(dpd->X, k, j + dpd->p + dpd->nx, x);
-	    }	    
+	    }
 	    k++;
 	}
     }
@@ -2170,7 +2181,7 @@ static int arbond_make_y_X (ddset *dpd, const DATASET *dset)
 #if WRITE_MATRICES
     gretl_matrix_write_as_text(dpd->Y, "arbondY.mat", 0);
     gretl_matrix_write_as_text(dpd->X, "arbondX.mat", 0);
-#endif  
+#endif
 
     return 0;
 }
@@ -2191,7 +2202,7 @@ static int next_obs (ddset *dpd, int t0, int j0, int n)
 /* construct the H matrix for first-differencing
    as applied to unit i */
 
-static void arbond_H_matrix (ddset *dpd, int *rc, 
+static void arbond_H_matrix (ddset *dpd, int *rc,
 			     int i, int t0)
 {
     unit_info *unit =  &dpd->ui[i];
@@ -2216,7 +2227,7 @@ static void arbond_H_matrix (ddset *dpd, int *rc,
     for (j=0; j<m; j++) {
 	for (k=j; k<m; k++) {
 	    if (skip) {
-		adjacent = (abs(rc[k] - rc[j]) == 1); 
+		adjacent = (abs(rc[k] - rc[j]) == 1);
 	    } else {
 		adjacent = (abs(k-j) == 1);
 	    }
@@ -2283,7 +2294,7 @@ static int arbond_make_Z_and_A (ddset *dpd, const DATASET *dset)
 		}
 	    }
 	    offj += zj;
-	}	    
+	}
 
 	k = 0;
 	for (t=unit->t1; t<=unit->t2; t++) {
@@ -2299,9 +2310,9 @@ static int arbond_make_Z_and_A (ddset *dpd, const DATASET *dset)
 		    }
 		}
 	    }
-	    
+
 	    /* additional block-diagonal columns, if required --
-	       needs checking for the unbalanced case 
+	       needs checking for the unbalanced case
 	    */
 	    zj = 0;
 	    for (zi=0; zi<dpd->nzb; zi++) {
@@ -2332,7 +2343,7 @@ static int arbond_make_Z_and_A (ddset *dpd, const DATASET *dset)
 		    x = (t - dpd->t1min - 1 == j)? 1 : 0;
 		    gretl_matrix_set(dpd->Zi, k, dpd->xc0 + dpd->nzr + j, x);
 		}
-		k++; /* increment target row */	
+		k++; /* increment target row */
 	    }
 
 	    offj += offincr; /* starting column for next block */
@@ -2364,7 +2375,7 @@ static int arbond_make_Z_and_A (ddset *dpd, const DATASET *dset)
 	}
 
 	/* Write Zi into ZT at offset 0, c */
-	gretl_matrix_inscribe_matrix(dpd->ZT, dpd->Zi, 0, c, 
+	gretl_matrix_inscribe_matrix(dpd->ZT, dpd->Zi, 0, c,
 				     GRETL_MOD_TRANSPOSE);
 	c += Ti;
     }
@@ -2386,7 +2397,7 @@ static int arbond_make_Z_and_A (ddset *dpd, const DATASET *dset)
 	    }
 	    free(mask);
 	}
-    } 
+    }
 
 #if ADEBUG
     gretl_matrix_print(dpd->A, "\\sum Z_i' H Z_i");
@@ -2430,7 +2441,7 @@ static int dpd_invert_A_N (ddset *dpd)
 
 	fprintf(stderr, "inverting dpd->A failed on first pass\n");
 
-	gretl_matrix_copy_values(dpd->A, dpd->Acpy); 
+	gretl_matrix_copy_values(dpd->A, dpd->Acpy);
 	mask = gretl_matrix_rank_mask(dpd->A, &err);
 
 	if (!err) {
@@ -2466,7 +2477,7 @@ static int dpd_step_1 (ddset *dpd)
 
     if (!err) {
 	/* construct additional moment matrices: we waited
-	   until we knew what size these should really be 
+	   until we knew what size these should really be
 	*/
 	gretl_matrix_multiply(dpd->ZT, dpd->Y, dpd->ZY);
 	gretl_matrix_multiply_mod(dpd->X, GRETL_MOD_TRANSPOSE,
@@ -2535,7 +2546,7 @@ static int diag_try_list (const char *vname, int *vp, int *nd,
     return 0;
 }
 
-/* Parse a particular entry in the (optional) incoming array 
+/* Parse a particular entry in the (optional) incoming array
    of "GMM(foo,m1,m2)" specifications.  We check that foo
    exists and that m1 and m2 have sane values (allowing that,
    for arbond, an m2 value of 0 means use all available lags).
@@ -2559,7 +2570,7 @@ static int parse_diag_info (int ci, const char *s, diag_info **dp,
 	}
 	level = 1;
 	s += 9;
-    }	
+    }
 
     sprintf(fmt, "%%%d[^, ] , %%d , %%d)", VNAMELEN-1);
 
@@ -2605,7 +2616,7 @@ static int parse_diag_info (int ci, const char *s, diag_info **dp,
     return err;
 }
 
-/* parse requests of the form 
+/* parse requests of the form
 
       GMM(xvar, minlag, maxlag)
 
@@ -2613,7 +2624,7 @@ static int parse_diag_info (int ci, const char *s, diag_info **dp,
    fashion
 */
 
-static int 
+static int
 parse_GMM_instrument_spec (int ci, const char *spec, const DATASET *dset,
 			   diag_info **pd, int *pnspec)
 {
@@ -2743,7 +2754,7 @@ arbond_estimate (const int *list, const char *ispec,
 
     if (!err) {
 	/* build instrument matrix blocks, Z_i, and insert into
-	   big Z' matrix; cumulate first-stage A_N as we go 
+	   big Z' matrix; cumulate first-stage A_N as we go
 	*/
 	err = arbond_make_Z_and_A(dpd, dset);
     }
@@ -2763,7 +2774,7 @@ arbond_estimate (const int *list, const char *ispec,
 
     if (!mod.errcode) {
 	/* write estimation info into model struct */
-	mod.errcode = dpd_finalize_model(&mod, dpd, list, NULL, ispec, 
+	mod.errcode = dpd_finalize_model(&mod, dpd, list, NULL, ispec,
 					 dset, opt);
     }
 
@@ -2773,4 +2784,3 @@ arbond_estimate (const int *list, const char *ispec,
 }
 
 #include "dpanel.c"
-

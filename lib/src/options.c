@@ -201,6 +201,7 @@ struct gretl_option gretl_opts[] = {
     { DISCRETE, OPT_R, "reverse", 0 },
     { DPANEL,   OPT_A, "asymptotic", 0 },
     { DPANEL,   OPT_D, "time-dummies", 1 },
+    { DPANEL,   OPT_K, "keep-extra", 0 },
     { DPANEL,   OPT_L, "system", 0 },
     { DPANEL,   OPT_T, "two-step", 0 },
     { DPANEL,   OPT_V, "verbose", 0 },

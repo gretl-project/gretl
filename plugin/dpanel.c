@@ -159,6 +159,7 @@ static int check_unit_obs (ddset *dpd, int *goodobs,
 static void copy_diag_info (diag_info *targ, diag_info *src)
 {
     targ->v = src->v;
+    targ->depvar = src->depvar;
     targ->minlag = src->minlag;
     targ->maxlag = src->maxlag;
     targ->level = src->level;
