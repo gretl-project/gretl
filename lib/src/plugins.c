@@ -86,6 +86,7 @@ enum {
     P_ANOVA,
     P_DURATION,
     P_INTERPOLATE,
+    P_ISO3166,
     P_BIPROBIT,
     P_REPROBIT,
     P_PANURC,
@@ -145,6 +146,7 @@ struct plugin_info plugins[] = {
     { P_ANOVA,           "anova",           NULL },
     { P_DURATION,        "duration",        NULL },
     { P_INTERPOLATE,     "interpolate",     NULL },
+    { P_ISO3166,         "iso3166",         NULL },
     { P_BIPROBIT,        "biprobit",        NULL },
     { P_REPROBIT,        "reprobit",        NULL },
     { P_PANURC,          "panurc",          NULL },
@@ -273,6 +275,9 @@ struct plugin_function_info plugin_functions[] = {
 
     /* data interpolation */
     { "chow_lin_interpolate", P_INTERPOLATE},
+
+    /* ISO 3166 country codes */
+    { "iso_country", P_ISO3166},
 
     /* panel unit roots/cointegration */
     { "real_levin_lin", P_PANURC},

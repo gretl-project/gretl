@@ -6936,6 +6936,20 @@ static NODE *single_string_func (NODE *n, NODE *x, int f, parser *p)
 	    }
 	    ret->v.str = calloc(VNAMELEN, 1);
 	    normalize_join_colname(ret->v.str, s, uscore, 0);
+	} else if (f == F_CCODE) {
+	    char *(*cfunc) (const char *, int, int *);
+	    int output = 2; /* default to Alpha-2 code */
+
+	    cfunc = get_plugin_function("iso_country");
+	    if (cfunc == NULL) {
+		p->err = E_FOPEN;
+	    }
+	    if (!p->err && !null_or_empty(x)) {
+		output = node_get_int(x, p);
+	    }
+	    if (!p->err) {
+		ret->v.str = cfunc(s, output, &p->err);
+	    }
 	} else {
 	    p->err = E_DATA;
 	}
@@ -15626,6 +15640,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_BACKTICK:
     case F_STRSTRIP:
     case F_FIXNAME:
+    case F_CCODE:
 	if (l->t == STR) {
 	    ret = single_string_func(l, r, t->t, p);
 	} else if (t->t == F_ARGNAME && (uscalar_node(l) || useries_node(l))) {

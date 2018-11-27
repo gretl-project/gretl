@@ -383,6 +383,7 @@ enum {
     F_JSONGETB,
     F_FIXNAME,
     F_ATAN2,
+    F_CCODE,
     HF_CMMULT,
     HF_CFFT,
     HF_CMATRIX,

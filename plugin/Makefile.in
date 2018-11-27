@@ -127,7 +127,9 @@ SRCS = excel_import.c \
 	interval.c \
 	anova.c \
 	biprobit.c \
-	reprobit.c
+	reprobit.c \
+	interpolate.c \
+	iso3166.c
 
 ZIPSRC = zfileio.c \
 	zsystem.c \
@@ -162,6 +164,7 @@ PLUGINS = arbond.la \
 	anova.la \
 	mp_ols.la \
 	interpolate.la \
+	iso3166.la \
 	biprobit.la \
 	reprobit.la \
 	panurc.la \
@@ -339,6 +342,9 @@ anova.la: anova.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(GLIB_LIBS)
 
 interpolate.la: interpolate.lo
+	$(LINK) -o $@ $< $(GRETLLIB)
+
+iso3166.la: iso3166.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
 panurc.la: panurc.lo

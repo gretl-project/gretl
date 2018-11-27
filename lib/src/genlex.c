@@ -493,6 +493,7 @@ struct str_table funcs[] = {
     { F_SVM,       "svm" },
     { F_GETKEYS,   "getkeys" },
     { F_FEVAL,     "feval" },
+    { F_CCODE,     "isocountry" },
     { 0,           NULL }
 };
 
