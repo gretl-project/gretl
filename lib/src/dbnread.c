@@ -30,10 +30,15 @@ static gretl_bundle *get_dbn_series_bundle (const char *datacode,
 		*err = E_DATA;
 		if (msg != NULL) {
 		    gretl_errmsg_set(msg);
+		} else {
+		    gretl_errmsg_sprintf(_("%s: no data found"), datacode);
 		}
 		gretl_bundle_destroy(b);
 		b = NULL;
 	    }
+	} else if (!*err) {
+	    gretl_errmsg_sprintf(_("%s: no data found"), datacode);
+	    *err = E_DATA;
 	}
     }
 

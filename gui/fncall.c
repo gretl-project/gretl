@@ -4168,6 +4168,34 @@ static fncall *get_dbnomics_function_call (const char *funcname)
     return fc;
 }
 
+static void dbnomics_report_error (const char *datacode,
+				   gretl_bundle *b,
+				   PRN **pprn)
+{
+    const char *buf = gretl_print_get_buffer(*pprn);
+
+    if (!string_is_blank(buf)) {
+	/* show what we got via PRN */
+	gchar *title = g_strdup_printf("gretl: %s", datacode);
+
+	view_buffer(*pprn, 78, 200, title, IMPORT, NULL);
+	*pprn = NULL; /* ownership taken by viewer */
+	g_free(title);
+    } else {
+	const char *errmsg = gretl_bundle_get_string(b, "errmsg", NULL);
+
+	if (!string_is_blank(errmsg)) {
+	    errbox(errmsg);
+	} else {
+	    /* fallback */
+	    gchar *msg = g_strdup_printf(_("%s: no data found"), datacode);
+
+	    errbox(msg);
+	    g_free(msg);
+	}
+    }
+}
+
 /* below: callbacks from regular gretl GUI menu items/buttons
    that invoke calls to the dbnomics package in the background
 */
@@ -4203,16 +4231,17 @@ int dbnomics_get_series_call (const char *datacode)
     }
 
     if (b != NULL) {
-	gchar *title;
 	int dberr = gretl_bundle_get_int(b, "error", &err);
 
 	if (dberr) {
-	    title = g_strdup_printf("gretl: %s", datacode);
-	    view_buffer(prn, 78, 200, title, IMPORT, NULL);
+	    /* we need to handle the case where dbnomics failed
+	       but did not provide any error message
+	    */
+	    dbnomics_report_error(datacode, b, &prn);
 	    gretl_bundle_destroy(b);
-	    prn = NULL; /* ownership taken by viewer */
 	} else {
 	    const char *p = strrchr(datacode, '/');
+	    gchar *title;
 
 	    title = g_strdup_printf("gretl: %s", p + 1);
 	    fc = get_pkg_function_call("dbnomics_bundle_print", "dbnomics", NULL);
@@ -4229,8 +4258,8 @@ int dbnomics_get_series_call (const char *datacode)
 		    }
 		}
 	    }
+	    g_free(title);
 	}
-	g_free(title);
     }
 
     gretl_print_destroy(prn);
