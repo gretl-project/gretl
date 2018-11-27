@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2018-11-19 08:54-0500\n"
-"PO-Revision-Date: 2018-08-23 14:01+0200\n"
+"PO-Revision-Date: 2018-11-19 17:18+0100\n"
 "Last-Translator: JCEN <ecadrian@hotmail.com>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.1.1\n"
+"X-Generator: Poedit 2.2\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 
@@ -2362,9 +2362,9 @@ msgid "Wrong type of operand for unary '&'"
 msgstr "Tipo de operando incorrecto para o operador dun solo parámetro '&'"
 
 #: lib/src/geneval.c:7843
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid observation specifier \"%s\""
-msgstr "'%s': Índice de observación incorrecto"
+msgstr "Indicador \"%s\" de observación incorrecto"
 
 #: lib/src/geneval.c:7927 lib/src/transforms.c:858 lib/src/transforms.c:1177
 msgid "The constant cannot be lagged"
@@ -2414,7 +2414,7 @@ msgstr "O operador '%s' é incorrecto neste contexto"
 
 #: lib/src/geneval.c:12451
 msgid "Bandwidth must be non-negative"
-msgstr ""
+msgstr "O largo de banda debe de ser non negativo"
 
 #: lib/src/geneval.c:13164
 msgid "array: no type was specified"
@@ -2778,7 +2778,7 @@ msgstr "'%s' é unha palabra reservada"
 
 #: lib/src/genmain.c:588
 msgid "Periodic dummy variables generated.\n"
-msgstr "Xeráronse variables ficticias periódicas.\n"
+msgstr "Xeráronse variables ficticias estacionais.\n"
 
 #: lib/src/genmain.c:593 lib/src/genmain.c:598
 msgid "Panel dummy variables generated.\n"
@@ -2933,7 +2933,6 @@ msgid "Relative frequency"
 msgstr "Frecuencia relativa"
 
 #: lib/src/graphing.c:4885 lib/src/graphing.c:4892
-#, fuzzy
 msgid "relative frequency"
 msgstr "Frecuencia relativa"
 
@@ -3582,14 +3581,14 @@ msgid "\"%s\" is not defined.\n"
 msgstr "\"%s\" non está definida.\n"
 
 #: lib/src/gretl_func.c:9388
-#, fuzzy, c-format
+#, c-format
 msgid "Removed %s\n"
-msgstr "Eliminar"
+msgstr "O %s está eliminado\n"
 
 #: lib/src/gretl_func.c:9390
-#, fuzzy, c-format
+#, c-format
 msgid "Unloaded %s\n"
-msgstr "Descargar o paquete %s?"
+msgstr "O %s non está cargado\n"
 
 #: lib/src/gretl_help.c:72 lib/src/gretl_help.c:431
 #, c-format
@@ -4396,9 +4395,9 @@ msgid "Couldn't write to %s"
 msgstr "Non puido escribirse a %s"
 
 #: lib/src/gretl_www.c:976
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't find %s for gretl %s"
-msgstr "Non puido atoparse o ficheiro %s para o paquete %s"
+msgstr "Non puido atoparse *%s* para *%s* de Gretl"
 
 #: lib/src/gretl_xml.c:148 lib/src/gretl_xml.c:4536
 #, c-format
@@ -4510,6 +4509,10 @@ msgid ""
 "supported by this build of gretl (%g). Some features may not be\n"
 "correctly recognized.\n"
 msgstr ""
+"A versión deste ficheiro de datos (%g) é superior á que pode ser tolerada "
+"por\n"
+"completo mediante esta composición de Gretl (%g). Algunhas funcionalidades\n"
+"poden non recoñecerse correctamente.\n"
 
 #: lib/src/gretl_xml.c:3884
 msgid "Uncompressing"
@@ -7538,9 +7541,9 @@ msgstr ""
 "Cando menos precísanse %d instrumentos máis."
 
 #: lib/src/usermat.c:195
-#, fuzzy, c-format
+#, c-format
 msgid "Index value %g is out of bounds"
-msgstr "O valor %d do índice está fóra dos límites"
+msgstr "O valor %g do índice está fóra dos límites"
 
 #: lib/src/usermat.c:246 gui/calculator.c:1381
 msgid "Range is non-positive!"
@@ -11185,12 +11188,12 @@ msgstr ""
 "Podes engadir ou eliminar nomes de ficheiros de datos a incluír no paquete."
 
 #: gui/fnsave.c:2728
-#, fuzzy
 msgid ""
 "You may add or delete names of packages to be recorded as dependencies.\n"
 "Leave off the .gfn or .zip suffix."
 msgstr ""
-"Podes engadir ou eliminar nomes de ficheiros de datos a incluír no paquete."
+"Podes engadir ou eliminar nomes de paquetes a grabar como dependencias.\n"
+"Non poñas o sufixo .gfn nin .zip."
 
 #: gui/fnsave.c:2765
 msgid ""
@@ -11234,9 +11237,8 @@ msgid "Data files"
 msgstr "Ficheiros de datos"
 
 #: gui/fnsave.c:3604
-#, fuzzy
 msgid "Dependencies"
-msgstr "Variable dependente"
+msgstr "Dependencias"
 
 #: gui/fnsave.c:3706
 msgid "Email"
@@ -12380,7 +12382,7 @@ msgstr "Variable _aleatoria..."
 
 #: gui/gretl.c:1750
 msgid "_Periodic dummies"
-msgstr "Variables _ficticias periódicas"
+msgstr "Variables _ficticias estacionais"
 
 #: gui/gretl.c:1751
 msgid "_Unit dummies"
@@ -14115,9 +14117,8 @@ msgid "Lag order for KPSS test:"
 msgstr "Nivel de retardo para a proba KPSS:"
 
 #: gui/library.c:1254
-#, fuzzy
 msgid "show individual results"
-msgstr "Amosar os resultados das probas individuais"
+msgstr "Amosar os resultados individuais"
 
 #: gui/library.c:1288
 msgid "gretl: ADF test"
@@ -14446,7 +14447,7 @@ msgid "%s versus %s with loess fit"
 msgstr "*%s* fronte a *%s* con axuste Loess"
 
 #: gui/library.c:4648
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s with Nadaraya-Watson fit"
 msgstr "*%s* fronte a *%s* con axuste de Nadaraya-Watson"
 
@@ -14815,16 +14816,15 @@ msgstr ""
 
 #: gui/library.c:8747
 msgid "new style (faster)"
-msgstr ""
+msgstr "Estilo novo (máis rápido)"
 
 #: gui/library.c:8748
 msgid "old style (compatible with gretl < 2018c)"
-msgstr ""
+msgstr "Estilo antigo (compatible con Gretl < 2018c)"
 
 #: gui/library.c:8750
-#, fuzzy
 msgid "Missing values should be stored:"
-msgstr "Atopáronse valores ausentes"
+msgstr "Os valores ausentes deben gardarse:"
 
 #: gui/library.c:9183 gui/library.c:9321
 msgid "No commands to execute"
@@ -15512,14 +15512,12 @@ msgid "Bandwidth"
 msgstr "Largura de banda"
 
 #: gui/selector.c:5134
-#, fuzzy
 msgid "Automatic bandwidth"
-msgstr "Máximo automático"
+msgstr "Largo de banda automático"
 
 #: gui/selector.c:5140
-#, fuzzy
 msgid "User-specified"
-msgstr "Valores especificados polo usuario"
+msgstr "Especificado polo usuario"
 
 #: gui/selector.c:5151
 msgid "Use robust weights"
@@ -17548,7 +17546,7 @@ msgstr "Fallo na instrución ARMA"
 #: plugin/arma_init.c:112
 #, c-format
 msgid "Shifting y by %g, scaling by %g\n"
-msgstr ""
+msgstr "Desprazando y con %g, escalando con %g\n"
 
 #: plugin/arma_x12.c:1004
 msgid "Failed to execute x12arima"

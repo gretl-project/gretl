@@ -2710,7 +2710,7 @@
       <para>
 	Este diálogo te permite inspeccionar y descargar series de datos
 	del servidor 'dbnomics'. Puedes visitar
-	<url>https://next.nomics.world/</url> para obtener los
+	<url>https://db.nomics.world/</url> para obtener los
 	identificadores o códigos de las series de interés. Estos tienen la
 	forma de 'tripletes' (tres términos separados con barras). Por
 	ejemplo
@@ -8589,23 +8589,30 @@
 	independiente.
       </para>
       <para>
-	La función kernel <math>K</math> viene dada por
-	<math>K = exp(-x</math><sup>2</sup><math> / 2h)</math>
-	para <math>|x| &lt; T</math>, y cero en otro caso.
+	La función núcleo (kernel) viene determinada por
+	<math>K = exp(-x</math><sup>2</sup><math>/2h)</math>
+	para <math>|x|&lt;T</math>, y cero en otro caso. <math>T</math> es
+	un parámetro de recorte, por defecto igual a 4<math>h</math>.
       </para>
       <para>
-	El ancho de banda, que habitualmente es un número pequeño, controla
-	la suavidad de <math>m(x)</math> (los valores más grandes producen
-	series más suaves); el valor por defecto es <math>n</math><sup>-0.2</sup>.
+	El ancho de banda <math>h</math>, que habitualmente es un número
+	pequeño, controla la suavidad de <math>m(x)</math> (los valores
+	más grandes producen series más suaves). Por defecto, este
+	valor está determinado por los datos y resulta proporcional a
+	<math>n</math><sup>-0.2</sup>, siendo <math>n</math> el tamaño
+	de la muestra.
       </para>
       <para>
 	Si marcas el cuadradito de <quote>dejar una fuera</quote>, se emplea
 	una variante del estimador en la que la <math>i</math>-ésima observación
 	no se utiliza para evaluar <math>m(x</math><sub>i</sub><math>)</math>.
-	Esto hace que el estimador de Nadaraya&ndash;Watson sea
-	numéricamente más robusto, y su utilización se aconseja
-	normalmente cuando el estimador se calcula con el propósito de
-	hacer inferencias.
+	Esto hace que el algoritmo sea numéricamente más robusto, y su
+	utilización se aconseja normalmente cuando el estimador se calcula
+	con el propósito de hacer inferencias.
+      </para>
+      <para>
+	Para obtener más detalles sobre la estimación no paramétrica, consulta
+	<guideref targ="chap:nonparam"/>.
       </para>
      </description>
   </command>
@@ -10016,6 +10023,7 @@
 	el nombre <quote>plano</quote> de un paquete de funciones de Gretl (como
 	en el primer ejemplo de arriba), el efecto de esta instrucción consiste
 	en descargar el paquete que se especifica del servidor de Gretl,
+	(excepto que <repl>nombrepaquete</repl> comience con <lit>http://</lit>),
 	e instalarlo en la máquina local. En este caso, no es necesario expresar
 	una extensión en el nombre del archivo. Sin embargo, cuando indicas
 	la opción <opt>local</opt>, el argumento <repl>nombrepaquete</repl>
@@ -10024,7 +10032,7 @@
 	(<lit>.gfn</lit> o <lit>.zip</lit>). En este caso, el efecto consiste
 	en copiar el archivo en su sitio (<lit>gfn</lit>), o descomprimirlo
 	en su sitio (<lit>zip</lit>), significando <quote>en su sitio</quote>
-	allí donde lo va a encontrar la instrucción <cmdref targ="include"/>.
+	allí donde lo va a encontrar la instrucción <cmdref targ="include"/>	.
       </para>
       <para>
 	<lit>unload</lit>: Debes indicar el argumento <repl>pkgname</repl> en
@@ -10715,8 +10723,7 @@
 
   </command>
 
-  <command name="pvalue" section="Statistics"
-    label="Calcular probabilidades asociadas" context="cli">
+  <command name="pvalue" section="Statistics" label="Calcular probabilidades asociadas" context="cli">
 
     <usage>
       <arguments>

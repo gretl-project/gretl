@@ -5722,22 +5722,29 @@
       <fnargs>
 	<fnarg type="series-or-vec">y</fnarg>
 	<fnarg type="int" optional="true">k</fnarg>
+	<fnarg type="scalar" optional="true">mu</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Devuelve un escalar con la varianza de largo plazo del argumento
 	  <argname>y</argname>, calculada usando un núcleo (<quote>kernel</quote>) de
 	  Bartlett con tamaño de ventana igual a <argname>k</argname>. Si omites el
-	  segundo argumento (o le asignas un valor menor que 0), el tamaño de la ventana
+	  segundo argumento (o le asignas un valor negativo), el tamaño de la ventana
 	  se establece por defecto igual a la parte entera de la raíz cúbica del tamaño de la muestra.
 	</para>
 	<para context="tex">
 	  Fórmula:
 	  \[ \hat{\omega}^2(k) = \frac{1}{T} \sum_{t=k}^{T-k}
-	  \left[ \sum_{i=-k}^k w_i (y_t - \bar{X}) (y_{t-i} - \bar{Y})
+	  \left[ \sum_{i=-k}^k w_i (y_t - \mu) (y_{t-i} - \bar{Y})
 	  \right] \]
 	  con
 	  \[ w_i = 1 - \frac{|i|}{k + 1} \]
+	</para>
+	<para>
+	  Para el cálculo de la varianza, la serie <argname>y</argname> se
+	  centra con respecto al parámetro opcional <argname>mu</argname>;
+	  y cando este se omite o es <lit>NA</lit>, se utiliza la media
+	  muestral.
 	</para>
 	<para>
 	  Para una contrapartida multivariante, consulta <fncref targ="lrcovar"/>.
@@ -6847,9 +6854,9 @@
 	  ($\tau$ = Parámetro de recorte.)
 	</para>
 	<para context="notex">
-	  La función núcleo (<quote>kernel</quote>) <math>K</math> viene dada por
-	  <math>K = exp(-x</math><sup>2</sup><math> / 2h)</math> cuando
-	  <math>|x| &lt; T</math>, e igual a cero en otro caso.
+	  La función núcleo (kernel) empleada por este estimador viene dada por
+	  <math>K = exp(-x</math><sup>2</sup><math>/2h)</math> cuando
+	  <math>|x|&lt;T</math>, y es igual a cero en otro caso.
 	  (<math>T</math> = Parámetro de recorte.)
 	</para>
 	<para>
