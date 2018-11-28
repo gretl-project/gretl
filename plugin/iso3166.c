@@ -372,3 +372,40 @@ char *iso_country (const char *src, int output, int *err)
 
     return ret;
 }
+
+gretl_array *iso_country_array (gretl_array *srcs,
+				int output,
+				int *err)
+{
+    gretl_array *ret = NULL;
+    const char *src;
+    char *result;
+    int i, n;
+
+    if (gretl_array_get_type(srcs) != GRETL_TYPE_STRINGS) {
+	*err = E_TYPES;
+	return NULL;
+    }
+
+    n = gretl_array_get_length(srcs);
+    ret = gretl_array_new(GRETL_TYPE_STRINGS, n, err);
+
+    for (i=0; i<n && !*err; i++) {
+	src = gretl_array_get_data(srcs, i);
+	if (src == NULL) {
+	    *err = E_DATA;
+	} else {
+	    result = iso_country(src, output, err);
+	}
+	if (!*err) {
+	    *err = gretl_array_set_data(ret, i, result);
+	}
+    }
+
+    if (*err && ret != NULL) {
+	gretl_array_destroy(ret);
+	ret = NULL;
+    }
+
+    return ret;
+}

@@ -6936,22 +6936,50 @@ static NODE *single_string_func (NODE *n, NODE *x, int f, parser *p)
 	    }
 	    ret->v.str = calloc(VNAMELEN, 1);
 	    normalize_join_colname(ret->v.str, s, uscore, 0);
-	} else if (f == F_CCODE) {
+	} else {
+	    p->err = E_DATA;
+	}
+    }
+
+    return ret;
+}
+
+static NODE *country_code_node (NODE *n, NODE *r, parser *p)
+{
+    NODE *ret = NULL;
+
+    if (n->t == STR) {
+	ret = aux_string_node(p);
+    } else if (n->t == ARRAY) {
+	ret = aux_array_node(p);
+    } else {
+	p->err = E_TYPES;
+    }
+
+    if (!p->err) {
+	int output = 2; /* default to Alpha-2 code */
+
+	if (!null_or_empty(r)) {
+	    output = node_get_int(r, p);
+	}
+	if (!p->err && n->t == STR) {
 	    char *(*cfunc) (const char *, int, int *);
-	    int output = 2; /* default to Alpha-2 code */
 
 	    cfunc = get_plugin_function("iso_country");
 	    if (cfunc == NULL) {
 		p->err = E_FOPEN;
+	    } else {
+		ret->v.str = cfunc(n->v.str, output, &p->err);
 	    }
-	    if (!p->err && !null_or_empty(x)) {
-		output = node_get_int(x, p);
+	} else if (!p->err) {
+	    gretl_array *(*cfunc) (gretl_array *, int, int *);
+
+	    cfunc = get_plugin_function("iso_country_array");
+	    if (cfunc == NULL) {
+		p->err = E_FOPEN;
+	    } else {
+		ret->v.a = cfunc(n->v.a, output, &p->err);
 	    }
-	    if (!p->err) {
-		ret->v.str = cfunc(s, output, &p->err);
-	    }
-	} else {
-	    p->err = E_DATA;
 	}
     }
 
@@ -15640,11 +15668,17 @@ static NODE *eval (NODE *t, parser *p)
     case F_BACKTICK:
     case F_STRSTRIP:
     case F_FIXNAME:
-    case F_CCODE:
 	if (l->t == STR) {
 	    ret = single_string_func(l, r, t->t, p);
 	} else if (t->t == F_ARGNAME && (uscalar_node(l) || useries_node(l))) {
 	    ret = argname_from_uvar(l, p);
+	} else {
+	    node_type_error(t->t, 0, STR, l, p);
+	}
+	break;
+    case F_CCODE:
+	if (l->t == STR || l->t == ARRAY) {
+	    ret = country_code_node(l, r, p);
 	} else {
 	    node_type_error(t->t, 0, STR, l, p);
 	}

@@ -278,6 +278,7 @@ struct plugin_function_info plugin_functions[] = {
 
     /* ISO 3166 country codes */
     { "iso_country", P_ISO3166},
+    { "iso_country_array", P_ISO3166},
 
     /* panel unit roots/cointegration */
     { "real_levin_lin", P_PANURC},
