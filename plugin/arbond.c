@@ -1858,13 +1858,13 @@ static int dpd_finalize_model (MODEL *pmod, ddset *dpd,
 	    if (keep_extra) {
 		gretl_matrix *A = gretl_matrix_copy(dpd->A);
 
-		gretl_model_set_matrix_as_data(pmod, "A", A);
+		gretl_model_set_matrix_as_data(pmod, "wgtmat", A);
 	    }
 	}
 	if (keep_extra && dpd->ZT != NULL) {
 	    gretl_matrix *Z = gretl_matrix_copy(dpd->ZT);
 
-	    gretl_model_set_matrix_as_data(pmod, "Z", Z);
+	    gretl_model_set_matrix_as_data(pmod, "GMMinst", Z);
 	}
 	if (opt & OPT_D) {
 	    maybe_suppress_time_dummies(pmod, dpd->ndum);

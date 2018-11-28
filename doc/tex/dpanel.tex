@@ -865,6 +865,77 @@ instruments minus the number of parameters estimated; for the first of
 these terms gretl uses the rank of $\bA_N$, while DPD appears to use
 the full dimension of this matrix.
 
+\section{Post-estimation available statistics}
+\label{sec:dpanel-post}
+
+After estimation, the \dollar{model} accessor will return a bundle
+containing several items that may be of interest: most should be
+self-explanatory, but here's a partial list:
+
+\begin{center}
+\begin{tabular}{rp{0.6\textwidth}}
+  \hline
+  \textbf{Key} & \textbf{Content} \\
+  \hline
+  \texttt{AR1}, \texttt{AR2} & 1st and 2nd order autocorrelation test
+                               statistics \\
+  \texttt{GMMinst} & The matrix $\bZ$ of instruments (see equations
+                     (\ref{eq:dpd-dif}) and (\ref{eq:sys-gmm}) \\
+  \texttt{wgtmat} & The matrix $\bA$ of GMM weights (see equations
+                    (\ref{eq:dpd-dif}) and (\ref{eq:sys-gmm}) \\
+  \texttt{sargan}, \texttt{sargan\_df} & Sargan test for
+                                         overidentifying restrictions
+                                         and corresponding degrees of freedom \\
+  \texttt{wald}, \texttt{wald\_df} & Wald test for
+                                     overall significance
+                                     and corresponding degrees of freedom \\
+  \hline
+\end{tabular}
+\end{center}
+
+The script in Table \ref{tab:dpanel-rep} illustrates the usage of the
+\texttt{GMMinst} and \texttt{wgtmat} to replicate via hansl commands
+the calculation of the GMM estimator.
+
+\begin{table}[htbp]
+\label{tab:dpanel-rep}
+  \begin{scode}
+set verbose off
+open abdata.gdt
+
+# compose list of regressors
+list X = w w(-1) k k(-1)
+list Z = w k
+
+dpanel 1 ; n X const ; GMM(Z,2,99) --two-step --dpd --keep-extra
+
+### --- re-do by hand ----------------------------
+
+# fetch Z and A from model
+A = $model.wgtmat
+mZt = $model.GMMinst # note: transposed
+
+# create data matrices
+series valid = ok($uhat)
+series ddep = diff(n)
+series dldep = ddep(-1)
+list dreg = diff(X)
+
+smpl valid --dummy
+
+matrix m_reg = {dldep} ~ {dreg} ~ 1
+matrix m_dep = {ddep}
+
+matrix uno = mZt * m_reg
+matrix due = qform(uno', A)
+matrix tre = (uno'A) * (mZt * m_dep)
+matrix coef = due\tre
+
+print coef
+\end{scode}
+  \caption{replication of built-in command via hansl commands}
+\end{table}
+
 \section{Memo: \texttt{dpanel} options}
 \label{sec:options}
 
@@ -893,3 +964,11 @@ in
 
 This means that although the dummies are included in the specification
 their coefficients, standard errors and so on are not printed.
+
+
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End:
