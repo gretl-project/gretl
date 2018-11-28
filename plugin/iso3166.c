@@ -308,7 +308,8 @@ enum { CNAME = 1, AC2, AC3 };
    given one of these and an output specification
 */
 
-char *iso_country (const char *src, int output, int *err)
+char *iso_country (const char *src, int output,
+		   PRN *prn, int *err)
 {
     char *ret = NULL;
     int input = CNAME;
@@ -317,7 +318,8 @@ char *iso_country (const char *src, int output, int *err)
     int i, n, match;
 
     /* what output is requested? */
-    if (output != CNAME && output != AC2 && output != AC3) {
+    if (output != 0 && output != CNAME &&
+	output != AC2 && output != AC3) {
 	*err = E_INVARG;
 	return NULL;
     }
@@ -333,6 +335,15 @@ char *iso_country (const char *src, int output, int *err)
 	input = AC2;
     } else if (n == 3 && all_upper(src)) {
 	input = AC3;
+    }
+
+    /* automatic output choice? */
+    if (output == 0) {
+	if (input == CNAME) {
+	    output = AC2;
+	} else {
+	    output = CNAME;
+	}
     }
 
     ccodes = isocodes;
@@ -367,14 +378,18 @@ char *iso_country (const char *src, int output, int *err)
 
     if (ret == NULL) {
 	ret = gretl_strdup("");
-	fprintf(stderr, "iso3166: '%s' was not matched\n", src);
+	if (prn != NULL) {
+	    pprintf(prn, "isocountry: '%s' was not matched\n", src);
+	} else {
+	    fprintf(stderr, "isocountry: '%s' was not matched\n", src);
+	}
     }
 
     return ret;
 }
 
 gretl_array *iso_country_array (gretl_array *srcs,
-				int output,
+				int output, PRN *prn,
 				int *err)
 {
     gretl_array *ret = NULL;
@@ -395,7 +410,7 @@ gretl_array *iso_country_array (gretl_array *srcs,
 	if (src == NULL) {
 	    *err = E_DATA;
 	} else {
-	    result = iso_country(src, output, err);
+	    result = iso_country(src, output, prn, err);
 	}
 	if (!*err) {
 	    *err = gretl_array_set_data(ret, i, result);

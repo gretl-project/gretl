@@ -6957,28 +6957,28 @@ static NODE *country_code_node (NODE *n, NODE *r, parser *p)
     }
 
     if (!p->err) {
-	int output = 2; /* default to Alpha-2 code */
+	int output = 0; /* default to automatic */
 
 	if (!null_or_empty(r)) {
 	    output = node_get_int(r, p);
 	}
 	if (!p->err && n->t == STR) {
-	    char *(*cfunc) (const char *, int, int *);
+	    char *(*cfunc) (const char *, int, PRN *, int *);
 
 	    cfunc = get_plugin_function("iso_country");
 	    if (cfunc == NULL) {
 		p->err = E_FOPEN;
 	    } else {
-		ret->v.str = cfunc(n->v.str, output, &p->err);
+		ret->v.str = cfunc(n->v.str, output, p->prn, &p->err);
 	    }
 	} else if (!p->err) {
-	    gretl_array *(*cfunc) (gretl_array *, int, int *);
+	    gretl_array *(*cfunc) (gretl_array *, int, PRN *, int *);
 
 	    cfunc = get_plugin_function("iso_country_array");
 	    if (cfunc == NULL) {
 		p->err = E_FOPEN;
 	    } else {
-		ret->v.a = cfunc(n->v.a, output, &p->err);
+		ret->v.a = cfunc(n->v.a, output, p->prn, &p->err);
 	    }
 	}
     }
