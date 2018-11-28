@@ -53,6 +53,7 @@ struct op_container_ {
     int *y;           /* dependent variable */
     double **Z;       /* data */
     int *list;        /* dependent var plus regular regressors */
+    int ymin;         /* minimum of original y values */
     int ymax;         /* max of (possibly normalized) y */
     int t1;           /* beginning of sample */
     int t2;           /* end of sample */
@@ -120,7 +121,7 @@ static void op_container_destroy (op_container *OC)
     free(OC);
 }
 
-static op_container *op_container_new (int ci, int ndum,
+static op_container *op_container_new (int ci, int ndum, int ymin,
 				       double **Z, MODEL *pmod,
 				       gretlopt opt)
 {
@@ -144,6 +145,7 @@ static op_container *op_container_new (int ci, int ndum,
     OC->t2 = pmod->t2;
     OC->nobs = nobs;
     OC->k = pmod->ncoeff;
+    OC->ymin = ymin;
     OC->ymax = ndum;
     OC->nx = OC->k - ndum;
 
@@ -522,19 +524,21 @@ static gretl_matrix *ordered_hessian_inverse (op_container *OC,
  * @pmod: model for ordered data, either logit or probit.
  * @Xb: X\beta, the value of the index function at a given
  * observation.
+ * @ymin: the minimum value of the dependent variable.
  *
  * Returns: the predicted value of the (ordinal) dependent variable;
  * that is, the value for which the estimated probability is greatest.
  */
 
-double ordered_model_prediction (const MODEL *pmod, double Xb)
+double ordered_model_prediction (const MODEL *pmod, double Xb,
+				 int ymin)
 {
     /* position of least cut point in coeff array */
     int k = gretl_model_get_int(pmod, "nx");
     int maxval = pmod->ncoeff - k;
     double prob, pmax, cut;
     double CDF, CDFbak;
-    int i, pred = 0;
+    int i, pred = ymin;
 
     cut = pmod->coeff[k];
     pmax = CDFbak = lp_cdf(cut - Xb, pmod->ci);
@@ -545,14 +549,14 @@ double ordered_model_prediction (const MODEL *pmod, double Xb)
 	prob = CDF - CDFbak;
 	if (prob > pmax) {
 	    pmax = prob;
-	    pred = i;
+	    pred = ymin + i;
 	}
 	CDFbak = CDF;
     }
 
     prob = 1 - CDFbak;
     if (prob > pmax) {
-	pred = maxval;
+	pred = ymin + maxval;
     }
 
     return (double) pred;
@@ -829,6 +833,12 @@ static int fill_op_model (MODEL *pmod, const int *list,
     pmod->ci = OC->ci;
     gretl_model_set_int(pmod, "ordered", 1);
     gretl_model_set_int(pmod, "nx", OC->nx);
+    gretl_model_set_int(pmod, "ymin", OC->ymin);
+
+    /* blank out invalid statistics */
+    pmod->rsq = pmod->adjrsq = pmod->fstt = pmod->sigma = NADBL;
+    gretl_model_destroy_data_item(pmod, "centered-R2");
+    gretl_model_destroy_data_item(pmod, "uncentered");
 
     if (grcount > 0) {
 	gretl_model_set_int(pmod, "fncount", fncount);
@@ -858,7 +868,7 @@ static int fill_op_model (MODEL *pmod, const int *list,
 	}
 	/* yhat = X\hat{beta} */
 	pmod->yhat[t] = Xb;
-	if (ordered_model_prediction(pmod, Xb) == OC->y[s]) {
+	if (ordered_model_prediction(pmod, Xb, 0) == OC->y[s]) {
 	    correct++;
 	}
 	/* compute generalized residual */
@@ -974,9 +984,9 @@ static void op_boot_init (op_container *OC,
 
 /* Main ordered estimation function */
 
-static int do_ordered (int ci, int ndum,
-		       DATASET *dset,
-		       MODEL *pmod, const int *list,
+static int do_ordered (int ci, int ndum, int ymin,
+		       DATASET *dset, MODEL *pmod,
+		       const int *list,
 		       gretlopt opt, PRN *prn)
 {
     int maxit = 1000;
@@ -991,7 +1001,7 @@ static int do_ordered (int ci, int ndum,
     int use_newton = 0;
     int err;
 
-    OC = op_container_new(ci, ndum, dset->Z, pmod, opt);
+    OC = op_container_new(ci, ndum, ymin, dset->Z, pmod, opt);
     if (OC == NULL) {
 	return E_ALLOC;
     }
@@ -1098,7 +1108,8 @@ static int do_ordered (int ci, int ndum,
 */
 
 static int maybe_fix_op_depvar (MODEL *pmod, DATASET *dset,
-				double **orig_y, int *ndum)
+				double **orig_y, int *ndum,
+				int *ymin)
 {
     gretl_matrix *v = NULL;
     double *yvals = NULL;
@@ -1143,7 +1154,7 @@ static int maybe_fix_op_depvar (MODEL *pmod, DATASET *dset,
 	nv = gretl_vector_get_length(v);
 	*ndum = nv - 1;
 	if (v->val[0] != 0.0) {
-	    /* the y min. is not zero */
+	    /* the minimum y-value is not zero */
 	    fixit = 1;
 	} else {
 	    for (i=1; i<nv; i++) {
@@ -1178,6 +1189,7 @@ static int maybe_fix_op_depvar (MODEL *pmod, DATASET *dset,
 	    */
 	    *orig_y = dset->Z[dv];
 	    dset->Z[dv] = normy;
+	    *ymin = v->val[0];
 	}
     }
 
@@ -1335,6 +1347,7 @@ static MODEL ordered_estimate (int *list, DATASET *dset, int ci,
     double *orig_y = NULL;
     int *biglist = NULL;
     int *dumlist = NULL;
+    int ymin = 0;
     int ndum = 0;
 
     gretl_model_init(&model, dset);
@@ -1378,15 +1391,15 @@ static MODEL ordered_estimate (int *list, DATASET *dset, int ci,
 	/* after accounting for any missing observations, normalize
 	   the dependent variable if necessary
 	*/
-	model.errcode = maybe_fix_op_depvar(&model, dset,
-					    &orig_y, &ndum);
+	model.errcode = maybe_fix_op_depvar(&model, dset, &orig_y,
+					    &ndum, &ymin);
     }
 
     /* do the actual ordered probit analysis */
     if (!model.errcode) {
 	clear_model_xpx(&model);
-	model.errcode = do_ordered(ci, ndum, dset, &model, list,
-				   opt, prn);
+	model.errcode = do_ordered(ci, ndum, ymin, dset, &model,
+				   list, opt, prn);
     }
 
     free(dumlist);

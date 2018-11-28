@@ -61,7 +61,8 @@ MODEL heckit_model (const int *list, DATASET *dset,
 
 int fishers_exact_test (const Xtab *tab, PRN *prn);
 
-double ordered_model_prediction (const MODEL *pmod, double Xb);
+double ordered_model_prediction (const MODEL *pmod, double Xb,
+				 int ymin);
 
 int logistic_ymax_lmax (const double *y, const DATASET *dset,
 			double *ymax, double *lmax);

@@ -1978,7 +1978,7 @@ static double fcast_transform (double xb, const MODEL *pmod,
 			       int t, const double *offset,
 			       double lmax)
 {
-    int ci = pmod->ci;
+    int ymin, ci = pmod->ci;
     double yf = xb;
 
     if (ci == TOBIT) {
@@ -1987,13 +1987,15 @@ static double fcast_transform (double xb, const MODEL *pmod,
 	}
     } else if (ci == LOGIT) {
 	if (gretl_model_get_int(pmod, "ordered")) {
-	    yf = ordered_model_prediction(pmod, xb);
+	    ymin = gretl_model_get_int(pmod, "ymin");
+	    yf = ordered_model_prediction(pmod, xb, ymin);
 	} else {
 	    yf = exp(xb) / (1.0 + exp(xb));
 	}
     } else if (ci == PROBIT) {
 	if (gretl_model_get_int(pmod, "ordered")) {
-	    yf = ordered_model_prediction(pmod, xb);
+	    ymin = gretl_model_get_int(pmod, "ymin");
+	    yf = ordered_model_prediction(pmod, xb, ymin);
 	} else {	
 	    yf = normal_cdf(xb);
 	}
