@@ -6942,13 +6942,23 @@ static NODE *single_string_func (NODE *n, NODE *x, int f, parser *p)
 static NODE *country_code_node (NODE *n, NODE *r, parser *p)
 {
     NODE *ret = NULL;
+    char *src = NULL;
+    char *tmp = NULL;
 
     if (n->t == STR) {
+	src = n->v.str;
 	ret = aux_string_node(p);
-    } else if (n->t == ARRAY) {
+    } else if (n->t == ARRAY || n->t == SERIES || n->t == MAT) {
 	ret = aux_array_node(p);
+    } else if (n->t == NUM) {
+	int k = node_get_int(n, p);
+
+	if (!p->err) {
+	    src = tmp = g_strdup_printf("%03d", k);
+	    ret = aux_string_node(p);
+	}
     } else {
-	p->err = E_TYPES;
+	p->err = E_INVARG;
     }
 
     if (!p->err) {
@@ -6957,16 +6967,16 @@ static NODE *country_code_node (NODE *n, NODE *r, parser *p)
 	if (!null_or_empty(r)) {
 	    output = node_get_int(r, p);
 	}
-	if (!p->err && n->t == STR) {
+	if (!p->err && src != NULL) {
 	    char *(*cfunc) (const char *, int, PRN *, int *);
 
 	    cfunc = get_plugin_function("iso_country");
 	    if (cfunc == NULL) {
 		p->err = E_FOPEN;
 	    } else {
-		ret->v.str = cfunc(n->v.str, output, p->prn, &p->err);
+		ret->v.str = cfunc(src, output, p->prn, &p->err);
 	    }
-	} else if (!p->err) {
+	} else if (!p->err && n->t == ARRAY) {
 	    gretl_array *(*cfunc) (gretl_array *, int, PRN *, int *);
 
 	    cfunc = get_plugin_function("iso_country_array");
@@ -6975,8 +6985,29 @@ static NODE *country_code_node (NODE *n, NODE *r, parser *p)
 	    } else {
 		ret->v.a = cfunc(n->v.a, output, p->prn, &p->err);
 	    }
+	} else if (!p->err) {
+	    gretl_array *(*cfunc) (const double *, int, int, PRN *, int *);
+
+	    cfunc = get_plugin_function("iso_country_series");
+	    if (cfunc == NULL) {
+		p->err = E_FOPEN;
+	    } else {
+		const double *x;
+		int nx;
+
+		if (n->t == SERIES) {
+		    x = n->v.xvec + p->dset->t1;
+		    nx = sample_size(p->dset);
+		} else {
+		    x = n->v.m->val;
+		    nx = n->v.m->rows * n->v.m->cols;
+		}
+		ret->v.a = cfunc(x, nx, output, p->prn, &p->err);
+	    }
 	}
     }
+
+    g_free(tmp);
 
     return ret;
 }
@@ -15666,11 +15697,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_CCODE:
-	if (l->t == STR || l->t == ARRAY) {
-	    ret = country_code_node(l, r, p);
-	} else {
-	    node_type_error(t->t, 0, STR, l, p);
-	}
+	ret = country_code_node(l, r, p);
 	break;
     case F_READFILE:
 	if (l->t == STR) {
