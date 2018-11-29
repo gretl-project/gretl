@@ -646,7 +646,7 @@ int assign_scalar_to_submatrix (gretl_matrix *M, double x,
     }
 
     if (spec->rslice == NULL && spec->cslice == NULL) {
-	/* parse mspec into lists of affected rows and columns */
+	/* parse @spec into lists of affected rows and columns */
 	err = get_slices(spec, M);
     }
 

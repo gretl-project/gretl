@@ -4467,15 +4467,10 @@ static NODE *submatrix_node (NODE *l, NODE *r, parser *p)
 		    ret->v.m = matrix_get_chunk(m, spec, &p->err);
 		}
 	    } else if (spec->type[0] == SEL_ELEMENT) {
-		int i = mspec_get_element(spec);
-		double x = matrix_get_element(m, i, &p->err);
-
+		ret = aux_scalar_node(p);
 		if (!p->err) {
-		    ret = aux_scalar_node(p);
-		    if (!p->err) {
-			ret->v.xval = x;
-			ret->flags |= MSL_NODE;
-		    }
+		    ret->v.xval = m->val[mspec_get_element(spec)];
+		    ret->flags |= MSL_NODE;
 		}
 	    } else if (spec->type[0] == SEL_STR) {
 		p->err = E_TYPES;
@@ -10235,13 +10230,7 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 	    if (p->op == B_ASN) {
 		m1->val[i] = y;
 	    } else {
-		/* inflected */
-		double x = matrix_get_element(m1, i, &p->err);
-
-		if (!p->err) {
-		    x = xy_calc(x, y, p->op, MAT, p);
-		}
-		m1->val[i] = x;
+		m1->val[i] = xy_calc(m1->val[i], y, p->op, MAT, p);
 	    }
 	} else {
 	    /* the RHS must be 1 x 1 */
