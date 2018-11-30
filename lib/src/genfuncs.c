@@ -5441,19 +5441,15 @@ static int fill_fcstats_column (gretl_matrix *m,
 	ME /= T;
 	MSE /= T;
 	MAE /= T;
-
 	if (!isnan(MPE)) {
 	    MPE /= T;
 	}
-
 	if (!isnan(MAPE)) {
 	    MAPE /= T;
 	}
-
 	if (!isnan(U) && u[1] > 0.0) {
 	    U = sqrt(u[0] / T) / sqrt(u[1] / T);
 	}
-
 	gretl_matrix_set(m, 0, col, ME);
 	gretl_matrix_set(m, 1, col, sqrt(MSE));
 	gretl_matrix_set(m, 2, col, MAE);
