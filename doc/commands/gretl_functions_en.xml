@@ -4866,6 +4866,82 @@
       </description>
     </function>
 
+    <function name="isocountry" section="strings" output="asinput">
+      <fnargs>
+	<fnarg type="string-or-strings">source</fnarg>
+	<fnarg type="int" optional="true">output</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  This function maps between the four designations for
+	  countries present in ISO 3166, namely
+	</para>
+	<nlist>
+	  <li><para>
+	    Country name
+	  </para></li>
+	  <li><para>
+	    Alpha-2 code (two uppercase letters)
+	  </para></li>
+	  <li><para>
+	    Alpha-3 code (three uppercase letters)
+	  </para></li>
+	  <li><para>
+	    Numeric code (3 digits)
+	  </para></li>
+	</nlist>
+	<para>
+	  Given a country's designation in one form, the return value
+	  is its designation in the form (1 to 4) selected by the
+	  optional <argname>output</argname> argument or, if this
+	  argument is omitted, a default conversion as follows: when
+	  <argname>source</argname> is a country name the return value
+	  is the country's 2-letter code; otherwise the return value
+	  is the country name. Various valid calls are illustrated
+	  below in interactive form.
+	</para>
+	<code>
+	  ? eval isocountry("Bolivia")
+	  BO
+	  ? eval isocountry("Bolivia", 3)
+	  BOL
+	  ? eval isocountry("GB")
+	  United Kingdom of Great Britain and Northern Ireland
+	  ? eval isocountry("GB", 3)
+	  GBR
+	  ? strings S = defarray("ES", "DE", "SD")
+	  ? strings C = isocountry(S)
+	  ? print C
+	  Array of strings, length 3
+	  [1] "Spain"
+	  [2] "Germany"
+	  [3] "Sudan"
+	  ? matrix m = {4, 840}
+	  ? C = isocountry(m)
+	  ? print C
+	  Array of strings, length 2
+	  [1] "Afghanistan"
+	  [2] "United States of America"
+	</code>
+	<para>
+	  When <argname>source</argname> is in form 4 (numeric code)
+	  this can be given as a string or array of strings (for
+	  example, <quote>032</quote> for Argentina) or in numeric
+	  form. In the latter case <argname>source</argname> may be
+	  given as a series or vector, though an error will be flagged
+	  if any of the numbers are out of the range 0 to 999.
+	</para>
+	<para>
+	  In all cases (even when output form 4 is selected) a string,
+	  or array of strings, is returned; if numeric values are
+	  required these may be obtained using <fncref targ="atof"/>.
+	  If <argname>source</argname> is not matched by any entry in
+	  the ISO 3166 table the return value is an empty string, in
+	  which case a warning is printed.
+	</para>
+      </description>
+    </function>
+
     <function name="isodate" section="calendar" output="seebelow">
       <fnargs>
 	<fnarg type="scalar-or-series">ed</fnarg>
