@@ -6996,13 +6996,20 @@ static NODE *country_code_node (NODE *n, NODE *r, parser *p)
 		int nx;
 
 		if (n->t == SERIES) {
-		    x = n->v.xvec + p->dset->t1;
 		    nx = sample_size(p->dset);
+		    x = n->v.xvec + p->dset->t1;
 		} else {
-		    x = n->v.m->val;
-		    nx = n->v.m->rows * n->v.m->cols;
+		    /* matrix */
+		    nx = gretl_vector_get_length(n->v.m);
+		    if (nx == 0) {
+			p->err = E_INVARG;
+		    } else {
+			x = n->v.m->val;
+		    }
 		}
-		ret->v.a = cfunc(x, nx, output, p->prn, &p->err);
+		if (!p->err) {
+		    ret->v.a = cfunc(x, nx, output, p->prn, &p->err);
+		}
 	    }
 	}
     }
