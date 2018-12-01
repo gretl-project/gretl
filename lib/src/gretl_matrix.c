@@ -10276,8 +10276,12 @@ gretl_matrix_col_concat (const gretl_matrix *a, const gretl_matrix *b,
 	}
     }
 
-    if (!*err && c == NULL) {
-	*err = E_ALLOC;
+    if (!*err) {
+	if (c == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    maybe_preserve_names(c, a, 0, 0);
+	}
     }
 
     return c;
