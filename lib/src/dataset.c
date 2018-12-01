@@ -4157,9 +4157,11 @@ void series_ensure_level_zero (DATASET *dset)
 		n++;
 	    }
 	}
+#if 0
 	if (n > 0) {
 	    fprintf(stderr, "Unauthorized access to series detected!\n");
 	}
+#endif
     }
 }
 

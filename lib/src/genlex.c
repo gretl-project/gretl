@@ -633,7 +633,7 @@ static ufunc *get_function_override (const char *sf,
     gchar *key = g_strdup_printf("%s::%s", sp, sf);
     ufunc *uf = g_hash_table_lookup(oht, key);
 
-#if 1
+#if 0
     if (uf != NULL) {
 	fprintf(stderr, "'%s': using package override\n", key);
     }
