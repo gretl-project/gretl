@@ -2746,6 +2746,7 @@ int dist_code_from_string (const char *s)
 	{ D_NC_CHISQ, "ncx" },
 	{ D_NC_F,     "ncf" },
 	{ D_NC_T,     "nct" },
+	{ D_LOGISTIC, "lgt" },
 	{ D_NONE,     NULL }
     };
     char test[8];
@@ -3025,6 +3026,8 @@ double gretl_get_cdf (int dist, const double *parm, double x)
 	y = nc_snedecor_cdf(parm[0], parm[1], parm[2], x);
     } else if (dist == D_NC_T) {
 	y = nc_student_cdf(parm[0], parm[1], x);
+    } else if (dist == D_LOGISTIC) {
+	y = logistic_cdf(x);
     }
 
     return y;

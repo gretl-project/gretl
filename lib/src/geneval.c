@@ -1368,6 +1368,13 @@ static int check_dist_count (int d, int f, int *np, int *argc)
 	} else {
 	    err = E_INVARG;
 	}
+    } else if (d == D_LOGISTIC) {
+	/* CDF only */
+	if (f == F_CDF) {
+	    *np = 0; /* (0,1) assumed */
+	} else {
+	    err = E_INVARG;
+	}
     } else {
 	err = E_INVARG;
     }
@@ -1826,7 +1833,15 @@ static NODE *eval_pdist (NODE *n, parser *p)
 
 	s = r->v.bn.n[0];
 	if (s->t == STR) {
-	    d = dist_code_from_string(s->v.str);
+	    char *dstr = s->v.str;
+
+	    d = dist_code_from_string(dstr);
+	    if (d == 0) {
+		dstr = get_string_by_name(dstr);
+		if (dstr != NULL) {
+		    d = dist_code_from_string(dstr);
+		}
+	    }
 	    if (d == 0) {
 		p->err = E_INVARG;
 		goto disterr;

@@ -42,7 +42,8 @@ typedef enum {
     D_BETABIN,
     D_NC_CHISQ,
     D_NC_F,
-    D_NC_T
+    D_NC_T,
+    D_LOGISTIC
 } DistCode;
 
 double gamma_function (double x);
