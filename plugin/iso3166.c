@@ -279,7 +279,7 @@ static const struct ccode isocodes[] = {
     {"Yemen", "YE", "YEM", 887},
     {"Zambia", "ZM", "ZMB", 894},
     {"Zimbabwe", "ZW", "ZWE", 716},
-    {NULL, "0", "0"}
+    {NULL, "0", "0", 0}
 };
 
 static const struct ccode fixups[] = {
@@ -290,7 +290,7 @@ static const struct ccode fixups[] = {
     {"North Korea", "KP", "PRK", 408},
     {"Great Britain", "GB", "GBR", 826},
     {"USA", "US", "USA", 840},
-    {NULL, "0", "0", 000}
+    {NULL, "0", "0", 0}
 };
 
 static int all_upper (const char *s)
