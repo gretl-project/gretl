@@ -6345,9 +6345,10 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
     double x, y;
     int m, n, p, q, nr, nc;
     int conftype;
-    int i, j, nv, off;
+    int i, j, off;
 #if defined(_OPENMP)
     guint64 psize;
+    int nv;
 #endif
 
     if (gretl_is_null_matrix(a) || gretl_is_null_matrix(b)) {
