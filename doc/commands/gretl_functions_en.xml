@@ -5733,15 +5733,15 @@
       </fnargs>
       <description>
 	<para context="tex">
-	  Returns the logistic function of the argument <argname>x</argname>,
-	  that is, $\Lambda(x) = e^x/(1+e^x)$. If <argname>x</argname> is a
+	  Returns the logistic CDF of the argument <argname>x</argname>,
+	  that is, $\Lambda(x) = 1/(1+e^{-x})$. If <argname>x</argname> is a
 	  matrix, the function is applied element by element.
 	</para>
 	<para context="notex">
-	  Returns the logistic function of the argument
-	  <argname>x</argname>, that is, <math>e</math><sup>x</sup>/(1
-	  + <math>e</math><sup>x</sup>).  If <argname>x</argname> is a
-	  matrix, the function is applied element by element.
+	  Returns the logistic CDF of the argument
+	  <argname>x</argname>, that is, 1/(1 +
+	  <math>e</math><sup>&minus;x</sup>).  If <argname>x</argname>
+	  is a matrix, the function is applied element by element.
 	</para>
       </description>
     </function>
