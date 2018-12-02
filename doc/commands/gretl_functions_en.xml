@@ -1888,12 +1888,17 @@
 	<ilist context="notex">
 	  <li>
             <para>
-              Standard normal (c = z, n, or N): no extra arguments
+              Standard normal (d = z, n, or N): no extra arguments
             </para>
 	  </li>
 	  <li>
             <para>
               Bivariate normal (D): correlation coefficient
+            </para>
+	  </li>
+	  <li>
+            <para>
+              Logistic (lgt): no extra arguments
             </para>
 	  </li>
 	  <li>
@@ -1969,7 +1974,9 @@
 	  Standard normal &amp; \texttt{z}, \texttt{n} or \texttt{N} &amp; 
 	  -- &amp; -- &amp; --\\ 
 	  Bivariate normal &amp; \texttt{D} &amp; 
-	  $\rho$ &amp; -- &amp; --\\ 
+	  $\rho$ &amp; -- &amp; --\\
+	  Logistic &amp; \texttt{lgt} &amp; 
+	  -- &amp; -- &amp; --\\
 	  Student's $t$ (central) &amp; \texttt{t} &amp;  
 	  df &amp; -- &amp; --\\ 
 	  Chi square &amp; \texttt{c}, \texttt{x} or \texttt{X} &amp; 
@@ -2005,7 +2012,7 @@
 	  <lit>z2</lit>.
 	</para>
 	<para context="tex">
-	  The parametrization \app{gretl} uses for the Gamma random variate
+	  The parametrization gretl uses for the Gamma random variate
 	  implies that its density function can be written as
 	  \[
 	  f(x; k, \theta) = \frac{x^{k-1}}{\theta^k} \frac{e^{-x/\theta}}{\Gamma(k)}
