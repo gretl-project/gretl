@@ -4859,6 +4859,84 @@
       </description>
     </function>
 
+    <function name="isocountry" section="strings" output="asinput">
+      <fnargs>
+	<fnarg type="string-or-strings">paese</fnarg>
+	<fnarg type="int" optional="true">tipo</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Questa funzione fornisce corrispondenze fra i quattro modi
+	  possibili di indicare un paese previsti nella norma ISO
+	  3166, e cioè
+	</para>
+	<nlist>
+	  <li><para>
+	    Nome paese (in inglese)
+	  </para></li>
+	  <li><para>
+	    Codice Alpha-2 (due lettere maiuscole)
+	  </para></li>
+	  <li><para>
+	    Codice Alpha-3 (tre lettere maiuscole)
+	  </para></li>
+	  <li><para>
+	    Codice numerico (a 3 cifre)
+	  </para></li>
+	</nlist>
+	<para>
+	  Partendo da una delle 4 forme, la funzione restituisce una
+	  delle altre, a seconda dell'argomento
+	  <argname>tipo</argname>, che deve andare da 1 a 4; se
+	  l'argomento è omesso, la conversione avviene come segue:
+	  quando <argname>paese</argname> è il nome di un paese, il
+	  valore di ritorno è il codice Alpha-2; altrimenti, viene
+	  ritornato il nome del paese. Qui di seguito sono illustrate
+	  alcune chiamate alla funzione in modalità interattiva.
+	</para>
+	<code>
+	  ? eval isocountry("Bolivia")
+	  BO
+	  ? eval isocountry("Bolivia", 3)
+	  BOL
+	  ? eval isocountry("GB")
+	  United Kingdom of Great Britain and Northern Ireland
+	  ? eval isocountry("GB", 3)
+	  GBR
+	  ? strings S = defarray("ES", "DE", "SD")
+	  ? strings C = isocountry(S)
+	  ? print C
+	  Array of strings, length 3
+	  [1] "Spain"
+	  [2] "Germany"
+	  [3] "Sudan"
+	  ? matrix m = {4, 840}
+	  ? C = isocountry(m)
+	  ? print C
+	  Array of strings, length 2
+	  [1] "Afghanistan"
+	  [2] "United States of America"
+	</code>
+	<para>
+	  L'argomento <argname>paese</argname> nella forma 4 (codice
+	  numerico), può essere contenuto in una stringa o in un array
+	  di stringhe (ad esempio, <quote>032</quote> per
+	  l'Argentina), così come in una variabile numerica. In questo
+	  caso, <argname>paese</argname> può essere una serie o un
+	  vettore, ma se c'è almeno un valore al di fuori del campo da
+	  0 a 999, la funzione darà errore.
+	</para>
+	<para>
+	  Il valore di ritorno è in ogni caso una stringa o un array
+	  di stringhe; queste, volendo, possono essere convertite in
+	  valori numerici per mezzo della funzione <fncref
+	  targ="atof"/>.  Se <argname>paese</argname> non viene
+	  trovato nella tavola ISO 3166, il valore restituito dalla
+	  funzione è una stringa vuota, e viene stampato un avviso.
+	</para>
+      </description>
+    </function>
+
     <function name="isodate" section="calendar" output="seebelow">
       <fnargs>
     <fnarg type="scalar-or-series">ed</fnarg>
