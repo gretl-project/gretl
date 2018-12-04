@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2018-11-19 08:54-0500\n"
-"PO-Revision-Date: 2018-11-19 17:18+0100\n"
+"PO-Revision-Date: 2018-12-02 02:18+0100\n"
 "Last-Translator: JCEN <ecadrian@hotmail.com>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -1220,7 +1220,7 @@ msgstr "O nome da variable excede o máximo de 31 caracteres"
 #: lib/src/dataio.c:115 lib/src/geneval.c:17438 lib/src/geneval.c:17441
 #, c-format
 msgid "'%s' shadows a function of the same name"
-msgstr "'%s' superpón unha función do mesmo nome"
+msgstr "'%s' se superpón cunha función do mesmo nome"
 
 #: lib/src/dataio.c:134
 #, c-format
@@ -2488,7 +2488,7 @@ msgstr "Neste contexto non é aceptable unha variable de tipo %s"
 #: lib/src/geneval.c:16471
 #, c-format
 msgid "Incompatible types in assignment: %s %s %s"
-msgstr "Tipos incompatibles na asigación: %s %s %s"
+msgstr "Tipos incompatibles na asignación: %s %s %s"
 
 #: lib/src/geneval.c:16556
 #, c-format
@@ -9257,7 +9257,7 @@ msgstr "Gretl: Bancos de datos no servidor"
 
 #: gui/datafiles.c:2055
 msgid "gretl: DB.NOMICS providers"
-msgstr "gretl: provedores de DB.NOMICS"
+msgstr "gretl: Provedores de DB.NOMICS"
 
 #: gui/datafiles.c:2057
 msgid "gretl: function packages on server"
@@ -9714,7 +9714,7 @@ msgstr "Gretl: Descrición do banco de datos"
 
 #: gui/dialogs.c:1229
 msgid "description:"
-msgstr "descrición:"
+msgstr "Descrición:"
 
 #: gui/dialogs.c:1287
 msgid "gretl: seed for random numbers"
@@ -9734,7 +9734,7 @@ msgstr "Gretl: Controis de iteración"
 
 #: gui/dialogs.c:1489
 msgid "BHHH maximizer"
-msgstr "maximizador BHHH"
+msgstr "Maximizador BHHH"
 
 #: gui/dialogs.c:1490
 msgid "BFGS maximizer"
@@ -10612,22 +10612,22 @@ msgstr "Erros da media móbil exponencial de *%s* (ponderación actual %g)"
 #: gui/filters.c:232
 #, c-format
 msgid "Filtered %s: one-sided Hodrick-Prescott trend (lambda = %g)"
-msgstr "%s filtrada: Tendencia de Hodrick-Prescott dunha parte (lambda = %g)"
+msgstr "%s filtrada: Tendencia do Hodrick-Prescott dunha cola (lambda = %g)"
 
 #: gui/filters.c:235
 #, c-format
 msgid "Filtered %s: one-sided Hodrick-Prescott cycle (lambda = %g)"
-msgstr "%s filtrada: Ciclo de Hodrick-Prescott dunha parte (lambda = %g)"
+msgstr "%s filtrada: Ciclo do Hodrick-Prescott dunha cola (lambda = %g)"
 
 #: gui/filters.c:240
 #, c-format
 msgid "Filtered %s: Hodrick-Prescott trend (lambda = %g)"
-msgstr "%s filtrada: Tendencia de Hodrick-Prescott (lambda = %g)"
+msgstr "%s filtrada: Tendencia do Hodrick-Prescott (lambda = %g)"
 
 #: gui/filters.c:243
 #, c-format
 msgid "Filtered %s: Hodrick-Prescott cycle (lambda = %g)"
-msgstr "%s filtrada: Ciclo de Hodrick-Prescott (lambda = %g)"
+msgstr "%s filtrada: Ciclo do Hodrick-Prescott (lambda = %g)"
 
 #: gui/filters.c:248
 #, c-format
@@ -10744,7 +10744,7 @@ msgstr "Lambda (valores máis altos -> tendencia máis suave):"
 
 #: gui/filters.c:743
 msgid "One-sided"
-msgstr "Unha parte"
+msgstr "Unha cola"
 
 #: gui/filters.c:754
 msgid "k (higher values -> better approximation):"
