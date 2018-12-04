@@ -3148,6 +3148,10 @@
 	  <flag>--asymptotic</flag>
 	  <effect>uncorrected asymptotic standard errors</effect>
         </option>
+        <option>
+	  <flag>--keep-extra</flag>
+	  <effect>see below</effect>
+        </option>
       </options>
       <examples>
         <example>dpanel 2 ; y x1 x2</example>
@@ -3228,6 +3232,13 @@
 	the constant.  The dummies are entered in differenced form unless
 	the <opt>dpdstyle</opt> option is given, in which case they
 	are entered in levels.
+      </para>
+      <para context="cli">
+	As with other estimation commands, a <fncref targ="$model"/>
+	bundle is available after estimation. In the case of
+	<lit>dpanel</lit>, the <opt>keep-extra</opt> option can be
+	used to save additional information in this bundle, namely the
+	GMM weight and instrument matrices.
       </para>
       <para>
 	For further details and examples, please see <guideref

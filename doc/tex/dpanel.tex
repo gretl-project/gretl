@@ -879,23 +879,27 @@ self-explanatory, but here's a partial list:
   \hline
   \texttt{AR1}, \texttt{AR2} & 1st and 2nd order autocorrelation test
                                statistics \\
-  \texttt{GMMinst} & The matrix $\bZ$ of instruments (see equations
-                     (\ref{eq:dpd-dif}) and (\ref{eq:sys-gmm}) \\
-  \texttt{wgtmat} & The matrix $\bA$ of GMM weights (see equations
-                    (\ref{eq:dpd-dif}) and (\ref{eq:sys-gmm}) \\
   \texttt{sargan}, \texttt{sargan\_df} & Sargan test for
                                          overidentifying restrictions
                                          and corresponding degrees of freedom \\
   \texttt{wald}, \texttt{wald\_df} & Wald test for
                                      overall significance
-                                     and corresponding degrees of freedom \\
+                                     and corresponding degrees of
+                                     freedom \\
+  \texttt{GMMinst} & The matrix $\bZ$ of instruments (see equations
+                     (\ref{eq:dpd-dif}) and (\ref{eq:sys-gmm}) \\
+  \texttt{wgtmat} & The matrix $\bA$ of GMM weights (see equations
+                    (\ref{eq:dpd-dif}) and (\ref{eq:sys-gmm}) \\
   \hline
 \end{tabular}
 \end{center}
 
-The script in Table \ref{tab:dpanel-rep} illustrates the usage of the
-\texttt{GMMinst} and \texttt{wgtmat} to replicate via hansl commands
-the calculation of the GMM estimator.
+Note, however, that \texttt{GMMinst} and \texttt{wgtmat} (which may be
+quite large matrices) are not saved in the \dollar{model} bundle by
+default; that requires use of the \option{keep-extra} option with the
+\cmd{dpanel} command. The script in Table \ref{tab:dpanel-rep}
+illustrates use of these matrices to replicate via hansl commands the
+calculation of the GMM estimator.
 
 \begin{table}[htbp]
 \label{tab:dpanel-rep}
@@ -945,15 +949,17 @@ print coef
   \verb|--asymptotic| & Suppresses the use of robust standard errors \\
   \verb|--two-step| & Calls for 2-step estimation (the default being 1-step) \\
   \verb|--system| & Calls for GMM-SYS, with default treatment of the 
-  dependent variable, as in \texttt{GMMlevel(y,1,1)} \\
+                    dependent variable, as in \texttt{GMMlevel(y,1,1)} \\
   \verb|--time-dummies| & Includes period-specific dummy variables \\
   \verb|--dpdstyle| & Compute the $H$ matrix as in DPD; also suppresses
-  differencing of automatic time dummies and omission of intercept
-  in the GMM-DIF case\\
+                      differencing of automatic time dummies and omission of intercept
+                      in the GMM-DIF case\\
   \verb|--verbose| & When \verb|--two-step| is selected, prints 
-  the 1-step estimates first \\
+                     the 1-step estimates first \\
   \verb|--vcv| & Calls for printing of the covariance matrix \\
   \verb|--quiet| & Suppresses the printing of results \\
+  \verb|--keep-extra| & Save additional matrices in \dollar{model}
+                        bundle (see above) \\
 \end{tabular}
 \end{center}
 
@@ -964,9 +970,6 @@ in
 
 This means that although the dummies are included in the specification
 their coefficients, standard errors and so on are not printed.
-
-
-
 
 %%% Local Variables:
 %%% mode: latex

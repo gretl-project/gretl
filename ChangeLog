@@ -19,6 +19,8 @@ version 2018d, in progress
   bugs
 - "arima" command with --x-12-arima option: enable the $vcv
   accessor
+- "dpanel" command: add --keep-extra option to enable access
+  to the GMM weights and instrument matrices after estimation
 - Native arima: improve the scaling of dependent series
   when necessary
 - Line plots via gnuplot: show gaps for missing values
