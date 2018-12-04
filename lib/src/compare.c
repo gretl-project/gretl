@@ -3787,6 +3787,7 @@ int leverage_test (MODEL *pmod, DATASET *dset,
     m = (*model_leverage)(pmod, dset, opt, prn, &err);
 
     if (!err && (opt & OPT_S)) {
+	/* we got the --save option */
 	err = add_leverage_values_to_dataset(dset, m, 
 					     SAVE_LEVERAGE |
 					     SAVE_INFLUENCE| 

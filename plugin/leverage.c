@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -67,7 +67,7 @@ static gboolean update_save_flag (GtkWidget *w, struct flag_info *finfo)
 	} else {
 	    *finfo->flag &= ~SAVE_DFFITS;
 	}
-    }    
+    }
 
     return FALSE;
 }
@@ -102,8 +102,8 @@ unsigned char leverage_data_dialog (void)
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
-    
-    gtk_window_set_title(GTK_WINDOW(dialog), _("gretl: save data")); 
+
+    gtk_window_set_title(GTK_WINDOW(dialog), _("gretl: save data"));
     gtk_window_set_resizable(GTK_WINDOW(dialog), FALSE);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
     gtk_container_set_border_width(GTK_CONTAINER(hbox), 5);
@@ -111,7 +111,7 @@ unsigned char leverage_data_dialog (void)
 
     gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_MOUSE);
 
-    g_signal_connect(G_OBJECT(dialog), "destroy", 
+    g_signal_connect(G_OBJECT(dialog), "destroy",
 		     G_CALLBACK(destroy_save_dialog), finfo);
 
     internal_vbox = gtk_vbox_new(FALSE, 5);
@@ -176,7 +176,7 @@ unsigned char leverage_data_dialog (void)
     return flag;
 }
 
-static void 
+static void
 leverage_x_range (int t1, int t2, const double *x, FILE *fp)
 {
     double xrange, xmin;
@@ -206,7 +206,7 @@ static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
 	return err;
     }
 
-    if (dataset_is_time_series(dset)) { 
+    if (dataset_is_time_series(dset)) {
 	obs = gretl_plotx(dset, OPT_NONE);
 	if (obs == NULL) {
 	    if (fp != NULL) {
@@ -220,14 +220,14 @@ static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
 
     fputs("set size 1.0,1.0\nset multiplot\nset size 1.0,0.48\n", fp);
     fputs("set xzeroaxis\n", fp);
-    fputs("set nokey\n", fp); 
+    fputs("set nokey\n", fp);
 
     if (obs != NULL) {
 	leverage_x_range(pmod->t1, pmod->t2, obs, fp);
     } else {
-	fprintf(fp, "set xrange [%g:%g]\n", 
+	fprintf(fp, "set xrange [%g:%g]\n",
 		pmod->t1 + 0.5, pmod->t2 + 1.5);
-    } 
+    }
 
     /* upper plot: leverage factor */
     fputs("set origin 0.0,0.50\n", fp);
@@ -242,16 +242,16 @@ static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
 	if (na(h)) {
 	    if (obs != NULL) {
 		fprintf(fp, "%g ?\n", obs[t]);
-	    } else { 
+	    } else {
 		fprintf(fp, "%d ?\n", t + 1);
 	    }
 	} else {
 	    if (obs != NULL) {
 		fprintf(fp, "%g %g\n", obs[t], h);
-	    } else { 
+	    } else {
 		fprintf(fp, "%d %g\n", t + 1, h);
 	    }
-	} 
+	}
     }
     fputs("e\n", fp);
 
@@ -259,7 +259,7 @@ static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
     fputs("set origin 0.0,0.0\n", fp);
     gnuplot_missval_string(fp);
     fputs("set yrange [*:*]\n", fp);
-    fprintf(fp, "set title '%s'\n", _("influence")); 
+    fprintf(fp, "set title '%s'\n", _("influence"));
     fputs("plot \\\n'-' using 1:2 w impulses\n", fp);
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
@@ -320,7 +320,7 @@ static void leverage_print (const MODEL *pmod,
 	    pputc(prn, '\n');
 	    continue;
 	}
-	    
+
 	h = gretl_matrix_get(S, j, 0);
 	if (h > lp) {
 	    gotlp = 1;
@@ -332,12 +332,12 @@ static void leverage_print (const MODEL *pmod,
 	} else {
 	    sprintf(fstr, "%15s", _("undefined"));
 	}
-	    
+
 	print_obs_marker(t, dset, obslen, prn);
-	
+
 	st = gretl_matrix_get(S, j, 2);
 	d = st * sqrt(h / (1.0 - h));
-	pprintf(prn, "%14.5g %14.3f%s %s %14.3f\n", pmod->uhat[t], h, 
+	pprintf(prn, "%14.5g %14.3f%s %s %14.3f\n", pmod->uhat[t], h,
 		(h > lp)? "*" : " ", fstr, d);
     }
 
@@ -350,35 +350,16 @@ static void leverage_print (const MODEL *pmod,
     pprintf(prn, "\n%s = %g\n\n", _("Cross-validation criterion"), Xvalcrit);
 }
 
-static void studentized_residuals (const MODEL *pmod, 
-				   gretl_matrix *S)
-{
-    double sampsizadj = sqrt(pmod->dfd - 1);
-    double ESS = pmod->ess;
-    double et, mt, dffit;
-    int t, i;
-
-    for (t=pmod->t1, i=0; t<=pmod->t2; t++, i++) {
-	et = pmod->uhat[t];
-	if (na(et)) {
-	    gretl_matrix_set(S, i, 2, NADBL);
-	} else {
-	    mt = 1.0 - gretl_matrix_get(S, i, 0);
-	    dffit = sampsizadj / sqrt(mt*ESS - et*et) * et;
-	    gretl_matrix_set(S, i, 2, dffit);
-	}
-    }
-}
-
-gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset, 
-			      gretlopt opt, PRN *prn, 
+gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset,
+			      gretlopt opt, PRN *prn,
 			      int *err)
 {
     integer info, lwork;
     integer m, n, lda;
     gretl_matrix *Q, *S = NULL;
     doublereal *tau, *work;
-    double Xvalcrit;
+    double Xvalcrit, df_adj = 0;
+    int xvc_only = 0;
     int i, j, s, t, vi;
     /* allow for missing obs in model range */
     int modn = pmod->t2 - pmod->t1 + 1;
@@ -442,55 +423,59 @@ gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset,
 	goto qr_cleanup;
     }
 
-    S = gretl_matrix_alloc(modn, 3);
-    if (S == NULL) {
-	*err = E_ALLOC;
-	goto qr_cleanup;
+    /* If we're neither printing anything nor saving leverage
+       at al as series, then we just need the cross-validation
+       criterion.
+    */
+    if ((opt & OPT_Q) && !(opt & OPT_S)) {
+	xvc_only = 1; /* the S matrix is not needed */
+    } else {
+	S = gretl_matrix_alloc(modn, 3);
+	if (S == NULL) {
+	    *err = E_ALLOC;
+	    goto qr_cleanup;
+	}
+	gretl_matrix_set_t1(S, pmod->t1);
+	df_adj = sqrt(pmod->dfd - 1.0);
     }
 
-    gretl_matrix_set_t1(S, pmod->t1);
+    /* initialize cross-validation criterion */
+    Xvalcrit = 0.0;
 
-    /* do the "h" calculations */
+    /* do the "h" calculations, etc. */
     s = 0;
-    for (t=pmod->t1, j=0; t<=pmod->t2; t++, j++) {
-	double q, h;
+    for (t=pmod->t1, i=0; t<=pmod->t2; t++, i++) {
+	double den, f = NADBL, d = NADBL;
+	double q, h, et = pmod->uhat[t];
 
-	if (na(pmod->uhat[t])) {
+	if (na(et)) {
 	    h = NADBL;
 	} else {
 	    h = 0.0;
-	    for (i=0; i<n; i++) {
-		q = gretl_matrix_get(Q, s, i);
+	    for (j=0; j<n; j++) {
+		q = gretl_matrix_get(Q, s, j);
 		h += q * q;
+	    }
+	    if (h < 1.0) {
+		f = et / (1 - h);
+		Xvalcrit += f * f;
+		f -= et;
+		if (!xvc_only) {
+		    /* studentized residual */
+		    den = sqrt((1 - h) * pmod->ess - et * et);
+		    d = df_adj / den * et;
+		}
 	    }
 	    s++;
 	}
-	gretl_matrix_set(S, j, 0, h);
-    }
-
-    Xvalcrit = 0.0;
-    
-    /* compute the influence series and the cross-validation criterion */
-    for (t=pmod->t1, j=0; t<=pmod->t2; t++, j++) {
-	double f = NADBL;
-
-	if (!na(pmod->uhat[t])) {
-	    double h = gretl_matrix_get(S, j, 0);
-
-	    if (h < 1.0) {
-		f =  pmod->uhat[t] / (1.0 - h);
-		Xvalcrit += f * f; 
-		f -= pmod->uhat[t];
-	    }
+	if (S != NULL) {
+	    gretl_matrix_set(S, i, 0, h);
+	    gretl_matrix_set(S, i, 1, f);
+	    gretl_matrix_set(S, i, 2, d);
 	}
-
-	gretl_matrix_set(S, j, 1, f);
     }
 
     record_test_result(Xvalcrit, NADBL);
-
-    /* put studentized residuals into S[,2] */
-    studentized_residuals(pmod, S);
 
     /* print the results, unless in quiet mode */
     if (!(opt & OPT_Q)) {
@@ -503,8 +488,8 @@ gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset,
  qr_cleanup:
 
     gretl_matrix_free(Q);
-    free(tau); 
+    free(tau);
     free(work);
 
-    return S;    
+    return S;
 }
