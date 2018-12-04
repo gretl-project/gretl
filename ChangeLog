@@ -12,6 +12,7 @@ version 2018d, in progress
 - boxcox() function: accept a matrix argument
 - psdroot() function: add option to check for positive
   semidefinite status of matrix argument
+- cdf() function: add support for logistic (code "lgt")
 - "install" command: replace with new "pkg" command (but the
   old form still works until further notice)
 - "levinlin" command: add a --verbose option and fix some
