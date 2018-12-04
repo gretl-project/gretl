@@ -1,6 +1,7 @@
 version 2018d, in progress
 - Internal representation of missing values: switch to
   using NaN
+- Internal speed-ups for matrix reads and writes
 - Add new function, atan2(), as per the C function of the
   same name
 - Add new function isocountry(): maps between the various
