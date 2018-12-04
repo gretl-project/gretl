@@ -6994,14 +6994,14 @@
 	Methods</book>, pages 685&ndash;686, and the references therein.
       </para>
       <para context="cli">
-	By default, if the program is not in batch mode a plot of the
-	leverage and influence values is shown.  This can be adjusted
-	via the <opt>plot</opt> option. The acceptable parameters to
-	this option are <lit>none</lit> (to suppress the plot);
-	<lit>display</lit> (to display a plot even when in batch
-	mode); or a file name. The effect of providing a file name is
-	as described for the <opt>output</opt> option of the <cmdref
-	targ="gnuplot"/> command.
+	By default, if this command is invoked interactively a
+	plot of the leverage and influence values is shown.  This can
+	be adjusted via the <opt>plot</opt> option. The acceptable
+	parameters to this option are <lit>none</lit> (to suppress the
+	plot); <lit>display</lit> (to display a plot even when in
+	script mode); or a file name. The effect of providing a file
+	name is as described for the <opt>output</opt> option of the
+	<cmdref targ="gnuplot"/> command.
       </para>
     </description>
 
