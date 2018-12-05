@@ -212,6 +212,10 @@ ifeq ($(fake_gtkspinner),yes)
   SRCS += spinner.c
 endif
 
+HACK_SRC = gtkfontselhack.c fontfilter.c
+HACK_HDR = gtkfontselhack.h fontfilter.h
+HACK_OBJ = gtkfontselhack.o fontfilter.o
+
 ifeq ($(win32_build),yes)
   SRCS += gretlwin32.c
   WINLIBS = -lwsock32 -lole32 -lshlwapi -ladvapi32 -lcomdlg32
@@ -223,9 +227,6 @@ ifeq ($(win32_build),yes)
 	--define __GNUWIN32__
 else
   SRCS += clipboard.c
-  HACK_SRC = gtkfontselhack.c fontfilter.c
-  HACK_HDR = gtkfontselhack.h fontfilter.h
-  HACK_OBJ = gtkfontselhack.o fontfilter.o
 endif
 
 OBJS = $(SRCS:.c=.o)
