@@ -22,6 +22,7 @@ quiet_build = @quiet_build@
 pkg_build = @pkg_build@
 win32_build = @win32_build@
 win32pkg = @win32pkg@
+gtk_version = @gtk_version@
 fake_gtkspinner = @fake_gtkspinner@
 mac_native = @mac_native@
 
@@ -212,9 +213,15 @@ ifeq ($(fake_gtkspinner),yes)
   SRCS += spinner.c
 endif
 
-HACK_SRC = gtkfontselhack.c fontfilter.c
-HACK_HDR = gtkfontselhack.h fontfilter.h
-HACK_OBJ = gtkfontselhack.o fontfilter.o
+ifeq ($(gtk_version),3.0)
+  HACK_SRC = fontfilter.c
+  HACK_HDR = fontfilter.h
+  HACK_OBJ = fontfilter.o
+else
+  HACK_SRC = gtkfontselhack.c fontfilter.c
+  HACK_HDR = gtkfontselhack.h fontfilter.h
+  HACK_OBJ = gtkfontselhack.o fontfilter.o
+endif
 
 ifeq ($(win32_build),yes)
   SRCS += gretlwin32.c

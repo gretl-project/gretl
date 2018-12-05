@@ -40,7 +40,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 
-#if GTK_MAJOR_VERSION == 3 && GTK_MINOR_VERSION >= 2
+#if GTK_MAJOR_VERSION == 3
 # define HAVE_GTK_FONT_CHOOSER 1
 #else
 # define HAVE_GTK_FONT_CHOOSER 0
