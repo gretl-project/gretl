@@ -3869,6 +3869,11 @@ void activate_plot_font_choice (png_plot *plot, const char *grfont)
 	fstr = g_strdup(fontname);
     }
 
+#if 1
+    fprintf(stderr, "font choice: grfont='%s', fstr='%s'\n",
+	    grfont, fstr);
+#endif    
+
     fp = gretl_fopen(plot->spec->fname, "r");
     if (fp == NULL) {
 	file_read_errbox(plot->spec->fname);

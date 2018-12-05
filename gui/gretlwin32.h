@@ -30,6 +30,8 @@ enum {
     WIN32_TO_PRINTER
 };
 
+#define USE_WIN32_FONSTSEL
+
 int win32_run_async (const char *prog, const char *arg);
 
 void win32_start_R_async (void);
@@ -50,8 +52,17 @@ int win32_open_file (const char *fname);
 
 int win32_open_pdf (const char *fname, const char *dest);
 
+void win32_font_selector (char *fontname, int flag);
+
 int win32_rename_dir (const char *oldname, const char *newname);
 
 void get_default_windows_app_font (char *target);
+
+#ifdef USE_WIN32_FONSTSEL
+
+void win32_font_selector (char *fontname, int flag);
+
+#endif
+
 
 #endif /* GRETLWIN32_H */

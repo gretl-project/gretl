@@ -775,6 +775,75 @@ int win32_open_file (const char *fname)
     return err;
 }
 
+#ifdef USE_WIN32_FONTSEL
+
+/* convert from gretl font string @src to a pango font specification,
+   and thence to Windows LOGFONT
+*/
+
+static void fontspec_to_win32 (CHOOSEFONT *cf, const char *src, int which)
+{
+    PangoFontDescription *pfd;
+    PangoFontMap *map;
+    PangoContext *pc;
+    PangoFont *font;
+
+    pfd = pango_font_description_from_string(src);
+    map = pango_win32_font_map_for_display();
+    pc = pango_font_map_create_context(map);
+    font = pango_context_load_font(pc, pfd);
+    cf->lpLogFont = pango_win32_font_logfont(font);
+    g_object_unref(font);
+    g_object_unref(pc);
+    pango_font_description_free(pfd);
+}
+
+/* convert from Windows CHOOSEFONT to pango font specification,
+   and thence to the string @spec for use by gretl
+*/
+
+static void winfont_to_fontspec (char *spec, CHOOSEFONT *cf)
+{
+    PangoFontDescription *pfd;
+    char *fstr;
+
+    pfd = pango_win32_font_description_from_logfont(cf->lpLogFont);
+    pango_font_description_set_size(pfd, PANGO_SCALE * cf->iPointSize / 10);
+    fstr = pango_font_description_to_string(pfd);
+    strcpy(spec, fstr);
+    g_free(fstr);
+    pango_font_description_free(pfd);
+}
+
+void win32_font_selector (char *fontname, int flag)
+{
+    CHOOSEFONT cf; /* info for font selection dialog */
+
+    ZeroMemory(&cf, sizeof cf);
+    cf.lStructSize = sizeof cf;
+    cf.Flags = CF_SCREENFONTS | CF_TTONLY | CF_LIMITSIZE |
+	CF_INITTOLOGFONTSTRUCT | CF_NOSCRIPTSEL;
+    if (flag == FIXED_FONT_SELECTION) {
+	cf.Flags |= CF_FIXEDPITCHONLY;
+    }
+    cf.nSizeMin = 6;
+    cf.nSizeMax = 24;
+
+    fontspec_to_win32(&cf, fontname, flag);
+
+    if (ChooseFont(&cf)) {
+	winfont_to_fontspec(fontname, &cf);
+    } else {
+	/* signal cancellation */
+	*fontname = '\0';
+    }
+
+    /* allocated via pango */
+    g_free(cf.lpLogFont);
+}
+
+#endif /* USE_WIN32_FONTSEL */
+
 int win32_rename_dir (const char *oldname, const char *newname)
 {
     char *oldtmp = NULL, *newtmp = NULL;
