@@ -781,20 +781,22 @@ int win32_open_file (const char *fname)
    and thence to Windows LOGFONT
 */
 
-static void fontspec_to_win32 (CHOOSEFONT *cf, const char *src, int which)
+static void fontspec_to_win32 (CHOOSEFONTW *cf, const char *src, int which)
 {
+    static PangoFontMap *map;
+    static PangoContext *pc;
     PangoFontDescription *pfd;
-    PangoFontMap *map;
-    PangoContext *pc;
     PangoFont *font;
 
+    if (map == NULL) {
+	map = pango_win32_font_map_for_display();
+	pc = pango_font_map_create_context(map);
+    }
+
     pfd = pango_font_description_from_string(src);
-    map = pango_win32_font_map_for_display();
-    pc = pango_font_map_create_context(map);
     font = pango_context_load_font(pc, pfd);
-    cf->lpLogFont = pango_win32_font_logfont(font);
+    cf->lpLogFont = pango_win32_font_logfontw(font);
     g_object_unref(font);
-    g_object_unref(pc);
     pango_font_description_free(pfd);
 }
 
@@ -802,12 +804,12 @@ static void fontspec_to_win32 (CHOOSEFONT *cf, const char *src, int which)
    and thence to the string @spec for use by gretl
 */
 
-static void winfont_to_fontspec (char *spec, CHOOSEFONT *cf)
+static void winfont_to_fontspec (char *spec, CHOOSEFONTW *cf)
 {
     PangoFontDescription *pfd;
     char *fstr;
 
-    pfd = pango_win32_font_description_from_logfont(cf->lpLogFont);
+    pfd = pango_win32_font_description_from_logfontw(cf->lpLogFont);
     pango_font_description_set_size(pfd, PANGO_SCALE * cf->iPointSize / 10);
     fstr = pango_font_description_to_string(pfd);
     strcpy(spec, fstr);
@@ -817,7 +819,7 @@ static void winfont_to_fontspec (char *spec, CHOOSEFONT *cf)
 
 void win32_font_selector (char *fontname, int flag)
 {
-    CHOOSEFONT cf; /* info for font selection dialog */
+    CHOOSEFONTW cf; /* info for font selection dialog */
 
     ZeroMemory(&cf, sizeof cf);
     cf.lStructSize = sizeof cf;
@@ -831,7 +833,7 @@ void win32_font_selector (char *fontname, int flag)
 
     fontspec_to_win32(&cf, fontname, flag);
 
-    if (ChooseFont(&cf)) {
+    if (ChooseFontW(&cf)) {
 	winfont_to_fontspec(fontname, &cf);
     } else {
 	/* signal cancellation */
