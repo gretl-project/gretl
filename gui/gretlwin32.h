@@ -30,7 +30,7 @@ enum {
     WIN32_TO_PRINTER
 };
 
-#define USE_WIN32_FONSTSEL
+#define USE_WIN32_FONTSEL
 
 int win32_run_async (const char *prog, const char *arg);
 
@@ -58,7 +58,7 @@ int win32_rename_dir (const char *oldname, const char *newname);
 
 void get_default_windows_app_font (char *target);
 
-#ifdef USE_WIN32_FONSTSEL
+#ifdef USE_WIN32_FONTSEL
 
 void win32_font_selector (char *fontname, int flag);
 
