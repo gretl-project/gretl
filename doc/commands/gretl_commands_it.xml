@@ -3130,6 +3130,10 @@
 	  <flag>--asymptotic</flag>
 	  <effect>errori standard asintotici non modificati</effect>
         </option>
+        <option>
+         <flag>--keep-extra</flag>
+         <effect>vedi sotto</effect>
+        </option>
       </options>
       <examples>
         <example>dpanel 2 ; y x1 x2</example>
@@ -3219,6 +3223,14 @@
 	dummy vengono incluse in differenza, a meno che non sia
 	indicata l'opzione <opt>dpdstyle</opt>; in questo caso le
 	dummy sono incluse in livello.
+      </para>
+      <para context="cli">
+       Come per altri comandi di stima, un bundle di nome <fncref
+       targ="$model"/> è disponibile se il comando va a buon fine. Nel
+       caso del comando <lit>dpanel</lit>, l'opzione
+       <opt>keep-extra</opt> provoca l'inclusione nel bundle di
+       elementi addizionali, e cioè i pesi GMM e la matrice degli
+       strumenti.
       </para>
       <para>
 	Per ulteriori dettagli ed esempi, si veda <guideref
