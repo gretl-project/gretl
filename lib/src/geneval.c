@@ -3391,13 +3391,7 @@ static void lag_calc (double *y, const double *x,
 
     for (t=t1; t<=t2; t++) {
 	s = t - k;
-	if (0 && dated_daily_data(p->dset)) {
-	    if (s >= 0 && s < p->dset->n) {
-		while (s >= 0 && na(x[s])) {
-		    s--;
-		}
-	    }
-	} else if (p->dset->structure == STACKED_TIME_SERIES) {
+	if (p->dset->structure == STACKED_TIME_SERIES) {
 	    if (s / p->dset->pd != t / p->dset->pd) {
 		/* s and t pertain to different units */
 		s = -1;

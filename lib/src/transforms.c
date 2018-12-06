@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -27,7 +27,7 @@
 /**
  * SECTION:transforms
  * @short_description: standard transformations of series in the dataset
- * @title: Transformations 
+ * @title: Transformations
  * @include: libgretl.h
  *
  * Functions to generate standard transformations (logs, lags, first
@@ -72,7 +72,7 @@ static int check_vals (const double *x, const double *y, int n)
 	    } else {
 		ret = VARS_DIFFER;
 	    }
-	    
+
 	}
 	if (ret == VARS_DIFFER) {
 	    break;
@@ -82,8 +82,8 @@ static int check_vals (const double *x, const double *y, int n)
     return ret;
 }
 
-static int 
-make_transform_varname (char *vname, const char *orig, int ci, 
+static int
+make_transform_varname (char *vname, const char *orig, int ci,
 			int aux, int len)
 {
     *vname = '\0';
@@ -121,7 +121,7 @@ make_transform_varname (char *vname, const char *orig, int ci,
 	       since this may get confusing
 	    */
 	    int n1, n2;
-	    
+
 	    sprintf(ext, "%d", -aux);
 	    n1 = strlen(orig);
 	    n2 = strlen(ext);
@@ -136,7 +136,7 @@ make_transform_varname (char *vname, const char *orig, int ci,
 		/* Oh, well, can't be helped */
 		strncat(vname, orig, len - n2);
 		strcat(vname, ext);
-	    }		
+	    }
 	}
     } else if (ci == DUMMIFY) {
 	char ext[16];
@@ -155,11 +155,11 @@ make_transform_varname (char *vname, const char *orig, int ci,
     } else if (ci == RESAMPLE) {
 	strcpy(vname, "rs_");
 	strncat(vname, orig, len - 3);
-    }	
+    }
 
 #if TRDEBUG
     fprintf(stderr, "make_transform_varname:\n"
-	    "orig='%s', ci=%d, len=%d, vname='%s'\n", 
+	    "orig='%s', ci=%d, len=%d, vname='%s'\n",
 	    orig, ci, len, vname);
 #endif
 
@@ -209,7 +209,7 @@ make_transform_label (char *label, const char *parent,
  * @parent: ID of potential parent series.
  * @dset: dataset information.
  *
- * Returns: the lag order of series @v, if it is marked as 
+ * Returns: the lag order of series @v, if it is marked as
  * a lag of @parent, otherwise 0.
  */
 
@@ -283,11 +283,11 @@ static void make_xp_varname (char *vname, int v1, int v2,
     *vname = '\0';
     strncat(vname, dset->varname[v1], n1 - cut1);
     strcat(vname, "_");
-    strncat(vname, dset->varname[v2], n2 - cut2);    
+    strncat(vname, dset->varname[v2], n2 - cut2);
 }
 
 /* Array into which to write a generated variable, prior to testing
-   whether or not the same var already exists.  
+   whether or not the same var already exists.
 */
 
 static double *testvec (int n)
@@ -302,11 +302,11 @@ static double *testvec (int n)
 	x = NULL;
 	nx = 0;
 	return NULL;
-    }	
+    }
 
     if (n > nx) {
 	double *y = realloc(x, n * sizeof *x);
-	
+
 	if (y == NULL) {
 	    free(x);
 	    x = NULL;
@@ -320,7 +320,7 @@ static double *testvec (int n)
 
     for (t=0; t<n; t++) {
 	x[t] = NADBL;
-    }    
+    }
 
     return x;
 }
@@ -339,7 +339,7 @@ void gretl_transforms_cleanup (void)
 
 /* write lagged values of variable v into xlag */
 
-static int get_lag (int v, int lag, double *xlag, 
+static int get_lag (int v, int lag, double *xlag,
 		    const DATASET *dset)
 {
     const double *x = dset->Z[v];
@@ -351,26 +351,14 @@ static int get_lag (int v, int lag, double *xlag,
 	xlag[t] = NADBL;
     }
 
-    if (0 && dated_daily_data(dset)) {
-	for (t=t1; t<=t2; t++) {
-	    s = t - lag;
-	    miss = 0;
-	    while (na(x[s]) && s > 0 && miss < 6) {
-		s--;
-		miss++;
-	    }
-	    xlag[t] = x[s];
+    for (t=t1; t<=t2; t++) {
+	s = t - lag;
+	if (dset->structure == STACKED_TIME_SERIES &&
+	    t / dset->pd != s / dset->pd) {
+	    continue;
 	}
-    } else { 
-	for (t=t1; t<=t2; t++) {
-	    s = t - lag;
-	    if (dset->structure == STACKED_TIME_SERIES &&
-		t / dset->pd != s / dset->pd) {
-		continue;
-	    }	    
-	    if (s >= 0 && s < dset->n) {
-		xlag[t] = x[s];
-	    }
+	if (s >= 0 && s < dset->n) {
+	    xlag[t] = x[s];
 	}
     }
 
@@ -390,7 +378,7 @@ static int get_log (int v, double *logvec, const DATASET *dset)
 	    logvec[t] = NADBL;
 	    set_gretl_warning(W_GENMISS);
 	} else {
-	    logvec[t] = log(xx); 
+	    logvec[t] = log(xx);
 	}
     }
 
@@ -540,14 +528,14 @@ static int get_resampled (int v, double *rsvec,
     if (dataset_is_panel(dset)) {
 	int n = panel_sample_size(dset);
 	int i, T = dset->pd;
-	
+
 	s = dset->t1;
 	for (i=0; i<n; i++) {
 	    j = z[i] * T;
 	    for (t=0; t<T; t++) {
 		rsvec[s++] = x[j + t];
 	    }
-	}	
+	}
     } else {
 	s = 0;
 	for (t=dset->t1; t<=dset->t2; t++) {
@@ -561,7 +549,7 @@ static int get_resampled (int v, double *rsvec,
 
 /* write dummy for (v == value) into xvec */
 
-static int get_discdum (int v, double val, double *xvec, 
+static int get_discdum (int v, double val, double *xvec,
 			const DATASET *dset)
 {
     double xt;
@@ -590,7 +578,7 @@ enum transform_results {
 
 #define TR_OVERWRITE 1
 
-static int transform_handle_duplicate (int ci, int lag, int v, 
+static int transform_handle_duplicate (int ci, int lag, int v,
 				       const double *x, const char *label,
 				       DATASET *dset, int origv)
 {
@@ -624,12 +612,12 @@ static int transform_handle_duplicate (int ci, int lag, int v,
 	series_set_lag(dset, v, lag);
 	series_zero_flags(dset, v);
 	ret = VAR_EXISTS_OK;
-    }	
+    }
 
     return ret;
 }
 
-static int 
+static int
 check_add_transform (int ci, int lag, int vnum, const double *x,
 		     const char *vname, const char *label,
 		     DATASET *dset, int origv)
@@ -651,7 +639,7 @@ check_add_transform (int ci, int lag, int vnum, const double *x,
 
 	if (chk == VARS_IDENTICAL) {
 	    ret = VAR_EXISTS_OK;
-	} else if (chk == X_HAS_MISSING) { 
+	} else if (chk == X_HAS_MISSING) {
 	    /* is this right? */
 	    ret = VAR_EXISTS_OK;
 	} else if (chk == Y_HAS_MISSING) {
@@ -718,7 +706,7 @@ static int get_lag_ID (int srcv, int lag, const DATASET *dset)
    Return the ID number of the transformed var, or -1 on error.
 */
 
-static int get_transform (int ci, int v, int aux, double x, 
+static int get_transform (int ci, int v, int aux, double x,
 			  DATASET *dset, int startlen, int origv,
 			  int *idxvec)
 {
@@ -769,7 +757,7 @@ static int get_transform (int ci, int v, int aux, double x,
     }
 
     if (ci == SQUARE && v != aux) {
-	sprintf(label, _("= %s times %s"), dset->varname[v], 
+	sprintf(label, _("= %s times %s"), dset->varname[v],
 		dset->varname[aux]);
     } else if (ci == DUMMIFY) {
 	if (is_string_valued(dset, v)) {
@@ -836,7 +824,7 @@ static int get_transform (int ci, int v, int aux, double x,
 }
 
 /**
- * laggenr: 
+ * laggenr:
  * @v: ID number in dataset of source variable.
  * @lag: the order of the lag to create.
  * @dset: dataset struct.
@@ -860,7 +848,7 @@ int laggenr (int v, int lag, DATASET *dset)
     } else if (lag == 0) {
 	lno = v;
     } else {
-	lno = get_transform(LAGS, v, lag, 0.0, dset, 
+	lno = get_transform(LAGS, v, lag, 0.0, dset,
 			    VNAMELEN - 3, dset->v, NULL);
     }
 
@@ -868,7 +856,7 @@ int laggenr (int v, int lag, DATASET *dset)
 }
 
 /**
- * laggenr_from_to: 
+ * laggenr_from_to:
  * @v: ID number in dataset of source variable.
  * @fromlag: start of lag/lead range.
  * @tolag: end of lag/lead range.
@@ -881,7 +869,7 @@ int laggenr (int v, int lag, DATASET *dset)
  * Returns: list of lag variables, or NULL or on error.
  */
 
-int *laggenr_from_to (int v, int fromlag, int tolag, 
+int *laggenr_from_to (int v, int fromlag, int tolag,
 		      DATASET *dset, int *err)
 {
     int *llist;
@@ -928,7 +916,7 @@ int *laggenr_from_to (int v, int fromlag, int tolag,
 }
 
 /**
- * loggenr: 
+ * loggenr:
  * @v: ID number in dataset of source variable.
  * @dset: dataset struct.
  *
@@ -940,12 +928,12 @@ int *laggenr_from_to (int v, int fromlag, int tolag,
 
 int loggenr (int v, DATASET *dset)
 {
-    return get_transform(LOGS, v, 0, 0.0, dset, 
+    return get_transform(LOGS, v, 0, 0.0, dset,
 			 VNAMELEN - 3, dset->v, NULL);
 }
 
 /**
- * invgenr: 
+ * invgenr:
  * @v: ID number in dataset of source variable.
  * @dset: dataset struct.
  *
@@ -957,18 +945,18 @@ int loggenr (int v, DATASET *dset)
 
 int invgenr (int v, DATASET *dset)
 {
-    return get_transform(INVERSE, v, 0, 0.0, dset, 
+    return get_transform(INVERSE, v, 0, 0.0, dset,
 			 VNAMELEN - 3, dset->v, NULL);
 }
 
 /**
- * diffgenr: 
+ * diffgenr:
  * @v: ID number in dataset of source variable.
  * @ci: DIFF (first difference), LDIFF (log difference) or SDIFF
  * (seasonal difference).
  * @dset: dataset struct.
  *
- * Creates the first difference (or log- or seasonal difference, 
+ * Creates the first difference (or log- or seasonal difference,
  * depending on the value of @ci) of variable @v, if the
  * differenced variable does not already exist.
  *
@@ -985,20 +973,20 @@ int diffgenr (int v, int ci, DATASET *dset)
 	return -1;
     }
 
-    return get_transform(ci, v, 0, 0.0, dset, 
+    return get_transform(ci, v, 0, 0.0, dset,
 			 VNAMELEN - 3, dset->v, NULL);
 }
 
 /**
- * xpxgenr: 
+ * xpxgenr:
  * @vi: ID number in dataset of first source variable.
  * @vj: ID number in dataset of second source variable.
  * @dset: dataset struct.
  *
- * Creates the cross product of variables @vi and @vj if this 
+ * Creates the cross product of variables @vi and @vj if this
  * variable does not already exist.
  *
- * Returns: the ID number of the cross-product variable, 
+ * Returns: the ID number of the cross-product variable,
  * or -1 on error.
  */
 
@@ -1010,11 +998,11 @@ int xpxgenr (int vi, int vj, DATASET *dset)
 	}
     }
 
-    return get_transform(SQUARE, vi, vj, 0.0, dset, 
+    return get_transform(SQUARE, vi, vj, 0.0, dset,
 			 VNAMELEN - 3, dset->v, NULL);
 }
 
-static int 
+static int
 get_starting_length (const int *list, DATASET *dset, int trim)
 {
     int width = VNAMELEN - 3 - trim;
@@ -1144,7 +1132,7 @@ static int make_mangled_name (int v, const char *s, int nc)
     return err;
 }
 
-static int 
+static int
 transform_preprocess_list (int *list, const DATASET *dset, int f)
 {
     int maxc = VNAMELEN - 3;
@@ -1167,7 +1155,7 @@ transform_preprocess_list (int *list, const DATASET *dset, int f)
 
 	if (f == LOGS || f == SQUARE) {
 	    if (v == 0) { /* FIXME?? */
-		ok = 1; 
+		ok = 1;
 	    }
 	    if (gretl_isdummy(dset->t1, dset->t2, dset->Z[v])) {
 		ok = 0;
@@ -1341,9 +1329,9 @@ static int process_hf_lags_input (int hf_min, int hf_max,
  * @dset: dataset struct.
  * @compfac: compaction factor (for MIDAS lists only, otherwise give 0).
  * @opt: may contain OPT_L to order the list by lag rather than
- * by variable. 
+ * by variable.
  *
- * Generates and adds to the data set lagged values of the 
+ * Generates and adds to the data set lagged values of the
  * variables given in the list pointed to by @plist.
  *
  * Returns: 0 on successful completion, 1 on error.
@@ -1370,7 +1358,7 @@ int list_laggenr (int **plist, int lmin, int lmax,
 	/* MIDAS: we want @lmin and @lmax, not @lvec */
 	if (lvec != NULL) {
 	    return E_INVARG;
-	}	
+	}
 	if (!gretl_is_midas_list(list, dset)) {
 	    gretl_warnmsg_set("The argument does not seem to be a MIDAS list");
 	}
@@ -1418,7 +1406,7 @@ int list_laggenr (int **plist, int lmin, int lmax,
        wanted per series in the input @list, but in the MIDAS case
        @n_terms is the total number of hf lag terms wanted (since
        the input @list actually represents a single series).
-    */    
+    */
 
     err = transform_preprocess_list(list, dset, LAGS);
     if (err) {
@@ -1430,7 +1418,7 @@ int list_laggenr (int **plist, int lmin, int lmax,
     } else {
 	laglist = make_lags_list(list, n_terms);
     }
-    
+
     if (laglist == NULL) {
 	destroy_mangled_names();
 	return E_ALLOC;
@@ -1465,7 +1453,7 @@ int list_laggenr (int **plist, int lmin, int lmax,
 		    l0++;
 		}
 	    }
-	}	
+	}
     } else if (opt & OPT_L) {
 	/* order the list by lags */
 	for (l=lmin; l<=lmax; l++) {
@@ -1481,7 +1469,7 @@ int list_laggenr (int **plist, int lmin, int lmax,
 		    l0++;
 		}
 	    }
-	}		
+	}
     } else {
 	/* order by variable */
 	for (i=1; i<=list[0]; i++) {
@@ -1489,7 +1477,7 @@ int list_laggenr (int **plist, int lmin, int lmax,
 	    for (l=lmin; l<=lmax; l++) {
 		if (!lag_wanted(l, lvec, veclen)) {
 		    continue;
-		}		
+		}
 		lv = get_transform(LAGS, v, l, 0.0, dset,
 				   startlen, origv, NULL);
 		if (lv > 0) {
@@ -1561,7 +1549,7 @@ int list_diffgenr (int *list, int ci, DATASET *dset)
 
     if (ci == SDIFF && !dataset_is_seasonal(dset)) {
 	return E_PDWRONG;
-    } 
+    }
 
     err = transform_preprocess_list(list, dset, ci);
     if (err) {
@@ -1569,7 +1557,7 @@ int list_diffgenr (int *list, int ci, DATASET *dset)
     }
 
     startlen = get_starting_length(list, dset, (ci == DIFF)? 2 : 3);
-    
+
     for (i=1; i<=list[0] && !err; i++) {
 	v = list[i];
 	tnum = get_transform(ci, v, 0, 0.0, dset,
@@ -1737,7 +1725,7 @@ int list_orthdev (int *list, DATASET *dset)
 
     if (!dataset_is_panel(dset)) {
 	return E_PDWRONG;
-    } 
+    }
 
     err = transform_preprocess_list(list, dset, ORTHDEV);
     if (err) {
@@ -1745,7 +1733,7 @@ int list_orthdev (int *list, DATASET *dset)
     }
 
     startlen = get_starting_length(list, dset, 2);
-    
+
     for (i=1; i<=list[0] && !err; i++) {
 	v = list[i];
 	tnum = get_transform(ORTHDEV, v, 0, 0.0, dset,
@@ -1768,13 +1756,13 @@ int list_orthdev (int *list, DATASET *dset)
 /**
  * list_xpxgenr:
  * @plist: pointer to list of variables to process.  On exit
- * the list holds the ID numbers of the squares (and possibly 
+ * the list holds the ID numbers of the squares (and possibly
  * cross-products).
  * @dset: dataset struct.
  * @opt: If OPT_O, both squares and cross-products are generated,
  * otherwise only squares.
  *
- * Generates and adds to the data set squares and (if @opt is OPT_O) 
+ * Generates and adds to the data set squares and (if @opt is OPT_O)
  * cross-products of the variables given in the list pointed to
  * by @plist.
  *
@@ -1799,7 +1787,7 @@ int list_xpxgenr (int **plist, DATASET *dset, gretlopt opt)
 
     if (opt & OPT_O) {
 	int maxterms = (l0 * l0 + l0) / 2;
-    
+
 	xpxlist = gretl_list_new(maxterms);
 	if (xpxlist == NULL) {
 	    destroy_mangled_names();
@@ -1866,14 +1854,14 @@ int list_resample (int *list, DATASET *dset)
     }
 
     n = k2 - k1 + 1;
-    
+
     z = malloc(n * sizeof *z);
     if (z == NULL) {
 	return E_ALLOC;
     }
 
     /* generate uniform drawings from sample range */
-    gretl_rand_int_minmax(z, n, k1, k2);  
+    gretl_rand_int_minmax(z, n, k1, k2);
 
     l0 = list[0];
     startlen = get_starting_length(list, dset, 3);
@@ -1934,7 +1922,7 @@ int list_dropcoll (int *list, double eps, DATASET *dset)
 
     T = X->rows;
     k = X->cols;
-    
+
     if (T < k) {
 	gretl_errmsg_sprintf(_("A minimum of %d observations is required"), k);
 	err = E_TOOFEW;
@@ -1946,7 +1934,7 @@ int list_dropcoll (int *list, double eps, DATASET *dset)
 	    err = gretl_matrix_QR_decomp(X, R);
 	}
     }
-    
+
     if (!err) {
 	double rii;
 	int i, j = 1;
@@ -1958,10 +1946,10 @@ int list_dropcoll (int *list, double eps, DATASET *dset)
 	    }
 	}
     }
-    
+
     gretl_matrix_free(X);
     gretl_matrix_free(R);
-    
+
     return err;
 }
 
@@ -1988,7 +1976,7 @@ static int real_list_dumgenr (int **plist, DATASET *dset,
 	err = E_ALLOC;
 	goto bailout;
     }
-    
+
     x = malloc(dset->n * sizeof *x);
     if (x == NULL) {
 	err = E_ALLOC;
@@ -2027,7 +2015,7 @@ static int real_list_dumgenr (int **plist, DATASET *dset,
 	jmin = (opt & OPT_F)? 1 : 0;
 	jmax = (opt & OPT_L)? nuniq - 1 : nuniq;
 
-#if DUMDEBUG 
+#if DUMDEBUG
 	fprintf(stderr, "variable %d has %d distinct values\n", vi, nuniq);
 	if (opt & OPT_F) fprintf(stderr, "skipping lowest value\n");
 	if (opt & OPT_L) fprintf(stderr, "skipping highest value\n");
@@ -2035,9 +2023,9 @@ static int real_list_dumgenr (int **plist, DATASET *dset,
 
 	for (j=jmin; j<jmax && !err; j++) {
 	    if (x[j] != oddval) {
-		tnum = get_transform(DUMMIFY, vi, j+1, x[j], dset, 
+		tnum = get_transform(DUMMIFY, vi, j+1, x[j], dset,
 				     startlen, origv, NULL);
-#if DUMDEBUG   
+#if DUMDEBUG
 		fprintf(stderr, "%s: for value %g tnum = %d\n",
 			dset->varname[vi], x[j], tnum);
 #endif
@@ -2058,7 +2046,7 @@ static int real_list_dumgenr (int **plist, DATASET *dset,
 	gretl_errmsg_set(_("dummify: no suitable variables were found"));
 #if DUMDEBUG
 	printlist(list, "list for which dummify failed");
-#endif	
+#endif
 	err = E_DATA;
     }
 
@@ -2069,7 +2057,7 @@ static int real_list_dumgenr (int **plist, DATASET *dset,
     if (!err && tmplist[0] > 0) {
 	free(*plist);
 	*plist = tmplist;
-#if DUMDEBUG   
+#if DUMDEBUG
 	printlist(tmplist, "output list");
 #endif
     } else {
@@ -2090,7 +2078,7 @@ static int real_list_dumgenr (int **plist, DATASET *dset,
  * the last value.
  *
  * For each of the variables given in the list to which @plist
- * points, generates and adds to the data set k dummy variables 
+ * points, generates and adds to the data set k dummy variables
  * coding for the k distinct values of the variable in question.
  * All these variables must have already been marked as discrete.
  * If the OPT_F or OPT_L option is given, either the first or
@@ -2115,7 +2103,7 @@ int list_dumgenr (int **plist, DATASET *dset, gretlopt opt)
  * input values as dummies.
  *
  * For each of the variables given in the list to which @plist
- * points, generates and adds to the data set k dummy variables 
+ * points, generates and adds to the data set k dummy variables
  * coding for the k distinct values of the variable in question.
  * All these variables must have already been marked as discrete.
  * if @oddval is not %NADBL, it is treated as the omitted
