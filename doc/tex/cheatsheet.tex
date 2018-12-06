@@ -494,6 +494,7 @@ is rather simple to adapt the script above to that effect.
 
 
 \subsection{Generating the ``hat'' values after an OLS regression}
+\label{sec:hatvalues}
 
 \emph{Problem:} I've just run an OLS regression, and now I need the
 so-called the leverage values (also known as the ``hat'' values). I
@@ -784,6 +785,59 @@ series mid = (top + bot)/2
 series dev = top - mid
 gnuplot x --band=mid,dev --time-series --with-lines --output=display
 \end{code}
+
+\subsection{Cross-validation}
+\label{sec:xvalid}
+
+\emph{Problem:} ``I'd like to compute the so-called \emph{leave-one-out
+cross-validation criterion} for my regression. Is there a command in
+\app{gretl}?''
+
+If you have a sample with $n$ observations, the ``leave-one-out''
+cross-validation criterion can be mechanically computed by running $n$
+regressions in which one observation at a time is omitted and all the
+other ones are used to forecast its value. The sum of the $n$ squared
+forecast errors is the statistic we want. Fortunately, there is no
+need to do so. It is possible to prove that the same statistic can be
+computed as 
+\[
+CV = \sum_{i=1}^n [\hat{u}_{i}/(1-h_{i})]^2,
+\]
+where $h_i$ is the $i$-th element of the ``hat'' matrix (see section
+\ref{sec:hatvalues}) from a regression on the whole sample.
+
+This method is natively provided by gretl as a side benefit to the
+\cmd{leverage} command, that stores the CV criterion into the
+\dollar{test} accessor. The following script shows the equivalence of
+the two approaches:
+\begin{code}
+set verbose off
+open data4-1.gdt
+list X = const sqft bedrms baths
+
+# compute the CV criterion the silly way
+
+scalar CV = 0
+matrix mX = {X}
+loop i = 1 .. $nobs
+    xi = mX[i,]
+    yi = price[i]
+    smpl obs != i --restrict
+    ols price X --quiet
+    smpl full
+    scalar fe = yi - xi * $coeff
+    CV += fe^2
+endloop
+
+printf "CV = %g\n", CV
+
+# the smart way
+
+ols price X --quiet
+leverage --quiet
+printf "CV = %g\n", $test
+\end{code}
+
 
 %%% Local Variables: 
 %%% mode: latex
