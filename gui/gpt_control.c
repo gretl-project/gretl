@@ -3855,24 +3855,16 @@ void activate_plot_font_choice (png_plot *plot, const char *grfont)
     FILE *fp = NULL;
     FILE *ftmp = NULL;
     char tmpname[FILENAME_MAX];
-    char line[256], fontname[128];
-    gchar *fstr = NULL;
-    int nf, fsize = 0;
+    char line[256], fontspec[128];
     int gotterm = 0;
     int err = 0;
 
-    nf = split_graph_fontspec(grfont, fontname, &fsize);
+    adjust_fontspec_string(fontspec, grfont, ADD_COMMA);
 
-    if (nf == 2) {
-	fstr = g_strdup_printf("%s,%d", fontname, fsize);
-    } else if (nf == 1) {
-	fstr = g_strdup(fontname);
-    }
-
-#if 1
-    fprintf(stderr, "font choice: grfont='%s', fstr='%s'\n",
-	    grfont, fstr);
-#endif    
+#if 0
+    fprintf(stderr, "font choice: grfont='%s', fontspec='%s'\n",
+	    grfont, fontspec);
+#endif
 
     fp = gretl_fopen(plot->spec->fname, "r");
     if (fp == NULL) {
@@ -3890,7 +3882,7 @@ void activate_plot_font_choice (png_plot *plot, const char *grfont)
 
     while (fgets(line, sizeof line, fp) && !err) {
 	if (!gotterm && strncmp(line, "set term", 8) == 0) {
-	    err = substitute_graph_font(line, fstr);
+	    err = substitute_graph_font(line, fontspec);
 	    fputs(line, ftmp);
 	    gotterm = 1;
 	} else {
@@ -3920,11 +3912,9 @@ void activate_plot_font_choice (png_plot *plot, const char *grfont)
 	gui_errmsg(err);
     } else {
 	free(plot->spec->fontstr);
-	plot->spec->fontstr = gretl_strdup(fstr);
+	plot->spec->fontstr = gretl_strdup(fontspec);
 	render_pngfile(plot, PNG_REDISPLAY);
     }
-
-    g_free(fstr);
 }
 
 static const gchar *menu_item_get_text (GtkMenuItem *item)
@@ -4236,7 +4226,7 @@ static gint plot_popup_activated (GtkMenuItem *item, gpointer data)
     } else if (!strcmp(item_string, _("Edit"))) {
 	start_editing_png_plot(plot);
     } else if (!strcmp(item_string, _("Font"))) {
-	plot_add_font_selector(plot, plot->spec->fontstr);
+	plot_show_font_selector(plot, plot->spec->fontstr);
     } else if (!strcmp(item_string, _("Close"))) {
         killplot = 1;
     }

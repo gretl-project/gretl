@@ -22,7 +22,7 @@
 
 GtkWidget *plot_add_editor (png_plot *plot);
 
-void plot_add_font_selector (png_plot *plot, const char *oldfont);
+void plot_show_font_selector (png_plot *plot, const char *currfont);
 
 void pdf_font_selector (GtkButton *button, gpointer p);
 

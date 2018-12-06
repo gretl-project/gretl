@@ -213,7 +213,9 @@ ifeq ($(fake_gtkspinner),yes)
   SRCS += spinner.c
 endif
 
-ifeq ($(gtk_version),3.0)
+ifeq ($(win32_build),yes)
+  # using native font selector
+else ifeq ($(gtk_version),3.0)
   HACK_SRC = fontfilter.c
   HACK_HDR = fontfilter.h
   HACK_OBJ = fontfilter.o

@@ -777,16 +777,40 @@ int win32_open_file (const char *fname)
 
 #ifdef USE_WIN32_FONTSEL
 
+static PangoFont *try_oblique (const char *src,
+			       PangoContext *pc)
+{
+    PangoFont *font = NULL;
+    char *tmp;
+    int err = 0;
+
+    tmp = gretl_literal_replace(src, "Italic", "Oblique", &err);
+    fprintf(stderr, "try_oblique: tmp = '%s'\n", tmp);
+
+    if (tmp != NULL) {
+	PangoFontDescription *pfd;
+
+	pfd = pango_font_description_from_string(tmp);
+	font = pango_context_load_font(pc, pfd);
+	fprintf(stderr, "font remedy: trying '%s' -> %p\n", tmp, (void *) font);
+	pango_font_description_free(pfd);
+	free(tmp);
+    }
+
+    return font;
+}
+
 /* convert from gretl font string @src to a pango font specification,
    and thence to Windows LOGFONT
 */
 
-static void fontspec_to_win32 (CHOOSEFONTW *cf, const char *src, int which)
+static int fontspec_to_win32 (CHOOSEFONTW *cf, const char *src, int which)
 {
     static PangoFontMap *map;
     static PangoContext *pc;
     PangoFontDescription *pfd;
     PangoFont *font;
+    int err = 0;
 
     if (map == NULL) {
 	map = pango_win32_font_map_for_display();
@@ -795,9 +819,20 @@ static void fontspec_to_win32 (CHOOSEFONTW *cf, const char *src, int which)
 
     pfd = pango_font_description_from_string(src);
     font = pango_context_load_font(pc, pfd);
-    cf->lpLogFont = pango_win32_font_logfontw(font);
-    g_object_unref(font);
+    if (font == NULL && strstr(src, "Italic") != NULL) {
+	/* maybe it's an Italic vs Oblique thing? */
+	font = try_oblique(src, pc);
+    }
+    if (font == NULL) {
+	err = E_DATA;
+    } else {
+	cf->lpLogFont = pango_win32_font_logfontw(font);
+	g_object_unref(font);
+    }
+
     pango_font_description_free(pfd);
+
+    return err;
 }
 
 /* convert from Windows CHOOSEFONT to pango font specification,
@@ -807,9 +842,21 @@ static void fontspec_to_win32 (CHOOSEFONTW *cf, const char *src, int which)
 static void winfont_to_fontspec (char *spec, CHOOSEFONTW *cf)
 {
     PangoFontDescription *pfd;
-    char *fstr;
+    gchar *fstr;
 
     pfd = pango_win32_font_description_from_logfontw(cf->lpLogFont);
+
+    if (cf->lpLogFont->lfItalic) {
+	/* remedial for gnuplot fonts: "Oblique" -> "Italic",
+	   since "Oblique" is not getting recognized
+	*/
+	PangoStyle style = pango_font_description_get_style(pfd);
+
+	if (style == PANGO_STYLE_OBLIQUE) {
+	    pango_font_description_set_style(pfd, PANGO_STYLE_ITALIC);
+	}
+    }
+
     pango_font_description_set_size(pfd, PANGO_SCALE * cf->iPointSize / 10);
     fstr = pango_font_description_to_string(pfd);
     strcpy(spec, fstr);
@@ -820,6 +867,7 @@ static void winfont_to_fontspec (char *spec, CHOOSEFONTW *cf)
 void win32_font_selector (char *fontname, int flag)
 {
     CHOOSEFONTW cf; /* info for font selection dialog */
+    int err;
 
     ZeroMemory(&cf, sizeof cf);
     cf.lStructSize = sizeof cf;
@@ -831,7 +879,12 @@ void win32_font_selector (char *fontname, int flag)
     cf.nSizeMin = 6;
     cf.nSizeMax = 24;
 
-    fontspec_to_win32(&cf, fontname, flag);
+    err = fontspec_to_win32(&cf, fontname, flag);
+    if (err) {
+	errbox_printf("Couldn't find '%s'", fontname);
+	*fontname = '\0';
+	return;
+    }
 
     if (ChooseFontW(&cf)) {
 	winfont_to_fontspec(fontname, &cf);

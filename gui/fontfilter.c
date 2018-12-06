@@ -20,7 +20,7 @@
 #include "gretl.h"
 #include "fontfilter.h"
 
-#define FDEBUG 0
+#define FONT_DEBUG 0
 
 static GtkWidget *font_test_widget;
 static PangoContext *font_test_context;
@@ -95,7 +95,7 @@ static int get_font_characteristics (PangoFontFamily *family,
 	g_object_unref(font);
     }
 
-#if FDEBUG
+#if FONT_DEBUG
     fprintf(stderr, " latin %s, monospaced %s\n",
 	    (ret & HACK_LATIN_FONT)? "yes" : "no",
 	    (ret & HACK_MONO_FONT)? "yes" : "no");
@@ -163,7 +163,7 @@ int validate_font_family (PangoFontFamily *family,
     }
 
     if (build_cache) {
-#if FDEBUG
+#if FONT_DEBUG
 	fprintf(stderr, "Checking font family %d, '%s'\n", i, famname);
 #endif
 	font_progress_bar(i, nf);
@@ -205,7 +205,7 @@ int validate_single_font (const PangoFontFamily *family,
 	pango_font_family_get_name((PangoFontFamily *) family);
     int ret, fc = 0;
 
-#if FDEBUG
+#if FONT_DEBUG
     fprintf(stderr, "Checking font '%s'\n", famname);
 #endif
 

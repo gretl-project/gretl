@@ -39,6 +39,8 @@
 #include "gtkfontselhack.h"
 #include "fontfilter.h"
 
+#define FONT_DEBUG 0
+
 #define GTK_TYPE_FNTHACK              (gtk_fontsel_hack_get_type ())
 #define GTK_FNTHACK(obj)              (G_TYPE_CHECK_INSTANCE_CAST ((obj), GTK_TYPE_FNTHACK, GtkFontselHack))
 #define GTK_FNTHACK_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST ((klass), GTK_TYPE_FNTHACK, GtkFontselHackClass))
@@ -674,7 +676,7 @@ gtk_fontsel_hack_show_available_fonts (GtkFontselHack *fontsel)
     pango_context_list_families(context, &families, &nf);
     qsort(families, nf, sizeof *families, cmp_families);
 
-#if FDEBUG
+#if FONT_DEBUG
     fprintf(stderr, "Font selector: got %d families\n", nf);
 #endif
 
@@ -690,7 +692,7 @@ gtk_fontsel_hack_show_available_fonts (GtkFontselHack *fontsel)
 	    continue;
 	}
 
-#if FDEBUG
+#if FONT_DEBUG
 	fprintf(stderr, "Examining font family '%s'\n", famname);
 #endif
 	if (!validate_font_family(families[i], famname, i, nf, fontsel->filter, &err)) { 

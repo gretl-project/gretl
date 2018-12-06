@@ -5498,6 +5498,29 @@ char *double_underscores (char *targ, const char *src)
     return targ;
 }
 
+char *adjust_fontspec_string (char *targ, const char *src,
+			      int mod)
+{
+    char *p, c0, c1;
+
+    strcpy(targ, src);
+
+    if (mod == ADD_COMMA) {
+	c0 = ' ';
+	c1 = ',';
+    } else {
+	c0 = ',';
+	c1 = ' ';
+    }
+
+    p = strrchr(targ, c0);
+    if (p != NULL && isdigit(p[1])) {
+	*p = c1;
+    }
+
+    return targ;
+}
+
 static int got_printable_output (PRN *prn)
 {
     int ret = 0;

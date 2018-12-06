@@ -42,6 +42,8 @@
 #define IS_SLASH(c) (c == '/')
 #endif
 
+enum { ADD_COMMA, DROP_COMMA };
+
 int vwin_is_editing (windata_t *vwin);
 
 int copyfile (const char *src, const char *dest);
@@ -176,6 +178,9 @@ const char *path_last_slash_const (const char *path);
 char *gretl_basename (char *dest, const char *src, int addscore);
 
 char *double_underscores (char *targ, const char *src);
+
+char *adjust_fontspec_string (char *targ, const char *src,
+			      int mod);
 
 void verbose_gerror_report (GError *gerr, const char *src);
 
