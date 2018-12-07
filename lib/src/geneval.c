@@ -18199,6 +18199,28 @@ static void autoreg_error (parser *p, int t)
     }
 }
 
+#if EDEBUG
+
+void autoreg_genr_report (const double *x, const double *y,
+			  int initted, parser *p)
+{
+    int t = p->obs;
+
+    fprintf(stderr, "\n*** autoreg: p->obs = %d\n", t);
+    if (!initted && na(x[t])) {
+	fprintf(stderr, "skipping xvec[%d], leaving y[%d] = %g\n",
+		t, t, y[t]);
+    } else if (p->op == B_ASN) {
+	fprintf(stderr, "writing xvec[%d] = %g into y[%d] (was %g)\n",
+		t, x[t], t, y[t]);
+    } else {
+	fprintf(stderr, "using xvec[%d] = %g to modify y[%d] (was %g)\n",
+		t, x[t], t, y[t]);
+    }
+}
+
+#endif
+
 int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 	     int flags, int targtype)
 {
@@ -18325,29 +18347,18 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 	    if (dataset_is_panel(p->dset) && t % p->dset->pd == 0) {
 		initted = 0;
 	    }
-#if EDEBUG
-	    fprintf(stderr, "\n*** autoreg: p->obs = %d\n", p->obs);
-#endif
 	    p->ret = eval(p->tree, p);
 	    if (p->ret != NULL && p->ret->t == SERIES) {
 		x = p->ret->v.xvec;
-		if (!initted && na(x[t])) {
 #if EDEBUG
-		    fprintf(stderr, "skipping xvec[%d], leaving y[%d] = %g\n",
-			    t, t, y[t]);
+		autoreg_genr_report(x, y, initted, p);
 #endif
+		if (!initted && na(x[t])) {
+		    ; /* don't overwrite initializer */
 		} else {
 		    if (p->op == B_ASN) {
-#if EDEBUG
-			fprintf(stderr, "writing xvec[%d] = %g into y[%d] (was %g)\n",
-				t, x[t], t, y[t]);
-#endif
 			y[t] = x[t];
 		    } else {
-#if EDEBUG
-			fprintf(stderr, "using xvec[%d] = %g to modify y[%d] (was %g)\n",
-				t, x[t], t, y[t]);
-#endif
 			y[t] = xy_calc(y[t], x[t], p->op, SERIES, p);
 		    }
 		    initted = 1;
