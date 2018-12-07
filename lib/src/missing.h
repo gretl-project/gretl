@@ -31,7 +31,7 @@
 #else
 # define NADBL 0.0/0.0
 #endif
-#define na(x) !isfinite(x)
+#define na(x) (isnan(x) || isinf(x))
 
 #define model_missing(m,t) ((m)->missmask != NULL && (m)->missmask[t] == '1')
 
