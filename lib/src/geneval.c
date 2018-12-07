@@ -3391,7 +3391,7 @@ static void lag_calc (double *y, const double *x,
 
     for (t=t1; t<=t2; t++) {
 	s = t - k;
-	if (p->dset->structure == STACKED_TIME_SERIES) {
+	if (dataset_is_panel(p->dset)) {
 	    if (s / p->dset->pd != t / p->dset->pd) {
 		/* s and t pertain to different units */
 		s = -1;
@@ -3411,18 +3411,35 @@ static void lag_calc (double *y, const double *x,
     }
 }
 
+#define TPDEBUG 0
+
+/* The effect of this transcription is to write NAs from
+   @src into @targ where that ought to happen, but not
+   otherwise. Non-missing values in @src will already be
+   present in @targ. That means that if there are no NAs
+   in @src this function will make no difference.
+*/
+
 static void transcribe_panel_autoreg_series (double *targ,
 					     const double *src,
 					     parser *p)
 {
     int t, s, T = p->dset->pd;
 
+#if TPDEBUG
+    fprintf(stderr, "\ntranscribe, before:\n");
     for (t=p->dset->t1; t<=p->dset->t2; t++) {
-	if (t == p->dset->t1 || t / T != (t-1) / T) {
-	    /* start of sample, or new unit starting */
+	fprintf(stderr, "t=%d, targ=%g, src=%g\n", t, targ[t], src[t]);
+    }
+#endif
+
+    for (t=p->dset->t1; t<=p->dset->t2; t++) {
+	if (t % T == 0) {
+	    /* first observation for a given individual */
 	    s = 0;
 	    while (na(src[t]) && s < T) {
-		t++; /* don't overwrite initializer */
+		/* skip leading NAs: don't overwrite initializer */
+		t++;
 		s++;
 	    }
 	    if (s == T) {
@@ -3433,6 +3450,13 @@ static void transcribe_panel_autoreg_series (double *targ,
 	}
 	targ[t] = src[t];
     }
+
+#if TPDEBUG
+    fprintf(stderr, "\ntranscribe, after\n");
+    for (t=p->dset->t1; t<=p->dset->t2; t++) {
+	fprintf(stderr, "targ[%d] = %g\n", t, targ[t]);
+    }
+#endif
 }
 
 static NODE *matrix_file_write (NODE *l, NODE *m, NODE *r, parser *p)
@@ -14234,17 +14258,11 @@ static NODE *lhs_terminal_node (NODE *t, NODE *l, NODE *r,
    is saved across function calls -- then the pointer is
    reset to NULL on each call to the function (but not
    on each iteration of the loop itself).
-
-   The "1" below, in the first condition, is a safety-first
-   measure that should be removable if the renaming case
-   is handled effectively by calling get_loop_renaming():
-   this returns non-zero if there's any renaming of series
-   going on within a loop on the current execution stack.
 */
 
 static void reattach_series (NODE *n, parser *p)
 {
-    if (/* 1 || */ n->v.xvec == NULL || get_loop_renaming()) {
+    if (n->v.xvec == NULL || get_loop_renaming()) {
 	/* do a full reset */
 	n->vnum = current_series_index(p->dset, n->vname);
 	if (n->vnum < 0) {
@@ -17555,6 +17573,8 @@ static int do_incr_decr (parser *p)
     return p->err;
 }
 
+#define NEW_AUTOREG_NA 0
+
 static int save_generated_var (parser *p, PRN *prn)
 {
     NODE *r = p->ret;
@@ -17740,15 +17760,18 @@ static int save_generated_var (parser *p, PRN *prn)
 	}
     } else if (p->targ == SERIES) {
 	/* writing a series */
-	if (r->t == NUM) {
-	    for (t=p->dset->t1; t<=p->dset->t2; t++) {
-		Z[v][t] = xy_calc(Z[v][t], r->v.xval, p->op, SERIES, p);
-	    }
-	} else if (r->t == SERIES) {
+	if (r->t == SERIES) {
 	    const double *x = r->v.xvec;
 
-	    if (p->dset->structure == STACKED_TIME_SERIES &&
-		autoreg(p) && p->op == B_ASN) {
+#if NEW_AUTOREG_NA
+	    /* FIXME move this upstream */
+	    if (autoreg(p)) {
+		/* no transcription required */
+		return p->err;
+	    }
+#endif
+
+	    if (dataset_is_panel(p->dset) && autoreg(p) && p->op == B_ASN) {
 		transcribe_panel_autoreg_series(Z[v], x, p);
 	    } else {
 		int t1 = p->dset->t1;
@@ -17771,6 +17794,10 @@ static int save_generated_var (parser *p, PRN *prn)
 			Z[v][t] = xy_calc(Z[v][t], x[t], p->op, SERIES, p);
 		    }
 		}
+	    }
+	} else if (r->t == NUM) {
+	    for (t=p->dset->t1; t<=p->dset->t2; t++) {
+		Z[v][t] = xy_calc(Z[v][t], r->v.xval, p->op, SERIES, p);
 	    }
 	} else if (r->t == MAT) {
 	    const gretl_matrix *m = r->v.m;
@@ -18354,33 +18381,42 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 
     if (autoreg(p)) {
 	/* e.g. y = b*y(-1) : evaluate dynamically */
-#ifdef OLDSTYLE
-	int initted = 0;
-#endif
-	int t;
+	double *y = p->dset->Z[p->lh.vnum];
+	const double *x;
+	int t, initted = 0;
 
 	for (t=p->dset->t1; t<=p->dset->t2 && !p->err; t++) {
-	    const double *x;
-
 	    /* initialize for this observation */
 	    p->obs = t;
+	    if (dataset_is_panel(p->dset) && t % p->dset->pd == 0) {
+		initted = 0;
+	    }
 #if EDEBUG
 	    fprintf(stderr, "\n*** autoreg: p->obs = %d\n", p->obs);
 #endif
 	    p->ret = eval(p->tree, p);
 	    if (p->ret != NULL && p->ret->t == SERIES) {
 		x = p->ret->v.xvec;
-#ifdef OLDSTYLE
-		if (initted || !na(x[t])) {
-#else
-		if (!na(x[t])) {
-#endif
+		if (!initted && na(x[t])) {
 #if EDEBUG
-		    fprintf(stderr, "writing xvec[%d] = %g into Z[%d][%d] (was %g)\n",
-			    t, x[t], p->lh.vnum, t, p->dset->Z[p->lh.vnum][t]);
+		    fprintf(stderr, "skipping xvec[%d], leaving y[%d] = %g\n",
+			    t, t, y[t]);
 #endif
-		    p->dset->Z[p->lh.vnum][t] = x[t];
-#ifdef OLDSTYLE
+		} else {
+		    if (p->op == B_ASN) {
+#if EDEBUG
+			fprintf(stderr, "writing xvec[%d] = %g into y[%d] (was %g)\n",
+				t, x[t], t, y[t]);
+#endif
+			y[t] = x[t];
+		    } else {
+#if EDEBUG
+			fprintf(stderr, "using xvec[%d] = %g to modify y[%d] (was %g)\n",
+				t, x[t], t, y[t]);
+#endif
+			y[t] = xy_calc(y[t], x[t], p->op, SERIES, p);
+		    }
+#if NEW_AUTOREG_NA
 		    initted = 1;
 #endif
 		}
