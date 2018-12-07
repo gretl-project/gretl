@@ -345,7 +345,7 @@ static int get_lag (int v, int lag, double *xlag,
     const double *x = dset->Z[v];
     int t1 = (lag > 0)? lag : 0;
     int t2 = dset->n - 1;
-    int t, s, miss;
+    int t, s;
 
     for (t=0; t<dset->n; t++) {
 	xlag[t] = NADBL;
@@ -353,7 +353,7 @@ static int get_lag (int v, int lag, double *xlag,
 
     for (t=t1; t<=t2; t++) {
 	s = t - lag;
-	if (dset->structure == STACKED_TIME_SERIES &&
+	if (dataset_is_panel(dset) &&
 	    t / dset->pd != s / dset->pd) {
 	    continue;
 	}
