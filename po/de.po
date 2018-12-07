@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2018-11-19 08:54-0500\n"
-"PO-Revision-Date: 2018-08-10 10:56+0200\n"
+"PO-Revision-Date: 2018-12-07 12:00+0100\n"
 "Last-Translator: Sven Schreiber <svetosch (at) gmx (dot) net>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -1010,7 +1010,7 @@ msgstr "FEHLER: Variable %d (%s), Beobachtung %d, nicht-numerischer Wert\n"
 
 #: lib/src/csvdata.c:2204
 msgid "allocating string table\n"
-msgstr ""
+msgstr "weise Zeichenkettentabelle zu\n"
 
 #: lib/src/csvdata.c:2607
 msgid ""
@@ -2355,9 +2355,9 @@ msgid "Wrong type of operand for unary '&'"
 msgstr "Falscher Operandentyp für unäres '&'"
 
 #: lib/src/geneval.c:7843
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid observation specifier \"%s\""
-msgstr "'%s': ungültiger Beobachtungsindex"
+msgstr "Ungültiger Beobachtungsbezeichner \"%s\""
 
 #: lib/src/geneval.c:7927 lib/src/transforms.c:858 lib/src/transforms.c:1177
 msgid "The constant cannot be lagged"
@@ -2409,7 +2409,7 @@ msgstr "Der Operator '%s' ist ungültig in diesem Kontext"
 
 #: lib/src/geneval.c:12451
 msgid "Bandwidth must be non-negative"
-msgstr ""
+msgstr "Bandbreite darf nicht negativ sein"
 
 #: lib/src/geneval.c:13164
 msgid "array: no type was specified"
@@ -2926,9 +2926,8 @@ msgstr "Skalierte Frequenz"
 
 # ist aus Spektralanalyse
 #: lib/src/graphing.c:4885 lib/src/graphing.c:4892
-#, fuzzy
 msgid "relative frequency"
-msgstr "Skalierte Frequenz"
+msgstr "relative Häufigkeit"
 
 #: lib/src/graphing.c:4953 gui/menustate.c:541
 msgid "Correlation matrix"
@@ -3573,14 +3572,14 @@ msgid "\"%s\" is not defined.\n"
 msgstr "\"%s\" ist nicht definiert.\n"
 
 #: lib/src/gretl_func.c:9388
-#, fuzzy, c-format
+#, c-format
 msgid "Removed %s\n"
-msgstr "Entfernen"
+msgstr "Entfernte %s\n"
 
 #: lib/src/gretl_func.c:9390
-#, fuzzy, c-format
+#, c-format
 msgid "Unloaded %s\n"
-msgstr "Paket %s entladen?"
+msgstr "Entlud %s\n"
 
 #: lib/src/gretl_help.c:72 lib/src/gretl_help.c:431
 #, c-format
@@ -4381,9 +4380,9 @@ msgid "Couldn't write to %s"
 msgstr "Konnte nicht in %s schreiben"
 
 #: lib/src/gretl_www.c:976
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't find %s for gretl %s"
-msgstr "Konnte Datei %s für Paket %s nicht finden"
+msgstr "Konnte %s für gretl %s nicht finden"
 
 #: lib/src/gretl_xml.c:148 lib/src/gretl_xml.c:4536
 #, c-format
@@ -4495,6 +4494,9 @@ msgid ""
 "supported by this build of gretl (%g). Some features may not be\n"
 "correctly recognized.\n"
 msgstr ""
+"Höhere Datendateiversion (%g) als die vollständig von\n"
+"dieser gretl-Version (%g) unterstützte. Manches könnte\n"
+"nicht richtig erkannt werden.\n"
 
 #: lib/src/gretl_xml.c:3884
 msgid "Uncompressing"
@@ -7509,9 +7511,9 @@ msgstr ""
 "Mindestens %d weitere Instrumente werden gebraucht."
 
 #: lib/src/usermat.c:195
-#, fuzzy, c-format
+#, c-format
 msgid "Index value %g is out of bounds"
-msgstr "Indexwert %d außerhalb der Grenzen"
+msgstr "Indexwert %g außerhalb der Grenzen"
 
 #: lib/src/usermat.c:246 gui/calculator.c:1381
 msgid "Range is non-positive!"
@@ -11134,13 +11136,13 @@ msgstr ""
 "entfernen."
 
 #: gui/fnsave.c:2728
-#, fuzzy
 msgid ""
 "You may add or delete names of packages to be recorded as dependencies.\n"
 "Leave off the .gfn or .zip suffix."
 msgstr ""
-"Sie können die Namen von Datendateien für das Paket hinzufügen oder "
-"entfernen."
+"Sie können die Namen von Paketen als Abhängigkeiten hinzufügen oder "
+"entfernen.\n"
+"Lassen Sie die Suffixe .gfn oder .zip weg."
 
 #: gui/fnsave.c:2765
 msgid ""
@@ -11184,9 +11186,8 @@ msgid "Data files"
 msgstr "Datendateien"
 
 #: gui/fnsave.c:3604
-#, fuzzy
 msgid "Dependencies"
-msgstr "Abhängige Variable"
+msgstr "Abhängigkeiten"
 
 #: gui/fnsave.c:3706
 msgid "Email"
@@ -14067,9 +14068,8 @@ msgid "Lag order for KPSS test:"
 msgstr "Lagordnung für KPSS-Test:"
 
 #: gui/library.c:1254
-#, fuzzy
 msgid "show individual results"
-msgstr "zeige individuelle Testergebnisse"
+msgstr "zeige individuelle Ergebnisse"
 
 #: gui/library.c:1288
 msgid "gretl: ADF test"
@@ -14397,7 +14397,7 @@ msgid "%s versus %s with loess fit"
 msgstr "%s gegen %s mit Loess-Anpassung"
 
 #: gui/library.c:4648
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s with Nadaraya-Watson fit"
 msgstr "%s gegen %s mit Nadaraya-Watson-Anpassung"
 
@@ -14766,16 +14766,15 @@ msgstr ""
 
 #: gui/library.c:8747
 msgid "new style (faster)"
-msgstr ""
+msgstr "neuartig (schneller)"
 
 #: gui/library.c:8748
 msgid "old style (compatible with gretl < 2018c)"
-msgstr ""
+msgstr "alte Art (kompatibel mit gretl < 2018c)"
 
 #: gui/library.c:8750
-#, fuzzy
 msgid "Missing values should be stored:"
-msgstr "Fehlwerte gefunden"
+msgstr "Fehlwerte sollen gespeichert werden:"
 
 #: gui/library.c:9183 gui/library.c:9321
 msgid "No commands to execute"
@@ -15462,14 +15461,12 @@ msgid "Bandwidth"
 msgstr "Bandbreite"
 
 #: gui/selector.c:5134
-#, fuzzy
 msgid "Automatic bandwidth"
-msgstr "Automatisches Maximum"
+msgstr "Automatische Bandbreite"
 
 #: gui/selector.c:5140
-#, fuzzy
 msgid "User-specified"
-msgstr "benutzerdefinierte Werte"
+msgstr "Benutzerdefiniert"
 
 #: gui/selector.c:5151
 msgid "Use robust weights"
@@ -17494,7 +17491,7 @@ msgstr "Fehler im Arma-Befehl"
 #: plugin/arma_init.c:112
 #, c-format
 msgid "Shifting y by %g, scaling by %g\n"
-msgstr ""
+msgstr "Verschoben um %g, skaliert mit %g\n"
 
 #: plugin/arma_x12.c:1004
 msgid "Failed to execute x12arima"
