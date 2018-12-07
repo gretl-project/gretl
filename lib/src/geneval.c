@@ -3411,54 +3411,6 @@ static void lag_calc (double *y, const double *x,
     }
 }
 
-#define TPDEBUG 0
-
-/* The effect of this transcription is to write NAs from
-   @src into @targ where that ought to happen, but not
-   otherwise. Non-missing values in @src will already be
-   present in @targ. That means that if there are no NAs
-   in @src this function will make no difference.
-*/
-
-static void transcribe_panel_autoreg_series (double *targ,
-					     const double *src,
-					     parser *p)
-{
-    int t, s, T = p->dset->pd;
-
-#if TPDEBUG
-    fprintf(stderr, "\ntranscribe, before:\n");
-    for (t=p->dset->t1; t<=p->dset->t2; t++) {
-	fprintf(stderr, "t=%d, targ=%g, src=%g\n", t, targ[t], src[t]);
-    }
-#endif
-
-    for (t=p->dset->t1; t<=p->dset->t2; t++) {
-	if (t % T == 0) {
-	    /* first observation for a given individual */
-	    s = 0;
-	    while (na(src[t]) && s < T) {
-		/* skip leading NAs: don't overwrite initializer */
-		t++;
-		s++;
-	    }
-	    if (s == T) {
-		/* back up one place for new check */
-		t--;
-		continue;
-	    }
-	}
-	targ[t] = src[t];
-    }
-
-#if TPDEBUG
-    fprintf(stderr, "\ntranscribe, after\n");
-    for (t=p->dset->t1; t<=p->dset->t2; t++) {
-	fprintf(stderr, "targ[%d] = %g\n", t, targ[t]);
-    }
-#endif
-}
-
 static NODE *matrix_file_write (NODE *l, NODE *m, NODE *r, parser *p)
 {
     NODE *ret = NULL;
@@ -17573,8 +17525,6 @@ static int do_incr_decr (parser *p)
     return p->err;
 }
 
-#define NEW_AUTOREG_NA 0
-
 static int save_generated_var (parser *p, PRN *prn)
 {
     NODE *r = p->ret;
@@ -17763,36 +17713,16 @@ static int save_generated_var (parser *p, PRN *prn)
 	if (r->t == SERIES) {
 	    const double *x = r->v.xvec;
 
-#if NEW_AUTOREG_NA
-	    /* FIXME move this upstream */
-	    if (autoreg(p)) {
-		/* no transcription required */
-		return p->err;
-	    }
-#endif
+	    if (p->op == B_ASN) {
+		/* avoid multiple calls to xy_calc */
+		if (Z[v] != x) {
+		    size_t sz = sample_size(p->dset) * sizeof *x;
 
-	    if (dataset_is_panel(p->dset) && autoreg(p) && p->op == B_ASN) {
-		transcribe_panel_autoreg_series(Z[v], x, p);
-	    } else {
-		int t1 = p->dset->t1;
-
-		if (autoreg(p) && p->op == B_ASN) {
-		    while (na(x[t1]) && t1 <= p->dset->t2) {
-			/* don't overwite initializer */
-			t1++;
-		    }
+		    memcpy(Z[v] + p->dset->t1, x + p->dset->t1, sz);
 		}
-		if (p->op == B_ASN) {
-		    /* avoid multiple calls to xy_calc */
-		    if (Z[v] != x) {
-			size_t sz = (p->dset->t2 - t1 + 1) * sizeof *x;
-
-			memcpy(Z[v] + t1, x + t1, sz);
-		    }
-		} else {
-		    for (t=t1; t<=p->dset->t2; t++) {
-			Z[v][t] = xy_calc(Z[v][t], x[t], p->op, SERIES, p);
-		    }
+	    } else {
+		for (t=p->dset->t1; t<=p->dset->t2; t++) {
+		    Z[v][t] = xy_calc(Z[v][t], x[t], p->op, SERIES, p);
 		}
 	    }
 	} else if (r->t == NUM) {
@@ -18111,6 +18041,10 @@ static void parser_init (parser *p, const char *str,
 
 void gen_save_or_print (parser *p, PRN *prn)
 {
+    if (autoreg(p)) {
+	/* no transcription required */
+	return;
+    }
     if (p->flags & P_DISCARD) {
 	/* doing "eval" */
 	if (p->ret == NULL) {
@@ -18416,9 +18350,7 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 #endif
 			y[t] = xy_calc(y[t], x[t], p->op, SERIES, p);
 		    }
-#if NEW_AUTOREG_NA
 		    initted = 1;
-#endif
 		}
 	    } else {
 		autoreg_error(p, t);
