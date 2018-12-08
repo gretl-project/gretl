@@ -777,24 +777,40 @@ int win32_open_file (const char *fname)
 
 #ifdef USE_WIN32_FONTSEL
 
-static PangoFont *try_oblique (const char *src,
-			       PangoContext *pc)
+static PangoFont *try_font_remedy (const char *src,
+				   PangoContext *pc,
+				   int which)
 {
+    PangoFontDescription *pfd = NULL;
     PangoFont *font = NULL;
     char *tmp;
     int err = 0;
 
-    tmp = gretl_literal_replace(src, "Italic", "Oblique", &err);
-    fprintf(stderr, "try_oblique: tmp = '%s'\n", tmp);
+    if (strstr(src, "Italic") != NULL) {
+	/* maybe it's an Italic vs Oblique thing? */
+	tmp = gretl_literal_replace(src, "Italic", "Oblique", &err);
+	if (tmp != NULL) {
+	    pfd = pango_font_description_from_string(tmp);
+	    font = pango_context_load_font(pc, pfd);
+	    fprintf(stderr, "font remedy: trying '%s' -> %p\n", tmp, (void *) font);
+	    pango_font_description_free(pfd);
+	    free(tmp);
+	}
+    }
 
-    if (tmp != NULL) {
-	PangoFontDescription *pfd;
-
-	pfd = pango_font_description_from_string(tmp);
+    if (font == NULL) {
+	/* try a hopefully reliable fallback? */
+	if (which == FIXED_FONT_SELECTION) {
+	    pfd = pango_font_description_from_string("Courier 10");
+	} else {
+	    pfd = pango_font_description_from_string("Arial 8");
+	}
 	font = pango_context_load_font(pc, pfd);
-	fprintf(stderr, "font remedy: trying '%s' -> %p\n", tmp, (void *) font);
+	if (font != NULL) {
+	    /* issue warning instead of error */
+	    warnbox_printf(_("Couldn't find '%s'"), src);
+	}
 	pango_font_description_free(pfd);
-	free(tmp);
     }
 
     return font;
@@ -804,7 +820,9 @@ static PangoFont *try_oblique (const char *src,
    and thence to Windows LOGFONT
 */
 
-static int fontspec_to_win32 (CHOOSEFONTW *cf, const char *src, int which)
+static int fontspec_to_win32 (CHOOSEFONTW *cf,
+			      const char *src,
+			      int which)
 {
     static PangoFontMap *map;
     static PangoContext *pc;
@@ -819,9 +837,8 @@ static int fontspec_to_win32 (CHOOSEFONTW *cf, const char *src, int which)
 
     pfd = pango_font_description_from_string(src);
     font = pango_context_load_font(pc, pfd);
-    if (font == NULL && strstr(src, "Italic") != NULL) {
-	/* maybe it's an Italic vs Oblique thing? */
-	font = try_oblique(src, pc);
+    if (font == NULL) {
+	font = try_font_remedy(src, pc, which);
     }
     if (font == NULL) {
 	err = E_DATA;
@@ -881,7 +898,7 @@ void win32_font_selector (char *fontname, int flag)
 
     err = fontspec_to_win32(&cf, fontname, flag);
     if (err) {
-	errbox_printf("Couldn't find '%s'", fontname);
+	errbox_printf(_("Couldn't find '%s'"), fontname);
 	*fontname = '\0';
 	return;
     }
