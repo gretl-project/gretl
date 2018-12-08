@@ -250,12 +250,6 @@ int load_function_package_by_filename (const char *fname,
 				       gretlopt opt,
 				       PRN *prn);
 
-int load_gfn_by_filename_full (const char *fname,
-			       int *preloaded,
-			       fnpkg **ppkg,
-			       gretlopt opt,
-			       PRN *prn);
-
 int function_package_is_loaded (const char *fname,
 				const char **version);
 

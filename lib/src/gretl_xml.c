@@ -4555,36 +4555,6 @@ static char *gretl_xml_get_doc_type (const char *fname, int *err)
     return ret;
 }
 
-static int load_gfn_dependencies (fnpkg *pkg, PRN *prn)
-{
-    char **depends = NULL;
-    int ndeps = 0;
-    int err = 0;
-
-    depends = function_package_get_depends(pkg, &ndeps);
-
-    if (depends != NULL) {
-	char *pkgpath;
-	int i;
-
-	for (i=0; i<ndeps && !err; i++) {
-	    if (get_function_package_by_name(depends[i]) != NULL) {
-		; /* OK, already loaded */
-	    } else {
-		pkgpath = gretl_function_package_get_path(depends[i], PKG_ALL);
-		if (pkgpath == NULL) {
-		    pprintf(prn, "Warning: dependency '%s' was not found\n", depends[i]);
-		} else {
-		    err = load_XML_functions_file(pkgpath, OPT_NONE, prn);
-		    free(pkgpath);
-		}
-	    }
-	}
-    }
-
-    return err;
-}
-
 /* This is called in response to the "include" command in
    the CLI program, the GUI program, and in interact.c,
    if we detect that the named file is XML.
@@ -4602,15 +4572,7 @@ int load_XML_functions_file (const char *fname, gretlopt opt, PRN *prn)
 
     if (!strcmp(rootname, "gretl-functions")) {
 	if (has_suffix(fname, ".gfn")) {
-	    int preloaded = 0;
-	    fnpkg *pkg = NULL;
-
-	    err = load_gfn_by_filename_full(fname, &preloaded, &pkg,
-					    opt, prn);
-	    if (!err && !preloaded && pkg != NULL) {
-		/* try loading any dependencies */
-		err = load_gfn_dependencies(pkg, prn);
-	    }
+	    err = load_function_package_by_filename(fname, opt, prn);
 	} else {
 	    err = read_session_functions_file(fname);
 	}

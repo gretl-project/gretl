@@ -4902,6 +4902,37 @@ static int load_public_function (fnpkg *pkg, int i)
     return err;
 }
 
+static int load_gfn_dependencies (fnpkg *pkg)
+{
+    char **depends = NULL;
+    int ndeps = 0;
+    int err = 0;
+
+    depends = function_package_get_depends(pkg, &ndeps);
+
+    if (depends != NULL) {
+	char *pkgpath;
+	int i;
+
+	for (i=0; i<ndeps && !err; i++) {
+	    if (get_function_package_by_name(depends[i]) != NULL) {
+		; /* OK, already loaded */
+	    } else {
+		pkgpath = gretl_function_package_get_path(depends[i], PKG_ALL);
+		if (pkgpath == NULL) {
+		    gretl_errmsg_sprintf("%s: dependency %s was not found",
+					 pkg->name, depends[i]);
+		} else {
+		    err = load_XML_functions_file(pkgpath, OPT_NONE, NULL);
+		    free(pkgpath);
+		}
+	    }
+	}
+    }
+
+    return err;
+}
+
 /* A 'real load' is in contrast to just reading some info from a
    package, as is done in various GUI contexts.  We do the real load
    in response to some GUI commands, the "include" command, and also
@@ -4918,6 +4949,8 @@ static int real_load_package (fnpkg *pkg)
 #endif
 
     gretl_error_clear();
+
+    err = load_gfn_dependencies(pkg);
 
     if (!err && pkg->pub != NULL) {
 	for (i=0; i<pkg->n_pub && !err; i++) {
@@ -5398,11 +5431,23 @@ static int not_mpi_duplicate (void)
 #endif
 }
 
-int load_gfn_by_filename_full (const char *fname,
-			       int *preloaded,
-			       fnpkg **ppkg,
-			       gretlopt opt,
-			       PRN *prn)
+/**
+ * load_function_package_by_filename:
+ * @fname: full path to gfn file.
+ * @opt: may include OPT_F to force loading even when
+ * the package is already loaded.
+ * @prn: gretl printer.
+ *
+ * Loads the function package located by @fname into
+ * memory, if possible. Supports gretl's "include" command
+ * for gfn files.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int load_function_package_by_filename (const char *fname,
+				       gretlopt opt,
+				       PRN *prn)
 {
     fnpkg *pkg;
     int err = 0;
@@ -5419,10 +5464,6 @@ int load_gfn_by_filename_full (const char *fname,
 	    fprintf(stderr, "load_function_package_by_filename:\n"
 		    " '%s' is already loaded\n", fname);
 	}
-    }
-
-    if (pkg != NULL && preloaded != NULL) {
-	*preloaded = 1;
     }
 
     if (pkg == NULL) {
@@ -5445,9 +5486,6 @@ int load_gfn_by_filename_full (const char *fname,
     if (err) {
 	fprintf(stderr, "load function package: failed on %s\n", fname);
     } else if (pkg != NULL) {
-	if (ppkg != NULL) {
-	    *ppkg = pkg;
-	}
 	if (prn != NULL && not_mpi_duplicate()) {
 	    pprintf(prn, "%s %s, %s (%s)\n", pkg->name, pkg->version,
 		    pkg->date, pkg->author);
@@ -5455,27 +5493,6 @@ int load_gfn_by_filename_full (const char *fname,
     }
 
     return err;
-}
-
-/**
- * load_function_package_by_filename:
- * @fname: full path to gfn file.
- * @opt: may include OPT_F to force loading even when
- * the package is already loaded.
- * @prn: gretl printer.
- *
- * Loads the function package located by @fname into
- * memory, if possible. Supports gretl's "include" command
- * for gfn files.
- *
- * Returns: 0 on success, non-zero code on error.
- */
-
-int load_function_package_by_filename (const char *fname,
-				       gretlopt opt,
-				       PRN *prn)
-{
-    return load_gfn_by_filename_full(fname, NULL, NULL, opt, prn);
 }
 
 /**
