@@ -885,8 +885,6 @@ static void winfont_to_fontspec (char *spec, CHOOSEFONTW *cf)
     }
     g_free(fstr);
     pango_font_description_free(pfd);
-
-    return 0;
 }
 
 void win32_font_selector (char *fontname, int flag)
