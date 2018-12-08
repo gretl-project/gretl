@@ -1,24 +1,52 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "gretl.h"
 #include "gretl_www.h"
+#include "version.h"
+
+static void show_update_message (int vserver)
+{
+    int vclient = gretl_version_number(GRETL_VERSION);
+    char latest[16];
+    gchar *msg;
+
+    gretl_version_string(latest, vserver);
+
+    if (vserver > vclient) {
+	msg = g_strdup_printf(_("You are running gretl %s.\n"
+				"Version %s is available at http://ricardo.ecn.wfu.edu/pub/gretl/\n"
+				"(If this version is not yet at http://gretl.sourceforge.net/\n"
+				"it should be shortly.)"), GRETL_VERSION, latest);
+    } else if (vclient > vserver) {
+	msg = g_strdup_printf(_("You are running gretl %s.\n"
+				"This seems to be a pre-release; the latest version available at\n"
+				"http://ricardo.ecn.wfu.edu/pub/gretl/ is %s"),
+			      GRETL_VERSION, latest);
+    } else {
+	msg = g_strdup_printf(_("You are running gretl %s.\n"
+				"This is the current version."), GRETL_VERSION);
+    }
+
+    infobox(msg);
+    g_free(msg);
+}
 
 static int real_update_query (int verbose)
 {
@@ -31,7 +59,11 @@ static int real_update_query (int verbose)
 	return 1;
     }
 
-    if (strncmp(getbuf, "message:", 8) == 0) {
+    if (strncmp(getbuf, "server-latest:", 14) == 0) {
+	int vserver = atoi(getbuf + 15);
+
+	show_update_message(vserver);
+    } else if (strncmp(getbuf, "message:", 8) == 0) {
 	infobox(getbuf + 9);
     } else if (verbose) {
 	infobox(_("No new files"));
