@@ -786,6 +786,7 @@ static PangoFont *try_font_remedy (const char *src,
 
     if (strstr(src, "Italic") != NULL) {
 	/* maybe it's an Italic vs Oblique thing? */
+	int err = 0;
 	char *tmp = gretl_literal_replace(src, "Italic", "Oblique", &err);
 
 	if (tmp != NULL) {
