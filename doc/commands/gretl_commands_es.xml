@@ -3148,6 +3148,10 @@
 	  <flag>--asymptotic</flag>
 	  <effect>Desviaciones típicas asintóticas sin corregir</effect>
         </option>
+        <option>
+	  <flag>--keep-extra</flag>
+	  <effect>Mira abajo</effect>
+        </option>
       </options>
       <examples>
         <example>dpanel 2 ; y x1 x2</example>
@@ -3228,6 +3232,13 @@
 	multicolinealidad perfecta con la constante. Las variables ficticias
 	se introducen en forma de diferencias excepto que se indique la opción
 	<opt>dpdstyle</opt>, en cuyo caso se introducen en niveles.
+      </para>
+      <para context="cli">
+	De igual modo que con otras instruciones para hacer la estimación,
+	dispones de un 'bundle' <fncref targ="$model"/> después de realizarla.
+	En caso de <lit>dpanel</lit>, puedes usar la opción <opt>keep-extra</opt>
+	para guardar información que quieras añadir a ese 'bundle', por ejemplo
+	las matrices de ponderaciones y de instrumentos GMM.
       </para>
       <para>
 	Para obtener otros detalles y ejemplos, consulta
@@ -6994,14 +7005,14 @@
 	las referencias que contiene.
       </para>
       <para context="cli">
-	Por defecto, si el programa no está en modo de procesamiento por lotes,
-	se muestra un gráfico con los valores de apalancamiento e influencia. Puedes
-	ajustar esto mediante la opción <opt>plot</opt>. Los parámetros que se
-	admiten para esta opción son <lit>none</lit> (para suprimir el gráfico),
-	<lit>display</lit> (para mostrar un gráfico incluso al estar en modo
-	de procesamiento por lotes), o un nombre de archivo. El efecto de indicar
-	un nombre de archivo es como el descrito para la opción <opt>output</opt>
-	de la instrucción <cmdref targ="gnuplot"/>.
+	Por defecto, si haces una llamada interactiva a esta instrución, se
+	muestra un gráfico con los valores de apanlancamiento e influencia.
+	Puedes axustar esto mediante la opción <opt>plot</opt>. Los parámetros
+	que se admiten para esta opción son <lit>none</lit> (para suprimir el
+	gráfico), <lit>display</lit> (para mostrar un gráfico incluso al estar en modo
+	de guiones), o un nombre de archivo. El efecto de indicar un nombre
+	de archivo es como el descrito para la opción <opt>output</opt> de la
+	instrucción <cmdref targ="gnuplot"/>.
       </para>
     </description>
 

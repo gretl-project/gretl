@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2018-11-19 08:54-0500\n"
-"PO-Revision-Date: 2018-12-02 02:18+0100\n"
+"PO-Revision-Date: 2018-12-07 15:11+0100\n"
 "Last-Translator: JCEN <ecadrian@hotmail.com>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -2995,7 +2995,7 @@ msgstr ""
 #: lib/src/graphing.c:7016
 #, c-format
 msgid "response of %s to a shock in %s"
-msgstr "resposta de *%s* a un impacto en *%s*"
+msgstr "Resposta de *%s* a un impacto en *%s*"
 
 #: lib/src/graphing.c:7031
 #, c-format
@@ -3152,12 +3152,12 @@ msgstr "BFGS: O valor inicial da función obxectivo non é finito"
 #: lib/src/gretl_bfgs.c:1334
 #, c-format
 msgid "stopped after %d iterations\n"
-msgstr "detido logo de %d iteracións\n"
+msgstr "Detido logo de %d iteracións\n"
 
 #: lib/src/gretl_bfgs.c:1351
 #, c-format
 msgid "norm of gradient = %g"
-msgstr "norma do gradiente = %g"
+msgstr "Norma do gradiente = %g"
 
 #: lib/src/gretl_bfgs.c:2074 lib/src/modelprint.c:3290
 #, c-format
@@ -4548,7 +4548,7 @@ msgstr "Non puido lerse '%s'"
 
 #: lib/src/gretl_zip.c:495 lib/src/gretl_zip.c:503
 msgid "not found"
-msgstr "non atopado"
+msgstr "Non atopado"
 
 #: lib/src/interact.c:787
 msgid "is a 0/1 variable"
@@ -4702,7 +4702,7 @@ msgstr "Variables que poden ser determinadas mediante a instrución \"set\""
 
 #: lib/src/libset.c:1416
 msgid "\"help set\" for details"
-msgstr "teclee \"help set\" para ver máis detalles"
+msgstr "Teclee \"help set\" para ver máis detalles"
 
 #: lib/src/libset.c:1420
 msgid "Program interaction and behavior"
@@ -6303,7 +6303,7 @@ msgstr "Non poden utilizarse as derivadas analíticas con MXM"
 #: lib/src/nls.c:2988
 #, c-format
 msgid "command '%s' not valid in this context"
-msgstr "a instrución '%s' non é correcta neste contexto"
+msgstr "A instrución '%s' non é correcta neste contexto"
 
 #: lib/src/nls.c:2991
 #, c-format
@@ -7506,7 +7506,7 @@ msgstr "Variable ficticia para %s = '%s'"
 #: lib/src/transforms.c:781 lib/src/transforms.c:784
 #, c-format
 msgid "dummy for %s = %g"
-msgstr "variable ficticia para *%s* = %g"
+msgstr "Variable ficticia para *%s* = %g"
 
 #: lib/src/transforms.c:1939
 #, c-format
@@ -8701,7 +8701,7 @@ msgstr "Gretl: MXM"
 
 #: gui/callbacks.c:594 gui/callbacks.c:685
 msgid "GMM: Specify function and orthogonality conditions:"
-msgstr "MXM: Especificar a función e as condicións de ortogonalidade:"
+msgstr "MXM: Especificar a función e as condicións de ortogonalidade"
 
 #: gui/callbacks.c:600 gui/callbacks.c:689
 msgid "gretl: maximum likelihood"
@@ -8709,7 +8709,7 @@ msgstr "Gretl: Máxima Verosimilitude"
 
 #: gui/callbacks.c:601 gui/callbacks.c:690
 msgid "MLE: Specify function, and derivatives if possible:"
-msgstr "EMV: Especificar a función e, se é posible, as derivadas:"
+msgstr "EMV: Especificar a función e, se é posible, as derivadas"
 
 #: gui/callbacks.c:607 gui/callbacks.c:694
 msgid "gretl: nonlinear least squares"
@@ -8717,7 +8717,7 @@ msgstr "Gretl: Mínimos cadrados non lineais"
 
 #: gui/callbacks.c:608 gui/callbacks.c:695
 msgid "NLS: Specify function, and derivatives if possible:"
-msgstr "MC non lineais: Especificar a función e, se é posible, as derivadas:"
+msgstr "MC non lineais: Especificar a función e, se é posible, as derivadas"
 
 #: gui/callbacks.c:614 gui/callbacks.c:710 gui/library.c:3671
 msgid "gretl: simultaneous equations system"
@@ -8725,7 +8725,7 @@ msgstr "Gretl: Sistema de ecuacións simultáneas"
 
 #: gui/callbacks.c:615 gui/callbacks.c:711
 msgid "Specify simultaneous equations:"
-msgstr "Especificar as ecuacións simultáneas:"
+msgstr "Especificar as ecuacións simultáneas"
 
 #: gui/callbacks.c:621
 msgid "gretl: linear restrictions"
@@ -10684,7 +10684,7 @@ msgstr "Cota de frecuencias superior:"
 
 #: gui/filters.c:456
 msgid "The initial EMA value is"
-msgstr "O valor inicial EMA é"
+msgstr "O valor inicial da media móbil exponencial é"
 
 #: gui/filters.c:465
 msgid "the mean of the first n observations"
@@ -10696,7 +10696,7 @@ msgstr "a media da serie completa"
 
 #: gui/filters.c:480
 msgid "a user-specified value"
-msgstr "Valor especificado polo usuario"
+msgstr "un valor especificado polo usuario"
 
 #: gui/filters.c:523
 msgid "quadratic"
@@ -10861,7 +10861,7 @@ msgstr "Definir lista"
 
 #: gui/fncall.c:859
 msgid "add series"
-msgstr "engadir unha serie"
+msgstr "Engadir unha serie"
 
 #: gui/fncall.c:860
 msgid "Enter name=formula for new series"
@@ -11627,7 +11627,7 @@ msgstr "Posición da chave"
 
 #: gui/gpt_dialog.c:1795
 msgid "fitted line"
-msgstr "Liña estimada"
+msgstr "Recta estimada"
 
 #: gui/gpt_dialog.c:1843
 msgid "Use only one y axis"
@@ -11713,11 +11713,11 @@ msgstr "Ancho de liña"
 
 #: gui/gpt_dialog.c:2825 gui/graphics.c:173
 msgid "width"
-msgstr "anchura"
+msgstr "Anchura"
 
 #: gui/gpt_dialog.c:2870
 msgid "point"
-msgstr "Símbolo"
+msgstr "Tipo de símbolo"
 
 #: gui/gpt_dialog.c:2898
 msgid "y axis"
@@ -11866,7 +11866,7 @@ msgstr "A páxina da gráfica está baldeira"
 
 #: gui/graph_page.c:709
 msgid "graph page options"
-msgstr "opcións da páxina de gráfica"
+msgstr "Opcións da páxina de gráfica"
 
 #: gui/gretl.c:122
 msgid ""
@@ -11878,39 +11878,39 @@ msgstr ""
 
 #: gui/gretl.c:126
 msgid "open a script file on startup"
-msgstr "abrir un ficheiro de guión ao inicio"
+msgstr "Abrir un ficheiro de guión ao inicio"
 
 #: gui/gretl.c:128
 msgid "open a database on startup"
-msgstr "abrir un banco de datos ao inicio"
+msgstr "Abrir un banco de datos ao inicio"
 
 #: gui/gretl.c:130
 msgid "open a remote (web) database on startup"
-msgstr "abrir un banco de datos remoto (web) ao inicio"
+msgstr "Abrir un banco de datos remoto (web) ao inicio"
 
 #: gui/gretl.c:132
 msgid "open (edit) a function package on startup"
-msgstr "abrir (editar) un paquete de funcións ao inicio"
+msgstr "Abrir (editar) un paquete de funcións ao inicio"
 
 #: gui/gretl.c:134
 msgid "force use of English"
-msgstr "forzar o uso do inglés"
+msgstr "Forzar o uso do inglés"
 
 #: gui/gretl.c:136
 msgid "force use of Basque"
-msgstr "forzar o uso do euskera"
+msgstr "Forzar o uso do euskera"
 
 #: gui/gretl.c:138
 msgid "dump gretl configuration to file"
-msgstr "gardar a configuración de Gretl nun ficheiro"
+msgstr "Gardar a configuración de Gretl nun ficheiro"
 
 #: gui/gretl.c:141
 msgid "send debugging info to console"
-msgstr "enviar a información de depurado á consola"
+msgstr "Enviar a información de depurado á consola"
 
 #: gui/gretl.c:144
 msgid "print version information"
-msgstr "amosar a información da versión"
+msgstr "Amosar a información da versión"
 
 #: gui/gretl.c:555
 msgid "Start a new gretl instance?"
@@ -14629,7 +14629,7 @@ msgstr ""
 
 #: gui/library.c:6784
 msgid "standardized residual"
-msgstr "erros estandarizados"
+msgstr "Erros estandarizados"
 
 #: gui/library.c:6836
 #, c-format
@@ -16583,11 +16583,11 @@ msgstr "O diálogo de selección de ficheiro debe de:"
 
 #: gui/settings.c:3054
 msgid "remember the last-opened folder"
-msgstr "Lembrar o último cartafol que se abriu"
+msgstr "lembrar o último cartafol que se abriu"
 
 #: gui/settings.c:3062
 msgid "always start in the working directory"
-msgstr "Comezar sempre no cartafol de traballo"
+msgstr "comezar sempre no cartafol de traballo"
 
 #: gui/settings.c:3071
 msgid "Show working directory in main window"
@@ -18119,7 +18119,7 @@ msgid ""
 "using %d sub-samples of size %d\n"
 "\n"
 msgstr ""
-"utilizando %d submostras de tamaño %d\n"
+"Utilizando %d submostras de tamaño %d\n"
 "\n"
 
 #: plugin/range-mean.c:273
@@ -18154,7 +18154,7 @@ msgid ""
 "(Type 0 characteristic of nonzero length)"
 msgstr ""
 "Hai algo estraño no ficheiro\n"
-"(Característica de longura non nula de tipo 0)"
+"(característica de longura non nula de tipo 0)"
 
 #: plugin/stata_import.c:2116
 msgid "cannot read Stata .dta on this platform"

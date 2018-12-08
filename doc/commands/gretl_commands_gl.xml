@@ -3148,6 +3148,10 @@
 	  <flag>--asymptotic</flag>
 	  <effect>Desviacións padrón asintóticas sen corrixir</effect>
         </option>
+        <option>
+	  <flag>--keep-extra</flag>
+	  <effect>Mira abaixo</effect>
+        </option>
       </options>
       <examples>
         <example>dpanel 2 ; y x1 x2</example>
@@ -3228,6 +3232,13 @@
 	multicolinearidade perfecta coa constante. As variables ficticias
 	introdúcense en forma de diferenzas agás que se indique a opción
 	<opt>dpdstyle</opt>, en cuxo caso introdúcense en niveis.
+      </para>
+      <para context="cli">
+	De igual xeito que con outras instrucións para facer a estimación,
+	dispós dun feixe <fncref targ="$model"/> logo de facela. No caso de
+	<lit>dpanel</lit>, podes usar a opción <opt>keep-extra</opt> para
+	gardar información que queiras engadir nese feixe, por exemplo
+	as matrices de ponderacións e de instrumentos MXM.
       </para>
       <para>
 	Para obter outros detalles e exemplos, consulta o
@@ -6994,14 +7005,14 @@
 	as referencias que contén.
       </para>
       <para context="cli">
-	Por defecto, se o programa non está en modo de procesamento por lotes,
-	amósase unha gráfica cos valores de pancamento e influencia. Podes
-	axustar isto mediante a opción <opt>plot</opt>. Os parámetros que se
+	Por defecto, se fas unha chamada interactiva a esta instrución, amósase
+	unha gráfica cos valores de pancamento e influencia. Podes axustar
+	isto mediante a opción <opt>plot</opt>. Os parámetros que se
 	admiten para esta opción son <lit>none</lit> (para suprimir a gráfica),
 	<lit>display</lit> (para amosar unha gráfica mesmo ao estar en modo
-	de procesamento por lotes), ou un nome de ficheiro. O efecto de indicar
-	un nome de ficheiro é como o descrito para a opción <opt>output</opt>
-	da instrución <cmdref targ="gnuplot"/>.
+	de guións), ou un nome de ficheiro. O efecto de indicar un nome de
+	ficheiro é como o descrito para a opción <opt>output</opt> da instrución
+	<cmdref targ="gnuplot"/>.
       </para>
     </description>
 

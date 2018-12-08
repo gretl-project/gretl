@@ -1888,12 +1888,17 @@
 	<ilist context="notex">
 	  <li>
             <para>
-              Normal estándar (c = z, n ou N): sen argumentos extras
+              Normal estándar (d = z, n ou N): sen argumentos extras
             </para>
 	  </li>
 	  <li>
             <para>
               Normal bivariante (D): coeficiente de correlación
+            </para>
+	  </li>
+	  <li>
+            <para>
+              Logistic (lgt): sen máis argumentos
             </para>
 	  </li>
 	  <li>
@@ -1970,6 +1975,8 @@
 	  -- &amp; -- &amp; --\\
 	  Normal bivariante &amp; \texttt{D} &amp;
 	  $\rho$ &amp; -- &amp; --\\
+	  Loxística &amp; \texttt{lgt} &amp;
+	  -- &amp; -- &amp; --\\
 	  $t$ de Student (central) &amp; \texttt{t} &amp;
 	  gl &amp; -- &amp; --\\
 	  Khi-cadrado &amp; \texttt{c}, \texttt{x} ou \texttt{X} &amp;
@@ -2005,7 +2012,7 @@
 	  e <lit>z2</lit>.
 	</para>
 	<para context="tex">
-	  A disposición de parámetros que o \app{Gretl} usa para a variable
+	  A disposición de parámetros que usa o Gretl para a variable
 	  aleatoria Gamma implica que a súa función de densidade pode escribirse
 	  \[
 	  f(x; k, \theta) = \frac{x^{k-1}}{\theta^k} \frac{e^{-x/\theta}}{\Gamma(k)}
@@ -4866,6 +4873,82 @@
       </description>
     </function>
 
+    <function name="isocountry" section="strings" output="asinput">
+      <fnargs>
+	<fnarg type="string-or-strings">orixe</fnarg>
+	<fnarg type="int" optional="true">resultado</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esta función está relacionada coas catro notacións para países
+	  que están incluídas no estándar ISO 3166; en concreto
+	</para>
+	<nlist>
+	  <li><para>
+	    Nome de país
+	  </para></li>
+	  <li><para>
+	    Código alfa-2 (dúas letras maiúsculas)
+	  </para></li>
+	  <li><para>
+	    Código alfa-3 (tres letras maiúsculas)
+	  </para></li>
+	  <li><para>
+	    Código numérico (3 díxitos)
+	  </para></li>
+	</nlist>
+	<para>
+	  Cando indicas un país con algunha desas formas, o resultado é a
+	  súa representación na forma (da 1 á 4) que escollas mediante o
+	  argumento opcional <argname>resultado</argname>. Se omites ese
+	  argumento, a conversión por defecto faise do xeito seguinte:
+	  cando o argumento <argname>orixe</argname> é un nome dun país,
+	  o resultado é o código de 2 letras do país; noutro caso, o resultado
+	  é o nome do país. Debaixo ilústranse varias solicitudes válidas con
+	  formato interactivo.
+	</para>
+	<code>
+	  ? eval isocountry("Bolivia")
+	  BO
+	  ? eval isocountry("Bolivia", 3)
+	  BOL
+	  ? eval isocountry("GB")
+	  United Kingdom of Great Britain and Northern Ireland
+	  ? eval isocountry("GB", 3)
+	  GBR
+	  ? strings S = defarray("ES", "DE", "SD")
+	  ? strings C = isocountry(S)
+	  ? print C
+	  Arranxo de strings, longura 3
+	  [1] "Spain"
+	  [2] "Germany"
+	  [3] "Sudan"
+	  ? matrix m = {4, 840}
+	  ? C = isocountry(m)
+	  ? print C
+	  Arranxo de strings, longura 2
+	  [1] "Afghanistan"
+	  [2] "United States of America"
+	</code>
+	<para>
+	  Cando <argname>orixe</argname> ten a forma 4 (código numérico),
+	  isto pode indicarse mediante unha cadea de texto ou un arranxo de
+	  cadeas (por exemplo, <quote>032</quote> para Argentina) ou con
+	  formato numérico. No derradeiro caso, <argname>orixe</argname>
+	  pode indicarse como unha serie ou como un vector, pero vaise amosar
+	  un fallo se algún dos números está fóra do rango de 0 a 999.
+	</para>
+	<para>
+	  En todos os casos (mesmo cando escollas o formato 4 de resultados)
+	  devólvese unha cadea de texto ou un arranxo de cadeas; se necesitas os
+	  valores numéricos, podes obtelos usando a función <fncref targ="atof"/>.
+	  Cando <argname>orixe</argname> non coincide con ningunha entrada
+	  da táboa ISO 3166, o resultado é unha cadea baleira, e nese caso
+	  amósase unha advertencia.
+	</para>
+      </description>
+    </function>
+
     <function name="isodate" section="calendar" output="seebelow">
       <fnargs>
 	<fnarg type="scalar-or-series">ed</fnarg>
@@ -5658,14 +5741,14 @@
       <description>
 	<para context="tex">
 	  Devolve un resultado (do mesmo tipo do argumento <argname>x</argname>)
-	  coa función loxística deste; isto é, $\Lambda(x) = e^x/(1+e^x)$. Se
+	  coa función FDA loxística deste; isto é, $\Lambda(x) = 1/(1+e^{-x})$. Se
 	  <argname>x</argname> é unha matriz, a función aplícase a cada elemento.
 	</para>
 	<para context="notex">
 	  Devolve un resultado (do mesmo tipo do argumento <argname>x</argname>)
-	  coa función loxística deste; isto é, <math>e</math><sup>x</sup>/(1
-	  + <math>e</math><sup>x</sup>). Se <argname>x</argname> é unha matriz,
-	  a función aplícase a cada elemento.
+	  coa función FDA loxística deste; é dicir,
+	  1/(1+<math>e</math><sup>&minus;x</sup>). Se <argname>x</argname>
+	  é unha matriz, a función aplícase a cada elemento.
 	</para>
       </description>
     </function>

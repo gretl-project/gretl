@@ -1888,12 +1888,17 @@
 	<ilist context="notex">
 	  <li>
             <para>
-              Normal estándar (c = z, n o N): sin argumentos extras
+              Normal estándar (d = z, n o N): sin argumentos extras
             </para>
 	  </li>
 	  <li>
             <para>
               Normal bivariante (D): coeficiente de correlación
+            </para>
+	  </li>
+	  <li>
+            <para>
+              Logistic (lgt): sin más argumentos
             </para>
 	  </li>
 	  <li>
@@ -1970,6 +1975,8 @@
 	  -- &amp; -- &amp; --\\
 	  Normal bivariante &amp; \texttt{D} &amp;
 	  $\rho$ &amp; -- &amp; --\\
+	  Logística &amp; \texttt{lgt} &amp;
+	  -- &amp; -- &amp; --\\
 	  $t$ de Student (central) &amp; \texttt{t} &amp;
 	  gl &amp; -- &amp; --\\
 	  Chi-cuadrado &amp; \texttt{c}, \texttt{x} o \texttt{X} &amp;
@@ -2005,7 +2012,7 @@
 	  y <lit>z2</lit>.
 	</para>
 	<para context="tex">
-	  La disposición de parámetros que el \app{Gretl} usa para la variable
+	  La disposición de parámetros que usa el Gretl para la variable
 	  aleatoria Gamma implica que su función de densidad puede escribirse
 	  \[
 	  f(x; k, \theta) = \frac{x^{k-1}}{\theta^k} \frac{e^{-x/\theta}}{\Gamma(k)}
@@ -4866,6 +4873,82 @@
       </description>
     </function>
 
+    <function name="isocountry" section="strings" output="asinput">
+      <fnargs>
+	<fnarg type="string-or-strings">origen</fnarg>
+	<fnarg type="int" optional="true">resultado</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esta función está relacionada con las cuatro notaciones para países
+	  que están incluídas en el estándar ISO 3166; concretamente
+	</para>
+	<nlist>
+	  <li><para>
+	    Nombre de país
+	  </para></li>
+	  <li><para>
+	    Código alfa-2 (dos letras mayúsculas)
+	  </para></li>
+	  <li><para>
+	    Código alfa-3 (tres letras mayúsculas)
+	  </para></li>
+	  <li><para>
+	    Código numérico (3 dígitos)
+	  </para></li>
+	</nlist>
+	<para>
+	  Cuando indicas un país con alguna de esas formas, el resultado es
+	  su representación en la forma (de 1 a 4) que elijas mediante el
+	  argumento opcional <argname>resultado</argname>. Si omites ese
+	  argumento, la conversión por defecto se hace del siguiente modo:
+	  cuando el argumento <argname>origen</argname> es un nome de un país,
+	  el resultado es el código de 2 letras del país; en caso contrario, el
+	  resultado es el nombre del país. Debajo se ilustran varias solicitudes
+	  válidas con formato interactivo.
+	</para>
+	<code>
+	  ? eval isocountry("Bolivia")
+	  BO
+	  ? eval isocountry("Bolivia", 3)
+	  BOL
+	  ? eval isocountry("GB")
+	  United Kingdom of Great Britain and Northern Ireland
+	  ? eval isocountry("GB", 3)
+	  GBR
+	  ? strings S = defarray("ES", "DE", "SD")
+	  ? strings C = isocountry(S)
+	  ? print C
+	  Array de strings, longitud 3
+	  [1] "Spain"
+	  [2] "Germany"
+	  [3] "Sudan"
+	  ? matrix m = {4, 840}
+	  ? C = isocountry(m)
+	  ? print C
+	  Array de strings, longitud 2
+	  [1] "Afghanistan"
+	  [2] "United States of America"
+	</code>
+	<para>
+	  Cuando <argname>origen</argname> tiene la forma 4 (código numérico),
+	  esto puede indicarse mediante una cadena de texto o un 'array' de
+	  cadenas (por ejemplo, <quote>032</quote> para Argentina) o con
+	  formato numérico. En este último caso, <argname>origen</argname>
+	  puede indicarse como una serie o como un vector, pero se va a mostrar
+	  un fallo si alguno de los números está fuera del rango de 0 a 999.
+	</para>
+	<para>
+	  En todos los casos (incluso cuando elijas el formato 4 de resultados) se
+	  devuelve una cadena de texto o un 'array' de cadenas; si necesitas los
+	  valores numéricos, puedes obtenerlos usando la función <fncref targ="atof"/>.
+	  Cuando <argname>origen</argname> no coincide con ninguna entrada
+	  de la tabla ISO 3166, el resultado es una cadena vacía, y en ese caso
+	  se muestra una advertencia.
+	</para>
+      </description>
+    </function>
+
     <function name="isodate" section="calendar" output="seebelow">
       <fnargs>
 	<fnarg type="scalar-or-series">ed</fnarg>
@@ -5658,14 +5741,14 @@
       <description>
 	<para context="tex">
 	  Devuelve un resultado (del mismo tipo que el argumento <argname>x</argname>)
-	  con la función logística de este; esto es, $\Lambda(x) = e^x/(1+e^x)$. Si
+	  con la función FDA logística de este; esto es, $\Lambda(x) = 1/(1+e^{-x})$. Si
 	  <argname>x</argname> es una matriz, la función se aplica a cada elemento.
 	</para>
 	<para context="notex">
 	  Devuelve un resultado (del mismo tipo que el argumento <argname>x</argname>)
-	  con la función logística de este; esto es, <math>e</math><sup>x</sup>/(1
-	  + <math>e</math><sup>x</sup>). Si <argname>x</argname> es una matriz,
-	  la función se aplica a cada elemento.
+	  con la función FDA logística de este; es decir,
+	  1/(1+<math>e</math><sup>&minus;x</sup>). Si <argname>x</argname> es
+	  una matriz, la función se aplica a cada elemento.
 	</para>
       </description>
     </function>
