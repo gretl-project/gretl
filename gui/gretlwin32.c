@@ -783,33 +783,32 @@ static PangoFont *try_font_remedy (const char *src,
 {
     PangoFontDescription *pfd = NULL;
     PangoFont *font = NULL;
-    char *tmp;
-    int err = 0;
 
     if (strstr(src, "Italic") != NULL) {
 	/* maybe it's an Italic vs Oblique thing? */
-	tmp = gretl_literal_replace(src, "Italic", "Oblique", &err);
+	char *tmp = gretl_literal_replace(src, "Italic", "Oblique", &err);
+
 	if (tmp != NULL) {
 	    pfd = pango_font_description_from_string(tmp);
 	    font = pango_context_load_font(pc, pfd);
-	    fprintf(stderr, "font remedy: trying '%s' -> %p\n", tmp, (void *) font);
+	    fprintf(stderr, "font remedy: '%s' -> %p\n", tmp, (void *) font);
 	    pango_font_description_free(pfd);
 	    free(tmp);
 	}
     }
 
     if (font == NULL) {
-	/* try a hopefully reliable fallback? */
-	if (which == FIXED_FONT_SELECTION) {
-	    pfd = pango_font_description_from_string("Courier 10");
-	} else {
-	    pfd = pango_font_description_from_string("Arial 8");
-	}
+	/* try a (hopefully reliable) fallback? */
+	const char *fonts[2] = {
+            "Arial 8",
+            "Courier 10"
+	};
+	const char *try;
+
+	try = (which == FIXED_FONT_SELECTION)? fonts[1] : fonts[0];
+	pfd = pango_font_description_from_string(try);
 	font = pango_context_load_font(pc, pfd);
-	if (font != NULL) {
-	    /* issue warning instead of error */
-	    warnbox_printf(_("Couldn't find '%s'"), src);
-	}
+	fprintf(stderr, "font remedy: '%s' -> %p\n", try, (void *) font);
 	pango_font_description_free(pfd);
     }
 
@@ -861,7 +860,12 @@ static void winfont_to_fontspec (char *spec, CHOOSEFONTW *cf)
     PangoFontDescription *pfd;
     gchar *fstr;
 
+    *spec = '\0';
+
     pfd = pango_win32_font_description_from_logfontw(cf->lpLogFont);
+    if (pfd == NULL) {
+	return;
+    }
 
     if (cf->lpLogFont->lfItalic) {
 	/* remedial for gnuplot fonts: "Oblique" -> "Italic",
@@ -876,14 +880,20 @@ static void winfont_to_fontspec (char *spec, CHOOSEFONTW *cf)
 
     pango_font_description_set_size(pfd, PANGO_SCALE * cf->iPointSize / 10);
     fstr = pango_font_description_to_string(pfd);
-    strcpy(spec, fstr);
+    if (fstr != NULL && *fstr != '\0') {
+	strcpy(spec, fstr);
+    }
     g_free(fstr);
     pango_font_description_free(pfd);
+
+    return 0;
 }
 
 void win32_font_selector (char *fontname, int flag)
 {
     CHOOSEFONTW cf; /* info for font selection dialog */
+    LOGFONTW lfont;
+    int free_font = 1;
     int err;
 
     ZeroMemory(&cf, sizeof cf);
@@ -897,10 +907,14 @@ void win32_font_selector (char *fontname, int flag)
     cf.nSizeMax = 24;
 
     err = fontspec_to_win32(&cf, fontname, flag);
+
     if (err) {
-	errbox_printf(_("Couldn't find '%s'"), fontname);
-	*fontname = '\0';
-	return;
+	/* fall back to empty initializer */
+	fprintf(stderr, "win32_font_selector: empty initializer\n");
+	ZeroMemory(&lfont, sizeof lfont);
+	cf.lpLogFont = &lfont;
+	cf.Flags &= ~CF_INITTOLOGFONTSTRUCT;
+	free_font = 0;
     }
 
     if (ChooseFontW(&cf)) {
@@ -910,8 +924,10 @@ void win32_font_selector (char *fontname, int flag)
 	*fontname = '\0';
     }
 
-    /* allocated via pango */
-    g_free(cf.lpLogFont);
+    if (free_font) {
+	/* allocated via pango */
+	g_free(cf.lpLogFont);
+    }
 }
 
 #endif /* USE_WIN32_FONTSEL */
