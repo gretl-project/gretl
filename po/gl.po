@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2018-12-08 17:06-0500\n"
-"PO-Revision-Date: 2018-12-07 15:11+0100\n"
+"PO-Revision-Date: 2018-12-09 11:36+0100\n"
 "Last-Translator: JCEN <ecadrian@hotmail.com>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -1504,9 +1504,9 @@ msgid "dataset restore: dataset is not resampled\n"
 msgstr "Restablecer conxunto de datos: este non renova as mostras\n"
 
 #: lib/src/dbnread.c:34 lib/src/dbnread.c:40 gui/fncall.c:4191
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no data found"
-msgstr "Non se atoparon datos.\n"
+msgstr "%s: Non se atoparon datos"
 
 #: lib/src/dbread.c:403 lib/src/dbread.c:686
 msgid "Couldn't open database index file"
@@ -17144,6 +17144,10 @@ msgid ""
 "(If this version is not yet at http://gretl.sourceforge.net/\n"
 "it should be shortly.)"
 msgstr ""
+"Estás executando Gretl %s.\n"
+"A versión %s está dispoñible en http://ricardo.ecn.wfu.edu/pub/gretl/\n"
+"(Se esta versión aínda non está en http://gretl.sourceforge.net/\n"
+"debería estalo axiña.)"
 
 #: gui/update.c:38
 #, c-format
@@ -17152,6 +17156,10 @@ msgid ""
 "This seems to be a pre-release; the latest version available at\n"
 "http://ricardo.ecn.wfu.edu/pub/gretl/ is %s"
 msgstr ""
+"Estás executando Gretl %s.\n"
+"Esta semella ser unha versión preliminar; a derradeira versión dispoñible "
+"en\n"
+"http://ricardo.ecn.wfu.edu/pub/gretl/ é %s"
 
 #: gui/update.c:43
 #, c-format
@@ -17159,6 +17167,8 @@ msgid ""
 "You are running gretl %s.\n"
 "This is the current version."
 msgstr ""
+"Estás executando Gretl %s.\n"
+"Esta é a versión vixente."
 
 #: gui/update.c:69
 msgid "No new files"

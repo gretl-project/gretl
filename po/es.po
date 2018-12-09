@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2018-12-08 17:06-0500\n"
-"PO-Revision-Date: 2018-12-07 15:12+0100\n"
+"PO-Revision-Date: 2018-12-09 11:37+0100\n"
 "Last-Translator: JCEN <ecadrian@hotmail.com>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -1512,9 +1512,9 @@ msgstr ""
 "datos\n"
 
 #: lib/src/dbnread.c:34 lib/src/dbnread.c:40 gui/fncall.c:4191
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no data found"
-msgstr "No se han encontrado datos.\n"
+msgstr "%s: No se han encontrado datos"
 
 #: lib/src/dbread.c:403 lib/src/dbread.c:686
 msgid "Couldn't open database index file"
@@ -17176,6 +17176,10 @@ msgid ""
 "(If this version is not yet at http://gretl.sourceforge.net/\n"
 "it should be shortly.)"
 msgstr ""
+"Estás ejecutando Gretl %s.\n"
+"La versión %s está disponible en http://ricardo.ecn.wfu.edu/pub/gretl/\n"
+"(Si esta versión aún non está en http://gretl.sourceforge.net/\n"
+"debería estarlo en breve.)"
 
 #: gui/update.c:38
 #, c-format
@@ -17184,6 +17188,9 @@ msgid ""
 "This seems to be a pre-release; the latest version available at\n"
 "http://ricardo.ecn.wfu.edu/pub/gretl/ is %s"
 msgstr ""
+"Estás ejecutando Gretl %s.\n"
+"Esta parece ser una versión preliminar; la última versión disponible en\n"
+"http://ricardo.ecn.wfu.edu/pub/gretl/ es %s"
 
 #: gui/update.c:43
 #, c-format
@@ -17191,6 +17198,8 @@ msgid ""
 "You are running gretl %s.\n"
 "This is the current version."
 msgstr ""
+"Estás ejecutando Gretl %s.\n"
+"Esta es la versión vigente."
 
 #: gui/update.c:69
 msgid "No new files"
