@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.91\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2018-12-08 17:06-0500\n"
-"PO-Revision-Date: 2018-11-19 19:35+0100\n"
+"PO-Revision-Date: 2018-12-10 17:02+0100\n"
 "Last-Translator: Riccardo (Jack) Lucchetti <r.lucchetti@univpm.it>\n"
 "Language-Team:\n"
 "Language: it\n"
@@ -1506,9 +1506,9 @@ msgid "dataset restore: dataset is not resampled\n"
 msgstr "ripristino dataset: dataset non ricampionato\n"
 
 #: lib/src/dbnread.c:34 lib/src/dbnread.c:40 gui/fncall.c:4191
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no data found"
-msgstr "Nessun dato trovato.\n"
+msgstr "%s: nessun dato trovato"
 
 #: lib/src/dbread.c:403 lib/src/dbread.c:686
 msgid "Couldn't open database index file"
@@ -17152,6 +17152,10 @@ msgid ""
 "(If this version is not yet at http://gretl.sourceforge.net/\n"
 "it should be shortly.)"
 msgstr ""
+"Questa è la versione %s di gretl.\n"
+"La versione %s è disponibile a http://ricardo.ecn.wfu.edu/pub/gretl/\n"
+"(Se non è già all'indirizzo http://gretl.sourceforge.net/,\n"
+"ci sarà fra breve.)"
 
 #: gui/update.c:38
 #, c-format
@@ -17160,6 +17164,9 @@ msgid ""
 "This seems to be a pre-release; the latest version available at\n"
 "http://ricardo.ecn.wfu.edu/pub/gretl/ is %s"
 msgstr ""
+"Questa è la versione %s di gretl, che sembra essere non\n"
+"ancora rilasciata; l'ultima verisone disponibile all'indirizzo\n"
+"http://ricardo.ecn.wfu.edu/pub/gretl/ è %s"
 
 #: gui/update.c:43
 #, c-format
@@ -17167,6 +17174,8 @@ msgid ""
 "You are running gretl %s.\n"
 "This is the current version."
 msgstr ""
+"Questa è la versione %s di gretl, che è\n"
+"l'ultima rilasciata"
 
 #: gui/update.c:69
 msgid "No new files"
