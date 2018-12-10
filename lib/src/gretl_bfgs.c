@@ -1331,9 +1331,11 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 #endif
 
     if (iter >= maxit) {
-	fprintf(stderr, _("stopped after %d iterations\n"), iter);
+	gretl_errmsg_sprintf(_("Reached the maximum iterations (%d)"), maxit);
 	err = E_NOCONV;
     } else if (gradnorm > gradmax) {
+	gretl_errmsg_sprintf(_("Norm of gradient %g exceeds maximum of %g"),
+			     gradnorm, gradmax);
 	err = E_NOCONV;
     } else if (fmax < f0) {
 	/* allow a small sloppiness factor here? */
