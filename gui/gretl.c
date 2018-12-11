@@ -1884,8 +1884,8 @@ GtkActionEntry main_entries[] = {
     { "About", GTK_STOCK_ABOUT, N_("_About gretl"), NULL, NULL, G_CALLBACK(about_dialog) }
 };
 
-/* Given an "internal" menu path, as in gretlmain.xml (with one or
-   two slash-separated components), return its user-visible
+/* Given an "internal" menu path, as in gretlmain.xml (with up
+   to three slash-separated components), return its user-visible
    counterpart, translated and with mnemonics stripped.
 */
 
