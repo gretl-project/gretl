@@ -1905,7 +1905,7 @@ static gchar *main_menu_user_string (const gchar *mpath)
     } else if (*mpath == '/') {
 	mpath += 1;
     } else if (!strncmp(mpath, "MODELWIN/", 9)) {
-	/* this function is main-window only */
+	/* this @mpath is model-window only */
 	return NULL;
     }
 
@@ -1917,26 +1917,36 @@ static gchar *main_menu_user_string (const gchar *mpath)
 
     if (S != NULL && S[0] != NULL) {
 	int i, j, nmain = G_N_ELEMENTS(main_entries);
-	const gchar *p1 = NULL, *p2 = NULL;
+	const gchar *p[3] = {NULL, NULL, NULL};
 
-	for (i=0; i<nmain && !p1; i++) {
+	for (i=0; i<nmain && !p[0]; i++) {
 	    if (main_entries[i].callback == NULL &&
 		!strcmp(S[0], main_entries[i].name)) {
-		p1 = main_entries[i].label;
+		p[0] = main_entries[i].label;
 		if (S[1] != NULL) {
-		    for (j=i+1; j<nmain && !p2; j++) {
+		    for (j=i+1; j<nmain && !p[1]; j++) {
 			if (main_entries[j].callback == NULL &&
 			    !strcmp(S[1], main_entries[j].name)) {
-			    p2 = main_entries[j].label;
+			    p[1] = main_entries[j].label;
+			}
+		    }
+		    if (S[2] != NULL) {
+			for (j=i+1; j<nmain && !p[2]; j++) {
+			    if (main_entries[j].callback == NULL &&
+				!strcmp(S[2], main_entries[j].name)) {
+				p[2] = main_entries[j].label;
+			    }
 			}
 		    }
 		}
 	    }
 	}
-	if (p2 != NULL) {
-	    ret = g_strdup_printf("%s/%s", _(p1), _(p2));
-	} else if (p1 != NULL) {
-	    ret = g_strdup_printf("%s", _(p1));
+	if (p[2] != NULL) {
+	    ret = g_strdup_printf("%s/%s/%s", _(p[0]), _(p[1]), _(p[2]));
+	} else if (p[1] != NULL) {
+	    ret = g_strdup_printf("%s/%s", _(p[0]), _(p[1]));
+	} else if (p[0] != NULL) {
+	    ret = g_strdup_printf("%s", _(p[0]));
 	}
     }
 
