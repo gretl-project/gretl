@@ -898,7 +898,7 @@ gretl_bundle *json_get_bundle (const char *data,
     return ret;
 }
 
-static char *path_top (const char *path)
+static char *path_first (const char *path)
 {
     const char *p = strchr(path, '/');
     char *ret;
@@ -922,7 +922,8 @@ gretl_array *json_get_array (const char *data,
     b = json_get_bundle(data, path, err);
 
     if (!*err) {
-	gchar *key = path_top(path);
+	/* FIXME handling of path -> key */
+	gchar *key = path_first(path);
 	GretlType type = 0;
 	void *ptr;
 
