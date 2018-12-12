@@ -7054,7 +7054,7 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
     if (starting(p)) {
 	const char *sr, *sl = l->v.str;
 
-	if (f == F_JSONGETB) {
+	if (f == F_JSONGETB || f == F_JSONGETA) {
 	    ; /* checks done below */
 	} else if (f == F_XMLGET && r->t == ARRAY) {
 	    if (gretl_array_get_type(r->v.a) != GRETL_TYPE_STRINGS) {
@@ -7067,6 +7067,7 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
 	if (!p->err) {
 	    ret = (f == F_INSTRING)? aux_scalar_node(p) :
 		(f == F_JSONGETB)? aux_bundle_node(p) :
+		(f == F_JSONGETA)? aux_array_node(p) :
 		aux_string_node(p);
 	}
 
@@ -7136,6 +7137,17 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
 	    }
 	    if (!p->err) {
 		ret->v.b = jfunc(l->v.str, path, &p->err);
+	    }
+	} else if (f == F_JSONGETA) {
+	    gretl_array *(*jfunc) (const char *, const char *, int *);
+	    const char *path = null_or_empty(r) ? NULL: r->v.str;
+
+	    jfunc = get_plugin_function("json_get_array");
+	    if (jfunc == NULL) {
+		p->err = E_FOPEN;
+	    }
+	    if (!p->err) {
+		ret->v.a = jfunc(l->v.str, path, &p->err);
 	    }
 	} else if (f == F_XMLGET) {
 	    char *(*xfunc) (const char *, void *, GretlType,
@@ -15748,6 +15760,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_JSONGETB:
+    case F_JSONGETA:
 	if (l->t == STR && (null_or_empty(r) || r->t == STR)) {
 	    ret = two_string_func(l, r, NULL, t->t, p);
 	} else {

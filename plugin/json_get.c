@@ -21,6 +21,7 @@
 
 #include "libgretl.h"
 #include "version.h"
+#include "gretl_typemap.h"
 
 #include <glib/gprintf.h>
 #include <glib-object.h>
@@ -733,8 +734,13 @@ static int jb_do_array (JsonReader *reader, jbundle *jb)
 		jb->curr = bsave;
 	    }
 	} else if (json_reader_is_array(reader)) {
+#if 1
+	    fprintf(stderr, "WARNING: skipping nested array at depth %d,\n"
+		    " under element '%s'\n", jb->level, name);
+#else
 	    gretl_errmsg_set("JSON array: gretl arrays cannot be nested");
 	    err = E_DATA;
+#endif
 	} else {
 	    gretl_errmsg_set("JSON array: unrecognized type");
 	    err = E_DATA;
@@ -769,7 +775,7 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
     typename = g_type_name(type);
 
 #if JB_DEBUG
-    fprintf(stderr, "  got value: name='%s', type %s (%d)\n",
+    fprintf(stderr, "  got value: name='%s', type %s (%ld)\n",
 	    name, typename, type);
 #endif
 
@@ -830,9 +836,10 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
   structure mirrors that of the root JSON object.
 */
 
-gretl_bundle *json_get_bundle (const char *data,
-			       const char *path,
-			       int *err)
+gretl_bundle *real_json_get_bundle (const char *data,
+				    const char *path,
+				    gretl_bundle *b0,
+				    int *err)
 {
     gretl_bundle *ret = NULL;
     jbundle jb = {0};
@@ -861,7 +868,11 @@ gretl_bundle *json_get_bundle (const char *data,
 	}
     }
 
-    jb.b0 = gretl_bundle_new();
+    if (b0 != NULL) {
+	jb.b0 = b0;
+    } else {
+	jb.b0 = gretl_bundle_new();
+    }
     jb.curr = jb.b0;
 
     reader = json_reader_new(root);
@@ -888,6 +899,64 @@ gretl_bundle *json_get_bundle (const char *data,
 	gretl_bundle_destroy(jb.b0);
     } else {
 	ret = jb.b0;
+    }
+
+    return ret;
+}
+
+gretl_bundle *json_get_bundle (const char *data,
+			       const char *path,
+			       int *err)
+{
+    return real_json_get_bundle(data, path, NULL, err);
+}
+
+static char *path_top (const char *path)
+{
+    const char *p = strchr(path, '/');
+    char *ret;
+
+    if (p == NULL) {
+	ret = g_strdup(path);
+    } else {
+	ret = g_strndup(path, p - path);
+    }
+
+    return ret;
+}
+
+gretl_array *json_get_array (const char *data,
+			     const char *path,
+			     int *err)
+{
+    gretl_bundle *b0 = gretl_bundle_new();
+    gretl_array *ret = NULL;
+
+    if (b0 == NULL) {
+	*err = E_ALLOC;
+    } else {
+	real_json_get_bundle(data, path, b0, err);
+    }
+
+    if (!*err) {
+	gchar *key = path_top(path);
+	GretlType type = 0;
+	void *ptr;
+
+	ptr = gretl_bundle_steal_data(b0, key, &type, NULL, err);
+	if (ptr == NULL) {
+	    gretl_errmsg_sprintf("json_get_array: got NULL for key '%s'",
+				 key);
+	    *err = E_DATA;
+	} else if (type != GRETL_TYPE_ARRAY) {
+	    gretl_errmsg_sprintf("json_get_array: got wrong type %s for key '%s'",
+				 gretl_type_get_name(type), key);
+	    *err = E_DATA;
+	} else {
+	    ret = ptr;
+	}
+	gretl_bundle_destroy(b0);
+	g_free(key);
     }
 
     return ret;

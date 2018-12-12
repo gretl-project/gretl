@@ -381,6 +381,7 @@ enum {
     F_COR,
     F_LRCOVAR,
     F_JSONGETB,
+    F_JSONGETA,
     F_FIXNAME,
     F_ATAN2,
     F_CCODE,
