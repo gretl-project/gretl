@@ -1768,40 +1768,38 @@ static void do_h_test (test_t *test, double *x, int n1, int n2)
 
 static void h_test (GtkWidget *w, test_t *test)
 {
-    int j, k, n1 = 0, n2 = 0;
+    int k = 0, n1 = 0, n2 = 0;
     double x[5] = {0};
-
-    j = k = 0;
 
     switch (test->code) {
 
     case ONE_MEAN:
-	x[j] = getval(test->entry[k++], C_DBL); /* mean */
-	if (na(x[j++])) return;
-	x[j] = getval(test->entry[k++], C_POS_DBL); /* s.d. */
-	if (na(x[j++])) return;
+	x[0] = getval(test->entry[k++], C_DBL); /* mean */
+	if (na(x[0])) return;
+	x[1] = getval(test->entry[k++], C_POS_DBL); /* s.d. */
+	if (na(x[1])) return;
 	n1 = getval(test->entry[k++], C_POS_INT); /* n */
 	if (n1 < 0) return;
-	x[j++] = getval(test->entry[k], C_DBL); /* val */
-	if (na(x[j])) return;
+	x[2] = getval(test->entry[k], C_DBL); /* val */
+	if (na(x[2])) return;
 	break;
 
     case ONE_VARIANCE:
-	x[j] = getval(test->entry[k++], C_POS_DBL);
-	if (na(x[j++])) return;
+	x[0] = getval(test->entry[k++], C_POS_DBL);
+	if (na(x[0])) return;
 	n1 = getval(test->entry[k++], C_POS_INT);
 	if (n1 < 0) return;
-	x[j] = getval(test->entry[k], C_POS_DBL);
-	if (na(x[j])) return;
+	x[1] = getval(test->entry[k], C_POS_DBL);
+	if (na(x[1])) return;
 	break;
 
     case ONE_PROPN:
-	x[j] = getval(test->entry[k++], C_FRAC); /* propn */
-	if (na(x[j++])) return;
+	x[0] = getval(test->entry[k++], C_FRAC); /* propn */
+	if (na(x[0])) return;
 	n1 = getval(test->entry[k++], C_POS_INT);
 	if (n1 < 0) return;
-	x[j] = getval(test->entry[k], C_FRAC); /* H0 propn */
-	if (na(x[j])) return;
+	x[1] = getval(test->entry[k], C_FRAC); /* H0 propn */
+	if (na(x[1])) return;
 
 	if (n1 * x[1] < 5.0 || n1 * (1.0 - x[1]) < 5.0) {
 	    infobox(_("The assumption of a normal sampling distribution\n"
@@ -1811,44 +1809,44 @@ static void h_test (GtkWidget *w, test_t *test)
 	break;
 
     case TWO_MEANS:
-	x[j] = getval(test->entry[k++], C_DBL); /* mean1 */
-	if (na(x[j++])) return;
-	x[j] = getval(test->entry[k++], C_POS_DBL); /* sd1 */
-	if (na(x[j++])) return;
+	x[0] = getval(test->entry[k++], C_DBL); /* mean1 */
+	if (na(x[0])) return;
+	x[1] = getval(test->entry[k++], C_POS_DBL); /* sd1 */
+	if (na(x[1])) return;
 	n1 = getval(test->entry[k++], C_POS_INT);
 	if (n1 < 0) return; 
 
-	x[j] = getval(test->entry[k++], C_DBL); /* mean2 */
-	if (na(x[j++])) return;
-	x[j] = getval(test->entry[k++], C_POS_DBL); /* sd2 */
-	if (na(x[j++])) return;
+	x[2] = getval(test->entry[k++], C_DBL); /* mean2 */
+	if (na(x[2])) return;
+	x[3] = getval(test->entry[k++], C_POS_DBL); /* sd2 */
+	if (na(x[3])) return;
 	n2 = getval(test->entry[k++], C_POS_INT);
 	if (n2 < 0) return; 
 
-	x[j] = getval(test->entry[k], C_DBL);
-	if (na(x[j])) return;
+	x[4] = getval(test->entry[k], C_DBL);
+	if (na(x[4])) return;
 	break;
 
     case TWO_VARIANCES:
-	x[j] = getval(test->entry[k++], C_POS_DBL);
-	if (na(x[j++])) return;
+	x[0] = getval(test->entry[k++], C_POS_DBL);
+	if (na(x[0])) return;
 	n1 = getval(test->entry[k++], C_POS_INT);
 	if (n1 < 0) return;
 
-	x[j] = getval(test->entry[k++], C_POS_DBL);
-	if (na(x[j])) return;
+	x[1] = getval(test->entry[k++], C_POS_DBL);
+	if (na(x[1])) return;
 	n2 = getval(test->entry[k], C_POS_INT);
 	if (n2 < 0) return;
 	break;
 
     case TWO_PROPNS:
-	x[j] = getval(test->entry[k++], C_FRAC);
-	if (na(x[j++])) return;
+	x[0] = getval(test->entry[k++], C_FRAC);
+	if (na(x[0])) return;
 	n1 = getval(test->entry[k++], C_POS_INT);
 	if (n1 < 0) return;
 
-	x[j] = getval(test->entry[k++], C_FRAC);
-	if (na(x[j])) return;
+	x[1] = getval(test->entry[k++], C_FRAC);
+	if (na(x[1])) return;
 	n2 = getval(test->entry[k], C_POS_INT);
 	if (n2 < 0) return;
 	break;
