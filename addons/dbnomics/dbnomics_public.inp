@@ -209,26 +209,21 @@ end function
 function bundles dbnomics_get_dataset_dimensions(const string provider,
       const string dset, bool verbose[0])
 
-    URL = sprintf("https://api.db.nomics.world/v21/%s/%s/series?limit=0&offset=0", \
-      provider, dset)
-    if verbose
-        printf "URL: %s\n", URL
-    endif
-    s = readfile(URL)
-    n = 0
-    errstr = jsonget(s, "$.error_description", &n)
-    if n
-        funcerr errstr
-    endif
+    string parms = sprintf("%s/%s/series?limit=0&offset=0", provider, dset)
+    string json
+    err = dbn_get_json(parms, verbose, &json)
 
-    b = jsongetb(s, "series_dimensions_facets")
-    c_order = strsplit(jsonget(s, "$.dataset.dimensions_codes_order"),"\n")
-    ndims = nelem(c_order)
-
-    bf = b["series_dimensions_facets"]
+    if !err
+        b = jsongetb(json, "series_dimensions_facets")
+        c_order = strsplit(jsonget(json, "$.dataset.dimensions_codes_order"),"\n")
+        ndims = nelem(c_order)
+        bf = b["series_dimensions_facets"]
+    else
+        ndims = 0
+    endif
 
     bundles ret = array(ndims)
-    loop i = 1 .. ndims --quiet # loop over dimensions
+    loop i=1..ndims --quiet # loop over dimensions
         ci = c_order[i]
         ret[i].code = ci
         bundle bfi = bf[ci]
@@ -237,7 +232,7 @@ function bundles dbnomics_get_dataset_dimensions(const string provider,
         ret[i].nvalues = nelem(bfi.values)
     endloop
 
-    if verbose
+    if verbose && !err
         loop i = 1 .. ndims --quiet
             r = ret[i]
             nv = r.nvalues
@@ -257,7 +252,6 @@ function bundles dbnomics_get_dataset_dimensions(const string provider,
     endif
 
     return ret
-
 end function
 
 ### ------------------------------------------------------------------------
