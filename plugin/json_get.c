@@ -836,10 +836,9 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
   structure mirrors that of the root JSON object.
 */
 
-gretl_bundle *real_json_get_bundle (const char *data,
-				    const char *path,
-				    gretl_bundle *b0,
-				    int *err)
+gretl_bundle *json_get_bundle (const char *data,
+			       const char *path,
+			       int *err)
 {
     gretl_bundle *ret = NULL;
     jbundle jb = {0};
@@ -868,12 +867,7 @@ gretl_bundle *real_json_get_bundle (const char *data,
 	}
     }
 
-    if (b0 != NULL) {
-	jb.b0 = b0;
-    } else {
-	jb.b0 = gretl_bundle_new();
-    }
-    jb.curr = jb.b0;
+    jb.curr = jb.b0 = gretl_bundle_new();
 
     reader = json_reader_new(root);
     gretl_push_c_numeric_locale();
@@ -904,13 +898,6 @@ gretl_bundle *real_json_get_bundle (const char *data,
     return ret;
 }
 
-gretl_bundle *json_get_bundle (const char *data,
-			       const char *path,
-			       int *err)
-{
-    return real_json_get_bundle(data, path, NULL, err);
-}
-
 static char *path_top (const char *path)
 {
     const char *p = strchr(path, '/');
@@ -929,21 +916,17 @@ gretl_array *json_get_array (const char *data,
 			     const char *path,
 			     int *err)
 {
-    gretl_bundle *b0 = gretl_bundle_new();
     gretl_array *ret = NULL;
+    gretl_bundle *b;
 
-    if (b0 == NULL) {
-	*err = E_ALLOC;
-    } else {
-	real_json_get_bundle(data, path, b0, err);
-    }
+    b = json_get_bundle(data, path, err);
 
     if (!*err) {
 	gchar *key = path_top(path);
 	GretlType type = 0;
 	void *ptr;
 
-	ptr = gretl_bundle_steal_data(b0, key, &type, NULL, err);
+	ptr = gretl_bundle_steal_data(b, key, &type, NULL, err);
 	if (ptr == NULL) {
 	    gretl_errmsg_sprintf("json_get_array: got NULL for key '%s'",
 				 key);
@@ -955,7 +938,7 @@ gretl_array *json_get_array (const char *data,
 	} else {
 	    ret = ptr;
 	}
-	gretl_bundle_destroy(b0);
+	gretl_bundle_destroy(b);
 	g_free(key);
     }
 
