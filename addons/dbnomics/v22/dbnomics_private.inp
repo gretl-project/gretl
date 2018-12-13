@@ -188,10 +188,12 @@ function scalar check_json (const string s, string *msg)
         ret = 400
     else
         bundle eb = jsongetb(s, "errors")
-        # do we have a (non-empty) @errors bundle?
-        if typeof(eb.errors) == 5 && nelem(eb.errors) > 0
-            msg = eb.errors[1].cause
-            ret = 1
+	if inbundle(eb, "errors")
+            # do we have a (non-empty) @errors bundle?
+            if typeof(eb.errors) == 5 && nelem(eb.errors) > 0
+                msg = eb.errors[1].cause
+                ret = 1
+            endif
         endif
     endif
     # warnings with v22 ??
@@ -257,16 +259,16 @@ function bundles multiple_from_json (const string json, bool verbose[0])
 
     bundles ret = null
     bundle b = jsongetb(json, "series")
-    b = b.series
-    n = b.num_found
-
-    if n == 0
-        return ret
+    if typeof(b.series) == 6 # array
+        ret = b.series
+    elif typeof(b.series) == 5 # bundle
+        if b.num_found > 0
+            b = b.series
+            ret = b.docs
+	endif
     endif
 
-    n = nelem(b.docs)
-    ret = b.docs
-    loop i=1..n -q
+    loop i=1..nelem(ret) -q
         process_series_bundle(&ret[i])
     endloop
     return ret
