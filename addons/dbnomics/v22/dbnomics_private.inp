@@ -1,5 +1,5 @@
 function bundle json2bndl(const strings fields, const string jsonobj,
-      const string root, int ndx)
+                          const string root, int ndx)
     bundle b = null
     k = 0
     loop j = 1..nelem(fields) --quiet
@@ -37,10 +37,10 @@ function void process_series_bundle (bundle *b)
     # trim trailing NAs
     loop for (j=t2; j>=t1; j--) -q
         if b.value[j] == "" || b.value[j] == "NA"
-	    t2--
-	else
-	    break
-	endif
+            t2--
+        else
+            break
+        endif
     endloop
     T = t2 - t1 + 1
     b.T = T
@@ -135,41 +135,41 @@ function string build_URL_mid(const bundle spec)
 
     if inbundle(spec, "mask")
         # special case: we have a mask
-	ret = "series_code_mask=" ~ spec.mask ~ "&"
+        ret = "series_code_mask=" ~ spec.mask ~ "&"
     else
         # no mask, selection is on dimensions
-	ret = "dimensions={"
-	strings filters = array()
-    
-	strings dims = getkeys(spec) # eg, "freq", "indicator", "geo"
-    
-	n = 0
-	loop i = 1..nelem(dims) --quiet
+        ret = "dimensions={"
+        strings filters = array()
+
+        strings dims = getkeys(spec) # eg, "freq", "indicator", "geo"
+
+        n = 0
+        loop i = 1..nelem(dims) --quiet
             s = make_dimensions(spec, dims[i])
             if strlen(s) > 0
-		n++
-		filters = filters + defarray(s)
+                n++
+                filters = filters + defarray(s)
             endif
-	endloop
+        endloop
 
-	loop i = 1..n --quiet
+        loop i = 1..n --quiet
             ret ~= filters[i]
             if i < n
-		ret ~= ", "
+                ret ~= ", "
             endif
-	endloop
+        endloop
 
-	ret = ret ~ "}&"
+        ret = ret ~ "}&"
     endif
-    
+
     return ret
 end function
 
 ### ------------------------------------------------------------------------
 
 function string build_parms(const string pcode, const string dcode,
-      int limit[0::20], int offset[0],
-      bundle spec)
+                            int limit[0::20], int offset[0],
+                            bundle spec)
     string head = sprintf("series?provider_code=%s&dataset_code=%s&",
       pcode, dcode)
     string mid = build_URL_mid(spec)
@@ -218,7 +218,7 @@ function scalar dbn_get_json_from_URL (const string URL, string *json, string *m
         dbg = ngetenv("DBNOMICS_DEBUG")
         if ok(dbg) && dbg > 0
             outfile dbn_debug.json --quiet
-            json
+                json
             end outfile
         endif
         string dbnmsg
@@ -234,7 +234,7 @@ end function
 ### ------------------------------------------------------------------------
 
 function scalar dbn_get_json (const string parms, bool verbose[0],
-      string *json)
+                              string *json)
 
     string URL = "https://api.dev.db.nomics.world/v22/" ~ parms
     if verbose
@@ -280,7 +280,7 @@ end function
 ### ------------------------------------------------------------------------
 
 function bundles general_search(const string key, int limit[0::100],
-      int offset[0], bool verbose[0])
+                                int offset[0], bool verbose[0])
 
     magic = "results.docs"
     bundles ret = array(0)
@@ -333,8 +333,8 @@ end function
 ### ------------------------------------------------------------------------
 
 function bundles dset_search(const string key, const string pcode,
-      const string dcode, int limit[0::100],
-      int offset[0], bool verbose[0])
+                             const string dcode, int limit[0::100],
+                             int offset[0], bool verbose[0])
 
     bundles ret = array(0)
     scalar got = 0
@@ -390,10 +390,10 @@ function matrix get_widths(bundles bs)
         l = strlen(bs[i].series_name)
         w3 = xmin(xmax(w3, l), 40)
     endloop
-    
+
     return {w1, w2, w3} + 2
 end function
-        
+
 ### ------------------------------------------------------------------------
 
 function string one_line_bprint(bundle b, matrix widths)
@@ -405,16 +405,16 @@ function string one_line_bprint(bundle b, matrix widths)
     endif
     fmtstring = sprintf("%%-%ds %%-%ds %%-%ds", widths[1], widths[2], widths[3])
     ret = sprintf(fmtstring, provider, scode, sname)
-    
+
     if b.has_data
         scalar T = b.T
         print T
         string span = sprintf("%s:%s", b.period[1], b.period[T])
         print span
-        ret ~= sprintf(" %d observations (pd = %d) [%s]", T, b.frequency, span) 
+        ret ~= sprintf(" %d observations (pd = %d) [%s]", T, b.frequency, span)
     else
         ret ~= " has no data"
     endif
-    
+
     return ret
 end function
