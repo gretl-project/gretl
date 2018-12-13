@@ -72,7 +72,7 @@ end function
 function void dbnomics_bundles_print(bundles bs)
     aname = argname(bs)
     n = nelem(bs)
-    if n>0
+    if n > 0
         printf("\n\nContents of %s:\n\n", aname)
         widths = get_widths(bs)
         fmtstring = sprintf("%%-%ds %%-%ds %%-%ds", widths[1], widths[2], widths[3])
