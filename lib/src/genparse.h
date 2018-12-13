@@ -444,6 +444,7 @@ enum {
     F_JSONGET,
     F_FEVD,
     F_LRVAR,
+    F_BRENAME,
     HF_CEIGG,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,

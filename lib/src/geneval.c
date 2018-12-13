@@ -10334,20 +10334,6 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
     return p->err;
 }
 
-static int set_bundle_note (gretl_bundle *b, const char *key,
-			    const char *note, parser *p)
-{
-    int err = 0;
-
-    if (b == NULL) {
-	p->err = E_UNKVAR;
-    } else {
-	err = gretl_bundle_set_note(b, key, note);
-    }
-
-    return err;
-}
-
 static gretl_matrix *get_corrgm_matrix (NODE *l,
 					NODE *m,
 					NODE *r,
@@ -10724,7 +10710,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 		}
 	    }
 	}
-    } else if (f == F_SETNOTE) {
+    } else if (f == F_SETNOTE || f == F_BRENAME) {
 	post_process = 0;
 	if (l->t != BUNDLE) {
 	    node_type_error(f, 1, BUNDLE, l, p);
@@ -10735,9 +10721,13 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	} else {
 	    reset_p_aux(p, save_aux);
 	    ret = aux_scalar_node(p);
+	    if (!p->err && f == F_SETNOTE) {
+		p->err = gretl_bundle_set_note(l->v.b, m->v.str, r->v.str);
+	    } else if (!p->err) {
+		p->err = gretl_bundle_rekey_data(l->v.b, m->v.str, r->v.str);
+	    }
 	    if (!p->err) {
-		ret->v.xval = set_bundle_note(l->v.b, m->v.str,
-					      r->v.str, p);
+		ret->v.xval = 0;
 	    }
 	}
     } else if (f == F_BWFILT) {
@@ -15469,6 +15459,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_MWEIGHTS:
     case F_MGRADIENT:
     case F_LRCOVAR:
+    case F_BRENAME:
     case HF_CEIGG:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {

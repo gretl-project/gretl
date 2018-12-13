@@ -134,7 +134,8 @@ int gretl_bundle_set_note (gretl_bundle *bundle, const char *key,
 
 int gretl_bundle_delete_data (gretl_bundle *bundle, const char *key);
 
-int gretl_bundle_add_or_replace (gretl_bundle *bundle, const char *name);
+int gretl_bundle_rekey_data (gretl_bundle *bundle, const char *oldkey,
+			     const char *newkey);
 
 int gretl_bundle_copy_as (const char *name, const char *copyname);
 
