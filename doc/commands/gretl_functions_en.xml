@@ -1775,6 +1775,22 @@
       </description>
     </function>
 
+    <function name="brename" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="bundle">B</fnarg>
+	<fnarg type="string">oldkey</fnarg>
+	<fnarg type="string">newkey</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  If the bundle <argname>B</argname> contains a member
+	  under the key <argname>oldkey</argname>, its key is
+	  changed to <argname>newkey</argname>, otherwise an
+	  error is flagged. Returns 0 on successful renaming.
+	</para>
+      </description>
+    </function>
+
     <function name="bwfilt" section="filters" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
