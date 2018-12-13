@@ -140,7 +140,6 @@ function string build_URL_mid(const bundle spec)
         # no mask, selection is on dimensions
         ret = "dimensions={"
         strings filters = array()
-
         strings dims = getkeys(spec) # eg, "freq", "indicator", "geo"
 
         n = 0
@@ -170,10 +169,9 @@ end function
 function string build_parms(const string pcode, const string dcode,
                             int limit[0::20], int offset[0],
                             bundle spec)
-    string head = sprintf("series?provider_code=%s&dataset_code=%s&",
-      pcode, dcode)
+    string head = sprintf("series/%s/%s?", pcode, dcode)
     string mid = build_URL_mid(spec)
-    string tail = sprintf("limit=%d&offset=%d&format=json", limit, offset)
+    string tail = sprintf("limit=%d&offset=%d&format=json&observations=true", limit, offset)
     ret = head ~ sanitize_url(mid) ~ tail
     return ret
 end function
@@ -189,16 +187,15 @@ function scalar check_json (const string s, string *msg)
         ret = 404
     elif instring(s, "400 Bad Request")
         ret = 400
+    else
+        bundle eb = jsongetb(s, "errors")
+	# do we have a (non-empty) @errors bundle?
+        if typeof(eb.errors) == 5 && nelem(eb.errors) > 0
+	    msg = eb.errors[1].cause
+	    ret = 1
+	endif
     endif
-    err_got = 0
-    msg = jsonget(s, "$.error_description", &err_got)
-    if !err_got
-        wgot = 0
-        msg = jsonget(s, "$.warnings", &wgot)
-    endif
-    if ret == 0 && err_got
-        ret = err_got
-    endif
+    # warnings with v22 ??
     return ret
 end function
 
@@ -268,8 +265,8 @@ function bundles multiple_from_json (const string json, bool verbose[0])
         return ret
     endif
 
-    n = nelem(b.data)
-    ret = b.data
+    n = nelem(b.docs)
+    ret = b.docs
     loop i=1..n -q
         process_series_bundle(&ret[i])
     endloop

@@ -426,8 +426,12 @@ function series dbnomics_fetch (const string id, bool verbose[0])
     series ret = NA
     bundle b = dbnomics_get_series(id, verbose)
     if b.error
-        string str = b.errmsg
-        funcerr str
+        if inbundle(b, "errmsg")
+	    string str = b.errmsg
+            funcerr str
+	else
+	    funcerr "error in dbnomics_fetch_series"
+	endif
     else
         dbnomics_bundle_get_data(b, &ret, verbose)
     endif
