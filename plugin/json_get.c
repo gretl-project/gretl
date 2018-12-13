@@ -29,6 +29,7 @@
 
 #define handled_type(t) (t == G_TYPE_STRING || \
 			 t == G_TYPE_DOUBLE || \
+	                 t == G_TYPE_BOOLEAN || \
 			 t == G_TYPE_INT64)
 
 #define non_empty_array(a) (a != NULL && json_array_get_length(a) > 0)
@@ -181,11 +182,16 @@ static int output_json_node_value (JsonNode *node,
 	double x = json_node_get_double(node);
 
 	pprintf(prn, "%.15g", x);
-    } else {
+    } else if (type == G_TYPE_INT64) {
 	gint64 k = json_node_get_int(node);
 	double x = (double) k;
 
 	pprintf(prn, "%.15g", x);
+    } else {
+	int k = json_node_get_boolean(node);
+	double x = (double) k;
+
+	pprintf(prn, "%g", x);
     }
 
     return err;
@@ -809,7 +815,17 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
 	} else {
 	    gretl_bundle_set_string(jb->curr, name, s);
 	}
+    } else if (type == G_TYPE_BOOLEAN) {
+	int k = (int) json_reader_get_boolean_value(reader);
+
+	if (a != NULL) {
+	    sprintf(tmp, "%d", k);
+	    gretl_array_set_string(a, i, tmp, 1);
+	} else {
+	    gretl_bundle_set_int(jb->curr, name, k);
+	}
     } else if (type == 0) {
+	/* null object -> empty string */
 	if (a != NULL) {
 	    gretl_array_set_string(a, i, "", 1);
 	} else {
