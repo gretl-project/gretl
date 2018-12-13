@@ -132,34 +132,27 @@ function string build_URL_mid(const bundle spec)
     if nelem(spec) == 0
         return ret
     endif
+    ret = "dimensions={"
+    strings filters = array()
+    strings dims = getkeys(spec) # eg, "freq", "indicator", "geo"
 
-    if inbundle(spec, "mask")
-        # special case: we have a mask
-        ret = "series_code_mask=" ~ spec.mask ~ "&"
-    else
-        # no mask, selection is on dimensions
-        ret = "dimensions={"
-        strings filters = array()
-        strings dims = getkeys(spec) # eg, "freq", "indicator", "geo"
+    n = 0
+    loop i = 1..nelem(dims) --quiet
+        s = make_dimensions(spec, dims[i])
+        if strlen(s) > 0
+            n++
+            filters = filters + defarray(s)
+        endif
+    endloop
 
-        n = 0
-        loop i = 1..nelem(dims) --quiet
-            s = make_dimensions(spec, dims[i])
-            if strlen(s) > 0
-                n++
-                filters = filters + defarray(s)
-            endif
-        endloop
+    loop i = 1..n --quiet
+        ret ~= filters[i]
+        if i < n
+            ret ~= ", "
+        endif
+    endloop
 
-        loop i = 1..n --quiet
-            ret ~= filters[i]
-            if i < n
-                ret ~= ", "
-            endif
-        endloop
-
-        ret = ret ~ "}&"
-    endif
+    ret = ret ~ "}&"
 
     return ret
 end function
@@ -169,11 +162,17 @@ end function
 function string build_parms(const string pcode, const string dcode,
                             int limit[0::20], int offset[0],
                             bundle spec)
-    string head = sprintf("series/%s/%s?", pcode, dcode)
-    string mid = build_URL_mid(spec)
+    string head
+    if inbundle(spec, "mask")
+        string mask = sanitize_url(spec.mask)
+        head = sprintf("series/%s/%s/%s?", pcode, dcode, mask)
+    else
+        head = sprintf("series/%s/%s?", pcode, dcode)
+        string mid = build_URL_mid(spec)
+        head ~= sanitize_url(mid)
+    endif
     string tail = sprintf("limit=%d&offset=%d&format=json&observations=true", limit, offset)
-    ret = head ~ sanitize_url(mid) ~ tail
-    return ret
+    return head ~ tail
 end function
 
 ### ------------------------------------------------------------------------
@@ -189,11 +188,11 @@ function scalar check_json (const string s, string *msg)
         ret = 400
     else
         bundle eb = jsongetb(s, "errors")
-	# do we have a (non-empty) @errors bundle?
+        # do we have a (non-empty) @errors bundle?
         if typeof(eb.errors) == 5 && nelem(eb.errors) > 0
-	    msg = eb.errors[1].cause
-	    ret = 1
-	endif
+            msg = eb.errors[1].cause
+            ret = 1
+        endif
     endif
     # warnings with v22 ??
     return ret

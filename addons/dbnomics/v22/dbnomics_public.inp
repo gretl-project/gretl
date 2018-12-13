@@ -427,11 +427,11 @@ function series dbnomics_fetch (const string id, bool verbose[0])
     bundle b = dbnomics_get_series(id, verbose)
     if b.error
         if inbundle(b, "errmsg")
-	    string str = b.errmsg
+            string str = b.errmsg
             funcerr str
-	else
-	    funcerr "error in dbnomics_fetch_series"
-	endif
+        else
+            funcerr "error in dbnomics_fetch_series"
+        endif
     else
         dbnomics_bundle_get_data(b, &ret, verbose)
     endif
