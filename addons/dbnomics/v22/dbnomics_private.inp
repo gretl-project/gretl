@@ -1,0 +1,420 @@
+function bundle json2bndl(const strings fields, const string jsonobj,
+      const string root, int ndx)
+    bundle b = null
+    k = 0
+    loop j = 1..nelem(fields) --quiet
+        f = fields[j]
+        src = sprintf("$.%s[%d].%s", root, ndx, f)
+        str = jsonget(jsonobj, src, &k)
+        if k
+            if f == "name"
+                # hopefully this can be trashed later
+                b[f] = strsub(str, "&#44;", ",")
+            else
+                b[f] = str
+            endif
+        endif
+    endloop
+    return b
+end function
+
+### ------------------------------------------------------------------------
+
+function void process_series_bundle (bundle *b)
+    set warnings off
+    b.error = 0
+    b.frequency = bundle_get_frequency(b)
+    t1 = 1
+    t2 = nelem(b.period)
+    # trim leading NAs
+    loop j=1..t2 -q
+        if b.value[j] == "" || b.value[j] == "NA"
+            t1++
+        else
+            break
+        endif
+    endloop
+    # trim trailing NAs
+    loop for (j=t2; j>=t1; j--) -q
+        if b.value[j] == "" || b.value[j] == "NA"
+	    t2--
+	else
+	    break
+	endif
+    endloop
+    T = t2 - t1 + 1
+    b.T = T
+    b.has_data = T > 0
+    if T > 0
+        if t1 > 1
+            b.period = b.period[t1:t2]
+        endif
+        matrix vals = zeros(T, 1)
+        j = 1
+        loop t=t1..t2 -q
+            vals[j] = atof(b.value[t])
+            j++
+        endloop
+        b.value = vals
+    endif
+end function
+
+### ------------------------------------------------------------------------
+
+function string sanitize_url(const string s)
+    ret = strsub(s, " ", "%20")
+    ret = strsub(ret, sprintf("\""), "%22")
+    ret = strsub(ret, ",", "%2C")
+    ret = strsub(ret, ":", "%3A")
+    ret = strsub(ret, "{", "%7B")
+    ret = strsub(ret, "}", "%7D")
+    ret = strsub(ret, "[", "%5B")
+    ret = strsub(ret, "]", "%5D")
+    return ret
+end function
+
+### ------------------------------------------------------------------------
+
+function scalar bundle_get_frequency (const bundle b)
+    set warnings off
+    strings alts = defarray("Frequency", "FREQ", "@frequency")
+    string frq = ""
+    loop i=1..nelem(alts) -q
+        if inbundle(b, alts[i])
+            frq = tolower(b[alts[i]][1])
+            break
+        endif
+    endloop
+
+    scalar ret
+
+    if frq == ""
+        ret = NA
+    elif frq == "a"
+        ret = 1
+    elif frq == "q"
+        ret = 4
+    elif frq == "m"
+        ret = 12
+    elif frq == "d"
+        ret = 7
+    else
+        printf "frq = \"%s\" unrecognized\n", frq
+        ret = -1
+    endif
+
+    return ret
+end function
+
+### ------------------------------------------------------------------------
+
+function string make_dimensions(const bundle spec, const string what)
+    ret = ""
+    if inbundle(spec, what)
+        strings ss = spec[what]
+        ret ~= sprintf("\"%s\":[", what)
+        loop i = 1 .. nelem(ss) --quiet
+            ret ~= sprintf("\"%s\"", ss[i])
+            if i < nelem(ss)
+                ret ~= ","
+            else
+                ret ~= "]"
+            endif
+        endloop
+    endif
+    return ret
+end function
+
+### ------------------------------------------------------------------------
+
+function string build_URL_mid(const bundle spec)
+    string ret = ""
+    if nelem(spec) == 0
+        return ret
+    endif
+
+    if inbundle(spec, "mask")
+        # special case: we have a mask
+	ret = "series_code_mask=" ~ spec.mask ~ "&"
+    else
+        # no mask, selection is on dimensions
+	ret = "dimensions={"
+	strings filters = array()
+    
+	strings dims = getkeys(spec) # eg, "freq", "indicator", "geo"
+    
+	n = 0
+	loop i = 1..nelem(dims) --quiet
+            s = make_dimensions(spec, dims[i])
+            if strlen(s) > 0
+		n++
+		filters = filters + defarray(s)
+            endif
+	endloop
+
+	loop i = 1..n --quiet
+            ret ~= filters[i]
+            if i < n
+		ret ~= ", "
+            endif
+	endloop
+
+	ret = ret ~ "}&"
+    endif
+    
+    return ret
+end function
+
+### ------------------------------------------------------------------------
+
+function string build_parms(const string pcode, const string dcode,
+      int limit[0::20], int offset[0],
+      bundle spec)
+    string head = sprintf("series?provider_code=%s&dataset_code=%s&",
+      pcode, dcode)
+    string mid = build_URL_mid(spec)
+    string tail = sprintf("limit=%d&offset=%d&format=json", limit, offset)
+    ret = head ~ sanitize_url(mid) ~ tail
+    return ret
+end function
+
+### ------------------------------------------------------------------------
+
+# This is tricky: we may not get a recognizable error code
+# or even an error message on failure to retrieve any data.
+
+function scalar check_json (const string s, string *msg)
+    ret = 0
+    if instring(s, "404 Error") || instring(s, "404 Not Found")
+        ret = 404
+    elif instring(s, "400 Bad Request")
+        ret = 400
+    endif
+    err_got = 0
+    msg = jsonget(s, "$.error_description", &err_got)
+    if !err_got
+        wgot = 0
+        msg = jsonget(s, "$.warnings", &wgot)
+    endif
+    if ret == 0 && err_got
+        ret = err_got
+    endif
+    return ret
+end function
+
+### ------------------------------------------------------------------------
+
+function scalar dbn_get_json_from_URL (const string URL, string *json, string *msg)
+
+    bundle req = defbundle("URL", URL, "header", "accept: application/json")
+    # check for curl error
+    scalar error = curl(&req)
+
+    if error
+        msg = req.errmsg
+    else
+        # also check for dbnomics error condition
+        json = req.output
+        dbg = ngetenv("DBNOMICS_DEBUG")
+        if ok(dbg) && dbg > 0
+            outfile dbn_debug.json --quiet
+            json
+            end outfile
+        endif
+        string dbnmsg
+        error = check_json(json, &dbnmsg)
+        if dbnmsg != ""
+            msg = sprintf("dbnomics says:\n\"%s\"\n", dbnmsg)
+        endif
+    endif
+
+    return error
+end function
+
+### ------------------------------------------------------------------------
+
+function scalar dbn_get_json (const string parms, bool verbose[0],
+      string *json)
+
+    string URL = "https://api.dev.db.nomics.world/v22/" ~ parms
+    if verbose
+        printf "URL: %s\n\n", URL
+    endif
+    string msg
+    error = dbn_get_json_from_URL(URL, &json, &msg)
+    if error
+        if msg == ""
+            msg = "Failed to get the requested information from dbnomics"
+        endif
+        funcerr msg
+    elif msg != ""
+        # got a warning but not an actual error
+        print msg
+    endif
+
+    return error
+end function
+
+### ------------------------------------------------------------------------
+
+function bundles multiple_from_json (const string json, bool verbose[0])
+
+    bundles ret = null
+    bundle b = jsongetb(json, "series")
+    b = b.series
+    n = b.num_found
+
+    if n == 0
+        return ret
+    endif
+
+    n = nelem(b.data)
+    ret = b.data
+    loop i=1..n -q
+        process_series_bundle(&ret[i])
+    endloop
+    return ret
+
+end function
+
+### ------------------------------------------------------------------------
+
+function bundles general_search(const string key, int limit[0::100],
+      int offset[0], bool verbose[0])
+
+    magic = "results.docs"
+    bundles ret = array(0)
+
+    string json
+    parms = sprintf("search?q=%s&limit=%d&offset=%d", sanitize_url(key),
+      limit, offset)
+    err = dbn_get_json(parms, verbose, &json)
+    if err
+        return ret
+    endif
+
+    n = 0
+    str = jsonget(json, sprintf("$.%s[*].code", magic), &n)
+    ntot = atof(jsonget(json, "$.results.num_found"))
+    # fix possibly nonsensical result
+    if ntot < n
+        ntot = n
+    endif
+
+    #printf "n = %d, ntot = %d\n", n, ntot
+
+    if n == 0
+        if verbose
+            printf "No matches found"
+        endif
+        return ret
+    endif
+
+    bundles ret = array(n)
+    strings fields = defarray("code", "nb_matching_series", "name", \
+      "provider_code")
+    loop i = 1..n --quiet
+        ret[i] = json2bndl(fields, json, magic, i-1)
+        ret[i].ntot = ntot
+    endloop
+
+    if verbose
+        printf "Datasets containing \"%s\" (%d-%d out of %d): \n\n",
+          key, offset+1, offset+n, ntot
+        loop i = 1..n --quiet
+            printf "%3d: %s.%s", i, ret[i].provider_code, ret[i].code
+            printf " (%d series)\n", atof(ret[i].nb_matching_series)
+        endloop
+    endif
+
+    return ret
+end function
+
+### ------------------------------------------------------------------------
+
+function bundles dset_search(const string key, const string pcode,
+      const string dcode, int limit[0::100],
+      int offset[0], bool verbose[0])
+
+    bundles ret = array(0)
+    scalar got = 0
+    string json
+    parms = sprintf("%s/%s/series?q=%s&limit=%d&offset=%d", pcode, dcode,
+      sanitize_url(key),limit, offset)
+
+    err = dbn_get_json(parms, verbose, &json)
+
+    if !err
+        bundle bj = jsongetb(json, "series")
+        scalar ntot = bj["series"].num_found
+        if ntot > 0
+            ret = bj["series"].docs
+            got = nelem(ret)
+            if ntot < got
+                # just in case of breakage
+                ntot = got
+            endif
+        endif
+        if got > 0
+            loop i = 1..got --quiet
+                ret[i].ntot = ntot
+            endloop
+        endif
+        if verbose
+            if got > 0
+                printf "Dataset %s/%s, matching series %d-%d of %d:\n\n",
+                  pcode, dcode, offset+1, offset+got, ntot
+                loop i = 1 .. got --quiet
+                    printf "%s: %s\n", ret[i].code, ret[i].name
+                endloop
+            else
+                printf "no matching series found\n"
+            endif
+        endif
+    endif
+
+    return ret
+end function
+
+### ------------------------------------------------------------------------
+
+function matrix get_widths(bundles bs)
+    w1 = 6
+    w2 = 12
+    w3 = 24
+    loop i = 1..nelem(bs) --quiet
+        l = strlen(bs[i].provider_code) + strlen(bs[i].dataset_code) + 1
+        w1 = xmax(w1, l)
+        l = strlen(bs[i].series_code)
+        w2 = xmax(w2, l)
+        l = strlen(bs[i].series_name)
+        w3 = xmin(xmax(w3, l), 40)
+    endloop
+    
+    return {w1, w2, w3} + 2
+end function
+        
+### ------------------------------------------------------------------------
+
+function string one_line_bprint(bundle b, matrix widths)
+    provider = b.provider_code ~ "/" ~ b.dataset_code
+    scode = fixname(b.series_code, 1)
+    sname = b.series_name
+    if strlen(sname) > 40
+        sname = sname[1:37] ~ "..."
+    endif
+    fmtstring = sprintf("%%-%ds %%-%ds %%-%ds", widths[1], widths[2], widths[3])
+    ret = sprintf(fmtstring, provider, scode, sname)
+    
+    if b.has_data
+        scalar T = b.T
+        print T
+        string span = sprintf("%s:%s", b.period[1], b.period[T])
+        print span
+        ret ~= sprintf(" %d observations (pd = %d) [%s]", T, b.frequency, span) 
+    else
+        ret ~= " has no data"
+    endif
+    
+    return ret
+end function
