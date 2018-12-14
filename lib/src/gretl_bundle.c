@@ -59,6 +59,7 @@ struct bundled_item_ {
     int size;
     gpointer data;
     char *note;
+    char *name; /* pointer to associated key */
 };
 
 static gretl_bundle *sysinfo_bundle;
@@ -178,6 +179,7 @@ static bundled_item *bundled_item_new (GretlType type, void *ptr,
 
     item->type = type;
     item->size = 0;
+    item->name = NULL;
     item->note = NULL;
 
     if (!copy && !always_alloc(item->type)) {
@@ -318,33 +320,9 @@ static int bundled_item_replace_data (bundled_item *item,
     return err;
 }
 
-static void free_bundled_data (void *data, GretlType type)
-{
-    switch (type) {
-    case GRETL_TYPE_DOUBLE:
-    case GRETL_TYPE_INT:
-    case GRETL_TYPE_STRING:
-    case GRETL_TYPE_SERIES:
-    case GRETL_TYPE_LIST:
-	free(data);
-	break;
-    case GRETL_TYPE_MATRIX:
-	gretl_matrix_free((gretl_matrix *) data);
-	break;
-    case GRETL_TYPE_BUNDLE:
-	gretl_bundle_destroy((gretl_bundle *) data);
-	break;
-    case GRETL_TYPE_ARRAY:
-	gretl_array_destroy((gretl_array *) data);
-	break;
-    default:
-	break;
-    }
-}
-
 /* callback invoked when a bundle's hash table is destroyed */
 
-static void bundled_item_destroy (gpointer data)
+static void bundle_item_destroy (gpointer data)
 {
     bundled_item *item = data;
 
@@ -356,17 +334,30 @@ static void bundled_item_destroy (gpointer data)
     }
 #endif
 
-    free_bundled_data(item->data, item->type);
+    switch (item->type) {
+    case GRETL_TYPE_DOUBLE:
+    case GRETL_TYPE_INT:
+    case GRETL_TYPE_STRING:
+    case GRETL_TYPE_SERIES:
+    case GRETL_TYPE_LIST:
+	free(item->data);
+	break;
+    case GRETL_TYPE_MATRIX:
+	gretl_matrix_free((gretl_matrix *) item->data);
+	break;
+    case GRETL_TYPE_BUNDLE:
+	gretl_bundle_destroy((gretl_bundle *) item->data);
+	break;
+    case GRETL_TYPE_ARRAY:
+	gretl_array_destroy((gretl_array *) item->data);
+	break;
+    default:
+	break;
+    }
+
+    g_free(item->name);
     free(item->note);
     free(item);
-}
-
-static void bundle_key_destroy (gpointer data)
-{
-#if BDEBUG
-    fprintf(stderr, "freeing key '%s'\n", (char *) data);
-#endif
-    free(data);
 }
 
 /**
@@ -411,8 +402,7 @@ void gretl_bundle_void_content (gretl_bundle *bundle)
     if (bundle->ht != NULL && g_hash_table_size(bundle->ht) > 0) {
 	g_hash_table_destroy(bundle->ht);
 	bundle->ht = g_hash_table_new_full(g_str_hash, g_str_equal,
-					   bundle_key_destroy,
-					   bundled_item_destroy);
+					   NULL, bundle_item_destroy);
     }
 
     if (bundle->type == BUNDLE_KALMAN) {
@@ -435,8 +425,7 @@ gretl_bundle *gretl_bundle_new (void)
     if (b != NULL) {
 	b->type = BUNDLE_PLAIN;
 	b->ht = g_hash_table_new_full(g_str_hash, g_str_equal,
-				      bundle_key_destroy,
-				      bundled_item_destroy);
+				      NULL, bundle_item_destroy);
 	b->creator = NULL;
 	b->data = NULL;
     }
@@ -1139,12 +1128,11 @@ static int real_bundle_set_data (gretl_bundle *b, const char *key,
 	item = bundled_item_new(type, ptr, size, copy, note, &err);
 
 	if (!err) {
-	    gchar *k = g_strdup(key);
-
+	    item->name = g_strdup(key);
 	    if (replace) {
-		g_hash_table_replace(b->ht, k, item);
+		g_hash_table_replace(b->ht, item->name, item);
 	    } else {
-		g_hash_table_insert(b->ht, k, item);
+		g_hash_table_insert(b->ht, item->name, item);
 	    }
 	}
     }
@@ -1394,22 +1382,10 @@ int gretl_bundle_rekey_data (gretl_bundle *bundle,
     if (item == NULL) {
 	err = E_DATA;
     } else {
-	GretlType t = item->type;
-	void *data = item->data;
-	char *note = item->note;
-	int sz = item->size;
-
-	item->data = NULL;
-	item->note = NULL;
-	g_hash_table_remove(bundle->ht, oldkey);
-	err = gretl_bundle_donate_data(bundle, newkey, data, t, sz);
-	if (!err && note != NULL) {
-	    gretl_bundle_set_note(bundle, newkey, note);
-	}
-	free(note);
-	if (err) {
-	    free_bundled_data(data, t);
-	}
+	g_hash_table_steal(bundle->ht, oldkey);
+	g_free(item->name);
+	item->name = g_strdup(newkey);
+	g_hash_table_insert(bundle->ht, item->name, item);
     }
 
     return err;
