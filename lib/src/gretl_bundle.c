@@ -349,7 +349,8 @@ static void bundled_item_destroy (gpointer data)
     bundled_item *item = data;
 
 #if BDEBUG
-    fprintf(stderr, "bundled_item_destroy: type %d\n", item->type);
+    fprintf(stderr, "bundled_item_destroy: type %d (%s)\n",
+	    item->type, gretl_type_get_name(item->type));
     if (item->type == GRETL_TYPE_STRING) {
 	fprintf(stderr, " string: '%s'\n", (char *) item->data);
     }
