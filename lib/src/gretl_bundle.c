@@ -159,6 +159,8 @@ int type_can_be_bundled (GretlType type)
 	    type == GRETL_TYPE_LIST);
 }
 
+#define always_alloc(t) (t == GRETL_TYPE_DOUBLE || t == GRETL_TYPE_INT)
+
 /* allocate and fill out a 'value' (type plus data pointer) that will
    be inserted into a bundle's hash table */
 
@@ -178,7 +180,7 @@ static bundled_item *bundled_item_new (GretlType type, void *ptr,
     item->size = 0;
     item->note = NULL;
 
-    if (!copy) {
+    if (!copy && !always_alloc(item->type)) {
 	item->data = ptr;
 	if (item->type == GRETL_TYPE_SERIES) {
 	    item->size = size;
