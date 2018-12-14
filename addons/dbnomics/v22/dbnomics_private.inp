@@ -186,6 +186,9 @@ function scalar check_json (const string s, string *msg)
         ret = 404
     elif instring(s, "400 Bad Request")
         ret = 400
+    elif instring(s,"Internal server error")
+        msg = "Internal server error"
+        ret = 1
     else
         bundle eb = jsongetb(s, "errors")
         if inbundle(eb, "errors")
