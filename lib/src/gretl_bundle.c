@@ -160,7 +160,60 @@ int type_can_be_bundled (GretlType type)
 	    type == GRETL_TYPE_LIST);
 }
 
-#define always_alloc(t) (t == GRETL_TYPE_DOUBLE || t == GRETL_TYPE_INT)
+#define bundled_scalar(t) (t == GRETL_TYPE_DOUBLE || t == GRETL_TYPE_INT)
+
+static int bundled_item_copy_in_data (bundled_item *item,
+				      void *ptr, int size)
+{
+    int err = 0;
+
+    switch (item->type) {
+    case GRETL_TYPE_DOUBLE:
+	item->data = malloc(sizeof(double));
+	if (item->data != NULL) {
+	    double *dp = item->data;
+
+	    *dp = *(double *) ptr;
+	}
+	break;
+    case GRETL_TYPE_INT:
+	item->data = malloc(sizeof(int));
+	if (item->data != NULL) {
+	    int *ip = item->data;
+
+	    *ip = *(int *) ptr;
+	}
+	break;
+    case GRETL_TYPE_STRING:
+	item->data = gretl_strdup((char *) ptr);
+	break;
+    case GRETL_TYPE_MATRIX:
+	item->data = gretl_matrix_copy((gretl_matrix *) ptr);
+	break;
+    case GRETL_TYPE_SERIES:
+	item->data = copyvec((const double *) ptr, size);
+	item->size = size;
+	break;
+    case GRETL_TYPE_LIST:
+	item->data = gretl_list_copy((const int *) ptr);
+	break;
+    case GRETL_TYPE_BUNDLE:
+	item->data = gretl_bundle_copy((gretl_bundle *) ptr, &err);
+	break;
+    case GRETL_TYPE_ARRAY:
+	item->data = gretl_array_copy((gretl_array *) ptr, &err);
+	break;
+    default:
+	err = E_TYPES;
+	break;
+    }
+
+    if (!err && item->data == NULL) {
+	err = E_ALLOC;
+    }
+
+    return err;
+}
 
 /* allocate and fill out a 'value' (type plus data pointer) that will
    be inserted into a bundle's hash table */
@@ -182,70 +235,46 @@ static bundled_item *bundled_item_new (GretlType type, void *ptr,
     item->name = NULL;
     item->note = NULL;
 
-    if (!copy && !always_alloc(item->type)) {
+    if (!copy && !bundled_scalar(item->type)) {
 	item->data = ptr;
 	if (item->type == GRETL_TYPE_SERIES) {
 	    item->size = size;
 	}
     } else {
-	switch (item->type) {
-	case GRETL_TYPE_DOUBLE:
-	    item->data = malloc(sizeof(double));
-	    if (item->data != NULL) {
-		double *dp = item->data;
-
-		*dp = *(double *) ptr;
-	    }
-	    break;
-	case GRETL_TYPE_INT:
-	    item->data = malloc(sizeof(int));
-	    if (item->data != NULL) {
-		int *ip = item->data;
-
-		*ip = *(int *) ptr;
-	    }
-	    break;
-	case GRETL_TYPE_STRING:
-	    item->data = gretl_strdup((char *) ptr);
-	    break;
-	case GRETL_TYPE_MATRIX:
-	    item->data = gretl_matrix_copy((gretl_matrix *) ptr);
-	    break;
-	case GRETL_TYPE_SERIES:
-	    item->data = copyvec((const double *) ptr, size);
-	    item->size = size;
-	    break;
-	case GRETL_TYPE_LIST:
-	    item->data = gretl_list_copy((const int *) ptr);
-	    break;
-	case GRETL_TYPE_BUNDLE:
-	    item->data = gretl_bundle_copy((gretl_bundle *) ptr, err);
-	    break;
-	case GRETL_TYPE_ARRAY:
-	    item->data = gretl_array_copy((gretl_array *) ptr, err);
-	    break;
-	default:
-	    *err = E_TYPES;
-	    break;
-	}
-
-	if (!*err && item->data == NULL) {
+	*err = bundled_item_copy_in_data(item, ptr, size);
+	if (*err) {
 	    free(item);
 	    item = NULL;
-	    *err = E_ALLOC;
 	}
+    }
 
-	if (item != NULL && note != NULL) {
-	    item->note = gretl_strdup(note);
-	}
+    if (item != NULL && note != NULL) {
+	item->note = gretl_strdup(note);
     }
 
     return item;
 }
 
+static void bundled_item_free_data (GretlType type, void *data)
+{
+    if (type == GRETL_TYPE_MATRIX) {
+	gretl_matrix_free((gretl_matrix *) data);
+    } else if (type == GRETL_TYPE_BUNDLE) {
+	gretl_bundle_destroy((gretl_bundle *) data);
+    } else if (type == GRETL_TYPE_ARRAY) {
+	gretl_array_destroy((gretl_array *) data);
+    } else {
+	free(data);
+    }
+}
+
+/* note: we come here only if the replacement type is the
+   same as the original type
+*/
+
 static int bundled_item_replace_data (bundled_item *item,
-				      GretlType type, void *ptr,
-				      int size, int copy)
+				      void *ptr, int size,
+				      int copy)
 {
     int err = 0;
 
@@ -253,59 +282,25 @@ static int bundled_item_replace_data (bundled_item *item,
 	return 0;
     }
 
-    if (item->type == GRETL_TYPE_DOUBLE) {
-	double *dp = item->data;
+    if (bundled_scalar(item->type)) {
+	/* storage is already available */
+	if (item->type == GRETL_TYPE_DOUBLE) {
+	    double *dp = item->data;
 
-	*dp = *(double *) ptr;
-    } else if (item->type == GRETL_TYPE_INT) {
-	int *ip = item->data;
+	    *dp = *(double *) ptr;
+	} else if (item->type == GRETL_TYPE_INT) {
+	    int *ip = item->data;
 
-	*ip = *(int *) ptr;
-    } else if (item->type == GRETL_TYPE_STRING) {
-	free(item->data);
-	if (copy) {
-	    item->data = gretl_strdup((char *) ptr);
-	} else {
-	    item->data = ptr;
-	}
-    } else if (item->type == GRETL_TYPE_MATRIX) {
-	gretl_matrix_free(item->data);
-	if (copy) {
-	    item->data = gretl_matrix_copy((gretl_matrix *) ptr);
-	} else {
-	    item->data = ptr;
-	}
-    } else if (item->type == GRETL_TYPE_SERIES) {
-	free(item->data);
-	if (copy) {
-	    item->data = copyvec((const double *) ptr, size);
-	} else {
-	    item->data = ptr;
-	}
-	item->size = size;
-    } else if (item->type == GRETL_TYPE_LIST) {
-	free(item->data);
-	if (copy) {
-	    item->data = gretl_list_copy((const int *) ptr);
-	} else {
-	    item->data = ptr;
-	}
-    } else if (item->type == GRETL_TYPE_BUNDLE) {
-	gretl_bundle_destroy((gretl_bundle *) item->data);
-	if (copy) {
-	    item->data = gretl_bundle_copy((gretl_bundle *) ptr, &err);
-	} else {
-	    item->data = ptr;
-	}
-    } else if (item->type == GRETL_TYPE_ARRAY) {
-	gretl_array_destroy((gretl_array *) item->data);
-	if (copy) {
-	    item->data = gretl_array_copy((gretl_array *) ptr, &err);
-	} else {
-	    item->data = ptr;
+	    *ip = *(int *) ptr;
 	}
     } else {
-	return E_DATA;
+	/* free then copy or donate */
+	bundled_item_free_data(item->type, item->data);
+	if (copy) {
+	    err = bundled_item_copy_in_data(item, ptr, size);
+	} else {
+	    item->data = ptr;
+	}
     }
 
     if (!err && item->data == NULL) {
@@ -334,27 +329,7 @@ static void bundle_item_destroy (gpointer data)
     }
 #endif
 
-    switch (item->type) {
-    case GRETL_TYPE_DOUBLE:
-    case GRETL_TYPE_INT:
-    case GRETL_TYPE_STRING:
-    case GRETL_TYPE_SERIES:
-    case GRETL_TYPE_LIST:
-	free(item->data);
-	break;
-    case GRETL_TYPE_MATRIX:
-	gretl_matrix_free((gretl_matrix *) item->data);
-	break;
-    case GRETL_TYPE_BUNDLE:
-	gretl_bundle_destroy((gretl_bundle *) item->data);
-	break;
-    case GRETL_TYPE_ARRAY:
-	gretl_array_destroy((gretl_array *) item->data);
-	break;
-    default:
-	break;
-    }
-
+    bundled_item_free_data(item->type, item->data);
     g_free(item->name);
     free(item->note);
     free(item);
@@ -1120,8 +1095,8 @@ static int real_bundle_set_data (gretl_bundle *b, const char *key,
 	if (item != NULL) {
 	    replace = 1;
 	    if (item->type == type) {
-		return bundled_item_replace_data(item, type, ptr,
-						 size, copy);
+		/* we can take a shortcut */
+		return bundled_item_replace_data(item, ptr, size, copy);
 	    }
 	}
 
@@ -1374,6 +1349,10 @@ int gretl_bundle_rekey_data (gretl_bundle *bundle,
 {
     bundled_item *item = NULL;
     int err = 0;
+
+    if (strcmp(oldkey, newkey) == 0) {
+	return 0;
+    }
 
     if (bundle != NULL) {
 	item = g_hash_table_lookup(bundle->ht, oldkey);
