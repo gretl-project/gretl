@@ -192,8 +192,8 @@ function scalar check_json (const string s, string *msg)
     else
         bundle eb = jsongetb(s, "errors")
         if inbundle(eb, "errors")
-            # do we have a (non-empty) @errors bundle?
-            if typeof(eb.errors) == 5 && nelem(eb.errors) > 0
+            # do we have a (non-empty) @errors array?
+            if typeof(eb.errors) == 6 && nelem(eb.errors) > 0
                 msg = eb.errors[1].cause
                 ret = 1
             endif

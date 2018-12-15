@@ -785,6 +785,11 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
 	    name, typename, type);
 #endif
 
+    if (a == NULL && type == 0) {
+	/* bundle member: skip null nodes */
+	return 0;
+    }
+
     if (a == NULL && (name == NULL || name[0] == '\0')) {
 	name = "anon";
     }
@@ -825,12 +830,8 @@ static int jb_do_value (JsonReader *reader, jbundle *jb,
 	    gretl_bundle_set_int(jb->curr, name, k);
 	}
     } else if (type == 0) {
-	/* null object -> empty string */
-	if (a != NULL) {
-	    gretl_array_set_string(a, i, "", 1);
-	} else {
-	    gretl_bundle_set_string(jb->curr, name, "");
-	}
+	/* in array context: null object -> empty string */
+	gretl_array_set_string(a, i, "", 1);
     } else {
 	gretl_errmsg_sprintf("Unhandled JSON value of type %s\n",
 			     typename);
