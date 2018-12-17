@@ -3534,6 +3534,13 @@ gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
     dset = g_strdup(s + 1);
     prov = g_strndup(dsref, s - dsref);
 
+    /* Note: the length of the retrieved array, which we write into
+       @alen, may be less (perhaps a lot less) than the "num_found"
+       field that we access below, since the latter records the
+       total number of series, regardless of the max number set on
+       the dbnomics query.
+    */
+
     A = dbnomics_probe_series(prov, dset, pgr->chunk, pgr->offset, &err);
     if (!err) {
 	alen = gretl_array_get_length(A);
@@ -3550,6 +3557,9 @@ gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
     pgr->n = 0;
     for (i=0; i<alen; i++) {
 	b = gretl_array_get_bundle(A, i);
+	if (i == 0) {
+	    pgr->ntotal = gretl_bundle_get_int(b, "num_found", NULL);
+	}
 	code = (char *) gretl_bundle_get_string(b, "code", &err);
 	name = (char *) gretl_bundle_get_string(b, "name", &err);
 	if (!err) {
@@ -3558,9 +3568,6 @@ gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
 			       COL_DBNAME, code,
 			       COL_DBINFO, name, -1);
 	    pgr->n += 1;
-	    if (pgr->ntotal == 0) {
-		pgr->ntotal = gretl_bundle_get_int(b, "num_found", NULL);
-	    }
 	}
     }
 
