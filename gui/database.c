@@ -3514,6 +3514,7 @@ gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
     GtkTreeIter iter;
     struct dbn_pager *pgr;
     int starting = 1;
+    int alen = 0;
     int i, err = 0;
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox)));
@@ -3535,8 +3536,8 @@ gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
 
     A = dbnomics_probe_series(prov, dset, pgr->chunk, pgr->offset, &err);
     if (!err) {
-	pgr->ntotal = gretl_array_get_length(A);
-	if (pgr->ntotal == 0) {
+	alen = gretl_array_get_length(A);
+	if (alen == 0) {
 	    errbox(_("No series were found"));
 	    err = 1;
 	}
@@ -3547,7 +3548,7 @@ gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
     }
 
     pgr->n = 0;
-    for (i=0; i<pgr->ntotal; i++) {
+    for (i=0; i<alen; i++) {
 	b = gretl_array_get_bundle(A, i);
 	code = (char *) gretl_bundle_get_string(b, "code", &err);
 	name = (char *) gretl_bundle_get_string(b, "name", &err);
@@ -3557,6 +3558,9 @@ gint populate_dbnomics_series_list (windata_t *vwin, gpointer p)
 			       COL_DBNAME, code,
 			       COL_DBINFO, name, -1);
 	    pgr->n += 1;
+	    if (pgr->ntotal == 0) {
+		pgr->ntotal = gretl_bundle_get_int(b, "num_found", NULL);
+	    }
 	}
     }
 

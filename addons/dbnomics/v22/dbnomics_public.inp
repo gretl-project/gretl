@@ -288,6 +288,7 @@ function bundles dbnomics_get_dataset_content(const string provider,
             ret[i] = json2bndl(fields, json, "series.docs", i-1)
             brename(ret[i], "series_code", "code")
             brename(ret[i], "series_name", "name")
+            ret[i].num_found = nfound
         endloop
     endif
 
