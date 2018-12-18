@@ -27,18 +27,12 @@
 #define DDEBUG 0
 #define FULLDEBUG 0
 
-#define LONG_LABELS
-
 #define Z_COLS_BORROWED 2
 
 #define dset_zcols_borrowed(d) (d->auxiliary == Z_COLS_BORROWED)
 
 struct VARINFO_ {
-#ifdef LONG_LABELS
     char *label;
-#else
-    char label[MAXLABEL];
-#endif
     char display_name[MAXDISP];
     char parent[VNAMELEN];
     VarFlags flags;
@@ -147,11 +141,9 @@ static void free_varinfo (DATASET *dset, int v)
     if (dset->varinfo[v]->st != NULL) {
 	series_table_destroy(dset->varinfo[v]->st);
     }
-#ifdef LONG_LABELS
     if (dset->varinfo[v]->label != NULL) {
 	free(dset->varinfo[v]->label);
     }
-#endif
     free(dset->varinfo[v]);
 }
 
@@ -310,11 +302,7 @@ int dataset_allocate_obs_markers (DATASET *dset)
 
 static void gretl_varinfo_init (VARINFO *vinfo)
 {
-#ifdef LONG_LABELS
     vinfo->label = NULL;
-#else
-    vinfo->label[0] = '\0';
-#endif
     vinfo->display_name[0] = '\0';
     vinfo->parent[0] = '\0';
     vinfo->flags = 0;
@@ -330,24 +318,16 @@ static void gretl_varinfo_init (VARINFO *vinfo)
 
 static void copy_label (char **targ, const char *src)
 {
-#ifdef LONG_LABELS
     free(*targ);
     if (src == NULL) {
 	*targ = NULL;
     } else {
 	*targ = gretl_strdup(src);
     }
-#else
-    (*targ)[0] = '\0';
-    if (src != NULL) {
-	strncat(*targ, src, MAXLABEL - 1);
-    }
-#endif
 }
 
 static int labels_differ (const char *s1, const char *s2)
 {
-#ifdef LONG_LABELS
     if ((s1 == NULL && s2 != NULL) || (s1 != NULL && s2 == NULL)) {
 	return 1;
     } else if (s1 != NULL && s2 != NULL) {
@@ -355,9 +335,6 @@ static int labels_differ (const char *s1, const char *s2)
     } else {
 	return 0;
     }
-#else
-    return strcmp(s1, s2) != 0;
-#endif
 }
 
 /**
@@ -4504,10 +4481,8 @@ static void maybe_adjust_label (DATASET *dset, int v,
     int i, len = 3 * ns; /* "=" + ", " */
     char *tmp;
 
-    if (len < MAXLABEL) {
-	for (i=0; i<ns; i++) {
-	    len += strlen(S[i]) + 1 + floor(log10(1.0 + i));
-	}
+    for (i=0; i<ns; i++) {
+	len += strlen(S[i]) + 1 + floor(log10(1.0 + i));
     }
 
     tmp = calloc(len + 1, 1);
