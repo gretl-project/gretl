@@ -194,13 +194,30 @@ function scalar check_json (const string s, string *msg)
         if inbundle(eb, "errors")
             # do we have a (non-empty) @errors array?
             if typeof(eb.errors) == 6 && nelem(eb.errors) > 0
-                msg = eb.errors[1].cause
+                if inbundle(eb.errors[1], "cause")
+                    msg = eb.errors[1].cause
+                elif inbundle(eb.errors[1], "message")
+                    msg = eb.errors[1].message
+                endif
                 ret = 1
             endif
         endif
     endif
     # warnings with v22 ??
     return ret
+end function
+
+### ------------------------------------------------------------------------
+
+function string get_dbnomics_message (const string json,
+                                      const string deflt)
+    scalar m = 0
+    string msg = jsonget(json, "$.message", &m)
+    if m > 0
+        return "dbnomics says: " ~ msg
+    else
+        return deflt
+    endif
 end function
 
 ### ------------------------------------------------------------------------

@@ -275,7 +275,11 @@ function bundles dbnomics_get_dataset_content(const string provider,
     n = 0
     ns = 0
     # note: the following will give the total for the dataset
-    found = jsonget(json, "$.series.num_found", &n)
+    string found = jsonget(json, "$.series.num_found", &n)
+    if n == 0
+        msg = get_dbnomics_message(json, "No content was found")
+        funcerr msg
+    endif
     if n > 0
         nfound = atof(found)
         ns = nfound - offset
@@ -383,8 +387,12 @@ function bundle dbnomics_dsets_for_provider(const string provider,
     ret.error = dbn_get_json("datasets/" ~ provider, verbose, &json)
 
     if !ret.error
-        bundle b = jsongetb(json, "datasets")
-        b = b.datasets
+        catch bundle b = jsongetb(json, "datasets")
+        catch b = b.datasets
+        if $error
+            msg = get_dbnomics_message(json, "No datasets found")
+            funcerr msg
+        endif
         n = b.num_found
         strings dscodes = array(n)
         strings dsnames = array(n)
@@ -404,6 +412,7 @@ end function
 function series dbnomics_fetch (const string id, bool verbose[0])
     series ret = NA
     bundle b = dbnomics_get_series(id, verbose)
+    # FIXME v22
     if b.error
         if inbundle(b, "errmsg")
             string str = b.errmsg
