@@ -6519,8 +6519,8 @@
     <function name="mrandgen" section="probdist" output="matrix">
       <fnargs>
 	<fnarg type="string">d</fnarg>
-	<fnarg type="scalar">p1</fnarg>
-	<fnarg type="scalar" conditional="true">p2</fnarg>
+	<fnarg type="scalar-or-matrix">p1</fnarg>
+	<fnarg type="scalar-or-matrix" conditional="true">p2</fnarg>
 	<fnarg type="scalar" conditional="true">p3</fnarg>
 	<fnarg type="int">rows</fnarg>
 	<fnarg type="int">cols</fnarg>
@@ -6536,8 +6536,11 @@
 	  arguments to this function (the number of which depends on
 	  the selected distribution) are as described for
 	  <lit>randgen</lit>, but they must be followed by two
-	  integers to specify the number of rows and columns of
-	  the desired random matrix.
+	  integers to specify the number of rows and columns of the
+	  desired random matrix. If <argname>p1</argname> or
+	  <argname>p2</argname> are given in matrix form they must
+	  have a number of elements equal to the product of
+	  <argname>rows</argname> and <argname>cols</argname>.
 	</para>
 	<para>
 	  The first example above calls for a uniform random column
