@@ -1817,6 +1817,7 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	double argval = NADBL;
 	double *parmvec[2] = { NULL };
 	double *argvec = NULL;
+	int pvlen[2] = {0};
 	gretl_matrix *argmat = NULL;
 	int rows = 0, cols = 0;
 	int d, np, argc, bb;
@@ -1904,7 +1905,10 @@ static NODE *eval_pdist (NODE *n, parser *p)
 		}
 	    } else if (i == k && e->t == MAT) {
 		/* a matrix in the last place? */
-		if (rgen || mrgen) {
+		if (mrgen) {
+		    parmvec[i-1] = e->v.m->val;
+		    pvlen[i-1] = e->v.m->rows * e->v.m->cols;
+		} else if (rgen) {
 		    node_type_error(n->t, i, NUM, e, p);
 		} else {
 		    argmat = e->v.m;
@@ -1916,9 +1920,26 @@ static NODE *eval_pdist (NODE *n, parser *p)
 		} else {
 		    node_type_error(n->t, i, NUM, e, p);
 		}
+	    } else if (e->t == MAT) {
+		/* a matrix param for mrandgen? */
+		if (mrgen && !bb) {
+		    parmvec[i-1] = e->v.m->val;
+		    pvlen[i-1] = e->v.m->rows * e->v.m->cols;
+		} else {
+		    node_type_error(n->t, i, NUM, e, p);
+		}
 	    } else {
 		p->err = E_INVARG;
 		fprintf(stderr, "eval_pdist: arg %d, bad type %d\n", i+1, e->t);
+	    }
+	}
+
+	if (mrgen) {
+	    int rlen = rows * cols;
+
+	    if ((parmvec[0] != NULL && pvlen[0] != rlen) ||
+		(parmvec[1] != NULL && pvlen[1] != rlen)) {
+		p->err = E_NONCONF;
 	    }
 	}
 
@@ -1947,7 +1968,9 @@ static NODE *eval_pdist (NODE *n, parser *p)
 					      parmvec[0], parmvec[1],
 					      p->dset);
 	} else if (mrgen) {
-	    ret->v.m = gretl_get_random_matrix(d, parm, rows, cols,
+	    ret->v.m = gretl_get_random_matrix(d, parm,
+					       parmvec[0], parmvec[1],
+					       rows, cols,
 					       &p->err);
 	} else if (rgen1) {
 	    ret->v.xval = gretl_get_random_scalar(d, parm, &p->err);

@@ -3414,7 +3414,10 @@ int gretl_fill_random_series (double *x, int dist,
 				   dist, parm, vecp1, vecp2);
 }
 
-gretl_matrix *gretl_get_random_matrix (int dist, const double *parm,
+gretl_matrix *gretl_get_random_matrix (int dist,
+				       const double *parm,
+				       const double *vecp1,
+				       const double *vecp2,
 				       int rows, int cols,
 				       int *err)
 {
@@ -3429,8 +3432,8 @@ gretl_matrix *gretl_get_random_matrix (int dist, const double *parm,
 	    *err = E_ALLOC;
 	    return NULL;
 	} else {
-	    *err = gretl_fill_random_array(m->val, 0, n - 1, dist,
-					   parm, NULL, NULL);
+	    *err = gretl_fill_random_array(m->val, 0, n-1, dist,
+					   parm, vecp1, vecp2);
 	}
     }
 

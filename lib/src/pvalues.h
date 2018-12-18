@@ -156,7 +156,10 @@ int gretl_fill_random_series (double *x, int dist,
 			      const double *vecp2, 
 			      const DATASET *dset);
 
-gretl_matrix *gretl_get_random_matrix (int dist, const double *parm,
+gretl_matrix *gretl_get_random_matrix (int dist,
+				       const double *parm,
+				       const double *vecp1,
+				       const double *vecp2,
 				       int rows, int cols, 
 				       int *err);
 
