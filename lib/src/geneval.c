@@ -4287,13 +4287,16 @@ static void print_mspec (matrix_subspec *mspec)
 
 #endif
 
-/* compose a sub-matrix specification, from scalars and/or
-   index matrices */
+/* Compose a sub-matrix specification, from scalars and/or
+   index matrices. FIXME: some of the work below ought to be
+   redundant if we're on the second or subsequent iteration
+   of a loop?
+*/
 
 static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
 {
     matrix_subspec *spec = targ->v.mspec;
-    int ridx = 0, cidx = 0;
+    int i = 0, j = 0;
 
     if (spec == NULL) {
 	spec = matrix_subspec_new();
@@ -4315,9 +4318,9 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
     /* special case: bundle membership */
     if (l->t == STR) {
 	if (r == NULL) {
-	    spec->type[0] = SEL_STR;
-	    spec->type[1] = SEL_NULL;
-	    spec->sel[0].str = l->v.str;
+	    spec->ltype = SEL_STR;
+	    spec->rtype = SEL_NULL;
+	    spec->lsel.str = l->v.str;
 	} else {
 	    p->err = E_TYPES;
 	}
@@ -4325,22 +4328,22 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
     }
 
     if (l->t == NUM) {
-	ridx = node_get_int(l, p);
-	if (!p->err && ridx == 0) {
+	i = node_get_int(l, p);
+	if (!p->err && i == 0) {
 	    gretl_errmsg_sprintf(_("Index value %d is out of bounds"), 0);
 	    p->err = E_INVARG;
 	}
-	if (!p->err && r == NULL && ridx > 0) {
+	if (!p->err && r == NULL && i > 0) {
 	    /* identify and flag the single index case */
-	    spec->type[0] = SEL_SINGLE;
-	    spec->type[1] = SEL_NULL;
-	    mspec_set_row_index(spec, ridx);
+	    spec->ltype = SEL_SINGLE;
+	    spec->rtype = SEL_NULL;
+	    mspec_set_row_index(spec, i);
 	    goto finished;
 	}
     }
     if (!p->err && r != NULL && r->t == NUM) {
-	cidx = node_get_int(r, p);
-	if (!p->err && cidx == 0) {
+	j = node_get_int(r, p);
+	if (!p->err && j == 0) {
 	    gretl_errmsg_sprintf(_("Index value %d is out of bounds"), 0);
 	    p->err = E_INVARG;
 	}
@@ -4351,59 +4354,59 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
 	    p->err = E_INVARG;
 	} else {
 	    if (l->v.idnum == DUM_DIAG) {
-		spec->type[0] = SEL_DIAG;
-		spec->type[1] = SEL_ALL;
+		spec->ltype = SEL_DIAG;
+		spec->rtype = SEL_ALL;
 	    } else {
 		p->err = E_TYPES;
 	    }
 	}
 	goto finished;
-    } else if (ridx > 0 && cidx > 0) {
-	spec->type[0] = spec->type[1] = SEL_ELEMENT;
-	mspec_set_row_index(spec, ridx);
-	mspec_set_col_index(spec, cidx);
+    } else if (i > 0 && j > 0) {
+	spec->ltype = spec->rtype = SEL_ELEMENT;
+	mspec_set_row_index(spec, i);
+	mspec_set_col_index(spec, j);
 	goto finished;
     } else if (l->t == NUM) {
-	spec->type[0] = ridx > 0 ? SEL_RANGE : SEL_EXCL;
-	mspec_set_row_index(spec, ridx);
+	spec->ltype = i > 0 ? SEL_RANGE : SEL_EXCL;
+	mspec_set_row_index(spec, i);
     } else if (l->t == IVEC) {
-	spec->type[0] = SEL_RANGE;
-	spec->sel[0].range[0] = l->v.ivec[0];
-	spec->sel[0].range[1] = l->v.ivec[1];
+	spec->ltype = SEL_RANGE;
+	spec->lsel.range[0] = l->v.ivec[0];
+	spec->lsel.range[1] = l->v.ivec[1];
     } else if (l->t == MAT) {
 	if (gretl_matrix_is_scalar(l->v.m)) {
-	    spec->type[0] = SEL_RANGE;
+	    spec->ltype = SEL_RANGE;
 	    mspec_set_row_index(spec, l->v.m->val[0]);
 	} else {
-	    spec->type[0] = SEL_MATRIX;
-	    spec->sel[0].m = l->v.m;
+	    spec->ltype = SEL_MATRIX;
+	    spec->lsel.m = l->v.m;
 	}
     } else if (l->t == EMPTY) {
-	spec->type[0] = SEL_ALL;
+	spec->ltype = SEL_ALL;
     } else {
 	p->err = E_TYPES;
 	goto finished;
     }
 
     if (r == NULL) {
-	spec->type[1] = SEL_NULL;
+	spec->rtype = SEL_NULL;
     } else if (r->t == NUM) {
-	spec->type[1] = cidx > 0 ? SEL_RANGE : SEL_EXCL;
-	mspec_set_col_index(spec, cidx);
+	spec->rtype = j > 0 ? SEL_RANGE : SEL_EXCL;
+	mspec_set_col_index(spec, j);
     } else if (r->t == IVEC) {
-	spec->type[1] = SEL_RANGE;
-	spec->sel[1].range[0] = r->v.ivec[0];
-	spec->sel[1].range[1] = r->v.ivec[1];
+	spec->rtype = SEL_RANGE;
+	spec->rsel.range[0] = r->v.ivec[0];
+	spec->rsel.range[1] = r->v.ivec[1];
     } else if (r->t == MAT) {
 	if (gretl_matrix_is_scalar(r->v.m)) {
-	    spec->type[1] = SEL_RANGE;
+	    spec->rtype = SEL_RANGE;
 	    mspec_set_col_index(spec, r->v.m->val[0]);
 	} else {
-	    spec->type[1] = SEL_MATRIX;
-	    spec->sel[1].m = r->v.m;
+	    spec->rtype = SEL_MATRIX;
+	    spec->rsel.m = r->v.m;
 	}
     } else if (r->t == EMPTY) {
-	spec->type[1] = SEL_ALL;
+	spec->rtype = SEL_ALL;
     } else {
 	p->err = E_TYPES;
     }
@@ -4446,18 +4449,18 @@ static NODE *submatrix_node (NODE *l, NODE *r, parser *p)
 	p->err = check_matrix_subspec(spec, m);
 
 	if (!p->err) {
-	    if (spec->type[0] == SEL_CONTIG) {
+	    if (spec->ltype == SEL_CONTIG) {
 		ret = aux_matrix_node(p);
 		if (!p->err) {
 		    ret->v.m = matrix_get_chunk(m, spec, &p->err);
 		}
-	    } else if (spec->type[0] == SEL_ELEMENT) {
+	    } else if (spec->ltype == SEL_ELEMENT) {
 		ret = aux_scalar_node(p);
 		if (!p->err) {
 		    ret->v.xval = m->val[mspec_get_element(spec)];
 		    ret->flags |= MSL_NODE;
 		}
-	    } else if (spec->type[0] == SEL_STR) {
+	    } else if (spec->ltype == SEL_STR) {
 		p->err = E_TYPES;
 	    } else {
 		ret = aux_matrix_node(p);
@@ -4698,17 +4701,17 @@ static int mspec_get_series_index (matrix_subspec *s,
 {
     int t = -1;
 
-    if (s->type[0] == SEL_SINGLE && s->type[1] == SEL_NULL) {
-	t = s->sel[0].range[0];
-    } else if (s->type[0] == SEL_RANGE && s->type[1] == SEL_NULL) {
-	if (s->sel[0].range[0] == s->sel[0].range[1]) {
-	    t = s->sel[0].range[0];
+    if (s->ltype == SEL_SINGLE && s->rtype == SEL_NULL) {
+	t = s->lsel.range[0];
+    } else if (s->ltype == SEL_RANGE && s->rtype == SEL_NULL) {
+	if (s->lsel.range[0] == s->lsel.range[1]) {
+	    t = s->lsel.range[0];
 	} else {
 	    /* allow for dates such as "2008:4" */
 	    gchar *tmp;
 
-	    tmp = g_strdup_printf("%d:%d", s->sel[0].range[0],
-				  s->sel[0].range[1]);
+	    tmp = g_strdup_printf("%d:%d", s->lsel.range[0],
+				  s->lsel.range[1]);
 	    t = get_observation_number(tmp, p->dset);
 	    g_free(tmp);
 	}
@@ -4733,12 +4736,12 @@ static int test_for_single_range (matrix_subspec *spec,
 {
     int ret = 0;
 
-    if (spec->type[0] == SEL_SINGLE) {
-	ret = spec->sel[0].range[0];
-    } else if (spec->type[0] == SEL_RANGE &&
-	spec->type[1] == SEL_NULL) {
-	if (spec->sel[0].range[0] == spec->sel[0].range[1]) {
-	    ret = spec->sel[0].range[0];
+    if (spec->ltype == SEL_SINGLE) {
+	ret = spec->lsel.range[0];
+    } else if (spec->ltype == SEL_RANGE &&
+	spec->rtype == SEL_NULL) {
+	if (spec->lsel.range[0] == spec->lsel.range[1]) {
+	    ret = spec->lsel.range[0];
 	}
     } else {
 	p->err = E_TYPES;
@@ -4755,8 +4758,8 @@ static int get_single_element (matrix_subspec *spec,
 {
     int ret = 0;
 
-    if (spec->type[0] == SEL_SINGLE) {
-	ret = spec->sel[0].range[0];
+    if (spec->ltype == SEL_SINGLE) {
+	ret = spec->lsel.range[0];
     } else {
 	if (p != NULL) {
 	    p->err = E_TYPES;
@@ -4845,8 +4848,8 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
 	    } else if (!p->err) {
 		int range[2];
 
-		range[0] = r->v.mspec->sel[0].range[0];
-		range[1] = r->v.mspec->sel[0].range[1];
+		range[0] = r->v.mspec->lsel.range[0];
+		range[1] = r->v.mspec->lsel.range[1];
 		if (l->t == ARRAY) {
 		    ret = array_range_node(l->v.a, range, p);
 		} else if (l->t == LIST) {
@@ -4866,7 +4869,7 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
 	    }
 	} else if (l->t == BUNDLE && r->t == MSPEC) {
 	    /* the "mspec" must hold a single key string */
-	    char *s = r->v.mspec->sel[0].str;
+	    char *s = r->v.mspec->lsel.str;
 	    GretlType type = GRETL_TYPE_NONE;
 	    int size = 0;
 	    void *val;
@@ -9602,7 +9605,7 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
     }
 
     bundle = lh1->v.b;
-    key = lh2->t == STR ? lh2->v.str : lh2->v.mspec->sel[0].str;
+    key = lh2->t == STR ? lh2->v.str : lh2->v.mspec->lsel.str;
 
     if (bundle == NULL || key == NULL) {
 	return E_DATA;
@@ -9828,12 +9831,12 @@ static int array_index_from_mspec (matrix_subspec *spec, int *err)
 {
     int idx = 0;
 
-    if (spec->type[0] == SEL_SINGLE) {
-	idx = spec->sel[0].range[0];
-    } else if (spec->type[0] == SEL_RANGE &&
-	spec->type[1] == SEL_NULL &&
-	spec->sel[0].range[0] == spec->sel[0].range[1]) {
-	idx = spec->sel[0].range[0];
+    if (spec->ltype == SEL_SINGLE) {
+	idx = spec->lsel.range[0];
+    } else if (spec->ltype == SEL_RANGE &&
+	spec->rtype == SEL_NULL &&
+	spec->lsel.range[0] == spec->lsel.range[1]) {
+	idx = spec->lsel.range[0];
     } else {
 	gretl_errmsg_set("Invalid left-hand side index value");
 	*err = E_TYPES;
@@ -10255,7 +10258,7 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 	return p->err;
     }
 
-    if (spec->type[0] == SEL_ELEMENT) {
+    if (spec->ltype == SEL_ELEMENT) {
 	/* assignment, plain or inflected, to a single
 	   element of target matrix
 	*/

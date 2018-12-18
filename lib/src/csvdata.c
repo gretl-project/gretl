@@ -398,7 +398,7 @@ static int csvdata_add_cols_list (csvdata *c, const char *s,
     int i, n, m = 0;
     int err = 0;
 
-    if (gretl_is_matrix(s)) {
+    if (get_matrix_by_name(s)) {
 	list = cols_list_from_matrix(s, &err);
     } else {
 	list = gretl_list_from_string(s, &err);
@@ -3983,7 +3983,7 @@ int csv_open_needs_matrix (gretlopt opt)
 	/* --fixed-cols=whatever */
 	const char *s = get_optval_string(OPEN, OPT_F);
 
-	ret = gretl_is_matrix(s);
+	ret = get_matrix_by_name(s) != NULL;
     }
 
     return ret;

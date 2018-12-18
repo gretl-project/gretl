@@ -276,7 +276,7 @@ int llc_test_driver (const char *param, const int *list,
 	    plist = gretl_auxlist_from_vector(m, &err);
 	}
 	gretl_matrix_free(m);
-    } else if (gretl_is_matrix(param)) {
+    } else if (get_matrix_by_name(param)) {
 	m = get_matrix_by_name(param);
 	plist = gretl_auxlist_from_vector(m, &err);
     } else if (integer_string(param)) {

@@ -22,7 +22,7 @@
 
 #define MSEL_MAX -999
 
-enum {
+typedef enum {
       SEL_NULL,
       SEL_RANGE,
       SEL_ELEMENT,
@@ -33,7 +33,7 @@ enum {
       SEL_EXCL,
       SEL_SINGLE,
       SEL_STR
-};
+} SelType;
 
 typedef struct matrix_subspec_ matrix_subspec;
 
@@ -44,21 +44,19 @@ union msel {
 };
 
 struct matrix_subspec_ {
-    int type[2];
-    union msel sel[2];
+    SelType ltype, rtype;
+    union msel lsel, rsel;
     int *rslice;
     int *cslice;
 };
 
-#define mspec_get_row_index(m) (m->sel[0].range[0])
-#define mspec_get_col_index(m) (m->sel[1].range[0])
+#define mspec_get_row_index(m) (m->lsel.range[0])
+#define mspec_get_col_index(m) (m->rsel.range[0])
 
-#define mspec_set_row_index(m,i) (m->sel[0].range[0] = m->sel[0].range[1] = (i))
-#define mspec_set_col_index(m,j) (m->sel[1].range[0] = m->sel[1].range[1] = (j))
+#define mspec_set_row_index(m,i) (m->lsel.range[0] = m->lsel.range[1] = (i))
+#define mspec_set_col_index(m,j) (m->rsel.range[0] = m->rsel.range[1] = (j))
 
-#define mspec_get_element(m) (m->sel[0].range[0])
-
-#define gretl_is_matrix(s) (get_matrix_by_name(s) != NULL)
+#define mspec_get_element(m) (m->lsel.range[0])
 
 matrix_subspec *matrix_subspec_new (void);
 
