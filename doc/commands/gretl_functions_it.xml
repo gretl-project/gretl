@@ -6506,11 +6506,11 @@
     <function name="mrandgen" section="probdist" output="matrix">
       <fnargs>
 	<fnarg type="string">d</fnarg>
-	<fnarg type="scalar">p1</fnarg>
-	<fnarg type="scalar" conditional="true">p2</fnarg>
+	<fnarg type="scalar-or-matrix">p1</fnarg>
+	<fnarg type="scalar-or-matrix" conditional="true">p2</fnarg>
 	<fnarg type="scalar" conditional="true">p3</fnarg>
-	<fnarg type="int">rows</fnarg>
-	<fnarg type="int">cols</fnarg>
+	<fnarg type="int">righe</fnarg>
+	<fnarg type="int">colonne</fnarg>
       </fnargs>
       <examples>
 	<example>matrix mx = mrandgen(u, 0, 100, 50, 1)</example>
@@ -6525,7 +6525,10 @@
 	  <lit>randgen</lit>, ma devono essere seguiti da due interi
 	  per specificare il numero di righe (<argname>r</argname>) e
 	  colonne (<argname>c</argname>) della matrice casuale
-	  desiderata.
+	  desiderata. Se <argname>p1</argname> o <argname>p2</argname>
+	  sono matrici, devono avere un numero di elementi pari al
+	  prodotto di <argname>righe</argname> per
+	  <argname>colonne</argname>.
 	</para>
 	<para>
 	  Il primo esempio fornito sopra calcola un vettore colonna
