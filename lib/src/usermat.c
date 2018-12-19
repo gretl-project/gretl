@@ -370,7 +370,7 @@ static int set_element_index (matrix_subspec *spec,
     }
 
 #if CONTIG_DEBUG
-    fprintf(stderr, "element_get_index: i=%d, j=%d, k=%d\n",
+    fprintf(stderr, "element_get_index: i=%d, j=%d -> k=%d\n",
 	    i, j, k);
 #endif
 
@@ -442,6 +442,96 @@ static void subspec_debug_print (const matrix_subspec *spec,
 
 #endif
 
+static int submatrix_contig (matrix_subspec *spec, const gretl_matrix *m)
+{
+    int contig = 0;
+
+    if (spec->ltype == SEL_MATRIX || spec->rtype == SEL_MATRIX ||
+	spec->ltype == SEL_EXCL || spec->rtype == SEL_EXCL) {
+	; /* cannot treat as contig */
+    } else if (m->rows == 1 || m->cols == 1) {
+	/* must be contig */
+	contig = 1;
+    } else if (spec->rtype == SEL_RANGE &&
+	spec->rsel.range[0] == spec->rsel.range[1]) {
+	/* single column selected */
+	contig = 1;
+    }
+#if 0 /* not ready for this yet */
+    else if ((spec->rtype == SEL_ALL || spec->rtype == SEL_RANGE) &&
+	spec->ltype == SEL_ALL) {
+	/* range of columns, all rows */
+	contig = 1;
+    }
+#endif
+
+    return contig;
+}
+
+static int get_offset_nelem (matrix_subspec *spec,
+			     const gretl_matrix *m,
+			     int *poff, int *pn)
+{
+    SelType stype = spec->ltype;
+    union msel *sel = &spec->lsel;
+    int offset = 0, nelem = 0;
+
+    if (m->cols == 1) {
+	/* column vector */
+	if (stype == SEL_ALL) {
+	    nelem = m->rows;
+	} else {
+	    int rmax = sel->range[1] == MSEL_MAX ? m->rows : sel->range[1];
+
+	    offset = sel->range[0] - 1;
+	    nelem = rmax - sel->range[0] + 1;
+	}
+    } else if (m->rows == 1) {
+	/* row vector */
+	if (spec->rtype != SEL_NULL) {
+	    stype = spec->rtype;
+	    sel = &spec->rsel;
+	}
+	if (stype == SEL_ALL) {
+	    nelem = m->cols;
+	} else {
+	    int cmax = sel->range[1] == MSEL_MAX ? m->cols : sel->range[1];
+
+	    offset = sel->range[0] - 1;
+	    nelem = cmax - sel->range[0] + 1;
+	}
+    } else if (spec->rtype == SEL_RANGE &&
+	       spec->rsel.range[0] == spec->rsel.range[0]) {
+	/* a single matrix column */
+	if (stype == SEL_ALL) {
+	    nelem = m->rows;
+	} else {
+	    int rmax = sel->range[1] == MSEL_MAX ? m->rows :
+		sel->range[1];
+
+	    offset = sel->range[0] - 1;
+	    nelem = rmax - sel->range[0] + 1;
+	}
+	offset += m->rows * (spec->rsel.range[0] - 1);
+    } else {
+	/* multiple columns, all rows (not ready yet) */
+	if (spec->rtype == SEL_ALL) {
+	    nelem = m->rows * m->cols;
+	} else {
+	    int cmax = sel->range[1] == MSEL_MAX ? m->cols : sel->range[1];
+	    int nc = cmax - spec->rsel.range[0] + 1;
+
+	    offset = m->rows * (spec->rsel.range[0] - 1);
+	    nelem = m->rows * nc;
+	}
+    }
+
+    *poff = offset;
+    *pn = nelem;
+
+    return 0;
+}
+
 /* Catch the case of an implicit column or row specification for
    a sub-matrix of an (n x 1) or (1 x m) matrix; also catch the
    error of giving just one row/col spec for a matrix that has
@@ -450,8 +540,7 @@ static void subspec_debug_print (const matrix_subspec *spec,
 
 int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 {
-    int isvec = gretl_vector_get_length(m);
-    int rh_scalar, get_contig = 0;
+    int veclen, rh_scalar;
     int err = 0;
 
 #if CONTIG_DEBUG
@@ -466,19 +555,21 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 	return 0;
     }
 
-    if (spec->ltype == SEL_SINGLE) {
-	if (!isvec) {
-	    gretl_errmsg_set(_("Ambiguous matrix index"));
-	    err = E_DATA;
-	} else {
-	    int lr0 = spec->lsel.range[0];
+    veclen = gretl_vector_get_length(m);
 
-	    err = bad_sel_single(lr0, isvec);
-	    if (!err) {
-		spec->ltype = spec->rtype = SEL_ELEMENT;
-		mspec_set_offset(spec, lr0 - 1);
-		mspec_set_n_elem(spec, 1);
-	    }
+    if (spec->rtype == SEL_NULL && veclen == 0) {
+	gretl_errmsg_set(_("Ambiguous matrix index"));
+	return E_DATA;
+    }
+
+    if (spec->ltype == SEL_SINGLE) {
+	int lr0 = spec->lsel.range[0];
+
+	err = bad_sel_single(lr0, veclen);
+	if (!err) {
+	    spec->ltype = spec->rtype = SEL_ELEMENT;
+	    mspec_set_offset(spec, lr0 - 1);
+	    mspec_set_n_elem(spec, 1);
 	}
 	/* nothing more to do */
 	return err;
@@ -505,75 +596,16 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 	}
     }
 
-    if ((isvec || rh_scalar) &&
-	(spec->ltype == SEL_RANGE || spec->ltype == SEL_ALL)) {
-	/* flag as contiguous values provided the rh spec doesn't
-	   take the form of a matrix or column exclusion
-	*/
-	get_contig = spec->rtype != SEL_MATRIX && spec->rtype != SEL_EXCL;
-#if CONTIG_DEBUG
-	if (get_contig) {
-	    fprintf(stderr, "got_contig: isvec %d, rh_scalar %d, rh range %d:%d\n",
-		    isvec, rh_scalar, spec->rsel.range[0], spec->rsel.range[0]);
-	}
-#endif
-    }
+    if (submatrix_contig(spec, m)) {
+	int offset, nelem;
 
-    if (spec->rtype == SEL_NULL && !isvec) {
-	gretl_errmsg_set(_("Ambiguous matrix index"));
-	return E_DATA;
-    }
-
-    if (get_contig) {
-	int lr0 = spec->lsel.range[0];
-	int lr1 = spec->lsel.range[1];
-	int rr0 = spec->rsel.range[0];
-	int rr1 = spec->rsel.range[1];
-	int i, j, n;
-
-	if (spec->ltype == SEL_ALL) {
-	    lr0 = 1;
-	    lr1 = m->rows;
-	} else if (lr1 == MSEL_MAX) {
-	    /* more checking! */
-	    // lr1 = spec->rtype == SEL_NULL ? m->cols : m->rows;
-	    lr1 = spec->rtype == SEL_NULL ? isvec : m->rows;
-	}
-	if (spec->rtype == SEL_ALL) { /* or SEL_NULL */
-	    rr0 = 1;
-	    rr1 = m->cols;
-	} else if (rr1 == MSEL_MAX) {
-	    rr1 = m->cols;
-	}
-
-	i = lr0;
-	if (!isvec) {
-	    j = rr0;
-	    n = lr1 - i + 1;
-	} else if (m->rows == 1) {
-	    if (spec->rtype == SEL_NULL) {
-		j = 1;
-		n = lr1 - lr0 + 1;
-	    } else {
-		j = rr0;
-		n = rr1 - j + 1;
-	    }
-	} else {
-	    /* m->cols == 1 */
-	    if (spec->rtype == SEL_NULL) {
-		j = 1;
-		n = lr1 - lr0 + 1;
-	    } else {
-		j = rr1;
-		n = lr1 - i + 1;
-	    }
-	}
+	get_offset_nelem(spec, m, &offset, &nelem);
 	spec->ltype = SEL_CONTIG;
-	mspec_set_offset(spec, (j-1) * m->rows + (i-1));
-	mspec_set_n_elem(spec, n);
-	if (spec->lsel.range[0] < 0 || n <= 0) {
-	    fprintf(stderr, "*** offset = %d, n = %d (i=%d, j=%d, m: %dx%d) ***\n",
-		    mspec_get_offset(spec), n, i, j, m->rows, m->cols);
+	mspec_set_offset(spec, offset);
+	mspec_set_n_elem(spec, nelem);
+	if (offset < 0 || nelem <= 0) {
+	    fprintf(stderr, "*** offset = %d, nelem = %d (m: %dx%d) ***\n",
+		    offset, nelem, m->rows, m->cols);
 	}
     }
 
