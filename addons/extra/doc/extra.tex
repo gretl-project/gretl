@@ -238,12 +238,16 @@ Arguments: \texttt{series x, int method }(optional)\texttt{ }
 
 \noindent Return type: \texttt{series}
 
-simple convenience function to crudely get rid of missing values interspersed
-between valid observations. Apart from the first argument (series)
-accepts an integer parameter as second argument, whose meaning is:
-0: do nothing, leave the gaps; 1: NAs are replaced with previous observations;
-2: NAs are replaced with a linear interpolation. Returns the filled
-series. 
+Simple convenience function to crudely get rid of missing values
+interspersed between valid observations. Apart from the first argument
+(series) accepts an integer parameter as second argument, whose
+meaning is: 0: do nothing, leave the gaps; 1: NAs are replaced with
+previous observations; 2: NAs are replaced with a linear
+interpolation. Returns the filled series.
+
+Note that the function only replaces NAs between valid observations;
+therefore, if the origin series has missing values at the beginning or
+the end of the sample, they will be in the returned series too.
 
 \subsection{winsor}
 
