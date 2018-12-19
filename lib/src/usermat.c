@@ -535,9 +535,11 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 	    lr0 = 1;
 	    lr1 = m->rows;
 	} else if (lr1 == MSEL_MAX) {
-	    lr1 = spec->rtype == SEL_NULL ? m->cols : m->rows;
+	    /* more checking! */
+	    // lr1 = spec->rtype == SEL_NULL ? m->cols : m->rows;
+	    lr1 = spec->rtype == SEL_NULL ? isvec : m->rows;
 	}
-	if (spec->rtype == SEL_ALL || spec->rtype == SEL_NULL) {
+	if (spec->rtype == SEL_ALL) { /* or SEL_NULL */
 	    rr0 = 1;
 	    rr1 = m->cols;
 	} else if (rr1 == MSEL_MAX) {
@@ -557,8 +559,14 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 		n = rr1 - j + 1;
 	    }
 	} else {
-	    j = rr1;
-	    n = lr1 - i + 1;
+	    /* m->cols == 1 */
+	    if (spec->rtype == SEL_NULL) {
+		j = 1;
+		n = lr1 - lr0 + 1;
+	    } else {
+		j = rr1;
+		n = lr1 - i + 1;
+	    }
 	}
 	spec->ltype = SEL_CONTIG;
 	mspec_set_offset(spec, (j-1) * m->rows + (i-1));
