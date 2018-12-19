@@ -343,16 +343,20 @@ static int *mspec_make_list (int type, union msel *sel, int n,
     return slice;
 }
 
+#define singleton_left_range(s) (s->ltype == SEL_RANGE && \
+				 s->lsel.range[0] == s->lsel.range[1])
+#define singleton_right_range(s) (s->rtype == SEL_RANGE && \
+				  s->rsel.range[0] == s->rsel.range[1])
+
 #define all_or_null(t) (t == SEL_ALL || t == SEL_NULL)
-#define singleton_range(sel) (sel.range[0] == sel.range[1])
 
 #define lhs_is_scalar(s,m) (s->ltype == SEL_ELEMENT ||		\
 			    (m->rows == 1 && all_or_null(s->ltype)) || \
-			    (s->ltype == SEL_RANGE && singleton_range(s->lsel)))
+			    singleton_left_range(s))
 
 #define rhs_is_scalar(s,m) (s->rtype == SEL_ELEMENT ||		\
 			    (m->cols == 1 && all_or_null(s->rtype)) || \
-			    (s->rtype == SEL_RANGE && singleton_range(s->rsel)))
+			    singleton_right_range(s))
 
 static int set_element_index (matrix_subspec *spec,
 			      const gretl_matrix *m)
@@ -452,21 +456,20 @@ static int submatrix_contig (matrix_subspec *spec, const gretl_matrix *m)
     } else if (m->rows == 1 || m->cols == 1) {
 	/* must be contig */
 	contig = 1;
-    } else if (spec->rtype == SEL_RANGE &&
-	spec->rsel.range[0] == spec->rsel.range[1]) {
+    } else if (singleton_right_range(spec)) {
 	/* single column selected */
 	contig = 1;
-    }
-#if 0 /* not ready for this yet */
-    else if ((spec->rtype == SEL_ALL || spec->rtype == SEL_RANGE) &&
-	spec->ltype == SEL_ALL) {
+    } else if ((spec->rtype == SEL_ALL || spec->rtype == SEL_RANGE) &&
+	       spec->ltype == SEL_ALL) {
 	/* range of columns, all rows */
 	contig = 1;
     }
-#endif
 
     return contig;
 }
+
+#define rowmax(s,m) (s->range[1] == MSEL_MAX ? m->rows : s->range[1])
+#define colmax(s,m) (s->range[1] == MSEL_MAX ? m->cols : s->range[1])
 
 static int get_offset_nelem (matrix_subspec *spec,
 			     const gretl_matrix *m,
@@ -481,7 +484,7 @@ static int get_offset_nelem (matrix_subspec *spec,
 	if (stype == SEL_ALL) {
 	    nelem = m->rows;
 	} else {
-	    int rmax = sel->range[1] == MSEL_MAX ? m->rows : sel->range[1];
+	    int rmax = rowmax(sel, m);
 
 	    offset = sel->range[0] - 1;
 	    nelem = rmax - sel->range[0] + 1;
@@ -495,33 +498,33 @@ static int get_offset_nelem (matrix_subspec *spec,
 	if (stype == SEL_ALL) {
 	    nelem = m->cols;
 	} else {
-	    int cmax = sel->range[1] == MSEL_MAX ? m->cols : sel->range[1];
+	    int cmax = colmax(sel, m);
 
 	    offset = sel->range[0] - 1;
 	    nelem = cmax - sel->range[0] + 1;
 	}
-    } else if (spec->rtype == SEL_RANGE &&
-	       spec->rsel.range[0] == spec->rsel.range[0]) {
+    } else if (singleton_right_range(spec)) {
 	/* a single matrix column */
 	if (stype == SEL_ALL) {
 	    nelem = m->rows;
 	} else {
-	    int rmax = sel->range[1] == MSEL_MAX ? m->rows :
-		sel->range[1];
+	    int rmax = rowmax(sel, m);
 
 	    offset = sel->range[0] - 1;
 	    nelem = rmax - sel->range[0] + 1;
 	}
 	offset += m->rows * (spec->rsel.range[0] - 1);
     } else {
-	/* multiple columns, all rows (not ready yet) */
+	/* multiple columns, all rows */
 	if (spec->rtype == SEL_ALL) {
 	    nelem = m->rows * m->cols;
 	} else {
-	    int cmax = sel->range[1] == MSEL_MAX ? m->cols : sel->range[1];
-	    int nc = cmax - spec->rsel.range[0] + 1;
+	    int cmax, nc;
 
-	    offset = m->rows * (spec->rsel.range[0] - 1);
+	    sel = &spec->rsel;
+	    cmax = colmax(sel, m);
+	    nc = cmax - sel->range[0] + 1;
+	    offset = m->rows * (sel->range[0] - 1);
 	    nelem = m->rows * nc;
 	}
     }
@@ -987,8 +990,7 @@ double matrix_get_element (const gretl_matrix *M, int i, int *err)
 }
 
 /* Copy a contiguous chunk of data out of @M, the offset and
-   extent of which are given by @spec. At present we come
-   here only if it's known that @M is a vector.
+   extent of which are given by @spec.
 */
 
 gretl_matrix *matrix_get_chunk (const gretl_matrix *M,
@@ -996,8 +998,9 @@ gretl_matrix *matrix_get_chunk (const gretl_matrix *M,
 				int *err)
 {
     int offset = spec->lsel.range[0];
-    int n = spec->lsel.range[1];
+    int nelem = spec->lsel.range[1];
     gretl_matrix *ret;
+    int rows;
 
     if (offset < 0) {
 	fprintf(stderr, "matrix_get_chunk: offset = %d\n", offset);
@@ -1005,19 +1008,34 @@ gretl_matrix *matrix_get_chunk (const gretl_matrix *M,
 	return NULL;
     }
 
-    if (M->rows == 1) {
-	ret = gretl_matrix_alloc(1, n);
+    if (M->cols > 1 && M->rows > 1) {
+	int cols;
+
+	if (spec->rtype == SEL_ALL) {
+	    cols = M->cols;
+	} else if (spec->rtype == SEL_RANGE) {
+	    int r1 = spec->rsel.range[1];
+	    int cmax = r1 == MSEL_MAX ? M->cols : r1;
+
+	    cols = cmax - spec->rsel.range[0] + 1;
+	}
+	rows = nelem / cols;
+	ret = gretl_matrix_alloc(rows, cols);
+    } else if (M->rows == 1) {
+	rows = 1;
+	ret = gretl_matrix_alloc(1, nelem);
     } else {
-	ret = gretl_matrix_alloc(n, 1);
+	rows = nelem;
+	ret = gretl_matrix_alloc(nelem, 1);
     }
 
     if (ret == NULL) {
 	*err = E_ALLOC;
     } else {
-	size_t sz = n * sizeof(double);
+	size_t sz = nelem * sizeof(double);
 
 	memcpy(ret->val, M->val + offset, sz);
-	if (M->rows > 1 && n == M->rows && offset == 0 &&
+	if (M->rows > 1 && rows == M->rows && offset == 0 &&
 	    gretl_matrix_is_dated(M)) {
 	    matrix_transcribe_dates(ret, M);
 	}
