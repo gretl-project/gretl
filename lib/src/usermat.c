@@ -727,6 +727,19 @@ static int matrix_insert_diagonal (gretl_matrix *M,
     return 0;
 }
 
+static int contig_cols (matrix_subspec *spec,
+			const gretl_matrix *m)
+{
+    if (spec->rtype == SEL_ALL) {
+	return m->cols;
+    } else if (spec->rtype == SEL_RANGE) {
+	int r1 = spec->rsel.range[1];
+	int cmax = r1 == MSEL_MAX ? m->cols : r1;
+
+	return cmax - spec->rsel.range[0] + 1;
+    }
+}
+
 /* @M is the target for partial replacement, @S is the source to
    substitute, and @spec tells how/where to make the
    substitution.
@@ -755,8 +768,11 @@ int matrix_replace_submatrix (gretl_matrix *M,
     if (spec->ltype == SEL_CONTIG) {
 	int ini = mspec_get_offset(spec);
 	int n = mspec_get_n_elem(spec);
+	int ccols = contig_cols(spec, M);
 
-	if (gretl_vector_get_length(S) != n) {
+	if (S->rows * S->cols != n) {
+	    return E_NONCONF;
+	} else if (ccols > 1 && M->rows != S->rows) {
 	    return E_NONCONF;
 	} else {
 	    memcpy(M->val + ini, S->val, n * sizeof(double));
@@ -1009,16 +1025,8 @@ gretl_matrix *matrix_get_chunk (const gretl_matrix *M,
     }
 
     if (M->cols > 1 && M->rows > 1) {
-	int cols;
+	int cols = contig_cols(spec, M);
 
-	if (spec->rtype == SEL_ALL) {
-	    cols = M->cols;
-	} else if (spec->rtype == SEL_RANGE) {
-	    int r1 = spec->rsel.range[1];
-	    int cmax = r1 == MSEL_MAX ? M->cols : r1;
-
-	    cols = cmax - spec->rsel.range[0] + 1;
-	}
 	rows = nelem / cols;
 	ret = gretl_matrix_alloc(rows, cols);
     } else if (M->rows == 1) {
