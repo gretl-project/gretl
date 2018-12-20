@@ -41,6 +41,8 @@
 #include "gretl_foreign.h"
 #include "var.h"
 
+#include "../../cephes/cephes.h" /* for hyp2f1 */
+
 #ifdef USE_CURL
 # include "gretl_www.h"
 #endif
@@ -12518,6 +12520,47 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    p->err = nadaraya_watson(x, y, h, p->dset, LOO,
 				     trim, ret->v.xvec);
 	}
+    } else if (t->t == F_HYP2F1) {
+	gretl_matrix *x;
+	double a[3];
+
+	if (k != 4) {
+	    n_args_error(k, 4, t->t, p);
+	}
+
+	for (i=0; i<k && !p->err; i++) {
+	    e = eval(n->v.bn.n[i], p);
+	    if (i < 3) {
+		a[i] = node_get_scalar(e, p);
+	    } else {
+		x = node_get_matrix(e, p, 0, 3);
+	    }
+	}
+
+	if (!p->err) {
+	    reset_p_aux(p, save_aux);
+	    ret = aux_matrix_node(p);
+	}
+
+	if (!p->err) {
+	    ret->v.m = gretl_matrix_alloc(x->rows, x->cols);
+	    if (ret->v.m == NULL) {
+		p->err = E_ALLOC;
+	    } else {
+		int n = x->rows * x->cols;
+		double xi, y;
+
+		for (i=0; i<n; i++) {
+		    xi = x->val[i];
+		    if (xi < -1.0 || xi >= 1.0) {
+			y = NADBL;
+		    } else {
+			y = hyp2f1(a[0], a[1], a[2], xi);
+		    }
+		    ret->v.m->val[i] = y;
+		}
+	    }
+	}
     }
 
     return ret;
@@ -15546,6 +15589,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_IRF:
     case F_NADARWAT:
     case F_FEVAL:
+    case F_HYP2F1:
     case HF_CLOGFI:
 	/* built-in functions taking more than three args */
 	if (t->t == F_FEVAL) {

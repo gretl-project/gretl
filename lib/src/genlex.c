@@ -496,6 +496,7 @@ struct str_table funcs[] = {
     { F_FEVAL,     "feval" },
     { F_BRENAME,   "brename" },
     { F_CCODE,     "isocountry" },
+    { F_HYP2F1,    "hyp2f1" },
     { 0,           NULL }
 };
 
