@@ -4292,18 +4292,19 @@ static void print_mspec (matrix_subspec *mspec)
     fprintf(stderr, "mspec at %p:\n", (void *) mspec);
 
     if (mspec != NULL) {
-	int i;
-
-	for (i=0; i<2; i++) {
-	    fprintf(stderr, "type[%d] = %s\n", i, mstypes[mspec->type[i]]);
-	    if (mspec->type[i] == SEL_RANGE) {
-		fprintf(stderr, "sel[%d].range[0] = %d\n",
-			i, mspec->sel[i].range[0]);
-		fprintf(stderr, "sel[%d].range[1] = %d\n",
-			i, mspec->sel[i].range[1]);
-	    } else if (mspec->type[i] == SEL_MATRIX) {
-		gretl_matrix_print(mspec->sel[i].m, "sel matrix");
-	    }
+	fprintf(stderr, "ltype = %s\n", mstypes[mspec->ltype]);
+	if (mspec->ltype == SEL_RANGE) {
+	    fprintf(stderr, "lsel.range[0] = %d\n", mspec->lsel.range[0]);
+	    fprintf(stderr, "lsel.range[1] = %d\n", mspec->lsel.range[1]);
+	} else if (mspec->ltype == SEL_MATRIX) {
+	    gretl_matrix_print(mspec->lsel.m, "sel matrix");
+	}
+	fprintf(stderr, "rtype = %s\n", mstypes[mspec->rtype]);
+	if (mspec->rtype == SEL_RANGE) {
+	    fprintf(stderr, "rsel.range[0] = %d\n", mspec->rsel.range[0]);
+	    fprintf(stderr, "rsel.range[1] = %d\n", mspec->rsel.range[1]);
+	} else if (mspec->rtype == SEL_MATRIX) {
+	    gretl_matrix_print(mspec->rsel.m, "sel matrix");
 	}
     }
 }
@@ -4724,7 +4725,7 @@ static int mspec_get_series_index (matrix_subspec *s,
 {
     int t = -1;
 
-    if (s->ltype == SEL_SINGLE && s->rtype == SEL_NULL) {
+    if (s->ltype == SEL_SINGLE) {
 	t = s->lsel.range[0];
     } else if (s->ltype == SEL_RANGE && s->rtype == SEL_NULL) {
 	if (s->lsel.range[0] == s->lsel.range[1]) {
@@ -4761,8 +4762,7 @@ static int test_for_single_range (matrix_subspec *spec,
 
     if (spec->ltype == SEL_SINGLE) {
 	ret = spec->lsel.range[0];
-    } else if (spec->ltype == SEL_RANGE &&
-	spec->rtype == SEL_NULL) {
+    } else if (spec->ltype == SEL_RANGE && spec->rtype == SEL_NULL) {
 	if (spec->lsel.range[0] == spec->lsel.range[1]) {
 	    ret = spec->lsel.range[0];
 	}
@@ -10748,12 +10748,12 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    reset_p_aux(p, save_aux);
 	    ret = aux_scalar_node(p);
 	    if (!p->err && f == F_SETNOTE) {
-		p->err = gretl_bundle_set_note(l->v.b, m->v.str, r->v.str);
+		ret->v.xval = gretl_bundle_set_note(l->v.b, m->v.str, r->v.str);
 	    } else if (!p->err) {
 		p->err = gretl_bundle_rekey_data(l->v.b, m->v.str, r->v.str);
-	    }
-	    if (!p->err) {
-		ret->v.xval = 0;
+		if (!p->err) {
+		    ret->v.xval = 0;
+		}
 	    }
 	}
     } else if (f == F_BWFILT) {

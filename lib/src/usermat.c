@@ -351,12 +351,14 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 #define all_or_null(t) (t == SEL_ALL || t == SEL_NULL)
 
 #define lhs_is_scalar(s,m) (s->ltype == SEL_ELEMENT ||		\
-			    (m->rows == 1 && all_or_null(s->ltype)) || \
+			    (m->rows == 1 && s->ltype == SEL_ALL) || \
 			    singleton_left_range(s))
 
 #define rhs_is_scalar(s,m) (s->rtype == SEL_ELEMENT ||		\
 			    (m->cols == 1 && all_or_null(s->rtype)) || \
 			    singleton_right_range(s))
+
+#define lhs_is_colspec(s,m) (m->rows == 1 && spec->rtype == SEL_NULL)
 
 static int set_element_index (matrix_subspec *spec,
 			      const gretl_matrix *m)
@@ -366,7 +368,9 @@ static int set_element_index (matrix_subspec *spec,
     int j = spec->rsel.range[0];
     int k;
 
-    if (spec->ltype == SEL_ELEMENT ||
+    if (spec->ltype == SEL_ALL && spec->rtype == SEL_ALL) {
+	k = 0;
+    } else if (spec->ltype == SEL_ELEMENT ||
 	(spec->ltype == SEL_RANGE && spec->rtype == SEL_RANGE)) {
 	k = (j-1) * m->rows + (i-1);
     } else {
@@ -374,7 +378,7 @@ static int set_element_index (matrix_subspec *spec,
     }
 
 #if CONTIG_DEBUG
-    fprintf(stderr, "element_get_index: i=%d, j=%d -> k=%d\n",
+    fprintf(stderr, "set_element_index: i=%d, j=%d -> k=%d\n",
 	    i, j, k);
 #endif
 
@@ -445,6 +449,10 @@ static void subspec_debug_print (const matrix_subspec *spec,
 }
 
 #endif
+
+/* When we come here we've already screened out DIAG
+   selection and single-element selection.
+*/
 
 static int submatrix_contig (matrix_subspec *spec, const gretl_matrix *m)
 {
@@ -543,8 +551,7 @@ static int get_offset_nelem (matrix_subspec *spec,
 
 int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 {
-    int veclen, rh_scalar;
-    int err = 0;
+    int veclen, err = 0;
 
 #if CONTIG_DEBUG
     subspec_debug_print(spec, m);
@@ -588,10 +595,8 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 	return 0;
     }
 
-    rh_scalar = rhs_is_scalar(spec, m);
-
     if (lhs_is_scalar(spec, m)) {
-	if (rh_scalar || (m->rows == 1 && spec->rtype == SEL_NULL)) {
+	if (rhs_is_scalar(spec, m) || lhs_is_colspec(spec, m)) {
 	    /* we're looking at just one element */
 	    set_element_index(spec, m);
 	    spec->ltype = spec->rtype = SEL_ELEMENT;
@@ -737,6 +742,8 @@ static int contig_cols (matrix_subspec *spec,
 	int cmax = r1 == MSEL_MAX ? m->cols : r1;
 
 	return cmax - spec->rsel.range[0] + 1;
+    } else {
+	return 1;
     }
 }
 
