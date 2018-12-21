@@ -27,6 +27,8 @@ version 2018d, in progress
 - Line plots via gnuplot: show gaps for missing values
 - dbnomics: some refinements to handle problematic cases
   as well as some new functionality
+- Matrix power (A^k): support fractional and negative powers
+  for positive-definite matrices
 - Fix bug: out-of-bounds writes to matrices were not being
   caught under all conditions
 - Fix bug: giving an all-zero initializer to "arima" could
