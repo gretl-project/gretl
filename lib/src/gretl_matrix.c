@@ -5798,8 +5798,8 @@ static gretl_matrix *matrix_frac_pow (const gretl_matrix *m,
     gretl_matrix *ret;
     gretl_matrix *tmp;
     gretl_matrix *lam;
-    int n = m->rows;
     double eps = 1.0e-12;
+    int n = m->rows;
 
     tmp = gretl_matrix_copy(m);
     ret = gretl_matrix_alloc(n, n);
@@ -5819,8 +5819,8 @@ static gretl_matrix *matrix_frac_pow (const gretl_matrix *m,
 	       semidefinite matrices */
 	    *err = E_NOTPD;
 	} else if (lam->val[0] < eps && a < 0) {
-	    /* don't allow negatibe exponents if matrix is
-	     singular*/
+	    /* but don't allow negative exponents if @m
+	       is singular */
 	    *err = E_INVARG;
 	} else {
 	    double x, y, a2 = a/2;
