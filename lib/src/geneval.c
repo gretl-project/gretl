@@ -12527,7 +12527,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	if (k != 4) {
 	    n_args_error(k, 4, t->t, p);
 	}
-
 	for (i=0; i<k && !p->err; i++) {
 	    e = eval(n->v.bn.n[i], p);
 	    if (i < 3) {
@@ -12536,12 +12535,10 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		x = node_get_matrix(e, p, 0, 3);
 	    }
 	}
-
 	if (!p->err) {
 	    reset_p_aux(p, save_aux);
 	    ret = aux_matrix_node(p);
 	}
-
 	if (!p->err) {
 	    ret->v.m = gretl_matrix_alloc(x->rows, x->cols);
 	    if (ret->v.m == NULL) {
