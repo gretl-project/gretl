@@ -453,8 +453,11 @@ For matrix $A$ and scalar $k$, the operators shown in
 Table~\ref{tab:matrix-scalar-ops} are available.  (Addition and
 subtraction were discussed in section~\ref{matrix-op} but we include
 them in the table for completeness.)  In addition, for square $A$ and
-integer $k \geq 0$, \verb|B = A^k| produces a matrix $B$ which is $A$
-raised to the power $k$.
+scalar $k$, \verb|B = A^k| produces a matrix $B$ which is $A$ raised
+to the power $k$, but only if either $k$ is a non-negative integer, in
+which case Golub and Van Loan's ``Binary Powering'' Algorithm 11.2.2
+is used---see \cite{golub96}---or $A$ is positive definite, in which
+case the power is computed via its eigen-decomposition.
 
 \begin{table}[htbp]
 \centering
