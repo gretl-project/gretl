@@ -12521,7 +12521,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 				     trim, ret->v.xvec);
 	}
     } else if (t->t == F_HYP2F1) {
-	gretl_matrix *x;
+	gretl_matrix *x = NULL;
 	double a[3];
 
 	if (k != 4) {
