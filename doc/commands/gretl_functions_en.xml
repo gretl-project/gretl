@@ -4282,6 +4282,32 @@
       </description>
     </function>
 
+    <function name="hyp2f1" section="math" output="scalar-or-matrix">
+      <fnargs>
+	<fnarg type="scalar">a</fnarg>
+	<fnarg type="scalar">b</fnarg>
+	<fnarg type="scalar">c</fnarg>
+	<fnarg type="scalar-or-matrix">x</fnarg>
+      </fnargs>
+      <description>
+	<para context="notex">
+	  Returns the Gauss hypergeometric function for real argument
+	  <argname>x</argname>.
+	</para>
+	<para context="tex">
+	  Returns the Gauss hypergeometric function
+	  <math>{}_2F_1(a,b;c;z) = \sum_{n=0}^\infty \frac{(a)_n
+	  (b)_n}{(c)_n} \frac{z^n}{n!}.</math> for real argument
+	  <argname>x</argname>.
+	</para>
+	<para>
+	  If <argname>x</argname> is a scalar, the return value will
+	  be scalar; otherwise, it will be a matrix the same size as
+	  <argname>x</argname>.
+	</para>
+      </description>
+    </function>
+
     <function name="I" section="matbuild" output="smatrix">
       <fnargs>
 	<fnarg type="int">n</fnarg>
