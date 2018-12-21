@@ -1,4 +1,4 @@
-version 2018d, in progress
+2018-12-21 version 2018d
 
 Replace "install" command with new "pkg" command: this has
 the same functionality but is more extensible for future use.
