@@ -107,6 +107,9 @@ static inline void *mval_realloc (void *ptr, size_t sz)
 static int add_scalar_to_matrix (gretl_matrix *targ, double x);
 static int gretl_matrix_copy_info (gretl_matrix *targ,
 				   const gretl_matrix *src);
+static int
+matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
+				gretl_matrix *c, GretlMatrixMod cmod);
 
 /* matrix metadata struct, not allocated by default */
 
@@ -1969,6 +1972,60 @@ gretl_matrix *gretl_matrix_exp (const gretl_matrix *m, int *err)
     }
 
     return N;
+}
+
+gretl_matrix *gretl_matrix_frac_pow (const gretl_matrix *m,
+				     double a, int *err)
+{
+    gretl_matrix *ret;
+    gretl_matrix *tmp;
+    gretl_matrix *lam;
+    int n = m->rows;
+
+    if (m->cols != n) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    tmp = gretl_matrix_copy(m);
+    ret = gretl_matrix_alloc(n, n);
+
+    if (tmp == NULL || ret == NULL) {
+	gretl_matrix_free(tmp);
+	gretl_matrix_free(ret);
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    lam = gretl_symmetric_matrix_eigenvals(tmp, 1, err);
+
+    if (!*err) {
+	if (lam->val[0] < 0) {
+	    *err = E_NOTPD;
+	} else {
+	    double x, y, a2 = a/2;
+	    int i, j;
+
+	    for (j=0; j<n; j++) {
+		y = pow(lam->val[j], a2);
+		for (i=0; i<n; i++) {
+		    x = gretl_matrix_get(tmp, i, j);
+		    gretl_matrix_set(tmp, i, j, x * y);
+		}
+	    }
+	    matrix_multiply_self_transpose(tmp, 0, ret, GRETL_MOD_NONE);
+	}
+    }
+
+    gretl_matrix_free(lam);
+    gretl_matrix_free(tmp);
+
+    if (*err) {
+	gretl_matrix_free(ret);
+	ret = NULL;
+    }
+
+    return ret;
 }
 
 /**
@@ -5793,7 +5850,7 @@ static char *binary_expansion (int s, int *t, int *pow2)
  * @s: exponent >= 0.
  * @err: location to receive error code.
  *
- * Calculates the matrix A^k using Golub and Van Loan's Algorithm
+ * Calculates the matrix A^s using Golub and Van Loan's Algorithm
  * 11.2.2 ("Binary Powering").
  *
  * Returns: allocated matrix, or NULL on failure.
@@ -6067,7 +6124,7 @@ static void vec_x_op_vec_y (double *z, const double *x,
 			    int op)
 {
     int i;
-    
+
     switch (op) {
     case '*':
 	for (i=0; i<n; i++) {
@@ -6078,52 +6135,52 @@ static void vec_x_op_vec_y (double *z, const double *x,
 	for (i=0; i<n; i++) {
 	    z[i] = x[i] / y[i];
 	}
-	break;	
+	break;
     case '+':
 	for (i=0; i<n; i++) {
 	    z[i] = x[i] + y[i];
 	}
-	break;	
+	break;
     case '-':
 	for (i=0; i<n; i++) {
 	    z[i] = x[i] - y[i];
 	}
-	break;	
+	break;
     case '^':
 	for (i=0; i<n; i++) {
 	    z[i] = pow(x[i], y[i]);
 	}
-	break;	
+	break;
     case '=':
 	for (i=0; i<n; i++) {
 	    z[i] = x[i] == y[i];
 	}
-	break;	
+	break;
     case '>':
 	for (i=0; i<n; i++) {
 	    z[i] = x[i] > y[i];
 	}
-	break;	
+	break;
     case '<':
 	for (i=0; i<n; i++) {
 	    z[i] = x[i] < y[i];
 	}
-	break;	
+	break;
     case ']':
 	for (i=0; i<n; i++) {
 	    z[i] = x[i] >= y[i];
 	}
-	break;	
+	break;
     case '[':
 	for (i=0; i<n; i++) {
 	    z[i] = x[i] <= y[i];
 	}
-	break;	
+	break;
     case '!':
 	for (i=0; i<n; i++) {
 	    z[i] = x[i] != y[i];
 	}
-	break;	
+	break;
     default:
 	break;
     }
@@ -6133,7 +6190,7 @@ static void vec_x_op_y (double *z, const double *x,
 			double y, int n, int op)
 {
     int i;
-    
+
     switch (op) {
     case '*':
 	for (i=0; i<n; i++) {
@@ -6144,52 +6201,52 @@ static void vec_x_op_y (double *z, const double *x,
 	for (i=0; i<n; i++) {
 	    z[i] = x[i] / y;
 	}
-	break;	
+	break;
     case '+':
 	for (i=0; i<n; i++) {
 	    z[i] = x[i] + y;
 	}
-	break;	
+	break;
     case '-':
 	for (i=0; i<n; i++) {
 	    z[i] = x[i] - y;
 	}
-	break;	
+	break;
     case '^':
 	for (i=0; i<n; i++) {
 	    z[i] = pow(x[i], y);
 	}
-	break;	
+	break;
     case '=':
 	for (i=0; i<n; i++) {
 	    z[i] = x[i] == y;
 	}
-	break;	
+	break;
     case '>':
 	for (i=0; i<n; i++) {
 	    z[i] = x[i] > y;
 	}
-	break;	
+	break;
     case '<':
 	for (i=0; i<n; i++) {
 	    z[i] = x[i] < y;
 	}
-	break;	
+	break;
     case ']':
 	for (i=0; i<n; i++) {
 	    z[i] = x[i] >= y;
 	}
-	break;	
+	break;
     case '[':
 	for (i=0; i<n; i++) {
 	    z[i] = x[i] <= y;
 	}
-	break;	
+	break;
     case '!':
 	for (i=0; i<n; i++) {
 	    z[i] = x[i] != y;
 	}
-	break;	
+	break;
     default:
 	break;
     }
@@ -6200,7 +6257,7 @@ static void x_op_vec_y (double *z, double x,
 			int op)
 {
     int i;
-    
+
     switch (op) {
     case '*':
 	for (i=0; i<n; i++) {
@@ -6211,52 +6268,52 @@ static void x_op_vec_y (double *z, double x,
 	for (i=0; i<n; i++) {
 	    z[i] = x / y[i];
 	}
-	break;	
+	break;
     case '+':
 	for (i=0; i<n; i++) {
 	    z[i] = x + y[i];
 	}
-	break;	
+	break;
     case '-':
 	for (i=0; i<n; i++) {
 	    z[i] = x - y[i];
 	}
-	break;	
+	break;
     case '^':
 	for (i=0; i<n; i++) {
 	    z[i] = pow(x, y[i]);
 	}
-	break;	
+	break;
     case '=':
 	for (i=0; i<n; i++) {
 	    z[i] = x == y[i];
 	}
-	break;	
+	break;
     case '>':
 	for (i=0; i<n; i++) {
 	    z[i] = x > y[i];
 	}
-	break;	
+	break;
     case '<':
 	for (i=0; i<n; i++) {
 	    z[i] = x < y[i];
 	}
-	break;	
+	break;
     case ']':
 	for (i=0; i<n; i++) {
 	    z[i] = x >= y[i];
 	}
-	break;	
+	break;
     case '[':
 	for (i=0; i<n; i++) {
 	    z[i] = x <= y[i];
 	}
-	break;	
+	break;
     case '!':
 	for (i=0; i<n; i++) {
 	    z[i] = x != y[i];
 	}
-	break;	
+	break;
     default:
 	break;
     }

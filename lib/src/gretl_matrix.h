@@ -322,6 +322,9 @@ gretl_matrix *gretl_matrix_complex_divide (const gretl_matrix *a,
 
 gretl_matrix *gretl_matrix_exp (const gretl_matrix *m, int *err);
 
+gretl_matrix *gretl_matrix_frac_pow (const gretl_matrix *m,
+				     double a, int *err);    
+
 gretl_matrix *gretl_matrix_polroots (const gretl_matrix *a,
 				     int force_complex,
 				     int *err);

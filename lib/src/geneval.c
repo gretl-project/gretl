@@ -3031,10 +3031,18 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 	/* note: the (scalar, 1x1) and (1x1, scalar) cases are
 	   handled above
 	*/
-	int s = node_get_int(r, p);
+	double a = node_get_scalar(r, p);
 
 	if (!p->err) {
-	    ret->v.m = gretl_matrix_pow(m, s, &p->err);
+	    if (a != floor(a) || a < 0) {
+		ret->v.m = gretl_matrix_frac_pow(m, a, &p->err);
+	    } else {
+		int s = gretl_int_from_double(a, &p->err);
+
+		if (!p->err) {
+		    ret->v.m = gretl_matrix_pow(m, s, &p->err);
+		}
+	    }
 	}
 	return ret;
     } else {
