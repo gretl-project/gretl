@@ -7,6 +7,7 @@ version 2018d, in progress
 - Add new function isocountry(): maps between the various
   designations for countries (full name and codes) in the ISO
   3166 standard
+- Add new function hyp2f1(): Gauss hypergeometric function
 - cdemean() function: add option to standardize in addition
   to centering
 - boxcox() function: accept a matrix argument
