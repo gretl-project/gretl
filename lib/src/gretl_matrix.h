@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #ifndef GRETL_MATRIX_H
@@ -79,7 +79,7 @@ typedef struct gretl_matrix_block_ gretl_matrix_block;
  * @m: matrix.
  * @i: row.
  * @j: column.
- * 
+ *
  * Returns: the @i, @j element of @m.
  */
 
@@ -89,7 +89,7 @@ typedef struct gretl_matrix_block_ gretl_matrix_block;
  * gretl_vector_get:
  * @v: vector.
  * @i: index.
- * 
+ *
  * Returns: element @i of @v.
  */
 
@@ -101,7 +101,7 @@ typedef struct gretl_matrix_block_ gretl_matrix_block;
  * @i: row.
  * @j: column.
  * @x: value to set.
- * 
+ *
  * Sets the @i, @j element of @m to @x.
  */
 
@@ -112,7 +112,7 @@ typedef struct gretl_matrix_block_ gretl_matrix_block;
  * @v: vector.
  * @i: index.
  * @x: value to set.
- * 
+ *
  * Sets element @i of @v to @x.
  */
 
@@ -121,8 +121,8 @@ typedef struct gretl_matrix_block_ gretl_matrix_block;
 /**
  * gretl_matrix_cols:
  * @m: matrix to query.
- * 
- * Returns: the number of columns in @m. 
+ *
+ * Returns: the number of columns in @m.
  */
 
 #define gretl_matrix_cols(m) ((m == NULL)? 0 : m->cols)
@@ -130,8 +130,8 @@ typedef struct gretl_matrix_block_ gretl_matrix_block;
 /**
  * gretl_matrix_rows:
  * @m: matrix to query.
- * 
- * Returns: the number of rows in @m. 
+ *
+ * Returns: the number of rows in @m.
  */
 
 #define gretl_matrix_rows(m) ((m == NULL)? 0 : m->rows)
@@ -139,7 +139,7 @@ typedef struct gretl_matrix_block_ gretl_matrix_block;
 /**
  * gretl_vector_get_length:
  * @v: vector to examine.
- * 
+ *
  * Returns: the length of vector @v (without regard to whether
  * it is a row or column vector).
  */
@@ -218,11 +218,11 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols);
 
 void gretl_matrix_init (gretl_matrix *m);
 
-gretl_matrix *gretl_matrix_replace (gretl_matrix **pa, 
+gretl_matrix *gretl_matrix_replace (gretl_matrix **pa,
 				    gretl_matrix *b);
 
-int gretl_matrix_replace_content (gretl_matrix *targ, 
-				  gretl_matrix *donor);    
+int gretl_matrix_replace_content (gretl_matrix *targ,
+				  gretl_matrix *donor);
 
 void gretl_matrix_block_destroy (gretl_matrix_block *B);
 
@@ -273,13 +273,13 @@ gretl_matrix *gretl_random_matrix_new (int r, int c, int dist);
 
 gretl_matrix *gretl_matrix_resample (const gretl_matrix *m, int *err);
 
-gretl_matrix *gretl_matrix_block_resample (const gretl_matrix *m, 
-					   int blocklen, 
+gretl_matrix *gretl_matrix_block_resample (const gretl_matrix *m,
+					   int blocklen,
 					   int *err);
 
 int gretl_matrix_block_resample2 (const gretl_matrix *src,
 				  gretl_matrix *targ,
-				  int blocklen, int *z);    
+				  int blocklen, int *z);
 
 double gretl_vector_mean (const gretl_vector *v);
 
@@ -305,25 +305,22 @@ gretl_matrix *
 gretl_matrix_dot_op (const gretl_matrix *a, const gretl_matrix *b,
 		     int op, int *err);
 
-gretl_matrix *gretl_matrix_complex_multiply (const gretl_matrix *a, 
+gretl_matrix *gretl_matrix_complex_multiply (const gretl_matrix *a,
 					     const gretl_matrix *b,
 					     int force_complex,
 					     int *err);
 
-gretl_matrix *gretl_matrix_divide (const gretl_matrix *a, 
+gretl_matrix *gretl_matrix_divide (const gretl_matrix *a,
 				   const gretl_matrix *b,
 				   GretlMatrixMod mod,
 				   int *err);
 
-gretl_matrix *gretl_matrix_complex_divide (const gretl_matrix *a, 
+gretl_matrix *gretl_matrix_complex_divide (const gretl_matrix *a,
 					   const gretl_matrix *b,
 					   int force_complex,
 					   int *err);
 
 gretl_matrix *gretl_matrix_exp (const gretl_matrix *m, int *err);
-
-gretl_matrix *gretl_matrix_frac_pow (const gretl_matrix *m,
-				     double a, int *err);    
 
 gretl_matrix *gretl_matrix_polroots (const gretl_matrix *a,
 				     int force_complex,
@@ -335,16 +332,16 @@ void gretl_matrix_free (gretl_matrix *m);
 
 double *gretl_matrix_steal_data (gretl_matrix *m);
 
-int gretl_vector_copy_values (gretl_vector *targ, 
+int gretl_vector_copy_values (gretl_vector *targ,
 			      const gretl_vector *src);
 
-int gretl_matrix_copy_values (gretl_matrix *targ, 
+int gretl_matrix_copy_values (gretl_matrix *targ,
 			      const gretl_matrix *src);
 
-int gretl_matrix_copy_data (gretl_matrix *targ, 
+int gretl_matrix_copy_data (gretl_matrix *targ,
 			    const gretl_matrix *src);
 
-int gretl_matrix_copy_values_shaped (gretl_matrix *targ, 
+int gretl_matrix_copy_values_shaped (gretl_matrix *targ,
 				     const gretl_matrix *src);
 
 int gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src);
@@ -352,17 +349,17 @@ int gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src);
 int gretl_matrix_add (const gretl_matrix *a, const gretl_matrix *b,
 		      gretl_matrix *c);
 
-int gretl_matrix_add_transpose_to (gretl_matrix *targ, 
+int gretl_matrix_add_transpose_to (gretl_matrix *targ,
 				   const gretl_matrix *src);
 
-int 
+int
 gretl_matrix_subtract_from (gretl_matrix *targ, const gretl_matrix *src);
 
-int 
+int
 gretl_matrix_subtract (const gretl_matrix *a, const gretl_matrix *b,
 		       gretl_matrix *c);
 
-int 
+int
 gretl_matrix_subtract_reversed (const gretl_matrix *a, gretl_matrix *b);
 
 int gretl_matrix_I_minus (gretl_matrix *m);
@@ -375,18 +372,18 @@ int gretl_square_matrix_transpose (gretl_matrix *m);
 
 int gretl_matrix_add_self_transpose (gretl_matrix *m);
 
-int 
+int
 gretl_matrix_vectorize (gretl_matrix *targ, const gretl_matrix *src);
 
 gretl_matrix *gretl_matrix_vectorize_new (const gretl_matrix *m);
 
-int 
+int
 gretl_matrix_unvectorize (gretl_matrix *targ, const gretl_matrix *src);
 
-int 
+int
 gretl_matrix_vectorize_h (gretl_matrix *targ, const gretl_matrix *src);
 
-int 
+int
 gretl_matrix_unvectorize_h (gretl_matrix *targ, const gretl_matrix *src);
 
 int gretl_matrix_inscribe_matrix (gretl_matrix *targ,
@@ -408,7 +405,7 @@ int gretl_matrix_multiply_mod_single (const gretl_matrix *a,
 				      const gretl_matrix *b,
 				      GretlMatrixMod bmod,
 				      gretl_matrix *c,
-				      GretlMatrixMod cmod);    
+				      GretlMatrixMod cmod);
 
 int gretl_matrix_multiply (const gretl_matrix *a,
 			   const gretl_matrix *b,
@@ -418,7 +415,7 @@ int gretl_matrix_multiply_single (const gretl_matrix *a,
 				  const gretl_matrix *b,
 				  gretl_matrix *c);
 
-gretl_matrix *gretl_matrix_multiply_new (const gretl_matrix *a, 
+gretl_matrix *gretl_matrix_multiply_new (const gretl_matrix *a,
 					 const gretl_matrix *b,
 					 int *err);
 
@@ -428,16 +425,16 @@ gretl_matrix_kronecker_product (const gretl_matrix *A,
 				gretl_matrix *K);
 
 gretl_matrix *
-gretl_matrix_kronecker_product_new (const gretl_matrix *A, 
+gretl_matrix_kronecker_product_new (const gretl_matrix *A,
 				    const gretl_matrix *B,
 				    int *err);
 
-int gretl_matrix_hdproduct (const gretl_matrix *A, 
+int gretl_matrix_hdproduct (const gretl_matrix *A,
 			    const gretl_matrix *B,
 			    gretl_matrix *C);
 
 gretl_matrix *
-gretl_matrix_hdproduct_new (const gretl_matrix *A, 
+gretl_matrix_hdproduct_new (const gretl_matrix *A,
 			    const gretl_matrix *B,
 			    int *err);
 
@@ -456,8 +453,8 @@ gretl_matrix_kronecker_I (const gretl_matrix *A, int r,
 gretl_matrix *
 gretl_matrix_kronecker_I_new (const gretl_matrix *A, int r, int *err);
 
-gretl_matrix *gretl_matrix_pow (const gretl_matrix *A, 
-				int s, int *err);
+gretl_matrix *gretl_matrix_pow (const gretl_matrix *A,
+				double s, int *err);
 
 double gretl_matrix_dot_product (const gretl_matrix *a, GretlMatrixMod amod,
 				 const gretl_matrix *b, GretlMatrixMod bmod,
@@ -480,7 +477,7 @@ gretl_matrix *gretl_matrix_column_mean (const gretl_matrix *m, int *err);
 
 gretl_matrix *gretl_matrix_column_sd (const gretl_matrix *m, int *err);
 
-gretl_matrix *gretl_matrix_column_sd2 (const gretl_matrix *m, 
+gretl_matrix *gretl_matrix_column_sd2 (const gretl_matrix *m,
 				       int df, int *err);
 
 double gretl_matrix_row_i_mean (const gretl_matrix *m, int row);
@@ -517,14 +514,14 @@ int gretl_cholesky_solve (const gretl_matrix *a, gretl_vector *b);
 
 int gretl_cholesky_invert (gretl_matrix *a);
 
-gretl_vector *gretl_toeplitz_solve (const gretl_vector *c, 
-				    const gretl_vector *r, 
-				    const gretl_vector *b, 
+gretl_vector *gretl_toeplitz_solve (const gretl_vector *c,
+				    const gretl_vector *r,
+				    const gretl_vector *b,
 				    int *err);
 
 gretl_matrix *gretl_matrix_XTX_new (const gretl_matrix *X);
 
-int gretl_inverse_from_cholesky_decomp (gretl_matrix *targ, 
+int gretl_inverse_from_cholesky_decomp (gretl_matrix *targ,
 					const gretl_matrix *src);
 
 int gretl_invert_general_matrix (gretl_matrix *a);
@@ -551,7 +548,7 @@ int gretl_invpd (gretl_matrix *a);
 
 int gretl_maybe_invpd (gretl_matrix *a);
 
-int gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu, 
+int gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
 		      gretl_vector **ps, gretl_matrix **pvt);
 
 double gretl_symmetric_matrix_rcond (const gretl_matrix *m, int *err);
@@ -559,36 +556,36 @@ double gretl_symmetric_matrix_rcond (const gretl_matrix *m, int *err);
 double gretl_matrix_rcond (const gretl_matrix *m, int *err);
 
 double gretl_matrix_cond_index (const gretl_matrix *m, int *err);
-    
-int gretl_symmetric_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs, 
+
+int gretl_symmetric_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs,
 				int rank);
 
 gretl_matrix *
 gretl_general_matrix_eigenvals (gretl_matrix *m,
-				int eigenvecs, 
+				int eigenvecs,
 				int *err);
 
 gretl_matrix *
 gretl_symmetric_matrix_eigenvals (gretl_matrix *m,
-				  int eigenvecs, 
+				  int eigenvecs,
 				  int *err);
 
 gretl_matrix *
-gretl_symm_matrix_eigenvals_descending (gretl_matrix *m, 
-					int eigenvecs, 
+gretl_symm_matrix_eigenvals_descending (gretl_matrix *m,
+					int eigenvecs,
 					int *err);
 
 gretl_matrix *
-gretl_gensymm_eigenvals (const gretl_matrix *A, 
-			 const gretl_matrix *B, 
-			 gretl_matrix *V, 
+gretl_gensymm_eigenvals (const gretl_matrix *A,
+			 const gretl_matrix *B,
+			 gretl_matrix *V,
 			 int *err);
 
 double gretl_symm_matrix_lambda_min (const gretl_matrix *m, int *err);
 
 double gretl_symm_matrix_lambda_max (const gretl_matrix *m, int *err);
 
-gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M, 
+gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M,
 					    int *err);
 
 gretl_matrix *gretl_matrix_left_nullspace (const gretl_matrix *M,
@@ -613,10 +610,10 @@ gretl_matrix_inplace_colcat (gretl_matrix *a, const gretl_matrix *b,
 
 gretl_matrix *gretl_matrix_cumcol (const gretl_matrix *m, int *err);
 
-gretl_matrix *gretl_matrix_diffcol (const gretl_matrix *m, 
+gretl_matrix *gretl_matrix_diffcol (const gretl_matrix *m,
 				    double missval, int *err);
 
-gretl_matrix *gretl_matrix_lag (const gretl_matrix *m, 
+gretl_matrix *gretl_matrix_lag (const gretl_matrix *m,
 				const gretl_vector *k,
 				gretlopt opt,
 				double missval);
@@ -634,7 +631,7 @@ int gretl_matrix_QR_decomp (gretl_matrix *M,
 
 int gretl_matrix_QR_pivot_decomp (gretl_matrix *M,
 				  gretl_matrix *R,
-				  int **order); 
+				  int **order);
 
 int gretl_check_QR_rank (const gretl_matrix *R,
 			 int *err,
@@ -649,15 +646,15 @@ int gretl_matrix_ols (const gretl_vector *y,
 		      gretl_vector *uhat,
 		      double *s2);
 
-int gretl_matrix_multi_ols (const gretl_matrix *Y, 
+int gretl_matrix_multi_ols (const gretl_matrix *Y,
 			    const gretl_matrix *X,
-			    gretl_matrix *B, 
+			    gretl_matrix *B,
 			    gretl_matrix *E,
 			    gretl_matrix **XTXi);
 
-int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y, 
+int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
 				const gretl_matrix *X,
-				gretl_matrix *B, 
+				gretl_matrix *B,
 				gretl_matrix *E,
 				gretl_matrix **XTXi);
 
@@ -680,7 +677,7 @@ int gretl_matrix_SVD_johansen_solve (const gretl_matrix *R0,
 				     gretl_matrix *A,
 				     int jrank);
 
-int 
+int
 gretl_matrix_restricted_ols (const gretl_vector *y,
 			     const gretl_matrix *X,
 			     const gretl_matrix *R,
@@ -690,12 +687,12 @@ gretl_matrix_restricted_ols (const gretl_vector *y,
 			     gretl_vector *uhat,
 			     double *s2);
 
-int 
-gretl_matrix_restricted_multi_ols (const gretl_matrix *Y, 
+int
+gretl_matrix_restricted_multi_ols (const gretl_matrix *Y,
 				   const gretl_matrix *X,
-				   const gretl_matrix *R, 
+				   const gretl_matrix *R,
 				   const gretl_matrix *q,
-				   gretl_matrix *B, 
+				   gretl_matrix *B,
 				   gretl_matrix *U,
 				   gretl_matrix **W);
 
@@ -709,10 +706,10 @@ int gretl_matrix_SVD_ols (const gretl_vector *y,
 int gretl_matrix_qform (const gretl_matrix *A,
 			GretlMatrixMod amod,
 			const gretl_matrix *X,
-			gretl_matrix *C, 
+			gretl_matrix *C,
 			GretlMatrixMod cmod);
 
-double gretl_scalar_qform (const gretl_vector *b, 
+double gretl_scalar_qform (const gretl_vector *b,
 			   const gretl_matrix *X,
 			   int *err);
 
@@ -755,9 +752,9 @@ gretl_matrix *gretl_covariance_matrix (const gretl_matrix *m,
 gretl_matrix *gretl_matrix_GG_inverse (const gretl_matrix *G,
 				       int *err);
 
-gretl_matrix *gretl_matrix_varsimul (const gretl_matrix *A, 
-				     const gretl_matrix *U, 
-				     const gretl_matrix *x0, 
+gretl_matrix *gretl_matrix_varsimul (const gretl_matrix *A,
+				     const gretl_matrix *U,
+				     const gretl_matrix *x0,
 				     int *err);
 
 gretl_matrix **gretl_matrix_array_new (int n);
@@ -770,45 +767,45 @@ void gretl_matrix_array_free (gretl_matrix **A, int n);
 gretl_matrix *gretl_matrix_values (const double *x, int n,
 				   gretlopt opt, int *err);
 
-gretl_matrix *gretl_matrix_shape (const gretl_matrix *A, 
+gretl_matrix *gretl_matrix_shape (const gretl_matrix *A,
 				  int r, int c, int *err);
 
-gretl_matrix *gretl_matrix_trim_rows (const gretl_matrix *A, 
+gretl_matrix *gretl_matrix_trim_rows (const gretl_matrix *A,
 				      int ttop, int tbot,
 				      int *err);
 
-gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A, 
+gretl_matrix *gretl_matrix_minmax (const gretl_matrix *A,
 				   int mm, int rc, int idx,
 				   int *err);
-    
+
 double gretl_matrix_global_minmax (const gretl_matrix *A,
 				   int mm, int *err);
 
 double gretl_matrix_global_sum (const gretl_matrix *A,
-				int *err);    
+				int *err);
 
-gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p, 
+gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p,
 				gretlopt opt, int *err);
 
-gretl_matrix *gretl_matrix_xtab (int t1, int t2, const double *x, 
+gretl_matrix *gretl_matrix_xtab (int t1, int t2, const double *x,
 				 const double *y, int *err);
 
 gretl_matrix *matrix_matrix_xtab (const gretl_matrix *x,
 				  const gretl_matrix *y,
 				  int *err);
 
-gretl_matrix *gretl_matrix_bool_sel(const gretl_matrix *A, 
-				    const gretl_matrix *sel, 
+gretl_matrix *gretl_matrix_bool_sel(const gretl_matrix *A,
+				    const gretl_matrix *sel,
 				    int rowsel, int *err);
 
-gretl_matrix *gretl_matrix_sort_by_column (const gretl_matrix *m, 
+gretl_matrix *gretl_matrix_sort_by_column (const gretl_matrix *m,
 					   int k, int *err);
 
 gretl_matrix *gretl_vector_sort (const gretl_matrix *v,
 				 int descending,
 				 int *err);
 
-gretl_matrix *gretl_matrix_covariogram (const gretl_matrix *X, 
+gretl_matrix *gretl_matrix_covariogram (const gretl_matrix *X,
 					const gretl_matrix *u,
 					const gretl_matrix *w,
 					int p, int *err);

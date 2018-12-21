@@ -107,9 +107,6 @@ static inline void *mval_realloc (void *ptr, size_t sz)
 static int add_scalar_to_matrix (gretl_matrix *targ, double x);
 static int gretl_matrix_copy_info (gretl_matrix *targ,
 				   const gretl_matrix *src);
-static int
-matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
-				gretl_matrix *c, GretlMatrixMod cmod);
 
 /* matrix metadata struct, not allocated by default */
 
@@ -1972,60 +1969,6 @@ gretl_matrix *gretl_matrix_exp (const gretl_matrix *m, int *err)
     }
 
     return N;
-}
-
-gretl_matrix *gretl_matrix_frac_pow (const gretl_matrix *m,
-				     double a, int *err)
-{
-    gretl_matrix *ret;
-    gretl_matrix *tmp;
-    gretl_matrix *lam;
-    int n = m->rows;
-
-    if (m->cols != n) {
-	*err = E_INVARG;
-	return NULL;
-    }
-
-    tmp = gretl_matrix_copy(m);
-    ret = gretl_matrix_alloc(n, n);
-
-    if (tmp == NULL || ret == NULL) {
-	gretl_matrix_free(tmp);
-	gretl_matrix_free(ret);
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    lam = gretl_symmetric_matrix_eigenvals(tmp, 1, err);
-
-    if (!*err) {
-	if (lam->val[0] < 0) {
-	    *err = E_NOTPD;
-	} else {
-	    double x, y, a2 = a/2;
-	    int i, j;
-
-	    for (j=0; j<n; j++) {
-		y = pow(lam->val[j], a2);
-		for (i=0; i<n; i++) {
-		    x = gretl_matrix_get(tmp, i, j);
-		    gretl_matrix_set(tmp, i, j, x * y);
-		}
-	    }
-	    matrix_multiply_self_transpose(tmp, 0, ret, GRETL_MOD_NONE);
-	}
-    }
-
-    gretl_matrix_free(lam);
-    gretl_matrix_free(tmp);
-
-    if (*err) {
-	gretl_matrix_free(ret);
-	ret = NULL;
-    }
-
-    return ret;
 }
 
 /**
@@ -5371,6 +5314,11 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
     return 0;
 }
 
+/* single-threaded version of gretl_matrix_multiply_mod()
+   for use when we're performing some larger task under
+   OMP.
+*/
+
 int gretl_matrix_multiply_mod_single (const gretl_matrix *a,
 				      GretlMatrixMod amod,
 				      const gretl_matrix *b,
@@ -5844,36 +5792,63 @@ static char *binary_expansion (int s, int *t, int *pow2)
     return bits;
 }
 
-/**
- * gretl_matrix_pow:
- * @A: square source matrix.
- * @s: exponent >= 0.
- * @err: location to receive error code.
- *
- * Calculates the matrix A^s using Golub and Van Loan's Algorithm
- * 11.2.2 ("Binary Powering").
- *
- * Returns: allocated matrix, or NULL on failure.
- */
+static gretl_matrix *matrix_frac_pow (const gretl_matrix *m,
+				      double a, int *err)
+{
+    gretl_matrix *ret;
+    gretl_matrix *tmp;
+    gretl_matrix *lam;
+    int n = m->rows;
 
-gretl_matrix *gretl_matrix_pow (const gretl_matrix *A,
-				int s, int *err)
+    tmp = gretl_matrix_copy(m);
+    ret = gretl_matrix_alloc(n, n);
+
+    if (tmp == NULL || ret == NULL) {
+	gretl_matrix_free(tmp);
+	gretl_matrix_free(ret);
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    lam = gretl_symmetric_matrix_eigenvals(tmp, 1, err);
+
+    if (!*err) {
+	if (lam->val[0] < 0) {
+	    *err = E_NOTPD;
+	} else {
+	    double x, y, a2 = a/2;
+	    int i, j;
+
+	    for (j=0; j<n; j++) {
+		y = pow(lam->val[j], a2);
+		for (i=0; i<n; i++) {
+		    x = gretl_matrix_get(tmp, i, j);
+		    gretl_matrix_set(tmp, i, j, x * y);
+		}
+	    }
+	    matrix_multiply_self_transpose(tmp, 0, ret, GRETL_MOD_NONE);
+	}
+    }
+
+    gretl_matrix_free(lam);
+    gretl_matrix_free(tmp);
+
+    if (*err) {
+	gretl_matrix_free(ret);
+	ret = NULL;
+    }
+
+    return ret;
+}
+
+static gretl_matrix *matrix_int_pow (const gretl_matrix *A,
+				     int s, int *err)
 {
     gretl_matrix *B = NULL;
     gretl_matrix *C = NULL;
     gretl_matrix *W = NULL;
     char *bits = NULL;
     int n, t, pow2 = 0;
-
-    if (gretl_is_null_matrix(A) || s < 0) {
-	*err = E_DATA;
-	return NULL;
-    }
-
-    if (A->rows != A->cols) {
-	*err = E_NONCONF;
-	return NULL;
-    }
 
     n = A->rows;
 
@@ -5939,6 +5914,42 @@ gretl_matrix *gretl_matrix_pow (const gretl_matrix *A,
     free(bits);
 
     return C;
+}
+
+/**
+ * gretl_matrix_pow:
+ * @A: square source matrix.
+ * @s: exponent.
+ * @err: location to receive error code.
+ *
+ * Calculates the matrix A^s. If @s is a non-negative integer
+ * Golub and Van Loan's Algorithm 11.2.2 ("Binary Powering")
+ * is used. Otherwise @A must be positive definite, and the
+ * power is computed via the eigen-decomposition of @A.
+ *
+ * Returns: allocated matrix, or NULL on failure.
+ */
+
+gretl_matrix *gretl_matrix_pow (const gretl_matrix *A,
+				double s, int *err)
+{
+    if (gretl_is_null_matrix(A)) {
+	*err = E_DATA;
+	return NULL;
+    } else if (A->rows != A->cols) {
+	*err = E_INVARG;
+	return NULL;
+    } else if (s != floor(s) || s < 0) {
+	return matrix_frac_pow(A, s, err);
+    } else {
+	int k = gretl_int_from_double(s, err);
+
+	if (*err) {
+	    return NULL;
+	} else {
+	    return matrix_int_pow(A, k, err);
+	}
+    }
 }
 
 /**
