@@ -209,7 +209,6 @@ function scalar dbn_get_json_from_URL (const string URL, string *json, string *m
     bundle req = defbundle("URL", URL, "header", "accept: application/json")
     # check for curl error
     scalar error = curl(&req)
-
     if error
         msg = req.errmsg
     else

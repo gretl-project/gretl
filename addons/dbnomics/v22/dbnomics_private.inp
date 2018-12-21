@@ -87,7 +87,6 @@ function scalar bundle_get_frequency (const bundle b)
     endloop
 
     scalar ret
-
     if frq == ""
         ret = NA
     elif frq == "a"
@@ -201,6 +200,10 @@ function scalar check_json (const string s, string *msg)
                 endif
                 ret = 1
             endif
+	    if ret && instring(msg, "Could not")
+	        # back off to warning, as with v21 API?
+		ret = 0
+	    endif
         endif
     endif
     # warnings with v22 ??
@@ -227,7 +230,6 @@ function scalar dbn_get_json_from_URL (const string URL, string *json, string *m
     bundle req = defbundle("URL", URL, "header", "accept: application/json")
     # check for curl error
     scalar error = curl(&req)
-
     if error
         msg = req.errmsg
     else
@@ -277,17 +279,12 @@ end function
 
 function bundles multiple_from_json (const string json, bool verbose[0])
 
-    bundles ret = null
+    bundles ret = array(0)
     bundle b = jsongetb(json, "series")
-    if typeof(b.series) == 6 # array
-        ret = b.series
-    elif typeof(b.series) == 5 # bundle
-        if b.num_found > 0
-            b = b.series
-            ret = b.docs
-        endif
+    b = b.series
+    if inbundle(b, "docs")
+        ret = b.docs
     endif
-
     loop i=1..nelem(ret) -q
         process_series_bundle(&ret[i])
     endloop
@@ -357,7 +354,7 @@ function bundles dset_search(const string key, const string pcode,
     bundles ret = array(0)
     scalar got = 0
     string json
-    parms = sprintf("%s/%s/series?q=%s&limit=%d&offset=%d", pcode, dcode,
+    parms = sprintf("series/%s/%s?q=%s&limit=%d&offset=%d", pcode, dcode,
       sanitize_url(key),limit, offset)
 
     err = dbn_get_json(parms, verbose, &json)
@@ -376,13 +373,15 @@ function bundles dset_search(const string key, const string pcode,
         if got > 0
             loop i = 1..got --quiet
                 ret[i].ntot = ntot
+                brename(ret[i], "series_code", "code")
+                brename(ret[i], "series_name", "name")
             endloop
         endif
         if verbose
             if got > 0
                 printf "Dataset %s/%s, matching series %d-%d of %d:\n\n",
                   pcode, dcode, offset+1, offset+got, ntot
-                loop i = 1 .. got --quiet
+                loop i = 1..got --quiet
                     printf "%s: %s\n", ret[i].code, ret[i].name
                 endloop
             else
@@ -408,7 +407,6 @@ function matrix get_widths(bundles bs)
         l = strlen(bs[i].series_name)
         w3 = xmin(xmax(w3, l), 40)
     endloop
-
     return {w1, w2, w3} + 2
 end function
 

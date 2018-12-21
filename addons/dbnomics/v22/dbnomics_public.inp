@@ -151,13 +151,14 @@ function bundle dbnomics_get_series (const string datacode, bool verbose[0])
         return ret
     endif
 
-    catch bundles bb = jsongeta(json, "series")
+    catch bundle b = jsongetb(json, "series")
     if $error
         ret.error = 1
-    elif nelem(bb) == 0
+    elif nelem(b.series.docs) == 0
         ret.error = 1
     endif
     if !ret.error
+        bundles bb = b.series.docs
         ret = bb[1]
         process_series_bundle(&ret)
     endif
@@ -167,16 +168,15 @@ end function
 ### ------------------------------------------------------------------------
 
 function bundles dbnomics_get_cart(const string URL)
-
     string json
     bundles ret = null
     string msg = ""
     err = dbn_get_json_from_URL(URL, &json, &msg)
-
-    if !err
+    if err
+        printf "%s\n", msg
+    else
         ret = multiple_from_json(json, 0)
     endif
-
     return ret
 end function
 
@@ -189,7 +189,6 @@ function bundles dbnomics_get_multiple(const string provider,
     if !exists(spec)
         bundle spec = null
     endif
-
     bundles ret = array(0)
     string parms = build_parms(provider, dset, limit, offset, spec)
     string json
@@ -197,7 +196,6 @@ function bundles dbnomics_get_multiple(const string provider,
     if !err
         ret = multiple_from_json(json, 0)
     endif
-
     return ret
 end function
 
@@ -313,7 +311,6 @@ function bundles dbnomics_providers(bool verbose[0])
             err = 1
         endif
     endif
-
     if err
         funcerr "no providers were found"
     endif
@@ -412,17 +409,11 @@ end function
 function series dbnomics_fetch (const string id, bool verbose[0])
     series ret = NA
     bundle b = dbnomics_get_series(id, verbose)
-    # FIXME v22
     if b.error
-        if inbundle(b, "errmsg")
-            string str = b.errmsg
-            funcerr str
-        else
-            funcerr "error in dbnomics_fetch_series"
-        endif
-    else
-        dbnomics_bundle_get_data(b, &ret, verbose)
+        msg = sprintf("%s: couldn't fetch", id)
+        funcerr msg
     endif
+    dbnomics_bundle_get_data(b, &ret, verbose)
     return ret
 end function
 
