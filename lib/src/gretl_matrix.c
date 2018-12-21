@@ -5799,6 +5799,7 @@ static gretl_matrix *matrix_frac_pow (const gretl_matrix *m,
     gretl_matrix *tmp;
     gretl_matrix *lam;
     int n = m->rows;
+    double eps = 1.0e-12;
 
     tmp = gretl_matrix_copy(m);
     ret = gretl_matrix_alloc(n, n);
@@ -5813,14 +5814,20 @@ static gretl_matrix *matrix_frac_pow (const gretl_matrix *m,
     lam = gretl_symmetric_matrix_eigenvals(tmp, 1, err);
 
     if (!*err) {
-	if (lam->val[0] < 0) {
+	if (lam->val[0] < -eps) {
+	    /* be a little lenient with positive 
+	       semidefinite matrices */
 	    *err = E_NOTPD;
+	} else if (lam->val[0] < eps && a < 0) {
+	    /* don't allow negatibe exponents if matrix is
+	     singular*/
+	    *err = E_INVARG;
 	} else {
 	    double x, y, a2 = a/2;
 	    int i, j;
 
 	    for (j=0; j<n; j++) {
-		y = pow(lam->val[j], a2);
+		y = pow(fabs(lam->val[j]), a2);
 		for (i=0; i<n; i++) {
 		    x = gretl_matrix_get(tmp, i, j);
 		    gretl_matrix_set(tmp, i, j, x * y);
