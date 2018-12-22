@@ -595,6 +595,7 @@ static tabwin_t *make_tabbed_viewer (int role)
 
     /* notebook with its signal handlers */
     tabwin->tabs = gtk_notebook_new();
+    gtk_notebook_popup_enable(GTK_NOTEBOOK(tabwin->tabs));
     gtk_notebook_set_scrollable(GTK_NOTEBOOK(tabwin->tabs), TRUE);
     g_signal_connect(G_OBJECT(tabwin->tabs), "switch-page",
 		     G_CALLBACK(switch_page_callback), tabwin);

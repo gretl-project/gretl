@@ -87,7 +87,7 @@
 #define CLIPTEMP "cliptmp.txt"
 
 #define SCRIPT_WIDTH 78
-#define SCRIPT_HEIGHT 370
+#define SCRIPT_HEIGHT 420
 #define MODEL_WIDTH 72
 #define MODEL_HEIGHT 420 
 
