@@ -9839,9 +9839,12 @@ static int script_open_append (ExecState *s, DATASET *dset,
     if (err) {
 	gui_errmsg(err);
 	return err;
-    } else if (check_gretl_warning()) {
+    }
+#if 0
+    else if (check_gretl_warning()) {
 	gui_warnmsg(0);
     }
+#endif
 
     if (http) {
 	/* arrange to display "Unsaved data" in place of filename */
