@@ -1373,7 +1373,7 @@ static void handle_lpnext (const char *s, parser *p,
 	       when naming series
 	    */
 	    p->sym = SERIES;
-	} else if (p->targ != UNK && p->targ == LIST && p->targ != SERIES) {
+	} else if (p->targ != UNK && p->targ != LIST && p->targ != SERIES) {
 	    /* target not compatible with series lag? */
 	    p->sym = UFUN;
 	} else if (defining_list(p) || p->targ == SERIES) {
@@ -1549,11 +1549,12 @@ static void word_check_next_char (parser *p)
     /* Here we're checking for validity and syntactical implications
        of one of "([.+-" immediately following a 'word' of some kind.
     */
-
     if (strspn(chk, "([.+-") == 0) {
 	/* none of the above */
 	return;
-    } else if (p->sym == UNDEF) {
+    }
+
+    if (p->sym == UNDEF) {
 	if (p->idstr != NULL && p->idstr[0] != '\0') {
 	    undefined_symbol_error(p->idstr, p);
 	    return;
@@ -1562,12 +1563,7 @@ static void word_check_next_char (parser *p)
 
     if (p->ch == '(') {
 	/* series or list (lag), or function */
-	if (p->sym == UNDEF) {
-	    if (p->idstr != NULL && p->idstr[0] != '\0') {
-		undefined_symbol_error(p->idstr, p);
-		return;
-	    }
-	} else if (p->sym == SERIES) {
+	if (p->sym == SERIES) {
 	    if (p->idnum > 0 && p->idnum == p->lh.vnum) {
 		p->flags |= P_AUTOREG;
 	    }
