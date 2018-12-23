@@ -39,12 +39,14 @@ function void dbnomics_bundle_print(const bundle b, bool print_data[0])
         endif
     endif
     if nf == 3
-        printf "Identifier: %s/%s/%s\n\n", b.provider_code,
+        printf "Identifier: %s/%s/%s\n", b.provider_code,
           b.dataset_code, b.series_code
     endif
     if inbundle(b, "series_name")
-        # this is actually the description of the series
-        printf "%s\n", b.series_name
+        printf "Name: %s\n", b.series_name
+    endif
+    if inbundle(b, "dimensions")
+        print_series_dimensions(b.dimensions)
     endif
     if dashline != ""
         print dashline
@@ -160,7 +162,7 @@ function bundle dbnomics_get_series (const string datacode, bool verbose[0])
     if !ret.error
         bundles bb = b.series.docs
         ret = bb[1]
-        process_series_bundle(&ret)
+        process_series_bundle(json, &ret)
     endif
     return ret
 end function

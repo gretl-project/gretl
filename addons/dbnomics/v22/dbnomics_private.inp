@@ -20,7 +20,62 @@ end function
 
 ### ------------------------------------------------------------------------
 
-function void process_series_bundle (bundle *b)
+function void print_series_dimensions (const bundle dims)
+    strings keys = getkeys(dims)
+    printf "Dimensions:\n"
+    loop i=1..nelem(keys) -q
+        b = dims[keys[i]]
+        printf "  %s: '%s' (%s)\n", b.dimension_label, b.value, b.value_label
+    endloop
+end function
+
+### ------------------------------------------------------------------------
+
+function void fix_dimensions_bundle (const string J, bundle *sd)
+    bundle dinfo = jsongetb(J, "datasets")
+    scalar dsmulti = 0
+    if nelem(dinfo) > 0
+        dsmulti = 1
+    else
+        # try for the singular?
+        dinfo = jsongetb(J, "dataset")
+    endif
+    if nelem(dinfo) == 0
+        return
+    endif
+    dinfo = dsmulti ? dinfo.datasets : dinfo.dataset
+    dsid = sprintf("%s/%s", sd.provider_code, sd.dataset_code)
+    # get the 'raw' dimensions bundle
+    bundle d0 = sd.dimensions
+    strings keys = getkeys(d0)
+    ndims = nelem(keys)
+    if dsmulti
+        dl = dinfo[dsid].dimensions_labels
+        dvl = dinfo[dsid].dimensions_values_labels
+    else
+        dl = dinfo.dimensions_labels
+        dvl = dinfo.dimensions_values_labels
+    endif
+
+    # represent the dimensions as a bundle of bundles
+    bundle dims
+    loop i=1..ndims -q
+        string key = keys[i]
+        string value = d0[key]
+        bundle b = null
+        b.dimension_label = dl[key]
+        b.value = value
+        b.value_label = dvl[key][value]
+        dims[key] = b
+    endloop
+
+    # replace the original dimensions bundle
+    sd.dimensions = dims
+end function
+
+### ------------------------------------------------------------------------
+
+function void process_series_bundle (string json, bundle *b)
     set warnings off
     b.error = 0
     b.frequency = bundle_get_frequency(b)
@@ -56,6 +111,9 @@ function void process_series_bundle (bundle *b)
             j++
         endloop
         b.value = vals
+    endif
+    if inbundle(b, "dimensions")
+        fix_dimensions_bundle(json, &b)
     endif
 end function
 
@@ -200,10 +258,10 @@ function scalar check_json (const string s, string *msg)
                 endif
                 ret = 1
             endif
-	    if ret && instring(msg, "Could not")
-	        # back off to warning, as with v21 API?
-		ret = 0
-	    endif
+            if ret && instring(msg, "Could not")
+                # back off to warning, as with v21 API?
+                ret = 0
+            endif
         endif
     endif
     # warnings with v22 ??
@@ -286,7 +344,7 @@ function bundles multiple_from_json (const string json, bool verbose[0])
         ret = b.docs
     endif
     loop i=1..nelem(ret) -q
-        process_series_bundle(&ret[i])
+        process_series_bundle(json, &ret[i])
     endloop
     return ret
 
