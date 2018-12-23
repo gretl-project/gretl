@@ -3034,16 +3034,7 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 	double s = node_get_scalar(r, p);
 
 	if (!p->err) {
-	    if (s == 0.5) {
-		ret->v.m = gretl_matrix_copy(m);
-		if (ret->v.m == NULL) {
-		    p->err = E_ALLOC;
-		} else {
-		    p->err = gretl_matrix_psd_root(ret->v.m, 0);
-		}
-	    } else {
-		ret->v.m = gretl_matrix_pow(m, s, &p->err);
-	    }
+	    ret->v.m = gretl_matrix_pow(m, s, &p->err);
 	}
 	return ret;
     } else {
