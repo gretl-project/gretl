@@ -418,7 +418,7 @@ void gui_nls_init (void)
 
 static void record_filearg (char *targ, const char *src)
 {
-    if (*src == '.') {
+    if (!g_path_is_absolute(src)) {
 	gchar *cdir = g_get_current_dir();
 	gchar *tmp = g_build_filename(cdir, src, NULL);
 
@@ -749,7 +749,7 @@ int main (int argc, char **argv)
     init_fileptrs();
 
     if (argc > 1 && *filearg == '\0') {
-	/* residual unhandled arg should the name
+	/* residual unhandled arg should be the name
 	   of a file to be opened */
 	strncat(filearg, argv[1], MAXLEN - 1);
     }
@@ -768,7 +768,7 @@ int main (int argc, char **argv)
     if (argc > 1) {
 	/* Record what is presumably a filename argument
 	   given on the command line (by now any options will
-	   have been extracted from the argv array).
+	   have been extracted from the @argv array).
 	*/
 	record_filearg(tryfile, filearg);
     }

@@ -445,6 +445,7 @@ static GtkWidget *make_viewer_tab (tabwin_t *tabwin,
 {
     GtkNotebook *notebook;
     gchar *title = NULL;
+    const gchar *fname = NULL;
     GtkWidget *tab;
     GtkWidget *label;
     GtkWidget *mlabel;
@@ -457,6 +458,7 @@ static GtkWidget *make_viewer_tab (tabwin_t *tabwin,
 	    title = untitled_title(tabwin);
 	} else {
 	    title = title_from_filename(info, tabwin->role, FALSE);
+	    fname = info;
 	}
     } else if (info != NULL) {
 	title = g_strdup(info);
@@ -465,7 +467,7 @@ static GtkWidget *make_viewer_tab (tabwin_t *tabwin,
     }
 
     label = gtk_label_new(title);
-    mlabel = gtk_label_new(title);
+    mlabel = gtk_label_new(fname == NULL ? title : fname);
     gtk_container_add(GTK_CONTAINER(tab), label);
     g_object_set_data(G_OBJECT(tab), "label", label);
     g_object_set_data(G_OBJECT(tab), "mlabel", mlabel);
@@ -746,14 +748,21 @@ void tabwin_tab_set_title (windata_t *vwin, const char *title)
     tab = gtk_notebook_get_tab_label(GTK_NOTEBOOK(tabwin->tabs),
 				     vwin->main);
 
+    /* label shown on the tab itself */
     label = g_object_get_data(G_OBJECT(tab), "label");
     if (label != NULL) {
 	gtk_label_set_text(GTK_LABEL(label), title);
     }
 
+    /* label shown in tab-switching right-click menu */
     label = g_object_get_data(G_OBJECT(tab), "mlabel");
     if (label != NULL) {
-	gtk_label_set_text(GTK_LABEL(label), title);
+	const gchar *mtext = title;
+
+	if (vwin_editing_script(tabwin->role) && vwin->fname[0] != '\0') {
+	    mtext = vwin->fname;
+	}
+	gtk_label_set_text(GTK_LABEL(label), mtext);
     }
 }
 
