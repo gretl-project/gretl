@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2018-12-08 17:06-0500\n"
-"PO-Revision-Date: 2018-12-06 21:39+0000\n"
+"PO-Revision-Date: 2018-12-24 17:43+0000\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
 "Language: pt\n"
@@ -1507,9 +1507,9 @@ msgid "dataset restore: dataset is not resampled\n"
 msgstr "restauro de conjunto de dados: o conjunto de dados não é reamostrado\n"
 
 #: lib/src/dbnread.c:34 lib/src/dbnread.c:40 gui/fncall.c:4191
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no data found"
-msgstr "Não se encontrou dados.\n"
+msgstr "%s: não se encontrou dados"
 
 #: lib/src/dbread.c:403 lib/src/dbread.c:686
 msgid "Couldn't open database index file"
@@ -8010,8 +8010,8 @@ msgstr "Data de produção"
 #: gui/about.c:194 gui/about.c:196
 msgid "translator_credits"
 msgstr ""
-"Hélio Guilherme <helio_guilherme@hotmail.com>Tradução de 6 de dezembro de "
-"2018."
+"Hélio Guilherme <helio_guilherme@hotmail.com>. \n"
+"Tradução de 24 de dezembro de 2018."
 
 #: gui/about.c:205
 msgid "News"
@@ -17138,6 +17138,10 @@ msgid ""
 "(If this version is not yet at http://gretl.sourceforge.net/\n"
 "it should be shortly.)"
 msgstr ""
+"Você está a usar gretl %s.\n"
+"A versão %s está disponível em http://ricardo.ecn.wfu.edu/pub/gretl/\n"
+"(se esta versão não estiver ainda em http://gretl.sourceforge.net/\n"
+"deverá estar em breve.)"
 
 #: gui/update.c:38
 #, c-format
@@ -17146,6 +17150,10 @@ msgid ""
 "This seems to be a pre-release; the latest version available at\n"
 "http://ricardo.ecn.wfu.edu/pub/gretl/ is %s"
 msgstr ""
+"Você está a usar gretl %s.\n"
+"Esta parece ser um versão de pré lançamento; a versão mais recente disponível"
+" em\n"
+"http://ricardo.ecn.wfu.edu/pub/gretl/ é %s"
 
 #: gui/update.c:43
 #, c-format
@@ -17153,6 +17161,8 @@ msgid ""
 "You are running gretl %s.\n"
 "This is the current version."
 msgstr ""
+"Você está a usar gretl %s.\n"
+"Esta é a versão atual."
 
 #: gui/update.c:69
 msgid "No new files"
