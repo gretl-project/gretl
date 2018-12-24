@@ -247,33 +247,22 @@ for International Settlements. The code for the dataset is
 \end{code}
 produces the following:
 \begin{code}
-bundle b:
- value (matrix: 119 x 1)
- Valuation = Market value
- series_name (string, 127 bytes)
- Borrowers' country = Australia
- VALUATION = M
- TC_LENDERS = A
- dataset_name = long series on total credit
- TC_BORROWERS = C
- Type of adjustment = Adjusted for breaks
- UNIT_TYPE = USD
- period = array of strings, length 119
- error = 0
- Unit type = US Dollar
- series_code = Q.AU.C.A.M.USD.A
- frequency = 4
- dataset_code = CNFS
- Lending sector = Adjusted for breaks
- provider_code = BIS
- TC_ADJUST = A
- has_data = 1
- Frequency = Quarterly
- BORROWERS_CTY = AU
- FREQ = Q
- T = 119
- @frequency = quarterly
- Borrowing sector = Non financial sector
+bundle b, created by dbnomics:
+  frequency = 4
+  series_name (string, 127 bytes)
+  dimensions (bundle)
+  dataset_name = long series on total credit
+  period = array of strings, length 120
+  error = 0
+  series_code = Q.AU.C.A.M.USD.A
+  indexed_at = 2018-12-13T17:38:15.031Z
+  dataset_code = CNFS
+  provider_code = BIS
+  has_data = 1
+  period_start_day = array of strings, length 312
+  T = 120
+  @frequency = quarterly
+  value (matrix: 120 x 1)
 \end{code}
 The actual data are stored as a column vector, under the key
 \texttt{value}; however, there is much more information available to
@@ -283,16 +272,22 @@ information printed in a more readable way, you'll want to use the
 \cmd{dbnomics\_bundle\_print} function, that yields (long lines broken for
 readability):
 \begin{code}
-------------------------
 Series: Q.AU.C.A.M.USD.A
 Provider: BIS
 Dataset: CNFS (long series on total credit)
 Identifier: BIS/CNFS/Q.AU.C.A.M.USD.A
-
-Quarterly – Australia – Non financial sector – Adjusted for breaks –
-   Market value – US Dollar – Adjusted for breaks
+Name: Quarterly – Australia – Non financial sector – Adjusted for
+  breaks – Market value – US Dollar – Adjusted for breaks
+Dimensions:
+  Frequency: 'Q' (Quarterly)
+  Borrowers' country: 'AU' (Australia)
+  Borrowing sector: 'C' (Non financial sector)
+  Lending sector: 'A' (Adjusted for breaks)
+  Valuation: 'M' (Market value)
+  Type of adjustment: 'A' (Adjusted for breaks)
+  Unit type: 'USD' (US Dollar)
 ------------------------
-pd = 4; 119 observations, 1988-Q2 - 2017-Q4
+pd = 4; 120 observations, 1988-Q2 - 2018-Q1
 \end{code}
 
 Some functions can be used for retrieving multiple series at once;
@@ -318,13 +313,13 @@ Contents of bs:
 
      Provider  Code                    Description                               
   1: ECB/AME   A_AUT_1_0_0_0_OVGD      Austria - Gross domestic product at 2...
-                                       60 observations (pd = 1) [1960:2019]
+                                       61 observations (pd = 1) [1960:2020]
   2: ECB/AME   A_AUT_1_0_319_0_UBLGE   Austria - Net lending (+) or net borr...
-                                       25 observations (pd = 1) [1995:2019]
+                                       26 observations (pd = 1) [1995:2020]
   3: ECB/AME   A_BEL_1_0_0_0_OVGD      Belgium - Gross domestic product at 2...
-                                       60 observations (pd = 1) [1960:2019]
+                                       61 observations (pd = 1) [1960:2020]
   4: ECB/AME   A_BEL_1_0_319_0_UBLGE   Belgium - Net lending (+) or net borr...
-                                       25 observations (pd = 1) [1995:2019]
+                                       26 observations (pd = 1) [1995:2020]
 \end{code}
 
 Note that this package contains several test scripts that
@@ -500,7 +495,7 @@ code = dims[2].code
 vals = dims[2].values
 printf "%s\n\n", code
 loop i = 1..4 --quiet
-    printf "%s - %s\n", vals[i].code, vals[i].label
+    printf "%s - %s\n", vals[i].code, vals[i].desc
 endloop
 \end{code}
 
