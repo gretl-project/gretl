@@ -438,13 +438,13 @@ function list dbnomics_bundles_to_list(bundles bs, string key[null])
             valid_name = 0
             if given_names
                 if inbundle(b, key)
-                    l$i = b[key]
-                    if typeof(l$i) == 4
+                    val = b[key]
+                    if typeof(val) == 4
                         valid_name = 1
                     endif
                 endif
             endif
-            sname = valid_name ? fixname(l$i) : sprintf(fmt, i)
+            sname = valid_name ? fixname(val) : sprintf(fmt, i)
             series tmp = NA
             err = dbnomics_bundle_get_data(b, &tmp)
             if (!err)

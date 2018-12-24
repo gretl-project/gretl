@@ -22,10 +22,11 @@ end function
 
 function void print_series_dimensions (const bundle dims)
     strings keys = getkeys(dims)
-    printf "Dimensions:\n"
+    printf "Dimensions, showing JSON mask form:\n"
     loop i=1..nelem(keys) -q
         b = dims[keys[i]]
-        printf "  %s: '%s' (%s)\n", b.dimension_label, b.value, b.value_label
+        printf "  %s: %s, {\"%s\":[\"%s\"]}\n", b.dimension_label, b.value_label,
+          keys[i], b.value
     endloop
 end function
 
@@ -64,14 +65,18 @@ function void fix_dimensions_bundle (const string J, bundle *sd)
         string key = keys[i]
         string value = d0[key]
         bundle b = null
-	if nelem(dl) > 0
+        if nelem(dl) > 0
             b.dimension_label = dl[key]
-	else
-	    b.dimension_label = key
-	endif
+        else
+            b.dimension_label = key
+        endif
         b.value = value
         b.value_label = dvl[key][value]
         dims[key] = b
+        if key == "REF_AREA"
+            # add this key at top level
+            sd["Reference Area"] = b.value_label
+        endif
     endloop
 
     # replace the original dimensions bundle
