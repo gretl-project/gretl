@@ -740,13 +740,15 @@ static int jb_do_array (JsonReader *reader, jbundle *jb)
 		jb->curr = bsave;
 	    }
 	} else if (json_reader_is_array(reader)) {
-#if 1
-	    fprintf(stderr, "WARNING: skipping nested array at depth %d,\n"
-		    " under element '%s'\n", jb->level, name);
-#else
-	    gretl_errmsg_set("JSON array: gretl arrays cannot be nested");
-	    err = E_DATA;
-#endif
+	    if (!strcmp(name, "observations_attributes")) {
+		/* dbnomics: this element should really be an
+		   object, not an array */
+		fprintf(stderr, "%s: skipping array that should be object\n",
+			name);
+	    } else {
+		fprintf(stderr, "Warning: skipping nested array at depth %d,\n"
+			" under element '%s'\n", jb->level, name);
+	    }
 	} else {
 	    gretl_errmsg_set("JSON array: unrecognized type");
 	    err = E_DATA;

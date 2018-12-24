@@ -383,7 +383,8 @@ function bundle dbnomics_dsets_for_provider(const string provider,
 
     bundle ret
     string json
-    ret.error = dbn_get_json("datasets/" ~ provider, verbose, &json)
+    ret.error = dbn_get_json("datasets/" ~ provider ~ "?limit=250",
+      verbose, &json)
 
     if !ret.error
         catch bundle b = jsongetb(json, "datasets")
@@ -392,7 +393,7 @@ function bundle dbnomics_dsets_for_provider(const string provider,
             msg = get_dbnomics_message(json, "No datasets found")
             funcerr msg
         endif
-        n = b.num_found
+        n = nelem(b.docs)
         strings dscodes = array(n)
         strings dsnames = array(n)
         loop i=1..n --quiet
