@@ -39,12 +39,14 @@ function void dbnomics_bundle_print(const bundle b, bool print_data[0])
         endif
     endif
     if nf == 3
-        printf "Identifier: %s/%s/%s\n\n", b.provider_code,
+        printf "Identifier: %s/%s/%s\n", b.provider_code,
           b.dataset_code, b.series_code
     endif
     if inbundle(b, "series_name")
-        # this is actually the description of the series
-        printf "%s\n", b.series_name
+        printf "Name: %s\n", b.series_name
+    endif
+    if inbundle(b, "dimensions")
+        print_series_dimensions(b.dimensions)
     endif
     if dashline != ""
         print dashline
@@ -72,7 +74,7 @@ end function
 function void dbnomics_bundles_print(bundles bs)
     aname = argname(bs)
     n = nelem(bs)
-    if n>0
+    if n > 0
         printf("\n\nContents of %s:\n\n", aname)
         widths = get_widths(bs)
         fmtstring = sprintf("%%-%ds %%-%ds %%-%ds", widths[1], widths[2], widths[3])
@@ -107,24 +109,24 @@ function scalar dbnomics_bundle_get_data(const bundle b, series *x, bool verbose
 
     tmpfile = sprintf("%s/tmp%04d.csv", $dotdir, randgen1(i, 0, 9999))
     # n = b.totobs
-    outfile @tmpfile --write
-    printf "obs\tdbseries\n"
-    set warnings off
-    loop i=1 .. b.T -q
-        printf "%s\t%20.15f\n", b.period[i], b.value[i]
-    endloop
-    outfile --close
+    outfile @tmpfile
+        printf "obs\tdbseries\n"
+        set warnings off
+        loop i=1 .. b.T -q
+            printf "%s\t%20.15f\n", b.period[i], b.value[i]
+        endloop
+    end outfile
 
     if daily
         setopt join --tkey="obs,%Y-%m-%d"
     endif
 
-    outfile null --write
-    catch append @tmpfile --quiet
-    if !$error
-        x = dbseries
-    endif
-    outfile --close
+    outfile null
+        catch append @tmpfile --quiet
+        if !$error
+            x = dbseries
+        endif
+    end outfile
 
     if inbundle(b, "series_name")
         d = b.series_name
@@ -144,55 +146,51 @@ function bundle dbnomics_get_series (const string datacode, bool verbose[0])
     bundle ret
     ret.error = 0
     ret.has_data = 0
-    string parms = "series?series_ids=" ~ datacode ~ "&format=json"
+    string parms = "series?series_ids=" ~ datacode ~ "&format=json&observations=true"
     string json
     ret.error = dbn_get_json(parms, verbose, &json)
     if ret.error
         return ret
     endif
 
-    bundle b = jsongetb(json, "series")
-    n = b.series.num_found
-    if n == 0
+    catch bundle b = jsongetb(json, "series")
+    if $error
         ret.error = 1
-        return ret
-    elif nelem(b.series.data) == 0
-        # allow for misleading "num_found" value
+    elif nelem(b.series.docs) == 0
         ret.error = 1
-        return ret
     endif
-
-    ret = b.series.data[1]
-    process_series_bundle(&ret)
+    if !ret.error
+        bundles bb = b.series.docs
+        ret = bb[1]
+        process_series_bundle(json, &ret)
+    endif
     return ret
 end function
 
 ### ------------------------------------------------------------------------
 
 function bundles dbnomics_get_cart(const string URL)
-
     string json
     bundles ret = null
     string msg = ""
     err = dbn_get_json_from_URL(URL, &json, &msg)
-
-    if !err
+    if err
+        printf "%s\n", msg
+    else
         ret = multiple_from_json(json, 0)
     endif
-
     return ret
 end function
 
 ### ------------------------------------------------------------------------
 
 function bundles dbnomics_get_multiple(const string provider,
-      const string dset, int limit[0::50], int offset[0],
-      bundle spec[null])
+                                       const string dset, int limit[0::50], int offset[0],
+                                       bundle spec[null])
 
     if !exists(spec)
         bundle spec = null
     endif
-
     bundles ret = array(0)
     string parms = build_parms(provider, dset, limit, offset, spec)
     string json
@@ -200,52 +198,57 @@ function bundles dbnomics_get_multiple(const string provider,
     if !err
         ret = multiple_from_json(json, 0)
     endif
-
     return ret
 end function
 
 ### ------------------------------------------------------------------------
 
 function bundles dbnomics_get_dataset_dimensions(const string provider,
-      const string dset, bool verbose[0])
+                                                 const string dset, bool verbose[0])
 
-    string parms = sprintf("%s/%s/series?limit=0&offset=0", provider, dset)
+    parms = sprintf("series/%s/%s?limit=0&offset=0&facets=true", provider, dset)
     string json
     err = dbn_get_json(parms, verbose, &json)
 
     if !err
-        b = jsongetb(json, "series_dimensions_facets")
-        c_order = strsplit(jsonget(json, "$.dataset.dimensions_codes_order"),"\n")
-        ndims = nelem(c_order)
-        bf = b["series_dimensions_facets"]
+        bundle b = jsongetb(json, "dataset")
+        bundle bf = jsongetb(json, "series_dimensions_facets")
+        b = b.dataset
+        bf = bf.series_dimensions_facets
+        strings dcodes = b.dimensions_codes_order
+        ndims = nelem(dcodes)
+        bundle dlabels = b.dimensions_labels
+        bundle vlabels = b.dimensions_values_labels
     else
         ndims = 0
     endif
 
     bundles ret = array(ndims)
-    loop i=1..ndims --quiet # loop over dimensions
-        ci = c_order[i]
-        ret[i].code = ci
-        bundle bfi = bf[ci]
-        ret[i].label = inbundle(bfi, "label") ? " (" ~ bfi.label ~ ")" : ""
-        ret[i].values = bfi.values
-        ret[i].nvalues = nelem(bfi.values)
+    # loop over the dimensions
+    loop i=1..ndims --quiet
+        string dci = dcodes[i]
+        ret[i].code = dci
+        ret[i].label = dlabels[dci]
+        bundles bfi = bf[dci]
+        ret[i].values = bfi
+        nv = nelem(bfi)
+        ret[i].nvalues = nv
+        bundle tmp = vlabels[dci]
+        # loop over the values in each dimension
+        loop j=1..nv --quiet
+            bundle vj = ret[i].values[j]
+            ret[i].values[j].desc = tmp[vj.code]
+        endloop
     endloop
 
     if verbose && !err
-        loop i = 1 .. ndims --quiet
+        loop i=1..ndims --quiet
             r = ret[i]
             nv = r.nvalues
-            printf "%s%s; %d elements\n", r.code, r.label, nv
-            loop j = 1 .. nv --quiet
-                bundle val_j = r.values[j]
-                string code = val_j.code
-                if inbundle(val_j, "label")
-                    desc = val_j.label
-                    printf "\t%s (%s)\n", code, desc
-                else
-                    printf "\t%s\n", code
-                endif
+            printf "%s (%s); %d elements\n", r.code, r.label, nv
+            loop j=1..nv --quiet
+                bundle vj = r.values[j]
+                printf "\t%s (%s, count %d)\n", vj.code, vj.desc, vj.count
             endloop
             printf("\n")
         endloop
@@ -257,12 +260,12 @@ end function
 ### ------------------------------------------------------------------------
 
 function bundles dbnomics_get_dataset_content(const string provider,
-      const string dset,
-      int limit[0::100],
-      int offset[0])
+                                              const string dset,
+                                              int limit[0::100],
+                                              int offset[0])
     bundles ret = null
     string json
-    parms = sprintf("%s/%s/series?limit=%d&offset=%d", provider,
+    parms = sprintf("series/%s/%s?limit=%d&offset=%d", provider,
       dset, limit, offset)
     err = dbn_get_json(parms, 0, &json)
     if err
@@ -272,7 +275,11 @@ function bundles dbnomics_get_dataset_content(const string provider,
     n = 0
     ns = 0
     # note: the following will give the total for the dataset
-    found = jsonget(json, "$.series.num_found", &n)
+    string found = jsonget(json, "$.series.num_found", &n)
+    if n == 0
+        msg = get_dbnomics_message(json, "No content was found")
+        funcerr msg
+    endif
     if n > 0
         nfound = atof(found)
         ns = nfound - offset
@@ -280,13 +287,14 @@ function bundles dbnomics_get_dataset_content(const string provider,
     endif
     if ns > 0
         bundles ret = array(ns)
-        strings fields = defarray("name", "code")
+        strings fields = defarray("series_name", "series_code")
         loop i = 1..ns --quiet
             ret[i] = json2bndl(fields, json, "series.docs", i-1)
+            brename(ret[i], "series_code", "code")
+            brename(ret[i], "series_name", "name")
             ret[i].num_found = nfound
         endloop
     endif
-
 
     return ret
 end function
@@ -305,7 +313,6 @@ function bundles dbnomics_providers(bool verbose[0])
             err = 1
         endif
     endif
-
     if err
         funcerr "no providers were found"
     endif
@@ -334,8 +341,8 @@ end function
 ### ------------------------------------------------------------------------
 
 function bundles dbnomics_search(const string key, const string dset[null],
-      int limit[0::100], int offset[0],
-      bool verbose[0])
+                                 int limit[0::100], int offset[0],
+                                 bool verbose[0])
 
     bundles ret = null
 
@@ -359,7 +366,7 @@ end function
 ### ------------------------------------------------------------------------
 
 function bundle dbnomics_category_tree(const string provider,
-      bool verbose[0])
+                                       bool verbose[0])
     bundle ret
     string json
     ret.error = dbn_get_json("providers/" ~ provider, verbose, &json)
@@ -372,43 +379,26 @@ end function
 ### ------------------------------------------------------------------------
 
 function bundle dbnomics_dsets_for_provider(const string provider,
-      bool verbose[0])
+                                            bool verbose[0])
 
     bundle ret
     string json
-    ret.error = dbn_get_json("providers/" ~ provider, verbose, &json)
+    ret.error = dbn_get_json("datasets/" ~ provider, verbose, &json)
 
     if !ret.error
-        bundle b = jsongetb(json, "category_tree")
-        bundles B = _jbterms(b)
-        n = nelem(B)
-        if n == 0
-            msg = sprintf("Found no datasets for provider %s", provider)
+        catch bundle b = jsongetb(json, "datasets")
+        catch b = b.datasets
+        if $error
+            msg = get_dbnomics_message(json, "No datasets found")
             funcerr msg
         endif
+        n = b.num_found
         strings dscodes = array(n)
         strings dsnames = array(n)
-        n_ok = 0
-        j = 1
-        loop i=1..n -q
-            if inbundle(B[i], "code")
-                dscodes[j] = B[i].code
-                if inbundle(B[i], "name")
-                    dsnames[j] = B[i].name
-                else
-                    dsnames[j] = "no description"
-                endif
-                j++
-                n_ok++
-            endif
+        loop i=1..n --quiet
+            dscodes[i] = b.docs[i].code
+            dsnames[i] = b.docs[i].name
         endloop
-        if n_ok == 0
-            printf("Found no datasets for provider %s", provider)
-        elif n_ok < n
-            dscodes = dscodes[1:n_ok]
-            dsnames = dsnames[1:n_ok]
-        endif
-        ret.error = 0
         ret.codes = dscodes
         ret.names = dsnames
     endif
@@ -422,11 +412,10 @@ function series dbnomics_fetch (const string id, bool verbose[0])
     series ret = NA
     bundle b = dbnomics_get_series(id, verbose)
     if b.error
-        string str = b.errmsg
-        funcerr str
-    else
-        dbnomics_bundle_get_data(b, &ret, verbose)
+        msg = sprintf("%s: couldn't fetch", id)
+        funcerr msg
     endif
+    dbnomics_bundle_get_data(b, &ret, verbose)
     return ret
 end function
 
@@ -436,10 +425,10 @@ function list dbnomics_bundles_to_list(bundles bs, string key[null])
     n = nelem(bs)
     list RET = null
     given_names = 0
-    if exists(key) 
+    if exists(key)
         given_names = strlen(key) > 0
     endif
-    
+
     digits = floor(log10(n)) + 1
     fmt = "series_" ~ sprintf("%%0%dd", digits)
 
@@ -448,7 +437,7 @@ function list dbnomics_bundles_to_list(bundles bs, string key[null])
         if b.has_data && b.frequency == $pd
             valid_name = 0
             if given_names
-                if inbundle(b, key) 
+                if inbundle(b, key)
                     l$i = b[key]
                     if typeof(l$i) == 4
                         valid_name = 1
