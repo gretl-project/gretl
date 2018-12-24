@@ -9,7 +9,10 @@ high-performance dynamic programming language for technical computing,
 with syntax that is familiar to users of other technical computing
 environments. It provides a sophisticated compiler, distributed
 parallel execution, numerical accuracy, and an extensive mathematical
-function library.'' Julia is well known for being very fast.
+function library.'' \app{Julia} is well known for being very fast; however,
+you should be aware that starting \app{Julia} takes some time, due to its
+JIT nature, so outsourcing jobs form \app{gretl} to \app{Julia} is
+not really worthwhile if the amount of computation is minimal.
 
 \section{Julia support in gretl}
 \label{sec:Julia-support}
@@ -48,8 +51,37 @@ used as is.
 
 \section{Illustration}
 
-TO BE WRITTEN!
+The following is a minimal example on how to interact with Julia from a
+\app{gretl} script.
 
+\begin{code}
+set verbose off
+
+matrix A = mnormal(4,4)                # generate a random matrix
+mwrite(A, "A", 1)                      # and save it to a file
+
+foreign language=julia                 # call Julia
+    print("Hi from Julia!\n");         # output a string
+    A = gretl_loadmat("A");            # grab the matrix from gretl
+    gretl_export(inv(A), "iA.mat");    # and save its inverse
+end foreign                            # go back to gretl
+
+matrix iA = mread("iA.mat", 1)         # read the inverse from Julia
+matrix check = A * iA                  # compute the product
+print check                            # print out the check (should be I)
+\end{code}
+
+The script above should produce output similar to the following:
+\begin{code}
+Hi from Julia!
+
+check (4 x 4)
+
+      1.0000   6.9389e-18   1.6653e-16   1.6653e-16 
+      0.0000       1.0000       0.0000       0.0000 
+ -4.4409e-16  -8.3267e-17       1.0000  -6.6613e-16 
+ -4.4409e-16  -1.3878e-17  -1.1102e-16       1.0000 
+\end{code}
 
 
 %%% Local Variables: 
