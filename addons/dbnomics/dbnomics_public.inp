@@ -237,7 +237,7 @@ function bundles dbnomics_get_dataset_dimensions(const string provider,
         # loop over the values in each dimension
         loop j=1..nv --quiet
             bundle vj = ret[i].values[j]
-            ret[i].values[j].desc = tmp[vj.code]
+            ret[i].values[j].label = tmp[vj.code]
         endloop
     endloop
 
@@ -248,7 +248,7 @@ function bundles dbnomics_get_dataset_dimensions(const string provider,
             printf "%s (%s); %d elements\n", r.code, r.label, nv
             loop j=1..nv --quiet
                 bundle vj = r.values[j]
-                printf "\t%s (%s, count %d)\n", vj.code, vj.desc, vj.count
+                printf "\t%s (%s, count %d)\n", vj.code, vj.label, vj.count
             endloop
             printf("\n")
         endloop
