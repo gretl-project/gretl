@@ -234,6 +234,8 @@
 	de que <math>y</math> é estacionária, este coeficiente é negativo.
       </para>
 
+      <subhead context="cli">Seleção do nível desfasamentos</subhead>
+
       <para context="cli">
 	Se o <repl>número</repl> de defasagens (daqui em diante, 
 	<math>k</math>) é maior que 0, então <math>k</math> desfasagens
@@ -367,9 +369,9 @@
   <command name="anova" label="ANOVA" section="Statistics">
     <usage>
       <arguments>
-        <argument>response</argument>
-        <argument>treatment</argument>
-        <argument optional="true">block</argument>
+        <argument>resposta</argument>
+        <argument>tratamento</argument>
+        <argument optional="true">controlo</argument>
       </arguments>
       <options>
 	<option>
@@ -380,11 +382,11 @@
     </usage>
     <description>
       <para>
-	Análise de Variância: <repl>response</repl> é uma série que mede
-	um efeito com interesse e <repl>treatment</repl> tem que ser uma
+	Análise de Variância: <repl>resposta</repl> é uma série que mede
+	um efeito com interesse e <repl>tratamento</repl> tem que ser uma
 	variável discreta que codifica dois ou mais tipos de tratamento
 	(ou não-tratamento).  Para ANOVA de duas-vias, a variável 
-	<repl>block</repl> (que também deve ser discreta) codifica os 
+	<repl>controlo</repl> (que também deve ser discreta) codifica os 
 	valores de uma variável de controlo.
       </para>
       <para context="cli">
@@ -407,9 +409,9 @@
 	facilmente implementável em gretl.  Crie um conjunto de variáveis
 	auxiliares que codifiquem todos os tipos de tratamentos, exceto um.
 	No caso da ANOVA de duas-vias, adicionalmente, crie um conjunto de
-	variáveis auxiliares que codifiquem todos os <quote>blocks</quote>
-	(controlos), exceto um.
-	De seguida efectue uma regressão sobre <repl>response</repl> com uma
+	variáveis auxiliares que codifiquem todos os <quote>controlos</quote>
+    , exceto um.
+	De seguida efectue uma regressão sobre <repl>resposta</repl> com uma
 	constante e com as variáveis auxiliares usando <cmdref targ="ols"/>.
 	No caso da ANOVA singular (ou uma-via) a  tabela é produzida passando
 	a opção <opt>--anova</opt> para <lit>ols</lit>.  No caso da ANOVA de 
@@ -448,9 +450,14 @@
 	  <effect>ver abaixo</effect>
 	</option>
 	<option>
+	  <flag>--fixed-sample</flag>
+	  <effect>ver abaixo</effect>
+	</option>
+	<option>
 	  <flag>--update-overlap</flag>
 	  <effect>ver abaixo</effect>
 	</option>
+
 	<optnote>Ver abaixo para opções especializadas adicionais</optnote>
       </options>
     </usage>
@@ -892,6 +899,10 @@
     </usage>
 
     <description>
+
+      <para>
+	Advertência: <lit>arma</lit> é uma alcunha aceitável para esta instrução.
+      </para>
 
       <para context="cli">
 	Se não for dada a lista de <repl>variáveis-independentes</repl>,
@@ -1989,6 +2000,7 @@
         <example>corr y x1 x2 x3</example>
 	<example>corr ylist --uniform</example>
 	<example>corr x y --spearman</example>
+	<example>corr --matrix=X --plot=display</example>
       </examples>
     </usage>
 
@@ -2426,6 +2438,7 @@
 	<example>dataset sortby x1</example>
 	<example>dataset resample 500</example>
 	<example>dataset renumber x 4</example>
+	<example>dataset pad-daily 7</example>
 	<example>dataset clear</example>
       </examples>
     </usage>
@@ -4686,7 +4699,6 @@
     </usage>
 
     <description>
-
       <para>
 	Faz estimação usando o Método dos Momentos Generalizado, 
 	'Generalized Method of Moments' (GMM) com o algoritmo 
@@ -4864,6 +4876,7 @@
       <code context="cli">
 	gnuplot 2 1 --matrix=M
       </code>
+      <subhead>Mostrar a linha de melhor ajuste</subhead>
       <para>
 	Em modo interativo o gráfico é apresentado imediatamente. Em modo de 
 	sequência de comandos o comportamento por omissão é o de criar um 
@@ -4916,6 +4929,7 @@
 	  </para>
 	</li>	
       </ilist>
+      <subhead>Representando uma banda</subhead>
       <para>
 	As várias opções de <quote>ajustamento</quote> são aplicáveis
 	apenas nos caso de gráficos de dispersão bivariados e nos de uma
@@ -4938,6 +4952,9 @@
 	(ou tempo); a linha ajustada representa o <math>y</math> esperado condicionalmente,
 	obtido por exponenciação.
       </para>
+      <code>
+	        gnuplot y --time-series --band=y,se_y,1.96 --with-lines
+      </code>
       <para>
 	Uma outra opção está disponível para este comando:
 	a seguir às especificações das variáveis a serem representadas
@@ -4954,6 +4971,44 @@
       <para>
 	<lit>{ set title 'O Meu Título'; set yrange [0:1000]; }</lit>
       </para>
+      <code>
+	eval readfile("@gretldir/data/gnuplot/gpcolors.txt")
+      </code>
+      <subhead>Controlando o resultado</subhead>
+      <para>??????
+      </para>
+      <subhead>Especificando unha fonte</subhead>
+      <para>
+	Podes utilizar a opção <opt>font</opt> para especificar uma fonte
+	concreta para o gráfico. O parámetro <repl>espfonte</repl> deve
+	ter a forma do nome duma fonte, seguida opcionalmente por um
+	número que indique o tamanho em pontos, separado do nome por uma
+	vírgula ou espaço, tudo dentro de aspas, como em
+      </para>
+      <code>
+	--font="serif,12"
+      </code>
+      <para>
+	Tem em conta que as fontes disponíveis para Gnuplot variam dependendo
+	da plataforma, e se estás escrevendo uma instrução de gráfico que
+	pretendes que seja portável, é melhor restringir o nome da fonte
+	às genéricas <lit>sans</lit> ou <lit>serif</lit>.
+      </para>
+      <subhead>Agregando instruções Gnuplot</subhead>
+      <para>
+	Depois de escrita uma instrução Gnuplot, ela pode ser seguida
+	da especificação de variáveis a desenhar e do indicador de opção
+	(caso exista), podes agregar instruções literais de Gnuplot
+	para controlar a aparência do gráfico (por exemplo, definindo
+	o título da gráfico e/ou intervalos dos eixos). Estas instruções devem
+	de estar dentro de chavetas, e deves terminar cada instrução
+	Gnuplot com ponto e vírgula. Podes utilizar uma barra invertida para
+	continuar um conjunto de instruções Gnuplot ao longo de mais do que uma
+	linha. Aqui está um exemplo da sintaxe:
+      </para>
+      <code>
+	{ set title 'O meu Título'; set yrange [0:1000]; }
+      </code>
 
     </description>
 
