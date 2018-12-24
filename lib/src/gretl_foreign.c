@@ -472,7 +472,11 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
     } else if (foreign_lang == LANG_JULIA) {
 	exe = gretl_julia_path();
 	fname = gretl_julia_scriptname();
-	cmd = g_strdup_printf("\"%s\" \"%s\"", exe, fname);
+	if (opt & OPT_N) {
+	    cmd = g_strdup_printf("\"%s\" --compile=no \"%s\"", exe, fname);;
+	} else {
+	    cmd = g_strdup_printf("\"%s\" \"%s\"", exe, fname);
+	}
     } else {
 	return 1;
     }
@@ -677,8 +681,14 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 	argv[2] = NULL;
     } else if (foreign_lang == LANG_JULIA) {
 	argv[0] = (char *) gretl_julia_path();
-	argv[1] = (char *) gretl_julia_scriptname();
-	argv[2] = NULL;
+	if (opt & OPT_N) {
+	    argv[1] = "--compile=no";
+	    argv[2] = (char *) gretl_julia_scriptname();
+	    argv[3] = NULL;
+	} else {
+	    argv[1] = (char *) gretl_julia_scriptname();
+	    argv[2] = NULL;
+	}
     } else if (foreign_lang == LANG_STATA) {
 	argv[0] = (char *) gretl_stata_path();
 	argv[1] = "-q";

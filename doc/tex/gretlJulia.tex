@@ -9,10 +9,13 @@ high-performance dynamic programming language for technical computing,
 with syntax that is familiar to users of other technical computing
 environments. It provides a sophisticated compiler, distributed
 parallel execution, numerical accuracy, and an extensive mathematical
-function library.'' \app{Julia} is well known for being very fast; however,
-you should be aware that starting \app{Julia} takes some time, due to its
-JIT nature, so outsourcing jobs form \app{gretl} to \app{Julia} is
-not really worthwhile if the amount of computation is minimal.
+function library.'' \app{Julia} is well known for being very fast;
+however, you should be aware that by default starting \app{Julia}
+takes some time due to Just-in-Time compilation of the input. This
+fixed cost is well worth bearing if you are asking \app{Julia} to
+perform a big computation, but small jobs are likely to run faster
+if you use the (\app{Julia}-specific) \option{no-compile} option
+with the \texttt{foreign} command.
 
 \section{Julia support in gretl}
 \label{sec:Julia-support}
@@ -82,6 +85,15 @@ check (4 x 4)
  -4.4409e-16  -8.3267e-17       1.0000  -6.6613e-16 
  -4.4409e-16  -1.3878e-17  -1.1102e-16       1.0000 
 \end{code}
+
+Since this is a very small job JIT compilation is not worthwhile; in
+our testing the script runs almost 4 times faster if the \app{Julia}
+block is opened with
+\begin{code}
+foreign language=julia --no-compile
+\end{code}
+This has the effect of passing the option \option{compile=no} to the
+\app{Julia} executable.
 
 
 %%% Local Variables: 

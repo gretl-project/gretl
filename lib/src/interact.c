@@ -640,7 +640,8 @@ static int command_is_silent (const CMD *cmd, const char *line)
     }
 
     if ((cmd->ci == OUTFILE && cmd->opt == OPT_C) ||
-	(cmd->ci == END && !strcmp(cmd->param, "outfile"))) {
+	(cmd->ci == END && cmd->param != NULL &&
+	 !strcmp(cmd->param, "outfile"))) {
 	return 1;
     }
 
