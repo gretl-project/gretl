@@ -378,6 +378,8 @@ end function
 
 ### ------------------------------------------------------------------------
 
+/* new API in v22: dodgy!
+
 function bundle dbnomics_dsets_for_provider(const string provider,
                                             bool verbose[0])
 
@@ -406,6 +408,56 @@ function bundle dbnomics_dsets_for_provider(const string provider,
 
     return ret
 end function
+
+*/
+
+# for now we'll use this older variant
+
+function bundle dbnomics_dsets_for_provider(const string provider,
+                                            bool verbose[0])
+
+    bundle ret
+    string json
+    ret.error = dbn_get_json("providers/" ~ provider, verbose, &json)
+
+    if !ret.error
+        bundle b = jsongetb(json, "category_tree")
+        bundles B = _jbterms(b)
+        n = nelem(B)
+        if n == 0
+            msg = sprintf("Found no datasets for provider %s", provider)
+            funcerr msg
+        endif
+        strings dscodes = array(n)
+        strings dsnames = array(n)
+        n_ok = 0
+        j = 1
+        loop i=1..n -q
+            if inbundle(B[i], "code")
+                dscodes[j] = B[i].code
+                if inbundle(B[i], "name")
+                    dsnames[j] = B[i].name
+                else
+                    dsnames[j] = "no description"
+                endif
+                j++
+                n_ok++
+            endif
+        endloop
+        if n_ok == 0
+            printf("Found no datasets for provider %s", provider)
+        elif n_ok < n
+            dscodes = dscodes[1:n_ok]
+            dsnames = dsnames[1:n_ok]
+        endif
+        ret.error = 0
+        ret.codes = dscodes
+        ret.names = dsnames
+    endif
+
+    return ret
+end function
+
 
 ### ------------------------------------------------------------------------
 
