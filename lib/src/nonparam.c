@@ -763,17 +763,13 @@ double lockes_test (const double *x, int t1, int t2)
     }
 
     m /= 2;
-
     u = malloc(m * sizeof *u);
     v = malloc(m * sizeof *v);
     uv = malloc(m * sizeof *uv);
 
     if (u == NULL || v == NULL || uv == NULL) {
-	free(u);
-	free(v);
-	free(uv);
-	free(sx);
-	return NADBL;
+	z = NADBL;
+	goto bailout;
     }
 
     z = 0.0;
@@ -783,8 +779,10 @@ double lockes_test (const double *x, int t1, int t2)
     */
 
     for (j=0; j<NREPEAT; j++) {
+#if LOCKE_DEBUG
+	fprintf(stderr, "locke's test: j = %d\n", j);
+#endif	
 	qsort(sx, 2 * m, sizeof *sx, randomize_doubles);
-
 	t = 0;
 	for (i=0; i<m; i++) {
 	    u[i] = sx[t] + sx[t+1];
@@ -794,11 +792,10 @@ double lockes_test (const double *x, int t1, int t2)
 	    }
 	    t += 2;
 	}
-
 	real_kendall_tau(u, v, m, uv, m, NULL, &zj);
 	z += zj;
 #if LOCKE_DEBUG
-	printf("z[%d] = %g\n", j, zj);
+	fprintf(stderr, "z[%d] = %g\n", j, zj);
 #endif
     }
 
@@ -807,6 +804,8 @@ double lockes_test (const double *x, int t1, int t2)
 #if LOCKE_DEBUG
     fprintf(stderr, "Kendall's tau: average z = %g\n", z);
 #endif
+
+ bailout:
 
     free(u);
     free(v);
