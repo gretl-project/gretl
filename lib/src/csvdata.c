@@ -37,7 +37,7 @@
 #define AGGDEBUG 0  /* aggregation in "join" */
 #define TDEBUG 0    /* handling of time keys in "join" */
 
-#define CSVSTRLEN 72
+#define CSVSTRLEN 128
 
 enum {
     CSV_HAVEDATA = 1 << 0,
