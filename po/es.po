@@ -8,19 +8,19 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2018-12-08 17:06-0500\n"
-"PO-Revision-Date: 2018-12-09 11:37+0100\n"
-"Last-Translator: JCEN <ecadrian@hotmail.com>\n"
+"PO-Revision-Date: 2018-12-27 10:54+0100\n"
+"Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.2\n"
+"X-Generator: Poedit 2.0.6\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: lib/src/adf_kpss.c:493
 msgid "lagged differences"
-msgstr "Diferencias retardadas"
+msgstr "diferencias retardadas"
 
 #: lib/src/adf_kpss.c:506
 msgid "modified BIC, Perron-Qu"
@@ -77,7 +77,7 @@ msgstr "Contraste aumentado de Dickey-Fuller para %s\n"
 #: lib/src/adf_kpss.c:545
 #, c-format
 msgid "testing down from %d lags, criterion %s"
-msgstr "Contrastar desde %d retardos, con el criterio %s"
+msgstr "Contrastar hacia abajo desde %d retardos, con el criterio %s"
 
 #: lib/src/adf_kpss.c:549 lib/src/adf_kpss.c:652 lib/src/adf_kpss.c:671
 #: plugin/panurc.c:568
@@ -139,12 +139,12 @@ msgstr "Tamaño muestral %d\n"
 
 #: lib/src/adf_kpss.c:639
 msgid "unit-root null hypothesis: a = 1"
-msgstr "Hipótesis nula de raíz unitaria: [a = 1]"
+msgstr "la hipótesis nula de raíz unitaria es: [a = 1]"
 
 #: lib/src/adf_kpss.c:659 lib/src/adf_kpss.c:678 lib/src/adf_kpss.c:1693
 #: gui/cmdstack.c:419
 msgid "model"
-msgstr "Modelo"
+msgstr "modelo"
 
 #: lib/src/adf_kpss.c:665
 msgid "plus seasonal dummies"
@@ -152,12 +152,12 @@ msgstr "más variables ficticias estacionales"
 
 #: lib/src/adf_kpss.c:691 lib/src/adf_kpss.c:1642
 msgid "estimated value of (a - 1)"
-msgstr "Valor estimado de (a - 1)"
+msgstr "valor estimado de (a - 1)"
 
 #: lib/src/adf_kpss.c:692 lib/src/adf_kpss.c:1643 lib/src/describe.c:4096
 #: lib/src/describe.c:4122 lib/src/gretl_model.c:4346 gui/calculator.c:593
 msgid "test statistic"
-msgstr "Estadístico de contraste"
+msgstr "estadístico de contraste"
 
 #: lib/src/adf_kpss.c:698 lib/src/adf_kpss.c:701 lib/src/adf_kpss.c:1480
 #: plugin/stats_tables.c:239
@@ -219,7 +219,7 @@ msgstr "Unidad"
 
 #: lib/src/adf_kpss.c:1639 lib/src/gretl_model.c:4344 gui/selector.c:8599
 msgid "lag order"
-msgstr "Orden de retardos"
+msgstr "orden de retardos"
 
 #: lib/src/adf_kpss.c:1746
 msgid "H0: all groups have unit root"
@@ -254,7 +254,7 @@ msgid ""
 " (including trend and seasonals)\n"
 "\n"
 msgstr ""
-"(incluyendo tendencia y variables ficticias estacionales)\n"
+" (incluyendo tendencia y variables ficticias estacionales)\n"
 "\n"
 
 #: lib/src/adf_kpss.c:2165
@@ -262,7 +262,7 @@ msgid ""
 " (including trend)\n"
 "\n"
 msgstr ""
-"(incluyendo tendencia)\n"
+" (incluyendo tendencia)\n"
 "\n"
 
 #: lib/src/adf_kpss.c:2169
@@ -270,7 +270,7 @@ msgid ""
 " (including seasonals)\n"
 "\n"
 msgstr ""
-"(incluyendo variables ficticias estacionales)\n"
+" (incluyendo variables ficticias estacionales)\n"
 "\n"
 
 #: lib/src/adf_kpss.c:2176 lib/src/adf_kpss.c:2222
@@ -354,7 +354,7 @@ msgstr ""
 
 #: lib/src/bootstrap.c:680 lib/src/bootstrap.c:756
 msgid "bootstrap F-test"
-msgstr "Contraste F bootstrap"
+msgstr "contraste F bootstrap"
 
 #: lib/src/bootstrap.c:684
 #, c-format
@@ -369,7 +369,7 @@ msgstr "Intervalo de confianza %g%% \"studentizado\" = %g a %g"
 #: lib/src/bootstrap.c:722
 #, c-format
 msgid "%g%% confidence interval = %g to %g"
-msgstr " Intervalo de confianza %g%% = %g a %g"
+msgstr "Intervalo de confianza %g%% = %g a %g"
 
 #: lib/src/bootstrap.c:728
 #, c-format
@@ -1422,7 +1422,7 @@ msgstr "Algunos datos estaban en uso"
 #: lib/src/tokenize.c:3224 plugin/arbond.c:2685
 #, c-format
 msgid "variable %d duplicated in the command list."
-msgstr "La variable %d está duplicada en la lista de instrucciones."
+msgstr "la variable %d está duplicada en la lista de instrucciones."
 
 #: lib/src/dataset.c:2022 gui/gui_utils.c:5313
 msgid "dataset is subsampled"
@@ -2719,7 +2719,7 @@ msgstr "Byte no esperado 0x%x\n"
 #: lib/src/genlex.c:1975
 msgid "obsolete use of \"=\" as Boolean test: please use \"==\""
 msgstr ""
-"La utilización de \"=\" como condición booleana está obsoleta, por favor use "
+"la utilización de \"=\" como condición booleana está obsoleta, por favor use "
 "\"==\""
 
 #: lib/src/genlex.c:2151
@@ -3726,7 +3726,7 @@ msgstr "diaria"
 #: lib/src/gretl_midas.c:2253
 #, c-format
 msgid "MIDAS list %s, high-frequency lags %d to %d"
-msgstr "Lista MIDAS %s, retardos de alta frecuencia %d a %d "
+msgstr "Lista MIDAS %s, retardos de alta frecuencia %d a %d"
 
 #: lib/src/gretl_model.c:3900
 msgid "Test for addition of variables"
@@ -4364,7 +4364,7 @@ msgstr ""
 #: lib/src/gretl_string_table.c:911 lib/src/gretl_win32.c:788
 #: lib/src/interact.c:445
 msgid "The shell command is not activated."
-msgstr "La instrucción 'shell' no está activada"
+msgstr "La instrucción 'shell' no está activada."
 
 #: lib/src/gretl_string_table.c:1136 lib/src/interact.c:1335
 #, c-format
@@ -4385,12 +4385,12 @@ msgstr "Los datos de panel deben tener frecuencia > 1"
 #: lib/src/gretl_utils.c:884
 msgid "starting obs must contain a ':' with frequency > 1"
 msgstr ""
-"La observación inicial debe contener un carácter ':' con frecuencia > 1"
+"la observación inicial debe contener un carácter ':' con frecuencia > 1"
 
 #: lib/src/gretl_utils.c:888
 #, c-format
 msgid "starting obs '%s' is incompatible with frequency"
-msgstr "La observación inicial '%s' es incompatible con la frecuencia"
+msgstr "la observación inicial '%s' es incompatible con la frecuencia"
 
 #: lib/src/gretl_utils.c:892
 msgid "cross-sectional data: frequency must be 1"
@@ -4706,12 +4706,12 @@ msgstr "Ocurrió un error mientras 'outfile' estaba activado\n"
 
 #: lib/src/kalman.c:474
 msgid "kalman: a required matrix is missing"
-msgstr "Kalman: Falta una matriz necesaria"
+msgstr "kalman: Falta una matriz necesaria"
 
 #: lib/src/kalman.c:476
 #, c-format
 msgid "kalman: required matrix %s is missing"
-msgstr "Kalman: Falta la matriz %s, que es necesaria"
+msgstr "kalman: Falta la matriz %s, que es necesaria"
 
 #: lib/src/libglue.c:463
 #, c-format
@@ -4778,7 +4778,7 @@ msgstr "%s: La matriz is NULA"
 
 #: lib/src/matrix_extra.c:1501
 msgid "matrix is NULL"
-msgstr "La matriz es NULA"
+msgstr "la matriz es NULA"
 
 #: lib/src/matrix_extra.c:1507
 #, c-format
@@ -4788,7 +4788,7 @@ msgstr "%s: La matriz está vacía (%d x %d)"
 #: lib/src/matrix_extra.c:1510
 #, c-format
 msgid "matrix is empty (%d x %d)"
-msgstr "La matriz está vacía (%d x %d)"
+msgstr "la matriz está vacía (%d x %d)"
 
 #: lib/src/missing.c:559
 #, c-format
@@ -6853,7 +6853,7 @@ msgstr "Correlaciones por encima de la diagonal principal"
 
 #: lib/src/printout.c:1109 lib/src/printout.c:1112 lib/src/printout.c:1115
 msgid "log determinant"
-msgstr "Logaritmo del determinante"
+msgstr "logaritmo del determinante"
 
 #: lib/src/printout.c:1290
 #, c-format
@@ -6963,7 +6963,7 @@ msgstr "     Intervalo de confianza %g%% \n"
 
 #: lib/src/printout.c:2957 gui/guiprint.c:835 plugin/jrestrict.c:2819
 msgid "loglikelihood"
-msgstr "Log-verosimilitud"
+msgstr "log-verosimilitud"
 
 #: lib/src/printout.c:2960
 msgid "Criterion"
@@ -7493,7 +7493,7 @@ msgstr "entre paréntesis, los estadísticos $t$"
 #: lib/src/tokenize.c:1272
 #, c-format
 msgid "Invalid option '--%s'"
-msgstr "La opción '--%s' no es válida"
+msgstr "la opción '--%s' no es válida"
 
 #: lib/src/tokenize.c:1835
 #, c-format
@@ -8638,7 +8638,7 @@ msgstr "Normal estándar"
 
 #: gui/calculator.c:3430
 msgid "logistic"
-msgstr "Logística"
+msgstr "logística"
 
 #: gui/calculator.c:3438
 msgid "both CDFs"
@@ -8925,7 +8925,7 @@ msgstr ""
 
 #: gui/database.c:292
 msgid "Sorry, can't handle this frequency conversion"
-msgstr "Lo siento, ¡no se puede manejar esta conversión de frecuencia!"
+msgstr "Lo siento, no puedo manejar esta conversión de frecuencia"
 
 #: gui/database.c:512 gui/database.c:626
 msgid ""
@@ -10776,7 +10776,7 @@ msgstr "Peso en la observación actual:"
 
 #: gui/filters.c:732
 msgid "lambda (higher values -> smoother trend):"
-msgstr "Lambda (valores más altos -> tendencia más suave):"
+msgstr "lambda (valores más altos -> tendencia más suave):"
 
 #: gui/filters.c:743
 msgid "One-sided"
@@ -11706,7 +11706,7 @@ msgstr "Selección por defecto"
 #: gui/gpt_dialog.c:2017 gui/gpt_dialog.c:2404
 #, c-format
 msgid "line %d: "
-msgstr "Línea %d: "
+msgstr "línea %d: "
 
 #: gui/gpt_dialog.c:2216
 msgid "No formula was given"
@@ -11735,7 +11735,7 @@ msgstr "Líneas"
 
 #: gui/gpt_dialog.c:2730
 msgid "legend"
-msgstr "Leyenda"
+msgstr "leyenda"
 
 #: gui/gpt_dialog.c:2758
 msgid "type"
@@ -11743,7 +11743,7 @@ msgstr "Tipo"
 
 #: gui/gpt_dialog.c:2818
 msgid "line"
-msgstr "Línea"
+msgstr "línea"
 
 #: gui/gpt_dialog.c:2819
 msgid "line width"
@@ -11779,7 +11779,7 @@ msgstr "Posición (X Y)"
 
 #: gui/gpt_dialog.c:3045
 msgid "justification"
-msgstr "Justificación"
+msgstr "justificación"
 
 #: gui/gpt_dialog.c:3073 gui/gpt_dialog.c:3208 gui/ssheet.c:138
 #: gui/ssheet.c:145
@@ -11804,7 +11804,7 @@ msgstr "Flecha con cabeza"
 
 #: gui/gpt_dialog.c:3190
 msgid "line is dotted"
-msgstr "Línea de puntos"
+msgstr "la línea es de puntos"
 
 #: gui/gpt_dialog.c:3228
 msgid "X-axis"
@@ -14479,7 +14479,7 @@ msgstr "gretl: GARCH"
 
 #: gui/library.c:4490
 msgid "loess"
-msgstr "Loess"
+msgstr "loess"
 
 #: gui/library.c:4645
 #, c-format
@@ -17126,7 +17126,7 @@ msgstr "Nueva pestaña"
 
 #: gui/toolbar.c:1449
 msgid "launch calculator"
-msgstr "Lanzar calculadora"
+msgstr "lanzar la calculadora"
 
 #: gui/toolbar.c:1450
 msgid "new script"
@@ -18415,7 +18415,7 @@ msgstr "Preparar un archivo de instrucciones de X-12-ARIMA"
 
 #: plugin/tramo-x12a.c:604 plugin/tramo-x12a.c:606
 msgid "irregular"
-msgstr "Irregular"
+msgstr "irregular"
 
 #: plugin/tramo-x12a.c:632
 msgid "trend/cycle"
