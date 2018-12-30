@@ -280,7 +280,7 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
 
     if (action == SAVE_SCRIPT) {
 	strcpy(scriptfile, fname);
-	mkfilelist(FILE_LIST_SCRIPT, scriptfile);
+	mkfilelist(FILE_LIST_SCRIPT, scriptfile, 0);
 	script_window_update(vwin, fname);
     } else if (action == SAVE_GP_CMDS ||
 	       action == SAVE_R_CMDS ||
@@ -355,7 +355,7 @@ static void script_open_choice (const char *fname, windata_t *vwin,
 	    strcpy(tryfile, fname);
 	    if (view_script(tryfile, 1, EDIT_HANSL) != NULL) {
 		strcpy(scriptfile, tryfile);
-		mkfilelist(FILE_LIST_SCRIPT, scriptfile);
+		mkfilelist(FILE_LIST_SCRIPT, scriptfile, 0);
 	    }
 	}
     } else if (resp == 1) {
@@ -416,7 +416,7 @@ static void filesel_open_script (const char *fname, windata_t *vwin)
 	strcpy(tryfile, fname);
 	if (view_script(tryfile, 1, EDIT_HANSL) != NULL) {
 	    strcpy(scriptfile, tryfile);
-	    mkfilelist(FILE_LIST_SCRIPT, scriptfile);
+	    mkfilelist(FILE_LIST_SCRIPT, scriptfile, 0);
 	}
     }
 }

@@ -859,7 +859,7 @@ static void gui_record_data_opening (const char *fname,
     record_command_verbatim();
 
     if (*datafile != '\0') {
-	mkfilelist(FILE_LIST_DATA, datafile);
+	mkfilelist(FILE_LIST_DATA, datafile, 0);
     }
 }
 

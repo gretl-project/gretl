@@ -2942,7 +2942,7 @@ int gui_set_working_dir (char *dirname)
 	gui_errmsg(err);
 	delete_from_filelist(FILE_LIST_WDIR, dirname);
     } else {
-	mkfilelist(FILE_LIST_WDIR, dirname);
+	mkfilelist(FILE_LIST_WDIR, dirname, 0);
 	set_workdir_label();
     }
 
@@ -3112,7 +3112,7 @@ apply_wdir_changes (GtkWidget *w, struct wdir_setter *wset)
     } else {
 	/* sync with "local copy" */
 	strcpy(paths.workdir, gretl_workdir());
-	mkfilelist(FILE_LIST_WDIR, tmp);
+	mkfilelist(FILE_LIST_WDIR, tmp, 0);
     }
 
     usecwd = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wset->cwd_radio));

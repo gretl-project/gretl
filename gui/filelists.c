@@ -371,7 +371,7 @@ static char *maybe_expand_path (char *fullname,
     return fullname;
 }
 
-void mkfilelist (int filetype, const char *fname)
+void mkfilelist (int filetype, char *fname, int get_full)
 {
     char fullname[FILENAME_MAX];
     char *tmp[MAXRECENT-1];
@@ -394,6 +394,10 @@ void mkfilelist (int filetype, const char *fname)
 #if FDEBUG
     fprintf(stderr, "after normalize_path: '%s'\n", fullname);
 #endif
+
+    if (get_full) {
+	strcpy(fname, fullname);
+    }
 
     filep = get_file_list(filetype);
     if (filep == NULL) {

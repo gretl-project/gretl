@@ -1512,7 +1512,7 @@ gboolean do_open_session (void)
 	delete_from_filelist(FILE_LIST_SESSION, tryfile);
     } else {
 	strcpy(sessionfile, tryfile);
-	mkfilelist(FILE_LIST_SESSION, sessionfile);
+	mkfilelist(FILE_LIST_SESSION, sessionfile, 0);
 
 	session.status = SESSION_OPEN;
 
@@ -2026,7 +2026,7 @@ int save_session (char *fname)
 	    fprintf(stderr, " gretl_make_zipfile: err = %d\n", err);
 	    gui_errmsg(err);
 	} else {
-	    mkfilelist(FILE_LIST_SESSION, fname);
+	    mkfilelist(FILE_LIST_SESSION, fname, 0);
 	    if (fname != sessionfile) {
 		session_name_from_session_file(session.name, fname);
 		strcpy(sessionfile, fname);

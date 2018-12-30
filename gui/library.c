@@ -8208,7 +8208,7 @@ static void run_native_script (windata_t *vwin, gchar *buf)
     if (!err && vwin->role != EDIT_PKG_SAMPLE &&
 	vwin->role != VIEW_PKG_SAMPLE &&
 	*vwin->fname != '\0' && !strstr(vwin->fname, "script_tmp")) {
-	mkfilelist(FILE_LIST_SCRIPT, vwin->fname);
+	mkfilelist(FILE_LIST_SCRIPT, vwin->fname, 0);
 	lib_command_sprintf("run %s", vwin->fname);
 	record_command_verbatim();
     }
@@ -8399,11 +8399,9 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
 
 gboolean do_open_script (int action)
 {
-    FILE *fp = NULL;
+    int err = gretl_test_fopen(tryfile, "r");
 
-    fp = gretl_fopen(tryfile, "r");
-
-    if (fp == NULL) {
+    if (err) {
 	file_read_errbox(tryfile);
 	if (action == EDIT_HANSL) {
 	    delete_from_filelist(FILE_LIST_SESSION, tryfile);
@@ -8412,11 +8410,9 @@ gboolean do_open_script (int action)
 	return FALSE;
     }
 
-    fclose(fp);
-
     if (action == EDIT_HANSL) {
 	strcpy(scriptfile, tryfile);
-	mkfilelist(FILE_LIST_SCRIPT, scriptfile);
+	mkfilelist(FILE_LIST_SCRIPT, scriptfile, 1);
 	gretl_set_script_dir(scriptfile);
 	if (has_system_prefix(scriptfile, SCRIPT_SEARCH)) {
 	    view_script(scriptfile, 0, VIEW_SCRIPT);
@@ -8947,7 +8943,7 @@ int do_store (char *filename, int action, gpointer data)
 
     if (!err && !exporting) {
 	/* record the fact that data have been saved, etc. */
-	mkfilelist(FILE_LIST_DATA, filename);
+	mkfilelist(FILE_LIST_DATA, filename, 0);
 	if (dataset_is_subsampled()) {
 	    maybe_shrink_dataset(filename);
 	} else if (datafile != filename) {

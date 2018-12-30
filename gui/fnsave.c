@@ -4550,7 +4550,7 @@ int save_function_package (const char *fname, gpointer p)
 				 finfo->fname,
 				 finfo->uses_subdir,
 				 finfo->pdfdoc);
-	mkfilelist(FILE_LIST_GFN, finfo->fname);
+	mkfilelist(FILE_LIST_GFN, finfo->fname, 0);
 
 	/* destroy the temporary pkgname variable */
 	g_free(finfo->ininame);
@@ -5147,7 +5147,7 @@ void edit_function_package (const char *fname)
 	delete_from_filelist(FILE_LIST_GFN, fname);
     } else {
 	/* record opening */
-	mkfilelist(FILE_LIST_GFN, fname);
+	mkfilelist(FILE_LIST_GFN, finfo->fname, 0);
 	/* and go for it */
 	finfo_dialog(finfo);
     }
