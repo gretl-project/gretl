@@ -4165,7 +4165,7 @@ MODEL arch_model (const int *list, int order, DATASET *dset,
 MODEL lad_model (const int *list, DATASET *dset, gretlopt opt)
 {
     MODEL mod;
-    int (*lad_driver) (MODEL *, DATASET *);
+    int (*lad_driver) (MODEL *, DATASET *, gretlopt);
 
     /* run an initial OLS to "set the model up" and check for errors.
        the lad_driver function will overwrite the coefficients etc.
@@ -4185,7 +4185,7 @@ MODEL lad_model (const int *list, DATASET *dset, gretlopt opt)
 	return mod;
     }
 
-    (*lad_driver) (&mod, dset);
+    (*lad_driver) (&mod, dset, opt);
     set_model_id(&mod, opt);
 
     return mod;
