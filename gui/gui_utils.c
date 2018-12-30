@@ -4851,6 +4851,8 @@ static void add_blist_item_to_menu (gpointer listitem,
 				    gpointer data)
 {
     struct bitem *bi = listitem;
+    gchar *key = bi->key;
+    gpointer value = bi->value;
     GtkWidget *menu = data;
     GtkAction *action;
     GtkWidget *item;
@@ -4860,10 +4862,8 @@ static void add_blist_item_to_menu (gpointer listitem,
     char keystr[64];
     GretlType type;
     void *val;
+    int r = 0, c = 0;
     int size = 0;
-
-    gchar *key = bi->key;
-    gpointer value = bi->value;
 
     val = bundled_item_get_data((bundled_item *) value, &type, &size);
 
@@ -4879,16 +4879,29 @@ static void add_blist_item_to_menu (gpointer listitem,
 	    return;
 	} else if (vector_suitable_for_series(m)) {
 	    type = GRETL_TYPE_SERIES;
+	} else {
+	    r = m->rows;
+	    c = m->cols;
 	}
     } else if (type == GRETL_TYPE_SERIES && size > dataset->n) {
 	type = GRETL_TYPE_MATRIX;
+	r = size;
+	c = 1;
     }
 
     typestr = gretl_type_get_name(type);
     note = bundled_item_get_note((bundled_item *) value);
     double_underscores(keystr, (gchar *) key);
 
-    if (note != NULL) {
+    if (r > 0 && c > 0) {
+	if (note != NULL) {
+	    label = g_strdup_printf("%s (%s: %s, %d x %d)", keystr,
+				    typestr, note, r, c);
+	} else {
+	    label = g_strdup_printf("%s (%s, %d x %d)", keystr,
+				    typestr, r, c);
+	}
+    } else if (note != NULL) {
 	label = g_strdup_printf("%s (%s: %s)", keystr,
 				typestr, note);
     } else {
