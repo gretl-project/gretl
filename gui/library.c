@@ -6088,7 +6088,7 @@ void do_anova (GtkAction *action, gpointer p)
     }
 }
 
-static int *get_discrete_list (void)
+static int *get_dummifiable_list (void)
 {
     int *dlist = NULL;
     int i;
