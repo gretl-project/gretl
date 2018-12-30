@@ -444,14 +444,47 @@ static void right_click_corr (void)
     }
 }
 
-static int series_is_dummifiable (int v)
+static int is_integer_valued (int v)
 {
-    if (!series_is_discrete(dataset, v)) {
-	return 0;
+    const double *x = dataset->Z[v];
+    double x0 = NADBL;
+    int nonconst = 0;
+    int t, n = 0;
+
+    for (t=dataset->t1; t<=dataset->t2; t++) {
+	if (na(x[t])) {
+	    continue;
+	}
+	if (!ok_int(x[t])) {
+	    /* out of integer bounds */
+	    return 0;
+	}
+	if (x[t] != floor(x[t])) {
+	    /* non-integral */
+	    return 0;
+	}
+	if (na(x0)) {
+	    x0 = x[t];
+	} else if (x[t] != x0) {
+	    nonconst = 1;
+	}
+	n++;
+    }
+
+    return n > 2 && nonconst;
+}
+
+int series_is_dummifiable (int v)
+{
+    if (series_is_discrete(dataset, v)) {
+	/* must be OK */
+	return 1;
     } else if (gretl_isdummy(0, dataset->n-1, dataset->Z[v])) {
+	/* already a 0/1 dummy */
 	return 0;
     } else {
-	return 1;
+	/* could be OK? */
+	return is_integer_valued(v);
     }
 }
 

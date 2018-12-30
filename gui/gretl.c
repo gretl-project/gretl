@@ -418,7 +418,7 @@ void gui_nls_init (void)
 
 static void record_filearg (char *targ, const char *src)
 {
-    if (!g_path_is_absolute(src)) {
+    if (*src == '.') {
 	gchar *cdir = g_get_current_dir();
 	gchar *tmp = g_build_filename(cdir, src, NULL);
 

@@ -29,6 +29,8 @@ void set_sample_label (DATASET *dset);
 void set_workdir_label (void);
 void set_main_window_title (const char *name, gboolean modified);
 
+int series_is_dummifiable (int v);
+
 void check_var_labels_state (GtkMenuItem *item, gpointer p);
 
 void action_entry_init (GtkActionEntry *entry);

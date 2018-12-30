@@ -6090,14 +6090,11 @@ void do_anova (GtkAction *action, gpointer p)
 
 static int *get_discrete_list (void)
 {
-    double **Z = dataset->Z;
     int *dlist = NULL;
     int i;
 
     for (i=1; i<dataset->v; i++) {
-	if (gretl_isdummy(dataset->t1, dataset->t2, Z[i])) {
-	    continue;
-	} else if (series_is_discrete(dataset, i)) {
+	if (series_is_dummifiable(i)) {
 	    dlist = gretl_list_append_term(&dlist, i);
 	}
     }
@@ -6169,24 +6166,29 @@ void add_discrete_dummies (int target)
     gretlopt opt = OPT_NONE;
     int resp;
 
+    if (target < 0) {
+	/* coming from main window menu, with a single
+	   series selected but not verified as a valid
+	   candidate for dummification
+	*/
+	if (series_is_dummifiable(-target)) {
+	    target = -target;
+	} else {
+	    target = 0;
+	}
+    }
+
     if (target > 0) {
-	/* pre-selected target series (right-click) */
+	/* pre-selected and verified target series */
 	resp = dummify_option_dialog(target, &opt);
 	if (canceled(resp)) {
 	    target = 0;
 	}
     } else {
-	/* coming from main window menu */
-	int *dlist = get_discrete_list();
+	int *dlist = get_dummifiable_list();
 
 	if (dlist == NULL) {
 	    infobox("No discrete series are available");
-	} else if (dlist[0] == 1) {
-	    target = dlist[1];
-	    resp = dummify_option_dialog(target, &opt);
-	    if (canceled(resp)) {
-		target = 0;
-	    }
 	} else {
 	    target = dummify_target_dialog(dlist, &opt);
 	    free(dlist);
@@ -6238,7 +6240,14 @@ void add_dummies (GtkAction *action)
     gint err;
 
     if (u == DISCRETE_DUMMIES) {
-	add_discrete_dummies(0);
+	int selvar = 0;
+	int selcount = vwin_selection_count(mdata, &selvar);
+
+	if (selcount == 1) {
+	    add_discrete_dummies(-selvar);
+	} else {
+	    add_discrete_dummies(0);
+	}
 	return;
     } else if (u == TS_DUMMIES) {
 	lib_command_strcpy("genr dummy");
