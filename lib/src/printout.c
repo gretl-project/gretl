@@ -522,19 +522,39 @@ void print_freq (const FreqDist *freq, int varno, const DATASET *dset,
     }
 }
 
-/**
- * print_xtab:
- * @tab: gretl cross-tabulation struct.
- * @dset: pointer to dataset, or NULL.
- * @opt: may contain %OPT_R to print row percentages, %OPT_C
- * to print column percentages, %OPT_Z to display zero entries.
- * @prn: gretl printing struct.
- *
- * Print crosstab to @prn.
- */
+static void tex_xtab_heading (const Xtab *tab, PRN *prn)
+{
+    char s1[9 + VNAMELEN * 2] = {0};
+    char s2[9 + VNAMELEN * 2] = {0};
+    const char *src;
+    char *targ;
+    int i, j, k;
 
-void print_xtab (const Xtab *tab, const DATASET *dset,
-		 gretlopt opt, PRN *prn)
+    strcpy(s1, "\\texttt{");
+    strcpy(s2, "\\texttt{");
+
+    /* fix any underscores in series names */
+    for (k=0; k<2; k++) {
+	targ = k == 0 ? s1 : s2;
+	src = k == 0 ? tab->rvarname : tab->cvarname;
+	for (i=0, j=8; src[i]; i++, j++) {
+	    if (src[i] == '_') {
+		strcat(targ, "\\_");
+		j++;
+	    } else {
+		targ[j] = src[i];
+	    }
+	}
+	strcat(targ, "}");
+    }
+
+    pprintf(prn, _("Cross-tabulation of %s (rows) against %s (columns)"),
+	    s1, s2);
+    pputs(prn, "\n\n\\vspace{1em}\n\n");
+}
+
+static void real_print_xtab (const Xtab *tab, const DATASET *dset,
+			     gretlopt opt, PRN *prn)
 {
     series_table *col_st = NULL;
     series_table *row_st = NULL;
@@ -545,7 +565,24 @@ void print_xtab (const Xtab *tab, const DATASET *dset,
     double pearson = 0.0;
     double pval = NADBL;
     char lbl[64];
+    int totals = 1;
+    int tex = 0;
+    int bold = 0;
     int i, j;
+
+    if (opt & OPT_T) {
+	/* LaTeX output */
+	tex = 1;
+	if (opt & OPT_E) {
+	    /* bold-face equal values */
+	    bold = 1;
+	}
+	/* don't bother with chi-square */
+	pearson = NADBL;
+    }
+    if (opt & OPT_N) {
+	totals = 0;
+    }
 
     if (dset != NULL) {
 	int cv = current_series_index(dset, tab->cvarname);
@@ -559,46 +596,109 @@ void print_xtab (const Xtab *tab, const DATASET *dset,
 	}
     }
 
+    if (bold && (col_st != NULL || row_st != NULL)) {
+	/* don't flag spurious "equality" of row, col values */
+	bold = 0;
+    }
+
     if (*tab->rvarname != '\0' && *tab->cvarname != '\0') {
 	pputc(prn, '\n');
-	pprintf(prn, _("Cross-tabulation of %s (rows) against %s (columns)"),
-		tab->rvarname, tab->cvarname);
-	pputs(prn, "\n\n       ");
+	if (tex) {
+	    tex_xtab_heading(tab, prn);
+	} else {
+	    pprintf(prn, _("Cross-tabulation of %s (rows) against %s (columns)"),
+		    tab->rvarname, tab->cvarname);
+	    pputs(prn, "\n\n       ");
+	}
     } else {
-	pputs(prn, "\n       ");
+	pputs(prn, tex ? "\n" : "\n       ");
+    }
+
+    if (tex) {
+	int nc = tab->cols + 1 + totals;
+
+	pputs(prn, "\\begin{tabular}{");
+	pputs(prn, "r|");
+	for (j=1; j<nc; j++) {
+	    pputc(prn, 'r');
+	}
+	pputs(prn, "}\n");
     }
 
     if (row_st != NULL) {
 	pputs(prn, "    ");
     }
+    if (tex) {
+	pputs(prn, "     & ");
+    }
+
+    /* header row: column labels */
 
     for (j=0; j<tab->cols; j++) {
 	double cj = tab->cval[j];
 
 	if (col_st == NULL) {
-	    pprintf(prn, "[%4g]", cj);
+	    if (tex) {
+		pprintf(prn, "%4g", cj);
+	    } else {
+		pprintf(prn, "[%4g]", cj);
+	    }
 	} else {
 	    sval = series_table_get_string(col_st, cj);
 	    *lbl = '\0';
 	    gretl_utf8_strncat(lbl, sval, 8);
-	    pprintf(prn, "[%8s]", lbl);
+	    if (tex) {
+		pprintf(prn, "%8s", lbl);
+	    } else {
+		pprintf(prn, "[%8s]", lbl);
+	    }
+	}
+	if (tex) {
+	    if (j < tab->cols - 1 || totals) {
+		pputs(prn, " & ");
+	    } else {
+		pputs(prn, "\\\\ \\hline\n");
+	    }
 	}
     }
 
-    pprintf(prn,"  %s\n  \n", _("TOT."));
+    if (totals) {
+	if (tex) {
+	    pprintf(prn,"$\\Sigma$\\\\ \\hline\n");
+	} else {
+	    pprintf(prn,"  %s\n  \n", _("TOT."));
+	}
+    } else if (!tex) {
+	pputc(prn, '\n');
+    }
+
+    /* body of table */
 
     for (i=0; i<tab->rows; i++) {
 	if (tab->rtotal[i] > 0) {
 	    double ri = tab->rval[i];
 
+	    /* row label */
 	    if (row_st == NULL) {
-		pprintf(prn, "[%4g] ", ri);
+		if (tex) {
+		    pprintf(prn, "%4g", ri);
+		} else {
+		    pprintf(prn, "[%4g] ", ri);
+		}
 	    } else {
 		sval = series_table_get_string(row_st, ri);
 		*lbl = '\0';
 		gretl_utf8_strncat(lbl, sval, 8);
-		pprintf(prn, "[%8s] ", lbl);
+		if (tex) {
+		    pprintf(prn, "%8s", lbl);
+		} else {
+		    pprintf(prn, "[%8s] ", lbl);
+		}
 	    }
+	    if (tex) {
+		pputs(prn, " & ");
+	    }
+	    /* row counts */
 	    for (j=0; j<tab->cols; j++) {
 		if (col_st != NULL) {
 		    pputs(prn, "    ");
@@ -611,15 +711,31 @@ void print_xtab (const Xtab *tab, const DATASET *dset,
 			    } else {
 				x = 100.0 * tab->f[i][j] / tab->rtotal[i];
 			    }
-			    pprintf(prn, "%5.1f%%", x);
+			    if (tex) {
+				if (bold && tab->cval[j] == tab->rval[i]) {
+				    pprintf(prn, "\\textbf{%.1f%%%%}", x);
+				} else {
+				    pprintf(prn, "%5.1f%%%%", x);
+				}
+			    } else {
+				pprintf(prn, "%5.1f%%", x);
+			    }
 			} else {
-			    pprintf(prn, "%5d ", tab->f[i][j]);
+			    if (bold && tab->cval[j] == tab->rval[i]) {
+				pprintf(prn, "\\textbf{%d} ", tab->f[i][j]);
+			    } else {
+				pprintf(prn, "%5d ", tab->f[i][j]);
+			    }
 			}
-		    } else {
+		    } else if (!tex) {
 			pputs(prn, "      ");
+		    }
+		    if (tex && (totals || j < tab->cols-1)) {
+			pputs(prn, "& ");
 		    }
 		}
 		if (!na(pearson)) {
+		    /* cumulate chi-square */
 		    y = ((double) tab->rtotal[i] * tab->ctotal[j]) / tab->n;
 		    if (y < ymin) {
 			pearson = NADBL;
@@ -632,34 +748,71 @@ void print_xtab (const Xtab *tab, const DATASET *dset,
 		    }
 		}
 	    }
-	    if (opt & OPT_C) {
-		x = 100.0 * tab->rtotal[i] / tab->n;
-		pprintf(prn, "%5.1f%%\n", x);
+	    if (totals) {
+		/* column totals */
+		if (opt & OPT_C) {
+		    x = 100.0 * tab->rtotal[i] / tab->n;
+		    if (tex) {
+			pprintf(prn, "%5.1f%%%%", x);
+		    } else {
+			pprintf(prn, "%5.1f%%", x);
+		    }
+		} else {
+		    pprintf(prn, "%6d", tab->rtotal[i]);
+		}
+	    }
+	    /* terminate row */
+	    if (tex) {
+		if (totals && i == tab->rows-1) {
+		    pputs(prn, "\\\\ [2pt]\n");
+		} else {
+		    pputs(prn, "\\\\\n");
+		}
 	    } else {
-		pprintf(prn, "%6d\n", tab->rtotal[i]);
+		pputc(prn, '\n');
 	    }
 	}
     }
 
-    pputc(prn, '\n');
-    pputs(prn, _("TOTAL  "));
-    if (row_st != NULL) {
-	pputs(prn, "    ");
-    }
+    /* footer row */
 
-    for (j=0; j<tab->cols; j++) {
-	if (col_st != NULL) {
-	    pputs(prn, "    ");
-	}
-	if (opt & OPT_R) {
-	    x = 100.0 * tab->ctotal[j] / tab->n;
-	    pprintf(prn, "%5.1f%%", x);
+    if (totals) {
+	if (tex) {
+	    pputs(prn, "$\\Sigma$ & ");
 	} else {
-	    pprintf(prn, "%5d ", tab->ctotal[j]);
+	    pputc(prn, '\n');
+	    pputs(prn, _("TOTAL  "));
+	    if (row_st != NULL) {
+		pputs(prn, "    ");
+	    }
 	}
+	for (j=0; j<tab->cols; j++) {
+	    if (col_st != NULL) {
+		pputs(prn, "    ");
+	    }
+	    if (opt & OPT_R) {
+		x = 100.0 * tab->ctotal[j] / tab->n;
+		if (tex) {
+		    pprintf(prn, "%5.1f%%%%", x);
+		} else {
+		    pprintf(prn, "%5.1f%%", x);
+		}
+	    } else {
+		pprintf(prn, "%5d ", tab->ctotal[j]);
+	    }
+	    if (tex) {
+		pputs(prn, "& ");
+	    }
+	}
+	pprintf(prn, "%6d\n", tab->n);
     }
 
-    pprintf(prn, "%6d\n", tab->n);
+    if (tex) {
+	pputs(prn, "\\end{tabular}\n");
+	return;
+    }
+
+    /* additional information, if applicable */
 
     if (tab->missing) {
 	pputc(prn, '\n');
@@ -684,7 +837,7 @@ void print_xtab (const Xtab *tab, const DATASET *dset,
 	    pprintf(prn, _("Pearson chi-square test = %g (%d df, p-value = %g)"),
 		    pearson, df, pval);
 	    pputc(prn, '\n');
-	    if (n5p < 0.80) {
+	    if (!tex && n5p < 0.80) {
 		/* xgettext:no-c-format */
 		pputs(prn, _("Warning: Less than of 80% of cells had expected "
 			     "values of 5 or greater.\n"));
@@ -697,8 +850,53 @@ void print_xtab (const Xtab *tab, const DATASET *dset,
 	record_test_result(pearson, pval);
     }
 
-    if (tab->rows == 2 && tab->cols == 2) {
+    if (!tex && tab->rows == 2 && tab->cols == 2) {
 	fishers_exact_test(tab, prn);
+    }
+}
+
+/**
+ * print_xtab:
+ * @tab: gretl cross-tabulation struct.
+ * @dset: pointer to dataset, or NULL.
+ * @opt: may contain %OPT_R to print row percentages, %OPT_C
+ * to print column percentages, %OPT_Z to display zero entries,
+ * %OPT_T to print as TeX (LaTeX), %OPT_N to omit marginal
+ * totals, %OPT_B to bold-face counts where the row and
+ * column values are equal (TeX only).
+ * @prn: gretl printing struct.
+ *
+ * Print crosstab to @prn.
+ */
+
+void print_xtab (const Xtab *tab, const DATASET *dset,
+		 gretlopt opt, PRN *prn)
+{
+    int done = 0;
+
+    if (opt & OPT_T) {
+	/* --tex : are we printing to file? */
+	const char *fname = get_optval_string(XTAB, OPT_T);
+
+	if (fname != NULL && *fname != '\0') {
+	    int err = 0;
+	    PRN *xprn;
+
+	    gretl_maybe_switch_dir(fname);
+	    xprn = gretl_print_new_with_filename(fname, &err);
+	    if (err) {
+		pprintf(prn, _("Couldn't write to %s"), fname);
+		pputc(prn, '\n');
+	    } else {
+		real_print_xtab(tab, dset, opt, xprn);
+		gretl_print_destroy(xprn);
+	    }
+	    done = 1;
+	}
+    }
+
+    if (!done) {
+	real_print_xtab(tab, dset, opt, prn);
     }
 }
 
