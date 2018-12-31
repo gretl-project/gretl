@@ -802,45 +802,16 @@ int gretl_shell (const char *arg, gretlopt opt, PRN *prn)
     return err;
 }
 
-/* Note: the return values from the underlying win32 API
-   functions are translated to return 0 on success.
-   Handles either an 8-bit locale filename, via @apath,
-   or a UTF-16 name (@wpath); exactly one of these must
-   be given.
-*/
-
-int win32_write_access (char *apath, gunichar2 *wpath)
+static int win32_access_init (TRUSTEE *pt)
 {
-    SID *sid = NULL;
-    ACL *dacl = NULL;
     LPWSTR domain = NULL;
-    SECURITY_DESCRIPTOR *sd = NULL;
-    TRUSTEE t;
+    SID *sid = NULL;
+    LPWSTR domain = NULL;
     DWORD sidsize = 0, dlen = 0;
     SID_NAME_USE stype;
-    ACCESS_MASK amask;
     const gchar *username;
     gunichar2 *acname = NULL;
-    int ret, ok = 0, err = 0;
-
-    /* check for invalid call: we must have exactly one
-       of @apath and @wpath non-NULL
-    */
-    if ((apath == NULL && wpath == NULL) ||
-	(apath != NULL && wpath != NULL)) {
-	return -1;
-    }
-
-    /* basic check for the read-write attribute first */
-    if (apath != NULL) {
-	if (_access(apath, 06) != 0) {
-	    return -1;
-	}
-    } else if (wpath != NULL) {
-	if (_waccess(wpath, 06) != 0) {
-	    return -1;
-	}
-    }
+    int ret, err = 0;
 
     /* note: the following always returns UTF-8 */
     username = g_get_user_name();
@@ -865,8 +836,57 @@ int win32_write_access (char *apath, gunichar2 *wpath)
 
     if (!err) {
 	/* build a trustee and get the file's DACL */
-	BuildTrusteeWithSid(&t, sid);
+	BuildTrusteeWithSid(pt, sid);
     }
+
+    g_free(acname);
+
+    if (domain != NULL) {
+	LocalFree(domain);
+    }
+    if (sid != NULL) {
+	LocalFree(sid);
+    }
+
+    return err;
+}
+
+/* Note: the return values from the underlying win32 API
+   functions are translated to return 0 on success.
+   Handles either an 8-bit locale filename, via @apath,
+   or a UTF-16 name (@wpath); exactly one of these must
+   be given.
+*/
+
+int win32_write_access (char *apath, gunichar2 *wpath)
+{
+    SID *sid = NULL;
+    ACL *dacl = NULL;
+    SECURITY_DESCRIPTOR *sd = NULL;
+    TRUSTEE t;
+    ACCESS_MASK amask;
+    int ret, ok = 0, err = 0;
+
+    /* check for invalid call: we must have exactly one
+       of @apath and @wpath non-NULL
+    */
+    if ((apath == NULL && wpath == NULL) ||
+	(apath != NULL && wpath != NULL)) {
+	return -1;
+    }
+
+    /* basic check for the read-write attribute first */
+    if (apath != NULL) {
+	if (_access(apath, 06) != 0) {
+	    return -1;
+	}
+    } else if (wpath != NULL) {
+	if (_waccess(wpath, 06) != 0) {
+	    return -1;
+	}
+    }
+
+    err = win32_access_init(&t);
 
     if (!err && apath != NULL) {
 	/* @apath is ASCII or in the locale */
@@ -897,18 +917,9 @@ int win32_write_access (char *apath, gunichar2 *wpath)
 	}
     }
 
-    g_free(acname);
-
-    if (sid != NULL) {
-	LocalFree(sid);
-    }
     if (sd != NULL) {
 	LocalFree(sd);
     }
-    if (domain != NULL) {
-	LocalFree(domain);
-    }
-
     if (err) {
 	win_show_last_error();
     }
