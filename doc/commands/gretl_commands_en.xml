@@ -14813,6 +14813,10 @@
 	  <effect>display zero entries</effect>
         </option>
         <option>
+	  <flag>--no-totals</flag>
+	  <effect>suppress printing of marginal counts</effect>
+        </option>
+        <option>
 	  <flag>--matrix</flag>
 	  <optparm>matname</optparm>
 	  <effect>use frequencies from named matrix</effect>
@@ -14821,11 +14825,21 @@
 	  <flag>--quiet</flag>
 	  <effect>see the bivariate case below</effect>
 	</option>
+	<option>
+	  <flag>--tex</flag>
+	  <optparm optional="true">filename</optparm>
+	  <effect>output as &latex;</effect>
+	</option>
+	<option>
+	  <flag>--equal</flag>
+	  <effect>see the &latex; case below</effect>
+	</option>
       </options>
       <examples>
 	<example>xtab 1 2</example>
 	<example>xtab 1 ; 2 3 4</example>
 	<example>xtab --matrix=A</example>
+	<example>xtab 1 2 --tex="xtab.tex"</example>
       </examples>
     </usage>
 
@@ -14877,7 +14891,6 @@
       </para>
       
       <subhead>The bivariate case</subhead>
-      
       <para>
 	In the simple case of a bivariate cross-tabulation the
 	accessors <fncref targ="$test"/> and <fncref targ="$pvalue"/>
@@ -14886,6 +14899,24 @@
 	met. In that context the <opt>quiet</opt> option may be
 	used to suppress printing of the table.
       </para>
+
+      <subhead>&latex; output</subhead>
+      <para>
+	If the <opt>tex</opt> option is given the cross-tabulation is
+	printed in the form of a &latex; <lit>tabular</lit>
+	environment, either inline (from where it may be copied and
+	pasted) or, if the <repl>filename</repl> parameter is
+	appended, to the specified file. (If <repl>filename</repl>
+	does not specify a full path the file is written in the
+	currently set <cmdref targ="workdir"/>.)  No test statistic is
+	computed. The additional option <opt>equal</opt> can be used
+	to flag, by printing in boldface, the count or percentage for
+	cells in which the row and column variables have the same
+	numerical value. This option is ignored unless the
+	<opt>tex</opt> option is given, and also when one or both of
+	the cross-tabulated variables are string-valued.
+      </para>
+
     </description>
 
     <description context="gui">

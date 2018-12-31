@@ -3,6 +3,8 @@ version 2019a, in progress
 - Increase the default size of the script editor window
 - dbnomics support: transition to using the v22 API
 - "foreign" block with Julia: add --no-compile option
+- "xtab" command: support TeX output and add some more
+  formatting options
 
 2018-12-21 version 2018d
 - Internal representation of missing values: switch to
