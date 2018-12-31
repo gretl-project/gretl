@@ -802,7 +802,15 @@ int gretl_shell (const char *arg, gretlopt opt, PRN *prn)
     return err;
 }
 
-static int win32_access_init (TRUSTEE *pt, SID **psid)
+#define ACCESS_DEBUG 0
+
+/* win32_access_init: get security info related to the
+   current user, but independent of the file to be tested
+   for access. We can cache this info and avoid looking
+   it up repeatedly.
+*/
+
+static int win32_access_init (TRUSTEE_W *pt, SID **psid)
 {
     LPWSTR domain = NULL;
     SID *sid = NULL;
@@ -814,12 +822,13 @@ static int win32_access_init (TRUSTEE *pt, SID **psid)
 
     /* note: the following always returns UTF-8 */
     username = g_get_user_name();
-
     acname = g_utf8_to_utf16(username, -1, NULL, NULL, NULL);
-    /* get the size of the SID and domain */
+
+    /* get the sizes of the SID and domain */
     ok = LookupAccountNameW(NULL, acname, NULL, &sidsize,
 			    NULL, &dlen, &stype);
-    if (!ok) {
+    if (!ok && GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
+	fprintf(stderr, "LookupAccountNameW failed (username '%s')\n", username);
 	err = 1;
     } else {
 	*psid = sid = LocalAlloc(0, sidsize);
@@ -829,25 +838,52 @@ static int win32_access_init (TRUSTEE *pt, SID **psid)
 	}
     }
 
+#if ACCESS_DEBUG
+    fprintf(stderr, "win32_access_init (1): err = %d\n", err);
+#endif
+
     if (!err) {
-	/* call the function for real */
+	/* call the Lookup function for real */
 	ok = LookupAccountNameW(NULL, acname, sid, &sidsize,
 				domain, &dlen, &stype);
 	err = !ok;
     }
 
+#if ACCESS_DEBUG
+    fprintf(stderr, "win32_access_init (2): err = %d\n", err);
+#endif
+
     if (!err) {
-	/* build a trustee and get the file's DACL */
+	/* build a trustee; note that @sid gets stuck onto @pt */
 	BuildTrusteeWithSidW(pt, sid);
     }
 
     g_free(acname);
 
     if (domain != NULL) {
+	/* we won't need this again */
 	LocalFree(domain);
     }
 
     return err;
+}
+
+static gunichar2 *get_wide_path (const char *s)
+{
+    gunichar2 *ret = NULL;
+
+    if (gretl_is_ascii(s)) {
+	ret = g_utf8_to_utf16(s, -1, NULL, NULL, NULL);
+    } else {
+	gchar *tmp = g_locale_to_utf8(s, -1, NULL, NULL, NULL);
+
+	if (tmp != NULL) {
+	    ret = g_utf8_to_utf16(tmp, -1, NULL, NULL, NULL);
+	    g_free(tmp);
+	}
+    }
+
+    return ret;
 }
 
 /* Note: the return values from the underlying win32 API
@@ -859,11 +895,12 @@ static int win32_access_init (TRUSTEE *pt, SID **psid)
 
 int win32_write_access (char *apath, gunichar2 *wpath)
 {
-    SID *sid = NULL;
+    static SID *sid = NULL;
+    static TRUSTEE_W t;
     ACL *dacl = NULL;
     SECURITY_DESCRIPTOR *sd = NULL;
-    TRUSTEE t;
     ACCESS_MASK amask;
+    int free_wpath = 0;
     int ret, ok = 0, err = 0;
 
     /* check for invalid call: we must have exactly one
@@ -874,33 +911,52 @@ int win32_write_access (char *apath, gunichar2 *wpath)
 	return -1;
     }
 
+#if ACCESS_DEBUG
+    fprintf(stderr, "win32_write_access: apath=%p\n", (void *) apath);
+#endif
+
     /* basic check for the read-write attribute first */
     if (apath != NULL) {
-	if (_access(apath, 06) != 0) {
-	    return -1;
-	}
-    } else if (wpath != NULL) {
-	if (_waccess(wpath, 06) != 0) {
-	    return -1;
-	}
+	err = _access(apath, 06);
+    } else {
+	err = _waccess(wpath, 06);
     }
 
-    err = win32_access_init(&t, &sid);
+#if ACCESS_DEBUG
+    fprintf(stderr, " first quick check: err = %d\n", err);
+#endif
 
-    if (!err && apath != NULL) {
-	/* @apath is ASCII or in the locale */
-	ret = GetNamedSecurityInfoA(apath, SE_FILE_OBJECT,
-				    DACL_SECURITY_INFORMATION,
-				    NULL, NULL, &dacl, NULL,
-				    (PSECURITY_DESCRIPTOR) &sd);
-	err = (ret != ERROR_SUCCESS);
-    } else if (!err && wpath != NULL) {
-	/* @wpath is UTF-16 */
+    if (err) {
+	return -1;
+    }
+
+    if (wpath == NULL) {
+	wpath = get_wide_path(apath);
+	if (wpath == NULL) {
+	    return -1;
+	}
+	free_wpath = 1;
+    }
+
+    if (sid == NULL) {
+	/* get user info and cache it in static variables */
+	err = win32_access_init(&t, &sid);
+    }
+
+#if ACCESS_DEBUG
+    fprintf(stderr, " win32_access_init returned %d\n", err);
+#endif
+
+    if (!err) {
+	/* note: @dacl will be a pointer into @sd */
 	ret = GetNamedSecurityInfoW(wpath, SE_FILE_OBJECT,
 				    DACL_SECURITY_INFORMATION,
 				    NULL, NULL, &dacl, NULL,
 				    (PSECURITY_DESCRIPTOR) &sd);
 	err = (ret != ERROR_SUCCESS);
+#if ACCESS_DEBUG
+	fprintf(stderr, " GetNamedSecurityInfoW: err = %d\n", err);
+#endif
     }
 
     if (!err) {
@@ -914,10 +970,13 @@ int win32_write_access (char *apath, gunichar2 *wpath)
         } else if (amask & STANDARD_RIGHTS_WRITE) {
 	    ok = 1;
 	}
+#if ACCESS_DEBUG
+	fprintf(stderr, " GetEffectiveRights: err = %d, ok = %d\n", err, ok);
+#endif
     }
 
-    if (sid != NULL) {
-	LocalFree(sid);
+    if (free_wpath) {
+	g_free(wpath);
     }
     if (sd != NULL) {
 	LocalFree(sd);
