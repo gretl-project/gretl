@@ -802,50 +802,49 @@ int gretl_shell (const char *arg, gretlopt opt, PRN *prn)
     return err;
 }
 
-static int win32_access_init (TRUSTEE *pt)
+static int win32_access_init (TRUSTEE *pt, SID **psid)
 {
     LPWSTR domain = NULL;
     SID *sid = NULL;
-    LPWSTR domain = NULL;
     DWORD sidsize = 0, dlen = 0;
     SID_NAME_USE stype;
     const gchar *username;
     gunichar2 *acname = NULL;
-    int ret, err = 0;
+    int ok, err = 0;
 
     /* note: the following always returns UTF-8 */
     username = g_get_user_name();
 
     acname = g_utf8_to_utf16(username, -1, NULL, NULL, NULL);
     /* get the size of the SID and domain */
-    LookupAccountNameW(NULL, acname, NULL, &sidsize,
-		       NULL, &dlen, &stype);
-
-    sid = LocalAlloc(0, sidsize);
-    domain = LocalAlloc(0, dlen * sizeof *domain);
-    if (sid == NULL || domain == NULL) {
+    ok = LookupAccountNameW(NULL, acname, NULL, &sidsize,
+			    NULL, &dlen, &stype);
+    if (!ok) {
 	err = 1;
+    } else {
+	*psid = sid = LocalAlloc(0, sidsize);
+	domain = LocalAlloc(0, dlen * sizeof *domain);
+	if (sid == NULL || domain == NULL) {
+	    err = 1;
+	}
     }
 
     if (!err) {
 	/* call the function for real */
-	ret = LookupAccountNameW(NULL, acname, sid, &sidsize,
-				 domain, &dlen, &stype);
-	err = (ret == 0);
+	ok = LookupAccountNameW(NULL, acname, sid, &sidsize,
+				domain, &dlen, &stype);
+	err = !ok;
     }
 
     if (!err) {
 	/* build a trustee and get the file's DACL */
-	BuildTrusteeWithSid(pt, sid);
+	BuildTrusteeWithSidW(pt, sid);
     }
 
     g_free(acname);
 
     if (domain != NULL) {
 	LocalFree(domain);
-    }
-    if (sid != NULL) {
-	LocalFree(sid);
     }
 
     return err;
@@ -886,7 +885,7 @@ int win32_write_access (char *apath, gunichar2 *wpath)
 	}
     }
 
-    err = win32_access_init(&t);
+    err = win32_access_init(&t, &sid);
 
     if (!err && apath != NULL) {
 	/* @apath is ASCII or in the locale */
@@ -906,7 +905,7 @@ int win32_write_access (char *apath, gunichar2 *wpath)
 
     if (!err) {
 	/* get the access mask for this trustee */
-	ret = GetEffectiveRightsFromAcl(dacl, &t, &amask);
+	ret = GetEffectiveRightsFromAclW(dacl, &t, &amask);
         if (ret != ERROR_SUCCESS) {
             fprintf(stderr, "GetEffectiveRights...: ret=%d\n", ret);
             if (ret != RPC_S_SERVER_UNAVAILABLE && ret != ERROR_NO_SUCH_DOMAIN) {
@@ -917,6 +916,9 @@ int win32_write_access (char *apath, gunichar2 *wpath)
 	}
     }
 
+    if (sid != NULL) {
+	LocalFree(sid);
+    }
     if (sd != NULL) {
 	LocalFree(sd);
     }
