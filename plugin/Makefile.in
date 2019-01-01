@@ -233,6 +233,9 @@ ifeq ($(use_libsvm),no)
   vpath %.h $(topsrc)/plugin/libsvm
   SVM_CFLAGS := -I$(topsrc)/plugin/libsvm
   SVMO = svmlib.lo
+  LDSVM = $(LDXX)
+else
+  LDSVM = $(LINK)
 endif
 
 URCDATA = $(topsrc)/plugin/data/urcdata.bin
@@ -362,7 +365,7 @@ json_get.la: json_get.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(JSON_GLIB_LIBS)
 
 svm.la: svm.lo $(SVMO)
-	$(LDXX) -o $@ $^ $(GRETLLIB) $(SVM_LIBS)
+	$(LDSVM) -o $@ $^ $(GRETLLIB) $(SVM_LIBS)
 
 # plugins that require GTK+
 
