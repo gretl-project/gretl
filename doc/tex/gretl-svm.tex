@@ -42,25 +42,24 @@ a look at \cite{mull-spiess17}, or google the topic if you prefer, and
 come back when you're ready.\footnote{For a good account of the
   technical background on SVMs, see \cite{smola04}.}
 
-Libsvm is an open-source library (see
+\textsf{Libsvm} is an open-source library (see
 \url{https://www.csie.ntu.edu.tw/~cjlin/libsvm/}) and gretl (as we
 suppose you know) is an open-source, cross-platform econometrics
 package (\url{http://gretl.sourceforge.net/}). Support for
-\texttt{libsvm} in gretl was added in the \texttt{2017d} release
+\textsf{libsvm} in gretl was added in the \texttt{2017d} release
 (2017-11-07). Since then, however, some improvements have been made
 and at present you'll be better off using gretl \texttt{2018a} or
 higher to work with this.
 
 In section~\ref{sec:function} we outline the gretl \texttt{svm}
-function as it stands and illustrate its usage via a few example
-scenarios; section~\ref{sec:options} goes into more detail on the
-supported options. Section~\ref{sec:xvalid} discusses
-cross-validation; section~\ref{sec:SVC} gives a classification
-example; section~\ref{sec:SV-probs} discusses probability estimation;
-section~\ref{sec:missing} notes features of \textsf{libsvm} that are
-not yet supported by gretl, and section~\ref{sec:linux} offers some
-comments on getting \textsf{libsvm} working on Linux.
-
+function and illustrate its usage via a few example scenarios;
+section~\ref{sec:options} goes into more detail on the supported
+options. Section~\ref{sec:xvalid} discusses cross-validation;
+section~\ref{sec:SVC} gives a classification example;
+section~\ref{sec:SV-probs} discusses probability estimation; and
+section~\ref{sec:platforms} provides information on the state of
+gretl's \textsf{libsvm} support on the three main operating systems
+for which gretl packages are available.
 
 \section{The \texttt{svm} function}
 \label{sec:function}
@@ -92,7 +91,7 @@ is discussed in section~\ref{sec:options}.
 The workflow for supervised machine learning goes like this:
 \begin{enumerate}
 \item Gather suitable data and divide them into a training set and a
-  testing set.
+  testing or ``holdout'' set.
 \item Build a model using the training data and assess its fit.
 \item Using this model, generate predictions for the testing data and
   assess the fit.
@@ -128,7 +127,7 @@ Here's what happens by default.
   \texttt{L}): if this is a binary dummy, or its ``coded'' attribute
   is set, the $C$-SVC SVM type is selected (classification), otherwise
   $\epsilon$-SVR (regression) is selected. In both cases the default
-  kernel is RBF.
+  kernel is RBF (radial basis function).
 \item Gretl finds the maxima and minima of the independent variables
   in the sample range 1 to \texttt{n\_train} and scales them onto
   [$-1,1$].
@@ -163,7 +162,7 @@ We'll give a real example, replication of the Mullainathan and Spiess
 study referenced in the Introduction. It's not an exact replication
 since the authors used different machine-learning software (a
 collection of \textsf{R} tools), but we can replicate their baseline
-OLS results and the \textsf{libsvm} results are comparable to those
+OLS results and our \textsf{libsvm} results are comparable to those
 shown in their article for machine learning.
 
 A hansl script for this purpose is shown in Listing~\ref{listing:MS}.
@@ -249,8 +248,8 @@ sample to the training data only and purge the list \texttt{X} of
 perfectly collinear terms, leaving 274 series.\footnote{These terms
   would have been dropped automatically by the \texttt{ols} command,
   but we also want to remove them from the list passed to
-  \texttt{svm}.}  We then estimate the linear model via OLS. After
-switching to the ``holdout'' sample, we use the OLS parameter
+  \texttt{svm}.}  We then estimate a linear model via OLS. After
+switching to the holdout sample, we use the OLS parameter
 estimates (\texttt{\$coeff}) to generate fitted values using the
 \texttt{lincomb} function, and calculate the measures of fit employed
 by Mullainathan--Spiess (hereinafter M--S).
@@ -304,7 +303,7 @@ list L = dataset
 \end{code}
 This works if (a) your dependent variable occupies position 1 in the
 dataset and (b) you wish to use all the other series in the dataset as
-supports. Otherwise you need to figure out \texttt{L} yourself.
+supports. Otherwise you need to compose \texttt{L} yourself.
 
 \begin{script}[htbp]
   \caption{Scenario 2: using two data files in one script}
@@ -426,8 +425,9 @@ svm(L, b)
 \section{Options}
 \label{sec:options}
 
-Table~\ref{tab:options} shows all the options that can be set via the
-parameter bundle passed to \texttt{svm}.
+Table~\ref{tab:options} shows the options that can be set via the
+parameter bundle passed to \texttt{svm}---other than those pertaining
+to cross-validation, for which see section~\ref{sec:xvalid}.
 
 As mentioned above, gretl selects a default SVM type based on the
 character of the dependent variable. However, this can be overridden
@@ -453,8 +453,8 @@ controlling the behavior of \textsf{libsvm}. We discuss the
 details please see the \textsf{libsvm} documentation, \cite{HCL16}.
 
 All but one of the default values shown are as per \textsf{libsvm}
-itself, the exception being \texttt{cachesize} (the size of the memory
-cache for use in training, in megabytes). Training can take quite a
+itself, the exception being \texttt{cachesize}, the size of the memory
+cache for use in training, in megabytes. Training can take quite a
 while on a big dataset, and a large cache is likely to speed things
 up. The \textsf{libsvm} default value is 100\,MB, but many computers
 today can support a gigabyte of cache so we raised this to 1024. If
@@ -485,8 +485,7 @@ suitably scaled); 1 means to scale to a range from $-1$ to $+1$ (the
 default); and 2 means to use a range of 0 to 1. At present we do not
 support user-specified lower and upper limits, and neither do we
 support scaling of the dependent variable (the above applying only to
-the independent variables). Either or both of the latter facilities
-could be added if people reckon they are worthwhile.
+the independent variables).
 
 \texttt{loadmod}: this binary variable governs the interpretation of
 the optional third (pointer-to-bundle) argument to \texttt{svm}. By
@@ -511,22 +510,24 @@ supply filenames for writing or reading, respectively, certain sorts
 of data. Only if such names are given does \texttt{svm} write or read
 any files; by default everything goes on in memory.
 
-\texttt{model\_infile} can be used to get gretl to read a third-party
-\textsf{libsvm} model file (which implies that \texttt{svm} will skip
-the training step), and \texttt{model\_outfile} can be used to produce
-a file readable by the \texttt{svm-predict} executable.  The
-\texttt{ranges} keys work in a similar manner, for files containing
-\textsf{libsvm} data-range information. However, gretl's own range
-files contain more information than standard \textsf{libsvm} ones and
-cannot be read by the \texttt{svm-} executables, so if you wish to
-output a ranges file readable by them you must in addition specify
+\texttt{model\_infile} can be used to get gretl to read a previously
+trained \textsf{libsvm} model file (which implies that \texttt{svm}
+will skip the training step), and \texttt{model\_outfile} can be used
+to produce a file readable by the \texttt{svm-predict} executable.
+The \texttt{ranges} keys work in a similar manner, for files
+containing \textsf{libsvm} data-range information. However, gretl's
+own range files contain more information than standard \textsf{libsvm}
+ones and cannot be read by the \texttt{svm-} executables, so if you
+wish to output a ranges file readable by them you must in addition
+specify
 \begin{code}
 parms.range_format = "libsvm"
 \end{code}
 (substituting the name of your parameter bundle). There is at present
-no facility for the converse---getting \texttt{svm} to read a ranges
-file written by \texttt{svm-scale}. Attempting to do so will generate
-an error, regardless of the setting of \texttt{range\_format}.
+no facility for the converse---that is, getting gretl's \texttt{svm()}
+to read a ranges file written by \texttt{svm-scale}. Attempting to do
+so will generate an error, regardless of the setting of
+\texttt{range\_format}.
 
 Finally, \texttt{data\_outfile} can be used to write data in the
 format required by \texttt{svm-train} and \texttt{svm-predict}. Note
@@ -549,10 +550,10 @@ figures of merit can be calculated for these predictions.
 
 Here's the context in which this can be particularly useful: when
 \textsf{libsvm} trains a model it automatically adjusts a (possibly
-large) number of coefficients, but it takes certain parameters as
-given. For the recommended RBF kernel this includes $C$ and $\gamma$;
-for the SVM type $\epsilon$-SVR it also includes $\epsilon$; and for
-$\nu$-SVC, $\nu$-SVR and one-class classification it includes
+large) number of coefficients, but it takes certain kernel parameters
+as given. For the recommended RBF kernel this includes $C$ and
+$\gamma$; for the SVM type $\epsilon$-SVR it also includes $\epsilon$;
+and for $\nu$-SVC, $\nu$-SVR and one-class classification it includes
 $\nu$. It may be that prediction can be improved by tuning these
 parameters. However, simply tuning on the full training dataset is
 likely to result in over-fitting, to the detriment of prediction on
@@ -573,10 +574,8 @@ It is still possible that this will result in over-fitting to the
 training data, but that risk should at least be lessened.\footnote{For
   further discussion see section 3 of \cite{HCL16}.}
 
-Support for this via gretl's \texttt{svm} is at a more experimental
-stage than the other features described above, which is why the
-relevant options are not shown in Table~\ref{tab:options}.  But 
-we show them now in Table~\ref{tab:xvalid}.
+The cross-validation options supported by gretl's \texttt{svm} are
+shown in Table~\ref{tab:xvalid}.
 
 \begin{table}[htbp]
   \centering
@@ -594,7 +593,7 @@ we show them now in Table~\ref{tab:xvalid}.
   \label{tab:xvalid}
 \end{table}
 
-We say more about specification of the folds in
+We have more to say about specification of the folds in
 section~\ref{sec:user-folds} below.
 
 Note that only one of \texttt{search} and \texttt{grid} should be
@@ -664,9 +663,8 @@ find for a single training run, you can expect a default grid search
 to take longer by two orders of magnitude. Moreover, training involves
 more computation the greater the value of the cost factor, $C$, so if
 your search space includes large values of $C$ the time taken by cross
-validation may be more like 3 orders of magnitude more than just
-training on a set of parameters in the neighborhood of the default
-values.
+validation may be three orders of magnitude more than just training on
+a set of parameters in the neighborhood of the default values.
 
 Listing~\ref{listing:xvalid} illustrates usage of cross validation in
 \texttt{svm}.
@@ -741,9 +739,9 @@ which translates into the following values for the parameter itself:
 value of 1.0, around which it is ``exponentially symmetrical.''
 
 Alternatively, you may specify that one or more rows of the grid
-matrix are to be taken as linear rather than log$_2$-based. In that
+matrix are to be taken as linear rather than $\log_2$-based. In that
 case you must append a fourth column to the grid, with 1 on linear
-rows and 0 on log$_2$-based rows. Here's an example:
+rows and 0 on $\log_2$-based rows. Here's an example:
 \begin{code}
 params.svm_type = 4 # nu-SVR
 params.grid = {0, 3, 1, 0; 0, 0, 0, 0; 0.5, 0.7, 0.05, 1}
@@ -786,7 +784,7 @@ times (as happens in the course of parameter search) it will get a
 different set of folds each time (since initialization of
 \texttt{rand} occurs only once per program invocation).
 
-This seems questionable on both counts. First, if the folds are
+This seems debatable on both counts. First, if the folds are
 advertised as random, one might expect to get non-identical results
 when running a given cross-validation program multiple times (unless
 one takes steps to ensure they are the same). Second, in the context
@@ -985,9 +983,9 @@ quite satisfactory.
 \label{sec:plot}
 
 It may be helpful to get a visual fix on what's going on in the tuning
-of the RBF parameters via cross validation. There's an experimental
-(and so far, little tested) option for this: you can include in the
-parameter bundle under the \texttt{plot} key either
+of the RBF kernel parameters via cross validation. There's an
+experimental (and so far, little tested) option for this: you can
+include in the parameter bundle under the \texttt{plot} key either
 ``\texttt{display}'' or an output filename, as in
 \begin{code}
 parms.plot = "display"
@@ -1107,22 +1105,22 @@ perhaps surprising that the SVM even equals the MLE results.
 By default the output of \texttt{svm} is just a series of
 point-predictions of the dependent variable conditional on the
 covariates or ``features''. It is possible, however, to obtain a
-measure of the uncertainty attaching to these predictions
-(``probability estimation''). The character of the probability
-information delivered by \textsf{libsvm} differs between SV regression
-and SV classification, but the mechanism for obtaining it via gretl
-is basically the same: you set \texttt{probability} to 1 in the
-parameter bundle, and supply a pointer-to-bundle as the fourth
-argument to the \texttt{svm} function, as in
+measure of the uncertainty attaching to these predictions.  The
+character of the probability information delivered by \textsf{libsvm}
+differs between SV regression and SV classification, but the mechanism
+for obtaining it via gretl is basically the same: you set
+\texttt{probability} to 1 in the parameter bundle, and supply a
+pointer-to-bundle as the fourth argument to the \texttt{svm} function,
+as in
 \begin{code}
 ...
 params.probability = 1
 bundle bprob = null
 series yhat = svm(L, params, null, &bprob)
 \end{code}
-(where \texttt{null} indicates that we're skipping the optional third
-argument). On successful completion \texttt{bprob} will
-contain probability information.
+(where the \texttt{null} argument indicates that we're skipping the
+optional third parameter). On successful completion \texttt{bprob}
+will contain probability information.
 
 \subsection{Regression error distribution}
 \label{sec:SVR-probs}
@@ -1195,26 +1193,29 @@ probability of 0.605 for an outcome of 2 (``at home'') for the first
 observation in the training set, and a probability of 0.702 for
 outcome 3 (``in work'') for the second observation.
 
-\section{What's missing?}
-\label{sec:missing}
+\section{Libsvm support per platform}
+\label{sec:platforms}
 
-There are some features of \textsf{libsvm} that we don't fully
-understand at this point, and that are therefore not yet supported.
+\subsection{MS Windows}
+\label{sec:svm-windows}
 
-Cases in point:
+This is straightfoward: we provide a build of \textsf{libsvm} as a
+supplementary DLL in the gretl packages for 32- and 64-bit Windows. No
+extra work is required unless you're building gretl for Windows
+yourself, in which case see
+\url{http://ricardo.ecn.wfu.edu/pub/gretl/winbuild/gretl-winbuild.pdf}.
 
-\begin{itemize}
-\item Precomputed kernels: we're just hazy on this feature. Yes, it
-  may be explained in the \textsf{libsvm} doc, but we haven't read
-  enough---or closely enough---to get it.
-\item Use of weights: ditto.
-\end{itemize}
+\subsection{Mac OS X}
+\label{sec:svm-osx}
 
-We'd be interested to hear how important people reckon these points
-are.
+The recommended ``quartz'' gretl package for OS X (64-bit build for
+Intel processors) includes a \textsf{libsvm} shared library and hence
+provides the same ``out of the box'' support as on MS Windows. As of
+this writing our legacy OS X builds (which require Apple's
+\textsf{X11}) do not include \textsf{libsvm} support.
 
-\section{Libsvm on Linux}
-\label{sec:linux}
+\subsection{Linux}
+\label{sec:svm-linux}
 
 There are \textsf{libsvm} packages for (at least) Debian, Fedora and
 Arch (AUR). However, we're not quite sure how functional they are. The
@@ -1305,11 +1306,5 @@ now you can get there via right-click, Save to session as icon,
 right-click on the icon, Edit plot commands; then the Execute icon in
 the plot commands window will open the plot in \textsf{gnuplot}
 itself.)
-
-Mac builds of gretl: at present only the (recommended) quartz snapshot
-contains a build of \texttt{libsvm.dylib}.  If SVM support is truly
-reckoned worthwhile, then I guess we should build the dylib for the
-older Mac packages, and also make a renewed attempt to get
-\textsf{OpenMP} multi-threading working in cross-builds for OS X.
 
 \end{document}
