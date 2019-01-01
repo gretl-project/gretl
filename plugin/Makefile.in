@@ -191,12 +191,6 @@ ifeq ($(build_gui),yes)
   endif
 endif
 
-ifeq ($(use_gsf),no)
-  PLUGINS += gretlzip.la
-  GRETL_ZIP_CFLAGS := -I$(topsrc)/plugin/zipunzip $(GLIB_CFLAGS)
-  GRETL_ZIP_LIBS := $(GLIB_LIBS) -lz
-endif
-
 ifeq ($(win32_build),yes)
   override LDFLAGS += -no-undefined
 endif
@@ -209,15 +203,6 @@ ifneq ($(SVM_LIBS),)
   PLUGINS += $(SVM_PLUGIN)
 endif
 
-# for now we'll build the gretlzip plugin regardless, since
-# libgsf-1.14.29 does not support setting of the zlib
-# compression level
-ifeq ($(use_gsf),yes)
-  PLUGINS += gretlzip.la
-  GRETL_ZIP_CFLAGS := -I$(topsrc)/plugin/zipunzip $(GLIB_CFLAGS)
-  GRETL_ZIP_LIBS := $(GLIB_LIBS) -lz
-endif
-
 ifeq ($(have_odbc),yes)
   PLUGINS += odbc_import.la
   ODBC_CFLAGS = @ODBC_CFLAGS@
@@ -227,12 +212,13 @@ endif
 vpath %.c $(topsrc)/plugin/libole2
 vpath %.h $(topsrc)/plugin/libole2
 
-ifeq ($(LIBGSF_LIBS),)
+ifeq ($(use_gsf),no)
+  PLUGINS += gretlzip.la
   vpath %.c $(topsrc)/plugin/zipunzip
   vpath %.h $(topsrc)/plugin/zipunzip
   ZIPOBJ = $(ZIPSRC:.c=.lo)
-  ZIP_LIBS = $(GRETL_ZIP_LIBS)
-  ZIP_CFLAGS = $(GRETL_ZIP_CFLAGS)
+  ZIP_CFLAGS := -I$(topsrc)/plugin/zipunzip $(GLIB_CFLAGS)
+  ZIP_LIBS := $(GLIB_LIBS) -lz
 endif
 
 URCDATA = $(topsrc)/plugin/data/urcdata.bin
