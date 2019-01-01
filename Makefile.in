@@ -5,6 +5,7 @@ exec_prefix = @exec_prefix@
 bindir = @bindir@
 libdir = @libdir@
 CC = @CC@
+CXX = @CXX@
 CFLAGS = @CFLAGS@
 MAKE = @MAKE@
 INSTALL = @INSTALL@
@@ -19,6 +20,10 @@ use_xdg = @use_xdg@
 
 ifeq ($(CC),)
   CC = gcc
+endif
+
+ifeq ($(CXX),)
+  CXX = g++
 endif
 
 ifeq ($(HOSTCC),)

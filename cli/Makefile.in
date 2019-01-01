@@ -99,7 +99,7 @@ $(CLI): .deps $(OBJS)
 
 $(MPICLI): .deps $(MPIOBJ)
 	$(MPILD_ECHO)
-	$(AMP)$(LIBTOOL) --mode=link $(MPICCV) $(LDFLAGS) -o $@ $(MPIOBJ) \
+	$(AMP)$(LIBTOOL) --tag CC --mode=link $(MPICCV) $(LDFLAGS) -o $@ $(MPIOBJ) \
 	$(GRETLLIB) $(MPILINK)
 
 gretlcli-mpi.o: gretlcli-mpi.c

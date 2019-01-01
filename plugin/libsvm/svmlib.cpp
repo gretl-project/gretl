@@ -8,6 +8,9 @@
 #include <limits.h>
 #include <locale.h>
 #include "svm.h"
+#if defined(_OPENMP)
+# include <omp.h>
+#endif
 int libsvm_version = LIBSVM_VERSION;
 typedef float Qfloat;
 typedef signed char schar;
@@ -1282,7 +1285,9 @@ public:
 		int start, j;
 		if((start = cache->get_data(i,&data,len)) < len)
 		{
+#if defined(_OPENMP)
 #pragma omp parallel for private(j) schedule(guided)
+#endif
 			for(j=start;j<len;j++)
 				data[j] = (Qfloat)(y[i]*y[j]*(this->*kernel_function)(i,j));
 		}
@@ -1398,7 +1403,9 @@ public:
 		int j, real_i = index[i];
 		if(cache->get_data(real_i,&data,l) < l)
 		{
+#if defined(_OPENMP)
 #pragma omp parallel for private(j) schedule(guided)
+#endif
 			for(j=0;j<l;j++)
 				data[j] = (Qfloat)(this->*kernel_function)(real_i,j);
 		}
@@ -2509,7 +2516,9 @@ double svm_predict_values(const svm_model *model, const svm_node *x, double* dec
 	{
 		double *sv_coef = model->sv_coef[0];
 		double sum = 0;
+#if defined(_OPENMP)
 #pragma omp parallel for private(i) reduction(+:sum) schedule(guided)
+#endif
 		for(i=0;i<model->l;i++)
 			sum += sv_coef[i] * Kernel::k_function(x,model->SV[i],model->param);
 		sum -= model->rho[0];
@@ -2526,7 +2535,9 @@ double svm_predict_values(const svm_model *model, const svm_node *x, double* dec
 		int l = model->l;
 
 		double *kvalue = Malloc(double,l);
+#if defined(_OPENMP)
 #pragma omp parallel for private(i) schedule(guided)
+#endif
 		for(i=0;i<l;i++)
 			kvalue[i] = Kernel::k_function(x,model->SV[i],model->param);
 

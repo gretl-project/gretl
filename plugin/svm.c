@@ -27,7 +27,11 @@
 # include "gretl_mpi.h"
 #endif
 
-#include <libsvm/svm.h>
+#ifdef USE_LIBSVM
+# include <libsvm/svm.h>
+#else
+# include "svm.h"
+#endif
 
 #define DATA_DEBUG 0
 

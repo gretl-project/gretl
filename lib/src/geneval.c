@@ -9252,8 +9252,6 @@ static NODE *curl_bundle_node (NODE *n, parser *p)
     return ret;
 }
 
-#ifdef HAVE_LIBSVM
-
 static gretl_bundle *node_get_bundle (NODE *n, parser *p)
 {
     gretl_bundle *b = NULL;
@@ -9274,15 +9272,8 @@ static gretl_bundle *node_get_bundle (NODE *n, parser *p)
     return b;
 }
 
-#endif
-
 static NODE *svm_driver_node (NODE *t, parser *p)
 {
-#ifndef HAVE_LIBSVM
-    gretl_errmsg_set(_("Libsvm is not supported"));
-    p->err = E_DATA;
-    return NULL;
-#else
     NODE *save_aux = p->aux;
     NODE *n = t->L;
     NODE *e, *ret = NULL;
@@ -9342,7 +9333,6 @@ static NODE *svm_driver_node (NODE *t, parser *p)
     free(list);
 
     return ret;
-#endif
 }
 
 static gretl_bundle *bvar_get_bundle (NODE *n, parser *p)

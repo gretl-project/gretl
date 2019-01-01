@@ -6,6 +6,7 @@ exec_prefix = @exec_prefix@
 libdir = @libdir@
 
 CC = @CC@
+CXX = @CXX@
 CFLAGS = @CFLAGS@
 LDFLAGS = @LDFLAGS@
 MAKE = @MAKE@
@@ -18,6 +19,7 @@ have_odbc = @have_odbc@
 quiet_build = @quiet_build@
 gtk_version = @gtk_version@
 use_gsf = @use_gsf@
+use_libsvm = @use_libsvm@
 win32_build = @win32_build@
 win32pkg = @win32pkg@
 
@@ -51,6 +53,9 @@ endif
 ifeq ($(CC),)
   CC = gcc
 endif
+ifeq ($(CXX),)
+  CXX = g++
+endif
 ifeq ($(INSTALL_PROGRAM),)
   INSTALL_PROGRAM = $(INSTALL) -m 755
 endif
@@ -63,17 +68,23 @@ VPATH = $(topsrc)/plugin:$(topsrc)/tests:$(topsrc)/plugin/mpack:$(topsrc)/plugin
 override CFLAGS += -I.. -I$(topsrc)/gui -DHAVE_CONFIG_H
 
 LIBTOOL = ../libtool
-COMPILE = $(LIBTOOL) --mode=compile $(CCV) -c $(CFLAGS) 
+COMPILE = $(LIBTOOL) --mode=compile $(CCV) -c $(CFLAGS)
+COMPILX = $(LIBTOOL) --tag CXX --mode=compile $(CXXV) -c $(CFLAGS)
 
 ifeq ($(quiet_build),yes)
   AMP = @
   CCECHO = @echo "  CC    $@"
-  LDECHO = @echo "  LD    $@" 
+  LDECHO = @echo "  LD    $@"
+  CXXECHO = @echo "  CXX   $@"
   CCV = $(CC) $(OMP_OPT) > /dev/null
+  CXXV = $(CXX) $(OMP_OPT) > /dev/null
   LINK = $(LDECHO); $(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -module -avoid-version -rpath $(plugindir)
+  LDXX = $(LDECHO); $(LIBTOOL) --tag CXX --mode=link $(CXXV) $(LDFLAGS) -module -avoid-version -rpath $(plugindir)
 else
   CCV = $(CC) $(OMP_OPT)
+  CXXV = $(CXX) $(OMP_OPT)
   LINK = $(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -module -avoid-version -rpath $(plugindir)
+  LDXX = $(LIBTOOL) --tag CXX --mode=link $(CXX) $(LDFLAGS) -module -avoid-version -rpath $(plugindir)
 endif
 
 GRETLINC = -I$(topsrc)/lib/src
@@ -168,7 +179,8 @@ PLUGINS = arbond.la \
 	biprobit.la \
 	reprobit.la \
 	panurc.la \
-	xml_get.la
+	xml_get.la \
+	svm.la
 
 GUI_DEPENDENT_PLUGINS = arma_x12.la \
 	excel_import.la \
@@ -178,11 +190,10 @@ GUI_DEPENDENT_PLUGINS = arma_x12.la \
 	ods_import.la \
 	pca.la \
 	progress_bar.la \
-	tramo-x12a.la 
+	tramo-x12a.la
 
 MAILER_PLUGIN = mailer.la
 JSON_PLUGIN = json_get.la
-SVM_PLUGIN = svm.la
 
 ifeq ($(build_gui),yes)
   PLUGINS += $(GUI_DEPENDENT_PLUGINS)
@@ -197,10 +208,6 @@ endif
 
 ifneq ($(JSON_GLIB_LIBS),)
   PLUGINS += $(JSON_PLUGIN)
-endif
-
-ifneq ($(SVM_LIBS),)
-  PLUGINS += $(SVM_PLUGIN)
 endif
 
 ifeq ($(have_odbc),yes)
@@ -221,6 +228,13 @@ ifeq ($(use_gsf),no)
   ZIP_LIBS := $(GLIB_LIBS) -lz
 endif
 
+ifeq ($(use_libsvm),no)
+  vpath %.cpp $(topsrc)/plugin/libsvm
+  vpath %.h $(topsrc)/plugin/libsvm
+  SVM_CFLAGS := -I$(topsrc)/plugin/libsvm
+  SVMO = svmlib.lo
+endif
+
 URCDATA = $(topsrc)/plugin/data/urcdata.bin
 DWDATA = $(topsrc)/plugin/data/dwdata.gz
 
@@ -230,8 +244,13 @@ override CFLAGS += $(GRETLINC) $(GTK_CFLAGS) $(GMP_CFLAGS) $(MPFR_CFLAGS) \
 
 %.lo: %.c
 	$(CCECHO)
-	$(AMP)$(COMPILE) $< 
-	$(AMP)$(CC) $(CFLAGS) -MM -MT $*.lo $< > .deps/$*.d 
+	$(AMP)$(COMPILE) $<
+	$(AMP)$(CC) $(CFLAGS) -MM -MT $*.lo $< > .deps/$*.d
+
+%.lo: %.cpp
+	$(CXXECHO)
+	$(AMP)$(COMPILX) $<
+	$(AMP)$(CXX) $(CXXFLAGS) -MM -MT $*.lo $< > .deps/$*.d
 
 all: .deps $(PLUGINS)
 
@@ -295,13 +314,13 @@ arma.la: arma.lo arma_cml.lo arma_init.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
 
 poisson.la: poisson.lo
-	$(LINK) -o $@ $< $(GRETLLIB) 
+	$(LINK) -o $@ $< $(GRETLLIB)
 
 duration.la: duration.lo
-	$(LINK) -o $@ $< $(GRETLLIB) 
+	$(LINK) -o $@ $< $(GRETLLIB)
 
 heckit.la: heckit.lo
-	$(LINK) -o $@ $< $(GRETLLIB) 
+	$(LINK) -o $@ $< $(GRETLLIB)
 
 biprobit.la: biprobit.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
@@ -322,7 +341,7 @@ quantreg.la: quantreg.lo rqfnb.lo rqbr.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
 
 interval.la: interval.lo
-	$(LINK) -o $@ $< $(GRETLLIB) 
+	$(LINK) -o $@ $< $(GRETLLIB)
 
 anova.la: anova.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(GLIB_LIBS)
@@ -342,8 +361,8 @@ xml_get.la: xml_get.lo
 json_get.la: json_get.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(JSON_GLIB_LIBS)
 
-svm.la: svm.lo
-	$(LINK) -o $@ $< $(GRETLLIB) $(SVM_LIBS)
+svm.la: svm.lo $(SVMO)
+	$(LDXX) -o $@ $^ $(GRETLLIB) $(SVM_LIBS)
 
 # plugins that require GTK+
 
@@ -363,7 +382,7 @@ leverage.la: leverage.lo
 	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) $(LAPACK_LIBS)
 
 mailer.la: mailer.lo encode.lo md5c.lo
-	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB) 
+	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB)
 
 ods_import.la: ods_import.lo
 	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) $(XML_LIBS)
@@ -380,9 +399,9 @@ tramo-x12a.la: tramo-x12a.lo tramo_options.lo
 $(GRETLLIB):
 	$(MAKE) -C ../lib
 
-.PHONY: 
+.PHONY:
 
-install: $(GRETLLIB) $(PLUGINS) $(URCDATA) $(DWDATA) installdirs 
+install: $(GRETLLIB) $(PLUGINS) $(URCDATA) $(DWDATA) installdirs
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) \
 	$(PLUGINS) $(DESTDIR)$(plugindir)
 	$(INSTALL_DATA) $(URCDATA) $(DESTDIR)$(plugindir)/data
@@ -402,4 +421,3 @@ clean:
 
 distclean: clean
 	rm -f Makefile
-

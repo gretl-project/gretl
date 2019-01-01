@@ -67,7 +67,7 @@ have_mpi="no"
 try_libR="yes"
 have_libR="no"
 try_libsvm="yes"
-have_libsvm="no"
+use_libsvm="no"
 try_bc="no"
 check_gnuplot="yes"
 use_curl="yes"
@@ -266,6 +266,14 @@ then
 fi,
 try_gsf=no)
 
+AC_ARG_WITH(libsvm,
+[  --with-libsvm          Use libsvm library [[default=auto]]],
+if test "$withval" = "no"
+then
+  try_libsvm=no
+fi,
+try_libsvm=yes)
+
 AC_ARG_WITH(x-12-arima,
 [  --with-x-12-arima      include X-12-ARIMA support [[default=yes]]],
 if test "$withval" = "no"
@@ -315,14 +323,6 @@ then
   try_odbc=yes
 fi,
 try_odbc=no)
-
-AC_ARG_WITH(libsvm,
-[  --with-libsvm            include libsvm support [[default=auto]]],
-if test "$withval" = "no"
-then
-  try_libsvm=no
-fi,
-try_libsvm=yes)
 
 AC_PROG_CC
 
@@ -452,16 +452,19 @@ elif test "$try_readline" = "yes" ; then
 fi
 
 dnl
-dnl Check for libsvm (build svm plugin?)
+dnl Check for installed libsvm (for svm plugin)
 dnl
 if test "$try_libsvm" = "yes" ; then
-   AM_PATH_LIBSVM(321, have_libsvm="yes")
-   if test "$have_libsvm" = "yes" ; then
-     AC_DEFINE(HAVE_LIBSVM)
-   else
+   AM_PATH_LIBSVM(321, use_libsvm="yes")
+   if test "$use_libsvm" != "yes" ; then
      SVM_LIBS=""
      SVM_CFLAGS=""
    fi
+fi
+if test "$use_libsvm" = "yes" ; then
+   AC_DEFINE(USE_LIBSVM)
+else
+   AC_PROG_CXX
 fi
 
 dnl
@@ -866,6 +869,7 @@ AC_SUBST(build_po)
 AC_SUBST(use_curl)
 AC_SUBST(use_xdg)
 AC_SUBST(use_xdg_utils)
+AC_SUBST(use_libsvm)
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 AC_SUBST(GTK_CFLAGS)
@@ -1186,6 +1190,7 @@ Configuration:
   Use gnuplot for graphs:                 ${have_gnuplot}
   Use pdflatex for typesetting:           ${have_latex}
   Use libgsf for zip/unzip:               ${use_gsf}
+  Use installed libsvm:                   ${use_libsvm}
   sse2 support for RNG:                   ${sse2_result}
   OpenMP support:                         ${ac_openmp_result}
   MPI support:                            ${have_mpi}
@@ -1198,7 +1203,6 @@ Configuration:
   X-12-ARIMA support:                     ${have_x12a}
   TRAMO/SEATS support:                    ${have_tramo}
   libR support:                           ${have_libR}
-  libsvm support:                         ${have_libsvm}
   ODBC support:                           ${have_odbc}
   JSON parsing support:                   ${have_json_glib}
   Use xdg-utils in installation:          ${xdg_utils_msg}
