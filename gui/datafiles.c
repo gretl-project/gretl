@@ -830,10 +830,6 @@ static int gui_delete_fn_pkg (const char *pkgname, const char *fname,
 			      windata_t *vwin)
 {
     gchar *msg = NULL;
-    int delete_ok = 0;
-    int delete = 0;
-    int loaded = 0;
-    int unload = 0;
     int resp, err = 0;
 
     if (package_being_edited(pkgname, NULL)) {
@@ -842,24 +838,8 @@ static int gui_delete_fn_pkg (const char *pkgname, const char *fname,
 	return 0;
     }
 
-    /* see if the package is loaded in memory */
-    if (get_function_package_by_name(pkgname) != NULL) {
-	loaded = 1;
-    }
-
-    /* and see if the user is able to delete the package */
     if (gretl_write_access((char *) fname) == 0) {
-	delete_ok = 1;
-    }
-
-    if (!loaded && !delete_ok) {
-	infobox_printf(_("Package %s is not loaded, and you do "
-			 "not have permission to delete it."),
-		       pkgname);
-	return 0;
-    }
-
-    if (loaded && delete_ok) {
+	/* 0 means OK */
 	const char *opts[] = {
 	    N_("Unload member functions only"),
 	    N_("Unload and delete package file"),
@@ -871,41 +851,27 @@ static int gui_delete_fn_pkg (const char *pkgname, const char *fname,
 	if (resp < 0) {
 	    /* canceled */
 	    return 0;
-	} else if (resp == 1) {
-	    delete = 1;
-	} else {
-	    unload = 1;
 	}
-    } else if (loaded) {
+    } else if (get_function_package_by_name(pkgname)) {
 	msg = g_strdup_printf(_("Unload package %s?"), pkgname);
 	resp = yes_no_dialog(NULL, msg, vwin_toplevel(vwin));
 	g_free(msg);
 	if (resp == GRETL_NO) {
 	    return 0;
-	} else {
-	    unload = 1;
 	}
-    } else if (delete_ok) {
-	msg = g_strdup_printf(_("Really delete %s?"), pkgname);
-	resp = yes_no_dialog(NULL, msg, vwin_toplevel(vwin));
-	g_free(msg);
-	if (resp == GRETL_NO) {
-	    return 0;
-	} else {
-	    delete = 1;
-	}
+    } else {
+	infobox_printf(_("Package %s is not loaded"), pkgname);
+	return 0;
     }
 
-    if (unload && !delete) {
-	/* just unload the package from memory */
+    if (resp == 0) {
+	/* unload the package from memory */
 	function_package_unload_full_by_filename(fname);
-    } else if (delete) {
+    } else {
 	/* remove entry from registry, if present */
 	gui_function_pkg_unregister(pkgname);
 	/* unload the package from memory */
-	if (loaded) {
-	    function_package_unload_full_by_filename(fname);
-	}
+	function_package_unload_full_by_filename(fname);
 	/* trash the package file(s) */
 	err = delete_function_package(fname);
 	if (err) {

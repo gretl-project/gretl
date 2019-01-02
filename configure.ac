@@ -259,7 +259,7 @@ fi,
 try_readline=yes)
 
 AC_ARG_WITH(gsf,
-[  --with-gsf             Use libgsf (if available) [[default=no]]],
+[  --with-gsf             Use libgsf library [[default=no]]],
 if test "x${withval}" = "xyes"
 then
   try_gsf=yes
@@ -267,7 +267,7 @@ fi,
 try_gsf=no)
 
 AC_ARG_WITH(libsvm,
-[  --with-libsvm          Use system libsvm [[default=auto]]],
+[  --with-libsvm          Use libsvm library [[default=auto]]],
 if test "$withval" = "no"
 then
   try_libsvm=no
@@ -344,14 +344,13 @@ case $host_os in
 esac
 
 AC_DISABLE_STATIC
-AC_LIBTOOL_DLOPEN
 AC_PROG_LIBTOOL
 AC_PROG_LN_S
 AC_PROG_GREP
 
-dnl if test "$win32_build" = "no" ; then
-dnl  AC_LIBTOOL_DLOPEN
-dnl fi
+if test "$win32_build" = "no" ; then
+  AC_LIBTOOL_DLOPEN
+fi
 
 AC_CHECK_LIB(m, sin)
 AC_CHECK_LIB(c, fopen)
@@ -1191,7 +1190,7 @@ Configuration:
   Use gnuplot for graphs:                 ${have_gnuplot}
   Use pdflatex for typesetting:           ${have_latex}
   Use libgsf for zip/unzip:               ${use_gsf}
-  Use system libsvm:                      ${use_libsvm}
+  Use installed libsvm:                   ${use_libsvm}
   sse2 support for RNG:                   ${sse2_result}
   OpenMP support:                         ${ac_openmp_result}
   MPI support:                            ${have_mpi}

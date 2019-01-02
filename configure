@@ -1603,8 +1603,8 @@ Optional Packages:
   --with-lucida           Use Lucida fonts for manual [git only]
   --with-gmake            Use GNU make explicitly [default=no]
   --with-readline        Use readline library [default=auto]
-  --with-gsf             Use libgsf (if available) [default=no]
-  --with-libsvm          Use system libsvm [default=auto]
+  --with-gsf             Use libgsf library [default=no]
+  --with-libsvm          Use libsvm library [default=auto]
   --with-x-12-arima      include X-12-ARIMA support [default=yes]
   --with-tramo-seats     include TRAMO/SEATS support [default=yes]
   --with-libR            include libR support [default=auto]
@@ -7478,10 +7478,6 @@ fi
 
 
 
-enable_dlopen=yes
-
-
-
 case `pwd` in
   *\ * | *\	*)
     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Libtool does not cope well with whitespace in \`pwd\`" >&5
@@ -10833,6 +10829,8 @@ done
 # Set options
 
 
+
+        enable_dlopen=no
 
 
   enable_win32_dll=no
@@ -15169,6 +15167,12 @@ $as_echo "$ac_cv_path_GREP" >&6; }
 
 
 
+if test "$win32_build" = "no" ; then
+  enable_dlopen=yes
+
+
+
+fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sin in -lm" >&5
 $as_echo_n "checking for sin in -lm... " >&6; }
@@ -26433,7 +26437,7 @@ Configuration:
   Use gnuplot for graphs:                 ${have_gnuplot}
   Use pdflatex for typesetting:           ${have_latex}
   Use libgsf for zip/unzip:               ${use_gsf}
-  Use system libsvm:                      ${use_libsvm}
+  Use installed libsvm:                   ${use_libsvm}
   sse2 support for RNG:                   ${sse2_result}
   OpenMP support:                         ${ac_openmp_result}
   MPI support:                            ${have_mpi}
