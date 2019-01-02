@@ -1,0 +1,12 @@
+The files in this directory are taken from libsvm-3.23, the
+copyright notice for which is included.
+
+svm.h is a straight copy of the library's header file.
+
+svmlib.cpp is a renamed version of svm.cpp, edited to support
+parallelization via OpenMP when the symbol _OPENMP is defined. The
+changes are as described in answer to "How can I use OpenMP to
+parallelize LIBSVM on a multicore/shared-memory computer?" in the
+file FAQ.html in the libsvm distribution.
+
+Allin Cottrell, January 2019
