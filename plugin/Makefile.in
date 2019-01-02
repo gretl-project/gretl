@@ -69,7 +69,7 @@ override CFLAGS += -I.. -I$(topsrc)/gui -DHAVE_CONFIG_H
 
 LIBTOOL = ../libtool
 COMPILE = $(LIBTOOL) --mode=compile $(CCV) -c $(CFLAGS)
-COMPILX = $(LIBTOOL) --tag CXX --mode=compile $(CXXV) -c $(CFLAGS)
+COMPILX = $(LIBTOOL) --mode=compile $(CXXV) -c $(CFLAGS)
 
 ifeq ($(quiet_build),yes)
   AMP = @
@@ -79,12 +79,12 @@ ifeq ($(quiet_build),yes)
   CCV = $(CC) $(OMP_OPT) > /dev/null
   CXXV = $(CXX) $(OMP_OPT) > /dev/null
   LINK = $(LDECHO); $(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -module -avoid-version -rpath $(plugindir)
-  LDXX = $(LDECHO); $(LIBTOOL) --tag CXX --mode=link $(CXXV) $(LDFLAGS) -module -avoid-version -rpath $(plugindir)
+  LDXX = $(LDECHO); $(LIBTOOL) --mode=link $(CXXV) $(LDFLAGS) -module -avoid-version -rpath $(plugindir)
 else
   CCV = $(CC) $(OMP_OPT)
   CXXV = $(CXX) $(OMP_OPT)
   LINK = $(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -module -avoid-version -rpath $(plugindir)
-  LDXX = $(LIBTOOL) --tag CXX --mode=link $(CXX) $(LDFLAGS) -module -avoid-version -rpath $(plugindir)
+  LDXX = $(LIBTOOL) --mode=link $(CXX) $(LDFLAGS) -module -avoid-version -rpath $(plugindir)
 endif
 
 GRETLINC = -I$(topsrc)/lib/src
