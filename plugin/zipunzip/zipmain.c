@@ -279,7 +279,7 @@ static FILE *ztempfile (char *templ)
 	*p = '\0';
 #ifdef G_OS_WIN32
 	if (lastchar(templ) != '\\') {
-	    strncat(templ, "\\", 1);
+	    strcat(templ, "\\");
 	}
 #else
 	if (lastchar(templ) != '/') {
