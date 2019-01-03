@@ -192,7 +192,7 @@ static void sv_wrapper_free (sv_wrapper *w)
     free(w->fsize);
 }
 
-static int employ_svm_seed (const sv_wrapper *w)
+static void employ_svm_seed (const sv_wrapper *w)
 {
 #if 0
     gretl_rand_set_seed(w->seed);
@@ -725,7 +725,7 @@ static sv_model *svm_model_from_bundle (gretl_bundle *b,
 	gretl_errmsg_set("svm precomputed kernel: not handled yet");
 	*err = E_DATA;
     } else if (!*err) {
-	sv_cell *p, *x_space = NULL;
+	sv_cell *p = NULL, *x_space = NULL;
 	gretl_array *aidx = NULL;
 	gretl_array *avec = NULL;
 	gretl_matrix *vec;
