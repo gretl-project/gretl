@@ -192,6 +192,14 @@ static void sv_wrapper_free (sv_wrapper *w)
     free(w->fsize);
 }
 
+static int employ_svm_seed (const sv_wrapper *w)
+{
+#if 0
+    gretl_rand_set_seed(w->seed);
+#endif
+    srand(w->seed);
+}
+
 static int loading_model (const sv_wrapper *w)
 {
     return (w->flags & W_LOADMOD) || w->model_infile != NULL;
@@ -1346,7 +1354,7 @@ static int real_svm_predict (double *yhat,
     }
 
     if (w->do_probs && w->seed != 0) {
-	srand(w->seed);
+	employ_svm_seed(w);
     }
 
     pprintf(prn, "Calling prediction function (this may take a while)\n");
@@ -1544,7 +1552,7 @@ static int xvalidate_once (sv_data *prob,
 	custom_xvalidate(prob, parm, w, targ);
     } else {
 	if (w->seed != 0) {
-	    srand(w->seed);
+	    employ_svm_seed(w);
 	}
 	svm_cross_validation(prob, parm, w->nfold, targ);
     }
@@ -2928,7 +2936,7 @@ static int svm_predict_main (const int *list,
 	pputs(prn, "Calling training function (this may take a while)\n");
 	svm_flush(prn);
 	if (wrap->do_probs && wrap->seed != 0) {
-	    srand(wrap->seed);
+	    employ_svm_seed(wrap);
 	}
 	model = svm_train(prob1, parm);
 	if (model == NULL) {
