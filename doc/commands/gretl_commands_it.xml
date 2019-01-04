@@ -14098,11 +14098,34 @@
 	  <effect>mostra i valori pari a zero</effect>
         </option>
         <option>
+	  <flag>--no-totals</flag>
+	  <effect>elimina la stampa delle marginali</effect>
+        </option>
+        <option>
 	  <flag>--matrix</flag>
 	  <optparm>matname</optparm>
 	  <effect>usa le frequenze da una matrice</effect>
         </option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>vedi il caso bivariato più sotto</effect>
+	</option>
+	<option>
+	  <flag>--tex</flag>
+	  <optparm optional="true">nomefile</optparm>
+	  <effect>produce output &latex;</effect>
+	</option>
+	<option>
+	  <flag>--equal</flag>
+	  <effect>vedi il caso &latex; più sotto</effect>
+	</option>
       </options>
+      <examples>
+	<example>xtab 1 2</example>
+	<example>xtab 1 ; 2 3 4</example>
+	<example>xtab --matrix=A</example>
+	<example>xtab 1 2 --tex="xtab.tex"</example>
+      </examples>
     </usage>
 
     <description context="cli">
@@ -14160,6 +14183,36 @@
 	quelli della tabella data e che hanno una probabilità minore o
 	uguale a quella della tabella data.
       </para>
+      
+      <subhead>Il caso bivariato</subhead>
+      <para>
+	Nel caso base di una semplice tabella a doppia entrata si
+	possono usare gli accessori <fncref targ="$test"/> e <fncref
+	targ="$pvalue"/> per il test chi-quadro di Pearson ed il
+	p-value corrispondente, a patto che sia rispettata la
+	condizione sul valore atteso minimo. In questo contesto,
+	l'opzione <opt>quiet</opt> fa sì che la tavola non venga
+	stampata.
+      </para>
+
+      <subhead>&latex; output</subhead>
+      <para>
+	Dando l'opzione <opt>tex</opt>, la tabella a doppia entrata
+	viene stampata sotto forma di un ambiente <lit>tabular</lit>
+	di &latex;. L'output verrà prodotto direttamente (così da
+	poterlo copincollare) o, se viene specificato il parametro
+	<repl>nomefile</repl>, nel file corrispondente. (Se
+	<repl>nomefile</repl> non contiene un percorso completo, il
+	file sarà scritto nella locazione <cmdref targ="workdir"/>
+	attuale). la statistica test non viene calcolata. L'opzione
+	addizionale <opt>equal</opt> viene usata per far sì che
+	venganp stampati in grassetto gli elementi della tabella per
+	cui le variabili riga e colonna hanno lo stesso valore
+	numerico. Quest'opzione è ignorata a se non è presente anche
+	l'opzione <opt>tex</opt> o quando una delle due variabili sia
+	di tipo stringa.
+      </para>
+      
     </description>
 
     <description context="gui">
