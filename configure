@@ -665,7 +665,6 @@ GTK_PREFIX
 GTKSOURCEVIEW_PREFIX
 GTK_LIBS
 GTK_CFLAGS
-use_libsvm
 use_xdg_utils
 use_xdg
 use_curl
@@ -725,8 +724,6 @@ CXXCPP
 ac_ct_CXX
 CXXFLAGS
 CXX
-SVM_LIBS
-SVM_CFLAGS
 new_readline
 have_readline
 READLINE_LIBS
@@ -877,7 +874,6 @@ with_lucida
 with_gmake
 with_readline
 with_gsf
-with_libsvm
 with_x_12_arima
 with_tramo_seats
 with_libR
@@ -896,7 +892,6 @@ enable_openmp
 with_mpi_lib
 with_mpi_include
 with_readline_prefix
-with_libsvm_prefix
 with_gmp_prefix
 with_mpfr_prefix
 with_lapack_prefix
@@ -1604,7 +1599,6 @@ Optional Packages:
   --with-gmake            Use GNU make explicitly [default=no]
   --with-readline        Use readline library [default=auto]
   --with-gsf             Use libgsf (if available) [default=no]
-  --with-libsvm          Use system libsvm [default=no]
   --with-x-12-arima      include X-12-ARIMA support [default=yes]
   --with-tramo-seats     include TRAMO/SEATS support [default=yes]
   --with-libR            include libR support [default=auto]
@@ -1621,7 +1615,6 @@ Optional Packages:
   --with-mpi-lib=PFX path to MPI library
   --with-mpi-include=PFX path to MPI header
   --with-readline-prefix=PFX   Prefix where readline is installed (optional)
-  --with-libsvm-prefix=PFX   Prefix where LIBSVM is installed (optional)
   --with-gmp-prefix=PFX   Prefix where GMP is installed (optional)
   --with-mpfr-prefix=PFX   Prefix where MPFR is installed (optional)
   --with-lapack-prefix=PFX   Prefix where LAPACK is installed (optional)
@@ -2979,8 +2972,6 @@ try_mpi="yes"
 have_mpi="no"
 try_libR="yes"
 have_libR="no"
-try_libsvm="no"
-use_libsvm="no"
 try_bc="no"
 check_gnuplot="yes"
 use_curl="yes"
@@ -6802,18 +6793,6 @@ then
 fi
 else
   try_gsf=no
-fi
-
-
-
-# Check whether --with-libsvm was given.
-if test "${with_libsvm+set}" = set; then :
-  withval=$with_libsvm; if test "x${withval}" = "xyes"
-then
-  try_libsvm=yes
-fi
-else
-  try_libsvm=no
 fi
 
 
@@ -16688,156 +16667,7 @@ fi
    fi
 fi
 
-if test "$try_libsvm" = "yes" ; then
-
-# Check whether --with-libsvm-prefix was given.
-if test "${with_libsvm_prefix+set}" = set; then :
-  withval=$with_libsvm_prefix; libsvm_config_prefix="$withval"
-else
-  libsvm_config_prefix=""
-fi
-
-
-  if test x$libsvm_config_prefix != x ; then
-     libsvm_config_args="$libsvm_config_args --prefix=$libsvm_config_prefix"
-  fi
-
-  min_libsvm_version=321
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for LIBSVM - version >= $min_libsvm_version" >&5
-$as_echo_n "checking for LIBSVM - version >= $min_libsvm_version... " >&6; }
-
-  SVM_CFLAGS="-I$libsvm_config_prefix/include"
-  SVM_LIBS="-L$libsvm_config_prefix/lib -lsvm"
-
-  ac_save_CFLAGS="$CFLAGS"
-  ac_save_LIBS="$LIBS"
-  CFLAGS="$CFLAGS $SVM_CFLAGS"
-  LIBS="$SVM_LIBS $LIBS"
-
-  rm -f conf.libsvmtest
-  if test "$cross_compiling" = yes; then :
-  echo $ac_n "cross compiling; assumed OK... $ac_c"
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#include <libsvm/svm.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-int
-main ()
-{
-  int my_libsvm_version = 0;
-  const char *tmp = "$min_libsvm_version";
-  int req = atoi(tmp);
-
-  system ("touch conf.libsvmtest");
-
-#ifdef LIBSVM_VERSION
-  my_libsvm_version = LIBSVM_VERSION;
-#endif
-
-  if (my_libsvm_version >= req)
-  {
-    return 0;
-  }
-  else
-  {
-    printf("*** You need LIBSVM >= %d. The latest version is available\n", req);
-    printf("*** from https://www.csie.ntu.edu.tw/~cjlin/libsvm/.\n");
-    printf("***\n");
-  }
-
-  return 1;
-}
-
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-
-else
-  no_libsvm=yes
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
-  CFLAGS="$ac_save_CFLAGS"
-  LIBS="$ac_save_LIBS"
-
-  if test "x$no_libsvm" = x ; then
-     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-     use_libsvm="yes"
-  else
-     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-     if test -f conf.libsvmtest ; then
-       :
-     else
-       echo "*** Could not run LIBSVM test program, checking why..."
-       CFLAGS="$CFLAGS $SVM_CFLAGS"
-       LIBS="$LIBS $SVM_LIBS"
-       cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#include <libsvm/svm.h>
-#include <stdio.h>
-
-int
-main ()
-{
- return (1);
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-   echo "*** The test program compiled, but did not run. This usually means"
-         echo "*** that the run-time linker is not finding LIBSVM or finding the wrong"
-         echo "*** version of LIBSVM. If it is not finding LIBSVM, you'll need to set your"
-         echo "*** LD_LIBRARY_PATH environment variable, or edit /etc/ld.so.conf to point"
-         echo "*** to the installed location  Also, make sure you have run ldconfig if that"
-         echo "*** is required on your system"
-         echo "***"
-         echo "*** If you have an old version installed, it is best to remove it, although"
-         echo "*** you may also be able to get things to work by modifying LD_LIBRARY_PATH"
-         echo "***"
-else
-   echo "*** The test program failed to compile or link. See the file config.log for the"
-         echo "*** exact error that occured. This usually means LIBSVM was incorrectly installed"
-         echo "*** or that you have moved LIBSVM since it was installed."
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-         CFLAGS="$ac_save_CFLAGS"
-         LIBS="$ac_save_LIBS"
-     fi
-     SVM_CFLAGS=""
-     SVM_LIBS=""
-     :
-  fi
-  if test "$SVM_CFLAGS" = "-I/include" ; then
-     SVM_CFLAGS=""
-  fi
-  if test "$SVM_LIBS" = "-L/lib -lsvm" ; then
-     SVM_LIBS="-lsvm"
-  fi
-
-
-  rm -f conf.libsvmtest
-
-   if test "$use_libsvm" != "yes" ; then
-     SVM_LIBS=""
-     SVM_CFLAGS=""
-   fi
-fi
-if test "$use_libsvm" = "yes" ; then
-   $as_echo "#define USE_LIBSVM 1" >>confdefs.h
-
-else
-   ac_ext=cpp
+ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
@@ -20409,7 +20239,6 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
-fi
 
 if test "$try_xdg_utils" = "yes" ; then
 
@@ -23099,7 +22928,6 @@ if test "$gui_disabled" = "yes" ; then
   use_xdg=no
   use_xdg_utils=no
 fi
-
 
 
 
@@ -26436,7 +26264,6 @@ Configuration:
   Use gnuplot for graphs:                 ${have_gnuplot}
   Use pdflatex for typesetting:           ${have_latex}
   Use libgsf for zip/unzip:               ${use_gsf}
-  Use system libsvm:                      ${use_libsvm}
   sse2 support for RNG:                   ${sse2_result}
   OpenMP support:                         ${ac_openmp_result}
   MPI support:                            ${have_mpi}
