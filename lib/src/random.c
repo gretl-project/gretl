@@ -72,6 +72,10 @@
 static sfmt_t gretl_sfmt;
 static guint32 sfmt_seed;
 
+/* alternate SFMT */
+static sfmt_t gretl_alt_sfmt;
+static guint32 alt_sfmt_seed;
+
 #define sfmt_rand32() sfmt_genrand_uint32(&gretl_sfmt)
 
 /* Find n independent "small" Mersenne Twisters with period 2^521-1;
@@ -254,6 +258,12 @@ static void gretl_sfmt_set_seed (unsigned int seed)
     sfmt_init_gen_rand(&gretl_sfmt, sfmt_seed);
 }
 
+static void gretl_alt_sfmt_set_seed (unsigned int seed)
+{
+    alt_sfmt_seed = seed;
+    sfmt_init_gen_rand(&gretl_alt_sfmt, alt_sfmt_seed);
+}
+
 /**
  * gretl_rand_set_seed:
  * @seed: the chosen seed value.
@@ -273,6 +283,13 @@ void gretl_rand_set_seed (unsigned int seed)
     } else {
 	gretl_sfmt_set_seed(seed);
     }
+}
+
+void gretl_alt_rand_set_seed (unsigned int seed)
+{
+    seed = (seed == 0)? time(NULL) : seed;
+
+    gretl_alt_sfmt_set_seed(seed);
 }
 
 /**
@@ -1370,6 +1387,11 @@ unsigned int gretl_rand_int (void)
     } else {
 	return sfmt_rand32();
     }
+}
+
+unsigned int gretl_alt_rand_int (void)
+{
+    return sfmt_genrand_uint32(&gretl_alt_sfmt);
 }
 
 static double halton (int i, int base)
