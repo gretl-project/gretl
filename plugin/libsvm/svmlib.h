@@ -2,6 +2,7 @@
 #define _LIBSVM_H
 
 #define LIBSVM_VERSION 323
+#define SVM_USE_MT 1
 
 #ifdef __cplusplus
 extern "C" {

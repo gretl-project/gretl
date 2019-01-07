@@ -1,12 +1,16 @@
 The files in this directory are taken from libsvm-3.23, the
 copyright notice for which is included.
 
-svm.h is a straight copy of the library's header file.
+svmlib.h is a renamed copy of the library's header file, with
+the symbol SVM_USE_MT defined (see below).
 
 svmlib.cpp is a renamed version of svm.cpp, edited to support
 parallelization via OpenMP when the symbol _OPENMP is defined. The
 changes are as described in answer to "How can I use OpenMP to
 parallelize LIBSVM on a multicore/shared-memory computer?" in the
-file FAQ.html in the libsvm distribution.
+file FAQ.html in the libsvm distribution. In addition, conditional
+on the definition of SVM_USE_MT, the random numbers used in cross
+validation are taken from libgretl's SFMT (Mersenne Twister), in
+place of the C library's rand().
 
 Allin Cottrell, January 2019

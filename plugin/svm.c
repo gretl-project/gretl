@@ -30,7 +30,7 @@
 #ifdef USE_LIBSVM
 # include <libsvm/svm.h>
 #else
-# include "svm.h"
+# include "svmlib.h"
 #endif
 
 #define DATA_DEBUG 0
@@ -192,12 +192,24 @@ static void sv_wrapper_free (sv_wrapper *w)
     free(w->fsize);
 }
 
-static void employ_svm_seed (const sv_wrapper *w)
+static void maybe_set_svm_seed (const sv_wrapper *w)
 {
-#if 0
-    gretl_rand_set_seed(w->seed);
-#endif
-    srand(w->seed);
+#ifdef SVM_USE_MT
+    static int set;
+
+    if (w->seed == 0) {
+	if (!set) {
+	    gretl_alt_rand_set_seed(0);
+	    set = 1;
+	}
+    } else {
+	gretl_alt_rand_set_seed(w->seed);
+    }
+#else
+    if (w->seed != 0) {
+	srand(w->seed);
+    }
+#endif    
 }
 
 static int loading_model (const sv_wrapper *w)
@@ -1353,8 +1365,8 @@ static int real_svm_predict (double *yhat,
 	return err;
     }
 
-    if (w->do_probs && w->seed != 0) {
-	employ_svm_seed(w);
+    if (w->do_probs) {
+	maybe_set_svm_seed(w);
     }
 
     pprintf(prn, "Calling prediction function (this may take a while)\n");
@@ -1551,9 +1563,7 @@ static int xvalidate_once (sv_data *prob,
     if (w->fsize != NULL) {
 	custom_xvalidate(prob, parm, w, targ);
     } else {
-	if (w->seed != 0) {
-	    employ_svm_seed(w);
-	}
+	maybe_set_svm_seed(w);
 	svm_cross_validation(prob, parm, w->nfold, targ);
     }
 
@@ -2935,8 +2945,8 @@ static int svm_predict_main (const int *list,
     if (!err && do_training) {
 	pputs(prn, "Calling training function (this may take a while)\n");
 	svm_flush(prn);
-	if (wrap->do_probs && wrap->seed != 0) {
-	    employ_svm_seed(wrap);
+	if (wrap->do_probs) {
+	    maybe_set_svm_seed(wrap);
 	}
 	model = svm_train(prob1, parm);
 	if (model == NULL) {

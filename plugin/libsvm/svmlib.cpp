@@ -7,7 +7,7 @@
 #include <stdarg.h>
 #include <limits.h>
 #include <locale.h>
-#include "svm.h"
+#include "svmlib.h"
 #if defined(_OPENMP)
 # include <omp.h>
 #endif
@@ -17,13 +17,11 @@ int libsvm_version = LIBSVM_VERSION;
 typedef float Qfloat;
 typedef signed char schar;
 
-#define USE_MT_RAND 0 // not ready yet
-
-#if USE_MT_RAND
-extern "C" unsigned int gretl_rand_int(void);
-# define svrand() gretl_rand_int()
+#ifdef SVM_USE_MT
+extern "C" unsigned int gretl_alt_rand_int (void);
+# define svrand gretl_alt_rand_int
 #else
-# define svrand() rand()
+# define svrand rand
 #endif
 
 #ifndef min
