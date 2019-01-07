@@ -2527,6 +2527,7 @@ int check_for_program (const char *prog)
 #else /* !WIN32 */
 
 #include <sys/stat.h>
+#include <unistd.h>
 
 static int is_executable (const char *s, uid_t myid, gid_t mygrp)
 {
