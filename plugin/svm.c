@@ -27,11 +27,7 @@
 # include "gretl_mpi.h"
 #endif
 
-#ifdef USE_LIBSVM
-# include <libsvm/svm.h>
-#else
-# include "svmlib.h"
-#endif
+#include "svmlib.h"
 
 #define DATA_DEBUG 0
 
@@ -43,7 +39,7 @@ typedef struct sv_wrapper_ sv_wrapper;
 typedef struct sv_grid_ sv_grid;
 typedef struct grid_row_ grid_row;
 
-/* the following need to be in sync with libsvm/svm.h */
+/* the following need to be in sync with svmlib.h */
 
 static const char *svm_type_names[] = {
     "C-SVC", "nu-SVC", "one-class", "epsilon-SVR", "nu-SVR"

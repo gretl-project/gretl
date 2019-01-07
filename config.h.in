@@ -44,9 +44,6 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Are we using OpenBLAS? */
 #undef OPENBLAS_BUILD
 
-/* Are we using libsvm? */
-#undef USE_LIBSVM
-
 /* Are we supporting MPI? */
 #undef HAVE_MPI
 

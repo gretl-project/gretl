@@ -19,7 +19,6 @@ have_odbc = @have_odbc@
 quiet_build = @quiet_build@
 gtk_version = @gtk_version@
 use_gsf = @use_gsf@
-use_libsvm = @use_libsvm@
 win32_build = @win32_build@
 win32pkg = @win32pkg@
 
@@ -37,8 +36,6 @@ MPFR_LIBS = @MPFR_LIBS@
 LAPACK_LIBS = @LAPACK_LIBS@
 JSON_GLIB_CFLAGS = @JSON_GLIB_CFLAGS@
 JSON_GLIB_LIBS = @JSON_GLIB_LIBS@
-SVM_CFLAGS = @SVM_CFLAGS@
-SVM_LIBS = @SVM_LIBS@
 
 OMP_OPT = @OPENMP_CFLAGS@
 
@@ -228,15 +225,9 @@ ifeq ($(use_gsf),no)
   ZIP_LIBS := $(GLIB_LIBS) -lz
 endif
 
-ifeq ($(use_libsvm),no)
-  vpath %.cpp $(topsrc)/plugin/libsvm
-  vpath %.h $(topsrc)/plugin/libsvm
-  SVM_CFLAGS := -I$(topsrc)/plugin/libsvm
-  SVMO = svmlib.lo
-  LDSVM = $(LDXX)
-else
-  LDSVM = $(LINK)
-endif
+vpath %.cpp $(topsrc)/plugin/libsvm
+vpath %.h $(topsrc)/plugin/libsvm
+SVM_CFLAGS := -I$(topsrc)/plugin/libsvm
 
 URCDATA = $(topsrc)/plugin/data/urcdata.bin
 DWDATA = $(topsrc)/plugin/data/dwdata.gz
@@ -364,8 +355,8 @@ xml_get.la: xml_get.lo
 json_get.la: json_get.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(JSON_GLIB_LIBS)
 
-svm.la: svm.lo $(SVMO)
-	$(LDSVM) -o $@ $^ $(GRETLLIB) $(SVM_LIBS)
+svm.la: svm.lo svmlib.lo
+	$(LDXX) -o $@ $^ $(GRETLLIB)
 
 # plugins that require GTK+
 

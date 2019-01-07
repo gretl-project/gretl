@@ -66,8 +66,6 @@ try_mpi="yes"
 have_mpi="no"
 try_libR="yes"
 have_libR="no"
-try_libsvm="no"
-use_libsvm="no"
 try_bc="no"
 check_gnuplot="yes"
 use_curl="yes"
@@ -266,14 +264,6 @@ then
 fi,
 try_gsf=no)
 
-AC_ARG_WITH(libsvm,
-[  --with-libsvm          Use system libsvm [[default=no]]],
-if test "x${withval}" = "xyes"
-then
-  try_libsvm=yes
-fi,
-try_libsvm=no)
-
 AC_ARG_WITH(x-12-arima,
 [  --with-x-12-arima      include X-12-ARIMA support [[default=yes]]],
 if test "x${withval}" = "xno"
@@ -449,20 +439,9 @@ elif test "$try_readline" = "yes" ; then
 fi
 
 dnl
-dnl Check for installed libsvm (for svm plugin)
+dnl Check for C++ compiler (for svm plugin)
 dnl
-if test "$try_libsvm" = "yes" ; then
-   AM_PATH_LIBSVM(321, use_libsvm="yes")
-   if test "$use_libsvm" != "yes" ; then
-     SVM_LIBS=""
-     SVM_CFLAGS=""
-   fi
-fi
-if test "$use_libsvm" = "yes" ; then
-   AC_DEFINE(USE_LIBSVM)
-else
-   AC_PROG_CXX
-fi
+AC_PROG_CXX
 
 dnl
 dnl Check for XDG for handling of gretl mime-types
@@ -866,7 +845,6 @@ AC_SUBST(build_po)
 AC_SUBST(use_curl)
 AC_SUBST(use_xdg)
 AC_SUBST(use_xdg_utils)
-AC_SUBST(use_libsvm)
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 AC_SUBST(GTK_CFLAGS)
@@ -1187,7 +1165,6 @@ Configuration:
   Use gnuplot for graphs:                 ${have_gnuplot}
   Use pdflatex for typesetting:           ${have_latex}
   Use libgsf for zip/unzip:               ${use_gsf}
-  Use system libsvm:                      ${use_libsvm}
   sse2 support for RNG:                   ${sse2_result}
   OpenMP support:                         ${ac_openmp_result}
   MPI support:                            ${have_mpi}
