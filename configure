@@ -1604,7 +1604,7 @@ Optional Packages:
   --with-gmake            Use GNU make explicitly [default=no]
   --with-readline        Use readline library [default=auto]
   --with-gsf             Use libgsf (if available) [default=no]
-  --with-libsvm          Use system libsvm [default=auto]
+  --with-libsvm          Use system libsvm [default=no]
   --with-x-12-arima      include X-12-ARIMA support [default=yes]
   --with-tramo-seats     include TRAMO/SEATS support [default=yes]
   --with-libR            include libR support [default=auto]
@@ -2979,7 +2979,7 @@ try_mpi="yes"
 have_mpi="no"
 try_libR="yes"
 have_libR="no"
-try_libsvm="yes"
+try_libsvm="no"
 use_libsvm="no"
 try_bc="no"
 check_gnuplot="yes"
@@ -6808,19 +6808,19 @@ fi
 
 # Check whether --with-libsvm was given.
 if test "${with_libsvm+set}" = set; then :
-  withval=$with_libsvm; if test "$withval" = "no"
+  withval=$with_libsvm; if test "x${withval}" = "xyes"
 then
-  try_libsvm=no
+  try_libsvm=yes
 fi
 else
-  try_libsvm=yes
+  try_libsvm=no
 fi
 
 
 
 # Check whether --with-x-12-arima was given.
 if test "${with_x_12_arima+set}" = set; then :
-  withval=$with_x_12_arima; if test "$withval" = "no"
+  withval=$with_x_12_arima; if test "x${withval}" = "xno"
 then
   have_x12a="no"
 else
@@ -7490,8 +7490,8 @@ esac
 
 
 
-macro_version='2.4.6.40-6ca5'
-macro_revision='2.4.6.40'
+macro_version='2.4.6.42-b88ce'
+macro_revision='2.4.6.42'
 
 
 
@@ -16133,8 +16133,11 @@ fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
       if test "$ac_cv_prog_cc_openmp" = unsupported; then
-								for brand in GCC SunPRO Intel SGI/PGI Compaq IBM; do
+								for brand in clang GCC SunPRO Intel SGI/PGI Compaq IBM; do
 	  case $brand in
+	    clang)
+	      ac_conditional='defined __clang__'
+	      ac_option='-fopenmp=libomp' ;;
 	    GCC)
 	      ac_conditional='defined __GNUC__'
 	      ac_option='-fopenmp' ;;
@@ -16209,6 +16212,7 @@ fi
         ac_openmp_result=yes
 	OPENMP_CFLAGS= ;;
       unsupported)
+        ac_openmp_result=no
         OPENMP_CFLAGS= ;;
       *)
 	OPENMP_CFLAGS=$ac_cv_prog_cc_openmp ;;
@@ -21938,8 +21942,8 @@ $as_echo "no" >&6; }
 fi
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for fftw3" >&5
-$as_echo_n "checking for fftw3... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for FFTW" >&5
+$as_echo_n "checking for FFTW... " >&6; }
 
 if test -n "$FFTW_CFLAGS"; then
     pkg_cv_FFTW_CFLAGS="$FFTW_CFLAGS"
@@ -21979,7 +21983,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -21997,7 +22001,7 @@ fi
 
 	have_fftw3="no"
 elif test $pkg_failed = untried; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	have_fftw3="no"
 else
@@ -22014,8 +22018,8 @@ if test "$use_curl" = "yes" ; then
   else
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for libcurl >= 7.13.0" >&5
-$as_echo_n "checking for libcurl >= 7.13.0... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for CURL" >&5
+$as_echo_n "checking for CURL... " >&6; }
 
 if test -n "$CURL_CFLAGS"; then
     pkg_cv_CURL_CFLAGS="$CURL_CFLAGS"
@@ -22055,7 +22059,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -22073,7 +22077,7 @@ fi
 
 	have_curl="no"
 elif test $pkg_failed = untried; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	have_curl="no"
 else
@@ -22092,8 +22096,8 @@ fi
 
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for glib-2.0 >= 2.14.0" >&5
-$as_echo_n "checking for glib-2.0 >= 2.14.0... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GLIB" >&5
+$as_echo_n "checking for GLIB... " >&6; }
 
 if test -n "$GLIB_CFLAGS"; then
     pkg_cv_GLIB_CFLAGS="$GLIB_CFLAGS"
@@ -22133,7 +22137,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -22151,7 +22155,7 @@ fi
 
 	have_glib2="no"
 elif test $pkg_failed = untried; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	have_glib2="no"
 else
@@ -22172,8 +22176,8 @@ fi
 if test "$darwin_build" = "no" ; then
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for glib-2.0 >= 2.28.0" >&5
-$as_echo_n "checking for glib-2.0 >= 2.28.0... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GLIB28" >&5
+$as_echo_n "checking for GLIB28... " >&6; }
 
 if test -n "$GLIB28_CFLAGS"; then
     pkg_cv_GLIB28_CFLAGS="$GLIB28_CFLAGS"
@@ -22213,7 +22217,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -22231,7 +22235,7 @@ fi
 
 	fake_mono_time="yes"
 elif test $pkg_failed = untried; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	fake_mono_time="yes"
 else
@@ -22336,8 +22340,8 @@ fi
 if test "$try_json_glib" = "yes" ; then
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for json-glib-1.0 >= 0.14" >&5
-$as_echo_n "checking for json-glib-1.0 >= 0.14... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for JSON_GLIB" >&5
+$as_echo_n "checking for JSON_GLIB... " >&6; }
 
 if test -n "$JSON_GLIB_CFLAGS"; then
     pkg_cv_JSON_GLIB_CFLAGS="$JSON_GLIB_CFLAGS"
@@ -22377,7 +22381,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -22395,7 +22399,7 @@ fi
 
 	have_json_glib="no"
 elif test $pkg_failed = untried; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	have_json_glib="no"
 else
@@ -22419,8 +22423,8 @@ fi
 if test "$prefer_gtk2" = "yes" ; then
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gtk+-2.0 >= 2.14.0" >&5
-$as_echo_n "checking for gtk+-2.0 >= 2.14.0... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTK2" >&5
+$as_echo_n "checking for GTK2... " >&6; }
 
 if test -n "$GTK2_CFLAGS"; then
     pkg_cv_GTK2_CFLAGS="$GTK2_CFLAGS"
@@ -22460,7 +22464,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -22479,7 +22483,7 @@ fi
 	echo "GTK 2 >= 2.14.0 not found"
 
 elif test $pkg_failed = untried; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	echo "GTK 2 >= 2.14.0 not found"
 
@@ -22497,8 +22501,8 @@ fi
 elif test "$build_gui" = "yes" ; then
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gtk+-3.0 >= 3.2.0" >&5
-$as_echo_n "checking for gtk+-3.0 >= 3.2.0... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTK3" >&5
+$as_echo_n "checking for GTK3... " >&6; }
 
 if test -n "$GTK3_CFLAGS"; then
     pkg_cv_GTK3_CFLAGS="$GTK3_CFLAGS"
@@ -22538,7 +22542,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -22557,7 +22561,7 @@ fi
 	echo "GTK 3 >= 3.0.1 not found"
 
 elif test $pkg_failed = untried; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	echo "GTK 3 >= 3.0.1 not found"
 
@@ -22581,8 +22585,8 @@ if test "$prefer_gtk2" = "no" && test "$gtk_version" = "none" ; then
    if test "$build_gui" = "yes" ; then
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gtk+-2.0 >= 2.14.0" >&5
-$as_echo_n "checking for gtk+-2.0 >= 2.14.0... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTK2" >&5
+$as_echo_n "checking for GTK2... " >&6; }
 
 if test -n "$GTK2_CFLAGS"; then
     pkg_cv_GTK2_CFLAGS="$GTK2_CFLAGS"
@@ -22622,7 +22626,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -22642,7 +22646,7 @@ fi
         echo "GTK 2 >= 2.14.0 not found"
 
 elif test $pkg_failed = untried; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	build_gui="no"
         echo "GTK 2 >= 2.14.0 not found"
@@ -22705,8 +22709,8 @@ fi
 if test "$mac_native" = "yes" ; then
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gtk-mac-integration >= 2.0.1" >&5
-$as_echo_n "checking for gtk-mac-integration >= 2.0.1... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTKMAC" >&5
+$as_echo_n "checking for GTKMAC... " >&6; }
 
 if test -n "$GTKMAC_CFLAGS"; then
     pkg_cv_GTKMAC_CFLAGS="$GTKMAC_CFLAGS"
@@ -22746,7 +22750,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -22764,7 +22768,7 @@ fi
 
 	have_mac_integration="yes"
 elif test $pkg_failed = untried; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	have_mac_integration="yes"
 else
@@ -22779,8 +22783,8 @@ fi
 if test "$gtk_version" = "2.0" ; then
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gtk+-2.0 >= 2.20.0" >&5
-$as_echo_n "checking for gtk+-2.0 >= 2.20.0... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTKSPINNER" >&5
+$as_echo_n "checking for GTKSPINNER... " >&6; }
 
 if test -n "$GTKSPINNER_CFLAGS"; then
     pkg_cv_GTKSPINNER_CFLAGS="$GTKSPINNER_CFLAGS"
@@ -22820,7 +22824,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -22838,7 +22842,7 @@ fi
 
 	fake_gtkspinner="yes"
 elif test $pkg_failed = untried; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	fake_gtkspinner="yes"
 else
@@ -22854,8 +22858,8 @@ fi
 if test "$gtk_version" = "2.0" ; then
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gtksourceview-2.0 >= 2.2.2" >&5
-$as_echo_n "checking for gtksourceview-2.0 >= 2.2.2... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTKSOURCEVIEW" >&5
+$as_echo_n "checking for GTKSOURCEVIEW... " >&6; }
 
 if test -n "$GTKSOURCEVIEW_CFLAGS"; then
     pkg_cv_GTKSOURCEVIEW_CFLAGS="$GTKSOURCEVIEW_CFLAGS"
@@ -22895,7 +22899,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -22914,7 +22918,7 @@ fi
 	echo "version 2.0 >= 2.2.2 not found"
 
 elif test $pkg_failed = untried; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	echo "version 2.0 >= 2.2.2 not found"
 
@@ -22931,8 +22935,8 @@ fi
     if test "$have_sourceview" = "2.0" ; then
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gtksourceview-2.0 >= 2.10.5" >&5
-$as_echo_n "checking for gtksourceview-2.0 >= 2.10.5... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GSVWORDS" >&5
+$as_echo_n "checking for GSVWORDS... " >&6; }
 
 if test -n "$GSVWORDS_CFLAGS"; then
     pkg_cv_GSVWORDS_CFLAGS="$GSVWORDS_CFLAGS"
@@ -22972,7 +22976,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -22991,7 +22995,7 @@ fi
 	echo "gtksourceview: word completion not supported"
 
 elif test $pkg_failed = untried; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	echo "gtksourceview: word completion not supported"
 
@@ -23009,8 +23013,8 @@ fi
 if test "$gtk_version" = "3.0" ; then
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gtksourceview-3.0" >&5
-$as_echo_n "checking for gtksourceview-3.0... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTKSOURCEVIEW" >&5
+$as_echo_n "checking for GTKSOURCEVIEW... " >&6; }
 
 if test -n "$GTKSOURCEVIEW_CFLAGS"; then
     pkg_cv_GTKSOURCEVIEW_CFLAGS="$GTKSOURCEVIEW_CFLAGS"
@@ -23050,7 +23054,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -23069,7 +23073,7 @@ fi
 	echo "version 3.0 not found"
 
 elif test $pkg_failed = untried; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	echo "version 3.0 not found"
 
@@ -23125,8 +23129,8 @@ fi
 if test ${build_gui} = "yes" ; then
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdk-pixbuf-2.0 >= 0.7.0" >&5
-$as_echo_n "checking for gdk-pixbuf-2.0 >= 0.7.0... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GDK_PIXBUF" >&5
+$as_echo_n "checking for GDK_PIXBUF... " >&6; }
 
 if test -n "$GDK_PIXBUF_CFLAGS"; then
     pkg_cv_GDK_PIXBUF_CFLAGS="$GDK_PIXBUF_CFLAGS"
@@ -23166,7 +23170,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -23185,7 +23189,7 @@ fi
 	pixbuf_failed="yes"
 
 elif test $pkg_failed = untried; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	pixbuf_failed="yes"
 
@@ -23204,8 +23208,8 @@ fi
 
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for libxml-2.0 >= 2.5.0" >&5
-$as_echo_n "checking for libxml-2.0 >= 2.5.0... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for XML" >&5
+$as_echo_n "checking for XML... " >&6; }
 
 if test -n "$XML_CFLAGS"; then
     pkg_cv_XML_CFLAGS="$XML_CFLAGS"
@@ -23245,7 +23249,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -23272,7 +23276,7 @@ Alternatively, you may set the environment variables XML_CFLAGS
 and XML_LIBS to avoid the need to call pkg-config.
 See the pkg-config man page for more details." "$LINENO" 5
 elif test $pkg_failed = untried; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	{ { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
@@ -23297,8 +23301,8 @@ fi
 if test "${build_docs}" = "yes" ; then
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for libxslt >= 1.0.15" >&5
-$as_echo_n "checking for libxslt >= 1.0.15... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for XSLT" >&5
+$as_echo_n "checking for XSLT... " >&6; }
 
 if test -n "$XSLT_CFLAGS"; then
     pkg_cv_XSLT_CFLAGS="$XSLT_CFLAGS"
@@ -23338,7 +23342,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -23357,7 +23361,7 @@ fi
 	have_xslt="no"
 
 elif test $pkg_failed = untried; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	have_xslt="no"
 
@@ -23378,8 +23382,8 @@ if test "$try_libR" = "yes" ; then
   else
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for libR" >&5
-$as_echo_n "checking for libR... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for RLIB" >&5
+$as_echo_n "checking for RLIB... " >&6; }
 
 if test -n "$RLIB_CFLAGS"; then
     pkg_cv_RLIB_CFLAGS="$RLIB_CFLAGS"
@@ -23419,7 +23423,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -23438,7 +23442,7 @@ fi
 	have_libR="no"
 
 elif test $pkg_failed = untried; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	have_libR="no"
 
@@ -23472,8 +23476,8 @@ fi
 if test "$try_gsf" = "yes" ; then
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for libgsf-1 >= 1.14.31" >&5
-$as_echo_n "checking for libgsf-1 >= 1.14.31... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GSF" >&5
+$as_echo_n "checking for GSF... " >&6; }
 
 if test -n "$GSF_CFLAGS"; then
     pkg_cv_GSF_CFLAGS="$GSF_CFLAGS"
@@ -23513,7 +23517,7 @@ fi
 
 
 if test $pkg_failed = yes; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
@@ -23532,7 +23536,7 @@ fi
 	echo "libgsf >= 1.14.31 not found"
 
 elif test $pkg_failed = untried; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 	echo "libgsf >= 1.14.31 not found"
 

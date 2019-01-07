@@ -66,7 +66,7 @@ try_mpi="yes"
 have_mpi="no"
 try_libR="yes"
 have_libR="no"
-try_libsvm="yes"
+try_libsvm="no"
 use_libsvm="no"
 try_bc="no"
 check_gnuplot="yes"
@@ -267,16 +267,16 @@ fi,
 try_gsf=no)
 
 AC_ARG_WITH(libsvm,
-[  --with-libsvm          Use system libsvm [[default=auto]]],
-if test "$withval" = "no"
+[  --with-libsvm          Use system libsvm [[default=no]]],
+if test "x${withval}" = "xyes"
 then
-  try_libsvm=no
+  try_libsvm=yes
 fi,
-try_libsvm=yes)
+try_libsvm=no)
 
 AC_ARG_WITH(x-12-arima,
 [  --with-x-12-arima      include X-12-ARIMA support [[default=yes]]],
-if test "$withval" = "no"
+if test "x${withval}" = "xno"
 then
   have_x12a="no"
 else
@@ -383,7 +383,7 @@ fi
 dnl ensure that the source will get rebuilt if openmp
 dnl is turned on or off, by flagging this in config.h
 if test "$ac_openmp_result" = "yes" ; then
-  AC_DEFINE(OPENMP_BUILD, 1)
+  AC_DEFINE(OPENMP_BUILD)
 fi
 
 dnl Check for MPI apparatus?
