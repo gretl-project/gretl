@@ -36,8 +36,11 @@ int main () { return omp_get_num_threads (); }
 	dnl   SGI C, PGI C	   -mp
 	dnl   Tru64 Compaq C	   -omp
 	dnl   IBM C (AIX, Linux)   -qsmp=omp
-	for brand in GCC SunPRO Intel SGI/PGI Compaq IBM; do
+	for brand in clang GCC SunPRO Intel SGI/PGI Compaq IBM; do
 	  case $brand in
+	    clang)
+	      ac_conditional='defined __clang__'
+	      ac_option='-fopenmp=libomp' ;;
 	    GCC)
 	      ac_conditional='defined __GNUC__'
 	      ac_option='-fopenmp' ;;
@@ -92,6 +95,7 @@ int main () { return omp_get_num_threads (); }
         ac_openmp_result=yes
 	OPENMP_CFLAGS= ;;
       unsupported)
+        ac_openmp_result=no
         OPENMP_CFLAGS= ;;
       *)
 	OPENMP_CFLAGS=$ac_cv_prog_cc_openmp ;;
