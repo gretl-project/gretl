@@ -278,6 +278,11 @@ end mle
 \section{Stochastic frontier cost function}
 \label{sec:frontier}
 
+\emph{%
+Note: this section has the only purpose of illustrating the \cmd{mle}
+command. For the estimation of stochastic frontier cost or production
+functions, you may want to use the \package{frontier} function package.}
+
 When modeling a cost function, it is sometimes worthwhile to
 incorporate explicitly into the statistical model the notion that
 firms may be inefficient, so that the observed cost deviates from the
@@ -300,10 +305,7 @@ The \emph{stochastic frontier} model is a linear model of the form
 $y_i = x_i \beta + \varepsilon_i$ in which the error term
 $\varepsilon_i$ is the sum of $u_i$ and $v_i$.  
 
-This class of models can be effectively dealt with in \app{gretl} by
-using the \cmd{frontier} function package. However, a simple version
-makes for a non-trivial yet simple illustration of the \cmd{mle}
-command. A common postulate is that $u_i \sim N(0,\sigma_u^2)$ and
+A common postulate is that $u_i \sim N(0,\sigma_u^2)$ and
 $v_i \sim \left|N(0,\sigma_v^2)\right|$. If independence between $u_i$
 and $v_i$ is also assumed, then it is possible to show that the
 density function of $\varepsilon_i$ has the form:
@@ -457,7 +459,7 @@ end mle
 
 GARCH models are handled by gretl via a native function. However, it is
 instructive to see how they can be estimated through the \texttt{mle}
-command.\footnote{The \texttt{gig} addon, which handles other variants
+command.\footnote{The \package{gig} addon, which handles other variants
 of conditionally heteroskedastic models, uses \texttt{mle} as its
 internal engine.}
 
@@ -1159,6 +1161,75 @@ function void check(matrix b, series y, list X)
     printf "Check (should be zero)\n%16.6f\n", nH + aH
 end function
 \end{code}
+
+\section{Handling non-convergence gracefully}
+\label{sec:mle-nonconv}
+
+If the numerical aspects of the estimation procedure are complex, it
+is possible that \cmd{mle} fails to find the maximum within the number
+of iterations stipulated via the \verb|bfgs_maxiter| state variable
+(which defaults to 500).
+
+In these cases, \cmd{mle} will exit with error and it's up to the user
+to handle the situation appropriately. For example, it is possible
+that \cmd{mle} is used inside a loop and you don't want the loop to
+stop in case convergence is not achieved. The \cmd{catch} command
+modifier (see also the \GCR) is an excellent tool for this purpose.
+
+The example provided in listing \ref{ex:catch-mle} illustrates the
+usage of \cmd{catch} in an artificially simple context: we use the
+\cmd{mle} command for estimating mean and variance of a Gaussian rv
+(of course you don't need the \cmd{mle} apparatus for this, but it
+makes for a nice example). The gist of the example is using the
+\verb|set bfgs_maxiter| command to force \cmd{mle} to abort after a
+very small number of iterations, so that you can have an idea on how
+to use the \cmd{catch} modifier and the associated \dollar{error}
+accessor to handle the situation.
+
+You may want to increase the maximum number if BFGS iterations in the
+example to check what happens if the algorithm is allowed to
+converge. Note that, upon successful completion of \cmd{mle}, a bundle
+named \dollar{model} is available, containing several quantities that
+may be of your interest, including the total number of function
+evaluations.
+
+\begin{script}[htbp]
+  \caption{Handling non-convergence via \cmd{catch}}
+  \label{ex:catch-mle}
+\begin{scodebit}
+set verbose off
+nulldata 200
+set seed 8118
+
+# generate simulated data from a N(3,4) variate
+series x = normal(3,2)
+
+# set starting values
+scalar m = 0
+scalar s2 = 1
+
+# set iteration limit to a ridiculously low value
+set bfgs_maxiter 10 
+
+# perform ML estimation; note the "catch" modifier
+catch mle loglik = -0.5* (log(2*$pi) + log(s2) + e2/s2)
+    series e2 = (x - m)^2
+    params m s2
+end mle --quiet
+
+# grab the error and proceed as needed
+err = $error
+if err
+    printf "Not converged! (m = %g, s2 = %g)\n", m, s2
+else
+    printf "Converged after %d iterations\n", $model.grcount
+    cs = $coeff ~ sqrt(diag($vcv))
+    pn = "m s2"
+    modprint cs pn
+endif
+\end{scodebit}
+\end{script}
+
 
 
 %%% Local Variables: 
