@@ -527,7 +527,8 @@ static int get_native_series_info (const char *series,
 {
     FILE *fp = NULL;
     char sername[VNAMELEN];
-    char s1[256], s2[72];
+    /* 2019-01-08: enlarge @s1 from 256 to 1024 */
+    char s1[1024], s2[72];
     char stobs[OBSLEN], endobs[OBSLEN];
     char pdc;
     int offset = 0;
