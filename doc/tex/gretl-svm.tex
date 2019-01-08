@@ -57,9 +57,8 @@ section~\ref{sec:options} goes into more detail on the supported
 options. Section~\ref{sec:xvalid} discusses cross-validation;
 section~\ref{sec:SVC} gives a classification example;
 section~\ref{sec:SV-probs} discusses probability estimation; and
-section~\ref{sec:platforms} provides information on the state of
-gretl's \textsf{libsvm} support on the three main operating systems
-for which gretl packages are available.
+section~\ref{sec:implement} provides some details on the
+implementation of \textsf{libsvm} in gretl.
 
 \section{The \texttt{svm} function}
 \label{sec:function}
@@ -587,7 +586,9 @@ shown in Table~\ref{tab:xvalid}.
    & \texttt{search} & 0/1: parameter search using default grid \\
  \textit{or} & \texttt{grid} & matrix: user-specified grid \\[2pt]
     & \texttt{search\_only} & 0/1: see text \\
-    & \texttt{seed} & integer: see section~\ref{sec:random-folds}
+    & \texttt{contiguous} & 0/1: see section~\ref{sec:user-folds} \\
+    & \texttt{seed} & integer: see section~\ref{sec:random-folds} \\
+    & \texttt{refold} & 0/1: see section~\ref{sec:random-folds}
   \end{tabular}
   \caption{Cross-validation options in \texttt{svm} parameter bundle}
   \label{tab:xvalid}
@@ -754,60 +755,71 @@ $\nu$ (0.5, 0.55,\dots,0.7).
 \label{sec:user-folds}
 
 In some contexts there may be reason to divide the data into subsets
-for cross validation on some chosen criterion rather than at
-random. This is supported via the binary flag \texttt{foldvar} in the
-\texttt{svm} parameter bundle. If this is present and non-zero then
-\texttt{svm} will take the \textit{last} series in the incoming list
-as a ``folding index'' rather than a regressor. Such a series must
-contain only integer values from 1 to the desired number of folds,
-which form a consecutive sequence when sorted. Each observation is
-then assigned to fold $i$ if its value for the folding index is $i$.
-
-One more option is available: if the parameter bundle contains the key
-\texttt{consecutive} with a non-zero value this indicates that the
-folds should simply be blocks of consecutive observations, of equal
-size except that any remainder is assigned to the last fold. In this
-case the number of folds again defaults to 5 but can be adjusted via
-the \texttt{folds} key. This option is incompatible with the
-\texttt{foldvar} specification.
+for cross validation on some chosen criterion rather than via random
+selection. The \texttt{svm} function supports two (mutually
+incompatible) options to this effect.
+\begin{itemize}
+\item If the parameter bundle contains the key \texttt{foldvar} with a
+  non-zero value, \texttt{svm} will take the \textit{last} series in
+  the incoming list as a ``folding index'' rather than a
+  regressor. Such a series must contain only integer values from 1 to
+  the desired number of folds, which form a consecutive sequence when
+  sorted. Each observation is then assigned to fold $i$ if its value
+  for the folding index is $i$.
+\item If the parameter bundle contains the key \texttt{consecutive}
+  with a non-zero value this indicates that the folds should simply be
+  blocks of consecutive observations, of equal size except that any
+  remainder is assigned to the last fold. The number of folds defaults
+  to 5 but can be adjusted via the \texttt{folds} key. This option may
+  be useful if the order of observations in the dataset is already
+  randomized.
+\end{itemize}
 
 \subsection{More on random cross-validation folds}
 \label{sec:random-folds}
 
-\textsf{Libsvm} calls the C-library function \texttt{rand} to produce
-its permutations, and it doesn't set a seed, so \texttt{rand} uses its
-default seed of 1 on each initialization. This means that each time a
-given \textsf{libsvm} program is executed it will generate the same
-set of ``random'' folds. However, it also means that if a given
-program calls the \textsf{libsvm} cross-validation function several
-times (as happens in the course of parameter search) it will get a
-different set of folds each time (since initialization of
-\texttt{rand} occurs only once per program invocation).
+Unmodified \textsf{libsvm} calls the C-library function \texttt{rand}
+to produce its permutations---and it doesn't set a seed, so
+\texttt{rand} uses its default seed of 1 on each initialization. This
+means that each time a given \textsf{libsvm} program is executed (on a
+given platform) it will generate exactly the same set of ``random''
+folds. However, it also means that if a given program calls the
+\textsf{libsvm} cross-validation function several times, as happens in
+the course of parameter search, it will get a different set of folds
+each time since automatic initialization of \texttt{rand} occurs only
+once per program invocation.
 
-This seems debatable on both counts. First, if the folds are
+This behavior seems debatable on both counts. First, if the folds are
 advertised as random, one might expect to get non-identical results
 when running a given cross-validation program multiple times (unless
 one takes steps to ensure they are the same). Second, in the context
 of parameter search one might wish to suppress variation in outcome
 stemming from data-subsetting in order to focus on variation stemming
-from the differing parameter vectors.
+from the differing parameter vectors. Moreover, the \texttt{rand}
+function is not guaranteed to produce the same sequence of values for
+a given seed on different operating systems.
 
-Gretl's \texttt{svm} function addresses these points as follows. By
-default we obtain a seed derived from the time at which \texttt{svm}
-execution starts, and we (re-)initialize \texttt{rand} with this seed
-immediately prior to each call to the \textsf{libsvm} cross-validation
-function. This means that each invocation of a gretl \texttt{svm}
-cross-validation program is likely to produce slightly different
-results, while each parameter combination will employ the same set of
-folds in the context of a given search. However, to support strictly
-reproducible results you can override the execution-time based
-\texttt{rand} seed with an integer \texttt{seed} value specified in
-the parameter bundle passed to \texttt{svm}.
-
-If you wish to invoke the default \textsf{libsvm} handling of random
-folds as described above, specify a \texttt{seed} value of zero in the
-parameter bundle; in that case gretl will not intervene by calling
-\texttt{srand}.
+Gretl's \texttt{svm} function addresses these points as
+follows. First, we use the \textsf{SFMT} implementation of the
+Mersenne Twister from the gretl library in place of \texttt{rand};
+this ensures consistency across platforms. By default we obtain a seed
+based on the time at which \texttt{svm} execution starts, and we
+(re-)initialize \textsf{SFMT} with this seed immediately prior to each
+call to the \textsf{libsvm} cross-validation function. This means that
+each invocation of a gretl \texttt{svm} cross-validation program is
+likely to produce slightly different results, while in the context of
+a given search each parameter combination will employ the same set of
+folds. This default behavior can be modified in two ways.
+\begin{itemize}
+\item To obtain strictly reproducible results you can override the
+  execution-time based \textsf{SFMT} seed with an integer
+  \texttt{seed} value specified in the parameter bundle passed to
+  \texttt{svm}.
+\item To emulate \textsf{libsvm}'s behavior, whereby each call to
+  randomized cross validation generates a new set of folds, specify a
+  non-zero value under the key \texttt{refold} in the parameter
+  bundle.
+\end{itemize}
 
 \subsection{More on SV regression}
 \label{sec:svr}
@@ -1193,118 +1205,48 @@ probability of 0.605 for an outcome of 2 (``at home'') for the first
 observation in the training set, and a probability of 0.702 for
 outcome 3 (``in work'') for the second observation.
 
-\section{Libsvm support per platform}
-\label{sec:platforms}
+\section{Implementation}
+\label{sec:implement}
 
-\subsection{MS Windows}
-\label{sec:svm-windows}
+\textsl{Note, 2019-01-08: this section describes the state of affairs
+  in the gretl git source and snapshots as of January 2019 (after the
+  2018d release but before 2019a).}
 
-This is straightfoward: we provide a build of \textsf{libsvm} as a
-supplementary DLL in the gretl packages for 32- and 64-bit Windows. No
-extra work is required unless you're building gretl for Windows
-yourself, in which case see
-\url{http://ricardo.ecn.wfu.edu/pub/gretl/winbuild/gretl-winbuild.pdf}.
+SVM support is implemented via a gretl ``plugin'' module. This module
+is supplied in our packages for MS Windows and Mac; it should become
+available in the gretl packages prepared by Linux distributions with
+the forthcoming 2019a release.
 
-\subsection{Mac OS X}
-\label{sec:svm-osx}
+For anyone building gretl from the git source, all the required files
+are now included. (That is, it is not necessary to have
+\textsf{libsvm} installed in its own right, which was the case up till
+the 2018d release.) The main files are these:
+\begin{verbatim}
+plugin/svm.c
+plugin/libsvm/svmlib.cpp
+plugin/libsvm/svmlib.h
+\end{verbatim}
 
-The recommended ``quartz'' gretl package for OS X (64-bit build for
-Intel processors) includes a \textsf{libsvm} shared library and hence
-provides the same ``out of the box'' support as on MS Windows. As of
-this writing our legacy OS X builds (which require Apple's
-\textsf{X11}) do not include \textsf{libsvm} support.
+\texttt{svm.c} contains ``driver'' code and implements the
+gretl-specific options for our \texttt{svm} function. The other two
+files are derived from the \textsf{libsvm} package (version 3.23,
+dated 2018-07-15).
 
-\subsection{Linux}
-\label{sec:svm-linux}
+\texttt{svmlib.cpp} is a slightly modified version of the
+\textsf{libsvm} C++ source file \texttt{svm.cpp}. It has been edited
+to support parallelization via \textsf{OpenMP} when the symbol
+\texttt{\_OPENMP} is defined. The changes are as described in answer
+to ``How can I use OpenMP to parallelize LIBSVM on a
+multicore/shared-memory computer?'' in the file \texttt{FAQ.html} in
+the \textsf{libsvm} distribution. In addition, the pseudo-random
+numbers used in cross validation are taken from libgretl's
+\textsf{SFMT} (Mersenne Twister) instead of the C library's
+\texttt{rand}.
 
-There are \textsf{libsvm} packages for (at least) Debian, Fedora and
-Arch (AUR). However, we're not quite sure how functional they are. The
-computation involved in machine learning can be quite time-consuming
-and can be sped up by parallelization via \textsf{OpenMP}, but this is
-not enabled by default in the source code for the library, nor is
-there any build-time switch to enable it. The \textsf{libvsm} FAQ at
-
-\url{http://www.csie.ntu.edu.tw/~cjlin/libsvm/faq.html#f432}
-
-has a recipe for adding \textsf{OpenMP} support, which involves
-editing the main source file, \texttt{svm.cpp}, as well as the
-project's \texttt{Makefile}. Linux packagers sometimes trouble to make
-that sort of enhancement but it doesn't seem that anyone has done so
-in this case; at any rate there was no \textsf{OpenMP} support in the
-\texttt{libsvm-3.21-1} package for Fedora 25 or the
-\texttt{libsvm3\_3.21} package for Debian.
-
-People with good coding skills should be able to follow the FAQ
-recipe---if they notice its existence and take some time to figure it
-out---when building \textsf{libsvm} from source, but it will be a good
-deal easier to use this little package containing a modified
-\texttt{Makefile} and \texttt{svm.cpp}:
-
-\url{http://ricardo.ecn.wfu.edu/pub/gretl/svm/svm-3.23-openmp.tar.gz}
-
-We show below a shell script to build and install the software. But
-note that by default installation is under \texttt{/usr/local}; if
-that doesn't suit you, change the definition of \texttt{PREFIX} in the
-revised \texttt{Makefile} before installing.
-\begin{code}
-#!/bin/sh
-wget http://www.csie.ntu.edu.tw/~cjlin/libsvm/libsvm-3.23.tar.gz
-tar xvf libsvm-3.23.tar.gz
-wget http://ricardo.ecn.wfu.edu/pub/gretl/svm/svm-3.23-openmp.tar.gz
-cd libsvm-3.23
-mv Makefile Makefile.orig
-mv svm.cpp svm.cpp.orig
-# replace Makefile and svm.cpp
-tar xvf ../svm-3.23-openmp.tar.gz
-# may want to edit Makefile here?
-make && sudo make install
-\end{code}
-
-If you choose to install into a location other than \texttt{/usr} or
-\texttt{/usr/local} you should give gretl's \texttt{configure} script
-a heads-up regarding \texttt{libsvm-prefix}; for example
-\begin{code}
---with-libsvm-prefix=/opt/libsvm
-\end{code}
-
-One more point on the shell script above: it installs the
-\texttt{libsvm} binary tools (\texttt{svm-scale}, \texttt{svm-train},
-\texttt{svm-predict}) by default. These are not used by gretl (we only
-want the library); you may or may not want them. To cut them out, edit
-the \texttt{install} target in the revised Makefile.
+\texttt{svmlib.h} is just a renamed version of the \textsf{libsvm}
+header file \texttt{svm.h}.
 
 \bibliographystyle{gretl}
 \bibliography{gretl}
-
-\section*{Post scriptum: some jottings}
-
-Here are a few observations and questions that I've not had time to
-write up properly; I'm recording them for future reference.
-
-A general point: you have to watch out for the fact that
-\textsf{libsvm} assumes the task is classification by
-default. Regression works quite nicely, but you have to be careful to
-invoke it correctly. The Python scripts under \texttt{tools} in the
-\textsf{libsvm} package are geared to classification: if you run
-regression data through \texttt{easy.py} or \texttt{grid.py} the
-results will be garbage!
-
-The time taken by training is an increasing function of the $C$
-parameter; this can be a limiting factor in grid search
-(section~\ref{sec:xvalid}). This seems to be because $C$ is actually a
-hyperparameter: it sets the maximum for a set of per-variable
-coefficients. I wonder if very big $C$ values are ever
-optimal. (Reminder: the default is $C=1$.)
-
-The grid-search plot (section~\ref{sec:xvalid}) with
-``\texttt{display}'' option: a 3D plot is opened directly in
-\textsf{gnuplot} when a script is run via \texttt{gretlcli} (so it's
-interactive, you can manipulate it) but in the gretl GUI you get a
-static (native gretl) plot window. In the GUI, can we set up a
-right-click menu item that opens an interactive plot window? (Right
-now you can get there via right-click, Save to session as icon,
-right-click on the icon, Edit plot commands; then the Execute icon in
-the plot commands window will open the plot in \textsf{gnuplot}
-itself.)
 
 \end{document}
