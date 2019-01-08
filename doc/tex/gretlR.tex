@@ -366,9 +366,11 @@ in the default case an appropriate suffix, \texttt{.csv} or
 \texttt{.mat}, will be added to the basename.
 
 As an example, we take the airline data and use them to estimate a
-structural time series model \`a la \cite{harvey89}. The model we will 
-use is the \emph{Basic Structural Model} (BSM), in which a time series
-is decomposed into three terms:
+structural time series model \`a la \cite{harvey89}.\footnote{The
+  function package \package{StucTiSM} is available to handle this
+  class of models natively in \app{gretl}.} The model we will use is
+the \emph{Basic Structural Model} (BSM), in which a time series is
+decomposed into three terms:
 \[
   y_t = \mu_t + \gamma_t + \varepsilon_t
 \]
@@ -387,11 +389,9 @@ variances of the noise components (which may be zero) and to recover
 estimates of the latent processes $\mu_t$ (the ``level''), $\beta_t$
 (the ``slope'') and $\gamma_t$.
 
-Gretl does not provide (yet) a command for estimating this class
-of models, so we will use \app{R}'s \texttt{StructTS} command and
-import the results back into gretl. Once the \texttt{bjg}
-dataset is loaded in gretl, we pass the data to \app{R} and execute
-the following script:
+We will use \app{R}'s \texttt{StructTS} command and import the results
+back into gretl. Once the \texttt{bjg} dataset is loaded in gretl, we
+pass the data to \app{R} and execute the following script:
 \begin{code}
 # extract the log series 
 y <- gretldata[, "lg"]
