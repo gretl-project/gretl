@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* random.c for gretl: RNGs */
@@ -58,9 +58,9 @@
  * @include: libgretl.h
  *
  * Libgretl uses the Mersenne Twister as its underlying engine
- * for uniform random values, but offers added value in 
- * the form of generators for several distributions commonly 
- * used in econometrics. 
+ * for uniform random values, but offers added value in
+ * the form of generators for several distributions commonly
+ * used in econometrics.
  *
  * Note that before using the libgretl PRNG you must call
  * either libgretl_init() or the specific initialization
@@ -77,6 +77,7 @@ static sfmt_t gretl_alt_sfmt;
 static guint32 alt_sfmt_seed;
 
 #define sfmt_rand32() sfmt_genrand_uint32(&gretl_sfmt)
+#define sfmt_alt_rand32() sfmt_genrand_uint32(&gretl_alt_sfmt)
 
 /* Find n independent "small" Mersenne Twisters with period 2^521-1;
    set the one corresponding to @self as the one to use
@@ -200,7 +201,7 @@ void gretl_rand_init (void)
     } else {
 	sfmt_seed = time(NULL);
     }
-    
+
     sfmt_init_gen_rand(&gretl_sfmt, sfmt_seed);
 }
 
@@ -339,7 +340,7 @@ static double randu53 (void)
 {
     const uint32_t a = randi32() >> 5;
     const uint32_t b = randi32() >> 6;
-  
+
     return (a*67108864.0+b+0.4) * (1.0/9007199254740992.0);
 }
 
@@ -423,7 +424,7 @@ double gretl_one_snormal (void)
 	uint32_t lo, hi;
 	int64_t rabs;
 	uint32_t *p = (uint32_t *) &rabs;
-	
+
 	lo = randi32();
 	idx = lo & 0xFF;
 	hi = randi32();
@@ -437,7 +438,7 @@ double gretl_one_snormal (void)
 	const int idx = (int) (rabs & 0xFF);
 	const double x = ((r & 1) ? -rabs : rabs) * wi[idx];
 #endif
-      
+
 	if (rabs < (int64_t) (ki[idx])) {
 	    return x; /* 99.3% of the time we return here 1st try */
 	} else if (idx == 0) {
@@ -449,7 +450,7 @@ double gretl_one_snormal (void)
 	       sign, but as we already have r we might as well use it.
 	    */
 	    double xx, yy;
-	    
+
 	    do {
 		xx = - ZIGGURAT_NOR_INV_R * log(randu53());
 		yy = - log(randu53());
@@ -492,14 +493,14 @@ void gretl_rand_normal (double *a, int t1, int t2)
  *
  * Fill the selected range of array @a with pseudo-random drawings
  * from the normal distribution with the given mean and standard
- * deviation, using the Mersenne Twister for uniform input and  
+ * deviation, using the Mersenne Twister for uniform input and
  * the Ziggurat method for converting to the normal distribution.
  *
  * Returns: 0 on success, 1 on invalid input.
  */
 
 int gretl_rand_normal_full (double *a, int t1, int t2,
-			    double mean, double sd) 
+			    double mean, double sd)
 {
     int t;
 
@@ -517,18 +518,20 @@ int gretl_rand_normal_full (double *a, int t1, int t2,
 	    a[t] = mean + a[t] * sd;
 	}
     }
-    
+
     return 0;
 }
 
-static guint32 mt_int_range (guint32 begin, guint32 end)
+static guint32 mt_int_range (guint32 begin,
+			     guint32 end,
+			     int alt)
 {
     guint32 dist = end - begin;
     guint32 rval = 0;
 
     if (dist > 0) {
 	/* maxval is set to the predecessor of the greatest
-	   multiple of dist less than or equal to 2^32 
+	   multiple of dist less than or equal to 2^32
 	*/
 	guint32 maxval;
 
@@ -545,16 +548,20 @@ static guint32 mt_int_range (guint32 begin, guint32 end)
 	if (use_dcmt) {
 	    do {
 		rval = dcmt_rand32();
-	    } while (rval > maxval);	    
+	    } while (rval > maxval);
+	} else if (alt) {
+	    do {
+		rval = sfmt_alt_rand32();
+	    } while (rval > maxval);
 	} else {
 	    do {
 		rval = sfmt_rand32();
 	    } while (rval > maxval);
 	}
-	  
+
 	rval %= dist;
     }
- 
+
     return begin + rval;
 }
 
@@ -574,7 +581,7 @@ static guint32 mt_int_range (guint32 begin, guint32 end)
  */
 
 int gretl_rand_uniform_minmax (double *a, int t1, int t2,
-			       double min, double max) 
+			       double min, double max)
 {
     int t;
 
@@ -596,21 +603,9 @@ int gretl_rand_uniform_minmax (double *a, int t1, int t2,
     return 0;
 }
 
-/**
- * gretl_rand_int_minmax:
- * @a: target array.
- * @n: length of array.
- * @min: lower closed bound of range.
- * @max: upper closed bound of range.
- *
- * Fill array @a of length @n with pseudo-random drawings
- * from the uniform distribution on [@min, @max], using the
- * Mersenne Twister.
- *
- * Returns: 0 on success, 1 on invalid input.
- */
-
-int gretl_rand_int_minmax (int *a, int n, int min, int max) 
+static int real_gretl_rand_int_minmax (int *a, int n,
+				       int min, int max,
+				       int alt)
 {
     int i, err = 0;
 
@@ -630,11 +625,50 @@ int gretl_rand_int_minmax (int *a, int n, int min, int max)
 	}
 
 	for (i=0; i<n; i++) {
-	    a[i] = mt_int_range(min, max + 1) - offset;
+	    a[i] = mt_int_range(min, max + 1, alt) - offset;
 	}
     }
 
     return err;
+}
+
+/**
+ * gretl_rand_int_minmax:
+ * @a: target array.
+ * @n: length of array.
+ * @min: lower closed bound of range.
+ * @max: upper closed bound of range.
+ *
+ * Fill array @a of length @n with pseudo-random drawings
+ * from the uniform distribution on [@min, @max], using the
+ * Mersenne Twister.
+ *
+ * Returns: 0 on success, 1 on invalid input.
+ */
+
+int gretl_rand_int_minmax (int *a, int n, int min, int max)
+{
+    return real_gretl_rand_int_minmax(a, n, min, max, 0);
+}
+
+/**
+ * gretl_alt_rand_int_minmax:
+ * @a: target array.
+ * @n: length of array.
+ * @min: lower closed bound of range.
+ * @max: upper closed bound of range.
+ *
+ * Fill array @a of length @n with pseudo-random drawings
+ * from the uniform distribution on [@min, @max], using a
+ * Mersenne Twister which is independent of the main one
+ * employed by libgretl.
+ *
+ * Returns: 0 on success, 1 on invalid input.
+ */
+
+int gretl_alt_rand_int_minmax (int *a, int n, int min, int max)
+{
+    return real_gretl_rand_int_minmax(a, n, min, max, 1);
 }
 
 static int already_selected (double *a, int n, double val,
@@ -671,9 +705,9 @@ static int already_selected (double *a, int n, double val,
  * Returns: 0 on success, 1 on invalid input.
  */
 
-int gretl_rand_uniform_int_minmax (double *a, int t1, int t2, 
+int gretl_rand_uniform_int_minmax (double *a, int t1, int t2,
 				   int min, int max,
-				   gretlopt opt) 
+				   gretlopt opt)
 {
     int t, err = 0;
 
@@ -694,10 +728,10 @@ int gretl_rand_uniform_int_minmax (double *a, int t1, int t2,
 	}
 
 	for (t=t1; t<=t2; t++) {
-	    x = mt_int_range(min, max + 1);
+	    x = mt_int_range(min, max + 1, 0);
 	    if (opt & OPT_O) {
 		while (already_selected(a, i, x, offset)) {
-		    x = mt_int_range(min, max + 1);
+		    x = mt_int_range(min, max + 1, 0);
 		}
 	    }
 	    a[t] = x - offset;
@@ -719,7 +753,7 @@ int gretl_rand_uniform_int_minmax (double *a, int t1, int t2,
  * Twister.
  */
 
-void gretl_rand_uniform (double *a, int t1, int t2) 
+void gretl_rand_uniform (double *a, int t1, int t2)
 {
     int t;
 
@@ -734,7 +768,7 @@ void gretl_rand_uniform (double *a, int t1, int t2)
     }
 }
 
-static double gretl_rand_uniform_one (void) 
+static double gretl_rand_uniform_one (void)
 {
     if (use_dcmt) {
 	return sfmt_to_real2(dcmt_rand32());
@@ -757,8 +791,8 @@ double gretl_rand_gamma_one (double shape, double scale)
     }
 
     d = k - 1.0/3;
-    c = 1.0 / sqrt(9*d);    
-    
+    c = 1.0 / sqrt(9*d);
+
     while (1) {
 	x = gretl_one_snormal();
 	v = pow(1 + c*x, 3);
@@ -769,7 +803,7 @@ double gretl_rand_gamma_one (double shape, double scale)
 	    if (u < 1 - 0.0331 * pow(x, 4) ||
 		log(u) < 0.5*x*x + d*(1-v+log(v))) {
 		break;
-	    } 
+	    }
 	}
     }
     if (shape < 1) {
@@ -790,7 +824,7 @@ double gretl_rand_gamma_one (double shape, double scale)
    (4) If U < 1-0.0331*x^4 return d*v.
    (5) If log(U) < 0.5*x^2+d*(1-v+log(v)) return d*v.
    (6) Go to step 2.
-*/   
+*/
 
 /**
  * gretl_rand_gamma:
@@ -806,8 +840,8 @@ double gretl_rand_gamma_one (double shape, double scale)
  * Returns: 0 on success, non-zero on error.
  */
 
-int gretl_rand_gamma (double *a, int t1, int t2, 
-		      double shape, double scale) 
+int gretl_rand_gamma (double *a, int t1, int t2,
+		      double shape, double scale)
 {
     double k = shape;
     double d, c, x, v, u, dv;
@@ -822,8 +856,8 @@ int gretl_rand_gamma (double *a, int t1, int t2,
     }
 
     d = k - 1.0/3;
-    c = 1.0 / sqrt(9*d);    
-    
+    c = 1.0 / sqrt(9*d);
+
     for (t=t1; t<=t2; t++) {
 	while (1) {
 	    x = gretl_one_snormal();
@@ -835,7 +869,7 @@ int gretl_rand_gamma (double *a, int t1, int t2,
 		if (u < 1 - 0.0331 * pow(x, 4) ||
 		    log(u) < 0.5*x*x + d*(1-v+log(v))) {
 		    break;
-		} 
+		}
 	    }
 	}
 	if (shape < 1) {
@@ -856,13 +890,13 @@ int gretl_rand_gamma (double *a, int t1, int t2,
  * @v: degrees of freedom.
  *
  * Fill the selected range of array @a with pseudo-random drawings
- * from the Chi-squared distribution with @v degrees of freedom, 
+ * from the Chi-squared distribution with @v degrees of freedom,
  * using the gamma r.v. generator.
  *
  * Returns: 0 on success, non-zero on error.
  */
 
-int gretl_rand_chisq (double *a, int t1, int t2, int v) 
+int gretl_rand_chisq (double *a, int t1, int t2, int v)
 {
     return gretl_rand_gamma(a, t1, t2, 0.5*v, 2);
 }
@@ -875,14 +909,14 @@ int gretl_rand_chisq (double *a, int t1, int t2, int v)
  * @v: degrees of freedom.
  *
  * Fill the selected range of array @a with pseudo-random drawings
- * from the Student t distribution with @v degrees of freedom, 
- * using the Mersenne Twister for uniform input and the ziggurat 
+ * from the Student t distribution with @v degrees of freedom,
+ * using the Mersenne Twister for uniform input and the ziggurat
  * method for converting to the normal distribution.
  *
  * Returns: 0 on success, non-zero on error.
  */
 
-int gretl_rand_student (double *a, int t1, int t2, double v) 
+int gretl_rand_student (double *a, int t1, int t2, double v)
 {
     double *X2 = NULL;
     int T = t2 - t1 + 1;
@@ -918,14 +952,14 @@ int gretl_rand_student (double *a, int t1, int t2, double v)
  * @v2: denominator degrees of freedom.
  *
  * Fill the selected range of array @a with pseudo-random drawings
- * from the F distribution with @v1 and @v2 degrees of freedom, 
+ * from the F distribution with @v1 and @v2 degrees of freedom,
  * using the Mersenne Twister for uniform input and the Ziggurat
  * method for converting to the normal distribution.
  *
  * Returns: 0 on success, non-zero on error.
  */
 
-int gretl_rand_F (double *a, int t1, int t2, int v1, int v2) 
+int gretl_rand_F (double *a, int t1, int t2, int v1, int v2)
 {
     double *b = NULL;
     int T = t2 - t1 + 1;
@@ -967,7 +1001,7 @@ int gretl_rand_F (double *a, int t1, int t2, int v1, int v2)
  * Returns: 0 on success, non-zero on error.
  */
 
-int gretl_rand_binomial (double *a, int t1, int t2, int n, double p) 
+int gretl_rand_binomial (double *a, int t1, int t2, int n, double p)
 {
     int t;
 
@@ -1067,15 +1101,15 @@ static double genpois (const double m)
  * @vec: should be 1 if @m is an array, else 0.
  *
  * Fill the selected range of array @a with pseudo-random drawings
- * from the Poisson distribution with a mean determined by 
+ * from the Poisson distribution with a mean determined by
  * @m, which can either be a pointer to a scalar, or an array
- * of length greater than or equal to @t2 + 1. 
+ * of length greater than or equal to @t2 + 1.
  *
- * Returns: 0 on success, non-zero on error. 
+ * Returns: 0 on success, non-zero on error.
  */
 
 int gretl_rand_poisson (double *a, int t1, int t2, const double *m,
-			int vec) 
+			int vec)
 {
     double mt;
     int t;
@@ -1106,7 +1140,7 @@ int gretl_rand_poisson (double *a, int t1, int t2, const double *m,
  */
 
 int gretl_rand_weibull (double *a, int t1, int t2, double shape,
-			double scale) 
+			double scale)
 {
     int err = 0;
 
@@ -1251,14 +1285,14 @@ int gretl_rand_laplace (double *a, int t1, int t2,
  * Fill the selected range of array @a with pseudo-random drawings
  * from the beta distribution with shape parameters @s1 and @s2.
  * The code here is adapted from http://www.netlib.org/random/random.f90
- * which implements the method of R.C.H. Cheng, "Generating beta 
+ * which implements the method of R.C.H. Cheng, "Generating beta
  * variates with nonintegral shape parameters", Communications of the
  * ACM, 21(4), April 1978.
  *
  * Returns: 0 on success, non-zero if @s1 or @s2 are out of bounds.
  */
 
-int gretl_rand_beta (double *x, int t1, int t2, 
+int gretl_rand_beta (double *x, int t1, int t2,
 		     double s1, double s2)
 {
     double aln4 = 1.3862944;
@@ -1337,7 +1371,7 @@ int gretl_rand_beta (double *x, int t1, int t2,
  * Returns: 0 on success, non-zero if @n, @s1 or @s2 are out of bounds.
  */
 
-int gretl_rand_beta_binomial (double *x, int t1, int t2, 
+int gretl_rand_beta_binomial (double *x, int t1, int t2,
 			      int n, double s1, double s2)
 {
     int t, err;
@@ -1364,13 +1398,13 @@ int gretl_rand_beta_binomial (double *x, int t1, int t2,
  * gretl_rand_int_max:
  * @max: the maximum value (open)
  *
- * Returns: a pseudo-random unsigned int in the interval 
+ * Returns: a pseudo-random unsigned int in the interval
  * [0, max-1] using the Mersenne Twister.
  */
 
 unsigned int gretl_rand_int_max (unsigned int max)
 {
-    return mt_int_range(0, max);
+    return mt_int_range(0, max, 0);
 }
 
 /**
@@ -1391,7 +1425,7 @@ unsigned int gretl_rand_int (void)
 
 unsigned int gretl_alt_rand_int (void)
 {
-    return sfmt_genrand_uint32(&gretl_alt_sfmt);
+    return sfmt_alt_rand32();
 }
 
 static double halton (int i, int base)
@@ -1416,8 +1450,8 @@ static double halton (int i, int base)
  * @err: location to receive error code.
  *
  * Returns: an @m x @r matrix containing @m Halton
- * sequences. The sequences are contructed using the first 
- * @m primes, and the first @offset elements of each sequence 
+ * sequences. The sequences are contructed using the first
+ * @m primes, and the first @offset elements of each sequence
  * are discarded.
  */
 
@@ -1438,13 +1472,13 @@ gretl_matrix *halton_matrix (int m, int r, int offset, int *err)
 	*err = E_DATA;
 	return NULL;
     }
-	
+
     H = gretl_matrix_alloc(m, r);
     if (H == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
-    
+
     /* we'll discard the first @offset elements */
     n = r + offset;
 
@@ -1478,7 +1512,7 @@ cholesky_factor_of_inverse (const gretl_matrix *S, int *err)
     return C;
 }
 
-static int wishart_workspace (gretl_matrix **pW, 
+static int wishart_workspace (gretl_matrix **pW,
 			      gretl_matrix **pB,
 			      double **pZ,
 			      int p)
@@ -1489,7 +1523,7 @@ static int wishart_workspace (gretl_matrix **pW,
 
     if (*pW == NULL) {
 	return E_ALLOC;
-    } 
+    }
 
     *pB = gretl_matrix_alloc(p, p);
 
@@ -1562,8 +1596,8 @@ static void odell_feiveson_compute (gretl_matrix *W,
  * @err: location to receive error code.
  *
  * Computes a draw from the Inverse Wishart distribution
- * with @v degrees of freedom, using the method of Odell and 
- * Feiveson, "A numerical procedure to generate a sample 
+ * with @v degrees of freedom, using the method of Odell and
+ * Feiveson, "A numerical procedure to generate a sample
  * covariance matrix", JASA 61, pp. 199­203, 1966.
  *
  * Returns: a p x p Inverse Wishart matrix, or NULL on error.
@@ -1625,7 +1659,7 @@ static void vech_into_row (gretl_matrix *targ, int row,
 }
 
 gretl_matrix *inverse_wishart_sequence (const gretl_matrix *S,
-					int v, int replics, 
+					int v, int replics,
 					int *err)
 {
     gretl_matrix *C, *B = NULL, *W = NULL;
@@ -1641,7 +1675,7 @@ gretl_matrix *inverse_wishart_sequence (const gretl_matrix *S,
     if (replics < 1) {
 	*err = E_INVARG;
 	return NULL;
-    }	
+    }
 
     *err = 0;
 

@@ -38,6 +38,8 @@ unsigned int gretl_rand_int_max (unsigned int max);
 
 int gretl_rand_int_minmax (int *a, int n, int min, int max);
 
+int gretl_alt_rand_int_minmax (int *a, int n, int min, int max);
+
 double gretl_rand_01 (void);
 
 double gretl_one_snormal (void);
