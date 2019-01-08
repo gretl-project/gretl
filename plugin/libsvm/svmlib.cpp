@@ -8,6 +8,7 @@
 #include <limits.h>
 #include <locale.h>
 #include "svmlib.h"
+
 #if defined(_OPENMP)
 # include <omp.h>
 #endif
@@ -17,12 +18,8 @@ int libsvm_version = LIBSVM_VERSION;
 typedef float Qfloat;
 typedef signed char schar;
 
-#ifdef SVM_USE_MT
 extern "C" unsigned int gretl_alt_rand_int (void);
-# define svrand gretl_alt_rand_int
-#else
-# define svrand rand
-#endif
+#define svrand gretl_alt_rand_int
 
 #ifndef min
 template <class T> static inline T min(T x,T y) { return (x<y)?x:y; }

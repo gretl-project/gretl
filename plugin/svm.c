@@ -58,7 +58,8 @@ enum {
     W_SVPARM  = 1 << 5, /* saving tuned params to bundle? */
     W_FOLDVAR = 1 << 6, /* caller-supplied folds variable? */
     W_YSCALE  = 1 << 7, /* scaling the dependent var? */
-    W_CONSEC  = 1 << 8  /* using consective folds? */
+    W_CONSEC  = 1 << 8, /* using consective folds? */
+    W_REFOLD  = 1 << 9  /* folds differ across x-validation calls? */
 };
 
 struct sv_wrapper_ {
@@ -190,22 +191,18 @@ static void sv_wrapper_free (sv_wrapper *w)
 
 static void maybe_set_svm_seed (const sv_wrapper *w)
 {
-#ifdef SVM_USE_MT
-    static int set;
+    if (w->flags & W_REFOLD) {
+	/* set the seed just once */
+	static int set;
 
-    if (w->seed == 0) {
 	if (!set) {
-	    gretl_alt_rand_set_seed(0);
+	    gretl_alt_rand_set_seed(w->seed);
 	    set = 1;
 	}
     } else {
+	/* set the seed on each x-validation run */
 	gretl_alt_rand_set_seed(w->seed);
     }
-#else
-    if (w->seed != 0) {
-	srand(w->seed);
-    }
-#endif    
 }
 
 static int loading_model (const sv_wrapper *w)
@@ -2559,6 +2556,10 @@ static int read_params_bundle (gretl_bundle *bparm,
 
     if (get_optional_int(bparm, "seed", &ival, &err)) {
 	wrap->seed = ival;
+    }
+
+    if (get_optional_int(bparm, "refold", &ival, &err) && ival != 0) {
+	wrap->flags |= W_REFOLD;
     }
 
     if (get_optional_int(bparm, "quiet", &ival, &err) && ival != 0) {
