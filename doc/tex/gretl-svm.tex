@@ -821,6 +821,13 @@ folds. This default behavior can be modified in two ways.
   bundle.
 \end{itemize}
 
+When random folding with the default time-based seed is employed, it
+may be useful to know what seed was actually used: you can retrieve
+this value from the parameter bundle under the key
+\texttt{autoseed}. (This item is added to the bundle only if random
+folding is performed and no \texttt{seed} value is specified on
+input.)
+
 \subsection{More on SV regression}
 \label{sec:svr}
 
