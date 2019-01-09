@@ -2412,6 +2412,17 @@ static int get_optional_int (gretl_bundle *b, const char *key,
     }
 }
 
+static int get_optional_unsigned (gretl_bundle *b, const char *key,
+				  unsigned int *uval, int *err)
+{
+    if (!*err && gretl_bundle_has_key(b, key)) {
+	*uval = gretl_bundle_get_unsigned(b, key, err);
+	return (*err == 0);
+    } else {
+	return 0;
+    }
+}
+
 /* Determine if @s is a recognized parameter key: we
    do this so we can flag anything that may be a
    mistyped key.
@@ -2474,6 +2485,7 @@ static int read_params_bundle (gretl_bundle *bparm,
 {
     gretl_array *A;
     int no_savemod = 0;
+    unsigned int uval;
     int ival, err = 0;
 
     /* got any bad keys in @bparm? */
@@ -2555,8 +2567,8 @@ static int read_params_bundle (gretl_bundle *bparm,
 	}
     }
 
-    if (get_optional_int(bparm, "seed", &ival, &err)) {
-	wrap->seed = ival;
+    if (get_optional_unsigned(bparm, "seed", &uval, &err)) {
+	wrap->seed = uval;
     }
 
     if (get_optional_int(bparm, "refold", &ival, &err) && ival != 0) {
@@ -3040,7 +3052,7 @@ static void maybe_save_auto_seed (sv_wrapper *w, gretl_bundle *b)
 	       gretl_bundle_has_key(b, "search") ||
 	       gretl_bundle_has_key(b, "grid")) {
 	/* OK, randomized folds employed */
-	gretl_bundle_set_int(b, "autoseed", w->seed);
+	gretl_bundle_set_unsigned(b, "autoseed", w->seed);
     }
 }
 

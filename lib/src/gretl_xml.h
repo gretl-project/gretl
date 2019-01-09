@@ -33,6 +33,8 @@ int gretl_xml_open_doc_root (const char *fname,
 
 void gretl_xml_put_int (const char *tag, int i, FILE *fp);
 
+void gretl_xml_put_unsigned (const char *tag, unsigned int u, FILE *fp);
+
 void gretl_xml_put_double (const char *tag, double x, FILE *fp);
 
 void gretl_xml_put_double_array (const char *tag, double *x, int n,
@@ -72,6 +74,9 @@ int gretl_xml_get_prop_as_bool (xmlNodePtr node, const char *tag);
 GretlType gretl_xml_get_type_property (xmlNodePtr node);
 
 int gretl_xml_node_get_int (xmlNodePtr node, xmlDocPtr doc, int *i);
+
+int gretl_xml_node_get_unsigned (xmlNodePtr node, xmlDocPtr doc,
+				 unsigned int *u);
 
 int gretl_xml_node_get_double (xmlNodePtr node, xmlDocPtr doc,
 			       double *x);

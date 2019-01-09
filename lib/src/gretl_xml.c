@@ -275,6 +275,20 @@ void gretl_xml_put_int (const char *tag, int i, FILE *fp)
 }
 
 /**
+ * gretl_xml_put_unsigned:
+ * @tag: name to give value.
+ * @i: value to put (as attribute)
+ * @fp: file to which to write.
+ *
+ * Writes to @fp a string of the form "\%s=\%u".
+ */
+
+void gretl_xml_put_unsigned (const char *tag, unsigned int u, FILE *fp)
+{
+    fprintf(fp, "%s=\"%u\" ", tag, u);
+}
+
+/**
  * gretl_xml_put_double:
  * @tag: name to give value.
  * @x: value to put (as attribute)
@@ -822,6 +836,34 @@ int gretl_xml_node_get_int (xmlNodePtr node, xmlDocPtr doc, int *i)
 	*i = atoi((const char *) tmp);
 	free(tmp);
 	ret = 1;
+    }
+
+    return ret;
+}
+
+/**
+ * gretl_xml_node_get_unsigned:
+ * @node: XML node pointer.
+ * @doc: XML document pointer.
+ * @i: location to receive integer.
+ *
+ * Returns: 1 if an unsigned int is found and read successfully, 0
+ * otherwise.
+ */
+
+int gretl_xml_node_get_unsigned (xmlNodePtr node, xmlDocPtr doc,
+				 unsigned int *u)
+{
+    xmlChar *tmp;
+    int ret = 0;
+
+    tmp = xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
+
+    if (tmp != NULL) {
+	int n = sscanf((const char *) tmp, "%u", u);
+
+	free(tmp);
+	ret = (n == 1);
     }
 
     return ret;

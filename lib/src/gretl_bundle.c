@@ -147,6 +147,7 @@ int gretl_bundle_has_content (gretl_bundle *b)
 int type_can_be_bundled (GretlType type)
 {
     if (type == GRETL_TYPE_INT ||
+	type == GRETL_TYPE_UNSIGNED ||
 	type == GRETL_TYPE_BOOL) {
 	type = GRETL_TYPE_DOUBLE;
     }
@@ -160,7 +161,9 @@ int type_can_be_bundled (GretlType type)
 	    type == GRETL_TYPE_LIST);
 }
 
-#define bundled_scalar(t) (t == GRETL_TYPE_DOUBLE || t == GRETL_TYPE_INT)
+#define bundled_scalar(t) (t == GRETL_TYPE_DOUBLE || \
+			   t == GRETL_TYPE_INT || \
+			   t == GRETL_TYPE_UNSIGNED)
 
 static int bundled_item_copy_in_data (bundled_item *item,
 				      void *ptr, int size)
@@ -182,6 +185,14 @@ static int bundled_item_copy_in_data (bundled_item *item,
 	    int *ip = item->data;
 
 	    *ip = *(int *) ptr;
+	}
+	break;
+    case GRETL_TYPE_UNSIGNED:
+	item->data = malloc(sizeof(unsigned int));
+	if (item->data != NULL) {
+	    unsigned int *up = item->data;
+
+	    *up = *(unsigned int *) ptr;
 	}
 	break;
     case GRETL_TYPE_STRING:
@@ -292,6 +303,10 @@ static int bundled_item_replace_data (bundled_item *item,
 	    int *ip = item->data;
 
 	    *ip = *(int *) ptr;
+	} else if (item->type == GRETL_TYPE_UNSIGNED) {
+	    unsigned int *up = item->data;
+
+	    *up = *(unsigned int *) ptr;
 	}
     } else {
 	/* free then copy or donate */
@@ -855,8 +870,11 @@ double gretl_bundle_get_scalar (gretl_bundle *bundle,
     int myerr = 0;
 
     ptr = gretl_bundle_get_data(bundle, key, &type, NULL, err);
-    if (ptr != NULL && type != GRETL_TYPE_DOUBLE &&
-	type != GRETL_TYPE_INT && type != GRETL_TYPE_MATRIX) {
+    if (ptr != NULL &&
+	type != GRETL_TYPE_DOUBLE &&
+	type != GRETL_TYPE_INT &&
+	type != GRETL_TYPE_UNSIGNED &&
+	type != GRETL_TYPE_MATRIX) {
 	myerr = E_TYPES;
     }
 
@@ -869,6 +887,10 @@ double gretl_bundle_get_scalar (gretl_bundle *bundle,
 	    int *pi = (int *) ptr;
 
 	    x = (double) *pi;
+	} else if (type == GRETL_TYPE_UNSIGNED) {
+	    unsigned int *pu = (unsigned int *) ptr;
+
+	    x = (double) *pu;
 	} else {
 	    /* must be a matrix */
 	    gretl_matrix *m = ptr;
@@ -914,6 +936,15 @@ int gretl_bundle_get_int (gretl_bundle *bundle,
 	    int *pi = (int *) ptr;
 
 	    i = *pi;
+	} else if (type == GRETL_TYPE_UNSIGNED) {
+	    unsigned int u, *pu = (unsigned int *) ptr;
+
+	    u = *pu;
+	    if (u <= INT_MAX) {
+		i = (int) u;
+	    } else {
+		myerr = E_TYPES;
+	    }
 	} else if (type == GRETL_TYPE_DOUBLE) {
 	    double x, *px = (double *) ptr;
 
@@ -933,6 +964,62 @@ int gretl_bundle_get_int (gretl_bundle *bundle,
     }
 
     return i;
+}
+
+/**
+ * gretl_bundle_get_unsigned:
+ * @bundle: bundle to access.
+ * @key: name of key to access.
+ * @err: location to receive error code.
+ *
+ * Returns: the unsigned integer value associated with @key in the
+ * specified @bundle, if any; otherwise 0.
+ */
+
+unsigned int gretl_bundle_get_unsigned (gretl_bundle *bundle,
+					const char *key,
+					int *err)
+{
+    unsigned int u = 0;
+    GretlType type;
+    void *ptr;
+    int myerr = 0;
+
+    ptr = gretl_bundle_get_data(bundle, key, &type, NULL, err);
+
+    if (ptr != NULL) {
+	if (type == GRETL_TYPE_UNSIGNED) {
+	    unsigned int *pu = (unsigned int *) ptr;
+
+	    u = *pu;
+	} else if (type == GRETL_TYPE_INT) {
+	    int i, *pi = (int *) ptr;
+
+	    i = *pi;
+	    if (i >= 0) {
+		u = (unsigned int) i;
+	    } else {
+		myerr = E_TYPES;
+	    }
+	} else if (type == GRETL_TYPE_DOUBLE) {
+	    double x, *px = (double *) ptr;
+
+	    x = *px;
+	    if (x >= 0 && x <= UINT_MAX && x == floor(x)) {
+		u = (unsigned int) x;
+	    } else {
+		myerr = E_TYPES;
+	    }
+	} else {
+	    myerr = E_TYPES;
+	}
+    }
+
+    if (err != NULL) {
+	*err = myerr;
+    }
+
+    return u;
 }
 
 /**
@@ -1222,7 +1309,7 @@ int gretl_bundle_set_scalar (gretl_bundle *bundle, const char *key,
  * gretl_bundle_set_int:
  * @bundle: target bundle.
  * @key: name of key to create or replace.
- * @val: the value to set.
+ * @val: the integer value to set.
  *
  * Sets @val as a member of @bundle under the name @key.
  * If @key is already present in the bundle the original
@@ -1236,6 +1323,26 @@ int gretl_bundle_set_int (gretl_bundle *bundle, const char *key,
 {
     return gretl_bundle_set_data(bundle, key, &val,
 				 GRETL_TYPE_INT, 0);
+}
+
+/**
+ * gretl_bundle_set_unsigned:
+ * @bundle: target bundle.
+ * @key: name of key to create or replace.
+ * @val: the unsigned integer value to set.
+ *
+ * Sets @val as a member of @bundle under the name @key.
+ * If @key is already present in the bundle the original
+ * value is replaced and destroyed.
+ *
+ * Returns: 0 on success, error code on error.
+ */
+
+int gretl_bundle_set_unsigned (gretl_bundle *bundle, const char *key,
+			       unsigned int val)
+{
+    return gretl_bundle_set_data(bundle, key, &val,
+				 GRETL_TYPE_UNSIGNED, 0);
 }
 
 /**
@@ -1592,78 +1699,69 @@ struct b_item_printer {
 static void print_bundled_item (gpointer key, gpointer value, gpointer p)
 {
     bundled_item *item = value;
+    GretlType t = item->type;
     const gchar *kstr = key;
     struct b_item_printer *bip = p;
     PRN *prn = bip->prn;
-    gretl_array *a;
-    gretl_matrix *m;
-    double x;
-    int i, n, indent;
-    char *s;
+    int indent;
 
-    if (bip->tree && item->type == GRETL_TYPE_BUNDLE) {
+    if (bip->tree && t == GRETL_TYPE_BUNDLE) {
 	return;
     }
 
     indent = 2 + 2 * bip->indent;
     bufspace(indent, prn);
 
-    switch (item->type) {
-    case GRETL_TYPE_DOUBLE:
-	x = *(double *) item->data;
+    if (t == GRETL_TYPE_DOUBLE) {
+	double x = *(double *) item->data;
+
 	if (na(x)) {
 	    pprintf(prn, "%s = NA", kstr);
 	} else {
 	    pprintf(prn, "%s = %g", kstr, x);
 	}
-	break;
-    case GRETL_TYPE_INT:
-	i = *(int *) item->data;
+    } else if (t == GRETL_TYPE_INT) {
+	int i = *(int *) item->data;
+
 	pprintf(prn, "%s = %d", kstr, i);
-	break;
-    case GRETL_TYPE_STRING:
-	s = (char *) item->data;
-	n = strlen(s);
+    } else if (t == GRETL_TYPE_UNSIGNED) {
+	unsigned int u = *(unsigned int *) item->data;
+
+	pprintf(prn, "%s = %u", kstr, u);
+    } else if (t == GRETL_TYPE_STRING) {
+	char *s = (char *) item->data;
+	int n = strlen(s);
+
 	if (n + indent < 70) {
 	    pprintf(prn, "%s = %s", kstr, s);
 	} else {
 	    pprintf(prn, "%s (%s, %d bytes)", kstr,
-		    gretl_type_get_name(item->type), n);
+		    gretl_type_get_name(t), n);
 	}
-	break;
-    case GRETL_TYPE_BUNDLE:
-	pprintf(prn, "%s (%s)", kstr,
-		gretl_type_get_name(item->type));
-	break;
-    case GRETL_TYPE_MATRIX:
-	m = item->data;
+    } else if (t == GRETL_TYPE_BUNDLE) {
+	pprintf(prn, "%s (%s)", kstr, gretl_type_get_name(t));
+    } else if (t == GRETL_TYPE_MATRIX) {
+	gretl_matrix *m = item->data;
+
 	if (m->rows == 1 && m->cols == 1) {
 	    pprintf(prn, "%s = %g", kstr, m->val[0]);
 	} else {
 	    pprintf(prn, "%s (%s: %d x %d)", kstr,
-		    gretl_type_get_name(item->type),
+		    gretl_type_get_name(t),
 		    m->rows, m->cols);
 	}
-	break;
-    case GRETL_TYPE_SERIES:
+    } else if (t == GRETL_TYPE_SERIES) {
 	pprintf(prn, "%s (%s: length %d)", kstr,
-		gretl_type_get_name(item->type), item->size);
-	break;
-    case GRETL_TYPE_LIST:
-	pprintf(prn, "%s (%s)", kstr, gretl_type_get_name(item->type));
-	break;
-    case GRETL_TYPE_ARRAY:
-	a = item->data;
-	{
-	    GretlType t = gretl_array_get_type(a);
+		gretl_type_get_name(t), item->size);
+    } else if (t == GRETL_TYPE_LIST) {
+	pprintf(prn, "%s (%s)", kstr, gretl_type_get_name(t));
+    } else if (t == GRETL_TYPE_ARRAY) {
+	gretl_array *a = item->data;
+	int n = gretl_array_get_length(a);
 
-	    n = gretl_array_get_length(a);
-	    pprintf(prn, "%s = array of %s, length %d", kstr,
-		    gretl_type_get_name(t), n);
-	}
-	break;
-    default:
-	break;
+	t = gretl_array_get_type(a);
+	pprintf(prn, "%s = array of %s, length %d", kstr,
+		gretl_type_get_name(t), n);
     }
 
     if (item->note != NULL) {
@@ -1890,6 +1988,10 @@ static void xml_put_bundled_item (gpointer keyp, gpointer value, gpointer p)
 	int i = *(int *) item->data;
 
 	fprintf(fp, "%d", i);
+    } else if (item->type == GRETL_TYPE_UNSIGNED) {
+	unsigned int u = *(unsigned int *) item->data;
+
+	fprintf(fp, "%u", u);
     } else if (item->type == GRETL_TYPE_SERIES) {
 	double *vals = (double *) item->data;
 
@@ -1982,6 +2084,15 @@ static int load_bundled_items (gretl_bundle *b, xmlNodePtr cur, xmlDocPtr doc)
 		    } else {
 			err = gretl_bundle_set_data(b, key, &i, type, size);
 		    }
+		} else if (type == GRETL_TYPE_UNSIGNED) {
+		    unsigned int u;
+
+		    if (!gretl_xml_node_get_unsigned(cur, doc, &u)) {
+			err = E_DATA;
+		    } else {
+			err = gretl_bundle_set_data(b, key, &u, type, size);
+		    }
+
 		} else if (type == GRETL_TYPE_STRING) {
 		    char *s;
 
