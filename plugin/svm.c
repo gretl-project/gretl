@@ -2690,8 +2690,7 @@ static int peek_foldvar (gretl_bundle *bparm, int *fvar)
 }
 
 /* wrap a couple of libsvm I/0 functions so they respect
-   @workdir, and don't fall foul of filename encoding issues
-   on MS Windows
+   @workdir
 */
 
 static sv_model *svm_load_model_wrapper (const char *fname,
@@ -2700,27 +2699,10 @@ static sv_model *svm_load_model_wrapper (const char *fname,
     sv_model *model = NULL;
 
     fname = gretl_maybe_switch_dir(fname);
-
-#ifdef WIN32
-    if (utf8_encoded(fname)) {
-	/* try to convert to locale for libsvm */
-	gchar *tmp = g_win32_locale_filename_from_utf8(fname);
-
-	if (tmp == NULL) {
-	    *err = E_FOPEN;
-	} else {
-	    model = svm_load_model(tmp);
-	    g_free(tmp);
-	}
-    } else {
-	model = svm_load_model(fname);
-    }
-#else
     model = svm_load_model(fname);
-#endif
 
-    if (!*err && model == NULL) {
-	*err = E_EXTERNAL;
+    if (model == NULL) {
+	*err = E_FOPEN;
     }
 
     return model;
@@ -2732,26 +2714,9 @@ static int svm_save_model_wrapper (const char *fname,
     int err = 0;
 
     fname = gretl_maybe_switch_dir(fname);
-
-#ifdef WIN32
-    if (utf8_encoded(fname)) {
-	/* try to convert to locale for libsvm */
-	gchar *tmp = g_win32_locale_filename_from_utf8(fname);
-
-	if (tmp == NULL) {
-	    err = E_FOPEN;
-	} else {
-	    err = svm_save_model(tmp, model);
-	    g_free(tmp);
-	}
-    } else {
-	err = svm_save_model(fname, model);
-    }
-#else
     err = svm_save_model(fname, model);
-#endif
 
-    return err;
+    return err ? E_FOPEN : 0;
 }
 
 static void report_result (int err, PRN *prn)
