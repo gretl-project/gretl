@@ -6568,7 +6568,7 @@ static NODE *mxtab_func (NODE *l, NODE *r, parser *p)
 
 static int type_translate_to_int (GretlType type)
 {
-    if (type == GRETL_TYPE_DOUBLE) {
+    if (gretl_scalar_type(type)) {
 	return 1;
     } else if (type == GRETL_TYPE_SERIES) {
 	return 2;

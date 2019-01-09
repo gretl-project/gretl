@@ -2412,9 +2412,9 @@ static int get_optional_int (gretl_bundle *b, const char *key,
     }
 }
 
-/* determine if @s is a recognized parameter key: we
+/* Determine if @s is a recognized parameter key: we
    do this so we can flag anything that may be a
-   mistyped key
+   mistyped key.
 */
 
 static int is_w_parm (const char *s)
@@ -2425,7 +2425,8 @@ static int is_w_parm (const char *s)
 	"foldvar", "consecutive", "yscale",
 	"search_only", "grid", "ranges_outfile",
 	"data_outfile", "ranges_infile", "model_outfile",
-	"model_infile", "plot", "range_format", NULL
+	"model_infile", "plot", "range_format", "refold",
+	"autoseed", NULL
     };
     int i;
 
@@ -3059,6 +3060,25 @@ static int sv_trim_missing (int *list, int fvar, DATASET *dset)
     return err;
 }
 
+/* If w->seed was automatic, and was actually used, save it
+   to the incoming bundle in case it may be of interest.
+*/
+
+static void maybe_save_auto_seed (sv_wrapper *w, gretl_bundle *b)
+{
+    if (gretl_bundle_has_key(b, "seed")) {
+	return; /* no, an incoming seed was specified */
+    } else if (gretl_bundle_has_key(b, "foldvar") ||
+	       gretl_bundle_has_key(b, "consecutive")) {
+	return; /* no, randomization of folds not employed */
+    } else if (gretl_bundle_has_key(b, "folds") ||
+	       gretl_bundle_has_key(b, "search") ||
+	       gretl_bundle_has_key(b, "grid")) {
+	/* OK, randomized folds employed */
+	gretl_bundle_set_int(b, "autoseed", w->seed);
+    }
+}
+
 int gretl_svm_driver (const int *list,
 		      gretl_bundle *bparams,
 		      gretl_bundle *bmodel,
@@ -3204,6 +3224,10 @@ int gretl_svm_driver (const int *list,
 
     if (!err && bprob != NULL) {
 	save_probs_to_bundle(&wrap, bprob);
+    }
+
+    if (!err && bparams != NULL) {
+	maybe_save_auto_seed(&wrap, bparams);
     }
 
     gretl_sv_data_destroy(prob, x_space);
