@@ -20,15 +20,17 @@ HANSL = hansl-primer.pdf
 PKGBOOK = pkgbook.pdf
 MPIDOC = gretl-mpi.pdf
 MIDASDOC = midas-gretl.pdf
+SVMDOC = gretl-svm.pdf
 KBD = gretl-keys.pdf
+
 ALTGUIDE = gretl-guide-a4.pdf
 ALTREF = gretl-ref-a4.pdf
 ALTHANSL = hansl-primer-a4.pdf
 ALTPKGBOOK = pkgbook-a4.pdf
 ALTMPIDOC = gretl-mpi-a4.pdf
 ALTMIDASDOC = midas-gretl-a4.pdf
+ALTSVMDOC = gretl-svm-a4.pdf
 ALTKBD = gretl-keys-a4.pdf
-SVMDOC = gretl-svm.pdf
 
 TEXSRC = cli.tex \
 	criteria.tex \
@@ -108,8 +110,8 @@ STYSRC = $(docsrc)/gretl.sty.in
 
 ALLSRC = $(wildcard $(docsrc)/tex/*.tex) $(STYSRC)
 
-all: $(GUIDE) $(REF) $(HANSL) $(PKGBOOK) $(MPIDOC) $(KBD) \
-	$(ALTGUIDE) $(ALTREF) $(ALTHANSL) $(ALTPKGBOOK) $(ALTMPIDOC) $(ALTKBD)
+all: $(GUIDE) $(REF) $(HANSL) $(PKGBOOK) $(MPIDOC) $(SVMDOC) $(KBD) \
+	$(ALTGUIDE) $(ALTREF) $(ALTHANSL) $(ALTPKGBOOK) $(ALTMPIDOC) $(ALTSVMDOC) $(ALTKBD)
 
 $(GUIDE): gretl-guide.tex links textables date.tex $(STYSRC) $(BIBSRC)
 	pdflatex $<
@@ -196,6 +198,12 @@ $(ALTMIDASDOC): midas-gretl-a4.tex links date.tex $(STYSRC)
 	pdflatex $<
 	pdflatex $<
 
+$(ALTSVMDOC): gretl-svm-a4.tex links $(STYSRC)
+	pdflatex $<
+	bibtex gretl-svm-a4
+	pdflatex $<
+	pdflatex $<
+
 $(ALTKBD): gretl-keys-a4.tex links $(STYSRC)
 	pdflatex $<
 
@@ -220,9 +228,9 @@ gretl-svm.tex:
 gretl-keys.tex:
 	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex/$@ . ; fi
 
-letter: $(GUIDE) $(REF) $(HANSL) $(PKGBOOK) $(MPIDOC) $(KBD)
+letter: $(GUIDE) $(REF) $(HANSL) $(PKGBOOK) $(MPIDOC) $(SVMDOC) $(KBD)
 
-a4: $(ALTGUIDE) $(ALTREF) $(ALTHANSL) $(ALTPKGBOOK) $(ALTMPIDOC) $(ALTKBD)
+a4: $(ALTGUIDE) $(ALTREF) $(ALTHANSL) $(ALTPKGBOOK) $(ALTMPIDOC) $(ALTSVMDOC) $(ALTKBD)
 
 gretl-guide-a4.tex: $(docsrc)/tex/gretl-guide.tex ../commands/us2a4
 	../commands/us2a4 < $< > $@
@@ -240,6 +248,9 @@ gretl-mpi-a4.tex: $(docsrc)/tex/gretl-mpi.tex ../commands/us2a4
 	../commands/us2a4 < $< > $@
 
 midas-gretl-a4.tex: $(docsrc)/tex/midas-gretl.tex ../commands/us2a4
+	../commands/us2a4 < $< > $@
+
+gretl-svm-a4.tex: $(docsrc)/tex/gretl-svm.tex ../commands/us2a4
 	../commands/us2a4 < $< > $@
 
 gretl-keys-a4.tex: $(docsrc)/tex/gretl-keys.tex ../commands/us2a4

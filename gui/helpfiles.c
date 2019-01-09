@@ -1997,7 +1997,8 @@ enum {
     GRETL_KEYS,
     HANSL_PRIMER,
     PKGBOOK,
-    GRETL_MPI
+    GRETL_MPI,
+    GRETL_SVM
 };
 
 static int get_writable_doc_path (char *path, const char *fname)
@@ -2126,6 +2127,10 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 	"gretl-mpi.pdf",
 	"gretl-mpi-a4.pdf"
     };
+    const char *gretlSVM_files[] = {
+	"gretl-svm.pdf",
+	"gretl-svm-a4.pdf"
+    };
     const char *fname;
     FILE *fp;
     int gotit = 0;
@@ -2135,7 +2140,8 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 	i = 0;
     }
 
-    if (code == GRETL_KEYS || code == HANSL_PRIMER || code == GRETL_MPI) {
+    if (code == GRETL_KEYS || code == HANSL_PRIMER ||
+	code == GRETL_MPI || code == GRETL_SVM) {
 	/* no (current) translations */
 	if (i > 1) i = 1;
     } else if (code == GRETL_GUIDE) {
@@ -2155,6 +2161,8 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 	fname = pkgbook_files[i];
     } else if (code == GRETL_MPI) {
 	fname = gretlMPI_files[i];
+    } else if (code == GRETL_SVM) {
+	fname = gretlSVM_files[i];
     } else if (code == GNUPLOT_REF) {
 	fname = "gnuplot.pdf";
     } else if (code == X12A_REF) {
@@ -2255,6 +2263,8 @@ void display_pdf_help (GtkAction *action)
 	    code = PKGBOOK;
 	} else if (!strcmp(aname, "gretlMPI")) {
 	    code = GRETL_MPI;
+	} else if (!strcmp(aname, "gretlSVM")) {
+	    code = GRETL_SVM;
 	}
     }
 
