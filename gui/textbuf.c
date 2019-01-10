@@ -1527,7 +1527,7 @@ void textview_insert_file (windata_t *vwin, const char *fname)
     }
 }
 
-static char *get_pkghelp_string (const char *key)
+static char *get_mnu_string (const char *key)
 {
     const char *p = strchr(key, ':');
 
@@ -1547,6 +1547,8 @@ static char *get_pkghelp_string (const char *key)
 	return "Check for addons";
     } else if (!strcmp(p, "Registry")) {
 	return "package registry";
+    } else if (!strcmp(p, "gretlSVM")) {
+	return "gretl + SVM";
     } else {
 	return (char *) p;
     }
@@ -1575,7 +1577,7 @@ static gboolean insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	    strcpy(tagname, "tag:guide");
 	}
     } else if (page == MNU_PAGE) {
-	show = get_pkghelp_string(text);
+	show = get_mnu_string(text);
 	strcpy(tagname, text);
     } else if (page == SCRIPT_PAGE || page == EXT_PAGE) {
 	*tagname = '\0';
@@ -1789,6 +1791,13 @@ static void open_menu_item (GtkTextTag *tag)
 
 	    if (action == NULL) {
 		action = gtk_action_new("Pkgbook", NULL, NULL, NULL);
+	    }
+	    display_pdf_help(action);
+	} else if (!strcmp(name, "Help:gretlSVM")) {
+	    static GtkAction *action;
+
+	    if (action == NULL) {
+		action = gtk_action_new("gretlSVM", NULL, NULL, NULL);
 	    }
 	    display_pdf_help(action);
 	}
