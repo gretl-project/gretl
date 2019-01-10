@@ -1151,15 +1151,15 @@ get_dist_entry_vector (int code, dist_t *tab, int d, double *x,
     switch (d) {
     case UNIFORM_DIST:
 	x[j] = getval(tab->entry[j], C_DBL); /* min */
-	if (na(x[j++])) return 1;
+	if (na(x[j])) return 1; else j++;
 	x[j] = getval(tab->entry[j], C_DBL); /* max */
-	if (na(x[j++])) return 1;
+	if (na(x[j])) return 1; else j++;
 	break;
     case NORMAL_DIST:
 	x[j] = getval(tab->entry[j], C_DBL); /* mean */
-	if (na(x[j++])) return 1;
+	if (na(x[j])) return 1; else j++;
 	x[j] = getval(tab->entry[j], C_POS_DBL); /* s.d. */
-	if (na(x[j++])) return 1;
+	if (na(x[j])) return 1; else j++;
 	break;
     case T_DIST:
     case CHISQ_DIST:
@@ -1175,19 +1175,19 @@ get_dist_entry_vector (int code, dist_t *tab, int d, double *x,
     case GAMMA_DIST: 
     case WEIBULL_DIST:
 	x[j] = getval(tab->entry[j], C_POS_DBL); /* shape */
-	if (na(x[j++])) return 1;
+	if (na(x[j])) return 1; else j++;
 	x[j] = getval(tab->entry[j], C_POS_DBL); /* scale */
-	if (na(x[j++])) return 1;
+	if (na(x[j])) return 1; else j++;
 	break;
     case BINOMIAL_DIST:
 	x[j] = getval(tab->entry[j], C_FRAC); /* prob */
-	if (na(x[j++])) return 1;
+	if (na(x[j])) return 1; else j++;
 	x[j] = getval(tab->entry[j], C_POS_INT); /* n */
 	if (x[j++] < 0) return 1;
 	break;
     case POISSON_DIST:
 	x[j] = getval(tab->entry[j], C_POS_DBL); /* mean */
-	if (na(x[j++])) return 1;
+	if (na(x[j])) return 1; else j++;
 	break;
     }
 
