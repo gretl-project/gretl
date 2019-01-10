@@ -10001,6 +10001,32 @@
       </description>
     </function>
 
+    <function name="svm" section="stats" output="series">
+      <fnargs>
+	<fnarg type="list">L</fnarg>
+	<fnarg type="bundle">bparms</fnarg>
+	<fnarg type="bundleref" optional="true">bmod</fnarg>
+	<fnarg type="bundleref" optional="true">bprob</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  This function enables the training of, and prediction based
+	  on, an SVM (Support Vector Machine) model, using LIBSVM as
+	  back-end. The list argument <argname>L</argname> should
+	  include the dependent variable followed by the independent
+	  variables and the <argname>bparms</argname> bundle is used
+	  to pass options to the SVM mechanism. The return value is a
+	  series holding the model's predictions.  The two optional
+	  bundle-pointer argument can be used to retrieve additional
+	  information after training and/or prediction.
+	</para>
+	<para>
+	  For details, please see the PDF documentation for
+	  <mnu>Help:gretlSVM</mnu>.
+	</para>
+      </description>
+    </function>
+
     <function name="tan" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
