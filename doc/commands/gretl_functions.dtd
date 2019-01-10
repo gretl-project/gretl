@@ -1,5 +1,5 @@
 <!--
-  DTD for gretl genr functions. Allin Cottrell 2008
+  DTD for gretl functions. Allin Cottrell 2008
  -->
 
 <!ENTITY ndash  "&#8211;">
@@ -78,7 +78,7 @@
                 lit | emphasis | book | quote | filename |
                 func | guideref | cmdref | fncref | tabref | 
                 footnote | argname | sub | sup | cite | seelist | 
-                by | url | cmd)*>
+                by | url | cmd | mnu)*>
 <!ATTLIST para
   context (tex | notex | both) "both"
 >
@@ -167,6 +167,7 @@
 <!ELEMENT emphasis (#PCDATA)>
 <!ELEMENT book     (#PCDATA)>
 <!ELEMENT url      (#PCDATA)>
+<!ELEMENT mnu      (#PCDATA)>
 <!ELEMENT quote    (#PCDATA | lit)*>
 <!ELEMENT filename (#PCDATA)>
 <!ELEMENT func     (#PCDATA)>
@@ -178,3 +179,8 @@
 <!ATTLIST repl
    quote (true | false) "false"
 >
+
+<!ATTLIST mnu
+   targ CDATA #IMPLIED
+>
+

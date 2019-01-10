@@ -223,6 +223,10 @@
    quote (true | false) "false"
 >
 
+<!ATTLIST mnu
+   targ CDATA #IMPLIED
+>
+
 <!ELEMENT by EMPTY>
 <!ATTLIST by
    r    CDATA #REQUIRED
