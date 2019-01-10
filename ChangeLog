@@ -5,6 +5,8 @@ version 2019a, in progress
 - "foreign" block with Julia: add --no-compile option
 - "xtab" command: support TeX output and add some more
   formatting options
+- SVM support: make this available on all platforms and
+  drop the requirement of separately installed libsvm
 
 2018-12-21 version 2018d
 - Internal representation of missing values: switch to
