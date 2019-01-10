@@ -10013,6 +10013,33 @@
       </description>
     </function>
 
+    <function name="svm" section="stats" output="series">
+      <fnargs>
+       <fnarg type="list">L</fnarg>
+       <fnarg type="bundle">param</fnarg>
+       <fnarg type="bundleref" optional="true">bmod</fnarg>
+       <fnarg type="bundleref" optional="true">bprob</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Questa funzione abilita il training di un modello SVM
+	  (Support Vector Machine) e le relative previsioni; il
+	  backend utilizzato è LIBSVM. La lista passata come argomento
+	  <argname>L</argname> deve includere la variabile dipendente,
+	  seguita dalle variabili indipendenti, mentre il bundle
+	  <argname>param</argname> è usato per passare opzioni alla
+	  SVM. La funzione restituisce una serie contenente le
+	  previsioni. I due parametri opzionali aggiuntivi sono
+	  puntatori a bundle per raccogliere informazioni aggiuntive
+	  sul training e/o la previsione.
+       </para>
+       <para>
+	 Per maggiori dettagli, consultare la documentazione PDF:
+	 <mnu>Help:gretlSVM</mnu> (in inglese).
+       </para>
+      </description>
+    </function>
+
     <function name="tan" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
