@@ -62,6 +62,13 @@ enum {
     W_REFOLD  = 1 << 9  /* folds differ across x-validation calls? */
 };
 
+enum {
+    REG_MSE = 1,
+    REG_MAD,
+    REG_ROUND_MAD,
+    REG_ROUND_MISS
+};
+
 struct sv_wrapper_ {
     int auto_type;
     int flags;
@@ -74,6 +81,7 @@ struct sv_wrapper_ {
     int predict;  /* are we doing (how much) prediction? */
     int nproc;    /* number of processes (MPI only ) */
     int rank;     /* "this" MPI rank, if applicable */
+    int regcrit;  /* regression optimality criterion */
     int do_probs; /* are we doing probability estimation? */
     double ymin;  /* min value of dependent variable */
     double ymax;  /* max value of dependent variable */
@@ -151,6 +159,7 @@ static void sv_wrapper_init (sv_wrapper *w, const DATASET *dset)
     w->predict = 2;
     w->nproc = 0;
     w->rank = -1;
+    w->regcrit = 0;
     w->do_probs = 0;
     w->ymin = 0.0;
     w->ymax = 0.0;
@@ -1317,6 +1326,8 @@ static int real_svm_predict (double *yhat,
     double ymean = 0.0;
     double TSS = 0.0;
     double SSR = 0.0;
+    double MAD = 0.0;
+    int misses = 0;
     double dev, yhi, yi;
     double *pi = NULL;
     sv_cell *x;
@@ -1390,10 +1401,19 @@ static int real_svm_predict (double *yhat,
 	}
 	yhat[dset->t1 + i] = yhi;
 	if (regression) {
+	    /* deviation from mean */
 	    dev = yi - ymean;
 	    TSS += dev * dev;
+	    /* actual minus predicted */
 	    dev = yi - yhi;
 	    SSR += dev * dev;
+	    if (w->regcrit == REG_ROUND_MISS) {
+		misses += yi != round(yhi);
+	    } else if (w->regcrit == REG_ROUND_MAD) {
+		MAD += fabs(yi - round(yhi));
+	    } else {
+		MAD += fabs(dev);
+	    }
 	}
     }
 
@@ -1408,8 +1428,17 @@ static int real_svm_predict (double *yhat,
     datastr = training ? "Training data" : "Test data";
 
     if (regression) {
-	pprintf(prn, "%s: MSE = %g, R^2 = %g\n", datastr,
-		SSR / prob->l, 1.0 - SSR / TSS);
+	MAD /= prob->l;
+	if (w->regcrit == REG_ROUND_MISS) {
+	    pprintf(prn, "%s: miss ratio = %g (MSE = %g, R^2 = %g)\n", datastr,
+		    misses / (double) prob->l, SSR / prob->l, 1.0 - SSR / TSS);
+	} else if (w->regcrit > REG_MSE) {
+	    pprintf(prn, "%s: MAD = %g (MSE = %g, R^2 = %g)\n", datastr,
+		    MAD, SSR / prob->l, 1.0 - SSR / TSS);
+	} else {
+	    pprintf(prn, "%s: MSE = %g, R^2 = %g (MAD = %g)\n", datastr,
+		    SSR / prob->l, 1.0 - SSR / TSS, MAD);
+	}
     } else {
 	pprintf(prn, "%s: correct predictions = %d (%.1f percent)\n", datastr,
 		n_correct, 100 * n_correct / (double) prob->l);
@@ -1561,7 +1590,7 @@ static int xvalidate_once (sv_data *prob,
     }
 
     if (doing_regression(parm)) {
-	double yi, yhi, dev, MSE = 0;
+	double yi, yhi, dev, minimand = 0;
 
 	for (i=0; i<prob->l; i++) {
 	    yi = prob->y[i];
@@ -1571,13 +1600,24 @@ static int xvalidate_once (sv_data *prob,
 		yhi = unscale_y(yhi, w);
 	    }
 	    dev = yi - yhi;
-	    MSE += dev * dev;
+	    if (w->regcrit == REG_ROUND_MISS) {
+		minimand += (yi != round(yhi));
+	    } else if (w->regcrit == REG_ROUND_MAD) {
+		minimand += fabs(yi - round(yhi));
+	    } else if (w->regcrit == REG_MAD) {
+		minimand += fabs(dev);
+	    } else {
+		minimand += dev * dev;
+	    }
 	}
-	MSE /= n;
+	minimand /= n;
 	if (prn != NULL) {
-	    print_xvalid_iter(parm, w, MSE, "MSE", iter, prn);
+	    const char *s = (w->regcrit == REG_MSE)? "MSE" :
+		(w->regcrit == REG_ROUND_MISS)? "miss ratio" : "MAD";
+
+	    print_xvalid_iter(parm, w, minimand, s, iter, prn);
 	}
-	*crit = -MSE;
+	*crit = -minimand;
     } else {
 	/* classification */
 	double pc_correct = 0;
@@ -2437,7 +2477,7 @@ static int is_w_parm (const char *s)
 	"search_only", "grid", "ranges_outfile",
 	"data_outfile", "ranges_infile", "model_outfile",
 	"model_infile", "plot", "range_format", "refold",
-	"autoseed", NULL
+	"autoseed", "regcrit", NULL
     };
     int i;
 
@@ -2462,7 +2502,7 @@ static int check_user_params (gretl_array *A)
 
     for (i=0; i<np; i++) {
 	if (!is_w_parm(pstrs[i]) && !is_sv_parm(pstrs[i])) {
-	    gretl_errmsg_sprintf("Unrecognized parameter '%s'",
+	    gretl_errmsg_sprintf("svm: unrecognized parameter '%s'",
 				 pstrs[i]);
 	    err = E_BADOPT;
 	    break;
@@ -2600,6 +2640,15 @@ static int read_params_bundle (gretl_bundle *bparm,
 	if (bmod != NULL) {
 	    wrap->flags |= W_SVPARM;
 	    no_savemod = 1;
+	}
+    }
+
+    if (get_optional_int(bparm, "regcrit", &ival, &err) && ival != 0) {
+	if (ival < REG_MSE || ival > REG_ROUND_MISS) {
+	    gretl_errmsg_sprintf("svm: invalid regcrit value %d", ival);
+	    err = E_INVARG;
+	} else {
+	    wrap->regcrit = ival;
 	}
     }
 
@@ -2819,6 +2868,7 @@ static int do_save_model (sv_model *model, sv_wrapper *w,
 
 static int check_svm_params (sv_data *data,
 			     sv_parm *parm,
+			     sv_wrapper *w,
 			     PRN *prn)
 {
     const char *msg = svm_check_parameter(data, parm);
@@ -2840,6 +2890,11 @@ static int check_svm_params (sv_data *data,
 	gretl_errmsg_set("svm: probability estimates not supported "
 			 "for this specification");
 	err = E_INVARG;
+    } else if (!doing_regression(parm) && w->regcrit > 0) {
+	pputs(prn, "problem\n");
+	gretl_errmsg_set("svm: the MAD criterion can only be used in "
+			 "regression mode");
+	err = E_INVARG;
     } else if (prn != NULL) {
 	pputs(prn, "OK\n");
 	pprintf(prn, "svm_type %s, kernel_type %s\n",
@@ -2853,6 +2908,10 @@ static int check_svm_params (sv_data *data,
 	    pprintf(prn, ", nu = %g\n", parm->nu);
 	}
 	pputc(prn, '\n');
+    }
+
+    if (!err && doing_regression(parm) && w->regcrit == 0) {
+	w->regcrit = REG_MSE;
     }
 
     return err;
@@ -3163,7 +3222,7 @@ int gretl_svm_driver (const int *list,
 	}
 	pputs(prn, "OK\n");
 	/* we're now ready to run a full check on @parm */
-	err = check_svm_params(prob, &parm, prn);
+	err = check_svm_params(prob, &parm, &wrap, prn);
 	if (!err && parm.probability) {
 	    wrap.do_probs = 1;
 	}
