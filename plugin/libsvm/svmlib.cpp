@@ -26,6 +26,7 @@ extern "C" void gretl_pop_c_numeric_locale (void);
 extern "C" unsigned int gretl_alt_rand_int (void);
 
 #define svrand gretl_alt_rand_int
+// #define svrand rand
 
 #ifndef min
 template <class T> static inline T min(T x, T y) { return (x<y)?x:y; }
@@ -1732,6 +1733,7 @@ static void multiclass_probability(int k, double **r, double *p)
 }
 
 // Cross-validation decision values for probability estimates
+
 static void svm_binary_svc_probability(const svm_problem *prob,
 				       const svm_parameter *param,
 				       double Cp, double Cn,
@@ -1814,6 +1816,7 @@ static void svm_binary_svc_probability(const svm_problem *prob,
 }
 
 // Return parameter of a Laplace distribution
+
 static double svm_svr_probability(const svm_problem *prob,
 				  const svm_parameter *param)
 {
@@ -2155,8 +2158,9 @@ svm_model *svm_train(const svm_problem *prob, const svm_parameter *param)
 
 // Stratified cross validation
 
-void svm_cross_validation(const svm_problem *prob, const svm_parameter *param,
-			  int nr_fold, double *target)
+void svm_cross_validation (const svm_problem *prob,
+			   const svm_parameter *param,
+			   int nr_fold, double *target)
 {
     int i;
     int *fold_start;
@@ -2178,6 +2182,7 @@ void svm_cross_validation(const svm_problem *prob, const svm_parameter *param,
 	int *start = NULL;
 	int *label = NULL;
 	int *count = NULL;
+
 	svm_group_classes(prob, &nr_class, &label, &start, &count, perm);
 
 	// random shuffle and then data grouped by fold using the array perm
@@ -2185,7 +2190,7 @@ void svm_cross_validation(const svm_problem *prob, const svm_parameter *param,
 	int c;
 	int *index = Malloc(int, l);
 	for (i=0; i<l; i++)
-	    index[i]=perm[i];
+	    index[i] = perm[i];
 	for (c=0; c<nr_class; c++)
 	    for (i=0; i<count[c]; i++) {
 		int j = i+svrand()%(count[c]-i);
@@ -2194,7 +2199,7 @@ void svm_cross_validation(const svm_problem *prob, const svm_parameter *param,
 	for (i=0; i<nr_fold; i++) {
 	    fold_count[i] = 0;
 	    for (c=0; c<nr_class; c++)
-		fold_count[i]+=(i+1)*count[c]/nr_fold-i*count[c]/nr_fold;
+		fold_count[i] += (i+1)*count[c]/nr_fold-i*count[c]/nr_fold;
 	}
 	fold_start[0] = 0;
 	for (i=1; i<=nr_fold; i++)
@@ -2217,13 +2222,14 @@ void svm_cross_validation(const svm_problem *prob, const svm_parameter *param,
 	free(index);
 	free(fold_count);
     } else {
-	for (i=0; i<l; i++) perm[i]=i;
+	for (i=0; i<l; i++) perm[i] = i;
 	for (i=0; i<l; i++) {
 	    int j = i+svrand()%(l-i);
 	    swap(perm[i], perm[j]);
 	}
-	for (i=0; i<=nr_fold; i++)
-	    fold_start[i]=i*l/nr_fold;
+	for (i=0; i<=nr_fold; i++) {
+	    fold_start[i] = i*l/nr_fold;
+	}
     }
 
     for (i=0; i<nr_fold; i++) {
@@ -2232,11 +2238,11 @@ void svm_cross_validation(const svm_problem *prob, const svm_parameter *param,
 	int j, k;
 	struct svm_problem subprob;
 
-	subprob.l = l-(end-begin);
+	subprob.l = l - (end-begin);
 	subprob.x = Malloc(struct svm_node*, subprob.l);
 	subprob.y = Malloc(double, subprob.l);
 
-	k=0;
+	k = 0;
 	for (j=0; j<begin; j++) {
 	    subprob.x[k] = prob->x[perm[j]];
 	    subprob.y[k] = prob->y[perm[j]];
@@ -2250,14 +2256,16 @@ void svm_cross_validation(const svm_problem *prob, const svm_parameter *param,
 	struct svm_model *submodel = svm_train(&subprob, param);
 	if (param->probability &&
 	    (param->svm_type == C_SVC || param->svm_type == NU_SVC)) {
-	    double *prob_estimates=Malloc(double, svm_get_nr_class(submodel));
+	    double *prob_estimates = Malloc(double, svm_get_nr_class(submodel));
 	    for (j=begin; j<end; j++)
 		target[perm[j]] = svm_predict_probability(submodel, prob->x[perm[j]],
 							  prob_estimates);
 	    free(prob_estimates);
-	} else
-	    for (j=begin; j<end; j++)
+	} else {
+	    for (j=begin; j<end; j++) {
 		target[perm[j]] = svm_predict(submodel, prob->x[perm[j]]);
+	    }
+	}
 	svm_free_and_destroy_model(&submodel);
 	free(subprob.x);
 	free(subprob.y);
