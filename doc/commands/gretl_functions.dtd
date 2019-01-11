@@ -181,6 +181,6 @@
 >
 
 <!ATTLIST mnu
-   targ CDATA #IMPLIED
+   targ CDATA #REQUIRED
 >
 

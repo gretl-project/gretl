@@ -1527,31 +1527,33 @@ void textview_insert_file (windata_t *vwin, const char *fname)
     }
 }
 
-static char *get_mnu_string (const char *key)
+static gchar *get_mnu_string (const char *key)
 {
-    const char *p = strchr(key, ':');
+    const char *s;
+    gchar *ret;
 
-    if (p != NULL) {
-	p++;
+    if (!strcmp(key, "LocalGfn")) {
+	s = _("On _local machine...");
+    } else if (!strcmp(key, "RemoteGfn")) {
+	s = _("On _server...");
+    } else if (!strcmp(key, "Pkgbook")) {
+	s = _("_Function package guide");
+    } else if (!strcmp(key, "SFAddons")) {
+	s = _("Check for _addons");
+    } else if (!strcmp(key, "Registry")) {
+	s = _("Package registry");
+    } else if (!strcmp(key, "gretlSVM")) {
+	s = _("gretl + SVM");
     } else {
-	p = key;
+	s = key;
     }
 
-    if (!strcmp(p, "LocalGfn")) {
-	return "On local machine";
-    } else if (!strcmp(p, "RemoteGfn")) {
-	return "On server";
-    } else if (!strcmp(p, "Pkgbook")) {
-	return "Function package guide";
-    } else if (!strcmp(p, "SFAddons")) {
-	return "Check for addons";
-    } else if (!strcmp(p, "Registry")) {
-	return "package registry";
-    } else if (!strcmp(p, "gretlSVM")) {
-	return "gretl + SVM";
-    } else {
-	return (char *) p;
-    }
+    ret = g_strdup(s);
+
+    gretl_delchar('_', ret);
+    gretl_delchar('.', ret);
+
+    return ret;
 }
 
 #define TAGLEN 128
@@ -1563,7 +1565,6 @@ static gboolean insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
     GtkTextTagTable *tab = gtk_text_buffer_get_tag_table(tbuf);
     GtkTextTag *tag;
     gchar *show = NULL;
-    int free_show = 0;
     gchar tagname[TAGLEN];
 
     if (page == GUIDE_PAGE) {
@@ -1572,7 +1573,6 @@ static gboolean insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	if (p != NULL) {
 	    show = g_strndup(text, p - text);
 	    strcpy(tagname, p + 1);
-	    free_show = 1;
 	} else {
 	    strcpy(tagname, "tag:guide");
 	}
@@ -1624,9 +1624,7 @@ static gboolean insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
 
     if (show != NULL) {
 	gtk_text_buffer_insert_with_tags(tbuf, iter, show, -1, tag, NULL);
-	if (free_show) {
-	    g_free(show);
-	}
+	g_free(show);
     } else {
 	gtk_text_buffer_insert_with_tags(tbuf, iter, text, -1, tag, NULL);
     }
@@ -1778,26 +1776,20 @@ static void open_menu_item (GtkTextTag *tag)
     g_object_get(G_OBJECT(tag), "name", &name, NULL);
 
     if (name != NULL) {
-	if (!strcmp(name, "PkgHelp:RemoteGfn")) {
+	if (!strcmp(name, "RemoteGfn")) {
 	    display_files(REMOTE_FUNC_FILES, NULL);
-	} else if (!strcmp(name, "PkgHelp:LocalGfn")) {
+	} else if (!strcmp(name, "LocalGfn")) {
 	    display_files(FUNC_FILES, NULL);
-	} else if (!strcmp(name, "PkgHelp:SFAddons")) {
+	} else if (!strcmp(name, "SFAddons")) {
 	    display_files(REMOTE_ADDONS, NULL);
-	} else if (!strcmp(name, "PkgHelp:Registry")) {
+	} else if (!strcmp(name, "Registry")) {
 	    display_files(PKG_REGISTRY, NULL);
-	} else if (!strcmp(name, "PkgHelp:Pkgbook")) {
+	} else {
+	    /* should be a PDF help file */
 	    static GtkAction *action;
 
 	    if (action == NULL) {
-		action = gtk_action_new("Pkgbook", NULL, NULL, NULL);
-	    }
-	    display_pdf_help(action);
-	} else if (!strcmp(name, "Help:gretlSVM")) {
-	    static GtkAction *action;
-
-	    if (action == NULL) {
-		action = gtk_action_new("gretlSVM", NULL, NULL, NULL);
+		action = gtk_action_new(name, NULL, NULL, NULL);
 	    }
 	    display_pdf_help(action);
 	}

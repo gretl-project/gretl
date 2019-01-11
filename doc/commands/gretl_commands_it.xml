@@ -7289,8 +7289,8 @@
 	modalità zip ed esiste un file gfn precedente.
       </para>
       <para>
-	Per maggiori dettagli, consultare la <book>Gretl Function
-	Package Guide</book>.
+	Per maggiori dettagli, consultare <mnu targ="Pkgbook">Guida ai
+	pacchetti</mnu>.
       </para>
       
     </description>
@@ -9243,26 +9243,29 @@
 	scaricati alla bisogna (ad esempio, selezionando la voce di
 	menu /Modello/Serie Storiche/GARCH variants, gretl scaricherà
 	l'Addon <lit>gig</lit> (GARCH in gretl). Per verificare se gli
-	Addons sono aggiornati, usare <mnu>PkgHelp:SFAddons</mnu> nel
-	menu Aiuto.
+	Addons sono aggiornati, usare <mnu targ="SFAddons">Controlla
+	disponibilità componenti aggiuntivi</mnu> nel menu Aiuto.
       </para>
       <para>
 	La lista dei pacchetti contibuiti installati è disponibile
-	usando la voce di menu <mnu>PkgHelp:LocalGfn</mnu>, e se si è
-	collegati alla rete la lista di tutti quelli disponibili è
-	visulaizzabile tramite <mnu>PkgHelp:RemoteGfn</mnu>. Entrambi
-	si trovano sotto /File/Pacchetti di funzioni.
+	usando la voce di menu <mnu targ="LocalGfn">Sule sistema
+	locale</mnu>, e se si è collegati alla rete la lista di tutti
+	quelli disponibili è visulaizzabile tramite <mnu
+	targ="RemoteGfn">Sul server</mnu>. Entrambi si trovano sotto
+	/File/Pacchetti di funzioni.
       </para>
       <para>
 	Diversi pacchetti offrono l'opzione di attaccarsi al menu
 	dell'interfaccia grafica. Per ispezionare questa funzionalità,
-	usare <mnu>PkgHelp:Registry</mnu> (accesso via il bottone
-	delle preferenze nella lista dei pacchetti installati).
+	usare <mnu targ="Registry">registro del pacchetto</mnu>
+	(accesso via il bottone delle preferenze nella lista dei
+	pacchetti installati).
       </para>
       <para>
 	Per più dettagli sull'installazione e il funzionamento dei
-	pacchetti, si veda <mnu>PkgHelp:Pkgbook</mnu> (sotto il menu
-	Aiuto). Questa guida spiega anche come scriverne di propri.
+	pacchetti, si veda <mnu targ="Pkgbook">Guida ai
+	pacchetti</mnu> (sotto il menu Aiuto). Questa guida spiega
+	anche come scriverne di propri.
       </para>
     </description>
   </command>

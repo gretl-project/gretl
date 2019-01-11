@@ -10022,7 +10022,7 @@
 	</para>
 	<para>
 	  For details, please see the PDF documentation for
-	  <mnu>Help:gretlSVM</mnu>.
+	  <mnu targ="gretlSVM">gretl + SVM</mnu>.
 	</para>
       </description>
     </function>

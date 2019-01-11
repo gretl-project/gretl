@@ -545,9 +545,12 @@
   <xsl:choose>
     <xsl:when test="$fmt='pango'">
       <xsl:text>&lt;@mnu="</xsl:text>
-      <xsl:apply-templates/>
+      <xsl:value-of select="@targ"/>
       <xsl:text>"&gt;</xsl:text>
     </xsl:when>
+    <xsl:otherwise>
+      <xsl:apply-templates/>
+    </xsl:otherwise>
   </xsl:choose>
 </xsl:template>
 

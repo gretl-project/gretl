@@ -7533,8 +7533,9 @@
 	un archivo gfn que ya existía.
       </para>
       <para>
-	Para obtener más detalles sobre todo esto, consulta la <mnu>PkgHelp:Pkgbook</mnu>
-	(bajo el menú Ayuda).
+	Para obtener más detalles sobre todo esto, consulta la <mnu
+	targ="Pkgbook">Guía de los paquetes</mnu> (bajo el menú
+	Ayuda).
       </para>
     </description>
 
@@ -9597,26 +9598,30 @@
 	elemento del menú /Modelo/Series temporales/GARCH, entonces Gretl
 	va a descargar el 'Añadido' <lit>gig</lit> (GARCH in Gretl). Puedes
 	verificar que tus 'Añadidos' están actualizados mediante
-	<mnu>PkgHelp:SFAddons</mnu> en el menú Ayuda.
+	<mnu targ="SFAddons">Revisar complementos</mnu> en el menú Ayuda.
       </para>
       <para>
-	Puedes echar un vistazo a los paquetes de contribuciones instalados en
-	tu ordenador mediante el elemento del menú <mnu>PkgHelp:LocalGfn</mnu>
-	y, si estás conectado a la red, puedes acceder a una lista de paquetes
-	disponibles mediante el elemento <mnu>PkgHelp:RemoteGfn</mnu>. Ambos
-	elementos se encuentran bajo el elemento /Archivo/Paquetes de funciones.
+	Puedes echar un vistazo a los paquetes de contribuciones
+	instalados en tu ordenador mediante el elemento del menú <mnu
+	targ="LocalGfn">En la máquina local</mnu> y, si estás
+	conectado a la red, puedes acceder a una lista de paquetes
+	disponibles mediante el elemento <mnu targ="RemoteGfn">En el
+	servidor</mnu>. Ambos elementos se encuentran bajo el elemento
+	/Archivo/Paquetes de funciones.
       </para>
       <para>
-	Muchos paquetes proponen agregarse por sí mismos a los menús de la Interface
-	Gráfica de Usuario (GUI). Puedes revisar estas anexiones mediante
-	<mnu>PkgHelp:Registry</mnu> (accede mediante el botón de Preferencias
-	en el navegador para paquetes instalados).
+	Muchos paquetes proponen agregarse por sí mismos a los menús
+	de la Interface Gráfica de Usuario (GUI). Puedes revisar estas
+	anexiones mediante <mnu targ="Registry">registro de
+	paquetes</mnu> (accede mediante el botón de Preferencias en el
+	navegador para paquetes instalados).
       </para>
       <para>
-	Para obtener detalles completos sobre la instalación y el trabajo con
-	paquetes de funciones, consulta <mnu>PkgHelp:Pkgbook</mnu> (bajo
-	el menú Ayuda). Esta guía también contiene detalles sobre cómo escribir
-	paquetes de funciones.
+	Para obtener detalles completos sobre la instalación y el
+	trabajo con paquetes de funciones, consulta <mnu
+	targ="Pkgbook">Guía de los paquetes</mnu> (bajo el menú
+	Ayuda). Esta guía también contiene detalles sobre cómo
+	escribir paquetes de funciones.
       </para>
     </description>
   </command>

@@ -7533,8 +7533,8 @@
 	file is used.
       </para>
       <para>
-	For details on all of this, see the <mnu>PkgHelp:Pkgbook</mnu>
-	(under the Help menu).
+	For details on all of this, see <mnu targ="Pkgbook">the
+	Function Package Guide</mnu>.
       </para>
     </description>
 
@@ -9596,27 +9596,28 @@
 	they are downloaded on demand (for example, if you select the
 	menu item /Model/Time series/GARCH variants, gretl will
 	download the <lit>gig</lit> (GARCH in gretl) Addon. You can
-	check that your Addons are up to date via
-	<mnu>PkgHelp:SFAddons</mnu> in the Help menu.
+	check that your Addons are up to date via <mnu
+	targ="SFAddons">Check for addons</mnu> in the Help menu.
       </para>
       <para>
 	You can browse the contributed packages installed on your
-	computer via the menu item <mnu>PkgHelp:LocalGfn</mnu>, and
-	if you are online you can access a listing of available
-	packages via the item <mnu>PkgHelp:RemoteGfn</mnu>. Both
-	items are found under /File/Function packages.
+	computer via the menu item <mnu targ="LocalGfn">On local
+	machine</mnu>, and if you are online you can access a listing
+	of available packages via the item <mnu targ="RemoteGfn">On
+	server</mnu>. Both items are found under /File/Function
+	packages.
       </para>
       <para>
 	Many packages offer to attach themselves to GUI menus. You can
-	inspect these attachments via the <mnu>PkgHelp:Registry</mnu>
-	(access via the Preferences button in the browser for
-	installed packages).
+	inspect these attachments via the <mnu
+	targ="Registry">function package registry</mnu> (access via
+	the Preferences button in the browser for installed packages).
       </para>
       <para>
 	For full details on installing and working with function
-	packages, see the <mnu>PkgHelp:Pkgbook</mnu> (under the Help
-	menu). This guide also contains details on writing function
-	packages.
+	packages, see <mnu targ="Pkgbook">the Function package
+	guide</mnu> (under the Help menu). This guide also contains
+	details on writing function packages.
       </para>
     </description>
   </command>
