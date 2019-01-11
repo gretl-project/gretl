@@ -1358,6 +1358,7 @@ static void get_random (GtkWidget *w, CalcChild *child)
     const char *vname;
     double x[2] = {0};
     int i, d, j = 0;
+    int err;
 
     i = gtk_notebook_get_current_page(GTK_NOTEBOOK(child->book));
     d = dist_from_page(child->code, i);
@@ -1423,7 +1424,15 @@ static void get_random (GtkWidget *w, CalcChild *child)
 
     gretl_pop_c_numeric_locale();
 
-    calc_finish_genr();
+    err = calc_finish_genr();
+
+    /* Close the dialog. If we don't it may not be apparent that
+       the random series has been generated OK, since the dialog
+       likely sits on top of the main window.
+    */
+    if (!err) {
+	gtk_widget_destroy(child->dlg);
+    }
 }
 
 static void print_pv (PRN *prn, double p1, double p2)
