@@ -59,7 +59,8 @@ enum {
     W_FOLDVAR = 1 << 6, /* caller-supplied folds variable? */
     W_YSCALE  = 1 << 7, /* scaling the dependent var? */
     W_CONSEC  = 1 << 8, /* using consective folds? */
-    W_REFOLD  = 1 << 9  /* folds differ across x-validation calls? */
+    W_REFOLD  = 1 << 9, /* folds differ across x-validation calls? */
+    W_INTDEP  = 1 << 10 /* dependent variable is integer-valued */
 };
 
 enum {
@@ -1149,6 +1150,7 @@ static int sv_data_fill (sv_data *prob,
     int i, j, s, t, idx;
     int vf = 0, pos = 0;
     int vi = list[1];
+    int all_ints = 0;
     int k = w->k;
 
 #if DATA_DEBUG
@@ -1156,18 +1158,24 @@ static int sv_data_fill (sv_data *prob,
 #endif
 
     /* deal with the LHS variable */
-    if (pass == 1 &&
-	(gretl_isdummy(dset->t1, dset->t2, dset->Z[vi]) ||
-	 series_is_coded(dset, vi))) {
-	/* classification, not regression */
-	w->auto_type = C_SVC;
+    if (pass == 1) {
+	if (gretl_isdummy(dset->t1, dset->t2, dset->Z[vi]) ||
+	    series_is_coded(dset, vi)) {
+	    /* classification, not regression */
+	    w->auto_type = C_SVC;
+	}
+	all_ints = 1;
     }
+
     for (i=0, t=dset->t1; t<=dset->t2; t++, i++) {
 	yt = dset->Z[vi][t];
         if (w->flags & W_YSCALE) {
 	    prob->y[i] = scale_y(yt, w);
 	} else {
 	    prob->y[i] = yt;
+	}
+	if (all_ints && prob->y[i] != floor(prob->y[i])) {
+	    all_ints = 0;
 	}
     }
 
@@ -1177,6 +1185,10 @@ static int sv_data_fill (sv_data *prob,
 	    /* record the ID of the folds series */
 	    vf = list[list[0]];
 	}
+    }
+
+    if (pass == 1 && all_ints) {
+	w->flags |= W_INTDEP;
     }
 
     /* retrieve the global x-scaling limits */
@@ -2892,8 +2904,13 @@ static int check_svm_params (sv_data *data,
 	err = E_INVARG;
     } else if (!doing_regression(parm) && w->regcrit > 0) {
 	pputs(prn, "problem\n");
-	gretl_errmsg_set("svm: the MAD criterion can only be used in "
-			 "regression mode");
+	gretl_errmsg_sprintf("svm: cross validation criterion %d not applicable",
+			     w->regcrit);
+	err = E_INVARG;
+    } else if (w->regcrit > 2 && !(w->flags & W_INTDEP)) {
+	pputs(prn, "problem\n");
+	gretl_errmsg_sprintf("svm: cross validation criterion %d not applicable",
+			     w->regcrit);
 	err = E_INVARG;
     } else if (prn != NULL) {
 	pputs(prn, "OK\n");

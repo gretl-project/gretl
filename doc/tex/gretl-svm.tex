@@ -8,7 +8,7 @@
 
 \definecolor{steel}{rgb}{0.03,0.20,0.45}
 
-\hypersetup{pdftitle={Gretl + libsvm},
+\hypersetup{pdftitle={gretl + SVM},
             pdfauthor={Allin Cottrell},
             colorlinks=true,
             linkcolor=blue,
@@ -24,9 +24,8 @@
 \setlength{\parskip}{1ex}
 \setcounter{secnumdepth}{2}
 
-\title{Gretl + libsvm}
+\title{gretl + SVM}
 \author{Allin Cottrell}
-%% \date{August 23, 2017}
 \maketitle
 
 \section{Introduction}
@@ -560,9 +559,10 @@ the testing data. So the recommended procedure is:
 \item Run a line or grid search over ranges of values for one or more
   of the above-mentioned parameters, on each iteration calculating a
   suitable figure of merit via cross validation.
-\item Thereby identify the parameter value(s) that produce the
-  best cross-validation results (maximum percentage of correct
-  predictions for classification, minimum MSE for regression).
+\item Thereby identify the parameter value(s) that produce the best
+  cross-validation results (the maximum percentage of correct
+  predictions for classification and, by default, minimum MSE for
+  regression---but see section~\ref{sec:regcrit} below).
 \item Use the optimized parameters to train a model on the full
   training dataset, and then use this model to generate predictions
   for the testing set.
@@ -578,16 +578,17 @@ shown in Table~\ref{tab:xvalid}.
 \begin{table}[htbp]
   \centering
   \begin{tabular}{lll}
-  & \textit{key} & \textit{type and effect} \\[2pt]
+  & \textit{key} & \textit{type and effect} \\[4pt]
    & \texttt{folds} & integer $\geq 2$: number of folds (default 5) \\
   \textit{or} & \texttt{foldvar} & 0/1: flags inclusion of a folds variable
-    (see text) \\[2pt]
+    (see text) \\[4pt]
    & \texttt{search} & 0/1: parameter search using default grid \\
- \textit{or} & \texttt{grid} & matrix: user-specified grid \\[2pt]
+ \textit{or} & \texttt{grid} & matrix: user-specified grid \\[4pt]
     & \texttt{search\_only} & 0/1: see text \\
     & \texttt{contiguous} & 0/1: see section~\ref{sec:user-folds} \\
     & \texttt{seed} & integer: see section~\ref{sec:random-folds} \\
-    & \texttt{refold} & 0/1: see section~\ref{sec:random-folds}
+    & \texttt{refold} & 0/1: see section~\ref{sec:random-folds} \\
+    & \texttt{regcrit} & integer: see section~\ref{sec:regcrit}
   \end{tabular}
   \caption{Cross-validation options in \texttt{svm} parameter bundle}
   \label{tab:xvalid}
@@ -750,6 +751,33 @@ This specifies an exponential search for $C$ (from 1 to 8, doubling at
 each step), a clamped value for $\gamma$ and a linear search for
 $\nu$ (0.5, 0.55,\dots,0.7).
 
+\subsection{Cross validation criteria}
+\label{sec:regcrit}
+
+As mentioned above, cross validation results in the selection of a set
+of parameter values that are deemed ``best'' on some criterion. In the
+case of classification the optimality criterion is always the
+proportion of correctly classified cases but in SVM regression a
+choice is offered, via the optional \texttt{regcrit} parameter. This
+must be an integer from 1 to 4, with 1 being the default, as follows:
+%
+\begin{center}
+  \begin{tabular}{ll}
+    1 & Minimum MSE (Mean Squared Error) \\
+    2 & Minimum MAD (Mean Absolute Deviation) \\
+    3 & Minimum rounded MAD \\
+    4 & Minimum rounded misses\\
+  \end{tabular}
+\end{center}
+%
+By ``rounded MAD'' we mean the MAD calculated using the absolute
+difference between the actual value of the dependent variable and the
+model's prediction rounded to the nearest integer. And by ``rounded
+misses'' we mean cases where the rounded prediction does not equal the
+actual dependent variable. Options 3 and 4 are applicable only when
+the dependent variable is integer-valued; an error is flagged if this
+condition is not met.
+
 \subsection{User-specified folds}
 \label{sec:user-folds}
 
@@ -826,6 +854,12 @@ this value from the parameter bundle under the key
 \texttt{autoseed}. (This item is added to the bundle only if random
 folding is performed and no \texttt{seed} value is specified on
 input.)
+
+One further note: when pseudo-random numbers are required in the
+context of \texttt{svm} they are drawn from an independent instance of
+\textsf{SFMT}, distinct from the one governed by the \texttt{set seed}
+command and employed by functions such as \texttt{normal()} and
+\texttt{randgen()}.
 
 \subsection{More on SV regression}
 \label{sec:svr}
