@@ -4925,7 +4925,9 @@
 
       <para>
 	If you want to generate repeatable sequences of pseudo-random
-	numbers, you can set the seed, under the Tools menu.
+	numbers, you can set the seed via the item <mnu
+	targ="SetSeed">Seed for random numbers</mnu>, under the Tools
+	menu.
       </para>
 
     </description>

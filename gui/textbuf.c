@@ -1544,6 +1544,8 @@ static gchar *get_mnu_string (const char *key)
 	s = _("Package registry");
     } else if (!strcmp(key, "gretlSVM")) {
 	s = _("gretl + SVM");
+    } else if (!strcmp(key, "SetSeed")) {
+	s = _("_Seed for random numbers");
     } else {
 	s = key;
     }
@@ -1784,6 +1786,8 @@ static void open_menu_item (GtkTextTag *tag)
 	    display_files(REMOTE_ADDONS, NULL);
 	} else if (!strcmp(name, "Registry")) {
 	    display_files(PKG_REGISTRY, NULL);
+	} else if (!strcmp(name, "SetSeed")) {
+	    rand_seed_dialog();
 	} else {
 	    /* should be a PDF help file */
 	    static GtkAction *action;
