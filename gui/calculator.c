@@ -1426,11 +1426,11 @@ static void get_random (GtkWidget *w, CalcChild *child)
 
     err = calc_finish_genr();
 
-    /* Close the dialog. If we don't it may not be apparent that
-       the random series has been generated OK, since the dialog
-       likely sits on top of the main window.
-    */
     if (!err) {
+	int v = current_series_index(dataset, vname);
+
+	gtk_widget_hide(child->dlg);
+	infobox_printf(_("Generated series %s (ID %d)"), vname, v);
 	gtk_widget_destroy(child->dlg);
     }
 }
