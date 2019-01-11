@@ -1775,6 +1775,22 @@
       </description>
     </function>
 
+    <function name="brename" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="bundle">B</fnarg>
+	<fnarg type="string">vellachave</fnarg>
+	<fnarg type="string">novachave</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Se o feixe <argname>B</argname> contén un elemento que teña
+	  a chave <argname>vellachave</argname>, esa súa chave trócase
+	  a <argname>novachave</argname>; doutro xeito, amósase un fallo.
+	  A función devolve un 0 cando se fai correctamente o cambio de nome.
+	</para>
+      </description>
+    </function>
+
     <function name="bwfilt" section="filters" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
@@ -4266,6 +4282,32 @@
       </description>
     </function>
 
+    <function name="hyp2f1" section="math" output="scalar-or-matrix">
+      <fnargs>
+	<fnarg type="scalar">a</fnarg>
+	<fnarg type="scalar">b</fnarg>
+	<fnarg type="scalar">c</fnarg>
+	<fnarg type="scalar-or-matrix">x</fnarg>
+      </fnargs>
+      <description>
+	<para context="notex">
+	  Devolve o valor da función hiperxeométrica de Gauss para o
+	  argumento real <argname>x</argname>.
+	</para>
+	<para context="tex">
+	  Devolve o valor da función hiperxeométrica de Gauss
+    <math>{}_2F_1(a,b;c;z) = \sum_{n=0}^\infty \frac{(a)_n (b)_n}{(c)_n} \frac{z^n}{n!}.</math>
+    para o argumento real
+	  <argname>x</argname>.
+	</para>
+	<para>
+	  Cando <argname>x</argname> é un escalar, o valor que se devolve
+	  vai ser un escalar; doutro xeito, vai ser unha matriz coa mesma
+	  dimensión ca <argname>x</argname>.
+	</para>
+      </description>
+    </function>
+
     <function name="I" section="matbuild" output="smatrix">
       <fnargs>
 	<fnarg type="int">n</fnarg>
@@ -6503,8 +6545,8 @@
     <function name="mrandgen" section="probdist" output="matrix">
       <fnargs>
 	<fnarg type="string">d</fnarg>
-	<fnarg type="scalar">p1</fnarg>
-	<fnarg type="scalar" conditional="true">p2</fnarg>
+	<fnarg type="scalar-or-matrix">p1</fnarg>
+	<fnarg type="scalar-or-matrix" conditional="true">p2</fnarg>
 	<fnarg type="scalar" conditional="true">p3</fnarg>
 	<fnarg type="int">filas</fnarg>
 	<fnarg type="int">columnas</fnarg>
@@ -6518,10 +6560,13 @@
 	  Funciona da mesma forma que a función <fncref targ="randgen"/> agás
 	  polo feito de que devolve unha matriz en troques dunha serie. Os
 	  argumentos iniciais (cuxo número depende da distribución escollida)
-	  para esta función xa se describen para <lit>randgen</lit>, pero
-	  deben de estar seguidos por dous números enteiros para especificar o
-	  número de filas e de columnas que vai ter a matriz aleatoria
-	  desexada.
+	  para esta función xa se describen para <lit>randgen</lit>, pero deben
+	  de estar seguidos por dous números enteiros para especificar o número
+	  de filas e de columnas que vai ter a matriz aleatoria desexada.
+	  Se indicas <argname>p1</argname> ou <argname>p2</argname>
+	  en forma matricial, deben ter un número de elementos que sexa
+	  igual ao produto de <argname>filas</argname> por
+	  <argname>columnas</argname>.
 	</para>
 	<para>
 	  O primeiro dos exemplos precedentes crea un vector columna con 50
@@ -9952,6 +9997,32 @@
             <fncref targ="eigensym"/>
             <fncref targ="qrdecomp"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="svm" section="stats" output="series">
+      <fnargs>
+	<fnarg type="list">L</fnarg>
+	<fnarg type="bundle">bparms</fnarg>
+	<fnarg type="bundleref" optional="true">bmod</fnarg>
+	<fnarg type="bundleref" optional="true">bprob</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esta función te permite o adestramento (e a predición baseada nel) dun
+	  modelo MSV (Máquina de Soporte Vectorial ou SVM), utilizando a librería
+	  LIBSVM como soporte. O argumento de tipo lista <argname>L</argname>
+	  deberá de incluír a variable dependente seguida das variables
+	  independentes; ademáis, o feixe <argname>bparms</argname> emprégase
+	  para pasarlle opcións ao mecanismo MSV. O valor que se devolve é unha
+	  serie que contén as predicións do modelo. Podes utilizar os dous
+	  argumentos opcionais punteiro-feixe para recuperar información
+	  adicional despois do adestramento e/ou predición.
+	</para>
+	<para>
+	  Para obter máis detalles, consulta a documentación PDF para
+	  <mnu targ="gretlSVM">gretl + SVM</mnu>.
 	</para>
       </description>
     </function>

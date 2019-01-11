@@ -7534,7 +7534,7 @@
       </para>
       <para>
 	Para obter máis detalles sobre todo isto, consulta a
-	<mnu targ="Pkgbook">Manual de paquetes</mnu> (baixo o menú Axuda).
+	<mnu targ="Pkgbook">Guía para paquetes de funcións</mnu>.
       </para>
     </description>
 
@@ -9585,41 +9585,39 @@
     <description>
       <para>
 	Podes ampliar as prestacións de Gretl mediante a utilización de
-	paquetes de funcións que son de dúas clases: os <quote>Engadidos</quote>
+	paquetes de funcións que son de dúas clases: os <quote>Complementos</quote>
 	oficiais e os paquetes de contribucións. En conxunto, cobren moitos
 	estimadores e utilidades que non están dispoñibles como instrucións
 	ou funcións integradas no programa.
       </para>
       <para>
-	Os 'Engadidos' oficiais están incluídos nos instaladores de Gretl
+	Os 'Complementos' oficiais están incluídos nos instaladores de Gretl
 	para Windows e para Mac. Para Linux, se non se instalan previamente,
 	entón descárganse cando se solicite (por exemplo, se escolles o
 	elemento do menú /Modelar/Series temporais/GARCH, entón Gretl
-	vai descargar o 'Engadido' <lit>gig</lit> (GARCH in Gretl). Podes
-	verificar que os teus 'Engadidos' están actualizados mediante
-	<mnu targ="SFAddons">Buscar complementos</mnu> no menú Axuda.
+	vai descargar o 'Complemento' <lit>gig</lit> (GARCH in Gretl). Podes
+	verificar que os teus 'Complementos' están actualizados mediante
+	<mnu targ="SFAddons">Comprobar complementos</mnu> no menú Axuda.
       </para>
       <para>
-	Podes botar unha ollada aos paquetes de contribucións
-	instalados no teu ordenador mediante o elemento do menú <mnu
-	targ="LocalGfn">Na máquina local</mnu> e, se estás conectado á
-	rede, podes acceder a unha lista de paquetes dispoñibles
-	mediante o elemento <mnu targ="RemoteGfn">No
-	servidor</mnu>. Ambos elementos atópanse baixo o elemento
-	/Ficheiro/Paquetes de funcións.
+	Podes botar unha ollada aos paquetes de contribucións instalados
+	no teu ordenador mediante o elemento do menú
+	<mnu targ="LocalGfn">Na máquina local</mnu> e, se estás conectado
+	á rede, podes acceder  a unha lista de paquetes dispoñibles mediante
+	o elemento <mnu targ="RemoteGfn">No servidor</mnu>. Ambos
+	elementos atópanse baixo o elemento /Ficheiro/Paquetes de funcións.
       </para>
       <para>
-	Moitos paquetes propoñen agregarse por si mesmos aos menús da
-	Interface Gráfica de Usuario (GUI). Podes revisar estas
-	anexións mediante <mnu targ="Registry">rexistro de
-	paquete</mnu> (accede mediante o botón de Preferencias no
-	navegador para paquetes instalados).
+	Moitos paquetes propoñen agregarse por si mesmos aos menús da Interface
+	Gráfica de Usuario (GUI). Podes revisar estas anexións mediante
+	<mnu targ="Registry">Rexistro de paquete</mnu> (accede a él mediante
+	o botón de Preferencias no buscador de paquetes instalados).
       </para>
       <para>
-	Para obter detalles completos sobre a instalación e o traballo
-	con paquetes de funcións, consulta <mnu targ="Pkgbook">Manual
-	de paquetes</mnu> (baixo o menú Axuda). Esta guía tamén contén
-	detalles sobre como escribir paquetes de funcións.
+	Para obter detalles completos sobre a instalación e o traballo con paquetes de
+	funcións, consulta <mnu targ="Pkgbook">Manual de paquetes de funcións</mnu>
+	(baixo o menú Axuda). Esta guía tamén contén detalles sobre como escribir
+	paquetes de funcións.
       </para>
     </description>
   </command>
@@ -14816,6 +14814,10 @@
 	  <effect>Amosa un cero nas entradas nulas</effect>
         </option>
         <option>
+	  <flag>--no-totals</flag>
+	  <effect>Elimina a presentación dos recontos marxinais</effect>
+        </option>
+        <option>
 	  <flag>--matrix</flag>
 	  <optparm>nomematr</optparm>
 	  <effect>Usa as frecuencias da matriz indicada</effect>
@@ -14824,11 +14826,21 @@
 	  <flag>--quiet</flag>
 	  <effect>Consulta o caso bivariante de abaixo</effect>
         </option>
+	      <option>
+	  <flag>--tex</flag>
+	  <optparm optional="true">nomeficheiro</optparm>
+	  <effect>Saída como &latex;</effect>
+	      </option>
+	      <option>
+	  <flag>--equal</flag>
+	  <effect>Consulta o caso &latex; debaixo</effect>
+	      </option>
       </options>
       <examples>
 	<example>xtab 1 2</example>
 	<example>xtab 1 ; 2 3 4</example>
 	<example>xtab --matrix=A</example>
+	<example>xtab 1 2 --tex="xtab.tex"</example>
       </examples>
     </usage>
 
@@ -14880,7 +14892,6 @@
       </para>
       
       <subhead>O caso bivariante</subhead>
-      
       <para>
 	No sinxelo caso dunha tabulación cruzada bivariante, podes utilizar
 	os accesorios <fncref targ="$test"/> e <fncref targ="$pvalue"/> para
@@ -14889,6 +14900,24 @@
 	mínimo valor agardado). Nese contexto, podes utilizar a opción
 	<opt>quiet</opt> para eliminar a presentación da táboa.
       </para>
+
+      <subhead>Saída &latex;</subhead>
+      <para>
+	Cando indicas a opción <opt>tex</opt>, a tabulación cruzada se
+	presenta co formato dun contorno <lit>tabular</lit> &latex; en
+	liña (de onde podería copiarse e pegarse) ou, cando se engade
+	o parámetro <repl>nomeficheiro</repl>, envíase ao ficheiro aí
+	indicado. (Se en <repl>nomeficheiro</repl> non se especifica
+	unha ruta completa, o ficheiro escríbese no directorio vixente
+	establecido, <cmdref targ="workdir"/>.) Non se calcula ningún
+	estatístico de proba. Podes utilizar <opt>equal</opt> como
+	opción adicional para sinalar (mostrado en letra grosa) o reconto
+	ou porcentaxe de celas nas que as variables da fila e columna
+ 	teñen o mesmo valor numérico. Esta opción ignórase agás que
+	indiques a opción <opt>tex</opt>; e tamén cando unha ou as dúas
+	variables da tabulación cruzada teña valores de cadea de texto.
+      </para>
+
     </description>
 
     <description context="gui">
