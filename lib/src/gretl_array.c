@@ -570,7 +570,7 @@ static int set_list (gretl_array *A, int i,
     return err;
 }
 
-/* In the functions below I assume the @copy parameter
+/* In the functions below we assume the @copy parameter
    will be set appropriately by "genr": if the incoming
    object is a named variable in its own right it should
    be copied, but if it's on on-the-fly thing there's
@@ -591,7 +591,7 @@ int gretl_array_set_string (gretl_array *A, int i,
     } else if (i < 0 || i >= A->n) {
 	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), i+1);
 	err = E_DATA;
-    } else {
+    } else if (s != A->data[i]) {
 	free(A->data[i]);
 	err = set_string(A, i, s, copy);
     }
@@ -636,7 +636,7 @@ int gretl_array_set_matrix (gretl_array *A, int i,
     } else if (i < 0 || i >= A->n) {
 	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), i+1);
 	err = E_DATA;
-    } else {
+    } else if (m != A->data[i]) {
 	gretl_matrix_free(A->data[i]);
 	err = set_matrix(A, i, m, copy);
     }
@@ -681,7 +681,7 @@ int gretl_array_set_bundle (gretl_array *A, int i,
     } else if (i < 0 || i >= A->n) {
 	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), i+1);
 	err = E_DATA;
-    } else {
+    } else if (b != A->data[i]) {
 	gretl_bundle_destroy(A->data[i]);
 	err = set_bundle(A, i, b, copy);
     }
@@ -725,7 +725,7 @@ int gretl_array_set_list (gretl_array *A, int i,
     } else if (i < 0 || i >= A->n) {
 	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), i+1);
 	err = E_DATA;
-    } else {
+    } else if (L != A->data[i]) {
 	free(A->data[i]);
 	err = set_list(A, i, L, copy);
     }
