@@ -36,8 +36,8 @@
 
 enum {
     VARS_IDENTICAL,
-    X_HAS_MISSING,
-    Y_HAS_MISSING,
+    NEW_HAS_MISSING,
+    OLD_HAS_MISSING,
     VARS_DIFFER
 } varcomp_codes;
 
@@ -50,29 +50,34 @@ enum {
 
 static char *get_mangled_name_by_id (int v);
 
-static int check_vals (const double *x, const double *y, int n)
+/* Note: in this comparison @test is the newly generated series
+   and @cand is the previously existing candidate series.
+*/
+
+static int check_vals (const double *test, const double *cand, int n)
 {
-    int ret = VARS_IDENTICAL;
-    int t;
+    int t, ret = VARS_IDENTICAL;
 
     for (t=0; t<n; t++) {
-	if (floatneq(x[t], y[t])) {
-	    if (na(x[t]) && !na(y[t])) {
-		if (ret == VARS_IDENTICAL || ret == X_HAS_MISSING) {
-		    ret = X_HAS_MISSING;
-		} else {
-		    ret = VARS_DIFFER;
-		}
-	    } else if (!na(x[t]) && na(y[t])) {
-		if (ret == VARS_IDENTICAL || ret == Y_HAS_MISSING) {
-		    ret = Y_HAS_MISSING;
-		} else {
-		    ret = VARS_DIFFER;
-		}
+	if (test[t] == cand[t] || (na(test[t]) && na(cand[t]))) {
+	    /* values the same, or both NA */
+	    continue;
+	}
+	/* values differ at obs @t */
+	if (na(test[t]) && !na(cand[t])) {
+	    if (ret == VARS_IDENTICAL || ret == NEW_HAS_MISSING) {
+		ret = NEW_HAS_MISSING;
 	    } else {
 		ret = VARS_DIFFER;
 	    }
-
+	} else if (!na(test[t]) && na(cand[t])) {
+	    if (ret == VARS_IDENTICAL || ret == OLD_HAS_MISSING) {
+		ret = OLD_HAS_MISSING;
+	    } else {
+		ret = VARS_DIFFER;
+	    }
+	} else {
+	    ret = VARS_DIFFER;
 	}
 	if (ret == VARS_DIFFER) {
 	    break;
@@ -639,10 +644,10 @@ check_add_transform (int ci, int lag, int vnum, const double *x,
 
 	if (chk == VARS_IDENTICAL) {
 	    ret = VAR_EXISTS_OK;
-	} else if (chk == X_HAS_MISSING) {
+	} else if (chk == NEW_HAS_MISSING) {
 	    /* is this right? */
 	    ret = VAR_EXISTS_OK;
-	} else if (chk == Y_HAS_MISSING) {
+	} else if (chk == OLD_HAS_MISSING) {
 	    for (t=0; t<dset->n; t++) {
 		dset->Z[vnum][t] = x[t];
 	    }
