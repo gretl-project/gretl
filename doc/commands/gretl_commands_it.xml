@@ -6538,6 +6538,10 @@
 	  <flag>--vcv</flag>
 	  <effect>mostra la matrice di covarianza</effect>
         </option>
+        <option>
+	  <flag>--no-vcv</flag>
+	  <effect>non calcolare la matrice di covarianza</effect>
+        </option>
       </options>
     </usage>
 
@@ -6551,10 +6555,23 @@
         unica.
       </para>
       <para>
-	Gli errori standard sono derivati usando la procedura bootstrap
-        con 500 estrazioni. La matrice di covarianza per le stime dei
-        parametri, mostrata se si usa l'opzione <opt>vcv</opt>, si basa
-        sulla stessa procedura.
+	Gli errori standard sono derivati usando la procedura
+	bootstrap con 500 estrazioni. La matrice di covarianza per le
+	stime dei parametri, mostrata se si usa l'opzione
+	<opt>vcv</opt>, si basa sulla stessa procedura. Questa è
+	un'operazione computazionalmente piuttosto onerosa, per cui se
+	sono richieste le sole stime puntuali, essa può essere omessa
+	attraverso l'opzione <opt>no-vcv</opt>; in questo caso, gli
+	errori standard non saranno disponibili.
+      </para>
+      <para>
+	Si noti che questo stimatore può richiedere molto tempo di
+	calcolo per campioni grandi o modelli con molte variabili
+	esplicative; in in questi casi, consigliamo di usare il comando
+	<cmdref targ="quantreg"/>. I due comandi sono di fatto
+	equivalenti, a parte il fatto che quantreg usa l'algoritmo di
+	Frisch&ndash;Newton (più efficiente) e fornisce errori
+	standard analitici anziché via bootstrap.
       </para>
     </description>
 
