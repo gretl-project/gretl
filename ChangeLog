@@ -9,6 +9,8 @@ version 2019a, in progress
   drop the requirement of separately installed libsvm
 - Fix bug: generation of random series via the GUI got
   broken
+- Fix bug: "diff" command not always respecting a revised
+  sample range
 
 2018-12-21 version 2018d
 - Internal representation of missing values: switch to
