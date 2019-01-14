@@ -6740,6 +6740,10 @@
 	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
         </option>
+        <option>
+	  <flag>--no-vcv</flag>
+	  <effect>don't compute covariance matrix</effect>
+        </option>
       </options>
     </usage>
 
@@ -6755,7 +6759,10 @@
 	Standard errors are derived using the bootstrap procedure with
 	500 drawings. The covariance matrix for the parameter
 	estimates, printed when the <opt>vcv</opt> flag is given, is
-	based on the same bootstrap.
+	based on the same bootstrap. Since this is quite an expensive
+	operation, the <opt>no-vcv</opt> option is provided for the
+	case where the covariance matrix is not required; when this
+	option is given standard errors will not be available.
       </para>
       <para>
 	Note that this method can be slow when the sample is large or

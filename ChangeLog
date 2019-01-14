@@ -5,6 +5,7 @@ version 2019a, in progress
 - "foreign" block with Julia: add --no-compile option
 - "xtab" command: support TeX output and add some more
   formatting options
+- "lad" command: add --no-vcv option
 - SVM support: make this available on all platforms and
   drop the requirement of separately installed libsvm
 - Fix bug: generation of random series via the GUI got
