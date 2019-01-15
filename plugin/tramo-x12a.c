@@ -884,8 +884,9 @@ static int grab_deseasonal_series (double *y, const DATASET *dset,
 
     if (prog == TRAMO_SEATS) {
 	gretl_build_path(sfname, path, "graph", "series",
-			     tramo_save_strings[TX_SA], NULL);
+			 tramo_save_strings[TX_SA], NULL);
     } else {
+	/* @path should end with ".spc" */
 	char *p;
 
 	strcpy(sfname, path);
@@ -1749,6 +1750,7 @@ int adjust_series (const double *x, double *y, const DATASET *dset,
 			   0, /* don't correct for outliers */
 			   0  /* trading days correction */
 	};
+	gchar *spc;
 
 	if (use_log) {
 	    xopt.logtrans = 1;
@@ -1756,8 +1758,10 @@ int adjust_series (const double *x, double *y, const DATASET *dset,
 	if (dset->pd == 12) {
 	    xopt.trdays = 1;
 	}
-	gretl_build_path(fname, workdir, vname, NULL);
-	write_spc_file(fname, x, vname, dset, savelist, &xopt);
+	spc = g_strdup_printf("%s.spc", vname);
+	gretl_build_path(fname, workdir, spc, NULL);
+	write_spc_file(fname, x, spc, dset, savelist, &xopt);
+	g_free(spc);
     } else {
 	gretl_build_path(fname, workdir, vname, NULL);
 	write_tramo_file(fname, x, vname, dset, NULL);
