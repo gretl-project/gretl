@@ -166,7 +166,7 @@ struct fnpkg_ {
     char overrides;   /* number of overrides of built-in functions */
     char **datafiles; /* names of packaged data files */
     char **depends;   /* names of dependencies */
-    char *parent;     /* name of parent package, if applicable */
+    char *sibling;    /* name of sibling package, if applicable */
     int n_files;      /* number of data files */
     int n_depends;    /* number of dependencies */
     void *editor;     /* for GUI use */
@@ -661,7 +661,7 @@ static fnpkg *function_package_alloc (const char *fname)
     pkg->n_files = 0;
     pkg->depends = NULL;
     pkg->n_depends = 0;
-    pkg->parent = NULL;
+    pkg->sibling = NULL;
     pkg->editor = NULL;
 
     return pkg;
@@ -1326,9 +1326,9 @@ ufunc *get_user_function_by_name (const char *name)
 		}
 	    }
 	}
-	if (fun == NULL && pkg->parent != NULL) {
-	    /* functions shared by parent */
-	    fnpkg *ppkg = get_function_package_by_name(pkg->parent);
+	if (fun == NULL && pkg->sibling != NULL) {
+	    /* functions shared by sibling */
+	    fnpkg *ppkg = get_function_package_by_name(pkg->sibling);
 
 	    if (ppkg != NULL) {
 		for (i=0; i<ppkg->n_priv; i++) {
@@ -2961,8 +2961,8 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
 				    pkg->n_depends, fp);
     }
 
-    if (pkg->parent != NULL) {
-	gretl_xml_put_tagged_string("parent", pkg->parent, fp);
+    if (pkg->sibling != NULL) {
+	gretl_xml_put_tagged_string("sibling", pkg->sibling, fp);
     }
 
     if (pkg->pub != NULL) {
@@ -3547,8 +3547,8 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 		err = function_package_set_properties(pkg, "label", p, NULL);
 	    } else if (!strncmp(line, "menu-attachment", 15)) {
 		err = function_package_set_properties(pkg, "menu-attachment", p, NULL);
-	    } else if (!strncmp(line, "parent", 6)) {
-		err = function_package_set_properties(pkg, "parent", p, NULL);
+	    } else if (!strncmp(line, "sibling", 7)) {
+		err = function_package_set_properties(pkg, "sibling", p, NULL);
 	    } else if (!strncmp(line, "help", 4)) {
 		gchar *hstr = NULL;
 		int pdfdoc;
@@ -4191,8 +4191,8 @@ static char **pkg_strvar_pointer (fnpkg *pkg, const char *key,
 	return &pkg->gui_help_fname;
     } else if (!strcmp(key, "sample-fname")) {
 	return &pkg->sample_fname;
-    } else if (!strcmp(key, "parent")) {
-	return &pkg->parent;
+    } else if (!strcmp(key, "sibling")) {
+	return &pkg->sibling;
     }
 
     return NULL;
@@ -4744,7 +4744,7 @@ static void real_function_package_free (fnpkg *pkg, int full)
 	free(pkg->tags);
 	free(pkg->label);
 	free(pkg->mpath);
-	free(pkg->parent);
+	free(pkg->sibling);
 	free(pkg);
     }
 }
@@ -4977,10 +4977,10 @@ static int real_load_package (fnpkg *pkg)
 
     gretl_error_clear();
 
-    if (pkg->parent != NULL) {
+    if (pkg->sibling != NULL) {
 	/* maybe move this? */
 	err = strings_array_add_uniq(&pkg->depends, &pkg->n_depends,
-				     pkg->parent);
+				     pkg->sibling);
     }
 
     if (!err) {
@@ -4999,11 +4999,11 @@ static int real_load_package (fnpkg *pkg)
 	}
     }
 
-    if (!err && pkg->parent != NULL) {
-	/* check that parent really got loaded */
-	if (get_function_package_by_name(pkg->parent) == NULL) {
-	    gretl_errmsg_sprintf("Parent package %s is not loaded\n",
-				 pkg->parent);
+    if (!err && pkg->sibling != NULL) {
+	/* check that sibling really got loaded */
+	if (get_function_package_by_name(pkg->sibling) == NULL) {
+	    gretl_errmsg_sprintf("Sibling package %s is not loaded\n",
+				 pkg->sibling);
 	    err = E_DATA;
 	}
     }
@@ -5070,8 +5070,8 @@ static void print_package_info (const fnpkg *pkg, const char *fname, PRN *prn)
 		    (i < pkg->n_depends-1)? ", " : "\n");
 	}
     }
-    if (pkg->parent != NULL) {
-	pprintf(prn, "<@itl=\"Parent\">: %s\n", pkg->parent);
+    if (pkg->sibling != NULL) {
+	pprintf(prn, "<@itl=\"Sibling\">: %s\n", pkg->sibling);
     }
 
     if (pdfdoc) {
@@ -5279,8 +5279,8 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname,
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->label);
 	} else if (!xmlStrcmp(cur->name, (XUC) "menu-attachment")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->mpath);
-	} else if (!xmlStrcmp(cur->name, (XUC) "parent")) {
-	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->parent);
+	} else if (!xmlStrcmp(cur->name, (XUC) "sibling")) {
+	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->sibling);
 	} else if (!xmlStrcmp(cur->name, (XUC) "data-files")) {
 	    pkg->datafiles =
 		gretl_xml_get_strings_array(cur, doc, &pkg->n_files,
