@@ -12,6 +12,8 @@ version 2019a, in progress
   broken
 - Fix bug: "diff" command not always respecting a revised
   sample range
+- Fix bug: the deseas() function stopped working when used
+  with x12a/x13as
 
 2018-12-21 version 2018d
 - Internal representation of missing values: switch to
