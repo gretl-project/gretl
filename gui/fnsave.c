@@ -2777,7 +2777,7 @@ static void add_dependency_entries (GtkWidget *holder,
 	}
 	gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
 	if (i == 0) {
-	    finfo->sib_check = gtk_check_button_new_with_label("sibling?");
+	    finfo->sib_check = gtk_check_button_new_with_label(_("sibling?"));
 	    set_sib_check_state(finfo->sib_check, finfo);
 	    gtk_box_pack_start(GTK_BOX(hbox), finfo->sib_check, FALSE, FALSE, 5);
 	    g_signal_connect(G_OBJECT(entry), "changed",
