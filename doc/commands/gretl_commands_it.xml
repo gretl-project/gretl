@@ -9653,12 +9653,19 @@
 	hansl. In questo caso, si può inserire
       </para>
       <code>
-	extra.zip
+	extra
       </code>
       <para>
-	in una delle caselle disponibili. Si noti che il suffisso 
-	<lit>.gfn</lit> o <lit>.zip</lit> va incluso, ma non il path
-	completo del pacchetto in questione.
+	in una delle caselle disponibili (la prima, se non ce ne sono
+	altre). Si noti che il suffisso <lit>.gfn</lit> o
+	<lit>.zip</lit> va incluso, ma non il path completo del
+	pacchetto in questione.
+      </para>
+      <para>
+	La prima dipendenza può essere indicata come
+	<quote>sorella</quote>. In questo caso, il vostro pacchetto
+	avrà accesso anche alle funzioni private del pacchetto da cui
+	dipende, cosa che di solito non è necessaria.
       </para>
     </description>
   </command>

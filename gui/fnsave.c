@@ -47,7 +47,7 @@
 #include "gretl_typemap.h"
 
 #define PKG_DEBUG 0
-#define NENTRIES 5
+#define N_ENTRIES 5
 #define N_FILE_ENTRIES 4
 #define N_DEP_ENTRIES 4
 #define N_SPECIALS (UFUN_ROLE_MAX - 1)
@@ -73,12 +73,10 @@ typedef struct login_info_ login_info;
 
 struct function_info_ {
     GtkWidget *dlg;        /* editing dialog box */
-    /* entry boxes for author, etc. */
-    GtkWidget *entries[NENTRIES];
-    /* entry boxes for data file names */
-    GtkWidget *file_entries[N_FILE_ENTRIES];
-    /* entry boxes for dependency names */
-    GtkWidget *dep_entries[N_DEP_ENTRIES];
+    GtkWidget *entries[N_ENTRIES];           /* author, etc. */
+    GtkWidget *file_entries[N_FILE_ENTRIES]; /* data files */
+    GtkWidget *dep_entries[N_DEP_ENTRIES];   /* dependencies */
+    GtkWidget *sib_check;  /* sibling selected? */
     GtkWidget *codesel;    /* code-editing selector */
     GtkWidget *popup;      /* popup menu */
     GtkWidget *extra;      /* extra properties child dialog */
@@ -122,6 +120,7 @@ struct function_info_ {
     int n_priv;            /* number of private functions */
     int n_files;           /* number of included data files */
     int n_depends;         /* number of dependencies */
+    gchar *sibling;        /* name of sibling package */
     gboolean uses_subdir;  /* the package has its own subdir (0/1) */
     gboolean data_access;  /* the package wants access to full data range */
     gboolean pdfdoc;       /* the package has PDF documentation */
@@ -236,6 +235,7 @@ function_info *finfo_new (void)
     finfo->n_priv = 0;
     finfo->n_files = 0;
     finfo->n_depends = 0;
+    finfo->sibling = NULL;
 
     finfo->dreq = 0;
     finfo->minver = 10900;
@@ -307,6 +307,10 @@ static void finfo_free (function_info *finfo)
 
     if (finfo->depends != NULL) {
 	strings_array_free(finfo->depends, finfo->n_depends);
+    }
+
+    if (finfo->sibling != NULL) {
+	g_free(finfo->sibling);
     }
 
     if (finfo->samplewin != NULL) {
@@ -772,7 +776,7 @@ static int finfo_save (function_info *finfo)
     };
     int i, err = 0;
 
-    for (i=0; i<NENTRIES && !err; i++) {
+    for (i=0; i<N_ENTRIES && !err; i++) {
 	g_free(*fields[i]);
 	*fields[i] = entry_box_get_trimmed_text(finfo->entries[i]);
 	if (*fields[i] == NULL || !strcmp(*fields[i], missing)) {
@@ -2722,6 +2726,33 @@ static void add_data_files_entries (GtkWidget *holder,
     }
 }
 
+static void set_sib_check_state (GtkWidget *b, function_info *finfo)
+{
+    gboolean s = FALSE;
+
+    if (finfo->sibling != NULL && finfo->n_depends > 0) {
+	if (!strcmp(finfo->sibling, finfo->depends[0])) {
+	    s = TRUE;
+	}
+    } else if (finfo->n_depends == 0) {
+	gtk_widget_set_sensitive(b, FALSE);
+    }
+
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), s);
+}
+
+static void adjust_sib_check (GtkEditable *w, GtkWidget *b)
+{
+    const gchar *s = gtk_entry_get_text(GTK_ENTRY(w));
+
+    if (s == NULL || string_is_blank(s)) {
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), FALSE);
+	gtk_widget_set_sensitive(b, FALSE);
+    } else {
+	gtk_widget_set_sensitive(b, TRUE);
+    }
+}
+
 static void add_dependency_entries (GtkWidget *holder,
 				    function_info *finfo)
 {
@@ -2745,6 +2776,13 @@ static void add_dependency_entries (GtkWidget *holder,
 	    gtk_entry_set_text(GTK_ENTRY(entry), finfo->depends[i]);
 	}
 	gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
+	if (i == 0) {
+	    finfo->sib_check = gtk_check_button_new_with_label(_("sibling?"));
+	    set_sib_check_state(finfo->sib_check, finfo);
+	    gtk_box_pack_start(GTK_BOX(hbox), finfo->sib_check, FALSE, FALSE, 5);
+	    g_signal_connect(G_OBJECT(entry), "changed",
+			     G_CALLBACK(adjust_sib_check), finfo->sib_check);
+	}
 	gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
     }
 }
@@ -3289,6 +3327,45 @@ static int process_dependency_names (function_info *finfo,
     return changed;
 }
 
+static int process_sibling_name (function_info *finfo,
+				 gboolean make_changes)
+{
+    gchar *sname = NULL;
+    gboolean checked;
+    int changed = 0;
+
+    checked =
+	gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(finfo->sib_check));
+
+    if (checked) {
+	sname = entry_box_get_trimmed_text(finfo->dep_entries[0]);
+    }
+
+    if (sname != NULL && *sname != '\0') {
+	if (finfo->sibling == NULL) {
+	    /* no prior sibling */
+	    changed = 1;
+	} else if (strcmp(sname, finfo->sibling)) {
+	    /* different prior sibling */
+	    changed = 1;
+	}
+    } else if (finfo->sibling != NULL) {
+	/* prior sibling was removed */
+	changed = 1;
+    }
+
+    if (changed && make_changes) {
+	g_free(finfo->sibling);
+	if (sname != NULL && *sname != '\0') {
+	    finfo->sibling = g_strdup(sname);
+	} else {
+	    finfo->sibling = NULL;
+	}
+    }
+
+    return changed;
+}
+
 static int process_extra_properties (function_info *finfo,
 				     gboolean make_changes)
 {
@@ -3306,6 +3383,7 @@ static int process_extra_properties (function_info *finfo,
 
     changed += process_data_file_names(finfo, make_changes);
     changed += process_dependency_names(finfo, make_changes);
+    changed += process_sibling_name(finfo, make_changes);
 
     if (changed && make_changes) {
 	finfo_set_modified(finfo, TRUE);
@@ -3717,7 +3795,7 @@ static void finfo_dialog (function_info *finfo)
     };
     gchar *tmp, *title;
     int focused = 0;
-    int rows = NENTRIES + 2;
+    int rows = N_ENTRIES + 2;
     int i;
 
     finfo->dlg = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -3747,7 +3825,7 @@ static void finfo_dialog (function_info *finfo)
     gtk_table_set_row_spacings(GTK_TABLE(tbl), 4);
     gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 5);
 
-    for (i=0; i<NENTRIES; i++) {
+    for (i=0; i<N_ENTRIES; i++) {
 	GtkWidget *entry;
 
 	label = gtk_label_new(_(entry_labels[i]));
@@ -4503,6 +4581,7 @@ int save_function_package (const char *fname, gpointer p)
 					      "lives-in-subdir", finfo->uses_subdir,
 					      "wants-data-access", finfo->data_access,
 					      "model-requirement", finfo->mreq,
+					      "sibling", finfo->sibling,
 					      NULL);
 	if (err) {
 	    fprintf(stderr, "function_package_set_properties: err = %d\n", err);
@@ -4889,6 +4968,11 @@ int save_function_package_spec (const char *fname, gpointer p)
 	}
     }
 
+    /* write out sibling name? */
+    if (finfo->sibling != NULL) {
+	pprintf(prn, "sibling = %s\n", finfo->sibling);
+    }
+
     gretl_print_destroy(prn);
 
     return 0;
@@ -5092,6 +5176,7 @@ void edit_function_package (const char *fname)
 					  "wants-data-access", &finfo->data_access,
 					  "model-requirement", &finfo->mreq,
 					  "gui-attrs", finfo->gui_attrs,
+					  "sibling", &finfo->sibling,
 					  NULL);
 
     if (!err && publist == NULL) {

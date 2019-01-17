@@ -138,6 +138,8 @@ int strings_array_donate (char ***pS, int *n, char *p);
 
 int strings_array_add_uniq (char ***pS, int *n, const char *p);
 
+int strings_array_prepend_uniq (char ***pS, int *n, const char *p);
+
 char **strings_array_new_with_length (int nstrs, int len);
 
 char **strings_array_dup (char **strs, int n);

@@ -166,6 +166,7 @@ struct fnpkg_ {
     char overrides;   /* number of overrides of built-in functions */
     char **datafiles; /* names of packaged data files */
     char **depends;   /* names of dependencies */
+    char *sibling;    /* name of sibling package, if applicable */
     int n_files;      /* number of data files */
     int n_depends;    /* number of dependencies */
     void *editor;     /* for GUI use */
@@ -660,6 +661,7 @@ static fnpkg *function_package_alloc (const char *fname)
     pkg->n_files = 0;
     pkg->depends = NULL;
     pkg->n_depends = 0;
+    pkg->sibling = NULL;
     pkg->editor = NULL;
 
     return pkg;
@@ -1324,6 +1326,19 @@ ufunc *get_user_function_by_name (const char *name)
 		}
 	    }
 	}
+	if (fun == NULL && pkg->sibling != NULL) {
+	    /* functions shared by sibling */
+	    fnpkg *ppkg = get_function_package_by_name(pkg->sibling);
+
+	    if (ppkg != NULL) {
+		for (i=0; i<ppkg->n_priv; i++) {
+		    if (!strcmp(name, ppkg->priv[i]->name)) {
+			fun = ppkg->priv[i];
+			break;
+		    }
+		}
+	    }
+	}
     }
 
     if (fun == NULL) {
@@ -1844,7 +1859,6 @@ static void ufunc_unload (ufunc *fun)
     int i, j, found = 0;
 
     if (n_ufuns == 0 || fun == NULL) {
-	/* "can't happen" */
 	return;
     }
 
@@ -1926,26 +1940,26 @@ static void real_function_package_unload (fnpkg *pkg, int full)
 
 static int attach_ufunc_to_package (ufunc *fun, fnpkg *pkg)
 {
-    ufunc **uf;
+    ufunc **ufs;
     int n, err = 0;
 
     if (function_is_private(fun)) {
 	n = pkg->n_priv;
-	uf = realloc(pkg->priv, (n + 1) * sizeof *uf);
-	if (uf == NULL) {
+	ufs = realloc(pkg->priv, (n + 1) * sizeof *ufs);
+	if (ufs == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    pkg->priv = uf;
+	    pkg->priv = ufs;
 	    pkg->priv[n] = fun;
 	    pkg->n_priv += 1;
 	}
     } else {
 	n = pkg->n_pub;
-	uf = realloc(pkg->pub, (n + 1) * sizeof *uf);
-	if (uf == NULL) {
+	ufs = realloc(pkg->pub, (n + 1) * sizeof *ufs);
+	if (ufs == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    pkg->pub = uf;
+	    pkg->pub = ufs;
 	    pkg->pub[n] = fun;
 	    pkg->n_pub += 1;
 	}
@@ -2947,6 +2961,10 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
 				    pkg->n_depends, fp);
     }
 
+    if (pkg->sibling != NULL) {
+	gretl_xml_put_tagged_string("sibling", pkg->sibling, fp);
+    }
+
     if (pkg->pub != NULL) {
 	for (i=0; i<pkg->n_pub; i++) {
 	    write_function_xml(pkg->pub[i], fp);
@@ -3494,6 +3512,10 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 	err = gretl_chdir(dirname);
     }
 
+#if PKG_DEBUG
+    fprintf(stderr, "new_package_info_from_spec\n");
+#endif
+
     while (fgets(line, sizeof line, fp) && !err) {
 	if (*line == '#' || string_is_blank(line)) {
 	    continue;
@@ -3525,6 +3547,11 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 		err = function_package_set_properties(pkg, "label", p, NULL);
 	    } else if (!strncmp(line, "menu-attachment", 15)) {
 		err = function_package_set_properties(pkg, "menu-attachment", p, NULL);
+	    } else if (!strncmp(line, "sibling", 7)) {
+		if (!quiet) {
+		    pprintf(prn, "Recording sibling %s\n", p);
+		}
+		err = function_package_set_properties(pkg, "sibling", p, NULL);
 	    } else if (!strncmp(line, "help", 4)) {
 		gchar *hstr = NULL;
 		int pdfdoc;
@@ -3632,6 +3659,12 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 		}
 	    }
 	}
+    }
+
+    if (!err && pkg->sibling != NULL && pkg->depends == NULL) {
+	/* the sibling will not have been registered as a dependency */
+	err = strings_array_prepend_uniq(&pkg->depends, &pkg->n_depends,
+					 pkg->sibling);
     }
 
     if (currdir != NULL) {
@@ -4154,7 +4187,7 @@ static char **pkg_strvar_pointer (fnpkg *pkg, const char *key,
     *optional = 1;
 
     if (!strcmp(key, "tags")) {
-	return &pkg->tags; /* FIXME should become non-optional */
+	return &pkg->tags; /* FIXME should be non-optional */
     } else if (!strcmp(key, "label")) {
 	return &pkg->label;
     } else if (!strcmp(key, "menu-attachment")) {
@@ -4167,6 +4200,8 @@ static char **pkg_strvar_pointer (fnpkg *pkg, const char *key,
 	return &pkg->gui_help_fname;
     } else if (!strcmp(key, "sample-fname")) {
 	return &pkg->sample_fname;
+    } else if (!strcmp(key, "sibling")) {
+	return &pkg->sibling;
     }
 
     return NULL;
@@ -4418,6 +4453,9 @@ int function_package_get_properties (fnpkg *pkg, ...)
 	} else if (!strcmp(key, "menu-attachment")) {
 	    ps = (char **) ptr;
 	    *ps = g_strdup(pkg->mpath);
+	} else if (!strcmp(key, "sibling")) {
+	    ps = (char **) ptr;
+	    *ps = g_strdup(pkg->sibling);
 	} else if (!strcmp(key, "data-requirement")) {
 	    pi = (int *) ptr;
 	    *pi = pkg->dreq;
@@ -4587,6 +4625,12 @@ int function_package_set_depends (fnpkg *pkg, char **S, int n)
 	}
     }
 
+    if (!err && pkg->sibling != NULL) {
+	err = strings_array_prepend_uniq(&pkg->depends,
+					 &pkg->n_depends,
+					 pkg->sibling);
+    }
+
     return err;
 }
 
@@ -4718,6 +4762,7 @@ static void real_function_package_free (fnpkg *pkg, int full)
 	free(pkg->tags);
 	free(pkg->label);
 	free(pkg->mpath);
+	free(pkg->sibling);
 	free(pkg);
     }
 }
@@ -4950,7 +4995,9 @@ static int real_load_package (fnpkg *pkg)
 
     gretl_error_clear();
 
-    err = load_gfn_dependencies(pkg);
+    if (!err) {
+	err = load_gfn_dependencies(pkg);
+    }
 
     if (!err && pkg->pub != NULL) {
 	for (i=0; i<pkg->n_pub && !err; i++) {
@@ -4961,6 +5008,15 @@ static int real_load_package (fnpkg *pkg)
     if (!err && pkg->priv != NULL) {
 	for (i=0; i<pkg->n_priv && !err; i++) {
 	    err = load_private_function(pkg, i);
+	}
+    }
+
+    if (!err && pkg->sibling != NULL) {
+	/* check that sibling really got loaded */
+	if (get_function_package_by_name(pkg->sibling) == NULL) {
+	    gretl_errmsg_sprintf("Sibling package %s is not loaded\n",
+				 pkg->sibling);
+	    err = E_DATA;
 	}
     }
 
@@ -5025,6 +5081,9 @@ static void print_package_info (const fnpkg *pkg, const char *fname, PRN *prn)
 	    pprintf(prn, "%s%s", pkg->depends[i],
 		    (i < pkg->n_depends-1)? ", " : "\n");
 	}
+    }
+    if (pkg->sibling != NULL) {
+	pprintf(prn, "<@itl=\"Sibling\">: %s\n", pkg->sibling);
     }
 
     if (pdfdoc) {
@@ -5232,6 +5291,8 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname,
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->label);
 	} else if (!xmlStrcmp(cur->name, (XUC) "menu-attachment")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->mpath);
+	} else if (!xmlStrcmp(cur->name, (XUC) "sibling")) {
+	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->sibling);
 	} else if (!xmlStrcmp(cur->name, (XUC) "data-files")) {
 	    pkg->datafiles =
 		gretl_xml_get_strings_array(cur, doc, &pkg->n_files,

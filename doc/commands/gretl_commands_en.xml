@@ -10090,14 +10090,19 @@
 	utilities for hansl scripting. Then you would enter
       </para>
       <code>
-	extra.zip
+	extra
       </code>
       <para>
 	in one of the available slots, the first slot if there are no
-	other dependencies. Note that you should include the suffix
-	<lit>.gfn</lit> or <lit>.zip</lit> as appropriate, but you
-	should not give the full path to the package in question, just
-	its plain name.
+	other dependencies. Note that you should give the plain name
+	of the package, without a full path or the <lit>.gfn</lit> or
+	<lit>.zip</lit> suffix.
+      </para>
+      <para>
+	Optionally, the first dependency can be marked as a
+	<quote>sibling</quote>. The effect of this is to give your
+	package access to any private functions in the specified
+	package. This should not usually be required.
       </para>
     </description>
   </command>

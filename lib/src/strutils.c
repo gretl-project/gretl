@@ -1743,6 +1743,72 @@ int strings_array_add (char ***pS, int *n, const char *p)
 }
 
 /**
+ * strings_array_prepend_uniq:
+ * @pS: pointer to strings array.
+ * @n: location of present number of strings in array.
+ * @p: string to prepend to array.
+ *
+ * If @p is already present in the array at location @pS,
+ * moves it into first position if it is not already there.
+ * Otherwise allocates storage for an extra member of the
+ * array and pushes @p into first position, in which case
+ * the content of @n is incremented by 1.
+ *
+ * Returns: 0 on success, %E_ALLOC on failure.
+ */
+
+int strings_array_prepend_uniq (char ***pS, int *n, const char *p)
+{
+    char **S = *pS;
+    char *s0;
+    int m = *n;
+    int i, pos = -1;
+
+    if (p == NULL) {
+	return E_DATA;
+    }
+
+    for (i=0; i<m; i++) {
+	if (!strcmp(S[i], p)) {
+	    pos = i;
+	    break;
+	}
+    }
+    
+    if (pos == 0) {
+	/* already present in 1st position */
+	return 0;
+    } else if (pos > 0) {
+	/* already present, not first */
+	s0 = S[pos];
+	for (i=pos; i>0; i++) {
+	    S[i] = S[i-1];
+	}
+	S[0] = s0;
+    } else if (pos < 0) {
+	/* not present */
+	S = realloc(*pS, (m + 1) * sizeof *S);
+	if (S == NULL) {
+	    return E_ALLOC;
+	}
+	s0 = gretl_strdup(p);
+	if (s0 == NULL) {
+	    return E_ALLOC;
+	}
+	*pS = S;
+	*n = ++m;
+	/* shuffle up */
+	for (i=m; i>0; i--) {
+	    S[i] = S[i-1];
+	}
+	/* and insert @p */
+	S[0] = s0;
+    }
+
+    return 0;
+}
+
+/**
  * strings_array_donate:
  * @pS: pointer to strings array.
  * @n: location of present number of strings in array.
