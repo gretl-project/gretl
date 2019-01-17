@@ -698,6 +698,7 @@ static void clear_tramo_files (const char *path, const char *vname)
     gretl_build_path(fname, path, "graph", "series", "irreg.t", NULL);
     gretl_remove(fname);
 
+    /* clear @vname.out */
     gretl_build_path(fname, path, "output", vname, NULL);
     strcat(fname, ".out");
     gretl_remove(fname);
@@ -724,6 +725,41 @@ static void clear_x12a_files (const char *path, const char *vname)
 
     switch_ext_in_place(fname, "err");
     gretl_remove(fname);
+}
+
+/* Peek into output/x.out and see if it contains evidence
+   that SEATS worked OK but did not find any evidence of
+   seasonality, in which case return 1. If we can't open
+   x.out, or can't find such evidence, return 0.
+*/
+
+static int seats_no_seasonal (const char *path)
+{
+    char *p, line[MAXLEN];
+    char outname[MAXLEN];
+    FILE *fp;
+    int ret = 0;
+
+    gretl_build_path(outname, path, "output", "x.out", NULL);
+
+    fp = gretl_fopen(outname, "r");
+    if (fp == NULL) {
+	return 0;
+    }
+
+    while (fgets(line, sizeof line, fp)) {
+	if (strstr(line, "NO DECOMPOSITION IS PERFORMED")) {
+	    ret = 1;
+	    break;
+	} else if ((p = strstr(line, "SEASONAL")) != NULL) {
+	    ret = string_is_blank(p + 8);
+	    break;
+	}
+    }
+
+    fclose(fp);
+
+    return ret;
 }
 
 static int add_series_from_file (const char *path, int src,
@@ -777,7 +813,7 @@ static int add_series_from_file (const char *path, int src,
 	    } else if (src == TX_LN) {
 		/* maybe no linearization was required? */
 		gretl_build_path(sfname, path, "graph", "series",
-				     "xorigt.t", NULL);
+				 "xorigt.t", NULL);
 		fp = gretl_fopen(sfname, "r");
 		if (fp != NULL) {
 		    gotit = 1;
@@ -873,14 +909,16 @@ static int add_series_from_file (const char *path, int src,
     return err;
 }
 
-static int grab_deseasonal_series (double *y, const DATASET *dset,
+static int grab_deseasonal_series (double *y, const double *x,
+				   const DATASET *dset,
 				   int prog, const char *path)
 {
     FILE *fp;
     char line[128], sfname[MAXLEN], date[16];
     double yt;
-    int d, yr, per, err = 0;
-    int t;
+    int no_seas = 0;
+    int t, d, yr, per;
+    int err = 0;
 
     if (prog == TRAMO_SEATS) {
 	gretl_build_path(sfname, path, "graph", "series",
@@ -897,13 +935,27 @@ static int grab_deseasonal_series (double *y, const DATASET *dset,
     }
 
     fp = gretl_fopen(sfname, "r");
+
     if (fp == NULL) {
-	return E_FOPEN;
+	err = E_FOPEN;
+	if (prog == TRAMO_SEATS && seats_no_seasonal(path)) {
+	    gretl_warnmsg_set(_("no seasonality was detected"));
+	    no_seas = 1;
+	    err = 0;
+	}
+	if (err) {
+	    return err;
+	}
     }
 
     gretl_push_c_numeric_locale();
 
-    if (prog == TRAMO_SEATS) {
+    if (no_seas) {
+	/* give back the original series? */
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    y[t] = x[t];
+	}
+    } else if (prog == TRAMO_SEATS) {
 	int i = 0;
 
 	t = dset->t1;
@@ -942,7 +994,9 @@ static int grab_deseasonal_series (double *y, const DATASET *dset,
 
     gretl_pop_c_numeric_locale();
 
-    fclose(fp);
+    if (fp != NULL) {
+	fclose(fp);
+    }
 
     return err;
 }
@@ -963,8 +1017,8 @@ static int grab_linearized_series (double *y, const double *x,
     fp = gretl_fopen(sfname, "r");
 
     /* The linearized series may not have been produced: is this
-       because a genuine error has occurred, or simply because
-       tramo judges that the series doesn't need linearizing?
+       because an error has occurred, or simply because TRAMO
+       judges that the series doesn't need linearizing?
     */
 
     if (fp == NULL) {
@@ -977,6 +1031,7 @@ static int grab_linearized_series (double *y, const double *x,
 	    fp = gretl_fopen(sfname, "r");
 	    if (fp != NULL) {
 		fclose(fp); /* again, OK ? */
+		/* is use of xorigt.t correct? */
 		gretl_build_path(sfname, path, "graph", "series",
 				     "xorigt.t", NULL);
 		fp = gretl_fopen(sfname, "r");
@@ -1127,7 +1182,7 @@ static int write_tramo_file (const char *fname,
 	if (na(y[t])) {
 	    fputs("-99999\n", fp);
 	} else {
-	    fprintf(fp, "%.8g\n", y[t]);
+	    fprintf(fp, "%.12g\n", y[t]);
 	}
     }
 
@@ -1207,7 +1262,7 @@ static int write_spc_file (const char *fname,
 	if (na(y[t])) {
 	    fputs("-99999 ", fp);
 	} else {
-	    fprintf(fp, "%g ", y[t]);
+	    fprintf(fp, "%.12g ", y[t]);
 	}
 	if ((i + 1) % 7 == 0) {
 	    fputc('\n', fp);
@@ -1782,7 +1837,7 @@ int adjust_series (const double *x, double *y, const DATASET *dset,
     if (!err) {
 	const char *path = (prog == X12A)? fname : workdir;
 
-	err = grab_deseasonal_series(y, dset, prog, path);
+	err = grab_deseasonal_series(y, x, dset, prog, path);
     }
 
     return err;
