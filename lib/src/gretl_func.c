@@ -3548,6 +3548,9 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 	    } else if (!strncmp(line, "menu-attachment", 15)) {
 		err = function_package_set_properties(pkg, "menu-attachment", p, NULL);
 	    } else if (!strncmp(line, "sibling", 7)) {
+		if (!quiet) {
+		    pprintf(prn, "Recording sibling %s\n", p);
+		}
 		err = function_package_set_properties(pkg, "sibling", p, NULL);
 	    } else if (!strncmp(line, "help", 4)) {
 		gchar *hstr = NULL;
@@ -3656,6 +3659,12 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 		}
 	    }
 	}
+    }
+
+    if (!err && pkg->sibling != NULL && pkg->depends == NULL) {
+	/* the sibling will not have been registered as a dependency */
+	err = strings_array_prepend_uniq(&pkg->depends, &pkg->n_depends,
+					 pkg->sibling);
     }
 
     if (currdir != NULL) {
@@ -4178,7 +4187,7 @@ static char **pkg_strvar_pointer (fnpkg *pkg, const char *key,
     *optional = 1;
 
     if (!strcmp(key, "tags")) {
-	return &pkg->tags; /* FIXME should become non-optional */
+	return &pkg->tags; /* FIXME should be non-optional */
     } else if (!strcmp(key, "label")) {
 	return &pkg->label;
     } else if (!strcmp(key, "menu-attachment")) {
@@ -4444,6 +4453,9 @@ int function_package_get_properties (fnpkg *pkg, ...)
 	} else if (!strcmp(key, "menu-attachment")) {
 	    ps = (char **) ptr;
 	    *ps = g_strdup(pkg->mpath);
+	} else if (!strcmp(key, "sibling")) {
+	    ps = (char **) ptr;
+	    *ps = g_strdup(pkg->sibling);
 	} else if (!strcmp(key, "data-requirement")) {
 	    pi = (int *) ptr;
 	    *pi = pkg->dreq;
@@ -4611,6 +4623,12 @@ int function_package_set_depends (fnpkg *pkg, char **S, int n)
 		pkg->n_depends = n;
 	    }
 	}
+    }
+
+    if (!err && pkg->sibling != NULL) {
+	err = strings_array_prepend_uniq(&pkg->depends,
+					 &pkg->n_depends,
+					 pkg->sibling);
     }
 
     return err;
@@ -4976,12 +4994,6 @@ static int real_load_package (fnpkg *pkg)
 #endif
 
     gretl_error_clear();
-
-    if (pkg->sibling != NULL) {
-	/* maybe move this? */
-	err = strings_array_add_uniq(&pkg->depends, &pkg->n_depends,
-				     pkg->sibling);
-    }
 
     if (!err) {
 	err = load_gfn_dependencies(pkg);
