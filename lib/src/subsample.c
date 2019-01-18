@@ -829,7 +829,7 @@ make_missing_mask (const int *list, const DATASET *dset, char *mask)
 	    mask[t] = 1;
 	    for (i=1; i<=list[0]; i++) {
 		vi = list[i];
-		if (na(dset->Z[vi][t])) {
+		if (vi != LISTSEP && na(dset->Z[vi][t])) {
 		    mask[t] = 0;
 		    break;
 		}

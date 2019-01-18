@@ -6267,7 +6267,7 @@ static NODE *list_ok_func (NODE *n, int f, parser *p)
 
     if (ret != NULL && starting(p)) {
 	int *list = n->v.ivec;
-	int i, v, t;
+	int i, vi, t;
 	double x;
 
 	if (list[0] == 0) {
@@ -6277,8 +6277,8 @@ static NODE *list_ok_func (NODE *n, int f, parser *p)
 	for (t=p->dset->t1; t<=p->dset->t2; t++) {
 	    x = (f == F_DATAOK)? 1 : 0;
 	    for (i=1; i<=list[0]; i++) {
-		v = list[i];
-		if (na(p->dset->Z[v][t])) {
+		vi = list[i];
+		if (vi != LISTSEP && na(p->dset->Z[vi][t])) {
 		    x = (f == F_DATAOK)? 0 : 1;
 		    break;
 		}
