@@ -76,7 +76,7 @@ struct function_info_ {
     GtkWidget *entries[N_ENTRIES];           /* author, etc. */
     GtkWidget *file_entries[N_FILE_ENTRIES]; /* data files */
     GtkWidget *dep_entries[N_DEP_ENTRIES];   /* dependencies */
-    GtkWidget *sib_check;  /* sibling selected? */
+    GtkWidget *prov_check; /* "provider" selected? */
     GtkWidget *codesel;    /* code-editing selector */
     GtkWidget *popup;      /* popup menu */
     GtkWidget *extra;      /* extra properties child dialog */
@@ -120,7 +120,7 @@ struct function_info_ {
     int n_priv;            /* number of private functions */
     int n_files;           /* number of included data files */
     int n_depends;         /* number of dependencies */
-    gchar *sibling;        /* name of sibling package */
+    gchar *provider;       /* name of "provider" package */
     gboolean uses_subdir;  /* the package has its own subdir (0/1) */
     gboolean data_access;  /* the package wants access to full data range */
     gboolean pdfdoc;       /* the package has PDF documentation */
@@ -235,7 +235,7 @@ function_info *finfo_new (void)
     finfo->n_priv = 0;
     finfo->n_files = 0;
     finfo->n_depends = 0;
-    finfo->sibling = NULL;
+    finfo->provider = NULL;
 
     finfo->dreq = 0;
     finfo->minver = 10900;
@@ -309,8 +309,8 @@ static void finfo_free (function_info *finfo)
 	strings_array_free(finfo->depends, finfo->n_depends);
     }
 
-    if (finfo->sibling != NULL) {
-	g_free(finfo->sibling);
+    if (finfo->provider != NULL) {
+	g_free(finfo->provider);
     }
 
     if (finfo->samplewin != NULL) {
@@ -2726,12 +2726,12 @@ static void add_data_files_entries (GtkWidget *holder,
     }
 }
 
-static void set_sib_check_state (GtkWidget *b, function_info *finfo)
+static void set_prov_check_state (GtkWidget *b, function_info *finfo)
 {
     gboolean s = FALSE;
 
-    if (finfo->sibling != NULL && finfo->n_depends > 0) {
-	if (!strcmp(finfo->sibling, finfo->depends[0])) {
+    if (finfo->provider != NULL && finfo->n_depends > 0) {
+	if (!strcmp(finfo->provider, finfo->depends[0])) {
 	    s = TRUE;
 	}
     } else if (finfo->n_depends == 0) {
@@ -2741,7 +2741,7 @@ static void set_sib_check_state (GtkWidget *b, function_info *finfo)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), s);
 }
 
-static void adjust_sib_check (GtkEditable *w, GtkWidget *b)
+static void adjust_prov_check (GtkEditable *w, GtkWidget *b)
 {
     const gchar *s = gtk_entry_get_text(GTK_ENTRY(w));
 
@@ -2777,11 +2777,11 @@ static void add_dependency_entries (GtkWidget *holder,
 	}
 	gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
 	if (i == 0) {
-	    finfo->sib_check = gtk_check_button_new_with_label(_("sibling?"));
-	    set_sib_check_state(finfo->sib_check, finfo);
-	    gtk_box_pack_start(GTK_BOX(hbox), finfo->sib_check, FALSE, FALSE, 5);
+	    finfo->prov_check = gtk_check_button_new_with_label(_("provider?"));
+	    set_prov_check_state(finfo->prov_check, finfo);
+	    gtk_box_pack_start(GTK_BOX(hbox), finfo->prov_check, FALSE, FALSE, 5);
 	    g_signal_connect(G_OBJECT(entry), "changed",
-			     G_CALLBACK(adjust_sib_check), finfo->sib_check);
+			     G_CALLBACK(adjust_prov_check), finfo->prov_check);
 	}
 	gtk_box_pack_start(GTK_BOX(holder), hbox, FALSE, FALSE, 5);
     }
@@ -3327,39 +3327,39 @@ static int process_dependency_names (function_info *finfo,
     return changed;
 }
 
-static int process_sibling_name (function_info *finfo,
-				 gboolean make_changes)
+static int process_provider_name (function_info *finfo,
+				  gboolean make_changes)
 {
     gchar *sname = NULL;
     gboolean checked;
     int changed = 0;
 
     checked =
-	gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(finfo->sib_check));
+	gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(finfo->prov_check));
 
     if (checked) {
 	sname = entry_box_get_trimmed_text(finfo->dep_entries[0]);
     }
 
     if (sname != NULL && *sname != '\0') {
-	if (finfo->sibling == NULL) {
-	    /* no prior sibling */
+	if (finfo->provider == NULL) {
+	    /* no prior provider */
 	    changed = 1;
-	} else if (strcmp(sname, finfo->sibling)) {
-	    /* different prior sibling */
+	} else if (strcmp(sname, finfo->provider)) {
+	    /* different prior provider */
 	    changed = 1;
 	}
-    } else if (finfo->sibling != NULL) {
-	/* prior sibling was removed */
+    } else if (finfo->provider != NULL) {
+	/* prior provider was removed */
 	changed = 1;
     }
 
     if (changed && make_changes) {
-	g_free(finfo->sibling);
+	g_free(finfo->provider);
 	if (sname != NULL && *sname != '\0') {
-	    finfo->sibling = g_strdup(sname);
+	    finfo->provider = g_strdup(sname);
 	} else {
-	    finfo->sibling = NULL;
+	    finfo->provider = NULL;
 	}
     }
 
@@ -3383,7 +3383,7 @@ static int process_extra_properties (function_info *finfo,
 
     changed += process_data_file_names(finfo, make_changes);
     changed += process_dependency_names(finfo, make_changes);
-    changed += process_sibling_name(finfo, make_changes);
+    changed += process_provider_name(finfo, make_changes);
 
     if (changed && make_changes) {
 	finfo_set_modified(finfo, TRUE);
@@ -4581,7 +4581,7 @@ int save_function_package (const char *fname, gpointer p)
 					      "lives-in-subdir", finfo->uses_subdir,
 					      "wants-data-access", finfo->data_access,
 					      "model-requirement", finfo->mreq,
-					      "sibling", finfo->sibling,
+					      "provider", finfo->provider,
 					      NULL);
 	if (err) {
 	    fprintf(stderr, "function_package_set_properties: err = %d\n", err);
@@ -4968,9 +4968,9 @@ int save_function_package_spec (const char *fname, gpointer p)
 	}
     }
 
-    /* write out sibling name? */
-    if (finfo->sibling != NULL) {
-	pprintf(prn, "sibling = %s\n", finfo->sibling);
+    /* write out provider name? */
+    if (finfo->provider != NULL) {
+	pprintf(prn, "provider = %s\n", finfo->provider);
     }
 
     gretl_print_destroy(prn);
@@ -5176,7 +5176,7 @@ void edit_function_package (const char *fname)
 					  "wants-data-access", &finfo->data_access,
 					  "model-requirement", &finfo->mreq,
 					  "gui-attrs", finfo->gui_attrs,
-					  "sibling", &finfo->sibling,
+					  "provider", &finfo->provider,
 					  NULL);
 
     if (!err && publist == NULL) {

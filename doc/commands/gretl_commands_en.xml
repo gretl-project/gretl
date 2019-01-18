@@ -10100,9 +10100,10 @@
       </para>
       <para>
 	Optionally, the first dependency can be marked as a
-	<quote>sibling</quote>. The effect of this is to give your
+	<quote>provider</quote>. The effect of this is to give your
 	package access to any private functions in the specified
-	package. This should not usually be required.
+	package. This should not usually be required but can be useful
+	when two packages are designed to work closely together.
       </para>
     </description>
   </command>

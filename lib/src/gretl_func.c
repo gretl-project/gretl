@@ -166,7 +166,7 @@ struct fnpkg_ {
     char overrides;   /* number of overrides of built-in functions */
     char **datafiles; /* names of packaged data files */
     char **depends;   /* names of dependencies */
-    char *sibling;    /* name of sibling package, if applicable */
+    char *provider;   /* name of "provider" package, if applicable */
     int n_files;      /* number of data files */
     int n_depends;    /* number of dependencies */
     void *editor;     /* for GUI use */
@@ -661,7 +661,7 @@ static fnpkg *function_package_alloc (const char *fname)
     pkg->n_files = 0;
     pkg->depends = NULL;
     pkg->n_depends = 0;
-    pkg->sibling = NULL;
+    pkg->provider = NULL;
     pkg->editor = NULL;
 
     return pkg;
@@ -1326,9 +1326,9 @@ ufunc *get_user_function_by_name (const char *name)
 		}
 	    }
 	}
-	if (fun == NULL && pkg->sibling != NULL) {
-	    /* functions shared by sibling */
-	    fnpkg *ppkg = get_function_package_by_name(pkg->sibling);
+	if (fun == NULL && pkg->provider != NULL) {
+	    /* functions shared by provider */
+	    fnpkg *ppkg = get_function_package_by_name(pkg->provider);
 
 	    if (ppkg != NULL) {
 		for (i=0; i<ppkg->n_priv; i++) {
@@ -2961,8 +2961,8 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
 				    pkg->n_depends, fp);
     }
 
-    if (pkg->sibling != NULL) {
-	gretl_xml_put_tagged_string("sibling", pkg->sibling, fp);
+    if (pkg->provider != NULL) {
+	gretl_xml_put_tagged_string("provider", pkg->provider, fp);
     }
 
     if (pkg->pub != NULL) {
@@ -3547,11 +3547,11 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 		err = function_package_set_properties(pkg, "label", p, NULL);
 	    } else if (!strncmp(line, "menu-attachment", 15)) {
 		err = function_package_set_properties(pkg, "menu-attachment", p, NULL);
-	    } else if (!strncmp(line, "sibling", 7)) {
+	    } else if (!strncmp(line, "provider", 8)) {
 		if (!quiet) {
-		    pprintf(prn, "Recording sibling %s\n", p);
+		    pprintf(prn, "Recording provider %s\n", p);
 		}
-		err = function_package_set_properties(pkg, "sibling", p, NULL);
+		err = function_package_set_properties(pkg, "provider", p, NULL);
 	    } else if (!strncmp(line, "help", 4)) {
 		gchar *hstr = NULL;
 		int pdfdoc;
@@ -3661,10 +3661,10 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 	}
     }
 
-    if (!err && pkg->sibling != NULL && pkg->depends == NULL) {
-	/* the sibling will not have been registered as a dependency */
+    if (!err && pkg->provider != NULL && pkg->depends == NULL) {
+	/* the provider will not have been registered as a dependency */
 	err = strings_array_prepend_uniq(&pkg->depends, &pkg->n_depends,
-					 pkg->sibling);
+					 pkg->provider);
     }
 
     if (currdir != NULL) {
@@ -4200,8 +4200,8 @@ static char **pkg_strvar_pointer (fnpkg *pkg, const char *key,
 	return &pkg->gui_help_fname;
     } else if (!strcmp(key, "sample-fname")) {
 	return &pkg->sample_fname;
-    } else if (!strcmp(key, "sibling")) {
-	return &pkg->sibling;
+    } else if (!strcmp(key, "provider")) {
+	return &pkg->provider;
     }
 
     return NULL;
@@ -4453,9 +4453,9 @@ int function_package_get_properties (fnpkg *pkg, ...)
 	} else if (!strcmp(key, "menu-attachment")) {
 	    ps = (char **) ptr;
 	    *ps = g_strdup(pkg->mpath);
-	} else if (!strcmp(key, "sibling")) {
+	} else if (!strcmp(key, "provider")) {
 	    ps = (char **) ptr;
-	    *ps = g_strdup(pkg->sibling);
+	    *ps = g_strdup(pkg->provider);
 	} else if (!strcmp(key, "data-requirement")) {
 	    pi = (int *) ptr;
 	    *pi = pkg->dreq;
@@ -4625,10 +4625,10 @@ int function_package_set_depends (fnpkg *pkg, char **S, int n)
 	}
     }
 
-    if (!err && pkg->sibling != NULL) {
+    if (!err && pkg->provider != NULL) {
 	err = strings_array_prepend_uniq(&pkg->depends,
 					 &pkg->n_depends,
-					 pkg->sibling);
+					 pkg->provider);
     }
 
     return err;
@@ -4762,7 +4762,7 @@ static void real_function_package_free (fnpkg *pkg, int full)
 	free(pkg->tags);
 	free(pkg->label);
 	free(pkg->mpath);
-	free(pkg->sibling);
+	free(pkg->provider);
 	free(pkg);
     }
 }
@@ -5011,11 +5011,11 @@ static int real_load_package (fnpkg *pkg)
 	}
     }
 
-    if (!err && pkg->sibling != NULL) {
-	/* check that sibling really got loaded */
-	if (get_function_package_by_name(pkg->sibling) == NULL) {
-	    gretl_errmsg_sprintf("Sibling package %s is not loaded\n",
-				 pkg->sibling);
+    if (!err && pkg->provider != NULL) {
+	/* check that provider really got loaded */
+	if (get_function_package_by_name(pkg->provider) == NULL) {
+	    gretl_errmsg_sprintf("Provider package %s is not loaded\n",
+				 pkg->provider);
 	    err = E_DATA;
 	}
     }
@@ -5082,8 +5082,8 @@ static void print_package_info (const fnpkg *pkg, const char *fname, PRN *prn)
 		    (i < pkg->n_depends-1)? ", " : "\n");
 	}
     }
-    if (pkg->sibling != NULL) {
-	pprintf(prn, "<@itl=\"Sibling\">: %s\n", pkg->sibling);
+    if (pkg->provider != NULL) {
+	pprintf(prn, "<@itl=\"Provider\">: %s\n", pkg->provider);
     }
 
     if (pdfdoc) {
@@ -5291,8 +5291,8 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname,
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->label);
 	} else if (!xmlStrcmp(cur->name, (XUC) "menu-attachment")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->mpath);
-	} else if (!xmlStrcmp(cur->name, (XUC) "sibling")) {
-	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->sibling);
+	} else if (!xmlStrcmp(cur->name, (XUC) "provider")) {
+	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->provider);
 	} else if (!xmlStrcmp(cur->name, (XUC) "data-files")) {
 	    pkg->datafiles =
 		gretl_xml_get_strings_array(cur, doc, &pkg->n_files,
