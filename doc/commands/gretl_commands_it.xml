@@ -9662,10 +9662,11 @@
 	pacchetto in questione.
       </para>
       <para>
-	La prima dipendenza può essere indicata come
-	<quote>sorella</quote>. In questo caso, il vostro pacchetto
+	La primo pacchetto da cui si dipende può essere indicato come
+	<quote>fornitore</quote>. In questo caso, il vostro pacchetto
 	avrà accesso anche alle funzioni private del pacchetto da cui
-	dipende, cosa che di solito non è necessaria.
+	dipende, cosa che di solito non è necessaria, ma che può
+	tornare utile in certi casi.
       </para>
     </description>
   </command>
