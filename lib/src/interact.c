@@ -2382,29 +2382,24 @@ static int package_check_dependencies (const char *fname,
 				       ExecState *s,
 				       PRN *prn)
 {
-    fnpkg *pkg;
+    char **depends;
+    int ndeps;
     int err = 0;
 
-    pkg = get_function_package_by_filename(fname, &err);
+    depends = package_peek_dependencies(fname, &ndeps);
 
-    if (pkg != NULL) {
-	char **depends = NULL;
-	int ndeps = 0;
+    if (depends != NULL) {
+	char *pkgpath;
+	int i;
 
-	depends = function_package_get_depends(pkg, &ndeps);
-	if (depends != NULL) {
-	    char *pkgpath;
-	    int i;
-
-	    for (i=0; i<ndeps && !err; i++) {
-		pkgpath = gretl_function_package_get_path(depends[i], PKG_ALL);
-		if (pkgpath == NULL) {
-		    err = install_function_package(depends[i], OPT_D, s, prn);
-		}
-		free(pkgpath);
+	for (i=0; i<ndeps && !err; i++) {
+	    pkgpath = gretl_function_package_get_path(depends[i], PKG_ALL);
+	    if (pkgpath == NULL) {
+		err = install_function_package(depends[i], OPT_D, s, prn);
 	    }
-	    strings_array_free(depends, ndeps);
+	    free(pkgpath);
 	}
+	strings_array_free(depends, ndeps);
     }
 
     return err;

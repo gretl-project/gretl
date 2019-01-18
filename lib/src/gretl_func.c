@@ -232,6 +232,10 @@ static fnpkg *current_pkg;  /* pointer to package currently being edited */
 
 static int function_package_record (fnpkg *pkg);
 static void function_package_free (fnpkg *pkg);
+static int load_function_package (const char *fname,
+				  gretlopt opt,
+				  GArray *pstack,
+				  PRN *prn);
 
 /* record of state, and communication of state with outside world */
 
@@ -3267,14 +3271,7 @@ int function_set_package_role (const char *name, fnpkg *pkg,
 	if (!strcmp(name, pkg->pub[i]->name)) {
 	    u = pkg->pub[i];
 	    if (role == UFUN_GUI_MAIN) {
-#if 1
 		; /* OK, type does not matter */
-#else
-		if (u->rettype != GRETL_TYPE_BUNDLE && u->rettype != GRETL_TYPE_VOID) {
-		    pprintf(prn, "%s: must return a bundle, or nothing\n", attr);
-		    err = E_TYPES;
-		}
-#endif
 	    } else {
 		/* bundle-print, bundle-plot, etc. */
 		if (u->n_params == 0) {
@@ -3354,13 +3351,7 @@ int function_ok_for_package_role (const char *name,
     }
 
     if (role == UFUN_GUI_MAIN) {
-#if 1
 	; /* OK, we don't mind what type it is */
-#else
-	if (u->rettype != GRETL_TYPE_BUNDLE && u->rettype != GRETL_TYPE_VOID) {
-	    err = E_TYPES;
-	}
-#endif
     } else {
 	/* bundle-print, bundle-plot, etc. */
 	if (u->n_params == 0) {
@@ -3661,8 +3652,8 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 	}
     }
 
-    if (!err && pkg->provider != NULL && pkg->depends == NULL) {
-	/* the provider will not have been registered as a dependency */
+    if (!err && pkg->provider != NULL) {
+	/* in case provider isn't registered as a dependency */
 	err = strings_array_prepend_uniq(&pkg->depends, &pkg->n_depends,
 					 pkg->provider);
     }
@@ -4947,29 +4938,52 @@ static int load_public_function (fnpkg *pkg, int i)
     return err;
 }
 
-static int load_gfn_dependencies (fnpkg *pkg)
+static int pkg_in_stack (const char *name, GArray *pstack)
 {
-    char **depends = NULL;
-    int ndeps = 0;
+    char *s;
+    int i;
+
+    for (i=0; i<pstack->len; i++) {
+	s = g_array_index(pstack, char *, i);
+	if (!strcmp(name, s)) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+static int load_gfn_dependencies (fnpkg *pkg, GArray *pstack)
+{
     int err = 0;
 
-    depends = function_package_get_depends(pkg, &ndeps);
-
-    if (depends != NULL) {
+    if (pkg->depends != NULL) {
 	char *pkgpath;
 	int i;
 
-	for (i=0; i<ndeps && !err; i++) {
-	    if (get_function_package_by_name(depends[i]) != NULL) {
+	fprintf(stderr, "*** load_gfn_dependencies for %s ***\n", pkg->name);
+
+	for (i=0; i<pkg->n_depends && !err; i++) {
+	    const char *dep = pkg->depends[i];
+
+	    if (get_function_package_by_name(dep) != NULL) {
 		; /* OK, already loaded */
+	    } else if (pkg_in_stack(dep, pstack)) {
+		fprintf(stderr, " found %s in pstack\n", dep);
+		; /* don't go into infinite loop! */
 	    } else {
-		pkgpath = gretl_function_package_get_path(depends[i], PKG_ALL);
+		fprintf(stderr, " trying for %s\n", dep);
+		pkgpath = gretl_function_package_get_path(dep, PKG_ALL);
 		if (pkgpath == NULL) {
 		    gretl_errmsg_sprintf("%s: dependency %s was not found",
-					 pkg->name, depends[i]);
+					 pkg->name, dep);
 		} else {
-		    err = load_XML_functions_file(pkgpath, OPT_NONE, NULL);
+		    err = load_function_package(pkgpath, OPT_NONE,
+						pstack, NULL);
 		    free(pkgpath);
+		    if (!err) {
+			g_array_append_val(pstack, dep);
+		    }
 		}
 	    }
 	}
@@ -4985,7 +4999,7 @@ static int load_gfn_dependencies (fnpkg *pkg)
    packages.
 */
 
-static int real_load_package (fnpkg *pkg)
+static int real_load_package (fnpkg *pkg, GArray *pstack)
 {
     int i, err = 0;
 
@@ -4995,8 +5009,8 @@ static int real_load_package (fnpkg *pkg)
 
     gretl_error_clear();
 
-    if (!err) {
-	err = load_gfn_dependencies(pkg);
+    if (pstack != NULL) {
+	err = load_gfn_dependencies(pkg, pstack);
     }
 
     if (!err && pkg->pub != NULL) {
@@ -5212,7 +5226,8 @@ static void print_package_code (const fnpkg *pkg,
 /* allocate a fnpkg structure and read from XML file into it */
 
 static fnpkg *
-real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname,
+real_read_package (xmlDocPtr doc, xmlNodePtr node,
+		   const char *fname, int get_funcs,
 		   int *err)
 {
     xmlNodePtr cur;
@@ -5306,12 +5321,14 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname,
 	cur = cur->next;
     }
 
-    cur = node->xmlChildrenNode;
-    while (cur != NULL && !*err) {
-        if (!xmlStrcmp(cur->name, (XUC) "gretl-function")) {
-	    *err = read_ufunc_from_xml(cur, doc, pkg);
+    if (get_funcs) {
+	cur = node->xmlChildrenNode;
+	while (cur != NULL && !*err) {
+	    if (!xmlStrcmp(cur->name, (XUC) "gretl-function")) {
+		*err = read_ufunc_from_xml(cur, doc, pkg);
+	    }
+	    cur = cur->next;
 	}
-	cur = cur->next;
     }
 
 #if PKG_DEBUG
@@ -5354,9 +5371,9 @@ int read_session_functions_file (const char *fname)
     cur = node->xmlChildrenNode;
     while (cur != NULL && !err) {
 	if (!xmlStrcmp(cur->name, (XUC) "gretl-function-package")) {
-	    pkg = real_read_package(doc, cur, fname, &err);
+	    pkg = real_read_package(doc, cur, fname, 1, &err);
 	    if (!err) {
-		err = real_load_package(pkg);
+		err = real_load_package(pkg, NULL);
 	    }
 	}
 #ifdef HAVE_MPI
@@ -5398,10 +5415,15 @@ int read_session_functions_file (const char *fname)
     return err;
 }
 
-/* parse an XML function package file and return an allocated
-   package struct with the functions attached */
+/* Parse an XML function package file and return an allocated
+   package struct with the functions attached. Note that this
+   function does not actually "load" the package (making it
+   available to users) and does not check dependencies.
+*/
 
-static fnpkg *read_package_file (const char *fname, int *err)
+static fnpkg *read_package_file (const char *fname,
+				 int get_funcs,
+				 int *err)
 {
     fnpkg *pkg = NULL;
     xmlDocPtr doc = NULL;
@@ -5420,7 +5442,7 @@ static fnpkg *read_package_file (const char *fname, int *err)
     cur = node->xmlChildrenNode;
     while (cur != NULL && !*err) {
 	if (!xmlStrcmp(cur->name, (XUC) "gretl-function-package")) {
-	    pkg = real_read_package(doc, cur, fname, err);
+	    pkg = real_read_package(doc, cur, fname, get_funcs, err);
 	    break;
 	}
 	cur = cur->next;
@@ -5439,6 +5461,27 @@ static fnpkg *read_package_file (const char *fname, int *err)
 #endif
 
     return pkg;
+}
+
+char **package_peek_dependencies (const char *fname, int *ndeps)
+{
+    char **deps = NULL;
+    fnpkg *pkg;
+    int err = 0;
+
+    pkg = read_package_file(fname, 0, &err);
+
+    if (pkg != NULL) {
+	deps = pkg->depends; /* stolen! */
+	*ndeps = pkg->n_depends;
+	pkg->depends = NULL;
+	pkg->n_depends = 0;
+	function_package_free(pkg);
+    } else {
+	*ndeps = 0;
+    }
+
+    return deps;
 }
 
 /**
@@ -5492,8 +5535,23 @@ static int not_mpi_duplicate (void)
 #endif
 }
 
+static fnpkg *check_for_loaded (const char *fname, gretlopt opt)
+{
+    fnpkg *pkg = get_loaded_pkg_by_filename(fname, NULL);
+
+    if (pkg != NULL) {
+	if (opt & OPT_F) {
+	    /* force re-reading from file */
+	    real_function_package_unload(pkg, 1);
+	    pkg = NULL;
+	}
+    }
+
+    return pkg;
+}
+
 /**
- * load_function_package_by_filename:
+ * load_function_package:
  * @fname: full path to gfn file.
  * @opt: may include OPT_F to force loading even when
  * the package is already loaded.
@@ -5506,42 +5564,32 @@ static int not_mpi_duplicate (void)
  * Returns: 0 on success, non-zero code on error.
  */
 
-int load_function_package_by_filename (const char *fname,
-				       gretlopt opt,
-				       PRN *prn)
+static int load_function_package (const char *fname,
+				  gretlopt opt,
+				  GArray *pstack,
+				  PRN *prn)
 {
     fnpkg *pkg;
     int err = 0;
 
-    pkg = get_loaded_pkg_by_filename(fname, NULL);
-
+    pkg = check_for_loaded(fname, opt);
     if (pkg != NULL) {
-	if (opt & OPT_F) {
-	    /* force re-reading from file */
-	    real_function_package_unload(pkg, 1);
-	    pkg = NULL;
-	} else {
-	    /* already loaded: no-op */
-	    fprintf(stderr, "load_function_package_by_filename:\n"
-		    " '%s' is already loaded\n", fname);
-	}
+	return 0;
     }
 
-    if (pkg == NULL) {
-	pkg = read_package_file(fname, &err);
-	if (!err) {
-	    /* Let's double-check that we don't have a
-	       colliding package (it would have to be
-	       with a different filename).
-	    */
-	    fnpkg *oldpkg;
+    pkg = read_package_file(fname, 1, &err);
+    if (!err) {
+	/* Let's double-check that we don't have a
+	   colliding package (it would have to be
+	   with a different filename).
+	*/
+	fnpkg *oldpkg;
 
-	    oldpkg = get_function_package_by_name(pkg->name);
-	    if (oldpkg != NULL) {
-		real_function_package_unload(oldpkg, 1);
-	    }
-	    err = real_load_package(pkg);
+	oldpkg = get_function_package_by_name(pkg->name);
+	if (oldpkg != NULL) {
+	    real_function_package_unload(oldpkg, 1);
 	}
+	err = real_load_package(pkg, pstack);
     }
 
     if (err) {
@@ -5557,15 +5605,49 @@ int load_function_package_by_filename (const char *fname,
 }
 
 /**
+ * include_gfn:
+ * @fname: full path to gfn file.
+ * @opt: may include OPT_F to force loading even when
+ * the package is already loaded.
+ * @prn: gretl printer.
+ *
+ * Loads the function package located by @fname into
+ * memory, if possible. Supports gretl's "include" command
+ * for gfn files.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int include_gfn (const char *fname, gretlopt opt, PRN *prn)
+{
+    GArray *pstack;
+    gchar *p, *pkgname;
+    int err;
+
+    pkgname = g_path_get_basename(fname);
+    p = strrchr(pkgname, '.');
+    if (p != NULL) {
+	*p = '\0';
+    }
+
+    pstack = g_array_new(FALSE, FALSE, sizeof(char *));
+    g_array_append_val(pstack, pkgname);
+    err = load_function_package(fname, opt, pstack, prn);
+    g_array_free(pstack, TRUE);
+    g_free(pkgname);
+
+    return err;
+}
+
+/**
  * get_function_package_by_filename:
  * @fname: gfn filename.
  * @err: location to receive error code.
  *
  * If the package whose filename is @fname is already loaded,
  * returns the package pointer, otherwise attempts to load the
- * package from file. Similar to load_function_package_from_file()
- * but returns the package pointer rather than just a status
- * code.
+ * package from file. Similar to include_gfn() but returns
+ * the package pointer rather than just a status code.
  *
  * Returns: package-pointer on success, NULL on error.
  */
@@ -5583,11 +5665,13 @@ fnpkg *get_function_package_by_filename (const char *fname, int *err)
     }
 
     if (pkg == NULL) {
-	pkg = read_package_file(fname, &myerr);
+	myerr = include_gfn(fname, OPT_NONE, NULL);
 	if (!myerr) {
-	    myerr = real_load_package(pkg);
-	    if (myerr) {
-		pkg = NULL;
+	    for (i=0; i<n_pkgs; i++) {
+		if (!strcmp(fname, pkgs[i]->fname)) {
+		    pkg = pkgs[i];
+		    break;
+		}
 	    }
 	}
     }
@@ -5662,7 +5746,13 @@ static int real_print_gfn_data (const char *fname, PRN *prn,
 
     if (pkg == NULL) {
 	/* package is not loaded, read it now */
-	pkg = read_package_file(fname, &err);
+	int get_funcs = 1;
+
+	if (task == FUNCS_HELP || task == FUNCS_INFO ||
+	    task == FUNCS_SAMPLE) {
+	    get_funcs = 0;
+	}
+	pkg = read_package_file(fname, get_funcs, &err);
 	free_pkg = 1;
     }
 

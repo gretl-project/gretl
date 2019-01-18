@@ -4614,7 +4614,7 @@ int load_XML_functions_file (const char *fname, gretlopt opt, PRN *prn)
 
     if (!strcmp(rootname, "gretl-functions")) {
 	if (has_suffix(fname, ".gfn")) {
-	    err = load_function_package_by_filename(fname, opt, prn);
+	    err = include_gfn(fname, opt, prn);
 	} else {
 	    err = read_session_functions_file(fname);
 	}

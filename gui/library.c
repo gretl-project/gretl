@@ -9316,7 +9316,7 @@ int execute_script (char *runfile, const char *buf,
 	if (!ok_run_file(runfile, &file_is_gfn)) {
 	    return -1;
 	} else if (file_is_gfn) {
-	    return load_function_package_by_filename(runfile, OPT_NONE, prn);
+	    return include_gfn(runfile, OPT_NONE, prn);
 	} else {
 	    fb = gretl_fopen(runfile, "r");
 	}
