@@ -687,30 +687,43 @@ static int sys_check_eqn_list (const int *list)
 
 /* @LY is a simple list of g regressands; @LX is either a common
    list of regressors or it should contain g sub-lists, one
-   per equation.
+   per equation; @AX is an array of lists. We get either @LX
+   or @AX as non-NULL, never both.
 */
 
 static int add_equations_from_lists (equation_system *sys,
 				     const int *LY,
 				     const int *LX,
+				     gretl_array *AX,
 				     const DATASET *dset)
 {
     int n = sys->neqns;
     int n_add = LY[0];
-    int nx, nx0 = LX[0];
-    int j0, pos = 0;
+    int nx, pos = 0;
     int i, j, err = 0;
 
-    /* does LX contain separator(s)? */
-    pos = gretl_list_separator_position(LX);
-    if (pos > 0) {
-	err = sys_check_sepcount(LX, n_add);
+    if (AX != NULL) {
+	if (gretl_array_get_length(AX) != n_add) {
+	    err = E_ARGS;
+	}
+    } else {
+	/* does LX contain separator(s)? */
+	pos = gretl_list_separator_position(LX);
+	if (pos > 0) {
+	    err = sys_check_sepcount(LX, n_add);
+	}
     }
 
     if (!err) {
-	sys->lists = realloc(sys->lists, (n + n_add) * sizeof *sys->lists);
-	if (sys->lists == NULL) {
+	int **L = realloc(sys->lists, (n + n_add) * sizeof *sys->lists);
+
+	if (L == NULL) {
 	    err = E_ALLOC;
+	} else {
+	    sys->lists = L;
+	    for (i=0; i<n_add; i++) {
+		sys->lists[n+i] = NULL;
+	    }
 	}
     }
 
@@ -718,40 +731,65 @@ static int add_equations_from_lists (equation_system *sys,
 	return err;
     }
 
-    /* the number of series to read from LX */
-    nx = pos > 0 ? (pos - 1) : nx0;
-    /* the starting position for reading from LX */
-    j0 = 1;
+    if (AX != NULL) {
+	for (i=0; i<n_add && !err; i++) {
+	    int *rhs, *list;
 
-    for (i=0; i<n_add && !err; i++) {
-	int *list;
-
-	list = gretl_list_new(1 + nx);
-
-	if (list == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    list[1] = LY[i+1];
-	    for (j=0; j<nx; j++) {
-		list[j+2] = LX[j+j0];
-	    }
-	    sys->lists[n++] = list;
-	    if (pos > 0 && i < n_add - 1) {
-		/* handle the multiple sub-list case */
-		j0 = ++pos; /* start of next read */
-		if (i == n_add - 2) {
-		    /* the next sublist is the last */
-		    nx = nx0 - pos + 1;
-		} else {
-		    nx = 0;
-		    while (LX[pos] != LISTSEP) {
-			/* advance to next ';' */
-			pos++;
-			nx++;
-		    }
+	    rhs = gretl_array_get_element(AX, i, NULL, &err);
+	    if (!err) {
+		nx = rhs[0];
+		list = gretl_list_new(1 + nx);
+		if (list == NULL) {
+		    err = E_ALLOC;
 		}
 	    }
-	    err = sys_check_eqn_list(list);
+	    if (!err) {
+		list[1] = LY[i+1];
+		for (j=0; j<nx; j++) {
+		    list[j+2] = rhs[j+1];
+		}
+		sys->lists[n++] = list;
+		err = sys_check_eqn_list(list);
+	    }
+	}
+    } else {
+	int nx0 = LX[0];
+	int j0;
+
+	/* the number of series to read from LX */
+	nx = pos > 0 ? (pos - 1) : nx0;
+	/* the starting position for reading from LX */
+	j0 = 1;
+
+	for (i=0; i<n_add && !err; i++) {
+	    int *list;
+
+	    list = gretl_list_new(1 + nx);
+	    if (list == NULL) {
+		err = E_ALLOC;
+	    } else {
+		list[1] = LY[i+1];
+		for (j=0; j<nx; j++) {
+		    list[j+2] = LX[j+j0];
+		}
+		sys->lists[n++] = list;
+		if (pos > 0 && i < n_add - 1) {
+		    /* handle the multiple sub-list case */
+		    j0 = ++pos; /* start of next read */
+		    if (i == n_add - 2) {
+			/* the next sublist is the last */
+			nx = nx0 - pos + 1;
+		    } else {
+			nx = 0;
+			while (LX[pos] != LISTSEP) {
+			    /* advance to next ';' */
+			    pos++;
+			    nx++;
+			}
+		    }
+		}
+		err = sys_check_eqn_list(list);
+	    }
 	}
     }
 
@@ -836,18 +874,25 @@ int equation_system_append_multi (equation_system *sys,
     n = sscanf(param, fmt, name1, name2);
 
     if (n == 2) {
-	/* look for two lists */
+	/* look for two lists, or list plus array */
 	const int *LY = get_list_by_name(name1);
 	const int *LX = get_list_by_name(name2);
+	gretl_array *AX = NULL;
 
 	if (LY == NULL) {
 	    gretl_errmsg_sprintf(_("'%s': no such list"), name1);
 	    err = E_UNKVAR;
 	} else if (LX == NULL) {
-	    gretl_errmsg_sprintf(_("'%s': no such list"), name2);
-	    err = E_UNKVAR;
-	} else {
-	    err = add_equations_from_lists(sys, LY, LX, dset);
+	    /* try for an array on the right */
+	    AX = get_array_by_name(name2);
+	    if (gretl_array_get_type(AX) != GRETL_TYPE_LISTS) {
+		gretl_errmsg_sprintf(_("'%s': not a list of array of lists"),
+				     name2);
+		err = E_UNKVAR;
+	    }
+	}
+	if (!err) {
+	    err = add_equations_from_lists(sys, LY, LX, AX, dset);
 	}
     } else if (n == 1) {
 	/* look for one matrix */
