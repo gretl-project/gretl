@@ -29,7 +29,8 @@ typedef enum {
     CI_FFORM = 1 << 16, /* command also has function-form */
     CI_LCHK  = 1 << 17, /* needs checking for "list" specials */
     CI_INFL  = 1 << 18, /* command arglist "inflected" by options */
-    CI_FCMIN = 1 << 19  /* minimal (single word) flow control */
+    CI_FCMIN = 1 << 19, /* minimal (single word) flow control */
+    CI_LGEN  = 1 << 20  /* command generates a named list */
 } CIFlags;
 
 struct gretl_cmd {
@@ -2562,7 +2563,7 @@ static int try_for_command_index (CMD *cmd, int i,
 		cmd->ciflags |= CI_EXTRA;
 	    }
 	    if (cmd->ci == GENR) {
-		GretlType gtype;
+		GretlType gtype = 0;
 
 		if (!strcmp(test, "list")) {
 		    if (peek_next_char(cmd, i) == '\0') {
@@ -2571,11 +2572,14 @@ static int try_for_command_index (CMD *cmd, int i,
 			cmd->ciflags = 0;
 		    } else {
 			/* probably "genr" but might be a special */
-			cmd->gtype = GRETL_TYPE_LIST;
+			gtype = cmd->gtype = GRETL_TYPE_LIST;
 			cmd->ciflags |= CI_LCHK;
 		    }
 		} else if ((gtype = gretl_get_gen_type(test)) > 0) {
 		    cmd->gtype = gtype;
+		}
+		if (gtype == 0 && get_list_by_name(test)) {
+		    cmd->ciflags |= CI_LGEN;
 		}
 	    }
 	    if (compmode && cmd->ci == END) {
@@ -3154,15 +3158,15 @@ static int set_command_vstart (CMD *cmd)
 	}
     }
 
-    if (0 && (cmd->ci == EVAL || cmd->ci == GENR)) {
+    if (cmd->gtype == GRETL_TYPE_LIST || (cmd->ciflags & CI_LGEN)) {
 	/* we won't accept ';' as list separator outside of an
-	   appropriate command context, other than in "{...}"
-	   Except that this breaks the "equations" mechanism!
-	   More thinking need here.
+	   appropriate command context. This breaks the old system
+	   "equations" mechanism but I'm afraid that's just too bad.
 	*/
-	if (bad_semic(s)) {
-	    gretl_errmsg_sprintf(_("Parse error at unexpected token '%s'"), ";");
-	    return E_PARSE;
+	if (strchr(s, ';')) {
+	    gretl_errmsg_sprintf(_("The symbol '%c' is not valid in this context\n"),
+				 ';');
+	    return E_INVARG;
 	}
     }
 
