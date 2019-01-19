@@ -284,7 +284,6 @@ GretlType gretl_get_gen_type (const char *s)
 	int i, n = G_N_ELEMENTS(gentypes);
 
 	ht = g_hash_table_new(g_str_hash, g_str_equal);
-
 	for (i=0; i<n; i++) {
 	    g_hash_table_insert(ht, (gpointer) gentypes[i].word,
 				GINT_TO_POINTER(gentypes[i].type));
