@@ -3160,8 +3160,9 @@ static int set_command_vstart (CMD *cmd)
 
     if (cmd->gtype == GRETL_TYPE_LIST || (cmd->ciflags & CI_LGEN)) {
 	/* we won't accept ';' as list separator outside of an
-	   appropriate command context. This breaks the old system
-	   "equations" mechanism but I'm afraid that's just too bad.
+	   appropriate command context. This breaks the old version
+	   of the system "equations" mechanism but I'm afraid that's
+	   just too bad.
 	*/
 	if (strchr(s, ';')) {
 	    gretl_errmsg_sprintf(_("The symbol '%c' is not valid in this context\n"),
