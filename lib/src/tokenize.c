@@ -3098,12 +3098,30 @@ static int handle_command_extra (CMD *c)
     return c->err;
 }
 
+static int bad_semic (const char *s)
+{
+    int braced = 0;
+
+    while (*s) {
+	if (*s == '{') {
+	    braced++;
+	} else if (*s == '}') {
+	    braced--;
+	} else if (*s == ';' && !braced) {
+	    return 1;
+	}
+	s++;
+    }
+
+    return 0;
+}
+
 /* @vstart is a const pointer into the incoming command
    line, holding a "genr"-type expression, a string to
    be passed to the shell, or a varargs expression.
 */
 
-static void set_command_vstart (CMD *cmd)
+static int set_command_vstart (CMD *cmd)
 {
     cmd_token *tok;
     const char *s = NULL;
@@ -3136,7 +3154,21 @@ static void set_command_vstart (CMD *cmd)
 	}
     }
 
+    if (0 && (cmd->ci == EVAL || cmd->ci == GENR)) {
+	/* we won't accept ';' as list separator outside of an
+	   appropriate command context, other than in "{...}"
+	   Except that this breaks the "equations" mechanism!
+	   More thinking need here.
+	*/
+	if (bad_semic(s)) {
+	    gretl_errmsg_sprintf(_("Parse error at unexpected token '%s'"), ";");
+	    return E_PARSE;
+	}
+    }
+
     cmd->vstart = s;
+
+    return 0;
 }
 
 /* For a command that ends with varargs, do we have the required
@@ -3816,7 +3848,7 @@ static int assemble_command (CMD *cmd, DATASET *dset,
 	if (cmd->ciflags & CI_ADHOC) {
 	    handle_adhoc_string(cmd);
 	} else if (cmd->ciflags & (CI_EXPR | CI_VARGS)) {
-	    set_command_vstart(cmd);
+	    cmd->err = set_command_vstart(cmd);
 	}
     }
 
