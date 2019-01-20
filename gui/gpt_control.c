@@ -190,6 +190,7 @@ typedef struct linestyle_ linestyle;
 struct linestyle_ {
     /* we may want more elements here at some point */
     char rgb[8];
+    float width;
 };
 
 #define MAX_STYLES N_GP_COLORS
@@ -1871,6 +1872,39 @@ static int verify_rgb (char *rgb)
     return err;
 }
 
+static int parse_user_linetype (const char *s, linestyle *styles)
+{
+    char rgb[20] = {0};
+    const char *p;
+    int n, idx = 0;
+    int err = 0;
+
+    n = sscanf(s, " %d lc rgb %19s", &idx, rgb);
+
+    if (n == 2 && idx > 0 && idx <= MAX_STYLES) {
+	err = verify_rgb(rgb);
+	if (err) {
+	    return err;
+	} else {
+	    strcpy(styles[idx-1].rgb, rgb);
+	}
+    } else {
+	err = 1;
+    }
+
+    if (!err && (p = strstr(s, "lw")) != NULL) {
+	float w = 0.0;
+
+	if (sscanf(p + 2, "%f", &w)) {
+	    styles[idx-1].width = w;
+	} else {
+	    err = 1;
+	}
+    }
+
+    return err;
+}
+
 static int parse_gp_set_line (GPT_SPEC *spec,
 			      const char *s,
 			      linestyle *styles,
@@ -1879,6 +1913,7 @@ static int parse_gp_set_line (GPT_SPEC *spec,
     char key[16] = {0};
     char val[MAXLEN] = {0};
     int lt_pos = 0;
+    int err = 0;
 
     if (!strncmp(s, "set linetype", 12)) {
 	/* e.g. set linetype 1 lc rgb "#ff0000" */
@@ -1888,11 +1923,16 @@ static int parse_gp_set_line (GPT_SPEC *spec,
 	lt_pos = 14;
     }
 
-    if (lt_pos > 0) {
+    if (lt_pos > 0 && unhandled != NULL) {
+	err = parse_user_linetype(s + lt_pos, styles);
+	if (err) {
+	    *unhandled = 1;
+	}
+	return err;
+    } else if (lt_pos > 0) {
 	/* look for color specification */
 	char rgb[20] = {0};
 	int n, idx = 0;
-	int err = 0;
 
 	n = sscanf(s + lt_pos, " %d lc rgb %19s", &idx, rgb);
 	if (n == 2 && idx > 0 && idx <= MAX_STYLES) {
@@ -2730,6 +2770,7 @@ static void check_for_plot_time_data (GPT_SPEC *spec, gchar *buf)
 static void linestyle_init (linestyle *ls)
 {
     ls->rgb[0] = '\0';
+    ls->width = 0;
 }
 
 static int push_z_row (gretl_matrix *z, int i, int n, char *line)
@@ -3130,6 +3171,10 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	err = E_DATA;
     }
 
+    if (!err && spec->literal != NULL) {
+	maybe_promote_literal_lines(spec, styles);
+    }
+
     /* transcribe styles info into lines for use in the
        GUI plot-editor */
 
@@ -3144,14 +3189,15 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	if (uservec != NULL && in_gretl_list(uservec, i)) {
 	    line->flags |= GP_LINE_USER;
 	}
-	if (idx > 0 && idx < MAX_STYLES && line->rgb[0] == '\0') {
-	    /* if we haven't already got a line-specific color,
-	       apply the default style */
-	    strcpy(line->rgb, styles[idx-1].rgb); /* zero-based */
-#if GPDEBUG
-	    fprintf(stderr, "i=%d, no explicit rgb, applying styles[%d].rgb='%s'\n",
-		    i, idx-1, styles[idx-1].rgb);
-#endif
+	if (idx > 0 && idx < MAX_STYLES) {
+	    if (line->rgb[0] == '\0') {
+		/* if we haven't already got a line-specific color,
+		   apply the default style */
+		strcpy(line->rgb, styles[idx-1].rgb); /* zero-based */
+	    }
+	    if (styles[idx-1].width > 0) {
+		line->width = styles[idx-1].width;
+	    }
 	}
 	if (spec->auxdata != NULL && i == spec->n_lines - 1) {
 	    /* the last "line" doesn't use the regular
@@ -3178,10 +3224,6 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	/* backward compatibility */
 	fprintf(stderr, "old roots plot: fixing\n");
 	fix_old_roots_plot(spec);
-    }
-
-    if (!err && spec->literal != NULL) {
-	maybe_promote_literal_lines(spec, styles);
     }
 
  bailout:
