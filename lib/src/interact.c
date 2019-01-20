@@ -243,7 +243,7 @@ static int ends_foreign_block (const char *s)
 
 /**
  * parse_command_line:
- * @line: the command line.
+ * @s: pointer to execution-state struct.
  * @cmd: pointer to command struct.
  * @dset: dataset struct.
  * @ptr: pointer for use with "compilation" of
@@ -254,8 +254,11 @@ static int ends_foreign_block (const char *s)
  * Returns: 0 on success, non-zero code on error.
  */
 
-int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
+int parse_command_line (ExecState *s, DATASET *dset, void *ptr)
 {
+    char *line = s->line;
+    CMD *cmd = s->cmd;
+
     gretl_cmd_clear(cmd);
     gretl_error_clear();
 
@@ -308,7 +311,7 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset, void *ptr)
 	}
     }
 
-    cmd->err = real_parse_command(line, cmd, dset, 0, ptr);
+    cmd->err = real_parse_command(s, dset, 0, ptr);
 
     if (cmd->err) {
 	gretl_cmd_destroy_context(cmd);
@@ -3641,7 +3644,7 @@ int maybe_exec_line (ExecState *s, DATASET *dset, int *loopstart)
 	err = get_command_index(s->line, LOOP, s->cmd);
     } else {
 	/* FIXME last arg to parse_command_line() ? */
-	err = parse_command_line(s->line, s->cmd, dset, NULL);
+	err = parse_command_line(s, dset, NULL);
 	if (loopstart != NULL && s->cmd->ci == LOOP) {
 	    *loopstart = 1;
 	}
@@ -3697,6 +3700,7 @@ int maybe_exec_line (ExecState *s, DATASET *dset, int *loopstart)
 
 int get_command_index (char *line, int cmode, CMD *cmd)
 {
+    ExecState s = {0};
     int err = 0;
 
     gretl_cmd_clear(cmd);
@@ -3716,7 +3720,9 @@ int get_command_index (char *line, int cmode, CMD *cmd)
 	return 0;
     }
 
-    err = real_parse_command(line, cmd, NULL, cmode, NULL);
+    s.line = line;
+    s.cmd = cmd;
+    err = real_parse_command(&s, NULL, cmode, NULL);
 
     if (!err && cmd->ci == 0) {
 	/* maybe genr via series name? */

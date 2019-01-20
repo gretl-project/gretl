@@ -3437,10 +3437,10 @@ static int handle_prog_command (LOOPSET *loop, int j,
 int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 {
     char *line = s->line;
-    char *currline = NULL;
-    char *showline = NULL;
     CMD *cmd = s->cmd;
     PRN *prn = s->prn;
+    char *currline = NULL;
+    char *showline = NULL;
     int indent0;
     int progressive;
     int gui_mode, echo;
@@ -3614,7 +3614,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	    } else if (do_compile_conditional(loop, j)) {
 		GENERATOR *ifgen = NULL;
 
-		err = parse_command_line(line, cmd, dset, &ifgen);
+		err = parse_command_line(s, dset, &ifgen);
 		if (ifgen != NULL) {
 		    loop->cmds[j].genr = ifgen;
 		    loop->cmds[j].flags |= LOOP_CMD_COND;
@@ -3628,7 +3628,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	    }
 
 	    if (parse && !err) {
-		err = parse_command_line(line, cmd, dset, NULL);
+		err = parse_command_line(s, dset, NULL);
 #if LOOP_DEBUG > 1
 		fprintf(stderr, "    after: '%s', ci=%d\n", line, cmd->ci);
 		fprintf(stderr, "    cmd->savename = '%s'\n", cmd->savename);

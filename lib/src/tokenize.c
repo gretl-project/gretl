@@ -2322,9 +2322,9 @@ static int check_list_sepcount (int ci, int nsep)
     if (nsep < minsep) {
 	err = E_ARGS;
     } else if (nsep > maxsep) {
-	gretl_errmsg_sprintf(_("Parse error at unexpected token '%s'"),
-			     ";");
-	err = E_PARSE;
+	gretl_errmsg_sprintf(_("The symbol '%c' is not valid in this context\n"),
+			     ';');
+	err = E_INVARG;
     }
 
 #if CDEBUG
@@ -3102,30 +3102,12 @@ static int handle_command_extra (CMD *c)
     return c->err;
 }
 
-static int bad_semic (const char *s)
-{
-    int braced = 0;
-
-    while (*s) {
-	if (*s == '{') {
-	    braced++;
-	} else if (*s == '}') {
-	    braced--;
-	} else if (*s == ';' && !braced) {
-	    return 1;
-	}
-	s++;
-    }
-
-    return 0;
-}
-
 /* @vstart is a const pointer into the incoming command
    line, holding a "genr"-type expression, a string to
    be passed to the shell, or a varargs expression.
 */
 
-static int set_command_vstart (CMD *cmd)
+static int set_command_vstart (CMD *cmd, PRN *prn)
 {
     cmd_token *tok;
     const char *s = NULL;
@@ -3165,6 +3147,13 @@ static int set_command_vstart (CMD *cmd)
 	   just too bad.
 	*/
 	if (strchr(s, ';')) {
+	    if (prn != NULL) {
+		pputc(prn, '\n');
+		pputs(prn, "If you are trying to assemble a compound list for use in a "
+		      "\"system\" block,\nplease see section 31.3 of the Gretl User's "
+		      "Guide for the current method.\n");
+		pputc(prn, '\n');
+	    }
 	    gretl_errmsg_sprintf(_("The symbol '%c' is not valid in this context\n"),
 				 ';');
 	    return E_INVARG;
@@ -3315,11 +3304,12 @@ static int unexpected_symbol_error (char c)
    as a unitary token.
 */
 
-static int tokenize_line (CMD *cmd, const char *line,
-			  DATASET *dset, int compmode)
+static int tokenize_line (ExecState *state, DATASET *dset,
+			  int compmode)
 {
     char tok[FN_NAMELEN];
-    const char *s = line;
+    const char *s = state->line;
+    CMD *cmd = state->cmd;
     char *vtok;
     int n, m, pos = 0;
     int wild_ok = 0;
@@ -3329,7 +3319,7 @@ static int tokenize_line (CMD *cmd, const char *line,
 
 #if CDEBUG || TDEBUG
     fprintf(stderr, "*** %s: line = '%s'\n",
-	    compmode ? "get_command_index" : "parse_command_line", line);
+	    compmode ? "get_command_index" : "parse_command_line", s);
 #endif
 
     gretl_push_c_numeric_locale();
@@ -3367,7 +3357,7 @@ static int tokenize_line (CMD *cmd, const char *line,
 	} else if (isalpha(*s) || *s == '$' || (at_ok && *s == '@')) {
 	    /* regular or accessor identifier */
 	    if (*s == '@' && !compmode) {
-		fprintf(stderr, "tokenize: found '@':\n '%s'\n", line);
+		fprintf(stderr, "tokenize: found '@':\n '%s'\n", state->line);
 	    }
 	    n = 1 + namechar_spn(s+1);
 	    m = (n < FN_NAMELEN)? n : FN_NAMELEN - 1;
@@ -3755,7 +3745,7 @@ static void handle_option_inflections (CMD *cmd)
 }
 
 static int assemble_command (CMD *cmd, DATASET *dset,
-			     char *line)
+			     char *line, PRN *prn)
 {
     /* defer handling option(s) till param is known? */
     int options_later = cmd->ci == SETOPT;
@@ -3853,7 +3843,7 @@ static int assemble_command (CMD *cmd, DATASET *dset,
 	if (cmd->ciflags & CI_ADHOC) {
 	    handle_adhoc_string(cmd);
 	} else if (cmd->ciflags & (CI_EXPR | CI_VARGS)) {
-	    cmd->err = set_command_vstart(cmd);
+	    cmd->err = set_command_vstart(cmd, prn);
 	}
     }
 
@@ -3947,10 +3937,13 @@ static int get_flow_control_ci (const char *s)
     return ci;
 }
 
-static int real_parse_command (char *line, CMD *cmd,
-			       DATASET *dset, int compmode,
+static int real_parse_command (ExecState *s,
+			       DATASET *dset,
+			       int compmode,
 			       void *ptr)
 {
+    char *line = s->line;
+    CMD *cmd = s->cmd;
     int err = 0;
 
 #if 0
@@ -3965,7 +3958,7 @@ static int real_parse_command (char *line, CMD *cmd,
 	    cmd->ci = get_flow_control_ci(line);
 	} else {
 	    /* not compiling or not blocked */
-	    err = tokenize_line(cmd, line, dset, compmode);
+	    err = tokenize_line(s, dset, compmode);
 	}
 
 	if (!err && simple_flow_control(cmd)) {
@@ -3983,7 +3976,7 @@ static int real_parse_command (char *line, CMD *cmd,
 	       ought to be unitary.
 	    */
 	    if (!err && compmode == LOOP && cmd->ci == LOOP) {
-		err = assemble_command(cmd, dset, line);
+		err = assemble_command(cmd, dset, line, s->prn);
 		compmode = 0;
 	    }
 	    goto parse_exit;
@@ -4005,7 +3998,7 @@ static int real_parse_command (char *line, CMD *cmd,
 
 	/* Otherwise proceed to "assemble" the parsed command */
 	if (!err && !simple_flow_control(cmd)) {
-	    err = assemble_command(cmd, dset, line);
+	    err = assemble_command(cmd, dset, line, s->prn);
 	}
     }
 
@@ -4038,19 +4031,23 @@ static int real_parse_command (char *line, CMD *cmd,
    string substitution, or "if-state" conditionality.
 */
 
-int parse_gui_command (const char *line, CMD *cmd, DATASET *dset)
+int parse_gui_command (char *line, CMD *cmd, DATASET *dset)
 {
+    ExecState s = {0};
     int err = 0;
 
     maybe_init_shadow();
+
+    s.line = line;
+    s.cmd = cmd;
 
     gretl_cmd_clear(cmd);
     gretl_error_clear();
 
     if (*line != '\0') {
-	err = tokenize_line(cmd, line, dset, 0);
+	err = tokenize_line(&s, dset, 0);
 	if (!err) {
-	    err = assemble_command(cmd, dset, NULL);
+	    err = assemble_command(cmd, dset, NULL, NULL);
 	}
     }
 

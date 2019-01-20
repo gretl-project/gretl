@@ -80,11 +80,9 @@ gretlopt gretl_cmd_get_opt (const CMD *cmd);
 
 void gretl_cmd_set_opt (CMD *cmd, gretlopt opt);
 
-int parse_command_line (char *line, CMD *cmd, DATASET *dset, 
-			void *ptr);
+int parse_command_line (ExecState *s, DATASET *dset, void *ptr);
 
-int parse_gui_command (const char *line, CMD *cmd, 
-		       DATASET *dset);
+int parse_gui_command (char *line, CMD *cmd, DATASET *dset);
 
 const char *get_parser_errline (void);
 

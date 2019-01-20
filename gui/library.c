@@ -10003,7 +10003,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 	/* when stacking commands for a loop, parse "lightly" */
 	err = get_command_index(line, LOOP, cmd);
     } else {
-	err = parse_command_line(line, cmd, dset, NULL);
+	err = parse_command_line(s, dset, NULL);
     }
 
 #if CMD_DEBUG
