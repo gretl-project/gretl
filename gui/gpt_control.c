@@ -4090,7 +4090,6 @@ static void plot_do_rescale (png_plot *plot, int mod)
 		break;
 	    }
 	}
-
 	if (mod == 1 && i < n - 1) {
 	    plot->spec->scale = graph_scales[i+1];
 	} else if (mod == -1 && i > 0) {

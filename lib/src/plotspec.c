@@ -324,6 +324,11 @@ static gp_key_spec key_specs[] = {
     { GP_KEY_RIGHT_BOTTOM, N_("right bottom") },
     { GP_KEY_OUTSIDE,      N_("outside") },
     { GP_KEY_NONE,         N_("none") },
+    /* in reverse order */
+    { GP_KEY_LEFT_TOP,     N_("top left") },
+    { GP_KEY_RIGHT_TOP,    N_("top right") },
+    { GP_KEY_LEFT_BOTTOM,  N_("bottom left") },
+    { GP_KEY_RIGHT_BOTTOM, N_("bottom right") },
     { -1,                  NULL }
 };
 
@@ -1232,7 +1237,6 @@ static void plotspec_print_heredata (GPT_SPEC *spec,
 
 int plotspec_print (GPT_SPEC *spec, FILE *fp)
 {
-    int i, k;
     int png = get_png_output(spec);
     int mono = (spec->flags & GPT_MONO);
     double xt1 = 0, xt2 = 0;
@@ -1240,7 +1244,7 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
     int skipline = -1;
     int ycol, any_y2 = 0;
     int anydata = 0;
-    int miss = 0;
+    int i, k, miss = 0;
 
     if (spec->pd > 0) {
 	fprintf(fp, "# timeseries %d", spec->pd);
