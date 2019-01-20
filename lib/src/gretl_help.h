@@ -21,6 +21,6 @@
 #define GRETL_HELP_H
 
 int cli_help (const char *hlpword, const char *param,
-	      gretlopt opt, PRN *prn);
+	      gretlopt opt, char **pbuf, PRN *prn);
 
 #endif

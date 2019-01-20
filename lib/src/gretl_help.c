@@ -355,12 +355,35 @@ static int find_function_package_help (const char *targ,
     return found;
 }
 
+static int maybe_do_markup (const char *hlpword, char **pbuf,
+			    PRN *prn)
+{
+    PRN *hprn;
+    int err = 0;
+
+    hprn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
+
+    if (err) {
+	return user_function_help(hlpword, OPT_NONE, prn);
+    } else {
+	err = user_function_help(hlpword, OPT_M, hprn);
+	if (!err) {
+	    *pbuf = gretl_print_steal_buffer(hprn);
+	    gretl_print_destroy(hprn);
+	}
+	return err;
+    }
+}
+
 /**
  * cli_help:
  * @hlpword: the word (usually a command) on which help is wanted.
  * @param: parameter usable when @hlpword is "set".
  * @opt: may include %OPT_F to give priority to functions
  * rather than commands.
+ * @pbuf: location to receive text buffer with GUI-friendly markup,
+ * if applicable.
+ * text uses GUI-friendly markup.
  * @prn: pointer to gretl printing struct.
  *
  * Searches in the gretl helpfile for help on @hlpword and,
@@ -372,7 +395,7 @@ static int find_function_package_help (const char *targ,
  */
 
 int cli_help (const char *hlpword, const char *param,
-	      gretlopt opt, PRN *prn)
+	      gretlopt opt, char **pbuf, PRN *prn)
 {
     static int recode = -1;
     char helpfile[FILENAME_MAX];
@@ -417,7 +440,11 @@ int cli_help (const char *hlpword, const char *param,
     } else if (genr_function_word(hlpword)) {
 	strcpy(helpfile, helpfile_path(GRETL_FUNCREF, 1, 0));
     } else if (gretl_is_public_user_function(hlpword)) {
-	return user_function_help(hlpword, OPT_NONE, prn);
+	if (pbuf != NULL) {
+	    return maybe_do_markup(hlpword, pbuf, prn);
+	} else {
+	    return user_function_help(hlpword, OPT_NONE, prn);
+	}
     } else if (find_function_package_help(hlpword, prn, &err)) {
 	return err; /* handled */
     } else {

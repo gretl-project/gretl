@@ -9924,6 +9924,30 @@ static int run_include_error (ExecState *s, const char *param,
 #define try_gui_help(c) (c->param != NULL && *c->param != '\0' && \
 			 c->parm2 == NULL && !c->opt)
 
+static void gui_exec_help (ExecState *s, CMD *cmd)
+{
+
+    char *buf = NULL;
+    int err = 0;
+
+    if ((s->flags & CONSOLE_EXEC) && try_gui_help(cmd)) {
+	err = gui_console_help(cmd->param);
+	if (err) {
+	    /* fallback */
+	    err = 0;
+	    cli_help(cmd->param, cmd->parm2, cmd->opt, &buf, s->prn);
+	}
+    } else {
+	cli_help(cmd->param, cmd->parm2, cmd->opt, &buf, s->prn);
+    }
+
+    if (buf != NULL) {
+	view_formatted_text_buffer(cmd->param, buf, 80, 400,
+				   VIEW_PKG_INFO);
+	free(buf);
+    }
+}
+
 /* gui_exec_line: this is called from the gretl console, from the
    command "minibuffer", from execute_script(), and when initiating a
    call to a function package (fncall.c).  Note that most commands get
@@ -10090,16 +10114,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 	break;
 
     case HELP:
-	if ((s->flags & CONSOLE_EXEC) && try_gui_help(cmd)) {
-	    err = gui_console_help(cmd->param);
-	    if (err) {
-		/* fallback */
-		err = 0;
-		cli_help(cmd->param, cmd->parm2, cmd->opt, prn);
-	    }
-	} else {
-	    cli_help(cmd->param, cmd->parm2, cmd->opt, prn);
-	}
+	gui_exec_help(s, cmd);
 	break;
 
     case OPEN:

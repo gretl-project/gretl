@@ -844,7 +844,7 @@ static int cli_exec_line (ExecState *s, int id, DATASET *dset,
 	break;
 
     case HELP:
-	cli_help(cmd->param, cmd->parm2, cmd->opt, prn);
+	cli_help(cmd->param, cmd->parm2, cmd->opt, NULL, prn);
 	break;
 
     case OPEN:

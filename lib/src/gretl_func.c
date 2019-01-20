@@ -9385,31 +9385,31 @@ static void real_user_function_help (ufunc *fun, gretlopt opt, PRN *prn)
     }
 
     if (pkg != NULL && pkg->help != NULL) {
-	if (markup) {
-	    pputs(prn, "<@itl=\"Help text\">:\n\n");
-	    pputs(prn, "<mono>\n");
-	} else {
-	    pputs(prn, "Help text:\n");
-	}
 	if (is_pdf_ref(pkg->help)) {
-	    const char *s = strrchr(pkg->help, ':');
+	    gchar *pdfname = g_strdup(pkg->fname);
+	    gchar *p = strrchr(pdfname, '.');
 
-	    if (s != NULL) {
-		if (markup) {
-		    pprintf(prn, "See <@pdf=\"%s\">", s + 1);
-		} else {
-		    pprintf(prn, "See %s", s + 1);
-		}
+	    *p = '\0';
+	    strcat(p, ".pdf");
+	    if (markup) {
+		pprintf(prn, "<@itl=\"Documentation\">: <@adb=\"%s\">\n\n", pdfname);
 	    } else {
-		pputs(prn, pkg->help);
+		pprintf(prn, "See %s\n\n", pdfname);
 	    }
+	    g_free(pdfname);
 	} else {
+	    if (markup) {
+		pputs(prn, "<@itl=\"Help text\">:\n\n");
+		pputs(prn, "<mono>\n");
+	    } else {
+		pputs(prn, "Help text:\n");
+	    }
 	    pputs(prn, pkg->help);
+	    if (markup) {
+		pputs(prn, "\n</mono>");
+	    }
+	    pputs(prn, "\n\n");
 	}
-	if (markup) {
-	    pputs(prn, "\n</mono>");
-	}
-	pputs(prn, "\n\n");
     }
 
     if (pkg != NULL && pkg->sample != NULL) {
