@@ -224,7 +224,8 @@ static struct gretl_cmd gretl_cmds[] = {
 			   c == GRAPHPG)
 
 #define parm2_optional(c) (c == SET || c == SETOPT || c == SETOBS || \
-			   c == ESTIMATE || c == HELP || c == GRAPHPG)
+			   c == ESTIMATE || c == HELP || c == GRAPHPG || \
+			   c == EQUATION)
 
 #define vargs_optional(c) (c == PRINTF || c == SPRINTF)
 
@@ -2410,6 +2411,7 @@ static int try_for_command_alias (const char *s, CMD *cmd)
 	deprecate_alias("pooled", "ols", 1);
 	ci = OLS;
     } else if (!strcmp(s, "equations")) {
+	/* reached only when compiling loop */
 	ci = EQUATION;
 	cmd->opt |= OPT_M;
     } else if (*s == '!') {
@@ -2554,8 +2556,10 @@ static int try_for_command_index (CMD *cmd, int i,
 	} else {
 	    cmd->ciflags = command_get_flags(cmd->ci);
 	    if (cmd->ci == EQUATION && (cmd->opt & OPT_M)) {
+		/* the system "equations" keyword */
 		cmd->ciflags ^= CI_LIST;
-		cmd->ciflags |= CI_ADHOC;
+		cmd->ciflags |= CI_PARM1;
+		cmd->ciflags |= CI_PARM2;
 	    }
 	    if (cmd->ci == STORE && (cmd->flags & CMD_PROG)) {
 		cmd->ciflags ^= CI_LIST;

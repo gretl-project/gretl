@@ -3564,6 +3564,27 @@ static int get_sys_method_from_opt (gretlopt *opt)
     return method;
 }
 
+static int gui_handle_equations_line (equation_system *sys,
+				      const char *s)
+{
+    char s1[VNAMELEN] = {0};
+    char s2[VNAMELEN] = {0};
+    int n, err;
+
+    /* extract one or two names to pass as arguments */
+
+    n = sscanf(s, "%31s %31s", s1, s2);
+    if (n == 2) {
+	err = equation_system_append_multi(sys, s1, s2, dataset);
+    } else if (n == 1) {
+	err = equation_system_append_multi(sys, s1, NULL, dataset);
+    } else {
+	err = E_ARGS;
+    }
+
+    return err;
+}
+
 void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 {
     equation_system *my_sys = NULL;
@@ -3600,6 +3621,11 @@ void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 	    break;
 	}
 
+	if (!strcmp(bufline, "system")) {
+	    /* harmless header line */
+	    continue;
+	}
+
 	if (!strncmp(bufline, "system ", 7)) {
 	    maybe_grab_system_name(bufline, sysname);
 	    continue;
@@ -3625,8 +3651,7 @@ void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 		free(slist);
 	    }
 	} else if (!strncmp(bufline, "equations ", 10)) {
-	    err = equation_system_append_multi(my_sys, bufline + 10,
-					       dataset);
+	    err = gui_handle_equations_line(my_sys, bufline + 10);
 	} else {
 	    err = system_parse_line(my_sys, bufline, dataset);
 	}

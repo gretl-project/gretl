@@ -3462,7 +3462,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case EQUATION:
 	if (cmd->opt & OPT_M) {
-	    err = equation_system_append_multi(s->sys, cmd->param, dset);
+	    err = equation_system_append_multi(s->sys, cmd->param,
+					       cmd->parm2, dset);
 	} else {
 	    err = equation_system_append(s->sys, cmd->list);
 	}

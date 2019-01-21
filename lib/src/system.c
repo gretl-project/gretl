@@ -800,23 +800,21 @@ static int add_equations_from_matrix (equation_system *sys,
 /**
  * equation_system_append_multi:
  * @sys: initialized equation system.
- * @param: the name of a pre-defined matrix, or the name of
- * a list followed by the name of a second list or array of
- * lists (space-separated).
+ * @parm1: the name of a pre-defined matrix or list.
+ * @parm2: the name of list or array of lists (or %NULL).
  * @dset: dataset information.
  *
- * Adds one or more equations to @sys in one or other of two
- * ways, as follows.
+ * Adds one or more equations to @sys as follows.
  *
- * If @param contains a single name it is taken to be
- * the name of a matrix, and we interpret the rows of the
+ * If @parm2 is %NULL then @parm1 is taken to be the
+ * name of a matrix, and we interpret the rows of the
  * specified matrix as lists. Lists of differing length
  * can be accommodated by padding unused trailing elements of
- * short rows with zeros. (EXPERIMENTAL, may be dropped)
+ * short rows with zeros.
  *
- * If @param contains two names, the first is taken to be a
- * list of g regressands, one per equation. The second name,
- * pertaining to regressors, may be that of either a list or
+ * If @parm2 is non-%NULL then @parm1 is taken to be the name
+ * of a list of regressands, one per equation; @parm2,
+ * pertaining to regressors, must be the name of either a list or
  * an array of lists. See the Gretl User's Guide for details.
  *
  * Returns: 0 on success, non-zero on failure, in which case
@@ -824,56 +822,52 @@ static int add_equations_from_matrix (equation_system *sys,
  */
 
 int equation_system_append_multi (equation_system *sys,
-				  const char *param,
+				  const char *parm1,
+				  const char *parm2,
 				  const DATASET *dset)
 {
-    char name1[VNAMELEN], name2[VNAMELEN];
-    char fmt[12];
-    int n, err = 0;
+    int err = 0;
 
     if (sys == NULL) {
 	gretl_errmsg_set(_(nosystem));
 	return E_DATA;
+    } else if (parm1 == NULL) {
+	return E_ARGS;
     }
 
-    sprintf(fmt, "%%%ds %%%ds", VNAMELEN-1, VNAMELEN-1);
-    n = sscanf(param, fmt, name1, name2);
-
-    if (n == 2) {
+    if (parm2 != NULL) {
 	/* look for two lists, or list plus array */
-	const int *LY = get_list_by_name(name1);
-	const int *LX = get_list_by_name(name2);
+	const int *LY = get_list_by_name(parm1);
+	const int *LX = get_list_by_name(parm2);
 	gretl_array *AX = NULL;
 
 	if (LY == NULL) {
-	    gretl_errmsg_sprintf(_("'%s': no such list"), name1);
+	    gretl_errmsg_sprintf(_("'%s': no such list"), parm1);
 	    err = E_UNKVAR;
 	} else if (LX == NULL) {
 	    /* try for an array on the right */
-	    AX = get_array_by_name(name2);
+	    AX = get_array_by_name(parm2);
 	    if (gretl_array_get_type(AX) != GRETL_TYPE_LISTS) {
 		gretl_errmsg_sprintf(_("'%s': not a list of array of lists"),
-				     name2);
+				     parm2);
 		err = E_UNKVAR;
 	    }
 	}
 	if (!err) {
 	    err = add_equations_from_lists(sys, LY, LX, AX, dset);
 	}
-    } else if (n == 1) {
+    } else {
 	/* look for one matrix */
-	const gretl_matrix *m = get_matrix_by_name(name1);
+	const gretl_matrix *m = get_matrix_by_name(parm1);
 
 	if (m == NULL) {
-	    gretl_errmsg_sprintf(_("'%s': no such matrix"), name1);
+	    gretl_errmsg_sprintf(_("'%s': no such matrix"), parm1);
 	    err = E_UNKVAR;
 	} else if (m->rows == 0 || m->cols == 0) {
 	    err = E_DATA;
 	} else {
 	    err = add_equations_from_matrix(sys, m, dset);
 	}
-    } else {
-	err = E_DATA;
     }
 
     if (err) {

@@ -106,7 +106,8 @@ equation_system *get_anonymous_equation_system (void);
 int equation_system_append (equation_system *sys, const int *list);
 
 int equation_system_append_multi (equation_system *sys, 
-				  const char *param, 
+				  const char *parm1,
+				  const char *parm2,
 				  const DATASET *dset);
 
 int system_parse_line (equation_system *sys,
