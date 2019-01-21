@@ -188,9 +188,10 @@ struct png_bounds_t {
 typedef struct linestyle_ linestyle;
 
 struct linestyle_ {
-    /* we may want more elements here at some point */
-    char rgb[8];
-    float width;
+    char lc[8]; /* color */
+    float lw;   /* line width */
+    int dt;     /* dash type */
+    int pt;     /* point type */
 };
 
 #define MAX_STYLES N_GP_COLORS
@@ -1872,31 +1873,62 @@ static int verify_rgb (char *rgb)
     return err;
 }
 
-static int parse_user_linetype (const char *s, linestyle *styles)
+static int parse_linetype (const char *s, linestyle *styles)
 {
-    char rgb[20] = {0};
     const char *p;
-    int n, idx = 0;
+    int n, i = 0;
     int err = 0;
 
-    n = sscanf(s, " %d lc rgb %19s", &idx, rgb);
+    n = sscanf(s, " %d", &i);
 
-    if (n == 2 && idx > 0 && idx <= MAX_STYLES) {
-	err = verify_rgb(rgb);
-	if (err) {
-	    return err;
-	} else {
-	    strcpy(styles[idx-1].rgb, rgb);
-	}
+    if (n != 1 || i <= 0 || i > MAX_STYLES) {
+	/* get out on error */
+	return 1;
     } else {
-	err = 1;
+	/* convert index to zero-based */
+	i -= 1;
     }
 
-    if (!err && (p = strstr(s, "lw")) != NULL) {
-	float w = 0.0;
+    if (!err && (p = strstr(s, " lc ")) != NULL) {
+	char lc[20];
 
-	if (sscanf(p + 2, "%f", &w)) {
-	    styles[idx-1].width = w;
+	p += 4;
+	if (!strncmp(p, "rgb ", 4)) {
+	    p += 4;
+	}
+	p += strspn(p, " ");
+	if (sscanf(p, "%19s", lc)) {
+	    err = verify_rgb(lc);
+	    if (!err) {
+		strcpy(styles[i].lc, lc);
+	    }
+	} else {
+	    err = 1;
+	}
+    }
+    if (!err && (p = strstr(s, " lw ")) != NULL) {
+	float lw = 0.0;
+
+	if (sscanf(p + 4, "%f", &lw)) {
+	    styles[i].lw = lw;
+	} else {
+	    err = 1;
+	}
+    }
+    if (!err && (p = strstr(s, " dt ")) != NULL) {
+	int dt = 0;
+
+	if (sscanf(p + 4, "%d", &dt)) {
+	    styles[i].dt = dt;
+	} else {
+	    err = 1;
+	}
+    }
+    if (!err && (p = strstr(s, " pt ")) != NULL) {
+	int pt = 0;
+
+	if (sscanf(p + 4, "%d", &pt)) {
+	    styles[i].pt = pt;
 	} else {
 	    err = 1;
 	}
@@ -1923,25 +1955,11 @@ static int parse_gp_set_line (GPT_SPEC *spec,
 	lt_pos = 14;
     }
 
-    if (lt_pos > 0 && unhandled != NULL) {
-	err = parse_user_linetype(s + lt_pos, styles);
-	if (err) {
+    if (lt_pos > 0) {
+	err = parse_linetype(s + lt_pos, styles);
+	if (err && unhandled != NULL) {
 	    *unhandled = 1;
 	}
-	return err;
-    } else if (lt_pos > 0) {
-	/* look for color specification */
-	char rgb[20] = {0};
-	int n, idx = 0;
-
-	n = sscanf(s + lt_pos, " %d lc rgb %19s", &idx, rgb);
-	if (n == 2 && idx > 0 && idx <= MAX_STYLES) {
-	    err = verify_rgb(rgb);
-	    if (!err) {
-		strcpy(styles[idx-1].rgb, rgb);
-	    }
-	}
-
 	return err;
     }
 
@@ -2769,8 +2787,10 @@ static void check_for_plot_time_data (GPT_SPEC *spec, gchar *buf)
 
 static void linestyle_init (linestyle *ls)
 {
-    ls->rgb[0] = '\0';
-    ls->width = 0;
+    ls->lc[0] = '\0';
+    ls->lw = 0;
+    ls->dt = 0;
+    ls->pt = 0;
 }
 
 static int push_z_row (gretl_matrix *z, int i, int n, char *line)
@@ -3190,13 +3210,19 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	    line->flags |= GP_LINE_USER;
 	}
 	if (idx > 0 && idx < MAX_STYLES) {
+	    int j = idx - 1;
+
 	    if (line->rgb[0] == '\0') {
-		/* if we haven't already got a line-specific color,
-		   apply the default style */
-		strcpy(line->rgb, styles[idx-1].rgb); /* zero-based */
+		strcpy(line->rgb, styles[j].lc);
 	    }
-	    if (styles[idx-1].width > 0) {
-		line->width = styles[idx-1].width;
+	    if (line->width == 1 && styles[j].lw > 0) {
+		line->width = styles[j].lw;
+	    }
+	    if (line->dtype == 0 && styles[j].dt > 0) {
+		line->dtype = styles[j].dt;
+	    }
+	    if (line->ptype == 0 && styles[j].pt > 0) {
+		line->ptype = styles[j].pt;
 	    }
 	}
 	if (spec->auxdata != NULL && i == spec->n_lines - 1) {
