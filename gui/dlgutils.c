@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* dlgutils.c for gretl: utilities for composing dialog boxes */
@@ -29,7 +29,7 @@
 #include "system.h"
 #include "gretl_bfgs.h"
 
-dialog_opts *dialog_opts_new (int n, int type, 
+dialog_opts *dialog_opts_new (int n, int type,
 			      gretlopt *optp,
 			      const gretlopt *vals,
 			      const char **strs)
@@ -47,7 +47,7 @@ dialog_opts *dialog_opts_new (int n, int type,
     opts->optp = optp;
     opts->vals = vals;
     opts->strs = strs;
-    
+
     return opts;
 }
 
@@ -59,7 +59,7 @@ void dialog_opts_free (dialog_opts *opts)
 void vbox_add_hsep (GtkWidget *vbox)
 {
     GtkWidget *h = gtk_hseparator_new();
-    
+
     gtk_box_pack_start(GTK_BOX(vbox), h, FALSE, FALSE, 0);
     gtk_widget_show(h);
 }
@@ -81,10 +81,10 @@ GtkWidget *cancel_delete_button (GtkWidget *hbox, GtkWidget *targ)
     button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
     gtk_widget_set_can_default(button, TRUE);
     gtk_box_pack_start(GTK_BOX(hbox), button, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT(button), "clicked", 
-		     G_CALLBACK(delete_widget), 
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(delete_widget),
 		     targ);
-	
+
     return button;
 }
 
@@ -110,7 +110,7 @@ static void set_valid_response (GtkButton *b, int *valptr)
     }
 }
 
-/* on "OK": if @valptr is non-NULL, copy the valid value from 
+/* on "OK": if @valptr is non-NULL, copy the valid value from
    @valptr to @retptr; otherwise signal all-clear by copying
    0 to @retptr
 */
@@ -121,7 +121,7 @@ GtkWidget *ok_validate_button (GtkWidget *hbox, int *retptr,
     GtkWidget *button = ok_button(hbox);
 
     g_object_set_data(G_OBJECT(button), "retptr", retptr);
-    g_signal_connect(G_OBJECT(button), "clicked", 
+    g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_valid_response), valptr);
 
     return button;
@@ -209,7 +209,7 @@ int maybe_raise_dialog (void)
     } else if (open_edit_dialog != NULL) {
 	gtk_window_present(GTK_WINDOW(open_edit_dialog));
 	ret = 1;
-    }	
+    }
 
     return ret;
 }
@@ -256,7 +256,7 @@ GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
     if (flags & GRETL_DLG_BLOCK) {
 	current_dialog = d;
     }
-    
+
     if (flags & GRETL_DLG_MODAL) {
 	gretl_set_window_modal(d);
     } else if (flags & GRETL_DLG_QUASI_MODAL) {
@@ -268,7 +268,7 @@ GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
     }
 
     if (flags & GRETL_DLG_BLOCK) {
-	g_signal_connect(G_OBJECT(d), "destroy", 
+	g_signal_connect(G_OBJECT(d), "destroy",
 			 G_CALLBACK(dialog_unblock), NULL);
     }
 
@@ -278,12 +278,12 @@ GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
 
     if (parent != NULL) {
 	g_signal_connect(G_OBJECT(d), "realize", /* was "show" */
-			 G_CALLBACK(gretl_dialog_set_destruction), 
+			 G_CALLBACK(gretl_dialog_set_destruction),
 			 parent);
     }
 
     if (flags & GRETL_DLG_BLOCK) {
-	g_signal_connect(G_OBJECT(d), "show", 
+	g_signal_connect(G_OBJECT(d), "show",
 			 G_CALLBACK(gtk_main), NULL);
     }
 
@@ -303,7 +303,7 @@ static void sensitize_widget (GtkWidget *b, GtkWidget *w)
 void sensitize_conditional_on (GtkWidget *w, GtkWidget *b)
 {
     g_signal_connect(G_OBJECT(b), "toggled",
-		     G_CALLBACK(sensitize_widget), w);	
+		     G_CALLBACK(sensitize_widget), w);
 }
 
 static void desensitize_widget (GtkWidget *b, GtkWidget *w)
@@ -319,7 +319,7 @@ static void desensitize_widget (GtkWidget *b, GtkWidget *w)
 void desensitize_conditional_on (GtkWidget *w, GtkWidget *b)
 {
     g_signal_connect(G_OBJECT(b), "toggled",
-		     G_CALLBACK(desensitize_widget), w);	
+		     G_CALLBACK(desensitize_widget), w);
 }
 
 void set_double_from_spinner (GtkSpinButton *b, double *x)
@@ -334,7 +334,7 @@ void set_int_from_spinner (GtkSpinButton *b, int *k)
 
 static void toggle_gretl_option (GtkToggleButton *b, gretlopt *popt)
 {
-    gretlopt val = 
+    gretlopt val =
 	GPOINTER_TO_INT(g_object_get_data(G_OBJECT(b), "optval"));
 
     if (gtk_toggle_button_get_active(b)) {
@@ -357,14 +357,14 @@ GtkWidget *gretl_option_check_button (const char *label,
     g_object_set_data(G_OBJECT(button), "optval",
 		      GINT_TO_POINTER(val));
     g_signal_connect(G_OBJECT(button), "toggled",
-		     G_CALLBACK(toggle_gretl_option), popt); 
+		     G_CALLBACK(toggle_gretl_option), popt);
 
     return button;
 }
 
 static void toggle_gretl_option_switched (GtkToggleButton *b, gretlopt *popt)
 {
-    gretlopt val = 
+    gretlopt val =
 	GPOINTER_TO_INT(g_object_get_data(G_OBJECT(b), "optval"));
 
     if (gtk_toggle_button_get_active(b)) {
@@ -387,7 +387,7 @@ GtkWidget *gretl_option_check_button_switched (const char *label,
     g_object_set_data(G_OBJECT(button), "optval",
 		      GINT_TO_POINTER(val));
     g_signal_connect(G_OBJECT(button), "toggled",
-		     G_CALLBACK(toggle_gretl_option_switched), popt); 
+		     G_CALLBACK(toggle_gretl_option_switched), popt);
 
     return button;
 }
@@ -432,7 +432,7 @@ struct dialog_t_ {
     GtkWidget *popup;
 };
 
-static void destroy_edit_dialog (GtkWidget *w, gpointer data) 
+static void destroy_edit_dialog (GtkWidget *w, gpointer data)
 {
     dialog_t *d = (dialog_t *) data;
 
@@ -440,7 +440,7 @@ static void destroy_edit_dialog (GtkWidget *w, gpointer data)
 	gtk_main_quit();
     }
 
-    g_free(d); 
+    g_free(d);
 
     open_edit_dialog = NULL;
 
@@ -449,7 +449,7 @@ static void destroy_edit_dialog (GtkWidget *w, gpointer data)
     if (active_edit_text) active_edit_text = NULL;
 }
 
-gboolean esc_kills_window (GtkWidget *w, GdkEventKey *key, 
+gboolean esc_kills_window (GtkWidget *w, GdkEventKey *key,
 			   gpointer p)
 {
     if (key->keyval == GDK_Escape) {
@@ -497,21 +497,21 @@ static dialog_t *edit_dialog_new (int ci, const char *title,
 	g_free(tmp);
     }
 
-    gtk_box_set_homogeneous(GTK_BOX(d->bbox), TRUE); 
+    gtk_box_set_homogeneous(GTK_BOX(d->bbox), TRUE);
     gtk_window_set_position(GTK_WINDOW(d->dialog), GTK_WIN_POS_MOUSE);
 
     if (parent == NULL) {
 	parent = mdata->main;
     }
 
-    g_signal_connect(G_OBJECT(d->dialog), "destroy", 
+    g_signal_connect(G_OBJECT(d->dialog), "destroy",
 		     G_CALLBACK(destroy_edit_dialog), d);
-    g_signal_connect(G_OBJECT(d->dialog), "key-press-event", 
+    g_signal_connect(G_OBJECT(d->dialog), "key-press-event",
 		     G_CALLBACK(esc_kills_window), NULL);
-    g_signal_connect(G_OBJECT(d->dialog), "show", 
+    g_signal_connect(G_OBJECT(d->dialog), "show",
 		     G_CALLBACK(gretl_dialog_set_destruction), parent);
     if (d->blocking) {
-	g_signal_connect(G_OBJECT(d->dialog), "show", 
+	g_signal_connect(G_OBJECT(d->dialog), "show",
 			 G_CALLBACK(gtk_main), NULL);
     }
 
@@ -547,7 +547,7 @@ static void set_edit_save_buf (const char *buf, int code)
 
 static int dlg_text_set_previous (dialog_t *d)
 {
-    if (d->ci == edit_save_code && 
+    if (d->ci == edit_save_code &&
 	edit_save_buf != NULL) {
 	textview_set_text(d->edit, edit_save_buf);
 	return 1;
@@ -556,23 +556,32 @@ static int dlg_text_set_previous (dialog_t *d)
     }
 }
 
-static int dlg_text_set_gmm_skel (dialog_t *d)
+static int dlg_text_set_skeleton (dialog_t *d)
 {
-    const char *skel = 
+    const char *gmm_skel =
 	"# initializations go here\n\n\n"
 	"gmm\n"
 	"  orthog\n"
 	"  weights\n"
 	"  params\n"
 	"end gmm\n";
+    const char *sys_skel =
+	"system\n\n"
+	"end system\n";
 
-    if (d->ci == GMM && edit_save_buf == NULL) {
-	textview_set_text(d->edit, skel);
-	textview_set_cursor_at_line(d->edit, 1);
-	return 1;
-    } else {
-	return 0;
+    if (edit_save_buf == NULL) {
+	if (d->ci == GMM) {
+	    textview_set_text(d->edit, gmm_skel);
+	    textview_set_cursor_at_line(d->edit, 1);
+	    return 1;
+	} else if (d->ci == SYSTEM) {
+	    textview_set_text(d->edit, sys_skel);
+	    textview_set_cursor_at_line(d->edit, 1);
+	    return 1;
+	}
     }
+
+    return 0;
 }
 
 /* end edit saver apparatus */
@@ -651,7 +660,7 @@ static void dialog_table_setup (dialog_t *dlg, int hsize)
 				   GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW (sw),
 					GTK_SHADOW_IN);
-    gtk_container_add(GTK_CONTAINER(sw), dlg->edit); 
+    gtk_container_add(GTK_CONTAINER(sw), dlg->edit);
     gtk_widget_show(dlg->edit);
     gtk_widget_show(sw);
 }
@@ -722,7 +731,7 @@ static int edit_has_list (GtkWidget *w, int i)
 
 static gint edit_popup_click (GtkWidget *w, dialog_t *d)
 {
-    gint action = 
+    gint action =
 	GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
     const char *ins = NULL;
 
@@ -740,11 +749,28 @@ static gint edit_popup_click (GtkWidget *w, dialog_t *d)
 
     if (ins != NULL) {
 	GtkTextBuffer *tbuf;
-	GtkTextIter pos;
+	GtkTextMark *mark;
+	GtkTextIter iter;
+	gint offset, at_end;
 
 	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(d->edit));
-	gtk_text_buffer_get_end_iter(tbuf, &pos);
-	gtk_text_buffer_insert(tbuf, &pos, ins, strlen(ins));
+	mark = gtk_text_buffer_get_insert(tbuf);
+	gtk_text_buffer_get_iter_at_mark(tbuf, &iter, mark);
+	offset = gtk_text_iter_get_line_offset(&iter);
+	at_end = gtk_text_iter_ends_line(&iter);
+	if (offset == 0) {
+	    /* at start of line */
+	    if (!at_end) {
+		gtk_text_iter_forward_to_line_end(&iter);
+		gtk_text_buffer_insert(tbuf, &iter, "\n", -1);
+	    }
+	} else {
+	    if (!at_end) {
+		gtk_text_iter_forward_to_line_end(&iter);
+	    }
+	    gtk_text_buffer_insert(tbuf, &iter, "\n", -1);
+	}
+	gtk_text_buffer_insert(tbuf, &iter, ins, -1);
     }
 
     gtk_widget_destroy(d->popup);
@@ -791,8 +817,8 @@ static GtkWidget *build_edit_popup (dialog_t *d)
     return menu;
 }
 
-static gboolean 
-edit_dialog_popup_handler (GtkWidget *w, GdkEventButton *event, 
+static gboolean
+edit_dialog_popup_handler (GtkWidget *w, GdkEventButton *event,
 			   dialog_t *d)
 {
     if (right_click(event)) {
@@ -807,7 +833,7 @@ edit_dialog_popup_handler (GtkWidget *w, GdkEventButton *event,
 	    gtk_menu_popup(GTK_MENU(d->popup), NULL, NULL, NULL, NULL,
 			   event->button, event->time);
 	    g_signal_connect(G_OBJECT(d->popup), "destroy",
-			     G_CALLBACK(gtk_widget_destroyed), 
+			     G_CALLBACK(gtk_widget_destroyed),
 			     &d->popup);
 	}
 	return TRUE;
@@ -847,7 +873,7 @@ static void set_sys_method (GtkComboBox *box, dialog_t *d)
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(bt), FALSE);
 	    gtk_widget_set_sensitive(bt, FALSE);
 	    gtk_widget_set_sensitive(bv, FALSE);
-	} 
+	}
     }
 
     g_free(str);
@@ -879,7 +905,7 @@ static GtkWidget *dialog_option_switch (GtkWidget *vbox, dialog_t *dlg,
     } else if (opt == OPT_F) {
 	b = gretl_option_check_button(_("Show full restricted estimates"),
 				      &dlg->opt, opt);
-    } 
+    }
 
     if (b != NULL) {
 	GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
@@ -910,8 +936,8 @@ static void combo_opt_changed (GtkComboBox *box, combo_opts *opts)
     g_free(s);
 }
 
-GtkWidget *gretl_opts_combo_full (combo_opts *opts, int deflt, 
-				  const int *masked, 
+GtkWidget *gretl_opts_combo_full (combo_opts *opts, int deflt,
+				  const int *masked,
 				  GCallback callback,
 				  gpointer calldata)
 {
@@ -970,7 +996,7 @@ static void mle_gmm_iters_dialog (GtkWidget *w, dialog_t *d)
 
     if (maxit <= 0) {
 	maxit = 1000;
-    }  
+    }
 
     if ((d->opt & OPT_L) || libset_get_bool(USE_LBFGS)) {
 	optim = LBFGS_MAX;
@@ -1015,7 +1041,7 @@ static void iter_control_button (GtkWidget *vbox, dialog_t *d, MODEL *pmod)
 		     G_CALLBACK(mle_gmm_iters_dialog), d);
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
-    gtk_widget_show_all(hbox);   
+    gtk_widget_show_all(hbox);
 }
 
 static void build_gmm_combo (GtkWidget *vbox, dialog_t *d, MODEL *pmod)
@@ -1062,7 +1088,7 @@ static void build_gmm_combo (GtkWidget *vbox, dialog_t *d, MODEL *pmod)
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
 
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
-    gtk_widget_show_all(hbox);      
+    gtk_widget_show_all(hbox);
 }
 
 static void system_estimator_list (GtkWidget *vbox, dialog_t *d,
@@ -1110,7 +1136,7 @@ static void system_estimator_list (GtkWidget *vbox, dialog_t *d,
     gtk_combo_box_set_active(GTK_COMBO_BOX(w), active);
 
     gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);
-    gtk_widget_show(w);  
+    gtk_widget_show(w);
 }
 
 static void dlg_display_sys (dialog_t *d)
@@ -1129,7 +1155,7 @@ static void dlg_display_sys (dialog_t *d)
 
     d->edit = dlg_text_edit_new(&hsize, d->ci == SYSTEM);
     dialog_table_setup(d, hsize);
-    dlg_text_set_from_sys(sys, d); 
+    dlg_text_set_from_sys(sys, d);
     gretl_dialog_set_resizeable(d->dialog, TRUE);
 }
 
@@ -1161,8 +1187,8 @@ static int edit_dialog_help_code (int ci, void *p)
 	    hc = SYS_RESTR;
 	} else if (vwin->role == VECM) {
 	    hc = VECM_RESTR;
-	} 
-    } 
+	}
+    }
 
     return hc;
 }
@@ -1186,7 +1212,7 @@ static int ols_model_window (windata_t *vwin)
 {
     if (vwin->role == VIEW_MODEL) {
 	MODEL *pmod = (MODEL *) vwin->data;
-	
+
 	if (pmod->ci == OLS) {
 	    return 1;
 	}
@@ -1215,9 +1241,9 @@ static void edit_dialog_add_note (const char *s, GtkWidget *vbox)
     g_free(lbl);
 }
 
-void 
-blocking_edit_dialog (int ci, const char *title, 
-		      const char *info, const char *deflt, 
+void
+blocking_edit_dialog (int ci, const char *title,
+		      const char *info, const char *deflt,
 		      void (*okfunc)(), void *okptr,
 		      Varclick click, GtkWidget *parent,
 		      int *canceled)
@@ -1242,7 +1268,7 @@ blocking_edit_dialog (int ci, const char *title,
     set_dialog_border_widths(d->vbox, d->bbox);
     gretl_dialog_set_resizeable(d->dialog, FALSE);
 
-    gtk_button_box_set_layout(GTK_BUTTON_BOX(d->bbox), 
+    gtk_button_box_set_layout(GTK_BUTTON_BOX(d->bbox),
 			      GTK_BUTTONBOX_END);
 
     if (ci == ESTIMATE) {
@@ -1269,7 +1295,7 @@ blocking_edit_dialog (int ci, const char *title,
 		pmod = okptr;
 	    }
 	} else if (dlg_text_set_previous(d) ||
-		   dlg_text_set_gmm_skel(d)) {
+		   dlg_text_set_skeleton(d)) {
 	    /* insert previous text, if any and if the command
 	       is the same as previously -- or insert skeleton
 	       of command
@@ -1278,7 +1304,7 @@ blocking_edit_dialog (int ci, const char *title,
 	}
 
 	if (ci != RESTRICT && ci != GMM) {
-	    g_signal_connect(G_OBJECT(d->edit), "button-press-event", 
+	    g_signal_connect(G_OBJECT(d->edit), "button-press-event",
 			     G_CALLBACK(edit_dialog_popup_handler), d);
 	}
     } else {
@@ -1300,9 +1326,9 @@ blocking_edit_dialog (int ci, const char *title,
 	if (deflt != NULL && *deflt != '\0') {
 	    gtk_entry_set_text(GTK_ENTRY(d->edit), deflt);
 	    gtk_editable_select_region(GTK_EDITABLE(d->edit), 0, strlen(deflt));
-	} 
+	}
 
-	g_signal_connect(G_OBJECT(GTK_EDITABLE(d->edit)), "changed", 
+	g_signal_connect(G_OBJECT(GTK_EDITABLE(d->edit)), "changed",
 			 G_CALLBACK(raise_and_focus_dialog), d->dialog);
     }
 
@@ -1329,13 +1355,13 @@ blocking_edit_dialog (int ci, const char *title,
 	dialog_option_switch(d->vbox, d, OPT_O, NULL);
     }
 
-    if (click == VARCLICK_INSERT_ID) { 
-	active_edit_id = d->edit; 
+    if (click == VARCLICK_INSERT_ID) {
+	active_edit_id = d->edit;
     } else if (click == VARCLICK_INSERT_NAME) {
 	active_edit_name = d->edit;
-    } else if (click == VARCLICK_INSERT_TEXT) { 
+    } else if (click == VARCLICK_INSERT_TEXT) {
 	active_edit_text = d->edit;
-    } 
+    }
 
     if (click != VARCLICK_NONE || helpcode > 0) {
 	gtk_window_set_keep_above(GTK_WINDOW(d->dialog), FALSE);
@@ -1349,9 +1375,9 @@ blocking_edit_dialog (int ci, const char *title,
     if (clear) {
 	w = gtk_button_new_from_stock(GTK_STOCK_CLEAR);
 	gtk_container_add(GTK_CONTAINER(d->bbox), w);
-	g_signal_connect(G_OBJECT(w), "clicked", 
+	g_signal_connect(G_OBJECT(w), "clicked",
 			 G_CALLBACK(clear_dlg_previous), d);
-    }    
+    }
 
     /* "Cancel" button */
     cancel_delete_button(d->bbox, d->dialog);
@@ -1362,7 +1388,7 @@ blocking_edit_dialog (int ci, const char *title,
     } else {
 	w = ok_button(d->bbox);
     }
-    g_signal_connect(G_OBJECT(w), "clicked", 
+    g_signal_connect(G_OBJECT(w), "clicked",
 		     G_CALLBACK(edit_dialog_ok), d);
     gtk_widget_grab_default(w);
 
@@ -1375,12 +1401,12 @@ blocking_edit_dialog (int ci, const char *title,
 	gtk_widget_set_size_request(GTK_WIDGET(d->dialog), 400, -1);
     }
 
-    gtk_widget_show_all(d->dialog); 
+    gtk_widget_show_all(d->dialog);
 }
 
-void edit_dialog (int ci, const char *title, 
-		  const char *info, const char *deflt, 
-		  void (*okfunc)(), void *okptr, 
+void edit_dialog (int ci, const char *title,
+		  const char *info, const char *deflt,
+		  void (*okfunc)(), void *okptr,
 		  Varclick click, GtkWidget *parent)
 {
     blocking_edit_dialog(ci, title, info, deflt, okfunc, okptr,
@@ -1438,9 +1464,9 @@ GtkWidget *combo_box_text_new_with_entry (void)
 gchar *combo_box_get_active_text (gpointer p)
 {
     gchar *ret = NULL;
-    
+
 #if GTK_MAJOR_VERSION >= 3
-    ret = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(p)); 
+    ret = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(p));
 #else /* gtk 2 >= 2.6 */
     ret = gtk_combo_box_get_active_text(GTK_COMBO_BOX(p));
 #endif
@@ -1454,7 +1480,7 @@ void combo_box_append_text (gpointer p, const gchar *s)
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(p), s);
 #else
     gtk_combo_box_append_text(GTK_COMBO_BOX(p), s);
-#endif			   
+#endif
 }
 
 void combo_box_prepend_text (gpointer p, const gchar *s)
@@ -1463,7 +1489,7 @@ void combo_box_prepend_text (gpointer p, const gchar *s)
     gtk_combo_box_text_prepend_text(GTK_COMBO_BOX_TEXT(p), s);
 #else
     gtk_combo_box_prepend_text(GTK_COMBO_BOX(p), s);
-#endif			   
+#endif
 }
 
 void combo_box_remove (gpointer p, int pos)
@@ -1472,7 +1498,7 @@ void combo_box_remove (gpointer p, int pos)
     gtk_combo_box_text_remove(GTK_COMBO_BOX_TEXT(p), pos);
 #else
     gtk_combo_box_remove_text(GTK_COMBO_BOX(p), pos);
-#endif			   
+#endif
 }
 
 gboolean widget_get_pointer_info (GtkWidget *w, gint *x, gint *y,
@@ -1499,7 +1525,7 @@ void gretl_emulated_dialog_add_structure (GtkWidget *dlg,
 {
     GtkWidget *base;
 
-    g_signal_connect(G_OBJECT(dlg), "key-press-event", 
+    g_signal_connect(G_OBJECT(dlg), "key-press-event",
 		     G_CALLBACK(esc_kills_window), NULL);
 
     base = gtk_vbox_new(FALSE, 5);
@@ -1517,7 +1543,7 @@ void gretl_emulated_dialog_add_structure (GtkWidget *dlg,
 #endif
 
     *pbbox = gtk_hbutton_box_new();
-    gtk_button_box_set_layout(GTK_BUTTON_BOX(*pbbox), 
+    gtk_button_box_set_layout(GTK_BUTTON_BOX(*pbbox),
 			      GTK_BUTTONBOX_END);
     gtk_box_set_spacing(GTK_BOX(*pbbox), 10);
     gtk_box_pack_start(GTK_BOX(base), *pbbox,
