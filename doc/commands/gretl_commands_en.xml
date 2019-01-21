@@ -13585,8 +13585,7 @@
 
       <ilist>
 	<li><para><cmdref targ="equation"/>: specify an equation
-	    within the system.  At least two such statements must be
-	    provided.</para>
+	    within the system.</para>
 	</li>
 	<li><para><cmd>instr</cmd>: for a system to be estimated via
 	    Three-Stage Least Squares, a list of instruments (by
