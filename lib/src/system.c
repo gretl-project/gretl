@@ -654,24 +654,6 @@ static int *matrix_row_to_list (const gretl_matrix *m, int i,
     return list;
 }
 
-static int sys_check_sepcount (const int *list, int n)
-{
-    int i, ns = 0;
-    int err = 0;
-
-    for (i=1; i<=list[0]; i++) {
-	if (list[i] == LISTSEP) {
-	    ns++;
-	}
-    }
-
-    if (ns != n - 1) {
-	err = E_ARGS;
-    }
-
-    return err;
-}
-
 static int sys_check_eqn_list (const int *list)
 {
     int dupv = gretl_list_duplicates(list, EQUATION);
@@ -685,10 +667,9 @@ static int sys_check_eqn_list (const int *list)
     }
 }
 
-/* @LY is a simple list of g regressands; @LX is either a common
-   list of regressors or it should contain g sub-lists, one
-   per equation; @AX is an array of lists. We get either @LX
-   or @AX as non-NULL, never both.
+/* @LY is a simple list of g regressands; either @LX is
+   simple list of common regressors or @AX is an array of
+   lists. We get either @LX or @AX as non-NULL, never both.
 */
 
 static int add_equations_from_lists (equation_system *sys,
@@ -697,31 +678,20 @@ static int add_equations_from_lists (equation_system *sys,
 				     gretl_array *AX,
 				     const DATASET *dset)
 {
-    int n = sys->neqns;
-    int n_add = LY[0];
-    int nx, pos = 0;
+    int nx, n = sys->neqns;
+    int g = LY[0];
     int i, j, err = 0;
 
-    if (AX != NULL) {
-	if (gretl_array_get_length(AX) != n_add) {
-	    err = E_ARGS;
-	}
+    if (AX != NULL && gretl_array_get_length(AX) != g) {
+	err = E_ARGS;
     } else {
-	/* does LX contain separator(s)? */
-	pos = gretl_list_separator_position(LX);
-	if (pos > 0) {
-	    err = sys_check_sepcount(LX, n_add);
-	}
-    }
-
-    if (!err) {
-	int **L = realloc(sys->lists, (n + n_add) * sizeof *sys->lists);
+	int **L = realloc(sys->lists, (n + g) * sizeof *sys->lists);
 
 	if (L == NULL) {
 	    err = E_ALLOC;
 	} else {
 	    sys->lists = L;
-	    for (i=0; i<n_add; i++) {
+	    for (i=0; i<g; i++) {
 		sys->lists[n+i] = NULL;
 	    }
 	}
@@ -732,9 +702,11 @@ static int add_equations_from_lists (equation_system *sys,
     }
 
     if (AX != NULL) {
-	for (i=0; i<n_add && !err; i++) {
-	    int *rhs, *list;
+	/* handle an array of regressor lists */
+	int *rhs, *list;
 
+	for (i=0; i<g && !err; i++) {
+	    list = NULL;
 	    rhs = gretl_array_get_element(AX, i, NULL, &err);
 	    if (!err) {
 		nx = rhs[0];
@@ -745,56 +717,49 @@ static int add_equations_from_lists (equation_system *sys,
 	    }
 	    if (!err) {
 		list[1] = LY[i+1];
-		for (j=0; j<nx; j++) {
-		    list[j+2] = rhs[j+1];
+		for (j=1; j<=nx; j++) {
+		    list[j+1] = rhs[j];
 		}
-		sys->lists[n++] = list;
 		err = sys_check_eqn_list(list);
+	    }
+	    if (err) {
+		free(list);
+	    } else {
+		sys->lists[n++] = list;
 	    }
 	}
     } else {
-	int nx0 = LX[0];
-	int j0;
+	/* handle a list of common regressors */
+	int nx = LX[0];
+	int *l0, *list;
 
-	/* the number of series to read from LX */
-	nx = pos > 0 ? (pos - 1) : nx0;
-	/* the starting position for reading from LX */
-	j0 = 1;
-
-	for (i=0; i<n_add && !err; i++) {
-	    int *list;
-
-	    list = gretl_list_new(1 + nx);
+	for (i=0; i<g && !err; i++) {
+	    if (i == 0) {
+		l0 = list = gretl_list_new(1 + nx);
+	    } else {
+		list = gretl_list_copy(l0);
+	    }
 	    if (list == NULL) {
 		err = E_ALLOC;
 	    } else {
 		list[1] = LY[i+1];
-		for (j=0; j<nx; j++) {
-		    list[j+2] = LX[j+j0];
-		}
-		sys->lists[n++] = list;
-		if (pos > 0 && i < n_add - 1) {
-		    /* handle the multiple sub-list case */
-		    j0 = ++pos; /* start of next read */
-		    if (i == n_add - 2) {
-			/* the next sublist is the last */
-			nx = nx0 - pos + 1;
-		    } else {
-			nx = 0;
-			while (LX[pos] != LISTSEP) {
-			    /* advance to next ';' */
-			    pos++;
-			    nx++;
-			}
+		if (i == 0) {
+		    for (j=1; j<=nx; j++) {
+			list[j+1] = LX[j];
 		    }
 		}
 		err = sys_check_eqn_list(list);
+	    }
+	    if (err) {
+		free(list);
+	    } else {
+		sys->lists[n++] = list;
 	    }
 	}
     }
 
     if (!err) {
-	sys->neqns += n_add;
+	sys->neqns += g;
     }
 
     return err;
@@ -804,14 +769,16 @@ static int add_equations_from_matrix (equation_system *sys,
 				      const gretl_matrix *m,
 				      const DATASET *dset)
 {
-    int *list;
+    int *list, **L;
     int n = sys->neqns;
     int i, err = 0;
 
-    sys->lists = realloc(sys->lists, (n + m->rows) * sizeof *sys->lists);
-    if (sys->lists == NULL) {
+    L = realloc(sys->lists, (n + m->rows) * sizeof *sys->lists);
+    if (L == NULL) {
 	return E_ALLOC;
     }
+
+    sys->lists = L;
 
     for (i=0; i<m->rows && !err; i++) {
 	list = matrix_row_to_list(m, i, dset, &err);
@@ -833,8 +800,9 @@ static int add_equations_from_matrix (equation_system *sys,
 /**
  * equation_system_append_multi:
  * @sys: initialized equation system.
- * @param: the name of a pre-defined matrix, or the names
- * of two pre-defined lists (space-separated).
+ * @param: the name of a pre-defined matrix, or the name of
+ * a list followed by the name of a second list or array of
+ * lists (space-separated).
  * @dset: dataset information.
  *
  * Adds one or more equations to @sys in one or other of two
@@ -846,12 +814,10 @@ static int add_equations_from_matrix (equation_system *sys,
  * can be accommodated by padding unused trailing elements of
  * short rows with zeros. (EXPERIMENTAL, may be dropped)
  *
- * If @param contains two names, they are taken to be the
- * names of lists. The first serves as a list of g
- * regressands, one per equation. If the second list contains
- * no instances of #LISTSEP it is treated as a common set of
- * regressors; otherwise it should contain g sub-lists, one
- * per equation, separated by #LISTSEP.
+ * If @param contains two names, the first is taken to be a
+ * list of g regressands, one per equation. The second name,
+ * pertaining to regressors, may be that of either a list or
+ * an array of lists. See the Gretl User's Guide for details.
  *
  * Returns: 0 on success, non-zero on failure, in which case
  * @sys is destroyed.
