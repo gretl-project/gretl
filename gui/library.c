@@ -3623,17 +3623,17 @@ void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 	    if (slist != NULL) {
 		err = equation_system_append(my_sys, slist);
 		free(slist);
-		if (err) {
-		    /* note: sys is destroyed on error */
-		    gui_errmsg(err);
-		}
 	    }
+	} else if (!strncmp(bufline, "equations ", 10)) {
+	    err = equation_system_append_multi(my_sys, bufline + 10,
+					       dataset);
 	} else {
 	    err = system_parse_line(my_sys, bufline, dataset);
-	    if (err) {
-		/* sys is destroyed on error */
-		gui_errmsg(err);
-	    }
+	}
+
+	if (err) {
+	    /* sys is destroyed on error */
+	    gui_errmsg(err);
 	}
     }
 
