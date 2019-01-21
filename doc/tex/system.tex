@@ -156,12 +156,12 @@ when the script is actually run.
 The relevant syntax is given by the \texttt{equations} keyword (note
 the plural), which replaces the block of \texttt{equation} lines in
 the standard form. This keyword must be followed by two arguments. The
-first is a list containing all series on the left-hand side of the
-system, which determines the number of equations in the system. The
-nature of the second argument depends on whether or not the list of
-regressors is in common for all equations (as in SUR):
+first is a named list containing all series on the left-hand side of
+the system, which determines the number of equations in the
+system. The nature of the second argument depends on whether or not
+the list of regressors is in common for all equations (as in SUR):
 \begin{itemize}
-\item Common regressors: a second list.
+\item Common regressors: a second named list.
 \item Differing regressors: an array of lists, one per equation.
 \end{itemize}
 
