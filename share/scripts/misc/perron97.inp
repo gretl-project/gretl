@@ -1,3 +1,5 @@
+set verbose off
+
 function scalar perron_test (series y, int maxlag, scalar testsig, 
                              int verbose)
 
@@ -68,9 +70,11 @@ function scalar perron_test (series y, int maxlag, scalar testsig,
    series DU = time > Tbstar
    series DT = time == (Tbstar + 1)
    # print -o time yr DU DT
+   string breakper = obslabel(Tbstar)
 
-   printf "\n*** min(t_alpha) = %g in %s (k=%d) ***\n", \
-   t_a_min, obslabel(Tbstar), Tbk
+   printf "\n*** minimized t_alpha = %g in %s (k=%d) ***\n", \
+     t_a_min, breakper, Tbk
+   printf "\nRegression with break at %s", breakper
 
    # print the regression ("Model 1") with the selected break year
 
@@ -116,7 +120,7 @@ scalar maxlag = 10
 # Max significance level for retaining the last lag
 scalar testsig = 0.10
 
-# Verbosity level (1 = not much)
-scalar verbosity = 1
+# Verbosity level (2 = moderate)
+scalar verbosity = 2
 
 perron_test(y, maxlag, testsig, verbosity)
