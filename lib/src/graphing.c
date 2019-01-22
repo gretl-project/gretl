@@ -1149,7 +1149,9 @@ static void maybe_set_eps_pdf_dims (char *s, PlotType ptype, GptFlags flags)
 	/* extra large */
 	w = h = (5.0 * GP_XXL_WIDTH) / GP_WIDTH;
     } else if (flags & GPT_XW) {
+	/* extra wide */
 	w = (5.0 * GP_XW_WIDTH) / GP_WIDTH;
+	h = 3.5;
     } else if (ptype == PLOT_ROOTS || ptype == PLOT_QQ) {
 	/* square plots */
 	w = h = 3.5;
@@ -1261,6 +1263,7 @@ static void write_png_size_string (char *s, PlotType ptype,
     } else if (flags & GPT_XW) {
 	/* extra wide */
 	w = GP_XW_WIDTH;
+	h = GP_HEIGHT;
     } else if (ptype == PLOT_ROOTS || ptype == PLOT_QQ) {
 	/* square plots */
 	w = h = GP_SQ_SIZE;

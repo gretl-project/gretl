@@ -468,6 +468,8 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 		flags = GPT_XL;
 	    } else if (strstr(fline, "extra-large")) {
 		flags = GPT_XXL;
+	    } else if (strstr(fline, "extra-wide")) {
+		flags = GPT_XW;
 	    } else if (!strncmp(fline, "set style line", 14) ||
 		       !strncmp(fline, "set linetype", 12)) {
 		add_line_styles = 0;
@@ -2765,6 +2767,9 @@ static void check_for_plot_size (GPT_SPEC *spec, gchar *buf)
 		spec->flags |= GPT_XL;
 		break;
 	    }
+	} else if (strstr(line, "extra-wide")) {
+	    spec->flags |= GPT_XW;
+	    break;
 	}
 	i++;
     }
@@ -5244,6 +5249,9 @@ static int gnuplot_show_png (const char *fname,
     } else if (plot->spec->flags & GPT_XL) {
 	plot->pixel_width = GP_XL_WIDTH;
 	plot->pixel_height = GP_XL_HEIGHT;
+    } else if (plot->spec->flags & GPT_XW) {
+	plot->pixel_width = GP_XW_WIDTH;
+	plot->pixel_height = GP_HEIGHT;
     }
 
     if (plot->spec->scale != 1.0) {
