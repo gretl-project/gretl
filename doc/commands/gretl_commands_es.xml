@@ -4925,7 +4925,9 @@
 
       <para>
 	Si quieres generar secuencias repetibles de números pseudoaleatorios,
-	puedes establecer la semilla en el menú Herramientas.
+	puedes establecer la semilla mediante el elemento
+	<mnu targ="SetSeed">Semilla para los números aleatorios</mnu>,
+	en el menú Herramientas.
       </para>
 
     </description>
@@ -6738,6 +6740,10 @@
 	  <flag>--vcv</flag>
 	  <effect>Presenta la matriz de covarianzas</effect>
         </option>
+        <option>
+	  <flag>--no-vcv</flag>
+	  <effect>No calcula la matriz de covarianzas</effect>
+        </option>
       </options>
     </usage>
 
@@ -6750,10 +6756,13 @@
 	advertencia si la solución no es única.
       </para>
       <para>
-	Las desviaciones típicas se deducen utilizando el procedimiento
-	'bootstrap' con 500 extracciones. La matriz de covarianzas de los
-	estimadores de los parámetros, que se presenta cuando indicas
-	<opt>vcv</opt>, se basa en el mismo 'bootstrap'.
+	Las desviaciones típicas se deducen utilizando el procedimiento 'bootstrap'
+	con 500 extracciones. La matriz de covarianzas de los estimadores de los
+	parámetros, que se presenta cuando indicas <opt>vcv</opt>, se basa en
+	el mismo 'bootstrap'. Puesto que esta es una operación bastante costosa,
+	la opción <opt>no-vcv</opt> se proporciona para aquellos casos en los que
+	no se necesita la matriz de covarianzas; cuando indicas esta opción, las
+	desviaciones típicas no van a estar disponibles.
       </para>
       <para>
 	Ten en cuenta que este método puede resultar lento cuando la muestra
@@ -10081,14 +10090,20 @@
 	Hansl. En ese caso, podrías escribir
       </para>
       <code>
-	extra.zip
+	extra
       </code>
       <para>
-	en uno de los huecos disponibles (en el primero si no hay ninguna otra
-	dependencia). Observa que debes incluir la extensión <lit>.gfn</lit>
-	o <lit>.zip</lit> según convenga, pero no debes indicar la ruta
-	completa hasta el paquete en cuestión, si no únicamente su
-	nombre 'plano'.
+	en uno de los huecos disponibles (en el primero si no hay
+	ninguna otra dependencia). Observa que debes indicar el
+	nombre 'plano' del paquete, sin poner la ruta completa ni
+	el sufijo <lit>.gfn</lit> ni <lit>.zip</lit>.
+      </para>
+      <para>
+	Opcionalmente, puedes marcar la primera dependencia como un
+	<quote>proveedor</quote>. El efecto de esto es el de propiciar que tu
+	paquete tenga acceso a cualquier función privada del paquete especificado.
+	Generalmente, esto no va a hacer falta pero puede serte útil cuando
+	diseñas dos paquetes para que funcionen en estrecha colaboración.
       </para>
     </description>
   </command>
@@ -13570,7 +13585,6 @@
 
       <ilist>
 	<li><para><cmdref targ="equation"/>: Especifica una ecuación del sistema.
-	    Como mínimo deben proporcionarse dos enunciados de este tipo.
 	    </para>
 	</li>
 	<li><para><cmd>instr</cmd>: Para estimar un sistema mediante

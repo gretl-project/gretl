@@ -4925,7 +4925,9 @@
 
       <para>
 	Se queres xerar secuencias repetibles de números pseudoaleatorios,
-	podes establecer a semente no menú Ferramentas.
+	podes establecer a semente mediante o elemento
+	<mnu targ="SetSeed">Semente de números aleatorios</mnu>,
+	no menú Ferramentas.
       </para>
 
     </description>
@@ -6738,6 +6740,10 @@
 	  <flag>--vcv</flag>
 	  <effect>Presenta a matriz de covarianzas</effect>
         </option>
+        <option>
+	  <flag>--no-vcv</flag>
+	  <effect>Non calcula a matriz de covarianzas</effect>
+        </option>
       </options>
     </usage>
 
@@ -6750,10 +6756,13 @@
 	advertencia se a solución non é única.
       </para>
       <para>
-	As desviacións padrón dedúcense utilizando o procedemento
-	'bootstrap' con 500 extraccións. A matriz de covarianzas dos
-	estimadores dos parámetros, que se presenta cando indicas
-	<opt>vcv</opt>, baséase no mesmo 'bootstrap'.
+	As desviacións padrón dedúcense utilizando o procedemento 'bootstrap'
+	con 500 extraccións. A matriz de covarianzas dos estimadores dos
+	parámetros, que se presenta cando indicas <opt>vcv</opt>, baséase
+	no mesmo 'bootstrap'. Dado que esta é unha operación custosa dabondo,
+	a opción <opt>no-vcv</opt> proporciónase para aqueles casos nos que
+	non se precisa a matriz de covarianzas; cando indicas esta opción, as
+	desviacións padrón no van estar dispoñibles.
       </para>
       <para>
 	Ten en conta que este método pode resultar lento cando a mostra
@@ -7533,8 +7542,8 @@
 	un ficheiro gfn que xa existía.
       </para>
       <para>
-	Para obter máis detalles sobre todo isto, consulta a
-	<mnu targ="Pkgbook">Guía para paquetes de funcións</mnu>.
+	Para obter máis detalles sobre todo isto, consulta o
+	<mnu targ="Pkgbook">Manual de paquetes de funcións</mnu>.
       </para>
     </description>
 
@@ -10081,14 +10090,20 @@
 	Hansl. Nese caso, poderías escribir
       </para>
       <code>
-	extra.zip
+	extra
       </code>
       <para>
-	nun dos ocos dispoñibles (no primeiro se non hai ningunha outra
-	dependencia). Advirte que debes de incluír a extensión <lit>.gfn</lit>
-	ou <lit>.zip</lit> segundo conveña, pero non debes de indicar a
-	ruta completa ata o paquete en cuestión, senón unicamente o seu
-	nome 'plano'.
+	nun dos ocos dispoñibles (no primeiro se non hai ningunha
+	outra dependencia). Advirte que debes de indicar o nome
+	'plano' do paquete, sen poñer a ruta completa nin o sufixo
+	<lit>.gfn</lit> nin <lit>.zip</lit>.
+      </para>
+      <para>
+	Opcionalmente, podes marcar a primeira dependencia como un
+	<quote>fornecedor</quote>. O efecto disto é o de propiciar que o teu
+	paquete teña acceso a calquera función privada do paquete especificado.
+	Xeralmente, isto non vai facer falta pero pode serte útil cando deseñas
+	dous paquetes para que funcionen en estreita colaboración.
       </para>
     </description>
   </command>
@@ -13570,7 +13585,6 @@
 
       <ilist>
 	<li><para><cmdref targ="equation"/>: Especifica unha ecuación do sistema.
-	    Como mínimo deben de proporcionarse dous enunciados deste tipo.
 	    </para>
 	</li>
 	<li><para><cmd>instr</cmd>: Para estimar un sistema mediante
