@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1.9.12\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-01-21 19:12-0500\n"
+"POT-Creation-Date: 2019-01-22 09:24-0500\n"
 "PO-Revision-Date: 2015-07-30 11:50+0100\n"
 "Last-Translator: Mihaela Nicolau <m.nicolau@univ-danubius.ro>\n"
 "Language-Team: Romanian\n"
@@ -192,7 +192,7 @@ msgstr "Opţiune nevalidă"
 
 #: lib/src/adf_kpss.c:1253 lib/src/adf_kpss.c:2020 lib/src/boxplots.c:874
 #: lib/src/describe.c:1670 lib/src/describe.c:3111 lib/src/describe.c:3665
-#: lib/src/describe.c:4236 lib/src/graphing.c:8226
+#: lib/src/describe.c:4236 lib/src/graphing.c:8233
 #, c-format
 msgid "%s is a constant"
 msgstr "%s este o constantă"
@@ -414,7 +414,7 @@ msgstr "Sinteză numerică cu interval de confidenţă bootstrap pentru mediană
 msgid "Numerical summary for %s"
 msgstr "Sinteză numerică pentru %s"
 
-#: lib/src/boxplots.c:317 gui/gpt_control.c:4291 gui/gpt_control.c:4369
+#: lib/src/boxplots.c:317 gui/gpt_control.c:4299 gui/gpt_control.c:4377
 msgid "Numerical summary"
 msgstr "Sinteza numerică"
 
@@ -448,7 +448,7 @@ msgstr "Trebuie indicate două variabile, dintre care ultima este discretă"
 msgid "Distribution of %s by %s"
 msgstr "Distribuţia lui %s pentru %s"
 
-#: lib/src/boxplots.c:906 lib/src/graphing.c:2062
+#: lib/src/boxplots.c:906 lib/src/graphing.c:2069
 #, c-format
 msgid "Regression residuals (= observed - fitted %s)"
 msgstr "Reziduurile regresiei (= observate - potrivite %s)"
@@ -508,7 +508,7 @@ msgstr "Testul Wald"
 #: lib/src/compare.c:402 lib/src/compare.c:982 lib/src/compare.c:2202
 #: lib/src/compare.c:2373 lib/src/compare.c:2379 lib/src/compare.c:3000
 #: lib/src/describe.c:1601 lib/src/estimate.c:2976 lib/src/estimate.c:3800
-#: lib/src/graphing.c:4641 lib/src/gretl_model.c:4215
+#: lib/src/graphing.c:4648 lib/src/gretl_model.c:4215
 #: lib/src/gretl_model.c:4229 lib/src/gretl_model.c:4232
 #: lib/src/gretl_model.c:4257 lib/src/gretl_panel.c:4432
 #: lib/src/gretl_panel.c:4694 lib/src/modelprint.c:202 lib/src/modelprint.c:381
@@ -552,8 +552,8 @@ msgstr "Adăugând variabile se îmbunătățesc %d din %d criterii informative.
 msgid "Omitting variables improved %d of %d information criteria.\n"
 msgstr "Omițând variabile se îmbunătățesc %d din %d criterii informative.\n"
 
-#: lib/src/compare.c:922 lib/src/compare.c:2310 lib/src/graphing.c:3795
-#: lib/src/graphing.c:3807 lib/src/graphing.c:3893 lib/src/graphing.c:6326
+#: lib/src/compare.c:922 lib/src/compare.c:2310 lib/src/graphing.c:3802
+#: lib/src/graphing.c:3814 lib/src/graphing.c:3900 lib/src/graphing.c:6333
 #: lib/src/gretl_panel.c:4537 lib/src/printout.c:1527 gui/guiprint.c:1532
 #: gui/guiprint.c:1592 gui/library.c:6803 plugin/leverage.c:306
 msgid "residual"
@@ -1412,7 +1412,7 @@ msgstr ""
 msgid "dataset is subsampled"
 msgstr "setul de date este subeșantionat"
 
-#: lib/src/dataset.c:2131 lib/src/dataset.c:2143 lib/src/graphing.c:7919
+#: lib/src/dataset.c:2131 lib/src/dataset.c:2143 lib/src/graphing.c:7926
 #: lib/src/gretl_utils.c:1158 lib/src/gretl_utils.c:1247
 msgid "periods"
 msgstr "perioade"
@@ -1655,7 +1655,7 @@ msgid "Correlogram"
 msgstr "Corelograma"
 
 #: lib/src/describe.c:2998 lib/src/describe.c:3410 lib/src/describe.c:3455
-#: lib/src/graphing.c:7806
+#: lib/src/graphing.c:7813
 msgid "lag"
 msgstr "întârziere"
 
@@ -2832,288 +2832,288 @@ msgstr "dev. stand."
 msgid "You must supply three variables, the last of which is discrete"
 msgstr "Trebuie furnizate trei variabile, din care ultima este discretă"
 
-#: lib/src/graphing.c:2046 gui/gpt_dialog.c:591
+#: lib/src/graphing.c:2053 gui/gpt_dialog.c:591
 #, c-format
 msgid "%s versus %s (with least squares fit)"
 msgstr "%s versus %s (cu estimare cele mai mici pătrate)"
 
-#: lib/src/graphing.c:2049 gui/gpt_dialog.c:600
+#: lib/src/graphing.c:2056 gui/gpt_dialog.c:600
 #, c-format
 msgid "%s versus %s (with inverse fit)"
 msgstr "%s versus %s (cu estimare inversă)"
 
-#: lib/src/graphing.c:2052 gui/gpt_dialog.c:594
+#: lib/src/graphing.c:2059 gui/gpt_dialog.c:594
 #, c-format
 msgid "%s versus %s (with quadratic fit)"
 msgstr "%s versus %s (cu estimare pătratică)"
 
-#: lib/src/graphing.c:2055 gui/gpt_dialog.c:597
+#: lib/src/graphing.c:2062 gui/gpt_dialog.c:597
 #, c-format
 msgid "%s versus %s (with cubic fit)"
 msgstr "%s versus %s (cu estimare cubică)"
 
-#: lib/src/graphing.c:2067 lib/src/graphing.c:2071
+#: lib/src/graphing.c:2074 lib/src/graphing.c:2078
 #, c-format
 msgid "Actual and fitted %s"
 msgstr "%s efectiv și estimat"
 
-#: lib/src/graphing.c:2073
+#: lib/src/graphing.c:2080
 #, c-format
 msgid "Actual and fitted %s versus %s"
 msgstr "%s versus %s efectiv și estimat"
 
-#: lib/src/graphing.c:2314 gui/gpt_dialog.c:603
+#: lib/src/graphing.c:2321 gui/gpt_dialog.c:603
 #, c-format
 msgid "%s versus %s (with loess fit)"
 msgstr "%s versus %s (cu estimare loess)"
 
-#: lib/src/graphing.c:2330 lib/src/plotspec.c:1645
+#: lib/src/graphing.c:2337 lib/src/plotspec.c:1645
 #, c-format
 msgid "loess fit, d = %d, q = %g"
 msgstr "estimare loess, d = %d, q = %g"
 
-#: lib/src/graphing.c:3501
+#: lib/src/graphing.c:3508
 msgid "time series by group"
 msgstr "serii de timp pe grup"
 
-#: lib/src/graphing.c:3882 lib/src/plotspec.c:733 lib/src/plotspec.c:1551
+#: lib/src/graphing.c:3889 lib/src/plotspec.c:733 lib/src/plotspec.c:1551
 #: gui/gpt_dialog.c:977 gui/gpt_dialog.c:1397 gui/gpt_dialog.c:2905
 msgid "right"
 msgstr "dreapta"
 
-#: lib/src/graphing.c:3882 lib/src/plotspec.c:729 lib/src/plotspec.c:735
+#: lib/src/graphing.c:3889 lib/src/plotspec.c:729 lib/src/plotspec.c:735
 #: lib/src/plotspec.c:1549 gui/gpt_dialog.c:1392 gui/gpt_dialog.c:2904
 msgid "left"
 msgstr "stânga"
 
-#: lib/src/graphing.c:3916 lib/src/graphing.c:3926
+#: lib/src/graphing.c:3923 lib/src/graphing.c:3933
 msgid "actual"
 msgstr "efectiv"
 
-#: lib/src/graphing.c:3917 lib/src/graphing.c:3927 lib/src/printout.c:1523
+#: lib/src/graphing.c:3924 lib/src/graphing.c:3934 lib/src/printout.c:1523
 #: gui/guiprint.c:888 gui/guiprint.c:1532 gui/guiprint.c:1592
 #: gui/library.c:4658
 msgid "fitted"
 msgstr "potrivit"
 
-#: lib/src/graphing.c:4019
+#: lib/src/graphing.c:4026
 msgid "actual = predicted"
 msgstr "efectiv = previzionat"
 
-#: lib/src/graphing.c:4743
+#: lib/src/graphing.c:4750
 #, c-format
 msgid "'%s' is a constant"
 msgstr "'%s' este o constantă"
 
-#: lib/src/graphing.c:4800
+#: lib/src/graphing.c:4807
 msgid "Test statistic for normality"
 msgstr "Testul statistic pentru normalitate"
 
-#: lib/src/graphing.c:4826
+#: lib/src/graphing.c:4833
 msgid "Test statistic for gamma"
 msgstr "Testul statististic pentru gama"
 
-#: lib/src/graphing.c:4872 plugin/addons-i18n.c:10
+#: lib/src/graphing.c:4879 plugin/addons-i18n.c:10
 msgid "Density"
 msgstr "Densitate"
 
-#: lib/src/graphing.c:4874
+#: lib/src/graphing.c:4881
 msgid "Relative frequency"
 msgstr "Frecvența relativă"
 
-#: lib/src/graphing.c:4899 lib/src/graphing.c:4906
+#: lib/src/graphing.c:4906 lib/src/graphing.c:4913
 #, fuzzy
 msgid "relative frequency"
 msgstr "Frecvența relativă"
 
-#: lib/src/graphing.c:4967 gui/menustate.c:574
+#: lib/src/graphing.c:4974 gui/menustate.c:574
 msgid "Correlation matrix"
 msgstr "Matricea de corelație"
 
-#: lib/src/graphing.c:5360 lib/src/graphing.c:6129
+#: lib/src/graphing.c:5367 lib/src/graphing.c:6136
 #, c-format
 msgid "%g percent interval"
 msgstr "interval de %g la sută"
 
-#: lib/src/graphing.c:5373 lib/src/graphing.c:5380 lib/src/printout.c:1523
+#: lib/src/graphing.c:5380 lib/src/graphing.c:5387 lib/src/printout.c:1523
 msgid "forecast"
 msgstr "prognoză"
 
-#: lib/src/graphing.c:6127
+#: lib/src/graphing.c:6134
 #, c-format
 msgid "%g%% interval for mean"
 msgstr "interval %g%% pentru medie"
 
-#: lib/src/graphing.c:6231
+#: lib/src/graphing.c:6238
 #, c-format
 msgid "Coefficient on %s"
 msgstr "Coeficientul lui %s"
 
-#: lib/src/graphing.c:6255
+#: lib/src/graphing.c:6262
 #, c-format
 msgid "Quantile estimates with %g%% band"
 msgstr "Cuantilă estimată cu intervalul %g%%"
 
-#: lib/src/graphing.c:6263
+#: lib/src/graphing.c:6270
 #, c-format
 msgid "OLS estimate with %g%% band"
 msgstr "OLS estimat cu intervalul %g%%"
 
-#: lib/src/graphing.c:6326
+#: lib/src/graphing.c:6333
 msgid "+- sqrt(h(t))"
 msgstr "+- sqrt(h(t))"
 
-#: lib/src/graphing.c:6481
+#: lib/src/graphing.c:6488
 #, c-format
 msgid "mean %s"
 msgstr "mean %s"
 
-#: lib/src/graphing.c:6561
+#: lib/src/graphing.c:6568
 msgid "Group means"
 msgstr "Grup medii"
 
-#: lib/src/graphing.c:6912
+#: lib/src/graphing.c:6919
 msgid "time"
 msgstr "timp"
 
-#: lib/src/graphing.c:7031
+#: lib/src/graphing.c:7038
 #, c-format
 msgid "response of %s to a shock in %s, with bootstrap confidence interval"
 msgstr "răspunsul lui %s la un șoc în %s, cu interval de confidență bootstrap"
 
-#: lib/src/graphing.c:7036
+#: lib/src/graphing.c:7043
 #, c-format
 msgid "response of %s to a shock in %s"
 msgstr "răspunsul lui %s la un șoc în %s"
 
-#: lib/src/graphing.c:7051
+#: lib/src/graphing.c:7058
 #, c-format
 msgid "%g percent confidence band"
 msgstr "interval de confidență de %g la sută"
 
-#: lib/src/graphing.c:7056 lib/src/graphing.c:7059
+#: lib/src/graphing.c:7063 lib/src/graphing.c:7066
 msgid "point estimate"
 msgstr "estimare punctuală"
 
-#: lib/src/graphing.c:7060
+#: lib/src/graphing.c:7067
 #, c-format
 msgid "%g and %g quantiles"
 msgstr "cuantilele %g și %g"
 
-#: lib/src/graphing.c:7162
+#: lib/src/graphing.c:7169
 #, c-format
 msgid "forecast variance decomposition for %s"
 msgstr "descompunerea varianței estimării pentru %s"
 
-#: lib/src/graphing.c:7391
+#: lib/src/graphing.c:7398
 msgid "VAR residuals"
 msgstr "Reziduuri VAR"
 
-#: lib/src/graphing.c:7393 gui/gui_utils.c:3560
+#: lib/src/graphing.c:7400 gui/gui_utils.c:3560
 msgid "System residuals"
 msgstr "Reziduurile sistemului"
 
-#: lib/src/graphing.c:7469
+#: lib/src/graphing.c:7476
 msgid "EC terms"
 msgstr "Termeni EC"
 
-#: lib/src/graphing.c:7471 gui/gui_utils.c:4709
+#: lib/src/graphing.c:7478 gui/gui_utils.c:4709
 msgid "EC term"
 msgstr "Termen EC"
 
-#: lib/src/graphing.c:7618
+#: lib/src/graphing.c:7625
 msgid "VAR inverse roots in relation to the unit circle"
 msgstr "Rădăcini inverse VAR în relație cu cercul unitate"
 
-#: lib/src/graphing.c:7702
+#: lib/src/graphing.c:7709
 #, c-format
 msgid "%g%% confidence ellipse and %g%% marginal intervals"
 msgstr "elipsă de confidență %g%% și intervale marginale de confidență %g%%"
 
-#: lib/src/graphing.c:7789
+#: lib/src/graphing.c:7796
 #, no-c-format
 msgid "95% interval"
 msgstr "interval 95%"
 
-#: lib/src/graphing.c:7815
+#: lib/src/graphing.c:7822
 msgid "Residual ACF"
 msgstr "FAC a reziduurilor"
 
-#: lib/src/graphing.c:7817
+#: lib/src/graphing.c:7824
 msgid "ACF for"
 msgstr "FAC pentru"
 
-#: lib/src/graphing.c:7851
+#: lib/src/graphing.c:7858
 msgid "Residual PACF"
 msgstr "FACP a reziduurilor"
 
-#: lib/src/graphing.c:7853
+#: lib/src/graphing.c:7860
 msgid "PACF for"
 msgstr "FACP pentru"
 
-#: lib/src/graphing.c:7930
+#: lib/src/graphing.c:7937
 msgid "radians"
 msgstr "radiani"
 
-#: lib/src/graphing.c:7932
+#: lib/src/graphing.c:7939
 msgid "degrees"
 msgstr "grade"
 
-#: lib/src/graphing.c:7934
+#: lib/src/graphing.c:7941
 msgid "scaled frequency"
 msgstr "frecvență scalată"
 
-#: lib/src/graphing.c:7944
+#: lib/src/graphing.c:7951
 msgid "Residual spectrum"
 msgstr "Spectru rezidual"
 
-#: lib/src/graphing.c:7946
+#: lib/src/graphing.c:7953
 #, c-format
 msgid "Spectrum of %s"
 msgstr "Spectrul lui %s"
 
-#: lib/src/graphing.c:7952
+#: lib/src/graphing.c:7959
 #, c-format
 msgid "Bartlett window, length %d"
 msgstr "Fereastra Bartlett, întindere %d"
 
-#: lib/src/graphing.c:7958 lib/src/graphing.c:8064 gui/dialogs.c:4822
+#: lib/src/graphing.c:7965 lib/src/graphing.c:8071 gui/dialogs.c:4822
 msgid "log scale"
 msgstr "scara logaritmică"
 
-#: lib/src/graphing.c:8063
+#: lib/src/graphing.c:8070
 #, fuzzy
 msgid "Sample periodogram vs ARMA Spectrum"
 msgstr "Periodogramă eșantion"
 
-#: lib/src/graphing.c:8065
+#: lib/src/graphing.c:8072
 #, fuzzy
 msgid "spectrum"
 msgstr "Spectru rezidual"
 
-#: lib/src/graphing.c:8066 gui/library.c:5953
+#: lib/src/graphing.c:8073 gui/library.c:5953
 msgid "periodogram"
 msgstr "periodograma"
 
-#: lib/src/graphing.c:8169 gui/library.c:885 gui/library.c:2879
+#: lib/src/graphing.c:8176 gui/library.c:885 gui/library.c:2879
 msgid "Q-Q plot"
 msgstr "Grafic Q-Q"
 
-#: lib/src/graphing.c:8257
+#: lib/src/graphing.c:8264
 #, c-format
 msgid "Q-Q plot for %s"
 msgstr "Grafic Q-Q pentru %s"
 
-#: lib/src/graphing.c:8260
+#: lib/src/graphing.c:8267
 msgid "Normal quantiles"
 msgstr "Cuantile normale"
 
-#: lib/src/graphing.c:8580 lib/src/graphing.c:8583
+#: lib/src/graphing.c:8587 lib/src/graphing.c:8590
 #, c-format
 msgid "adjusted %s"
 msgstr "%s ajustat"
 
-#: lib/src/graphing.c:8646 plugin/range-mean.c:112
+#: lib/src/graphing.c:8653 plugin/range-mean.c:112
 msgid "with least squares fit"
 msgstr "cu estimare cele mai mici pătrate"
 
@@ -7305,7 +7305,7 @@ msgstr "'%s': matricea nu există"
 
 #: lib/src/system.c:851
 #, fuzzy, c-format
-msgid "'%s': not a list of array of lists"
+msgid "'%s': not a list or array of lists"
 msgstr "'%s': neimplementat pentru liste"
 
 #: lib/src/system.c:1254
@@ -9017,8 +9017,8 @@ msgstr ""
 msgid "Add to menu"
 msgstr "Adaugă la meniu"
 
-#: gui/datafiles.c:1502 gui/datafiles.c:1725 gui/gpt_control.c:4266
-#: gui/gpt_control.c:4268 gui/gpt_control.c:4372 gui/session.c:167
+#: gui/datafiles.c:1502 gui/datafiles.c:1725 gui/gpt_control.c:4274
+#: gui/gpt_control.c:4276 gui/gpt_control.c:4380 gui/session.c:167
 #: gui/session.c:174 gui/session.c:3497 gui/toolbar.c:835 gui/toolbar.c:836
 #: gui/toolbar.c:837
 msgid "Help"
@@ -11254,11 +11254,11 @@ msgstr ""
 msgid "Copy"
 msgstr ""
 
-#: gui/gpt_control.c:281 gui/gpt_control.c:4283 gui/gpt_control.c:4366
+#: gui/gpt_control.c:281 gui/gpt_control.c:4291 gui/gpt_control.c:4374
 msgid "Display PDF"
 msgstr ""
 
-#: gui/gpt_control.c:282 gui/gpt_control.c:4293 gui/gpt_control.c:4370
+#: gui/gpt_control.c:282 gui/gpt_control.c:4301 gui/gpt_control.c:4378
 #: gui/session.c:192 gui/session.c:198 gui/session.c:208 gui/session.c:3358
 #: gui/session.c:3397 gui/session.c:3410
 msgid "Edit"
@@ -11273,133 +11273,133 @@ msgstr ""
 msgid " Click to set position"
 msgstr ""
 
-#: gui/gpt_control.c:1012
+#: gui/gpt_control.c:1014
 msgid "gnuplot command failed"
 msgstr ""
 
-#: gui/gpt_control.c:1078 gui/gpt_control.c:1167
+#: gui/gpt_control.c:1080 gui/gpt_control.c:1169
 msgid "Gnuplot error creating graph"
 msgstr ""
 
-#: gui/gpt_control.c:3088 gui/gpt_control.c:3099
+#: gui/gpt_control.c:3096 gui/gpt_control.c:3107
 msgid "Plot file is corrupted"
 msgstr ""
 
-#: gui/gpt_control.c:3875
+#: gui/gpt_control.c:3883
 msgid "Couldn't access graph info"
 msgstr ""
 
-#: gui/gpt_control.c:4005 gui/gpt_control.c:4313 gui/graphics.c:240
+#: gui/gpt_control.c:4013 gui/gpt_control.c:4321 gui/graphics.c:240
 #: gui/graph_page.c:698
 msgid "monochrome"
 msgstr ""
 
-#: gui/gpt_control.c:4009 gui/gpt_control.c:4349 gui/gpt_control.c:4355
+#: gui/gpt_control.c:4017 gui/gpt_control.c:4357 gui/gpt_control.c:4363
 msgid "Save as Windows metafile (EMF)..."
 msgstr ""
 
-#: gui/gpt_control.c:4013 gui/gpt_control.c:4357 gui/menustate.c:578
+#: gui/gpt_control.c:4021 gui/gpt_control.c:4365 gui/menustate.c:578
 msgid "Copy to clipboard"
 msgstr ""
 
-#: gui/gpt_control.c:4022 gui/gpt_control.c:4364
+#: gui/gpt_control.c:4030 gui/gpt_control.c:4372
 msgid "Print"
 msgstr ""
 
-#: gui/gpt_control.c:4047
+#: gui/gpt_control.c:4055
 msgid "roots (real, imaginary, modulus, frequency)"
 msgstr ""
 
-#: gui/gpt_control.c:4081
+#: gui/gpt_control.c:4089
 msgid "roots"
 msgstr ""
 
-#: gui/gpt_control.c:4103
+#: gui/gpt_control.c:4111
 msgid "gretl: boxplot data"
 msgstr "gretl: date grafic boxplot"
 
-#: gui/gpt_control.c:4241
+#: gui/gpt_control.c:4249
 msgid " Drag to define zoom rectangle"
 msgstr ""
 
-#: gui/gpt_control.c:4252 gui/gpt_control.c:4347
+#: gui/gpt_control.c:4260 gui/gpt_control.c:4355
 msgid "Add another curve..."
 msgstr "Adăugă o altă curbă..."
 
-#: gui/gpt_control.c:4254 gui/gpt_control.c:4351
+#: gui/gpt_control.c:4262 gui/gpt_control.c:4359
 msgid "Save as PNG..."
 msgstr ""
 
-#: gui/gpt_control.c:4258 gui/gpt_control.c:4353
+#: gui/gpt_control.c:4266 gui/gpt_control.c:4361
 msgid "Save as PDF..."
 msgstr ""
 
-#: gui/gpt_control.c:4261 gui/gpt_control.c:4352
+#: gui/gpt_control.c:4269 gui/gpt_control.c:4360
 msgid "Save as postscript (EPS)..."
 msgstr ""
 
-#: gui/gpt_control.c:4264 gui/gpt_control.c:4358 gui/toolbar.c:232
+#: gui/gpt_control.c:4272 gui/gpt_control.c:4366 gui/toolbar.c:232
 msgid "Save to session as icon"
 msgstr ""
 
-#: gui/gpt_control.c:4270 gui/gpt_control.c:4359
+#: gui/gpt_control.c:4278 gui/gpt_control.c:4367
 msgid "Freeze data labels"
 msgstr ""
 
-#: gui/gpt_control.c:4273 gui/gpt_control.c:4361
+#: gui/gpt_control.c:4281 gui/gpt_control.c:4369
 msgid "Clear data labels"
 msgstr ""
 
-#: gui/gpt_control.c:4275 gui/gpt_control.c:4360
+#: gui/gpt_control.c:4283 gui/gpt_control.c:4368
 msgid "All data labels"
 msgstr ""
 
-#: gui/gpt_control.c:4277 gui/gpt_control.c:4362
+#: gui/gpt_control.c:4285 gui/gpt_control.c:4370
 msgid "Zoom..."
 msgstr ""
 
-#: gui/gpt_control.c:4279 gui/gpt_control.c:4377
+#: gui/gpt_control.c:4287 gui/gpt_control.c:4385
 msgid "Restore full view"
 msgstr ""
 
-#: gui/gpt_control.c:4281 gui/gpt_control.c:4378
+#: gui/gpt_control.c:4289 gui/gpt_control.c:4386
 msgid "Replace full view"
 msgstr ""
 
-#: gui/gpt_control.c:4285 gui/gpt_control.c:4367
+#: gui/gpt_control.c:4293 gui/gpt_control.c:4375
 msgid "OLS estimates"
 msgstr "Estimatorii OLS"
 
-#: gui/gpt_control.c:4289 gui/gpt_control.c:4368
+#: gui/gpt_control.c:4297 gui/gpt_control.c:4376
 msgid "Numerical values"
 msgstr ""
 
-#: gui/gpt_control.c:4295 gui/gpt_control.c:4371
+#: gui/gpt_control.c:4303 gui/gpt_control.c:4379
 msgid "Font"
 msgstr ""
 
-#: gui/gpt_control.c:4297 gui/gpt_control.c:4373 gui/gpt_control.c:4379
+#: gui/gpt_control.c:4305 gui/gpt_control.c:4381 gui/gpt_control.c:4387
 #: gui/gui_utils.c:1904
 msgid "Close"
 msgstr "Închide"
 
-#: gui/gpt_control.c:4312 gui/graphics.c:236 gui/graph_page.c:697
+#: gui/gpt_control.c:4320 gui/graphics.c:236 gui/graph_page.c:697
 msgid "color"
 msgstr ""
 
-#: gui/gpt_control.c:4911
+#: gui/gpt_control.c:4919
 msgid "Malformed PNG file for graph"
 msgstr ""
 
-#: gui/gpt_control.c:5280
+#: gui/gpt_control.c:5291
 msgid "gretl: graph"
 msgstr ""
 
-#: gui/gpt_control.c:5343
+#: gui/gpt_control.c:5354
 msgid " Right-click on graph for menu"
 msgstr ""
 
-#: gui/gpt_control.c:5595
+#: gui/gpt_control.c:5606
 msgid "Couldn't find a usable terminal program"
 msgstr ""
 

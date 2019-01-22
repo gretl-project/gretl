@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-01-21 19:12-0500\n"
+"POT-Creation-Date: 2019-01-22 09:24-0500\n"
 "PO-Revision-Date: 2019-01-21 19:27-0500\n"
 "Last-Translator: Artur Bala <artur.bala.tn@gmail.com>\n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
@@ -193,7 +193,7 @@ msgstr "Zgjedhje e pavlefshme"
 
 #: lib/src/adf_kpss.c:1253 lib/src/adf_kpss.c:2020 lib/src/boxplots.c:874
 #: lib/src/describe.c:1670 lib/src/describe.c:3111 lib/src/describe.c:3665
-#: lib/src/describe.c:4236 lib/src/graphing.c:8226
+#: lib/src/describe.c:4236 lib/src/graphing.c:8233
 #, c-format
 msgid "%s is a constant"
 msgstr "%s është konstante"
@@ -421,7 +421,7 @@ msgstr ""
 msgid "Numerical summary for %s"
 msgstr "Statistika përmbledhëse për %s"
 
-#: lib/src/boxplots.c:317 gui/gpt_control.c:4291 gui/gpt_control.c:4369
+#: lib/src/boxplots.c:317 gui/gpt_control.c:4299 gui/gpt_control.c:4377
 msgid "Numerical summary"
 msgstr "Statistika përmbledhëse"
 
@@ -457,7 +457,7 @@ msgstr ""
 msgid "Distribution of %s by %s"
 msgstr "Shpërndarja e %s kundrejt %s"
 
-#: lib/src/boxplots.c:906 lib/src/graphing.c:2062
+#: lib/src/boxplots.c:906 lib/src/graphing.c:2069
 #, c-format
 msgid "Regression residuals (= observed - fitted %s)"
 msgstr "Mbetja e regresit (= realizimi - përafrimi i %s)"
@@ -517,7 +517,7 @@ msgstr "testi Wald"
 #: lib/src/compare.c:402 lib/src/compare.c:982 lib/src/compare.c:2202
 #: lib/src/compare.c:2373 lib/src/compare.c:2379 lib/src/compare.c:3000
 #: lib/src/describe.c:1601 lib/src/estimate.c:2976 lib/src/estimate.c:3800
-#: lib/src/graphing.c:4641 lib/src/gretl_model.c:4215
+#: lib/src/graphing.c:4648 lib/src/gretl_model.c:4215
 #: lib/src/gretl_model.c:4229 lib/src/gretl_model.c:4232
 #: lib/src/gretl_model.c:4257 lib/src/gretl_panel.c:4432
 #: lib/src/gretl_panel.c:4694 lib/src/modelprint.c:202 lib/src/modelprint.c:381
@@ -563,8 +563,8 @@ msgid "Omitting variables improved %d of %d information criteria.\n"
 msgstr ""
 "Heqja e ndryshoreve përmirësoi %d nga %d kriteret informues të modelit.\n"
 
-#: lib/src/compare.c:922 lib/src/compare.c:2310 lib/src/graphing.c:3795
-#: lib/src/graphing.c:3807 lib/src/graphing.c:3893 lib/src/graphing.c:6326
+#: lib/src/compare.c:922 lib/src/compare.c:2310 lib/src/graphing.c:3802
+#: lib/src/graphing.c:3814 lib/src/graphing.c:3900 lib/src/graphing.c:6333
 #: lib/src/gretl_panel.c:4537 lib/src/printout.c:1527 gui/guiprint.c:1532
 #: gui/guiprint.c:1592 gui/library.c:6803 plugin/leverage.c:306
 msgid "residual"
@@ -1434,7 +1434,7 @@ msgstr "në komandë, ndryshorja %d është përsëritur"
 msgid "dataset is subsampled"
 msgstr "të dhënat i përkasin një nën-kampioni"
 
-#: lib/src/dataset.c:2131 lib/src/dataset.c:2143 lib/src/graphing.c:7919
+#: lib/src/dataset.c:2131 lib/src/dataset.c:2143 lib/src/graphing.c:7926
 #: lib/src/gretl_utils.c:1158 lib/src/gretl_utils.c:1247
 msgid "periods"
 msgstr "periudha"
@@ -1678,7 +1678,7 @@ msgid "Correlogram"
 msgstr "Korrelogram"
 
 #: lib/src/describe.c:2998 lib/src/describe.c:3410 lib/src/describe.c:3455
-#: lib/src/graphing.c:7806
+#: lib/src/graphing.c:7813
 msgid "lag"
 msgstr "vonesa"
 
@@ -2865,289 +2865,289 @@ msgstr ""
 "Duhet të jepni 3 ndryshore, e fundit nga të cilat\n"
 "duhet të jetë ndryshore diskrete."
 
-#: lib/src/graphing.c:2046 gui/gpt_dialog.c:591
+#: lib/src/graphing.c:2053 gui/gpt_dialog.c:591
 #, c-format
 msgid "%s versus %s (with least squares fit)"
 msgstr "%s kundrejt %s (me vijën e regresionit KVZ)"
 
-#: lib/src/graphing.c:2049 gui/gpt_dialog.c:600
+#: lib/src/graphing.c:2056 gui/gpt_dialog.c:600
 #, c-format
 msgid "%s versus %s (with inverse fit)"
 msgstr "%s kundrejt %s (me përafrim të anasjelltë)"
 
-#: lib/src/graphing.c:2052 gui/gpt_dialog.c:594
+#: lib/src/graphing.c:2059 gui/gpt_dialog.c:594
 #, c-format
 msgid "%s versus %s (with quadratic fit)"
 msgstr "%s kundrejt %s (me përafrim kuadratik)"
 
-#: lib/src/graphing.c:2055 gui/gpt_dialog.c:597
+#: lib/src/graphing.c:2062 gui/gpt_dialog.c:597
 #, c-format
 msgid "%s versus %s (with cubic fit)"
 msgstr "%s kundrejt %s (me përafrim kubik)"
 
-#: lib/src/graphing.c:2067 lib/src/graphing.c:2071
+#: lib/src/graphing.c:2074 lib/src/graphing.c:2078
 #, c-format
 msgid "Actual and fitted %s"
 msgstr "Realizimi dhe përafrimi i %s"
 
-#: lib/src/graphing.c:2073
+#: lib/src/graphing.c:2080
 #, c-format
 msgid "Actual and fitted %s versus %s"
 msgstr "Realizimi dhe përafrimi i %s kundrejt %s"
 
-#: lib/src/graphing.c:2314 gui/gpt_dialog.c:603
+#: lib/src/graphing.c:2321 gui/gpt_dialog.c:603
 #, c-format
 msgid "%s versus %s (with loess fit)"
 msgstr "%s kundrejt %s (me përafrim loess)"
 
-#: lib/src/graphing.c:2330 lib/src/plotspec.c:1645
+#: lib/src/graphing.c:2337 lib/src/plotspec.c:1645
 #, c-format
 msgid "loess fit, d = %d, q = %g"
 msgstr "përafrim loess, d = %d, q = %g"
 
-#: lib/src/graphing.c:3501
+#: lib/src/graphing.c:3508
 msgid "time series by group"
 msgstr "seri kohore të grupuara"
 
-#: lib/src/graphing.c:3882 lib/src/plotspec.c:733 lib/src/plotspec.c:1551
+#: lib/src/graphing.c:3889 lib/src/plotspec.c:733 lib/src/plotspec.c:1551
 #: gui/gpt_dialog.c:977 gui/gpt_dialog.c:1397 gui/gpt_dialog.c:2905
 msgid "right"
 msgstr "djathtas"
 
-#: lib/src/graphing.c:3882 lib/src/plotspec.c:729 lib/src/plotspec.c:735
+#: lib/src/graphing.c:3889 lib/src/plotspec.c:729 lib/src/plotspec.c:735
 #: lib/src/plotspec.c:1549 gui/gpt_dialog.c:1392 gui/gpt_dialog.c:2904
 msgid "left"
 msgstr "majtas"
 
-#: lib/src/graphing.c:3916 lib/src/graphing.c:3926
+#: lib/src/graphing.c:3923 lib/src/graphing.c:3933
 msgid "actual"
 msgstr "realizimi"
 
-#: lib/src/graphing.c:3917 lib/src/graphing.c:3927 lib/src/printout.c:1523
+#: lib/src/graphing.c:3924 lib/src/graphing.c:3934 lib/src/printout.c:1523
 #: gui/guiprint.c:888 gui/guiprint.c:1532 gui/guiprint.c:1592
 #: gui/library.c:4658
 msgid "fitted"
 msgstr "përafrimi"
 
-#: lib/src/graphing.c:4019
+#: lib/src/graphing.c:4026
 msgid "actual = predicted"
 msgstr "realizimi = përafrimin"
 
-#: lib/src/graphing.c:4743
+#: lib/src/graphing.c:4750
 #, c-format
 msgid "'%s' is a constant"
 msgstr "'%s' është një konstante"
 
-#: lib/src/graphing.c:4800
+#: lib/src/graphing.c:4807
 msgid "Test statistic for normality"
 msgstr "Statistika e testit të normalitetit"
 
-#: lib/src/graphing.c:4826
+#: lib/src/graphing.c:4833
 msgid "Test statistic for gamma"
 msgstr "Statistika e testit për gama"
 
-#: lib/src/graphing.c:4872 plugin/addons-i18n.c:10
+#: lib/src/graphing.c:4879 plugin/addons-i18n.c:10
 msgid "Density"
 msgstr "Densiteti"
 
-#: lib/src/graphing.c:4874
+#: lib/src/graphing.c:4881
 msgid "Relative frequency"
 msgstr "Frekuenca relative"
 
-#: lib/src/graphing.c:4899 lib/src/graphing.c:4906
+#: lib/src/graphing.c:4906 lib/src/graphing.c:4913
 #, fuzzy
 msgid "relative frequency"
 msgstr "Frekuenca relative"
 
-#: lib/src/graphing.c:4967 gui/menustate.c:574
+#: lib/src/graphing.c:4974 gui/menustate.c:574
 msgid "Correlation matrix"
 msgstr "Matrica e korrelacioneve"
 
-#: lib/src/graphing.c:5360 lib/src/graphing.c:6129
+#: lib/src/graphing.c:5367 lib/src/graphing.c:6136
 #, c-format
 msgid "%g percent interval"
 msgstr "intervali i besimit %g%%"
 
-#: lib/src/graphing.c:5373 lib/src/graphing.c:5380 lib/src/printout.c:1523
+#: lib/src/graphing.c:5380 lib/src/graphing.c:5387 lib/src/printout.c:1523
 msgid "forecast"
 msgstr "parashikimi"
 
-#: lib/src/graphing.c:6127
+#: lib/src/graphing.c:6134
 #, c-format
 msgid "%g%% interval for mean"
 msgstr "interval  %g%% për mesataren"
 
-#: lib/src/graphing.c:6231
+#: lib/src/graphing.c:6238
 #, c-format
 msgid "Coefficient on %s"
 msgstr "Koeficienti i %s"
 
-#: lib/src/graphing.c:6255
+#: lib/src/graphing.c:6262
 #, c-format
 msgid "Quantile estimates with %g%% band"
 msgstr "Vlerësimi Kuantil me interval %g%%"
 
-#: lib/src/graphing.c:6263
+#: lib/src/graphing.c:6270
 #, c-format
 msgid "OLS estimate with %g%% band"
 msgstr "Vlerësimi KVZ me interval %g%%"
 
-#: lib/src/graphing.c:6326
+#: lib/src/graphing.c:6333
 msgid "+- sqrt(h(t))"
 msgstr "+- sqrt(h(t))"
 
-#: lib/src/graphing.c:6481
+#: lib/src/graphing.c:6488
 #, c-format
 msgid "mean %s"
 msgstr "mesatarja %s"
 
-#: lib/src/graphing.c:6561
+#: lib/src/graphing.c:6568
 msgid "Group means"
 msgstr "Mesataret e grupeve"
 
-#: lib/src/graphing.c:6912
+#: lib/src/graphing.c:6919
 msgid "time"
 msgstr "koha"
 
-#: lib/src/graphing.c:7031
+#: lib/src/graphing.c:7038
 #, c-format
 msgid "response of %s to a shock in %s, with bootstrap confidence interval"
 msgstr ""
 "përgjigjja e %s ndaj një goditjeje mbi %s, me interval besimi bootstrap"
 
-#: lib/src/graphing.c:7036
+#: lib/src/graphing.c:7043
 #, c-format
 msgid "response of %s to a shock in %s"
 msgstr "përgjigjja e %s ndaj një goditjeje mbi %s"
 
-#: lib/src/graphing.c:7051
+#: lib/src/graphing.c:7058
 #, c-format
 msgid "%g percent confidence band"
 msgstr "intervali i besimit %g%%"
 
-#: lib/src/graphing.c:7056 lib/src/graphing.c:7059
+#: lib/src/graphing.c:7063 lib/src/graphing.c:7066
 msgid "point estimate"
 msgstr "vlerësim pikësor"
 
-#: lib/src/graphing.c:7060
+#: lib/src/graphing.c:7067
 #, c-format
 msgid "%g and %g quantiles"
 msgstr "kuantilet %g dhe %g"
 
-#: lib/src/graphing.c:7162
+#: lib/src/graphing.c:7169
 #, c-format
 msgid "forecast variance decomposition for %s"
 msgstr "zbërthimi i variancës së parashikimit për %s"
 
-#: lib/src/graphing.c:7391
+#: lib/src/graphing.c:7398
 msgid "VAR residuals"
 msgstr "Mbetjet e VAR"
 
-#: lib/src/graphing.c:7393 gui/gui_utils.c:3560
+#: lib/src/graphing.c:7400 gui/gui_utils.c:3560
 msgid "System residuals"
 msgstr "Mbetjet e sistemit"
 
-#: lib/src/graphing.c:7469
+#: lib/src/graphing.c:7476
 msgid "EC terms"
 msgstr "Termat e korrigjimit të gabimit (EC)"
 
-#: lib/src/graphing.c:7471 gui/gui_utils.c:4709
+#: lib/src/graphing.c:7478 gui/gui_utils.c:4709
 msgid "EC term"
 msgstr "Termi i korrigjimit të gabimit (EC)"
 
-#: lib/src/graphing.c:7618
+#: lib/src/graphing.c:7625
 msgid "VAR inverse roots in relation to the unit circle"
 msgstr "VAR: rrënjët e anasjellta kundrejt rrethit të njësishëm"
 
-#: lib/src/graphing.c:7702
+#: lib/src/graphing.c:7709
 #, c-format
 msgid "%g%% confidence ellipse and %g%% marginal intervals"
 msgstr "elipsi i besimit %g%% me intervalet marzhinalë %g%%"
 
-#: lib/src/graphing.c:7789
+#: lib/src/graphing.c:7796
 #, fuzzy, no-c-format
 msgid "95% interval"
 msgstr "(intervali 90%)"
 
-#: lib/src/graphing.c:7815
+#: lib/src/graphing.c:7822
 msgid "Residual ACF"
 msgstr " ACF i mbetjes"
 
-#: lib/src/graphing.c:7817
+#: lib/src/graphing.c:7824
 msgid "ACF for"
 msgstr "ACF për"
 
-#: lib/src/graphing.c:7851
+#: lib/src/graphing.c:7858
 msgid "Residual PACF"
 msgstr "PACF i mbetjes"
 
-#: lib/src/graphing.c:7853
+#: lib/src/graphing.c:7860
 msgid "PACF for"
 msgstr "PACF për"
 
-#: lib/src/graphing.c:7930
+#: lib/src/graphing.c:7937
 msgid "radians"
 msgstr "radianë"
 
-#: lib/src/graphing.c:7932
+#: lib/src/graphing.c:7939
 msgid "degrees"
 msgstr "gradë"
 
-#: lib/src/graphing.c:7934
+#: lib/src/graphing.c:7941
 msgid "scaled frequency"
 msgstr "frekuencë e ponderuar"
 
-#: lib/src/graphing.c:7944
+#: lib/src/graphing.c:7951
 msgid "Residual spectrum"
 msgstr "Spektri i mbetjes"
 
-#: lib/src/graphing.c:7946
+#: lib/src/graphing.c:7953
 #, c-format
 msgid "Spectrum of %s"
 msgstr "Spektri i  %s"
 
-#: lib/src/graphing.c:7952
+#: lib/src/graphing.c:7959
 #, c-format
 msgid "Bartlett window, length %d"
 msgstr "Dritarja e Bartlett, gjerësia %d"
 
-#: lib/src/graphing.c:7958 lib/src/graphing.c:8064 gui/dialogs.c:4822
+#: lib/src/graphing.c:7965 lib/src/graphing.c:8071 gui/dialogs.c:4822
 msgid "log scale"
 msgstr "shkallë logaritmike"
 
-#: lib/src/graphing.c:8063
+#: lib/src/graphing.c:8070
 #, fuzzy
 msgid "Sample periodogram vs ARMA Spectrum"
 msgstr "Periodogrami i kampionit"
 
-#: lib/src/graphing.c:8065
+#: lib/src/graphing.c:8072
 #, fuzzy
 msgid "spectrum"
 msgstr "Spektri i mbetjes"
 
-#: lib/src/graphing.c:8066 gui/library.c:5953
+#: lib/src/graphing.c:8073 gui/library.c:5953
 msgid "periodogram"
 msgstr "periodogram"
 
-#: lib/src/graphing.c:8169 gui/library.c:885 gui/library.c:2879
+#: lib/src/graphing.c:8176 gui/library.c:885 gui/library.c:2879
 msgid "Q-Q plot"
 msgstr "Grafiku i kuantileve (Q-Q) "
 
-#: lib/src/graphing.c:8257
+#: lib/src/graphing.c:8264
 #, c-format
 msgid "Q-Q plot for %s"
 msgstr "Grafiku i kuantileve (Q-Q) për %s"
 
-#: lib/src/graphing.c:8260
+#: lib/src/graphing.c:8267
 msgid "Normal quantiles"
 msgstr "Kuantilet e shpërndarjes normale"
 
-#: lib/src/graphing.c:8580 lib/src/graphing.c:8583
+#: lib/src/graphing.c:8587 lib/src/graphing.c:8590
 #, c-format
 msgid "adjusted %s"
 msgstr "%s i korrigjuar"
 
-#: lib/src/graphing.c:8646 plugin/range-mean.c:112
+#: lib/src/graphing.c:8653 plugin/range-mean.c:112
 msgid "with least squares fit"
 msgstr "me vijën e regresit KVZ"
 
@@ -7425,7 +7425,7 @@ msgstr "'%s': kjo matricë nuk ekziston"
 
 #: lib/src/system.c:851
 #, fuzzy, c-format
-msgid "'%s': not a list of array of lists"
+msgid "'%s': not a list or array of lists"
 msgstr "'%s': nuk vlen për listat"
 
 #: lib/src/system.c:1254
@@ -9210,8 +9210,8 @@ msgstr ""
 msgid "Add to menu"
 msgstr "Shto në menu"
 
-#: gui/datafiles.c:1502 gui/datafiles.c:1725 gui/gpt_control.c:4266
-#: gui/gpt_control.c:4268 gui/gpt_control.c:4372 gui/session.c:167
+#: gui/datafiles.c:1502 gui/datafiles.c:1725 gui/gpt_control.c:4274
+#: gui/gpt_control.c:4276 gui/gpt_control.c:4380 gui/session.c:167
 #: gui/session.c:174 gui/session.c:3497 gui/toolbar.c:835 gui/toolbar.c:836
 #: gui/toolbar.c:837
 msgid "Help"
@@ -11517,11 +11517,11 @@ msgstr "Zvogëlo"
 msgid "Copy"
 msgstr "Kopjo"
 
-#: gui/gpt_control.c:281 gui/gpt_control.c:4283 gui/gpt_control.c:4366
+#: gui/gpt_control.c:281 gui/gpt_control.c:4291 gui/gpt_control.c:4374
 msgid "Display PDF"
 msgstr "Shfaq në format PDF"
 
-#: gui/gpt_control.c:282 gui/gpt_control.c:4293 gui/gpt_control.c:4370
+#: gui/gpt_control.c:282 gui/gpt_control.c:4301 gui/gpt_control.c:4378
 #: gui/session.c:192 gui/session.c:198 gui/session.c:208 gui/session.c:3358
 #: gui/session.c:3397 gui/session.c:3410
 msgid "Edit"
@@ -11536,133 +11536,133 @@ msgstr "Dritaret"
 msgid " Click to set position"
 msgstr "Kliko për të përcaktuar vendndodhjen"
 
-#: gui/gpt_control.c:1012
+#: gui/gpt_control.c:1014
 msgid "gnuplot command failed"
 msgstr "komanda GnuPlot dështoi"
 
-#: gui/gpt_control.c:1078 gui/gpt_control.c:1167
+#: gui/gpt_control.c:1080 gui/gpt_control.c:1169
 msgid "Gnuplot error creating graph"
 msgstr "Gabim Gnuplot gjatë krijimit të grafikut"
 
-#: gui/gpt_control.c:3088 gui/gpt_control.c:3099
+#: gui/gpt_control.c:3096 gui/gpt_control.c:3107
 msgid "Plot file is corrupted"
 msgstr "Skeda e grafikut është e dëmtuar"
 
-#: gui/gpt_control.c:3875
+#: gui/gpt_control.c:3883
 msgid "Couldn't access graph info"
 msgstr "E pamundur të trajtohen hollësitë e grafikut"
 
-#: gui/gpt_control.c:4005 gui/gpt_control.c:4313 gui/graphics.c:240
+#: gui/gpt_control.c:4013 gui/gpt_control.c:4321 gui/graphics.c:240
 #: gui/graph_page.c:698
 msgid "monochrome"
 msgstr "bardh e zi"
 
-#: gui/gpt_control.c:4009 gui/gpt_control.c:4349 gui/gpt_control.c:4355
+#: gui/gpt_control.c:4017 gui/gpt_control.c:4357 gui/gpt_control.c:4363
 msgid "Save as Windows metafile (EMF)..."
 msgstr "Ruaj si Windows metafile (EMF)..."
 
-#: gui/gpt_control.c:4013 gui/gpt_control.c:4357 gui/menustate.c:578
+#: gui/gpt_control.c:4021 gui/gpt_control.c:4365 gui/menustate.c:578
 msgid "Copy to clipboard"
 msgstr "Kopjo në kujtesë"
 
-#: gui/gpt_control.c:4022 gui/gpt_control.c:4364
+#: gui/gpt_control.c:4030 gui/gpt_control.c:4372
 msgid "Print"
 msgstr "Shtyp"
 
-#: gui/gpt_control.c:4047
+#: gui/gpt_control.c:4055
 msgid "roots (real, imaginary, modulus, frequency)"
 msgstr "Rrënjët (reale, imagjinare, modulo, frekuenca)"
 
-#: gui/gpt_control.c:4081
+#: gui/gpt_control.c:4089
 msgid "roots"
 msgstr "rrënjët"
 
-#: gui/gpt_control.c:4103
+#: gui/gpt_control.c:4111
 msgid "gretl: boxplot data"
 msgstr "gretl: të dhënat e grafikut-kuti"
 
-#: gui/gpt_control.c:4241
+#: gui/gpt_control.c:4249
 msgid " Drag to define zoom rectangle"
 msgstr " Zhvendos mausin për të përcaktuar zonën për zmadhim"
 
-#: gui/gpt_control.c:4252 gui/gpt_control.c:4347
+#: gui/gpt_control.c:4260 gui/gpt_control.c:4355
 msgid "Add another curve..."
 msgstr "Shto një vijë tjetër..."
 
-#: gui/gpt_control.c:4254 gui/gpt_control.c:4351
+#: gui/gpt_control.c:4262 gui/gpt_control.c:4359
 msgid "Save as PNG..."
 msgstr "Ruaj si PNG..."
 
-#: gui/gpt_control.c:4258 gui/gpt_control.c:4353
+#: gui/gpt_control.c:4266 gui/gpt_control.c:4361
 msgid "Save as PDF..."
 msgstr "Ruaj si PDF..."
 
-#: gui/gpt_control.c:4261 gui/gpt_control.c:4352
+#: gui/gpt_control.c:4269 gui/gpt_control.c:4360
 msgid "Save as postscript (EPS)..."
 msgstr "Ruaj si postscript (EPS)..."
 
-#: gui/gpt_control.c:4264 gui/gpt_control.c:4358 gui/toolbar.c:232
+#: gui/gpt_control.c:4272 gui/gpt_control.c:4366 gui/toolbar.c:232
 msgid "Save to session as icon"
 msgstr "Ruaj si ikonë"
 
-#: gui/gpt_control.c:4270 gui/gpt_control.c:4359
+#: gui/gpt_control.c:4278 gui/gpt_control.c:4367
 msgid "Freeze data labels"
 msgstr "Blloko etiketat e vrojtimeve siç janë tani"
 
-#: gui/gpt_control.c:4273 gui/gpt_control.c:4361
+#: gui/gpt_control.c:4281 gui/gpt_control.c:4369
 msgid "Clear data labels"
 msgstr "Fshij etiketat e vrojtimeve"
 
-#: gui/gpt_control.c:4275 gui/gpt_control.c:4360
+#: gui/gpt_control.c:4283 gui/gpt_control.c:4368
 msgid "All data labels"
 msgstr "Shfaq etiketat e vrojtimeve"
 
-#: gui/gpt_control.c:4277 gui/gpt_control.c:4362
+#: gui/gpt_control.c:4285 gui/gpt_control.c:4370
 msgid "Zoom..."
 msgstr "Zmadho..."
 
-#: gui/gpt_control.c:4279 gui/gpt_control.c:4377
+#: gui/gpt_control.c:4287 gui/gpt_control.c:4385
 msgid "Restore full view"
 msgstr "Rikthe grafikun siç ishte"
 
-#: gui/gpt_control.c:4281 gui/gpt_control.c:4378
+#: gui/gpt_control.c:4289 gui/gpt_control.c:4386
 msgid "Replace full view"
 msgstr "Mbaj këtë grafik"
 
-#: gui/gpt_control.c:4285 gui/gpt_control.c:4367
+#: gui/gpt_control.c:4293 gui/gpt_control.c:4375
 msgid "OLS estimates"
 msgstr "Vlerësimi KVZ"
 
-#: gui/gpt_control.c:4289 gui/gpt_control.c:4368
+#: gui/gpt_control.c:4297 gui/gpt_control.c:4376
 msgid "Numerical values"
 msgstr "Vlerat numerike"
 
-#: gui/gpt_control.c:4295 gui/gpt_control.c:4371
+#: gui/gpt_control.c:4303 gui/gpt_control.c:4379
 msgid "Font"
 msgstr "Fonte"
 
-#: gui/gpt_control.c:4297 gui/gpt_control.c:4373 gui/gpt_control.c:4379
+#: gui/gpt_control.c:4305 gui/gpt_control.c:4381 gui/gpt_control.c:4387
 #: gui/gui_utils.c:1904
 msgid "Close"
 msgstr "Mbyll"
 
-#: gui/gpt_control.c:4312 gui/graphics.c:236 gui/graph_page.c:697
+#: gui/gpt_control.c:4320 gui/graphics.c:236 gui/graph_page.c:697
 msgid "color"
 msgstr "me ngjyra"
 
-#: gui/gpt_control.c:4911
+#: gui/gpt_control.c:4919
 msgid "Malformed PNG file for graph"
 msgstr "Skeda PNG nuk punon për të ruajtur grafikun"
 
-#: gui/gpt_control.c:5280
+#: gui/gpt_control.c:5291
 msgid "gretl: graph"
 msgstr "gretl: grafik"
 
-#: gui/gpt_control.c:5343
+#: gui/gpt_control.c:5354
 msgid " Right-click on graph for menu"
 msgstr " Kliko me buton të djathtë mbi grafik për të shfaqur menunë "
 
-#: gui/gpt_control.c:5595
+#: gui/gpt_control.c:5606
 msgid "Couldn't find a usable terminal program"
 msgstr "E pamundur të gjendet një terminal programi i përdorshëm"
 

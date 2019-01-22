@@ -848,7 +848,7 @@ int equation_system_append_multi (equation_system *sys,
 	    /* try for an array on the right */
 	    AX = get_array_by_name(parm2);
 	    if (gretl_array_get_type(AX) != GRETL_TYPE_LISTS) {
-		gretl_errmsg_sprintf(_("'%s': not a list of array of lists"),
+		gretl_errmsg_sprintf(_("'%s': not a list or array of lists"),
 				     parm2);
 		err = E_UNKVAR;
 	    }
