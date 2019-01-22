@@ -802,20 +802,21 @@ static int add_equations_from_matrix (equation_system *sys,
  * @sys: initialized equation system.
  * @parm1: the name of a pre-defined matrix or list.
  * @parm2: the name of list or array of lists (or %NULL).
- * @dset: dataset information.
+ * @dset: pointer to dataset struct.
  *
  * Adds one or more equations to @sys as follows.
  *
  * If @parm2 is %NULL then @parm1 is taken to be the
  * name of a matrix, and we interpret the rows of the
  * specified matrix as lists. Lists of differing length
- * can be accommodated by padding unused trailing elements of
- * short rows with zeros.
+ * can be accommodated by padding unused trailing elements
+ * of short rows with zeros.
  *
  * If @parm2 is non-%NULL then @parm1 is taken to be the name
  * of a list of regressands, one per equation; @parm2,
- * pertaining to regressors, must be the name of either a list or
- * an array of lists. See the Gretl User's Guide for details.
+ * pertaining to regressors, should be the name of a list
+ * if the regressors are in common across the equations
+ * or an array of lists (one per equation) otherwise.
  *
  * Returns: 0 on success, non-zero on failure, in which case
  * @sys is destroyed.
