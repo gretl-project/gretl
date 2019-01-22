@@ -1484,6 +1484,10 @@ int write_plot_type_string (PlotType ptype, GptFlags flags, FILE *fp)
 	}
     }
 
+    if (ret == 0 && (flags & GPT_XW)) {
+	fputs("# extra-wide\n", fp);
+    }
+
     if (get_local_decpoint() == ',') {
 	/* is this right? */
 	fputs("set decimalsign ','\n", fp);

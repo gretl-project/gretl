@@ -3032,6 +3032,9 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	    get_heatmap_matrix(spec, buf, gpline, sizeof gpline, datapos);
 	}
 	goto bailout;
+    } else {
+	buf_rewind(buf);
+	check_for_plot_size(spec, buf);
     }
 
     for (i=0; i<MAX_STYLES; i++) {
