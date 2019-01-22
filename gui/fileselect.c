@@ -108,7 +108,7 @@ static const char *get_extension_for_action (int action, gpointer data)
     }
 
     if (action == SAVE_DATA || action == EXPORT_GDT ||
-	action == SAVE_BOOT_DATA) {
+	action == SAVE_DATA_AS || action == SAVE_BOOT_DATA) {
 	return ".gdt";
     } else if (action == EXPORT_GDTB) {
 	return ".gdtb";
