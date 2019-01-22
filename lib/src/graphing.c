@@ -66,6 +66,7 @@
 static char gnuplot_path[MAXLEN];
 static int gp_small_font_size;
 static double default_png_scale = 1.0;
+static int xwide = 0;
 
 static char ad_hoc_font[64];
 
@@ -581,6 +582,12 @@ static int get_gp_flags (gnuplot_info *gi, gretlopt opt,
 	    /* the --fit=fitspec option */
 	    err = get_fit_type(gi);
 	}
+    }
+
+    if (xwide) {
+	/* access file-scope global */
+	gi->flags |= GPT_XW;
+	xwide = 0;
     }
 
 #if GP_DEBUG
@@ -1141,6 +1148,8 @@ static void maybe_set_eps_pdf_dims (char *s, PlotType ptype, GptFlags flags)
     } else if (flags & GPT_XXL) {
 	/* extra large */
 	w = h = (5.0 * GP_XXL_WIDTH) / GP_WIDTH;
+    } else if (flags & GPT_XW) {
+	w = (5.0 * GP_XW_WIDTH) / GP_WIDTH;
     } else if (ptype == PLOT_ROOTS || ptype == PLOT_QQ) {
 	/* square plots */
 	w = h = 3.5;
@@ -1249,6 +1258,9 @@ static void write_png_size_string (char *s, PlotType ptype,
 	/* extra large */
 	w = GP_XXL_WIDTH;
 	h = GP_XXL_HEIGHT;
+    } else if (flags & GPT_XW) {
+	/* extra wide */
+	w = GP_XW_WIDTH;
     } else if (ptype == PLOT_ROOTS || ptype == PLOT_QQ) {
 	/* square plots */
 	w = h = GP_SQ_SIZE;
@@ -1459,6 +1471,8 @@ int write_plot_type_string (PlotType ptype, GptFlags flags, FILE *fp)
 		fprintf(fp, "# %s (large)\n", ptinfo[i].pstr);
 	    } else if (flags & GPT_XXL) {
 		fprintf(fp, "# %s (extra-large)\n", ptinfo[i].pstr);
+	    } else if (flags & GPT_XW) {
+		fprintf(fp, "# %s (extra-wide)\n", ptinfo[i].pstr);
 	    } else {
 		fprintf(fp, "# %s\n", ptinfo[i].pstr);
 	    }
@@ -6789,8 +6803,14 @@ static int panel_overlay_ts_plot (const int vnum,
 	literal = g_strdup_printf("set title \"%s\" ; set xlabel ;", title);
     }
 
+    if (nunits > 80) {
+	/* set file-scope global */
+	xwide = 1;
+    }
+
     err = gnuplot(list, literal, gset, opt);
 
+    xwide = 0;
     g_free(title);
     g_free(literal);
     destroy_dataset(gset);

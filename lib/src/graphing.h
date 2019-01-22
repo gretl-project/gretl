@@ -50,9 +50,10 @@ typedef enum {
     GPT_POLAR          = 1 << 22, /* plot is in polar mode */
     GPT_XL             = 1 << 23, /* large */
     GPT_XXL            = 1 << 24, /* extra-large */
-    GPT_TIMEFMT        = 1 << 25, /* using gnuplot "timefmt" */
-    GPT_ICON           = 1 << 26, /* saving plot "as icon" */
-    GPT_STEPS          = 1 << 27  /* force steps for plot */
+    GPT_XW             = 1 << 25, /* extra-wide */
+    GPT_TIMEFMT        = 1 << 26, /* using gnuplot "timefmt" */
+    GPT_ICON           = 1 << 27, /* saving plot "as icon" */
+    GPT_STEPS          = 1 << 28  /* force steps for plot */
 } GptFlags; 
 
 typedef struct gretlRGB_ gretlRGB;
@@ -78,6 +79,7 @@ typedef struct GPT_SPEC_ GPT_SPEC;
 #define GP_XL_HEIGHT  510
 #define GP_XXL_WIDTH  680
 #define GP_XXL_HEIGHT 680
+#define GP_XW_WIDTH   800
 #define GP_SQ_SIZE    480
 
 typedef enum {

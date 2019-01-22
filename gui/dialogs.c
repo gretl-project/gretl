@@ -2509,6 +2509,8 @@ static void panel_units_finalize (GtkButton *b, struct range_setting *rset)
     gtk_widget_destroy(rset->dlg);
 }
 
+#define PNMAX 130
+
 static void sensitize_panel_options (GtkSpinButton *spin,
 				     GSList *group)
 {
@@ -2529,7 +2531,7 @@ static void sensitize_panel_options (GtkSpinButton *spin,
 	if (j == 0) {
 	    w0 = w;
 	} else if (j == 1 || j == 2) {
-	    gtk_widget_set_sensitive(w, N <= 80);
+	    gtk_widget_set_sensitive(w, N <= PNMAX);
 	} else if (j == 3) {
 	    gtk_widget_set_sensitive(w, N <= 16);
 	} else if (j == 4) {
@@ -2551,8 +2553,8 @@ int panel_graph_dialog (int *t1, int *t2)
 {
     const char *opts[] = {
 	N_("single graph: group means"),
-	N_("single graph: groups overlaid (N <= 80)"),
-	N_("single graph: groups in sequence (N <= 80)"),
+	N_("single graph: groups overlaid (N <= %d)"),
+	N_("single graph: groups in sequence (N <= %d)"),
 	N_("multiple plots in grid (N <= 16)"),
 	N_("multiple plots arranged vertically (N <= 6)"),
 	N_("boxplots by group (N <= 150)"),
@@ -2583,10 +2585,17 @@ int panel_graph_dialog (int *t1, int *t2)
     w = gtk_label_new(_("panel plot"));
     gtk_box_pack_start(GTK_BOX(vbox), w, FALSE, FALSE, 5);
 
-    deflt = (nunits <= 80)? 1 : 0;
+    deflt = (nunits <= PNMAX)? 1 : 0;
 
     for (i=0; i<nopts; i++) {
-	button = gtk_radio_button_new_with_label(group, _(opts[i]));
+	if (i == 1 || i == 2) {
+	    gchar *label = g_strdup_printf(_(opts[i]), PNMAX);
+
+	    button = gtk_radio_button_new_with_label(group, label);
+	    g_free(label);
+	} else {
+	    button = gtk_radio_button_new_with_label(group, _(opts[i]));
+	}
 	gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
 	if (i == deflt) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
@@ -2597,7 +2606,7 @@ int panel_graph_dialog (int *t1, int *t2)
 	g_object_set_data(G_OBJECT(button), "action",
 			  GINT_TO_POINTER(i));
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
-	if ((i == 1 || i == 2) && nunits > 80) {
+	if ((i == 1 || i == 2) && nunits > PNMAX) {
 	    gtk_widget_set_sensitive(button, FALSE);
 	}
 	if (i == 3 && nunits > 16) {
