@@ -6278,7 +6278,7 @@ static NODE *list_ok_func (NODE *n, int f, parser *p)
 	    x = (f == F_DATAOK)? 1 : 0;
 	    for (i=1; i<=list[0]; i++) {
 		vi = list[i];
-		if (vi != LISTSEP && na(p->dset->Z[vi][t])) {
+		if (na(p->dset->Z[vi][t])) {
 		    x = (f == F_DATAOK)? 0 : 1;
 		    break;
 		}
