@@ -731,7 +731,7 @@ static int add_equations_from_lists (equation_system *sys,
     } else {
 	/* handle a list of common regressors */
 	int nx = LX[0];
-	int *l0, *list;
+	int *list, *l0 = NULL;
 
 	for (i=0; i<g && !err; i++) {
 	    if (i == 0) {
