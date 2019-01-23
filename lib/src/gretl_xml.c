@@ -1158,6 +1158,13 @@ static void *gretl_xml_get_array (xmlNodePtr node, xmlDocPtr doc,
 	    for (i=0; i<n && !*err && *s; i++) {
 		while (isspace(*s)) s++;
 		x = strtod(s, &test);
+#ifdef WIN32
+		/* remedial code for "1.#QNAN" */
+		if (!strncmp(test, "#QNAN", 5)) {
+		    x = NADBL;
+		    s = test + 5;
+		} else
+#endif
 		if (!strncmp(test, "NA", 2)) {
 		    x = NADBL;
 		    s = test + 2;
