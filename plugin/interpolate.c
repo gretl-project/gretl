@@ -184,27 +184,6 @@ static double acf_1 (const double *u, int T)
     return num / den;
 }
 
-static int make_y_vectors (gretl_matrix **py,
-			   gretl_matrix **pyx,
-			   int T, int Tx)
-{
-    gretl_matrix *y = gretl_null_matrix_new();
-    gretl_matrix *yx = gretl_null_matrix_new();
-
-    if (y == NULL || yx == NULL) {
-	free(y);
-	free(yx);
-	return E_ALLOC;
-    } else {
-	y->rows = T;
-	yx->rows = Tx;
-	y->cols = yx->cols = 1;
-	*py = y;
-	*pyx = yx;
-	return 0;
-    }
-}
-
 /**
  * chow_lin_interpolate:
  * @Y: T x k: holds the original data to be expanded.
@@ -238,6 +217,7 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
     gretl_matrix *Tmp1, *Tmp2;
     gretl_matrix *Yx = NULL;
     gretl_matrix *y, *yx;
+    gretl_matrix my, myx;
     double eps = 1.0e-12;
     int nx = 3;
     int ny = Y->cols;
@@ -245,15 +225,18 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
     int Tx = T * xfac;
     int i, t;
 
+    gretl_matrix_init(&my);
+    gretl_matrix_init(&myx);
+
     /* Note: checks to the effect that xfac = 3 or 4, and,
        if X is non-NULL, that X->rows = xfac * Y->rows,
        should have already been performed.
     */
-
     if (X != NULL) {
 	nx += X->cols;
     }
 
+    /* the return value */
     Yx = gretl_matrix_alloc(Tx, ny);
     if (Yx == NULL) {
 	*err = E_ALLOC;
@@ -278,24 +261,19 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
        anything the user has added */
     make_CX(CX, xfac, X);
 
-    if (ny > 1) {
-	/* Y has more than 1 column */
-	*err = make_y_vectors(&y, &yx, T, Tx);
-	if (*err) {
-	    gretl_matrix_free(Yx);
-	    gretl_matrix_block_destroy(B);
-	    return NULL;
-	}
-    } else {
-	y = (gretl_matrix *) Y; /* don't worry, it's really const */
-	yx = Yx;
-    }
+    y = &my;
+    yx = &myx;
+    y->rows = T;
+    yx->rows = Tx;
+    y->cols = yx->cols = 1;
+    y->val = Y->val;
+    yx->val = Yx->val;
 
     for (i=0; i<ny; i++) {
 	double uabs, umax = 0.0;
 	double a = 0.0;
 
-	if (ny > 1) {
+	if (i > 0) {
 	    /* pick up the current column */
 	    y->val = Y->val + i * T;
 	    yx->val = Yx->val + i * Tx;
@@ -362,11 +340,6 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
 
 	    gretl_matrix_multiply_by_scalar(yx, xfac);
 	}
-    }
-
-    if (ny > 1) {
-	free(y);
-	free(yx);
     }
 
     gretl_matrix_block_destroy(B);
