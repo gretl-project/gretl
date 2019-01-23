@@ -463,7 +463,7 @@ static void add_dataset_colnames (gretl_matrix *M,
     if (list != NULL) {
 	nv = list[0];
     } else {
-	/* all series */
+	/* all series except "const" */
 	nv = dset->v - 1;
     }
 
