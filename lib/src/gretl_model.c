@@ -4632,7 +4632,13 @@ static void serialize_model_data_items (const MODEL *pmod, FILE *fp)
 	if (item->type == GRETL_TYPE_INT) {
 	    fprintf(fp, "%d", *(int *) item->ptr);
 	} else if (item->type == GRETL_TYPE_DOUBLE) {
-	    fprintf(fp, "%.15g", *(double *) item->ptr);
+	    double x = *(double *) item->ptr;
+
+	    if (na(x)) {
+		fputs("NA", fp);
+	    } else {
+		fprintf(fp, "%.15g", x);
+	    }
 	} else if (item->type == GRETL_TYPE_INT_ARRAY) {
 	    int *vals = (int *) item->ptr;
 
@@ -4643,13 +4649,29 @@ static void serialize_model_data_items (const MODEL *pmod, FILE *fp)
 	    double *vals = (double *) item->ptr;
 
 	    for (j=0; j<nelem; j++) {
-		fprintf(fp, "%.15g ", vals[j]);
+		if (na(vals[j])) {
+		    fputs("NA ", fp);
+		} else {
+		    fprintf(fp, "%.15g ", vals[j]);
+		}
 	    }
 	} else if (item->type == GRETL_TYPE_CMPLX_ARRAY) {
 	    cmplx *vals = (cmplx *) item->ptr;
+	    double x;
 
 	    for (j=0; j<nelem; j++) {
-		fprintf(fp, "%.15g %.15g ", vals[j].r, vals[j].i);
+		x = vals[j].r;
+		if (na(x)) {
+		    fputs("NA ", fp);
+		} else {
+		    fprintf(fp, "%.15g ", x);
+		}
+		x = vals[j].i;
+		if (na(x)) {
+		    fputs("NA ", fp);
+		} else {
+		    fprintf(fp, "%.15g ", x);
+		}
 	    }
 	} else if (item->type == GRETL_TYPE_LIST) {
 	    int *list = (int *) item->ptr;
