@@ -1200,7 +1200,10 @@ static void *gretl_xml_get_array (xmlNodePtr node, xmlDocPtr doc,
 	    for (i=0; i<n2 && !*err && *s; i++) {
 		while (isspace(*s)) s++;
 		x = strtod(s, &test);
-		if (errno) {
+		if (!strncmp(test, "NA", 2)) {
+		    x = NADBL;
+		    test += 2;
+		} else if (errno) {
 		    if (SMALLVAL(x)) {
 			errno = 0;
 		    } else {
