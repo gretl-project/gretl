@@ -456,9 +456,16 @@ static void add_dataset_colnames (gretl_matrix *M,
 				  const int *list,
 				  const DATASET *dset)
 {
-    int i, vi, nv = list[0];
-    char **S;
-    int err;
+    int i, vi, nv;
+    char **S = NULL;
+    int err = 0;
+
+    if (list != NULL) {
+	nv = list[0];
+    } else {
+	/* all series */
+	nv = dset->v - 1;
+    }
 
     /* we won't treat errors here as fatal */
 
@@ -472,10 +479,10 @@ static void add_dataset_colnames (gretl_matrix *M,
 	return;
     }
 
-    for (i=0; i<nv; i++) {
-	vi = list[i+1];
-	S[i] = gretl_strdup(dset->varname[vi]);
-	if (S[i] == NULL) {
+    for (i=1; i<=nv; i++) {
+	vi = list == NULL ? i : list[i];
+	S[i-1] = gretl_strdup(dset->varname[vi]);
+	if (S[i-1] == NULL) {
 	    strings_array_free(S, nv);
 	    return;
 	}
@@ -495,12 +502,16 @@ real_gretl_matrix_data_subset (const int *list,
 			       int op, int *err)
 {
     gretl_matrix *M;
-    double x;
     int T, Tmax = t2 - t1 + 1;
-    int mt1, mt2;
-    int k = list[0];
+    int mt1, mt2, k;
     int skip;
     int j, vj, s, t;
+
+    if (list != NULL) {
+	k = list[0];
+    } else {
+	k = dset->v - 1;
+    }
 
     if (k <= 0 || Tmax <= 0 || t2 >= dset->n) {
 	*err = E_DATA;
@@ -521,10 +532,9 @@ real_gretl_matrix_data_subset (const int *list,
 	}
     } else if (op == M_MISSING_SKIP || op == M_MISSING_ERROR) {
 	for (t=t1; t<=t2 && !*err; t++) {
-	    for (j=0; j<k; j++) {
-		vj = list[j+1];
-		x = dset->Z[vj][t];
-		if (na(x)) {
+	    for (j=1; j<=k; j++) {
+		vj = list == NULL ? j : list[j];
+		if (na(dset->Z[vj][t])) {
 		    if (op == M_MISSING_SKIP) {
 			T--;
 		    } else {
@@ -556,20 +566,18 @@ real_gretl_matrix_data_subset (const int *list,
 	if (mask != NULL) {
 	    skip = mask[t - t1];
 	} else if (op == M_MISSING_SKIP) {
-	    for (j=0; j<k; j++) {
-		vj = list[j+1];
-		x = dset->Z[vj][t];
-		if (na(x)) {
+	    for (j=1; j<=k; j++) {
+		vj = list == NULL ? j : list[j];
+		if (na(dset->Z[vj][t])) {
 		    skip = 1;
 		    break;
 		}
 	    }
 	}
 	if (!skip) {
-	    for (j=0; j<k; j++) {
-		vj = list[j+1];
-		x = dset->Z[vj][t];
-		gretl_matrix_set(M, s, j, x);
+	    for (j=1; j<=k; j++) {
+		vj = list == NULL ? j : list[j];
+		gretl_matrix_set(M, s, j-1, dset->Z[vj][t]);
 	    }
 	    if (s == 0) {
 		mt1 = t;
@@ -611,21 +619,22 @@ real_gretl_matrix_data_subset (const int *list,
 
 /**
  * gretl_matrix_data_subset:
- * @list: list of variable to process.
- * @dset: dataset struct.
+ * @list: list of series to process, or %NULL to include
+ * all series except "const".
+ * @dset: pointer to dataset struct.
  * @t1: starting observation.
  * @t2: ending observation.
  * @missop: how to handle missing observations.
  * @err: location to receive error code.
  *
- * Creates a gretl matrix holding the subset of variables from
+ * Creates a matrix holding the subset of variables from
  * @dset specified by @list, over the sample range @t1 to @t2,
- * inclusive.  Variables are in columns. The @missop flag
- * can be %M_MISSING_OK to indicate that it's OK to include
- * missing values in the matrix (these become NaNs),
- * %M_MISSING_ERROR (it's an error if any missing values are
- * found), or %M_MISSING_SKIP (observations with any missing
- * values are omitted from the matrix).
+ * inclusive. Series are in columns. The @missop flag can
+ * be %M_MISSING_OK to indicate that it's OK to include
+ * missing values in the matrix, %M_MISSING_ERROR (it's an
+ * error if any missing values are found), or %M_MISSING_SKIP
+ * (observations with any missing values are omitted from the
+ * matrix).
  *
  * Returns: allocated matrix or NULL on failure. 
  */

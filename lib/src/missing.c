@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* mechanisms for handling missing observations */
@@ -58,11 +58,11 @@ static int really_missing (int v, int t, const double **Z, int d)
 	return 0;
     } else {
 	return na(Z[v][t]);
-    } 
+    }
 }
 
 /* Construct a mask to code for missing observations within the sample
-   range for a model.  The mask is an array of char with '0's 
+   range for a model.  The mask is an array of char with '0's
    for OK observations and '1's for missing obs, terminated with
    a NUL byte. This format allows copying of the mask using
    strcpy.
@@ -115,7 +115,7 @@ static char *model_missmask (const int *list, int t1, int t2,
 }
 
 /**
- * model_adjust_sample: 
+ * model_adjust_sample:
  * @pmod: pointer to gretl model.
  * @n: full length of data array.
  * @Z: data array.
@@ -124,12 +124,12 @@ static char *model_missmask (const int *list, int t1, int t2,
  *
  * Drops leading or trailing observations from the sample range
  * initially given by the values in the t1 and t2 members of
- * @pmod, if missing values are found among the variables given 
+ * @pmod, if missing values are found among the variables given
  * in the list member of @pmod.
  *
- * Also checks for missing values within the adjusted sample range.  
- * If such values are encountered, either flag an error (if 
- * @misst != %NULL), or construct a "missing mask" and attach it 
+ * Also checks for missing values within the adjusted sample range.
+ * If such values are encountered, either flag an error (if
+ * @misst != %NULL), or construct a "missing mask" and attach it
  * to @pmod.
  *
  * Returns: if @misst is not NULL, either the ID number of the
@@ -139,7 +139,7 @@ static char *model_missmask (const int *list, int t1, int t2,
  * the missing obs mask, otherwise 0.
  */
 
-int model_adjust_sample (MODEL *pmod, int n, const double **Z, 
+int model_adjust_sample (MODEL *pmod, int n, const double **Z,
 			 int *misst)
 {
     int i, t, dwt = 0, t1min = pmod->t1, t2max = pmod->t2;
@@ -179,14 +179,14 @@ int model_adjust_sample (MODEL *pmod, int n, const double **Z,
 		if (really_missing(vi, t, Z, dwt)) {
 		    missobs = 1;
 		    break;
-		}		
+		}
 	    }
 	}
 	if (missobs) {
 	    t2max--;
 	} else {
 	    break;
-	}	
+	}
     }
 
     if (misst != NULL) {
@@ -201,12 +201,12 @@ int model_adjust_sample (MODEL *pmod, int n, const double **Z,
 			*misst = t + 1;
 			ret = vi;
 			break;
-		    }		    
+		    }
 		}
 	    }
-	}     
+	}
     } else {
-	/* construct a mask for missing values within remaining range? 
+	/* construct a mask for missing values within remaining range?
 	   we do this only if misst == NULL */
 	missobs = 0;
 	for (t=t1min; t<=t2max; t++) {
@@ -220,13 +220,13 @@ int model_adjust_sample (MODEL *pmod, int n, const double **Z,
 		}
 	    }
 	}
-	
+
 	if (missobs == t2max - t1min + 1) {
 	    /* no valid observations */
 	    pmod->errcode = E_MISSDATA;
 	    ret = 1;
 	} else if (missobs > 0) {
-	    pmod->missmask = model_missmask(pmod->list, pmod->t1, pmod->t2, 
+	    pmod->missmask = model_missmask(pmod->list, pmod->t1, pmod->t2,
 					    n, Z, dwt, NULL);
 	    move_ends = 0;
 	    if (pmod->missmask == NULL) {
@@ -234,10 +234,10 @@ int model_adjust_sample (MODEL *pmod, int n, const double **Z,
 		ret = 1;
 	    }
 	}
-    } 
+    }
 
     if (move_ends) {
-	pmod->t1 = t1min; 
+	pmod->t1 = t1min;
 	pmod->t2 = t2max;
     }
 
@@ -257,7 +257,7 @@ int model_adjust_sample (MODEL *pmod, int n, const double **Z,
  * @t1: start of range to check.
  * @t2: end of range to check.
  *
- * Returns: the index of the first missing observation in @x 
+ * Returns: the index of the first missing observation in @x
  * over the sample range @t1 to @t2, or -1 if there is no
  * such observation.
  */
@@ -276,15 +276,15 @@ int first_missing_index (const double *x, int t1, int t2)
 }
 
 /**
- * series_adjust_sample: 
+ * series_adjust_sample:
  * @x: series to be checked for missing values.
  * @t1: on entry, initial start of sample range; on exit,
  *      start of sample range adjusted for missing values.
  * @t2: on entry, initial end of sample range; on exit, end
  *      of sample range adjusted for missing values.
  *
- * Adjusts @t1 and @t2 so as to drop any leading or trailing 
- * missing observations. 
+ * Adjusts @t1 and @t2 so as to drop any leading or trailing
+ * missing observations.
  *
  * Returns: E_MISSDATA if interior missing values were found
  * within the (possibly adjusted) sample range, otherwise 0.
@@ -312,15 +312,16 @@ int series_adjust_sample (const double *x, int *t1, int *t2)
 	}
     }
 
-    *t1 = t1min; 
+    *t1 = t1min;
     *t2 = t2max;
 
     return err;
 }
 
 /**
- * list_adjust_sample: 
- * @list: list of variables to be tested for missing values.
+ * list_adjust_sample:
+ * @list: list of variables to be tested for missing values,
+ * or %NULL to test all series.
  * @t1: on entry, initial start of sample range; on exit,
  *      start of sample range adjusted for missing values.
  * @t2: on entry, initial end of sample range; on exit, end
@@ -340,17 +341,24 @@ int series_adjust_sample (const double *x, int *t1, int *t2)
  * Returns: 0 on success or %E_MISSDATA or error.
  */
 
-int list_adjust_sample (const int *list, int *t1, int *t2, 
+int list_adjust_sample (const int *list, int *t1, int *t2,
 			const DATASET *dset, int *nmiss)
 {
     int i, t, t1min = *t1, t2max = *t2;
-    int vi, missing, err = 0;
+    int k, vi, missing, err = 0;
+
+    if (list != NULL) {
+	k = list[0];
+    } else {
+	/* check all series */
+	k = dset->v - 1;
+    }
 
     /* advance start of sample range to skip missing obs? */
     for (t=t1min; t<t2max; t++) {
 	missing = 0;
-	for (i=1; i<=list[0]; i++) {
-	    vi = list[i];
+	for (i=1; i<=k; i++) {
+	    vi = list == NULL ? i : list[i];
 	    if (vi > 0 && vi != LISTSEP) {
 		if (na(dset->Z[vi][t])) {
 		    missing = 1;
@@ -368,8 +376,8 @@ int list_adjust_sample (const int *list, int *t1, int *t2,
     /* retard end of sample range to skip missing obs? */
     for (t=t2max; t>t1min; t--) {
 	missing = 0;
-	for (i=1; i<=list[0]; i++) {
-	    vi = list[i];
+	for (i=1; i<=k; i++) {
+	    vi = list == NULL ? i : list[i];
 	    if (vi > 0 && vi != LISTSEP) {
 		if (na(dset->Z[vi][t])) {
 		    missing = 1;
@@ -381,7 +389,7 @@ int list_adjust_sample (const int *list, int *t1, int *t2,
 	    t2max--;
 	} else {
 	    break;
-	}	
+	}
     }
 
     if (nmiss != NULL) {
@@ -391,8 +399,8 @@ int list_adjust_sample (const int *list, int *t1, int *t2,
     /* check for missing values within remaining range */
     for (t=t1min; t<=t2max && !err; t++) {
 	missing = 0;
-	for (i=1; i<=list[0]; i++) {
-	    vi = list[i];
+	for (i=1; i<=k; i++) {
+	    vi = list == NULL ? i : list[i];
 	    if (vi > 0 && vi != LISTSEP) {
 		if (na(dset->Z[vi][t])) {
 		    if (nmiss == NULL) {
@@ -404,9 +412,9 @@ int list_adjust_sample (const int *list, int *t1, int *t2,
 		}
 	    }
 	}
-    } 
+    }
 
-    *t1 = t1min; 
+    *t1 = t1min;
     *t2 = t2max;
 
     return err;
@@ -455,7 +463,7 @@ void set_reference_missmask_from_model (const MODEL *pmod)
 	} else if (model_has_missing_obs(pmod)) {
 	    refmask = build_refmask_from_model(pmod);
 	}
-    } 
+    }
 }
 
 int copy_to_reference_missmask (const char *mask)
@@ -468,7 +476,7 @@ int copy_to_reference_missmask (const char *mask)
     refmask = gretl_strdup(mask);
 
 #if MASKDEBUG
-    fprintf(stderr, "copy_to_reference_missmask: refmask = %p\n", 
+    fprintf(stderr, "copy_to_reference_missmask: refmask = %p\n",
 	    (void *) refmask);
 #endif
 
@@ -481,7 +489,7 @@ int apply_reference_missmask (MODEL *pmod)
 {
     if (refmask != NULL) {
 #if MASKDEBUG
-	fprintf(stderr, "applying reference mask to model = %p\n", 
+	fprintf(stderr, "applying reference mask to model = %p\n",
 		(void *) pmod);
 #endif
 	pmod->missmask = refmask;
@@ -496,8 +504,8 @@ int reference_missmask_present (void)
     return (refmask != NULL);
 }
 
-static int real_setmiss (double missval, int varno, 
-			 DATASET *dset) 
+static int real_setmiss (double missval, int varno,
+			 DATASET *dset)
 {
     int i, t, count = 0;
     int start = 1, end = dset->v;
@@ -513,7 +521,7 @@ static int real_setmiss (double missval, int varno,
 		dset->Z[i][t] = NADBL;
 		count++;
 	    }
-	}	
+	}
     }
 
     return count;
@@ -526,14 +534,14 @@ static int real_setmiss (double missval, int varno,
  * @param: string representation of the numerical value to treat as missing.
  * @dset: dataset struct.
  * @prn: pointer to printing struct.
- * 
+ *
  * Set to "missing" each observation of each series in @list that
  * has the value represented by @param.
  *
  * Returns: 0 on success, non-zero code on failure.
  */
 
-int set_miss (const int *list, const char *param, 
+int set_miss (const int *list, const char *param,
 	      DATASET *dset, PRN *prn)
 {
     int i, vi, count;
@@ -555,7 +563,7 @@ int set_miss (const int *list, const char *param,
 
     if (list == NULL || list[0] == 0) {
 	count = real_setmiss(missval, 0, dset);
-	if (count) { 
+	if (count) {
 	    pprintf(prn, _("Set %d values to \"missing\"\n"), count);
 	} else {
 	    pputs(prn, _("Didn't find any matching observations\n"));
@@ -570,10 +578,10 @@ int set_miss (const int *list, const char *param,
 		break;
 	    }
 	    count = real_setmiss(missval, vi, dset);
-	    if (count) { 
-		pprintf(prn, _("%s: set %d observations to \"missing\"\n"), 
+	    if (count) {
+		pprintf(prn, _("%s: set %d observations to \"missing\"\n"),
 			dset->varname[vi], count);
-	    } else { 
+	    } else {
 		pprintf(prn, _("%s: Didn't find any matching observations\n"),
 			dset->varname[vi]);
 	    }
@@ -586,7 +594,7 @@ int set_miss (const int *list, const char *param,
 /**
  * missing_obs_fraction:
  * @dset: dataset struct.
- * 
+ *
  * Returns: the fraction of the observations in @Z for which
  * all variables have missing values (empty rows).
  */
@@ -617,7 +625,7 @@ double missing_obs_fraction (const DATASET *dset)
 /**
  * any_missing_user_values:
  * @dset: dataset struct.
- * 
+ *
  * Returns: 1 if there are missing values for any non-hidden
  * variables within the current sample range, otherwise 0.
  */

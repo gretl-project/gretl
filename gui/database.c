@@ -4257,7 +4257,8 @@ void do_compact_data_set (void)
 
 void do_expand_data_set (void)
 {
-    int err, newpd, interpol = 1;
+    int newpd, interpol = 1;
+    int err = 0;
 
     if (maybe_restore_full_data(EXPAND)) {
 	return;
@@ -4273,6 +4274,7 @@ void do_expand_data_set (void)
 	return;
     }
 
+    gretl_error_clear();
     err = expand_data_set(dataset, newpd, interpol);
 
     if (err) {

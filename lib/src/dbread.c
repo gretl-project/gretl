@@ -4859,15 +4859,8 @@ static gretl_matrix *interpol_expand_dataset (const DATASET *dset,
 					      int newpd, int *err)
 {
     gretl_matrix *Y0, *Y1 = NULL;
-    int *list;
 
-    list = gretl_consecutive_list_new(1, dset->v - 1);
-    if (list == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    Y0 = gretl_matrix_data_subset(list, dset, dset->t1, dset->t2,
+    Y0 = gretl_matrix_data_subset(NULL, dset, dset->t1, dset->t2,
 				  M_MISSING_ERROR, err);
 
     if (!*err) {
@@ -4876,8 +4869,6 @@ static gretl_matrix *interpol_expand_dataset (const DATASET *dset,
 	Y1 = matrix_chowlin(Y0, NULL, f, err);
 	gretl_matrix_free(Y0);
     }
-
-    free(list);
 
     return Y1;
 }

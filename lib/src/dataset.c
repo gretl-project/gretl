@@ -974,7 +974,7 @@ int dataset_add_observations (DATASET *dset, int n, gretlopt opt)
 	return E_PDWRONG;
     }
 
-    bign = dset->n + n;
+    bign = oldn + n;
 
     for (i=0; i<dset->v; i++) {
 	x = realloc(dset->Z[i], bign * sizeof *x);
@@ -982,7 +982,7 @@ int dataset_add_observations (DATASET *dset, int n, gretlopt opt)
 	    return E_ALLOC;
 	}
 	dset->Z[i] = x;
-	for (t=dset->n; t<bign; t++) {
+	for (t=oldn; t<bign; t++) {
 	    dset->Z[i][t] = (i == 0)? 1.0 : NADBL;
 	}
     }
