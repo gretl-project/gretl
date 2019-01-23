@@ -181,6 +181,10 @@ static double acf_1 (const double *u, int T)
 	}
     }
 
+    if (num < 1.0e-9) {
+	return 0;
+    }
+
     return num / den;
 }
 
@@ -218,12 +222,11 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
     gretl_matrix *Yx = NULL;
     gretl_matrix *y, *yx;
     gretl_matrix my, myx;
-    double eps = 1.0e-12;
     int nx = 3;
     int ny = Y->cols;
     int T = Y->rows;
     int Tx = T * xfac;
-    int i, t;
+    int i;
 
     gretl_matrix_init(&my);
     gretl_matrix_init(&myx);
@@ -237,7 +240,7 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
     }
 
     /* the return value */
-    Yx = gretl_matrix_alloc(Tx, ny);
+    Yx = gretl_zero_matrix_new(Tx, ny);
     if (Yx == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -270,7 +273,6 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
     yx->val = Yx->val;
 
     for (i=0; i<ny; i++) {
-	double uabs, umax = 0.0;
 	double a = 0.0;
 
 	if (i > 0) {
@@ -283,21 +285,19 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
 	*err = gretl_matrix_ols(y, CX, b, NULL, u, NULL);
 
 	if (!*err) {
-	    /* check for "perfect fit" */
-	    for (t=0; t<T; t++) {
-		uabs = fabs(u->val[t]);
-		if (uabs > umax) {
-		    umax = uabs;
-		}
-	    }
-	    if (umax < eps) {
-		a = 0.0;
+	    a = acf_1(u->val, T);
+	    if (a == 0.0) {
+		make_Xx_beta(yx, b->val, X);
+		gretl_matrix_multiply_by_scalar(yx, xfac);
+		/* nothing more to do, this iteration */
+		continue;
 	    } else {
 		struct chowlin cl;
 		int c1 = 0, c2 = 0;
 
 		cl.n = xfac;
-		cl.targ = acf_1(u->val, T);
+		cl.targ = a;
+		a = 0.0;
 		*err = BFGS_max(&a, 1, 50, 1.0e-12, &c1, &c2,
 				chow_lin_callback, C_OTHER, NULL,
 				&cl, NULL, OPT_NONE, NULL);
