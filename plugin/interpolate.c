@@ -1,17 +1,17 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -31,10 +31,10 @@ struct chowlin {
     double targ;
 };
 
-/* Callback for BFGS, as we adjust the coefficient a so that the
+/* Callback for BFGS, as we adjust the coefficient @a so the
    theoretically derived ratio of polynomials in a matches the
    empirical first-order autocorrelation of the OLS residuals
-   (cl->targ).  
+   (cl->targ).
 */
 
 static double chow_lin_callback (const double *pa, void *p)
@@ -71,8 +71,8 @@ static double csum (int n, double a, int k)
     return s;
 }
 
-/* Generate CVC' without storing the full C or V matrices.  C is the
-   selection matrix that transforms from higher frequency to lower
+/* Generate W = CVC' without storing the full C or V matrices.  C is
+   the selection matrix that transforms from higher frequency to lower
    frequency by summation; V is the autocovariance matrix for AR(1)
    disturbances with autoregressive coefficient a; n is the expansion
    factor.
@@ -100,7 +100,7 @@ static void make_CVC (gretl_matrix *W, int n, double a)
    again, without storing V or C'.
 */
 
-static void mult_VC (gretl_matrix *yx, gretl_matrix *u, 
+static void mult_VC (gretl_matrix *yx, gretl_matrix *u,
 		     int n, double a)
 {
     int Tx = yx->rows;
@@ -114,7 +114,7 @@ static void mult_VC (gretl_matrix *yx, gretl_matrix *u,
     }
 }
 
-/* Regressor matrix: by default we put in constant plus 
+/* Regressor matrix: by default we put in constant plus
    quadratic trend, summed appropriately based on @n.
    If the user has supplied high-frequency covariates,
    in @X, we compress them from column 3 onward.
@@ -207,7 +207,7 @@ static int make_y_vectors (gretl_matrix **py,
 
 /**
  * chow_lin_interpolate:
- * @Y: T x k: holds the original data to be expanded. 
+ * @Y: T x k: holds the original data to be expanded.
  * @X: (optionally) holds covariates of Y at the higher frequency:
  * if these are supplied they supplement the default set of
  * regressors, namely, constant plus quadratic trend.
@@ -218,18 +218,18 @@ static int make_y_vectors (gretl_matrix **py,
  *
  * Interpolate, from annual to quarterly or quarterly to monthly,
  * via the Chow-Lin method. See Gregory C. Chow and An-loh Lin,
- * "Best Linear Unbiased Interpolation, Distribution, and 
+ * "Best Linear Unbiased Interpolation, Distribution, and
  * Extrapolation of Time Series by Related Series", The
- * Review of Economics and Statistics, Vol. 53, No. 4 
+ * Review of Economics and Statistics, Vol. 53, No. 4
  * (November 1971) pp. 372-375.
  *
  * If @X is given it must have T * @xfac rows.
- * 
+ *
  * Returns: matrix containing the expanded series, or
  * NULL on failure.
  */
 
-gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y, 
+gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
 				    const gretl_matrix *X,
 				    int xfac, int *err)
 {
@@ -238,11 +238,12 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
     gretl_matrix *Tmp1, *Tmp2;
     gretl_matrix *Yx = NULL;
     gretl_matrix *y, *yx;
+    double eps = 1.0e-12;
     int nx = 3;
     int ny = Y->cols;
     int T = Y->rows;
     int Tx = T * xfac;
-    int i;
+    int i, t;
 
     /* Note: checks to the effect that xfac = 3 or 4, and,
        if X is non-NULL, that X->rows = xfac * Y->rows,
@@ -257,7 +258,7 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
     if (Yx == NULL) {
 	*err = E_ALLOC;
 	return NULL;
-    }	
+    }
 
     B = gretl_matrix_block_new(&CX, T, nx,
 			       &W, T, T,
@@ -291,6 +292,7 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
     }
 
     for (i=0; i<ny; i++) {
+	double uabs, umax = 0.0;
 	double a = 0.0;
 
 	if (ny > 1) {
@@ -303,14 +305,25 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
 	*err = gretl_matrix_ols(y, CX, b, NULL, u, NULL);
 
 	if (!*err) {
-	    struct chowlin cl;
-	    int c1 = 0, c2 = 0;
+	    /* check for "perfect fit" */
+	    for (t=0; t<T; t++) {
+		uabs = fabs(u->val[t]);
+		if (uabs > umax) {
+		    umax = uabs;
+		}
+	    }
+	    if (umax < eps) {
+		a = 0.0;
+	    } else {
+		struct chowlin cl;
+		int c1 = 0, c2 = 0;
 
-	    cl.n = xfac;
-	    cl.targ = acf_1(u->val, T);
-	    *err = BFGS_max(&a, 1, 50, 1.0e-12, &c1, &c2, 
-			    chow_lin_callback, C_OTHER, NULL,
-			    &cl, NULL, OPT_NONE, NULL);
+		cl.n = xfac;
+		cl.targ = acf_1(u->val, T);
+		*err = BFGS_max(&a, 1, 50, 1.0e-12, &c1, &c2,
+				chow_lin_callback, C_OTHER, NULL,
+				&cl, NULL, OPT_NONE, NULL);
+	    }
 	}
 
 	if (!*err) {
@@ -322,7 +335,7 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
 	    gretl_matrix_qform(CX, GRETL_MOD_TRANSPOSE,
 			       W, Z, GRETL_MOD_NONE);
 	    *err = gretl_invert_symmetric_matrix(Z);
-	} 
+	}
 
 	if (!*err) {
 	    /* GLS \hat{\beta} */
@@ -357,6 +370,6 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y,
     }
 
     gretl_matrix_block_destroy(B);
-    
+
     return Yx;
 }
