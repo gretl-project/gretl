@@ -4860,7 +4860,7 @@ static gretl_matrix *interpol_expand_dataset (const DATASET *dset,
 {
     gretl_matrix *Y0, *Y1 = NULL;
 
-    Y0 = gretl_matrix_data_subset(NULL, dset, dset->t1, dset->t2,
+    Y0 = gretl_matrix_data_subset(NULL, dset, 0, dset->n - 1,
 				  M_MISSING_ERROR, err);
 
     if (!*err) {
@@ -4896,7 +4896,7 @@ int expand_data_set (DATASET *dset, int newpd, int interpol)
     int mult, newn, nadd;
     gretl_matrix *X = NULL;
     double *x = NULL;
-    int i, j, s, t;
+    int i, j, t;
     int err = 0;
 
     if (oldpd != 1 && oldpd != 4) {
@@ -4922,26 +4922,29 @@ int expand_data_set (DATASET *dset, int newpd, int interpol)
 	return err;
     }
 
-    mult = newpd / oldpd;
-    newn = mult * dset->n;
-    nadd = newn - oldn;
+    mult = newpd / oldpd;  /* frequency increase factor */
+    newn = mult * dset->n; /* revised number of observations */
+    nadd = newn - oldn;    /* number of obs to add */
 
-    err = dataset_add_observations(dset, nadd, OPT_NONE);
+    err = dataset_add_observations(dset, nadd, OPT_D);
     if (err) {
 	goto bailout;
     }
 
     if (interpol) {
+	const double *Xi = X->val;
+	size_t sz = newn * sizeof *Xi;
+
 	for (i=1; i<dset->v; i++) {
-	    for (t=0; t<newn; t++) {
-		dset->Z[i][t] = gretl_matrix_get(X, t, i-1);
-	    }
+	    memcpy(dset->Z[i], Xi, sz);
+	    Xi += newn;
 	}
     } else {
+	size_t sz = oldn * sizeof *x;
+	int s;
+
 	for (i=1; i<dset->v; i++) {
-	    for (t=0; t<oldn; t++) {
-		x[t] = dset->Z[i][t];
-	    }
+	    memcpy(x, dset->Z[i], sz);
 	    s = 0;
 	    for (t=0; t<oldn; t++) {
 		for (j=0; j<mult; j++) {
@@ -4952,6 +4955,7 @@ int expand_data_set (DATASET *dset, int newpd, int interpol)
     }
 
     if (dset->pd == 1) {
+	/* starting with annual data */
 	strcpy(stobs, dset->stobs);
 	if (newpd == 4) {
 	    strcat(stobs, ":1");
@@ -4959,6 +4963,7 @@ int expand_data_set (DATASET *dset, int newpd, int interpol)
 	    strcat(stobs, ":01");
 	}
     } else {
+	/* starting with quarterly data */
 	int yr, qtr, mo;
 
 	sscanf(dset->stobs, "%d:%d", &yr, &qtr);
@@ -4966,10 +4971,10 @@ int expand_data_set (DATASET *dset, int newpd, int interpol)
 	sprintf(stobs, "%d:%02d", yr, mo);
     }
 
+    /* revise the sample range, if set */
     if (dset->t1 > 0) {
 	dset->t1 *= mult;
     }
-
     if (dset->t2 < oldn - 1) {
 	dset->t2 = dset->t1 + (t2 - t1 + 1) * mult - 1;
     }
@@ -4978,10 +4983,6 @@ int expand_data_set (DATASET *dset, int newpd, int interpol)
     dset->pd = newpd;
     dset->sd0 = get_date_x(dset->pd, dset->stobs);
     ntodate(dset->endobs, dset->n - 1, dset);
-
-    if (dset->markers) {
-	dataset_destroy_obs_markers(dset);
-    }
 
  bailout:
 

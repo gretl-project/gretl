@@ -4046,6 +4046,8 @@ static void abort_expand (GtkWidget *w, gpointer data)
     *k = -1;
 }
 
+/* called from do_expand_data_set() in database.c */
+
 void data_expand_dialog (int spd, int *interpol, GtkWidget *parent)
 {
     GtkWidget *d, *tmp, *vbox, *hbox;
@@ -4057,6 +4059,10 @@ void data_expand_dialog (int spd, int *interpol, GtkWidget *parent)
 	msg = N_("Expand annual data to quarterly");
     } else if (spd == 4) {
 	msg = N_("Expand quarterly data to monthly");
+    } else {
+	/* "can't happen" */
+	*interpol = -1;
+	return;
     }
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(d));

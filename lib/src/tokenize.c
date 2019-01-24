@@ -1666,6 +1666,8 @@ static int get_parm2 (CMD *c, int options_later)
 	    /* "install" emulating "pkg" */
 	    c->err = pkg_params_compat(c);
 	    c->opt ^= OPT_B; /* scrub temporary option */
+	} else if (c->ci == DATAMOD && c->auxint == DS_EXPAND) {
+	    ; /* OK, parm2 is optional in this case */
 	} else if (!parm2_optional(c->ci)) {
 	    c->err = E_ARGS;
 	    fprintf(stderr, "%s: required parm2 is missing\n",

@@ -314,7 +314,6 @@ static GHashTable *gretl_plugin_hash_init (void)
        in a hash table under the key of the function
        name, permitting quick look-up.
     */
-
     for (i=0; plugin_functions[i].name != NULL; i++) {
 	g_hash_table_insert(ht, (gpointer) plugin_functions[i].name,
 			    GINT_TO_POINTER(plugin_functions[i].index));
@@ -440,13 +439,13 @@ static void *get_function_address (void *handle,
 #else
     funp = dlsym(handle, name);
     if (funp == NULL) {
-	char munged[64];
+	gchar *munged = g_strdup_printf("_%s", name);
 
-	sprintf(munged, "_%s", name);
 	funp = dlsym(handle, munged);
 	if (funp == NULL) {
 	    fprintf(stderr, "%s\n", dlerror());
 	}
+	g_free(munged);
     }
 #endif
 

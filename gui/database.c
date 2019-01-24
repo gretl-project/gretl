@@ -4260,6 +4260,11 @@ void do_expand_data_set (void)
     int newpd, interpol = 1;
     int err = 0;
 
+    if (!(dataset->pd == 1 || dataset->pd == 4)) {
+	/* should not happen! */
+	return;
+    }
+
     if (maybe_restore_full_data(EXPAND)) {
 	return;
     }
