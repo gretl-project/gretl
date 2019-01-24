@@ -1,3 +1,12 @@
+2019-01-24 version 2019a
+
+It is no longer permitted to create a named list which
+contains the semicolon separator. The use of such a list
+in the context of a "system" block with the "equations"
+keyword was previously supported: now one should use an
+array of lists for that purpose. See section 31.2 of the
+Gretl User's Guide for details.
+
 2018-12-21 version 2018d
 
 Replace "install" command with new "pkg" command: this has

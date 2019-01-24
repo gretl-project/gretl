@@ -1,13 +1,18 @@
-version 2019a, in progress
-- Hush some warnings issued in the GUI
+2019-01-24 version 2019a
+- Hush some warnings issued in the GUI, plus several
+  small GUI improvements
 - Increase the default size of the script editor window
 - dbnomics support: transition to using the v22 API
+- Ban creation of named lists containing the semicolon
+  separator, to ward off potential crashes
 - "foreign" block with Julia: add --no-compile option
 - "xtab" command: support TeX output and add some more
   formatting options
 - "lad" command: add --no-vcv option
 - SVM support: make this available on all platforms and
   drop the requirement of separately installed libsvm
+- Fix bug: expansion of dataset via interpolation could
+  fail under some conditions
 - Fix bug: generation of random series via the GUI got
   broken
 - Fix bug: "diff" command not always respecting a revised
