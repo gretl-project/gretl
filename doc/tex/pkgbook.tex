@@ -2718,7 +2718,7 @@ displaying a \textsf{gig} bundle.
 \section{Extra elements}
 \label{sec:spec-extra}
 
-At present there are two spec file entries in this category; in the
+At present there are three spec file entries in this category; in the
 GUI package editor they appear under the tabs \textsf{Data files} and
 \textsf{Dependencies} in the \textsf{Extra properties} window.
 
@@ -2733,13 +2733,25 @@ GUI package editor they appear under the tabs \textsf{Data files} and
 
 \item \texttt{depends} (optional): Specifies one or more packages upon
   which the given package depends. This information should be added if
-  the package calls functions that reside in other packages. For
-  example, there's a package named \texttt{extra} which provides
-  various utility functions that are not available as gretl built-ins.
-  If your packages uses functions from \texttt{extra} you should
-  include the following line in its spec file.
+  the package calls functions that reside in other packages.  Use of
+  this option ensures that when your package is loaded, any
+  dependencies are also loaded.  For example, there's a package named
+  \texttt{extra} which provides various utility functions that are not
+  available as gretl built-ins.  If your package uses functions from
+  \texttt{extra} you should include the following line in its spec
+  file.
 
-  \ttusage{depends = extra}  
+  \ttusage{depends = extra}
+
+\item \texttt{provider} (optional): This should be used if your
+  package requires access to the \textit{private} functions of another
+  package, a particularly close form of dependency. Only one package
+  can be specified in this way.  In the GUI this feature is
+  represented by a check box against the first entry under the
+  \textsf{Dependencies} tab. In the spec file, specifying a package as
+  provider automatically includes it as a dependency.
+
+  \ttusage{provider = extra}
 
 \end{description}
 
