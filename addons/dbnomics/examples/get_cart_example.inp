@@ -1,6 +1,6 @@
 include dbnomics.gfn
 
-PATH = "https://api.dev.db.nomics.world/v22/series"
+PATH = "https://api.db.nomics.world/v22/series"
 QERY = "?series_ids=AMECO%2FNWT2%2FEA19.1.0.0.0.NWT2%2CINEPT%2FA.4%2FA.4.1.4%2CISM%2Fprices%2Fh&format=json&observations=true"
 CART = PATH ~ QERY
 

@@ -3,6 +3,9 @@ include dbnomics.gfn
 nulldata 120
 setobs 4 1990:1
 
+print "This example temporarily omitted owing to a dbnomics bug"
+quit
+
 ### the DBnomics dataset we're drawing from
 provider = "IMF"
 database = "CPI"
