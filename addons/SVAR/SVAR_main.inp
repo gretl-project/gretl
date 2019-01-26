@@ -141,19 +141,15 @@ function list determ(list X, bool cnst, bool trnd, bool seas)
   list ret = cnst ? const : null 
     
   if trnd
-    list ret += time
+    ret += time
   endif
     
   if seas
-    ipd = 1/$pd 
-    tt = time % $pd	
-    loop i=1..$pd-1 --quiet
-      ret += genseries(sprintf("seas_%d", i), (tt == i) - ipd)
-    endloop
+    ret += seasonals(0, 1) # centered
   endif
   
   # stick together deterministics and other exog.
-  list ret = ret || X
+  ret = ret || X
   return ret
 end function
 
