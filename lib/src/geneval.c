@@ -2798,6 +2798,15 @@ static int real_matrix_calc (const gretl_matrix *A,
 	    C = gretl_matrix_divide(A, B, GRETL_MOD_TRANSPOSE, &err);
 	}
 	break;
+    case F_CSOLVE:
+	C = calc_get_matrix(pM, B->rows, B->cols);
+	if (C == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    gretl_matrix_copy_values(C, B);
+	    err = gretl_cholesky_solve(A, C);
+	}
+	break;
     case B_DOTMULT:
     case B_DOTDIV:
     case B_DOTPOW:
@@ -14690,6 +14699,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_HDPROD:
     case F_CMULT:
     case F_CDIV:
+    case F_CSOLVE:
     case F_MRSEL:
     case F_MCSEL:
     case F_DSUM:

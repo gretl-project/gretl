@@ -385,6 +385,7 @@ enum {
     F_FIXNAME,
     F_ATAN2,
     F_CCODE,
+    F_CSOLVE,
     HF_CMMULT,
     HF_CFFT,
     HF_CMATRIX,
