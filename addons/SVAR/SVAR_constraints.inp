@@ -105,7 +105,10 @@ function matrix imp2exp(matrix Rd)
    Given the constraints in implicit form, returns the matrix [ S | s ]
    of the constraints in explicit form
   */
-
+  if !nelem(Rd)
+    funcerr "No restrictions given."
+  endif
+  
   p = cols(Rd)
   matrix R = Rd[, 1:(p-1)]
   matrix d = Rd[,p]
