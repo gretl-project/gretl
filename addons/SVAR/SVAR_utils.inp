@@ -172,7 +172,7 @@ function scalar vecm_est(bundle *SVARobj)
     E = dep
   endif
 
-  df = T - (n*p + k - (n-r)) 
+  df = T - (n*p + k - (n-r)) # FIXME: aren't the unrestr. determ. terms missing?
   matrix Sigma = (E'E)./T
 
   # print olspar Sigma
@@ -207,7 +207,7 @@ function scalar vecm_est(bundle *SVARobj)
   endif
 
   if k > 0
-    matrix sel = nd + seq(0, k-1) 
+    matrix sel = nd + seq(1, k) 
     mu = mu ~ olspar[sel,]
   endif
 
