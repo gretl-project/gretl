@@ -115,9 +115,10 @@ function matrix imp2exp(matrix Rd)
   catch matrix RRi = invpd(R*R')
   err = $error
   if err
-    print "Processing of restrictions failed, aborting."
+    print "Processing of restrictions failed aborting."
     print "Perhaps redundant or incompatible restrictions?"
-    funcerr errmsg(err)
+    printf "%s\n", errmsg(err)
+    funcerr "aborting"
   endif
   
   matrix s = R'RRi*d
