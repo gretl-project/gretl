@@ -136,12 +136,13 @@ function scalar vecm_est(bundle *SVARobj)
   matrix dY = diff(mY)
   matrix dep = dY[p+1:T,]
   matrix E = {}
+  ng = n * (p-1) # number coming from Gammas /lagged diffs (p>0 for SVEC)
 
   # deterministics
   matrix mreg = vecm_det(T, dcase)
     
   # ECM terms
-  matrix ECM = mlag(mY * jbeta[1:n,],1)
+  matrix ECM = mlag(mY * jbeta[1:n,], 1)
   if dcase == 2
     ECM = ECM .+ jbeta[n+1, ]
   elif dcase == 4
@@ -173,6 +174,7 @@ function scalar vecm_est(bundle *SVARobj)
   endif
 
   df = T - (n*p + k - (n-r)) # FIXME: aren't the unrestr. determ. terms missing?
+  # (but apparently df is never used again...)
   matrix Sigma = (E'E)./T
 
   # print olspar Sigma
@@ -183,8 +185,7 @@ function scalar vecm_est(bundle *SVARobj)
 
   # alpha first (should be before the gammas, if estimated)
   if ols_al
-    ng = n*(p-1)
-    jalpha = olspar[rp-ng-r+1:rp-ng,]'
+    jalpha = olspar[rp-ng-r+1 : rp-ng,]'
   endif
     
   # exogenous
@@ -216,17 +217,21 @@ function scalar vecm_est(bundle *SVARobj)
   */
   Pi = jalpha * jbeta[1:n,]'
     
-  if p>1
+  if p > 1
+    # the Gammas are always at the back:
+    ini = rp - ng + 1
+    /* old code:
     if ols_al
       # the Gammas should be after the ECM terms
-      ini = nd + r + 1
+      ini = nd + k + r + 1	# (k was missing)
     else
-      # the Gammas should be right after the deterministics
-      ini = nd + 1
+      # the Gammas should be right after the exogenous (was: deterministics)
+      ini = nd + k + 1	# (k was missing)
     endif
     fin = ini + (p-1) * n - 1
-    matrix A = olspar[ini:fin,] | zeros(n,n)
-    A += I(n) + Pi' | -olspar[ini:fin,]
+    */
+    matrix A = olspar[ini: ,] | zeros(n,n)	# was: ini:fin
+    A += I(n) + Pi' | -olspar[ini: ,]
   else
     matrix A = I(n) + Pi'
   endif
