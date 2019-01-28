@@ -102,7 +102,13 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
      (maybe not needed any more)
 
      The bootstrap does _not_ live here.
-  */
+     */
+     
+  # Do a general rank deficiency check on the exogenous
+  matrix mcheck = {lX}
+  if rank(mcheck'mcheck) < nelem(lX)	# RHS can be zero!
+    funcerr "Exogenous terms are lin. dependent!"
+  endif   
 
   scalar type = modeltype(type_string)
  
@@ -113,7 +119,7 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
       # (eg centred dummies) 
             
       # the following currently doesn't work in gretl w.r.t. the time trend,
-      # but fails silently (but const works)
+      # but fails silently (but const works -- still current in Jan 2019)
       list lX -= const time
       
       # therefore check for remaining collinearity 
@@ -316,6 +322,7 @@ function scalar SVAR_restrict(bundle *b, string code, int r,
   return err	# 0, -1, 10, or 20
 end function
     
+# FIXME: Allow omission of jalpha via null; equivalent to {}
 function scalar SVAR_coint(bundle *SVARobj, int dcase[1:5:3],
 			   matrix jbeta, matrix jalpha,
 			   bool verbose[0])
