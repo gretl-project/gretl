@@ -6,3 +6,4 @@ changelog ***
 - catch a missing cointegration setup when trying to estimate a SVEC
 - add a linear dependency check on the exogenous terms in SVAR_setup
 - allow omission of jalpha in SVAR_coint (still need to adapt the doc)
+- (internal: replace isnull with !exists, and vice versa)
