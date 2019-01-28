@@ -15,7 +15,17 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
   scalar errcode = 0
 
   if type == 4 # do VECM
-    vecm_est(&obj)
+    if inbundle(obj, "cointsetup")
+      if obj.cointsetup
+        vecm_est(&obj)
+      else
+        # Not sure if this case (obj.cointsetup==0)can currently happen.
+        funcerr "No valid cointegration setup found."
+      endif
+    else
+      funcerr "Need to do cointegration setup first for 'SVEC'."
+    endif
+    
   else # estimate ordinary VAR
     base_est(&obj)
   endif

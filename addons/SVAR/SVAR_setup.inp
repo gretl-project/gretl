@@ -375,6 +375,7 @@ function scalar SVAR_coint(bundle *SVARobj, int dcase[1:5:3],
     
   # if anything goes wrong, return
   if err
+    # (currently err==1 here always, Sven believes)
     outfile stderr --write --quiet
     printf "SVAR_coint: returning on err = %d\n", err
     outfile --close
@@ -437,7 +438,10 @@ function scalar SVAR_coint(bundle *SVARobj, int dcase[1:5:3],
     endif
   endif
 
-  SVARobj.snames = sn
+  SVARobj.snames = sn 
+  if !err
+    SVARobj.cointsetup = 1	# flag success
+  endif
     
   return err
 end function
