@@ -26,7 +26,7 @@ function string IRFgrph(matrix IRFmat, int snum, int vnum, scalar scale, \
     scalar snum = abs(snum)
     scalar n = round(sqrt(cols(IRFmat)))
                         
-    if !isnull(boot)
+    if exists(boot)
         scalar bootrep = boot.rep
         scalar alpha = boot.alpha
     else
@@ -34,7 +34,7 @@ function string IRFgrph(matrix IRFmat, int snum, int vnum, scalar scale, \
     endif
 
     # anything to cumulate?
-    scalar cumulate = !isnull(cumul) ? sumr(sumc(cumul .= vnum)) > 0 : 0
+    scalar cumulate = exists(cumul) ? sumr(sumc(cumul .= vnum)) > 0 : 0
 
     scalar tmpfname = int(1000*muniform(1,1))
     string tmpfile = $windows ? sprintf("@dotdir\\irf%d.gp", tmpfname) : \

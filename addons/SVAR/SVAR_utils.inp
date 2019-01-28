@@ -314,7 +314,7 @@ function scalar VARloglik(scalar T, matrix Sigma, matrix *C[null])
   n = rows(Sigma)
   ll = n * 1.83787706640934548355 # ln(2*$pi)
 
-  if isnull(C) # just-identified model
+  if !exists(C) # just-identified model
     ll += log(det(Sigma)) + n
   else
     matrix KK = invpd(C*C')
@@ -354,7 +354,7 @@ function matrix InfoMat(matrix CorB, matrix S, matrix *A[null])
    merged from InfoMatC and InfoMatAB
    First case C model (A is null), latter AB model.
   */
-  matrix tmp = isnull(A) ? I(rows(CorB)) : (A\CorB) | -I(rows(A))    
+  matrix tmp = !exists(A) ? I(rows(CorB)) : (A\CorB) | -I(rows(A))    
   tmp = S' (tmp ** inv(CorB'))    
   return tmp * N2_ify(tmp')
 end function
@@ -362,7 +362,7 @@ end function
 
 function matrix coeffVCV(matrix S, matrix *rhs, matrix *lhs[null])
   # C or AB model
-  matrix IM = isnull(lhs) ? InfoMat(rhs, S) : InfoMat(rhs, S, &lhs)
+  matrix IM = !exists(lhs) ? InfoMat(rhs, S) : InfoMat(rhs, S, &lhs)
   # (should be correct with new InfoMat)
   
   

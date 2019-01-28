@@ -205,7 +205,7 @@ function bundle GUI_SVAR(int type[1:3:1] "Model type" \
   m.optmeth = optmeth
 
   ## implement the cumulation spec (sven 1.0.2)
-  if !isnull(cumix)
+  if exists(cumix)
     # ensure column vector
     cumix = vec(cumix)
     # input checks (numbers out of bounds)
@@ -221,7 +221,7 @@ function bundle GUI_SVAR(int type[1:3:1] "Model type" \
     
   ## process restrictions
   if type == 1
-    if !isnull(R1) || !isnull(R2)
+    if exists(R1) || exists(R2)
       print "Estimating plain model. Discarding provided restrictions."
     endif
         
@@ -230,16 +230,16 @@ function bundle GUI_SVAR(int type[1:3:1] "Model type" \
     endif
   else # C or AB model
     # input check
-    if isnull(R1) && isnull(R2)
+    if !exists(R1) && !exists(R2)
       funcerr "Must provide some restrictions for C and AB models!"
     endif
         
-    if type == 3 && ( isnull(R1) || isnull(R2) ) 
+    if type == 3 && ( !exists(R1) || !exists(R2) ) 
       funcerr "Must provide restrictions on A and B for AB model!"
     endif
                     
     # transform the R1-matrix to SVAR-style restrictions
-    if !isnull(R1)
+    if exists(R1)
       r = rows(R1)
       c = cols(R1)
       if (r != n || c != n)
@@ -259,7 +259,7 @@ function bundle GUI_SVAR(int type[1:3:1] "Model type" \
         
     # still need to consider the A or longrun-C matrix
     # transform the R2-matrix to SVAR-style restrictions
-    if !isnull(R2)
+    if exists(R2)
       r2 = rows(R2)
       c2 = cols(R2)
       if (r2 != n || c2 != n)
@@ -282,7 +282,7 @@ function bundle GUI_SVAR(int type[1:3:1] "Model type" \
   scalar id_ok = 1
 	
   if checkident
-    if (type == 2  && !isnull(R2) ) # longrun C
+    if (type == 2  && exists(R2) ) # longrun C
       print "FIXME: not yet implemented for models with long-run restrictions"
     else
       print "Check identification:" 
