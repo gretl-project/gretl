@@ -207,8 +207,8 @@ function scalar vecm_est(bundle *SVARobj)
   endif
 
   if k > 0
-    matrix sel = nd + seq(1, k) 
-    mu = mu ~ olspar[sel,]
+    # matrix sel = nd + seq(1, k) 
+    mu = mu | olspar[nd+1 : nd+1 + k,] # was: mu ~ olspar[sel,]
   endif
 
   /*
