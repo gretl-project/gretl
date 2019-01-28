@@ -322,9 +322,8 @@ function scalar SVAR_restrict(bundle *b, string code, int r,
   return err	# 0, -1, 10, or 20
 end function
     
-# FIXME: Allow omission of jalpha via null; equivalent to {}
 function scalar SVAR_coint(bundle *SVARobj, int dcase[1:5:3],
-			   matrix jbeta, matrix jalpha,
+			   matrix jbeta, matrix jalpha[null],
 			   bool verbose[0])
 
   /*
@@ -345,6 +344,11 @@ function scalar SVAR_coint(bundle *SVARobj, int dcase[1:5:3],
   */
 
   scalar n = SVARobj.n
+  
+  # define default
+  if !exists(jalpha)
+    matrix jalpha = {}
+  endif
     
   # syntax check
   err = (dcase<1) || (dcase>5)

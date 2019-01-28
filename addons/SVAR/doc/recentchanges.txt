@@ -4,3 +4,5 @@ changelog ***
 - simplify centered seasonals creation in determ()
 - catch the case when no restrictions are given, to prevent other errors
 - catch a missing cointegration setup when trying to estimate a SVEC
+- add a linear dependency check on the exogenous terms in SVAR_setup
+- allow omission of jalpha in SVAR_coint (still need to adapt the doc)
