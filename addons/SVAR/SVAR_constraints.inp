@@ -112,7 +112,15 @@ function matrix imp2exp(matrix Rd)
   p = cols(Rd)
   matrix R = Rd[, 1:(p-1)]
   matrix d = Rd[,p]
-  matrix s = R'invpd(R*R')*d
+  catch matrix RRi = invpd(R*R')
+  err = $error
+  if err
+    print "Processing of restrictions failed, aborting."
+    print "Perhaps redundant or incompatible restrictions?"
+    funcerr errmsg(err)
+  endif
+  
+  matrix s = R'RRi*d
   matrix S = nullspace(R | s')
   return S ~ s
 end function
