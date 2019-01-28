@@ -1,0 +1,6 @@
+*** List of changes since last release (1.36), some of which need to be added to the 
+changelog ***
+
+- simplify centered seasonals creation in determ()
+- catch the case when no restrictions are given, to prevent other errors
+- catch a missing cointegration setup when trying to estimate a SVEC
