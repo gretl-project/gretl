@@ -9,3 +9,4 @@ changelog ***
 - (internal: replace isnull with !exists, and vice versa)
 - fix indexing error and mis-concatenation in vecm_est
 - fix companion matrix in vecm_est with exogenous
+- catch the case where restrictions would not work (imp2exp) and print out a message
