@@ -8365,7 +8365,18 @@ int gretl_matrix_rank (const gretl_matrix *a, int *err)
 
     k = (a->rows < a->cols)? a->rows : a->cols;
 
-    *err = gretl_matrix_SVD(a, NULL, &S, NULL);
+    if (a->rows > 4 * k || a->cols > 4 * k) {
+	gretl_matrix *b = gretl_matrix_alloc(k, k);
+	GretlMatrixMod mod1, mod2;
+
+	mod1 = a->rows > k ? GRETL_MOD_TRANSPOSE : 0;
+	mod2 = a->cols > k ? GRETL_MOD_TRANSPOSE : 0;
+	gretl_matrix_multiply_mod(a, mod1, a, mod2, b, 0);
+	*err = gretl_matrix_SVD(b, NULL, &S, NULL);
+	gretl_matrix_free(b);
+    } else {
+	*err = gretl_matrix_SVD(a, NULL, &S, NULL);
+    }
 
     if (!*err) {
 	double smin = svd_smin(a, S->val[0]);
