@@ -5,8 +5,10 @@ changelog ***
 - catch the case when no restrictions are given, to prevent other errors
 - catch a missing cointegration setup when trying to estimate a SVEC
 - add a linear dependency check on the exogenous terms in SVAR_setup
-- allow omission of jalpha in SVAR_coint (still need to adapt the doc)
+- allow omission of jalpha in SVAR_coint
 - (internal: replace isnull with !exists, and vice versa)
 - fix indexing error and mis-concatenation in vecm_est
 - fix companion matrix in vecm_est with exogenous
 - catch the case where restrictions would not work (imp2exp) and print out a message
+
+---- changelog in SVAR.tex updated up to here -----

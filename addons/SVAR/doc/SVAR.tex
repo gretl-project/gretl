@@ -1660,6 +1660,7 @@ Order condition OK
 rank condition: r = 5, cols(Q) = 5
 Rank condition OK
 \end{code}
+
 \section{Structural VEC Models}
 \label{sec:SVECs}
 
@@ -1803,15 +1804,20 @@ don't, grab any decent econometrics textbook or the \emph{Gretl User's
 
 For injecting the necessary information into the model bundle once
 you've set it up, there is a dedicated function whose name is
-\texttt{SVAR\_coint}. It takes four compulsory parameters: the SVAR
+\texttt{SVAR\_coint}. It takes three compulsory parameters: the SVAR
 model (in pointer form), the ``deterministic terms code'' and the
-matrices $\beta$ and $\alpha$; the latter may be empty, in which case
+cointegration matrix $\beta$. 
+Next is the loading matrix $\alpha$; this argument may be omitted or 
+equivalently passed as an empty matrix \texttt{\{\}}, in which case
 it will be estimated via OLS. If, on the contrary, it is not empty,
 then it should be a $n \times r$ matrix that will be accepted at face
 value. Pre-setting $\alpha$ may be useful, in some cases, to force
 some of the variables to be weakly exogenous. Note that the
 \verb!$jbeta!  and \verb|$jalpha| standard gretl accessors make it
-painless to fetch them from a Johansen-style VECM if necessary.
+painless to fetch them from a Johansen-style VECM if necessary. 
+This also means that the coefficients of any restricted deterministic 
+terms must be included as part of the given $\beta$ matrix in the 
+cases 2 and 4 (sometimes called $\beta*$ in the literature).
 
 Calling this function will
 \begin{enumerate}
@@ -2275,15 +2281,16 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
 \end{funcdoc}
 
 \begin{funcdoc}{SVAR\_coint(bundle *obj, scalar case,
-			   matrix jbeta, matrix jalpha,
+			   matrix jbeta, matrix jalpha[null],
 			   bool verbose[0])}
   Sets up a SVEC model for subsequent estimation. Its arguments are:
   \begin{enumerate}
   \item a bundle holding the model
   \item a code for the constant/trend combination (1 to 5, as per
-    Johansen)
+    Johansen; default 3)
   \item the cointegration matrix (required)
-  \item the loading matrix (optional, will be estimated via OLS if empty)
+  \item the loading matrix (optional, will be estimated via OLS if omitted
+  or empty)
   \item an optional verbosity switch (default 0)
   \end{enumerate}
 \end{funcdoc}
@@ -2458,6 +2465,25 @@ a warning will be printed.
   
 \section{Changelog (after v1.2)}
 \label{sec:changelog}
+
+\subsection*{Version 1.4, January 2019}
+\begin{itemize}
+
+\item catches of wrong user input: catch the case when no restrictions are given, 
+to prevent other errors; catch a missing cointegration setup when trying to 
+estimate a SVEC; add a linear dependency check on the exogenous terms 
+in SVAR_setup; catch the case where restrictions would not work (imp2exp) 
+and print out a message
+
+\item fixes in the SVEC case especially with further exogenous variables: 
+fix indexing error and mis-concatenation, and companion matrix in vecm_est 
+with exogenous; 
+ 
+\item internal changes: simplify centered seasonals creation in determ(),
+replace isnull with !exists (and vice versa)
+
+\item interface: allow omission of alpha in SVAR_coint
+\end{itemize}
 
 \subsection*{Version 1.36,  July 2018}
 \begin{itemize}

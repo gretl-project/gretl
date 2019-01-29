@@ -1,8 +1,8 @@
 author = Riccardo "Jack" Lucchetti and Sven Schreiber
 email = r.lucchetti@univpm.it
 tags = C32
-version = 1.36
-date = 2018-07-03
+version = 1.4
+date = 2019-01-29
 description = Structural VARs
 public = SVAR_setup SVAR_restrict SVAR_ident SVAR_estimate \
     SVAR_cumulate SVAR_boot SVAR_hd SVAR_coint \
