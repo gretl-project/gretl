@@ -1076,9 +1076,10 @@ static int gen_edit_list (parser *p, int *list, int op)
     if (op == B_ASN) {
 	err = replace_list_by_data(u, list);
     } else if (op == B_ADD) {
-	err = append_to_list_by_data(u, list);
-    } else { /* must be B_SUB */
-	err = subtract_from_list_by_data(u, list);
+	err = append_to_list_by_data(u, list, p->dset);
+    } else {
+	/* must be B_SUB */
+	err = subtract_from_list_by_data(u, list, p->dset);
     }
 
     return err;
@@ -17323,7 +17324,7 @@ static int create_or_edit_list (parser *p)
     int *list = node_get_list(p->ret, p); /* note: copied */
 
 #if EDEBUG
-    printlist(list, "incoming list in edit_list()");
+    printlist(list, "incoming RHS list in edit_list()");
 #endif
 
 #if 0 /* we're not applying the following check (yet?) */

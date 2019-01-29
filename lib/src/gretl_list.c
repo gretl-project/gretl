@@ -195,6 +195,7 @@ int gretl_list_set_midas (const int *list, DATASET *dset)
  * append_to_list_by_data:
  * @ptr: pointer to a user_var.
  * @add: list to add.
+ * @dset: pointer to dataset.
  *
  * If @ptr holds a saved list, append the list
  * @add to it.
@@ -202,7 +203,8 @@ int gretl_list_set_midas (const int *list, DATASET *dset)
  * Returns: 0 on success, non-zero code on failure.
  */
 
-int append_to_list_by_data (void *ptr, const int *add)
+int append_to_list_by_data (void *ptr, int *add,
+			    const DATASET *dset)
 {
     user_var *u = ptr;
     int err = 0;
@@ -226,10 +228,44 @@ int append_to_list_by_data (void *ptr, const int *add)
     return err;
 }
 
+/* Dropping terms from the list @targ inside a function:
+   this is tricky with regard to the auto-generated
+   "time" variable, which may be a member of a list that
+   was passed as an argument yet not "visible" by name
+   within the function. Here we attempt to fix this by
+   transcribing the ID number for "time" from the caller's
+   namespace into the @drop list -- if the latter is
+   trying to drop this variable.
+*/
+
+static void check_auto_time_var (const int *targ, int *drop,
+				 const DATASET *dset)
+{
+    int i, vi, tnum = 0;
+
+    for (i=1; i<=targ[0]; i++) {
+	vi = targ[i];
+	if (!strcmp(dset->varname[vi], "time")) {
+	    tnum = vi;
+	    break;
+	}
+    }
+
+    if (tnum > 0) {
+	for (i=drop[0]; i>0; i--) {
+	    vi = drop[i];
+	    if (!strcmp(dset->varname[vi], "time")) {
+		drop[i] = tnum;
+	    }
+	}
+    }
+}
+
 /**
  * subtract_from_list_by_data:
  * @ptr: pointer to a user_var.
  * @sub: sub-list to remove.
+ * @dset: pointer to dataset.
  *
  * If @ptr holds a saved list, remove from @targ
  * any elements of @sub that it contains.
@@ -237,7 +273,8 @@ int append_to_list_by_data (void *ptr, const int *add)
  * Returns: 0 on success, non-zero code on failure.
  */
 
-int subtract_from_list_by_data (void *ptr, const int *sub)
+int subtract_from_list_by_data (void *ptr, int *sub,
+				const DATASET *dset)
 {
     user_var *u = ptr;
     int err = 0;
@@ -246,8 +283,12 @@ int subtract_from_list_by_data (void *ptr, const int *sub)
 	err = E_DATA;
     } else {
 	const int *list = user_var_get_value(u);
-	int *tmp = gretl_list_drop(list, sub, &err);
+	int *tmp;
 
+	if (gretl_function_depth() > 0) {
+	    check_auto_time_var(list, sub, dset);
+	}
+	tmp = gretl_list_drop(list, sub, &err);
 	if (!err) {
 	    user_var_replace_value(u, tmp, GRETL_TYPE_LIST);
 	}
