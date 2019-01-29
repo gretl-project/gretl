@@ -2242,6 +2242,13 @@ int restrict_sample (const char *param, const int *list,
 	   recorded in state->submask
 	*/
 	oldmask = state->submask;
+    } else if (state != NULL) {
+	/* FIXME? This is a loophole that potentially allows
+	   overriding of a (t1, t2) sample range at caller
+	   level, via "restrict replace" sampling within a
+	   function.
+	*/
+	;
     }
 
     if (do_precompute(mode, oldmask, param)) {
