@@ -2472,17 +2472,17 @@ a warning will be printed.
 \item catches of wrong user input: catch the case when no restrictions are given, 
 to prevent other errors; catch a missing cointegration setup when trying to 
 estimate a SVEC; add a linear dependency check on the exogenous terms 
-in SVAR\_setup; catch the case where restrictions would not work (imp2exp) 
-and print out a message
+in \texttt{SVAR\_setup}; catch the case where restrictions would not work 
+(\texttt{imp2exp}) and print out a message
 
 \item fixes in the SVEC case especially with further exogenous variables: 
-fix indexing error and mis-concatenation, and companion matrix in vecm_est 
+fix indexing error and mis-concatenation, and companion matrix in \texttt{vecm\_est} 
 with exogenous; 
  
 \item internal changes: simplify centered seasonals creation in determ(),
 replace isnull with !exists (and vice versa)
 
-\item interface: allow omission of alpha in SVAR\_coint
+\item interface: allow omission of alpha in \texttt{SVAR\_coint}
 \end{itemize}
 
 \subsection*{Version 1.36,  July 2018}
