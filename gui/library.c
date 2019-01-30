@@ -94,6 +94,7 @@
 static CMD libcmd;
 static char libline[MAXLINE];
 static int original_n;
+static int gui_main_exec;
 
 char *get_lib_cmdline (void)
 {
@@ -8160,6 +8161,16 @@ static int maybe_stop_script (GtkWidget *parent)
     return stop;
 }
 
+static int already_running_script (void)
+{
+    if (gui_main_exec) {
+	warnbox(_("There's a script already running"));
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 /* Execute a script from the buffer in viewer window @vwin */
 
 static void run_native_script (windata_t *vwin, gchar *buf)
@@ -8171,6 +8182,10 @@ static void run_native_script (windata_t *vwin, gchar *buf)
     int save_batch;
     int untmp = 0;
     int err;
+
+    if (already_running_script()) {
+	return;
+    }
 
     if (policy != OUTPUT_POLICY_NEW_WINDOW) {
 	/* check for an existing output window */
@@ -8211,7 +8226,9 @@ static void run_native_script (windata_t *vwin, gchar *buf)
 
     parent = vwin_toplevel(vwin);
     save_batch = gretl_in_batch_mode();
+    gui_main_exec = 1;
     err = execute_script(NULL, buf, prn, SCRIPT_EXEC, parent);
+    gui_main_exec = 0;
     gretl_set_batch_mode(save_batch);
 
     refresh_data();
@@ -8249,6 +8266,10 @@ void run_script_fragment (windata_t *vwin, gchar *buf)
     PRN *prn;
     int save_batch;
 
+    if (already_running_script()) {
+	return;
+    }
+
     if (bufopen(&prn)) {
 	return;
     }
@@ -8261,7 +8282,9 @@ void run_script_fragment (windata_t *vwin, gchar *buf)
     }
 
     save_batch = gretl_in_batch_mode();
+    gui_main_exec = 1;
     execute_script(NULL, buf, prn, SCRIPT_EXEC, parent);
+    gui_main_exec = 0;
     gretl_set_batch_mode(save_batch);
 
     refresh_data();
