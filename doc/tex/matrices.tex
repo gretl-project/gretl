@@ -15,14 +15,12 @@ Matrices can be created using any of these methods:
 
 \begin{enumerate}
 \item By direct specification of the scalar values that compose the
-  matrix --- in numerical form, by reference to pre-existing
+  matrix---either in numerical form, or by reference to pre-existing
   scalar variables, or using computed values.
 \item By providing a list of data series.
 \item By providing a \textit{named list} of series.
-\item Using a formula of the same general type that is used
-  with the \texttt{genr} command, whereby a new matrix is defined
-  in terms of existing matrices and/or scalars, or via some
-  special functions.
+\item Via a suitable expression that references existing matrices
+  and/or scalars, or via some special functions.
 \end{enumerate}
 
 To specify a matrix \textit{directly in terms of scalars}, the syntax
@@ -482,13 +480,10 @@ constraint that $x$ can be negative only if $A$ is invertible.
 \section{Matrix functions}
 \label{sec:matrix-func}
 
-Most of the gretl functions available for scalars and series
-also apply to matrices in an element-by-element fashion, and as such
-their behavior should be pretty obvious. This is the case for
-functions such as \texttt{log}, \texttt{exp}, \texttt{sin}, etc.
-These functions have the effects documented in relation to the
-\texttt{genr} command.  For example, if a matrix \texttt{A} is already
-defined, then
+Most of the functions available for scalars and series also apply to
+matrices on an element-by-element basis. This is the case for
+\texttt{log}, \texttt{exp}, \texttt{sqrt}, \texttt{sin} and many
+others. For example, if a matrix \texttt{A} is already defined, then
 %
 \begin{code}
 matrix B = sqrt(A)
@@ -497,15 +492,15 @@ matrix B = sqrt(A)
 generates a matrix such that $b_{ij} = \sqrt{a_{ij}}$.  All such
 functions require a single matrix as argument, or an expression which
 evaluates to a single matrix.\footnote{Note that to find the ``matrix
-  square root'' you need the \texttt{cholesky} function (see below);
-  moreover, the \texttt{exp} function computes the exponential element
-  by element, and therefore does \emph{not} return the matrix
-  exponential unless the matrix is diagonal---to get the matrix
-  exponential, use \texttt{mexp}.}
+  square root'' you need the \texttt{cholesky} function (see below).
+  And since the \texttt{exp} function computes the exponential element
+  by element, it does \emph{not} return the matrix exponential unless
+  the matrix is diagonal. To get the matrix exponential, use
+  \texttt{mexp}.}
 
-In this section, we review some aspects of \texttt{genr} functions that
-apply specifically to matrices. A full account of each function is
-available in the \GCR.
+In this section, we review some aspects of functions that apply
+specifically to matrices. A full account of each function is available
+in the \GCR.
 
 \newlength{\cwid}
 \setlength{\cwid}{0.1\textwidth}
