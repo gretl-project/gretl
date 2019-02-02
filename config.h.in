@@ -47,6 +47,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Are we supporting MPI? */
 #undef HAVE_MPI
 
+/* Are we supporting GMP? */
+#undef HAVE_GMP
+
 /* X-12-ARIMA support? */
 #undef HAVE_X12A
 

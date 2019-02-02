@@ -2,6 +2,8 @@ version 2019b, in progress
 - Speed up rank() for far-from-square matrices
 - Obscure fix: enable deletion of "time" from a list
   supplied as a function argument
+- Add configure option --disable-gmp: not recommended,
+  but may be helpful in some tricky build contexts
 
 2019-01-24 version 2019a
 - Hush some warnings issued in the GUI, plus several

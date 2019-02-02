@@ -865,6 +865,7 @@ enable_quiet_build
 enable_swap_ends
 enable_xdg
 enable_json
+enable_gmp
 enable_xdg_utils
 enable_pkgbuild
 enable_gnuplot_checks
@@ -1573,6 +1574,7 @@ Optional Features:
   --enable-swap-ends      Build FRED database with swapped endianness
   --disable-xdg           Don't Install XDG files
   --disable-json          Don't try to include JSON support
+  --disable-gmp           Don't try to include GMP support
   --enable-xdg-utils      Use xdg-utils for installing XDG files [default=auto]
   --enable-pkgbuild       For building relocatable package (e.g. OS X)
   --disable-gnuplot-checks do not run checks for gnuplot
@@ -2951,8 +2953,11 @@ use_xdg="yes"
 use_xdg_utils="no"
 try_xdg_utils="yes"
 use_gsf="no"
+try_gmp="yes"
 have_gmp="no"
 have_mpfr="no"
+gmp_fail="no"
+mpfr_fail="no"
 have_lapack="no"
 have_fftw3="no"
 seek_inet_addr="no"
@@ -6673,6 +6678,15 @@ if test "${enable_json+set}" = set; then :
   enableval=$enable_json; if test "$enableval" = "no"
 then
   try_json_glib=no
+fi
+fi
+
+
+# Check whether --enable-gmp was given.
+if test "${enable_gmp+set}" = set; then :
+  enableval=$enable_gmp; if test "$enableval" = "no"
+then
+  try_gmp=no
 fi
 fi
 
@@ -20329,6 +20343,7 @@ fi
 
 
 
+if test "$try_gmp" = "yes" ; then
 
 # Check whether --with-gmp-prefix was given.
 if test "${with_gmp_prefix+set}" = set; then :
@@ -20481,7 +20496,7 @@ rm -f core conftest.err conftest.$ac_objext \
      fi
      GMP_CFLAGS=""
      GMP_LIBS=""
-     :
+     gmp_fail="yes"
   fi
   if test "$GMP_CFLAGS" = "-I/include" ; then
      GMP_CFLAGS=""
@@ -20648,7 +20663,7 @@ rm -f core conftest.err conftest.$ac_objext \
      fi
      MPFR_CFLAGS=""
      MPFR_LIBS=""
-     :
+     gmp_fail="yes"
   fi
   if test "$MPFR_CFLAGS" = "-I/include" ; then
      MPFR_CFLAGS=""
@@ -20660,6 +20675,11 @@ rm -f core conftest.err conftest.$ac_objext \
 
   rm -f conf.mpfrtest
 
+  if test "$have_gmp" = "yes" -a "$have_mpfr" = "yes" ; then
+    $as_echo "#define HAVE_GMP 1" >>confdefs.h
+
+  fi
+fi
 
 LAPACK_CFLAGS="-I${srcdir}/lib/src"
 case $host_os in
@@ -26214,13 +26234,13 @@ Please install fftw3 and then reconfigure gretl.
 fftw3 is available from http://www.fftw.org/
 "
 
-elif test "${have_gmp}" = "no" ; then
+elif test "${gmp_fail}" = "yes" ; then
 echo "
 Please install GMP and then reconfigure gretl.
 GMP is available from http://gmplib.org/
 "
 
-elif test "${have_mpfr}" = "no" ; then
+elif test "${mpfr_fail}" = "yes" ; then
 echo "
 Please install MPFR and then reconfigure gretl.
 MPFR is available from http://www.mpfr.org/
@@ -26277,6 +26297,7 @@ Configuration:
   TRAMO/SEATS support:                    ${have_tramo}
   libR support:                           ${have_libR}
   ODBC support:                           ${have_odbc}
+  GMP support:                            ${have_gmp}
   JSON parsing support:                   ${have_json_glib}
   Use xdg-utils in installation:          ${xdg_utils_msg}
 

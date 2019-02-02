@@ -41,9 +41,11 @@
 #define LOOP_DEBUG 0
 #define SUBST_DEBUG 0
 
-#include <gmp.h>
+#if HAVE_GMP
+# include <gmp.h>
 
 typedef mpf_t bigval;
+#endif
 
 enum loop_types {
     COUNT_LOOP,
@@ -60,6 +62,13 @@ enum loop_types {
                          l->type == DATED_LOOP || \
 			 l->type == EACH_LOOP)
 
+#if HAVE_GMP
+
+/* below: LOOP_PRINT, LOOP_MODEL and LOOP_STORE are
+   used only in "progressive" loops, which requires
+   GMP to preserve precision
+*/
+
 typedef struct {
     int lineno;    /* location: line number in loop */
     int n;         /* number of repetitions */
@@ -71,8 +80,6 @@ typedef struct {
     int *diff;     /* indicator for difference */
     char *na;      /* indicator for NAs in calculation */
 } LOOP_PRINT;
-
-/* below: used only in "progressive" loops */
 
 typedef struct {
     int lineno;             /* location: line number in loop */
@@ -99,6 +106,8 @@ typedef struct {
     gretlopt opt;   /* formatting option */
     DATASET *dset;  /* temporary data storage */
 } LOOP_STORE;
+
+#endif /* HAVE_GMP: progressive option supported */
 
 typedef enum {
     LOOP_PROGRESSIVE = 1 << 0,
@@ -174,8 +183,6 @@ struct LOOPSET_ {
     /* numbers of various subsidiary objects */
     int n_cmds;
     int n_models;
-    int n_loop_models;
-    int n_prints;
     int n_children;
 
     /* subsidiary objects */
@@ -183,12 +190,18 @@ struct LOOPSET_ {
     char **eachstrs;      /* for use with "foreach" loop */
     MODEL **models;       /* regular model pointers */
     int *model_lines;
-    LOOP_MODEL *lmodels;
-    LOOP_PRINT *prns;
-    LOOP_STORE store;
     LOOPSET *parent;
     LOOPSET **children;
     int parent_line;
+
+#if HAVE_GMP
+    /* "progressive" objects and counts thereof */
+    LOOP_MODEL *lmodels;
+    LOOP_PRINT *prns;
+    LOOP_STORE store;
+    int n_loop_models;
+    int n_prints;
+#endif
 };
 
 #define loop_is_progressive(l)  (l->flags & LOOP_PROGRESSIVE)
@@ -209,12 +222,16 @@ struct LOOPSET_ {
 
 static void controller_init (controller *clr);
 static int gretl_loop_prepare (LOOPSET *loop);
+static void controller_free (controller *clr);
+static void destroy_loop_stack (LOOPSET *loop);
+
+#if HAVE_GMP
+static int extend_loop_dataset (LOOP_STORE *lstore);
 static void loop_model_free (LOOP_MODEL *lmod);
 static void loop_print_free (LOOP_PRINT *lprn);
 static void loop_store_free (LOOP_STORE *lstore);
-static int extend_loop_dataset (LOOP_STORE *lstore);
-static void controller_free (controller *clr);
-static void destroy_loop_stack (LOOPSET *loop);
+static void loop_store_init (LOOP_STORE *lstore);
+#endif
 
 static int
 make_dollar_substitutions (char *str, int maxlen,
@@ -539,17 +556,6 @@ static int loop_attach_child (LOOPSET *loop, LOOPSET *child)
     return 0;
 }
 
-static void loop_store_init (LOOP_STORE *lstore)
-{
-    lstore->lineno = -1;
-    lstore->n = 0;
-    lstore->nvars = 0;
-    lstore->names = NULL;
-    lstore->fname = NULL;
-    lstore->opt = OPT_NONE;
-    lstore->dset = NULL;
-}
-
 static void gretl_loop_init (LOOPSET *loop)
 {
 #if LOOP_DEBUG > 1
@@ -567,6 +573,7 @@ static void gretl_loop_init (LOOPSET *loop)
     loop->idxval = 0;
     loop->brk = 0;
     *loop->eachname = '\0';
+    loop->eachstrs = NULL;
 
     controller_init(&loop->init);
     controller_init(&loop->test);
@@ -574,25 +581,24 @@ static void gretl_loop_init (LOOPSET *loop)
     controller_init(&loop->final);
 
     loop->n_cmds = 0;
-    loop->n_models = 0;
-    loop->n_loop_models = 0;
-    loop->n_prints = 0;
-
     loop->cmds = NULL;
-    loop->model_lines = NULL;
-
-    loop->eachstrs = NULL;
-
+    loop->n_models = 0;
     loop->models = NULL;
-    loop->lmodels = NULL;
-    loop->prns = NULL;
-
-    loop_store_init(&loop->store);
+    loop->model_lines = NULL;
 
     loop->parent = NULL;
     loop->children = NULL;
     loop->n_children = 0;
     loop->parent_line = 0;
+
+#if HAVE_GMP
+    /* "progressive" apparatus */
+    loop->n_loop_models = 0;
+    loop->lmodels = NULL;
+    loop->n_prints = 0;
+    loop->prns = NULL;
+    loop_store_init(&loop->store);
+#endif
 }
 
 static LOOPSET *gretl_loop_new (LOOPSET *parent)
@@ -660,24 +666,21 @@ void gretl_loop_destroy (LOOPSET *loop)
 	strings_array_free(loop->eachstrs, loop->itermax);
     }
 
+#if HAVE_GMP
     if (loop->lmodels != NULL) {
 	for (i=0; i<loop->n_loop_models; i++) {
-#if LOOP_DEBUG > 1
-	    fprintf(stderr, "freeing loop->lmodels[%d]\n", i);
-#endif
 	    loop_model_free(&loop->lmodels[i]);
 	}
 	free(loop->lmodels);
     }
-
     if (loop->prns != NULL) {
 	for (i=0; i<loop->n_prints; i++) {
 	    loop_print_free(&loop->prns[i]);
 	}
 	free(loop->prns);
     }
-
     loop_store_free(&loop->store);
+#endif
 
     if (loop->children != NULL) {
 	free(loop->children);
@@ -1643,7 +1646,9 @@ static void loop_cmds_init (LOOPSET *loop, int i1, int i2)
 
 static int gretl_loop_prepare (LOOPSET *loop)
 {
+#if HAVE_GMP
     mpf_set_default_prec(256);
+#endif
 
     /* allocate some initial lines/commands for loop */
     loop->cmds = malloc(LOOP_BLOCK * sizeof *loop->cmds);
@@ -1656,6 +1661,8 @@ static int gretl_loop_prepare (LOOPSET *loop)
 
     return 0;
 }
+
+#if HAVE_GMP
 
 static void loop_model_free (LOOP_MODEL *lmod)
 {
@@ -1962,6 +1969,17 @@ static int loop_store_set_filename (LOOP_STORE *lstore,
     return 0;
 }
 
+static void loop_store_init (LOOP_STORE *lstore)
+{
+    lstore->lineno = -1;
+    lstore->n = 0;
+    lstore->nvars = 0;
+    lstore->names = NULL;
+    lstore->fname = NULL;
+    lstore->opt = OPT_NONE;
+    lstore->dset = NULL;
+}
+
 /* check, allocate and initialize loop data storage */
 
 static int loop_store_start (LOOPSET *loop, const char *names,
@@ -2055,9 +2073,11 @@ static int loop_store_update (LOOPSET *loop, int j,
     return err;
 }
 
+#endif /* HAVE_GMP: progressive option supported */
+
 /* See if we already have a model recorder in place for the command on
-   line @lno of the loop.  If so, return it, else create a new one and
-   return it.
+   line @lno of the loop.  If so, fetch it, otherwise create a new one
+   and return it.
 */
 
 static MODEL *get_model_record_by_line (LOOPSET *loop, int lno, int *err)
@@ -2125,6 +2145,8 @@ int model_is_in_loop (const MODEL *pmod)
 
     return 0;
 }
+
+#if HAVE_GMP
 
 /* See if we already have a LOOP_MODEL in place for the command
    on line @lno of the loop.  If so, return it, else create
@@ -2284,6 +2306,8 @@ static int loop_print_update (LOOPSET *loop, int j, const char *names)
     return err;
 }
 
+#endif /* HAVE_GMP */
+
 static int add_more_loop_commands (LOOPSET *loop)
 {
     int nb = 1 + (loop->n_cmds + 1) / LOOP_BLOCK;
@@ -2388,6 +2412,14 @@ int gretl_loop_append_line (ExecState *s, DATASET *dset)
 	    err = E_DATA;
 	}
 
+#if !HAVE_GMP
+	if (opt & OPT_P) {
+	    gretl_errmsg_set("The progressive option is not available "
+			     "in this build");
+	    err = E_BADOPT;
+	}
+#endif
+
 	if (!err) {
 	    newloop = start_new_loop(spec, loop, dset, opt,
 				     &nested, &err);
@@ -2437,6 +2469,8 @@ int gretl_loop_append_line (ExecState *s, DATASET *dset)
 
     return err;
 }
+
+#if HAVE_GMP
 
 static void print_loop_coeff (const DATASET *dset,
 			      const LOOP_MODEL *lmod,
@@ -2617,6 +2651,75 @@ static int loop_store_save (LOOP_STORE *lstore, PRN *prn)
     return err;
 }
 
+static int extend_loop_dataset (LOOP_STORE *lstore)
+{
+    double *x;
+    int oldn = lstore->dset->n;
+    int n = oldn + DEFAULT_NOBS;
+    int i, t;
+
+    for (i=0; i<lstore->dset->v; i++) {
+	x = realloc(lstore->dset->Z[i], n * sizeof *x);
+	if (x == NULL) {
+	    return E_ALLOC;
+	}
+	lstore->dset->Z[i] = x;
+	for (t=oldn; t<n; t++) {
+	    lstore->dset->Z[i][t] = (i == 0)? 1.0 : NADBL;
+	}
+    }
+
+    lstore->dset->n = n;
+    lstore->dset->t2 = n - 1;
+
+    ntodate(lstore->dset->endobs, n - 1, lstore->dset);
+
+    return 0;
+}
+
+static void progressive_loop_zero (LOOPSET *loop)
+{
+    int i;
+
+    /* What we're doing here is debatable: could we get
+       away with just "zeroing" the relevant structures
+       in an appropriate way, rather than destroying
+       them? Maybe, but so long as we're destroying them
+       we have to remove the "started" flags from
+       associated "print" and "store" commands, or else
+       things will go awry on the second execution of
+       a nested progressive loop.
+    */
+
+    if (loop->cmds != NULL) {
+	for (i=0; i<loop->n_cmds; i++) {
+	    if (loop->cmds[i].ci == PRINT ||
+		loop->cmds[i].ci == STORE) {
+		/* reset */
+		loop->cmds[i].flags &= ~LOOP_CMD_PDONE;
+	    }
+	}
+    }
+
+    for (i=0; i<loop->n_loop_models; i++) {
+	loop_model_free(&loop->lmodels[i]);
+    }
+
+    loop->lmodels = NULL;
+    loop->n_loop_models = 0;
+
+    for (i=0; i<loop->n_prints; i++) {
+	loop_print_free(&loop->prns[i]);
+    }
+
+    loop->prns = NULL;
+    loop->n_prints = 0;
+
+    loop_store_free(&loop->store);
+}
+
+#endif /* HAVE_GMP */
+
 #define loop_literal(l,i) (l->cmds[i].flags & LOOP_CMD_LIT)
 
 /**
@@ -2658,6 +2761,7 @@ static void print_loop_results (LOOPSET *loop, const DATASET *dset,
 	    }
 	}
 
+#if HAVE_GMP
 	if (loop_is_progressive(loop)) {
 	    if (plain_model_ci(ci) && !(opt & OPT_Q)) {
 		loop_model_print(&loop->lmodels[j], dset, prn);
@@ -2671,6 +2775,7 @@ static void print_loop_results (LOOPSET *loop, const DATASET *dset,
 		loop_store_save(&loop->store, prn);
 	    }
 	}
+#endif
     }
 }
 
@@ -2783,73 +2888,6 @@ static int substitute_dollar_targ (char *str, int maxlen,
     return err;
 }
 
-static int extend_loop_dataset (LOOP_STORE *lstore)
-{
-    double *x;
-    int oldn = lstore->dset->n;
-    int n = oldn + DEFAULT_NOBS;
-    int i, t;
-
-    for (i=0; i<lstore->dset->v; i++) {
-	x = realloc(lstore->dset->Z[i], n * sizeof *x);
-	if (x == NULL) {
-	    return E_ALLOC;
-	}
-	lstore->dset->Z[i] = x;
-	for (t=oldn; t<n; t++) {
-	    lstore->dset->Z[i][t] = (i == 0)? 1.0 : NADBL;
-	}
-    }
-
-    lstore->dset->n = n;
-    lstore->dset->t2 = n - 1;
-
-    ntodate(lstore->dset->endobs, n - 1, lstore->dset);
-
-    return 0;
-}
-
-static void progressive_loop_zero (LOOPSET *loop)
-{
-    int i;
-
-    /* What we're doing here is debatable: could we get
-       away with just "zeroing" the relevant structures
-       in an appropriate way, rather than destroying
-       them? Maybe, but so long as we're destroying them
-       we have to remove the "started" flags from
-       associated "print" and "store" commands, or else
-       things will go awry on the second execution of
-       a nested progressive loop.
-    */
-
-    if (loop->cmds != NULL) {
-	for (i=0; i<loop->n_cmds; i++) {
-	    if (loop->cmds[i].ci == PRINT ||
-		loop->cmds[i].ci == STORE) {
-		/* reset */
-		loop->cmds[i].flags &= ~LOOP_CMD_PDONE;
-	    }
-	}
-    }
-
-    for (i=0; i<loop->n_loop_models; i++) {
-	loop_model_free(&loop->lmodels[i]);
-    }
-
-    loop->lmodels = NULL;
-    loop->n_loop_models = 0;
-
-    for (i=0; i<loop->n_prints; i++) {
-	loop_print_free(&loop->prns[i]);
-    }
-
-    loop->prns = NULL;
-    loop->n_prints = 0;
-
-    loop_store_free(&loop->store);
-}
-
 /* When re-executing a loop that has been saved onto its
    calling function, the loop index variable may have been
    destroyed, in which case it has to be recreated.
@@ -2920,6 +2958,7 @@ static int top_of_loop (LOOPSET *loop, DATASET *dset)
 	/* initialization, in case this loop is being run more than
 	   once (i.e. it's embedded in an outer loop)
 	*/
+#if HAVE_GMP
 	if (loop_is_progressive(loop)) {
 	    progressive_loop_zero(loop);
 	} else {
@@ -2927,6 +2966,11 @@ static int top_of_loop (LOOPSET *loop, DATASET *dset)
 	    loop->models = NULL;
 	    loop->n_models = 0;
 	}
+#else
+	free(loop->models);
+	loop->models = NULL;
+	loop->n_models = 0;
+#endif /* HAVE_GMP */
     }
 
     return err;
@@ -3279,6 +3323,8 @@ static int do_compile_conditional (LOOPSET *loop, int j)
     }
 }
 
+#if HAVE_GMP
+
 static int model_command_post_process (ExecState *s,
 				       DATASET *dset,
 				       LOOPSET *loop,
@@ -3316,6 +3362,40 @@ static int model_command_post_process (ExecState *s,
 
     return err;
 }
+
+#else
+
+static int model_command_post_process (ExecState *s,
+				       DATASET *dset,
+				       LOOPSET *loop,
+				       int j)
+{
+    int moderr = check_gretl_errno();
+    int err = 0;
+
+    if (moderr) {
+	if (model_print_deferred(s->cmd->opt)) {
+	    err = moderr;
+	} else {
+	    errmsg(moderr, s->prn);
+	}
+    } else if (model_print_deferred(s->cmd->opt)) {
+	MODEL *pmod = get_model_record_by_line(loop, j, &err);
+
+	if (!err) {
+	    swap_models(s->model, pmod);
+	    pmod->ID = j + 1;
+	    set_as_last_model(pmod, GRETL_OBJ_EQN);
+	    model_count_minus(NULL);
+	}
+    } else {
+	loop_print_save_model(s->model, dset, s->prn, s);
+    }
+
+    return err;
+}
+
+#endif /* !HAVE_GMP */
 
 static int maybe_preserve_loop (LOOPSET *loop)
 {
@@ -3397,6 +3477,8 @@ static int block_model (CMD *cmd)
 	 !strcmp(cmd->param, "gmm"));
 }
 
+#if HAVE_GMP
+
 #define not_ok_in_progloop(c) (NEEDS_MODEL_CHECK(c) || \
 			       c == NLS ||  \
 			       c == MLE ||  \
@@ -3431,6 +3513,8 @@ static int handle_prog_command (LOOPSET *loop, int j,
 
     return handled;
 }
+
+#endif /* HAVE_GMP */
 
 #define LTRACE 0
 
@@ -3722,8 +3806,10 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		}
 	    } else if (cmd->ci == DELEET && !(cmd->opt & (OPT_F | OPT_T))) {
 		err = loop_delete_object(loop, cmd, prn);
+#if HAVE_GMP
 	    } else if (progressive && handle_prog_command(loop, j, cmd, &err)) {
 		; /* OK, or not */
+#endif
 	    } else {
 		/* send command to the regular processor */
 		int catch = cmd->flags & CMD_CATCH;

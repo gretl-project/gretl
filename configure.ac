@@ -45,8 +45,11 @@ use_xdg="yes"
 use_xdg_utils="no"
 try_xdg_utils="yes"
 use_gsf="no"
+try_gmp="yes"
 have_gmp="no"
 have_mpfr="no"
+gmp_fail="no"
+mpfr_fail="no"
 have_lapack="no"
 have_fftw3="no"
 seek_inet_addr="no"
@@ -166,6 +169,13 @@ AC_ARG_ENABLE(json,
 [if test "$enableval" = "no"
 then
   try_json_glib=no
+fi])
+
+AC_ARG_ENABLE(gmp,
+[  --disable-gmp           Don't try to include GMP support],
+[if test "$enableval" = "no"
+then
+  try_gmp=no
 fi])
 
 AC_ARG_ENABLE(xdg-utils,
@@ -466,8 +476,13 @@ AC_SUBST(have_zlib)
 dnl
 dnl Check for GMP and MPFR
 dnl
-AM_PATH_GMP(4.0.1, have_gmp="yes")
-AM_PATH_MPFR(2.2.0, have_mpfr="yes")
+if test "$try_gmp" = "yes" ; then
+  AM_PATH_GMP(4.0.1, have_gmp="yes", gmp_fail="yes")
+  AM_PATH_MPFR(2.2.0, have_mpfr="yes", gmp_fail="yes")
+  if test "$have_gmp" = "yes" -a "$have_mpfr" = "yes" ; then
+    AC_DEFINE(HAVE_GMP)
+  fi
+fi
 
 dnl
 dnl Check for LAPACK
@@ -1115,13 +1130,13 @@ Please install fftw3 and then reconfigure gretl.
 fftw3 is available from http://www.fftw.org/
 "
 
-elif test "${have_gmp}" = "no" ; then
+elif test "${gmp_fail}" = "yes" ; then
 echo "
 Please install GMP and then reconfigure gretl.
 GMP is available from http://gmplib.org/
 "
 
-elif test "${have_mpfr}" = "no" ; then
+elif test "${mpfr_fail}" = "yes" ; then
 echo "
 Please install MPFR and then reconfigure gretl.
 MPFR is available from http://www.mpfr.org/
@@ -1178,6 +1193,7 @@ Configuration:
   TRAMO/SEATS support:                    ${have_tramo}
   libR support:                           ${have_libR}
   ODBC support:                           ${have_odbc}
+  GMP support:                            ${have_gmp}
   JSON parsing support:                   ${have_json_glib}
   Use xdg-utils in installation:          ${xdg_utils_msg}
 

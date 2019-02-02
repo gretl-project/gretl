@@ -2377,6 +2377,8 @@ static void form_Qy (double *y, int T)
     y[T-1] = lag1;
 }
 
+#if HAVE_GMP
+
 static int mp_butterworth (const double *x, double *bw, int T,
 			   int order, double cutoff)
 {
@@ -2391,6 +2393,8 @@ static int mp_butterworth (const double *x, double *bw, int T,
 
     return (*mpfun) (x, bw, T, order, cutoff);
 }
+
+#endif
 
 #if 0
 
@@ -2515,12 +2519,19 @@ int butterworth_filter (const double *x, double *bw, const DATASET *dset,
 
     bad_lambda = set_bw_lambda(cutoff, n, &lam1, &lam2);
 
+#if HAVE_GMP
     if (bad_lambda > 1) {
 	gretl_errmsg_set("Butterworth: infeasible lambda value");
 	return E_DATA;
     } else if (bad_lambda) {
 	return mp_butterworth(x, y, T, n, cutoff);
     }
+#else
+    if (bad_lambda) {
+	gretl_errmsg_set("Butterworth: infeasible lambda value");
+	return E_DATA;
+    }
+#endif
 
     /* the workspace we need for everything except the
        Toeplitz solver */
@@ -4288,6 +4299,8 @@ int list_linear_combo (double *y, const int *list,
 
 #define MDEBUG 0
 
+#if HAVE_GMP
+
 static int try_mp_midas_weights (const double *theta, int k,
 				 gretl_matrix *w, int method)
 {
@@ -4316,6 +4329,8 @@ static int try_mp_midas_weights (const double *theta, int k,
 
     return err;
 }
+
+#endif /* HAVE_GMP */
 
 #define INF_CHECK_VERBOSE 0
 
@@ -4450,6 +4465,7 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 	}
     }
 
+#if HAVE_GMP
     if (*err == E_NAN || (method != MIDAS_ALMONP && wsum < eps)) {
 	/* attempt a fix-up using multiple precision */
 	int save_errno = errno;
@@ -4462,6 +4478,7 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
 	    using_mp = 1;
 	}
     }
+#endif
 
     if (errno) {
 	gretl_errmsg_sprintf("Failed to calculate MIDAS weights: %s",
@@ -4498,6 +4515,8 @@ gretl_matrix *midas_weights (int p, const gretl_matrix *m,
     return w;
 }
 
+#if HAVE_GMP
+
 static int try_mp_midas_grad (const double *theta,
 			      gretl_matrix *G,
 			      int method)
@@ -4527,6 +4546,8 @@ static int try_mp_midas_grad (const double *theta,
 
     return err;
 }
+
+#endif
 
 static int mgrad_zero (const gretl_matrix *G)
 {
@@ -4723,6 +4744,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 
  range_error:
 
+#if HAVE_GMP
     if (*err == E_NAN || mgrad_zero(G)) {
 	/* attempt a fix-up using multiple precision */
 	int save_errno = errno;
@@ -4733,6 +4755,7 @@ gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 	    errno = save_errno;
 	}
     }
+#endif
 
     gretl_matrix_free(w);
 

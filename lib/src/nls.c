@@ -2040,6 +2040,7 @@ MODEL GNR (int *glist, DATASET *gdset, gretlopt opt, PRN *prn)
 	errmsg(gnr.errcode, prn);
     } else if (gnr.list[0] < glist[0]) {
 	/* excessive collinearity */
+#if HAVE_GMP
 	MODEL mpmod = mp_ols(glist, gdset, OPT_A);
 
 	if (mpmod.errcode) {
@@ -2057,6 +2058,10 @@ MODEL GNR (int *glist, DATASET *gdset, gretlopt opt, PRN *prn)
 	    }
 	    gretl_model_set_int(&gnr, "near-singular", 1);
 	}
+#else
+	gnr.errcode = E_JACOBIAN;
+	gretl_model_set_int(&gnr, "near-singular", 2);
+#endif
     }
 
     return gnr;

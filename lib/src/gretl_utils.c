@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -49,8 +49,11 @@
 # include "gretl_foreign.h"
 #endif
 
+#if HAVE_GMP
+# include <gmp.h>
+#endif
+
 #include <errno.h>
-#include <gmp.h>
 
 static void gretl_tests_cleanup (void);
 static int have_optimized_blas (void);
@@ -72,8 +75,8 @@ double date_as_double (int t, int pd, double sd0)
     ysd = (int) sd0;
 
     if (pd == 1) {
-	return (double) (ysd + t);  
-    } 
+	return (double) (ysd + t);
+    }
 
     pp = pd;
     while ((pp = pp / 10)) {
@@ -98,7 +101,7 @@ double date_as_double (int t, int pd, double sd0)
  * @j: column number (0-based)
  * @nrows: number of rows (and columns) in symmetric matrix.
  *
- * Given a (row, column) reference into a symmetric 2-dimensional 
+ * Given a (row, column) reference into a symmetric 2-dimensional
  * matrix A, finds the index into a 1-dimensional array x
  * composed of the non-redundant (lower) elements of A.
  *
@@ -128,15 +131,15 @@ int ijton (int i, int j, int nrows)
  * @targ: arrat to which to write.
  * @src: array from which to read.
  * @dset: data information struct.
- * 
+ *
  * Copy from @src to @targ, skipping any missing values,
  * over the sample range defined in @dset.
  *
  * Returns: the number of valid observations put into @targ.
  */
 
-int transcribe_array (double *targ, const double *src, 
-		      const DATASET *dset) 
+int transcribe_array (double *targ, const double *src,
+		      const DATASET *dset)
 {
     int t, n = 0;
 
@@ -152,9 +155,9 @@ int transcribe_array (double *targ, const double *src,
 /**
  * gretl_isdummy:
  * @t1: starting observation.
- * @t2: ending observation. 
+ * @t2: ending observation.
  * @x: data series to examine.
- * 
+ *
  * Check whether series @x has only 0 or 1 values over the
  * given sample range (or possibly missing values).
  *
@@ -184,14 +187,14 @@ int gretl_isdummy (int t1, int t2, const double *x)
     }
 
     return 0;
-} 
+}
 
 /**
  * gretl_iszero:
  * @x: data series to examine.
  * @t1: starting observation.
- * @t2: ending observation. 
- * 
+ * @t2: ending observation.
+ *
  * Check whether series @x has only zero values over the
  * given sample range (or possibly missing values).
  *
@@ -216,8 +219,8 @@ int gretl_iszero (int t1, int t2, const double *x)
  * gretl_isconst:
  * @x: data series to examine.
  * @t1: starting observation.
- * @t2: ending observation. 
- * 
+ * @t2: ending observation.
+ *
  * Check whether series @x is constant over the
  * given sample range (aside from any missing values).
  *
@@ -253,8 +256,8 @@ int gretl_isconst (int t1, int t2, const double *x)
  * gretl_isunits:
  * @x: data series to examine.
  * @t1: starting observation.
- * @t2: ending observation. 
- * 
+ * @t2: ending observation.
+ *
  * Check whether series @x equals 1 over the
  * given sample range (aside from any missing values).
  *
@@ -279,10 +282,10 @@ int gretl_isunits (int t1, int t2, const double *x)
  * gretl_iscount:
  * @x: data series to examine.
  * @t1: starting observation.
- * @t2: ending observation. 
- * 
+ * @t2: ending observation.
+ *
  * Check whether series @x contains nothing but non-negative
- * integer values (some of which are > 1) over the 
+ * integer values (some of which are > 1) over the
  * given sample range.
  *
  * Returns: 1 if so, otherwise 0.
@@ -356,16 +359,16 @@ static int few_vals (int t1, int t2, const double *x, double *ratio)
  * gretl_isdiscrete:
  * @x: data series to examine.
  * @t1: starting observation.
- * @t2: ending observation. 
+ * @t2: ending observation.
  *
  * Checks the variable @x over the range @t1 to @t2 for discreteness.
  * This is a heuristic whose components are (a) whether the values
  * are "fairly round" (multiples of 0.25) or not, and, if test (a) is
  * passed, (b) whether the variable takes on only "few" distinct
  * values.
- * 
+ *
  * Returns: 0 if test (a) is not passed or the number of distinct values
- * is > 32; else 1 if the number of distinct values is <= 32; else 2 if 
+ * is > 32; else 1 if the number of distinct values is <= 32; else 2 if
  * the number of distinct values is <= 4.  A return of 1 is supposed
  * to indicate that it's "reasonable" to treat @x as discrete, while
  * a return of 2 indicates that it's probably unreasonable _not_ to
@@ -427,8 +430,8 @@ int gretl_isdiscrete (int t1, int t2, const double *x)
  * gretl_ispositive:
  * @x: data series to examine.
  * @t1: starting observation.
- * @t2: ending observation. 
- * @strict: boolean, strict inequality. 
+ * @t2: ending observation.
+ * @strict: boolean, strict inequality.
  *
  * Returns: 1 if all non-missing values in @x, over the range @t1 to
  * @t2, are positive (if strict==1) or non-negative (if strict==0),
@@ -460,13 +463,13 @@ int gretl_ispositive (int t1, int t2, const double *x, int strict)
  * gretl_is_oprobit_ok:
  * @x: data series to examine.
  * @t1: starting observation.
- * @t2: ending observation. 
+ * @t2: ending observation.
  *
  * Checks the variable @x over the range @t1 to @t2 for its
  * suitability as the dependent variable in an ordered probit
- * analysis.  The criterion used is that the variable has 
+ * analysis.  The criterion used is that the variable has
  * only non-negative integer values.
- * 
+ *
  * Returns: 1 if the test succeeds, otherwise 0.
  */
 
@@ -491,8 +494,8 @@ int gretl_is_oprobit_ok (int t1, int t2, const double *x)
 /**
  * true_const:
  * @v: index number of variable to test.
- * @dset: dataset struct. 
- * 
+ * @dset: dataset struct.
+ *
  * Check whether variable Z[v] equals 1 over the sample
  * range given in @dset (aside from any missing values).
  *
@@ -517,7 +520,7 @@ int true_const (int v, const DATASET *dset)
  *
  * Comparison function for use with qsort.  Sorts doubles in
  * ascending order.
- * 
+ *
  * Returns: appropriate value for qsort.
  */
 
@@ -540,17 +543,17 @@ int gretl_compare_doubles (const void *a, const void *b)
     }
 #else
     return (*da > *db) - (*da < *db);
-#endif    
+#endif
 }
 
 /**
  * gretl_inverse_compare_doubles:
  * @a: pointer to first element to compare.
  * @b: pointer to second element to compare.
- * 
+ *
  * Comparison function for use with qsort.  Sorts doubles in
  * descending order.
- * 
+ *
  * Returns: appropriate value for qsort.
  */
 
@@ -559,7 +562,7 @@ int gretl_inverse_compare_doubles (const void *a, const void *b)
     const double *da = (const double *) a;
     const double *db = (const double *) b;
 
-#if NAN_HIGH    
+#if NAN_HIGH
     if (isnan(*da) || isnan(*db)) {
 	if (!isnan(*da)) {
 	    return 1;
@@ -570,10 +573,10 @@ int gretl_inverse_compare_doubles (const void *a, const void *b)
 	}
     } else {
 	return (*da < *db) - (*da > *db);
-    }      
+    }
 #else
     return (*da < *db) - (*da > *db);
-#endif    
+#endif
 }
 
 /**
@@ -583,7 +586,7 @@ int gretl_inverse_compare_doubles (const void *a, const void *b)
  *
  * Comparison function for use with qsort.  Sorts integers in
  * ascending order.
- * 
+ *
  * Returns: appropriate value for qsort.
  */
 
@@ -591,7 +594,7 @@ int gretl_compare_ints (const void *a, const void *b)
 {
     const int *ia = (const int *) a;
     const int *ib = (const int *) b;
-     
+
     return *ia - *ib;
 }
 
@@ -643,7 +646,7 @@ int count_distinct_int_values (const int *x, int n)
  * @m: number of distinct values in array.
  * @n: number of elements in array.
  *
- * Rearranges the sorted array @x such that the first @m 
+ * Rearranges the sorted array @x such that the first @m
  * elements contain the @m distinct values in sorted order.
  *
  * Returns: 0 on success, 1 on error (in case @m is greater
@@ -671,7 +674,7 @@ int rearrange_id_array (double *x, int m, int n)
  * printlist:
  * @list: array of integers.
  * @msg: message to print along with @list (or NULL).
- * 
+ *
  * Prints to stderr the given @list of integers along with a message.
  */
 
@@ -753,7 +756,7 @@ int gretl_calculate_criteria (double ess, int n, int k,
 	*aic = c[0];
 	*bic = c[1];
 	*hqc = c[2];
-    }	
+    }
 
     return err;
 }
@@ -808,7 +811,7 @@ real_format_obs (char *obs, int maj, int min, int pd, char sep)
  * @min: minor period (e.g. quarter, month).
  * @pd: data frequency.
  *
- * Prints to @obs the gretl-type date string representing 
+ * Prints to @obs the gretl-type date string representing
  * the observation given by @maj, @min and @pd.
  *
  * Returns: @obs.
@@ -840,7 +843,7 @@ static int get_stobs_maj_min (char *stobs, int structure,
     }
 
     if (!err) {
-	if (dotc > 1 || *stobs == '.' || 
+	if (dotc > 1 || *stobs == '.' ||
 	    stobs[strlen(stobs) - 1] == '.') {
 	    err = 1;
 	}
@@ -863,10 +866,10 @@ static int get_stobs_maj_min (char *stobs, int structure,
     return err;
 }
 
-static int 
+static int
 catch_setobs_errors (const char *stobs, int pd, int min, int structure)
 {
-    int panel = structure == STACKED_TIME_SERIES || 
+    int panel = structure == STACKED_TIME_SERIES ||
 	structure == STACKED_CROSS_SECTION;
     int err = 0;
 
@@ -885,7 +888,7 @@ catch_setobs_errors (const char *stobs, int pd, int min, int structure)
 			       "frequency > 1"));
 	    err = 1;
 	} else if (min > pd) {
-	    gretl_errmsg_sprintf(_("starting obs '%s' is incompatible with frequency"), 
+	    gretl_errmsg_sprintf(_("starting obs '%s' is incompatible with frequency"),
 				 stobs);
 	    err = 1;
 	} else if (structure == CROSS_SECTION) {
@@ -915,7 +918,7 @@ static void maybe_fix_daily_start (guint32 *ed, int pd)
 	/* 5-day data: saturday not valid */
 	fix = 2;
     }
-    
+
     if (fix) {
 	char *fixed, *msg;
 
@@ -933,7 +936,7 @@ static void maybe_fix_daily_start (guint32 *ed, int pd)
 
 #define recognized_ts_frequency(f) (f == 4 || f == 12 || f == 24)
 
-static int process_starting_obs (const char *stobs_in, int pd, 
+static int process_starting_obs (const char *stobs_in, int pd,
 				 int *pstructure, double *psd0,
 				 guint32 *ped0)
 {
@@ -944,8 +947,8 @@ static int process_starting_obs (const char *stobs_in, int pd,
     int dated = 0;
     int err = 0;
 
-    if (structure == CROSS_SECTION || 
-	structure == STACKED_TIME_SERIES || 
+    if (structure == CROSS_SECTION ||
+	structure == STACKED_TIME_SERIES ||
 	structure == STACKED_CROSS_SECTION) {
 	maybe_tseries = 0;
     }
@@ -993,8 +996,8 @@ static int process_starting_obs (const char *stobs_in, int pd,
 	    return invalid_stobs(stobs);
 	}
 
-	if ((pd == 5 || pd == 6 || pd == 7 || pd == 52) && 
-	    min == 0 && maybe_tseries) {  
+	if ((pd == 5 || pd == 6 || pd == 7 || pd == 52) &&
+	    min == 0 && maybe_tseries) {
 	    /* catch undated daily or weekly data */
 	    structure = TIME_SERIES;
 	} else {
@@ -1015,7 +1018,7 @@ static int process_starting_obs (const char *stobs_in, int pd,
 		    structure = SPECIAL_TIME_SERIES;
 		}
 		real_format_obs(stobs, maj, min, pd, '.');
-		if (structure == STRUCTURE_UNKNOWN && 
+		if (structure == STRUCTURE_UNKNOWN &&
 		    recognized_ts_frequency(pd)) {
 		    structure = TIME_SERIES;
 		}
@@ -1044,7 +1047,7 @@ static int process_starting_obs (const char *stobs_in, int pd,
  * panel structure via two variables representing unit and period
  * respectively. For data already set as panel, %OPT_G to set panel
  * group names or %OPT_I to set panel time-dimension information.
- * 
+ *
  * Set the frequency and initial observation for a dataset, or
  * in the case of a panel dataset, extra group or time information.
  *
@@ -1085,7 +1088,7 @@ int set_obs (const char *parm1, const char *parm2,
     if (opt & OPT_R) {
 	/* restructure panel: "hidden" option */
 	return switch_panel_orientation(dset);
-    }    
+    }
 
     if (opt == OPT_NONE && parm1 == NULL && parm2 == NULL) {
 	/* we'll just print current obs info */
@@ -1147,14 +1150,14 @@ int set_obs (const char *parm1, const char *parm2,
 	dset->panel_pd = pd;
 	dset->panel_sd0 = sd0;
 	return 0;
-    }   
+    }
 
     if (panel && dset->n % pd != 0) {
 	int sts = structure == STACKED_TIME_SERIES;
 
 	gretl_errmsg_sprintf(_("Panel datasets must be balanced.\n"
 			       "The number of observations (%d) is not a multiple\n"
-			       "of the number of %s (%d)."), 
+			       "of the number of %s (%d)."),
 			     dset->n, sts ? _("periods") : _("units"), pd);
 	return E_DATA;
     }
@@ -1175,7 +1178,7 @@ int set_obs (const char *parm1, const char *parm2,
 	calendar_date_string(dset->stobs, 0, dset);
 	calendar_date_string(dset->endobs, dset->n - 1, dset);
     } else {
-	ntodate(dset->stobs, 0, dset); 
+	ntodate(dset->stobs, 0, dset);
 	ntodate(dset->endobs, dset->n - 1, dset);
     }
 
@@ -1189,7 +1192,7 @@ int set_obs (const char *parm1, const char *parm2,
 #if 0
     fprintf(stderr, "setobs: pd=%d, stobs=%s, sd0=%g, markers=%d, S=%p\n",
 	    dset->pd, dset->stobs, dset->sd0, dset->markers, (void *) dset->S);
-#endif    
+#endif
 
     return err;
 }
@@ -1200,13 +1203,13 @@ int set_obs (const char *parm1, const char *parm2,
  * @pd: data frequency.
  * @stobs: string representation of starting observation.
  * @opt: options flags.
- * 
+ *
  * See the "setobs" command.
  *
  * Returns: 0 on success, non-zero code on error.
  */
 
-int simple_set_obs (DATASET *dset, int pd, const char *stobs, 
+int simple_set_obs (DATASET *dset, int pd, const char *stobs,
 		    gretlopt opt)
 {
     int structure = STRUCTURE_UNKNOWN;
@@ -1243,7 +1246,7 @@ int simple_set_obs (DATASET *dset, int pd, const char *stobs,
 
 	gretl_errmsg_sprintf(_("Panel datasets must be balanced.\n"
 			       "The number of observations (%d) is not a multiple\n"
-			       "of the number of %s (%d)."), 
+			       "of the number of %s (%d)."),
 			     dset->n, sts ? _("periods") : _("units"), pd);
 	return E_DATA;
     }
@@ -1264,7 +1267,7 @@ int simple_set_obs (DATASET *dset, int pd, const char *stobs,
 	calendar_date_string(dset->stobs, 0, dset);
 	calendar_date_string(dset->endobs, dset->n - 1, dset);
     } else {
-	ntodate(dset->stobs, 0, dset); 
+	ntodate(dset->stobs, 0, dset);
 	ntodate(dset->endobs, dset->n - 1, dset);
     }
 
@@ -1279,7 +1282,7 @@ int simple_set_obs (DATASET *dset, int pd, const char *stobs,
  * gretl_double_from_string:
  * @s: string to examine.
  * @err: location to receive error code.
- * 
+ *
  * If @s is a valid string representation of a double,
  * return its value, otherwise if @s is the name of a
  * scalar variable, return the value of that variable,
@@ -1320,7 +1323,7 @@ double gretl_double_from_string (const char *s, int *err)
  * gretl_int_from_string:
  * @s: string to examine.
  * @err: location to receive error code.
- * 
+ *
  * If @s is a valid string representation of an integer,
  * return that integer, otherwise if @s is the name of a
  * scalar variable, return the value of that variable,
@@ -1339,10 +1342,10 @@ int gretl_int_from_string (const char *s, int *err)
 	*err = E_DATA;
 	return 0;
     }
-    
+
     if (isalpha(*s)) {
 	double x = get_scalar_value_by_name(s, err);
-	
+
 	if (!*err) {
 	    n = gretl_int_from_double(x, err);
 	}
@@ -1364,7 +1367,7 @@ int gretl_int_from_string (const char *s, int *err)
 /**
  * positive_int_from_string:
  * @s: string to examine.
- * 
+ *
  * If @s is a valid string representation of a positive integer,
  * return that integer, otherwise return -1.
  *
@@ -1383,7 +1386,7 @@ int positive_int_from_string (const char *s)
 	ret = strtol(s, &test, 10);
 	if (*test != '\0' || !strcmp(s, test) || errno == ERANGE) {
 	    ret = -1;
-	} 
+	}
     }
 
     return ret;
@@ -1408,14 +1411,14 @@ static int letter_to_int (char c)
 /**
  * gretl_version_number:
  * @version: gretl program version in string form.
- * 
+ *
  * Returns: the integer gretl version number.
  */
 
 int gretl_version_number (const char *version)
 {
     int vnum = 0;
-    
+
     if (atoi(version) >= 2015) {
 	/* as in "2015d" and subsequent releases */
 	int Y;
@@ -1478,7 +1481,7 @@ static int old_style_gretl_version_number (int v)
  * gretl_version_string:
  * @targ: string into which to write (9 bytes minimum).
  * @vnum: integer program version number.
- * 
+ *
  * Returns: the string representation of @vnum, in @targ.
  */
 
@@ -1514,7 +1517,7 @@ char *gretl_version_string (char *targ, int vnum)
 
 	sprintf(targ, "%d.%d.%d", x, y, z);
     }
-    
+
     return targ;
 }
 
@@ -1522,7 +1525,7 @@ char *gretl_version_string (char *targ, int vnum)
  * varnum_from_string:
  * @str: string representation of an integer ID number.
  * @dset: dataset information.
- * 
+ *
  * Returns: integer ID number, or -1 on failure.
  */
 
@@ -1532,8 +1535,8 @@ int varnum_from_string (const char *str, DATASET *dset)
 
     if (v <= 0 || v >= dset->v) {
 	v = -1;
-    } 
-    
+    }
+
     return v;
 }
 
@@ -1541,7 +1544,7 @@ int varnum_from_string (const char *str, DATASET *dset)
  * gretl_int_from_double:
  * @x: double-precision floating point value
  * @err: location to receive error code.
- * 
+ *
  * Returns: the value of @x converted to an integer, if
  * possible. Otherwise returns -1 with @err set to a
  * non-zero value. Note that it is considered an
@@ -1566,7 +1569,7 @@ int gretl_int_from_double (double x, int *err)
  * gretl_type_from_name:
  * @s: the name to check.
  * @dset: dataset information.
- * 
+ *
  * Returns: non-zero if @s is the name of an existing
  * series, matrix, scalar, list, string or bundle,
  * otherwise 0.
@@ -1585,7 +1588,7 @@ GretlType gretl_type_from_name (const char *s, const DATASET *dset)
  * copyvec:
  * @src: array of doubles.
  * @n: number of elements to copy.
- * 
+ *
  * Returns: an allocated copy of the first @n elements of
  * array @src, or %NULL on failure.
  */
@@ -1635,7 +1638,7 @@ void doubles_array_free (double **X, int m)
  * Allocates a 2-dimensional array of doubles, that is,
  * @m arrays each containing @n elements.  If @n is
  * zero the sub-arrays are just set to %NULL.
- * 
+ *
  * Returns: the allocated array, or %NULL on failure.
  */
 
@@ -1679,7 +1682,7 @@ double **doubles_array_new (int m, int n)
  * Works just as doubles_array_new(), except that on
  * successful allocation all values in the arrays are
  * set to zero.
- * 
+ *
  * Returns: the allocated array, or %NULL on failure.
  */
 
@@ -1705,10 +1708,10 @@ double **doubles_array_new0 (int m, int n)
  * @X: original two-dimensional array.
  * @m: number of sub-arrays in @X.
  * @new_n: new length of each sub-array.
- * 
+ *
  * For each of the @m sub-arrays in @X, reallocate to
  * a length of @new_n.
- * 
+ *
  * Returns: 0 on success, non-zero on error.
  */
 
@@ -1812,21 +1815,21 @@ static int gp_fatal (const char *cmd, const char *s)
     if (strstr(cmd, "gnuplot") == NULL) {
 	return 0;
     }
-    
+
     /* wx and C++ ABI non-issue */
     if (strstr(s, "Warning: Mismatch")) {
 	return 0;
     }
 
-#ifdef OS_OSX   
+#ifdef OS_OSX
     /* cairo on later OS X */
     if (strstr(s, "CGFont")) {
 	return 0;
     }
-#endif    
-    
-    /* "Could not find/open font when opening font X, using default" 
-       "gnuplot_x11: Some character sets not available" 
+#endif
+
+    /* "Could not find/open font when opening font X, using default"
+       "gnuplot_x11: Some character sets not available"
        "Warning: empty y2 range..."
        pango warning for, e.g., FreeSans font w/o GPOS table
        pango error on quartz
@@ -1889,7 +1892,7 @@ int gretl_spawn (char *cmdline)
 
     if (ret) {
 	fprintf(stderr, "Failed command: '%s'\n", cmdline);
-    } 
+    }
 
     return ret;
 }
@@ -1898,7 +1901,7 @@ int gretl_spawn (char *cmdline)
 
 /* file copying */
 
-int gretl_copy_file (const char *src, const char *dest) 
+int gretl_copy_file (const char *src, const char *dest)
 {
     FILE *srcfd, *destfd;
     char buf[8192];
@@ -1908,10 +1911,10 @@ int gretl_copy_file (const char *src, const char *dest)
 	gretl_errmsg_set("Source and destination files are the same");
 	return E_FOPEN;
     }
-   
+
     if ((srcfd = gretl_fopen(src, "rb")) == NULL) {
 	gretl_errmsg_sprintf(_("Couldn't open %s"), src);
-	return E_FOPEN; 
+	return E_FOPEN;
     }
 
     if ((destfd = gretl_fopen(dest, "wb")) == NULL) {
@@ -1928,7 +1931,7 @@ int gretl_copy_file (const char *src, const char *dest)
     fclose(destfd);
 
     return 0;
-}  
+}
 
 static int maybe_unload_function_package (const char *s,
 					  PRN *prn)
@@ -1987,7 +1990,7 @@ int gretl_delete_var_by_name (const char *s, PRN *prn)
 
 	err = generate(genstr, NULL, GRETL_TYPE_ANY, OPT_P, prn);
 	g_free(genstr);
-    } 
+    }
 
     return err;
 }
@@ -2089,7 +2092,7 @@ static void gretl_stopwatch_init (void)
     gretl_omp_stopwatch_init();
 #else
     gretl_unix_stopwatch_init();
-#endif    
+#endif
 }
 
 double gretl_stopwatch (void)
@@ -2103,7 +2106,7 @@ double gretl_stopwatch (void)
     return gretl_omp_stopwatch();
 #else
     return gretl_unix_stopwatch();
-#endif 
+#endif
 }
 
 #endif /* !Windows */
@@ -2113,7 +2116,7 @@ double gretl_stopwatch (void)
 /**
  * libgretl_init:
  *
- * In a program that uses libgretl, this function should be 
+ * In a program that uses libgretl, this function should be
  * called once, before any other libgretl functions are
  * used. See also libgretl_cleanup(), and libgretl_mpi_init().
  **/
@@ -2124,11 +2127,13 @@ void libgretl_init (void)
     gretl_rand_init();
     gretl_xml_init();
     gretl_stopwatch_init();
+#if HAVE_GMP
     mpf_set_default_prec(get_mp_bits());
+#endif
 
     if (!gretl_in_tool_mode() && have_optimized_blas()) {
 	set_blas_mnk_min(90000);
-    } 
+    }
 }
 
 #ifdef HAVE_MPI
@@ -2140,7 +2145,7 @@ void libgretl_init (void)
  * @dcmt: if non-zero, set up per-process RNG using DCMT.
  *
  * This function provides an alternative to libgretl_init()
- * which should be used when a libgretl program is to be run in 
+ * which should be used when a libgretl program is to be run in
  * MPI mode.
  **/
 
@@ -2169,7 +2174,9 @@ int libgretl_mpi_init (int self, int np, int dcmt)
 
     gretl_xml_init();
     gretl_stopwatch_init();
+#if HAVE_GMP
     mpf_set_default_prec(get_mp_bits());
+#endif
 
     /* be relatively quiet by default */
     set_gretl_echo(0);
@@ -2232,8 +2239,8 @@ void libgretl_session_cleanup (int mode)
 /**
  * libgretl_cleanup:
  *
- * In a program that uses libgretl, this function may be 
- * called to free various chunks of memory after the program 
+ * In a program that uses libgretl, this function may be
+ * called to free various chunks of memory after the program
  * is finished with libgretl. Do not attempt to call any
  * other libgretl functions after invoking this cleanup.
  *
@@ -2322,14 +2329,14 @@ static double record_or_get_test_result (double teststat,
 	} else if (code == GET_TEST_BRK) {
 	    ret = brk;
 	}
-    } 
-	
+    }
+
     return ret;
 }
 
 static gretl_matrix *
-record_or_get_test_matrix (gretl_matrix *tests, 
-			   gretl_matrix *pvals, 
+record_or_get_test_matrix (gretl_matrix *tests,
+			   gretl_matrix *pvals,
 			   int code, int *err)
 {
     static gretl_matrix *vals = NULL;
@@ -2361,8 +2368,8 @@ record_or_get_test_matrix (gretl_matrix *tests,
 	} else {
 	    *err = E_BADSTAT;
 	}
-    } 
-	
+    }
+
     return ret;
 }
 
@@ -2396,11 +2403,11 @@ void record_QLR_test_result (double teststat, double pval, double brk)
 }
 
 /* Note: the hypothesis-test recorder "takes ownership" of the
-   two input matrices, @tests and @pvals, which should therefore 
+   two input matrices, @tests and @pvals, which should therefore
    NOT be freed by the caller.
 */
 
-void record_matrix_test_result (gretl_matrix *tests, 
+void record_matrix_test_result (gretl_matrix *tests,
 				gretl_matrix *pvals)
 {
     record_or_get_test_matrix(tests, pvals, SET_TEST_STAT, NULL);
@@ -2439,7 +2446,7 @@ gretl_matrix *get_last_pvals_matrix (int *err)
 /*
   malloc and free for alignments greater than that guaranteed by the C
   library, based on Steven G. Johnson's public domand code at
-  http://ab-initio.mit.edu/~stevenj/align.c 
+  http://ab-initio.mit.edu/~stevenj/align.c
 */
 
 #ifdef HAVE_STDINT_H
@@ -2555,7 +2562,7 @@ static int is_executable (const char *s, uid_t myid, gid_t mygrp)
 /**
  * check_for_program:
  * @prog: name of program.
- * 
+ *
  * Returns: 1 if @prog is found in the PATH, otherwise 0.
  */
 
@@ -2622,14 +2629,14 @@ int check_for_program (const char *prog)
 	}
     }
 
-    if (ndirs == 0 || 
+    if (ndirs == 0 ||
 	(fullpath = malloc(max_dlen + strlen(prog) + 2)) == NULL) {
 	free(dirs);
 	free(pathcpy);
 	return 0;
     }
 
-    for (i=0; i<ndirs && !found; i++) { 
+    for (i=0; i<ndirs && !found; i++) {
 	sprintf(fullpath, "%s/%s", dirs[i], prog);
 	found = is_executable(fullpath, myid, mygrp);
     }
@@ -2686,7 +2693,7 @@ static void register_openblas_details (void)
 	    strncat(OB_core, s, 31);
 	}
     }
-    
+
     if (OB_get_parallel != NULL) {
 	int p = OB_get_parallel();
 
@@ -2743,8 +2750,8 @@ static int real_detect_blas (const char *s)
     }
 
     /* allow for the possibility that we have a symlink
-       from libblas to one or other of the optimized 
-       BLAS variants 
+       from libblas to one or other of the optimized
+       BLAS variants
     */
     if (found[0] == 'y' && strcmp(found + 1, "nnn")) {
 	found[0] = 'n';
@@ -2792,7 +2799,7 @@ static int detect_blas_variant (void)
 		 &status, &gerr);
 
     if (gerr != NULL) {
-	fprintf(stderr, "%s\n", gerr->message); 
+	fprintf(stderr, "%s\n", gerr->message);
 	g_error_free(gerr);
     } else if (status != 0) {
 	fprintf(stderr, "%s exited with status %d\n", argv[0], status);

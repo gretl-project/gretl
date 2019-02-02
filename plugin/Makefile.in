@@ -107,7 +107,6 @@ SRCS = excel_import.c \
 	jalpha.c \
 	kernel.c \
 	longname.c \
-	mp_ols.c \
 	pca.c \
 	progress_bar.c \
 	range-mean.c \
@@ -170,7 +169,6 @@ PLUGINS = arbond.la \
 	quantreg.la \
 	interval.la \
 	anova.la \
-	mp_ols.la \
 	interpolate.la \
 	iso3166.la \
 	biprobit.la \
@@ -191,6 +189,7 @@ GUI_DEPENDENT_PLUGINS = arma_x12.la \
 
 MAILER_PLUGIN = mailer.la
 JSON_PLUGIN = json_get.la
+GMP_PLUGIN = mp_ols.la
 
 ifeq ($(build_gui),yes)
   PLUGINS += $(GUI_DEPENDENT_PLUGINS)
@@ -205,6 +204,10 @@ endif
 
 ifneq ($(JSON_GLIB_LIBS),)
   PLUGINS += $(JSON_PLUGIN)
+endif
+
+ifneq ($(GMP_LIBS),)
+  PLUGINS += $(GMP_PLUGIN)
 endif
 
 ifeq ($(have_odbc),yes)
