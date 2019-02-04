@@ -485,6 +485,13 @@ void *get_plugin_function (const char *funcname)
     int i = plugin_index_lookup(funcname);
     void *funp = NULL;
 
+#if !HAVE_GMP
+    if (i == P_MP_OLS) {
+	gretl_errmsg_set("GMP is not supported in this build");
+	return NULL;
+    }
+#endif
+
     if (i > 0) {
 	void *handle = get_plugin_handle_by_index(i);
 
