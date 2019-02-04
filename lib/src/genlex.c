@@ -1492,6 +1492,9 @@ static void look_up_word (const char *s, parser *p)
 	    } else if (parsing_query || prevsym == B_AND) {
 		p->sym = UNDEF;
 		p->idstr = gretl_strdup(s);
+	    } else if (p->flags & P_AND) {
+		p->sym = UNDEF;
+		p->idstr = gretl_strdup(s);
 	    } else {
 		err = E_UNKVAR;
 	    }

@@ -1723,8 +1723,10 @@ static NODE *expr1 (parser *p)
     while (!p->err && p->sym == B_AND) {
 	t = newb2(p->sym, t, NULL);
 	if (t != NULL) {
+	    p->flags |= P_AND;
 	    lex(p);
 	    t->R = expr2(p);
+	    p->flags &= ~P_AND;
 	}
     }
 

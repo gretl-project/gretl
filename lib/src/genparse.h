@@ -629,7 +629,8 @@ enum parser_flags {
     P_NOEXEC  = 1 << 21, /* just compile, don't evaluate */
     P_MSAVE   = 1 << 22, /* trying for reuse of an aux matrix */
     P_OBSVAL  = 1 << 23, /* generating value of observation in series */
-    P_ALIASED = 1 << 24  /* state: handling aliased object (temporary) */
+    P_ALIASED = 1 << 24, /* state: handling aliased object (temporary) */
+    P_AND     = 1 << 25  /* state: working on right-hand term of B_AND */
 };
 
 struct lhinfo {
