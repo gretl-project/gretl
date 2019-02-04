@@ -186,7 +186,7 @@ open ahs_jep.gdtb -q
 rename LOGVALUE y
 dataset sortby holdout
 list X = dataset
-list drop = y lassofolds holdout
+list drop = y folds8 lassofolds holdout
 X -= drop
 X = cdummify(X)
 ntrain = 10000
@@ -1013,13 +1013,14 @@ variations in $\gamma$ and $\epsilon$ were worth exploring.
 On that basis we set up a finer (linear) grid with 80 parameter
 combinations and used \texttt{gretlmpi} on an HPC node with 32 Xeon
 cores, running 16 MPI processes with two threads each. In addition,
-rather than random folds we used the \texttt{lassofolds} variable in
-the M--S dataset, which specifies 10 subsets based on clusters in the
-data. Cross-validation took almost an hour and yielded minimum MSE at
-0.606208 for $C=2.8$, $\gamma=0.00365$, $\epsilon=0.09$. The selected
-$C$ was in the range we expected and $\epsilon$ was somewhat smaller
-than its default of 0.1; the selected $\gamma$ was equal to the
-default (the reciprocal of the number of covariates).
+rather than random folds we used the \texttt{folds8} variable in the
+M--S dataset, which specifies 8 random subsets of the training sample
+based on clusters in the data.\footnote{See \cite{mull-spiess-17a} for
+  details.}  Cross-validation took almost an hour and yielded minimum
+MSE at 0.606208 for $C=2.8$, $\gamma=0.00365$, $\epsilon=0.09$. The
+selected $C$ was in the range we expected and $\epsilon$ was somewhat
+smaller than its default of 0.1; the selected $\gamma$ was equal to
+the default (the reciprocal of the number of covariates).
 
 We then trained a model on all 10,000 training observations using the
 selected parameters and produced predictions for all the data, giving
