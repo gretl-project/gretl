@@ -7144,7 +7144,7 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
 	    }
 	} else if (f == F_JSONGET) {
 	    char *(*jfunc) (const char *, const char *,
-			    int *, int *);
+			    int *, int *) = NULL;
 	    user_var *uv = NULL;
 
 	    if (!null_or_empty(x)) {
@@ -7156,7 +7156,7 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
 		    p->err = E_FOPEN;
 		}
 	    }
-	    if (!p->err) {
+	    if (jfunc != NULL) {
 		int nobj = 0;
 		int *pnobj = uv == NULL ? NULL : &nobj;
 
@@ -7166,30 +7166,28 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
 		}
 	    }
 	} else if (f == F_JSONGETB) {
-	    gretl_bundle *(*jfunc) (const char *, const char *, int *);
+	    gretl_bundle *(*jfunc) (const char *, const char *, int *) = NULL;
 	    const char *path = null_or_empty(r) ? NULL: r->v.str;
 
 	    jfunc = get_plugin_function("json_get_bundle");
 	    if (jfunc == NULL) {
 		p->err = E_FOPEN;
-	    }
-	    if (!p->err) {
+	    } else {
 		ret->v.b = jfunc(l->v.str, path, &p->err);
 	    }
 	} else if (f == F_JSONGETA) {
-	    gretl_array *(*jfunc) (const char *, const char *, int *);
+	    gretl_array *(*jfunc) (const char *, const char *, int *) = NULL;
 	    const char *path = null_or_empty(r) ? NULL: r->v.str;
 
 	    jfunc = get_plugin_function("json_get_array");
 	    if (jfunc == NULL) {
 		p->err = E_FOPEN;
-	    }
-	    if (!p->err) {
+	    } else {
 		ret->v.a = jfunc(l->v.str, path, &p->err);
 	    }
 	} else if (f == F_XMLGET) {
 	    char *(*xfunc) (const char *, void *, GretlType,
-			    int *, int *);
+			    int *, int *) = NULL;
 	    user_var *uv = NULL;
 
 	    if (!null_or_empty(x)) {
@@ -7201,7 +7199,7 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
 		    p->err = E_FOPEN;
 		}
 	    }
-	    if (!p->err) {
+	    if (xfunc != NULL) {
 		int nobj = 0;
 		int *pnobj = uv == NULL ? NULL : &nobj;
 

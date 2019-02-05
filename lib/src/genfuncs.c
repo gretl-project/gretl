@@ -4547,8 +4547,6 @@ static int try_mp_midas_grad (const double *theta,
     return err;
 }
 
-#endif
-
 static int mgrad_zero (const gretl_matrix *G)
 {
     int i, j, colzero;
@@ -4568,6 +4566,8 @@ static int mgrad_zero (const gretl_matrix *G)
 
     return 0;
 }
+
+#endif /* HAVE_GMP */
 
 gretl_matrix *midas_gradient (int p, const gretl_matrix *m,
 			      int method, int *err)

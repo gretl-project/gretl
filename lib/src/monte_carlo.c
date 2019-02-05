@@ -2734,8 +2734,11 @@ static void progressive_loop_zero (LOOPSET *loop)
 static void print_loop_results (LOOPSET *loop, const DATASET *dset,
 				PRN *prn)
 {
+#if HAVE_GMP
+    int k = 0;
+#endif
     int iters = loop->iter;
-    int i, j = 0, k = 0;
+    int i, j = 0;
 
     if (!loop_is_quiet(loop)) {
 	pprintf(prn, _("\nNumber of iterations: %d\n\n"), iters);
@@ -3526,9 +3529,11 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
     char *currline = NULL;
     char *showline = NULL;
     int indent0;
-    int progressive;
     int gui_mode, echo;
     int show_activity = 0;
+#if HAVE_GMP
+    int progressive;
+#endif
     int err = 0;
 
     if (loop == NULL) {
@@ -3552,6 +3557,9 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
     indent0 = gretl_if_state_record();
     progressive = loop_is_progressive(loop);
     set_loop_on(loop_is_quiet(loop));
+#if HAVE_GMP
+    progressive = loop_is_progressive(loop);
+#endif
 
 #if LOOP_DEBUG
     fprintf(stderr, "loop_exec: loop = %p\n", (void *) loop);
