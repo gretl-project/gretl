@@ -3555,7 +3555,6 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
     gui_mode = gretl_in_gui_mode();
     echo = gretl_echo_on();
     indent0 = gretl_if_state_record();
-    progressive = loop_is_progressive(loop);
     set_loop_on(loop_is_quiet(loop));
 #if HAVE_GMP
     progressive = loop_is_progressive(loop);
