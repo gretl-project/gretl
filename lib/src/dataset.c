@@ -3437,7 +3437,8 @@ int modify_dataset (DATASET *dset, int op, const int *list,
 	}
     }
 
-    if (op != DS_RESAMPLE && op != DS_RESTORE && gretl_looping()) {
+    if (gretl_looping() && op != DS_RESAMPLE &&
+	op != DS_RESTORE && op != DS_SORTBY) {
 	pputs(prn, _("Sorry, this command is not available in loop mode\n"));
 	return 1;
     }
