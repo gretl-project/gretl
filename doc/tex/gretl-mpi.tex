@@ -387,6 +387,9 @@ First, you have these two new accessors:
 \end{tabular}
 \end{center}
 
+Note that when gretl is not in MPI mode \texttt{\$mpirank} returns
+$-1$ and \texttt{\$mpisize} returns 0.
+
 To shunt data around between the processes you have the following
 functions:
 \begin{center}

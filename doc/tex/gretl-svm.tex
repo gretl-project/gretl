@@ -186,7 +186,7 @@ open ahs_jep.gdtb -q
 rename LOGVALUE y
 dataset sortby holdout
 list X = dataset
-list drop = y folds8 lassofolds holdout
+list drop = y folds8 holdout
 X -= drop
 X = cdummify(X)
 ntrain = 10000
