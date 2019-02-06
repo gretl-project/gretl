@@ -2,8 +2,15 @@ version 2019b, in progress
 - Speed up rank() for far-from-square matrices
 - Obscure fix: enable deletion of "time" from a list
   supplied as a function argument
+- GUI: disallow execution of a script when one is
+  already in progress (to prevent crashing)
 - Add configure option --disable-gmp: not recommended,
   but may be helpful in some tricky build contexts
+- Allow use of "dataset sortby" in loops
+- Document the --all-cols option for the "open" command
+- Allow use of undefined symbols in the right-hand
+  operand of "&&": don't flag an error unless the
+  left-hand operand evaluates as true
 
 2019-01-24 version 2019a
 - Hush some warnings issued in the GUI, plus several
