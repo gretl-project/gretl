@@ -8954,6 +8954,10 @@
 	  <effect>vedi sotto</effect>
 	</option>	
 	<option>
+	  <flag>--all-cols</flag>
+	  <effect>vedi sotto</effect>
+	</option>
+	<option>
 	  <flag>--www</flag>
 	  <effect>usa un database sul server di gretl</effect>
 	</option>
@@ -8969,7 +8973,9 @@
     <description>
       <para>
         Apre un file di dati. Se è già stato aperto un file di dati,
-        esso viene sostituito da quello selezionato.
+        esso viene sostituito da quello selezionato. Per aggiungere
+	dati al dataset aperto, vedi <cmdref targ="append"/> o, per
+	maggiore flessibilità, <cmdref targ="join"/>.
       </para>
       <para>
 	Se non si specifica un percorso completo, il programma
@@ -8993,31 +8999,37 @@
 	di scaricare il file dalla rete prima di aprirlo.
       </para>
       <para>
-	come impostazione predefinita, l'apertura di un nuovo file di
+	Come impostazione predefinita, l'apertura di un nuovo file di
 	dati annulla la sessione corrente, il che implica la perdita
 	di tutte le variabili di tipo matrice, scalare e stringa. Se
 	si vuole preservare tali variabili (con l'eccezione delle
 	serie, che sono necessariamente eliminate), va usata l'opzione
 	<opt>preserve</opt>.
       </para>
+      <subhead context="cli">Apertura di un database</subhead>
       <para>
-	Questo comando può essere usato anche per aprire un database (gretl,
-	RATS 4.0 o PcGive) per la lettura. In questo caso, dev'essere seguito dal comando
-        <cmdref targ="data"/> per estrarre una particolare serie dal database.
-        Se si usa l'opzione <lit>www</lit>, il programma cercherà di accedere al
-        database specificato sul server di gretl &mdash; ad esempio il database
-        "Federal Reserve interest rates" nel terzo degli esempi visti sopra.
+	Questo comando può essere usato anche per aprire un database
+	(gretl, RATS 4.0 o PcGive) per la lettura. In questo caso,
+	dev'essere seguito dal comando <cmdref targ="data"/> per
+	estrarre una particolare serie dal database.  Se si usa
+	l'opzione <lit>www</lit>, il programma cercherà di accedere al
+	database specificato sul server di gretl &mdash; ad esempio il
+	database "Federal Reserve interest rates" nel terzo degli
+	esempi visti sopra.
       </para>
+      <subhead context="cli">Fogli elettronici</subhead>
       <para>
-	Quando si apre un file di un foglio elettronico (Gnumeric, Open Document o XLS),
-        è possibile fornire fino a tre parametri aggiuntivi, oltre al nome del
-        file. Per prima cosa, è possibile selezionare un particolare foglio di
-        lavoro all'interno del file, indicando il suo numero con la
-        sintassi <lit>--sheet=2</lit>, oppure indicando il suo nome tra
-        virgolette doppie, usando la sintassi <lit>--sheet="MacroData"</lit>.
-        L'impostazione predefinita consiste nel leggere il primo foglio di
-        lavoro del file. È anche possibile specificare la riga/colonna da cui
-        iniziare a leggere, usando la sintassi
+	Quando si apre un file di un foglio elettronico (Gnumeric,
+	Open Document o XLS), è possibile fornire fino a tre parametri
+	aggiuntivi, oltre al nome del file. Per prima cosa, è
+	possibile selezionare un particolare foglio di lavoro
+	all'interno del file, indicando il suo numero con la sintassi
+	<opt>sheet=2</opt>, oppure indicando il suo nome tra
+	virgolette doppie, usando la sintassi
+	<opt>--sheet="MacroData"</opt>.  L'impostazione predefinita
+	consiste nel leggere il primo foglio di lavoro del file. È
+	anche possibile specificare la riga/colonna da cui iniziare a
+	leggere, usando la sintassi
       </para>
       <code>
 	--coloffset=3 --rowoffset=2
@@ -9027,20 +9039,34 @@
         L'impostazione predefinita consiste nel leggere tutte le celle del
         foglio, a partire dalla prima in alto a sinistra.
       </para>
+      <subhead context="cli">File di testo con delimitatori</subhead>
       <para>
 	Con file di testo, gretl in genere si aspetta di trovare le
-	colonne di dati separate da un qualche carattere
-	standard. Tuttavia, c'è anche modo di leggere dati in
-	<quote>formato fisso</quote>, dove non ci sono delimitatori ma
-	esiste una specifica del formato; ad esempio, <quote>la
-	variabile <math>k</math> occupa 8 caratteri a partire dal
+	colonne di dati separate da un qualche carattere standard; in
+	genere, la virgola, il tab, lo spazio o il punto e virgola
+	(copyright Totò e Peppino). Come impostazione base, gretl
+	cerca di trovare nella prima colonna etichette identificative
+	o date, se l'intestazione è vuota o contiene qualcosa che
+	verosimilmente va interpretato in tal modo, come
+	<quote>year</quote>, <quote>date</quote> o
+	<quote>obs</quote>. Questa euristica sulla prima colonna può
+	essere disattivata attraverso l'opzione <opt>all-cols</opt>
+	option.
+      </para>
+      <subhead context="cli">File di testo in formato fisso</subhead>
+      <para>
+	Tuttavia, c'è anche modo di leggere dati in <quote>formato
+	fisso</quote>, dove non ci sono delimitatori ma esiste una
+	specifica del formato; ad esempio, <quote>la variabile
+	<math>k</math> occupa 8 caratteri a partire dal
 	24esimo</quote>.  Per leggere file siffatti, va aggiunta la
 	stringa <opt>fixed-cols=</opt><repl>colspec</repl>, dove
 	<repl>colspec</repl> si compone di interi separati da virgole.
 	Essi vengono interpretati a coppie, in cui il primo elemento
 	denota la colonna di partenza, misurata in byte dall'inizio
-	della riga (dove 1 indica il primo byte); il secondo elemento indica quanti byte
-	vanno letti per quel dato campo. Facciamo un esempio: il comando
+	della riga (dove 1 indica il primo byte); il secondo elemento
+	indica quanti byte vanno letti per quel dato campo. Facciamo
+	un esempio: il comando
       </para>
       <code>
 	open fixed.txt --fixed-cols=1,6,20,3
