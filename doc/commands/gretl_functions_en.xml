@@ -10011,12 +10011,12 @@
       <description>
 	<para>
 	  This function enables the training of, and prediction based
-	  on, an SVM (Support Vector Machine) model, using LIBSVM as
+	  on, an SVM (a Support Vector Machine), using LIBSVM as
 	  back-end. The list argument <argname>L</argname> should
 	  include the dependent variable followed by the independent
 	  variables and the <argname>bparms</argname> bundle is used
 	  to pass options to the SVM mechanism. The return value is a
-	  series holding the model's predictions.  The two optional
+	  series holding the SVM's predictions.  The two optional
 	  bundle-pointer argument can be used to retrieve additional
 	  information after training and/or prediction.
 	</para>
