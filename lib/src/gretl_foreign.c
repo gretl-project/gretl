@@ -1822,39 +1822,41 @@ static int write_data_for_R (const DATASET *dset,
 
 static void write_R_io_funcs (FILE *fp)
 {
+    const char *export_body =
+	"  objname <- as.character(substitute(x))\n"
+	"  if (missing(sx)) {\n"
+	"    sx <- objname\n"
+	"  }\n"
+	"  if (is.ts(x)) {\n"
+	"    fname <- paste(prefix, sx, \".csv\", sep=\"\")\n"
+	"    dfx <- data.frame(x)\n"
+	"    if (ncol(dfx) == 1) {\n"
+	"      colnames(dfx) <- sx;\n"
+	"    }\n"
+	"    write.csv(dfx, file=fname, row.names=F)\n"
+	"    gretlmsg <- paste(\"wrote CSV data\", fname, \"\\n\")\n"
+	"  } else if (is.data.frame(x)) {\n"
+	"    fname <- paste(prefix, sx, \".csv\", sep=\"\")\n"
+	"    write.csv(x, file=fname, row.names=F)\n"
+	"    gretlmsg <- paste(\"wrote CSV data\", fname, \"\\n\")\n"
+	"  } else if (is.matrix(x)) {\n"
+	"    fname <- paste(prefix, sx, \".mat\", sep=\"\")\n"
+	"    write(dim(x), fname)\n"
+	"    write(format(t(x), digits=15), file=fname, ncolumns=ncol(x), append=TRUE)\n"
+	"    gretlmsg <- paste(\"wrote matrix\", fname, \"\\n\")\n"
+	"  } else {\n"
+	"    gretlmsg <- paste(\"gretl.export: don't know how to write object\", objname, "
+	" \"(try as.matrix?)\\n\")\n"
+	"  }\n"
+	"  cat(gretlmsg)\n"
+	"}\n";
     const char *ddir = get_export_dotdir();
 
     fprintf(fp, "gretl.dotdir <- \"%s\"\n", ddir);
 
     fputs("gretl.export <- function(x, sx) {\n", fp);
     fprintf(fp, "  prefix <- \"%s\"\n", ddir);
-    fputs("  objname <- as.character(substitute(x))\n", fp);
-    fputs("  if (missing(sx)) {\n", fp);
-    fputs("    sx <- objname\n", fp);
-    fputs("  }\n", fp);
-    fputs("  if (is.ts(x)) {\n", fp);
-    fputs("    fname <- paste(prefix, sx, \".csv\", sep=\"\")\n", fp);
-    fputs("    dfx <- data.frame(x)\n", fp);
-    fputs("    if (ncol(dfx) == 1) {\n", fp);
-    fputs("      colnames(dfx) <- sx;\n", fp);
-    fputs("    }\n", fp);
-    fputs("    write.csv(dfx, file=fname, row.names=F)\n", fp);
-    fputs("    gretlmsg <- paste(\"wrote CSV data\", fname, \"\\n\")\n", fp);
-    fputs("  } else if (is.data.frame(x)) {\n", fp);
-    fputs("    fname <- paste(prefix, sx, \".csv\", sep=\"\")\n", fp);
-    fputs("    write.csv(x, file=fname, row.names=F)\n", fp);
-    fputs("    gretlmsg <- paste(\"wrote CSV data\", fname, \"\\n\")\n", fp);
-    fputs("  } else if (is.matrix(x)) {\n", fp);
-    fputs("    fname <- paste(prefix, sx, \".mat\", sep=\"\")\n", fp);
-    fputs("    write(dim(x), fname)\n", fp);
-    fputs("    write(format(t(x), digits=15), file=fname, ncolumns=ncol(x), append=TRUE)\n", fp);
-    fputs("    gretlmsg <- paste(\"wrote matrix\", fname, \"\\n\")\n", fp);
-    fputs("  } else {\n", fp);
-    fputs("    gretlmsg <- paste(\"gretl.export: don't know how to write object\", objname, "
-	  " \"(try as.matrix?)\\n\")\n", fp);
-    fputs("  }\n", fp);
-    fputs("  cat(gretlmsg)\n", fp);
-    fputs("}\n", fp);
+    fputs(export_body, fp);
 
     fputs("gretl.loadmat <- function(mname) {\n", fp);
     fprintf(fp, "  prefix <- \"%s\"\n", ddir);
