@@ -1535,7 +1535,7 @@ static void maybe_treat_as_postfix (parser *p)
 #define could_be_matrix(t) (model_data_matrix(t) || \
 			    model_data_matrix_builder(t) || \
 			    t == M_UHAT || t == M_YHAT || \
-			    t == R_TEST_STAT || t == R_TEST_PVAL)
+			    (t > R_SERIES_MAX && t < R_MAX))
 
 static void word_check_next_char (parser *p)
 {

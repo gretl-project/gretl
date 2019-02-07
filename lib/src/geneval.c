@@ -11043,6 +11043,7 @@ static int x_to_period (double x, char c, int *julian, int *err)
     }
 
     if (na(x)) {
+	/* note: error not flagged here */
 	return -1;
     } else if (x < 0 || fabs(x) > INT_MAX) {
 	*err = E_INVARG;
@@ -11051,7 +11052,7 @@ static int x_to_period (double x, char c, int *julian, int *err)
 	int k = x;
 	int ret = x;
 
-	if (c == 'y' && k < 0) {
+	if (c == 'y' && k <= 0) {
 	    ret = -1;
 	} else if (c == 'm' && (k < 1 || k > 12)) {
 	    ret = -1;
@@ -11068,89 +11069,124 @@ static int x_to_period (double x, char c, int *julian, int *err)
     }
 }
 
+static void fill_xymd (double *targ, double x)
+{
+    int rem;
+
+    targ[0] = floor(x / 10000);
+    rem = x - 10000 * targ[0];
+    targ[1] = floor(rem / 100);
+    targ[2] = rem - 100 * targ[1];
+}
+
+static void bad_date_message (int y, int m, int d)
+{
+    gretl_warnmsg_sprintf("%04d-%02d-%02d: %s", y, m, d,
+			  _("non-existent date"));
+}
+
+/* epochday policy: NAs for year, month or day give an NA result;
+   non-NA but inherently out-of-bounds values for y, m or d (for
+   example, negative y, m > 12, d > 31) will produce an error,
+   and otherwise non-existent dates produce NA.
+*/
+
 static NODE *eval_epochday (NODE *ny, NODE *nm, NODE *nd, parser *p)
 {
     NODE *ret = NULL;
     NODE *nodes[3] = {ny, nm, nd};
     double *x[3] = {NULL, NULL, NULL};
+    double xymd[3];
     int ymd[3] = {-1, -1, -1};
     const char *code = "ymd";
+    int basic_input = 0;
+    int n_series = 0;
     int julian = 0;
     double sval;
     int i;
 
-    /* Policy: NA for y, m, or d will give an NA result;
-       non-NA but out-of-bounds values for y, m or d produce
-       an error.
-    */
-
-    for (i=0; i<3 && !p->err; i++) {
-	if (scalar_node(nodes[i])) {
-	    sval = node_get_scalar(nodes[i], p);
+    if (nm->t == EMPTY && nd->t == EMPTY) {
+	/* try for ISO 8601 basic input */
+	basic_input = 1;
+	if (scalar_node(ny)) {
+	    sval = node_get_scalar(ny, p);
 	    if (!p->err) {
-		ymd[i] = x_to_period(sval, code[i], &julian, &p->err);
+		fill_xymd(xymd, sval);
+		for (i=0; i<3 && !p->err; i++) {
+		    ymd[i] = x_to_period(xymd[i], code[i], NULL, &p->err);
+		}
 	    }
-	} else if (nodes[i]->t == SERIES) {
-	    x[i] = nodes[i]->v.xvec;
+	} else if (ny->t == SERIES) {
+	    x[0] = ny->v.xvec;
+	    n_series = 1;
 	} else {
-	    node_type_error(F_EPOCHDAY, i+1, NUM, nodes[i], p);
+	    node_type_error(F_EPOCHDAY, 1, NUM, ny, p);
+	}
+    } else {
+	for (i=0; i<3 && !p->err; i++) {
+	    if (scalar_node(nodes[i])) {
+		sval = node_get_scalar(nodes[i], p);
+		if (!p->err) {
+		    ymd[i] = x_to_period(sval, code[i], &julian, &p->err);
+		}
+	    } else if (nodes[i]->t == SERIES) {
+		x[i] = nodes[i]->v.xvec;
+		n_series++;
+	    } else {
+		node_type_error(F_EPOCHDAY, i+1, NUM, nodes[i], p);
+	    }
 	}
     }
 
     if (!p->err) {
+	double edt;
+	int t, t1, t2;
 	int y = ymd[0];
 	int m = ymd[1];
 	int d = ymd[2];
 
-	/* From this point, -1 for y, m or d indicates either an NA
-	   or the fact that a series and not a scalar was given for
-	   that date-element.
-	*/
-
-	if (x[0] == NULL && x[1] == NULL && x[2] == NULL) {
-	    /* y, m and d all given as scalars */
+	if (n_series > 0) {
+	    t1 = p->dset->t1;
+	    t2 = p->dset->t2;
+	    ret = aux_series_node(p);
+	} else {
+	    t1 = t2 = 0;
 	    ret = aux_scalar_node(p);
-	    if (!p->err) {
-		if (y < 0 || m < 0 || d < 0) {
-		    ret->v.xval = NADBL;
+	}
+
+	for (t=t1; t<=t2 && !p->err; t++) {
+	    if (basic_input) {
+		if (x[0] != NULL) {
+		    fill_xymd(xymd, x[0][t]);
+		    y = x_to_period(xymd[0], 'y', NULL, &p->err);
+		    m = x_to_period(xymd[1], 'm', NULL, &p->err);
+		    d = x_to_period(xymd[2], 'd', NULL, &p->err);
+		}
+	    } else {
+		y = (x[0] == NULL)? y : x_to_period(x[0][t], 'y', &julian, &p->err);
+		m = (x[1] == NULL)? m : x_to_period(x[1][t], 'm', NULL, &p->err);
+		d = (x[2] == NULL)? d : x_to_period(x[2][t], 'd', NULL, &p->err);
+	    }
+	    if (p->err) {
+		break;
+	    } else if (y < 0 || m < 0 || d < 0) {
+		/* got an NA somewhere */
+		edt = NADBL;
+	    } else {
+		if (julian) {
+		    edt = epoch_day_from_julian_ymd(y, m, d);
 		} else {
-		    if (julian) {
-			ret->v.xval = epoch_day_from_julian_ymd(y, m, d);
-		    } else {
-			ret->v.xval = epoch_day_from_ymd(y, m, d);
-		    }
-		    if (ret->v.xval < 0) {
-			p->err = E_INVARG;
-		    }
+		    edt = epoch_day_from_ymd(y, m, d);
+		}
+		if (edt <= 0) {
+		    bad_date_message(y, m, d);
+		    edt = NADBL;
 		}
 	    }
-	} else {
-	    ret = aux_series_node(p);
-	    if (!p->err) {
-		int t;
-
-		for (t=p->dset->t1; t<=p->dset->t2; t++) {
-		    if (x[0] != NULL) {
-			y = x_to_period(x[0][t], 'y', &julian, &p->err);
-		    }
-		    m = (x[1] == NULL)? m : x_to_period(x[1][t], 'm', NULL, &p->err);
-		    d = (x[2] == NULL)? d : x_to_period(x[2][t], 'd', NULL, &p->err);
-		    if (p->err) {
-			break;
-		    } else if (y < 0 || m < 0 || d < 0) {
-			/* got an NA somewhere */
-			ret->v.xvec[t] = NADBL;
-		    } else {
-			if (julian) {
-			    ret->v.xvec[t] = epoch_day_from_julian_ymd(y, m, d);
-			} else {
-			    ret->v.xvec[t] = epoch_day_from_ymd(y, m, d);
-			}
-			if (ret->v.xvec[t] < 0) {
-			    p->err = E_INVARG;
-			}
-		    }
-		}
+	    if (n_series > 0) {
+		ret->v.xvec[t] = edt;
+	    } else {
+		ret->v.xval = edt;
 	    }
 	}
     }
@@ -13582,16 +13618,13 @@ static NODE *eval_query (NODE *t, parser *p)
 
 #define dvar_scalar(i) (i > 0 && i < R_SCALAR_MAX)
 #define dvar_series(i) (i > R_SCALAR_MAX && i < R_SERIES_MAX)
+#define dvar_matrix(i) (i == R_NOW)
 #define dvar_variant(i) (i > R_SERIES_MAX && i < R_MAX)
 
 #define no_data(p) (p == NULL || p->n == 0)
 
 double dvar_get_scalar (int i, const DATASET *dset)
 {
-    time_t t;
-    struct tm tm;
-    double ret;
-    
     switch (i) {
     case R_NOBS:
 	return (dset == NULL) ? NADBL :
@@ -13639,16 +13672,6 @@ double dvar_get_scalar (int i, const DATASET *dset)
 	return gretl_rand_get_seed();
     case R_HUGE:
 	return libset_get_double(CONV_HUGE);
-    case R_NOW:
-	t = time(NULL);
-	tm = *localtime(&t);
-	ret = (tm.tm_year - 100)*10000 +	\
-	    (tm.tm_mon + 1) * 100 +		\
-	    tm.tm_mday +			\
-	    tm.tm_hour/24.0 +			\
-	    tm.tm_min/1440.0 +			\
-	    tm.tm_sec/86400.0 ;	
-	return ret;
     default:
 	return NADBL;
     }
@@ -13764,6 +13787,24 @@ static gretl_matrix *dvar_get_matrix (int i, int *err)
     case R_TEST_PVAL:
 	m = get_last_pvals_matrix(err);
 	break;
+    case R_NOW:
+	m = gretl_matrix_alloc(1, 2);
+	if (m == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    /* package epoch second and ISO 8601 basic date */
+	    time_t t = time(NULL);
+	    struct tm tm;
+	    int y, mon, d;
+
+	    localtime_r(&t, &tm);
+	    y = tm.tm_year + 1900;
+	    mon = tm.tm_mon + 1;
+	    d = tm.tm_mday;
+	    m->val[0] = (double) t;
+	    m->val[1] = y * 10000 + mon * 100 + d;
+	}
+	break;
     default:
 	*err = E_DATA;
 	break;
@@ -13823,6 +13864,11 @@ static NODE *dollar_var_node (NODE *t, parser *p)
 	    ret = aux_series_node(p);
 	    if (ret != NULL) {
 		p->err = dvar_get_series(ret->v.xvec, idx, p->dset);
+	    }
+	} else if (dvar_matrix(idx)) {
+	    ret = aux_matrix_node(p);
+	    if (ret != NULL) {
+		ret->v.m = dvar_get_matrix(idx, &p->err);
 	    }
 	} else if (dvar_variant(idx)) {
 	    GretlType type = get_last_test_type();
