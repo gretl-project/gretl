@@ -7476,8 +7476,6 @@ static NODE *strtime_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_string_node(p);
     const char *fmt = NULL;
-    char buf[64] = {0};
-    struct tm tm;
     double tx;
     time_t t;
 
@@ -7501,6 +7499,8 @@ static NODE *strtime_node (NODE *l, NODE *r, parser *p)
     }
 
     if (!p->err) {
+	struct tm tm;
+	char buf[64] = {0};
 	int bytes = 0;
 
 	if (fmt == NULL) {
