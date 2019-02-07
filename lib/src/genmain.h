@@ -49,6 +49,7 @@ typedef enum {
     R_SERIES_MAX, /* separator: series vs matrices */
     R_TEST_STAT,  /* last test statistic(s) (scalar or matrix) */
     R_TEST_PVAL,  /* last test p-value(s) (scalar or matrix) */
+    R_NOW,        /* current time */
     R_MAX
 } RetrievalIndex;
 

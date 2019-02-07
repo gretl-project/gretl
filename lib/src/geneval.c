@@ -42,6 +42,7 @@
 #include "var.h"
 
 #include "../../cephes/cephes.h" /* for hyp2f1 */
+#include <time.h> /* for the $now accessor */
 
 #ifdef USE_CURL
 # include "gretl_www.h"
@@ -13587,6 +13588,10 @@ static NODE *eval_query (NODE *t, parser *p)
 
 double dvar_get_scalar (int i, const DATASET *dset)
 {
+    time_t t;
+    struct tm tm;
+    double ret;
+    
     switch (i) {
     case R_NOBS:
 	return (dset == NULL) ? NADBL :
@@ -13634,6 +13639,16 @@ double dvar_get_scalar (int i, const DATASET *dset)
 	return gretl_rand_get_seed();
     case R_HUGE:
 	return libset_get_double(CONV_HUGE);
+    case R_NOW:
+	t = time(NULL);
+	tm = *localtime(&t);
+	ret = (tm.tm_year - 100)*10000 +	\
+	    (tm.tm_mon + 1) * 100 +		\
+	    tm.tm_mday +			\
+	    tm.tm_hour/24.0 +			\
+	    tm.tm_min/1440.0 +			\
+	    tm.tm_sec/86400.0 ;	
+	return ret;
     default:
 	return NADBL;
     }

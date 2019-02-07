@@ -96,6 +96,7 @@ struct str_table dvars[] = {
     { R_ERRNO,     "$error" },
     { R_SEED,      "$seed" },
     { R_HUGE,      "$huge" },
+    { R_NOW,       "$now" },
     { R_INDEX,     "obs" },
     { 0,           NULL },
 };
