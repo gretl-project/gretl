@@ -64,7 +64,7 @@
 	</para>
 	<code>
 	  open bjg
-	  arima 0 1 1 ; 0 1 1 ; lg 
+	  arima 0 1 1 ; 0 1 1 ; lg
 	  b = $coeff               # gets a vector
 	  macoef = $coeff(theta_1) # gets a scalar
 	</code>
@@ -138,7 +138,7 @@
 	  targ="$diagtest"/> statistic.
 	</para>
       </description>
-    </function>     
+    </function>
 
     <function name="$diagtest" section="access" output="scalar">
       <description>
@@ -187,7 +187,7 @@
       <description>
 	<para>
 	  Must follow the estimation of a VECM; returns a matrix containing
-	  the error correction terms.  The number of rows equals the number 
+	  the error correction terms.  The number of rows equals the number
 	  of observations used and the number of columns equals the
 	  cointegration rank of the system.
 	</para>
@@ -246,7 +246,7 @@
 	  returns the forecast values as a matrix. If the model on
 	  which the forecast was based is a system of equations the
 	  returned matrix will have one column per equation, otherwise
-	  it is a column vector. 
+	  it is a column vector.
 	</para>
       </description>
     </function>
@@ -418,11 +418,11 @@
 
 	  s1 (5 x 5)
 
-	  0.0000       0.0000       0.0000       0.0000       0.0000 
-	  0.0000       0.0000       0.0000       0.0000       0.0000 
-	  0.0000       0.0000      0.27398     -0.27398    -0.019059 
-	  0.0000       0.0000     -0.27398      0.27398     0.019059 
-	  0.0000       0.0000    -0.019059     0.019059    0.0014180 
+	  0.0000       0.0000       0.0000       0.0000       0.0000
+	  0.0000       0.0000       0.0000       0.0000       0.0000
+	  0.0000       0.0000      0.27398     -0.27398    -0.019059
+	  0.0000       0.0000     -0.27398      0.27398     0.019059
+	  0.0000       0.0000    -0.019059     0.019059    0.0014180
 	</code>
       </description>
     </function>
@@ -444,7 +444,7 @@
 	  <quote><lit>unknown</lit></quote> is returned.
 	</para>
       </description>
-    </function>    
+    </function>
 
     <function name="$llt" section="access" output="series">
       <description>
@@ -483,7 +483,7 @@
 	  retrieves a matrix holding the estimated probabilities
 	  of each possible outcome at each observation in the model's
 	  sample range. Each row represents an observation and
-	  each column an outcome. 
+	  each column an outcome.
 	</para>
       </description>
     </function>
@@ -511,7 +511,7 @@
 	  print b
 	</code>
       </description>
-    </function>    
+    </function>
 
     <function name="$ncoeff" section="access" output="int">
       <description>
@@ -527,6 +527,20 @@
 	<para>
 	  Returns the number of observations in the currently selected
 	  sample. Related: <fncref label="\$tmax" targ="dtmax"/>.
+	</para>
+      </description>
+    </function>
+
+    <function name="$now" section="access" targ="dnow" output="vector">
+      <description>
+	<para>
+	  Returns a 2-vector: its first element is the number of
+	  seconds elapsed since 1970-01-01 00:00:00 +0000 (UTC), which
+	  is widely used in the computing world to represent the
+	  current time, and the second is the current date in ISO 8601
+	  <quote>basic</quote> format, <lit>YYYYMMDD</lit>. The
+	  <fncref targ="epochday"/> function may be used to process
+	  the second element.
 	</para>
       </description>
     </function>
@@ -670,7 +684,7 @@
 	  observation at which the test statistic is maximized.
 	</para>
       </description>
-    </function>    
+    </function>
 
     <function name="$rho" section="access" output="scalar">
       <fnargs>
@@ -707,7 +721,7 @@
 	</para>
 	<para>
 	  If you wish to compute statistics based on the sample that was
-	  used for a given model, you can do, for example: 
+	  used for a given model, you can do, for example:
 	</para>
 	<code>
 	  ols y 0 xlist
@@ -765,7 +779,7 @@
 	</para>
 	<para>
 	  <seelist>
-            <fncref targ="$coeff"/> 
+            <fncref targ="$coeff"/>
             <fncref targ="$vcv"/>
 	  </seelist>
 	</para>
@@ -875,7 +889,7 @@
               fallback of <lit>localhost</lit> in case the name
               cannot be determined).
             </para>
-	  </li>   
+	  </li>
 	</ilist>
 	<para>
 	  Note that individual elements in the bundle can be accessed
@@ -1038,9 +1052,9 @@
 	  the estimated covariance between the parameters named
 	  <argname>s1</argname> and <argname>s2</argname>.
 	  <seelist>
-            <fncref targ="$coeff"/> 
+            <fncref targ="$coeff"/>
             <fncref targ="$stderr"/>
-	  </seelist>      
+	  </seelist>
 	</para>
 	<para>
 	  This accessor is not available for VARs or VECMs; for models of that
@@ -1059,7 +1073,7 @@
 	  <math>p</math> there are <math>p</math> &minus; 1 sub-matrices.
 	</para>
       </description>
-    </function>    
+    </function>
 
     <function name="$version" section="access" output="scalar">
       <description>
@@ -1149,7 +1163,7 @@
 	  If the last model was a single equation, this accessor gives
 	  a list with a single element, the dependent variable. In the
 	  special case of the biprobit model the list contains two
-	  elements. 
+	  elements.
 	</para>
       </description>
     </function>
@@ -1292,7 +1306,7 @@
 	  list BY = gender race
 	  list X = income age
 	  matrix m = aggregate(X, BY, sd)
-	</code> 
+	</code>
 	<para>
 	  The <lit>aggregate</lit> call here will produce a <by r="6"
 	  c="5"/> matrix. The first two columns hold the 6 distinct
@@ -1326,7 +1340,7 @@
       </fnargs>
       <description>
 	<para>
-	  For <argname>s</argname> the name of a parameter to a 
+	  For <argname>s</argname> the name of a parameter to a
 	  user-defined function, returns the name of the corresponding
 	  argument, or an empty string if the argument was anonymous.
 	</para>
@@ -1356,7 +1370,7 @@
 	  See also <fncref targ="defarray"/>.
 	</para>
       </description>
-    </function>    
+    </function>
 
     <function name="asin" section="math" output="asinput">
       <fnargs>
@@ -1472,12 +1486,12 @@
 	</para>
 	<code>
 	  # examples
-	  x = atof("1.234") # gives x = 1.234 
+	  x = atof("1.234") # gives x = 1.234
 	  x = atof("1,234") # gives x = 1
 	  x = atof("1.2y")  # gives x = 1.2
 	  x = atof("y")     # gives x = NA
 	  x = atof(",234")  # gives x = NA
-	</code> 
+	</code>
 	<para>
 	  See also <fncref targ="sscanf"/> for more flexible string to
 	  numeric conversion.
@@ -1694,19 +1708,19 @@
 	</para>
       </description>
     </function>
-    
+
     <function name="boxcox" section="filters" output="asinput">
       <fnargs>
 	<fnarg type="series-or-mat">y</fnarg>
 	<fnarg type="scalar">d</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para>
 	  Returns the Box&ndash;Cox transformation with parameter
 	  <argname>d</argname> for the positive series
 	  <argname>y</argname> (or the columns of matrix
 	  <argname>y</argname>).
-	</para>   
+	</para>
 	<para context="tex">
 	  \[ y_t^{(d)} = \left\{ \begin{array}{ll} \frac{y_t^d - 1}{d} &amp;
 	  {\rm if}\quad d\neq 0 \\ \log (y_t) &amp; {\rm if}\quad d=0
@@ -1807,7 +1821,7 @@
 	  values restrict the pass-band to lower frequencies and hence
 	  produce a smoother trend. Higher values of
 	  <argname>n</argname> produce a sharper cutoff, at the cost
-	  of possible numerical instability. 
+	  of possible numerical instability.
 	</para>
 	<para>
 	  Inspecting the periodogram of the target series is a
@@ -1936,12 +1950,12 @@
             <para>
               Gamma (g or G): shape; scale
             </para>
-	  </li>   
+	  </li>
 	  <li>
             <para>
               Binomial (b or B): probability; number of trials
             </para>
-	  </li>   
+	  </li>
 	  <li>
             <para>
               Poisson (p or P): mean
@@ -1951,7 +1965,7 @@
             <para>
               Exponential (exp): scale
             </para>
-	  </li>	  
+	  </li>
 	  <li>
             <para>
               Weibull (w or W): shape; scale
@@ -1961,7 +1975,7 @@
             <para>
               Laplace (l or L): mean; scale
             </para>
-	  </li>	  
+	  </li>
 	  <li>
             <para>
               Generalized Error (E): shape
@@ -1982,42 +1996,42 @@
 	    <para>
 	      Non-central t (nct): df, non-centrality parameter
 	    </para>
-	  </li>	  
+	  </li>
 	</ilist>
 	<tabular colspec="lllll">
 	  \textit{Distribution} &amp; \textsl{d} &amp;
-	  \textit{Arg} 2 &amp; \textit{Arg} 3 &amp; \textit{Arg} 4 \\[4pt] 
-	  Standard normal &amp; \texttt{z}, \texttt{n} or \texttt{N} &amp; 
-	  -- &amp; -- &amp; --\\ 
-	  Bivariate normal &amp; \texttt{D} &amp; 
-	  $\rho$ &amp; -- &amp; --\\
-	  Logistic &amp; \texttt{lgt} &amp; 
+	  \textit{Arg} 2 &amp; \textit{Arg} 3 &amp; \textit{Arg} 4 \\[4pt]
+	  Standard normal &amp; \texttt{z}, \texttt{n} or \texttt{N} &amp;
 	  -- &amp; -- &amp; --\\
-	  Student's $t$ (central) &amp; \texttt{t} &amp;  
-	  df &amp; -- &amp; --\\ 
-	  Chi square &amp; \texttt{c}, \texttt{x} or \texttt{X} &amp; 
-	  df &amp; -- &amp; --\\ 
+	  Bivariate normal &amp; \texttt{D} &amp;
+	  $\rho$ &amp; -- &amp; --\\
+	  Logistic &amp; \texttt{lgt} &amp;
+	  -- &amp; -- &amp; --\\
+	  Student's $t$ (central) &amp; \texttt{t} &amp;
+	  df &amp; -- &amp; --\\
+	  Chi square &amp; \texttt{c}, \texttt{x} or \texttt{X} &amp;
+	  df &amp; -- &amp; --\\
 	  Snedecor's $F$ &amp; \texttt{f} or \texttt{F} &amp;
-	  df (num.) &amp; df (den.) &amp; --\\ 
+	  df (num.) &amp; df (den.) &amp; --\\
 	  Gamma &amp; \texttt{g} or \texttt{G} &amp;
-	  shape &amp; scale &amp; --\\ 
+	  shape &amp; scale &amp; --\\
 	  Binomial &amp; \texttt{b} or \texttt{B} &amp;
-	  probability &amp; trials &amp; --\\ 
-	  Poisson &amp; \texttt{p} or \texttt{P} &amp; 
+	  probability &amp; trials &amp; --\\
+	  Poisson &amp; \texttt{p} or \texttt{P} &amp;
 	  mean &amp; -- &amp; --\\
 	  Exponential &amp; \texttt{exp} &amp;
 	  scale &amp; -- &amp; --\\
-	  Weibull &amp; \texttt{w} or \texttt{W} &amp; 
+	  Weibull &amp; \texttt{w} or \texttt{W} &amp;
 	  shape &amp; scale &amp; --\\
-	  Laplace &amp; \texttt{l} or \texttt{L} &amp; 
+	  Laplace &amp; \texttt{l} or \texttt{L} &amp;
 	  mean &amp; scale &amp; --\\
-	  Generalized Error &amp; \texttt{E} &amp; 
+	  Generalized Error &amp; \texttt{E} &amp;
 	  shape &amp; -- &amp; --\\
-	  Non-central $\chi^2$ &amp; \texttt{ncX} &amp; 
+	  Non-central $\chi^2$ &amp; \texttt{ncX} &amp;
 	  df &amp; non-centrality &amp; -- \\
-	  Non-central $F$ &amp; \texttt{ncF} &amp; 
+	  Non-central $F$ &amp; \texttt{ncF} &amp;
 	  df (num.) &amp; df (den.) &amp; non-centrality \\
-	  Non-central $t$ &amp; \texttt{nct} &amp; 
+	  Non-central $t$ &amp; \texttt{nct} &amp;
 	  df &amp; non-centrality &amp; -- \\
 	</tabular>
 	<para>
@@ -2113,14 +2127,14 @@
       <description>
 	<para>
 	  Ceiling function: returns the smallest integer greater than or
-	  equal to <argname>x</argname>. 
-	  <seelist> 
+	  equal to <argname>x</argname>.
+	  <seelist>
             <fncref targ="floor"/>
             <fncref targ="int"/>
 	  </seelist>
 	</para>
       </description>
-    </function>  
+    </function>
 
     <function name="cholesky" section="linalg" output="smatrix">
       <fnargs>
@@ -2134,10 +2148,10 @@
 	  <math>L</math> which satisfies <equation status="inline"
 	  ascii="A = LL'"  tex="$A = LL'$"/>. The function will fail if
 	  <argname>A</argname> is not symmetric or not positive definite.
-	  <seelist> 
+	  <seelist>
             <fncref targ="psdroot"/>
 	  </seelist>
-	</para> 
+	</para>
       </description>
     </function>
 
@@ -2187,7 +2201,7 @@
 	  The first column contains the real part and the second (if
 	  present) the imaginary part.  The return value is an
 	  <by r="n" c="2"/> matrix, or, if the result has no imaginary
-	  part, an <math>n</math>-vector. 
+	  part, an <math>n</math>-vector.
 	  <seelist>
             <fncref targ="cdiv"/>
 	  </seelist>
@@ -2202,7 +2216,7 @@
       <description>
 	<para>
 	  Returns the cumulative distribution function for a standard
-	  normal. 
+	  normal.
 	  <seelist>
             <fncref targ="dnorm"/>
             <fncref targ="qnorm"/>
@@ -2241,7 +2255,7 @@
 	  </seelist>
 	</para>
       </description>
-    </function>    
+    </function>
 
     <function name="cnameget" section="strings" output="string-or-strings">
       <fnargs>
@@ -2321,12 +2335,12 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the number of columns of <argname>X</argname>. 
-	  <seelist> 
+	  Returns the number of columns of <argname>X</argname>.
+	  <seelist>
             <fncref targ="mshape"/>
             <fncref targ="rows"/>
             <fncref targ="unvech"/>
-            <fncref targ="vec"/> 
+            <fncref targ="vec"/>
             <fncref targ="vech"/>
 	  </seelist>
 	</para>
@@ -2341,9 +2355,9 @@
       <description>
 	<para>
 	  Computes the correlation coefficient between <argname>y1</argname>
-	  and <argname>y2</argname>. The arguments should be either 
+	  and <argname>y2</argname>. The arguments should be either
 	  two series, or two vectors of the same length.
-	  <seelist> 
+	  <seelist>
             <fncref targ="cov"/>
             <fncref targ="mcov"/>
             <fncref targ="mcorr"/>
@@ -2432,10 +2446,10 @@
       <description>
 	<para>
 	  Returns the covariance between <argname>y1</argname> and
-	  <argname>y2</argname>. The arguments should be either 
+	  <argname>y2</argname>. The arguments should be either
 	  two series, or two vectors of the same length.
-	  <seelist> 
-            <fncref targ="corr"/> 
+	  <seelist>
+            <fncref targ="corr"/>
             <fncref targ="mcov"/>
             <fncref targ="mcorr"/>
 	  </seelist>
@@ -2456,7 +2470,7 @@
       <description>
 	<para>
 	  Critical value calculator. Returns <math>x</math> such that
-	  <equation status="inline" ascii="P(X &gt; x) = p"  
+	  <equation status="inline" ascii="P(X &gt; x) = p"
 		    tex="$P(X &gt; x) = p$"/>, where the distribution <math>X</math> is
 	  determined by the character <argname>c</argname>. Between the
 	  arguments <argname>c</argname> and <argname>p</argname>, zero or
@@ -2509,20 +2523,20 @@
 	  \textit{Distribution} &amp; \textsl{c} &amp;
 	  \textit{Arg} 2 &amp; \textit{Arg} 3 \\[4pt]
 	  Standard normal &amp; \texttt{z}, \texttt{n} or \texttt{N} &amp;
-	  -- &amp; -- \\ 
-	  Student's $t$ (central) &amp; \texttt{t} &amp; 
-	  degrees of freedom &amp; -- \\ 
-	  Chi square &amp; \texttt{c}, \texttt{x} or \texttt{X} &amp; 
+	  -- &amp; -- \\
+	  Student's $t$ (central) &amp; \texttt{t} &amp;
 	  degrees of freedom &amp; -- \\
-	  Snedecor's $F$ &amp; \texttt{f} or \texttt{F} &amp; 
-	  df (num.) &amp; df (den.) \\ 
-	  Binomial &amp; \texttt{b} or \texttt{B} &amp; 
-	  $p$ &amp; $n$ \\ 
-	  Poisson &amp; \texttt{p} or \texttt{P} &amp; 
+	  Chi square &amp; \texttt{c}, \texttt{x} or \texttt{X} &amp;
+	  degrees of freedom &amp; -- \\
+	  Snedecor's $F$ &amp; \texttt{f} or \texttt{F} &amp;
+	  df (num.) &amp; df (den.) \\
+	  Binomial &amp; \texttt{b} or \texttt{B} &amp;
+	  $p$ &amp; $n$ \\
+	  Poisson &amp; \texttt{p} or \texttt{P} &amp;
 	  $\lambda$ &amp; -- \\
-	  Laplace &amp; \texttt{l} or \texttt{L} &amp; 
+	  Laplace &amp; \texttt{l} or \texttt{L} &amp;
 	  mean &amp; scale \\
-	  Standardized GED &amp; \texttt{E} &amp; 
+	  Standardized GED &amp; \texttt{E} &amp;
 	  shape &amp; -- \\
 	</tabular>
 	<para>
@@ -2533,7 +2547,7 @@
 	  </seelist>
 	</para>
       </description>
-    </function>  
+    </function>
 
     <function name="cum" section="transforms" output="asinput">
       <fnargs>
@@ -2581,13 +2595,13 @@
 	</para>
 	<ilist>
 	  <li>
-	    <para> 
+	    <para>
 	      <quote><lit>header</lit></quote>: a string specifying
 	      an HTTP header to be sent to the host.
 	    </para>
 	  </li>
 	  <li>
-	    <para> 
+	    <para>
 	      <quote><lit>postdata</lit></quote>: a string holding
 	      data to be sent to the host.
 	    </para>
@@ -2677,7 +2691,7 @@
 	  targ="smplspan"/>.
 	</para>
       </description>
-    </function>    
+    </function>
 
     <function name="defarray" section="data-utils" output="seebelow">
       <fnargs>
@@ -2810,14 +2824,14 @@
 	<para>
 	  Returns the determinant of <argname>A</argname>, computed via the
 	  LU factorization.
-	  <seelist> 
+	  <seelist>
             <fncref targ="ldet"/>
             <fncref targ="rcond"/>
 	    <fncref targ="cnumber"/>
 	  </seelist>
 	</para>
       </description>
-    </function>  
+    </function>
 
     <function name="diag" section="matbuild" output="matrix">
       <fnargs>
@@ -2862,9 +2876,9 @@
 	  Computes first differences.  If <argname>y</argname> is a series, or
 	  a list of series, starting values are set to <lit>NA</lit>.  If
 	  <argname>y</argname> is a matrix, differencing is done by columns
-	  and starting values are set to 0. 
+	  and starting values are set to 0.
 	</para>
-	<para> 
+	<para>
 	  When a list is returned, the individual variables are
 	  automatically named according to the template
 	  <lit>d_</lit>
@@ -2872,7 +2886,7 @@
 	  name of the original series.  The name is truncated if necessary,
 	  and may be adjusted in case of non-uniqueness in the set of names
 	  thus constructed.
-	</para> 
+	</para>
 	<para>
 	  <seelist>
             <fncref targ="cum"/>
@@ -2886,7 +2900,7 @@
     <function name="digamma" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para context="notex">
 	  Returns the digamma (or Psi) function of
@@ -2894,7 +2908,7 @@
 	  the Gamma function.
 	</para>
 	<para context="tex">
-	  Returns the digamma (or Psi) function of $x$, that is 
+	  Returns the digamma (or Psi) function of $x$, that is
 	  $\frac{d}{dx}\, \mbox{ln } \Gamma(x)$.
 	</para>
       </description>
@@ -2933,7 +2947,7 @@
       <fnargs>
 	<fnarg type="list">X</fnarg>
 	<fnarg optional="true" type="scalar">epsilon</fnarg>
-      </fnargs>     
+      </fnargs>
       <description>
 	<para>
 	  Returns a list with the same elements as
@@ -2974,16 +2988,16 @@
 	</para>
 	<code>
 	  ? list print X
-	  foo bar foobar 
+	  foo bar foobar
 	  ? list print Y
-	  foo bar 
+	  foo bar
 	  ? list Y = dropcoll(X, 1.0e-30)
 	  Replaced list Y
 	  ? list print Y
-	  foo bar foobar 
+	  foo bar foobar
 	</code>
       </description>
-    </function>    
+    </function>
 
     <function name="dsort" section="matshape" output="asinput">
       <fnargs>
@@ -2993,8 +3007,8 @@
 	<para>
 	  Sorts <argname>x</argname> in descending order, skipping
 	  observations with missing values when <argname>x</argname> is a
-	  series. 
-	  <seelist> 
+	  series.
+	  <seelist>
             <fncref targ="sort"/>
             <fncref targ="values"/>
 	  </seelist>
@@ -3023,7 +3037,7 @@
 	  full set of dummies, with no omitted category, use
 	  <lit>dummify(x, NA)</lit>.
 	</para>
-	<para> 
+	<para>
 	  The generated variables are automatically named according to
 	  the template
 	  <lit>D</lit><repl>varname</repl><lit>_</lit><repl>i</repl>
@@ -3082,7 +3096,7 @@
 	  the indicator function.
 	</para>
       </description>
-    </function>    
+    </function>
 
     <function name="eigengen" section="linalg" output="matrix">
       <fnargs>
@@ -3227,6 +3241,17 @@
 	  switches to the Julian calendar.
 	</para>
 	<para>
+	  An alternative call is also supported: if a single argument
+	  is given, it is taken to be a date (or series of dates) in
+	  ISO 8601 <quote>basic</quote> numeric format,
+	  <lit>YYYYMMDD</lit>. So the following two calls produce the
+	  same result, namely 700115.
+	</para>
+	<code>
+	  eval epochday(1917, 11, 7)
+	  eval epochday(19171107)
+	</code>
+	<para>
 	  For the inverse function, see <fncref targ="isodate"/> and
 	  also (for the Julian calendar) <fncref targ="juldate"/>.
 	</para>
@@ -3258,7 +3283,7 @@
 	  returns 0. See also <fncref targ="typeof"/>.
 	</para>
       </description>
-    </function>    
+    </function>
 
     <function name="exp" section="math" output="asinput">
       <fnargs>
@@ -3307,14 +3332,14 @@
 	  3  Mean Absolute Error (MAE)
 	  4  Mean Percentage Error (MPE)
 	  5  Mean Absolute Percentage Error (MAPE)
-	  6  Theil's U 
+	  6  Theil's U
 	  7  Bias proportion, UM
 	  8  Regression proportion, UR
 	  9  Disturbance proportion, UD
 	</code>
 	<para>
 	  For details on the calculation of these statistics, and the
-	  interpretation of the <math>U</math> values, please see 
+	  interpretation of the <math>U</math> values, please see
 	  <guideref targ="chap:forecast"/>.
 	</para>
       </description>
@@ -3325,7 +3350,7 @@
 	<fnarg type="cvec">b</fnarg>
 	<fnarg type="fncall">fcall</fnarg>
 	<fnarg optional="true" type="scalar">h</fnarg>
-      </fnargs> 
+      </fnargs>
       <description>
 	<para>
 	  Calculates a numerical approximation to the Jacobian
@@ -3463,7 +3488,7 @@
 	  Should it be necessary to compute the Fourier transform on several
 	  vectors with the same number of elements, it is numerically more
 	  efficient to group them into a matrix rather than invoking
-	  <lit>fft</lit> for each vector separately.  
+	  <lit>fft</lit> for each vector separately.
 	  <seelist>
             <fncref targ="ffti"/>
 	  </seelist>
@@ -3512,7 +3537,7 @@
 	  \[ y_t = \sum_{i=0}^q a_i x_{t-i} + \sum_{i=1}^p b_i y_{t-i} \]
 	</para>
 	<para context="notex">
-	  <math>y</math><sub>t</sub> = 
+	  <math>y</math><sub>t</sub> =
 	  <math>a</math><sub>0</sub> <math>x</math><sub>t</sub> +
 	  <math>a</math><sub>1</sub> <math>x</math><sub>t-1</sub> +
 	  ...
@@ -3560,7 +3585,7 @@
 	  <argname>x</argname> are always assumed zero.
 	</para>
 	<para>
-	  <seelist> 
+	  <seelist>
             <fncref targ="bkfilt"/>
             <fncref targ="bwfilt"/>
             <fncref targ="fracdiff"/>
@@ -3584,29 +3609,29 @@
 	  produces
 	</para>
 	<code>
-          index            y   
-          
-          1            1     -0.40000   
-          2            2      1.36000   
-          3            3      0.27600   
-          4            4      1.75160   
-          5            5      0.92356   
+          index            y
+
+          1            1     -0.40000
+          2            2      1.36000
+          3            3      0.27600
+          4            4      1.75160
+          5            5      0.92356
 
           x (5 x 2)
-          
-          1   1 
-          2   0 
-          3   0 
-          4   0 
-          5   0 
-          
+
+          1   1
+          2   0
+          3   0
+          4   0
+          5   0
+
           w (5 x 2)
-          
-          -0.40000     -0.40000 
-          1.3600      0.36000 
-          0.27600     -0.32400 
-          1.7516      0.29160 
-          0.92356     -0.26244 
+
+          -0.40000     -0.40000
+          1.3600      0.36000
+          0.27600     -0.32400
+          1.7516      0.29160
+          0.92356     -0.26244
 	</code>
       </description>
     </function>
@@ -3622,7 +3647,7 @@
 	  if some form of subsampling is in effect, the value returned
 	  may be smaller than the dollar variable <fncref
 	  targ="$t1"/>.
-	  <seelist> 
+	  <seelist>
             <fncref targ="lastobs"/>
 	  </seelist>
 	</para>
@@ -3671,7 +3696,7 @@
     <function name="floor" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">y</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para>
 	  Returns the greatest integer less than or equal to
@@ -3687,12 +3712,12 @@
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="scalar">d</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para context="notex">
 	  Returns the fractional difference of order <argname>d</argname>
 	  for the series <argname>y</argname>.
-	</para>   
+	</para>
 	<para context="tex">
           \[
           \Delta^d y_t = y_t - \sum_{i=1}^{\infty} \psi_i y_{t-i}
@@ -3708,17 +3733,17 @@
 	<para>
 	  A negative value of <argname>d</argname> can be given, in
 	  which case fractional integration is performed.
-	</para>	
+	</para>
       </description>
     </function>
 
     <function name="gammafun" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para>
-	  Returns the gamma function of <argname>x</argname>. 
+	  Returns the gamma function of <argname>x</argname>.
 	</para>
       </description>
     </function>
@@ -3727,7 +3752,7 @@
       <fnargs>
 	<fnarg type="string">varname</fnarg>
 	<fnarg type="series">rhs</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para>
 	  Provides the script writer with a convenient means of
@@ -3771,7 +3796,7 @@
     <function name="getenv" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">s</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para>
 	  If an environment variable by the name of
@@ -3785,7 +3810,7 @@
     <function name="getinfo" section="data-utils" output="bundle">
       <fnargs>
 	<fnarg type="series">y</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para>
 	  Returns information on the specified series, which may be
@@ -3817,7 +3842,7 @@
 	  lag = 2
 	  parent = QNC
 	  name = QNC_2
-	  graph_name = 
+	  graph_name =
 	  coded = 0
 	  discrete = 0
 	  transform = lags
@@ -3843,7 +3868,7 @@
     <function name="getkeys" section="data-utils" output="strings">
       <fnargs>
 	<fnarg type="bundle">b</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para>
 	  Returns an array of strings holding the keys identifying the
@@ -3857,7 +3882,7 @@
       <fnargs>
 	<fnarg type="string">source</fnarg>
 	<fnarg type="string">target</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para>
 	  This function is used to read successive lines from
@@ -3974,7 +3999,7 @@
     <function name="gini" section="stats" output="scalar">
       <fnargs>
 	<fnarg type="series-or-vec">y</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para>
 	  Returns Gini's inequality index for the (non-negative)
@@ -3991,7 +4016,7 @@
     <function name="ginv" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para>
 	  Returns <math>A</math><sup>+</sup>, the Moore&ndash;Penrose
@@ -4011,7 +4036,7 @@
 	  This matrix has the properties
 	  \begin{eqnarray*}
 	  A A^+ A &amp; = &amp; A \\
-	  A^+ A A^+ &amp; = &amp; A^+ 
+	  A^+ A A^+ &amp; = &amp; A^+
 	  \end{eqnarray*}
 	  Moreover, the products $A^+ A$ and $A A^+$ are
 	  symmetric by construction.
@@ -4128,9 +4153,9 @@
 	  In other words, if $X$ is an $r \times k$ matrix, $Y$ is an
 	  $r \times m$ matrix and $Z$ is the result matrix of the
 	  horizontal direct product of $X$ times $Y$, then $Z$ will
-	  have $r$ rows and $k\cdot m$ columns; moreover, 
-	  \[ 
-	  Z_{in} = X_{ij} Y_{il} 
+	  have $r$ rows and $k\cdot m$ columns; moreover,
+	  \[
+	  Z_{in} = X_{ij} Y_{il}
 	  \]
 	  where $n = (j-1) m + l$.
 	</para>
@@ -4153,8 +4178,8 @@
 	  produces the following matrix:
 	</para>
 	<code>
-          0    1    0    2    0    3 
-         -4    4   -5    5   -6    6 
+          0    1    0    2    0    3
+         -4    4   -5    5   -6    6
 	</code>
       </description>
     </function>
@@ -4189,7 +4214,7 @@
 	  (approximate) percentage changes.
 	</para>
       </description>
-    </function>    
+    </function>
 
     <function name="hflags" section="midas" output="list">
       <fnargs>
@@ -4241,7 +4266,7 @@
 	  these names duplicate names of existing objects.
 	</para>
       </description>
-    </function>    
+    </function>
 
     <function name="hpfilt" section="filters" output="series">
       <fnargs>
@@ -4274,7 +4299,7 @@
 	  series hptrend = y - hfilt(y)
 	</code>
 	<para>
-	  <seelist> 
+	  <seelist>
             <fncref targ="bkfilt"/>
             <fncref targ="bwfilt"/>
 	  </seelist>
@@ -4327,11 +4352,11 @@
       <description>
 	<para>
 	  Returns the row indices of the maxima of the columns of
-	  <argname>X</argname>. 
+	  <argname>X</argname>.
 	</para>
 	<para>
-	  <seelist> 
-            <fncref targ="imaxr"/> 
+	  <seelist>
+            <fncref targ="imaxr"/>
             <fncref targ="iminc"/>
             <fncref targ="maxc"/>
 	  </seelist>
@@ -4342,14 +4367,14 @@
     <function name="imaxr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para>
 	  Returns the column indices of the maxima of the rows of
-	  <argname>X</argname>. 
+	  <argname>X</argname>.
 	</para>
 	<para>
-	  <seelist> 
+	  <seelist>
             <fncref targ="imaxc"/>
             <fncref targ="iminr"/>
             <fncref targ="maxr"/>
@@ -4362,7 +4387,7 @@
       <fnargs>
 	<fnarg type="matrix">M</fnarg>
 	<fnarg type="scalar">x</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para context="notex">
 	  Computes Prob(<math>u'Au</math> &lt; <math>x</math>) for a quadratic
@@ -4391,11 +4416,11 @@
     <function name="iminc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para>
 	  Returns the row indices of the minima of the columns of
-	  <math>X</math>. 
+	  <math>X</math>.
 	</para>
 	<para>
 	  <seelist>
@@ -4410,15 +4435,15 @@
     <function name="iminr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para>
 	  Returns the column indices of the minima of the rows of
-	  <math>X</math>. 
+	  <math>X</math>.
 	</para>
 	<para>
 	  <seelist>
-            <fncref targ="iminc"/> 
+            <fncref targ="iminc"/>
             <fncref targ="imaxr"/>
             <fncref targ="minr"/>
 	  </seelist>
@@ -4430,7 +4455,7 @@
       <fnargs>
 	<fnarg type="bundle">b</fnarg>
 	<fnarg type="string">key</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para>
 	  Checks whether bundle <argname>b</argname> contains a
@@ -4440,14 +4465,14 @@
 	  string, 5 for bundle, 6 for array and 7 for list. The
 	  function <fncref targ="typestr"/> may be used to get the
 	  string corresponding to this code.
-	</para>   
+	</para>
       </description>
-    </function>   
+    </function>
 
     <function name="infnorm" section="linalg" output="scalar">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para context="notex">
 	  Returns the infinity-norm of <argname>X</argname>, that is,
@@ -4456,7 +4481,7 @@
 	</para>
 	<para context="tex">
 	  Returns the $\infty$-norm of the $r\times c$ matrix
-	  <argname>X</argname>, namely, 
+	  <argname>X</argname>, namely,
           \[\| X \|_{\infty} = \max_i \sum_{j=1}^c |X_{ij}|\]
 	</para>
 	<para>
@@ -4471,7 +4496,7 @@
       <fnargs>
 	<fnarg type="list">L</fnarg>
 	<fnarg type="series">y</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para>
 	  Returns the (1-based) position of <argname>y</argname> in
@@ -4532,15 +4557,15 @@
     <function name="int" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
-      </fnargs>  
+      </fnargs>
       <description>
 	<para>
 	  Returns the integer part of <argname>x</argname>, truncating the
 	  fractional part. Note: <lit>int</lit> and <fncref targ="floor"/>
 	  differ in their effect for
 	  negative arguments: <lit>int(-3.5)</lit> gives &minus;3, while
-	  <lit>floor(-3.5)</lit> gives &minus;4. 
-	  <seelist> 
+	  <lit>floor(-3.5)</lit> gives &minus;4.
+	  <seelist>
             <fncref targ="ceil"/>
 	  </seelist>
 	</para>
@@ -4550,7 +4575,7 @@
     <function name="inv" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
-      </fnargs>  
+      </fnargs>
       <description>
 	<para>
 	  Returns the inverse of <argname>A</argname>. If
@@ -4592,7 +4617,7 @@
 	<para>
 	  Inverse cumulative distribution function calculator. Returns
 	  <math>x</math> such that
-	  <equation status="inline" ascii="P(X &le; x) = p"  
+	  <equation status="inline" ascii="P(X &le; x) = p"
 		    tex="$P(X \le x) = p$"/>, where the distribution
 	  of <math>X</math> is determined by the string
 	  <argname>d</argname>. Between the arguments
@@ -4661,22 +4686,22 @@
 	    <para>
 	      Non-central t (nct): df, non-centrality parameter
 	    </para>
-	  </li>	  
+	  </li>
 	</ilist>
 	<tabular colspec="lllll">
 	  \textit{Distribution} &amp; \textsl{d} &amp;
-	  \textit{Arg} 2 &amp; \textit{Arg} 3 &amp; \textit{Arg} 4 \\[4pt] 
+	  \textit{Arg} 2 &amp; \textit{Arg} 3 &amp; \textit{Arg} 4 \\[4pt]
 	  Standard normal &amp; \texttt{z}, \texttt{n} or \texttt{N} &amp;
-	  -- &amp; --  &amp; -- \\ 
+	  -- &amp; --  &amp; -- \\
 	  Gamma &amp; \texttt{g} or \texttt{G} &amp;
-	  shape &amp; scale  &amp; -- \\ 
-	  Student's $t$ (central) &amp; \texttt{t} &amp; 
-	  degrees of freedom &amp; --  &amp; -- \\ 
-	  Chi square &amp; \texttt{c}, \texttt{x} or \texttt{X} &amp; 
+	  shape &amp; scale  &amp; -- \\
+	  Student's $t$ (central) &amp; \texttt{t} &amp;
 	  degrees of freedom &amp; --  &amp; -- \\
-	  Snedecor's $F$ &amp; \texttt{f} or \texttt{F} &amp; 
-	  df (num.) &amp; df (den.)  &amp; -- \\ 
-	  Binomial &amp; \texttt{b} or \texttt{B} &amp; 
+	  Chi square &amp; \texttt{c}, \texttt{x} or \texttt{X} &amp;
+	  degrees of freedom &amp; --  &amp; -- \\
+	  Snedecor's $F$ &amp; \texttt{f} or \texttt{F} &amp;
+	  df (num.) &amp; df (den.)  &amp; -- \\
+	  Binomial &amp; \texttt{b} or \texttt{B} &amp;
 	  $p$ &amp; $n$  &amp; -- \\
 	  Poisson &amp; \texttt{p} or \texttt{P} &amp;
           $\lambda$ &amp; --  &amp; -- \\
@@ -4684,11 +4709,11 @@
           mean &amp; scale  &amp; -- \\
 	  Standardized GED &amp; \texttt{E} &amp; shape &amp; --
 	  &amp; -- \\
-	  Non-central $\chi^2$ &amp; \texttt{ncX} &amp; 
+	  Non-central $\chi^2$ &amp; \texttt{ncX} &amp;
 	  df &amp; non-centrality &amp; -- \\
-	  Non-central $F$ &amp; \texttt{ncF} &amp; 
+	  Non-central $F$ &amp; \texttt{ncF} &amp;
 	  df (num.) &amp; df (den.) &amp; non-centrality \\
-	  Non-central $t$ &amp; \texttt{nct} &amp; 
+	  Non-central $t$ &amp; \texttt{nct} &amp;
 	  df &amp; non-centrality &amp; -- \\
 	</tabular>
 	<para>
@@ -4704,13 +4729,13 @@
     <function name="invmills" section="probdist" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
-      </fnargs>  
+      </fnargs>
       <description>
 	<para>
 	  Returns the inverse Mills ratio at <argname>x</argname>, that is
 	  the ratio between the standard normal density and the complement
 	  to the standard normal distribution function, both evaluated at
-	  <argname>x</argname>. 
+	  <argname>x</argname>.
 	</para>
 	<para>
 	  This function uses a dedicated algorithm which yields greater
@@ -4732,7 +4757,7 @@
     <function name="invpd" section="linalg" output="smatrix">
       <fnargs>
 	<fnarg type="pdmat">A</fnarg>
-      </fnargs>  
+      </fnargs>
       <description>
 	<para>
 	  Returns the inverse of the symmetric, positive definite matrix
@@ -4761,7 +4786,7 @@
 	<fnarg type="int">shock</fnarg>
 	<fnarg type="pscalar" optional="true">alpha</fnarg>
 	<fnarg type="bundle" optional="true">sys</fnarg>
-      </fnargs>  
+      </fnargs>
       <description>
 	<para>
 	  Without the final optional argument, this function is
@@ -4806,7 +4831,7 @@
     <function name="irr" section="math" output="scalar">
       <fnargs>
 	<fnarg type="series-or-vec">x</fnarg>
-      </fnargs>  
+      </fnargs>
       <description>
 	<para>
 	  Returns the Internal Rate of Return for <argname>x</argname>,
@@ -5221,7 +5246,7 @@
 	  See also <fncref targ="isodate"/>.
 	</para>
       </description>
-    </function>    
+    </function>
 
     <function name="kdensity" section="stats" output="matrix">
       <fnargs>
@@ -5293,7 +5318,7 @@
 	  </seelist>
 	</para>
       </description>
-    </function> 
+    </function>
 
     <function name="kfilter" section="sspace" output="scalar">
       <fnargs>
@@ -5386,7 +5411,7 @@
 	  1995)</cite>. See also the <cmdref targ="kpss"/> command.
  	</para>
       </description>
-    </function> 
+    </function>
 
     <function name="ksetup" section="sspace" output="bundle">
       <fnargs>
@@ -5401,15 +5426,15 @@
 	  Sets up a Kalman bundle, that is an object which contains
 	  all the information needed to define a linear state space
 	  model of the form
-	  <equation status="display" 
+	  <equation status="display"
 		    tex="\[y_t=H'\alpha_t\]"
 		    ascii="y(t) = H'a(t)"
-		    graphic="kalman1"/> 
+		    graphic="kalman1"/>
 	  and state transition equation
-	  <equation status="display" 
+	  <equation status="display"
 		    tex="\[\alpha_{t+1}=F \alpha_t + u_t\]"
 		    ascii="a(t+1) = F a(t) + u(t)"
-		    graphic="kalman2"/> 
+		    graphic="kalman2"/>
 	  where Var<math>(u) = Q</math>.
 	</para>
 	<para>
@@ -5436,7 +5461,7 @@
 	  </seelist>
 	</para>
       </description>
-    </function> 
+    </function>
 
     <function name="ksimul" section="sspace" output="scalar">
       <fnargs>
@@ -5458,7 +5483,7 @@
 	  </seelist>
 	</para>
       </description>
-    </function> 
+    </function>
 
     <function name="ksmooth" section="sspace" output="matrix">
       <fnargs>
@@ -5469,7 +5494,7 @@
 	  Performs a fixed-point smoothing (backward) pass on a
 	  Kalman bundle previously set up by means of <fncref
 	  targ="ksetup"/> and returns 0 on successful completion or 1
-	  if numerical problems are encountered.  
+	  if numerical problems are encountered.
 	</para>
 	<para>
 	  On successful completion, the smoothed states will be
@@ -5486,7 +5511,7 @@
 	  </seelist>
 	</para>
       </description>
-    </function> 
+    </function>
 
     <function name="kurtosis" section="stats" output="scalar">
       <fnargs>
@@ -5526,7 +5551,7 @@
 	  as in <lit>{3,5,7}</lit>, although the lags should always
 	  be given in ascending order.
 	</para>
-	<para> 
+	<para>
 	  In the case of list output, the generated variables are
 	  automatically named according to the template
 	  <repl>varname</repl> <lit>_</lit> <repl>i</repl> where
@@ -5577,7 +5602,7 @@
 	<para>
 	  Returns the natural log of the determinant of <math>A</math>,
 	  computed via the LU factorization.
-	  <seelist> 
+	  <seelist>
             <fncref targ="det"/>
             <fncref targ="rcond"/>
 	    <fncref targ="cnumber"/>
@@ -5595,16 +5620,16 @@
 	  Computes log differences; starting values are set to
 	  <lit>NA</lit>.
 	</para>
-	<para> 
+	<para>
 	  When a list is returned, the individual variables are
 	  automatically named according to the template
 	  <lit>ld_</lit><repl>varname</repl> where
 	  <repl>varname</repl> is the name of the original series.
 	  The name is truncated if necessary, and may be adjusted in
 	  case of non-uniqueness in the set of names thus constructed.
-	</para> 
+	</para>
 	<para>
-	  <seelist> 
+	  <seelist>
             <fncref targ="diff"/>
             <fncref targ="sdiff"/>
 	  </seelist>
@@ -5625,7 +5650,7 @@
 	  series in <argname>L</argname>.
 	</para>
 	<para>
-	  <seelist> 
+	  <seelist>
             <fncref targ="wmean"/>
 	  </seelist>
 	</para>
@@ -5741,14 +5766,14 @@
 	  <lit>NA</lit> for non-positive values. Note: <lit>ln</lit> is an
 	  acceptable alias for <lit>log</lit>.
 	</para>
-	<para> 
+	<para>
 	  When a list is returned, the individual variables are
 	  automatically named according to the template
 	  <lit>l_</lit><repl>varname</repl> where <repl>varname</repl>
 	  is the name of the original series.  The name is truncated
 	  if necessary, and may be adjusted in case of non-uniqueness
 	  in the set of names thus constructed.
-	</para> 
+	</para>
       </description>
     </function>
 
@@ -5858,11 +5883,11 @@
 	  the integer part of the cube root of the sample size.
 	</para>
 	<para context="tex">
-	  In formulae: 
+	  In formulae:
 	  \[ \hat{\omega}^2(k) = \frac{1}{T} \sum_{t=k}^{T-k}
 	  \left[ \sum_{i=-k}^k w_i (y_t - \mu) (y_{t-i} - \bar{Y})
-	  \right] \] 
-	  with 
+	  \right] \]
+	  with
 	  \[ w_i = 1 - \frac{|i|}{k + 1} \]
 	</para>
 	<para>
@@ -5873,7 +5898,7 @@
 	</para>
 	<para>
 	  For a multivariate counterpart, see <fncref targ="lrcovar"/>.
-	</para>	
+	</para>
       </description>
     </function>
 
@@ -5895,7 +5920,7 @@
             <fncref targ="xmax"/>
             <fncref targ="xmin"/>
 	  </seelist>
-	</para> 
+	</para>
       </description>
     </function>
 
@@ -5906,7 +5931,7 @@
       <description>
 	<para>
 	  Returns a row vector containing the maxima of the columns of
-	  <argname>X</argname>. 
+	  <argname>X</argname>.
 	</para>
 	<para>
 	  <seelist>
@@ -5925,12 +5950,12 @@
       <description>
 	<para>
 	  Returns a column vector containing the maxima of the rows of
-	  <argname>X</argname>. 
+	  <argname>X</argname>.
 	</para>
 	<para>
 	  <seelist>
             <fncref targ="imaxr"/>
-            <fncref targ="maxc"/> 
+            <fncref targ="maxc"/>
             <fncref targ="minr"/>
 	  </seelist>
 	</para>
@@ -5945,7 +5970,7 @@
 	<para>
 	  Computes a (Pearson) correlation matrix treating each column
 	  of <argname>X</argname> as a variable.
-	  <seelist> 
+	  <seelist>
             <fncref targ="corr"/>
             <fncref targ="cov"/>
             <fncref targ="mcov"/>
@@ -5969,7 +5994,7 @@
 	  <math>n</math> is used.
 	</para>
 	<para>
-	  <seelist> 
+	  <seelist>
             <fncref targ="corr"/>
             <fncref targ="cov"/>
             <fncref targ="mcorr"/>
@@ -6102,7 +6127,7 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the means of the columns of <argname>X</argname>. 
+	  Returns the means of the columns of <argname>X</argname>.
 	  <seelist>
             <fncref targ="meanr"/>
             <fncref targ="sumc"/>
@@ -6118,7 +6143,7 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the means of the rows of <argname>X</argname>. 
+	  Returns the means of the rows of <argname>X</argname>.
 	  <seelist>
             <fncref targ="meanc"/>
             <fncref targ="sumr"/>
@@ -6160,9 +6185,9 @@
 	  Computes the matrix exponential,
 	  \[ e^A = \sum_{k=0}^{\infty} \frac{A^k}{k!}
 	  = \frac{I}{0!} + \frac{A}{1!} + \frac{A^2}{2!} + \frac{A^3}{3!}
-	  + \cdots\] 
+	  + \cdots\]
 	  (This series is sure to converge.) The algorithm used
-	  is 11.3.1 from <cite key="golub96">Golub and Van Loan 
+	  is 11.3.1 from <cite key="golub96">Golub and Van Loan
 	  (1996)</cite>.
 	</para>
       </description>
@@ -6192,9 +6217,9 @@
             <fncref targ="mweights"/>
 	    <fncref targ="mlincomb"/>
 	  </seelist>
-	</para>	
+	</para>
       </description>
-    </function>    
+    </function>
 
     <function name="min" section="stats" output="scalar-or-series">
       <fnargs>
@@ -6214,7 +6239,7 @@
             <fncref targ="xmax"/>
             <fncref targ="xmin"/>
 	  </seelist>
-	</para> 
+	</para>
       </description>
     </function>
 
@@ -6229,7 +6254,7 @@
 	<para>
 	  <seelist>
             <fncref targ="iminc"/>
-            <fncref targ="maxc"/> 
+            <fncref targ="maxc"/>
             <fncref targ="minr"/>
 	  </seelist>
 	</para>
@@ -6242,12 +6267,12 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the minima of the rows of <argname>X</argname>. 
+	  Returns the minima of the rows of <argname>X</argname>.
 	</para>
 	<para>
 	  <seelist>
             <fncref targ="iminr"/>
-            <fncref targ="maxr"/> 
+            <fncref targ="maxr"/>
             <fncref targ="minc"/>
 	  </seelist>
 	</para>
@@ -6268,7 +6293,7 @@
 	  otherwise.
 	</para>
 	<para>
-	  <seelist> 
+	  <seelist>
             <fncref targ="misszero"/>
             <fncref targ="ok"/>
             <fncref targ="zeromiss"/>
@@ -6284,7 +6309,7 @@
       <description>
 	<para>
 	  Converts <lit>NA</lit>s to zeros. If <argname>x</argname> is a
-	  series, the conversion is done element by element. 
+	  series, the conversion is done element by element.
 	  <seelist>
             <fncref targ="missing"/>
             <fncref targ="ok"/>
@@ -6379,7 +6404,7 @@
 	  also some CPU cycles.
 	</para>
       </description>
-    </function>    
+    </function>
 
     <function name="mnormal" section="matbuild" output="matrix">
       <fnargs>
@@ -6390,8 +6415,8 @@
 	<para>
 	  Returns a matrix with <argname>r</argname> rows and
 	  <argname>c</argname> columns, filled with standard normal
-	  pseudo-random variates. 
-	  <seelist> 
+	  pseudo-random variates.
+	  <seelist>
             <fncref targ="normal"/>
             <fncref targ="muniform"/>
 	  </seelist>
@@ -6430,7 +6455,7 @@
 	  can be forced via the command <lit>set svd on</lit>.
 	</para>
 	<para>
-	  <seelist> 
+	  <seelist>
             <fncref targ="mpols"/>
             <fncref targ="mrls"/>
 	  </seelist>
@@ -6519,7 +6544,7 @@
 	  may be specified using the optional <argname>y0</argname>
 	  argument; in that case the <argname>control</argname>
 	  argument is ignored.
-	</para> 
+	</para>
       </description>
     </function>
 
@@ -6606,7 +6631,7 @@
 	      as lines that start with the hash mark, <lit>#</lit>;
 	      such lines are ignored.
             </para>
-	  </li>	  
+	  </li>
 	  <li>
             <para>
               The first non-comment line must contain two integers,
@@ -6661,7 +6686,7 @@
 	  optional second argument has a non-zero value.
 	</para>
       </description>
-    </function>  
+    </function>
 
     <function name="mrls" section="stats" output="matrix">
       <fnargs>
@@ -6698,7 +6723,7 @@
 	  for that equation.
 	</para>
       </description>
-    </function>  
+    </function>
 
     <function name="mshape" section="matshape" output="matrix">
       <fnargs>
@@ -6720,9 +6745,9 @@
 	<para>
 	  <seelist>
             <fncref targ="cols"/>
-            <fncref targ="rows"/> 
+            <fncref targ="rows"/>
             <fncref targ="unvech"/>
-            <fncref targ="vec"/> 
+            <fncref targ="vec"/>
             <fncref targ="vech"/>
 	  </seelist>
 	</para>
@@ -6738,7 +6763,7 @@
 	<para>
 	  Returns a matrix in which the rows of <argname>X</argname>
 	  are reordered by increasing value of the elements in
-	  column <argname>j</argname>. This is a stable sort: 
+	  column <argname>j</argname>. This is a stable sort:
 	  rows that share the same value in column <argname>j</argname>
 	  will not be interchanged.
 	</para>
@@ -6808,9 +6833,9 @@
             <fncref targ="mgradient"/>
 	    <fncref targ="mlincomb"/>
 	  </seelist>
-	</para>	
+	</para>
       </description>
-    </function>    
+    </function>
 
     <function name="mwrite" section="data-utils" output="int">
       <fnargs>
@@ -6877,7 +6902,7 @@
 	      converted to little endian on writing, and converted to
 	      big endian on reading.
 	    </para>
-	  </li>	  
+	  </li>
 	</ilist>
 	<para>
 	  Note that if the matrix file is to be read by a third-party
@@ -7056,7 +7081,7 @@
     <function name="ngetenv" section="strings" output="scalar">
       <fnargs>
 	<fnarg type="string">s</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para>
 	  If an environment variable by the name of
@@ -7070,7 +7095,7 @@
     <function name="nlines" section="strings" output="scalar">
       <fnargs>
 	<fnarg type="string">buf</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para>
 	  Returns a count of the complete lines (that is, lines that
@@ -7239,7 +7264,7 @@
 	  See also <fncref targ="corr"/> for Pearson correlation.
 	</para>
       </description>
-    </function>    
+    </function>
 
     <function name="npv" section="math" output="scalar">
       <fnargs>
@@ -7354,7 +7379,7 @@
 	  \item $AB = [0]$, except when $A$ has full column rank, in which
 	  case an empty matrix is returned. Otherwise, if $A$ is $m \times
 	  n$, $B$ will be an $n \times (n-r)$ matrix, where $r$ is the
-	  rank of $A$.  
+	  rank of $A$.
 	  \item If $A$ is not of full column rank, then the vertical
 	  concatenation of $A$ and $B'$ produces a full rank matrix.
 	  \end{itemize}
@@ -7379,24 +7404,24 @@
       ? print A B C
       A (2 x 3)
 
-      1   3   5 
-      2   4   6 
+      1   3   5
+      2   4   6
 
       B (3 x 1)
 
-      -0.5 
-         1 
-      -0.5 
+      -0.5
+         1
+      -0.5
 
       C (3 x 3)
 
-         1      3      5 
-         2      4      6 
-      -0.5      1   -0.5 
+         1      3      5
+         2      4      6
+      -0.5      1   -0.5
 
       ? eval A*B
-      -4.4409e-16 
-      -4.4409e-16 
+      -4.4409e-16
+      -4.4409e-16
 
       ? eval rank(C)
       3
@@ -7415,7 +7440,7 @@
 	<fnarg type="cvec">b</fnarg>
 	<fnarg type="fncall">fcall</fnarg>
 	<fnarg optional="true" type="scalar">d</fnarg>
-      </fnargs> 
+      </fnargs>
       <description>
 	<para>
 	  Calculates a numerical approximation to the Hessian
@@ -7494,7 +7519,7 @@
 	  datasets.  For example, the following code
 	</para>
 	<code>
-	  open denmark 
+	  open denmark
 	  k = obsnum(1980:1)
 	</code>
 	<para>
@@ -7555,7 +7580,7 @@
 	</para>
 	<para context="tex">
 	  Returns the 1-norm of the $r \times c$ matrix
-	  <argname>X</argname>: 
+	  <argname>X</argname>:
 	  \[\| X \|_1 = \max_j \sum_{i=1}^r |X_{ij}| \]
 	</para>
 	<para>
@@ -7599,7 +7624,7 @@
 	<para context="tex">
 	  Only applicable if the currently open dataset has a panel
 	  structure. Computes the forward orthogonal deviations for
-	  variable <argname>y</argname>, that is 
+	  variable <argname>y</argname>, that is
 	  \[ \tilde{y}_{i,t} =
 	  \sqrt{ \frac{T_i - t}{T_i - t + 1}} \left( y_{i,t} -
 	  \frac{1}{T_i - t} \sum_{s=t+1}^{T_i} y_{i,s} \right) \]
@@ -7692,7 +7717,7 @@
 	  series is therefore non-time varying.
 	</para>
       </description>
-    </function>    
+    </function>
 
     <function name="pmax" section="stats" output="series">
       <fnargs>
@@ -7712,7 +7737,7 @@
 	  is zero are ignored.
 	</para>
 	<para>
-	  <seelist> 
+	  <seelist>
             <fncref targ="pmin"/>
             <fncref targ="pmean"/>
             <fncref targ="pnobs"/>
@@ -7752,7 +7777,7 @@
 	  is zero are ignored.
 	</para>
 	<para>
-	  <seelist> 
+	  <seelist>
             <fncref targ="pmax"/>
             <fncref targ="pmin"/>
             <fncref targ="pnobs"/>
@@ -7781,9 +7806,9 @@
 	  If the optional second argument is provided then
 	  observations for which the value of <argname>mask</argname>
 	  is zero are ignored.
-	</para> 
+	</para>
 	<para>
-	  <seelist> 
+	  <seelist>
             <fncref targ="pmax"/>
             <fncref targ="pmean"/>
             <fncref targ="pnobs"/>
@@ -7813,7 +7838,7 @@
 	  is zero are ignored.
 	</para>
 	<para>
-	  <seelist> 
+	  <seelist>
             <fncref targ="pmax"/>
             <fncref targ="pmin"/>
             <fncref targ="pmean"/>
@@ -7906,7 +7931,7 @@
 	  covariance) matrix of the $X_i$s, with the eigenvectors
 	  ordered by decreasing value of the corresponding
 	  eigenvalues.
-	</para> 
+	</para>
 	<para>
 	  <seelist>
             <fncref targ="eigensym"/>
@@ -7985,7 +8010,7 @@
 	  Note: this function makes it possible to check whether a given
 	  variable (say, <lit>X</lit>) is time-invariant via the condition
 	  <lit>max(psd(X)) == 0</lit>.
-	</para> 
+	</para>
 	<para>
 	  <seelist>
             <fncref targ="pmax"/>
@@ -8053,7 +8078,7 @@
 	  returned by functions such as <fncref targ="pmax"/> and
 	  <fncref targ="pmean"/>, in which a value pertaining to
 	  each cross-sectional unit is repeated for each time
-	  period. 
+	  period.
 	</para>
 	<para>
 	  See <fncref targ="pexpand"/> for the inverse operation.
@@ -8088,7 +8113,7 @@
 	  is zero are ignored.
 	</para>
 	<para>
-	  <seelist> 
+	  <seelist>
             <fncref targ="pmax"/>
             <fncref targ="pmean"/>
             <fncref targ="pmin"/>
@@ -8106,7 +8131,7 @@
 	<fnarg type="char">c</fnarg>
 	<fnarg type="seebelow">&hellip;</fnarg>
 	<fnarg type="anyfloat">x</fnarg>
-      </fnargs> 
+      </fnargs>
       <examples>
 	<example>p1 = pvalue(z, 2.2)</example>
 	<example>p2 = pvalue(X, 3, 5.67)</example>
@@ -8159,7 +8184,7 @@
 	  the <fncref targ="pnobs"/> function.
 	</para>
       </description>
-    </function>    
+    </function>
 
     <function name="pxsum" section="stats" output="series">
       <fnargs>
@@ -8176,8 +8201,8 @@
 	<para context="tex">
 	  Only applicable if the currently open dataset has a panel
 	  structure. Computes the cross-sectional sum for variable
-	  <argname>y</argname> in each period; that is, 
-	  \[ \tilde{y}_t = \sum_{i=1}^{N} y_{i,t}\] 
+	  <argname>y</argname> in each period; that is,
+	  \[ \tilde{y}_t = \sum_{i=1}^{N} y_{i,t}\]
 	  where $N$ is the number of cross-sectional units.
 	</para>
 	<para>
@@ -8253,7 +8278,7 @@
 	  <argname>p2</argname> to 0.85.
 	</para>
 	<para>
-	  <seelist> 
+	  <seelist>
             <fncref targ="pvalue"/>
 	    <fncref targ="urcpval"/>
 	  </seelist>
@@ -8269,14 +8294,14 @@
 	<para>
 	  Returns quantiles for the standard normal distribution. If
 	  <argname>x</argname> is not between 0 and 1, <lit>NA</lit> is
-	  returned. 
+	  returned.
 	  <seelist>
             <fncref targ="cnorm"/>
             <fncref targ="dnorm"/>
 	  </seelist>
 	</para>
       </description>
-    </function>  
+    </function>
 
     <function name="qrdecomp" section="linalg" output="matrix">
       <fnargs>
@@ -8360,7 +8385,7 @@
 	  <cite key="golub69">Golub and Welsch (1969)</cite> is used.
 	</para>
 	<para context="notex">
-	  When the Gauss&ndash;Legendre type is selected, the 
+	  When the Gauss&ndash;Legendre type is selected, the
 	  optional arguments <argname>a</argname> and
 	  <argname>b</argname> can be used to control the lower and
 	  upper limits of integration, the default values being
@@ -8402,7 +8427,7 @@
 	  and dividing the default $w_i$ by $\sqrt{\pi}$.
 	</para>
       </description>
-    </function>    
+    </function>
 
     <function name="quantile" section="stats" output="scalar" altout="matrix">
       <fnargs>
@@ -8432,8 +8457,8 @@
 	<para context="tex">
 	  For a series of length $n$, the $p$-quantile, $q$, is defined
 	  as:
-	  \[q = y_{[k]} + [(n+1) \cdot p - k] (y_{[k+1]} - y_{[k]})\] 
-	  where $k$ is the integer part of $(n+1) \cdot p$ and 
+	  \[q = y_{[k]} + [(n+1) \cdot p - k] (y_{[k+1]} - y_{[k]})\]
+	  where $k$ is the integer part of $(n+1) \cdot p$ and
 	  $y_{[i]}$ is the $i$-th element of the series when
 	  sorted from smallest to largest.
 	</para>
@@ -8480,7 +8505,7 @@
 	  where applicable, <argname>p2</argname> and
 	  <argname>p3</argname>.
 	</para>
-	
+
 	<ilist context="notex">
 	  <li>
             <para>
@@ -8516,12 +8541,12 @@
             <para>
               Gamma (g or G): shape, scale
             </para>
-	  </li>   
+	  </li>
 	  <li>
             <para>
               Binomial (b or B): probability, number of trials
             </para>
-	  </li>   
+	  </li>
 	  <li>
             <para>
               Poisson (p or P): mean
@@ -8531,7 +8556,7 @@
             <para>
               Exponential (exp): scale
             </para>
-	  </li>	  
+	  </li>
 	  <li>
             <para>
               Weibull (w or W): shape, scale
@@ -8541,7 +8566,7 @@
             <para>
               Laplace (l or L): mean, scale
             </para>
-	  </li>	  
+	  </li>
 	  <li>
             <para>
               Generalized Error (E): shape
@@ -8579,7 +8604,7 @@
 	<para>
 	  <seelist>
             <fncref targ="normal"/>
-            <fncref targ="uniform"/> 
+            <fncref targ="uniform"/>
             <fncref targ="mrandgen"/>
             <fncref targ="randgen1"/>
 	  </seelist>
@@ -8623,7 +8648,7 @@
       <description>
 	<para>
 	  Returns a pseudo-random integer in the closed interval
-	  [<argname>min</argname>, <argname>max</argname>]. 
+	  [<argname>min</argname>, <argname>max</argname>].
 	  <seelist>
 	    <fncref targ="randgen"/>
 	  </seelist>
@@ -8638,8 +8663,8 @@
       <description>
 	<para>
 	  Returns the rank of <argname>X</argname>, numerically computed
-	  via the singular value decomposition. 
-	  <seelist> 
+	  via the singular value decomposition.
+	  <seelist>
             <fncref targ="svd"/>
 	  </seelist>
 	</para>
@@ -8663,9 +8688,9 @@
 	  1 instead of 0.
 	</para>
 	<para context="tex">
-	  Formally, 
+	  Formally,
 	  \[ \mathrm{rank}(y_i) = 1 + \sum_{j \ne i} \left[
-	  I(y_j &lt; y_i) + 0.5 \cdot I(y_j = y_i) \right] \] 
+	  I(y_j &lt; y_i) + 0.5 \cdot I(y_j = y_i) \right] \]
 	  where $I$ denotes the indicator function.
 	</para>
 	<para>
@@ -8695,7 +8720,7 @@
 	</para>
 	<para context="tex">
 	  Given that <math>A</math> is non-singular, we may define
-	  \[\kappa(A) = ||A||_1 \cdot ||A^{-1}||_1\] 
+	  \[\kappa(A) = ||A||_1 \cdot ||A^{-1}||_1\]
 	  This function returns $\kappa(A)^{-1}$.
 	</para>
 	<para>
@@ -8712,7 +8737,7 @@
       <fnargs>
 	<fnarg type="string">fname</fnarg>
 	<fnarg type="string" optional="true">codeset</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para>
 	  If a file by the name of <argname>fname</argname> exists and
@@ -8745,7 +8770,7 @@
     <code>
         string web_page = readfile("http://gretl.sourceforge.net/")
         print web_page
-        
+
         string current_settings = readfile("@dotdir/.gretl2rc")
         print current_settings
     </code>
@@ -8761,7 +8786,7 @@
 	<fnarg type="string">s</fnarg>
 	<fnarg type="string">match</fnarg>
 	<fnarg type="string">repl</fnarg>
-      </fnargs>  
+      </fnargs>
       <description>
 	<para>
 	  Returns a copy of <argname>s</argname> in which all
@@ -8780,7 +8805,7 @@
     <function name="remove" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="string">fname</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para>
 	  If a file by the name of <argname>fname</argname> exists and
@@ -8807,7 +8832,7 @@
 	<fnarg type="series-or-mat">x</fnarg>
 	<fnarg type="scalar-or-vec">find</fnarg>
 	<fnarg type="scalar-or-vec">subst</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para>
 	  Replaces each element of <argname>x</argname> equal to
@@ -8837,14 +8862,14 @@
 	</para>
 	<code>
           a (2 x 3)
-          
-          1   2   3 
-          3   4   5 
-          
+
+          1   2   3
+          3   4   5
+
           b (2 x 3)
-          
-          -1    2   -8 
-          -8    0    5 
+
+          -1    2   -8
+          -8    0    5
 	</code>
       </description>
     </function>
@@ -8853,7 +8878,7 @@
       <fnargs>
 	<fnarg type="series-or-mat">x</fnarg>
 	<fnarg optional="true" type="int">blocksize</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para>
 	  The initial description of this function pertains to
@@ -8904,7 +8929,7 @@
 	<para>
 	  Rounds to the nearest integer. Note that when <math>x</math>
 	  lies halfway between two integers, rounding is done "away
-	  from zero", so for example 2.5 rounds to 3, but 
+	  from zero", so for example 2.5 rounds to 3, but
 	  <lit>round(-3.5)</lit> gives &minus;4. This is a common
 	  convention in spreadsheet programs, but other software may
 	  yield different results.
@@ -8944,7 +8969,7 @@
 	  matrix A = { 11, 23, 13 ; 54, 15, 46 }
 	  rnameset(A, "First Second")
 	  string name = rnameget(A, 2)
-	  print name	
+	  print name
 	</code>
 	<para>
 	  <seelist>
@@ -8973,7 +8998,7 @@
 	</para>
 	<para>
 	  The return value is 0 on successful completion, non-zero on
-	  error. See also <fncref targ="cnameset"/>.	  
+	  error. See also <fncref targ="cnameset"/>.
 	</para>
 	<para>
 	  Example:
@@ -8985,7 +9010,7 @@
 	  S[2] = "Row2"
 	  S[3] = "Row3"
 	  rnameset(M, S)
-	  print M      
+	  print M
 	</code>
       </description>
     </function>
@@ -9000,7 +9025,7 @@
 	  <seelist>
             <fncref targ="cols"/>
             <fncref targ="mshape"/>
-            <fncref targ="unvech"/> 
+            <fncref targ="unvech"/>
             <fncref targ="vec"/>
             <fncref targ="vech"/>
 	  </seelist>
@@ -9011,7 +9036,7 @@
     <function name="sd" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">x</fnarg>
-      </fnargs>     
+      </fnargs>
       <description>
 	<para>
 	  If <argname>x</argname> is a series, returns the (scalar) sample
@@ -9025,7 +9050,7 @@
 	  there are any missing values at <math>t</math>.
 	</para>
 	<para>
-	  <seelist> 
+	  <seelist>
             <fncref targ="var"/>
 	  </seelist>
 	</para>
@@ -9056,25 +9081,25 @@
     <function name="sdiff" section="transforms" output="asinput">
       <fnargs>
 	<fnarg type="series-or-list">y</fnarg>
-      </fnargs>   
+      </fnargs>
       <description>
 	<para>
-	  Computes seasonal differences: <equation status="inline" 
+	  Computes seasonal differences: <equation status="inline"
 	  ascii="y(t) - y(t-k)"  tex="$y_t - y_{t-k}$"/>, where
 	  <math>k</math> is the periodicity of the current dataset (see
 	  <fncref targ="$pd"/>). Starting values are set to
 	  <lit>NA</lit>.
 	</para>
-	<para> 
+	<para>
 	  When a list is returned, the individual variables are
 	  automatically named according to the template
 	  <lit>sd_</lit><repl>varname</repl> where
 	  <repl>varname</repl> is the name of the original series.
 	  The name is truncated if necessary, and may be adjusted in
 	  case of non-uniqueness in the set of names thus constructed.
-	</para> 
+	</para>
 	<para>
-	  <seelist> 
+	  <seelist>
             <fncref targ="diff"/>
             <fncref targ="ldiff"/>
 	  </seelist>
@@ -9086,7 +9111,7 @@
       <fnargs>
 	<fnarg optional="true" type="int">baseline</fnarg>
 	<fnarg optional="true" type="bool">center</fnarg>
-      </fnargs>     
+      </fnargs>
       <description>
 	<para>
 	  Applicable only if the dataset has a time-series structure
@@ -9111,13 +9136,13 @@
 	  rather than 0 and 1.
 	</para>
       </description>
-    </function>    
+    </function>
 
     <function name="selifc" section="matshape" output="matrix">
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
 	<fnarg type="rvec">b</fnarg>
-      </fnargs>   
+      </fnargs>
       <description>
 	<para>
 	  Selects from <argname>A</argname> only the columns for which
@@ -9137,7 +9162,7 @@
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
 	<fnarg type="cvec">b</fnarg>
-      </fnargs>   
+      </fnargs>
       <description>
 	<para>
 	  Selects from <argname>A</argname> only the rows for which
@@ -9159,7 +9184,7 @@
 	<fnarg type="scalar">a</fnarg>
 	<fnarg type="scalar">b</fnarg>
 	<fnarg optional="true" type="scalar">k</fnarg>
-      </fnargs>   
+      </fnargs>
       <description>
 	<para>
 	  Given only two arguments, returns a row vector filled with
@@ -9192,7 +9217,7 @@
 	<fnarg type="bundle">b</fnarg>
 	<fnarg type="string">key</fnarg>
 	<fnarg type="string">note</fnarg>
-      </fnargs>   
+      </fnargs>
       <description>
 	<para>
 	  Sets a descriptive note for the object identified by
@@ -9204,7 +9229,7 @@
 	  <argname>key</argname>).
 	</para>
       </description>
-    </function>    
+    </function>
 
     <function name="simann" section="numerical" output="scalar">
       <fnargs>
@@ -9242,7 +9267,7 @@
     <function name="sin" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
-      </fnargs>       
+      </fnargs>
       <description>
 	<para>
 	  Returns the sine of <argname>x</argname>.
@@ -9373,12 +9398,12 @@
     <function name="sort" section="matshape" output="asinput">
       <fnargs>
 	<fnarg type="series-or-vec">x</fnarg>
-      </fnargs>     
+      </fnargs>
       <description>
 	<para>
 	  Sorts <argname>x</argname> in ascending order, skipping
 	  observations with missing values when <math>x</math> is a
-	  series.  
+	  series.
 	  <seelist>
             <fncref targ="dsort"/>
             <fncref targ="values"/>
@@ -9392,12 +9417,12 @@
       <fnargs>
 	<fnarg type="series">y1</fnarg>
 	<fnarg type="series">y2</fnarg>
-      </fnargs>     
+      </fnargs>
       <description>
 	<para>
 	  Returns a series containing the elements of
 	  <argname>y2</argname> sorted by increasing value of the first
-	  argument, <argname>y1</argname>. 
+	  argument, <argname>y1</argname>.
 	  <seelist>
             <fncref targ="sort"/>
             <fncref targ="ranking"/>
@@ -9410,7 +9435,7 @@
       <fnargs>
 	<fnarg type="string">format</fnarg>
 	<fnarg type="varargs"/>
-      </fnargs>     
+      </fnargs>
       <description>
 	<para>
 	  The returned string is constructed by printing the values of
@@ -9433,7 +9458,7 @@
 	</para>
 	<para>
 	  For example, the code below
-	</para>	
+	</para>
 	<code>
 	  scalar x = sqrt(5)
 	  string claim = sprintf("sqrt(%d) is (roughly) %6.4f.\n", 5, x)
@@ -9466,7 +9491,7 @@
     <function name="sqrt" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
-      </fnargs>     
+      </fnargs>
       <description>
 	<para>
 	  Returns the positive square root of <argname>x</argname>; produces
@@ -9484,7 +9509,7 @@
       <fnargs>
 	<fnarg type="list">L</fnarg>
 	<fnarg optional="true" type="bool">cross-products</fnarg>
-      </fnargs>     
+      </fnargs>
       <description>
 	<para>
 	  Returns a list that references the squares of the variables
@@ -9499,14 +9524,14 @@
 	  of names in the returned list.
 	</para>
       </description>
-    </function>    
+    </function>
 
     <function name="sscanf" section="strings" output="int">
       <fnargs>
 	<fnarg type="string">src</fnarg>
 	<fnarg type="string">format</fnarg>
 	<fnarg type="varargs"/>
-      </fnargs>  
+      </fnargs>
       <description>
 	<para>
 	  Reads values from <argname>src</argname> under the control
@@ -9599,12 +9624,12 @@
     <function name="sst" section="stats" output="scalar">
       <fnargs>
 	<fnarg type="series">y</fnarg>
-      </fnargs>  
+      </fnargs>
       <description>
 	<para>
 	  Returns the sum of squared deviations from the mean for the
 	  non-missing observations in series <argname>y</argname>.
-	  <seelist> 
+	  <seelist>
             <fncref targ="var"/>
 	  </seelist>
 	</para>
@@ -9615,7 +9640,7 @@
       <fnargs>
 	<fnarg type="series">y</fnarg>
 	<fnarg type="strings">S</fnarg>
-      </fnargs>  
+      </fnargs>
       <description>
 	<para>
 	  Provides a means of defining string values for the series
@@ -9626,9 +9651,9 @@
 	  elements where <math>n</math> is the largest value in
 	  <argname>y</argname>.  In addition each element of
 	  <argname>S</argname> must be valid UTF-8.
-	  <seelist> 
+	  <seelist>
             <fncref targ="strvals"/>
-	  </seelist>	  
+	  </seelist>
 	</para>
 	<para>
 	  The value returned is zero on success or a positive error
@@ -9640,7 +9665,7 @@
     <function name="strlen" section="strings" output="int">
       <fnargs>
 	<fnarg type="string">s</fnarg>
-      </fnargs>  
+      </fnargs>
       <description>
 	<para>
 	  Returns the number of characters in the string
@@ -9664,7 +9689,7 @@
 	<fnarg type="string">s1</fnarg>
 	<fnarg type="string">s2</fnarg>
 	<fnarg optional="true" type="int">n</fnarg>
-      </fnargs>  
+      </fnargs>
       <description>
 	<para>
 	  Compares the two string arguments and returns an integer less
@@ -9674,7 +9699,7 @@
 	  characters.  If <argname>n</argname> is omitted the comparison
 	  proceeds as far as possible.
 	</para>
-	<para> 
+	<para>
 	  Note that if you just want to compare two strings for
 	  equality, that can be done without using a function, as in
 	  <lit>if (s1 == s2) ...</lit>
@@ -9687,7 +9712,7 @@
 	<fnarg type="string">s</fnarg>
 	<fnarg optional="true" type="string">sep</fnarg>
 	<fnarg optional="true" type="int">i</fnarg>
-      </fnargs>  
+      </fnargs>
       <description>
 	<para>
 	  In basic usage, with a single argument, returns the array of
@@ -9743,7 +9768,7 @@
       <fnargs>
 	<fnarg type="string">s1</fnarg>
 	<fnarg type="string">s2</fnarg>
-      </fnargs>  
+      </fnargs>
       <description>
 	<para>
 	  Searches <argname>s1</argname> for an occurrence of the string
@@ -9770,7 +9795,7 @@
     <function name="strstrip" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">s</fnarg>
-      </fnargs>  
+      </fnargs>
       <description>
 	<para>
 	  Returns a copy of the argument <argname>s</argname> from
@@ -9792,7 +9817,7 @@
 	<fnarg type="string">s</fnarg>
 	<fnarg type="string">find</fnarg>
 	<fnarg type="string">subst</fnarg>
-      </fnargs>  
+      </fnargs>
       <description>
 	<para>
 	  Returns a copy of <argname>s</argname> in which all
@@ -9814,7 +9839,7 @@
     <function name="strvals" section="strings" output="strings">
       <fnargs>
 	<fnarg type="series">y</fnarg>
-      </fnargs>  
+      </fnargs>
       <description>
 	<para>
 	  If the series <argname>y</argname> is string-valued,
@@ -9822,7 +9847,7 @@
 	  ordered by the associated numerical values starting
 	  at 1. If <argname>y</argname> is not string-valued an
 	  empty strings array is returned.
-	  <seelist> 
+	  <seelist>
             <fncref targ="stringify"/>
 	  </seelist>
 	</para>
@@ -9834,7 +9859,7 @@
 	<fnarg type="string">s</fnarg>
 	<fnarg type="int">start</fnarg>
 	<fnarg type="int">end</fnarg>
-      </fnargs>  
+      </fnargs>
       <description>
 	<para>
 	  Returns a substring of <argname>s</argname>, from the
@@ -9887,7 +9912,7 @@
     <function name="sum" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="smlist">x</fnarg>
-      </fnargs>      
+      </fnargs>
       <description>
 	<para>
 	  If <argname>x</argname> is a series, returns the (scalar) sum of the
@@ -9897,21 +9922,21 @@
 	<para>
 	  If <argname>x</argname> is a matrix, returns the sum of the
 	  elements of the matrix.
-	</para> 
+	</para>
 	<para>
 	  If <argname>x</argname> is a list, returns a series
 	  <math>y</math> such that <math>y</math><sub>t</sub> is the
 	  sum of the values of the variables in the list at
 	  observation <math>t</math>, or <lit>NA</lit> if there are
 	  any missing values at <math>t</math>.
-	</para> 
+	</para>
       </description>
     </function>
 
     <function name="sumall" section="stats" output="scalar">
       <fnargs>
 	<fnarg type="series">x</fnarg>
-      </fnargs>      
+      </fnargs>
       <description>
 	<para>
 	  Returns the sum of the observations of <argname>x</argname>
@@ -9925,7 +9950,7 @@
     <function name="sumc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-      </fnargs>     
+      </fnargs>
       <description>
 	<para>
 	  Returns the sums of the columns of <argname>X</argname>.
@@ -9940,11 +9965,11 @@
     <function name="sumr" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-      </fnargs>  
+      </fnargs>
       <description>
 	<para>
 	  Returns the sums of the rows of <argname>X</argname>.
-	  <seelist> 
+	  <seelist>
             <fncref targ="meanr"/>
             <fncref targ="sumc"/>
 	  </seelist>
@@ -9965,15 +9990,15 @@
 	</para>
 	<para context="tex">
 	  Performs the singular values decomposition of the $r \times c$
-	  matrix $X$: 
+	  matrix $X$:
 	  \[ X = U \left[
-	  \begin{array}{cccc} 
-	  \sigma_1 \\ 
-	  &amp; \sigma_2 \\ 
-	  &amp; &amp; \ddots \\ 
+	  \begin{array}{cccc}
+	  \sigma_1 \\
+	  &amp; \sigma_2 \\
+	  &amp; &amp; \ddots \\
 	  &amp; &amp; &amp; \sigma_n ,
 	  \end{array}
-	  \right] V \] 
+	  \right] V \]
 	  where $n = \min(r,c)$. $U$ is $r \times
 	  n$ and $V$ is $n \times c$, with $U'U = I$ and $VV' = I$.
 	</para>
@@ -9984,7 +10009,7 @@
 	  3, respectively.  For any matrix <lit>A</lit>, the code
 	</para>
 	<code>
-	  s = svd(A, &amp;U, &amp;V) 
+	  s = svd(A, &amp;U, &amp;V)
 	  B = (U .* s) * V
 	</code>
 	<para>
@@ -10049,7 +10074,7 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the hyperbolic tangent of <argname>x</argname>. 
+	  Returns the hyperbolic tangent of <argname>x</argname>.
 	</para>
 	<para context="tex">
 	  \[ \tanh x = \frac{e^{2x} - 1}{e^{2x} + 1}  \]
@@ -10075,12 +10100,12 @@
 	  Solves a Toeplitz system of linear equations, that is
 	  <math>Tx = b</math> where <math>T </math> is a square matrix
 	  whose element <math>T</math><sub>i,j</sub> equals
-	  <math>c</math><sub>i-j</sub> for 
+	  <math>c</math><sub>i-j</sub> for
 	  <equation status="inline"
-	  ascii="i&gt;=j" tex="$i\ge j$"/> 
-	  and <math>r</math><sub>j-i</sub> for 
+	  ascii="i&gt;=j" tex="$i\ge j$"/>
+	  and <math>r</math><sub>j-i</sub> for
 	  <equation status="inline" ascii="i&lt;=j"
-	  tex="$i\le j$"/>. 
+	  tex="$i\le j$"/>.
 	  Note that the first elements of <math>c</math> and
 	  <math>r</math> must be equal, otherwise an error is
 	  returned. Upon successful completion, the function returns
@@ -10102,7 +10127,7 @@
     <function name="tolower" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">s</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para>
 	  Returns a copy of <argname>s</argname> in which any upper-case
@@ -10115,7 +10140,7 @@
         string s1 = "Hello, Gretl!"
         string s2 = tolower(s1)
         print s2
-        
+
         string s3 = tolower("Hello, Gretl!")
         print s3
     </code>
@@ -10125,7 +10150,7 @@
     <function name="toupper" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">s</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para>
 	  Returns a copy of <argname>s</argname> in which any lower-case
@@ -10138,7 +10163,7 @@
         string s1 = "Hello, Gretl!"
         string s2 = toupper(s1)
         print s2
-        
+
         string s3 = toupper("Hello, Gretl!")
         print s3
     </code>
@@ -10148,12 +10173,12 @@
     <function name="tr" section="linalg" output="scalar">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para>
 	  Returns the trace of the square matrix <argname>A</argname>, that
 	  is, the sum of its diagonal elements.
-	  <seelist> 
+	  <seelist>
             <fncref targ="diag"/>
 	  </seelist>
 	</para>
@@ -10163,7 +10188,7 @@
     <function name="transp" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-      </fnargs>      
+      </fnargs>
       <description>
 	<para>
 	  Returns the transpose of <argname>X</argname>. Note: this is rarely
@@ -10178,7 +10203,7 @@
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="int">ttop</fnarg>
 	<fnarg type="int">tbot</fnarg>
-      </fnargs>   
+      </fnargs>
       <description>
 	<para>
 	  Returns a matrix that is a copy of <argname>X</argname> with
@@ -10227,7 +10252,7 @@
     <function name="typestr" section="data-utils" output="string">
       <fnargs>
 	<fnarg type="int">typecode</fnarg>
-      </fnargs>      
+      </fnargs>
       <description>
 	<para>
 	  Returns the name of the gretl data-type corresponding to
@@ -10246,7 +10271,7 @@
       <fnargs>
 	<fnarg type="scalar">a</fnarg>
 	<fnarg type="scalar">b</fnarg>
-      </fnargs>     
+      </fnargs>
       <description>
 	<para>
 	  Generates a series of uniform pseudo-random variates in the
@@ -10270,7 +10295,7 @@
     <function name="uniq" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="series-or-vec">x</fnarg>
-      </fnargs>      
+      </fnargs>
       <description>
 	<para>
 	  Returns a vector containing the distinct elements of
@@ -10284,7 +10309,7 @@
     <function name="unvech" section="matbuild" output="smatrix">
       <fnargs>
 	<fnarg type="vector">v</fnarg>
-      </fnargs>      
+      </fnargs>
       <description>
 	<para>
 	  Returns an <by r="n" c="n"/> symmetric matrix obtained by
@@ -10292,9 +10317,9 @@
 	  in <math>v</math> must be a triangular integer&mdash;&ie;, a
 	  number <math>k</math> such that an integer <math>n</math> exists
 	  with the property <equation
-          status="inline" ascii="k = n(n+1)/2" 
+          status="inline" ascii="k = n(n+1)/2"
           tex="$k = n(n+1)/2$"/>. This is the inverse of the function
-	  <fncref targ="vech"/>. 
+	  <fncref targ="vech"/>.
 	</para>
 	<para>
 	  <seelist>
@@ -10308,7 +10333,7 @@
     <function name="upper" section="matbuild" output="smatrix">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
-      </fnargs>  
+      </fnargs>
       <description>
 	<para context="notex">
 	  Returns an <by r="n" c="n"/> upper triangular matrix: the elements
@@ -10358,7 +10383,7 @@
 	  <argname>n</argname> value of 0 to get an asymptotic result.
 	</para>
 	<para>
-	  <seelist> 
+	  <seelist>
             <fncref targ="pvalue"/>
 	    <fncref targ="qlrpval"/>
 	  </seelist>
@@ -10369,7 +10394,7 @@
     <function name="values" section="stats" output="cvec">
       <fnargs>
 	<fnarg type="series-or-vec">x</fnarg>
-      </fnargs>      
+      </fnargs>
       <description>
 	<para>
 	  Returns a vector containing the distinct elements of
@@ -10390,7 +10415,7 @@
     <function name="var" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">x</fnarg>
-      </fnargs>     
+      </fnargs>
       <description>
 	<para>
 	  If <argname>x</argname> is a series, returns the (scalar) sample
@@ -10421,7 +10446,7 @@
     <function name="varname" section="strings" output="string">
       <fnargs>
 	<fnarg type="int-or-list">v</fnarg>
-      </fnargs>     
+      </fnargs>
       <description>
 	<para>
 	  If given an integer argument, returns the name of the
@@ -10449,7 +10474,7 @@
     <function name="varnames" section="strings" output="strings">
       <fnargs>
 	<fnarg type="list">L</fnarg>
-      </fnargs>     
+      </fnargs>
       <description>
 	<para>
 	  Returns an array of strings containing the names of the
@@ -10468,12 +10493,12 @@
         eval S[3]
     </code>
       </description>
-    </function>    
+    </function>
 
     <function name="varnum" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="string">varname</fnarg>
-      </fnargs>     
+      </fnargs>
       <description>
 	<para>
 	  Returns the ID number of the variable called
@@ -10494,7 +10519,7 @@
 	  Simulates a <math>p</math>-order <math>n</math>-variable
 	  VAR, that is
 	  <equation status="inline"
-		    ascii="y(t) = A1 y(t-1) + ... + Ap y(t-p) + u(t)." 
+		    ascii="y(t) = A1 y(t-1) + ... + Ap y(t-p) + u(t)."
 		    tex="$y_t = \sum_{i=1}^p A_i y_{t-i} + u_t$."/>
 	  The coefficient matrix <argname>A</argname> is composed by
 	  stacking the <math>A</math><sub>i</sub> matrices horizontally;
@@ -10512,9 +10537,9 @@
 	  If the VAR contains deterministic terms and/or exogenous
 	  regressors, these can be handled by folding them into the
 	  <argname>U</argname> matrix: each row of <argname>U</argname>
-	  then becomes 
+	  then becomes
 	  <equation status="inline"
-		    ascii="u(t) = B'x(t) + e(t)." 
+		    ascii="u(t) = B'x(t) + e(t)."
 		    tex="$u_t = B' x_t + e_t$."/>
 	</para>
 	<para>
@@ -10524,7 +10549,7 @@
 	  <math>T</math> simulated values.
 	</para>
 	<para>
-	  <seelist> 
+	  <seelist>
             <fncref targ="$compan"/>
             <cmdref targ="var"/>
             <cmdref targ="vecm"/>
@@ -10537,7 +10562,7 @@
     <function name="vec" section="matbuild" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-      </fnargs>     
+      </fnargs>
       <description>
 	<para>
 	  Stacks the columns of <argname>X</argname> as a column vector.
@@ -10553,14 +10578,14 @@
     <function name="vech" section="matbuild" output="cvec">
       <fnargs>
 	<fnarg type="smatrix">A</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para>
 	  Returns in a column vector the elements of <argname>A</argname>
 	  on and above the diagonal. Typically, this function is used on
 	  symmetric matrices; in this case, it can be undone by the
-	  function <fncref targ="unvech"/>. 
-	  <seelist> 
+	  function <fncref targ="unvech"/>.
+	  <seelist>
             <fncref targ="vec"/>
 	  </seelist>
 	</para>
@@ -10572,7 +10597,7 @@
 	<fnarg type="scalar-or-series">year</fnarg>
 	<fnarg type="scalar-or-series">month</fnarg>
 	<fnarg type="scalar-or-series">day</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para>
 	  Returns the day of the week (Sunday = 0, Monday = 1, etc.)
@@ -10588,7 +10613,7 @@
       <fnargs>
 	<fnarg type="list">Y</fnarg>
 	<fnarg type="list">W</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para>
 	  Returns a series <math>y</math> such that
@@ -10602,11 +10627,11 @@
 	  weights must be non-negative.
 	</para>
 	<para>
-	  <seelist> 
+	  <seelist>
             <fncref targ="wsd"/>
             <fncref targ="wvar"/>
 	  </seelist>
-	</para> 
+	</para>
       </description>
     </function>
 
@@ -10614,7 +10639,7 @@
       <fnargs>
 	<fnarg type="list">Y</fnarg>
 	<fnarg type="list">W</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para>
 	  Returns a series <math>y</math> such that
@@ -10628,11 +10653,11 @@
 	  same length and the weights must be non-negative.
 	</para>
 	<para>
-	  <seelist> 
+	  <seelist>
             <fncref targ="wmean"/>
             <fncref targ="wvar"/>
 	  </seelist>
-	</para> 
+	</para>
       </description>
     </function>
 
@@ -10640,7 +10665,7 @@
       <fnargs>
 	<fnarg type="list">X</fnarg>
 	<fnarg type="list">W</fnarg>
-      </fnargs>    
+      </fnargs>
       <description>
 	<para>
 	  Returns a series <math>y</math> such that
@@ -10661,11 +10686,11 @@
 	  the weighted mean.
 	</para>
 	<para>
-	  <seelist> 
+	  <seelist>
             <fncref targ="wmean"/>
             <fncref targ="wsd"/>
 	  </seelist>
-	</para> 
+	</para>
       </description>
     </function>
 
@@ -10673,20 +10698,20 @@
       <fnargs>
 	<fnarg type="scalar">x</fnarg>
 	<fnarg type="scalar">y</fnarg>
-      </fnargs>     
+      </fnargs>
       <description>
 	<para>
 	  Returns the greater of <argname>x</argname> and
 	  <argname>y</argname>, or <lit>NA</lit> if either value
-	  is missing.  
+	  is missing.
 	</para>
 	<para>
-	  <seelist> 
+	  <seelist>
             <fncref targ="xmin"/>
             <fncref targ="max"/>
             <fncref targ="min"/>
 	  </seelist>
-	</para> 
+	</para>
       </description>
     </function>
 
@@ -10694,7 +10719,7 @@
       <fnargs>
 	<fnarg type="scalar">x</fnarg>
 	<fnarg type="scalar">y</fnarg>
-      </fnargs>     
+      </fnargs>
       <description>
 	<para>
 	  Returns the lesser of <argname>x</argname> and
@@ -10702,12 +10727,12 @@
 	  is missing.
 	</para>
 	<para>
-	  <seelist> 
+	  <seelist>
             <fncref targ="xmax"/>
             <fncref targ="max"/>
             <fncref targ="min"/>
 	  </seelist>
-	</para> 
+	</para>
       </description>
     </function>
 
@@ -10750,7 +10775,7 @@
 	<para>
 	  However, an error is still flagged in case of a malformed
 	  query.
-	</para>	
+	</para>
 	<para>
 	  A good introduction to XPath usage and syntax can be found
 	  at
@@ -10771,7 +10796,7 @@
     <function name="zeromiss" section="data-utils" output="asinput">
       <fnargs>
 	<fnarg type="scalar-or-series">x</fnarg>
-      </fnargs>     
+      </fnargs>
       <description>
 	<para>
 	  Converts zeros to <lit>NA</lit>s. If <argname>x</argname> is a
@@ -10789,12 +10814,12 @@
       <fnargs>
 	<fnarg type="int">r</fnarg>
 	<fnarg type="int">c</fnarg>
-      </fnargs> 
+      </fnargs>
       <description>
 	<para>
 	  Outputs a zero matrix with <math>r</math> rows and
-	  <math>c</math> columns. 
-      <seelist> 
+	  <math>c</math> columns.
+      <seelist>
         <fncref targ="ones"/>
         <fncref targ="seq"/>
       </seelist>
