@@ -1,4 +1,6 @@
 version 2019b, in progress
+- New accessor $now to get current time/date
+- epochday() function: support YYYYMMDD input
 - Speed up rank() for far-from-square matrices
 - Obscure fix: enable deletion of "time" from a list
   supplied as a function argument
