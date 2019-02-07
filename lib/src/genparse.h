@@ -386,6 +386,7 @@ enum {
     F_ATAN2,
     F_CCODE,
     F_CSOLVE,
+    F_STRTIME,
     HF_CMMULT,
     HF_CFFT,
     HF_CMATRIX,

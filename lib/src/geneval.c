@@ -7472,6 +7472,60 @@ static NODE *isodate_node (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
+static NODE *strtime_node (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_string_node(p);
+    const char *fmt = NULL;
+    char buf[64] = {0};
+    struct tm tm;
+    double tx;
+    time_t t;
+
+    if (ret == NULL) {
+	return NULL;
+    }
+
+    /* we want a time_t compatible value from @l */
+    tx = node_get_scalar(l, p);
+    if (na(tx)) {
+	p->err = E_INVARG;
+    } else {
+	t = (time_t) floor(tx);
+    }
+
+    /* if @r isn't empty it should hold a format string */
+    if (r->t == STR) {
+	fmt = r->v.str;
+    } else if (r->t != EMPTY) {
+	p->err = E_TYPES;
+    }
+
+    if (!p->err) {
+	int bytes = 0;
+
+	if (fmt == NULL) {
+	    /* default to 'locale-preferred' format */
+	    fmt = "%c";
+	}
+#ifdef WIN32
+	bytes = strftime(buf, sizeof buf, fmt, localtime(&t));
+#else
+	if (localtime_r(&t, &tm) == NULL) {
+	    p->err = E_INVARG;
+	} else {
+	    bytes = strftime(buf, sizeof buf, fmt, &tm);
+	}
+#endif
+	if (bytes > 0) {
+	    ret->v.str = gretl_strdup(g_strchomp(buf));
+	} else {
+	    ret->v.str = gretl_strdup("");
+	}
+    }
+
+    return ret;
+}
+
 static NODE *atof_node (NODE *l, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
@@ -13797,7 +13851,11 @@ static gretl_matrix *dvar_get_matrix (int i, int *err)
 	    struct tm tm;
 	    int y, mon, d;
 
+#ifdef WIN32
+	    tm = *localtime(&t);
+#else
 	    localtime_r(&t, &tm);
+#endif
 	    y = tm.tm_year + 1900;
 	    mon = tm.tm_mon + 1;
 	    d = tm.tm_mday;
@@ -15919,6 +15977,13 @@ static NODE *eval (NODE *t, parser *p)
     case F_ISODATE:
     case F_JULDATE:
 	ret = isodate_node(l, r, t->t, p);
+	break;
+    case F_STRTIME:
+	if (scalar_node(l)) {
+	    ret = strtime_node(l, r, p);
+	} else {
+	    node_type_error(t->t, 0, NUM, l, p);
+	}
 	break;
     case F_ATOF:
 	if (l->t == STR) {
