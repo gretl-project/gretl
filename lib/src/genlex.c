@@ -497,9 +497,10 @@ struct str_table funcs[] = {
     { F_FEVAL,     "feval" },
     { F_BRENAME,   "brename" },
     { F_CCODE,     "isocountry" },
-    { F_CSOLVE,    "csolve" },
+    { F_LSOLVE,    "Lsolve" },
     { F_HYP2F1,    "hyp2f1" },
-    { F_STRTIME,   "strtime" },
+    { F_STRFTIME,  "strftime" },
+    { F_STRPTIME,  "strptime" },
     { 0,           NULL }
 };
 

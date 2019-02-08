@@ -2800,7 +2800,7 @@ static int real_matrix_calc (const gretl_matrix *A,
 	    C = gretl_matrix_divide(A, B, GRETL_MOD_TRANSPOSE, &err);
 	}
 	break;
-    case F_CSOLVE:
+    case F_LSOLVE:
 	C = calc_get_matrix(pM, B->rows, B->cols);
 	if (C == NULL) {
 	    err = E_ALLOC;
@@ -7472,7 +7472,7 @@ static NODE *isodate_node (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
-static NODE *strtime_node (NODE *l, NODE *r, parser *p)
+static NODE *strftime_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_string_node(p);
     const char *fmt = NULL;
@@ -7520,6 +7520,70 @@ static NODE *strtime_node (NODE *l, NODE *r, parser *p)
 	    ret->v.str = gretl_strdup(g_strchomp(buf));
 	} else {
 	    ret->v.str = gretl_strdup("");
+	}
+    }
+
+    return ret;
+}
+
+static NODE *strptime_node (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+    const char *fmt = NULL;
+    const char *src = NULL;
+    int ymd = -1;
+
+    if (ret == NULL) {
+	return NULL;
+    }
+
+    /* we want a string or YYYYMMDD integer from @l */
+    if (l->t == STR) {
+	src = l->v.str;
+    } else {
+	/* must be YYYYMMDD */
+	ymd = node_get_int(l, p);
+    }
+
+    if (src == NULL) {
+	/* we won't accept a format string */
+	if (r->t != EMPTY) {
+	    p->err = E_INVARG;
+	}
+    } else {
+	/* if @r isn't empty it should hold a format string */
+	if (r->t == STR) {
+	    fmt = r->v.str;
+	} else if (r->t != EMPTY) {
+	    p->err = E_TYPES;
+	}
+    }
+
+    if (!p->err) {
+	struct tm tm = {0};
+	char *s;
+
+	if (src == NULL) {
+	    /* has to be ISO 8601 basic */
+	    gchar *buf = g_strdup_printf("%d", ymd);
+
+	    s = strptime(buf, "%Y%m%d", &tm);
+	    g_free(buf);
+	} else {
+	    if (fmt == NULL) {
+		/* default to ISO 8601 extended */
+		fmt = "%Y-%m-%d";
+	    }
+	    s = strptime(src, fmt, &tm);
+	}
+
+	if (s == NULL) {
+	    /* strptime() failed */
+	    p->err = E_INVARG;
+	} else {
+	    time_t t = mktime(&tm);
+
+	    ret->v.xval = (double) t;
 	}
     }
 
@@ -14817,7 +14881,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_HDPROD:
     case F_CMULT:
     case F_CDIV:
-    case F_CSOLVE:
+    case F_LSOLVE:
     case F_MRSEL:
     case F_MCSEL:
     case F_DSUM:
@@ -15978,11 +16042,18 @@ static NODE *eval (NODE *t, parser *p)
     case F_JULDATE:
 	ret = isodate_node(l, r, t->t, p);
 	break;
-    case F_STRTIME:
+    case F_STRFTIME:
 	if (scalar_node(l)) {
-	    ret = strtime_node(l, r, p);
+	    ret = strftime_node(l, r, p);
 	} else {
 	    node_type_error(t->t, 0, NUM, l, p);
+	}
+	break;
+    case F_STRPTIME:
+	if (l->t == STR || scalar_node(l)) {
+	    ret = strptime_node(l, r, p);
+	} else {
+	    node_type_error(t->t, 0, STR, l, p);
 	}
 	break;
     case F_ATOF:
