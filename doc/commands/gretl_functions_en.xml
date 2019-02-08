@@ -2150,6 +2150,7 @@
 	  <argname>A</argname> is not symmetric or not positive definite.
 	  <seelist>
             <fncref targ="psdroot"/>
+	    <fncref targ="Lsolve"/>
 	  </seelist>
 	</para>
       </description>
@@ -3628,10 +3629,10 @@
           w (5 x 2)
 
           -0.40000     -0.40000
-          1.3600      0.36000
-          0.27600     -0.32400
-          1.7516      0.29160
-          0.92356     -0.26244
+           1.3600       0.36000
+           0.27600     -0.32400
+           1.7516       0.29160
+           0.92356     -0.26244
 	</code>
       </description>
     </function>
@@ -5898,6 +5899,39 @@
 	</para>
 	<para>
 	  For a multivariate counterpart, see <fncref targ="lrcovar"/>.
+	</para>
+      </description>
+    </function>
+
+    <function name="Lsolve" section="linalg" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">L</fnarg>
+	<fnarg type="matrix">b</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Solves for <math>x</math> in <math>Lx = b</math>, where
+	  <argname>L</argname> is lower triangular, using the LAPACK
+	  function <lit>dpotrs</lit>. Suitable <argname>L</argname>
+	  may be obtained as the Cholesky factor of a positive
+	  definite matrix using <fncref targ="cholesky"/>. Assuming
+	  that the matrix <math>A</math> is positive definite, one
+	  can solve <math>Ax = b</math> as follows:
+	</para>
+	<code>
+	  matrix L = cholesky(A)
+	  matrix x = Lsolve(L, b)
+	</code>
+	<para>
+	  The result should be equivalent to that of
+	</para>
+	<code>
+	  matrix x = A \ b
+	</code>
+	<para>
+	  but <lit>Lsolve</lit> allows reuse of a precomputed Cholesky
+	  factor and so should be faster if you are solving for
+	  given <math>A</math> and several values of <math>b</math>.
 	</para>
       </description>
     </function>
@@ -9658,6 +9692,33 @@
 	<para>
 	  The value returned is zero on success or a positive error
 	  code on error.
+	</para>
+      </description>
+    </function>
+
+    <function name="strftime" section="strings" output="string">
+      <fnargs>
+	<fnarg type="scalar">t</fnarg>
+	<fnarg optional="true" type="string">format</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  The argument <argname>t</argname> is taken to give the
+	  number of seconds since the start of the year 1970 according
+	  to UTC (Coordinated Universal Time, once known as Greenwich
+	  Mean Time), and the return value is a string giving the
+	  corresponding date and/or time&mdash;either in a format
+	  specified via the second, optional argument or, by default,
+	  the <quote>preferred date and time representation for the
+	  current locale</quote> as determined by the system C
+	  library.
+	</para>
+	<para>
+	  The formatting options may be found by consulting the
+	  <lit>strftime</lit> manual page, on systems which have such
+	  pages, or via one of the many websites which present
+	  relevant information, such as
+	  <url>https://devhints.io/strftime</url>.
 	</para>
       </description>
     </function>
