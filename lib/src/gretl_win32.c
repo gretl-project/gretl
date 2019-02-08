@@ -1531,7 +1531,6 @@ static int my_strtoi (const char *s, char **endptr, int dmax)
     return k;
 }
 
-
 char *strptime (const char *buf, const char *format, struct tm *timeptr)
 {
     char c;
