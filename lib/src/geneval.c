@@ -52,6 +52,10 @@
 # include "gretl_mpi.h"
 #endif
 
+#ifdef WIN32
+# include "gretl_win32.h" /* for strptime() */
+#endif
+
 #include <errno.h>
 
 #if GENDEBUG
