@@ -1,18 +1,20 @@
 version 2019b, in progress
 - New accessor $now to get current time/date
+- New function Lsolve(), using precomputed Cholesky factor
 - epochday() function: support YYYYMMDD input
-- Speed up rank() for far-from-square matrices
+- Speed up rank() function for far-from-square matrices
 - Obscure fix: enable deletion of "time" from a list
   supplied as a function argument
-- GUI: disallow execution of a script when one is
-  already in progress (to prevent crashing)
-- Add configure option --disable-gmp: not recommended,
-  but may be helpful in some tricky build contexts
+- GUI: disallow execution of a script when one is already
+  in progress (to prevent crashing)
+- Add configure option --disable-gmp: not recommended for
+  general use, but can be helpful in some build contexts
+  where libgmp is not readily available
 - Allow use of "dataset sortby" in loops
 - Document the --all-cols option for the "open" command
 - Allow use of undefined symbols in the right-hand
-  operand of "&&": don't flag an error unless the
-  left-hand operand evaluates as true
+  operand of "&&": don't flag an error unless theleft-hand
+  operand evaluates as true
 
 2019-01-24 version 2019a
 - Hush some warnings issued in the GUI, plus several

@@ -5910,29 +5910,29 @@
       </fnargs>
       <description>
 	<para>
-	  Solves for <math>x</math> in <math>Lx = b</math>, where
-	  <argname>L</argname> is lower triangular, using the LAPACK
-	  function <lit>dpotrs</lit>. Suitable <argname>L</argname>
-	  may be obtained as the Cholesky factor of a positive
-	  definite matrix using <fncref targ="cholesky"/>. Assuming
-	  that the matrix <math>A</math> is positive definite, one
-	  can solve <math>Ax = b</math> as follows:
+	  Solves for <math>x</math> in <math>Ax = b</math>, where
+	  <argname>L</argname> is the lower triangular Cholesky factor
+	  of the positive definite matrix <math>A</math>, satisfying
+	  <math>LL' = A</math>. Suitable <argname>L</argname> can be
+	  obtained using the <fncref targ="cholesky"/> function with
+	  <math>A</math> as argument.
+	</para>
+	<para>
+	  The following two calculations should produce the same
+	  result (up to machine precision), but the first variant
+	  allows for reuse of a precomputed Cholesky factor and so
+	  should be substantially faster if you are solving repeatedly
+	  for given <math>A</math> and several values of
+	  <math>b</math>. The speed-up will be greater, the greater
+	  the column dimension of <math>A</math>.
 	</para>
 	<code>
+	  # variant 1
 	  matrix L = cholesky(A)
 	  matrix x = Lsolve(L, b)
-	</code>
-	<para>
-	  The result should be equivalent to that of
-	</para>
-	<code>
+	  # variant 2
 	  matrix x = A \ b
 	</code>
-	<para>
-	  but <lit>Lsolve</lit> allows reuse of a precomputed Cholesky
-	  factor and so should be faster if you are solving for
-	  given <math>A</math> and several values of <math>b</math>.
-	</para>
       </description>
     </function>
 
