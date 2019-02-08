@@ -526,6 +526,20 @@
       </description>
     </function>
 
+    <function name="$now" section="access" targ="dnow" output="vector">
+      <description>
+	<para>
+	  Produce un vettore a 2 elementi: il primo elemento è il
+	  numero disecondi trascorsi dal 1970-01-01 00:00:00 +0000
+	  (UTC), che una misura molto comune nel mondo
+	  dell'informatica per rappresentare l'ora. Il secondo è la
+	  data attuale nel formato ISO 8601 <quote>di base</quote>, e
+	  cioè <lit>YYYYMMDD</lit>; per processare il secondo elemento
+	  si può usare la funzione <fncref targ="epochday"/>.
+	</para>
+      </description>
+    </function>
+
     <function name="$nvars" section="access" output="int">
       <description>
     <para>
@@ -1780,6 +1794,23 @@
         <fncref targ="bwrite"/>
       </seelist>
     </para>
+      </description>
+    </function>
+
+    <function name="brename" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="bundle">B</fnarg>
+	<fnarg type="string">vecchia</fnarg>
+	<fnarg type="string">nuova</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Se il bundle <argname>B</argname> contiene un membro sotte
+	  l'etichetta <argname>vecchia</argname>, questa viene
+	  cambiata in <argname>nuova</argname>; in caso contrario, si
+	  produce un errore. Se l'operazione va a buon fine, ritorna
+	  0.
+	</para>
       </description>
     </function>
 
@@ -5869,6 +5900,40 @@
       </description>
     </function>
 
+    <function name="Lsolve" section="linalg" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">L</fnarg>
+	<fnarg type="matrix">b</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Risolve l'equazione <math>Lx = b</math> per <math>x</math>,
+	  dove <argname>L</argname> è triangolare bassa, usando la
+	  funzione LAPACK <lit>dpotrs</lit>. Matrici
+	  <argname>L</argname> siffatte vengono ottenute a partire da
+	  una matrice definita positiva per mezzo della funzione
+	  <fncref targ="cholesky"/>. Se <math>A</math> è positiva
+	  definita, si può risolvere <math>Ax = b</math> come segue:
+	</para>
+	<code>
+	  matrix L = cholesky(A)
+	  matrix x = Lsolve(L, b)
+	</code>
+	<para>
+	  Il risultato dovrebbe essere uguale a quello ottenuto via
+	</para>
+	<code>
+	  matrix x = A \ b
+	</code>
+	<para>
+	  tuttavia, <lit>Lsolve</lit> permette di riutilizzare un
+	  fattore di Cholesky già calcolato e quindi ottimizza i tempi
+	  di calcolo per una data matrice <math>A</math> e diversi
+	  valori di <math>b</math>.
+	</para>
+      </description>
+    </function>
+
     <function name="max" section="stats" output="scalar-or-series">
       <fnargs>
     <fnarg type="series-or-list">y</fnarg>
@@ -9638,6 +9703,31 @@
       </description>
     </function>
 
+    <function name="strftime" section="strings" output="string">
+      <fnargs>
+	<fnarg type="scalar">t</fnarg>
+	<fnarg optional="true" type="string">formato</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  L'argomento <argname>t</argname> viene interpretato come il
+	  numero di secondi trascorsi dall'inizio dell'anno 1970 nel
+	  fuso orario UTC (un tempo noto come ora di Greenwich);
+	  produce una stringa con la data e l'ora corrispondenti.  Il
+	  formato di default è quello standard di sistema, ma può
+	  essere modificato se il secondo argomento (opzionale) è una
+	  stringa appropriata.
+	</para>
+	<para>
+	  Le opzioni di formato disponibili vengono elencati sulla
+	  pagina di manuale per <lit>strftime</lit>, sui sistemi che
+	  la offrono, oppure su uno dei tanti siti che contengono tale
+	  informazione, come ad esempio
+	  <url>https://devhints.io/strftime</url>.
+	</para>
+      </description>
+    </function>
+    
     <function name="strlen" section="strings" output="int">
       <fnargs>
 	<fnarg type="string">s</fnarg>
