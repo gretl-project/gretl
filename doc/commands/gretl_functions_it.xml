@@ -5907,30 +5907,30 @@
       </fnargs>
       <description>
 	<para>
-	  Risolve l'equazione <math>Lx = b</math> per <math>x</math>,
-	  dove <argname>L</argname> è triangolare bassa, usando la
-	  funzione LAPACK <lit>dpotrs</lit>. Matrici
-	  <argname>L</argname> siffatte vengono ottenute a partire da
-	  una matrice definita positiva per mezzo della funzione
-	  <fncref targ="cholesky"/>. Se <math>A</math> è positiva
-	  definita, si può risolvere <math>Ax = b</math> come segue:
+	  Risolve l'equazione <math>Ax = b</math> per <math>x</math>,
+	  dove <argname>L</argname> è il fattore di Cholesky
+	  (triangolare bassa) della matrice definita postitiva
+	  <math>A</math>. Matrici <argname>L</argname> siffatte
+	  vengono ottenute a partire da una matrice definita positiva
+	  per mezzo della funzione <fncref targ="cholesky"/>.
+	</para>
+	<para>
+	  Le due espressioni seguenti dovrebbero produrre lo stesso
+	  risultato (salvo la precisione macchina); tuttavia, la
+	  variante basata su <lit>Lsolve</lit> permette di
+	  riutilizzare un fattore di Cholesky già calcolato e quindi
+	  ottimizza i tempi di calcolo per una data matrice
+	  <math>A</math> e diversi valori di <math>b</math>. Il
+	  guadagno sarà tanto più grande quanto più alta è la
+	  dimensione di <math>A</math>.
 	</para>
 	<code>
+	  # variante 1
 	  matrix L = cholesky(A)
 	  matrix x = Lsolve(L, b)
-	</code>
-	<para>
-	  Il risultato dovrebbe essere uguale a quello ottenuto via
-	</para>
-	<code>
+	  # variante 2
 	  matrix x = A \ b
 	</code>
-	<para>
-	  tuttavia, <lit>Lsolve</lit> permette di riutilizzare un
-	  fattore di Cholesky già calcolato e quindi ottimizza i tempi
-	  di calcolo per una data matrice <math>A</math> e diversi
-	  valori di <math>b</math>.
-	</para>
       </description>
     </function>
 
