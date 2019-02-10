@@ -924,6 +924,27 @@ leverage --quiet
 printf "CV = %g\n", $test
 \end{code}
 
+\subsection{Is my matrix result broken?}
+\label{sec:brokenmat}
+
+\emph{Problem:} ``Most of the matrix manipulation functions available
+in gretl flag an error if something goes wrong, but there's no
+guarantee that every matrix computation will return an entirely finite
+matrix, containing no infinities or \texttt{NaN}s. So how do I tell if
+I've got a fully valid matrix?''
+
+\emph{Solution}: Given a matrix \texttt{m}, the call
+``\texttt{ok(m)}'' returns a matrix with the same dimensions as
+\texttt{m}, with elements 1 for finite values and 0 for infinities or
+\texttt{NaN}s. A matrix as a whole is OK if it has no elements which
+fail this test, so here's a suitable check for a ``broken'' matrix,
+using the logical NOT operator, ``\texttt{!}'':
+\begin{code}
+sumc(sumr(!ok(m))) > 0
+\end{code}
+If this gives a non-zero return value you know that \texttt{m}
+contains at least one non-finite element.
+
 
 %%% Local Variables: 
 %%% mode: latex
