@@ -5815,7 +5815,7 @@ static gretl_matrix *matrix_frac_pow (const gretl_matrix *m,
 
     if (!*err) {
 	if (lam->val[0] < -eps) {
-	    /* be a little lenient with positive 
+	    /* be a little lenient with positive
 	       semidefinite matrices */
 	    *err = E_NOTPD;
 	} else if (lam->val[0] < eps && a < 0) {
@@ -11544,6 +11544,8 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 		      gretl_vector *uhat, double *s2)
 {
     gretl_matrix *XTX = NULL;
+    int use_lapack = 0; /* FIXME */
+    int try_QR = 0;
     int nasty = 0;
     int k, T, err = 0;
 
@@ -11573,29 +11575,52 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 	return E_NONCONF;
     }
 
-    XTX = gretl_matrix_packed_XTX_new(X, &nasty);
-    if (XTX == NULL) {
-	err = E_ALLOC;
-    }
-
-    if (!err && !nasty) {
-	err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
-					y, GRETL_MOD_NONE,
-					b, GRETL_MOD_NONE);
-    }
-
-    if (!err && vcv != NULL) {
-	err = gretl_matrix_unvectorize_h(vcv, XTX);
-    }
-
-    if (!err) {
-	if (!nasty) {
-	    err = native_cholesky_decomp_solve(XTX, b);
+    if (use_lapack) {
+	XTX = gretl_matrix_XTX_new(X);
+	if (XTX == NULL) {
+	    err = E_ALLOC;
 	}
-	if (nasty || err == E_SINGULAR) {
-	    fprintf(stderr, "gretl_matrix_ols: switching to QR decomp\n");
-	    err = gretl_matrix_QR_ols(y, X, b, NULL, NULL, NULL);
+	if (!err) {
+	    err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
+					    y, GRETL_MOD_NONE,
+					    b, GRETL_MOD_NONE);
 	}
+	if (!err) {
+	    err = gretl_cholesky_decomp_solve(XTX, b);
+	    if (err) {
+		try_QR = 1;
+	    }
+	}
+    } else {
+	XTX = gretl_matrix_packed_XTX_new(X, &nasty);
+	if (XTX == NULL) {
+	    err = E_ALLOC;
+	}
+	if (!err && !nasty) {
+	    err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
+					    y, GRETL_MOD_NONE,
+					    b, GRETL_MOD_NONE);
+	}
+	if (!err && vcv != NULL) {
+	    err = gretl_matrix_unvectorize_h(vcv, XTX);
+	}
+	if (!err) {
+	    if (!nasty) {
+		err = native_cholesky_decomp_solve(XTX, b);
+	    }
+	    if (nasty || err == E_SINGULAR) {
+		try_QR = 1;
+	    }
+	}
+    }
+
+    if (XTX != NULL) {
+	gretl_matrix_free(XTX);
+    }
+
+    if (try_QR) {
+	fprintf(stderr, "gretl_matrix_ols: switching to QR decomp\n");
+	err = gretl_matrix_QR_ols(y, X, b, NULL, NULL, NULL);
     }
 
     if (!err) {
@@ -11608,10 +11633,6 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 	if (uhat != NULL) {
 	    get_ols_uhat(y, X, b, uhat);
 	}
-    }
-
-    if (XTX != NULL) {
-	gretl_matrix_free(XTX);
     }
 
     return err;
