@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* estimate.c - basic gretl estimation procedures */
@@ -44,7 +44,7 @@
  * @title: Estimation
  * @include: gretl/libgretl.h
  *
- * Most libgretl functions that estimate regression models are 
+ * Most libgretl functions that estimate regression models are
  * collected here.
  *
  * Please note that most of these functions return a #MODEL
@@ -57,7 +57,7 @@
  *
  * <informalexample><programlisting>
  * #include &lt;gretl/libgretl.h&gt;
- * 
+ *
  * int ols_using_gretl (const int *list, DATASET *dset,
  *                      PRN *prn)
  * {
@@ -85,7 +85,7 @@
  *     return err;
  * }
  * </programlisting></informalexample>
- * 
+ *
  */
 
 /* Comment on 'TINY': It's the minimum value for 'test' (see below)
@@ -111,13 +111,13 @@
 
 #define XPX_DEBUG 0
 
-static void regress (MODEL *pmod, double *xpy, 
-		     double ysum, double ypy, 
-		     const DATASET *dset, 
+static void regress (MODEL *pmod, double *xpy,
+		     double ysum, double ypy,
+		     const DATASET *dset,
 		     double rho, gretlopt opt);
 static void omitzero (MODEL *pmod, const DATASET *dset,
 		      gretlopt opt);
-static int lagdepvar (const int *list, const DATASET *dset); 
+static int lagdepvar (const int *list, const DATASET *dset);
 static int jackknife_vcv (MODEL *pmod, const DATASET *dset);
 static double estimate_rho (const int *list, DATASET *dset,
 			    gretlopt opt, PRN *prn, int *err);
@@ -146,7 +146,7 @@ static void model_depvar_stats (MODEL *pmod, DATASET *dset)
 	}
 	if (!model_missing(pmod, t)) {
 	    sum += dset->Z[yno][t];
-	} 
+	}
     }
 
     pmod->ybar = sum / pmod->nobs;
@@ -155,9 +155,9 @@ static void model_depvar_stats (MODEL *pmod, DATASET *dset)
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (dwt && dset->Z[pmod->nwt][t] == 0.0) {
 	    continue;
-	}	
+	}
 	if (!model_missing(pmod, t)) {
-	    sum += (dset->Z[yno][t] - pmod->ybar); 
+	    sum += (dset->Z[yno][t] - pmod->ybar);
 	}
     }
 
@@ -195,7 +195,7 @@ static int get_model_df (MODEL *pmod)
     if (pmod->dfd < 0) {
 	pmod->errcode = E_DF;
         gretl_errmsg_sprintf(_("No. of obs (%d) is less than no. "
-			       "of parameters (%d)"), pmod->nobs, 
+			       "of parameters (%d)"), pmod->nobs,
 			     pmod->ncoeff);
 	err = 1;
     } else {
@@ -225,7 +225,7 @@ static int transcribe_ld_vcv (MODEL *targ, MODEL *src)
     if (!err) {
 	for (i=0; i<nv; i++) {
 	    for (j=i; j<nv; j++) {
-		targ->vcv[ijton(i, j, nv)] = 
+		targ->vcv[ijton(i, j, nv)] =
 		    src->vcv[ijton(i, j, src->ncoeff)];
 	    }
 	}
@@ -239,7 +239,7 @@ static int transcribe_ld_vcv (MODEL *targ, MODEL *src)
    Ramanathan, Introductory Econometrics, 5e, p. 450.
 */
 
-static int 
+static int
 ldepvar_std_errors (MODEL *pmod, DATASET *dset)
 {
     MODEL emod;
@@ -279,7 +279,7 @@ ldepvar_std_errors (MODEL *pmod, DATASET *dset)
     /* dependent var is residual from original model */
     for (t=0; t<dset->n; t++) {
 	dset->Z[vi][t] = pmod->uhat[t];
-    }    
+    }
     strcpy(dset->varname[vi], "eps");
     list[1] = vi++;
 
@@ -306,7 +306,7 @@ ldepvar_std_errors (MODEL *pmod, DATASET *dset)
     for (t=0; t<dset->n; t++) {
 	if (t == 0) {
 	    dset->Z[vi][t] = NADBL;
-	} else { 
+	} else {
 	    dset->Z[vi][t] = dset->Z[pmod->list[1]][t-1];
 	}
 	if (na(dset->Z[vi][t])) {
@@ -343,9 +343,9 @@ ldepvar_std_errors (MODEL *pmod, DATASET *dset)
 
 	err = transcribe_ld_vcv(pmod, &emod);
     }
-    
+
     clear_model(&emod);
-    
+
     free(list);
     dataset_drop_last_variables(dset, vnew);
 
@@ -361,7 +361,7 @@ ldepvar_std_errors (MODEL *pmod, DATASET *dset)
 
 /* special computation of statistics for autoregressive models */
 
-static int compute_ar_stats (MODEL *pmod, const DATASET *dset, 
+static int compute_ar_stats (MODEL *pmod, const DATASET *dset,
 			     double rho)
 {
     int i, v, t, yno = pmod->list[1];
@@ -404,8 +404,8 @@ static int compute_ar_stats (MODEL *pmod, const DATASET *dset,
 
     pmod->rsq = gretl_corr_rsq(pmod->t1, pmod->t2, dset->Z[yno], pmod->yhat);
 
-    pmod->adjrsq = 
-	1.0 - ((1.0 - pmod->rsq) * (pmod->t2 - pmod->t1) / 
+    pmod->adjrsq =
+	1.0 - ((1.0 - pmod->rsq) * (pmod->t2 - pmod->t1) /
 	       (double) pmod->dfd);
 
     return 0;
@@ -419,7 +419,7 @@ static void get_wls_stats (MODEL *pmod, const DATASET *dset)
     int t, wobs = pmod->nobs, yno = pmod->list[1];
     double x, dy, wmean = 0.0, wsum = 0.0;
 
-    for (t=pmod->t1; t<=pmod->t2; t++) { 
+    for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (model_missing(pmod, t)) {
 	    continue;
 	}
@@ -438,7 +438,7 @@ static void get_wls_stats (MODEL *pmod, const DATASET *dset)
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (model_missing(pmod, t) || dset->Z[pmod->nwt][t] == 0.0) {
 	    continue;
-	}	
+	}
 	dy = dset->Z[yno][t] - wmean;
 	x += dset->Z[pmod->nwt][t] * dy * dy;
     }
@@ -514,8 +514,8 @@ static int model_missval_count (const MODEL *pmod)
 
 #define SMPL_DEBUG 0
 
-static int 
-lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts, DATASET *dset, 
+static int
+lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts, DATASET *dset,
 			   int *misst)
 {
     int ref_mask = reference_missmask_present();
@@ -540,13 +540,13 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts, DATASET *dset,
 	} else {
 	    return 0;
 	}
-    } 
+    }
 
     /* can't do HAC VCV with missing obs in middle */
     if ((opts & OPT_R) && dataset_is_time_series(dset) &&
 	!libset_get_bool(FORCE_HC)) {
 	reject_missing = 1;
-    } 
+    }
 
     if (opts & OPT_M) {
 	reject_missing = 1;
@@ -554,13 +554,13 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts, DATASET *dset,
 
     if (reject_missing) {
 	/* reject missing obs within adjusted sample */
-	missv = model_adjust_sample(pmod, dset->n, 
-				    (const double **) dset->Z, 
+	missv = model_adjust_sample(pmod, dset->n,
+				    (const double **) dset->Z,
 				    misst);
     } else {
 	/* we'll try to work around missing obs */
-	missv = model_adjust_sample(pmod, dset->n, 
-				    (const double **) dset->Z, 
+	missv = model_adjust_sample(pmod, dset->n,
+				    (const double **) dset->Z,
 				    NULL);
     }
 
@@ -571,9 +571,9 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts, DATASET *dset,
 
 	ntodate(t1s, pmod->t1, dset);
 	ntodate(t2s, pmod->t2, dset);
-	fprintf(stderr, "*** after adjustment, t1=%d (%s), t2=%d (%s)\n", 
+	fprintf(stderr, "*** after adjustment, t1=%d (%s), t2=%d (%s)\n",
 		pmod->t1, t1s, pmod->t2, t2s);
-	fprintf(stderr, "Valid observations in range = %d\n", 
+	fprintf(stderr, "Valid observations in range = %d\n",
 		pmod->t2 - pmod->t1 + 1 - misscount);
     }
 #endif
@@ -595,7 +595,7 @@ lagged_depvar_check (MODEL *pmod, const DATASET *dset)
     return ldv;
 }
 
-static void 
+static void
 log_depvar_ll (MODEL *pmod, const DATASET *dset)
 {
     char parent[VNAMELEN];
@@ -610,17 +610,17 @@ log_depvar_ll (MODEL *pmod, const DATASET *dset)
 	    }
 	}
 	gretl_model_set_double(pmod, "jll", jll);
-	gretl_model_set_string_as_data(pmod, 
-				       "log-parent", 
+	gretl_model_set_string_as_data(pmod,
+				       "log-parent",
 				       gretl_strdup(parent));
     }
 }
 
 static int check_weight_var (MODEL *pmod, const double *w, int *effobs)
 {
-    const char *wtzero = 
+    const char *wtzero =
 	N_("Weight variable is all zeros, aborting regression");
-    const char *wtneg = 
+    const char *wtneg =
 	N_("Weight variable contains negative values");
     int t, allzero = 1;
 
@@ -638,7 +638,7 @@ static int check_weight_var (MODEL *pmod, const double *w, int *effobs)
 	gretl_errmsg_set(_(wtzero));
 	pmod->errcode = E_DATA;
 	return 1;
-    }	
+    }
 
     *effobs = gretl_isdummy(pmod->t1, pmod->t2, w);
 
@@ -676,17 +676,17 @@ void maybe_shift_ldepvar (MODEL *pmod, DATASET *dset)
  * of the original data, depending on @nwt, @rho and @pwe.
  * If X'y is not required, @xpy can be given as NULL.
  *
- * Note: the y-related pointer arguments @xpy, @ysum, and @ypy 
- * form a "package": either all should be given, or all should 
+ * Note: the y-related pointer arguments @xpy, @ysum, and @ypy
+ * form a "package": either all should be given, or all should
  * be NULL.
  *
  * Returns: 0 on success, non-zero on error.
  */
 
-static int XTX_XTy (const int *list, int t1, int t2, 
-		    const DATASET *dset, int nwt, 
+static int XTX_XTy (const int *list, int t1, int t2,
+		    const DATASET *dset, int nwt,
 		    double rho, int pwe,
-		    double *xpx, double *xpy, 
+		    double *xpx, double *xpy,
 		    double *ysum, double *ypy,
 		    const char *mask)
 {
@@ -725,7 +725,7 @@ static int XTX_XTy (const int *list, int t1, int t2,
 	    if (masked(mask, t)) {
 		continue;
 	    }
-	    x = y[t]; 
+	    x = y[t];
 	    if (qdiff) {
 		if (pwe && t == t1) {
 		    x = pw1 * y[t];
@@ -741,9 +741,9 @@ static int XTX_XTy (const int *list, int t1, int t2,
 
 	if (*ypy <= 0.0) {
 	    /* error condition */
-	    return yno; 
-	} 
-    }   
+	    return yno;
+	}
+    }
 
     m = 0;
 
@@ -758,7 +758,7 @@ static int XTX_XTy (const int *list, int t1, int t2,
 		    if (pwe && t == t1) {
 			x += pw1 * xi[t1] * pw1 * xj[t];
 		    } else {
-			x += (xi[t] - rho * xi[t-1]) * 
+			x += (xi[t] - rho * xi[t-1]) *
 			    (xj[t] - rho * xj[t-1]);
 		    }
 		}
@@ -794,7 +794,7 @@ static int XTX_XTy (const int *list, int t1, int t2,
 		}
 		if (i == j && x < DBL_EPSILON) {
 		    return E_SINGULAR;
-		}   
+		}
 		xpx[m++] = x;
 	    }
 	    if (xpy != NULL) {
@@ -868,7 +868,7 @@ static int XTX_XTy (const int *list, int t1, int t2,
 	    }
 	}
 	done = 1;
-    
+
     st_mode:
 #endif /* OPENMP */
 
@@ -897,7 +897,7 @@ static int XTX_XTy (const int *list, int t1, int t2,
 	}
     }
 
-    return err; 
+    return err;
 }
 
 /**
@@ -907,7 +907,7 @@ static int XTX_XTy (const int *list, int t1, int t2,
  * @err: location to receive error code.
  *
  * (Re-)calculates X'X, with various possible transformations
- * of the original data depending on whether estimation of 
+ * of the original data depending on whether estimation of
  * @pmod involved weighting or quasi-differencing.
  *
  * Returns: The vech of X'X or NULL on error.
@@ -920,7 +920,7 @@ double *gretl_XTX (const MODEL *pmod, const DATASET *dset, int *err)
     double rho;
     int pwe = 0;
     int k, m;
-    
+
     *err = 0;
 
     xlist = gretl_model_get_x_list(pmod);
@@ -948,9 +948,9 @@ double *gretl_XTX (const MODEL *pmod, const DATASET *dset, int *err)
 	rho = 0.0;
     }
 
-    *err = XTX_XTy(xlist, pmod->t1, pmod->t2, dset, 
-		   pmod->nwt, rho, pwe, xpx, 
-		   NULL, NULL, NULL, 
+    *err = XTX_XTy(xlist, pmod->t1, pmod->t2, dset,
+		   pmod->nwt, rho, pwe, xpx,
+		   NULL, NULL, NULL,
 		   pmod->missmask);
 
     free(xlist);
@@ -985,14 +985,14 @@ static int gretl_cholesky_regress (MODEL *pmod, const DATASET *dset,
 
     if (pmod->yhat == NULL) {
 	pmod->yhat = malloc(pmod->full_n * sizeof *pmod->yhat);
-    } 
+    }
 
     if (pmod->uhat == NULL) {
 	pmod->uhat = malloc(pmod->full_n * sizeof *pmod->uhat);
     }
 
     if (pmod->xpx == NULL || pmod->coeff == NULL ||
-	pmod->sderr == NULL || pmod->yhat == NULL || 
+	pmod->sderr == NULL || pmod->yhat == NULL ||
 	pmod->uhat == NULL) {
 	free(xpy);
 	pmod->errcode = E_ALLOC;
@@ -1007,8 +1007,8 @@ static int gretl_cholesky_regress (MODEL *pmod, const DATASET *dset,
     }
 
     /* calculate regression results, Cholesky style */
-    pmod->errcode = XTX_XTy(pmod->list, pmod->t1, pmod->t2, dset, 
-			    pmod->nwt, rho, pwe, pmod->xpx, xpy, 
+    pmod->errcode = XTX_XTy(pmod->list, pmod->t1, pmod->t2, dset,
+			    pmod->nwt, rho, pwe, pmod->xpx, xpy,
 			    &ysum, &ypy, pmod->missmask);
 
 #if XPX_DEBUG
@@ -1037,7 +1037,7 @@ static int gretl_null_regress (MODEL *pmod, const DATASET *dset)
 
     if (pmod->yhat == NULL) {
 	pmod->yhat = malloc(pmod->full_n * sizeof *pmod->yhat);
-    } 
+    }
 
     if (pmod->uhat == NULL) {
 	pmod->uhat = malloc(pmod->full_n * sizeof *pmod->uhat);
@@ -1106,7 +1106,7 @@ static int depvar_zero (const MODEL *pmod, int yno, const double **Z)
 }
 
 /* limited freeing of elements before passing a model
-   on for QR estimation in the case of (near-)singularity 
+   on for QR estimation in the case of (near-)singularity
 */
 
 static void model_free_storage (MODEL *pmod)
@@ -1135,8 +1135,8 @@ static void model_free_storage (MODEL *pmod)
  * Returns: model struct containing the estimates.
  */
 
-static MODEL ar1_lsq (const int *list, DATASET *dset, 
-		      GretlCmdIndex ci, gretlopt opt, 
+static MODEL ar1_lsq (const int *list, DATASET *dset,
+		      GretlCmdIndex ci, gretlopt opt,
 		      double rho)
 {
     MODEL mdl;
@@ -1159,7 +1159,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
     if (opt & OPT_C) {
 	/* cluster option implies robust */
 	opt |= OPT_R;
-    }  
+    }
 
     if (ci == AR1) {
 	if (opt & OPT_P) {
@@ -1169,7 +1169,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 	    /* OPT_H: Hildreth-Lu */
 	    mdl.opt |= OPT_H;
 	}
-    } 
+    }
 
     if (list[0] == 1 && ci == OLS && (opt & OPT_U)) {
 	/* null model OK */
@@ -1194,7 +1194,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
     mdl.ci = ci;
 
     /* Doing weighted least squares? */
-    if (ci == WLS) { 
+    if (ci == WLS) {
 	check_weight_var(&mdl, dset->Z[mdl.list[1]], &effobs);
 	if (mdl.errcode) {
 	    return mdl;
@@ -1220,7 +1220,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
     /* react to presence of unhandled missing obs */
     if (missv) {
 	gretl_errmsg_sprintf(_("Missing value encountered for "
-			       "variable %d, obs %d"), 
+			       "variable %d, obs %d"),
 			     missv, misst);
 	mdl.errcode = E_DATA;
 	return mdl;
@@ -1231,29 +1231,29 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
     }
 
     yno = mdl.list[1];
-    
+
     /* check for unknown vars in list */
     for (i=1; i<=mdl.list[0]; i++) {
         if (mdl.list[i] > dset->v - 1) {
             mdl.errcode = E_UNKVAR;
             goto lsq_abort;
         }
-    } 
+    }
 
     /* check for zero dependent var */
-    if (depvar_zero(&mdl, yno, (const double **) dset->Z)) {  
+    if (depvar_zero(&mdl, yno, (const double **) dset->Z)) {
         mdl.errcode = E_ZERO;
-        goto lsq_abort; 
-    } 
+        goto lsq_abort;
+    }
 
     /* drop any vars that are all zero and repack the list */
     omitzero(&mdl, dset, opt);
 
-    /* if regressor list contains a constant, record this fact and 
+    /* if regressor list contains a constant, record this fact and
        place it first among the regressors */
     mdl.ifc = reglist_check_for_const(mdl.list, dset);
 
-    /* Check for presence of lagged dependent variable? 
+    /* Check for presence of lagged dependent variable?
        (Don't bother if this is an auxiliary regression.) */
     if (!(opt & OPT_A)) {
 	ldv = lagged_depvar_check(&mdl, dset);
@@ -1264,7 +1264,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 	mdl.t1 += 1;
     }
 
-    mdl.ncoeff = mdl.list[0] - 1; 
+    mdl.ncoeff = mdl.list[0] - 1;
     if (effobs) {
 	mdl.nobs = effobs; /* FIXME? */
     } else {
@@ -1276,7 +1276,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 
     /* check degrees of freedom */
     if (get_model_df(&mdl)) {
-        goto lsq_abort; 
+        goto lsq_abort;
     }
 
     /* if df correction is not wanted, record this fact */
@@ -1286,7 +1286,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 
     if (dataset_is_time_series(dset)) {
 	opt |= OPT_T;
-    } 
+    }
 
     /* remove Durbin-Watson p-value flag if not appropriate */
     if (ldv || !(opt & OPT_T)) {
@@ -1302,7 +1302,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
     } else if (libset_get_bool(USE_QR)) {
 	mdl.rho = rho;
 	gretl_qr_regress(&mdl, dset, opt);
-    } else if (!jackknife && (opt & (OPT_R | OPT_I))) { 
+    } else if (!jackknife && (opt & (OPT_R | OPT_I))) {
 	mdl.rho = rho;
 	gretl_qr_regress(&mdl, dset, opt);
     } else {
@@ -1324,7 +1324,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 
     /* Doing an autoregressive procedure? */
     if (ci == AR1) {
-	if (compute_ar_stats(&mdl, dset, rho)) { 
+	if (compute_ar_stats(&mdl, dset, rho)) {
 	    goto lsq_abort;
 	}
 	if (ldv) {
@@ -1398,7 +1398,7 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
  *   OPT_N: don't use degrees of freedom correction for standard
  *      error of regression;
  *   OPT_M: reject missing observations within sample range;
- *   OPT_Z: (internal use) suppress the automatic elimination of 
+ *   OPT_Z: (internal use) suppress the automatic elimination of
  *      perfectly collinear variables.
  *   OPT_X: compute "variance matrix" as just (X'X)^{-1}
  *   OPT_I: compute Durbin-Watson p-value.
@@ -1407,11 +1407,11 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
  *
  * Computes least squares estimates of the model specified by @list,
  * using an estimator determined by the value of @ci.
- * 
+ *
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL lsq (const int *list, DATASET *dset, GretlCmdIndex ci, 
+MODEL lsq (const int *list, DATASET *dset, GretlCmdIndex ci,
 	   gretlopt opt)
 {
     return ar1_lsq(list, dset, ci, opt, 0.0);
@@ -1430,7 +1430,7 @@ MODEL lsq (const int *list, DATASET *dset, GretlCmdIndex ci,
  * Returns: model struct containing the estimates.
  */
 
-MODEL ar1_model (const int *list, DATASET *dset, 
+MODEL ar1_model (const int *list, DATASET *dset,
 		 gretlopt opt, PRN *prn)
 {
     MODEL mdl;
@@ -1542,7 +1542,7 @@ static void uncentered_r_squared (MODEL *pmod, const DATASET *dset)
     }
 }
 
-static void compute_r_squared (MODEL *pmod, const DATASET *dset, 
+static void compute_r_squared (MODEL *pmod, const DATASET *dset,
 			       int *ifc)
 {
     int yno = pmod->list[1];
@@ -1580,9 +1580,9 @@ static void compute_r_squared (MODEL *pmod, const DATASET *dset,
 	    /* and make the "official" figure the uncentered R^2,
 	       as per NIST, R, Stata, SPSS, ... */
 	    pmod->rsq = 1 - pmod->ess / den;
-	    pmod->adjrsq = 
+	    pmod->adjrsq =
 		1.0 - ((1.0 - pmod->rsq) * (pmod->nobs - 1.0) / pmod->dfd);
-	} 
+	}
     }
 
     if (pmod->rsq < 0.0) {
@@ -1599,7 +1599,7 @@ static void compute_r_squared (MODEL *pmod, const DATASET *dset,
   @nv = number of regression coefficients = length of diag
 */
 
-static void diaginv (const double *xpx, double *tmp, double *diag, 
+static void diaginv (const double *xpx, double *tmp, double *diag,
 		     int nv)
 {
     int kk, l, m, k, i, j;
@@ -1642,7 +1642,7 @@ static void diaginv (const double *xpx, double *tmp, double *diag,
 
   pmod->xpx = X'X on input and Cholesky decomposition on output
   xpy = the X'y vector on input and Cholesky-transformed t
-        vector on output 
+        vector on output
   rss = location to receive regression sum of squares
 
   The number of floating-point operations is basically 3.5 * nv^2
@@ -1688,14 +1688,14 @@ static int cholbeta (MODEL *pmod, double *xpy, double *rss)
 
 	/* check for singularity */
         if (test < TINY) {
-#if 0	    
+#if 0
 	    fprintf(stderr, "cholbeta: test[%d] = %g\n", j, test);
-#endif	    
+#endif
 	    *rss = -1.0;
 	    return E_SINGULAR;
         } else if (test < SMALL) {
 	    gretl_model_set_int(pmod, "near-singular", 1);
-	} 
+	}
 
         e = 1 / sqrt(d2);
         xpx[kk] = e;
@@ -1743,7 +1743,7 @@ static int cholbeta (MODEL *pmod, double *xpy, double *rss)
 	}
     }
 
-    return 0; 
+    return 0;
 }
 
 /* compute fitted values and residuals */
@@ -1791,7 +1791,7 @@ static int hatvars (MODEL *pmod, const DATASET *dset)
   pmod->sderr = corresponding array of standard errors
 */
 
-static void regress (MODEL *pmod, double *xpy, 
+static void regress (MODEL *pmod, double *xpy,
 		     double ysum, double ypy,
 		     const DATASET *dset,
 		     double rho, gretlopt opt)
@@ -1804,7 +1804,7 @@ static void regress (MODEL *pmod, double *xpy,
 
     for (i=0; i<pmod->full_n; i++) {
 	pmod->yhat[i] = pmod->uhat[i] = NADBL;
-    }    
+    }
 
     zz = ysum * ysum / pmod->nobs;
     pmod->tss = ypy - zz;
@@ -1814,8 +1814,8 @@ static void regress (MODEL *pmod, double *xpy,
     if (err) {
         pmod->errcode = err;
         return;
-    }   
-    
+    }
+
     if (rho != 0.0) {
 	pmod->ess = ypy - rss;
     } else {
@@ -1825,10 +1825,10 @@ static void regress (MODEL *pmod, double *xpy,
 
     if (fabs(pmod->ess) < ESSZERO) {
 	pmod->ess = 0.0;
-    } else if (pmod->ess < 0.0) { 
+    } else if (pmod->ess < 0.0) {
 	gretl_errmsg_sprintf(_("Error sum of squares (%g) is not > 0"),
 			     pmod->ess);
-        return; 
+        return;
     }
 
     if (pmod->dfd == 0) {
@@ -1846,9 +1846,9 @@ static void regress (MODEL *pmod, double *xpy,
 
     if (pmod->tss < DBL_EPSILON) {
 	pmod->rsq = pmod->adjrsq = NADBL;
-    } 
+    }
 
-    hatvars(pmod, dset); 
+    hatvars(pmod, dset);
 
     if (pmod->errcode) return;
 
@@ -1873,7 +1873,7 @@ static void regress (MODEL *pmod, double *xpy,
 	}
     }
 
-    diag = malloc(pmod->ncoeff * sizeof *diag); 
+    diag = malloc(pmod->ncoeff * sizeof *diag);
     if (diag == NULL) {
 	pmod->errcode = E_ALLOC;
 	return;
@@ -1881,7 +1881,7 @@ static void regress (MODEL *pmod, double *xpy,
 
     /* Note: 'xpy' is used purely as workspace in diaginv() below, as
        a matter of economy/convenience; no values in this array are
-       used before they are written. 
+       used before they are written.
     */
     diaginv(pmod->xpx, xpy, diag, pmod->ncoeff);
 
@@ -1893,7 +1893,7 @@ static void regress (MODEL *pmod, double *xpy,
 	}
     }
 
-    free(diag); 
+    free(diag);
 }
 
 /**
@@ -1902,9 +1902,9 @@ static void regress (MODEL *pmod, double *xpy,
  * @sigma: square root of error variance, or 1.0 to
  * produce just X'X^{-1}.
  *
- * Inverts the Cholesky-decomposed X'X and computes the 
+ * Inverts the Cholesky-decomposed X'X and computes the
  * coefficient covariance matrix.
- * 
+ *
  * Returns: 0 on successful completion, non-zero code on error.
  */
 
@@ -1925,7 +1925,7 @@ int makevcv (MODEL *pmod, double sigma)
     }
 
     nv = pmod->ncoeff;
-    nxpx = (nv * nv + nv) / 2; 
+    nxpx = (nv * nv + nv) / 2;
     mst = nxpx;
     kk = nxpx - 1;
 
@@ -1992,7 +1992,7 @@ int makevcv (MODEL *pmod, double sigma)
  * @dset: pointer to dataset.
  *
  * Computes the Durbin-Watson statistic for @pmod.
- * 
+ *
  * Returns: the D-W value, or #NADBL on error.
  */
 
@@ -2024,7 +2024,7 @@ double dwstat (int order, MODEL *pmod, const DATASET *dset)
         ut = pmod->uhat[t];
         u1 = pmod->uhat[t-1];
         if (na(ut) || na(u1) ||
-	    (w != NULL && (w[t] == 0.0 || w[t-1] == 0.0))) { 
+	    (w != NULL && (w[t] == 0.0 || w[t-1] == 0.0))) {
 	    continue;
 	}
         num += (ut - u1) * (ut - u1);
@@ -2041,7 +2041,7 @@ double dwstat (int order, MODEL *pmod, const DATASET *dset)
 static double altrho (int order, int t1, int t2, const double *uhat)
 {
     int t, n, len = t2 - (t1 + order) + 1;
-    double *ut, *u1;    
+    double *ut, *u1;
     double uht, uh1, rho;
 
     ut = malloc(2 * len * sizeof *ut);
@@ -2052,7 +2052,7 @@ static double altrho (int order, int t1, int t2, const double *uhat)
     u1 = ut + len;
     n = 0;
 
-    for (t=t1+order; t<=t2; t++) { 
+    for (t=t1+order; t<=t2; t++) {
         uht = uhat[t];
 	uh1 = (t > 0)? uhat[t-1] : NADBL;
         if (!na(uht) && !na(uh1)) {
@@ -2078,7 +2078,7 @@ static double altrho (int order, int t1, int t2, const double *uhat)
  *
  * Computes the first order serial correlation coefficient
  * for @uhat, over the range @t1 to @t2.
- * 
+ *
  * Returns: the \hat{rho} value, or #NADBL on error.
  */
 
@@ -2088,7 +2088,7 @@ double rhohat (int order, int t1, int t2, const double *uhat)
     double rho;
     int t;
 
-    for (t=t1+order; t<=t2; t++) { 
+    for (t=t1+order; t<=t2; t++) {
         ut = uhat[t];
         u1 = uhat[t-1];
         if (na(ut) || na(u1)) {
@@ -2119,7 +2119,7 @@ static int hilu_plot (double *ssr, double *rho, int n)
 
     fp = open_plot_input_file(PLOT_REGULAR, 0, &err);
     if (err) {
-	return err; 
+	return err;
     }
 
     fputs("# hildreth-lu\n", fp);
@@ -2188,14 +2188,14 @@ static int rho_val_ends_row (int k)
     return 0;
 }
 
-static void hilu_print_iter (double r, double ess, int iter, 
+static void hilu_print_iter (double r, double ess, int iter,
 			     double *ssr, double *rh,
 			     int *ip, int asciiplot,
 			     PRN *prn)
 {
     char num[8];
     int k;
-		
+
     sprintf(num, "%.1f", 100 * r);
     k = atoi(num);
 
@@ -2214,7 +2214,7 @@ static void hilu_print_iter (double r, double ess, int iter,
 	} else {
 	    bufspace(3, prn);
 	}
-    } 
+    }
 }
 
 static void hilu_header (PRN *prn)
@@ -2272,13 +2272,13 @@ static double hilu_search (const int *list, DATASET *dset,
 	ess = pmod->ess;
 
 	if (!quiet) {
-	    hilu_print_iter(r, ess, iter, ssr, rh, &i, 
+	    hilu_print_iter(r, ess, iter, ssr, rh, &i,
 			    !niceplot, prn);
 	    if (niceplot) {
 		/* record full data for plotting */
 		ssr[i] = ess;
 		rh[i++] = r;
-	    }	    
+	    }
 	}
 
 	if (iter == 0 || ess < essmin) {
@@ -2286,7 +2286,7 @@ static double hilu_search (const int *list, DATASET *dset,
 	    hl_rho = r;
 	}
     } /* end of basic iteration */
-	
+
     if (hl_rho > 0.989) {
 	/* try exploring this funny region? */
 	for (r = 0.99; r <= 0.999; r += .001) {
@@ -2327,7 +2327,7 @@ static double hilu_search (const int *list, DATASET *dset,
 	    hilu_plot(ssr, rh, nplot);
 	} else {
 	    /* ascii plot */
-	    graphyx(ssr, rh, nplot, "ESS", "RHO", prn); 
+	    graphyx(ssr, rh, nplot, "ESS", "RHO", prn);
 	    pputs(prn, "\n");
 	}
     }
@@ -2381,7 +2381,7 @@ static int pwe_error (double rho, int quiet, int iter, PRN *prn)
  * Cochrane-Orcutt, Hildreth-Lu or Prais-Winsten procedures for
  * handling first-order serial correlation. Print a trace of the
  * search for rho.
- * 
+ *
  * Returns: rho estimate on successful completion, #NADBL on error.
  */
 
@@ -2395,7 +2395,7 @@ static double estimate_rho (const int *list, DATASET *dset,
     double rho = 0.0;
     MODEL armod;
 
-    *err = list_adjust_sample(list, &dset->t1, &dset->t2, 
+    *err = list_adjust_sample(list, &dset->t1, &dset->t2,
 			      dset, NULL);
     if (*err) {
 	goto bailout;
@@ -2403,10 +2403,10 @@ static double estimate_rho (const int *list, DATASET *dset,
 
     gretl_model_init(&armod, dset);
 
-    if (opt & OPT_H) { 
+    if (opt & OPT_H) {
 	/* Do Hildreth-Lu first */
 	rho = hilu_search(list, dset, &armod, opt, prn);
-    } else { 
+    } else {
 	/* Initialize Cochrane-Orcutt (or Prais-Winsten) */
 	armod = lsq(list, dset, OLS, OPT_A);
 	if (!armod.errcode && armod.dfd == 0) {
@@ -2508,17 +2508,17 @@ static double estimate_rho (const int *list, DATASET *dset,
  * @dset: dataset struct.
  * @err: location to receive error code.
  *
- * Augment the regression list @orig with auxiliary terms.  If @aux 
+ * Augment the regression list @orig with auxiliary terms.  If @aux
  * is %AUX_SQ add the squares of the original regressors; if @aux
  * is %AUX_WHITE add squares and cross-products, or if @aux is
  * %AUX_LOG add the natural logs of the original regressors.
  * If they are not already present, these variables are added
  * to the data array.
- * 
+ *
  * Returns: the augmented list, or NULL on failure.
  */
 
-int *augment_regression_list (const int *orig, int aux, 
+int *augment_regression_list (const int *orig, int aux,
 			      DATASET *dset, int *err)
 {
     int *list;
@@ -2757,7 +2757,7 @@ static int get_hsk_weights (MODEL *pmod, DATASET *dset, gretlopt opt)
  *
  * Estimate the model given in @list using a correction for
  * heteroskedasticity.
- * 
+ *
  * Returns: a #MODEL struct, containing the estimates.
  */
 
@@ -2844,7 +2844,7 @@ static int jackknife_vcv (MODEL *pmod, const DATASET *dset)
     if (st == NULL || p == NULL || ustar == NULL) {
 	err = E_ALLOC;
 	goto bailout;
-    }  
+    }
 
     if (pmod->vcv != NULL) {
 	free(pmod->vcv);
@@ -2881,7 +2881,7 @@ static int jackknife_vcv (MODEL *pmod, const DATASET *dset)
     for (t=t1; t<=t2; t++) {
 	if (model_missing(pmod, t)) {
 	    continue;
-	}	
+	}
 	xx = 0.0;
 	for (i=0; i<nc; i++) {
 	    xx += dset->Z[pmod->list[i+2]][t] * p[i][tp];
@@ -2949,11 +2949,11 @@ static void print_HET_1 (double z, double pval, PRN *prn)
 {
     pprintf(prn, "\n%s\n", _("Pesaran-Taylor test for heteroskedasticity"));
     pprintf(prn, "\n%s: HET_1 = %f,\n", _("Test statistic"), z);
-    pprintf(prn, "%s = 2 * P(z > %f) = %.3g\n\n", 
+    pprintf(prn, "%s = 2 * P(z > %f) = %.3g\n\n",
 	    _("with p-value"), z, pval);
 }
 
-static void print_whites_test (double LM, int df, double pval, 
+static void print_whites_test (double LM, int df, double pval,
 			       gretlopt opt, PRN *prn)
 {
     if (opt & OPT_B) {
@@ -2972,9 +2972,9 @@ static void print_whites_test (double LM, int df, double pval,
 	pprintf(prn, "\n%s: TR^2 = %f,\n", _("Test statistic"), LM);
     }
 
-    pprintf(prn, "%s = P(%s(%d) > %f) = %f\n\n", 
-	    _("with p-value"), _("Chi-square"), 
-	    df, LM, pval); 
+    pprintf(prn, "%s = P(%s(%d) > %f) = %f\n\n",
+	    _("with p-value"), _("Chi-square"),
+	    df, LM, pval);
 }
 
 /* For White's test, see if we have enough degrees of freedom
@@ -2982,7 +2982,7 @@ static void print_whites_test (double LM, int df, double pval,
    cross-products also.
 */
 
-static int get_whites_aux (const MODEL *pmod, const double **Z) 
+static int get_whites_aux (const MODEL *pmod, const double **Z)
 {
     int aux = AUX_WHITE;
     int rem = pmod->ncoeff - pmod->ifc - 1;
@@ -3021,11 +3021,11 @@ static int get_whites_aux (const MODEL *pmod, const double **Z)
  * Runs Pesaran and Taylor's (1999) HET_1 test for heteroskedasticity
  * on the given tsls model. The statistic is just a t-statistic, so
  * under the null it is distributed as a standard normal.
- * 
+ *
  * Returns: 0 on successful completion, error code on error.
  */
 
-static int tsls_hetero_test (MODEL *pmod, DATASET *dset, 
+static int tsls_hetero_test (MODEL *pmod, DATASET *dset,
 			     gretlopt opt, PRN *prn)
 {
     int pos, newv = dset->v;
@@ -3056,7 +3056,7 @@ static int tsls_hetero_test (MODEL *pmod, DATASET *dset,
     ptlist[1] = pmod->list[1];
     for (i=2; i<=ptlist[0]; i++) {
 	ptlist[i] = pmod->list[i + pos - 1];
-    }	
+    }
 
     testlist[1] = newv;
     testlist[2] = 0;
@@ -3129,7 +3129,7 @@ static int tsls_hetero_test (MODEL *pmod, DATASET *dset,
 		model_test_set_value(test, z);
 		model_test_set_pvalue(test, pval);
 		maybe_add_test_to_model(pmod, test);
-	    }	  
+	    }
 	}
 
 	record_test_result(z, pval);
@@ -3137,7 +3137,7 @@ static int tsls_hetero_test (MODEL *pmod, DATASET *dset,
 
     clear_model(&ptmod);
 
-    dataset_drop_last_variables(dset, 2); 
+    dataset_drop_last_variables(dset, 2);
 
  bailout:
 
@@ -3216,7 +3216,7 @@ static int *ensure_const_copy_list (const MODEL *pmod, int *err)
 	list = gretl_list_copy(pmod->list);
     } else {
 	int i, nl = pmod->list[0] + 1;
-	
+
 	list = gretl_list_new(nl);
 	if (list != NULL) {
 	    list[1] = pmod->list[1];
@@ -3238,7 +3238,7 @@ static int *ensure_const_augment_list (const MODEL *pmod, int aux,
 				       DATASET *dset, int *err)
 {
     int *list = NULL;
-    
+
     if (pmod->ifc) {
 	list = augment_regression_list(pmod->list, aux, dset, err);
     } else {
@@ -3264,11 +3264,11 @@ static int *ensure_const_augment_list (const MODEL *pmod, int aux,
  * @prn: gretl printing struct.
  *
  * Runs White's test for heteroskedasticity on the given model.
- * 
+ *
  * Returns: 0 on successful completion, error code on error.
  */
 
-int whites_test (MODEL *pmod, DATASET *dset, 
+int whites_test (MODEL *pmod, DATASET *dset,
 		 gretlopt opt, PRN *prn)
 {
     int BP = (opt & OPT_B);
@@ -3290,8 +3290,8 @@ int whites_test (MODEL *pmod, DATASET *dset,
     }
 
     if (pmod->ci == NLS || pmod->ci == MLE ||
-	pmod->ci == GMM || pmod->ci == ARMA || 
-	pmod->ci == LOGISTIC) { 
+	pmod->ci == GMM || pmod->ci == ARMA ||
+	pmod->ci == LOGISTIC) {
 	return E_NOTIMP;
     }
 
@@ -3303,7 +3303,7 @@ int whites_test (MODEL *pmod, DATASET *dset,
 
     /* what can we do, with the degrees of freedom available? */
     if (!BP) {
-	if (opt & OPT_X) { 
+	if (opt & OPT_X) {
 	    aux = AUX_SQ;
 	} else {
 	    aux = get_whites_aux(pmod, (const double **) dset->Z);
@@ -3340,7 +3340,7 @@ int whites_test (MODEL *pmod, DATASET *dset,
 	    list = ensure_const_copy_list(pmod, &err);
 	} else {
 	    /* build aux regression list, adding squares and
-	       (possibly) cross-products of the original 
+	       (possibly) cross-products of the original
 	       independent vars */
 	    list = ensure_const_augment_list(pmod, aux, dset, &err);
 	}
@@ -3390,7 +3390,7 @@ int whites_test (MODEL *pmod, DATASET *dset,
 	if (opt & OPT_S) {
 	    ModelTestType mt = BP? GRETL_TEST_BP : GRETL_TEST_WHITES;
 	    ModelTest *test = model_test_new(mt);
-	    
+
 	    if (test != NULL) {
 		model_test_set_teststat(test, GRETL_STAT_LM);
 		model_test_set_dfn(test, df);
@@ -3398,7 +3398,7 @@ int whites_test (MODEL *pmod, DATASET *dset,
 		model_test_set_pvalue(test, pval);
 		model_test_set_opt(test, testopt);
 		maybe_add_test_to_model(pmod, test);
-	    }	  
+	    }
 	}
 
 	record_test_result(LM, pval);
@@ -3414,7 +3414,7 @@ int whites_test (MODEL *pmod, DATASET *dset,
     return err;
 }
 
-static int ar_list_max (const int *list) 
+static int ar_list_max (const int *list)
 {
     int i, lmax = 0;
 
@@ -3434,13 +3434,13 @@ static int ar_list_max (const int *list)
  * @opt: may contain OPT_O to print covariance matrix.
  * @prn: gretl printing struct.
  *
- * Estimate the model given in @list using the generalized 
+ * Estimate the model given in @list using the generalized
  * Cochrane-Orcutt procedure for autoregressive errors.
- * 
+ *
  * Returns: #MODEL struct containing the results.
  */
 
-MODEL ar_model (const int *list, DATASET *dset, 
+MODEL ar_model (const int *list, DATASET *dset,
 		gretlopt opt, PRN *prn)
 {
     double diff, ess, tss, xx;
@@ -3470,7 +3470,7 @@ MODEL ar_model (const int *list, DATASET *dset,
 	    ar.errcode = E_ALLOC;
 	}
     }
-    
+
     if (ar.errcode) {
 	goto bailout;
     }
@@ -3479,7 +3479,7 @@ MODEL ar_model (const int *list, DATASET *dset,
     cpos = reglist_check_for_const(reglist, dset);
 
     /* first pass: estimate model via OLS: use OPT_M to generate an
-       error in case of missing values within sample range 
+       error in case of missing values within sample range
     */
     ar = lsq(reglist, dset, OLS, OPT_A | OPT_M);
     if (ar.errcode) {
@@ -3495,7 +3495,7 @@ MODEL ar_model (const int *list, DATASET *dset,
     }
 
     yno = reglist[1];
-    t1 = ar.t1; 
+    t1 = ar.t1;
     t2 = ar.t2;
     rholist[1] = v;
 
@@ -3521,7 +3521,7 @@ MODEL ar_model (const int *list, DATASET *dset,
 		}
 		dset->Z[v][t] = xx;
 	    }
-	}		
+	}
 	for (i=1; i<=arlist[0]; i++) {
 	    k = arlist[i];
 	    rholist[1+i] = v + i;
@@ -3593,7 +3593,7 @@ MODEL ar_model (const int *list, DATASET *dset,
     /* special computation of fitted values */
     for (t=t1; t<=t2; t++) {
 	xx = 0.0;
-	for (j=2; j<=reglist[0]; j++) { 
+	for (j=2; j<=reglist[0]; j++) {
 	    xx += ar.coeff[j-2] * dset->Z[reglist[j]][t];
 	}
 	ar.uhat[t] = dset->Z[yno][t] - xx;
@@ -3606,7 +3606,7 @@ MODEL ar_model (const int *list, DATASET *dset,
 	ar.yhat[t] = xx;
     }
 
-    for (t=t1; t<=t2; t++) { 
+    for (t=t1; t<=t2; t++) {
 	ar.uhat[t] = dset->Z[yno][t] - ar.yhat[t];
     }
 
@@ -3634,7 +3634,7 @@ MODEL ar_model (const int *list, DATASET *dset,
     if (gretl_model_add_arinfo(&ar, maxlag)) {
 	ar.errcode = E_ALLOC;
     } else {
-	for (i=0; i<=arlist[0]; i++) { 
+	for (i=0; i<=arlist[0]; i++) {
 	    ar.arinfo->arlist[i] = arlist[i];
 	    if (i >= 1) {
 		ar.arinfo->rho[i-1] = rhomod.coeff[i-1];
@@ -3695,7 +3695,7 @@ static void omitzero (MODEL *pmod, const DATASET *dset,
 	    if (zlist != NULL) {
 		gretl_list_append_term(&zlist, v);
 	    }
-	    fprintf(stderr, "Deleting var %d (%s) at list pos %d: all zero\n", 
+	    fprintf(stderr, "Deleting var %d (%s) at list pos %d: all zero\n",
 		    v, dset->varname[v], i);
 	    gretl_list_delete_at_pos(pmod->list, i);
 	}
@@ -3750,7 +3750,7 @@ static int not_equal (double y, double x)
    variable may be changed if it was a function argument?
 */
 
-static int lagdepvar (const int *list, const DATASET *dset) 
+static int lagdepvar (const int *list, const DATASET *dset)
 {
     const char *p, *yname, *xname;
     int xno, yno = list[1];
@@ -3762,7 +3762,7 @@ static int lagdepvar (const int *list, const DATASET *dset)
 	if (list[i] == LISTSEP) {
 	    break;
 	}
-	xno = list[i];	
+	xno = list[i];
 	xname = dset->varname[xno];
 	p = strrchr(xname, '_');
 	if (p != NULL && isdigit(*(p + 1))) {
@@ -3796,14 +3796,14 @@ static void arch_test_print_simple (int order, double LM,
 	pprintf(prn, "\n%s %d\n", _("Test for ARCH of order"), order);
 	pprintf(prn, "\n%s: TR^2 = %f,\n", _("Test statistic"), LM);
     }
-    pprintf(prn, "%s = P(%s(%d) > %f) = %f\n\n", 
-	    _("with p-value"), _("Chi-square"), 
-	    order, LM, pval); 
+    pprintf(prn, "%s = P(%s(%d) > %f) = %f\n\n",
+	    _("with p-value"), _("Chi-square"),
+	    order, LM, pval);
 }
 
 static void print_arch_regression (const gretl_matrix *b,
 				   const gretl_matrix *V,
-				   int T, int order, 
+				   int T, int order,
 				   gretlopt opt, PRN *prn)
 {
     int i, k = order + 1;
@@ -3826,7 +3826,7 @@ static void print_arch_regression (const gretl_matrix *b,
 	}
 
 	/* is a df correction wanted here? */
-	print_coeffs(b->val, se, (const char **) names, 
+	print_coeffs(b->val, se, (const char **) names,
 		     k, T - k, ARCH, prn);
     }
 
@@ -3834,9 +3834,9 @@ static void print_arch_regression (const gretl_matrix *b,
     strings_array_free(names, k);
 }
 
-static void 
+static void
 arch_test_save_or_print (const gretl_matrix *b, const gretl_matrix *V,
-			 int T, int order, double rsq, MODEL *pmod, 
+			 int T, int order, double rsq, MODEL *pmod,
 			 gretlopt opt, PRN *prn)
 {
     double LM = T * rsq;
@@ -3879,8 +3879,8 @@ arch_test_save_or_print (const gretl_matrix *b, const gretl_matrix *V,
     }
 }
 
-static int real_arch_test (const double *u, int T, int order, 
-			   MODEL *pmod, gretlopt opt, 
+static int real_arch_test (const double *u, int T, int order,
+			   MODEL *pmod, gretlopt opt,
 			   PRN *prn)
 {
     gretl_matrix *X = NULL;
@@ -3946,7 +3946,7 @@ static int real_arch_test (const double *u, int T, int order,
     }
 
     if (!err) {
-	arch_test_save_or_print(b, V, T, order, rsq, pmod, 
+	arch_test_save_or_print(b, V, T, order, rsq, pmod,
 				opt, prn);
     }
 
@@ -3969,8 +3969,8 @@ static int real_arch_test (const double *u, int T, int order,
  * if OPT_Q, be less verbose; if OPT_I, be silent.
  * @prn: gretl printing struct.
  *
- * Tests @pmod for AutoRegressive Conditional Heteroskedasticity.  
- * 
+ * Tests @pmod for AutoRegressive Conditional Heteroskedasticity.
+ *
  * Returns: 0 on success, non-zero code on error.
  */
 
@@ -3989,14 +3989,14 @@ int arch_test (MODEL *pmod, int order, const DATASET *dset,
 	    order = dset->pd;
 	}
 
-	err = real_arch_test(u, pmod->nobs, order, pmod, 
+	err = real_arch_test(u, pmod->nobs, order, pmod,
 			     opt, prn);
     }
 
     return err;
 }
 
-int array_arch_test (const double *u, int n, int order, 
+int array_arch_test (const double *u, int n, int order,
 		     gretlopt opt, PRN *prn)
 {
     return real_arch_test(u, n, order, NULL, opt, prn);
@@ -4013,11 +4013,11 @@ int array_arch_test (const double *u, int n, int order,
  * with the weights based on the predicted error variances from
  * an auxiliary regression of the squared residuals on their lagged
  * values.
- * 
+ *
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL arch_model (const int *list, int order, DATASET *dset, 
+MODEL arch_model (const int *list, int order, DATASET *dset,
 		  gretlopt opt)
 {
     MODEL amod;
@@ -4145,7 +4145,7 @@ MODEL arch_model (const int *list, int order, DATASET *dset,
     if (alist != NULL) free(alist);
     if (wlist != NULL) free(wlist);
 
-    dataset_drop_last_variables(dset, dset->v - oldv); 
+    dataset_drop_last_variables(dset, dset->v - oldv);
 
     return amod;
 }
@@ -4158,7 +4158,7 @@ MODEL arch_model (const int *list, int order, DATASET *dset,
  *
  * Estimate the model given in @list using the method of Least
  * Absolute Deviation (LAD).
- * 
+ *
  * Returns: a #MODEL struct, containing the estimates.
  */
 
@@ -4193,21 +4193,21 @@ MODEL lad_model (const int *list, DATASET *dset, gretlopt opt)
 
 /**
  * quantreg:
- * @tau: vector containing one or more quantile values, in the range 
+ * @tau: vector containing one or more quantile values, in the range
  * 0.01 to 0.99.
  * @list: model specification: dependent var and regressors.
  * @dset: dataset struct.
- * @opt: may contain OPT_R for robust standard errors, 
+ * @opt: may contain OPT_R for robust standard errors,
  * OPT_I to produce confidence intervals.
  * @prn: gretl printing struct.
  *
- * Estimate the model given in @list using the method of 
+ * Estimate the model given in @list using the method of
  * quantile regression.
- * 
+ *
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL quantreg (const gretl_matrix *tau, const int *list, 
+MODEL quantreg (const gretl_matrix *tau, const int *list,
 		DATASET *dset, gretlopt opt, PRN *prn)
 {
     MODEL mod;
@@ -4294,7 +4294,7 @@ int get_x12a_maxpd (void)
 		n = atoi(p + 6);
 	    }
 	    free(sout);
-	} 	
+	}
 	if (n <= 0) {
 	    n = 12;
 	}
@@ -4310,7 +4310,7 @@ int get_x12a_maxpd (void)
  * @pqlags: list giving specific non-seasonal AR/MA lags (or NULL).
  * @dset: dataset struct.
  * @opt: option flags.
- * @PRN: for printing details of iterations (or NULL). 
+ * @PRN: for printing details of iterations (or NULL).
  *
  * Calculates ARMA estimates. By default the estimator is
  * exact ML, implemented via gretl's Kalman filter in
@@ -4330,26 +4330,26 @@ int get_x12a_maxpd (void)
  * this is added automatically, unless @opt includes OPT_N
  * ("no constant").
  *
- * When the estimation method is native exact ML, two (mutually 
- * exclusive) flags in @opt may be used to control the estimator 
- * of the covariance matrix: OPT_G specifies use of the outer 
+ * When the estimation method is native exact ML, two (mutually
+ * exclusive) flags in @opt may be used to control the estimator
+ * of the covariance matrix: OPT_G specifies use of the outer
  * product of the gradient (OPG), while OPT_H specifies use of
  * the (numerical) Hessian. If neither of these flags is given, the
  * default is to use the Hessian by preference, but to fall back
  * to OPG if computation of the numerical Hessian fails. These
  * flags are ignored if estimation is not via native exact ML.
- * 
+ *
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL arma (const int *list, const int *pqlags, 
-	    DATASET *dset, gretlopt opt, 
+MODEL arma (const int *list, const int *pqlags,
+	    DATASET *dset, gretlopt opt,
 	    PRN *prn)
 {
     MODEL (*arma_model) (const int *, const int *,
 			 DATASET *, gretlopt, PRN *);
     MODEL (*arma_x12_model) (const int *, const int *,
-			     const DATASET *, 
+			     const DATASET *,
 			     int, gretlopt, PRN *);
     MODEL armod;
     int err = 0;
@@ -4363,7 +4363,7 @@ MODEL arma (const int *list, const int *pqlags,
     if (err) {
 	armod.errcode = err;
 	return armod;
-    }	
+    }
 
     if (opt & OPT_X) {
 	int pdmax = get_x12a_maxpd();
@@ -4399,7 +4399,7 @@ MODEL arma (const int *list, const int *pqlags,
     set_model_id(&armod, opt);
 
     return armod;
-} 
+}
 
 /**
  * garch:
@@ -4409,7 +4409,7 @@ MODEL arma (const int *list, const int *pqlags,
  * @prn: for printing details of iterations (or NULL).
  *
  * Calculate GARCH estimates.
- * 
+ *
  * Returns: a #MODEL struct, containing the estimates.
  */
 
@@ -4441,7 +4441,7 @@ MODEL garch (const int *list, DATASET *dset, gretlopt opt,
     set_model_id(&mod, opt);
 
     return mod;
-} 
+}
 
 /**
  * mp_ols:
@@ -4451,14 +4451,14 @@ MODEL garch (const int *list, DATASET *dset, gretlopt opt,
  *
  * Estimate an OLS model using multiple-precision arithmetic
  * via the GMP library.
- * 
+ *
  * Returns: a #MODEL struct, containing the estimates.
  */
 
 MODEL mp_ols (const int *list, DATASET *dset, gretlopt opt)
 {
-    int (*mplsq)(const int *, const int *, const int *, 
-		 DATASET *, MODEL *, 
+    int (*mplsq)(const int *, const int *, const int *,
+		 DATASET *, MODEL *,
 		 gretlopt);
     MODEL mpmod;
 
@@ -4478,14 +4478,14 @@ MODEL mp_ols (const int *list, DATASET *dset, gretlopt opt)
 	if (mpmod.errcode == 0 && (base == NULL || poly == NULL)) {
 	    mpmod.errcode = E_ARGS;
 	} else {
-	    mpmod.errcode = (*mplsq)(base, poly, NULL, dset,  
+	    mpmod.errcode = (*mplsq)(base, poly, NULL, dset,
 				     &mpmod, OPT_S);
 	}
 	free(base);
 	free(poly);
     } else {
-	mpmod.errcode = (*mplsq)(list, NULL, NULL, dset,  
-				 &mpmod, OPT_S); 
+	mpmod.errcode = (*mplsq)(list, NULL, NULL, dset,
+				 &mpmod, OPT_S);
     }
 
     set_model_id(&mpmod, opt);
@@ -4517,7 +4517,7 @@ static int check_panel_options (gretlopt opt)
 
 /**
  * panel_model:
- * @list: regression list (dependent variable plus independent 
+ * @list: regression list (dependent variable plus independent
  * variables).
  * @dset: dataset struct.
  * @opt: can include OPT_Q (quiet estimation), OPT_R (random
@@ -4530,7 +4530,7 @@ static int check_panel_options (gretlopt opt)
  * effects (the default), random effects, or weighted
  * least squares based on the respective variances for the
  * cross-sectional units.
- * 
+ *
  * Returns: a #MODEL struct, containing the estimates.
  */
 
@@ -4558,12 +4558,12 @@ MODEL panel_model (const int *list, DATASET *dset,
  * @dset: dataset struct.
  * @opt: option flags.
  *
- * Calculate IV estimates for a linear model, by default via two-stage 
+ * Calculate IV estimates for a linear model, by default via two-stage
  * least squares. The option flags can include OPT_Q for quiet
  * operation, and either OPT_L to specify estimation via Limited
  * Information Maximum Likelihood or OPT_G for estimation via
  * Generalized method of Moments.
- * 
+ *
  * Returns: a #MODEL struct, containing the estimates.
  */
 
@@ -4581,7 +4581,7 @@ MODEL ivreg (const int *list, DATASET *dset, gretlopt opt)
 	/* two-step, iterate and weights options are GMM-only */
 	err = option_prereq_missing(opt, OPT_T | OPT_I | OPT_H, OPT_G);
     }
-    
+
     if (err) {
 	gretl_model_init(&mod, dset);
 	mod.errcode = err;
@@ -4604,7 +4604,7 @@ MODEL ivreg (const int *list, DATASET *dset, gretlopt opt)
  * @list: regression list.
  * @ispec: may contain additional instrument specification.
  * @dset: dataset struct.
- * @opt: may include OPT_D to include time dummies, 
+ * @opt: may include OPT_D to include time dummies,
  * OPT_H to transform the dependent variable via orthogonal
  * deviations rather than first differences, OPT_T for two-step
  * estimation, OPT_A to force production of asymptotic standard
@@ -4619,11 +4619,11 @@ MODEL ivreg (const int *list, DATASET *dset, gretlopt opt)
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL arbond_model (const int *list, const char *ispec,  
-		    const DATASET *dset, gretlopt opt, 
+MODEL arbond_model (const int *list, const char *ispec,
+		    const DATASET *dset, gretlopt opt,
 		    PRN *prn)
 {
-    MODEL (*arbond_estimate) (const int *, const char *, 
+    MODEL (*arbond_estimate) (const int *, const char *,
 			      const DATASET *, gretlopt, PRN *);
     MODEL mod;
 
@@ -4638,7 +4638,7 @@ MODEL arbond_model (const int *list, const char *ispec,
     mod = (*arbond_estimate)(list, ispec, dset, opt, prn);
     set_model_id(&mod, opt);
 
-    return mod;    
+    return mod;
 }
 
 /**
@@ -4657,11 +4657,11 @@ MODEL arbond_model (const int *list, const char *ispec,
  */
 
 MODEL dpd_model (const int *list, const int *laglist,
-		 const char *ispec, const DATASET *dset, 
+		 const char *ispec, const DATASET *dset,
 		 gretlopt opt, PRN *prn)
 {
     MODEL (*dpd_estimate) (const int *, const int *,
-			   const char *, const DATASET *, 
+			   const char *, const DATASET *,
 			   gretlopt, PRN *);
     MODEL mod;
 
@@ -4676,7 +4676,7 @@ MODEL dpd_model (const int *list, const int *laglist,
     mod = (*dpd_estimate)(list, laglist, ispec, dset, opt, prn);
     set_model_id(&mod, opt);
 
-    return mod;    
+    return mod;
 }
 
 /**
@@ -4685,16 +4685,16 @@ MODEL dpd_model (const int *list, const int *laglist,
  * @dset: dataset struct.
  * @opt: unused at present.
  * @prn: printing struct.
- * 
+ *
  * Does one-way or two-way Analysis of Variance (prints table and F-test).
- * 
+ *
  * Returns: 0 on success, non-zero on failure.
 */
 
-int anova (const int *list, const DATASET *dset, 
+int anova (const int *list, const DATASET *dset,
 	   gretlopt opt, PRN *prn)
 {
-    int (*gretl_anova) (const int *, const DATASET *, 
+    int (*gretl_anova) (const int *, const DATASET *,
 			gretlopt, PRN *);
 
     gretl_anova = get_plugin_function("gretl_anova");
