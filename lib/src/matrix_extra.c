@@ -1134,7 +1134,7 @@ gretl_matrix *gretl_matrix_read_from_file (const char *fname,
 {
     char fullname[FILENAME_MAX];
     gchar *unzname = NULL;
-    int r = 0, c = 0, n = 0;
+    int r = -1, c = -1, n = 0;
     int gz, bin = 0;
     gretl_matrix *A = NULL;
     FILE *fp = NULL;
@@ -1184,13 +1184,13 @@ gretl_matrix *gretl_matrix_read_from_file (const char *fname,
     }
 
     if (!*err) {
-	if (r > 0 && c > 0) {
+	if (r >= 0 && c >= 0) {
 	    /* we got dimensions from the preamble */
 	    n = 2;
 	} else {
 	    n = fscanf(fp, "%d %d\n", &r, &c);
 	}
-	if (n < 2 || r <= 0 || c <= 0) {
+	if (n < 2 || r < 0 || c < 0) {
 	    fprintf(stderr, "error reading rows, cols (r=%d, c=%d)\n",
 		    r, c);
 	    *err = E_DATA;

@@ -4176,10 +4176,6 @@ static NODE *read_object_func (NODE *n, NODE *r, int f, parser *p)
 	default:
 	    break;
 	}
-
-	if (f == F_MREAD && ret->v.m == NULL) {
-	    matrix_error(p);
-	}
     }
 
     return ret;
