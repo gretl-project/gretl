@@ -1540,6 +1540,126 @@ int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
     return err;
 }
 
+int gretl_cholesky_regress2 (MODEL *pmod, DATASET *dset, gretlopt opt)
+{
+    integer T, k;
+    gretl_matrix *y = NULL;
+    gretl_matrix *X = NULL;
+    gretl_matrix *b = NULL;
+    gretl_matrix *XTX = NULL;
+    int rank, warn = 0, err = 0;
+
+    T = pmod->nobs;        /* # of rows (observations) */
+    k = pmod->list[0] - 1; /* # of cols (variables) */
+
+    y = gretl_matrix_alloc(T, 1);
+    X = gretl_matrix_alloc(T, k);
+    b = gretl_matrix_alloc(k, 1);
+
+    if (y == NULL || X == NULL || b == NULL) {
+	err = E_ALLOC;
+	goto ch_cleanup;
+    }
+
+    get_model_data(pmod, dset, X, y);
+
+    XTX = gretl_matrix_XTX_new(X);
+    if (XTX == NULL) {
+	err = E_ALLOC;
+    }
+    if (!err) {
+	err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
+					y, GRETL_MOD_NONE,
+					b, GRETL_MOD_NONE);
+    }
+    if (!err) {
+	err = gretl_cholesky_decomp_solve(XTX, b);
+    }
+
+    if (!err) {
+	err = allocate_model_arrays(pmod, k, dset->n);
+    }
+
+    if (err) {
+	goto ch_cleanup;
+    }
+
+    /* write vector of fitted values into y */
+    gretl_matrix_multiply(X, b, y);
+
+    /* OLS coefficients */
+    pmod->coeff = gretl_matrix_steal_data(b);
+
+    /* get vector of residuals and SSR */
+    get_resids_and_SSR(pmod, dset, y, dset->n);
+
+    /* standard error of regression */
+    if (T - k > 0) {
+	if (pmod->opt & OPT_N) {
+	    /* no-df-corr */
+	    pmod->sigma = sqrt(pmod->ess / T);
+	} else {
+	    pmod->sigma = sqrt(pmod->ess / (T - k));
+	}
+    } else {
+	pmod->sigma = 0.0;
+    }
+
+    /* create (X'X)^{-1} */
+    err = gretl_cholesky_invert(XTX);
+    if (err) {
+	goto ch_cleanup;
+    }
+
+    /* VCV and standard errors */
+    if (opt & OPT_R) {
+	pmod->opt |= OPT_R;
+	if (opt & OPT_C) {
+	    err = qr_make_cluster_vcv(pmod, OLS, dset, XTX, opt);
+	} else if ((opt & OPT_T) && !libset_get_bool(FORCE_HC)) {
+	    err = qr_make_hac(pmod, dset, XTX);
+	} else {
+	    err = qr_make_hccme(pmod, dset, X, XTX);
+	}
+    } else {
+	err = qr_make_regular_vcv(pmod, XTX, opt);
+    }
+
+    if ((opt & OPT_R) && err == E_JACOBIAN) {
+	/* try fallback? */
+	err = qr_make_regular_vcv(pmod, XTX, opt);
+	if (!err) {
+	    gretl_model_set_int(pmod, "non-robust", 1);
+	}
+    }
+
+    if (!err) {
+	/* get R^2, F-stat */
+	qr_compute_stats(pmod, dset, T, opt);
+
+	/* D-W stat and p-value */
+	if ((opt & OPT_I) && pmod->missmask == NULL) {
+	    qr_dw_stats(pmod, dset, X, y);
+	}
+
+	/* near-singularity? */
+	if (warn) {
+	    gretl_model_set_int(pmod, "near-singular", 1);
+	}
+    }
+
+ ch_cleanup:
+
+    gretl_matrix_free(X);
+    gretl_matrix_free(y);
+    gretl_matrix_free(b);
+    gretl_matrix_free(XTX);
+
+    pmod->errcode = err;
+
+    return err;
+}
+
 int qr_tsls_vcv (MODEL *pmod, const DATASET *dset, gretlopt opt)
 {
     gretl_matrix *Q = NULL;
