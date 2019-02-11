@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -67,7 +67,7 @@ static void int_container_destroy (int_container *IC)
 
     free(IC->theta);
     free(IC->g);
-    
+
     free(IC->obstype);
     free(IC->list);
 
@@ -77,7 +77,7 @@ static void int_container_destroy (int_container *IC)
     free(IC);
 }
 
-static int_container *int_container_new (int *list, DATASET *dset, 
+static int_container *int_container_new (int *list, DATASET *dset,
 					 MODEL *mod)
 {
     int_container *IC;
@@ -106,7 +106,7 @@ static int_container *int_container_new (int *list, DATASET *dset,
 
     IC->theta = IC->g = NULL;
     IC->X = IC->G = NULL;
-    
+
     IC->obstype = NULL;
     IC->list = NULL;
 
@@ -126,8 +126,8 @@ static int_container *int_container_new (int *list, DATASET *dset,
     IC->list = gretl_list_new(2 + IC->nx);
 
     if (IC->dspace == NULL ||
-	IC->theta == NULL || IC->g == NULL || 
-	IC->X == NULL || IC->G == NULL || 
+	IC->theta == NULL || IC->g == NULL ||
+	IC->X == NULL || IC->G == NULL ||
 	IC->obstype == NULL || IC->list == NULL) {
 	int_container_destroy(IC);
 	return NULL;
@@ -191,7 +191,7 @@ static int_container *int_container_new (int *list, DATASET *dset,
     return IC;
 }
 
-static int create_midpoint_y (int *list, DATASET *dset, 
+static int create_midpoint_y (int *list, DATASET *dset,
 			      int **initlist)
 {
     int mpy = dset->v;
@@ -267,7 +267,7 @@ static void loglik_prelim (const double *theta, int_container *IC)
 	x0 = IC->lo[t];
 	x1 = IC->hi[t];
 
-	/* reset forced observations to mid just in case */ 
+	/* reset forced observations to mid just in case */
 	if (IC->obstype[t] == INT_FPOINT) {
 	    IC->obstype[t] = INT_MID;
 	}
@@ -357,13 +357,16 @@ static double interval_loglik (const double *theta, void *ptr)
 	for (i=0; i<IC->nx; i++) {
 	    gti = derivb * gretl_matrix_get(IC->X, t, i);
 	    gretl_matrix_set(IC->G, t, i, gti);
-	    IC->g[i] += gti; 
+	    IC->g[i] += gti;
 	}
 
 	gretl_matrix_set(IC->G, t, k-1, derivs);
 	IC->g[k-1] += derivs;
     }
 
+#if 0
+    fprintf(stderr, "interval loglik: ll = %g\n", ll);
+#endif
 
 #if INTDEBUG > 1
     fprintf(stderr, "ll = %16.10f\n", ll);
@@ -377,7 +380,7 @@ static double interval_loglik (const double *theta, void *ptr)
     return ll;
 }
 
-static int interval_score (double *theta, double *s, int npar, 
+static int interval_score (double *theta, double *s, int npar,
 			   BFGS_CRIT_FUNC ll, void *ptr)
 {
     int_container *IC = (int_container *) ptr;
@@ -395,7 +398,7 @@ int interval_hessian (double *theta, gretl_matrix *V, void *ptr)
     int_container *IC = (int_container *) ptr;
     double z0 = 0, z1 = 0, mu = 0;
     double q0 = 0, q1 = 0, nu = 0;
-    double x, vij, x0, x1;    
+    double x, vij, x0, x1;
     double f0, f1, Hss = 0;
     double sigma, ndxt, lambda = 0;
     int i, j, t, k = IC->k;
@@ -404,11 +407,7 @@ int interval_hessian (double *theta, gretl_matrix *V, void *ptr)
     sigma = exp(theta[k-1]);
     loglik_prelim(theta, IC);
 
-    for (i=0; i<k; i++) {
-	for (j=0; j<k; j++) {
-	    gretl_matrix_set(V, i, j, 0);
-	}
-    }
+    gretl_matrix_zero(V);
 
 #if INTDEBUG > 1
     fprintf(stderr, "interval_hessian:\n");
@@ -454,24 +453,24 @@ int interval_hessian (double *theta, gretl_matrix *V, void *ptr)
 	    z0 = (x0 - ndxt)/sigma;
 	}
 
-	if ((IC->obstype[t] == INT_POINT) || 
+	if ((IC->obstype[t] == INT_POINT) ||
 	    (IC->obstype[t] == INT_FPOINT)) {
 	    x = 1.0 / (sigma*sigma);
 	} else {
 	    x = (mu*mu - lambda/sigma);
 	}
 
-	for (i=0; i<IC->nx; i++) {
-	    x0 = gretl_matrix_get(IC->X, t, i);
-	    for (j=i; j<IC->nx; j++) {
-		x1 = gretl_matrix_get(IC->X, t, j);
-		vij = gretl_matrix_get(V, i, j);
+	for (j=0; j<IC->nx; j++) {
+	    x0 = gretl_matrix_get(IC->X, t, j);
+	    for (i=j; i<IC->nx; i++) {
+		x1 = gretl_matrix_get(IC->X, t, i);
+		vij = gretl_matrix_get(V, j, i);
 		vij += x * x0 * x1;
-		gretl_matrix_set(V, i, j, vij);
+		gretl_matrix_set(V, j, i, vij);
 	    }
 	}
 
-	if ((IC->obstype[t] == INT_POINT) || 
+	if ((IC->obstype[t] == INT_POINT) ||
 	    (IC->obstype[t] == INT_FPOINT)) {
 	    x = 2 * z0 / sigma;
 	} else {
@@ -485,7 +484,7 @@ int interval_hessian (double *theta, gretl_matrix *V, void *ptr)
 	    gretl_matrix_set(V, i, k-1, vij);
 	}
 
-	if ((IC->obstype[t] == INT_POINT) || 
+	if ((IC->obstype[t] == INT_POINT) ||
 	    (IC->obstype[t] == INT_FPOINT)) {
 	    x = 2 * (z0*z0);
 	    Hss += x;
@@ -511,7 +510,7 @@ int interval_hessian (double *theta, gretl_matrix *V, void *ptr)
     return err;
 }
 
-static gretl_matrix *interval_hessian_inverse (double *theta, 
+static gretl_matrix *interval_hessian_inverse (double *theta,
 					       void *ptr,
 					       int *err)
 {
@@ -568,7 +567,7 @@ static int interval_trim_vcv (MODEL *pmod, int k,
 }
 
 static int intreg_model_add_vcv (MODEL *pmod,
-				 int_container *IC, 
+				 int_container *IC,
 				 const DATASET *dset,
 				 gretlopt opt,
 				 double *x)
@@ -633,7 +632,7 @@ static void int_compute_gresids (int_container *IC)
 	    IC->uhat[t] = IC->lo[t] - IC->ndx[t];
 	}
     }
-} 
+}
 
 /*
   Wald test for zeroing all coefficient apart from the constant,
@@ -677,18 +676,18 @@ static double chisq_overall_test (int_container *IC)
     gretl_matrix_free(V);
 
     return ret;
-} 
+}
 
-/* 
-   Here we exploit the following properties of sub-support normal 
+/*
+   Here we exploit the following properties of sub-support normal
    moments: if x ~ N(0,1) and A = [a,b], then
 
-   E(x^n | x \in A) = (n-1) E(x^{n-2} | x \in A) + 
+   E(x^n | x \in A) = (n-1) E(x^{n-2} | x \in A) +
    + \frac{a^{n-1}\phi(a) - b^{n-1}\phi(b)}{\Phi(b)-\Phi(a)}
 
    We have:
 
-   E(x^0 | x \in A) = 1 (trivially) 
+   E(x^0 | x \in A) = 1 (trivially)
    E(x^1 | x \in A) = f0 - f1
    E(x^2 | x \in A) = 1 + lo*f0 - hi*f1
    ...
@@ -698,13 +697,13 @@ static double chisq_overall_test (int_container *IC)
    and sm4.
 */
 
-static gretl_matrix *cond_moments (int_container *IC, double *sm3, 
+static gretl_matrix *cond_moments (int_container *IC, double *sm3,
 				   double *sm4)
 {
     gretl_matrix *ret = NULL;
-    int n = IC->nobs;  
-    int k = IC->k;  
-    int noc = k + 2;  
+    int n = IC->nobs;
+    int k = IC->k;
+    int noc = k + 2;
     double a, b, phi0, phi1, m1, m2, u, x, y;
     double gti, m3 = 0.0, m4 = 0.0;
     double sigma = exp(IC->theta[k - 1]);
@@ -818,7 +817,7 @@ static int intreg_normtest (int_container *IC, double *teststat)
     return err;
 }
 
-static int fill_intreg_model (int_container *IC, 
+static int fill_intreg_model (int_container *IC,
 			      int fncount, int grcount,
 			      const DATASET *dset,
 			      gretlopt opt)
@@ -843,7 +842,7 @@ static int fill_intreg_model (int_container *IC,
 	goto bailout;
     }
 
-     if (!na(x)) {
+    if (!na(x)) {
 	/* get the s.e. of sigma via the delta method */
 	 x *= pmod->sigma * pmod->sigma;
 	 gretl_model_set_double(pmod, "se_sigma", sqrt(x));
@@ -910,8 +909,8 @@ static int fill_intreg_model (int_container *IC,
     return err;
 }
 
-static int do_interval (int *list, DATASET *dset, MODEL *mod, 
-			gretlopt opt, PRN *prn) 
+static int do_interval (int *list, DATASET *dset, MODEL *mod,
+			gretlopt opt, PRN *prn)
 {
     int_container *IC;
     int maxit, fncount = 0, grcount = 0;
@@ -929,6 +928,10 @@ static int do_interval (int *list, DATASET *dset, MODEL *mod,
 
     if (libset_get_int(GRETL_OPTIM) == OPTIM_BFGS) {
 	use_bfgs = 1;
+    } else if (mod->ncoeff > 250) {
+	/* experimenting */
+	toler = 1.0e-5;
+	use_bfgs = 1;
     }
 
 #if INTDEBUG
@@ -936,16 +939,16 @@ static int do_interval (int *list, DATASET *dset, MODEL *mod,
 #endif
 
     if (use_bfgs) {
-	err = BFGS_max(IC->theta, IC->k, maxit, toler, 
+	err = BFGS_max(IC->theta, IC->k, maxit, toler,
 		       &fncount, &grcount, interval_loglik, C_LOGLIK,
 		       interval_score, IC, NULL, maxopt, prn);
     } else {
 	double crittol = 1.0e-07;
 	double gradtol = 1.0e-07;
-	
+
 	err = newton_raphson_max(IC->theta, IC->k, maxit, crittol, gradtol,
-				 &fncount, C_LOGLIK, interval_loglik, 
-				 interval_score, interval_hessian, 
+				 &fncount, C_LOGLIK, interval_loglik,
+				 interval_score, interval_hessian,
 				 IC, maxopt, prn);
     }
 
@@ -988,17 +991,17 @@ static void maybe_reposition_const (int *list, const DATASET *dset)
 	    list[i] = list[i-1];
 	}
 	list[3] = 0;
-    }	
+    }
 }
 
 MODEL interval_estimate (int *list, DATASET *dset,
-			 gretlopt opt, PRN *prn) 
+			 gretlopt opt, PRN *prn)
 {
     MODEL model;
     int *initlist = NULL;
 
     gretl_model_init(&model, NULL);
-    
+
     if (list[0] > 3) {
 	maybe_reposition_const(list, dset);
     }
@@ -1116,8 +1119,8 @@ static int tobit_depvar_check (const int *list)
 }
 
 MODEL tobit_via_intreg (int *list, double llim, double rlim,
-			DATASET *dset, gretlopt opt, 
-			PRN *prn) 
+			DATASET *dset, gretlopt opt,
+			PRN *prn)
 {
     MODEL model;
     int *ilist = NULL;
@@ -1153,7 +1156,7 @@ MODEL tobit_via_intreg (int *list, double llim, double rlim,
 
     if (!model.errcode) {
 	/* do the actual analysis */
-	model.errcode = do_interval(ilist, dset, &model, 
+	model.errcode = do_interval(ilist, dset, &model,
 				    opt | OPT_T, prn);
     }
 
@@ -1167,7 +1170,7 @@ MODEL tobit_via_intreg (int *list, double llim, double rlim,
 	if ((opt & OPT_M) && !na(rlim)) {
 	    model.opt |= OPT_M;
 	    gretl_model_set_double(&model, "rlimit", rlim);
-	}	
+	}
     }
 
     /* clean up extra data */
