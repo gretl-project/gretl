@@ -1039,7 +1039,10 @@ static int qr_make_hccme (MODEL *pmod, const DATASET *dset,
 {
     gretl_matrix *X;
     gretl_matrix *diag = NULL;
-    gretl_matrix *tmp1 = NULL, *tmp2 = NULL, *V = NULL;
+    gretl_matrix *tmp1 = NULL;
+    gretl_matrix *tmp2 = NULL;
+    gretl_matrix *V = NULL;
+    gretl_matrix *u = NULL;
     int T = pmod->nobs;
     int k = pmod->list[0] - 1;
     int hc_version;
@@ -1049,11 +1052,21 @@ static int qr_make_hccme (MODEL *pmod, const DATASET *dset,
     X = make_data_X(pmod, dset);
     if (X == NULL) return 1;
 
+    hc_version = libset_get_int(HC_VERSION);
+
     diag = gretl_vector_from_array(pmod->uhat + pmod->t1, T,
 				   GRETL_MOD_SQUARE);
     if (diag == NULL) {
 	err = 1;
 	goto bailout;
+    }
+    if (hc_version == 4) {
+	u = gretl_vector_from_array(pmod->uhat + pmod->t1, T,
+				    GRETL_MOD_NONE);
+	if (u == NULL) {
+	    err = 1;
+	    goto bailout;
+	}
     }
 
     tmp1 = gretl_matrix_alloc(k, T);
@@ -1064,7 +1077,6 @@ static int qr_make_hccme (MODEL *pmod, const DATASET *dset,
 	goto bailout;
     }
 
-    hc_version = libset_get_int(HC_VERSION);
     gretl_model_set_vcv_info(pmod, VCV_HC, hc_version);
 
     if (hc_version == 1) {
@@ -1083,8 +1095,11 @@ static int qr_make_hccme (MODEL *pmod, const DATASET *dset,
 	    if (hc_version == 2) {
 		diag->val[t] /= (1.0 - ht);
 	    } else {
-		/* HC3 */
+		/* HC3+ */
 		diag->val[t] /= (1.0 - ht) * (1.0 - ht);
+	    }
+	    if (hc_version == 4) {
+		u->val[t] /= (1.0 - ht);
 	    }
 	}
     }
@@ -1093,6 +1108,25 @@ static int qr_make_hccme (MODEL *pmod, const DATASET *dset,
     gretl_matrix_multiply(tmp1, X, tmp2);
     gretl_matrix_qform(XTXi, GRETL_MOD_NONE, tmp2,
 		       V, GRETL_MOD_NONE);
+
+    if (hc_version == 4) {
+	/* jackknife, per MacKinnon and White (1985) */
+	double nfac = (T - 1.0) / T;
+	gretl_matrix *g;
+
+	gretl_matrix_multiply_mod(XTXi, GRETL_MOD_NONE,
+				  X, GRETL_MOD_TRANSPOSE,
+				  tmp1, GRETL_MOD_NONE);
+	g = gretl_matrix_reuse(diag, k, 1);
+	gretl_matrix_multiply(tmp1, u, g);
+	/* \gamma * \gamma' */
+	gretl_matrix_multiply_mod(g, GRETL_MOD_NONE,
+				  g, GRETL_MOD_TRANSPOSE,
+				  tmp2, GRETL_MOD_NONE);
+	gretl_matrix_divide_by_scalar(tmp2, T);
+	gretl_matrix_subtract_from(V, tmp2);
+	gretl_matrix_multiply_by_scalar(V, nfac);
+    }
 
     /* Transcribe vcv into triangular representation */
     err = qr_make_vcv(pmod, V, VCV_ROBUST);
@@ -1104,6 +1138,7 @@ static int qr_make_hccme (MODEL *pmod, const DATASET *dset,
     gretl_matrix_free(tmp1);
     gretl_matrix_free(tmp2);
     gretl_matrix_free(V);
+    gretl_matrix_free(u);
 
     return err;
 }

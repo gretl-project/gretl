@@ -118,7 +118,6 @@ static void regress (MODEL *pmod, double *xpy,
 static void omitzero (MODEL *pmod, const DATASET *dset,
 		      gretlopt opt);
 static int lagdepvar (const int *list, const DATASET *dset);
-static int jackknife_vcv (MODEL *pmod, const DATASET *dset);
 static double estimate_rho (const int *list, DATASET *dset,
 			    gretlopt opt, PRN *prn, int *err);
 
@@ -959,12 +958,13 @@ double *gretl_XTX (const MODEL *pmod, const DATASET *dset, int *err)
 }
 
 static int native_cholesky_regress (MODEL *pmod, const DATASET *dset,
-				    double rho, int pwe, gretlopt opt)
+				    double rho, gretlopt opt)
 {
     double ysum = 0.0, ypy = 0.0;
     double *xpy;
     int k = pmod->ncoeff;
     int nxpx = k * (k + 1) / 2;
+    int pwe = (pmod->opt & OPT_P);
     int i;
 
     if (nxpx == 0) {
@@ -1106,7 +1106,7 @@ static int depvar_zero (const MODEL *pmod, int yno, const double **Z)
 }
 
 static int cholesky_regress (MODEL *pmod, const DATASET *dset,
-			     double rho, int pwe, gretlopt opt)
+			     double rho, gretlopt opt)
 {
     int T = pmod->t2 - pmod->t1 + 1;
     int k = pmod->list[0] - 1;
@@ -1114,7 +1114,7 @@ static int cholesky_regress (MODEL *pmod, const DATASET *dset,
     if (k >= 50 || (T >= 250 && k >= 30)) {
 	return lapack_cholesky_regress(pmod, dset, opt);
     } else {
-	return native_cholesky_regress(pmod, dset, rho, pwe, opt);
+	return native_cholesky_regress(pmod, dset, rho, opt);
     }
 }
 
@@ -1155,9 +1155,9 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
     MODEL mdl;
     int effobs = 0;
     int missv = 0, misst = 0;
-    int jackknife = 0;
     int pwe = (opt & OPT_P);
     int nullmod = 0, ldv = 0;
+    int save_hc = -1;
     int yno, i;
 
     gretl_model_init(&mdl, dset);
@@ -1309,8 +1309,11 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 	opt &= ~OPT_I;
     }
 
-    if ((opt & OPT_J) || ((opt & OPT_R) && libset_get_int(HC_VERSION) == 4)) {
-	jackknife = 1;
+    if (opt & OPT_J) {
+	/* --jackknife */
+	save_hc = libset_get_int(HC_VERSION);
+	libset_set_int(HC_VERSION, 4);
+	opt |= OPT_R;
     }
 
     if (nullmod) {
@@ -1318,23 +1321,22 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
     } else if (libset_get_bool(USE_QR)) {
 	mdl.rho = rho;
 	gretl_qr_regress(&mdl, dset, opt);
-    } else if (!jackknife && (opt & (OPT_R | OPT_I))) {
+    } else if (opt & (OPT_R | OPT_I)) {
 	mdl.rho = rho;
 	gretl_qr_regress(&mdl, dset, opt);
     } else {
-	if (jackknife) {
-	    /* not yet handled other than by native cholesky */
-	    native_cholesky_regress(&mdl, dset, rho, pwe, opt);
-	} else {
-	    mdl.rho = rho;
-	    cholesky_regress(&mdl, dset, rho, pwe, opt);
-	}
-	if (mdl.errcode == E_SINGULAR && !jackknife) {
+	mdl.rho = rho;
+	cholesky_regress(&mdl, dset, rho, opt);
+	if (mdl.errcode == E_SINGULAR) {
 	    /* near-perfect collinearity is better handled by QR */
 	    model_free_storage(&mdl);
 	    mdl.rho = rho;
 	    gretl_qr_regress(&mdl, dset, opt);
 	}
+    }
+
+    if (save_hc >= 0) {
+	libset_set_int(HC_VERSION, save_hc);
     }
 
     if (mdl.errcode) {
@@ -1390,11 +1392,6 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
     }
     if (!(opt & OPT_A) && !na(mdl.lnL)) {
 	log_depvar_ll(&mdl, dset);
-    }
-
-    /* HCCME version HC3a */
-    if (jackknife) {
-	mdl.errcode = jackknife_vcv(&mdl, dset);
     }
 
  lsq_abort:
@@ -2842,129 +2839,6 @@ MODEL hsk_model (const int *list, DATASET *dset, gretlopt opt)
     free(hsklist);
 
     return hsk;
-}
-
-static int jackknife_vcv (MODEL *pmod, const DATASET *dset)
-{
-    double *st = NULL, *ustar = NULL;
-    double **p = NULL;
-    int nobs, tp, nc = 0;
-    int i, j, k, t;
-    int t1, t2;
-    double xx;
-    int err = 0;
-
-    t1 = pmod->t1;
-    t2 = pmod->t2;
-    nobs = pmod->nobs;
-    nc = pmod->ncoeff;
-
-    st = malloc(nc * sizeof *st);
-    ustar = malloc(nobs * sizeof *ustar);
-    p = doubles_array_new(nc, nobs);
-
-    if (st == NULL || p == NULL || ustar == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    if (pmod->vcv != NULL) {
-	free(pmod->vcv);
-	pmod->vcv = NULL;
-    }
-
-    if (makevcv(pmod, 1.0)) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    /* form elements of (X'X)^{-1}X' */
-
-    for (i=0; i<nc; i++) {
-	tp = 0;
-	for (t=t1; t<=t2; t++) {
-	    if (model_missing(pmod, t)) {
-		continue;
-	    }
-	    xx = 0.0;
-	    for (j=0; j<nc; j++) {
-		if (i <= j) {
-		    k = ijton(i, j, nc);
-		} else {
-		    k = ijton(j, i, nc);
-		}
-		xx += pmod->vcv[k] * dset->Z[pmod->list[j+2]][t];
-	    }
-	    p[i][tp++] = xx;
-	}
-    }
-
-    tp = 0;
-    for (t=t1; t<=t2; t++) {
-	if (model_missing(pmod, t)) {
-	    continue;
-	}
-	xx = 0.0;
-	for (i=0; i<nc; i++) {
-	    xx += dset->Z[pmod->list[i+2]][t] * p[i][tp];
-	}
-	if (floateq(xx, 1.0)) {
-	    xx = 0.0;
-	}
-	ustar[tp++] = pmod->uhat[t] / (1.0 - xx);
-    }
-
-    for (i=0; i<nc; i++) {
-	xx = 0.0;
-	for (t=0; t<nobs; t++) {
-	    xx += p[i][t] * ustar[t];
-	}
-	st[i] = xx;
-    }
-
-    for (t=0; t<nobs; t++) {
-	for (i=0; i<nc; i++) {
-	    p[i][t] *= ustar[t];
-	}
-    }
-
-    /* MacKinnon and White, 1985, equation (13) */
-
-    k = 0;
-    for (i=0; i<nc; i++) {
-	for (j=i; j<nc; j++) {
-	    xx = 0.0;
-	    for (t=0; t<nobs; t++) {
-		xx += p[i][t] * p[j][t];
-	    }
-	    xx -= st[i] * st[j] / nobs;
-	    /* MacKinnon and White: "It is tempting to omit the factor
-	       (n - 1) / n from HC3" (1985, p. 309).  Here we leave it in
-	       place, as in their simulations.
-	    */
-	    xx *= (nobs - 1.0) / nobs;
-	    if (i == j) {
-		pmod->sderr[i] = sqrt(xx);
-	    }
-	    pmod->vcv[k++] = xx;
-	}
-    }
-
-    /* substitute robust F stat */
-    if (pmod->dfd > 0 && pmod->dfn > 1) {
-	pmod->fstt = wald_omit_F(NULL, pmod);
-    }
-
-    pmod->opt |= (OPT_R | OPT_J);
-    gretl_model_set_vcv_info(pmod, VCV_HC, 4);
-
- bailout:
-
-    free(st);
-    free(ustar);
-    doubles_array_free(p, nc);
-
-    return err;
 }
 
 static void print_HET_1 (double z, double pval, PRN *prn)
