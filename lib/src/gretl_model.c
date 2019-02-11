@@ -2669,6 +2669,7 @@ int gretl_model_add_hessian_vcv (MODEL *pmod,
  * gretl_model_add_OPG_vcv:
  * @pmod: pointer to model.
  * @G: T x k gradient matrix.
+ * @pV: location to receive the full covariance matrix, or NULL.
  *
  * Compute (G'G)^{-1}, write this into @pmod as its covariance matrix,
  * and set the standard errors to the square roots of the diagonal
@@ -2678,7 +2679,8 @@ int gretl_model_add_hessian_vcv (MODEL *pmod,
  */
 
 int gretl_model_add_OPG_vcv (MODEL *pmod,
-			     const gretl_matrix *G)
+			     const gretl_matrix *G,
+			     gretl_matrix **pV)
 {
     gretl_matrix *GG = gretl_matrix_XTX_new(G);
     int err = 0;
@@ -2702,7 +2704,11 @@ int gretl_model_add_OPG_vcv (MODEL *pmod,
 	gretl_matrix_print(GG, "non-p.d. G'G");
     }
 
-    gretl_matrix_free(GG);
+    if (pV != NULL) {
+	*pV = GG;
+    } else {
+	gretl_matrix_free(GG);
+    }
 
     return err;
 }

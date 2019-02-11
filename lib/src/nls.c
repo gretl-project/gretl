@@ -1536,7 +1536,7 @@ static int mle_add_vcv (MODEL *pmod, nlspec *spec)
 		err = gretl_model_add_QML_vcv(pmod, MLE, spec->Hinv,
 					      G, spec->dset, opt, NULL);
 	    } else {
-		err = gretl_model_add_OPG_vcv(pmod, G);
+		err = gretl_model_add_OPG_vcv(pmod, G, NULL);
 	    }
 	}
 	gretl_matrix_free(G);

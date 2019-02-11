@@ -320,7 +320,7 @@ static int negbin_model_add_vcv (MODEL *pmod, negbin_info *nbinfo,
     int err = 0;
 
     if (opt & OPT_G) {
-	err = gretl_model_add_OPG_vcv(pmod, nbinfo->G);
+	err = gretl_model_add_OPG_vcv(pmod, nbinfo->G, NULL);
     } else {
 	H = negbin_hessian_inverse(nbinfo, &err);
 	if (!err) {

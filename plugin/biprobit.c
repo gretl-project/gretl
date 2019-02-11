@@ -1029,7 +1029,7 @@ static int biprobit_vcv (MODEL *pmod, bp_container *bp,
     int err = 0;
 
     if (opt & OPT_G) {
-	err = gretl_model_add_OPG_vcv(pmod, bp->score);
+	err = gretl_model_add_OPG_vcv(pmod, bp->score, NULL);
     } else {
 	double *theta = make_bp_theta(bp, &err);
 

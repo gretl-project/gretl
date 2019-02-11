@@ -384,7 +384,8 @@ int gretl_model_add_hessian_vcv (MODEL *pmod,
 				 const gretl_matrix *H);
 
 int gretl_model_add_OPG_vcv (MODEL *pmod, 
-			     const gretl_matrix *G);
+			     const gretl_matrix *G,
+			     gretl_matrix **pV);
 
 VMatrix *gretl_model_get_vcv (MODEL *pmod, const DATASET *dset);
 

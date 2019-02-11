@@ -627,7 +627,7 @@ static int duration_model_add_vcv (MODEL *pmod, duration_info *dinfo,
     int err = 0;
 
     if (opt & OPT_G) {
-	err = gretl_model_add_OPG_vcv(pmod, dinfo->G);
+	err = gretl_model_add_OPG_vcv(pmod, dinfo->G, NULL);
     } else {
 	H = duration_hessian_inverse(dinfo->theta, dinfo, &err);
 	if (!err) {
