@@ -866,7 +866,7 @@ static int copy_initial_hessian (double **H,
 {
     int i, j;
 
-#if BFGS_DEBUG
+#if BFGS_DEBUG > 1
     gretl_matrix_print(A, "BFGS: initial Hessian inverse");
 #endif
 
@@ -1142,7 +1142,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
     iter = ilast = fcount = gcount = 1;
     optim_gradcall(gradfunc, b, g, n, cfunc, data, minimize);
 
-#if BFGS_DEBUG
+#if BFGS_DEBUG > 1
     fprintf(stderr, "initial gradient:\n");
     for (i=0; i<n; i++) {
 	fprintf(stderr, " g[%d] = %g\n", i, g[i]);
@@ -1203,7 +1203,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 		iter, sumgrad, gradnorm);
 #endif
 
-#if BFGS_DEBUG
+#if BFGS_DEBUG > 1
 	fprintf(stderr, "H = \n");
 	for (i=0; i<n; i++) {
 	    for (j=0; j<=i; j++) {
@@ -1245,7 +1245,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
 #endif
 		fmax = f;
 		optim_gradcall(gradfunc, b, g, n, cfunc, data, minimize);
-#if BFGS_DEBUG
+#if BFGS_DEBUG > 1
 		fprintf(stderr, "new gradient:\n");
 		for (i=0; i<n; i++) {
 		    fprintf(stderr, "%15.6f", g[i]);
