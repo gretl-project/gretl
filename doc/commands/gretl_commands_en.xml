@@ -6300,6 +6300,10 @@
 	  <flag>--robust</flag>
 	  <effect>robust standard errors</effect>
         </option>
+        <option>
+	  <flag>--opg</flag>
+	  <effect>see below</effect>
+        </option>
 	<option>
 	  <flag>--cluster</flag>
 	  <optparm>clustvar</optparm>
@@ -6348,7 +6352,9 @@
 	then QML or Huber&ndash;White standard errors are calculated
 	instead. In this case the estimated covariance matrix is a
 	<quote>sandwich</quote> of the inverse of the estimated Hessian
-	and the outer product of the gradient.
+	and the outer product of the gradient. Alternatively, the
+	<opt>opg</opt> option can be given, in which case standard
+	errors are based on the outer product of the gradient alone.
       </para>
       <para context="gui">
 	By default, standard errors are computed using the negative
@@ -13860,6 +13866,10 @@
 	  <flag>--robust</flag>
 	  <effect>robust standard errors</effect>
         </option>
+        <option>
+	  <flag>--opg</flag>
+	  <effect>see below</effect>
+        </option>
 	<option>
 	  <flag>--cluster</flag>
 	  <optparm>clustvar</optparm>
@@ -13900,8 +13910,10 @@
 	or <lit>NA</lit> for no censoring.
       </para>
       <para>
-	The Tobit model is a special case of interval regression, which
-	is supported via the <cmdref targ="intreg"/> command.
+	The Tobit model is a special case of interval regression.
+	Please see the <cmdref targ="intreg"/> command for further
+	details, including an account of the <opt>robust</opt> and
+	<opt>opg</opt> options.
       </para>
     </description>
 
