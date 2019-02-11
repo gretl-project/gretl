@@ -716,7 +716,7 @@ that \texttt{H0} is not even symmetric, as it should be).
 \section{Numerical integration}
 \label{sec:numint}
 
-The main tools that \app{gretl} offers in this area is integration via
+The main tool that \app{gretl} offers in this area is integration via
 Gaussian quadrature. In practice, the evaluation of an integral of the
 kind
 \begin{equation}
@@ -740,30 +740,28 @@ for the following list of problems:
   \textbf{Integral} & \textbf{Technique} & \textbf{Note}\\
   \hline
   $\int_{-\infty}^{\infty} f(x) e^{-x^2} \mathrm{d}x$ &
-  Gauss-Hermite & see below for the relationship with the Gaussian distribution\\
+  Gauss--Hermite & see below for the relationship with the Gaussian distribution\\
   $\int_{0}^{\infty} f(x) e^{-x} \mathrm{d}x$ &
-  Gauss-Laguerre & can be used for evaluating Laplace transforms numerically \\
+  Gauss--Laguerre & can be used for evaluating Laplace transforms numerically \\
   $\int_{a}^{b} f(x) \mathrm{d}x$ &
-  Gauss-Legendre & by default, $a=0$ and $b=1$ \\
+  Gauss--Legendre & by default, $a=0$ and $b=1$ \\
   \hline
 \end{tabular}
 \end{center}
 The \cmd{quadtable} function returns a $q \times 2$ matrix with the
 $x_i$ points in the first column and the corresponding weights $w_i$
-in the second one, so in practice you compute the desired integral of
+in the second, so in practice you compute the desired integral of
 $f(x)$ by applying that function to the first column and then
 computing the inner product of the result by the second column.
 
-
-
 In econometrics, Gaussian quadrature is most commonly used for
-evaluating expectations of functions of Gaussian random variable, that
-is, integrals of the form
+evaluating expectations of functions of Gaussian random variables,
+that is, integrals of the form
 \[
   E\left[f(X)\right] = \int_{-\infty}^{\infty} f(x) \varphi(x)
-  \mathrm{d} x;
+  \mathrm{d} x
 \]
-In this case, Gauss-Hermite quadrature can be readily applied,
+In this case, Gauss--Hermite quadrature can be readily applied,
 provided one modifies the integral above via a suitable change of
 variable, namely by defining $z = x/\sqrt{2}$ so that
 \[
@@ -771,7 +769,7 @@ variable, namely by defining $z = x/\sqrt{2}$ so that
   \mathrm{d} x =
   \frac{1}{\sqrt{\pi}} \int_{-\infty}^{\infty} f(\sqrt{2} \cdot z)
   \cdot  e^{-z^2}
-  \mathrm{d} z .
+  \mathrm{d} z
 \]
 For example, consider the following script, in which we evaluate
 $E(e^X)$ and $E[\cos(X)]$ via Gaussian quadrature.
@@ -792,19 +790,20 @@ The result is
 E(exp(x)) = 1.64872127069823 (exact = 1.64872127070013)
 E(cos(x)) = 0.60653065971146 (exact = 0.60653065971263)
 \end{code}
-By using higher values for $q$, instead of the one used in the
-example, you get higher precision.
+Higher values of $q$ will give a more precise approximation.
 
-In fact, \app{gretl} gives you a ``shorthand'' way to obtain the same
-result in case of Gauss-Hermite integration, which saves you the
-hassle of having to recalculate the integral with the change of
-variable you need in case you want something like
+In fact, the full form of \cmd{quadtable}---which supports three
+optional arguments besides the required
+$q$---provides a shortcut which saves you the hassle of having to
+recalculate the integral with the change of variable. Suppose you want
+something like
 \[
-  C = E\left[f(X)\right] \qquad \mathrm \qquad X \sim N(\mu, \sigma^2);
+  C = E\left[f(X)\right] \qquad \mathrm \qquad X \sim N(\mu, \sigma^2)
 \]
-in these cases, you can use the syntax \cmd{quadtable(q, 0, m, s)}. So
-for example if you want to compute $E(X^2)$, where $X \sim N(1,
-0.25)$, you could use
+Then you can use the syntax \cmd{quadtable(q, 1, m, s)}, where the 1
+indicates Gauss--Hermite integration and the two final arguments give
+the mean and standard deviation. So for example if you want to compute
+$E(X^2)$, where $X \sim N(1, 0.25)$, you could use
 \begin{code}
 # Note: no rescaling needed
 Q = quadtable(q, 1, 1, 0.5)
