@@ -1548,7 +1548,7 @@ int lapack_cholesky_regress (MODEL *pmod, const DATASET *dset,
     gretl_matrix *X = NULL;
     gretl_matrix *b = NULL;
     gretl_matrix *XTX = NULL;
-    int rank, warn = 0, err = 0;
+    int err = 0;
 
     T = pmod->nobs;        /* # of rows (observations) */
     k = pmod->list[0] - 1; /* # of cols (variables) */
@@ -1641,11 +1641,6 @@ int lapack_cholesky_regress (MODEL *pmod, const DATASET *dset,
 	/* D-W stat and p-value */
 	if ((opt & OPT_I) && pmod->missmask == NULL) {
 	    qr_dw_stats(pmod, dset, X, y);
-	}
-
-	/* near-singularity? */
-	if (warn) {
-	    gretl_model_set_int(pmod, "near-singular", 1);
 	}
     }
 
