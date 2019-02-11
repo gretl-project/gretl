@@ -1,4 +1,5 @@
 version 2019b, in progress
+- "intreg" and "tobit" commands: add --opg option
 - New accessor $now to get current time/date
 - New function Lsolve(), using precomputed Cholesky factor
 - epochday() function: support YYYYMMDD input
