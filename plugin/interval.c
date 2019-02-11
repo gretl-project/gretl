@@ -24,7 +24,12 @@
 #include "gretl_normal.h"
 #include "matrix_extra.h"
 
+#ifdef _OPENMP
+# include <omp.h>
+#endif
+
 #define INTDEBUG 0
+#define BIGDEBUG 0
 
 enum {
     INT_LOW,   /* no lower bound */
@@ -256,6 +261,10 @@ static void loglik_prelim (const double *theta, int_container *IC)
     double ndxt, z0, z1, x0, x1, xti;
     double sigma = exp(theta[k-1]);
 
+#if defined(_OPENMP)
+    int par_t = IC->nobs >= 2000;
+#pragma omp parallel for private(t, i, ndxt, xti, x0, x1, z0, z1) if (par_t)
+#endif
     for (t=0; t<IC->nobs; t++) {
 	ndxt = 0.0;
 	for (i=0; i<IC->nx; i++) {
@@ -364,8 +373,8 @@ static double interval_loglik (const double *theta, void *ptr)
 	IC->g[k-1] += derivs;
     }
 
-#if 0
-    fprintf(stderr, "interval loglik: ll = %g\n", ll);
+#if BIGDEBUG
+    fprintf(stderr, "*** interval loglik: ll = %g ***\n", ll);
 #endif
 
 #if INTDEBUG > 1
@@ -402,12 +411,19 @@ int interval_hessian (double *theta, gretl_matrix *V, void *ptr)
     double f0, f1, Hss = 0;
     double sigma, ndxt, lambda = 0;
     int i, j, t, k = IC->k;
+#if defined(_OPENMP)
+    int parhess = (IC->nx > 400);
+#endif
     int err = 0;
 
     sigma = exp(theta[k-1]);
     loglik_prelim(theta, IC);
 
     gretl_matrix_zero(V);
+
+#if BIGDEBUG
+    fprintf(stderr, "*** interval hessian ***\n");
+#endif
 
 #if INTDEBUG > 1
     fprintf(stderr, "interval_hessian:\n");
@@ -460,6 +476,9 @@ int interval_hessian (double *theta, gretl_matrix *V, void *ptr)
 	    x = (mu*mu - lambda/sigma);
 	}
 
+#if defined(_OPENMP)
+#pragma omp parallel for private(j, i, x0, x1, vij) if (parhess)
+#endif
 	for (j=0; j<IC->nx; j++) {
 	    x0 = gretl_matrix_get(IC->X, t, j);
 	    for (i=j; i<IC->nx; i++) {
@@ -576,15 +595,22 @@ static int intreg_model_add_vcv (MODEL *pmod,
     gretl_matrix *V = NULL;
     int err = 0;
 
-    H = interval_hessian_inverse(IC->theta, IC, &err);
+#if BIGDEBUG
+    fprintf(stderr, "*** intreg: add vcv ***\n");
+#endif
 
-    if (!err) {
-	if (opt & OPT_R) {
-	    err = gretl_model_add_QML_vcv(pmod, pmod->ci, H, IC->G,
-					  dset, opt, &V);
-	} else {
-	    V = H;
-	    err = gretl_model_add_hessian_vcv(pmod, H);
+    if (opt & OPT_G) {
+	err = gretl_model_add_OPG_vcv(pmod, IC->G, &V);
+    } else {
+	H = interval_hessian_inverse(IC->theta, IC, &err);
+	if (!err) {
+	    if (opt & OPT_R) {
+		err = gretl_model_add_QML_vcv(pmod, pmod->ci, H, IC->G,
+					      dset, opt, &V);
+	    } else {
+		V = H;
+		err = gretl_model_add_hessian_vcv(pmod, H);
+	    }
 	}
     }
 
@@ -916,7 +942,7 @@ static int do_interval (int *list, DATASET *dset, MODEL *mod,
     int maxit, fncount = 0, grcount = 0;
     double toler, normtest = NADBL;
     gretlopt maxopt = opt & OPT_V;
-    int use_bfgs = 0;
+    int optim, use_bfgs = 0;
     int err = 0;
 
     IC = int_container_new(list, dset, mod);
@@ -926,15 +952,15 @@ static int do_interval (int *list, DATASET *dset, MODEL *mod,
 
     BFGS_defaults(&maxit, &toler, INTREG);
 
-    if (libset_get_int(GRETL_OPTIM) == OPTIM_BFGS) {
+    optim = libset_get_int(GRETL_OPTIM);
+    if (optim == OPTIM_BFGS) {
 	use_bfgs = 1;
-    } else if (mod->ncoeff > 250) {
-	/* experimenting */
-	toler = 1.0e-5;
+    } else if (optim == OPTIM_AUTO && mod->ncoeff > 600) {
+	/* avoid bogging down */
 	use_bfgs = 1;
     }
 
-#if INTDEBUG
+#if INTDEBUG || BIGDEBUG
     fprintf(stderr, "do_interval: use_bfgs = %d\n", use_bfgs);
 #endif
 
@@ -952,7 +978,7 @@ static int do_interval (int *list, DATASET *dset, MODEL *mod,
 				 IC, maxopt, prn);
     }
 
-#if INTDEBUG
+#if INTDEBUG || BIGDEBUG
     fprintf(stderr, "after maximization, err = %d\n", err);
 #endif
 
