@@ -2,13 +2,21 @@
 \label{chap:numerical}
 
 Several functions are available to aid in the construction of
-special-purpose estimators: one group of functions are used to
-maximize user-supplied functions via numerical methods: BFGS,
-Newton--Raphson, Simulated Annealing and Nelder--Mead.  Another
-relevant function is \texttt{fdjac}, which produces a
-forward-difference approximation to the Jacobian.
+special-purpose estimators: their purpose is to find numerically
+approximate solutions to problems that in principle could be solved
+analytically, but in practice cannot be, for one reason or another. In
+this chapter, we illustrate the tools that \app{gretl} offers for
+optimization of functions, differentiation and integration.
 
-\section{BFGS}
+\section{Derivative-based optimization methods}
+
+In some cases, the function we want to optimize is differentiable and
+has a maximum in the interior of the search space. In these cases, you
+will want to use algorithms that exploit this feature, such as BFGS or
+Newton--Raphson. If this is not the case, you may want to use
+derivative-free mthods, which are illustrated in section \ref{sec:derivfree}.
+
+\subsection{BFGS}
 \label{sec:BFGSmax}
 
 The \texttt{BFGSmax} function has two required arguments: a vector
@@ -79,7 +87,7 @@ of progress). Note that, in this particular case, the function to be
 maximized only depends on the parameters, so the second parameter is
 omitted from the definition of the function \texttt{Rosenbrock}. 
 
-\subsection{Supplying analytical derivatives for BFGS}
+\subsubsection{Supplying analytical derivatives for BFGS}
 \label{sec:BFGSgrad}
 
 An optional third argument to the \texttt{BFGSmax} function enables
@@ -141,7 +149,7 @@ print grad
 \end{scode}
 \end{script}
 
-\subsection{Limited-memory variant}
+\subsubsection{Limited-memory variant and constrained optimization}
 \label{sec:LBFGS}
 
 As an alternative to ``standard'' BFGS gretl offers the limited-memory
@@ -175,8 +183,9 @@ fourth must lie between 0 and 1:
 \begin{code}
 matrix bounds = {2, 0, $huge; 4, 0, 1}
 \end{code}
+% $
 
-\section{Newton--Raphson}
+\subsection{Newton--Raphson}
 \label{sec:newton-raphson}
 
 BFGS, discussed above, is an excellent all-purpose maximizer, and
@@ -278,8 +287,15 @@ A = NRmax(&x, ND(x))
 \end{scode}
 \end{script}
 
+\section{Derivative-free optimization methods}
+\label{sec:derivfree}
 
-\section{Simulated Annealing}
+\subsection{Golden ratio search method}
+\label{sec:golden}
+
+\ldots
+
+\subsection{Simulated Annealing}
 \label{sec:sim-anneal}
 
 Simulated annealing---as implemented by the gretl function
@@ -354,7 +370,7 @@ print x
 \end{scode}
 \end{script}
 
-\section{Nelder--Mead}
+\subsection{Nelder--Mead}
 \label{sec:nelder-mead}
 
 The Nelder--Mead derivative-free simplex maximizer (also known as the
@@ -410,7 +426,10 @@ printf "Estimate of optimal X*:\n%14f\n", x
 printf "f(X*) = %g\n", fmin
 \end{code}
 
-\section{Computing a Jacobian}
+\section{Numerical differentiation}
+\label{sec:numdiff}
+
+\subsection{Computing a Jacobian}
 \label{sec:fdjac}
 
 Gretl offers the possibility of differentiating numerically a
@@ -648,6 +667,154 @@ dg (4 x 4)
       634.79       488.26       683.55       585.98 
      -781.27      -976.52      -781.21      -1367.3 
 \end{code}
+
+\subsection{Computing a Hessian}
+\label{sec:Hessian}
+
+In principle, you can use the \cmd{fdjac} function repeatedly to
+evaluate higher-order derivatives. However, you should be aware that
+you may encounter rather serious numerical issues. For this reason,
+\app{gretl} provides a function, similar to \cmd{fdjac}, for computing
+a Hessian directly, called \cmd{numhess}.
+
+An example follows:
+\begin{code}
+function scalar quad(matrix x, matrix A )
+    return 0.5*qform(x', A)
+end function
+
+function matrix coljac(matrix x, matrix A)
+    return fdjac(x, quad(x, A))'
+end function
+
+A = {23, -11; -11, 118}
+x = {1;1}
+
+set fdjac_quality 2
+H0 = fdjac(x, "coljac(x, A)")
+H1 = numhess(x, "quad(x, A)")
+printf "\n%14.8f", H0
+printf "\n%14.8f", H1
+\end{code}
+In this example, we use the function \texttt{quad} for evaluating a
+simple quadratic form $f(x) = \frac{1}{2} x'Ax$, for which the Hessian
+is trivially the matrix $A$. The matrix \texttt{H0} is obtained by
+using \cmd{fdjac} twice (at its best quality, that is with Richardson
+extrapolation on); the matrix \texttt{H1}, instead, is obtained
+directly via the \cmd{numhess} function. The result of the above
+script is:
+\begin{code}
+   22.99788411  -10.99983724
+  -10.99902343  117.99161784
+
+   23.00000000  -11.00000000
+  -11.00000000  118.00000000
+\end{code}
+which makes it apparent how much better the second result is (note
+that \texttt{H0} is not even symmetric, as it should be). 
+
+\section{Numerical integration}
+\label{sec:numint}
+
+The main tools that \app{gretl} offers in this area is integration via
+Gaussian quadrature. In practice, the evaluation of an integral of the
+kind
+\begin{equation}
+  \label{eq:quadint}
+  C = \int_{A} f(x) \omega(x) \mathrm{d}x
+\end{equation}
+is approximated via a suitable linear combination of the form
+\begin{equation}
+  \label{eq:quadsum}
+  C \simeq \sum_{i=1}^q f(x_i) w(x_i) ,
+\end{equation}
+where the $q$ ``quadrature points'' $x_1, x_2, \ldots, x_q$ are
+suitably chosen and the corresponding weights $w(x_i)$ ensure that the
+approximation is optimal.
+
+The \cmd{quadtable} function provides quadrature points and weights
+for the following list of problems:
+\begin{center}
+\begin{tabular}{ccp{0.4\textwidth}}
+  \hline
+  \textbf{Integral} & \textbf{Technique} & \textbf{Note}\\
+  \hline
+  $\int_{-\infty}^{\infty} f(x) e^{-x^2} \mathrm{d}x$ &
+  Gauss-Hermite & see below for the relationship with the Gaussian distribution\\
+  $\int_{0}^{\infty} f(x) e^{-x} \mathrm{d}x$ &
+  Gauss-Laguerre & can be used for evaluating Laplace transforms numerically \\
+  $\int_{a}^{b} f(x) \mathrm{d}x$ &
+  Gauss-Legendre & by default, $a=0$ and $b=1$ \\
+  \hline
+\end{tabular}
+\end{center}
+The \cmd{quadtable} function returns a $q \times 2$ matrix with the
+$x_i$ points in the first column and the corresponding weights $w_i$
+in the second one, so in practice you compute the desired integral of
+$f(x)$ by applying that function to the first column and then
+computing the inner product of the result by the second column.
+
+
+
+In econometrics, Gaussian quadrature is most commonly used for
+evaluating expectations of functions of Gaussian random variable, that
+is, integrals of the form
+\[
+  E\left[f(X)\right] = \int_{-\infty}^{\infty} f(x) \varphi(x)
+  \mathrm{d} x;
+\]
+In this case, Gauss-Hermite quadrature can be readily applied,
+provided one modifies the integral above via a suitable change of
+variable, namely by defining $z = x/\sqrt{2}$ so that
+\[
+  \int_{-\infty}^{\infty} f(x) \frac{1}{\sqrt{2 \pi}} e^{-x^2/2}
+  \mathrm{d} x =
+  \frac{1}{\sqrt{\pi}} \int_{-\infty}^{\infty} f(\sqrt{2} \cdot z)
+  \cdot  e^{-z^2}
+  \mathrm{d} z .
+\]
+For example, consider the following script, in which we evaluate
+$E(e^X)$ and $E[\cos(X)]$ via Gaussian quadrature.
+\begin{code}
+q = 10
+Q = quadtable(q)
+
+x = exp(sqrt(2) * Q[,1])
+w = Q[,2] ./ sqrt($pi) 
+printf "E(exp(x)) = %16.14f (exact = %16.14f)\n", x'w, exp(0.5)
+
+x = cos(sqrt(2) * Q[,1])
+w = Q[,2] ./ sqrt($pi) 
+printf "E(cos(x)) = %16.14f (exact = %16.14f)\n", x'w, exp(-0.5)
+\end{code}
+The result is
+\begin{code}
+E(exp(x)) = 1.64872127069823 (exact = 1.64872127070013)
+E(cos(x)) = 0.60653065971146 (exact = 0.60653065971263)
+\end{code}
+By using higher values for $q$, instead of the one used in the
+example, you get higher precision.
+
+In fact, \app{gretl} gives you a ``shorthand'' way to obtain the same
+result in case of Gauss-Hermite integration, which saves you the
+hassle of having to recalculate the integral with the change of
+variable you need in case you want something like
+\[
+  C = E\left[f(X)\right] \qquad \mathrm \qquad X \sim N(\mu, \sigma^2);
+\]
+in these cases, you can use the syntax \cmd{quadtable(q, 0, m, s)}. So
+for example if you want to compute $E(X^2)$, where $X \sim N(1,
+0.25)$, you could use
+\begin{code}
+# Note: no rescaling needed
+Q = quadtable(q, 1, 1, 0.5)
+printf "E(X^2) = %6.4f (exact = %6.4f)\n", (Q[,1].^2)'Q[,2], 1.25
+\end{code}
+which yields
+\begin{code}
+  E(X^2) = 1.2500 (exact = 1.2500)
+\end{code}
+See the \GCR\ for more details.
 
 %%% Local Variables: 
 %%% mode: latex
