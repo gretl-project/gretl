@@ -11544,10 +11544,15 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 		      gretl_vector *uhat, double *s2)
 {
     gretl_matrix *XTX = NULL;
-    int use_lapack = 0; /* FIXME */
+    int use_lapack = 0;
     int try_QR = 0;
     int nasty = 0;
     int k, T, err = 0;
+
+    if (getenv("USE_LAPACK") != NULL) {
+	/* just for testing */
+	use_lapack = 1;
+    }
 
     if (gretl_is_null_matrix(y) ||
 	gretl_is_null_matrix(X) ||
@@ -11573,6 +11578,11 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 
     if (vcv != NULL && (vcv->rows != k || vcv->cols != k)) {
 	return E_NONCONF;
+    }
+
+    if (k >= 50 || (T >= 250 && k >= 30)) {
+	/* this could maybe do with some more tuning? */
+	use_lapack = 1;
     }
 
     if (use_lapack) {

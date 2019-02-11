@@ -1540,7 +1540,8 @@ int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
     return err;
 }
 
-int gretl_cholesky_regress2 (MODEL *pmod, DATASET *dset, gretlopt opt)
+int lapack_cholesky_regress (MODEL *pmod, const DATASET *dset,
+			     gretlopt opt)
 {
     integer T, k;
     gretl_matrix *y = NULL;
@@ -1655,7 +1656,7 @@ int gretl_cholesky_regress2 (MODEL *pmod, DATASET *dset, gretlopt opt)
     gretl_matrix_free(b);
     gretl_matrix_free(XTX);
 
-    pmod->errcode = err;
+    pmod->errcode = (err == E_NOTPD)? E_SINGULAR: err;
 
     return err;
 }

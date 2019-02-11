@@ -958,8 +958,8 @@ double *gretl_XTX (const MODEL *pmod, const DATASET *dset, int *err)
     return xpx;
 }
 
-static int gretl_cholesky_regress (MODEL *pmod, const DATASET *dset,
-				   double rho, int pwe, gretlopt opt)
+static int native_cholesky_regress (MODEL *pmod, const DATASET *dset,
+				    double rho, int pwe, gretlopt opt)
 {
     double ysum = 0.0, ypy = 0.0;
     double *xpy;
@@ -1105,6 +1105,19 @@ static int depvar_zero (const MODEL *pmod, int yno, const double **Z)
     return ret;
 }
 
+static int cholesky_regress (MODEL *pmod, const DATASET *dset,
+			     double rho, int pwe, gretlopt opt)
+{
+    int T = pmod->t2 - pmod->t1 + 1;
+    int k = pmod->list[0] - 1;
+
+    if (k >= 50 || (T >= 250 && k >= 30)) {
+	return lapack_cholesky_regress(pmod, dset, opt);
+    } else {
+	return native_cholesky_regress(pmod, dset, rho, pwe, opt);
+    }
+}
+
 /* limited freeing of elements before passing a model
    on for QR estimation in the case of (near-)singularity
 */
@@ -1169,6 +1182,9 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 	    /* OPT_H: Hildreth-Lu */
 	    mdl.opt |= OPT_H;
 	}
+    } else if (rho != 0.0 && (opt & OPT_P)) {
+	/* estimation of rho in progress */
+	mdl.opt |= OPT_P;
     }
 
     if (list[0] == 1 && ci == OLS && (opt & OPT_U)) {
@@ -1306,12 +1322,12 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 	mdl.rho = rho;
 	gretl_qr_regress(&mdl, dset, opt);
     } else {
-	if (1 || jackknife) {
-	    gretl_cholesky_regress(&mdl, dset, rho, pwe, opt);
+	if (jackknife) {
+	    /* not yet handled other than by native cholesky */
+	    native_cholesky_regress(&mdl, dset, rho, pwe, opt);
 	} else {
-	    /* not just yet! */
 	    mdl.rho = rho;
-	    gretl_cholesky_regress2(&mdl, dset, opt);
+	    cholesky_regress(&mdl, dset, rho, pwe, opt);
 	}
 	if (mdl.errcode == E_SINGULAR && !jackknife) {
 	    /* near-perfect collinearity is better handled by QR */
