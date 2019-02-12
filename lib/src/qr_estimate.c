@@ -1031,7 +1031,9 @@ static void do_X_prime_diag (const gretl_matrix *X,
 
 /* Heteroskedasticity-Consistent Covariance Matrices: See Davidson
    and MacKinnon, Econometric Theory and Methods, chapter 5, esp.
-   page 200.  Implements HC0, HC1, HC2 and HC3.
+   page 200. Implements HC0, HC1, HC2 and HC3. Also added: the
+   jackknife as described in MacKinnon and White (Journal of
+   Econometrics, 1985), or "HC3a" in gretl parlance.
 */
 
 static int qr_make_hccme (MODEL *pmod, const DATASET *dset,
