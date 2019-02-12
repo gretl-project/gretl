@@ -290,10 +290,64 @@ A = NRmax(&x, ND(x))
 \section{Derivative-free optimization methods}
 \label{sec:derivfree}
 
-\subsection{Golden ratio search method}
+\subsection{Golden section search method}
 \label{sec:golden}
 
-\ldots
+Suppose you have a function $f(x)$ of a scalar argument, that is known
+to have a unique maximum. The golden section method is rather effective
+at finding it quickly without making use of derivatives (see
+\cite{pressetal2007}, section 10.2 for a thorough description). The
+\app{gretl} function implementing this method is called \cmd{GSSmax}.
+
+The idea is, roughly, to take an interval $[x_0, x_1]$ (also known as
+the ``bracket'') that should contain the maximizing value. Once
+$y_0 = f(x_0)$ and $y_1 = f(x_1)$ are computed, the algorithm sets a
+new point $x_2$ that replaces the end of the previous interval for
+which the function takes the worse value. So for example, if
+$y_0 < y_1$, then $x_0$ is replaced and the interval becomes
+$[x_1, x_2]$. The width of the interval shrinks progressively, so
+after a few iterations you should end close to the maximum.
+
+As an illustration, consider the function $f(x) = 50 \cdot x^{3/2}
+e^{-x}$, which is maximized at $x = 1.5$. The following script sets as
+the initial interval the range $[0, 10]$:
+\begin{scode}
+function scalar g(scalar x)
+    return 50 * x^(1.5) * exp(-x)
+end function
+
+set max_verbose on
+m = {5, 0, 10}
+y = GSSmax(&m, g(m[1]))
+printf "\nf(%g) = %g\n", m[1], y
+\end{scode}
+
+The output is
+\begin{code}
+1: bracket={3.81966,6.18034}, values={8.18747,1.59001}
+2: bracket={2.36068,3.81966}, values={17.1118,8.18747}
+3: bracket={1.45898,2.36068}, values={20.4841,17.1118}
+4: bracket={0.901699,1.45898}, values={17.3764,20.4841}
+...
+20: bracket={1.50017,1.50042}, values={20.4958,20.4958}
+21: bracket={1.50001,1.50017}, values={20.4958,20.4958}
+
+f(1.49996) = 20.4958
+\end{code}
+
+As you can see from the output, the bracket shrinks progressively; the
+center of the interval when the algorithm stops is $x=1.49996$;
+figure \ref{fig:goldenratio} gives a pictorial representation of the
+process, where the blue line is the function to maximize and the red
+segments are the successive choices for the bracket.
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[scale=0.8]{figures/gss}
+  \caption{Golden section search method: example}
+  \label{fig:goldenratio}
+\end{figure}
+
 
 \subsection{Simulated Annealing}
 \label{sec:sim-anneal}
