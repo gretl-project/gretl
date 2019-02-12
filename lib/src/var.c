@@ -4712,10 +4712,28 @@ gretl_matrix *gretl_IRF_from_bundle (gretl_bundle *b,
     return ret;
 }
 
+static gretl_matrix *make_detflags_matrix (const GRETL_VAR *var)
+{
+    gretl_matrix *d = gretl_zero_matrix_new(1, 3);
+
+    if (var->ifc || (var->detflags & DET_CONST)) {
+	d->val[0] = 1;
+    }
+    if (var->detflags & DET_TREND) {
+	d->val[1] = 1;
+    }
+    if (var->detflags & DET_SEAS) {
+	d->val[2] = 1;
+    }
+
+    return d;
+}
+
 int gretl_VAR_bundlize (const GRETL_VAR *var,
 			DATASET *dset,
 			gretl_bundle *b)
 {
+    gretl_matrix *d;
     int err = 0;
 
     if (var->name != NULL) {
@@ -4738,6 +4756,11 @@ int gretl_VAR_bundlize (const GRETL_VAR *var,
 	gretl_bundle_set_scalar(b, "Ljung_Box", var->LB);
 	gretl_bundle_set_scalar(b, "LB_order", var->LBs);
     }
+
+    /* deterministic terms: pack in matrix */
+    d = make_detflags_matrix(var);
+    gretl_bundle_donate_data(b, "detflags", d,
+			     GRETL_TYPE_MATRIX, 0);
 
     /* lists: lags, ylist, xlist, rlist */
     if (var->lags != NULL) {
