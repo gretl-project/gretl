@@ -509,7 +509,7 @@ void infobox (const char *template, ...)
     va_list args;
 
     va_start(args, template);
-    vsprintf(msg, template, args);
+    vsnprintf(msg, MAXLEN, template, args);
     va_end(args);
 
     dialog = gtk_message_dialog_new(NULL,

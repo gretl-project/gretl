@@ -175,7 +175,9 @@ static int zip_finish (zfile *zf)
     return err;
 }
 
-static char zerrbuf[2048];
+#define ZERRLEN 2048
+
+static char zerrbuf[ZERRLEN];
 
 static void transcribe_zip_error (int err)
 {
@@ -202,14 +204,18 @@ int ziperr (int err, const char *format, ...)
     transcribe_zip_error(err);
 
     if (format != NULL) {
+	int len = strlen(zerrbuf);
+	int rem = ZERRLEN - len - 4;
 	char *buf;
 
-	strcat(zerrbuf, " (");
-	buf = zerrbuf + strlen(zerrbuf);
-	va_start(args, format);
-	vsprintf(buf, format, args);
-	va_end(args);
-	strcat(zerrbuf, ")");
+	if (rem > 0) {
+	    strcat(zerrbuf, " (");
+	    buf = zerrbuf + len + 2;
+	    va_start(args, format);
+	    vsnprintf(buf, rem, format, args);
+	    va_end(args);
+	    strcat(zerrbuf, ")");
+	}
     }
 
     fprintf(stderr, "%s\n", zerrbuf);

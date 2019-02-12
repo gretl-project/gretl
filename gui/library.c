@@ -155,7 +155,7 @@ int lib_command_sprintf (const char *template, ...)
     memset(libline, 0, MAXLINE);
 
     va_start(args, template);
-    len = vsprintf(libline, template, args);
+    len = vsnprintf(libline, MAXLINE, template, args);
     va_end(args);
 
     return len;
