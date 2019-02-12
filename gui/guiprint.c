@@ -834,7 +834,7 @@ int text_print_equation (const MODEL *pmod, const DATASET *pdinfo,
 	    eqn_numstr(pmod->lnL, xstr);
 	    pprintf(prn, ", %s = %s ", _("loglikelihood"), xstr);
 	}
-	x = gretl_model_get_double(pmod, "rho_in");
+	x = gretl_model_get_double(pmod, "rho_gls");
 	if (!na(x)) {
 	    pprintf(prn, ", rho = %.3f", x);
 	}

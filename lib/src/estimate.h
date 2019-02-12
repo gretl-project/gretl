@@ -77,9 +77,6 @@ int makevcv (MODEL *pmod, double sigma);
 int *augment_regression_list (const int *orig, int aux, 
 			      DATASET *dset, int *err);
 
-double *gretl_XTX (const MODEL *pmod, const DATASET *dset, 
-		   int *err);
-
 int anova (const int *list, const DATASET *dset, 
 	   gretlopt opt, PRN *prn);
 

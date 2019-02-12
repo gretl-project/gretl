@@ -34,10 +34,6 @@
 # include "gretl_win32.h"
 #endif
 
-#if defined(_OPENMP)
-# include <omp.h>
-#endif
-
 /**
  * SECTION:estimate
  * @short_description: estimation of regression models
@@ -98,8 +94,8 @@
    Before making a permanent change to the value of TINY, check how
    gretl does on the NIST reference data sets for linear regression
    and ensure you're not getting any garbage results.  The current
-   enables us to get decent results on the NIST nonlinear regression
-   test suite; it might be a bit too low for some contexts.
+   value enables us to get decent results on the NIST nonlinear
+   regression test suite; it might be a bit too low for some contexts.
 */
 
 #define TINY      8.0e-09 /* was 2.1e-09 (last changed 2007/01/20) */
@@ -245,7 +241,7 @@ ldepvar_std_errors (MODEL *pmod, DATASET *dset)
     const double *x;
     int orig_t1 = dset->t1;
     int orig_t2 = dset->t2;
-    double rho = gretl_model_get_double(pmod, "rho_in");
+    double rho = gretl_model_get_double(pmod, "rho_gls");
     int origv = dset->v;
     int vnew = pmod->list[0] + 1 - pmod->ifc;
     int *list;
@@ -367,18 +363,9 @@ static int compute_ar_stats (MODEL *pmod, const DATASET *dset,
     int pwe = (pmod->opt & OPT_P);
     double x, pw1 = 0.0;
 
-    if (gretl_model_add_arinfo(pmod, 1)) {
-	pmod->errcode = E_ALLOC;
-	return 1;
-    }
-
     if (pwe) {
 	pw1 = sqrt(1.0 - rho * rho);
     }
-
-    pmod->arinfo->arlist[0] = pmod->arinfo->arlist[1] = 1;
-    pmod->arinfo->rho[0] = rho;
-    gretl_model_set_double(pmod, "rho_in", rho);
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (t == pmod->t1 && pwe) {
@@ -835,63 +822,25 @@ static int XTX_XTy (const int *list, int t1, int t2,
 	}
     } else {
 	/* plain data, no missing obs mask */
-	int done = 0;
-#if defined(_OPENMP)
-	int vi, k = lmax - lmin + 1;
-	guint64 T = t2 - t1 + 1;
-	guint64 fpm = T * (k*k + k)/2;
-
-	if (!libset_use_openmp(fpm)) {
-	    goto st_mode;
-	}
-
-#pragma omp parallel for private(i, j, t, vi, x)
 	for (i=lmin; i<=lmax; i++) {
-	    vi = list[i];
+	    xi = dset->Z[list[i]];
 	    for (j=i; j<=lmax; j++) {
+		xj = dset->Z[list[j]];
 		x = 0.0;
 		for (t=t1; t<=t2; t++) {
-		    x += dset->Z[vi][t] * dset->Z[list[j]][t];
+		    x += xi[t] * xj[t];
 		}
 		if (i == j && x < DBL_EPSILON) {
-		    err = E_SINGULAR;
+		    return E_SINGULAR;
 		}
-		xpx[ijton(i-lmin, j-lmin, k)] = x;
+		xpx[m++] = x;
 	    }
 	    if (xpy != NULL) {
 		x = 0.0;
 		for (t=t1; t<=t2; t++) {
-		    x += y[t] * dset->Z[vi][t];
+		    x += y[t] * xi[t];
 		}
 		xpy[i-2] = x;
-	    }
-	}
-	done = 1;
-
-    st_mode:
-#endif /* OPENMP */
-
-	if (!done) {
-	    for (i=lmin; i<=lmax; i++) {
-		xi = dset->Z[list[i]];
-		for (j=i; j<=lmax; j++) {
-		    xj = dset->Z[list[j]];
-		    x = 0.0;
-		    for (t=t1; t<=t2; t++) {
-			x += xi[t] * xj[t];
-		    }
-		    if (i == j && x < DBL_EPSILON) {
-			return E_SINGULAR;
-		    }
-		    xpx[m++] = x;
-		}
-		if (xpy != NULL) {
-		    x = 0.0;
-		    for (t=t1; t<=t2; t++) {
-			x += y[t] * xi[t];
-		    }
-		    xpy[i-2] = x;
-		}
 	    }
 	}
     }
@@ -899,68 +848,10 @@ static int XTX_XTy (const int *list, int t1, int t2,
     return err;
 }
 
-/**
- * gretl_XTX:
- * @pmod: reference model.
- * @dset: dataset struct.
- * @err: location to receive error code.
- *
- * (Re-)calculates X'X, with various possible transformations
- * of the original data depending on whether estimation of
- * @pmod involved weighting or quasi-differencing.
- *
- * Returns: The vech of X'X or NULL on error.
- */
-
-double *gretl_XTX (const MODEL *pmod, const DATASET *dset, int *err)
-{
-    int *xlist;
-    double *xpx;
-    double rho;
-    int pwe = 0;
-    int k, m;
-
-    *err = 0;
-
-    xlist = gretl_model_get_x_list(pmod);
-    if (xlist == NULL) {
-	*err = E_DATA;
-	return NULL;
-    }
-
-    k = xlist[0];
-    m = k * (k + 1) / 2;
-
-    xpx = malloc(m * sizeof *xpx);
-    if (xpx == NULL) {
-	*err = E_ALLOC;
-	free(xlist);
-	return NULL;
-    }
-
-    if (pmod->ci == AR1 && (pmod->opt & OPT_P)) {
-	pwe = 1;
-    }
-
-    rho = gretl_model_get_double(pmod, "rho_in");
-    if (na(rho)) {
-	rho = 0.0;
-    }
-
-    *err = XTX_XTy(xlist, pmod->t1, pmod->t2, dset,
-		   pmod->nwt, rho, pwe, xpx,
-		   NULL, NULL, NULL,
-		   pmod->missmask);
-
-    free(xlist);
-
-    return xpx;
-}
-
 static int native_cholesky_regress (MODEL *pmod, const DATASET *dset,
-				    double rho, gretlopt opt)
+				    gretlopt opt)
 {
-    double ysum = 0.0, ypy = 0.0;
+    double rho, ysum = 0.0, ypy = 0.0;
     double *xpy;
     int k = pmod->ncoeff;
     int nxpx = k * (k + 1) / 2;
@@ -1004,6 +895,11 @@ static int native_cholesky_regress (MODEL *pmod, const DATASET *dset,
     }
     for (i=0; i<nxpx; i++) {
 	pmod->xpx[i] = 0.0;
+    }
+
+    rho = gretl_model_get_double(pmod, "rho_gls");
+    if (na(rho)) {
+	rho = 0.0;
     }
 
     /* calculate regression results, Cholesky style */
@@ -1106,7 +1002,7 @@ static int depvar_zero (const MODEL *pmod, int yno, const double **Z)
 }
 
 static int cholesky_regress (MODEL *pmod, const DATASET *dset,
-			     double rho, gretlopt opt)
+			     gretlopt opt)
 {
     int T = pmod->t2 - pmod->t1 + 1;
     int k = pmod->list[0] - 1;
@@ -1114,7 +1010,7 @@ static int cholesky_regress (MODEL *pmod, const DATASET *dset,
     if (k >= 50 || (T >= 250 && k >= 30)) {
 	return lapack_cholesky_regress(pmod, dset, opt);
     } else {
-	return native_cholesky_regress(pmod, dset, rho, opt);
+	return native_cholesky_regress(pmod, dset, opt);
     }
 }
 
@@ -1314,23 +1210,24 @@ static MODEL ar1_lsq (const int *list, DATASET *dset,
 	save_hc = libset_get_int(HC_VERSION);
 	libset_set_int(HC_VERSION, 4);
 	opt |= OPT_R;
+	mdl.opt |= (OPT_J | OPT_R);
+    }
+
+    if (rho != 0.0) {
+	gretl_model_set_double(&mdl, "rho_gls", rho);
     }
 
     if (nullmod) {
 	gretl_null_regress(&mdl, dset);
     } else if (libset_get_bool(USE_QR)) {
-	mdl.rho = rho;
 	gretl_qr_regress(&mdl, dset, opt);
     } else if (opt & (OPT_R | OPT_I)) {
-	mdl.rho = rho;
 	gretl_qr_regress(&mdl, dset, opt);
     } else {
-	mdl.rho = rho;
-	cholesky_regress(&mdl, dset, rho, opt);
+	cholesky_regress(&mdl, dset, opt);
 	if (mdl.errcode == E_SINGULAR) {
 	    /* near-perfect collinearity is better handled by QR */
 	    model_free_storage(&mdl);
-	    mdl.rho = rho;
 	    gretl_qr_regress(&mdl, dset, opt);
 	}
     }

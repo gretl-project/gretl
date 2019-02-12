@@ -1543,8 +1543,8 @@ int tex_print_equation (const MODEL *pmod, const DATASET *dset,
 	    pprintf(prn, "\\quad \\hat{\\sigma} = %s ", tmp);
 	}
 
-	if (!na(gretl_model_get_double(pmod, "rho_in"))) {
-	    x = gretl_model_get_double(pmod, "rho_in");
+	if (!na(gretl_model_get_double(pmod, "rho_gls"))) {
+	    x = gretl_model_get_double(pmod, "rho_gls");
 	    tex_sprint_math_double_digits(x, tmp, 5);
 	    pprintf(prn, " \\quad \\rho = %s", tmp);
 	}

@@ -7010,7 +7010,7 @@ static gretl_matrix *model_get_rhovec (const MODEL *pmod, int *err)
     gretl_matrix *r = NULL;
 
     if (pmod->ci == AR1) {
-	double x = gretl_model_get_double(pmod, "rho_in");
+	double x = gretl_model_get_double(pmod, "rho_gls");
 
 	r = gretl_matrix_from_scalar(x);
     } else if (pmod->ci != AR) {
@@ -7284,7 +7284,7 @@ gretl_model_get_data_element (MODEL *pmod, int idx, const char *s,
 	int k = atoi(s);
 
 	if (k == 1 && pmod->ci == AR1) {
-	    x = gretl_model_get_double(pmod, "rho_in");
+	    x = gretl_model_get_double(pmod, "rho_gls");
 	} else if (k == 1 && pmod->ci != AR) {
 	    x = pmod->rho;
 	} else if (pmod->arinfo == NULL ||

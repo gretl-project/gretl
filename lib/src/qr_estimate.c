@@ -41,6 +41,13 @@ static int qr_make_cluster_vcv (MODEL *pmod, int ci,
 				gretl_matrix *XX,
 				gretlopt opt);
 
+static double gls_rho (MODEL *pmod)
+{
+    double r = gretl_model_get_double(pmod, "rho_gls");
+
+    return na(r) ? 0.0 : r;
+}
+
 /* General note: in fortran arrays, column entries are contiguous.
    Columns of data matrix X hold variables, rows hold observations.
    So in a fortran array, entries for a given variable are contiguous.
@@ -51,6 +58,7 @@ static double qr_get_tss (MODEL *pmod, const DATASET *dset,
 {
     int yno = pmod->list[1];
     int pwe = (pmod->opt & OPT_P);
+    double rho = gls_rho(pmod);
     double yt, y0 = 0.0, ymean = 0.0;
     double x, tss = 0.0;
     double ctss = 0.0;
@@ -62,15 +70,15 @@ static double qr_get_tss (MODEL *pmod, const DATASET *dset,
 
     *yconst = 1;
 
-    if (pmod->rho != 0.0) {
+    if (rho != 0.0) {
 	double ry, d;
 
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    ry = dset->Z[yno][t];
 	    if (t == pmod->t1 && pwe) {
-		ry *= sqrt(1.0 - pmod->rho * pmod->rho);
+		ry *= sqrt(1.0 - rho * rho);
 	    } else {
-		ry -= pmod->rho * dset->Z[yno][t-1];
+		ry -= rho * dset->Z[yno][t-1];
 	    }
 	    ymean += ry;
 	}
@@ -79,9 +87,9 @@ static double qr_get_tss (MODEL *pmod, const DATASET *dset,
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    ry = dset->Z[yno][t];
 	    if (t == pmod->t1 && pwe) {
-		ry *= sqrt(1.0 - pmod->rho * pmod->rho);
+		ry *= sqrt(1.0 - rho * rho);
 	    } else {
-		ry -= pmod->rho * dset->Z[yno][t-1];
+		ry -= rho * dset->Z[yno][t-1];
 	    }
 	    if (t == pmod->t1) {
 		y0 = ry;
@@ -218,7 +226,8 @@ static void get_resids_and_SSR (MODEL *pmod, const DATASET *dset,
 				gretl_matrix *yhat, int fulln)
 {
     int dwt = gretl_model_get_int(pmod, "wt_dummy");
-    int qdiff = (pmod->rho != 0.0);
+    double rho = gls_rho(pmod);
+    int qdiff = (rho != 0.0);
     int pwe = (pmod->opt & OPT_P);
     int yvar = pmod->list[1];
     double *u = pmod->uhat;
@@ -238,9 +247,9 @@ static void get_resids_and_SSR (MODEL *pmod, const DATASET *dset,
 	    } else {
 		y = dset->Z[yvar][t];
 		if (t == pmod->t1 && pwe) {
-		    y *= sqrt(1.0 - pmod->rho * pmod->rho);
+		    y *= sqrt(1.0 - rho * rho);
 		} else {
-		    y -= pmod->rho * dset->Z[yvar][t-1];
+		    y -= rho * dset->Z[yvar][t-1];
 		}
 		pmod->yhat[t] = yhat->val[i];
 		u[t] = y - yhat->val[i];
@@ -1239,7 +1248,8 @@ static void get_model_data (MODEL *pmod, const DATASET *dset,
 			    gretl_matrix *Q, gretl_matrix *y)
 {
     int dwt = gretl_model_get_int(pmod, "wt_dummy");
-    int qdiff = (pmod->rho != 0.0);
+    double rho = gls_rho(pmod);
+    int qdiff = (rho != 0.0);
     int pwe = (pmod->opt & OPT_P);
     double x, pw1 = 0.0;
     int i, s, t;
@@ -1263,7 +1273,7 @@ static void get_model_data (MODEL *pmod, const DATASET *dset,
     }
 
     if (pwe) {
-	pw1 = sqrt(1.0 - pmod->rho * pmod->rho);
+	pw1 = sqrt(1.0 - rho * rho);
     }
 
     if (dwt) {
@@ -1288,7 +1298,7 @@ static void get_model_data (MODEL *pmod, const DATASET *dset,
 		if (pwe && t == pmod->t1) {
 		    x *= pw1;
 		} else {
-		    x -= pmod->rho * dset->Z[vi][t-1];
+		    x -= rho * dset->Z[vi][t-1];
 		}
 	    }
 	    Q->val[s++] = x;
@@ -1313,7 +1323,7 @@ static void get_model_data (MODEL *pmod, const DATASET *dset,
 		if (pwe && t == pmod->t1) {
 		    x *= pw1;
 		} else {
-		    x -= pmod->rho * dset->Z[vy][t-1];
+		    x -= rho * dset->Z[vy][t-1];
 		}
 	    }
 	    y->val[s++] = x;
