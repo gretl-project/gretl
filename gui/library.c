@@ -155,8 +155,13 @@ int lib_command_sprintf (const char *template, ...)
     memset(libline, 0, MAXLINE);
 
     va_start(args, template);
-    len = vsnprintf(libline, MAXLINE, template, args);
+    len = g_vsnprintf(libline, MAXLINE, template, args);
     va_end(args);
+
+    if (len > MAXLINE) {
+	warnbox_printf(_("Maximum length of command line "
+			 "(%d bytes) exceeded"), MAXLINE);
+    }
 
     return len;
 }
