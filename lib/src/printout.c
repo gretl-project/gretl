@@ -1956,7 +1956,7 @@ char *maybe_trim_varname (char *targ, const char *src)
 
 	    strncat(targ, src, fore - snip);
 	    strcat(targ, "~");
-	    strncat(targ, p, strlen(p));
+	    strcat(targ, p);
 	} else {
 	    strncat(targ, src, NAMETRUNC - 2);
 	    strcat(targ, "~");
