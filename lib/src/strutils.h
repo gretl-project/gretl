@@ -198,6 +198,8 @@ char *gretl_utf8_truncate (char *s, size_t nmax);
 
 char *gretl_utf8_truncate_b (char *s, size_t bmax);
 
+char *gretl_utf8_replace_char (char *targ, char *src, int pos);
+
 int gretl_scan_varname (const char *src, char *targ);
 
 char *gretl_regexp_replace (const char *orig,

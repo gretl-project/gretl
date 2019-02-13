@@ -2339,7 +2339,7 @@ static NODE *string_offset (NODE *l, NODE *r, parser *p)
     NODE *ret = aux_string_node(p);
 
     if (ret != NULL && starting(p)) {
-	int n = strlen(l->v.str);
+	int n = g_utf8_strlen(l->v.str, -1);
 	int k = r->v.xval;
 
 	if (k < 0) {
@@ -2347,9 +2347,10 @@ static NODE *string_offset (NODE *l, NODE *r, parser *p)
 	} else if (k >= n) {
 	    ret->v.str = gretl_strdup("");
 	} else {
-	    ret->v.str = gretl_strdup(l->v.str + k);
-	}
+	    char *p = g_utf8_offset_to_pointer(l->v.str, k);
 
+	    ret->v.str = gretl_strdup(p);
+	}
 	if (!p->err && ret->v.str == NULL) {
 	    p->err = E_ALLOC;
 	}
@@ -10228,23 +10229,39 @@ static int set_string_value (NODE *lhs, NODE *rhs, parser *p)
     }
 
     s1 = lh1->v.str;
+
     if (s1 == NULL) {
 	return E_DATA;
-    } else if (idx < 1 || idx > strlen(s1)) {
+    } else if (idx < 1 || idx > g_utf8_strlen(s1, -1)) {
 	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), idx);
 	return E_DATA;
     }
 
-#if LHDEBUG
-    fprintf(stderr, "set_string_value: s1 = %s, idx = %d\n",
-	    s1, idx);
-#endif
-
     s2 = rhs->v.str;
-    if (strlen(s2) != 1) {
-	return E_INVARG; /* FIXME */
+    if (g_utf8_strlen(s2, -1) != 1) {
+	return E_INVARG;
+    } else if (g_utf8_strlen(s1, -1) == strlen(s1) && strlen(s2) == 1) {
+	/* simple: no multibyte characters */
+	s1[idx-1] = s2[0];
     } else {
-	s1[idx - 1] = s2[0];
+	/* handle the multibyte case */
+	char *tmp = gretl_utf8_replace_char(s1, s2, idx - 1);
+
+	if (strlen(tmp) <= strlen(s1)) {
+	    strcpy(s1, tmp);
+	    free(tmp);
+	} else {
+	    user_var *uv = get_user_var_by_data(s1);
+
+	    if (uv != NULL) {
+		p->err = user_var_replace_value(uv, tmp,
+						GRETL_TYPE_STRING);
+		free(s1);
+	    } else {
+		p->err = E_DATA;
+		free(tmp);
+	    }
+	}
     }
 
     return p->err;
@@ -17467,7 +17484,7 @@ static int create_or_edit_string (parser *p)
 
     if (p->ret->t == NUM) {
 	/* taking an offset into an existing string */
-	int len = strlen(orig);
+	int len = g_utf8_strlen(orig, -1);
 	int adj = p->ret->v.xval;
 
 	if (adj < 0) {
@@ -17475,7 +17492,11 @@ static int create_or_edit_string (parser *p)
 	} else if (adj == 0) {
 	    ; /* no-op */
 	} else {
-	    src = (adj < len)? (orig + adj) : "";
+	    if (adj < len) {
+		src = g_utf8_offset_to_pointer(orig, adj);
+	    } else {
+		src = "";
+	    }
 	    newstr = gretl_strdup(src);
 	    if (newstr == NULL) {
 		p->err = E_ALLOC;

@@ -2891,6 +2891,34 @@ char *gretl_utf8_truncate_b (char *s, size_t bmax)
 }
 
 /**
+ * gretl_utf8_replace_char:
+ * @targ: the target for replacement.
+ * @src: the UTF-8 character to insert (NUL terminated).
+ * @pos: the position, in UTF-8 characters, at which to replace.
+ *
+ * Notes: @pos must be prechecked as within bounds, and
+ * @src must be prechecked for containing a single character.
+ *
+ * Returns: newly allocated resulting string.
+ */
+
+char *gretl_utf8_replace_char (char *targ, char *src, int pos)
+{
+    char *s = g_utf8_offset_to_pointer(targ, pos);
+    char *p = g_utf8_find_next_char(s, NULL);
+    char *ret;
+    int len;
+
+    len = strlen(targ) + strlen(src) + 1 - (p - s);
+    ret = calloc(len, 1);
+    strncat(ret, targ, s - targ);
+    strcat(ret, src);
+    strcat(ret, p);
+
+    return ret;
+}
+
+/**
  * gretl_scan_varname:
  * @src: source string.
  * @targ: target string.
