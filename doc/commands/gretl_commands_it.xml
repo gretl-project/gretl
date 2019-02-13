@@ -6118,6 +6118,15 @@
 	  <flag>--robust</flag>
 	  <effect>errori standard robusti</effect>
         </option>	
+        <option>
+	  <flag>--opg</flag>
+	  <effect>vedi sotto</effect>
+        </option>
+	<option>
+	  <flag>--cluster</flag>
+	  <optparm>clustvar</optparm>
+	  <effect>vedi <cmdref targ="logit"/> per la spiegazione</effect>
+        </option>
       </options>
       <examples>
 	<example>intreg lo hi const x1 x2</example>
@@ -6156,18 +6165,23 @@
       </para>
 
       <para context="cli">
-	Per impostazione predefinita, gli errori standard sono calcolati usando
-        l'inversa dell'Hessiana. Se si usa l'opzione <opt>robust</opt>, vengono
-        calcolati invece gli errori standard QML o Huber&ndash;White. In questo caso
-        la matrice di covarianza stimata è un <quote>sandwich</quote>
-        dell'inversa dell'Hessiana stimata e del prodotto esterno del gradiente.
+	Per impostazione predefinita, gli errori standard sono
+	calcolati usando l'inversa dell'Hessiana. Se si usa l'opzione
+	<opt>robust</opt>, vengono calcolati invece gli errori
+	standard QML o Huber&ndash;White. In questo caso la matrice di
+	covarianza stimata è un <quote>sandwich</quote> dell'inversa
+	dell'Hessiana stimata e del prodotto esterno del gradiente. In
+	alternativa, l'opzione <opt>opg</opt> produce una matrica
+	varianze-covarianze basata sul prodotto esterno dei gradienti.
       </para>
       <para context="gui">
-	Per impostazione predefinita, gli errori standard sono calcolati usando
-        l'inversa dell'Hessiana. Se si abilita la casella "Errori standard robusti", vengono
-        calcolati invece gli errori standard QML o Huber&ndash;White. In questo caso
-        la matrice di covarianza stimata è un <quote>sandwich</quote>
-        dell'inversa dell'Hessiana stimata e del prodotto esterno del gradiente.
+	Per impostazione predefinita, gli errori standard sono
+	calcolati usando l'inversa dell'Hessiana. Se si abilita la
+	casella "Errori standard robusti", vengono calcolati invece
+	gli errori standard QML o Huber&ndash;White. In questo caso la
+	matrice di covarianza stimata è un <quote>sandwich</quote>
+	dell'inversa dell'Hessiana stimata e del prodotto esterno del
+	gradiente.
       </para>
 
     </description>
@@ -7025,36 +7039,42 @@
 
     <description>
       <para>
-        Se la variabile dipendente è binaria (i suoi valori sono 0 o 1),
-        esegue una stima di massima verosimiglianza dei coefficienti
-        per le <repl>variabili-indipendenti</repl> con il
-        metodo BRMR (<quote>binary response model regression</quote>) descritto
-        in Davidson e MacKinnon (2004). Visto che il modello è nonlineare, le pendenze
-        dipendono dai valori delle variabili indipendenti: per impostazione
-        predefinita, al posto dei p-value vengono mostrate le pendenze rispetto ad
-        ognuna delle variabili indipendenti, calcolate in corrispondenza della
-        media della variabile. Questo comportamento può essere soppresso usando
-        l'opzione <lit>--p-values</lit>.  La statistica chi-quadro testa
-        l'ipotesi nulla che tutti i coefficienti tranne la costante siano pari a
-        zero.
+        Se la variabile dipendente è binaria (i suoi valori sono 0 o
+        1), esegue una stima di massima verosimiglianza dei
+        coefficienti per le <repl>variabili-indipendenti</repl> con il
+        metodo BRMR (<quote>binary response model regression</quote>)
+        descritto in Davidson e MacKinnon (2004). Visto che il modello
+        è nonlineare, le pendenze dipendono dai valori delle variabili
+        indipendenti: per impostazione predefinita, al posto dei
+        p-value vengono mostrate le pendenze rispetto ad ognuna delle
+        variabili indipendenti, calcolate in corrispondenza della
+        media della variabile. Questo comportamento può essere
+        soppresso usando l'opzione <lit>--p-values</lit>.  La
+        statistica chi-quadro testa l'ipotesi nulla che tutti i
+        coefficienti tranne la costante siano pari a zero.
       </para>
       <para context="cli">
-        In modalità predefinita, gli errori standard sono calcolati con
-        l'inversa negativa dell'Hessiana.  Se si usa l'opzione
-        <opt>robust</opt>, verranno calcolati gli errori standard QML o quelli
-        di Huber&ndash;White. In questo caso, la matrice di covarianza stimata è
-        un <quote>sandwich</quote> dell'inversa dell'Hessiana stimata e del
-        prodotto esterno del gradiente. Per i dettagli, si veda Davidson e
-        MacKinnon 2004, cap. 10.
+        In modalità predefinita, gli errori standard sono calcolati
+        con l'inversa negativa dell'Hessiana.  Se si usa l'opzione
+        <opt>robust</opt>, verranno calcolati gli errori standard QML
+        o quelli di Huber&ndash;White. In questo caso, la matrice di
+        covarianza stimata è un <quote>sandwich</quote> dell'inversa
+        dell'Hessiana stimata e del prodotto esterno del
+        gradiente. Per i dettagli, si veda Davidson e MacKinnon 2004,
+        cap. 10. Ma se viene usata l'opzione <opt>cluster</opt>,
+        verranno prodotti errori standard
+        <quote>cluster-robusti</quote>; vedi <guideref
+        targ="chap:robust_vcv"/> per dettagli.
       </para>
       <para context="gui">
-        In modalità predefinita, gli errori standard sono calcolati con
-        l'inversa negativa dell'Hessiana.  Se si seleziona la casella "Errori
-        standard robusti", verranno calcolati gli errori standard QML o quelli
-        di Huber&ndash;White. In questo caso, la matrice di covarianza stimata è
-        un <quote>sandwich</quote> dell'inversa dell'Hessiana stimata e del
-        prodotto esterno del gradiente. Per i dettagli, si veda Davidson e
-        MacKinnon 2004, cap. 10.
+        In modalità predefinita, gli errori standard sono calcolati
+        con l'inversa negativa dell'Hessiana.  Se si seleziona la
+        casella "Errori standard robusti", verranno calcolati gli
+        errori standard QML o quelli di Huber&ndash;White. In questo
+        caso, la matrice di covarianza stimata è un
+        <quote>sandwich</quote> dell'inversa dell'Hessiana stimata e
+        del prodotto esterno del gradiente. Per i dettagli, si veda
+        Davidson e MacKinnon 2004, cap. 10. 
       </para>
       <para>
         Se la variabile dipendente non è binaria, ma è discreta, si
@@ -13275,6 +13295,10 @@
 	  <flag>--robust</flag>
 	  <effect>standard error robusti</effect>
         </option>
+        <option>
+	  <flag>--opg</flag>
+	  <effect>vedi sotto</effect>
+        </option>
 	<option>
 	  <flag>--cluster</flag>
 	  <optparm>clustvar</optparm>
@@ -13314,8 +13338,9 @@
       </para>
       <para>
 	Il modello Tobit è un caso particolare della regressione ad
-	intervallo, che è effettuabile col comando <cmdref
-	targ="intreg"/>.
+	intervallo. Si veda la documentazione del comando <cmdref
+	targ="intreg"/> per una descrizione delle opzioni
+	<opt>robust</opt> e <opt>opg</opt>.
       </para>
     </description>
 
