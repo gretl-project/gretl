@@ -14,7 +14,7 @@ In some cases, the function we want to optimize is differentiable and
 has a maximum in the interior of the search space. In these cases, you
 will want to use algorithms that exploit this feature, such as BFGS or
 Newton--Raphson. If this is not the case, you may want to use
-derivative-free mthods, which are illustrated in section \ref{sec:derivfree}.
+derivative-free methods, which are illustrated in section \ref{sec:derivfree}.
 
 \subsection{BFGS}
 \label{sec:BFGSmax}
@@ -42,7 +42,7 @@ The first argument contains the parameter vector (which should not be
 modified within the function) and the second may be used to hold
 ``extra'' values that are necessary to compute the objective function,
 but are not the variables of the optimization problem. For example, if
-the objective function were a loglikelihood, the first argument would
+the objective function were a log-likelihood, the first argument would
 contain the parameters and the second one the data. Or, for more
 economic-theory inclined readers, if the objective function were the
 utility of a consumer, the first argument might contain the quantities
