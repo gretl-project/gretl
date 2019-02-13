@@ -305,6 +305,10 @@ int gretl_model_get_int (const MODEL *pmod, const char *key);
 
 double gretl_model_get_double (const MODEL *pmod, const char *key);
 
+double gretl_model_get_double_default (const MODEL *pmod,
+				       const char *key,
+				       double deflt);
+
 int *gretl_model_get_list (const MODEL *pmod, const char *key);
 
 char *gretl_model_get_param_name (const MODEL *pmod, 

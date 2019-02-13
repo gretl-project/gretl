@@ -769,6 +769,42 @@ double gretl_model_get_double (const MODEL *pmod, const char *key)
 }
 
 /**
+ * gretl_model_get_double_default:
+ * @pmod: pointer to model.
+ * @key: key string.
+ * @deflt: default value
+ *
+ * Returns: the double-precision value identified by @key, or
+ * @deflt if there is no such value.
+ */
+
+double gretl_model_get_double_default (const MODEL *pmod,
+				       const char *key,
+				       double deflt)
+{
+    double *valp = NULL;
+    double ret = deflt;
+    int i;
+
+    if (pmod == NULL) {
+	return NADBL;
+    }
+
+    for (i=0; i<pmod->n_data_items; i++) {
+	if (pmod->data_items[i]->type != GRETL_TYPE_DOUBLE) {
+	    continue;
+	}
+	if (!strcmp(key, pmod->data_items[i]->key)) {
+	    valp = (double *) pmod->data_items[i]->ptr;
+	    ret = *valp;
+	    break;
+	}
+    }
+
+    return ret;
+}
+
+/**
  * gretl_model_get_list:
  * @pmod: pointer to model.
  * @key: key string.

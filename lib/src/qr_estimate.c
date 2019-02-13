@@ -41,12 +41,7 @@ static int qr_make_cluster_vcv (MODEL *pmod, int ci,
 				gretl_matrix *XX,
 				gretlopt opt);
 
-static double gls_rho (MODEL *pmod)
-{
-    double r = gretl_model_get_double(pmod, "rho_gls");
-
-    return na(r) ? 0.0 : r;
-}
+#define gls_rho(p) gretl_model_get_double_default(p, "rho_gls", 0.0)
 
 /* General note: in fortran arrays, column entries are contiguous.
    Columns of data matrix X hold variables, rows hold observations.

@@ -897,10 +897,7 @@ static int native_cholesky_regress (MODEL *pmod, const DATASET *dset,
 	pmod->xpx[i] = 0.0;
     }
 
-    rho = gretl_model_get_double(pmod, "rho_gls");
-    if (na(rho)) {
-	rho = 0.0;
-    }
+    rho = gretl_model_get_double_default(pmod, "rho_gls", 0.0);
 
     /* calculate regression results, Cholesky style */
     pmod->errcode = XTX_XTy(pmod->list, pmod->t1, pmod->t2, dset,
