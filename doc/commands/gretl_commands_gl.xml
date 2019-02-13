@@ -6300,7 +6300,11 @@
 	  <flag>--robust</flag>
 	  <effect>Desviacións padrón robustas</effect>
         </option>
-	<option>
+        <option>
+	  <flag>--opg</flag>
+	  <effect>Mira máis abaixo</effect>
+        </option>
+        <option>
 	  <flag>--cluster</flag>
 	  <optparm>clustvar</optparm>
 	  <effect>Consulta <cmdref targ="logit"/> para máis explicacións</effect>
@@ -6347,8 +6351,10 @@
 	negativa da matriz Hessiana. Cando especificas a opción
 	<opt>robust</opt>, entón calcúlanse no seu lugar as desviacións
 	padrón CMV (QML) ou de Huber&ndash;White. Neste caso, a matriz de
-	covarianzas estimada é un <quote>emparedado</quote> entre a inversa
-	da matriz Hessiana estimada e o produto externo do vector gradiente.
+	covarianzas estimada é un <quote>emparedado</quote> entre a inversa da
+	matriz Hessiana estimada e o produto externo do vector gradiente. Como
+	alternativa podes indicar a opción<opt>opg</opt>, en cuxo caso as desviacións
+	padrón baséanse unicamente no produto externo do vector gradiente.
       </para>
       <para context="gui">
 	Por defecto, as desviacións padrón calcúlanse utilizando a inversa
@@ -9310,6 +9316,10 @@
 	  <effect>Mira abaixo</effect>
 	</option>
 	<option>
+	  <flag>--all-cols</flag>
+	  <effect>Mira abaixo</effect>
+	</option>
+	<option>
 	  <flag>--www</flag>
 	  <effect>Utiliza un banco de datos do servidor de Gretl</effect>
 	</option>
@@ -9345,27 +9355,30 @@
 	de funcións especificado por <repl>nomepaquete</repl>.
       </para>
       <para>
-	Se o argumento <repl>nomeficheiro</repl> toma a forma dun identificador
-	de recursos uniforme (URI) que comeza por <lit>http://</lit>, entón
-	Gretl tratará de descargar o ficheiro de datos indicado, antes de abrilo.
+	Se o argumento <repl>nomeficheiro</repl> toma a forma dun
+	identificador de recursos uniforme (URI) que comeza por
+	<lit>http://</lit> ou por <lit>https://</lit>, entón Gretl tratará
+	de descargar o ficheiro de datos indicado, antes de abrilo.
       </para>
       <para>
-	Por defecto, ao abrir un novo ficheiro de datos líbrase a sesión
-	vixente de Gretl, o que inclúe a eliminación de todas as variables
-	definidas, incluíndo matrices, escalares e cadeas de texto. Se
-	queres manter as variables que teñas definidas nese momento
-	(as que non sexan series, pois estas elimínanse obrigatoriamente),
-	utiliza a opción <opt>preserve</opt>.
+	Por defecto, ao abrir un novo ficheiro de datos líbrase a sesión vixente
+	de Gretl, o que inclúe a eliminación de todas as variables definidas,
+	incluíndo matrices, escalares e cadeas de texto. Se queres manter as
+	variables que teñas definidas nese momento (as que non sexan series, pois
+	estas elimínanse obrigatoriamente), utiliza a opción <opt>preserve</opt>.
       </para>
+      <subhead context="cli">Abrindo un banco de datos</subhead>
       <para>
-	Tamén podes utilizar a instrución <lit>open</lit> para abrir un banco
-	de datos (de Gretl, RATS 4.0 ou PcGive) para lelo. Nese caso, deberá
-	de ir seguida da instrución <cmdref targ="data"/> para extraer series
-	concretas do banco de datos. Cando indicas a opción <lit>www</lit>,
-	o programa vai tratar de acceder ao banco de datos do nome indicado
-	no servidor de Gretl (por exemplo, o banco de datos dos tipos de
-	interese da Reserva Federal do terceiro exemplo de arriba).
+	Tamén podes utilizar a instrución <lit>open</lit> para abrir un
+	banco de datos (de Gretl, RATS 4.0 ou PcGive) para lelo. Nese
+	caso, deberá de ir seguida da instrución <cmdref targ="data"/>
+	para extraer series concretas do banco de datos. Cando indicas
+	a opción <lit>www</lit>, o programa vai tratar de acceder ao
+	banco de datos do nome indicado no servidor de Gretl (por
+	exemplo, o banco de datos dos tipos de interese da Reserva
+	Federal do terceiro exemplo de arriba).
       </para>
+      <subhead context="cli">Ficheiros de folla de cálculo</subhead>
       <para>
 	Ao abrir un ficheiro de folla de cálculo (Gnumeric, Open Document
 	ou MS Excel), podes facilitar tres parámetros adicionais despois do
@@ -9386,32 +9399,46 @@
 	primeiras filas. Por defecto, hai un desprazamento de 0 en ambas
 	dimensións, é dicir, comézase a ler na cela de arriba á esquerda.
       </para>
+      <subhead context="cli">Ficheiros de texto delimitado</subhead>
       <para>
-	Con ficheiros de texto plano, Gretl xeralmente agarda atopar as columnas
-	de datos delimitadas dalgún xeito estándar. Pero tamén hai un recurso
-	especial para ler ficheiros de <quote>formato fixo</quote>, nos que non
-	hai delimitadores pero hai unha especificación coñecida da forma, &eg;,
+	Con ficheiros de texto plano, Gretl habitualmente agarda atopar
+	as columnas de datos delimitadas dalgún xeito estándar (en xeral
+	mediante coma, tabulador, espazo, ou punto e coma). Por defecto,
+	Gretl procura na primeira columna as etiquetas ou as datas das
+	observacións, se o seu encabezamento ben está baleiro ou ben
+	contén unha cadea de texto suxestiva tal como <quote>year</quote>,
+	<quote>date</quote> ou <quote>obs</quote>. Podes evitar que
+	Gretl trate de xeito especial a primeira columna indicando a opción 
+	<opt>all-cols</opt>.
+      </para>
+      <subhead context="cli">Texto de formato fixo</subhead>
+      <para>
+	Un ficheiro de datos en texto con <quote>formato fixo</quote> é aquel
+	que non ten delimitadores de columna, pero no que os datos dispóñense
+	de acordo a un conxunto coñecido de especificacións como, por exemplo,
 	<quote>a variable <math>k</math> ocupa 8 columnas comezando na columna 24</quote>.
 	Para ler ese tipo de ficheiros, debes de engadir unha cadea de texto
 	con <opt>fixed-cols=</opt><repl>colspec</repl>, onde <repl>colspec</repl>
-	componse de números enteiros separados por comas. Estes enteiros se
-	interpretan coma un conxunto de pares. O primeiro elemento de cada par
-	denota unha columna de comezo, medida en bytes desde o principio da
-	liña, na que o 1 indica o primeiro byte; e o segundo elemento de cada
-	par indica cantos bytes se deben de ler para o campo indicado. Así, por
-	exemplo, se indicas
+	componse de números enteiros separados por comas. Estes
+	enteiros se interpretan coma un conxunto de pares. O primeiro
+	elemento de cada par denota unha columna de comezo, medida
+	en bytes desde o principio da liña, na que o 1 indica o
+	primeiro byte; e o segundo elemento de cada par indica
+	cantos bytes se deben de ler para o campo indicado. Así,
+	por exemplo, se indicas
       </para>
       <code>
 	open fixed.txt --fixed-cols=1,6,20,3
       </code>
       <para>
-	entón Gretl vai ler 6 bytes comezando na columna 1 para a variable 1;
-	e para a variable 2, vai ler 3 bytes comezando na columna 20. As liñas
-	que están en branco, ou que comezan con <lit>#</lit> ignóranse; pero
-	en caso contrario aplícase o padrón de lectura de columnas, e cando
-	se atopa algo distinto a un valor numérico válido, amósase un fallo.
-	Cando se len os datos satisfactoriamente, as variables vanse designar
-	como <lit>v1</lit>, <lit>v2</lit>, etc. Está nas mans do usuario o
+	entón Gretl vai ler 6 bytes comezando na columna 1 para a
+	variable 1; e para a variable 2, vai ler 3 bytes comezando na
+	columna 20. As liñas que están en branco, ou que comezan con
+	<lit>#</lit> ignóranse; pero en caso contrario aplícase o 
+	padrón de lectura de columnas, e cando se atopa algo distinto
+	a un valor numérico válido, amósase un fallo. Cando se len os
+	datos satisfactoriamente, as variables vanse designar como
+	<lit>v1</lit>, <lit>v2</lit>, etc. Está nas mans do usuario o
 	facilitar nomes con significado e/ou descricións, utilizando para elo
 	as instrucións <cmdref targ="rename"/> e/ou <cmdref targ="setinfo"/>.
       </para>
@@ -13839,7 +13866,11 @@
 	  <flag>--robust</flag>
 	  <effect>Desviacións padrón robustas</effect>
         </option>
-	<option>
+        <option>
+	  <flag>--opg</flag>
+	  <effect>Mira máis abaixo</effect>
+        </option>
+        <option>
 	  <flag>--cluster</flag>
 	  <optparm>clustvar</optparm>
 	  <effect>Consulta <cmdref targ="logit"/> para máis explicacións</effect>
@@ -13879,8 +13910,10 @@
 	facer censura.
       </para>
       <para>
-	O modelo Tobit é un caso especial da regresión por intervalos,
-	executándose esta mediante a instrución <cmdref targ="intreg"/>.
+	O modelo Tobit é un caso especial da regresión por intervalos.
+	Consulta a instrución <cmdref targ="intreg"/> para obter detalles
+	adicionais, incluída unha explicación das opcións <opt>robust</opt>
+	e <opt>opg</opt>.
       </para>
     </description>
 

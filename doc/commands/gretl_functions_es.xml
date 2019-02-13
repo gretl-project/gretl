@@ -531,6 +531,20 @@
       </description>
     </function>
 
+    <function name="$now" section="access" targ="dnow" output="vector">
+      <description>
+	<para>
+	  Devuelve un vector con 2 elementos: el primero indica el número de
+	  segundos transcurridos desde el 01-01-1970 00:00:00 +0000 (UTC), lo
+	  que se utiliza ampliamente en el mundo de la informática para representar
+	  el tiempo vigente, y el segundo indica la fecha vigente en formato
+	  <quote>básico</quote> ISO 8601, <lit>YYYYMMDD</lit>. Puedes
+	  utilizar la función <fncref targ="epochday"/> para procesar el
+	  segundo elemento.
+	</para>
+      </description>
+    </function>
+
     <function name="$nvars" section="access" output="int">
       <description>
 	<para>
@@ -1694,7 +1708,7 @@
 	</para>
       </description>
     </function>
-    
+
     <function name="boxcox" section="filters" output="asinput">
       <fnargs>
 	<fnarg type="series-or-mat">y</fnarg>
@@ -2136,6 +2150,7 @@
 	  es definida positiva.
 	  <seelist>
             <fncref targ="psdroot"/>
+            <fncref targ="Lsolve"/>
 	  </seelist>
 	</para>
       </description>
@@ -3227,6 +3242,17 @@
     calendario Juliano.
 	</para>
 	<para>
+	  También se admite una petición alternativa: si indicas un único
+	  argumento, se va a considerar que es una fecha (o una serie de
+	  fechas) en formato numérico ISO 8601 <quote>básico</quote>,
+	  <lit>YYYYMMDD</lit>. De esta forma, las dos siguientes peticiones
+	  producen el mismo resultado, concretamente 700115.
+	</para>
+	<code>
+	  eval epochday(1917, 11, 7)
+	  eval epochday(19171107)
+	</code>
+	<para>
 	  Para la inversa de esta función consulta <fncref targ="isodate"/>, y
 	  también <fncref targ="juldate"/> (para el calendario Juliano).
 	</para>
@@ -3585,28 +3611,28 @@
 	</para>
 	<code>
           index            y
-          
+
           1            1     -0.40000
           2            2      1.36000
           3            3      0.27600
           4            4      1.75160
           5            5      0.92356
-          
+
           x (5 x 2)
-          
+
           1   1
           2   0
           3   0
           4   0
           5   0
-          
+
           w (5 x 2)
-          
+
           -0.40000     -0.40000
-          1.3600      0.36000
-          0.27600     -0.32400
-          1.7516      0.29160
-          0.92356     -0.26244
+           1.3600       0.36000
+           0.27600     -0.32400
+           1.7516       0.29160
+           0.92356     -0.26244
 	</code>
       </description>
     </function>
@@ -3817,7 +3843,7 @@
 	  lag = 2
 	  parent = QNC
 	  name = QNC_2
-	  graph_name = 
+	  graph_name =
 	  coded = 0
 	  discrete = 0
 	  transform = lags
@@ -5877,6 +5903,39 @@
       </description>
     </function>
 
+    <function name="Lsolve" section="linalg" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">L</fnarg>
+	<fnarg type="matrix">b</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Soluciona <math>x</math> en <math>Ax = b</math>, donde
+	  <argname>L</argname> es el factor de Cholesky triangular
+	  inferior de la matriz definida positiva <math>A</math>, que
+	  cumple <math>LL' = A</math>. Puedes obtener un <argname>L</argname>
+	  apropiado utilizando la función <fncref targ="cholesky"/> con
+	  <math>A</math> como argumento.
+	</para>
+	<para>
+	  Los siguientes dos cálculos deberían producir el mismo resultado
+	  (dependiendo de la precisión de la máquina), pero la primera variante
+	  permite la reutilización de un factor de Cholesky calculado previamente,
+	  y por lo tanto debería ser substancialmente más rápido si estás
+	  solucionando de forma repetida para una misma <math>A</math>,
+	  y distintos valores de <math>b</math>. El aumento de velocidad será
+	  mayor, cuanto mayor sea la dimensión de columnas de <math>A</math>.
+	</para>
+	<code>
+	  # Variante 1
+	  matrix L = cholesky(A)
+	  matrix x = Lsolve(L, b)
+	  # Variante 2
+	  matrix x = A \ b
+	</code>
+      </description>
+    </function>
+
     <function name="max" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">y</fnarg>
@@ -7415,7 +7474,7 @@
 	<fnarg type="cvec">b</fnarg>
 	<fnarg type="fncall">fcall</fnarg>
 	<fnarg optional="true" type="scalar">d</fnarg>
-      </fnargs> 
+      </fnargs>
       <description>
 	<para>
 	  Calcula una aproximación numérica a la matriz hessiana asociada
@@ -9637,6 +9696,33 @@
       </description>
     </function>
 
+    <function name="strftime" section="strings" output="string">
+      <fnargs>
+	<fnarg type="scalar">t</fnarg>
+	<fnarg optional="true" type="string">formato</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  El argumento <argname>t</argname> se utiliza para proporcionar
+	  el número de segundos desde el comienzo del año 1970, de acuerdo
+	  con el UTC (Tiempo Universal Coordinado, antes conocido como
+	  tiempo medio de Greenwich). El valor que se devuelve es una
+	  cadena de texto que proporciona la fecha y/u hora correspondiente,
+	  bien en un formato especificado mediante el segundo argumento
+	  (opcional) o bien, por defecto, mediante la
+	  <quote>representación preferida de fecha y hora en el entorno local vigente</quote>
+	  tal como determinaría la biblioteca del sistema C.
+	</para>
+	<para>
+	  Puedes encontrar las opciones de formato consultando las páginas
+	  sobre <lit>strftime</lit> del manual, en sistemas que las tengan;
+	  o por medio de uno de los muchos sitios web que presentan
+	  información relevante, como por ejemplo
+	  <url>https://devhints.io/strftime</url>.
+	</para>
+      </description>
+    </function>
+
     <function name="strlen" section="strings" output="int">
       <fnargs>
 	<fnarg type="string">s</fnarg>
@@ -10010,15 +10096,15 @@
       </fnargs>
       <description>
 	<para>
-	  Esta función te permite el entrenamiento (y la predicción basada en él) de un
-	  modelo MSV (Máquina de Soporte Vectorial o SVM), utilizando la librería
+	  Esta función te permite el entrenamiento (y la predicción basada en ella)
+	  de una MSV (Máquina de Soporte Vectorial o SVM), utilizando la librería
 	  LIBSVM como soporte. El argumento de tipo lista <argname>L</argname>
 	  deberá incluir la variable dependiente seguida de las variables
-	  independientes; y el 'bundle' <argname>bparms</argname> se utiliza para
-	  pasarle opciones al mecanismo MSV. El valor que se devuelve es una
-	  serie que contiene las predicciones del modelo. Puedes utilizar los dos
-	  argumentos opcionales puntero-bundle para recuperar información
-	  adicional después del entrenamiento y/o predicción.
+	  independientes; y el 'bundle' <argname>bparms</argname> se utiliza
+	  para pasarle opciones al mecanismo de la MSV. El valor que se
+	  devuelve es una serie que contiene las predicciones de la MSV.
+	  Puedes utilizar los dos argumentos opcionales puntero-bundle para
+	  recuperar información adicional después del entrenamiento y/o predicción.
 	</para>
 	<para>
 	  Para obtener más detalles, consulta la documentación PDF para
