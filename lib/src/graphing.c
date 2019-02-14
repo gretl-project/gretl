@@ -2831,7 +2831,7 @@ static int use_impulses (gnuplot_info *gi)
 	int i;
 
 	for (i=1; i<=gi->withlist[0]; i++) {
-	    if (gi->withlist[0] == W_IMPULSES) {
+	    if (gi->withlist[i] == W_IMPULSES) {
 		return 1;
 	    }
 	}
