@@ -2238,7 +2238,11 @@ gretl_matrix *get_last_matrix_result (int *err)
 	*err = E_BADSTAT;
 	return NULL;
     } else {
-	return last_result;
+	/* you only get the result once */
+	gretl_matrix *m = last_result;
+
+	last_result = NULL;
+	return m;
     }
 }
 
@@ -5394,6 +5398,113 @@ Summary *get_summary (const int *list, const DATASET *dset,
     return s;
 }
 
+static void record_summary (Summary *summ,
+			    const DATASET *dset,
+			    gretlopt opt)
+{
+    gretl_matrix *m = NULL;
+    int nv = summ->list[0];
+    int i;
+
+    if (summ->opt & OPT_S) {
+	/* the "simple" option */
+	const char *h[] = {
+	    N_("Mean"),
+	    N_("Median"),
+	    N_("S.D."),
+	    N_("Min"),
+	    N_("Max"),
+	};
+	char **S = strings_array_new(5);
+
+	if (S != NULL) {
+	    for (i=0; i<5; i++) {
+		S[i] = gretl_strdup(_(h[i]));
+	    }
+	}
+
+	m = gretl_matrix_alloc(nv, 5);
+	for (i=0; i<nv; i++) {
+	    // vi = summ->list[i+1];
+	    // summary_print_varname(dset->varname[vi], len, prn);
+	    gretl_matrix_set(m, i, 0, summ->mean[i]);
+	    gretl_matrix_set(m, i, 1, summ->median[i]);
+	    gretl_matrix_set(m, i, 2, summ->sd[i]);
+	    gretl_matrix_set(m, i, 3, summ->low[i]);
+	    gretl_matrix_set(m, i, 4, summ->high[i]);
+	}
+	gretl_matrix_set_colnames(m, S);
+    } else {
+	/* record all available stats */
+	const char *ha[] = {
+	    N_("Mean"),
+	    N_("Median"),
+	    N_("Minimum"),
+	    N_("Maximum"),
+	};
+	const char *hb[] = {
+	    N_("Std. Dev."),
+	    N_("C.V."),
+	    N_("Skewness"),
+	    N_("Ex. kurtosis")
+	};
+	const char *hc[] = {
+	    /* xgettext:no-c-format */
+	    N_("5% perc."),
+	    /* xgettext:no-c-format */
+	    N_("95% perc."),
+	    N_("IQ range"),
+	    N_("Missing obs.")
+	};
+	char **S = strings_array_new(12);
+	double cv;
+	int j = 0;
+
+	if (S != NULL) {
+	    for (i=0; i<4; i++) {
+		S[j++] = gretl_strdup(_(ha[i]));
+	    }
+	    for (i=0; i<4; i++) {
+		S[j++] = gretl_strdup(_(hb[i]));
+	    }
+	    for (i=0; i<4; i++) {
+		S[j++] = gretl_strdup(_(hc[i]));
+	    }
+	}
+
+	m = gretl_matrix_alloc(nv, 12);
+
+	for (i=0; i<nv; i++) {
+	    // vi = summ->list[i+1];
+	    // summary_print_varname(dset->varname[vi], len, prn);
+	    gretl_matrix_set(m, i, 0, summ->mean[i]);
+	    gretl_matrix_set(m, i, 1, summ->median[i]);
+	    gretl_matrix_set(m, i, 2, summ->low[i]);
+	    gretl_matrix_set(m, i, 3, summ->high[i]);
+	    gretl_matrix_set(m, i, 4, summ->sd[i]);
+	    if (floateq(summ->mean[i], 0.0)) {
+		cv = NADBL;
+	    } else if (floateq(summ->sd[i], 0.0)) {
+		cv = 0.0;
+	    } else {
+		cv = fabs(summ->sd[i] / summ->mean[i]);
+	    }
+	    gretl_matrix_set(m, i,  5, cv);
+	    gretl_matrix_set(m, i,  6, summ->skew[i]);
+	    gretl_matrix_set(m, i,  7, summ->xkurt[i]);
+	    gretl_matrix_set(m, i,  8, summ->perc05[i]);
+	    gretl_matrix_set(m, i,  9, summ->perc95[i]);
+	    gretl_matrix_set(m, i, 10, summ->iqr[i]);
+	    gretl_matrix_set(m, i, 11, summ->misscount[i]);
+	}
+	gretl_matrix_set_colnames(m, S);
+    }
+
+    if (m != NULL) {
+	set_last_matrix_result(m);
+    }
+}
+
 /**
  * list_summary:
  * @list: list of series to process.
@@ -5441,6 +5552,7 @@ int list_summary (const int *list, int wgtvar,
 
     if (summ != NULL) {
 	print_summary(summ, dset, prn);
+	record_summary(summ, dset, opt);
 	free_summary(summ);
     }
 
