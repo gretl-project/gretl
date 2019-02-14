@@ -50,6 +50,7 @@ typedef enum {
     R_TEST_STAT,  /* last test statistic(s) (scalar or matrix) */
     R_TEST_PVAL,  /* last test p-value(s) (scalar or matrix) */
     R_NOW,        /* current date/time */
+    R_RESULT,     /* result of a "matrix-compatible" command */
     R_MAX
 } RetrievalIndex;
 

@@ -13753,7 +13753,7 @@ static NODE *eval_query (NODE *t, parser *p)
 
 #define dvar_scalar(i) (i > 0 && i < R_SCALAR_MAX)
 #define dvar_series(i) (i > R_SCALAR_MAX && i < R_SERIES_MAX)
-#define dvar_matrix(i) (i == R_NOW)
+#define dvar_matrix(i) (i == R_NOW || i == R_RESULT)
 #define dvar_variant(i) (i > R_SERIES_MAX && i < R_MAX)
 
 #define no_data(p) (p == NULL || p->n == 0)
@@ -13943,6 +13943,9 @@ static gretl_matrix *dvar_get_matrix (int i, int *err)
 	    m->val[0] = (double) t;
 	    m->val[1] = y * 10000 + mon * 100 + d;
 	}
+	break;
+    case R_RESULT:
+	m = get_last_matrix_result(err);
 	break;
     default:
 	*err = E_DATA;

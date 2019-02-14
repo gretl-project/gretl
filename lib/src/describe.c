@@ -2060,6 +2060,31 @@ static int check_freq_opts (gretlopt opt, int *n_bins,
     return 0;
 }
 
+static void record_freq_matrix (FreqDist *fd)
+{
+    gretl_matrix *m = NULL;
+    int i, n = fd->numbins;
+
+    m = gretl_matrix_alloc(n, 2);
+
+    if (m != NULL) {
+	char **S = strings_array_new(2);
+
+	if (S != NULL) {
+	    S[0] = gretl_strdup("midpoint");
+	    S[1] = gretl_strdup("count");
+	}
+	for (i=0; i<n; i++) {
+	    m->val[i] = fd->midpt[i];
+	    m->val[i+n] = (double) fd->f[i];
+	}
+	if (S != NULL) {
+	    gretl_matrix_set_colnames(m, S);
+	}
+	set_last_matrix_result(m);
+    }
+}
+
 /* Wrapper function: get the distribution, print it if
    wanted, graph it if wanted, then free stuff.
 */
@@ -2113,6 +2138,8 @@ int freqdist (int varno, const DATASET *dset,
 	} else if (dist) {
 	    record_freq_test(freq);
 	}
+
+	record_freq_matrix(freq);
 
 	if (do_graph && freq->numbins < 2) {
 	    do_graph = 0;
@@ -2201,6 +2228,27 @@ gretl_matrix *xtab_to_matrix (const Xtab *tab)
     }
 
     return m;
+}
+
+static gretl_matrix *last_result;
+
+gretl_matrix *get_last_matrix_result (int *err)
+{
+    if (last_result == NULL) {
+	*err = E_BADSTAT;
+	return NULL;
+    } else {
+	return last_result;
+    }
+}
+
+void set_last_matrix_result (gretl_matrix *m)
+{
+    if (last_result != NULL) {
+	gretl_matrix_free(last_result);
+    }
+
+    last_result = m;
 }
 
 /**
