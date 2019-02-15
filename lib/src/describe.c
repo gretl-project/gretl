@@ -5551,7 +5551,9 @@ int list_summary (const int *list, int wgtvar,
     }
 
     if (summ != NULL) {
-	print_summary(summ, dset, prn);
+	if (!(opt & OPT_Q)) {
+	    print_summary(summ, dset, prn);
+	}
 	record_summary(summ, dset, opt);
 	free_summary(summ);
     }
