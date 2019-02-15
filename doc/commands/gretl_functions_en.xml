@@ -535,12 +535,13 @@
       <description>
 	<para>
 	  Returns a 2-vector: its first element is the number of
-	  seconds elapsed since 1970-01-01 00:00:00 +0000 (UTC), which
-	  is widely used in the computing world to represent the
-	  current time, and the second is the current date in ISO 8601
-	  <quote>basic</quote> format, <lit>YYYYMMDD</lit>. The
-	  <fncref targ="epochday"/> function may be used to process
-	  the second element.
+	  seconds elapsed since 1970-01-01 00:00:00 +0000 (UTC, or
+	  Coordinated Universal Time), which is widely used in the
+	  computing world to represent the current time, and the
+	  second is the current date in ISO 8601 <quote>basic</quote>
+	  format, <lit>YYYYMMDD</lit>. The <fncref targ="strftime"/>
+	  function may be used to process the first element, and
+	  <fncref targ="epochday"/> may be used to process the second.
 	</para>
       </description>
     </function>
@@ -9696,14 +9697,14 @@
       </description>
     </function>
 
-    <function name="strftime" section="strings" output="string">
+    <function name="strftime" section="calendar" output="string">
       <fnargs>
-	<fnarg type="scalar">t</fnarg>
+	<fnarg type="scalar">tm</fnarg>
 	<fnarg optional="true" type="string">format</fnarg>
       </fnargs>
       <description>
 	<para>
-	  The argument <argname>t</argname> is taken to give the
+	  The argument <argname>tm</argname> is taken to give the
 	  number of seconds since the start of the year 1970 according
 	  to UTC (Coordinated Universal Time, once known as Greenwich
 	  Mean Time), and the return value is a string giving the
@@ -9712,6 +9713,11 @@
 	  the <quote>preferred date and time representation for the
 	  current locale</quote> as determined by the system C
 	  library.
+	</para>
+	<para>
+	  Values of <argname>tm</argname> suitable for use with this
+	  function may be obtained via the <fncref targ="$now"/>
+	  accessor or the <fncref targ="strptime"/> function.
 	</para>
 	<para>
 	  The formatting options may be found by consulting the
@@ -9765,6 +9771,45 @@
 	  equality, that can be done without using a function, as in
 	  <lit>if (s1 == s2) ...</lit>
 	</para>
+      </description>
+    </function>
+
+    <function name="strptime" section="calendar" output="scalar">
+      <fnargs>
+	<fnarg type="string">s</fnarg>
+	<fnarg type="string">format</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	 This function is the converse of <fncref targ="strftime"/>;
+	 it parses the date/time string <argname>s</argname> using the
+	 specified <argname>format</argname> and returns a scalar
+	 giving the number of seconds since the start of 1970
+	 according to Coordinated Universal Time (UTC).
+	</para>
+	<para>
+	  The <argname>format</argname> options may be found by
+	  consulting the <lit>strptime</lit> manual page, on systems
+	  which have such pages, or via one of the many websites which
+	  present relevant information, such as
+	  <url>http://man7.org/linux/man-pages/man3/strptime.3.html</url>.
+	</para>
+	<para>
+	  The example below shows how one can convert date information
+	  from one format to another.
+	</para>
+	<code>
+	  scalar tm = strptime("Thursday 02/07/19", "%A %m/%d/%y")
+	  eval strftime(tm) # default output
+	  eval strftime(tm, "%B %d, %Y")
+	</code>
+	<para>
+	  In the US English locale the result is
+	</para>
+	<code>
+	  Thu 07 Feb 2019 12:00:00 AM EST
+	  February 07, 2019
+	</code>
       </description>
     </function>
 
