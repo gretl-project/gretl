@@ -335,11 +335,10 @@ int print_vifs (MODEL *pmod, DATASET *dset, PRN *prn)
 	    gretl_matrix_set_colnames(B, S);
 	    BKW_print(B, prn);
 	}
+	set_last_matrix_result(B);
     }
 
-    gretl_matrix_free(B);
     gretl_matrix_free(V);
-
     free(vif);
     free(xlist);
 
