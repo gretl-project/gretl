@@ -1,6 +1,7 @@
 version 2019b, in progress
 - "intreg" and "tobit" commands: add --opg option
-- New accessor $now to get current time/date
+- New accessor $now to get current time/date, plus new
+  functions strftime() and strptime()
 - New function Lsolve(), using precomputed Cholesky factor
 - epochday() function: support YYYYMMDD input
 - Speed up rank() function for far-from-square matrices
@@ -15,7 +16,7 @@ version 2019b, in progress
 - Document the --all-cols option for the "open" command
 - User's Guide: beef up the Numerical Methods chapter
 - Allow use of undefined symbols in the right-hand
-  operand of "&&": don't flag an error unless theleft-hand
+  operand of "&&": don't flag an error unless the left-hand
   operand evaluates as true
 
 2019-01-24 version 2019a
