@@ -9671,32 +9671,6 @@
       </description>
     </function>
 
-    <function name="stringify" section="strings" output="int">
-      <fnargs>
-	<fnarg type="series">y</fnarg>
-	<fnarg type="strings">S</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Provides a means of defining string values for the series
-	  <argname>y</argname>. Two conditions must be satisfied for
-	  this to work: the target series must have nothing but
-	  integer values, none of them less than 1, and the array
-	  <argname>S</argname> must have at least <math>n</math>
-	  elements where <math>n</math> is the largest value in
-	  <argname>y</argname>.  In addition each element of
-	  <argname>S</argname> must be valid UTF-8.
-	  <seelist>
-            <fncref targ="strvals"/>
-	  </seelist>
-	</para>
-	<para>
-	  The value returned is zero on success or a positive error
-	  code on error.
-	</para>
-      </description>
-    </function>
-
     <function name="strftime" section="calendar" output="string">
       <fnargs>
 	<fnarg type="scalar">tm</fnarg>
@@ -9729,6 +9703,32 @@
       </description>
     </function>
 
+    <function name="stringify" section="strings" output="int">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+	<fnarg type="strings">S</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Provides a means of defining string values for the series
+	  <argname>y</argname>. Two conditions must be satisfied for
+	  this to work: the target series must have nothing but
+	  integer values, none of them less than 1, and the array
+	  <argname>S</argname> must have at least <math>n</math>
+	  elements where <math>n</math> is the largest value in
+	  <argname>y</argname>.  In addition each element of
+	  <argname>S</argname> must be valid UTF-8.
+	  <seelist>
+            <fncref targ="strvals"/>
+	  </seelist>
+	</para>
+	<para>
+	  The value returned is zero on success or a positive error
+	  code on error.
+	</para>
+      </description>
+    </function>
+    
     <function name="strlen" section="strings" output="int">
       <fnargs>
 	<fnarg type="string">s</fnarg>
