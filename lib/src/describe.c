@@ -5399,13 +5399,21 @@ Summary *get_summary (const int *list, const DATASET *dset,
     return s;
 }
 
-static void record_summary (Summary *summ,
-			    const DATASET *dset,
-			    gretlopt opt)
+static void record_summary (Summary *summ, const DATASET *dset)
 {
     gretl_matrix *m = NULL;
+    char **Sc, **Sr;
     int nv = summ->list[0];
-    int i;
+    int i, vi, cols;
+
+    cols = (summ->opt & OPT_S)? 5 : 12;
+    m = gretl_matrix_alloc(nv, cols);
+    if (m == NULL) {
+	return;
+    }
+
+    Sc = strings_array_new(cols);
+    Sr = strings_array_new(nv);
 
     if (summ->opt & OPT_S) {
 	/* the "simple" option */
@@ -5416,40 +5424,34 @@ static void record_summary (Summary *summ,
 	    N_("Min"),
 	    N_("Max"),
 	};
-	char **S = strings_array_new(5);
 
-	if (S != NULL) {
-	    for (i=0; i<5; i++) {
-		S[i] = gretl_strdup(_(h[i]));
+	if (Sc != NULL) {
+	    for (i=0; i<cols; i++) {
+		Sc[i] = gretl_strdup(_(h[i]));
 	    }
 	}
-
-	m = gretl_matrix_alloc(nv, 5);
 	for (i=0; i<nv; i++) {
-	    // vi = summ->list[i+1];
-	    // summary_print_varname(dset->varname[vi], len, prn);
+	    if (Sr != NULL) {
+		vi = summ->list[i+1];
+		Sr[i] = gretl_strdup(dset->varname[vi]);
+	    }
 	    gretl_matrix_set(m, i, 0, summ->mean[i]);
 	    gretl_matrix_set(m, i, 1, summ->median[i]);
 	    gretl_matrix_set(m, i, 2, summ->sd[i]);
 	    gretl_matrix_set(m, i, 3, summ->low[i]);
 	    gretl_matrix_set(m, i, 4, summ->high[i]);
 	}
-	gretl_matrix_set_colnames(m, S);
     } else {
 	/* record all available stats */
-	const char *ha[] = {
+	const char *h[] = {
 	    N_("Mean"),
 	    N_("Median"),
 	    N_("Minimum"),
 	    N_("Maximum"),
-	};
-	const char *hb[] = {
 	    N_("Std. Dev."),
 	    N_("C.V."),
 	    N_("Skewness"),
-	    N_("Ex. kurtosis")
-	};
-	const char *hc[] = {
+	    N_("Ex. kurtosis"),
 	    /* xgettext:no-c-format */
 	    N_("5% perc."),
 	    /* xgettext:no-c-format */
@@ -5457,27 +5459,18 @@ static void record_summary (Summary *summ,
 	    N_("IQ range"),
 	    N_("Missing obs.")
 	};
-	char **S = strings_array_new(12);
 	double cv;
-	int j = 0;
 
-	if (S != NULL) {
-	    for (i=0; i<4; i++) {
-		S[j++] = gretl_strdup(_(ha[i]));
-	    }
-	    for (i=0; i<4; i++) {
-		S[j++] = gretl_strdup(_(hb[i]));
-	    }
-	    for (i=0; i<4; i++) {
-		S[j++] = gretl_strdup(_(hc[i]));
+	if (Sc != NULL) {
+	    for (i=0; i<cols; i++) {
+		Sc[i] = gretl_strdup(_(h[i]));
 	    }
 	}
-
-	m = gretl_matrix_alloc(nv, 12);
-
 	for (i=0; i<nv; i++) {
-	    // vi = summ->list[i+1];
-	    // summary_print_varname(dset->varname[vi], len, prn);
+	    if (Sr != NULL) {
+		vi = summ->list[i+1];
+		Sr[i] = gretl_strdup(dset->varname[vi]);
+	    }
 	    gretl_matrix_set(m, i, 0, summ->mean[i]);
 	    gretl_matrix_set(m, i, 1, summ->median[i]);
 	    gretl_matrix_set(m, i, 2, summ->low[i]);
@@ -5498,12 +5491,11 @@ static void record_summary (Summary *summ,
 	    gretl_matrix_set(m, i, 10, summ->iqr[i]);
 	    gretl_matrix_set(m, i, 11, summ->misscount[i]);
 	}
-	gretl_matrix_set_colnames(m, S);
     }
 
-    if (m != NULL) {
-	set_last_matrix_result(m);
-    }
+    gretl_matrix_set_colnames(m, Sc);
+    gretl_matrix_set_rownames(m, Sr);
+    set_last_matrix_result(m);
 }
 
 /**
@@ -5555,7 +5547,7 @@ int list_summary (const int *list, int wgtvar,
 	if (!(opt & OPT_Q)) {
 	    print_summary(summ, dset, prn);
 	}
-	record_summary(summ, dset, opt);
+	record_summary(summ, dset);
 	free_summary(summ);
     }
 
@@ -6026,11 +6018,11 @@ static void record_corr_matrix (VMatrix *c)
 		k++;
 	    }
 	}
-	
+
 	if (c->names) {
 	    char **rlab = strings_array_new(n);
 	    char **clab = strings_array_new(n);
-	    
+
 	    if (rlab != NULL && clab != NULL) {
 		for (i=0; i<n; i++) {
 		    rlab[i] = gretl_strdup(c->names[i]);
@@ -6087,7 +6079,7 @@ int gretl_corrmx (int *list, const DATASET *dset,
 	if (corr->dim > 2 && gnuplot_graph_wanted(PLOT_HEATMAP, opt)) {
 	    err = plot_corrmat(corr, opt);
 	}
-	
+
 	record_corr_matrix(corr);
 	free_vmatrix(corr);
     }
