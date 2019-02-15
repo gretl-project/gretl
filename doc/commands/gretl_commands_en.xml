@@ -6198,7 +6198,7 @@
 	    commands1
 	else
 	    commands2
-        endif
+	endif
 
 	# three or more branches
 	if condition1
