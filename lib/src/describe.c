@@ -2085,6 +2085,7 @@ static void record_freq_matrix (FreqDist *fd)
     }
 }
 
+
 /* Wrapper function: get the distribution, print it if
    wanted, graph it if wanted, then free stuff.
 */
@@ -6007,6 +6008,43 @@ void print_corrmat (VMatrix *corr, const DATASET *dset, PRN *prn)
     }
 }
 
+static void record_corr_matrix (VMatrix *c)
+{
+    gretl_matrix *m = NULL;
+    int i, j, k, n = c->dim;
+    double cij;
+
+    m = gretl_matrix_alloc(n, n);
+
+    if (m != NULL) {
+	k = 0;
+	for (i=0; i<n; i++) {
+	    for (j=i; j<n; j++) {
+		cij = c->vec[k];
+		gretl_matrix_set(m, i, j, cij);
+		gretl_matrix_set(m, j, i, cij);
+		k++;
+	    }
+	}
+	
+	if (c->names) {
+	    char **rlab = strings_array_new(n);
+	    char **clab = strings_array_new(n);
+	    
+	    if (rlab != NULL && clab != NULL) {
+		for (i=0; i<n; i++) {
+		    rlab[i] = gretl_strdup(c->names[i]);
+		    clab[i] = gretl_strdup(c->names[i]);
+		}
+		gretl_matrix_set_rownames(m, rlab);
+		gretl_matrix_set_colnames(m, clab);
+	    }
+	}
+
+	set_last_matrix_result(m);
+    }
+}
+
 /**
  * gretl_corrmx:
  * @list: gives the ID numbers of the variables to process.
@@ -6043,10 +6081,14 @@ int gretl_corrmx (int *list, const DATASET *dset,
     }
 
     if (corr != NULL) {
-	print_corrmat(corr, dset, prn);
+	if (!(opt & OPT_Q)) {
+	    print_corrmat(corr, dset, prn);
+	}
 	if (corr->dim > 2 && gnuplot_graph_wanted(PLOT_HEATMAP, opt)) {
 	    err = plot_corrmat(corr, opt);
 	}
+	
+	record_corr_matrix(corr);
 	free_vmatrix(corr);
     }
 
