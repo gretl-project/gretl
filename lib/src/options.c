@@ -35,7 +35,6 @@
 
 #define yields_result(c) (c == CORR || c == FREQ || c == SUMMARY)
 
-
 #define quiet_opt_ok(c) (MODEL_COMMAND(c) ||	\
 			 yields_result(c) ||	\
 			 c == ADD ||		\

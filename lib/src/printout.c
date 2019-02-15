@@ -749,7 +749,7 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
 		}
 	    }
 	    if (totals) {
-		/* column totals */
+		/* row totals */
 		if (opt & OPT_C) {
 		    x = 100.0 * tab->rtotal[i] / tab->n;
 		    if (tex) {
@@ -777,6 +777,7 @@ static void real_print_xtab (const Xtab *tab, const DATASET *dset,
     /* footer row */
 
     if (totals) {
+	/* column totals */
 	if (tex) {
 	    pputs(prn, "$\\Sigma$ & ");
 	} else {

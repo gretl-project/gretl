@@ -22,6 +22,7 @@
 #include "gretl_cmatrix.h"
 #include "matrix_extra.h"
 #include "gretl_panel.h"
+#include "gretl_string_table.h"
 #include "libset.h"
 #include "compat.h"
 #include "plotspec.h"
@@ -2502,6 +2503,122 @@ static Xtab *get_xtab (int rvarno, int cvarno, const DATASET *dset,
     return tab;
 }
 
+static void record_xtab (const Xtab *tab, const DATASET *dset,
+			 gretlopt opt)
+{
+    gretl_matrix *X = NULL;
+    series_table *col_st = NULL;
+    series_table *row_st = NULL;
+    char **Sr;
+    char **Sc;
+    double xij;
+    int totals, rows, cols;
+    int i, j;
+
+    totals = (opt & OPT_N)? 0 : 1;
+    rows = tab->rows + totals;
+    cols = tab->cols + totals;
+
+    X = gretl_zero_matrix_new(rows, cols);
+    if (X == NULL) {
+	return;
+    }
+
+    if (dset != NULL) {
+	int cv = current_series_index(dset, tab->cvarname);
+	int rv = current_series_index(dset, tab->rvarname);
+
+	if (cv > 0) {
+	    col_st = series_get_string_table(dset, cv);
+	}
+	if (rv > 0) {
+	    row_st = series_get_string_table(dset, rv);
+	}
+    }
+
+    /* column labels */
+    Sc = strings_array_new(cols);
+    if (Sc != NULL) {
+	for (j=0; j<tab->cols; j++) {
+	    double cj = tab->cval[j];
+
+	    if (col_st == NULL) {
+		Sc[j] = gretl_strdup_printf("%4g", cj);
+	    } else {
+		Sc[j] = gretl_strdup(series_table_get_string(col_st, cj));
+	    }
+	}
+	if (totals) {
+	    Sc[cols-1] = gretl_strdup("TOTAL");
+	}
+    }
+
+    /* row labels */
+    Sr = strings_array_new(rows);
+    if (Sr != NULL) {
+	for (i=0; i<tab->rows; i++) {
+	    double ri = tab->rval[i];
+
+	    if (row_st == NULL) {
+		Sr[i] = gretl_strdup_printf("%4g", ri);
+	    } else {
+		Sr[i] = gretl_strdup(series_table_get_string(row_st, ri));
+	    }
+	}
+	if (totals) {
+	    Sr[rows-1] = gretl_strdup("TOTAL");
+	}
+    }
+
+    /* body of table */
+
+    for (i=0; i<tab->rows; i++) {
+	if (tab->rtotal[i] > 0) {
+	    /* row counts */
+	    for (j=0; j<tab->cols; j++) {
+		if (tab->ctotal[j]) {
+		    if (opt & (OPT_C | OPT_R)) {
+			if (opt & OPT_C) {
+			    xij = 100.0 * tab->f[i][j] / tab->ctotal[j];
+			} else {
+			    xij = 100.0 * tab->f[i][j] / tab->rtotal[i];
+			}
+		    } else {
+			xij = tab->f[i][j];
+		    }
+		    gretl_matrix_set(X, i, j, xij);
+		}
+	    }
+	    if (totals) {
+		/* row totals */
+		if (opt & OPT_C) {
+		    xij = 100.0 * tab->rtotal[i] / tab->n;
+		} else {
+		    xij = tab->rtotal[i];
+		}
+		gretl_matrix_set(X, i, cols-1, xij);
+	    }
+	}
+    }
+
+    if (totals) {
+	/* column totals */
+	for (j=0; j<tab->cols; j++) {
+	    if (opt & OPT_R) {
+		xij = 100.0 * tab->ctotal[j] / tab->n;
+	    } else {
+		xij = tab->ctotal[j];
+	    }
+	    gretl_matrix_set(X, rows-1, j, xij);
+	}
+	gretl_matrix_set(X, rows-1, cols-1, tab->n);
+    }
+
+    gretl_matrix_set_colnames(X, Sc);
+    gretl_matrix_set_rownames(X, Sr);
+    set_last_matrix_result(X);
+}
+
 /* for use in the context of "xtab" with --quiet option:
    compute and record the Pearson chi-square value and its
    p-value
@@ -2713,6 +2830,7 @@ int crosstab (const int *list, const DATASET *dset,
 			    opt |= OPT_S;
 			}
 			print_xtab(tab, dset, opt, prn);
+			record_xtab(tab, dset, opt);
 		    }
 		    free_xtab(tab);
 		}
