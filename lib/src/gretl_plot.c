@@ -297,7 +297,9 @@ static int plot_printf (const char *s, const DATASET *dset)
     int err = 0;
 
     genline = g_strdup_printf("sprintf(%s)", s);
+    gretl_push_c_numeric_locale();
     genout = generate_string(genline, (DATASET *) dset, &err);
+    gretl_pop_c_numeric_locale();
 
     if (err) {
 	fprintf(stderr, "plot_printf error: genline='%s'\n", 
