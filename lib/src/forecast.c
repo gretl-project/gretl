@@ -677,14 +677,18 @@ static_fcast_with_errs (Forecast *fc, MODEL *pmod,
     return err;
 }
 
-static int fixed_effects_fcast (Forecast *fc, MODEL *pmod,
-				const DATASET *dset)
+/* forecast based on fixed effects or random effects
+   panel data estimators: current sample version
+*/
+
+static int fe_or_re_fcast (Forecast *fc, MODEL *pmod,
+			   const DATASET *dset)
 {
     gretl_vector *b = NULL;
     double xval;
     const double *ahat;
     int k = pmod->ncoeff;
-    int i, vi, t;
+    int imin, i, vi, t;
     int err = 0;
 
     b = gretl_coeff_vector_from_model(pmod, NULL, &err);
@@ -694,10 +698,15 @@ static int fixed_effects_fcast (Forecast *fc, MODEL *pmod,
 
     ahat = gretl_model_get_data(pmod, "ahat");
     if (ahat == NULL) {
-	fprintf(stderr, "fixed_effects_fcast: ahat is missing\n");
+	fprintf(stderr, "fe_or_re_fcast: ahat is missing\n");
 	gretl_matrix_free(b);
 	return E_DATA;
     }
+
+    /* In the random effects case we include the intercept below;
+       in the fixed effects case it must be skipped.
+    */
+    imin = (pmod->opt & OPT_U)? 0 : 1;
 
     for (t=fc->t1; t<=fc->t2 && !err; t++) {
 	int missing = 0;
@@ -708,7 +717,7 @@ static int fixed_effects_fcast (Forecast *fc, MODEL *pmod,
 	}
 
 	if (!missing) {
-	    /* per-unit intercept */
+	    /* individual effect */
 	    if (na(ahat[t])) {
 		missing = 1;
 	    } else {
@@ -716,8 +725,8 @@ static int fixed_effects_fcast (Forecast *fc, MODEL *pmod,
 	    }
 	}
 
-	for (i=1; i<k && !missing; i++) {
-	    vi = pmod->list[i + 2];
+	for (i=imin; i<k && !missing; i++) {
+	    vi = pmod->list[i+2];
 	    xval = dset->Z[vi][t];
 	    if (na(xval)) {
 		missing = 1;
@@ -727,12 +736,109 @@ static int fixed_effects_fcast (Forecast *fc, MODEL *pmod,
 	}
 
 	if (missing) {
-	    fc->sderr[t] = fc->yhat[t] = NADBL;
+	    fc->yhat[t] = NADBL;
+	    if (fc->sderr != NULL) {
+		fc->sderr[t] = NADBL;
+	    }
 	    continue;
 	}
     }
 
     gretl_vector_free(b);
+
+    return err;
+}
+
+/* Out-of-sample forecast routine for panel data,
+   supporting pooled OLS, fixed effects and random
+   effects.
+*/
+
+static int panel_os_special (MODEL *pmod, DATASET *dset,
+			     const char *vname)
+{
+    DATASET *fset = fetch_full_dataset();
+    gretl_vector *b = NULL;
+    double xval, *yhat = NULL;
+    const double *ahat = NULL;
+    char *mask = dset->submask;
+    int k = pmod->ncoeff;
+    int imin, i, vi, t, s;
+    int err = 0;
+
+    b = gretl_coeff_vector_from_model(pmod, NULL, &err);
+    if (err) {
+	return err;
+    }
+
+    yhat = malloc(fset->n * sizeof *yhat);
+    if (yhat == NULL) {
+	gretl_vector_free(b);
+	return E_ALLOC;
+    }
+
+    if (pmod->opt & (OPT_F | OPT_U)) {
+	ahat = gretl_model_get_data(pmod, "ahat");
+	if (ahat == NULL) {
+	    fprintf(stderr, "fe_or_re_fcast: ahat is missing\n");
+	    gretl_matrix_free(b);
+	    free(yhat);
+	    return E_DATA;
+	}
+    }
+
+    /* in the fixed effects case we skip the intercept below */
+    imin = (pmod->opt & OPT_F)? 1 : 0;
+    s = -1;
+
+    for (t=0; t<fset->n && !err; t++) {
+	int missing = 0;
+
+	if (mask[t] == 1) {
+	    /* this obs is in the @dset sample */
+	    s++;
+	    continue;
+	}
+
+	if (ahat != NULL) {
+	    /* individual effect */
+	    if (na(ahat[s])) {
+		missing = 1;
+	    } else {
+		yhat[t] = ahat[s];
+	    }
+	} else {
+	    yhat[t] = 0.0;
+	}
+
+	for (i=imin; i<k && !missing; i++) {
+	    vi = pmod->list[i+2];
+	    xval = fset->Z[vi][t];
+	    if (na(xval)) {
+		missing = 1;
+	    } else {
+		yhat[t] += b->val[i] * xval;
+	    }
+	}
+
+	if (missing) {
+	    yhat[t] = NADBL;
+	}
+    }
+
+    if (!err) {
+	err = dataset_add_NA_series(dset, 1);
+	if (!err) {
+	    err = dataset_rename_series(dset, dset->v - 1, vname);
+	}
+	if (!err) {
+	    err = dataset_add_allocated_series(fset, yhat);
+	}
+	yhat = NULL;
+    }
+
+    gretl_vector_free(b);
+    free(yhat);
 
     return err;
 }
@@ -2491,8 +2597,8 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     }
 
     /* compute the actual forecast */
-    if (pmod->ci == PANEL && (pmod->opt & OPT_F)) {
-	err = fixed_effects_fcast(&fc, pmod, dset);
+    if (pmod->ci == PANEL && (pmod->opt & (OPT_F | OPT_U))) {
+	err = fe_or_re_fcast(&fc, pmod, dset);
     } else if (DM_errs) {
 	err = static_fcast_with_errs(&fc, pmod, dset, opt);
     } else if (pmod->ci == NLS) {
@@ -2573,12 +2679,61 @@ static int fcast_get_limit (const char *s, DATASET *dset)
     return t;
 }
 
+enum {
+    OS_OK = 0,
+    OS_ERR,
+    OS_PANEL
+};
+
+static int out_of_sample_check (MODEL *pmod, DATASET *dset)
+{
+    int panel, ret;
+
+    if (pmod->ci == PANEL || (pmod->ci == OLS && dataset_is_panel(dset))) {
+	panel = 1;
+	ret = OS_ERR;
+    } else {
+	panel = 0;
+	ret = OS_OK;
+    }
+
+    if (pmod->smpl.t1 == 0 && pmod->smpl.t2 == dset->n - 1) {
+	/* no out-of-sample obs reachable via t1, t2 */
+	ret = OS_ERR;
+	if (panel) {
+	    DATASET *fullset = fetch_full_dataset();
+
+	    if (dataset_is_panel(fullset)) {
+		int Tfull = fullset->pd;
+		int Tcurr = dset->pd;
+		int Nfull = fullset->n / Tfull;
+		int Ncurr = dset->n / Tcurr;
+
+		if (Ncurr == Nfull && Tcurr < Tfull &&
+		    dset->v == fullset->v) {
+		    /* sub-sampled in the time dimension, and
+		       no series added or deleted (we hope)
+		    */
+		    ret = OS_PANEL;
+		}
+	    }
+	}
+	if (ret == OS_ERR) {
+	    gretl_errmsg_set("No out-of-sample observations are available");
+	}
+    }
+
+    return ret;
+}
+
 static int parse_forecast_string (const char *s,
 				  gretlopt opt,
+				  MODEL *pmod,
 				  int t2est,
 				  DATASET *dset,
 				  int *pt1, int *pt2,
-				  int *pk, char *vname)
+				  int *pk, char *vname,
+				  int *os_case)
 {
     char f[4][32];
     char *t1str = NULL, *t2str = NULL;
@@ -2670,9 +2825,18 @@ static int parse_forecast_string (const char *s,
 	}
     }
 
-    if ((opt & OPT_O) && (t1str != NULL || t2str != NULL)) {
-	gretl_errmsg_set("fcast: got unexpected t1 and/or t2 field in input");
-	return E_DATA;
+    if (t1str != NULL || t2str != NULL) {
+	if (opt & OPT_O) {
+	    /* t1, t2 should not be given with --out-of-sample */
+	    err = E_DATA;
+	} else if (dataset_is_panel(dset)) {
+	    /* what should t1, t2 mean?? */
+	    err = E_DATA;
+	}
+	if (err) {
+	    gretl_errmsg_set("fcast: got unexpected t1 and/or t2 field in input");
+	    return err;
+	}
     }
 
     if (kstr != NULL && pk != NULL) {
@@ -2700,11 +2864,16 @@ static int parse_forecast_string (const char *s,
 	}
     } else if (opt & OPT_O) {
 	/* out of sample, if possible */
-	if (dset->n - t2est - 1 > 0) {
-	    t1 = t2est + 1;
-	    t2 = dset->n - 1;
-	} else {
-	    err = E_OBS;
+	if (pmod != NULL) {
+	    *os_case = out_of_sample_check(pmod, dset);
+	}
+	if (*os_case == OS_OK) {
+	    if (dset->n - t2est - 1 > 0) {
+		t1 = t2est + 1;
+		t2 = dset->n - 1;
+	    } else {
+		err = E_OBS;
+	    }
 	}
     } else {
 	/* default: sample range */
@@ -3106,8 +3275,9 @@ static int model_do_forecast (const char *str, MODEL *pmod,
 			      PRN *prn)
 {
     char vname[VNAMELEN];
-    FITRESID *fr;
+    FITRESID *fr = NULL;
     int t1, t2, k = -1;
+    int os_case = 0;
     int err;
 
     if (pmod->ci == ARBOND || pmod->ci == DPANEL ||
@@ -3118,7 +3288,9 @@ static int model_do_forecast (const char *str, MODEL *pmod,
 
     if (pmod->ci == PANEL && !(pmod->opt & OPT_P)) {
 	/* FIXME */
-	return E_NOTIMP;
+	if (opt & OPT_R) {
+	    return E_NOTIMP;
+	}
     }
 
     if (pmod->ci == PROBIT && (pmod->opt & OPT_E)) {
@@ -3135,8 +3307,8 @@ static int model_do_forecast (const char *str, MODEL *pmod,
 	}
     }
 
-    err = parse_forecast_string(str, opt, pmod->t2, dset,
-				&t1, &t2, &k, vname);
+    err = parse_forecast_string(str, opt, pmod, pmod->t2, dset,
+				&t1, &t2, &k, vname, &os_case);
     if (err) {
 	return err;
     }
@@ -3146,7 +3318,15 @@ static int model_do_forecast (const char *str, MODEL *pmod,
 	opt |= (OPT_A | OPT_Q);
     }
 
-    if (opt & OPT_R) {
+    if (os_case == OS_PANEL) {
+	/* panel-special case requires saving to named series */
+	if (*vname == '\0') {
+	    return E_NOTIMP;
+	} else {
+	    /* FIXME */
+	    return panel_os_special(pmod, dset, vname);
+	}
+    } else if (opt & OPT_R) {
 	fr = recursive_OLS_k_step_fcast(pmod, dset, t1, t2,
 					k, 0, &err);
     } else {
@@ -3283,8 +3463,8 @@ static int system_do_forecast (const char *str, void *ptr, int type,
 	ylist = sys->ylist;
     }
 
-    err = parse_forecast_string(str, opt, t2est, dset, &t1, &t2,
-				NULL, vname);
+    err = parse_forecast_string(str, opt, NULL, t2est, dset,
+				&t1, &t2, NULL, vname, NULL);
 
     if (!err) {
 	if (var != NULL) {

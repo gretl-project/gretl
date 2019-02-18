@@ -1241,7 +1241,6 @@ static int real_add_series (int newvars, double *x,
 	    newvars, (void *) newZ);
 #endif
 
-
     if (newZ == NULL) {
 	err = E_ALLOC;
     } else {
@@ -1262,7 +1261,12 @@ static int real_add_series (int newvars, double *x,
 	}
     }
 
-    if (!err) {
+    if (!err && dset != fetch_full_dataset()) {
+	/* don't expand varinfo if we're adding a series
+	   to the full dataset when currently sub-sampled,
+	   since in that case varinfo is shared between
+	   the two datasets
+	*/
 	err = dataset_expand_varinfo(v0, newvars, dset);
     }
 
