@@ -755,15 +755,21 @@ static int fe_or_re_fcast (Forecast *fc, MODEL *pmod,
 */
 
 static int panel_os_special (MODEL *pmod, DATASET *dset,
-			     const char *vname)
+			     const char *vname,
+			     gretlopt opt,
+			     PRN *prn)
 {
     DATASET *fset = fetch_full_dataset();
+    int named_save = *vname != '\0';
+    gretl_matrix *fc = NULL;
     gretl_vector *b = NULL;
     double xval, *yhat = NULL;
-    const double *ahat = NULL;
+    const double *y, *ahat = NULL;
     char *mask = dset->submask;
+    char **Sr = NULL;
+    char obsstr[OBSLEN];
     int k = pmod->ncoeff;
-    int imin, i, vi, t, s;
+    int imin, i, j, vi, t, s;
     int err = 0;
 
     b = gretl_coeff_vector_from_model(pmod, NULL, &err);
@@ -771,10 +777,22 @@ static int panel_os_special (MODEL *pmod, DATASET *dset,
 	return err;
     }
 
-    yhat = malloc(fset->n * sizeof *yhat);
-    if (yhat == NULL) {
-	gretl_vector_free(b);
-	return E_ALLOC;
+    if (named_save) {
+	yhat = malloc(fset->n * sizeof *yhat);
+	if (yhat == NULL) {
+	    gretl_vector_free(b);
+	    return E_ALLOC;
+	}
+    } else {
+	int nfc = fset->n - dset->n;
+	int cols = opt & OPT_Q ? 1 : 2;
+
+	fc = gretl_matrix_alloc(nfc, cols);
+	if (fc == NULL) {
+	    gretl_vector_free(b);
+	    return E_ALLOC;
+	}
+	Sr = strings_array_new(nfc);
     }
 
     if (pmod->opt & (OPT_F | OPT_U)) {
@@ -789,10 +807,12 @@ static int panel_os_special (MODEL *pmod, DATASET *dset,
 
     /* in the fixed effects case we skip the intercept below */
     imin = (pmod->opt & OPT_F)? 1 : 0;
+    y = fset->Z[pmod->list[1]];
     s = -1;
 
-    for (t=0; t<fset->n && !err; t++) {
+    for (t=0, j=0; t<fset->n && !err; t++) {
 	int missing = 0;
+	double fct;
 
 	if (mask[t] == 1) {
 	    /* this obs is in the @dset sample */
@@ -805,10 +825,10 @@ static int panel_os_special (MODEL *pmod, DATASET *dset,
 	    if (na(ahat[s])) {
 		missing = 1;
 	    } else {
-		yhat[t] = ahat[s];
+		fct = ahat[s];
 	    }
 	} else {
-	    yhat[t] = 0.0;
+	    fct = 0.0;
 	}
 
 	for (i=imin; i<k && !missing; i++) {
@@ -817,16 +837,32 @@ static int panel_os_special (MODEL *pmod, DATASET *dset,
 	    if (na(xval)) {
 		missing = 1;
 	    } else {
-		yhat[t] += b->val[i] * xval;
+		fct += b->val[i] * xval;
 	    }
 	}
 
 	if (missing) {
-	    yhat[t] = NADBL;
+	    fct = NADBL;
+	}
+
+	if (yhat != NULL) {
+	    yhat[t] = fct;
+	} else {
+	    if (Sr != NULL) {
+		ntodate(obsstr, t, fset);
+		Sr[j] = gretl_strdup(obsstr);
+	    }
+	    if (fc->cols == 2) {
+		gretl_matrix_set(fc, j, 0, y[t]);
+		gretl_matrix_set(fc, j, 1, fct);
+	    } else {
+		gretl_matrix_set(fc, j, 0, fct);
+	    }
+	    j++;
 	}
     }
 
-    if (!err) {
+    if (!err && yhat != NULL) {
 	err = dataset_add_NA_series(dset, 1);
 	if (!err) {
 	    err = dataset_rename_series(dset, dset->v - 1, vname);
@@ -835,9 +871,29 @@ static int panel_os_special (MODEL *pmod, DATASET *dset,
 	    err = dataset_add_allocated_series(fset, yhat);
 	}
 	yhat = NULL;
+    } else if (!err) {
+	char **Sc = NULL;
+
+	if (!(opt & OPT_Q)) {
+	    Sc = strings_array_new(2);
+	    Sc[0] = gretl_strdup(fset->varname[pmod->list[1]]);
+	    Sc[1] = gretl_strdup(_("prediction"));
+	    gretl_matrix_set_colnames(fc, Sc);
+	}
+	gretl_matrix_set_rownames(fc, Sr);
+	gretl_matrix_print_to_prn(fc, NULL, prn);
+	if (opt & OPT_Q) {
+	    set_fcast_matrix(fc);
+	} else {
+	    /* FIXME: save (somehow) or destroy? */
+	    // set_forecast_matrices_from_fr(fr);
+	    // strings_array_free(Sr);
+	    // strings_array_free(Sc);
+	}
     }
 
     gretl_vector_free(b);
+    gretl_matrix_free(fc);
     free(yhat);
 
     return err;
@@ -3319,13 +3375,7 @@ static int model_do_forecast (const char *str, MODEL *pmod,
     }
 
     if (os_case == OS_PANEL) {
-	/* panel-special case requires saving to named series */
-	if (*vname == '\0') {
-	    return E_NOTIMP;
-	} else {
-	    /* FIXME */
-	    return panel_os_special(pmod, dset, vname);
-	}
+	return panel_os_special(pmod, dset, vname, opt, prn);
     } else if (opt & OPT_R) {
 	fr = recursive_OLS_k_step_fcast(pmod, dset, t1, t2,
 					k, 0, &err);
