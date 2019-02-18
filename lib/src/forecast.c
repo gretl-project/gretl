@@ -63,6 +63,19 @@ struct Forecast_ {
     int model_t2;     /* end of period over which model was estimated */
 };
 
+static gretl_matrix *fcast_matrix;
+static gretl_matrix *fcerr_matrix;
+
+static void set_fcast_matrices (gretl_matrix *fc,
+				gretl_matrix *se)
+{
+    gretl_matrix_free(fcast_matrix);
+    gretl_matrix_free(fcerr_matrix);
+
+    fcast_matrix = fc;
+    fcerr_matrix = se;
+}
+
 /* Create an empty, dummy AR info structure for use with models
    that don't have an explicit AR error process, but that do
    have a lagged dependent variable that in effect produces
@@ -883,7 +896,7 @@ static int panel_os_special (MODEL *pmod, DATASET *dset,
 	gretl_matrix_set_rownames(fc, Sr);
 	gretl_matrix_print_to_prn(fc, NULL, prn);
 	if (opt & OPT_Q) {
-	    set_fcast_matrix(fc);
+	    set_fcast_matrices(fc, NULL);
 	} else {
 	    /* FIXME: save (somehow) or destroy? */
 	    // set_forecast_matrices_from_fr(fr);
@@ -3004,20 +3017,9 @@ FITRESID *get_forecast (MODEL *pmod, int t1, int t2, int pre_n,
     return fr;
 }
 
-static gretl_matrix *fcast_matrix;
-static gretl_matrix *fcerr_matrix;
-
 void forecast_matrix_cleanup (void)
 {
-    if (fcast_matrix != NULL) {
-	gretl_matrix_free(fcast_matrix);
-	fcast_matrix = NULL;
-    }
-
-    if (fcerr_matrix != NULL) {
-	gretl_matrix_free(fcerr_matrix);
-	fcerr_matrix = NULL;
-    }
+    set_fcast_matrices(NULL, NULL);
 }
 
 gretl_matrix *get_forecast_matrix (int idx, int *err)
@@ -3122,11 +3124,7 @@ static int set_forecast_matrices_from_fr (FITRESID *fr)
 	}
     }
 
-    gretl_matrix_free(fcast_matrix);
-    gretl_matrix_free(fcerr_matrix);
-
-    fcast_matrix = f;
-    fcerr_matrix = e;
+    set_fcast_matrices(f, e);
 
     return err;
 }
@@ -3267,11 +3265,7 @@ static int set_forecast_matrices_from_F (const gretl_matrix *F,
 	}
     }
 
-    gretl_matrix_free(fcast_matrix);
-    gretl_matrix_free(fcerr_matrix);
-
-    fcast_matrix = f;
-    fcerr_matrix = e;
+    set_fcast_matrices(f, e);
 
     if (F1 != NULL) {
 	gretl_matrix_free(F1);
