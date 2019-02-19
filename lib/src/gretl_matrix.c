@@ -568,6 +568,7 @@ gretl_matrix *gretl_matrix_reuse (gretl_matrix *m, int rows, int cols)
 int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
 {
     int n = rows * cols;
+    int oldrows, oldcols;
     double *x = NULL;
 
     if (m == NULL) {
@@ -601,10 +602,24 @@ int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols)
 	}
     }
 
+    oldrows = m->rows;
+    oldcols = m->cols;
+
     m->val = x;
     m->rows = rows;
     m->cols = cols;
-    gretl_matrix_destroy_info(m);
+
+    if (m->info != NULL) {
+	if (m->rows != oldrows && m->cols != oldcols) {
+	    gretl_matrix_destroy_info(m);
+	} else if (m->rows != oldrows && m->info->rownames != NULL) {
+	    strings_array_free(m->info->rownames, oldrows);
+	    m->info->rownames = NULL;
+	} else if (m->cols != oldcols && m->info->colnames != NULL) {
+	    strings_array_free(m->info->colnames, oldcols);
+	    m->info->colnames = NULL;
+	}
+    }
 
     return 0;
 }

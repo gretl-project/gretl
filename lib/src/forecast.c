@@ -762,6 +762,20 @@ static int fe_or_re_fcast (Forecast *fc, MODEL *pmod,
     return err;
 }
 
+static void special_set_fcast_matrix (gretl_matrix *f)
+{
+    size_t sz;
+
+    /* copy from second column to first */
+    sz = f->rows * sizeof(double);
+    memcpy(f->val, f->val + f->rows, sz);
+
+    /* and release some storage */
+    gretl_matrix_realloc(f, f->rows, 1);
+
+    set_fcast_matrices(f, NULL);
+}
+
 /* Out-of-sample forecast routine for panel data,
    supporting pooled OLS, fixed effects and random
    effects.
@@ -885,10 +899,9 @@ static int panel_os_special (MODEL *pmod, DATASET *dset,
 	}
 	yhat = NULL;
     } else if (!err) {
-	char **Sc = NULL;
-
 	if (!(opt & OPT_Q)) {
-	    Sc = strings_array_new(2);
+	    char **Sc = strings_array_new(2);
+
 	    Sc[0] = gretl_strdup(fset->varname[pmod->list[1]]);
 	    Sc[1] = gretl_strdup(_("prediction"));
 	    gretl_matrix_set_colnames(fc, Sc);
@@ -896,13 +909,13 @@ static int panel_os_special (MODEL *pmod, DATASET *dset,
 	gretl_matrix_set_rownames(fc, Sr);
 	gretl_matrix_print_to_prn(fc, NULL, prn);
 	if (opt & OPT_Q) {
+	    /* @fc should be suitable to purpose */
 	    set_fcast_matrices(fc, NULL);
 	} else {
-	    /* FIXME: save (somehow) or destroy? */
-	    // set_forecast_matrices_from_fr(fr);
-	    // strings_array_free(Sr);
-	    // strings_array_free(Sc);
+	    /* @fc need some adjustment */
+	    special_set_fcast_matrix(fc);
 	}
+	fc = NULL;
     }
 
     gretl_vector_free(b);
