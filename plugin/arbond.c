@@ -1732,6 +1732,10 @@ static int dpd_finalize_model (MODEL *pmod, ddset *dpd,
 
     gretl_model_set_int(pmod, "yno", dpd->yno);
     gretl_model_set_int(pmod, "n_included_units", dpd->effN);
+    gretl_model_set_int(pmod, "t1min", dpd->t1min + 1);
+    gretl_model_set_int(pmod, "t2max", dpd->t2max + 1);
+    gretl_model_set_int(pmod, "ndum", dpd->ndum);
+    gretl_model_set_int(pmod, "ifc", dpd->ifc);
 
     pmod->ncoeff = dpd->k;
     pmod->nobs = dpd->nobs;
