@@ -36,6 +36,10 @@ int write_datainfo_submask (const DATASET *dset, FILE *fp);
 
 int write_model_submask (const MODEL *pmod, FILE *fp);
 
+int get_dataset_submask_size (const DATASET *dset);
+
+int get_model_submask_size (const MODEL *pmod);
+
 int subsample_check_model (MODEL *pmod, char *mask);
 
 int remove_model_subsample_info (MODEL *pmod);
