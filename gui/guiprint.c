@@ -1418,6 +1418,7 @@ static int texprint_fcast_stats (const FITRESID *fr,
     gretl_matrix *m;
     double x;
     int i, j, t1, t2;
+    int n_used = 0;
     int len, err = 0;
 
     fcast_get_continuous_range(fr, &t1, &t2);
@@ -1426,7 +1427,8 @@ static int texprint_fcast_stats (const FITRESID *fr,
 	return E_MISSDATA;
     }
 
-    m = forecast_stats(fr->actual, fr->fitted, t1, t2, opt, &err);
+    m = forecast_stats(fr->actual, fr->fitted, t1, t2, &n_used,
+		       opt, &err);
     if (err) {
 	return err;
     }
@@ -1434,8 +1436,8 @@ static int texprint_fcast_stats (const FITRESID *fr,
     len = gretl_vector_get_length(m);
 
     pputs(prn, A_("Forecast evaluation statistics"));
+    pprintf(prn, " (T = %d)", n_used);
     pputs(prn, "\\\\[1ex]\n\n");
-
     pputs(prn, "\\begin{tabular}{ll}\n");
 
     j = 0;

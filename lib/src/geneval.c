@@ -6459,7 +6459,7 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
 	    if (Fmat != NULL) {
 		ret->v.m = matrix_fc_stats(x, Fmat, OPT_D, &p->err);
 	    } else {
-		ret->v.m = forecast_stats(x, y, 0, n, OPT_D, &p->err);
+		ret->v.m = forecast_stats(x, y, 0, n, NULL, OPT_D, &p->err);
 	    }
 	    break;
 	case F_NAALEN:
