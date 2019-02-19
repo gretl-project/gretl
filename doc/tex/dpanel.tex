@@ -18,13 +18,13 @@
 {altcode}%
 {\vspace{1ex}\small\leftmargin 1em}{\vspace{1ex}}
 
-Since gretl version 1.9.2, the primary command for estimating dynamic
-panel models has been \texttt{dpanel}. The closely related
-\texttt{arbond} command predated \texttt{dpanel}, and is still
-present, but whereas \texttt{arbond} only supports the so-called
-``difference'' estimator \citep{arellano-bond91}, \texttt{dpanel} is
-addition offers the ``system'' estimator \citep{blundell-bond98},
-which has become the method of choice in the applied literature.
+The primary command for estimating dynamic panel models in gretl is
+\texttt{dpanel}. The closely related \texttt{arbond} command predated
+\texttt{dpanel}, and is still present, but whereas \texttt{arbond}
+only supports the so-called ``difference'' estimator
+\citep{arellano-bond91}, \texttt{dpanel} in addition offers the
+``system'' estimator \citep{blundell-bond98}, which has become the
+method of choice in the applied literature.
 
 \section{Introduction}
 \subsection{Notation}
@@ -37,8 +37,8 @@ A dynamic linear panel data model can be represented as follows
   y_{it} = \alpha y_{i,t-1} + \beta'x_{it} + \eta_{i} + v_{it}
 \end{equation}
 
-The main idea on which the difference estimator is based is to get rid
-of the individual effect via differencing.  First-differencing eq.\
+The main idea behind the difference estimator is to sweep out the
+individual effect via differencing.  First-differencing eq.\
 (\ref{eq:dpd-def}) yields
 \begin{equation}
   \label{eq:dpd-dif}
@@ -49,10 +49,10 @@ in obvious notation. The error term of (\ref{eq:dpd-dif}) is, by
 construction, autocorrelated and also correlated with the lagged
 dependent variable, so an estimator that takes both issues into
 account is needed. The endogeneity issue is solved by noting that all
-values of $y_{i,t-k}$, with $k>1$ can be used as instruments for
-$\Delta y_{i,t-1}$: unobserved values of $y_{i,t-k}$ (because they
-could be missing, or pre-sample) can safely be substituted with 0. In
-the language of GMM, this amounts to using the relation
+values of $y_{i,t-k}$ with $k>1$ can be used as instruments for
+$\Delta y_{i,t-1}$: unobserved values of $y_{i,t-k}$ (whether missing
+or pre-sample) can safely be substituted with 0. In the language of
+GMM, this amounts to using the relation
 \begin{equation}
   \label{eq:OC-dif}
   E(\Delta v_{it} \cdot y_{i,t-k}) = 0, \quad k>1
@@ -116,10 +116,10 @@ that this condition is satisfied in mean-stationary models and brings
 an improvement in efficiency that may be substantial in many cases.
 
 The set of orthogonality conditions exploited in the system approach
-is not very much larger than with the difference estimator,
-the reason being that most of the possible orthogonality conditions
-associated with the equations in levels are redundant, given those
-already used for the equations in differences.
+is not very much larger than with the difference estimator since most
+of the possible orthogonality conditions associated with the equations
+in levels are redundant, given those already used for the equations in
+differences.
 
 The key equations of the system estimator can be written as
 
@@ -178,7 +178,7 @@ difference between the resulting estimates can be noticeable.
 \label{sec:rankdef}
 
 Both the difference estimator (\ref{eq:dif-gmm}) and the system
-estimator (\ref{eq:sys-gmm}) depend, for their existence, on the
+estimator (\ref{eq:sys-gmm}) depend for their existence on the
 invertibility of $\bA_N$. This matrix may turn out to be singular for
 several reasons. However, this does not mean that the estimator is not
 computable: in some cases, adjustments are possible such that the
@@ -244,15 +244,15 @@ as an instrument, so this unit is in fact perfectly usable.
 
 Not all software packages seem to be aware of this possibility, so
 replicating published results may prove tricky if your dataset
-contains individuals with ``gaps'' between valid observations.
+contains individuals with gaps between valid observations.
 
 \section{Usage}
 
 One of the concepts underlying the syntax of \texttt{dpanel} is that
 you get default values for several choices you may want to make, so
-that in a ``standard'' situation the command itself is very short to
-write (and read).  The simplest case of the model (\ref{eq:dpd-def})
-is a plain AR(1) process:
+that in a ``standard'' situation the command is very concise.  The
+simplest case of the model (\ref{eq:dpd-def}) is a plain AR(1)
+process:
 \begin{equation}
 \label{eq:dp1}
   y_{i,t} = \alpha y_{i,t-1} + \eta_{i} + v_{it} .
