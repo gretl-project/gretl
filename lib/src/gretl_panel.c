@@ -3964,11 +3964,14 @@ MODEL real_panel_model (const int *list, DATASET *dset,
 	    mod = *pan.realmod;
 	}
 	gretl_model_smpl_init(&mod, dset);
-	if ((opt & OPT_D) && pan.ntdum > 0) {
-	    maybe_suppress_time_dummies(&mod, pan.ntdum);
-	}
-	if (complex_subsampled() && (opt & OPT_D)) {
-	    process_time_dummies(&mod, dset, orig_v);
+	if (opt & OPT_D) {
+	    if (pan.ntdum > 0) {
+		gretl_model_set_int(&mod, "ndum", pan.ntdum);
+		maybe_suppress_time_dummies(&mod, pan.ntdum);
+	    }
+	    if (complex_subsampled()) {
+		process_time_dummies(&mod, dset, orig_v);
+	    }
 	}
     }
 
