@@ -5423,6 +5423,10 @@ static int theil_decomp (double *m, double MSE,
     return err;
 }
 
+/* OPT_O allows embedded missing values (which will be skipped);
+   OPT_D requests Theil decomposition
+*/
+
 static int fill_fcstats_column (gretl_matrix *m,
 				const double *y,
 				const double *f,
@@ -5432,6 +5436,8 @@ static int fill_fcstats_column (gretl_matrix *m,
 {
     double ME, MSE, MAE, MPE, MAPE, U;
     double x, u[2];
+    int do_theil = 0;
+    int ok_T = T;
     int t, err = 0;
 
     ME = MSE = MAE = MPE = MAPE = U = 0.0;
@@ -5439,8 +5445,13 @@ static int fill_fcstats_column (gretl_matrix *m,
 
     for (t=0; t<T; t++) {
 	if (na(y[t]) || na(f[t])) {
-	    err = E_MISSDATA;
-	    break;
+	    if (opt & OPT_O) {
+		ok_T--;
+		continue;
+	    } else {
+		err = E_MISSDATA;
+		break;
+	    }
 	}
 	x = y[t] - f[t];
 	ME += x;
@@ -5451,12 +5462,26 @@ static int fill_fcstats_column (gretl_matrix *m,
 	} else {
 	    MPE += 100 * x / y[t];
 	    MAPE += 100 * fabs(x / y[t]);
-	    if (t < T-1) {
-		x = (f[t+1] - y[t+1]) / y[t];
-		u[0] += x * x;
-		x = (y[t+1] - y[t]) / y[t];
-		u[1] += x * x;
+	    if (t < T-1 && !na(U)) {
+		if (na(f[t+1]) || na(y[t+1])) {
+		    U = NADBL;
+		} else {
+		    x = (f[t+1] - y[t+1]) / y[t];
+		    u[0] += x * x;
+		    x = (y[t+1] - y[t]) / y[t];
+		    u[1] += x * x;
+		}
 	    }
+	}
+    }
+
+    if (!err) {
+	if (ok_T == 0) {
+	    err = E_MISSDATA;
+	} else if (ok_T < T) {
+	    T = ok_T;
+	} else if (opt & OPT_D) {
+	    do_theil = 1;
 	}
     }
 
@@ -5480,7 +5505,7 @@ static int fill_fcstats_column (gretl_matrix *m,
 	gretl_matrix_set(m, 4, col, MAPE);
 	gretl_matrix_set(m, 5, col, U);
 
-	if (opt & OPT_D) {
+	if (do_theil) {
 	    double *targ = m->val + col * m->rows + 6;
 
 	    theil_decomp(targ, MSE, y, f, T);
@@ -5516,7 +5541,8 @@ static void add_fcstats_rownames (gretl_matrix *m)
 static int fcstats_sample_check (const double *y,
 				 const double *f,
 				 int *pt1,
-				 int *pt2)
+				 int *pt2,
+				 int *nmiss)
 {
     int t1 = *pt1;
     int t2 = *pt2;
@@ -5540,7 +5566,15 @@ static int fcstats_sample_check (const double *y,
 
     if (t2 - t1 + 1 < 1) {
 	err = E_MISSDATA;
+    } else if (nmiss != NULL) {
+	/* allow internal NAs */
+	for (t=t1; t<=t2; t++) {
+	    if (na(y[t]) || na(f[t])) {
+		*nmiss += 1;
+	    }
+	}
     } else {
+	/* flag error on internal NAs */
 	for (t=t1; t<=t2; t++) {
 	    if (na(y[t]) || na(f[t])) {
 		err = E_MISSDATA;
@@ -5563,21 +5597,37 @@ static int fcstats_sample_check (const double *y,
    by Steven Cook of Swansea University <s.cook@Swansea.ac.uk>
 
    OPT_D indicates that we should include the Theil decomposition.
+   OPT_O allows missing values (which will be skipped).
 */
 
 gretl_matrix *forecast_stats (const double *y, const double *f,
-			      int t1, int t2, gretlopt opt,
-			      int *err)
+			      int t1, int t2, int *n_used,
+			      gretlopt opt, int *err)
 {
-    int ns = (opt & OPT_D)? 9 : 6;
     gretl_matrix *m = NULL;
+    int rows = 6;
+    int nmiss = 0;
 
-    *err = fcstats_sample_check(y, f, &t1, &t2);
+    if (opt & OPT_O) {
+	*err = fcstats_sample_check(y, f, &t1, &t2, &nmiss);
+    } else {
+	*err = fcstats_sample_check(y, f, &t1, &t2, NULL);
+    }
     if (*err) {
 	return NULL;
     }
 
-    m = gretl_column_vector_alloc(ns);
+    if (opt & OPT_D) {
+	if (nmiss == 0) {
+	    /* extra rows for Theil decomp */
+	    rows = 9;
+	} else {
+	    /* scrub the Theil decomp option */
+	    opt &= ~OPT_D;
+	}
+    }
+
+    m = gretl_column_vector_alloc(rows);
 
     if (m == NULL) {
 	*err = E_ALLOC;
@@ -5591,6 +5641,9 @@ gretl_matrix *forecast_stats (const double *y, const double *f,
 	gretl_matrix_free(m);
 	m = NULL;
     } else {
+	if (n_used != NULL) {
+	    *n_used = t2 - t1 + 1 - nmiss;
+	}
 	add_fcstats_rownames(m);
     }
 

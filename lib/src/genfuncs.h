@@ -170,8 +170,8 @@ gretl_matrix *multi_xcf (const void *px, int xtype,
 			 int p, int *err);
 
 gretl_matrix *forecast_stats (const double *y, const double *f,
-			      int t1, int t2, gretlopt opt,
-			      int *err);
+			      int t1, int t2, int *n_used,
+			      gretlopt opt, int *err);
 
 gretl_matrix *matrix_fc_stats (const double *y,
 			       const gretl_matrix *F,
