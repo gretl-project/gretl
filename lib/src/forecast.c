@@ -762,18 +762,35 @@ static int fe_or_re_fcast (Forecast *fc, MODEL *pmod,
     return err;
 }
 
-static void special_set_fcast_matrix (gretl_matrix *f)
+static void special_set_fcast_matrix (gretl_matrix *fc)
 {
     size_t sz;
 
-    /* copy from second column to first */
-    sz = f->rows * sizeof(double);
-    memcpy(f->val, f->val + f->rows, sz);
+    /* copy forecast from second column to first */
+    sz = fc->rows * sizeof(double);
+    memcpy(fc->val, fc->val + fc->rows, sz);
 
     /* and release some storage */
-    gretl_matrix_realloc(f, f->rows, 1);
+    gretl_matrix_realloc(fc, fc->rows, 1);
 
-    set_fcast_matrices(f, NULL);
+    set_fcast_matrices(fc, NULL);
+}
+
+static void special_print_fc_stats (gretl_matrix *fc,
+				    PRN *prn)
+{
+    const double *y = fc->val;
+    const double *f = y + fc->rows;
+    gretl_matrix *fcs;
+    int n_used;
+    int err = 0;
+
+    fcs = forecast_stats(y, f, 0, fc->rows - 1, &n_used,
+			 OPT_O, &err);
+    if (fcs != NULL) {
+	print_fcast_stats_matrix(fcs, n_used, prn);
+	gretl_matrix_free(fcs);
+    }
 }
 
 /* Out-of-sample forecast routine for panel data,
@@ -798,6 +815,13 @@ static int panel_os_special (MODEL *pmod, DATASET *dset,
     int k = pmod->ncoeff;
     int imin, i, j, vi, t, s;
     int err = 0;
+
+    s = get_dataset_submask_size(dset);
+    if (s != fset->n) {
+	fprintf(stderr, "fullset->n = %d but submask size = %d\n",
+		fset->n, s);
+	return E_DATA;
+    }
 
     b = gretl_coeff_vector_from_model(pmod, NULL, &err);
     if (err) {
@@ -892,27 +916,35 @@ static int panel_os_special (MODEL *pmod, DATASET *dset,
     if (!err && yhat != NULL) {
 	err = dataset_add_NA_series(dset, 1);
 	if (!err) {
-	    err = dataset_rename_series(dset, dset->v - 1, vname);
+	    vi = dset->v - 1;
+	    err = dataset_rename_series(dset, vi, vname);
+	    series_set_label(dset, vi, _("predicted values"));
 	}
 	if (!err) {
+	    /* keep number of series in sync */
 	    err = dataset_add_allocated_series(fset, yhat);
 	}
 	yhat = NULL;
     } else if (!err) {
-	if (!(opt & OPT_Q)) {
-	    char **Sc = strings_array_new(2);
-
-	    Sc[0] = gretl_strdup(fset->varname[pmod->list[1]]);
-	    Sc[1] = gretl_strdup(_("prediction"));
-	    gretl_matrix_set_colnames(fc, Sc);
-	}
 	gretl_matrix_set_rownames(fc, Sr);
-	gretl_matrix_print_to_prn(fc, NULL, prn);
 	if (opt & OPT_Q) {
 	    /* @fc should be suitable to purpose */
 	    set_fcast_matrices(fc, NULL);
 	} else {
-	    /* @fc need some adjustment */
+	    if (!(opt & OPT_T)) {
+		/* not --stats-only */
+		char **Sc = strings_array_new(2);
+
+		Sc[0] = gretl_strdup(fset->varname[pmod->list[1]]);
+		Sc[1] = gretl_strdup(_("prediction"));
+		gretl_matrix_set_colnames(fc, Sc);
+		gretl_matrix_print_to_prn(fc, NULL, prn);
+	    }
+	    if (!(opt & OPT_N)) {
+		/* not --no-stats */
+		special_print_fc_stats(fc, prn);
+	    }
+	    /* @fc needs some adjustment */
 	    special_set_fcast_matrix(fc);
 	}
 	fc = NULL;
