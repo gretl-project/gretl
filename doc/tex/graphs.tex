@@ -399,46 +399,6 @@ note that if you give a matrix to \cmd{plot} it's assumed you want to
 plot all the columns. In addition, if you give a single series and the
 dataset is time series, it's assumed you want a time-series plot.
 
-The script \ref{ex:Mroz-logwage} contains a slightly more elaborate
-example: here we load the Mroz example dataset and calculate the log
-of the individual's wage. Then, we match the histogram of a
-discretized version of the same variable (obtained via the
-\cmd{aggregate()} function) versus the theoretical density if data
-were Gaussian.
-
-There are a few points to note:
-\begin{itemize}
-\item the data for the plot are passed through a matrix in which we
-  set column names via the \cmd{cnameset} function; those names are
-  then automatically used by the \cmd{plot} environment.
-\item In this example, we make extensive use of the \cmd{set literal}
-  construct for refining the plot by passing instruction to
-  \app{gnuplot}; the power of \app{gnuplot} is impossible to
-  overstate. We encourage you to visit the ``demos'' version of
-  \app{gnuplot}'s website (\url{http://gnuplot.sourceforge.net/}) and
-  revel in amazement.
-\item In the \cmd{plot} environment you can use all the quantities you
-  have in your script. This is the way we calibrate the histogram
-  width (try setting the scalar \verb|k| in the script to different
-  values). Note that the \cmd{printf} command has a special meaning
-  inside a \cmd{plot} environment.
-\item The script displays the plot on your screen. If you want to save
-  it to a file instead, replace \verb!--output=display! at the end
-  with \texttt{-{}-output=\textsl{filename}}.
-\item It's OK to insert comments in the \cmd{plot} environment;
-  actually, it's a rather good idea to comment as much as possible (as
-  always)!
-\end{itemize}
-The output from the script is shown in Figure \ref{fig:Mroz-logwage}.
-
-
-\begin{figure}[htbp]
-  \centering
-  \includegraphics{figures/Mroz-logwage}
-  \caption{Output from listing \ref{ex:Mroz-logwage}}
-  \label{fig:Mroz-logwage}
-\end{figure}
-
 \begin{script}[htbp]
   \caption{Plotting the log wage from the Mroz example dataset}
   \label{ex:Mroz-logwage}
@@ -488,27 +448,92 @@ end plot --output=display
 \end{scode}
 \end{script}
 
+Script \ref{ex:Mroz-logwage} contains a slightly more elaborate
+example: here we load the Mroz example dataset and calculate the log
+of the individual's wage. Then, we match the histogram of a
+discretized version of the same variable (obtained via the
+\cmd{aggregate()} function) versus the theoretical density if data
+were Gaussian.
+
+There are a few points to note:
+\begin{itemize}
+\item the data for the plot are passed through a matrix in which we
+  set column names via the \cmd{cnameset} function; those names are
+  then automatically used by the \cmd{plot} environment.
+\item In this example, we make extensive use of the \cmd{set literal}
+  construct for refining the plot by passing instruction to
+  \app{gnuplot}; the power of \app{gnuplot} is impossible to
+  overstate. We encourage you to visit the ``demos'' version of
+  \app{gnuplot}'s website (\url{http://gnuplot.sourceforge.net/}) and
+  revel in amazement.
+\item In the \cmd{plot} environment you can use all the quantities you
+  have in your script. This is the way we calibrate the histogram
+  width (try setting the scalar \verb|k| in the script to different
+  values). Note that the \cmd{printf} command has a special meaning
+  inside a \cmd{plot} environment.
+\item The script displays the plot on your screen. If you want to save
+  it to a file instead, replace \verb!--output=display! at the end
+  with \texttt{-{}-output=\textsl{filename}}.
+\item It's OK to insert comments in the \cmd{plot} environment;
+  actually, it's a rather good idea to comment as much as possible (as
+  always)!
+\end{itemize}
+The output from the script is shown in Figure \ref{fig:Mroz-logwage}.
+
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics{figures/Mroz-logwage}
+  \caption{Output from listing \ref{ex:Mroz-logwage}}
+  \label{fig:Mroz-logwage}
+\end{figure}
+
+\pagebreak[4]
+
 \section{Boxplots}
 \label{sect-boxplots}
 
+These plots (after Tukey and Chambers) display the distribution of a
+variable. Its shape depends on a few quantities, defined as follows:
+
+\begin{center}
+\begin{tabular}{rl}
+  $x_{\mathrm{min}}$ & sample minimum \\
+  $Q_1$ & first quartile \\
+  $m$ & median \\
+  $\bar{x}$ & mean \\
+  $Q_3$ & third quartile \\
+  $x_{\mathrm{min}}$ & sample maximum\\
+  $R = Q_3 - Q_1$ & interquartile range\\
+\end{tabular}
+\end{center}
+
+The central box encloses the middle 50 percent of the data, i.e.\ goes
+from $Q_1$ to $Q_3$; therefore, its height equals $R$.  A line
+is drawn across the box at the median $m$ and a ``\texttt{+}'' sign
+identifies the mean $\bar{x}$.
+
+The length of the ``whiskers'' depends on the presence of
+outliers. The top whisker extends from the top of the box up to a
+maximum of 1.5 times the interquartile range, but can be shorter if
+the sample maximum is lower than that value; that is, it reaches
+$\min[x_{\mathrm{max}}, Q_3 + 1.5 R]$. Observations larger than
+$Q_3 + 1.5 R$, if any, are considered outliers and represented
+individually via dots.\footnote{To give you an intuitive idea, if a
+  variable is normally distributed, the chances of picking an outlier
+  by this definition are slightly below 0.7\%.} The bottom whisker
+obeys the same logic, with obvious adjustments.
+Figure~\ref{fig-boxplot} provides an example of all this by using the
+variable \texttt{FAMINC} from the sample dataset \texttt{mroz87}.
+
 \begin{figure}[htbp]
-  \begin{center}
-    \includegraphics{figures/boxplot_sample}
-  \end{center}
+  \begin{flushleft}
+    \hspace{1cm}
+  \input{figures/boxplot_sample}
+  \end{flushleft}
   \caption{Sample boxplot}
   \label{fig-boxplot}
 \end{figure}
-
-These plots (after Tukey and Chambers) display the distribution of a
-variable. The central box encloses the middle 50 percent of the data,
-i.e.\ it is bounded by the first and third quartiles.  The
-``whiskers'' extend to from each end of the box for a range equal to
-1.5 times the interquartile range. Observations outside that range are
-considered outliers and represented via dots.\footnote{To give you an
-  intuitive idea, if a variable is normally distributed, the chances
-  of picking an outlier by this definition are slightly below 0.7\%.}
-A line is drawn across the box at the median and a ``\texttt{+}'' sign
-identifies the mean---see Figure~\ref{fig-boxplot}.
 
 In the case of boxplots with confidence intervals, dotted lines show
 the limits of an approximate 90 percent confidence interval for the
