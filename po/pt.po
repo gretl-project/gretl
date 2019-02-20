@@ -4,13 +4,13 @@
 # Helio Guilherme <helio.guilherme@bluebottle.com>, 2006, 2007.
 # Hélio Guilherme <helio.guilherme@bluebottle.com>, 2007, 2008.
 # Hélio Guilherme <helio_guilherme@hotmail.com>, 2008, 2009, 2010, 2013, 2014, 2015, 2016, 2017.
-# Helio Guilherme <helio_guilherme@hotmail.com>, 2010, 2011, 2012, 2013, 2018.
+# Helio Guilherme <helio_guilherme@hotmail.com>, 2010, 2011, 2012, 2013, 2018, 2019.
 msgid ""
 msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2019-01-22 09:24-0500\n"
-"PO-Revision-Date: 2019-01-21 19:24-0500\n"
+"PO-Revision-Date: 2019-02-20 00:32+0000\n"
 "Last-Translator: Hélio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
 "Language: pt\n"
@@ -3150,14 +3150,14 @@ msgid "BFGS: initial value of objective function is not finite"
 msgstr "BFGS: o valor inicial da função objectivo é não finito"
 
 #: lib/src/gretl_bfgs.c:1334
-#, fuzzy, c-format
+#, c-format
 msgid "Reached the maximum iterations (%d)"
-msgstr "Atingido o máximo de iterações, %d"
+msgstr "Atingido o máximo de iterações (%d)"
 
 #: lib/src/gretl_bfgs.c:1337
-#, fuzzy, c-format
+#, c-format
 msgid "Norm of gradient %g exceeds maximum of %g"
-msgstr "norma do gradiente = %g"
+msgstr "A norma do gradiente %g excede o máximo de %g"
 
 #: lib/src/gretl_bfgs.c:1353
 #, c-format
@@ -6648,22 +6648,20 @@ msgid "outside"
 msgstr "exterior"
 
 #: lib/src/plotspec.c:328
-#, fuzzy
 msgid "top left"
-msgstr "esquerda"
+msgstr "topo esquerdo"
 
 #: lib/src/plotspec.c:329
-#, fuzzy
 msgid "top right"
-msgstr "direita"
+msgstr "topo direito"
 
 #: lib/src/plotspec.c:330
 msgid "bottom left"
-msgstr ""
+msgstr "embaixo esquerdo"
 
 #: lib/src/plotspec.c:331
 msgid "bottom right"
-msgstr ""
+msgstr "embaixo direito"
 
 #: lib/src/plotspec.c:731
 msgid "center"
@@ -7380,9 +7378,9 @@ msgid "'%s': no such list"
 msgstr "'%s': não existe essa lista"
 
 #: lib/src/system.c:851
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': not a list or array of lists"
-msgstr "'%s' : não está implementado para listas"
+msgstr "'%s' : não é uma lista ou arranjo de listas"
 
 #: lib/src/system.c:1254
 msgid "Wald test for the specified restrictions"
@@ -8034,7 +8032,7 @@ msgstr "Data de produção"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>. \n"
-"Tradução de 24 de dezembro de 2018."
+"Tradução de 19 de fevereiro de 2019."
 
 #: gui/about.c:205
 msgid "News"
@@ -9087,6 +9085,7 @@ msgstr "%s: por favor primeiro feche a janela deste objecto"
 #, c-format
 msgid "Package %s is not loaded, and you do not have permission to delete it."
 msgstr ""
+"O pacote %s não está carregado, e você não tem permissão para  o apagar."
 
 #: gui/datafiles.c:864
 msgid "Unload member functions only"
@@ -11233,7 +11232,7 @@ msgstr ""
 
 #: gui/fnsave.c:2780
 msgid "provider?"
-msgstr ""
+msgstr "fornecedor?"
 
 #: gui/fnsave.c:2803
 msgid ""
@@ -12845,9 +12844,8 @@ msgid "_gretl + MPI"
 msgstr "_gretl + MPI"
 
 #: gui/gretl.c:1882
-#, fuzzy
 msgid "_gretl + SVM"
-msgstr "_gretl + MPI"
+msgstr "_gretl + SVM"
 
 #: gui/gretl.c:1883
 msgid "Check for _updates"
@@ -16872,9 +16870,8 @@ msgid "processing...\n"
 msgstr "processando...\n"
 
 #: gui/textbuf.c:1546
-#, fuzzy
 msgid "gretl + SVM"
-msgstr "_gretl + MPI"
+msgstr "gretl + SVM"
 
 #: gui/textbuf.c:2127
 msgid "Gretl Command Reference"
@@ -18428,9 +18425,8 @@ msgid "adjusted"
 msgstr "ajustado"
 
 #: plugin/tramo-x12a.c:942
-#, fuzzy
 msgid "no seasonality was detected"
-msgstr "sem efeitos sazonais"
+msgstr "não foi detectado efeitos sazonais"
 
 #: plugin/vif.c:69
 msgid "The statistic you requested is not meaningful for this model"
