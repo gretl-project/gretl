@@ -2806,6 +2806,11 @@ static int out_of_sample_check (MODEL *pmod, DATASET *dset)
     if (pmod->ci == PANEL || (pmod->ci == OLS && dataset_is_panel(dset))) {
 	panel = 1;
 	ret = OS_ERR;
+	if (gretl_model_get_int(pmod, "ndum") > 0) {
+	    gretl_errmsg_set(_("Specification includes time dummies: cannot "
+			       "forecast out of sample"));
+	    return ret;
+	}
     } else {
 	panel = 0;
 	ret = OS_OK;
@@ -2826,7 +2831,7 @@ static int out_of_sample_check (MODEL *pmod, DATASET *dset)
 		if (Ncurr == Nfull && Tcurr < Tfull &&
 		    dset->v == fullset->v) {
 		    /* sub-sampled in the time dimension, and
-		       no series added or deleted (we hope)
+		       no series added or deleted (we trust)
 		    */
 		    ret = OS_PANEL;
 		}
@@ -2981,7 +2986,9 @@ static int parse_forecast_string (const char *s,
 	if (pmod != NULL) {
 	    *os_case = out_of_sample_check(pmod, dset);
 	}
-	if (*os_case == OS_OK) {
+	if (*os_case == OS_ERR) {
+	    err = E_DATA;
+	} else if (*os_case == OS_OK) {
 	    if (dset->n - t2est - 1 > 0) {
 		t1 = t2est + 1;
 		t2 = dset->n - 1;

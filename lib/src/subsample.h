@@ -74,6 +74,9 @@ int dataset_is_resampled (const DATASET *dset);
 
 int set_sample (const char *start, const char *stop, DATASET *dset);
 
+int set_panel_sample (const char *start, const char *stop,
+		      gretlopt opt, DATASET *dset);
+
 int restore_full_sample (DATASET *dset, ExecState *state);
 
 int backup_full_dataset (DATASET *dset);

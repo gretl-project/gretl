@@ -2435,21 +2435,6 @@ enum {
     SMPL_T2
 };
 
-static int panel_round (const DATASET *dset, int t, int code)
-{
-    if (code == SMPL_T1) {
-	while ((t + 1) % dset->pd != 1) {
-	    t++;
-	}
-    } else {
-	while ((t + 1) % dset->pd != 0) {
-	    t--;
-	}
-    }
-
-    return t;
-}
-
 static int smpl_get_int (const char *s, DATASET *dset, int *err)
 {
     int k = -1;
@@ -2483,14 +2468,41 @@ static int probably_year (const char *s, DATASET *dset)
 	    sval > 1000 && sval > dset->n);
 }
 
+static int got_two_ints (const char *s, int *pi, int *pt)
+{
+    int n = 0;
+
+    if (strchr(s, ':') != NULL) {
+	n = sscanf(s, "%d:%d", pi, pt);
+    } else if (strchr(s, '.') != NULL) {
+	n = sscanf(s, "%d.%d", pi, pt);
+    }
+
+    return n == 2;
+}
+
 static int get_sample_limit (const char *s, DATASET *dset, int code)
 {
     int ret = -1;
+    int i, t;
     int err = 0;
 
 #if SUBDEBUG
     fprintf(stderr, "get_sample_limit: s = '%s'\n", s);
 #endif
+
+    if (dataset_is_panel(dset) && got_two_ints(s, &i, &t)) {
+	if (code == SMPL_T1 && t != 1) {
+	    gretl_errmsg_sprintf(_("'%s': invalid starting observation"), s);
+	    err = E_DATA;
+	} else if (code == SMPL_T2 && t != dset->pd) {
+	    gretl_errmsg_sprintf(_("'%s': invalid ending observation"), s);
+	    err = E_DATA;
+	}
+	if (err) {
+	    return -1;
+	}
+    }
 
     if (*s == '-' || *s == '+') {
 	/* increment/decrement form */
@@ -2519,9 +2531,6 @@ static int get_sample_limit (const char *s, DATASET *dset, int code)
 	    ret = smpl_get_int(s, dset, &err);
 	    /* convert to base 0 */
 	    if (!err) ret--;
-	}
-	if (ret >= 0 && dataset_is_panel(dset)) {
-	    ret = panel_round(dset, ret, code);
 	}
     }
 
@@ -2646,6 +2655,41 @@ static int real_set_sample (const char *start,
 int set_sample (const char *start, const char *stop, DATASET *dset)
 {
     return real_set_sample(start, stop, dset, NULL, NULL);
+}
+
+int set_panel_sample (const char *start, const char *stop,
+		      gretlopt opt, DATASET *dset)
+{
+    int s1, s2, err = 0;
+
+    /* maybe some day implement option to sample in the
+       panel time dimension here? (not trivial)
+    */
+
+    s1 = smpl_get_int(start, dset, &err);
+    if (!err) {
+	s2 = smpl_get_int(stop, dset, &err);
+    }
+
+    if (!err) {
+	if (s1 < 1) {
+	    gretl_errmsg_sprintf(_("invalid first unit %d"), s1);
+	    err = E_DATA;
+	} else if (s2 > dset->n / dset->pd) {
+	    gretl_errmsg_sprintf(_("invalid last unit %d"), s2);
+	    err = E_DATA;
+	} else if (s2 < s1) {
+	    gretl_errmsg_set(_("invalid null sample"));
+	    err = E_DATA;
+	}
+    }
+
+    if (!err) {
+	dset->t1 = (s1 - 1) * dset->pd;
+	dset->t2 = s2 * dset->pd - 1;
+    }
+
+    return err;
 }
 
 static int test_set_sample (const char *s, DATASET *dset,

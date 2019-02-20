@@ -572,6 +572,7 @@ struct gretl_option gretl_opts[] = {
     { SMPL,     OPT_T, "permanent", 0 },
     { SMPL,     OPT_U, "current", 0 },
     { SMPL,     OPT_Z, "resize", 0 },
+    { SMPL,     OPT_G, "unit", 0 },
     { SPEARMAN, OPT_V, "verbose", 0 },
     { SQUARE,   OPT_O, "cross", 0 },
     { STORE,    OPT_C, "csv", 0 },

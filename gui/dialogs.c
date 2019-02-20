@@ -1957,7 +1957,7 @@ static void free_pset (GtkWidget *w, panel_setting *pset)
     free(pset);
 }
 
-static void set_panel_sample (GtkWidget *w, panel_setting *pset)
+static void gui_set_panel_sample (GtkWidget *w, panel_setting *pset)
 {
     int orig_u1 = 1 + dataset->t1 / dataset->pd;
     int orig_u2 = (dataset->t2 + 1) / dataset->pd;
@@ -2116,7 +2116,7 @@ static void panel_sample_dialog (void)
     cancel_delete_button(hbox, pset->dlg);
     w = ok_button(hbox);
     g_signal_connect(G_OBJECT(w), "clicked",
-		     G_CALLBACK(set_panel_sample), pset);
+		     G_CALLBACK(gui_set_panel_sample), pset);
     gtk_widget_grab_default(w);
     g_signal_connect(G_OBJECT(pset->dlg), "destroy",
 		     G_CALLBACK(free_pset), pset);
