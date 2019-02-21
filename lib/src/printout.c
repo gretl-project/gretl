@@ -2845,7 +2845,8 @@ int print_fcast_stats_matrix (const gretl_matrix *m,
 
     pputs(prn, "  ");
     pputs(prn, _("Forecast evaluation statistics"));
-    pprintf(prn, " (T = %d)", T);
+    pputc(prn, ' ');
+    pprintf(prn, _("using %d observations"), T);
     pputs(prn, "\n\n");
 
     for (i=0; i<len; i++) {
