@@ -1460,73 +1460,6 @@ static void debug_print_specs (ddset *dpd, const char *ispec,
 
 #endif
 
-#if 0 /* just testing! */
-
-static int dpanel_os_fcast (MODEL *pmod, const DATASET *dset)
-{
-    const double *y, *xi, *b;
-    double yht;
-    int *xlist;
-    int order = 2, yno;
-    int i, vi, s, t, k, u;
-
-    yno = gretl_model_get_depvar(pmod;
-    xlist = gretl_model_get_x_list(pmod);
-    y = dset->Z[yno];
-    b = pmod->coeff;
-    t = 0;
-    u = 0;
-
-    for (s=0; s<dset->n; s++) {
-	int j = 0;
-
-	/* integrate? */
-	if (t > 0 && !na(y[s-1])) {
-	    yht = y[s-1];
-	} else {
-	    yht = NADBL;
-	}
-
-	/* autoregressive terms come first */
-	for (k=1; k<=order && !na(yht); k++) {
-	    if (t - k - 1 < 0 || na(y[s-k]) || na(y[s-k-1])) {
-		yht = NADBL;
-	    } else {
-		yht += b[j++] * (y[s-k] - y[s-k-1]);
-	    }
-	}
-	
-	/* then regular regressors, differenced */
-	for (i=1; i<=xlist[0] && !na(yht); i++) {
-	    vi = xlist[i];
-	    if (vi == 0) {
-		yht += b[j++];
-	    } else {
-		xi = dset->Z[vi];
-		if (t - 1 < 0 || na(xi[s]) || na(xi[s-1])) {
-		    yht = NADBL;
-		} else {
-		    yht += b[j++] * (xi[s] - xi[s-1]);
-		}
-	    }
-	}
-	fprintf(stderr, "%d:%d  %f\n", u+1, t+1, yht);
-
-	if (t == dset->pd - 1) {
-	    t = 0;
-	    u++;
-	} else {
-	    t++;
-	}
-    }
-
-    free(xlist);
-
-    return 0;
-}
-
-#endif
-
 /* Public interface for new approach, including system GMM: 
    in a script use --system (OPT_L, think "levels") to get
    Blundell-Bond. To build the H matrix as per Ox/DPD use 
@@ -1620,7 +1553,6 @@ MODEL dpd_estimate (const int *list, const int *laglist,
 	/* write estimation info into model struct */
 	mod.errcode = dpd_finalize_model(&mod, dpd, list, laglist, ispec, 
 					 dset, opt);
-	// dpanel_os_fcast(&mod, dset);
     }
 
     ddset_free(dpd);

@@ -793,6 +793,92 @@ static void special_print_fc_stats (gretl_matrix *fc,
     }
 }
 
+static int dpanel_os_fcast (double *yhat,
+			    MODEL *pmod,
+			    const char *mask,
+			    const DATASET *dset,
+			    gretlopt opt)
+{
+    const double *y, *xi, *b;
+    double yht;
+    int *xlist, *ylags = NULL;
+    int yno, free_ylags = 0;
+    int i, vi, s, t, k, u;
+
+    ylags = gretl_model_get_data(pmod, "ylags");
+    if (ylags == NULL) {
+	ylags = gretl_consecutive_list_new(1, pmod->list[1]);
+	free_ylags = 1;
+    }
+
+    yno = gretl_model_get_depvar(pmod);
+    xlist = gretl_model_get_x_list(pmod);
+    y = dset->Z[yno];
+    b = pmod->coeff;
+    t = u = 0;
+
+    /* FIXME respect --dynamic in @opt, if possible */
+
+    for (s=0; s<dset->n; s++) {
+	int j = 0;
+
+	if (mask[s] == 1) {
+	    /* an in-sample observation */
+	    goto next_t;
+	}
+
+	/* integrate? */
+	if (t > 0 && !na(y[s-1])) {
+	    yht = y[s-1];
+	} else {
+	    yht = NADBL;
+	}
+
+	/* autoregressive terms come first */
+	for (i=1; i<=ylags[0] && !na(yht); i++) {
+	    k = ylags[i];
+	    if (t - k - 1 < 0 || na(y[s-k]) || na(y[s-k-1])) {
+		yht = NADBL;
+	    } else {
+		yht += b[j++] * (y[s-k] - y[s-k-1]);
+	    }
+	}
+
+	/* then regular regressors, differenced */
+	for (i=1; i<=xlist[0] && !na(yht); i++) {
+	    vi = xlist[i];
+	    if (vi == 0) {
+		yht += b[j++];
+	    } else {
+		xi = dset->Z[vi];
+		if (t - 1 < 0 || na(xi[s]) || na(xi[s-1])) {
+		    yht = NADBL;
+		} else {
+		    yht += b[j++] * (xi[s] - xi[s-1]);
+		}
+	    }
+	}
+
+	/* transcribe result */
+	yhat[s] = yht;
+
+    next_t:
+	if (t == dset->pd - 1) {
+	    t = 0;
+	    u++;
+	} else {
+	    t++;
+	}
+    }
+
+    free(xlist);
+    if (free_ylags) {
+	free(ylags);
+    }
+
+    return 0;
+}
+
 /* Out-of-sample forecast routine for panel data,
    supporting pooled OLS, fixed effects and random
    effects.
@@ -844,6 +930,11 @@ static int panel_os_special (MODEL *pmod, DATASET *dset,
 	    return E_ALLOC;
 	}
 	Sr = strings_array_new(nfc);
+    }
+
+    if (pmod->ci == DPANEL) {
+	dpanel_os_fcast(yhat, pmod, mask, dset, opt);
+	goto calc_done;
     }
 
     if (pmod->opt & (OPT_F | OPT_U)) {
@@ -912,6 +1003,8 @@ static int panel_os_special (MODEL *pmod, DATASET *dset,
 	    j++;
 	}
     }
+
+ calc_done:
 
     if (!err && yhat != NULL) {
 	err = dataset_add_NA_series(dset, 1);
@@ -2803,7 +2896,8 @@ static int out_of_sample_check (MODEL *pmod, DATASET *dset)
 {
     int panel, ret;
 
-    if (pmod->ci == PANEL || (pmod->ci == OLS && dataset_is_panel(dset))) {
+    if (pmod->ci == PANEL || pmod->ci == DPANEL ||
+	(pmod->ci == OLS && dataset_is_panel(dset))) {
 	panel = 1;
 	ret = OS_ERR;
 	if (gretl_model_get_int(pmod, "ndum") > 0) {
@@ -2830,7 +2924,7 @@ static int out_of_sample_check (MODEL *pmod, DATASET *dset)
 
 		if (Ncurr == Nfull && Tcurr < Tfull &&
 		    dset->v == fullset->v) {
-		    /* sub-sampled in the time dimension, and
+		    /* sub-sampled in the time dimension only, and
 		       no series added or deleted (we trust)
 		    */
 		    ret = OS_PANEL;
@@ -3382,8 +3476,10 @@ static int model_do_forecast (const char *str, MODEL *pmod,
     int os_case = 0;
     int err;
 
-    if (pmod->ci == ARBOND || pmod->ci == DPANEL ||
-	pmod->ci == HECKIT || pmod->ci == DURATION) {
+    if (pmod->ci == ARBOND ||
+	pmod->ci == DPANEL ||
+	pmod->ci == HECKIT ||
+	pmod->ci == DURATION) {
 	/* FIXME */
 	return E_NOTIMP;
     }

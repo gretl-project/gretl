@@ -1702,8 +1702,10 @@ static int dpanel_adjust_uhat (ddset *dpd,
     return 0;
 }
 
-static int dpd_finalize_model (MODEL *pmod, ddset *dpd,
-			       const int *list, const int *ylags,
+static int dpd_finalize_model (MODEL *pmod,
+			       ddset *dpd,
+			       const int *list,
+			       const int *ylags,
 			       const char *istr,
 			       const DATASET *dset,
 			       gretlopt opt)
