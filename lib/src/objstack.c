@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -86,7 +86,7 @@ static int object_get_refcount (void *ptr, GretlObjType type)
     }
 
     return rc;
-} 
+}
 
 #endif
 
@@ -103,7 +103,7 @@ static void print_ostack (void)
 	for (i=0; i<n_obj; i++) {
 	    p = ostack[i].ptr;
 	    t = ostack[i].type;
-	    fprintf(stderr, " %d: %p (type=%d, refcount=%d)\n", i, p, 
+	    fprintf(stderr, " %d: %p (type=%d, refcount=%d)\n", i, p,
 		    t, object_get_refcount(p, t));
 	}
 	fputc('\n', stderr);
@@ -187,7 +187,7 @@ static void gretl_object_unstack (void *ptr, int action)
     fprintf(stderr, " stack pos for %p = %d, n_obj = %d\n",
 	    ptr, pos, n_obj);
 #endif
-    
+
     if (pos >= 0) {
 	n_obj--;
 	if (n_obj == 0) {
@@ -216,7 +216,7 @@ static void gretl_object_destroy (void *ptr, GretlObjType type)
 #endif
 
     gretl_object_unstack(ptr, UNSTACK_DESTROY);
-    
+
     if (type == GRETL_OBJ_EQN) {
 	gretl_model_free(ptr);
     } else if (type == GRETL_OBJ_VAR) {
@@ -335,7 +335,7 @@ void gretl_object_unref (void *ptr, GretlObjType type)
 
     if (type == GRETL_OBJ_ANY) {
 	type = get_stacked_type_by_data(ptr);
-    } 
+    }
 
     if (type == GRETL_OBJ_EQN) {
 	MODEL *pmod = (MODEL *) ptr;
@@ -365,7 +365,7 @@ void gretl_object_unref (void *ptr, GretlObjType type)
     }
 
 #if ODEBUG
-    fprintf(stderr, "gretl_object_unref: %p (incoming count = %d)\n", 
+    fprintf(stderr, "gretl_object_unref: %p (incoming count = %d)\n",
 	    ptr, *rc);
 #endif
 
@@ -524,7 +524,7 @@ get_stacker_by_name (const char *oname, GretlObjType type, int *onum)
     fprintf(stderr, "get_stacker_by_name: name='%s', type=%d: got s=%p\n",
 	    oname, type, (void *) s);
 #endif
-    
+
     return s;
 }
 
@@ -567,7 +567,7 @@ get_object_by_name (const char *oname, GretlObjType type, int *onum)
 	    }
 	}
     }
-#endif    
+#endif
 
     return ptr;
 }
@@ -577,7 +577,7 @@ void *gretl_get_object_by_name (const char *name)
     return get_object_by_name(name, GRETL_OBJ_ANY, NULL);
 }
 
-int 
+int
 gretl_get_object_and_type (const char *name, void **pp, GretlObjType *type)
 {
     int err = E_DATA;
@@ -592,7 +592,7 @@ gretl_get_object_and_type (const char *name, void **pp, GretlObjType *type)
     if (!strcmp(name, "$system")) {
 	*pp = get_anonymous_equation_system();
 	if (*pp != NULL) {
-	    *type = GRETL_OBJ_SYS; 
+	    *type = GRETL_OBJ_SYS;
 	    err = 0;
 	}
     } else {
@@ -613,7 +613,7 @@ gretl_get_object_and_type (const char *name, void **pp, GretlObjType *type)
     return err;
 }
 
-MODEL *get_model_by_ID (int ID) 
+MODEL *get_model_by_ID (int ID)
 {
     MODEL *pmod;
     int i;
@@ -694,7 +694,7 @@ int gretl_object_compose_unique_name (void *p, GretlObjType type)
 
     if (type == GRETL_OBJ_EQN) {
 	MODEL *pmod = (MODEL *) p;
-	
+
 	id = pmod->ID;
 	sprintf(name, "%s %d", _("Model"), id);
 	while (get_model_by_name(name) != NULL) {
@@ -720,7 +720,7 @@ int gretl_object_compose_unique_name (void *p, GretlObjType type)
 
 	    if (strlen(vstr) > 4) {
 		vstr = "VECM";
-	    }	    
+	    }
 	    id = gretl_VECM_id(var);
 	    sprintf(name, "%s %d", vstr, id);
 	    while (get_VECM_by_name(name) != NULL) {
@@ -730,7 +730,7 @@ int gretl_object_compose_unique_name (void *p, GretlObjType type)
 	gretl_VAR_set_name(var, name);
     } else if (type == GRETL_OBJ_SYS) {
 	equation_system *sys = (equation_system *) p;
-	
+
 	id = ++n_sys;
 	sprintf(name, "%s %d", _("System"), id);
 	while (get_equation_system_by_name(name) != NULL) {
@@ -818,14 +818,14 @@ int object_is_on_stack (const void *ptr)
     return (object_stack_index(ptr) >= 0);
 }
 
-static int 
+static int
 real_stack_object (void *p, GretlObjType type, const char *name, PRN *prn)
 {
     stacker *orig;
     int onum, err = 0;
 
 #if ODEBUG
-    fprintf(stderr, "real_stack_object: on entry, p=%p, type=%d, name='%s'\n", 
+    fprintf(stderr, "real_stack_object: on entry, p=%p, type=%d, name='%s'\n",
 	    (void *) p, type, name);
 #endif
 
@@ -855,7 +855,7 @@ real_stack_object (void *p, GretlObjType type, const char *name, PRN *prn)
     if (orig != NULL) {
 	/* replace existing object of same name */
 #if ODEBUG
-	fprintf(stderr, "  replacing at %p (onum = %d, ptr = %p)\n", 
+	fprintf(stderr, "  replacing at %p (onum = %d, ptr = %p)\n",
 		orig, onum, orig->ptr);
 #endif
 	unstack_replace = 1;
@@ -883,7 +883,7 @@ real_stack_object (void *p, GretlObjType type, const char *name, PRN *prn)
 #if ODEBUG
     fprintf(stderr, " real_stack_object, on exit: '%s', type=%d, ptr=%p (n_obj=%d)\n",
 	    name, type, (void *) p, n_obj);
-#endif 
+#endif
 
 #if ODEBUG > 1
     print_ostack();
@@ -975,12 +975,12 @@ MODEL *maybe_stack_model (MODEL *pmod, CMD *cmd, PRN *prn, int *err)
 /* retrieve from an object some value that is stored on the object in
    the form of a simple scalar */
 
-static double real_get_obj_scalar (void *p, GretlObjType type, 
+static double real_get_obj_scalar (void *p, GretlObjType type,
 				   DATASET *dset, int idx)
 {
     double x = INVALID_STAT;
     int err = 0;
-    
+
     if (idx <= 0) {
 	return x;
     }
@@ -1022,7 +1022,7 @@ static double real_get_obj_scalar (void *p, GretlObjType type,
 	} else if (idx == M_AIC) {
 	    x = var->AIC;
 	} else if (idx == M_BIC) {
-	    x = var->BIC;	
+	    x = var->BIC;
 	} else if (idx == M_HQC) {
 	    x = var->HQC;
 	}
@@ -1032,14 +1032,14 @@ static double real_get_obj_scalar (void *p, GretlObjType type,
 }
 
 /* find out what sort of object we're dealing with, and call
-   the appropriate function to get the requested matrix 
+   the appropriate function to get the requested matrix
 */
 
 static gretl_matrix *
 real_get_obj_matrix (void *p, GretlObjType type, int idx, int *err)
 {
     gretl_matrix *M = NULL;
-    
+
     if (idx <= 0) {
 	*err = 1;
 	return M;
@@ -1074,7 +1074,7 @@ real_get_obj_list (void *p, GretlObjType type, int idx, int *err)
     const equation_system *sys = NULL;
     const int *list = NULL;
     int *ret = NULL;
-    
+
     if (idx <= 0 || p == NULL || !list_carrying_type(type)) {
 	*err = E_DATA;
 	return NULL;
@@ -1131,7 +1131,7 @@ real_get_obj_list (void *p, GretlObjType type, int idx, int *err)
 }
 
 static char *
-real_get_obj_string (void *p, GretlObjType type, int idx, 
+real_get_obj_string (void *p, GretlObjType type, int idx,
 		     const DATASET *dset, int *err)
 {
     char *str = NULL;
@@ -1146,7 +1146,7 @@ real_get_obj_string (void *p, GretlObjType type, int idx,
 
 	str = gretl_strdup(gretl_command_word(pmod->ci));
     } else if (type == GRETL_OBJ_EQN && idx == M_DEPVAR) {
-	const char *s = gretl_model_get_depvar_name((MODEL *) p, 
+	const char *s = gretl_model_get_depvar_name((MODEL *) p,
 						    dset);
 
 	str = gretl_strdup(s);
@@ -1202,7 +1202,7 @@ static stacker *find_smatch (const char *oname)
     } else {
 	const char *test;
 	int i;
-	
+
 	for (i=0; i<n_obj; i++) {
 	    test = gretl_object_get_name(ostack[i].ptr, ostack[i].type);
 	    if (!strcmp(oname, test)) {
@@ -1269,7 +1269,7 @@ int *saved_object_get_list (const char *oname, int idx, int *err)
     return ret;
 }
 
-char *saved_object_get_string (const char *oname, int idx, 
+char *saved_object_get_string (const char *oname, int idx,
 			       const DATASET *dset, int *err)
 {
     char *ret = NULL;
@@ -1278,14 +1278,14 @@ char *saved_object_get_string (const char *oname, int idx,
     smatch = find_smatch(oname);
 
     if (smatch != NULL) {
-	ret = real_get_obj_string(smatch->ptr, smatch->type, idx, 
+	ret = real_get_obj_string(smatch->ptr, smatch->type, idx,
 				  dset, err);
     }
 
     return ret;
 }
 
-double saved_object_get_scalar (const char *oname, int idx, 
+double saved_object_get_scalar (const char *oname, int idx,
 				DATASET *dset, int *err)
 {
     double ret = INVALID_STAT;
@@ -1294,7 +1294,7 @@ double saved_object_get_scalar (const char *oname, int idx,
     smatch = find_smatch(oname);
 
     if (smatch != NULL) {
-	ret = real_get_obj_scalar(smatch->ptr, smatch->type, 
+	ret = real_get_obj_scalar(smatch->ptr, smatch->type,
 				  dset, idx);
     }
 
@@ -1305,7 +1305,7 @@ double saved_object_get_scalar (const char *oname, int idx,
     return ret;
 }
 
-int saved_object_get_series (double *x, const char *oname, 
+int saved_object_get_series (double *x, const char *oname,
 			     int idx, const DATASET *dset)
 {
     int err = 0;
@@ -1350,7 +1350,7 @@ saved_object_get_matrix (const char *oname, int idx, int *err)
 
     if (M == NULL && !*err) {
 	*err = E_BADSTAT;
-    }    
+    }
 
     return M;
 }
@@ -1361,7 +1361,7 @@ saved_object_get_matrix (const char *oname, int idx, int *err)
 */
 
 gretl_matrix *
-saved_object_build_matrix (const char *oname, int idx, 
+saved_object_build_matrix (const char *oname, int idx,
 			   const DATASET *dset,
 			   int *err)
 {
@@ -1386,7 +1386,7 @@ saved_object_build_matrix (const char *oname, int idx,
 }
 
 gretl_matrix *
-last_model_get_irf_matrix (int targ, int shock, double alpha, 
+last_model_get_irf_matrix (int targ, int shock, double alpha,
 			   const DATASET *dset, int *err)
 {
     stacker *smatch = find_smatch(NULL);
@@ -1445,7 +1445,7 @@ double last_model_get_boot_pval (int cnum,
     return ret;
 }
 
-void *last_model_get_data (const char *key, GretlType *type, 
+void *last_model_get_data (const char *key, GretlType *type,
 			   int *size, int *copied, int *err)
 {
     stacker *smatch = find_smatch(NULL);
@@ -1545,7 +1545,7 @@ int parse_object_command (const char *s, char *name, char **cmd)
 
     if (len == 0) {
 	return 0;
-    } 
+    }
 
     if (len > MAXSAVENAME - 1) {
 	len = MAXSAVENAME - 1;
@@ -1576,7 +1576,7 @@ int parse_object_command (const char *s, char *name, char **cmd)
 	fprintf(stderr, "name='%s'\n", name);
     }
 #endif
-    
+
     return err;
 }
 
@@ -1610,14 +1610,14 @@ static void saved_object_free (stacker *s)
 
 #define sys_modtest_opt_ok(o) (o & (OPT_A | OPT_H | OPT_N))
 
-int last_model_test_ok (int ci, gretlopt opt, const DATASET *dset, 
+int last_model_test_ok (int ci, gretlopt opt, const DATASET *dset,
 			PRN *prn)
 {
     GretlObjType type;
     void *ptr;
     int err = 0;
 
-    ptr = get_last_model(&type);  
+    ptr = get_last_model(&type);
     if (ptr == NULL) {
 	pputs(prn, _("Can't do this: no model has been estimated yet\n"));
 	return E_DATA;
@@ -1670,7 +1670,7 @@ int last_model_test_uhat (DATASET *dset, gretlopt opt, PRN *prn)
     void *ptr;
     int err = 0;
 
-    ptr = get_last_model(&type);  
+    ptr = get_last_model(&type);
     if (ptr == NULL) {
 	return E_DATA;
     }
@@ -1760,7 +1760,7 @@ void set_gui_model_list_callback (GList *(*callback)())
    call is issued only in gui mode.
 
    Otherwise, for each saved model, we either mark it for
-   deletion (via the GUI) or revise its sample information 
+   deletion (via the GUI) or revise its sample information
    appropriately in light of the shrinkage of the dataset.
 */
 
@@ -1786,12 +1786,12 @@ int check_models_for_subsample (char *newmask, int *ndropped)
 	    if (moderr) {
 		*ndropped += 1;
 		err = E_CANCEL;
-	    }	    
+	    }
 	    if (fromgui->next != NULL) {
 		fromgui = fromgui->next;
 	    } else {
 		break;
-	    }	    
+	    }
 	}
 	fprintf(stderr, "gui-precheck: ndropped = %d\n", *ndropped);
     } else {
@@ -1809,7 +1809,7 @@ int check_models_for_subsample (char *newmask, int *ndropped)
 		remove_model_subsample_info(pmod);
 	    }
 	}
-	
+
 	while (fromgui != NULL) {
 	    pmod = fromgui->data;
 	    fprintf(stderr, "finalizing model %p\n", fromgui->data);
@@ -1825,7 +1825,7 @@ int check_models_for_subsample (char *newmask, int *ndropped)
 		fromgui = fromgui->next;
 	    } else {
 		break;
-	    }	    
+	    }
 	}
 
 	if (togui != NULL && get_or_send_gui_models != NULL) {
@@ -1891,7 +1891,7 @@ void gretl_saved_objects_cleanup (void)
 	    lmp = NULL;
 	}
 #if ODEBUG
-	fprintf(stderr, " calling saved_object_free on ostack[%d] (%p)\n", 
+	fprintf(stderr, " calling saved_object_free on ostack[%d] (%p)\n",
 		i, ostack[i].ptr);
 #endif
 	saved_object_free(&ostack[i]);
