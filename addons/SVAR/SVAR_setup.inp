@@ -90,7 +90,7 @@ function matrix set_default_dimensions(bundle *mod, list lY,
 end function
     
 function bundle SVAR_setup(string type_string, list lY, list lX[null], 
-			   int varorder[1::1], int dcase[1:5:3])
+			   int varorder[1::1], bool checkident[1])
 
   /*
      This creates a bundle holding the info on the SVAR; this will be
@@ -102,6 +102,9 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
      (maybe not needed any more)
 
      The bootstrap does _not_ live here.
+     
+     The arg 'checkident' is just copied into the model bundle. It still needs 
+     to be processed later (presumably within SVAR_estimate).
      */
      
   # Do a general rank deficiency check on the exogenous
@@ -183,22 +186,18 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
     ret.jcase = 0
   endif
 
-  /* 
-     Optimisation
+  /* Optimisation
   */
   ret.optmeth = 4 # default = scoring
   ret.simann  = 0 # not for now
 
-  /* 
-     Information for cumulating/normalizing IRFs
+  /* Information for cumulating/normalizing IRFs
   */
-
   ret.ncumul = 0
   matrix ret.cumul = {}
   ret.normalize = 0
     
-  /* 
-     Bootstrap
+  /* Bootstrap
   */
   ret.nboot = 0
   ret.boot_alpha = -1
@@ -211,7 +210,10 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
   
   /* Don't calculate the long-run matrix by default.
     (This does not apply to the case of long-run restrictions.) */
-  ret.calc_lr	= 0
+  ret.calc_lr = 0
+  
+  /* Copy the id check choice */
+  ret.checkident = checkident
   
   return ret
 end function

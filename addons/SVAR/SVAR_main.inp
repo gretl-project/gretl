@@ -178,7 +178,7 @@ function bundle GUI_SVAR(int type[1:3:1] "Model type" \
   list lX = dropcoll(determ(X, hasconst, hastrend, hasseas))
     
   # initialize the model bundle    
-  bundle m = SVAR_setup(modelstring(type), Y, lX, l)
+  bundle m = SVAR_setup(modelstring(type), Y, lX, l, checkident)
   if h > 0
     m.horizon = h
   endif
