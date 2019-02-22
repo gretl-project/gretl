@@ -1043,8 +1043,8 @@ static int panel_os_special (MODEL *pmod, DATASET *dset,
 
     if (individual_effects_model(pmod)) {
 	ahat = gretl_model_get_data(pmod, "ahat");
-	if (ahat == NULL) {
-	    fprintf(stderr, "fe_or_re_fcast: ahat is missing\n");
+	if (ahat == NULL && (pmod->opt & OPT_F)) {
+	    fprintf(stderr, "fixed effects forecast: ahat is missing\n");
 	    gretl_matrix_free(b);
 	    free(yhat);
 	    return E_DATA;
