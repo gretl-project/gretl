@@ -15,5 +15,6 @@ include @pkgdir/SVAR_plots.inp
 include @pkgdir/SVAR_boot.inp
 include @pkgdir/SVAR_setup.inp
 include @pkgdir/SVAR_main.inp
+include @pkgdir/SVAR_estim_backend.inp
 
 makepkg SVAR.gfn --index --translations --quiet --dtd="@dtd"

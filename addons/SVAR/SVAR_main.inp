@@ -145,23 +145,6 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
   return errcode
 end function # SVAR_estimate
 
-/* ------------------------------------------------------------------ */
-
-function list determ(list X, bool cnst, bool trnd, bool seas)
-  list ret = cnst ? const : null 
-    
-  if trnd
-    ret += time
-  endif
-    
-  if seas
-    ret += seasonals(0, 1) # centered
-  endif
-  
-  # stick together deterministics and other exog.
-  ret = ret || X
-  return ret
-end function
 
 /* ------------------------------------------------------------------ */
 

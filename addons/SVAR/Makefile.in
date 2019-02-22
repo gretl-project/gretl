@@ -34,7 +34,8 @@ INP =   SVAR_ABfuncs.inp \
 	SVAR_boot.inp \
 	SVAR_plots.inp \
 	SVAR_utils.inp \
-	SVAR_main.inp
+	SVAR_main.inp \
+	SVAR_estim_backend.inp
 
 all: $(PKG).gfn pdfdoc
 

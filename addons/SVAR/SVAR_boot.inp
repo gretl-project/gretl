@@ -49,16 +49,7 @@ function void boot_printout(int type, int n, int rep,
   endif
 end function
 
-# ---------------------------
-
-function scalar max_eval(matrix A)
-  n = rows(A)
-  p = cols(A)/n
-  matrix compan = p==1 ? A : A | (I(n*(p-1)) ~ zeros(n*(p-1), n))  
-  matrix lambda = eigengen(compan)
-  scalar maxmod = maxc(sumr(lambda.^2))
-  return maxmod
-end function
+###############
 
 function matrix bias_correction(scalar H, matrix Ahat, const matrix mu, 
                                 const matrix E, const matrix X, 
