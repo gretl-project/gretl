@@ -32,6 +32,7 @@
 
 #define SUBDEBUG 0
 #define FULLDEBUG 0
+#define PANDEBUG 0
 
 typedef enum {
     SUBSAMPLE_NONE,
@@ -655,7 +656,7 @@ static int restore_full_easy (DATASET *dset, ExecState *state)
     if (dset->t1 != t1min || dset->t2 != t2max) {
 	dset->t1 = t1min;
 	dset->t2 = t2max;
-#if SUBDEBUG
+#if PANDEBUG || SUBDEBUG
 	fprintf(stderr, "restore_full_sample: just set t1=%d and t2=%d\n",
 		t1min, t2max);
 #endif
@@ -725,7 +726,7 @@ int restore_full_sample (DATASET *dset, ExecState *state)
     }
 
     /* destroy sub-sampled data array */
-#if SUBDEBUG
+#if PANDEBUG || SUBDEBUG
     fprintf(stderr, "restore_full_sample: freeing sub-sampled Z at %p (v = %d, n = %d)\n"
 	    " and clearing dset at %p\n", (void *) dset->Z, dset->v, dset->n,
 	    (void *) dset);
@@ -2132,6 +2133,22 @@ static int check_permanent_option (gretlopt opt,
     return 0;
 }
 
+#if PANDEBUG || SUBDEBUG
+
+static void panreport (const char *s, const DATASET *dset)
+{
+    fprintf(stderr, "%s: dset: t1=%d, t2=%d, pd=%d, n=%d\n",
+	    s, dset->t1, dset->t2, dset->pd, dset->n);
+    if (fullset != NULL) {
+	fprintf(stderr, " fullset: t1=%d, t2=%d, pd=%d, n=%d\n",
+		fullset->t1, fullset->t2, fullset->pd, fullset->n);
+    } else {
+	fprintf(stderr, " fullset: not present\n");
+    }
+}
+
+#endif
+
 /* "Precomputing" a mask means computing a mask based on a
    current subsampled dataset (before restoring the full dataset,
    which is a part of the subsampling process). We do this if
@@ -2363,9 +2380,8 @@ int restrict_sample (const char *param, const int *list,
 
     free(oldrestr);
 
-#if SUBDEBUG
-    fprintf(stderr, "restrict sample: dset: t1=%d, t2=%d, n=%d\n",
-	    dset->t1, dset->t2, dset->n);
+#if PANDEBUG || SUBDEBUG
+    panreport("restrict sample", dset);
 #endif
 
     return err;
@@ -2558,6 +2574,7 @@ static int real_set_sample (const char *start,
     int nf, new_t1 = dset->t1, new_t2 = dset->t2;
     int tmin = 0, tmax = 0;
     int testing = 0;
+    int err = 0;
 
     if (dset == NULL) {
 	return E_NODATA;
@@ -2574,10 +2591,8 @@ static int real_set_sample (const char *start,
 #if SUBDEBUG
     fprintf(stderr, "set_sample: start='%s', stop='%s', dset=%p\n",
 	    start, stop, (void *) dset);
-    if (dset != NULL) {
-	fprintf(stderr, "dset->v = %d, dset->n = %d, pd = %d\n",
-		dset->v, dset->n, dset->pd);
-    }
+    fprintf(stderr, "dset->v = %d, dset->n = %d, pd = %d\n",
+	    dset->v, dset->n, dset->pd);
 #endif
 
     if (nf == 2 && dset->n == 0 && !testing) {
@@ -2622,34 +2637,40 @@ static int real_set_sample (const char *start,
 	if (new_t1 < tmin || new_t1 > tmax) {
 	    maybe_clear_range_error(new_t1, dset);
 	    gretl_errmsg_set(_("error in new starting obs"));
-	    return 1;
+	    err = E_DATA;
 	}
     }
 
-    if (strcmp(stop, ";")) {
+    if (!err && strcmp(stop, ";")) {
 	new_t2 = get_sample_limit(stop, dset, SMPL_T2);
 	if (new_t2 < tmin || new_t2 > tmax) {
 	    maybe_clear_range_error(new_t2, dset);
 	    gretl_errmsg_set(_("error in new ending obs"));
-	    return 1;
+	    err = E_DATA;
 	}
     }
 
-    if (new_t1 < tmin || new_t1 > new_t2) {
+    if (!err && (new_t1 < tmin || new_t1 > new_t2)) {
 	gretl_error_clear();
 	gretl_errmsg_set(_("Invalid null sample"));
-	return 1;
+	err = E_DATA;
     }
 
-    if (testing) {
-	*t1 = new_t1;
-	*t2 = new_t2;
-    } else {
-	dset->t1 = new_t1;
-	dset->t2 = new_t2;
+    if (!err) {
+	if (testing) {
+	    *t1 = new_t1;
+	    *t2 = new_t2;
+	} else {
+	    dset->t1 = new_t1;
+	    dset->t2 = new_t2;
+	}
     }
 
-    return 0;
+#if PANDEBUG
+    panreport("real_set_sample", dset);
+#endif
+
+    return err;
 }
 
 int set_sample (const char *start, const char *stop, DATASET *dset)
@@ -2661,6 +2682,11 @@ int set_panel_sample (const char *start, const char *stop,
 		      gretlopt opt, DATASET *dset)
 {
     int s1, s2, err = 0;
+
+    if (!dataset_is_panel(dset)) {
+	gretl_errmsg_sprintf(_("%s: inapplicable option"), print_flags(opt, SMPL));
+	return E_BADOPT;
+    }
 
     /* maybe some day implement option to sample in the
        panel time dimension here? (not trivial)
@@ -2685,9 +2711,23 @@ int set_panel_sample (const char *start, const char *stop,
     }
 
     if (!err) {
-	dset->t1 = (s1 - 1) * dset->pd;
-	dset->t2 = s2 * dset->pd - 1;
+	int t1 = (s1 - 1) * dset->pd;
+	int t2 = s2 * dset->pd - 1;
+	int tmin = 0, tmax = 0;
+
+	sample_range_get_extrema(dset, &tmin, &tmax);
+	if (t1 < tmin || t2 > tmax) {
+	    gretl_errmsg_set("sample range out of bounds");
+	    err = E_DATA;
+	} else {
+	    dset->t1 = t1;
+	    dset->t2 = t2;
+	}
     }
+
+#if PANDEBUG
+    panreport("set_panel_sample", dset);
+#endif
 
     return err;
 }

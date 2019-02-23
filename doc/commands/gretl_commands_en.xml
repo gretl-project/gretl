@@ -13083,6 +13083,10 @@
 	  <flag>--balanced</flag>
 	  <effect>panel data: try to retain balanced panel</effect>
         </option>
+        <option>
+	  <flag>--unit</flag>
+	  <effect>panel data: sample in cross-sectional dimension</effect>
+        </option>
 	<option>
 	  <flag>--quiet</flag>
 	  <effect>don't report sample range</effect>
@@ -13193,6 +13197,16 @@
 	insertion of <quote>missing rows</quote> if need be.  But note that it
 	is not always possible to comply with this request.
       </para>
+
+      <para>
+	The <opt>unit</opt> option is specific to panel data: it
+	allows you to specify a range of <quote>individuals</quote>
+	directly. For example:
+      </para>
+      <code>
+	# limit the sample to the first 50 individuals
+	smpl 1 50 --unit
+      </code>
 
       <para>
 	By default, restrictions on the current sample range are
