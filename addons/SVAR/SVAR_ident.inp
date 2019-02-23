@@ -266,6 +266,10 @@ end function
 
 function scalar SVAR_ident(bundle *b, int verbose[0])
 
+    /* Apparently returns a non-zero number if identification holds.
+     (Which is perhaps against convention, 0 for "no error"?)
+    */
+
     print "(Check for identification: it may happen that in special"
     print " circumstances underidentification goes unnoticed."
     print " If estimation fails, perhaps try adding restrictions.)"

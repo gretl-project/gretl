@@ -13,6 +13,12 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
   scalar T = obj.T
   matrix vcv
   scalar errcode = 0
+  
+  if obj.checkident
+    if SVAR_ident(obj, verbosity) == 0
+      funcerr "Identification check failed."
+    endif
+  endif
 
   if type == 4 # do VECM
     if inbundle(obj, "cointsetup")
