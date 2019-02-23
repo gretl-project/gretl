@@ -283,6 +283,10 @@ function scalar SVAR_ident(bundle *b, int verbose[0])
         matrix Rd = get_full_Rd(&b, 0)
         matrix Ra = I(n2)
         matrix da = vec(I(n))
+        if !nelem(Rd)
+            funcerr "No restrictions specified!"
+        endif
+            
         matrix Rb = Rd[,1:n2]
         matrix db = Rd[,n2+1]
 
