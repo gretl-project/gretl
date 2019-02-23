@@ -2,6 +2,30 @@
    internal; constraints-related functions
 */
 
+function scalar transshockcheck(bundle b)
+  # only for SVEC case
+  # check the last r columns of C (trans shocks), 
+  # shouldn't have more than r-1 zeros in each of them
+  # according to Luetkepohl (2008, EL)
+  # (passing this check doesn't mean everything is OK)
+  
+  if b.type != 4
+    print "Transitory shocks only for SVEC models"
+    return 1
+  endif
+    
+  loop i = (b.n - b.crank)..(b.n - 1) -q
+    matrix part = b.Rd1[, i * b.n + 1: (i+1) * b.n]
+    # check for exclusion restrictions (RHS zero)
+    matrix mc = (sumr(part) .= 1) && (b.Rd1[,cols(b.Rd1)] .= 0)
+    if sum(mc) > b.crank - 1
+      printf "Concerning shock %d\n", i+1
+      funcerr "Too many zero restrictions"
+    endif
+  endloop
+  return 0
+end function
+
 function scalar CheckNormalizeRd(matrix *R, matrix *d)
 /*
    Checks that
@@ -18,7 +42,7 @@ function scalar CheckNormalizeRd(matrix *R, matrix *d)
 
   if r < p 
     matrix Rd = R ~ d
-    if r < rank(Rd) #contradictory
+    if r < rank(Rd) # contradictory
       R = {}
       d = {}
       ret = 1
