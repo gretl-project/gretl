@@ -284,20 +284,20 @@ given, in which case gretl estimates
   default model was (\ref{eq:arima-with-z}).  We changed this for the
   sake of consistency with other software.}
 
-
 \subsection{Estimation}
 \label{arma-est}
 
 The default estimation method for ARMA models is exact maximum
 likelihood estimation (under the assumption that the error term is
-normally distributed), using the Kalman filter in conjunction with the
-BFGS maximization algorithm.  The gradient of the log-likelihood with
-respect to the parameter estimates is approximated numerically.  This
-method produces results that are directly comparable with many other
-software packages.  The constant, and any exogenous variables, are
-treated as in equation (\ref{eq:arma-with-x}).  The covariance matrix
-for the parameters is computed using a numerical approximation to the
-Hessian at convergence.
+normally distributed), using a variety of techniques: the main
+algorithm for evaluating the log-likelihood is AS197 by
+\cite{melard84}. Maximization is performed via BFGS and the score is
+approximated numerically.  This method produces results that are
+directly comparable with many other software packages.  The constant,
+and any exogenous variables, are treated as in equation
+(\ref{eq:arma-with-x}).  The covariance matrix for the parameters is
+computed using a numerical approximation to the Hessian at
+convergence.
 
 The alternative method, invoked with the \option{conditional} switch,
 is conditional maximum likelihood (CML), also known as ``conditional
