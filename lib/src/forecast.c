@@ -1083,8 +1083,8 @@ static int panel_os_special (MODEL *pmod, DATASET *dset,
 
     if (individual_effects_model(pmod)) {
 	ahat = gretl_model_get_data(pmod, "ahat");
-	if (ahat == NULL && (pmod->opt & OPT_F)) {
-	    fprintf(stderr, "fixed effects forecast: ahat is missing\n");
+	if (ahat == NULL) {
+	    fprintf(stderr, "panel forecast: ahat is missing\n");
 	    gretl_matrix_free(b);
 	    free(yhat);
 	    return E_DATA;
@@ -3069,8 +3069,11 @@ static int out_of_sample_check (MODEL *pmod, DATASET *dset)
 	    }
 	}
 	if (ret == OS_ERR) {
-	    gretl_errmsg_set("No out-of-sample observations are available");
+	    gretl_errmsg_set(_("No out-of-sample observations are available"));
 	}
+    } else if (panel) {
+	gretl_errmsg_set(_("The --out-of-sample option is only supported in the "
+			   "time dimension"));
     }
 
     return ret;
