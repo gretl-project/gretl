@@ -89,7 +89,7 @@ struct ddset_ {
     int t1;               /* initial offset into dataset */
     int t1min;            /* first usable observation, any unit */
     int t2max;            /* last usable observation, any unit */
-    int ndum;             /* number of time dummies to use */
+    int ntdum;            /* number of time dummies to use */
     double SSR;           /* sum of squared residuals */
     double s2;            /* residual variance */
     double AR1;           /* z statistic for AR(1) errors */
@@ -293,7 +293,7 @@ static ddset *ddset_new (int ci, const int *list, const int *ylags,
     dpd->nzdiff = 0;
     dpd->nzlev = 0;
     dpd->t1min = dpd->t2max = 0;
-    dpd->ndum = 0;
+    dpd->ntdum = 0;
     dpd->ifc = 0;
 
     /* "system"-specific */
@@ -782,11 +782,11 @@ static void arbond_compute_Z_cols (ddset *dpd, int t1min, int t2max)
     /* xc0 records the column where the exogenous vars start */
     dpd->xc0 = dpd->nz;
     dpd->nz += dpd->nzr;
-    dpd->nz += dpd->ndum;
+    dpd->nz += dpd->ntdum;
 
 #if ADEBUG
-    fprintf(stderr, "total nz = %d (dummies = %d, exog = %d)\n",
-	    dpd->nz, dpd->ndum, dpd->nzr);
+    fprintf(stderr, "total nz = %d (time dummies = %d, exog = %d)\n",
+	    dpd->nz, dpd->ntdum, dpd->nzr);
 #endif
 }
 
@@ -824,8 +824,8 @@ static int arbond_sample_check (ddset *dpd, const DATASET *dset)
 
     /* figure number of time dummies, if wanted */
     if (dpd->flags & DPD_TIMEDUM) {
-	dpd->ndum = t2max - t1imin;
-	dpd->k += dpd->ndum;
+	dpd->ntdum = t2max - t1imin;
+	dpd->k += dpd->ntdum;
     }
 
     /* is t1min actually "reachable"? */
@@ -908,7 +908,7 @@ static int dpd_wald_test (ddset *dpd)
     int err = 0;
 
     /* total number of coefficients excluding any time dummies */
-    knd = dpd->k - dpd->ndum;
+    knd = dpd->k - dpd->ntdum;
 
     /* the number of coefficients to be tested at the first step
        (we exclude the constant)
@@ -950,26 +950,25 @@ static int dpd_wald_test (ddset *dpd)
 	dpd->wdf[0] = k1;
     }
 
-    if (!err && dpd->ndum > 0) {
+    if (!err && dpd->ntdum > 0) {
 	/* time dummies: these are always at the end of the
 	   coeff vector
 	*/
-	b = gretl_matrix_reuse(dpd->kmtmp, dpd->ndum, 1);
-	V = gretl_matrix_reuse(dpd->kktmp, dpd->ndum, dpd->ndum);
+	int kt = dpd->ntdum;
+
+	b = gretl_matrix_reuse(dpd->kmtmp, kt, 1);
+	V = gretl_matrix_reuse(dpd->kktmp, kt, kt);
 	gretl_matrix_extract_matrix(b, dpd->beta, knd, 0,
 				    GRETL_MOD_NONE);
 	gretl_matrix_extract_matrix(V, dpd->vbeta, knd, knd,
 				    GRETL_MOD_NONE);
-
 	err = gretl_invert_symmetric_matrix(V);
-
 	if (!err) {
 	    x = gretl_scalar_qform(b, V, &err);
 	}
-
 	if (!err) {
 	    dpd->wald[1] = x;
-	    dpd->wdf[1] = dpd->ndum;
+	    dpd->wdf[1] = kt;
 	}
     }
 
@@ -1736,7 +1735,7 @@ static int dpd_finalize_model (MODEL *pmod,
     gretl_model_set_int(pmod, "n_included_units", dpd->effN);
     gretl_model_set_int(pmod, "t1min", dpd->t1min + 1);
     gretl_model_set_int(pmod, "t2max", dpd->t2max + 1);
-    gretl_model_set_int(pmod, "ndum", dpd->ndum);
+    gretl_model_set_int(pmod, "ntdum", dpd->ntdum);
     gretl_model_set_int(pmod, "ifc", dpd->ifc);
 
     pmod->ncoeff = dpd->k;
@@ -1788,7 +1787,7 @@ static int dpd_finalize_model (MODEL *pmod,
 	gretl_model_set_param_name(pmod, j++, dset->varname[dpd->xlist[i+1]]);
     }
 
-    for (i=0; i<dpd->ndum; i++) {
+    for (i=0; i<dpd->ntdum; i++) {
 	if (dpd->ifc) {
 	    sprintf(tmp, "T%d", dpd->t1min + i + 2);
 	    gretl_model_set_param_name(pmod, j++, tmp);
@@ -1873,7 +1872,7 @@ static int dpd_finalize_model (MODEL *pmod,
 	    gretl_model_set_matrix_as_data(pmod, "GMMinst", Z);
 	}
 	if (opt & OPT_D) {
-	    maybe_suppress_time_dummies(pmod, dpd->ndum);
+	    maybe_suppress_time_dummies(pmod, dpd->ntdum);
 	}
     }
 
@@ -2170,7 +2169,7 @@ static int arbond_make_y_X (ddset *dpd, const DATASET *dset)
 		x = dset->Z[dpd->xlist[j+1]][s];
 		gretl_matrix_set(dpd->X, k, j + dpd->p, x);
 	    }
-	    for (j=0; j<dpd->ndum; j++) {
+	    for (j=0; j<dpd->ntdum; j++) {
 		/* time dummies */
 		x = (t - dpd->t1min - 1 == j)? 1 : 0;
 		gretl_matrix_set(dpd->X, k, j + dpd->p + dpd->nx, x);
@@ -2345,7 +2344,7 @@ static int arbond_make_Z_and_A (ddset *dpd, const DATASET *dset)
 		    gretl_matrix_set(dpd->Zi, k, dpd->xc0 + j, x);
 		}
 		/* plus time dummies, if wanted */
-		for (j=0; j<dpd->ndum; j++) {
+		for (j=0; j<dpd->ntdum; j++) {
 		    x = (t - dpd->t1min - 1 == j)? 1 : 0;
 		    gretl_matrix_set(dpd->Zi, k, dpd->xc0 + dpd->nzr + j, x);
 		}

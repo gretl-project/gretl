@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libset.h"
@@ -84,7 +84,7 @@ static void dpanel_residuals (ddset *dpd)
     }
 }
 
-/* 
+/*
    This is the first thing we do for each panel unit: construct a list
    holding the usable observations. A usable observation is defined
    as one for which we have all the data for the equation _in levels_.
@@ -97,7 +97,7 @@ static void dpanel_residuals (ddset *dpd)
    in the big array dpd->used, so that we can place the residuals
    correctly later on.
 
-   (Note that @t0 gives the offset in the full dataset of the start of 
+   (Note that @t0 gives the offset in the full dataset of the start of
    the unit's data.)
 
    We return the number of "good observations" minus one, to allow
@@ -105,7 +105,7 @@ static void dpanel_residuals (ddset *dpd)
    max number of observations that are actually usable.
 */
 
-static int check_unit_obs (ddset *dpd, int *goodobs, 
+static int check_unit_obs (ddset *dpd, int *goodobs,
 			   const DATASET *dset,
 			   int t0)
 {
@@ -171,7 +171,7 @@ static void copy_diag_info (diag_info *targ, diag_info *src)
    On input tmin should be the first available obs in levels;
    tmax should be the second-last available obs in levels
    (in each case, for any unit). These indices are based at 0
-   for the first period in the unit's data, and they 
+   for the first period in the unit's data, and they
    represent the subtractive terms in the first and last
    feasible observations in differences, respectively.
 
@@ -184,7 +184,7 @@ static void copy_diag_info (diag_info *targ, diag_info *src)
    gappy data we may have k > 1 for some observations;
    nonetheless, we "impute" a difference-base index of
    (the subtractive term's index + 1). This ensures
-   that we don't use level instruments that are entangled 
+   that we don't use level instruments that are entangled
    in the difference they are supposed to be instrumenting.
 */
 
@@ -209,12 +209,12 @@ int diff_iv_accounts (ddset *dpd, int tmin, int tmax)
 
 	dpd->d[i].rows = 0;
 
-#if IVDEBUG	
-	fprintf(stderr, "GMM spec %d, incoming: minlag = %d, maxlag = %d\n", 
+#if IVDEBUG
+	fprintf(stderr, "GMM spec %d, incoming: minlag = %d, maxlag = %d\n",
 		i, minlag, maxlag);
 #endif
 
-	/* find tbase = the 'base' of the first differenced observation 
+	/* find tbase = the 'base' of the first differenced observation
 	   for which there can be any usable instruments */
 
 	for (t=tbot; t<=ttop; t++) {
@@ -229,7 +229,7 @@ int diff_iv_accounts (ddset *dpd, int tmin, int tmax)
 	    dpd->nzb -= 1;
 	    for (k=i; k<dpd->nzb; k++) {
 		copy_diag_info(&dpd->d[k], &dpd->d[k+1]);
-	    }	    
+	    }
 	    i--;
 	    continue;
 	}
@@ -253,7 +253,7 @@ int diff_iv_accounts (ddset *dpd, int tmin, int tmax)
 	    itot += ii;
 	}
 
-#if IVDEBUG    
+#if IVDEBUG
 	fprintf(stderr, " total insts = %d\n", itot);
 	fprintf(stderr, " usable maxlag = %d\n", usable_maxlag);
 #endif
@@ -282,7 +282,7 @@ int lev_iv_accounts (ddset *dpd, int tbot, int ttop)
 {
     int i, t, k, nrows = 0;
 
-#if IVDEBUG    
+#if IVDEBUG
     fprintf(stderr, "*** lev_iv_accounts: tbot = %d, ttop = %d\n", tbot, ttop);
 #endif
 
@@ -295,12 +295,12 @@ int lev_iv_accounts (ddset *dpd, int tbot, int ttop)
 
 	dpd->d2[i].rows = 0;
 
-#if IVDEBUG  	
-	fprintf(stderr, "spec %d: minlag = %d, maxlag = %d\n", 
+#if IVDEBUG
+	fprintf(stderr, "spec %d: minlag = %d, maxlag = %d\n",
 		i, minlag, maxlag);
 #endif
 
-	/* find tbase = the first obs in levels for which there can 
+	/* find tbase = the first obs in levels for which there can
 	   be any usable instruments; since these instruments are
 	   differences we need to go back one step beyond minlag
 	*/
@@ -317,12 +317,12 @@ int lev_iv_accounts (ddset *dpd, int tbot, int ttop)
 	    dpd->nzb2 -= 1;
 	    for (k=i; k<dpd->nzb2; k++) {
 		copy_diag_info(&dpd->d2[k], &dpd->d2[k+1]);
-	    }	    
+	    }
 	    i--;
 	    continue;
 	}
 
-#if IVDEBUG  
+#if IVDEBUG
 	fprintf(stderr, " tbase = %d\n", tbase);
 #endif
 
@@ -341,7 +341,7 @@ int lev_iv_accounts (ddset *dpd, int tbot, int ttop)
 	    itot += ii;
 	}
 
-#if IVDEBUG    
+#if IVDEBUG
 	fprintf(stderr, " total insts = %d\n", itot);
 	fprintf(stderr, " usable maxlag = %d\n", usable_maxlag);
 #endif
@@ -358,7 +358,7 @@ int lev_iv_accounts (ddset *dpd, int tbot, int ttop)
 /* Work through the array of block-diagonal instrument
    specifications. Discard any useless ones, trim the
    maxlag values to what is supported on the data,
-   and for each spec, count and record the implied number 
+   and for each spec, count and record the implied number
    of instrument rows that will appear in the Z matrix.
 */
 
@@ -371,7 +371,7 @@ static int block_instrument_count (ddset *dpd, int t1lev, int t2pen)
     dpd->nz += dpd->nzdiff;
 
 #if IVDEBUG
-    fprintf(stderr, "block_instrument_count, diffs: got %d rows (total = %d)\n", 
+    fprintf(stderr, "block_instrument_count, diffs: got %d rows (total = %d)\n",
 	    dpd->nzdiff, dpd->nz);
 #endif
 
@@ -384,9 +384,9 @@ static int block_instrument_count (ddset *dpd, int t1lev, int t2pen)
     }
 
 #if IVDEBUG
-    fprintf(stderr, "block_instrument_count, levels: got %d rows (total = %d)\n", 
+    fprintf(stderr, "block_instrument_count, levels: got %d rows (total = %d)\n",
 	    dpd->nzlev, dpd->nz);
-#endif  
+#endif
 
     return 0;
 }
@@ -399,9 +399,9 @@ static int block_instrument_count (ddset *dpd, int t1lev, int t2pen)
 static void do_unit_accounting (ddset *dpd, const DATASET *dset,
 				int **Goodobs)
 {
-    /* t1lev = index of first good obs in levels, 
-       t1dif = index of first good obs in differences, 
-       t2pen = index of penultimate good obs in levels 
+    /* t1lev = index of first good obs in levels,
+       t1dif = index of first good obs in differences,
+       t2pen = index of penultimate good obs in levels
     */
     int t1lev = dpd->T, t1dif = dpd->T, t2pen = 0;
     int i, t;
@@ -458,12 +458,12 @@ static void do_unit_accounting (ddset *dpd, const DATASET *dset,
 
     /* figure number of time dummies, if wanted */
     if (dpd->flags & DPD_TIMEDUM) {
-	dpd->ndum = dpd->t2max - dpd->t1min;
+	dpd->ntdum = dpd->t2max - dpd->t1min;
 	if (dpd->ifc == 0) {
-	    dpd->ndum += 1;
+	    dpd->ntdum += 1;
 	}
-	dpd->k += dpd->ndum;
-	dpd->nz += dpd->ndum;
+	dpd->k += dpd->ntdum;
+	dpd->nz += dpd->ntdum;
     }
 
     if (dpd->nzb > 0) {
@@ -472,13 +472,13 @@ static void do_unit_accounting (ddset *dpd, const DATASET *dset,
     }
 
     /* figure the required number of columns for the Yi and Xi data
-       matrices: this must be great enough to span the data range 
+       matrices: this must be great enough to span the data range
        for all units taken together
     */
     dpd->max_ni = dpd->t2max - dpd->t1min + 1;
     if (dpd->flags & DPD_SYSTEM) {
 	dpd->max_ni += dpd->max_ni - 1;
-    }   
+    }
 
     dpd->dcols = dpd->t2max - t1dif + 1;
     dpd->dcolskip = dpd->p + 1;
@@ -493,12 +493,12 @@ static void do_unit_accounting (ddset *dpd, const DATASET *dset,
 
 #if DPDEBUG
     fprintf(stderr, "*** after dpanel accounting:\n"
-	    " effN=%d, max_ni=%d, k=%d, ndum=%d, nz=%d\n", 
-	    dpd->effN, dpd->max_ni, dpd->k, dpd->ndum, dpd->nz);
+	    " effN=%d, max_ni=%d, k=%d, ntdum=%d, nz=%d\n",
+	    dpd->effN, dpd->max_ni, dpd->k, dpd->ntdum, dpd->nz);
     fprintf(stderr, " maxTi=%d, minTi=%d\n", dpd->maxTi, dpd->minTi);
     fprintf(stderr, " t1min=%d, t2max=%d\n", dpd->t1min, dpd->t2max);
     fprintf(stderr, " t1lev=%d, t1dif=%d\n", t1lev, t1dif);
-#endif    
+#endif
 }
 
 /* Based on the accounting of good observations for a unit recorded
@@ -509,7 +509,7 @@ static void do_unit_accounting (ddset *dpd, const DATASET *dset,
 static void build_unit_D_matrix (ddset *dpd, int *goodobs, gretl_matrix *D)
 {
     int usable = goodobs[0] - 1;
-    int i, j, i0, i1;    
+    int i, j, i0, i1;
 
     gretl_matrix_zero(D);
 
@@ -536,12 +536,12 @@ static void build_unit_D_matrix (ddset *dpd, int *goodobs, gretl_matrix *D)
 #endif
 }
 
-static void build_unit_H_matrix (ddset *dpd, int *goodobs, 
+static void build_unit_H_matrix (ddset *dpd, int *goodobs,
 				 gretl_matrix *D)
 {
     build_unit_D_matrix(dpd, goodobs, D);
-    gretl_matrix_multiply_mod(D, GRETL_MOD_TRANSPOSE, 
-			      D, GRETL_MOD_NONE, 
+    gretl_matrix_multiply_mod(D, GRETL_MOD_TRANSPOSE,
+			      D, GRETL_MOD_NONE,
 			      dpd->H, GRETL_MOD_NONE);
 }
 
@@ -585,10 +585,10 @@ static double timedum_diff (ddset *dpd, int j, int t)
 }
 
 /* Build row vector of dependent variable values in @Yi using
-   differences, followed by levels if wanted. 
+   differences, followed by levels if wanted.
 */
 
-static int build_Y (ddset *dpd, int *goodobs, 
+static int build_Y (ddset *dpd, int *goodobs,
 		    const DATASET *dset,
 		    int t, gretl_matrix *Yi)
 {
@@ -609,14 +609,14 @@ static int build_Y (ddset *dpd, int *goodobs,
 	ycol = i1 - dpd->dcolskip;
 	if (ycol >= Yi->cols) {
 	    fprintf(stderr, "Bzzt! scribbling off the end of Yi (diffs)\n"
-		    " Yi->cols = %d; i1 - dcolskip = %d - %d = %d\n", 
+		    " Yi->cols = %d; i1 - dcolskip = %d - %d = %d\n",
 		    Yi->cols, i1, dpd->dcolskip, ycol);
 	    return E_DATA;
 	} else {
 	    gretl_vector_set(Yi, ycol, dy);
 	}
     }
-    
+
     if (gmm_sys(dpd)) {
 	/* levels */
 	for (i=0; i<=usable; i++) {
@@ -625,7 +625,7 @@ static int build_Y (ddset *dpd, int *goodobs,
 	    ycol = i1 + dpd->lcol0;
 	    if (ycol >= Yi->cols) {
 		fprintf(stderr, "Bzzt! scribbling off the end of Yi (levels)\n"
-			" Yi->cols = %d; i1 + lcol0 = %d + %d = %d\n", 
+			" Yi->cols = %d; i1 + lcol0 = %d + %d = %d\n",
 			Yi->cols, i1, dpd->lcol0, ycol);
 		fprintf(stderr, " note: dpd->t1min = %d, 1 + dpd->p = %d\n",
 			dpd->t1min, 1 + dpd->p);
@@ -643,7 +643,7 @@ static int build_Y (ddset *dpd, int *goodobs,
    differences, followed by levels if wanted.
 */
 
-static void build_X (ddset *dpd, int *goodobs, 
+static void build_X (ddset *dpd, int *goodobs,
 		     const DATASET *dset,
 		     int t, gretl_matrix *Xi)
 {
@@ -688,8 +688,8 @@ static void build_X (ddset *dpd, int *goodobs,
 	    gretl_matrix_set(Xi, row++, col, dx);
 	}
 
-	if (dpd->ndum > 0) {
-	    for (j=0; j<dpd->ndum; j++) {
+	if (dpd->ntdum > 0) {
+	    for (j=0; j<dpd->ntdum; j++) {
 		if (gmm_sys(dpd)) {
 		    dx = timedum_diff(dpd, j, i1);
 		} else if (dpd_style(dpd)) {
@@ -703,7 +703,7 @@ static void build_X (ddset *dpd, int *goodobs,
 	    }
 	}
     }
-    
+
     if (gmm_sys(dpd)) {
 	for (i=0; i<=usable; i++) {
 	    i1 = goodobs[i+1];
@@ -721,7 +721,7 @@ static void build_X (ddset *dpd, int *goodobs,
 		gretl_matrix_set(Xi, row++, col, xj[t1]);
 	    }
 
-	    for (j=0; j<dpd->ndum; j++) {
+	    for (j=0; j<dpd->ntdum; j++) {
 		dx = timedum_level(dpd, j, i1);
 		gretl_matrix_set(Xi, row++, col, dx);
 	    }
@@ -774,8 +774,8 @@ static int bad_write_check (ddset *dpd, int row, int lev)
 
 /* GMM-style instruments in levels for the eqns in differences */
 
-static int gmm_inst_diff (ddset *dpd, int bnum, const double *x, 
-			  int s, int *goodobs, int row0, int col0, 
+static int gmm_inst_diff (ddset *dpd, int bnum, const double *x,
+			  int s, int *goodobs, int row0, int col0,
 			  gretl_matrix *Zi)
 {
     int maxlag = dpd->d[bnum].maxlag;
@@ -800,9 +800,9 @@ static int gmm_inst_diff (ddset *dpd, int bnum, const double *x,
 		    bad_write_check(dpd, row, 0);
 #endif
 		    gretl_matrix_set(Zi, row, col, xt);
-		} 
+		}
 		row++;
-	    } 
+	    }
 	}
 
     }
@@ -812,8 +812,8 @@ static int gmm_inst_diff (ddset *dpd, int bnum, const double *x,
 
 /* GMM-style instruments in differences for the eqns in levels */
 
-static int gmm_inst_lev (ddset *dpd, int bnum, const double *x, 
-			 int s, int *goodobs, int row0, int col0, 
+static int gmm_inst_lev (ddset *dpd, int bnum, const double *x,
+			 int s, int *goodobs, int row0, int col0,
 			 gretl_matrix *Zi)
 {
     int maxlag = dpd->d2[bnum].maxlag;
@@ -837,9 +837,9 @@ static int gmm_inst_lev (ddset *dpd, int bnum, const double *x,
 		    bad_write_check(dpd, row, 1);
 #endif
 		    gretl_matrix_set(Zi, row, col, x1 - x0);
-		} 
+		}
 		row++;
-	    } 
+	    }
 	}
     }
 
@@ -855,7 +855,7 @@ static int gmm_inst_lev (ddset *dpd, int bnum, const double *x,
    counting both observations in differences and observations in
    levels, if applicable.
 
-   We pack the instruments in the following order: 
+   We pack the instruments in the following order:
 
    1) G1: GMM-style instruments in levels for equations in
       differences
@@ -863,10 +863,10 @@ static int gmm_inst_lev (ddset *dpd, int bnum, const double *x,
    3) G2: GMM-style instruments in differences for equations in
       levels, if present
 
-   5) I1: "Regular" instruments, differenced exog vars for eqns 
+   5) I1: "Regular" instruments, differenced exog vars for eqns
       in differences
 
-   6) I2: "Regular" instruments, levels of exog vars for eqns 
+   6) I2: "Regular" instruments, levels of exog vars for eqns
       in levels, if any
 
    7) D1: Time dummies for eqns in differences, if specified and if
@@ -885,7 +885,7 @@ static int gmm_inst_lev (ddset *dpd, int bnum, const double *x,
 
 */
 
-static void build_Z (ddset *dpd, int *goodobs, 
+static void build_Z (ddset *dpd, int *goodobs,
 		     const DATASET *dset,
 		     int t, gretl_matrix *Zi)
 {
@@ -904,7 +904,7 @@ static void build_Z (ddset *dpd, int *goodobs,
     /* GMM-style instruments in levels for diffs equations */
     for (i=0; i<dpd->nzb; i++) {
 	x = dset->Z[dpd->d[i].v];
-	row = gmm_inst_diff(dpd, i, x, t, goodobs, row, 0, Zi);	
+	row = gmm_inst_diff(dpd, i, x, t, goodobs, row, 0, Zi);
     }
 
     col = dpd->t2max - dpd->t1min;
@@ -912,7 +912,7 @@ static void build_Z (ddset *dpd, int *goodobs,
     /* GMM-style instruments in diffs for levels equations */
     for (i=0; i<dpd->nzb2; i++) {
 	x = dset->Z[dpd->d2[i].v];
-	row = gmm_inst_lev(dpd, i, x, t, goodobs, row, col, Zi);	
+	row = gmm_inst_lev(dpd, i, x, t, goodobs, row, col, Zi);
     }
 
     /* equations in differences: differenced exog vars */
@@ -940,15 +940,15 @@ static void build_Z (ddset *dpd, int *goodobs,
     }
 
     /* equations in differences: time dummies */
-    if (dpd->ndum > 0 && !gmm_sys(dpd)) {
+    if (dpd->ntdum > 0 && !gmm_sys(dpd)) {
 	for (i=0; i<usable; i++) {
 	    i1 = goodobs[i+2];
 	    col = i1 - dpd->dcolskip;
-	    for (j=0; j<dpd->ndum; j++) {
+	    for (j=0; j<dpd->ntdum; j++) {
 		dx = timedum_level(dpd, j, i1);
 		gretl_matrix_set(Zi, k3 + j, col, dx);
 	    }
-	}	
+	}
     }
 
     if (gmm_sys(dpd)) {
@@ -966,11 +966,11 @@ static void build_Z (ddset *dpd, int *goodobs,
 	}
 
 	/* equations in levels: time dummies */
-	if (dpd->ndum > 0) {
+	if (dpd->ntdum > 0) {
 	    for (i=0; i<=usable; i++) {
 		i1 = goodobs[i+1];
 		col = i1 + dpd->lcol0;
-		for (j=0; j<dpd->ndum; j++) {
+		for (j=0; j<dpd->ntdum; j++) {
 		    dx = timedum_level(dpd, j, i1);
 		    gretl_matrix_set(Zi, k3 + j, col, dx);
 		}
@@ -1015,7 +1015,7 @@ static int trim_zero_inst (ddset *dpd)
 
 /* allocate temporary storage needed by do_units() */
 
-static int make_units_workspace (ddset *dpd, gretl_matrix **D, 
+static int make_units_workspace (ddset *dpd, gretl_matrix **D,
 				 gretl_matrix **Yi, gretl_matrix **Xi)
 {
     int err = 0;
@@ -1043,13 +1043,13 @@ static int make_units_workspace (ddset *dpd, gretl_matrix **D,
     return err;
 }
 
-/* Stack the per-unit data matrices from unit @unum for future use, 
-   skipping unused observations and recording the numbers of 
+/* Stack the per-unit data matrices from unit @unum for future use,
+   skipping unused observations and recording the numbers of
    observations in differences and in levels.
 */
 
 static void stack_unit_data (ddset *dpd,
-			     const gretl_matrix *Yi, 
+			     const gretl_matrix *Yi,
 			     const gretl_matrix *Xi,
 			     const gretl_matrix *Zi,
 			     int *goodobs, int unum,
@@ -1142,7 +1142,7 @@ static int do_units (ddset *dpd, const DATASET *dset,
 
     Zi = dpd->Zi;
     gretl_matrix_reuse(Zi, dpd->nz, dpd->max_ni);
-    
+
     if (D == NULL) {
 	/* the H matrix will not vary by unit */
 	int tau = dpd->t2max - dpd->t1min + 1;
@@ -1208,7 +1208,7 @@ static int do_units (ddset *dpd, const DATASET *dset,
 #if WRITE_MATRICES
     gretl_matrix_write_as_text(dpd->Y, "dpdY.mat", 0);
     gretl_matrix_write_as_text(dpd->X, "dpdX.mat", 0);
-#endif    
+#endif
 
     gretl_matrix_free(D);
     gretl_matrix_free(Yi);
@@ -1217,8 +1217,8 @@ static int do_units (ddset *dpd, const DATASET *dset,
     return err;
 }
 
-/* If we're not doing DPD-style, the constant, if present, 
-   gets differenced away, both as a regressor and as a regular 
+/* If we're not doing DPD-style, the constant, if present,
+   gets differenced away, both as a regressor and as a regular
    instrument. This is for the case where we are not including
    any equations in levels.
 */
@@ -1262,7 +1262,7 @@ static void maybe_prune_const (ddset *dpd)
 
 /* the user hasn't supplied a block-diagonal spec for
    y in the differences equations: here we set up the
-   default version, with unlimited lags 
+   default version, with unlimited lags
 */
 
 static int add_default_ydiff_spec (ddset *dpd)
@@ -1298,9 +1298,9 @@ static int add_default_ydiff_spec (ddset *dpd)
     return 0;
 }
 
-/* the user has specified "system" but hasn't supplied a 
-   block-diagonal spec for y in the levels equations: here 
-   we set up the default version, with 1 lag 
+/* the user has specified "system" but hasn't supplied a
+   block-diagonal spec for y in the levels equations: here
+   we set up the default version, with 1 lag
 */
 
 static int add_default_ylev_spec (ddset *dpd)
@@ -1358,7 +1358,7 @@ static int dpanel_adjust_GMM_spec (ddset *dpd)
        - a GMM-style spec for the dep var, differenced equations
        - any block-diagonal specs for levels eqns
        - a GMM-style spec for dep var, levels equations
-    */       
+    */
 
     for (i=0; i<dpd->nzb; i++) {
 	if (dpd->d[i].level == 0) {
@@ -1374,7 +1374,7 @@ static int dpanel_adjust_GMM_spec (ddset *dpd)
 		have_ylev_spec = 1;
 	    }
 	}
-    }	    
+    }
 
     if (!have_ydiff_spec) {
 	err = add_default_ydiff_spec(dpd);
@@ -1388,7 +1388,7 @@ static int dpanel_adjust_GMM_spec (ddset *dpd)
 	if (err) {
 	    return err;
 	}
-    }    
+    }
 
     if (dpd->nzb2 > 0 && dpd->nzb2 < dpd->nzb) {
 	/* ensure the levels-equations specs come last */
@@ -1411,11 +1411,11 @@ static int dpanel_adjust_GMM_spec (ddset *dpd)
 
 static int print_step_1 (MODEL *pmod, ddset *dpd,
 			 const int *list, const int *ylags,
-			 const char *ispec, 
+			 const char *ispec,
 			 const DATASET *dset,
 			 gretlopt opt, PRN *prn)
 {
-    int err = dpd_finalize_model(pmod, dpd, list, ylags, ispec, 
+    int err = dpd_finalize_model(pmod, dpd, list, ylags, ispec,
 				 dset, opt);
 
     if (!err) {
@@ -1438,21 +1438,21 @@ static void debug_print_specs (ddset *dpd, const char *ispec,
 
     if (ispec != NULL) {
 	fprintf(stderr, "user's ispec = '%s'\n", ispec);
-    } 
+    }
 
-    fprintf(stderr, "nzb = %d, nzb2 = %d\n", dpd->nzb, dpd->nzb2); 
-    fprintf(stderr, "nzr = %d\n", dpd->nzr); 
+    fprintf(stderr, "nzb = %d, nzb2 = %d\n", dpd->nzb, dpd->nzb2);
+    fprintf(stderr, "nzr = %d\n", dpd->nzr);
 
     for (i=0; i<dpd->nzb; i++) {
-	fprintf(stderr, "var %d (%s): lags %d to %d (GMM)\n", 
-		dpd->d[i].v, dset->varname[dpd->d[i].v], 
-		dpd->d[i].minlag, dpd->d[i].maxlag); 
+	fprintf(stderr, "var %d (%s): lags %d to %d (GMM)\n",
+		dpd->d[i].v, dset->varname[dpd->d[i].v],
+		dpd->d[i].minlag, dpd->d[i].maxlag);
     }
 
     for (i=0; i<dpd->nzb2; i++) {
-	fprintf(stderr, "var %d (%s): lags %d to %d (GMMlevel)\n", 
-		dpd->d2[i].v, dset->varname[dpd->d[i].v], 
-		dpd->d2[i].minlag, dpd->d2[i].maxlag); 
+	fprintf(stderr, "var %d (%s): lags %d to %d (GMMlevel)\n",
+		dpd->d2[i].v, dset->varname[dpd->d[i].v],
+		dpd->d2[i].minlag, dpd->d2[i].maxlag);
     }
 
     printlist(dpd->ilist, "ilist (regular instruments)");
@@ -1460,14 +1460,14 @@ static void debug_print_specs (ddset *dpd, const char *ispec,
 
 #endif
 
-/* Public interface for new approach, including system GMM: 
+/* Public interface for new approach, including system GMM:
    in a script use --system (OPT_L, think "levels") to get
-   Blundell-Bond. To build the H matrix as per Ox/DPD use 
-   the option --dpdstyle (OPT_X).  
+   Blundell-Bond. To build the H matrix as per Ox/DPD use
+   the option --dpdstyle (OPT_X).
 */
 
 MODEL dpd_estimate (const int *list, const int *laglist,
-		    const char *ispec, const DATASET *dset, 
+		    const char *ispec, const DATASET *dset,
 		    gretlopt opt, PRN *prn)
 {
     diag_info *d = NULL;
@@ -1499,7 +1499,7 @@ MODEL dpd_estimate (const int *list, const int *laglist,
 
     dpanel_adjust_GMM_spec(dpd);
 
-    if (!dpd_style(dpd) && !gmm_sys(dpd)) { 
+    if (!dpd_style(dpd) && !gmm_sys(dpd)) {
 	maybe_prune_const(dpd);
     }
 
@@ -1537,13 +1537,13 @@ MODEL dpd_estimate (const int *list, const int *laglist,
     if (!err && (opt & OPT_T)) {
 	/* second step, if wanted */
 	if (opt & OPT_V) {
-	    err = print_step_1(&mod, dpd, list, laglist, ispec, 
+	    err = print_step_1(&mod, dpd, list, laglist, ispec,
 			       dset, opt, prn);
 	}
 	if (!err) {
 	    err = dpd_step_2(dpd);
 	}
-    }	
+    }
 
     if (err && !mod.errcode) {
 	mod.errcode = err;
@@ -1551,7 +1551,7 @@ MODEL dpd_estimate (const int *list, const int *laglist,
 
     if (!mod.errcode) {
 	/* write estimation info into model struct */
-	mod.errcode = dpd_finalize_model(&mod, dpd, list, laglist, ispec, 
+	mod.errcode = dpd_finalize_model(&mod, dpd, list, laglist, ispec,
 					 dset, opt);
     }
 

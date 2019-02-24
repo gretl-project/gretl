@@ -827,8 +827,10 @@ static int real_dpanel_fcast (double *yhat,
     const double *y, *xi, *b;
     double *yi = NULL;
     int *xlist, *ylags = NULL;
-    int tmin, yno, free_ylags = 0;
+    int yno, free_ylags = 0;
     int fc_static = (opt & OPT_S);
+    int dpdstyle = (pmod->opt & OPT_X);
+    int t1min, ntdum, tdt, ifc, tdpos;
     int i, vi, s, t, k, u;
     int T, ti, row;
 
@@ -858,11 +860,38 @@ static int real_dpanel_fcast (double *yhat,
 	fc_static = 1;
     }
 
+    /* first usable time-series observation, zero based */
+    t1min = gretl_model_get_int(pmod, "t1min");
+    if (t1min > 0) {
+	t1min--;
+    } else {
+	/* fallback? problematic if we have time dummies */
+	t1min = 1 + ylags[ylags[0]];
+    }
+
+    /* is a constant included? */
+    ifc = gretl_model_get_int(pmod, "ifc");
+
+    /* do we have time dummies? */
+    ntdum = gretl_model_get_int(pmod, "ntdum");
+    if (ntdum > 0) {
+	/* index into coeff array for first time dummy */
+	tdpos = pmod->ncoeff - ntdum;
+	/* period to which first time dummy refers */
+	tdt = t1min + ifc;
+    } else {
+	tdpos = tdt = 0;
+    }
+
+#if 0
+    fprintf(stderr, "ntdum=%d, tdpos=%d, t1min=%d, ifc=%d, tdt=%d\n",
+	    ntdum, tdpos, t1min, ifc, tdt);
+#endif
+
     yno = gretl_model_get_depvar(pmod);
     xlist = gretl_model_get_x_list(pmod);
     y = dset->Z[yno];
     b = pmod->coeff;
-    tmin = 1 + ylags[ylags[0]];
     t = u = row = 0;
 
     for (s=0; s<=dset->t2; s++) {
@@ -891,7 +920,7 @@ static int real_dpanel_fcast (double *yhat,
 	    goto transcribe;
 	}
 
-	if (t < tmin) {
+	if (t < t1min) {
 	    /* required lags not available */
 	    goto transcribe;
 	}
@@ -924,6 +953,17 @@ static int real_dpanel_fcast (double *yhat,
 		    missing = 1;
 		} else {
 		    fct += b[j++] * (xi[s] - xi[s-1]);
+		}
+	    }
+	}
+
+	/* then a time effect, if applicable */
+	if (!missing && ntdum > 0 && t >= tdt) {
+	    fct += b[tdpos + t - tdt];
+	    if (!dpdstyle) {
+		/* time dummies differenced */
+		if (t - tdt > 0) {
+		    fct -= b[tdpos + t - tdt - 1];
 		}
 	    }
 	}
@@ -2950,8 +2990,6 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	fr->actual[t] = dset->Z[yno][t];
     }
 
-    fprintf(stderr, "fr->nobs=%d, nf=%d\n", fr->nobs, nf);
-
     if (nf == 0) {
 	err = E_MISSDATA;
     } else {
@@ -2999,7 +3037,7 @@ static int out_of_sample_check (MODEL *pmod, DATASET *dset)
 	(pmod->ci == OLS && dataset_is_panel(dset))) {
 	panel = 1;
 	ret = OS_ERR;
-	if (gretl_model_get_int(pmod, "ndum") > 0) {
+	if (gretl_model_get_int(pmod, "ntdum") > 0) {
 	    gretl_errmsg_set(_("Specification includes time dummies: cannot "
 			       "forecast out of sample"));
 	    return ret;
