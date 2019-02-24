@@ -2159,7 +2159,8 @@ int *gretl_model_get_x_list (const MODEL *pmod)
 	    }
 	}
     } else if (pmod->ci == ARBOND || pmod->ci == DPANEL) {
-	int sep = 0;
+	int ifc = gretl_model_get_int(pmod, "ifc");
+	int vi, sep = 0;
 
 	nx = 0;
 	for (i=2; i<=pmod->list[0]; i++) {
@@ -2172,9 +2173,13 @@ int *gretl_model_get_x_list (const MODEL *pmod)
 		}
 	    }
 	    if (sep == 1 && i <= pmod->list[0]) {
-		list = gretl_list_append_term(&list, pmod->list[i]);
-		if (list == NULL) {
-		    return NULL;
+		vi = pmod->list[i];
+		if (vi > 0 || ifc) {
+		    /* don't include const if it was dropped */
+		    list = gretl_list_append_term(&list, vi);
+		    if (list == NULL) {
+			return NULL;
+		    }
 		}
 	    }
 	}
