@@ -693,8 +693,9 @@ static_fcast_with_errs (Forecast *fc, MODEL *pmod,
 #define individual_effects_model(m) (m->ci == PANEL && \
 				     (m->opt & (OPT_F | OPT_U)))
 
-/* forecast based on fixed effects or random effects
-   panel data estimators: current sample version
+/* Forecast based on fixed effects or random effects
+   panel data estimators: this version applies when
+   we're not out of sample in the time dimension.
 */
 
 static int fe_or_re_fcast (Forecast *fc, MODEL *pmod,
@@ -734,7 +735,16 @@ static int fe_or_re_fcast (Forecast *fc, MODEL *pmod,
 
 	if (!missing) {
 	    /* individual effect */
-	    if (na(ahat[t])) {
+	    if (t < pmod->t1 || t > pmod->t2) {
+		/* out of sample in x-sectional dimension */
+		if (pmod->opt & OPT_F) {
+		    /* fixed effect: use global constant */
+		    fc->yhat[t] = pmod->coeff[0];
+		} else {
+		    /* random effect: use expectation of zero */
+		    fc->yhat[t] = 0.0;
+		}
+	    } else if (na(ahat[t])) {
 		missing = 1;
 	    } else {
 		fc->yhat[t] = ahat[t];
@@ -816,13 +826,13 @@ static void transcribe_to_matrix (gretl_matrix *fc,
     }
 }
 
-/* For dpanel forecast, out of sample in the time dimension:
+/* For panel forecast, out of sample in the time dimension:
    construct a time effect as the mean of those actually
    estimated?
 */
 
-static double dp_os_time_effect (MODEL *pmod, int j, int ntdum,
-				 int dpdstyle, int ifc)
+static double os_time_effect (MODEL *pmod, int j, int ntdum,
+			      int dpdstyle, int ifc)
 {
     double bsum = 0.0;
 
@@ -849,6 +859,7 @@ static int real_dpanel_fcast (double *yhat,
 {
     const double *y, *xi, *b;
     double *yi = NULL;
+    double os_tdum = 0.0;
     int *xlist, *ylags = NULL;
     int yno, free_ylags = 0;
     int fc_static = (opt & OPT_S);
@@ -900,6 +911,11 @@ static int real_dpanel_fcast (double *yhat,
     if (ntdum > 0) {
 	/* period to which first time dummy refers */
 	tdt = t1min + ifc;
+	if (mask != NULL) {
+	    /* average time effect, if needed */
+	    int j = pmod->ncoeff - ntdum;
+	    os_tdum = os_time_effect(pmod, j, ntdum, dpdstyle, ifc);
+	}
     }
 
 #if 0
@@ -977,11 +993,11 @@ static int real_dpanel_fcast (double *yhat,
 	}
 
 	/* then a time effect, if applicable */
-	if (!missing && ntdum > 0 && t >= tdt) {
+	if (!missing && ntdum > 0) {
 	    if (mask != NULL) {
 		/* out of sample */
-		fct += dp_os_time_effect(pmod, j, ntdum, dpdstyle, ifc);
-	    } else {
+		fct += os_tdum;
+	    } else if (t >= tdt) {
 		fct += b[j + t - tdt];
 		if (!dpdstyle) {
 		    /* time dummies differenced */
@@ -1048,9 +1064,9 @@ static int dpanel_fcast (Forecast *fc, MODEL *pmod,
     return err;
 }
 
-/* Out-of-sample forecast routine for panel data,
-   supporting pooled OLS, fixed effects and random
-   effects.
+/* Out-of-sample (in the time dimension) forecast routine
+   for panel data, supporting pooled OLS, fixed effects and
+   random effects.
 */
 
 static int panel_os_special (MODEL *pmod, DATASET *dset,
@@ -1064,10 +1080,12 @@ static int panel_os_special (MODEL *pmod, DATASET *dset,
     gretl_vector *b = NULL;
     double xval, *yhat = NULL;
     const double *y, *ahat = NULL;
+    double os_tdum = 0.0;
     char *mask = dset->submask;
     char **Sr = NULL;
     int k = pmod->ncoeff;
-    int imin, i, j, vi, t, s;
+    int ntdum, imin, imax;
+    int i, j, vi, t, s;
     int err = 0;
 
     s = get_dataset_submask_size(dset);
@@ -1115,6 +1133,15 @@ static int panel_os_special (MODEL *pmod, DATASET *dset,
 	}
     }
 
+    /* for handling of time dummies */
+    ntdum = gretl_model_get_int(pmod, "ntdum");
+    if (ntdum > 0) {
+	imax = pmod->ncoeff - ntdum;
+	os_tdum = os_time_effect(pmod, imax, ntdum, 0, 1);
+    } else {
+	imax = k;
+    }
+
     /* in the fixed effects case we skip the intercept below */
     imin = (pmod->opt & OPT_F)? 1 : 0;
     y = fset->Z[pmod->list[1]];
@@ -1125,7 +1152,7 @@ static int panel_os_special (MODEL *pmod, DATASET *dset,
 	double fct;
 
 	if (mask[t] == 1) {
-	    /* this obs is in the @dset sample */
+	    /* this obs is in the estimation sample */
 	    s++;
 	    continue;
 	}
@@ -1141,7 +1168,7 @@ static int panel_os_special (MODEL *pmod, DATASET *dset,
 	    fct = 0.0;
 	}
 
-	for (i=imin; i<k && !missing; i++) {
+	for (i=imin; i<imax && !missing; i++) {
 	    vi = pmod->list[i+2];
 	    xval = fset->Z[vi][t];
 	    if (na(xval)) {
@@ -1149,6 +1176,11 @@ static int panel_os_special (MODEL *pmod, DATASET *dset,
 	    } else {
 		fct += b->val[i] * xval;
 	    }
+	}
+
+	if (!missing && ntdum > 0) {
+	    /* add mean time effect */
+	    fct += os_tdum;
 	}
 
 	if (missing) {
@@ -3061,12 +3093,6 @@ static int out_of_sample_check (MODEL *pmod, DATASET *dset)
 	(pmod->ci == OLS && dataset_is_panel(dset))) {
 	panel = 1;
 	ret = OS_ERR;
-	if (pmod->ci != DPANEL && gretl_model_get_int(pmod, "ntdum") > 0) {
-	    /* experiment: allow out-of-sample time effects for dpanel */
-	    gretl_errmsg_set(_("Specification includes time dummies: cannot "
-			       "forecast out of sample"));
-	    return ret;
-	}
     } else {
 	panel = 0;
 	ret = OS_OK;
@@ -3255,6 +3281,7 @@ static int parse_forecast_string (const char *s,
 	t2 = dset->t2;
     }
 
+#if 0 /* let this pass? */
     if (!err && !(opt & OPT_O) && individual_effects_model(pmod)) {
 	/* panel data check */
 	if (t1 < pmod->smpl.t1 || t2 > pmod->smpl.t2) {
@@ -3263,6 +3290,7 @@ static int parse_forecast_string (const char *s,
 	    err = E_DATA;
 	}
     }
+#endif
 
     if (!err) {
 	/* in case we hit any "temporary" errors above */
