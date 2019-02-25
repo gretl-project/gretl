@@ -133,8 +133,6 @@ function scalar vecm_est(bundle *SVARobj)
   # (but apparently df is never used again...)
   matrix Sigma = (E'E)./T
 
-  # print olspar Sigma
-    
   # --- construct the various matrices required later
 
   rp = rows(olspar)
@@ -165,7 +163,7 @@ function scalar vecm_est(bundle *SVARobj)
 
   if k > 0
     # matrix sel = nd + seq(1, k) 
-    mu = mu | olspar[nd+1 : nd+1 + k,] # was: mu ~ olspar[sel,]
+    mu = mu | olspar[nd + 1 : nd + k,] # was: mu ~ olspar[sel,]
   endif
 
   /*
