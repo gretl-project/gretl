@@ -816,6 +816,29 @@ static void transcribe_to_matrix (gretl_matrix *fc,
     }
 }
 
+/* For dpanel forecast, out of sample in the time dimension:
+   construct a time effect as the mean of those actually
+   estimated?
+*/
+
+static double dp_os_time_effect (MODEL *pmod, int j, int ntdum,
+				 int dpdstyle, int ifc)
+{
+    double bsum = 0.0;
+
+    if (dpdstyle) {
+	int i;
+
+	for (i=0; i<ntdum; i++) {
+	    bsum += pmod->coeff[j + i];
+	}
+    } else {
+	bsum = pmod->coeff[j+ntdum-1] + pmod->coeff[j];
+    }
+
+    return bsum / (ntdum + ifc);
+}
+
 static int real_dpanel_fcast (double *yhat,
 			      gretl_matrix *fc,
 			      char **rlabels,
@@ -830,7 +853,7 @@ static int real_dpanel_fcast (double *yhat,
     int yno, free_ylags = 0;
     int fc_static = (opt & OPT_S);
     int dpdstyle = (pmod->opt & OPT_X);
-    int t1min, ntdum, tdt, ifc, tdpos;
+    int t1min, ntdum, ifc, tdt = 0;
     int i, vi, s, t, k, u;
     int T, ti, row;
 
@@ -875,17 +898,13 @@ static int real_dpanel_fcast (double *yhat,
     /* do we have time dummies? */
     ntdum = gretl_model_get_int(pmod, "ntdum");
     if (ntdum > 0) {
-	/* index into coeff array for first time dummy */
-	tdpos = pmod->ncoeff - ntdum;
 	/* period to which first time dummy refers */
 	tdt = t1min + ifc;
-    } else {
-	tdpos = tdt = 0;
     }
 
 #if 0
-    fprintf(stderr, "ntdum=%d, tdpos=%d, t1min=%d, ifc=%d, tdt=%d\n",
-	    ntdum, tdpos, t1min, ifc, tdt);
+    fprintf(stderr, "ntdum=%d, t1min=%d, ifc=%d, tdt=%d\n",
+	    ntdum, t1min, ifc, tdt);
 #endif
 
     yno = gretl_model_get_depvar(pmod);
@@ -959,11 +978,16 @@ static int real_dpanel_fcast (double *yhat,
 
 	/* then a time effect, if applicable */
 	if (!missing && ntdum > 0 && t >= tdt) {
-	    fct += b[tdpos + t - tdt];
-	    if (!dpdstyle) {
-		/* time dummies differenced */
-		if (t - tdt > 0) {
-		    fct -= b[tdpos + t - tdt - 1];
+	    if (mask != NULL) {
+		/* out of sample */
+		fct += dp_os_time_effect(pmod, j, ntdum, dpdstyle, ifc);
+	    } else {
+		fct += b[j + t - tdt];
+		if (!dpdstyle) {
+		    /* time dummies differenced */
+		    if (t - tdt > 0) {
+			fct -= b[j + t - tdt - 1];
+		    }
 		}
 	    }
 	}
@@ -3037,7 +3061,8 @@ static int out_of_sample_check (MODEL *pmod, DATASET *dset)
 	(pmod->ci == OLS && dataset_is_panel(dset))) {
 	panel = 1;
 	ret = OS_ERR;
-	if (gretl_model_get_int(pmod, "ntdum") > 0) {
+	if (pmod->ci != DPANEL && gretl_model_get_int(pmod, "ntdum") > 0) {
+	    /* experiment: allow out-of-sample time effects for dpanel */
 	    gretl_errmsg_set(_("Specification includes time dummies: cannot "
 			       "forecast out of sample"));
 	    return ret;
