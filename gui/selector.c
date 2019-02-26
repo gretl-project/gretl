@@ -6080,7 +6080,7 @@ static void build_selector_switches (selector *sr)
     } else if (sr->ci == PANEL_WLS) {
 	tmp = gtk_check_button_new_with_label(_("Iterated weighted least squares"));
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_I, 0);
-    } else if (sr->ci == PANEL) {
+    } else if (sr->ci == PANEL || (sr->ci == OLS && dataset_is_panel(dataset))) {
 	tmp = gtk_check_button_new_with_label(_("Include time dummies"));
 	pack_switch(tmp, sr, (model_opt & OPT_D), FALSE, OPT_D, 0);
     } else if (sr->ci == DPANEL) {
