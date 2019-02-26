@@ -4906,12 +4906,17 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
 	    }
 	} else if (l->t == BUNDLE && r->t == MSPEC) {
 	    /* the "mspec" must hold a single key string */
-	    char *s = r->v.mspec->lsel.str;
+	    const char *key = mspec_get_string(r->v.mspec, 0);
 	    GretlType type = GRETL_TYPE_NONE;
+	    void *val = NULL;
 	    int size = 0;
-	    void *val;
 
-	    val = gretl_bundle_get_data(l->v.b, s, &type, &size, &p->err);
+	    if (key == NULL) {
+		gretl_errmsg_set(_("Invalid bundle key"));
+		p->err = E_DATA;
+	    } else {
+		val = gretl_bundle_get_data(l->v.b, key, &type, &size, &p->err);
+	    }
 	    if (!p->err) {
 		int t = gen_type_from_gretl_type(type);
 

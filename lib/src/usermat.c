@@ -620,6 +620,17 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
     return err;
 }
 
+const char *mspec_get_string (matrix_subspec *spec, int i)
+{
+    if (spec == NULL || i < 0 || i > 1) {
+	return NULL;
+    } else if (i == 0) {
+	return spec->ltype != SEL_STR ? NULL : spec->lsel.str;
+    } else {
+	return spec->rtype != SEL_STR ? NULL : spec->rsel.str;
+    }
+}
+
 static int get_slices (matrix_subspec *spec,
 		       const gretl_matrix *M)
 {

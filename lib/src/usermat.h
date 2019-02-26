@@ -152,6 +152,8 @@ gretl_matrix *matrix_get_chunk (const gretl_matrix *M,
 
 int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m);
 
+const char *mspec_get_string (matrix_subspec *spec, int i);
+
 gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 				    matrix_subspec *spec,
 				    int prechecked,
