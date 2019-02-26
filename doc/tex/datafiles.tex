@@ -481,7 +481,7 @@ The second line illustrates the syntax of the \cmd{stack} function.
 The double dots within the parentheses indicate a range of variables
 to be stacked: here we want to stack all 5 columns (for all 5
 years).\footnote{You can also specify a list of series using
-  the wildcard `\texttt{*}'; for example \texttt{stack(p*)} would
+  the wildcard `\texttt{*}'; for example \texttt{stack(v*)} would
   stack all series whose names begin with `v'.} 
 The full data set contains 100 rows; in the stacking of variable
 \varname{x1} we wish to read only the first 50 rows from each column:
@@ -505,11 +505,11 @@ the data in gretl format, with the panel interpretation, discarding
 the original ``variables'' \varname{v1} through \varname{v5}.
 
 The illustrative script above is appropriate when the number of
-variable to be processed is small.  When then are many variables in
-the data set it will be more efficient to use a command loop to
-accomplish the stacking, as shown in the following script.  The setup
-is presumed to be the same as in the previous section (50 units, 5
-periods), but with 20 variables rather than 2.
+variables to be processed is small.  When then are many variables in
+the data set it will be more efficient to use a loop to accomplish the
+stacking, as shown in the following script.  The setup is presumed to
+be the same as in the previous section (50 units, 5 periods), but with
+20 variables rather than 2.
 
 \begin{code}
 open panel.txt
@@ -599,7 +599,7 @@ command in script mode or \app{gretlcli}.
 
 If a panel data set has the \verb+YEAR+ of the observation entered as
 one of the variables you can create a periodic dummy to pick out a
-particular year, e.g.\ \cmd{genr dum = (YEAR=1960)}.  You can also
+particular year, e.g.\ \cmd{genr dum = (YEAR==1960)}.  You can also
 create periodic dummy variables using the modulus operator,
 \verb+%+.  For instance, to create a dummy with
 value 1 for the first observation and every thirtieth observation

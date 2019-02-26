@@ -157,7 +157,7 @@ function scalar ordercond(int n, matrix Ra, matrix Rb,
 
   if verbose > 0
       printf "no. of constraints on A: %d\n", rows(Ra)
-      printf "no. of constraints on B: %d\n", rows(Rb)
+      printf "no. of constraints on B (or C): %d\n", rows(Rb)
       printf "no. of total constraints: %d\n", rows(Ra) + rows(Rb)
       printf "no. of necessary restrictions for the order condition = %d\n", p
   endif
@@ -235,7 +235,7 @@ function scalar ident(matrix Ra, matrix da, matrix Rb, matrix db,
 
   err = CheckNormalizeRd(&locRb,&locdb)
   if err
-      printf "Contradictory constraints on B!\n"
+      printf "Contradictory constraints on B (or C, respectively)!\n"
       return 0
   endif
 
@@ -266,32 +266,56 @@ end function
 
 function scalar SVAR_ident(bundle *b, int verbose[0])
 
+    /* Apparently returns a non-zero number if identification holds.
+     (Which is perhaps against convention, 0 for "no error"?)
+    */
+
+    print "(Check for identification: it may happen that in special"
+    print " circumstances underidentification goes unnoticed."
+    print " If estimation fails, perhaps try adding restrictions.)"
+    
     type = b.type
     n = b.n
     n2 = n*n
     ret = 1
 
     if (type==1) || (type==2) || (type == 4) # plain, C-model or SVEC
-	matrix Rd = get_full_Rd(&b, 0)
-	matrix Ra = I(n2)
-	matrix da = vec(I(n))
-	matrix Rb = Rd[,1:n2]
-	matrix db = Rd[,n2+1]
-    elif type == 3 # AB - Model
-	matrix bRd = b.Rd1 # restrictions on B
-	matrix aRd = b.Rd0 # restrictions on A
+        matrix Rd = get_full_Rd(&b, 0)
+        matrix Ra = I(n2)
+        matrix da = vec(I(n))
+        if !nelem(Rd)
+            funcerr "No restrictions specified!"
+        endif
+            
+        matrix Rb = Rd[,1:n2]
+        matrix db = Rd[,n2+1]
 
-	matrix Ra = aRd[,1:n2]
-	matrix da = aRd[,n2+1]
-	matrix Rb = bRd[,1:n2]
-	matrix db = bRd[,n2+1]
+        if type == 4    # special SVEC check
+            print "(The identification check for SVEC models is work in progress."
+            print " Be careful especially when loadings alpha are restricted.)"
+            transshockcheck(b)  # based on Luetkepohl 2008
+        endif
+
+    elif type == 3 # AB - Model
+        matrix bRd = b.Rd1 # restrictions on B
+        matrix aRd = b.Rd0 # restrictions on A
+
+        matrix Ra = aRd[,1:n2]
+        matrix da = aRd[,n2+1]
+        matrix Rb = bRd[,1:n2]
+        matrix db = bRd[,n2+1]
     endif
 
     if verbose
-	printf "Constraints in implicit form:\n\n"
-	loop foreach i Ra da Rb db --quiet
-	    printf "$i:\n%4.0f\n", $i
-	endloop
+        printf "Constraints in implicit form:\n\n"
+        if type == 3
+            loop foreach i Ra da Rb db --quiet
+                printf "$i:\n%4.0f\n", $i
+            endloop
+        else    # The A restrictions are trivial and confusing
+            printf "Rd:\n%4.0f\n", Rb   # 'b' would be misleading in the C-model
+            printf "dd:\n%4.0f\n", db
+        endif
     endif
 
     ret = ident(Ra, da, Rb, db, verbose)

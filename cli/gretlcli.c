@@ -58,6 +58,9 @@ extern char *rl_gets (char **line_read, const char *prompt);
 extern void initialize_readline (void);
 #endif /* HAVE_READLINE */
 
+#define ENDRUN (NC + 1)
+#define RUNLOOP (NC + 2)
+
 char datafile[MAXLEN];
 char cmdfile[MAXLEN];
 FILE *fb;
@@ -768,9 +771,8 @@ int main (int argc, char *argv[])
 	}
 
 	if (gretl_execute_loop()) {
-	    if (gretl_loop_exec(&state, dset, NULL)) {
-		return 1;
-	    }
+	    state.cmd->ci = RUNLOOP;
+	    err = cli_exec_line(&state, dset, cmdprn);
 	} else {
 	    err = cli_get_input_line(&state);
 	    if (err) {
@@ -1110,7 +1112,30 @@ static int run_include_error (ExecState *s, const char *param,
     return process_command_error(s, err);
 }
 
-#define ENDRUN (NC + 1)
+static void cli_quit (ExecState *s, PRN *cmdprn)
+{
+    if (runit || batch_stdin) {
+	*s->runfile = '\0';
+	runit--;
+	fclose(fb);
+	fb = pop_input_file();
+	if (fb == NULL) {
+	    if (gretl_messages_on()) {
+		pputs(s->prn, _("Done\n"));
+	    }
+	} else {
+	    s->cmd->ci = ENDRUN;
+	}
+    } else {
+	gretl_print_destroy(cmdprn);
+	if (s->cmd->opt & OPT_X) {
+	    gretl_remove(cmdfile);
+	} else {
+	    printf(_("commands saved as %s\n"), cmdfile);
+	    maybe_save_session_output(cmdfile);
+	}
+    }
+}
 
 /* cli_exec_line: this is called to execute both interactive and
    script commands.  Note that most commands get passed on to the
@@ -1131,6 +1156,10 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
     int renumber = 0;
     int err = 0;
 
+    if (cmd->ci == RUNLOOP) {
+	goto cmd_proceed;
+    }
+
 #if 0
     fprintf(stderr, "cli_exec_line: '%s'\n", line);
 #endif
@@ -1139,10 +1168,11 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	err = gretl_function_append_line(line);
 	if (err) {
 	    errmsg(err, prn);
+	    goto cmd_finish;
 	} else {
 	    pprintf(cmdprn, "%s\n", line);
+	    return 0;
 	}
-	return err;
     }
 
     if (string_is_blank(line)) {
@@ -1159,7 +1189,9 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	int action = cli_saved_object_action(line, dset, prn);
 
 	if (action == OBJ_ACTION_INVALID) {
-	    return 1; /* action was faulty */
+	    /* action was faulty */
+	    err = 1;
+	    goto cmd_finish;
 	} else if (action != OBJ_ACTION_NONE) {
 	    return 0; /* action was OK (and handled), or ignored */
 	}
@@ -1185,7 +1217,8 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	}
 	gretl_echo_command(cmd, line, prn);
         errmsg(err, prn);
-	return (catch)? 0 : err;
+	err = catch ? 0 : err;
+	goto cmd_finish;
     }
 
     gretl_exec_state_transcribe_flags(s, cmd);
@@ -1206,7 +1239,8 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	       line);
 	equation_system_destroy(s->sys);
 	s->sys = NULL;
-	return 1;
+	err = 1;
+	goto cmd_finish;
     }
 
     if (cmd->ci == LOOP && !batch && !runit) {
@@ -1226,7 +1260,7 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	} else if (!batch && !runit) {
 	    gretl_record_command(cmd, line, cmdprn);
 	}
-	return err;
+	goto cmd_finish;
     }
 
     if (gretl_echo_on()) {
@@ -1239,6 +1273,8 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
     }
 
     check_for_loop_only_options(cmd->ci, cmd->opt, prn);
+
+ cmd_proceed:
 
     gretl_exec_state_set_callback(s, cli_exec_callback, OPT_NONE);
 
@@ -1282,28 +1318,12 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	}
 	break;
 
+    case RUNLOOP:
+	err = gretl_loop_exec(s, dset, NULL);
+	break;
+
     case QUIT:
-	if (runit || batch_stdin) {
-	    *s->runfile = '\0';
-	    runit--;
-	    fclose(fb);
-	    fb = pop_input_file();
-	    if (fb == NULL) {
-		if (gretl_messages_on()) {
-		    pputs(prn, _("Done\n"));
-		}
-	    } else {
-		cmd->ci = ENDRUN;
-	    }
-	} else {
-	    gretl_print_destroy(cmdprn);
-	    if (cmd->opt & OPT_X) {
-		gretl_remove(cmdfile);
-	    } else {
-		printf(_("commands saved as %s\n"), cmdfile);
-		maybe_save_session_output(cmdfile);
-	    }
-	}
+	cli_quit(s, cmdprn);
 	break;
 
     case RUN:
@@ -1367,8 +1387,10 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	} else if (cmd->auxint == DS_RENUMBER) {
 	    err = cli_renumber_series(cmd->list, cmd->parm2, dset, prn);
 	    break;
+	} else {
+	   err = gretl_cmd_exec(s, dset);
 	}
-	/* Falls through. */
+	break;
 
     default:
 	err = gretl_cmd_exec(s, dset);
@@ -1380,8 +1402,13 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	gretl_record_command(cmd, line, cmdprn);
     }
 
+ cmd_finish:
+
     if (err) {
 	gretl_exec_state_uncomment(s);
+	if ((runit || batch) && cmd->ci != QUIT) {
+	    cli_quit(s, cmdprn);
+	}
     }
 
     return err;

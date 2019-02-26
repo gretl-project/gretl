@@ -11,9 +11,10 @@ changelog ***
 - fix companion matrix in vecm_est with exogenous
 - catch the case where restrictions would not work (imp2exp) and print out a message
 
+- New argument 'checkident' in SVAR_setup. Checking identification is default 
+  in script use (SVAR_setup). Some warning messages regarding the non-stable state of
+  the id check code.
+- A new restriction check in the SVEC case (Luetkepohl 2008).
+
 ---- changelog in SVAR.tex updated up to here -----
 
---  New argument 'checkident' in SVAR_setup. Checking identification will become the default 
-  in script use (SVAR_setup). This isn't yet 
-  effective (Feb 22) because the implementation in SVAR_estimate isn't done yet, and neither 
-  is the new version / bug fix of SVAR_ident.

@@ -29,6 +29,13 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
   else # estimate ordinary VAR
     base_est(&obj)
   endif
+  
+  if obj.checkident
+    id = SVAR_ident(&obj, verbosity)
+    if !id
+      funcerr "Identification check failed."
+    endif
+  endif
 
   # grab the instantaneous covariance matrix 
   matrix Sigma = obj.Sigma

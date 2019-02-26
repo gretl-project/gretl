@@ -253,6 +253,15 @@ universally adopted, although in some cases it may be quite CPU-heavy.
 \label{sec:Cmodel}
 \subsection{A simple example}
 
+As a trivial example, we will estimate a plain Cholesky model. The
+data are taken from Stock and Watson's sample data
+\texttt{sw\_ch14.gdt}, and our VAR will include inflation and
+unemployment, with a constant and 3 lags. Then, we will compute the
+IRFs and their 90\% bootstrap confidence interval.\footnote{Why not
+  95\%? Well, keeping the number of bootstrap replications low is one
+  reason. Anyway, it must be said that in the SVAR literature few
+  people use 95\%. 90\%, 84\% or even 66\% are common choices.}
+  
 \begin{table}[htbp]
   \label{InternalChol-in}
   \begin{code}
@@ -275,15 +284,6 @@ print Sigma C
   \caption{Cholesky example via \texttt{gretl}'s internal 
   \texttt{var} command}
 \end{table}
-
-As a trivial example, we will estimate a plain Cholesky model. The
-data are taken from Stock and Watson's sample data
-\texttt{sw\_ch14.gdt}, and our VAR will include inflation and
-unemployment, with a constant and 3 lags. Then, we will compute the
-IRFs and their 90\% bootstrap confidence interval.\footnote{Why not
-  95\%? Well, keeping the number of bootstrap replications low is one
-  reason. Anyway, it must be said that in the SVAR literature few
-  people use 95\%. 90\%, 84\% or even 66\% are common choices.}
 
 \begin{table}[htbp]
   \label{InternalChol-out}
@@ -1593,7 +1593,8 @@ condition. The rank condition is described in \cite{AG} (chapter 4 for
 the AB model), and it involves the rank of a certain matrix, which can
 be computed as a function of the four matrices $R_a$, $d_a$, $R_b$ and
 $d_b$. The \texttt{SVAR} package contains a function for doing just
-that, whose name is \texttt{SVAR\_ident}.
+that, whose name is \texttt{SVAR\_ident}.\footnote{Starting in version 1.4 
+of the SVAR addon this identification check is carried out by default.}
 
 As a simple example, let's check that the plain model is in fact
 identified by running a simple variation of the example contained in
@@ -1747,7 +1748,16 @@ achieve identification, apart from the special case $n =2$, $r=1$, so
 in general the partition between transitory and permanent shocks must
 be supplemented by extra constraints. Clearly, these can be short-run
 constraints on both kind of shocks, but long-run constraints only make
-sense on permanent ones.
+sense on permanent ones.\footnote{The SVAR addon also allows to apply 
+further long-run constraints manually in a \texttt{SVEC} model, using the
+same \texttt{lrC} code as before. However, getting these right is sometimes
+tricky given the reduced rank of the long-run impact matrix. Sometimes, for
+example, the restrictions might imply a different $\alpha$ matrix from what 
+the reduced-form estimates yielded. These complications are currently not 
+(always) handled automatically and remain the user's responsibility. You 
+should double-check what your long-run constraints actually mean and how 
+they interact.}
+
 
 \subsection{Syntax}
 \label{sec:KPSWsyntax}
@@ -2182,7 +2192,7 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
 
 \clearpage
 
-\section{Alphabetical list of functions}
+\section{Alphabetical list of (public) functions}
 \label{sec:syntax}
 
 \begin{funcdoc}{FEVD(bundle *SVARobj)}
@@ -2193,29 +2203,29 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   variables in the VAR).
 \end{funcdoc}
 
-\begin{funcdoc}{FEVDplot(bundle *obj, scalar vnum, int keypos[0:2:1])}
+\begin{funcdoc}{FEVDplot(bundle *obj, int vnum[0], int keypos[0:2:1])}
   Plots on screen the Forecast Error Variance Decomposition for a
   variable. Its arguments are:
   \begin{enumerate}
   \item a bundle holding the model
-  \item the progressive number of the variable
+  \item the progressive number of the variable (0 means all)
   \item the position of the legend, if any (optional; default = right).
   \end{enumerate}
 \end{funcdoc}
 
-\begin{funcdoc}{FEVDsave(string outfilename, bundle *obj, scalar vnum, int keypos[0:2:1])}
+\begin{funcdoc}{FEVDsave(string outfilename, bundle *obj, int vnum[0], int keypos[0:2:1])}
   Saves the Forecast Error Variance Decomposition for a variable to a
   graphic file, whose format is identified by its extension. Its
   arguments are:
   \begin{enumerate}
   \item The graphic file name
   \item a bundle holding the model
-  \item the progressive number of the variable
+  \item the progressive number of the variable (0 means all)
   \item the position of the legend, if any (optional; default = right).
   \end{enumerate}
 \end{funcdoc}
 
-\begin{funcdoc}{GetShock(bundle *SVARobj, scalar i)}
+\begin{funcdoc}{GetShock(bundle *SVARobj, int i)}
   Retrieves, as a series, the estimate of $i$-th structural shock of
   the system via equation \eqref{eq:PrE-StS-AB}, in which VAR
   residuals are used instead of the one-step-ahead prediction errors
@@ -2224,26 +2234,26 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   for the generated series.
 \end{funcdoc}
 
-\begin{funcdoc}{HDplot(bundle *obj, scalar vnum)}
+\begin{funcdoc}{HDplot(bundle *obj, int vnum[0])}
   Plots on screen the Historical Decomposition for a variable. Its
   arguments are:
   \begin{enumerate}
   \item a bundle holding the model
-  \item the progressive number of the variable
+  \item the progressive number of the variable (0 means all)
   \end{enumerate}
 \end{funcdoc}
 
-\begin{funcdoc}{HDsave(string outfilename, bundle *obj, scalar vnum)}
+\begin{funcdoc}{HDsave(string outfilename, bundle *obj, int vnum[0])}
   Saves the Historical Decomposition for a variable to a graphic file,
   whose format is identified by its extension. Its arguments are:
   \begin{enumerate}
   \item The graphic file name
   \item a bundle holding the model
-  \item the progressive number of the variable
+  \item the progressive number of the variable (0 means all)
   \end{enumerate}
 \end{funcdoc}
 
-\begin{funcdoc}{IRFplot(bundle *obj, scalar snum, scalar vnum, int keypos[0:2:1])}
+\begin{funcdoc}{IRFplot(bundle *obj, int snum, int vnum, int keypos[0:2:1])}
   Plots an impulse response function on screen. Its arguments are:
   \begin{enumerate}
   \item a bundle holding the model
@@ -2254,7 +2264,7 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   \end{enumerate}
 \end{funcdoc}
 
-\begin{funcdoc}{IRFsave(string outfilename, bundle *obj, scalar snum, scalar vnum, int keypos[0:2:1]))}
+\begin{funcdoc}{IRFsave(string outfilename, bundle *obj, int snum, int vnum, int keypos[0:2:1]))}
   Saves an impulse response function to a graphic file, whose format is
   identified by its extension. Its arguments are:
   \begin{enumerate}
@@ -2266,7 +2276,7 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   \end{enumerate}
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_boot(bundle *obj, scalar rep, scalar alpha, bool
+\begin{funcdoc}{SVAR\_boot(bundle *obj, int rep, scalar alpha, bool
     quiet[1])}
   Perform a bootstrap analysis of a model. Returns the number of
   bootstrap replications in which the model failed to converge. Its
@@ -2280,7 +2290,7 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   \end{enumerate}
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_coint(bundle *obj, scalar case,
+\begin{funcdoc}{SVAR\_coint(bundle *obj, int dcase[1:5:3],
 			   matrix jbeta, matrix jalpha[null],
 			   bool verbose[0])}
   Sets up a SVEC model for subsequent estimation. Its arguments are:
@@ -2296,7 +2306,7 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
 \end{funcdoc}
 
 
-\begin{funcdoc}{SVAR\_cumulate(bundle *b, scalar nv)}
+\begin{funcdoc}{SVAR\_cumulate(bundle *b, int nv)}
   Stores into the model the fact that the cumulated IRFs for
   variable \texttt{nv} are desired. This is typically used jointly
   with long-run restrictions.
@@ -2305,10 +2315,13 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
 \begin{funcdoc}{SVAR\_estimate(bundle *obj, int verbosity[1])}
   Estimates the model by maximum likelihood. Its second argument is a
   scalar, which controls the verbosity of output. If omitted,
-  output is printed.
+  output is printed.\\
+  Since v1.4 the identification check is called automatically before the estimation 
+  of the structural form, unless this has been explicitly suppressed in SVAR\_setup
+  (or by manually setting obj.checkident to 0).  
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_hd(bundle *b, scalar nv)}
+\begin{funcdoc}{SVAR\_hd(bundle *b, int nv)}
   Performs the ``historical decomposition'' of variable \texttt{nv}:
   this function outputs a list of variables which decomposes the
   \verb|nv|-th variable in the system into a deterministic component
@@ -2328,7 +2341,7 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   value, a few messages are printed as checks are performed.
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_restrict(bundle *b, string code, scalar r, scalar c, scalar d)}
+\begin{funcdoc}{SVAR\_restrict(bundle *b, string code, int r, int c[0], scalar d[0])}
 Sets up constraints for an existing model. The function which takes at
 most five arguments:
 \begin{enumerate}
@@ -2363,10 +2376,10 @@ most five arguments:
   \end{description}
 \item An integer: the column of the restricted element, for the codes
   \texttt{"C"}, \texttt{"lrC"}, \texttt{"A"} and
-  \texttt{"B"}. Otherwise, unused.
+  \texttt{"B"}. Otherwise, unused and can then be omitted.
 \item A scalar: for the codes \texttt{"C"}, \texttt{"lrC"},
   \texttt{"A"} and \texttt{"B"}, the fixed value the matrix element
-  should be set to (may be omitted if 0). Otherwise, unused.
+  should be set to (may be omitted if 0). Otherwise, unused and can then be omitted.
 \end{enumerate}
 
 A few examples: 
@@ -2392,7 +2405,7 @@ implied by the pre-existing constraints, they will just be ignored and
 a warning will be printed.
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_setup(string type, list Y, list X, int varorder)}
+\begin{funcdoc}{SVAR\_setup(string type, list Y, list X, int varorder, bool checkident[1])}
   Initialises a model: the function's output is a bundle. The function
   arguments are:
   \begin{enumerate}
@@ -2400,7 +2413,9 @@ a warning will be printed.
     \texttt{"plain"} and \texttt{"AB"};
   \item a list containing the endogenous variables;
   \item a list containing the exogenous variables;
-  \item a positive integer, the VAR order.
+  \item a positive integer, the VAR order;
+  \item a switch to activate or suppress the automatic identification check before 
+  estimation of the structural form (default on).
   \end{enumerate}
 \end{funcdoc}
 
@@ -2421,6 +2436,8 @@ a warning will be printed.
     \texttt{t1, t2}	  & initial and final observations \\
     \texttt{X}	  & exogenous variables data matrix \\
     \texttt{calc\_lr} & switch to get long-run matrix \texttt{lrmat} in short-run models \\ 
+    \texttt{checkident} & switch indicating whether to check identification before 
+    estimation\\
     \hline
     \multicolumn{2}{c}{\textbf{VAR}} \\
     \hline
@@ -2430,6 +2447,7 @@ a warning will be printed.
     \texttt{Sigma}  & unrestricted covariance matrix \\
     \texttt{jalpha} & (SVEC only) cointegration loadings \\
     \texttt{jbeta}  & (SVEC only) cointegration coefficients \\
+    \texttt{crank} & (SVEC only) cointegration rank (inferred from jbeta)\\
     \hline
     \multicolumn{2}{c}{\textbf{SVAR setup}} \\
     \hline
@@ -2466,7 +2484,7 @@ a warning will be printed.
 \section{Changelog (after v1.2)}
 \label{sec:changelog}
 
-\subsection*{Version 1.4, January 2019}
+\subsection*{Version 1.4, February 2019}
 \begin{itemize}
 
 \item catches of wrong user input: catch the case when no restrictions are given, 
@@ -2483,6 +2501,12 @@ with exogenous;
 replace isnull with !exists (and vice versa)
 
 \item interface: allow omission of alpha in \texttt{SVAR\_coint}
+
+\item New argument 'checkident' in SVAR\_setup. Checking identification is now default 
+  in script use.
+
+\item A new restriction check in the SVEC case (Luetkepohl 2008).
+
 \end{itemize}
 
 \subsection*{Version 1.36,  July 2018}

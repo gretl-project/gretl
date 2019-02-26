@@ -3664,16 +3664,17 @@ process_time_dummies (MODEL *pmod, const DATASET *dset, int v)
     return 0;
 }
 
-static int add_dummies_to_list (const int *list, DATASET *dset,
-				int **plist)
+static int add_time_dummies_to_list (const int *list,
+				     DATASET *dset,
+				     int **plist)
 {
     char dname[VNAMELEN];
     int *biglist = NULL;
-    int ndum = dset->pd - 1;
+    int ntdum = dset->pd - 1;
     int i, j, v;
     int err = 0;
 
-    biglist = gretl_list_new(list[0] + ndum);
+    biglist = gretl_list_new(list[0] + ntdum);
     if (biglist == NULL) {
 	return E_ALLOC;
     }
@@ -3821,7 +3822,7 @@ MODEL real_panel_model (const int *list, DATASET *dset,
 	/* time dummies wanted */
 	err = gen_panel_dummies(dset, OPT_T, prn);
 	if (!err) {
-	    err = add_dummies_to_list(list, dset, &olslist);
+	    err = add_time_dummies_to_list(list, dset, &olslist);
 	}
     } else {
 	olslist = gretl_list_copy(list);
@@ -3966,7 +3967,7 @@ MODEL real_panel_model (const int *list, DATASET *dset,
 	gretl_model_smpl_init(&mod, dset);
 	if (opt & OPT_D) {
 	    if (pan.ntdum > 0) {
-		gretl_model_set_int(&mod, "ndum", pan.ntdum);
+		gretl_model_set_int(&mod, "ntdum", pan.ntdum);
 		maybe_suppress_time_dummies(&mod, pan.ntdum);
 	    }
 	    if (complex_subsampled()) {
