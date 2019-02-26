@@ -821,13 +821,8 @@ command.  Assuming the name of this script file is
 (a) includes the script file, (b) generates a simulated dataset,
 and (c) performs the estimation of a ZIP model on the artificial data.
 
-% \begin{script}[htbp]
-%   \caption{Zero-inflated Poisson Model --- example \texttt{.inp} file}
-%   \label{mle-zip-inp}
-% \begin{scode}
 \begin{code}
-set echo off
-set messages off
+set verbose off
 
 # include the user-written functions
 include zip_est.inp
@@ -839,14 +834,12 @@ scalar truep = 0.2
 scalar b0 = 0.2
 scalar b1 = 0.5
 series x = normal()
-series y = (uniform()<truep) ? 0 : genpois(exp(b0 + b1*x))
+series y = (uniform()<truep) ? 0 : randgen(p, exp(b0 + b1*x))
 list X = const x
 
 # estimate the zero-inflated Poisson model
 zip(y, X)
 \end{code}
-% \end{scode}
-% \end{script}
 
 The results are as follows:
 
@@ -855,9 +848,9 @@ Zero-inflated Poisson model:
 
              coefficient   std. error   z-stat   p-value 
   -------------------------------------------------------
-  alpha       0.203069     0.0238035     8.531   1.45e-17 ***
-  const       0.257014     0.0417129     6.161   7.21e-10 ***
-  x           0.466657     0.0321235    14.53    8.17e-48 ***
+  alpha       0.209738     0.0261746     8.013   1.12e-15 ***
+  const       0.167847     0.0449693     3.732   0.0002   ***
+  x           0.452390     0.0340836    13.27    3.32e-40 ***
 \end{code}
 
 A further step may then be creating a function package for accessing
