@@ -4912,8 +4912,7 @@ static NODE *subobject_node (NODE *l, NODE *r, parser *p)
 	    int size = 0;
 
 	    if (key == NULL) {
-		gretl_errmsg_set(_("Invalid bundle key"));
-		p->err = E_DATA;
+		p->err = E_TYPES;
 	    } else {
 		val = gretl_bundle_get_data(l->v.b, key, &type, &size, &p->err);
 	    }
