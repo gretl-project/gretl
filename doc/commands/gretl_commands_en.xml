@@ -9683,6 +9683,10 @@
 	  <effect>use the Nerlove transformation</effect>
         </option>
         <option>
+	  <flag>--pooled</flag>
+	  <effect>estimate via pooled OLS</effect>
+        </option>
+        <option>
 	  <flag>--between</flag>
 	  <effect>estimate the between-groups model</effect>
         </option>
