@@ -2843,6 +2843,10 @@ static int process_command_list (CMD *c, DATASET *dset)
 			tok->flag |= TOK_DONE;
 		    }
 		}
+		if (c->err) {
+		    gretl_errmsg_sprintf(_("Parse error at unexpected token '%s'"),
+					 tok->s);
+		}
 	    } else if (next_joined_token(c, i) != NULL) {
 		rejoin_list_toks(c, i, &i, lstr, j++);
 	    } else {
