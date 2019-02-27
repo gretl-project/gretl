@@ -3872,7 +3872,10 @@ int do_forecast (const char *str, DATASET *dset,
 	return E_BADSTAT;
     }
 
-    if ((opt & (OPT_R | OPT_I | OPT_U)) && type != GRETL_OBJ_EQN) {
+    if ((opt & OPT_U) && dataset_is_panel(dset)) {
+	gretl_errmsg_set(_("Forecast plot not implemented for panel data"));
+	err = E_NOTIMP;
+    } else if ((opt & (OPT_R | OPT_I | OPT_U)) && type != GRETL_OBJ_EQN) {
 	/* "recursive", "integrate", plot option: single equations only */
 	err = E_BADOPT;
     } else if (type == GRETL_OBJ_EQN) {
