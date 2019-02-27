@@ -693,88 +693,6 @@ static_fcast_with_errs (Forecast *fc, MODEL *pmod,
 #define individual_effects_model(m) (m->ci == PANEL && \
 				     (m->opt & (OPT_F | OPT_U)))
 
-/* Forecast based on fixed effects or random effects
-   panel data estimators: this version applies when
-   we're not out of sample in the time dimension.
-*/
-
-static int fe_or_re_fcast (Forecast *fc, MODEL *pmod,
-			   const DATASET *dset)
-{
-    gretl_vector *b = NULL;
-    double xval;
-    const double *ahat;
-    int k = pmod->ncoeff;
-    int imin, i, vi, t;
-    int err = 0;
-
-    b = gretl_coeff_vector_from_model(pmod, NULL, &err);
-    if (err) {
-	return err;
-    }
-
-    ahat = gretl_model_get_data(pmod, "ahat");
-    if (ahat == NULL) {
-	fprintf(stderr, "fe_or_re_fcast: ahat is missing\n");
-	gretl_matrix_free(b);
-	return E_DATA;
-    }
-
-    /* In the random effects case we include the intercept below;
-       in the fixed effects case it must be skipped.
-    */
-    imin = (pmod->opt & OPT_U)? 0 : 1;
-
-    for (t=fc->t1; t<=fc->t2 && !err; t++) {
-	int missing = 0;
-
-	/* skip if we can't compute forecast */
-	if (t >= pmod->t1 && t <= pmod->t2) {
-	    missing = na(pmod->yhat[t]);
-	}
-
-	if (!missing) {
-	    /* individual effect */
-	    if (t < pmod->t1 || t > pmod->t2) {
-		/* out of sample in x-sectional dimension */
-		if (pmod->opt & OPT_F) {
-		    /* fixed effect: use global constant */
-		    fc->yhat[t] = pmod->coeff[0];
-		} else {
-		    /* random effect: use expectation of zero */
-		    fc->yhat[t] = 0.0;
-		}
-	    } else if (na(ahat[t])) {
-		missing = 1;
-	    } else {
-		fc->yhat[t] = ahat[t];
-	    }
-	}
-
-	for (i=imin; i<k && !missing; i++) {
-	    vi = pmod->list[i+2];
-	    xval = dset->Z[vi][t];
-	    if (na(xval)) {
-		missing = 1;
-	    } else {
-		fc->yhat[t] += b->val[i] * xval;
-	    }
-	}
-
-	if (missing) {
-	    fc->yhat[t] = NADBL;
-	    if (fc->sderr != NULL) {
-		fc->sderr[t] = NADBL;
-	    }
-	    continue;
-	}
-    }
-
-    gretl_vector_free(b);
-
-    return err;
-}
-
 static void special_set_fcast_matrix (gretl_matrix *fc)
 {
     size_t sz;
@@ -826,28 +744,9 @@ static void transcribe_to_matrix (gretl_matrix *fc,
     }
 }
 
-/* For panel forecast, out of sample in the time dimension:
-   construct a time effect as the mean of those actually
-   estimated?
+/* specific to "dpanel": handles both within-sample
+   and out of sample forecasts
 */
-
-static double os_time_effect (MODEL *pmod, int j, int ntdum,
-			      int dpdstyle, int ifc)
-{
-    double bsum = 0.0;
-
-    if (dpdstyle) {
-	int i;
-
-	for (i=0; i<ntdum; i++) {
-	    bsum += pmod->coeff[j + i];
-	}
-    } else {
-	bsum = pmod->coeff[j+ntdum-1] + pmod->coeff[j];
-    }
-
-    return bsum / (ntdum + ifc);
-}
 
 static int real_dpanel_fcast (double *yhat,
 			      gretl_matrix *fc,
@@ -859,7 +758,6 @@ static int real_dpanel_fcast (double *yhat,
 {
     const double *y, *xi, *b;
     double *yi = NULL;
-    double os_tdum = 0.0;
     int *xlist, *ylags = NULL;
     int yno, free_ylags = 0;
     int fc_static = (opt & OPT_S);
@@ -911,11 +809,6 @@ static int real_dpanel_fcast (double *yhat,
     if (ntdum > 0) {
 	/* period to which first time dummy refers */
 	tdt = t1min + ifc;
-	if (mask != NULL) {
-	    /* average time effect, if needed */
-	    int j = pmod->ncoeff - ntdum;
-	    os_tdum = os_time_effect(pmod, j, ntdum, dpdstyle, ifc);
-	}
     }
 
 #if 0
@@ -993,17 +886,12 @@ static int real_dpanel_fcast (double *yhat,
 	}
 
 	/* then a time effect, if applicable */
-	if (!missing && ntdum > 0) {
-	    if (mask != NULL) {
-		/* out of sample */
-		fct += os_tdum;
-	    } else if (t >= tdt) {
-		fct += b[j + t - tdt];
-		if (!dpdstyle) {
-		    /* time dummies differenced */
-		    if (t - tdt > 0) {
-			fct -= b[j + t - tdt - 1];
-		    }
+	if (!missing && ntdum > 0 && t >= tdt) {
+	    fct += b[j + t - tdt];
+	    if (!dpdstyle) {
+		/* time dummies differenced */
+		if (t - tdt > 0) {
+		    fct -= b[j + t - tdt - 1];
 		}
 	    }
 	}
@@ -1047,114 +935,64 @@ static int real_dpanel_fcast (double *yhat,
     return 0;
 }
 
-static int dpanel_fcast (Forecast *fc, MODEL *pmod,
-			 DATASET *dset, gretlopt opt)
-{
-    int save_t1 = dset->t1;
-    int save_t2 = dset->t2;
-    int err;
-
-    dset->t1 = fc->t1;
-    dset->t2 = fc->t2;
-    err = real_dpanel_fcast(fc->yhat, NULL, NULL, pmod,
-			     NULL, dset, opt);
-    dset->t1 = save_t1;
-    dset->t2 = save_t2;
-
-    return err;
-}
-
-/* Out-of-sample (in the time dimension) forecast routine
-   for panel data, supporting pooled OLS, fixed effects and
-   random effects.
+/* for pooled OLS, fixed effects and random effects:
+   handles both within-sample and out of sample
 */
 
-static int panel_os_special (MODEL *pmod, DATASET *dset,
-			     const char *vname,
-			     gretlopt opt,
-			     PRN *prn)
+static int real_panel_fcast (double *yhat,
+			     gretl_matrix *fc,
+			     char **rlabels,
+			     MODEL *pmod,
+			     const char *mask,
+			     const DATASET *dset,
+			     gretlopt opt)
 {
-    DATASET *fset = fetch_full_dataset();
-    int named_save = *vname != '\0';
-    gretl_matrix *fc = NULL;
-    gretl_vector *b = NULL;
-    double xval, *yhat = NULL;
-    const double *y, *ahat = NULL;
-    double os_tdum = 0.0;
-    char *mask = dset->submask;
-    char **Sr = NULL;
-    int k = pmod->ncoeff;
-    int ntdum, imin, imax;
-    int i, j, vi, t, s;
-    int err = 0;
+    const double *y, *b;
+    const double *ahat = NULL;
+    int i, vi, s, t;
+    int row;
 
-    s = get_dataset_submask_size(dset);
-    if (s != fset->n) {
-	fprintf(stderr, "fullset->n = %d but submask size = %d\n",
-		fset->n, s);
-	return E_DATA;
-    }
-
-    b = gretl_coeff_vector_from_model(pmod, NULL, &err);
-    if (err) {
-	return err;
-    }
-
-    if (named_save) {
-	yhat = malloc(fset->n * sizeof *yhat);
-	if (yhat == NULL) {
-	    gretl_vector_free(b);
-	    return E_ALLOC;
-	}
-    } else {
-	int nfc = fset->n - dset->n;
-	int cols = opt & OPT_Q ? 1 : 2;
-
-	fc = gretl_matrix_alloc(nfc, cols);
-	if (fc == NULL) {
-	    gretl_vector_free(b);
-	    return E_ALLOC;
-	}
-	Sr = strings_array_new(nfc);
-    }
-
-    if (pmod->ci == DPANEL) {
-	real_dpanel_fcast(yhat, fc, Sr, pmod, mask, fset, opt);
-	goto calc_done;
-    }
+#if 0
+    fprintf(stderr, "real_panel_fcast: yhat=%p, fc=%p, mask=%p\n",
+	    (void *) yhat, (void *) fc, (void *) mask);
+    fprintf(stderr, " dset: n=%d, pd=%d, t1=%d, t2=%d\n",
+	    dset->n, dset->pd, dset->t1, dset->t2);
+#endif
 
     if (individual_effects_model(pmod)) {
 	ahat = gretl_model_get_data(pmod, "ahat");
 	if (ahat == NULL) {
-	    fprintf(stderr, "panel forecast: ahat is missing\n");
-	    gretl_matrix_free(b);
-	    free(yhat);
+	    fprintf(stderr, "real_panel_fcast: ahat is missing\n");
 	    return E_DATA;
 	}
     }
 
-    /* for handling of time dummies */
-    ntdum = gretl_model_get_int(pmod, "ntdum");
-    if (ntdum > 0) {
-	imax = pmod->ncoeff - ntdum;
-	os_tdum = os_time_effect(pmod, imax, ntdum, 0, 1);
-    } else {
-	imax = k;
-    }
+    y = dset->Z[pmod->list[1]];
+    b = pmod->coeff;
+    s = -1; /* index into @ahat */
+    row = 0;
 
-    /* in the fixed effects case we skip the intercept below */
-    imin = (pmod->opt & OPT_F)? 1 : 0;
-    y = fset->Z[pmod->list[1]];
-    s = -1;
-
-    for (t=0, j=0; t<fset->n && !err; t++) {
+    for (t=0; t<=dset->t2; t++) {
+	double xit, fct = NADBL;
 	int missing = 0;
-	double fct;
+	int fc_skip = 0;
+	int j = 0;
 
-	if (mask[t] == 1) {
-	    /* this obs is in the estimation sample */
+	if (mask == NULL || mask[t]) {
+	    /* advance model obs index */
 	    s++;
+	}
+
+	if (t < dset->t1) {
 	    continue;
+	}
+
+	if (mask != NULL && mask[t] == 1) {
+	    /* we're doing out-of-sample forecast and this is
+	       an in-sample observation
+	    */
+	    fc_skip = 1;
+	    goto transcribe;
 	}
 
 	if (ahat != NULL) {
@@ -1168,33 +1006,116 @@ static int panel_os_special (MODEL *pmod, DATASET *dset,
 	    fct = 0.0;
 	}
 
-	for (i=imin; i<imax && !missing; i++) {
-	    vi = pmod->list[i+2];
-	    xval = fset->Z[vi][t];
-	    if (na(xval)) {
-		missing = 1;
+	/* regular regressors */
+	for (i=2, j=0; i<=pmod->list[0] && !missing; i++, j++) {
+	    vi = pmod->list[i];
+	    if (vi == 0) {
+		if (!(pmod->opt & OPT_F)) {
+		    fct += b[j];
+		}
 	    } else {
-		fct += b->val[i] * xval;
+		xit = dset->Z[vi][t];
+		if (na(xit)) {
+		    missing = 1;
+		} else {
+		    fct += b[j] * xit;
+		}
 	    }
 	}
 
-	if (!missing && ntdum > 0) {
-	    /* add mean time effect */
-	    fct += os_tdum;
-	}
+	/* FIXME handling of time dummies? */
 
 	if (missing) {
 	    fct = NADBL;
 	}
 
+    transcribe:
+
+	/* transcribe result? */
 	if (yhat != NULL) {
 	    yhat[t] = fct;
+	} else if (fc_skip) {
+	    ; /* skip */
+	} else if (row >= fc->rows) {
+	    fprintf(stderr, "panel_fcast out of bounds! t=%d, row=%d\n", t, row);
 	} else {
-	    transcribe_to_matrix(fc, y[t], fct, Sr, fset, t, j++);
+	    transcribe_to_matrix(fc, y[t], fct, rlabels, dset, t, row++);
 	}
     }
 
- calc_done:
+    return 0;
+}
+
+static int panel_fcast (Forecast *fc, MODEL *pmod,
+			DATASET *dset, gretlopt opt)
+{
+    int save_t1 = dset->t1;
+    int save_t2 = dset->t2;
+    int err;
+
+    dset->t1 = fc->t1;
+    dset->t2 = fc->t2;
+    if (pmod->ci == DPANEL) {
+	err = real_dpanel_fcast(fc->yhat, NULL, NULL, pmod,
+				NULL, dset, opt);
+    } else {
+	err = real_panel_fcast(fc->yhat, NULL, NULL, pmod,
+			       NULL, dset, opt);
+    }
+    dset->t1 = save_t1;
+    dset->t2 = save_t2;
+
+    return err;
+}
+
+/* Out-of-sample (in the time dimension) forecast routine
+   for panel data, supporting pooled OLS, fixed effects,
+   random effects and dpanel. This is the top-level
+   driver.
+*/
+
+static int panel_os_special (MODEL *pmod, DATASET *dset,
+			     const char *vname,
+			     gretlopt opt,
+			     PRN *prn)
+{
+    DATASET *fset = fetch_full_dataset();
+    int named_save = *vname != '\0';
+    gretl_matrix *fc = NULL;
+    double *yhat = NULL;
+    char *mask = dset->submask;
+    char **Sr = NULL;
+    int vi, s;
+    int err = 0;
+
+    s = get_dataset_submask_size(dset);
+    if (s != fset->n) {
+	fprintf(stderr, "fullset->n = %d but submask size = %d\n",
+		fset->n, s);
+	return E_DATA;
+    }
+
+    if (named_save) {
+	yhat = malloc(fset->n * sizeof *yhat);
+	if (yhat == NULL) {
+	    return E_ALLOC;
+	}
+    } else {
+	int nfc = fset->n - dset->n;
+	int cols = opt & OPT_Q ? 1 : 2;
+
+	fc = gretl_matrix_alloc(nfc, cols);
+	if (fc == NULL) {
+	    return E_ALLOC;
+	}
+	Sr = strings_array_new(nfc);
+    }
+
+    if (pmod->ci == DPANEL) {
+	err = real_dpanel_fcast(yhat, fc, Sr, pmod, mask, fset, opt);
+    } else {
+	err = real_panel_fcast(yhat, fc, Sr, pmod, mask, fset, opt);
+    }
 
     if (!err && yhat != NULL) {
 	err = dataset_add_NA_series(dset, 1);
@@ -1234,7 +1155,6 @@ static int panel_os_special (MODEL *pmod, DATASET *dset,
 	fc = NULL;
     }
 
-    gretl_vector_free(b);
     gretl_matrix_free(fc);
     free(yhat);
 
@@ -2995,10 +2915,8 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     }
 
     /* compute the actual forecast */
-    if (individual_effects_model(pmod)) {
-	err = fe_or_re_fcast(&fc, pmod, dset);
-    } else if (pmod->ci == DPANEL) {
-	err = dpanel_fcast(&fc, pmod, dset, opt);
+    if (pmod->ci == DPANEL || individual_effects_model(pmod)) {
+	err = panel_fcast(&fc, pmod, dset, opt);
     } else if (DM_errs) {
 	err = static_fcast_with_errs(&fc, pmod, dset, opt);
     } else if (pmod->ci == NLS) {
@@ -3093,6 +3011,11 @@ static int out_of_sample_check (MODEL *pmod, DATASET *dset)
 	(pmod->ci == OLS && dataset_is_panel(dset))) {
 	panel = 1;
 	ret = OS_ERR;
+	if (gretl_model_get_int(pmod, "ntdum") > 0) {
+	    gretl_errmsg_set(_("Specification includes time dummies: cannot "
+			       "forecast out of sample"));
+	    return ret;
+	}
     } else {
 	panel = 0;
 	ret = OS_OK;
@@ -3281,7 +3204,6 @@ static int parse_forecast_string (const char *s,
 	t2 = dset->t2;
     }
 
-#if 0 /* let this pass? */
     if (!err && !(opt & OPT_O) && individual_effects_model(pmod)) {
 	/* panel data check */
 	if (t1 < pmod->smpl.t1 || t2 > pmod->smpl.t2) {
@@ -3290,7 +3212,6 @@ static int parse_forecast_string (const char *s,
 	    err = E_DATA;
 	}
     }
-#endif
 
     if (!err) {
 	/* in case we hit any "temporary" errors above */
