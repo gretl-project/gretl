@@ -34,6 +34,8 @@
 
 static int gretl_digits = 6;
 
+static int get_print_range (int len, int *start, int *stop);
+
 void bufspace (int n, PRN *prn)
 {
     while (n-- > 0) {
@@ -2100,6 +2102,7 @@ static int print_listed_objects (const char *s,
 				 gretlopt opt,
 				 PRN *prn)
 {
+    user_var *uv;
     char *name;
     int err = 0;
 
@@ -2113,7 +2116,41 @@ static int print_listed_objects (const char *s,
     }
 
     while ((name = gretl_word_strdup(s, &s, OPT_S, &err)) != NULL) {
-	err = print_user_var_by_name(name, dset, opt, prn);
+	GretlType t;
+
+	uv = get_user_var_by_name(name);
+	if (uv == NULL) {
+	    err = E_UNKVAR;
+	    break;
+	} else if (opt & OPT_R) {
+	    int start, stop;
+
+	    t = user_var_get_type(uv);
+	    if (t == GRETL_TYPE_ARRAY) {
+		void *ptr = user_var_get_value(uv);
+		int len = gretl_array_get_length(ptr);
+
+		err = get_print_range(len, &start, &stop);
+		if (!err) {
+		    err = gretl_array_print_range(ptr, start, stop+1, prn);
+		}
+	    } else if (0 && t == GRETL_TYPE_MATRIX) {
+#if 0
+		/* not ready yet!! */
+		void *ptr = user_var_get_value(uv);
+		int len = gretl_matrix_rows(ptr);
+
+		err = get_print_range(len, &start, &stop);
+		if (!err) {
+		    err = gretl_matrix_print_range(ptr, start, stop+1, prn);
+		}
+#endif
+	    } else {
+		err = print_user_var_by_name(name, dset, opt, prn);
+	    }
+	} else {
+	    err = print_user_var_by_name(name, dset, opt, prn);
+	}
 	free(name);
 	if (err) {
 	    break;
@@ -2235,7 +2272,65 @@ static void bufprint_string (char *buf, const char *s, int width)
 
 #endif
 
-int column_width_from_list (const int *list, const DATASET *dset)
+static int get_print_range (int len, int *start, int *stop)
+{
+    const char *s = get_optval_string(PRINT, OPT_R);
+    int err = 0;
+
+    if (s == NULL || *s == '\0' || strchr(s, ':') == NULL) {
+	err = E_DATA;
+    } else {
+	int k1 = 0, k2 = 0, nf = 0;
+	char **S = gretl_string_split(s, &nf, ":");
+
+	if (S == NULL || nf != 2) {
+	    err = E_PARSE;
+	} else {
+	    if (S[0][0] == '\0') {
+		k1 = 1;
+	    } else {
+		k1 = gretl_int_from_string(S[0], &err);
+	    }
+	    if (!err) {
+		if (S[1][0] == '\0') {
+		    k2 = len;
+		} else {
+		    k2 = gretl_int_from_string(S[1], &err);
+		}
+	    }
+	}
+
+	if (!err && (k1 == 0 || k2 == 0)) {
+	    fprintf(stderr, "get_print_range: got a zero value\n");
+	    err = E_INVARG;
+	}
+	if (!err && (k1 < 0 || k2 < 0)) {
+	    if (k1 < 0) {
+		k1 = len + k1;
+	    }
+	    if (k2 < 0) {
+		k2 = len + k2;
+	    }
+	    if (k2 < k1) {
+		fprintf(stderr, "get_print_range: got empty range\n");
+	    }
+	}
+	if (!err && (k1 > len || k2 > len)) {
+	    fprintf(stderr, "get_print_range: out of bounds\n");
+	    err = E_INVARG;
+	}
+	if (!err) {
+	    *start = k1 - 1;
+	    *stop = k2 - 1;
+	}
+
+	strings_array_free(S, nf);
+    }
+
+    return err;
+}
+
+static int column_width_from_list (const int *list, const DATASET *dset)
 {
     int i, n, w = 13;
 
@@ -2263,12 +2358,29 @@ static int print_by_obs (int *list, const DATASET *dset,
 {
     int i, j, j0, k, t, v, nrem;
     int colwidth, obslen = 0;
+    int start = 0, stop = 0;
+    int tmin, tmax;
     int *pmax = NULL;
     char buf[128];
     int blist[BMAX+1];
     int gprec = 6;
     double x;
     int err = 0;
+
+    if (opt & OPT_R) {
+	/* --range */
+	err = get_print_range(sample_size(dset), &start, &stop);
+	if (err) {
+	    return err;
+	} else if (stop < start) {
+	    return 0;
+	}
+	tmin = dset->t1 + start;
+	tmax = dset->t1 + stop;
+    } else {
+	tmin = dset->t1;
+	tmax = dset->t2;
+    }
 
     if (!(opt & OPT_S)) {
 	pmax = get_pmax_array(list, dset);
@@ -2300,7 +2412,7 @@ static int print_by_obs (int *list, const DATASET *dset,
 
 	varheading(blist, obslen, colwidth, dset, 0, prn);
 
-	for (t=dset->t1; t<=dset->t2; t++) {
+	for (t=tmin; t<=tmax; t++) {
 	    if (screenvar && dset->Z[screenvar][t] == 0.0) {
 		/* screened out by boolean */
 		continue;
@@ -2396,7 +2508,8 @@ static int midas_print_list (const int *list,
  * @dset: dataset struct.
  * @opt: if OPT_O, print the data by observation (series in columns);
  * if OPT_D, use simple obs numbers, not dates; if OPT_M, print midas
- * list in original time-series order.
+ * list in original time-series order; if OPT_R print specified range
+ * of object.
  * @prn: gretl printing struct.
  *
  * Print the data for the variables in @list over the currently
