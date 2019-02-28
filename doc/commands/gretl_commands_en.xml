@@ -10464,6 +10464,11 @@
 	  <effect>use simple observation numbers</effect>
 	</option>
 	<option>
+	  <flag>--range</flag>
+	  <optparm>start:stop</optparm>
+	  <effect>see below</effect>
+	</option>
+	<option>
 	  <flag>--midas</flag>
 	  <effect>see below</effect>
 	</option>
@@ -10525,6 +10530,23 @@
 	double-quotes (and there should be nothing else following on
 	the command line). The string in question is printed, followed
 	by a newline character.
+      </para>
+      <para>
+	The <opt>range</opt> option can be used to control the amount
+	of information printed, for series, lists of series, matrices,
+	and strings. The <repl>start</repl> and <repl>stop</repl>
+	(integer) values refer to observations for series and lists,
+	rows for matrices, elements for arrays, and lines of text for
+	strings. In all cases the minimum <repl>start</repl> value is
+	1 and the maximum <repl>stop</repl> value is the
+	<quote>row-wise size</quote> of the object in
+	question. Negative values for these indices are taken to
+	indicate a count back from the end. The indices may be given
+	in numeric form or as the names of predefined scalar
+	variables. If <repl>start</repl> is omitted that is taken
+	as an implicit 1 and if <repl>stop</repl> is omitted that
+	means go all the way to the end. Note that with series and
+	lists the indices are relative to the current sample range.
       </para>
       <para>
 	The <opt>midas</opt> option is specific to the printing of a
