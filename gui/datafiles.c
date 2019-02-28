@@ -2244,7 +2244,7 @@ void show_files (GtkAction *action, gpointer p)
 {
     int code = display_files_code(gtk_action_get_name(action));
 
-    display_files(code, p);
+    display_files(code, NULL);
 }
 
 void show_native_dbs (void)
