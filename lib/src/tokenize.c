@@ -2967,11 +2967,10 @@ static int handle_adhoc_string (CMD *c)
 	pputs(prn, "function ");
     }
 
-    /* FIXME efficiency in case @c has no options */
-
     for (i=c->cstart+1; i<c->ntoks; i++) {
 	tok = &c->toks[i];
-	if (!option_type(tok->type)) {
+	/* 2019-02-27: was !option_type(tok->type) below */
+	if (!token_done(tok)) {
 	    if (j > 0 && !token_joined(tok)) {
 		pputc(prn, ' ');
 	    }
