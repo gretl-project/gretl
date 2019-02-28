@@ -2339,10 +2339,10 @@ static int get_print_range (int len, int *start, int *stop)
 	}
 	if (!err && (k1 < 0 || k2 < 0)) {
 	    if (k1 < 0) {
-		k1 = len + k1;
+		k1 = len + k1 + 1;
 	    }
 	    if (k2 < 0) {
-		k2 = len + k2;
+		k2 = len + k2 + 1;
 	    }
 	    if (k2 < k1) {
 		fprintf(stderr, "get_print_range: got empty range\n");
