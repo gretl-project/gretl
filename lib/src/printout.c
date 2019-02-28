@@ -27,6 +27,7 @@
 #include "uservar.h"
 #include "gretl_string_table.h"
 #include "gretl_midas.h"
+#include "matrix_extra.h"
 
 #include <time.h>
 
@@ -2097,6 +2098,35 @@ void maybe_list_series (const DATASET *dset, PRN *prn)
     }
 }
 
+static int line_count (const char *s)
+{
+    int n = 1;
+
+    while (*s) {
+	if (*s == '\n') n++;
+	s++;
+    }
+
+    return n;
+}
+
+static void string_print_range (const char *s, int lmin, int lmax,
+				PRN *prn)
+{
+    int len, l = 0;
+
+    while (*s && l < lmax) {
+	len = strcspn(s, "\r\n");
+	if (l >= lmin) {
+	    pprintf(prn, "%.*s\n", len, s);
+	}
+	s += len;
+	if (*s == '\r') s++;
+	if (*s == '\n') s++;
+	l++;
+    }
+}
+
 static int print_listed_objects (const char *s,
 				 const DATASET *dset,
 				 gretlopt opt,
@@ -2116,35 +2146,38 @@ static int print_listed_objects (const char *s,
     }
 
     while ((name = gretl_word_strdup(s, &s, OPT_S, &err)) != NULL) {
-	GretlType t;
-
 	uv = get_user_var_by_name(name);
 	if (uv == NULL) {
 	    err = E_UNKVAR;
 	    break;
 	} else if (opt & OPT_R) {
+	    GretlType t = user_var_get_type(uv);
 	    int start, stop;
 
-	    t = user_var_get_type(uv);
 	    if (t == GRETL_TYPE_ARRAY) {
-		void *ptr = user_var_get_value(uv);
-		int len = gretl_array_get_length(ptr);
+		gretl_array *a = user_var_get_value(uv);
+		int len = gretl_array_get_length(a);
 
 		err = get_print_range(len, &start, &stop);
 		if (!err) {
-		    err = gretl_array_print_range(ptr, start, stop+1, prn);
+		    err = gretl_array_print_range(a, start, stop+1, prn);
 		}
-	    } else if (0 && t == GRETL_TYPE_MATRIX) {
-#if 0
-		/* not ready yet!! */
-		void *ptr = user_var_get_value(uv);
-		int len = gretl_matrix_rows(ptr);
+	    } else if (t == GRETL_TYPE_MATRIX) {
+		gretl_matrix *m = user_var_get_value(uv);
+		int len = gretl_matrix_rows(m);
 
 		err = get_print_range(len, &start, &stop);
 		if (!err) {
-		    err = gretl_matrix_print_range(ptr, start, stop+1, prn);
+		    gretl_matrix_print_range(m, name, start, stop+1, prn);
 		}
-#endif
+	    } else if (t == GRETL_TYPE_STRING) {
+		const char *s = user_var_get_value(uv);
+		int len = line_count(s);
+
+		err = get_print_range(len, &start, &stop);
+		if (!err) {
+		    string_print_range(s, start, stop+1, prn);
+		}
 	    } else {
 		err = print_user_var_by_name(name, dset, opt, prn);
 	    }
