@@ -1,7 +1,7 @@
 author = Riccardo "Jack" Lucchetti and Allin Cottrell
 email = r.lucchetti@univpm.it
-version = 0.31
-date = 2019-01-17
+version = 0.32
+date = 2019-02-28
 description = obtain data via dbnomics
 tags = C81
 label = dbnomics

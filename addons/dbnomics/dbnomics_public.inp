@@ -210,6 +210,7 @@ function bundles dbnomics_get_dataset_dimensions(const string provider,
     string json
     err = dbn_get_json(parms, verbose, &json)
 
+    version = "0.22"
     if !err
         bundle b = jsongetb(json, "dataset")
         bundle bf = jsongetb(json, "series_dimensions_facets")
@@ -217,18 +218,26 @@ function bundles dbnomics_get_dataset_dimensions(const string provider,
         bf = bf.series_dimensions_facets
         strings dcodes = b.dimensions_codes_order
         ndims = nelem(dcodes)
-        bundle dlabels = b.dimensions_labels
+        if version == "0.22"
+            strings dlabels = b.dimensions_codes_order
+        else
+            bundle dlabels = b.dimensions_labels
+        endif
+        
         bundle vlabels = b.dimensions_values_labels
     else
         ndims = 0
     endif
-
     bundles ret = array(ndims)
     # loop over the dimensions
     loop i=1..ndims --quiet
         string dci = dcodes[i]
         ret[i].code = dci
-        ret[i].label = dlabels[dci]
+        if version == "0.22"
+            ret[i].label = dlabels[i]
+        else
+            ret[i].label = dlabels[dci]
+        endif
         bundles bfi = bf[dci]
         ret[i].values = bfi
         nv = nelem(bfi)
@@ -240,7 +249,6 @@ function bundles dbnomics_get_dataset_dimensions(const string provider,
             ret[i].values[j].label = tmp[vj.code]
         endloop
     endloop
-
     if verbose && !err
         loop i=1..ndims --quiet
             r = ret[i]
