@@ -1,4 +1,6 @@
 version 2019b, in progress
+- "print" command: new --range option to control the
+  range to print for series, matrices, arrays and strings
 - "smpl" command: add --unit option for panel data
 - "intreg" and "tobit" commands: add --opg option
 - New accessor $now to get current time/date, plus new
