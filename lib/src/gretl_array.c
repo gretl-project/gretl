@@ -1012,11 +1012,13 @@ static void print_array_string (const char *s, PRN *prn)
     }
 }
 
-static void print_array_elements (gretl_array *A, PRN *prn)
+static void print_array_elements (gretl_array *A,
+				  int imin, int imax,
+				  PRN *prn)
 {
     int i;
 
-    for (i=0; i<A->n; i++) {
+    for (i=imin; i<imax; i++) {
 	pprintf(prn, "[%d] ", i+1);
 	if (A->data[i] == NULL) {
 	    pputs(prn, "null\n");
@@ -1046,12 +1048,28 @@ int gretl_array_print (gretl_array *A, PRN *prn)
 	pprintf(prn, _("Array of %s, length %d\n"), s, A->n);
 
 	if (A->n > 0 && A->n < 10 && A->type != GRETL_TYPE_BUNDLES) {
-	    print_array_elements(A, prn);
+	    print_array_elements(A, 0, A->n, prn);
 	}
     }
 
     return 0;
 }
+
+int gretl_array_print_range (gretl_array *A, int imin, int imax, PRN *prn)
+{
+    if (A != NULL) {
+	const char *s = gretl_type_get_name(A->type);
+
+	pprintf(prn, _("Array of %s, length %d\n"), s, A->n);
+
+	if (A->type != GRETL_TYPE_BUNDLES) {
+	    print_array_elements(A, imin, imax, prn);
+	}
+    }
+
+    return 0;
+}
+
 
 /* Called from gretl_bundle.c when serializing a bundle
    which contains one or more arrays.
