@@ -390,7 +390,9 @@ static int get_file_collections_from_dir (const char *path, GDir *dir,
 		coll = file_collection_new(path, dname, err);
 		if (coll != NULL) {
 		    *err = push_collection(coll);
-		    if (!*err) {
+		    if (*err) {
+			fprintf(stderr, "push_collection failed\n");
+		    } else {
 			n++;
 		    }
 		}
@@ -421,7 +423,7 @@ static int seek_file_collections (const char *basedir,
 				  SearchType stype,
 				  int *err)
 {
-    char *path = NULL;
+    gchar *path = NULL;
     GDir *topdir;
     const char *dname;
     int n_coll = 0;
@@ -431,15 +433,10 @@ static int seek_file_collections (const char *basedir,
 	    basedir, stype);
 #endif
 
-    if (*err) {
-	/* a fatal error occurred already, skip it */
-	return 0;
-    }
-
     if (stype == DATA_SEARCH) {
-	path = gretl_strdup_printf("%sdata", basedir);
+	path = g_strdup_printf("%sdata", basedir);
     } else if (stype == SCRIPT_SEARCH) {
-	path = gretl_strdup_printf("%sscripts", basedir);
+	path = g_strdup_printf("%sscripts", basedir);
     } else {
 	/* USER_SEARCH */
 	path = gretl_strdup(basedir);
@@ -448,7 +445,7 @@ static int seek_file_collections (const char *basedir,
 
     topdir = gretl_opendir(path);
     if (topdir == NULL) {
-	free(path);
+	g_free(path);
 	return 0;
     }
 
@@ -458,17 +455,13 @@ static int seek_file_collections (const char *basedir,
 
     while (!*err && (dname = g_dir_read_name(topdir))) {
 	if (!dont_go_there(dname)) {
-	    char *subpath;
+	    gchar *subpath;
 	    GDir *subdir;
 
 #if COLL_DEBUG > 1
 	    fprintf(stderr, " dname = '%s'\n", dname);
 #endif
-	    if (strcmp(dname, ".")) {
-		subpath = full_path(path, dname);
-	    } else {
-		subpath = path;
-	    }
+	    subpath = g_build_path("/", path, dname, NULL);
 	    subdir = gretl_opendir(subpath);
 	    if (subdir != NULL) {
 #if COLL_DEBUG
@@ -482,11 +475,12 @@ static int seek_file_collections (const char *basedir,
 #endif
 		g_dir_close(subdir);
 	    }
+	    g_free(subpath);
 	}
     }
 
     g_dir_close(topdir);
-    free(path);
+    g_free(path);
 
 #if COLL_DEBUG
     fprintf(stderr, "*** found %d collections\n", n_coll);
@@ -523,39 +517,73 @@ static void print_collections (int role)
 }
 #endif
 
-static int build_file_collections (void)
+static int build_file_collections (int role)
 {
     static int built;
     static int err;
 
     if (!built && !err) {
 	const char *wd;
-	int n = 0;
+	int derr[3] = {0};
+	int serr[3] = {0};
+	int uerr[2] = {0};
+	int nd = 0;
+	int ns = 0;
+	int nu = 0;
+	int i;
 
-	n += seek_file_collections(gretl_home(), DATA_SEARCH, &err);
-	n += seek_file_collections(gretl_home(), SCRIPT_SEARCH, &err);
+	gretl_error_clear();
+
+	nd += seek_file_collections(gretl_home(), DATA_SEARCH, &derr[0]);
+	ns += seek_file_collections(gretl_home(), SCRIPT_SEARCH, &serr[0]);
 #ifdef OS_OSX
-	n += seek_file_collections(gretl_app_support_dir(), DATA_SEARCH, &err);
-	n += seek_file_collections(gretl_app_support_dir(), SCRIPT_SEARCH, &err);
+	nd += seek_file_collections(gretl_app_support_dir(), DATA_SEARCH, &derr[1]);
+	ns += seek_file_collections(gretl_app_support_dir(), SCRIPT_SEARCH, &serr[1]);
 #else
-	n += seek_file_collections(gretl_dotdir(), DATA_SEARCH, &err);
-	n += seek_file_collections(gretl_dotdir(), SCRIPT_SEARCH, &err);
+	nd += seek_file_collections(gretl_dotdir(), DATA_SEARCH, &derr[1]);
+	ns += seek_file_collections(gretl_dotdir(), SCRIPT_SEARCH, &serr[1]);
 #endif
-	n += seek_file_collections(gretl_workdir(), USER_SEARCH, &err);
-	if (!err) {
-	    wd = maybe_get_default_workdir();
-	    if (wd != NULL) {
-		n += seek_file_collections(wd, USER_SEARCH, &err);
-		n += seek_file_collections(wd, DATA_SEARCH, &err);
-		n += seek_file_collections(wd, SCRIPT_SEARCH, &err);
+
+	nu += seek_file_collections(gretl_workdir(), USER_SEARCH, &uerr[0]);
+	wd = maybe_get_default_workdir();
+	if (wd != NULL) {
+	    nu += seek_file_collections(wd, USER_SEARCH, &uerr[1]);
+	    nd += seek_file_collections(wd, DATA_SEARCH, &derr[2]);
+	    ns += seek_file_collections(wd, SCRIPT_SEARCH, &serr[2]);
+	}
+
+	for (i=0; i<3; i++) {
+	    /* help to diagnose any errors? */
+	    if (derr[i]) {
+		fprintf(stderr, "data seek %d gave error %d\n", i+1, derr[i]);
+	    }
+	    if (serr[i]) {
+		fprintf(stderr, "script seek %d gave error %d\n", i+1, serr[i]);
+	    }
+	    if (i < 2 && uerr[i]) {
+		fprintf(stderr, "user file seek %d gave error %d\n", i+1, uerr[i]);
 	    }
 	}
-	if (!err && n == 0) {
-	    err = E_DATA;
+	if (role == TEXTBOOK_DATA) {
+	    if (nd == 0) {
+		gretl_errmsg_ensure("file_collections: no data files found");
+		errbox(gretl_errmsg_get());
+		err = 1;
+	    }
+	} else if (role == PS_FILES) {
+	    if (ns == 0) {
+		gretl_errmsg_ensure("file_collections: no script files found");
+		errbox(gretl_errmsg_get());
+		err = 1;
+	    }
 	}
 	if (!err) {
-	    sort_files_stack(TEXTBOOK_DATA);
-	    sort_files_stack(PS_FILES);
+	    if (nd > 0) {
+		sort_files_stack(TEXTBOOK_DATA);
+	    }
+	    if (ns > 0) {
+		sort_files_stack(PS_FILES);
+	    }
 	}
 	built = 1;
     }
@@ -3086,9 +3114,9 @@ static GtkWidget *files_notebook (windata_t *vwin, int role)
     }
 
     /* assemble the info we'll need */
-    err = build_file_collections();
+    err = build_file_collections(role);
     if (err) {
-	gui_errmsg(err);
+	fprintf(stderr, "files_notebook: build_files_collections failed\n");
 	return NULL;
     }
 
@@ -3157,6 +3185,7 @@ static int populate_notebook_filelists (windata_t *vwin,
 
     if (found == 0) {
 	/* didn't find anything to show */
+	fprintf(stderr, "populate_notebook_filelists: found = 0!\n");
 	return 1;
     }
 

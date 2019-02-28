@@ -883,24 +883,30 @@ int gretl_deltree (const char *path)
 
 GDir *gretl_opendir (const char *name)
 {
+    GError *error = NULL;
     GDir *dir = NULL;
 
 #ifdef WIN32
     if (valid_utf8(name)) {
-	dir = g_dir_open(name, 0, NULL);
+	dir = g_dir_open(name, 0, &error);
     } else {
 	gchar *pconv;
 	gsize bytes;
 
-	pconv = g_locale_to_utf8(name, -1, NULL, &bytes, NULL);
+	pconv = g_locale_to_utf8(name, -1, NULL, &bytes, &error);
 	if (pconv != NULL) {
-	    dir = g_dir_open(pconv, 0, NULL);
+	    dir = g_dir_open(pconv, 0, &error);
 	    g_free(pconv);
 	}
     }
 #else
-    dir = g_dir_open(name, 0, NULL);
+    dir = g_dir_open(name, 0, &error);
 #endif
+
+    if (error != NULL) {
+	gretl_errmsg_set(error->message);
+	g_error_free(error);
+    }
 
     return dir;
 }
@@ -1063,7 +1069,7 @@ static int try_open_file (char *targ, const char *finddir,
 	    err = gretl_test_fopen(tmp, "rb");
 	    if (err) {
 		/* try .gdtb also */
-		strncat(tmp, "b", 1);
+		strcat(tmp, "b");
 		err = gretl_test_fopen(tmp, "rb");
 	    }
 	}
