@@ -1,0 +1,15 @@
+set verbose off
+include dbnomics.gfn
+
+dims = dbnomics_get_dataset_dimensions("ECB", "AME")
+n = nelem(dims)
+printf "dims: %s with %d elements\n", typestr(typeof(dims)), n
+loop i=1..n --quiet
+    code = dims[i].code
+    vals = dims[i].values
+    ni = nelem(dims[i].values)
+    printf "\ndims[%d]: code %s, %d member(s)\n\n", i, code, ni
+    loop j=1..ni --quiet
+        printf "%s - %s\n", vals[j].code, vals[j].label
+    endloop
+endloop
