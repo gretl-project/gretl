@@ -6757,8 +6757,8 @@ static void build_data_export_combo (selector *sr)
 
 	combo = gretl_opts_combo_masked(&export_opts, deflt, masked);
     }
-    gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 0);
 
+    gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
 }
 

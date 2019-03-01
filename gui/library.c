@@ -1748,7 +1748,7 @@ void drop_missing_data (void)
 	int err;
 
 	if (permanent) {
-	    opt |= OPT_T;
+	    opt |= OPT_T; /* --permanent */
 	}
 	err = bool_subsample(NULL, opt, NULL);
 	if (!err) {
@@ -2892,9 +2892,9 @@ void do_qqplot (void)
     }
 
     if (resp == 1) {
-	opt |= OPT_Z;
+	opt |= OPT_Z; /* --z-scores */
     } else if (resp == 2) {
-	opt |= OPT_R;
+	opt |= OPT_R; /* --raw */
     }
 
     lib_command_sprintf("qqplot %s%s", dataset->varname[v],
@@ -5335,6 +5335,7 @@ void do_resid_freq (GtkAction *action, gpointer p)
 	return;
     }
 
+    /* OPT_Z: compare with normal dist */
     freq = get_freq(dset->v - 1, dset, NADBL, NADBL, 0,
 		    pmod->ncoeff, OPT_Z, &err);
 
@@ -5440,10 +5441,10 @@ void do_freq_dist (void)
 	}
 
 	if (dist == D_NORMAL) {
-	    opt = OPT_Z;
+	    opt = OPT_Z; /* --normal */
 	    diststr = " --normal";
 	} else if (dist == D_GAMMA) {
-	    opt = OPT_O;
+	    opt = OPT_O; /* --gamma */
 	    diststr = " --gamma";
 	}
     }
@@ -8869,7 +8870,7 @@ static gretlopt store_action_to_opt (const char *fname, int action,
 	   status of the original file
 	*/
 	if (has_suffix(fname, ".gdt") && is_gzipped(fname)) {
-	    opt |= OPT_Z;
+	    opt |= OPT_Z; /* --gzipped */
 	}
     } else if (action == SAVE_DATA || action == SAVE_DATA_AS ||
 	       action == SAVE_BOOT_DATA || action == EXPORT_GDT) {
@@ -8878,7 +8879,7 @@ static gretlopt store_action_to_opt (const char *fname, int action,
 	/* apply compression unless the user has set the
 	   gzip level to zero via the file save dialog */
 	if (level > 0) {
-	    opt |= OPT_Z;
+	    opt |= OPT_Z; /* compression */
 	}
 	/* offer binary compatibility option? */
 	if (has_suffix(fname, ".gdtb")) {

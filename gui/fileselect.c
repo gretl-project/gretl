@@ -971,7 +971,7 @@ static void record_compress_level (GtkWidget *b, gpointer p)
     int level;
 
     level = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(b));
-    set_optval_int(STORE, OPT_Z, level);
+    set_optval_int(STORE, OPT_Z, level); /* data compression */
 }
 
 static void add_compression_level_option (GtkWidget *filesel)
