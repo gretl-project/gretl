@@ -10011,55 +10011,106 @@
  	  <flag>--no-dates</flag>
  	  <effect>usa i numeri delle osservazioni</effect>
  	</option>
+	<option>
+	  <flag>--range</flag>
+	  <optparm>inizio:fine</optparm>
+	  <effect>vedi sotto</effect>
+	</option>
+	<option>
+	  <flag>--midas</flag>
+	  <effect>vedi sotto</effect>
+	</option>
+	<option>
+	  <flag>--tree</flag>
+	  <effect>specifico per bundle; vedi sotto</effect>
+	</option>
       </options>
       <examples>
 	<example>print x1 x2 --byobs</example>
+	<example>print matriciona</example>
 	<example>print "Questa è una stringa"</example>
+	<example>print my_array --range=3:6</example>
+	<example>print hflist --midas</example>
       </examples>
     </usage>
 
     <description>
       <para>
-	Se viene indicata una <repl>lista-variabili</repl>, stampa i
-        valori delle variabili specificate, altrimenti stampa i valori
-        di tutte le variabili nel dataset in uso. Usando l'opzione
-	<opt>byobs</opt> i dati vengono stampati per osservazione,
-        altrimenti sono stampati per variabile.
+	Si noti che <lit>print</lit> è un comando relativamente 
+	<quote>rozzo</quote> (principalmente rivolto alla stampa di
+	serie); per alternative più avanzate e meno restrittive, si
+	vedano i comandi <cmdref targ="printf"/> e <cmdref
+	targ="eval"/>.
       </para>
-
       <para>
- 	Se si usa l'opzione <opt>byobs</opt> e i dati sono mostrati per
-        osservazione, il comportamento predefinito è quello di mostrare la data
-        (per serie storiche) o il marcatore (se esiste) all'inizio di ogni riga.
- 	L'opzione <lit>--no-dates</lit> sopprime la visualizzazione delle date o
-        dei marcatori: viene mostrato solo un semplice numero di osservazione.
+	Nella prima variante mostrata sopra (vedia anche il primo
+	esempio), <repl>lista</repl> dev'essere una lista di serie
+	(sia come variabile predefinita che come lista di nomi o
+	numeri ID separati da spazi). In tal caso, il comando stampa i
+	valori delle variabili specificate. Per default, la stampa
+	avviene <quote>per variabile</quote>, ma con l'opzione
+	<opt>byobs</opt> i dati vengono stampati per osservazione. Nel
+	secondo caso, il comportamento predefinito è quello di
+	mostrare la data (per serie storiche) o il marcatore (se
+	esiste) all'inizio di ogni riga.  L'opzione
+	<lit>--no-dates</lit> sopprime la visualizzazione delle date o
+	dei marcatori: viene mostrato solo un semplice numero di
+	osservazione. Si veda l'ultimo paragrafo dio questa voce per
+	l'effetto in questo contesto dell'opzione <opt>midas</opt>
+	(che si applica solo a liste predefinite).
       </para>
- 
       <para>
-	Se l'argomento di <cmd>print</cmd> è una stringa letterale (che
-        deve iniziare con le virgolette doppie <lit>"</lit>), la stringa
-        viene stampata così come è stata indicata. Si veda anche <cmdref
-          targ="printf"/>.
+	Se al comando non vengono forniti argomenti (la seconda variante
+	mostrata all'inizio), l'azione è simile a quella appena
+	descritta, con tatnto di opzioni aggiuntive. La sola
+	differenza è che vengono stampate <emphasis>tutte</emphasis>
+	le serie nel dataset aperto.
       </para>
-      
       <para>
-        Nota: c'è un <quote>trucco</quote> con questo comando, usando
-        l'opzione <opt>byobs</opt>, che può essere utile quando si
-        lavora su un dataset con valori mancanti. Se si fornisce una
-        lista di variabili seguite da un punto e virgola e da una
-        variabile finale, la variabile finale non viene mostrata, ma
-        viene usata per selezionare le osservazioni da mostrare. Le
-        osservazioni per cui la variabile finale assume valore 0 non
-        verranno mostrate. Ad esempio, si supponga di avere la serie
-        giornaliera <lit>x</lit> e di volere la lista delle date per
-        cui <lit>x</lit> ha valori mancanti. Si può procedere nel modo
-        seguente:
+	La terza variante (con l'argomento <repl>nomi-oggetto</repl>;
+	vedi il secondo esempio) funziona con una lista di nomi
+	(separati da spazi) di variabili diversi da serie: scalari,
+	matrici, stringhe, bundle, array. Di questi oggetti, vengono
+	mostrati i valori.
       </para>
-      <code>
-	genr filt = missing(x)
-	print x ; filt --byobs
-      </code>
-
+      <para>
+	Nella quarta forma (terzo esempio), <repl>stringa</repl>
+	dev'essere una stringa racchiusa da virgolette doppie (e
+	nient'altro dopo). La stringa viene stampata, seguita da un
+	<quote>a capo</quote>.
+      </para>
+      <para>
+	L'opzione <opt>range</opt> è usata per controllare la quantità
+	di informazione stampata. I valori (interi)
+	<repl>inizio</repl> e <repl>fine</repl> fanno riferimento alle
+	osservazioni per serie e liste, alle rghe per le matrici, agli
+	elementi per gli array, e alle linee di testo per le
+	stringhe. In tutti i casi, il valore minimo per
+	<repl>inizio</repl> è 1 e il massimo <repl>stop</repl> è la
+	dimensione <quote>per riga</quote> dell'oggetto in
+	questione. Valori negativi per questi indici sono interpretati
+	come valori a partire dal fondo. Gli indici possono avere la
+	forma di numeri o di variabili scalari predefinite. Se
+	<repl>inizio</repl> viene omesso, si intende 1 e se viene
+	omesso <repl>fine</repl> si intende <quote>fino in
+	fondo</quote>. Si noti che nel caso di serie e liste, gli
+	indici sono relativi al sottocampione in uso.
+      </para>
+      <para>
+	L'opzione <opt>tree</opt> è specifica alla stampa di un
+	bundle: essa fa sì che venga stampato anche il contenuto degli
+	eventuali altri bundle contenuti in quello specificato (anche
+	come array di bundle). Altrimenti, vengono elencati solo gli
+	elementi di livello più alto.
+      </para>
+      <para>
+	L'opzione <opt>midas</opt> è specifica alla stampa di una
+	lista in dataset che contengono una o più serie ad alta
+	frequenza, ognuna rappresentata da una <cmdref
+	targ="MIDAS_list"/>. Se viene passata come argomento una lista
+	di questo tipo, verrà stampata (per osservazione) la serie
+	alla sua frequenza <quote>nativa</quote>.
+      </para>
     </description>
 
     <gui-access>

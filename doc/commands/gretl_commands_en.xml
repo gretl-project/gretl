@@ -10481,6 +10481,7 @@
 	<example>print x1 x2 --byobs</example>
 	<example>print my_matrix</example>
 	<example>print "This is a string"</example>
+	<example>print my_array --range=3:6</example>
 	<example>print hflist --midas</example>
       </examples>
     </usage>
@@ -10521,8 +10522,7 @@
 	argument; see the second example) expects a space-separated
 	list of names of primary gretl objects other than series
 	(scalars, matrices, strings, bundles, arrays). The value(s) of
-	these objects are displayed. No option flags are supported in
-	this case.
+	these objects are displayed.
       </para>
       <para>
 	In the fourth form (third example),
@@ -10533,20 +10533,26 @@
       </para>
       <para>
 	The <opt>range</opt> option can be used to control the amount
-	of information printed, for series, lists of series, matrices,
-	and strings. The <repl>start</repl> and <repl>stop</repl>
-	(integer) values refer to observations for series and lists,
-	rows for matrices, elements for arrays, and lines of text for
-	strings. In all cases the minimum <repl>start</repl> value is
-	1 and the maximum <repl>stop</repl> value is the
-	<quote>row-wise size</quote> of the object in
-	question. Negative values for these indices are taken to
-	indicate a count back from the end. The indices may be given
-	in numeric form or as the names of predefined scalar
-	variables. If <repl>start</repl> is omitted that is taken
-	as an implicit 1 and if <repl>stop</repl> is omitted that
-	means go all the way to the end. Note that with series and
-	lists the indices are relative to the current sample range.
+	of information printed. The <repl>start</repl> and
+	<repl>stop</repl> (integer) values refer to observations for
+	series and lists, rows for matrices, elements for arrays, and
+	lines of text for strings. In all cases the minimum
+	<repl>start</repl> value is 1 and the maximum
+	<repl>stop</repl> value is the <quote>row-wise size</quote> of
+	the object in question. Negative values for these indices are
+	taken to indicate a count back from the end. The indices may
+	be given in numeric form or as the names of predefined scalar
+	variables. If <repl>start</repl> is omitted that is taken as
+	an implicit 1 and if <repl>stop</repl> is omitted that means
+	go all the way to the end. Note that with series and lists the
+	indices are relative to the current sample range.
+      </para>
+      <para>
+	The <opt>tree</opt> option is specific to the printing of a
+	gretl bundle: the effect is that if the specified bundle
+	contains further bundles, or arrays of bundles, their contents
+	are listed. Otherwise only the top-level members of the
+	bundle are listed.
       </para>
       <para>
 	The <opt>midas</opt> option is specific to the printing of a
@@ -10555,13 +10561,6 @@
 	a <cmdref targ="MIDAS_list"/>. If one such list is given as
 	argument and this option is appended, the series is printed by
 	observation at its <quote>native</quote> frequency.
-      </para>
-      <para>
-	The <opt>tree</opt> option is specific to the printing of a
-	gretl bundle: the effect is that if the specified bundle
-	contains further bundles, or arrays of bundles, their contents
-	are listed. Otherwise only the top-level members of the
-	bundle are listed.
       </para>
     </description>
 
