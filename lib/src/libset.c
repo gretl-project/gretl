@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* libset.c for gretl */
@@ -75,7 +75,7 @@ enum {
     STATE_MWRITE_G        = 1 << 21, /* use %g format with mwrite() */
     STATE_ECHO_SPACE      = 1 << 22, /* preserve vertical space in output */
     STATE_STRSUB_ON       = 1 << 23  /* string substitution activated */
-};    
+};
 
 /* for values that really want a non-negative integer */
 #define UNSET_INT -9
@@ -95,18 +95,18 @@ struct set_vars_ {
     int flags;
     unsigned int seed;          /* for PRNG */
     double conv_huge;           /* conventional value for $huge */
-    int horizon;                /* for VAR impulse responses */ 
+    int horizon;                /* for VAR impulse responses */
     int bootrep;                /* bootstrap replications */
     double nls_toler;           /* NLS convergence criterion */
     int loop_maxiter;           /* max no. of iterations in non-for loops */
     int vecm_norm;              /* VECM beta normalization */
     int optim;                  /* code for preferred optimizer */
-    int bfgs_maxiter;           /* max iterations, BFGS */         
+    int bfgs_maxiter;           /* max iterations, BFGS */
     double bfgs_toler;          /* convergence tolerance, BFGS */
     double bfgs_maxgrad;        /* max acceptable gradient norm, BFGS */
     int bfgs_verbskip;          /* BFGS: show one in n iterations  */
     int optim_steplen;          /* step length algorithm (only BFGS for now) */
-    int bhhh_maxiter;           /* max iterations, BHHH */          
+    int bhhh_maxiter;           /* max iterations, BHHH */
     double bhhh_toler;          /* convergence tolerance, BHHH */
     int lbfgs_mem;              /* memory span for L-BFGS-B */
     int garch_vcv;              /* GARCH vcv variant */
@@ -217,6 +217,8 @@ static const char *hac_lag_string (void);
 static int real_libset_read_script (const char *fname,
 				    PRN *prn);
 static int set_csv_digits (const char *s);
+static int libset_get_scalar (const char *var, const char *arg,
+			      int *pi, double *px);
 
 static void robust_opts_init (struct robust_opts *r)
 {
@@ -232,7 +234,7 @@ static void robust_opts_copy (struct robust_opts *r)
     r->auto_lag = state->ropts.auto_lag;
     r->user_lag = state->ropts.user_lag;
     r->hc_version = state->ropts.hc_version;
-    r->hkern = state->ropts.hkern; 
+    r->hkern = state->ropts.hkern;
     r->qsband = state->ropts.qsband;
 }
 
@@ -261,8 +263,8 @@ static const char *arma_vcv_strs[] = {
 };
 
 static const char *hac_kernel_strs[] = {
-    "bartlett", 
-    "parzen", 
+    "bartlett",
+    "parzen",
     "qs",
     NULL
 };
@@ -382,13 +384,13 @@ static void print_initvals (const gretl_matrix *ivals, PRN *prn,
 	} else {
 	    gretl_matrix_print_to_prn(ivals, " initvals =", prn);
 	}
-    } 
+    }
 }
 
 /* check_for_state() returns non-zero if the program options
    state is not readable */
 
-static int check_for_state (void) 
+static int check_for_state (void)
 {
     if (state == NULL) {
 	return libset_init();
@@ -484,7 +486,7 @@ int gretl_n_processors (void)
     if (sysctl(mib, 2, &n_proc, &len, NULL, 0) == -1) {
 	perror("could not determine number of CPUs available");
 	n_proc = 1;
-    }    
+    }
 #else
     n_proc = sysconf(_SC_NPROCESSORS_ONLN);
 #endif
@@ -567,7 +569,7 @@ static int openmp_by_default (void)
 	fprintf(stderr, "use OpenMP by default? %s\n", ret ? "yes" : "no");
 	fprintf(stderr, "omp_num_threads = %d\n", omp_n_threads);
     }
-# endif	
+# endif
 
     return ret;
 }
@@ -579,7 +581,7 @@ static void state_vars_init (set_vars *sv)
 #if PDEBUG
     fprintf(stderr, "state_vars_init called\n");
 #endif
-    sv->flags = STATE_ECHO_ON | STATE_MSGS_ON | STATE_WARN_ON | 
+    sv->flags = STATE_ECHO_ON | STATE_MSGS_ON | STATE_WARN_ON |
 	STATE_SKIP_MISSING | STATE_STRSUB_ON;
 #if 1
     if (getenv("GRETL_STRSUB_OFF")) {
@@ -723,7 +725,7 @@ int get_mp_bits (void)
 	char *s = getenv("GRETL_MP_BITS");
 	int b;
 
-	if (s != NULL) { 
+	if (s != NULL) {
 	    b = atoi(s);
 	    if (mp_bits_ok(b)) {
 		return b;
@@ -853,15 +855,19 @@ static int parse_hac_lag_variant (const char *s)
 	state->ropts.auto_lag = AUTO_LAG_NEWEYWEST;
 	state->ropts.user_lag = UNSET_INT;
 	err = 0;
-    } else if (isdigit(*s)) {
-	state->ropts.user_lag = atoi(s);
-	err = 0;
+    } else {
+	int k = 0;
+
+	err = libset_get_scalar(HAC_LAG, s, &k, NULL);
+	if (!err) {
+	    state->ropts.user_lag = k;
+	}
     }
 
     return err;
 }
 
-static int 
+static int
 libset_numeric_string (const char *s, int *pi, double *px, int *err)
 {
     char *test;
@@ -920,7 +926,7 @@ static int negval_invalid (const char *var)
     return ret;
 }
 
-static int libset_get_scalar (const char *var, const char *arg, 
+static int libset_get_scalar (const char *var, const char *arg,
 			      int *pi, double *px)
 {
     double x = NADBL;
@@ -940,7 +946,7 @@ static int libset_get_scalar (const char *var, const char *arg,
     x = get_scalar_value_by_name(arg, &err);
     if (err) {
 	return err;
-    }	
+    }
 
     if (negval_invalid(var) && x < 0.0) {
 	return E_DATA;
@@ -1017,7 +1023,7 @@ static int parse_hc_variant (const char *s)
     return 1;
 }
 
-static int parse_libset_int_code (const char *key, 
+static int parse_libset_int_code (const char *key,
 				  const char *val)
 {
     int i, err = E_DATA;
@@ -1065,7 +1071,7 @@ static int parse_libset_int_code (const char *key,
 		err = 0;
 		break;
 	    }
-	}	
+	}
     } else if (!g_ascii_strcasecmp(key, WILDBOOT_DIST)) {
 	for (i=0; wildboot_strs[i] != NULL; i++) {
 	    if (!g_ascii_strcasecmp(val, wildboot_strs[i])) {
@@ -1081,7 +1087,7 @@ static int parse_libset_int_code (const char *key,
 		err = 0;
 		break;
 	    }
-	}	
+	}
     }
 
     if (err) {
@@ -1089,7 +1095,7 @@ static int parse_libset_int_code (const char *key,
     }
 
     return err;
-}	
+}
 
 void set_xsect_hccme (const char *s)
 {
@@ -1204,7 +1210,7 @@ static int set_echo_status (const char *arg)
     } else {
 	err = E_INVARG;
     }
-	
+
     return err;
 }
 
@@ -1212,7 +1218,7 @@ static const char *get_echo_status (void)
 {
     if (check_for_state()) {
 	return "on";
-    } else if ((state->flags & STATE_ECHO_ON) && 
+    } else if ((state->flags & STATE_ECHO_ON) &&
 	       (state->flags & STATE_ECHO_SPACE)) {
 	return "full";
     } else if (state->flags & STATE_ECHO_ON) {
@@ -1288,7 +1294,7 @@ static int set_workdir (const char *s)
 	} else if (!err) {
 	    err = set_gretl_work_dir(workdir);
 	}
-    } 
+    }
 
     return err;
 }
@@ -1392,7 +1398,7 @@ static void libset_print_double (const char *s, PRN *prn,
     }
 }
 
-static void libset_header (char *s, PRN *prn, gretlopt opt) 
+static void libset_header (char *s, PRN *prn, gretlopt opt)
 {
     if (opt & OPT_D) {
 	pputs(prn, "\n --- ");
@@ -1409,7 +1415,7 @@ static void libset_header (char *s, PRN *prn, gretlopt opt)
 static int print_settings (PRN *prn, gretlopt opt)
 {
     const char *workdir = gretl_workdir();
-    
+
     if (opt & OPT_D) {
 	pputs(prn, _("Variables that can be set using \"set\""));
 	pputs(prn, " (");
@@ -1452,7 +1458,7 @@ static int print_settings (PRN *prn, gretlopt opt)
     } else {
 	pprintf(prn, "set echo %s\n", get_echo_status());
     }
-	    
+
     libset_print_bool(FORCE_DECP, prn, opt);
     libset_print_int(LOOP_MAXITER, prn, opt);
     libset_print_bool(MAX_VERBOSE, prn, opt);
@@ -1534,7 +1540,7 @@ static int print_settings (PRN *prn, gretlopt opt)
     libset_print_int(VECM_NORM, prn, opt);
 
     pputc(prn, '\n');
-    
+
     return 0;
 }
 
@@ -1545,19 +1551,19 @@ static int libset_query_settings (const char *s, PRN *prn)
     if (!strcmp(s, "echo")) {
 	pprintf(prn, "%s: code, currently '%s'\n", s, get_echo_status());
     } else if (libset_boolvar(s)) {
-	pprintf(prn, "%s: boolean (on/off), currently %s\n", 
+	pprintf(prn, "%s: boolean (on/off), currently %s\n",
 		s, libset_get_bool(s)? "on" : "off");
     } else if (coded_intvar(s)) {
 	pprintf(prn, "%s: code, currently \"%s\"\n", s, intvar_code_string(s));
 	coded_var_show_opts(s, prn);
     } else if (libset_int(s)) {
 	int k = libset_get_int(s);
-	
+
 	if (is_unset(k)) {
 	    pprintf(prn, "%s: positive integer, currently unset\n", s);
 	} else {
 	    pprintf(prn, "%s: positive integer, currently %d\n", s, k);
-	}	    
+	}
     } else if (libset_double(s)) {
 	double x = libset_get_double(s);
 
@@ -1765,7 +1771,7 @@ int execute_set (const char *setobj, const char *setarg,
 	    if (!err) {
 		gretl_rand_set_seed(u);
 		if (gretl_messages_on() && !gretl_looping_quietly()) {
-		    pprintf(prn, 
+		    pprintf(prn,
 			    _("Pseudo-random number generator seeded with %u\n"), u);
 		}
 		state->seed = u;
@@ -1796,7 +1802,7 @@ int execute_set (const char *setobj, const char *setarg,
 	    err = E_UNKVAR;
 	}
     }
-		    
+
     return err;
 }
 
@@ -1853,7 +1859,7 @@ double libset_get_double (const char *key)
 	}
     } else {
 	fprintf(stderr, "libset_get_double: unrecognized "
-		"variable '%s'\n", key);	
+		"variable '%s'\n", key);
 	return 0;
     }
 }
@@ -1908,7 +1914,7 @@ int libset_set_double (const char *key, double val)
 	state->fdjac_eps = val;
     } else {
 	fprintf(stderr, "libset_set_double: unrecognized "
-		"variable '%s'\n", key);	
+		"variable '%s'\n", key);
 	err = E_UNKVAR;
     }
 
@@ -1975,7 +1981,7 @@ int libset_get_int (const char *key)
 	return state->wildboot_dist;
     } else {
 	fprintf(stderr, "libset_get_int: unrecognized "
-		"variable '%s'\n", key);	
+		"variable '%s'\n", key);
 	return 0;
     }
 }
@@ -2046,7 +2052,7 @@ static int intvar_min_max (const char *s, int *min, int *max,
 	*var = &state->wildboot_dist;
     } else {
 	fprintf(stderr, "libset_set_int: unrecognized "
-		"variable '%s'\n", s);	
+		"variable '%s'\n", s);
 	return E_UNKVAR;
     }
 
@@ -2136,7 +2142,7 @@ static int boolvar_get_flag (const char *s)
 	return STATE_STRSUB_ON;
     } else {
 	fprintf(stderr, "libset_get_bool: unrecognized "
-		"variable '%s'\n", s);	
+		"variable '%s'\n", s);
 	return 0;
     }
 }
@@ -2396,7 +2402,7 @@ int pop_program_state (void)
 	sstack = realloc(state_stack, (ns - 1) * sizeof *sstack);
 	if (sstack == NULL) {
 	    err = 1;
-	}	
+	}
     }
 
     if (!err) {
@@ -2463,9 +2469,9 @@ void set_loop_on (int quiet)
 void set_loop_off (void)
 {
     state->flags &= ~STATE_LOOPING;
-    
+
     /* If we're not currently governed by "loop quietness" at
-       caller level, turn such quietness off too 
+       caller level, turn such quietness off too
     */
     if (state->flags & STATE_LOOP_QUIET) {
 	int i = n_states - 1;
@@ -2563,7 +2569,7 @@ void gretl_set_gui_mode (void)
 
 /* Returns 1 if we're running the GUI program. The current
    usage may be interactive (menu-driven or typing at the
-   GUI "console") or script/batch. See also 
+   GUI "console") or script/batch. See also
    gretl_in_batch_mode().
 */
 
@@ -2589,7 +2595,7 @@ int gretl_in_tool_mode (void)
     return tool_mode;
 }
 
-/* mechanism to support callback for representing ongoing 
+/* mechanism to support callback for representing ongoing
    activity in the GUI */
 
 static SHOW_ACTIVITY_FUNC sfunc;
@@ -2615,24 +2621,24 @@ void show_activity_callback (void)
 
 static DEBUG_READLINE dbg_readline;
 
-void set_debug_read_func (DEBUG_READLINE dfunc) 
+void set_debug_read_func (DEBUG_READLINE dfunc)
 {
     dbg_readline = dfunc;
 }
 
-DEBUG_READLINE get_debug_read_func (void) 
+DEBUG_READLINE get_debug_read_func (void)
 {
     return dbg_readline;
 }
 
 static DEBUG_OUTPUT dbg_output;
 
-void set_debug_output_func (DEBUG_OUTPUT dout) 
+void set_debug_output_func (DEBUG_OUTPUT dout)
 {
     dbg_output = dout;
 }
 
-DEBUG_OUTPUT get_debug_output_func (void) 
+DEBUG_OUTPUT get_debug_output_func (void)
 {
     return dbg_output;
 }
@@ -2641,7 +2647,7 @@ DEBUG_OUTPUT get_debug_output_func (void)
 
 static QUERY_STOP query_stop;
 
-void set_query_stop_func (QUERY_STOP query) 
+void set_query_stop_func (QUERY_STOP query)
 {
     query_stop = query;
 }
