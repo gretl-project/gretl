@@ -773,6 +773,7 @@ int main (int argc, char *argv[])
 	if (gretl_execute_loop()) {
 	    state.cmd->ci = RUNLOOP;
 	    err = cli_exec_line(&state, dset, cmdprn);
+	    state.cmd->ci = 0;
 	} else {
 	    err = cli_get_input_line(&state);
 	    if (err) {
