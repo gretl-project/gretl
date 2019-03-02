@@ -65,8 +65,6 @@ static DATASET *peerset;
 #define SUBMASK_SENTINEL 127
 
 static int smpl_get_int (const char *s, DATASET *dset, int *err);
-static int test_set_sample (const char *s, DATASET *dset,
-			    int *t1, int *t2);
 
 /* accessors for full dataset, when sub-sampled */
 
@@ -1617,45 +1615,6 @@ make_restriction_mask (int mode, const char *s,
     return err;
 }
 
-/* Here the mask we're after is "mixed" in the sense that
-   we are starting from a t1, t2 setting but possibly
-   compounding this with a prior "subsampling".
-*/
-
-static int
-make_mixed_mask (int t1, int t2, DATASET *dset,
-		 const char *oldmask, char **pmask,
-		 PRN *prn)
-{
-    char *mask = NULL;
-    int t, sn = 0, err = 0;
-
-    mask = make_submask(dset->n);
-    if (mask == NULL) {
-	return E_ALLOC;
-    }
-
-    for (t=t1; t<=t2; t++) {
-	mask[t] = 1;
-    }
-
-    if (oldmask != NULL) {
-	sn = overlay_masks(mask, oldmask, dset->n);
-    } else {
-	sn = t2 - t1 + 1;
-    }
-
-    err = check_subsample_n(sn, dset, &mask, prn);
-
-    if (err) {
-	free(mask);
-    } else {
-	*pmask = mask;
-    }
-
-    return err;
-}
-
 static void finalize_panel_subset (DATASET *subset,
 				   DATASET *dset,
 				   int npad)
@@ -2649,21 +2608,6 @@ int set_panel_sample (const char *start, const char *stop,
 #if PANDEBUG
     panreport("set_panel_sample", dset);
 #endif
-
-    return err;
-}
-
-static int test_set_sample (const char *s, DATASET *dset,
-			    int *t1, int *t2)
-{
-    char start[OBSLEN], stop[OBSLEN];
-    int err = 0;
-
-    if (sscanf(s, "%15s %15s", start, stop) == 2) {
-	err = real_set_sample(start, stop, dset, t1, t2);
-    } else if (sscanf(s, "%15s", start) == 1) {
-	err = real_set_sample(start, NULL, dset, t1, t2);
-    }
 
     return err;
 }
