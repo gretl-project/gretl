@@ -122,7 +122,7 @@ function scalar dbnomics_bundle_get_data(const bundle b, series *x, bool verbose
     endif
 
     outfile null
-        catch append @tmpfile --quiet
+        catch append @tmpfile --quiet --fixed-sample
         if !$error
             x = dbseries
         endif
