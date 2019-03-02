@@ -2716,8 +2716,8 @@ static int smpl_special (gretlopt opt)
 
 static int panel_smpl_special (gretlopt opt)
 {
-    /* --unit [or, maybe someday, --time */
-    return opt & OPT_G;
+    /* --unit [or, maybe someday, --time] */
+    return opt & OPT_U;
 }
 
 static void maybe_print_error_message (CMD *cmd, int err, PRN *prn)
@@ -3163,11 +3163,14 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case SMPL:
 	if (cmd->opt == OPT_F) {
 	    err = restore_full_sample(dset, s);
-	} else if ((cmd->opt & OPT_T) && (cmd->opt & OPT_U)) {
+	} else if (cmd->opt == OPT_T && cmd->param == NULL) {
+	    /* --permanent, by itself */
 	    err = perma_sample(dset, cmd->opt, prn, NULL);
 	} else if (panel_smpl_special(cmd->opt)) {
+	    /* the panel --unit option */
 	    err = set_panel_sample(cmd->param, cmd->parm2, cmd->opt, dset);
 	} else if (smpl_special(cmd->opt)) {
+	    /* --restrict, etc. */
 	    err = restrict_sample(cmd->param, cmd->list, dset,
 				  s, cmd->opt, prn, NULL);
 	} else if (cmd->param == NULL && cmd->parm2 == NULL) {
@@ -3175,6 +3178,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    print_smpl(dset, get_full_length_n(), OPT_F, prn);
 	    break;
 	} else {
+	    /* simple setting of t1, t2 business */
 	    err = set_sample(cmd->param, cmd->parm2, dset);
 	}
 	if (!err && !(cmd->opt & OPT_Q)) {

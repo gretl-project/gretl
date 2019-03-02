@@ -2749,7 +2749,7 @@ void sample_restrict_dialog (GtkAction *action, gpointer p)
 	g_list_free(dumlist);
     }
 
-    if (dataset_is_restricted()) {
+    if (dataset_is_subsampled(dataset)) {
 	if (dumlist != NULL) {
 	    vbox_add_hsep(vbox);
 	}

@@ -3681,8 +3681,8 @@ static void handle_option_inflections (CMD *cmd)
 	if (cmd->opt & (OPT_M | OPT_A | OPT_C)) {
 	    /* no-missing, no-all-missing or contiguous */
 	    cmd->ciflags = CI_LIST | CI_DOALL;
-	} else if (cmd->opt & (OPT_R | OPT_Z)) {
-	    /* restrict or resize */
+	} else if (cmd->opt & OPT_R) {
+	    /* restrict */
 	    cmd->ciflags = CI_ADHOC;
 	} else if (cmd->opt & OPT_F) {
 	    /* full: no args */
@@ -3693,9 +3693,6 @@ static void handle_option_inflections (CMD *cmd)
 	} else if (cmd->opt & OPT_N) {
 	    /* random sample */
 	    cmd->ciflags = CI_PARM1;
-	} else if (cmd->opt & OPT_U) {
-	    /* operate on current subsample: no args */
-	    cmd->ciflags = 0;
 	}
     } else if (cmd->ci == SET) {
 	if (cmd->opt & (OPT_F | OPT_T)) {

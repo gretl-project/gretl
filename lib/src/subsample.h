@@ -64,7 +64,7 @@ int perma_sample (DATASET *dset, gretlopt opt, PRN *prn,
 
 int complex_subsampled (void);
 
-int dataset_is_complex_subsampled (const DATASET *dset);
+int dataset_is_subsampled (const DATASET *dset);
 
 int get_full_length_n (void);
 

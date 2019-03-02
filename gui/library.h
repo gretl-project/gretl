@@ -107,8 +107,6 @@ int do_save_labels (const char *fname);
 
 void labels_callback (void);
 
-int dataset_is_restricted (void);
-
 int maybe_restore_full_data (int action);
 
 void gui_transpose_data (void);
@@ -118,8 +116,6 @@ void gui_sort_data (void);
 void gui_resample_data (void);
 
 void perma_sample_callback (void);
-
-int dataset_is_subsampled (void);
 
 void set_original_n (int n);
 

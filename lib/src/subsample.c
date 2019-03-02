@@ -1145,10 +1145,15 @@ int get_full_length_n (void)
     return (fullset != NULL) ? fullset->n : 0;
 }
 
-int dataset_is_complex_subsampled (const DATASET *dset)
+int dataset_is_subsampled (const DATASET *dset)
 {
-    return (fullset != NULL && fullset->Z != NULL &&
-	    dset == peerset);
+    if (fullset != NULL && fullset->Z != NULL) {
+	return 1;
+    } else if (dset->t1 > 0 || dset->t2 < dset->n - 1) {
+	return 1;
+    } else {
+	return 0;
+    }
 }
 
 /* When sub-sampling on some boolean criterion, check to see if we can
@@ -1870,14 +1875,14 @@ static char *precompute_mask (const char *s, const char *oldmask,
 /* Intended for time series data: trim any missing values
    at the start and end of the current sample range, then
    check the remaining range for missing values and flag
-   an error if any are found. If @rt1 and @rt2 are non-
-   NULL we record the resulting sample range in them,
-   otherwise we assign in to the t1 and t2 members of @dset.
+   an error if any are found. If opt contains OPT_T (for
+   permanence) and no error is encountered, we shrink the
+   dataset to the contiguous range.
 */
 
 static int set_contiguous_sample (const int *list,
 				  DATASET *dset,
-				  int *rt1, int *rt2)
+				  gretlopt opt)
 {
     int ct1 = dset->t1;
     int ct2 = dset->t2;
@@ -1902,12 +1907,12 @@ static int set_contiguous_sample (const int *list,
     }
 
     if (!err) {
-	if (rt1 != NULL && rt2 != NULL) {
-	    *rt1 = ct1;
-	    *rt2 = ct2;
-	} else {
-	    dset->t1 = ct1;
-	    dset->t2 = ct2;
+	int changed = ct1 != dset->t1 || ct2 != dset->t2;
+
+	dset->t1 = ct1;
+	dset->t2 = ct2;
+	if (changed && (opt & OPT_T)) {
+	    err = perma_sample(dset, OPT_T, NULL, NULL);
 	}
     }
 
@@ -2010,62 +2015,6 @@ static int handle_ts_restrict (char *mask, DATASET *dset,
     return err;
 }
 
-/* under what conditions will be bother testing for a
-   contiguous subsample mask? */
-
-static int try_for_contig (gretlopt opt, DATASET *dset)
-{
-    if (opt & (OPT_T | OPT_N)) {
-	/* permanent restriction, or random subsample: no */
-	return 0;
-    }
-
-    if (opt & OPT_C) {
-	/* we're already forcing contiguity */
-	return 0;
-    }
-
-    if ((opt & OPT_Z) && !dataset_is_time_series(dset)) {
-	/* forcing a resize and not time-series: no */
-	return 0;
-    }
-
-    return 1;
-}
-
-static int handle_resize_option (gretlopt *opt,
-				 const char *param,
-				 DATASET *dset,
-				 int *rt1, int *rt2)
-{
-    int err = 0;
-
-    if (*opt & (OPT_O | OPT_M | OPT_A | OPT_N | OPT_C)) {
-	/* besides --resize we got another option
-	   that implies a restriction: so there's
-	   nothing to be done here
-	*/
-	return 0;
-    }
-
-    /* add implicit "restrict" flag */
-    *opt |= OPT_R;
-
-    /* and inspect @param */
-    if (param != NULL) {
-	if (strchr(param, '=') ||
-	    strchr(param, '<') ||
-	    strchr(param, '>')) {
-	    ; /* must be a restriction spec */
-	} else {
-	    /* may be obs1 [ obs2 ] or similar? */
-	    err = test_set_sample(param, dset, rt1, rt2);
-	}
-    }
-
-    return err;
-}
-
 static int check_restrict_options (gretlopt opt, const char *param)
 {
     /* We'll accept the redundant combination of the options --dummy
@@ -2083,9 +2032,9 @@ static int check_restrict_options (gretlopt opt, const char *param)
     }
 
     /* The --contiguous option (OPT_C) is compatible only with
-       --no-missing (implied) and possibly --resize (OPT_Z) */
+       --no-missing (which is implied) and --permanent */
     if (opt & OPT_C) {
-	if ((opt & ~(OPT_C | OPT_M | OPT_Z)) != OPT_NONE) {
+	if ((opt & ~(OPT_C | OPT_M | OPT_T)) != OPT_NONE) {
 	    return E_BADOPT;
 	}
     }
@@ -2093,14 +2042,6 @@ static int check_restrict_options (gretlopt opt, const char *param)
     if (opt & (OPT_O | OPT_R | OPT_N)) {
 	/* parameter is required */
 	if (param == NULL || *param == '\0') {
-	    return E_ARGS;
-	}
-    }
-
-    if (opt & OPT_U) {
-	/* --current */
-	if (!(opt & (OPT_T | OPT_Z))) {
-	    /* requires --permanent or --resize */
 	    return E_ARGS;
 	}
     }
@@ -2116,7 +2057,7 @@ static int check_permanent_option (gretlopt opt,
 	/* can't permanently shrink the dataset within a function */
 	gretl_errmsg_set(_("The dataset cannot be modified at present"));
 	return E_DATA;
-    } else if (!(opt & (OPT_O | OPT_M | OPT_A | OPT_N | OPT_R | OPT_U))) {
+    } else if (!(opt & (OPT_O | OPT_M | OPT_A | OPT_N | OPT_R | OPT_C))) {
 	/* we need some kind of restriction flag */
 	return E_ARGS;
     } else if (gretl_in_gui_mode() && !(opt & OPT_F)) {
@@ -2189,7 +2130,7 @@ static int do_precompute (int mode, char *oldmask, const char *param)
  * a balanced panel.
  *
  * In case OPT_T is included, the sample restriction will be
- * permanent (the full datasset is destroyed), otherwise the
+ * permanent (the dataset is shrunk to the sample), otherwise the
  * restriction can be undone via the command "smpl full".
  *
  * Returns: 0 on success, non-zero error code on failure.
@@ -2204,10 +2145,8 @@ int restrict_sample (const char *param, const int *list,
     char *oldmask = NULL;
     char *mask = NULL;
     int free_oldmask = 0;
-    int force_resize = 0;
     int permanent = 0;
     int n_models = 0;
-    int rt1 = -1, rt2 = -1;
     int n_orig = 0;
     int mode, err = 0;
 
@@ -2220,15 +2159,7 @@ int restrict_sample (const char *param, const int *list,
     /* general check on incoming options */
     err = check_restrict_options(opt, param);
 
-    /* now take a closer look at some finicky options */
-
-    if (!err && (opt & OPT_Z)) {
-	err = handle_resize_option(&opt, param, dset, &rt1, &rt2);
-	if (!err) {
-	    force_resize = 1;
-	}
-    }
-
+    /* take a closer look at the --permanent option */
     if (!err && (opt & OPT_T)) {
 	err = check_permanent_option(opt, dset, &n_models);
 	if (!err) {
@@ -2250,15 +2181,7 @@ int restrict_sample (const char *param, const int *list,
 
     if (opt & OPT_C) {
 	/* --contiguous */
-	if (force_resize) {
-	    err = set_contiguous_sample(list, dset, &rt1, &rt2);
-	    if (err) {
-		return err;
-	    }
-	} else {
-	    /* we should be done at this point */
-	    return set_contiguous_sample(list, dset, NULL, NULL);
-	}
+	return set_contiguous_sample(list, dset, opt);
     }
 
     mode = get_restriction_mode(opt);
@@ -2313,13 +2236,8 @@ int restrict_sample (const char *param, const int *list,
 
     if (mask == NULL) {
 	/* not already handled by "precompute" above */
-	if (rt1 >= 0 && rt2 >= 0) {
-	    err = make_mixed_mask(rt1, rt2, dset, oldmask,
-				  &mask, prn);
-	} else {
-	    err = make_restriction_mask(mode, param, list, dset,
-					oldmask, &mask, prn);
-	}
+	err = make_restriction_mask(mode, param, list, dset,
+				    oldmask, &mask, prn);
     }
 
     if (!err && n_models > 0) {
@@ -2330,12 +2248,9 @@ int restrict_sample (const char *param, const int *list,
 	int contiguous = 0;
 	int t1 = 0, t2 = 0;
 
-	if (try_for_contig(opt, dset)) {
+	if (!(opt & OPT_N)) {
+	    /* don't bother with this for the --random case */
 	    contiguous = mask_contiguous(mask, dset, &t1, &t2);
-	} else if (dataset_is_time_series(dset) && (opt & OPT_C)) {
-	    contiguous = 1;
-	    t1 = rt1;
-	    t2 = rt2;
 	}
 
 #if SUBDEBUG
@@ -2344,7 +2259,7 @@ int restrict_sample (const char *param, const int *list,
 #endif
 
 	if (contiguous) {
-	    if (force_resize && dataset_is_time_series(dset)) {
+	    if (permanent && dataset_is_time_series(dset)) {
 		/* apply the restriction, but then re-establish the
 		   time-series character of the dataset
 		*/
@@ -2389,7 +2304,7 @@ int restrict_sample (const char *param, const int *list,
 
 /* perma_sample:
  * @dset: dataset struct.
- * @opt: option flags: must be OPT_T | OPT_U.
+ * @opt: option flags: must be OPT_T.
  * @prn: printing apparatus.
  * @n_dropped: location to receive count of dropped models,
  * or NULL.
@@ -2402,16 +2317,22 @@ int restrict_sample (const char *param, const int *list,
 int perma_sample (DATASET *dset, gretlopt opt, PRN *prn,
 		  int *n_dropped)
 {
-    gretlopt testopt = OPT_T | OPT_U;
-
-    if (dset->submask == NULL) {
+    if (!dataset_is_subsampled(dset)) {
 	pputs(prn, "smpl: nothing to be done\n");
 	return 0;
     } else if (dset->submask == RESAMPLED) {
 	pputs(prn, "smpl: dataset is resampled\n");
 	return E_DATA;
-    } else if (opt != testopt) {
+    } else if (gretl_function_depth() > 0) {
+	gretl_errmsg_set(_("The dataset cannot be modified at present"));
+	return E_DATA;
+    } else if (opt != OPT_T) {
 	return E_BADOPT;
+    }
+
+    if (dset->submask == NULL) {
+	/* just trim observations */
+	return dataset_shrink_obs_range(dset);
     }
 
     if (n_dropped != NULL) {

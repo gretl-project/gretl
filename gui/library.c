@@ -1559,7 +1559,7 @@ static int perma_sample_options (const char *param, int *list,
 
     if (resp == GRETL_YES) {
 	*n_dropped = 0;
-	if (opt & OPT_U) {
+	if (opt == OPT_T && param == NULL) {
 	    /* freezing current restriction */
 	    err = perma_sample(dset, opt, prn, NULL);
 	} else {
@@ -1602,7 +1602,7 @@ int bool_subsample (const char *param, gretlopt opt,
 
     if ((opt & OPT_T) && (opt & OPT_U)) {
 	/* freezing current restriction */
-	err = perma_sample(dataset, opt, prn, &n_dropped);
+	err = perma_sample(dataset, OPT_T, prn, &n_dropped);
     } else {
 	err = restrict_sample(param, NULL, dataset, NULL,
 			      opt, prn, &n_dropped);
@@ -8557,35 +8557,9 @@ void maybe_display_string_table (void)
     }
 }
 
-int dataset_is_subsampled (void)
-{
-    int ret = 0;
-
-    if (mdata->ui != NULL) {
-	GtkWidget *w = gtk_ui_manager_get_widget(mdata->ui,
-						 "/menubar/Sample/FullRange");
-
-	if (w != NULL && GTK_IS_WIDGET(w) && gtk_widget_is_sensitive(w)) {
-	    ret = 1;
-	}
-    }
-
-    return ret;
-}
-
-int dataset_is_restricted (void)
-{
-    /* Should we indicate "restricted" if t1 and t2 are reset, or only
-       if a sub-sampling mask is in place?  For now we'll go with the
-       broader option.
-    */
-
-    return dataset_is_subsampled();
-}
-
 int maybe_restore_full_data (int action)
 {
-    if (dataset_is_subsampled()) {
+    if (dataset_is_subsampled(dataset)) {
 	int r = GRETL_CANCEL;
 
 	if (action == SAVE_DATA) {
@@ -8768,7 +8742,7 @@ static void maybe_shrink_dataset (const char *newname)
     }
 
     if (shrink) {
-	if (dataset_is_subsampled()) {
+	if (dataset_is_subsampled(dataset)) {
 	    shrink_dataset_to_sample();
 	}
 	if (datafile != newname) {
@@ -8998,7 +8972,7 @@ int do_store (char *filename, int action, gpointer data)
     if (!err && !exporting) {
 	/* record the fact that data have been saved, etc. */
 	mkfilelist(FILE_LIST_DATA, filename, 0);
-	if (dataset_is_subsampled()) {
+	if (dataset_is_subsampled(dataset)) {
 	    maybe_shrink_dataset(filename);
 	} else if (datafile != filename) {
 	    strcpy(datafile, filename);
@@ -10245,7 +10219,8 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 	    int n_dropped = 0;
 	    int cancel = 0;
 
-	    if ((cmd->opt & OPT_T) && (cmd->opt & OPT_U)) {
+	    if (cmd->opt ==  OPT_T && cmd->param == NULL) {
+		/* make the current sampling permanent */
 		err = perma_sample(dset, cmd->opt, prn, &n_dropped);
 	    } else {
 		err = restrict_sample(cmd->param, cmd->list, dset,

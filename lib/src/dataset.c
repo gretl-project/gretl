@@ -1125,8 +1125,9 @@ int dataset_drop_observations (DATASET *dset, int n)
 
 int dataset_shrink_obs_range (DATASET *dset)
 {
-    int head = dset->t1;
-    int tail = dset->n - 1 - dset->t2;
+    int offset = dset->t1;
+    int newn = dset->t2 - dset->t1 + 1;
+    int tail = dset->n - newn;
     int err = 0;
 
     if (dset_zcols_borrowed(dset)) {
@@ -1134,21 +1135,24 @@ int dataset_shrink_obs_range (DATASET *dset)
 	return E_DATA;
     }
 
-    if (head > 0) {
-	int mvsize, rem = dset->n - head;
-	int i;
+    if (offset > 0) {
+	/* If the revised dataset starts at an offset into
+	   the original, shift each series back to the start of
+	   its Z[i] array.
+	*/
+	int i, mvsize;
 
-	mvsize = rem * sizeof **dset->Z;
+	mvsize = newn * sizeof **dset->Z;
 	for (i=0; i<dset->v; i++) {
-	    memmove(dset->Z[i], dset->Z[i] + head, mvsize);
+	    memmove(dset->Z[i], dset->Z[i] + offset, mvsize);
 	}
 
 	if (dataset_has_markers(dset)) {
-	    for (i=0; i<head; i++) {
+	    for (i=0; i<offset; i++) {
 		free(dset->S[i]);
 	    }
-	    mvsize = rem * sizeof *dset->S;
-	    memmove(dset->S, dset->S + head, mvsize);
+	    mvsize = newn * sizeof *dset->S;
+	    memmove(dset->S, dset->S + offset, mvsize);
 	}
 
 	if (dset->structure == CROSS_SECTION) {
@@ -1160,14 +1164,9 @@ int dataset_shrink_obs_range (DATASET *dset)
 	}
 
 	dset->t1 = 0;
-	dset->t2 -= head;
-	dset->n -= head;
-	ntodate(dset->endobs, dset->n - 1, dset);
     }
 
-    if (tail > 0) {
-	err = dataset_drop_observations(dset, tail);
-    }
+    err = dataset_drop_observations(dset, tail);
 
     return err;
 }

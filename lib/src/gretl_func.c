@@ -8998,7 +8998,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 
     if (dset != NULL) {
 	/* restore the sample that was in place on entry */
-	if (dataset_is_complex_subsampled(dset)) {
+	if (complex_subsampled()) {
 	    if (state.submask == NULL) {
 		/* we were not sub-sampled on entry */
 		restore_full_sample(dset, NULL);
