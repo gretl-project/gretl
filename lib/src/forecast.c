@@ -690,7 +690,7 @@ static_fcast_with_errs (Forecast *fc, MODEL *pmod,
     return err;
 }
 
-#define individual_effects_model(m) (m->ci == PANEL && \
+#define individual_effects_model(m) (m != NULL && m->ci == PANEL && \
 				     (m->opt & (OPT_F | OPT_U)))
 
 static void special_set_fcast_matrix (gretl_matrix *fc)
