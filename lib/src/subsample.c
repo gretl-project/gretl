@@ -2033,22 +2033,6 @@ static int check_permanent_option (gretlopt opt,
     return 0;
 }
 
-#if PANDEBUG || SUBDEBUG
-
-static void panreport (const char *s, const DATASET *dset)
-{
-    fprintf(stderr, "%s: dset: t1=%d, t2=%d, pd=%d, n=%d\n",
-	    s, dset->t1, dset->t2, dset->pd, dset->n);
-    if (fullset != NULL) {
-	fprintf(stderr, " fullset: t1=%d, t2=%d, pd=%d, n=%d\n",
-		fullset->t1, fullset->t2, fullset->pd, fullset->n);
-    } else {
-	fprintf(stderr, " fullset: not present\n");
-    }
-}
-
-#endif
-
 /* "Precomputing" a mask means computing a mask based on a
    current subsampled dataset (before restoring the full dataset,
    which is a part of the subsampling process). We do this if
@@ -2276,14 +2260,14 @@ int restrict_sample (const char *param, const int *list,
 int perma_sample (DATASET *dset, gretlopt opt, PRN *prn,
 		  int *n_dropped)
 {
-    if (!dataset_is_subsampled(dset)) {
+    if (gretl_function_depth() > 0) {
+	gretl_errmsg_set(_("The dataset cannot be modified at present"));
+	return E_DATA;
+    } else if (!dataset_is_subsampled(dset)) {
 	pputs(prn, "smpl: nothing to be done\n");
 	return 0;
     } else if (dset->submask == RESAMPLED) {
 	pputs(prn, "smpl: dataset is resampled\n");
-	return E_DATA;
-    } else if (gretl_function_depth() > 0) {
-	gretl_errmsg_set(_("The dataset cannot be modified at present"));
 	return E_DATA;
     } else if (opt != OPT_T) {
 	return E_BADOPT;
@@ -2446,22 +2430,42 @@ static void maybe_clear_range_error (int t, DATASET *dset)
     }
 }
 
-static int real_set_sample (const char *start,
-			    const char *stop,
-			    DATASET *dset,
-			    int *t1, int *t2)
+/**
+ * set_sample:
+ * @start: start of sample range.
+ * @stop: end of sample range.
+ * @dset: pointer to dataset struct.
+ * @opt: options flag(s).
+ *
+ * Sets the current sample range for @dset to that specified by
+ * @start and @stop, if possible.
+ *
+ * If @opt contains %OPT_T, make the sub-sampling permanent,
+ * or in other words shrink the dataset to the selected range.
+ *
+ * Returns: 0 on successful completion, non-zero error code
+ * otherwise.
+ */
+
+int set_sample (const char *start,
+		const char *stop,
+		DATASET *dset,
+		gretlopt opt)
 {
     int nf, new_t1 = dset->t1, new_t2 = dset->t2;
     int tmin = 0, tmax = 0;
-    int testing = 0;
     int err = 0;
 
     if (dset == NULL) {
 	return E_NODATA;
     }
 
-    if (t1 != NULL && t2 != NULL) {
-	testing = 1;
+    /* currently --quiet (OPT_Q) and --permanent (OPT_T)
+       are the only acceptable options here
+    */
+    opt &= ~OPT_Q;
+    if (opt != OPT_NONE && opt != OPT_T) {
+	return E_BADOPT;
     }
 
     gretl_error_clear();
@@ -2475,7 +2479,7 @@ static int real_set_sample (const char *start,
 	    dset->v, dset->n, dset->pd);
 #endif
 
-    if (nf == 2 && dset->n == 0 && !testing) {
+    if (nf == 2 && dset->n == 0) {
 	/* database special */
 	return db_set_sample(start, stop, dset);
     }
@@ -2502,12 +2506,8 @@ static int real_set_sample (const char *start,
 	    gretl_errmsg_set(_("error in new starting obs"));
 	    return 1;
 	}
-	if (testing) {
-	    *t1 = new_t1;
-	} else {
-	    dset->t1 = new_t1;
-	}
-	return 0;
+	dset->t1 = new_t1;
+	goto finish;
     }
 
     /* now we're looking at the 2 fields case */
@@ -2537,25 +2537,17 @@ static int real_set_sample (const char *start,
     }
 
     if (!err) {
-	if (testing) {
-	    *t1 = new_t1;
-	    *t2 = new_t2;
-	} else {
-	    dset->t1 = new_t1;
-	    dset->t2 = new_t2;
-	}
+	dset->t1 = new_t1;
+	dset->t2 = new_t2;
     }
 
-#if PANDEBUG
-    panreport("real_set_sample", dset);
-#endif
+ finish:
+
+    if (!err && (opt & OPT_T)) {
+	err = perma_sample(dset, opt, NULL, NULL);
+    }
 
     return err;
-}
-
-int set_sample (const char *start, const char *stop, DATASET *dset)
-{
-    return real_set_sample(start, stop, dset, NULL, NULL);
 }
 
 int set_panel_sample (const char *start, const char *stop,
@@ -2604,10 +2596,6 @@ int set_panel_sample (const char *start, const char *stop,
 	    dset->t2 = t2;
 	}
     }
-
-#if PANDEBUG
-    panreport("set_panel_sample", dset);
-#endif
 
     return err;
 }

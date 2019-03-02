@@ -10213,7 +10213,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 		print_smpl(dset, get_full_length_n(), OPT_F, prn);
 		break;
 	    } else {
-		err = set_sample(cmd->param, cmd->parm2, dset);
+		err = set_sample(cmd->param, cmd->parm2, dset, 0);
 	    }
  	} else {
 	    int n_dropped = 0;

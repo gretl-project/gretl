@@ -13234,14 +13234,13 @@
       </code>
 
       <para>
-	By default, restrictions on the current sample range are
-	undoable: by doing <lit>smpl full</lit> you can restore
-	the unrestricted dataset. However, the <opt>permanent</opt>
-	flag can be used to substitute the restricted dataset for the
-	original. This option is only available in conjunction
-	with the <opt>restrict</opt>, <opt>dummy</opt>,
-	<opt>no-missing</opt>, <opt>no-all-missing</opt> or
-	<opt>random</opt> forms of <lit>smpl</lit>.
+	By default, restrictions on the current sample range can be
+	undone: you can restore the full dataset via <lit>smpl
+	full</lit>.  However, the <opt>permanent</opt> flag can be
+	used to substitute the restricted dataset for the original. If
+	you give the <opt>permanent</opt> option with no other
+	arguments or options the effect is to shrink the dataset to
+	the current sample range.
       </para>
 
       <para>

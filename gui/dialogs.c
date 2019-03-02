@@ -1691,7 +1691,7 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	}
 
 	if (t1 != dataset->t1 || t2 != dataset->t2) {
-	    err = set_sample(s1, s2, dataset);
+	    err = set_sample(s1, s2, dataset, 0);
 	    if (err) {
 		gui_errmsg(err);
 	    } else {

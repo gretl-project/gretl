@@ -72,7 +72,8 @@ void set_dataset_resampled (DATASET *dset, unsigned int seed);
 
 int dataset_is_resampled (const DATASET *dset);
 
-int set_sample (const char *start, const char *stop, DATASET *dset);
+int set_sample (const char *start, const char *stop,
+		DATASET *dset, gretlopt opt);
 
 int set_panel_sample (const char *start, const char *stop,
 		      gretlopt opt, DATASET *dset);

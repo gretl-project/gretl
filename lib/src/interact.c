@@ -2708,9 +2708,10 @@ static int execute_plot_call (CMD *cmd, DATASET *dset,
     return err;
 }
 
-static int smpl_special (gretlopt opt)
+static int smpl_restrict (gretlopt opt)
 {
     opt &= ~OPT_Q;
+    opt &= ~OPT_T;
     return opt != OPT_NONE;
 }
 
@@ -3169,8 +3170,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	} else if (panel_smpl_special(cmd->opt)) {
 	    /* the panel --unit option */
 	    err = set_panel_sample(cmd->param, cmd->parm2, cmd->opt, dset);
-	} else if (smpl_special(cmd->opt)) {
-	    /* --restrict, etc. */
+	} else if (smpl_restrict(cmd->opt)) {
+	    /* --restrict, --dummy, etc. */
 	    err = restrict_sample(cmd->param, cmd->list, dset,
 				  s, cmd->opt, prn, NULL);
 	} else if (cmd->param == NULL && cmd->parm2 == NULL) {
@@ -3179,7 +3180,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    break;
 	} else {
 	    /* simple setting of t1, t2 business */
-	    err = set_sample(cmd->param, cmd->parm2, dset);
+	    err = set_sample(cmd->param, cmd->parm2, dset, cmd->opt);
 	}
 	if (!err && !(cmd->opt & OPT_Q)) {
 	    print_smpl(dset, get_full_length_n(), OPT_NONE, prn);
