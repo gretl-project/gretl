@@ -14701,6 +14701,13 @@
 	<repl>wtvar</repl>.
       </para>
 
+	  <para context="cli">
+	For weighted least squares estimation applied to panel data and 
+	based on the unit specific error variances please see the 
+	<cmdref targ="panel"/> command with the <lit>--unit-weights</lit> 
+	option.  
+	  </para>
+	  
       <para context="gui">
 	Let "wtvar" denote the variable selected in the "Weight variable"
 	box.  An OLS regression is run, where the dependent variable is
