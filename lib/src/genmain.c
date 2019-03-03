@@ -159,6 +159,11 @@ static int maybe_record_lag_info (parser *p)
 	s += strspn(s, " ");
     }
 
+    /* ensure we don't preserve stale metadata */
+    if (p->lh.vnum > 0) {
+	series_delete_metadata(p->dset, p->lh.vnum);
+    }
+
     sprintf(fmt, "%%%d[^ ()](%%d)", VNAMELEN-1);
 
     if (sscanf(s, fmt, vname, &lag) == 2) {
