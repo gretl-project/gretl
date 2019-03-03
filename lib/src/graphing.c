@@ -6997,6 +6997,19 @@ int gretl_panel_ts_plot (int vnum, DATASET *dset, gretlopt opt)
     }
 }
 
+int cli_panel_plot (const int *list, const char *literal,
+		    const DATASET *dset, gretlopt opt)
+{
+    if (!dataset_is_panel(dset)) {
+	gretl_errmsg_set(_("This command needs panel data"));
+	return E_DATA;
+    }
+
+    gretl_errmsg_set("panplot: not ready yet");
+
+    return 1;
+}
+
 static int data_straddle_zero (const gretl_matrix *m)
 {
     int t, lt0 = 0, gt0 = 0;

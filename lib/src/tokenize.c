@@ -163,6 +163,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { ORTHDEV,  "orthdev",  CI_LIST | CI_NOOPT },
     { OUTFILE,  "outfile",  CI_PARM1 | CI_FNAME | CI_INFL },
     { PANEL,    "panel",    CI_LIST },
+    { PANPLOT,  "panplot",  CI_LIST | CI_LLEN1 | CI_EXTRA },
     { PCA,      "pca",      CI_LIST | CI_DOALL },
     { PERGM,    "pergm",    CI_LIST | CI_LLEN1 | CI_ORD2 },
     { PLOT,     "plot",     CI_BLOCK | CI_PARM1 },

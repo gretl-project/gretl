@@ -3013,6 +3013,10 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	err = qq_plot(cmd->list, dset, cmd->opt);
 	break;
 
+    case PANPLOT:
+	err = cli_panel_plot(cmd->list, cmd->param, dset, cmd->opt);
+	break;
+
     case INFO:
 	print_info(cmd->opt, dset, prn);
 	break;
