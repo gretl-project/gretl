@@ -151,14 +151,14 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
   
   # add constant
   if obj.jcase > 2      # unrestricted
-    bmu +=  transp( mshape(obj.mu[1, ], n,T) )  
+    bmu = bmu .+  obj.mu[1, ]  # (use broadcasting)
   elif obj.jcase == 2   # restricted
-    bmu += transp( mshape(obj.jbeta[n+1, ], n, T) )
+    bmu = bmu .+ (obj.jbeta[n+1, ] * obj.jalpha')
   endif
 
   # add trend
   if obj.jcase == 4
-    bmu += seq(1,T)' obj.jbeta[n+1, ]   # restr.
+    bmu += seq(1,T)' obj.jbeta[n+1, ] * obj.jalpha'  # restr.
   elif obj.jcase == 5
     bmu += seq(1,T)' obj.mu[2, ]        # unrestr.
   endif
