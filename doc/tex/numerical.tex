@@ -32,7 +32,7 @@ user-defined function (see Chapter~\ref{chap:functions}) with the
 following general set-up:
 %
 \begin{code}
-function scalar ObjFunc (const matrix *theta, matrix *X)
+function scalar ObjFunc (const matrix theta, matrix *X)
   scalar val = ...  # do some computation
   return val
 end function
@@ -41,7 +41,10 @@ end function
 The first argument contains the parameter vector (which should not be
 modified within the function) and the second may be used to hold
 ``extra'' values that are necessary to compute the objective function,
-but are not the variables of the optimization problem. For example, if
+but are not the variables of the optimization problem. Here the pointer 
+form is chosen for the argument, but depending on the problem it could
+also be passed as a plain argument, with our without the \texttt{const} 
+modifier. For example, if
 the objective function were a log-likelihood, the first argument would
 contain the parameters and the second one the data. Or, for more
 economic-theory inclined readers, if the objective function were the
@@ -52,7 +55,7 @@ of goods and the second one their prices and disposable income.
   \caption{Finding the minimum of the Rosenbrock function}
   \label{rosenbrock}
 \begin{scode}
-function scalar Rosenbrock(const matrix *param)
+function scalar Rosenbrock(const matrix param)
   scalar x = param[1]
   scalar y = param[2]
   return -(1-x)^2 - 100 * (y - x^2)^2
@@ -60,7 +63,7 @@ end function
 
 matrix theta = {0, 0}
 set max_verbose 1
-M = BFGSmax(&theta, Rosenbrock(&theta))
+M = BFGSmax(&theta, Rosenbrock(theta))
 print theta
 \end{scode}
 \end{script}
@@ -127,13 +130,13 @@ in fact the derivatives of the negative of the Rosenbrock function.)
   \caption{Rosenbrock function with analytical gradient}
   \label{rosen-analytical}
 \begin{scode}
-function scalar Rosenbrock (const matrix *param)
+function scalar Rosenbrock (const matrix param)
   scalar x = param[1]
   scalar y = param[2]
   return -(1-x)^2 - 100 * (y - x^2)^2
 end function
 
-function void Rosen_grad (matrix *g, const matrix *param)
+function void Rosen_grad (matrix *g, const matrix param)
   scalar x = param[1]
   scalar y = param[2]
   g[1] = 2*(1-x) + 2*x*(200*(y-x^2))
@@ -143,7 +146,7 @@ end function
 matrix theta = {0, 0}
 matrix grad = {0, 0}
 set max_verbose 1
-M = BFGSmax(&theta, Rosenbrock(&theta), Rosen_grad(&grad, &theta))
+M = BFGSmax(&theta, Rosenbrock(theta), Rosen_grad(&grad, theta))
 print theta
 print grad
 \end{scode}
@@ -230,7 +233,7 @@ brevity.
   \caption{Rosenbrock function via Newton--Raphson}
   \label{rosen-newton}
 \begin{scode}
-function void Rosen_hess (matrix *H, const matrix *param)
+function void Rosen_hess (matrix *H, const matrix param)
   scalar x = param[1]
   scalar y = param[2]
   H[1,1] = 2 - 400*y + 1200*x^2
@@ -243,8 +246,8 @@ matrix theta = { 0, 0 }
 matrix grad = { 0, 0 }
 matrix H = zeros(2, 2)
 set max_verbose 1
-M = NRmax(&theta, Rosenbrock(&theta), Rosen_grad(&grad, &theta), 
-          Rosen_hess(&H, &theta))
+M = NRmax(&theta, Rosenbrock(theta), Rosen_grad(&grad, theta), 
+          Rosen_hess(&H, theta))
 print theta
 print grad
 \end{scode}
@@ -465,7 +468,7 @@ function, which is problematic for BFGS. (The true minimum is zero,
 obtained for \texttt{x} a 4-vector of zeros.)
 %
 \begin{code}
-function scalar powell (const matrix *x)
+function scalar powell (const matrix x)
   fx1 = x[1] + 10 * x[2]
   fx2 = x[3] - x[4]
   fx3 = x[2] - 2 * x[3]
@@ -474,8 +477,8 @@ function scalar powell (const matrix *x)
 end function
 
 matrix x = {3, -1, 0, 1}'
-printf "Initial f(X) = %g\n", powell(&x)
-fmin = NMmin(x, powell(&x))
+printf "Initial f(X) = %g\n", powell(x)
+fmin = NMmin(x, powell(x))
 printf "Estimate of optimal X*:\n%14f\n", x
 printf "f(X*) = %g\n", fmin
 \end{code}
