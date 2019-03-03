@@ -5435,7 +5435,7 @@ static int fill_fcstats_column (gretl_matrix *m,
 				int col)
 {
     double ME, MSE, MAE, MPE, MAPE, U;
-    double x, u[2];
+    double fe, u[2];
     int do_theil = 0;
     int ok_T = T;
     int t, err = 0;
@@ -5453,23 +5453,40 @@ static int fill_fcstats_column (gretl_matrix *m,
 		break;
 	    }
 	}
-	x = y[t] - f[t];
-	ME += x;
-	MSE += x * x;
-	MAE += fabs(x);
-	if (y[t] == 0.0) {
-	    MPE = MAPE = U = NADBL;
+	fe = y[t] - f[t];
+	ME += fe;
+	MSE += fe * fe;
+	MAE += fabs(fe);
+	if (floateq(fe, 0)) {
+	    ; /* OK, zero contribution to MPE, MAPE */
+	} else if (y[t] == 0.0) {
+	    /* can't calculate percentage */
+	    MPE = MAPE = NADBL;
 	} else {
-	    MPE += 100 * x / y[t];
-	    MAPE += 100 * fabs(x / y[t]);
-	    if (t < T-1 && !na(U)) {
-		if (na(f[t+1]) || na(y[t+1])) {
-		    U = NADBL;
-		} else {
-		    x = (f[t+1] - y[t+1]) / y[t];
-		    u[0] += x * x;
-		    x = (y[t+1] - y[t]) / y[t];
-		    u[1] += x * x;
+	    MPE += 100 * fe / y[t];
+	    MAPE += 100 * fabs(fe / y[t]);
+	}
+	if (t < T-1 && !na(U)) {
+	    if (na(f[t+1]) || na(y[t+1])) {
+		U = NADBL;
+	    } else {
+		fe = f[t+1] - y[t+1];
+		if (floatneq(fe, 0)) {
+		    if (y[t] == 0.0) {
+			U = NADBL;
+		    } else {
+			fe /= y[t];
+			u[0] += fe * fe;
+		    }
+		}
+		fe = y[t+1] - y[t];
+		if (floatneq(fe, 0)) {
+		    if (y[t] == 0.0) {
+			U = NADBL;
+		    } else {
+			fe /= y[t];
+			u[1] += fe * fe;
+		    }
 		}
 	    }
 	}
