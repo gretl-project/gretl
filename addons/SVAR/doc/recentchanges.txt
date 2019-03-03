@@ -15,9 +15,10 @@ changelog ***
   in script use (SVAR_setup). Some warning messages regarding the non-stable state of
   the id check code.
 - A new restriction check in the SVEC case (Luetkepohl 2008).
+- fix (hopefully) the treatment of deterministics and exog. in the SVEC bootstrap
+
 
 ---- changelog in SVAR.tex updated up to here -----
 
 - add optional rexo list arg to SVAR_coint, to allow -in the future- restricted exog. vars
-- fix (hopefully) the treatment of deterministics and exog. in the SVEC bootstrap
 

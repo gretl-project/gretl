@@ -2484,7 +2484,7 @@ a warning will be printed.
 \section{Changelog (after v1.2)}
 \label{sec:changelog}
 
-\subsection*{Version 1.4, February 2019}
+\subsection*{Version 1.4, March 2019}
 \begin{itemize}
 
 \item catches of wrong user input: catch the case when no restrictions are given, 
@@ -2495,7 +2495,7 @@ in \texttt{SVAR\_setup}; catch the case where restrictions would not work
 
 \item fixes in the SVEC case especially with further exogenous variables: 
 fix indexing error and mis-concatenation, and companion matrix in \texttt{vecm\_est} 
-with exogenous; 
+with exogenous; and fix the restricted terms in the bootstrap
  
 \item internal changes: simplify centered seasonals creation in determ(),
 replace isnull with !exists (and vice versa)
