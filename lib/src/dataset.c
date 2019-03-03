@@ -4127,6 +4127,17 @@ void series_decrement_stack_level (DATASET *dset, int i)
     }
 }
 
+void series_delete_metadata (DATASET *dset, int i)
+{
+    if (i > 0 && i < dset->v &&
+	dset->varinfo != NULL &&
+	dset->varinfo[i] != NULL) {
+	dset->varinfo[i]->lag = 0;
+	dset->varinfo[i]->transform = 0;
+	dset->varinfo[i]->parent[0] = '\0';
+    }
+}
+
 void series_ensure_level_zero (DATASET *dset)
 {
     if (dset != NULL) {

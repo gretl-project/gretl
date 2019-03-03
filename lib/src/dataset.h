@@ -516,6 +516,8 @@ void series_set_parent (DATASET *dset, int i,
 void series_set_transform (DATASET *dset, int i, 
 			   int transform);
 
+void series_delete_metadata (DATASET *dset, int i);
+
 void series_set_lag (DATASET *dset, int i, int lag);
 
 void series_set_stack_level (DATASET *dset, int i, int level);
