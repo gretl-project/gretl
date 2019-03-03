@@ -811,9 +811,9 @@ static int get_transform (int ci, int v, int aux, double x,
     if (!err && vno > 0) {
 	if (ci == DUMMIFY) {
 	    series_set_parent(dset, vno, dset->varname[v]);
-	    series_set_transform(dset, vno, DUMMIFY);
+	    series_set_transform(dset, vno, ci);
 	    series_set_discrete(dset, vno, 1);
-	} else if (ci == LAGS || ci == DIFF) {
+	} else if (ci == LAGS || ci == DIFF || ci == LOGS) {
 	    series_set_parent(dset, vno, dset->varname[v]);
 	    series_set_transform(dset, vno, ci);
 	}
