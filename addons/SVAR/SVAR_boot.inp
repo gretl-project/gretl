@@ -119,8 +119,7 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
   endif
 
   matrix X = obj.X        # exogenous variables (more precisely: unrestr. exog.)
-  matrix start = obj.Y    
-  start = start[1:p,] # Y0
+  matrix start = obj.Y[1:p, ] # Y0
   matrix E = cdemean(obj.E) # was: E .- meanc(E)   # centre residuals
 
   matrix C = obj.C	# (used below at least in maybe_flip_columns(C, &K))
@@ -135,10 +134,9 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
      the vectorisation of the complete IRF matrix
   */
   matrix bands = zeros(rep, (h+1) * n2)
-  matrix U
 
   # disentangle determ/exog:
-  matrix bmu = {}   # baseline case jcase==1 && k==0
+  matrix bmu = zeros(T, n) 
   if k  # some unrestr. exo (apart from const/trend)
     if obj.jcase == 1 
       bmu = X * obj.mu
@@ -208,14 +206,12 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
        (corresponding to Y0) are 0; next rows are sampled
        with replacement from VAR residuals
     */      
-    U = zeros(p,n) | resample(E)  
-    if rows(bmu) > 0
-      U = bmu + U
-    endif
+  
+    matrix U = resample(E) + bmu     # bmu may be zero
 
     # generate bootstrap data
     matrix ABCorA = BIASCORR ? ABC : obj.VARpar	# was: A
-    matrix bY = varsimul(ABCorA, U[p+1:,], start)
+    matrix bY = varsimul(ABCorA, U, start)
 
     matrix bobj.Y = bY       # and store it into the bootstrap object
 
