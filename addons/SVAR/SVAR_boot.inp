@@ -165,10 +165,6 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
     
   # old:
   # matrix bmu = (k > 0) ? X*m : {}
-  # debug:
-  eval {rows(E), cols(E)}
-  print T
-  print p
 
   bundle bobj = obj       # store a copy of the model for bootstrap
   obj.nboot = rep         # record bootstrap details
@@ -211,7 +207,7 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
        with replacement from VAR residuals
     */      
     
-    matrix U = resample(E) + bmu     # bmu may be zero
+    matrix U = resample(E) + bmu[p + 1:, ]     # bmu may be zero
 
     # generate bootstrap data
     matrix ABCorA = BIASCORR ? ABC : obj.VARpar	# was: A
