@@ -58,6 +58,7 @@ function matrix bias_correction(scalar H, matrix Ahat, const matrix mu,
   /* This function implements a bias correction for
      the estimate of the VAR parameters as per Kilian,
      REStat (1998).
+     (The SVEC case is not allowed here, but it must be checked on the outside.)
   */
 
   n = rows(Ahat)
@@ -66,7 +67,7 @@ function matrix bias_correction(scalar H, matrix Ahat, const matrix mu,
   cmu = cols(mu)
   rY0 = rows(Y0)
 
-  #check for stationarity first
+  # check for stationarity first
   scalar maxmod = max_eval(Ahat)
 
   if maxmod < 0.9999
@@ -102,23 +103,22 @@ end function
 function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
 
   loop foreach i n k T p type --quiet 
-    scalar $i = obj.$i 	# copy for convenience,   # type = obj.type 
+    scalar $i = obj.$i 	# copy for convenience
   endloop
   scalar h = obj.horizon
   scalar n2 = n*n  
-  # meth = obj.optmeth
-  matrix m = obj.mu	       # deterministics 
+  matrix m = obj.mu	       # deterministics and/or exogenous
 
   /* --- constraints-related matrices ---------------------*/
   matrix Rd1 = obj.Rd1
   matrix Rd2 = type==3 ? obj.Rd0 : obj.Rd1l
    
   if type == 4
-    coint_r = cols(obj.jbeta)
-    matrix J = zeros(n - coint_r, coint_r) | I(coint_r)
+    # coint_r = cols(obj.jbeta)
+    matrix J = zeros(n - obj.crank, obj.crank) | I(obj.crank)
   endif
 
-  matrix X = obj.X        # exogenous variables
+  matrix X = obj.X        # exogenous variables (more precisely: unrestr. exog.)
   matrix start = obj.Y    
   start = start[1:p,] # Y0
   matrix E = cdemean(obj.E) # was: E .- meanc(E)   # centre residuals
@@ -137,7 +137,36 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
   matrix bands = zeros(rep, (h+1) * n2)
   matrix U
 
-  matrix bmu = (k > 0) ? X*m : {}
+  # disentangle determ/exog:
+  matrix bmu = {}   # baseline case jcase==1 && k==0
+  if k  # some unrestr. exo (apart from const/trend)
+    if obj.jcase == 1 
+      bmu = X * obj.mu
+      
+    elif obj.jcase == 2 || obj.jcase == 3
+      bmu = X * obj.mu[2:, ]  # need to add restr. or unrestr. const later 
+      
+    elif obj.jcase == 4 || obj.jcase == 5
+      bmu = X * obj.mu[3:, ] # need to add restr./unr. const and trend later
+    endif
+  endif
+  
+  # add constant
+  if obj.jcase > 2      # unrestricted
+    bmu +=  transp( mshape(obj.mu[1, ], n,T) )  
+  elif obj.jcase == 2   # restricted
+    bmu += transp( mshape(obj.jbeta[n+1, ], n, T) )
+  endif
+
+  # add trend
+  if obj.jcase == 4
+    bmu += seq(1,T)' obj.jbeta[n+1, ]   # restr.
+  elif obj.jcase == 5
+    bmu += seq(1,T)' obj.mu[2, ]        # unrestr.
+  endif
+    
+  # old:
+  # matrix bmu = (k > 0) ? X*m : {}
 
   bundle bobj = obj       # store a copy of the model for bootstrap
   obj.nboot = rep         # record bootstrap details
@@ -191,7 +220,7 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
     matrix bobj.Y = bY       # and store it into the bootstrap object
 
     /*
-       estimate VAR parameters, via VECM if type==4 (KPSW) 
+       estimate VAR parameters, via VECM if type==4 (SVEC) 
        or via VAR otherwise
     */
     if type == 4 
@@ -264,7 +293,7 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
       matrix K = estAB(&theta, bSigma, Rd2, Rd1, null, \
         &errcode, obj.optmeth, 0, &transferAB)
       
-    # elif type == 4 # SVEC, was: "KPSW"  
+    # elif type == 4 # SVEC
       # matrix fullRd = get_full_Rd(&bobj)      
       # matrix K = estC(&theta, bSigma, fullRd, null, &errcode, obj.optmeth, 0)
     endif

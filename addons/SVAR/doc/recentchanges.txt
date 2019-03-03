@@ -18,3 +18,6 @@ changelog ***
 
 ---- changelog in SVAR.tex updated up to here -----
 
+- add optional rexo list arg to SVAR_coint, to allow -in the future- restricted exog. vars
+- fix (hopefully) the treatment of deterministics and exog. in the SVEC bootstrap
+
