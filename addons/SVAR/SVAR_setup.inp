@@ -326,7 +326,7 @@ end function
     
 function scalar SVAR_coint(bundle *SVARobj, int dcase[1:5:3],
 			   matrix jbeta, matrix jalpha[null],
-			   bool verbose[0])
+			   bool verbose[0], const list rexo[null])
 
   /*
      This function doesn't do very much, except setting
