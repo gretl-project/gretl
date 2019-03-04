@@ -7327,7 +7327,7 @@ static void do_panel_plot (int vnum)
 	dataset->t2 = dataset->t1 + n * dataset->pd - 1;
     }
 
-    /* note: ppopt is the option that must be passed to
+    /* note: @ppopt is the option that must be passed to
        "panplot" to get the specified effect */
 
     if (sel == 0) {
