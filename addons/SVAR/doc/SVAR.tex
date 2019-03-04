@@ -2421,6 +2421,7 @@ a warning will be printed.
 
 \section{Contents of the model bundle}
 \label{sec:bundle_struct}
+\thispagestyle{empty}
 
   \centering
   \begin{tabular}{rp{0.8\textwidth}}
@@ -2429,9 +2430,9 @@ a warning will be printed.
     \hline
     \texttt{step} & done so far \\
     \texttt{type} & integer, model type (1: PLAIN, 2: C, 3: AB, 4: SVEC)\\
-    \texttt{n}	  & number of endogenous variables \\
+    \texttt{n, k}	  & numbers of endogenous and exogenous variables \\
     \texttt{p}	  & VAR order \\
-    \texttt{k}	  & number of exogenous variables \\
+    %\texttt{k}	  & number of exogenous variables \\
     \texttt{T}	  & number of observations \\
     \texttt{t1, t2}	  & initial and final observations \\
     \texttt{X}	  & exogenous variables data matrix \\
@@ -2448,6 +2449,7 @@ a warning will be printed.
     \texttt{jalpha} & (SVEC only) cointegration loadings \\
     \texttt{jbeta}  & (SVEC only) cointegration coefficients \\
     \texttt{crank} & (SVEC only) cointegration rank (inferred from jbeta)\\
+    \texttt{jcase} & (SVEC only) deterministic setup (1 to 5)\\
     \hline
     \multicolumn{2}{c}{\textbf{SVAR setup}} \\
     \hline
@@ -2457,17 +2459,17 @@ a warning will be printed.
     \texttt{horizon}	 & horizon for structural VMA \\
     \texttt{cumul}	 & vector of cumuland variables \\
     \texttt{ncumul}	 & number of cumuland variables \\
-    \texttt{Ynames}	 & string array, names for VAR variables \\
-    \texttt{Xnames}	 & string array, names for exogenous
+    \texttt{Ynames}	 & names for VAR variables (string array)\\
+    \texttt{Xnames}	 & names for exogenous (string array)
     variables, if any \\
-    \texttt{snames}	 & string array, names for shocks \\
+    \texttt{snames}	 & names for shocks (string array) \\
     \texttt{optmeth}	 & integer between 0 and 4, optimisation method \\
     \hline
     \multicolumn{2}{c}{\textbf{SVAR post-estimation}} \\
     \hline
-    \texttt{S1}	   & estimated A \\
-    \texttt{S2}	   & estimated B \\
-    \texttt{C}	   & estimated C \\
+    \texttt{S1, S1, C}	   & estimated A, B, C \\
+    % \texttt{S2}	   & estimated B \\
+    % \texttt{C}	   & estimated C \\
     \texttt{lrmat} & estimated long-run matrix \\ 
     \texttt{theta} & coefficient vector \\
     \texttt{IRFs}  & IRF matrix (see section \ref{sec:baseest})\\

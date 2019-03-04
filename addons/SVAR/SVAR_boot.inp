@@ -136,33 +136,42 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
   matrix bands = zeros(rep, (h+1) * n2)
 
   # disentangle determ/exog:
+  /* when further (non-determ) restricted terms will be allowed, this block
+    should probably be outsourced to a separate function */
+    
   matrix bmu = zeros(T, n) 
-  if k  # some unrestr. exo (apart from const/trend)
+  if k && type == 4 # SVEC, some unrestr. exo (apart from const/trend)
     if obj.jcase == 1 
       bmu = X * obj.mu
       
     elif obj.jcase == 2 || obj.jcase == 3
       bmu = X * obj.mu[2:, ]  # need to add restr. or unrestr. const later 
-      
+
     elif obj.jcase == 4 || obj.jcase == 5
       bmu = X * obj.mu[3:, ] # need to add restr./unr. const and trend later
     endif
+  
+  elif k    # no SVEC
+    bmu = X * obj.mu    # this was the pre-1.4 handled case
   endif
   
-  # add constant
-  if obj.jcase > 2      # unrestricted
-    bmu = bmu .+  obj.mu[1, ]  # (use broadcasting)
-  elif obj.jcase == 2   # restricted
-    bmu = bmu .+ (obj.jbeta[n+1, ] * obj.jalpha')
-  endif
+  # more special treatment of SVEC
+  if type == 4  
+    # add constant
+    if obj.jcase > 2      # unrestricted
+      bmu = bmu .+  obj.mu[1, ]  # (use broadcasting)
+    elif obj.jcase == 2   # restricted
+      bmu = bmu .+ (obj.jbeta[n+1, ] * obj.jalpha')
+    endif
 
-  # add trend
-  if obj.jcase == 4
-    bmu += seq(1,T)' obj.jbeta[n+1, ] * obj.jalpha'  # restr.
-  elif obj.jcase == 5
-    bmu += seq(1,T)' obj.mu[2, ]        # unrestr.
+    # add trend
+    if obj.jcase == 4
+      bmu += seq(1,T)' obj.jbeta[n+1, ] * obj.jalpha'  # restr.
+    elif obj.jcase == 5
+      bmu += seq(1,T)' obj.mu[2, ]        # unrestr.
+    endif
   endif
-    
+  
   # old:
   # matrix bmu = (k > 0) ? X*m : {}
 
