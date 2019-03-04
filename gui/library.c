@@ -7305,13 +7305,14 @@ static int regular_ts_plot (int v)
     return err;
 }
 
-static void do_panel_plot (int varnum)
+static void do_panel_plot (int vnum)
 {
     int t1 = dataset->t1 / dataset->pd;
     int t2 = dataset->t2 / dataset->pd;
     int save_t1 = dataset->t1;
     int save_t2 = dataset->t2;
     int handled = 0;
+    gretlopt ppopt = 0;
     int sel, err = 0;
 
     sel = panel_graph_dialog(&t1, &t2);
@@ -7326,28 +7327,36 @@ static void do_panel_plot (int varnum)
 	dataset->t2 = dataset->t1 + n * dataset->pd - 1;
     }
 
+    /* note: ppopt is the option that must be passed to
+       "panplot" to get the specified effect */
+
     if (sel == 0) {
 	/* group means time series */
-	err = gretl_panel_ts_plot(varnum, dataset, OPT_G | OPT_M);
+	err = gretl_panel_ts_plot(vnum, dataset, OPT_G | OPT_M);
+	ppopt = OPT_M;
     } else if (sel == 1) {
 	/* time-series overlay */
-	err = gretl_panel_ts_plot(varnum, dataset, OPT_G);
+	err = gretl_panel_ts_plot(vnum, dataset, OPT_G);
+	ppopt = OPT_V;
     } else if (sel == 2) {
 	/* sequential by unit */
-	err = regular_ts_plot(varnum);
+	err = regular_ts_plot(vnum);
+	ppopt = OPT_S;
     } else if (sel == 3) {
 	/* small multiples in grid */
-	err = gretl_panel_ts_plot(varnum, dataset, OPT_S);
+	err = gretl_panel_ts_plot(vnum, dataset, OPT_S);
+	ppopt = OPT_D;
     } else if (sel == 4) {
 	/* small multiples stacked vertically */
-	err = gretl_panel_ts_plot(varnum, dataset, OPT_S | OPT_V);
+	err = gretl_panel_ts_plot(vnum, dataset, OPT_S | OPT_V);
+	ppopt = OPT_A;
     } else if (sel == 5) {
 	/* boxplots by group */
-	do_boxplot_var(varnum, OPT_P);
+	do_boxplot_var(vnum, OPT_P);
 	handled = 1;
     } else {
 	/* single boxplot */
-	do_boxplot_var(varnum, OPT_S);
+	do_boxplot_var(vnum, OPT_S);
 	handled = 1;
     }
 
@@ -7355,6 +7364,11 @@ static void do_panel_plot (int varnum)
     dataset->t2 = save_t2;
 
     if (!handled) {
+	if (!err) {
+	    lib_command_sprintf("panplot %s%s", dataset->varname[vnum],
+			print_flags(ppopt, PANPLOT));
+	    record_command_verbatim();
+	}
 	gui_graph_handler(err);
     }
 }
