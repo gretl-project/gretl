@@ -2703,6 +2703,8 @@ static int execute_plot_call (CMD *cmd, DATASET *dset,
 	err = boxplots(cmd->list, cmd->param, dset, opt);
     } else if (cmd->ci == HFPLOT) {
 	err = hf_plot(cmd->list, cmd->param, dset, opt);
+    } else if (cmd->ci == PANPLOT) {
+	err = cli_panel_plot(cmd->list, cmd->param, dset, opt);
     }
 
     return err;
@@ -3011,10 +3013,6 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case QQPLOT:
 	err = qq_plot(cmd->list, dset, cmd->opt);
-	break;
-
-    case PANPLOT:
-	err = cli_panel_plot(cmd->list, cmd->param, dset, cmd->opt);
 	break;
 
     case INFO:
@@ -3585,6 +3583,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case BXPLOT:
     case SCATTERS:
     case HFPLOT:
+    case PANPLOT:
 	err = execute_plot_call(cmd, dset, NULL, prn);
 	break;
 

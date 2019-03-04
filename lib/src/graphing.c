@@ -32,6 +32,7 @@
 #include "gretl_string_table.h"
 #include "uservar.h"
 #include "gretl_midas.h"
+#include "boxplots.h"
 
 #ifdef WIN32
 # include "gretl_win32.h"
@@ -6708,7 +6709,7 @@ static int dataset_has_panel_labels (const DATASET *dset,
 */
 
 static int panel_overlay_ts_plot (const int vnum,
-				  DATASET *dset,
+				  const DATASET *dset,
 				  gretlopt opt)
 {
     DATASET *gset;
@@ -6832,7 +6833,7 @@ static int panel_overlay_ts_plot (const int vnum,
    stack the plots vertically on the "page".
 */
 
-static int panel_grid_ts_plot (int vnum, DATASET *dset,
+static int panel_grid_ts_plot (int vnum, const DATASET *dset,
 			       gretlopt opt)
 {
     FILE *fp = NULL;
@@ -6997,17 +6998,107 @@ int gretl_panel_ts_plot (int vnum, DATASET *dset, gretlopt opt)
     }
 }
 
+/* The following implements the script command "panplot" */
+
 int cli_panel_plot (const int *list, const char *literal,
 		    const DATASET *dset, gretlopt opt)
 {
+    int N, vnum = list[1];
+    int err;
+
+    /* condition on multi_unit_panel_sample() ? */
+
     if (!dataset_is_panel(dset)) {
 	gretl_errmsg_set(_("This command needs panel data"));
-	return E_DATA;
+	err = E_DATA;
+    } else {
+	err = incompatible_options(opt, OPT_M | OPT_V | OPT_S |
+				   OPT_D | OPT_A | OPT_B | OPT_C);
+    }
+    if (err) {
+	return err;
     }
 
-    gretl_errmsg_set("panplot: not ready yet");
+    N = panel_sample_size(dset);
 
-    return 1;
+    /* check for too many groups */
+    if ((opt & (OPT_V | OPT_S)) && N > 130) {
+	err = E_BADOPT;
+    } else if ((opt & OPT_B) && N > 150) {
+	err = E_BADOPT;
+    } else if ((opt & OPT_D) && N > 16) {
+	err = E_BADOPT;
+    } else if ((opt & OPT_A) && N > 6) {
+	err = E_BADOPT;
+    }
+    if (err) {
+	gretl_errmsg_set("Too many groups for the specified plot");
+	return err;
+    }
+
+    /* select a default if no panplot-specific option given */
+    if (!(opt & (OPT_M | OPT_V | OPT_S | OPT_D |
+		 OPT_A | OPT_B | OPT_C))) {
+	if (N <= 130) {
+	    opt |= OPT_V; /* --overlay */
+	} else if (N <= 150) {
+	    opt |= OPT_B; /* --boxplots */
+	} else {
+	    opt |= OPT_M; /* --means */
+	}
+    }
+
+    if (opt & OPT_U) {
+	/* handle output spec? */
+	const char *s = get_optval_string(PANPLOT, OPT_U);
+	int pci = (opt & (OPT_B | OPT_C)) ? BXPLOT : GNUPLOT;
+
+	if (s != NULL) {
+	    set_optval_string(pci, OPT_U, s);
+	}
+    }
+
+    if (opt & OPT_M) {
+	/* --means */
+	fprintf(stderr, "panplot OPT_M: --means\n");
+	opt &= ~OPT_M;
+	opt |= OPT_S;
+	err = panel_means_ts_plot(vnum, dset, opt);
+    } else if (opt & OPT_V) {
+	/* --overlay */
+	fprintf(stderr, "panplot OPT_V: --overlay\n");
+	opt &= ~OPT_V;
+	err = panel_overlay_ts_plot(vnum, dset, opt);
+    } else if (opt & OPT_S) {
+	/* --sequence */
+	fprintf(stderr, "panplot OPT_S: --sequence\n");
+	opt &= ~OPT_S;
+	err = gnuplot(list, literal, dset, opt | OPT_O | OPT_T);
+    } else if (opt & OPT_D) {
+	/* --grid */
+	fprintf(stderr, "panplot OPT_D: --grid\n");
+	opt &= ~OPT_D;
+	err = panel_grid_ts_plot(vnum, dset, opt);
+    } else if (opt & OPT_A) {
+	/* --stack */
+	fprintf(stderr, "panplot OPT_A: --stack\n");
+	opt &= ~OPT_A;
+	err = panel_grid_ts_plot(vnum, dset, opt | OPT_S | OPT_V);
+    } else if (opt & OPT_B) {
+	/* --boxplots */
+	fprintf(stderr, "panplot OPT_B: --boxplots\n");
+	opt &= ~OPT_B;
+	err = boxplots(list, literal, dset, opt | OPT_P);
+    } else if (opt & OPT_C) {
+	/* --boxplot */
+	fprintf(stderr, "panplot OPT_C: --boxplot\n");
+	opt &= ~OPT_C;
+	err = boxplots(list, literal, dset, opt);
+    }
+
+    fprintf(stderr, "panplot: vnum=%d, N=%d, err=%d\n", vnum, N, err);
+
+    return err;
 }
 
 static int data_straddle_zero (const gretl_matrix *m)
