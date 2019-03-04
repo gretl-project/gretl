@@ -12,17 +12,23 @@ function scalar transshockcheck(bundle b)
   if b.type != 4
     print "Transitory shocks only for SVEC models"
     return 1
-  endif
     
-  loop i = (b.n - b.crank)..(b.n - 1) -q
-    matrix part = b.Rd1[, i * b.n + 1: (i+1) * b.n]
-    # check for exclusion restrictions (RHS zero)
-    matrix mc = (sumr(part) .= 1) && (b.Rd1[,cols(b.Rd1)] .= 0)
-    if sum(mc) > b.crank - 1
-      printf "Concerning shock %d\n", i+1
-      funcerr "Too many zero restrictions"
-    endif
-  endloop
+  elif nelem(b.Rd1)	# else there are no short-run restr.
+        
+    loop i = (b.n - b.crank)..(b.n - 1) -q
+      matrix part = b.Rd1[, i * b.n + 1: (i+1) * b.n]
+      # check for exclusion restrictions (RHS zero)
+      matrix mc = (sumr(part) .= 1) && (b.Rd1[,cols(b.Rd1)] .= 0)
+      if sum(mc) > b.crank - 1
+        printf "Concerning shock %d\n", i+1
+        funcerr "Too many zero restrictions"
+      endif
+    endloop
+  
+  else
+    print "No short-run restrictions found (Rd1)"
+  endif
+  
   return 0
 end function
 
