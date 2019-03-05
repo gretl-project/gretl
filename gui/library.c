@@ -9990,6 +9990,65 @@ static void gui_exec_help (ExecState *s, CMD *cmd)
     }
 }
 
+static int smpl_restrict (gretlopt opt)
+{
+    opt &= ~OPT_Q;
+    opt &= ~OPT_T;
+    return opt != OPT_NONE;
+}
+
+static int gui_do_smpl (CMD *cmd, DATASET *dset, PRN *prn)
+{
+    int n_dropped = 0;
+    int cancel = 0;
+    int err = 0;
+
+    if (cmd->opt == OPT_F) {
+	gui_restore_sample(dset);
+    } else if (cmd->opt == OPT_T && cmd->param == NULL) {
+	/* --permanent, by itself */
+	err = perma_sample(dset, cmd->opt, prn, &n_dropped);
+    } else if (cmd->opt & OPT_U) {
+	/* the panel --unit option */
+	err = set_panel_sample(cmd->param, cmd->parm2, cmd->opt, dset);
+    } else if (smpl_restrict(cmd->opt)) {
+	/* --restrict, --dummy, etc. */
+	err = restrict_sample(cmd->param, cmd->list, dset,
+			      NULL, cmd->opt, prn, &n_dropped);
+    } else if (cmd->param == NULL && cmd->parm2 == NULL) {
+	/* no args given: give a report */
+	print_smpl(dset, get_full_length_n(), OPT_F, prn);
+	return 0; /* done */
+    } else {
+	/* simple setting of t1, t2 business */
+	err = set_sample(cmd->param, cmd->parm2, dset, cmd->opt);
+    }
+    if (err == E_CANCEL && (cmd->opt & OPT_T)) {
+	err = perma_sample_options(cmd->param, cmd->list,
+				   dset, cmd->opt, prn,
+				   &n_dropped, &cancel);
+	if (cancel) {
+	    return 0;
+	}
+    }
+    if (err) {
+	errmsg(err, prn);
+    } else {
+	print_smpl(dset, get_full_length_n(), OPT_NONE, prn);
+	if (cmd->opt & OPT_T) {
+	    mark_dataset_as_modified();
+	} else {
+	    set_sample_label(dset);
+	}
+    }
+    if (err && err != E_ALLOC && (cmd->flags & CMD_CATCH)) {
+	set_gretl_errno(err);
+	err = 0;
+    }
+
+    return err;
+}
+
 /* gui_exec_line: this is called from the gretl console, from the
    command "minibuffer", from execute_script(), and when initiating a
    call to a function package (fncall.c).  Note that most commands get
@@ -10219,50 +10278,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 	break;
 
     case SMPL:
- 	if (cmd->opt == OPT_F) {
- 	    gui_restore_sample(dset);
-	} else if (!cmd->opt) {
-	    if (cmd->param == NULL && cmd->parm2 == NULL) {
-		/* no args, just report */
-		print_smpl(dset, get_full_length_n(), OPT_F, prn);
-		break;
-	    } else {
-		err = set_sample(cmd->param, cmd->parm2, dset, 0);
-	    }
- 	} else {
-	    int n_dropped = 0;
-	    int cancel = 0;
-
-	    if (cmd->opt ==  OPT_T && cmd->param == NULL) {
-		/* make the current sampling permanent */
-		err = perma_sample(dset, cmd->opt, prn, &n_dropped);
-	    } else {
-		err = restrict_sample(cmd->param, cmd->list, dset,
-				      NULL, cmd->opt, prn, &n_dropped);
-	    }
-	    if (err == E_CANCEL && (cmd->opt & OPT_T)) {
-		err = perma_sample_options(cmd->param, cmd->list,
-					   dset, cmd->opt, prn,
-					   &n_dropped, &cancel);
-		if (cancel) {
-		    break;
-		}
-	    }
-	}
-  	if (err) {
-  	    errmsg(err, prn);
-  	} else {
- 	    print_smpl(dset, get_full_length_n(), OPT_NONE, prn);
-	    if (cmd->opt & OPT_T) {
-		mark_dataset_as_modified();
-	    } else {
-		set_sample_label(dset);
-	    }
-  	}
-	if (err && err != E_ALLOC && (cmd->flags & CMD_CATCH)) {
-	    set_gretl_errno(err);
-	    err = 0;
-	}
+	err = gui_do_smpl(cmd, dset, prn);
   	break;
 
     case CLEAR:
