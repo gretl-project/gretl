@@ -5133,7 +5133,8 @@
 	The variables in the list <repl>yvars</repl> are graphed
 	against <repl>xvar</repl>.  For a time series plot you may
 	either give <lit>time</lit> as <repl>xvar</repl> or use the
-	option flag <opt>time-series</opt>.
+	option flag <opt>time-series</opt>. See also the <cmdref
+	targ="plot"/> and <cmdref targ="panplot"/> commands.
       </para>
       <para>
 	By default, data-points are shown as points; this can be
@@ -9884,6 +9885,93 @@
 	estimates are Maximum Likelihood.
       </para>
     </description>
+
+  </command>
+
+    <command name="panplot" section="Graphs"
+    label="plot a panel series" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>plotvar</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--means</flag>
+	  <effect>time series, group means</effect>
+        </option>
+        <option>
+	  <flag>--overlay</flag>
+	  <effect>plot per group, overlaid, N &lt;= 130</effect>
+        </option>
+        <option>
+	  <flag>--sequence</flag>
+	  <effect>plot per group, in sequence, N &lt;= 130</effect>
+        </option>
+        <option>
+	  <flag>--grid</flag>
+	  <effect>plot per group, in grid, N &lt;= 16</effect>
+        </option>
+        <option>
+	  <flag>--stack</flag>
+	  <effect>plot per group, stacked, N &lt;= 6</effect>
+        </option>
+        <option>
+	  <flag>--boxplots</flag>
+	  <effect>boxplot per group, in sequence, N &lt;= 150</effect>
+        </option>
+        <option>
+	  <flag>--boxplot</flag>
+	  <effect>single boxplot, all groups</effect>
+        </option>
+	<option>
+	  <flag>--output</flag>
+	  <optparm>filename</optparm>
+	  <effect>send output to specified file</effect>
+        </option>
+      </options>
+      <examples>
+        <example>panplot x --overlay</example>
+        <example>panplot x --means --output=display</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Graphing command specific to panel data: the series
+	<repl>plotvar</repl> is plotted in a mode specified by one or
+	other of the options.
+      </para>
+      <para>
+	Apart from the <opt>means</opt> and <opt>boxplot</opt> options
+	the plot explicitly represents variation in both the
+	time-series and cross-sectional dimensions.  Such plots are
+	limited in respect of the number of groups (also known as
+	individuals or units) in the current sample range of the
+	panel. For example, the overlay option, which shows a time
+	series for each group in a single plot, is available only when
+	the number of groups, <math>N</math>, is 130 or
+	less. (Otherwise the graphic becomes too dense to be
+	informative.) If a panel is too large to permit the desired
+	plot specification one can select a reduced range of groups or
+	units temporarily, as in
+      </para>
+      <code>
+	smpl 1 100 --unit
+	panplot x --overlay
+	smpl full
+      </code>
+      <para>
+	The <opt>output=</opt><repl>filename</repl> option can be
+	used to control the form and destination of the output; see
+	the <cmdref targ="gnuplot"/> command for details.
+      </para>
+
+    </description>
+
+    <gui-access>
+      <other-access>Main window pop-up menu (single selection)</other-access>
+    </gui-access>
 
   </command>
 

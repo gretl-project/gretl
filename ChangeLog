@@ -1,4 +1,5 @@
 version 2019b, in progress
+- New command "panplot": plot a single panel-data series
 - "print" command: new --range option to control the
   range to print for series, matrices, arrays and strings
 - "smpl" command: add --unit option for panel data
