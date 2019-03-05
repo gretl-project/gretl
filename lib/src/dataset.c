@@ -4633,33 +4633,9 @@ const char *get_panel_group_name (const DATASET *dset, int obs)
     return (s != NULL)? s : "??";
 }
 
-#define GRPS_DEBUG 0
-
-int panel_group_names_ok (const DATASET *dset)
+int panel_group_names_ok (const DATASET *dset, int maxlen)
 {
-#if GRPS_DEBUG
-    int n, v;
-
-    fputs("panel_group_names_ok ?\n", stderr);
-    if (!dataset_is_panel(dset)) {
-	fputs(" no, not a panel\n", stderr);
-    } else if (dset->pangrps == NULL) {
-	fputs(" no, dset->pangrps not set\n", stderr);
-    } else if ((v = current_series_index(dset, dset->pangrps)) < 0) {
-	fputs(" no, dset->pangrps not found\n", stderr);
-    } else {
-	char **S = series_get_string_vals(dset, v, &n);
-
-	if (S == NULL) {
-	    fputs(" no, stringvals not found\n", stderr);
-	} else if (n < dset->n / dset->pd) {
-	    fprintf(stderr, " no, n strings = %d < %d\n",
-		    n, dset->n / dset->pd);
-	} else {
-	    fprintf(stderr, " yes, using series %s\n", dset->pangrps);
-	}
-    }
-#endif
+    int ok = 0;
 
     if (dataset_is_panel(dset) && dset->pangrps != NULL) {
 	int ns, v = current_series_index(dset, dset->pangrps);
@@ -4667,15 +4643,23 @@ int panel_group_names_ok (const DATASET *dset)
 	if (v > 0 && v < dset->v) {
 	    char **S = series_get_string_vals(dset, v, &ns);
 
-	    if (S != NULL) {
-		int ng = dset->n / dset->pd;
+	    if (S != NULL && ns >= dset->n / dset->pd) {
+		ok = 1; /* provisional */
+		if (maxlen > 0) {
+		    int i;
 
-		return ns >= ng;
+		    for (i=0; i<ns; i++) {
+			if (strlen(S[i]) > maxlen) {
+			    ok = 0;
+			    break;
+			}
+		    }
+		}
 	    }
 	}
     }
 
-    return 0;
+    return ok;
 }
 
 const char *panel_group_names_varname (const DATASET *dset)
@@ -4706,6 +4690,85 @@ int is_panel_group_names_series (const DATASET *dset, int v)
     } else {
 	return 0;
     }
+}
+
+static int suitable_group_names_series (const DATASET *dset,
+					int maxlen,
+					int exclude)
+{
+    int i, vfound = 0;
+
+    for (i=1; i<dset->v && !vfound; i++) {
+	if (i == exclude) {
+	    continue;
+	}
+	if (is_string_valued(dset, i)) {
+	    int ns = 0;
+	    char **S = series_get_string_vals(dset, i, &ns);
+
+	    if (S != NULL && ns >= dset->n / dset->pd) {
+		const char *sbak = NULL;
+		int t, u, ubak = -1;
+		int fail = 0;
+
+		for (t=dset->t1; t<=dset->t2 && !fail; t++) {
+		    const char *st = series_get_string_for_obs(dset, i, t);
+
+		    u = t / dset->pd;
+		    if (u == ubak && strcmp(st, sbak)) {
+			/* same unit, different label: no */
+			fail = 1;
+		    } else if (ubak >= 0 && u != ubak && !strcmp(st, sbak)) {
+			/* different unit, same label: no */
+			fail = 2;
+		    }
+		    if (!fail && maxlen > 0 && strlen(st) > maxlen) {
+			fail = 1;
+		    }
+		    ubak = u;
+		    sbak = st;
+		}
+		if (!fail) {
+		    vfound = i;
+		}
+	    }
+	}
+    }
+
+    return vfound;
+}
+
+/* For plotting purposes, try to get labels for panel groups,
+   subject to the constraint that they should be no longer
+   than @maxlen. If successful, this will return an array of
+   at least N strings, where N is the cross-sectional
+   dimension of the panel. This array should be treated as
+   read-only.
+*/
+
+char **get_panel_group_labels (const DATASET *dset, int maxlen)
+{
+    char **S = NULL;
+    int altv, vpg = 0;
+
+    if (dset->pangrps != NULL) {
+	vpg = current_series_index(dset, dset->pangrps);
+    }
+
+    /* first see if we have valid group labels set explicitly */
+    if (vpg > 0 && panel_group_names_ok(dset, maxlen)) {
+	S = series_get_string_vals(dset, vpg, NULL);
+    }
+
+    if (S == NULL) {
+	/* can we find a suitable string-valued series? */
+	altv = suitable_group_names_series(dset, maxlen, vpg);
+	if (altv > 0) {
+	    S = series_get_string_vals(dset, altv, NULL);
+	}
+    }
+
+    return S;
 }
 
 int is_dataset_series (const DATASET *dset, const double *x)

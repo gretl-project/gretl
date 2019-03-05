@@ -1887,7 +1887,7 @@ static void maybe_print_panel_info (const DATASET *dset,
 				    int skip_padding,
 				    FILE *fp, gzFile fz)
 {
-    int names = panel_group_names_ok(dset);
+    int names = panel_group_names_ok(dset, 0);
     int pd = dset->panel_pd;
     double sd0 = dset->panel_sd0;
     int times = pd > 0 && sd0 > 0.0;

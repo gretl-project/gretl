@@ -565,11 +565,13 @@ int set_panel_groups_name (DATASET *dset, const char *vname);
 
 const char *get_panel_group_name (const DATASET *dset, int obs);
 
-int panel_group_names_ok (const DATASET *dset);
+int panel_group_names_ok (const DATASET *dset, int maxlen);
 
 const char *panel_group_names_varname (const DATASET *dset);
 
 int is_panel_group_names_series (const DATASET *dset, int v);
+
+char **get_panel_group_labels (const DATASET *dset, int maxlen);
 
 int is_dataset_series (const DATASET *dset, const double *x);
 

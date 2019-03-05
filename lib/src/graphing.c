@@ -6524,7 +6524,7 @@ int panel_means_XY_scatter (const int *list, const DATASET *dset,
 
     /* If we have valid panel group names, use them
        as obs markers here */
-    grpnames = panel_group_names_ok(dset);
+    grpnames = panel_group_names_ok(dset, 0);
     if (grpnames) {
 	dataset_allocate_obs_markers(gset);
     }
@@ -6583,10 +6583,11 @@ int panel_means_XY_scatter (const int *list, const DATASET *dset,
 */
 
 static int dataset_has_panel_labels (const DATASET *dset,
-				     int *use, int *strip)
+				     int maxlen, int *use,
+				     int *strip)
 {
     int t, u, ubak = -1;
-    int fail = 0;
+    int len, lmax = 0, fail = 0;
     int ret = 0;
 
     if (dset->S == NULL) {
@@ -6603,12 +6604,23 @@ static int dataset_has_panel_labels (const DATASET *dset,
 	    /* different unit, same label: no */
 	    fail = 2;
 	}
+	if (!fail) {
+	    len = strlen(dset->S[t]);
+	    if (len > lmax) {
+		lmax = len;
+	    }
+	}
 	ubak = u;
     }
 
     if (!fail) {
-	/* fine: the full obs labels satisfy the criterion */
-	ret = 1;
+	/* the full obs labels satisfy the criterion,
+	   but are they perhaps too long? */
+	if (maxlen > 0 && lmax > maxlen) {
+	    ret = 0;
+	} else {
+	    ret = 1;
+	}
     } else if (fail == 1) {
 	/* Try for a leading portion of the obs labels: for
 	   example we might have AUS1990, AUS1991, ...
@@ -6718,8 +6730,9 @@ static int panel_overlay_ts_plot (const int vnum,
     gchar *literal = NULL;
     gchar *title = NULL;
     const double *obs = NULL;
-    int grpnames = 0;
+    char **grpnames = NULL;
     int nv, panel_labels = 0;
+    int maxlen = 0;
     int single_series;
     int use = 0, strip = 0;
     int i, t, s, s0;
@@ -6753,10 +6766,11 @@ static int panel_overlay_ts_plot (const int vnum,
     }
 
     if (!single_series) {
-	grpnames = panel_group_names_ok(dset);
-	if (!grpnames && dset->S != NULL) {
+	grpnames = get_panel_group_labels(dset, maxlen);
+	if (0 && grpnames == NULL && dset->S != NULL) {
 	    /* maybe we have obs markers that are usable */
-	    panel_labels = dataset_has_panel_labels(dset, &use, &strip);
+	    panel_labels =
+		dataset_has_panel_labels(dset, maxlen, &use, &strip);
 	}
     }
 
@@ -6766,8 +6780,8 @@ static int panel_overlay_ts_plot (const int vnum,
 	s = s0 + i * T;
 	if (single_series) {
 	    strcpy(gset->varname[i+1], dset->varname[vnum]);
-	} else if (grpnames) {
-	    const char *sval = get_panel_group_name(dset, s);
+	} else if (grpnames != NULL) {
+	    const char *sval = grpnames[u0+i];
 
 	    strncat(gset->varname[i+1], sval, VNAMELEN-1);
 	} else if (panel_labels) {
@@ -6900,7 +6914,7 @@ static int panel_grid_ts_plot (int vnum, const DATASET *dset,
     }
 
     if (dset->S != NULL) {
-	panel_labels = dataset_has_panel_labels(dset, &use, &strip);
+	panel_labels = dataset_has_panel_labels(dset, 0, &use, &strip);
     }
 
     vname = dset->varname[vnum];
