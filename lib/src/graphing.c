@@ -6690,6 +6690,9 @@ static int dataset_has_panel_labels (const DATASET *dset,
 		    /* different unit, same label: no */
 		    fail = 2;
 		}
+		if (!fail && maxlen > 0 && strlen(s1) > maxlen) {
+		    fail = 3;
+		}
 		strcpy(s0, s1);
 		ubak = u;
 	    }
@@ -6765,9 +6768,14 @@ static int panel_overlay_ts_plot (const int vnum,
 	return E_ALLOC;
     }
 
+    if (nunits > 80) {
+	/* FIXME calibrate this properly */
+	maxlen = 3;
+    }
+
     if (!single_series) {
 	grpnames = get_panel_group_labels(dset, maxlen);
-	if (0 && grpnames == NULL && dset->S != NULL) {
+	if (grpnames == NULL && dset->S != NULL) {
 	    /* maybe we have obs markers that are usable */
 	    panel_labels =
 		dataset_has_panel_labels(dset, maxlen, &use, &strip);
