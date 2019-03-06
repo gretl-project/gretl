@@ -5089,7 +5089,8 @@
  	mostrate rispetto alla variabile <repl>variabile-x</repl>. Per
  	avere un grafico storico è possibile usare <lit>time</lit>
  	come <repl>variabile-x</repl>, oppure usare l'opzione
- 	<lit>--time-series</lit>.
+ 	<lit>--time-series</lit>. Vedi anche i comandi <cmdref
+	targ="plot"/> e <cmdref targ="panplot"/>.
        </para>
       <para>
 	Per default, i dati sono mostrati come punti; ma questa scelta
@@ -9492,6 +9493,92 @@
         risultanti sono di massima verosimiglianza.
       </para>
     </description>
+
+  </command>
+
+  <command name="panplot" section="Graphs"
+	   label="grafico di una serie panel" context="cli">
+
+    <usage>
+      <arguments>
+	<argument>variabile</argument>
+      </arguments>
+      <options>
+	<option>
+	 <flag>--means</flag>
+	 <effect>medie per gruppo attraverso il tempo</effect>
+	</option>
+	<option>
+	 <flag>--overlay</flag>
+	 <effect>unità mescolate, N &lt;= 130</effect>
+	</option>
+	<option>
+	 <flag>--sequence</flag>
+	 <effect>unità in sequenza, N &lt;= 130</effect>
+	</option>
+	<option>
+	 <flag>--grid</flag>
+	 <effect>unità su griglia, N &lt;= 16</effect>
+	</option>
+	<option>
+	 <flag>--stack</flag>
+	 <effect>unità sovrapposte verticalmente, N &lt;= 6</effect>
+	</option>
+	<option>
+	 <flag>--boxplots</flag>
+	 <effect>boxplot per unità, in sequenza, N &lt;= 150</effect>
+	</option>
+	<option>
+	 <flag>--boxplot</flag>
+	 <effect>boxplot per tutte le unità</effect>
+	</option>
+       <option>
+	 <flag>--output</flag>
+	 <optparm>nomefile</optparm>
+	 <effect>ridireziona l'output</effect>
+	</option>
+      </options>
+      <examples>
+	<example>panplot x --overlay</example>
+	<example>panplot x --means --output=display</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+       Comando grafico specifico per dati panel: la serie
+       <repl>variabile</repl> viene graficata a seconda delle opzioni
+       specificate.
+      </para>
+      <para>
+       A parte le opzioni <opt>means</opt> e <opt>boxplot</opt> quel
+       che viene graficato è la variazione della serie sia sotto il
+       profilo longitudinale che quello temporale.  Questo tipo di
+       grafici è limitato dal numero di unità nel dataset in uso. Ad
+       esmepio, l'opzione <opt>overlay</opt>, che mostra una serie
+       storica per ciascuna unità, è disponibile soltanto se il numero
+       di unità <math>N</math> è minore o uguale a 130. (In caso
+       contrario, il grafico diventa troppo denso per essere
+       informativo.) Se un dataset è troppo grande da permettere
+       l'applicazione del comando, va selezionato preventivamente un
+       sottocampione di unità, come ad esempio
+      </para>
+      <code>
+       smpl 1 100 --unit
+       panplot x --overlay
+       smpl full
+      </code>
+      <para>
+       L'opzione <opt>output=</opt><repl>filename</repl> è usata per
+       controllare forma e destinazione dell'output; per dettagli,
+       vedi il comando <cmdref targ="gnuplot"/>.
+      </para>
+
+    </description>
+
+    <gui-access>
+      <other-access>Main window pop-up menu (single selection)</other-access>
+    </gui-access>
 
   </command>
 

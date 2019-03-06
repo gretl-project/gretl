@@ -9948,9 +9948,9 @@
 	time-series and cross-sectional dimensions.  Such plots are
 	limited in respect of the number of groups (also known as
 	individuals or units) in the current sample range of the
-	panel. For example, the overlay option, which shows a time
-	series for each group in a single plot, is available only when
-	the number of groups, <math>N</math>, is 130 or
+	panel. For example, the <opt>overlay</opt> option, which shows
+	a time series for each group in a single plot, is available
+	only when the number of groups, <math>N</math>, is 130 or
 	less. (Otherwise the graphic becomes too dense to be
 	informative.) If a panel is too large to permit the desired
 	plot specification one can select a reduced range of groups or
