@@ -534,13 +534,14 @@
     <function name="$now" section="access" targ="dnow" output="vector">
       <description>
 	<para>
-	  Devolve un vector con 2 elementos: o primeiro indica o número de
-	  segundos transcorridos dende o 01-01-1970 00:00:00 +0000 (UTC), o
-	  que se utiliza amplamente no mundo da informática para representar
-	  o tempo vixente, e o segundo indica a data vixente en formato
-	  <quote>básico</quote> ISO 8601, <lit>YYYYMMDD</lit>. Podes
-	  utilizar a función <fncref targ="epochday"/> para procesar o
-	  segundo elemento.
+	  Devolve un vector con 2 elementos: o primeiro indica o número
+	  de segundos transcorridos dende o 01-01-1970 00:00:00 +0000
+	  (UTC, ou Tempo Universal Coordinado), o que se utiliza amplamente
+	  no mundo da informática para representar o tempo vixente;
+	  e o segundo indica a data vixente en formato <quote>básico</quote>
+	  ISO 8601, <lit>YYYYMMDD</lit>. Podes utilizar a función 
+	  <fncref targ="strftime"/> para procesar o primeiro elemento, e a función
+	  <fncref targ="epochday"/> para procesar o segundo elemento.
 	</para>
       </description>
     </function>
@@ -9670,6 +9671,38 @@
       </description>
     </function>
 
+    <function name="strftime" section="calendar" output="string">
+      <fnargs>
+	<fnarg type="scalar">tm</fnarg>
+	<fnarg optional="true" type="string">formato</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  O argumento <argname>tm</argname> utilízase para proporcionar
+	  o número de segundos dende o inicio do ano 1970, de acordo
+	  co UTC (Tempo Universal Coordinado, antes coñecido como
+	  tempo medio de Greenwich). O valor que se devolve é unha
+	  cadea de texto que proporciona a data e/ou hora correspondente,
+	  ben nun formato especificado mediante o segundo argumento
+	  (opcional) ou ben, por defecto, mediante a
+	  <quote>representación preferida de data e hora no entorno local vixente</quote>
+	  tal como determinaría a biblioteca do sistema C.
+	</para>
+	<para>
+	  Podes obter valores axeitados de <argname>tm</argname> para
+	  utilizar con esta función mediante o accesorio <fncref targ="$now"/>
+	  ou a función <fncref targ="strptime"/>.
+	</para>
+	<para>
+	  Podes atopar as opcións de formato consultando as páxinas
+	  sobre <lit>strftime</lit> do manual, en sistemas que as teñan;
+	  ou por medio dun dos moitos sitios web que presentan
+	  información relevante, como por exemplo
+	  <url>https://devhints.io/strftime</url>.
+	</para>
+      </description>
+    </function>
+
     <function name="stringify" section="strings" output="int">
       <fnargs>
 	<fnarg type="series">y</fnarg>
@@ -9692,33 +9725,6 @@
 	<para>
 	  O valor que devolve esta función é cero no caso de completarse con
 	  éxito, ou un código de fallo positivo no caso de fallar.
-	</para>
-      </description>
-    </function>
-
-    <function name="strftime" section="strings" output="string">
-      <fnargs>
-	<fnarg type="scalar">t</fnarg>
-	<fnarg optional="true" type="string">formato</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  O argumento <argname>t</argname> utilízase para proporcionar
-	  o número de segundos dende o inicio do ano 1970, de acordo
-	  co UTC (Tempo Universal Coordinado, antes coñecido como
-	  tempo medio de Greenwich). O valor que se devolve é unha
-	  cadea de texto que proporciona a data e/ou hora correspondente,
-	  ben nun formato especificado mediante o segundo argumento
-	  (opcional) ou ben, por defecto, mediante a
-	  <quote>representación preferida de data e hora no entorno local vixente</quote>
-	  tal como determinaría a biblioteca do sistema C.
-	</para>
-	<para>
-	  Podes atopar as opcións de formato consultando as páxinas
-	  sobre <lit>strftime</lit> do manual, en sistemas que as teñan;
-	  ou por medio dun dos moitos sitios web que presentan
-	  información relevante, como por exemplo
-	  <url>https://devhints.io/strftime</url>.
 	</para>
       </description>
     </function>
@@ -9765,6 +9771,45 @@
 	  son iguais, podes facelo sen necesidade de utilizar esta función, como
 	  coa indicación <lit>if (s1 == s2)...</lit>.
 	</para>
+      </description>
+    </function>
+
+    <function name="strptime" section="calendar" output="scalar">
+      <fnargs>
+	<fnarg type="string">s</fnarg>
+	<fnarg type="string">formato</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	 Esta función é a recíproca de <fncref targ="strftime"/>. Analiza a
+	 cadea de texto <argname>s</argname> que expresa tempo ou data,
+	 utilizando o <argname>formato</argname> especificado; e devolve un
+	 escalar que proporciona o número de segundos transcorridos dende o
+	 inicio de 1970 segundo o Tempo Universal Coordinado (UTC).
+	</para>
+	<para>
+	  Podes atopar as opcións de <argname>formato</argname> consultando
+	  a páxina sobre <lit>strptime</lit> do manual, en sistemas que dispoñan
+	  das mesmas; ou por medio dun dos moitos sitios web que presentan
+	  información relevante, como por exemplo
+	  <url>http://man7.org/linux/man-pages/man3/strptime.3.html</url>.
+	</para>
+	<para>
+	  O exemplo de debaixo amosa como podes converter información
+	  de datas dun a outro formato.
+	</para>
+	<code>
+	  scalar tm = strptime("Sunday 17/02/19", "%A %d/%m/%y")
+	  eval strftime(tm) # Resultado por defecto
+	  eval strftime(tm, "%A, %d de %B de %Y")
+	</code>
+	<para>
+	  No entorno local galego (España), o resultado é
+	</para>
+	<code>
+	  17/02/2019 0:00:00
+	  domingo, 17 de febreiro de 2019
+	</code>
       </description>
     </function>
 

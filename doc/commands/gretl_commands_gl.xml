@@ -5131,9 +5131,10 @@
     <description>
       <para>
 	As variables da lista <repl>yvars</repl> debúxanse fronte a
-	<repl>xvar</repl>. Para unha gráfica dunha serie temporal
-	podes ben propoñer <lit>time</lit> en lugar de <repl>xvar</repl>,
-	ou ben utilizar o indicador de opción <opt>time-series</opt>.
+	<repl>xvar</repl>. Para unha gráfica dunha serie temporal podes
+	ben propoñer <lit>time</lit> en lugar de <repl>xvar</repl>, ou ben
+	utilizar o indicador de opción <opt>time-series</opt>. Consulta
+	tamén as instrucións<cmdref targ="plot"/> e <cmdref targ="panplot"/>.
       </para>
       <para>
 	Por defecto, as posicións dos datos amósanse con puntos,
@@ -6198,7 +6199,7 @@
 	    instrucións 1
 	else
 	    instrucións 2
-        endif
+	endif
 
 	# Tres ou máis ramas
 	if (poñer a condición 1)
@@ -9683,6 +9684,10 @@
 	  <effect>Utiliza a transformación de Nerlove</effect>
         </option>
         <option>
+	  <flag>--pooled</flag>
+	  <effect>Estima mediante MCO combinados</effect>
+        </option>
+        <option>
 	  <flag>--between</flag>
 	  <effect>Estima o modelo entre-grupos</effect>
         </option>
@@ -9880,6 +9885,93 @@
 	as estimacións resultantes son Máximo Verosímiles.
       </para>
     </description>
+
+  </command>
+
+    <command name="panplot" section="Graphs"
+    label="Debuxa unha serie de panel" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>vardebuxar</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--means</flag>
+	  <effect>Serie temporal coas medias de grupo</effect>
+        </option>
+        <option>
+	  <flag>--overlay</flag>
+	  <effect>Gráfica por grupo, superpostas, N &lt;= 130</effect>
+        </option>
+        <option>
+	  <flag>--sequence</flag>
+	  <effect>Gráfica por grupo, en secuencia, N &lt;= 130</effect>
+        </option>
+        <option>
+	  <flag>--grid</flag>
+	  <effect>Gráfica por grupo, en cuadrícula, N &lt;= 16</effect>
+        </option>
+        <option>
+	  <flag>--stack</flag>
+	  <effect>Gráfica por grupo, amoreadas, N &lt;= 6</effect>
+        </option>
+        <option>
+	  <flag>--boxplots</flag>
+	  <effect>Gráfica de caixa por grupo, en secuencia, N &lt;= 150</effect>
+        </option>
+        <option>
+	  <flag>--boxplot</flag>
+	  <effect>Gráfica única de caixa, todos os grupos</effect>
+        </option>
+	<option>
+	  <flag>--output</flag>
+	  <optparm>nomeficheiro</optparm>
+	  <effect>Enviar o resultado a un ficheiro específico</effect>
+        </option>
+      </options>
+      <examples>
+        <example>panplot x --overlay</example>
+        <example>panplot x --means --output=display</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Instrución de debuxo específica para datos de panel: a serie
+	<repl>vardebuxar</repl> se debuxa do xeito que se especifica
+	con algunha das opcións.
+      </para>
+      <para>
+	Ademais das opcións <opt>means</opt> e <opt>boxplot</opt>, a
+	gráfica representa explicitamente as variacións nas dúas dimensións,
+	a de serie temporal e a de sección cruzada. Semellantes gráficas
+	están limitadas no que se refire ao número de grupos (ou tamén
+	coñecidos como individuos ou unidades) no rango da mostra vixente
+	do panel. Por exemplo, a opción <opt>overlay</opt>, que presenta
+	unha serie temporal para cada grupo nunha única gráfica, só está
+	dispoñible se o número de grupos, <math>N</math>, é menor ou igual
+	a 130. (Doutro xeito, a gráfica chegaría a ser densa de máis para
+	resultar instrutiva.) Se un panel é longo de máis para permitir a
+	especificación gráfica desexada, podes escoller provisionalmente
+	un rango reducido de grupos ou de unidades, como en
+      </para>
+      <code>
+	smpl 1 100 --unit
+	panplot x --overlay
+	smpl full
+      </code>
+      <para>
+	Podes usar a opción <opt>output=</opt><repl>nomeficheiro</repl>
+	para controlar a forma e o destino do resultado; consulta a instrución
+	<cmdref targ="gnuplot"/> para obter máis detalles.
+      </para>
+
+    </description>
+
+    <gui-access>
+      <other-access>Xanela principal: Menú emerxente (selección única)</other-access>
+    </gui-access>
 
   </command>
 
@@ -10457,7 +10549,12 @@
 	</option>
 	<option>
 	  <flag>--no-dates</flag>
-	  <effect>Utiliza simples números de observación</effect>
+	  <effect>Utiliza números de observación simples</effect>
+	</option>
+	<option>
+	  <flag>--range</flag>
+	  <optparm>inicio:parada</optparm>
+	  <effect>Mira abaixo</effect>
 	</option>
 	<option>
 	  <flag>--midas</flag>
@@ -10472,6 +10569,7 @@
 	<example>print x1 x2 --byobs</example>
 	<example>print my_matrix</example>
 	<example>print "Isto é unha cadea"</example>
+	<example>print my_array --range=3:6</example>
 	<example>print hflist --midas</example>
       </examples>
     </usage>
@@ -10512,8 +10610,7 @@
 	mira o segundo exemplo) agarda unha lista de nomes, separados
 	por espazos, de obxectos básicos de Gretl que non sexan
 	series (escalares, matrices, cadeas de texto, feixes, arranxos);
-	e amósase o valor destes obxectos. Neste caso, non se admiten
-	indicadores de opción.
+	e amósase o valor destes obxectos.
       </para>
       <para>
 	Na cuarta forma (terceiro exemplo), <repl>cadealiteral</repl>
@@ -10523,12 +10620,20 @@
 	de liña nova.
       </para>
       <para>
-	A opción <opt>midas</opt> é especial para presentar unha lista de series
-	e, máis aínda, é específica para conxuntos de datos que conteñen unha
-	ou máis series de alta frecuencia, cada unha representada por unha
-	<cmdref targ="MIDAS_list"/>. Cando indicas unha desas listas como
-	argumento e agregas esta opción, a serie preséntase por observación
-	da súa frecuencia <quote>orixinal</quote>.
+	Podes utilizar a opción <opt>range</opt> para controlar o volume de
+	información que se presenta. Os valores (enteiros) dos marcadores
+	de <repl>inicio</repl> e <repl>parada</repl> poden referirse a
+	observacións de series e de listas, a filas de matrices, a elementos
+	de arranxos, e a liñas de cadeas de texto. En todos os casos, o
+	valor mínimo de <repl>inicio</repl> é 1, e o máximo valor de
+	<repl>parada</repl> é o <quote>tamaño en forma de filas</quote> do
+	obxecto en cuestión. Os valores negativos destes marcadores se usan
+	para dispoñer unha conta cara atrás, dende o final. Podes indicar
+	estes marcadores en formato numérico, ou mediante nomes de variables
+	escalares previamente definidas. Se omites <repl>inicio</repl>, se
+	considera implicitamente igual a 1; e se omites <repl>parada</repl>,
+	iso significa ir ata o final de todo. Con series e listas, cae na
+	conta de que os marcadores refírense ao rango mostral vixente.
       </para>
       <para>
 	A opción <opt>tree</opt> é específica para presentar un feixe
@@ -10536,6 +10641,14 @@
 	contén outros feixes ou arranxos deles, se presentan os seus
 	contidos. Se non, só se presentan os elementos do nivel superior
 	do feixe.
+      </para>
+      <para>
+	A opción <opt>midas</opt> é especial para presentar unha lista de series
+	e, máis aínda, é específica para conxuntos de datos que conteñen unha
+	ou máis series de alta frecuencia, cada unha representada por unha
+	<cmdref targ="MIDAS_list"/>. Cando indicas unha desas listas como
+	argumento e agregas esta opción, a serie preséntase por observación
+	da súa frecuencia <quote>orixinal</quote>.
       </para>
     </description>
 
@@ -13083,10 +13196,14 @@
 	  <flag>--balanced</flag>
 	  <effect>Datos de panel: trata de manter o panel equilibrado</effect>
         </option>
-	<option>
+        <option>
+	  <flag>--unit</flag>
+	  <effect>Datos de panel: mostra na dimensión atemporal</effect>
+        </option>
+	      <option>
 	  <flag>--quiet</flag>
 	  <effect>Non amosar o rango mostral</effect>
-	</option>
+	      </option>
       </options>
       <examples>
         <example>smpl 3 10</example>
@@ -13195,14 +13312,23 @@
       </para>
 
       <para>
-	Por defecto, non podes establecer limitacións sobre o rango da mostra
-	vixente, e executando <lit>smpl full</lit> podes restaurar o conxunto
-	de datos completo. Porén, podes utilizar a opción <opt>permanent</opt>
-	para substituír o conxunto de datos restrinxido en lugar do orixinal.
-	Esta opción só está dispoñible cando se aplica ao mesmo tempo
-	que as opcións <opt>restrict</opt>, <opt>dummy</opt>,
-	<opt>no-missing</opt>, <opt>no-all-missing</opt> ou <opt>random</opt>
-	da instrución <lit>smpl</lit>.
+	A opción <opt>unit</opt> é específica para datos de panel, e te
+	permite indicar directamente un rango de <quote>individuos</quote>
+	na dimensión atemporal dese tipo de datos. Por exemplo:
+      </para>
+      <code>
+	# Limita a mostra aos primeiros 50 individuos nesa dimensión
+	smpl 1 50 --unit
+      </code>
+
+      <para>
+	Por defecto, podes desfacer as limitacións que establezas sobre o
+	rango da mostra vixente, pois executando <lit>smpl full</lit> podes
+	restaurar o conxunto de datos completo. Porén, podes utilizar a
+	opción <opt>permanent</opt> para substituír o conxunto de datos
+	restrinxido en lugar do orixinal. O efecto de indicar a opción
+	<opt>permanent</opt> sen outros argumentos nin opcións, é o de
+	reducir o banco de datos ao rango da mostra vixente.
       </para>
 
       <para>
@@ -14662,6 +14788,13 @@
 	teñen un valor de cero para <repl>varponder</repl>.
       </para>
 
+	  <para context="cli">
+	Para aplicar a estimación de Mínimos Cadrados Ponderados a datos
+	de panel, baseada nas varianzas do erro específico de cada unidade,
+	consulta a instrución <cmdref targ="panel"/> xunto coa opción
+	<lit>--unit-weights</lit>.
+	  </para>
+	  
       <para context="gui">
 	Sexa 'varponder' a variable escollida no cadriño 'Variable de ponderacións'.
 	Execútase unha regresión MCO, onde a variable dependente é o produto
