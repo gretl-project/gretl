@@ -2082,7 +2082,7 @@ static void record_freq_matrix (FreqDist *fd)
 	if (S != NULL) {
 	    gretl_matrix_set_colnames(m, S);
 	}
-	set_last_matrix_result(m);
+	set_last_result_data(m, GRETL_TYPE_MATRIX);
     }
 }
 
@@ -2232,29 +2232,38 @@ gretl_matrix *xtab_to_matrix (const Xtab *tab)
     return m;
 }
 
-static gretl_matrix *last_result;
+static void *last_result;
+static GretlType last_result_type;
 
-gretl_matrix *get_last_matrix_result (int *err)
+void *get_last_result_data (GretlType *type, int *err)
 {
+    void *ret = NULL;
+
     if (last_result == NULL) {
+	*type = GRETL_TYPE_NONE;
 	*err = E_BADSTAT;
-	return NULL;
     } else {
 	/* you only get the result once */
-	gretl_matrix *m = last_result;
-
+	*type = last_result_type;
+	ret = last_result;
 	last_result = NULL;
-	return m;
     }
+
+    return ret;
 }
 
-void set_last_matrix_result (gretl_matrix *m)
+void set_last_result_data (void *data, GretlType type)
 {
     if (last_result != NULL) {
-	gretl_matrix_free(last_result);
+	if (last_result_type == GRETL_TYPE_MATRIX) {
+	    gretl_matrix_free(last_result);
+	} else if (last_result_type == GRETL_TYPE_BUNDLE) {
+	    gretl_bundle_destroy(last_result);
+	}
     }
 
-    last_result = m;
+    last_result = data;
+    last_result_type = type;
 }
 
 /**
@@ -2616,7 +2625,7 @@ static void record_xtab (const Xtab *tab, const DATASET *dset,
 
     gretl_matrix_set_colnames(X, Sc);
     gretl_matrix_set_rownames(X, Sr);
-    set_last_matrix_result(X);
+    set_last_result_data(X, GRETL_TYPE_MATRIX);
 }
 
 /* for use in the context of "xtab" with --quiet option:
@@ -5613,7 +5622,7 @@ static void record_summary (Summary *summ, const DATASET *dset)
 
     gretl_matrix_set_colnames(m, Sc);
     gretl_matrix_set_rownames(m, Sr);
-    set_last_matrix_result(m);
+    set_last_result_data(m, GRETL_TYPE_MATRIX);
 }
 
 /**
@@ -6151,7 +6160,7 @@ static void record_corr_matrix (VMatrix *c)
 	    }
 	}
 
-	set_last_matrix_result(m);
+	set_last_result_data(m, GRETL_TYPE_MATRIX);
     }
 }
 

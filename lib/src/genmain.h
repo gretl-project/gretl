@@ -46,11 +46,11 @@ typedef enum {
     R_OBSMIN,     /* minor component of observation (e.g. quarter, month) */
     R_OBSMIC,     /* micro component of observation (e.g. day) */
     R_DATES,      /* ISO 8601 "basic" dates series */
-    R_SERIES_MAX, /* separator: series vs matrices */
+    R_SERIES_MAX, /* separator: series vs variants */
     R_TEST_STAT,  /* last test statistic(s) (scalar or matrix) */
     R_TEST_PVAL,  /* last test p-value(s) (scalar or matrix) */
-    R_NOW,        /* current date/time */
-    R_RESULT,     /* result of a "matrix-compatible" command */
+    R_NOW,        /* current date/time (matrix) */
+    R_RESULT,     /* result of a "result-compatible" command */
     R_MAX
 } RetrievalIndex;
 

@@ -9481,6 +9481,15 @@ static gretl_bundle *bvar_get_bundle (NODE *n, parser *p)
 	if (!p->err) {
 	    b = gretl_bundle_copy(tmp, &p->err);
 	}
+    } else if (n->v.idnum == R_RESULT) {
+	GretlType type = 0;
+	void *ptr = get_last_result_data(&type, &p->err);
+
+	if (type == GRETL_TYPE_BUNDLE) {
+	    b = ptr;
+	} else if (!p->err) {
+	    p->err = E_TYPES;
+	}
     } else {
 	p->err = E_DATA;
     }
@@ -13757,8 +13766,9 @@ static NODE *eval_query (NODE *t, parser *p)
 
 #define dvar_scalar(i) (i > 0 && i < R_SCALAR_MAX)
 #define dvar_series(i) (i > R_SCALAR_MAX && i < R_SERIES_MAX)
-#define dvar_matrix(i) (i == R_NOW || i == R_RESULT)
-#define dvar_variant(i) (i > R_SERIES_MAX && i < R_MAX)
+#define dvar_matrix(i) (i == R_NOW)
+#define dvar_variant1(i) (i == R_TEST_STAT || i == R_TEST_PVAL)
+#define dvar_variant2(i) (i == R_RESULT)
 
 #define no_data(p) (p == NULL || p->n == 0)
 
@@ -13948,9 +13958,6 @@ static gretl_matrix *dvar_get_matrix (int i, int *err)
 	    m->val[1] = y * 10000 + mon * 100 + d;
 	}
 	break;
-    case R_RESULT:
-	m = get_last_matrix_result(err);
-	break;
     default:
 	*err = E_DATA;
 	break;
@@ -13959,49 +13966,14 @@ static gretl_matrix *dvar_get_matrix (int i, int *err)
     return m;
 }
 
-static gretl_matrix *dvar_get_submatrix (NODE *targ, int idx,
-					 NODE *t, parser *p)
-{
-    NODE *r = eval(t->R, p);
-    gretl_matrix *M, *S = NULL;
-
-    if (r == NULL || r->t != MSPEC) {
-	if (!p->err) {
-	    p->err = E_TYPES;
-	}
-	return NULL;
-    }
-
-    M = dvar_get_matrix(idx, &p->err);
-
-    if (M != NULL) {
-	S = matrix_get_submatrix(M, r->v.mspec, 0, &p->err);
-	gretl_matrix_free(M);
-    }
-
-    return S;
-}
-
 static NODE *dollar_var_node (NODE *t, parser *p)
 {
     NODE *ret = NULL;
 
     if (starting(p)) {
-	int idx, mslice = (t->t == DMSL);
+	int idx = t->v.idnum;
 
-	if (mslice) {
-	    /* "slice" spec on right subnode, index on left */
-	    idx = t->L->v.idnum;
-	} else {
-	    idx = t->v.idnum;
-	}
-
-	if (mslice) {
-	    ret = aux_matrix_node(p);
-	    if (ret != NULL) {
-		ret->v.m = dvar_get_submatrix(ret, idx, t, p);
-	    }
-	} else if (dvar_scalar(idx)) {
+	if (dvar_scalar(idx)) {
 	    ret = aux_scalar_node(p);
 	    if (ret != NULL) {
 		ret->v.xval = dvar_get_scalar(idx, p->dset);
@@ -14016,7 +13988,7 @@ static NODE *dollar_var_node (NODE *t, parser *p)
 	    if (ret != NULL) {
 		ret->v.m = dvar_get_matrix(idx, &p->err);
 	    }
-	} else if (dvar_variant(idx)) {
+	} else if (dvar_variant1(idx)) {
 	    GretlType type = get_last_test_type();
 
 	    if (type == GRETL_TYPE_MATRIX) {
@@ -14030,6 +14002,23 @@ static NODE *dollar_var_node (NODE *t, parser *p)
 		if (ret != NULL) {
 		    ret->v.xval = dvar_get_scalar(idx, p->dset);
 		}
+	    }
+	} else if (dvar_variant2(idx)) {
+	    GretlType type = 0;
+	    void *ptr = get_last_result_data(&type, &p->err);
+
+	    if (type == GRETL_TYPE_MATRIX) {
+		ret = aux_matrix_node(p);
+		if (ret != NULL) {
+		    ret->v.m = ptr;
+		}
+	    } else if (type == GRETL_TYPE_BUNDLE) {
+		ret = aux_bundle_node(p);
+		if (ret != NULL) {
+		    ret->v.b = ptr;
+		}
+	    } else if (!p->err) {
+		p->err = E_TYPES;
 	    }
 	}
     } else {
@@ -14077,38 +14066,6 @@ static NODE *fevd_node (NODE *l, NODE *m, NODE *r, parser *p)
     }
 
     return ret;
-}
-
-/* The incoming node here is binary: matrix ID on the left, and
-   specification of a matrix sub-slice on the right.
-*/
-
-static gretl_matrix *
-object_var_get_submatrix (NODE *targ, const char *oname, int idx,
-			  NODE *t, parser *p, int needs_data)
-{
-    NODE *r = eval(t->R, p);
-    gretl_matrix *M, *S = NULL;
-
-    if (r == NULL || r->t != MSPEC) {
-	if (!p->err) {
-	    p->err = E_TYPES;
-	}
-	return NULL;
-    }
-
-    if (needs_data) {
-	M = saved_object_build_matrix(oname, idx, p->dset, &p->err);
-    } else {
-	M = saved_object_get_matrix(oname, idx, &p->err);
-    }
-
-    if (M != NULL) {
-	S = matrix_get_submatrix(M, r->v.mspec, 0, &p->err);
-	gretl_matrix_free(M);
-    }
-
-    return S;
 }
 
 static GretlType object_var_type (int idx, const char *oname,
@@ -14188,12 +14145,6 @@ static NODE *dollar_str_node (NODE *t, MODEL *pmod, parser *p)
    data from the last model). In the latter case @t is itself the data
    item specification, while in the former the data item spec will be
    found on the right-hand subnode of @t.
-
-   And there's another thing: in the case where the data item to be
-   retrieved is a matrix, we handle the possibility that the user
-   actually wants a sub-slice of that matrix. Handling that in
-   this function may be the wrong thing to do -- perhaps it should be
-   subsumed under the more general handling of <matrix>[<subspec>].
 */
 
 static NODE *object_var_node (NODE *t, parser *p)
@@ -14201,15 +14152,14 @@ static NODE *object_var_node (NODE *t, parser *p)
     NODE *ret = NULL;
 
 #if EDEBUG
-    fprintf(stderr, "object_var_node: t->t = %d\n", t->t);
+    fprintf(stderr, "object_var_node: t->t = %d (%s)\n", t->t, getsymb(t->t));
 #endif
 
     if (starting(p)) {
 	NODE *r = NULL; /* the data spec node */
 	const char *oname = NULL;
 	GretlType vtype;
-	int idx, mslice;
-	int needs_data = 0;
+	int idx, needs_data = 0;
 
 	if (t->t == OVAR) {
 	    /* objectname.<stuff> */
@@ -14237,30 +14187,15 @@ static NODE *object_var_node (NODE *t, parser *p)
 	    }
 	}
 
-	mslice = (r->t == DMSL);
-
-	/* find the index which identifies the data item
-	   the user wants */
-
-	if (mslice) {
-	    /* slice spec is on right subnode, index on left */
-	    idx = r->L->v.idnum;
-	} else {
-	    idx = r->v.idnum;
-	}
-
-	if (mslice && dvar_variant(idx)) {
-	    /* we're in the wrong place */
-	    return dollar_var_node(r, p);
-	}
-
+	/* read the index which identifies the data item
+	   the user wants, and determine its type */
+	idx = r->v.idnum;
 	vtype = object_var_type(idx, oname, &needs_data);
 
 #if EDEBUG
 	fprintf(stderr, "object_var_node: t->t = %d (%s), r->t = %d (%s)\n",
 		t->t, getsymb(t->t), r->t, getsymb(r->t));
-	fprintf(stderr, "idx = %d, vtype = %d, mslice = %d\n",
-		idx, vtype, mslice);
+	fprintf(stderr, "idx = %d, vtype = %d\n", idx, vtype);
 #endif
 
 	if (vtype == GRETL_TYPE_DOUBLE) {
@@ -14291,9 +14226,6 @@ static NODE *object_var_node (NODE *t, parser *p)
 						 &p->err);
 	} else if (vtype == GRETL_TYPE_BUNDLE) {
 	    ret->v.b = bundle_from_model(NULL, p->dset, &p->err);
-	} else if (mslice) {
-	    /* the right-hand subnode needs more work */
-	    ret->v.m = object_var_get_submatrix(ret, oname, idx, r, p, needs_data);
 	} else if (vtype == GRETL_TYPE_MATRIX) {
 	    if (needs_data) {
 		ret->v.m = saved_object_build_matrix(oname, idx,
@@ -15824,7 +15756,6 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case OVAR:
     case MVAR:
-    case DMSL:
 	/* variable "under" user-defined object, or last object */
 	ret = object_var_node(t, p);
 	break;
@@ -16405,7 +16336,7 @@ static void printnode (NODE *t, parser *p, int value)
 	printsymb(t->t, p);
 	printnode(t->R, p, 0);
 	pputc(p->prn, ')');
-    } else if (t->t == MSL || t->t == DMSL) {
+    } else if (t->t == MSL) {
 	printnode(t->L, p, 0);
 	pputc(p->prn, '[');
 	printnode(t->R, p, 0);

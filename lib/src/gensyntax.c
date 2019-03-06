@@ -1236,8 +1236,8 @@ static void get_ovar_ref (NODE *t, parser *p)
 
     if (p->idnum == 0) {
 	p->err = E_PARSE;
-    } else if (p->sym == DMSL || p->sym == DMSTR) {
-	/* followed by '[' or '(' matrix subspec? */
+    } else if (p->sym == DMSTR) {
+	/* followed by '(' matrix subspec? */
 	t->R = powterm(p, NULL);
     } else {
 	t->R = newref(p, p->sym);
@@ -1385,7 +1385,7 @@ static NODE *powterm (parser *p, NODE *l)
 	if (sym == LAG) {
 	    set_lag_parse_off(p);
 	}
-    } else if (sym == MSL || sym == DMSL || sym == OSL) {
+    } else if (sym == MSL || sym == OSL) {
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
 	    t->L = newref(p, p->upsym);

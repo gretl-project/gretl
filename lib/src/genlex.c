@@ -1540,6 +1540,8 @@ static void maybe_treat_as_postfix (parser *p)
 			    t == M_UHAT || t == M_YHAT || \
 			    (t > R_SERIES_MAX && t < R_MAX))
 
+#define could_be_bundle(t) (t == R_RESULT)
+
 static void word_check_next_char (parser *p)
 {
     char chk[2] = {p->ch, '\0'};
@@ -1596,10 +1598,11 @@ static void word_check_next_char (parser *p)
 	if (p->sym == MAT) {
 	    /* slice of user matrix */
 	    p->sym = MSL;
-	} else if ((p->sym == MVAR || p->sym == DVAR) &&
+	} else if (*p->point != '"' &&
+		   (p->sym == MVAR || p->sym == DVAR) &&
 		   could_be_matrix(p->idnum)) {
-	    /* slice of $ matrix */
-	    p->sym = DMSL;
+	    /* slice of $-matrix? */
+	    p->sym = MSL;
 	} else if (p->sym == SERIES) {
 	    /* observation from series */
 	    p->sym = OBS;
@@ -1617,6 +1620,8 @@ static void word_check_next_char (parser *p)
 	    p->sym = BMEMB;
 	} else if (p->sym == DBUNDLE) {
 	    /* member from $ bundle */
+	    p->sym = DBMEMB;
+	} else if (p->sym == DVAR && could_be_bundle(p->idnum)) {
 	    p->sym = DBMEMB;
 	} else {
 	    p->err = E_PARSE;
@@ -1638,6 +1643,8 @@ static void word_check_next_char (parser *p)
 	} else if (p->sym == BUNDLE) {
 	    p->sym = BMEMB;
 	} else if (p->sym == DBUNDLE) {
+	    p->sym = DBMEMB;
+	} else if (p->sym == DVAR && could_be_bundle(p->idnum)) {
 	    p->sym = DBMEMB;
 	} else {
 	    p->err = E_PARSE;
@@ -2188,8 +2195,6 @@ const char *getsymb_full (int t, const parser *p)
 	return "OSL";
     } else if (t == SUB_ADDR) {
 	return "SUB_ADDR";
-    } else if (t == DMSL) {
-	return "DMSL";
     } else if (t == DMSTR) {
 	return "DMSTR";
     } else if (t == MSLRAW) {

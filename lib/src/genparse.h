@@ -99,8 +99,7 @@ enum {
 	      NUM_M,      /* user scalar-- */
 	      OBS,	  /* observation from a series */
               MSL,	  /* matrix plus subspec */
-  /* 70 */    DMSL,	  /* "dollar" matrix plus subspec */
-	      DMSTR,	  /* "dollar" matrix plus string subspec */
+  /* 70 */    DMSTR,	  /* "dollar" matrix plus string subspec */
 	      MSLRAW,	  /* unevaluated matrix subspec */
 	      MSPEC,	  /* evaluated matrix subspec */
 	      SUBSL,	  /* row or column component of MSPEC */
@@ -108,9 +107,9 @@ enum {
               LAG,        /* variable plus lag length */	  
 	      DVAR,	  /* $ "dataset" variable (mostly scalar or series) */
 	      MVAR,	  /* $ model var (scalar, series, or matrix) */
-              OVAR,	  /* object variable: variable "under" an object */
-  /* 80 */    LISTVAR,    /* variable in list, dot syntax */
-	      DBUNDLE,    /* $ bundle accessor */
+	      OVAR,	  /* object variable: variable "under" an object */
+	      LISTVAR,    /* variable in list, dot syntax */
+  /* 80 */    DBUNDLE,    /* $ bundle accessor */
 	      BMEMB,      /* member of bundle */
 	      DBMEMB,     /* member of $ bundle */
 	      FARGS,	  /* set of n function arguments */
@@ -119,8 +118,8 @@ enum {
 	      UNDEF,      /* undefined (allowed in "query" context only) */
 	      DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
 	      UFUN,	  /* user-defined function */
-  /* 90 */    RFUN,       /* GNU R function */
-	      IVEC,       /* array of ints, not a varlist */
+	      RFUN,       /* GNU R function */
+  /* 90 */    IVEC,       /* array of ints, not a varlist */
 	      OSL,        /* "slice" of object other than matrix */
 	      USERIES,    /* named series (defined only for error reporting) */
 	      SUB_ADDR,   /* "address" of (e.g.) array element */

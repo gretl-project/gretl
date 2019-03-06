@@ -54,11 +54,11 @@ static double get_vif (MODEL *mod, const int *xlist,
 
 /* run regressions of each x_i on the other x_j's */
 
-static double *model_vif_vector (MODEL *pmod, const int *xlist,
-				 DATASET *dset, int *err)
+static gretl_vector *model_vif_vector (MODEL *pmod, const int *xlist,
+				       DATASET *dset, int *err)
 {
     MODEL tmpmod;
-    double *vif = NULL;
+    gretl_vector *vif = NULL;
     int *vlist = NULL;
     int nvif = xlist[0];
     int save_t1 = dset->t1;
@@ -71,7 +71,7 @@ static double *model_vif_vector (MODEL *pmod, const int *xlist,
 	return NULL;
     }
 
-    vif = malloc(nvif * sizeof *vif);
+    vif = gretl_column_vector_alloc(nvif);
     if (vif == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -91,7 +91,7 @@ static double *model_vif_vector (MODEL *pmod, const int *xlist,
     dset->t2 = pmod->t2;
 
     for (i=1; i<=xlist[0] && !*err; i++) {
-	vif[i-1] = get_vif(&tmpmod, xlist, vlist, i, dset, err);
+	vif->val[i-1] = get_vif(&tmpmod, xlist, vlist, i, dset, err);
     }
 
     /* reinstate sample */
@@ -101,7 +101,7 @@ static double *model_vif_vector (MODEL *pmod, const int *xlist,
     free(vlist);
 
     if (*err) {
-	free(vif);
+	gretl_matrix_free(vif);
 	vif = NULL;
     }
 
@@ -252,8 +252,8 @@ static void maybe_truncate_param_name (char *s)
 int print_vifs (MODEL *pmod, DATASET *dset, PRN *prn)
 {
     gretl_matrix *V = NULL;
-    gretl_matrix *B = NULL;
-    double *vif = NULL;
+    gretl_matrix *BKW = NULL;
+    gretl_vector *vif = NULL;
     int *xlist;
     double vj;
     int vi, i, n;
@@ -286,7 +286,7 @@ int print_vifs (MODEL *pmod, DATASET *dset, PRN *prn)
 
     for (i=1; i<=xlist[0]; i++) {
 	vi = xlist[i];
-	vj = vif[i-1];
+	vj = vif->val[i-1];
 	if (!na(vj)) {
 	    n = strlen(dset->varname[vi]);
 	    if (n > maxlen) {
@@ -299,7 +299,7 @@ int print_vifs (MODEL *pmod, DATASET *dset, PRN *prn)
 
     for (i=1; i<=xlist[0]; i++) {
 	vi = xlist[i];
-	vj = vif[i-1];
+	vj = vif->val[i-1];
 	if (!na(vj)) {
 	    pprintf(prn, "%*s %8.3f\n", maxlen, dset->varname[vi], vj);
 	}
@@ -316,7 +316,7 @@ int print_vifs (MODEL *pmod, DATASET *dset, PRN *prn)
     V = gretl_vcv_matrix_from_model(pmod, NULL, &err);
 
     if (!err) {
-	B = bkw_matrix(V, &err);
+	BKW = bkw_matrix(V, &err);
     }
 
     if (!err) {
@@ -332,14 +332,26 @@ int print_vifs (MODEL *pmod, DATASET *dset, PRN *prn)
 		gretl_model_get_param_name(pmod, dset, i, S[i+2]);
 		maybe_truncate_param_name(S[i+2]);
 	    }
-	    gretl_matrix_set_colnames(B, S);
-	    BKW_print(B, prn);
+	    gretl_matrix_set_colnames(BKW, S);
+	    BKW_print(BKW, prn);
 	}
-	set_last_matrix_result(B);
+    }
+
+    if (!err) {
+	gretl_bundle *b = gretl_bundle_new();
+
+	if (b != NULL) {
+	    gretl_bundle_donate_data(b, "BKW", BKW, GRETL_TYPE_MATRIX, 0);
+	    gretl_bundle_donate_data(b, "vif", vif, GRETL_TYPE_MATRIX, 0);
+	    set_last_result_data(b, GRETL_TYPE_BUNDLE);
+	    BKW = NULL;
+	    vif = NULL;
+	}
     }
 
     gretl_matrix_free(V);
-    free(vif);
+    gretl_matrix_free(vif);
+    gretl_matrix_free(BKW);
     free(xlist);
 
     return 0;

@@ -156,9 +156,9 @@ int freqdist (int varno, const DATASET *dset,
 gretl_matrix *freqdist_matrix (const double *x, int t1, int t2, 
 			       int *err);
 
-gretl_matrix *get_last_matrix_result (int *err);
+void *get_last_result_data (GretlType *type, int *err);
 
-void set_last_matrix_result (gretl_matrix *m);
+void set_last_result_data (void *ptr, GretlType type);
 
 int crosstab (const int *list, const DATASET *dset, 
 	      gretlopt opt, PRN *prn);
