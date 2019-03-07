@@ -3803,6 +3803,7 @@ int leverage_test (MODEL *pmod, DATASET *dset,
  * vif_test:
  * @pmod: pointer to model to be tested.
  * @dset: dataset struct.
+ * @opt: may contain OPT_Q for quiet operation.
  * @prn: gretl printing struct.
  *
  * Calculates and displays the Variance Inflation Factors for
@@ -3811,16 +3812,17 @@ int leverage_test (MODEL *pmod, DATASET *dset,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int vif_test (MODEL *pmod, DATASET *dset, PRN *prn)
+int vif_test (MODEL *pmod, DATASET *dset,
+	      gretlopt opt, PRN *prn)
 {
-    int (*print_vifs) (MODEL *, DATASET *, PRN *);
+    int (*compute_vifs) (MODEL *, DATASET *, gretlopt, PRN *);
 
     gretl_error_clear();
 
-    print_vifs = get_plugin_function("print_vifs");
-    if (print_vifs == NULL) {
+    compute_vifs = get_plugin_function("compute_vifs");
+    if (compute_vifs == NULL) {
 	return 1;
     }
 
-    return (*print_vifs)(pmod, dset, prn);
+    return (*compute_vifs)(pmod, dset, opt, prn);
 }

@@ -144,7 +144,8 @@ int cusum_test (MODEL *pmod, DATASET *dset,
 int panel_hausman_test (MODEL *pmod, DATASET *dset, 
 			gretlopt opt, PRN *prn);
 
-int vif_test (MODEL *pmod, DATASET *dset, PRN *prn);
+int vif_test (MODEL *pmod, DATASET *dset,
+	      gretlopt opt, PRN *prn);
 
 int leverage_test (MODEL *pmod, DATASET *dset, 
 		   gretlopt opt, PRN *prn);

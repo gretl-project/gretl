@@ -206,7 +206,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { VARLIST,  "varlist",  0 },
     { VARTEST,  "vartest",  CI_LIST | CI_LLEN2 | CI_NOOPT },
     { VECM,     "vecm",     CI_ORD1 | CI_LIST },
-    { VIF,      "vif",      CI_NOOPT },
+    { VIF,      "vif",      0 },
     { WLS,      "wls",      CI_LIST },
     { XCORRGM,  "xcorrgm",  CI_LIST | CI_LLEN2 | CI_ORD2 },
     { XTAB,     "xtab",     CI_LIST | CI_INFL },

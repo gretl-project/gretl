@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -23,7 +23,7 @@
 
 /* run the vif regression for regressor k */
 
-static double get_vif (MODEL *mod, const int *xlist, 
+static double get_vif (MODEL *mod, const int *xlist,
 		       int *vlist, int k,
 		       DATASET *dset,
 		       int *err)
@@ -40,7 +40,7 @@ static double get_vif (MODEL *mod, const int *xlist,
 	}
     }
 
-    *mod = lsq(vlist, dset, OLS, OPT_A); 
+    *mod = lsq(vlist, dset, OLS, OPT_A);
     *err = mod->errcode;
 
     if (!*err && !na(mod->rsq) && mod->rsq != 1.0) {
@@ -137,7 +137,7 @@ gretl_matrix *bkw_matrix (const gretl_matrix *VCV, int *err)
     S = gretl_identity_matrix_new(k);
     Q = gretl_matrix_alloc(k, k);
     BKW = gretl_matrix_alloc(k, k+2);
-    
+
     if (S == NULL || Q == NULL || BKW == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
@@ -154,7 +154,7 @@ gretl_matrix *bkw_matrix (const gretl_matrix *VCV, int *err)
     if (!*err) {
 	*err = gretl_matrix_SVD(Q, NULL, &lambda, &V);
     }
-    
+
     if (*err) {
 	goto bailout;
     }
@@ -173,7 +173,7 @@ gretl_matrix *bkw_matrix (const gretl_matrix *VCV, int *err)
 	    y = gretl_matrix_get(S, i, j);
 	    gretl_matrix_set(Q, i, j, x * x * y);
 	}
-    }    
+    }
 
     for (i=0; i<k; i++) {
 	/* compute row sums */
@@ -184,7 +184,7 @@ gretl_matrix *bkw_matrix (const gretl_matrix *VCV, int *err)
 	for (j=0; j<k; j++) {
 	    x = gretl_matrix_get(Q, i, j);
 	    gretl_matrix_set(V, j, i, x/y);
-	}	
+	}
     }
 
     y = lambda->val[0];
@@ -249,16 +249,15 @@ static void maybe_truncate_param_name (char *s)
     }
 }
 
-int print_vifs (MODEL *pmod, DATASET *dset, PRN *prn)
+int compute_vifs (MODEL *pmod, DATASET *dset,
+		  gretlopt opt, PRN *prn)
 {
     gretl_matrix *V = NULL;
     gretl_matrix *BKW = NULL;
     gretl_vector *vif = NULL;
     int *xlist;
-    double vj;
-    int vi, i, n;
-    int maxlen = 0;
-    int err = 0;
+    int quiet = (opt & OPT_Q);
+    int i, err = 0;
 
     /* fetch list of regressors */
     xlist = gretl_model_get_x_list(pmod);
@@ -279,37 +278,42 @@ int print_vifs (MODEL *pmod, DATASET *dset, PRN *prn)
 	return err;
     }
 
-    pprintf(prn, "\n%s\n", _("Variance Inflation Factors"));
-    pprintf(prn, "%s\n", _("Minimum possible value = 1.0"));
-    pprintf(prn, "%s\n", _("Values > 10.0 may indicate a collinearity problem"));
-    pputc(prn, '\n');
+    if (!quiet) {
+	int vi, n, maxlen = 0;
+	double vj;
 
-    for (i=1; i<=xlist[0]; i++) {
-	vi = xlist[i];
-	vj = vif->val[i-1];
-	if (!na(vj)) {
-	    n = strlen(dset->varname[vi]);
-	    if (n > maxlen) {
-		maxlen = n;
+	pprintf(prn, "\n%s\n", _("Variance Inflation Factors"));
+	pprintf(prn, "%s\n", _("Minimum possible value = 1.0"));
+	pprintf(prn, "%s\n", _("Values > 10.0 may indicate a collinearity problem"));
+	pputc(prn, '\n');
+
+	for (i=1; i<=xlist[0]; i++) {
+	    vi = xlist[i];
+	    vj = vif->val[i-1];
+	    if (!na(vj)) {
+		n = strlen(dset->varname[vi]);
+		if (n > maxlen) {
+		    maxlen = n;
+		}
 	    }
 	}
-    }
 
-    maxlen = maxlen < 12 ? 12 : maxlen;
+	maxlen = maxlen < 12 ? 12 : maxlen;
 
-    for (i=1; i<=xlist[0]; i++) {
-	vi = xlist[i];
-	vj = vif->val[i-1];
-	if (!na(vj)) {
-	    pprintf(prn, "%*s %8.3f\n", maxlen, dset->varname[vi], vj);
+	for (i=1; i<=xlist[0]; i++) {
+	    vi = xlist[i];
+	    vj = vif->val[i-1];
+	    if (!quiet && !na(vj)) {
+		pprintf(prn, "%*s %8.3f\n", maxlen, dset->varname[vi], vj);
+	    }
 	}
-    }
-    pputc(prn, '\n');
 
-    pputs(prn, _("VIF(j) = 1/(1 - R(j)^2), where R(j) is the "
-		 "multiple correlation coefficient\nbetween "
-		 "variable j and the other independent variables"));
-    pputc(prn, '\n');
+	pputc(prn, '\n');
+	pputs(prn, _("VIF(j) = 1/(1 - R(j)^2), where R(j) is the "
+		     "multiple correlation coefficient\nbetween "
+		     "variable j and the other independent variables"));
+	pputc(prn, '\n');
+    }
 
     /* now for some more sophisticated diagnostics */
 
@@ -324,8 +328,6 @@ int print_vifs (MODEL *pmod, DATASET *dset, PRN *prn)
 	char **S = strings_array_new_with_length(k, VNAMELEN);
 
 	if (S != NULL) {
-	    int i;
-
 	    strcpy(S[0], "lambda");
 	    strcpy(S[1], "cond");
 	    for (i=0; i<pmod->ncoeff; i++) {
@@ -333,7 +335,9 @@ int print_vifs (MODEL *pmod, DATASET *dset, PRN *prn)
 		maybe_truncate_param_name(S[i+2]);
 	    }
 	    gretl_matrix_set_colnames(BKW, S);
-	    BKW_print(BKW, prn);
+	    if (!quiet) {
+		BKW_print(BKW, prn);
+	    }
 	}
     }
 

@@ -73,6 +73,7 @@
 			 c == SYSTEM ||		\
 			 c == VAR ||		\
 			 c == VECM ||		\
+			 c == VIF ||		\
 			 c == XCORRGM ||	\
 			 c == XTAB)
 

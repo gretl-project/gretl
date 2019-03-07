@@ -3404,7 +3404,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	} else if (cmd->ci == QLRTEST) {
 	    err = QLR_test(model, dset, cmd->opt, prn);
 	} else if (cmd->ci == VIF) {
-	    err = vif_test(model, dset, prn);
+	    err = vif_test(model, dset, cmd->opt, prn);
 	}
 	break;
 

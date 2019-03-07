@@ -2807,7 +2807,7 @@ void do_vif (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
-    int (*print_vifs) (MODEL *, DATASET *, PRN *);
+    int (*compute_vifs) (MODEL *, DATASET *, gretlopt, PRN *);
     DATASET *dset;
     PRN *prn;
     int err;
@@ -2818,8 +2818,8 @@ void do_vif (GtkAction *action, gpointer p)
 	return;
     }
 
-    print_vifs = gui_get_plugin_function("print_vifs");
-    if (print_vifs == NULL) {
+    compute_vifs = gui_get_plugin_function("compute_vifs");
+    if (compute_vifs == NULL) {
 	trim_dataset(pmod, 0);
 	return;
     }
@@ -2829,7 +2829,7 @@ void do_vif (GtkAction *action, gpointer p)
 	return;
     }
 
-    err = (*print_vifs)(pmod, dset, prn);
+    err = (*compute_vifs)(pmod, dset, OPT_NONE, prn);
 
     if (err) {
 	gui_errmsg(err);

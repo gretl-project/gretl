@@ -15997,9 +15997,9 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     default:
-	printf("eval: weird node %s (t->t = %d)\n", getsymb(t->t),
-	       t->t);
-	p->err = E_PARSE;
+	fprintf(stderr, "eval: weird node %s (t->t = %d)\n",
+		getsymb(t->t), t->t);
+	p->err = E_TYPES;
 	break;
     }
 

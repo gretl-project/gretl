@@ -2243,10 +2243,12 @@ void *get_last_result_data (GretlType *type, int *err)
 	*type = GRETL_TYPE_NONE;
 	*err = E_BADSTAT;
     } else {
-	/* you only get the result once */
 	*type = last_result_type;
-	ret = last_result;
-	last_result = NULL;
+	if (*type == GRETL_TYPE_MATRIX) {
+	    ret = gretl_matrix_copy(last_result);
+	} else {
+	    ret = gretl_bundle_copy(last_result, err);
+	}
     }
 
     return ret;

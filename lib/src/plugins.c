@@ -180,7 +180,7 @@ struct plugin_function_info plugin_functions[] = {
     { "leverage_data_dialog", P_LEVERAGE },
 
     /* collinearity diagnostics */
-    { "print_vifs", P_VIF },
+    { "compute_vifs", P_VIF },
     { "bkw_matrix", P_VIF },
 
     /* GMP (multiple precision) */
