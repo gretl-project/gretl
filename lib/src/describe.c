@@ -2268,6 +2268,20 @@ void set_last_result_data (void *data, GretlType type)
     last_result_type = type;
 }
 
+void last_result_cleanup (void)
+{
+    if (last_result != NULL) {
+	if (last_result_type == GRETL_TYPE_MATRIX) {
+	    gretl_matrix_free(last_result);
+	} else if (last_result_type == GRETL_TYPE_BUNDLE) {
+	    gretl_bundle_destroy(last_result);
+	}
+    }
+
+    last_result = NULL;
+    last_result_type = 0;
+}
+
 /**
  * free_xtab:
  * @tab: pointer to gretl crosstab struct.

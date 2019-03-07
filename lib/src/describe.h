@@ -160,6 +160,8 @@ void *get_last_result_data (GretlType *type, int *err);
 
 void set_last_result_data (void *ptr, GretlType type);
 
+void last_result_cleanup (void);
+
 int crosstab (const int *list, const DATASET *dset, 
 	      gretlopt opt, PRN *prn);
 

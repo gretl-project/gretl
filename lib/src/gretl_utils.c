@@ -2269,6 +2269,7 @@ void libgretl_cleanup (void)
     gretl_www_cleanup();
 #endif
     builtin_strings_cleanup();
+    last_result_cleanup();
 
 #ifdef HAVE_MPI
     if (!gretl_mpi_initialized()) {
