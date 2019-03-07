@@ -25,7 +25,7 @@ static int cli_parse_object_request (const char *line,
 				     PRN *prn)
 {
     char word[MAXSAVENAME] = {0};
-    int action, err = 0;
+    int action;
 
     /* get object name (if any) and dot param */
     parse_object_command(line, word, param);
@@ -40,9 +40,9 @@ static int cli_parse_object_request (const char *line,
     }
 
     /* see if there's an object associated with the name */
-    err = gretl_get_object_and_type(word, pptr, type);
+    *pptr = gretl_get_object_and_type(word, type);
 
-    if (err) {
+    if (*pptr == NULL) {
 	/* no matching object */
 	if (*param != NULL && !strcmp(*param, "show")) {
 	    /* maybe OK in GUI, skip in CLI? */

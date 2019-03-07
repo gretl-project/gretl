@@ -112,7 +112,13 @@ static NODE *newref (parser *p, int t)
 	    n->vname = p->idstr;
 	    n->v.ptr = p->data;
 	} else if (t == DBUNDLE) {
-	    n->v.idnum = p->idnum;
+	    if (p->idstr != NULL) {
+		/* case of named model */
+		n->vname = p->idstr;
+		n->v.idnum = -1;
+	    } else {
+		n->v.idnum = p->idnum;
+	    }
 	} else if (t == UNDEF) {
 	    n->vname = p->idstr;
 	} else if (t == UOBJ || t == WLIST) {
@@ -849,7 +855,15 @@ static NODE *get_bundle_member_name (parser *p)
 	}
     } else if (p->ch == '.') {
 	/* using bundle dot notation */
-	int i, n = gretl_namechar_spn(p->point);
+	int n;
+
+	if (p->idstr != NULL && *p->point == '$') {
+	    /* allow '$' for objects under named models */
+	    n = 1 + gretl_namechar_spn(p->point + 1);
+	} else {
+	    /* otherwise should be valid identifier */
+	    n = gretl_namechar_spn(p->point);
+	}
 
 	if (n == 0 || n >= VNAMELEN) {
 	    p->err = E_PARSE;
@@ -858,6 +872,8 @@ static NODE *get_bundle_member_name (parser *p)
 	    if (p->idstr == NULL) {
 		p->err = E_ALLOC;
 	    } else {
+		int i;
+
 		for (i=0; i<=n; i++) {
 		    parser_getc(p);
 		}
@@ -1219,32 +1235,6 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 #endif
 }
 
-static void get_ovar_ref (NODE *t, parser *p)
-{
-    if (p->ch != '.' || parser_char_index(p, '$') != 0) {
-	p->err = E_PARSE;
-	return;
-    }
-
-    p->idnum = 0;
-
-    /* handle the '.' */
-    lex(p);
-
-    /* get the following '$' name */
-    lex(p);
-
-    if (p->idnum == 0) {
-	p->err = E_PARSE;
-    } else if (p->sym == DMSTR) {
-	/* followed by '(' matrix subspec? */
-	t->R = powterm(p, NULL);
-    } else {
-	t->R = newref(p, p->sym);
-	lex(p);
-    }
-}
-
 static NODE *powterm (parser *p, NODE *l)
 {
     /* watch out for unary operators */
@@ -1413,12 +1403,6 @@ static NODE *powterm (parser *p, NODE *l)
 	if (t != NULL) {
 	    t->L = newref(p, DBUNDLE);
 	    t->R = get_bundle_member_name(p);
-	}
-    } else if (sym == OVAR) {
-	t = newb2(sym, NULL, NULL);
-	if (t != NULL) {
-	    t->L = newstr(p->idstr);
-	    get_ovar_ref(t, p);
 	}
     } else if (sym == LISTVAR) {
 	t = listvar_node(p);

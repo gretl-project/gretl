@@ -144,7 +144,6 @@ static void node_type_error (int ntype, int argnum, int goodt,
 			     NODE *bad, parser *p);
 static int node_is_true (NODE *n, parser *p);
 static gretl_matrix *series_to_matrix (const double *x, parser *p);
-static NODE *object_var_node (NODE *t, parser *p);
 static void printnode (NODE *t, parser *p, int value);
 static inline int attach_aux_node (NODE *t, NODE *ret, parser *p);
 static char *get_opstr (int op);
@@ -9082,31 +9081,6 @@ static NODE *eval_Rfunc (NODE *t, parser *p)
 
 #endif
 
-static NODE *model_var_via_accessor (const char *key, parser *p)
-{
-    NODE *ret = NULL;
-    gchar *dkey;
-    int mv;
-
-    dkey = g_strdup_printf("$%s", key);
-
-    if ((mv = mvar_lookup(dkey)) > 0) {
-	/* OK: @key (with dollar-sign prepended) is a
-	   regular model-related accessor
-	*/
-	NODE tmp;
-
-	memset(&tmp, 0, sizeof tmp);
-	tmp.t = MVAR;
-	tmp.v.idnum = mv;
-	ret = object_var_node(&tmp, p);
-    }
-
-    g_free(dkey);
-
-    return ret;
-}
-
 /* Getting an object from within a bundle: on the left is the
    bundle reference, on the right should be a string -- the
    key to look up to get content.
@@ -9122,39 +9096,11 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
     NODE *ret = NULL;
 
 #if EDEBUG
-    if (l->t == DBUNDLE) {
-	fprintf(stderr, "get_bundle_member: %s[\"%s\"]\n",
-		bvarname(l->v.idnum), key);
-    } else {
-	fprintf(stderr, "get_bundle_member: %s[\"%s\"]\n",
-		l->vname, key);
-    }
+    fprintf(stderr, "get_bundle_member: %s[\"%s\"]\n",
+	    l->vname, key);
 #endif
 
-    if (l->t == DBUNDLE) {
-	if (l->v.idnum == B_MODEL) {
-	    /* Treating the 'last model' as a bundle: we'll first
-	       try for a regular model-related accessor then,
-	       unless we already hit an error, for a "special"
-	       (a named item of model data that's not represented
-	       by a regular accessor).
-	    */
-	    ret = model_var_via_accessor(key, p);
-	    if (ret != NULL || p->err) {
-		return ret;
-	    } else {
-		val = last_model_get_data(key, &type, &size, &copied, &p->err);
-	    }
-	} else if (l->v.idnum == B_SYSTEM) {
-	    /* FIXME */
-	    gretl_errmsg_set("$system sub-object: not ready yet");
-	    p->err = E_DATA;
-	} else if (l->v.idnum == B_SYSINFO) {
-	    val = sysinfo_bundle_get_data(key, &type, &p->err);
-	}
-    } else {
-	val = gretl_bundle_get_data(l->v.b, key, &type, &size, &p->err);
-    }
+    val = gretl_bundle_get_data(l->v.b, key, &type, &size, &p->err);
 
     if (p->err) {
 	return ret;
@@ -14135,67 +14081,43 @@ static NODE *dollar_str_node (NODE *t, MODEL *pmod, parser *p)
     return ret;
 }
 
-/* Retrieve a data item from an object (typically, a model). We're not
-   sure in advance here of the type of the data item (scalar, matrix,
-   etc.): we look that up with object_var_type().
+/* Retrieve a data item from a model (single equation or system of
+   some kind. We're not sure in advance here of the type of the data
+   item (scalar, matrix, etc.): we look that up with object_var_type().
 
-   This function handles two cases: the input @t may be a binary node
-   with the name of an object on its left-hand subnode (as in
-   "mymodel.$vcv"), or the object may be implicit (as when accessing
-   data from the last model). In the latter case @t is itself the data
-   item specification, while in the former the data item spec will be
-   found on the right-hand subnode of @t.
+   If retrieval is from a named model, the model name will be given
+   by the @vname member of @t and the key will be on node @k. 
+   Otherwise @k will be NULL and @t will already hold the index of
+   the required data item.
 */
 
-static NODE *object_var_node (NODE *t, parser *p)
+static NODE *model_var_node (NODE *t, NODE *k, parser *p)
 {
     NODE *ret = NULL;
 
-#if EDEBUG
-    fprintf(stderr, "object_var_node: t->t = %d (%s)\n", t->t, getsymb(t->t));
-#endif
-
     if (starting(p)) {
-	NODE *r = NULL; /* the data spec node */
 	const char *oname = NULL;
-	GretlType vtype;
 	int idx, needs_data = 0;
+	GretlType vtype;
 
-	if (t->t == OVAR) {
-	    /* objectname.<stuff> */
-	    oname = t->L->v.str;
-	    r = t->R;
-	} else {
-	    /* plain <stuff> */
-	    r = t;
-	}
-
-	if (oname != NULL && gretl_get_object_by_name(oname) == NULL) {
-	    gretl_errmsg_sprintf(_("%s: no such object\n"), oname);
-	    p->err = E_UNKVAR;
-	    return NULL;
-	}
-
-	if (oname != NULL && r->t == DMSTR) {
-	    MODEL *pmod = get_model_by_name(oname);
-
-	    if (pmod == NULL) {
-		p->err = E_INVARG;
+	if (t->t == DBUNDLE) {
+	    /* pseudo-bundle: holds name of model */
+	    oname = t->vname;
+	    idx = mvar_lookup(k->v.str);
+	    if (idx == 0) {
+		p->err = E_DATA;
 		return NULL;
-	    } else {
-		return dollar_str_node(r, pmod, p);
 	    }
+	} else {
+	    /* @t already holds the data-item index */
+	    idx = t->v.idnum;
 	}
 
-	/* read the index which identifies the data item
-	   the user wants, and determine its type */
-	idx = r->v.idnum;
+	/* determine the type of the requested data */
 	vtype = object_var_type(idx, oname, &needs_data);
 
 #if EDEBUG
-	fprintf(stderr, "object_var_node: t->t = %d (%s), r->t = %d (%s)\n",
-		t->t, getsymb(t->t), r->t, getsymb(r->t));
-	fprintf(stderr, "idx = %d, vtype = %d\n", idx, vtype);
+	fprintf(stderr, "model_var_node: idx = %d, vtype = %d\n", idx, vtype);
 #endif
 
 	if (vtype == GRETL_TYPE_DOUBLE) {
@@ -14662,6 +14584,9 @@ static NODE *eval (NODE *t, parser *p)
 	    }
 	    if (r == NULL && !p->err) {
 		r = eval(t->R, p);
+		if (r == NULL && !p->err) {
+		    p->err = 1;
+		}
 	    }
 	}
     }
@@ -14677,7 +14602,13 @@ static NODE *eval (NODE *t, parser *p)
 
     switch (t->t) {
     case DBUNDLE:
-	ret = dollar_bundle_node(t, p);
+	if (t->vname != NULL) {
+	    /* pseudo-bundle: name of model */
+	    ret = t;
+	} else {
+	    /* built-in bundle indentifed by idnum */
+	    ret = dollar_bundle_node(t, p);
+	}
 	break;
     case UNDEF:
 	ret = maybe_rescue_undef_node(t, p);
@@ -15136,13 +15067,15 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case DBMEMB:
-	/* name of $ bundle plus string */
-	if ((l->t == DBUNDLE || l->t == BUNDLE) && r->t == STR) {
+	/* name of $-bundle plus string */
+	if (l->t == BUNDLE && r->t == STR) {
 	    ret = get_bundle_member(l, r, p);
-	} else if (l->t == DBUNDLE || l->t == BUNDLE) {
-	    node_type_error(t->t, 1, STR, r, p);
+	} else if (l->t == DBUNDLE && r->t == STR) {
+	    ret = model_var_node(l, r, p);
+	} else if (r->t != STR) {
+	    node_type_error(t->t, 2, STR, r, p);
 	} else {
-	    node_type_error(t->t, 0, DBUNDLE, l, p);
+	    node_type_error(t->t, 1, BUNDLE, l, p);
 	}
 	break;
     case F_CURL:
@@ -15754,10 +15687,9 @@ static NODE *eval (NODE *t, parser *p)
     case F_ISOCONV:
 	ret = isoconv_node(t, p);
 	break;
-    case OVAR:
     case MVAR:
-	/* variable "under" user-defined object, or last object */
-	ret = object_var_node(t, p);
+	/* variable "under" model */
+	ret = model_var_node(t, NULL, p);
 	break;
     case DMSTR:
 	ret = dollar_str_node(t, NULL, p);
@@ -16345,10 +16277,6 @@ static void printnode (NODE *t, parser *p, int value)
 	pputs(p->prn, "MSLRAW");
     } else if (t->t == SUBSL) {
 	pputs(p->prn, "SUBSL");
-    } else if (t->t == OVAR) {
-	printnode(t->L, p, 0);
-	pputc(p->prn, '.');
-	printnode(t->R, p, 0);
     } else if (func1_symb(t->t)) {
 	printsymb(t->t, p);
 	pputc(p->prn, '(');

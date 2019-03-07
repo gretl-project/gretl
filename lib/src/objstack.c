@@ -577,40 +577,59 @@ void *gretl_get_object_by_name (const char *name)
     return get_object_by_name(name, GRETL_OBJ_ANY, NULL);
 }
 
-int
-gretl_get_object_and_type (const char *name, void **pp, GretlObjType *type)
+void *get_model_object_and_type (const char *name,
+				 GretlObjType *type)
 {
-    int err = E_DATA;
+    void *ret = NULL;
+    GretlObjType ti;
+    const char *test;
+    int i;
 
-    *pp = NULL;
-    *type = 0;
+    *type = GRETL_OBJ_NULL;
 
     if (name == NULL) {
-	return err;
+	return NULL;
     }
 
-    if (!strcmp(name, "$system")) {
-	*pp = get_anonymous_equation_system();
-	if (*pp != NULL) {
-	    *type = GRETL_OBJ_SYS;
-	    err = 0;
-	}
-    } else {
-	const char *test;
-	int i;
-
-	for (i=0; i<n_obj; i++) {
-	    test = gretl_object_get_name(ostack[i].ptr, ostack[i].type);
+    for (i=0; i<n_obj; i++) {
+	ti = ostack[i].type;
+	if (ti == GRETL_OBJ_EQN || ti == GRETL_OBJ_VAR ||
+	    ti == GRETL_OBJ_SYS) {
+	    test = gretl_object_get_name(ostack[i].ptr, ti);
 	    if (!strcmp(name, test)) {
-		*pp = ostack[i].ptr;
-		*type = ostack[i].type;
-		err = 0;
+		ret = ostack[i].ptr;
+		*type = ti;
 		break;
 	    }
 	}
     }
 
-    return err;
+    return ret;
+}
+
+void *gretl_get_object_and_type (const char *name,
+				 GretlObjType *type)
+{
+    void *ret = NULL;
+    const char *test;
+    int i;
+
+    *type = GRETL_OBJ_NULL;
+
+    if (name == NULL) {
+	return NULL;
+    }
+
+    for (i=0; i<n_obj; i++) {
+	test = gretl_object_get_name(ostack[i].ptr, ostack[i].type);
+	if (!strcmp(name, test)) {
+	    ret = ostack[i].ptr;
+	    *type = ostack[i].type;
+	    break;
+	}
+    }
+
+    return ret;
 }
 
 MODEL *get_model_by_ID (int ID)

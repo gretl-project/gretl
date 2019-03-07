@@ -1158,7 +1158,7 @@ static char *get_quoted_string (parser *p)
 	if (p->ch == '.' && *p->point == '$') {
 	    /* maybe quoted name of saved object followed by
 	       dollar variable? */
-	    p->sym = OVAR;
+	    p->sym = DBMEMB;
 	} else {
 	    p->sym = CSTR;
 	}
@@ -1629,11 +1629,11 @@ static void word_check_next_char (parser *p)
     } else if (p->ch == '.' && *p->point == '$') {
 	if (p->sym == UOBJ) {
 	    /* name of saved object followed by dollar variable? */
-	    p->sym = OVAR;
+	    p->sym = DBMEMB;
 	} else if (p->sym == CSTR) {
 	    /* maybe quoted name of saved object followed by
 	       dollar variable? */
-	    p->sym = OVAR;
+	    p->sym = DBMEMB;
 	} else {
 	    p->err = E_PARSE;
 	}
@@ -2209,8 +2209,6 @@ const char *getsymb_full (int t, const parser *p)
 	return "FARGS";
     } else if (t == LIST || t == WLIST) {
 	return "LIST";
-    } else if (t == OVAR) {
-	return "OVAR";
     } else if (t == EMPTY) {
 	return "EMPTY";
     } else if (t == LISTVAR) {

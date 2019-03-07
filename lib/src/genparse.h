@@ -107,10 +107,9 @@ enum {
               LAG,        /* variable plus lag length */	  
 	      DVAR,	  /* $ "dataset" variable (mostly scalar or series) */
 	      MVAR,	  /* $ model var (scalar, series, or matrix) */
-	      OVAR,	  /* object variable: variable "under" an object */
 	      LISTVAR,    /* variable in list, dot syntax */
-  /* 80 */    DBUNDLE,    /* $ bundle accessor */
-	      BMEMB,      /* member of bundle */
+	      DBUNDLE,    /* $ bundle accessor */
+  /* 80 */    BMEMB,      /* member of bundle */
 	      DBMEMB,     /* member of $ bundle */
 	      FARGS,	  /* set of n function arguments */
               WLIST,      /* wildcard list spec */
@@ -119,8 +118,8 @@ enum {
 	      DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
 	      UFUN,	  /* user-defined function */
 	      RFUN,       /* GNU R function */
-  /* 90 */    IVEC,       /* array of ints, not a varlist */
-	      OSL,        /* "slice" of object other than matrix */
+	      IVEC,       /* array of ints, not a varlist */
+  /* 90 */    OSL,        /* "slice" of object other than matrix */
 	      USERIES,    /* named series (defined only for error reporting) */
 	      SUB_ADDR,   /* "address" of (e.g.) array element */
               INC,        /* increment */

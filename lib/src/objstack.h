@@ -90,8 +90,11 @@ equation_system *get_equation_system_by_name (const char *sname);
 
 void *gretl_get_object_by_name (const char *name);
 
-int gretl_get_object_and_type (const char *name, void **pp, 
-			       GretlObjType *type);
+void *get_model_object_and_type (const char *name,
+				 GretlObjType *type);
+
+void *gretl_get_object_and_type (const char *name,
+				 GretlObjType *type);
 
 GretlType saved_object_get_data_type (const char *name,
 				      ModelDataIndex idx);

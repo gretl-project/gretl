@@ -1927,9 +1927,17 @@ restriction_set_start (const char *target, gretlopt opt, int *err)
 
     if (target != NULL) {
 	/* get pointer to named object */
-	*err = gretl_get_object_and_type(target, &ptr, &type);
+	if (!strcmp(target, "$system")) {
+	    ptr = get_anonymous_equation_system();
+	    if (ptr != NULL) {
+		type = GRETL_OBJ_SYS;
+	    }
+	} else {
+	    ptr = get_model_object_and_type(target, &type);
+	}
 	if (ptr == NULL) {
 	    gretl_errmsg_sprintf("'%s': unrecognized target", target);
+	    *err = E_DATA;
 	}
     } else {
 	/* get pointer to last-estimated model */
