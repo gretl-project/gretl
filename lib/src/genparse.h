@@ -111,6 +111,7 @@ enum {
 	      DBUNDLE,    /* $ bundle accessor */
   /* 80 */    BMEMB,      /* member of bundle */
 	      DBMEMB,     /* member of $ bundle */
+	      MMEMB,      /* member of named model */
 	      FARGS,	  /* set of n function arguments */
               WLIST,      /* wildcard list spec */
               EMPTY,      /* "null" or empty arg slot */
@@ -118,8 +119,8 @@ enum {
 	      DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
 	      UFUN,	  /* user-defined function */
 	      RFUN,       /* GNU R function */
-	      IVEC,       /* array of ints, not a varlist */
-  /* 90 */    OSL,        /* "slice" of object other than matrix */
+  /* 90 */    IVEC,       /* array of ints, not a varlist */
+	      OSL,        /* "slice" of object other than matrix */
 	      USERIES,    /* named series (defined only for error reporting) */
 	      SUB_ADDR,   /* "address" of (e.g.) array element */
               INC,        /* increment */

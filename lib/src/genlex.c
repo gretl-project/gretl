@@ -1156,9 +1156,9 @@ static char *get_quoted_string (parser *p)
 
     if (!p->err) {
 	if (p->ch == '.' && *p->point == '$') {
-	    /* maybe quoted name of saved object followed by
+	    /* maybe quoted name of saved model followed by
 	       dollar variable? */
-	    p->sym = DBMEMB;
+	    p->sym = MMEMB;
 	} else {
 	    p->sym = CSTR;
 	}
@@ -1628,12 +1628,12 @@ static void word_check_next_char (parser *p)
 	}
     } else if (p->ch == '.' && *p->point == '$') {
 	if (p->sym == UOBJ) {
-	    /* name of saved object followed by dollar variable? */
-	    p->sym = DBMEMB;
+	    /* name of saved model followed by dollar variable? */
+	    p->sym = MMEMB;
 	} else if (p->sym == CSTR) {
 	    /* maybe quoted name of saved object followed by
 	       dollar variable? */
-	    p->sym = DBMEMB;
+	    p->sym = MMEMB;
 	} else {
 	    p->err = E_PARSE;
 	}
@@ -2235,6 +2235,8 @@ const char *getsymb_full (int t, const parser *p)
 	return "DBUNDLE";
     } else if (t == DBMEMB) {
 	return "DBMEMB";
+    } else if (t == DBMEMB) {
+	return "MMEMB";
     } else if (t == PTR) {
 	return "PTR";
     }

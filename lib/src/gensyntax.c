@@ -112,13 +112,12 @@ static NODE *newref (parser *p, int t)
 	    n->vname = p->idstr;
 	    n->v.ptr = p->data;
 	} else if (t == DBUNDLE) {
-	    if (p->idstr != NULL) {
-		/* case of named model */
-		n->vname = p->idstr;
-		n->v.idnum = -1;
-	    } else {
-		n->v.idnum = p->idnum;
-	    }
+	    n->v.idnum = p->idnum;
+	} else if (t == MMEMB) {
+	    /* for case of named model */
+	    n->vname = p->idstr;
+	    n->v.idnum = -1;
+	    n->t = DBUNDLE; /* roll into DBUNDLE case */
 	} else if (t == UNDEF) {
 	    n->vname = p->idstr;
 	} else if (t == UOBJ || t == WLIST) {
@@ -1402,6 +1401,12 @@ static NODE *powterm (parser *p, NODE *l)
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
 	    t->L = newref(p, DBUNDLE);
+	    t->R = get_bundle_member_name(p);
+	}
+    } else if (sym == MMEMB) {
+	t = newb2(DBMEMB, NULL, NULL);
+	if (t != NULL) {
+	    t->L = newref(p, MMEMB);
 	    t->R = get_bundle_member_name(p);
 	}
     } else if (sym == LISTVAR) {
