@@ -2132,6 +2132,10 @@
 	<opt>kendall</opt> options are not available&mdash;but
 	see the <fncref targ="npcorr"/> function.
       </para>
+      <para>
+	The <fncref targ="$result"/> accessor can be used to obtain
+	the correlations as a matrix.
+      </para>
     </description>
 
     <gui-access>
@@ -4302,6 +4306,9 @@
 	Note that gretl does not have a function that matches this
 	command, but it is possible to use the <fncref
 	targ="aggregate"/> function to achieve the same purpose.
+	In addition, the frequency distribution constructed by
+	<lit>freq</lit> can be obtained in matrix form via the
+	<fncref targ="$result"/> accessor.
       </para>
     </description>
 
@@ -13667,6 +13674,11 @@
 	summary statistics are printed for each column of the matrix.
 	The <opt>by</opt> option is not available in this case.
       </para>
+      <para>
+	The table of statistics produced by <lit>summary</lit> can be
+	retrieved in matrix form via the <fncref targ="$result"/>
+	accessor. 
+      </para>
     </description>
 
     <gui-access>
@@ -14707,26 +14719,56 @@
   </command>
 
   <command name="vif" section="Tests" context="cli"
-    label="Variance Inflation Factors">
+	   label="Variance Inflation Factors">
+
+    <usage>
+      <options>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>don't print anything</effect>
+        </option>
+      </options>
+    </usage>
 
     <description>
       <para>
 	Must follow the estimation of a model which includes at least
-	two independent variables. Calculates and displays the
-	Variance Inflation Factors (VIFs) for the regressors.  The VIF
-	for regressor <math>j</math> is defined as
-	<equation status="display"
-	  tex="\[\frac{1}{1-R_j^2}\]"
-	  ascii="1/(1 - Rj^2)"
-	  graphic="vif"/> where <math>R</math><sub>j</sub> is
-	the coefficient of multiple correlation between regressor
-	<math>j</math> and the other regressors. The factor has
-	a minimum value of 1.0 when the variable in question is
-	orthogonal to the other independent variables.
-	<cite key="neter-etal90">Neter,	Wasserman, and Kutner (1990)</cite>
-	suggest inspecting the largest VIF as a diagnostic for collinearity;
-	a value greater than 10 is sometimes taken as indicating a
-	problematic degree of collinearity.
+	two independent variables. Calculates and displays diagnostic
+	information pertaining to collinearity.
+      </para>
+
+      <subhead>Variance Inflation Factors</subhead>
+      <para>
+	The Variance Inflation Factor or VIF for regressor
+	<math>j</math> is defined as <equation status="display"
+	tex="\[\frac{1}{1-R_j^2}\]" ascii="1/(1 - Rj^2)"
+	graphic="vif"/> where <math>R</math><sub>j</sub> is the
+	coefficient of multiple correlation between regressor
+	<math>j</math> and the other regressors. The factor has a
+	minimum value of 1.0 when the variable in question is
+	orthogonal to the other independent variables.  <cite
+	key="neter-etal90">Neter, Wasserman, and Kutner (1990)</cite>
+	suggest inspecting the largest VIF as a diagnostic for
+	collinearity; a value greater than 10 is sometimes taken as
+	indicating a problematic degree of collinearity.
+      </para>
+
+      <subhead>BKW matrix</subhead>
+      <para>
+	This matrix, based on the work of <cite
+	key="belsley-etal80">Belsley, Kuh and Welsch (1980),</cite>
+	offers a more sophisticated analysis of the degree and sources
+	of collinearity among the independent variables in a
+	regression model. For a good account of the BKW analysis in
+	relation to gretl, see <url>
+	https://learneconometrics.com/pdf/Collin/collin_gretl.pdf</url>.
+      </para>
+
+      <para>
+	Following this command the <fncref targ="$result"/> accessor
+	may be used to retrieve a bundle containing two matrices:
+	a column vector holding the VIFs under the key <lit>vif</lit>
+	and the BKW matrix under <lit>BKW</lit>.
       </para>
     </description>
 
@@ -14972,8 +15014,7 @@
 
   </command>
 
-  <command name="xtab" section="Statistics"
-    label="Cross-tabulate variables">
+  <command name="xtab" section="Statistics" label="Cross-tabulate variables">
 
     <usage>
       <arguments>
@@ -15096,6 +15137,13 @@
 	numerical value. This option is ignored unless the
 	<opt>tex</opt> option is given, and also when one or both of
 	the cross-tabulated variables are string-valued.
+      </para>
+
+      <subhead>The table as a matrix</subhead>
+      <para>
+	When a single list argument is given, the contingency table
+	may be retrieved in matrix form via the <fncref
+	targ="$result"/> accessor.
       </para>
 
     </description>

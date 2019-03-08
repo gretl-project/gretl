@@ -687,6 +687,19 @@
       </description>
     </function>
 
+    <function name="$result" section="access" output="matrix-or-bundle">
+      <description>
+	<para>
+	  Provides stored information following certain commands that
+	  do not have specific accessors. The commands in question
+	  include <cmdref targ="corr"/>, <cmdref targ="freq"/>,
+	  <cmdref targ="summary"/> and <cmdref targ="xtab"/> (in which
+	  cases the result is a matrix) plus <cmdref targ="vif"/> (in
+	  which case the result is a bundle).
+	</para>
+      </description>
+    </function>
+
     <function name="$rho" section="access" output="scalar">
       <fnargs>
 	<fnarg optional="true" type="scalar">n</fnarg>
