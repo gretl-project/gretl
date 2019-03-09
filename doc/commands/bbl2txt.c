@@ -135,7 +135,7 @@ void print_item (char *s, const char *key, int html)
 	    if (url) {
 		/* reached end of URL */
 		if (html) {
-		    printf("\">link</a>");
+		    printf("\">LINK</a>");
 		} else {
 		    printf("\">");
 		}
