@@ -14758,10 +14758,11 @@
 	This matrix, based on the work of <cite
 	key="belsley-etal80">Belsley, Kuh and Welsch (1980),</cite>
 	offers a more sophisticated analysis of the degree and sources
-	of collinearity among the independent variables in a
-	regression model. For a good account of the BKW analysis in
-	relation to gretl, see <url>
-	https://learneconometrics.com/pdf/Collin/collin_gretl.pdf</url>.
+	of collinearity. For a thorough account of the BKW analysis
+	with reference to gretl, see
+      </para>
+      <para>
+	<url>https://learneconometrics.com/pdf/Collin/collin_gretl.pdf</url>
       </para>
 
       <para>
