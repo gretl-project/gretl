@@ -2907,6 +2907,51 @@ int model_sample_problem (const MODEL *pmod, const DATASET *dset)
     return ret;
 }
 
+int fcast_not_feasible (const MODEL *pmod, const DATASET *dset)
+{
+    int ret = E_DATA;
+
+    if (pmod->ci == PANEL && (pmod->opt & OPT_B)) {
+	; /* special case: panel "between" model */
+    } else if (pmod->submask == NULL) {
+	/* @pmod was estimated on the full dataset */
+	if (dset->submask == NULL) {
+	    /* @dset not sub-sampled either, OK */
+	    ret = 0;
+	} else if (dataset_is_cross_section(dset)) {
+	    /* @dset is cross-sectional subset, OK? */
+	    ret = 0;
+	} else {
+	    gretl_errmsg_set(_("dataset is subsampled, model is not\n"));
+	}
+    } else {
+	/* the model does have sub-sampling info recorded */
+	DATASET *fullset = fetch_full_dataset();
+
+	if (dset->submask == NULL) {
+	    if (dataset_is_cross_section(fullset) &&
+		dataset_is_cross_section(dset)) {
+		ret = 0; /* OK? */
+	    } else {
+		gretl_errmsg_set(_("model is subsampled, dataset is not\n"));
+	    }
+	} else if (submasks_match(dset, pmod)) {
+	    /* the subsamples (model and current data set) agree, OK */
+	    ret = 0;
+	} else {
+	    /* the subsamples differ */
+	    if (dataset_is_cross_section(fullset) &&
+		dataset_is_cross_section(dset)) {
+		ret = 0; /* OK ? */
+	    } else {
+		gretl_errmsg_set(_("model and dataset subsamples not the same\n"));
+	    }
+	}
+    }
+
+    return ret;
+}
+
 static void dataset_type_string (char *str, const DATASET *dset)
 {
     if (dataset_is_time_series(dset)) {

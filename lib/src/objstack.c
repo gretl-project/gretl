@@ -1649,8 +1649,9 @@ int last_model_test_ok (int ci, gretlopt opt, const DATASET *dset,
 	    err = E_DATA;
 	} else if (!model_test_ok(ci, opt, pmod, dset)) {
 	    err = E_NOTIMP;
-	}
-	if (model_sample_problem(pmod, dset)) {
+	} else if (ci == FCAST) {
+	    err = fcast_not_feasible(pmod, dset);
+	} else if (model_sample_problem(pmod, dset)) {
 	    pputs(prn, _("Can't do: the current data set is different from "
 			 "the one on which\nthe reference model was estimated\n"));
 	    err = E_DATA;
