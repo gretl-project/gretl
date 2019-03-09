@@ -829,7 +829,7 @@ static NODE *get_literal_string_arg (parser *p, int opt)
     return (p->idstr == NULL)? NULL : newstr(p->idstr);
 }
 
-static NODE *get_bundle_member_name (parser *p)
+static NODE *get_bundle_member_name (parser *p, int dollarize)
 {
     NODE *ret = NULL;
 
@@ -854,13 +854,13 @@ static NODE *get_bundle_member_name (parser *p)
 	}
     } else if (p->ch == '.') {
 	/* using bundle dot notation */
-	int n;
+	int i, n;
 
-	if (p->idstr != NULL && *p->point == '$') {
-	    /* allow '$' for objects under named models */
+	if (dollarize && *p->point == '$') {
+	    /* allow leading '$' for objects under named models */
 	    n = 1 + gretl_namechar_spn(p->point + 1);
 	} else {
-	    /* otherwise should be valid identifier */
+	    /* otherwise should be standard valid identifier */
 	    n = gretl_namechar_spn(p->point);
 	}
 
@@ -871,8 +871,6 @@ static NODE *get_bundle_member_name (parser *p)
 	    if (p->idstr == NULL) {
 		p->err = E_ALLOC;
 	    } else {
-		int i;
-
 		for (i=0; i<=n; i++) {
 		    parser_getc(p);
 		}
@@ -1258,7 +1256,7 @@ static NODE *powterm (parser *p, NODE *l)
 	    t = newb2(sym, l, NULL);
 	    if (t != NULL) {
 		parser_ungetc(p);
-		t->R = get_bundle_member_name(p);
+		t->R = get_bundle_member_name(p, 0);
 	    }
 	} else if (sym == G_LBR) {
 	    /* "OSL": we're being somewhat agnostic here regarding
@@ -1395,19 +1393,19 @@ static NODE *powterm (parser *p, NODE *l)
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
 	    t->L = newref(p, BUNDLE);
-	    t->R = get_bundle_member_name(p);
+	    t->R = get_bundle_member_name(p, 0);
 	}
     } else if (sym == DBMEMB) {
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
 	    t->L = newref(p, DBUNDLE);
-	    t->R = get_bundle_member_name(p);
+	    t->R = get_bundle_member_name(p, 0);
 	}
     } else if (sym == MMEMB) {
 	t = newb2(DBMEMB, NULL, NULL);
 	if (t != NULL) {
 	    t->L = newref(p, MMEMB);
-	    t->R = get_bundle_member_name(p);
+	    t->R = get_bundle_member_name(p, 1);
 	}
     } else if (sym == LISTVAR) {
 	t = listvar_node(p);
