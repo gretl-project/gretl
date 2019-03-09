@@ -1726,14 +1726,24 @@ static void open_bibitem_link (GtkTextTag *tag, GtkWidget *tview)
 
     if (fp != NULL) {
 	char *buf, line[4096];
+	gchar *p, *modbuf;
 	int n = strlen(key);
 
 	while (fgets(line, sizeof line, fp)) {
 	    if (!strncmp(line, "<@key=\"", 7)) {
 		if (!strncmp(line + 7, key, n)) {
-		    buf = strchr(line + 7, '>');
-		    if (buf != NULL) {
-			make_bibitem_window(buf + 1, tview);
+		    p = strchr(line + 7, '>');
+		    if (p != NULL) {
+			buf = p + 1;
+			if ((p = strstr(buf, "<@url")) != NULL) {
+			    /* put bibitem URL on new line */
+			    n = p - buf;
+			    modbuf = g_strdup_printf("%.*s\n%s", n, buf, p);
+			    make_bibitem_window(modbuf, tview);
+			    g_free(modbuf);
+			} else {
+			    make_bibitem_window(buf, tview);
+			}
 		    }
 		    break;
 		}

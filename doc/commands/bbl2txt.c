@@ -35,7 +35,7 @@ void normalize_space (char *s)
 	    if (n > 1) {
 		m = strlen(s+n);
 		memmove(s+1, s+n, m+1);
-	    }	
+	    }
 	}
 	s++;
     }
@@ -49,7 +49,7 @@ void remember_author (char *s, char *au)
 
     if (p != NULL) {
 	int n = p - s;
-	
+
 	strncat(au, s, n - 1);
 	p = au;
 	while (*p) {
@@ -107,10 +107,14 @@ void print_item (char *s, const char *key, int html)
 	    }
 	    s += 5;
 	} else if (!strncmp(s, "\\urlprefix\\url{", 14)) {
-	    printf("URL ");
+	    if (html) {
+		printf("URL ");
+	    } else {
+		printf("<@url=\"");
+	    }
 	    url = 1;
 	    putit = 0;
-	    s += 14;			    
+	    s += 14;
 	} else if (!strncmp(s, "\\url{", 4)) {
 	    printf("URL ");
 	    url = 1;
@@ -125,8 +129,16 @@ void print_item (char *s, const char *key, int html)
 
 	if (*s == '}') {
 	    if (url) {
+		/* reached end of URL */
+		if (!html) {
+		    printf("\">");
+		}
+		if (s[1] == '.') {
+		    /* skip trailing dot */
+		    s++;
+		}
 		putit = 0;
-		url = 0;	    
+		url = 0;
 	    } else if (group) {
 		putit = 0;
 		group = 0;
@@ -146,7 +158,7 @@ void print_item (char *s, const char *key, int html)
 		    printf("\u201D");
 		}
 		quoted = 0;
-	    } 
+	    }
 	} else if (*s == '-') {
 	    if (*(s+1) == '-') {
 		putit = 0;
@@ -156,7 +168,7 @@ void print_item (char *s, const char *key, int html)
 	if (putit) {
 	    if (!url && *s == '~') {
 		putchar(' ');
-	    } else {	    
+	    } else {
 		putchar(*s);
 	    }
 	    if (html && rparen == 0 && *s == ')') {
@@ -260,7 +272,7 @@ int main (int argc, char **argv)
 
     if (argc == 3 && !strcmp(argv[2], "--html")) {
 	html = 1;
-    }    
+    }
 
     fp = fopen(argv[1], "r");
     if (fp == NULL) {

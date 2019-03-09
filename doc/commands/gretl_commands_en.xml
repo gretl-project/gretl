@@ -14755,14 +14755,13 @@
 
       <subhead>BKW matrix</subhead>
       <para>
-	This matrix, based on the work of <cite
-	key="belsley-etal80">Belsley, Kuh and Welsch (1980),</cite>
-	offers a more sophisticated analysis of the degree and sources
-	of collinearity. For a thorough account of the BKW analysis
-	with reference to gretl, see
-      </para>
-      <para>
-	<url>https://learneconometrics.com/pdf/Collin/collin_gretl.pdf</url>
+	This table, based on the work of <cite
+	key="belsley-etal80">Belsley, Kuh and Welsch (1980)</cite>,
+	presents a more sophisticated analysis of the degree and
+	sources of collinearity via eigenanalysis of the matrix
+	<math>X'X</math>. For a thorough account of the BKW approach
+	with reference to gretl, see <cite key="adkins15">Adkins,
+	Waters and Hill (2015)</cite>.
       </para>
 
       <para>
