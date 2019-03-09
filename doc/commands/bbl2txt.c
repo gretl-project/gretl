@@ -108,7 +108,7 @@ void print_item (char *s, const char *key, int html)
 	    s += 5;
 	} else if (!strncmp(s, "\\urlprefix\\url{", 14)) {
 	    if (html) {
-		printf("URL ");
+		printf("<a href=\"");
 	    } else {
 		printf("<@url=\"");
 	    }
@@ -116,7 +116,11 @@ void print_item (char *s, const char *key, int html)
 	    putit = 0;
 	    s += 14;
 	} else if (!strncmp(s, "\\url{", 4)) {
-	    printf("URL ");
+	    if (html) {
+		printf("<a href=\"");
+	    } else {
+		printf("<@url=\"");
+	    }
 	    url = 1;
 	    putit = 0;
 	    s += 3;
@@ -130,7 +134,9 @@ void print_item (char *s, const char *key, int html)
 	if (*s == '}') {
 	    if (url) {
 		/* reached end of URL */
-		if (!html) {
+		if (html) {
+		    printf("\">link</a>");
+		} else {
 		    printf("\">");
 		}
 		if (s[1] == '.') {
