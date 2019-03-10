@@ -407,6 +407,73 @@ int remove_model_subsample_info (MODEL *pmod)
     return 0;
 }
 
+/* check for at least two observations, all contiguous */
+
+static int ts_contig (const char *ts, int T)
+{
+    int contig = 1;
+    int stopped = 0;
+    int t, n = 0;
+
+    for (t=0; t<T && contig; t++) {
+	if (ts[t]) {
+	    if (stopped) {
+		contig = 0;
+	    } else {
+		n++;
+	    }
+	} else if (n > 0) {
+	    stopped = 1;
+	}
+    }
+
+    return n >= 2 && contig;
+}
+
+/* For forecasting purposes, check to see if a subsample
+   mask represents a sub-sampling of a panel dataset in
+   the time dimension only.
+*/
+
+int is_panel_time_sample (const char *mask)
+{
+    int i, t, s, N, T, ret = 1;
+    char *ts = NULL;
+
+    if (fullset == NULL || !dataset_is_panel(fullset)) {
+	return 0;
+    } else if (get_submask_length(mask) != fullset->n + 1) {
+	return 0;
+    }
+
+    T = fullset->pd;
+    N = fullset->n / T;
+    ts = calloc(T, 1);
+
+    s = 0;
+    for (i=0; i<N && ret; i++) {
+	for (t=0; t<T & ret; t++) {
+	    if (i == 0) {
+		/* first unit sets the pattern */
+		if (mask[s]) {
+		    ts[t] = 1;
+		}
+	    } else if ((mask[s] && !ts[t]) || (ts[t] && !mask[s])) {
+		/* subsequent units must match */
+		ret = 0;
+	    }
+	    s++;
+	}
+	if (i == 0 && !ts_contig(ts, T)) {
+	    ret = 0;
+	}
+    }
+
+    free(ts);
+
+    return ret;
+}
+
 /* If series have been added to a resampled dataset, we can't
    bring these back to the "full" dataset, which may have a
    longer or shorter series length, and from which there is
@@ -2943,6 +3010,11 @@ int fcast_not_feasible (const MODEL *pmod, const DATASET *dset)
 	    if (dataset_is_cross_section(fullset) &&
 		dataset_is_cross_section(dset)) {
 		ret = 0; /* OK ? */
+	    } else if (is_panel_time_sample(pmod->submask) &&
+		       is_panel_time_sample(dset->submask)) {
+		/* we should be able to make this work */
+		fprintf(stderr, "FIXME model and dataset are both panel time subsets!\n");
+		/* ret = 0; not yet! */
 	    } else {
 		gretl_errmsg_set(_("model and dataset subsamples not the same\n"));
 	    }

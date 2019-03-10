@@ -42,6 +42,8 @@ int get_model_submask_size (const MODEL *pmod);
 
 int subsample_check_model (MODEL *pmod, char *mask);
 
+int is_panel_time_sample (const char *mask);
+
 int remove_model_subsample_info (MODEL *pmod);
 
 int submask_cmp (const char *m1, const char *m2);
