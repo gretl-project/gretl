@@ -91,6 +91,8 @@ int model_sample_problem (const MODEL *pmod, const DATASET *dset);
 
 int fcast_not_feasible (const MODEL *pmod, const DATASET *dset);
 
+int same_dataset (const MODEL *pmod, const DATASET *dset);
+
 void print_sample_obs (const DATASET *dset, PRN *prn);
 
 void print_sample_status (const DATASET *dset, PRN *prn);

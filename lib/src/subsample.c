@@ -2952,6 +2952,17 @@ int fcast_not_feasible (const MODEL *pmod, const DATASET *dset)
     return ret;
 }
 
+int same_dataset (const MODEL *pmod, const DATASET *dset)
+{
+    if (pmod->submask == NULL && dset->submask == NULL) {
+	return 1;
+    } else if (pmod->submask != NULL && dset->submask != NULL) {
+	return submasks_match(dset, pmod);
+    } else {
+	return 0;
+    }
+}
+
 static void dataset_type_string (char *str, const DATASET *dset)
 {
     if (dataset_is_time_series(dset)) {

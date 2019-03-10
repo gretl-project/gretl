@@ -617,6 +617,7 @@ static_fcast_with_errs (Forecast *fc, MODEL *pmod,
     double s2 = pmod->sigma * pmod->sigma;
     double vyh, xval;
     int k = pmod->ncoeff;
+    int same_data = 0;
     int i, vi, t;
     int err = 0;
 
@@ -636,11 +637,13 @@ static_fcast_with_errs (Forecast *fc, MODEL *pmod,
 	goto bailout;
     }
 
+    same_data = same_dataset(pmod, dset);
+
     for (t=fc->t1; t<=fc->t2 && !err; t++) {
 	int missing = 0;
 
 	/* skip if we can't compute forecast */
-	if (t >= pmod->t1 && t <= pmod->t2) {
+	if (same_data && t >= pmod->t1 && t <= pmod->t2) {
 	    missing = na(pmod->yhat[t]);
 	}
 
@@ -2839,6 +2842,7 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     int dyn_errs = 0;
     int asy_errs = 0;
     int int_errs = 0;
+    int same_data = 0;
     int nf = 0;
     int t, err;
 
@@ -2946,13 +2950,15 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	pmod->arinfo = NULL;
     }
 
+    same_data = same_dataset(pmod, dset);
+
     for (t=0; t<fr->nobs; t++) {
 	if (t >= fr->t1 && t <= fr->t2) {
 	    if (!na(fr->fitted[t])) {
 		nf++;
 	    }
-	} else if (t >= fr->t0 && t >= pmod->t1 &&
-		   t <= pmod->t2 && t <= fr->t2) {
+	} else if (same_data && t >= fr->t0 && t <= fr->t2 &&
+		   t >= pmod->t1 && t <= pmod->t2) {
 	    if (integrate) {
 		fr->fitted[t] = fr->fitted[t-1] + pmod->yhat[t];
 		fr->resid[t] = fr->resid[t-1] + pmod->uhat[t];
