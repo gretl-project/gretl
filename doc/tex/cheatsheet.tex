@@ -175,7 +175,7 @@ are turned into 3- or 4- or 5-year averages (see \emph{eg}
 \emph{Solution:} In a panel dataset, \app{gretl} functions that deal
 with time are aware of the panel structure, so they will automatically
 ``do the right thing''. Therefore, all you have to do is use the
-\cmd{movavag()} function for computing moving averages and then just
+\cmd{movavg()} function for computing moving averages and then just
 drop the years you don't need. An example with artificial data
 follows:
 \begin{code}
@@ -662,6 +662,39 @@ much greater burden on the hansl interpreter, since handling a loop is
 conceptually more complex than a single operation. In practice, you'll
 find that for any realistically-sized problem, solution 4 is much
 slower that solution 3.
+
+\subsection{Moving functions for time series}
+\label{sec:movfun}
+
+\emph{Problem:} \app{Gretl} provides native functions for moving
+averages, but I need a to compute a different statistic on a sliding
+data window. Is there a way to do this without using loops?
+
+\emph{Solution:} One of the nice things of the \texttt{list} data type
+is that, if you define a list, then several functions that would
+normally apply ``vertically'' to elements of a series apply
+``horizontally'' across the list. So for example, the following piece
+of code
+\begin{code}
+open bjg.gdt
+order = 12
+list L = lg || lags(order-1, lg)
+smpl +order ;
+series movmin = min(L)
+series movmax = max(L)
+series movmed = median(L)
+smpl full
+\end{code}
+computes the moving minimum, maximum and median of the \texttt{lg}
+series. Plotting the four series would produce something similar to
+figure \ref{fig:movfun}.
+
+\begin{figure}[hbtp]
+  \centering
+  \includegraphics{figures/movfun}
+  \caption{``Moving'' functions}
+  \label{fig:movfun}
+\end{figure}
 
 \section{Neat tricks}
 \label{sec:cheat-neat}
