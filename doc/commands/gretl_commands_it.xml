@@ -12466,7 +12466,7 @@
 	etichette per ciascuna unità. Se la serie non esiste, verrà
 	creata al momento. Nel secondo argomento, i nomi delle unità
 	vanno separati da spazi; se il nome stesso include degli
-	spazi, allora va racchiuso fra <lit>\"</lit>. Se no, il
+	spazi, allora va racchiuso fra virgolette doppie. Se no, il
 	secondo argomento può essere un array di stringhe.
       </para>
       <para>
@@ -14044,23 +14044,54 @@
   <command name="vif" section="Tests" context="cli"
     label="Fattori di inflazione della varianza">
 
+    <usage>
+      <options>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>soppprime la stampa dei risultati</effect>
+        </option>
+      </options>
+    </usage>
+
     <description>
       <para>
 	Deve seguire la stima di un modello che includa almeno due variabili
-	indipendenti. Calcola e mostra i fattori di inflazione della varianza
-	(Variance Inflation Factors - VIF) per i regressori.  Il VIF
-	per il regressore <math>j</math> è definito come
-	<equation status="display" 
-	  tex="\[\frac{1}{1-R_j^2}\]"
-	  ascii="1/(1 - Rj^2)"
-	  graphic="vif"/> dove <math>R</math><sub>j</sub> è il
-	coefficiente di correlazione multipla tra il regressore
-	<math>j</math> e gli altri regressori. Il fattore ha un valore
-        minimo di 1.0 quando la variabile in questione è ortogonale alle altre
-        variabili indipendenti.  Neter, Wasserman e Kutner (1990) suggeriscono
-        di usare il VIF maggiore come test diagnostico per la collinearità; un
-        valore superiore a 10 è in genere considerato indice di un grado di
-        collinearità problematico.
+	indipendenti. Calcola e mostra i informazioni diagnostiche
+	relativbe alla collinearità
+      </para>
+
+      <subhead>Fattori di inflazione della varianza (Variance Inflation Factors - VIF)</subhead>
+      <para>
+	Il VIF per il regressore <math>j</math> è definito come
+	<equation status="display" tex="\[\frac{1}{1-R_j^2}\]"
+	ascii="1/(1 - Rj^2)" graphic="vif"/> dove
+	<math>R</math><sub>j</sub> è il coefficiente di correlazione
+	multipla tra il regressore <math>j</math> e gli altri
+	regressori. Il fattore ha un valore minimo di 1.0 quando la
+	variabile in questione è ortogonale alle altre variabili
+	indipendenti.  <cite key="neter-etal90">Neter, Wasserman, e
+	Kutner (1990)</cite> suggeriscono di usare il VIF maggiore
+	come test diagnostico per la collinearità; un valore superiore
+	a 10 è in genere considerato indice di un grado di
+	collinearità problematico.
+      </para>
+      
+      <subhead>Matrice BKW</subhead>
+      <para>
+	Questa tabella, basata sul lavoro di <cite
+	key="belsley-etal80">Belsley, Kuh and Welsch (1980)</cite>,
+	presenta un'analisi più sofisticata del grado di collinearità
+	e delle sue cause per mezzo dell'analisi spettrale della
+	matrice <math>X'X</math>. Per una descrizione completa della
+	tavola BKW in riferimento a gretl, si veda <cite
+	key="adkins15">Adkins, Waters and Hill (2015)</cite>.
+      </para>
+
+      <para>
+	Dopo l'esecusione di questo comando, l'accessore <fncref
+	targ="$result"/> conterrà un bundle copn due matrici: un
+	vetttore colonna con glil indici VIFs, sotto la chiave
+	<lit>vif</lit> e la matrice BKW matrix sotto <lit>BKW</lit>.
       </para>
     </description>
 
