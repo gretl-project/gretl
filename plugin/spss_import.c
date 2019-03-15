@@ -895,6 +895,8 @@ static int transcribe_varname (spss_data *sdat, struct sysfile_variable *sv, int
 	c = sv->name[j];
 	if (isspace(c)) {
 	    break;
+	} else if (c == '.') {
+	    v->name[k++] = '_';
 	} else if (isalnum(c) || c == '_') {
 	    v->name[k++] = c;
 	} else {
