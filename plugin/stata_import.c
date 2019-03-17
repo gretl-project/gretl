@@ -1836,7 +1836,8 @@ static int dtab_save_offset (dta_table *dtab, int i, gint64 offset)
 	    /* semi-expected */
 	    fprintf(stderr, "buggy Stata file: variable labels not mapped\n");
 	} else {
-	    fprintf(stderr, "map: bad offset for element %d\n", i);
+	    fprintf(stderr, "map: bad offset %" G_GINT64_FORMAT " for element %d\n",
+		    offset, i);
 	}
 
 	return err;
@@ -2016,7 +2017,8 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
 		    gint64 offset;
 
 		    for (i=0; i<14 && !err; i++) {
-			offset = stata_read_int64(fp, &err);
+			/* 2019-03-17: was stata_read_int64() */
+			offset = stata_read_uint64(fp, &err);
 			if (i > 0 && !err) {
 			    err = dtab_save_offset(dtab, i, offset);
 			}
