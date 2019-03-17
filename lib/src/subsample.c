@@ -452,7 +452,7 @@ int is_panel_time_sample (const char *mask)
 
     s = 0;
     for (i=0; i<N && ret; i++) {
-	for (t=0; t<T & ret; t++) {
+	for (t=0; t<T && ret; t++) {
 	    if (i == 0) {
 		/* first unit sets the pattern */
 		if (mask[s]) {
