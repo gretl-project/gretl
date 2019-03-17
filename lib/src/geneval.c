@@ -8756,8 +8756,8 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     rtype = user_func_get_return_type(uf);
 
     if (!p->err && rtype == GRETL_TYPE_VOID) {
-	if (p->targ == UNK && p->lh.name[0] == '\0') {
-	    /* can we ever get here? */
+	if (p->targ == UNK && p->lh.name[0] == '\0' && p->lh.expr == NULL) {
+	    /* never reached? */
 	    p->targ = EMPTY;
 	} else if (p->targ != EMPTY) {
 	    gretl_errmsg_sprintf(_("The function %s does not return any value"),
