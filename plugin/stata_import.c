@@ -2017,7 +2017,7 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
 		    gint64 offset;
 
 		    for (i=0; i<14 && !err; i++) {
-			/* 2019-03-17: was stata_read_int64() */
+			/* 2019-03-17: was stata_read_int64() -- FIXME?? */
 			offset = stata_read_uint64(fp, &err);
 			if (i > 0 && !err) {
 			    err = dtab_save_offset(dtab, i, offset);
