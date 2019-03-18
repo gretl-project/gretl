@@ -217,7 +217,7 @@ static void bin_error (int *err, const char *func)
     *err = 1;
 }
 
-static int stata_read_int64 (FILE *fp, int *err)
+static gint64 stata_read_int64 (FILE *fp, int *err)
 {
     gint64 i;
 
@@ -1821,7 +1821,7 @@ static int read_dta_data (FILE *fp, DATASET *dset,
    to work around that.
 */
 
-static int dtab_save_offset (dta_table *dtab, int i, gint64 offset)
+static int dtab_save_offset (dta_table *dtab, int i, goffset offset)
 {
     if (offset <= 0) {
 	int err = 0;
@@ -1836,7 +1836,7 @@ static int dtab_save_offset (dta_table *dtab, int i, gint64 offset)
 	    /* semi-expected */
 	    fprintf(stderr, "buggy Stata file: variable labels not mapped\n");
 	} else {
-	    fprintf(stderr, "map: bad offset %" G_GINT64_FORMAT " for element %d\n",
+	    fprintf(stderr, "map: bad offset %" G_GOFFSET_FORMAT " for element %d\n",
 		    offset, i);
 	}
 
@@ -2014,11 +2014,10 @@ static int parse_dta_117_header (FILE *fp, dta_table *dtab,
 		if (strcmp(buf, "<map>")) {
 		    err = 1;
 		} else {
-		    gint64 offset;
+		    goffset offset;
 
 		    for (i=0; i<14 && !err; i++) {
-			/* 2019-03-17: was stata_read_int64() -- FIXME?? */
-			offset = stata_read_uint64(fp, &err);
+			offset = stata_read_int64(fp, &err);
 			if (i > 0 && !err) {
 			    err = dtab_save_offset(dtab, i, offset);
 			}
