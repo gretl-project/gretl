@@ -1840,6 +1840,32 @@ static void parse_number (parser *p)
     }
 }
 
+static void parse_int (parser *p)
+{
+    char istr[NUMLEN] = {0};
+    int i = 0;
+
+    while (p->ch >= '0' && p->ch <= '9' && i < NUMLEN - 1) {
+	istr[i++] = p->ch;
+	parser_getc(p);
+    }
+
+    while (p->ch >= '0' && p->ch <= '9') {
+	/* flush excess numeric characters */
+	parser_getc(p);
+    }
+
+#if LDEBUG
+    fprintf(stderr, "parse_int: istr = '%s'\n", istr);
+#endif
+
+    p->xval = atoi(istr);
+    p->sym = CNUM;
+#if LDEBUG
+    fprintf(stderr, " atoi gave %g\n", p->xval);
+#endif
+}
+
 static int wildcard_special (parser *p)
 {
     char cprev = *(p->point - 2);
@@ -1890,8 +1916,11 @@ static void lex_try_utf8 (parser *p)
 void lex (parser *p)
 {
 #if LDEBUG
-    if (p->ch) fprintf(stderr, "lex: p->ch = '%c'\n", p->ch);
-    else fprintf(stderr, "lex: p->ch = NUL\n");
+    if (p->ch) {
+	fprintf(stderr, "lex: p->ch='%c', point='%c'\n", p->ch, *p->point);
+    } else {
+	fprintf(stderr, "lex: p->ch is NUL\n");
+    }
 #endif
 
     if (p->ch == 0) {
@@ -2149,7 +2178,14 @@ void lex (parser *p)
 		p->sym = B_LCAT;
 		return;
 	    }
-	    if (isdigit(p->ch) || (p->ch == '.' && isdigit(*p->point))) {
+	    if (isdigit(p->ch)) {
+		if (defining_list(p)) {
+		    parse_int(p);
+		} else {
+		    parse_number(p);
+		}
+		return;
+	    } else if (p->ch == '.' && isdigit(*p->point) && !defining_list(p)) {
 		parse_number(p);
 		return;
 	    } else if (islower(p->ch) || isupper(p->ch) ||
@@ -2326,6 +2362,8 @@ const char *getsymb_full (int t, const parser *p)
 	return "JOIN";
     case B_RANGE:
 	return " to ";
+    case B_ELLIP:
+	return "..";
     case U_ADDR:
 	return "&";
     case B_OR:

@@ -14086,7 +14086,7 @@ static NODE *dollar_str_node (NODE *t, MODEL *pmod, parser *p)
    item (scalar, matrix, etc.): we look that up with object_var_type().
 
    If retrieval is from a named model, the model name will be given
-   by the @vname member of @t and the key will be on node @k. 
+   by the @vname member of @t and the key will be on node @k.
    Otherwise @k will be NULL and @t will already hold the index of
    the required data item.
 */
@@ -14182,13 +14182,29 @@ static NODE *ellipsis_list_node (NODE *l, NODE *r, parser *p)
     NODE *ret = aux_list_node(p);
 
     if (ret != NULL && starting(p)) {
-	int *list = ellipsis_list(p->dset, l->vnum, r->vnum,
-				  &p->err);
+	int v1 = useries_node(l) ? l->vnum : l->v.xval;
+	int v2 = useries_node(r) ? r->vnum : r->v.xval;
 
-	ret->v.ivec = list;
+	ret->v.ivec = ellipsis_list(p->dset, v1, v2, &p->err);
     }
 
     return ret;
+}
+
+/* see if a plain NUM node can be interpreted as holding a
+   series ID, in the context of creating a list */
+
+static int could_be_series_id (NODE *n, parser *p)
+{
+    if (n->t == NUM && p->dset != NULL && p->dset->n > 0) {
+	int k = node_get_int(n, p);
+
+	if (!p->err && k >= 0 && k < p->dset->v) {
+	    return 1;
+	}
+    }
+
+    return 0;
 }
 
 static NODE *list_join_node (NODE *l, NODE *r, parser *p)
@@ -14784,7 +14800,8 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case B_ELLIP:
 	/* list-making ellipsis */
-	if (useries_node(l) && useries_node(r)) {
+	if ((useries_node(l) || could_be_series_id(l, p)) &&
+	    (useries_node(r) || could_be_series_id(r, p))) {
 	    ret = ellipsis_list_node(l, r, p);
 	} else {
 	    p->err = E_TYPES;
