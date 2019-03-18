@@ -74,4 +74,6 @@ int show_dbnomics_data (windata_t *vwin, int plot);
 
 void dbnomics_search (gchar *key, windata_t *vwin);
 
+void maybe_fill_dbn_finder (GtkWidget *entry);
+
 #endif

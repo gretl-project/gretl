@@ -1045,6 +1045,13 @@ void vwin_add_finder (windata_t *vwin)
     gtk_box_pack_end(GTK_BOX(hbox), label, FALSE, FALSE, 5);
 #endif
 
+    if (vwin->role == DBNOMICS_TOP ||
+	vwin->role == VIEW_DBSEARCH ||
+	vwin->role == DBNOMICS_SERIES ||
+	vwin->role == DBNOMICS_DB) {
+	maybe_fill_dbn_finder(vwin->finder);
+    }
+
     g_signal_connect(G_OBJECT(entry), "key-press-event",
 		     G_CALLBACK(finder_key_handler), vwin);
     g_signal_connect(G_OBJECT(entry), "activate",

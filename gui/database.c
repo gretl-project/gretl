@@ -2026,6 +2026,15 @@ static int dbn_dataset_search_results (const char *key,
 
 #define SEARCH_CHUNK 80
 
+static gchar *dbnomics_search_string;
+
+void maybe_fill_dbn_finder (GtkWidget *entry)
+{
+    if (dbnomics_search_string != NULL) {
+	gtk_entry_set_text(GTK_ENTRY(entry), dbnomics_search_string);
+    }
+}
+
 /* The @key string is passed here when "all DB.NOMICS"
    is selected as the search space in the dbnomics
    providers window, or when "this database" is selected
@@ -2037,6 +2046,10 @@ void dbnomics_search (gchar *key, windata_t *vwin)
     gretl_array *a = NULL;
     int n_found = 0;
     int err = 0;
+
+    if (key != NULL) {
+	dbnomics_search_string = g_strdup(key);
+    }
 
     if (vwin->role == VIEW_DBSEARCH) {
 	/* we're called in "next results" mode */
@@ -3349,7 +3362,7 @@ void dbnomics_pager_call (GtkWidget *button, windata_t *vwin)
     int newoff;
 
     /* action: 1-based enumeration; see make_files_toolbar()
-       int datafiles.c
+       in datafiles.c
     */
 
     if (action == 1) {
