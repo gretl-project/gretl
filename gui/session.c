@@ -699,13 +699,8 @@ void save_output_as_text_icon (windata_t *vwin)
     }
 
     if (title != NULL && !strncmp(title, "gretl: ", 7)) {
-	int n = strlen(title + 7);
-
-	if (n > MAXSAVENAME - 1) {
-	    n = MAXSAVENAME - 1;
-	}
 	*tname = '\0';
-	strncat(tname, title + 7, n);
+	strncat(tname, title + 7, MAXSAVENAME - 1);
     } else {
 	strcpy(tname, "text");
     }
