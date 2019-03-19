@@ -65,12 +65,6 @@ static gretl_vector *model_vif_vector (MODEL *pmod, const int *xlist,
     int save_t2 = dset->t2;
     int i;
 
-    if (nvif <= 1) {
-	gretl_errmsg_set(_("The statistic you requested is not meaningful "
-			   "for this model"));
-	return NULL;
-    }
-
     vif = gretl_column_vector_alloc(nvif);
     if (vif == NULL) {
 	*err = E_ALLOC;
@@ -266,19 +260,22 @@ int compute_vifs (MODEL *pmod, DATASET *dset,
     }
 
     /* drop the constant if present in xlist */
-    for (i=1; i<=xlist[0]; i++) {
+    for (i=xlist[0]; i>0; i--) {
 	if (xlist[i] == 0) {
 	    gretl_list_delete_at_pos(xlist, i);
 	    break;
 	}
     }
 
-    vif = model_vif_vector(pmod, xlist, dset, &err);
-    if (err) {
-	return err;
+    if (xlist[0] > 1) {
+	vif = model_vif_vector(pmod, xlist, dset, &err);
+	if (err) {
+	    return err;
+	}
     }
 
-    if (!quiet) {
+    if (vif != NULL && !quiet) {
+	int vlen = gretl_vector_get_length(vif);
 	int vi, n, maxlen = 0;
 	double vj;
 
@@ -287,9 +284,9 @@ int compute_vifs (MODEL *pmod, DATASET *dset,
 	pprintf(prn, "%s\n", _("Values > 10.0 may indicate a collinearity problem"));
 	pputc(prn, '\n');
 
-	for (i=1; i<=xlist[0]; i++) {
-	    vi = xlist[i];
-	    vj = vif->val[i-1];
+	for (i=0; i<vlen; i++) {
+	    vi = xlist[i+1];
+	    vj = vif->val[i];
 	    if (!na(vj)) {
 		n = strlen(dset->varname[vi]);
 		if (n > maxlen) {
@@ -300,9 +297,9 @@ int compute_vifs (MODEL *pmod, DATASET *dset,
 
 	maxlen = maxlen < 12 ? 12 : maxlen;
 
-	for (i=1; i<=xlist[0]; i++) {
-	    vi = xlist[i];
-	    vj = vif->val[i-1];
+	for (i=0; i<vlen; i++) {
+	    vi = xlist[i+1];
+	    vj = vif->val[i];
 	    if (!quiet && !na(vj)) {
 		pprintf(prn, "%*s %8.3f\n", maxlen, dset->varname[vi], vj);
 	    }
@@ -344,12 +341,16 @@ int compute_vifs (MODEL *pmod, DATASET *dset,
     if (!err) {
 	gretl_bundle *b = gretl_bundle_new();
 
-	if (b != NULL) {
-	    gretl_bundle_donate_data(b, "BKW", BKW, GRETL_TYPE_MATRIX, 0);
-	    gretl_bundle_donate_data(b, "vif", vif, GRETL_TYPE_MATRIX, 0);
+	if (b != NULL && (vif != NULL || BKW != NULL)) {
+	    if (vif != NULL) {
+		gretl_bundle_donate_data(b, "vif", vif, GRETL_TYPE_MATRIX, 0);
+		vif = NULL;
+	    }
+	    if (BKW != NULL) {
+		gretl_bundle_donate_data(b, "BKW", BKW, GRETL_TYPE_MATRIX, 0);
+		BKW = NULL;
+	    }
 	    set_last_result_data(b, GRETL_TYPE_BUNDLE);
-	    BKW = NULL;
-	    vif = NULL;
 	}
     }
 
