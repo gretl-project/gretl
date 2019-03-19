@@ -182,12 +182,13 @@ static int print_iterations (const char *path, PRN *prn)
 static int x12_date_to_n (const char *s, const DATASET *dset)
 {
     char date[12] = {0};
+    int len = strlen(s);
 
     if (non_yearly_frequency(dset->pd)) {
-	int t, maj = 0, min = 0, n = strlen(s);
+	int t, maj = 0, min = 0;
 	char fmt[16];
 
-	sprintf(fmt, "%%%dd%%2d", n - 2);
+	sprintf(fmt, "%%%dd%%2d", len - 2);
 	if (sscanf(s, fmt, &maj, &min) == 2) {
 	    t = (maj - 1) * dset->pd + min - 1;
 	} else {
@@ -198,8 +199,6 @@ static int x12_date_to_n (const char *s, const DATASET *dset)
     }
 
     if (dset->pd > 1) {
-	int len = strlen(s);
-
 	if (len <= 4) {
 	    strncat(date, s, len - 2);
 	    strcat(date, ":");
