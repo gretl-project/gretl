@@ -2048,7 +2048,12 @@ void dbnomics_search (gchar *key, windata_t *vwin)
     int err = 0;
 
     if (key != NULL) {
-	dbnomics_search_string = g_strdup(key);
+	if (dbnomics_search_string == NULL) {
+	    dbnomics_search_string = g_strdup(key);
+	} else if (strcmp(dbnomics_search_string, key)) {
+	    g_free(dbnomics_search_string);
+	    dbnomics_search_string = g_strdup(key);
+	}
     }
 
     if (vwin->role == VIEW_DBSEARCH) {
