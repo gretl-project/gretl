@@ -7,12 +7,15 @@ version 2019b, in progress
 - New accessor $now to get current time/date, plus new
   functions strftime() and strptime()
 - New function Lsolve(), using precomputed Cholesky factor
+- New function isoweek() to get ISO 8601 week number
 - epochday() function: support YYYYMMDD input
 - Speed up rank() function for far-from-square matrices
 - Obscure fix: enable deletion of "time" from a list
   supplied as a function argument
 - GUI: disallow execution of a script when one is already
   in progress (to prevent crashing)
+- GUI fix: some of the example scripts referenced in the
+  GUI command help were not being found
 - Add configure option --disable-gmp: not recommended for
   general use, but can be helpful in some build contexts
   where libgmp is not readily available
