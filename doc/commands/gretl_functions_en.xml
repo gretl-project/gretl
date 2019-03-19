@@ -1790,9 +1790,9 @@
 	  component.
 	</para>
 	<para>
-	  Should an error occur (such as the file being badly formatted or
-	  inaccessible), an error is returned via the <fncref
-	  targ="$error"/> accessor.
+	  Should an error occur (such as the file being badly
+	  formatted or inaccessible), an error is returned via the
+	  <fncref targ="$error"/> accessor.
 	</para>
 	<para>
 	  <seelist>
@@ -1811,10 +1811,36 @@
       </fnargs>
       <description>
 	<para>
-	  If the bundle <argname>B</argname> contains a member
-	  under the key <argname>oldkey</argname>, its key is
-	  changed to <argname>newkey</argname>, otherwise an
-	  error is flagged. Returns 0 on successful renaming.
+	  If the bundle <argname>B</argname> contains a member under
+	  the key <argname>oldkey</argname>, its key is changed to
+	  <argname>newkey</argname>, otherwise an error is
+	  flagged. Returns 0 on successful renaming.
+	</para>
+	<para>
+	  Changing the key of a bundle member is not a common task but
+	  it can arise in the context of functions that work with
+	  bundles, and <lit>brename</lit> is an efficient tool for the
+	  job. Example:
+	</para>
+	<code>
+	  # set up a bundle holding a big matrix
+	  bundle b
+	  b.X = mnormal(1000, 1000)
+	  if 0
+	      # change the key manually
+	      Xcopy = b.X
+	      delete b.X
+	      b.Y = Xcopy
+	      delete Xcopy
+	  else
+	      # versus: change it efficiently
+	      brename(b, "X", "Y")
+	  endif
+	</code>
+	<para>
+	  The first method requires that the big matrix be copied
+	  twice, out of the bundle then back into it under a different
+	  key; the efficient method changes the key directly.
 	</para>
       </description>
     </function>
