@@ -1675,26 +1675,25 @@ static gboolean insert_xlink (GtkTextBuffer *tbuf, GtkTextIter *iter,
 
 static void open_script_link (GtkTextTag *tag)
 {
-    const char *gretldir = gretl_home();
+    char fullname[MAXLEN] = {0};
     gchar *fname = NULL;
-    char fullname[MAXLEN];
-    FILE *fp;
+    int err;
 
     g_object_get(G_OBJECT(tag), "name", &fname, NULL);
-    sprintf(fullname, "%sscripts%cmisc%c%s", gretldir,
-	    SLASH, SLASH, fname);
-
-    fp = gretl_fopen(fullname, "r");
-    if (fp != NULL) {
-	fclose(fp);
+    err = get_full_filename(fname, fullname, OPT_S);
+    if (err) {
+	errbox_printf(_("Couldn't find %s"), fname);
     } else {
-	sprintf(fullname, "%sscripts%c%s", gretldir,
-		SLASH, fname);
+	err = gretl_test_fopen(fullname, "r");
+	if (err) {
+	    errbox_printf(_("Couldn't read %s"), fullname);
+	}
     }
-
     g_free(fname);
 
-    view_script(fullname, 0, VIEW_SCRIPT);
+    if (!err) {
+	view_script(fullname, 0, VIEW_SCRIPT);
+    }
 }
 
 static void make_bibitem_window (const char *buf,
