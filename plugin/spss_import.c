@@ -400,7 +400,6 @@ static int recode_sav_string (char *targ, const char *src,
     return err;
 }
 
-
 /* Read record type 7, subtype 13: long variable names */
 
 static int read_long_varnames (spss_data *sdat, unsigned size, 
@@ -441,13 +440,13 @@ static int read_long_varnames (spss_data *sdat, unsigned size,
 	if ((val = strchr(p, '=')) == NULL) {
 	    fprintf(stderr, "No long name for variable '%s'\n", p);
 	} else {
-	    *val = 0;
+	    *val = '\0';
 	    ++val;
 	    /* at this point p is key, val is long name */
 	    var = get_spss_var_by_name(sdat, p);
 	    if (var != NULL) {
 		/* replace original name with "long name" */
-#if SPSS_DEBUG
+#if SPSS_DEBUG > 1
 		fprintf(stderr, "'%s' -> '%s'\n", p, val);
 #endif
 		*var->name = '\0';
@@ -519,7 +518,7 @@ static int read_subrecord (spss_data *sdat)
 	break;
     default:
 	fprintf(stderr, "Unrecognized record type 7, subtype %d encountered "
-		"in save file\n", data.subtype);
+		"in sav file\n", data.subtype);
 	skip = 1;
     }
 
@@ -658,6 +657,7 @@ static int read_value_labels (spss_data *sdat)
     spss_labelset *lset;
     int32_t n_labels = 0;  /* Number of labels */
     int32_t n_vars = 0;    /* Number of associated variables */
+    int empty_label = 0;
     int i, err = 0;
 
     n_labels = sav_read_int32(sdat, &err);
@@ -680,8 +680,8 @@ static int read_value_labels (spss_data *sdat)
 
     for (i=0; i<n_labels && !err; i++) {
 	char label[256] = {0};
-	double value;
-	unsigned char label_len;
+	double value = 0;
+	unsigned char label_len = 0;
 	int rem, fgot = 0;
 
 	/* read value, label length, label */
@@ -689,14 +689,19 @@ static int read_value_labels (spss_data *sdat)
 	fgot += fread(&label_len, 1, 1, fp);
 	fgot += fread(label, label_len, 1, fp);
 
-	if (fgot != 3) {
-	    err = E_DATA;
-	    break;
-	}
-
 #if SPSS_DEBUG
-	fprintf(stderr, " %3d: value %g: '%s'\n", i, value, label);
+	fprintf(stderr, "i=%d: fgot=%d, value=%g, len=%d, '%s'\n",
+		i, fgot, value, label_len, label);
 #endif
+	if (fgot < 3) {
+	    if (n_labels == 1 && label_len == 0) {
+		/* tolerate apparent breakage here? */
+		empty_label = 1;
+	    } else {
+		err = E_DATA;
+		break;
+	    }
+	}
 
 	lset->vals[i] = value;
 	lset->labels[i] = gretl_strdup(label);
@@ -718,13 +723,12 @@ static int read_value_labels (spss_data *sdat)
 
     if (!err) {
 	n_vars = read_type_4(sdat, &err);
+#if SPSS_DEBUG
+	fprintf(stderr, "Got %d associated variables\n", n_vars);
+#endif
     }
 
-#if SPSS_DEBUG
-    fprintf(stderr, "Got %d associated variables\n", n_vars);
-#endif
-
-    if (!err) {
+    if (!err && n_vars > 0) {
 	lset->varlist = gretl_list_new(n_vars);
 	if (lset->varlist == NULL) {
 	    fprintf(stderr, "lset->varlist: failed, n_vars = %d\n", n_vars);
@@ -752,7 +756,7 @@ static int read_value_labels (spss_data *sdat)
 
     /* we'll preserve value -> label mappings only for numeric
        variables */
-    if (!err && lset->vtype != SPSS_NUMERIC) {
+    if (!err && (empty_label || lset->vtype != SPSS_NUMERIC)) {
 	sdat_remove_labelset(sdat);
     }
 
