@@ -5061,6 +5061,30 @@
       </description>
     </function>
 
+    <function name="isoweek" section="calendar" output="seebelow">
+      <fnargs>
+	<fnarg type="scalar-or-series">year</fnarg>
+	<fnarg type="scalar-or-series">month</fnarg>
+	<fnarg type="scalar-or-series">day</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns the ISO 8601 week number corresponding to the
+	  date(s) specified by the three arguments, or <lit>NA</lit>
+	  if the date is invalid. Note that all three arguments must
+	  be of the same type, either scalars (integers) or series.
+	</para>
+	<para>
+	  ISO weeks are numbered from 01 to 53; most years have 52
+	  weeks but on average 71 out of 400 years have 53 weeks.  The
+	  ISO 8601 definition for week 01 is the week containing the
+	  year's first Thursday on the Gregorian calendar. For a full
+	  account see
+	  <url>https://en.wikipedia.org/wiki/ISO_week_date</url>.
+	</para>
+      </description>
+    </function>
+
     <function name="iwishart" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="symmat">S</fnarg>
