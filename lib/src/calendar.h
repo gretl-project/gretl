@@ -88,4 +88,6 @@ double easterdate (int year);
 
 int day_span (guint32 ed1, guint32 ed2, int wkdays, int *err);
 
+int iso_week_number (int y, int m, int d, int *err);
+
 #endif /* CALENDAR_H */ 

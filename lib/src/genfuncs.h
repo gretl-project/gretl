@@ -227,6 +227,12 @@ int fill_day_of_week_array (double *dow,
 			    const double *d,
 			    const DATASET *dset);
 
+int fill_isoweek_array (double *wknum,
+			const double *y,
+			const double *m,
+			const double *d,
+			const DATASET *dset);
+
 gretl_matrix *empirical_cdf (const double *y, int n, int *err);
 
 int sample_span (const char *stobs, const char *endobs,

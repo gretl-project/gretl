@@ -56,14 +56,14 @@ static int leap_year (int yr)
 static int valid_ymd (int y, int m, int d, int julian)
 {
     int ok = 1;
-    
+
     if (!g_date_valid_dmy(d, m, y)) {
 	ok = 0;
 	if (julian && y > 0 && m == 2 && d == 29 && y%4 == 0) {
 	    ok = 1;
 	}
     }
-	
+
     return ok;
 }
 
@@ -80,7 +80,7 @@ static int day_of_week_from_ymd (int y, int m, int d, int julian)
 
     if (julian) {
 	guint32 ed = epoch_day_from_julian_ymd(y, m, d);
-	
+
 	g_date_set_julian(&date, ed);
     } else {
 	g_date_set_dmy(&date, d, m, y);
@@ -1228,7 +1228,7 @@ double easterdate (int year)
 int day_span (guint32 ed1, guint32 ed2, int wkdays, int *err)
 {
     int n = 0;
-    
+
     if (!g_date_valid_julian(ed1) ||
 	!g_date_valid_julian(ed2) ||
 	ed2 < ed1) {
@@ -1244,7 +1244,7 @@ int day_span (guint32 ed1, guint32 ed2, int wkdays, int *err)
 	g_date_clear(&date, 1);
 	g_date_set_julian(&date, ed1);
 	idx = g_date_get_weekday(&date) - 1;
-	
+
 	for (i=ed1; i<=ed2; i++) {
 	    if (day_in_calendar(wkdays, idx % 7)) {
 		n++;
@@ -1254,4 +1254,20 @@ int day_span (guint32 ed1, guint32 ed2, int wkdays, int *err)
     }
 
     return n;
+}
+
+int iso_week_number (int y, int m, int d, int *err)
+{
+    GDate date;
+    int wnum = -1;
+
+    if (!g_date_valid_dmy(d, m, y)) {
+	*err = E_INVARG;
+    } else {
+	g_date_clear(&date, 1);
+	g_date_set_dmy(&date, d, m, y);
+	wnum = g_date_get_iso8601_week_of_year(&date);
+    }
+
+    return wnum;
 }

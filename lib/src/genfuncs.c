@@ -7128,6 +7128,25 @@ int fill_day_of_week_array (double *dow,
     return err;
 }
 
+int fill_isoweek_array (double *wknum,
+			const double *y,
+			const double *m,
+			const double *d,
+			const DATASET *dset)
+{
+    int yt, mt, dt;
+    int t, err = 0;
+
+    for (t=dset->t1; t<=dset->t2 && !err; t++) {
+	yt = (int) y[t];
+	mt = (int) m[t];
+	dt = (int) d[t];
+	wknum[t] = iso_week_number(yt, mt, dt, &err);
+    }
+
+    return err;
+}
+
 /**
  * empirical_cdf:
  * @y: array to process

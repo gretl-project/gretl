@@ -10725,7 +10725,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 		}
 	    }
 	}
-    } else if (f == F_WEEKDAY) {
+    } else if (f == F_WEEKDAY || f == F_ISOWEEK) {
 	post_process = 0;
 	if (l->t == NUM && m->t == NUM && r->t == NUM) {
 	    ret = aux_scalar_node(p);
@@ -10734,7 +10734,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 		int mo = node_get_int(m, p);
 		int day = node_get_int(r, p);
 
-		if (!p->err) {
+		if (!p->err && f == F_WEEKDAY) {
 		    int julian = 0;
 
 		    if (yr < 0) {
@@ -10742,17 +10742,25 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 			julian = 1;
 		    }
 		    ret->v.xval = day_of_week(yr, mo, day, julian, &p->err);
+		} else if (!p->err) {
+		    ret->v.xval = iso_week_number(yr, mo, day, &p->err);
 		}
 	    }
 	} else if (l->t == SERIES && m->t == SERIES && r->t == SERIES) {
 	    reset_p_aux(p, save_aux);
 	    ret = aux_series_node(p);
-	    if (ret != NULL) {
+	    if (ret != NULL && f == F_WEEKDAY) {
 		p->err = fill_day_of_week_array(ret->v.xvec,
 						l->v.xvec,
 						m->v.xvec,
 						r->v.xvec,
 						p->dset);
+	    } else if (ret != NULL) {
+		p->err = fill_isoweek_array(ret->v.xvec,
+					    l->v.xvec,
+					    m->v.xvec,
+					    r->v.xvec,
+					    p->dset);
 	    }
 	} else {
 	    p->err = E_TYPES;
@@ -15614,6 +15622,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_MGRADIENT:
     case F_LRCOVAR:
     case F_BRENAME:
+    case F_ISOWEEK:
     case HF_CEIGG:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {

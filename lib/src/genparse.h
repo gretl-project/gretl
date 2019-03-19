@@ -447,6 +447,7 @@ enum {
     F_FEVD,
     F_LRVAR,
     F_BRENAME,
+    F_ISOWEEK,
     HF_CEIGG,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
