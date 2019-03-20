@@ -805,12 +805,18 @@ function to do that, and yet it's a fairly basic mathematical task.
 is advertised as a time series tool, but in fact does just that.
 
 Suppose you want to multiply two finite-order polynomials $P(x) =
-\sum_{i=1}^p p_i x^i$ and $Q(x) = \sum_{i=1}^q q_i x^i$. What you want
-is the sequence of coefficients of the polynomial $R(x) = P(x) \cdot
-Q(x) = \sum_{i=1}^{pq-1} r_i x^i$, where $r_i = \sum_j p_j q_{i-j}$,
-also known as the \emph{convolution} of the $p_i$ and $q_i$
-coefficients. The same operation can be performed via the FFT, but in
-most cases using \cmd{filter} is quicker and more natural.
+\sum_{i=0}^m p_i x^i$ and $Q(x) = \sum_{i=0}^n q_i x^i$. What you want
+is the sequence of coefficients of the polynomial
+\[
+  R(x) = P(x) \cdot Q(x) = \sum_{k=0}^{m+n} r_k x^k
+\]
+where
+\[
+  r_k = \sum_{i=0}^k p_i q_{k-i}
+\]
+is the \emph{convolution} of the $p_i$ and $q_i$ coefficients. The
+same operation can be performed via the FFT, but in most cases using
+\cmd{filter} is quicker and more natural.
 
 As an example, we'll use the same one we used in Section
 \ref{sec:genr-fft}: consider the multiplication of two polynomials:
