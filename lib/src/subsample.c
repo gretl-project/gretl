@@ -999,20 +999,50 @@ static int mask_from_temp_dummy (const char *s, DATASET *dset,
 static int mask_from_dummy (const char *s, const DATASET *dset,
 			    char *mask)
 {
+    double *x = NULL;
     char dname[VNAMELEN] = {0};
-    int dnum, err = 0;
+    int free_x = 0;
+    int err = 0;
 
-    gretl_scan_varname(s, dname);
-    dnum = series_index(dset, dname);
+    if (!strcmp(s, "$sample")) {
+	/* try fetching the sample series from the last model */
+	GretlObjType type = 0;
+	void *ptr = get_last_model(&type);
 
-    if (dnum == dset->v) {
-	gretl_errmsg_sprintf(_("Variable '%s' not defined"), dname);
-	err = 1;
+	if (ptr == NULL || type != GRETL_OBJ_EQN) {
+	    err = E_DATA;
+	} else {
+	    strcpy(dname, s);
+	    x = malloc(dset->n * sizeof *x);
+	    if (x == NULL) {
+		err = E_ALLOC;
+	    } else {
+		free_x = 1;
+		err = gretl_model_get_series(x, ptr, dset, M_SAMPLE);
+	    }
+	}
     } else {
-	err = copy_dummy_to_mask(mask, dset->Z[dnum], dset->n);
+	int dnum;
+
+	gretl_scan_varname(s, dname);
+	dnum = series_index(dset, dname);
+	if (dnum == dset->v) {
+	    gretl_errmsg_sprintf(_("Variable '%s' not defined"), dname);
+	    err = E_DATA;
+	} else {
+	    x = dset->Z[dnum];
+	}
+    }
+
+    if (!err) {
+	err = copy_dummy_to_mask(mask, x, dset->n);
 	if (err) {
 	    gretl_errmsg_sprintf(_("'%s' is not a dummy variable"), dname);
 	}
+    }
+
+    if (free_x) {
+	free(x);
     }
 
     return err;

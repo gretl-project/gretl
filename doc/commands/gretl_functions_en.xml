@@ -739,7 +739,7 @@
 	</para>
 	<code>
 	  ols y 0 xlist
-	  genr sdum = $sample
+	  series sdum = $sample
 	  smpl sdum --dummy
 	</code>
       </description>
