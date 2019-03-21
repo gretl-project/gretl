@@ -9239,7 +9239,16 @@
 	  are created, based on the ISO 8601 week number (see <fncref
 	  targ="isoweek"/>); if not, the maximum number of series is
 	  52 (and over a long time span the <quote>seasonals</quote>
-	  will drift out of phase with the calendar year).
+	  will drift out of phase with the calendar year). In the
+	  dated weekly case, if you wish to create monthly seasonals
+	  this can be done as follows:
+	</para>
+	<code>
+	  series month = $obsminor
+	  list months = dummify(month)
+	</code>
+	<para>
+	  See <fncref targ="dummify"/> for details.
 	</para>
       </description>
     </function>

@@ -8,6 +8,8 @@ version 2019b, in progress
   functions strftime() and strptime()
 - New function Lsolve(), using precomputed Cholesky factor
 - New function isoweek() to get ISO 8601 week number
+- seasonals() function: use ISO 8601 week numbers for dated
+  weekly data
 - epochday() function: support YYYYMMDD input
 - Speed up rank() function for far-from-square matrices
 - Obscure fix: enable deletion of "time" from a list
@@ -58,6 +60,7 @@ version 2019b, in progress
   designations for countries (full name and codes) in the ISO
   3166 standard
 - Add new function hyp2f1(): Gauss hypergeometric function
+- Add new function brename(): rename a bundle member
 - cdemean() function: add option to standardize in addition
   to centering
 - boxcox() function: accept a matrix argument
