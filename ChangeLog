@@ -4,6 +4,7 @@ version 2019b, in progress
   range to print for series, matrices, arrays and strings
 - "smpl" command: add --unit option for panel data
 - "intreg" and "tobit" commands: add --opg option
+- "fcast" command: add some support for panel data
 - New accessor $now to get current time/date, plus new
   functions strftime() and strptime()
 - New function Lsolve(), using precomputed Cholesky factor
@@ -14,6 +15,7 @@ version 2019b, in progress
 - Speed up rank() function for far-from-square matrices
 - Obscure fix: enable deletion of "time" from a list
   supplied as a function argument
+- GUI convenience: remember dbnomics search string
 - GUI: disallow execution of a script when one is already
   in progress (to prevent crashing)
 - GUI fix: some of the example scripts referenced in the
