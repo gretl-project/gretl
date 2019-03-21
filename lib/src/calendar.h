@@ -90,4 +90,6 @@ int day_span (guint32 ed1, guint32 ed2, int wkdays, int *err);
 
 int iso_week_number (int y, int m, int d, int *err);
 
+int iso_week_from_date (const char *datestr);
+
 #endif /* CALENDAR_H */ 

@@ -2880,12 +2880,16 @@ static int real_seasonals (DATASET *dset, int ref, int center,
 	}
     }
 
+    if (dated_weekly_data(dset)) {
+	/* allow for up to 53 ISO 8601 weeks */
+	pd = 53;
+    }
+
     if (ref < 0 || ref > pd) {
 	return E_INVARG;
     }
 
     ndums = pd - (ref > 0);
-
     list = gretl_list_new(ndums);
     if (list == NULL) {
 	return E_ALLOC;
@@ -2995,6 +2999,20 @@ static int real_seasonals (DATASET *dset, int ref, int center,
 		dset->Z[vi][t] = (pp == k)? 1 : 0;
 	    }
 	    k++;
+	}
+    } else if (dated_weekly_data(dset)) {
+	char datestr[OBSLEN];
+	int wknum;
+
+	for (t=0; t<dset->n; t++) {
+	    ntodate(datestr, t, dset);
+	    wknum = iso_week_from_date(datestr);
+	    for (k=1, i=1; i<=list[0]; i++) {
+		vi = list[i];
+		if (k+1 == ref) k++;
+		dset->Z[vi][t] = (wknum == k)? 1 : 0;
+		k++;
+	    }
 	}
     } else {
 	int p0 = get_subperiod(0, dset, NULL);

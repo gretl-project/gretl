@@ -1256,6 +1256,18 @@ int day_span (guint32 ed1, guint32 ed2, int wkdays, int *err)
     return n;
 }
 
+/**
+ * iso_week_number:
+ * @y: year.
+ * @m: month (1 to 12).
+ * @d: day on month.
+ * @err: location to receive error code.
+ *
+ * Returns: The ISO 8601 week number (1 to 53) corresponding
+ * to the Gregorian date specified by the first 3 arguments,
+ * or -1 on invalid input.
+ */
+
 int iso_week_number (int y, int m, int d, int *err)
 {
     GDate date;
@@ -1270,4 +1282,34 @@ int iso_week_number (int y, int m, int d, int *err)
     }
 
     return wnum;
+}
+
+/**
+ * iso_week_from_date:
+ * @datestr: date in ISO 8601 format, YYYY-MM-DD.
+ *
+ * Returns: The ISO 8601 week number (1 to 53) corresponding
+ * to the Gregorian date specified by @datestr, or -1 on
+ * invalid input.
+ */
+
+int iso_week_from_date (const char *datestr)
+{
+    int y, m, d;
+    int ydigits;
+    int err = 0;
+
+    if (sscanf(datestr, YMD_READ_FMT, &y, &m, &d) != 3) {
+	return -1;
+    }
+
+    ydigits = strcspn(datestr, "-");
+
+    if (ydigits != 4 && ydigits != 2) {
+	return -1;
+    } else if (ydigits == 2) {
+	y = FOUR_DIGIT_YEAR(y);
+    }
+
+    return iso_week_number(y, m, d, &err);
 }

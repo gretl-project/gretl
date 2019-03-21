@@ -9233,6 +9233,14 @@
 	  centered seasonals will have values &minus;0.25 and 0.75
 	  rather than 0 and 1.
 	</para>
+	<para>
+	  With weekly data the precise effect depends on whether the
+	  data are dated or not. If they are dated, up to 53 seasonals
+	  are created, based on the ISO 8601 week number (see <fncref
+	  targ="isoweek"/>); if not, the maximum number of series is
+	  52 (and over a long time span the <quote>seasonals</quote>
+	  will drift out of phase with the calendar year).
+	</para>
       </description>
     </function>
 
