@@ -5237,17 +5237,17 @@
 	  either strings or bundles. JSON <quote>value</quote> nodes
 	  become either members of bundles or elements of arrays; in
 	  the latter case numerical values are converted to strings
-	  using <lit>sprintf</lit>.  Please note that since gretl
-	  arrays cannot be nested, the input accepted by this function
-	  is somewhat more restrictive than the JSON specification,
-	  which permits nesting of arrays.
+	  using <lit>sprintf</lit>.  Since gretl arrays cannot be
+	  nested, the input accepted by this function is somewhat more
+	  restrictive than the JSON specification, which permits
+	  nesting of arrays.
 	</para>
 	<para>
 	  The <argname>path</argname> argument can be used to limit
-	  the JSON elements included in the returned bundle. Please
-	  note that this is not a <quote>JsonPath</quote> as described
-	  in the help for <fncref targ="jsonget"/>; it is a simple
-	  construct subject to the following specification.
+	  the JSON elements included in the returned bundle.  This is
+	  not a <quote>JsonPath</quote> as described in the help for
+	  <fncref targ="jsonget"/>; it is a simple construct subject
+	  to the following specification.
 	</para>
 	<ilist>
 	  <li>
