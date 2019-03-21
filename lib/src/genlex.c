@@ -1766,33 +1766,36 @@ static int colon_ok (parser *p, char *s, int n)
 
 static int ok_dbl_char (parser *p, char *s, int i)
 {
-    if (i < 0) {
-	return 1;
-    }
+    int ret = 0;
 
-    if (p->ch >= '0' && p->ch <= '9') {
+    if (i < 0 || (p->ch >= '0' && p->ch <= '9')) {
 	return 1;
     }
 
     switch (p->ch) {
     case '+':
     case '-':
-	return s[i] == 'e' || s[i] == 'E';
+	ret = s[i] == 'e' || s[i] == 'E';
+	break;
     case '.':
-	return !strchr(s, '.') && !strchr(s, ':') &&
-	    !strchr(s, 'e') && !strchr(s, 'E');
+	ret = !strchr(s, '.') && !strchr(s, ':') &&
+	    !strchr(s, 'e') && !strchr(s, 'E') &&
+	    *p->point != '.';
+	break;
     case 'e':
     case 'E':
-	return !strchr(s, 'e') && !strchr(s, 'E') &&
+	ret = !strchr(s, 'e') && !strchr(s, 'E') &&
 	    !strchr(s, ':');
+	break;
     case ':':
 	/* allow for obs numbers in the form, e.g., "1995:10" */
-	return colon_ok(p, s, i);
+	ret = colon_ok(p, s, i);
+	break;
     default:
 	break;
     }
 
-    return 0;
+    return ret;
 }
 
 static void parse_number (parser *p)
@@ -1839,32 +1842,6 @@ static void parse_number (parser *p)
 	fprintf(stderr, " dot_atof gave %g\n", p->xval);
 #endif
     }
-}
-
-static void parse_int (parser *p)
-{
-    char istr[NUMLEN] = {0};
-    int i = 0;
-
-    while (p->ch >= '0' && p->ch <= '9' && i < NUMLEN - 1) {
-	istr[i++] = p->ch;
-	parser_getc(p);
-    }
-
-    while (p->ch >= '0' && p->ch <= '9') {
-	/* flush excess numeric characters */
-	parser_getc(p);
-    }
-
-#if LDEBUG
-    fprintf(stderr, "parse_int: istr = '%s'\n", istr);
-#endif
-
-    p->xval = atoi(istr);
-    p->sym = CNUM;
-#if LDEBUG
-    fprintf(stderr, " atoi gave %g\n", p->xval);
-#endif
 }
 
 static int wildcard_special (parser *p)
@@ -2180,13 +2157,9 @@ void lex (parser *p)
 		return;
 	    }
 	    if (isdigit(p->ch)) {
-		if (defining_list(p)) {
-		    parse_int(p);
-		} else {
-		    parse_number(p);
-		}
+		parse_number(p);
 		return;
-	    } else if (p->ch == '.' && isdigit(*p->point) && !defining_list(p)) {
+	    } else if (p->ch == '.' && isdigit(*p->point)) {
 		parse_number(p);
 		return;
 	    } else if (islower(p->ch) || isupper(p->ch) ||
