@@ -1760,8 +1760,9 @@ static int colon_ok (parser *p, char *s, int n)
     return 1;
 }
 
-/* below: we're testing 'ch' for validity, given what we've already
-   packed into string 's' up to element 'i'
+/* Below: we're testing p->ch for validity, given what we've already
+   packed into string @s up to element @i, and with some regard to
+   the next character in line.
 */
 
 static int ok_dbl_char (parser *p, char *s, int i)
