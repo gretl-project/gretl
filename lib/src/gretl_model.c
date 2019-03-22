@@ -1960,6 +1960,60 @@ int arma_model_get_n_arma_coeffs (const MODEL *pmod)
     return npq;
 }
 
+/**
+ * gretl_model_ahat_vec:
+ * @pmod: pointer to gretl model.
+ * @err: location to receive error code.
+ *
+ * If @pmod was estimated on panel data via fixed or random
+ * effects, provides a column vector holding the "ahat" values
+ * or estimated individual effects for the individuals
+ * included in the active dataset when the model was estimated.
+ * Some of these values may be NA if some units were not
+ * actually included in estimation.
+ *
+ * Returns: allocated column vector on success or NULL on failure.
+ */
+
+gretl_matrix *gretl_model_ahat_vec (const MODEL *pmod,
+				    int *err)
+{
+    gretl_vector *a_vec = NULL;
+    double *ahat;
+    int i, s, t, N, T;
+
+    ahat = gretl_model_get_data(pmod, "ahat");
+    T = gretl_model_get_int(pmod, "panel_T");
+
+    if (ahat == NULL || T == 0) {
+	*err = E_BADSTAT;
+	return NULL;
+    }
+
+    /* number of units included in model dataset */
+    N = pmod->full_n / T;
+
+    a_vec = gretl_column_vector_alloc(N);
+    if (a_vec == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    for (i=0; i<N; i++) {
+	a_vec->val[i] = NADBL;
+	for (t=0; t<T; t++) {
+	    s = i * T + t;
+	    if (!na(ahat[s])) {
+		/* pick up first non-missing value */
+		a_vec->val[i] = ahat[s];
+		break;
+	    }
+	}
+    }
+
+    return a_vec;
+}
+
 static int arbond_get_depvar (const MODEL *pmod)
 {
     int i;

@@ -2650,6 +2650,7 @@ static void fix_gls_stats (MODEL *pmod, panelmod_t *pan)
 static void add_panel_obs_info (MODEL *pmod, panelmod_t *pan)
 {
     gretl_model_set_int(pmod, "n_included_units", pan->effn);
+    gretl_model_set_int(pmod, "panel_T", pan->T);
     gretl_model_set_int(pmod, "Tmin", pan->Tmin);
     gretl_model_set_int(pmod, "Tmax", pan->Tmax);
     if (pan->Tmax > pan->Tmin && pan->Tbar == 0) {

@@ -951,9 +951,9 @@ static int real_panel_fcast (double *yhat,
 			     gretlopt opt)
 {
     const double *y, *b;
-    const double *ahat = NULL;
+    gretl_vector *a_vec = NULL;
     int i, vi, s, t;
-    int row;
+    int T, row, err = 0;
 
 #if 0
     fprintf(stderr, "real_panel_fcast: yhat=%p, fc=%p, mask=%p\n",
@@ -963,16 +963,17 @@ static int real_panel_fcast (double *yhat,
 #endif
 
     if (individual_effects_model(pmod)) {
-	ahat = gretl_model_get_data(pmod, "ahat");
-	if (ahat == NULL) {
-	    fprintf(stderr, "real_panel_fcast: ahat is missing\n");
-	    return E_DATA;
+	a_vec = gretl_model_ahat_vec(pmod, &err);
+	if (err) {
+	    fprintf(stderr, "real_panel_fcast: ahat vector is missing\n");
+	    return err;
 	}
     }
 
     y = dset->Z[pmod->list[1]];
     b = pmod->coeff;
-    s = -1; /* index into @ahat */
+    s = 0; /* panel unit index */
+    T = dset->pd;
     row = 0;
 
     for (t=0; t<=dset->t2; t++) {
@@ -981,8 +982,8 @@ static int real_panel_fcast (double *yhat,
 	int fc_skip = 0;
 	int j = 0;
 
-	if (mask == NULL || mask[t]) {
-	    /* advance model obs index */
+	if (t > 0 && t % T == 0) {
+	    /* advance unit index */
 	    s++;
 	}
 
@@ -998,12 +999,12 @@ static int real_panel_fcast (double *yhat,
 	    goto transcribe;
 	}
 
-	if (ahat != NULL) {
+	if (a_vec != NULL) {
 	    /* individual effect */
-	    if (na(ahat[s])) {
+	    if (na(a_vec->val[s])) {
 		missing = 1;
 	    } else {
-		fct = ahat[s];
+		fct = a_vec->val[s];
 	    }
 	} else {
 	    fct = 0.0;
@@ -1045,6 +1046,8 @@ static int real_panel_fcast (double *yhat,
 	    transcribe_to_matrix(fc, y[t], fct, rlabels, dset, t, row++);
 	}
     }
+
+    gretl_matrix_free(a_vec);
 
     return 0;
 }
