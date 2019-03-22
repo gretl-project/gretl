@@ -352,7 +352,7 @@ function matrix wkron(matrix *X, matrix *Z)
     ret = {}
   
     if ($version < 10908)
-	loop for i=1..k --quiet	
+	loop i=1..k --quiet	
             matrix ret ~= X[,i] .* Z
 	endloop
     else
