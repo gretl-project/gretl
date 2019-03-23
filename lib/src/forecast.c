@@ -3213,15 +3213,6 @@ static int parse_forecast_string (const char *s,
 	t2 = dset->t2;
     }
 
-    if (!err && !(opt & OPT_O) && individual_effects_model(pmod)) {
-	/* panel data check */
-	if (t1 < pmod->smpl.t1 || t2 > pmod->smpl.t2) {
-	    gretl_errmsg_set("Cannot do out-of-sample forecast in the "
-			     "cross-sectional dimension");
-	    err = E_DATA;
-	}
-    }
-
     if (!err) {
 	/* in case we hit any "temporary" errors above */
 	gretl_error_clear();

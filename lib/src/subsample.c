@@ -435,19 +435,20 @@ static int ts_contig (const char *ts, int T)
    the time dimension only.
 */
 
-int is_panel_time_sample (const char *mask)
+static int is_panel_time_sample (const char *mask,
+				 const DATASET *dset)
 {
     int i, t, s, N, T, ret = 1;
     char *ts = NULL;
 
-    if (fullset == NULL || !dataset_is_panel(fullset)) {
+    if (dset == NULL || !dataset_is_panel(dset)) {
 	return 0;
-    } else if (get_submask_length(mask) != fullset->n + 1) {
+    } else if (get_submask_length(mask) != dset->n + 1) {
 	return 0;
     }
 
-    T = fullset->pd;
-    N = fullset->n / T;
+    T = dset->pd;
+    N = dset->n / T;
     ts = calloc(T, 1);
 
     s = 0;
@@ -3023,11 +3024,11 @@ int fcast_not_feasible (const MODEL *pmod, const DATASET *dset)
 	}
     } else {
 	/* the model does have sub-sampling info recorded */
-	DATASET *fullset = fetch_full_dataset();
-
 	if (dset->submask == NULL) {
-	    if (dataset_is_cross_section(fullset) &&
-		dataset_is_cross_section(dset)) {
+	    /* the dataset is not sub-sampled */
+	    if (dataset_is_cross_section(dset)) {
+		ret = 0; /* OK? */
+	    } else if (is_panel_time_sample(pmod->submask, dset)) {
 		ret = 0; /* OK? */
 	    } else {
 		gretl_errmsg_set(_("model is subsampled, dataset is not\n"));
@@ -3040,11 +3041,10 @@ int fcast_not_feasible (const MODEL *pmod, const DATASET *dset)
 	    if (dataset_is_cross_section(fullset) &&
 		dataset_is_cross_section(dset)) {
 		ret = 0; /* OK ? */
-	    } else if (is_panel_time_sample(pmod->submask) &&
-		       is_panel_time_sample(dset->submask)) {
+	    } else if (is_panel_time_sample(pmod->submask, fullset) &&
+		       is_panel_time_sample(dset->submask, fullset)) {
 		/* we should be able to make this work */
-		fprintf(stderr, "FIXME model and dataset are both panel time subsets!\n");
-		/* ret = 0; not yet! */
+		ret = 0; /* new 2019-03-23 */
 	    } else {
 		gretl_errmsg_set(_("model and dataset subsamples not the same\n"));
 	    }
