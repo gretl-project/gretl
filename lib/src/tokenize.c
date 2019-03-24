@@ -3160,7 +3160,7 @@ static int set_command_vstart (CMD *cmd, PRN *prn)
 	    if (prn != NULL) {
 		pputc(prn, '\n');
 		pputs(prn, "If you are trying to assemble a compound list for use in a "
-		      "\"system\" block,\nplease see section 31.3 of the Gretl User's "
+		      "\"system\" block,\nplease see section 31.2 of the Gretl User's "
 		      "Guide for the current method.\n");
 		pputc(prn, '\n');
 	    }
