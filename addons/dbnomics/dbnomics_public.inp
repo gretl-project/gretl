@@ -122,9 +122,20 @@ function scalar dbnomics_bundle_get_data(const bundle b, series *x, bool verbose
     endif
 
     outfile null
+        # try "append" first
         catch append @tmpfile --quiet --fixed-sample
-        if !$error
+       err = $error
+        if !err
+           tool = "append"
             x = dbseries
+       else
+           # "append" may fail because data are not ordered properly
+           # if that's the case, "join" may still work
+           catch join @tmpfile x --data="dbseries"
+           err = $error
+           if !err
+               tool = "join"
+           endif
         endif
     end outfile
 
@@ -135,7 +146,13 @@ function scalar dbnomics_bundle_get_data(const bundle b, series *x, bool verbose
 
     if verbose
         printf "dbnomics_bundle_get_data:\n%s\n", b.series_name
+       if err
+           printf "error = %d\n", err
+       else
+           printf "tool = %s\n", tool
+       endif
     endif
+
     return 0
 end function
 
