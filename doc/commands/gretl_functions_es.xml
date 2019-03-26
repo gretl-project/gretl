@@ -687,6 +687,19 @@
       </description>
     </function>
 
+    <function name="$result" section="access" output="matrix-or-bundle">
+      <description>
+	<para>
+	  A continuación de algunas instrucciones que no tienen accesores
+	  específicos, proporciona información reservada. Las instrucciones en
+	  cuestión incluyen <cmdref targ="corr"/>, <cmdref targ="freq"/>,
+	  <cmdref targ="summary"/> y <cmdref targ="xtab"/>
+	  (en cuyos casos, el resultado es una matriz), además de
+	  <cmdref targ="vif"/> (en cuyo caso, el resultado es un 'bundle').
+	</para>
+      </description>
+    </function>
+
     <function name="$rho" section="access" output="scalar">
       <fnargs>
 	<fnarg optional="true" type="scalar">n</fnarg>
@@ -726,7 +739,7 @@
 	</para>
 	<code>
 	  ols y 0 xlist
-	  genr sdum = $sample
+	  series sdum = $sample
 	  smpl sdum --dummy
 	</code>
       </description>
@@ -1802,6 +1815,32 @@
 	  la clave <argname>antiguaclave</argname>, esa clave se cambia por
 	  <argname>nuevaclave</argname>; en caso contrario, se muestra un fallo.
 	  La función devuelve un 0 cuando se hace correctamente el cambio de nombre.
+	</para>
+	<para>
+	  Cambiar la clave de un elemento de un 'bundle' no es una tarea habitual,
+	  pero puede surgir esa necesidad en el contexto de funciones que
+	  operan con 'bundles', y <lit>brename</lit> resulta ser una herramienta
+	  eficiente para ese trabajo. Ejemplo:
+	</para>
+	<code>
+	  # Establecer un 'bundle' que contiene una matriz grande
+	  bundle b
+	  b.X = mnormal(1000, 1000)
+	  if 0
+	      # 'Cambiar la clave manualmente'
+	      Xcopy = b.X
+	      delete b.X
+	      b.Y = Xcopy
+	      delete Xcopy
+	  else
+	      # frente a 'Cambiarla de forma eficiente'
+	      brename(b, "X", "Y")
+	  endif
+	</code>
+	<para>
+	  El primer método exige que se copie esa gran matriz dos veces:
+	  primero fuera del 'bundle', y luego de nuevo dentro de él bajo una
+	  clave diferente. El método eficiente cambia la clave directamente.
 	</para>
       </description>
     </function>
@@ -5044,6 +5083,30 @@
 	<para>
 	  En relación a la función inversa consulta <fncref targ="epochday"/>.
 	  Consulta también <fncref targ="juldate"/>.
+	</para>
+      </description>
+    </function>
+
+    <function name="isoweek" section="calendar" output="seebelow">
+      <fnargs>
+	<fnarg type="scalar-or-series">año</fnarg>
+	<fnarg type="scalar-or-series">mes</fnarg>
+	<fnarg type="scalar-or-series">dia</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devuelve el número de semana (en formato ISO 8601) que se corresponde
+	  con la(s) fecha(s) especificada(s) por los tres argumentos, o <lit>NA</lit>
+	  si la fecha no es válida. Ten en cuenta que los tres argumentos deben
+	  ser todos del mismo tipo, bien escalares (enteros) o bien series.
+	</para>
+	<para>
+	  Las semanas en formato ISO se numeran de 01 a 53. La mayoría de
+	  los años teñen 52 semanas, pero una media de 71 de 400 años tienen
+	  53 semanas. La semana 01, según la definición ISO 8601, es la semana
+	  que contiene el primer jueves del año en el calendario Gregoriano.
+	  Para obtener una explicación completa, consulta
+	  <url>https://en.wikipedia.org/wiki/ISO_week_date</url>.
 	</para>
       </description>
     </function>
@@ -9169,6 +9232,23 @@
 	  calcularse restándole las medias en la población. Por ejemplo, con
 	  datos trimestrales, las variables ficticias estacionales centradas van a
 	  tener valores iguales a &minus;0.25 y 0.75 en vez de 0 y 1.
+	</para>
+	<para>
+	  Con datos de frecuencia semanal, el resultado concreto depende
+	  de si los datos tienen fecha o no. Si tienen fecha, se crean hasta
+	  53 series estacionales, basadas en el número de semana ISO 8601
+	  (consulta <fncref targ="isoweek"/>); si no la tienen, el número
+	  máximo de series es 52 (y durante un período prolongado las series
+	  <quote>estacionales</quote> se van a desfasar con el año del calendario).
+	  En caso de disponer de datos semanales, si deseas generar series
+	  estacionales mensuales puedes hacerlo del siguiente modo:
+	</para>
+	<code>
+	  series month = $obsminor
+	  list months = dummify(month)
+	</code>
+	<para>
+	  Para obtener más detalles, consulta <fncref targ="dummify"/>.
 	</para>
       </description>
     </function>

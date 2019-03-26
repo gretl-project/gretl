@@ -892,6 +892,10 @@
         <example>arima 1 0 2 ; y</example>
 	<example>arima 2 0 2 ; y 0 x1 x2 --verbose</example>
 	<example>arima 0 1 1 ; 0 1 1 ; y --nc</example>
+	<demos>
+	<demo>armaloop.inp</demo>
+	<demo>bjg.inp</demo>
+	</demos>
       </examples>
     </usage>
 
@@ -1806,6 +1810,10 @@
         <example>coint2 2 y x</example>
 	<example>coint2 4 y x1 x2 --verbose</example>
 	<example>coint2 3 y x1 x2 --rc</example>
+	<demos>
+	  <demo>hamilton.inp</demo>
+	  <demo>denmark.inp</demo>
+	</demos>
       </examples>
     </usage>
 
@@ -2131,6 +2139,10 @@
 	definida en lugar dunha lista de series, as opcións <opt>spearman</opt>
 	e <opt>kendall</opt> non están dispoñibles (pero consulta a función
 	<fncref targ="npcorr"/>).
+      </para>
+      <para>
+	Podes usar o accesorio <fncref targ="$result"/> para obter as
+	correlacións en forma de matriz.
       </para>
     </description>
 
@@ -2953,6 +2965,13 @@
       <arguments>
         <argument>listavariables</argument>
       </arguments>
+	<examples>
+	<demos>
+	  <demo>penngrow.inp</demo>
+	  <demo>sw_ch12.inp</demo>
+	  <demo>sw_ch14.inp</demo>
+	</demos>
+	</examples>
     </usage>
 
     <description>
@@ -3004,6 +3023,11 @@
 	  <effect>Elimina o resultado presentado</effect>
 	</option>
       </options>
+	<examples>
+	<demos>
+	  <demo>ooballot.inp</demo>
+	</demos>
+	</examples>
     </usage>
 
     <description>
@@ -3083,6 +3107,12 @@
 	  <effect>Marca as variables como continuas</effect>
 	</option>
       </options>
+	<examples>
+	<demos>
+	  <demo>ooballot.inp</demo>
+	  <demo>oprobit.inp</demo>
+	</demos>
+	</examples>
     </usage>
 
     <description>
@@ -3389,6 +3419,9 @@
       <examples>
         <example>duration y 0 x1 x2</example>
 	<example>duration y 0 x1 x2 ; cens</example>
+	<demos>
+	  <demo>weibull.inp</demo>
+	</demos>
       </examples>
     </usage>
 
@@ -3901,6 +3934,9 @@
         <example>fcast 1997:1 2001:4 f1</example>
 	<example>fcast fit2</example>
 	<example>fcast 2004:1 2008:3 4 rfcast --recursive</example>
+	<demos>
+	  <demo>gdp_midas.inp</demo>
+	</demos>
       </examples>
     </usage>
 
@@ -4302,6 +4338,9 @@
 	Ten en conta que Gretl non ten unha función que se corresponda
 	con esta instrución, pero resulta posible utilizar a función
 	<fncref targ="aggregate"/> para acadar o mesmo obxectivo.
+	Amais, podes obter a distribución de frecuencias que se xera coa
+	instrución <lit>freq</lit>, en forma de matriz, mediante o accesorio
+	<fncref targ="$result"/>.
       </para>
     </description>
 
@@ -4431,6 +4470,10 @@
       <examples>
         <example>garch 1 1 ; y</example>
 	<example>garch 1 1 ; y 0 x1 x2 --robust</example>
+	<demos>
+	  <demo>garch.inp</demo>
+	  <demo>sw_ch14.inp</demo>
+	</demos>
       </examples>
     </usage>
 
@@ -4983,6 +5026,11 @@
 	  <effect>Utiliza L-BFGS-B en lugar do BFGS normal</effect>
 	</option>
       </options>
+	<examples>
+     <demos>
+	  <demo>hall_cbapm.inp</demo>
+	</demos>
+	</examples>
     </usage>
 
     <description>
@@ -6699,6 +6747,11 @@
 	<altform><lit>labels --from-file=</lit><repl>nomeficheiro</repl></altform>
 	<altform><lit>labels --delete</lit></altform>
       </altforms>
+	<examples>
+	<demos>
+	  <demo>oprobit.inp</demo>
+	</demos>
+	</examples>
     </usage>
 
     <description>
@@ -6811,7 +6864,11 @@
 	<example>lags x y</example>
 	<example>lags 12 ; x y</example>
 	<example>lags 4 ; x1 x2 x3 --bylag</example>
-      </examples>
+	<demos>
+	  <demo>sw_ch12.inp</demo>
+	  <demo>sw_ch14.inp</demo>
+	</demos>
+	    </examples>
     </usage>
 
     <description>
@@ -6936,6 +6993,11 @@
 	  <effect>Mira abaixo</effect>
         </option>
       </options>
+	<examples>
+	<demos>
+	  <demo>leverage.inp</demo>
+	</demos>
+	</examples>
     </usage>
 
     <description>
@@ -7259,6 +7321,12 @@
 	  <effect>Amosa os valores p en vez das pendentes</effect>
 	</option>
       </options>
+	<examples>
+	<demos>
+	  <demo>keane.inp</demo>
+	  <demo>oprobit.inp</demo>
+	</demos>
+	</examples>
     </usage>
 
     <description>
@@ -7385,6 +7453,10 @@
         <example>loop i=1991..2000</example>
         <example>loop for (r=-.99; r&lt;=.99; r+=.01)</example>
 	<example>loop foreach i xlista</example>
+	<demos>
+	<demo>armaloop.inp</demo>
+	<demo>keane.inp</demo>
+	</demos>
       </examples>
     </usage>
 
@@ -8024,6 +8096,9 @@
       <examples>
 	<demos>
 	  <demo>weibull.inp</demo>
+	  <demo>biprobit_via_ghk.inp</demo>
+	  <demo>frontier.inp</demo>
+	  <demo>keane.inp</demo>
 	</demos>
       </examples>
     </usage>
@@ -8454,6 +8529,11 @@
 	  <effect>Non presenta nada</effect>
         </option>
       </options>
+	  <examples>
+	<demos>
+	  <demo>credscore.inp</demo>
+	</demos>
+      </examples>
     </usage>
 
     <description>
@@ -8680,6 +8760,11 @@
 	  <effect>Presenta os detalles das iteracións</effect>
 	</option>
       </options>
+	 <examples>
+	<demos>
+	  <demo>camtriv.inp</demo>
+	</demos>
+	</examples>
     </usage>
 
     <description>
@@ -8746,6 +8831,7 @@
       <examples>
 	<demos>
 	  <demo>wg_nls.inp</demo>
+	  <demo>ects_nls.inp</demo>
 	</demos>
       </examples>
     </usage>
@@ -9175,7 +9261,12 @@
         <example>omit seasonals --quiet</example>
         <example>omit --auto</example>
         <example>omit --auto=0.05</example>
-      </examples>
+	 <demos>
+	  <demo>restrict.inp</demo>
+	  <demo>sw_ch12.inp</demo>
+	  <demo>sw_ch14.inp</demo>
+	 </demos>
+     </examples>
     </usage>
 
     <description context="gui">
@@ -9725,6 +9816,11 @@
 	  <effect>Resultados máis detallados</effect>
         </option>
       </options>
+	<examples>
+	<demos>
+	  <demo>penngrow.inp</demo>
+	</demos>
+	</examples>
     </usage>
 
     <description>
@@ -10286,6 +10382,11 @@
 	  <effect>Envía o resultado ao ficheiro especificado</effect>
         </option>
       </options>
+	<examples>
+	<demos>
+	  <demo>nile.inp</demo>
+	</demos>
+	</examples>
     </usage>
 
     <description>
@@ -10471,6 +10572,9 @@
       <examples>
         <example>poisson y 0 x1 x2</example>
 	<example>poisson y 0 x1 x2 ; S</example>
+	<demos>
+	  <demo>camtriv.inp</demo>
+	</demos>
       </examples>
     </usage>
 
@@ -10907,6 +11011,10 @@
 	<example>pvalue B bprob 10 6</example>
 	<example>pvalue P lambda x</example>
 	<example>pvalue W shape scale x</example>
+    <demos>
+	  <demo>mrw.inp</demo>
+	  <demo>restrict.inp</demo>
+	</demos>
       </examples>
     </usage>
 
@@ -11402,6 +11510,12 @@
 	  <effect>Só MCO e VECMs, mira abaixo</effect>
 	</option>
       </options>
+    <examples>
+	<demos>
+	  <demo>hamilton.inp</demo>
+	   <demo>restrict.inp</demo>
+	</demos>
+    </examples>
     </usage>
 
     <description>
@@ -13054,6 +13168,9 @@
         <example>setopt mle --hessian</example>
         <example>setopt ols persist --quiet</example>
 	<example>setopt ols clear</example>
+	<demos>
+	  <demo>gdp_midas.inp</demo>
+	</demos>
       </examples>
     </usage>
 
@@ -13638,6 +13755,11 @@
 	  <effect>Mira abaixo</effect>
         </option>
       </options>
+	  <examples>
+	<demos>
+	  <demo>frontier.inp</demo>
+	</demos>
+	  </examples>
     </usage>
 
     <description>
@@ -13666,6 +13788,11 @@
 	Cando indicas a forma alternativa, utilizando unha matriz xa definida,
 	entón preséntase o resumo estatístico para cada columna da matriz.
 	Neste caso, a opción <opt>by</opt> non está dispoñible.
+      </para>
+      <para>
+	Podes obter, en forma de matriz, a táboa de estatísticos xerada
+	pola instrución <lit>summary</lit>, mediante o accesorio
+	<fncref targ="$result"/>.
       </para>
     </description>
 
@@ -14113,6 +14240,9 @@
       </options>
       <examples>
         <example>tsls y1 0 y2 y3 x1 x2 ; 0 x1 x2 x3 x4 x5 x6</example>
+	<demos>
+		<demo>penngrow.inp</demo>
+	</demos>
       </examples>
     </usage>
 
@@ -14287,6 +14417,9 @@
         <example>var 4 x1 x2 x3 ; time mydum</example>
 	<example>var 4 x1 x2 x3 --seasonals</example>
 	<example>var 12 x1 x2 x3 --lagselect</example>
+	<demos>
+	  <demo>sw_ch14.inp</demo>
+	</demos>
       </examples>
     </usage>
 
@@ -14709,24 +14842,59 @@
   <command name="vif" section="Tests" context="cli"
     label="Factores de Inflación da Varianza">
 
+    <usage>
+      <options>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>Non presenta nada</effect>
+        </option>
+      </options>
+	  <examples>
+	<demos>
+	  <demo>longley.inp</demo>
+	</demos>
+    </examples>
+    </usage>
+
     <description>
       <para>
 	Debe de ir despois da estimación dun modelo que inclúa cando
-	menos 2 variables independentes. Calcula e amosa os Factores
-	de Inflación da Varianza (FIV) para os regresores. O FIV do
-	regresor <math>j</math> defínese como
-	<equation status="display"
-	  tex="\[\frac{1}{1-R_j^2}\]"
-	  ascii="1/(1 - Rj^2)"
-	  graphic="vif"/>
+	menos 2 variables independentes. Calcula e amosa información de
+	diagnóstico relacionada coa multicolinearidade.
+      </para>
+
+      <subhead>Factores de Inflación da Varianza</subhead>
+      <para>
+	O Factor de Inflación da Varianza (FIV) do regresor <math>j</math>
+	defínese como <equation status="display" tex="\[\frac{1}{1-R_j^2}\]"
+	ascii="1/(1 - Rj^2)" graphic="vif"/>
 	onde <math>R</math><sub>j</sub> é o coeficiente de correlación
 	múltiple entre ese regresor <math>j</math> e os demais regresores.
 	O factor ten un valor mínimo de 1.0 cando a variable en cuestión
 	é ortogonal con respecto ás outras variables independentes.
 	<cite key="neter-etal90">Neter, Wasserman e Kutner (1990)</cite>
-	suxiren revisar o valor máis grande dos FIV para diagnosticar un alto grao
-	de multicolinearidade; así, un valor maior ca 10 considérase ás veces
-	indicativo dun grao de multicolinearidade problemático.
+	suxiren revisar o valor máis grande dos FIV, para diagnosticar
+	un alto grao de multicolinearidade; así, un valor maior ca 10 
+	considérase ás veces indicativo dun grao de multicolinearidade
+	problemático.
+      </para>
+
+      <subhead>Matriz BKW</subhead>
+      <para>
+	Esta táboa, baseada no traballo de
+	<cite key="belsley-etal80">Belsley, Kuh e Welsch (1980)</cite>,
+	presenta unha análise máis sofisticada do grao e das causas
+	da multicolineariedade, mediante a análise dos autovalores da
+	matriz <math>X'X</math>. Para ter unha explicación polo miúdo
+	do enfoque BKW con referencia a Gretl, consulta
+	<cite key="adkins15">Adkins, Waters and Hill (2015)</cite>.
+      </para>
+
+      <para>
+	Despois de utilizar esta instrución, podes usar o accesorio
+	<fncref targ="$result"/> para obter un feixe que inclúa dúas
+	matrices: un vector columna que conteña os FIV baixo a chave
+	<lit>vif</lit>, e a matriz BKW baixo <lit>BKW</lit>.
       </para>
     </description>
 
@@ -14972,8 +15140,7 @@
 
   </command>
 
-  <command name="xtab" section="Statistics"
-    label="Tabulación cruzada de variables">
+  <command name="xtab" section="Statistics" label="Tabulación cruzada de variables">
 
     <usage>
       <arguments>
@@ -15021,6 +15188,9 @@
 	<example>xtab 1 ; 2 3 4</example>
 	<example>xtab --matrix=A</example>
 	<example>xtab 1 2 --tex="xtab.tex"</example>
+	<demos>
+	  <demo>ooballot.inp</demo>
+	</demos>
       </examples>
     </usage>
 
@@ -15096,6 +15266,13 @@
  	teñen o mesmo valor numérico. Esta opción ignórase agás que
 	indiques a opción <opt>tex</opt>; e tamén cando unha ou as dúas
 	variables da tabulación cruzada teña valores de cadea de texto.
+      </para>
+
+      <subhead>A táboa como matriz</subhead>
+      <para>
+	Cando indicas un argumento con unha única lista, vas poder
+	obter a táboa de continxencia en forma de matriz, mediante o
+	accesorio <fncref targ="$result"/>.
       </para>
 
     </description>

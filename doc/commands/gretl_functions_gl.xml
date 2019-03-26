@@ -687,6 +687,19 @@
       </description>
     </function>
 
+    <function name="$result" section="access" output="matrix-or-bundle">
+      <description>
+	<para>
+	  A continuación dalgunhas instrucións que non teñen accesorios
+	  específicos, proporciona información reservada. As instrucións en
+	  cuestión inclúen <cmdref targ="corr"/>, <cmdref targ="freq"/>,
+	  <cmdref targ="summary"/> e <cmdref targ="xtab"/>
+	  (en cuxos casos, o resultado é unha matriz), ademais de
+	  <cmdref targ="vif"/> (en cuxo caso, o resultado é un feixe).
+	</para>
+      </description>
+    </function>
+
     <function name="$rho" section="access" output="scalar">
       <fnargs>
 	<fnarg optional="true" type="scalar">n</fnarg>
@@ -726,7 +739,7 @@
 	</para>
 	<code>
 	  ols y 0 xlist
-	  genr sdum = $sample
+	  series sdum = $sample
 	  smpl sdum --dummy
 	</code>
       </description>
@@ -1802,6 +1815,32 @@
 	  a chave <argname>vellachave</argname>, esa súa chave trócase
 	  a <argname>novachave</argname>; doutro xeito, amósase un fallo.
 	  A función devolve un 0 cando se fai correctamente o cambio de nome.
+	</para>
+	<para>
+	  Trocar a chave dun elemento dun feixe non é unha tarefa habitual,
+	  mais pode xurdirte esa necesidade no contexto de funcións que
+	  operan con feixes, e <lit>brename</lit> resulta ser unha ferramenta
+	  eficiente para ese traballo. Exemplo:
+	</para>
+	<code>
+	  # Establecer un feixe que contén unha matriz grande
+	  bundle b
+	  b.X = mnormal(1000, 1000)
+	  if 0
+	      # 'Trocar a chave manualmente'
+	      Xcopy = b.X
+	      delete b.X
+	      b.Y = Xcopy
+	      delete Xcopy
+	  else
+	      # fronte a 'Trocala de forma eficiente'
+	      brename(b, "X", "Y")
+	  endif
+	</code>
+	<para>
+	  O primeiro método esixe que se copie esa gran matriz dúas veces:
+	  primeiro fóra do feixe, e logo de novo dentro del baixo unha chave
+	  diferente. O método eficiente troca a chave directamente.
 	</para>
       </description>
     </function>
@@ -5044,6 +5083,30 @@
 	<para>
 	  Con relación á función inversa consulta <fncref targ="epochday"/>.
 	  Consulta tamén <fncref targ="juldate"/>.
+	</para>
+      </description>
+    </function>
+
+    <function name="isoweek" section="calendar" output="seebelow">
+      <fnargs>
+	<fnarg type="scalar-or-series">ano</fnarg>
+	<fnarg type="scalar-or-series">mes</fnarg>
+	<fnarg type="scalar-or-series">día</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devolve o número de semana (en formato ISO 8601) que se corresponde
+	  coa(s) data(s) especificada(s) polos tres argumentos, ou <lit>NA</lit>
+	  se a data non é válida. Cae na conta de que os tres argumentos deben
+	  de ser todos do mesmo tipo, ben escalares (enteiros) ou ben series.
+	</para>
+	<para>
+	  As semanas en formato ISO numéranse de 01 a 53. Os máis dos
+	  anos teñen 52 semanas, pero unha media de 71 de 400 anos teñen
+	  53 semanas. A semana 01, segundo a definición ISO 8601, é a semana
+	  que contén o primeiro xoves do ano no calendario Gregoriano.
+	  Para obter unha explicación completa, consulta
+	  <url>https://en.wikipedia.org/wiki/ISO_week_date</url>.
 	</para>
       </description>
     </function>
@@ -9169,6 +9232,23 @@
 	  calcularse restándolle as medias na poboación. Por exemplo, con
 	  datos trimestrais, as variables ficticias estacionais centradas van
 	  ter valores iguais a &minus;0.25 e 0.75 en vez de 0 e 1.
+	</para>
+	<para>
+	  Con datos de frecuencia semanal, o resultado concreto depende
+	  de se os datos teñen data ou non. Se teñen data, créanse ata
+	  53 series estacionais, baseadas no número de semana ISO 8601
+	  (consulta <fncref targ="isoweek"/>); se non a teñen, o número
+	  máximo de series é 52 (e ao longo dun período prolongado as series
+	  <quote>estacionais</quote> vanse desfasar co ano do calendario).
+	  No caso de ter datos semanais, se desexas xerar series estacionais
+	  mensuais podes facelo do seguinte xeito:
+	</para>
+	<code>
+	  series month = $obsminor
+	  list months = dummify(month)
+	</code>
+	<para>
+	  Para obter máis detalles, consulta <fncref targ="dummify"/>.
 	</para>
       </description>
     </function>
