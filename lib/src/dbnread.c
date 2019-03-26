@@ -45,6 +45,69 @@ static gretl_bundle *get_dbn_series_bundle (const char *datacode,
     return b;
 }
 
+struct dbn_sorter {
+    const char *s;
+    int t;
+};
+
+static void write_dbn_csv (char **S, int T,
+			   gretl_matrix *v,
+			   struct dbn_sorter *ds,
+			   FILE *fp)
+{
+    int t, i;
+
+    gretl_push_c_numeric_locale();
+
+    fputs("obs dbnomics_data\n", fp);
+    for (t=0; t<T; t++) {
+	i = (ds != NULL)? ds[t].t : t;
+	if (na(v->val[i])) {
+	    fprintf(fp, "%s NA\n", S[i]);
+	} else {
+	    fprintf(fp, "%s %.12g\n", S[i], v->val[i]);
+	}
+    }
+
+    gretl_pop_c_numeric_locale();
+}
+
+static int dbtcomp (const void *a, const void *b)
+{
+    const struct dbn_sorter *ds1 = a, *ds2 = b;
+
+    return strcmp(ds1->s, ds2->s);
+}
+
+/* remedial code for the case where the "periods" in
+   JSON from dbnomics are not actually in temporal
+   order
+*/
+
+static int maybe_reorder_dbn_data (char **S, int T,
+				   gretl_matrix *v,
+				   FILE *fp)
+{
+    struct dbn_sorter *ds;
+    int t;
+
+    ds = malloc(T * sizeof *ds);
+    if (ds == NULL) {
+	return E_ALLOC;
+    }
+
+    for (t=0; t<T; t++) {
+	ds[t].s = S[t];
+	ds[t].t = t;
+    }
+
+    qsort(ds, T, sizeof *ds, dbtcomp);
+    write_dbn_csv(S, T, v, ds, fp);
+    free(ds);
+
+    return 0;
+}
+
 /* write the info from @P (periods) and @v (values) to
    CSV, then grab it back using the gretl CSV reader
    to populate @dbset
@@ -65,24 +128,28 @@ static int dbn_dset_from_csv (DATASET *dbset,
 	err = E_FOPEN;
     } else {
 	char **S = gretl_array_get_strings(P, &T);
-	int t;
 
-	gretl_push_c_numeric_locale();
-	fputs("obs dbnomics_data\n", fp);
-	for (t=0; t<T; t++) {
-	    if (na(v->val[t])) {
-		fprintf(fp, "%s NA\n", S[t]);
+	write_dbn_csv(S, T, v, NULL, fp);
+	fclose(fp);
+
+	err = import_csv(fname, dbset, OPT_NONE, NULL);
+	if (!err && !dataset_is_time_series(dbset)) {
+	    /* try again, after sorting by "period" strings */
+	    gretl_remove(fname);
+	    fp = gretl_fopen(fname, "w");
+	    if (fp == NULL) {
+		err = E_FOPEN;
 	    } else {
-		fprintf(fp, "%s %.12g\n", S[t], v->val[t]);
+		maybe_reorder_dbn_data(S, T, v, fp);
+		fclose(fp);
+		free_Z(dbset);
+		clear_datainfo(dbset, CLEAR_FULL);
+		err = import_csv(fname, dbset, OPT_NONE, NULL);
 	    }
 	}
-	gretl_pop_c_numeric_locale();
-
-	fclose(fp);
-	err = import_csv(fname, dbset, OPT_NONE, NULL);
 	gretl_remove(fname);
     }
-    
+
     g_free(fname);
 
     return err;

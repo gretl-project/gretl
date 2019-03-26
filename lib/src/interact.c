@@ -1882,7 +1882,7 @@ static int lib_open_append (ExecState *s,
 	    }
 	    err = lib_join_data(s, newfile, dset, opt, prn);
 	} else {
-	    gretl_errmsg_set("Only CSV and gdt[b] files are supported for now");
+	    gretl_errmsg_set("join: only CSV and gdt[b] files are supported");
 	    err = E_DATA;
 	}
 	if (err) {
