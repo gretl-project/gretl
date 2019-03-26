@@ -1230,6 +1230,10 @@ static void print_restriction_set (const gretl_restriction *rset,
 {
     int i;
 
+    if (prn == NULL) {
+	return;
+    }
+
     if (rset->g > 1) {
 	pputs(prn, _("Restriction set"));
     } else {
@@ -1693,19 +1697,19 @@ static int parse_restriction_row (gretl_restriction *rset,
 
     for (i=0; i<nt; i++) {
 	/* work on the left-hand side */
-	char chunk[32];
+	char chunk[36];
 	int len, bnum = 1, eq = 1;
 	int numeric = 0;
 	char letter = 'b';
 	double mult;
 
 	len = strcspn(s, "+-=");
-	if (len > 31) {
+	if (len >= sizeof chunk) {
 	    err = 1;
 	    break;
 	}
 
-	*chunk = 0;
+	*chunk = '\0';
 	strncat(chunk, s, len);
 	s += len;
 
