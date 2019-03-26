@@ -111,31 +111,33 @@ function scalar dbnomics_bundle_get_data(const bundle b, series *x, bool verbose
     # n = b.totobs
     outfile @tmpfile
         printf "obs\tdbseries\n"
-        set warnings off
-        loop i=1 .. b.T -q
+	set warnings off
+	loop i=1 .. b.T -q
             printf "%s\t%20.15f\n", b.period[i], b.value[i]
-        endloop
+	endloop
     end outfile
-
+    
     if daily
         setopt join --tkey="obs,%Y-%m-%d"
     endif
 
-    outfile null
+    outfile tracestr --buffer
         # try "append" first
         catch append @tmpfile --quiet --fixed-sample
-       err = $error
-        if !err
-           tool = "append"
+	err = $error
+        if !err 
+            tool = "append"
             x = dbseries
-       else
-           # "append" may fail because data are not ordered properly
-           # if that's the case, "join" may still work
-           catch join @tmpfile x --data="dbseries"
-           err = $error
-           if !err
-               tool = "join"
-           endif
+	else
+            # "append" may fail because data are not ordered properly
+            # if that's the case, "join" may still work
+            catch join @tmpfile x --data="dbseries"
+            err = $error
+            if !err
+		tool = "join"
+	    else
+		series dbseries = NA
+            endif
         endif
     end outfile
 
@@ -146,11 +148,12 @@ function scalar dbnomics_bundle_get_data(const bundle b, series *x, bool verbose
 
     if verbose
         printf "dbnomics_bundle_get_data:\n%s\n", b.series_name
-       if err
-           printf "error = %d\n", err
-       else
-           printf "tool = %s\n", tool
-       endif
+	if err
+            printf "error = %d\n", err
+	    printf "trace:\n%s\n\n", tracestr
+	else
+            printf "tool = %s\n", tool
+	endif
     endif
 
     return 0
