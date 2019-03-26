@@ -850,7 +850,7 @@ static MODEL replicate_estimator (const MODEL *orig, int *list,
 	{
 	    double lmax = gretl_model_get_double(orig, "lmax");
 
-	    rep = logistic_model(list, lmax, dset);
+	    rep = logistic_model(list, lmax, dset, myopt);
 	}
 	break;
     case PANEL:

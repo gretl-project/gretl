@@ -381,7 +381,7 @@ MODEL logistic_driver (const int *list, DATASET *dset,
 	return mdl;
     }
 
-    return logistic_model(list, lmax, dset);
+    return logistic_model(list, lmax, dset, opt);
 }
 
 /* assemble the left and right limits for tobit using gretl's

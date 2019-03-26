@@ -42,7 +42,7 @@ MODEL reprobit_model (const int *list, DATASET *dset,
 		      gretlopt opt, PRN *prn);
 
 MODEL logistic_model (const int *list, double lmax,
-		      DATASET *dset);
+		      DATASET *dset, gretlopt opt);
 
 MODEL interval_model (int *list, DATASET *dset, 
 		      gretlopt opt, PRN *prn);

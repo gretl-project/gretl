@@ -3434,7 +3434,8 @@ static double get_real_lmax (const double *y,
  * @list: dependent variable plus list of regressors.
  * @lmax: value for the asymptote of the logistic curve, or
  * %NADBL for automatic treatment of this.
- * @dset: dataset struct.
+ * @dset: pointer to dataset.
+ * @opt: option flags.
  *
  * Estimate the model given in @list using the logistic transformation
  * of the dependent variable.
@@ -3443,15 +3444,13 @@ static double get_real_lmax (const double *y,
  */
 
 MODEL logistic_model (const int *list, double lmax,
-		      DATASET *dset)
+		      DATASET *dset, gretlopt opt)
 {
     int *llist = NULL;
     int dv = list[1];
     double real_lmax;
     MODEL lmod;
     int err = 0;
-
-    fprintf(stderr, "logistic model: lmax = %g\n", lmax);
 
     gretl_model_init(&lmod, dset);
 
@@ -3480,7 +3479,7 @@ MODEL logistic_model (const int *list, double lmax,
     /* replace with transformed dependent variable */
     llist[1] = dset->v - 1;
 
-    lmod = lsq(llist, dset, OLS, OPT_A);
+    lmod = lsq(llist, dset, OLS, opt | OPT_A);
     if (!lmod.errcode) {
 	rewrite_logistic_stats(dset, &lmod, dv, real_lmax);
 	set_model_id(&lmod, OPT_NONE);
