@@ -1193,8 +1193,7 @@ static void print_restriction (const gretl_restriction *rset,
 			       PRN *prn)
 {
     const rrow *r = rset->rows[i];
-    char letter;
-    char vname[24];
+    char letter, vname[VNAMELEN];
     int j, k;
 
     for (j=0; j<r->nterms; j++) {
@@ -2752,7 +2751,7 @@ gretl_restriction_finalize_full (ExecState *state,
     int silent, err = 0;
 
 #if RDEBUG
-    fprintf(stderr, "gretl_restriction_finalize: starting\n");
+    fprintf(stderr, "gretl_restriction_finalize_full: starting\n");
 #endif
 
     if (rset == NULL) {
