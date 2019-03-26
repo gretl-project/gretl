@@ -2836,7 +2836,7 @@ gretl_sum_test (const int *list, MODEL *pmod, DATASET *dset,
 {
     gretl_restriction *r;
     char line[MAXLEN];
-    char bstr[24];
+    char bstr[36];
     int i, len, err = 0;
 
     if (list[0] < 2) {
