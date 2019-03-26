@@ -177,6 +177,7 @@ enum {
                          c == LOGIT || \
                          c == OLOGIT || \
                          c == MLOGIT || \
+			 c == LOGISTIC || \
                          c == MPOLS || \
                          c == OLS || \
                          c == PANEL || \
@@ -5957,7 +5958,7 @@ static void build_selector_switches (selector *sr)
 	sr->ci == OLOGIT || sr->ci == OPROBIT || sr->ci == COUNTMOD ||
 	sr->ci == DURATION || sr->ci == PANEL || sr->ci == QUANTREG ||
 	sr->ci == HECKIT || sr->ci == BIPROBIT || sr->ci == TOBIT ||
-	sr->ci == MIDASREG) {
+	sr->ci == MIDASREG || sr->ci == LOGISTIC) {
 	GtkWidget *b1;
 
 	/* FIXME arma robust variant? (and REPROBIT should be here?) */
