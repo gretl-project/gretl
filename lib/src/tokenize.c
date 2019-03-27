@@ -138,7 +138,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { LDIFF,    "ldiff",    CI_LIST | CI_NOOPT },
     { LEVERAGE, "leverage", 0 },
     { LEVINLIN, "levinlin", CI_PARM1 | CI_LIST | CI_LLEN1 },
-    { LOGISTIC, "logistic", CI_LIST }, /* + special */
+    { LOGISTIC, "logistic", CI_LIST },
     { LOGIT,    "logit",    CI_LIST },
     { LOGS,     "logs",     CI_LIST | CI_NOOPT },
     { LOOP,     "loop",     CI_ADHOC }, /* ? */
@@ -1445,24 +1445,6 @@ static int legacy_get_filename (CMD *c)
 	    mark_token_done(c->toks[pos]);
 	} else {
 	    c->param = merge_toks_l_to_r(c, pos);
-	}
-    }
-
-    return c->err;
-}
-
-static int get_logistic_ymax (CMD *c)
-{
-    cmd_token *tok;
-    int i;
-
-    for (i=c->cstart+1; i<c->ntoks; i++) {
-	tok = &c->toks[i];
-	if (tok->type == TOK_EQUALS && token_joined(tok)) {
-	    if (!strcmp(c->toks[i-1].s, "ymax")) {
-		c->param = merge_toks_l_to_r(c, i-1);
-		break;
-	    }
 	}
     }
 
@@ -3800,8 +3782,6 @@ static int assemble_command (CMD *cmd, DATASET *dset,
 	legacy_get_filename(cmd);
     } else if (cmd->ci == SETINFO) {
 	get_quoted_dash_fields(cmd, "dn");
-    } else if (cmd->ci == LOGISTIC) {
-	get_logistic_ymax(cmd);
     }
 
     if (cmd->err) {
