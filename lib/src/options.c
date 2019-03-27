@@ -377,6 +377,7 @@ struct gretl_option gretl_opts[] = {
     { LAD,      OPT_N, "no-vcv", 0 },
     { LOGISTIC, OPT_M, "ymax", 2 },
     { LOGISTIC, OPT_R, "robust", 0 },
+    { LOGISTIC, OPT_C, "cluster", 2 },
     { LOGIT,    OPT_M, "multinomial", 0 },
     { LOGIT,    OPT_P, "p-values", 0 },
     { LOGIT,    OPT_R, "robust", 0 },
