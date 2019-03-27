@@ -351,13 +351,15 @@ static const char *real_funcs_heading (const char *s)
     }
 }
 
+
+
 static GtkTreeStore *make_help_topics_tree (int role)
 {
     const char *fname;
     GtkTreeStore *store;
     GtkTreeIter iter, parent;
     gchar *s, *buf = NULL;
-    char word[16], sect[32];
+    char word[32], sect[48];
     const char *heading;
     int pos = 0, idx = 0;
     int err;
@@ -392,10 +394,14 @@ static GtkTreeStore *make_help_topics_tree (int role)
 
     s = buf;
 
+#if HDEBUG
+    fprintf(stderr, "*** processing %s ***\n", fname);
+#endif
+
     while (*s) {
 	if (*s == '\n' && *(s+1) == '#' &&
 	    *(s+2) != '#' && *(s+2) != '\0') {
-	    if (sscanf(s+2, "%15s %31s", word, sect) == 2) {
+	    if (sscanf(s+2, "%31s %47s", word, sect) == 2) {
 		if (funcref_role(role)) {
 		    heading = real_funcs_heading(sect);
 		} else {
@@ -417,6 +423,9 @@ static GtkTreeStore *make_help_topics_tree (int role)
 		} else {
 		    idx = gretl_command_number(word);
 		}
+#if HDEBUG
+		fprintf(stderr, " %s: pos %d, idx, %d\n", word, pos+1, idx);
+#endif
 		gtk_tree_store_set(store, &iter,
 				   STRING_COL, word,
 				   POSITION_COL, pos + 1,
