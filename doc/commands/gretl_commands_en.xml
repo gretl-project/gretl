@@ -1597,6 +1597,12 @@
       <arguments>
         <argument>varlist</argument>
       </arguments>
+      <options>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>don't print anything</effect>
+	</option>
+      </options>
       <examples>
         <example>coeffsum xt xt_1 xr_2</example>
 	<demos>
@@ -1606,9 +1612,9 @@
     </usage>
 
     <description>
-      <para context="gui">This command needs a list of variables,
-	selected from the set of independent variables in a given
-	model.</para>
+      <para context="gui">
+	This command needs a list of variables, selected from the set
+	of independent variables in a given model.</para>
       <para context="gui">
 	Calculates the sum of the coefficients on the variables in the
 	specified list.  Prints this sum along with its standard error
@@ -1620,11 +1626,18 @@
 	this sum along with its standard error and the p-value for the
 	null hypothesis that the sum is zero.
       </para>
-      <para>Note the difference between this and <cmdref
-	  targ="omit"/>, which tests the null
-	hypothesis that the coefficients on a specified subset of
-	independent variables are <emphasis>all</emphasis> equal to
-	zero.</para>
+      <para>
+	Note the difference between this and <cmdref targ="omit"/>,
+	which tests the null hypothesis that the coefficients on a
+	specified subset of independent variables are
+	<emphasis>all</emphasis> equal to zero.
+      </para>
+      <para context="cli">
+	The <opt>quiet</opt> option may be useful if one just
+	wants access to the <fncref targ="$test"/> and <fncref
+	targ="$pvalue"/> values that are recorded on successful
+	completion.
+      </para>
     </description>
 
     <gui-access>
