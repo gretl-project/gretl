@@ -7233,6 +7233,15 @@
 	  <effect>specify maximum of dependent variable</effect>
 	</option>
 	<option>
+	  <flag>--robust</flag>
+	  <effect>robust standard errors</effect>
+        </option>
+	<option>
+	  <flag>--cluster</flag>
+	  <optparm>clustvar</optparm>
+	  <effect>see <cmdref targ="logit"/> for explanation</effect>
+        </option>
+	<option>
 	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
 	</option>
@@ -7252,7 +7261,6 @@
 	  ascii="log(y/(y* - y))"
 	  graphic="logistic1"/>
       </para>
-
       <para>
 	The dependent variable must be strictly positive.  If all its
 	values lie between 0 and 1, the default is to use a
@@ -7260,20 +7268,17 @@
 	the dependent variable) of 1; if its values lie between 0 and
 	100, the default <math>y</math><sup>*</sup> is 100.
       </para>
-
       <para context="cli">
 	If you wish to set a different maximum, use the
 	<opt>ymax</opt> option. Note that the supplied value must be
 	greater than all of the observed values of the dependent
 	variable.
       </para>
-
       <para context="gui">
 	You may specify a different maximum <math>y</math> value.
 	Note that the supplied value must be greater than all of the
 	observed values of the dependent variable.
       </para>
-
       <para>
 	The fitted values and residuals from the regression are
 	automatically transformed using
@@ -7286,7 +7291,6 @@
 	are therefore comparable with the original dependent
 	variable.
       </para>
-
       <para>
 	Note that if the dependent variable is binary, you should
 	use the <cmdref targ="logit"/> command instead.
