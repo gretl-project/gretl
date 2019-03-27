@@ -1980,6 +1980,8 @@ static gretl_matrix *cluster_var_values (const double *cvar,
     return cvals;
 }
 
+static int cluster_vcv_ci;
+
 /**
  * qr_make_cluster_vcv:
  * @pmod: pointer to model.
@@ -2010,8 +2012,14 @@ static int qr_make_cluster_vcv (MODEL *pmod, int ci,
 	return E_NOTIMP;
     }
 
+    if (cluster_vcv_ci != 0) {
+	ci = cluster_vcv_ci;
+	cluster_vcv_ci = 0;
+    }
+
     cname = get_optval_string(ci, OPT_C);
     if (cname == NULL) {
+	gretl_errmsg_set("Got --cluster option but couldn't find varname");
 	return E_PARSE;
     }
 
@@ -2053,4 +2061,14 @@ static int qr_make_cluster_vcv (MODEL *pmod, int ci,
     gretl_matrix_free(cvals);
 
     return err;
+}
+
+int set_cluster_vcv_ci (int ci)
+{
+    if (ci != 0 && !valid_short_opt(ci, 'c')) {
+	return E_BADOPT;
+    } else {
+	cluster_vcv_ci = ci;
+	return 0;
+    }
 }

@@ -3479,10 +3479,18 @@ MODEL logistic_model (const int *list, double lmax,
     /* replace with transformed dependent variable */
     llist[1] = dset->v - 1;
 
+    if (opt & OPT_C) {
+	set_cluster_vcv_ci(LOGISTIC);
+    }
+
     lmod = lsq(llist, dset, OLS, opt | OPT_A);
     if (!lmod.errcode) {
 	rewrite_logistic_stats(dset, &lmod, dv, real_lmax);
 	set_model_id(&lmod, OPT_NONE);
+    }
+
+    if (opt & OPT_C) {
+	set_cluster_vcv_ci(0);
     }
 
     dataset_drop_last_variables(dset, 1);
