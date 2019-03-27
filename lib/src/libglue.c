@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* Miscellaneous functions to bridge between gretl commands and
@@ -40,14 +40,14 @@
  * @opt: controls which test(s) will be performed; OPT_Q
  * gives less verbose results, OPT_I gives silent operation.
  * @prn: gretl printing struct.
- * 
+ *
  * Performs some subset of gretl's "modtest" tests on the
  * model last estimated, and prints the results to @prn.
- * 
+ *
  * Returns: 0 on successful completion, error code on error.
  */
 
-int model_test_driver (int order, DATASET *dset, 
+int model_test_driver (int order, DATASET *dset,
 		       gretlopt opt, PRN *prn)
 {
     GretlObjType type;
@@ -68,7 +68,7 @@ int model_test_driver (int order, DATASET *dset,
 	return err;
     }
 
-    ptr = get_last_model(&type);  
+    ptr = get_last_model(&type);
     if (ptr == NULL) {
 	return E_DATA;
     }
@@ -92,7 +92,7 @@ int model_test_driver (int order, DATASET *dset,
     /* non-linearity (squares) */
     if (!err && (opt & OPT_S)) {
 	if (type == GRETL_OBJ_EQN) {
-	    err = nonlinearity_test(ptr, dset, AUX_SQ, 
+	    err = nonlinearity_test(ptr, dset, AUX_SQ,
 				    testopt, prn);
 	} else {
 	    err = E_NOTIMP;
@@ -103,7 +103,7 @@ int model_test_driver (int order, DATASET *dset,
     /* non-linearity (logs) */
     if (!err && (opt & OPT_L)) {
 	if (type == GRETL_OBJ_EQN) {
-	    err = nonlinearity_test(ptr, dset, AUX_LOG, 
+	    err = nonlinearity_test(ptr, dset, AUX_LOG,
 				    testopt, prn);
 	} else {
 	    err = E_NOTIMP;
@@ -134,7 +134,7 @@ int model_test_driver (int order, DATASET *dset,
 		/* --univariate */
 		testopt |= OPT_U;
 	    }
-	    err = gretl_VAR_autocorrelation_test(ptr, k, dset, 
+	    err = gretl_VAR_autocorrelation_test(ptr, k, dset,
 						 testopt, prn);
 	} else if (type == GRETL_OBJ_SYS) {
 	    err = system_autocorrelation_test(ptr, k, testopt, prn);
@@ -153,7 +153,7 @@ int model_test_driver (int order, DATASET *dset,
 		/* --univariate */
 		testopt |= OPT_U;
 	    }
-	    err = gretl_VAR_arch_test(ptr, k, dset, 
+	    err = gretl_VAR_arch_test(ptr, k, dset,
 				      testopt, prn);
 	} else if (type == GRETL_OBJ_SYS) {
 	    err = system_arch_test(ptr, k, testopt, prn);
@@ -161,7 +161,7 @@ int model_test_driver (int order, DATASET *dset,
 	    err = E_NOTIMP;
 	}
 	return err;
-    }    
+    }
 
     /* normality of residual */
     if (!err && (opt & OPT_N)) {
@@ -196,12 +196,12 @@ int model_test_driver (int order, DATASET *dset,
 	    err = E_NOTIMP;
 	}
 	return err;
-    }    
+    }
 
     return err;
 }
 
-static int get_chow_dummy (const char *s, const DATASET *dset, 
+static int get_chow_dummy (const char *s, const DATASET *dset,
 			   int *err)
 {
     int v = current_series_index(dset, s);
@@ -228,7 +228,7 @@ static int get_chow_dummy (const char *s, const DATASET *dset,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int chow_test_driver (const char *param, MODEL *pmod, DATASET *dset, 
+int chow_test_driver (const char *param, MODEL *pmod, DATASET *dset,
 		      gretlopt opt, PRN *prn)
 {
     int chowparm = 0;
@@ -260,7 +260,7 @@ int chow_test_driver (const char *param, MODEL *pmod, DATASET *dset,
    Levin-Lin-Chu code.
 */
 
-int llc_test_driver (const char *param, const int *list, 
+int llc_test_driver (const char *param, const int *list,
 		     DATASET *dset, gretlopt opt, PRN *prn)
 {
     gretl_matrix *m = NULL;
@@ -305,7 +305,7 @@ int llc_test_driver (const char *param, const int *list,
    "real" quantreg function
 */
 
-MODEL quantreg_driver (const char *param, const int *list, 
+MODEL quantreg_driver (const char *param, const int *list,
 		       DATASET *dset, gretlopt opt, PRN *prn)
 {
     gretl_vector *tau;
@@ -334,7 +334,7 @@ MODEL quantreg_driver (const char *param, const int *list,
    that gretl supports
 */
 
-MODEL logit_probit (int *list, DATASET *dset, int ci, 
+MODEL logit_probit (int *list, DATASET *dset, int ci,
 		    gretlopt opt, PRN *prn)
 {
     MODEL ret;
@@ -362,23 +362,26 @@ MODEL logit_probit (int *list, DATASET *dset, int ci,
 }
 
 /* parse out optional "ymax=..." parameter before calling the real
-   logistic model function 
+   logistic model function
 */
 
 MODEL logistic_driver (const int *list, DATASET *dset,
-		       gretlopt opt) 
+		       gretlopt opt)
 {
-    double lmax;
-    int err = 0;
+    double lmax = NADBL;
 
-    lmax = get_optval_double(LOGISTIC, OPT_M, &err);
-    
-    if (err) {
-	MODEL mdl;
+    if (opt & OPT_M) {
+	int err = 0;
 
-	gretl_model_init(&mdl, dset);
-	mdl.errcode = err;
-	return mdl;
+	lmax = get_optval_double(LOGISTIC, OPT_M, &err);
+
+	if (err) {
+	    MODEL mdl;
+
+	    gretl_model_init(&mdl, dset);
+	    mdl.errcode = err;
+	    return mdl;
+	}
     }
 
     return logistic_model(list, lmax, dset, opt);
@@ -388,7 +391,7 @@ MODEL logistic_driver (const int *list, DATASET *dset,
    option apparatus before calling the real tobit function
 */
 
-MODEL tobit_driver (const int *list, DATASET *dset, 
+MODEL tobit_driver (const int *list, DATASET *dset,
 		    gretlopt opt, PRN *prn)
 {
     MODEL model;
@@ -401,15 +404,15 @@ MODEL tobit_driver (const int *list, DATASET *dset,
 	llim = get_optval_double(TOBIT, OPT_L, &err);
 	if (!err && na(llim)) {
 	    err = E_INVARG;
-	} 
+	}
     }
 
     if (!err && (opt & OPT_M)) {
 	/* we should have an explicit upper limit */
 	rlim = get_optval_double(TOBIT, OPT_M, &err);
 	if (!err && (na(rlim) || rlim <= llim)) {
-	    err = E_INVARG; 
-	}	
+	    err = E_INVARG;
+	}
     }
 
     if (err) {
@@ -491,22 +494,22 @@ static gretl_array *strings_array_from_string (const char *s,
  *
  * Prints to @prn the coefficient table and optional additional statistics
  * for a model estimated "by hand". Mainly useful for user-written functions.
- * 
+ *
  * The string @line must contain, in order: (1) the name of a k x 2 matrix
  * containing k coefficients and k associated standard errors and (2) the
  * name of a string variable containing at least k comma- or space-
- * separated names for the coefficients (or a string literal on that 
- * pattern). 
+ * separated names for the coefficients (or a string literal on that
+ * pattern).
  *
- * Optionally, @line may contain a third element, the name of a vector 
- * containing p additional statistics.  In that case element (2) should 
- * contain k + p names, the additional p names to be associated with the 
- * additional statistics. 
+ * Optionally, @line may contain a third element, the name of a vector
+ * containing p additional statistics.  In that case element (2) should
+ * contain k + p names, the additional p names to be associated with the
+ * additional statistics.
  *
  * Returns: 0 on success, non-zero on failure.
  */
 
-int do_modprint (const char *mname, const char *names, 
+int do_modprint (const char *mname, const char *names,
 		 gretlopt opt, PRN *prn)
 {
     gretl_matrix *coef_se = NULL;
@@ -531,7 +534,7 @@ int do_modprint (const char *mname, const char *names,
     } else {
 	nnames = coef_se->rows;
     }
- 
+
     if (!err) {
 	/* names for coeffs: string literal, string variable,
 	   or array of strings */
@@ -592,18 +595,18 @@ int do_modprint (const char *mname, const char *names,
 		    fmt = GRETL_FORMAT_TEX;
 		    if (opt & OPT_C) {
 			fmt |= GRETL_FORMAT_DOC;
-		    }		    
+		    }
 		} else if (has_suffix(fname, ".rtf")) {
 		    fmt = GRETL_FORMAT_RTF;
 		} else if (has_suffix(fname, ".csv")) {
 		    fmt = GRETL_FORMAT_CSV;
 		}
 	    }
-	}	
+	}
 
 	if (*fname != '\0') {
 	    PRN *myprn;
-	    
+
 	    gretl_maybe_switch_dir(fname);
 	    myprn = gretl_print_new_with_filename(fname, &err);
 	    if (!err) {
@@ -660,7 +663,7 @@ static int *matrix_bandplot_biglist (int ci,
 	    }
 	} else {
 	    c = 0;
-	}	
+	}
 	if (!*err && c == 0) {
 	    *err = invalid_field_error(S[i]);
 	}
@@ -677,10 +680,10 @@ static int *matrix_bandplot_biglist (int ci,
     return biglist;
 }
 
-int matrix_command_driver (int ci, 
-			   const int *list, 
+int matrix_command_driver (int ci,
+			   const int *list,
 			   const char *param,
-			   const DATASET *dset, 
+			   const DATASET *dset,
 			   gretlopt opt,
 			   PRN *prn)
 {
@@ -709,7 +712,7 @@ int matrix_command_driver (int ci,
 	    mdset = gretl_dataset_from_matrix(m, biglist, OPT_B, &err);
 	    cmax = mdset->v - 3;
 	    free(biglist);
-	} 
+	}
     } else if (ci == SCATTERS) {
 	/* note: this is a special case, for now */
 	return matrix_scatters(m, list, dset, opt);
@@ -752,7 +755,7 @@ int matrix_command_driver (int ci,
 	}
     }
 
-    destroy_dataset(mdset);   
+    destroy_dataset(mdset);
     free(collist);
 
     return err;
@@ -783,7 +786,7 @@ int matrix_freq_driver (const int *list,
 	    /* this is OK if m is a column vector */
 	    if (m->cols == 1) {
 		int mlist[2] = {1, 1};
-		
+
 		mdset = gretl_dataset_from_matrix(m, mlist, OPT_B, &err);
 	    } else {
 		err = E_ARGS;
@@ -797,12 +800,12 @@ int matrix_freq_driver (const int *list,
 	err = freqdist(1, mdset, opt, prn);
     }
 
-    destroy_dataset(mdset);   
+    destroy_dataset(mdset);
 
     return err;
 }
 
-int list_summary_driver (const int *list, const DATASET *dset, 
+int list_summary_driver (const int *list, const DATASET *dset,
 			 gretlopt opt, PRN *prn)
 {
     int wtvar = 0;
@@ -827,5 +830,3 @@ int list_summary_driver (const int *list, const DATASET *dset,
 
     return err;
 }
-
-
