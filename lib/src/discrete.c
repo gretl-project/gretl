@@ -22,6 +22,7 @@
 #include "missing_private.h"
 #include "gretl_bfgs.h"
 #include "gretl_normal.h"
+#include "qr_estimate.h"
 
 #include <errno.h>
 
