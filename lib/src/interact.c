@@ -3394,7 +3394,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case QLRTEST:
     case VIF:
 	if (cmd->ci == COEFFSUM) {
-	    err = gretl_sum_test(cmd->list, model, dset, prn);
+	    err = gretl_sum_test(cmd->list, model, dset, cmd->opt, prn);
 	} else if (cmd->ci == CUSUM) {
 	    err = cusum_test(model, dset, cmd->opt, prn);
 	} else if (cmd->ci == RESET) {

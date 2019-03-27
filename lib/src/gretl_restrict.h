@@ -69,7 +69,7 @@ void print_restriction_from_matrices (const gretl_matrix *R,
 void destroy_restriction_set (gretl_restriction *rset);
 
 int gretl_sum_test (const int *list, MODEL *pmod, DATASET *dset,
-		    PRN *prn);
+		    gretlopt opt, PRN *prn);
 
 const gretl_matrix *rset_get_R_matrix (const gretl_restriction *rset);
 

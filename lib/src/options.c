@@ -41,6 +41,7 @@
 			 c == ADF ||		\
 			 c == ANOVA ||		\
 			 c == APPEND ||		\
+			 c == COEFFSUM ||       \
 			 c == CHOW ||		\
 			 c == COINT2 ||		\
 			 c == CORRGM ||		\

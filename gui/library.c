@@ -2205,7 +2205,7 @@ int do_coeff_sum (selector *sr)
 	return 1;
     }
 
-    err = gretl_sum_test(libcmd.list, pmod, dataset, prn);
+    err = gretl_sum_test(libcmd.list, pmod, dataset, OPT_NONE, prn);
 
     if (err) {
         gui_errmsg(err);

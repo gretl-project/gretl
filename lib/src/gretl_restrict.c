@@ -2824,22 +2824,24 @@ int gretl_restriction_finalize (gretl_restriction *rset,
  * @list: list of variables to use.
  * @pmod: pointer to model.
  * @dset: information on the data set.
+ * @opt: option flags (OPT_Q gives quiet operation).
  * @prn: gretl printing struct.
  *
  * Calculates the sum of the coefficients, relative to the given model,
  * for the variables given in @list.  Prints this estimate along
- * with its standard error.
+ * with its standard error, unless OPT_Q is given.
  *
  * Returns: 0 on successful completion, error code on error.
  */
 
 int
 gretl_sum_test (const int *list, MODEL *pmod, DATASET *dset,
-		PRN *prn)
+		gretlopt opt, PRN *prn)
 {
     gretl_restriction *r;
     char line[MAXLEN];
     char bstr[36];
+    int quiet = (opt & OPT_Q);
     int i, len, err = 0;
 
     if (list[0] < 2) {
@@ -2889,32 +2891,33 @@ gretl_sum_test (const int *list, MODEL *pmod, DATASET *dset,
     if (!err) {
 	double test;
 
-	pprintf(prn, "\n%s: ", _("Variables"));
-
-	for (i=1; i<=list[0]; i++) {
-	    pprintf(prn, "%s ", dset->varname[list[i]]);
+	if (!quiet) {
+	    pprintf(prn, "\n%s: ", _("Variables"));
+	    for (i=1; i<=list[0]; i++) {
+		pprintf(prn, "%s ", dset->varname[list[i]]);
+	    }
+	    pprintf(prn, "\n   %s = %g\n", _("Sum of coefficients"), r->bsum);
 	}
 
-	pprintf(prn, "\n   %s = %g\n", _("Sum of coefficients"), r->bsum);
+	test = sqrt(r->test);
+	if (r->bsum < 0) {
+	    test = -test;
+	}
 
 	if (r->code == GRETL_STAT_F) {
-	    pprintf(prn, "   %s = %g\n", _("Standard error"), r->bse);
-	    test = sqrt(r->test);
-	    if (r->bsum < 0) {
-		test = -test;
+	    if (!quiet) {
+		pprintf(prn, "   %s = %g\n", _("Standard error"), r->bse);
+		pprintf(prn, "   t(%d) = %g ", pmod->dfd, test);
+		pprintf(prn, _("with p-value = %g\n"), r->pval);
 	    }
-	    pprintf(prn, "   t(%d) = %g ", pmod->dfd, test);
-	    pprintf(prn, _("with p-value = %g\n"), r->pval);
 	    record_test_result(test, r->pval);
 	} else if (r->code == GRETL_STAT_WALD_CHISQ) {
-	    pprintf(prn, "   %s = %g\n", _("Standard error"), r->bse);
-	    test = sqrt(r->test);
-	    if (r->bsum < 0) {
-		test = -test;
+	    if (!quiet) {
+		pprintf(prn, "   %s = %g\n", _("Standard error"), r->bse);
+		r->pval = normal_pvalue_2(test);
+		pprintf(prn, "   z = %g ", test);
+		pprintf(prn, _("with p-value = %g\n"), r->pval);
 	    }
-	    r->pval = normal_pvalue_2(test);
-	    pprintf(prn, "   z = %g ", test);
-	    pprintf(prn, _("with p-value = %g\n"), r->pval);
 	    record_test_result(test, r->pval);
 	}
 
