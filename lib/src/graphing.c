@@ -6960,8 +6960,7 @@ static int panel_grid_ts_plot (int vnum, const DATASET *dset,
 	    if (use > 0) {
 		strncat(uname, dset->S[s], use);
 	    } else if (strip > 0) {
-		strncat(uname, dset->S[s],
-			strlen(dset->S[s]) - strip);
+		strncat(uname, dset->S[s], strlen(dset->S[s]) - strip);
 	    } else {
 		strcpy(uname, dset->S[s]);
 	    }
