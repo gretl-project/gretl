@@ -44,12 +44,6 @@ $y_t = \sum_{\tau=1}^t x_{\tau}$
 <texequation fileref="">
 \[m_t \le y_t \le M_t\]
 </texequation>
-<texequation fileref="kalman1">
-\[y_t=H'\alpha_t\]
-</texequation>
-<texequation fileref="kalman2">
-\[\alpha_{t+1}=F \alpha_t + u_t\]
-</texequation>
 <texequation fileref="dffit">
 $\sqrt{h/(1 - h)}$
 </texequation>
@@ -57,7 +51,7 @@ $\sqrt{h/(1 - h)}$
 \[\log\left(\frac{y}{y^*-y}\right)\]
 </texequation>
 <texequation fileref="logistic2">
-\[y=\frac{y^*}{1+e^{-x}}\]
+\[y \approx E\left(\frac{y^*}{1+e^{-x}}\right)\]
 </texequation>
 <texequation fileref="mahal">
 \[\sqrt{(p-q)^{\prime}C^{-1}(p-q)}\]
