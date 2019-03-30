@@ -86,9 +86,6 @@ mask_from_test_list (const int *list, const MODEL *pmod, int *err)
 	    }
 	}
 	off2 = pmod->list[1];
-#if WDEBUG
-	fprintf(stderr, "pmod->ifc = %d\n", pmod->ifc);
-#endif
     }
 
     for (i=0; i<pmod->ncoeff; i++) {
@@ -650,7 +647,13 @@ static gretlopt retrieve_dpanel_opts (const MODEL *pmod)
     gretlopt opt = OPT_NONE;
 
     if (pmod->opt & OPT_D) {
+	/* --dpdstyle */
 	opt |= OPT_D;
+    }
+
+    if (pmod->opt & OPT_L) {
+	/* --system (include levels) */
+	opt |= OPT_L;
     }
 
     if (gretl_model_get_int(pmod, "asy")) {
@@ -1097,8 +1100,7 @@ static int add_vars_missing (const MODEL *pmod,
     int i, vi, t;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	/* 2019-03-30: the condition below was !model_missing(pmod, t) */
-	if (!na(pmod->yhat[t])) {
+	if (!model_missing(pmod, t)) {
 	    for (i=1; i<=addvars[0]; i++) {
 		vi = addvars[i];
 		if (na(dset->Z[vi][t])) {

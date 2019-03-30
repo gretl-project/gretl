@@ -1217,49 +1217,6 @@ static int do_units (ddset *dpd, const DATASET *dset,
     return err;
 }
 
-/* If we're not doing DPD-style, the constant, if present,
-   gets differenced away, both as a regressor and as a regular
-   instrument. This is for the case where we are not including
-   any equations in levels.
-*/
-
-static void maybe_prune_const (ddset *dpd)
-{
-    int i;
-
-    if (dpd->xlist != NULL) {
-	for (i=dpd->xlist[0]; i>0; i--) {
-	    if (dpd->xlist[i] == 0) {
-		if (dpd->xlist[0] == 1) {
-		    free(dpd->xlist);
-		    dpd->xlist = NULL;
-		} else {
-		    gretl_list_delete_at_pos(dpd->xlist, i);
-		}
-		dpd->nx -= 1;
-		dpd->k -= 1;
-		dpd->ifc = 0;
-		break;
-	    }
-	}
-    }
-
-    if (dpd->ilist != NULL) {
-	for (i=dpd->ilist[0]; i>0; i--) {
-	    if (dpd->ilist[i] == 0) {
-		if (dpd->ilist[0] == 1) {
-		    free(dpd->ilist);
-		    dpd->ilist = NULL;
-		} else {
-		    gretl_list_delete_at_pos(dpd->ilist, i);
-		}
-		dpd->nzr -= 1;
-		break;
-	    }
-	}
-    }
-}
-
 /* the user hasn't supplied a block-diagonal spec for
    y in the differences equations: here we set up the
    default version, with unlimited lags
@@ -1410,7 +1367,7 @@ static int dpanel_adjust_GMM_spec (ddset *dpd)
    reference */
 
 static int print_step_1 (MODEL *pmod, ddset *dpd,
-			 const int *list, const int *ylags,
+			 int *list, const int *ylags,
 			 const char *ispec,
 			 const DATASET *dset,
 			 gretlopt opt, PRN *prn)
@@ -1473,6 +1430,8 @@ MODEL dpd_estimate (const int *list, const int *laglist,
     diag_info *d = NULL;
     ddset *dpd = NULL;
     int **Goodobs = NULL;
+    int *dlist = NULL;
+    int nlevel = 0;
     int nzb = 0;
     MODEL mod;
     int err = 0;
@@ -1485,23 +1444,31 @@ MODEL dpd_estimate (const int *list, const int *laglist,
 
     /* parse GMM instrument info, if present */
     if (ispec != NULL && *ispec != '\0') {
-	mod.errcode = parse_GMM_instrument_spec(DPANEL, ispec, dset, &d, &nzb);
+	mod.errcode = parse_GMM_instrument_spec(DPANEL, ispec, dset,
+						&d, &nzb, &nlevel);
 	if (mod.errcode) {
 	    return mod;
 	}
     }
 
-    dpd = ddset_new(DPANEL, list, laglist, dset, opt, d, nzb, &mod.errcode);
+    if (nlevel > 0 && !(opt & OPT_L)) {
+	/* make --system (levels) explicit */
+	opt |= OPT_L;
+    }
+
+    dlist = gretl_list_copy(list);
+    if (dlist == NULL) {
+	mod.errcode = E_ALLOC;
+	return mod;
+    }
+
+    dpd = ddset_new(DPANEL, dlist, laglist, dset, opt, d, nzb, &mod.errcode);
     if (mod.errcode) {
 	fprintf(stderr, "Error %d in dpd_init\n", mod.errcode);
 	return mod;
     }
 
     dpanel_adjust_GMM_spec(dpd);
-
-    if (!dpd_style(dpd) && !gmm_sys(dpd)) {
-	maybe_prune_const(dpd);
-    }
 
 #if DPDEBUG
     if (dpd->nzb > 0 || dpd->nzb2 > 0) {
@@ -1537,7 +1504,7 @@ MODEL dpd_estimate (const int *list, const int *laglist,
     if (!err && (opt & OPT_T)) {
 	/* second step, if wanted */
 	if (opt & OPT_V) {
-	    err = print_step_1(&mod, dpd, list, laglist, ispec,
+	    err = print_step_1(&mod, dpd, dlist, laglist, ispec,
 			       dset, opt, prn);
 	}
 	if (!err) {
@@ -1551,8 +1518,10 @@ MODEL dpd_estimate (const int *list, const int *laglist,
 
     if (!mod.errcode) {
 	/* write estimation info into model struct */
-	mod.errcode = dpd_finalize_model(&mod, dpd, list, laglist, ispec,
+	mod.errcode = dpd_finalize_model(&mod, dpd, dlist, laglist, ispec,
 					 dset, opt);
+    } else {
+	free(dlist);
     }
 
     ddset_free(dpd);

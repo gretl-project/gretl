@@ -142,8 +142,7 @@ struct ddset_ {
 #define data_index(dpd,i) (i * dpd->T + dpd->t1)
 
 static void dpanel_residuals (ddset *dpd);
-static int dpd_process_list (ddset *dpd, const int *list,
-			     const int *ylags);
+static int dpd_process_list (ddset *dpd, int *list, const int *ylags);
 
 static void ddset_free (ddset *dpd)
 {
@@ -255,7 +254,7 @@ static int dpd_flags_from_opt (gretlopt opt)
     return f;
 }
 
-static ddset *ddset_new (int ci, const int *list, const int *ylags,
+static ddset *ddset_new (int ci, int *list, const int *ylags,
 			 const DATASET *dset, gretlopt opt,
 			 diag_info *d, int nzb, int *err)
 {
@@ -542,7 +541,7 @@ static int dpanel_make_laglist (ddset *dpd, const int *list,
    done in dpanel via "GMM(y,min,max)".
 */
 
-static int dpd_process_list (ddset *dpd, const int *list,
+static int dpd_process_list (ddset *dpd, int *list,
 			     const int *ylags)
 {
     int seppos = gretl_list_separator_position(list);
@@ -560,6 +559,16 @@ static int dpd_process_list (ddset *dpd, const int *list,
     xpos = seppos + 2;
 
     if (dpd->ci == DPANEL) {
+	if (!dpd_style(dpd) && !gmm_sys(dpd)) {
+	    /* maybe drop the constant (differenced out) */
+	    int i;
+
+	    for (i=list[0]; i>=xpos; i--) {
+		if (list[i] == 0) {
+		    gretl_list_delete_at_pos(list, i);
+		}
+	    }
+	}
 	/* the auxiliary 'ylags' list may contain specific y lags,
 	   otherwise there should be just one field */
 	err = dpanel_make_laglist(dpd, list, seppos, ylags);
@@ -1703,7 +1712,7 @@ static int dpanel_adjust_uhat (ddset *dpd,
 
 static int dpd_finalize_model (MODEL *pmod,
 			       ddset *dpd,
-			       const int *list,
+			       int *list,
 			       const int *ylags,
 			       const char *istr,
 			       const DATASET *dset,
@@ -1725,11 +1734,7 @@ static int dpd_finalize_model (MODEL *pmod,
     pmod->dfn = dpd->k;
     pmod->dfd = dpd->nobs - dpd->k;
 
-    pmod->list = gretl_list_copy(list);
-    if (pmod->list == NULL) {
-	pmod->errcode = E_ALLOC;
-	return pmod->errcode;
-    }
+    pmod->list = list; /* donated, don't free */
 
     gretl_model_set_int(pmod, "yno", dpd->yno);
     gretl_model_set_int(pmod, "n_included_units", dpd->effN);
@@ -2630,8 +2635,10 @@ static int parse_diag_info (int ci, const char *s, diag_info **dp,
 */
 
 static int
-parse_GMM_instrument_spec (int ci, const char *spec, const DATASET *dset,
-			   diag_info **pd, int *pnspec)
+parse_GMM_instrument_spec (int ci, const char *spec,
+			   const DATASET *dset,
+			   diag_info **pd, int *pnspec,
+			   int *pnlevel)
 {
     diag_info *d = NULL;
     const char *s;
@@ -2684,7 +2691,10 @@ parse_GMM_instrument_spec (int ci, const char *spec, const DATASET *dset,
     if (!err) {
 	int i, j;
 
-	for (i=1; i<nspec && !err; i++) {
+	for (i=0; i<nspec && !err; i++) {
+	    if (pnlevel != NULL && d[i].level) {
+		*pnlevel += 1;
+	    }
 	    for (j=0; j<i && !err; j++) {
 		if (d[i].v == d[j].v && d[i].level == d[j].level) {
 		    gretl_errmsg_sprintf(_("variable %d duplicated "
@@ -2716,6 +2726,7 @@ arbond_estimate (const int *list, const char *ispec,
 {
     diag_info *d = NULL;
     ddset *dpd = NULL;
+    int *alist = NULL;
     int nzb = 0;
     MODEL mod;
     int err = 0;
@@ -2724,14 +2735,21 @@ arbond_estimate (const int *list, const char *ispec,
 
     /* parse GMM instrument info, if present */
     if (ispec != NULL && *ispec != '\0') {
-	mod.errcode = parse_GMM_instrument_spec(ARBOND, ispec, dset, &d, &nzb);
+	mod.errcode = parse_GMM_instrument_spec(ARBOND, ispec, dset,
+						&d, &nzb, NULL);
 	if (mod.errcode) {
 	    return mod;
 	}
     }
 
+    alist = gretl_list_copy(list);
+    if (alist == NULL) {
+	mod.errcode = E_ALLOC;
+	return mod;
+    }
+
     /* initialize (including some memory allocation) */
-    dpd = ddset_new(ARBOND, list, NULL, dset, opt, d, nzb, &mod.errcode);
+    dpd = ddset_new(ARBOND, alist, NULL, dset, opt, d, nzb, &mod.errcode);
     if (mod.errcode) {
 	fprintf(stderr, "Error %d in dpd_init\n", mod.errcode);
 	return mod;
@@ -2779,8 +2797,10 @@ arbond_estimate (const int *list, const char *ispec,
 
     if (!mod.errcode) {
 	/* write estimation info into model struct */
-	mod.errcode = dpd_finalize_model(&mod, dpd, list, NULL, ispec,
+	mod.errcode = dpd_finalize_model(&mod, dpd, alist, NULL, ispec,
 					 dset, opt);
+    } else {
+	free(alist);
     }
 
     ddset_free(dpd);
