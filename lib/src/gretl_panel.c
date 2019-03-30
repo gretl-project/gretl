@@ -2741,6 +2741,10 @@ static int save_panel_model (MODEL *pmod, panelmod_t *pan,
 	panel_dwstat(pmod, pan);
     }
 
+    if (pan->opt & OPT_R) {
+	pmod->opt |= OPT_R;
+    }
+
     time_dummies_wald_test(pan, pmod);
     add_panel_obs_info(pmod, pan);
     *pan->realmod = *pmod;

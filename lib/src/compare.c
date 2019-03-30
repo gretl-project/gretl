@@ -1206,8 +1206,9 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
 	return err;
     }
 
-    /* impose as sample range the sample range in force
-       when the original model was estimated */
+    /* impose the sample range in force when the
+       original model was estimated
+    */
     impose_model_smpl(orig, dset);
 
     if (opt & OPT_L) {
