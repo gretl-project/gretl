@@ -3368,25 +3368,47 @@ static int make_logistic_depvar (DATASET *dset, int dv,
     return err;
 }
 
+#define TRY_APPROX 1
+
 static int rewrite_logistic_stats (const DATASET *dset,
 				   MODEL *pmod, int dv,
 				   double lmax)
 {
-    double x, ess, sigma;
+    double x, sigma, adj;
+    double ess = 0.0;
     int t;
+
+    if (pmod->depvar == NULL || *pmod->depvar == '\0') {
+	if (pmod->depvar == NULL) {
+	    free(pmod->depvar);
+	}
+	pmod->depvar = gretl_strdup(dset->varname[dv]);
+    }
 
     pmod->ybar = gretl_mean(pmod->t1, pmod->t2, dset->Z[dv]);
     pmod->sdy = gretl_stddev(pmod->t1, pmod->t2, dset->Z[dv]);
 
-    /* make the VCV matrix before messing with the model stats */
-    makevcv(pmod, pmod->sigma);
+    if (pmod->vcv == NULL) {
+	/* make the VCV matrix before messing with the model stats */
+	makevcv(pmod, pmod->sigma);
+    }
 
-    ess = 0.0;
+#if TRY_APPROX
+    adj = 0.0;
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (!na(pmod->uhat[t])) {
+	    adj += exp(pmod->uhat[t]);
+	}
+    }
+    adj /= pmod->nobs;
+#else
+    adj = 1.0;
+#endif
 
-    for (t=0; t<dset->n; t++) {
+    for (t=pmod->t1; t<=pmod->t2; t++) {
 	x = pmod->yhat[t];
 	if (!na(x)) {
-	    pmod->yhat[t] = lmax / (1.0 + exp(-x));
+	    pmod->yhat[t] =  lmax / (1.0 + exp(-x)/adj);
 	    pmod->uhat[t] = dset->Z[dv][t] - pmod->yhat[t];
 	    ess += pmod->uhat[t] * pmod->uhat[t];
 	}
@@ -3399,7 +3421,10 @@ static int rewrite_logistic_stats (const DATASET *dset,
     gretl_model_set_double(pmod, "ess_orig", ess);
     gretl_model_set_double(pmod, "sigma_orig", sigma);
     pmod->ci = LOGISTIC;
-    ls_criteria(pmod);
+
+    if (!(pmod->opt & OPT_F)) {
+	ls_criteria(pmod);
+    }
 
     return 0;
 }
@@ -3455,9 +3480,14 @@ MODEL logistic_model (const int *list, double lmax,
 
     gretl_model_init(&lmod, dset);
 
-    llist = gretl_list_copy(list);
-    if (llist == NULL) {
-	err = E_ALLOC;
+    if ((opt & OPT_F) && !dataset_is_panel(dset)) {
+	gretl_errmsg_set(_("This estimator requires panel data"));
+	err = E_DATA;
+    } else {
+	llist = gretl_list_copy(list);
+	if (llist == NULL) {
+	    err = E_ALLOC;
+	}
     }
 
     if (!err) {
@@ -3484,7 +3514,11 @@ MODEL logistic_model (const int *list, double lmax,
 	set_cluster_vcv_ci(LOGISTIC);
     }
 
-    lmod = lsq(llist, dset, OLS, opt | OPT_A);
+    if (opt & OPT_F) {
+	lmod = panel_model(llist, dset, opt, NULL);
+    } else {
+	lmod = lsq(llist, dset, OLS, opt | OPT_A);
+    }
     if (!lmod.errcode) {
 	rewrite_logistic_stats(dset, &lmod, dv, real_lmax);
 	set_model_id(&lmod, OPT_NONE);

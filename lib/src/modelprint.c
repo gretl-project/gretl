@@ -1034,6 +1034,12 @@ const char *estimator_string (const MODEL *pmod, PRN *prn)
 	} else {
 	    return N_("Probit");
 	}
+    } else if (pmod->ci == LOGISTIC) {
+	if (pmod->opt & OPT_F) {
+	    return N_("Fixed-effects logistic");
+	} else {
+	    return N_("Logistic");
+	}
     } else if (pmod->ci == HECKIT) {
 	if (pmod->opt & OPT_T) {
 	    return N_("Two-step Heckit");

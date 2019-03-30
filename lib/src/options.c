@@ -379,6 +379,7 @@ struct gretl_option gretl_opts[] = {
     { LOGISTIC, OPT_M, "ymax", 2 },
     { LOGISTIC, OPT_R, "robust", 0 },
     { LOGISTIC, OPT_C, "cluster", 2 },
+    { LOGISTIC, OPT_F, "fixed-effects", 0 },
     { LOGIT,    OPT_M, "multinomial", 0 },
     { LOGIT,    OPT_P, "p-values", 0 },
     { LOGIT,    OPT_R, "robust", 0 },
