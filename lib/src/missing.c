@@ -65,8 +65,6 @@ int model_missing (const MODEL *pmod, int t)
 {
     if (pmod->missmask != NULL) {
 	return pmod->missmask[t] == '1';
-    } else if (pmod->yhat != NULL) {
-	return na(pmod->yhat[t]);
     } else {
 	return 0;
     }

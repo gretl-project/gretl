@@ -1100,14 +1100,16 @@ static int add_vars_missing (const MODEL *pmod,
     int i, vi, t;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (!model_missing(pmod, t)) {
-	    for (i=1; i<=addvars[0]; i++) {
-		vi = addvars[i];
-		if (na(dset->Z[vi][t])) {
-		    fprintf(stderr, "add: obs %d OK in model but missing for series %s\n",
-			    t+1, dset->varname[vi]);
-		    return E_MISSDATA;
-		}
+	if (model_missing(pmod, t) ||
+	    (pmod->yhat != NULL && na(pmod->yhat[t]))) {
+	    continue;
+	}
+	for (i=1; i<=addvars[0]; i++) {
+	    vi = addvars[i];
+	    if (na(dset->Z[vi][t])) {
+		fprintf(stderr, "add: obs %d OK in model but missing for series %s\n",
+			t+1, dset->varname[vi]);
+		return E_MISSDATA;
 	    }
 	}
     }
