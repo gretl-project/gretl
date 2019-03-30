@@ -2290,10 +2290,10 @@ static void print_model_heading (const MODEL *pmod,
     } else if (pmod->ci == LOGISTIC) {
 	/* y-hat formula for logistic regression */
 	if (tex) {
-	    pprintf(prn, "$\\hat{y} = %g / (1 + e^{-X\\hat{\\beta}})$\n",
+	    pprintf(prn, "$\\hat{y} \approx E\left(%g / (1 + e^{-X\\hat{\\beta}})\right)$\n",
 		    gretl_model_get_double(pmod, "lmax"));
 	} else {
-	    pprintf(prn, "yhat = %g / (1 + exp(-X*b))\n",
+	    pprintf(prn, "yhat =~ E(%g / (1 + exp(-X*b)))\n",
 		    gretl_model_get_double(pmod, "lmax"));
 	}
     }
