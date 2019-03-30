@@ -61,6 +61,17 @@ static int really_missing (int v, int t, const double **Z, int d)
     }
 }
 
+int model_missing (const MODEL *pmod, int t)
+{
+    if (pmod->missmask != NULL) {
+	return pmod->missmask[t] == '1';
+    } else if (pmod->yhat != NULL) {
+	return na(pmod->yhat[t]);
+    } else {
+	return 0;
+    }
+}
+
 /* Construct a mask to code for missing observations within the sample
    range for a model.  The mask is an array of char with '0's
    for OK observations and '1's for missing obs, terminated with

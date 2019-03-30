@@ -33,7 +33,7 @@
 #endif
 #define na(x) (isnan(x) || isinf(x))
 
-#define model_missing(m,t) ((m)->missmask != NULL && (m)->missmask[t] == '1')
+int model_missing (const MODEL *pmod, int t);
 
 int model_has_missing_obs (const MODEL *pmod);
 
