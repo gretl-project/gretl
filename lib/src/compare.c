@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -35,7 +35,7 @@
  * @include: libgretl.h
  *
  * Included here are several tests for "pathologies" of the error
- * term in regression models, as well as specification tests 
+ * term in regression models, as well as specification tests
  * covering nonlinearity and the omission or addition of variables.
  */
 
@@ -46,7 +46,7 @@ struct COMPARE {
     int model_id;  /* ID of model under test */
     int model_ci;  /* estimator code for the model under test */
     int dfn;       /* numerator degrees of freedom */
-    int dfd;       /* denominator degrees of freedom */ 
+    int dfd;       /* denominator degrees of freedom */
     double test;   /* test statistic */
     double pval;   /* p-value for test statistic */
     int stat;      /* code identifying the test statistic */
@@ -86,6 +86,9 @@ mask_from_test_list (const int *list, const MODEL *pmod, int *err)
 	    }
 	}
 	off2 = pmod->list[1];
+#if WDEBUG
+	fprintf(stderr, "pmod->ifc = %d\n", pmod->ifc);
+#endif
     }
 
     for (i=0; i<pmod->ncoeff; i++) {
@@ -95,6 +98,8 @@ mask_from_test_list (const int *list, const MODEL *pmod, int *err)
 #if WDEBUG
 		    fprintf(stderr, "matched var %d at pmod->list[%d]: "
 			    "set mask[%d] = 1\n", list[j], i + off1, i + off2);
+		    printlist(list, "test list");
+		    printlist(pmod->list, "pmod->list");
 #endif
 		    mask[i + off2] = 1;
 		    nmask++;
@@ -121,7 +126,7 @@ mask_from_test_list (const int *list, const MODEL *pmod, int *err)
    automatic test, for the significance of all vars but the constant.
 */
 
-static int 
+static int
 wald_test (const int *list, MODEL *pmod, double *chisq, double *F)
 {
     char *mask = NULL;
@@ -242,7 +247,7 @@ double wald_omit_chisq (const int *list, MODEL *pmod)
     return X;
 }
 
-static int add_diffvars_to_test (ModelTest *test, const int *list, 
+static int add_diffvars_to_test (ModelTest *test, const int *list,
 				 const DATASET *dset)
 {
     char *vnames;
@@ -279,7 +284,7 @@ void print_add_omit_null (const int *list, const DATASET *dset,
     if (nl == 1 && !(opt & OPT_S)) {
 	/* single parameter, not in system context */
 	pputs(prn, "\n  ");
-	pprintf(prn, _("Null hypothesis: the regression parameter is zero for %s"), 
+	pprintf(prn, _("Null hypothesis: the regression parameter is zero for %s"),
 		dset->varname[list[1]]);
 	pputc(prn, '\n');
     } else if (nl == 0) {
@@ -324,7 +329,7 @@ void print_add_omit_null (const int *list, const DATASET *dset,
 	if (opt & OPT_T) {
 	    /* trend */
 	    pputs(prn, "    time\n");
-	}	
+	}
     }
 }
 
@@ -347,7 +352,7 @@ static int printing_revised_model (gretlopt opt)
 
 /* print the results from an add or omit test */
 
-static void print_compare (struct COMPARE *cmp, 
+static void print_compare (struct COMPARE *cmp,
 			   const DATASET *dset,
 			   gretlopt opt,
 			   PRN *prn)
@@ -364,7 +369,7 @@ static void print_compare (struct COMPARE *cmp,
 	}
 	pprintf(prn, _("Test on Model %d:"), cmp->model_id);
 	pputc(prn, '\n');
-    } 
+    }
 
     print_add_omit_null(cmp->testvars, dset, OPT_NONE, prn);
 
@@ -377,13 +382,13 @@ static void print_compare (struct COMPARE *cmp,
 	    double pval = chisq_cdf_comp(cmp->dfn, cmp->LR);
 
 	    pprintf(prn, "  (%s: %s(%d) = %g, %s %g)\n",  _("LR test"),
-		    _("Chi-square"), cmp->dfn, cmp->LR, 
+		    _("Chi-square"), cmp->dfn, cmp->LR,
 		    _("p-value"), pval);
 	} else if (!na(cmp->F)) {
 	    /* alternate F-form for Wald? */
 	    double pval = snedecor_cdf_comp(cmp->dfn, cmp->dfd, cmp->F);
 
-	    pprintf(prn, "  (%s: F(%d, %d) = %g, %s %g)\n", 
+	    pprintf(prn, "  (%s: F(%d, %d) = %g, %s %g)\n",
 		    _("F-form"), cmp->dfn, cmp->dfd, cmp->F,
 		    _("p-value"), pval);
 	}
@@ -391,17 +396,17 @@ static void print_compare (struct COMPARE *cmp,
 	/* note: unused */
 	pprintf(prn, "  %s: %s(%d) = %g, %s %g\n",  _("LR test"),
 		_("Chi-square"), cmp->dfn, cmp->test,
-		_("p-value"), cmp->pval); 
+		_("p-value"), cmp->pval);
     } else if (cmp->stat == GRETL_STAT_F) {
-	pprintf(prn, "  %s: %s(%d, %d) = %g, %s %g\n", _("Test statistic"), 
+	pprintf(prn, "  %s: %s(%d, %d) = %g, %s %g\n", _("Test statistic"),
 		(cmp->robust)? _("Robust F") : "F",
 		cmp->dfn, cmp->dfd, cmp->test,
-		_("p-value"), cmp->pval); 
+		_("p-value"), cmp->pval);
     } else if (cmp->stat == GRETL_STAT_LM) {
 	pprintf(prn, "  %s: %s(%d) = %g, %s %g\n",  _("LM test"),
 		_("Chi-square"), cmp->dfn, cmp->test,
-		_("p-value"), cmp->pval); 
-    }	    
+		_("p-value"), cmp->pval);
+    }
 
     if (cmp->score >= 0) {
 	pputs(prn, "  ");
@@ -412,7 +417,7 @@ static void print_compare (struct COMPARE *cmp,
 	    pprintf(prn, _("Omitting variables improved %d of %d information "
 			   "criteria.\n"), cmp->score, C_MAX);
 	}
-    } 
+    }
 
     if (!printing_revised_model(opt)) {
 	pputc(prn, '\n');
@@ -426,7 +431,7 @@ static void add_omit_attach (struct COMPARE *cmp, MODEL *pmod,
 {
     int tcode = (cmp->ci == OMIT)? GRETL_TEST_OMIT : GRETL_TEST_ADD;
     ModelTest *mtest = model_test_new(tcode);
-	    
+
     if (mtest != NULL) {
 	model_test_set_teststat(mtest, cmp->stat);
 	model_test_set_dfn(mtest, cmp->dfn);
@@ -440,7 +445,7 @@ static void add_omit_attach (struct COMPARE *cmp, MODEL *pmod,
     }
 }
 
-/* add a record of improvement/degeneration of the 
+/* add a record of improvement/degeneration of the
    model selection criteria, for non-quiet printing:
    @pmodA is the original model, and @pmodB the
    restricted (OMIT) or augmented (ADD) variant
@@ -454,7 +459,7 @@ static void maybe_add_info_score (struct COMPARE *cmp,
 	int i;
 
 	cmp->score = 0;
-	for (i=0; i<C_MAX; i++) { 
+	for (i=0; i<C_MAX; i++) {
 	    if (na(pmodB->criterion[i]) || na(pmodA->criterion[i])) {
 		cmp->score = -1;
 		break;
@@ -465,7 +470,7 @@ static void maybe_add_info_score (struct COMPARE *cmp,
     }
 }
 
-static int add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, 
+static int add_or_omit_compare (MODEL *pmodA, MODEL *pmodB,
 				const int *testvars, const DATASET *dset,
 				int ci, gretlopt opt, PRN *prn)
 {
@@ -483,7 +488,7 @@ static int add_or_omit_compare (MODEL *pmodA, MODEL *pmodB,
     cmp.dfn = testvars[0];
     cmp.testvars = testvars;
     cmp.model_ci = pmodA->ci;
-    cmp.model_id = pmodA->ID; 
+    cmp.model_id = pmodA->ID;
 
     if (ci == OMIT) {
 	/* the unrestricted model is the original one, 'A' */
@@ -493,7 +498,7 @@ static int add_or_omit_compare (MODEL *pmodA, MODEL *pmodB,
 	/* add: the unrestricted model is the new one, 'B' */
 	umod = pmodB;
 	rmod = pmodA;
-    } 
+    }
 
     if (opt & OPT_B) {
 	/* ivreg special: A and B have different
@@ -503,18 +508,23 @@ static int add_or_omit_compare (MODEL *pmodA, MODEL *pmodB,
 	cmp.model_id = -1;
     } else if (opt & OPT_L) {
 	cmp.model_id = -1;
-    } else if (umod != NULL && rmod != NULL) {	
+    } else if (umod != NULL && rmod != NULL) {
 	cmp.dfn = umod->ncoeff - rmod->ncoeff;
-    } 
+    }
 
     if (pmodA->opt & OPT_R) {
 	cmp.robust = 1;
     }
 
+    if (pmodA->ci == ARBOND || pmodA->ci == DPANEL) {
+	/* FIXME: plus some other cases? */
+	opt |= OPT_X;
+    }
+
     cmp.dfd = umod->dfd;
 
     if (opt & OPT_L) {
-	/* "add" with LM option: the auxiliary regression 
+	/* "add" with LM option: the auxiliary regression
 	   results are in pmodB */
 	cmp.stat = GRETL_STAT_LM;
 	cmp.test = pmodB->nobs * pmodB->rsq;
@@ -527,7 +537,7 @@ static int add_or_omit_compare (MODEL *pmodA, MODEL *pmodB,
 	   models available: base F-test on sums of squared
 	   residuals */
 	cmp.stat = GRETL_STAT_F;
-	cmp.test = ((rmod->ess - umod->ess) / umod->ess) * 
+	cmp.test = ((rmod->ess - umod->ess) / umod->ess) *
 	    cmp.dfd / cmp.dfn;
 	cmp.pval = snedecor_cdf_comp(cmp.dfn, cmp.dfd, cmp.test);
     } else if (opt & OPT_X) {
@@ -544,8 +554,8 @@ static int add_or_omit_compare (MODEL *pmodA, MODEL *pmodB,
 	if (!err) {
 	    cmp.pval = snedecor_cdf_comp(cmp.dfn, cmp.dfd, cmp.test);
 	}
-    }	
-	
+    }
+
     /* auxiliary LR test? */
     if (umod != NULL && rmod != NULL && !(opt & OPT_L)) {
 	if (!na(umod->lnL) && !na(rmod->lnL)) {
@@ -564,10 +574,9 @@ static int add_or_omit_compare (MODEL *pmodA, MODEL *pmodB,
 	    /* attach test to model */
 	    add_omit_attach(&cmp, pmodA, dset);
 	}
-	
 	if (!(opt & OPT_I)) {
 	    /* not --silent */
-	    if (!(opt & OPT_Q) && cmp.stat != GRETL_STAT_LM && 
+	    if (!(opt & OPT_Q) && cmp.stat != GRETL_STAT_LM &&
 		!iv_special) {
 		maybe_add_info_score(&cmp, pmodA, pmodB);
 	    }
@@ -603,7 +612,7 @@ full_model_list (const MODEL *pmod, const int *inlist)
 						inlist);
     } else {
 	int i, len = inlist[0];
-    
+
 	if (pmod->ci == WLS) {
 	    /* prepend the weight variable */
 	    len += 1;
@@ -617,7 +626,7 @@ full_model_list (const MODEL *pmod, const int *inlist)
 	    return NULL;
 	}
 
-	if (pmod->ci == WLS) { 
+	if (pmod->ci == WLS) {
 	    flist[1] = pmod->nwt;
 	    for (i=1; i<=inlist[0]; i++) {
 		flist[i+1] = inlist[i];
@@ -650,7 +659,7 @@ static gretlopt retrieve_dpanel_opts (const MODEL *pmod)
 
     if (gretl_model_get_int(pmod, "step") == 2) {
 	opt |=OPT_T;
-    }    
+    }
 
     return opt;
 }
@@ -679,11 +688,11 @@ static int obs_diff_ok (const MODEL *m_old, const MODEL *m_new)
    Durbin-Watson statistic, which requires re-estimation of the
    original specification. In these cases we need to ensure
    comparability, which means we have to retrieve any relevant options
-   from the original model and re-apply them.  
+   from the original model and re-apply them.
 */
 
 static MODEL replicate_estimator (const MODEL *orig, int *list,
-				  DATASET *dset, gretlopt myopt, 
+				  DATASET *dset, gretlopt myopt,
 				  PRN *prn)
 {
     MODEL rep;
@@ -706,7 +715,7 @@ static MODEL replicate_estimator (const MODEL *orig, int *list,
     if (cv > 0 && cv < dset->v) {
 	myopt |= OPT_C;
 	set_optval_string(orig->ci, OPT_C, dset->varname[cv]);
-    }    
+    }
 
     if (orig->ci == AR1) {
 	if (orig->opt & OPT_H) {
@@ -786,7 +795,7 @@ static MODEL replicate_estimator (const MODEL *orig, int *list,
 	if (!na(x)) {
 	    myopt |= OPT_L;
 	    set_optval_double(TOBIT, OPT_L, x);
-	}	
+	}
 	x = gretl_model_get_double(orig, "rlimit");
 	if (!na(x)) {
 	    myopt |= OPT_M;
@@ -813,7 +822,7 @@ static MODEL replicate_estimator (const MODEL *orig, int *list,
     case ARBOND:
 	rep = arbond_model(list, param, dset, myopt, prn);
 	break;
-    case DPANEL: 
+    case DPANEL:
 	rep = dpd_model(list, laglist, param, dset, myopt, prn);
 	break;
     case ARCH:
@@ -846,7 +855,7 @@ static MODEL replicate_estimator (const MODEL *orig, int *list,
     case IVREG:
 	rep = ivreg(list, dset, myopt);
 	break;
-    case LOGISTIC: 
+    case LOGISTIC:
 	{
 	    double lmax = gretl_model_get_double(orig, "lmax");
 
@@ -890,7 +899,7 @@ static MODEL replicate_estimator (const MODEL *orig, int *list,
 	    fprintf(stderr, "Original obs = %d but new = %d\n", orig->nobs, rep.nobs);
 	    rep.errcode = E_DATA;
 	}
-    } 
+    }
 
  bailout:
 
@@ -938,7 +947,7 @@ static void nonlin_test_header (int code, PRN *prn)
 
 static int
 real_nonlinearity_test (MODEL *pmod, int *list,
-			DATASET *dset, int aux_code, 
+			DATASET *dset, int aux_code,
 			gretlopt opt, PRN *prn)
 {
     MODEL aux;
@@ -978,7 +987,7 @@ real_nonlinearity_test (MODEL *pmod, int *list,
 		pputc(prn, '\n');
 	    }
 	    pprintf(prn, "  %s: TR^2 = %g,\n  ", _("Test statistic"), trsq);
-	    pprintf(prn, "%s = P(%s(%d) > %g) = %g\n\n", 
+	    pprintf(prn, "%s = P(%s(%d) > %g) = %g\n\n",
 		    _("with p-value"), _("Chi-square"), df, trsq, pval);
 	}
 
@@ -997,7 +1006,7 @@ real_nonlinearity_test (MODEL *pmod, int *list,
 	}
 
 	record_test_result(trsq, pval);
-    } 
+    }
 
  bailout:
 
@@ -1018,17 +1027,17 @@ real_nonlinearity_test (MODEL *pmod, int *list,
  * Run an auxiliary regression to test @pmod for nonlinearity,
  * via the addition of either squares or logs of the original
  * indepdendent variables.
- * 
+ *
  * Returns: 0 on successful completion, error code on error.
  */
 
-int nonlinearity_test (MODEL *pmod, DATASET *dset, ModelAuxCode aux, 
-		       gretlopt opt, PRN *prn) 
+int nonlinearity_test (MODEL *pmod, DATASET *dset, ModelAuxCode aux,
+		       gretlopt opt, PRN *prn)
 {
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
     int *tmplist = NULL;
-    const int orig_nvar = dset->v; 
+    const int orig_nvar = dset->v;
     int err = 0;
 
     if (!command_ok_for_model(ADD, 0, pmod)) {
@@ -1065,10 +1074,10 @@ int nonlinearity_test (MODEL *pmod, DATASET *dset, ModelAuxCode aux,
     }
 
     if (!err) {
-	err = real_nonlinearity_test(pmod, tmplist, dset, aux, 
+	err = real_nonlinearity_test(pmod, tmplist, dset, aux,
 				     opt, prn);
     }
-	
+
     /* trash any extra variables generated (squares, logs) */
     dataset_drop_last_variables(dset, dset->v - orig_nvar);
 
@@ -1081,15 +1090,20 @@ int nonlinearity_test (MODEL *pmod, DATASET *dset, ModelAuxCode aux,
     return err;
 }
 
-static int add_vars_missing (const MODEL *pmod, const int *list,
-			     const double **Z)
+static int add_vars_missing (const MODEL *pmod,
+			     const int *addvars,
+			     const DATASET *dset)
 {
-    int i, t;
+    int i, vi, t;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (!model_missing(pmod, t)) {
-	    for (i=1; i<=list[0]; i++) {
-		if (na(Z[list[i]][t])) {
+	/* 2019-03-30: the condition below was !model_missing(pmod, t) */
+	if (!na(pmod->yhat[t])) {
+	    for (i=1; i<=addvars[0]; i++) {
+		vi = addvars[i];
+		if (na(dset->Z[vi][t])) {
+		    fprintf(stderr, "add: obs %d OK in model but missing for series %s\n",
+			    t+1, dset->varname[vi]);
 		    return E_MISSDATA;
 		}
 	    }
@@ -1111,7 +1125,7 @@ static MODEL LM_add_test (MODEL *pmod, DATASET *dset, int *list,
 	aux.errcode = err;
 	return aux;
     }
-    
+
     list[1] = dset->v - 1;
 
     aux = lsq(list, dset, OLS, OPT_A | OPT_Z);
@@ -1130,7 +1144,7 @@ static MODEL LM_add_test (MODEL *pmod, DATASET *dset, int *list,
 		printmodel(&aux, dset, OPT_S, prn);
 	    }
 	}
-    } 
+    }
 
     return aux;
 }
@@ -1143,13 +1157,13 @@ static MODEL LM_add_test (MODEL *pmod, DATASET *dset, int *list,
  * @dset: dataset struct.
  * @opt: can contain OPT_Q (quiet) to suppress printing
  * of the new model, OPT_O to print its covariance matrix,
- * OPT_I for silent operation.  
+ * OPT_I for silent operation.
  * @prn: gretl printing struct.
  *
  * Re-estimate a given model after adding the specified
  * variables, and records a joint test on the additional
  * variables.
- * 
+ *
  * Returns: 0 on successful completion, error code on error.
  */
 
@@ -1160,11 +1174,17 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
     int *biglist = NULL;
-    const int orig_nvar = dset->v; 
+    const int orig_nvar = dset->v;
+    int n_add = 0;
     int err = 0;
 
     if (orig == NULL || orig->list == NULL || addvars == NULL) {
 	return E_DATA;
+    }
+
+    n_add = addvars[0];
+    if (n_add == 0) {
+	return E_NOADD;
     }
 
     if (!command_ok_for_model(ADD, opt, orig)) {
@@ -1187,7 +1207,7 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
     }
 
     /* check for NAs in add list relative to model */
-    err = add_vars_missing(orig, addvars, (const double **) dset->Z);
+    err = add_vars_missing(orig, addvars, dset);
     if (err) {
 	return err;
     }
@@ -1195,8 +1215,7 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
     /* create augmented regression list */
     if (orig->ci == IVREG) {
 	biglist = ivreg_list_add(orig->list, addvars, opt, &err);
-    } else if (orig->ci == PANEL || orig->ci == ARBOND || 
-	       orig->ci == DPANEL) {
+    } else if (orig->ci == ARBOND || orig->ci == DPANEL) {
 	biglist = panel_list_add(orig, addvars, &err);
     } else {
 	biglist = gretl_list_add(orig->list, addvars, &err);
@@ -1231,23 +1250,33 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
     if (umod.errcode) {
 	err = umod.errcode;
 	errmsg(err, prn);
+    } else if (umod.ncoeff - orig->ncoeff != n_add) {
+	gretl_errmsg_sprintf("Failed to add %d variable(s)", n_add);
+	err = E_DATA;
     }
 
+#if 1
+    if (!err) {
+	err = add_or_omit_compare(orig, &umod, addvars,
+				  dset, ADD, opt, prn);
+    }
+#else
     if (!err) {
 	int *addlist = gretl_list_diff_new(umod.list, orig->list, 2);
-	
+
 	if (addlist != NULL) {
 	    err = add_or_omit_compare(orig, &umod, addlist,
 				      dset, ADD, opt, prn);
 	    free(addlist);
 	}
     }
+#endif
 
     if (err || pmod == NULL) {
 	clear_model(&umod);
     } else {
 	*pmod = umod;
-    } 
+    }
 
     /* put dset back as it was on input */
     dataset_drop_last_variables(dset, dset->v - orig_nvar);
@@ -1272,7 +1301,7 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
  * Performs an LM test on @pmod for the null hypothesis
  * that the @addvars variables do not contribute
  * significant explanatory power.
- * 
+ *
  * Returns: 0 on successful completion, error code on error.
  */
 
@@ -1282,7 +1311,7 @@ int add_test (MODEL *pmod, const int *addvars,
     return add_test_full(pmod, NULL, addvars, dset, opt, prn);
 }
 
-static int wald_omit_test (const int *list, MODEL *pmod, 
+static int wald_omit_test (const int *list, MODEL *pmod,
 			   const DATASET *dset, gretlopt opt,
 			   PRN *prn)
 {
@@ -1302,7 +1331,7 @@ static int wald_omit_test (const int *list, MODEL *pmod,
 
     if (!err) {
 	free(test);
-	err = add_or_omit_compare(pmod, NULL, list, dset, OMIT, 
+	err = add_or_omit_compare(pmod, NULL, list, dset, OMIT,
 				  opt, prn);
     }
 
@@ -1341,17 +1370,17 @@ static int coeff_is_removable (const int *cands, const MODEL *pmod,
 
 /* Determine if @pmod contains a variable with p-value
    greater than some cutoff alpha_max; and if so, remove
-   this variable from @list.  
+   this variable from @list.
 
-   If the list @cands is non-empty then confine the search 
+   If the list @cands is non-empty then confine the search
    to candidate variables in that list.
 
    Returns 1 if a variable was dropped, else 0.
 */
 
-static int auto_drop_var (const MODEL *pmod, 
+static int auto_drop_var (const MODEL *pmod,
 			  int *list, const int *cands,
-			  DATASET *dset, double alpha_max, 
+			  DATASET *dset, double alpha_max,
 			  int starting, gretlopt opt,
 			  PRN *prn)
 {
@@ -1420,12 +1449,12 @@ static void list_copy_values (int *targ, const int *src)
 
 /* run a loop in which the least significant variable is dropped
    from the regression list, provided its p-value exceeds some
-   specified cutoff.  FIXME this probably still needs work for 
+   specified cutoff.  FIXME this probably still needs work for
    estimators other than OLS.  If @omitlist is non-empty the
    routine is confined to members of the list.
 */
 
-static MODEL auto_omit (MODEL *orig, const int *omitlist, 
+static MODEL auto_omit (MODEL *orig, const int *omitlist,
 			DATASET *dset, gretlopt opt,
 			PRN *prn)
 {
@@ -1448,17 +1477,17 @@ static MODEL auto_omit (MODEL *orig, const int *omitlist,
 	omod.errcode = err;
 	return omod;
     }
-    
+
     if (na(amax) || amax <= 0.0 || amax >= 1.0) {
 	amax = 0.10;
     }
 
-    drop = auto_drop_var(orig, tmplist, omitlist, dset, amax, 
+    drop = auto_drop_var(orig, tmplist, omitlist, dset, amax,
 			 1, opt, prn);
     if (!drop) {
 	/* nothing was dropped: set a "benign" error code */
 	err = omod.errcode = E_NOOMIT;
-    }	
+    }
 
     for (i=0; drop > 0; i++) {
 	if (i > 0) {
@@ -1472,7 +1501,7 @@ static MODEL auto_omit (MODEL *orig, const int *omitlist,
 	    drop = 0; /* break */
 	} else {
 	    list_copy_values(tmplist, omod.list);
-	    drop = auto_drop_var(&omod, tmplist, omitlist, dset, 
+	    drop = auto_drop_var(&omod, tmplist, omitlist, dset,
 				 amax, 0, opt, prn);
 	    clear_model(&omod);
 	}
@@ -1506,7 +1535,7 @@ static int make_short_list (MODEL *orig, const int *omitvars,
 
     if (omitvars == NULL || omitvars[0] == 0) {
 	return E_PARSE;
-    } 
+    }
 
     if (orig->ci == IVREG) {
 	list = ivreg_list_omit(orig->list, omitvars, opt, &err);
@@ -1575,11 +1604,11 @@ static int omit_test_precheck (MODEL *pmod, gretlopt opt)
  * @prn: gretl printing struct.
  *
  * Re-estimate a given model after removing the variables
- * specified in @omitvars.  Or if OPT_A is given, proceed 
- * sequentially, at each step dropping the least significant 
- * variable provided its p-value is above a certain threshold 
+ * specified in @omitvars.  Or if OPT_A is given, proceed
+ * sequentially, at each step dropping the least significant
+ * variable provided its p-value is above a certain threshold
  * (currently 0.10, two-sided).
- * 
+ *
  * Returns: 0 on successful completion, error code on error.
  */
 
@@ -1610,7 +1639,7 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
 	}
     }
 
-    /* impose the sample range used for the original model */ 
+    /* impose the sample range used for the original model */
     impose_model_smpl(orig, dset);
 
     /* set the mask for missing obs within the sample range, based
@@ -1680,7 +1709,7 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
  * Performs a Wald test on @pmod for the null hypothesis
  * that the @omitvars variables do not contribute
  * explanatory power.
- * 
+ *
  * Returns: 0 on successful completion, error code on error.
  */
 
@@ -1708,7 +1737,7 @@ int omit_test (MODEL *pmod, const int *omitvars,
  * Returns: the p-value, or #NADBL on error.
  */
 
-double get_DW_pvalue_for_model (MODEL *pmod, DATASET *dset, 
+double get_DW_pvalue_for_model (MODEL *pmod, DATASET *dset,
 				int *err)
 {
     MODEL dwmod;
@@ -1732,7 +1761,7 @@ double get_DW_pvalue_for_model (MODEL *pmod, DATASET *dset,
 	*err = E_NODATA;
     } else if (pmod == NULL || pmod->list == NULL) {
 	*err = E_DATA;
-    } else if ((pmod->ci != OLS && pmod->ci != PANEL) || 
+    } else if ((pmod->ci != OLS && pmod->ci != PANEL) ||
 	       na(pmod->dw) || model_has_missing_obs(pmod)) {
 	*err = E_BADSTAT;
     } else {
@@ -1753,7 +1782,7 @@ double get_DW_pvalue_for_model (MODEL *pmod, DATASET *dset,
 
     gretl_model_init(&dwmod, dset);
 
-    /* impose the sample range used for the original model */ 
+    /* impose the sample range used for the original model */
     impose_model_smpl(pmod, dset);
 
     dwmod = replicate_estimator(pmod, list, dset, OPT_A | OPT_I, NULL);
@@ -1770,7 +1799,7 @@ double get_DW_pvalue_for_model (MODEL *pmod, DATASET *dset,
     /* put back into dset what was there on input */
     dset->t1 = save_t1;
     dset->t2 = save_t2;
-    
+
     clear_model(&dwmod);
     free(list);
 
@@ -1788,11 +1817,11 @@ double get_DW_pvalue_for_model (MODEL *pmod, DATASET *dset,
  * @prn: gretl printing struct.
  *
  * Carries out and prints Ramsey's RESET test for model specification.
- * 
+ *
  * Returns: 0 on successful completion, error code on error.
  */
 
-int reset_test (MODEL *pmod, DATASET *dset, 
+int reset_test (MODEL *pmod, DATASET *dset,
 		gretlopt opt, PRN *prn)
 {
     int *newlist = NULL;
@@ -1800,7 +1829,7 @@ int reset_test (MODEL *pmod, DATASET *dset,
     double RF;
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
-    int i, t, orig_v = dset->v; 
+    int i, t, orig_v = dset->v;
     int addv, use_square, use_cube;
     const char *mode;
     int err = 0;
@@ -1891,7 +1920,7 @@ int reset_test (MODEL *pmod, DATASET *dset,
 	if (err) {
 	    errmsg(aux.errcode, prn);
 	}
-    } 
+    }
 
     if (!err) {
 	int silent = (opt & OPT_I);
@@ -1903,7 +1932,7 @@ int reset_test (MODEL *pmod, DATASET *dset,
 	    if (!(opt & OPT_Q)) {
 		printmodel(&aux, dset, OPT_NONE, prn);
 	    } else {
-		if (!(opt & OPT_G)) { 
+		if (!(opt & OPT_G)) {
 		    /* GUI special; see gui2/library.c */
 		    pputc(prn, '\n');
 		}
@@ -1917,7 +1946,7 @@ int reset_test (MODEL *pmod, DATASET *dset,
 
 	if (!silent) {
 	    pprintf(prn, "%s: F = %f,\n", _("Test statistic"), RF);
-	    pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"), 
+	    pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"),
 		    addv, aux.dfd, RF, pval);
 	    pputc(prn, '\n');
 	}
@@ -1939,15 +1968,15 @@ int reset_test (MODEL *pmod, DATASET *dset,
 		model_test_set_pvalue(test, pval);
 		model_test_set_opt(test, topt);
 		maybe_add_test_to_model(pmod, test);
-	    }	    
+	    }
 	}
 
 	record_test_result(RF, pval);
     }
 
     free(newlist);
-    dataset_drop_last_variables(dset, addv); 
-    clear_model(&aux); 
+    dataset_drop_last_variables(dset, addv);
+    clear_model(&aux);
 
     dset->t1 = save_t1;
     dset->t2 = save_t2;
@@ -1960,7 +1989,7 @@ static void bg_test_header (int order, PRN *prn, int ivreg)
     if (ivreg) {
 	pprintf(prn, "\n%s ", _("Godfrey (1994) test for"));
     } else {
-	pprintf(prn, "\n%s ", _("Breusch-Godfrey test for")); 
+	pprintf(prn, "\n%s ", _("Breusch-Godfrey test for"));
     }
 
     if (order > 1) {
@@ -1996,7 +2025,7 @@ static double ivreg_autocorr_wald_stat (MODEL *aux, int order, int *err)
 	    gretl_vector_set(b, i, x);
 	    kj = ki;
 	    for (j=i; j<order; j++) {
-		x = gretl_matrix_get(V0, ki, kj); 
+		x = gretl_matrix_get(V0, ki, kj);
 		gretl_matrix_set(V1, i, j, x);
 		gretl_matrix_set(V1, j, i, x);
 		kj++;
@@ -2010,7 +2039,7 @@ static double ivreg_autocorr_wald_stat (MODEL *aux, int order, int *err)
 	gretl_matrix_qform(b, GRETL_MOD_NONE, V1, WT, GRETL_MOD_NONE);
 	x = gretl_vector_get(WT, 0) / order;
     }
-	
+
     gretl_vector_free(WT);
     gretl_vector_free(b);
     gretl_matrix_free(V1);
@@ -2038,12 +2067,12 @@ static double ivreg_autocorr_wald_stat (MODEL *aux, int order, int *err)
  * perform a Wald-type test. The resulting chi-square statistic is
  * divided by its degrees of freedom as a finite-sample adjustment and
  * compared to an F distribution.
- * 
+ *
  * Returns: 0 on successful completion, error code on error.
  */
 
-static int ivreg_autocorr_test (MODEL *pmod, int order, 
-				DATASET *dset, gretlopt opt, 
+static int ivreg_autocorr_test (MODEL *pmod, int order,
+				DATASET *dset, gretlopt opt,
 				PRN *prn)
 {
     int smpl_t1 = dset->t1;
@@ -2056,7 +2085,7 @@ static int ivreg_autocorr_test (MODEL *pmod, int order,
     int i, t;
     int err = 0;
 
-    if (dataset_is_panel(dset)) { 
+    if (dataset_is_panel(dset)) {
 	return E_NOTIMP;
     }
 
@@ -2108,7 +2137,7 @@ static int ivreg_autocorr_test (MODEL *pmod, int order,
 	    /* compose augmented regression list */
 	    testlist = ivreg_list_add(pmod->list, addlist, OPT_B, &err);
 	}
-    } 
+    }
 
     if (!err) {
 	gretlopt ivopt = OPT_A;
@@ -2132,18 +2161,18 @@ static int ivreg_autocorr_test (MODEL *pmod, int order,
 	    bg_test_header(order, prn, 1);
 	} else {
 	    printmodel(&aux, dset, OPT_S, prn);
-	} 
+	}
 
 	pputc(prn, '\n');
 	pprintf(prn, "%s: Pseudo-LMF = %f,\n", _("Test statistic"), x);
-	pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"), 
+	pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"),
 		order, aux.nobs - pmod->ncoeff, x, pval);
 	pputc(prn, '\n');
 	record_test_result(x / order, pval);
 
 	if (opt & OPT_S) {
 	    ModelTest *test = model_test_new(GRETL_TEST_AUTOCORR);
-	    
+
 	    if (test != NULL) {
 		model_test_set_teststat(test, GRETL_STAT_LMF);
 		model_test_set_dfn(test, order);
@@ -2152,15 +2181,15 @@ static int ivreg_autocorr_test (MODEL *pmod, int order,
 		model_test_set_value(test, x);
 		model_test_set_pvalue(test, pval);
 		maybe_add_test_to_model(pmod, test);
-	    }	    
+	    }
 	}
     }
 
     free(addlist);
     free(testlist);
 
-    dataset_drop_last_variables(dset, dset->v - v); 
-    clear_model(&aux); 
+    dataset_drop_last_variables(dset, dset->v - v);
+    clear_model(&aux);
 
     /* reset sample as it was */
     dset->t1 = smpl_t1;
@@ -2169,7 +2198,7 @@ static int ivreg_autocorr_test (MODEL *pmod, int order,
     return err;
 }
 
-static int lb_autocorr_test (MODEL *pmod, int order, 
+static int lb_autocorr_test (MODEL *pmod, int order,
 			     gretlopt opt, PRN *prn)
 {
     double lb, pval = NADBL;
@@ -2188,18 +2217,18 @@ static int lb_autocorr_test (MODEL *pmod, int order,
 	pval = chisq_cdf_comp(df, lb);
 	if (na(pval)) {
 	    err = E_DATA;
-	} 
+	}
     }
 
     if (err) {
 	gretl_errmsg_set(_("Error calculating Ljung-Box statistic"));
     } else {
 	pputc(prn, '\n');
-	pprintf(prn, _("Test for autocorrelation up to order %d"), 
+	pprintf(prn, _("Test for autocorrelation up to order %d"),
 		order);
 	pputs(prn, "\n\n");
 	pprintf(prn, "Ljung-Box Q' = %g,\n", lb);
-	pprintf(prn, "%s = P(%s(%d) > %g) = %#.4g\n", _("with p-value"), 
+	pprintf(prn, "%s = P(%s(%d) > %g) = %#.4g\n", _("with p-value"),
 		_("Chi-square"), df, lb, chisq_cdf_comp(df, lb));
 	pputc(prn, '\n');
 	record_test_result(lb, pval);
@@ -2215,7 +2244,7 @@ static int lb_autocorr_test (MODEL *pmod, int order,
 	    model_test_set_value(test, lb);
 	    model_test_set_pvalue(test, pval);
 	    maybe_add_test_to_model(pmod, test);
-	}	    
+	}
     }
 
     return err;
@@ -2233,11 +2262,11 @@ static int lb_autocorr_test (MODEL *pmod, int order,
  * Tests the given model for autocorrelation of order equal to
  * the specified value, or equal to the frequency of the data if
  * the supplied @order is zero. Prints TR^2 and LMF test statistics.
- * 
+ *
  * Returns: 0 on successful completion, error code on error.
  */
 
-int autocorr_test (MODEL *pmod, int order, DATASET *dset, 
+int autocorr_test (MODEL *pmod, int order, DATASET *dset,
 		   gretlopt opt, PRN *prn)
 {
     int save_t1 = dset->t1;
@@ -2245,7 +2274,7 @@ int autocorr_test (MODEL *pmod, int order, DATASET *dset,
     int *newlist = NULL;
     MODEL aux;
     double RSSxe, RSSx = pmod->ess;
-    int i, t, n = dset->n, v = dset->v; 
+    int i, t, n = dset->n, v = dset->v;
     double trsq, LMF, lb, pval = 1.0;
     int err = 0;
 
@@ -2257,7 +2286,7 @@ int autocorr_test (MODEL *pmod, int order, DATASET *dset,
 	return lb_autocorr_test(pmod, order, opt, prn);
     }
 
-    if (pmod->ci != OLS && pmod->ci != VAR) { 
+    if (pmod->ci != OLS && pmod->ci != VAR) {
 	return E_NOTIMP;
     }
 
@@ -2298,7 +2327,7 @@ int autocorr_test (MODEL *pmod, int order, DATASET *dset,
     }
 
     if (!err) {
-	/* add uhat to data set: substitute zeros for 
+	/* add uhat to data set: substitute zeros for
 	   pre-sample values */
 	for (t=0; t<n; t++) {
 	    if (t < pmod->t1) {
@@ -2325,7 +2354,7 @@ int autocorr_test (MODEL *pmod, int order, DATASET *dset,
 		    dset->Z[lv][t] = (na(ul))? 0.0 : ul;
 		}
 	    }
-	} 
+	}
     }
 
     /* LMF apparatus: see Kiviet, Review of Economic Studies,
@@ -2340,7 +2369,7 @@ int autocorr_test (MODEL *pmod, int order, DATASET *dset,
 	err = aux.errcode;
 	if (err) {
 	    errmsg(err, prn);
-	} else { 
+	} else {
 	    RSSxe = aux.ess;
 	}
     }
@@ -2363,20 +2392,20 @@ int autocorr_test (MODEL *pmod, int order, DATASET *dset,
 	    } else {
 		printmodel(&aux, dset, OPT_NONE, prn);
 		pputc(prn, '\n');
-	    } 
+	    }
 	    pprintf(prn, "%s: LMF = %f,\n", _("Test statistic"), LMF);
-	    pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"), 
+	    pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"),
 		    order, aux.nobs - pmod->ncoeff - order, LMF, pval);
 
-	    pprintf(prn, "\n%s: TR^2 = %f,\n", 
+	    pprintf(prn, "\n%s: TR^2 = %f,\n",
 		    _("Alternative statistic"), trsq);
-	    pprintf(prn, "%s = P(%s(%d) > %g) = %.3g\n\n", _("with p-value"), 
+	    pprintf(prn, "%s = P(%s(%d) > %g) = %.3g\n\n", _("with p-value"),
 		    _("Chi-square"), order, trsq, chisq_cdf_comp(order, trsq));
 
 	    lb = ljung_box(order, pmod->t1, pmod->t2, dset->Z[v], &lberr);
 	    if (!na(lb)) {
 		pprintf(prn, "Ljung-Box Q' = %g,\n", lb);
-		pprintf(prn, "%s = P(%s(%d) > %g) = %.3g\n", _("with p-value"), 
+		pprintf(prn, "%s = P(%s(%d) > %g) = %.3g\n", _("with p-value"),
 			_("Chi-square"), order, lb, chisq_cdf_comp(order, lb));
 	    }
 
@@ -2397,13 +2426,13 @@ int autocorr_test (MODEL *pmod, int order, DATASET *dset,
 		model_test_set_value(test, LMF);
 		model_test_set_pvalue(test, pval);
 		maybe_add_test_to_model(pmod, test);
-	    }	    
+	    }
 	}
     }
 
     free(newlist);
-    dataset_drop_last_variables(dset, dset->v - v); 
-    clear_model(&aux); 
+    dataset_drop_last_variables(dset, dset->v - v);
+    clear_model(&aux);
 
     /* reset sample as it was */
     dset->t1 = save_t1;
@@ -2418,7 +2447,7 @@ static int chow_active (int split, const double *x, int t)
 	return x[t] == 1.0;
     } else {
 	return (t >= split);
-    } 
+    }
 }
 
 static int *get_break_list (const MODEL *pmod, int ci, int *err)
@@ -2467,7 +2496,7 @@ make_chow_list (const MODEL *pmod, DATASET *dset,
     int i, t, v = dset->v;
 
     if (havedum && in_gretl_list(pmod->list, dumv)) {
-	gretl_errmsg_sprintf(_("The model already contains %s"), 
+	gretl_errmsg_sprintf(_("The model already contains %s"),
 			     dset->varname[dumv]);
 	*err = E_DATA;
 	return NULL;
@@ -2500,7 +2529,7 @@ make_chow_list (const MODEL *pmod, DATASET *dset,
     if (!*err) {
 	const double *cdum = NULL;
 
-	for (i=1; i<=l0; i++) { 
+	for (i=1; i<=l0; i++) {
 	    chowlist[i] = pmod->list[i];
 	}
 
@@ -2510,7 +2539,7 @@ make_chow_list (const MODEL *pmod, DATASET *dset,
 	} else {
 	    /* generate the split variable */
 	    for (t=0; t<dset->n; t++) {
-		dset->Z[v][t] = (double) (t >= split); 
+		dset->Z[v][t] = (double) (t >= split);
 	    }
 	    strcpy(dset->varname[v], "splitdum");
 	    series_set_label(dset, v, _("dummy variable for Chow test"));
@@ -2567,7 +2596,7 @@ static void write_plot_x_range (const double *x, int t1, int t2,
     fprintf(fp, "set xrange [%.10g:%.10g]\n", xmin, xmax);
 }
 
-static int QLR_graph (const double *testvec, int t1, int t2, 
+static int QLR_graph (const double *testvec, int t1, int t2,
 		      const DATASET *dset, int df, int robust)
 {
     const double *x = gretl_plotx(dset, OPT_NONE);
@@ -2611,13 +2640,13 @@ static int QLR_graph (const double *testvec, int t1, int t2,
     if (!na(critval)) {
 	fprintf(fp, "plot \\\n"
 		"'-' using 1:2 title \"%s\" w lines , \\\n"
-		"%g title \"%s\" w lines lt 0\n", 
+		"%g title \"%s\" w lines lt 0\n",
 		_(title), critval, "5% QLR critical value");
     } else {
 	fprintf(fp, "plot \\\n"
 		"'-' using 1:2 title \"%s\" w lines\n", _(title));
     }
-    
+
     for (t=t1; t<=t2; t++) {
 	fprintf(fp, "%g %g\n", x[t], testvec[t-t1]);
     }
@@ -2644,13 +2673,13 @@ static void save_QLR_test (MODEL *pmod, const char *datestr,
 	model_test_set_pvalue(test, pval);
 	model_test_set_dfn(test, df);
 	maybe_add_test_to_model(pmod, test);
-    }	  
+    }
 }
 
 /* for internal use by the "qlrtest" command */
 
 static double get_QLR_pval (double test, int df,
-			    int k1, int k2, 
+			    int k1, int k2,
 			    MODEL *pmod)
 {
     double (*qlr_asy_pvalue) (double, int, double);
@@ -2664,7 +2693,7 @@ static double get_QLR_pval (double test, int df,
 	return NADBL;
     }
 
-    pi_1 = (k1 - pmod->t1 + 1) / (double) pmod->nobs; 
+    pi_1 = (k1 - pmod->t1 + 1) / (double) pmod->nobs;
     pi_2 = (k2 - pmod->t1 + 1) / (double) pmod->nobs;
     lam0 = (pi_2*(1.0 - pi_1)) / (pi_1*(1.0 - pi_2));
 
@@ -2735,7 +2764,7 @@ static void QLR_print_result (double test,
 
 static void save_chow_test (MODEL *pmod, const char *chowstr,
 			    double test, double pval,
-			    int dfn, int dfd, 
+			    int dfn, int dfd,
 			    gretlopt opt)
 {
     int ttype = (opt & OPT_D)? GRETL_TEST_CHOWDUM : GRETL_TEST_CHOW;
@@ -2753,7 +2782,7 @@ static void save_chow_test (MODEL *pmod, const char *chowstr,
 	model_test_set_dfn(mt, dfn);
 	model_test_set_dfd(mt, dfd);
 	maybe_add_test_to_model(pmod, mt);
-    }	  
+    }
 }
 
 static int QLR_plot_wanted (gretlopt opt)
@@ -2794,7 +2823,7 @@ static int QLR_plot_wanted (gretlopt opt)
  * Returns: 0 on successful completion, error code on error.
  */
 
-static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset, 
+static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
 			   int ci, gretlopt opt, PRN *prn)
 {
     int save_t1 = dset->t1;
@@ -2869,7 +2898,7 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
 		err = E_ALLOC;
 	    }
 	}
-	
+
 	for (t=split; t<=smax && !err; t++) {
 	    chow_mod = lsq(chowlist, dset, OLS, lsqopt);
 	    if (chow_mod.errcode) {
@@ -2898,9 +2927,9 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
 		testvec[t - split] = test;
 	    }
 #if 0
-	    fprintf(stderr, "split at t=%d: F(%d,%d)=%g (X2=%g)\n", t, 
+	    fprintf(stderr, "split at t=%d: F(%d,%d)=%g (X2=%g)\n", t,
 		    dfn, dfd, F, test*dfn);
-	    fprintf(stderr, " pmod->ess = %g, chow_mod.ess = %g\n", 
+	    fprintf(stderr, " pmod->ess = %g, chow_mod.ess = %g\n",
 		    pmod->ess, chow_mod.ess);
 #endif
 	    clear_model(&chow_mod);
@@ -2916,7 +2945,7 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
 	    X2 = robust ? testmax : dfn * testmax;
 	    pval = get_QLR_pval(X2, dfn, split, smax, pmod);
 	    ntodate(datestr, tmax, dset);
-	    
+
 	    if (!(opt & OPT_Q)) {
 		QLR_print_result(testmax, pval, datestr, dfn, dfd,
 				 robust, prn);
@@ -2973,7 +3002,7 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
 		    pval = chisq_cdf_comp(dfn, test);
 		}
 	    } else {
-		test = (pmod->ess - chow_mod.ess) * dfd / 
+		test = (pmod->ess - chow_mod.ess) * dfd /
 		    (chow_mod.ess * dfn);
 		if (!na(test)) {
 		    pval = snedecor_cdf_comp(dfn, dfd, test);
@@ -2994,17 +3023,17 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
 		    ntodate(chowstr, chowparm, dset);
 		    pprintf(prn, _("Chow test for structural break at observation %s"),
 			    chowstr);
-		} 
+		}
 		pputc(prn, '\n');
 
 		if (robust) {
 		    pprintf(prn, "  %s(%d) = %g %s %.4f\n", _("Chi-square"),
 			    dfn, test, _("with p-value"), pval);
-		    pprintf(prn, "  %s: F(%d, %d) = %g %s %.4f\n\n", _("F-form"), 
+		    pprintf(prn, "  %s: F(%d, %d) = %g %s %.4f\n\n", _("F-form"),
 			    dfn, chow_mod.dfd, test / dfn, _("with p-value"),
 			    snedecor_cdf_comp(dfn, chow_mod.dfd, test / dfn));
 		} else {
-		    pprintf(prn, "  F(%d, %d) = %g %s %.4f\n\n", 
+		    pprintf(prn, "  F(%d, %d) = %g %s %.4f\n\n",
 			    dfn, dfd, test, _("with p-value"), pval);
 		}
 
@@ -3013,7 +3042,7 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
 		}
 
 		record_test_result(test, pval);
-	    } 
+	    }
 	}
 	clear_model(&chow_mod);
 	free(testlist);
@@ -3045,16 +3074,16 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
  * and prints the results to @prn. (The second portion of
  * the sample runs from observation @splitobs to the
  * end of the original sample range.)
- * 
+ *
  * Returns: 0 on successful completion, error code on error.
  */
 
-int chow_test (int splitobs, MODEL *pmod, DATASET *dset, 
+int chow_test (int splitobs, MODEL *pmod, DATASET *dset,
 	       gretlopt opt, PRN *prn)
 {
     int err = 0;
 
-    if (splitobs <= 0 || splitobs >= dset->n) { 
+    if (splitobs <= 0 || splitobs >= dset->n) {
 	gretl_errmsg_set(_("Invalid sample split for Chow test"));
 	err = E_DATA;
     } else {
@@ -3076,16 +3105,16 @@ int chow_test (int splitobs, MODEL *pmod, DATASET *dset,
  * Tests the given model for structural stability (Chow test),
  * using the dummy variable specified by @splitvar to divide the
  * original sample range of @pmod into two portions.
- * 
+ *
  * Returns: 0 on successful completion, error code on error.
  */
 
-int chow_test_from_dummy (int splitvar, MODEL *pmod, DATASET *dset, 
+int chow_test_from_dummy (int splitvar, MODEL *pmod, DATASET *dset,
 			  gretlopt opt, PRN *prn)
 {
     int err = 0;
 
-    if (splitvar <= 0 || splitvar >= dset->v) { 
+    if (splitvar <= 0 || splitvar >= dset->v) {
 	gretl_errmsg_set(_("Invalid sample split for Chow test"));
 	err = E_DATA;
     } else {
@@ -3104,9 +3133,9 @@ int chow_test_from_dummy (int splitvar, MODEL *pmod, DATASET *dset,
  * @prn: gretl printing struct.
  *
  * Tests the given model for structural stability via the
- * Quandt Likelihood Ratio test for a structural break at 
+ * Quandt Likelihood Ratio test for a structural break at
  * an unknown point in the sample range.
- * 
+ *
  * Returns: 0 on successful completion, error code on error.
  */
 
@@ -3149,13 +3178,13 @@ static double vprime_M_v (double *v, double *M, int n)
     return val;
 }
 
-/* Compute scaled recursive residuals and cumulate \bar{w} via a 
-   sequence of OLS regressions. See William Greene, Econometric 
+/* Compute scaled recursive residuals and cumulate \bar{w} via a
+   sequence of OLS regressions. See William Greene, Econometric
    Analysis 5e, pp. 135-136.
 */
 
 static int cusum_compute (MODEL *pmod, double *cresid, int T, int k,
-			  double *wbar, DATASET *dset) 
+			  double *wbar, DATASET *dset)
 {
     MODEL cmod;
     gretlopt opt = OPT_X | OPT_A;
@@ -3172,7 +3201,7 @@ static int cusum_compute (MODEL *pmod, double *cresid, int T, int k,
 
     /* set minimal sample based on model to be tested */
     dset->t1 = pmod->t1;
-    dset->t2 = pmod->t1 + k - 1;    
+    dset->t2 = pmod->t1 + k - 1;
 
     for (j=0; j<n && !err; j++) {
 	cmod = lsq(pmod->list, dset, OLS, opt);
@@ -3202,7 +3231,7 @@ static int cusum_compute (MODEL *pmod, double *cresid, int T, int k,
 		dset->t2 += 1;
 	    }
 	}
-	clear_model(&cmod); 
+	clear_model(&cmod);
     }
 
     free(xt);
@@ -3212,8 +3241,8 @@ static int cusum_compute (MODEL *pmod, double *cresid, int T, int k,
 
 #define okfreq(p) (p == 1 || p == 4 || p == 12 || p == 24 || p == 52)
 
-static int cusum_do_graph (double a, double b, const double *W, 
-			   int t1, int k, int m, 
+static int cusum_do_graph (double a, double b, const double *W,
+			   int t1, int k, int m,
 			   DATASET *dset, gretlopt opt)
 {
     FILE *fp = NULL;
@@ -3255,11 +3284,11 @@ static int cusum_do_graph (double a, double b, const double *W,
 		_("CUSUM plot with 95% confidence band"));
 	fprintf(fp, "plot \\\n%g+%g*(x-%g) title '' w lines lt 2, \\\n", a, b, x0);
 	fprintf(fp, "%g-%g*(x-%g) title '' w lines lt 2, \\\n", -a, b, x0);
-    }	
+    }
 
     fputs("'-' using 1:2 w linespoints lt 1\n", fp);
 
-    for (j=0; j<m; j++) { 
+    for (j=0; j<m; j++) {
 	t = t1 + k + j;
 	if (obs != NULL) {
 	    fprintf(fp, "%g %g\n", obs[t], W[j]);
@@ -3283,7 +3312,7 @@ static void cusum_harvey_collier (double wbar, double sigma, int m,
 
     hct = (sqrt((double) m) * wbar) / sigma;
     pval = student_pvalue_2(m - 1, hct);
-    pprintf(prn, _("\nHarvey-Collier t(%d) = %g with p-value %.4g\n\n"), 
+    pprintf(prn, _("\nHarvey-Collier t(%d) = %g with p-value %.4g\n\n"),
 	    m - 1, hct, pval);
 
     if (opt & OPT_S) {
@@ -3311,12 +3340,12 @@ static void cusum_harvey_collier (double wbar, double sigma, int m,
  * Tests the given model for parameter stability via the CUSUM test,
  * or if @opt includes %OPT_R, via the CUSUMSQ test; %OPT_Q makes
  * the test quiet.
- * 
+ *
  * Returns: 0 on successful completion, error code on error.
  */
 
-int cusum_test (MODEL *pmod, DATASET *dset, 
-		gretlopt opt, PRN *prn) 
+int cusum_test (MODEL *pmod, DATASET *dset,
+		gretlopt opt, PRN *prn)
 {
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
@@ -3342,7 +3371,7 @@ int cusum_test (MODEL *pmod, DATASET *dset,
     }
 
     /* the number of forecasts */
-    m = T - k; 
+    m = T - k;
 
     cresid = malloc(m * sizeof *cresid);
     W = malloc(m * sizeof *W);
@@ -3410,7 +3439,7 @@ int cusum_test (MODEL *pmod, DATASET *dset,
 	pputs(prn, /* xgettext:no-c-format */
 	      _("('*' indicates a value outside of 95% confidence band)"));
 	pputs(prn, "\n\n");
-    
+
 	for (j=0; j<m; j++) {
 	    W[j] = 0.0;
 	    if (opt & OPT_R) {
@@ -3444,7 +3473,7 @@ int cusum_test (MODEL *pmod, DATASET *dset,
     /* restore original sample range */
     dset->t1 = save_t1;
     dset->t2 = save_t2;
-    
+
     free(cresid);
     free(W);
 
@@ -3461,11 +3490,11 @@ int cusum_test (MODEL *pmod, DATASET *dset,
  * If @pmod was estimated via an AR(1) estimator, run an
  * auxiliary regression to test the implied common-factor
  * restriction.
- * 
+ *
  * Returns: 0 on successful completion, error code on error.
  */
 
-int comfac_test (MODEL *pmod, DATASET *dset, 
+int comfac_test (MODEL *pmod, DATASET *dset,
 		 gretlopt opt, PRN *prn)
 {
     MODEL cmod;
@@ -3580,7 +3609,7 @@ int comfac_test (MODEL *pmod, DATASET *dset,
 	    pputs(prn, _("Test of common factor restriction"));
 	    pputs(prn, "\n\n");
 
-	    pprintf(prn, "  %s: %s(%d, %d) = %g, ", _("Test statistic"), 
+	    pprintf(prn, "  %s: %s(%d, %d) = %g, ", _("Test statistic"),
 		    "F", dfn, dfd, Ftest);
 	    pprintf(prn, _("with p-value = %g\n"), pval);
 	    pputc(prn, '\n');
@@ -3610,7 +3639,7 @@ int comfac_test (MODEL *pmod, DATASET *dset,
     /* delete the added variables and restore the original
        sample range */
 
-    dataset_drop_last_variables(dset, nadd);   
+    dataset_drop_last_variables(dset, nadd);
     free(biglist);
 
     dset->t1 = save_t1;
@@ -3627,12 +3656,12 @@ int comfac_test (MODEL *pmod, DATASET *dset,
  * @prn: gretl printing struct.
  *
  * Tests the given pooled model for fixed and random effects.
- * 
+ *
  * Returns: 0 on successful completion, error code on error.
  */
 
-int panel_hausman_test (MODEL *pmod, DATASET *dset, 
-			gretlopt opt, PRN *prn) 
+int panel_hausman_test (MODEL *pmod, DATASET *dset,
+			gretlopt opt, PRN *prn)
 {
     if (pmod->ci != OLS || !dataset_is_panel(dset)) {
 	pputs(prn, _("This test is only relevant for pooled models\n"));
@@ -3665,11 +3694,11 @@ int panel_hausman_test (MODEL *pmod, DATASET *dset,
  *
  * Adds to the working dataset one or more series calculated by
  * the gretl test for leverage/influence of data points.
- * 
+ *
  * Returns: 0 on successful completion, error code on error.
  */
 
-int add_leverage_values_to_dataset (DATASET *dset, gretl_matrix *m, 
+int add_leverage_values_to_dataset (DATASET *dset, gretl_matrix *m,
 				    int flags)
 {
     int t1, t2;
@@ -3718,7 +3747,7 @@ int add_leverage_values_to_dataset (DATASET *dset, gretl_matrix *m,
 	    } else {
 		dset->Z[v][t] = gretl_matrix_get(m, j++, 1);
 	    }
-	}	
+	}
 	strcpy(dset->varname[v], "influ");
 	make_varname_unique(dset->varname[v], v, dset);
 	series_set_label(dset, v, "influence values");
@@ -3745,7 +3774,7 @@ int add_leverage_values_to_dataset (DATASET *dset, gretl_matrix *m,
 		}
 		j++;
 	    }
-	}	
+	}
 	strcpy(dset->varname[v], "dffits");
 	make_varname_unique(dset->varname[v], v, dset);
 	series_set_label(dset, v, "DFFITS values");
@@ -3755,23 +3784,23 @@ int add_leverage_values_to_dataset (DATASET *dset, gretl_matrix *m,
 }
 
 /**
- * leverage_test: 
- * @pmod: pointer to model to be tested.  
- * @dset: dataset struct.  
- * @opt: if OPT_S, add calculated series to data set; operate 
- * silently if OPT_Q.  
+ * leverage_test:
+ * @pmod: pointer to model to be tested.
+ * @dset: dataset struct.
+ * @opt: if OPT_S, add calculated series to data set; operate
+ * silently if OPT_Q.
  * @prn: gretl printing struct.
  *
  * Tests the data used in the given model for points with
  * high leverage and influence on the estimates.
- * 
+ *
  * Returns: 0 on successful completion, error code on error.
  */
 
-int leverage_test (MODEL *pmod, DATASET *dset, 
+int leverage_test (MODEL *pmod, DATASET *dset,
 		   gretlopt opt, PRN *prn)
 {
-    gretl_matrix *(*model_leverage) (const MODEL *, const DATASET *, 
+    gretl_matrix *(*model_leverage) (const MODEL *, const DATASET *,
 				     gretlopt, PRN *, int *);
     gretl_matrix *m;
     int err = 0;
@@ -3789,9 +3818,9 @@ int leverage_test (MODEL *pmod, DATASET *dset,
 
     if (!err && (opt & OPT_S)) {
 	/* we got the --save option */
-	err = add_leverage_values_to_dataset(dset, m, 
+	err = add_leverage_values_to_dataset(dset, m,
 					     SAVE_LEVERAGE |
-					     SAVE_INFLUENCE| 
+					     SAVE_INFLUENCE|
 					     SAVE_DFFITS);
     }
 
@@ -3809,7 +3838,7 @@ int leverage_test (MODEL *pmod, DATASET *dset,
  *
  * Calculates and displays the Variance Inflation Factors for
  * the independent variables in the given model.
- * 
+ *
  * Returns: 0 on successful completion, error code on error.
  */
 

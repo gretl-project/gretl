@@ -3849,12 +3849,13 @@ MODEL real_panel_model (const int *list, DATASET *dset,
 	goto bailout;
     }
 
-    free(olslist);
-
 #if PDEBUG > 1
     pprintf(prn, "*** initial baseline OLS\n");
+    printlist(olslist, "olslist");
     printmodel(&mod, dset, OPT_NONE, prn);
 #endif
+
+    free(olslist);
 
 #if PDEBUG
     if (pan_opt & OPT_F) {
@@ -6266,34 +6267,11 @@ static int *arbond_list_add (const MODEL *orig, const int *add, int *err)
 
 int *panel_list_add (const MODEL *orig, const int *add, int *err)
 {
-    int *newlist = NULL;
-    int i;
-
-    if (orig->ci == ARBOND) {
+    if (orig->ci == ARBOND || orig->ci == DPANEL) {
 	return arbond_list_add(orig, add, err);
-    }
-
-    if (orig->opt & OPT_F) {
-	int *panlist;
-
-	/* fixed-effects lists have the constant removed,
-	   so we need to put it back first
-	*/
-	panlist = gretl_list_new(orig->list[0] + 1);
-	if (panlist != NULL) {
-	    panlist[1] = orig->list[1];
-	    panlist[2] = 0;
-	    for (i=3; i<=panlist[0]; i++) {
-		panlist[i] = orig->list[i-1];
-	    }
-	    newlist = gretl_list_add(panlist, add, err);
-	    free(panlist);
-	}
     } else {
-	newlist = gretl_list_add(orig->list, add, err);
+	return gretl_list_add(orig->list, add, err);
     }
-
-    return newlist;
 }
 
 /* calculate the within and between standard deviations for a given
