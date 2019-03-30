@@ -7245,6 +7245,10 @@
 	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
 	</option>
+	<option>
+	  <flag>--fixed-effects</flag>
+	  <effect>see below</effect>
+	</option>
       </options>
       <examples>
         <example>logistic y const x</example>
@@ -7283,13 +7287,19 @@
 	The fitted values and residuals from the regression are
 	automatically transformed using
 	<equation status="display"
-	  tex="\[y=\frac{y^*}{1+e^{-x}}\]"
-	  ascii="y = y* / (1 + exp(-x))"
+	  tex="\[y \approx E\left(\frac{y^*}{1+e^{-x}}\right)\]"
+	  ascii="y =~ E(y* / (1 + exp(-x)))"
 	  graphic="logistic2"/> where <math>x</math> represents
 	either a fitted value or a residual from the OLS regression
 	using the transformed dependent variable.  The reported values
 	are therefore comparable with the original dependent
 	variable.
+      </para>
+      <para>
+	The <opt>fixed-effects</opt> option is applicable only if the
+	dataset takes the form of a panel. In that case we subtract
+	the group means from the logistic transform of the dependent
+	variable and estimation proceeds as usual for fixed effects.
       </para>
       <para>
 	Note that if the dependent variable is binary, you should
