@@ -22,6 +22,7 @@ MPIDOC = gretl-mpi.pdf
 MIDASDOC = midas-gretl.pdf
 SVMDOC = gretl-svm.pdf
 KBD = gretl-keys.pdf
+US = $(GUIDE) $(REF) $(HANSL) $(PKGBOOK) $(MPIDOC) $(MIDASDOC) $(SVMDOC) $(KBD)
 
 ALTGUIDE = gretl-guide-a4.pdf
 ALTREF = gretl-ref-a4.pdf
@@ -31,6 +32,8 @@ ALTMPIDOC = gretl-mpi-a4.pdf
 ALTMIDASDOC = midas-gretl-a4.pdf
 ALTSVMDOC = gretl-svm-a4.pdf
 ALTKBD = gretl-keys-a4.pdf
+A4 = $(ALTGUIDE) $(ALTREF) $(ALTHANSL) $(ALTPKGBOOK) $(ALTMPIDOC) $(ALTMIDASDOC) \
+ $(ALTSVMDOC) $(ALTKBD)
 
 TEXSRC = cli.tex \
 	criteria.tex \
@@ -309,6 +312,14 @@ bibpass: onepass refpass
 
 install: all installdirs
 	for f in *.pdf ; do \
+	$(INSTALL_DATA) $$f $(DESTDIR)$(docdir) ; done
+
+install-us: $(US) installdirs
+	for f in $(US) ; do \
+	$(INSTALL_DATA) $$f $(DESTDIR)$(docdir) ; done
+
+install-a4: $(A4) installdirs
+	for f in $(A4) ; do \
 	$(INSTALL_DATA) $$f $(DESTDIR)$(docdir) ; done
 
 installdirs:
