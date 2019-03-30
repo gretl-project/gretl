@@ -2762,6 +2762,40 @@ static int validate_list_token (cmd_token *tok)
     }
 }
 
+/* In case we got something that looks like a list but
+   turned out not to be valid as such, remove the TOK_DONE
+   flag from the tokens that composed the putative list;
+   their @s (string) members are collected in @lstr.
+*/
+
+static int rescind_tok_done_status (CMD *c, const char *lstr)
+{
+    int i, j, ns = 0;
+    cmd_token *tok;
+    char **S;
+
+    S = gretl_string_split(lstr, &ns, NULL);
+    if (S == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=c->cstart+1; i<c->ntoks; i++) {
+	tok = &c->toks[i];
+	if (token_done(tok)) {
+	    for (j=0; j<ns; j++) {
+		if (!strcmp(S[j], tok->s)) {
+		    tok->flag ^= TOK_DONE;
+		    break;
+		}
+	    }
+	}
+    }
+
+    strings_array_free(S, ns);
+
+    return 0;
+}
+
 static int process_command_list (CMD *c, DATASET *dset)
 {
     char vectest[3] = {0}; /* for arima */
@@ -2893,10 +2927,12 @@ static int process_command_list (CMD *c, DATASET *dset)
 	       but list generation failed: again, maybe the
 	       the terms are names of non-series variables
 	    */
-	    c->ciflags &= ~CI_LIST;
-	    c->ciflags &= ~CI_DOALL;
-	    c->ciflags |= CI_ADHOC;
-	    c->err = 0;
+	    c->err = rescind_tok_done_status(c, lstr);
+	    if (!c->err) {
+		c->ciflags &= ~CI_LIST;
+		c->ciflags &= ~CI_DOALL;
+		c->ciflags |= CI_ADHOC;
+	    }
 	}
     }
 
