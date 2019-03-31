@@ -7285,15 +7285,18 @@
       </para>
       <para>
 	The fitted values and residuals from the regression are
-	automatically transformed using
+	automatically adjusted using the inverse of the logistic
+	transformation:
 	<equation status="display"
 	  tex="\[y \approx E\left(\frac{y^*}{1+e^{-x}}\right)\]"
 	  ascii="y =~ E(y* / (1 + exp(-x)))"
 	  graphic="logistic2"/> where <math>x</math> represents
 	either a fitted value or a residual from the OLS regression
-	using the transformed dependent variable.  The reported values
+	using the logistic dependent variable.  The reported values
 	are therefore comparable with the original dependent
-	variable.
+	variable. The need for approximation arises because the
+	inverse transformation is nonlinear and therefore does
+	not conserve expectation.
       </para>
       <para>
 	The <opt>fixed-effects</opt> option is applicable only if the
