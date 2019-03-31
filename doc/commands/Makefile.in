@@ -150,14 +150,14 @@ matfuncs.o: matfuncs.c $(GRETLHDRS)
 skeleton.xml: skeleton $(CMDDTD)
 	./skeleton $(CMDSDIR) > $@
 
-$(EQNLIST): $(EQNXSL) $(CMDSDIR)/gretl_commands.xml
-	xsltproc $(EQNXSL) $(CMDSDIR)/gretl_commands.xml > eqn_list.new
+$(EQNLIST): $(EQNXSL) $(CMDSDIR)/gretl_commands_en.xml
+	xsltproc $(EQNXSL) $(CMDSDIR)/gretl_commands_en.xml > eqn_list.new
 	if diff --brief $@ eqn_list.new	| grep eqn ; then cp eqn_list.new $@ ; fi
 	rm -f eqn_list.new
 
 # we'll do the following manually: it's a bit hyperactive
-$(FIGSTAMP): $(EQNLIST)
-	$(topsrc)/doc/texmath2png.pl $< $(SHAREDIR)/texfigs && touch $@
+figs: $(EQNLIST)
+	$(topsrc)/doc/texmath2png.pl $< $(SHAREDIR)/texfigs && touch $(FIGSTAMP)
 
 # English "online" help files
 $(EN_CMDREF_STAMP): xsltrans reflow $(EN_SRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) $(CHAPREFS)
