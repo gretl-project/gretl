@@ -4361,6 +4361,9 @@ int do_model (selector *sr)
 	/* random-effects probit */
 	ci = PROBIT;
 	addopt = OPT_E;
+    } else if (ci == FE_LOGISTIC) {
+	ci = LOGISTIC;
+	addopt = OPT_F;
     } else if (ci == IV_LIML || ci == IV_GMM) {
 	/* single-equation LIML, GMM */
 	if (ci == IV_LIML) {

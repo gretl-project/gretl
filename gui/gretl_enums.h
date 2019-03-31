@@ -96,6 +96,7 @@ enum extra_cmds {
     DEFINE_LIST,
     DEFINE_MATRIX,
     PANEL_WLS,
+    FE_LOGISTIC,
     PANEL_MODE,
     TSPLOTS,
     ITERATIONS,

@@ -1842,6 +1842,7 @@ GtkActionEntry main_entries[] = {
     { "PANEL_WLS", NULL, N_("_Weighted least squares"), NULL, NULL, G_CALLBACK(model_callback) },
     { "PANEL_B", NULL, N_("_Between model"), NULL, NULL, G_CALLBACK(model_callback) },
     { "dpanel", NULL, N_("_Dynamic panel model"), NULL, NULL, G_CALLBACK(model_callback) },
+    { "FE_LOGISTIC", NULL, N_("FE logistic"), NULL, NULL, G_CALLBACK(model_callback) },
     { "LimdepModels", NULL, N_("_Limited dependent variable"), NULL, NULL, NULL },
     { "logit", NULL, N_("_Logit"), NULL, NULL, NULL },
     { "blogit", NULL, N_("_Binary"), NULL, NULL, G_CALLBACK(model_callback) },

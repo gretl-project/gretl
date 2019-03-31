@@ -268,6 +268,7 @@
 	<menuitem action="PANEL_WLS"/>
 	<menuitem action="PANEL_B"/>
 	<menuitem action="dpanel"/>
+	<menuitem action="FE_LOGISTIC"/>
       </menu>
       <menu action="RobustModels">
 	<menuitem action="lad"/>

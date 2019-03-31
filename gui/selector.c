@@ -132,7 +132,7 @@ enum {
 #define MODEL_CODE(c) (MODEL_COMMAND(c) || c == PANEL_WLS || c == PANEL_B || \
                        c == OLOGIT || c == OPROBIT || c == REPROBIT || \
 		       c == MLOGIT || c == IV_LIML || c == IV_GMM || \
-		       c == COUNTMOD)
+		       c == COUNTMOD || c == FE_LOGISTIC)
 
 #define MODEL_NEEDS_X(c) (MODEL_CODE(c) && !(c == ARMA || c == GARCH))
 
@@ -183,6 +183,7 @@ enum {
                          c == PANEL || \
                          c == PANEL_WLS || \
                          c == PANEL_B || \
+			 c == FE_LOGISTIC || \
 			 c == COUNTMOD || \
 			 c == DURATION || \
                          c == PROBIT || \
@@ -369,7 +370,8 @@ static int want_radios (selector *sr)
 	c == LOGIT || c == PROBIT || c == HECKIT ||
 	c == XTAB || c == PCA ||
 	c == QUANTREG || c == DPANEL ||
-	c == LOGISTIC || c == VAROMIT) {
+	c == LOGISTIC || c == FE_LOGISTIC ||
+	c == VAROMIT) {
 	ret = 1;
     } else if (c == ADD || c == OMIT) {
 	windata_t *vwin = (windata_t *) sr->data;
@@ -879,8 +881,11 @@ void selector_from_model (windata_t *vwin)
 	    retrieve_biprobit_info(pmod, &gotinst);
 	} else if (pmod->ci == MIDASREG) {
 	    retrieve_midas_info(pmod);
+	} else if (pmod->ci == LOGISTIC) {
+	    if (pmod->opt & OPT_F) {
+		sel_ci = FE_LOGISTIC;
+	    }
 	}
-
 	if (pmod->opt & OPT_R) {
 	    model_opt |= OPT_R;
 	}
@@ -3473,7 +3478,7 @@ static void read_logistic_extras (selector *sr)
 	GtkAdjustment *adj;
 
 	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(w));
-	set_optval_double(LOGISTIC, OPT_M, gtk_adjustment_get_value(adj));
+	set_optval_double(sr->ci, OPT_M, gtk_adjustment_get_value(adj));
     }
 }
 
@@ -3645,7 +3650,7 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 	return;
     }
 
-    if (sr->ci == LOGISTIC) {
+    if (sr->ci == LOGISTIC || sr->ci == FE_LOGISTIC) {
 	read_logistic_extras(sr);
 	return;
     }
@@ -4194,6 +4199,8 @@ static char *est_str (int cmdnum)
 	return N_("Bivariate probit");
     case LOGISTIC:
 	return N_("Logistic");
+    case FE_LOGISTIC:
+	return N_("Fixed effects logistic model");
     case COUNTMOD:
 	return N_("Count data model");
     case DURATION:
@@ -5958,7 +5965,8 @@ static void build_selector_switches (selector *sr)
 	sr->ci == OLOGIT || sr->ci == OPROBIT || sr->ci == COUNTMOD ||
 	sr->ci == DURATION || sr->ci == PANEL || sr->ci == QUANTREG ||
 	sr->ci == HECKIT || sr->ci == BIPROBIT || sr->ci == TOBIT ||
-	sr->ci == MIDASREG || sr->ci == LOGISTIC) {
+	sr->ci == MIDASREG || sr->ci == LOGISTIC ||
+	sr->ci == FE_LOGISTIC) {
 	GtkWidget *b1;
 
 	/* FIXME arma robust variant? (and REPROBIT should be here?) */
@@ -6785,7 +6793,7 @@ static void build_selector_radios (selector *sr)
 	build_pca_radios(sr);
     } else if (sr->ci == QUANTREG) {
 	build_quantreg_radios(sr);
-    } else if (sr->ci == LOGISTIC) {
+    } else if (sr->ci == LOGISTIC || sr->ci == FE_LOGISTIC) {
 	build_logistic_radios(sr);
     } else if (sr->ci == AR1) {
 	build_ar1_radios(sr);
@@ -8331,6 +8339,8 @@ gretlopt selector_get_opts (const selector *sr)
 
     if (sr->ci == PANEL_B) {
 	ret = sr->opts | OPT_B;
+    } else if (sr->ci == FE_LOGISTIC) {
+	ret = sr->opts | OPT_F;
     } else {
 	ret = sr->opts;
     }
