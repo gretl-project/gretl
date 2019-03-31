@@ -1,25 +1,25 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /*  pvalues.c - routines relating to computation of pvalues
     of sample statistics
-*/  
+*/
 
 #include "libgretl.h"
 #include "libset.h"
@@ -98,12 +98,12 @@ double digamma (double x)
 
     return ret;
 }
- 
+
 /**
  * binomial_cdf:
  * @p: probability of success on each trial.
  * @n: number of trials.
- * @k: maximum number of successes. 
+ * @k: maximum number of successes.
  *
  * Returns: the probability of @k or less successes on
  * @n trials given binomial probability @p, or
@@ -149,7 +149,7 @@ double binomial_cdf_comp (double p, int n, int k)
     return x;
 }
 
-/*  
+/*
     gives the event probability p such that the sum of the terms 0
     through k of the Binomial probability density, for n trials, is
     equal to the given cumulative probability a.
@@ -195,7 +195,7 @@ static double binomial_critval (double p, int n, double a)
  * @p: success probability.
  * @n: number of trials.
  * @k: number of successes.
- * 
+ *
  * Returns: the probability mass for @k successes in @n
  * binomial trials with success probability @p.
  */
@@ -231,7 +231,7 @@ static int binomial_pmf_array (double p, int n, double *x, int T)
 /**
  * x_factorial:
  * @x: input value.
- * 
+ *
  * Returns: the factorial of int(x), cast to a double, or
  * NADBL on failure.
  */
@@ -263,7 +263,7 @@ double x_factorial (double x)
 /**
  * log_x_factorial:
  * @x: input value.
- * 
+ *
  * Returns: the log of the factorial of int(x), cast to a double, or
  * NADBL on failure.
  */
@@ -296,8 +296,8 @@ double log_x_factorial (double x)
 /**
  * tcrit95:
  * @df: degrees of freedom.
- * 
- * Returns: the two-sided 95 percent critical value for the t 
+ *
+ * Returns: the two-sided 95 percent critical value for the t
  * distribution with @df degrees of freedom, or #NADBL on
  * failure.
  */
@@ -321,14 +321,14 @@ double tcrit95 (int df)
  * @n: sample size.
  *
  * Computes the two-sided 5 percent critical value of the sample
- * correlation coefficient for a sample of size @n. This is based 
- * on the inverse of the function which maps from the correlation 
+ * correlation coefficient for a sample of size @n. This is based
+ * on the inverse of the function which maps from the correlation
  * coefficient, r, to a student t statistic, namely
  *
  *            t = r / sqrt[(1—r^2) / (n-2)]
  *
  * The inverse is r = sqrt(t^2 / (t^2 + n - 2)).
- * 
+ *
  * Returns: the critical value, or #NADBL on failure.
  */
 
@@ -345,7 +345,7 @@ double rhocrit95 (int n)
 	    rc = sqrt(tc2 / (tc2 + n - 2));
 	}
     }
-    
+
     return rc;
 }
 
@@ -370,9 +370,9 @@ double normal_pvalue_2 (double x)
 /**
  * normal_pvalue_1:
  * @x: double-precision value.
- * 
+ *
  * Calculates the one-sided p-value for @x in relation to the
- * standard normal distribution (that is, the probability that a 
+ * standard normal distribution (that is, the probability that a
  * random variable distributed as N(0, 1) is greater than @x).
  *
  * Returns: 1 minus the value of the standard normal CDF
@@ -396,7 +396,7 @@ double normal_pvalue_1 (double x)
  * student_cdf:
  * @df: degrees of freedom.
  * @x: the cutoff point in the distribution.
- * 
+ *
  * Returns: the integral from minus infinity to @x of
  * the Student's t distribution with @df degrees of freedom, or
  * #NADBL on failure.
@@ -420,7 +420,7 @@ double student_cdf (double df, double x)
  * student_cdf_comp:
  * @df: degrees of freedom.
  * @x: the cutoff point in the distribution.
- * 
+ *
  * Returns: the integral from @x to infinity of
  * the t distribution with @df degrees of freedom, or
  * #NADBL on failure.
@@ -452,8 +452,8 @@ static double student_cdf_comp (double df, double x)
 /**
  * normal_cdf_comp:
  * @x: the cutoff point in the distribution.
- * 
- * Returns: the integral from @x to infinity of the standard 
+ *
+ * Returns: the integral from @x to infinity of the standard
  * normal distribution, or #NADBL on failure.
  */
 
@@ -465,7 +465,7 @@ double normal_cdf_comp (double x)
 	p = ndtr(-x);
 	if (get_cephes_errno()) {
 	    p = NADBL;
-	}	
+	}
     } else {
 	p = ndtr(x);
 	if (get_cephes_errno()) {
@@ -473,7 +473,7 @@ double normal_cdf_comp (double x)
 	} else {
 	    p = 1 - p;
 	}
-    } 
+    }
 
     return p;
 }
@@ -482,7 +482,7 @@ double normal_cdf_comp (double x)
  * student_pvalue_1:
  * @df: degrees of freedom.
  * @x: the cutoff point in the distribution.
- * 
+ *
  * Returns: the probability that t(@df) is greater than @x,
  * or #NADBL on failure.
  */
@@ -507,7 +507,7 @@ double student_pvalue_1 (double df, double x)
  * student_pvalue_2:
  * @df: degrees of freedom.
  * @x: the cutoff point in the distribution.
- * 
+ *
  * Returns: the probability that t(@df) is greater than @x
  * (two-sided, using the absolute value of @x), or
  * #NADBL on failure.
@@ -538,7 +538,7 @@ double student_pvalue_2 (double df, double x)
  * @df: degrees of freedom.
  * @a: right-tail probability.
  *
- * Returns: the argument x such that the integral from x to 
+ * Returns: the argument x such that the integral from x to
  * infinity of the t(@df) density is equal to the given
  * probability @a, or #NADBL on failure.
  */
@@ -549,7 +549,7 @@ double student_critval (double df, double a)
 
     if (df < 0) {
 	return NADBL;
-    }    
+    }
 
     if (a > .10) {
 	x = stdtri(df, 1 - a);
@@ -559,7 +559,7 @@ double student_critval (double df, double a)
 
     if (get_cephes_errno()) {
 	x = NADBL;
-    } 
+    }
 
     return x;
 }
@@ -569,8 +569,8 @@ double student_critval (double df, double a)
  * @df: degrees of freedom.
  * @a: probability.
  *
- * Returns: the argument x such that the integral from 
- * minus infinity to @x of the t(@df) density is equal to 
+ * Returns: the argument x such that the integral from
+ * minus infinity to @x of the t(@df) density is equal to
  * the given probability @a, or #NADBL on failure.
  */
 
@@ -586,7 +586,7 @@ double student_cdf_inverse (double df, double a)
 
     if (get_cephes_errno()) {
 	x = NADBL;
-    } 
+    }
 
     return x;
 }
@@ -595,7 +595,7 @@ double student_cdf_inverse (double df, double a)
  * chisq_cdf:
  * @df: degrees of freedom.
  * @x: the cutoff point in the distribution.
- * 
+ *
  * Returns: the integral from 0 to @x of the chi-square
  * distribution with @df degrees of freedom, or #NADBL
  * on failure.
@@ -618,7 +618,7 @@ double chisq_cdf (double df, double x)
  * chisq_cdf_comp:
  * @df: degrees of freedom.
  * @x: the cutoff point in the distribution.
- * 
+ *
  * Returns: the integral from @x to infinity of the chi-square
  * distribution with @df degrees of freedom, or #NADBL
  * on failure.
@@ -630,7 +630,7 @@ double chisq_cdf_comp (double df, double x)
 
     if (get_cephes_errno() == CEPHES_DOMAIN) {
 	p = NADBL;
-    }    
+    }
 
     return p;
 }
@@ -639,7 +639,7 @@ double chisq_cdf_comp (double df, double x)
  * chisq_critval:
  * @df: degrees of freedom.
  * @a: right-tail probability.
- * 
+ *
  * Returns: the Chi-square argument x such that the integral
  * from x to infinity of the Chi-square density is equal
  * to the given probability @a, or #NADBL on failure.
@@ -675,7 +675,7 @@ static double chisq_cdf_inverse (int df, double a)
  * @dfn: numerator degrees of freedom.
  * @dfd: denominator degrees of freedom.
  * @x: the cutoff point in the distribution.
- * 
+ *
  * Returns: the integral of the F distribution with @dfn and
  * @dfd degrees of freedom, from 0 to @x, or #NADBL on failure.
  */
@@ -699,9 +699,9 @@ double snedecor_cdf (double dfn, double dfd, double x)
  * @dfn: numerator degrees of freedom.
  * @dfd: denominator degrees of freedom.
  * @x: the cutoff point in the distribution.
- * 
+ *
  * Returns: the integral of the F distribution with @dfn and
- * @dfd degrees of freedom, from @x to infinity, or #NADBL 
+ * @dfd degrees of freedom, from @x to infinity, or #NADBL
  * on failure.
  */
 
@@ -724,7 +724,7 @@ double snedecor_cdf_comp (double dfn, double dfd, double x)
  * @dfn: numerator degrees of freedom.
  * @dfd: denominator degrees of freedom.
  * @a: right-tail probability.
- * 
+ *
  * Returns: the F argument x such that the integral
  * from x to infinity of the F density is equal
  * to the given probability @a, or #NADBL on failure.
@@ -780,7 +780,7 @@ static double Binv (double p, double q)
     }
 
     return f;
-}    
+}
 
 static int snedecor_pdf_array (double v1, double v2, double *x, int n)
 {
@@ -932,7 +932,7 @@ static double student_pdf (double m, double x)
     return x;
 }
 
-static int weibull_pdf_array (double k, double l, 
+static int weibull_pdf_array (double k, double l,
 			      double *x, int n)
 {
     int i, err = 0;
@@ -1020,7 +1020,7 @@ static double exponential_pdf (double mu, double x)
 /**
  * normal_cdf:
  * @x: double-precision value.
- * 
+ *
  * Returns: the value of the standard normal CDF evaluated
  * at @x, or #NADBL on failure.
  */
@@ -1042,7 +1042,7 @@ double normal_cdf (double x)
 /**
  * normal_cdf_inverse:
  * @x: double-precision value.
- * 
+ *
  * Returns: the argument, y, for which the area under the
  * Gaussian probability density function (integrated from
  * minus infinity to y) is equal to x, or #NADBL on failure.
@@ -1063,7 +1063,7 @@ double normal_cdf_inverse (double x)
  * normal_critval:
  * @a: right-tail probability.
  *
- * Returns: the argument z such that the integral from z to 
+ * Returns: the argument z such that the integral from z to
  * infinity of the standard normal density is equal
  * to the given probability @a, or #NADBL on failure.
  */
@@ -1080,7 +1080,7 @@ double normal_critval (double a)
 
     if (get_cephes_errno()) {
 	z = NADBL;
-    } 
+    }
 
     return z;
 }
@@ -1108,7 +1108,7 @@ static int normal_pdf_array (double *x, int n)
 /**
  * normal_pdf:
  * @x: double-precision value.
- * 
+ *
  * Returns: the value of the standard normal PDF evaluated
  * at @x.
  */
@@ -1121,7 +1121,7 @@ double normal_pdf (double x)
 /**
  * log_normal_pdf:
  * @x: double-precision value.
- * 
+ *
  * Returns: the value of the log-normal PDF evaluated
  * at @x.
  */
@@ -1152,11 +1152,11 @@ double gamma_cdf (double s1, double s2, double x, int control)
     double scale, shape, p;
 
     if (control == 1) {
-	shape = s1; 
-	scale = s2; 
+	shape = s1;
+	scale = s2;
     } else {
-	scale = s2 / s1; 
-	shape = s1 / scale; 
+	scale = s2 / s1;
+	shape = s1 / scale;
     }
 
     /* for the cephes functions, the parameterization is
@@ -1191,8 +1191,8 @@ double gamma_cdf_comp (double s1, double s2, double x, int control)
     double shape, scale, p;
 
     if (control == 1) {
-	shape = s1; 
-	scale = s2; 
+	shape = s1;
+	scale = s2;
     } else {
 	scale = s2 / s1;    /* variance / mean */
 	shape = s1 / scale; /* mean / scale */
@@ -1236,7 +1236,7 @@ double gamma_cdf_inverse (double shape, double scale, double p)
     return x;
 }
 
-static int gamma_pdf_array (double shape, double scale, 
+static int gamma_pdf_array (double shape, double scale,
 			    double *x, int n)
 {
     int i, err = 0;
@@ -1371,7 +1371,7 @@ static int poisson_pmf_array (double lambda, double *x, int n)
 	    }
 	}
 	x[i] = p;
-    }	    
+    }
 
     return 0;
 }
@@ -1409,7 +1409,7 @@ double poisson_pmf (double lambda, int k)
 	for (i=1; i<=k; i++) {
 	    p *= lambda / i;
 	}
-    } 
+    }
 
     return p;
 }
@@ -1432,14 +1432,14 @@ static double poisson_critval (double mu, double a)
     if (mu >= 10 && a < 0.5) {
 	k0 = mu - 1;
 	pk = poisson_cdf(mu, k0++);
-    }     
+    }
 
     for (k=k0; ; k++) {
 	pk = poisson_cdf(mu, k);
 	if (pk >= ac) {
 	    break;
 	}
-    }  
+    }
 
     return (double) k;
 }
@@ -1548,7 +1548,7 @@ static double weibull_cdf_comp (double shape, double scale, double x)
  * GED_pdf:
  * @nu: shape parameter.
  * @x: reference value.
- * 
+ *
  * Returns: the density function of the Generalized Error distribution
  * with shape parameter @nu at @x, or #NADBL on failure.
  */
@@ -1577,7 +1577,7 @@ static int GED_pdf_array (double nu, double *x, int n)
 	double lg3 = ln_gamma(3/nu);
 	double lC  = 0.5*(lg3 - 3*lg1);
 	double k   = pow(0.5, 1/nu) * exp(0.5*(lg1 - lg3));
-	double znu; 
+	double znu;
 
 	for (i=0; i<n; i++) {
 	    if (!na(x[i])) {
@@ -1857,7 +1857,7 @@ double johansen_trace_pval (int N, int det, int T, double tr)
  *
  * This is a version of cumchn() from dcdflib, de-spaghettized by
  * Jack Lucchetti (2015-06-21). The original algorithm uses formula
- * 26.4.25 from Abramowitz and Stegun, Handbook of Mathematical 
+ * 26.4.25 from Abramowitz and Stegun, Handbook of Mathematical
  * Functions, US NBS (1966).
  *
  * Returns: the calculated probability, or #NADBL on failure.
@@ -1886,9 +1886,9 @@ double nc_chisq_cdf (double df, double delta, double x)
 	*/
 	return chisq_cdf(df, x);
     }
-    
+
     xnonc = delta / 2.0;
-	
+
     /*
       The following code calculates the weight, chi-square, and
       adjustment term for the central term in the infinite series.
@@ -2011,7 +2011,7 @@ double nc_chisq_cdf (double df, double delta, double x)
 static int nc_chisq_pdf_array (double p, double c, double *x, int n)
 {
     int i, err = 0;
-    double k, a, b; 
+    double k, a, b;
 
     if (fabs(c) < 1.0e-10) {
 	return chisq_pdf_array((int) floor(p), x, n);
@@ -2065,10 +2065,10 @@ static double nc_chisq_cdf_inverse (double p, double c, double q)
     double x, d0, d1;
     int iter, subiter, retry;
     double F, f, dir;
-    
+
     if (p < 0 || c < 0 || q <= 0 || q >= 1) {
 	return NADBL;
-    } 
+    }
 
     if (fabs(c) < 1.0e-10) {
 	/* don't bother for infinitesimal c */
@@ -2107,11 +2107,11 @@ static double nc_chisq_cdf_inverse (double p, double c, double q)
 	    iter++;
 	}
     }
-    
+
     if (iter >= 1000) {
 	x = NADBL;
     }
-    
+
     return x;
 }
 
@@ -2125,7 +2125,7 @@ static double nc_chisq_cdf_inverse (double p, double c, double q)
  * Calculates the value at @x of the CDF of the noncentral F
  * distribution with @dfn, @dfd dof and noncentrality parameter equal
  * to @delta.
- * 
+ *
  * This is a version of cumfnc() from dcdflib, de-spaghettized by
  * Jack Lucchetti (2015-06-21). The original algorithm uses formula
  * 26.6.18 from Abramowitz and Stegun, Handbook of Mathematical
@@ -2141,7 +2141,7 @@ double nc_snedecor_cdf (double dfn, double dfd, double delta, double x)
     double centwt, dnterm, sum, upterm, xmult, xnonc;
     double T1, T2, T3, T4, T5, T6;
     int i, icent;
-    
+
     if (x < 0.0) {
 	return 1.0;
     }
@@ -2198,7 +2198,7 @@ double nc_snedecor_cdf (double dfn, double dfd, double delta, double x)
     /*
       Now sum terms backward from icent until convergence or all done
     */
-    
+
     xmult = centwt;
     i = icent;
     T4 = adn + b;
@@ -2221,11 +2221,11 @@ double nc_snedecor_cdf (double dfn, double dfd, double delta, double x)
     */
     xmult = centwt;
     if (aup-1.0+b == 0) {
-	upterm = exp(-ln_gamma(aup) - ln_gamma(b) + 
+	upterm = exp(-ln_gamma(aup) - ln_gamma(b) +
 		     (aup-1.0)*log(xx) + b*log(yy));
     } else {
         T6 = aup - 1.0 + b;
-        upterm = exp(ln_gamma(T6) - ln_gamma(aup) - ln_gamma(b) + 
+        upterm = exp(ln_gamma(T6) - ln_gamma(aup) - ln_gamma(b) +
 		     (aup-1.0)*log(xx) + b*log(yy));
     }
 
@@ -2255,8 +2255,8 @@ double nc_snedecor_cdf (double dfn, double dfd, double delta, double x)
  * to @c.
  *
  * Source: S. Kay, Fundamentals of Statistical Signal Processing:
- * Detection Theory, (New Jersey: Prentice Hall, 1998), 
- * <TeX> 
+ * Detection Theory, (New Jersey: Prentice Hall, 1998),
+ * <TeX>
  * p(x) = \sum\limits_{k=0}^\infty
  *   \frac{e^{-c/2}(c/2)^k}{k!}  % Poisson weights
  *   \frac{1}{B\left(\frac{\nu_2}{2},\frac{\nu_1}{2}+k\right)} % Beta function
@@ -2269,7 +2269,7 @@ double nc_snedecor_cdf (double dfn, double dfd, double delta, double x)
  * Returns: an error code, as appropriate.
  */
 
-static int ncf_pdf_array (double dfn, double dfd, double c, 
+static int ncf_pdf_array (double dfn, double dfd, double c,
 			  double *x, int n)
 {
     double ch, k1, k2, k;
@@ -2306,7 +2306,7 @@ static int ncf_pdf_array (double dfn, double dfd, double c,
     k1 = dfn/2;
     k2 = (dfn + dfd)/2;
     k = log(dfn) - log(dfd);
-    
+
     for(t=0; t<n; t++) {
 	if (na(x[t]) || x[t] < 0) {
 	    vx[t] = vz[t] = NADBL;
@@ -2335,7 +2335,7 @@ static int ncf_pdf_array (double dfn, double dfd, double c,
 	    x[t] = a * exp(l);
 	}
     }
-    
+
     /*
       First, go back from start to 0
     */
@@ -2352,7 +2352,7 @@ static int ncf_pdf_array (double dfn, double dfd, double c,
 	b = (k1 + i) * k;
 	for (t=0; t<n; t++) {
 	    if (!na(x[t])) {
-		l = b + (i + k1 - 1) * vx[t] + (i + k2) * vz[t]; 
+		l = b + (i + k1 - 1) * vx[t] + (i + k2) * vz[t];
 		x[t] += a * exp(l);
 	    }
 	}
@@ -2374,7 +2374,7 @@ static int ncf_pdf_array (double dfn, double dfd, double c,
 	b = (k1 + i) * k;
 	for (t=0; t<n; t++) {
 	    if (!na(x[t])) {
-		l = b + (i + k1 - 1) * vx[t] + (i + k2) * vz[t]; 
+		l = b + (i + k1 - 1) * vx[t] + (i + k2) * vz[t];
 		x[t] += a * exp(l);
 	    }
 	}
@@ -2415,10 +2415,10 @@ static double ncf_cdf_inverse (double n1, double n2, double c, double q)
     double x, d0, d1;
     int iter, subiter;
     double F, f, dir;
-    
+
     if (n2 < 1 || n1 < 1 || c < 0 || q <= 0 || q >= 1) {
 	return NADBL;
-    } 
+    }
 
     x = 0.5;
     d0 = 1.0e7;
@@ -2447,11 +2447,11 @@ static double ncf_cdf_inverse (double n1, double n2, double c, double q)
 	    iter++;
 	}
     }
-    
+
     if (iter >= 1000) {
 	x = NADBL;
     }
-    
+
     return x;
 }
 
@@ -2466,7 +2466,7 @@ static double ncf_cdf_inverse (double n1, double n2, double c, double q)
  * @x: reference value.
  *
  * Calculates the value at @x of the CDF of the noncentral Student t
- * distribution with @df dof and noncentrality parameter equal to 
+ * distribution with @df dof and noncentrality parameter equal to
  * @delta. The algorithm is by Benson-Krishnamoorthy (2003) CSDA 43,
  * with minimal changes.
  *
@@ -2477,12 +2477,12 @@ double nc_student_cdf (double df, double delta, double x)
 {
     double errtol = 1.0e-16;
     double maxit = 512;
-    double ax, y, del, dels, k, a, b, c; 
+    double ax, y, del, dels, k, a, b, c;
     double pkf, pkb, qkf, qkb, pbetaf, pbetab, qbetaf, qbetab;
     double pgamf, pgamb, qgamf, qgamb, tmp, ret;
     double rempois, sum, ptermf, qtermf, ptermb, qtermb;
     int i;
-    
+
     if (df <= 0.0) {
 	return NADBL;
     }
@@ -2505,7 +2505,7 @@ double nc_student_cdf (double df, double delta, double x)
     }
 
     /* settings */
-    
+
     y = ax*ax / (df + ax*ax);
     dels = del * del / 2.0;
     k = (int) floor(dels);
@@ -2513,8 +2513,8 @@ double nc_student_cdf (double df, double delta, double x)
     c = k + 1;
     b = df * 0.5;
 
-    /* 
-       Initialization to compute the P_k and Q_k terms 
+    /*
+       Initialization to compute the P_k and Q_k terms
        and the respective incomplete beta functions
     */
 
@@ -2523,12 +2523,12 @@ double nc_student_cdf (double df, double delta, double x)
     qkf = qkb = exp(tmp - ln_gamma(k + 1.5));
     pbetaf = pbetab = incbet(a, b, y);
     qbetaf = qbetab = incbet(c, b, y);
-    
+
     /*
-      Initialization to compute the incomplete beta functions 
+      Initialization to compute the incomplete beta functions
       associated with the P_i and the Q_i recursively:
     */
-    
+
     tmp = b * log(1-y) - ln_gamma(b);
     pgamf = exp(ln_gamma(a+b-1) - ln_gamma(a) + (a-1) * log(y) + tmp);
     pgamb = pgamf * y * (a + b - 1)/a;
@@ -2549,13 +2549,13 @@ double nc_student_cdf (double df, double delta, double x)
 	pbetab += pgamb;
 	pkb *= (k-i+1)/dels;
 	ptermb = pkb * pbetab;
-	    
+
 	/* second block --- backwards */
 	qgamb *= (c-i+1)/(y * (c+b-i));
 	qbetab += qgamb;
 	qkb *= (k-i+1.5)/dels;
 	qtermb = qkb * qbetab;
-	    
+
 	/* accumulate */
 	sum += ptermb + del * qtermb * ISQRT_2;
 	rempois -= pkb;
@@ -2567,20 +2567,20 @@ double nc_student_cdf (double df, double delta, double x)
 	pbetaf -= pgamf;
 	pkf *= dels/(k+i);
 	ptermf = pkf * pbetaf;
-	    
+
 	/* second block --- forwards */
 	qgamf *= y * (c+b-2+i)/(c+i-1);
 	qbetaf -= qgamf;
 	qkf *= dels/(k+i+0.5);
 	qtermf = qkf * qbetaf;
-	    
+
 	/* accumulate */
 	sum += ptermf + del * qtermf * ISQRT_2;
 	rempois -= pkf;
     }
 
     ret += sum/2.0;
-    
+
     return x < 0 ? (1.0 - ret) : ret;
 }
 
@@ -2591,7 +2591,7 @@ double nc_student_cdf (double df, double delta, double x)
  * @x: reference value.
  *
  * Calculates the value at @x of the PDF of the noncentral Student t
- * distribution with @df dof and noncentrality parameter equal to 
+ * distribution with @df dof and noncentrality parameter equal to
  * @delta. The algorithm is from Wikipedia, apparently used in R too.
  *
  * Returns: the calculated density, or #NADBL on failure.
@@ -2600,7 +2600,7 @@ double nc_student_cdf (double df, double delta, double x)
 double nc_student_pdf (double df, double delta, double x)
 {
     double ret, tmp;
-    
+
     if (df <= 0.0) {
 	return NADBL;
     }
@@ -2641,7 +2641,7 @@ static int nct_pdf_array (double df, double delta, double *x, int n)
     } else {
 	err = E_DATA;
     }
-    
+
     if (err) {
 	for (i=0; i<n; i++) {
 	    x[i] = NADBL;
@@ -2671,10 +2671,10 @@ static double nct_cdf_inverse (double p, double c, double q)
     double x, d0, d1;
     int iter, subiter;
     double F, f, dir;
-    
+
     if (p < 1 || c < 0 || q <= 0 || q >= 1) {
 	return NADBL;
-    } 
+    }
 
     if (fabs(c) < 1.0e-10) {
 	/* don't bother for infinitesimal c */
@@ -2708,7 +2708,7 @@ static double nct_cdf_inverse (double p, double c, double q)
 	    iter++;
 	}
     }
-    
+
     if (iter >= 1000) {
 	x = NADBL;
     }
@@ -2746,7 +2746,7 @@ int dist_code_from_string (const char *s)
 	{ D_NC_CHISQ, "ncx" },
 	{ D_NC_F,     "ncf" },
 	{ D_NC_T,     "nct" },
-	{ D_LOGISTIC, "lgt" },
+	{ D_LOGISTIC, "s" },
 	{ D_NONE,     NULL }
     };
     char test[8];
@@ -2769,11 +2769,13 @@ int dist_code_from_string (const char *s)
 	}
     }
 
-    /* backward compatibility (do we need this?) */
+    /* backward compatibility */
     if (!strcmp(test, "n")) {
 	return D_NORMAL;
     } else if (!strcmp(test, "c")) {
 	return D_CHISQ;
+    } else if (!strcmp(test, "lgt")) {
+	return D_LOGISTIC;
     }
 
     return D_NONE;
@@ -2829,12 +2831,12 @@ void print_critval (int dist, const double *parm, double a, double c, PRN *prn)
     }
     pputs(prn, "\n\n ");
     pprintf(prn, _("Critical value = %g"), c);
-    pputc(prn, '\n');    
+    pputc(prn, '\n');
 }
 
-/* This apparatus is for use with the "batch p-value" 
+/* This apparatus is for use with the "batch p-value"
    routine: it remembers the parameters (p) and
-   argument (x) from the last internal p-value 
+   argument (x) from the last internal p-value
    assessment.
 */
 
@@ -2883,7 +2885,7 @@ static int pdist_check_input (int dist, const double *parm,
 /**
  * gretl_get_cdf_inverse:
  * @dist: distribution code.
- * @parm: array holding from zero to two parameter values, 
+ * @parm: array holding from zero to two parameter values,
  * depending on the distribution.
  * @a: probability value.
  *
@@ -2892,7 +2894,7 @@ static int pdist_check_input (int dist, const double *parm,
  * is equal to @a, or #NADBL on failure.
  */
 
-double gretl_get_cdf_inverse (int dist, const double *parm, 
+double gretl_get_cdf_inverse (int dist, const double *parm,
 			      double a)
 {
     double y = NADBL;
@@ -2922,10 +2924,10 @@ double gretl_get_cdf_inverse (int dist, const double *parm,
     } else if (dist == D_NC_F) {
 	y = ncf_cdf_inverse(parm[0], parm[1], parm[2], a);
     } else if (dist == D_NC_CHISQ) {
-	y = nc_chisq_cdf_inverse(parm[0], parm[1], a); 
+	y = nc_chisq_cdf_inverse(parm[0], parm[1], a);
     } else if (dist == D_NC_T) {
-	y = nct_cdf_inverse(parm[0], parm[1], a); 
-    } 
+	y = nct_cdf_inverse(parm[0], parm[1], a);
+    }
 
     return y;
 }
@@ -2934,12 +2936,12 @@ double gretl_get_cdf_inverse (int dist, const double *parm,
 /**
  * gretl_get_critval:
  * @dist: distribution code.
- * @parm: array holding from zero to two parameter values, 
+ * @parm: array holding from zero to two parameter values,
  * depending on the distribution.
  * @a: right-tail probability.
  *
  * Returns: the abcsissa value x for the distribution specified
- * by @dist and @parm, such that P(X >= x) = @a, or #NADBL on 
+ * by @dist and @parm, such that P(X >= x) = @a, or #NADBL on
  * failure.
  */
 
@@ -2955,7 +2957,7 @@ double gretl_get_critval (int dist, const double *parm, double a)
 	x = normal_critval(a);
     } else if (dist == D_STUDENT) {
 	x = student_critval(parm[0], a);
-    } else if (dist == D_CHISQ) {	
+    } else if (dist == D_CHISQ) {
 	x = chisq_critval((int) parm[0], a);
     } else if (dist == D_SNEDECOR) {
 	x = snedecor_critval((int) parm[0], (int) parm[1], a);
@@ -2980,12 +2982,12 @@ double gretl_get_critval (int dist, const double *parm, double a)
 /**
  * gretl_get_cdf:
  * @dist: distribution code.
- * @parm: array holding from zero to two parameter values, 
+ * @parm: array holding from zero to two parameter values,
  * depending on the distribution.
  * @x: abscissa value.
  *
  * Evaluates the CDF for the distribution specified by
- * @dist and @parm applicable at @x. 
+ * @dist and @parm applicable at @x.
  *
  * Returns: the CDF value, or #NADBL on error.
  */
@@ -2996,7 +2998,7 @@ double gretl_get_cdf (int dist, const double *parm, double x)
 
     if (pdist_check_input(dist, parm, x) == E_MISSDATA) {
 	return y;
-    }    
+    }
 
     if (dist == D_NORMAL) {
 	y = normal_cdf(x);
@@ -3036,12 +3038,12 @@ double gretl_get_cdf (int dist, const double *parm, double x)
 /**
  * gretl_get_pdf:
  * @dist: distribution code.
- * @parm: array holding from zero to two parameter values, 
+ * @parm: array holding from zero to two parameter values,
  * depending on the distribution.
  * @x: abscissa value.
  *
  * Evaluates the PDF for the distribution specified by
- * @dist and @parm at @x. 
+ * @dist and @parm at @x.
  *
  * Returns: the PDF value, or #NADBL on error.
  */
@@ -3052,7 +3054,7 @@ double gretl_get_pdf (int dist, const double *parm, double x)
 
     if (pdist_check_input(dist, parm, x) == E_MISSDATA) {
 	return y;
-    } 
+    }
 
     if (dist == D_NORMAL) {
 	y = normal_pdf(x);
@@ -3098,18 +3100,18 @@ double gretl_get_pdf (int dist, const double *parm, double x)
  * On input, @x contains an array of abscissae at which the
  * PDF specified by @dist and @parm should be evaluated. On
  * output it contains the corresponding PDF values.
- * 
+ *
  * Returns: 0 on success, non-zero on error.
  */
 
-int gretl_fill_pdf_array (int dist, const double *parm, 
+int gretl_fill_pdf_array (int dist, const double *parm,
 			  double *x, int n)
 {
     int err = E_DATA;
 
     if (pdist_check_input(dist, parm, 0) == E_MISSDATA) {
 	return E_MISSDATA;
-    } 
+    }
 
     if (dist == D_NORMAL) {
 	err = normal_pdf_array(x, n);
@@ -3120,7 +3122,7 @@ int gretl_fill_pdf_array (int dist, const double *parm,
     } else if (dist == D_SNEDECOR) {
 	err = snedecor_pdf_array((int) parm[0], (int) parm[1], x, n);
     } else if (dist == D_GAMMA) {
-	err = gamma_pdf_array(parm[0], parm[1], x, n); 
+	err = gamma_pdf_array(parm[0], parm[1], x, n);
     } else if (dist == D_BINOMIAL) {
 	err = binomial_pmf_array(parm[0], parm[1], x, n);
     } else if (dist == D_POISSON) {
@@ -3147,7 +3149,7 @@ int gretl_fill_pdf_array (int dist, const double *parm,
 /**
  * gretl_get_pvalue:
  * @dist: distribution code.
- * @parm: array holding from zero to two parameter values, 
+ * @parm: array holding from zero to two parameter values,
  * depending on the distribution.
  * @x: abscissa value.
  *
@@ -3161,7 +3163,7 @@ double gretl_get_pvalue (int dist, const double *parm, double x)
 
     if (pdist_check_input(dist, parm, x) == E_MISSDATA) {
 	return y;
-    } 
+    }
 
     if (dist == D_NORMAL) {
 	y = normal_cdf_comp(x);
@@ -3186,7 +3188,7 @@ double gretl_get_pvalue (int dist, const double *parm, double x)
     } else if (dist == D_LAPLACE) {
 	y = laplace_cdf_comp(parm[0], parm[1], x);
     } else if (dist == D_JOHANSEN) {
-	y = johansen_trace_pval((int) parm[0], (int) parm[1], 
+	y = johansen_trace_pval((int) parm[0], (int) parm[1],
 				(int) parm[2], x);
     }
 
@@ -3197,7 +3199,7 @@ double gretl_get_pvalue (int dist, const double *parm, double x)
 
 static int gretl_fill_random_array (double *x, int t1, int t2,
 				    int dist, const double *parm,
-				    const double *vecp1, 
+				    const double *vecp1,
 				    const double *vecp2)
 {
     int t, err = 0;
@@ -3229,7 +3231,7 @@ static int gretl_fill_random_array (double *x, int t1, int t2,
 	} else {
 	    err = gretl_rand_uniform_int_minmax(x, t1, t2, min, max,
 						OPT_NONE);
-	}	
+	}
     } else if (dist == D_NORMAL) {
 	double mu = parm[0], sd = parm[1];
 
@@ -3251,7 +3253,7 @@ static int gretl_fill_random_array (double *x, int t1, int t2,
 		v = vecp1[t];
 		err = gretl_rand_student(x, t, t, v);
 	    }
-	} else {	
+	} else {
 	    err = gretl_rand_student(x, t1, t2, v);
 	}
     } else if (dist == D_CHISQ) {
@@ -3377,6 +3379,10 @@ static int gretl_fill_random_array (double *x, int t1, int t2,
 	int n = parm[0];
 
 	err = gretl_rand_beta_binomial(x, t1, t2, n, shape1, shape2);
+    } else if (dist == D_LOGISTIC) {
+	double loc = parm[0], shape = parm[1];
+
+	err = gretl_rand_logistic(x, t1, t2, loc, shape);
     }
 
     return err;
@@ -3386,7 +3392,7 @@ static int gretl_fill_random_array (double *x, int t1, int t2,
  * gretl_fill_random_series:
  * @x: series to fill (must be of length dset->n).
  * @dist: distribution code.
- * @parm: array holding either one or two scalar 
+ * @parm: array holding either one or two scalar
  * parameter values, depending on the distribution.
  * @vecp1: series containing values for first param,
  * or %NULL.
@@ -3404,13 +3410,13 @@ static int gretl_fill_random_array (double *x, int t1, int t2,
  * Returns: 0 on success, non-zero code on error.
  */
 
-int gretl_fill_random_series (double *x, int dist, 
+int gretl_fill_random_series (double *x, int dist,
 			      const double *parm,
-			      const double *vecp1, 
+			      const double *vecp1,
 			      const double *vecp2,
 			      const DATASET *dset)
 {
-    return gretl_fill_random_array(x, dset->t1, dset->t2, 
+    return gretl_fill_random_array(x, dset->t1, dset->t2,
 				   dist, parm, vecp1, vecp2);
 }
 
@@ -3451,7 +3457,7 @@ double gretl_get_random_scalar (int dist, const double *parm,
     return x;
 }
 
-static int 
+static int
 print_pv_string (double x, double p, PRN *prn)
 {
     char numstr[32];
@@ -3496,12 +3502,12 @@ void print_pvalue (int dist, const double *parm, double x,
 	err = print_pv_string(x, pv, prn);
 	if (err) return;
 	if (pv < 0.5) {
-	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
+	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"),
 		    2 * pv, 1 - 2 * pv);
 	} else {
 	    pc = normal_cdf(x);
 	    pprintf(prn, _("(to the left: %g)\n"), pc);
-	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
+	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"),
 		    2 * pc, 1 - 2 * pc);
 	}
 	break;
@@ -3511,12 +3517,12 @@ void print_pvalue (int dist, const double *parm, double x,
 	err = print_pv_string(x, pv, prn);
 	if (err) return;
 	if (pv < 0.5) {
-	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
+	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"),
 		    2 * pv, 1 - 2 * pv);
 	} else {
 	    pc = student_cdf(parm[0], x);
 	    pprintf(prn, _("(to the left: %g)\n"), pc);
-	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
+	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"),
 		    2 * pc, 1 - 2 * pc);
 	}
 	break;
@@ -3539,15 +3545,15 @@ void print_pvalue (int dist, const double *parm, double x,
 
     case D_GAMMA:
 	pprintf(prn, _("Gamma (shape %g, scale %g, mean %g, variance %g):"
-		       "\n area to the right of %g = %g\n"), 
-		parm[0], parm[1], parm[0] * parm[1], 
+		       "\n area to the right of %g = %g\n"),
+		parm[0], parm[1], parm[0] * parm[1],
 		parm[0] * parm[1] * parm[1],
 		x, pv);
 	break;
 
     case D_BINOMIAL:
 	pprintf(prn, _("Binomial (p = %g, n = %d):"
-		       "\n Prob(x > %d) = %g\n"), 
+		       "\n Prob(x > %d) = %g\n"),
 		parm[0], (int) parm[1], (int) x, pv);
 	pc = binomial_cdf(parm[0], parm[1], x);
 	if (x > 0) {
@@ -3579,10 +3585,10 @@ void print_pvalue (int dist, const double *parm, double x,
 	if (err) return;
 	pc = exponential_cdf(parm[0], x);
 	pprintf(prn, _("(to the left: %g)\n"), pc);
-	break;	
+	break;
 
     case D_WEIBULL:
-	pprintf(prn, _("Weibull (shape = %g, scale = %g): "), 
+	pprintf(prn, _("Weibull (shape = %g, scale = %g): "),
 		parm[0], parm[1]);
 	err = print_pv_string(x, pv, prn);
 	if (err) return;
@@ -3625,10 +3631,10 @@ void print_pvalue (int dist, const double *parm, double x,
  * @dset: dataset struct.
  * @prn: gretl printing struct.
  *
- * Calculates and prints the probability that a random variable 
- * distributed as specified in the command line @str exceeds the 
+ * Calculates and prints the probability that a random variable
+ * distributed as specified in the command line @str exceeds the
  * value indicated in @str.
- * 
+ *
  * Returns: 0 on success, non-zero code on error.
  */
 
@@ -3644,7 +3650,7 @@ int batch_pvalue (const char *str, DATASET *dset, PRN *prn)
     if (str == NULL || *str == '\0') {
 	return E_ARGS;
     }
-    
+
     if (!strncmp(str, "pvalue ", 7)) {
 	str += 7;
     }
@@ -3692,13 +3698,13 @@ int batch_pvalue (const char *str, DATASET *dset, PRN *prn)
  * @err: location to receive error code.
  *
  * Consults a table of Durbin-Watson critical values and
- * returns the results in a gretl_matrix.  
+ * returns the results in a gretl_matrix.
  *
  * Returns: on success, a 4-vector containing the lower
  * and upper Durbin-Watson values, dl and du, along with
  * the values actually used for @n and @k (which may differ
  * from those given on input if the exact values are not
- * found in the table and have to be approximated).  
+ * found in the table and have to be approximated).
  * On error, returns %NULL.
  */
 
@@ -3718,4 +3724,3 @@ gretl_matrix *gretl_get_DW (int n, int k, int *err)
 
     return m;
 }
-
