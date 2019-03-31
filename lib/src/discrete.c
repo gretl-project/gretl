@@ -3368,14 +3368,14 @@ static int make_logistic_depvar (DATASET *dset, int dv,
     return err;
 }
 
-#define TRY_APPROX 1
-
 static int rewrite_logistic_stats (const DATASET *dset,
 				   MODEL *pmod, int dv,
 				   double lmax)
 {
-    double x, sigma, adj;
+    double den, lam = M_PI/5.35;
+    double x, sigma;
     double ess = 0.0;
+    int use_approx = 1;
     int t;
 
     if (pmod->depvar == NULL || *pmod->depvar == '\0') {
@@ -3393,22 +3393,20 @@ static int rewrite_logistic_stats (const DATASET *dset,
 	makevcv(pmod, pmod->sigma);
     }
 
-#if TRY_APPROX
-    adj = 0.0;
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (!na(pmod->uhat[t])) {
-	    adj += exp(pmod->uhat[t]);
-	}
+    if (use_approx) {
+	double s2 = pmod->sigma * pmod->sigma;
+
+	den = sqrt(1.0/(lam * lam) + s2);
     }
-    adj /= pmod->nobs;
-#else
-    adj = 1.0;
-#endif
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	x = pmod->yhat[t];
 	if (!na(x)) {
-	    pmod->yhat[t] =  lmax / (1.0 + exp(-x)/adj);
+	    if (use_approx) {
+		pmod->yhat[t] = lmax * normal_cdf(x/den);
+	    } else {
+		pmod->yhat[t] = lmax / (1.0 + exp(-x));
+	    }
 	    pmod->uhat[t] = dset->Z[dv][t] - pmod->yhat[t];
 	    ess += pmod->uhat[t] * pmod->uhat[t];
 	}
