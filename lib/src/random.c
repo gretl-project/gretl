@@ -1199,6 +1199,44 @@ int gretl_rand_exponential (double *a, int t1, int t2, double mu)
 }
 
 /**
+ * gretl_rand_logistic:
+ * @a: target array.
+ * @t1: start of the fill range.
+ * @t2: end of the fill range.
+ * @loc: location parameter.
+ * @scale: scale parameter > 0.
+ *
+ * Fill the selected range of array @a with pseudo-random drawings
+ * from the logistic distribution with location @loc and scale @scale.
+ *
+ * Returns: 0 on success, non-zero if @scale is out of
+ * bounds.
+ */
+
+int gretl_rand_logistic (double *a, int t1, int t2,
+			 double loc, double scale)
+{
+    int err = 0;
+
+    if (scale <= 0) {
+	err = E_DATA;
+    } else {
+	double u;
+	int t;
+
+	for (t=t1; t<=t2; t++) {
+	    u = gretl_rand_01();
+	    while (u == 0.0) {
+		u = gretl_rand_01();
+	    }
+	    a[t] = loc + scale * log(u / (1 - u));
+	}
+    }
+
+    return err;
+}
+
+/**
  * gretl_rand_GED:
  * @a: target array.
  * @t1: start of the fill range.

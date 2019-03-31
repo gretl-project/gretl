@@ -1376,8 +1376,9 @@ static int check_dist_count (int d, int f, int *np, int *argc)
 	    err = E_INVARG;
 	}
     } else if (d == D_LOGISTIC) {
-	/* CDF only */
-	if (f == F_CDF) {
+	if (randgen(f)) {
+	    *np = 2; /* location, scale */
+	} else if (f == F_CDF) {
 	    *np = 0; /* (0,1) assumed */
 	} else {
 	    err = E_INVARG;

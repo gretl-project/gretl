@@ -74,6 +74,9 @@ int gretl_rand_exponential (double *a, int t1, int t2, double mu);
 int gretl_rand_weibull (double *a, int t1, int t2, double shape,
 			double scale);
 
+int gretl_rand_logistic (double *a, int t1, int t2,
+			 double loc, double scale);
+
 int gretl_rand_gamma (double *a, int t1, int t2,  
 		      double shape, double scale);
 
