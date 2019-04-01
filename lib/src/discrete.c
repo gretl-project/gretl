@@ -3373,8 +3373,7 @@ static int rewrite_logistic_stats (const DATASET *dset,
 				   double lmax)
 {
     double den, lam = M_PI/5.35;
-    double x, sigma;
-    double ess = 0.0;
+    double x, sigma, ess, jll;
     int use_approx = 1;
     int t;
 
@@ -3399,16 +3398,23 @@ static int rewrite_logistic_stats (const DATASET *dset,
 	den = sqrt(1.0/(lam * lam) + s2);
     }
 
+    ess = 0.0;
+    jll = pmod->lnL;
+
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	x = pmod->yhat[t];
 	if (!na(x)) {
 	    if (use_approx) {
+		/* approximation via normal CDF */
 		pmod->yhat[t] = lmax * normal_cdf(x/den);
 	    } else {
+		/* naive version */
 		pmod->yhat[t] = lmax / (1.0 + exp(-x));
 	    }
 	    pmod->uhat[t] = dset->Z[dv][t] - pmod->yhat[t];
 	    ess += pmod->uhat[t] * pmod->uhat[t];
+	    x = dset->Z[dv][t];
+	    jll -= log(x * (lmax-x) / lmax);
 	}
     }
 
@@ -3418,6 +3424,8 @@ static int rewrite_logistic_stats (const DATASET *dset,
     gretl_model_set_double(pmod, "lmax", lmax);
     gretl_model_set_double(pmod, "ess_orig", ess);
     gretl_model_set_double(pmod, "sigma_orig", sigma);
+    gretl_model_set_double(pmod, "jll", jll);
+    fprintf(stderr, "logistic: Jloglik = %g\n", jll);
     pmod->ci = LOGISTIC;
 
     if (!(pmod->opt & OPT_F)) {
