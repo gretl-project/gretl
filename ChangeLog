@@ -7,6 +7,8 @@ version 2019b, in progress
 - "fcast" command: add some support for panel data
 - "add" command: ensure that the robust option for the
   target model is respected in the panel-data case
+- "logistic" command: enable --robust, --cluster and
+  --fixed-effects options
 - New accessor $now to get current time/date, plus new
   functions strftime() and strptime()
 - New function Lsolve(), using precomputed Cholesky factor
@@ -14,6 +16,7 @@ version 2019b, in progress
 - seasonals() function: use ISO 8601 week numbers for dated
   weekly data
 - epochday() function: support YYYYMMDD input
+- randgen() function: support the logistic distribution
 - Speed up rank() function for far-from-square matrices
 - Stata dta importer: fix for opening of very large files
 - Obscure fix: enable deletion of "time" from a list
