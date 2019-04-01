@@ -2543,10 +2543,16 @@ static int set_uf_array_from_names (fnpkg *pkg, char **names,
 {
     ufunc **uf = NULL;
     ufunc *fun;
-    int i;
+    int i, j;
 
     /* check the supplied names */
     for (i=0; i<n; i++) {
+	for (j=0; j<i; j++) {
+	    if (!strcmp(names[j], names[i])) {
+		gretl_errmsg_sprintf("Duplicated function name '%s'", names[i]);
+		return E_DATA;
+	    }
+	}
 	if (get_uf_array_member(names[i], NULL) == NULL) {
 	    fprintf(stderr, "%s: function not found!\n", names[i]);
 	    return E_DATA;
