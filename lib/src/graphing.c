@@ -798,14 +798,6 @@ static gretlRGB user_color[N_GP_COLORS] = {
     { 0xdd, 0xdd, 0xdd }
 };
 
-static const gretlRGB default_shade_color = {
-    0xdd, 0xdd, 0xdd
-};
-
-static gretlRGB user_shade_color = {
-    0xdd, 0xdd, 0xdd
-};
-
 void print_rgb_hash (char *s, const gretlRGB *color)
 {
     sprintf(s, "#%02x%02x%02x", color->r, color->g, color->b);
@@ -845,19 +837,13 @@ void print_palette_string (char *s)
 
 const gretlRGB *get_graph_color (int i)
 {
-    if (i == SHADECOLOR) {
-	return &user_shade_color;
-    } else {
-	return (i >= 0 && i < N_GP_COLORS)? &user_color[i] : NULL;
-    }
+    return (i >= 0 && i < N_GP_COLORS)? &user_color[i] : NULL;
 }
 
 void set_graph_palette (int i, gretlRGB color)
 {
     if (i >= 0 && i < N_GP_COLORS) {
 	user_color[i] = color;
-    } else if (i == SHADECOLOR) {
-	user_shade_color = color;
     } else {
 	fprintf(stderr, "Out of bounds color index %d\n", i);
     }
@@ -889,14 +875,8 @@ void set_graph_palette_from_string (int i, const char *s)
 
 void graph_palette_reset (int i)
 {
-    if (i == SHADECOLOR) {
-	user_shade_color = default_shade_color;
-    } else if (i == BOXCOLOR) {
-	user_color[BOXCOLOR] = default_color[BOXCOLOR];
-    } else {
-	for (i=0; i<BOXCOLOR; i++) {
-	    user_color[i] = default_color[i];
-	}
+    if (i >= 0 && i < N_GP_COLORS) {
+	user_color[i] = default_color[i];
     }
 }
 
@@ -5232,7 +5212,7 @@ static void print_filledcurve_line (const char *title,
 	*cstr = '\0';
 	strncat(cstr, rgb, 9);
     } else {
-	print_rgb_hash(cstr, &user_shade_color);
+	print_rgb_hash(cstr, get_graph_color(SHADECOLOR));
     }
 
     if (title == NULL) {
@@ -5255,7 +5235,7 @@ static void print_pm_filledcurve_line (double factor,
 	*cstr = '\0';
 	strncat(cstr, rgb, 9);
     } else {
-	print_rgb_hash(cstr, &user_shade_color);
+	print_rgb_hash(cstr, get_graph_color(SHADECOLOR));
     }
 
     if (title == NULL) {

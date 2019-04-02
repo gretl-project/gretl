@@ -278,10 +278,6 @@ static void color_patch_button_reset (GtkWidget *button, int cnum)
     gtk_widget_show(image);
     gtk_container_add(GTK_CONTAINER(button), image);
     g_object_set_data(G_OBJECT(button), "image", image);
-
-    if (cnum == BOXCOLOR || cnum == BOXCOLOR - 1) {
-	update_persistent_graph_colors();
-    }
 }
 
 static void graph_color_selector (GtkWidget *w, gpointer p)
@@ -1417,30 +1413,35 @@ static void toggle_axis_selection (GtkWidget *w, plot_editor *ed)
 /* re-establish the default plot colors and reset the
    color selection buttons accordingly */
 
-static void color_default_callback (GtkWidget *w, GtkWidget *book)
+static void colors_default_callback (GtkWidget *w, GtkWidget *book)
 {
     GtkWidget *button;
-    char id[32];
+    gchar *id;
     int i;
 
-    sprintf(id, "color-button%d", BOXCOLOR);
-    button = g_object_get_data(G_OBJECT(book), id);
-
-    if (button != NULL) {
-	graph_palette_reset(BOXCOLOR);
-	color_patch_button_reset(button, BOXCOLOR);
-    } else {
-	for (i=0; i<BOXCOLOR; i++) {
-	    sprintf(id, "color-button%d", i);
-	    button = g_object_get_data(G_OBJECT(book), id);
-	    if (button != NULL) {
-		if (i == 0) {
-		    graph_palette_reset(i);
-		}
-		color_patch_button_reset(button, i);
-	    }
+    for (i=0; i<N_GP_COLORS; i++) {
+	id = g_strdup_printf("color-button%d", i);
+	button = g_object_get_data(G_OBJECT(book), id);
+	if (button != NULL) {
+	    graph_palette_reset(i);
+	    color_patch_button_reset(button, i);
 	}
+	g_free(id);
     }
+
+    /* record current values in settings.c */
+    update_persistent_graph_colors();
+}
+
+/* specific to BOXCOLOR selection: return this particular
+   value to its default */
+
+static void boxcolor_default_callback (GtkWidget *w,
+				       GtkWidget *button)
+{
+    graph_palette_reset(BOXCOLOR);
+    color_patch_button_reset(button, BOXCOLOR);
+    update_persistent_graph_colors();
 }
 
 static void table_add_row (GtkWidget *tbl, int *rows, int cols)
@@ -1449,68 +1450,89 @@ static void table_add_row (GtkWidget *tbl, int *rows, int cols)
     gtk_table_resize(GTK_TABLE(tbl), *rows, cols);
 }
 
-static void add_color_selector (int i, GtkWidget *tbl, int cols,
-				int *rows, GtkWidget *notebook)
+static GtkWidget *color_reset_button (GtkWidget *tbl, int row)
 {
-    static int r0;
-    int collen = (N_GP_COLORS - 1) / 2;
     GtkWidget *button, *hbox;
-    GtkWidget *label;
-    int row, cmin, cmax;
-    char str[32];
-
-    if (i == 0) {
-	/* get baseline table row for color selectors */
-	r0 = *rows;
-    }
-
-    if (i < collen || i == BOXCOLOR) {
-	table_add_row(tbl, rows, cols);
-	cmin = 0;
-	cmax = 1;
-	row = *rows;
-    } else {
-	/* place selector to the right */
-	row = r0 + 1 + i - collen;
-	cmin = 1;
-	cmax = 2;
-    }
 
     hbox = gtk_hbox_new(FALSE, 2);
+    button = gtk_button_new_with_label(_("Reset to default"));
+    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 10);
+    gtk_table_attach(GTK_TABLE(tbl), hbox, 0, 2, row, row+1,
+		     GTK_FILL, 0, 0, 5);
+    gtk_widget_show_all(hbox);
 
-    if (i == BOXCOLOR) {
-	strcpy(str, _("Fill color"));
-    } else {
-	sprintf(str, _("Color %d"), i + 1);
+    return button;
+}
+
+static void add_color_selectors (GtkWidget *tbl, GtkWidget *notebook)
+{
+    int c_rows = N_GP_COLORS / 2;
+    GtkWidget *label, *button, *hbox;
+    int i, j, c, idx, row = 1;
+    char str[32];
+
+    for (i=0; i<c_rows; i++) {
+	for (j=0; j<2; j++) {
+	    if (i < 3) {
+		idx = (j == 1)? i + 3 : i;
+	    } else {
+		idx = BOXCOLOR + j;
+	    }
+	    hbox = gtk_hbox_new(FALSE, 2);
+	    if (i < 3) {
+		sprintf(str, _("Color %d"), idx + 1);
+	    } else if (j == 1) {
+		strcpy(str, _("Shade color"));
+	    } else {
+		strcpy(str, _("Fill color"));
+	    }
+	    c = 2 * j;
+	    label = gtk_label_new(str);
+	    gtk_widget_show(label);
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), label, c, c+1,
+				      row, row+1);
+	    button = color_patch_button(idx);
+	    sprintf(str, "color-button%d", idx);
+	    g_object_set_data(G_OBJECT(notebook), str, button);
+	    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+	    gtk_widget_show_all(hbox);
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, c+1, c+2,
+				      row, row+1);
+	}
+	row++;
     }
 
-    label = gtk_label_new(str);
+    button = color_reset_button(tbl, row);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(colors_default_callback),
+		     notebook);
+}
+
+static void add_boxcolor_selector (GtkWidget *tbl, int cols,
+				   int *rows, GtkWidget *notebook)
+{
+    GtkWidget *hbox, *label;
+    GtkWidget *button, *reset;
+    int row = *rows;
+
+    /* add rows for single color selector and reset */
+    *rows += 2;
+    gtk_table_resize(GTK_TABLE(tbl), *rows, cols);
+
+    /* hbox containing label and color button into hbox */
+    hbox = gtk_hbox_new(FALSE, 2);
+    label = gtk_label_new(_("Fill color"));
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
-    gtk_widget_show(label);
-
-    button = color_patch_button(i);
+    button = color_patch_button(BOXCOLOR);
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
-    gtk_widget_show_all(button);
-    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, cmin, cmax,
-			      row - 1, row);
-    gtk_widget_show(hbox);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 0, 1,
+			      row, row + 1);
+    gtk_widget_show_all(hbox);
 
-    sprintf(str, "color-button%d", i);
-    g_object_set_data(G_OBJECT(notebook), str, button);
-
-    if (i == BOXCOLOR || i == BOXCOLOR - 1) {
-	table_add_row(tbl, rows, TAB_MAIN_COLS);
-	hbox = gtk_hbox_new(FALSE, 2);
-	button = gtk_button_new_with_label(_("Reset to default"));
-	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 10);
-	g_signal_connect(G_OBJECT(button), "clicked",
-			 G_CALLBACK(color_default_callback),
-			 notebook);
-	gtk_table_attach(GTK_TABLE(tbl), hbox, 0, 2, *rows - 1, *rows,
-			 GTK_FILL, 0, 0, 5);
-	gtk_widget_show(button);
-	gtk_widget_show(hbox);
-    }
+    reset = color_reset_button(tbl, row + 2);
+    g_signal_connect(G_OBJECT(reset), "clicked",
+		     G_CALLBACK(boxcolor_default_callback),
+		     button);
 }
 
 static void combo_set_ignore_changed (GtkComboBox *box, gboolean s)
@@ -1976,8 +1998,7 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 	gtk_table_attach_defaults(GTK_TABLE(tbl), hsep, 0, TAB_MAIN_COLS,
 				  rows - 1, rows);
 	gtk_widget_show(hsep);
-	add_color_selector(BOXCOLOR, tbl, TAB_MAIN_COLS, &rows,
-			   ed->notebook);
+	add_boxcolor_selector(tbl, TAB_MAIN_COLS, &rows, ed->notebook);
     }
 }
 
@@ -3412,22 +3433,19 @@ static void gpt_tab_XY (plot_editor *ed, GPT_SPEC *spec, gint axis)
 
 static void gpt_tab_palette (GtkWidget *notebook)
 {
-    GtkWidget *vbox, *label, *tbl;
-    int i, rows = 1;
+    GtkWidget *vbox, *label, *table;
+    int rows = 2 + N_GP_COLORS / 2;
 
     vbox = gp_page_vbox(notebook, _("Palette"));
-    tbl = gp_dialog_table(1, 2, vbox);
+    table = gp_dialog_table(rows, 4, vbox);
 
     label = gtk_label_new(_("These colors will be used unless overridden\n"
 			    "by graph-specific choices\n"));
-    gtk_table_attach(GTK_TABLE(tbl), label, 0, 2, 0, 1, 0, 0, 0, 0);
+    gtk_table_attach(GTK_TABLE(table), label, 0, 4, 0, 1, 0, 0, 0, 0);
     gtk_widget_show(label);
 
-    for (i=0; i<BOXCOLOR; i++) {
-	add_color_selector(i, tbl, 2, &rows, notebook);
-    }
-
-    gtk_widget_show(tbl);
+    add_color_selectors(table, notebook);
+    gtk_widget_show(table);
 }
 
 static void plot_editor_destroy (plot_editor *ed)

@@ -67,9 +67,9 @@ struct gretlRGB_ {
 typedef struct GPT_SPEC_ GPT_SPEC;
 
 #define MAXTITLE 128
-#define N_GP_COLORS 8
+#define N_GP_COLORS 8 /* six lines plus "box" and "shade" */
 #define BOXCOLOR (N_GP_COLORS - 2)
-#define SHADECOLOR 0x54ade
+#define SHADECOLOR (N_GP_COLORS - 1)
 
 #define GP_WIDTH      640
 #define GP_HEIGHT     480
