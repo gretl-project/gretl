@@ -3373,7 +3373,7 @@ static int rewrite_logistic_stats (const DATASET *dset,
 				   double lmax)
 {
     double den, lam = M_PI/5.35;
-    double x, sigma, ess, jll;
+    double x, sigma, ess, jll, jaic;
     int use_approx = 1;
     int t;
 
@@ -3419,13 +3419,14 @@ static int rewrite_logistic_stats (const DATASET *dset,
     }
 
     sigma = sqrt(ess / pmod->dfd);
+    jaic = -2.0 * jll + 2 * pmod->ncoeff;
 
     pmod->list[1] = dv;
     gretl_model_set_double(pmod, "lmax", lmax);
     gretl_model_set_double(pmod, "ess_orig", ess);
     gretl_model_set_double(pmod, "sigma_orig", sigma);
     gretl_model_set_double(pmod, "jll", jll);
-    fprintf(stderr, "logistic: Jloglik = %g\n", jll);
+    gretl_model_set_double(pmod, "jaic", jaic);
     pmod->ci = LOGISTIC;
 
     if (!(pmod->opt & OPT_F)) {

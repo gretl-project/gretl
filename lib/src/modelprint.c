@@ -3253,6 +3253,10 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	for (i=K_RSQ; i<MID_STATS; i++) {
 	    val[i] = NADBL;
 	}
+	if (pmod->ci == LOGISTIC) {
+	    val[K_LNL] = gretl_model_get_double(pmod, "jll");
+	    val[K_AKA] = gretl_model_get_double(pmod, "jaic");
+	}
     }
 
     /* start the table */
