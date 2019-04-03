@@ -2827,7 +2827,7 @@ static int use_lines (gnuplot_info *gi)
 	int i;
 
 	for (i=1; i<=gi->withlist[0]; i++) {
-	    if (gi->withlist[0] == W_LINES) {
+	    if (gi->withlist[i] == W_LINES) {
 		return 1;
 	    }
 	}
