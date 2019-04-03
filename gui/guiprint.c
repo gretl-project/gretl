@@ -1,24 +1,24 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /*  guiprint.c - RTF and LaTeX generation for gretl, plus native
-    printing */ 
+    printing */
 
 #include "gretl.h"
 #include "selector.h"
@@ -82,7 +82,7 @@ static char *header_string (const char *fname)
 	g_free(hdr);
 	hdr = trans;
     }
-#endif  
+#endif
 
     return hdr;
 }
@@ -125,7 +125,7 @@ static gchar *my_locale_from_utf8 (const gchar *src)
     return ret;
 }
 
-void print_window_content (gchar *fullbuf, gchar *selbuf, 
+void print_window_content (gchar *fullbuf, gchar *selbuf,
 			   const char *fname,
 			   windata_t *vwin)
 {
@@ -153,7 +153,7 @@ void print_window_content (gchar *fullbuf, gchar *selbuf,
     }
 
     dc = pdlg.hDC;
-    
+
     /* use Textmappingmode, that's easiest to map the fontsize */
     SetMapMode(dc, MM_TEXT);
 
@@ -161,7 +161,7 @@ void print_window_content (gchar *fullbuf, gchar *selbuf,
     px = GetDeviceCaps(dc, LOGPIXELSY);
 
     winfont = win32_fixed_font_name();
-    
+
     /* setup font specifics */
     /* first param to MulDiv is supposed to be point size */
     lfont.lfHeight = -MulDiv(10, px, 72); /* this is broken! */
@@ -176,10 +176,10 @@ void print_window_content (gchar *fullbuf, gchar *selbuf,
     lfont.lfOutPrecision = OUT_DEVICE_PRECIS;
     lfont.lfClipPrecision = CLIP_DEFAULT_PRECIS;
     lfont.lfQuality = DEFAULT_QUALITY;
-    lfont.lfPitchAndFamily = VARIABLE_PITCH | FF_MODERN; 
+    lfont.lfPitchAndFamily = VARIABLE_PITCH | FF_MODERN;
     lstrcpy(lfont.lfFaceName, winfont);
     fixed_font = CreateFontIndirect(&lfont);
-    SelectObject(dc, fixed_font); 
+    SelectObject(dc, fixed_font);
 
     free(winfont);
 
@@ -187,12 +187,12 @@ void print_window_content (gchar *fullbuf, gchar *selbuf,
     if (GetTextMetrics(dc, &lptm)) {
 	incr = lptm.tmHeight * 1.2;
     }
-        
+
     /* Initialize print document details */
     memset(&di, 0, sizeof di);
     di.cbSize = sizeof di;
     di.lpszDocName = "gretl";
-    
+
     printok = StartDoc(dc, &di);
 
     if (selbuf != NULL && (pdlg.Flags & PD_SELECTION)) {
@@ -214,21 +214,21 @@ void print_window_content (gchar *fullbuf, gchar *selbuf,
     x = px / 2; /* attempt at left margin */
     hdrstart = header_string(fname);
 
-    while (*text && printok) { 
+    while (*text && printok) {
 	/* pages loop */
 	StartPage(dc);
 	SelectObject(dc, fixed_font);
 	SetMapMode(dc, MM_TEXT);
 	/* make simple header */
 	if (hdrstart != NULL) {
-	    sprintf(hdr, I_("%s, page %d"), hdrstart, page++); 
+	    sprintf(hdr, I_("%s, page %d"), hdrstart, page++);
 	} else {
 	    sprintf(hdr, "%d", page++);
 	}
 	TextOut(dc, x, px / 8, hdr, strlen(hdr));
 	line = 0;
 	y = px/2;
-	while (*text && line < PAGE_LINES) { 
+	while (*text && line < PAGE_LINES) {
 	    /* lines loop */
 	    len = strcspn(text, "\n");
 	    TextOut(dc, x, y, text, len);
@@ -244,7 +244,7 @@ void print_window_content (gchar *fullbuf, gchar *selbuf,
     }
 
  bailout:
-    
+
     if (printok) {
         EndDoc(dc);
     } else {
@@ -286,7 +286,7 @@ int win32_print_graph (char *emfname)
     if (!printok) {
 	/* canceled */
 	DeleteEnhMetaFile(hemf);
-	return 0; 
+	return 0;
     }
 
     dc = pdlg.hDC;
@@ -294,7 +294,7 @@ int win32_print_graph (char *emfname)
     memset(&di, 0, sizeof di);
     di.cbSize = sizeof di;
     di.lpszDocName = "gretl";
-    
+
     printok = StartDoc(dc, &di);
 
     if (printok) {
@@ -307,7 +307,7 @@ int win32_print_graph (char *emfname)
 
 	StartPage(dc);
 
-	hpx = (float) GetDeviceCaps(dc, HORZRES); 
+	hpx = (float) GetDeviceCaps(dc, HORZRES);
 	vpx = (float) GetDeviceCaps(dc, VERTRES);
 	hppi = (float) GetDeviceCaps(dc, LOGPIXELSX);
 	vppi = (float) GetDeviceCaps(dc, LOGPIXELSY);
@@ -318,7 +318,7 @@ int win32_print_graph (char *emfname)
 	vsize = hsize * 0.75 * (vppi / hppi);
 	vfrac = vsize / vpx;
 	vmarg = ((1.0 - vfrac) / 3.0) * vpx;
-	
+
 	rect.left = (long) hmarg;
 	rect.top = (long) vmarg;
 	rect.right = (long) (hmarg + hsize);
@@ -328,7 +328,7 @@ int win32_print_graph (char *emfname)
 	fprintf(fp, "hpx=%g, vpx=%g\n", hpx, vpx);
 	fprintf(fp, "hsize=%g, vsize=%g\n", hsize, vsize);
 	fprintf(fp, "hfrac=%g, vfrac=%g\n", hfrac, vfrac);
-	fprintf(fp, "rect = %ld, %ld, %ld, %ld\n", 
+	fprintf(fp, "rect = %ld, %ld, %ld, %ld\n",
 		rect.left, rect.top, rect.right, rect.bottom);
 	fclose(fp);
 # endif
@@ -378,7 +378,7 @@ static void begin_text_print (GtkPrintOperation *op,
     gchar *fstring;
     GtkPageSetup *setup;
     gdouble x, y;
- 
+
     setup = gtk_print_context_get_page_setup(context);
 
     x = gtk_page_setup_get_left_margin(setup, GTK_UNIT_POINTS);
@@ -466,14 +466,14 @@ static void job_set_n_pages (GtkPrintOperation *op,
 	s++;
     }
 
-    pinfo->n_pages = lines / pinfo->pagelines + 
+    pinfo->n_pages = lines / pinfo->pagelines +
 	(lines % pinfo->pagelines != 0);
     gtk_print_operation_set_n_pages(op, pinfo->n_pages);
 }
 
 static GtkPrintSettings *settings = NULL;
 
-void print_window_content (gchar *fullbuf, gchar *selbuf, 
+void print_window_content (gchar *fullbuf, gchar *selbuf,
 			   const char *fname,
 			   windata_t *vwin)
 {
@@ -498,13 +498,13 @@ void print_window_content (gchar *fullbuf, gchar *selbuf,
     pinfo.layout = NULL;
     pinfo.pagelines = 54; /* FIXME */
 
-    job_set_n_pages(op, &pinfo); 
+    job_set_n_pages(op, &pinfo);
 
     g_signal_connect(op, "begin-print", G_CALLBACK(begin_text_print), &pinfo);
     g_signal_connect(op, "draw-page", G_CALLBACK(draw_text_page), &pinfo);
 
     res = gtk_print_operation_run(op, GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG,
-				  GTK_WINDOW(vwin_toplevel(vwin)), 
+				  GTK_WINDOW(vwin_toplevel(vwin)),
 				  &err);
 
     if (res == GTK_PRINT_OPERATION_RESULT_ERROR) {
@@ -533,7 +533,7 @@ void rtf_print_obs_marker (int t, const DATASET *pdinfo, PRN *prn)
     if (pdinfo->markers) {
 	obs = pdinfo->S[t];
     } else {
-	char tmp[OBSLEN]; 
+	char tmp[OBSLEN];
 
 	ntodate(tmp, t, pdinfo);
 	obs = tmp;
@@ -589,7 +589,7 @@ static void printk_rtf (int k, PRN *prn, int endrow)
                     "\\cellx1600\\cellx2800\\cellx4000\\cellx5200" \
                     "\\cellx6400\\cellx7200\n"
 
-static void 
+static void
 rtfprint_simple_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 {
     char date1[OBSLEN], date2[OBSLEN], tmp[128];
@@ -603,7 +603,7 @@ rtfprint_simple_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 	    date1, date2);
 
     pprintf(prn, "{\\rtf1\\par\n\\qc %s\\par\n", tmp);
-    
+
     if (summary_has_missing_values(summ)) {
 	strcpy(tmp, A_("(missing values were skipped)"));
 	pprintf(prn, "%s\\par\n\n", tmp); /* FIXME */
@@ -611,7 +611,7 @@ rtfprint_simple_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
     pprintf(prn, "{" SUMM_ROW_S
 	    "\\intbl \\qc %s\\cell", A_("Variable"));
 
-    pprintf(prn, 
+    pprintf(prn,
 	    " \\qc %s\\cell"
 	    " \\qc %s\\cell"
 	    " \\qc %s\\cell"
@@ -637,7 +637,7 @@ rtfprint_simple_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
     pputs(prn, "}}\n");
 }
 
-static void 
+static void
 rtfprint_summary_full (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 {
     char date1[OBSLEN], date2[OBSLEN], tmp[128];
@@ -651,9 +651,9 @@ rtfprint_summary_full (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 	    date1, date2);
 
     pprintf(prn, "{\\rtf1\\par\n\\qc %s\\par\n", tmp);
-    
+
     if (summ->list[0] == 1) {
-	sprintf(tmp, A_("for the variable %s (%d valid observations)"), 
+	sprintf(tmp, A_("for the variable %s (%d valid observations)"),
 		pdinfo->varname[summ->list[1]], summ->n);
 	pprintf(prn, "%s\\par\n\n", tmp);
 	pputs(prn, "{" VAR_SUMM_ROW "\\intbl ");
@@ -670,7 +670,7 @@ rtfprint_summary_full (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 	set_gretl_digits(5);
     }
 
-    pprintf(prn, 
+    pprintf(prn,
 	    " \\qc %s\\cell"
 	    " \\qc %s\\cell"
 	    " \\qc %s\\cell"
@@ -692,7 +692,7 @@ rtfprint_summary_full (const Summary *summ, const DATASET *pdinfo, PRN *prn)
     if (summ->list[0] > 1) pprintf(prn, "\\intbl \\qc %s\\cell",
 				   A_("Variable"));
 
-    pprintf(prn, 
+    pprintf(prn,
 	    " \\qc %s\\cell"
 	    " \\qc %s\\cell"
 	    " \\qc %s\\cell"
@@ -714,7 +714,7 @@ rtfprint_summary_full (const Summary *summ, const DATASET *pdinfo, PRN *prn)
     if (summ->list[0] > 1) pprintf(prn, "\\intbl \\qc %s\\cell",
 				   A_("Variable"));
 
-    pprintf(prn, 
+    pprintf(prn,
 	    " \\qc %s\\cell"
 	    " \\qc %s\\cell"
 	    " \\qc %s\\cell"
@@ -738,15 +738,15 @@ rtfprint_summary_full (const Summary *summ, const DATASET *pdinfo, PRN *prn)
     pputs(prn, "}}\n");
 }
 
-int text_equation_ok (const MODEL *pmod) 
+int text_equation_ok (const MODEL *pmod)
 {
     if (pmod->ci == OLS || pmod->ci == WLS ||
 	pmod->ci == HSK || pmod->ci == AR1 ||
 	pmod->ci == ARCH || pmod->ci == IVREG ||
 	pmod->ci == LAD || pmod->ci == PANEL ||
 	pmod->ci == LOGIT || pmod->ci == PROBIT ||
-	pmod->ci == TOBIT) {
-	return pmod->ncoeff <= 6;
+	pmod->ci == TOBIT || pmod->ci == LOGISTIC) {
+	return 1;
     } else {
 	return 0;
     }
@@ -758,57 +758,93 @@ static char *eqn_numstr (double x, char *s)
     return gretl_fix_exponent(s);
 }
 
-int text_print_equation (const MODEL *pmod, const DATASET *pdinfo, 
+int text_print_equation (const MODEL *pmod, const DATASET *pdinfo,
 			 gretlopt opt, PRN *prn)
 {
     double x;
     char vname[32], xstr[12];
     int pad, c, cols[6] = {0};
-    int i, nc = pmod->ncoeff;
+    int k, totk = pmod->ncoeff;
+    int ii, ii0, rem, maxper = 5;
+    int n_lines, i, j;
 
     /* dependent variable */
     pputc(prn, '\n');
     c = pprintf(prn, "^%s = ", gretl_model_get_depvar_name(pmod, pdinfo));
 
-    /* coefficients times indep vars */
+    /* how many lines are needed, at @maxper coeffs per line? */
+    n_lines = totk / maxper + (totk % maxper ? 1 : 0);
 
-    for (i=0; i<nc; i++) {
-	cols[i] = (i == 0)? (c - 1) : (c + 2);
-	if (i == 0 && pmod->ifc) {
-	    eqn_numstr(pmod->coeff[i], xstr);
-	    c += pputs(prn, xstr);
-	} else {
-	    eqn_numstr(fabs(pmod->coeff[i]), xstr);
-	    c += pprintf(prn, " %c %s", (pmod->coeff[i] < 0.0)? '-' : '+',
-			 xstr);
-	    gretl_model_get_param_name(pmod, pdinfo, i, vname);
-	    c += pprintf(prn, "*%s", vname);
-	}
-    }
-    pputc(prn, '\n');
+    /* coeffs remaining to print */
+    rem = totk;
 
-    /* standard errors or t-stats */
+    /* index of first coeff on line */
+    ii0 = 0;
 
-    c = cols[0];
-    bufspace(cols[0], prn);
+    for (j=0; j<n_lines; j++) {
+	k = rem > maxper ? maxper : rem;
+	rem -= k; /* reduce for bext iteration */
+	ii = ii0;
 
-    for (i=0; i<nc; i++) {
-	if (i > 0) {
-	    pad = cols[i] - c;
-	    if (pad > 0) {
-		bufspace(pad, prn);
-		c += pad;
+	/* coefficients times indep vars */
+	for (i=0; i<k; i++) {
+	    cols[i] = (i == 0)? (c - 1) : (c + 2); /* FIXME */
+	    if (ii == 0 && pmod->ifc) {
+		eqn_numstr(pmod->coeff[ii], xstr);
+		c += pputs(prn, xstr);
+	    } else {
+		eqn_numstr(fabs(pmod->coeff[ii]), xstr);
+		c += pprintf(prn, " %c %s", (pmod->coeff[ii] < 0.0)? '-' : '+',
+			     xstr);
+		gretl_model_get_param_name(pmod, pdinfo, ii, vname);
+		c += pprintf(prn, "*%s", vname);
 	    }
+	    ii++;
 	}
-	if (na(pmod->sderr[i])) {
-	    c += pprintf(prn, "(NA)");
-	} else if (opt & OPT_T) {
-	    x = pmod->coeff[i] / pmod->sderr[i];
-	    eqn_numstr(x, xstr);
-	    c += pprintf(prn, "(%s)", xstr);
-	} else {
-	    eqn_numstr(pmod->sderr[i], xstr);
-	    c += pprintf(prn, "(%s)", xstr);
+	pputc(prn, '\n');
+
+	/* find our starting point in line @j */
+	c = cols[0];
+	bufspace(cols[0], prn);
+	ii = ii0;
+
+	/* standard errors or t-stats */
+	for (i=0; i<k; i++) {
+	    if (i == 0 && j > 0) {
+		/* starting second or subsequent line */
+		bufspace(3, prn);
+		c += 3;
+	    } else if (i > 0) {
+		pad = cols[i] - c;
+		if (pad > 0) {
+		    bufspace(pad, prn);
+		    c += pad;
+		}
+	    }
+	    if (na(pmod->sderr[ii])) {
+		c += pprintf(prn, "(NA)");
+	    } else if (opt & OPT_T) {
+		x = pmod->coeff[ii] / pmod->sderr[ii];
+		eqn_numstr(x, xstr);
+		c += pprintf(prn, "(%s)", xstr);
+	    } else {
+		eqn_numstr(pmod->sderr[ii], xstr);
+		c += pprintf(prn, "(%s)", xstr);
+	    }
+	    ii++;
+	}
+
+	/* prepare for next line? */
+	if (j < n_lines - 1) {
+	    int p;
+
+	    pputs(prn, "\n\n");
+	    ii0 += k;
+	    cols[0] = 3;
+	    for (p=0; p<6; p++) {
+		cols[p] = 0;
+	    }
+	    c = pputs(prn, "  ");
 	}
     }
 
@@ -821,7 +857,7 @@ int text_print_equation (const MODEL *pmod, const DATASET *pdinfo,
     }
 
     /* additional info (R^2 etc) */
-    if (pmod->ci == LAD) { 
+    if (pmod->ci == LAD) {
 	x = gretl_model_get_double(pmod, "ladsum");
 	if (!na(x)) {
 	    eqn_numstr(x, xstr);
@@ -847,7 +883,7 @@ int text_print_equation (const MODEL *pmod, const DATASET *pdinfo,
     return 0;
 }
 
-int text_print_x_y_fitted (int vx, int vy, const double *f, 
+int text_print_x_y_fitted (int vx, int vy, const double *f,
 			   const DATASET *dset, PRN *prn)
 {
     char obs1[OBSLEN], obs2[OBSLEN];
@@ -886,7 +922,7 @@ int text_print_x_y_fitted (int vx, int vy, const double *f,
 	if (t == 0) strcpy(label, dset->varname[vx]);
 	if (t == 1) strcpy(label, dset->varname[vy]);
 	if (t == 2) strcpy(label, _("fitted"));
-	pprintf(prn, "%*s", UTF_WIDTH(label, 13), label); 
+	pprintf(prn, "%*s", UTF_WIDTH(label, 13), label);
     }
 
     pputs(prn, "\n\n");
@@ -911,7 +947,7 @@ int text_print_x_y_fitted (int vx, int vy, const double *f,
 	    if (pmaxx == PMAX_NOT_AVAILABLE || pmaxy == PMAX_NOT_AVAILABLE) {
 		pprintf(prn, "%13g%13g%13g\n", x[t], y[t], f[t]);
 	    } else {
-		pprintf(prn, "%13.*f%13.*f%13.*f\n", 
+		pprintf(prn, "%13.*f%13.*f%13.*f\n",
 			pmaxx, x[t], pmaxy, y[t], pmaxy, f[t]);
 	    }
 	}
@@ -949,7 +985,7 @@ static void printf_tex (double x, PRN *prn, int endrow)
 	} else {
 	    pprintf(prn, "%s & ", s);
 	}
-    }	
+    }
 }
 
 static void printk_tex (int k, PRN *prn, int endrow)
@@ -961,7 +997,7 @@ static void printk_tex (int k, PRN *prn, int endrow)
     }
 }
 
-static void 
+static void
 texprint_simple_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 {
     char pt = get_local_decpoint();
@@ -976,7 +1012,7 @@ texprint_simple_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 	    date1, date2);
 
     pprintf(prn, "\\begin{center}\n%s\\\\\n", tmp);
-    
+
     if (summary_has_missing_values(summ)) {
 	pprintf(prn, "%s\\\\[8pt]\n\n", A_("(missing values were skipped)"));
     } else {
@@ -1012,7 +1048,7 @@ texprint_simple_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
     pputs(prn, "\\end{tabular}\n\\end{center}\n");
 }
 
-static void 
+static void
 texprint_summary_full (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 {
     char pt = get_local_decpoint();
@@ -1027,10 +1063,10 @@ texprint_summary_full (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 	    date1, date2);
 
     pprintf(prn, "\\begin{center}\n%s\\\\\n", tmp);
-    
+
     if (summ->list[0] == 1) {
 	tex_escape(vname, pdinfo->varname[summ->list[1]]);
-	sprintf(tmp, A_("for the variable %s (%d valid observations)"), 
+	sprintf(tmp, A_("for the variable %s (%d valid observations)"),
 		vname, summ->n);
 	pprintf(prn, "%s\\\\[8pt]\n\n", tmp);
 	pprintf(prn, "\\begin{tabular}{r@{%c}lr@{%c}lr@{%c}lr@{%c}l}\n",
@@ -1111,8 +1147,8 @@ texprint_summary_full (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 	    /* xgettext:no-c-format */
 	    A_("5\\% perc."),
 	    /* xgettext:no-c-format */
-	    A_("95\\% perc."), 
-	    A_("IQ Range"), 
+	    A_("95\\% perc."),
+	    A_("IQ Range"),
 	    A_("Missing obs."));
 
     for (i=0; i<summ->list[0]; i++) {
@@ -1167,7 +1203,7 @@ static void rtf_outxx (double xx, PRN *prn)
     if (na(xx)) {
 	pprintf(prn, "\\qc %s\\cell ", A_("undefined"));
     } else {
-	pprintf(prn, "\\qc %.4f\\cell ", xx);	
+	pprintf(prn, "\\qc %.4f\\cell ", xx);
     }
 }
 
@@ -1220,14 +1256,14 @@ rtfprint_vmatrix (const VMatrix *vmat, const DATASET *pdinfo, PRN *prn)
 	if (vmat->missing) {
 	    pprintf(prn, "%s\\par\n", A_("(missing values were skipped)"));
 	}
-	sprintf(tmp, A_("5%% critical value (two-tailed) = %.4f for n = %d"), 
+	sprintf(tmp, A_("5%% critical value (two-tailed) = %.4f for n = %d"),
 		rhocrit95(n), n);
 	pprintf(prn, "%s\\par\n\\par\n{", tmp);
     } else {
 	pprintf(prn, "{\\rtf1\\par\n\\qc %s\\par\n\\par\n{",
 		A_("Coefficient covariance matrix"));
     }
-    
+
     for (i=0; i<=blockmax; i++) {
 	int pad;
 
@@ -1250,7 +1286,7 @@ rtfprint_vmatrix (const VMatrix *vmat, const DATASET *pdinfo, PRN *prn)
 
 	/* print rectangular part, if any, of matrix */
 	for (j=0; j<nf; j++) {
-	    pputs(prn, "\\intbl "); 
+	    pputs(prn, "\\intbl ");
 	    if (pad) {
 		rtf_table_pad(pad, prn);
 	    }
@@ -1267,7 +1303,7 @@ rtfprint_vmatrix (const VMatrix *vmat, const DATASET *pdinfo, PRN *prn)
 
 	/* print upper triangular part of matrix */
 	for (j=0; j<p; ++j) {
-	    pputs(prn, "\\intbl "); 
+	    pputs(prn, "\\intbl ");
 	    rtf_table_pad(pad + j, prn);
 	    ij2 = nf + j;
 	    for (k=j; k<p; k++) {
@@ -1314,11 +1350,11 @@ texprint_vmatrix (const VMatrix *vmat, const DATASET *pdinfo, PRN *prn)
 	    pputs(prn, A_("(missing values were skipped)"));
 	    pputs(prn, "\\\\\n");
 	}
-	pprintf(prn, A_("5\\%% critical value (two-tailed) = %.4f for n = %d"), 
+	pprintf(prn, A_("5\\%% critical value (two-tailed) = %.4f for n = %d"),
 		rhocrit95(n), n);
 	pputs(prn, "\\\\\n");
     } else {
-	pprintf(prn, "\\begin{center}\n%s\\\\\n", 
+	pprintf(prn, "\\begin{center}\n%s\\\\\n",
 		A_("Coefficient covariance matrix"));
     }
 
@@ -1348,7 +1384,7 @@ texprint_vmatrix (const VMatrix *vmat, const DATASET *pdinfo, PRN *prn)
 			(j == p - 1)? " &\\\\\n" : " &\n");
 	    }
 	}
-	
+
 	/* print rectangular part, if any, of matrix */
 	for (j=0; j<nf; j++) {
 	    for (k=0; k<p; k++) {
@@ -1387,7 +1423,7 @@ texprint_vmatrix (const VMatrix *vmat, const DATASET *pdinfo, PRN *prn)
     pputs(prn, "\\end{center}\n");
 }
 
-void special_print_vmatrix (const VMatrix *vmat, const DATASET *pdinfo, 
+void special_print_vmatrix (const VMatrix *vmat, const DATASET *pdinfo,
 			    PRN *prn)
 {
     set_alt_gettext_mode(prn);
@@ -1399,7 +1435,7 @@ void special_print_vmatrix (const VMatrix *vmat, const DATASET *pdinfo,
     }
 }
 
-static int texprint_fcast_stats (const FITRESID *fr, 
+static int texprint_fcast_stats (const FITRESID *fr,
 				 gretlopt opt,
 				 PRN *prn)
 {
@@ -1444,27 +1480,27 @@ static int texprint_fcast_stats (const FITRESID *fr,
     for (i=0; i<len; i++) {
 	x = gretl_vector_get(m, i);
 	if (!isnan(x)) {
-	    pprintf(prn, "%s & %s%.5g \\\\\n", A_(strs[j]), (x < 0)? "$-$" : "", 
+	    pprintf(prn, "%s & %s%.5g \\\\\n", A_(strs[j]), (x < 0)? "$-$" : "",
 		    fabs(x));
 	    if (i == 1) {
-		pprintf(prn, "%s & %.5g \\\\\n", A_(strs[j+1]), sqrt(x));	
+		pprintf(prn, "%s & %.5g \\\\\n", A_(strs[j+1]), sqrt(x));
 	    }
 	}
 	j += (i == 1)? 2 : 1;
     }
 
     pputs(prn, "\\end{tabular}\n");
-    
+
     gretl_matrix_free(m);
 
     return err;
 }
 
-static 
-void tex_fit_resid_head (const FITRESID *fr, const DATASET *pdinfo, 
+static
+void tex_fit_resid_head (const FITRESID *fr, const DATASET *pdinfo,
 			 PRN *prn)
 {
-    char date1[OBSLEN], date2[OBSLEN]; 
+    char date1[OBSLEN], date2[OBSLEN];
 
     ntodate(date1, fr->t1, pdinfo);
     ntodate(date2, fr->t2, pdinfo);
@@ -1477,21 +1513,21 @@ void tex_fit_resid_head (const FITRESID *fr, const DATASET *pdinfo,
     pputs(prn, "\n\\end{raggedright}\n");
 }
 
-static 
-void rtf_fit_resid_head (const FITRESID *fr, const DATASET *pdinfo, 
+static
+void rtf_fit_resid_head (const FITRESID *fr, const DATASET *pdinfo,
 			 PRN *prn)
 {
-    char date1[OBSLEN], date2[OBSLEN]; 
+    char date1[OBSLEN], date2[OBSLEN];
     char tmp[128];
 
     ntodate(date1, fr->t1, pdinfo);
     ntodate(date2, fr->t2, pdinfo);
 
     pputs(prn, "{\\rtf1\\par\n\\qc ");
-    pputs(prn, A_("Model estimation range:")); 
+    pputs(prn, A_("Model estimation range:"));
     pprintf(prn, " %s - %s\\par\n", date1, date2);
 
-    sprintf(tmp, A_("Standard error of residuals = %g"), 
+    sprintf(tmp, A_("Standard error of residuals = %g"),
 	    fr->sigma);
     pprintf(prn, "\\qc %s\\par\n\\par\n", tmp);
 }
@@ -1500,7 +1536,7 @@ static void tex_print_x (double x, int pmax, PRN *prn)
 {
     if (x < 0) {
 	pputs(prn, "$-$");
-    } 
+    }
 
     x = fabs(x);
 
@@ -1513,15 +1549,15 @@ static void tex_print_x (double x, int pmax, PRN *prn)
     pputs(prn, " & ");
 }
 
-static void texprint_fit_resid (const FITRESID *fr, 
-				const DATASET *pdinfo, 
+static void texprint_fit_resid (const FITRESID *fr,
+				const DATASET *pdinfo,
 				PRN *prn)
 {
     int t, anyast = 0;
     double xx;
     char vname[16];
 
-    tex_fit_resid_head(fr, pdinfo, prn); 
+    tex_fit_resid_head(fr, pdinfo, prn);
 
     tex_escape(vname, fr->depvar);
 
@@ -1573,8 +1609,8 @@ static void texprint_fit_resid (const FITRESID *fr,
                 "\\cellx800\\cellx2400\\cellx4000\\cellx5600" \
                 "\\cellx6100\n"
 
-static void rtfprint_fit_resid (const FITRESID *fr, 
-				const DATASET *pdinfo, 
+static void rtfprint_fit_resid (const FITRESID *fr,
+				const DATASET *pdinfo,
 				PRN *prn)
 {
     double xx;
@@ -1584,7 +1620,7 @@ static void rtfprint_fit_resid (const FITRESID *fr,
     rtf_fit_resid_head(fr, pdinfo, prn);
 
     pputs(prn, "{" FR_ROW "\\intbl ");
-    pprintf(prn, 
+    pprintf(prn,
 	    " \\qc \\cell"
 	    " \\qc %s\\cell"
 	    " \\qc %s\\cell"
@@ -1597,11 +1633,11 @@ static void rtfprint_fit_resid (const FITRESID *fr,
 	rtf_print_obs_marker(t, pdinfo, prn);
 	if (na(fr->actual[t])) {
 	    pputs(prn, "\\qc \\cell \\qc \\cell \\qc \\cell \\ql \\cell"
-		  " \\intbl \\row\n"); 
-	} else if (na(fr->fitted[t])) {	 
+		  " \\intbl \\row\n");
+	} else if (na(fr->fitted[t])) {
 	    printf_rtf(fr->actual[t], prn, 0);
 	    pputs(prn, "\\qc \\cell \\qc \\cell \\ql \\cell"
-		  " \\intbl \\row\n"); 
+		  " \\intbl \\row\n");
 	} else {
 	    int ast;
 
@@ -1613,7 +1649,7 @@ static void rtfprint_fit_resid (const FITRESID *fr,
 	    printf_rtf(fr->actual[t], prn, 0);
 	    printf_rtf(fr->fitted[t], prn, 0);
 	    printf_rtf(xx, prn, 0);
-	    pprintf(prn, "\\ql %s\\cell \\intbl \\row\n", 
+	    pprintf(prn, "\\ql %s\\cell \\intbl \\row\n",
 		    (ast)? "*" : "");
 	}
     }
@@ -1626,8 +1662,8 @@ static void rtfprint_fit_resid (const FITRESID *fr,
     pputs(prn, "}\n");
 }
 
-void special_print_fit_resid (const FITRESID *fr, 
-			      const DATASET *pdinfo, 
+void special_print_fit_resid (const FITRESID *fr,
+			      const DATASET *pdinfo,
 			      PRN *prn)
 {
     set_alt_gettext_mode(prn);
@@ -1648,8 +1684,8 @@ static void texprint_fcast_x (double x, int places, char *str)
     }
 }
 
-static void texprint_fcast_without_errs (const FITRESID *fr, 
-					 const DATASET *pdinfo, 
+static void texprint_fcast_without_errs (const FITRESID *fr,
+					 const DATASET *pdinfo,
 					 PRN *prn)
 {
     char actual[32], fitted[32];
@@ -1684,8 +1720,8 @@ static void texprint_fcast_without_errs (const FITRESID *fr,
     pputs(prn, "\\end{center}\n\n");
 }
 
-static void texprint_fcast_with_errs (const FITRESID *fr, 
-				      const DATASET *pdinfo, 
+static void texprint_fcast_with_errs (const FITRESID *fr,
+				      const DATASET *pdinfo,
 				      PRN *prn)
 {
     double maxerr, tval = 0;
@@ -1701,11 +1737,11 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
 
     if (fr->asymp) {
 	tval = normal_critval(fr->alpha / 2);
-	pprintf(prn, A_("For %g\\%% confidence intervals, $z(%g) = %.2f$\n\n"), 
+	pprintf(prn, A_("For %g\\%% confidence intervals, $z(%g) = %.2f$\n\n"),
 		conf, fr->alpha / 2, tval);
     } else {
 	tval = student_critval(fr->df, fr->alpha / 2);
-	pprintf(prn, A_("For %g\\%% confidence intervals, $t(%d, %g) = %.3f$\n\n"), 
+	pprintf(prn, A_("For %g\\%% confidence intervals, $t(%d, %g) = %.3f$\n\n"),
 		conf, fr->df, fr->alpha / 2, tval);
     }
 
@@ -1762,7 +1798,7 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
     pputs(prn, "\\end{longtable}\n\n");
     texprint_fcast_stats(fr, OPT_D, prn);
     pputs(prn, "\\end{center}\n\n");
-    
+
 }
 
 #define FC_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
@@ -1772,8 +1808,8 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
                  "\\cellx800\\cellx2200\\cellx3600\\cellx5000" \
                  "\\cellx7800\n"
 
-static void rtfprint_fcast_without_errs (const FITRESID *fr, 
-					 const DATASET *pdinfo, 
+static void rtfprint_fcast_without_errs (const FITRESID *fr,
+					 const DATASET *pdinfo,
 					 PRN *prn)
 {
     int t;
@@ -1782,12 +1818,12 @@ static void rtfprint_fcast_without_errs (const FITRESID *fr,
 
     pputs(prn, "{" FC_ROW "\\intbl ");
 
-    pprintf(prn, 
+    pprintf(prn,
 	    " \\qc %s\\cell"
 	    " \\qc %s\\cell"
 	    " \\qc %s\\cell"
-	    " \\intbl \\row\n", 
-	    A_("Obs"), fr->depvar, A_("prediction")); 
+	    " \\intbl \\row\n",
+	    A_("Obs"), fr->depvar, A_("prediction"));
 
     for (t=fr->t1; t<=fr->t2; t++) {
 	rtf_print_obs_marker(t, pdinfo, prn);
@@ -1798,8 +1834,8 @@ static void rtfprint_fcast_without_errs (const FITRESID *fr,
     pputs(prn, "}}\n");
 }
 
-static void rtfprint_fcast_with_errs (const FITRESID *fr, 
-				      const DATASET *pdinfo, 
+static void rtfprint_fcast_with_errs (const FITRESID *fr,
+				      const DATASET *pdinfo,
 				      PRN *prn)
 {
     double maxerr, tval = 0;
@@ -1809,11 +1845,11 @@ static void rtfprint_fcast_with_errs (const FITRESID *fr,
 
     if (fr->asymp) {
 	tval = normal_critval(fr->alpha / 2);
-	sprintf(tmp, A_("For %g%% confidence intervals, z(%g) = %.2f"), 
+	sprintf(tmp, A_("For %g%% confidence intervals, z(%g) = %.2f"),
 		conf, fr->alpha / 2, tval);
     } else {
 	tval = student_critval(fr->df, fr->alpha / 2);
-	sprintf(tmp, A_("For %g%% confidence intervals, t(%d, %g) = %.3f"), 
+	sprintf(tmp, A_("For %g%% confidence intervals, t(%d, %g) = %.3f"),
 		conf, fr->df, fr->alpha / 2, tval);
     }
     pprintf(prn, "{\\rtf1\\par\n\\qc %s\\par\n\\par\n", tmp);
@@ -1821,14 +1857,14 @@ static void rtfprint_fcast_with_errs (const FITRESID *fr,
     sprintf(tmp, A_("%g%% interval"), conf);
 
     pputs(prn, "{" FCE_ROW "\\intbl ");
-    pprintf(prn, 
+    pprintf(prn,
 	    " \\qc %s\\cell"
 	    " \\qc %s\\cell"
 	    " \\qc %s\\cell"
 	    " \\qc %s\\cell"
 	    " \\qc %s\\cell"
-	    " \\intbl \\row\n", 
-	    A_("Obs"), fr->depvar, A_("prediction"), 
+	    " \\intbl \\row\n",
+	    A_("Obs"), fr->depvar, A_("prediction"),
 	    A_("std. error"),
 	    tmp);
 
@@ -1844,7 +1880,7 @@ static void rtfprint_fcast_with_errs (const FITRESID *fr,
 	    pputs(prn, "\\qc \\cell \\intbl \\row\n");
 	} else {
 	    maxerr = tval * fr->sderr[t];
-	    pprintf(prn, "\\qc (%#.*g, %#.*g)\\cell \\intbl \\row\n", 
+	    pprintf(prn, "\\qc (%#.*g, %#.*g)\\cell \\intbl \\row\n",
 		    d, fr->fitted[t] - maxerr,
 		    d, fr->fitted[t] + maxerr);
 	}
@@ -1853,8 +1889,8 @@ static void rtfprint_fcast_with_errs (const FITRESID *fr,
     pputs(prn, "}}\n");
 }
 
-void special_print_forecast (const FITRESID *fr, 
-			     const DATASET *pdinfo, 
+void special_print_forecast (const FITRESID *fr,
+			     const DATASET *pdinfo,
 			     PRN *prn)
 {
     set_alt_gettext_mode(prn);
@@ -1874,7 +1910,7 @@ void special_print_forecast (const FITRESID *fr,
     }
 }
 
-static void 
+static void
 texprint_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
 {
     char vname[16];
@@ -1935,7 +1971,7 @@ static void texprint_confints (const CoeffIntervals *cf, PRN *prn)
 	  "\\end{center}\n");
 }
 
-static void 
+static void
 rtfprint_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
 {
     int d = get_gretl_digits();
@@ -1947,15 +1983,15 @@ rtfprint_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
     if (isnan(cf->maxerr[i])) {
 	pprintf(prn, "\\qc %s\\cell ", A_("undefined"));
     } else {
-	pprintf(prn, "\\qc (%#.*g, %#.*g)\\cell ", 
-		d, cf->coeff[i] - cf->maxerr[i], 
+	pprintf(prn, "\\qc (%#.*g, %#.*g)\\cell ",
+		d, cf->coeff[i] - cf->maxerr[i],
 		d, cf->coeff[i] + cf->maxerr[i]);
     }
     pputs(prn, " \\intbl \\row\n");
 }
 
 #define CF_ROW  "\\trowd \\trgaph60\\trleft-30\\trrh262" \
-                "\\cellx2400\\cellx4000\\cellx7200\n" 
+                "\\cellx2400\\cellx4000\\cellx7200\n"
 
 static void rtfprint_confints (const CoeffIntervals *cf, PRN *prn)
 {
@@ -1963,18 +1999,18 @@ static void rtfprint_confints (const CoeffIntervals *cf, PRN *prn)
     gchar *cstr;
     int i;
 
-    pprintf(prn, "{\\rtf1\\par\n\\qc t(%d, %g) = %.3f\\par\n\\par\n", 
+    pprintf(prn, "{\\rtf1\\par\n\\qc t(%d, %g) = %.3f\\par\n\\par\n",
 	    cf->df, tail, cf->t);
 
     cstr = g_strdup_printf(A_("%g\\%% confidence interval"), 100 * (1 - cf->alpha));
 
     pputs(prn, "{" CF_ROW "\\intbl ");
-    pprintf(prn, 
+    pprintf(prn,
 	    " \\qc %s\\cell"
 	    " \\qc %s\\cell"
 	    " \\qc %s\\cell"
-	    " \\intbl \\row\n", 
-	    A_("Variable"), A_("Coefficient"), 
+	    " \\intbl \\row\n",
+	    A_("Variable"), A_("Coefficient"),
 	    cstr);
 
     g_free(cstr);
@@ -2115,7 +2151,7 @@ int csv_to_clipboard (GtkWidget *parent)
     liststr = get_selector_storelist();
 
     if (liststr != NULL) {
-	int *list = command_list_from_string(liststr, &err);	
+	int *list = command_list_from_string(liststr, &err);
 
 	if (list != NULL) {
 	    cancel = csv_options_dialog(COPY_CSV, GRETL_OBJ_DSET,
@@ -2274,7 +2310,7 @@ int copy_vars_formatted (windata_t *vwin, int fmt, int action)
 
 /* We mostly use this for checking whether the font described by @desc
    has the Unicode minus sign (0x2212), which looks better than a
-   simple dash if it's available.  
+   simple dash if it's available.
 */
 
 int font_has_symbol (PangoFontDescription *desc, int symbol)
@@ -2295,13 +2331,13 @@ int font_has_symbol (PangoFontDescription *desc, int symbol)
 	g_object_ref_sink(widget);
     }
 
-    context = gtk_widget_get_pango_context(widget); 
+    context = gtk_widget_get_pango_context(widget);
     if (context == NULL) {
 	gtk_widget_destroy(widget);
 	return 0;
-    }    
+    }
 
-    layout = pango_layout_new(context); 
+    layout = pango_layout_new(context);
     lang = pango_language_from_string("eng");
 
     if (layout != NULL && lang != NULL) {
@@ -2315,7 +2351,7 @@ int font_has_symbol (PangoFontDescription *desc, int symbol)
 	    }
 	    g_object_unref(font);
 	}
-    } 
+    }
 
     g_object_unref(G_OBJECT(layout));
     g_object_unref(G_OBJECT(context));
@@ -2373,7 +2409,7 @@ static int spawn_latex (char *texsrc)
 	} else {
 	    gchar *errmsg;
 
-	    errmsg = g_strdup_printf("%s\n%s", 
+	    errmsg = g_strdup_printf("%s\n%s",
 				     _("Failed to process TeX file"),
 				     sout);
 	    errbox(errmsg);
@@ -2387,7 +2423,7 @@ static int spawn_latex (char *texsrc)
 
     /* change above, 2008-08-22: before we flagged a LATEX_ERROR
        if we saw anything on standard error, regardless of the
-       exit status 
+       exit status
     */
 
     g_free(errout);
@@ -2460,7 +2496,7 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 	strcpy(texfile, fname);
     } else {
 	sprintf(texfile, "%swindow.tex", gretl_dotdir());
-    } 
+    }
 
     /* ensure we don't get stale output */
     remove(texfile);
@@ -2477,7 +2513,7 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
     pputs(fprn, "\n\\end{document}\n");
 
     gretl_print_destroy(fprn);
-	
+
     if (saveit) {
 	return;
     }
