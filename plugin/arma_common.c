@@ -669,8 +669,10 @@ static int check_arma_list (arma_info *ainfo,
     int err = 0;
 
     if (list[1] < 0 || list[1] > MAX_ARMA_ORDER) {
+	/* non-seasonal AR order out of bounds */
 	err = 1;
     } else if (list[2] < 0 || list[2] > MAX_ARMA_ORDER) {
+	/* non-seasonal MA order out of bounds */
 	err = 1;
     } 
 
@@ -683,8 +685,10 @@ static int check_arma_list (arma_info *ainfo,
 	if (list[0] < 7) {
 	    err = 1;
 	} else if (list[4] < 0 || list[4] > MAX_ARMA_ORDER) {
+	    /* seasonal AR order out of bounds */
 	    err = 1;
 	} else if (list[5] < 0 || list[5] > MAX_ARMA_ORDER) {
+	    /* seasonal MA order out of bounds */
 	    err = 1;
 	} 
     }
