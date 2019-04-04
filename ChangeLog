@@ -24,6 +24,8 @@ version 2019b, in progress
 - GUI convenience: remember dbnomics search string
 - GUI: disallow execution of a script when one is already
   in progress (to prevent crashing)
+- GUI, "View as equation" option for models: enable for
+  cases with more than 5 regressors
 - GUI fix: some of the example scripts referenced in the
   GUI command help were not being found
 - Add configure option --disable-gmp: not recommended for
