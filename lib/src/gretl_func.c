@@ -2155,10 +2155,17 @@ void adjust_indent (const char *s, int *this_indent, int *next_indent)
     } else if (wordmatch(s, "foreign")) {
 	ni++;
     } else if (wordmatch(s, "outfile")) {
-	if (strstr(s, "--close")) {
-	    ti--;
-	    ni--;
+	/* Current syntax is "outfile <lines> end outfile", with
+	   options --append, --quiet, --buffer available on
+	   the initial line. Legacy syntax is "outfile --write"
+	   (or --append) to start and "outfile --close" to
+	   finish. We should indent <lines> in the first case
+	   but not the second.
+	*/
+	if (strstr(s, "--close") || strstr(s, "--write")) {
+	    ; /* no-op */
 	} else {
+	    /* note: --append is ambiguous wrt indenting! */
 	    ni++;
 	}
     } else if (wordmatch(s, "end") ||
