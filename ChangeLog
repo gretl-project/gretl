@@ -17,6 +17,8 @@ version 2019b, in progress
   weekly data
 - epochday() function: support YYYYMMDD input
 - randgen() function: support the logistic distribution
+- firstobs() and lastobs() functions: add optional boolean
+  argument to restrict the check to the current sample
 - Speed up rank() function for far-from-square matrices
 - Stata dta importer: fix for opening of very large files
 - Obscure fix: enable deletion of "time" from a list
