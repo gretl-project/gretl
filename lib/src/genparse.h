@@ -165,8 +165,6 @@ enum {
     F_RANKING,    
     F_ODEV,	  /* orthogonal deviation */
     F_NOBS,
-    F_T1,
-    F_T2,   
     F_CUM,
     F_MISSING,
     F_DATAOK,
@@ -292,6 +290,8 @@ enum {
     HF_CEXP,
     HF_JBTERMS,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
+    F_T1,
+    F_T2,
     F_COV,
     F_SDC,
     F_CDEMEAN,

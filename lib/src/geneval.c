@@ -7717,10 +7717,12 @@ static void cast_to_series (NODE *n, int f, gretl_matrix **tmp,
 }
 
 /* Functions taking a series or vector as argument and returning
-   a scalar.
+   a scalar; allowance is made for an additional boolean arg
+   in some cases.
 */
 
-static NODE *series_scalar_func (NODE *n, int f, parser *p)
+static NODE *series_scalar_func (NODE *n, int f,
+				 NODE *r, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
 
@@ -7749,6 +7751,17 @@ static NODE *series_scalar_func (NODE *n, int f, parser *p)
 	    }
 	    if (p->err) {
 		return NULL;
+	    }
+	}
+
+	if (f == F_T1 || f == F_T2) {
+	    int insample = node_get_bool(r, p, 0);
+
+	    if (p->err) {
+		return NULL;
+	    } else if (!insample) {
+		t1 = 0;
+		t2 = p->dset->n - 1;
 	    }
 	}
 
@@ -7801,10 +7814,10 @@ static NODE *series_scalar_func (NODE *n, int f, parser *p)
 	    ret->v.xval = gretl_isdummy(t1, t2, x);
 	    break;
 	case F_T1:
-	    ret->v.xval = series_get_start(0, p->dset->n - 1, x);
+	    ret->v.xval = series_get_start(t1, t2, x);
 	    break;
 	case F_T2:
-	    ret->v.xval = series_get_end(0, p->dset->n - 1, x);
+	    ret->v.xval = series_get_end(t1, t2, x);
 	    break;
 	default:
 	    break;
@@ -7998,7 +8011,7 @@ static NODE *series_scalar_scalar_func (NODE *l, NODE *r,
 static NODE *isconst_or_dum_node (NODE *l, NODE *r, parser *p, int f)
 {
     if (f == F_ISDUMMY || null_or_empty(r)) {
-	return series_scalar_func(l, f, p);
+	return series_scalar_func(l, f, NULL, p);
     } else if (l->t == MAT) {
 	node_type_error(f, 1, SERIES, l, p);
 	return NULL;
@@ -15247,7 +15260,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_T2:
 	/* functions taking series arg (mostly), returning scalar */
 	if (l->t == SERIES || l->t == MAT) {
-	    ret = series_scalar_func(l, t->t, p);
+	    ret = series_scalar_func(l, t->t, r, p);
 	} else if ((t->t == F_MEAN || t->t == F_SD ||
 		    t->t == F_VCE || t->t == F_MIN ||
 		    t->t == F_MAX || t->t == F_SUM ||

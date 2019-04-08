@@ -3680,14 +3680,17 @@
     <function name="firstobs" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="series">y</fnarg>
+	<fnarg type="bool" optional="true">insample</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Returns the 1-based index of the first non-missing
-	  observation for the series <argname>y</argname>. Note that
-	  if some form of subsampling is in effect, the value returned
-	  may be smaller than the dollar variable <fncref
-	  targ="$t1"/>.
+	  observation for the series <argname>y</argname>. By default
+	  the whole data range is examined, so if subsampling is in
+	  effect the value returned may be smaller than the accessor
+	  <fncref targ="$t1"/>. But if a non-zero value is given for
+	  <argname>insample</argname> only the current sample range is
+	  considered.
 	  <seelist>
             <fncref targ="lastobs"/>
 	  </seelist>
@@ -5645,13 +5648,17 @@
     <function name="lastobs" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="series">y</fnarg>
+	<fnarg type="bool" optional="true">insample</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Returns the 1-based index of the last non-missing
-	  observation for the series <argname>y</argname>. Note that
-	  if some form of subsampling is in effect, the value returned
-	  may be larger than the dollar variable <fncref targ="$t2"/>.
+	  observation for the series <argname>y</argname>. By default
+	  the whole data range is examined, so if subsampling is in
+	  effect the value returned may be larger than the accessor
+	  <fncref targ="$t2"/>. But if a non-zero value is given for
+	  <argname>insample</argname> only the current sample range is
+	  considered.
 	  <seelist>
             <fncref targ="firstobs"/>
 	  </seelist>
