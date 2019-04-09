@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -143,7 +143,7 @@ static void dta_value_labels_write (int fd, const DATASET *dset,
 
 static void dta_hdr_write (dta_hdr *hdr, int fd, ssize_t *w)
 {
-    
+
     *w += write(fd, &hdr->ds_format, 1);
     *w += write(fd, &hdr->byteorder, 1);
     *w += write(fd, &hdr->filetype, 1);
@@ -166,12 +166,19 @@ static void asciify_to_length (char *targ, const char *src, int len)
     }
 }
 
+/* Note: see https://www.stata.com/help.cgi?dta_113 for detail
+   on the dta_113 format. Also see
+   https://www.loc.gov/preservation/digital/formats/fdd/fdd000471.shtml
+   according to which the 113 format was introduced with Stata 8
+   in January 2003.
+*/
+
 static void dta_hdr_init (dta_hdr *hdr, const DATASET *dset,
 			  int nvars)
 {
 #ifdef ENABLE_NLS
     char *localt = NULL;
-#endif    
+#endif
     time_t now = time(NULL);
     struct tm *local;
 
@@ -180,7 +187,7 @@ static void dta_hdr_init (dta_hdr *hdr, const DATASET *dset,
     hdr->byteorder = 0x01;
 #else
     hdr->byteorder = 0x02;
-#endif    
+#endif
     hdr->filetype = 0x01;
     hdr->unused = 0x01;
     hdr->nvar = nvars;
@@ -188,18 +195,18 @@ static void dta_hdr_init (dta_hdr *hdr, const DATASET *dset,
 
     memset(hdr->data_label, 0, 81);
     sprintf(hdr->data_label, "Written by gretl %s", GRETL_VERSION);
-    
+
     memset(hdr->time_stamp, 0, 18);
 #ifdef ENABLE_NLS
     localt = setlocale(LC_TIME, NULL);
     setlocale(LC_TIME, "C");
-#endif    
+#endif
     local = localtime(&now);
     /* dd Mon yyyy hh:mm (in C locale) */
     strftime(hdr->time_stamp, 18, "%d %b %Y %I:%M", local);
-#ifdef ENABLE_NLS    
+#ifdef ENABLE_NLS
     setlocale(LC_TIME, localt);
-#endif    
+#endif
 }
 
 static int include_var (const int *list, int i)
@@ -338,7 +345,7 @@ static void make_timevar_label (char *buf, const char *tvar)
 static gint32 stata_date (int t, const DATASET *dset)
 {
     long ed = -1;
-    
+
     if (dataset_has_markers(dset)) {
 	ed = get_epoch_day(dset->S[t]);
     } else {
@@ -433,8 +440,8 @@ int stata_export (const char *fname,
 	    }
 	    w += write(fd, buf, 33);
 	}
-    }    
-    
+    }
+
     /* srtlist */
     i16 = 0;
     if (add_time) {
@@ -449,7 +456,7 @@ int stata_export (const char *fname,
 	memset(buf, 0, 12);
 	sprintf(buf, "%%t%c", *timevar);
 	w += write(fd, buf, 12);
-    }    
+    }
     for (j=0; j<nv; j++) {
 	memset(buf, 0, 12);
 	if (types[j] == STATA_BYTE || types[j] == STATA_INT) {
@@ -466,7 +473,7 @@ int stata_export (const char *fname,
     if (add_time) {
 	memset(buf, 0, 33);
 	w += write(fd, buf, 33);
-    }     
+    }
     for (i=1; i<dset->v; i++) {
 	if (include_var(list, i)) {
 	    memset(buf, 0, 33);
@@ -483,7 +490,7 @@ int stata_export (const char *fname,
 	memset(buf, 0, 81);
 	make_timevar_label(buf, timevar);
 	w += write(fd, buf, 81);
-    }     
+    }
     for (i=1; i<dset->v; i++) {
 	if (include_var(list, i)) {
 	    const char *vlabel = series_get_label(dset, i);
