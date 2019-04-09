@@ -84,18 +84,31 @@ static void clear_plot (void)
 static int no_data_plot (gretlopt opt)
 {
     FILE *fp = NULL;
-    int i, err = 0;
+    int i, np = 0;
+    int err = 0;
 
-    fprintf(stderr, "no_data_plot: opt=%u\n", opt);
+    /* check that there's something to plot */
+    for (i=0; i<plot.nlines; i++) {
+	if (!strncmp(plot.lines[i], "plot ", 5) ||
+	    !strncmp(plot.lines[i], "splot ", 6)) {
+	    np++;
+	}
+    }
+
+    if (np == 0) {
+	gretl_errmsg_set("plot: nothing to plot");
+	return E_ARGS;
+    }
 
     fp = open_plot_input_file(PLOT_USER, 0, &err);
 
-    for (i=0; i<plot.nlines && !err; i++) {
-	fputs(plot.lines[i], fp);
-	fputc('\n', fp);
+    if (!err) {
+	for (i=0; i<plot.nlines; i++) {
+	    fputs(plot.lines[i], fp);
+	    fputc('\n', fp);
+	}
+	err = finalize_plot_input_file(fp);
     }
-
-    err = finalize_plot_input_file(fp);
 
     return err;
 }
