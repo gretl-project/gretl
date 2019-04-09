@@ -1944,7 +1944,7 @@ static int parse_gp_set_line (GPT_SPEC *spec,
 			      linestyle *styles,
 			      int *unhandled)
 {
-    char key[16] = {0};
+    char *p, key[16] = {0};
     char val[MAXLEN] = {0};
     int lt_pos = 0;
     int err = 0;
@@ -1980,6 +1980,11 @@ static int parse_gp_set_line (GPT_SPEC *spec,
 
     if (sscanf(s + 4, "%11s", key) != 1) {
 	return unhandled_gp_line_error(s);
+    }
+
+    if ((p = strchr(key, '[')) != NULL) {
+	/* try fixing this */
+	*p = '\0';
     }
 
 #if GPDEBUG
