@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* Implementation of "plot" block command. Current set-up:
@@ -24,7 +24,7 @@
    parameter: the name of the variable that supplies the data to
    be plotted. This can be a single series, a list or a matrix.
 
-   Optional elements: 
+   Optional elements:
 
    * zero or more "option" lines, holding a single option each
 
@@ -44,7 +44,7 @@
    The block ends with "end plot". The --output=whatever option
    may be appended to the ending line.
 */
-  
+
 #include "libgretl.h"
 #include "uservar.h"
 #include "usermat.h"
@@ -81,62 +81,51 @@ static void clear_plot (void)
     set_effective_plot_ci(GNUPLOT);
 }
 
-static int execute_plot (const DATASET *dset, gretlopt opt)
+static int no_data_plot (gretlopt opt)
 {
-    int *list = NULL;
-    char *literal = NULL;
-    size_t litlen = 0;
-    int free_list = 0;
+    FILE *fp = NULL;
     int i, err = 0;
 
-    plot.opt |= opt;
+    fprintf(stderr, "no_data_plot: opt=%u\n", opt);
 
-    if (plot.datasource == NULL || plot.datatype == 0) {
-	/* FIXME maybe this should be made OK? */
-	fprintf(stderr, "plot has no data source\n");
-	return E_ARGS;
-    } else {
-#if PDEBUG
-	fprintf(stderr, "plot datasource = %s (type %s)\n", 
-		plot.datasource, gretl_type_get_name(plot.datatype));
-#endif
-	if (plot.datatype == GRETL_TYPE_LIST) {
-	    list = get_list_by_name(plot.datasource);
-	} else if (plot.datatype == GRETL_TYPE_SERIES) {
-	    /* convert to singleton list */
-	    list = gretl_list_new(1);
-	    list[1] = current_series_index(dset, plot.datasource);
-	    free_list = 1;
-	}
+    fp = open_plot_input_file(PLOT_USER, 0, &err);
+
+    for (i=0; i<plot.nlines && !err; i++) {
+	fputs(plot.lines[i], fp);
+	fputc('\n', fp);
     }
 
-#if PDEBUG
-    fprintf(stderr, "number of literal lines: %d\n", plot.nlines);
-#endif
+    err = finalize_plot_input_file(fp);
+
+    return err;
+}
+
+/* In the following function we turn the array of "literal"
+   lines from "plot" into the form
+
+   { literal 1; literal 2; ...}
+
+   which is the form wanted by the gnuplot() function at
+   present. For future reference, it would be more efficient to
+   revise gnuplot() so that it accepts an array of strings as
+   input.
+*/
+
+static char *construct_literal_arg (int *err)
+{
+    char *literal = NULL;
+    size_t litlen = 0;
+    int i;
 
     for (i=0; i<plot.nlines; i++) {
-#if PDEBUG
-	fprintf(stderr, " %d: '%s'\n", i, plot.lines[i]);
-#endif
 	litlen += strlen(plot.lines[i]);
     }
 
-    /* In the following code block we turn the array of "literal"
-       lines from "plot" into the form
- 
-       { literal 1; literal 2; ...}
-
-       which is the form wanted by the gnuplot() function at
-       present. For future reference, it would be more efficient to
-       revise gnuplot() so that it accepts an array of strings as
-       input.
-    */
-
-    if (!err && litlen > 0) {
+    if (litlen > 0) {
 	litlen += 2 * plot.nlines + 4;
-	literal = malloc(litlen);
+	literal = calloc(litlen, 1);
 	if (literal == NULL) {
-	    err = E_ALLOC;
+	    *err = E_ALLOC;
 	} else {
 	    strcpy(literal, "{ ");
 	    for (i=0; i<plot.nlines; i++) {
@@ -145,9 +134,37 @@ static int execute_plot (const DATASET *dset, gretlopt opt)
 	    }
 	    strcat(literal, "}");
 	}
+    }
+
+    return literal;
+}
+
+static int execute_plot (const DATASET *dset, gretlopt opt)
+{
+    int *list = NULL;
+    char *literal = NULL;
+    int free_list = 0;
+    int err = 0;
+
 #if PDEBUG
-	fprintf(stderr, "composed literal: '%s'\n", literal);
+    fprintf(stderr, "plot datasource = %s (type %s)\n",
+	    plot.datasource, gretl_type_get_name(plot.datatype));
+    fprintf(stderr, "number of literal lines: %d\n", plot.nlines);
 #endif
+
+    plot.opt |= opt;
+
+    if (plot.datatype == GRETL_TYPE_LIST) {
+	list = get_list_by_name(plot.datasource);
+    } else if (plot.datatype == GRETL_TYPE_SERIES) {
+	/* convert to singleton list */
+	list = gretl_list_new(1);
+	list[1] = current_series_index(dset, plot.datasource);
+	free_list = 1;
+    }
+
+    if (plot.datatype != 0 && plot.nlines > 0) {
+	literal = construct_literal_arg(&err);
     }
 
     if (!err && list != NULL && list[0] == 1) {
@@ -158,7 +175,9 @@ static int execute_plot (const DATASET *dset, gretlopt opt)
     }
 
     if (!err) {
-	if (plot.datatype == GRETL_TYPE_MATRIX) {
+	if (plot.datatype == 0) {
+	    err = no_data_plot(plot.opt);
+	} else if (plot.datatype == GRETL_TYPE_MATRIX) {
 	    gretl_matrix *m = get_matrix_by_name(plot.datasource);
 
 	    err = matrix_plot(m, NULL, literal, plot.opt);
@@ -167,7 +186,7 @@ static int execute_plot (const DATASET *dset, gretlopt opt)
 	}
 #if PDEBUG
 	fprintf(stderr, "actual exec returned %d\n", err);
-#endif	
+#endif
     }
 
     free(literal);
@@ -182,7 +201,7 @@ static int execute_plot (const DATASET *dset, gretlopt opt)
 /* we'll accept a single series, list or matrix as the
    "datasource" for a plot block */
 
-static int check_plot_data_source (const char *s, 
+static int check_plot_data_source (const char *s,
 				   const DATASET *dset)
 {
     int err = 0;
@@ -190,6 +209,9 @@ static int check_plot_data_source (const char *s,
     if (plot.datatype != 0) {
 	/* duplicated data spec */
 	err = E_DATA;
+    } else if (s == NULL) {
+	/* no param given */
+	return 0;
     } else {
 	int id = current_series_index(dset, s);
 
@@ -197,7 +219,7 @@ static int check_plot_data_source (const char *s,
 	    plot.datatype = GRETL_TYPE_SERIES;
 	} else {
 	    GretlType type = 0;
-    
+
 	    user_var_get_value_and_type(s, &type);
 	    if (type == GRETL_TYPE_MATRIX ||
 		type == GRETL_TYPE_LIST) {
@@ -245,7 +267,7 @@ static int check_plot_option (const char *s)
 
 #if PDEBUG
     fprintf(stderr, "check_plot_option: '%s'\n", s);
-#endif    
+#endif
 
     if ((p = strchr(s, '=')) != NULL) {
 	char *flag = gretl_strndup(s, p - s);
@@ -253,7 +275,7 @@ static int check_plot_option (const char *s)
 	param = gretl_strdup(p + 1);
 #if PDEBUG
 	fprintf(stderr, " flag = '%s', param = '%s'\n", flag, param);
-#endif      
+#endif
 	opt = valid_long_opt(PLOT, flag, &status);
 	free(flag);
     } else {
@@ -286,7 +308,7 @@ static int check_plot_option (const char *s)
     }
 
     free(param);
-    
+
     return err;
 }
 
@@ -302,7 +324,7 @@ static int plot_printf (const char *s, const DATASET *dset)
     gretl_pop_c_numeric_locale();
 
     if (err) {
-	fprintf(stderr, "plot_printf error: genline='%s'\n", 
+	fprintf(stderr, "plot_printf error: genline='%s'\n",
 		genline);
     } else {
 	strings_array_add(&plot.lines, &plot.nlines, genout);
@@ -380,7 +402,7 @@ enum {
 };
 
 static const char *
-get_plot_field_and_advance (const char *s, char *field, 
+get_plot_field_and_advance (const char *s, char *field,
 			    size_t maxlen, int flag,
 			    int *err)
 {
@@ -454,7 +476,7 @@ int gretl_plot_append_line (const char *s, const DATASET *dset)
 	}
     } else if (!strcmp(field, "options")) {
 	int flag = 0;
-	
+
 	while (1) {
 	    s = get_plot_field_and_advance(s, field, sizeof field, flag, &err);
 	    if (err || *field == '\0') {
@@ -523,7 +545,7 @@ int gretl_plot_start (const char *param, const DATASET *dset)
  * Returns: 0 on success, non-zero code on error.
  */
 
-int gretl_plot_finalize (const char *s, const DATASET *dset, 
+int gretl_plot_finalize (const char *s, const DATASET *dset,
 			 gretlopt opt)
 {
     int err;
