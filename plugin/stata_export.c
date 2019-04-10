@@ -365,6 +365,29 @@ static void write_lower_case (char *targ, const char *src)
     targ[i] = '\0';
 }
 
+#define BINDEBUG 0
+
+#if BINDEBUG
+
+static void debug_print (void *ptr, int bytes)
+{
+    unsigned char *u = ptr;
+    int i;
+
+    fputc(' ', stderr);
+    for (i=0; i<bytes; i++) {
+	fprintf(stderr, "%02x ", u[i]);
+    }
+    fputc('\n', stderr);
+}
+
+int do_printing (int t)
+{
+    return t > 48 && t < 60; /* or more */
+}
+
+#endif
+
 int stata_export (const char *fname,
 		  const int *list,
 		  gretlopt opt,
@@ -511,6 +534,11 @@ int stata_export (const char *fname,
 
     /* Data */
     for (t=dset->t1; t<=dset->t2; t++) {
+#if BINDEBUG
+	if (do_printing(t)) {
+	    fprintf(stderr, "t=%d, w = %07x\n", t+1, (unsigned int) w);
+	}
+#endif
 	if (add_time == TIME_AUTO) {
 	    w += write(fd, &t32, 4);
 	    t32++;
@@ -523,19 +551,41 @@ int stata_export (const char *fname,
 	    if (include_var(list, i)) {
 		xit = dset->Z[i][t];
 		missing = na(xit);
+#if BINDEBUG
+		int wsave = (int) w;
+		if (do_printing(t)) {
+		    fprintf(stderr, " i=%d, w=%07x, type %d, xit=%g\n",
+			    i, (unsigned int) w, types[j], xit);
+		}
+#endif
 		if (types[j] == STATA_BYTE) {
-		    i8 = missing ? STATA_BYTE_NA : xit;
-		    w += write(fd, &i8, 1);
+		    i8 = missing ? STATA_BYTE_NA : (guint8) xit;
+		    w += write(fd, &i8, sizeof i8);
 		} else if (types[j] == STATA_INT) {
-		    i16 = missing ? STATA_INT_NA : xit;
-		    w += write(fd, &i16, 2);
+		    i16 = missing ? STATA_INT_NA : (gint16) xit;
+#if BINDEBUG
+		    if (do_printing(t)) {
+			debug_print(&i16, 2);
+		    }
+#endif
+		    w += write(fd, &i16, sizeof i16);
 		} else if (types[j] == STATA_LONG) {
-		    i32 = missing ? STATA_LONG_NA : xit;
-		    w += write(fd, &i32, 4);
+		    i32 = missing ? STATA_LONG_NA : (gint32) xit;
+		    w += write(fd, &i32, sizeof i32);
 		} else {
 		    xit = missing ? STATA_DOUBLE_NA : xit;
-		    w += write(fd, &xit, 8);
+#if BINDEBUG
+		    if (do_printing(t)) {
+			debug_print(&xit, 8);
+		    }
+#endif
+		    w += write(fd, &xit, sizeof xit);
 		}
+#if BINDEBUG
+		if (do_printing(t)) {
+		    fprintf(stderr, "  wrote %d bytes\n", (int) w - wsave);
+		}
+#endif
 		j++;
 	    }
 	}
@@ -544,8 +594,7 @@ int stata_export (const char *fname,
     /* Value labels */
     if (strvars > 0) {
 	for (i=1; i<dset->v; i++) {
-	    if (include_var(list, i) &&
-		is_string_valued(dset, i)) {
+	    if (include_var(list, i) && is_string_valued(dset, i)) {
 		dta_value_labels_write(fd, dset, i, &w);
 	    }
 	}
