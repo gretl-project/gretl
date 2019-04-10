@@ -9,6 +9,8 @@ version 2019b, in progress
   target model is respected in the panel-data case
 - "logistic" command: enable --robust, --cluster and
   --fixed-effects options
+- "plot" (block) command: make the "data" argument optional,
+  allowing creation of formula-based plots
 - New accessor $now to get current time/date, plus new
   functions strftime() and strptime()
 - New function Lsolve(), using precomputed Cholesky factor
