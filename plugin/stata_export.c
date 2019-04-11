@@ -78,7 +78,7 @@ struct dta_113_value_label {
     vltable table;       /* the table itself */
 };
 
-static void dta_value_labels_write (int fd, const DATASET *dset,
+static void dta_value_labels_write (FILE *fp, const DATASET *dset,
 				    int v, ssize_t *w)
 {
     vlabel lbl;
@@ -110,48 +110,48 @@ static void dta_value_labels_write (int fd, const DATASET *dset,
     sprintf(lbl.labname, "S%d", v);
     memset(lbl.padding, 0, 3);
 
-    *w += write(fd, &lbl.len, 4);
-    *w += write(fd, lbl.labname, 33);
-    *w += write(fd, lbl.padding, 3);
+    *w += fwrite(&lbl.len, 4, 1, fp);
+    *w += fwrite(lbl.labname, 1, 33, fp);
+    *w += fwrite(lbl.padding, 1, 3, fp);
 
     tab = lbl.table;
     tab.n = ns;
     tab.txtlen = len;
 
-    *w += write(fd, &tab.n, 4);
-    *w += write(fd, &tab.txtlen, 4);
+    *w += fwrite(&tab.n, 4, 1, fp);
+    *w += fwrite(&tab.txtlen, 4, 1, fp);
 
     tab.off = 0;
     for (i=0; i<tab.n; i++) {
-	*w += write(fd, &tab.off, 4);
+	*w += fwrite(&tab.off, 4, 1, fp);
 	tab.off += strlen(S[i]) + 1;
     }
 
     tab.val = 1;
     for (i=0; i<tab.n; i++) {
-	*w += write(fd, &tab.val, 4);
+	*w += fwrite(&tab.val, 4, 1, fp);
 	tab.val++;
     }
 
     for (i=0; i<tab.n; i++) {
 	u8_to_ascii_convert(tmp, S[i], maxlen, '?');
-	*w += write(fd, tmp, strlen(tmp) + 1);
+	*w += fwrite(tmp, 1, strlen(tmp) + 1, fp);
     }
 
     free(tmp);
 }
 
-static void dta_hdr_write (dta_hdr *hdr, int fd, ssize_t *w)
+static void dta_hdr_write (dta_hdr *hdr, FILE *fp, ssize_t *w)
 {
 
-    *w += write(fd, &hdr->ds_format, 1);
-    *w += write(fd, &hdr->byteorder, 1);
-    *w += write(fd, &hdr->filetype, 1);
-    *w += write(fd, &hdr->unused, 1);
-    *w += write(fd, &hdr->nvar, 2);
-    *w += write(fd, &hdr->nobs, 4);
-    *w += write(fd, hdr->data_label, 81);
-    *w += write(fd, hdr->time_stamp, 18);
+    *w += fwrite(&hdr->ds_format, 1, 1, fp);
+    *w += fwrite(&hdr->byteorder, 1, 1, fp);
+    *w += fwrite(&hdr->filetype, 1, 1, fp);
+    *w += fwrite(&hdr->unused, 1, 1, fp);
+    *w += fwrite(&hdr->nvar, 2, 1, fp);
+    *w += fwrite(&hdr->nobs, 4, 1, fp);
+    *w += fwrite(hdr->data_label, 81, 1, fp);
+    *w += fwrite(hdr->time_stamp, 18, 1, fp);
 }
 
 static void asciify_to_length (char *targ, const char *src, int len)
@@ -365,34 +365,12 @@ static void write_lower_case (char *targ, const char *src)
     targ[i] = '\0';
 }
 
-#define BINDEBUG 0
-
-#if BINDEBUG
-
-static void debug_print (void *ptr, int bytes)
-{
-    unsigned char *u = ptr;
-    int i;
-
-    fputc(' ', stderr);
-    for (i=0; i<bytes; i++) {
-	fprintf(stderr, "%02x ", u[i]);
-    }
-    fputc('\n', stderr);
-}
-
-int do_printing (int t)
-{
-    return t > 48 && t < 60; /* or more */
-}
-
-#endif
-
 int stata_export (const char *fname,
 		  const int *list,
 		  gretlopt opt,
 		  const DATASET *dset)
 {
+    FILE *fp;
     dta_hdr hdr;
     char buf[96];
     char timevar[16];
@@ -404,19 +382,19 @@ int stata_export (const char *fname,
     guint8 i8;
     int missing;
     int add_time = 0;
-    int i, j, t, fd;
+    int i, j, t;
     int strvars = 0;
     int nv = 0;
     int err = 0;
 
-    fd = gretl_open(fname, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-    if (fd < 0) {
+    fp = gretl_fopen(fname, "wb");
+    if (fp == NULL) {
 	return E_FOPEN;
     }
 
     types = make_types_array(dset, list, &nv);
     if (types == NULL) {
-	close(fd);
+	fclose(fp);
 	return E_ALLOC;
     }
 
@@ -427,7 +405,7 @@ int stata_export (const char *fname,
     }
 
     dta_hdr_init(&hdr, dset, nv + (add_time > 0));
-    dta_hdr_write(&hdr, fd, &w);
+    dta_hdr_write(&hdr, fp, &w);
 
     /*
         typlist        nvar    byte array
@@ -440,17 +418,17 @@ int stata_export (const char *fname,
     /* typlist */
     if (add_time) {
 	i8 = STATA_LONG;
-	w += write(fd, &i8, 1);
+	w += fwrite(&i8, sizeof i8, 1, fp);
     }
     for (j=0; j<nv; j++) {
-	w += write(fd, &types[j], 1);
+	w += fwrite(&types[j], 1, 1, fp);
     }
 
     /* varlist (names) */
     if (add_time) {
 	memset(buf, 0, 33);
 	strcat(buf, timevar);
-	w += write(fd, buf, 33);
+	w += fwrite(buf, 1, 33, fp);
     }
     for (i=1; i<dset->v; i++) {
 	if (include_var(list, i)) {
@@ -461,24 +439,24 @@ int stata_export (const char *fname,
 	    } else {
 		strcat(buf, dset->varname[i]);
 	    }
-	    w += write(fd, buf, 33);
+	    w += fwrite(buf, 1, 33, fp);
 	}
     }
 
     /* srtlist */
     i16 = 0;
     if (add_time) {
-	w += write(fd, &i16, 2);
+	w += fwrite(&i16, 2, 1, fp);
     }
     for (j=0; j<=nv; j++) {
-	w += write(fd, &i16, 2);
+	w += fwrite(&i16, 2, 1, fp);
     }
 
     /* fmtlist */
     if (add_time) {
 	memset(buf, 0, 12);
 	sprintf(buf, "%%t%c", *timevar);
-	w += write(fd, buf, 12);
+	w += fwrite(buf, 1, 12, fp);
     }
     for (j=0; j<nv; j++) {
 	memset(buf, 0, 12);
@@ -489,13 +467,13 @@ int stata_export (const char *fname,
 	} else {
 	    strcpy(buf, "%9.0g");
 	}
-	w += write(fd, buf, 12);
+	w += fwrite(buf, 1, 12, fp);
     }
 
     /* lbllist */
     if (add_time) {
 	memset(buf, 0, 33);
-	w += write(fd, buf, 33);
+	w += fwrite(buf, 1, 33, fp);
     }
     for (i=1; i<dset->v; i++) {
 	if (include_var(list, i)) {
@@ -504,7 +482,7 @@ int stata_export (const char *fname,
 		sprintf(buf, "S%d", i);
 		strvars++;
 	    }
-	    w += write(fd, buf, 33);
+	    w += fwrite(buf, 1, 33, fp);
 	}
     }
 
@@ -512,7 +490,7 @@ int stata_export (const char *fname,
     if (add_time) {
 	memset(buf, 0, 81);
 	make_timevar_label(buf, timevar);
-	w += write(fd, buf, 81);
+	w += fwrite(buf, 1, 81, fp);
     }
     for (i=1; i<dset->v; i++) {
 	if (include_var(list, i)) {
@@ -522,70 +500,43 @@ int stata_export (const char *fname,
 	    if (vlabel != NULL && *vlabel != '\0') {
 		asciify_to_length(buf, vlabel, 80);
 	    }
-	    w += write(fd, buf, 81);
+	    w += fwrite(buf, 1, 81, fp);
 	}
     }
 
     /* "Expansion fields" (a Stata-private mystery) */
     i8 = 0;
     for (i=0; i<5; i++) {
-	w += write(fd, &i8, 1);
+	w += fwrite(&i8, 1, 1, fp);
     }
 
     /* Data */
     for (t=dset->t1; t<=dset->t2; t++) {
-#if BINDEBUG
-	if (do_printing(t)) {
-	    fprintf(stderr, "t=%d, w = %07x\n", t+1, (unsigned int) w);
-	}
-#endif
 	if (add_time == TIME_AUTO) {
-	    w += write(fd, &t32, 4);
+	    w += fwrite(&t32, 4, 1, fp);
 	    t32++;
 	} else if (add_time == TIME_CAL) {
 	    t32 = stata_date(t, dset);
-	    w += write(fd, &t32, 4);
+	    w += fwrite(&t32, 4, 1, fp);
 	}
 	j = 0;
 	for (i=1; i<dset->v; i++) {
 	    if (include_var(list, i)) {
 		xit = dset->Z[i][t];
 		missing = na(xit);
-#if BINDEBUG
-		int wsave = (int) w;
-		if (do_printing(t)) {
-		    fprintf(stderr, " i=%d, w=%07x, type %d, xit=%g\n",
-			    i, (unsigned int) w, types[j], xit);
-		}
-#endif
 		if (types[j] == STATA_BYTE) {
 		    i8 = missing ? STATA_BYTE_NA : (guint8) xit;
-		    w += write(fd, &i8, sizeof i8);
+		    w += fwrite(&i8, sizeof i8, 1, fp);
 		} else if (types[j] == STATA_INT) {
 		    i16 = missing ? STATA_INT_NA : (gint16) xit;
-#if BINDEBUG
-		    if (do_printing(t)) {
-			debug_print(&i16, 2);
-		    }
-#endif
-		    w += write(fd, &i16, sizeof i16);
+		    w += fwrite(&i16, sizeof i16, 1, fp);
 		} else if (types[j] == STATA_LONG) {
 		    i32 = missing ? STATA_LONG_NA : (gint32) xit;
-		    w += write(fd, &i32, sizeof i32);
+		    w += fwrite(&i32, sizeof i32, 1, fp);
 		} else {
 		    xit = missing ? STATA_DOUBLE_NA : xit;
-#if BINDEBUG
-		    if (do_printing(t)) {
-			debug_print(&xit, 8);
-		    }
-#endif
-		    w += write(fd, &xit, sizeof xit);
+		    w += fwrite(&xit, sizeof xit, 1, fp);
 		}
-#if BINDEBUG
-		if (do_printing(t)) {
-		    fprintf(stderr, "  wrote %d bytes\n", (int) w - wsave);
-		}
-#endif
 		j++;
 	    }
 	}
@@ -595,15 +546,15 @@ int stata_export (const char *fname,
     if (strvars > 0) {
 	for (i=1; i<dset->v; i++) {
 	    if (include_var(list, i) && is_string_valued(dset, i)) {
-		dta_value_labels_write(fd, dset, i, &w);
+		dta_value_labels_write(fp, dset, i, &w);
 	    }
 	}
     }
 
-    close(fd);
+    fclose(fp);
     free(types);
 
-    fprintf(stderr, "stata_export: wrote %d bytes\n", (int) w);
+    fprintf(stderr, "stata_export: wrote %d elements\n", (int) w);
 
     return err;
 }
