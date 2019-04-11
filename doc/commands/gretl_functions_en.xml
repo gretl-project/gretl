@@ -3461,6 +3461,51 @@
       </description>
     </function>
 
+    <function name="feval" section="data-utils" output="seebelow">
+      <fnargs>
+	<fnarg type="string">funcname</fnarg>
+	<fnarg type="varargs"/>
+      </fnargs>
+      <description>
+	<para>
+	  Primarily useful for writers of functions. The first
+	  argument should be the name of a function, and the remaining
+	  one or more arguments should be the arguments to be passed
+	  to the function in question. This permits treating the
+	  function identified by <argname>funcname</argname> as itself
+	  a variable. The return value is whatever the named function
+	  returns given the specified arguments.
+	</para>
+	<para>
+	  The example below illustrates some possible uses.
+	</para>
+	<code>
+	  function scalar utility (scalar c, scalar sigma)
+	      return (c^(1-sigma)-1)/(1-sigma)
+	  end function
+
+	  strings S = defarray("log", "utility")
+
+	  # call a 1-argument built-in function
+	  x = feval(S[1], 2.5)
+	  # call a user-defined function
+	  x = feval(S[2], 5, 0.5)
+	  # a 2-argument built-in function
+	  func = "zeros"
+	  m = feval(func, 5-2, sqrt(4))
+	  print m
+	  # a 3-argument built-in
+	  x = feval("monthlen", 12, 1980, 5)
+	</code>
+	<para>
+	  There's a weak analogy between <lit>feval</lit> and <fncref
+	  targ="genseries"/>: both functions render variable a
+	  syntactic element that is usually fixed at the time a script
+	  is composed.
+	</para>
+      </description>
+    </function>
+
     <function name="fevd" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="int">target</fnarg>
@@ -3833,6 +3878,10 @@
 	<para>
 	  On completion <lit>Normals</lit> will contain the series
 	  <lit>norm1</lit>, <lit>norm2</lit> and so on.
+	</para>
+	<para>
+	  Those who find <lit>genseries</lit> useful may also like to
+	  explore <fncref targ="feval"/>.
 	</para>
       </description>
     </function>
