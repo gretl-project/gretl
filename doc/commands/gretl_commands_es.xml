@@ -1597,6 +1597,12 @@
       <arguments>
         <argument>listavariables</argument>
       </arguments>
+      <options>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>No presenta nada</effect>
+	</option>
+      </options>
       <examples>
         <example>coeffsum xt xt_1 xr_2</example>
 	<demos>
@@ -1621,10 +1627,17 @@
 	estadístico para contrastar la hipótesis nula de que la suma es cero.
       </para>
       <para>
-	Ten en cuenta la diferencia entre esto y la instrucción <cmdref targ="omit"/>, pues esta
-	última te permite contrastar la hipótesis nula de que los coeficientes de un subconjunto
-	especificado de variables independientes son <emphasis>todos</emphasis> nulos.
+	Ten en cuenta la diferencia entre esto y la instrucción <cmdref targ="omit"/>,
+	pues esta última te permite contrastar la hipótesis nula de que los
+	coeficientes de un subconjunto especificado de variables independientes
+	son <emphasis>todos</emphasis> nulos.
 	    </para>
+      <para context="cli">
+	La opción <opt>quiet</opt> te puede ser de utilidad si únicamente
+	deseas acceder a los valores de <fncref targ="$test"/> y de
+	<fncref targ="$pvalue"/> que se registran después de terminar
+	la estimación con éxito.
+      </para>
     </description>
 
     <gui-access>
@@ -7220,8 +7233,21 @@
 	  <effect>Especifica el máximo de la variable dependiente</effect>
 	</option>
 	<option>
+	  <flag>--robust</flag>
+	  <effect>Desviaciones típicas robustas</effect>
+	</option>
+	<option>
+	  <flag>--cluster</flag>
+	  <optparm>clustvar</optparm>
+	  <effect>Consulta <cmdref targ="logit"/> para una explicación</effect>
+	</option>
+	<option>
 	  <flag>--vcv</flag>
 	  <effect>Presenta la matriz de covarianzas</effect>
+	</option>
+	<option>
+	  <flag>--fixed-effects</flag>
+	  <effect>Mira abajo</effect>
 	</option>
       </options>
       <examples>
@@ -7239,7 +7265,6 @@
 	  ascii="log(y/(y* - y))"
 	  graphic="logistic1"/>
       </para>
-
       <para>
 	La variable dependiente debe ser estrictamente positiva. Si
 	todos sus valores están entre 0 y 1, por defecto se utiliza
@@ -7247,33 +7272,38 @@
 	variable dependiente) igual a 1; si sus valores están entre
 	0 y 100, entonces <math>y</math><sup>*</sup> es 100 por defecto.
       </para>
-
       <para context="cli">
 	Si quieres establecer un máximo diferente, utiliza la opción
 	<opt>ymax</opt>. Ten en cuenta que el valor que indiques debe
 	ser mayor que todos los valores observados de la variable
 	dependiente.
       </para>
-
       <para context="gui">
 	Puedes especificar un valor máximo diferente para <math>y</math>.
 	Ten en cuenta que el valor que indiques debe ser mayor que
 	todos los valores observados de la variable dependiente.
       </para>
-
       <para>
 	Los valores ajustados y los errores de la regresión se transforman
-	automáticamente utilizando
+	automáticamente utilizando la inversa de la transformación
+	logística:
 	<equation status="display"
-	  tex="\[y=\frac{y^*}{1+e^{-z}}\]"
-	  ascii="y = y* / (1 + exp(-z))"
+	  tex="\[y \approx E\left(\frac{y^*}{1+e^{-x}}\right)\]"
+	  ascii="y =~ E(y* / (1 + exp(-x)))"
 	  graphic="logistic2"/>
-	donde <math>z</math> representa un valor ajustado o un error,
+	donde <math>x</math> representa un valor ajustado o un error,
 	obtenidos de la regresión MCO que utiliza la variable dependiente
-	transformada. De este modo puedes comparar los valores que se
-	presentan con los de la variable dependiente original.
+	logística. De este modo puedes comparar los valores que se
+	presentan con los de la variable dependiente original. La aproximación
+	es necesaria pues la transformación inversa no es lineal, y por lo tanto
+	la esperanza no se corresponde exactamente.
       </para>
-
+      <para>
+	La opción <opt>fixed-effects</opt> solo es aplicable cuando el conjunto
+	de datos tiene forma de panel. En ese caso, se le restan las medias de
+	grupo de la transformación logística de la variable dependiente, y la
+	estimación continúa como se hace habitualmente con efectos fijos.
+      </para>
       <para>
 	Ten en cuenta que si la variable dependiente es binaria, debes
 	utilizar en su lugar la instrucción <cmdref targ="logit"/>.
@@ -10326,7 +10356,7 @@
   <command name="plot" section="Graphs" context="cli">
     <usage>
       <arguments>
-        <argument>datos</argument>
+        <argument optional="true">datos</argument>
       </arguments>
       <options>
         <option>
@@ -10397,11 +10427,14 @@
 	Gnuplot para que se inserten en el archivo gráfico).
       </para>
       <para>
-	Un bloque <lit>plot</lit> comienza con la palabra de instrucción
-	<lit>plot</lit> seguida por el argumento <repl>datos</repl>
-	exigido, que especifica los datos que se van a representar y
-	que debe ser el nombre de una lista, de una matriz o de una
-	única serie.
+	Un bloque de tipo <lit>plot</lit> comienza con la palabra de instrución
+	<lit>plot</lit>. Habitualmente va seguida de un argumento de
+	<repl>datos</repl> que especifica los datos que se van a representar,
+	y que debe indicar el nombre de una lista, de una matriz o de una
+	única serie. Si no especificas datos de entrada, el bloque debe
+	contener en su lugar al menos una directriz para dibujar una
+	fórmula; ese tipo de directivas puedes indicarlas por medio de
+	lineas de tipo <lit>literal</lit> o <lit>printf</lit> (mira más abajo).
       </para>
       <para>
 	Cuando indicas una lista (o una matriz), se asume que el último término
@@ -10502,6 +10535,24 @@
 	plot y
 	    options time-series with-lines
 	    options band=B,10 band-style=fill
+	end plot --output=display
+      </code>
+      <subhead>Dibujar un gráfico sin datos</subhead>
+      <para>
+	El seguiente ejemplo muestra un caso sencillo de cómo especificar
+	la representación de una gráfica sin ter una fuente de datos.
+      </para>
+      <code>
+	plot
+	    literal set title 'Utilidad CRRA'
+	    literal set xlabel 'c'
+	    literal set ylabel 'u(c)'
+	    literal set xrange[1:3]
+	    literal set key top left
+	    literal crra(x,s) = (x**(1-s) - 1)/(1-s)
+	    printf "plot crra(x, 0) t 'sigma=0', \\"
+	    printf " log(x) t 'sigma=1', \\"
+	    printf " crra(x,3) t 'sigma=3"
 	end plot --output=display
       </code>
     </description>

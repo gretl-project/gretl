@@ -1968,7 +1968,7 @@
 	  </li>
 	  <li>
             <para>
-              Logistic (lgt): sin más argumentos
+              Logística (lgt o s): sin más argumentos
             </para>
 	  </li>
 	  <li>
@@ -3461,6 +3461,51 @@
       </description>
     </function>
 
+    <function name="feval" section="data-utils" output="seebelow">
+      <fnargs>
+	<fnarg type="string">nombrefuncion</fnarg>
+	<fnarg type="varargs"/>
+      </fnargs>
+      <description>
+	<para>
+	  Principalmente útil para los creadores de funciones. El primer
+	  argumento debe ser el nombre de una función, y los restantes
+	  argumentos (uno o varios) deben ser los argumentos a los que
+	  se le aplica la función en cuestión. Esto permite tratar la propia
+	  función identificada mediante <argname>nombrefuncion</argname>
+	  como una variable. El valor que se devuelve es cualquier cosa que
+	  produzca la función indicada, dados los argumentos especificados.
+	</para>
+	<para>
+	  El ejemplo de abajo, ilustra algunos de sus posibles usos.
+	</para>
+	<code>
+	  function scalar utilidad (scalar c, scalar sigma)
+	      return (c^(1-sigma)-1)/(1-sigma)
+	  end function
+
+	  strings S = defarray("log", "utilidad")
+
+	  # Llamada a una función integrada de 1 argumento
+	  x = feval(S[1], 2.5)
+	  # Llamada a una función definida por el usuario
+	  x = feval(S[2], 5, 0.5)
+	  # Llamada a una función integrada de 2 argumentos
+	  func = "zeros"
+	  m = feval(func, 5-2, sqrt(4))
+	  print m
+	  # Llamada a una función integrada de 3 argumentos
+	  x = feval("monthlen", 12, 1980, 5)
+	</code>
+	<para>
+	  Existe una frágil analogía entre la función <lit>feval</lit> y
+	  <fncref targ="genseries"/>: ambas funciones convierten en variable
+	  un elemento sintáctico que habitualmente se fija al tiempo en el
+	  que se redacta un guion.
+	</para>
+      </description>
+    </function>
+
     <function name="fevd" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="int">efecto</fnarg>
@@ -3680,14 +3725,17 @@
     <function name="firstobs" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="series">y</fnarg>
+	<fnarg type="bool" optional="true">enmuestra</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Devuelve el número entero positivo que indexa la primera observación
-	  no ausente de la serie <argname>y</argname>. Ten en cuenta que, si
-	  está activa alguna forma de submuestreo, el valor que se devuelve
-	  puede ser menor que el valor devuelto por el acceso
-	  <fncref targ="$t1"/>.
+	  no ausente de la serie <argname>y</argname>. Por defecto, se analiza
+	  todo el rango de la muestra, de forma que, si está activa alguna forma
+	  de submuestreo, el valor que se devuelve puede ser menor que el
+	  valor devuelto por el accesor <fncref targ="$t1"/>. Pero si indicas un
+	  valor no nulo en <argname>enmuestra</argname>, solo se va a tener
+	  en cuenta el rango de la muestra vigente.
 	  <seelist>
             <fncref targ="lastobs"/>
 	  </seelist>
@@ -3830,6 +3878,10 @@
 	<para>
 	  Al finalizar la ejecución, la lista <lit>Normales</lit> va a contener las
 	  series <lit>norm1</lit>, <lit>norm2</lit> y así sucesivamente.
+	</para>
+	<para>
+	  A aquellos que encontréis útil la función <lit>genseries</lit>, quizás os
+	  interese explorar la función <fncref targ="feval"/>.
 	</para>
       </description>
     </function>
@@ -5645,13 +5697,17 @@
     <function name="lastobs" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="series">y</fnarg>
+	<fnarg type="bool" optional="true">enmuestra</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devuelve el número entero positivo que indexa la última observación no
-	  ausente de la serie <argname>y</argname>. Ten en cuenta que, si está
-	  activa alguna forma de submuestreo, el valor que se devuelve puede ser
-	  mayor que el valor devuelto por el acceso <fncref targ="$t2"/>.
+	  Devuelve el número entero positivo que indexa la última observación
+	  no ausente de la serie <argname>y</argname>. Por defecto, se analiza
+	  todo el rango de la muestra, de forma que, si está activa alguna forma
+	  de submuestreo, el valor que se devuelve puede ser mayor que el
+	  valor devuelto por el accesor <fncref targ="$t2"/>. Pero si indicas un
+	  valor no nulo en <argname>enmuestra</argname>, solo se va a tener
+	  en cuenta el rango de la muestra vigente.
 	  <seelist>
             <fncref targ="firstobs"/>
 	  </seelist>
@@ -8657,6 +8713,11 @@
 	  </li>
 	  <li>
             <para>
+              Logística (lgt o s): posición, escala
+            </para>
+	  </li>
+	  <li>
+            <para>
               Weibull (w o W): forma, escala
             </para>
 	  </li>
@@ -8693,6 +8754,7 @@
 	  Binomial &amp; \texttt{b} o \texttt{B} &amp; $p$ &amp; $n$  &amp; --\\
 	  Poisson &amp; \texttt{p} o \texttt{P} &amp; media &amp; --  &amp; --\\
 	  Exponencial &amp; \texttt{exp} &amp; escala &amp; -- &amp; --\\
+	  Logística &amp; \texttt{s} &amp; posición &amp; escala &amp; --\\
 	  Weibull &amp; \texttt{w} o \texttt{W} &amp; forma &amp; escala &amp; --\\
 	  Laplace &amp; \texttt{l} o \texttt{L} &amp; media &amp; escala &amp; --\\
 	  Error Generalizado &amp; \texttt{E} &amp; forma &amp; -- &amp; --\\

@@ -1968,7 +1968,7 @@
 	  </li>
 	  <li>
             <para>
-              Logistic (lgt): sen máis argumentos
+              Loxística (lgt ou s): sen máis argumentos
             </para>
 	  </li>
 	  <li>
@@ -3461,6 +3461,51 @@
       </description>
     </function>
 
+    <function name="feval" section="data-utils" output="seebelow">
+      <fnargs>
+	<fnarg type="string">nomefuncion</fnarg>
+	<fnarg type="varargs"/>
+      </fnargs>
+      <description>
+	<para>
+	  Fundamentalmente útil para os creadores de funcións. O primeiro
+	  argumento debe de ser o nome dunha función, e os argumentos
+	  restantes (un ou varios) deben ser os argumentos aos que se lle
+	  aplica a función en cuestión. Isto permite tratar á propia función
+	  identificada mediante <argname>nomefuncion</argname> como unha
+	  variable. O valor que se devolve é calquera cousa que produza a
+	  función indicada, dados os argumentos especificados.
+	</para>
+	<para>
+	  O exemplo de abaixo, ilustra algúns dos seus posibles usos.
+	</para>
+	<code>
+	  function scalar utilidade (scalar c, scalar sigma)
+	      return (c^(1-sigma)-1)/(1-sigma)
+	  end function
+
+	  strings S = defarray("log", "utilidade")
+
+	  # Chamada a unha función integrada de 1 argumento
+	  x = feval(S[1], 2.5)
+	  # Chamada a unha función definida polo usuario
+	  x = feval(S[2], 5, 0.5)
+	  # Chamada a unha función integrada de 2 argumentos
+	  func = "zeros"
+	  m = feval(func, 5-2, sqrt(4))
+	  print m
+	  # Chamada a unha función integrada de 3 argumentos
+	  x = feval("monthlen", 12, 1980, 5)
+	</code>
+	<para>
+	  Existe unha feble semellanza entre a función <lit>feval</lit> e
+	  <fncref targ="genseries"/>: ámbalas dúas funcións volven variable
+	  a un elemento sintáctico que habitualmente se fixa ao tempo no
+	  que se redacta un guión.
+	</para>
+      </description>
+    </function>
+
     <function name="fevd" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="int">efecto</fnarg>
@@ -3680,14 +3725,17 @@
     <function name="firstobs" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="series">y</fnarg>
+	<fnarg type="bool" optional="true">namostra</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Devolve o número enteiro positivo que indexa a primeira observación
-	  non ausente da serie <argname>y</argname>. Ten en conta que, se
-	  está activa algunha forma de submostraxe, o valor que se devolve
-	  pode ser menor ca o valor devolto polo accesorio
-	  <fncref targ="$t1"/>.
+	  non ausente da serie <argname>y</argname>. Por defecto, analízase
+	  todo o rango da mostra, de xeito que, se está activa algunha forma
+	  de submostraxe, o valor que se devolve pode ser menor ca o valor
+	  devolto polo accesorio <fncref targ="$t1"/>. Pero se indicas un
+	  valor non nulo en <argname>namostra</argname>, só vai terse en
+	  conta o rango da mostra vixente.
 	  <seelist>
             <fncref targ="lastobs"/>
 	  </seelist>
@@ -3830,6 +3878,10 @@
 	<para>
 	  Ao rematar a execución, a lista <lit>Normais</lit> vai conter as
 	  series <lit>norm1</lit>, <lit>norm2</lit> e así sucesivamente.
+	</para>
+	<para>
+	  A aqueles que atopedes útil a función <lit>genseries</lit>, pode que
+	  vos interese explorar a función <fncref targ="feval"/>.
 	</para>
       </description>
     </function>
@@ -5645,13 +5697,17 @@
     <function name="lastobs" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="series">y</fnarg>
+	<fnarg type="bool" optional="true">namostra</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devolve o número enteiro positivo que indexa a última observación non
-	  ausente da serie <argname>y</argname>. Cae na conta de que, se está
-	  activa algunha forma de submostraxe, o valor que se devolve pode ser
-	  maior ca o valor devolto polo accesorio <fncref targ="$t2"/>.
+	  Devolve o número enteiro positivo que indexa a última observación
+	  non ausente da serie <argname>y</argname>. Por defecto, analízase
+	  todo o rango da mostra, de xeito que, se está activa algunha forma
+	  de submostraxe, o valor que se devolve pode ser maior ca o valor
+	  devolto polo accesorio <fncref targ="$t2"/>. Pero se indicas un
+	  valor non nulo en <argname>namostra</argname>, só vai terse en
+	  conta o rango da mostra vixente.
 	  <seelist>
             <fncref targ="firstobs"/>
 	  </seelist>
@@ -8657,6 +8713,11 @@
 	  </li>
 	  <li>
             <para>
+              Loxística (lgt ou s): posición, escala
+            </para>
+	  </li>
+	  <li>
+            <para>
               Weibull (w ou W): forma, escala
             </para>
 	  </li>
@@ -8693,6 +8754,7 @@
 	  Binomial &amp; \texttt{b} ou \texttt{B} &amp; $p$ &amp; $n$  &amp; --\\
 	  Poisson &amp; \texttt{p} ou \texttt{P} &amp; media &amp; --  &amp; --\\
 	  Exponencial &amp; \texttt{exp} &amp; escala &amp; -- &amp; --\\
+	  Loxística &amp; \texttt{s} &amp; posición &amp; escala &amp; --\\
 	  Weibull &amp; \texttt{w} ou \texttt{W} &amp; forma &amp; escala &amp; --\\
 	  Laplace &amp; \texttt{l} ou \texttt{L} &amp; media &amp; escala &amp; --\\
 	  Erro Xeneralizado &amp; \texttt{E} &amp; forma &amp; -- &amp; --\\
