@@ -845,7 +845,7 @@ nlspec_add_params_from_line (nlspec *s, const char *str)
 #endif
 
     for (i=0; i<nf && !err; i++) {
-	gretlopt opt = OPT_S | OPT_D;
+	gretlopt opt = OPT_S | OPT_D | OPT_U;
 	char *name = gretl_word_strdup(str, &str, opt, &err);
 	gretl_bundle *bundle = NULL;
 	GretlType type = 0;

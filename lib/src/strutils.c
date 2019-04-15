@@ -646,15 +646,27 @@ char *gretl_str_expand (char **orig, const char *add, const char *sep)
     return targ;
 }
 
-static int is_word_char (int c, gretlopt opt)
+static int is_word_char (const char *s, int i, gretlopt opt)
 {
-    if (isalnum((unsigned char) c) || c == '_') {
+    unsigned char c = *s;
+
+    if (isalnum(c) || c == '_') {
 	return 1;
     } else if ((opt & OPT_D) && c == '.') {
 	return 1;
-    } else {
-	return 0;
+    } else if (opt & OPT_U) {
+	/* allow Greeks */
+	if ((c == 0xCE || c == 0xCF) && *(s+1)) {
+	    return 1;
+	} else if (i > 0) {
+	    unsigned char prev = *(s-1);
+
+	    return (prev == 0xCE && c >= 0x91 && c <= 0xBF) ||
+		(prev == 0xCF && c >= 0x80 && c <= 0x89);
+	}
     }
+
+    return 0;
 }
 
 /**
@@ -664,7 +676,8 @@ static int is_word_char (int c, gretlopt opt)
  * @opt: can include OPT_S for "strict" operation: in this
  * case an error is flagged if @src contains any characters
  * other than 'word' characters (see below), comma and space.
- * Also may include OPT_D to allow dot as a "word" character.
+ * Also may include OPT_D to allow dot as a "word" character,
+ * OPT_U to accept UTF-8 Greek letters.
  * @err: location to receive error code.
  *
  * Copies the first 'word' found in @src, where a word
@@ -693,28 +706,32 @@ char *gretl_word_strdup (const char *src, const char **ptr,
     } else {
 	const char *p;
 	int len = 0;
+	int i = 0;
 
 	if (opt & OPT_S) {
-	    /* strict: don't allow any junk */
+	    /* strict: check for any junk */
 	    while (*src && (*src == ' ' || *src == ',')) {
-		src++;
+		src++; i++;
 	    }
-	    if (*src && !is_word_char(*src, opt)) {
+	    if (*src && !is_word_char(src, 0, opt)) {
 		gretl_errmsg_sprintf(_("Unexpected symbol '%c'"), *src);
 		*err = E_PARSE;
 		return NULL;
 	    }
 	} else {
-	    while (*src && !is_word_char(*src, opt)) {
-		src++;
+	    /* just skip to first 'word char' */
+	    while (*src && !is_word_char(src, i, opt)) {
+		src++; i++;
 	    }
 	}
 
+	/* set to start of 'word' */
 	p = src;
 
-	while (is_word_char(*src, opt)) {
+	while (is_word_char(src, i, opt)) {
 	    len++;
 	    src++;
+	    i++;
 	}
 
 	if (opt & OPT_S) {
