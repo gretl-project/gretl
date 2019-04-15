@@ -128,6 +128,10 @@ static int real_check_varname (const char *vname,
 	}
     }
 
+    if (err && !is_series && strlen(vname) == 2 && is_greek_letter(vname)) {
+	return 0;
+    }
+
     if (testchar != 'a') {
 	if (isprint((unsigned char) testchar)) {
 	    if (firstbad) {

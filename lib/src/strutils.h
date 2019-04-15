@@ -65,6 +65,8 @@ int gretl_charpos (char c, const char *s);
 
 int ends_with_backslash (const char *s);
 
+int is_greek_letter (const char *s);
+
 int gretl_namechar_spn (const char *s);
 
 int double_quote_position (const char *s);

@@ -17851,6 +17851,13 @@ static int save_generated_var (parser *p, PRN *prn)
 	    getsymb(p->targ), getsymb(p->op));
 #endif
 
+    if (p->targ == SERIES && (unsigned char) p->lh.name[0] > 126) {
+	/* can't allow Greek letters for series names */
+	gretl_errmsg_sprintf("Invalid series name '%s'", p->lh.name);
+	p->err = E_DATA;
+	return p->err;
+    }
+
     /* allocate dataset storage, if needed */
     if (p->targ == SERIES) {
 	gen_allocate_storage(p);

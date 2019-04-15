@@ -1099,11 +1099,51 @@ char *gretl_trunc (char *str, size_t n)
     return str;
 }
 
+static const char *name_ok =
+    "abcdefghijklmnopqrstuvwxyz"
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "0123456789_";
+
+/**
+ * is_greek_letter:
+ * @s: the string to test.
+ *
+ * Checks for the case where @s contains a greek letter,
+ * followed by a nul byte or an ascii character that cannot
+ * occur in a gretl identifier.
+
+ * Returns: 1 if the case is met, otherwise 0.
+ */
+
+int is_greek_letter (const char *s)
+{
+    unsigned char u[2] = {0};
+    int ret = 0;
+
+    u[0] = s[0];
+    if (s[0] != '\0') {
+	u[1] = s[1];
+    }
+
+    if ((u[0] == 0xCE && u[1] >= 0x91 && u[1] <= 0xBF) ||
+	(u[0] == 0xCF && u[1] >= 0x80 && u[1] <= 0x89)) {
+	char nxt = s[2];
+
+	if (nxt == '\0') {
+	    ret = 1;
+	} else if (nxt >= 32 && nxt <= 126 && !strchr(name_ok, nxt)) {
+	    ret = 1;
+	}
+    }
+
+    return ret;
+}
+
 /**
  * gretl_namechar_spn:
  * @s: the string to examine.
  *
- * Returns: the length of the intial segment of @s which
+ * Returns: the length of the initial segment of @s which
  * consists of characters that are valid in a gretl
  * variable or object name, namely a-z, A-Z, 0-9 and _,
  * starting with a letter.
@@ -1111,13 +1151,14 @@ char *gretl_trunc (char *str, size_t n)
 
 int gretl_namechar_spn (const char *s)
 {
-    const char *ok = "abcdefghijklmnopqrstuvwxyz"
-	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	"0123456789_";
     int ret = 0;
 
     if (isalpha(*s)) {
-	ret = strspn(s, ok);
+	ret = strspn(s, name_ok);
+    }
+
+    if (ret == 0 && is_greek_letter(s)) {
+	ret = 2;
     }
 
     return ret;
@@ -1774,7 +1815,7 @@ int strings_array_prepend_uniq (char ***pS, int *n, const char *p)
 	    break;
 	}
     }
-    
+
     if (pos == 0) {
 	/* already present in 1st position */
 	return 0;

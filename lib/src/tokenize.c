@@ -3350,6 +3350,11 @@ static int tokenize_line (ExecState *state, DATASET *dset,
 	    compmode ? "get_command_index" : "parse_command_line", s);
 #endif
 
+    if (!g_utf8_validate(s, -1, NULL)) {
+	gretl_errmsg_set("command line is not valid UTF-8");
+	return E_DATA;
+    }
+
     gretl_push_c_numeric_locale();
 
     while (!err && *s) {
@@ -3390,6 +3395,10 @@ static int tokenize_line (ExecState *state, DATASET *dset,
 	    n = 1 + namechar_spn(s+1);
 	    m = (n < FN_NAMELEN)? n : FN_NAMELEN - 1;
 	    strncat(tok, s, m);
+	    err = push_string_token(cmd, tok, s, pos);
+	} else if (is_greek_letter(s)) {
+	    n = 2;
+	    strncat(tok, s, n);
 	    err = push_string_token(cmd, tok, s, pos);
 	} else if (ldelim(*s)) {
 	    /* left-hand delimiter that needs to be paired */

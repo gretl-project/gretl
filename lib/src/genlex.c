@@ -1673,28 +1673,35 @@ static int is_word_char (parser *p)
     return 0;
 }
 
-static void getword (parser *p)
+static void getword (parser *p, int greek)
 {
     char word[32];
     int i = 0;
 
-    /* we know the first char is acceptable (and might be '$' or '_') */
-    word[i++] = p->ch;
-    parser_getc(p);
+    if (greek) {
+	/* we have a single (2-byte) UTF-8 greek letter in scope */
+	for (i=0; i<2; i++) {
+	    word[i] = p->ch;
+	    parser_getc(p);
+	}
+    } else {
+	/* we know the first char is acceptable (and might be '$' or '_') */
+	word[i++] = p->ch;
+	parser_getc(p);
 
 #ifdef USE_RLIB
-    /* allow for R.foo function namespace */
-    if (*word == 'R' && p->ch == '.' && *p->point != '$') {
-	if (libset_get_bool(R_FUNCTIONS) && !gretl_is_bundle("R")) {
+	/* allow for R.foo function namespace */
+	if (*word == 'R' && p->ch == '.' && *p->point != '$') {
+	    if (libset_get_bool(R_FUNCTIONS) && !gretl_is_bundle("R")) {
+		word[i++] = p->ch;
+		parser_getc(p);
+	    }
+	}
+#endif
+	while (p->ch != 0 && is_word_char(p) && i < 31) {
 	    word[i++] = p->ch;
 	    parser_getc(p);
 	}
-    }
-#endif
-
-    while (p->ch != 0 && is_word_char(p) && i < 31) {
-	word[i++] = p->ch;
-	parser_getc(p);
     }
 
     word[i] = '\0';
@@ -1863,7 +1870,7 @@ static int wildcard_special (parser *p)
 	 (p->sym == LAG))) {
 	p->sym = B_LCAT;
     } else {
-	getword(p);
+	getword(p, 0);
     }
 
     return 1;
@@ -1910,6 +1917,9 @@ void lex (parser *p)
     while (p->ch != 0) {
 	if ((unsigned char) p->ch == 0xE2) {
 	    lex_try_utf8(p);
+	    return;
+	} else if (is_greek_letter(p->point - 1)) {
+	    getword(p, 1);
 	    return;
 	}
 	switch (p->ch) {
@@ -2165,7 +2175,7 @@ void lex (parser *p)
 		return;
 	    } else if (islower(p->ch) || isupper(p->ch) ||
 		       word_start_special(p->ch)) {
-		getword(p);
+		getword(p, 0);
 		return;
 	    } else if (p->ch == '"') {
 		p->idstr = get_quoted_string(p);
@@ -2175,6 +2185,7 @@ void lex (parser *p)
 		if (isprint(p->ch)) {
 		    pprintf(p->prn, _("Invalid character '%c'\n"), p->ch);
 		} else {
+		    fprintf(stderr, "HERE!\n");
 		    pprintf(p->prn, _("Unexpected byte 0x%x\n"),
 			    (unsigned char) p->ch);
 		}
