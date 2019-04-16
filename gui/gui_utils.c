@@ -610,14 +610,14 @@ static struct greek_map greek_keys[] = {
     { GDK_KEY_G, 0x93 }, /* gamma */
     { GDK_KEY_H, 0x97 }, /* eta */
     { GDK_KEY_I, 0x99 }, /* iota */
-    { GDK_KEY_J, 0x98 }, /* theta */
+    { GDK_KEY_J, 0xa8 }, /* psi */
     { GDK_KEY_K, 0x9a }, /* kappa */
     { GDK_KEY_L, 0x9b }, /* lambda */
     { GDK_KEY_M, 0x9c }, /* mu */
     { GDK_KEY_N, 0x9d }, /* nu */
     { GDK_KEY_O, 0x9f }, /* omicron */
     { GDK_KEY_P, 0xa0 }, /* pi */
-    { GDK_KEY_Q, 0xa8 }, /* psi */
+    { GDK_KEY_Q, 0x98 }, /* theta */
     { GDK_KEY_R, 0xa1 }, /* rho */
     { GDK_KEY_S, 0xa3 }, /* sigma */
     { GDK_KEY_T, 0xa4 }, /* tau */
