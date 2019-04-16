@@ -587,6 +587,82 @@ static void vwin_select_all (windata_t *vwin)
     }
 }
 
+#define HANDLE_GREEKS 1
+
+#if HANDLE_GREEKS
+
+/* GDK_KEY_A 0x041 .. GDK_KEY_Z 0x05a
+   GDK_KEY_a 0x061 .. GDK_KEY_z 0x07a
+*/
+
+struct greek_map {
+    guint key; /* Latin letter key */
+    guint grk; /* "corresponding" Greek letter */
+};
+
+static struct greek_map greek_keys[] = {
+    { GDK_KEY_A, 0x91 }, /* alpha */
+    { GDK_KEY_B, 0x92 }, /* beta */
+    { GDK_KEY_C, 0x93 }, /* gamma */
+    { GDK_KEY_D, 0x94 }, /* delta */
+    { GDK_KEY_E, 0x95 }, /* epsilon */
+    { GDK_KEY_F, 0xa6 }, /* phi */
+    { GDK_KEY_G, 0x96 }, /* zeta */
+    { GDK_KEY_H, 0x97 }, /* eta */
+    { GDK_KEY_I, 0x99 }, /* iota */
+    { GDK_KEY_J, 0x98 }, /* theta */
+    { GDK_KEY_K, 0x9a }, /* kappa */
+    { GDK_KEY_L, 0x9b }, /* lambda */
+    { GDK_KEY_M, 0x9c }, /* mu */
+    { GDK_KEY_N, 0x9d }, /* nu */
+    { GDK_KEY_O, 0x9f }, /* omicron */
+    { GDK_KEY_P, 0xa0 }, /* pi */
+    { GDK_KEY_Q, 0xa8 }, /* psi */
+    { GDK_KEY_R, 0xa1 }, /* rho */
+    { GDK_KEY_S, 0xa3 }, /* sigma */
+    { GDK_KEY_T, 0xa4 }, /* tau */
+    { GDK_KEY_W, 0xa9 }, /* omega */
+    { GDK_KEY_X, 0xa7 }, /* chi */
+    { GDK_KEY_Y, 0xa5 }, /* upsilon */
+    { GDK_KEY_Z, 0x9e }  /* xi */
+};
+
+static int maybe_insert_greek (guint key, windata_t *vwin)
+{
+    guint lc = 0, ukey = 0;
+
+    if (key >= GDK_a && key <= GDK_KEY_z) {
+	ukey = gdk_keyval_to_upper(key);
+	lc = 1;
+    } else if (key >= GDK_A && key <= GDK_KEY_Z) {
+	ukey = key;
+    }
+
+    if (ukey > 0) {
+	int i, n = G_N_ELEMENTS(greek_keys);
+	unsigned char g, ins[3] = {0};
+
+	for (i=0; i<n; i++) {
+	    if (ukey == greek_keys[i].key) {
+		g = greek_keys[i].grk;
+		if (lc) {
+		    ins[0] = g > 0x9f ? 0xCF : 0xCE;
+		    ins[1] = g > 0x9f ? g - 0x20 : g + 0x20;
+		} else {
+		    ins[0] = 0xCE;
+		    ins[1] = g;
+		}
+		textview_append_text(vwin->text, ins);
+		return 1;
+	    }
+	}
+    }
+
+    return 0;
+}
+
+#endif
+
 /* Signal attached to editor/viewer windows. Note that @w is
    generally the top-level GtkWidget vwin->main; exceptions
    are (a) tabbed windows, where @w is the embedding window,
@@ -604,6 +680,14 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
     if (vwin_is_busy(vwin)) {
 	return TRUE;
     }
+
+#if HANDLE_GREEKS
+    if (editing && Alt) {
+	if (maybe_insert_greek(upkey, vwin)) {
+	    return TRUE;
+	}
+    }
+#endif
 
     if (is_control_key(event->keyval)) {
 	return FALSE;
@@ -684,8 +768,7 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	if (upkey == GDK_C && vwin->role == SCRIPT_OUT) {
 	    cascade_session_windows();
 	    return TRUE;
-	}
-	if (window_is_tab(vwin)) {
+	} else if (window_is_tab(vwin)) {
 	    int k = numeric_keyval(upkey);
 
 	    if (k > 0) {
@@ -693,6 +776,7 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 		return TRUE;
 	    }
 	}
+
     }
 
     if (editing || (vwin->finder != NULL && gtk_widget_has_focus(vwin->finder))) {
