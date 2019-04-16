@@ -603,11 +603,11 @@ struct greek_map {
 static struct greek_map greek_keys[] = {
     { GDK_KEY_A, 0x91 }, /* alpha */
     { GDK_KEY_B, 0x92 }, /* beta */
-    { GDK_KEY_C, 0x93 }, /* gamma */
+    { GDK_KEY_C, 0xa7 }, /* chi */
     { GDK_KEY_D, 0x94 }, /* delta */
     { GDK_KEY_E, 0x95 }, /* epsilon */
     { GDK_KEY_F, 0xa6 }, /* phi */
-    { GDK_KEY_G, 0x96 }, /* zeta */
+    { GDK_KEY_G, 0x93 }, /* gamma */
     { GDK_KEY_H, 0x97 }, /* eta */
     { GDK_KEY_I, 0x99 }, /* iota */
     { GDK_KEY_J, 0x98 }, /* theta */
@@ -624,9 +624,9 @@ static struct greek_map greek_keys[] = {
     { GDK_KEY_U, 0xa5 }, /* upsilon */
     { GDK_KEY_V, 0x9d }, /* nu (again) */
     { GDK_KEY_W, 0xa9 }, /* omega */
-    { GDK_KEY_X, 0xa7 }, /* chi */
+    { GDK_KEY_X, 0x9e }, /* xi */
     { GDK_KEY_Y, 0xa5 }, /* upsilon (again) */
-    { GDK_KEY_Z, 0x9e }  /* xi */
+    { GDK_KEY_Z, 0x96 }  /* zeta */
 };
 
 static int maybe_insert_greek (guint key, windata_t *vwin)
@@ -654,7 +654,7 @@ static int maybe_insert_greek (guint key, windata_t *vwin)
 		    ins[0] = 0xCE;
 		    ins[1] = g;
 		}
-		textview_append_text(vwin->text, ins);
+		textview_append_text(vwin->text, (char *) ins);
 		return 1;
 	    }
 	}
@@ -686,6 +686,9 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 #if HANDLE_GREEKS
     if (editing && Alt) {
 	if (maybe_insert_greek(upkey, vwin)) {
+	    return TRUE;
+	} else if (upkey == GDK_KEY_minus) {
+	    textview_append_text(vwin->text, "~");
 	    return TRUE;
 	}
     }
