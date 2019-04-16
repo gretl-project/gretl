@@ -621,9 +621,11 @@ static struct greek_map greek_keys[] = {
     { GDK_KEY_R, 0xa1 }, /* rho */
     { GDK_KEY_S, 0xa3 }, /* sigma */
     { GDK_KEY_T, 0xa4 }, /* tau */
+    { GDK_KEY_U, 0xa5 }, /* upsilon */
+    { GDK_KEY_V, 0x9d }, /* nu (again) */
     { GDK_KEY_W, 0xa9 }, /* omega */
     { GDK_KEY_X, 0xa7 }, /* chi */
-    { GDK_KEY_Y, 0xa5 }, /* upsilon */
+    { GDK_KEY_Y, 0xa5 }, /* upsilon (again) */
     { GDK_KEY_Z, 0x9e }  /* xi */
 };
 
