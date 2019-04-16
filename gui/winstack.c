@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "gretl.h"
@@ -55,7 +55,7 @@ static gint select_other_window (gpointer self, int seq);
 */
 
 /* get the top-level widget associated with pre-defined
-   @action 
+   @action
 */
 
 static GtkWidget *window_from_action (GtkAction *action)
@@ -75,7 +75,7 @@ static GtkWidget *window_from_action (GtkAction *action)
 static windata_t *vwin_from_action (GtkAction *action)
 {
     GtkWidget *w = window_from_action(action);
-    
+
     if (w != NULL) {
 	return g_object_get_data(G_OBJECT(w), "vwin");
     }
@@ -108,7 +108,7 @@ static const gchar *window_list_icon (int role)
 	id = GRETL_STOCK_MODEL;
     } else if (role == CONSOLE) {
 	id = GRETL_STOCK_CONSOLE;
-    } else if (role >= EDIT_HEADER && 
+    } else if (role >= EDIT_HEADER &&
 	       role < EDIT_MAX) {
 	id = GTK_STOCK_EDIT;
     } else if (role == GNUPLOT) {
@@ -131,7 +131,7 @@ static const gchar *window_list_icon (int role)
 	id = GTK_STOCK_EXECUTE;
     } else if (role == OPEN_SESSION) {
 	id = GRETL_STOCK_ICONS;
-    } else if (role == PRINT || 
+    } else if (role == PRINT ||
 	       role == SCRIPT_OUT ||
 	       role == VIEW_LOG) {
 	id = GRETL_STOCK_PAGE;
@@ -169,7 +169,7 @@ static const gchar *get_window_title (GtkWidget *w)
     return s;
 }
 
-/* callback to be invoked just before destroying a window that's 
+/* callback to be invoked just before destroying a window that's
    on the list of open windows: remove its entry from the list
 */
 
@@ -188,7 +188,7 @@ static void window_list_remove (GtkWidget *w, GtkActionGroup *group)
     if (action != NULL) {
 	gtk_action_group_remove_action(group, action);
 	n_listed_windows--;
-    }    
+    }
 }
 
 static char *winname_double_underscores (const gchar *src)
@@ -236,7 +236,7 @@ static gint maybe_select_other_window (GdkEventKey *event,
     }
 #else
     if (event->state & GDK_MOD1_MASK) {
-	if (event->keyval == GDK_Page_Up || 
+	if (event->keyval == GDK_Page_Up ||
 	    event->keyval == GDK_KP_Page_Up) {
 	    return select_other_window(data, WINDOW_PREV);
 	} else if (event->keyval == GDK_Page_Down ||
@@ -244,12 +244,12 @@ static gint maybe_select_other_window (GdkEventKey *event,
 	    return select_other_window(data, WINDOW_NEXT);
 	}
     }
-#endif	
+#endif
 
     return FALSE;
 }
 
-static gint catch_winlist_key (GtkWidget *w, GdkEventKey *event, 
+static gint catch_winlist_key (GtkWidget *w, GdkEventKey *event,
 			       gpointer data)
 {
 #ifdef MAC_NATIVE
@@ -262,7 +262,7 @@ static gint catch_winlist_key (GtkWidget *w, GdkEventKey *event,
     if (cmd_key(event) && mac_hide_unhide(event)) {
 	return TRUE;
     }
-# endif  
+# endif
 #else /* non-Mac */
     if (event->state & GDK_MOD1_MASK) {
 	if (event->keyval == GDK_w) {
@@ -277,9 +277,9 @@ static gint catch_winlist_key (GtkWidget *w, GdkEventKey *event,
 
 void window_list_add (GtkWidget *w, int role)
 {
-    GtkActionEntry entry = { 
+    GtkActionEntry entry = {
 	/* name, stock_id, label, accelerator, tooltip, callback */
-	NULL, NULL, NULL, NULL, NULL, G_CALLBACK(gretl_window_raise) 
+	NULL, NULL, NULL, NULL, NULL, G_CALLBACK(gretl_window_raise)
     };
     GtkAction *action;
     const char *label;
@@ -328,13 +328,16 @@ void window_list_add (GtkWidget *w, int role)
 	/* attach time to window */
 	g_object_set_data(G_OBJECT(w), "time", GUINT_TO_POINTER(time(NULL)));
 	/* attach callback to remove from window list */
-	g_signal_connect(G_OBJECT(w), "destroy", 
-			 G_CALLBACK(window_list_remove), 
+	g_signal_connect(G_OBJECT(w), "destroy",
+			 G_CALLBACK(window_list_remove),
 			 window_group);
     }
 
-    g_signal_connect(G_OBJECT(w), "key-press-event", 
-		     G_CALLBACK(catch_winlist_key), w);
+    if (role != EDIT_HANSL) {
+	/* allow for Alt-w = omega */
+	g_signal_connect(G_OBJECT(w), "key-press-event",
+			 G_CALLBACK(catch_winlist_key), w);
+    }
 
     n_listed_windows++;
 
@@ -344,7 +347,7 @@ void window_list_add (GtkWidget *w, int role)
 
 /* GCompareFunc: returns "a negative integer if the first value comes
    before the second, 0 if they are equal, or a positive integer if
-   the first value comes after the second." 
+   the first value comes after the second."
 */
 
 static gint sort_window_list (gconstpointer a, gconstpointer b)
@@ -353,7 +356,7 @@ static gint sort_window_list (gconstpointer a, gconstpointer b)
     GtkWidget *wb = window_from_action((GtkAction *) b);
     guint ta, tb;
 
-    /* sort main window first, otherwise by time when the 
+    /* sort main window first, otherwise by time when the
        window was created */
 
     if (wa == mdata->main) return -1;
@@ -385,7 +388,7 @@ static void make_bullet (char *bullet)
 	desc = pango_font_description_from_string(fontname);
 	if (font_has_symbol(desc, 0x2022)) {
 	    sprintf(bullet, " %c%c%c", 0xE2, 0x80, 0xA2);
-	} 
+	}
 	if (desc != NULL) {
 	    pango_font_description_free(desc);
 	}
@@ -422,7 +425,7 @@ static void gtk_action_set_label (GtkAction *action,
 
 #endif /* remedial functions for older GTK */
 
-/* show a bullet or asterisk next to the entry for 
+/* show a bullet or asterisk next to the entry for
    the current window */
 
 static void maybe_revise_action_label (GtkAction *action,
@@ -453,11 +456,11 @@ static void maybe_revise_action_label (GtkAction *action,
 	/* remove asterisk */
 	repl = g_strndup(label, strlen(label) - blen);
     }
-    
+
     if (repl != NULL) {
 	gtk_action_set_label(action, repl);
 	g_free(repl);
-    }	
+    }
 }
 
 static gboolean winlist_popup_done (GtkMenuShell *mshell,
@@ -467,8 +470,8 @@ static gboolean winlist_popup_done (GtkMenuShell *mshell,
 
     if (vwin != NULL) {
 	/* don't leave focus on the winlist button */
-	if (vwin->role == VIEW_MODEL || 
-	    vwin->role == VAR || 
+	if (vwin->role == VIEW_MODEL ||
+	    vwin->role == VAR ||
 	    vwin->role == VECM) {
 	    gtk_widget_grab_focus(vwin->text);
 	} else if (vwin == mdata) {
@@ -485,29 +488,29 @@ static void add_cascade_item (GtkWidget *menu,
     GtkWidget *image;
 
     item = gtk_image_menu_item_new_with_label(_("Arrange"));
-    image = gtk_image_new_from_stock(GRETL_STOCK_WINLIST, 
+    image = gtk_image_new_from_stock(GRETL_STOCK_WINLIST,
 				     GTK_ICON_SIZE_MENU);
-    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(item), 
+    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(item),
 				  image);
-    g_signal_connect(G_OBJECT(item), "activate", 
-		     G_CALLBACK(cascade_session_windows), 
+    g_signal_connect(G_OBJECT(item), "activate",
+		     G_CALLBACK(cascade_session_windows),
 		     NULL);
     gtk_widget_show(item);
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 }
 
-static void add_log_item (GtkWidget *menu, 
+static void add_log_item (GtkWidget *menu,
 			  GtkWidget *item)
 {
     GtkWidget *image;
 
     item = gtk_image_menu_item_new_with_label(_("command log"));
-    image = gtk_image_new_from_stock(GRETL_STOCK_PAGE, 
+    image = gtk_image_new_from_stock(GRETL_STOCK_PAGE,
 				     GTK_ICON_SIZE_MENU);
-    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(item), 
+    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(item),
 				  image);
-    g_signal_connect(G_OBJECT(item), "activate", 
-		     G_CALLBACK(view_command_log), 
+    g_signal_connect(G_OBJECT(item), "activate",
+		     G_CALLBACK(view_command_log),
 		     NULL);
     gtk_widget_show(item);
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
@@ -519,12 +522,12 @@ static void add_iconview_item (GtkWidget *menu,
     GtkWidget *image;
 
     item = gtk_image_menu_item_new_with_label(_("icon view"));
-    image = gtk_image_new_from_stock(GRETL_STOCK_ICONS, 
+    image = gtk_image_new_from_stock(GRETL_STOCK_ICONS,
 				     GTK_ICON_SIZE_MENU);
-    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(item), 
+    gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(item),
 				  image);
-    g_signal_connect(G_OBJECT(item), "activate", 
-		     G_CALLBACK(view_session), 
+    g_signal_connect(G_OBJECT(item), "activate",
+		     G_CALLBACK(view_session),
 		     NULL);
     gtk_widget_show(item);
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
@@ -533,7 +536,7 @@ static void add_iconview_item (GtkWidget *menu,
 /* pop up a list of open windows from which the user can
    select one to raise and focus */
 
-void window_list_popup (GtkWidget *src, GdkEvent *event, 
+void window_list_popup (GtkWidget *src, GdkEvent *event,
 			gpointer data)
 {
     static GtkWidget *menu;
@@ -558,7 +561,7 @@ void window_list_popup (GtkWidget *src, GdkEvent *event,
 
     if (data != NULL) {
 	thiswin = GTK_WIDGET(data);
-    }    
+    }
 
     menu = gtk_menu_new();
     list = wlist;
@@ -600,7 +603,7 @@ void window_list_popup (GtkWidget *src, GdkEvent *event,
     }
 
     if (thiswin != NULL) {
-	g_signal_connect(G_OBJECT(menu), "deactivate", 
+	g_signal_connect(G_OBJECT(menu), "deactivate",
 			 G_CALLBACK(winlist_popup_done),
 			 thiswin);
     }
@@ -620,7 +623,7 @@ void window_list_popup (GtkWidget *src, GdkEvent *event,
 }
 
 static void vwin_winlist_popup (GtkWidget *src,
-				GdkEvent *event, 
+				GdkEvent *event,
 				windata_t *vwin)
 {
     /* Note: this function may look redundant, given the
@@ -796,10 +799,10 @@ static gint select_other_window (gpointer self, int seq)
 	    w = window_from_action((GtkAction *) mylist->data);
 	    if (w == (GtkWidget *) self) {
 		if (seq == WINDOW_PREV) {
-		    mylist = mylist->prev != NULL ? mylist->prev : 
+		    mylist = mylist->prev != NULL ? mylist->prev :
 			g_list_last(wlist);
 		} else {
-		    mylist = mylist->next != NULL ? mylist->next : 
+		    mylist = mylist->next != NULL ? mylist->next :
 			g_list_first(wlist);
 		}
 		gretl_window_raise((GtkAction *) mylist->data, NULL);
@@ -876,7 +879,7 @@ real_get_browser_for_database (const char *filename, int code)
 	while (list != NULL && ret == NULL) {
 	    vwin = vwin_from_action((GtkAction *) list->data);
 	    if (vwin != NULL && db_role_matches(vwin, code)) {
-		if (!strncmp(filename, vwin->fname, 
+		if (!strncmp(filename, vwin->fname,
 			     strlen(vwin->fname))) {
 		    ret = vwin;
 		}
@@ -1093,7 +1096,7 @@ GtkWidget *get_window_for_plot (void *session_plot)
 		if (test != NULL && test == session_plot) {
 		    ret = w;
 		}
-	    }	    
+	    }
 	    list = list->next;
 	}
 	g_list_free(list);
@@ -1162,7 +1165,7 @@ int highest_numbered_variable_in_winstack (void)
 		    m_vmax = gretl_VAR_get_highest_variable(var);
 		    if (m_vmax > vmax) {
 			vmax = m_vmax;
-		    }		    
+		    }
 		}
 	    }
 	    list = list->next;
@@ -1224,8 +1227,8 @@ windata_t *vwin_new (int role, gpointer data)
 }
 
 windata_t *
-gretl_viewer_new_with_parent (windata_t *parent, int role, 
-			      const gchar *title, 
+gretl_viewer_new_with_parent (windata_t *parent, int role,
+			      const gchar *title,
 			      gpointer data)
 {
     windata_t *vwin = vwin_new(role, data);
@@ -1257,7 +1260,7 @@ gretl_viewer_new_with_parent (windata_t *parent, int role,
 	gtk_window_set_position(GTK_WINDOW(vwin->main),
 				GTK_WIN_POS_CENTER);
     } else {
-	g_signal_connect(G_OBJECT(vwin->main), "destroy", 
+	g_signal_connect(G_OBJECT(vwin->main), "destroy",
 			 G_CALLBACK(free_windata), vwin);
 	gtk_window_set_position(GTK_WINDOW(vwin->main),
 				GTK_WIN_POS_MOUSE);
@@ -1273,7 +1276,7 @@ gretl_viewer_new_with_parent (windata_t *parent, int role,
     return vwin;
 }
 
-windata_t *gretl_viewer_new (int role, const gchar *title, 
+windata_t *gretl_viewer_new (int role, const gchar *title,
 			     gpointer data)
 {
     return gretl_viewer_new_with_parent(NULL, role, title,
@@ -1304,9 +1307,9 @@ static GtkWidget *real_add_winlist (windata_t *vwin,
 	GTK_IS_MENU_BAR(vwin->mbar)) {
 	sibling = vwin->mbar;
     }
-    
+
     tbar = gretl_toolbar_new(sibling);
-    
+
     gtk_widget_set_tooltip_text(GTK_WIDGET(item), _("Windows"));
     gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
     img = gtk_image_new_from_stock(GRETL_STOCK_WINLIST, GTK_ICON_SIZE_MENU);
@@ -1314,13 +1317,13 @@ static GtkWidget *real_add_winlist (windata_t *vwin,
     gtk_container_add(GTK_CONTAINER(item), button);
 
     if (vwin != NULL) {
-	g_signal_connect(G_OBJECT(button), "button-press-event", 
+	g_signal_connect(G_OBJECT(button), "button-press-event",
 			 G_CALLBACK(vwin_winlist_popup), vwin);
     } else {
-	g_signal_connect(G_OBJECT(button), "button-press-event", 
+	g_signal_connect(G_OBJECT(button), "button-press-event",
 			 G_CALLBACK(window_list_popup), window);
     }
-    
+
     gtk_toolbar_insert(GTK_TOOLBAR(tbar), item, -1);
     gtk_widget_show_all(tbar);
     gtk_box_pack_end(GTK_BOX(hbox), tbar, FALSE, FALSE, 0);
@@ -1334,7 +1337,7 @@ void vwin_add_winlist (windata_t *vwin)
 
     if (g_object_get_data(G_OBJECT(hbox), "winlist") == NULL) {
 	GtkWidget *winlist;
-	
+
 	winlist = real_add_winlist(vwin, NULL, hbox);
 	g_object_set_data(G_OBJECT(hbox), "winlist", winlist);
     }
@@ -1347,7 +1350,7 @@ void window_add_winlist (GtkWidget *window, GtkWidget *hbox)
 
 	winlist = real_add_winlist(NULL, window, hbox);
 	g_object_set_data(G_OBJECT(hbox), "winlist", winlist);
-    }    
+    }
 }
 
 static void destroy_hbox_child (GtkWidget *w, gpointer p)
@@ -1372,7 +1375,7 @@ void vwin_pack_toolbar (windata_t *vwin)
 	tabwin_register_toolbar(vwin);
 	if (want_winlist(vwin)) {
 	    vwin_add_winlist(vwin);
-	}	
+	}
     } else {
 	GtkWidget *hbox;
 
@@ -1423,10 +1426,10 @@ void vwin_reinstate_toolbar (windata_t *vwin)
 
     if (hbox != NULL) {
 	/* destroy the temporary stuff, put the "real" stuff back,
-	   and drop the extra references 
+	   and drop the extra references
 	*/
 	GtkWidget *winlist;
-	
+
 	gtk_container_foreach(GTK_CONTAINER(hbox), destroy_hbox_child, NULL);
 	gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
 	g_object_unref(G_OBJECT(vwin->mbar));
