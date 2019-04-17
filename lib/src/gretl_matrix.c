@@ -1103,6 +1103,14 @@ int gretl_matrix_copy_row (gretl_matrix *dest, int di,
     return err;
 }
 
+/* Mechanism for copying row or column names from matrix
+   @src to matrix @targ. If @cols is nonzero it's column
+   names in question, otherwise it's row names. If @reverse
+   is non-zero that implies we've carried out an operation
+   such that it makes sense to reverse the row or column
+   names on @targ relative to @src.
+*/
+
 static void maybe_preserve_names (gretl_matrix *targ,
 				  const gretl_matrix *src,
 				  int cols, int reverse)
@@ -1110,7 +1118,7 @@ static void maybe_preserve_names (gretl_matrix *targ,
     char **srcnames;
     int n, err = 0;
 
-    if (src->info != NULL) {
+    if (src->info != NULL && src->info != (matrix_info *) INFO_INVALID) {
 	if (cols) {
 	    srcnames = src->info->colnames;
 	    n = src->cols;
@@ -6875,11 +6883,12 @@ static double col_sum (const gretl_matrix *m, int j)
     return x;
 }
 
-/* return col vector containing row sums, or row vector containing
-   column sums */
+/* Returns a column vector containing the sums of the rows of @m,
+   or a row vector containing the column sums if @bycol != 0.
+*/
 
-static gretl_matrix *gretl_matrix_sum (const gretl_matrix *m, int bycol,
-				       int *err)
+static gretl_matrix *gretl_matrix_sum (const gretl_matrix *m,
+				       int bycol, int *err)
 {
 
     gretl_matrix *s = NULL;
@@ -6904,6 +6913,7 @@ static gretl_matrix *gretl_matrix_sum (const gretl_matrix *m, int bycol,
 	for (i=0; i<dim; i++) {
 	    s->val[i] = (bycol)? col_sum(m, i) : row_sum(m, i);
 	}
+	maybe_preserve_names(s, m, bycol, 0);
     }
 
     return s;
