@@ -97,7 +97,8 @@
    type (bool | boolean | int | obs | scalar | series | list |
          matrix | bundle | scalarref | seriesref | matrixref |
          bundleref | string | stringref | strings | matrices |
-	 bundles | stringsref | matricesref | bundlesref) 'series'
+	 bundles | lists | stringsref | matricesref | 
+	 bundlesref) 'series'
 >
 
 <!ELEMENT return EMPTY>
