@@ -601,42 +601,42 @@ struct greek_map {
 };
 
 static struct greek_map greek_keys[] = {
-    { GDK_KEY_A, 0x91 }, /* alpha */
-    { GDK_KEY_B, 0x92 }, /* beta */
-    { GDK_KEY_C, 0xa7 }, /* chi */
-    { GDK_KEY_D, 0x94 }, /* delta */
-    { GDK_KEY_E, 0x95 }, /* epsilon */
-    { GDK_KEY_F, 0xa6 }, /* phi */
-    { GDK_KEY_G, 0x93 }, /* gamma */
-    { GDK_KEY_H, 0x97 }, /* eta */
-    { GDK_KEY_I, 0x99 }, /* iota */
-    { GDK_KEY_J, 0xa8 }, /* psi */
-    { GDK_KEY_K, 0x9a }, /* kappa */
-    { GDK_KEY_L, 0x9b }, /* lambda */
-    { GDK_KEY_M, 0x9c }, /* mu */
-    { GDK_KEY_N, 0x9d }, /* nu */
-    { GDK_KEY_O, 0x9f }, /* omicron */
-    { GDK_KEY_P, 0xa0 }, /* pi */
-    { GDK_KEY_Q, 0x98 }, /* theta */
-    { GDK_KEY_R, 0xa1 }, /* rho */
-    { GDK_KEY_S, 0xa3 }, /* sigma */
-    { GDK_KEY_T, 0xa4 }, /* tau */
-    { GDK_KEY_U, 0xa5 }, /* upsilon */
-    { GDK_KEY_V, 0x9d }, /* nu (again) */
-    { GDK_KEY_W, 0xa9 }, /* omega */
-    { GDK_KEY_X, 0x9e }, /* xi */
-    { GDK_KEY_Y, 0xa5 }, /* upsilon (again) */
-    { GDK_KEY_Z, 0x96 }  /* zeta */
+    { GDK_A, 0x91 }, /* alpha */
+    { GDK_B, 0x92 }, /* beta */
+    { GDK_C, 0xa7 }, /* chi */
+    { GDK_D, 0x94 }, /* delta */
+    { GDK_E, 0x95 }, /* epsilon */
+    { GDK_F, 0xa6 }, /* phi */
+    { GDK_G, 0x93 }, /* gamma */
+    { GDK_H, 0x97 }, /* eta */
+    { GDK_I, 0x99 }, /* iota */
+    { GDK_J, 0xa8 }, /* psi */
+    { GDK_K, 0x9a }, /* kappa */
+    { GDK_L, 0x9b }, /* lambda */
+    { GDK_M, 0x9c }, /* mu */
+    { GDK_N, 0x9d }, /* nu */
+    { GDK_O, 0x9f }, /* omicron */
+    { GDK_P, 0xa0 }, /* pi */
+    { GDK_Q, 0x98 }, /* theta */
+    { GDK_R, 0xa1 }, /* rho */
+    { GDK_S, 0xa3 }, /* sigma */
+    { GDK_T, 0xa4 }, /* tau */
+    { GDK_U, 0xa5 }, /* upsilon */
+    { GDK_V, 0x9d }, /* nu (again) */
+    { GDK_W, 0xa9 }, /* omega */
+    { GDK_X, 0x9e }, /* xi */
+    { GDK_Y, 0xa5 }, /* upsilon (again) */
+    { GDK_Z, 0x96 }  /* zeta */
 };
 
 static int maybe_insert_greek (guint key, windata_t *vwin)
 {
     guint lc = 0, ukey = 0;
 
-    if (key >= GDK_a && key <= GDK_KEY_z) {
+    if (key >= GDK_a && key <= GDK_z) {
 	ukey = gdk_keyval_to_upper(key);
 	lc = 1;
-    } else if (key >= GDK_A && key <= GDK_KEY_Z) {
+    } else if (key >= GDK_A && key <= GDK_Z) {
 	ukey = key;
     }
 
@@ -687,7 +687,7 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
     if (editing && Alt) {
 	if (maybe_insert_greek(upkey, vwin)) {
 	    return TRUE;
-	} else if (upkey == GDK_KEY_minus) {
+	} else if (upkey == GDK_minus) {
 	    textview_append_text(vwin->text, "~");
 	    return TRUE;
 	}
