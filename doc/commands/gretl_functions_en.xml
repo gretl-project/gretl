@@ -1351,12 +1351,16 @@
     <function name="argname" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">s</fnarg>
+	<fnarg type="string" optional="true">default</fnarg>
       </fnargs>
       <description>
 	<para>
 	  For <argname>s</argname> the name of a parameter to a
 	  user-defined function, returns the name of the corresponding
-	  argument, or an empty string if the argument was anonymous.
+	  argument, if the argument had a name at the caller level. If
+	  the argument was anonymous, an empty string is returned
+	  unless the optional <argname>default</argname> argument is
+	  provided, in which case its value is used as a fallback.
 	</para>
       </description>
     </function>

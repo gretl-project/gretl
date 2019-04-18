@@ -248,7 +248,6 @@ enum {
     F_UPPER,
     F_LOWER,
     F_POLROOTS,
-    F_ARGNAME,
     F_OBSLABEL,
     F_BACKTICK,
     F_STRLEN,
@@ -290,6 +289,7 @@ enum {
     HF_CEXP,
     HF_JBTERMS,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
+    F_ARGNAME,
     F_T1,
     F_T2,
     F_COV,

@@ -6789,12 +6789,18 @@ static NODE *in_list_node (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *argname_from_uvar (NODE *n, parser *p)
+static NODE *argname_from_uvar (NODE *n, NODE *r, parser *p)
 {
     NODE *ret = aux_string_node(p);
 
     if (ret != NULL && starting(p)) {
 	const char *vname = NULL;
+
+	if (!null_or_empty(r) && r->t != STR) {
+	    /* if @r is present it must hold a string */
+	    p->err = E_TYPES;
+	    return ret;
+	}
 
 	if (n->t == SERIES) {
 	    vname = p->dset->varname[n->vnum];
@@ -6806,6 +6812,12 @@ static NODE *argname_from_uvar (NODE *n, parser *p)
 	    p->err = E_DATA;
 	} else {
 	    ret->v.str = gretl_func_get_arg_name(vname, &p->err);
+	}
+
+	if (ret->v.str == NULL || ret->v.str[0] == '\0') {
+	    if (!null_or_empty(r)) {
+		ret->v.str = gretl_strdup(r->v.str);
+	    }
 	}
     }
 
@@ -15856,7 +15868,7 @@ static NODE *eval (NODE *t, parser *p)
 	if (l->t == STR) {
 	    ret = single_string_func(l, r, t->t, p);
 	} else if (t->t == F_ARGNAME && (uscalar_node(l) || useries_node(l))) {
-	    ret = argname_from_uvar(l, p);
+	    ret = argname_from_uvar(l, r, p);
 	} else {
 	    node_type_error(t->t, 0, STR, l, p);
 	}

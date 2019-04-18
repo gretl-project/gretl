@@ -22,6 +22,7 @@ version 2019b, in progress
 - randgen() function: support the logistic distribution
 - firstobs() and lastobs() functions: add optional boolean
   argument to restrict the check to the current sample
+- argname() function: add optional fallback argument
 - Speed up rank() function for far-from-square matrices
 - Stata dta importer: fix for opening of very large files
 - Stata dta exporter: fix breakage on MS Windows
