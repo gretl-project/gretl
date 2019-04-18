@@ -230,6 +230,9 @@ static void free_mspec (matrix_subspec *spec, parser *p)
 
 static void clear_mspec (matrix_subspec *spec, parser *p)
 {
+    spec->lsel.range[0] = spec->lsel.range[1] = 0;
+    spec->rsel.range[0] = spec->rsel.range[1] = 0;
+
     /* the slice elements may not be reusable as is */
     if (spec->rslice != NULL) {
 	free(spec->rslice);

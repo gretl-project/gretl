@@ -374,6 +374,12 @@ static int set_element_index (matrix_subspec *spec,
 	(spec->ltype == SEL_RANGE && spec->rtype == SEL_RANGE)) {
 	k = (j-1) * m->rows + (i-1);
     } else {
+	if (spec->ltype == SEL_CONTIG) {
+	    fprintf(stderr, "CONTIG on left\n");
+	}
+	if (spec->rtype == SEL_CONTIG) {
+	    fprintf(stderr, "CONTIG on right\n");
+	}
 	k = i > j ? (i-1) : (j-1);
     }
 
@@ -429,18 +435,31 @@ static int spec_check_dimensions (matrix_subspec *spec,
 static void subspec_debug_print (const matrix_subspec *spec,
 				 const gretl_matrix *m)
 {
-    fprintf(stderr, "check_matrix_subspec: types = (%d,%d), ",
-	    spec->ltype, spec->rtype);
+    const char *snames[] = {
+        "SEL_NULL",
+        "SEL_RANGE",
+        "SEL_ELEMENT",
+        "SEL_MATRIX",
+        "SEL_DIAG",
+        "SEL_ALL",
+        "SEL_CONTIG",
+        "SEL_EXCL",
+        "SEL_SINGLE",
+        "SEL_STR"
+    };
+
+    fprintf(stderr, "check_matrix_subspec: types = (%s,%s), ",
+	    snames[spec->ltype], snames[spec->rtype]);
     if (spec->ltype == SEL_MATRIX) {
 	fputs("vector sel, ", stderr);
     } else if (spec->ltype != SEL_NULL) {
-	fprintf(stderr, "S0 = (%d,%d), ", spec->lsel.range[0],
+	fprintf(stderr, "lsel->range = (%d,%d), ", spec->lsel.range[0],
 		spec->lsel.range[1]);
     }
     if (spec->rtype == SEL_MATRIX) {
 	fputs("vector sel, ", stderr);
     } else if (spec->rtype != SEL_NULL) {
-	fprintf(stderr, "S1 = (%d,%d), ", spec->rsel.range[0],
+	fprintf(stderr, "rsel->range = (%d,%d), ", spec->rsel.range[0],
 		spec->rsel.range[1]);
     }
     fprintf(stderr, "m is %d x %d\n", m->rows, m->cols);
