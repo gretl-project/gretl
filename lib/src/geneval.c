@@ -6807,7 +6807,7 @@ static NODE *argname_from_uvar (NODE *n, NODE *r, parser *p)
 
 	if (n->t == SERIES) {
 	    vname = p->dset->varname[n->vnum];
-	} else if (n->t == NUM) {
+	} else {
 	    vname = n->vname;
 	}
 
@@ -15870,7 +15870,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_FIXNAME:
 	if (l->t == STR) {
 	    ret = single_string_func(l, r, t->t, p);
-	} else if (t->t == F_ARGNAME && (uscalar_node(l) || useries_node(l))) {
+	} else if (t->t == F_ARGNAME && uvar_node(l)) {
 	    ret = argname_from_uvar(l, r, p);
 	} else {
 	    node_type_error(t->t, 0, STR, l, p);
