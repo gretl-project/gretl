@@ -5028,3 +5028,203 @@ void *series_info_bundle (const DATASET *dset, int i,
 
     return b;
 }
+
+/* Given a series label @s, see if it is recognized as
+   identifying the series as the square of another, and if
+   so write the name of the other into @targ.
+*/
+
+static int square_parent_name (const char *s, char *targ)
+{
+    const char *p;
+    int n1, n2, ret = 0;
+
+    *targ = '\0';
+
+    if (*s == '=' && (p = strstr(s, "squared")) != NULL) {
+	/* "= PARENT squared" */
+	s++;
+	s += strspn(s, " ");
+	n1 = gretl_namechar_spn(s);
+	n2 = p - s - 1;
+	if (n1 > 0 && n1 < VNAMELEN && n2 == n1) {
+	    strcat(targ, s);
+	    ret = 1;
+	}
+    } else if (strchr(s, '^') != NULL) {
+	/* PARENT^2 */
+	n1 = gretl_namechar_spn(s);
+	if (n1 > 0 && n1 < VNAMELEN) {
+	    p = s + n1;
+	    if (!strcmp(p, "^2")) {
+		strncat(targ, s, n1);
+		ret = 1;
+	    }
+	}
+    }
+
+    return ret;
+}
+
+/* Given a series label @s, see if it is recognized as
+   identifying the series as the interation of two others,
+   and if so write the names of the others into @targ1
+   and @targ2.
+*/
+
+static int interaction_names (const char *s,
+			      char *targ1,
+			      char *targ2)
+{
+    const char *p;
+    int n1, n2, ret = 0;
+
+    *targ1 = *targ2 = '\0';
+
+    p = strchr(s, '*');
+    if (p == NULL) {
+	return 0;
+    }
+
+    s += strspn(s, " ");
+    n1 = gretl_namechar_spn(s);
+    p += strspn(p, " ");
+    n2 = gretl_namechar_spn(s);
+
+    if (n1 > 0 && n1 < VNAMELEN &&
+	n2 > 0 && n2 < VNAMELEN) {
+	strncat(targ1, s, n1);
+	strncat(targ2, p, n2);
+	ret = 1;
+    }
+
+    return ret;
+}
+
+/* Given either (a) two series identified by ID numbers
+   @i and @j where the second is supposed to be the
+   square of the first, or (b) three series where the
+   third is supposed to be the product of the first two,
+   check that the putative relationship actually holds
+   over the current sample range. Return 1 if so, else 0.
+*/
+
+static int validate_relationship (int i, int j, int k,
+				  const DATASET *dset)
+{
+    double xi, xj;
+    int t;
+
+    for (t=dset->t1; t<=dset->t2; t++) {
+	xi = dset->Z[i][t];
+	xj = dset->Z[j][t];
+	if (k > 0) {
+	    /* interaction test: xk = xi*xj */
+	    if (!na(xi) && !na(xj) && dset->Z[k][t] != xi*xj) {
+		return 0;
+	    }
+	} else {
+	    /* square test: xj = xi*xi */
+	    if (!na(xi) && xj != xi*xi) {
+		return 0;
+	    }
+	}
+    }
+
+    return 1;
+}
+
+/* Construct a matrix providing information about the relations
+   between the series in @list. This will have rows equal to the
+   number of series and at least 4 columns.
+
+   col 0: holds 1 if the series is a 0/1 dummy, else 0.
+
+   col 1: holds 1 if the series is "primary" (not the square
+   of another series in the list, or the interation of two
+   series in the list), 0 otherwise.
+
+   col 2: if the square of the series is also present in the
+   list, holds the list position of the square, else 0.
+
+   col 3: if the series features in an interaction term, holds
+   the list position of its "partner", else 0. FIXME at
+   present we don't allow for more than one partner.
+
+*/
+
+gretl_matrix *list_info_matrix (const int *list, const DATASET *dset,
+				int *err)
+{
+    gretl_matrix *ret = NULL;
+    const char *label;
+    char targ1[VNAMELEN];
+    char targ2[VNAMELEN];
+    int i, vi, j, vj;
+    int n;
+
+    if (list == NULL || list[0] == 0) {
+	*err = E_DATA;
+	return ret;
+    }
+
+    n = list[0];
+    ret = gretl_zero_matrix_new(n, 4);
+    if (ret == NULL) {
+	*err = E_ALLOC;
+	return ret;
+    }
+
+    for (i=1; i<=n; i++) {
+	int primary = 1;
+
+	vi = list[i];
+	if (gretl_isdummy(dset->t1, dset->t2, dset->Z[vi])) {
+	    /* insert dummy flag in second col */
+	    gretl_matrix_set(ret, i-1, 1, 1);
+	}
+	if ((label = series_get_label(dset, vi)) != NULL) {
+	    square_parent_name(label, targ1);
+	    if (*targ1 != '\0') {
+		for (j=1; j<=n; j++) {
+		    if (j == i) continue;
+		    vj = list[j];
+		    if (!strcmp(targ1, dset->varname[vj]) &&
+			validate_relationship(vj, vi, 0, dset)) {
+			/* mark this series as not primary */
+			primary = 0;
+			/* insert square ref in parent's row, third col */
+			gretl_matrix_set(ret, j-1, 2, i);
+			break;
+		    }
+		}
+	    } else {
+		interaction_names(label, targ1, targ2);
+		if (*targ1 != '\0' && *targ2 != '\0') {
+		    int ia1 = 0, ia2 = 0;
+
+		    for (j=1; j<=n; j++) {
+			if (j == i) continue;
+			vj = list[j];
+			if (!strcmp(targ1, dset->varname[vj])) {
+			    ia1 = j;
+			} else if (!strcmp(targ1, dset->varname[vj])) {
+			    ia2 = j;
+			}
+		    }
+		    if (ia1 > 0 && ia2 > 0 &&
+			validate_relationship(list[ia1], list[ia2], vi, dset)) {
+			/* mark this series as not primary */
+			primary = 0;
+			/* insert x-refs in parents' rows */
+			gretl_matrix_set(ret, ia1-1, 3, ia2);
+			gretl_matrix_set(ret, ia2-1, 3, ia1);
+		    }
+		}
+	    }
+	}
+	gretl_matrix_set(ret, i-1, 0, primary);
+    }
+
+    return ret;
+}
