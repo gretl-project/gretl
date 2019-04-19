@@ -539,6 +539,7 @@ struct str_table hidden_funcs[] = {
     { HF_CHPROD,   "_chprod" },
     { HF_CPRINTF,  "_cprintf" },
     { HF_JBTERMS,  "_jbterms" },
+    { HF_LISTINFO, "_listinfo" },
     { 0,           NULL }
 };
 

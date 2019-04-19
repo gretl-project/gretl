@@ -6792,6 +6792,23 @@ static NODE *in_list_node (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static NODE *list_info_node (NODE *n, parser *p)
+{
+    NODE *ret = aux_matrix_node(p);
+
+    if (p->err == 0 && (p->dset == NULL || p->dset->v == 0)) {
+	p->err = E_NODATA;
+    }
+
+    if (!p->err) {
+	const int *list = n->v.ivec;
+
+	ret->v.m = list_info_matrix(list, p->dset, &p->err);
+    }
+
+    return ret;
+}
+
 static NODE *argname_from_uvar (NODE *n, NODE *r, parser *p)
 {
     NODE *ret = aux_string_node(p);
@@ -15782,7 +15799,10 @@ static NODE *eval (NODE *t, parser *p)
 	ret = n_elements_node(l, p);
 	break;
     case F_INLIST:
-	if (ok_list_node(l, p)) {
+    case HF_LISTINFO:
+	if (l->t == LIST && t->t == HF_LISTINFO) {
+	    ret = list_info_node(l, p);
+	} else if (ok_list_node(l, p)) {
 	    ret = in_list_node(l, r, p);
 	} else {
 	    node_type_error(t->t, 1, LIST, l, p);

@@ -5034,7 +5034,7 @@ void *series_info_bundle (const DATASET *dset, int i,
    so write the name of the other into @targ.
 */
 
-static int square_parent_name (const char *s, char *targ)
+static int get_square_parent_name (const char *s, char *targ)
 {
     const char *p;
     int n1, n2, ret = 0;
@@ -5072,9 +5072,9 @@ static int square_parent_name (const char *s, char *targ)
    and @targ2.
 */
 
-static int interaction_names (const char *s,
-			      char *targ1,
-			      char *targ2)
+static int get_interaction_names (const char *s,
+				  char *targ1,
+				  char *targ2)
 {
     const char *p;
     int n1, n2, ret = 0;
@@ -5088,6 +5088,7 @@ static int interaction_names (const char *s,
 
     s += strspn(s, " ");
     n1 = gretl_namechar_spn(s);
+    p++;
     p += strspn(p, " ");
     n2 = gretl_namechar_spn(s);
 
@@ -5153,8 +5154,8 @@ static int validate_relationship (int i, int j, int k,
 
 */
 
-gretl_matrix *list_info_matrix (const int *list, const DATASET *dset,
-				int *err)
+void *list_info_matrix (const int *list, const DATASET *dset,
+			int *err)
 {
     gretl_matrix *ret = NULL;
     const char *label;
@@ -5176,54 +5177,56 @@ gretl_matrix *list_info_matrix (const int *list, const DATASET *dset,
     }
 
     for (i=1; i<=n; i++) {
-	int primary = 1;
-
+	/* default to series is primary */
+	gretl_matrix_set(ret, i-1, 0, 1);
 	vi = list[i];
 	if (gretl_isdummy(dset->t1, dset->t2, dset->Z[vi])) {
 	    /* insert dummy flag in second col */
 	    gretl_matrix_set(ret, i-1, 1, 1);
 	}
-	if ((label = series_get_label(dset, vi)) != NULL) {
-	    square_parent_name(label, targ1);
-	    if (*targ1 != '\0') {
-		for (j=1; j<=n; j++) {
-		    if (j == i) continue;
-		    vj = list[j];
-		    if (!strcmp(targ1, dset->varname[vj]) &&
-			validate_relationship(vj, vi, 0, dset)) {
-			/* mark this series as not primary */
-			primary = 0;
-			/* insert square ref in parent's row, third col */
-			gretl_matrix_set(ret, j-1, 2, i);
-			break;
-		    }
-		}
-	    } else {
-		interaction_names(label, targ1, targ2);
-		if (*targ1 != '\0' && *targ2 != '\0') {
-		    int ia1 = 0, ia2 = 0;
-
-		    for (j=1; j<=n; j++) {
-			if (j == i) continue;
-			vj = list[j];
-			if (!strcmp(targ1, dset->varname[vj])) {
-			    ia1 = j;
-			} else if (!strcmp(targ1, dset->varname[vj])) {
-			    ia2 = j;
-			}
-		    }
-		    if (ia1 > 0 && ia2 > 0 &&
-			validate_relationship(list[ia1], list[ia2], vi, dset)) {
-			/* mark this series as not primary */
-			primary = 0;
-			/* insert x-refs in parents' rows */
-			gretl_matrix_set(ret, ia1-1, 3, ia2);
-			gretl_matrix_set(ret, ia2-1, 3, ia1);
-		    }
+	label = series_get_label(dset, vi);
+	if (label == NULL) {
+	    continue;
+	}
+	if (get_square_parent_name(label, targ1)) {
+	    /* looks like this could be a squared term */
+	    for (j=1; j<=n; j++) {
+		if (j == i) continue;
+		vj = list[j];
+		if (!strcmp(targ1, dset->varname[vj]) &&
+		    validate_relationship(vj, vi, 0, dset)) {
+		    /* mark this series as not primary */
+		    gretl_matrix_set(ret, i-1, 0, 0);
+		    /* insert square ref in parent's row, third col */
+		    gretl_matrix_set(ret, j-1, 2, i);
+		    break;
 		}
 	    }
+	    continue;
 	}
-	gretl_matrix_set(ret, i-1, 0, primary);
+	if (get_interaction_names(label, targ1, targ2)) {
+	    /* looks like this could be an interaction term */
+	    int ia1 = 0, ia2 = 0;
+
+	    for (j=1; j<=n; j++) {
+		if (j == i) continue;
+		vj = list[j];
+		if (!strcmp(targ1, dset->varname[vj])) {
+		    ia1 = j;
+		} else if (!strcmp(targ2, dset->varname[vj])) {
+		    ia2 = j;
+		}
+	    }
+	    if (ia1 > 0 && ia2 > 0 &&
+		validate_relationship(list[ia1], list[ia2], vi, dset)) {
+		/* mark this series as not primary */
+		gretl_matrix_set(ret, i-1, 0, 0);
+		/* insert x-refs in parents' rows */
+		gretl_matrix_set(ret, ia1-1, 3, ia2);
+		gretl_matrix_set(ret, ia2-1, 3, ia1);
+	    }
+	    /* FIXME allow for multiple interactions? */
+	}
     }
 
     return ret;
