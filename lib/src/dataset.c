@@ -5029,7 +5029,7 @@ void *series_info_bundle (const DATASET *dset, int i,
     return b;
 }
 
-/* Given a series label @s, see if it is recognized as
+/* Given a series label @s, see if it can be recognized as
    identifying the series as the square of another, and if
    so write the name of the other into @targ.
 */
@@ -5052,7 +5052,7 @@ static int get_square_parent_name (const char *s, char *targ)
 	    ret = 1;
 	}
     } else if (strchr(s, '^') != NULL) {
-	/* PARENT^2 */
+	/* "PARENT^2" */
 	n1 = gretl_namechar_spn(s);
 	if (n1 > 0 && n1 < VNAMELEN) {
 	    p = s + n1;
@@ -5066,8 +5066,8 @@ static int get_square_parent_name (const char *s, char *targ)
     return ret;
 }
 
-/* Given a series label @s, see if it is recognized as
-   identifying the series as the interation of two others,
+/* Given a series label @s, see if it cane be recognized
+   as identifying the series as the product of two others,
    and if so write the names of the others into @targ1
    and @targ2.
 */
@@ -5082,7 +5082,8 @@ static int get_interaction_names (const char *s,
     *targ1 = *targ2 = '\0';
 
     p = strchr(s, '*');
-    if (p == NULL) {
+    if (p == NULL || strchr(p+1, '*') != NULL) {
+	/* the label string does not contain a single '*' */
 	return 0;
     }
 
@@ -5135,23 +5136,55 @@ static int validate_relationship (int i, int j, int k,
     return 1;
 }
 
+/* In case we find more interaction terms that can be fit into
+   the current column-size of the "list info" matrix, add two more
+   (since the encoding of each interaction for a given "primary"
+   series requires two columns).
+*/
+
+static int resize_listinfo_matrix (gretl_matrix *m,
+				   int *cols,
+				   int *iacol)
+{
+    int newc = *cols + 2;
+    int i, err = 0;
+
+    err = gretl_matrix_realloc(m, m->rows, newc);
+    if (!err) {
+	for (i=0; i<m->rows; i++) {
+	    gretl_matrix_set(m, i, newc-2, 0);
+	    gretl_matrix_set(m, i, newc-1, 0);
+	}
+	*cols += 2;
+	*iacol += 2;
+    }
+
+    return err;
+}
+
 /* Construct a matrix providing information about the relations
    between the series in @list. This will have rows equal to the
-   number of series and at least 4 columns.
+   number of series and at least 5 columns (shown as 1-based here).
+   All elements of the matrix are zero unless otherwise specified.
 
-   col 0: holds 1 if the series is a 0/1 dummy, else 0.
+   col 1: Holds 1 if the series is "primary" (neither the square
+   of another series in the list, nor the interaction of two
+   series in the list).
 
-   col 1: holds 1 if the series is "primary" (not the square
-   of another series in the list, or the interation of two
-   series in the list), 0 otherwise.
+   col 2: Holds 1 if the series is a 0/1 dummy.
 
-   col 2: if the square of the series is also present in the
-   list, holds the list position of the square, else 0.
+   col 3: If the series is primary and its square is also
+   present in the list, holds the list position of the square,
+   or if the series itself is a squared term, holds the list
+   position of the series of which it's the square.
 
-   col 3: if the series features in an interaction term, holds
-   the list position of its "partner", else 0. FIXME at
-   present we don't allow for more than one partner.
-
+   cols 4, 5: If the series features in an interaction term,
+   col 4 holds the list position of its "partner" and col 5 the
+   list position of the interaction term. If the series features
+   in more than one interaction term, subsequent interaction info
+   goes into cols 6 and 7 or higher (these being added as required).
+   If the series itself is an interaction term, cols 4 and 5 get
+   the list positions of the two source series.
 */
 
 void *list_info_matrix (const int *list, const DATASET *dset,
@@ -5162,7 +5195,9 @@ void *list_info_matrix (const int *list, const DATASET *dset,
     char targ1[VNAMELEN];
     char targ2[VNAMELEN];
     int i, vi, j, vj;
-    int n;
+    int pcol = 0, dcol = 1;
+    int sqcol = 2, iacol = 3;
+    int n, cols = 5;
 
     if (list == NULL || list[0] == 0) {
 	*err = E_DATA;
@@ -5170,19 +5205,19 @@ void *list_info_matrix (const int *list, const DATASET *dset,
     }
 
     n = list[0];
-    ret = gretl_zero_matrix_new(n, 4);
+    ret = gretl_zero_matrix_new(n, cols);
     if (ret == NULL) {
 	*err = E_ALLOC;
 	return ret;
     }
 
-    for (i=1; i<=n; i++) {
+    for (i=1; i<=n && !*err; i++) {
 	/* default to series is primary */
-	gretl_matrix_set(ret, i-1, 0, 1);
+	gretl_matrix_set(ret, i-1, pcol, 1);
 	vi = list[i];
 	if (gretl_isdummy(dset->t1, dset->t2, dset->Z[vi])) {
-	    /* insert dummy flag in second col */
-	    gretl_matrix_set(ret, i-1, 1, 1);
+	    /* insert dummy flag in this row */
+	    gretl_matrix_set(ret, i-1, dcol, 1);
 	}
 	label = series_get_label(dset, vi);
 	if (label == NULL) {
@@ -5195,10 +5230,11 @@ void *list_info_matrix (const int *list, const DATASET *dset,
 		vj = list[j];
 		if (!strcmp(targ1, dset->varname[vj]) &&
 		    validate_relationship(vj, vi, 0, dset)) {
-		    /* mark this series as not primary */
-		    gretl_matrix_set(ret, i-1, 0, 0);
-		    /* insert square ref in parent's row, third col */
-		    gretl_matrix_set(ret, j-1, 2, i);
+		    /* mark this series as non-primary, and as square */
+		    gretl_matrix_set(ret, i-1, pcol, 0);
+		    gretl_matrix_set(ret, i-1, sqcol, j);
+		    /* insert square ref in parent's row */
+		    gretl_matrix_set(ret, j-1, sqcol, i);
 		    break;
 		}
 	    }
@@ -5219,13 +5255,37 @@ void *list_info_matrix (const int *list, const DATASET *dset,
 	    }
 	    if (ia1 > 0 && ia2 > 0 &&
 		validate_relationship(list[ia1], list[ia2], vi, dset)) {
-		/* mark this series as not primary */
-		gretl_matrix_set(ret, i-1, 0, 0);
-		/* insert x-refs in parents' rows */
-		gretl_matrix_set(ret, ia1-1, 3, ia2);
-		gretl_matrix_set(ret, ia2-1, 3, ia1);
+		/* mark this series as non-primary, interaction */
+		gretl_matrix_set(ret, i-1, pcol, 0);
+		gretl_matrix_set(ret, i-1, 3, ia1);
+		gretl_matrix_set(ret, i-1, 4, ia2);
+		/* do we need to expand the number of columns? */
+		if (gretl_matrix_get(ret, ia1-1, iacol) != 0 ||
+		    gretl_matrix_get(ret, ia2-1, iacol) != 0) {
+		    *err = resize_listinfo_matrix(ret, &cols, &iacol);
+		}
+		if (!*err) {
+		    /* insert cross references in parents' rows */
+		    gretl_matrix_set(ret, ia1-1, iacol, ia2);
+		    gretl_matrix_set(ret, ia1-1, iacol+1, i);
+		    gretl_matrix_set(ret, ia2-1, iacol, ia1);
+		    gretl_matrix_set(ret, ia2-1, iacol+1, i);
+		}
 	    }
-	    /* FIXME allow for multiple interactions? */
+	}
+    }
+
+    if (*err) {
+	gretl_matrix_free(ret);
+	ret = NULL;
+    } else {
+	/* convenience: attach series names to rows */
+	char **S;
+	int serr = 0;
+
+	S = gretl_list_get_names_array(list, dset, &serr);
+	if (S != NULL) {
+	    gretl_matrix_set_rownames(ret, S);
 	}
     }
 
