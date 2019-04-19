@@ -5066,7 +5066,7 @@ static int get_square_parent_name (const char *s, char *targ)
     return ret;
 }
 
-/* Given a series label @s, see if it cane be recognized
+/* Given a series label @s, see if it can be recognized
    as identifying the series as the product of two others,
    and if so write the names of the others into @targ1
    and @targ2.
@@ -5104,8 +5104,8 @@ static int get_interaction_names (const char *s,
 }
 
 /* Given either (a) two series identified by ID numbers
-   @i and @j where the second is supposed to be the
-   square of the first, or (b) three series where the
+   i, j where the second is supposed to be the square
+   of the first, or (b) three series i, j, k where the
    third is supposed to be the product of the first two,
    check that the putative relationship actually holds
    over the current sample range. Return 1 if so, else 0.
@@ -5136,7 +5136,7 @@ static int validate_relationship (int i, int j, int k,
     return 1;
 }
 
-/* In case we find more interaction terms that can be fit into
+/* In case we find more interaction terms that can be fitted into
    the current column-size of the "list info" matrix, add two more
    (since the encoding of each interaction for a given "primary"
    series requires two columns).
