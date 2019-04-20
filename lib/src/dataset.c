@@ -5029,6 +5029,10 @@ void *series_info_bundle (const DATASET *dset, int i,
     return b;
 }
 
+#define USE_LABELS 1
+
+#if USE_LABELS
+
 /* Given a series label @s, see if it can be recognized
    as identifying the series as the product of two others,
    and if so write the names of the others into @targ1
@@ -5117,6 +5121,8 @@ static int get_square_parent_name (const char *s, char *targ,
     return ret;
 }
 
+#endif /* USE_LABELS */
+
 /* Given either (a) two series identified by ID numbers
    i, j where the second is supposed to be the square
    of the first, or (b) three series i, j, k where the
@@ -5200,6 +5206,8 @@ static int resize_listinfo_matrix (gretl_matrix *m,
    If the series itself is an interaction term, cols 4 and 5 get
    the list positions of the two source series.
 */
+
+#if USE_LABELS
 
 void *list_info_matrix (const int *list, const DATASET *dset,
 			int *err)
@@ -5305,3 +5313,92 @@ void *list_info_matrix (const int *list, const DATASET *dset,
 
     return ret;
 }
+
+#else /* !USE_LABELS : brute force matching */
+
+void *list_info_matrix (const int *list, const DATASET *dset,
+			int *err)
+{
+    gretl_matrix *ret = NULL;
+    int i, vi, j, vj, k, vk;
+    int pcol = 0, dcol = 1;
+    int sqcol = 2, iacol = 3;
+    int n, cols = 5;
+
+    if (list == NULL || list[0] == 0) {
+	*err = E_DATA;
+	return ret;
+    }
+
+    n = list[0];
+    ret = gretl_zero_matrix_new(n, cols);
+    if (ret == NULL) {
+	*err = E_ALLOC;
+	return ret;
+    }
+
+    for (i=1; i<=n && !*err; i++) {
+	int matched = 0;
+
+	/* default to series is primary */
+	gretl_matrix_set(ret, i-1, pcol, 1);
+	vi = list[i];
+	if (gretl_isdummy(dset->t1, dset->t2, dset->Z[vi])) {
+	    /* insert dummy flag in this row */
+	    gretl_matrix_set(ret, i-1, dcol, 1);
+	}
+	for (j=1; j<=n && !matched; j++) {
+	    if (j == i) continue;
+	    vj = list[j];
+	    if (validate_relationship(vj, vi, 0, dset)) {
+		/* mark this series as non-primary, square */
+		gretl_matrix_set(ret, i-1, pcol, 0);
+		gretl_matrix_set(ret, i-1, sqcol, j);
+		/* insert square ref in parent's row */
+		gretl_matrix_set(ret, j-1, sqcol, i);
+		matched = 1;
+	    }
+	    for (k=1; k<=n && !matched; k++) {
+		if (k == i || k == j) continue;
+		vk = list[k];
+		if (validate_relationship(vj, vk, vi, dset)) {
+		    /* mark this series as non-primary, interaction */
+		    gretl_matrix_set(ret, i-1, pcol, 0);
+		    gretl_matrix_set(ret, i-1, 3, j);
+		    gretl_matrix_set(ret, i-1, 4, k);
+		    /* do we need to expand the number of columns? */
+		    if (gretl_matrix_get(ret, j-1, iacol) != 0 ||
+			gretl_matrix_get(ret, k-1, iacol) != 0) {
+			*err = resize_listinfo_matrix(ret, &cols, &iacol);
+		    }
+		    if (!*err) {
+			/* insert cross references in parents' rows */
+			gretl_matrix_set(ret, j-1, iacol, k);
+			gretl_matrix_set(ret, j-1, iacol+1, i);
+			gretl_matrix_set(ret, k-1, iacol, j);
+			gretl_matrix_set(ret, k-1, iacol+1, i);
+		    }
+		    matched = 1;
+		}
+	    }
+	}
+    }
+
+    if (*err) {
+	gretl_matrix_free(ret);
+	ret = NULL;
+    } else {
+	/* convenience: attach series names to rows */
+	char **S;
+	int serr = 0;
+
+	S = gretl_list_get_names_array(list, dset, &serr);
+	if (S != NULL) {
+	    gretl_matrix_set_rownames(ret, S);
+	}
+    }
+
+    return ret;
+}
+
+#endif /* USE_LABELS or not */
