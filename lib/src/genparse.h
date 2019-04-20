@@ -288,8 +288,8 @@ enum {
     HF_CTRAN,
     HF_CEXP,
     HF_JBTERMS,
-    HF_LISTINFO,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
+    HF_LISTINFO,
     F_ARGNAME,
     F_T1,
     F_T2,

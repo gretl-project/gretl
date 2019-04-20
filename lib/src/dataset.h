@@ -596,6 +596,7 @@ void *series_info_bundle (const DATASET *dset, int i,
 
 void *list_info_matrix (const int *list,
 			const DATASET *dset,
+			gretlopt opt,
 			int *err);
 
 #endif /* DATASET_H */

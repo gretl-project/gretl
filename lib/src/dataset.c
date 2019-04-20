@@ -5179,6 +5179,60 @@ static int resize_listinfo_matrix (gretl_matrix *m, int *iacol)
     return err;
 }
 
+/* The (optionally) "condensed" version of the listinfo_matrix
+   includes only primary terms (and excludes the constant).
+   The first column of the full matrix is replaced by the
+   position in @list of each primary term.
+*/
+
+static int condense_listinfo_matrix (gretl_matrix *m,
+				     const int *list,
+				     const DATASET *dset)
+{
+    gretl_matrix *mc = NULL;
+    char **S = NULL;
+    double x;
+    int i, j, ic, n = 0;
+
+    for (i=0; i<m->rows; i++) {
+	if (m->val[i] == 1) {
+	    n++;
+	}
+    }
+
+    if (n == m->rows) {
+	/* nothing to be done */
+	return 0;
+    }
+
+    mc = gretl_matrix_alloc(n, m->cols);
+    if (mc == NULL) {
+	return E_ALLOC;
+    }
+
+    S = strings_array_new(n);
+
+    ic = 0;
+    for (i=0; i<m->rows; i++) {
+	if (m->val[i] == 1) {
+	    gretl_matrix_set(mc, ic, 0, i+1);
+	    for (j=1; j<m->cols; j++) {
+		x = gretl_matrix_get(m, i, j);
+		gretl_matrix_set(mc, ic, j, x);
+	    }
+	    S[ic] = gretl_strdup(dset->varname[list[i+1]]);
+	    ic++;
+	}
+    }
+
+    gretl_matrix_reuse(m, n, m->cols);
+    gretl_matrix_copy_values(m, mc);
+    gretl_matrix_free(mc);
+    gretl_matrix_set_rownames(m, S);
+
+    return 0;
+}
+
 /* Construct a matrix providing information about the relations
    between the series in @list. This will have rows equal to the
    number of series and at least 5 columns (shown as 1-based here).
@@ -5207,7 +5261,7 @@ static int resize_listinfo_matrix (gretl_matrix *m, int *iacol)
 #if USE_LABELS
 
 void *list_info_matrix (const int *list, const DATASET *dset,
-			int *err)
+			gretlopt opt, int *err)
 {
     gretl_matrix *ret = NULL;
     const char *label;
@@ -5302,6 +5356,8 @@ void *list_info_matrix (const int *list, const DATASET *dset,
     if (*err) {
 	gretl_matrix_free(ret);
 	ret = NULL;
+    } else if (opt & OPT_C) {
+	condense_listinfo_matrix(ret, list, dset);
     } else {
 	/* convenience: attach series names to rows */
 	char **S;
@@ -5319,7 +5375,7 @@ void *list_info_matrix (const int *list, const DATASET *dset,
 #else /* !USE_LABELS : brute force data-matching */
 
 void *list_info_matrix (const int *list, const DATASET *dset,
-			int *err)
+			gretlopt opt, int *err)
 {
     gretl_matrix *ret = NULL;
     int i, vi, j, vj, k, vk;
@@ -5394,6 +5450,8 @@ void *list_info_matrix (const int *list, const DATASET *dset,
     if (*err) {
 	gretl_matrix_free(ret);
 	ret = NULL;
+    } else if (opt & OPT_C) {
+	condense_listinfo_matrix(ret, list, dset);
     } else {
 	/* convenience: attach series names to rows */
 	char **S;

@@ -6792,7 +6792,7 @@ static NODE *in_list_node (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *list_info_node (NODE *n, parser *p)
+static NODE *list_info_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_matrix_node(p);
 
@@ -6801,9 +6801,13 @@ static NODE *list_info_node (NODE *n, parser *p)
     }
 
     if (!p->err) {
-	const int *list = n->v.ivec;
+	const int *list = l->v.ivec;
+	gretlopt opt = OPT_NONE;
 
-	ret->v.m = list_info_matrix(list, p->dset, &p->err);
+	if (node_get_bool(r, p, 0)) {
+	    opt = OPT_C;
+	}
+	ret->v.m = list_info_matrix(list, p->dset, opt, &p->err);
     }
 
     return ret;
@@ -15801,7 +15805,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_INLIST:
     case HF_LISTINFO:
 	if (l->t == LIST && t->t == HF_LISTINFO) {
-	    ret = list_info_node(l, p);
+	    ret = list_info_node(l, r, p);
 	} else if (ok_list_node(l, p)) {
 	    ret = in_list_node(l, r, p);
 	} else {
