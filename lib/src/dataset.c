@@ -5029,43 +5029,6 @@ void *series_info_bundle (const DATASET *dset, int i,
     return b;
 }
 
-/* Given a series label @s, see if it can be recognized as
-   identifying the series as the square of another, and if
-   so write the name of the other into @targ.
-*/
-
-static int get_square_parent_name (const char *s, char *targ)
-{
-    const char *p;
-    int n1, n2, ret = 0;
-
-    *targ = '\0';
-
-    if (*s == '=' && (p = strstr(s, "squared")) != NULL) {
-	/* "= PARENT squared" */
-	s++;
-	s += strspn(s, " ");
-	n1 = gretl_namechar_spn(s);
-	n2 = p - s - 1;
-	if (n1 > 0 && n1 < VNAMELEN && n2 == n1) {
-	    strcat(targ, s);
-	    ret = 1;
-	}
-    } else if (strchr(s, '^') != NULL) {
-	/* "PARENT^2" */
-	n1 = gretl_namechar_spn(s);
-	if (n1 > 0 && n1 < VNAMELEN) {
-	    p = s + n1;
-	    if (!strcmp(p, "^2")) {
-		strncat(targ, s, n1);
-		ret = 1;
-	    }
-	}
-    }
-
-    return ret;
-}
-
 /* Given a series label @s, see if it can be recognized
    as identifying the series as the product of two others,
    and if so write the names of the others into @targ1
@@ -5098,6 +5061,57 @@ static int get_interaction_names (const char *s,
 	strncat(targ1, s, n1);
 	strncat(targ2, p, n2);
 	ret = 1;
+    }
+
+    return ret;
+}
+
+/* Given a series label @s, see if it can be recognized as
+   identifying the series as the square of another, and if
+   so write the name of the other into @targ.
+*/
+
+static int get_square_parent_name (const char *s, char *targ,
+				   char *targ2)
+{
+    const char *p;
+    int n1, n2, ret = 0;
+
+    *targ = '\0';
+
+    if (*s == '=' && (p = strstr(s, "squared")) != NULL) {
+	/* "= PARENT squared" */
+	s++;
+	s += strspn(s, " ");
+	n1 = gretl_namechar_spn(s);
+	n2 = p - s - 1;
+	if (n1 > 0 && n1 < VNAMELEN && n2 == n1) {
+	    strcat(targ, s);
+	    ret = 1;
+	}
+    } else if (strchr(s, '^') != NULL) {
+	/* "PARENT^2" */
+	n1 = gretl_namechar_spn(s);
+	if (n1 > 0 && n1 < VNAMELEN) {
+	    p = s + n1;
+	    if (!strcmp(p, "^2")) {
+		strncat(targ, s, n1);
+		ret = 1;
+	    }
+	}
+    } else if ((p = strstr(s, "square of ")) != NULL) {
+	p += 9;
+	p += strspn(p, " ");
+	n1 = gretl_namechar_spn(p);
+	if (n1 > 0 && n1 < VNAMELEN) {
+	    strncat(targ, p, n1);
+	    ret = 1;
+	}
+    } else if (get_interaction_names(s, targ, targ2)) {
+	/* "x * x" ? */
+	if (!strcmp(targ, targ2)) {
+	    ret = 1;
+	}
     }
 
     return ret;
@@ -5223,7 +5237,7 @@ void *list_info_matrix (const int *list, const DATASET *dset,
 	if (label == NULL) {
 	    continue;
 	}
-	if (get_square_parent_name(label, targ1)) {
+	if (get_square_parent_name(label, targ1, targ2)) {
 	    /* looks like this could be a squared term */
 	    for (j=1; j<=n; j++) {
 		if (j == i) continue;
