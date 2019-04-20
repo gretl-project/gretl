@@ -5234,6 +5234,11 @@ void *list_info_matrix (const int *list, const DATASET *dset,
 	/* default to series is primary */
 	gretl_matrix_set(ret, i-1, pcol, 1);
 	vi = list[i];
+	if (vi == 0) {
+	    /* mark as non-primary and move on */
+	    gretl_matrix_set(ret, i-1, pcol, 0);
+	    continue;
+	}
 	if (gretl_isdummy(dset->t1, dset->t2, dset->Z[vi])) {
 	    /* insert dummy flag in this row */
 	    gretl_matrix_set(ret, i-1, dcol, 1);
@@ -5340,13 +5345,18 @@ void *list_info_matrix (const int *list, const DATASET *dset,
 	/* default to series is primary */
 	gretl_matrix_set(ret, i-1, pcol, 1);
 	vi = list[i];
+	if (vi == 0) {
+	    /* mark as non-primary and move on */
+	    gretl_matrix_set(ret, i-1, pcol, 0);
+	    continue;
+	}
 	if (gretl_isdummy(dset->t1, dset->t2, dset->Z[vi])) {
 	    /* insert dummy flag in this row */
 	    gretl_matrix_set(ret, i-1, dcol, 1);
 	}
 	for (j=1; j<=n && !matched; j++) {
-	    if (j == i) continue;
 	    vj = list[j];
+	    if (j == i || vj == 0) continue;
 	    if (validate_relationship(vj, vi, 0, dset)) {
 		/* mark this series as non-primary, square */
 		gretl_matrix_set(ret, i-1, pcol, 0);
@@ -5356,8 +5366,8 @@ void *list_info_matrix (const int *list, const DATASET *dset,
 		matched = 1;
 	    }
 	    for (k=1; k<=n && !matched; k++) {
-		if (k == i || k == j) continue;
 		vk = list[k];
+		if (k == i || k == j || vk == 0) continue;
 		if (validate_relationship(vj, vk, vi, dset)) {
 		    /* mark this series as non-primary, interaction */
 		    gretl_matrix_set(ret, i-1, pcol, 0);
