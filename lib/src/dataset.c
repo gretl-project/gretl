@@ -5058,7 +5058,7 @@ static int get_interaction_names (const char *s,
     n1 = gretl_namechar_spn(s);
     p++;
     p += strspn(p, " ");
-    n2 = gretl_namechar_spn(s);
+    n2 = gretl_namechar_spn(p);
 
     if (n1 > 0 && n1 < VNAMELEN &&
 	n2 > 0 && n2 < VNAMELEN) {
