@@ -17224,7 +17224,7 @@ static gretl_matrix *retrieve_matrix_result (parser *p)
 	    p->err = E_ALLOC;
 	}
     } else {
-	fprintf(stderr, "Looking for matrix, but r->t = %d\n", r->t);
+	fprintf(stderr, "Looking for matrix, but r->t = %s\n", getsymb(r->t));
 	p->err = E_TYPES;
     }
 
