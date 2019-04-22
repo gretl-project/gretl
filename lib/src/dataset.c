@@ -5162,7 +5162,7 @@ static int validate_relationship (int i, int j, int k,
    series requires two columns).
 */
 
-static int resize_listinfo_matrix (gretl_matrix *m, int *iacol)
+static int resize_listinfo_matrix (gretl_matrix *m)
 {
     int newc = m->cols + 2;
     int i, err = 0;
@@ -5173,10 +5173,24 @@ static int resize_listinfo_matrix (gretl_matrix *m, int *iacol)
 	    gretl_matrix_set(m, i, newc-2, 0);
 	    gretl_matrix_set(m, i, newc-1, 0);
 	}
-	*iacol += 2;
     }
 
     return err;
+}
+
+static int get_iact_column (gretl_matrix *m, int i, int *err)
+{
+    int j;
+
+    for (j=3; j<m->cols; j+=2) {
+	if (gretl_matrix_get(m, i, j) == 0) {
+	    return j;
+	}
+    }
+
+    /* looks like we need more columns */
+    *err = resize_listinfo_matrix(m);
+    return *err ? -1 : m->cols - 2;
 }
 
 /* The (optionally) "condensed" version of the listinfo_matrix
@@ -5269,7 +5283,7 @@ void *list_info_matrix (const int *list, const DATASET *dset,
     char targ2[VNAMELEN];
     int i, vi, j, vj;
     int pcol = 0, dcol = 1;
-    int sqcol = 2, iacol = 3;
+    int iacol, sqcol = 2;
     int n;
 
     if (list == NULL || list[0] == 0) {
@@ -5337,11 +5351,8 @@ void *list_info_matrix (const int *list, const DATASET *dset,
 		gretl_matrix_set(ret, i-1, pcol, 0);
 		gretl_matrix_set(ret, i-1, 3, ia1);
 		gretl_matrix_set(ret, i-1, 4, ia2);
-		/* do we need to expand the number of columns? */
-		if (gretl_matrix_get(ret, ia1-1, iacol) != 0 ||
-		    gretl_matrix_get(ret, ia2-1, iacol) != 0) {
-		    *err = resize_listinfo_matrix(ret, &iacol);
-		}
+		/* we may need to expand the number of columns */
+		iacol = get_iact_column(ret, i, err);
 		if (!*err) {
 		    /* insert cross references in parents' rows */
 		    gretl_matrix_set(ret, ia1-1, iacol, ia2);
@@ -5380,7 +5391,7 @@ void *list_info_matrix (const int *list, const DATASET *dset,
     gretl_matrix *ret = NULL;
     int i, vi, j, vj, k, vk;
     int pcol = 0, dcol = 1;
-    int sqcol = 2, iacol = 3;
+    int iacol, sqcol = 2;
     int n;
 
     if (list == NULL || list[0] == 0) {
@@ -5429,11 +5440,8 @@ void *list_info_matrix (const int *list, const DATASET *dset,
 		    gretl_matrix_set(ret, i-1, pcol, 0);
 		    gretl_matrix_set(ret, i-1, 3, j);
 		    gretl_matrix_set(ret, i-1, 4, k);
-		    /* do we need to expand the number of columns? */
-		    if (gretl_matrix_get(ret, j-1, iacol) != 0 ||
-			gretl_matrix_get(ret, k-1, iacol) != 0) {
-			*err = resize_listinfo_matrix(ret, &iacol);
-		    }
+		    /* we may need to expand the number of columns */
+		    iacol = get_iact_column(ret, i, err);
 		    if (!*err) {
 			/* insert cross references in parents' rows */
 			gretl_matrix_set(ret, j-1, iacol, k);
