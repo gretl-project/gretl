@@ -750,6 +750,22 @@ static int check_index_in_parentage (LOOPSET *loop, const char *vname)
     return 0;
 }
 
+static user_var *get_local_scalar_by_name (const char *s, int *err)
+{
+    user_var *u = get_user_var_by_name(s);
+
+    if (u == NULL) {
+	/* no pre-existing var, OK */
+	return NULL;
+    } else if (u->type != GRETL_TYPE_DOUBLE) {
+	gretl_errmsg_set("loop index must be a scalar");
+	*err = E_TYPES;
+	return NULL;
+    } else {
+	return u;
+    }
+}
+
 /* The following is called only once, at the point of initial
    "compilation" of a loop.
 */
@@ -767,17 +783,13 @@ static int loop_attach_index_var (LOOPSET *loop,
 	}
     }
 
-    loop->idxvar = get_user_var_by_name(vname);
+    loop->idxvar = get_local_scalar_by_name(vname, &err);
 
     if (loop->idxvar != NULL) {
-	if (loop->idxvar->type == GRETL_TYPE_DOUBLE) {
-	    strcpy(loop->idxname, vname);
-	    uvar_set_scalar_value(loop->idxvar, loop->init.val);
-	} else {
-	    gretl_errmsg_set("loop index must be a scalar");
-	    err = E_TYPES;
-	}
-    } else {
+	strcpy(loop->idxname, vname);
+	uvar_set_scalar_fast(loop->idxvar, loop->init.val);
+    } else if (!err) {
+	/* create index var from scratch */
 	char genline[64];
 
 	if (na(loop->init.val)) {
@@ -1582,7 +1594,7 @@ static int loop_condition (LOOPSET *loop, DATASET *dset, int *err)
 	    ok = 1;
 	    if (indexed_loop(loop) && loop->iter > 0) {
 		loop->idxval += 1;
-		uvar_set_scalar_value(loop->idxvar, loop->idxval);
+		uvar_set_scalar_fast(loop->idxvar, loop->idxval);
 	    }
 	}
     } else if (!loop_count_too_high(loop)) {
@@ -2956,7 +2968,7 @@ static int top_of_loop (LOOPSET *loop, DATASET *dset)
     if (!err) {
 	if (indexed_loop(loop)) {
 	    loop->idxval = loop->init.val;
-	    uvar_set_scalar_value(loop->idxvar, loop->idxval);
+	    uvar_set_scalar_fast(loop->idxvar, loop->idxval);
 	}
 	/* initialization, in case this loop is being run more than
 	   once (i.e. it's embedded in an outer loop)

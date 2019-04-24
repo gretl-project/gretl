@@ -28,7 +28,7 @@ struct user_var_ {
     void *ptr;
 };
 
-#define uvar_set_scalar_value(u,x) (*(double *) u->ptr = x)
+#define uvar_set_scalar_fast(u,x) (*(double *) u->ptr = x)
 
 #define uvar_get_scalar_value(u) (*(double *) u->ptr)
 

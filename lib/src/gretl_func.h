@@ -145,7 +145,7 @@ int gretl_function_recursing (void);
 void current_function_info (char const **funcname,
 			    char const **pkgname);
 
-fnpkg *get_active_function_package (void);
+fnpkg *get_active_function_package (gretlopt opt);
 
 fnpkg *gretl_function_get_package (const ufunc *fun);
 

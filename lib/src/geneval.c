@@ -1143,7 +1143,7 @@ static int node_replace_scalar (NODE *n, double x)
     int err = 0;
 
     if (n->uv != NULL && n->uv->type == GRETL_TYPE_DOUBLE) {
-	uvar_set_scalar_value(n->uv, x);
+	uvar_set_scalar_fast(n->uv, x);
     } else {
 	if (n->uv == NULL) {
 	    fprintf(stderr, "*** node_replace scalar: node uv is NULL!\n");
@@ -1161,7 +1161,7 @@ static int gen_replace_scalar (parser *p, double x)
     int err = 0;
 
     if (p->lh.uv != NULL && p->lh.uv->type == GRETL_TYPE_DOUBLE) {
-	uvar_set_scalar_value(p->lh.uv, x);
+	uvar_set_scalar_fast(p->lh.uv, x);
     } else {
 	if (p->lh.uv == NULL) {
 	    fprintf(stderr, "*** gen_replace scalar: LHS uv is NULL!\n");
@@ -17737,7 +17737,7 @@ static int do_incr_decr (parser *p)
 
 	if (!na(x)) {
 	    x += (p->op == INC)? 1 : -1;
-	    uvar_set_scalar_value(p->lh.uv, x);
+	    uvar_set_scalar_fast(p->lh.uv, x);
 	}
     } else if (p->lh.uv != NULL && p->lh.uv->type == GRETL_TYPE_STRING) {
 	if (p->op == DEC) {

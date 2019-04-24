@@ -724,7 +724,7 @@ static int function_lookup_with_alias (const char *s,
 	/* we have a record of one or more package-private
 	   functions whose names collide with built-ins
 	*/
-	gpointer pp = get_active_function_package();
+	gpointer pp = get_active_function_package(OPT_O);
 
 	if (pp != NULL) {
 	    ufunc *uf = get_function_override(s, pp);

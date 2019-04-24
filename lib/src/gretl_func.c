@@ -1207,15 +1207,22 @@ void current_function_info (char const **funcname,
     }
 }
 
-fnpkg *get_active_function_package (void)
+fnpkg *get_active_function_package (gretlopt opt)
 {
     ufunc *u = currently_called_function();
 
-    if (u != NULL && u->pkg != NULL && u->pkg->overrides) {
-	return u->pkg;
-    } else {
-	return NULL;
+    if (u != NULL && u->pkg != NULL) {
+	if (opt == OPT_NONE) {
+	    return u->pkg;
+	} else if ((opt & OPT_O) && u->pkg->overrides) {
+	    /* in this case we're only interested if the
+	       package overrides any built-in functions
+	    */
+	    return u->pkg;
+	}
     }
+
+    return NULL;
 }
 
 fnpkg *gretl_function_get_package (const ufunc *fun)
