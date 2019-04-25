@@ -11,14 +11,14 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2019-01-22 09:24-0500\n"
-"PO-Revision-Date: 2019-04-15 13:33-0300\n"
+"PO-Revision-Date: 2019-04-24 21:07-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.2.1\n"
+"X-Generator: Poedit 2.0.6\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-Bookmarks: -1,-1,1504,-1,-1,-1,-1,-1,-1,-1\n"
 
@@ -2376,10 +2376,9 @@ msgid "Wrong type of operand for unary '&'"
 msgstr "Tipo errado de operando para o '&' unário"
 
 #: lib/src/geneval.c:7902
-#, fuzzy, c-format
-#| msgid "'%s': invalid observation index"
+#, c-format
 msgid "Invalid observation specifier \"%s\""
-msgstr "'%s': índice de observação inválido"
+msgstr "Especificador de observação inválido \"%s\""
 
 #: lib/src/geneval.c:7986 lib/src/transforms.c:851 lib/src/transforms.c:1170
 msgid "The constant cannot be lagged"
@@ -2405,10 +2404,9 @@ msgid "Expected %s but got %s"
 msgstr "Esperado %s mas encontrou-se %s"
 
 #: lib/src/geneval.c:9446
-#, fuzzy, c-format
-#| msgid "Series length does not match the dataset"
+#, c-format
 msgid "Specified type %s does not match array type %s"
-msgstr "O tamanho da série não corresponde ao conjunto de dados"
+msgstr "O tipo especificado %s não corresponde ao tipo de arranjo/array %s"
 
 #: lib/src/geneval.c:10019 lib/src/geneval.c:10087 lib/src/geneval.c:16622
 #: lib/src/geneval.c:16630
@@ -3636,7 +3634,7 @@ msgid ""
 "Valid gretl commands are:\n"
 msgstr ""
 "\n"
-"Comandos válidos do gretl são:\n"
+"Comandos válidos do Gretl são:\n"
 
 #: lib/src/gretl_help.c:228
 msgid ""
@@ -3660,7 +3658,7 @@ msgstr ""
 #: lib/src/gretl_help.c:451
 #, c-format
 msgid "\"%s\" is not a gretl command.\n"
-msgstr "\"%s\" não é um comando gretl.\n"
+msgstr "\"%s\" não é um comando Gretl.\n"
 
 #: lib/src/gretl_intl.c:102 gui/gretl.c:1608
 msgid "_Open data"
@@ -4161,10 +4159,9 @@ msgid "Couldn't find package %s"
 msgstr "Não foi possível encontrar o pacote %s"
 
 #: lib/src/gretl_paths.c:1647
-#, fuzzy, c-format
-#| msgid "Couldn't find usable socket driver\n"
+#, c-format
 msgid "Couldn't find file %s for package %s"
-msgstr "Não foi possível encontrar um controlador de rede utilizável\n"
+msgstr "Não foi possível encontrar o arquivo %s para o pacote %s"
 
 #: lib/src/gretl_paths.c:2337
 msgid "User directory is not set"
@@ -4178,7 +4175,7 @@ msgstr "Não foi possível criar o diretório '%s'"
 #: lib/src/gretl_paths.c:2354
 #, c-format
 msgid "Couldn't write to '%s': gretl will not work properly!"
-msgstr "Não foi possível escrever em '%s': gretl não funcionará corretamente!"
+msgstr "Não foi possível escrever em '%s': Gretl não funcionará corretamente!"
 
 #: lib/src/gretl_paths.c:2573
 #, c-format
@@ -4529,6 +4526,9 @@ msgid ""
 "supported by this build of gretl (%g). Some features may not be\n"
 "correctly recognized.\n"
 msgstr ""
+"A versão desse arquivo de dados (%g) é mais recente que a suportada\n"
+"por essa versão do Gretl (%g). Algumas características podem não ser\n"
+"corretamente reconhecidas.\n"
 
 #: lib/src/gretl_xml.c:3926
 msgid "Uncompressing"
@@ -6697,7 +6697,7 @@ msgstr "Sessão atual"
 #: lib/src/printout.c:103 lib/src/printout.c:161
 #, c-format
 msgid "gretl version %s\n"
-msgstr "gretl versão %s\n"
+msgstr "Gretl versão %s\n"
 
 #: lib/src/printout.c:106
 msgid ""
@@ -6712,7 +6712,7 @@ msgstr "Este software é livre e TOTALMENTE SEM GARANTIA"
 #: lib/src/printout.c:128
 #, c-format
 msgid "gretl: gui client for gretl version %s,\n"
-msgstr "gretl: cliente de interface gráfico (gui) para gretl versão %s,\n"
+msgstr "gretl: cliente de interface gráfica (gui) para gretl versão %s,\n"
 
 #: lib/src/printout.c:129
 msgid "Copyright Allin Cottrell and Riccardo \"Jack\" Lucchetti"
@@ -7375,10 +7375,9 @@ msgstr "'%s': essa lista não existe"
 
 # I'm not sure about translating the term "array" to Portuguese.
 #: lib/src/system.c:851
-#, fuzzy, c-format
-#| msgid "'%s' : not implemented for arrays"
+#, c-format
 msgid "'%s': not a list or array of lists"
-msgstr "'%s' : não está implementado para \"arrays\""
+msgstr "'%s' : não é uma lista ou um arranjo/array de listas"
 
 #: lib/src/system.c:1254
 msgid "Wald test for the specified restrictions"
@@ -8021,7 +8020,7 @@ msgstr "\"Por econometristas, para econometristas.\""
 
 #: gui/about.c:119
 msgid "About gretl"
-msgstr "Sobre o gretl"
+msgstr "Sobre o Gretl"
 
 #: gui/about.c:149 gui/about.c:155 plugin/excel_import.c:108
 msgid "build date"
@@ -8861,7 +8860,7 @@ msgstr ""
 
 #: gui/console.c:424
 msgid "gretl console: type 'help' for a list of commands"
-msgstr "console gretl: escreva 'help' para uma lista de comandos"
+msgstr "console Gretl: escreva 'help' para uma lista de comandos"
 
 #: gui/database.c:127
 #, c-format
@@ -9601,7 +9600,7 @@ msgstr "Assistente de estrutura de dados"
 
 #: gui/dialogs.c:193
 msgid "Do you want to save this gretl session?"
-msgstr "Deseja gravar esta sessão do gretl?"
+msgstr "Deseja gravar esta sessão do Gretl?"
 
 #: gui/dialogs.c:195
 msgid "Save a record of the commands you executed?"
@@ -10514,7 +10513,7 @@ msgstr "todos os arquivos (*.*)"
 
 #: gui/fileselect.c:922 gui/fileselect.c:942
 msgid "gretl script files (*.inp)"
-msgstr "Arquivos de script gretl (*.inp)"
+msgstr "Arquivos de script Gretl (*.inp)"
 
 #: gui/fileselect.c:923
 msgid "GNU R files (*.R)"
@@ -10546,11 +10545,11 @@ msgstr "Arquivos Stata (*.do)"
 
 #: gui/fileselect.c:939 gui/fileselect.c:943
 msgid "Gretl datafiles (*.gdt)"
-msgstr "Arquivos de dados gretl (*.gdt)"
+msgstr "Arquivos de dados Gretl (*.gdt)"
 
 #: gui/fileselect.c:940 gui/fileselect.c:944
 msgid "Gretl binary datafiles (*.gdtb)"
-msgstr "Arquivos de dados binário gretl (*.gdtb)"
+msgstr "Arquivos de dados binário Gretl (*.gdtb)"
 
 #: gui/fileselect.c:947
 msgid "plain function packages (*.gfn)"
@@ -11193,7 +11192,7 @@ msgstr "Selecionar"
 
 #: gui/fnsave.c:2146
 msgid "Minimum gretl version"
-msgstr "Versão mínima do gretl"
+msgstr "Versão mínima do Gretl"
 
 #: gui/fnsave.c:2351
 msgid "Tag"
@@ -11223,9 +11222,6 @@ msgstr ""
 "pacote"
 
 #: gui/fnsave.c:2759
-#, fuzzy
-#| msgid ""
-#| "You may add or delete names of datafiles to be included in the package."
 msgid ""
 "You may add or delete names of packages to be recorded as dependencies.\n"
 "Leave off the .gfn or .zip suffix."
@@ -11354,7 +11350,7 @@ msgid ""
 "The 'Website' button below should open this page\n"
 "in your web browser."
 msgstr ""
-"Se não tiver um login no servidor gretl\n"
+"Se não tiver um login no servidor Gretl\n"
 "consulte http://gretl.ecn.wfu.edu/cgi-bin/apply/ (em Inglês).\n"
 "O botão 'Website' abaixo deve abrir esta página\n"
 "no seu navegador da web."
@@ -11860,7 +11856,7 @@ msgstr "Título para eixo"
 
 #: gui/gpt_dialog.c:3715
 msgid "gretl plot controls"
-msgstr "controles dos gráficos do gretl"
+msgstr "controles dos gráficos do Gretl"
 
 #: gui/graphics.c:175
 msgid "height"
@@ -11944,7 +11940,7 @@ msgstr "forçar o uso de Basco"
 
 #: gui/gretl.c:138
 msgid "dump gretl configuration to file"
-msgstr "gravar a configuração do gretl em um arquivo"
+msgstr "gravar a configuração do Gretl em um arquivo"
 
 #: gui/gretl.c:141
 msgid "send debugging info to console"
@@ -12036,7 +12032,7 @@ msgstr "_Novo script"
 
 #: gui/gretl.c:1626
 msgid "gretl script"
-msgstr "Script gretl"
+msgstr "Script Gretl"
 
 #: gui/gretl.c:1627
 msgid "gnuplot script"
@@ -12844,11 +12840,11 @@ msgstr "Guia de pacotes de _funções"
 
 #: gui/gretl.c:1881
 msgid "_gretl + MPI"
-msgstr "_gretl + MPI"
+msgstr "_Gretl + MPI"
 
 #: gui/gretl.c:1882
 msgid "_gretl + SVM"
-msgstr "_gretl + SVM"
+msgstr "_Gretl + SVM"
 
 #: gui/gretl.c:1883
 msgid "Check for _updates"
@@ -12860,7 +12856,7 @@ msgstr "Verific_ar complementos"
 
 #: gui/gretl.c:1885
 msgid "_About gretl"
-msgstr "_Sobre o gretl"
+msgstr "_Sobre o Gretl"
 
 #: gui/gretl.c:1970 gui/gui_utils.c:238 gui/gui_utils.c:363
 msgid "_Analysis"
@@ -12889,12 +12885,12 @@ msgstr "Não foi possível abrir a memória de edição"
 #: gui/gretlwin32.c:416 plugin/mailer.c:671
 #, c-format
 msgid "Please find the gretl data file %s attached."
-msgstr "Veja o arquivo de dados do gretl %s em anexo."
+msgstr "Veja o arquivo de dados do Gretl %s em anexo."
 
 #: gui/gretlwin32.c:420 plugin/mailer.c:674
 #, c-format
 msgid "Please find the gretl script %s attached."
-msgstr "Veja o script do gretl %s em anexo."
+msgstr "Veja o script do Gretl %s em anexo."
 
 #: gui/gtkfontselhack.c:120
 msgid "abcdefghijk ABCDEFGHIJK"
@@ -12946,7 +12942,7 @@ msgstr "Seleção de Fonte"
 
 #: gui/guiprint.c:73 gui/guiprint.c:75
 msgid "gretl output"
-msgstr "saída gretl"
+msgstr "saída Gretl"
 
 #: gui/guiprint.c:73
 msgid "for"
@@ -13463,7 +13459,7 @@ msgstr "gretl: editar programa Stata"
 
 #: gui/gui_utils.c:1706
 msgid "gretl: edit package spec file"
-msgstr "gretl: editar arquivo spec de pacote"
+msgstr "gretl: editar arquivo spec do pacote de funções"
 
 #: gui/gui_utils.c:1708
 msgid "gretl: untitled"
@@ -13511,7 +13507,7 @@ msgstr "Não é possível abrir %s para leitura"
 
 #: gui/gui_utils.c:2231
 msgid "gretl console"
-msgstr "console gretl"
+msgstr "console Gretl"
 
 #: gui/gui_utils.c:2533
 #, c-format
@@ -14766,7 +14762,7 @@ msgstr ""
 
 #: gui/library.c:8568
 msgid "gretl: Compact data"
-msgstr "gretl: Compactar dados"
+msgstr "gretl: compactar dados"
 
 #: gui/library.c:8569
 msgid ""
@@ -14780,7 +14776,7 @@ msgstr ""
 
 #: gui/library.c:8573
 msgid "gretl: Expand data"
-msgstr "gretl: Expandir dados"
+msgstr "gretl: expandir dados"
 
 #: gui/library.c:8574
 msgid ""
@@ -15832,15 +15828,15 @@ msgstr "CSV"
 
 #: gui/selector.c:6720
 msgid "gretl datafile (.gdt)"
-msgstr "arquivo de dados gretl (.gdt)"
+msgstr "arquivo de dados Gretl (.gdt)"
 
 #: gui/selector.c:6721
 msgid "gretl binary datafile (.gdtb)"
-msgstr "arquivo de dados binário gretl (.gdbt)"
+msgstr "arquivo de dados binário Gretl (.gdbt)"
 
 #: gui/selector.c:6722
 msgid "gretl database (.bin)"
-msgstr "arquivo base de dados gretl (.bin)"
+msgstr "arquivo base de dados Gretl (.bin)"
 
 #: gui/selector.c:6723
 msgid "space separated (R-friendly)"
@@ -16292,11 +16288,11 @@ msgstr "Autovalores"
 
 #: gui/settings.c:201
 msgid "Main gretl directory"
-msgstr "Diretório principal do gretl"
+msgstr "Diretório principal do Gretl"
 
 #: gui/settings.c:203
 msgid "User's gretl directory"
-msgstr "Diretório do usuário do gretl"
+msgstr "Diretório do usuário do Gretl"
 
 #: gui/settings.c:206
 msgid "Remember main window size"
@@ -16312,11 +16308,11 @@ msgstr "Preferência de tema"
 
 #: gui/settings.c:218
 msgid "Web browser"
-msgstr "Navegador Web"
+msgstr "Navegador web"
 
 #: gui/settings.c:221
 msgid "Allow shell commands"
-msgstr "Permitir comandos de sistema"
+msgstr "Permitir comandos de sistema (shell)"
 
 #: gui/settings.c:223
 msgid "Show icon view automatically"
@@ -16517,8 +16513,8 @@ msgstr "Esta mudança será aplicada nas novas janelas abertas"
 #: gui/settings.c:954
 msgid "You seem to be running gretl as root.  Do you really want to do this?"
 msgstr ""
-"Parece que está a executar gretl como \"root\".  Tem a certeza que quer "
-"fazer isso?"
+"Aparentemente você está executando o Gretl como \"root\".  Tem a certeza que "
+"quer fazer isso?"
 
 #: gui/settings.c:1039
 msgid "gretl: preferences"
@@ -16566,7 +16562,7 @@ msgstr "MPI"
 
 #: gui/settings.c:1940 gui/settings.c:3124
 msgid "This change will take effect when you restart gretl"
-msgstr "É necessário reiniciar o gretl para que esta alteração tenha efeito"
+msgstr "Reinicie o Gretl para que esta alteração tenha efeito"
 
 #: gui/settings.c:2505
 msgid "Select a specific font"
@@ -16574,7 +16570,7 @@ msgstr "Selecionar uma fonte específica"
 
 #: gui/settings.c:2639 gui/settings.c:2749
 msgid "Font for gretl output windows"
-msgstr "Fonte para a saída nas janelas do gretl"
+msgstr "Fonte para a saída nas janelas do Gretl"
 
 #: gui/settings.c:2643 gui/settings.c:2753
 msgid "Font for menus and labels"
@@ -16598,7 +16594,7 @@ msgstr "Diretório de trabalho:"
 
 #: gui/settings.c:3026
 msgid "On start-up, gretl should use:"
-msgstr "Na inicialização, gretl deve usar:"
+msgstr "Na inicialização, Gretl deve usar:"
 
 #: gui/settings.c:3033
 msgid "the directory selected above"
@@ -16871,7 +16867,7 @@ msgstr "processando...\n"
 
 #: gui/textbuf.c:1546
 msgid "gretl + SVM"
-msgstr "gretl + SVM"
+msgstr "Gretl + SVM"
 
 #: gui/textbuf.c:2127
 msgid "Gretl Command Reference"
@@ -17132,7 +17128,7 @@ msgstr "novo script"
 
 #: gui/toolbar.c:1451
 msgid "open gretl console"
-msgstr "abrir o console gretl"
+msgstr "abrir o console Gretl"
 
 #: gui/toolbar.c:1452
 msgid "session icon view"
@@ -17615,7 +17611,7 @@ msgstr "Erro no comando arma"
 #: plugin/arma_init.c:112
 #, c-format
 msgid "Shifting y by %g, scaling by %g\n"
-msgstr ""
+msgstr "Deslocando y em %g, dimensionando em %g\n"
 
 #: plugin/arma_x12.c:1004
 msgid "Failed to execute x12arima"
@@ -18478,7 +18474,7 @@ msgstr "Ainda não são suportadas pastas de trabalho protegidas por senha."
 #: plugin/workbook.c:559
 msgid "This file is not an 'OLE' file -- it may be too old for gretl to read\n"
 msgstr ""
-"Este arquivo não é um arquivo 'OLE' -- pode ser demasiado antigo para gretl "
+"Este arquivo não é um arquivo 'OLE' -- pode ser muito antigo para o Gretl "
 "ler\n"
 
 #: plugin/workbook.c:561
