@@ -824,9 +824,12 @@ static void do_qq_xyplot (const char *buf, gretlopt opt)
     int err;
 
     lib_command_sprintf("qqplot%s", buf);
+    err = parse_lib_command();
 
-    err = qq_plot(libcmd.list, dataset, opt);
-    gui_graph_handler(err);
+    if (!err) {
+	err = qq_plot(libcmd.list, dataset, opt);
+	gui_graph_handler(err);
+    }
 
     if (!err) {
 	record_command_verbatim();
