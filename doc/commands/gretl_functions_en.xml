@@ -3447,9 +3447,10 @@
 	</para>
 	<para>
 	  The three alternatives above provide, generally, a trade-off
-	  between accuracy and speed. You can choose among methods by
-	  using the <cmdref targ="set"/> command and specify the value
-	  0, 1 or 2 for the <lit>fdjac_quality</lit> variable.
+	  between accuracy and speed. You can choose among methods via
+	  the <cmdref targ="set"/> command: specify a value of 0, 1 or
+	  2 for the <lit>fdjac_quality</lit> variable. The default is
+	  0.
 	</para>
 	<para>
 	  For more details and examples <guideref

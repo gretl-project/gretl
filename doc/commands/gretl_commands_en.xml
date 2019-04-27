@@ -12682,8 +12682,9 @@
 	  </para>
 	</li>
 	<li>
-	  <para><lit>fdjac_quality</lit>: one integer between 0 and 2,
-	  the algorithm used by the <fncref targ="fdjac"/> function.
+	  <para><lit>fdjac_quality</lit>: one integer (0, 1 or 2), the
+	  algorithm used by the <fncref targ="fdjac"/> function; the
+	  default is 0.
 	  </para>
 	</li>
       </ilist>

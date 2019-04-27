@@ -1388,7 +1388,7 @@ static void libset_print_double (const char *s, PRN *prn,
     double x = libset_get_double(s);
 
     if (opt & OPT_D) {
-	if (na(x)) {
+	if (na(x) || (x == 0.0 && !strcmp(s, FDJAC_EPS))) {
 	    pprintf(prn, " %s = auto\n", s);
 	} else {
 	    pprintf(prn, " %s = %.15g\n", s, x);
