@@ -2003,17 +2003,42 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
     fprintf(stderr, "show = %d, grab_bundle = %d\n", show, grab_bundle);
 #endif
 
-    if (close_on_OK && cinfo->dlg != NULL) {
-	gtk_widget_hide(cinfo->dlg);
-    }
-
     if (show) {
 	/* allow the "flush" mechanism to operate */
+	if (close_on_OK && cinfo->dlg != NULL) {
+	    gtk_widget_hide(cinfo->dlg);
+	}
 	err = exec_line_with_output_handler(&state, dataset,
 					    title, &outwin);
     } else {
 	/* execute "invisibly" */
+	GtkWidget *ctop = NULL;
+	GdkWindow *cwin = NULL;
+	int modal = 0;
+
+	if (cinfo->dlg != NULL) {
+	    /* set modality */
+	    ctop = gtk_widget_get_toplevel(cinfo->dlg);
+	    if (GTK_IS_WINDOW(ctop)) {
+		gtk_window_set_modal(GTK_WINDOW(ctop), TRUE);
+		modal = 1;
+		cwin = gtk_widget_get_window(ctop);
+	    }
+	}
+
+	set_wait_cursor(&cwin);
 	err = gui_exec_line(&state, dataset, NULL);
+	unset_wait_cursor(cwin);
+
+	if (cinfo->dlg != NULL) {
+	    /* unset modality */
+	    if (modal) {
+		gtk_window_set_modal(GTK_WINDOW(ctop), FALSE);
+	    }
+	    if (close_on_OK) {
+		gtk_widget_hide(cinfo->dlg);
+	    }
+	}
     }
 
     if (!err && strstr(fnline, AUTOLIST) == NULL) {
@@ -4271,7 +4296,7 @@ void *dbnomics_get_providers_call (int *err)
 {
     gretl_array *A = NULL;
     fncall *fc = NULL;
-    GdkWindow *cwin;
+    GdkWindow *cwin = NULL;
 
     fc = get_dbnomics_function_call("dbnomics_providers");
     if (fc == NULL) {
@@ -4298,7 +4323,6 @@ void *dbnomics_search_call (const char *key,
 {
     gretl_array *A = NULL;
     fncall *fc = NULL;
-    GdkWindow *cwin;
     int use_dset = 0;
 
     if (prov != NULL && dset != NULL) {
@@ -4325,6 +4349,8 @@ void *dbnomics_search_call (const char *key,
     }
 
     if (!*err) {
+	GdkWindow *cwin = NULL;
+
 	set_wait_cursor(&cwin);
 	*err = gretl_function_exec(fc, GRETL_TYPE_BUNDLES, NULL,
 				   &A, NULL, NULL);
@@ -4342,7 +4368,6 @@ void *dbnomics_dataset_list (const char *provider, int *err)
 {
     gretl_bundle *b = NULL;
     fncall *fc = NULL;
-    GdkWindow *cwin;
 
     fc = get_pkg_function_call("dbnomics_dsets_for_provider",
 			       "dbnomics", NULL);
@@ -4353,6 +4378,8 @@ void *dbnomics_dataset_list (const char *provider, int *err)
 
     *err = push_anon_function_arg(fc, GRETL_TYPE_STRING, (void *) provider);
     if (!*err) {
+	GdkWindow *cwin = NULL;
+
 	set_wait_cursor(&cwin);
 	*err = gretl_function_exec(fc, GRETL_TYPE_BUNDLE, NULL,
 				   &b, NULL, NULL);
@@ -4372,7 +4399,6 @@ void *dbnomics_probe_series (const char *prov,
 {
     gretl_array *A = NULL;
     fncall *fc = NULL;
-    GdkWindow *cwin;
 
     fc = get_pkg_function_call("dbnomics_get_dataset_content",
 			       "dbnomics", NULL);
@@ -4386,6 +4412,8 @@ void *dbnomics_probe_series (const char *prov,
 			      GRETL_TYPE_INT, (void *) &limit,
 			      GRETL_TYPE_INT, (void *) &offset, -1);
     if (!*err) {
+	GdkWindow *cwin = NULL;
+
 	set_wait_cursor(&cwin);
 	*err = gretl_function_exec(fc, GRETL_TYPE_BUNDLES, NULL,
 				   &A, NULL, NULL);

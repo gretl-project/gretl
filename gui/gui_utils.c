@@ -461,9 +461,14 @@ void set_wait_cursor (GdkWindow **pcwin)
 {
     GdkDisplay *disp = gdk_display_get_default();
     GdkWindow *w;
-    gint x, y;
 
-    *pcwin = w = gdk_display_get_window_at_pointer(disp, &x, &y);
+    if (*pcwin == NULL) {
+	gint x, y;
+	
+	*pcwin = w = gdk_display_get_window_at_pointer(disp, &x, &y);
+    } else {
+	w = *pcwin;
+    }
 
     if (w != NULL) {
 	GdkCursor *cursor = gdk_cursor_new(GDK_WATCH);
