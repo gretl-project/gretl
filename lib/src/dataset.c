@@ -5029,10 +5029,6 @@ void *series_info_bundle (const DATASET *dset, int i,
     return b;
 }
 
-#define USE_LABELS 1
-
-#if USE_LABELS
-
 /* Given a series label @s, see if it can be recognized
    as identifying the series as the product of two others,
    and if so write the names of the others into @targ1
@@ -5120,8 +5116,6 @@ static int get_square_parent_name (const char *s, char *targ,
 
     return ret;
 }
-
-#endif /* USE_LABELS */
 
 /* Given either (a) two series identified by ID numbers
    i, j where the second is supposed to be the square
@@ -5247,35 +5241,10 @@ static int condense_listinfo_matrix (gretl_matrix *m,
     return 0;
 }
 
-/* Construct a matrix providing information about the relations
-   between the series in @list. This will have rows equal to the
-   number of series and at least 5 columns (shown as 1-based here).
-   All elements of the matrix are zero unless otherwise specified.
-
-   col 1: Holds 1 if the series is "primary" (neither the square
-   of another series in the list, nor the interaction of two
-   series in the list).
-
-   col 2: Holds 1 if the series is a 0/1 dummy.
-
-   col 3: If the series is primary and its square is also
-   present in the list, holds the list position of the square,
-   or if the series itself is a squared term, holds the list
-   position of the series of which it's the square.
-
-   cols 4, 5: If the series features in an interaction term,
-   col 4 holds the list position of its "partner" and col 5 the
-   list position of the interaction term. If the series features
-   in more than one interaction term, subsequent interaction info
-   goes into cols 6 and 7 or higher (these being added as required).
-   If the series itself is an interaction term, cols 4 and 5 get
-   the list positions of the two source series.
-*/
-
-#if USE_LABELS
-
-void *list_info_matrix (const int *list, const DATASET *dset,
-			gretlopt opt, int *err)
+static gretl_matrix *linfo_matrix_labels (const int *list,
+					  const DATASET *dset,
+					  gretlopt opt,
+					  int *err)
 {
     gretl_matrix *ret = NULL;
     const char *label;
@@ -5383,10 +5352,10 @@ void *list_info_matrix (const int *list, const DATASET *dset,
     return ret;
 }
 
-#else /* !USE_LABELS : brute force data-matching */
-
-void *list_info_matrix (const int *list, const DATASET *dset,
-			gretlopt opt, int *err)
+static gretl_matrix *linfo_matrix_brute (const int *list,
+					 const DATASET *dset,
+					 gretlopt opt,
+					 int *err)
 {
     gretl_matrix *ret = NULL;
     int i, vi, j, vj, k, vk;
@@ -5474,4 +5443,37 @@ void *list_info_matrix (const int *list, const DATASET *dset,
     return ret;
 }
 
-#endif /* USE_LABELS or not */
+/* Construct a matrix providing information about the relations
+   between the series in @list. This will have rows equal to the
+   number of series and at least 5 columns (shown as 1-based here).
+   All elements of the matrix are zero unless otherwise specified.
+
+   col 1: Holds 1 if the series is "primary" (neither the square
+   of another series in the list, nor the interaction of two
+   series in the list).
+
+   col 2: Holds 1 if the series is a 0/1 dummy.
+
+   col 3: If the series is primary and its square is also
+   present in the list, holds the list position of the square,
+   or if the series itself is a squared term, holds the list
+   position of the series of which it's the square.
+
+   cols 4, 5: If the series features in an interaction term,
+   col 4 holds the list position of its "partner" and col 5 the
+   list position of the interaction term. If the series features
+   in more than one interaction term, subsequent interaction info
+   goes into cols 6 and 7 or higher (these being added as required).
+   If the series itself is an interaction term, cols 4 and 5 get
+   the list positions of the two source series.
+*/
+
+void *list_info_matrix (const int *list, const DATASET *dset,
+			gretlopt opt, int *err)
+{
+    if (opt & OPT_B) {
+	return linfo_matrix_brute(list, dset, opt, err);
+    } else {
+	return linfo_matrix_labels(list, dset, opt, err);
+    }
+}
