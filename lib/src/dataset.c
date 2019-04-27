@@ -3057,6 +3057,7 @@ static int add_obs (int n, DATASET *dset, PRN *prn)
 	if (!err) {
 	    pprintf(prn, _("Dataset extended by %d observations"), n);
 	    pputc(prn, '\n');
+	    extend_function_sample_range(n);
 	}
     }
 

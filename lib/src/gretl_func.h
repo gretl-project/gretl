@@ -180,6 +180,8 @@ int series_is_accessible_in_function (int ID, const DATASET *dset);
 
 void sample_range_get_extrema (const DATASET *dset, int *t1, int *t2);
 
+void extend_function_sample_range (int addobs);
+
 int function_return_type_from_string (const char *s);
 
 int gretl_function_print_code (ufunc *u, int tabwidth, PRN *prn);

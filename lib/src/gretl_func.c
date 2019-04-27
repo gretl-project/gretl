@@ -100,6 +100,7 @@ struct obsinfo_ {
     int structure;      /* time-series, etc. */
     int pd;             /* data frequency */
     int t1, t2;         /* starting and ending observations */
+    int added;          /* number of observations added within function */
     char changed;       /* sample has been changed within the function call? */
     char stobs[OBSLEN]; /* string representation of starting obs */
 };
@@ -8024,6 +8025,7 @@ function_assign_returns (fncall *call, int rtype,
 static void record_obs_info (obsinfo *oi, DATASET *dset)
 {
     oi->changed = 0;
+    oi->added = 0;
 
     if (dset != NULL) {
 	oi->structure = dset->structure;
@@ -9226,7 +9228,7 @@ void sample_range_get_extrema (const DATASET *dset, int *t1, int *t2)
 
 	if (call != NULL) {
 	    tvals[0] = call->obs.t1;
-	    tvals[1] = call->obs.t2;
+	    tvals[1] = call->obs.t2 + call->obs.added;
 	}
     }
 
@@ -9235,6 +9237,15 @@ void sample_range_get_extrema (const DATASET *dset, int *t1, int *t2)
     }
     if (t2 != NULL) {
 	*t2 = tvals[1];
+    }
+}
+
+void extend_function_sample_range (int addobs)
+{
+    fncall *call = current_function_call();
+
+    if (call != NULL) {
+	call->obs.added += addobs;
     }
 }
 
