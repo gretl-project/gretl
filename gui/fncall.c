@@ -3051,7 +3051,9 @@ static int official_addon (const char *pkgname)
     if (!strcmp(pkgname, "SVAR") ||
 	!strcmp(pkgname, "gig") ||
 	!strcmp(pkgname, "HIP") ||
-	!strcmp(pkgname, "ivpanel")) {
+	!strcmp(pkgname, "ivpanel") ||
+	!strcmp(pkgname, "dbnomics") ||
+	!strcmp(pkgname, "extra")) {
 	return 1;
     } else {
 	return 0;
