@@ -6795,17 +6795,25 @@ static NODE *in_list_node (NODE *l, NODE *r, parser *p)
 static NODE *list_info_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_matrix_node(p);
+    int k = 0;
 
     if (p->err == 0 && (p->dset == NULL || p->dset->v == 0)) {
 	p->err = E_NODATA;
+    }
+
+    if (!p->err && !null_or_empty(r)) {
+	k = node_get_int(r, p);
     }
 
     if (!p->err) {
 	const int *list = l->v.ivec;
 	gretlopt opt = OPT_NONE;
 
-	if (node_get_bool(r, p, 0)) {
-	    opt = OPT_C;
+	if (k & 1) {
+	    opt |= OPT_C;
+	}
+	if (k & 2) {
+	    opt |= OPT_B;
 	}
 	ret->v.m = list_info_matrix(list, p->dset, opt, &p->err);
     }
