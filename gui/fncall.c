@@ -446,7 +446,7 @@ static int probably_stochastic (int v)
     int ret = 1;
 
     if (sample_size(dataset) >= 3) {
-	/* rule our vars that seem to be integer-valued with
+	/* rule out vars that seem to be integer-valued with
 	   a constant increment */
 	int t = dataset->t1;
 	double d1 = dataset->Z[v][t+1] - dataset->Z[v][t];
@@ -1004,22 +1004,42 @@ static void update_enum_arg (GtkComboBox *combo, call_info *cinfo)
     cinfo->args[i] = g_strdup_printf("%d", val);
 }
 
+static int maybe_limit_enum (call_info *cinfo, int nvals)
+{
+    if (!strcmp(cinfo->pkgname, "lp-mfx") &&
+	atoi(cinfo->pkgver) > 0 &&
+	cinfo->vwin != NULL &&
+	cinfo->vwin->role == VIEW_MODEL) {
+	MODEL *pmod = cinfo->vwin->data;
+
+	if (gretl_model_get_int(pmod, "ordered") ||
+	    gretl_model_get_int(pmod, "multinom")) {
+	    /* exclude the final "per obs" option */
+	    return nvals - 1;
+	}
+    }
+
+    return nvals;
+}
+
 static GtkWidget *enum_arg_selector (call_info *cinfo, int i,
 				     const char **S, int nvals,
 				     int minv, int initv)
 {
     GtkWidget *combo;
-    int j;
+    int j, jmax, jactive;
 
+    jmax = maybe_limit_enum(cinfo, nvals);
     combo = gtk_combo_box_text_new();
     widget_set_int(combo, "argnum", i);
     widget_set_int(combo, "minv", minv);
     g_signal_connect(G_OBJECT(combo), "changed",
 		     G_CALLBACK(update_enum_arg), cinfo);
-    for (j=0; j<nvals; j++) {
+    for (j=0; j<jmax; j++) {
 	combo_box_append_text(combo, (const char *) S[j]);
     }
-    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), initv - minv);
+    jactive = MIN(initv - minv, jmax - 1);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), jactive);
 
     return combo;
 }
@@ -1256,7 +1276,7 @@ static void arg_combo_set_default (call_info *cinfo,
 
 /* create an argument selector widget in the form of a
    GtkComboBox, with an entry field plus a drop-down
-   list (which may initally be empty)
+   list (which may initially be empty)
 */
 
 static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i,
