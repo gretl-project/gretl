@@ -5288,7 +5288,6 @@ linfo_matrix_via_labels (const int *list,
 	}
 	if (get_square_parent_name(label, targ1, targ2)) {
 	    /* looks like this could be a squared term */
-	    fprintf(stderr, "HERE looks like square (label %s, targ1 %s)\n", label, targ1);
 	    for (j=1; j<=n; j++) {
 		if (j == i) continue;
 		vj = list[j];
