@@ -5087,7 +5087,7 @@ static int get_square_parent_name (const char *s, char *targ,
 	n1 = gretl_namechar_spn(s);
 	n2 = p - s - 1;
 	if (n1 > 0 && n1 < VNAMELEN && n2 == n1) {
-	    strcat(targ, s);
+	    strncat(targ, s, n1);
 	    ret = 1;
 	}
     } else if (strchr(s, '^') != NULL) {
@@ -5242,10 +5242,11 @@ static int condense_listinfo_matrix (gretl_matrix *m,
     return 0;
 }
 
-static gretl_matrix *linfo_matrix_labels (const int *list,
-					  const DATASET *dset,
-					  gretlopt opt,
-					  int *err)
+static gretl_matrix *
+linfo_matrix_via_labels (const int *list,
+			 const DATASET *dset,
+			 gretlopt opt,
+			 int *err)
 {
     gretl_matrix *ret = NULL;
     const char *label;
@@ -5287,6 +5288,7 @@ static gretl_matrix *linfo_matrix_labels (const int *list,
 	}
 	if (get_square_parent_name(label, targ1, targ2)) {
 	    /* looks like this could be a squared term */
+	    fprintf(stderr, "HERE looks like square (label %s, targ1 %s)\n", label, targ1);
 	    for (j=1; j<=n; j++) {
 		if (j == i) continue;
 		vj = list[j];
@@ -5353,10 +5355,11 @@ static gretl_matrix *linfo_matrix_labels (const int *list,
     return ret;
 }
 
-static gretl_matrix *linfo_matrix_brute (const int *list,
-					 const DATASET *dset,
-					 gretlopt opt,
-					 int *err)
+static gretl_matrix *
+linfo_matrix_via_data (const int *list,
+		       const DATASET *dset,
+		       gretlopt opt,
+		       int *err)
 {
     gretl_matrix *ret = NULL;
     int i, vi, j, vj, k, vk;
@@ -5473,8 +5476,8 @@ void *list_info_matrix (const int *list, const DATASET *dset,
 			gretlopt opt, int *err)
 {
     if (opt & OPT_B) {
-	return linfo_matrix_brute(list, dset, opt, err);
+	return linfo_matrix_via_data(list, dset, opt, err);
     } else {
-	return linfo_matrix_labels(list, dset, opt, err);
+	return linfo_matrix_via_labels(list, dset, opt, err);
     }
 }
