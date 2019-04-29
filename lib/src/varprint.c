@@ -1,25 +1,25 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
-#include "libgretl.h" 
-#include "var.h"  
-#include "vartest.h" 
+#include "libgretl.h"
+#include "var.h"
+#include "vartest.h"
 #include "johansen.h"
 #include "varprint.h"
 #include "libset.h"
@@ -77,8 +77,8 @@ static void VAR_RTF_row_spec (int ncols, PRN *prn)
     pputc(prn, '\n');
 }
 
-static void VAR_info_header_block (int code, int v, int block, 
-				   const DATASET *dset, 
+static void VAR_info_header_block (int code, int v, int block,
+				   const DATASET *dset,
 				   PRN *prn)
 {
     int tex = tex_format(prn);
@@ -88,10 +88,10 @@ static void VAR_info_header_block (int code, int v, int block,
     if (tex) {
 	pputs(prn, "\\vspace{1em}\n\n");
 	if (code == IRF) {
-	    pprintf(prn, A_("Responses to a one-standard error shock in %s"), 
+	    pprintf(prn, A_("Responses to a one-standard error shock in %s"),
 		    tex_escape(vname, dset->varname[v]));
 	} else {
-	    pprintf(prn, A_("Decomposition of variance for %s"), 
+	    pprintf(prn, A_("Decomposition of variance for %s"),
 		    tex_escape(vname, dset->varname[v]));
 	}
 	if (block == 0) {
@@ -104,10 +104,10 @@ static void VAR_info_header_block (int code, int v, int block,
     } else if (rtf) {
 	pputs(prn, "\\par\n\n");
 	if (code == IRF) {
-	    pprintf(prn, A_("Responses to a one-standard error shock in %s"), 
+	    pprintf(prn, A_("Responses to a one-standard error shock in %s"),
 		    dset->varname[v]);
 	} else {
-	    pprintf(prn, A_("Decomposition of variance for %s"), 
+	    pprintf(prn, A_("Decomposition of variance for %s"),
 		    dset->varname[v]);
 	}
 	if (block == 0) {
@@ -118,11 +118,11 @@ static void VAR_info_header_block (int code, int v, int block,
 	/* FIXME */
 	VAR_RTF_row_spec((code == IRF)? IRF_ROW_MAX : VDC_ROW_MAX, prn);
     } else {
-	if (code == IRF) {	
-	    pprintf(prn, _("Responses to a one-standard error shock in %s"), 
+	if (code == IRF) {
+	    pprintf(prn, _("Responses to a one-standard error shock in %s"),
 		    dset->varname[v]);
 	} else {
-	    pprintf(prn, _("Decomposition of variance for %s"), 
+	    pprintf(prn, _("Decomposition of variance for %s"),
 		    dset->varname[v]);
 	}
 	if (block == 0) {
@@ -153,14 +153,14 @@ static void VAR_info_print_vname (int i, int v, int endrow, int width,
 	pprintf(prn, " %s ", tex_escape(vname, dset->varname[v]));
 	if (endrow) {
 	   pputs(prn, "\\\\");
-	} else { 
+	} else {
 	    pputs(prn, "& ");
 	}
     } else if (rtf) {
 	pprintf(prn, "\\qc %s\\cell", dset->varname[v]);
 	if (endrow) {
 	    pputs(prn, " \\intbl \\row");
-	} 
+	}
     } else {
 	pprintf(prn, "%*s", width, dset->varname[v]);
     }
@@ -188,7 +188,7 @@ static void VAR_info_end_row (PRN *prn)
     }
 }
 
-static void VAR_info_end_table (PRN *prn)	
+static void VAR_info_end_table (PRN *prn)
 {
     if (tex_format(prn)) {
 	pputs(prn, "\\end{longtable}\n\n");
@@ -199,7 +199,7 @@ static void VAR_info_end_table (PRN *prn)
     }
 }
 
-static int varprint_namelen (const GRETL_VAR *var, 
+static int varprint_namelen (const GRETL_VAR *var,
 			     const DATASET *dset,
 			     int rmax, int block)
 {
@@ -238,13 +238,13 @@ static int varprint_namelen (const GRETL_VAR *var,
  * the equations of the VAR so for example if @shock = 1,
  * the responses are to a shock in the second endogenous
  * variable in the VAR specification.
- * 
+ *
  * Returns: 0 on success, non-zero code on error.
  */
 
-int 
+int
 gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
-				  int periods, const DATASET *dset, 
+				  int periods, const DATASET *dset,
 				  PRN *prn)
 {
     gretl_matrix *rtmp = NULL, *ctmp = NULL;
@@ -262,14 +262,14 @@ gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
     if (shock >= var->neqns) {
 	fprintf(stderr, "Shock variable out of bounds\n");
 	return 1;
-    }  
+    }
 
     if (var->ord != NULL) {
 	C = reorder_responses(var, &err);
 	if (err) {
 	    return err;
 	}
-    } 
+    }
 
     rtmp = gretl_matrix_alloc(rows, var->neqns);
     ctmp = gretl_matrix_alloc(rows, var->neqns);
@@ -364,7 +364,7 @@ gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
     return err;
 }
 
-int gretl_VAR_print_all_impulse_responses (GRETL_VAR *var, const DATASET *dset, 
+int gretl_VAR_print_all_impulse_responses (GRETL_VAR *var, const DATASET *dset,
 					   int horizon, PRN *prn)
 {
     int i, err = 0;
@@ -378,13 +378,13 @@ int gretl_VAR_print_all_impulse_responses (GRETL_VAR *var, const DATASET *dset,
     }
 
     for (i=0; i<var->neqns && !err; i++) {
-	err = gretl_VAR_print_impulse_response(var, i, horizon, dset, 
+	err = gretl_VAR_print_impulse_response(var, i, horizon, dset,
 					       prn);
     }
 
     if (rtf_format(prn)) {
 	pputs(prn, "}\n");
-    }   
+    }
 
     return err;
 }
@@ -401,9 +401,9 @@ int gretl_VAR_print_all_impulse_responses (GRETL_VAR *var, const DATASET *dset,
  * Returns: 0 on success, non-zero code on error.
  */
 
-int 
+int
 gretl_VAR_print_fcast_decomp (GRETL_VAR *var, int targ,
-			      int periods, const DATASET *dset, 
+			      int periods, const DATASET *dset,
 			      PRN *prn)
 {
     int vtarg;
@@ -420,7 +420,7 @@ gretl_VAR_print_fcast_decomp (GRETL_VAR *var, int targ,
     if (targ >= var->neqns) {
 	fprintf(stderr, "Target variable out of bounds\n");
 	return 1;
-    } 
+    }
 
     vd = gretl_VAR_get_fcast_decomp(var, targ, periods, &err);
     if (err) {
@@ -516,7 +516,7 @@ gretl_VAR_print_fcast_decomp (GRETL_VAR *var, int targ,
     return err;
 }
 
-int gretl_VAR_print_all_fcast_decomps (GRETL_VAR *var, const DATASET *dset, 
+int gretl_VAR_print_all_fcast_decomps (GRETL_VAR *var, const DATASET *dset,
 				       int horizon, PRN *prn)
 {
     int i, err = 0;
@@ -530,7 +530,7 @@ int gretl_VAR_print_all_fcast_decomps (GRETL_VAR *var, const DATASET *dset,
     }
 
     for (i=0; i<var->neqns && !err; i++) {
-	err = gretl_VAR_print_fcast_decomp(var, i, horizon, dset, 
+	err = gretl_VAR_print_fcast_decomp(var, i, horizon, dset,
 					   prn);
     }
 
@@ -558,7 +558,7 @@ void print_Johansen_test_case (JohansenCode jcode, PRN *prn)
 	    pputs(prn, _(jcase[jcode]));
 	} else {
 	    pputs(prn, A_(jcase[jcode]));
-	} 
+	}
     }
 }
 
@@ -584,14 +584,14 @@ char *vecm_beta_varname (char *vname,
     return vname;
 }
 
-static int max_beta_namelen (GRETL_VAR *v, 
+static int max_beta_namelen (GRETL_VAR *v,
 			     const DATASET *dset)
 {
     int r = gretl_matrix_rows(v->jinfo->Beta);
     char s[32];
     int i, ni, n = 0;
 
-    for (i=0; i<r; i++) {    
+    for (i=0; i<r; i++) {
 	vecm_beta_varname(s, v, dset, i);
 	ni = strlen(s);
 	if (ni > n) {
@@ -602,9 +602,9 @@ static int max_beta_namelen (GRETL_VAR *v,
     return n;
 }
 
-static void 
-print_VECM_coint_eqns (GRETL_VAR *jvar, 
-		       const DATASET *dset, 
+static void
+print_VECM_coint_eqns (GRETL_VAR *jvar,
+		       const DATASET *dset,
 		       PRN *prn)
 {
     JohansenInfo *jv = jvar->jinfo;
@@ -781,7 +781,7 @@ static void print_VECM_omega (GRETL_VAR *jvar, const DATASET *dset, PRN *prn)
 	    pputs(prn, src);
 	    if (strlen(src) < 8) {
 		pputc(prn, '\t');
-	    }	    
+	    }
 	} else {
 	    pprintf(prn, "%-*s ", w0, vname);
 	}
@@ -816,8 +816,8 @@ static void vecm_print_restrictions (GRETL_VAR *vecm, PRN *prn)
 	pputs(prn, "\n\n");
 	pputs(prn, _("Restrictions on beta:"));
 	pputc(prn, '\n');
-	print_restriction_from_matrices(vecm->jinfo->R, vecm->jinfo->q, 
-					'b', gretl_VECM_n_beta(vecm), 
+	print_restriction_from_matrices(vecm->jinfo->R, vecm->jinfo->q,
+					'b', gretl_VECM_n_beta(vecm),
 					prn);
 	pputc(prn, '\n');
     }
@@ -828,11 +828,11 @@ static void vecm_print_restrictions (GRETL_VAR *vecm, PRN *prn)
 	}
 	pputs(prn, _("Restrictions on alpha:"));
 	pputc(prn, '\n');
-	print_restriction_from_matrices(vecm->jinfo->Ra, vecm->jinfo->qa, 
-					'a', gretl_VECM_n_alpha(vecm), 
+	print_restriction_from_matrices(vecm->jinfo->Ra, vecm->jinfo->qa,
+					'a', gretl_VECM_n_alpha(vecm),
 					prn);
 	pputc(prn, '\n');
-    }	  
+    }
 }
 
 static void print_LR_stat (double x, int df, PRN *prn)
@@ -863,7 +863,7 @@ enum {
     LR_RELATIVE
 };
 
-static void 
+static void
 vecm_print_LR_test (GRETL_VAR *vecm, PRN *prn, int code)
 {
     double ll0, x;
@@ -898,7 +898,7 @@ vecm_print_LR_test (GRETL_VAR *vecm, PRN *prn, int code)
     gretl_prn_newline(prn);
 }
 
-static void 
+static void
 print_vecm_header_info (GRETL_VAR *vecm, int *lldone, PRN *prn)
 {
     JohansenInfo *J = vecm->jinfo;
@@ -907,21 +907,21 @@ print_vecm_header_info (GRETL_VAR *vecm, int *lldone, PRN *prn)
     if (vecm->jinfo == NULL) {
 	return;
     }
-    
+
     pprintf(prn, "%s = %d", A_("Cointegration rank"), jrank(vecm));
     gretl_prn_newline(prn);
-    print_Johansen_test_case(jcode(vecm), prn); 
+    print_Johansen_test_case(jcode(vecm), prn);
 
     if (J->R != NULL || J->Ra != NULL) {
 	vecm_print_restrictions(vecm, prn);
 	if (!na(J->ll0) && J->lrdf > 0) {
 	    vecm_print_LR_test(vecm, prn, LR_TOTAL);
 	    *lldone = 1;
-	} 
+	}
 	if (!na(J->prior_ll) && J->prior_df > 0) {
 	    vecm_print_LR_test(vecm, prn, LR_RELATIVE);
 	    *lldone = 1;
-	} 	
+	}
 	if (!*lldone) {
 	    pputc(prn, '\n');
 	}
@@ -943,7 +943,7 @@ static void VAR_print_LB_stat (const GRETL_VAR *var, PRN *prn)
     if (tex_format(prn)) {
 	pprintf(prn, "\\noindent\n%s: LB(%d) = %g, %s = %d [%.4f]\\par\n",
 		A_("Portmanteau test"), var->LBs, var->LB,
-		A_("df"), df, pv);	    
+		A_("df"), df, pv);
     } else if (rtf_format(prn)) {
 	pprintf(prn, "%s: LB(%d) = %g, %s = %d [%.4f]\\par\n",
 		A_("Portmanteau test"), var->LBs, var->LB,
@@ -1006,7 +1006,7 @@ static int max_Ftest_label_len (GRETL_VAR *var, const DATASET *dset,
  * Returns: 0 on success, 1 on failure.
  */
 
-int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt, 
+int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 		     PRN *prn)
 {
     char startdate[OBSLEN], enddate[OBSLEN];
@@ -1030,7 +1030,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 
     nlags = var_n_lags(var);
     maxlag = var_max_lag(var);
-    
+
     if (var->lags != NULL) {
 	nextlag = var->lags[nlags - 1];
     } else {
@@ -1066,7 +1066,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 		(vecm)? A_("Maximum likelihood") : A_("OLS"), startdate, enddate, var->T);
 	if (vecm) {
 	    print_vecm_header_info(var, &lldone, prn);
-	}	
+	}
 	pputs(prn, "\\par\n\n");
     } else {
 	pprintf(prn, "\n%s\n", label);
@@ -1092,7 +1092,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 	if (!lldone) {
 	    pprintf(prn, "%s = %.8g\\par\n", A_("Log-likelihood"), var->ll);
 	}
-	pprintf(prn, "%s = %.8g\\par\n", A_("Determinant of covariance matrix"), 
+	pprintf(prn, "%s = %.8g\\par\n", A_("Determinant of covariance matrix"),
 		exp(var->ldet));
 	pprintf(prn, "%s = %.4f\\par\n", A_("AIC"), var->AIC);
 	pprintf(prn, "%s = %.4f\\par\n", A_("BIC"), var->BIC);
@@ -1168,7 +1168,9 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 		v = (var->models[j])->list[1];
 		vname = dset->varname[v];
 		if (tex) {
-		    pprintf(prn, A_("All lags of %s"), vname);
+		    char tname[32];
+
+		    pprintf(prn, A_("All lags of %s"), tex_escape(tname, vname));
 		    pputs(prn, " & ");
 		    pprintf(prn, "$F(%d, %d) = %g$ & ", nlags, dfd, Fval);
 		    pprintf(prn, "[%.4f]\\\\\n", pv);
@@ -1228,7 +1230,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 		  "\\clearpage\n\n");
 	} else if (rtf) {
 	    pputs(prn, "\\par\\n\n");
-	} 
+	}
     }
 
     /* global LR test on max lag */
@@ -1254,7 +1256,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 	    pprintf(prn, "\\par %s\n", A_("For the system as a whole"));
 	    pprintf(prn, "\\par %s: %s\n", A_("Null hypothesis"), h0str);
 	    pprintf(prn, "\\par %s: %s\n", A_("Alternative hypothesis"), h1str);
-	    pprintf(prn, "\\par %s: %s(%d) = %g [%.4f]\n", A_("Likelihood ratio test"), 
+	    pprintf(prn, "\\par %s: %s(%d) = %g [%.4f]\n", A_("Likelihood ratio test"),
 		    A_("Chi-square"), df, var->LR, pv);
 	} else {
 	    int ordlen = (var->order > 10)? 2 : 1;
@@ -1262,18 +1264,18 @@ int gretl_VAR_print (GRETL_VAR *var, const DATASET *dset, gretlopt opt,
 	    pprintf(prn, "%s:\n\n", _("For the system as a whole"));
 	    pprintf(prn, "  %s: %s\n", _("Null hypothesis"), h0str);
 	    pprintf(prn, "  %s: %s\n", _("Alternative hypothesis"), h1str);
-	    pprintf(prn, "  %s: %s(%d) = %g [%.4f]\n", _("Likelihood ratio test"), 
+	    pprintf(prn, "  %s: %s(%d) = %g [%.4f]\n", _("Likelihood ratio test"),
 		    _("Chi-square"), df, var->LR, pv);
 	    if (Ivals_ok(var)) {
 		/* Info criteria comparison */
 		pprintf(prn, "\n  %s:\n", _("Comparison of information criteria"));
 		pputs(prn, "  ");
 		pprintf(prn, _("Lag order %*d"), ordlen, var->order);
-		pprintf(prn, ": AIC = %#.6g, BIC = %#.6g, HQC = %#.6g\n", 
+		pprintf(prn, ": AIC = %#.6g, BIC = %#.6g, HQC = %#.6g\n",
 			var->AIC, var->BIC, var->HQC);
 		pputs(prn, "  ");
 		pprintf(prn, _("Lag order %*d"), ordlen, var->order - 1);
-		pprintf(prn, ": AIC = %#.6g, BIC = %#.6g, HQC = %#.6g\n", 
+		pprintf(prn, ": AIC = %#.6g, BIC = %#.6g, HQC = %#.6g\n",
 			var->Ivals[0], var->Ivals[1], var->Ivals[2]);
 	    }
 	}
