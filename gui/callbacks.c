@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* callbacks.c for gretl */
@@ -52,7 +52,7 @@ static void doubleclick_action (windata_t *vwin)
 	browser_call_func(NULL, vwin);
 	break;
     case NATIVE_DB:
-	open_db_index(NULL, vwin); 
+	open_db_index(NULL, vwin);
 	break;
     case REMOTE_DB:
 	open_remote_db_index(NULL, vwin);
@@ -96,7 +96,7 @@ void listbox_select_row (GtkTreeSelection *selection, gpointer data)
 gint listbox_double_click (GtkWidget *widget, GdkEventButton *event,
 			   windata_t *win)
 {
-    if (event != NULL && event->type == GDK_2BUTTON_PRESS 
+    if (event != NULL && event->type == GDK_2BUTTON_PRESS
 	&& event->button == 1) {
 	doubleclick_action(win);
     }
@@ -119,8 +119,8 @@ gboolean listbox_drag (GtkWidget *listbox, GdkEventMotion *event,
         state = event->state;
     }
 
-    if ((state & GDK_BUTTON1_MASK) && 
-	gtk_tree_view_get_path_at_pos(view, x, y, &path, 
+    if ((state & GDK_BUTTON1_MASK) &&
+	gtk_tree_view_get_path_at_pos(view, x, y, &path,
 				      NULL, NULL, NULL)) {
 	GtkTreeSelection *select = NULL;
 	GtkTreePath *anchor_path = NULL;
@@ -129,7 +129,7 @@ gboolean listbox_drag (GtkWidget *listbox, GdkEventMotion *event,
 	int anchor;
 	static gint lastrow;
 
-	anchor = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(listbox), 
+	anchor = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(listbox),
 						   "active_row"));
 	row = tree_path_get_row_number(path);
 
@@ -162,7 +162,7 @@ struct open_data_code {
 };
 
 struct open_data_code open_data_codes[] = {
-    { OPEN_DATA,       "OpenData" },    
+    { OPEN_DATA,       "OpenData" },
     { APPEND_DATA,     "AppendData" },
     { OPEN_MARKERS,    "AddMarkers" },
     { OPEN_RATS_DB,    "RATSDB" },
@@ -286,8 +286,8 @@ static int model_action_code (GtkAction *action)
 void fit_resid_callback (GtkAction *action, gpointer data)
 {
     const gchar *s = gtk_action_get_name(action);
-    windata_t *vwin = (windata_t *) data; 
-    int code = M_UHAT; 
+    windata_t *vwin = (windata_t *) data;
+    int code = M_UHAT;
 
     if (!strcmp(s, "yhat")) {
 	code = M_YHAT;
@@ -304,14 +304,16 @@ void fit_resid_callback (GtkAction *action, gpointer data)
     save_fit_resid(vwin, code);
 }
 
-/* callback for adding a scalar from a model */
+/* callback for adding a scalar from a model, also
+   pressed into service for saving a model as bundle
+*/
 
 void model_stat_callback (GtkAction *action, gpointer data)
 {
     const gchar *s = gtk_action_get_name(action);
-    windata_t *vwin = (windata_t *) data; 
+    windata_t *vwin = (windata_t *) data;
     MODEL *pmod = vwin->data;
-    int code = M_ESS; 
+    int code = M_ESS;
 
     if (!strcmp(s, "ess")) {
 	code = M_ESS;
@@ -331,6 +333,8 @@ void model_stat_callback (GtkAction *action, gpointer data)
 	code = M_BIC;
     } else if (!strcmp(s, "HQC")) {
 	code = M_HQC;
+    } else if (!strcmp(s, "bundle")) {
+	code = B_MODEL;
     }
 
     add_model_stat(pmod, code, vwin);
@@ -389,7 +393,7 @@ static int have_midas_data (void)
     return got_midas;
 }
 
-void model_callback (GtkAction *action, gpointer data) 
+void model_callback (GtkAction *action, gpointer data)
 {
     int code = model_action_code(action);
 
@@ -404,11 +408,11 @@ void model_genr_callback (GtkAction *action, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
 
-    edit_dialog(MODEL_GENR, _("gretl: add var"), 
+    edit_dialog(MODEL_GENR, _("gretl: add var"),
 		_("Enter formula for new variable:"),
-		"", do_model_genr, vwin, 
-		VARCLICK_INSERT_NAME, 
-		vwin_toplevel(vwin));   
+		"", do_model_genr, vwin,
+		VARCLICK_INSERT_NAME,
+		vwin_toplevel(vwin));
 }
 
 static int selector_callback_code (const gchar *s)
@@ -496,19 +500,19 @@ void selector_callback (GtkAction *action, gpointer data)
 	}
 	selection_dialog(ci, _("gretl: define graph"), NULL, selfunc);
     } else if (ci == ADD || ci == OMIT) {
-	simple_selection_for_viewer(ci, _("gretl: model tests"), 
+	simple_selection_for_viewer(ci, _("gretl: model tests"),
 				    do_add_omit, vwin);
     } else if (ci == VAROMIT) {
-	simple_selection_for_viewer(ci, _("gretl: model tests"), 
+	simple_selection_for_viewer(ci, _("gretl: model tests"),
 				    do_VAR_omit, vwin);
     } else if (ci == COEFFSUM) {
-	simple_selection_for_viewer(ci, _("gretl: model tests"), 
+	simple_selection_for_viewer(ci, _("gretl: model tests"),
 				    do_coeff_sum, vwin);
     } else if (ci == ELLIPSE) {
-	simple_selection_for_viewer(ci, _("gretl: model tests"), 
+	simple_selection_for_viewer(ci, _("gretl: model tests"),
 				    do_confidence_region, vwin);
     } else if (ci == GR_PLOT) {
-	simple_selection(ci, _("gretl: define graph"), do_graph_from_selector, 
+	simple_selection(ci, _("gretl: define graph"), do_graph_from_selector,
 			 NULL);
     } else if (ci == TSPLOTS) {
 	simple_selection(ci, _("gretl: define graph"), do_scatters, NULL);
@@ -516,7 +520,7 @@ void selector_callback (GtkAction *action, gpointer data)
 	simple_selection(ci, _("gretl: define graph"), do_regular_boxplot, NULL);
     } else if (ci == LOESS || ci == NADARWAT) {
 	char title[64];
-	
+
 	strcpy(title, "gretl: ");
 	strcat(title, (ci == LOESS)? _("Loess") : _("Nadaraya-Watson"));
 	selection_dialog(ci, title, NULL, do_nonparam_model);
@@ -527,25 +531,25 @@ void selector_callback (GtkAction *action, gpointer data)
 
 static int gretl_callback_code (const gchar *s)
 {
-    if (!strcmp(s, "SampleRestrict")) 
+    if (!strcmp(s, "SampleRestrict"))
 	return SMPLBOOL;
-    if (!strcmp(s, "GENR")) 
+    if (!strcmp(s, "GENR"))
 	return GENR;
-    if (!strcmp(s, "VSETMISS")) 
+    if (!strcmp(s, "VSETMISS"))
 	return VSETMISS;
-    if (!strcmp(s, "GSETMISS")) 
+    if (!strcmp(s, "GSETMISS"))
 	return GSETMISS;
-    if (!strcmp(s, "gmm")) 
+    if (!strcmp(s, "gmm"))
 	return GMM;
-    if (!strcmp(s, "mle")) 
+    if (!strcmp(s, "mle"))
 	return MLE;
-    if (!strcmp(s, "nls")) 
+    if (!strcmp(s, "nls"))
 	return NLS;
-    if (!strcmp(s, "system")) 
+    if (!strcmp(s, "system"))
 	return SYSTEM;
-    if (!strcmp(s, "restrict")) 
+    if (!strcmp(s, "restrict"))
 	return RESTRICT;
-    if (!strcmp(s, "MINIBUF")) 
+    if (!strcmp(s, "MINIBUF"))
 	return MINIBUF;
     return 0;
 }
@@ -582,7 +586,7 @@ void gretl_callback (GtkAction *action, gpointer data)
     case VSETMISS:
 	title = N_("gretl: missing code");
 	dynquery = g_strdup_printf(_("Enter value to be read as \"missing\"\n"
-				     "for the variable \"%s\""), 
+				     "for the variable \"%s\""),
 				   dataset->varname[mdata->active_var]);
 	okfunc = do_variable_setmiss;
 	break;
@@ -597,21 +601,21 @@ void gretl_callback (GtkAction *action, gpointer data)
 	okfunc = do_gmm_model;
 	click = VARCLICK_INSERT_TEXT;
 	data = NULL;
-	break;	
+	break;
     case MLE:
 	title = N_("gretl: maximum likelihood");
 	query = N_("MLE: Specify function, and derivatives if possible:");
 	okfunc = do_mle_model;
 	click = VARCLICK_INSERT_TEXT;
 	data = NULL;
-	break;	
+	break;
     case NLS:
 	title = N_("gretl: nonlinear least squares");
 	query = N_("NLS: Specify function, and derivatives if possible:");
 	okfunc = do_nls_model;
 	click = VARCLICK_INSERT_TEXT;
 	data = NULL;
-	break;	
+	break;
     case SYSTEM:
 	title = N_("gretl: simultaneous equations system");
 	query = N_("Specify simultaneous equations:");
@@ -624,24 +628,24 @@ void gretl_callback (GtkAction *action, gpointer data)
 	query = N_("Specify restrictions:");
 	okfunc = do_restrict;
 	parent = vwin_toplevel(vwin);
-	break;	
+	break;
     case MINIBUF:
 	title = N_("gretl: command entry");
 	query = N_("Type a command:");
 	okfunc = do_minibuf;
-	break;	
+	break;
     default:
-	fprintf(stderr, "gretl_callback: unrecognized action '%s'\n", 
+	fprintf(stderr, "gretl_callback: unrecognized action '%s'\n",
 	       gtk_action_get_name(action));
 	return;
     }
 
     if (dynquery != NULL) {
-	edit_dialog(ci, _(title), dynquery, defstr, okfunc, data, 
+	edit_dialog(ci, _(title), dynquery, defstr, okfunc, data,
 		    click, parent);
 	g_free(dynquery);
     } else {
-	edit_dialog(ci, _(title), _(query), defstr, okfunc, data, 
+	edit_dialog(ci, _(title), _(query), defstr, okfunc, data,
 		    click, parent);
     }
 }
@@ -655,7 +659,7 @@ void menu_boxplot_callback (int varnum)
     };
     int ret;
 
-    ret = radio_dialog(_("gretl: define graph"), NULL, 
+    ret = radio_dialog(_("gretl: define graph"), NULL,
 		       opts, 3, 0, 0, NULL);
 
     if (ret == 0) {
@@ -664,7 +668,7 @@ void menu_boxplot_callback (int varnum)
 	do_boxplot_var(varnum, OPT_O);
     } else if (ret == 2) {
 	selector_set_varnum(varnum);
-	selection_dialog(GR_FBOX, _("gretl: define graph"), 
+	selection_dialog(GR_FBOX, _("gretl: define graph"),
 			 NULL, do_factorized_boxplot);
     }
 }
@@ -686,30 +690,30 @@ void revise_nl_model (MODEL *pmod, GtkWidget *parent)
 	title = N_("gretl: GMM");
 	query = N_("GMM: Specify function and orthogonality conditions:");
 	okfunc = do_gmm_model;
-	break;	
+	break;
     case MLE:
 	title = N_("gretl: maximum likelihood");
 	query = N_("MLE: Specify function, and derivatives if possible:");
 	okfunc = do_mle_model;
-	break;	
+	break;
     case NLS:
 	title = N_("gretl: nonlinear least squares");
 	query = N_("NLS: Specify function, and derivatives if possible:");
 	okfunc = do_nls_model;
-	break;	
+	break;
     }
 
     defstr = gretl_model_get_data(pmod, "nlinfo");
 
-    edit_dialog(pmod->ci, _(title), _(query), defstr, okfunc, pmod, 
-		VARCLICK_INSERT_TEXT, parent);   
+    edit_dialog(pmod->ci, _(title), _(query), defstr, okfunc, pmod,
+		VARCLICK_INSERT_TEXT, parent);
 }
 
 void revise_system_model (void *ptr, GtkWidget *parent)
 {
     equation_system *sys = (equation_system *) ptr;
 
-    edit_dialog(SYSTEM, _("gretl: simultaneous equations system"), 
+    edit_dialog(SYSTEM, _("gretl: simultaneous equations system"),
 		_("Specify simultaneous equations:"), NULL,
 		do_eqn_system, sys,
 		VARCLICK_INSERT_TEXT,
@@ -728,19 +732,19 @@ void genr_callback (void)
     }
 
     edit_dialog(GENR, _("gretl: add var"), _(msg),
-		NULL, do_genr, NULL, 
-		VARCLICK_INSERT_NAME, NULL);   
+		NULL, do_genr, NULL,
+		VARCLICK_INSERT_NAME, NULL);
 }
 
 void minibuf_callback (void)
 {
     edit_dialog(MINIBUF, _("gretl: command entry"),
-		_("Type a command:"), NULL, 
-		do_minibuf, NULL, 
-		VARCLICK_NONE, NULL);   
+		_("Type a command:"), NULL,
+		do_minibuf, NULL,
+		VARCLICK_NONE, NULL);
 }
 
-void newdata_callback (void) 
+void newdata_callback (void)
 {
     int resp, n = 50;
 
@@ -748,8 +752,8 @@ void newdata_callback (void)
 	return;
     }
 
-    resp = spin_dialog(_("gretl: create data set"), NULL, &n, 
-		       _("Number of observations:"), 
+    resp = spin_dialog(_("gretl: create data set"), NULL, &n,
+		       _("Number of observations:"),
 		       2, 1000000, 0, NULL);
 
     if (resp < 0) {
@@ -789,7 +793,7 @@ void edit_gfn_callback (void)
     if (n_opts > 1) {
 	const char *opts[n_opts];
 	int resp;
-	
+
 	if (edit_sys_ok && edit_dot_ok) {
 	    opts[0] = N_("system gfn directory");
 	    opts[1] = N_("personal gfn directory");
@@ -800,8 +804,8 @@ void edit_gfn_callback (void)
 	} else if (edit_dot_ok) {
 	    opts[0] = N_("personal gfn directory");
 	    opts[1] = N_("current working directory");
-	}	    
-	    
+	}
+
 	resp = radio_dialog(_("Open .gfn file"), _("Start looking in:"),
 			    opts, n_opts, 0, 0, NULL);
 	if (resp < 0) {
@@ -904,11 +908,11 @@ static int nist_verbosity (GtkAction *action)
 {
     const gchar *s = gtk_action_get_name(action);
 
-    if (!strcmp(s, "NistVVerbose")) 
+    if (!strcmp(s, "NistVVerbose"))
 	return 2;
-    else if (!strcmp(s, "NistVerbose")) 
+    else if (!strcmp(s, "NistVerbose"))
 	return 1;
-    else 
+    else
 	return 0;
 }
 
@@ -917,7 +921,7 @@ void do_nistcheck (GtkAction *action)
     int (*run_nist_tests)(const char *, const char *, int);
     gchar *datadir = NULL;
     gchar *fname = NULL;
-    
+
     run_nist_tests = gui_get_plugin_function("run_nist_tests");
     if (run_nist_tests == NULL) {
 	return;

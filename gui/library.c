@@ -6667,6 +6667,22 @@ static void set_scalar_name (GtkWidget *widget, dialog_t *dlg)
     }
 }
 
+static void set_bundle_name (GtkWidget *widget, dialog_t *dlg)
+{
+    char *vname = (char *) edit_dialog_get_data(dlg);
+    GtkWidget *parent = edit_dialog_get_window(dlg);
+    const gchar *s = edit_dialog_get_text(dlg);
+
+    if (s == NULL || gui_validate_varname(s,
+					  GRETL_TYPE_BUNDLE,
+					  parent)) {
+	edit_dialog_reset(dlg);
+    } else {
+	strcpy(vname, s);
+	edit_dialog_close(dlg);
+    }
+}
+
 void add_model_stat (MODEL *pmod, int which, windata_t *vwin)
 {
     char vname[VNAMELEN];
@@ -6674,7 +6690,7 @@ void add_model_stat (MODEL *pmod, int which, windata_t *vwin)
     const char *descrip = NULL;
     const char *statname = NULL;
     gchar *blurb;
-    int cancel = 0;
+    int err = 0, cancel = 0;
 
     switch (which) {
     case M_ESS:
@@ -6722,6 +6738,9 @@ void add_model_stat (MODEL *pmod, int which, windata_t *vwin)
 	val = pmod->criterion[C_HQC];
 	statname = "$hqc";
 	break;
+    case B_MODEL:
+	statname = "$model";
+	break;
     default:
 	dummy_call();
 	return;
@@ -6729,23 +6748,42 @@ void add_model_stat (MODEL *pmod, int which, windata_t *vwin)
 
     sprintf(vname, "%s_%d", statname + 1, pmod->ID);
 
-    blurb = g_strdup_printf(_("Statistic from model %d\n"
-			      "%s (value = %g)\n"
-			      "Name (max. %d characters):"),
-			    pmod->ID, _(descrip), val,
-			    VNAMELEN -1);
-
-    blocking_edit_dialog(0, _("add scalar"), blurb, vname,
-			 set_scalar_name, vname, VARCLICK_NONE,
-			 vwin_toplevel(vwin), &cancel);
+    if (which == B_MODEL) {
+	blurb = g_strdup_printf(_("Bundle from model %d\n"
+				  "Name (max. %d characters):"),
+				pmod->ID, VNAMELEN -1);
+	blocking_edit_dialog(0, _("add bundle"), blurb, vname,
+			     set_bundle_name, vname, VARCLICK_NONE,
+			     vwin_toplevel(vwin), &cancel);
+    } else {
+	blurb = g_strdup_printf(_("Statistic from model %d\n"
+				  "%s (value = %g)\n"
+				  "Name (max. %d characters):"),
+				pmod->ID, _(descrip), val,
+				VNAMELEN -1);
+	blocking_edit_dialog(0, _("add scalar"), blurb, vname,
+			     set_scalar_name, vname, VARCLICK_NONE,
+			     vwin_toplevel(vwin), &cancel);
+    }
 
     g_free(blurb);
 
     if (!cancel) {
-	int err = gretl_scalar_add(vname, val);
+	const char *tstr;
 
+	if (which == B_MODEL) {
+	    gretl_bundle *b = bundle_from_model(pmod, dataset, &err);
+
+	    if (!err) {
+		err = user_var_add_or_replace(vname, GRETL_TYPE_BUNDLE, b);
+		tstr = "bundle";
+	    }
+	} else {
+	    err = gretl_scalar_add(vname, val);
+	    tstr = "scalar";
+	}
 	if (!err) {
-	    lib_command_sprintf("scalar %s = %s", vname, statname);
+	    lib_command_sprintf("%s %s = %s", tstr, vname, statname);
 	    record_model_command_verbatim(pmod->ID);
 	    if (autoicon_on()) {
 		view_session();
@@ -6753,8 +6791,8 @@ void add_model_stat (MODEL *pmod, int which, windata_t *vwin)
 	}
     }
 
-    /* note: since this is a scalar, which will not be saved by
-       default on File/Save data, we will not mark the data set
+    /* note: since this is a scalar or bundle, which will not be saved
+       by default on File/Save data, we will not mark the data set
        as "modified" here */
 }
 

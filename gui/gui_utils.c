@@ -464,7 +464,7 @@ void set_wait_cursor (GdkWindow **pcwin)
 
     if (*pcwin == NULL) {
 	gint x, y;
-	
+
 	*pcwin = w = gdk_display_get_window_at_pointer(disp, &x, &y);
     } else {
 	w = *pcwin;
@@ -2965,6 +2965,8 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 }
 
 static GtkActionEntry model_data_base_items[] = {
+    { "bundle", NULL, N_("_Model as bundle"), NULL, NULL,
+      G_CALLBACK(model_stat_callback) },
     { "yhat", NULL, N_("_Fitted values"), NULL, NULL,
       G_CALLBACK(fit_resid_callback) },
     { "uhat", NULL, N_("_Residuals"), NULL, NULL,
