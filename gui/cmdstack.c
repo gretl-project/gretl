@@ -104,7 +104,6 @@ void view_command_log (void)
 	}
 
 	if (!err) {
-	    /* get text buffer from the tempfile */
 	    logbuf = gretl_print_read_tempfile(logprn, &err);
 	}
 
@@ -174,7 +173,7 @@ static int session_logfile_init (void)
     char timestr[64];
     FILE *fp;
 
-    fp = gretl_fopen(logname, "a");
+    fp = gretl_fopen(logname, "a+");
     if (fp == NULL) {
 	return E_FOPEN;
     }

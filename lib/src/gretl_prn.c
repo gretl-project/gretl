@@ -1647,9 +1647,8 @@ int gretl_print_alloc (PRN *prn, size_t s)
  * @prn: gretl printing struct.
  * @err: location to receive error code.
  *
- * Retrieves a copy of the content of @prn, if it takes
- * the form of a temporary file that has been opened
- * in "w+" mode.
+ * Retrieves a copy of the content of @prn, if it takes the
+ * form of a file that has been opened in "w+" or "a+" mode.
  *
  * Returns: allocated buffer, or NULL on failure.
  */
@@ -1660,7 +1659,7 @@ char *gretl_print_read_tempfile (PRN *prn, int *err)
     long pos0;
     char *buf = NULL;
 
-    if (prn == NULL || prn->fp == NULL || prn->fname == NULL) {
+    if (prn == NULL || prn->fp == NULL) {
 	fprintf(stderr, "gretl_print_read_tempfile: no temp file to read!\n");
 	*err = E_DATA;
 	return NULL;
