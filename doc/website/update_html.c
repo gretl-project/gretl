@@ -4,7 +4,7 @@
 #include <time.h>
 #include <locale.h>
 
-#define MYLEN 96
+#define MYLEN 256
 #define HTMLLEN 1024
 #define BUFFER_SIZE 4096
 
@@ -45,6 +45,7 @@ struct _gretl_version {
     int minor;
     int rev;
     char letter;
+    char pre;
 };
 
 struct lang_strings_t lang_strings[NLANGS];
@@ -92,14 +93,14 @@ int read_lang_info (const char *s, int i)
 
     if (!err) {
 	if (!strcmp(pat, "LONGDATE")) {
-	    printf("got '%s' for '%s' (lang=%s)\n", 
+	    printf("got '%s' for '%s' (lang=%s)\n",
 		   lang_strings[i].longdate,
 		   pat, lang_strings[i].lang);
 	} else if (!strcmp(pat, "SHORTDATE")) {
-	    printf("got '%s' for '%s' (lang=%s)\n", 
+	    printf("got '%s' for '%s' (lang=%s)\n",
 		   lang_strings[i].shortdate,
 		   pat, lang_strings[i].lang);
-	}	    
+	}
     }
 
     return err;
@@ -123,7 +124,7 @@ int read_subst_file_full (const char *fname)
 	if (!strncmp(line, "lang = ", 7)) {
 	    char lang[8];
 	    int i;
-	    
+
 	    sscanf(line + 7, "%7s", lang);
 	    for (i=0; i<NLANGS; i++) {
 		if (!strcmp(lang, lang_strings[i].lang)) {
@@ -262,7 +263,7 @@ int make_subst_file (const char *fname, const char *verstr,
 	    err = get_intl_progdate(progdate, i);
 	} else {
 	    char langbit[32];
-	    
+
 	    if (!strcmp(lang_strings[i].lang, "en_US")) {
 		*langbit = '\0';
 	    } else {
@@ -286,17 +287,17 @@ int make_subst_file (const char *fname, const char *verstr,
     return err;
 }
 
-int copyfile (const char *src, const char *dest, int append) 
+int copyfile (const char *src, const char *dest, int append)
 {
     FILE *srcfd, *destfd;
     char buf[BUFFER_SIZE];
     size_t n;
 
     if (!strcmp(src, dest)) return 1;
-   
+
     if ((srcfd = fopen(src, "rb")) == NULL) {
         fprintf(stderr, "Couldn't open %s\n", src);
-        return 1; 
+        return 1;
     }
 
     if (append) {
@@ -323,7 +324,7 @@ int copyfile (const char *src, const char *dest, int append)
 
 static int mstr_to_mon (const char *s)
 {
-    const char *months[] = { 
+    const char *months[] = {
 	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     };
@@ -370,7 +371,7 @@ int get_info_from_subst_file (const char *fname, char *verstr,
 		sprintf(progdate, "%d.%02d.%02d", yr, mon, day);
 		n_read++;
 	    }
-	} 
+	}
     }
 
     fclose(fp);
@@ -429,7 +430,7 @@ int make_substitutions (char *line, int lang, char *verstr)
 	strcpy(save, p + strlen("LONGDATE"));
 	strcpy(p, sub);
 	strcpy(p + strlen(sub), save);
-    }    
+    }
 
     p = line;
     while ((p = strstr(p, "SHORTDATE")) != NULL) {
@@ -438,7 +439,7 @@ int make_substitutions (char *line, int lang, char *verstr)
 	strcpy(p, sub);
 	strcpy(p + strlen(sub), save);
     }
-    
+
     return 0;
 }
 
@@ -519,7 +520,7 @@ int process_templates (char *verstr)
 	{ "gretl_turkish_pat.html",   "tr.html" },
 	{ "win32_pat_tr.html",        "win32/index_tr.html" },
 	{ "osx_pat_tr.html",          "osx_tr.html" },
-	{ "gretl_russian_pat.html",   "ru.html" }, 
+	{ "gretl_russian_pat.html",   "ru.html" },
 	{ NULL, NULL }
     };
     struct from_to *ptr = templates;
@@ -529,13 +530,13 @@ int process_templates (char *verstr)
 
     while (ptr->src != NULL && !err) {
 
-	/* take source from git-controlled directory; write 
+	/* take source from git-controlled directory; write
 	   output to web directory */
 
 	sprintf(fullsrc, "%s/template/%s", WEBSRC, ptr->src);
 	sprintf(fulltarg, "%s/%s", WEBDIR, ptr->targ);
 
-	fprintf(stderr, "substituting from\n %s to\n %s\n", 
+	fprintf(stderr, "substituting from\n %s to\n %s\n",
 		fullsrc, fulltarg);
 
 	err = copy_substitute(fullsrc, fulltarg, verstr);
@@ -546,7 +547,7 @@ int process_templates (char *verstr)
 	    ptr++;
 	}
     }
-    
+
     return err;
 }
 
@@ -560,17 +561,30 @@ int version_history (char *fname, gretl_version *versions)
     clog = fopen(fname, "r");
 
     while (fgets(line, MYLEN, clog)) {
-	ret = sscanf(line, "%d-%d-%d version %d.%d.%d\n", 
+	ret = sscanf(line, "%d-%d-%d version %d.%d.%d\n",
 		     &year, &mon, &day, &M, &m, &r);
 	if (ret == 6) {
 	    versions[n].major = M;
 	    versions[n].minor = m;
 	    versions[n].rev = r;
 	    versions[n].letter = 0;
+	    versions[n].pre = 0;
+	    n++;
+	} else if (ret == 5 && year == 2002 && mon >= 9 && (mon < 11 || day <= 15)) {
+	    /* version 1.0 and its pre-releases */
+	    versions[n].major = 1;
+	    versions[n].minor = 0;
+	    versions[n].rev = 0;
+	    versions[n].letter = 0;
+	    if (mon == 11 && day == 15) {
+		versions[n].pre = 0;
+	    } else {
+		versions[n].pre = line[25];
+	    }
 	    n++;
 	} else {
 	    char c;
-	    
+
 	    ret = sscanf(line, "%d-%d-%d version %d%c\n",
 			 &year, &mon, &day, &M, &c);
 	    if (ret == 5 && M >= 2015) {
@@ -578,6 +592,7 @@ int version_history (char *fname, gretl_version *versions)
 		versions[n].minor = 0;
 		versions[n].rev = 0;
 		versions[n].letter = c;
+		versions[n].pre = 0;
 		n++;
 	    }
 	}
@@ -609,7 +624,7 @@ void bug_print_line (char *s, FILE *fp)
 		/* old-style SF bug reference */
 		sscanf(s, "%d", &bnum);
 		fprintf(fp, "<a href=\"http://sourceforge.net/tracker/index.php?"
-			"func=detail&aid=%d&group_id=36234&atid=416803\">%d</a>", 
+			"func=detail&aid=%d&group_id=36234&atid=416803\">%d</a>",
 			bnum, bnum);
 		s += n;
 	    } else if (n > 0) {
@@ -630,7 +645,7 @@ void bug_print_line (char *s, FILE *fp)
 
 void write_changelog (char *src, char *targ, gretl_version *gv, int nv)
 {
-    int ret, M, m, r, i;
+    int ns, M, m, r, p, i;
     FILE *fin;
     FILE *fout;
     char c, line[MYLEN];
@@ -649,13 +664,16 @@ void write_changelog (char *src, char *targ, gretl_version *gv, int nv)
 	m = gv[i].minor;
 	r = gv[i].rev;
 	c = gv[i].letter;
+	p = gv[i].pre;
 
 	if (c != 0) {
 	    fprintf(fout, "<a href=\"#v%d%c\">", M, c);
-	} else {
+	} else if (p == 0) {
 	    fprintf(fout, "<a href=\"#v%d-%d-%d\">", M, m, r);
+	} else {
+	    fprintf(fout, "<a href=\"#v1pre%c\">", p);
 	}
-	
+
 	if (i == 0) {
 	    if (c != 0) {
 		fprintf(fout, "Version %d%c</a>&nbsp&nbsp;\n", M, c);
@@ -664,9 +682,11 @@ void write_changelog (char *src, char *targ, gretl_version *gv, int nv)
 	    }
         } else {
 	    if (c != 0) {
-		fprintf(fout, "Version %d%c</a>\n", M,c);
-	    } else {
+		fprintf(fout, "Version %d%c</a>\n", M, c);
+	    } else if (p == 0) {
 		fprintf(fout, "Version %d.%d.%d</a>\n", M, m, r);
+	    } else {
+		fprintf(fout, "Version 1.0pre%c</a>\n", p);
 	    }
         }
     }
@@ -674,30 +694,43 @@ void write_changelog (char *src, char *targ, gretl_version *gv, int nv)
     fputs("</pre>\n</td>\n<td valign=\"top\">\n<pre>\n", fout);
 
     while (fgets(line, MYLEN, fin)) {
+	int doparen = 1;
 	int err = 0;
-	
-	ret = sscanf(line, "%d-%d-%d version %d.%d.%d\n", 
-		     &year, &mon, &day, &M, &m, &r);
-	if (ret == 6) {
-	    fprintf(fout, "<b><a name=\"v%d-%d-%d\">", M, m, r); 
-	    fprintf(fout, " %d-%02d-%02d Version %d.%d.%d</a></b>", 
+
+	ns = sscanf(line, "%d-%d-%d version %d.%d.%d\n",
+		    &year, &mon, &day, &M, &m, &r);
+	if (ns == 6) {
+	    fprintf(fout, "<b><a name=\"v%d-%d-%d\">", M, m, r);
+	    fprintf(fout, " %d-%02d-%02d Version %d.%d.%d</a></b>",
 		    year, mon, day, M, m, r);
+	} else if (ns == 5 && year == 2002 && mon >= 9 && (mon < 11 || day <= 15)) {
+	    /* 1.0 and its pre-releases */
+	    if (mon == 11 && day == 15) {
+		fprintf(fout, "<b><a name=\"v1-0-0\">");
+		fprintf(fout, " %d-%02d-%02d Version 1.0</a></b>",
+			year, mon, day);
+	    } else {
+		fprintf(fout, "<b><a name=\"v1pre%c\">", line[25]);
+		fprintf(fout, " %d-%02d-%02d Version 1.0pre%c</a></b>",
+			year, mon, day, line[25]);
+	    }
+	    doparen = 0;
 	} else {
-	    ret = sscanf(line, "%d-%d-%d version %d%c\n", 
-			 &year, &mon, &day, &M, &c);
-	    if (ret == 5) {
+	    ns = sscanf(line, "%d-%d-%d version %d%c\n",
+			&year, &mon, &day, &M, &c);
+	    if (ns == 5) {
 		if (M == 0 && c == '.') {
 		    /* very old versions */
 		    char tail[8];
-		    
+
 		    sscanf(line, "%d-%d-%d version %s",
 			   &year, &mon, &day, tail);
-		    fprintf(fout, "<b><a name=\"v%s\">", tail); 
-		    fprintf(fout, " %d-%02d-%02d Version %s</a></b>", 
+		    fprintf(fout, "<b><a name=\"v%s\">", tail);
+		    fprintf(fout, " %d-%02d-%02d Version %s</a></b>",
 			    year, mon, day, tail);
 		} else {
-		    fprintf(fout, "<b><a name=\"v%d%c\">", M, c); 
-		    fprintf(fout, " %d-%02d-%02d Version %d%c</a></b>", 
+		    fprintf(fout, "<b><a name=\"v%d%c\">", M, c);
+		    fprintf(fout, " %d-%02d-%02d Version %d%c</a></b>",
 			    year, mon, day, M, c);
 		}
 	    } else {
@@ -706,10 +739,12 @@ void write_changelog (char *src, char *targ, gretl_version *gv, int nv)
 	    }
 	}
 	if (!err) {
-	    char *p = strchr(line, '(');
+	    if (doparen) {
+		char *p = strchr(line, '(');
 
-	    if (p != NULL) {
-		fprintf(fout, " %.7s", p);
+		if (p != NULL) {
+		    fprintf(fout, " %.7s", p);
+		}
 	    }
 	    fputs(" [<a href=\"#top\">Back to top</a>]\n", fout);
 	}
@@ -926,7 +961,7 @@ int main (int argc, char **argv)
     if (!err) {
 	err = make_html_log(BACKWARD_LOG);
     }
-    
+
     if (!err) {
 	err = make_gretldata_dtd_page();
     }
