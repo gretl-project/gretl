@@ -170,6 +170,8 @@ char *gretl_get_gdt_description (const char *fname, int *err);
 
 int load_XML_functions_file (const char *fname, gretlopt opt, PRN *prn);
 
+char *gretl_XML_escape (const char *s);
+
 #ifndef __GTK_DOC_IGNORE__
 
 void gretl_xml_init (void);

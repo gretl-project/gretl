@@ -3296,11 +3296,19 @@ int equation_system_serialize (equation_system *sys,
 			       SavedObjectFlags flags,
 			       FILE *fp)
 {
+    char *xmlname = NULL;
     int tsls_style = 0;
     int i, err = 0;
 
+    if (sys->name == NULL || *sys->name == '\0') {
+	xmlname = gretl_strdup("none");
+    } else {
+	xmlname = gretl_xml_encode(sys->name);
+    }
+
     fprintf(fp, "<gretl-equation-system name=\"%s\" saveflags=\"%d\" method=\"%d\" ",
-	    (sys->name != NULL)? sys->name : "none", flags, sys->method);
+	    xmlname, flags, sys->method);
+    free(xmlname);
 
     fprintf(fp, "n_equations=\"%d\" nidents=\"%d\" flags=\"%d\" order=\"%d\">\n",
 	    sys->neqns, sys->nidents, sys->flags, sys->order);

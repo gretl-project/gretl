@@ -4457,12 +4457,19 @@ static gretl_bundle *johansen_bundlize (JohansenInfo *j)
 int gretl_VAR_serialize (const GRETL_VAR *var, SavedObjectFlags flags,
 			 FILE *fp)
 {
+    char *xmlname = NULL;
     int g = var->neqns;
     int m = g * g + g;
     int i, err = 0;
 
-    fprintf(fp, "<gretl-VAR name=\"%s\" saveflags=\"%d\" ",
-	    (var->name == NULL)? "none" : var->name, (int) flags);
+    if (var->name == NULL || *var->name == '\0') {
+	xmlname = gretl_strdup("none");
+    } else {
+	xmlname = gretl_xml_encode(var->name);
+    }
+
+    fprintf(fp, "<gretl-VAR name=\"%s\" saveflags=\"%d\" ", xmlname, (int) flags);
+    free(xmlname);
 
     fprintf(fp, "ecm=\"%d\" neqns=\"%d\" order=\"%d\" detflags=\"%d\" ",
 	    (var->ci == VECM), var->neqns, var->order, var->detflags);

@@ -5107,13 +5107,20 @@ static int copy_model (MODEL *targ, MODEL *src)
 int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
 			   FILE *fp)
 {
+    char *xmlname = NULL;
     int k = pmod->ncoeff;
     int m = k * (k + 1) / 2;
     int err = 0;
 
+    if (pmod->name == NULL || *pmod->name == '\0') {
+	xmlname = gretl_strdup("none");
+    } else {
+	xmlname = gretl_xml_encode(pmod->name);
+    }
+
     fprintf(fp, "<gretl-model ID=\"%d\" name=\"%s\" saveflags=\"%d\" ",
-	    pmod->ID, (pmod->name == NULL)? "none" : pmod->name,
-	    (int) flags);
+	    pmod->ID, xmlname, (int) flags);
+    free(xmlname);
 
     if (pmod->depvar != NULL) {
 	fprintf(fp, "depvar=\"%s\" ", pmod->depvar);
