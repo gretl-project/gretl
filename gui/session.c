@@ -3263,10 +3263,10 @@ static gboolean session_icon_click (GtkWidget *icon,
 	    display_graph_page(iconview);
 	    break;
 	case GRETL_OBJ_CORR:
-	    do_menu_op(ALL_CORR, NULL, OPT_NONE);
+	    do_menu_op(ALL_CORR, NULL, OPT_NONE, iconview);
 	    break;
 	case GRETL_OBJ_STATS:
-	    do_menu_op(ALL_SUMMARY, NULL, OPT_NONE);
+	    do_menu_op(ALL_SUMMARY, NULL, OPT_NONE, iconview);
 	    break;
 	}
 	return TRUE;

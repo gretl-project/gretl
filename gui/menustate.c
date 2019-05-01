@@ -439,7 +439,7 @@ static void right_click_corr (void)
     buf = main_window_selection_as_string();
 
     if (buf != NULL) {
-	do_menu_op(CORR, buf, opt);
+	do_menu_op(CORR, buf, opt, NULL);
 	free(buf);
     }
 }
@@ -617,7 +617,7 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
 	display_var();
 	break;
     case MNU_STATS:
-	do_menu_op(VAR_SUMMARY, NULL, OPT_NONE);
+	do_menu_op(VAR_SUMMARY, NULL, OPT_NONE, NULL);
 	break;
     case MNU_TPLOT:
     case MNU_PPLOT:
@@ -752,7 +752,7 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
 	char *buf = main_window_selection_as_string();
 
 	if (buf != NULL) {
-	    do_menu_op(ci, buf, OPT_NONE);
+	    do_menu_op(ci, buf, OPT_NONE, NULL);
 	    free(buf);
 	}
     } else if (i == MNU_DISP) {

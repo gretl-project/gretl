@@ -72,7 +72,8 @@ gint bufopen (PRN **pprn);
 
 void menu_op_action (GtkAction *action, gpointer data);
 
-void do_menu_op (int ci, const char *liststr, gretlopt opt);
+void do_menu_op (int ci, const char *liststr, gretlopt opt,
+		 GtkWidget *parent);
 
 void do_run_script (GtkWidget *w, windata_t *vwin);
 

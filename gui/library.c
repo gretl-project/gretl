@@ -650,7 +650,8 @@ static const char *selected_varname (void)
     return dataset->varname[mdata_active_var()];
 }
 
-static int get_summary_stats_option (gretlopt *popt)
+static int get_summary_stats_option (gretlopt *popt,
+				     GtkWidget *parent)
 {
     static int deflt = 0;
     const char *opts[] = {
@@ -660,7 +661,7 @@ static int get_summary_stats_option (gretlopt *popt)
     int resp;
 
     resp = radio_dialog(NULL, NULL, opts, 2, deflt,
-			0, mdata->main);
+			0, parent);
 
     if (resp >= 0) {
 	deflt = resp;
@@ -673,7 +674,8 @@ static int get_summary_stats_option (gretlopt *popt)
     return resp;
 }
 
-void do_menu_op (int ci, const char *liststr, gretlopt opt)
+void do_menu_op (int ci, const char *liststr, gretlopt opt,
+		 GtkWidget *parent)
 {
     PRN *prn;
     char title[128];
@@ -690,7 +692,7 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt)
 
     if (ci == ALL_SUMMARY || ci == SUMMARY) {
 	/* all series or listed series */
-	int resp = get_summary_stats_option(&opt);
+	int resp = get_summary_stats_option(&opt, parent);
 
 	if (resp == GRETL_CANCEL) return;
     }
@@ -848,7 +850,7 @@ int menu_op_wrapper (selector *sr)
     } else if (ci == QQPLOT) {
 	do_qq_xyplot(buf, opt);
     } else {
-	do_menu_op(ci, buf, opt);
+	do_menu_op(ci, buf, opt, NULL);
     }
 
     return err;
@@ -876,7 +878,7 @@ void menu_op_action (GtkAction *action, gpointer p)
 
     if (ci == VAR_SUMMARY || ci == NORMTEST) {
 	/* a single-variable action */
-	do_menu_op(ci, NULL, OPT_NONE);
+	do_menu_op(ci, NULL, OPT_NONE, NULL);
     } else {
 	/* potentially a multi-variable option */
 	const char *str = NULL;
