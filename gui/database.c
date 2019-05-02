@@ -551,9 +551,10 @@ add_single_series_to_dataset (windata_t *vwin, DATASET *dbset)
 /* multiple series version of data adding function */
 
 static int
-add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
+add_db_series_to_dataset (windata_t *vwin, DATASET *dbset, dbwrapper *dw)
 {
     SERIESINFO *sinfo;
+    double **dbZ = dbset->Z;
     CompactMethod cmethod = COMPACT_AVG;
     int resp, warned = 0, chosen = 0;
     int i, err = 0;
@@ -611,6 +612,7 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 	    compact = 1;
 	    if (cmethod == COMPACT_SPREAD) {
 		err = handle_compact_spread(dbZ, sinfo, dataset, NULL);
+		dbZ += 1; /* advance actual data pointer */
 		if (err) {
 		    break;
 		} else {
@@ -668,7 +670,7 @@ static void add_dbdata (windata_t *vwin, DATASET *dbset,
     if (data_status) {
 	/* we already have data in gretl's workspace */
 	if (dw != NULL) {
-	    add_db_series_to_dataset(vwin, dbset->Z, dw);
+	    add_db_series_to_dataset(vwin, dbset, dw);
 	} else {
 	    add_single_series_to_dataset(vwin, dbset);
 	}

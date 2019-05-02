@@ -128,6 +128,8 @@ static int lib_add_db_data (double **dbZ, SERIESINFO *sinfo,
 			    DATASET *dset, CompactMethod cmethod,
 			    int interpolate, int dbv, PRN *prn);
 
+static int do_compact_spread (DATASET *dset, int newpd);
+
 static FILE *open_binfile (const char *dbbase, int code, int offset, int *err)
 {
     char dbbin[MAXLEN];
@@ -3070,7 +3072,7 @@ static DATASET *make_import_tmpset (const DATASET *dset,
 
     tmpset->Z[0] = NULL;
     tmpset->Z[1] = dbZ[1];
-    dbZ[1] = NULL; /* note: stolen */
+    dbZ[1] = NULL; /* note: stolen! */
 
     tmpset->t1 = sinfo->t1;
     tmpset->t2 = sinfo->t2;
@@ -3170,13 +3172,13 @@ int transcribe_db_data (DATASET *dset, int targv,
 }
 
 /* Processes a single db series in "spread" mode, meaning
-   that multiple series are added to the target
-   dataset, @dset.
+   that multiple series are added to the target dataset,
+   @dset.
 
    There are two calling modes: (1) @dbZ and @sinfo are
    given and @dbset is NULL, or @dbset is given and both
    @dbZ and @sinfo are NULL. These cannot be mixed! The
-   @dbset cases comes only from GUI dbnomics import.
+   @dbset case comes only from GUI dbnomics import.
 */
 
 int lib_spread_db_data (double **dbZ, SERIESINFO *sinfo,
@@ -3189,7 +3191,7 @@ int lib_spread_db_data (double **dbZ, SERIESINFO *sinfo,
 	gretl_errmsg_set("\"compact=spread\": requires a dataset in place");
 	err = E_DATA;
     } else if (dbset != NULL) {
-	err = compact_data_set(dbset, dset->pd, COMPACT_SPREAD, 0, 0);
+	err = do_compact_spread(dbset, dset->pd);
 	if (!err) {
 	    /* we add OPT_K ("keep") to prevent destruction of @dbset:
 	       we're bypassing get_merge_opts(), so we'd better know
@@ -3203,7 +3205,7 @@ int lib_spread_db_data (double **dbZ, SERIESINFO *sinfo,
 	DATASET *tmpset = make_import_tmpset(dset, sinfo, dbZ, &err);
 
 	if (!err) {
-	    err = compact_data_set(tmpset, dset->pd, COMPACT_SPREAD, 0, 0);
+	    err = do_compact_spread(tmpset, dset->pd);
 	}
 	if (!err) {
 	    err = merge_or_replace_data(dset, &tmpset, OPT_X | OPT_U, prn);
