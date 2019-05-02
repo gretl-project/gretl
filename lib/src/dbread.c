@@ -2529,7 +2529,7 @@ static int get_one_db_series (const char *sername,
 	    strcpy(sinfo.varname, altname);
 	}
 	if (this_method == COMPACT_SPREAD) {
-	    err = lib_spread_db_data(dbZ, &sinfo, dset, NULL, prn);
+	    err = lib_spread_db_data(dbZ, &sinfo, dset, prn);
 	} else {
 	    err = lib_add_db_data(dbZ, &sinfo, dset, this_method,
 				  interpolate, v, prn);
@@ -3173,24 +3173,45 @@ int transcribe_db_data (DATASET *dset, int targv,
 
 /* Processes a single db series in "spread" mode, meaning
    that multiple series are added to the target dataset,
-   @dset.
-
-   There are two calling modes: (1) @dbZ and @sinfo are
-   given and @dbset is NULL, or @dbset is given and both
-   @dbZ and @sinfo are NULL. These cannot be mixed! The
-   @dbset case comes only from GUI dbnomics import.
+   @dset. This variant is associated with gretl databases.
 */
 
 int lib_spread_db_data (double **dbZ, SERIESINFO *sinfo,
-			DATASET *dset, DATASET *dbset,
-			PRN *prn)
+			DATASET *dset, PRN *prn)
 {
     int err = 0;
 
     if (dset == NULL || dset->v == 0) {
 	gretl_errmsg_set("\"compact=spread\": requires a dataset in place");
 	err = E_DATA;
-    } else if (dbset != NULL) {
+    } else {
+	DATASET *tmpset = make_import_tmpset(dset, sinfo, dbZ, &err);
+
+	if (!err) {
+	    err = do_compact_spread(tmpset, dset->pd);
+	}
+	if (!err) {
+	    err = merge_or_replace_data(dset, &tmpset, OPT_X | OPT_U, prn);
+	}
+    }
+
+    return err;
+}
+
+/* Processes a single db series in "spread" mode, meaning
+   that multiple series are added to the target dataset,
+   @dset. This variant is associated with dbnomics import.
+*/
+
+int lib_spread_dbnomics_data (DATASET *dset, DATASET *dbset,
+			      PRN *prn)
+{
+    int err = 0;
+
+    if (dset == NULL || dset->v == 0) {
+	gretl_errmsg_set("\"compact=spread\": requires a dataset in place");
+	err = E_DATA;
+    } else {
 	err = do_compact_spread(dbset, dset->pd);
 	if (!err) {
 	    /* we add OPT_K ("keep") to prevent destruction of @dbset:
@@ -3200,15 +3221,6 @@ int lib_spread_db_data (double **dbZ, SERIESINFO *sinfo,
 	    gretlopt merge_opt = (OPT_X | OPT_U | OPT_K);
 
 	    err = merge_or_replace_data(dset, &dbset, merge_opt, prn);
-	}
-    } else {
-	DATASET *tmpset = make_import_tmpset(dset, sinfo, dbZ, &err);
-
-	if (!err) {
-	    err = do_compact_spread(tmpset, dset->pd);
-	}
-	if (!err) {
-	    err = merge_or_replace_data(dset, &tmpset, OPT_X | OPT_U, prn);
 	}
     }
 

@@ -434,7 +434,11 @@ static int handle_compact_spread (double **dbZ,
 	return E_ALLOC;
     }
 
-    err = lib_spread_db_data(dbZ, sinfo, dset, dbset, prn);
+    if (dbset != NULL) {
+	err = lib_spread_dbnomics_data(dset, dbset, prn);
+    } else {
+	err = lib_spread_db_data(dbZ, sinfo, dset, prn);
+    }
 
     if (err) {
 	char *buf = gretl_print_steal_buffer(prn);

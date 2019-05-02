@@ -2329,7 +2329,7 @@ gretlopt get_merge_opts (gretlopt opt)
  * merge_or_replace_data:
  * @dset0: original dataset struct.
  * @pdset1: new dataset struct.
- * @opt: zero or more option flags (OPT_P presrves @pdset1,
+ * @opt: zero or more option flags (OPT_K presrves @pdset1,
  * otherwise it is destroyed).
  * @prn: print struct to accept messages.
  *

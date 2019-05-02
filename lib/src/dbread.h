@@ -135,8 +135,10 @@ int transcribe_db_data (DATASET *dset, int targv,
 			int interpolate);
 
 int lib_spread_db_data (double **dbZ, SERIESINFO *sinfo,
-			DATASET *dset, DATASET *dbset,
-			PRN *prn);
+			DATASET *dset, PRN *prn);
+
+int lib_spread_dbnomics_data (DATASET *dset, DATASET *dbset,
+			      PRN *prn);
 
 int compact_data_set (DATASET *dset, int newpd,
 		      CompactMethod default_method,
