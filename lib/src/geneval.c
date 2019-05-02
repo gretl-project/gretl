@@ -6991,7 +6991,20 @@ static NODE *single_string_func (NODE *n, NODE *x, int f, parser *p)
 	const char *s = n->v.str;
 
 	if (f == F_ARGNAME) {
+	    char *deflt = NULL;
+
+	    if (!null_or_empty(x)) {
+		if (x->t == STR) {
+		    deflt = x->v.str;
+		} else {
+		    p->err = E_TYPES;
+		}
+	    }
+	    s = (n->vname != NULL)? n->vname : s;
 	    ret->v.str = gretl_func_get_arg_name(s, &p->err);
+	    if (!p->err && ret->v.str[0] == '\0' && deflt != NULL) {
+		ret->v.str = gretl_strdup(deflt);
+	    }
 	} else if (f == F_BACKTICK) {
 	    ret->v.str = gretl_backtick(s, &p->err);
 	} else if (f == F_STRSTRIP) {

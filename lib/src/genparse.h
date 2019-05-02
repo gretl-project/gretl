@@ -523,9 +523,9 @@ enum {
 /* function with single string argument */
 #define string_arg_func(s) (s == F_ISNULL || s == F_ISDISCR || \
 			    s == F_OBSNUM || s == F_BACKTICK || \
-			    s == F_VARNUM || s == F_ARGNAME || \
-                            s == F_TYPEOF || s == F_ISSTRING || \
-			    s == F_EXISTS || s == F_REMOVE)
+			    s == F_VARNUM || s == F_TYPEOF || \
+			    s == F_ISSTRING || s == F_EXISTS || \
+			    s == F_REMOVE)
 
 /* function with multiple args, string for first arg */
 #define str0_func(s) (s == F_PVAL || s == F_CDF || s == F_INVCDF || \

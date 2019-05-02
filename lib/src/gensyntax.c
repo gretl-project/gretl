@@ -669,7 +669,8 @@ static NODE *get_final_string_arg (parser *p, NODE *t, int sym,
     }
 
 #if SDEBUG
-    fprintf(stderr, "get_final_string_arg: '%s'\n", p->idstr);
+    fprintf(stderr, "get_final_string_arg: '%s' (strvar=%d)\n",
+	    p->idstr, strvar);
 #endif
 
     if (p->err) {
@@ -1147,8 +1148,8 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
     int i = 0;
 
 #if SDEBUG
-    fprintf(stderr, "get_args: f=%s, k=%d, point='%s'\n", getsymb(f),
-	    k, p->point);
+    fprintf(stderr, "get_args: f=%s, k=%d, ch='%c', point='%s'\n",
+	    getsymb(f), k, p->ch, p->point);
 #endif
 
     if (p->sym != G_LPR) {
@@ -1283,7 +1284,6 @@ static NODE *powterm (parser *p, NODE *l)
     if (string_last_func(sym)) {
 	opt |= RIGHT_STR;
     }
-
     if (string_mid_func(sym)) {
 	opt |= MID_STR;
     }
