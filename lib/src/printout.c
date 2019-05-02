@@ -2145,7 +2145,7 @@ static int print_listed_objects (const char *s,
 	return err;
     }
 
-    while ((name = gretl_word_strdup(s, &s, OPT_S, &err)) != NULL) {
+    while ((name = gretl_word_strdup(s, &s, OPT_S | OPT_U, &err)) != NULL) {
 	uv = get_user_var_by_name(name);
 	if (uv == NULL) {
 	    err = E_UNKVAR;
