@@ -25,6 +25,9 @@ void window_list_add (GtkWidget *w, int role);
 void window_list_popup (GtkWidget *src, GdkEvent *event, 
 			gpointer data);
 
+void window_list_revise_label (GtkWidget *targ,
+			       const char *label);
+
 void vwin_record_toolbar_popup (windata_t *vwin,
 				GtkWidget *menu);
 

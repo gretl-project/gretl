@@ -463,6 +463,25 @@ static void maybe_revise_action_label (GtkAction *action,
     }
 }
 
+void window_list_revise_label (GtkWidget *targ,
+			       const char *label)
+{
+    GList *wlist = gtk_action_group_list_actions(window_group);
+    GList *list = wlist;
+    GtkAction *action;
+
+    while (list) {
+	action = (GtkAction *) list->data;
+	if (targ == window_from_action(action)) {
+	    gtk_action_set_label(action, label);
+	    break;
+	}
+	list = list->next;
+    }
+
+    g_list_free(wlist);
+}
+
 static gboolean winlist_popup_done (GtkMenuShell *mshell,
 				    GtkWidget *window)
 {

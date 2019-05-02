@@ -219,10 +219,14 @@ static void script_window_update (windata_t *vwin,
 	tabwin_tab_set_title(vwin, basename);
     } else {
 	/* update the window title */
-	gchar *title = g_strdup_printf("gretl: %s", basename);
+	const gchar *t0 = gtk_window_get_title(GTK_WINDOW(vwin->main));
+	gchar *t1 = g_strdup_printf("gretl: %s", basename);
 
-	gtk_window_set_title(GTK_WINDOW(vwin->main), title);
-	g_free(title);
+	if (strcmp(t0, t1)) {
+	    gtk_window_set_title(GTK_WINDOW(vwin->main), t1);
+	    window_list_revise_label(vwin->main, basename);
+	}
+	g_free(t1);
     }
 
     g_free(basename);
