@@ -8,7 +8,10 @@ make
 # This should be placed in a file named api.key in the same
 # directory as the program fred2db.
 
-# make the gretl db (fedstl.idx plus fedstl.bin)
+# You also need a file named fedstl.series which contains the
+# names of the series to be included, one per line.
+
+# You can then make the gretl db (fedstl.idx plus fedstl.bin)
 make fedstl.idx
 
 
