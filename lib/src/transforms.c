@@ -595,7 +595,7 @@ static int transform_handle_duplicate (int ci, int lag, int v,
     int no_overwrite = 0;
     int t, ok = 0;
 
-    if (vlabel != NULL) {
+    if (vlabel != NULL && *label && *vlabel) {
 	if (!strcmp(label, vlabel)) {
 	    /* labels identical, so OK? */
 	    ok = 1;
