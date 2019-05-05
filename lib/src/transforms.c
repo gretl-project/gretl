@@ -584,20 +584,35 @@ enum transform_results {
 #define TR_OVERWRITE 1
 
 static int transform_handle_duplicate (int ci, int lag, int v,
-				       const double *x, const char *label,
-				       DATASET *dset, int origv)
+				       const double *x,
+				       const char *label,
+				       DATASET *dset,
+				       int parent,
+				       int origv)
 {
     const char *vlabel = series_get_label(dset, v);
     int ret = VARNAME_DUPLICATE;
+    int no_overwrite = 0;
     int t, ok = 0;
 
-    if (vlabel != NULL && !strcmp(label, vlabel)) {
-	/* labels identical, so OK? */
-	ok = 1;
+    if (vlabel != NULL) {
+	if (!strcmp(label, vlabel)) {
+	    /* labels identical, so OK? */
+	    ok = 1;
+	} else {
+	    /* labels differ */
+	    no_overwrite = 1;
+	}
+    }
+
+    if (!no_overwrite) {
+	int vp = series_get_parent_id(dset, v);
+
+	no_overwrite = parent != vp;
     }
 
 #if TR_OVERWRITE
-    if (!ok && v < origv) {
+    if (!ok && v < origv && !no_overwrite) {
 	ok = 1;
     }
 #endif
@@ -619,13 +634,20 @@ static int transform_handle_duplicate (int ci, int lag, int v,
 	ret = VAR_EXISTS_OK;
     }
 
+#if TRDEBUG
+    if (!ok) {
+	fprintf(stderr, "transform_handle_duplicate: collision with var %d (%s)\n",
+		v, dset->varname[v]);
+    }
+#endif
+
     return ret;
 }
 
 static int
 check_add_transform (int ci, int lag, int vnum, const double *x,
 		     const char *vname, const char *label,
-		     DATASET *dset, int origv)
+		     DATASET *dset, int parent, int origv)
 {
     int t, ret = VAR_ADDED_OK;
 
@@ -654,7 +676,7 @@ check_add_transform (int ci, int lag, int vnum, const double *x,
 	    ret = VAR_EXISTS_OK;
 	} else {
 	    ret = transform_handle_duplicate(ci, lag, vnum, x, label, dset,
-					     origv);
+					     parent, origv);
 	}
     } else {
 	/* no var of this name, working from scratch */
@@ -754,7 +776,7 @@ static int get_transform (int ci, int v, int aux, double x,
 
     if (ci == LAGS && (vno = get_lag_ID(v, aux, dset)) > 0) {
 	/* special case: pre-existing lag */
-	err = check_add_transform(ci, lag, vno, vx, vname, label, dset, origv);
+	err = check_add_transform(ci, lag, vno, vx, vname, label, dset, v, origv);
 	if (err != VAR_EXISTS_OK) {
 	    vno = -1;
 	}
@@ -785,8 +807,13 @@ static int get_transform (int ci, int v, int aux, double x,
 	srcname = dset->varname[v];
     }
 
+#if TRDEBUG
+    fprintf(stderr, "srcname = '%s', startlen = %d, v = %d\n",
+	    srcname, startlen, v);
+#endif
+
     for (len=startlen; len<=VNAMELEN; len++) {
-	if (len == VNAMELEN) {
+	if (*vname != '\0' && len == VNAMELEN) {
 	    /* last resort: hack the name */
 	    make_varname_unique(vname, 0, dset);
 	} else if (ci == SQUARE && v != aux) {
@@ -797,8 +824,7 @@ static int get_transform (int ci, int v, int aux, double x,
 	    make_transform_varname(vname, srcname, ci, aux, len);
 	}
 	vno = series_index(dset, vname);
-
-	err = check_add_transform(ci, lag, vno, vx, vname, label, dset, origv);
+	err = check_add_transform(ci, lag, vno, vx, vname, label, dset, v, origv);
 	if (err != VAR_EXISTS_OK && err != VAR_ADDED_OK) {
 	    vno = -1;
 	}

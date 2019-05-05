@@ -2632,34 +2632,47 @@ void unescape_url (char *url)
 
 char *make_varname_unique (char *vname, int v, DATASET *dset)
 {
+    const char *sfx = "abcdefghijklmnopqrstuvwxzy"
+	"ABCDEFGHIJKLMNOPQRSTUVWXZY";
     size_t n = strlen(vname);
     size_t nmax = VNAMELEN - 8;
-    char tmp[8];
-    int i, k, conflict;
+    char tmp[5] = {0};
+    int i, j, k, vi;
+    int unique = 0;
+
+    /* strategy: cut @vname down to a length that permits
+       addition of a suffix (if necessary), then add a
+       suffix composed of underscore and three (ASCII)
+       letters. This allows for 52^3 = 140608 unique
+       suffixes.
+    */
 
     if (n > nmax) {
 	n = nmax;
     }
 
-    for (k=1; k<999999; k++) {
-	conflict = 0;
-	for (i=1; i<dset->v; i++) {
-	    if (i != v && !strcmp(vname, dset->varname[i])) {
-		conflict = 1;
-		break;
+    tmp[0] = '_';
+
+    for (i=0; i<52 && !unique; i++) {
+	tmp[1] = sfx[i];
+	for (j=0; j<52 && !unique; j++) {
+	    tmp[2] = sfx[j];
+	    for (k=0; k<52 && !unique; k++) {
+		tmp[3] = sfx[k];
+		vname[n] = '\0';
+		strcat(vname, tmp);
+		unique = 1;
+		for (vi = 1; vi < dset->v; vi++) {
+		    if (vi != v && !strcmp(vname, dset->varname[vi])) {
+			unique = 0;
+			break;
+		    }
+		}
 	    }
-	}
-	if (conflict) {
-	    sprintf(tmp, "%d", k);
-	    vname[n] = '\0';
-	    strcat(vname, tmp);
-	} else {
-	    /* name is unique */
-	    break;
 	}
     }
 
-    if (conflict) {
+    if (!unique) {
 	fprintf(stderr, "make_varname_unique: unresolved conflict!\n");
     }
 
