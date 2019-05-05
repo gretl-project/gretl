@@ -2634,11 +2634,21 @@ char *make_varname_unique (char *vname, int v, DATASET *dset)
 {
     const char *sfx = "abcdefghijklmnopqrstuvwxzy"
 	"ABCDEFGHIJKLMNOPQRSTUVWXZY";
-    size_t n = strlen(vname);
-    size_t nmax = VNAMELEN - 8;
+    size_t n, nmax = VNAMELEN - 8;
     char tmp[5] = {0};
     int i, j, k, vi;
-    int unique = 0;
+    int unique = 1;
+
+    /* first off: see if the series name is already unique! */
+    for (vi = 1; vi < dset->v; vi++) {
+	if (vi != v && !strcmp(vname, dset->varname[vi])) {
+	    unique = 0;
+	    break;
+	}
+    }
+    if (unique) {
+	return vname;
+    }
 
     /* strategy: cut @vname down to a length that permits
        addition of a suffix (if necessary), then add a
@@ -2647,11 +2657,13 @@ char *make_varname_unique (char *vname, int v, DATASET *dset)
        suffixes.
     */
 
+    n = strlen(vname);
     if (n > nmax) {
 	n = nmax;
     }
 
     tmp[0] = '_';
+    unique = 0;
 
     for (i=0; i<52 && !unique; i++) {
 	tmp[1] = sfx[i];
