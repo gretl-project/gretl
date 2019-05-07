@@ -28,6 +28,7 @@
 				r == EDIT_PYTHON || \
 				r == EDIT_STATA ||  \
 				r == EDIT_JULIA ||  \
+				r == EDIT_DYNARE || \
 				r == EDIT_X12A ||   \
 				r == EDIT_SPEC)
 
@@ -188,7 +189,7 @@ int gretl_file_get_contents (const gchar *fname, gchar **contents, gsize *size);
 
 void start_R (const char *buf, int send_data, int interactive);
 
-void run_foreign_script (gchar *buf, int lang);
+void run_foreign_script (gchar *buf, int lang, gretlopt opt);
 
 const char *print_today (void);
 

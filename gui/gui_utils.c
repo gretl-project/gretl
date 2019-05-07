@@ -1554,6 +1554,8 @@ static void file_edit_save (GtkWidget *w, windata_t *vwin)
 	    file_selector(SAVE_JULIA_CODE, FSEL_DATA_VWIN, vwin);
 	} else if (vwin->role == EDIT_STATA) {
 	    file_selector(SAVE_STATA_CMDS, FSEL_DATA_VWIN, vwin);
+	} else if (vwin->role == EDIT_DYNARE) {
+	    file_selector(SAVE_DYNARE_CODE, FSEL_DATA_VWIN, vwin);
 	} else if (vwin->role == CONSOLE) {
 	    file_selector(SAVE_CONSOLE, FSEL_DATA_VWIN, vwin);
 	}
@@ -1796,6 +1798,8 @@ gchar *title_from_filename (const char *fname,
 	    title = g_strdup(_("gretl: edit Julia program"));
 	} else if (role == EDIT_STATA) {
 	    title = g_strdup(_("gretl: edit Stata program"));
+	} else if (role == EDIT_DYNARE) {
+	    title = g_strdup(_("gretl: edit Dynare script"));
 	} else if (role == EDIT_SPEC) {
 	    title = g_strdup(_("gretl: edit package spec file"));
 	} else {
@@ -1869,6 +1873,7 @@ static gchar *make_viewer_title (int role, const char *fname)
     case EDIT_PYTHON:
     case EDIT_JULIA:
     case EDIT_STATA:
+    case EDIT_DYNARE:
     case EDIT_SPEC:
 	title = title_from_filename(fname, role, TRUE);
 	break;
@@ -5678,11 +5683,13 @@ static void win32_run_R_sync (const char *buf, gretlopt opt)
 
 /* win32 version */
 
-void run_foreign_script (gchar *buf, int lang)
+void run_foreign_script (gchar *buf, int lang, gretlopt opt)
 {
     const char *fname;
     PRN *prn = NULL;
     int err;
+
+    opt |= OPT_G;
 
     /* note: as things stand, the @fname we obtain here
        (composed in gretl_foreign.c) will be in the locale
@@ -5693,15 +5700,15 @@ void run_foreign_script (gchar *buf, int lang)
     */
 
     if (lang == LANG_OX) {
-	err = write_gretl_ox_script(buf, OPT_G, &fname);
+	err = write_gretl_ox_script(buf, opt, &fname);
     } else if (lang == LANG_PYTHON) {
-	err = write_gretl_python_script(buf, OPT_G, &fname);
+	err = write_gretl_python_script(buf, opt, &fname);
     } else if (lang == LANG_JULIA) {
-	err = write_gretl_julia_script(buf, OPT_G, &fname);
+	err = write_gretl_julia_script(buf, opt, &fname);
     } else if (lang == LANG_STATA) {
-	err = write_gretl_stata_script(buf, OPT_G, dataset, &fname);
+	err = write_gretl_stata_script(buf, opt, dataset, &fname);
     } else if (lang == LANG_OCTAVE) {
-	err = write_gretl_octave_script(buf, OPT_G, dataset, &fname);
+	err = write_gretl_octave_script(buf, opt, dataset, &fname);
     } else {
 	err = E_DATA;
     }
@@ -5942,21 +5949,26 @@ static void run_R_sync (void)
     run_prog_sync(argv, LANG_R);
 }
 
-void run_foreign_script (gchar *buf, int lang)
+void run_foreign_script (gchar *buf, int lang, gretlopt opt)
 {
     const char *fname;
     int err;
 
+    opt |= OPT_G;
+
     if (lang == LANG_OX) {
-	err = write_gretl_ox_script(buf, OPT_G, &fname);
+	err = write_gretl_ox_script(buf, opt, &fname);
     } else if (lang == LANG_PYTHON) {
-	err = write_gretl_python_script(buf, OPT_G, &fname);
+	err = write_gretl_python_script(buf, opt, &fname);
     } else if (lang == LANG_JULIA) {
-	err = write_gretl_julia_script(buf, OPT_G, &fname);
+	err = write_gretl_julia_script(buf, opt, &fname);
     } else if (lang == LANG_STATA) {
-	err = write_gretl_stata_script(buf, OPT_G, dataset, &fname);
+	err = write_gretl_stata_script(buf, opt, dataset, &fname);
     } else if (lang == LANG_OCTAVE) {
-	err = write_gretl_octave_script(buf, OPT_G, dataset, &fname);
+	err = write_gretl_octave_script(buf, opt, dataset, &fname);
+	if (opt & OPT_Y) {
+	    gretl_chdir(gretl_dotdir());
+	}
     } else {
 	err = E_DATA;
     }

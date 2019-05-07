@@ -68,6 +68,7 @@ enum extra_cmds {
     EDIT_PYTHON,
     EDIT_STATA,
     EDIT_JULIA,
+    EDIT_DYNARE,
     EDIT_X12A,
     EDIT_SPEC,
     EDIT_MAX,
@@ -143,7 +144,7 @@ enum extra_cmds {
 
 #define help_role(r) (r >= CMD_HELP && r <= FUNC_HELP_EN)
 
-#define editing_alt_script(r) (r >= EDIT_R && r <= EDIT_JULIA)
+#define editing_alt_script(r) (r >= EDIT_R && r <= EDIT_DYNARE)
 
 enum file_ops {
     OPEN_DATA = GUI_CMD_MAX + 1, /* don't collide with extra_cmds */
@@ -189,6 +190,7 @@ enum file_ops {
     SAVE_PYTHON_CMDS,
     SAVE_STATA_CMDS,
     SAVE_JULIA_CODE,
+    SAVE_DYNARE_CODE,
     SAVE_SPEC_FILE,
     SAVE_CONSOLE,
     SAVE_CMD_LOG,

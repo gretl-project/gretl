@@ -70,6 +70,7 @@ static struct extmap action_map[] = {
     { SAVE_PYTHON_CMDS,  ".py" },
     { SAVE_STATA_CMDS,   ".do" },
     { SAVE_JULIA_CODE,   ".jl" },
+    { SAVE_DYNARE_CODE,  ".mod" },
     { SAVE_SPEC_FILE,    ".spec" },
     { SAVE_FUNCTIONS,    ".gfn" },
     { SAVE_MARKERS,      ".txt" },
@@ -292,7 +293,8 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
 	       action == SAVE_OCTAVE_CMDS ||
 	       action == SAVE_PYTHON_CMDS ||
 	       action == SAVE_STATA_CMDS ||
-	       action == SAVE_JULIA_CODE) {
+	       action == SAVE_JULIA_CODE ||
+	       action == SAVE_DYNARE_CODE) {
 	script_window_update(vwin, fname);
     }
 }
@@ -402,6 +404,8 @@ static void filesel_open_script (const char *fname, windata_t *vwin)
 	role = EDIT_STATA;
     } else if (has_suffix(fname, ".jl")) {
 	role = EDIT_JULIA;
+    } else if (has_suffix(fname, ".mod")) {
+	role = EDIT_DYNARE;
     }
 
     if (role >= EDIT_GP && role < EDIT_MAX) {
@@ -871,7 +875,7 @@ static GtkFileFilter *filesel_add_filter (GtkWidget *filesel,
 
 static int script_filter_index (int role)
 {
-    int filtmap[7][2] = {
+    int filtmap[8][2] = {
 	{EDIT_R, 1},
 	{EDIT_GP, 2},
 	{EDIT_OCTAVE, 3},
@@ -879,6 +883,7 @@ static int script_filter_index (int role)
 	{EDIT_JULIA, 5},
 	{EDIT_OX, 6},
 	{EDIT_STATA, 7},
+	{EDIT_DYNARE, 8}
     };
     int i;
 
@@ -920,7 +925,7 @@ static int filesel_set_filters (GtkWidget *filesel, int action,
 	    }
 	}
     } else if (action == OPEN_SCRIPT) {
-	GtkFileFilter *flt[8] = {0};
+	GtkFileFilter *flt[9] = {0};
 	int fidx;
 
 	flt[0] = filesel_add_filter(filesel, N_("gretl script files (*.inp)"), "*.inp");
@@ -931,6 +936,7 @@ static int filesel_set_filters (GtkWidget *filesel, int action,
 	flt[5] = filesel_add_filter(filesel, N_("Julia files (*.jl)"), "*.jl");
 	flt[6] = filesel_add_filter(filesel, N_("Ox files (*.ox)"), "*.ox");
 	flt[7] = filesel_add_filter(filesel, N_("Stata files (*.do)"), "*.do");
+	flt[8] = filesel_add_filter(filesel, N_("Dynare files (*.mod)"), "*.mod");
 	fidx = script_filter_index(role);
 	if (fidx > 0) {
 	    gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(filesel), flt[fidx]);

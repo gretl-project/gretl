@@ -1637,44 +1637,71 @@ static int write_data_for_octave (const DATASET *dset,
     return err;
 }
 
+static int put_dynare_script (const char *buf, FILE *fp)
+{
+    gchar *dpath = gretl_make_dotpath("gretltmp.mod");
+    FILE *fd;
+    int err = 0;
+
+    fd = gretl_fopen(dpath, "w");
+
+    if (fd == NULL) {
+	err = E_FOPEN;
+    } else {
+	fputs(buf, fd);
+	fclose(fd);
+	fputs("dynare gretltmp.mod\n", fp);
+    }
+
+    g_free(dpath);
+
+    return err;
+}
+
 int write_gretl_octave_script (const char *buf, gretlopt opt,
 			       const DATASET *dset,
 			       const char **pfname)
 {
     const gchar *fname = get_octave_scriptname();
     FILE *fp = gretl_fopen(fname, "w");
+    int err = 0;
 
     write_octave_io_file();
 
     if (fp == NULL) {
-	return E_FOPEN;
+	err = E_FOPEN;
     } else {
-	int err;
-
 	/* source the I-O functions */
 	add_gretl_include(LANG_OCTAVE, opt, fp);
 	if (opt & OPT_D) {
 	    /* --send-data */
 	    err = write_data_for_octave(dset, fp);
-	    if (err) {
-		fclose(fp);
-		return err;
-	    }
 	}
-	if (buf != NULL) {
+	if (!err && buf != NULL) {
 	    /* pass on the material supplied in the 'buf' argument */
-	    put_foreign_buffer(buf, fp);
-	} else {
+	    if (opt & OPT_Y) {
+		/* handle dynare .mod file */
+		err = put_dynare_script(buf, fp);
+		/* dynare wipes out gretl functions? */
+		add_gretl_include(LANG_OCTAVE, opt, fp);
+	    } else {
+		/* regular Octave script */
+		put_foreign_buffer(buf, fp);
+	    }
+	} else if (!err) {
 	    /* put out the stored 'foreign' lines */
 	    put_foreign_lines(fp);
 	}
-	fclose(fp);
-	if (pfname != NULL) {
+	if (!err && pfname != NULL) {
 	    *pfname = fname;
 	}
     }
 
-    return 0;
+    if (fp != NULL) {
+	fclose(fp);
+    }
+
+    return err;
 }
 
 static gretl_matrix *make_coded_vec (int *list,

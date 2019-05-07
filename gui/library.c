@@ -8429,6 +8429,7 @@ static void ensure_newline_termination (gchar **ps)
 
 void do_run_script (GtkWidget *w, windata_t *vwin)
 {
+    gretlopt opt = OPT_NONE;
     gboolean selection = FALSE;
     gchar *currdir = NULL;
     gchar *buf = NULL;
@@ -8439,6 +8440,7 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
 	vwin->role == EDIT_OCTAVE ||
         vwin->role == EDIT_PYTHON ||
 	vwin->role == EDIT_JULIA ||
+	vwin->role == EDIT_DYNARE ||
 	vwin->role == EDIT_STATA ||
 	vwin->role == EDIT_X12A) {
 	buf = textview_get_text(vwin->text);
@@ -8481,20 +8483,26 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
 	ensure_newline_termination(&buf);
     }
 
+    if (vwin->role == EDIT_DYNARE) {
+	opt = OPT_Y;
+    }
+
     if (vwin->role == EDIT_GP) {
 	run_gnuplot_script(buf);
     } else if (vwin->role == EDIT_R) {
 	run_R_script(buf, vwin_toplevel(vwin));
     } else if (vwin->role == EDIT_OX) {
-	run_foreign_script(buf, LANG_OX);
+	run_foreign_script(buf, LANG_OX, opt);
     } else if (vwin->role == EDIT_OCTAVE) {
-	run_foreign_script(buf, LANG_OCTAVE);
+	run_foreign_script(buf, LANG_OCTAVE, opt);
     } else if (vwin->role == EDIT_PYTHON) {
-	run_foreign_script(buf, LANG_PYTHON);
+	run_foreign_script(buf, LANG_PYTHON, opt);
     } else if (vwin->role == EDIT_JULIA) {
-	run_foreign_script(buf, LANG_JULIA);
+	run_foreign_script(buf, LANG_JULIA, opt);
+    } else if (vwin->role == EDIT_DYNARE) {
+	run_foreign_script(buf, LANG_OCTAVE, opt);
     } else if (vwin->role == EDIT_STATA) {
-	run_foreign_script(buf, LANG_STATA);
+	run_foreign_script(buf, LANG_STATA, opt);
     } else if (vwin->role == EDIT_X12A) {
 	run_x12a_script(buf);
     } else if (selection) {
@@ -8594,6 +8602,8 @@ void new_script_callback (GtkAction *action)
 	etype = EDIT_STATA;
     } else if (!strcmp(s, "JuliaScript")) {
 	etype = EDIT_JULIA;
+    } else if (!strcmp(s, "DynareScript")) {
+	etype = EDIT_DYNARE; /* FIXME not reached */
     }
 
     do_new_script(etype, NULL);

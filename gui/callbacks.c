@@ -204,6 +204,8 @@ void file_save (windata_t *vwin, int ci)
     case SAVE_OCTAVE_CMDS:
     case SAVE_PYTHON_CMDS:
     case SAVE_STATA_CMDS:
+    case SAVE_JULIA_CODE:
+    case SAVE_DYNARE_CODE:
     case SAVE_DATA:
     case SAVE_DATA_AS:
     case SAVE_SPEC_FILE:
