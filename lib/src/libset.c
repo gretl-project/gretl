@@ -576,6 +576,8 @@ static int openmp_by_default (void)
 
 #endif /* _OPENMP defined */
 
+#define LOOP_MAXITER_DEFAULT 100000
+
 static void state_vars_init (set_vars *sv)
 {
 #if PDEBUG
@@ -598,7 +600,7 @@ static void state_vars_init (set_vars *sv)
     sv->horizon = UNSET_INT;
     sv->bootrep = 1000;
     sv->nls_toler = NADBL;
-    sv->loop_maxiter = 100000;
+    sv->loop_maxiter = LOOP_MAXITER_DEFAULT;
     sv->rq_maxiter = 1000;
     sv->gmm_maxiter = 250;
     sv->vecm_norm = NORM_PHILLIPS;
@@ -894,7 +896,20 @@ libset_numeric_string (const char *s, int *pi, double *px, int *err)
 	long li = strtol(s, &test, 10);
 
 	if (*test != '\0') {
-	    ret = 0;
+	    /* try for a floating-point value that's also a valid int */
+	    char *testx;
+	    double x = strtod(s, &testx);
+
+	    if (*testx == '\0') {
+		if (x == floor(x) && fabs(x) <= INT_MAX) {
+		    *pi = (int) x;
+		    ret = 1;
+		}
+	    } else {
+		gretl_errmsg_set_from_errno(s, errno);
+		*err = 1;
+		ret = 0;
+	    }
 	} else if (errno == ERANGE) {
 	    gretl_errmsg_set_from_errno(s, errno);
 	    *err = 1;
@@ -1979,6 +1994,8 @@ int libset_get_int (const char *key)
 	return state->fdjac_qual;
     } else if (!strcmp(key, WILDBOOT_DIST)) {
 	return state->wildboot_dist;
+    } else if (!strcmp(key, "loop_maxiter_default")) {
+	return LOOP_MAXITER_DEFAULT; /* for internal use */
     } else {
 	fprintf(stderr, "libset_get_int: unrecognized "
 		"variable '%s'\n", key);
