@@ -1228,6 +1228,10 @@ static void put_foreign_lines (FILE *fp)
 	    if (strstr(foreign_lines[i], "oxstd.h")) {
 		add_gretl_include(LANG_OX, 0, fp);
 	    }
+	} else if (foreign_lang == LANG_OCTAVE) {
+	    if (strstr(foreign_lines[i], "dynare ")) {
+		add_gretl_include(LANG_OCTAVE, 0, fp);
+	    }
 	}
     }
 }
@@ -1243,6 +1247,10 @@ static void put_foreign_buffer (const char *buf, FILE *fp)
 	if (foreign_lang == LANG_OX) {
 	    if (strstr(line, "oxstd.h")) {
 		add_gretl_include(LANG_OX, 0, fp);
+	    }
+	} else if (foreign_lang == LANG_OCTAVE) {
+	    if (strstr(line, "dynare ")) {
+		add_gretl_include(LANG_OCTAVE, 0, fp);
 	    }
 	}
     }
