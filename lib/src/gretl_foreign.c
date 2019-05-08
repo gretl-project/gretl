@@ -826,340 +826,305 @@ static FILE *write_open_dotfile (const char *fname)
     return fp;
 }
 
-static int write_ox_io_file (void)
+static int dotfile_exists (const char *fname)
 {
-    static int written;
+    gchar *path = gretl_make_dotpath(fname);
+    struct stat buf = {0};
+    int ret = 0;
 
-    if (!written) {
-	FILE *fp = write_open_dotfile("gretl_io.ox");
-
-	if (fp == NULL) {
-	    return E_FOPEN;
-	} else {
-	    const char *ddir = get_export_dotdir();
-
-	    fputs("gretl_dotdir ()\n{\n", fp);
-	    fprintf(fp, "  return \"%s\";\n", ddir);
-	    fputs("}\n\n", fp);
-
-	    fputs("gretl_export_nodot (const X, const str)\n{\n", fp);
-	    fputs("  decl fp = fopen(str, \"w\");\n", fp);
-	    fputs("  fprint(fp, \"%d \", rows(X), \"%d\", columns(X));\n", fp);
-	    fputs("  fprint(fp, \"%.15g\", X);\n", fp);
-	    fputs("  fclose(fp);\n}\n\n", fp);
-
-	    fputs("gretl_export (const X, const str)\n{\n", fp);
-            fputs("  decl dname = gretl_dotdir();\n", fp);
-	    fputs("  decl fp = fopen(dname ~ str, \"w\");\n", fp);
-	    fputs("  fprint(fp, \"%d \", rows(X), \"%d\", columns(X));\n", fp);
-	    fputs("  fprint(fp, \"%.15g\", X);\n", fp);
-	    fputs("  fclose(fp);\n}\n\n", fp);
-
-	    fputs("gretl_loadmat (const str)\n{\n", fp);
-            fputs("  decl dname = gretl_dotdir();\n", fp);
-	    fputs("  decl X = loadmat(dname ~ str);\n", fp);
-	    fputs("  return X;\n}\n", fp);
-
-	    fclose(fp);
-	    written = 1;
-	}
+    if (gretl_stat(path, &buf) == 0 && buf.st_size > 32) {
+	ret = 1;
     }
 
-    return 0;
+    g_free(path);
+
+    return ret;
 }
 
-static int real_write_octave_io_file (void)
+static void write_ox_io_file (FILE *fp, const char *ddir)
 {
-    FILE *fp = write_open_dotfile("gretl_io.m");
+    fputs("gretl_dotdir ()\n{\n", fp);
+    fprintf(fp, "  return \"%s\";\n", ddir);
+    fputs("}\n\n", fp);
 
-    if (fp == NULL) {
-	return E_FOPEN;
-    } else {
-	const char *ddir = get_export_dotdir();
+    fputs("gretl_export_nodot (const X, const str)\n{\n", fp);
+    fputs("  decl fp = fopen(str, \"w\");\n", fp);
+    fputs("  fprint(fp, \"%d \", rows(X), \"%d\", columns(X));\n", fp);
+    fputs("  fprint(fp, \"%.15g\", X);\n", fp);
+    fputs("  fclose(fp);\n}\n\n", fp);
 
-	fputs("# not a 'function file' as such\n1;\n", fp);
-	fputs("function dotdir = gretl_dotdir()\n", fp);
-	fprintf(fp, "  dotdir = \"%s\";\n", ddir);
-	fputs("endfunction\n\n", fp);
+    fputs("gretl_export (const X, const str)\n{\n", fp);
+    fputs("  decl dname = gretl_dotdir();\n", fp);
+    fputs("  decl fp = fopen(dname ~ str, \"w\");\n", fp);
+    fputs("  fprint(fp, \"%d \", rows(X), \"%d\", columns(X));\n", fp);
+    fputs("  fprint(fp, \"%.15g\", X);\n", fp);
+    fputs("  fclose(fp);\n}\n\n", fp);
 
-	fputs("function gretl_export(X, str, autodot=1)\n", fp);
-	fputs("  if (autodot)\n", fp);
-	fputs("    dname = gretl_dotdir();\n", fp);
-	fputs("    fd = fopen(strcat(dname, str), \"w\");\n", fp);
-	fputs("  else\n", fp);
-	fputs("    fd = fopen(str, \"w\");\n", fp);
-	fputs("  endif\n", fp);
-	fputs("  fprintf(fd, \"%d %d\\n\", size(X));\n", fp);
-	fputs("  c = columns(X);\n", fp);
-	fputs("  fs = strcat(strrep(sprintf(\"%d \", ones(1, c)), \"1\", \"%.15g\"), \"\\n\");",
-	      fp);
-	fputc('\n', fp);
-	fputs("  fprintf(fd, fs, X');\n", fp);
-	fputs("  fclose(fd);\n", fp);
-	fputs("endfunction\n\n", fp);
-
-	fputs("function A = gretl_loadmat(str, autodot=1)\n", fp);
-	fputs("  if (autodot)\n", fp);
-	fputs("    dname = gretl_dotdir();\n", fp);
-	fputs("    fd = fopen(strcat(dname, str), \"r\");\n", fp);
-	fputs("  else\n", fp);
-	fputs("    fd = fopen(str, \"r\");\n", fp);
-	fputs("  endif\n", fp);
-	fputs("  [r,c] = fscanf(fd, \"%d %d\", \"C\");\n", fp);
-	fputs("  A = reshape(fscanf(fd, \"%g\", r*c),c,r)';\n", fp);
-	fputs("  fclose(fd);\n", fp);
-	fputs("endfunction\n\n", fp);
-
-	fclose(fp);
-    }
-
-    return 0;
+    fputs("gretl_loadmat (const str)\n{\n", fp);
+    fputs("  decl dname = gretl_dotdir();\n", fp);
+    fputs("  decl X = loadmat(dname ~ str);\n", fp);
+    fputs("  return X;\n}\n", fp);
 }
 
-static int write_octave_io_file (void)
+static void write_octave_io_file (FILE *fp, const char *ddir)
 {
-    static int written;
+    fputs("# not a 'function file' as such\n1;\n", fp);
+    fputs("function dotdir = gretl_dotdir()\n", fp);
+    fprintf(fp, "  dotdir = \"%s\";\n", ddir);
+    fputs("endfunction\n\n", fp);
+
+    fputs("function gretl_export(X, str, autodot=1)\n", fp);
+    fputs("  if (autodot)\n", fp);
+    fputs("    dname = gretl_dotdir();\n", fp);
+    fputs("    fd = fopen(strcat(dname, str), \"w\");\n", fp);
+    fputs("  else\n", fp);
+    fputs("    fd = fopen(str, \"w\");\n", fp);
+    fputs("  endif\n", fp);
+    fputs("  fprintf(fd, \"%d %d\\n\", size(X));\n", fp);
+    fputs("  c = columns(X);\n", fp);
+    fputs("  fs = strcat(strrep(sprintf(\"%d \", ones(1, c)), \"1\", \"%.15g\"), \"\\n\");",
+	  fp);
+    fputc('\n', fp);
+    fputs("  fprintf(fd, fs, X');\n", fp);
+    fputs("  fclose(fd);\n", fp);
+    fputs("endfunction\n\n", fp);
+
+    fputs("function A = gretl_loadmat(str, autodot=1)\n", fp);
+    fputs("  if (autodot)\n", fp);
+    fputs("    dname = gretl_dotdir();\n", fp);
+    fputs("    fd = fopen(strcat(dname, str), \"r\");\n", fp);
+    fputs("  else\n", fp);
+    fputs("    fd = fopen(str, \"r\");\n", fp);
+    fputs("  endif\n", fp);
+    fputs("  [r,c] = fscanf(fd, \"%d %d\", \"C\");\n", fp);
+    fputs("  A = reshape(fscanf(fd, \"%g\", r*c),c,r)';\n", fp);
+    fputs("  fclose(fd);\n", fp);
+    fputs("endfunction\n\n", fp);
+}
+
+static void write_python_io_file (FILE *fp, const char *ddir)
+{
+    fprintf(fp, "gretl_dotdir = \"%s\"\n\n", ddir);
+    /* export matrix for reading by gretl */
+    fputs("def gretl_export(X, fname, autodot=1):\n", fp);
+    fputs("  binwrite = 0\n", fp);
+    fputs("  if fname[-4:] == '.bin':\n", fp);
+    fputs("    binwrite = 1\n", fp);
+    fputs("    from numpy import asmatrix, asarray\n", fp);
+    fputs("    from struct import pack\n", fp);
+    fputs("  else:\n", fp);
+    fputs("    from numpy import asmatrix, savetxt\n", fp);
+    fputs("  M = asmatrix(X)\n", fp);
+    fputs("  r, c = M.shape\n", fp);
+    fputs("  if autodot:\n", fp);
+    fputs("    fname = gretl_dotdir + fname\n", fp);
+    fputs("  if binwrite:\n", fp);
+    fputs("    from sys import byteorder\n", fp);
+    fputs("    f = open(fname, 'wb')\n", fp);
+    fputs("    f.write(b'gretl_binary_matrix')\n", fp);
+    fputs("    f.write(pack('<i', r))\n", fp);
+    fputs("    f.write(pack('<i', c))\n", fp);
+    fputs("    if byteorder == 'big':\n", fp);
+    fputs("      for j in range(0, c):\n", fp);
+    fputs("        for i in range(0, r):\n", fp);
+    fputs("          f.write(pack('<d', M[i,j]))\n", fp);
+    fputs("    else:\n", fp);
+    fputs("      A = asarray(X, dtype=float)\n", fp);
+    fputs("      f.write(A.tobytes('F'))\n", fp);
+    fputs("    f.close()\n", fp);
+    fputs("  else:\n", fp);
+    fputs("    ghead = repr(r) + ' ' + repr(c)\n", fp);
+    fputs("    savetxt(fname, M, header=ghead, comments='')\n", fp);
+
+    /* import matrix from gretl */
+    fputs("def gretl_loadmat(fname, autodot=1):\n", fp);
+    fputs("  if autodot:\n", fp);
+    fputs("    fname = gretl_dotdir + fname\n", fp);
+    fputs("  if fname[-4:] == '.bin':\n", fp);
+    fputs("    from numpy import ndarray, asmatrix\n", fp);
+    fputs("    from struct import unpack\n", fp);
+    fputs("    f = open(fname, 'rb')\n", fp);
+    fputs("    buf = f.read(19)\n", fp);
+    fputs("    if buf != b'gretl_binary_matrix':\n", fp);
+    fputs("      raise ValueError('Not a gretl binary matrix')\n", fp);
+    fputs("    r = unpack('<i', f.read(4))[0]\n", fp);
+    fputs("    c = unpack('<i', f.read(4))[0]\n", fp);
+    fputs("    M = ndarray(shape=(r,c), dtype=float, order='F')\n", fp);
+    fputs("    for j in range(0, c):\n", fp);
+    fputs("      for i in range(0, r):\n", fp);
+    fputs("        M[i,j] = unpack('<d', f.read(8))[0]\n", fp);
+    fputs("    f.close()\n", fp);
+    fputs("    M = asmatrix(M)\n", fp);
+    fputs("  else:\n", fp);
+    fputs("    from numpy import loadtxt\n", fp);
+    fputs("    M = loadtxt(fname, skiprows=1)\n", fp);
+    fputs("  return M\n\n", fp);
+}
+
+static void write_julia_io_file (FILE *fp, const char *ddir)
+{
+    fprintf(fp, "gretl_dotdir = \"%s\"\n\n", ddir);
+    /* Julia 1.0 requires more library-loading */
+    fputs("v1 = VERSION > v\"0.6.9\"\n", fp);
+    fputs("if v1\n", fp);
+    fputs("  using Printf\n", fp);
+    fputs("  using DelimitedFiles\n", fp);
+    fputs("end\n\n", fp);
+    fputs("function gretl_export(M, fname, autodot=1)\n", fp);
+    fputs("  r,c = size(M)\n", fp);
+    fputs("  if autodot != 0\n", fp);
+    fputs("    fname = gretl_dotdir * fname\n", fp);
+    fputs("  end\n", fp);
+    fputs("  f = open(fname, \"w\")\n", fp);
+    fputs("  if v1\n", fp);
+    fputs("    n = lastindex(fname)\n", fp);
+    fputs("  else\n", fp);
+    fputs("    n = endof(fname)\n", fp);
+    fputs("  end\n", fp);
+    fputs("  if fname[n-3:n] == \".bin\"\n", fp);
+    fputs("    # binary mode\n", fp);
+    fputs("    write(f, b\"gretl_binary_matrix\")\n", fp);
+    fputs("    if ENDIAN_BOM == 0x01020304\n", fp);
+    fputs("      # host is big-endian\n", fp);
+    fputs("      write(f, htol(Int32(r)))\n", fp);
+    fputs("      write(f, htol(Int32(c)))\n", fp);
+    fputs("      for j=1:c\n", fp);
+    fputs("        for i=1:r\n", fp);
+    fputs("          write(f, htol(Float64(M[i,j])))\n", fp);
+    fputs("        end\n", fp);
+    fputs("      end\n", fp);
+    fputs("    else\n", fp);
+    fputs("      write(f, Int32(r))\n", fp);
+    fputs("      write(f, Int32(c))\n", fp);
+    fputs("      for j=1:c\n", fp);
+    fputs("        for i=1:r\n", fp);
+    fputs("          write(f, Float64(M[i,j]))\n", fp);
+    fputs("        end\n", fp);
+    fputs("      end\n", fp);
+    fputs("    end\n", fp);
+    fputs("  else\n", fp);
+    fputs("    # text mode\n", fp);
+    fputs("    @printf(f, \"%d\\t%d\\n\", r, c)\n", fp);
+    fputs("    for i = 1:r\n", fp);
+    fputs("      for j = 1:c\n", fp);
+    fputs("        @printf(f, \"%.18e \", M[i,j])\n", fp);
+    fputs("      end\n", fp);
+    fputs("      @printf(f, \"\\n\")\n", fp);
+    fputs("    end\n", fp);
+    fputs("  end\n", fp);
+    fputs("  close(f)\n", fp);
+    fputs("end\n\n", fp);
+
+    fputs("function gretl_loadmat(fname, autodot=1)\n", fp);
+    fputs("  if autodot != 0\n", fp);
+    fputs("    fname = gretl_dotdir * fname\n", fp);
+    fputs("  end\n", fp);
+    fputs("  if v1\n", fp);
+    fputs("    n = lastindex(fname)\n", fp);
+    fputs("  else\n", fp);
+    fputs("    n = endof(fname)\n", fp);
+    fputs("  end\n", fp);
+    fputs("  if fname[n-3:n] == \".bin\"\n", fp);
+    fputs("    # binary mode\n", fp);
+    fputs("    f = open(fname, \"r\")\n", fp);
+    fputs("    hdr = read(f, UInt8, 19)\n", fp);
+    fputs("    if hdr != b\"gretl_binary_matrix\"\n", fp);
+    fputs("      error(\"Not a gretl binary matrix\")\n", fp);
+    fputs("    end\n", fp);
+    fputs("    if ENDIAN_BOM == 0x01020304\n", fp);
+    fputs("      # host is big-endian\n", fp);
+    fputs("      r = ltoh(read(f, Int32))\n", fp);
+    fputs("      c = ltoh(read(f, Int32))\n", fp);
+    fputs("      M = Array{Float64, 2}(r, c)\n", fp);
+    fputs("      for j=1:c\n", fp);
+    fputs("        for i=1:r\n", fp);
+    fputs("          M[i,j] = ltoh(read(f, Float64))\n", fp);
+    fputs("        end\n", fp);
+    fputs("      end\n", fp);
+    fputs("    else\n", fp);
+    fputs("      r = read(f, Int32)\n", fp);
+    fputs("      c = read(f, Int32)\n", fp);
+    fputs("      M = Array{Float64, 2}(r, c)\n", fp);
+    fputs("      for j=1:c\n", fp);
+    fputs("        for i=1:r\n", fp);
+    fputs("          M[i,j] = read(f, Float64)\n", fp);
+    fputs("        end\n", fp);
+    fputs("      end\n", fp);
+    fputs("    end\n", fp);
+    fputs("    close(f)\n", fp);
+    fputs("  else\n", fp);
+    fputs("    # text mode\n", fp);
+    fputs("    M = readdlm(fname, skipstart=1)\n", fp);
+    fputs("  end\n", fp);
+    fputs("  M\n", fp);
+    fputs("end\n\n", fp);
+}
+
+static void write_stata_io_file (FILE *fp, const char *ddir)
+{
+    fputs("program define gretl_export\n", fp);
+    /* not sure about req'd version, but see mat2txt.ado */
+    fputs("version 8.2\n", fp);
+    fputs("local matrix `1'\n", fp);
+    fputs("local fname `2'\n", fp);
+    fputs("tempname myfile\n", fp);
+    fprintf(fp, "file open `myfile' using \"%s`fname'\", "
+	    "write text replace\n", ddir);
+    fputs("local nrows = rowsof(`matrix')\n", fp);
+    fputs("local ncols = colsof(`matrix')\n", fp);
+    fputs("file write `myfile' %8.0g (`nrows') %8.0g (`ncols') _n\n", fp);
+    fputs("forvalues r=1/`nrows' {\n", fp);
+    fputs("  forvalues c=1/`ncols' {\n", fp);
+    fputs("    file write `myfile' %15.0e (`matrix'[`r',`c']) _n\n", fp);
+    fputs("  }\n", fp);
+    fputs("}\n", fp);
+    fputs("file close `myfile'\n", fp);
+    fputs("end\n", fp);
+}
+
+static int ensure_foreign_io_file (int lang)
+{
+    const char *iofile = NULL;
     int err = 0;
 
-    if (!written) {
-	err = real_write_octave_io_file();
-	if (!err) {
-	    written = 1;
+    if (lang == LANG_PYTHON) {
+	iofile = "gretl_io.py";
+    } else if (lang == LANG_OCTAVE) {
+	iofile = "gretl_io.m";
+    } else if (lang == LANG_JULIA) {
+	iofile = "gretl_io.jl";
+    } else if (lang == LANG_OX) {
+	iofile = "gretl_io.ox";
+    } else if (lang == LANG_STATA) {
+	iofile = "gretl_export.ado";
+    } else {
+	return E_DATA;
+    }
+
+    if (!dotfile_exists(iofile)) {
+	FILE *fp = write_open_dotfile(iofile);
+	const char *ddir = get_export_dotdir();
+
+	if (fp == NULL) {
+	    err = E_FOPEN;
+	} else if (lang == LANG_PYTHON) {
+	    write_python_io_file(fp, ddir);
+	} else if (lang == LANG_OCTAVE) {
+	    write_octave_io_file(fp, ddir);
+	} else if (lang == LANG_JULIA) {
+	    write_julia_io_file(fp, ddir);
+	} else if (lang == LANG_OX) {
+	    write_ox_io_file(fp, ddir);
+	} else if (lang == LANG_STATA) {
+	    write_stata_io_file(fp, ddir);
+	}
+
+	if (fp != NULL) {
+	    fclose(fp);
 	}
     }
 
     return err;
-}
-
-static int write_python_io_file (void)
-{
-    static int written;
-
-    if (!written) {
-	FILE *fp = write_open_dotfile("gretl_io.py");
-
-	if (fp == NULL) {
-	    return E_FOPEN;
-	} else {
-	    const char *ddir = get_export_dotdir();
-
-	    fprintf(fp, "gretl_dotdir = \"%s\"\n\n", ddir);
-	    /* export matrix for reading by gretl */
-	    fputs("def gretl_export(X, fname, autodot=1):\n", fp);
-	    fputs("  binwrite = 0\n", fp);
-	    fputs("  if fname[-4:] == '.bin':\n", fp);
-	    fputs("    binwrite = 1\n", fp);
-	    fputs("    from numpy import asmatrix, asarray\n", fp);
-	    fputs("    from struct import pack\n", fp);
-	    fputs("  else:\n", fp);
-	    fputs("    from numpy import asmatrix, savetxt\n", fp);
-	    fputs("  M = asmatrix(X)\n", fp);
-	    fputs("  r, c = M.shape\n", fp);
-	    fputs("  if autodot:\n", fp);
-            fputs("    fname = gretl_dotdir + fname\n", fp);
-	    fputs("  if binwrite:\n", fp);
-	    fputs("    from sys import byteorder\n", fp);
-	    fputs("    f = open(fname, 'wb')\n", fp);
-	    fputs("    f.write(b'gretl_binary_matrix')\n", fp);
-	    fputs("    f.write(pack('<i', r))\n", fp);
-	    fputs("    f.write(pack('<i', c))\n", fp);
-	    fputs("    if byteorder == 'big':\n", fp);
-	    fputs("      for j in range(0, c):\n", fp);
-	    fputs("        for i in range(0, r):\n", fp);
-	    fputs("          f.write(pack('<d', M[i,j]))\n", fp);
-	    fputs("    else:\n", fp);
-	    fputs("      A = asarray(X, dtype=float)\n", fp);
-	    fputs("      f.write(A.tobytes('F'))\n", fp);
-	    fputs("    f.close()\n", fp);
-	    fputs("  else:\n", fp);
- 	    fputs("    ghead = repr(r) + ' ' + repr(c)\n", fp);
-	    fputs("    savetxt(fname, M, header=ghead, comments='')\n", fp);
-
-	    /* import matrix from gretl */
-	    fputs("def gretl_loadmat(fname, autodot=1):\n", fp);
-	    fputs("  if autodot:\n", fp);
-	    fputs("    fname = gretl_dotdir + fname\n", fp);
-	    fputs("  if fname[-4:] == '.bin':\n", fp);
-	    fputs("    from numpy import ndarray, asmatrix\n", fp);
-	    fputs("    from struct import unpack\n", fp);
-	    fputs("    f = open(fname, 'rb')\n", fp);
-	    fputs("    buf = f.read(19)\n", fp);
-	    fputs("    if buf != b'gretl_binary_matrix':\n", fp);
-	    fputs("      raise ValueError('Not a gretl binary matrix')\n", fp);
-	    fputs("    r = unpack('<i', f.read(4))[0]\n", fp);
-	    fputs("    c = unpack('<i', f.read(4))[0]\n", fp);
-	    fputs("    M = ndarray(shape=(r,c), dtype=float, order='F')\n", fp);
-	    fputs("    for j in range(0, c):\n", fp);
-	    fputs("      for i in range(0, r):\n", fp);
-	    fputs("        M[i,j] = unpack('<d', f.read(8))[0]\n", fp);
-	    fputs("    f.close()\n", fp);
-	    fputs("    M = asmatrix(M)\n", fp);
-	    fputs("  else:\n", fp);
-	    fputs("    from numpy import loadtxt\n", fp);
-	    fputs("    M = loadtxt(fname, skiprows=1)\n", fp);
-	    fputs("  return M\n\n", fp);
-
-	    fclose(fp);
-	    written = 1;
-	}
-    }
-
-    return 0;
-}
-
-static int write_julia_io_file (void)
-{
-    static int written;
-
-    if (!written) {
-	FILE *fp = write_open_dotfile("gretl_io.jl");
-
-	if (fp == NULL) {
-	    return E_FOPEN;
-	} else {
-	    const char *ddir = get_export_dotdir();
-
-	    fprintf(fp, "gretl_dotdir = \"%s\"\n\n", ddir);
-	    /* Julia 1.0 requires more library-loading */
-	    fputs("v1 = VERSION > v\"0.6.9\"\n", fp);
-	    fputs("if v1\n", fp);
-	    fputs("  using Printf\n", fp);
-	    fputs("  using DelimitedFiles\n", fp);
-	    fputs("end\n\n", fp);
-	    fputs("function gretl_export(M, fname, autodot=1)\n", fp);
-	    fputs("  r,c = size(M)\n", fp);
-	    fputs("  if autodot != 0\n", fp);
-	    fputs("    fname = gretl_dotdir * fname\n", fp);
-	    fputs("  end\n", fp);
-	    fputs("  f = open(fname, \"w\")\n", fp);
-	    fputs("  if v1\n", fp);
-	    fputs("    n = lastindex(fname)\n", fp);
-	    fputs("  else\n", fp);
-	    fputs("    n = endof(fname)\n", fp);
-	    fputs("  end\n", fp);
-	    fputs("  if fname[n-3:n] == \".bin\"\n", fp);
-	    fputs("    # binary mode\n", fp);
-	    fputs("    write(f, b\"gretl_binary_matrix\")\n", fp);
-	    fputs("    if ENDIAN_BOM == 0x01020304\n", fp);
-	    fputs("      # host is big-endian\n", fp);
-	    fputs("      write(f, htol(Int32(r)))\n", fp);
-	    fputs("      write(f, htol(Int32(c)))\n", fp);
-	    fputs("      for j=1:c\n", fp);
-	    fputs("        for i=1:r\n", fp);
-	    fputs("          write(f, htol(Float64(M[i,j])))\n", fp);
-	    fputs("        end\n", fp);
-	    fputs("      end\n", fp);
-	    fputs("    else\n", fp);
-	    fputs("      write(f, Int32(r))\n", fp);
-	    fputs("      write(f, Int32(c))\n", fp);
-	    fputs("      for j=1:c\n", fp);
-	    fputs("        for i=1:r\n", fp);
-	    fputs("          write(f, Float64(M[i,j]))\n", fp);
-	    fputs("        end\n", fp);
-	    fputs("      end\n", fp);
-	    fputs("    end\n", fp);
-	    fputs("  else\n", fp);
-	    fputs("    # text mode\n", fp);
-	    fputs("    @printf(f, \"%d\\t%d\\n\", r, c)\n", fp);
-	    fputs("    for i = 1:r\n", fp);
-	    fputs("      for j = 1:c\n", fp);
-	    fputs("        @printf(f, \"%.18e \", M[i,j])\n", fp);
-	    fputs("      end\n", fp);
-	    fputs("      @printf(f, \"\\n\")\n", fp);
-	    fputs("    end\n", fp);
-	    fputs("  end\n", fp);
-	    fputs("  close(f)\n", fp);
-	    fputs("end\n\n", fp);
-
-	    fputs("function gretl_loadmat(fname, autodot=1)\n", fp);
-	    fputs("  if autodot != 0\n", fp);
-	    fputs("    fname = gretl_dotdir * fname\n", fp);
-	    fputs("  end\n", fp);
-	    fputs("  if v1\n", fp);
-	    fputs("    n = lastindex(fname)\n", fp);
-	    fputs("  else\n", fp);
-	    fputs("    n = endof(fname)\n", fp);
-	    fputs("  end\n", fp);
-	    fputs("  if fname[n-3:n] == \".bin\"\n", fp);
-	    fputs("    # binary mode\n", fp);
-	    fputs("    f = open(fname, \"r\")\n", fp);
-	    fputs("    hdr = read(f, UInt8, 19)\n", fp);
-	    fputs("    if hdr != b\"gretl_binary_matrix\"\n", fp);
-	    fputs("      error(\"Not a gretl binary matrix\")\n", fp);
-	    fputs("    end\n", fp);
-	    fputs("    if ENDIAN_BOM == 0x01020304\n", fp);
-	    fputs("      # host is big-endian\n", fp);
-	    fputs("      r = ltoh(read(f, Int32))\n", fp);
-	    fputs("      c = ltoh(read(f, Int32))\n", fp);
-	    fputs("      M = Array{Float64, 2}(r, c)\n", fp);
-	    fputs("      for j=1:c\n", fp);
-	    fputs("        for i=1:r\n", fp);
-	    fputs("          M[i,j] = ltoh(read(f, Float64))\n", fp);
-	    fputs("        end\n", fp);
-	    fputs("      end\n", fp);
-	    fputs("    else\n", fp);
-	    fputs("      r = read(f, Int32)\n", fp);
-	    fputs("      c = read(f, Int32)\n", fp);
-	    fputs("      M = Array{Float64, 2}(r, c)\n", fp);
-	    fputs("      for j=1:c\n", fp);
-	    fputs("        for i=1:r\n", fp);
-	    fputs("          M[i,j] = read(f, Float64)\n", fp);
-	    fputs("        end\n", fp);
-	    fputs("      end\n", fp);
-	    fputs("    end\n", fp);
-	    fputs("    close(f)\n", fp);
-	    fputs("  else\n", fp);
-	    fputs("    # text mode\n", fp);
-	    fputs("    M = readdlm(fname, skipstart=1)\n", fp);
-	    fputs("  end\n", fp);
-	    fputs("  M\n", fp);
-	    fputs("end\n\n", fp);
-
-	    fclose(fp);
-	    written = 1;
-	}
-    }
-
-    return 0;
-}
-
-static int write_stata_io_file (void)
-{
-    static int written;
-
-    if (!written) {
-	FILE *fp = write_open_dotfile("gretl_export.ado");
-
-	if (fp == NULL) {
-	    return E_FOPEN;
-	} else {
-	    const char *ddir = get_export_dotdir();
-
-	    fputs("program define gretl_export\n", fp);
-	    /* not sure about req'd version, but see mat2txt.ado */
-	    fputs("version 8.2\n", fp);
-	    fputs("local matrix `1'\n", fp);
-	    fputs("local fname `2'\n", fp);
-	    fputs("tempname myfile\n", fp);
-	    fprintf(fp, "file open `myfile' using \"%s`fname'\", "
-		    "write text replace\n", ddir);
-	    fputs("local nrows = rowsof(`matrix')\n", fp);
-	    fputs("local ncols = colsof(`matrix')\n", fp);
-	    fputs("file write `myfile' %8.0g (`nrows') %8.0g (`ncols') _n\n", fp);
-	    fputs("forvalues r=1/`nrows' {\n", fp);
-	    fputs("  forvalues c=1/`ncols' {\n", fp);
-	    fputs("    file write `myfile' %15.0e (`matrix'[`r',`c']) _n\n", fp);
-	    fputs("  }\n", fp);
-	    fputs("}\n", fp);
-	    fputs("file close `myfile'\n", fp);
-	    fputs("end\n", fp);
-
-	    fclose(fp);
-	    written = 1;
-	}
-    }
-
-    return 0;
 }
 
 static void add_gretl_include (int lang, gretlopt opt, FILE *fp)
@@ -1229,7 +1194,8 @@ static void put_foreign_lines (FILE *fp)
 		add_gretl_include(LANG_OX, 0, fp);
 	    }
 	} else if (foreign_lang == LANG_OCTAVE) {
-	    if (strstr(foreign_lines[i], "dynare ")) {
+	    if (strstr(foreign_lines[i], "dynare ") &&
+		!strstr(foreign_lines[i], "noclearall")) {
 		add_gretl_include(LANG_OCTAVE, 0, fp);
 	    }
 	}
@@ -1249,7 +1215,8 @@ static void put_foreign_buffer (const char *buf, FILE *fp)
 		add_gretl_include(LANG_OX, 0, fp);
 	    }
 	} else if (foreign_lang == LANG_OCTAVE) {
-	    if (strstr(line, "dynare ")) {
+	    if (strstr(line, "dynare ") &&
+		!strstr(line, "noclearall")) {
 		add_gretl_include(LANG_OCTAVE, 0, fp);
 	    }
 	}
@@ -1276,7 +1243,7 @@ int write_gretl_ox_script (const char *buf, gretlopt opt,
     const gchar *fname = get_ox_scriptname();
     FILE *fp = gretl_fopen(fname, "w");
 
-    write_ox_io_file();
+    ensure_foreign_io_file(LANG_OX);
 
     if (fp == NULL) {
 	return E_FOPEN;
@@ -1315,7 +1282,7 @@ int write_gretl_python_script (const char *buf, gretlopt opt,
     const gchar *fname = get_python_scriptname();
     FILE *fp = gretl_fopen(fname, "w");
 
-    write_python_io_file();
+    ensure_foreign_io_file(LANG_PYTHON);
 
     if (fp == NULL) {
 	return E_FOPEN;
@@ -1356,7 +1323,7 @@ int write_gretl_julia_script (const char *buf, gretlopt opt,
     const gchar *fname = gretl_julia_scriptname();
     FILE *fp = gretl_fopen(fname, "w");
 
-    write_julia_io_file();
+    ensure_foreign_io_file(LANG_JULIA);
 
     if (fp == NULL) {
 	return E_FOPEN;
@@ -1578,7 +1545,7 @@ int write_gretl_stata_script (const char *buf, gretlopt opt,
     const gchar *fname = get_stata_scriptname();
     FILE *fp = gretl_fopen(fname, "w");
 
-    write_stata_io_file();
+    ensure_foreign_io_file(LANG_STATA);
 
     if (fp == NULL) {
 	return E_FOPEN;
@@ -1674,7 +1641,7 @@ int write_gretl_octave_script (const char *buf, gretlopt opt,
     FILE *fp = gretl_fopen(fname, "w");
     int err = 0;
 
-    write_octave_io_file();
+    ensure_foreign_io_file(LANG_OCTAVE);
 
     if (fp == NULL) {
 	err = E_FOPEN;
