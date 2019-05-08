@@ -48,22 +48,9 @@ int write_gretl_R_files (const char *buf,
 
 void delete_gretl_R_files (void);
 
-int write_gretl_ox_script (const char *buf, gretlopt opt,
-			   const char **pfname);
-
-int write_gretl_python_script (const char *buf, gretlopt opt,
-			       const char **pfname);
-
-int write_gretl_julia_script (const char *buf, gretlopt opt,
-			      const char **pfname);
-
-int write_gretl_octave_script (const char *buf, gretlopt opt,
-			       const DATASET *dset,
-			       const char **pfname);
-
-int write_gretl_stata_script (const char *buf, gretlopt opt,
-			      const DATASET *dset,
-			      const char **pfname);
+int write_gretl_foreign_script (const char *buf, int lang,
+				gretlopt opt, const DATASET *dset,
+				const char **pfname);
 
 int gretl_max_mpi_processes (void);
 

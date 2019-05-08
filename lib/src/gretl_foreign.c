@@ -57,15 +57,68 @@ static gchar *gretl_Rsrc;
 static gchar *gretl_Rout;
 static gchar *gretl_Rmsg;
 
-/* names of dotdir scripts to be passed to foreign programs */
-static gchar *gretl_ox_script;
-static gchar *gretl_octave_script;
-static gchar *gretl_stata_script;
-static gchar *gretl_python_script;
-static gchar *gretl_julia_script;
 #ifdef HAVE_MPI
 static gchar *gretl_mpi_script;
 #endif
+
+struct fmap {
+    int lang;
+    const char *scriptname;
+    const char *iofile;
+    gchar *scriptpath;
+};
+
+static struct fmap foreign_map[] = {
+     { LANG_OX,     "gretltmp.ox", "gretl_io.ox", NULL },
+     { LANG_OCTAVE, "gretltmp.m",  "gretl_io.m", NULL },
+     { LANG_STATA,  "gretltmp.do", "gretl_export.ado", NULL },
+     { LANG_PYTHON, "gretltmp.py", "gretl_io.py", NULL },
+     { LANG_JULIA,  "gretltmp.jl", "gretl_io.jl", NULL }
+};
+
+static const char *get_io_filename (int lang)
+{
+    int i, n = G_N_ELEMENTS(foreign_map);
+
+    for (i=0; i<n; i++) {
+	if (foreign_map[i].lang == lang) {
+	    return foreign_map[i].iofile;
+	}
+    }
+
+    return NULL;
+}
+
+static gchar *get_foreign_scriptpath (int lang)
+{
+    int i, n = G_N_ELEMENTS(foreign_map);
+
+    for (i=0; i<n; i++) {
+	if (foreign_map[i].lang == lang) {
+	    if (foreign_map[i].scriptpath == NULL) {
+		foreign_map[i].scriptpath =
+		    gretl_make_dotpath(foreign_map[i].scriptname);
+	    }
+	    return foreign_map[i].scriptpath;
+	}
+    }
+
+    return NULL;
+}
+
+static void delete_foreign_script (int lang)
+{
+    int i, n = G_N_ELEMENTS(foreign_map);
+
+    for (i=0; i<n; i++) {
+	if (foreign_map[i].lang == lang) {
+	    if (foreign_map[i].scriptpath != NULL) {
+		gretl_remove(foreign_map[i].scriptpath);
+	    }
+	    break;
+	}
+    }
+}
 
 void foreign_destroy (void)
 {
@@ -245,51 +298,6 @@ int gretl_max_mpi_processes (void)
 
 #endif /* HAVE_MPI */
 
-static const gchar *get_ox_scriptname (void)
-{
-    if (gretl_ox_script == NULL) {
-	gretl_ox_script = gretl_make_dotpath("gretltmp.ox");
-    }
-
-    return gretl_ox_script;
-}
-
-static const gchar *get_octave_scriptname (void)
-{
-    if (gretl_octave_script == NULL) {
-	gretl_octave_script = gretl_make_dotpath("gretltmp.m");
-    }
-
-    return gretl_octave_script;
-}
-
-static const gchar *get_stata_scriptname (void)
-{
-    if (gretl_stata_script == NULL) {
-	gretl_stata_script = gretl_make_dotpath("gretltmp.do");
-    }
-
-    return gretl_stata_script;
-}
-
-static const gchar *get_python_scriptname (void)
-{
-    if (gretl_python_script == NULL) {
-	gretl_python_script = gretl_make_dotpath("gretltmp.py");
-    }
-
-    return gretl_python_script;
-}
-
-static const gchar *gretl_julia_scriptname (void)
-{
-    if (gretl_julia_script == NULL) {
-	gretl_julia_script = gretl_make_dotpath("gretltmp.jl");
-    }
-
-    return gretl_julia_script;
-}
-
 #ifdef HAVE_MPI
 
 static const gchar *get_mpi_scriptname (void)
@@ -453,25 +461,22 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
     gchar *cmd, *sout = NULL;
     int err;
 
+    fname = get_foreign_scriptpath(foreign_lang);
+
     if (foreign_lang == LANG_OX) {
 	exe = gretl_oxl_path();
-	fname = get_ox_scriptname();
 	cmd = g_strdup_printf("\"%s\" \"%s\"", exe, fname);
     } else if (foreign_lang == LANG_OCTAVE) {
 	exe = gretl_octave_path();
-	fname = get_octave_scriptname();
 	cmd = g_strdup_printf("\"%s\" --silent \"%s\"", exe, fname);
     } else if (foreign_lang == LANG_STATA) {
 	exe = gretl_stata_path();
-	fname = get_stata_scriptname();
 	cmd = g_strdup_printf("\"%s\" /q /e do \"%s\"", exe, fname);
     } else if (foreign_lang == LANG_PYTHON) {
 	exe = gretl_python_path();
-	fname = get_python_scriptname();
 	cmd = g_strdup_printf("\"%s\" \"%s\"", exe, fname);
     } else if (foreign_lang == LANG_JULIA) {
 	exe = gretl_julia_path();
-	fname = gretl_julia_scriptname();
 	if (opt & OPT_N) {
 	    cmd = g_strdup_printf("\"%s\" --compile=no \"%s\"", exe, fname);;
 	} else {
@@ -663,30 +668,33 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
 
 static int lib_run_other_sync (gretlopt opt, PRN *prn)
 {
+    char *scriptpath;
     char *argv[6];
     int err;
 
+    scriptpath = (char *) get_foreign_scriptpath(foreign_lang);
+
     if (foreign_lang == LANG_OX) {
 	argv[0] = (char *) gretl_oxl_path();
-	argv[1] = (char *) get_ox_scriptname();
+	argv[1] = scriptpath;
 	argv[2] = NULL;
     } else if (foreign_lang == LANG_OCTAVE) {
 	argv[0] = (char *) gretl_octave_path();
 	argv[1] = "--silent";
-	argv[2] = (char *) get_octave_scriptname();
+	argv[2] = scriptpath;
 	argv[3] = NULL;
     } else if (foreign_lang == LANG_PYTHON) {
 	argv[0] = (char *) gretl_python_path();
-	argv[1] = (char *) get_python_scriptname();
+	argv[1] = scriptpath;
 	argv[2] = NULL;
     } else if (foreign_lang == LANG_JULIA) {
 	argv[0] = (char *) gretl_julia_path();
 	if (opt & OPT_N) {
 	    argv[1] = "--compile=no";
-	    argv[2] = (char *) gretl_julia_scriptname();
+	    argv[2] = scriptpath;
 	    argv[3] = NULL;
 	} else {
-	    argv[1] = (char *) gretl_julia_scriptname();
+	    argv[1] = scriptpath;
 	    argv[2] = NULL;
 	}
     } else if (foreign_lang == LANG_STATA) {
@@ -694,7 +702,7 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 	argv[1] = "-q";
 	argv[2] = "-b";
 	argv[3] = "do";
-	argv[4] = (char *) get_stata_scriptname();
+	argv[4] = scriptpath;
 	argv[5] = NULL;
     }
 
@@ -1084,20 +1092,10 @@ static void write_stata_io_file (FILE *fp, const char *ddir)
 
 static int ensure_foreign_io_file (int lang)
 {
-    const char *iofile = NULL;
+    const char *iofile = get_io_filename(lang);
     int err = 0;
 
-    if (lang == LANG_PYTHON) {
-	iofile = "gretl_io.py";
-    } else if (lang == LANG_OCTAVE) {
-	iofile = "gretl_io.m";
-    } else if (lang == LANG_JULIA) {
-	iofile = "gretl_io.jl";
-    } else if (lang == LANG_OX) {
-	iofile = "gretl_io.ox";
-    } else if (lang == LANG_STATA) {
-	iofile = "gretl_export.ado";
-    } else {
+    if (iofile == NULL) {
 	return E_DATA;
     }
 
@@ -1223,126 +1221,6 @@ static void put_foreign_buffer (const char *buf, FILE *fp)
     }
 
     bufgets_finalize(buf);
-}
-
-/**
- * write_gretl_ox_script:
- * @buf: text buffer containing Ox code.
- * @opt: should contain %OPT_G for use from GUI.
- * @pfname: location to receive name of file written, or %NULL.
- *
- * Writes the content of @buf into a file in the gretl user's
- * "dotdir".
- *
- * Returns: 0 on success, non-zero on error.
- */
-
-int write_gretl_ox_script (const char *buf, gretlopt opt,
-			   const char **pfname)
-{
-    const gchar *fname = get_ox_scriptname();
-    FILE *fp = gretl_fopen(fname, "w");
-
-    ensure_foreign_io_file(LANG_OX);
-
-    if (fp == NULL) {
-	return E_FOPEN;
-    } else {
-	if (buf != NULL) {
-	    /* pass on the material supplied in the 'buf' argument */
-	    put_foreign_buffer(buf, fp);
-	} else {
-	    /* put out the stored 'foreign' lines */
-	    put_foreign_lines(fp);
-	}
-	fclose(fp);
-	if (pfname != NULL) {
-	    *pfname = fname;
-	}
-    }
-
-    return 0;
-}
-
-/**
- * write_gretl_python_script:
- * @buf: text buffer containing Python code.
- * @opt: should contain %OPT_G for use from GUI.
- * @pfname: location to receive name of file written, or %NULL.
- *
- * Writes the content of @buf into a file in the gretl user's
- * "dotdir".
- *
- * Returns: 0 on success, non-zero on error.
- */
-
-int write_gretl_python_script (const char *buf, gretlopt opt,
-			       const char **pfname)
-{
-    const gchar *fname = get_python_scriptname();
-    FILE *fp = gretl_fopen(fname, "w");
-
-    ensure_foreign_io_file(LANG_PYTHON);
-
-    if (fp == NULL) {
-	return E_FOPEN;
-    } else {
-	add_gretl_include(LANG_PYTHON, opt, fp);
-	if (buf != NULL) {
-	    /* pass on the material supplied in the 'buf' argument */
-	    put_foreign_buffer(buf, fp);
-	} else {
-	    /* put out the stored 'foreign' lines */
-	    put_foreign_lines(fp);
-	}
-	fclose(fp);
-	if (pfname != NULL) {
-	    *pfname = fname;
-	}
-    }
-
-    return 0;
-}
-
-/**
- * write_gretl_julia_script:
- * @buf: text buffer containing Julia code.
- * @opt: should contain %OPT_G for use from GUI.
- * @pfname: location to receive name of file written, or %NULL.
- *
- * Writes the content of @buf into a file in the gretl user's
- * "dotdir".
- *
- * Returns: 0 on success, non-zero on error.
- */
-
-int write_gretl_julia_script (const char *buf, gretlopt opt,
-			      const char **pfname)
-{
-    /* FIXME more to be done here! */
-    const gchar *fname = gretl_julia_scriptname();
-    FILE *fp = gretl_fopen(fname, "w");
-
-    ensure_foreign_io_file(LANG_JULIA);
-
-    if (fp == NULL) {
-	return E_FOPEN;
-    } else {
-	add_gretl_include(LANG_JULIA, opt, fp);
-	if (buf != NULL) {
-	    /* pass on the material supplied in the 'buf' argument */
-	    put_foreign_buffer(buf, fp);
-	} else {
-	    /* put out the stored 'foreign' lines */
-	    put_foreign_lines(fp);
-	}
-	fclose(fp);
-	if (pfname != NULL) {
-	    *pfname = fname;
-	}
-    }
-
-    return 0;
 }
 
 static int no_data_check (const DATASET *dset)
@@ -1538,46 +1416,6 @@ static int write_data_for_stata (const DATASET *dset,
     return err;
 }
 
-int write_gretl_stata_script (const char *buf, gretlopt opt,
-			      const DATASET *dset,
-			      const char **pfname)
-{
-    const gchar *fname = get_stata_scriptname();
-    FILE *fp = gretl_fopen(fname, "w");
-
-    ensure_foreign_io_file(LANG_STATA);
-
-    if (fp == NULL) {
-	return E_FOPEN;
-    } else {
-	int err;
-
-	/* source the I-O functions */
-	add_gretl_include(LANG_STATA, opt, fp);
-	if (opt & OPT_D) {
-	    /* --send-data */
-	    err = write_data_for_stata(dset, fp);
-	    if (err) {
-		fclose(fp);
-		return err;
-	    }
-	}
-	if (buf != NULL) {
-	    /* pass on the material supplied in the 'buf' argument */
-	    put_foreign_buffer(buf, fp);
-	} else {
-	    /* put out the stored 'foreign' lines */
-	    put_foreign_lines(fp);
-	}
-	fclose(fp);
-	if (pfname != NULL) {
-	    *pfname = fname;
-	}
-    }
-
-    return 0;
-}
-
 /* write out current dataset as an octave matrix, and, if this succeeds,
    write appropriate octave commands to @fp to source the data
 */
@@ -1633,34 +1471,56 @@ static int put_dynare_script (const char *buf, FILE *fp)
     return err;
 }
 
-int write_gretl_octave_script (const char *buf, gretlopt opt,
-			       const DATASET *dset,
-			       const char **pfname)
+/**
+ * write_gretl_foreign_script:
+ * @buf: text buffer containing foreign code: Ox, Octave, Stata,
+ * Python or Julia.
+ * @lang: language identifier.
+ * @opt: should contain %OPT_G for use from GUI.
+ * @dset: pointer to dataset (or %NULL if no data are to be passed).
+ * @pfname: location to receive name of file written, or %NULL.
+ *
+ * Writes the content of @buf into a file in the gretl user's
+ * "dotdir".
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int write_gretl_foreign_script (const char *buf, int lang,
+				gretlopt opt, const DATASET *dset,
+				const char **pfname)
 {
-    const gchar *fname = get_octave_scriptname();
+    const gchar *fname = get_foreign_scriptpath(lang);
     FILE *fp = gretl_fopen(fname, "w");
     int err = 0;
 
-    ensure_foreign_io_file(LANG_OCTAVE);
+    ensure_foreign_io_file(lang);
 
     if (fp == NULL) {
 	err = E_FOPEN;
     } else {
-	/* source the I-O functions */
-	add_gretl_include(LANG_OCTAVE, opt, fp);
-	if (opt & OPT_D) {
+	/* source the I-O functions? */
+	if (lang != LANG_OX) {
+	    /* this comes later for Ox */
+	    add_gretl_include(lang, opt, fp);
+	}
+	if (dset != NULL && (opt & OPT_D)) {
 	    /* --send-data */
-	    err = write_data_for_octave(dset, fp);
+	    if (lang == LANG_OCTAVE) {
+		err = write_data_for_octave(dset, fp);
+	    } else if (lang == LANG_STATA) {
+		err = write_data_for_stata(dset, fp);
+	    }
 	}
 	if (!err && buf != NULL) {
-	    /* pass on the material supplied in the 'buf' argument */
-	    if (opt & OPT_Y) {
+	    /* pass on the material supplied in the @buf argument */
+	    if (lang == LANG_OCTAVE && (opt & OPT_Y)) {
 		/* handle dynare .mod file */
 		err = put_dynare_script(buf, fp);
 		/* dynare wipes out gretl functions? */
-		add_gretl_include(LANG_OCTAVE, opt, fp);
+		add_gretl_include(lang, opt, fp);
 	    } else {
-		/* regular Octave script */
+		/* regular script */
 		put_foreign_buffer(buf, fp);
 	    }
 	} else if (!err) {
@@ -2077,41 +1937,6 @@ void delete_gretl_R_files (void)
     }
     if (gretl_Rsrc != NULL) {
 	gretl_remove(gretl_Rsrc);
-    }
-}
-
-static void delete_ox_script (void)
-{
-    if (gretl_ox_script != NULL) {
-	gretl_remove(gretl_ox_script);
-    }
-}
-
-static void delete_octave_script (void)
-{
-    if (gretl_octave_script != NULL) {
-	gretl_remove(gretl_octave_script);
-    }
-}
-
-static void delete_stata_script (void)
-{
-    if (gretl_stata_script != NULL) {
-	gretl_remove(gretl_stata_script);
-    }
-}
-
-static void delete_python_script (void)
-{
-    if (gretl_python_script != NULL) {
-	gretl_remove(gretl_python_script);
-    }
-}
-
-static void delete_julia_script (void)
-{
-    if (gretl_julia_script != NULL) {
-	gretl_remove(gretl_julia_script);
     }
 }
 
@@ -2957,41 +2782,12 @@ int foreign_execute (const DATASET *dset,
 	return err; /* handled */
     }
 
-    if (foreign_lang == LANG_OX) {
-	err = write_gretl_ox_script(NULL, foreign_opt, NULL);
-	if (err) {
-	    delete_ox_script();
-	}
-    } else if (foreign_lang == LANG_OCTAVE) {
-	err = write_gretl_octave_script(NULL, foreign_opt,
-					dset, NULL);
-	if (err) {
-	    delete_octave_script();
-	}
-    } else if (foreign_lang == LANG_STATA) {
-	err = write_gretl_stata_script(NULL, foreign_opt,
-				       dset, NULL);
-	if (err) {
-	    delete_stata_script();
-	}
-    } else if (foreign_lang == LANG_PYTHON) {
-	err = write_gretl_python_script(NULL, foreign_opt,
-					NULL);
-	if (err) {
-	    delete_python_script();
-	}
-    } else if (foreign_lang == LANG_JULIA) {
-	err = write_gretl_julia_script(NULL, foreign_opt,
-				       NULL);
-	if (err) {
-	    delete_julia_script();
-	}
-    } else {
-	/* "can't happen" */
-	err = E_DATA;
-    }
+    err = write_gretl_foreign_script(NULL, foreign_lang,
+				     foreign_opt, dset, NULL);
 
-    if (!err) {
+    if (err) {
+	delete_foreign_script(foreign_lang);
+    } else {
 	err = lib_run_other_sync(foreign_opt, prn);
     }
 

@@ -5685,7 +5685,7 @@ static void win32_run_R_sync (const char *buf, gretlopt opt)
 
 void run_foreign_script (gchar *buf, int lang, gretlopt opt)
 {
-    const char *fname;
+    const char *fname = NULL;
     PRN *prn = NULL;
     int err;
 
@@ -5699,19 +5699,7 @@ void run_foreign_script (gchar *buf, int lang, gretlopt opt)
        below.
     */
 
-    if (lang == LANG_OX) {
-	err = write_gretl_ox_script(buf, opt, &fname);
-    } else if (lang == LANG_PYTHON) {
-	err = write_gretl_python_script(buf, opt, &fname);
-    } else if (lang == LANG_JULIA) {
-	err = write_gretl_julia_script(buf, opt, &fname);
-    } else if (lang == LANG_STATA) {
-	err = write_gretl_stata_script(buf, opt, dataset, &fname);
-    } else if (lang == LANG_OCTAVE) {
-	err = write_gretl_octave_script(buf, opt, dataset, &fname);
-    } else {
-	err = E_DATA;
-    }
+    err = write_gretl_foreign_script(buf, lang, opt, dataset, &fname);
 
     if (err) {
 	gui_errmsg(err);
@@ -5951,32 +5939,21 @@ static void run_R_sync (void)
 
 void run_foreign_script (gchar *buf, int lang, gretlopt opt)
 {
-    const char *fname;
+    const char *fname = NULL;
     int err;
 
     opt |= OPT_G;
 
-    if (lang == LANG_OX) {
-	err = write_gretl_ox_script(buf, opt, &fname);
-    } else if (lang == LANG_PYTHON) {
-	err = write_gretl_python_script(buf, opt, &fname);
-    } else if (lang == LANG_JULIA) {
-	err = write_gretl_julia_script(buf, opt, &fname);
-    } else if (lang == LANG_STATA) {
-	err = write_gretl_stata_script(buf, opt, dataset, &fname);
-    } else if (lang == LANG_OCTAVE) {
-	err = write_gretl_octave_script(buf, opt, dataset, &fname);
-	if (opt & OPT_Y) {
-	    gretl_chdir(gretl_dotdir());
-	}
-    } else {
-	err = E_DATA;
-    }
+    err = write_gretl_foreign_script(buf, lang, opt, dataset, &fname);
 
     if (err) {
 	gui_errmsg(err);
     } else {
 	gchar *argv[6];
+
+	if (lang == LANG_OCTAVE && (opt & OPT_Y)) {
+	    gretl_chdir(gretl_dotdir());
+	}
 
 	if (lang == LANG_OX) {
 	    argv[0] = (gchar *) gretl_oxl_path();
