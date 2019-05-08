@@ -1463,7 +1463,7 @@ static int put_dynare_script (const char *buf, FILE *fp)
     } else {
 	fputs(buf, fd);
 	fclose(fd);
-	fputs("dynare gretltmp.mod\n", fp);
+	fputs("dynare gretltmp.mod noclearall\n", fp);
     }
 
     g_free(dpath);
@@ -1515,10 +1515,8 @@ int write_gretl_foreign_script (const char *buf, int lang,
 	if (!err && buf != NULL) {
 	    /* pass on the material supplied in the @buf argument */
 	    if (lang == LANG_OCTAVE && (opt & OPT_Y)) {
-		/* handle dynare .mod file */
+		/* handle a dynare .mod file */
 		err = put_dynare_script(buf, fp);
-		/* dynare wipes out gretl functions? */
-		add_gretl_include(lang, opt, fp);
 	    } else {
 		/* regular script */
 		put_foreign_buffer(buf, fp);
