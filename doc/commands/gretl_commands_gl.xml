@@ -12682,8 +12682,9 @@
 	  </para>
 	</li>
 	<li>
-	  <para><lit>fdjac_quality</lit>: Un enteiro entre 0 e 2, que indica
-	  o algoritmo utilizado pola función <fncref targ="fdjac"/>.
+	  <para><lit>fdjac_quality</lit>: Un enteiro (0, 1 ou 2) que indica
+	  o algoritmo utilizado pola función <fncref targ="fdjac"/>; por
+	  defecto é 0.
 	  </para>
 	</li>
       </ilist>

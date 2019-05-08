@@ -1351,12 +1351,16 @@
     <function name="argname" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">s</fnarg>
+	<fnarg type="string" optional="true">pordefecto</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Se <argname>s</argname> é o nome dun parámetro dunha función
+	  Se <argname>s</argname> é o nome dun parámetro cara a unha función
 	  definida previamente polo usuario, devolve unha cadea de texto co nome
-	  dese argumento, ou baleira se o argumento fora anónimo.
+	  do argumento correspondente (se este ten un nome a nivel da chamada).
+	  Cando o argumento é anónimo, devólvese unha cadea baleira agás que
+	  indiques o argumento opcional <argname>pordefecto</argname>, en cuxo
+	  caso utilízase o seu valor como alternativa.
 	</para>
       </description>
     </function>
@@ -3444,8 +3448,9 @@
 	<para>
 	  Estas tres alternativas xeralmente proporcionan unha conciliación
 	  entre precisión e velocidade. Podes elixir entre os distintos
-	  métodos utilizando a instrución <cmdref targ="set"/>, e especificando
-	  o valor 0, 1 ou 2 para a variable <lit>fdjac_quality</lit>.
+	  métodos mediante a instrución <cmdref targ="set"/>: especifica o
+	  valor 0, 1 ou 2 para a variable <lit>fdjac_quality</lit>. O valor
+	  por defecto é 0.
 	</para>
 	<para>
 	  Para máis detalles e exemplos, consulta o
