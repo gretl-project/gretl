@@ -3938,7 +3938,7 @@ int check_declarations (char ***pS, parser *p)
 
     s = p->lh.expr;
     for (i=0; i<n && !p->err; i++) {
-	S[i] = gretl_word_strdup(s, &s, OPT_S, &p->err);
+	S[i] = gretl_word_strdup(s, &s, OPT_S | OPT_U, &p->err);
     }
 
     if (!p->err && *s != '\0') {

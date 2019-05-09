@@ -1429,6 +1429,16 @@ void textview_append_text (GtkWidget *view, const char *text)
     gtk_text_buffer_insert(tbuf, &iter, text, -1);
 }
 
+void textview_insert_text (GtkWidget *view, const char *text)
+{
+    GtkTextBuffer *tbuf;
+
+    g_return_if_fail(GTK_IS_TEXT_VIEW(view));
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
+    gtk_text_buffer_insert_at_cursor(tbuf, text, -1);
+}
+
 void textview_clear_text (GtkWidget *view)
 {
     GtkTextBuffer *tbuf;

@@ -68,6 +68,8 @@ int textview_set_text (GtkWidget *view, const gchar *text);
 
 void textview_append_text (GtkWidget *view, const char *text);
 
+void textview_insert_text (GtkWidget *view, const char *text);
+
 void textview_clear_text (GtkWidget *view);
 
 int textview_set_text_selected (GtkWidget *view, const gchar *text);
