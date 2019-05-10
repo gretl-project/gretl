@@ -102,6 +102,30 @@ static gretl_vector *model_vif_vector (MODEL *pmod, const int *xlist,
     return vif;
 }
 
+static void bkw_add_colnames (gretl_matrix *BKW,
+			      gretl_array *pnames)
+{
+    char **S = strings_array_new(BKW->cols);
+
+    if (S != NULL) {
+	int i, k = BKW->cols - 2;
+	char tmp[16];
+
+	S[0] = gretl_strdup("lambda");
+	S[1] = gretl_strdup("cond");
+	for (i=0; i<k; i++) {
+	    if (pnames != NULL) {
+		S[i+2] = gretl_array_get_data(pnames, i);
+		gretl_array_set_data(pnames, i, NULL);
+	    } else {
+		sprintf(tmp, "x%d", i+1);
+		S[i+2] = gretl_strdup(tmp);
+	    }
+	}
+	gretl_matrix_set_colnames(BKW, S);
+    }
+}
+
 /* note: we're assuming in bkw_matrix() that the array argument
    @pnames is disposable: we pull out its entries and set them
    to NULL, but it's still up to the caller to destroy the
@@ -118,7 +142,6 @@ gretl_matrix *bkw_matrix (const gretl_matrix *VCV,
     gretl_matrix *V = NULL;
     gretl_matrix *lambda = NULL;
     gretl_matrix *BKW = NULL;
-    char **colnames = NULL;
     double x, y;
     int k = VCV->rows;
     int i, j;
@@ -210,23 +233,7 @@ gretl_matrix *bkw_matrix (const gretl_matrix *VCV,
 	}
     }
 
-    colnames = strings_array_new(k + 2);
-    if (colnames != NULL) {
-	char tmp[16];
-
-	colnames[0] = gretl_strdup("lambda");
-	colnames[1] = gretl_strdup("cond");
-	for (i=0; i<k; i++) {
-	    if (pnames != NULL) {
-		colnames[i+2] = gretl_array_get_data(pnames, i);
-		gretl_array_set_data(pnames, i, NULL);
-	    } else {
-		sprintf(tmp, "x%d", i+1);
-		colnames[i+2] = gretl_strdup(tmp);
-	    }
-	}
-	gretl_matrix_set_colnames(BKW, colnames);
-    }
+    bkw_add_colnames(BKW, pnames);
 
  bailout:
 
