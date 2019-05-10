@@ -659,7 +659,7 @@ static int maybe_insert_greek (guint key, windata_t *vwin)
 		    ins[0] = 0xCE;
 		    ins[1] = g;
 		}
-		textview_append_text(vwin->text, (char *) ins);
+		textview_insert_text(vwin->text, (char *) ins);
 		return 1;
 	    }
 	}
@@ -693,7 +693,7 @@ gint catch_viewer_key (GtkWidget *w, GdkEventKey *event,
 	if (maybe_insert_greek(upkey, vwin)) {
 	    return TRUE;
 	} else if (upkey == GDK_minus) {
-	    textview_append_text(vwin->text, "~");
+	    textview_insert_text(vwin->text, "~");
 	    return TRUE;
 	}
     }
