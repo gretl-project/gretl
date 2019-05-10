@@ -388,6 +388,7 @@ enum {
     F_LSOLVE,
     F_STRFTIME,
     F_STRPTIME,
+    F_BKW,
     HF_CMMULT,
     HF_CFFT,
     HF_CMATRIX,

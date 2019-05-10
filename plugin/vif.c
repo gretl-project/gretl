@@ -102,7 +102,15 @@ static gretl_vector *model_vif_vector (MODEL *pmod, const int *xlist,
     return vif;
 }
 
-gretl_matrix *bkw_matrix (const gretl_matrix *VCV, int *err)
+/* note: we're assuming in bkw_matrix() that the array argument
+   @pnames is disposable: we pull out its entries and set them
+   to NULL, but it's still up to the caller to destroy the
+   array itself.
+*/
+
+gretl_matrix *bkw_matrix (const gretl_matrix *VCV,
+			  gretl_array *pnames,
+			  int *err)
 {
     gretl_matrix *Vi = NULL;
     gretl_matrix *S = NULL;
@@ -110,9 +118,17 @@ gretl_matrix *bkw_matrix (const gretl_matrix *VCV, int *err)
     gretl_matrix *V = NULL;
     gretl_matrix *lambda = NULL;
     gretl_matrix *BKW = NULL;
+    char **colnames;
     double x, y;
     int k = VCV->rows;
     int i, j;
+
+    if (pnames != NULL && gretl_array_get_length(pnames) != k) {
+	fprintf(stderr, "bkw_matrix: expected %d names but got %d\n",
+		k, gretl_array_get_length(pnames));
+	*err = E_INVARG;
+	return NULL;
+    }
 
     /* copy the covariance matrix */
     Vi = gretl_matrix_copy(VCV);
@@ -194,6 +210,21 @@ gretl_matrix *bkw_matrix (const gretl_matrix *VCV, int *err)
 	}
     }
 
+    colnames = strings_array_new(k + 2);
+    if (colnames != NULL) {
+	colnames[0] = gretl_strdup("lambda");
+	colnames[1] = gretl_strdup("cond");
+	for (i=0; i<k; i++) {
+	    if (pnames != NULL) {
+		colnames[i+2] = gretl_array_get_data(pnames, i);
+		gretl_array_set_data(pnames, i, NULL);
+	    } else {
+		colnames[i+2] = gretl_strdup_printf("x%d", i+1);
+	    }
+	}
+	gretl_matrix_set_colnames(BKW, colnames);
+    }
+
  bailout:
 
     gretl_matrix_free(Vi);
@@ -243,10 +274,29 @@ static void maybe_truncate_param_name (char *s)
     }
 }
 
+static gretl_array *BKW_pnames (MODEL *pmod, DATASET *dset)
+{
+    gretl_array *pnames;
+    char pname[VNAMELEN];
+    int i, k = pmod->ncoeff;
+    int err = 0;
+
+    pnames = gretl_array_new(GRETL_TYPE_STRINGS, k, &err);
+
+    if (pnames != NULL) {
+	for (i=0; i<pmod->ncoeff; i++) {
+	    gretl_model_get_param_name(pmod, dset, i, pname);
+	    maybe_truncate_param_name(pname);
+	    gretl_array_set_string(pnames, i, pname, 1);
+	}
+    }
+
+    return pnames;
+}
+
 int compute_vifs (MODEL *pmod, DATASET *dset,
 		  gretlopt opt, PRN *prn)
 {
-    gretl_matrix *V = NULL;
     gretl_matrix *BKW = NULL;
     gretl_vector *vif = NULL;
     int *xlist;
@@ -312,30 +362,24 @@ int compute_vifs (MODEL *pmod, DATASET *dset,
 	pputc(prn, '\n');
     }
 
-    /* now for some more sophisticated diagnostics */
+    if (1) {
+	/* this should get hived off to a separate function,
+	   but for now...
+	*/
+	gretl_matrix *V;
 
-    V = gretl_vcv_matrix_from_model(pmod, NULL, &err);
+	V = gretl_vcv_matrix_from_model(pmod, NULL, &err);
 
-    if (!err) {
-	BKW = bkw_matrix(V, &err);
-    }
+	if (!err) {
+	    gretl_array *pnames = BKW_pnames(pmod, dset);
 
-    if (!err) {
-	int k = pmod->ncoeff + 2;
-	char **S = strings_array_new_with_length(k, VNAMELEN);
-
-	if (S != NULL) {
-	    strcpy(S[0], "lambda");
-	    strcpy(S[1], "cond");
-	    for (i=0; i<pmod->ncoeff; i++) {
-		gretl_model_get_param_name(pmod, dset, i, S[i+2]);
-		maybe_truncate_param_name(S[i+2]);
-	    }
-	    gretl_matrix_set_colnames(BKW, S);
-	    if (!quiet) {
-		BKW_print(BKW, prn);
-	    }
+	    BKW = bkw_matrix(V, pnames, &err);
+	    gretl_array_destroy(pnames);
 	}
+	if (!err && !quiet) {
+	    BKW_print(BKW, prn);
+	}
+	gretl_matrix_free(V);
     }
 
     if (!err) {
@@ -354,7 +398,6 @@ int compute_vifs (MODEL *pmod, DATASET *dset,
 	}
     }
 
-    gretl_matrix_free(V);
     gretl_matrix_free(vif);
     gretl_matrix_free(BKW);
     free(xlist);

@@ -503,6 +503,7 @@ struct str_table funcs[] = {
     { F_HYP2F1,    "hyp2f1" },
     { F_STRFTIME,  "strftime" },
     { F_STRPTIME,  "strptime" },
+    { F_BKW,       "BKW" },
     { 0,           NULL }
 };
 

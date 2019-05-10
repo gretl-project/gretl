@@ -3831,6 +3831,55 @@ static NODE *matrix_imhof (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static NODE *bkw_node (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_matrix_node(p);
+
+    if (ret != NULL && starting(p)) {
+	gretl_matrix *(*bkwfunc) (const gretl_matrix *,
+				  gretl_array *, int *);
+	const gretl_matrix *m = l->v.m;
+	gretl_array *pnames = NULL;
+	int ns = 0;
+
+	if (!null_or_empty(r)) {
+	    if (r->t == STR) {
+		/* for compat with Lee's bkw() we expect comma-
+		   separated parameter names here
+		*/
+		char **S = gretl_string_split(r->v.str, &ns, ",");
+
+		if (S == NULL) {
+		    p->err = E_DATA;
+		} else {
+		    pnames = gretl_array_from_strings(S, ns, 0, &p->err);
+		}
+	    } else if (r->t == ARRAY) {
+		if (gretl_array_get_type(r->v.a) != GRETL_TYPE_STRINGS) {
+		    p->err = E_TYPES;
+		} else {
+		    pnames = gretl_array_copy(r->v.a, &p->err);
+		}
+	    } else {
+		p->err = E_TYPES;
+	    }
+	}
+
+	if (!p->err) {
+	    bkwfunc = get_plugin_function("bkw_matrix");
+	    if (bkwfunc == NULL) {
+		p->err = E_FOPEN;
+	    }
+	}
+	if (!p->err) {
+	    ret->v.m = bkwfunc(m, pnames, &p->err);
+	}
+	gretl_array_destroy(pnames);
+    }
+
+    return ret;
+}
+
 /* Here we handle the case where the relevant libgretl
    function overwrites its matrix argument. If @m is
    just an on-the-fly matrix it can be passed as arg,
@@ -15617,6 +15666,14 @@ static NODE *eval (NODE *t, parser *p)
 	/* matrix, scalar as second arg */
 	if (l->t == MAT && scalar_node(r)) {
 	    ret = matrix_imhof(l, r, p);
+	} else {
+	    p->err = E_TYPES;
+	}
+	break;
+    case F_BKW:
+	/* matrix, string(s) as second optional arg */
+	if (l->t == MAT) {
+	    ret = bkw_node(l, r, p);
 	} else {
 	    p->err = E_TYPES;
 	}
