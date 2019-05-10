@@ -13601,7 +13601,6 @@ gretl_matrix *gretl_matrix_bool_sel (const gretl_matrix *A,
     cs = sel->cols;
 
     /* check dimensions */
-
     if (rowsel) {
 	if ((ra != rs) || (cs > 1)) {
 	    *err = E_NONCONF;
@@ -13615,7 +13614,6 @@ gretl_matrix *gretl_matrix_bool_sel (const gretl_matrix *A,
     }
 
     /* count nonzeros */
-
     n = (rowsel)? rs : cs ;
     for (i=0; i<n; i++) {
 	if (gretl_vector_get(sel, i) != 0) {
@@ -13624,7 +13622,6 @@ gretl_matrix *gretl_matrix_bool_sel (const gretl_matrix *A,
     }
 
     /* check for extreme cases */
-
     if (nonzero == n) {
 	ret = gretl_matrix_copy(A);
 	goto bailout;
@@ -13634,7 +13631,6 @@ gretl_matrix *gretl_matrix_bool_sel (const gretl_matrix *A,
     }
 
     /* copy selected row/columns */
-
     if (rowsel) {
 	ret = gretl_matrix_alloc(nonzero, ca);
 	if (ret == NULL) {
@@ -13665,6 +13661,8 @@ gretl_matrix *gretl_matrix_bool_sel (const gretl_matrix *A,
 	    }
 	}
     }
+
+    maybe_preserve_names(ret, A, rowsel, 0);
 
  bailout:
 
