@@ -118,7 +118,7 @@ gretl_matrix *bkw_matrix (const gretl_matrix *VCV,
     gretl_matrix *V = NULL;
     gretl_matrix *lambda = NULL;
     gretl_matrix *BKW = NULL;
-    char **colnames;
+    char **colnames = NULL;
     double x, y;
     int k = VCV->rows;
     int i, j;
@@ -212,6 +212,8 @@ gretl_matrix *bkw_matrix (const gretl_matrix *VCV,
 
     colnames = strings_array_new(k + 2);
     if (colnames != NULL) {
+	char tmp[16];
+
 	colnames[0] = gretl_strdup("lambda");
 	colnames[1] = gretl_strdup("cond");
 	for (i=0; i<k; i++) {
@@ -219,7 +221,8 @@ gretl_matrix *bkw_matrix (const gretl_matrix *VCV,
 		colnames[i+2] = gretl_array_get_data(pnames, i);
 		gretl_array_set_data(pnames, i, NULL);
 	    } else {
-		colnames[i+2] = gretl_strdup_printf("x%d", i+1);
+		sprintf(tmp, "x%d", i+1);
+		colnames[i+2] = gretl_strdup(tmp);
 	    }
 	}
 	gretl_matrix_set_colnames(BKW, colnames);
