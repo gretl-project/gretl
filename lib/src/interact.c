@@ -1244,6 +1244,10 @@ static int print_save_model (MODEL *pmod, DATASET *dset,
 {
     int err = pmod->errcode;
 
+#if 0
+    gretl_model_get_param_names(pmod, dset);
+#endif
+
     if (!err) {
 	set_gretl_errno(0);
 	if (!gretl_looping_currently() || loop_force) {
