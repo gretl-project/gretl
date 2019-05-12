@@ -26,6 +26,7 @@
 #include "gretl_func.h"
 #include "gretl_cmatrix.h"
 #include "gretl_panel.h"
+#include "gretl_array.h"
 
 /**
  * SECTION:gretl_model
@@ -1006,57 +1007,31 @@ char *gretl_model_get_param_name (const MODEL *pmod,
     return targ;
 }
 
-#if 0 /* testing */
-
-// #include "gretl_array.h"
-
-void *gretl_model_get_param_names (MODEL *pmod,
-				   const DATASET *dset)
+void *gretl_model_get_param_names (const MODEL *pmod,
+				   const DATASET *dset,
+				   int *err)
 {
-    // gretl_array *names = NULL;
-    int nc, vdim, listlen;
-    int err = 0;
+    gretl_array *names = NULL;
 
     if (pmod == NULL) {
 	return NULL;
     }
 
-    gretl_matrix *V = gretl_vcv_matrix_from_model(pmod, NULL, &err);
-    
-    vdim = V == NULL ? 0 : V->rows;
-    nc = pmod->ncoeff;
-    listlen = pmod->list == NULL ? 0 : pmod->list[0];
-
-    if (pmod->ci == IVREG && nc == vdim && listlen > nc) {
-	; /* OK, expected */
-    } else if (vdim == 0 || listlen == 0 || nc != vdim || nc != listlen - 1) {
-	fprintf(stderr, "\n=== %s: nc = %d, vdim %d, listlen = %d ===\n",
-		gretl_command_word(pmod->ci), nc, vdim, listlen);
-    }
-
-    gretl_matrix_free(V);
-
-    return NULL;
-	
-    /*	
-
-    names = gretl_array_new(GRETL_TYPE_STRINGS, n, &err);
+    names = gretl_array_new(GRETL_TYPE_STRINGS,
+			    pmod->ncoeff, err);
 
     if (names != NULL) {
 	char targ[VNAMELEN];
 	int i;
 
-	for (i=0; i<n && !err; i++) {
+	for (i=0; i<pmod->ncoeff; i++) {
 	    gretl_model_get_param_name(pmod, dset, i, targ);
 	    gretl_array_set_string(names, i, targ, 1);
 	}
     }
 
     return names;
-    */
 }
-
-#endif
 
 /**
  * gretl_model_get_param_number:

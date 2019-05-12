@@ -2500,6 +2500,7 @@ gretl_bundle *bundle_from_model (MODEL *pmod,
 {
     gretl_bundle *b = NULL;
     gretl_matrix *m;
+    gretl_array *a;
     double *x;
     double val;
     int *list;
@@ -2592,7 +2593,7 @@ gretl_bundle *bundle_from_model (MODEL *pmod,
 	}
     }
 
-    for (i=M_LIST_MAX+1; i<M_MAX && !*err; i++) {
+    for (i=M_LIST_MAX+1; i<M_PARNAMES && !*err; i++) {
 	s = NULL;
 	if (i == M_DEPVAR) {
 	    s = gretl_model_get_depvar_name(pmod, dset);
@@ -2602,6 +2603,19 @@ gretl_bundle *bundle_from_model (MODEL *pmod,
 	if (s != NULL && *s != '\0') {
 	    key = mvarname(i) + 1;
 	    *err = gretl_bundle_set_string(b, key, s);
+	}
+    }
+
+    for (i=M_PARNAMES; i<M_MAX && !*err; i++) {
+	a = NULL;
+	if (i == M_PARNAMES) {
+	    a = gretl_model_get_param_names(pmod, dset, err);
+	}
+	if (a != NULL) {
+	    key = mvarname(i) + 1;
+	    *err = gretl_bundle_donate_data(b, key, a,
+					    GRETL_TYPE_ARRAY,
+					    0);
 	}
     }
 

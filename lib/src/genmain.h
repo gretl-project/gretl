@@ -124,6 +124,7 @@ typedef enum {
     M_LIST_MAX,   /*** SEPARATOR, end of lists ***/
     M_COMMAND,    /* model command word */
     M_DEPVAR,     /* name of dependent variable */
+    M_PARNAMES,   /* array of parameter names */
     M_MAX         /* sentinel */
 } ModelDataIndex;
 
@@ -138,7 +139,8 @@ typedef enum {
 #define model_data_matrix(i) (i > M_SERIES_MAX && i < M_MATRIX_MAX)
 #define model_data_matrix_builder(i) (i > M_MATRIX_MAX && i < M_MBUILD_MAX)
 #define model_data_list(i)   (i > M_MBUILD_MAX && i < M_LIST_MAX)
-#define model_data_string(i) (i > M_LIST_MAX && i < M_MAX)
+#define model_data_string(i) (i > M_LIST_MAX && i < M_PARNAMES)
+#define model_data_array(i) (i == M_PARNAMES)
 
 typedef struct parser_ GENERATOR;
 

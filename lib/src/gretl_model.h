@@ -315,6 +315,10 @@ char *gretl_model_get_param_name (const MODEL *pmod,
 				  const DATASET *dset,
 				  int i, char *targ);
 
+void *gretl_model_get_param_names (const MODEL *pmod,
+				   const DATASET *dset,
+				   int *err);
+
 int gretl_model_get_param_number (const MODEL *pmod, 
 				  const DATASET *dset,
 				  const char *s);

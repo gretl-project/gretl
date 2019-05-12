@@ -161,6 +161,7 @@ struct str_table mvars[] = {
     { M_YLIST,   "$ylist" },
     { M_COMMAND, "$command" },
     { M_DEPVAR,  "$depvar" },
+    { M_PARNAMES, "$parnames" },
     { 0,         NULL }
 };
 
