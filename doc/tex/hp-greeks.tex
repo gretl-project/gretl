@@ -1,0 +1,61 @@
+\chapter{Greek-letter identifiers}
+\label{chap:greeks}
+
+As mentioned in chapter~\ref{chap:hello}, the sole exception to the
+requirement that hansl identifiers must be plain ASCII is that they
+may take the form of a single Greek letter. Here are the details.
+
+\begin{itemize}
+\item This exception applies only to names of variables \textit{other
+    than series}; the names of series must always be ASCII.
+\item The supported Greek characters are the 24 (unaccented) letters
+  in the basic Greek alphabet, minus omicron, which is
+  indistinguishable from the Latin `o'.
+\item These letters may be used in lower or upper case (constituting
+  distinct identifiers, as usual in hansl), except for the several
+  upper-case letters which are indistinguishable in the Latin and
+  Greek alphabets (`A', `B', `E', `K', `M', `N', \dots).
+\item The letters must be encoded in UTF-8.
+\end{itemize}
+
+In gretl's graphical interface (script editor and GUI ``console''),
+the acceptable Greek letters can be entered by typing a Latin letter
+while the \texttt{Alt} key is depressed. The mappings from Latin to
+Greek are shown below: lower case first, then upper case.
+
+\begin{center}
+  \begin{tabular}{ccl@{\hskip 4em}ccl}
+    Latin & Greek & & Latin & Greek \\[4pt]
+    a & $\alpha$ & alpha & n & $\nu$ & nu \\
+    b & $\beta$ & beta & p & $\pi$ & pi \\
+    c & $\chi$ & chi & q & $\theta$ & theta \\
+    d & $\delta$ & delta & r & $\rho$ & rho \\
+    e & $\epsilon$ & epsilon & s & $\sigma$ & sigma \\
+    f & $\phi$ & phi & t & $\tau$ & tau \\
+    g & $\gamma$ & gamma & u & $\upsilon$ & upsilon \\
+    h & $\eta$ & eta & v & $\nu$ & nu \\
+    i & $\iota$ & iota & w & $\omega$ & omega \\
+    j & $\psi$ & psi & x & $\xi$ & xi \\
+    k & $\kappa$ & kappa & y & $\upsilon$ & upsilon \\
+    l & $\lambda$ & lambda & z & $\zeta$ & zeta \\
+    m & $\mu$ & mu \\
+  \end{tabular}
+\end{center}
+
+\begin{center}
+  \begin{tabular}{ccl}
+    Latin & Greek \\[4pt]
+    D & $\Delta$ & Delta \\
+    F & $\Phi$ & Phi \\
+    G & $\Gamma$ & Gamma \\
+    J & $\Psi$ & Psi\\
+    L & $\Lambda$ & Lambda \\
+    P & $\Pi$ & Pi \\
+    Q & $\Theta$ & Theta \\
+    S & $\Sigma$ & Sigma \\
+    U & $\Upsilon$ & Upsilon \\
+    W & $\Omega$ & Omega \\
+    X & $\Xi$  & Xi \\
+    Y & $\Upsilon$ & Upsilon \\
+  \end{tabular}
+\end{center}

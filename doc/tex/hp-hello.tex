@@ -75,14 +75,17 @@ In this line, we assign the value ``\texttt{Hello, world}'' to the
 variable named \texttt{foo}. Note that
 \begin{enumerate}
 \item The assignment operator is the equals sign (\texttt{=}).
-\item The name of the variable (its \emph{identifier}) must follow
-  the following convention: identifiers can be at most 31 characters
-  long. They must start with a letter, and can contain only letters,
-  numbers and the underscore character. Identifiers in hansl are
-  case-sensitive, so \texttt{foo}, \texttt{Foo} and \texttt{FOO} are
-  three distinct names. Of course, some words are reserved and can't
-  be used as identifiers (however, nearly all reserved words only
-  contain lowercase characters).
+\item The name of the variable (its \emph{identifier}) must follow the
+  following convention: identifiers can be at most 31 characters long
+  and must be plain ASCII. They must start with a letter, and can
+  contain only letters, numbers and the underscore
+  character.\footnote{Actually one exception to this rule is
+    supported: identifiers taking the form of a single Greek
+    letter. See chapter~\ref{chap:greeks} for details.} Identifiers in
+  hansl are case-sensitive, so \texttt{foo}, \texttt{Foo} and
+  \texttt{FOO} are three distinct names. Of course, some words are
+  reserved and can't be used as identifiers (however, nearly all
+  reserved words only contain lowercase characters).
 \item The string delimiter is the double quote (\verb|"|). 
 \end{enumerate}
 

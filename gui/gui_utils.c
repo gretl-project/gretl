@@ -620,7 +620,6 @@ static struct greek_map greek_keys[] = {
     { GDK_L, 0x9b }, /* lambda */
     { GDK_M, 0x9c }, /* mu */
     { GDK_N, 0x9d }, /* nu */
-    { GDK_O, 0x9f }, /* omicron */
     { GDK_P, 0xa0 }, /* pi */
     { GDK_Q, 0x98 }, /* theta */
     { GDK_R, 0xa1 }, /* rho */
@@ -634,6 +633,15 @@ static struct greek_map greek_keys[] = {
     { GDK_Z, 0x96 }  /* zeta */
 };
 
+/* Note: exclude Greek capital letters that are indistinguishable from
+   Latin caps.
+*/
+
+#define ok_greek_cap(k) (k == GDK_D || k == GDK_F || k == GDK_G || \
+			 k == GDK_J || k == GDK_L || k == GDK_P || \
+			 k == GDK_Q || k == GDK_S || k == GDK_U || \
+			 k == GDK_W || k == GDK_X || k == GDK_Y)
+
 static int maybe_insert_greek (guint key, windata_t *vwin)
 {
     guint lc = 0, ukey = 0;
@@ -641,7 +649,7 @@ static int maybe_insert_greek (guint key, windata_t *vwin)
     if (key >= GDK_a && key <= GDK_z) {
 	ukey = gdk_keyval_to_upper(key);
 	lc = 1;
-    } else if (key >= GDK_A && key <= GDK_Z) {
+    } else if (ok_greek_cap(key)) {
 	ukey = key;
     }
 

@@ -103,6 +103,7 @@ TEXSRC = cli.tex \
 	hp-estimate.tex \
 	hp-further.tex \
 	hp-reference.tex \
+	hp-greeks.tex \
 	pkgbook.tex \
 	midas-gretl.tex \
 	gretl-svm.tex
