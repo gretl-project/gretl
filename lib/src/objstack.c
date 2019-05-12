@@ -1404,6 +1404,24 @@ saved_object_build_matrix (const char *oname, int idx,
     return M;
 }
 
+void *saved_object_get_array (const char *oname, int idx,
+			      const DATASET *dset,
+			      int *err)
+{
+    stacker *smatch = find_smatch(oname);
+    gretl_array *A = NULL;
+
+    if (smatch == NULL) {
+	*err = E_DATA;
+    } else if (idx == M_PARNAMES && smatch->type == GRETL_OBJ_EQN) {
+	A = gretl_model_get_param_names(smatch->ptr, dset, err);
+    } else {
+	*err = E_BADSTAT;
+    }
+
+    return A;
+}
+
 gretl_matrix *
 last_model_get_irf_matrix (int targ, int shock, double alpha,
 			   const DATASET *dset, int *err)

@@ -14162,6 +14162,8 @@ static GretlType object_var_type (int idx, const char *oname,
 	vtype = GRETL_TYPE_LIST;
     } else if (model_data_string(idx)) {
 	vtype = GRETL_TYPE_STRING;
+    } else if (model_data_array(idx)) {
+	vtype = GRETL_TYPE_ARRAY;
     } else if (idx == B_MODEL) {
 	vtype = GRETL_TYPE_BUNDLE;
     } else if (idx == B_SYSTEM) {
@@ -14258,6 +14260,8 @@ static NODE *model_var_node (NODE *t, NODE *k, parser *p)
 	    ret = aux_string_node(p);
 	} else if (vtype == GRETL_TYPE_BUNDLE) {
 	    ret = aux_bundle_node(p);
+	} else if (vtype == GRETL_TYPE_ARRAY) {
+	    ret = aux_array_node(p);
 	} else {
 	    ret = aux_matrix_node(p);
 	}
@@ -14283,6 +14287,8 @@ static NODE *model_var_node (NODE *t, NODE *k, parser *p)
 	    } else {
 		ret->v.m = saved_object_get_matrix(oname, idx, &p->err);
 	    }
+	} else if (vtype == GRETL_TYPE_ARRAY) {
+	    ret->v.a = saved_object_get_array(oname, idx, p->dset, &p->err);
 	}
     } else {
 	ret = aux_any_node(p);
