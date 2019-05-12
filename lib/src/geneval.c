@@ -3836,8 +3836,6 @@ static NODE *bkw_node (NODE *l, NODE *r, parser *p)
     NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
-	gretl_matrix *(*bkwfunc) (const gretl_matrix *,
-				  gretl_array *, int *);
 	const gretl_matrix *m = l->v.m;
 	gretl_array *pnames = NULL;
 	int ns = 0;
@@ -3866,14 +3864,17 @@ static NODE *bkw_node (NODE *l, NODE *r, parser *p)
 	}
 
 	if (!p->err) {
+	    gretl_matrix *(*bkwfunc) (const gretl_matrix *,
+				      gretl_array *, int *);
+
 	    bkwfunc = get_plugin_function("bkw_matrix");
 	    if (bkwfunc == NULL) {
 		p->err = E_FOPEN;
+	    } else {
+		ret->v.m = bkwfunc(m, pnames, &p->err);
 	    }
 	}
-	if (!p->err) {
-	    ret->v.m = bkwfunc(m, pnames, &p->err);
-	}
+
 	gretl_array_destroy(pnames);
     }
 
