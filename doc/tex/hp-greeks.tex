@@ -15,7 +15,7 @@ may take the form of a single Greek letter. Here are the details.
   distinct identifiers, as usual in hansl), except for the several
   upper-case letters which are indistinguishable in the Latin and
   Greek alphabets (`A', `B', `E', `K', `M', `N', \dots).
-\item The letters must be encoded in UTF-8.
+\item The Greek letters must be encoded in UTF-8.
 \end{itemize}
 
 In gretl's graphical interface (script editor and GUI ``console''),
@@ -59,3 +59,11 @@ Greek are shown below: lower case first, then upper case.
     Y & $\Upsilon$ & Upsilon \\
   \end{tabular}
 \end{center}
+
+A word of advice: it's probably not a good idea to employ Greek-letter
+identifiers in hansl scripts that you intend to share via the
+internet, since one cannot assume that text encodings are preserved
+unchanged. This warning applies in particular if you, or any of the
+intended recipients of your scripts, work on MS Windows, since Windows
+does not natively support UTF-8, the mandatory encoding of such
+identifiers for use with gretl.
