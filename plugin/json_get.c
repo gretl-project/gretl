@@ -931,6 +931,8 @@ static char *path_first (const char *path)
     return ret;
 }
 
+/* public function, referenced in geneval.c (I think) */
+
 gretl_array *json_get_array (const char *data,
 			     const char *path,
 			     int *err)
