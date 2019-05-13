@@ -635,6 +635,30 @@
       </description>
     </function>
 
+    <function name="$parnames" section="access" output="strings">
+      <description>
+	<para>
+	  Following estimation of a single-equation model, returns
+	  an array of strings holding the names of the model's
+	  parameters. The number of names matches the number of
+	  elements in the <fncref targ="$coeff"/> vector.
+	</para>
+	<para>
+	  For models specified via a list of regressors the result
+	  will be the same as that of
+	</para>
+	<code>
+	  varnames($xlist)
+	</code>
+	<para>
+	  (see <fncref targ="varnames"/>), but <lit>$parnames</lit> is
+	  more general; it also works for models with no regressor
+	  list (<cmdref targ="nls"/>, <cmdref targ="mle"/>, <cmdref
+	  targ="gmm"/>).
+	</para>
+      </description>
+    </function>
+
     <function name="$pd" section="access" output="int">
       <description>
 	<para>

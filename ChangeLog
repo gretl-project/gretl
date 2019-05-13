@@ -13,6 +13,8 @@ version 2019b, in progress
   allowing creation of formula-based plots
 - New accessor $now to get current time/date, plus new
   functions strftime() and strptime()
+- New accessor $parnames to get array of parameter names
+  from a model
 - New function feval(): evaluate a function by name
 - New function Lsolve(), using precomputed Cholesky factor
 - New function isoweek() to get ISO 8601 week number
