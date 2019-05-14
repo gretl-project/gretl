@@ -6283,14 +6283,7 @@ static NODE *lincomb_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 
     if (ret != NULL && starting(p)) {
 	int *list = node_get_list(l, p);
-	const gretl_matrix *b;
-
-	if (m->t == NUM) {
-	    b = node_get_matrix(m, p, 0, 0);
-	} else {
-	    b = m->v.m;
-	}
-	
+	const gretl_matrix *b = node_get_matrix(m, p, 0, 2);
 	int k = 0;
 
 	if (!p->err && (list == NULL || gretl_is_null_matrix(b))) {
