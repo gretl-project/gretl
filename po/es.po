@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2019-01-22 09:24-0500\n"
-"PO-Revision-Date: 2019-01-21 19:18-0500\n"
+"PO-Revision-Date: 2019-05-14 17:27+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.eus>\n"
 "Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
 "Language: es\n"
@@ -3165,14 +3165,14 @@ msgid "BFGS: initial value of objective function is not finite"
 msgstr "BFGS: el valor inicial de la función objetivo no es finito"
 
 #: lib/src/gretl_bfgs.c:1334
-#, fuzzy, c-format
+#, c-format
 msgid "Reached the maximum iterations (%d)"
-msgstr "Se ha alcanzado el número máximo de iteraciones, %d"
+msgstr "Se ha alcanzado el número máximo de iteraciones (%d)"
 
 #: lib/src/gretl_bfgs.c:1337
-#, fuzzy, c-format
+#, c-format
 msgid "Norm of gradient %g exceeds maximum of %g"
-msgstr "Norma del gradiente = %g"
+msgstr "La norma del gradiente %g es superior al máximo %g"
 
 #: lib/src/gretl_bfgs.c:1353
 #, c-format
@@ -6677,22 +6677,20 @@ msgid "outside"
 msgstr "fuera"
 
 #: lib/src/plotspec.c:328
-#, fuzzy
 msgid "top left"
-msgstr "izquierda"
+msgstr "arriba a la izquierda"
 
 #: lib/src/plotspec.c:329
-#, fuzzy
 msgid "top right"
-msgstr "derecha"
+msgstr "arriba a la derecha"
 
 #: lib/src/plotspec.c:330
 msgid "bottom left"
-msgstr ""
+msgstr "abajo a la izquierda"
 
 #: lib/src/plotspec.c:331
 msgid "bottom right"
-msgstr ""
+msgstr "abajo a la derecha"
 
 #: lib/src/plotspec.c:731
 msgid "center"
@@ -7403,9 +7401,9 @@ msgid "'%s': no such list"
 msgstr "'%s': No existe esa lista"
 
 #: lib/src/system.c:851
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': not a list or array of lists"
-msgstr "'%s' : no está preparado para listas"
+msgstr "'%s' : no es una lista o una formación (array) de listas"
 
 #: lib/src/system.c:1254
 msgid "Wald test for the specified restrictions"
@@ -9119,7 +9117,7 @@ msgstr "%s: Por favor, primero cierre la ventana de este objeto"
 #: gui/datafiles.c:856
 #, c-format
 msgid "Package %s is not loaded, and you do not have permission to delete it."
-msgstr ""
+msgstr "El paquete %s no está cargado y Vd. no tiene permiso para borrarlo."
 
 #: gui/datafiles.c:864
 msgid "Unload member functions only"
@@ -11265,7 +11263,7 @@ msgstr ""
 
 #: gui/fnsave.c:2780
 msgid "provider?"
-msgstr ""
+msgstr "proveedor?"
 
 #: gui/fnsave.c:2803
 msgid ""
@@ -12878,9 +12876,8 @@ msgid "_gretl + MPI"
 msgstr "_Gretl + MPI"
 
 #: gui/gretl.c:1882
-#, fuzzy
 msgid "_gretl + SVM"
-msgstr "_Gretl + MPI"
+msgstr "_gretl + SVM"
 
 #: gui/gretl.c:1883
 msgid "Check for _updates"
@@ -16912,9 +16909,8 @@ msgid "processing...\n"
 msgstr "Procesando...\n"
 
 #: gui/textbuf.c:1546
-#, fuzzy
 msgid "gretl + SVM"
-msgstr "_Gretl + MPI"
+msgstr "gretl + SVM"
 
 #: gui/textbuf.c:2127
 msgid "Gretl Command Reference"
@@ -18465,9 +18461,8 @@ msgid "adjusted"
 msgstr "Corregida"
 
 #: plugin/tramo-x12a.c:942
-#, fuzzy
 msgid "no seasonality was detected"
-msgstr "sin efectos estacionales"
+msgstr "no se ha detectado estacionalidad"
 
 #: plugin/vif.c:69
 msgid "The statistic you requested is not meaningful for this model"
