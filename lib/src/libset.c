@@ -946,8 +946,9 @@ static int libset_get_scalar (const char *var, const char *arg,
 {
     double x = NADBL;
     int err = 0;
+    int is_numstring = libset_numeric_string(arg, pi, px, &err);
 
-    if (libset_numeric_string(arg, pi, px, &err)) {
+    if (is_numstring) {
 	if (err) {
 	    err = E_DATA;
 	} else if (pi != NULL && negval_invalid(var) && *pi < 0) {
@@ -956,9 +957,11 @@ static int libset_get_scalar (const char *var, const char *arg,
 	    err = E_DATA;
 	}
 	return err;
+    } else {
+	err = 0;
+	x = get_scalar_value_by_name(arg, &err);
     }
-
-    x = get_scalar_value_by_name(arg, &err);
+    
     if (err) {
 	return err;
     }
