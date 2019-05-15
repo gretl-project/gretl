@@ -255,10 +255,11 @@ gretl_matrix *bkw_matrix (const gretl_matrix *VCV,
     return BKW;
 }
 
-static int BKW_analyse (gretl_matrix *B, const char *fmt, PRN *prn)
+static int BKW_analyse (gretl_matrix *B, double maxcond,
+			const char *fmt, PRN *prn)
 {
     const char *labels[] = {
-        N_("Problematic rows, with large condition index"),
+        N_("Potentially problematic rows, with condition index >= 10"),
 	N_("Sums of variance proportions attributable to the affected rows"),
 	N_("Problematic parameter estimates (proportion >= 0.5)"),
 	N_("No evidence of excessive collinearity")
@@ -271,7 +272,7 @@ static int BKW_analyse (gretl_matrix *B, const char *fmt, PRN *prn)
     int rows = B->rows;
     int np = B->cols - 2;
     int nbigc = 0, ngp5 = 0;
-    int bigc = 30; /* FIXME? */
+    int bigc = 10;
     int i, j, k;
     int err = 0;
 
@@ -386,7 +387,7 @@ static void BKW_print (gretl_matrix *B, PRN *prn)
     pprintf(prn, "  cond   = %s\n", _(strs[3]));
     pprintf(prn, "  %s\n\n", _(strs[4]));
 
-    BKW_analyse(B, fmt, prn);
+    BKW_analyse(B, maxcond, fmt, prn);
 }
 
 static void maybe_truncate_param_name (char *s)
