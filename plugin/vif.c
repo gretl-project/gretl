@@ -305,7 +305,7 @@ static int BKW_analyse (gretl_matrix *B, const char *fmt, PRN *prn)
     }
 
     if (ng30 > 0 && !err) {
-	/* row vector showing sums of variance proportion */
+	/* row vector showing sums of variance proportions */
 	S = gretl_matrix_alloc(1, np);
 	if (S == NULL) {
 	    err = E_ALLOC;
@@ -315,7 +315,7 @@ static int BKW_analyse (gretl_matrix *B, const char *fmt, PRN *prn)
 		for (i=0; i<P->rows; i++) {
 		    x += gretl_matrix_get(P, i, j);
 		}
-		gretl_matrix_set(S, 0, j-1, x);
+		S->val[j-1] = x;
 		if (x >= 0.5) {
 		    ngp5++;
 		}
