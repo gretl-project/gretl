@@ -533,6 +533,33 @@ int compute_vifs (MODEL *pmod, DATASET *dset,
     return 0;
 }
 
+int compute_bkw (MODEL *pmod, DATASET *dset,
+		 gretlopt opt, PRN *prn)
+{
+    gretl_matrix *V, *BKW = NULL;
+    int quiet = (opt & OPT_Q);
+    int i, err = 0;
+
+    V = gretl_vcv_matrix_from_model(pmod, NULL, &err);
+
+    if (!err) {
+	gretl_array *pnames = BKW_pnames(pmod, dset);
+	PRN *vprn = quiet ? NULL : prn;
+
+	BKW = bkw_matrix(V, pnames, vprn, &err);
+	gretl_array_destroy(pnames);
+	gretl_matrix_free(V);
+    }
+
+    if (!err) {
+	set_last_result_data(BKW, GRETL_TYPE_MATRIX);
+    } else {
+	gretl_matrix_free(BKW);
+    }
+
+    return err;
+}
+
 int gui_bkw (MODEL *pmod, const DATASET *dset, PRN *prn)
 {
     gretl_matrix *V = NULL, *B = NULL;

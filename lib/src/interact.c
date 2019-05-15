@@ -3387,6 +3387,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	}
 	break;
 
+    case BKW:
     case COEFFSUM:
     case CUSUM:
     case RESET:
@@ -3405,6 +3406,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    err = QLR_test(model, dset, cmd->opt, prn);
 	} else if (cmd->ci == VIF) {
 	    err = vif_test(model, dset, cmd->opt, prn);
+	} else if (cmd->ci == BKW) {
+	    err = bkw_test(model, dset, cmd->opt, prn);
 	}
 	break;
 

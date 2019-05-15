@@ -80,6 +80,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { ARCH,     "arch",     CI_ORD1 | CI_LIST },
     { ARMA,     "arima",    CI_LIST | CI_L1INT },
     { BIPROBIT, "biprobit", CI_LIST },
+    { BKW,      "bkw",      0 },
     { BREAK,    "break",    CI_NOOPT | CI_FCMIN },
     { BXPLOT,   "boxplot",  CI_LIST | CI_EXTRA | CI_INFL },
     { CHOW,     "chow",     CI_PARM1 },

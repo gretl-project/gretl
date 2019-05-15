@@ -32,6 +32,7 @@ typedef enum {
     ARCH,
     ARMA,
     BIPROBIT,
+    BKW,
     BREAK,
     BXPLOT,
     CHOW,
@@ -177,6 +178,7 @@ typedef enum {
 			    (c) == XTAB)
 
 #define TEXTSAVE_OK(c) (c == ADF || \
+	                c == BKW || \
                         c == CHOW || \
                         c == COEFFSUM || \
                         c == COINT || \
@@ -212,6 +214,7 @@ typedef enum {
                         c == XTAB)
 
 #define NEEDS_MODEL_CHECK(c) (c == ADD || \
+	                      c == BKW || \
                               c == CHOW || \
                               c == COEFFSUM || \
                               c == CUSUM || \

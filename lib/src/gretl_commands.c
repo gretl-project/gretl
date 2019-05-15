@@ -42,6 +42,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { ARCH,     "arch" },
     { ARMA,     "arima" },
     { BIPROBIT, "biprobit" },
+    { BKW,      "bkw" },
     { BREAK,    "break" },
     { BXPLOT,   "boxplot" },
     { CHOW,     "chow" },     

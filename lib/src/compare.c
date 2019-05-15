@@ -3860,3 +3860,31 @@ int vif_test (MODEL *pmod, DATASET *dset,
 
     return (*compute_vifs)(pmod, dset, opt, prn);
 }
+
+/**
+ * bkw_test:
+ * @pmod: pointer to model to be tested.
+ * @dset: dataset struct.
+ * @opt: may contain OPT_Q for quiet operation.
+ * @prn: gretl printing struct.
+ *
+ * Calculates and displays the Belsley-Kuh-Welsch collinearity
+ * diagnostics for @pmod.
+ *
+ * Returns: 0 on successful completion, error code on error.
+ */
+
+int bkw_test (MODEL *pmod, DATASET *dset,
+	      gretlopt opt, PRN *prn)
+{
+    int (*compute_bkw) (MODEL *, DATASET *, gretlopt, PRN *);
+
+    gretl_error_clear();
+
+    compute_bkw = get_plugin_function("compute_bkw");
+    if (compute_bkw == NULL) {
+	return 1;
+    }
+
+    return (*compute_bkw)(pmod, dset, opt, prn);
+}
