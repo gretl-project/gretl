@@ -2812,72 +2812,53 @@ void do_collin (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
+    DATASET *dset = NULL;
     PRN *prn = NULL;
-    int err = 0, show = 0;
+    int err = 0;
 
     if (bufopen(&prn)) {
 	return;
     }
 
-    if (model_test_ok(VIF, OPT_NONE, pmod, dataset)) {
+    dset = maybe_get_model_data(pmod, OPT_NONE, &err);
+
+    if (!err && model_test_ok(VIF, OPT_NONE, pmod, dset)) {
 	/* show VIFs if possible */
 	int (*compute_vifs) (MODEL *, DATASET *, gretlopt, PRN *);
-	DATASET *dset;
-	int err1 = 0;
 
-	dset = maybe_get_model_data(pmod, OPT_NONE, &err1);
-	if (!err1) {
-	    compute_vifs = gui_get_plugin_function("compute_vifs");
-	    if (compute_vifs == NULL) {
-		err1 = E_FOPEN;
-	    } else {
-		err1 = (*compute_vifs)(pmod, dset, OPT_NONE, prn);
-	    }
+	compute_vifs = gui_get_plugin_function("compute_vifs");
+	if (compute_vifs == NULL) {
+	    err = E_FOPEN;
+	} else {
+	    err = (*compute_vifs)(pmod, dset, OPT_NONE, prn);
 	}
-	if (!err1) {
+	if (!err) {
 	    lib_command_strcpy("vif");
 	    record_model_command_verbatim(pmod->ID);
-	    show = 1;
-	} else {
-	    err = err1;
 	}
-	trim_dataset(pmod, 0);
-    } else {
+    } else if (!err) {
 	/* BKW analysis? (more generally applicable) */
-	gretl_matrix *V, *B = NULL;
-	gretl_array *pnames = NULL;
-	int err2 = 0;
+	int (*gui_bkw) (MODEL *, const DATASET *, PRN *);
 
-	V = gretl_vcv_matrix_from_model(pmod, NULL, &err2);
-	if (!err2) {
-	    pnames = gretl_model_get_param_names(pmod, dataset, &err2);
-	}
-	if (!err2) {
-	    int (*gui_bkw) (const gretl_matrix *, gretl_array *, PRN *);
-
-	    gui_bkw = get_plugin_function("gui_bkw");
-	    if (gui_bkw == NULL) {
-		err2 = E_FOPEN;
-	    } else {
-		err2 = gui_bkw(V, pnames, prn);
-	    }
-	}
-	if (err2) {
-	    err = err2;
+	gui_bkw = get_plugin_function("gui_bkw");
+	if (gui_bkw == NULL) {
+	    err = E_FOPEN;
 	} else {
-	    show = 1;
+	    err = (*gui_bkw)(pmod, dset, prn);
 	}
-	gretl_matrix_free(V);
-	gretl_array_destroy(pnames);
     }
 
-    if (show) {
+    if (dset != NULL) {
+	trim_dataset(pmod, 0);
+    }
+
+    if (err) {
+	gui_errmsg(err);
+	gretl_print_destroy(prn);
+    } else {
 	view_buffer_with_parent(vwin, prn, 78, 400,
 				_("gretl: collinearity"),
 				PRINT, NULL);
-    } else {
-	gui_errmsg(err);
-	gretl_print_destroy(prn);
     }
 }
 

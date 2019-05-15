@@ -21,6 +21,8 @@
 #include "matrix_extra.h"
 #include "version.h"
 
+static void BKW_print (gretl_matrix *B, PRN *prn);
+
 /* run the vif regression for regressor k */
 
 static double get_vif (MODEL *mod, const int *xlist,
@@ -134,7 +136,7 @@ static void bkw_add_colnames (gretl_matrix *BKW,
 
 gretl_matrix *bkw_matrix (const gretl_matrix *VCV,
 			  gretl_array *pnames,
-			  int *err)
+			  PRN *prn, int *err)
 {
     gretl_matrix *Vi = NULL;
     gretl_matrix *S = NULL;
@@ -246,9 +248,119 @@ gretl_matrix *bkw_matrix (const gretl_matrix *VCV,
     if (*err) {
 	gretl_matrix_free(BKW);
 	BKW = NULL;
+    } else if (prn != NULL) {
+	BKW_print(BKW, prn);
     }
 
     return BKW;
+}
+
+static int BKW_analyse (gretl_matrix *B, const char *fmt, PRN *prn)
+{
+    const char *labels[] = {
+        N_("Problematic rows, with condition index > 30"),
+	N_("Sums of variance proportions attributable to the affected rows"),
+	N_("Problematic parameter estimates (proportion >= 0.5)"),
+	N_("No evidence of excessive collinearity")
+    };
+    const char **bnames = NULL;
+    char **cnames = NULL;
+    gretl_matrix *P = NULL;
+    gretl_matrix *S = NULL;
+    double x;
+    int rows = B->rows;
+    int np = B->cols - 2;
+    int ng30 = 0, ngp5 = 0;
+    int i, j, k;
+    int err = 0;
+
+    /* count rows with condition index >= 30 */
+    for (i=rows-1; i>=0; i--) {
+	if (gretl_matrix_get(B, i, 1) >= 30) {
+	    ng30++;
+	} else {
+	    break;
+	}
+    }
+
+    if (ng30 > 0) {
+	/* construct matrix showing problematic rows */
+	P = gretl_matrix_alloc(ng30, B->cols - 1);
+	if (P == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    for (j=1; j<B->cols; j++) {
+		k = 0;
+		for (i=rows-ng30; i<rows; i++) {
+		    x = gretl_matrix_get(B, i, j);
+		    gretl_matrix_set(P, k++, j-1, x);
+		}
+	    }
+	    bnames = gretl_matrix_get_colnames(B);
+	    cnames = strings_array_dup((char **) bnames + 1, B->cols - 1);
+	    gretl_matrix_set_colnames(P, cnames);
+	    pprintf(prn, "%s:\n\n", _(labels[0]));
+	    gretl_matrix_print_with_format(P, fmt, 0, 0, prn);
+	}
+    }
+
+    if (ng30 > 0 && !err) {
+	/* row vector showing sums of variance proportion */
+	S = gretl_matrix_alloc(1, np);
+	if (S == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    for (j=1; j<P->cols; j++) {
+		x = 0;
+		for (i=0; i<P->rows; i++) {
+		    x += gretl_matrix_get(P, i, j);
+		}
+		gretl_matrix_set(S, 0, j-1, x);
+		if (x >= 0.5) {
+		    ngp5++;
+		}
+	    }
+	    cnames = strings_array_dup((char **) bnames + 2, B->cols - 2);
+	    gretl_matrix_set_colnames(S, cnames);
+	    pprintf(prn, "\n%s:\n\n", _(labels[1]));
+	    gretl_matrix_print_with_format(S, "%8.3f", 0, 0, prn);
+	}
+    }
+
+    if (ngp5 > 1 && !err) {
+	/* row vector showing problematic estimates */
+	gretl_matrix_free(P);
+	P = gretl_matrix_alloc(1, ngp5);
+	if (P == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    cnames = strings_array_new(ngp5);
+	    k = 0;
+	    for (j=0; j<S->cols; j++) {
+		if (S->val[j] >= 0.5) {
+		    P->val[k] = S->val[j];
+		    cnames[k] = gretl_strdup(bnames[j+2]);
+		    k++;
+		}
+	    }
+	    gretl_matrix_set_colnames(P, cnames);
+	    pprintf(prn, "\n%s:\n\n", _(labels[2]));
+	    gretl_matrix_print_with_format(P, "%8.3f", 0, 0, prn);
+	}
+    }
+
+    if (!err) {
+	if (ngp5 < 1) {
+	    pprintf(prn, "%s\n", _(labels[3]));
+	} else {
+	    pputc(prn, '\n');
+	}
+    }
+
+    gretl_matrix_free(P);
+    gretl_matrix_free(S);
+
+    return err;
 }
 
 static void BKW_print (gretl_matrix *B, PRN *prn)
@@ -260,14 +372,20 @@ static void BKW_print (gretl_matrix *B, PRN *prn)
 	N_("condition index"),
 	N_("note: variance proportions columns sum to 1.0")
     };
+    double maxcond = gretl_matrix_get(B, B->rows - 1, 1);
+    int sp = maxcond >= 10000 ? 10 : maxcond >= 1000 ? 9 : 8;
+    char fmt[8];
 
+    sprintf(fmt, "%%%d.3f", sp);
     pprintf(prn, "\n%s:\n\n", _(strs[0]));
     bufspace(25, prn);
     pprintf(prn, "--- %s ---\n", _(strs[1]));
-    gretl_matrix_print_with_format(B, "%10.3f", 0, 0, prn);
+    gretl_matrix_print_with_format(B, fmt, 0, 0, prn);
     pprintf(prn, "\n  lambda = %s\n", _(strs[2]));
     pprintf(prn, "  cond   = %s\n", _(strs[3]));
     pprintf(prn, "  %s\n\n", _(strs[4]));
+
+    BKW_analyse(B, fmt, prn);
 }
 
 static void maybe_truncate_param_name (char *s)
@@ -382,12 +500,10 @@ int compute_vifs (MODEL *pmod, DATASET *dset,
 
 	if (!err) {
 	    gretl_array *pnames = BKW_pnames(pmod, dset);
+	    PRN *vprn = quiet ? NULL : prn;
 
-	    BKW = bkw_matrix(V, pnames, &err);
+	    BKW = bkw_matrix(V, pnames, vprn, &err);
 	    gretl_array_destroy(pnames);
-	}
-	if (!err && !quiet) {
-	    BKW_print(BKW, prn);
 	}
 	gretl_matrix_free(V);
     }
@@ -415,16 +531,25 @@ int compute_vifs (MODEL *pmod, DATASET *dset,
     return 0;
 }
 
-int gui_bkw (const gretl_matrix *VCV, gretl_array *pnames, PRN *prn)
+int gui_bkw (MODEL *pmod, const DATASET *dset, PRN *prn)
 {
-    gretl_matrix *B;
+    gretl_matrix *V = NULL, *B = NULL;
+    gretl_array *pnames = NULL;
     int err = 0;
 
-    B = bkw_matrix(VCV, pnames, &err);
+    V = gretl_vcv_matrix_from_model(pmod, NULL, &err);
 
-    if (B != NULL) {
-	BKW_print(B, prn);
+    if (!err) {
+	pnames = gretl_model_get_param_names(pmod, dset, &err);
     }
+
+    if (!err) {
+	B = bkw_matrix(V, pnames, prn, &err);
+    }
+
+    gretl_matrix_free(V);
+    gretl_matrix_free(B);
+    gretl_array_destroy(pnames);
 
     return err;
 }

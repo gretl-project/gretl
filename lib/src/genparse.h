@@ -388,7 +388,6 @@ enum {
     F_LSOLVE,
     F_STRFTIME,
     F_STRPTIME,
-    F_BKW,
     HF_CMMULT,
     HF_CFFT,
     HF_CMATRIX,
@@ -450,6 +449,7 @@ enum {
     F_LRVAR,
     F_BRENAME,
     F_ISOWEEK,
+    F_BKW,
     HF_CEIGG,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
