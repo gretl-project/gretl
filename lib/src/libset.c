@@ -869,50 +869,84 @@ static int parse_hac_lag_variant (const char *s)
     return err;
 }
 
-static int
-libset_numeric_string (const char *s, int *pi, double *px, int *err)
-{
-    char *test;
-    int ret = 1;
+enum {
+    NUMERIC_OK,
+    NUMERIC_BAD,
+    NON_NUMERIC
+};
 
-    if (s == NULL || *s == '\0' ||
-	!strcmp(s, "inf") || !strcmp(s, "nan")) {
-	return 0;
+/* Test @s for being a string representation of a numeric value
+   in the C locale, using strtod() and/or strtol(). This can be
+   used to retrieve a floating-point value (if @px is non-NULL)
+   or an integer value (@pi non-NULL); exactly one of these
+   pointers should be non-NULL.
+
+   A return value of NUMERIC_OK means that @s is indeed numeric
+   and the converted value is within range for a double (if @px
+   is non-NULL) or a 32-bit integer (if @pi is non-NULL).
+
+   A return of NUMERIC_BAD means that @s is numeric but out of
+   range for the target type.
+
+   A return of NON_NUMERIC means that @s is not a numeric string;
+   one may then proceed to test whether it's the name of a scalar
+   variable.
+*/
+
+static int
+libset_numeric_test (const char *s, int *pi, double *px)
+{
+    int ret = NUMERIC_OK;
+    char *test;
+
+    if (!strcmp(s, "inf") || !strcmp(s, "nan")) {
+	return NUMERIC_BAD;
+    } else if (isalpha(*s)) {
+	return NON_NUMERIC;
     }
 
     errno = 0;
-
     gretl_push_c_numeric_locale();
 
     if (px != NULL) {
+	/* looking for a floating-point value */
 	*px = strtod(s, &test);
 	if (*test != '\0') {
-	    ret = 0;
+	    ret = NON_NUMERIC;
 	} else if (errno == ERANGE) {
 	    gretl_errmsg_set_from_errno(s, errno);
-	    *err = 1;
+	    ret = NUMERIC_BAD;
 	}
     } else {
+	/* looking for an integer value */
 	long li = strtol(s, &test, 10);
 
 	if (*test != '\0') {
-	    /* try for a floating-point value that's also a valid int */
+	    /* try for a floating-point value that's also a valid int? */
 	    char *testx;
-	    double x = strtod(s, &testx);
+	    double x;
 
-	    if (*testx == '\0') {
+	    errno = 0;
+	    x = strtod(s, &testx);
+
+	    if (*testx != '\0') {
+		ret = NON_NUMERIC;
+	    } else if (errno == ERANGE) {
+		ret = NUMERIC_BAD;
+	    } else {
+		/* numeric, but does it work as an int? */
 		if (x == floor(x) && fabs(x) <= INT_MAX) {
 		    *pi = (int) x;
-		    ret = 1;
+		} else {
+		    ret = NUMERIC_BAD;
 		}
-	    } else {
-		gretl_errmsg_set_from_errno(s, errno);
-		*err = 1;
-		ret = 0;
 	    }
 	} else if (errno == ERANGE) {
 	    gretl_errmsg_set_from_errno(s, errno);
-	    *err = 1;
+	    ret = NUMERIC_BAD;
+	} else if (labs(li) > INT_MAX) {
+	    /* OK as a long but too big for 32-bit int */
+	    ret = NUMERIC_BAD;
 	} else {
 	    *pi = (int) li;
 	}
@@ -945,38 +979,39 @@ static int libset_get_scalar (const char *var, const char *arg,
 			      int *pi, double *px)
 {
     double x = NADBL;
-    int err = 0;
-    int is_numstring = libset_numeric_string(arg, pi, px, &err);
+    int nstatus, err = 0;
 
-    if (is_numstring) {
-	if (err) {
-	    err = E_DATA;
-	} else if (pi != NULL && negval_invalid(var) && *pi < 0) {
-	    err = E_DATA;
+    if (arg == NULL || *arg == '\0') {
+	return E_ARGS;
+    }
+
+    nstatus = libset_numeric_test(arg, pi, px);
+
+    if (nstatus == NUMERIC_BAD) {
+	return E_INVARG; /* handled */
+    } else if (nstatus == NUMERIC_OK) {
+	if (pi != NULL && negval_invalid(var) && *pi < 0) {
+	    err = E_INVARG;
 	} else if (px != NULL && *px < 0.0) {
-	    err = E_DATA;
+	    err = E_INVARG;
 	}
-	return err;
-    } else {
-	err = 0;
-	x = get_scalar_value_by_name(arg, &err);
-    }
-    
-    if (err) {
-	return err;
+	return err; /* handled */
     }
 
-    if (negval_invalid(var) && x < 0.0) {
-	return E_DATA;
-    }
+    /* handle the non-numeric case */
+    x = get_scalar_value_by_name(arg, &err);
 
-    if (px != NULL) {
-	*px = x;
-    } else if (pi != NULL) {
-	if (na(x) || fabs(x) > (double) INT_MAX) {
-	    err = E_DATA;
-	} else {
-	    *pi = (int) x;
+    if (!err) {
+	if (negval_invalid(var) && x < 0.0) {
+	    err = E_INVARG;
+	} else if (px != NULL) {
+	    *px = x;
+	} else if (pi != NULL) {
+	    if (na(x) || fabs(x) > (double) INT_MAX) {
+		err = E_INVARG;
+	    } else {
+		*pi = (int) x;
+	    }
 	}
     }
 

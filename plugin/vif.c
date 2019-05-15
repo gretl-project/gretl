@@ -368,7 +368,7 @@ static void BKW_print (gretl_matrix *B, PRN *prn)
     const char *strs[] = {
 	N_("Belsley-Kuh-Welsch collinearity diagnostics"),
 	N_("variance proportions"),
-	N_("eigenvalues of X'X, largest to smallest"),
+	N_("eigenvalues of inverse covariance matrix, largest to smallest"),
 	N_("condition index"),
 	N_("note: variance proportions columns sum to 1.0")
     };
