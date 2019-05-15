@@ -243,7 +243,7 @@ static GtkActionEntry model_items[] = {
       G_CALLBACK(do_coeff_intervals) },
     { "ConfEllipse", NULL, N_("Confidence _ellipse..."), NULL, NULL, G_CALLBACK(selector_callback) },
     { "Covariance", NULL, N_("Coefficient covariance _matrix"), NULL, NULL, G_CALLBACK(do_outcovmx) },
-    { "Collinearity", NULL, N_("_Collinearity"), NULL, NULL, G_CALLBACK(do_vif) },
+    { "Collinearity", NULL, N_("_Collinearity"), NULL, NULL, G_CALLBACK(do_collin) },
     { "Leverage", NULL, N_("_Influential observations"), NULL, NULL, G_CALLBACK(do_leverage) },
     { "ANOVA", NULL, N_("_ANOVA"), NULL, NULL, G_CALLBACK(do_anova) },
     { "Bootstrap", NULL, N_("_Bootstrap..."), NULL, NULL, G_CALLBACK(do_bootstrap) }
@@ -2845,6 +2845,7 @@ static void set_tests_menu_state (GtkUIManager *ui, const MODEL *pmod)
 static void set_analysis_menu_state (windata_t *vwin, const MODEL *pmod)
 {
     GtkUIManager *ui = vwin->ui;
+    gboolean s;
 
     if (pmod->ci == MLE || pmod->ci == GMM || pmod->ci == BIPROBIT) {
 	/* can we relax some of this later? */
@@ -2881,9 +2882,9 @@ static void set_analysis_menu_state (windata_t *vwin, const MODEL *pmod)
 	flip(ui, "/menubar/Analysis/Covariance", FALSE);
     }
 
-    if (!model_test_ok(VIF, OPT_NONE, pmod, dataset)) {
-	flip(ui, "/menubar/Analysis/Collinearity", FALSE);
-    }
+    s = model_test_ok(VIF, OPT_NONE, pmod, dataset) ||
+	pmod->vcv != NULL;
+    flip(ui, "/menubar/Analysis/Collinearity", s);
 
     if (!model_test_ok(LEVERAGE, OPT_NONE, pmod, dataset)) {
 	flip(ui, "/menubar/Analysis/Leverage", FALSE);

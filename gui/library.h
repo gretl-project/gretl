@@ -186,7 +186,7 @@ void do_qqplot (void);
 
 void do_kernel (void);
 
-void do_vif (GtkAction *action, gpointer p);
+void do_collin (GtkAction *action, gpointer p);
 
 void do_leverage (GtkAction *action, gpointer p);
 

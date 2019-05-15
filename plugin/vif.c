@@ -414,3 +414,17 @@ int compute_vifs (MODEL *pmod, DATASET *dset,
 
     return 0;
 }
+
+int gui_bkw (const gretl_matrix *VCV, gretl_array *pnames, PRN *prn)
+{
+    gretl_matrix *B;
+    int err = 0;
+
+    B = bkw_matrix(VCV, pnames, &err);
+
+    if (B != NULL) {
+	BKW_print(B, prn);
+    }
+
+    return err;
+}
