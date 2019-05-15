@@ -1212,6 +1212,49 @@
     </description>
   </command>
 
+  <command name="bkw" section="Tests" context="cli"
+	   label="Collinearity Diagnostics">
+    <usage>
+      <options>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>don't print anything</effect>
+        </option>
+      </options>
+	<examples>
+	<demos>
+	  <demo>longley.inp</demo>
+	</demos>
+    </examples>
+    </usage>
+
+    <description>
+      <para>
+	Must follow the estimation of a model which includes at least
+	two independent variables. Calculates and displays diagnostic
+	information pertaining to collinearity, namely the BKW Table,
+	based on the work of <cite key="belsley-etal80">Belsley, Kuh
+	and Welsch (1980)</cite>. This table presents a sophisticated
+	analysis of the degree and sources of collinearity, via
+	eigenanalysis of the inverse correlation matrix. For a
+	thorough account of the BKW approach with reference to gretl,
+	and with several examples, see <cite key="adkins15">Adkins,
+	Waters and Hill (2015)</cite>.
+      </para>
+      <para>
+	Following this command the <fncref targ="$result"/> accessor
+	may be used to retrieve the BKW table as a matrix. See also
+	the <cmdref targ="vif"/> command for a simpler approach to
+	diagnosing collinearity.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Model window, /Analysis/Collinearity</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="bootstrap" section="Tests" label="Bootstrap options"
     context="gui">
 
@@ -14893,7 +14936,6 @@
 
   <command name="vif" section="Tests" context="cli"
 	   label="Variance Inflation Factors">
-
     <usage>
       <options>
         <option>
@@ -14914,8 +14956,6 @@
 	two independent variables. Calculates and displays diagnostic
 	information pertaining to collinearity.
       </para>
-
-      <subhead>Variance Inflation Factors</subhead>
       <para>
 	The Variance Inflation Factor or VIF for regressor
 	<math>j</math> is defined as <equation status="display"
@@ -14930,26 +14970,13 @@
 	collinearity; a value greater than 10 is sometimes taken as
 	indicating a problematic degree of collinearity.
       </para>
-
-      <subhead>BKW matrix</subhead>
-      <para>
-	This table, based on the work of <cite
-	key="belsley-etal80">Belsley, Kuh and Welsch (1980)</cite>,
-	presents a more sophisticated analysis of the degree and
-	sources of collinearity via eigenanalysis of the matrix
-	<math>X'X</math>. For a thorough account of the BKW approach
-	with reference to gretl, see <cite key="adkins15">Adkins,
-	Waters and Hill (2015)</cite>.
-      </para>
-
       <para>
 	Following this command the <fncref targ="$result"/> accessor
-	may be used to retrieve a bundle containing two matrices:
-	a column vector holding the VIFs under the key <lit>vif</lit>
-	and the BKW matrix under <lit>BKW</lit>.
+	may be used to retrieve a column vector holding the VIFs.
+	For a more sophisticated approach to diagnosing collinearity,
+	see the <cmdref targ="bkw"/> command.
       </para>
     </description>
-
     <gui-access>
       <menu-path>Model window, /Analysis/Collinearity</menu-path>
     </gui-access>

@@ -2814,12 +2814,14 @@ void do_collin (GtkAction *action, gpointer p)
     MODEL *pmod = (MODEL *) vwin->data;
     DATASET *dset = NULL;
     PRN *prn = NULL;
-    int err = 0;
+    int show = 0;
+    int err, verr, berr;
 
     if (bufopen(&prn)) {
 	return;
     }
 
+    err = verr = berr = 0;
     dset = maybe_get_model_data(pmod, OPT_NONE, &err);
 
     if (!err && model_test_ok(VIF, OPT_NONE, pmod, dset)) {
@@ -2828,23 +2830,31 @@ void do_collin (GtkAction *action, gpointer p)
 
 	compute_vifs = gui_get_plugin_function("compute_vifs");
 	if (compute_vifs == NULL) {
-	    err = E_FOPEN;
+	    verr = E_FOPEN;
 	} else {
-	    err = (*compute_vifs)(pmod, dset, OPT_NONE, prn);
+	    verr = (*compute_vifs)(pmod, dset, OPT_NONE, prn);
 	}
-	if (!err) {
+	if (!verr) {
 	    lib_command_strcpy("vif");
 	    record_model_command_verbatim(pmod->ID);
+	    show = 1;
 	}
-    } else if (!err) {
+    }
+
+    if (!err) {
 	/* BKW analysis? (more generally applicable) */
 	int (*gui_bkw) (MODEL *, const DATASET *, PRN *);
 
 	gui_bkw = get_plugin_function("gui_bkw");
 	if (gui_bkw == NULL) {
-	    err = E_FOPEN;
+	    berr = E_FOPEN;
 	} else {
-	    err = (*gui_bkw)(pmod, dset, prn);
+	    berr = (*gui_bkw)(pmod, dset, prn);
+	}
+	if (!berr) {
+	    lib_command_strcpy("bkw");
+	    record_model_command_verbatim(pmod->ID);
+	    show = 1;
 	}
     }
 
@@ -2852,13 +2862,16 @@ void do_collin (GtkAction *action, gpointer p)
 	trim_dataset(pmod, 0);
     }
 
-    if (err) {
-	gui_errmsg(err);
-	gretl_print_destroy(prn);
-    } else {
+    if (show) {
 	view_buffer_with_parent(vwin, prn, 78, 400,
 				_("gretl: collinearity"),
 				PRINT, NULL);
+    } else {
+	if (!err) {
+	    err = verr ? verr : berr;
+	}
+	gui_errmsg(err);
+	gretl_print_destroy(prn);
     }
 }
 

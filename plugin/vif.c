@@ -427,7 +427,6 @@ static gretl_array *BKW_pnames (MODEL *pmod, DATASET *dset)
 int compute_vifs (MODEL *pmod, DATASET *dset,
 		  gretlopt opt, PRN *prn)
 {
-    gretl_matrix *BKW = NULL;
     gretl_vector *vif = NULL;
     int *xlist;
     int quiet = (opt & OPT_Q);
@@ -492,42 +491,12 @@ int compute_vifs (MODEL *pmod, DATASET *dset,
 	pputc(prn, '\n');
     }
 
-    if (1) {
-	/* this should get hived off to a separate function,
-	   but for now...
-	*/
-	gretl_matrix *V;
-
-	V = gretl_vcv_matrix_from_model(pmod, NULL, &err);
-
-	if (!err) {
-	    gretl_array *pnames = BKW_pnames(pmod, dset);
-	    PRN *vprn = quiet ? NULL : prn;
-
-	    BKW = bkw_matrix(V, pnames, vprn, &err);
-	    gretl_array_destroy(pnames);
-	}
-	gretl_matrix_free(V);
-    }
-
     if (!err) {
-	gretl_bundle *b = gretl_bundle_new();
-
-	if (b != NULL && (vif != NULL || BKW != NULL)) {
-	    if (vif != NULL) {
-		gretl_bundle_donate_data(b, "vif", vif, GRETL_TYPE_MATRIX, 0);
-		vif = NULL;
-	    }
-	    if (BKW != NULL) {
-		gretl_bundle_donate_data(b, "BKW", BKW, GRETL_TYPE_MATRIX, 0);
-		BKW = NULL;
-	    }
-	    set_last_result_data(b, GRETL_TYPE_BUNDLE);
-	}
+	set_last_result_data(vif, GRETL_TYPE_MATRIX);
+    } else {
+	gretl_matrix_free(vif);
     }
 
-    gretl_matrix_free(vif);
-    gretl_matrix_free(BKW);
     free(xlist);
 
     return 0;
