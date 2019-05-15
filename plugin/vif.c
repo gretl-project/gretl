@@ -258,7 +258,7 @@ gretl_matrix *bkw_matrix (const gretl_matrix *VCV,
 static int BKW_analyse (gretl_matrix *B, const char *fmt, PRN *prn)
 {
     const char *labels[] = {
-        N_("Problematic rows, with condition index > 30"),
+        N_("Problematic rows, with large condition index"),
 	N_("Sums of variance proportions attributable to the affected rows"),
 	N_("Problematic parameter estimates (proportion >= 0.5)"),
 	N_("No evidence of excessive collinearity")
@@ -270,28 +270,29 @@ static int BKW_analyse (gretl_matrix *B, const char *fmt, PRN *prn)
     double x;
     int rows = B->rows;
     int np = B->cols - 2;
-    int ng30 = 0, ngp5 = 0;
+    int nbigc = 0, ngp5 = 0;
+    int bigc = 30; /* FIXME? */
     int i, j, k;
     int err = 0;
 
-    /* count rows with condition index >= 30 */
+    /* count rows with condition index >= bigc */
     for (i=rows-1; i>=0; i--) {
-	if (gretl_matrix_get(B, i, 1) >= 30) {
-	    ng30++;
+	if (gretl_matrix_get(B, i, 1) >= bigc) {
+	    nbigc++;
 	} else {
 	    break;
 	}
     }
 
-    if (ng30 > 0) {
+    if (nbigc > 0) {
 	/* construct matrix showing problematic rows */
-	P = gretl_matrix_alloc(ng30, B->cols - 1);
+	P = gretl_matrix_alloc(nbigc, B->cols - 1);
 	if (P == NULL) {
 	    err = E_ALLOC;
 	} else {
 	    for (j=1; j<B->cols; j++) {
 		k = 0;
-		for (i=rows-ng30; i<rows; i++) {
+		for (i=rows-nbigc; i<rows; i++) {
 		    x = gretl_matrix_get(B, i, j);
 		    gretl_matrix_set(P, k++, j-1, x);
 		}
@@ -304,7 +305,7 @@ static int BKW_analyse (gretl_matrix *B, const char *fmt, PRN *prn)
 	}
     }
 
-    if (ng30 > 0 && !err) {
+    if (nbigc > 0 && !err) {
 	/* row vector showing sums of variance proportions */
 	S = gretl_matrix_alloc(1, np);
 	if (S == NULL) {
@@ -368,7 +369,7 @@ static void BKW_print (gretl_matrix *B, PRN *prn)
     const char *strs[] = {
 	N_("Belsley-Kuh-Welsch collinearity diagnostics"),
 	N_("variance proportions"),
-	N_("eigenvalues of inverse covariance matrix, largest to smallest"),
+	N_("eigenvalues of inverse covariance matrix"),
 	N_("condition index"),
 	N_("note: variance proportions columns sum to 1.0")
     };
