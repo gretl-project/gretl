@@ -1,3 +1,10 @@
+version 2019a, in progress
+
+The BKW collinearity diagnostics have been split off from
+the "vif" command in a new "bkw" command. Both commands
+support the $result accessor to retrieve a matrix holding
+the results.
+
 2019-01-24 version 2019a
 
 It is no longer permitted to create a named list which

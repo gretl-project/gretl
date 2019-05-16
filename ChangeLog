@@ -2,6 +2,7 @@ version 2019b, in progress
 - New command "panplot": plot a single panel-data series
 - "print" command: new --range option to control the
   range to print for series, matrices, arrays and strings
+- New command "bkw", now separated from the "vif" command
 - "smpl" command: add --unit option for panel data
 - "intreg" and "tobit" commands: add --opg option
 - "fcast" command: add some support for panel data
