@@ -507,7 +507,7 @@ int compute_bkw (MODEL *pmod, DATASET *dset,
 {
     gretl_matrix *V, *BKW = NULL;
     int quiet = (opt & OPT_Q);
-    int i, err = 0;
+    int err = 0;
 
     V = gretl_vcv_matrix_from_model(pmod, NULL, &err);
 
