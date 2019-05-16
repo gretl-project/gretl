@@ -5957,6 +5957,11 @@ int command_ok_for_model (int test_ci, gretlopt opt,
 	return test_ci == RESTRICT;
     }
 
+    if (test_ci == BKW) {
+	/* most models should be OK */
+	return pmod->ncoeff > 1 && pmod->vcv != NULL;
+    }
+
     if (NONLIST_MODEL(mci)) {
 	return (test_ci == RESTRICT ||
 		test_ci == TABPRINT ||
