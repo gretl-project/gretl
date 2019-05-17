@@ -181,9 +181,8 @@ struct plugin_function_info plugin_functions[] = {
 
     /* collinearity diagnostics */
     { "compute_vifs", P_VIF },
-    { "compute_bkw", P_VIF },
-    { "bkw_matrix", P_VIF },
-    { "gui_bkw", P_VIF },
+    { "compute_bkw",  P_VIF },
+    { "bkw_matrix",   P_VIF },
 
     /* GMP (multiple precision) */
     { "mplsq",                    P_MP_OLS },

@@ -2832,7 +2832,7 @@ void do_collin (GtkAction *action, gpointer p)
 	if (compute_vifs == NULL) {
 	    verr = E_FOPEN;
 	} else {
-	    verr = (*compute_vifs)(pmod, dset, OPT_NONE, prn);
+	    verr = (*compute_vifs)(pmod, dset, OPT_G, prn);
 	}
 	if (!verr) {
 	    lib_command_strcpy("vif");
@@ -2843,13 +2843,13 @@ void do_collin (GtkAction *action, gpointer p)
 
     if (!err) {
 	/* BKW analysis? (more generally applicable) */
-	int (*gui_bkw) (MODEL *, const DATASET *, PRN *);
+	int (*compute_bkw) (MODEL *, const DATASET *, gretlopt, PRN *);
 
-	gui_bkw = get_plugin_function("gui_bkw");
-	if (gui_bkw == NULL) {
+	compute_bkw = get_plugin_function("compute_bkw");
+	if (compute_bkw == NULL) {
 	    berr = E_FOPEN;
 	} else {
-	    berr = (*gui_bkw)(pmod, dset, prn);
+	    berr = (*compute_bkw)(pmod, dset, OPT_G, prn);
 	}
 	if (!berr) {
 	    lib_command_strcpy("bkw");

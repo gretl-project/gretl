@@ -456,9 +456,6 @@ int compute_vifs (MODEL *pmod, DATASET *dset,
 
     if (xlist[0] > 1) {
 	vif = model_vif_vector(pmod, xlist, dset, &err);
-	if (err) {
-	    return err;
-	}
     }
 
     if (vif != NULL && !quiet) {
@@ -499,7 +496,7 @@ int compute_vifs (MODEL *pmod, DATASET *dset,
 	pputc(prn, '\n');
     }
 
-    if (!err) {
+    if (!err && !(opt & OPT_G)) {
 	set_last_result_data(vif, GRETL_TYPE_MATRIX);
     } else {
 	gretl_matrix_free(vif);
@@ -507,7 +504,7 @@ int compute_vifs (MODEL *pmod, DATASET *dset,
 
     free(xlist);
 
-    return 0;
+    return err;
 }
 
 int compute_bkw (MODEL *pmod, DATASET *dset,
@@ -528,7 +525,7 @@ int compute_bkw (MODEL *pmod, DATASET *dset,
 	gretl_matrix_free(V);
     }
 
-    if (!err) {
+    if (!err && !(opt & OPT_G)) {
 	set_last_result_data(BKW, GRETL_TYPE_MATRIX);
     } else {
 	gretl_matrix_free(BKW);
@@ -537,25 +534,3 @@ int compute_bkw (MODEL *pmod, DATASET *dset,
     return err;
 }
 
-int gui_bkw (MODEL *pmod, const DATASET *dset, PRN *prn)
-{
-    gretl_matrix *V = NULL, *B = NULL;
-    gretl_array *pnames = NULL;
-    int err = 0;
-
-    V = gretl_vcv_matrix_from_model(pmod, NULL, &err);
-
-    if (!err) {
-	pnames = gretl_model_get_param_names(pmod, dset, &err);
-    }
-
-    if (!err) {
-	B = bkw_matrix(V, pnames, prn, &err);
-    }
-
-    gretl_matrix_free(V);
-    gretl_matrix_free(B);
-    gretl_array_destroy(pnames);
-
-    return err;
-}
