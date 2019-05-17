@@ -5959,7 +5959,7 @@ int command_ok_for_model (int test_ci, gretlopt opt,
 
     if (test_ci == BKW) {
 	/* most models should be OK */
-	return pmod->ncoeff > 1 && pmod->vcv != NULL;
+	return pmod->ncoeff > 1 && (pmod->vcv != NULL || pmod->xpx != NULL);
     }
 
     if (NONLIST_MODEL(mci)) {
