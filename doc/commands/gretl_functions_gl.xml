@@ -635,6 +635,30 @@
       </description>
     </function>
 
+    <function name="$parnames" section="access" output="strings">
+      <description>
+	<para>
+	  Logo da estimación dun modelo uniecuacional, devolve un arranxo
+	  de cadeas de texto que conteñen os nomes dos parámetros do modelo.
+	  O número de nomes coincide co número de elementos que ten o vector
+	  <fncref targ="$coeff"/>.
+	</para>
+	<para>
+	  Para os modelos especificados mediante unha lista de regresores,
+	  o resultado vai ser o mesmo que o de
+	</para>
+	<code>
+	  varnames($xlist)
+	</code>
+	<para>
+	  (consulta a función<fncref targ="varnames"/>) pero a función
+	  <lit>$parnames</lit> é máis xeral; pois tamén funciona para os modelos que
+	  non teñen unha lista de regresores
+	  (<cmdref targ="nls"/>, <cmdref targ="mle"/>, <cmdref targ="gmm"/>).
+	</para>
+      </description>
+    </function>
+
     <function name="$pd" section="access" output="int">
       <description>
 	<para>

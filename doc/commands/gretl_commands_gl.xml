@@ -1212,6 +1212,49 @@
     </description>
   </command>
 
+  <command name="bkw" section="Tests" context="cli"
+	   label="Diagnósticos de Multicolinearidade">
+    <usage>
+      <options>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>Non presenta nada</effect>
+        </option>
+      </options>
+	<examples>
+	<demos>
+	  <demo>longley.inp</demo>
+	</demos>
+    </examples>
+    </usage>
+
+    <description>
+      <para>
+	Debe de ir despois da estimación dun modelo que conteña cando
+	menos dúas variables explicativas. Calcula e presenta información
+	de diagnóstico en relación á multicolinearidade, en concreto a
+	Táboa BKW que está baseada no traballo de
+	<cite key="belsley-etal80">Belsley, Kuh e Welsch (1980)</cite>.
+	Esta táboa presenta unha sofisticada análise do grao e das causas da
+	multicolinearidade, mediante o exame dos autovalores da inversa da
+	matriz de correlacións. Para ter unha explicación polo miúdo do enfoque
+	BKW en relación a Gretl, e con diversos exemplos, consulta
+	<cite key="adkins15">Adkins, Waters e Hill (2015)</cite>.
+      </para>
+      <para>
+	Despois de utilizar esta instrución, podes usar o accesorio
+	<fncref targ="$result"/> para recuperar a táboa BKW en forma de
+	matriz. Consulta tamén a instrución <cmdref targ="vif"/> para
+	obter un enfoque máis sinxelo da diagnose da multicolinearidade.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Xanela de modelo: Análise/Multicolinearidade</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="bootstrap" section="Tests" label="Opcións de Bootstrap"
     context="gui">
 
@@ -14893,7 +14936,6 @@
 
   <command name="vif" section="Tests" context="cli"
     label="Factores de Inflación da Varianza">
-
     <usage>
       <options>
         <option>
@@ -14914,8 +14956,6 @@
 	menos 2 variables independentes. Calcula e amosa información de
 	diagnóstico relacionada coa multicolinearidade.
       </para>
-
-      <subhead>Factores de Inflación da Varianza</subhead>
       <para>
 	O Factor de Inflación da Varianza (FIV) do regresor <math>j</math>
 	defínese como <equation status="display" tex="\[\frac{1}{1-R_j^2}\]"
@@ -14930,26 +14970,13 @@
 	considérase ás veces indicativo dun grao de multicolinearidade
 	problemático.
       </para>
-
-      <subhead>Matriz BKW</subhead>
-      <para>
-	Esta táboa, baseada no traballo de
-	<cite key="belsley-etal80">Belsley, Kuh e Welsch (1980)</cite>,
-	presenta unha análise máis sofisticada do grao e das causas
-	da multicolineariedade, mediante a análise dos autovalores da
-	matriz <math>X'X</math>. Para ter unha explicación polo miúdo
-	do enfoque BKW con referencia a Gretl, consulta
-	<cite key="adkins15">Adkins, Waters and Hill (2015)</cite>.
-      </para>
-
       <para>
 	Despois de utilizar esta instrución, podes usar o accesorio
-	<fncref targ="$result"/> para obter un feixe que inclúa dúas
-	matrices: un vector columna que conteña os FIV baixo a chave
-	<lit>vif</lit>, e a matriz BKW baixo <lit>BKW</lit>.
+	<fncref targ="$result"/> para obter un vector columna que inclúa
+	os FIV. Para ter un enfoque máis sofisticado para diagnosticar a
+	multicolinearidade, consulta a instrución <cmdref targ="bkw"/>.
       </para>
     </description>
-
     <gui-access>
       <menu-path>Xanela de modelo: Análise/Multicolinearidade</menu-path>
     </gui-access>

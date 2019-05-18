@@ -1212,6 +1212,49 @@
     </description>
   </command>
 
+  <command name="bkw" section="Tests" context="cli"
+	   label="Diagnósticos de Multicolinealidad">
+    <usage>
+      <options>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>No presenta nada</effect>
+        </option>
+      </options>
+	<examples>
+	<demos>
+	  <demo>longley.inp</demo>
+	</demos>
+    </examples>
+    </usage>
+
+    <description>
+      <para>
+	Debe ir después de la estimación de un modelo que contenga al
+	menos dos variables explicativas. Calcula y presenta información
+	de diagnóstico en relación a la multicolinealidad, en concreto la
+	Tabla BKW que está basada en el trabajo de
+	<cite key="belsley-etal80">Belsley, Kuh y Welsch (1980)</cite>.
+	Esta tabla presenta un sofisticado análisis del grado y de las causas de
+	la multicolinealidad, mediante el examen de los autovalores de la inversa
+	de la matriz de correlaciones. Para tener una explicación en detalle del
+	enfoque BKW en relación a Gretl, y con diversos ejemplos, consulta
+	<cite key="adkins15">Adkins, Waters y Hill (2015)</cite>.
+      </para>
+      <para>
+	Después de utilizar esta instrucción, puedes usar el accesor
+	<fncref targ="$result"/> para recuperar la tabla BKW en forma de
+	matriz. Consulta también la instrucción <cmdref targ="vif"/> para
+	obtener un enfoque más sencillo del diagnóstico de la multicolinealidad.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Ventana de modelo: Análisis/Colinealidad</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="bootstrap" section="Tests" label="Opciones de Bootstrap"
     context="gui">
 
@@ -14893,7 +14936,6 @@
 
   <command name="vif" section="Tests" context="cli"
     label="Factores de Inflación de la Varianza">
-
     <usage>
       <options>
         <option>
@@ -14914,8 +14956,6 @@
 	menos 2 variables independientes. Calcula y muestra información de
 	diagnóstico relacionada con la multicolinealidad.
       </para>
-
-      <subhead>Factores de Inflación de la Varianza</subhead>
       <para>
 	El Factor de Inflación de la Varianza (FIV) del regresor <math>j</math>
 	se define como <equation status="display" tex="\[\frac{1}{1-R_j^2}\]"
@@ -14930,26 +14970,13 @@
 	considera a veces indicativo de un grado de multicolinealidad
 	problemático.
       </para>
-
-      <subhead>Matriz BKW</subhead>
-      <para>
-	Esta tabla, basada en el trabajo de
-	<cite key="belsley-etal80">Belsley, Kuh y Welsch (1980)</cite>,
-	presenta un análisis más sofisticado del grado y de las causas
-	de la multicolinealidad, por medio del análisis de los autovalores
-	de la matriz <math>X'X</math>. Para tener una explicación en
-	detalle del enfoque BKW con referencia a Gretl, consulta
-	<cite key="adkins15">Adkins, Waters and Hill (2015)</cite>.
-      </para>
-
       <para>
 	Después de utilizar esta instrucción, puedes usar el accesor
-	<fncref targ="$result"/> para obtener un 'bundle' que incluya dos
-	matrices: un vector columna que contenga los FIV bajo la clave
-	<lit>vif</lit>, y la matriz BKW bajo <lit>BKW</lit>.
+	<fncref targ="$result"/> para obtener un vector columna que incluya
+	los FIV. Para tener un enfoque más sofisticado para diagnosticar
+	la multicolinealidad, consulta la instrución <cmdref targ="bkw"/>.
       </para>
     </description>
-
     <gui-access>
       <menu-path>Ventana de modelo: Análisis/Colinealidad</menu-path>
     </gui-access>

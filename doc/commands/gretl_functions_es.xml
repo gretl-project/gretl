@@ -635,6 +635,30 @@
       </description>
     </function>
 
+    <function name="$parnames" section="access" output="strings">
+      <description>
+	<para>
+	  Después de la estimación de un modelo uniecuacional, devuelve
+	  un 'array' de cadenas de texto que contienen los nombres de los
+	  parámetros del modelo. El número de nombres coincide con el
+	  número de elementos que tiene el vector <fncref targ="$coeff"/>.
+	</para>
+	<para>
+	  Para los modelos especificados mediante una lista de regresores,
+	  el resultado va a ser el mismo que el de
+	</para>
+	<code>
+	  varnames($xlist)
+	</code>
+	<para>
+	  (consulta la función<fncref targ="varnames"/>) pero la función
+	  <lit>$parnames</lit> es más general; pues también funciona para
+	  los modelos que no tienen una lista de regresores
+	  (<cmdref targ="nls"/>, <cmdref targ="mle"/>, <cmdref targ="gmm"/>).
+	</para>
+      </description>
+    </function>
+
     <function name="$pd" section="access" output="int">
       <description>
 	<para>
