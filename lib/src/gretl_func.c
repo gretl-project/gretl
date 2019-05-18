@@ -4947,9 +4947,13 @@ static int load_public_function (fnpkg *pkg, int i)
     }
 
     if (!err && !done && function_lookup(fun->name)) {
-	gretl_errmsg_sprintf(_("'%s' is the name of a built-in function"),
-			     fun->name);
-	err = E_DATA;
+	if (strcmp(fun->name, "bkw")) {
+	    /* for now, don't throw an error on loading Lee Adkins'
+	       bkw package */
+	    gretl_errmsg_sprintf(_("'%s' is the name of a built-in function"),
+				 fun->name);
+	    err = E_DATA;
+	}
     }
 
     if (!err && !done) {

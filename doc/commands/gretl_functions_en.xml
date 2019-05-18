@@ -1751,6 +1751,40 @@
       </description>
     </function>
 
+    <function name="bkw" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">V</fnarg>
+	<fnarg optional="true" type="strings">parnames</fnarg>
+	<fnarg optional="true" type="bool">verbose</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Computes BKW collinearity diagnostics (see <cite
+	  key="belsley-etal80">Belsley, Kuh and Welsch (1980)</cite>)
+	  given a covariance matrix of parameter estimates,
+	  <argname>V</argname>. The optional second argument, which
+	  can be an array of strings or a string containing
+	  comma-separated names, is used to label the columns showing
+	  the variance proportions; the number of names should match
+	  the dimension of <argname>V</argname>.  After estimation of
+	  a model in gretl, suitable arguments can be obtained via the
+	  <fncref targ="$vcv"/> and <fncref targ="$parnames"/>
+	  accessors.
+	</para>
+	<para>
+	  By default this function operates silently, just returning
+	  the BKW table as a matrix, but if a non-zero value is given
+	  for the third argument the table is printed along with some
+	  analysis.
+	</para>
+	<para>
+	  There is also a command form of this facility, <cmdref
+	  targ="bkw"/>, which automatically references the last model
+	  and requires no arguments.
+	</para>
+      </description>
+    </function>
+
     <function name="boxcox" section="filters" output="asinput">
       <fnargs>
 	<fnarg type="series-or-mat">y</fnarg>

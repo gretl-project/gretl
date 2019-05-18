@@ -1247,6 +1247,10 @@
 	the <cmdref targ="vif"/> command for a simpler approach to
 	diagnosing collinearity.
       </para>
+      <para>
+	There is also a function named <fncref targ="bkw"/> which
+	offers greater flexibility.
+      </para>
     </description>
 
     <gui-access>

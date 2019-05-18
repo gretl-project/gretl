@@ -3838,7 +3838,7 @@ static NODE *bkw_node (NODE *l, NODE *m, NODE *r, parser *p)
     if (ret != NULL && starting(p)) {
 	const gretl_matrix *V = l->v.m;
 	gretl_array *pnames = NULL;
-	PRN *vprn = p->prn;
+	PRN *vprn = NULL;
 	int ns = 0;
 
 	if (!null_or_empty(m)) {
@@ -3865,8 +3865,8 @@ static NODE *bkw_node (NODE *l, NODE *m, NODE *r, parser *p)
 	}
 
 	if (node_get_bool(r, p, 0)) {
-	    /* optional quiet flag */
-	    vprn = NULL;
+	    /* optional verbose flag */
+	    vprn = p->prn;
 	}
 
 	if (!p->err) {
