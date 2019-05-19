@@ -25,6 +25,8 @@
 #include "genparse.h"
 #include "gretl_xml.h"
 #include "gretl_midas.h"
+#include "matrix_extra.h"
+#include "gretl_www.h"
 #include "csvdata.h"
 
 #ifdef WIN32
@@ -55,7 +57,8 @@ enum {
     CSV_VERBOSE  = 1 << 12,
     CSV_THOUSEP  = 1 << 13,
     CSV_NOHEADER = 1 << 14,
-    CSV_QUOTES   = 1 << 15
+    CSV_QUOTES   = 1 << 15,
+    CSV_AS_MAT   = 1 << 16
 };
 
 enum {
@@ -137,6 +140,7 @@ struct csvdata_ {
 #define csv_scrub_thousep(c)      (c->flags & CSV_THOUSEP)
 #define csv_no_header(c)          (c->flags & CSV_NOHEADER)
 #define csv_keep_quotes(c)        (c->flags & CSV_QUOTES)
+#define csv_as_matrix(c)          (c->flags & CSV_AS_MAT)
 
 #define csv_set_trailing_comma(c)   (c->flags |= CSV_TRAIL)
 #define csv_unset_trailing_comma(c) (c->flags &= ~CSV_TRAIL)
@@ -154,6 +158,7 @@ struct csvdata_ {
 #define csv_set_scrub_thousep(c)    (c->flags |= CSV_THOUSEP)
 #define csv_set_no_header(c)        (c->flags |= CSV_NOHEADER)
 #define csv_unset_keep_quotes(c)    (c->flags &= ~CSV_QUOTES)
+#define csv_set_as_matrix(c)        (c->flags |= CSV_AS_MAT)
 
 #define csv_skip_bad(c)        (*c->skipstr != '\0')
 #define csv_has_non_numeric(c) (c->st != NULL)
@@ -2127,6 +2132,18 @@ int non_numeric_check (DATASET *dset, int **plist,
     fprintf(stderr, "non_numeric_check: testing %d series\n", dset->v - 1);
 #endif
 
+    if (pst == NULL) {
+	/* not interested in string-valued series/columns */
+	for (i=1; i<dset->v; i++) {
+	    for (t=0; t<dset->n; t++) {
+		if (dset->Z[i][t] == NON_NUMERIC) {
+		    dset->Z[i][t] = NADBL;
+		}
+	    }
+	}
+	return 0;
+    }
+
     for (i=1; i<dset->v; i++) {
 	for (t=0; t<dset->n; t++) {
 	    if (dset->Z[i][t] == NON_NUMERIC) {
@@ -2223,7 +2240,11 @@ static int csv_non_numeric_check (csvdata *c, PRN *prn)
     int *nlist = NULL;
     int err = 0;
 
-    err = non_numeric_check(c->dset, &nlist, &st, prn);
+    if (csv_as_matrix(c)) {
+	err = non_numeric_check(c->dset, &nlist, NULL, prn);
+    } else {
+	err = non_numeric_check(c->dset, &nlist, &st, prn);
+    }
 
     if (!err) {
 	c->codelist = nlist;
@@ -3466,6 +3487,7 @@ static int csv_set_dataset_dimensions (csvdata *c)
  * @rows: row specification.
  * @join: specification pertaining to "join" command.
  * @probe: also pertains to "join" (via GUI).
+ * @pm: location of matrix to accept the data or NULL.
  * @opt: use OPT_N to force interpretation of data colums containing
  * strings as coded (non-numeric) values and not errors; use OPT_H
  * to indicate absence of a header row; use OPT_A to indicate that
@@ -3486,6 +3508,7 @@ static int real_import_csv (const char *fname,
 			    const char *rows,
 			    joinspec *join,
 			    csvprobe *probe,
+			    gretl_matrix **pm,
 			    gretlopt opt,
 			    PRN *prn)
 {
@@ -3555,6 +3578,9 @@ static int real_import_csv (const char *fname,
 	c->probe = probe;
 	c->flags |= CSV_HAVEDATA;
     } else {
+	if (pm != NULL) {
+	    csv_set_as_matrix(c);
+	}
         if (opt & OPT_A) {
 	    csv_set_all_cols(c);
         }
@@ -3765,6 +3791,17 @@ static int real_import_csv (const char *fname,
 	}
     }
 
+    if (csv_as_matrix(c)) {
+	/* FIXME placement of this */
+	if (csv_autoname(c)) {
+	    strings_array_free(c->dset->varname, c->dset->v);
+	    c->dset->varname = NULL;
+	}
+	*pm = gretl_matrix_data_subset(NULL, c->dset, -1, -1,
+				       M_MISSING_OK, &err);
+	goto csv_bailout;
+    }
+
     /* If there were observation labels and they were not interpretable
        as dates, and they weren't simply "1, 2, 3, ...", then they
        should probably be preserved; otherwise discard them.
@@ -3889,7 +3926,34 @@ int import_csv (const char *fname, DATASET *dset,
     }
 
     return real_import_csv(fname, dset, cols, rows,
-			   NULL, NULL, opt, prn);
+			   NULL, NULL, NULL, opt, prn);
+}
+
+gretl_matrix *import_csv_as_matrix (const char *fname, int *err)
+{
+    gretl_matrix *m = NULL;
+    char csvname[FILENAME_MAX] = {0};
+    gretlopt opt = OPT_A; /* --all-cols */
+    int http = 0;
+
+    if (strncmp(fname, "http://", 7) == 0 ||
+	strncmp(fname, "https://", 8) == 0) {
+#ifdef USE_CURL
+	*err = retrieve_public_file(fname, csvname);
+#else
+	gretl_errmsg_set(_("Internet access not supported"));
+	*err = E_DATA;
+#endif
+    } else {
+	strcpy(csvname, fname);
+    }
+
+    if (!*err) {
+	*err = real_import_csv(csvname, NULL, NULL, NULL,
+			       NULL, NULL, &m, opt, NULL);
+    }
+
+    return m;
 }
 
 static int probe_varnames_check (DATASET *dset, gretlopt opt,
@@ -3939,8 +4003,8 @@ int probe_csv (const char *fname, char ***varnames,
     csvprobe probe = {0};
     int err;
 
-    err = real_import_csv(fname, NULL, NULL, NULL,
-			  NULL, &probe, *opt, NULL);
+    err = real_import_csv(fname, NULL, NULL, NULL, NULL,
+			  &probe, NULL, *opt, NULL);
 
     if (!err) {
 	int rerun = 0;
@@ -3955,8 +4019,8 @@ int probe_csv (const char *fname, char ***varnames,
 	if (!err && rerun) {
 	    /* try again with --no-header flag */
 	    *opt |= OPT_H;
-	    err = real_import_csv(fname, NULL, NULL, NULL,
-				  NULL, &probe, *opt, NULL);
+	    err = real_import_csv(fname, NULL, NULL, NULL, NULL,
+				  &probe, NULL, *opt, NULL);
 	}
 
 	if (!err) {
@@ -6237,8 +6301,8 @@ static int join_import_csv (const char *fname,
     }
 
     if (!err) {
-	err = real_import_csv(fname, NULL, NULL, NULL,
-			      jspec, NULL, opt, prn);
+	err = real_import_csv(fname, NULL, NULL, NULL, jspec,
+			      NULL, NULL, opt, prn);
 	if (0 && !err) {
 	    DATASET *dset = jspec->c->dset;
 	    int pd, reversed = 0;

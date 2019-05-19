@@ -503,6 +503,7 @@ real_gretl_matrix_data_subset (const int *list,
 {
     gretl_matrix *M;
     int T, Tmax = t2 - t1 + 1;
+    int do_obs_info = 1;
     int mt1, mt2, k;
     int skip;
     int j, vj, s, t;
@@ -511,6 +512,13 @@ real_gretl_matrix_data_subset (const int *list,
 	k = list[0];
     } else {
 	k = dset->v - 1;
+    }
+
+    if (t1 < 0 && t2 < 0) {
+	t1 = 0;
+	t2 = dset->n - 1;
+	T = Tmax = dset->n;
+	do_obs_info = 0;
     }
 
     if (k <= 0 || Tmax <= 0 || t2 >= dset->n) {
@@ -547,7 +555,9 @@ real_gretl_matrix_data_subset (const int *list,
 	}
     }
 
-    mt1 = t1; mt2 = t2;
+    if (do_obs_info) {
+	mt1 = t1; mt2 = t2;
+    }
 
     if (T <= 0) {
 	*err = E_DATA;
@@ -605,7 +615,7 @@ real_gretl_matrix_data_subset (const int *list,
 	gretl_matrix_free(M);
 	M = NULL;
     } else {
-	if (T == mt2 - mt1 + 1) {
+	if (do_obs_info && T == mt2 - mt1 + 1) {
 	    gretl_matrix_set_t1(M, mt1);
 	    gretl_matrix_set_t2(M, mt2);
 	}
