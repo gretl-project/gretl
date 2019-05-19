@@ -504,7 +504,7 @@ real_gretl_matrix_data_subset (const int *list,
     gretl_matrix *M;
     int T, Tmax = t2 - t1 + 1;
     int do_obs_info = 1;
-    int mt1, mt2, k;
+    int k, mt1 = 0, mt2 = 0;
     int skip;
     int j, vj, s, t;
 

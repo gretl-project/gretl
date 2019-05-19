@@ -3932,24 +3932,17 @@ int import_csv (const char *fname, DATASET *dset,
 gretl_matrix *import_csv_as_matrix (const char *fname, int *err)
 {
     gretl_matrix *m = NULL;
-    char csvname[FILENAME_MAX] = {0};
+    char csvname[MAXLEN] = {0};
     gretlopt opt = OPT_A; /* --all-cols */
     int http = 0;
 
-    if (strncmp(fname, "http://", 7) == 0 ||
-	strncmp(fname, "https://", 8) == 0) {
-#ifdef USE_CURL
-	*err = retrieve_public_file(fname, csvname);
-#else
-	gretl_errmsg_set(_("Internet access not supported"));
-	*err = E_DATA;
-#endif
-    } else {
-	strcpy(csvname, fname);
-    }
+    *err = try_http(fname, csvname, &http);
 
-    if (!*err) {
+    if (!*err && http) {
 	*err = real_import_csv(csvname, NULL, NULL, NULL,
+			       NULL, NULL, &m, opt, NULL);
+    } else if (!*err) {
+	*err = real_import_csv(fname, NULL, NULL, NULL,
 			       NULL, NULL, &m, opt, NULL);
     }
 
