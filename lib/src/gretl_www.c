@@ -1277,3 +1277,39 @@ int gretl_curl (const char *url, const char *header,
 
     return err;
 }
+
+/**
+ * try_http:
+ * @s: string: filename or URL.
+ * @fname: location for writing name of local file;
+ * must be of at least %MAXLEN bytes.
+ * @http: location to receive 1 if @s turns out to be
+ * a URL using HTTP(S) protocol.
+ *
+ * Check the string @s, that may be a straight filename or may
+ * be a URL. If it's a filename, just copy @s to @fname.
+ * Otherwise try to download the resource and write its content
+ * to a temporary file, whose name is then written into @fname.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int try_http (const char *s, char *fname, int *http)
+{
+    int err = 0;
+
+    if (strncmp(s, "http://", 7) == 0 ||
+	strncmp(s, "https://", 8) == 0) {
+#ifdef USE_CURL
+	err = retrieve_public_file(s, fname);
+	if (!err) {
+	    *http = 1;
+	}
+#else
+	gretl_errmsg_set(_("Internet access not supported"));
+	err = E_DATA;
+#endif
+    }
+
+    return err;
+}

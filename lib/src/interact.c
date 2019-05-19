@@ -1400,26 +1400,6 @@ static int run_script (const char *fname, ExecState *s,
     return err;
 }
 
-static int lib_try_http (const char *s, char *fname, int *http)
-{
-    int err = 0;
-
-    if (strncmp(s, "http://", 7) == 0 ||
-	strncmp(s, "https://", 8) == 0) {
-#ifdef USE_CURL
-	err = retrieve_public_file(s, fname);
-	if (!err) {
-	    *http = 1;
-	}
-#else
-	gretl_errmsg_set(_("Internet access not supported"));
-	err = E_DATA;
-#endif
-    }
-
-    return err;
-}
-
 static int lib_clear_data (ExecState *s, DATASET *dset)
 {
     int err = 0;
@@ -1849,7 +1829,7 @@ static int lib_open_append (ExecState *s,
 	goto next_step;
     }
 
-    err = lib_try_http(cmd->param, newfile, &http);
+    err = try_http(cmd->param, newfile, &http);
     if (err) {
 	errmsg(err, prn);
 	return err;

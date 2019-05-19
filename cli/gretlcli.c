@@ -910,26 +910,6 @@ static int cli_renumber_series (const int *list,
     return err;
 }
 
-static int cli_try_http (const char *s, char *fname, int *http)
-{
-    int err = 0;
-
-    if (strncmp(s, "http://", 7) == 0 ||
-	strncmp(s, "https://", 8) == 0) {
-#ifdef USE_CURL
-	err = retrieve_public_file(s, fname);
-	if (!err) {
-	    *http = 1;
-	}
-#else
-	gretl_errmsg_set(_("Internet access not supported"));
-	err = E_DATA;
-#endif
-    }
-
-    return err;
-}
-
 static int cli_open_append (CMD *cmd, DATASET *dset,
 			    MODEL *model, PRN *prn)
 {
@@ -961,7 +941,7 @@ static int cli_open_append (CMD *cmd, DATASET *dset,
 	ftype = GRETL_DBNOMICS;
 	got_type = 1;
     } else {
-	err = cli_try_http(cmd->param, newfile, &http);
+	err = try_http(cmd->param, newfile, &http);
 	if (err) {
 	    errmsg(err, prn);
 	    return err;

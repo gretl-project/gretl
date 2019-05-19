@@ -101,4 +101,6 @@ int gretl_curl (const char *url, const char *header,
 		const char *postdata, int include,
 		char **output, char **errmsg);
 
+int try_http (const char *s, char *fname, int *http);
+
 #endif /* GRETL_WWW_H */

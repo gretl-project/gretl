@@ -9833,21 +9833,6 @@ static int script_renumber_series (const int *list,
     return err;
 }
 
-static int gui_try_http (const char *s, char *fname, int *http)
-{
-    int err = 0;
-
-    if (strncmp(s, "http://", 7) == 0 ||
-	strncmp(s, "https://", 8) == 0) {
-	err = retrieve_public_file(s, fname);
-	if (!err) {
-	    *http = 1;
-	}
-    }
-
-    return err;
-}
-
 static int script_open_append (ExecState *s, DATASET *dset,
 			       PRN *prn, GtkWidget *parent)
 {
@@ -9883,7 +9868,7 @@ static int script_open_append (ExecState *s, DATASET *dset,
 	ftype = GRETL_DBNOMICS;
 	got_type = 1;
     } else {
-	err = gui_try_http(cmd->param, myfile, &http);
+	err = try_http(cmd->param, myfile, &http);
 	if (err) {
 	    gui_errmsg(err);
 	    return err;
