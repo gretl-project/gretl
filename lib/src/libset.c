@@ -335,6 +335,9 @@ static void coded_var_show_opts (const char *s, PRN *prn)
 	    pprintf(prn, " %s", *S);
 	    S++;
 	}
+	if (!strcmp(s, "csv_delim")) {
+	    pputs(prn, " or quoted punctuation character");
+	}
 	pputc(prn, '\n');
     }
 }
@@ -1364,17 +1367,27 @@ static char delim_from_arg (const char *s)
 	}
     }
 
+    if (strlen(s) == 1 && ispunct(*s)) {
+	return s[0];
+    }
+
     return 0;
 }
 
 static const char *arg_from_delim (char c)
 {
+    static char d[2];
     int i;
 
     for (i=0; csv_delims[i] != '\0'; i++) {
 	if (c == csv_delims[i]) {
 	    return csv_delim_args[i];
 	}
+    }
+
+    if (ispunct(c)) {
+	sprintf(d, "%c", c);
+	return d;
     }
 
     return "unset";
