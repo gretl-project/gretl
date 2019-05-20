@@ -548,7 +548,8 @@ enum {
 #define fncall_func(s) (s == F_BFGSMAX || s == F_NRMAX || \
 			s == F_FDJAC || s == F_SIMANN || \
 			s == F_BFGSCMAX || s == F_NMMAX || \
-			s == F_GSSMAX || s == F_NUMHESS)
+			s == F_GSSMAX || s == F_NUMHESS || \
+			s == F_FZERO)
 
 /* maximization functions */
 #define max_func(s) (s == F_BFGSMAX || s == F_NRMAX || \

@@ -1163,7 +1163,7 @@ int is_greek_letter (const char *s)
  * Returns: the length of the initial segment of @s which
  * consists of characters that are valid in a gretl
  * variable or object name, namely a-z, A-Z, 0-9 and _,
- * starting with a letter.
+ * starting with a letter, up to a maximum of %VNAMELEN - 1.
  */
 
 int gretl_namechar_spn (const char *s)

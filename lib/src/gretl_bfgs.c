@@ -38,6 +38,10 @@ static int gretl_gss (double *b, int n, double tol,
 		      BFGS_CRIT_FUNC cfunc, void *data,
 		      gretlopt opt, PRN *prn);
 
+static int gretl_fzero (double *theta, int n, double tol,
+			ZFUNC zfunc, void *data, double *px,
+			gretlopt opt, PRN *prn);
+
 void BFGS_defaults (int *maxit, double *tol, int ci)
 {
     *maxit = libset_get_int(BFGS_MAXITER);
@@ -1724,6 +1728,7 @@ typedef struct umax_ umax;
 
 struct umax_ {
     GretlType gentype;    /* GRETL_TYPE_DOUBLE or GRETL_TYPE_MATRIX */
+    char *pxname;         /* name of scalar parameter value */
     gretl_matrix *b;      /* parameter vector */
     gretl_matrix *g;      /* gradient vector */
     gretl_matrix *h;      /* hessian matrix */
@@ -1745,6 +1750,7 @@ static umax *umax_new (GretlType t)
 
     if (u != NULL) {
 	u->gentype = t;
+	u->pxname = NULL;
 	u->b = NULL;
 	u->g = NULL;
 	u->h = NULL;
@@ -1781,6 +1787,7 @@ static void umax_destroy (umax *u)
 
     umax_unset_no_replace_flag(u);
     user_var_delete_by_name("$umax", NULL);
+    free(u->pxname);
 
     destroy_genr(u->gf);
     destroy_genr(u->gg);
@@ -1801,6 +1808,40 @@ static double user_get_criterion (const double *b, void *p)
 	u->b->val[i] = b[i];
     }
 
+    err = execute_genr(u->gf, u->dset, u->prn);
+
+    if (err) {
+	return NADBL;
+    }
+
+    t = genr_get_output_type(u->gf);
+
+    if (t == GRETL_TYPE_DOUBLE) {
+	x = genr_get_output_scalar(u->gf);
+    } else if (t == GRETL_TYPE_MATRIX) {
+	gretl_matrix *m = genr_get_output_matrix(u->gf);
+
+	if (gretl_matrix_is_scalar(m)) {
+	    x = m->val[0];
+	} else {
+	    err = E_TYPES;
+	}
+    } else {
+	err = E_TYPES;
+    }
+
+    u->fx_out = x;
+
+    return x;
+}
+
+static double user_get_criterion2 (double b, void *p)
+{
+    umax *u = (umax *) p;
+    double x = NADBL;
+    int i, t, err;
+
+    gretl_scalar_set_value(u->pxname, b);
     err = execute_genr(u->gf, u->dset, u->prn);
 
     if (err) {
@@ -1926,6 +1967,29 @@ int optimizer_get_matrix_name (const char *fncall, char *name)
     return err;
 }
 
+static int check_optimizer_scalar_parm (umax *u, const char *s)
+{
+    int n = gretl_namechar_spn(s);
+    int err = 0;
+
+    if (n > 0 && n < VNAMELEN) {
+	char vname[VNAMELEN];
+
+	*vname = '\0';
+	strncat(vname, s, n);
+	if (!gretl_is_scalar(vname)) {
+	    err = gretl_scalar_add(vname, NADBL);
+	}
+	if (!err) {
+	    u->pxname = gretl_strdup(vname);
+	}
+    } else if (n >= VNAMELEN) {
+	err = E_INVARG;
+    }
+
+    return err;
+}
+
 /* Ensure that we can find the specified callback function,
    and that it cannot replace/move its param-vector argument,
    given by u->b.
@@ -1944,7 +2008,11 @@ static int check_optimizer_callback (umax *u, const char *fncall)
 	*fname = '\0';
 	strncat(fname, fncall, n);
 	ufun = get_user_function_by_name(fname);
-	uvar = get_user_var_by_data(u->b);
+	if (u->b == NULL) {
+	    check_optimizer_scalar_parm(u, fncall + n + 1);
+	} else {
+	    uvar = get_user_var_by_data(u->b);
+	}
 	if (ufun != NULL && uvar != NULL) {
 	    user_var_set_flag(uvar, UV_NOREPL);
 	}
@@ -2178,7 +2246,9 @@ double deriv_free_optimize (MaxMethod method,
 	goto bailout;
     }
 
-    u->b = b;
+    if (method != ROOT_FIND) {
+	u->b = b;
+    }
 
     *err = user_gen_setup(u, fncall, NULL, NULL, dset);
     if (*err) {
@@ -2206,9 +2276,13 @@ double deriv_free_optimize (MaxMethod method,
 	*err = gretl_gss(b->val, u->ncoeff, tol,
 			 user_get_criterion, u,
 			 opt, prn);
+    } else if (method == ROOT_FIND) {
+	*err = gretl_fzero(b->val, 2, tol,
+			   user_get_criterion2, u,
+			   &ret, opt, prn);
     }
 
-    if (!*err) {
+    if (!*err && method != ROOT_FIND) {
 	ret = user_get_criterion(b->val, u);
     }
 
@@ -3460,7 +3534,9 @@ static int gretl_gss (double *theta, int n, double tol,
 
 #define sign(x) (((x) > 0)? 1 : -1)
 
-double gretl_fzero (ZFUNC func, double a, double b)
+static int gretl_fzero (double *bracket, int n, double tol,
+			ZFUNC zfunc, void *data, double *px,
+			gretlopt opt, PRN *prn)
 {
     int MAXITER = 100;
     double ytol = 1.0e-12;
@@ -3468,7 +3544,15 @@ double gretl_fzero (ZFUNC func, double a, double b)
     double y, y0, y1, y2;
     double x, x0, x1, x2;
     double dx, d0, d1;
-    int i;
+    double a, b;
+    int i, err = 0;
+
+    a = bracket[0];
+    b = bracket[1];
+
+    if (!na(tol)) {
+	ytol = tol;
+    }
 
     if (na(a)) {
 	a = 0;
@@ -3487,29 +3571,27 @@ double gretl_fzero (ZFUNC func, double a, double b)
 	x1 = a + w;
     }
 
-    y0 = (*func)(x0);
-    y1 = (*func)(x1);
+    y0 = zfunc(x0, data);
+    y1 = zfunc(x1, data);
 
-    if (y0 * y1 > 0 || na(y0) || na(y1)) {
-	/* we don't have a valid bracket! */
-	return NADBL;
+    if (y0 * y1 >= 0) {
+	err = E_NOCONV;
+    } else if (na(y0) || na(y1)) {
+	err = E_NAN;
     }
 
-    for (i=0; i<MAXITER; i++) {
+    for (i=0; i<MAXITER && !err; i++) {
         x2 = (x0 + x1) / 2;
-	y2 = (*func)(x2);
+	y2 = zfunc(x2, data);
         x = x2 + (x2-x0) * sign(y0-y1)*y2 / sqrt(y2*y2-y0*y1);
-	/* x-tolerance */
 	d0 = fabs(x-x0);
 	d1 = fabs(x-x1);
 	dx = d0 < d1 ? d0 : d1;
-        if (dx < xtol) {
-	    y = (*func)(x);
-            break;
+	y = zfunc(x, data);
+	if ((opt & OPT_V) && prn != NULL) {
+	    pprintf(prn, "Iter %3d: f(%g) = %g\n", i+1, x, y);
 	}
-        y = (*func)(x);
-        /* y-tolerance */
-        if (fabs(y) < ytol) {
+        if (dx < xtol || fabs(y) < ytol) {
             break;
 	}
         if (sign(y2) != sign(y)) {
@@ -3526,11 +3608,17 @@ double gretl_fzero (ZFUNC func, double a, double b)
         }
     }
 
-    if (i == MAXITER) {
+    if (!err && i == (MAXITER || fabs(y) > ytol)) {
 	x = NADBL;
-    } else if (fabs(y) > ytol) {
-	x = NADBL;
+	err = E_NOCONV;
     }
 
-    return x;
+    if (!err) {
+	/* record the root and its bracket */
+	*px = x;
+	bracket[0] = x0 < x1 ? x0 : x1;
+	bracket[1] = x0 < x1 ? x1 : x0;
+    }
+
+    return err;
 }

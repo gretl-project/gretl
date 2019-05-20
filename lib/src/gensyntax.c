@@ -1097,7 +1097,8 @@ struct argrecord fncall_argrec[] = {
     {F_BFGSCMAX, {0, 0, 1, 1}},
     {F_NMMAX,    {0, 1, 0, 0}},
     {F_GSSMAX,   {0, 1, 0, 0}},
-    {F_NUMHESS,  {0, 1, 0, 0}}
+    {F_NUMHESS,  {0, 1, 0, 0}},
+    {F_FZERO,    {0, 1, 0, 0}},
 };
 
 static const int *get_callargs (int f)

@@ -3412,6 +3412,8 @@ static NODE *deriv_free_node (NODE *l, NODE *m, NODE *r,
 		method = NM_MAX;
 	    } else if (t->t == F_GSSMAX) {
 		method = GSS_MAX;
+	    } else if (t->t == F_FZERO) {
+		method = ROOT_FIND;
 	    }
 
 	    ret->v.xval =
@@ -12958,170 +12960,6 @@ static NODE *eval_feval (NODE *t, parser *p)
     return ret;
 }
 
-#define sign(x) (((x) > 0)? 1 : -1)
-
-NODE *fzero_node (NODE *l, NODE *m, NODE *r, parser *p)
-{
-    NODE *ret = NULL;
-    NODE **ufargs = NULL;
-    NODE *ufarg0 = NULL;
-    NODE tmp = {0};
-    NODE fl = {0};
-    NODE fr = {0};
-    int MAXITER = 100;
-    double ytol = 1.0e-12;
-    double xtol = 1.0e-13;
-    double a, b;
-    double y0, y1, y2;
-    double x0, x1, x2;
-    double x = NADBL;
-    double y = 1.0e6;
-    double dx, d0, d1;
-    ufunc *u = NULL;
-    PRN *prn = NULL;
-    int i, f = 0;
-
-    f = function_lookup(l->v.str);
-    if (f > 0 && !func1_symb(f)) {
-	p->err = E_TYPES;
-    } else if (f == 0) {
-	u = get_user_function_by_name(l->v.str);
-    }
-
-    if (!p->err && f == 0 && u == NULL) {
-	p->err = E_INVARG;
-    }
-
-    if (p->err) {
-	return NULL;
-    }
-
-    if (libset_get_bool(MAX_VERBOSE)) {
-	prn = p->prn;
-    }
-
-    a = null_or_empty(m) ? 0 : node_get_scalar(m, p);
-    b = null_or_empty(r) ? NADBL : node_get_scalar(r, p);
-
-    if (f != 0) {
-	tmp.t = f;
-	fl.t = NUM;
-	tmp.L = &fl;
-    } else {
-	ufargs = malloc(sizeof *ufargs);
-	ufarg0 = calloc(sizeof *ufarg0, 1);
-	tmp.t = UFUN;
-	fl.vname = l->v.str;
-	fl.v.ptr = u;
-	fr.v.bn.n_nodes = 1;
-	ufarg0->t = NUM;
-	fr.v.bn.n = ufargs;
-	fr.v.bn.n[0] = ufarg0;
-	tmp.L = &fl;
-	tmp.R = &fr;
-    }
-
-    if (!na(b)) {
-	x0 = a;
-	x1 = b;
-    } else if (a == 0) {
-	x0 = -1;
-	x1 = 1;
-    } else {
-	double w = 0.8 * a;
-
-	x0 = a - w;
-	x1 = a + w;
-    }
-
-    if (f > 0) {
-	fl.v.xval = x0;
-	ret = eval(&tmp, p);
-	y0 = node_get_scalar(ret, p);
-	fl.v.xval = x1;
-	ret = eval(&tmp, p);
-	y1 = node_get_scalar(ret, p);
-    } else {
-	ufarg0->v.xval = x0;
-	ret = eval_ufunc(&tmp, p, ret);
-	y0 = node_get_scalar(ret, p);
-	ufarg0->v.xval = x1;
-	ret = eval_ufunc(&tmp, p, ret);
-	y1 = node_get_scalar(ret, p);
-    }
-
-    if (!p->err && (y0 * y1 > 0 || na(y0) || na(y1))) {
-	/* we don't have a valid bracket! */
-	p->err = E_NOCONV;
-    }
-
-    for (i=0; i<MAXITER && !p->err; i++) {
-	x2 = (x0 + x1) / 2;
-	if (f > 0) {
-	    fl.v.xval = x2;
-	    ret = eval(&tmp, p);
-	} else {
-	    ufarg0->v.xval = x2;
-	    ret = eval_ufunc(&tmp, p, ret);
-	}
-	if (!p->err) {
-	    y2 = node_get_scalar(ret, p);
-	}
-	if (p->err) {
-	    break;
-	}
-	x = x2 + (x2-x0) * sign(y0-y1)*y2 / sqrt(y2*y2-y0*y1);
-	d0 = fabs(x-x0);
-	d1 = fabs(x-x1);
-	dx = d0 < d1 ? d0 : d1;
-	if (f > 0) {
-	    fl.v.xval = x;
-	    ret = eval(&tmp, p);
-	} else {
-	    ufarg0->v.xval = x;
-	    ret = eval_ufunc(&tmp, p, ret);
-	}
-	if (!p->err) {
-	    y = node_get_scalar(ret, p);
-	}
-	if (prn != NULL) {
-	    pprintf(prn, "Iter %3d: f(%g) = %g\n", i+1, x, y);
-	}
-	if (dx < xtol || fabs(y) < ytol) {
-	    break;
-	}
-        if (sign(y2) != sign(y)) {
-            x0 = x2;
-	    y0 = y2;
-	    x1 = x;
-	    y1 = y;
-        } else if (sign(y1) != sign(y)) {
-            x0 = x;
-            y0 = y;
-        } else {
-            x1 = x;
-            y1 = y;
-        }
-    }
-
-    if (u != NULL) {
-	free(ufargs);
-	free(ufarg0);
-    }
-
-    if (!p->err) {
-	if (i == MAXITER) {
-	    p->err = E_NOCONV;
-	} else if (fabs(y) > ytol) {
-	    p->err = E_NOCONV;
-	}
-    }
-
-    ret->v.xval = p->err ? NADBL : x;
-
-    return ret;
-}
-
 /* try to get a matrix from @n, even if it's not in fact a
    matrix node as such, provided we can make a matrix out
    of its content
@@ -15838,7 +15676,8 @@ static NODE *eval (NODE *t, parser *p)
     case F_SIMANN:
     case F_NMMAX:
     case F_GSSMAX:
-	/* matrix-pointer, plus string and int args */
+    case F_FZERO:
+	/* matrix(-pointer), plus string and int args */
 	if ((l->t == U_ADDR || l->t == MAT) && m->t == STR) {
 	    ret = deriv_free_node(l, m, r, p, t);
 	} else {
@@ -15945,13 +15784,6 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = eval_epochday(l, m, r, p);
 	} else {
 	    ret = eval_3args_func(l, m, r, t->t, p);
-	}
-	break;
-    case F_FZERO:
-	if (l->t == STR) {
-	    ret = fzero_node(l, m, r, p);
-	} else {
-	    node_type_error(t->t, 1, STR, l, p);
 	}
 	break;
     case F_PRINTF:
