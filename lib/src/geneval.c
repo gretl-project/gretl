@@ -12968,8 +12968,9 @@ NODE *fzero_node (NODE *l, NODE *m, NODE *r, parser *p)
     NODE fr = {0};
     int MAXITER = 100;
     double eps = 1.0e-13;
+    double tol = 1.0e-6;
     double a, b;
-    double x, x0, y, y2;
+    double x, x0, y1, y2;
     double top, bot;
     ufunc *u = NULL;
     PRN *prn = NULL;
@@ -13025,7 +13026,7 @@ NODE *fzero_node (NODE *l, NODE *m, NODE *r, parser *p)
 	double w;
 
 	x = a;
-	w = abs(x) * 1.1 + 1;
+	w = abs(x) * 1.1 + 1; /* ? */
 	bot = x - w;
 	top = x + w;
     }
@@ -13041,14 +13042,14 @@ NODE *fzero_node (NODE *l, NODE *m, NODE *r, parser *p)
 	    ret = eval_ufunc(&tmp, p, ret);
 	}
 	if (!p->err) {
-	    y = node_get_scalar(ret, p);
+	    y1 = node_get_scalar(ret, p);
 	}
 	if (p->err) {
 	    break;
 	}
 	if (prn != NULL) {
 	    pprintf(prn, "Iter %3d: [%8.3f,%8.3f] f(%g) = %g\n",
-		    i+1, bot, top, x, y);
+		    i+1, bot, top, x, y1);
 	}
 	/* set arg value to @top */
 	if (f > 0) {
@@ -13064,7 +13065,7 @@ NODE *fzero_node (NODE *l, NODE *m, NODE *r, parser *p)
 	if (p->err) {
 	    break;
 	}
-	if (y * y2 < 0) {
+	if (y1 * y2 < 0) {
 	    bot = x;
 	} else {
 	    top = x;
@@ -13080,11 +13081,15 @@ NODE *fzero_node (NODE *l, NODE *m, NODE *r, parser *p)
 	free(ufarg0);
     }
 
-    if (!p->err && i == MAXITER && abs(x - x0) > eps) {
-	p->err = E_NOCONV;
-    } else {
-	ret->v.xval = x;
+    if (!p->err) {
+	if (i == MAXITER && abs(x - x0) > eps) {
+	    p->err = E_NOCONV;
+	} else if (fabs(y1) > tol) {
+	    p->err = E_NOCONV;
+	}
     }
+
+    ret->v.xval = p->err ? NADBL : x;
 
     return ret;
 }

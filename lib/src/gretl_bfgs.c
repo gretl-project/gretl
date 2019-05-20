@@ -3457,3 +3457,55 @@ static int gretl_gss (double *theta, int n, double tol,
 
     return err;
 }
+
+double gretl_fzero (ZFUNC func, double a, double b)
+{
+    int MAXITER = 100;
+    double eps = 1.0e-13;
+    double tol = 1.0e-6;
+    double x, x0, y1, y2;
+    double top, bot;
+    int i;
+
+    if (na(a)) {
+	a = 0;
+    }
+
+    if (!na(b)) {
+        /* initialization via bracket */
+	top = MAX(a,b);
+	bot = MIN(a,b);
+	x = (top + bot) / 2.0;
+    } else {
+	/* initialization via guess */
+	double w;
+
+	x = a;
+	w = abs(x) * 1.1 + 1;
+	bot = x - w;
+	top = x + w;
+    }
+
+    for (i=0; i<MAXITER; i++) {
+	x0 = x;
+	y1 = (*func)(x);
+	y2 = (*func)(top);
+	if (y1 * y2 < 0) {
+	    bot = x;
+	} else {
+	    top = x;
+	}
+	x = (top + bot) / 2.0;
+	if (fabs(x - x0) < eps) {
+	    break;
+	}
+    }
+
+    if (i == MAXITER && abs(x - x0) > eps) {
+	x = NADBL;
+    } else if (fabs(y1) > tol) {
+	x = NADBL;
+    }
+
+    return x;
+}

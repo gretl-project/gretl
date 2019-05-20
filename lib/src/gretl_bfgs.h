@@ -35,6 +35,7 @@ typedef int (*BFGS_GRAD_FUNC) (double *, double *, int,
 typedef double (*BFGS_COMBO_FUNC) (double *, double *, int, void *);
 typedef const double *(*BFGS_LLT_FUNC) (const double *, int, void *);
 typedef int (*HESS_FUNC) (double *, gretl_matrix *, void *);
+typedef double (*ZFUNC) (double);
 
 int BFGS_max (double *b, int n, int maxit, double reltol,
 	      int *fncount, int *grcount, BFGS_CRIT_FUNC cfunc, 
@@ -120,6 +121,8 @@ int gretl_simann (double *theta, int n, int maxit,
 int gretl_amoeba (double *theta, int n, int maxit,
 		  BFGS_CRIT_FUNC cfunc, void *data,
 		  gretlopt opt, PRN *prn);
+
+double gretl_fzero (ZFUNC func, double a, double b);
 
 void BFGS_defaults (int *maxit, double *tol, int ci);
 
