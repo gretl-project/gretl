@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Gretl (2016)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2019-05-18 07:18-0400\n"
-"PO-Revision-Date: 2019-01-22 16:27+0100\n"
+"PO-Revision-Date: 2019-05-20 18:27+0200\n"
 "Last-Translator: JCEN <ecadrian@hotmail.com>\n"
 "Language-Team: Gretl galego <ecadrian.estevez@usc.es>\n"
 "Language: gl_ES\n"
@@ -777,7 +777,7 @@ msgstr "Esta proba só é relevante para modelos combinados (pooled models)\n"
 
 #: lib/src/compare.c:3676
 msgid "This test requires that the model contains a constant\n"
-msgstr "Esta proba precisa que o modelo teña unha constante\n"
+msgstr "Esta proba necesita que o modelo teña unha constante\n"
 
 #: lib/src/compare.c:3681
 msgid ""
@@ -2154,7 +2154,7 @@ msgstr "Valor incorrecto para o máximo da variable dependente"
 
 #: lib/src/discrete.c:3491 lib/src/interact.c:3252
 msgid "This estimator requires panel data"
-msgstr "Este estimador precisa dispoñer de datos de panel"
+msgstr "Este estimador necesita dispoñer de datos de panel"
 
 #: lib/src/discrete.c:3668
 msgid "Fisher's Exact Test"
@@ -2322,15 +2322,16 @@ msgstr "Predición"
 #: lib/src/forecast.c:3024
 msgid "Specification includes time dummies: cannot forecast out of sample"
 msgstr ""
+"A especificación inclúe ficticias temporais: non pode facerse a predición "
+"fóra da mostra"
 
 #: lib/src/forecast.c:3055
-#, fuzzy
 msgid "No out-of-sample observations are available"
-msgstr "Non se dispón de datos axeitados"
+msgstr "Non se dispón de observacións fóra da mostra"
 
 #: lib/src/forecast.c:3058
 msgid "The --out-of-sample option is only supported in the time dimension"
-msgstr ""
+msgstr "A opción --out-of sample só se admite na dimensión temporal"
 
 #: lib/src/forecast.c:3573 lib/src/genmain.c:99
 #, c-format
@@ -2343,9 +2344,8 @@ msgid "Generated series %s (ID %d)"
 msgstr "Serie *%s* xerada (ID %d)"
 
 #: lib/src/forecast.c:3876
-#, fuzzy
 msgid "Forecast plot not implemented for panel data"
-msgstr "'%s' : Non está preparado para listas"
+msgstr "Gráfica de predición non preparada para datos de panel"
 
 #: lib/src/geneval.c:1517
 #, c-format
@@ -2448,7 +2448,7 @@ msgstr "O operador '%s' é incorrecto neste contexto"
 
 #: lib/src/geneval.c:11314
 msgid "non-existent date"
-msgstr ""
+msgstr "Data non existente"
 
 #: lib/src/geneval.c:12758
 msgid "Bandwidth must be non-negative"
@@ -3020,9 +3020,8 @@ msgid "time"
 msgstr "tempo"
 
 #: lib/src/graphing.c:7013
-#, fuzzy
 msgid "This command needs panel data"
-msgstr "Este paquete precisa datos de panel"
+msgstr "Esta instrución necesita datos de panel"
 
 #: lib/src/graphing.c:7143
 #, c-format
@@ -3408,9 +3407,8 @@ msgid "External command failed"
 msgstr "Fallou unha instrución externa"
 
 #: lib/src/gretl_errors.c:79
-#, fuzzy
 msgid "Maximum length of command line (65536 bytes) exceeded"
-msgstr "Superouse a longura máxima da liña de instrucións (16384 bytes)"
+msgstr "Excedeuse a longura máxima da liña de instrucións (65536 bytes)"
 
 #: lib/src/gretl_errors.c:80
 msgid "No dataset is in place"
@@ -4649,9 +4647,9 @@ msgid "No data information is available.\n"
 msgstr "Non hai información dispoñible sobre os datos.\n"
 
 #: lib/src/interact.c:1339 gui/library.c:162
-#, fuzzy, c-format
+#, c-format
 msgid "Maximum length of command line (%d bytes) exceeded"
-msgstr "Excedeuse a lonxitude máxima da liña de instrucións (%d bytes)\n"
+msgstr "Excedeuse a longura máxima da liña de instrucións (%d bytes)"
 
 #: lib/src/interact.c:1453
 #, c-format
@@ -5248,9 +5246,8 @@ msgid "Ordered Probit"
 msgstr "Probit ordenado"
 
 #: lib/src/modelprint.c:1039
-#, fuzzy
 msgid "Fixed-effects logistic"
-msgstr "Efectos fixos"
+msgstr "Loxística de efectos fixos"
 
 #: lib/src/modelprint.c:1045
 msgid "Two-step Heckit"
@@ -6188,9 +6185,8 @@ msgid "You can use \"set loop_maxiter\" to increase the limit"
 msgstr "Podes usar \"set loop_maxiter\" para aumentar o límite"
 
 #: lib/src/monte_carlo.c:1569
-#, fuzzy
 msgid "You can reset \"set loop_maxiter\" to increase the limit"
-msgstr "Podes usar \"set loop_maxiter\" para aumentar o límite"
+msgstr "Podes restablecer \"set loop_maxiter\" para aumentar o límite"
 
 #: lib/src/monte_carlo.c:2233
 msgid "progressive loop: model must be of constant size"
@@ -6616,7 +6612,7 @@ msgstr ""
 #: lib/src/options.c:1286 lib/src/tokenize.c:1069
 #, c-format
 msgid "The option '--%s' requires a parameter"
-msgstr "A opción '--%s' precisa dun parámetro"
+msgstr "A opción '--%s' necesita un parámetro"
 
 #: lib/src/options.c:1763
 #, c-format
@@ -6961,9 +6957,9 @@ msgid "Forecast evaluation statistics"
 msgstr "Estatísticos de avaliación da predición"
 
 #: lib/src/printout.c:2995
-#, fuzzy, c-format
+#, c-format
 msgid "using %d observations"
-msgstr "%s, utilizando %d observacións"
+msgstr "Utilizando %d observacións"
 
 #: lib/src/printout.c:3097
 msgid "Note: * denotes a residual in excess of 2.5 standard errors\n"
@@ -7200,14 +7196,14 @@ msgstr ""
 "restrición mostral permanente"
 
 #: lib/src/subsample.c:2474
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': invalid starting observation"
-msgstr "'%s': Índice de observación incorrecto"
+msgstr "'%s': Observación inicial incorrecta"
 
 #: lib/src/subsample.c:2477
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': invalid ending observation"
-msgstr "'%s': Índice de observación incorrecto"
+msgstr "'%s': Observación final incorrecta"
 
 #: lib/src/subsample.c:2604 lib/src/subsample.c:2617
 msgid "error in new starting obs"
@@ -7218,17 +7214,16 @@ msgid "error in new ending obs"
 msgstr "Fallo na nova observación final"
 
 #: lib/src/subsample.c:2672
-#, fuzzy, c-format
+#, c-format
 msgid "invalid first unit %d"
-msgstr "Elemento de lista incorrecto"
+msgstr "Primeira unidade %d incorrecta"
 
 #: lib/src/subsample.c:2675
-#, fuzzy, c-format
+#, c-format
 msgid "invalid last unit %d"
-msgstr "Nivel de retardo %d incorrecto"
+msgstr "Última unidade %d incorrecta"
 
 #: lib/src/subsample.c:2678
-#, fuzzy
 msgid "invalid null sample"
 msgstr "Mostra nula incorrecta"
 
@@ -8056,8 +8051,9 @@ msgid ""
 "This program should be run under mpiexec, and requires the name of a\n"
 "script file as argument.\n"
 msgstr ""
-"Este programa debe de executarse baixo 'mpiexec' e precisa, como argumento,\n"
-"do nome dun ficheiro de guión .\n"
+"Este programa debe de executarse baixo 'mpiexec' e necesita, como "
+"argumento,\n"
+"o nome dun ficheiro de guión .\n"
 
 #: cli/gretlcli-mpi.c:139
 #, c-format
@@ -10627,9 +10623,8 @@ msgid "Stata files (*.do)"
 msgstr "Ficheiros de Stata (*.do)"
 
 #: gui/fileselect.c:939
-#, fuzzy
 msgid "Dynare files (*.mod)"
-msgstr "Ficheiros de Octave (*.m)"
+msgstr "Ficheiros Dynare (*.mod)"
 
 #: gui/fileselect.c:949 gui/fileselect.c:953
 msgid "Gretl datafiles (*.gdt)"
@@ -11029,7 +11024,7 @@ msgstr "Escoller unha función"
 
 #: gui/fncall.c:2335
 msgid "This function needs a model in place"
-msgstr "Esta función precisa dun modelo"
+msgstr "Esta función necesita un modelo"
 
 #: gui/fncall.c:2386
 msgid "Function package is broken"
@@ -11041,19 +11036,19 @@ msgstr "Non puido obterse a información do paquete de función"
 
 #: gui/fncall.c:2484
 msgid "This package needs time series data."
-msgstr "Este paquete precisa datos de series temporais"
+msgstr "Este paquete necesita datos de series temporais."
 
 #: gui/fncall.c:2485
 msgid "This package needs quarterly or monthly data."
-msgstr "Este paquete precisa datos trimestrais ou mensuais"
+msgstr "Este paquete necesita datos trimestrais ou mensuais."
 
 #: gui/fncall.c:2486
 msgid "This package needs panel data."
-msgstr "Este paquete precisa datos de panel"
+msgstr "Este paquete necesita datos de panel."
 
 #: gui/fncall.c:2487
 msgid "This package needs a dataset in place."
-msgstr "Este paquete precisa dun banco de datos en troques."
+msgstr "Este paquete necesita dun banco de datos en troques."
 
 #: gui/fncall.c:2488
 msgid "Would you like to open its sample script?"
@@ -11231,7 +11226,7 @@ msgstr "Ningún requisito especial"
 
 #: gui/fnsave.c:1762
 msgid "No dataset needed"
-msgstr "Non se precisa dun conxunto de datos"
+msgstr "Non se necesita un conxunto de datos"
 
 #: gui/fnsave.c:1767
 msgid "Data requirement"
@@ -11721,9 +11716,8 @@ msgid "Color %d"
 msgstr "Cor %d"
 
 #: gui/gpt_dialog.c:1485
-#, fuzzy
 msgid "Shade color"
-msgstr "Escoller unha cor"
+msgstr "Sombrear a cor"
 
 #: gui/gpt_dialog.c:1487 gui/gpt_dialog.c:1524
 msgid "Fill color"
@@ -12739,7 +12733,7 @@ msgstr "MCO Lineais de _Alta Precisión"
 
 #: gui/gretl.c:1828 gui/library.c:4084 gui/library.c:6148 gui/selector.c:7047
 msgid "ANOVA"
-msgstr "A_NOVA"
+msgstr "ANOVA"
 
 #: gui/gretl.c:1829
 msgid "_Time series"
@@ -12810,9 +12804,8 @@ msgid "_Dynamic panel model"
 msgstr "Modelo de panel _dinámico"
 
 #: gui/gretl.c:1847
-#, fuzzy
 msgid "FE logistic"
-msgstr "Loxística"
+msgstr "Loxística EF"
 
 #: gui/gretl.c:1848
 msgid "_Limited dependent variable"
@@ -13559,9 +13552,8 @@ msgid "gretl: edit Stata program"
 msgstr "Gretl: Editar programa Stata"
 
 #: gui/gui_utils.c:1810
-#, fuzzy
 msgid "gretl: edit Dynare script"
-msgstr "Gretl: Editar un guión de R"
+msgstr "Gretl: Editar un guión Dynare"
 
 #: gui/gui_utils.c:1812
 msgid "gretl: edit package spec file"
@@ -13630,9 +13622,8 @@ msgid "Outcome probabilities"
 msgstr "Probabilidades finais"
 
 #: gui/gui_utils.c:2982
-#, fuzzy
 msgid "_Model as bundle"
-msgstr "Táboa de modelos"
+msgstr "Modelo como _feixe"
 
 #: gui/gui_utils.c:2984
 msgid "_Fitted values"
@@ -14159,7 +14150,7 @@ msgstr "Amosar os detalles da importación"
 
 #: gui/join-gui.c:781
 msgid "The 'seq' aggregator requires an integer parameter, as in seq:1"
-msgstr "O agregador 'seq' precisa dun parámetro enteiro, como en seq:1"
+msgstr "O agregador 'seq' necesita un parámetro enteiro, como en seq:1"
 
 #: gui/library.c:499 gui/library.c:506 gui/library.c:6272 gui/library.c:6495
 msgid "Error adding variables"
@@ -14765,18 +14756,17 @@ msgid "Akaike Information Criterion"
 msgstr "Criterio de información de Akaike"
 
 #: gui/library.c:6779
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Bundle from model %d\n"
 "Name (max. %d characters):"
 msgstr ""
-"Estatístico do modelo %d\n"
-"%s (valor = %g)\n"
+"Feixe do modelo %d\n"
 "Nome (máx. %d caracteres)"
 
 #: gui/library.c:6782
 msgid "add bundle"
-msgstr ""
+msgstr "Engadir un feixe"
 
 #: gui/library.c:6786
 #, c-format
@@ -14859,7 +14849,7 @@ msgstr "%s: Non hai valores correctos"
 
 #: gui/library.c:8258
 msgid "There's a script already running"
-msgstr ""
+msgstr "Xa hai un guión executándose"
 
 #: gui/library.c:8420
 msgid "Non-interactive (just get output)"
@@ -15417,9 +15407,8 @@ msgid "Random effects (binary) probit"
 msgstr "Probit (binario) de efectos aleatorios"
 
 #: gui/selector.c:4203
-#, fuzzy
 msgid "Fixed effects logistic model"
-msgstr "Efectos fixos"
+msgstr "Modelo loxístico de efectos fixos"
 
 #: gui/selector.c:4205
 msgid "Count data model"
@@ -17008,9 +16997,9 @@ msgid "gretl + SVM"
 msgstr "Gretl + SVM"
 
 #: gui/textbuf.c:1702
-#, fuzzy, c-format
+#, c-format
 msgid "Couldn't read %s"
-msgstr "Non puido lerse '%s'"
+msgstr "Non puido lerse %s"
 
 #: gui/textbuf.c:2149
 msgid "Gretl Command Reference"
@@ -18568,24 +18557,23 @@ msgstr "Non se detectou estacionalidade"
 
 #: plugin/vif.c:317
 msgid "Count of condition indices >= 30"
-msgstr ""
+msgstr "Reconto de índices de condición >= 30"
 
 #: plugin/vif.c:318
 msgid "Variance proportions >= 0.5 associated with cond >= 30"
-msgstr ""
+msgstr "Proporcións de varianza >= 0.5 asociadas con Cond >= 30"
 
 #: plugin/vif.c:319
 msgid "Count of condition indices >= 10"
-msgstr ""
+msgstr "Reconto de índices de condición >= 10"
 
 #: plugin/vif.c:320
 msgid "Variance proportions >= 0.5 associated with cond >= 10"
-msgstr ""
+msgstr "Proporcións de varianza >= 0.5 asociadas con Cond >= 10"
 
 #: plugin/vif.c:321
-#, fuzzy
 msgid "No evidence of excessive collinearity"
-msgstr "Omitidas debido a multicolinearidade perfecta:"
+msgstr "Sen evidencia de alto grao de multicolinearidade"
 
 #: plugin/vif.c:328
 msgid ""
@@ -18595,6 +18583,10 @@ msgid ""
 "variance is mostly associated with problematic cond values may themselves\n"
 "be considered problematic."
 msgstr ""
+"De acordo con BKW, Cond >= 30 indica relación \"moi forte\", case linear; e\n"
+"Cond entre 10 e 30 indica \"moderadamente forte\". As estimacións dos\n"
+"parámetros cuxa varianza se asocia en gran parte con valores de Cond\n"
+"problemáticos, poden considerarse á súa vez problemáticas."
 
 #: plugin/vif.c:379
 msgid "Belsley-Kuh-Welsch collinearity diagnostics"
@@ -18605,9 +18597,8 @@ msgid "variance proportions"
 msgstr "Proporcións de varianza"
 
 #: plugin/vif.c:381
-#, fuzzy
 msgid "eigenvalues of inverse covariance matrix"
-msgstr "Inversa da matriz de covarianzas"
+msgstr "Autovalores da inversa da matriz de covarianzas"
 
 #: plugin/vif.c:382
 msgid "condition index"

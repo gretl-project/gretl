@@ -1751,6 +1751,40 @@
       </description>
     </function>
 
+    <function name="bkw" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">V</fnarg>
+	<fnarg optional="true" type="strings">nombrespar</fnarg>
+	<fnarg optional="true" type="bool">detallado</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Ejecuta pruebas BKW de diagnóstico de multicolinealidad (consulta
+	  <cite key="belsley-etal80">Belsley, Kuh e Welsch (1980)</cite>)
+	  dada una matriz de covarianzas de las estimaciones de los parámetros,
+	  <argname>V</argname>. El segundo argumento (opcional), puede ser
+	  una formación (array) de cadenas de texto o una cadena que contenga
+	  nombres separados por comas, y se usa para etiquetar las columnas
+	  que muestran las proporciones de varianza; el número de nombres
+	  debe coincidir con la dimensión de <argname>V</argname>. Después
+	  de estimar un modelo en Gretl, puedes obtener argumentos adecuados
+	  para indicar en esta función por medio de los accesores
+	  <fncref targ="$vcv"/> y <fncref targ="$parnames"/>.
+	</para>
+	<para>
+	  Por defecto, esta función opera silenciosamente, devolviendo tan
+	  solo la tabla BKW en forma de matriz, pero si indicas como tercer
+	  argumento un valor no nulo, la tabla se presenta junto con algunos
+	  análisis.
+	</para>
+	<para>
+	  También dispones de esta funcionalidad con formato de instrucción
+	  mediante <cmdref targ="bkw"/>, y se va a referir automáticamente
+	  al último modelo, sin requerir ningún argumento.
+	</para>
+      </description>
+    </function>
+
     <function name="boxcox" section="filters" output="asinput">
       <fnargs>
 	<fnarg type="series-or-mat">y</fnarg>

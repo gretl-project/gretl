@@ -1247,6 +1247,10 @@
 	matriz. Consulta tamén a instrución <cmdref targ="vif"/> para
 	obter un enfoque máis sinxelo da diagnose da multicolinearidade.
       </para>
+      <para>
+	Hai tamén unha función chamada <fncref targ="bkw"/> que ofrece
+	unha maior flexibilidade.
+      </para>
     </description>
 
     <gui-access>
