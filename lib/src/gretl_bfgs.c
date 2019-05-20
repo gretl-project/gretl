@@ -3458,13 +3458,16 @@ static int gretl_gss (double *theta, int n, double tol,
     return err;
 }
 
+#define sign(x) (((x) > 0)? 1 : -1)
+
 double gretl_fzero (ZFUNC func, double a, double b)
 {
     int MAXITER = 100;
-    double eps = 1.0e-13;
-    double tol = 1.0e-6;
-    double x, x0, y1, y2;
-    double top, bot;
+    double ytol = 1.0e-12;
+    double xtol = 1.0e-13;
+    double y, y0, y1, y2;
+    double x, x0, x1, x2;
+    double dx, d0, d1;
     int i;
 
     if (na(a)) {
@@ -3472,38 +3475,60 @@ double gretl_fzero (ZFUNC func, double a, double b)
     }
 
     if (!na(b)) {
-        /* initialization via bracket */
-	top = MAX(a,b);
-	bot = MIN(a,b);
-	x = (top + bot) / 2.0;
+	x0 = a;
+	x1 = b;
+    } else if (a == 0) {
+	x0 = -1;
+	x1 = 1;
     } else {
-	/* initialization via guess */
-	double w;
+	double w = 0.8 * a;
 
-	x = a;
-	w = abs(x) * 1.1 + 1;
-	bot = x - w;
-	top = x + w;
+	x0 = a - w;
+	x1 = a + w;
+    }
+
+    y0 = (*func)(x0);
+    y1 = (*func)(x1);
+
+    if (y0 * y1 > 0 || na(y0) || na(y1)) {
+	/* we don't have a valid bracket! */
+	return NADBL;
     }
 
     for (i=0; i<MAXITER; i++) {
-	x0 = x;
-	y1 = (*func)(x);
-	y2 = (*func)(top);
-	if (y1 * y2 < 0) {
-	    bot = x;
-	} else {
-	    top = x;
+        x2 = (x0 + x1) / 2;
+	y2 = (*func)(x2);
+        x = x2 + (x2-x0) * sign(y0-y1)*y2 / sqrt(y2*y2-y0*y1);
+	/* x-tolerance */
+	d0 = fabs(x-x0);
+	d1 = fabs(x-x1);
+	dx = d0 < d1 ? d0 : d1;
+        if (dx < xtol) {
+	    y = (*func)(x);
+            break;
 	}
-	x = (top + bot) / 2.0;
-	if (fabs(x - x0) < eps) {
-	    break;
+        y = (*func)(x);
+        /* y-tolerance */
+        if (fabs(y) < ytol) {
+            break;
 	}
+        if (sign(y2) != sign(y)) {
+            x0 = x2;
+	    y0 = y2;
+	    x1 = x;
+	    y1 = y;
+        } else if (sign(y1) != sign(y)) {
+            x0 = x;
+            y0 = y;
+        } else {
+            x1 = x;
+            y1 = y;
+        }
     }
 
-    if (i == MAXITER && abs(x - x0) > eps) {
+    if (i == MAXITER) {
 	x = NADBL;
-    } else if (fabs(y1) > tol) {
+    } else if (fabs(y) > ytol) {
 	x = NADBL;
     }
 

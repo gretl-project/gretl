@@ -12958,6 +12958,8 @@ static NODE *eval_feval (NODE *t, parser *p)
     return ret;
 }
 
+#define sign(x) (((x) > 0)? 1 : -1)
+
 NODE *fzero_node (NODE *l, NODE *m, NODE *r, parser *p)
 {
     NODE *ret = NULL;
@@ -12967,11 +12969,14 @@ NODE *fzero_node (NODE *l, NODE *m, NODE *r, parser *p)
     NODE fl = {0};
     NODE fr = {0};
     int MAXITER = 100;
-    double eps = 1.0e-13;
-    double tol = 1.0e-6;
+    double ytol = 1.0e-12;
+    double xtol = 1.0e-13;
     double a, b;
-    double x, x0, y1, y2;
-    double top, bot;
+    double y0, y1, y2;
+    double x0, x1, x2;
+    double x = NADBL;
+    double y = 1.0e6;
+    double dx, d0, d1;
     ufunc *u = NULL;
     PRN *prn = NULL;
     int i, f = 0;
@@ -13017,46 +13022,46 @@ NODE *fzero_node (NODE *l, NODE *m, NODE *r, parser *p)
     }
 
     if (!na(b)) {
-        /* initialization via bracket */
-	top = MAX(a,b);
-	bot = MIN(a,b);
-	x = (top + bot) / 2.0;
+	x0 = a;
+	x1 = b;
+    } else if (a == 0) {
+	x0 = -1;
+	x1 = 1;
     } else {
-	/* initialization via guess */
-	double w;
+	double w = 0.8 * a;
 
-	x = a;
-	w = abs(x) * 1.1 + 1; /* ? */
-	bot = x - w;
-	top = x + w;
+	x0 = a - w;
+	x1 = a + w;
     }
 
-    for (i=0; i<MAXITER; i++) {
-	x0 = x;
-	/* set arg value to @x */
+    if (f > 0) {
+	fl.v.xval = x0;
+	ret = eval(&tmp, p);
+	y0 = node_get_scalar(ret, p);
+	fl.v.xval = x1;
+	ret = eval(&tmp, p);
+	y1 = node_get_scalar(ret, p);
+    } else {
+	ufarg0->v.xval = x0;
+	ret = eval_ufunc(&tmp, p, ret);
+	y0 = node_get_scalar(ret, p);
+	ufarg0->v.xval = x1;
+	ret = eval_ufunc(&tmp, p, ret);
+	y1 = node_get_scalar(ret, p);
+    }
+
+    if (!p->err && (y0 * y1 > 0 || na(y0) || na(y1))) {
+	/* we don't have a valid bracket! */
+	p->err = E_NOCONV;
+    }
+
+    for (i=0; i<MAXITER && !p->err; i++) {
+	x2 = (x0 + x1) / 2;
 	if (f > 0) {
-	    fl.v.xval = x;
+	    fl.v.xval = x2;
 	    ret = eval(&tmp, p);
 	} else {
-	    ufarg0->v.xval = x;
-	    ret = eval_ufunc(&tmp, p, ret);
-	}
-	if (!p->err) {
-	    y1 = node_get_scalar(ret, p);
-	}
-	if (p->err) {
-	    break;
-	}
-	if (prn != NULL) {
-	    pprintf(prn, "Iter %3d: [%8.3f,%8.3f] f(%g) = %g\n",
-		    i+1, bot, top, x, y1);
-	}
-	/* set arg value to @top */
-	if (f > 0) {
-	    fl.v.xval = top;
-	    ret = eval(&tmp, p);
-	} else {
-	    ufarg0->v.xval = top;
+	    ufarg0->v.xval = x2;
 	    ret = eval_ufunc(&tmp, p, ret);
 	}
 	if (!p->err) {
@@ -13065,15 +13070,38 @@ NODE *fzero_node (NODE *l, NODE *m, NODE *r, parser *p)
 	if (p->err) {
 	    break;
 	}
-	if (y1 * y2 < 0) {
-	    bot = x;
+	x = x2 + (x2-x0) * sign(y0-y1)*y2 / sqrt(y2*y2-y0*y1);
+	d0 = fabs(x-x0);
+	d1 = fabs(x-x1);
+	dx = d0 < d1 ? d0 : d1;
+	if (f > 0) {
+	    fl.v.xval = x;
+	    ret = eval(&tmp, p);
 	} else {
-	    top = x;
+	    ufarg0->v.xval = x;
+	    ret = eval_ufunc(&tmp, p, ret);
 	}
-	x = (top + bot) / 2.0;
-	if (fabs(x - x0) < eps) {
+	if (!p->err) {
+	    y = node_get_scalar(ret, p);
+	}
+	if (prn != NULL) {
+	    pprintf(prn, "Iter %3d: f(%g) = %g\n", i+1, x, y);
+	}
+	if (dx < xtol || fabs(y) < ytol) {
 	    break;
 	}
+        if (sign(y2) != sign(y)) {
+            x0 = x2;
+	    y0 = y2;
+	    x1 = x;
+	    y1 = y;
+        } else if (sign(y1) != sign(y)) {
+            x0 = x;
+            y0 = y;
+        } else {
+            x1 = x;
+            y1 = y;
+        }
     }
 
     if (u != NULL) {
@@ -13082,9 +13110,9 @@ NODE *fzero_node (NODE *l, NODE *m, NODE *r, parser *p)
     }
 
     if (!p->err) {
-	if (i == MAXITER && abs(x - x0) > eps) {
+	if (i == MAXITER) {
 	    p->err = E_NOCONV;
-	} else if (fabs(y1) > tol) {
+	} else if (fabs(y) > ytol) {
 	    p->err = E_NOCONV;
 	}
     }
