@@ -8869,7 +8869,7 @@ static NODE *suitable_ufunc_ret_node (parser *p,
 
 /* evaluate a user-defined function */
 
-static NODE *eval_ufunc (NODE *t, parser *p)
+static NODE *eval_ufunc (NODE *t, parser *p, NODE *rn)
 {
     NODE *l = t->L;
     NODE *r = t->R;
@@ -9046,7 +9046,11 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 
 	if (!p->err && retp != NULL) {
 	    reset_p_aux(p, save_aux);
-	    ret = suitable_ufunc_ret_node(p, rtype);
+	    if (rn != NULL) {
+		ret = rn;
+	    } else {
+		ret = suitable_ufunc_ret_node(p, rtype);
+	    }
 	}
 
 	if (!p->err && ret != NULL) {
@@ -12941,7 +12945,7 @@ static NODE *eval_feval (NODE *t, parser *p)
 	    }
 	    tmp.L = &l;
 	    tmp.R = &r;
-	    ret = eval_ufunc(&tmp, p);
+	    ret = eval_ufunc(&tmp, p, NULL);
 	    reset_p_aux(p, save_aux); /* tmp.aux? */
 	    free(r.v.bn.n);
 	}
@@ -12949,6 +12953,137 @@ static NODE *eval_feval (NODE *t, parser *p)
 
     if (!p->err && f == 0 && u == NULL) {
 	gretl_errmsg_sprintf("%s: function not found", e->v.str);
+    }
+
+    return ret;
+}
+
+NODE *fzero_node (NODE *l, NODE *m, NODE *r, parser *p)
+{
+    NODE *ret = NULL;
+    NODE **ufargs = NULL;
+    NODE *ufarg0 = NULL;
+    NODE tmp = {0};
+    NODE fl = {0};
+    NODE fr = {0};
+    int MAXITER = 100;
+    double eps = 1.0e-13;
+    double a, b;
+    double x, x0, y, y2;
+    double top, bot;
+    ufunc *u = NULL;
+    PRN *prn = NULL;
+    int i, f = 0;
+
+    f = function_lookup(l->v.str);
+    if (f > 0 && !func1_symb(f)) {
+	p->err = E_TYPES;
+    } else if (f == 0) {
+	u = get_user_function_by_name(l->v.str);
+    }
+
+    if (!p->err && f == 0 && u == NULL) {
+	p->err = E_INVARG;
+    }
+
+    if (p->err) {
+	return NULL;
+    }
+
+    if (libset_get_bool(MAX_VERBOSE)) {
+	prn = p->prn;
+    }
+
+    a = null_or_empty(m) ? 0 : node_get_scalar(m, p);
+    b = null_or_empty(r) ? NADBL : node_get_scalar(r, p);
+
+    if (f != 0) {
+	tmp.t = f;
+	fl.t = NUM;
+	tmp.L = &fl;
+    } else {
+	ufargs = malloc(sizeof *ufargs);
+	ufarg0 = calloc(sizeof *ufarg0, 1);
+	tmp.t = UFUN;
+	fl.vname = l->v.str;
+	fl.v.ptr = u;
+	fr.v.bn.n_nodes = 1;
+	ufarg0->t = NUM;
+	fr.v.bn.n = ufargs;
+	fr.v.bn.n[0] = ufarg0;
+	tmp.L = &fl;
+	tmp.R = &fr;
+    }
+
+    if (!na(b)) {
+        /* initialization via bracket */
+	top = MAX(a,b);
+	bot = MIN(a,b);
+	x = (top + bot) / 2.0;
+    } else {
+	/* initialization via guess */
+	double w;
+
+	x = a;
+	w = abs(x) * 1.1 + 1;
+	bot = x - w;
+	top = x + w;
+    }
+
+    for (i=0; i<MAXITER; i++) {
+	x0 = x;
+	/* set arg value to @x */
+	if (f > 0) {
+	    fl.v.xval = x;
+	    ret = eval(&tmp, p);
+	} else {
+	    ufarg0->v.xval = x;
+	    ret = eval_ufunc(&tmp, p, ret);
+	}
+	if (!p->err) {
+	    y = node_get_scalar(ret, p);
+	}
+	if (p->err) {
+	    break;
+	}
+	if (prn != NULL) {
+	    pprintf(prn, "Iter %3d: [%8.3f,%8.3f] f(%g) = %g\n",
+		    i+1, bot, top, x, y);
+	}
+	/* set arg value to @top */
+	if (f > 0) {
+	    fl.v.xval = top;
+	    ret = eval(&tmp, p);
+	} else {
+	    ufarg0->v.xval = top;
+	    ret = eval_ufunc(&tmp, p, ret);
+	}
+	if (!p->err) {
+	    y2 = node_get_scalar(ret, p);
+	}
+	if (p->err) {
+	    break;
+	}
+	if (y * y2 < 0) {
+	    bot = x;
+	} else {
+	    top = x;
+	}
+	x = (top + bot) / 2.0;
+	if (fabs(x - x0) < eps) {
+	    break;
+	}
+    }
+
+    if (u != NULL) {
+	free(ufargs);
+	free(ufarg0);
+    }
+
+    if (!p->err && i == MAXITER && abs(x - x0) > eps) {
+	p->err = E_NOCONV;
+    } else {
+	ret->v.xval = x;
     }
 
     return ret;
@@ -15779,6 +15914,13 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = eval_3args_func(l, m, r, t->t, p);
 	}
 	break;
+    case F_FZERO:
+	if (l->t == STR) {
+	    ret = fzero_node(l, m, r, p);
+	} else {
+	    node_type_error(t->t, 1, STR, l, p);
+	}
+	break;
     case F_PRINTF:
     case F_SPRINTF:
 	if (l->t == STR && empty_or_string(r)) {
@@ -15930,7 +16072,7 @@ static NODE *eval (NODE *t, parser *p)
 	ret = retrieve_const(t, p);
 	break;
     case UFUN:
-	ret = eval_ufunc(t, p);
+	ret = eval_ufunc(t, p, NULL);
 	break;
 #ifdef USE_RLIB
     case RFUN:

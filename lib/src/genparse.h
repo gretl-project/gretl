@@ -450,6 +450,7 @@ enum {
     F_BRENAME,
     F_ISOWEEK,
     F_BKW,
+    F_FZERO,
     HF_CEIGG,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
