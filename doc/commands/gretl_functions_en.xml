@@ -2055,6 +2055,11 @@
 	  </li>
 	  <li>
             <para>
+              Beta (beta): 2 shape parameters
+            </para>
+	  </li>
+	  <li>
+            <para>
               Binomial (b or B): probability; number of trials
             </para>
 	  </li>
@@ -7883,7 +7888,7 @@
 	  details of the required (scalar) arguments.  The
 	  distributions supported by the <lit>pdf</lit> function are
 	  the normal, Student's <math>t</math>, chi-square,
-	  <math>F</math>, Gamma, Exponential, Weibull, Laplace,
+	  <math>F</math>, Gamma, Beta, Exponential, Weibull, Laplace,
 	  Generalized Error, Binomial and Poisson. Note that for the
 	  Binomial and the Poisson what's calculated is in fact the
 	  probability mass at the specified point. For Student's
