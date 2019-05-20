@@ -29,6 +29,11 @@ double bdtrc (int k, int n, double p);
 */
 double bdtri (int k, int n, double y);
 
+/* Returns the area from 0 to x under the beta density
+   function with parameters a and b
+*/
+double btdtr (double a, double b, double x);
+
 /* area under the left hand tail (from 0 to x)
    of the Chi square probability density function with
    v degrees of freedom.

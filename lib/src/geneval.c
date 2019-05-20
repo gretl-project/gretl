@@ -1365,8 +1365,8 @@ static int check_dist_count (int d, int f, int *np, int *argc)
 	    err = E_INVARG;
 	}
     } else if (d == D_BETA) {
-	/* randgen only */
-	if (randgen(f)) {
+	/* cdf, pdf, randgen only */
+	if (f == F_CDF || f == F_PDF || randgen(f)) {
 	    *np = 2; /* shape1, shape2 */
 	} else {
 	    err = E_INVARG;

@@ -125,6 +125,27 @@ double binomial_cdf (double p, int n, int k)
 }
 
 /**
+ * beta_cdf:
+ *
+ * Returns the probability that a B(a,b) random variable is
+ * between 0 and z, or #NADBL on failure.
+ */
+
+double beta_cdf (double a, double b, double z)
+{
+    double x = NADBL;
+
+    if (a > 0 && b > 0 && z >= 0 && z <= 1) {
+	x = btdtr(a, b, z);
+	if (get_cephes_errno()) {
+	    x = NADBL;
+	}
+    }
+
+    return x;
+}
+
+/**
  * binomial_cdf_comp:
  * @p: probability of success on each trial.
  * @n: number of trials.
@@ -1003,6 +1024,26 @@ static int exponential_pdf_array (double mu, double *x, int n)
     return err;
 }
 
+static int beta_pdf_array (double a, double b, double *x, int n)
+{
+    int i, err = 0;
+
+    if (na(a) || a <= 0 || na(b) || b <= 0) {
+	err = E_INVARG;
+	for (i=0; i<n; i++) {
+	    x[i] = NADBL;
+	}
+    } else {
+	double k = exp(ln_gamma(a + b) - ln_gamma(a) - ln_gamma(b));
+
+	for (i=0; i<n; i++) {
+	    x[i] = k * pow(x[i], a-1) * pow(1.0 - x[i], b-1);
+	}
+    }
+
+    return err;
+}
+
 static double weibull_pdf (double k, double l, double x)
 {
     weibull_pdf_array(k, l, &x, 1);
@@ -1013,6 +1054,13 @@ static double weibull_pdf (double k, double l, double x)
 static double exponential_pdf (double mu, double x)
 {
     exponential_pdf_array(mu, &x, 1);
+
+    return x;
+}
+
+static double beta_pdf (double a, double b, double x)
+{
+    beta_pdf_array(a, b, &x, 1);
 
     return x;
 }
@@ -2865,7 +2913,7 @@ static int pdist_check_input (int dist, const double *parm,
     } else if (dist == D_SNEDECOR || dist == D_GAMMA ||
 	       dist == D_BINOMIAL || dist == D_WEIBULL ||
 	       dist == D_NC_CHISQ || dist == D_NC_T ||
-	       dist == D_LAPLACE) {
+	       dist == D_LAPLACE  || dist == D_BETA) {
 	np = 2;
     } else if (dist == D_JOHANSEN || dist == D_BETABIN ||
 	       dist == D_NC_F) {
@@ -3030,6 +3078,8 @@ double gretl_get_cdf (int dist, const double *parm, double x)
 	y = nc_student_cdf(parm[0], parm[1], x);
     } else if (dist == D_LOGISTIC) {
 	y = logistic_cdf(x);
+    } else if (dist == D_BETA) {
+	y = beta_cdf(parm[0], parm[1], x);
     }
 
     return y;
@@ -3084,6 +3134,8 @@ double gretl_get_pdf (int dist, const double *parm, double x)
 	y = nc_student_pdf(parm[0], parm[1], x);
     } else if (dist == D_NC_CHISQ) {
 	y = nc_chisq_pdf(parm[0], parm[1], x);
+    } else if (dist == D_BETA) {
+	y = beta_pdf(parm[0], parm[1], x);
     }
 
     return y;
@@ -3141,6 +3193,8 @@ int gretl_fill_pdf_array (int dist, const double *parm,
 	err = nct_pdf_array(parm[0], parm[1], x, n);
     } else if (dist == D_NC_CHISQ) {
 	err = nc_chisq_pdf_array(parm[0], parm[1], x, n);
+    } else if (dist == D_BETA) {
+	err = beta_pdf_array(parm[0], parm[1], x, n);
     }
 
     return err;

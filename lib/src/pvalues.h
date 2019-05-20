@@ -52,6 +52,8 @@ double ln_gamma (double x);
 
 double digamma (double x);
 
+double beta_cdf (double a, double b, double x);
+
 double binomial_cdf (double p, int n, int k);
 
 double binomial_cdf_comp (double p, int n, int k);
