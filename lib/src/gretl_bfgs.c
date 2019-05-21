@@ -2241,8 +2241,8 @@ double deriv_free_optimize (MaxMethod method,
     }
 
     u->ncoeff = gretl_vector_get_length(b);
-    if (u->ncoeff == 0) {
-	*err = E_DATA;
+    if (u->ncoeff == 0 || (method == ROOT_FIND && u->ncoeff != 2)) {
+	*err = E_INVARG;
 	goto bailout;
     }
 
