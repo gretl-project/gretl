@@ -29,6 +29,7 @@
 
 #include "../../minpack/minpack.h"
 #include <float.h>
+#include <errno.h>
 
 #define BFGS_DEBUG 0
 
@@ -3538,8 +3539,8 @@ static int gretl_gss (double *theta, int n, double tol,
 
 #if ZERO_SEARCH
 
-/* try to find a value for x1 which brackets a zero-crossing,
-   based on Octave's fzero.m
+/* Try to find a value for x1 which brackets a zero-crossing.
+   Based on Octave's fzero.m but with a little extra stuff.
 */
 
 static double find_x1 (double x0, double y0, double *py1,
@@ -3547,19 +3548,32 @@ static double find_x1 (double x0, double y0, double *py1,
 {
     double srch[] = {
         -0.01, 0.025, -0.05, 0.10, -0.25, 0.50,
-        -1, 2.5, -5, 10, -50, 100, -500, 1000
+        -1.01, 2.5, -5, 10, -50, 100, -500, 1000
     };
     double x1, y1, a = x0;
+    int negbad = 0;
     int i, found = 0;
 
     if (fabs(x0) < 0.001) {
 	a = (x0 == 0)? 0.1 : sign(x0) * 0.1;
     }
 
+    errno = 0;
+
     for (i=0; i<G_N_ELEMENTS(srch); i++) {
-	x1 = a + a * srch[i];
+	if (negbad) {
+	    x1 = a + a * fabs(srch[i]);
+	} else {
+	    x1 = a + a * srch[i];
+	}
 	y1 = zfunc(x1, data);
 	if (na(y1)) {
+	    if (errno == EDOM) {
+		if (x1 < 0) {
+		    negbad = 1;
+		}
+		errno = 0;
+	    }
 	    continue;
 	}
 	if (sign(y1) * sign(y0) <= 0) {
@@ -3583,8 +3597,8 @@ static int gretl_fzero (double *bracket, double tol,
 			gretlopt opt, PRN *prn)
 {
     int MAXITER = 80;
-    double ytol = 1.0e-12;
-    double xtol = 1.0e-13;
+    double ytol = 1.0e-14;
+    double xtol = 1.0e-15;
     double y, y0, y1, y2;
     double x, x0, x1, x2;
     double dx, d0, d1;
@@ -3597,7 +3611,8 @@ static int gretl_fzero (double *bracket, double tol,
 	ytol = tol;
     }
     if (na(x0)) {
-	x0 = 0;
+	/* exact zero is too risky as default */
+	x0 = 0.107;
     }
 
 #if ZERO_SEARCH
