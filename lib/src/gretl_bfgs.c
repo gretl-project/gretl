@@ -3534,6 +3534,50 @@ static int gretl_gss (double *theta, int n, double tol,
 
 #define sign(x) (((x) > 0)? 1 : -1)
 
+#define ZERO_SEARCH 1
+
+#if ZERO_SEARCH
+
+/* try to find a value for x1 which brackets a zero-crossing,
+   based on Octave's fzero.m
+*/
+
+static double find_x1 (double x0, double y0, double *py1,
+		       ZFUNC zfunc, void *data)
+{
+    double srch[] = {
+        -0.01, 0.025, -0.05, 0.10, -0.25, 0.50,
+        -1, 2.5, -5, 10, -50, 100, -500, 1000
+    };
+    double x1, y1, a = x0;
+    int i, found = 0;
+
+    if (fabs(x0) < 0.001) {
+	a = (x0 == 0)? 0.1 : sign(x0) * 0.1;
+    }
+
+    for (i=0; i<G_N_ELEMENTS(srch); i++) {
+	x1 = a + a * srch[i];
+	y1 = zfunc(x1, data);
+	if (na(y1)) {
+	    continue;
+	}
+	if (sign(y1) * sign(y0) <= 0) {
+	    found = 1;
+	    break;
+	}
+    }
+
+    if (found) {
+	*py1 = y1;
+	return x1;
+    } else {
+	return NADBL;
+    }
+}
+
+#endif
+
 static int gretl_fzero (double *bracket, double tol,
 			ZFUNC zfunc, void *data, double *px,
 			gretlopt opt, PRN *prn)
@@ -3544,40 +3588,59 @@ static int gretl_fzero (double *bracket, double tol,
     double y, y0, y1, y2;
     double x, x0, x1, x2;
     double dx, d0, d1;
-    double a, b;
     int i, err = 0;
 
-    a = bracket[0];
-    b = bracket[1];
+    x0 = bracket[0];
+    x1 = bracket[1];
 
     if (!na(tol)) {
 	ytol = tol;
     }
-
-    if (na(a)) {
-	a = 0;
+    if (na(x0)) {
+	x0 = 0;
     }
 
-    if (!na(b)) {
-	x0 = a;
-	x1 = b;
-    } else if (a == 0) {
+#if ZERO_SEARCH
+    y0 = zfunc(x0, data);
+    if (na(y0)) {
+	return E_NAN;
+    }
+    if (!na(x1)) {
+	y1 = zfunc(x1, data);
+	if (na(y1)) {
+	    return E_NAN;
+	}
+    } else {
+	x1 = find_x1(x0, y0, &y1, zfunc, data);
+	if (na(x1)) {
+	    return E_NOCONV;
+	}
+    }
+#else
+    if (x0 == 0 && na(x1)) {
 	x0 = -1;
 	x1 = 1;
-    } else {
-	double w = 0.8 * a;
+    } else if (na(x1)) {
+	double a = x0, f = 0.8;
 
-	x0 = a - w;
-	x1 = a + w;
+	x0 = a - f*a;
+	x1 = a + f*a;
     }
-
     y0 = zfunc(x0, data);
     y1 = zfunc(x1, data);
+    if (na(y0) || na(y1)) {
+	return E_NAN;
+    }
+#endif
 
-    if (y0 * y1 >= 0) {
-	err = E_NOCONV;
-    } else if (na(y0) || na(y1)) {
-	err = E_NAN;
+    if (y0 == 0) {
+	*px = x0;
+	return 0;
+    } else if (y1 == 0) {
+	*px = x1;
+	return 0;
+    } else if (y0 * y1 > 0) {
+	return E_NOCONV;
     }
 
     for (i=0; i<MAXITER && !err; i++) {
@@ -3614,10 +3677,8 @@ static int gretl_fzero (double *bracket, double tol,
     }
 
     if (!err) {
-	/* record the root and its bracket */
+	/* record the root */
 	*px = x;
-	bracket[0] = x0 < x1 ? x0 : x1;
-	bracket[1] = x0 < x1 ? x1 : x0;
     }
 
     return err;
