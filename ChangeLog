@@ -1,4 +1,4 @@
-version 2019b, in progress
+2019-05-21 version 2019b
 - New command "panplot": plot a single panel-data series
 - "print" command: new --range option to control the
   range to print for series, matrices, arrays and strings

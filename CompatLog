@@ -1,4 +1,4 @@
-version 2019a, in progress
+2019-05-21 version 2019b
 
 The BKW collinearity diagnostics have been split off from
 the "vif" command in a new "bkw" command. Both commands
