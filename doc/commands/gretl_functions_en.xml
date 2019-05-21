@@ -3894,6 +3894,69 @@
       </description>
     </function>
 
+    <function name="fzero" section="numerical" output="scalar">
+      <fnargs>
+	<fnarg type="fncall">fcall</fnarg>
+	<fnarg optional="true" type="scalar-or-vec">init</fnarg>
+	<fnarg optional="true" type="scalar">toler</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Attempts to find a single root of a continuous (typically
+	  nonlinear) function <math>f</math>&mdash;that is, a value of
+	  the scalar variable <math>x</math> such that
+	  <math>f</math>(<math>x</math>) = 0.  The
+	  <argname>fcall</argname> argument should provide a call to
+	  the function in question. The first argument should be the
+	  scalar playing the role of <math>x</math>, which may be
+	  followed by any required parameters. On successful
+	  completion the value of the root is returned.
+	</para>
+	<para>
+	  The method used is that of <cite key="ridders79">Ridders
+	  (1979)</cite>. This requires an initial bracket
+	  {<math>x</math><sub>0</sub>, <math>x</math><sub>1</sub>}
+	  such that both <math>x</math> values lie in the domain of
+	  the function and the respective function values are of
+	  opposite sign. Best results are likely to be obtained if the
+	  user can supply, via the second argument, a 2-vector holding
+	  suitable end-points for the bracket.  Failing that, one can
+	  supply a single scalar value and <lit>fzero</lit> will try
+	  to find a counterpart. If the second argument is omitted,
+	  <math>x</math><sub>0</sub> is initialized to near-zero and
+	  we search for a suitable <math>x</math><sub>1</sub>.
+	</para>
+	<para>
+	  The optional <argname>toler</argname> argument can be used
+	  to adjust the maximum acceptable absolute difference of
+	  <math>f</math>(<math>x</math>) from zero, the default being
+	  1.0e&minus;13.
+	</para>
+	<para>
+	  By default this function operates silently, but the progress
+	  of the iterative method can be exposed by executing the
+	  command <quote><lit>set max_verbose on</lit></quote> before
+	  calling <lit>fzero</lit>.
+	</para>
+	<para>
+	  Some simple examples follow.
+	</para>
+	<code>
+	  # Approximate pi by finding a zero for sin() in the
+	  # bracket 2.8 to 3.2
+	  x = fzero(sin(x), {2.8, 3.2})
+	  printf "\nx = %.12f vs pi = %.12f\n\n", x, $pi
+
+	  # Approximate the 'Omega constant' starting from x = 0.5
+	  function scalar f(scalar x)
+	      return log(x) + x
+	  end function
+	  x = fzero(f(x), 0.5)
+	  printf "x = %.12f f(x) = %.15f\n", x, f(x)
+	</code>
+      </description>
+    </function>
+
     <function name="gammafun" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
