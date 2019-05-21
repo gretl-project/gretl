@@ -3538,7 +3538,7 @@ static int gretl_fzero (double *bracket, double tol,
 			ZFUNC zfunc, void *data, double *px,
 			gretlopt opt, PRN *prn)
 {
-    int MAXITER = 100;
+    int MAXITER = 80;
     double ytol = 1.0e-12;
     double xtol = 1.0e-13;
     double y, y0, y1, y2;
@@ -3589,7 +3589,7 @@ static int gretl_fzero (double *bracket, double tol,
 	dx = d0 < d1 ? d0 : d1;
 	y = zfunc(x, data);
 	if ((opt & OPT_V) && prn != NULL) {
-	    pprintf(prn, "Iter %3d: f(%#.9g) = %g\n", i+1, x, y);
+	    pprintf(prn, "Iter %2d: f(%#.9g) = %g\n", i+1, x, y);
 	}
         if (dx < xtol || fabs(y) < ytol) {
             break;
