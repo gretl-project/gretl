@@ -32,4 +32,6 @@
 <!ENTITY par "\\">
 <!ENTITY eg "e.g.{}">
 <!ENTITY ie "i.e.{}">
+<!ENTITY lbr "\{">
+<!ENTITY rbr "\}">
 ]>

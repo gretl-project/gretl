@@ -3915,14 +3915,15 @@
 	<para>
 	  The method used is that of <cite key="ridders79">Ridders
 	  (1979)</cite>. This requires an initial bracket
-	  {<math>x</math><sub>0</sub>, <math>x</math><sub>1</sub>}
-	  such that both <math>x</math> values lie in the domain of
-	  the function and the respective function values are of
-	  opposite sign. Best results are likely to be obtained if the
-	  user can supply, via the second argument, a 2-vector holding
-	  suitable end-points for the bracket.  Failing that, one can
-	  supply a single scalar value and <lit>fzero</lit> will try
-	  to find a counterpart. If the second argument is omitted,
+	  &lbr;<math>x</math><sub>0</sub>,
+	  <math>x</math><sub>1</sub>&rbr; such that both
+	  <math>x</math> values lie in the domain of the function and
+	  the respective function values are of opposite sign. Best
+	  results are likely to be obtained if the user can supply,
+	  via the second argument, a 2-vector holding suitable
+	  end-points for the bracket.  Failing that, one can supply a
+	  single scalar value and <lit>fzero</lit> will try to find a
+	  counterpart. If the second argument is omitted,
 	  <math>x</math><sub>0</sub> is initialized to near-zero and
 	  we search for a suitable <math>x</math><sub>1</sub>.
 	</para>
