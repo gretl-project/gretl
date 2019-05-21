@@ -1098,7 +1098,7 @@ struct argrecord fncall_argrec[] = {
     {F_NMMAX,    {0, 1, 0, 0}},
     {F_GSSMAX,   {0, 1, 0, 0}},
     {F_NUMHESS,  {0, 1, 0, 0}},
-    {F_FZERO,    {0, 1, 0, 0}},
+    {F_FZERO,    {1, 0, 0, 0}},
 };
 
 static const int *get_callargs (int f)
@@ -1159,7 +1159,9 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
     }
 
     callargs = get_callargs(f);
-    lex(p);
+    if (callargs == NULL || callargs[0] == 0) {
+	lex(p);
+    }
 
     while (((k > 0 && i < k) || p->ch) && !p->err) {
 	if (p->sym == G_RPR) {

@@ -38,7 +38,7 @@ static int gretl_gss (double *b, int n, double tol,
 		      BFGS_CRIT_FUNC cfunc, void *data,
 		      gretlopt opt, PRN *prn);
 
-static int gretl_fzero (double *theta, int n, double tol,
+static int gretl_fzero (double *theta, double tol,
 			ZFUNC zfunc, void *data, double *px,
 			gretlopt opt, PRN *prn);
 
@@ -1839,7 +1839,7 @@ static double user_get_criterion2 (double b, void *p)
 {
     umax *u = (umax *) p;
     double x = NADBL;
-    int i, t, err;
+    int t, err;
 
     gretl_scalar_set_value(u->pxname, b);
     err = execute_genr(u->gf, u->dset, u->prn);
@@ -2002,7 +2002,7 @@ static int check_optimizer_callback (umax *u, const char *fncall)
 
     if (n > 0 && n < FN_NAMELEN) {
 	char fname[FN_NAMELEN];
-	user_var *uvar;
+	user_var *uvar = NULL;
 	ufunc *ufun;
 
 	*fname = '\0';
@@ -2277,7 +2277,7 @@ double deriv_free_optimize (MaxMethod method,
 			 user_get_criterion, u,
 			 opt, prn);
     } else if (method == ROOT_FIND) {
-	*err = gretl_fzero(b->val, 2, tol,
+	*err = gretl_fzero(b->val, tol,
 			   user_get_criterion2, u,
 			   &ret, opt, prn);
     }
@@ -3534,7 +3534,7 @@ static int gretl_gss (double *theta, int n, double tol,
 
 #define sign(x) (((x) > 0)? 1 : -1)
 
-static int gretl_fzero (double *bracket, int n, double tol,
+static int gretl_fzero (double *bracket, double tol,
 			ZFUNC zfunc, void *data, double *px,
 			gretlopt opt, PRN *prn)
 {
@@ -3589,7 +3589,7 @@ static int gretl_fzero (double *bracket, int n, double tol,
 	dx = d0 < d1 ? d0 : d1;
 	y = zfunc(x, data);
 	if ((opt & OPT_V) && prn != NULL) {
-	    pprintf(prn, "Iter %3d: f(%g) = %g\n", i+1, x, y);
+	    pprintf(prn, "Iter %3d: f(%#.9g) = %g\n", i+1, x, y);
 	}
         if (dx < xtol || fabs(y) < ytol) {
             break;

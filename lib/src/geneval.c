@@ -3208,13 +3208,13 @@ static gretl_matrix *matrix_node_get_matrix (NODE *n, parser *p)
 {
     if (n->t == U_ADDR) {
 	n = n->L;
-	if (n->t != MAT) {
-	    p->err = E_TYPES;
-	    return NULL;
-	}
     }
-
-    return n->v.m;
+    if (n == NULL || n->t != MAT) {
+	p->err = E_TYPES;
+	return NULL;
+    } else {
+	return n->v.m;
+    }
 }
 
 static user_var *ptr_node_get_uvar (NODE *n, int t, parser *p)
@@ -3371,21 +3371,19 @@ static NODE *deriv_free_node (NODE *l, NODE *m, NODE *r,
     NODE *ret = NULL;
 
     if (starting(p)) {
-	gretl_matrix *b;
-	const char *sf = m->v.str;
+	gretl_matrix *b = NULL;
+	const char *fcall = m->v.str;
 	double tol = NADBL;
 	int maxit = 0;
 
 	b = matrix_node_get_matrix(l, p);
-
 	if (!p->err) {
 	    if (gretl_is_null_matrix(b)) {
 		p->err = E_DATA;
-	    } else if (!is_function_call(sf)) {
+	    } else if (!is_function_call(fcall)) {
 		p->err = E_TYPES;
 	    }
 	}
-
 	if (!p->err) {
 	    if (scalar_node(r)) {
 		if (t->t == F_GSSMAX) {
@@ -3397,13 +3395,9 @@ static NODE *deriv_free_node (NODE *l, NODE *m, NODE *r,
 		p->err = E_TYPES;
 	    }
 	}
-
-	if (p->err) {
-	    return NULL;
+	if (!p->err) {
+	    ret = aux_scalar_node(p);
 	}
-
-	ret = aux_scalar_node(p);
-
 	if (ret != NULL) {
 	    int minimize = (t->flags & ALS_NODE)? 1 : 0;
 	    MaxMethod method = SIMANN_MAX;
@@ -3412,14 +3406,62 @@ static NODE *deriv_free_node (NODE *l, NODE *m, NODE *r,
 		method = NM_MAX;
 	    } else if (t->t == F_GSSMAX) {
 		method = GSS_MAX;
-	    } else if (t->t == F_FZERO) {
-		method = ROOT_FIND;
 	    }
+	    ret->v.xval = deriv_free_optimize(method, b, fcall, maxit, tol,
+					      minimize, p->dset, p->prn,
+					      &p->err);
+	}
+    } else {
+	ret = aux_scalar_node(p);
+    }
 
-	    ret->v.xval =
-		deriv_free_optimize(method, b, sf, maxit, tol,
-				    minimize, p->dset, p->prn,
-				    &p->err);
+    return ret;
+}
+
+static NODE *fzero_node (NODE *l, NODE *m, NODE *r, parser *p)
+{
+    NODE *ret = NULL;
+
+    if (starting(p)) {
+	const char *fcall = l->v.str;
+	gretl_matrix *b = NULL;
+	double tol = NADBL;
+	int free_b = 0;
+
+	if (null_or_empty(m) || m->t == NUM) {
+	    b = gretl_matrix_alloc(1, 2);
+	    b->val[0] = m->t == NUM ? node_get_scalar(m, p) : NADBL;
+	    b->val[1] = NADBL;
+	    free_b = 1;
+	} else if (m->t == MAT) {
+	    b = m->v.m;
+	} else {
+	    p->err = E_TYPES;
+	}
+	if (!p->err) {
+	    if (gretl_is_null_matrix(b)) {
+		p->err = E_DATA;
+	    } else if (!is_function_call(fcall)) {
+		p->err = E_TYPES;
+	    }
+	}
+	if (!p->err) {
+	    if (scalar_node(r)) {
+		tol = r->v.xval;
+	    } else if (!null_or_empty(r)) {
+		p->err = E_TYPES;
+	    }
+	}
+	if (!p->err) {
+	    ret = aux_scalar_node(p);
+	}
+	if (ret != NULL) {
+	    ret->v.xval = deriv_free_optimize(ROOT_FIND, b, fcall, 0,
+					      tol, 0, p->dset, p->prn,
+					      &p->err);
+	}
+	if (free_b) {
+	    gretl_matrix_free(b);
 	}
     } else {
 	ret = aux_scalar_node(p);
@@ -15676,10 +15718,16 @@ static NODE *eval (NODE *t, parser *p)
     case F_SIMANN:
     case F_NMMAX:
     case F_GSSMAX:
-    case F_FZERO:
-	/* matrix(-pointer), plus string and int args */
+	/* matrix(-pointer), plus string and scalar args */
 	if ((l->t == U_ADDR || l->t == MAT) && m->t == STR) {
 	    ret = deriv_free_node(l, m, r, p, t);
+	} else {
+	    p->err = E_TYPES;
+	}
+	break;
+    case F_FZERO:
+	if (l->t == STR) {
+	    ret = fzero_node(l, m, r, p);
 	} else {
 	    p->err = E_TYPES;
 	}
