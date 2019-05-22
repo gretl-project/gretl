@@ -3574,9 +3574,7 @@ static double find_x1 (double x0, double y0, double *py1,
 		negbad = 1;
 	    }
 	    errno = 0;
-	    continue;
-	}
-	if (sgn(y1) * sgn(y0) <= 0) {
+	} else if (sgn(y1) * sgn(y0) <= 0) {
 	    /* found a candidate */
 	    *py1 = y1;
 	    break;
