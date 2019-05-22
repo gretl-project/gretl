@@ -3533,11 +3533,10 @@ static int gretl_gss (double *theta, int n, double tol,
     return err;
 }
 
-#define sign(x) (((x) > 0)? 1 : -1)
-
-#define ZERO_SEARCH 1
-
-#if ZERO_SEARCH
+static int sgn (double x)
+{
+    return x == 0 ? 0 : x < 0 ? -1 : 1;
+}
 
 /* Try to find a value for x1 which brackets a zero-crossing.
    Based on Octave's fzero.m but with a little extra stuff.
@@ -3551,46 +3550,43 @@ static double find_x1 (double x0, double y0, double *py1,
         -1.01, 2.5, -5, 10, -50, 100, -500, 1000
     };
     double x1, y1, a = x0;
-    int negbad = 0;
-    int i, found = 0;
+    int warnsave, negbad = 0;
+    int i;
+
+    warnsave = libset_get_bool("warnings");
+    libset_set_bool("warnings", 0);
 
     if (fabs(x0) < 0.001) {
-	a = (x0 == 0)? 0.1 : sign(x0) * 0.1;
+	a = (x0 == 0)? 0.1 : sgn(x0) * 0.1;
     }
 
     errno = 0;
+    *py1 = NADBL;
 
     for (i=0; i<G_N_ELEMENTS(srch); i++) {
-	if (negbad) {
-	    x1 = a + a * fabs(srch[i]);
-	} else {
-	    x1 = a + a * srch[i];
+	x1 = a + a * srch[i];
+	if (negbad && x1 < 0) {
+	    x1 = -x1;
 	}
 	y1 = zfunc(x1, data);
 	if (na(y1)) {
-	    if (errno == EDOM) {
-		if (x1 < 0) {
-		    negbad = 1;
-		}
-		errno = 0;
+	    if (errno == EDOM && x1 < 0) {
+		negbad = 1;
 	    }
+	    errno = 0;
 	    continue;
 	}
-	if (sign(y1) * sign(y0) <= 0) {
-	    found = 1;
+	if (sgn(y1) * sgn(y0) <= 0) {
+	    /* found a candidate */
+	    *py1 = y1;
 	    break;
 	}
     }
 
-    if (found) {
-	*py1 = y1;
-	return x1;
-    } else {
-	return NADBL;
-    }
-}
+    libset_set_bool("warnings", warnsave);
 
-#endif
+    return na(*py1) ? NADBL : x1;
+}
 
 static int gretl_fzero (double *bracket, double tol,
 			ZFUNC zfunc, void *data, double *px,
@@ -3615,7 +3611,6 @@ static int gretl_fzero (double *bracket, double tol,
 	x0 = 0.107;
     }
 
-#if ZERO_SEARCH
     y0 = zfunc(x0, data);
     if (na(y0)) {
 	return E_NAN;
@@ -3631,22 +3626,6 @@ static int gretl_fzero (double *bracket, double tol,
 	    return E_NOCONV;
 	}
     }
-#else
-    if (x0 == 0 && na(x1)) {
-	x0 = -1;
-	x1 = 1;
-    } else if (na(x1)) {
-	double a = x0, f = 0.8;
-
-	x0 = a - f*a;
-	x1 = a + f*a;
-    }
-    y0 = zfunc(x0, data);
-    y1 = zfunc(x1, data);
-    if (na(y0) || na(y1)) {
-	return E_NAN;
-    }
-#endif
 
     if (y0 == 0) {
 	*px = x0;
@@ -3658,26 +3637,31 @@ static int gretl_fzero (double *bracket, double tol,
 	return E_NOCONV;
     }
 
+    if (opt & OPT_V) {
+	pprintf(prn, "Initial bracket {%#.6g, %#.6g}\n", x0, x1);
+    }
+
     for (i=0; i<MAXITER && !err; i++) {
         x2 = (x0 + x1) / 2;
 	y2 = zfunc(x2, data);
-        x = x2 + (x2-x0) * sign(y0-y1)*y2 / sqrt(y2*y2-y0*y1);
+	/* exponential interpolation of x */
+        x = x2 + (x2-x0) * sgn(y0-y1)*y2 / sqrt(y2*y2-y0*y1);
 	d0 = fabs(x-x0);
 	d1 = fabs(x-x1);
 	dx = d0 < d1 ? d0 : d1;
 	y = zfunc(x, data);
-	if ((opt & OPT_V) && prn != NULL) {
+	if (opt & OPT_V) {
 	    pprintf(prn, "Iter %2d: f(%#.9g) = %g\n", i+1, x, y);
 	}
         if (dx < xtol || fabs(y) < ytol) {
             break;
 	}
-        if (sign(y2) != sign(y)) {
+        if (sgn(y2) != sgn(y)) {
             x0 = x2;
 	    y0 = y2;
 	    x1 = x;
 	    y1 = y;
-        } else if (sign(y1) != sign(y)) {
+        } else if (sgn(y1) != sgn(y)) {
             x0 = x;
             y0 = y;
         } else {

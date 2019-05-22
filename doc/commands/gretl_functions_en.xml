@@ -3924,14 +3924,15 @@
 	  end-points for the bracket.  Failing that, one can supply a
 	  single scalar value and <lit>fzero</lit> will try to find a
 	  counterpart. If the second argument is omitted,
-	  <math>x</math><sub>0</sub> is initialized to near-zero and
-	  we search for a suitable <math>x</math><sub>1</sub>.
+	  <math>x</math><sub>0</sub> is initialized to a small
+	  positive value and we search for a suitable
+	  <math>x</math><sub>1</sub>.
 	</para>
 	<para>
 	  The optional <argname>toler</argname> argument can be used
 	  to adjust the maximum acceptable absolute difference of
 	  <math>f</math>(<math>x</math>) from zero, the default being
-	  1.0e&minus;13.
+	  1.0e&minus;14.
 	</para>
 	<para>
 	  By default this function operates silently, but the progress
