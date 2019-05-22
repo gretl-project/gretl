@@ -2014,6 +2014,30 @@ int finalize_plot_input_file (FILE *fp)
     return err;
 }
 
+/**
+ * finalize_3d_plot_input_file:
+ * @fp: stream to which gnuplot commands have been written.
+ *
+ * Closes @fp and alerts libgretl to the fact that an interactive
+ * 3-D plot is wanted.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int finalize_3d_plot_input_file (FILE *fp)
+{
+    int err = 0;
+
+    if (fp != NULL) {
+	fclose(fp);
+	graph_file_written = 1;
+    } else {
+	err = 1;
+    }
+
+    return err;
+}
+
 enum {
     GTITLE_VLS,
     GTITLE_RESID,
@@ -4435,7 +4459,7 @@ int matrix_scatters (const gretl_matrix *m, const int *list,
     return finalize_plot_input_file(fp);
 }
 
-static FILE *get_3d_output_file (int *err)
+static FILE *get_3d_input_file (int *err)
 {
     FILE *fp = NULL;
     char fname[MAXLEN];
@@ -4551,7 +4575,7 @@ int gnuplot_3d (int *list, const char *literal,
 #endif
 
     if (interactive) {
-	fp = get_3d_output_file(&err);
+	fp = get_3d_input_file(&err);
     } else {
 	fp = open_plot_input_file(PLOT_3D, 0, &err);
     }
@@ -4617,6 +4641,59 @@ int gnuplot_3d (int *list, const char *literal,
     }
 
     return err;
+}
+
+/**
+ * open_3d_plot_input_file:
+ * @iact: on input, non-zero if an interactive plot is
+ * preferred, 0 otherwise; on output, non-zero if interactive
+ * status is obtained, 0 otherwise.
+ *
+ * Writes a gnuplot plot file to display a 3D plot
+ * (interactive if requested and possible).
+ *
+ * Returns: FILE pointer on success, NULL on error.
+ */
+
+FILE *open_3d_plot_input_file (int *iact)
+{
+    const char *term = NULL;
+    FILE *fp = NULL;
+    int err = 0;
+
+    if (*iact != 0) {
+#ifndef WIN32
+	/* On Windows we let the gnuplot terminal default to
+	   "win"; on other operating systems we need a suitable
+	   terminal for interactive 3-D display.
+	*/
+	if (gnuplot_has_wxt()) {
+	    term = "wxt size 640,420 noenhanced";
+	} else if (gnuplot_has_x11()) {
+	    term = "x11";
+	} else if (gnuplot_has_qt()) {
+	    term = "qt";
+	} else {
+	    /* can't do it? */
+	    *iact = 0;
+	}
+#endif
+    }
+
+    if (*iact != 0) {
+	fp = get_3d_input_file(&err);
+    } else {
+	fp = open_plot_input_file(PLOT_3D, 0, &err);
+    }
+
+    if (*iact) {
+	if (term != NULL) {
+	    fprintf(fp, "set term %s\n", term);
+	}
+	write_plot_line_styles(PLOT_3D, fp);
+    }
+
+    return fp;
 }
 
 static void print_freq_test_label (char *s, int teststat,

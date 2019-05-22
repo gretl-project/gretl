@@ -174,7 +174,11 @@ void write_gp_dataval (double x, FILE *fp, int final);
 
 FILE *open_plot_input_file (PlotType ptype, GptFlags flags, int *err);
 
+FILE *open_3d_plot_input_file (int *iact);
+
 int finalize_plot_input_file (FILE *fp);
+
+int finalize_3d_plot_input_file (FILE *fp);
 
 int gnuplot_graph_wanted (PlotType ptype, gretlopt opt);
 

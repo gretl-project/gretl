@@ -1816,15 +1816,21 @@ static int write_plot_file (sv_wrapper *w,
 {
     gretl_matrix *m = w->xdata;
     const char *zlabel = "MSE";
-    double x[3], best[3] = {0};
+    double xprev, x[3], best[3] = {0};
     int critcol = m->cols - 1;
+    int display, iact = 0;
     int i, j, err = 0;
     FILE *fp;
 
     set_optval_string(GNUPLOT, OPT_U, w->plot);
 
-    fp = open_plot_input_file(PLOT_USER, 0, &err);
-    if (err) {
+    if (!strcmp(w->plot, "display")) {
+	display = iact = 1;
+    }
+
+    fp = open_3d_plot_input_file(&iact);
+    if (fp == NULL) {
+	err = E_FOPEN;
 	return err;
     }
 
@@ -1846,11 +1852,9 @@ static int write_plot_file (sv_wrapper *w,
 	fputs("set ylabel 'log2(gamma)'\n", fp);
     }
     fprintf(fp, "set zlabel '%s'\n", zlabel);
-    fputs("set dgrid3d\n", fp);
-    fputs("set contour\n", fp);
-    fputs("set cntrparam levels auto 8\n", fp);
-    fputs("splot '-' using 1:2:3 title '' w l ,\\\n", fp);
+    fputs("splot '-' using 1:2:3 title '' w pm3d ,\\\n", fp);
     fputs(" '-' using 1:2:3 title 'best' w p lt 1 pt 8\n", fp);
+    xprev = 0;
     for (i=0; i<m->rows; i++) {
 	x[0] = gretl_matrix_get(m, i, 0);
 	x[1] = gretl_matrix_get(m, i, 1);
@@ -1860,21 +1864,37 @@ static int write_plot_file (sv_wrapper *w,
 		best[j] = x[j];
 	    }
 	}
+	if (i > 0 && x[0] != xprev) {
+	    fputc('\n', fp);
+	}
+	xprev = x[0];
 	fprintf(fp, "%g %g %g\n",
 		w->grid->linear[0] ? x[0] : log2(x[0]),
 		w->grid->linear[1] ? x[1] : log2(x[1]),
 		x[2]);
     }
     fputs("e\n", fp);
-    fprintf(fp, "%g %g %g\n", best[0], best[1], best[2]);
+    fprintf(fp, "%g %g %g\n",
+	    w->grid->linear[0] ? best[0] : log2(best[0]),
+	    w->grid->linear[1] ? best[1] : log2(best[1]),
+	    best[2]);
     fputs("e\n", fp);
 
     gretl_pop_c_numeric_locale();
 
-    err = finalize_plot_input_file(fp);
-
-    if (!err && gui_mode) {
-	manufacture_gui_callback(GNUPLOT);
+    if (display && iact) {
+	fprintf(stderr, "svm: calling finalize_3d_plot_input_file\n");
+	err = finalize_3d_plot_input_file(fp);
+	fprintf(stderr, "svm: err = %d\n", err);
+	if (!err && gui_mode) {
+	    manufacture_gui_callback(EVAL);
+	}
+    } else {
+	err = finalize_plot_input_file(fp);
+	if (!err && gui_mode) {
+	    /* wanted? */
+	    manufacture_gui_callback(GNUPLOT);
+	}
     }
 
     return err;
