@@ -9602,6 +9602,10 @@ static void handle_gui_pkg_install (gretl_bundle *b)
     gretl_bundle_destroy(b);
 }
 
+/* Callback from libgretl to update the GUI in light of
+   execution of commands via script.
+*/
+
 static void gui_exec_callback (ExecState *s, void *ptr,
 			       GretlObjType type)
 {

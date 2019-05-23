@@ -1026,7 +1026,7 @@ static int real_send_to_gp (const char *fname, int persist)
     return err;
 }
 
-#endif
+#endif /* Windows vs other */
 
 /* Callback for execute icon in window editing gnuplot
    commands: send script in @buf to gnuplot itself

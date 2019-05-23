@@ -1883,6 +1883,7 @@ static int write_plot_file (sv_wrapper *w,
     gretl_pop_c_numeric_locale();
 
     if (display && iact) {
+	fputs("pause mouse close\n", fp);
 	err = finalize_3d_plot_input_file(fp);
 	if (!err && gui_mode) {
 	    manufacture_gui_callback(GP_ASYNC);
