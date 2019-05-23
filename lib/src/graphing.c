@@ -4647,10 +4647,10 @@ int gnuplot_3d (int *list, const char *literal,
  * open_3d_plot_input_file:
  * @iact: on input, non-zero if an interactive plot is
  * preferred, 0 otherwise; on output, non-zero if interactive
- * status is obtained, 0 otherwise.
+ * status can be supported, 0 otherwise.
  *
  * Writes a gnuplot plot file to display a 3D plot
- * (interactive if requested and possible).
+ * (interactive if requested and feasible).
  *
  * Returns: FILE pointer on success, NULL on error.
  */

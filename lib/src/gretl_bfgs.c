@@ -3643,7 +3643,7 @@ static int gretl_fzero (double *bracket, double tol,
         x2 = (x0 + x1) / 2;
 	y2 = zfunc(x2, data);
 	/* exponential interpolation of x */
-        x = x2 + (x2-x0) * sgn(y0-y1)*y2 / sqrt(y2*y2-y0*y1);
+        x = x2 + (x2-x0) * sgn(y0-y1)*y2 / sqrt(y2*y2 - y0*y1);
 	d0 = fabs(x-x0);
 	d1 = fabs(x-x1);
 	dx = d0 < d1 ? d0 : d1;

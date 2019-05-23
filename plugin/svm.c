@@ -1883,11 +1883,9 @@ static int write_plot_file (sv_wrapper *w,
     gretl_pop_c_numeric_locale();
 
     if (display && iact) {
-	fprintf(stderr, "svm: calling finalize_3d_plot_input_file\n");
 	err = finalize_3d_plot_input_file(fp);
-	fprintf(stderr, "svm: err = %d\n", err);
 	if (!err && gui_mode) {
-	    manufacture_gui_callback(EVAL);
+	    manufacture_gui_callback(GP_ASYNC);
 	}
     } else {
 	err = finalize_plot_input_file(fp);

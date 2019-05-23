@@ -374,7 +374,6 @@ MODEL logistic_driver (const int *list, DATASET *dset,
 	int err = 0;
 
 	lmax = get_optval_double(LOGISTIC, OPT_M, &err);
-
 	if (err) {
 	    MODEL mdl;
 

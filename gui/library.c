@@ -9657,8 +9657,7 @@ static void gui_exec_callback (ExecState *s, void *ptr,
 	} else {
 	    close_session(OPT_NONE);
 	}
-    } else if (ci == EVAL) {
-	/* FIXME this is an unholy hack */
+    } else if (ci == GP_ASYNC) {
 	const char *pf = gretl_plotfile();
 
 	gnuplot_view_3d(pf);

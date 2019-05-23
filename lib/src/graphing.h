@@ -54,7 +54,10 @@ typedef enum {
     GPT_TIMEFMT        = 1 << 26, /* using gnuplot "timefmt" */
     GPT_ICON           = 1 << 27, /* saving plot "as icon" */
     GPT_STEPS          = 1 << 28  /* force steps for plot */
-} GptFlags; 
+} GptFlags;
+
+/* an extra "command" for use with GUI callback */
+#define GP_ASYNC (NC+1)
 
 typedef struct gretlRGB_ gretlRGB;
 
