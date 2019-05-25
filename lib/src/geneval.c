@@ -18262,7 +18262,7 @@ static void maybe_update_lhs_uvar (parser *p, GretlType *type)
 	/* targetting a series */
 	int v = p->lh.vnum;
 
-	if (v <= 0 || v >= p->dset->v) {
+	if (get_loop_renaming() || v <= 0 || v >= p->dset->v) {
 	    p->lh.vnum = current_series_index(p->dset, p->lh.name);
 	}
 	if (p->lh.vnum < 0) {
