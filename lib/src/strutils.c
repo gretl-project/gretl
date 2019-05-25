@@ -1352,6 +1352,11 @@ char *gretl_strstrip_copy (const char *str, int *err)
     char *ret = NULL;
     int i, n;
 
+    if (str == NULL) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
     while (isspace(*str)) {
 	str++;
     }
