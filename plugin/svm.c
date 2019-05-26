@@ -43,12 +43,12 @@ typedef struct grid_row_ grid_row;
 
 static const char *svm_type_names[] = {
     "C-SVC", "nu-SVC", "one-class", "epsilon-SVR", "nu-SVR",
-    "c-rnk", "svorim"
+    "C-rnk", NULL
 };
 
 static const char *kernel_type_names[] = {
     "linear", "polynomial", "RBF", "sigmoid",
-    "stump", "perc", "laplace", "expo"
+    "stump", "perc", "laplace", "expo", NULL
 };
 
 enum {
@@ -290,6 +290,32 @@ static int is_sv_parm (const char *s)
     return 0;
 }
 
+static int type_value_from_string (const char *s, int i,
+				   PRN *prn, int *err)
+{
+    int j;
+
+    if (i == 0) {
+	/* SVM type */
+	for (j=0; svm_type_names[j] != NULL; j++) {
+	    if (!strcmp(s, svm_type_names[j])) {
+		return j;
+	    }
+	}
+	pprintf(prn, "%s: unrecognized SVM type\n", s);
+    } else {
+	/* kernel type */
+	for (j=0; kernel_type_names[j] != NULL; j++) {
+	    if (!strcmp(s, kernel_type_names[j])) {
+		return j;
+	    }
+	}
+	pprintf(prn, "%s: unrecognized kernel type\n", s);
+    }
+
+    return -1;
+}
+
 static int set_or_store_sv_parm (sv_parm *parm, gretl_bundle *b,
 				 int store, PRN *prn)
 {
@@ -333,7 +359,19 @@ static int set_or_store_sv_parm (sv_parm *parm, gretl_bundle *b,
 
     for (i=0; i<N_PARMS && !err; i++) {
 	if (gretl_bundle_has_key(b, pinfo[i].key)) {
-	    if (i >= 8 && i <= 10) {
+	    if (i < 2) {
+		/* types of svm and kernel: int or string */
+		GretlType type = 0;
+		void *ptr = gretl_bundle_get_data(b, pinfo[i].key,
+						  &type, NULL, &err);
+		if (type == GRETL_TYPE_INT) {
+		    *(int *) elem[i] = *(int *) ptr;
+		} else if (type == GRETL_TYPE_STRING) {
+		    *(int *) elem[i] = type_value_from_string(ptr, i, prn, &err);
+		} else {
+		    err = E_TYPES;
+		}
+	    } else if (i >= 8 && i <= 10) {
 		pputs(prn, "Sorry, svm weighting not handled yet\n");
 		err = E_INVARG;
 	    } else if (pinfo[i].type == GRETL_TYPE_DOUBLE) {
