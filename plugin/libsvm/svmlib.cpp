@@ -350,6 +350,7 @@ double Kernel::dot(const svm_node *px, const svm_node *py)
     }
     return sum;
 }
+
 // function added in rank variant
 
 double Kernel::dist_1(const svm_node * px, const svm_node * py)
@@ -995,142 +996,6 @@ double Solver::calculate_rho()
 	r = (ub+lb)/2;
 
     return r;
-}
-// svorim: added in rank variant
-//
-// Use a trick in working set selection with RNK_Q to perform SVORIM
-//
-// additional constraints: y[idx]^T \alpha[idx] = 0, where idx = (0:(l-1)) * M + j
-//
-class Solver_SVORIM : public Solver
-{
-private:
-    int nr_thres;
-public:
-    double *th; // lazy public
-    Solver_SVORIM(const int _nr_thres) {
-	nr_thres = _nr_thres; th = new double[nr_thres];
-    }
-    ~Solver_SVORIM() { delete th; }
-    void Solve(int l, const QMatrix &Q, const double *b, const schar *y,
-	       double *alpha, double Cp, double Cn, double eps,
-	       SolutionInfo* si, int shrinking) {
-	// don't do shrinking -- otherwise needs more complicated select_working_set
-	Solver::Solve(l, Q, b, y, alpha, Cp, Cn, eps, si, 0);
-    }
-
-    int select_working_set(int& out_i, int& out_j);
-    double calculate_rho();
-};
-
-//copied from LIBSVM 2.4 (first order selection)
-int Solver_SVORIM::select_working_set(int &out_i, int &out_j)
-{
-    // return i,j which maximize -grad(f)^T d , under constraint
-    // if alpha_i == C, d != +1
-    // if alpha_i == 0, d != -1
-
-    if (active_size != l) {
-	fprintf(stderr, "select_working_set: active_size != l\n");
-	return -1;
-    }
-
-    double Gdiff = -INF;
-    int G1_idx = -1;
-    int G2_idx = -1;
-
-    for (int k=0; k<nr_thres; k++) {
-	double Gmax1 = -INF; // max { -grad(f)_i * d | y_i*d = +1 }
-	int Gmax1_idx = -1;
-	double Gmax2 = -INF; // max { -grad(f)_i * d | y_i*d = -1 }
-	int Gmax2_idx = -1;
-
-	for (int i=k; i<l; i+=nr_thres) {
-	    //only consider things in the same group
-	    if (y[i]==+1) {	// y = +1
-		if (!is_upper_bound(i)) { // d = +1
-		    if (-G[i] > Gmax1) {
-			Gmax1 = -G[i];
-			Gmax1_idx = i;
-		    }
-		}
-		if (!is_lower_bound(i)) { // d = -1
-		    if (G[i] > Gmax2) {
-			Gmax2 = G[i];
-			Gmax2_idx = i;
-		    }
-		}
-	    } else { // y = -1
-		if (!is_upper_bound(i))	{// d = +1
-		    if (-G[i] > Gmax2) {
-			Gmax2 = -G[i];
-			Gmax2_idx = i;
-		    }
-		}
-		if (!is_lower_bound(i))	{ // d = -1
-		    if (G[i] > Gmax1) {
-			Gmax1 = G[i];
-			Gmax1_idx = i;
-		    }
-		}
-	    }
-	}
-
-	if (Gmax1+Gmax2 > Gdiff) {
-	    G1_idx = Gmax1_idx;
-	    G2_idx = Gmax2_idx;
-	    Gdiff = Gmax1+Gmax2;
-	}
-    }
-
-    if (Gdiff < eps)
-	return 1;
-
-    out_i = G1_idx;
-    out_j = G2_idx;
-
-    return 0;
-}
-
-double Solver_SVORIM::calculate_rho()
-{
-    if (active_size != l) {
-	fprintf(stderr, "calculate_rho: active_size != l\n");
-	return 0.0/0.0;
-    }
-
-    for (int k=0; k<nr_thres; k++) {
-	double r;
-	int nr_free = 0;
-	double ub = INF, lb = -INF, sum_free = 0;
-
-	for (int i=k; i<l; i+=nr_thres) {
-	    double yG = y[i]*G[i];
-
-	    if (is_lower_bound(i)) {
-		if (y[i] > 0)
-		    ub = min(ub,yG);
-		else
-		    lb = max(lb,yG);
-	    } else if (is_upper_bound(i)) {
-		if (y[i] < 0)
-		    ub = min(ub,yG);
-		else
-		    lb = max(lb,yG);
-	    } else {
-		++nr_free;
-		sum_free += yG;
-	    }
-	}
-
-	if (nr_free>0)
-	    r = sum_free/nr_free;
-	else
-	    r = (ub+lb)/2;
-	th[k] = r;
-    }
-
-    return 0;
 }
 
 //
@@ -1790,52 +1655,6 @@ static void solve_epsilon_svr(const svm_problem *prob, const svm_parameter *para
     delete[] y;
 }
 
-// added function
-
-static void solve_svorim(const svm_problem *prob, const svm_parameter *param,
-			 double *alpha, Solver::SolutionInfo* si,
-			 double *thres, int nr_thres)
-{
-    int l = prob->l;
-    int bigl = l * nr_thres;
-    double *bigalpha = new double[bigl];
-    double *minus_ones = new double[bigl];
-    schar *y = new schar[bigl];
-    int i, k;
-
-    int idx = 0;
-    for (i=0; i<l; i++) {
-	for (k=1; k<=nr_thres; k++) {
-	    bigalpha[idx] = 0;
-	    minus_ones[idx] = -1;
-	    y[idx] = (prob->y[i] <= k ? -1 : 1);
-	    idx++;
-	}
-    }
-
-    Solver_SVORIM s(nr_thres);
-    s.Solve(bigl, RNK_Q(*prob,*param, nr_thres, 0), minus_ones, y,
-	    bigalpha, param->C, param->C, param->eps, si, param->shrinking);
-
-    for (k=1; k<=nr_thres; k++)
-	thres[k-1] = s.th[k-1];
-
-    idx=0;
-    for (i=0; i<l; i++) {
-	alpha[i] = 0.0;
-	for (k=1; k<=nr_thres; k++) {
-	    alpha[i] += y[idx] * bigalpha[idx];
-	    idx++;
-	}
-    }
-
-    delete[] bigalpha;
-    delete[] minus_ones;
-    delete[] y;
-}
-
-// added function
-
 static void solve_c_rnk(const svm_problem *prob, const svm_parameter *param,
 			double *alpha, Solver::SolutionInfo* si,
 			double *thres, int nr_thres)
@@ -1954,13 +1773,6 @@ static decision_function svm_train_one(const svm_problem *prob,
 	{
 	    double *thres = Malloc(double, n_class-1);
 	    solve_c_rnk(prob, param, alpha, &si, thres, n_class-1);
-	    f.thres = thres;
-	}
-	break;
-    case SVORIM:
-	{
-	    double *thres = Malloc(double, n_class-1);
-	    solve_svorim(prob, param, alpha, &si, thres, n_class-1);
 	    f.thres = thres;
 	}
 	break;
@@ -2365,7 +2177,7 @@ svm_model *svm_train(const svm_problem *prob, const svm_parameter *param)
     model->free_sv = 0; 	// XXX
 
     // first branch added from svm-rank */
-    if (param->svm_type == C_RNK || param->svm_type == SVORIM) {
+    if (param->svm_type == C_RNK) {
 	int nr_class = 0;
 	int i, j;
 
@@ -2649,8 +2461,7 @@ void svm_cross_validation (const svm_problem *prob,
     // Each class to l folds -> some folds may have zero elements
     if ((param->svm_type == C_SVC ||
 	 param->svm_type == NU_SVC ||
-	 param->svm_type == C_RNK ||
-	 param->svm_type == SVORIM) && nr_fold < l) {
+	 param->svm_type == C_RNK) && nr_fold < l) {
 	int *start = NULL;
 	int *label = NULL;
 	int *count = NULL;
@@ -2795,8 +2606,7 @@ double svm_predict_values(const svm_model *model, const svm_node *x,
     if (model->param.svm_type == ONE_CLASS ||
 	model->param.svm_type == EPSILON_SVR ||
 	model->param.svm_type == NU_SVR ||
-	model->param.svm_type == C_RNK ||
-	model->param.svm_type == SVORIM) {
+	model->param.svm_type == C_RNK) {
 	double *sv_coef = model->sv_coef[0];
 	double sum = 0;
 
@@ -2878,15 +2688,14 @@ double svm_predict(const svm_model *model, const svm_node *x)
     if (model->param.svm_type == ONE_CLASS ||
 	model->param.svm_type == EPSILON_SVR ||
 	model->param.svm_type == NU_SVR ||
-	model->param.svm_type == C_RNK ||
-	model->param.svm_type == SVORIM)
+	model->param.svm_type == C_RNK)
 	dec_values = Malloc(double, 1);
     else
 	dec_values = Malloc(double, nr_class*(nr_class-1)/2);
 
     double pred_result = svm_predict_values(model, x, dec_values);
 
-    if (model->param.svm_type == C_RNK || model->param.svm_type == SVORIM) {
+    if (model->param.svm_type == C_RNK) {
 	// AC: Is this code (and its placement) OK??
 	int found = 0;
 
@@ -2951,7 +2760,7 @@ double svm_predict_probability(const svm_model *model, const svm_node *x,
 
 static const char *svm_type_table[] = {
     "c_svc", "nu_svc", "one_class", "epsilon_svr", "nu_svr",
-    "c_rnk", "svorim", NULL
+    "c_rnk", NULL
 };
 
 static const char *kernel_type_table[] = {
@@ -2990,7 +2799,7 @@ int svm_save_model(const char *model_file_name, const svm_model *model)
 
     {
 	fprintf(fp, "rho");
-	if (param.svm_type == C_RNK || param.svm_type == SVORIM) {
+	if (param.svm_type == C_RNK) {
 	    for (int i=0; i<nr_class; i++)
 		fprintf(fp, " %g", model->rho[i]);
 	    nr_class = 2; //fake
@@ -3134,7 +2943,7 @@ static bool read_model_header(FILE *fp, svm_model* model)
 	else if (strcmp(cmd, "rho")==0) {
 	    int n;
 
-	    if (model->param.svm_type == C_RNK || model->param.svm_type == SVORIM)
+	    if (model->param.svm_type == C_RNK)
 		n = model->nr_class;
 	    else
 		n = model->nr_class * (model->nr_class-1)/2;
@@ -3277,8 +3086,7 @@ void svm_free_model_content (svm_model *model_ptr)
     if (model_ptr->free_sv && model_ptr->l > 0 && model_ptr->SV != NULL)
 	free((void *)(model_ptr->SV[0]));
 
-    if (model_ptr->param.svm_type == C_RNK ||
-	model_ptr->param.svm_type == SVORIM) {
+    if (model_ptr->param.svm_type == C_RNK) {
 	model_ptr->nr_class = 2;
     }
 
@@ -3338,8 +3146,7 @@ const char *svm_check_parameter (const svm_problem *prob,
 	svm_type != ONE_CLASS &&
 	svm_type != EPSILON_SVR &&
 	svm_type != NU_SVR &&
-	svm_type != C_RNK &&
-	svm_type != SVORIM)
+	svm_type != C_RNK)
 	return "unknown svm type";
 
     // kernel_type, degree
