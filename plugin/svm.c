@@ -42,11 +42,13 @@ typedef struct grid_row_ grid_row;
 /* the following need to be in sync with svmlib.h */
 
 static const char *svm_type_names[] = {
-    "C-SVC", "nu-SVC", "one-class", "epsilon-SVR", "nu-SVR"
+    "C-SVC", "nu-SVC", "one-class", "epsilon-SVR", "nu-SVR",
+    "c-rnk", "svorim"
 };
 
 static const char *kernel_type_names[] = {
-    "linear", "polynomial", "RBF", "sigmoid", "precomputed"
+    "linear", "polynomial", "RBF", "sigmoid",
+    "stump", "perc", "laplace", "expo"
 };
 
 enum {
@@ -452,11 +454,16 @@ static int svm_model_save_to_bundle (const sv_model *model,
 
     if (parm->kernel_type == POLY ||
 	parm->kernel_type == RBF ||
-	parm->kernel_type == SIGMOID) {
+	parm->kernel_type == SIGMOID ||
+	parm->kernel_type == LAPLACE ||
+	parm->kernel_type == EXPO) {
 	gretl_bundle_set_scalar(b, "gamma", parm->gamma);
     }
 
-    if (parm->kernel_type == POLY || parm->kernel_type == SIGMOID) {
+    if (parm->kernel_type == POLY ||
+	parm->kernel_type == SIGMOID ||
+	parm->kernel_type == STUMP ||
+	parm->kernel_type == PERC) {
 	gretl_bundle_set_scalar(b, "coef0", parm->coef0);
     }
 
@@ -499,19 +506,7 @@ static int svm_model_save_to_bundle (const sv_model *model,
 				 GRETL_TYPE_MATRIX, 0);
     }
 
-    if (parm->kernel_type == PRECOMPUTED) {
-	int *plist = gretl_list_new(l);
-
-	if (plist != NULL) {
-	    const sv_cell *p;
-
-	    for (i=0; i<l; i++) {
-		p = model->SV[i];
-		plist[i+1] = (int) p->value;
-	    }
-	}
-    } else {
-	/* not a precomputed kernel: more complicated */
+    {
 	gretl_array *aidx, *avec = NULL;
 	gretl_matrix *vec;
 	int *idx;
@@ -736,10 +731,7 @@ static sv_model *svm_model_from_bundle (gretl_bundle *b,
 	}
     }
 
-    if (!*err && parm->kernel_type == PRECOMPUTED) {
-	gretl_errmsg_set("svm precomputed kernel: not handled yet");
-	*err = E_DATA;
-    } else if (!*err) {
+    if (!*err) {
 	sv_cell *p = NULL, *x_space = NULL;
 	gretl_array *aidx = NULL;
 	gretl_array *avec = NULL;

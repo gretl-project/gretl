@@ -22,8 +22,8 @@ struct svm_problem
 	struct svm_node **x;
 };
 
-enum { C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, NU_SVR };	/* svm_type */
-enum { LINEAR, POLY, RBF, SIGMOID, PRECOMPUTED }; /* kernel_type */
+enum { C_SVC, NU_SVC, ONE_CLASS, EPSILON_SVR, NU_SVR, C_RNK, SVORIM };	/* svm_type */
+enum { LINEAR, POLY, RBF, SIGMOID, STUMP, PERC, LAPLACE, EXPO }; /* kernel_type */
 
 struct svm_parameter
 {

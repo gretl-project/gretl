@@ -241,7 +241,18 @@ private:
     const double gamma;
     const double coef0;
 
+    static double dist_1(const svm_node * px, const svm_node * py);
+    // next two functions added
     static double dot(const svm_node *px, const svm_node *py);
+    static double dist_2_sqr(const svm_node * px, const svm_node * py);
+
+    // also added
+    inline double dist_2_sqr(int i, int j) const
+    {
+	double sum = x_square[i]+x_square[j]-2*dot(x[i],x[j]);
+	return (sum > 0.0 ? sum : 0.0);
+    }
+
     double kernel_linear(int i, int j) const
     {
 	return dot(x[i], x[j]);
@@ -258,9 +269,21 @@ private:
     {
 	return tanh(gamma*dot(x[i], x[j])+coef0);
     }
-    double kernel_precomputed(int i, int j) const
+    double kernel_stump(int i, int j) const
     {
-	return x[i][(int)(x[j][0].value)].value;
+	return -dist_1(x[i], x[j])+coef0;
+    }
+    double kernel_perc(int i, int j) const
+    {
+	return -sqrt(dist_2_sqr(i, j))+coef0;
+    }
+    double kernel_laplace(int i, int j) const
+    {
+	return exp(-gamma*dist_1(x[i], x[j]));
+    }
+    double kernel_expo(int i, int j) const
+    {
+	return exp(-gamma*sqrt(dist_2_sqr(i, j)));
     }
 };
 
@@ -280,14 +303,23 @@ Kernel::Kernel(int l, svm_node * const * x_, const svm_parameter& param)
     case SIGMOID:
 	kernel_function = &Kernel::kernel_sigmoid;
 	break;
-    case PRECOMPUTED:
-	kernel_function = &Kernel::kernel_precomputed;
+    case STUMP:
+	kernel_function = &Kernel::kernel_stump;
+	break;
+    case PERC:
+	kernel_function = &Kernel::kernel_perc;
+	break;
+    case LAPLACE:
+	kernel_function = &Kernel::kernel_laplace;
+	break;
+    case EXPO:
+	kernel_function = &Kernel::kernel_expo;
 	break;
     }
 
     clone(x, x_, l);
 
-    if (kernel_type == RBF) {
+    if (kernel_type == RBF || kernel_type == PERC || kernel_type == EXPO) {
 	x_square = new double[l];
 	for (int i=0; i<l; i++)
 	    x_square[i] = dot(x[i], x[i]);
@@ -318,50 +350,94 @@ double Kernel::dot(const svm_node *px, const svm_node *py)
     }
     return sum;
 }
+// function added in rank variant
+
+double Kernel::dist_1(const svm_node * px, const svm_node * py)
+{
+    double sum = 0;
+
+    while (px->index != -1 && py->index != -1) {
+	if (px->index == py->index) {
+	    sum += fabs(px->value - py->value);
+	    ++px;
+	    ++py;
+	} else {
+	    if (px->index > py->index) {
+		sum += fabs(py->value);
+		++py;
+	    } else {
+		sum += fabs(px->value);
+		++px;
+	    }
+	}
+    }
+    while (px->index != -1) {
+	sum += fabs(px->value);
+	++px;
+    }
+    while (py->index != -1) {
+	sum += fabs (py->value);
+	++py;
+    }
+
+    return sum;
+}
+
+// function added in rank variant
+
+double Kernel::dist_2_sqr(const svm_node *px, const svm_node *py)
+{
+    double sum = 0;
+
+    while (px->index != -1 && py->index != -1) {
+	if (px->index == py->index) {
+	    double d = px->value - py->value;
+	    sum += d * d;
+	    ++px;
+	    ++py;
+	} else {
+	    if (px->index > py->index) {
+		sum += py->value * py->value;
+		++py;
+	    } else {
+		sum += px->value * px->value;
+		++px;
+	    }
+	}
+
+    }
+    while (px->index != -1) {
+	sum += px->value * px->value;
+	++px;
+    }
+    while (py->index != -1) {
+	sum += py->value * py->value;
+	++py;
+    }
+
+    return sum > 0.0 ? sum : 0.0;
+}
 
 double Kernel::k_function(const svm_node *x, const svm_node *y,
-			  const svm_parameter& param) {
+			  const svm_parameter &param)
+{
     switch(param.kernel_type) {
     case LINEAR:
 	return dot(x, y);
     case POLY:
 	return powi(param.gamma*dot(x, y)+param.coef0, param.degree);
     case RBF:
-	{
-	    double sum = 0;
-	    while (x->index != -1 && y->index !=-1) {
-		if (x->index == y->index) {
-		    double d = x->value - y->value;
-		    sum += d*d;
-		    ++x;
-		    ++y;
-		} else {
-		    if (x->index > y->index) {
-			sum += y->value * y->value;
-			++y;
-		    } else {
-			sum += x->value * x->value;
-			++x;
-		    }
-		}
-	    }
-
-	    while (x->index != -1) {
-		sum += x->value * x->value;
-		++x;
-	    }
-
-	    while (y->index != -1) {
-		sum += y->value * y->value;
-		++y;
-	    }
-
-	    return exp(-param.gamma*sum);
-	}
+	return exp(-param.gamma*dist_2_sqr(x, y));
     case SIGMOID:
 	return tanh(param.gamma*dot(x, y)+param.coef0);
-    case PRECOMPUTED:  //x: test (validation), y: SV
-	return x[(int)(y->value)].value;
+    case STUMP:
+	return -dist_1(x, y) + param.coef0;
+    case PERC:
+	return -sqrt(dist_2_sqr(x, y)) + param.coef0;
+    case LAPLACE:
+	return exp(-param.gamma*dist_1(x, y));
+    case EXPO:
+	return exp(-param.gamma*sqrt(dist_2_sqr(x, y)));
     default:
 	return 0;  // Unreachable
     }
@@ -490,13 +566,13 @@ void Solver::reconstruct_gradient()
     }
 }
 
-void Solver::Solve(int l, const QMatrix& Q, const double *p_, const schar *y_,
+void Solver::Solve(int l, const QMatrix &Q, const double *p_, const schar *y_,
 		   double *alpha_, double Cp, double Cn, double eps,
 		   SolutionInfo* si, int shrinking)
 {
     this->l = l;
     this->Q = &Q;
-    QD=Q.get_QD();
+    QD = Q.get_QD();
     clone(p, p_, l);
     clone(y, y_, l);
     clone(alpha, alpha_, l);
@@ -583,7 +659,7 @@ void Solver::Solve(int l, const QMatrix& Q, const double *p_, const schar *y_,
 	double old_alpha_i = alpha[i];
 	double old_alpha_j = alpha[j];
 
-	if (y[i]!=y[j]) {
+	if (y[i] != y[j]) {
 	    double quad_coef = QD[i]+QD[j]+2*Q_i[j];
 	    if (quad_coef <= 0)
 		quad_coef = TAU;
@@ -893,6 +969,7 @@ double Solver::calculate_rho()
     double r;
     int nr_free = 0;
     double ub = INF, lb = -INF, sum_free = 0;
+
     for (int i=0; i<active_size; i++) {
 	double yG = y[i]*G[i];
 
@@ -918,6 +995,142 @@ double Solver::calculate_rho()
 	r = (ub+lb)/2;
 
     return r;
+}
+// svorim: added in rank variant
+//
+// Use a trick in working set selection with RNK_Q to perform SVORIM
+//
+// additional constraints: y[idx]^T \alpha[idx] = 0, where idx = (0:(l-1)) * M + j
+//
+class Solver_SVORIM : public Solver
+{
+private:
+    int nr_thres;
+public:
+    double *th; // lazy public
+    Solver_SVORIM(const int _nr_thres) {
+	nr_thres = _nr_thres; th = new double[nr_thres];
+    }
+    ~Solver_SVORIM() { delete th; }
+    void Solve(int l, const QMatrix &Q, const double *b, const schar *y,
+	       double *alpha, double Cp, double Cn, double eps,
+	       SolutionInfo* si, int shrinking) {
+	// don't do shrinking -- otherwise needs more complicated select_working_set
+	Solver::Solve(l, Q, b, y, alpha, Cp, Cn, eps, si, 0);
+    }
+
+    int select_working_set(int& out_i, int& out_j);
+    double calculate_rho();
+};
+
+//copied from LIBSVM 2.4 (first order selection)
+int Solver_SVORIM::select_working_set(int &out_i, int &out_j)
+{
+    // return i,j which maximize -grad(f)^T d , under constraint
+    // if alpha_i == C, d != +1
+    // if alpha_i == 0, d != -1
+
+    if (active_size != l) {
+	fprintf(stderr, "select_working_set: active_size != l\n");
+	return -1;
+    }
+
+    double Gdiff = -INF;
+    int G1_idx = -1;
+    int G2_idx = -1;
+
+    for (int k=0; k<nr_thres; k++) {
+	double Gmax1 = -INF; // max { -grad(f)_i * d | y_i*d = +1 }
+	int Gmax1_idx = -1;
+	double Gmax2 = -INF; // max { -grad(f)_i * d | y_i*d = -1 }
+	int Gmax2_idx = -1;
+
+	for (int i=k; i<l; i+=nr_thres) {
+	    //only consider things in the same group
+	    if (y[i]==+1) {	// y = +1
+		if (!is_upper_bound(i)) { // d = +1
+		    if (-G[i] > Gmax1) {
+			Gmax1 = -G[i];
+			Gmax1_idx = i;
+		    }
+		}
+		if (!is_lower_bound(i)) { // d = -1
+		    if (G[i] > Gmax2) {
+			Gmax2 = G[i];
+			Gmax2_idx = i;
+		    }
+		}
+	    } else { // y = -1
+		if (!is_upper_bound(i))	{// d = +1
+		    if (-G[i] > Gmax2) {
+			Gmax2 = -G[i];
+			Gmax2_idx = i;
+		    }
+		}
+		if (!is_lower_bound(i))	{ // d = -1
+		    if (G[i] > Gmax1) {
+			Gmax1 = G[i];
+			Gmax1_idx = i;
+		    }
+		}
+	    }
+	}
+
+	if (Gmax1+Gmax2 > Gdiff) {
+	    G1_idx = Gmax1_idx;
+	    G2_idx = Gmax2_idx;
+	    Gdiff = Gmax1+Gmax2;
+	}
+    }
+
+    if (Gdiff < eps)
+	return 1;
+
+    out_i = G1_idx;
+    out_j = G2_idx;
+
+    return 0;
+}
+
+double Solver_SVORIM::calculate_rho()
+{
+    if (active_size != l) {
+	fprintf(stderr, "calculate_rho: active_size != l\n");
+	return 0.0/0.0;
+    }
+
+    for (int k=0; k<nr_thres; k++) {
+	double r;
+	int nr_free = 0;
+	double ub = INF, lb = -INF, sum_free = 0;
+
+	for (int i=k; i<l; i+=nr_thres) {
+	    double yG = y[i]*G[i];
+
+	    if (is_lower_bound(i)) {
+		if (y[i] > 0)
+		    ub = min(ub,yG);
+		else
+		    lb = max(lb,yG);
+	    } else if (is_upper_bound(i)) {
+		if (y[i] < 0)
+		    ub = min(ub,yG);
+		else
+		    lb = max(lb,yG);
+	    } else {
+		++nr_free;
+		sum_free += yG;
+	    }
+	}
+
+	if (nr_free>0)
+	    r = sum_free/nr_free;
+	else
+	    r = (ub+lb)/2;
+	th[k] = r;
+    }
+
+    return 0;
 }
 
 //
@@ -1312,6 +1525,118 @@ private:
     double *QD;
 };
 
+// Q_{(i, k), (i', k')} = z[(i, k)] z[(i', k')] *
+//  { K(x[i], x[i']) + th_cost * [ k == k' ] }
+// where (i, k) is on index (i * nr_thres + k)
+// z(i, k) = sign(y[i]-k)
+
+// rnk_q: added
+
+class RNK_Q: public Kernel
+{
+public:
+    RNK_Q(const svm_problem &prob, const svm_parameter &param,
+	  const int _nr_thres, const double _th_cost = 1)
+	:Kernel(prob.l, prob.x, param)
+    {
+	l = prob.l;
+	nr_thres = _nr_thres;
+	th_cost = _th_cost;
+
+	y = new schar[l];
+
+	cache = new Cache(l, (int)(param.cache_size*(1<<20)));
+	QD = new double[nr_thres*l];
+	index = new int[nr_thres*l];
+	sign = new schar[nr_thres*l];
+	phase = new schar[nr_thres*l];
+	for (int i=0;i<l;i++) {
+	    int idx = i * nr_thres;
+	    y[i] = (int)prob.y[i];
+	    QD[idx]= (this->*kernel_function)(i,i) + th_cost;
+	    sign[idx] = ((y[i] <= 1) ? -1 : +1);
+	    index[idx] = i;
+	    phase[idx] = 1;
+	    idx++;
+	    for (int k=2; k<=nr_thres; k++) {
+		QD[idx] = QD[idx-1]; //takes the same value as QD[i * nr_thres]
+		sign[idx] = ((y[i] <= k) ? -1 : +1);
+		index[idx] = i;
+		phase[idx] = k;
+		idx++;
+	    }
+	}
+
+	buffer[0] = new Qfloat[nr_thres*l];
+	buffer[1] = new Qfloat[nr_thres*l];
+	next_buffer = 0;
+    }
+
+    void swap_index(int i, int j) const
+    {
+	swap(sign[i],sign[j]);
+	swap(index[i],index[j]);
+	swap(phase[i],phase[j]);
+	swap(QD[i],QD[j]);
+    }
+
+    Qfloat *get_Q(int i, int len) const
+    {
+	Qfloat *data;
+	int j, real_i = index[i];
+
+	if (cache->get_data(real_i, &data, l) < l) {
+#if defined(_OPENMP)
+#pragma omp parallel for private(j) schedule(guided)
+#endif
+	    for (j=0; j<l; j++) {
+		data[j] = (Qfloat)(this->*kernel_function)(real_i, j);
+	    }
+	}
+
+	// reorder and copy
+	Qfloat *buf = buffer[next_buffer];
+	next_buffer = 1 - next_buffer;
+	schar si = sign[i];
+	for (int j=0; j<len; j++) {
+	    double value = data[index[j]];
+	    if (phase[j] == phase[i])
+		value += th_cost;
+	    buf[j] = si * sign[j] * value;
+	}
+	return buf;
+    }
+
+    double *get_QD() const
+    {
+	return QD;
+    }
+
+    ~RNK_Q()
+    {
+	delete cache;
+	delete[] sign;
+	delete[] phase;
+	delete[] index;
+	delete[] buffer[0];
+	delete[] buffer[1];
+	delete[] y;
+	delete[] QD;
+    }
+private:
+    int l;
+    schar *y;
+    Cache *cache;
+    schar *sign;
+    schar *phase;
+    int *index;
+    mutable int next_buffer;
+    Qfloat *buffer[2];
+    double *QD;
+    int nr_thres;
+    double th_cost;
+};
+
 //
 // construct and solve various formulations
 //
@@ -1465,6 +1790,95 @@ static void solve_epsilon_svr(const svm_problem *prob, const svm_parameter *para
     delete[] y;
 }
 
+// added function
+
+static void solve_svorim(const svm_problem *prob, const svm_parameter *param,
+			 double *alpha, Solver::SolutionInfo* si,
+			 double *thres, int nr_thres)
+{
+    int l = prob->l;
+    int bigl = l * nr_thres;
+    double *bigalpha = new double[bigl];
+    double *minus_ones = new double[bigl];
+    schar *y = new schar[bigl];
+    int i, k;
+
+    int idx = 0;
+    for (i=0; i<l; i++) {
+	for (k=1; k<=nr_thres; k++) {
+	    bigalpha[idx] = 0;
+	    minus_ones[idx] = -1;
+	    y[idx] = (prob->y[i] <= k ? -1 : 1);
+	    idx++;
+	}
+    }
+
+    Solver_SVORIM s(nr_thres);
+    s.Solve(bigl, RNK_Q(*prob,*param, nr_thres, 0), minus_ones, y,
+	    bigalpha, param->C, param->C, param->eps, si, param->shrinking);
+
+    for (k=1; k<=nr_thres; k++)
+	thres[k-1] = s.th[k-1];
+
+    idx=0;
+    for (i=0; i<l; i++) {
+	alpha[i] = 0.0;
+	for (k=1; k<=nr_thres; k++) {
+	    alpha[i] += y[idx] * bigalpha[idx];
+	    idx++;
+	}
+    }
+
+    delete[] bigalpha;
+    delete[] minus_ones;
+    delete[] y;
+}
+
+// added function
+
+static void solve_c_rnk(const svm_problem *prob, const svm_parameter *param,
+			double *alpha, Solver::SolutionInfo* si,
+			double *thres, int nr_thres)
+{
+    int l = prob->l;
+    int bigl = l * nr_thres;
+    double *bigalpha = new double[bigl];
+    double *minus_ones = new double[bigl];
+    schar *y = new schar[bigl];
+    int i, k;
+
+    int idx = 0;
+    for (i=0; i<l; i++) {
+	for (k=1; k<=nr_thres; k++) {
+	    bigalpha[idx] = 0;
+	    minus_ones[idx] = -1;
+	    y[idx] = (prob->y[i] <= k ? -1 : 1);
+	    idx++;
+	}
+    }
+
+    Solver s;
+    s.Solve(bigl, RNK_Q(*prob,*param, nr_thres, 1), minus_ones, y,
+	    bigalpha, param->C, param->C, param->eps, si, param->shrinking);
+
+    for (k=1; k<=nr_thres; k++)
+	thres[k-1] = 0.0;
+
+    idx=0;
+    for(i=0; i<l; i++) {
+	alpha[i] = 0.0;
+	for (k=1; k<=nr_thres; k++) {
+	    alpha[i] += y[idx] * bigalpha[idx];
+	    thres[k-1] -= y[idx] * bigalpha[idx];
+	    idx++;
+	}
+    }
+
+    delete[] bigalpha;
+    delete[] minus_ones;
+    delete[] y;
+}
+
 static void solve_nu_svr(const svm_problem *prob, const svm_parameter *param,
 			 double *alpha, Solver::SolutionInfo* si)
 {
@@ -1508,14 +1922,18 @@ struct decision_function
 {
     double *alpha;
     double rho;
+    double *thres;
 };
 
 static decision_function svm_train_one(const svm_problem *prob,
 				       const svm_parameter *param,
-				       double Cp, double Cn)
+				       double Cp, double Cn,
+				       int n_class = 2)
 {
     double *alpha = Malloc(double, prob->l);
     Solver::SolutionInfo si;
+    decision_function f;
+
     switch(param->svm_type) {
     case C_SVC:
 	solve_c_svc(prob, param, alpha, &si, Cp, Cn);
@@ -1531,6 +1949,20 @@ static decision_function svm_train_one(const svm_problem *prob,
 	break;
     case NU_SVR:
 	solve_nu_svr(prob, param, alpha, &si);
+	break;
+    case C_RNK:
+	{
+	    double *thres = Malloc(double, n_class-1);
+	    solve_c_rnk(prob, param, alpha, &si, thres, n_class-1);
+	    f.thres = thres;
+	}
+	break;
+    case SVORIM:
+	{
+	    double *thres = Malloc(double, n_class-1);
+	    solve_svorim(prob, param, alpha, &si, thres, n_class-1);
+	    f.thres = thres;
+	}
 	break;
     }
 
@@ -1555,7 +1987,7 @@ static decision_function svm_train_one(const svm_problem *prob,
 
     info("nSV = %d, nBSV = %d\n", nSV, nBSV);
 
-    decision_function f;
+    //decision_function f;
     f.alpha = alpha;
     f.rho = si.rho;
     return f;
@@ -1932,9 +2364,47 @@ svm_model *svm_train(const svm_problem *prob, const svm_parameter *param)
     model->param = *param;
     model->free_sv = 0; 	// XXX
 
-    if (param->svm_type == ONE_CLASS ||
-	param->svm_type == EPSILON_SVR ||
-	param->svm_type == NU_SVR) {
+    // first branch added from svm-rank */
+    if (param->svm_type == C_RNK || param->svm_type == SVORIM) {
+	int nr_class = 0;
+	int i, j;
+
+	for (i=0; i<prob->l; i++)
+	    if (prob->y[i] > nr_class)
+		nr_class = (int)(prob->y[i]);
+
+	model->nr_class = nr_class;
+	model->label = NULL;
+	model->nSV = NULL;
+	model->probA = NULL; model->probB = NULL;
+	model->sv_coef = Malloc(double *,1);
+
+	decision_function f = svm_train_one(prob,param,0,0,nr_class);
+	model->rho = Malloc(double,nr_class);
+	model->rho[0] = f.rho;
+	for (j=1; j<nr_class; ++j) {
+	    model->rho[j] = f.thres[j-1];
+	}
+
+	int nSV = 0;
+	for (i=0; i<prob->l; i++)
+	    if (fabs(f.alpha[i]) > 0) ++nSV;
+	model->l = nSV;
+	model->SV = Malloc(svm_node *, nSV);
+	model->sv_coef[0] = Malloc(double, nSV);
+	j = 0;
+	for (i=0; i<prob->l; i++) {
+	    if (fabs(f.alpha[i]) > 0) {
+		model->SV[j] = prob->x[i];
+		model->sv_coef[0][j] = f.alpha[i];
+		++j;
+	    }
+	}
+	free(f.alpha);
+	free(f.thres);
+    } else if (param->svm_type == ONE_CLASS ||
+	       param->svm_type == EPSILON_SVR ||
+	       param->svm_type == NU_SVR) {
 	// regression or one-class-svm
 	model->nr_class = 2;
 	model->label = NULL;
@@ -2178,7 +2648,9 @@ void svm_cross_validation (const svm_problem *prob,
     // stratified cv may not give leave-one-out rate
     // Each class to l folds -> some folds may have zero elements
     if ((param->svm_type == C_SVC ||
-	 param->svm_type == NU_SVC) && nr_fold < l) {
+	 param->svm_type == NU_SVC ||
+	 param->svm_type == C_RNK ||
+	 param->svm_type == SVORIM) && nr_fold < l) {
 	int *start = NULL;
 	int *label = NULL;
 	int *count = NULL;
@@ -2322,7 +2794,9 @@ double svm_predict_values(const svm_model *model, const svm_node *x,
 
     if (model->param.svm_type == ONE_CLASS ||
 	model->param.svm_type == EPSILON_SVR ||
-	model->param.svm_type == NU_SVR) {
+	model->param.svm_type == NU_SVR ||
+	model->param.svm_type == C_RNK ||
+	model->param.svm_type == SVORIM) {
 	double *sv_coef = model->sv_coef[0];
 	double sum = 0;
 
@@ -2400,17 +2874,36 @@ double svm_predict(const svm_model *model, const svm_node *x)
 {
     int nr_class = model->nr_class;
     double *dec_values;
-    
+
     if (model->param.svm_type == ONE_CLASS ||
 	model->param.svm_type == EPSILON_SVR ||
-	model->param.svm_type == NU_SVR)
+	model->param.svm_type == NU_SVR ||
+	model->param.svm_type == C_RNK ||
+	model->param.svm_type == SVORIM)
 	dec_values = Malloc(double, 1);
     else
 	dec_values = Malloc(double, nr_class*(nr_class-1)/2);
-    
+
     double pred_result = svm_predict_values(model, x, dec_values);
+
+    if (model->param.svm_type == C_RNK || model->param.svm_type == SVORIM) {
+	// AC: Is this code (and its placement) OK??
+	int found = 0;
+
+	for (int j=1; j<model->nr_class; j++) {
+	    if (pred_result < model->rho[j]) {
+		pred_result = j;
+		found = 1;
+		break;
+	    }
+	}
+	if (!found) {
+	    pred_result = model->nr_class;
+	}
+    }
+
     free(dec_values);
-    
+
     return pred_result;
 }
 
@@ -2418,7 +2911,7 @@ double svm_predict_probability(const svm_model *model, const svm_node *x,
 			       double *prob_estimates)
 {
     if ((model->param.svm_type == C_SVC || model->param.svm_type == NU_SVC) &&
-	model->probA!=NULL && model->probB!=NULL) {
+	model->probA != NULL && model->probB != NULL) {
 	int i;
 	int nr_class = model->nr_class;
 	double *dec_values = Malloc(double, nr_class*(nr_class-1)/2);
@@ -2457,11 +2950,13 @@ double svm_predict_probability(const svm_model *model, const svm_node *x,
 }
 
 static const char *svm_type_table[] = {
-    "c_svc", "nu_svc", "one_class", "epsilon_svr", "nu_svr", NULL
+    "c_svc", "nu_svc", "one_class", "epsilon_svr", "nu_svr",
+    "c_rnk", "svorim", NULL
 };
 
 static const char *kernel_type_table[] = {
-    "linear", "polynomial", "rbf", "sigmoid", "precomputed", NULL
+    "linear", "polynomial", "rbf", "sigmoid", "stump", "perc",
+    "laplace", "expo", NULL
 };
 
 int svm_save_model(const char *model_file_name, const svm_model *model)
@@ -2471,7 +2966,7 @@ int svm_save_model(const char *model_file_name, const svm_model *model)
 
     gretl_push_c_numeric_locale();
 
-    const svm_parameter& param = model->param;
+    const svm_parameter &param = model->param;
 
     fprintf(fp, "svm_type %s\n", svm_type_table[param.svm_type]);
     fprintf(fp, "kernel_type %s\n", kernel_type_table[param.kernel_type]);
@@ -2479,10 +2974,13 @@ int svm_save_model(const char *model_file_name, const svm_model *model)
     if (param.kernel_type == POLY)
 	fprintf(fp, "degree %d\n", param.degree);
 
-    if (param.kernel_type == POLY || param.kernel_type == RBF || param.kernel_type == SIGMOID)
+    if (param.kernel_type == POLY || param.kernel_type == RBF ||
+	param.kernel_type == SIGMOID || param.kernel_type == LAPLACE ||
+	param.kernel_type == EXPO)
 	fprintf(fp, "gamma %.17g\n", param.gamma);
 
-    if (param.kernel_type == POLY || param.kernel_type == SIGMOID)
+    if (param.kernel_type == POLY || param.kernel_type == SIGMOID ||
+	param.kernel_type == STUMP || param.kernel_type == PERC)
 	fprintf(fp, "coef0 %.17g\n", param.coef0);
 
     int nr_class = model->nr_class;
@@ -2492,8 +2990,14 @@ int svm_save_model(const char *model_file_name, const svm_model *model)
 
     {
 	fprintf(fp, "rho");
-	for (int i=0; i<nr_class*(nr_class-1)/2; i++)
-	    fprintf(fp, " %.17g", model->rho[i]);
+	if (param.svm_type == C_RNK || param.svm_type == SVORIM) {
+	    for (int i=0; i<nr_class; i++)
+		fprintf(fp, " %g", model->rho[i]);
+	    nr_class = 2; //fake
+	} else {
+	    for (int i=0; i<nr_class*(nr_class-1)/2; i++)
+		fprintf(fp," %.17g", model->rho[i]);
+	}
 	fprintf(fp, "\n");
     }
 
@@ -2529,18 +3033,15 @@ int svm_save_model(const char *model_file_name, const svm_model *model)
     const svm_node * const *SV = model->SV;
 
     for (int i=0; i<l; i++) {
+	const svm_node *p = SV[i];
+
 	for (int j=0; j<nr_class-1; j++)
 	    fprintf(fp, "%.17g ", sv_coef[j][i]);
 
-	const svm_node *p = SV[i];
-
-	if (param.kernel_type == PRECOMPUTED)
-	    fprintf(fp, "0:%d ", (int)(p->value));
-	else
-	    while (p->index != -1) {
-		fprintf(fp, "%d:%.8g ", p->index, p->value);
-		p++;
-	    }
+	while (p->index != -1) {
+	    fprintf(fp, "%d:%.8g ", p->index, p->value);
+	    p++;
+	}
 	fprintf(fp, "\n");
     }
 
@@ -2590,7 +3091,7 @@ static bool read_model_header(FILE *fp, svm_model* model)
     param.weight_label = NULL;
     param.weight = NULL;
 
-    char cmd[81];
+    char cmd[1025];
     while (1) {
 	FSCANF(fp, "%80s", cmd);
 
@@ -2631,7 +3132,12 @@ static bool read_model_header(FILE *fp, svm_model* model)
 	else if (strcmp(cmd, "total_sv")==0)
 	    FSCANF(fp, "%d", &model->l);
 	else if (strcmp(cmd, "rho")==0) {
-	    int n = model->nr_class * (model->nr_class-1)/2;
+	    int n;
+
+	    if (model->param.svm_type == C_RNK || model->param.svm_type == SVORIM)
+		n = model->nr_class;
+	    else
+		n = model->nr_class * (model->nr_class-1)/2;
 	    model->rho = Malloc(double, n);
 	    for (int i=0; i<n; i++)
 		FSCANF(fp, "%lf", &model->rho[i]);
@@ -2770,6 +3276,12 @@ void svm_free_model_content (svm_model *model_ptr)
 {
     if (model_ptr->free_sv && model_ptr->l > 0 && model_ptr->SV != NULL)
 	free((void *)(model_ptr->SV[0]));
+
+    if (model_ptr->param.svm_type == C_RNK ||
+	model_ptr->param.svm_type == SVORIM) {
+	model_ptr->nr_class = 2;
+    }
+
     if (model_ptr->sv_coef) {
 	for (int i=0; i<model_ptr->nr_class-1; i++)
 	    free(model_ptr->sv_coef[i]);
@@ -2825,7 +3337,9 @@ const char *svm_check_parameter (const svm_problem *prob,
 	svm_type != NU_SVC &&
 	svm_type != ONE_CLASS &&
 	svm_type != EPSILON_SVR &&
-	svm_type != NU_SVR)
+	svm_type != NU_SVR &&
+	svm_type != C_RNK &&
+	svm_type != SVORIM)
 	return "unknown svm type";
 
     // kernel_type, degree
@@ -2835,7 +3349,10 @@ const char *svm_check_parameter (const svm_problem *prob,
 	kernel_type != POLY &&
 	kernel_type != RBF &&
 	kernel_type != SIGMOID &&
-	kernel_type != PRECOMPUTED)
+	kernel_type != STUMP &&
+	kernel_type != PERC &&
+	kernel_type != LAPLACE &&
+	kernel_type != EXPO)
 	return "unknown kernel type";
 
     if (param->gamma < 0)
