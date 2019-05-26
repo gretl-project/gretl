@@ -2218,6 +2218,7 @@ int restrict_sample (const char *param, const int *list,
     fprintf(stderr, "\nrestrict_sample: param='%s'\n", param);
     fprintf(stderr, " dset=%p, state=%p, fullset=%p\n", (void *) dset,
 	    (void *) state, (void *) fullset);
+    printlist(list, "list param");
 #endif
 
     if (opt & OPT_C) {
@@ -2305,12 +2306,14 @@ int restrict_sample (const char *param, const int *list,
 		   time-series character of the dataset
 		*/
 		err = handle_ts_restrict(mask, dset, opt, t1);
-	    } else {
+	    } else if (!permanent) {
 		/* just move the sample range pointers, avoiding
 		   the overhead of creating a parallel dataset
 		*/
 		dset->t1 = t1;
 		dset->t2 = t2;
+	    } else {
+		err = restrict_sample_from_mask(mask, dset, opt);
 	    }
 	} else {
 	    err = restrict_sample_from_mask(mask, dset, opt);
