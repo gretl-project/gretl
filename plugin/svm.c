@@ -60,9 +60,10 @@ enum {
     W_SVPARM  = 1 << 5, /* saving tuned params to bundle? */
     W_FOLDVAR = 1 << 6, /* caller-supplied folds variable? */
     W_YSCALE  = 1 << 7, /* scaling the dependent var? */
-    W_CONSEC  = 1 << 8, /* using consective folds? */
+    W_CONSEC  = 1 << 8, /* using consecutive folds? */
     W_REFOLD  = 1 << 9, /* folds differ across x-validation calls? */
-    W_INTDEP  = 1 << 10 /* dependent variable is integer-valued */
+    W_INTDEP  = 1 << 10, /* dependent variable is integer-valued */
+    W_NOTRAIN = 1 << 11  /* not doing any training */
 };
 
 enum {
@@ -2505,23 +2506,53 @@ static int check_folds_series (const int *list,
 static int get_optional_int (gretl_bundle *b, const char *key,
 			     int *ival, int *err)
 {
-    if (!*err && gretl_bundle_has_key(b, key)) {
-	*ival = gretl_bundle_get_int(b, key, err);
-	return (*err == 0);
-    } else {
-	return 0;
+    GretlType type = 0;
+    void *ptr;
+
+    ptr = gretl_bundle_get_data(b, key, &type, NULL, NULL);
+
+    if (ptr != NULL) {
+	if (type == GRETL_TYPE_INT) {
+	    *ival = *(int *) ptr;
+	    return 1;
+	} else if (type == GRETL_TYPE_DOUBLE) {
+	    *ival = *(double *) ptr;
+	    return 1;
+	} else if (type == GRETL_TYPE_UNSIGNED) {
+	    *ival = *(unsigned *) ptr;
+	    return 1;
+	} else {
+	    *err = E_TYPES;
+	}
     }
+
+    return 0;
 }
 
 static int get_optional_unsigned (gretl_bundle *b, const char *key,
 				  unsigned int *uval, int *err)
 {
-    if (!*err && gretl_bundle_has_key(b, key)) {
-	*uval = gretl_bundle_get_unsigned(b, key, err);
-	return (*err == 0);
-    } else {
-	return 0;
+    GretlType type = 0;
+    void *ptr;
+
+    ptr = gretl_bundle_get_data(b, key, &type, NULL, NULL);
+
+    if (ptr != NULL) {
+	if (type == GRETL_TYPE_INT) {
+	    *uval = *(int *) ptr;
+	    return 1;
+	} else if (type == GRETL_TYPE_DOUBLE) {
+	    *uval = *(double *) ptr;
+	    return 1;
+	} else if (type == GRETL_TYPE_UNSIGNED) {
+	    *uval = *(unsigned *) ptr;
+	    return 1;
+	} else {
+	    *err = E_TYPES;
+	}
     }
+
+    return 0;
 }
 
 /* Determine if @s is a recognized parameter key: we
@@ -2637,7 +2668,10 @@ static int read_params_bundle (gretl_bundle *bparm,
 	   incoming sample, which was recorded as wrap->t1
 	   after trimming any missing values
 	*/
-	if (ival != 0) {
+	if (ival == 0) {
+	    wrap->flags |= W_NOTRAIN;
+	    pputs(prn, "n_train = 0, no training will be done\n");
+	} else {
 	    int nmax = wrap->t2 - wrap->t1 + 1;
 
 	    if (ival < list[0]) {
@@ -3004,6 +3038,10 @@ static int svm_predict_main (const int *list,
     if (!err && wrap->data_outfile != NULL && wrap->rank <= 0) {
 	err = write_problem(prob1, wrap);
 	report_result(err, prn);
+    }
+
+    if (wrap->flags & W_NOTRAIN) {
+	do_training = 0;
     }
 
     if (!err && loading_model(wrap)) {
