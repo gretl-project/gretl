@@ -42,7 +42,7 @@ typedef struct grid_row_ grid_row;
 /* the following need to be in sync with svmlib.h */
 
 static const char *svm_type_names[] = {
-    "C-SVC", "nu-SVC", "one-class", "epsilon-SVR", "nu-SVR",
+    "C-SVC", "nu-SVC", "one-class", "eps-SVR", "nu-SVR",
     "C-rnk", NULL
 };
 
@@ -299,7 +299,7 @@ static int type_value_from_string (const char *s, int i,
     if (i == 0) {
 	/* SVM type */
 	for (j=0; svm_type_names[j] != NULL; j++) {
-	    if (!strcmp(s, svm_type_names[j])) {
+	    if (!g_ascii_strcasecmp(s, svm_type_names[j])) {
 		return j;
 	    }
 	}
@@ -307,7 +307,7 @@ static int type_value_from_string (const char *s, int i,
     } else {
 	/* kernel type */
 	for (j=0; kernel_type_names[j] != NULL; j++) {
-	    if (!strcmp(s, kernel_type_names[j])) {
+	    if (!g_ascii_strcasecmp(s, kernel_type_names[j])) {
 		return j;
 	    }
 	}
