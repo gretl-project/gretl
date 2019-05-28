@@ -304,6 +304,7 @@ static int type_value_from_string (const char *s, int i,
 	    }
 	}
 	pprintf(prn, "%s: unrecognized SVM type\n", s);
+	*err = E_INVARG;
     } else {
 	/* kernel type */
 	for (j=0; kernel_type_names[j] != NULL; j++) {
@@ -312,6 +313,7 @@ static int type_value_from_string (const char *s, int i,
 	    }
 	}
 	pprintf(prn, "%s: unrecognized kernel type\n", s);
+	*err = E_INVARG;
     }
 
     return -1;
