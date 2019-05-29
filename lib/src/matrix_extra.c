@@ -1574,13 +1574,21 @@ real_matrix_print_to_prn (const gretl_matrix *m,
     }
 
     if (colnames != NULL) {
+	int numeric_names = 1;
+
 	if (rnamelen > 0) {
 	    bufspace(rnamelen + 1, prn);
 	}
 	for (j=0; j<m->cols; j++) {
 	    pprintf(prn, "%*.*s ", strwidth, strwidth, colnames[j]);
+	    if (!numeric_string(colnames[j])) {
+		numeric_names = 0;
+	    }
 	}
 	pputc(prn, '\n');
+	if (numeric_names) {
+	    pputc(prn, '\n');
+	}
     }
 
     if (imin < 0) imin = 0;
@@ -1685,6 +1693,7 @@ static void maybe_print_col_heads (const gretl_matrix *m,
     heads = gretl_matrix_get_colnames(m);
 
     if (heads != NULL) {
+	int numeric = 1;
 	char wtest[32];
 	double x;
 	int j, n;
@@ -1718,8 +1727,14 @@ static void maybe_print_col_heads (const gretl_matrix *m,
 	n = strlen(wtest);
 	for (j=0; j<m->cols; j++) {
 	    pprintf(prn, "%*s", n, heads[j]);
+	    if (!numeric_string(heads[j])) {
+		numeric = 0;
+	    }
 	}
 	pputc(prn, '\n');
+	if (numeric) {
+	    pputc(prn, '\n');
+	}
     }
 }
 
