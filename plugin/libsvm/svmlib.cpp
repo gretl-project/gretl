@@ -99,9 +99,9 @@ private:
     long int size;
     struct head_t
     {
-	head_t *prev, *next; 	// a circular list
+	head_t *prev, *next; // a circular list
 	Qfloat *data;
-	int len; 		// data[0, len) is cached in this entry
+	int len; // data[0, len) is cached in this entry
     };
 
     head_t *head;
@@ -112,10 +112,10 @@ private:
 
 Cache::Cache(int l_, long int size_):l(l_), size(size_)
 {
-    head = (head_t *)calloc(l, sizeof(head_t)); 	// initialized to 0
+    head = (head_t *)calloc(l, sizeof(head_t)); // initialized to 0
     size /= sizeof(Qfloat);
     size -= l * sizeof(head_t) / sizeof(Qfloat);
-    size = max(size, 2 * (long int) l); 	// cache must be large enough for two columns
+    size = max(size, 2 * (long int) l); // cache must be large enough for two columns
     lru_head.next = lru_head.prev = &lru_head;
 }
 
@@ -1772,6 +1772,7 @@ static decision_function svm_train_one(const svm_problem *prob,
     case C_RNK:
 	{
 	    double *thres = Malloc(double, n_class-1);
+
 	    solve_c_rnk(prob, param, alpha, &si, thres, n_class-1);
 	    f.thres = thres;
 	}
@@ -2173,8 +2174,10 @@ static void svm_group_classes(const svm_problem *prob, int *nr_class_ret,
 svm_model *svm_train(const svm_problem *prob, const svm_parameter *param)
 {
     svm_model *model = Malloc(svm_model, 1);
+
     model->param = *param;
     model->free_sv = 0; 	// XXX
+    model->sv_indices = NULL;
 
     // first branch added from svm-rank */
     if (param->svm_type == C_RNK) {
@@ -2191,7 +2194,7 @@ svm_model *svm_train(const svm_problem *prob, const svm_parameter *param)
 	model->probA = NULL; model->probB = NULL;
 	model->sv_coef = Malloc(double *,1);
 
-	decision_function f = svm_train_one(prob,param,0,0,nr_class);
+	decision_function f = svm_train_one(prob, param, 0, 0, nr_class);
 	model->rho = Malloc(double,nr_class);
 	model->rho[0] = f.rho;
 	for (j=1; j<nr_class; ++j) {
@@ -2590,7 +2593,7 @@ int svm_get_nr_sv(const svm_model *model)
 double svm_get_svr_probability(const svm_model *model)
 {
     if ((model->param.svm_type == EPSILON_SVR || model->param.svm_type == NU_SVR) &&
-	model->probA!=NULL)
+	model->probA != NULL)
 	return model->probA[0];
     else {
 	fprintf(stderr, "Model doesn't contain information for SVR probability inference\n");
@@ -3178,7 +3181,8 @@ const char *svm_check_parameter (const svm_problem *prob,
 
     if (svm_type == C_SVC ||
 	svm_type == EPSILON_SVR ||
-	svm_type == NU_SVR)
+	svm_type == NU_SVR ||
+	svm_type == C_RNK)
 	if (param->C <= 0)
 	    return "C <= 0";
 
