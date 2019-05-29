@@ -233,6 +233,23 @@ static int uses_epsilon (const sv_parm *parm)
     return parm->svm_type == EPSILON_SVR;
 }
 
+static int uses_gamma (const sv_parm *parm)
+{
+    return parm->kernel_type == POLY ||
+	parm->kernel_type == RBF ||
+	parm->kernel_type == SIGMOID ||
+	parm->kernel_type == LAPLACE ||
+	parm->kernel_type == EXPO;
+}
+
+static int uses_coef0 (const sv_parm *parm)
+{
+    return parm->kernel_type == POLY ||
+	parm->kernel_type == SIGMOID ||
+	parm->kernel_type == STUMP ||
+	parm->kernel_type == PERC;
+}
+
 static int uses_nu (const sv_parm *parm)
 {
     return parm->svm_type == NU_SVC ||
@@ -493,18 +510,11 @@ static int svm_model_save_to_bundle (const sv_model *model,
 	gretl_bundle_set_int(b, "degree", parm->degree);
     }
 
-    if (parm->kernel_type == POLY ||
-	parm->kernel_type == RBF ||
-	parm->kernel_type == SIGMOID ||
-	parm->kernel_type == LAPLACE ||
-	parm->kernel_type == EXPO) {
+    if (uses_gamma(parm)) {
 	gretl_bundle_set_scalar(b, "gamma", parm->gamma);
     }
 
-    if (parm->kernel_type == POLY ||
-	parm->kernel_type == SIGMOID ||
-	parm->kernel_type == STUMP ||
-	parm->kernel_type == PERC) {
+    if (uses_coef0(parm)) {
 	gretl_bundle_set_scalar(b, "coef0", parm->coef0);
     }
 
@@ -1504,10 +1514,13 @@ static void print_xvalid_iter (sv_parm *parm,
     } else {
 	pputs(prn, "\nCross validation:\n ");
     }
-    pprintf(prn, "C = %g, gamma = %g", parm->C, parm->gamma);
-    if (parm->svm_type == EPSILON_SVR) {
+    pprintf(prn, "C = %g", parm->C);
+    if (uses_gamma(parm)) {
+	pprintf(prn, ", gamma = %g", parm->gamma);
+    }
+    if (uses_epsilon(parm)) {
 	pprintf(prn, ", epsilon = %g", parm->p);
-    } else if (parm->svm_type == NU_SVR) {
+    } else if (uses_nu(parm)) {
 	pprintf(prn, ", nu = %g", parm->nu);
     }
     pprintf(prn, ": %s = %#.8g\n", label, val);
@@ -1729,15 +1742,23 @@ static int grid_set_dimensions (sv_grid *g, const gretl_matrix *m)
     return 0;
 }
 
-static void sv_grid_default (sv_grid *g)
+static void sv_grid_default (sv_grid *g, sv_parm *parm)
 {
+    int gsearch = parm == NULL || uses_gamma(parm);
+
     g->row[G_C].start = -5;
     g->row[G_C].stop = 9; /* grid.py has 15 (too big?) */
     g->row[G_C].step = 2;
 
-    g->row[G_g].start = 3;
-    g->row[G_g].stop = -15;
-    g->row[G_g].step = -2;
+    if (gsearch) {
+	g->row[G_g].start = 3;
+	g->row[G_g].stop = -15;
+	g->row[G_g].step = -2;
+    } else {
+	g->row[G_g].start = 0;
+	g->row[G_g].stop = 0;
+	g->row[G_g].step = 0;
+    }
 
     g->row[G_p].start = 0;
     g->row[G_p].stop = 0;
@@ -1800,6 +1821,7 @@ static double grid_get_p (sv_grid *g, int k)
 }
 
 static int sv_wrapper_add_grid (sv_wrapper *w,
+				sv_parm *parm,
 				const gretl_matrix *m)
 {
     sv_grid *g;
@@ -1821,7 +1843,7 @@ static int sv_wrapper_add_grid (sv_wrapper *w,
 	    err = grid_set_dimensions(g, m);
 	}
     } else {
-	sv_grid_default(g);
+	sv_grid_default(g, parm);
     }
 
     if (err) {
@@ -1942,12 +1964,12 @@ static int do_search_prep (sv_data *data,
 {
     int err = 0;
 
-    if (parm->kernel_type != RBF) {
+    if (0 && parm->kernel_type != RBF) {
 	pputs(prn, "Non-RBF kernel, don't know how to tune parameters\n");
 	sv_wrapper_remove_grid(w);
 	err = E_INVARG;
     } else if (w->grid == NULL) {
-	sv_wrapper_add_grid(w, NULL);
+	sv_wrapper_add_grid(w, parm, NULL);
     }
 
     if (!err && (w->flags & (W_FOLDVAR | W_CONSEC))) {
@@ -2000,15 +2022,18 @@ static void param_search_finalize (sv_parm *parm,
 	write_plot_file(w, parm, fabs(cmax));
     }
 
-    pprintf(prn, "*** Criterion optimized at %g: C=%g, gamma=%g",
-	    fabs(cmax), parm->C, parm->gamma);
-    if (grid->null[G_p]) {
-	pputs(prn, " ***\n");
-    } else if (parm->svm_type == EPSILON_SVR) {
-	pprintf(prn, ", epsilon=%g ***\n", parm->p);
-    } else if (parm->svm_type == NU_SVR) {
-	pprintf(prn, ", nu=%g ***\n", parm->nu);
+    pprintf(prn, "*** Criterion optimized at %g: C=%g", fabs(cmax), parm->C);
+    if (uses_gamma(parm)) {
+	pprintf(prn, ", gamma=%g", parm->gamma);
     }
+    if (grid->null[G_p]) {
+	; /* neither epsilon nor nu used in x-validation */
+    } else if (uses_epsilon(parm)) {
+	pprintf(prn, ", epsilon=%g", parm->p);
+    } else if (uses_nu(parm)) {
+	pprintf(prn, ", nu=%g", parm->nu);
+    }
+    pputs(prn, " ***\n");
 }
 
 #ifdef HAVE_MPI
@@ -2754,7 +2779,7 @@ static int read_params_bundle (gretl_bundle *bparm,
 
 	m = gretl_bundle_get_matrix(bparm, "grid", NULL);
 	if (m != NULL) {
-	    err = sv_wrapper_add_grid(wrap, m);
+	    err = sv_wrapper_add_grid(wrap, NULL, m);
 	    if (!err) {
 		wrap->flags |= W_SEARCH;
 	    }
@@ -2823,7 +2848,7 @@ static int read_params_bundle (gretl_bundle *bparm,
 
     if (!err) {
 	/* param search: at present we only support the RBF kernel */
-	if ((wrap->flags & W_SEARCH) && parm->kernel_type != RBF) {
+	if ((wrap->flags & W_SEARCH) && 0 && parm->kernel_type != RBF) {
 	    gretl_errmsg_set("parameter search is only supported for "
 			     "the RBF kernel at present");
 	    err = E_INVARG;
