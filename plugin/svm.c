@@ -386,9 +386,12 @@ static int set_or_store_sv_parm (sv_parm *parm, gretl_bundle *b,
 						  &type, NULL, &err);
 		if (type == GRETL_TYPE_INT) {
 		    *(int *) elem[i] = *(int *) ptr;
+		} else if (type == GRETL_TYPE_DOUBLE) {
+		    *(int *) elem[i] = *(double *) ptr;
 		} else if (type == GRETL_TYPE_STRING) {
 		    *(int *) elem[i] = type_value_from_string(ptr, i, prn, &err);
 		} else {
+		    fprintf(stderr, "parameter %d, bad option type\n", i);
 		    err = E_TYPES;
 		}
 	    } else if (i >= 8 && i <= 10) {
