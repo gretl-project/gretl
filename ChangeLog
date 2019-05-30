@@ -1,3 +1,11 @@
+version 2019c, in progress
+- New function fzero(): find a root of a nonlinear function
+- GUI plot editor: try to ensure that choice of font carries
+  over in copying a plot to the clipboard
+- svm() function: add support for ordinal data plus small
+  interface improvements
+- GUI model table: show up to three "significance" stars
+
 2019-05-21 version 2019b
 - New command "panplot": plot a single panel-data series
 - "print" command: new --range option to control the
