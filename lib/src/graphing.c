@@ -1307,6 +1307,7 @@ static char *gretl_png_term_line (char *term_line,
  * @ptype: indication of the sort of plot to be made, which
  * may make a difference to the color palette chosen.
  * @flags: plot option flags.
+ * @font: if non-NULL, try to respect a specified font.
  *
  * Constructs a suitable line for sending to gnuplot to invoke
  * the specified "terminal".
@@ -1316,11 +1317,16 @@ static char *gretl_png_term_line (char *term_line,
 
 const char *gretl_gnuplot_term_line (TermType ttype,
 				     PlotType ptype,
-				     GptFlags flags)
+				     GptFlags flags,
+				     const char *font)
 {
     static char term_line[TERMLEN];
 
     *term_line = '\0';
+
+    if (font != NULL && ad_hoc_font[0] == '\0') {
+	strcpy(ad_hoc_font, font);
+    }
 
     if (ttype == GP_TERM_PNG) {
 	double s = default_png_scale;
@@ -1671,8 +1677,8 @@ static FILE *gp_set_up_interactive (char *fname, PlotType ptype,
 	set_gretl_plotfile(fname);
 	if (gui) {
 	    /* set up for PNG output */
-	    fprintf(fp, "%s\n", gretl_gnuplot_term_line(GP_TERM_PNG,
-							ptype, flags));
+	    fprintf(fp, "%s\n", gretl_gnuplot_term_line(GP_TERM_PNG, ptype,
+							flags, NULL));
 	    if (default_png_scale != 1.0) {
 		gretl_push_c_numeric_locale();
 		fprintf(fp, "# scale = %.1f\n", default_png_scale);

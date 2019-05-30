@@ -163,7 +163,8 @@ typedef enum {
 
 const char *gretl_gnuplot_term_line (TermType ttype,
 				     PlotType ptype,
-				     GptFlags flags);
+				     GptFlags flags,
+				     const char *font);
 
 const char *get_png_line_for_plotspec (const GPT_SPEC *spec);
 

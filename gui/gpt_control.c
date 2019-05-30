@@ -497,7 +497,7 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 	    } else {
 		tline = gretl_gnuplot_term_line(GP_TERM_PNG,
 						PLOT_REGULAR,
-						flags);
+						flags, NULL);
 	    }
 	    fprintf(ftmp, "%s\n", tline);
 	    if (strstr(tline, "encoding") == NULL) {
@@ -704,7 +704,8 @@ static int revise_plot_file (GPT_SPEC *spec,
 	if (termstr == NULL) {
 	    termstr = gretl_gnuplot_term_line(spec->termtype,
 					      spec->code,
-					      spec->flags);
+					      spec->flags,
+					      spec->fontstr);
 	}
 	fprintf(fpout, "%s\n", termstr);
 	if (mono) {
