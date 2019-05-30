@@ -7076,9 +7076,9 @@ int gretl_join_data (const char *fname,
 	    if (add_v) {
 		pputs(prn, _("Data appended OK\n"));
 	    } else if (modified) {
-		pputs(prn, "Data modified OK\n");
+		pputs(prn, _("Data modified OK\n"));
 	    } else {
-		pputs(prn, "No changes were nade to the dataset\n");
+		pputs(prn, _("No changes were made to the dataset\n"));
 	    }
 	}
     }
