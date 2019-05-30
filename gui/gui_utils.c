@@ -1789,9 +1789,11 @@ gchar *title_from_filename (const char *fname,
 			    int role,
 			    gboolean prepend)
 {
-    gchar *title = NULL;
+    gchar *base, *title = NULL;
 
-    if (strstr(fname, "script_tmp") || strstr(fname, "session.inp")) {
+    base = g_path_get_basename(fname);
+
+    if (!strcmp(base, "session.inp") || !strncmp(base, "script_tmp.", 11)) {
 	if (role == EDIT_GP) {
 	    title = g_strdup(_("gretl: edit plot commands"));
 	} else if (role == EDIT_R) {
@@ -1813,16 +1815,14 @@ gchar *title_from_filename (const char *fname,
 	} else {
 	    title = g_strdup(_("gretl: untitled"));
 	}
+    } else if (prepend) {
+	title = g_strdup_printf("gretl: %s", base);
     } else {
-	gchar *tname = g_path_get_basename(fname);
-
-	if (prepend) {
-	    title = g_strdup_printf("gretl: %s", tname);
-	    g_free(tname);
-	} else {
-	    title = tname;
-	}
+	title = base;
+	base = NULL; /* don't free */
     }
+
+    g_free(base);
 
     return title;
 }
