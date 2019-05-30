@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* model_table.c for gretl */
@@ -73,7 +73,7 @@ static int real_table_n_models (void)
 	}
     }
 
-    return len;    
+    return len;
 }
 
 static int model_table_too_many (int gui)
@@ -178,7 +178,7 @@ void clear_model_table (int on_exit, PRN *prn)
     n_params = 0;
 
     n_models = 0;
-    
+
     if (prn != NULL) {
 	pputs(prn, _("Model table cleared"));
 	pputc(prn, '\n');
@@ -206,7 +206,7 @@ static int model_table_precheck (MODEL *pmod, int add_mode)
 
     if (pmod == NULL) {
 	return 1;
-    }    
+    }
 
     /* various sorts of models that will not work */
     if (pmod->ci == NLS || pmod->ci == MLE || pmod->ci == GMM ||
@@ -280,7 +280,7 @@ static int real_add_to_model_table (MODEL *pmod, int add_mode,
 
 	for (i=n_models; i<n; i++) {
 	    mods[i] = NULL;
-	}	
+	}
 
 	table_models = mods;
 	n_models = n;
@@ -329,11 +329,11 @@ void remove_from_model_table (MODEL *pmod)
 	    int i;
 
 	    gretl_object_unref(pmod, GRETL_OBJ_EQN);
-	    
+
 	    for (i=pos-1; i<n_models-1; i++) {
 		table_models[i] = table_models[i+1];
 	    }
-	    
+
 	    table_models[n_models-1] = NULL;
 	    n_models--;
 	}
@@ -384,7 +384,7 @@ static int make_full_param_list (void)
 	    if (first) {
 		depvarnum = gretl_model_get_depvar(pmod);
 		first = 0;
-	    } 
+	    }
 	    err = add_to_param_list(pmod);
 	}
     }
@@ -396,7 +396,7 @@ static int model_table_is_empty (void)
 {
     int i, n = 0;
 
-    if (n_models == 0 || table_models == NULL) { 
+    if (n_models == 0 || table_models == NULL) {
 	return 1;
     }
 
@@ -421,7 +421,7 @@ static int common_estimator (void)
 		return 0;
 	    }
 	}
-    }  
+    }
 
     return ci0;
 }
@@ -442,7 +442,7 @@ static int common_df (void)
 		}
 	    }
 	}
-    }  
+    }
 
     return 1;
 }
@@ -480,19 +480,30 @@ static const char *short_estimator_string (const MODEL *pmod, PRN *prn)
     }
 }
 
-static const char *get_asts (double pval)
+static const char *get_asts (double pval, int tex)
 {
-    return (pval >= 0.1)? "  " : (pval >= 0.05)? "* " : "**";
-}
-
-static const char *tex_get_asts (double pval)
-{
-    return (pval >= 0.1)? "" : (pval >= 0.05)? "$^{*}$" : "$^{**}$";
+    if (pval < 0.01) {
+	return tex ? "$^{***}$" : "***";
+    } else if (pval < 0.05) {
+	return tex ? "$^{**}$" : "**";
+    } else if (pval < 0.10) {
+	return tex ? "$^{*}$" : "*";
+    } else {
+	return tex ? "" : "   ";
+    }
 }
 
 static const char *get_pre_asts (double pval)
 {
-    return (pval >= 0.1)? "" : (pval >= 0.05)? "$\\,$" : "$\\,\\,$";
+    if (pval < 0.01) {
+	return "$\\,\\,\\,$";
+    } else if (pval < 0.05) {
+	return "$\\,\\,$";
+    } else if (pval < 0.10) {
+	return "$\\,$";
+    } else {
+	return "";
+    }
 }
 
 static void terminate_coeff_row (int namewidth, PRN *prn)
@@ -579,17 +590,17 @@ static void print_model_table_coeffs (int namewidth, int colwidth, PRN *prn)
 		    if (tex) {
 			if (x < 0) {
 			    pprintf(prn, "& %s$-$%s%s ", get_pre_asts(pval),
-				    numstr + 1, tex_get_asts(pval));
+				    numstr + 1, get_asts(pval, 1));
 			} else {
-			    pprintf(prn, "& %s%s%s ", get_pre_asts(pval), 
-				    numstr, tex_get_asts(pval));
+			    pprintf(prn, "& %s%s%s ", get_pre_asts(pval),
+				    numstr, get_asts(pval, 1));
 			}
 		    } else if (rtf) {
-			pprintf(prn, "\\qc %s%s\\cell ", numstr, get_asts(pval));
+			pprintf(prn, "\\qc %s%s\\cell ", numstr, get_asts(pval, 0));
 		    } else {
-			/* note: strlen(asts) = 2 */
-			pprintf(prn, "%*s%s", (first_coeff)? colwidth : colwidth - 2,
-				numstr, get_asts(pval));
+			/* note: strlen(asts) = 3 */
+			pprintf(prn, "%*s%s", (first_coeff)? colwidth : colwidth - 3,
+				numstr, get_asts(pval, 0));
 		    }
 		} else {
 		    /* not showing asterisks */
@@ -749,7 +760,7 @@ static int catch_bad_point (char *s)
     return (c == '.' || c == ',');
 }
 
-static void print_equation_stats (int width0, int colwidth, PRN *prn, 
+static void print_equation_stats (int width0, int colwidth, PRN *prn,
 				  int *binary)
 {
     const MODEL *pmod;
@@ -802,10 +813,10 @@ static void print_equation_stats (int width0, int colwidth, PRN *prn,
 	if (tex) {
 	    pputs(prn, (same_df)? "$R^2$" : "$\\bar R^2$ ");
 	} else if (rtf) {
-	    pprintf(prn, "\\qc %s\\cell ", 
+	    pprintf(prn, "\\qc %s\\cell ",
 		    (same_df)? "R{\\super 2}" : A_("Adj. R{\\super 2}"));
 	} else {
-	    pprintf(prn, "%*s", width0, (same_df)? _("R-squared") : 
+	    pprintf(prn, "%*s", width0, (same_df)? _("R-squared") :
 		    _("Adj. R**2"));
 	}
 
@@ -824,7 +835,7 @@ static void print_equation_stats (int width0, int colwidth, PRN *prn,
 		    pputs(prn, "\\qc \\cell ");
 		} else {
 		    pputs(prn, "            ");
-		}		
+		}
 	    } else if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
 		*binary = 1;
 		/* McFadden */
@@ -880,7 +891,7 @@ static void print_equation_stats (int width0, int colwidth, PRN *prn,
 		    pputs(prn, "\\qc \\cell ");
 		} else {
 		    pputs(prn, "            ");
-		}		
+		}
 	    } else {
 		if (tex) {
 		    if (pmod->lnL > 0) {
@@ -987,7 +998,7 @@ static void print_estimator_strings (int colwidth, PRN *prn)
 	    } else {
 		strcpy(est, _(s));
 		print_centered(est, colwidth, prn);
-	    }		
+	    }
 	}
     }
 }
@@ -1001,7 +1012,7 @@ static void print_model_head (const MODEL *pmod, int j, int colwidth,
 	sprintf(targ, "(%d)", j + 1);
     } else if (colheads == COLHEAD_ROMAN) {
 	const char *R[] = {
-	    "I", "II", "III", "IV", "V", "VI", 
+	    "I", "II", "III", "IV", "V", "VI",
 	    "VII", "VIII", "IX", "X", "XI", "XII"
 	};
 
@@ -1025,7 +1036,7 @@ static void print_model_head (const MODEL *pmod, int j, int colwidth,
 	    strncat(targ, pmod->name, 31);
 	} else {
 	    sprintf(targ, A_("Model %d"), pmod->ID);
-	}	
+	}
     } else {
 	if (pmod->name != NULL) {
 	    *targ = '\0';
@@ -1055,6 +1066,12 @@ static void print_column_heads (int colwidth, PRN *prn)
     }
 }
 
+static const char *sigstrs[] = {
+    N_("significant at the 10 percent level"),
+    N_("significant at the 5 percent level"),
+    N_("significant at the 1 percent level")
+};
+
 static void plain_print_model_table (PRN *prn)
 {
     int namelen = mtab_max_namelen();
@@ -1064,7 +1081,7 @@ static void plain_print_model_table (PRN *prn)
 
     if (ci > 0) {
 	/* all models use same estimation procedure */
-	pprintf(prn, _("%s estimates"), 
+	pprintf(prn, _("%s estimates"),
 		_(estimator_string(table_models[0], prn)));
 	pputc(prn, '\n');
     }
@@ -1075,14 +1092,14 @@ static void plain_print_model_table (PRN *prn)
     bufspace(namelen + 4, prn);
     print_column_heads(colwidth, prn);
     pputc(prn, '\n');
-    
+
     if (ci == 0) {
 	bufspace(namelen + 4, prn);
 	print_estimator_strings(colwidth, prn);
 	pputc(prn, '\n');
     }
 
-    pputc(prn, '\n'); 
+    pputc(prn, '\n');
 
     print_model_table_coeffs(namelen, colwidth, prn);
     print_equation_stats(namelen + 1, colwidth, prn, &binary);
@@ -1098,10 +1115,11 @@ static void plain_print_model_table (PRN *prn)
     }
 
     if (do_asts) {
-	pprintf(prn, "%s\n", _("* indicates significance at the 10 percent level"));
-	pprintf(prn, "%s\n", _("** indicates significance at the 5 percent level"));
+	pprintf(prn, "*   %s\n", _(sigstrs[0]));
+	pprintf(prn, "**  %s\n", _(sigstrs[1]));
+	pprintf(prn, "*** %s\n", _(sigstrs[2]));
     }
-   
+
     if (binary) {
 	pprintf(prn, "%s\n", _("For logit and probit, R-squared is "
 			       "McFadden's pseudo-R-squared"));
@@ -1132,7 +1150,7 @@ int display_model_table (int gui)
 			  &do_pvals,
 			  &do_asts,
 			  &mt_figs,
-			  &mt_fmt);    
+			  &mt_fmt);
 
     plain_print_model_table(prn);
 
@@ -1140,7 +1158,7 @@ int display_model_table (int gui)
 	winwidth = 90;
     }
 
-    view_buffer(prn, winwidth, 450, _("gretl: model table"), VIEW_MODELTABLE, 
+    view_buffer(prn, winwidth, 450, _("gretl: model table"), VIEW_MODELTABLE,
 		NULL);
 
     return 0;
@@ -1172,7 +1190,7 @@ static int tex_print_model_table (PRN *prn)
 
     if (ci > 0) {
 	/* all models use same estimation procedure */
-	pprintf(prn, A_("%s estimates"), 
+	pprintf(prn, A_("%s estimates"),
 		A_(estimator_string(table_models[0], prn)));
 	pputs(prn, "\\\\\n");
     }
@@ -1191,14 +1209,14 @@ static int tex_print_model_table (PRN *prn)
 
     print_column_heads(0, prn);
     pputs(prn, "\\\\ ");
-    
+
     if (ci == 0) {
 	pputc(prn, '\n');
 	print_estimator_strings(0, prn);
 	pputs(prn, "\\\\ ");
     }
 
-    pputs(prn, " [6pt] \n");   
+    pputs(prn, " [6pt] \n");
 
     print_model_table_coeffs(0, 0, prn);
     print_equation_stats(0, 0, prn, &binary);
@@ -1217,10 +1235,9 @@ static int tex_print_model_table (PRN *prn)
     }
 
     if (do_asts) {
-	pprintf(prn, "{}%s\\\\\n", 
-		A_("* indicates significance at the 10 percent level"));
-	pprintf(prn, "{}%s\\\\\n", 
-		A_("** indicates significance at the 5 percent level"));
+	pprintf(prn, "{}* %s\\\\\n", A_(sigstrs[0]));
+	pprintf(prn, "{}** %s\\\\\n", A_(sigstrs[1]));
+	pprintf(prn, "{}*** %s\\\\\n", A_(sigstrs[2]));
     }
 
     if (binary) {
@@ -1270,19 +1287,19 @@ static int rtf_print_model_table (PRN *prn)
     if (ci > 0) {
 	/* all models use same estimation procedure */
 	pputs(prn, "\\par \\qc ");
-	pprintf(prn, A_("%s estimates"), 
+	pprintf(prn, A_("%s estimates"),
 		A_(estimator_string(table_models[0], prn)));
 	pputc(prn, '\n');
     }
 
-    pprintf(prn, "\\par \\qc %s: %s\n\\par\n\\par\n{", 
+    pprintf(prn, "\\par \\qc %s: %s\n\\par\n\\par\n{",
 	    A_("Dependent variable"), dataset->varname[depvarnum]);
 
     print_rtf_row_spec(prn, 1);
     pputs(prn, "\\intbl \\qc \\cell ");
     print_column_heads(0, prn);
     pputs(prn, "\\intbl \\row\n");
-    
+
     if (ci == 0) {
 	pputs(prn, "\\intbl \\qc \\cell ");
 	print_estimator_strings(0, prn);
@@ -1305,10 +1322,9 @@ static int rtf_print_model_table (PRN *prn)
     }
 
     if (do_asts) {
-	pprintf(prn, "\\par \\qc %s\n", 
-		A_("* indicates significance at the 10 percent level"));
-	pprintf(prn, "\\par \\qc %s\n", 
-		A_("** indicates significance at the 5 percent level"));
+	pprintf(prn, "\\par \\qc * %s\n", A_(sigstrs[0]));
+	pprintf(prn, "\\par \\qc ** %s\n", A_(sigstrs[1]));
+	pprintf(prn, "\\par \\qc *** %s\n", A_(sigstrs[2]));
     }
 
     if (binary) {
@@ -1331,7 +1347,7 @@ int special_print_model_table (PRN *prn)
 			  &do_pvals,
 			  &do_asts,
 			  &mt_figs,
-			  &mt_fmt);    
+			  &mt_fmt);
 
     if (tex_format(prn)) {
 	return tex_print_model_table(prn);
@@ -1383,7 +1399,7 @@ static int cli_modeltab_add (PRN *prn)
     return err;
 }
 
-static int print_model_table_direct (const char *fname, 
+static int print_model_table_direct (const char *fname,
 				     gretlopt opt,
 				     PRN *msgprn)
 {
@@ -1412,7 +1428,7 @@ static int print_model_table_direct (const char *fname,
 	gretl_print_set_format(prn, GRETL_FORMAT_TEX);
 	if (opt & OPT_C) {
 	    gretl_print_toggle_doc_flag(prn);
-	}	
+	}
     } else if (has_suffix(fname, ".rtf")) {
 	gretl_print_set_format(prn, GRETL_FORMAT_RTF);
     }
@@ -1446,7 +1462,7 @@ int modeltab_exec (const char *param, gretlopt opt, PRN *prn)
 	   command params; otherwise a param value is
 	   needed
 	*/
-	return E_PARSE;    
+	return E_PARSE;
     } else if (opt & OPT_O) {
 	/* --output="filename" */
 	const char *outfile;
@@ -1492,7 +1508,7 @@ void format_model_table (windata_t *vwin)
     pv_opt = do_pvals;
     ast_opt = do_asts;
     figs = mt_figs;
-    fmt = mt_fmt;    
+    fmt = mt_fmt;
 
     resp = model_table_dialog(&colhead_opt, &se_opt, &pv_opt, &ast_opt,
 			      &figs, &fmt, vwin->main);
@@ -1501,7 +1517,7 @@ void format_model_table (windata_t *vwin)
 	return;
     }
 
-    if (colhead_opt == colheads && se_opt == use_tstats && 
+    if (colhead_opt == colheads && se_opt == use_tstats &&
 	pv_opt == do_pvals && ast_opt == do_asts && figs == mt_figs) {
 	/* no-op */
 	return;
@@ -1522,7 +1538,7 @@ void format_model_table (windata_t *vwin)
 			      do_pvals,
 			      do_asts,
 			      mt_figs,
-			      mt_fmt);	
+			      mt_fmt);
 
 	if (bufopen(&prn)) {
 	    return;
@@ -1533,7 +1549,6 @@ void format_model_table (windata_t *vwin)
 	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
 	gtk_text_buffer_set_text(buf, "", -1);
 	textview_set_text(vwin->text, newtext);
-	gretl_print_destroy(prn); 
+	gretl_print_destroy(prn);
     }
 }
-
