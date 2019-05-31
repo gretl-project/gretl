@@ -4813,6 +4813,8 @@ gretl_matrix *gretl_matrix_XTX_new (const gretl_matrix *X)
 	matrix_multiply_self_transpose(X, 1, XTX, GRETL_MOD_NONE);
     }
 
+    maybe_preserve_names(XTX, X, 1, 0);
+
     return XTX;
 }
 
