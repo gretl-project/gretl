@@ -511,7 +511,7 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 	*/
 	write_plot_output_line(NULL, ftmp);
 
-	if (add_line_styles) {
+	if (spec != NULL && add_line_styles) {
 	    write_plot_line_styles(spec->code, ftmp);
 	}
 
