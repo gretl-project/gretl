@@ -850,7 +850,7 @@ void xcorrgm_callback (void)
 void cond_number_callback (void)
 {
     gretl_matrix *X = NULL;
-    double cnumber;
+    gretl_matrix *XXi = NULL;
     int *list = main_window_selection_as_list();
     int resp, err = 0;
 
@@ -879,30 +879,36 @@ void cond_number_callback (void)
 				 dataset->t2,
 				 M_MISSING_SKIP,
 				 &err);
-
     if (!err) {
-	cnumber = gretl_matrix_cond_index(X, &err);
+	XXi = gretl_matrix_XTX_new(X);
+	if (XXi == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    err = gretl_invert_symmetric_matrix(XXi);
+	}
     }
 
     if (err) {
 	gui_errmsg(err);
     } else {
+	gretl_matrix *(*bkwfunc) (const gretl_matrix *, gretl_array *,
+				  PRN *, int *);
 	PRN *prn = NULL;
 
-	if (bufopen(&prn)) {
-	    return;
+	bkwfunc = gui_get_plugin_function("bkw_matrix");
+	if (bkwfunc != NULL && bufopen(&prn) == 0) {
+	    (*bkwfunc)(XXi, NULL, prn, &err);
+	    if (err) {
+		gui_errmsg(err);
+	    } else {
+		view_buffer(prn, 78, 400, _("Collinearity check"), PRINT, NULL);
+		/* record command? */
+	    }
 	}
-	pputs(prn, _("For a matrix composed of the selected series:"));
-	pputc(prn, '\n');
-	gretl_list_print(list, dataset, prn);
-	pprintf(prn, "\n%s = %g\n\n", _("condition number"), cnumber);
-	pputs(prn, _("A condition number greater than 50 is commonly regarded as\n"
-		     "indicating strong collinearity."));
-	pputc(prn, '\n');
-	view_buffer(prn, 78, 200, _("Collinearity check"), PRINT, NULL);
     }
 
     gretl_matrix_free(X);
+    gretl_matrix_free(XXi);
     free(list);
 }
 
