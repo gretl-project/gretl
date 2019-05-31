@@ -21,6 +21,8 @@
 #include "matrix_extra.h"
 #include "version.h"
 
+#define NAMEWIDTH 9
+
 static void BKW_print (gretl_matrix *B, int namelen, PRN *prn);
 
 /* run the vif regression for regressor k */
@@ -104,28 +106,44 @@ static gretl_vector *model_vif_vector (MODEL *pmod, const int *xlist,
     return vif;
 }
 
-static void bkw_add_colnames (gretl_matrix *BKW,
-			      gretl_array *pnames)
+static int bkw_add_colnames (gretl_matrix *BKW,
+			     gretl_array *pnames)
 {
     char **S = strings_array_new(BKW->cols);
+    int maxlen = 0;
 
     if (S != NULL) {
-	int i, k = BKW->cols - 2;
-	char tmp[16];
+	int i, len, k = BKW->cols - 2;
+	char *si, tmp[16];
 
 	S[0] = gretl_strdup("lambda");
 	S[1] = gretl_strdup("cond");
+
 	for (i=0; i<k; i++) {
 	    if (pnames != NULL) {
-		S[i+2] = gretl_array_get_data(pnames, i);
-		gretl_array_set_data(pnames, i, NULL);
+		si = gretl_array_get_data(pnames, i);
+		if (strlen(si) > NAMEWIDTH) {
+		    *tmp = '\0';
+		    strncat(tmp, si, NAMEWIDTH - 1);
+		    strcat(tmp, "~");
+		    S[i+2] = gretl_strdup(tmp);
+		} else {
+		    S[i+2] = gretl_array_get_data(pnames, i);
+		    gretl_array_set_data(pnames, i, NULL);
+		}
 	    } else {
 		sprintf(tmp, "x%d", i+1);
 		S[i+2] = gretl_strdup(tmp);
 	    }
+	    len = strlen(S[i+2]);
+	    if (len > maxlen) {
+		maxlen = len;
+	    }
 	}
 	gretl_matrix_set_colnames(BKW, S);
     }
+
+    return maxlen;
 }
 
 /* note: we're assuming in bkw_matrix() that the array argument
@@ -135,7 +153,7 @@ static void bkw_add_colnames (gretl_matrix *BKW,
 */
 
 gretl_matrix *bkw_matrix (const gretl_matrix *VCV,
-			  gretl_array *pnames, int namelen,
+			  gretl_array *pnames,
 			  PRN *prn, int *err)
 {
     gretl_matrix *Vi = NULL;
@@ -146,13 +164,16 @@ gretl_matrix *bkw_matrix (const gretl_matrix *VCV,
     gretl_matrix *BKW = NULL;
     double x, y;
     int k = VCV->rows;
+    int namelen = 0;
     int i, j;
 
-    if (pnames != NULL && gretl_array_get_length(pnames) != k) {
-	fprintf(stderr, "bkw_matrix: expected %d names but got %d\n",
-		k, gretl_array_get_length(pnames));
-	*err = E_INVARG;
-	return NULL;
+    if (pnames != NULL) {
+	if (gretl_array_get_length(pnames) != k) {
+	    fprintf(stderr, "bkw_matrix: expected %d names but got %d\n",
+		    k, gretl_array_get_length(pnames));
+	    *err = E_INVARG;
+	    return NULL;
+	}
     }
 
     /* copy the covariance matrix */
@@ -235,7 +256,7 @@ gretl_matrix *bkw_matrix (const gretl_matrix *VCV,
 	}
     }
 
-    bkw_add_colnames(BKW, pnames);
+    namelen = bkw_add_colnames(BKW, pnames);
 
  bailout:
 
@@ -414,39 +435,18 @@ static void BKW_print (gretl_matrix *B, int namelen, PRN *prn)
     BKW_analyse(B, maxcond, fmt, prn);
 }
 
-static int maybe_truncate_param_name (char *s)
-{
-    int n = strlen(s);
-
-    if (n > 9) {
-	char tmp[VNAMELEN];
-
-	tmp[0] = '\0';
-	strncat(tmp, s, 8);
-	strcat(tmp, "~");
-	strcpy(s, tmp);
-	return 9;
-    } else {
-	return n;
-    }
-}
-
-static gretl_array *BKW_pnames (MODEL *pmod, DATASET *dset, int *namelen)
+static gretl_array *BKW_pnames (MODEL *pmod, DATASET *dset)
 {
     gretl_array *pnames;
     char pname[VNAMELEN];
     int i, k = pmod->ncoeff;
-    int len, err = 0;
+    int err = 0;
 
     pnames = gretl_array_new(GRETL_TYPE_STRINGS, k, &err);
 
     if (pnames != NULL) {
 	for (i=0; i<pmod->ncoeff; i++) {
 	    gretl_model_get_param_name(pmod, dset, i, pname);
-	    len = maybe_truncate_param_name(pname);
-	    if (len > *namelen) {
-		*namelen = len;
-	    }
 	    gretl_array_set_string(pnames, i, pname, 1);
 	}
     }
@@ -539,11 +539,10 @@ int compute_bkw (MODEL *pmod, DATASET *dset,
     V = gretl_vcv_matrix_from_model(pmod, NULL, &err);
 
     if (!err) {
-	int namelen = 0;
-	gretl_array *pnames = BKW_pnames(pmod, dset, &namelen);
+	gretl_array *pnames = BKW_pnames(pmod, dset);
 	PRN *vprn = quiet ? NULL : prn;
 
-	BKW = bkw_matrix(V, pnames, namelen, vprn, &err);
+	BKW = bkw_matrix(V, pnames, vprn, &err);
 	gretl_array_destroy(pnames);
 	gretl_matrix_free(V);
     }
