@@ -1886,7 +1886,11 @@ static int write_plot_file (sv_wrapper *w,
 	display = iact = 1;
     }
 
-    fp = open_3d_plot_input_file(&iact);
+    if (gui_mode) {
+	fp = open_3d_plot_input_file(&iact);
+    } else {
+	fp = open_plot_input_file(PLOT_USER, 0, &err);
+    }
     if (fp == NULL) {
 	err = E_FOPEN;
 	return err;
@@ -1940,7 +1944,7 @@ static int write_plot_file (sv_wrapper *w,
 
     gretl_pop_c_numeric_locale();
 
-    if (display && iact) {
+    if (gui_mode && display && iact) {
 	fputs("pause mouse close\n", fp);
 	err = finalize_3d_plot_input_file(fp);
 	if (!err && gui_mode) {
