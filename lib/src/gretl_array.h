@@ -126,4 +126,8 @@ void gretl_array_serialize (gretl_array *A, FILE *fp);
 gretl_array *gretl_array_deserialize (void *p1, void *p2,
 				      int *err);
 
+gretl_array *gretl_matrix_col_split (const gretl_matrix *m,
+				     int leadcols, int maxcols,
+				     int *err);
+
 #endif /* GRETL_ARRAY_H_ */

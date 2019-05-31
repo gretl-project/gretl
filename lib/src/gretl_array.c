@@ -1196,3 +1196,103 @@ gretl_array *gretl_array_deserialize (void *p1, void *p2,
 
     return A;
 }
+
+/* In case a matrix is too wide for comfortable printing, split it by
+   column. If there are one or more "leading" columns that should be
+   displayed with each chunk of the matrix this should be signalled
+   via a non-zero value for @leadcols. The maximum number of columns
+   per chunk (including the leading columns, if any) is set by the
+   @maxcols argument.
+
+   The return value is an array of suitably sized matrices. If @m
+   has column names attached these are distributed to the matrices
+   in the array.
+*/
+
+gretl_array *gretl_matrix_col_split (const gretl_matrix *m,
+				     int leadcols, int maxcols,
+				     int *err)
+{
+    gretl_array *a = NULL;
+    int maincols, nm, rem;
+
+    if (gretl_is_null_matrix(m)) {
+	*err = E_INVARG;
+    } else {
+	maincols = m->cols - leadcols;
+	if (maincols <= 0) {
+	    *err = E_INVARG;
+	}
+    }
+
+    if (!*err) {
+	/* how many matrices will we need? */
+	nm = maincols / (maxcols - leadcols);
+	rem = maincols % (maxcols - leadcols);
+	nm += rem > 0;
+	if (nm == 1) {
+	    /* nothing to be done */
+	    *err = E_INVARG;
+	}
+    }
+
+    if (!*err) {
+	a = gretl_array_new(GRETL_TYPE_MATRICES, nm, err);
+    }
+
+    if (!*err) {
+	const char **S0 = gretl_matrix_get_colnames(m);
+	char **Si = NULL;
+	size_t rsize = m->rows * sizeof(double);
+	const double *src;
+	double *targ;
+	gretl_matrix *ai;
+	int i, j, cols, spos;
+
+	/* initial read position for "main" columns */
+	src = m->val + leadcols * m->rows;
+	spos = leadcols;
+
+	for (i=0; i<nm && !*err; i++) {
+	    cols = (i == nm-1 && rem > 0)? rem + leadcols : maxcols;
+	    ai = gretl_zero_matrix_new(m->rows, cols);
+	    if (ai == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		Si = S0 == NULL ? NULL : strings_array_new(cols);
+		/* initial write position */
+		targ = ai->val;
+		if (leadcols > 0) {
+		    memcpy(targ, m->val, leadcols * rsize);
+		    targ += leadcols * m->rows;
+		    if (Si != NULL) {
+			/* transcribe column names */
+			for (j=0; j<leadcols; j++) {
+			    Si[j] = gretl_strdup(S0[j]);
+			}
+		    }
+		}
+		/* now handle the "main" columns */
+		cols -= leadcols;
+		memcpy(targ, src, cols * rsize);
+		/* advance the read position */
+		src += cols * m->rows;
+		if (Si != NULL) {
+		    for (j=0; j<cols; j++) {
+			Si[leadcols+j] = gretl_strdup(S0[spos++]);
+		    }
+		    gretl_matrix_set_colnames(ai, Si);
+		}
+		/* stick matrix @i into the array */
+		gretl_array_set_matrix(a, i, ai, 0);
+	    }
+	}
+    }
+
+    if (*err && a != NULL) {
+	gretl_array_destroy(a);
+	a = NULL;
+    }
+
+    return a;
+}
