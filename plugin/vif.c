@@ -21,7 +21,7 @@
 #include "matrix_extra.h"
 #include "version.h"
 
-static void BKW_print (gretl_matrix *B, PRN *prn);
+static void BKW_print (gretl_matrix *B, int namelen, PRN *prn);
 
 /* run the vif regression for regressor k */
 
@@ -135,7 +135,7 @@ static void bkw_add_colnames (gretl_matrix *BKW,
 */
 
 gretl_matrix *bkw_matrix (const gretl_matrix *VCV,
-			  gretl_array *pnames,
+			  gretl_array *pnames, int namelen,
 			  PRN *prn, int *err)
 {
     gretl_matrix *Vi = NULL;
@@ -249,7 +249,7 @@ gretl_matrix *bkw_matrix (const gretl_matrix *VCV,
 	gretl_matrix_free(BKW);
 	BKW = NULL;
     } else if (prn != NULL) {
-	BKW_print(BKW, prn);
+	BKW_print(BKW, namelen, prn);
     }
 
     return BKW;
@@ -264,6 +264,7 @@ static int do_proportion_sums (const gretl_matrix *B,
     char **cnames;
     double x;
     int np = B->cols - 2;
+    int len, namelen = 0;
     int ngp5 = 0;
     int i, j, k;
 
@@ -287,6 +288,10 @@ static int do_proportion_sums (const gretl_matrix *B,
 		if (x >= 0.5) {
 		    P->val[ngp5] = x;
 		    cnames[ngp5] = gretl_strdup(bnames[j]);
+		    len = strlen(cnames[ngp5]);
+		    if (len > namelen) {
+			namelen = len;
+		    }
 		    ngp5++;
 		}
 	    }
@@ -295,10 +300,17 @@ static int do_proportion_sums (const gretl_matrix *B,
     }
 
     if (ngp5 > 0) {
+	char fmt[16];
+	int len = 8;
+
+	if (len < namelen + 1) {
+	    len = namelen + 1;
+	}
+	sprintf(fmt, "%%%d.3f", len);
 	P->cols = ngp5;
 	gretl_matrix_set_colnames(P, cnames);
 	pprintf(prn, "%s:\n\n", _(label));
-	gretl_matrix_print_with_format(P, "%8.3f", 0, 0, prn);
+	gretl_matrix_print_with_format(P, fmt, 0, 0, prn);
 	pputc(prn, '\n');
     } else {
 	pprintf(prn, "%s: 0\n\n", _(label));
@@ -373,7 +385,7 @@ static int BKW_analyse (gretl_matrix *B, double maxcond,
     return err;
 }
 
-static void BKW_print (gretl_matrix *B, PRN *prn)
+static void BKW_print (gretl_matrix *B, int namelen, PRN *prn)
 {
     const char *strs[] = {
 	N_("Belsley-Kuh-Welsch collinearity diagnostics"),
@@ -384,12 +396,16 @@ static void BKW_print (gretl_matrix *B, PRN *prn)
     };
     double maxcond = gretl_matrix_get(B, B->rows - 1, 1);
     int sp = maxcond >= 10000 ? 10 : maxcond >= 1000 ? 9 : 8;
-    char fmt[8];
+    char fmt[16];
+
+    if (sp < namelen + 1) {
+	sp = namelen + 1;
+    }
 
     sprintf(fmt, "%%%d.3f", sp);
     pprintf(prn, "\n%s:\n\n", _(strs[0]));
-    bufspace(25, prn);
-    pprintf(prn, "--- %s ---\n", _(strs[1]));
+    bufspace(2, prn);
+    pprintf(prn, "%s\n\n", _(strs[1]));
     gretl_matrix_print_with_format(B, fmt, 0, 0, prn);
     pprintf(prn, "\n  lambda = %s\n", _(strs[2]));
     pprintf(prn, "  cond   = %s\n", _(strs[3]));
@@ -398,7 +414,7 @@ static void BKW_print (gretl_matrix *B, PRN *prn)
     BKW_analyse(B, maxcond, fmt, prn);
 }
 
-static void maybe_truncate_param_name (char *s)
+static int maybe_truncate_param_name (char *s)
 {
     int n = strlen(s);
 
@@ -409,22 +425,28 @@ static void maybe_truncate_param_name (char *s)
 	strncat(tmp, s, 8);
 	strcat(tmp, "~");
 	strcpy(s, tmp);
+	return 9;
+    } else {
+	return n;
     }
 }
 
-static gretl_array *BKW_pnames (MODEL *pmod, DATASET *dset)
+static gretl_array *BKW_pnames (MODEL *pmod, DATASET *dset, int *namelen)
 {
     gretl_array *pnames;
     char pname[VNAMELEN];
     int i, k = pmod->ncoeff;
-    int err = 0;
+    int len, err = 0;
 
     pnames = gretl_array_new(GRETL_TYPE_STRINGS, k, &err);
 
     if (pnames != NULL) {
 	for (i=0; i<pmod->ncoeff; i++) {
 	    gretl_model_get_param_name(pmod, dset, i, pname);
-	    maybe_truncate_param_name(pname);
+	    len = maybe_truncate_param_name(pname);
+	    if (len > *namelen) {
+		*namelen = len;
+	    }
 	    gretl_array_set_string(pnames, i, pname, 1);
 	}
     }
@@ -517,10 +539,11 @@ int compute_bkw (MODEL *pmod, DATASET *dset,
     V = gretl_vcv_matrix_from_model(pmod, NULL, &err);
 
     if (!err) {
-	gretl_array *pnames = BKW_pnames(pmod, dset);
+	int namelen = 0;
+	gretl_array *pnames = BKW_pnames(pmod, dset, &namelen);
 	PRN *vprn = quiet ? NULL : prn;
 
-	BKW = bkw_matrix(V, pnames, vprn, &err);
+	BKW = bkw_matrix(V, pnames, namelen, vprn, &err);
 	gretl_array_destroy(pnames);
 	gretl_matrix_free(V);
     }
@@ -533,4 +556,3 @@ int compute_bkw (MODEL *pmod, DATASET *dset,
 
     return err;
 }
-
