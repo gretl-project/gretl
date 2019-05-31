@@ -388,7 +388,7 @@ fi
 
 dnl Check for MPI apparatus?
 if test "$try_mpi" = "yes" ; then
-  if test x"${MPICC}" = x ; then
+  if test "x${MPICC}" = x ; then
     AC_DEFUN([AC_PROG_MPICC],
     [AC_CHECK_PROG(HAVE_MPICC,mpicc,yes)])
 
