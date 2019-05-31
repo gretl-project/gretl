@@ -107,29 +107,38 @@ static gretl_vector *model_vif_vector (MODEL *pmod, const int *xlist,
 }
 
 static int bkw_add_colnames (gretl_matrix *BKW,
+			     const gretl_matrix *VCV,
 			     gretl_array *pnames)
 {
     char **S = strings_array_new(BKW->cols);
+    const char **S0 = NULL;
     int maxlen = 0;
+
+    if (pnames == NULL) {
+	S0 = gretl_matrix_get_colnames(VCV);
+    }
 
     if (S != NULL) {
 	int i, len, k = BKW->cols - 2;
-	char *si, tmp[16];
+	const char *si;
+	char tmp[16];
 
 	S[0] = gretl_strdup("lambda");
 	S[1] = gretl_strdup("cond");
 
 	for (i=0; i<k; i++) {
-	    if (pnames != NULL) {
-		si = gretl_array_get_data(pnames, i);
+	    if (pnames != NULL || S0 != NULL) {
+		si = pnames != NULL ? gretl_array_get_data(pnames, i) : S0[i];
 		if (strlen(si) > NAMEWIDTH) {
 		    *tmp = '\0';
 		    strncat(tmp, si, NAMEWIDTH - 1);
 		    strcat(tmp, "~");
 		    S[i+2] = gretl_strdup(tmp);
-		} else {
+		} else if (pnames != NULL) {
 		    S[i+2] = gretl_array_get_data(pnames, i);
 		    gretl_array_set_data(pnames, i, NULL);
+		} else {
+		    S[i+2] = gretl_strdup(si);
 		}
 	    } else {
 		sprintf(tmp, "x%d", i+1);
@@ -256,7 +265,7 @@ gretl_matrix *bkw_matrix (const gretl_matrix *VCV,
 	}
     }
 
-    namelen = bkw_add_colnames(BKW, pnames);
+    namelen = bkw_add_colnames(BKW, VCV, pnames);
 
  bailout:
 
@@ -417,6 +426,7 @@ static void BKW_print (gretl_matrix *B, int namelen, PRN *prn)
     };
     double maxcond = gretl_matrix_get(B, B->rows - 1, 1);
     int sp = maxcond >= 10000 ? 10 : maxcond >= 1000 ? 9 : 8;
+    int maxcols = 9;
     char fmt[16];
 
     if (sp < namelen + 1) {
@@ -427,8 +437,30 @@ static void BKW_print (gretl_matrix *B, int namelen, PRN *prn)
     pprintf(prn, "\n%s:\n\n", _(strs[0]));
     bufspace(2, prn);
     pprintf(prn, "%s\n\n", _(strs[1]));
-    gretl_matrix_print_with_format(B, fmt, 0, 0, prn);
-    pprintf(prn, "\n  lambda = %s\n", _(strs[2]));
+
+    if (B->cols > maxcols) {
+	int err = 0;
+	gretl_array *a = gretl_matrix_col_split(B, 2, maxcols, &err);
+
+	if (a != NULL) {
+	    int i, n = gretl_array_get_length(a);
+	    gretl_matrix *ai;
+
+	    for (i=0; i<n; i++) {
+		ai = gretl_array_get_data(a, i);
+		gretl_matrix_print_with_format(ai, fmt, 0, 0, prn);
+		if (i < n-1) {
+		    pputc(prn, '\n');
+		}
+	    }
+	    gretl_array_destroy(a);
+	}
+    } else {
+	gretl_matrix_print_with_format(B, fmt, 0, 0, prn);
+    }
+
+    pprintf(prn, "\n  lambda = %s (smallest is %g)\n", _(strs[2]),
+	    gretl_matrix_get(B, B->rows - 1, 0));
     pprintf(prn, "  cond   = %s\n", _(strs[3]));
     pprintf(prn, "  %s\n\n", _(strs[4]));
 
