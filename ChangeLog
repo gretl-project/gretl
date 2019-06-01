@@ -1,4 +1,6 @@
 version 2019c, in progress
+- Fix bug: "dataset sortby" not handling missing values
+  correctly on MS Windows
 - New function fzero(): find a root of a nonlinear function
 - GUI plot editor: try to ensure that choice of font carries
   over in copying a plot to the clipboard
