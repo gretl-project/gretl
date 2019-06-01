@@ -2285,7 +2285,15 @@ static int compare_vals_up (const void *a, const void *b)
     int i, ret = 0;
 
     for (i=0; i<pa->nvals && !ret; i++) {
-	ret = (pa->vals[i] > pb->vals[i]) - (pa->vals[i] < pb->vals[i]);
+	if (isnan(pa->vals[i]) || isnan(pb->vals[i])) {
+	    if (!isnan(pa->vals[i])) {
+		ret = -1;
+	    } else if (!isnan(pb->vals[i])) {
+		ret = 1;
+	    }
+	} else {
+	    ret = (pa->vals[i] > pb->vals[i]) - (pa->vals[i] < pb->vals[i]);
+	}
     }
 
     return ret;
@@ -2298,7 +2306,15 @@ static int compare_vals_down (const void *a, const void *b)
     int i, ret = 0;
 
     for (i=0; i<pa->nvals && !ret; i++) {
-	ret = (pa->vals[i] < pb->vals[i]) - (pa->vals[i] > pb->vals[i]);
+	if (isnan(pa->vals[i]) || isnan(pb->vals[i])) {
+	    if (!isnan(pa->vals[i])) {
+		ret = 1;
+	    } else if (!isnan(pb->vals[i])) {
+		ret = -1;
+	    }
+	} else {
+	    ret = (pa->vals[i] < pb->vals[i]) - (pa->vals[i] > pb->vals[i]);
+	}
     }
 
     return ret;
