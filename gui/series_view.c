@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* series_view.c for gretl */
@@ -54,7 +54,7 @@ struct series_view_t {
     int npoints;
     char view;
     int digits;
-    char format; 
+    char format;
     char sorted;
     data_point *points;
 };
@@ -144,11 +144,11 @@ static void single_series_view_print (windata_t *vwin)
 	if (sview->sorted) {
 	    series_view_unsort(sview);
 	}
-	
+
 	err = printdata(list, NULL, dataset, OPT_O, prn);
 	if (err) {
 	    gui_errmsg(err);
-	} 
+	}
 	goto finalize;
     }
 
@@ -159,7 +159,7 @@ static void single_series_view_print (windata_t *vwin)
     } else {
 	sprintf(num_format, "%%13.%df\n", sview->digits);
     }
-	
+
     pprintf(prn, "\n%*s ", obslen, " ");
     pprintf(prn, "%13s\n\n", dataset->varname[sview->varnum]);
 
@@ -171,7 +171,7 @@ static void single_series_view_print (windata_t *vwin)
 	    pputc(prn, '\n');
 	} else {
 	    pprintf(prn, num_format, x);
-	} 
+	}
     }
 
  finalize:
@@ -216,7 +216,7 @@ static void multi_series_view_print_sorted (windata_t *vwin)
 	return;
     }
 
-    err = print_data_in_columns(sview->list, obsvec, dataset, 
+    err = print_data_in_columns(sview->list, obsvec, dataset,
 				OPT_NONE, prn);
     if (err) {
 	gui_errmsg(err);
@@ -243,10 +243,10 @@ static void multi_series_view_print (windata_t *vwin)
     if (sview->view == VIEW_STANDARD) {
 	err = printdata(sview->list, NULL, dataset, OPT_O, prn);
     } else {
-	err = print_series_with_format(sview->list, dataset, 
-				       sview->format, sview->digits, 
+	err = print_series_with_format(sview->list, dataset,
+				       sview->format, sview->digits,
 				       prn);
-    } 
+    }
 
     if (err) {
 	gui_errmsg(err);
@@ -291,10 +291,10 @@ PRN *vwin_print_sorted_with_format (windata_t *vwin, PrnFormat fmt)
 	/* single series, no list */
 	int list[2] = {1, sview->varnum};
 
-	err = print_data_in_columns(list, obsvec, dataset, 
+	err = print_data_in_columns(list, obsvec, dataset,
 				    OPT_NONE, prn);
     } else {
-	err = print_data_in_columns(sview->list, obsvec, dataset, 
+	err = print_data_in_columns(sview->list, obsvec, dataset,
 				    OPT_NONE, prn);
     }
 
@@ -302,7 +302,7 @@ PRN *vwin_print_sorted_with_format (windata_t *vwin, PrnFormat fmt)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
 	prn = NULL;
-    } 
+    }
 
     free(obsvec);
 
@@ -330,35 +330,55 @@ static void summary_print_formatted (windata_t *vwin, series_view *sview)
     print_summary_single(summ, digits, places, dataset, prn);
     textview_set_text(vwin->text, gretl_print_get_trimmed_buffer(prn));
     gretl_print_destroy(prn);
-}    
+}
 
 static int sort_points (const void *a, const void *b)
 {
     const data_point *pa = (const data_point *) a;
     const data_point *pb = (const data_point *) b;
-     
-    return (pa->val > pb->val) - (pa->val < pb->val);
+
+    if (isnan(pa->val) || isnan(pb->val)) {
+	if (!isnan(pa->val)) {
+	    return -1;
+	} else if (!isnan(pb->val)) {
+	    return 1;
+	} else {
+	    return 0;
+	}
+    } else {
+	return (pa->val > pb->val) - (pa->val < pb->val);
+    }
 }
 
 static int sort_points_down (const void *a, const void *b)
 {
     const data_point *pa = (const data_point *) a;
     const data_point *pb = (const data_point *) b;
-     
-    return (pa->val < pb->val) - (pa->val > pb->val);
+
+    if (isnan(pa->val) || isnan(pb->val)) {
+	if (!isnan(pa->val)) {
+	    return 1;
+	} else if (!isnan(pb->val)) {
+	    return -1;
+	} else {
+	    return 0;
+	}
+    } else {
+	return (pa->val < pb->val) - (pa->val > pb->val);
+    }
 }
 
 static int unsort_points (const void *a, const void *b)
 {
     const data_point *pa = (const data_point *) a;
     const data_point *pb = (const data_point *) b;
-     
+
     return (pa->obsnum > pb->obsnum) - (pa->obsnum < pb->obsnum);
 }
 
 static void series_view_unsort (series_view *sview)
 {
-    qsort(sview->points, sview->npoints, 
+    qsort(sview->points, sview->npoints,
 	  sizeof sview->points[0], unsort_points);
     sview->sorted = 0;
 }
@@ -372,14 +392,14 @@ void series_view_toggle_sort (GtkWidget *w, windata_t *vwin)
     };
     series_view *sview = (series_view *) vwin->data;
     int sort_opt;
-    
+
     if (series_view_allocate(sview)) {
 	return;
     }
 
-    sort_opt = radio_dialog(NULL, _("Sort order:"), opts, 
+    sort_opt = radio_dialog(NULL, _("Sort order:"), opts,
 			    3, 0, 0, vwin->main);
-    
+
     if (sort_opt < 0) {
 	return;
     } else if (sort_opt == 2) {
@@ -387,18 +407,18 @@ void series_view_toggle_sort (GtkWidget *w, windata_t *vwin)
 	if (!sview->sorted) {
 	    return; /* no-op */
 	} else {
-	    qsort(sview->points, sview->npoints, 
+	    qsort(sview->points, sview->npoints,
 		  sizeof sview->points[0], unsort_points);
 	    sview->sorted = 0;
 	    sview->view = VIEW_STANDARD;
 	}
     } else if (sort_opt == 0) {
-	qsort(sview->points, sview->npoints, 
+	qsort(sview->points, sview->npoints,
 	      sizeof sview->points[0], sort_points);
 	sview->sorted = 1;
 	sview->view = VIEW_CUSTOM;
     } else {
-	qsort(sview->points, sview->npoints, 
+	qsort(sview->points, sview->npoints,
 	      sizeof sview->points[0], sort_points_down);
 	sview->sorted = 1;
 	sview->view = VIEW_CUSTOM;
@@ -428,7 +448,7 @@ static int select_series_view_sorter (series_view *sview,
 			   opt, vals, strs);
 
     if (opts != NULL) {
-	v = select_var_from_list_with_opt(sview->list, 
+	v = select_var_from_list_with_opt(sview->list,
 					  _("Variable to sort by"),
 					  opts, 0, vwin->main);
 	dialog_opts_free(opts);
@@ -462,7 +482,7 @@ void multi_series_view_sort_by (GtkWidget *w, windata_t *vwin)
 	    return; /* no-op */
 	} else if (sview->points != NULL) {
 	    /* toggle back to unsorted */
-	    qsort(sview->points, sview->npoints, 
+	    qsort(sview->points, sview->npoints,
 		  sizeof sview->points[0], unsort_points);
 	    sview->sorted = 0;
 	    sview->view = VIEW_STANDARD;
@@ -473,10 +493,10 @@ void multi_series_view_sort_by (GtkWidget *w, windata_t *vwin)
 	series_view_fill_points(sview);
 
 	if (opt == OPT_D) {
-	    qsort(sview->points, sview->npoints, 
+	    qsort(sview->points, sview->npoints,
 		  sizeof sview->points[0], sort_points_down);
 	} else {
-	    qsort(sview->points, sview->npoints, 
+	    qsort(sview->points, sview->npoints,
 		  sizeof sview->points[0], sort_points);
 	}
 
@@ -609,7 +629,7 @@ static series_view *series_view_new (int varnum, const int *list)
 
     if (varnum == 0 && list == NULL) {
 	return NULL;
-    } 
+    }
 
     sview = malloc(sizeof *sview);
     if (sview == NULL) {
@@ -622,7 +642,7 @@ static series_view *series_view_new (int varnum, const int *list)
 	    free(sview);
 	    sview = NULL;
 	}
-    }	
+    }
 
     if (sview != NULL) {
 	series_view_init(sview);
@@ -772,7 +792,7 @@ static void real_view_format_dialog (windata_t *vwin, series_view *sview)
 
     /* Cancel button */
     cancel_delete_button(hbox, dlg);
-   
+
     /* OK button */
     tmp = ok_button(hbox);
     g_signal_connect(G_OBJECT(tmp), "clicked",
@@ -797,14 +817,13 @@ void series_view_format_dialog (windata_t *vwin)
 	    initted = 1;
 	}
 	sview = &static_sview;
-    } else {    
+    } else {
 	sview = (series_view *) vwin->data;
 
 	if (series_view_allocate(sview)) {
 	    return;
 	}
-    } 
+    }
 
     real_view_format_dialog(vwin, sview);
 }
-
