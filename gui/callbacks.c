@@ -850,7 +850,8 @@ void xcorrgm_callback (void)
 void cond_number_callback (void)
 {
     gretl_matrix *X = NULL;
-    gretl_matrix *XXi = NULL;
+    gretl_matrix *XX = NULL;
+    gretl_matrix *chk = NULL;
     int *list = main_window_selection_as_list();
     int resp, err = 0;
 
@@ -880,11 +881,23 @@ void cond_number_callback (void)
 				 M_MISSING_SKIP,
 				 &err);
     if (!err) {
-	XXi = gretl_matrix_XTX_new(X);
-	if (XXi == NULL) {
+	XX = gretl_matrix_XTX_new(X);
+	if (XX == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    err = gretl_invert_symmetric_matrix(XXi);
+	    chk = gretl_matrix_copy(XX);
+	    err = gretl_invert_symmetric_matrix(XX);
+	    if (err == E_NOTPD && chk != NULL) {
+		int r, sverr = 0;
+
+		r = gretl_matrix_rank(chk, &sverr);
+		if (!sverr && r < XX->cols) {
+		    infobox_printf(_("X'X is singular to machine precision:\n"
+				     "it is of dimension %d but rank %d."),
+				   XX->rows, r);
+		    goto finish;
+		}
+	    }
 	}
     }
 
@@ -897,7 +910,7 @@ void cond_number_callback (void)
 
 	bkwfunc = gui_get_plugin_function("bkw_matrix");
 	if (bkwfunc != NULL && bufopen(&prn) == 0) {
-	    (*bkwfunc)(XXi, NULL, prn, &err);
+	    (*bkwfunc)(XX, NULL, prn, &err);
 	    if (err) {
 		gui_errmsg(err);
 	    } else {
@@ -907,8 +920,11 @@ void cond_number_callback (void)
 	}
     }
 
+ finish:
+
     gretl_matrix_free(X);
-    gretl_matrix_free(XXi);
+    gretl_matrix_free(XX);
+    gretl_matrix_free(chk);
     free(list);
 }
 
