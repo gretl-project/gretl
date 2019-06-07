@@ -5834,6 +5834,23 @@ int print_function_package_help (const char *fname, PRN *prn)
     return real_print_gfn_data(fname, prn, 0, FUNCS_HELP);
 }
 
+static void maybe_fix_broken_date (char **pdate)
+{
+    char *date = *pdate;
+
+    if (strlen(date) < 10 && date[4] == '-') {
+	int y, m, d;
+
+	if (sscanf(date, "%d-%d-%d", &y, &m, &d) == 3) {
+	    char tmp[12];
+
+	    sprintf(tmp, "%d-%02d-%02d", y, m, d);
+	    free(*pdate);
+	    *pdate = gretl_strdup(tmp);
+	}
+    }
+}
+
 /* Read the header from a function package file -- this is used when
    displaying the available packages in the GUI.  We write the
    description into *pdesc and a string representation of version
@@ -5873,6 +5890,9 @@ int get_function_file_header (const char *fname, char **pdesc,
 		    gretl_xml_node_get_trimmed_string(sub, doc, pver);
 		} else if (pdate != NULL && !xmlStrcmp(sub->name, (XUC) "date")) {
 		    gretl_xml_node_get_trimmed_string(sub, doc, pdate);
+		    if (*pdate != NULL) {
+			maybe_fix_broken_date(pdate);
+		    }
 		} else if (pauthor != NULL && !xmlStrcmp(sub->name, (XUC) "author")) {
 		    gretl_xml_node_get_trimmed_string(sub, doc, pauthor);
 		} else if (pdfdoc != NULL && !xmlStrcmp(sub->name, (XUC) "help")) {
