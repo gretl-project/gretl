@@ -103,6 +103,10 @@ gretl_array *gretl_arrays_join (gretl_array *A,
 gretl_array *gretl_array_copy (const gretl_array *A,
 			       int *err);
 
+gretl_array *gretl_strings_sort (const gretl_array *A,
+				 int descending,
+				 int *err);
+
 int gretl_array_copy_as (const char *name, const char *copyname,
 			 GretlType copytype);
 

@@ -839,6 +839,46 @@ gretl_array *gretl_array_copy (const gretl_array *A,
     return Acpy;
 }
 
+static int compare_strings (const void *a, const void *b)
+{
+    const char **sa = (const char **) a;
+    const char **sb = (const char **) b;
+
+    return strcmp(*sa, *sb);
+}
+
+static int inverse_compare_strings (const void *a, const void *b)
+{
+    const char **sa = (const char **) a;
+    const char **sb = (const char **) b;
+
+    return -strcmp(*sa, *sb);
+}
+
+gretl_array *gretl_strings_sort (const gretl_array *A,
+				 int descending,
+				 int *err)
+{
+    gretl_array *Asrt = NULL;
+
+    if (A != NULL) {
+	if (A->type != GRETL_TYPE_STRINGS) {
+	    *err = E_TYPES;
+	} else {
+	    Asrt = gretl_array_new(A->type, A->n, err);
+	}
+	if (!*err) {
+	    *err = gretl_array_copy_content(Asrt, A, 0);
+	}
+	if (!*err) {
+	    qsort(Asrt->data, Asrt->n, sizeof *Asrt->data,
+		  descending ? inverse_compare_strings : compare_strings);
+	}
+    }
+
+    return Asrt;
+}
+
 /* respond to A1 += A2 */
 
 int gretl_array_append_array (gretl_array *A1,

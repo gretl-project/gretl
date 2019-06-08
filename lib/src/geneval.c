@@ -7547,14 +7547,10 @@ static NODE *strsplit_node (int f, NODE *l, NODE *m, NODE *r, parser *p)
 
 static NODE *array_sort_node (NODE *n, int f, parser *p)
 {
-    /* FIXME: for the moment, this is just a no-op */
+    NODE *ret = aux_array_node(p);
 
-    if (f == F_SORT) {
-	return n;
-    } else {
-	return n;
-    }
-    
+    ret->v.a = gretl_strings_sort(n->v.a, f == F_DSORT, &p->err);
+    return ret;
 }
 
 static NODE *errmsg_node (NODE *l, parser *p)
