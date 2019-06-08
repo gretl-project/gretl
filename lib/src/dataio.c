@@ -2564,7 +2564,8 @@ int dataset_has_var_labels (const DATASET *dset)
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int save_var_labels_to_file (const DATASET *dset, const char *fname)
+int save_var_labels_to_file (const DATASET *dset,
+			     const char *fname)
 {
     const char *vlabel;
     FILE *fp;
@@ -2580,6 +2581,45 @@ int save_var_labels_to_file (const DATASET *dset, const char *fname)
 	    fprintf(fp, "%s\n", vlabel == NULL ? "" : vlabel);
 	}
 	fclose(fp);
+    }
+
+    return err;
+}
+
+static int save_var_labels_to_array (const DATASET *dset,
+				     const char *aname)
+{
+    gretl_array *a = NULL;
+    int err = 0;
+
+    if (gretl_is_series(aname, dset)) {
+	err = E_TYPES;
+    } else {
+	err = check_identifier(aname);
+    }
+
+    if (!err) {
+	a = gretl_array_new(GRETL_TYPE_STRINGS, dset->v - 1, &err);
+    }
+
+    if (!err) {
+	err = user_var_add_or_replace(aname, GRETL_TYPE_STRINGS, a);
+    }
+
+    if (!err) {
+	char *vlabel;
+	int i;
+
+	for (i=1; i<dset->v; i++) {
+	    vlabel = (char *) series_get_label(dset, i);
+	    gretl_array_set_element(a, i-1, vlabel != NULL ? vlabel : "",
+				    GRETL_TYPE_STRING, 1);
+	}
+    }
+
+    if (err && a != NULL) {
+	gretl_array_destroy(a);
+	a = NULL;
     }
 
     return err;
@@ -2646,22 +2686,45 @@ int add_var_labels_from_file (DATASET *dset, const char *fname)
     return err;
 }
 
+static int add_var_labels_from_array (DATASET *dset, const char *aname)
+{
+    gretl_array *a = get_array_by_name(aname);
+    int i, err = 0;
+
+    if (a == NULL) {
+	gretl_errmsg_sprintf("%s: no such array", aname);
+	err = E_DATA;
+    } else if (gretl_array_get_type(a) != GRETL_TYPE_STRINGS ||
+	       gretl_array_get_length(a) < dset->v - 1) {
+	err = E_TYPES;
+    }
+
+    for (i=1; i<dset->v && !err; i++) {
+	const char *s = gretl_array_get_data(a, i-1);
+
+	series_set_label(dset, i, s);
+    }
+
+    return err;
+}
+
 int read_or_write_var_labels (gretlopt opt, DATASET *dset, PRN *prn)
 {
-    const char *fname = NULL;
+    const char *lname = NULL;
     int err;
 
-    err = incompatible_options(opt, OPT_D | OPT_T | OPT_F);
+    err = incompatible_options(opt, OPT_D | OPT_T | OPT_F |
+			       OPT_A | OPT_R);
     if (err) {
 	return err;
     }
 
-    if (opt & (OPT_T | OPT_F)) {
-	fname = get_optval_string(LABELS, opt);
-	if (fname == NULL) {
+    if (opt & (OPT_T | OPT_F | OPT_A | OPT_R)) {
+	lname = get_optval_string(LABELS, opt);
+	if (lname == NULL) {
 	    return E_BADOPT;
-	} else {
-	    gretl_maybe_switch_dir(fname);
+	} else if (opt & (OPT_T | OPT_F)) {
+	    gretl_maybe_switch_dir(lname);
 	}
     }
 
@@ -2672,20 +2735,28 @@ int read_or_write_var_labels (gretlopt opt, DATASET *dset, PRN *prn)
 	for (i=1; i<dset->v; i++) {
 	    series_set_label(dset, i, "");
 	}
-    } else if (opt & OPT_T) {
-	/* to-file */
+    } else if (opt & (OPT_T | OPT_R)) {
+	/* to-file, to-array */
 	if (!dataset_has_var_labels(dset)) {
 	    pprintf(prn, "No labels are available for writing\n");
 	    err = E_DATA;
 	} else {
-	    err = save_var_labels_to_file(dset, fname);
+	    if (opt & OPT_T) {
+		err = save_var_labels_to_file(dset, lname);
+	    } else {
+		err = save_var_labels_to_array(dset, lname);
+	    }
 	    if (!err && gretl_messages_on() && !gretl_looping_quietly()) {
 		pprintf(prn, "Labels written OK\n");
 	    }
 	}
-    } else if (opt & OPT_F) {
-	/* from-file */
-	err = add_var_labels_from_file(dset, fname);
+    } else if (opt & (OPT_F | OPT_A)) {
+	/* from-file, from-array */
+	if (opt & OPT_F) {
+	    err = add_var_labels_from_file(dset, lname);
+	} else {
+	    err = add_var_labels_from_array(dset, lname);
+	}
 	if (!err && gretl_messages_on() && !gretl_looping_quietly()) {
 	    pprintf(prn, "Labels loaded OK\n");
 	}

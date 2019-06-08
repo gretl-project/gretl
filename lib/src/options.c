@@ -376,6 +376,8 @@ struct gretl_option gretl_opts[] = {
     { LABELS,   OPT_D, "delete", 0 },
     { LABELS,   OPT_F, "from-file", 2 },
     { LABELS,   OPT_T, "to-file", 2 },
+    { LABELS,   OPT_A, "from-array", 2 },
+    { LABELS,   OPT_R, "to-array", 2 },
     { LAD,      OPT_N, "no-vcv", 0 },
     { LOGISTIC, OPT_M, "ymax", 2 },
     { LOGISTIC, OPT_R, "robust", 0 },

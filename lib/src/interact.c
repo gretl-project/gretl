@@ -3020,7 +3020,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
         break;
 
     case LABELS:
-	if (cmd->opt & (OPT_D | OPT_F | OPT_T)) {
+	if (cmd->opt & (OPT_D | OPT_F | OPT_T | OPT_A | OPT_R)) {
 	    err = read_or_write_var_labels(cmd->opt, dset, prn);
 	    if (!err && (cmd->opt & (OPT_D | OPT_F))) {
 		schedule_callback(s);
