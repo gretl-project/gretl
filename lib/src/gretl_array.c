@@ -844,7 +844,7 @@ static int compare_strings (const void *a, const void *b)
     const char **sa = (const char **) a;
     const char **sb = (const char **) b;
 
-    return strcmp(*sa, *sb);
+    return g_strcmp0(*sa, *sb);
 }
 
 static int inverse_compare_strings (const void *a, const void *b)
@@ -852,7 +852,7 @@ static int inverse_compare_strings (const void *a, const void *b)
     const char **sa = (const char **) a;
     const char **sb = (const char **) b;
 
-    return -strcmp(*sa, *sb);
+    return -g_strcmp0(*sa, *sb);
 }
 
 gretl_array *gretl_strings_sort (const gretl_array *A,
