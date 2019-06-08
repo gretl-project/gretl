@@ -2850,6 +2850,9 @@ static int real_matrix_calc (const gretl_matrix *A,
     case F_MCSEL:
 	C = gretl_matrix_bool_sel(A, B, 0, &err);
 	break;
+    case F_CONV2D:
+	C = gretl_matrix_2d_convolution(A, B, &err);
+	break;
     default:
 	err = E_TYPES;
 	break;
@@ -14981,6 +14984,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_DSUM:
     case B_LDIV:
     case B_KRON:
+    case F_CONV2D:
 	/* matrix-only binary operators (but promote scalars) */
 	if (ok_matrix_node(l) && ok_matrix_node(r)) {
 	    ret = matrix_matrix_calc(l, r, t->t, p);

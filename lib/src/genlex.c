@@ -506,6 +506,7 @@ struct str_table funcs[] = {
     { F_STRPTIME,  "strptime" },
     { F_BKW,       "bkw" },
     { F_FZERO,     "fzero" },
+    { F_CONV2D,    "conv2d" },
     { 0,           NULL }
 };
 

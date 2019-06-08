@@ -2679,3 +2679,101 @@ gretl_matrix *gretl_gauss_hermite_matrix_new (int n, int *err)
 {
     return gretl_quadrule_matrix_new(n, QUAD_GHERMITE, 0, 1, err);
 }
+
+/**
+ * gretl_matrix_2d_convolution:
+ *
+ * FIXME
+ */
+
+#if 1
+
+gretl_matrix *gretl_matrix_2d_convolution (const gretl_matrix *A,
+					   const gretl_matrix *B,
+					   int *err)
+{
+    /* Convolution works fastest if we choose the A matrix to be
+     *  the largest.
+     */
+    int Am = A->rows;
+    int An = A->cols;
+    int Bm = B->rows;
+    int Bn = B->cols;
+    int Cm = Am + Bm - 1;
+    int Cn = An + Bn - 1;
+    int edgM = Bm - 1;
+    int edgN = Bn - 1;
+    gretl_matrix *C;
+    double sum;
+    int ci, cj, bj, aj, bi, ai;
+
+    C = gretl_matrix_alloc(Cm, Cn);
+
+    for (ci=0; ci < Cm; ci++) {
+	for (cj=0; cj < Cn; cj++) {
+            sum = 0;
+            for (bj = Bn - 1 - MAX(0, edgN-cj), aj = MAX(0, cj-edgN);
+		 bj >= 0 && aj < An; bj--, aj++) {
+		bi = Bm - 1 - MAX(0, edgM-ci);
+		ai = MAX(0, ci-edgM);
+		for ( ; bi >= 0 && ai < Am; bi--, ai++) {
+		    sum += gretl_matrix_get(A, ai, aj) * gretl_matrix_get(B, bi, bj);
+		}
+            }
+            gretl_matrix_set(C, ci, cj, sum);
+	}
+    }
+
+    return C;
+}
+
+#else
+
+static gretl_matrix *conv_pad (const gretl_matrix *A,
+			       int er, int ec)
+{
+    gretl_matrix *ret;
+
+    ret = gretl_zero_matrix_new(A->rows + 2 * er, A->cols + 2 * ec);
+    gretl_matrix_inscribe_matrix(ret, A, er, ec, GRETL_MOD_NONE);
+
+    return ret;
+}
+
+gretl_matrix *gretl_matrix_2d_convolution (const gretl_matrix *A,
+					   const gretl_matrix *B,
+					   int *err)
+{
+    int rA = A->rows;
+    int cA = A->cols;
+    int rB = B->rows;
+    int cB = B->cols;
+    int Cm = rA + rB - 1;
+    int Cn = cA + cB - 1;
+    gretl_matrix *C, *U, *Tmp;
+    double sum;
+    int i, j, k, nb;
+
+    C = gretl_matrix_alloc(Cm, Cn);
+    U = conv_pad(A, rB - 1, cB - 1);
+    Tmp = gretl_matrix_alloc(rB, cB);
+    nb = rB * cB;
+
+    for (i=0; i < Cm; i++) {
+	for (j=0; j < Cn; j++) {
+	    gretl_matrix_extract_matrix(Tmp, U, i, j, GRETL_MOD_NONE);
+	    sum = 0;
+	    for (k=0; k<nb; k++) {
+		sum += B->val[nb-k-1] * Tmp->val[i];
+	    }
+            gretl_matrix_set(C, i, j, sum);
+	}
+    }
+
+    gretl_matrix_free(U);
+    gretl_matrix_free(Tmp);
+
+    return C;
+}
+
+#endif

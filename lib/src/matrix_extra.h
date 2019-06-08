@@ -139,4 +139,8 @@ gretl_matrix *gretl_quadrule_matrix_new (int n, int method,
 
 gretl_matrix *gretl_gauss_hermite_matrix_new (int n, int *err);
 
+gretl_matrix *gretl_matrix_2d_convolution (const gretl_matrix *A,
+					   const gretl_matrix *B,
+					   int *err);
+
 #endif /* MATRIX_EXTRA_H */
