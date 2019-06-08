@@ -7545,6 +7545,18 @@ static NODE *strsplit_node (int f, NODE *l, NODE *m, NODE *r, parser *p)
     return ret;
 }
 
+static NODE *array_sort_node (NODE *n, int f, parser *p)
+{
+    /* FIXME: for the moment, this is just a no-op */
+
+    if (f == F_SORT) {
+	return n;
+    } else {
+	return n;
+    }
+    
+}
+
 static NODE *errmsg_node (NODE *l, parser *p)
 {
     NODE *ret = aux_string_node(p);
@@ -15397,6 +15409,15 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_SORT:
     case F_DSORT:
+	/* series or vector or string array argument needed */
+	if (l->t == SERIES || l->t == MAT || l->t == NUM) {
+	    ret = vector_sort(l, t->t, p);
+	} else if (l->t == ARRAY && gretl_array_get_type(l->v.a) == GRETL_TYPE_STRINGS) {
+	    ret = array_sort_node(l, t->t, p);
+	} else {
+	    node_type_error(t->t, 0, SERIES, l, p);
+	}
+	break;
     case F_VALUES:
     case F_UNIQ:
     case F_PERGM:
