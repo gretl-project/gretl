@@ -57,6 +57,7 @@
  <gentext key="bundles"       text="arranxo de feixes"/>
  <gentext key="string-or-strings"  text="cadea ou arranxo de cadeas"/>
  <gentext key="strings-or-list"  text="arranxo de cadeas ou lista"/>
+ <gentext key="series-vec-or-strings"    text="serie, vector ou arranxo de cadeas"/> 
  <gentext key="char"          text="carácter"/>
  <gentext key="coeffname"     text="nome de coeficiente"/>
  <gentext key="sslist"        text="escalar, serie ou lista"/>

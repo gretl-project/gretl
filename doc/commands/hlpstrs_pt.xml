@@ -57,6 +57,7 @@
  <gentext key="bundles"       text="cadeia de lotes"/>
  <gentext key="string-or-strings"  text="texto ou cadeia de texto"/>
  <gentext key="strings-or-list"  text="cadeia de texto ou lista"/>
+ <gentext key="series-vec-or-strings"    text="série, vetor ou cadeia de texto"/> 
  <gentext key="char"          text="caractere"/>
  <gentext key="coeffname"     text="nome do coeficiente"/>
  <gentext key="sslist"        text="escalar, série ou lista"/>

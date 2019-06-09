@@ -3109,7 +3109,7 @@
 
     <function name="dsort" section="matshape" output="asinput">
       <fnargs>
-	<fnarg type="series-or-vec">x</fnarg>
+	<fnarg type="series-vec-or-strings">x</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -9707,7 +9707,7 @@
 
     <function name="sort" section="matshape" output="asinput">
       <fnargs>
-	<fnarg type="series-or-vec">x</fnarg>
+	<fnarg type="series-vec-or-strings">x</fnarg>
       </fnargs>
       <description>
 	<para>

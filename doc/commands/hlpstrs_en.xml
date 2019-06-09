@@ -57,6 +57,7 @@
  <gentext key="bundles"       text="array of bundles"/>
  <gentext key="string-or-strings"  text="string or array of strings"/>
  <gentext key="strings-or-list"  text="array of strings or list"/>
+ <gentext key="series-vec-or-strings"    text="series, vector or string array"/> 
  <gentext key="char"          text="character"/>
  <gentext key="coeffname"     text="name of coefficient"/>
  <gentext key="sslist"        text="scalar, series or list"/>
