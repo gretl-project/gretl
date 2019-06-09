@@ -9615,7 +9615,7 @@
       <para>
 	By default, when you import a file that contains string-valued
 	series, a text box will open showing you the contents of the
-	<quote>string_table.txt</quote> file, which contains the
+	<lit>string_table.txt</lit> file, which contains the
 	mapping between strings and their numeric coding. You can
 	suppress this behavior via the <opt>quiet</opt> option.
       </para>

@@ -2455,6 +2455,37 @@
       </description>
     </function>
 
+    <function name="conv2d" section="linalg" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">A</fnarg>
+	<fnarg type="matrix">B</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Computes the 2-d convolution of the matrices
+	  <argname>A</argname> and <argname>B</argname>. If
+	  <argname>A</argname> has <math>r</math> rows and
+	  <math>c</math> columns and <argname>B</argname> has
+	  <math>m</math> rows and <math>n</math> coumns, then the
+	  returned matrix will be <math>r+m-1</math> times
+	  <math>c+n-1</math>.
+	  <para context="tex">
+	    The 2-d convolution of <argname>A</argname> and
+	    <argname>B</argname> is defined as
+	    \[
+	    C_{i,j} =
+	    \sum_{k=1}^r\sum_{l=1}^c A_{k,l} B_{i-k+1,j-l+1},
+	    \]
+	    as long as the subscripts of $B$ are within bounds.
+	</para>
+	  <seelist>
+            <fncref targ="fft"/>
+            <fncref targ="filter"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="corr" section="stats" output="scalar">
       <fnargs>
 	<fnarg type="series-or-vec">y1</fnarg>
