@@ -5332,7 +5332,6 @@ static void print_pm_filledcurve_line (double factor,
     }
 }
 
-
 /* note: if @opt includes OPT_H, that says to show fitted
    values for the pre-forecast range
 */
@@ -5515,6 +5514,7 @@ struct band_pm {
     int center;
     int width;
     double factor;
+    int bdummy;
 };
 
 /* Handle the special case where we get to the band-plot code
@@ -5624,6 +5624,23 @@ static int parse_band_pm_option (const int *list,
 	return E_INVARG;
     }
 
+    if (strchr(s, ',') == NULL) {
+	v = current_series_index(dset, s);
+	if (v >= 0 && v < dset->v) {
+	    if (gretl_isdummy(dset->t1, dset->t2, dset->Z[v])) {
+		pm->bdummy = v;
+	    } else {
+		err = E_INVARG;
+		fprintf(stderr, "%s: not a dummy variable\n",
+			dset->varname[v]);
+	    }
+	} else {
+	    err = E_INVARG;
+	}
+	return err;
+    }
+
+    /* at this point, can't be a recession-style band */
     S = g_strsplit(s, ",", -1);
 
     while (S != NULL && S[i] != NULL && !err) {
@@ -5858,12 +5875,13 @@ static int plot_with_band (int mode, gnuplot_info *gi,
 			   DATASET *dset,
 			   gretlopt opt)
 {
-    struct band_pm pm = {-1, -1, 1.0};
+    struct band_pm pm = {-1, -1, 1.0, 0};
     FILE *fp = NULL;
     const double *x = NULL;
     const double *y = NULL;
     const double *c = NULL;
     const double *w = NULL;
+    const double *d = NULL;
     char yname[MAXDISP];
     char xname[MAXDISP];
     char rgb[10] = {0};
@@ -5929,9 +5947,13 @@ static int plot_with_band (int mode, gnuplot_info *gi,
     }
 
     /* assemble the data we'll need */
-    c = dset->Z[pm.center];
-    w = dset->Z[pm.width];
-    show_zero = band_straddles_zero(c, w, pm.factor, t1, t2);
+    if (pm.bdummy) {
+	d = dset->Z[pm.bdummy];
+    } else {
+	c = dset->Z[pm.center];
+	w = dset->Z[pm.width];
+	show_zero = band_straddles_zero(c, w, pm.factor, t1, t2);
+    }
 
     if (gi->flags & GPT_TS) {
 	PRN *prn = gretl_print_new_with_stream(fp);
