@@ -464,16 +464,16 @@ gretl_array *gretl_matrix_split_by_column (gretl_matrix *X,
 					   int *err)
 {
     gretl_array *ret = NULL;
-
-    int i, j, k, l, n = 1, nv;
+    int i, j, k, l, n = 1;
     int nc = X->cols;
     gretl_matrix *tmp = NULL;
     gretl_matrix *vals = NULL;
+    const double *sel;
     int *nrows = NULL;
     double x;
-    
-    /* must be a valid column */
-    if (splitcol<0 || splitcol >= nc) {
+
+    /* @splitcol must be a valid column */
+    if (splitcol < 0 || splitcol >= nc) {
 	*err = E_INVARG;
 	return ret;
     }
@@ -481,22 +481,20 @@ gretl_array *gretl_matrix_split_by_column (gretl_matrix *X,
     /* only positive integers allowed */
     for (i=0; i<X->rows; i++) {
 	x = gretl_matrix_get(X, i, splitcol);
-	if ((x != floor(x)) || (x <= 0) || (x >= INT_MAX)) {
+	if (x != floor(x) || x <= 0 || x >= INT_MAX) {
 	    *err = E_INVARG;
 	    return ret;
 	}
     }
 
-    const double *sel = X->val+splitcol*X->rows;
+    sel = X->val + splitcol * X->rows;
     vals = gretl_matrix_values(sel, X->rows, OPT_NONE, err);
-
     if (*err) {
 	return ret;
     }
 
-    nv = vals->rows;
-    /* get the maximum value */
-    for (i = 0; i < nv; i++) {
+    /* get the maximum index value */
+    for (i=0; i<vals->rows; i++) {
 	n = vals->val[i] > n ? vals->val[i] : n;
     }
 
@@ -505,39 +503,53 @@ gretl_array *gretl_matrix_split_by_column (gretl_matrix *X,
 	return NULL;
     }
 
-    /* count how many rows we have for each array element and 
+    /* count how many rows we have for each array element and
        allocate accordingly */
     nrows = calloc(n, sizeof *nrows);
-    for (i = 0; i < X->rows; i++) {
-	j = sel[i]-1;
-	nrows[j] += 1;
+    if (nrows == NULL) {
+	*err = E_ALLOC;
+    } else {
+	for (i=0; i<X->rows; i++) {
+	    j = sel[i]-1;
+	    nrows[j] += 1;
+	}
     }
-
-    for (i = 0; i < n; i++) {
+    for (i=0; i<n && !*err; i++) {
 	if (nrows[i] > 0) {
 	    tmp = gretl_matrix_alloc(nrows[i], nc - 1);
-	    gretl_array_set_element(ret, i, tmp, GRETL_TYPE_MATRIX, 0);
-	    /* here nrows doubles as an array of counters for later use */
-	    nrows[i] = 0;
+	    if (tmp == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		gretl_array_set_element(ret, i, tmp, GRETL_TYPE_MATRIX, 0);
+		/* @nrows serves as an array of counters below */
+		nrows[i] = 0;
+	    }
 	}
     }
 
-    for (i = 0; i < X->rows; i++) {
+    /* fill the individual matrices, skipping the split column */
+    for (i=0; i<X->rows; i++) {
 	k = sel[i] - 1;
 	l = 0;
-	for (j = 0; j < nc; j++) {
+	for (j=0; j<nc; j++) {
 	    if (j != splitcol) {
 		x = gretl_matrix_get(X, i, j);
 		tmp = ret->data[k];
 		gretl_matrix_set(tmp, nrows[k], l++, x);
 	    }
 	}
+	/* advance the write position */
 	nrows[k] += 1;
     }
 
     free(nrows);
     gretl_matrix_free(vals);
-    
+
+    if (*err && ret != NULL) {
+	gretl_array_destroy(ret);
+	ret = NULL;
+    }
+
     return ret;
 }
 

@@ -3583,7 +3583,7 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
 	} else {
 	    ret = aux_matrix_node(p);
 	}
-	
+
 	if (ret == NULL) {
 	    return NULL;
 	}
