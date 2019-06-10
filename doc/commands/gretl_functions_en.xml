@@ -2462,21 +2462,22 @@
       </fnargs>
       <description>
 	<para>
-	  Computes the 2-d convolution of the matrices
+	  Computes the 2-dimensional convolution of the matrices
 	  <argname>A</argname> and <argname>B</argname>. If
 	  <argname>A</argname> has <math>r</math> rows and
 	  <math>c</math> columns and <argname>B</argname> has
 	  <math>m</math> rows and <math>n</math> coumns, then the
-	  returned matrix will be <math>r+m-1</math> times
+	  returned matrix will be <math>r+m-1</math> by
 	  <math>c+n-1</math>.
 	  <para context="tex">
-	    The 2-d convolution of <argname>A</argname> and
+	    The 2-D convolution of <argname>A</argname> and
 	    <argname>B</argname> is defined as
 	    \[
 	    C_{i,j} =
 	    \sum_{k=1}^r\sum_{l=1}^c A_{k,l} B_{i-k+1,j-l+1},
 	    \]
-	    as long as the subscripts of $B$ are within bounds.
+	    where the summations include just those values of $k$ and
+	    $l$ for which the subscripts of $B$ are within bounds.
 	</para>
 	  <seelist>
             <fncref targ="fft"/>
