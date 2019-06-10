@@ -3578,18 +3578,25 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
 	    return NULL;
 	}
 
-	ret = aux_matrix_node(p);
+	if (f == F_MSPLITBY) {
+	    ret = aux_array_node(p);
+	} else {
+	    ret = aux_matrix_node(p);
+	}
+	
 	if (ret == NULL) {
 	    return NULL;
 	}
 
 	if (f == F_MSORTBY) {
 	    ret->v.m = gretl_matrix_sort_by_column(m, k-1, &p->err);
+	} else if (f == F_MSPLITBY) {
+	    ret->v.a = gretl_matrix_split_by_column(m, k-1, &p->err);
 	} else if (f == HF_CXTRACT) {
 	    ret->v.m = gretl_cxtract(m, k, &p->err);
 	}
     } else {
-	ret = aux_matrix_node(p);
+	ret = aux_any_node(p);
     }
 
     return ret;
@@ -15019,6 +15026,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_MSORTBY:
+    case F_MSPLITBY:
     case HF_CXTRACT:
 	/* matrix on left, scalar on right */
 	if (l->t == MAT && scalar_node(r)) {

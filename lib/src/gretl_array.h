@@ -83,6 +83,10 @@ gretl_matrix *gretl_matrix_array_flatten (gretl_array *A,
 					  int vcat,
 					  int *err);
 
+gretl_array *gretl_matrix_split_by_column (gretl_matrix *X,
+					   int splitcol,
+					   int *err);
+
 int gretl_array_set_list (gretl_array *A, int i, 
 			  int *L, int copy);
 

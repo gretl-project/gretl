@@ -328,6 +328,7 @@ enum {
     F_RNAMESET,
     F_LJUNGBOX,
     F_MSORTBY,
+    F_MSPLITBY,
     F_LINCOMB,
     F_IMHOF,
     F_XMIN,
