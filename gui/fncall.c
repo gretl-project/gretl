@@ -3865,6 +3865,9 @@ static const gchar *pkg_get_attachment (const gchar *mpath,
 
     if (!strncmp(mpath, "MAINWIN/", 8)) {
 	relpath = mpath + 7;
+    } else if (!strncmp(mpath, "menubar/", 8)) {
+	/* backward compatibility for old packages */
+	relpath = mpath + 7;
     } else if (!strncmp(mpath, "MODELWIN/", 9)) {
 	relpath = mpath + 8;
 	*modelwin = 1;
