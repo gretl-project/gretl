@@ -3071,12 +3071,13 @@ static int parse_forecast_string (const char *s,
 				  int *pk, char *vname,
 				  int *os_case)
 {
-    char f[4][32];
+    char f[4][32] = {0};
     char *t1str = NULL, *t2str = NULL;
     char *kstr = NULL, *vstr = NULL;
     int nmax, nmin = (opt & OPT_R)? 1 : 0;
     int t1 = 0, t2 = 0;
-    int nf, err = 0;
+    int nf = 0;
+    int err = 0;
 
     /* "static" and "recursive" can't be combined */
     err = incompatible_options(opt, OPT_S | OPT_R);
@@ -3112,11 +3113,10 @@ static int parse_forecast_string (const char *s,
 	nf = 0;
     } else {
 	nf = sscanf(s, "%31s %31s %31s %31s", f[0], f[1], f[2], f[3]);
-    }
-
-    if (nf > nmax) {
-	/* try for parenthesized t1, t2 terms? */
-	nf = sscanf(s, "(%31[^)]) (%31[^)]) %31s %31s", f[0], f[1], f[2], f[3]);
+	if (nf > nmax) {
+	    /* try for parenthesized t1, t2 terms? */
+	    nf = sscanf(s, "(%31[^)]) (%31[^)]) %31s %31s", f[0], f[1], f[2], f[3]);
+	}
     }
 
     if (nf < nmin || nf > nmax) {
@@ -3752,6 +3752,7 @@ static int system_do_forecast (const char *str, void *ptr, int type,
     int t1 = 0, t2 = 0;
     int t2est, ci;
     int imax, imin = 0;
+    int os_case = 0;
     int df = 0;
     int err = 0;
 
@@ -3772,7 +3773,7 @@ static int system_do_forecast (const char *str, void *ptr, int type,
     }
 
     err = parse_forecast_string(str, opt, NULL, t2est, dset,
-				&t1, &t2, NULL, vname, NULL);
+				&t1, &t2, NULL, vname, &os_case);
 
     if (!err) {
 	if (var != NULL) {
