@@ -329,10 +329,8 @@ struct str_table funcs[] = {
     { F_OBSNUM,   "obsnum" },
     { F_ISDISCR,  "isdiscrete" },
     { F_ISDUMMY,  "isdummy"},
-    { F_ISNULL,   "isnull" },   /* deprecated */
     { F_TYPEOF,   "typeof" },
     { F_EXISTS,   "exists" },
-    { F_ISSTRING, "isstring" }, /* deprecated */
     { F_NELEM,    "nelem" },
     { F_PDF,      "pdf" },
     { F_CDF,      "cdf" },
@@ -764,17 +762,6 @@ static const char *funname (int t)
     return "unknown";
 }
 
-/* for external purposes (.lang file, manual) */
-
-static int deprecated_func (int id)
-{
-    if (id == F_ISNULL || id == F_ISSTRING) {
-	return 1;
-    } else {
-	return 0;
-    }
-}
-
 static int show_alias (int i)
 {
     if (strstr(func_alias[i].str, "min")) {
@@ -784,18 +771,14 @@ static int show_alias (int i)
     }
 }
 
-/* return the number of built-in functions, disregarding
-   any that are "blacklisted" (deprecated)
-*/
+/* return the number of built-in functions */
 
 int gen_func_count (void)
 {
     int i, n = 0;
 
     for (i=0; funcs[i].id != 0; i++) {
-	if (!deprecated_func(funcs[i].id)) {
-	    n++;
-	}
+	n++;
     }
 
     for (i=0; func_alias[i].id != 0; i++) {
@@ -807,19 +790,14 @@ int gen_func_count (void)
     return n;
 }
 
-/* return the name of function @i, where this index skips
-   any deprecated functions, but including non-deprecated
-   aliases
-*/
+/* return the name of function @i, including aliases */
 
 const char *gen_func_name (int i)
 {
     int j, seq = -1;
 
     for (j=0; funcs[j].id != 0; j++) {
-	if (!deprecated_func(funcs[j].id)) {
-	    seq++;
-	}
+	seq++;
 	if (seq == i) {
 	    return funcs[i].str;
 	}

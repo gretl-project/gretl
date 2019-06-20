@@ -6727,23 +6727,13 @@ static NODE *object_status (NODE *n, int f, parser *p)
 
 	ret->v.xval = NADBL;
 
-	if (f == F_ISNULL) {
-	    ret->v.xval = 1;
-	    if (gretl_is_series(s, p->dset)) {
-		ret->v.xval = 0.0;
-	    } else if (gretl_is_user_var(s)) {
-		ret->v.xval = 0.0;
-	    }
-	} else if (f == F_TYPEOF || f == F_EXISTS) {
+	if (f == F_TYPEOF || f == F_EXISTS) {
 	    GretlType type = user_var_get_type_by_name(s);
 
 	    if (type == 0 && gretl_is_series(s, p->dset)) {
 		type = GRETL_TYPE_SERIES;
 	    }
 	    ret->v.xval = type_translate_to_int(type);
-	} else if (f == F_ISSTRING) {
-	    /* temporarily reinstated */
-	    ret->v.xval = gretl_is_string(s);
 	} else if (f == F_ISDISCR) {
 	    int v = current_series_index(p->dset, s);
 
@@ -15958,8 +15948,6 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_OBSNUM:
     case F_ISDISCR:
-    case F_ISNULL:
-    case F_ISSTRING:
     case F_STRLEN:
     case F_NLINES:
     case F_REMOVE:

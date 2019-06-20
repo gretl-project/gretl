@@ -217,10 +217,8 @@ enum {
     F_OBSNUM,
     F_ISDISCR,
     F_ISDUMMY,
-    F_ISNULL,
     F_TYPEOF,
     F_EXISTS,
-    F_ISSTRING,
     F_NELEM,
     F_PDF,
     F_PVAL,
@@ -525,11 +523,9 @@ enum {
 #define bnsym(s) (s == MDEF || s == FARGS)
 
 /* function with single string argument */
-#define string_arg_func(s) (s == F_ISNULL || s == F_ISDISCR || \
-			    s == F_OBSNUM || s == F_BACKTICK || \
-			    s == F_VARNUM || s == F_TYPEOF || \
-			    s == F_ISSTRING || s == F_EXISTS || \
-			    s == F_REMOVE)
+#define string_arg_func(s) (s == F_ISDISCR || s == F_OBSNUM || \
+			    s == F_BACKTICK || s == F_VARNUM || \
+			    s == F_EXISTS || s == F_REMOVE)
 
 /* function with multiple args, string for first arg */
 #define str0_func(s) (s == F_PVAL || s == F_CDF || s == F_INVCDF || \
