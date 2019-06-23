@@ -6727,7 +6727,7 @@ static NODE *object_status (NODE *n, int f, parser *p)
 
 	ret->v.xval = NADBL;
 
-	if (f == F_TYPEOF || f == F_EXISTS) {
+	if (f == F_EXISTS) {
 	    GretlType type = user_var_get_type_by_name(s);
 
 	    if (type == 0 && gretl_is_series(s, p->dset)) {
@@ -15957,13 +15957,15 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, 1, STR, l, p);
 	}
 	break;
-    case F_TYPEOF:
     case F_EXISTS:
 	if (l->t == STR) {
 	    ret = object_status(l, t->t, p);
 	} else {
 	    ret = generic_typeof_node(l, p);
 	}
+	break;
+    case F_TYPEOF:
+	ret = generic_typeof_node(l, p);
 	break;
     case F_NELEM:
 	ret = n_elements_node(l, p);
