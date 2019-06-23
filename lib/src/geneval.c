@@ -14479,6 +14479,7 @@ static NODE *scalar_postfix_node (NODE *n, parser *p)
 	if (n->vname != NULL && p->lh.name[0] != '\0' &&
 	    strcmp(n->vname, p->lh.name) == 0) {
 	    /* undefined behavior */
+	    fprintf(stderr, "BAD NUM_P/NUM_M\n");
 	    gretl_errmsg_sprintf(_("The result for %s is not well defined"),
 				 n->vname);
 	    p->err = E_DATA;

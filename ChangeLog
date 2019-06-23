@@ -2,9 +2,11 @@ version 2019c, in progress
 - Fix bug: "dataset sortby" not handling missing values
   correctly on MS Windows
 - New function fzero(): find a root of a nonlinear function
+- New function conv2d(): 2-dimensional convolution of two
+  matrices
 - GUI plot editor: try to ensure that choice of font carries
   over in copying a plot to the clipboard
-- svm() function: add support for ordinal data plus small
+- svm() function: add support for ordinal data, plus small
   interface improvements
 - GUI model table: show up to three "significance" stars
 - Remove the deprecated functions insnull() and isstring()
