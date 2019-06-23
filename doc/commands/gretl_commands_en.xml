@@ -5382,6 +5382,35 @@
       <code>
 	eval readfile("@gretldir/data/gnuplot/gpcolors.txt")
       </code>
+      <subhead>Recession bars</subhead>
+      <para>
+	The <quote>band</quote> options described above can also be
+	used to add <quote>recession bars</quote> to a plot. By this
+	we mean vertical bars occupying the full
+	<math>y</math>-dimension of the plot and indicating the
+	presence (bar) or absence (no bar) of some qualitative feature
+	in a time-series plot. Such bars are commonly used to flag
+	periods of recession; they could also be used to indicate
+	periods of war, or anything that can be coded in a 0/1 dummy
+	variable.
+      </para>
+      <para>
+	In this context the <opt>band</opt> option requires a single
+	parameter: the identifier of a series with values 0 and 1,
+	where 1 indicates <quote>on</quote> and 0
+	<quote>off</quote>. The <opt>band-style</opt> option may be
+	used to specify a color for the bars, given in hexadecimal
+	form or as the name of a color known to gnuplot (see the
+	previous section). An example showing a single bar is given
+	below:
+      </para>
+      <code>
+	open AWM17 --quiet
+	series dum = obs &gt;>= 1990:1 &amp;&amp; obs &lt;= 1994:2
+	gnuplot YER URX --with-lines --time-series \
+	  --band=dum --band-style=0xcccccc --output=display \
+	  {set key top left;}
+      </code>
       <subhead>Controlling the output</subhead>
       <para>
 	In interactive mode the plot is displayed immediately. In
