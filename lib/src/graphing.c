@@ -6048,15 +6048,30 @@ static int plot_with_band (int mode, gnuplot_info *gi,
 	write_rectangles(gi, rgb, d, t1, t2, dset, fp);
     }
 
-    fputs("plot \\\n", fp);
-
     if (pm.bdummy) {
+	int oddman = 0;
+
+	check_for_yscale(gi, (const double **) dset->Z, &oddman);
+	if (gi->flags & GPT_Y2AXIS) {
+	    fputs("set ytics nomirror\n", fp);
+	    fputs("set y2tics\n", fp);
+	}
+
+	fputs("plot \\\n", fp);
+
 	/* plot the actual data */
 	for (i=1; i<=n_yvars; i++) {
 	    const char *iname = series_get_graph_name(dset, gi->list[i]);
 
 	    set_withstr(gi, i, wspec);
-	    fprintf(fp, "'-' using 1:2 title '%s' %s lt %d", iname, wspec, i);
+	    if (gi->flags & GPT_Y2AXIS) {
+		fprintf(fp, "'-' using 1:2 axes %s title \"%s (%s)\" %s lt %d",
+			(i == oddman)? "x1y2" : "x1y1", iname,
+			(i == oddman)? _("right") : _("left"),
+			wspec, i);
+	    } else {
+		fprintf(fp, "'-' using 1:2 title \"%s\" %s lt %d", iname, wspec, i);
+	    }
 	    if (i < n_yvars) {
 		fputs(", \\\n", fp);
 	    } else {
@@ -6070,6 +6085,8 @@ static int plot_with_band (int mode, gnuplot_info *gi,
 	}
 	goto finish;
     }
+
+    fputs("plot \\\n", fp);
 
     if (style == BAND_FILL) {
 	/* plot the confidence band first, so the other lines
