@@ -5793,7 +5793,8 @@ int parse_gnuplot_color (const char *s, char *targ)
    "#00ff00" or "0x00ff00".
 */
 
-static int parse_band_style_option (int *style, char *rgb)
+static int parse_band_style_option (struct band_pm *pm,
+				    int *style, char *rgb)
 {
     const char *s = get_optval_string(plot_ci, OPT_J);
     int err = 0;
@@ -5801,8 +5802,11 @@ static int parse_band_style_option (int *style, char *rgb)
     if (s != NULL) {
 	const char *p = strchr(s, ',');
 
-	if (*s == ',') {
-	    /* we're skipping field 1 */
+	if (pm->bdummy && *s != ',') {
+	    /* must be just a color */
+	    err = parse_gnuplot_color(s, rgb);
+	} else if (*s == ',') {
+	    /* skipping field 1, going straight to color */
 	    err = parse_gnuplot_color(s + 1, rgb);
 	} else if (p == NULL) {
 	    /* just got field 1, style spec */
@@ -5840,6 +5844,61 @@ static int parse_band_style_option (int *style, char *rgb)
 		err = parse_gnuplot_color(s + 5, rgb);
 	    }
 	}
+    }
+
+    return err;
+}
+
+/* write "recession bars" as gnuplot rectangle objects, using
+   the dummy variable @d for on/off information
+*/
+
+static int write_rectangles (gnuplot_info *gi,
+			     char *rgb,
+			     const double *d,
+			     int t1, int t2,
+			     DATASET *dset,
+			     FILE *fp)
+{
+    char stobs[16], endobs[16];
+    int bar_on = 0, obj = 1;
+    int t, err = 0;
+
+    if (gi->x == NULL) {
+	return E_DATA;
+    }
+
+    if (*rgb == '\0') {
+	strcpy(rgb, "#dddddd");
+    }
+
+    *stobs = *endobs = '\0';
+
+    for (t=t1; t<=t2; t++) {
+	if (na(d[t])) {
+	    err = E_MISSDATA;
+	    break;
+	}
+	if (bar_on && d[t] == 0) {
+	    /* finalize a bar */
+	    sprintf(endobs, "%g", gi->x[t]);
+	    fprintf(fp, "set object %d rectangle from %s, graph 0 to %s, graph 1 back "
+		    "fillstyle solid 0.5 noborder fc rgb \"%s\"\n",
+		    obj++, stobs, endobs, rgb);
+	    bar_on = 0;
+	} else if (!bar_on && d[t] != 0) {
+	    /* start a bar */
+	    sprintf(stobs, "%g", gi->x[t]);
+	    bar_on = 1;
+	}
+    }
+
+    if (bar_on) {
+	/* terminate an unfinished bar */
+	sprintf(endobs, "%g", gi->x[t2]);
+	fprintf(fp, "set rectangle from %s, graph 0 to %s, graph 1 back "
+		"fillstyle solid 0.5 noborder fc rgb \"%s\"\n",
+		stobs, endobs, rgb);
     }
 
     return err;
@@ -5906,7 +5965,7 @@ static int plot_with_band (int mode, gnuplot_info *gi,
     }
 
     if (!err && (opt & OPT_J)) {
-	err = parse_band_style_option(&style, rgb);
+	err = parse_band_style_option(&pm, &style, rgb);
     }
 
     if (!err) {
@@ -5984,7 +6043,33 @@ static int plot_with_band (int mode, gnuplot_info *gi,
 
     print_gnuplot_literal_lines(literal, GNUPLOT, OPT_NONE, fp);
 
+    if (pm.bdummy) {
+	/* write out the rectangles */
+	write_rectangles(gi, rgb, d, t1, t2, dset, fp);
+    }
+
     fputs("plot \\\n", fp);
+
+    if (pm.bdummy) {
+	/* plot the actual data */
+	for (i=1; i<=n_yvars; i++) {
+	    const char *iname = series_get_graph_name(dset, gi->list[i]);
+
+	    set_withstr(gi, i, wspec);
+	    fprintf(fp, "'-' using 1:2 title '%s' %s lt %d", iname, wspec, i);
+	    if (i < n_yvars) {
+		fputs(", \\\n", fp);
+	    } else {
+		fputc('\n', fp);
+	    }
+	}
+	/* and write the data block */
+	for (i=0; i<n_yvars; i++) {
+	    y = dset->Z[gi->list[i+1]];
+	    print_user_y_data(x, y, t1, t2, fp);
+	}
+	goto finish;
+    }
 
     if (style == BAND_FILL) {
 	/* plot the confidence band first, so the other lines
@@ -6059,6 +6144,8 @@ static int plot_with_band (int mode, gnuplot_info *gi,
 	    print_user_pm_data(x, c, w, t1, t2, fp);
 	}
     }
+
+ finish:
 
     gretl_pop_c_numeric_locale();
 
