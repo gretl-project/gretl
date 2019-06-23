@@ -14476,13 +14476,22 @@ static NODE *scalar_postfix_node (NODE *n, parser *p)
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
-	double x = n->v.xval;
-
-	ret->v.xval = x;
-	if (n->t == NUM_P) {
-	    p->err = node_replace_scalar(n, x + 1.0);
+	if (n->vname != NULL && p->lh.name[0] != '\0' &&
+	    strcmp(n->vname, p->lh.name) == 0) {
+	    /* undefined behavior */
+	    gretl_errmsg_sprintf(_("The result for %s is not well defined"),
+				 n->vname);
+	    p->err = E_DATA;
+	    ret->v.xval = NADBL;
 	} else {
-	    p->err = node_replace_scalar(n, x - 1.0);
+	    double x = n->v.xval;
+
+	    ret->v.xval = x;
+	    if (n->t == NUM_P) {
+		p->err = node_replace_scalar(n, x + 1.0);
+	    } else {
+		p->err = node_replace_scalar(n, x - 1.0);
+	    }
 	}
     }
 
