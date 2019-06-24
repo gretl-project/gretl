@@ -116,7 +116,7 @@ static int autoicon = 1;
 static int session_prompt = 1;
 static int keep_folder = 1;
 static int tabbed_editor = 1;
-static int tabbed_models;
+static int tabbed_models = 1;
 static int display_wdir = 1;
 static int wdir_tooltip = 1;
 static int script_output_policy;
