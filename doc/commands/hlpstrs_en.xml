@@ -32,7 +32,7 @@
  <gentext key="list-or-mat"    text="list or matrix"/>
  <gentext key="matrix-or-bundle" text="matrix or bundle"/>
  <gentext key="asinput"       text="same type as input"/>
- <gentext key="bundle"        text="bundle"/> 
+ <gentext key="bundle"        text="bundle"/>
  <gentext key="scalar"        text="scalar"/>
  <gentext key="pscalar"       text="scalar between 0 and 1"/>
  <gentext key="int"           text="integer"/>
@@ -55,9 +55,10 @@
  <gentext key="strings"       text="array of strings"/>
  <gentext key="matrices"      text="array of matrices"/>
  <gentext key="bundles"       text="array of bundles"/>
+ <gentext key="matrices-or-strings" text="array of matrices or strings"/>
  <gentext key="string-or-strings"  text="string or array of strings"/>
  <gentext key="strings-or-list"  text="array of strings or list"/>
- <gentext key="series-vec-or-strings"    text="series, vector or string array"/> 
+ <gentext key="series-vec-or-strings"    text="series, vector or string array"/>
  <gentext key="char"          text="character"/>
  <gentext key="coeffname"     text="name of coefficient"/>
  <gentext key="sslist"        text="scalar, series or list"/>
@@ -66,8 +67,8 @@
  <gentext key="optional"      text="optional"/>
  <gentext key="conditional"   text="conditional"/>
  <gentext key="seebelow"      text="see below"/>
- <gentext key="varargs"       text="see below"/>  
+ <gentext key="varargs"       text="see below"/>
  <gentext key="chapter"       text="Chapter"/>
- <gentext key="applies-to"    text="Applies to"/> 
+ <gentext key="applies-to"    text="Applies to"/>
 
 </localization>

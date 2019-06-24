@@ -7544,9 +7544,42 @@ static NODE *strsplit_node (int f, NODE *l, NODE *m, NODE *r, parser *p)
 
 static NODE *array_sort_node (NODE *n, int f, parser *p)
 {
-    NODE *ret = aux_array_node(p);
+    NODE *ret = NULL;
 
-    ret->v.a = gretl_strings_sort(n->v.a, f == F_DSORT, &p->err);
+    if (gretl_array_get_type(n->v.a) != GRETL_TYPE_STRINGS) {
+	p->err = E_TYPES;
+    } else {
+	ret = aux_array_node(p);
+	if (!p->err) {
+	    ret->v.a = gretl_strings_sort(n->v.a, f == F_DSORT, &p->err);
+	}
+    }
+    return ret;
+}
+
+static NODE *array_flatten_node (NODE *l, NODE *r, parser *p)
+{
+    GretlType t = gretl_array_get_type(l->v.a);
+    NODE *ret = NULL;
+
+    if (t == GRETL_TYPE_MATRICES) {
+	int vcat = node_get_bool(r, p, 0);
+
+	if (!p->err) {
+	    ret = aux_matrix_node(p);
+	}
+	if (!p->err) {
+	    ret->v.m = gretl_matrix_array_flatten(l->v.a, vcat, &p->err);
+	}
+    } else if (t == GRETL_TYPE_STRINGS) {
+	ret = aux_string_node(p);
+	if (!p->err) {
+	    ret->v.str = gretl_strings_array_flatten(l->v.a, &p->err);
+	}
+    } else {
+	p->err = E_TYPES;
+    }
+
     return ret;
 }
 
@@ -15426,10 +15459,17 @@ static NODE *eval (NODE *t, parser *p)
 	/* series or vector or string array argument needed */
 	if (l->t == SERIES || l->t == MAT || l->t == NUM) {
 	    ret = vector_sort(l, t->t, p);
-	} else if (l->t == ARRAY && gretl_array_get_type(l->v.a) == GRETL_TYPE_STRINGS) {
+	} else if (l->t == ARRAY) {
 	    ret = array_sort_node(l, t->t, p);
 	} else {
 	    node_type_error(t->t, 0, SERIES, l, p);
+	}
+	break;
+    case F_FLATTEN:
+	if (l->t == ARRAY) {
+	    ret = array_flatten_node(l, r, p);
+	} else {
+	    node_type_error(t->t, 0, ARRAY, l, p);
 	}
 	break;
     case F_VALUES:

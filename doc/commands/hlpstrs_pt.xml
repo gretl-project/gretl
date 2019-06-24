@@ -55,6 +55,7 @@
  <gentext key="strings"       text="cadeia de texto"/>
  <gentext key="matrices"      text="cadeia de matrizes"/>
  <gentext key="bundles"       text="cadeia de lotes"/>
+ <gentext key="matrices-or-strings" text="cadeia de matrizes ou texto"/>
  <gentext key="string-or-strings"  text="texto ou cadeia de texto"/>
  <gentext key="strings-or-list"  text="cadeia de texto ou lista"/>
  <gentext key="series-vec-or-strings"    text="série, vetor ou cadeia de texto"/> 

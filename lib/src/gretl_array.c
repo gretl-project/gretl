@@ -398,6 +398,13 @@ gretl_bundle *gretl_array_get_bundle (gretl_array *A, int i)
     return b;
 }
 
+/* "flatten" an array of matrices, yielding a single matrix,
+   by either horizontal or vertical concatenation. By
+   default the concatenation is horizontal but if @vcat is
+   non-zero it's vertical. An error is flagged if the
+   matrices are not conformable for the operation.
+*/
+
 gretl_matrix *gretl_matrix_array_flatten (gretl_array *A,
 					  int vcat,
 					  int *err)

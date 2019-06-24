@@ -55,6 +55,7 @@
  <gentext key="strings"       text="array di stringhe"/>
  <gentext key="matrices"      text="array di matrici"/>
  <gentext key="bundles"       text="array di bundle"/>
+ <gentext key="matrices-or-strings" text="array di matrici o stringhe"/>
  <gentext key="string-or-strings"  text="stringa o array di stringhe"/>
  <gentext key="strings-or-list"  text="array di stringhe o lista"/>
  <gentext key="series-vec-or-strings"    text="serie, vettore o array di stringhe"/> 

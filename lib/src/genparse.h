@@ -388,6 +388,7 @@ enum {
     F_STRFTIME,
     F_STRPTIME,
     F_CONV2D,
+    F_FLATTEN,
     HF_CMMULT,
     HF_CFFT,
     HF_CMATRIX,
