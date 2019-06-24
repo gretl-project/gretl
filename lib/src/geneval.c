@@ -11324,29 +11324,35 @@ static NODE *eval_print_scan (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	const char *fmt = m->v.str;
 	const char *args = NULL;
 	const char *lstr = NULL;
-	char *lflat = NULL;
+	user_var *uvar = NULL;
 	int n = 0;
 
 	if (l != NULL) {
-	    /* sscanf only */
+	    /* sscanf() only */
 	    if (l->t == STR) {
 		lstr = l->v.str;
 	    } else if (l->t == ARRAY) {
-		lflat = gretl_strings_array_flatten(l->v.a, &p->err);
+		args = r->v.str;
+		uvar = get_user_var_of_type_by_name(args, GRETL_TYPE_MATRIX);
+		if (uvar == NULL) {
+		    p->err = E_INVARG;
+		}
 	    }
 	}
 
 	if (!p->err) {
-	    if (!null_or_empty(r)) {
+	    if (args == NULL && !null_or_empty(r)) {
 		args = r->v.str;
 	    }
-	    if (f == F_SSCANF) {
-		if (lflat != NULL) {
-		    p->err = do_sscanf(lflat, fmt, args, p->dset, &n);
-		    free(lflat);
-		} else {
-		    p->err = do_sscanf(lstr, fmt, args, p->dset, &n);
+	    if (f == F_SSCANF && l->t == ARRAY) {
+		gretl_matrix *m;
+
+		m = vector_from_strings_array(l->v.a, fmt, &n, &p->err);
+		if (!p->err) {
+		    p->err = user_var_replace_value(uvar, m, GRETL_TYPE_MATRIX);
 		}
+	    } else if (f == F_SSCANF) {
+		p->err = do_sscanf(lstr, fmt, args, p->dset, &n);
 	    } else if (f == F_SPRINTF) {
 		ret->v.str = do_sprintf_function(fmt, args, p->dset, &p->err);
 	    } else {

@@ -1,8 +1,16 @@
 version 2019c, in progress
 - Fix bug: "dataset sortby" not handling missing values
   correctly on MS Windows
+- Fix bug: possible crash on using the "fcast" command for
+  out-of-sample forecasting after estimation of a VAR
+- Fix bug: typeof() function not working correctly for
+  string objects inside bundles and arrays
 - New function fzero(): find a root of a nonlinear function
 - New function conv2d(): 2-dimensional convolution of two
+  matrices
+- New function flatten(): reduce array of matrices to single
+  matrix or array of strings to single string
+- New function msplitby(): split a matrix into an array of
   matrices
 - GUI plot editor: try to ensure that choice of font carries
   over in copying a plot to the clipboard
@@ -10,10 +18,6 @@ version 2019c, in progress
   interface improvements
 - GUI model table: show up to three "significance" stars
 - Remove the deprecated functions insnull() and isstring()
-- Fix bug: possible crash on using the "fcast" command for
-  out-of-sample forecasting after estimation of a VAR
-- Fix bug: typeof() function not working correctly for
-  string objects inside bundles and arrays
 
 2019-05-21 version 2019b
 - New command "panplot": plot a single panel-data series
