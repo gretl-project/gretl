@@ -4278,7 +4278,8 @@ static NODE *read_object_func (NODE *n, NODE *r, int f, parser *p)
 		done = 1;
 	    }
 #endif
-	    if (!done && has_suffix(fname, ".csv")) {
+	    if (!done && (has_suffix(fname, ".csv") ||
+			  has_suffix(fname, ".txt"))) {
 		ret->v.m = import_csv_as_matrix(fname, &p->err);
 	    } else if (!done) {
 		ret->v.m = gretl_matrix_read_from_file(fname, import,

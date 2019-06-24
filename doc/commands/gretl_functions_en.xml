@@ -6962,7 +6962,14 @@
       <description>
 	<para>
 	  Reads a matrix from a file named
-	  <argname>fname</argname>. If the filename has the suffix
+	  <argname>fname</argname>. This is mostly intended for
+	  reading files with a specific format, described below, but it
+	  can also be used on delimited text files of various
+	  sorts. For the latter usage see the section titled
+	  <quote>Delimited text files</quote>.
+	</para>
+	<para>
+	  If the filename has the suffix
 	  <quote><lit>.gz</lit></quote> it is assumed that gzip
 	  compression has been applied in writing the data; if it has
 	  the suffix <quote><lit>.bin</lit></quote> the file is
@@ -7010,6 +7017,18 @@
 	  <cmdref targ="foreign"/> command. In this case the
 	  <argname>fname</argname> argument should be a plain
 	  filename, without any path component.
+	</para>
+	<subhead>Delimited text files</subhead>
+	<para>
+	  If the name of the file to be read has extension
+	  <quote><lit>.csv</lit></quote> or
+	  <quote><lit>.txt</lit></quote> the rules governing the
+	  format of the file are relaxed&mdash;in particular, we do
+	  not require that the actual data be preceded by
+	  specification of the number of rows and columns. The program
+	  will try to figure out the delimiter (space, tab, comma or
+	  semicolon) and do its best to import the matrix, allowing
+	  for use of comma as decimal separator if need be.
 	</para>
 	<para>
 	  <seelist>

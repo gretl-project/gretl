@@ -2747,9 +2747,29 @@ static int intercept_nan_as_name (const char *s)
     return 0;
 }
 
-static int process_csv_varname (char *vname, const char *src, int j,
-				int *numcount, PRN *prn)
+static int csv_is_numeric (const char *s, csvdata *c)
 {
+    int ret = 0;
+
+    if (c->decpoint == '.') {
+	ret = numeric_string(s);
+    } else {
+	/* decimal comma in force */
+	char *tmp = gretl_strdup(s);
+
+	gretl_charsub(tmp, ',', '.');
+	ret = numeric_string(tmp);
+	free(tmp);
+    }
+
+    return ret;
+}
+
+static int process_csv_varname (csvdata *c, int j, int *numcount,
+				PRN *prn)
+{
+    char *vname = c->dset->varname[j];
+    char *src = c->str;
     int err = 0;
 
     *vname = '\0';
@@ -2762,14 +2782,14 @@ static int process_csv_varname (char *vname, const char *src, int j,
     } else if (*src == '\0') {
 	fprintf(stderr, "variable name %d is missing\n", j);
 	sprintf(vname, "v%d", j);
-    } else if (numeric_string(src)) {
+    } else if (csv_is_numeric(src, c)) {
 	*numcount += 1;
     } else {
 	const char *s = src;
 
 	while (*s && !isalpha(*s)) s++;
 	if (*s == '\0') {
-	    fprintf(stderr, "variable name %d is garbage\n", j);
+	    fprintf(stderr, "variable name %d (%s) is garbage\n", j, src);
 	    sprintf(vname, "v%d", j);
 	} else {
 	    strncat(vname, s, VNAMELEN - 1);
@@ -3003,8 +3023,7 @@ static int csv_varname_scan (csvdata *c, FILE *fp, PRN *prn, PRN *mprn)
 		sprintf(c->dset->varname[j], "col%d", j);
 		j++;
 	    } else {
-		err = process_csv_varname(c->dset->varname[j], c->str, j,
-					  &numcount, prn);
+		err = process_csv_varname(c, j, &numcount, prn);
 		j++;
 	    }
 	}
@@ -3604,14 +3623,12 @@ static int real_import_csv (const char *fname,
 	goto csv_bailout;
     }
 
-#if CDEBUG
-    fprintf(stderr, "fixed_format? %s; got_delim (%c)? %s; got_tab? %s\n",
-	    fixed_format(c) ? "yes" : "no", c->delim,
-	    csv_got_delim(c) ? "yes" : "no",
-	    csv_got_tab(c)? "yes" : "no");
-#endif
-
-    if (!fixed_format(c) && !csv_got_delim(c)) {
+    if (csv_as_matrix(c) && csv_got_semi(c)) {
+	if (c->delim == ',' && csv_got_delim(c)) {
+	    c->decpoint = ',';
+	}
+	c->delim = ';';
+    } else if (!fixed_format(c) && !csv_got_delim(c)) {
 	/* set default delimiter */
 	if (csv_got_tab(c)) {
 	    c->delim = '\t';
@@ -3621,6 +3638,14 @@ static int real_import_csv (const char *fname,
 	    c->delim = ' ';
 	}
     }
+
+#if CDEBUG
+    fprintf(stderr, "fixed_format? %s; got_delim (%c)? %s; got_tab? %s; ",
+	    fixed_format(c) ? "yes" : "no", c->delim,
+	    csv_got_delim(c) ? "yes" : "no",
+	    csv_got_tab(c)? "yes" : "no");
+    fprintf(stderr, "decpoint '%c'\n", c->decpoint);
+#endif
 
     /* buffer to hold lines */
     c->line = malloc(c->maxlinelen);
@@ -3931,6 +3956,11 @@ int import_csv (const char *fname, DATASET *dset,
 
 gretl_matrix *import_csv_as_matrix (const char *fname, int *err)
 {
+#if CDEBUG
+    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+#else
+    PRN *prn = NULL;
+#endif
     gretl_matrix *m = NULL;
     char csvname[MAXLEN] = {0};
     gretlopt opt = OPT_A; /* --all-cols */
@@ -3940,11 +3970,13 @@ gretl_matrix *import_csv_as_matrix (const char *fname, int *err)
 
     if (!*err && http) {
 	*err = real_import_csv(csvname, NULL, NULL, NULL,
-			       NULL, NULL, &m, opt, NULL);
+			       NULL, NULL, &m, opt, prn);
     } else if (!*err) {
 	*err = real_import_csv(fname, NULL, NULL, NULL,
-			       NULL, NULL, &m, opt, NULL);
+			       NULL, NULL, &m, opt, prn);
     }
+
+    gretl_print_destroy(prn);
 
     return m;
 }
