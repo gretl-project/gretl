@@ -267,7 +267,7 @@ char *gretl_strings_array_flatten (gretl_array *A, int *err)
 		for (i=0; i<A->n; i++) {
 		    strcat(s, A->data[i]);
 		    if (i < A->n - 1) {
-			strcat(s, " ");
+			strcat(s, "\n");
 		    }
 		}
 	    }
