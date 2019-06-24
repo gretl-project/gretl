@@ -17,6 +17,8 @@ version 2019c, in progress
 - svm() function: add support for ordinal data, plus small
   interface improvements
 - mread() function: enable reading of delimited text matrix
+- sscanf() function: support conversion of an array of numeric
+  strings to a column vector
   files, non-conformant with the mwrite() format
 - GUI model table: show up to three "significance" stars
 - Remove the deprecated functions insnull() and isstring()
