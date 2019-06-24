@@ -2682,8 +2682,15 @@ gretl_matrix *gretl_gauss_hermite_matrix_new (int n, int *err)
 
 /**
  * gretl_matrix_2d_convolution:
+ * @A: first matrix.
+ * @B: second matrix.
+ * @err: location to receive error code.
  *
- * FIXME
+ * Computes the 2-dimensional convolution of the matrices
+ * @A and @B. The code borrows from Octave's conv2.m.
+ *
+ * Returns: newly allocated convolution matrix, or %NULL on
+ * failure.
  */
 
 gretl_matrix *gretl_matrix_2d_convolution (const gretl_matrix *A,
@@ -2696,7 +2703,7 @@ gretl_matrix *gretl_matrix_2d_convolution (const gretl_matrix *A,
 #if 0
     /* Octave: "Convolution works fastest if we choose the A matrix to be
      *  the largest" -- but we're not really seeing any difference.
-     */    
+     */
     int Am, An, B, Bn, Cm, Cn;
     int edgM, edgN;
 
@@ -2724,7 +2731,7 @@ gretl_matrix *gretl_matrix_2d_convolution (const gretl_matrix *A,
     int Cn = An + Bn - 1;
     int edgM = Bm - 1;
     int edgN = Bn - 1;
-#endif    
+#endif
 
     C = gretl_matrix_alloc(Cm, Cn);
 
@@ -2744,4 +2751,82 @@ gretl_matrix *gretl_matrix_2d_convolution (const gretl_matrix *A,
     }
 
     return C;
+}
+
+/* scan format string: should be "%<num>m" or just "%m" */
+
+static int check_matrix_scan_format (const char *fmt, int ns, int *n)
+{
+    int err = 0;
+
+    if (*fmt == '%') {
+	char *p;
+	long len = strtol(++fmt, &p, 10);
+
+	if (p == fmt) {
+	    /* no "max rows" given */
+	    *n = ns;
+	} else if (len < 0) {
+	    err = E_INVARG;
+	} else if (len > ns) {
+	    *n = ns;
+	} else {
+	    *n = len;
+	}
+	if (!err && strcmp(p, "m")) {
+	    err = E_INVARG;
+	}
+    } else {
+	err = E_INVARG;
+    }
+
+    return err;
+}
+
+gretl_matrix *vector_from_strings (char **S, int ns,
+				   const char *fmt,
+				   int *nvals,
+				   int *err)
+{
+    gretl_matrix *m = NULL;
+    int n = 0;
+
+    *nvals = 0;
+    *err = check_matrix_scan_format(fmt, ns, &n);
+
+    if (!*err) {
+	if (n == 0) {
+	    m = gretl_null_matrix_new();
+	} else {
+	    m = gretl_column_vector_alloc(n);
+	}
+	if (m == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (!*err && n > 0) {
+	char *s, *p;
+	double x;
+	int i;
+
+	gretl_push_c_numeric_locale();
+	for (i=0; i<n; i++) {
+	    s = S[i];
+	    if (s == NULL || *s == '\0') {
+		m->val[i] = NADBL;
+	    } else {
+		x = strtod(s, &p);
+		if (*p == '\0') {
+		    m->val[i] = x;
+		    *nvals += 1;
+		} else {
+		    m->val[i] = NADBL;
+		}
+	    }
+	}
+	gretl_pop_c_numeric_locale();
+    }
+
+    return m;
 }

@@ -11310,6 +11310,35 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
     return ret;
 }
 
+static int scan_to_vector (NODE *n, const char *fmt,
+			   const char *arg, int *err)
+{
+    gretl_matrix *m = NULL;
+    user_var *uvar = NULL;
+    char **S = NULL;
+    int ns = 0;
+    int nmax = 0;
+
+    uvar = get_user_var_of_type_by_name(arg, GRETL_TYPE_MATRIX);
+    if (uvar == NULL) {
+	*err = E_INVARG;
+	return 0;
+    }
+
+    if (gretl_array_get_type(n->v.a) != GRETL_TYPE_STRINGS) {
+	*err = E_TYPES;
+    } else {
+	S = gretl_array_get_strings(n->v.a, &ns);
+	m = vector_from_strings(S, ns, fmt, &nmax, err);
+    }
+
+    if (!*err) {
+	*err = user_var_replace_value(uvar, m, GRETL_TYPE_MATRIX);
+    }
+
+    return nmax;
+}
+
 static NODE *eval_print_scan (NODE *l, NODE *m, NODE *r, int f, parser *p)
 {
     NODE *ret;
@@ -11322,45 +11351,41 @@ static NODE *eval_print_scan (NODE *l, NODE *m, NODE *r, int f, parser *p)
 
     if (ret != NULL) {
 	const char *fmt = m->v.str;
-	const char *args = NULL;
 	const char *lstr = NULL;
-	user_var *uvar = NULL;
 	int n = 0;
 
-	if (l != NULL) {
+	if (l != NULL && l->t == ARRAY) {
+	    /* scanning array of strings to vector */
+	    n = scan_to_vector(l, fmt, r->v.str, &p->err);
+	    goto finish;
+	} else if (l != NULL) {
 	    /* sscanf() only */
 	    if (l->t == STR) {
 		lstr = l->v.str;
-	    } else if (l->t == ARRAY) {
-		args = r->v.str;
-		uvar = get_user_var_of_type_by_name(args, GRETL_TYPE_MATRIX);
-		if (uvar == NULL) {
-		    p->err = E_INVARG;
-		}
+	    } else {
+		p->err = E_INVARG;
 	    }
 	}
 
 	if (!p->err) {
-	    if (args == NULL && !null_or_empty(r)) {
+	    const char *args = NULL;
+
+	    if (!null_or_empty(r)) {
 		args = r->v.str;
 	    }
-	    if (f == F_SSCANF && l->t == ARRAY) {
-		gretl_matrix *m;
-
-		m = vector_from_strings_array(l->v.a, fmt, &n, &p->err);
-		if (!p->err) {
-		    p->err = user_var_replace_value(uvar, m, GRETL_TYPE_MATRIX);
-		}
-	    } else if (f == F_SSCANF) {
+	    if (f == F_SSCANF) {
 		p->err = do_sscanf(lstr, fmt, args, p->dset, &n);
 	    } else if (f == F_SPRINTF) {
 		ret->v.str = do_sprintf_function(fmt, args, p->dset, &p->err);
 	    } else {
 		p->err = do_printf(fmt, args, p->dset, p->prn, &n);
 	    }
-	    if (f != F_SPRINTF && !p->err) {
-		ret->v.xval = n;
-	    }
+	}
+
+    finish:
+
+	if (!p->err && f != F_SPRINTF) {
+	    ret->v.xval = n;
 	}
     }
 
