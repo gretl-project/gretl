@@ -237,6 +237,46 @@ char **gretl_array_get_strings (gretl_array *A, int *ns)
     return AS;
 }
 
+/* note: the return value is newly allocated, and owned by the caller */
+
+char *gretl_strings_array_flatten (gretl_array *A, int *err)
+{
+    char *s = NULL;
+
+    if (A == NULL) {
+	*err = E_DATA;
+    } else if (A->type != GRETL_TYPE_STRINGS) {
+	*err = E_TYPES;
+    } else {
+	int i, len = 0;
+
+	for (i=0; i<A->n; i++) {
+	    if (A->data[i] == NULL) {
+		*err = E_MISSDATA;
+		break;
+	    } else {
+		len += strlen(A->data[i]) + 1;
+	    }
+	}
+
+	if (!*err) {
+	    s = calloc(len, 1);
+	    if (s == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		for (i=0; i<A->n; i++) {
+		    strcat(s, A->data[i]);
+		    if (i < A->n - 1) {
+			strcat(s, " ");
+		    }
+		}
+	    }
+	}
+    }
+
+    return s;
+}
+
 void *gretl_array_get_element (gretl_array *A, int i,
 			       GretlType *type,
 			       int *err)

@@ -11291,11 +11291,16 @@ static NODE *eval_print_scan (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	const char *fmt = m->v.str;
 	const char *args = NULL;
 	const char *lstr = NULL;
+	char *lflat = NULL;
 	int n = 0;
 
 	if (l != NULL) {
 	    /* sscanf only */
-	    lstr = l->v.str;
+	    if (l->t == STR) {
+		lstr = l->v.str;
+	    } else if (l->t == ARRAY) {
+		lflat = gretl_strings_array_flatten(l->v.a, &p->err);
+	    }
 	}
 
 	if (!p->err) {
@@ -11303,7 +11308,12 @@ static NODE *eval_print_scan (NODE *l, NODE *m, NODE *r, int f, parser *p)
 		args = r->v.str;
 	    }
 	    if (f == F_SSCANF) {
-		p->err = do_sscanf(lstr, fmt, args, p->dset, &n);
+		if (lflat != NULL) {
+		    p->err = do_sscanf(lflat, fmt, args, p->dset, &n);
+		    free(lflat);
+		} else {
+		    p->err = do_sscanf(lstr, fmt, args, p->dset, &n);
+		}
 	    } else if (f == F_SPRINTF) {
 		ret->v.str = do_sprintf_function(fmt, args, p->dset, &p->err);
 	    } else {
@@ -15873,6 +15883,8 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_SSCANF:
 	if (l->t == STR && m->t == STR && r->t == STR) {
+	    ret = eval_print_scan(l, m, r, t->t, p);
+	} else if (l->t == ARRAY && m->t == STR && r->t == STR) {
 	    ret = eval_print_scan(l, m, r, t->t, p);
 	} else {
 	    node_type_error(t->t, 0, STR, NULL, p);
