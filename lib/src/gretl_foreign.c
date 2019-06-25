@@ -652,7 +652,7 @@ static int lib_run_prog_sync (char **argv, gretlopt opt,
     return err;
 }
 
-#define MPI_PIPES 0 /* not yet */
+#define MPI_PIPES 0 /* not yet? */
 
 #if MPI_PIPES
 
@@ -694,13 +694,17 @@ static int run_mpi_with_pipes (char **argv, gretlopt opt, PRN *prn)
 	g_error_free(gerr);
 	err = 1;
     } else {
+	int gui = gretl_in_gui_mode();
+
 	g_child_watch_add(child_pid, mpi_childwatch, &finished);
 	while (!finished) {
 	    memset(buf, 0, sizeof buf);
 	    got = read(sout, buf, sizeof buf - 1);
 	    if (got > 0) {
-		fputs(buf, stderr);
 		pputs(prn, buf);
+		if (gui) {
+		    manufacture_gui_callback(FLUSH);
+		}
 	    }
 	    g_usleep(250000); /* 0.25 seconds */
 	    g_main_context_iteration(NULL, FALSE);

@@ -25,6 +25,8 @@
 
 #ifdef HAVE_MPI
 # include "gretl_mpi.h"
+# include "gretl_foreign.h"
+# include "matrix_extra.h"
 #endif
 
 #include "svmlib.h"
@@ -63,7 +65,8 @@ enum {
     W_CONSEC  = 1 << 8, /* using consecutive folds? */
     W_REFOLD  = 1 << 9, /* folds differ across x-validation calls? */
     W_INTDEP  = 1 << 10, /* dependent variable is integer-valued */
-    W_NOTRAIN = 1 << 11  /* not doing any training */
+    W_NOTRAIN = 1 << 11, /* not doing any training */
+    W_MPI     = 1 << 12  /* use MPI for cross validation */
 };
 
 enum {
@@ -83,7 +86,7 @@ struct sv_wrapper_ {
     int k;
     int nfold;    /* number of folds for x-validation */
     int predict;  /* are we doing (how much) prediction? */
-    int nproc;    /* number of processes (MPI only ) */
+    int nproc;    /* number of processes (MPI only) */
     int rank;     /* "this" MPI rank, if applicable */
     int regcrit;  /* regression optimality criterion */
     int do_probs; /* are we doing probability estimation? */
@@ -2555,7 +2558,7 @@ static int get_optional_int (gretl_bundle *b, const char *key,
 	} else if (type == GRETL_TYPE_UNSIGNED) {
 	    *ival = *(unsigned *) ptr;
 	    return 1;
-	} else {
+	} else if (err != NULL) {
 	    *err = E_TYPES;
 	}
     }
@@ -2603,7 +2606,7 @@ static int is_w_parm (const char *s)
 	"search_only", "grid", "ranges_outfile",
 	"data_outfile", "ranges_infile", "model_outfile",
 	"model_infile", "plot", "range_format", "refold",
-	"autoseed", "regcrit", NULL
+	"autoseed", "regcrit", "use_mpi", NULL
     };
     int i;
 
@@ -2752,6 +2755,10 @@ static int read_params_bundle (gretl_bundle *bparm,
 	wrap->flags |= W_SEARCH;
     }
 
+    if (get_optional_int(bparm, "use_mpi", &ival, &err) && ival != 0) {
+	wrap->flags |= W_MPI;
+    }
+
     if (get_optional_int(bparm, "foldvar", &ival, &err) && ival != 0) {
 	wrap->flags |= W_FOLDVAR;
     }
@@ -2878,6 +2885,40 @@ static int peek_foldvar (gretl_bundle *bparm, int *fvar)
 
     return err;
 }
+
+#ifdef HAVE_MPI
+
+static int peek_use_mpi (gretl_bundle *bparm, PRN *prn)
+{
+    int ival, ret = 0;
+
+    if (get_optional_int(bparm, "use_mpi", &ival, NULL) && ival > 0) {
+	ret = ival;
+    }
+
+    if (ret > 0) {
+	/* MPI is actually used internally only in parameter search,
+	   so let's peek at that too.
+	*/
+	int search = 0;
+
+	ival = 0;
+	if (get_optional_int(bparm, "search", &ival, NULL) && ival > 0) {
+	    search = 1;
+	} else if (gretl_bundle_get_matrix(bparm, "grid", NULL) != NULL) {
+	    search = 1;
+	}
+	if (!search) {
+	    pputs(prn, "svm: 'use_mpi' option ignored in the absence of search");
+	    pputc(prn, '\n');
+	    ret = 0;
+	}
+    }
+
+    return ret;
+}
+
+#endif
 
 /* wrap a couple of libsvm I/0 functions so they respect
    @workdir
@@ -3253,6 +3294,70 @@ static void maybe_save_auto_seed (sv_wrapper *w, gretl_bundle *b)
     }
 }
 
+#ifdef HAVE_MPI
+
+static int forward_to_gretlmpi (const int *list,
+				gretl_bundle *bparams,
+				DATASET *dset,
+				int np,
+				double *yhat,
+				int *got_yhat,
+				PRN *prn)
+{
+    gchar *fname;
+    int err = 0;
+
+    /* write data file for gretlmpi */
+    fname = gretl_make_dotpath("svmtmp.gdt");
+    err = write_data(fname, (int *) list, dset, OPT_NONE, NULL);
+    g_free(fname);
+
+    if (!err) {
+	/* write parameter bundle for gretlmpi */
+	err = gretl_bundle_write_to_file(bparams, "svmtmp.xml", 1);
+    }
+
+    if (!err) {
+	/* compose "foreign" lines */
+	if (np > 1) {
+	    set_optval_int(MPI, OPT_N, np);
+	    err = foreign_start(MPI, NULL, OPT_N, prn);
+	} else {
+	    err = foreign_start(MPI, NULL, OPT_NONE, prn);
+	}
+	if (!err) {
+	    foreign_append("open @dotdir/svmtmp.gdt -q", MPI);
+	    foreign_append("bundle parms = bread(\"@dotdir/svmtmp.xml\")", MPI);
+	    foreign_append("list All = dataset", MPI);
+	    foreign_append("yhat_svm = svm(All, parms)", MPI);
+	    foreign_append("if $mpirank < 1", MPI);
+	    foreign_append("  mwrite({yhat_svm}, \"@dotdir/svmtmp.mat\")", MPI);
+	    foreign_append("endif", MPI);
+	    err = foreign_execute(dset, OPT_NONE, prn);
+	}
+    }
+
+    if (!err) {
+	gretl_matrix *m;
+	int t;
+
+	m = gretl_matrix_read_from_file("svmtmp.mat", 1, &err);
+	if (m != NULL) {
+	    for (t=0; t<dset->n; t++) {
+		yhat[t] = m->val[t];
+	    }
+	    *got_yhat = 1;
+	    gretl_matrix_free(m);
+	} else {
+	    err = E_DATA;
+	}
+    }
+
+    return err;
+}
+
+#endif
+
 int gretl_svm_driver (const int *list,
 		      gretl_bundle *bparams,
 		      gretl_bundle *bmodel,
@@ -3275,6 +3380,14 @@ int gretl_svm_driver (const int *list,
 #ifdef HAVE_MPI
     if (gretl_mpi_rank() > 0) {
 	prn = NULL;
+    } else if (!gretl_mpi_initialized() && gretl_n_processors() > 1) {
+	/* not in MPI mode currently */
+	int np = peek_use_mpi(bparams, prn);
+
+	if (np > 0) {
+	    return forward_to_gretlmpi(list, bparams, dset, np,
+				       yhat, yhat_written, prn);
+	}
     }
 #endif
 
