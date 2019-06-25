@@ -5406,7 +5406,7 @@
       </para>
       <code>
 	open AWM17 --quiet
-	series dum = obs &gt;>= 1990:1 &amp;&amp; obs &lt;= 1994:2
+	series dum = obs &gt;= 1990:1 &amp;&amp; obs &lt;= 1994:2
 	gnuplot YER URX --with-lines --time-series \
 	  --band=dum --band-style=0xcccccc --output=display \
 	  {set key top left;}
