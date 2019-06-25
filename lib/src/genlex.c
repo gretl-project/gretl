@@ -687,10 +687,12 @@ static int real_function_lookup (const char *s, int aliases,
 
 	for (i=0; func_alias[i].id != 0; i++) {
 	    if (!strcmp(s, func_alias[i].str)) {
+#if 0 /* not just yet? */
 		if (!strcmp(s, "isnull")) {
 		    gretl_warnmsg_set(_("obsolete function isnull(): "
 					"please use !exists() instead"));
 		}
+#endif
 		if (p != NULL) {
 		    p->flags |= P_ALIASED;
 		}
