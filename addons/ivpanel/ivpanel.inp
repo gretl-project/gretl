@@ -166,7 +166,7 @@ function matrix matrix_tsls (const matrix y, matrix *X, matrix *Z,
                              matrix *V[null], matrix *S1[null])
     matrix R 
     matrix Q = qrdecomp(Z, &R)
-    if !isnull(S1)
+    if exists(S1)
       # write first-stage fitted values into S1
       S1 = Q*Q'S1
     endif

@@ -207,7 +207,7 @@ function scalar aparchFilter(series *depVar, series *h, series *e,
        endif
    endif
 
-   if (!err && !isnull(deriv_h) && !isnull(deriv_e))
+   if (!err && exists(deriv_h) && exists(deriv_e))
        # FIXME: incomplete and experimental --------------------------------
        #
        # deriv_e and deriv_h should contain (eventually), the derivatives
@@ -395,7 +395,7 @@ function scalar gfilter(scalar type,
  			scalar p, scalar q, matrix *parameters, 
 			matrix *DH[null], matrix *DE[null])
 
-    ascore = !isnull(DH) && !isnull(DE)
+    ascore = exists(DH) && exists(DE)
 
     if type < 7 # aparch
 	if ascore

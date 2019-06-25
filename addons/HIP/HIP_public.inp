@@ -431,7 +431,7 @@ function bundle HIP(series y "Dependent variable",
 
     bundle b = HIP_setup(y, EXOG, ENDOG, ADDIN, HETVAR)
 
-    if !isnull(b)
+    if exists(b)
 	if v != 1
 	    HIP_setoption(&b, "verbose", v)
 	endif
