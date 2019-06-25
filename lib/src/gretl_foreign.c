@@ -652,6 +652,68 @@ static int lib_run_prog_sync (char **argv, gretlopt opt,
     return err;
 }
 
+#define MPI_PIPES 0 /* not yet */
+
+#if MPI_PIPES
+
+static void mpi_childwatch (GPid pid, gint status, gpointer p)
+{
+    int *finished = (int *) p;
+
+    fprintf(stderr, "gretlmpi: child %" G_PID_FORMAT " exited %s\n",
+	    pid, g_spawn_check_exit_status(status, NULL)?
+	    "normally" : "abnormally");
+    g_spawn_close_pid(pid);
+    *finished = 1;
+}
+
+static int run_mpi_with_pipes (char **argv, gretlopt opt, PRN *prn)
+{
+    gint sout, errout, got;
+    gint finished = 0;
+    char buf[1024];
+    GError *gerr = NULL;
+    GPid child_pid;
+    int err = 0;
+
+    g_spawn_async_with_pipes(gretl_workdir(),
+			     argv,
+			     NULL, /* envp */
+			     G_SPAWN_SEARCH_PATH |
+			     G_SPAWN_DO_NOT_REAP_CHILD,
+			     NULL, /* child_setup */
+			     NULL, /* data for child_setup */
+			     &child_pid,
+			     NULL, /* stdin */
+			     &sout,
+			     &errout,
+			     &gerr);
+
+    if (gerr != NULL) {
+	pprintf(prn, "%s\n", gerr->message);
+	g_error_free(gerr);
+	err = 1;
+    } else {
+	g_child_watch_add(child_pid, mpi_childwatch, &finished);
+	while (!finished) {
+	    memset(buf, 0, sizeof buf);
+	    got = read(sout, buf, sizeof buf - 1);
+	    if (got > 0) {
+		fputs(buf, stderr);
+		pputs(prn, buf);
+	    }
+	    g_usleep(250000); /* 0.25 seconds */
+	    g_main_context_iteration(NULL, FALSE);
+	}
+	close(sout);
+	close(errout);
+    }
+
+    return err;
+}
+
+#endif /* MPI_PIPES experiment */
+
 static int lib_run_R_sync (gretlopt opt, PRN *prn)
 {
     char *argv[] = {
@@ -812,7 +874,11 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	    print_mpi_command(argv, prn);
 	}
 
+#if MPI_PIPES
+	err = run_mpi_with_pipes(argv, opt, prn);
+#else
 	err = lib_run_prog_sync(argv, opt, prn);
+#endif
 	g_free(mpiprog);
     }
 
