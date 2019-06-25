@@ -6719,9 +6719,10 @@ static int type_translate_to_int (GretlType type)
     }
 }
 
-static NODE *object_status (NODE *n, int f, parser *p)
+static NODE *object_status (NODE *n, NODE *func, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
+    int f = func->t;
 
     if (ret != NULL && starting(p)) {
 	const char *s = n->v.str;
@@ -6734,7 +6735,12 @@ static NODE *object_status (NODE *n, int f, parser *p)
 	    if (type == 0 && gretl_is_series(s, p->dset)) {
 		type = GRETL_TYPE_SERIES;
 	    }
-	    ret->v.xval = type_translate_to_int(type);
+	    if (func->flags & ALS_NODE) {
+		/* handle the "isnull" alias */
+		ret->v.xval = (type == 0);
+	    } else {
+		ret->v.xval = type_translate_to_int(type);
+	    }
 	} else if (f == F_ISDISCR) {
 	    int v = current_series_index(p->dset, s);
 
@@ -6761,7 +6767,7 @@ static NODE *object_status (NODE *n, int f, parser *p)
     return ret;
 }
 
-static NODE *generic_typeof_node (NODE *n, parser *p)
+static NODE *generic_typeof_node (NODE *n, NODE *func, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
     GretlType t = GRETL_TYPE_NONE;
@@ -6792,7 +6798,12 @@ static NODE *generic_typeof_node (NODE *n, parser *p)
 	break;
     }
 
-    ret->v.xval = type_translate_to_int(t);
+    if (func->flags & ALS_NODE) {
+	/* handle the "isnull" alias */
+	ret->v.xval = (t == 0);
+    } else {
+	ret->v.xval = type_translate_to_int(t);
+    }
 
     return ret;
 }
@@ -16046,20 +16057,20 @@ static NODE *eval (NODE *t, parser *p)
     case F_NLINES:
     case F_REMOVE:
 	if (l->t == STR) {
-	    ret = object_status(l, t->t, p);
+	    ret = object_status(l, t, p);
 	} else {
 	    node_type_error(t->t, 1, STR, l, p);
 	}
 	break;
     case F_EXISTS:
 	if (l->t == STR) {
-	    ret = object_status(l, t->t, p);
+	    ret = object_status(l, t, p);
 	} else {
-	    ret = generic_typeof_node(l, p);
+	    ret = generic_typeof_node(l, t, p);
 	}
 	break;
     case F_TYPEOF:
-	ret = generic_typeof_node(l, p);
+	ret = generic_typeof_node(l, t, p);
 	break;
     case F_NELEM:
 	ret = n_elements_node(l, p);

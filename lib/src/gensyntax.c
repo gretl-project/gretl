@@ -1476,7 +1476,7 @@ static NODE *powterm (parser *p, NODE *l)
 	t = base(p, NULL);
     }
 
-    if (max_func(sym) && (p->flags & P_ALIASED)) {
+    if (als_func(sym) && (p->flags & P_ALIASED)) {
 	/* transfer flag to newly created node */
 	t->flags |= ALS_NODE;
 	p->flags ^= P_ALIASED;

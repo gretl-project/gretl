@@ -550,10 +550,11 @@ enum {
 			s == F_GSSMAX || s == F_NUMHESS || \
 			s == F_FZERO)
 
-/* maximization functions */
-#define max_func(s) (s == F_BFGSMAX || s == F_NRMAX || \
+/* functions with "reversing" aliases */
+#define als_func(s) (s == F_BFGSMAX || s == F_NRMAX || \
 		     s == F_SIMANN || s == F_BFGSCMAX || \
-		     s == F_NMMAX || s == F_GSSMAX)
+		     s == F_NMMAX || s == F_GSSMAX || \
+		     s == F_EXISTS)
 
 /* functions where the right-hand argument is actually a return
    location */

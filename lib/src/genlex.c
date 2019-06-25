@@ -526,6 +526,7 @@ struct str_table func_alias[] = {
     { F_RNAMESET, "rownames" },
     { F_CNAMEGET, "colname" },
     { F_RNAMEGET, "rowname" },
+    { F_EXISTS,   "isnull" },
     { 0,          NULL }
 };
 
