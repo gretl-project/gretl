@@ -2888,9 +2888,17 @@ static int peek_foldvar (gretl_bundle *bparm, int *fvar)
 
 #ifdef HAVE_MPI
 
-static int peek_use_mpi (gretl_bundle *bparm, PRN *prn)
+static int peek_use_mpi (gretl_bundle *bparm,
+			 gretl_bundle *bmodel,
+			 gretl_bundle *bprob,
+			 PRN *prn)
 {
     int ival, ret = 0;
+
+    if (bmodel != NULL || bprob != NULL) {
+	/* these cases are not handled yet */
+	return 0;
+    }
 
     if (get_optional_int(bparm, "use_mpi", &ival, NULL) && ival > 0) {
 	ret = ival;
@@ -3382,7 +3390,7 @@ int gretl_svm_driver (const int *list,
 	prn = NULL;
     } else if (!gretl_mpi_initialized() && gretl_n_processors() > 1) {
 	/* not in MPI mode currently */
-	int np = peek_use_mpi(bparams, prn);
+	int np = peek_use_mpi(bparams, bmodel, bprob, prn);
 
 	if (np > 0) {
 	    return forward_to_gretlmpi(list, bparams, dset, np,
