@@ -526,7 +526,7 @@ struct str_table func_alias[] = {
     { F_RNAMESET, "rownames" },
     { F_CNAMEGET, "colname" },
     { F_RNAMEGET, "rowname" },
-    { F_EXISTS,   "isnull" },
+    { F_EXISTS,   "isnull" }, /* deprecated */
     { 0,          NULL }
 };
 
@@ -687,6 +687,10 @@ static int real_function_lookup (const char *s, int aliases,
 
 	for (i=0; func_alias[i].id != 0; i++) {
 	    if (!strcmp(s, func_alias[i].str)) {
+		if (!strcmp(s, "isnull")) {
+		    gretl_warnmsg_set(_("obsolete function isnull(): "
+					"please use !exists() instead"));
+		}
 		if (p != NULL) {
 		    p->flags |= P_ALIASED;
 		}

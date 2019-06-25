@@ -2575,10 +2575,7 @@ static int try_for_command_index (CMD *cmd, int i,
 	    if (compmode && cmd->ci == END) {
 		int endci = peek_end_param(cmd, i);
 
-		if (compmode == LOOP && endci == LOOP) {
-		    deprecate_alias("end loop", "endloop", 0);
-		    cmd->ci = ENDLOOP;
-		} else if (compmode == FUNC && endci == FUNC) {
+		if (compmode == FUNC && endci == FUNC) {
 		    cmd->flags |= CMD_ENDFUN;
 		}
 	    }
