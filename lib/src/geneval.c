@@ -14010,7 +14010,7 @@ double dvar_get_scalar (int i, const DATASET *dset)
 	    return tmax + 1;
 	}
     case R_DATATYPE:
-	return (no_data(dset))? NADBL : dataset_get_structure(dset);
+	return dataset_get_structure(dset);
     case R_TEST_PVAL:
 	return get_last_pvalue();
     case R_TEST_STAT:
