@@ -2820,7 +2820,7 @@ static int QLR_plot_wanted (gretlopt opt)
  * @opt: if flags include OPT_S, save test results to model;
  * if OPT_D included, do the Chow test based on a given dummy
  * variable; if OPT_T included, do the QLR test. If OPT_M,
- * _just_save the test on the model, don't set $test and
+ * just save the test on the model, don't set $test and
  * $pvalue.
  * @prn: gretl printing struct.
  *
@@ -3006,11 +3006,16 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
 		    pval = chisq_cdf_comp(dfn, test);
 		}
 	    } else {
-		test = (pmod->ess - chow_mod.ess) * dfd /
-		    (chow_mod.ess * dfn);
+		test = (pmod->ess - chow_mod.ess) * dfd / (chow_mod.ess * dfn);
 		if (!na(test)) {
 		    pval = snedecor_cdf_comp(dfn, dfd, test);
 		}
+	    }
+
+	    if (na(test)) {
+		pputs(prn, "Couldn't compute Chow test statistic\n");
+	    } else if (na(pval)) {
+		pprintf(prn, "Couldn't compute Chow test p-value (test = %g)\n", test);
 	    }
 
 	    if (!na(test) && !na(pval)) {
