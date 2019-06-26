@@ -71,7 +71,11 @@ function void fix_dimensions_bundle (const string J, bundle *sd)
             b.dimension_label = key
         endif
         b.value = value
-        b.value_label = dvl[key][value]
+	if typeof(dvl[key]) == 6 # array (will be all nulls)
+            b.value_label = "<unknown value label>"
+	else
+	    b.value_label = dvl[key][value]
+	endif
         dims[key] = b
         if key == "REF_AREA"
             # add this key at top level
