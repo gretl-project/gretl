@@ -3326,7 +3326,7 @@ static int forward_to_gretlmpi (const int *list,
     }
 
     if (!err) {
-	/* compose "foreign" lines */
+	/* compose and execute MPI script */
 	if (np > 1) {
 	    set_optval_int(MPI, OPT_N, np);
 	    err = foreign_start(MPI, NULL, OPT_N, prn);
@@ -3347,21 +3347,39 @@ static int forward_to_gretlmpi (const int *list,
 
     if (!err) {
 	gretl_matrix *m;
-	int t;
+	int s, t;
 
 	m = gretl_matrix_read_from_file("svmtmp.mat", 1, &err);
-	if (m != NULL) {
-	    for (t=0; t<dset->n; t++) {
-		yhat[t] = m->val[t];
-	    }
-	    *got_yhat = 1;
-	    gretl_matrix_free(m);
-	} else {
+	if (m == NULL) {
 	    err = E_DATA;
+	} else {
+	    if (m->rows == sample_size(dset)) {
+		for (t=dset->t1, s=0; t<=dset->t2; t++, s++) {
+		    yhat[t] = m->val[s];
+		}
+		*got_yhat = 1;
+	    } else {
+		err = E_DATA;
+	    }
+	    gretl_matrix_free(m);
 	}
     }
 
     return err;
+}
+
+static int can_do_mpi (void)
+{
+    if (gretl_mpi_initialized()) {
+	/* can't run MPI under MPI */
+	return 0;
+    } else if (gretl_n_processors() < 2) {
+	/* can't do local MPI */
+	return 0;
+    } else {
+	/* OK if mpiexec is installed */
+	return check_for_mpiexec();
+    }
 }
 
 #endif
@@ -3388,8 +3406,7 @@ int gretl_svm_driver (const int *list,
 #ifdef HAVE_MPI
     if (gretl_mpi_rank() > 0) {
 	prn = NULL;
-    } else if (!gretl_mpi_initialized() && gretl_n_processors() > 1) {
-	/* not in MPI mode currently */
+    } else if (can_do_mpi()) {
 	int np = peek_use_mpi(bparams, bmodel, bprob, prn);
 
 	if (np > 0) {
