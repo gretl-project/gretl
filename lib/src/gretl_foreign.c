@@ -345,6 +345,39 @@ static void make_gretl_R_names (void)
     }
 }
 
+#ifdef HAVE_MPI
+
+/* The following should probably be redundant on Linux but may
+   be needed for the OS X package, where the gretl bin
+   directory may not be in PATH, and in general will be needed
+   on Windows.
+*/
+
+static gchar *gretl_mpi_binary (void)
+{
+    gchar *ret;
+
+#ifdef WIN32
+    ret = g_strdup_printf("%sgretlmpi", gretl_bindir());
+#else
+    gchar *tmp = g_strdup(gretl_home());
+    gchar *p = strstr(tmp, "/share/gretl");
+
+    if (p != NULL) {
+	*p = '\0';
+	ret = g_strdup_printf("%s/bin/gretlmpi", tmp);
+    } else {
+	ret = g_strdup("gretlmpi");
+    }
+
+    g_free(tmp);
+#endif
+
+    return ret;
+}
+
+#endif
+
 #ifdef G_OS_WIN32
 
 static char *get_rscript_path (void)
@@ -511,7 +544,6 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 
 static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 {
-    const char *mpiexec = gretl_mpiexec();
     const char *hostfile = gretl_mpi_hosts();
     int np = 0;
     int err = 0;
@@ -529,6 +561,8 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
     }
 
     if (!err) {
+	const char *mpiexec = gretl_mpiexec();
+	gchar *mpiprog = gretl_mpi_binary();
 	gchar *hostbit, *npbit, *rngbit, *qopt;
 	gchar *cmd, *sout = NULL;
 
@@ -563,8 +597,8 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	    qopt = g_strdup("");
 	}
 
-	cmd = g_strdup_printf("%s%s%s \"%sgretlmpi\"%s%s \"%s\"",
-			      mpiexec, hostbit, npbit, gretl_bindir(), rngbit,
+	cmd = g_strdup_printf("%s%s%s \"%s\"%s%s \"%s\"",
+			      mpiexec, hostbit, npbit, mpiprog, rngbit,
 			      qopt, get_mpi_scriptname());
 
 	if (opt & OPT_V) {
@@ -578,6 +612,7 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	    pputs(prn, sout);
 	}
 
+	g_free(mpiprog);
 	g_free(hostbit);
 	g_free(npbit);
 	g_free(rngbit);
@@ -652,7 +687,7 @@ static int lib_run_prog_sync (char **argv, gretlopt opt,
     return err;
 }
 
-#define MPI_PIPES 0 /* not yet? */
+#define MPI_PIPES 1 /* not yet? */
 
 #if MPI_PIPES
 
@@ -704,6 +739,8 @@ static int run_mpi_with_pipes (char **argv, gretlopt opt, PRN *prn)
 		pputs(prn, buf);
 		if (gui) {
 		    manufacture_gui_callback(FLUSH);
+		} else {
+		    gretl_print_flush_stream(prn);
 		}
 	    }
 	    g_usleep(250000); /* 0.25 seconds */
@@ -790,33 +827,10 @@ static void print_mpi_command (char **argv, PRN *prn)
     pputc(prn, '\n');
 }
 
-/* The following should probably be redundant on Linux but may
-   be needed for the OS X package, where the gretl bin
-   directory may not be in PATH.
-*/
-
-static gchar *gretl_mpi_binary (void)
-{
-    gchar *tmp = g_strdup(gretl_home());
-    gchar *p = strstr(tmp, "/share/gretl");
-    gchar *ret;
-
-    if (p != NULL) {
-	*p = '\0';
-	ret = g_strdup_printf("%s/bin/gretlmpi", tmp);
-    } else {
-	ret = g_strdup("gretlmpi");
-    }
-
-    g_free(tmp);
-
-    return ret;
-}
-
 static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 {
     const char *hostfile = gretl_mpi_hosts();
-    char npnum[8] = {0};
+    char np = 0;
     int err = 0;
 
     if (*hostfile == '\0') {
@@ -825,13 +839,13 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 
     if (opt & OPT_N) {
 	/* handle the number-of-processes option */
-	int np = get_optval_int(MPI, OPT_N, &err);
+	int opt_np = get_optval_int(MPI, OPT_N, &err);
 
-	if (!err && (np <= 0 || np > 9999999)) {
+	if (!err && (opt_np <= 0 || opt_np > 9999999)) {
 	    err = E_DATA;
 	}
 	if (!err) {
-	    sprintf(npnum, "%d", np);
+	    np = opt_np;
 	}
     }
 
@@ -839,17 +853,29 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	const char *mpiexec = gretl_mpiexec();
 	gchar *mpiprog = gretl_mpi_binary();
 	const char *hostsopt = NULL;
-	char *argv[11];
-	int npmax, i = 0;
+	char *argv[11] = {0};
+	char npnum[8] = {0};
+	int nproc, i = 0;
 
-	npmax = gretl_n_processors();
+	nproc = gretl_n_processors();
 
 	if (!(opt & OPT_L) && hostfile != NULL && *hostfile != '\0') {
-	    hostsopt = (mpi_variant == MPI_MPICH)? "-machinefile" :
-		"--hostfile";
-	} else if (*npnum == '\0') {
-	    /* no hosts file: supply a default np value */
-	    sprintf(npnum, "%d", npmax);
+	    if (mpi_variant == MPI_MPICH) {
+		hostsopt = "-machinefile";
+	    } else if (mpi_variant == MPI_MSMPI) {
+		hostsopt = "/machinefile";
+	    } else {
+		hostsopt = "--hostfile";
+	    }
+	} else if (np == 0) {
+	    /* no user spec, so supply a default np value */
+	    if (libset_get_bool(MPI_USE_SMT)) {
+		/* use max number of threads */
+		np = nproc;
+	    } else {
+		/* don't use hyper-threads */
+		np = gretl_n_physical_cores();
+	    }
 	}
 
 	argv[i++] = (char *) mpiexec;
@@ -857,10 +883,11 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	    argv[i++] = (char *) hostsopt;
 	    argv[i++] = (char *) hostfile;
 	}
-	if (*npnum != '\0') {
-	    argv[i++] = "-np";
+	if (np > 0) {
+	    sprintf(npnum, "%d", np);
+	    argv[i++] = (mpi_variant == MPI_MSMPI)? "/np" : "-np";
 	    argv[i++] = npnum;
-	    if (mpi_variant == MPI_OPENMPI && atoi(npnum) > npmax/2) {
+	    if (mpi_variant == MPI_OPENMPI && atoi(npnum) > nproc/2) {
 		argv[i++] = "--oversubscribe";
 	    }
 	}

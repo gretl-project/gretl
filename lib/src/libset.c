@@ -34,6 +34,10 @@
 # include "gretl_mpi.h"
 #endif
 
+#ifdef WIN32
+# include "gretl_win32.h"
+#endif
+
 #include <unistd.h>
 #include <errno.h>
 
@@ -75,7 +79,7 @@ enum {
     STATE_MWRITE_G        = 1 << 21, /* use %g format with mwrite() */
     STATE_ECHO_SPACE      = 1 << 22, /* preserve vertical space in output */
     STATE_STRSUB_ON       = 1 << 23, /* string substitution activated */
-    STATE_MPI_NO_HT       = 1 << 24  /* MPI: don't use hyperthreading */
+    STATE_MPI_SMT         = 1 << 24  /* MPI: use hyperthreads by default */
 };
 
 /* for values that really want a non-negative integer */
@@ -161,7 +165,7 @@ struct set_vars_ {
 			   !strcmp(s, ROBUST_Z) || \
 			   !strcmp(s, MWRITE_G) || \
 			   !strcmp(s, STRSUB_ON) || \
-			   !strcmp(s, MPI_NO_HT) || \
+			   !strcmp(s, MPI_USE_SMT) || \
 			   !strcmp(s, USE_OPENMP))
 
 #define libset_double(s) (!strcmp(s, CONV_HUGE) || \
@@ -499,6 +503,49 @@ int gretl_n_processors (void)
     return n_proc;
 }
 
+int gretl_n_physical_cores (void)
+{
+    static int n_cores = -1;
+
+    if (n_cores >= 1) {
+	return n_cores;
+    }
+
+    n_cores = gretl_n_processors();
+
+#if defined(WIN32)
+    win32_get_core_count();
+    return n_cores; /* FIXME */
+#elif defined(OS_OSX)
+    int nc = 0;
+    size_t len = sizeof nc;
+
+    if (sysctlbyname("hw.physicalcpu", &nc, &len, NULL, 0) == -1) {
+	perror("could not determine number of physical cores available");
+    } else {
+	n_cores = nc;
+    }
+#else
+    if (n_cores > 1) {
+	/* check SMT status */
+	FILE *fp = fopen("/sys/devices/system/cpu/smt/active", "r");
+	char line[2];
+	int smt = 0;
+
+	if (fp != NULL) {
+	    if (fgets(line, sizeof line, fp)) {
+		smt = atoi(line);
+	    }
+	}
+	if (smt) {
+	    n_cores /= 2;
+	}
+    }
+#endif
+
+    return n_cores;
+}
+
 #define OMP_SHOW 0
 
 int libset_use_openmp (guint64 n)
@@ -589,7 +636,7 @@ static void state_vars_init (set_vars *sv)
     fprintf(stderr, "state_vars_init called\n");
 #endif
     sv->flags = STATE_ECHO_ON | STATE_MSGS_ON | STATE_WARN_ON |
-	STATE_SKIP_MISSING | STATE_STRSUB_ON;
+	STATE_SKIP_MISSING | STATE_STRSUB_ON | STATE_MPI_SMT;
 #if 1
     if (getenv("GRETL_STRSUB_OFF")) {
 	sv->flags &= ~STATE_STRSUB_ON;
@@ -2210,6 +2257,8 @@ static int boolvar_get_flag (const char *s)
 	return STATE_MWRITE_G;
     } else if (!strcmp(s, STRSUB_ON)) {
 	return STATE_STRSUB_ON;
+    } else if (!strcmp(s, MPI_USE_SMT)) {
+	return STATE_MPI_SMT;
     } else {
 	fprintf(stderr, "libset_get_bool: unrecognized "
 		"variable '%s'\n", s);

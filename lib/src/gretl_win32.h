@@ -106,6 +106,8 @@ int win32_set_console_charset (const char *package);
 
 int windows_is_xp (void);
 
+int win32_get_core_count (void);
+
 #endif /* WIN32 */
 
 #endif /* GRETL_WIN32_H */

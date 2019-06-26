@@ -1977,3 +1977,82 @@ int windows_is_xp (void)
 
     return ret;
 }
+
+typedef BOOL (WINAPI *LPFN_GLPI) (
+    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION,
+    PDWORD);
+
+static DWORD count_set_bits (ULONG_PTR bit_mask)
+{
+    DWORD LSHIFT = sizeof(ULONG_PTR)*8 - 1;
+    DWORD set_count = 0;
+    ULONG_PTR bit_test = (ULONG_PTR)1 << LSHIFT;
+    int i;
+
+    for (i=0; i<=LSHIFT; i++) {
+        set_count += (bit_mask & bit_test)? 1 : 0;
+        bit_test /= 2;
+    }
+
+    return set_count;
+}
+
+int win32_get_core_count (void)
+{
+    LPFN_GLPI glpi;
+    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION buf = NULL;
+    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION ptr = NULL;
+    DWORD rc, retlen = 0;
+    int n_procs = 0;
+    int n_cores = 0;
+    int bufsize = 0;
+    int offset = 0;
+
+    glpi = (LPFN_GLPI) GetProcAddress(GetModuleHandle(TEXT("kernel32")),
+				      "GetLogicalProcessorInformation");
+    if (glpi == NULL) {
+	return 0;
+    }
+
+    /* get required buffer size */
+    rc = glpi(buf, &retlen);
+    if (!rc && GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
+	/* failed */
+	return 0;
+    }
+
+    buf = malloc(retlen);
+    if (buf != NULL) {
+	rc = glpi(buf, &retlen);
+    }
+
+    if (!rc) {
+	/* failed */
+	free(buf);
+	return 0;
+    }
+
+    bufsize = sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);
+    ptr = buf;
+
+    while (offset + bufsize <= retlen) {
+        if (ptr->Relationship == RelationProcessorCore) {
+            n_cores++;
+            /* hyper-threaded cores supply more than one logical processor */
+            n_procs += count_set_bits(ptr->ProcessorMask);
+            break;
+	}
+        offset += bufsize;
+        ptr++;
+    }
+
+#if 1
+    fprintf(stderr, "\nGetLogicalProcessorInformation results:\n");
+    fprintf(stderr, " Number of processor cores: %d\n", n_cores);
+    fprintf(stderr, " Number of logical processors: %d\n", n_procs);
+#endif
+
+    free(buf);
+
+    return n_cores;
+}

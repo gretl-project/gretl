@@ -92,7 +92,7 @@ typedef enum {
 #define WILDBOOT_DIST    "wildboot"
 #define MWRITE_G         "mwrite_g"
 #define STRSUB_ON        "string_subst"
-#define MPI_NO_HT        "mpi_no_ht"
+#define MPI_USE_SMT      "mpi_use_smt"
 
 typedef void (*SHOW_ACTIVITY_FUNC) (void);
 typedef int (*DEBUG_READLINE) (void *);
@@ -124,6 +124,7 @@ int is_libset_var (const char *s);
 int libset_use_openmp (guint64 n);
 
 int gretl_n_processors (void);
+int gretl_n_physical_cores (void);
 
 int get_omp_n_threads (void);
 
