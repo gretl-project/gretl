@@ -92,6 +92,7 @@ typedef enum {
 #define WILDBOOT_DIST    "wildboot"
 #define MWRITE_G         "mwrite_g"
 #define STRSUB_ON        "string_subst"
+#define MPI_NO_HT        "mpi_no_ht"
 
 typedef void (*SHOW_ACTIVITY_FUNC) (void);
 typedef int (*DEBUG_READLINE) (void *);

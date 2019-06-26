@@ -3341,7 +3341,7 @@ static int forward_to_gretlmpi (const int *list,
 	    foreign_append("if $mpirank < 1", MPI);
 	    foreign_append("  mwrite({yhat_svm}, \"@dotdir/svmtmp.mat\")", MPI);
 	    foreign_append("endif", MPI);
-	    err = foreign_execute(dset, OPT_NONE, prn);
+	    err = foreign_execute(dset, OPT_L, prn); /* note: --local */
 	}
     }
 

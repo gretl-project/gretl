@@ -74,7 +74,8 @@ enum {
     STATE_ROBUST_Z        = 1 << 20, /* use z- not t-score with HCCM/HAC */
     STATE_MWRITE_G        = 1 << 21, /* use %g format with mwrite() */
     STATE_ECHO_SPACE      = 1 << 22, /* preserve vertical space in output */
-    STATE_STRSUB_ON       = 1 << 23  /* string substitution activated */
+    STATE_STRSUB_ON       = 1 << 23, /* string substitution activated */
+    STATE_MPI_NO_HT       = 1 << 24  /* MPI: don't use hyperthreading */
 };
 
 /* for values that really want a non-negative integer */
@@ -160,6 +161,7 @@ struct set_vars_ {
 			   !strcmp(s, ROBUST_Z) || \
 			   !strcmp(s, MWRITE_G) || \
 			   !strcmp(s, STRSUB_ON) || \
+			   !strcmp(s, MPI_NO_HT) || \
 			   !strcmp(s, USE_OPENMP))
 
 #define libset_double(s) (!strcmp(s, CONV_HUGE) || \
