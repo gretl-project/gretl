@@ -2,14 +2,17 @@
 BSMestim.inp
 
 The code in this script comes from the retired function package "BSMestim"
-by Ignacio Diaz-Emparanza.
+by Ignacio Diaz-Emparanza, which has been superseded by the "StrucTiSM"
+package.
+
 It shows how a Kalman filter can be programmed "by hand" in gretl's
-language hansl. Nowadays this is not necessary anymore but may still be 
+language hansl. Nowadays this is not necessary anymore, since gretl has
+built-in Kalman functionality, but Ignacio's script may still be 
 interesting for pedagogical reasons.
 
 Below this comment the original help text of the package is reproduced, 
-  then up to about line 365 the necessary functions are defined, then the 
-  code from the old package's sample script appears below.
+then up to about line 365 the necessary functions are defined, then the 
+code from the old package's sample script appears below.
    
 (Some syntax has been marginally edited by Sven.)
 */
