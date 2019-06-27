@@ -2975,13 +2975,7 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
 
 	if (robust) {
 	    lsqopt |= OPT_R;
-	    testlist = gretl_list_diff_new(chowlist, pmod->list, 2);
-	    if (testlist == NULL) {
-		err = E_ALLOC;
-		goto bailout;
-	    }
 	}
-
 	chow_mod = lsq(chowlist, dset, OLS, lsqopt);
 
 	if (chow_mod.errcode) {
@@ -3001,7 +2995,13 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
 	    }
 
 	    if (robust) {
-		test = wald_omit_chisq(testlist, &chow_mod);
+		testlist = gretl_list_diff_new(chow_mod.list, pmod->list, 2);
+		if (testlist == NULL) {
+		    err = E_ALLOC;
+		    goto bailout;
+		} else {
+		    test = wald_omit_chisq(testlist, &chow_mod);
+		}
 		if (!na(test)) {
 		    pval = chisq_cdf_comp(dfn, test);
 		}
