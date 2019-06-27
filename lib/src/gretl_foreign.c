@@ -690,14 +690,13 @@ static int lib_run_prog_sync (char **argv, gretlopt opt,
 #define MPI_PIPES 1 /* not yet? */
 
 #if MPI_PIPES
-#define G_PID_FORMAT 8
+
 static void mpi_childwatch (GPid pid, gint status, gpointer p)
 {
     int *finished = (int *) p;
 
-    char fmt[40];
-    sprintf(fmt, "gretlmpi: child %%0%d exited %s\n", G_PID_FORMAT);
-    fprintf(stderr, fmt, pid, g_spawn_check_exit_status(status, NULL)?
+    fprintf(stderr, "gretlmpi: child %" G_PID_FORMAT " exited %s\n",
+	    pid, g_spawn_check_exit_status(status, NULL)?
 	    "normally" : "abnormally");
     g_spawn_close_pid(pid);
     *finished = 1;
