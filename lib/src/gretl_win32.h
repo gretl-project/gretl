@@ -65,6 +65,10 @@ int gretl_win32_grab_output (const char *cmdline,
 			     const char *currdir,
 			     char **sout);
 
+int gretl_win32_pipe_output (const char *cmdline,
+			     const char *currdir,
+			     PRN *prn);
+
 char *slash_convert (char *str, int which);
 
 char *desktop_path (void);

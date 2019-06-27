@@ -23,10 +23,12 @@
 #include "gretl_foreign.h"
 #include "matrix_extra.h"
 #include "gretl_typemap.h"
+#include <unistd.h>
 
 #ifdef HAVE_MPI
 # include "gretl_mpi.h"
 # include "gretl_xml.h"
+# define MPI_PIPES 1 /* somewhat experimental */
 #endif
 
 #ifdef USE_RLIB
@@ -491,7 +493,7 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 {
     const char *exe;
     const char *fname;
-    gchar *cmd, *sout = NULL;
+    gchar *cmd = NULL;
     int err;
 
     fname = get_foreign_scriptpath(foreign_lang);
@@ -519,18 +521,13 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 	return 1;
     }
 
-    err = gretl_win32_grab_output(cmd, gretl_workdir(), &sout);
-
-    if (sout != NULL && *sout != '\0') {
-	pputs(prn, sout);
-    }
+    err = gretl_win32_pipe_output(cmd, gretl_workdir(), prn);
 
     if (!err && foreign_lang == LANG_STATA && !(opt & OPT_Q)) {
 	/* output will be in log file, not stdout */
 	do_stata_printout(prn);
     }
 
-    g_free(sout);
     g_free(cmd);
 
     return err;
@@ -564,7 +561,7 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	const char *mpiexec = gretl_mpiexec();
 	gchar *mpiprog = gretl_mpi_binary();
 	gchar *hostbit, *npbit, *rngbit, *qopt;
-	gchar *cmd, *sout = NULL;
+	gchar *cmd = NULL;
 
 	if (!(opt & OPT_L) && hostfile != NULL && *hostfile != '\0') {
 	    /* note: OPT_L corresponds to --local, meaning that we
@@ -607,16 +604,12 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	    pputc(prn, '\n');
 	}
 
-	err = gretl_win32_grab_output(cmd, gretl_workdir(), &sout);
-	if (sout != NULL && *sout != '\0') {
-	    pputs(prn, sout);
-	}
+	err = gretl_win32_pipe_output(cmd, gretl_workdir(), prn);
 
 	g_free(mpiprog);
 	g_free(hostbit);
 	g_free(npbit);
 	g_free(rngbit);
-	g_free(sout);
 	g_free(cmd);
     }
 
@@ -687,17 +680,17 @@ static int lib_run_prog_sync (char **argv, gretlopt opt,
     return err;
 }
 
-#define MPI_PIPES 1 /* not yet? */
-
-#if MPI_PIPES
+#ifdef MPI_PIPES
 
 static void mpi_childwatch (GPid pid, gint status, gpointer p)
 {
     int *finished = (int *) p;
 
-    fprintf(stderr, "gretlmpi: child %" G_PID_FORMAT " exited %s\n",
-	    pid, g_spawn_check_exit_status(status, NULL)?
+#if GLIB_MINOR_VERSION >= 34
+    fprintf(stderr, "gretlmpi: child process exited %s\n",
+	    g_spawn_check_exit_status(status, NULL)?
 	    "normally" : "abnormally");
+#endif
     g_spawn_close_pid(pid);
     *finished = 1;
 }
@@ -753,7 +746,7 @@ static int run_mpi_with_pipes (char **argv, gretlopt opt, PRN *prn)
     return err;
 }
 
-#endif /* MPI_PIPES experiment */
+#endif /* MPI_PIPES (not on Windows) */
 
 static int lib_run_R_sync (gretlopt opt, PRN *prn)
 {
@@ -905,7 +898,7 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	    print_mpi_command(argv, prn);
 	}
 
-#if MPI_PIPES
+#ifdef MPI_PIPES
 	err = run_mpi_with_pipes(argv, opt, prn);
 #else
 	err = lib_run_prog_sync(argv, opt, prn);

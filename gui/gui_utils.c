@@ -5695,7 +5695,6 @@ static void win32_run_R_sync (const char *buf, gretlopt opt)
 void run_foreign_script (gchar *buf, int lang, gretlopt opt)
 {
     const char *fname = NULL;
-    PRN *prn = NULL;
     int err;
 
     opt |= OPT_G;
@@ -5713,8 +5712,12 @@ void run_foreign_script (gchar *buf, int lang, gretlopt opt)
     if (err) {
 	gui_errmsg(err);
     } else {
-	char *sout = NULL;
+	PRN *prn = NULL;
 	gchar *cmd = NULL;
+
+	if (bufopen(&prn)) {
+	    return;
+	}
 
 	if (lang == LANG_OX) {
 	    cmd = g_strdup_printf("\"%s\" \"%s\"", gretl_oxl_path(), fname);
@@ -5736,22 +5739,16 @@ void run_foreign_script (gchar *buf, int lang, gretlopt opt)
 	    err = gretl_spawn(cmd);
 
 	    if (g_file_get_contents("gretltmp.log", &buf, NULL, NULL)) {
-		bufopen(&prn);
 		pputs(prn, buf);
 		g_free(buf);
 		pputc(prn, '\n');
 	    }
 	} else {
-	    err = gretl_win32_grab_output(cmd, gretl_dotdir(), &sout);
-	    if (sout != NULL) {
-		prn = gretl_print_new_with_buffer(sout);
-		if (prn == NULL) {
-		    free(sout);
-		}
-	    }
+	    err = gretl_win32_pipe_output(cmd, gretl_dotdir(), prn);
 	}
 
 	if (got_printable_output(prn)) {
+	    /* note: this check destroys @prn on failure */
 	    view_buffer(prn, 78, 350, _("gretl: script output"), PRINT, NULL);
 	} else if (err) {
 	    gui_errmsg(err);
