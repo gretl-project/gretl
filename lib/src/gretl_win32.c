@@ -291,7 +291,7 @@ void win_copy_last_error (void)
 /* If the command-line (*ps1) and/or current directory
    (*ps2) are UTF-8, convert them to locale encoding.
    This is exclusively for the benefit of third-party
-   software that casnnot handle UTF-16.
+   software that cannot handle UTF-16.
 */
 
 int ensure_locale_encoding (const char **ps1, gchar **ls1,
