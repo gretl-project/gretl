@@ -5382,6 +5382,35 @@
       <code>
 	eval readfile("@gretldir/data/gnuplot/gpcolors.txt")
       </code>
+      <subhead>Franxas de recesión</subhead>
+      <para>
+	Tamén podes utilizar as opcións <quote>band</quote> que se describiron
+	máis arriba, para engadir <quote>franxas de recesión</quote> a unha
+	gráfica. Deste xeito estámonos a referir a franxas verticais que
+	ocupan todo o rango da dimensión <math>y</math> da gráfica, e que
+	indican a presenza (coa franxa) ou ausencia (sen a franxa) dalgunha
+	característica cualitativa, nunha gráfica de series temporais. Estas
+	franxas utilízanse habitualmente para indicar períodos de recesión;
+	pero tamén podes usalas para sinalar períodos de guerra, ou calquera
+	cousa que poda codificarse cunha variable ficticia 0/1.
+      </para>
+      <para>
+	Neste contexto, a opción <opt>band</opt> require un único parámetro:
+	o identificador dunha serie que teña valores 0 e 1, onde o 1 indica
+	<quote>presenza</quote> e o 0 indica <quote>ausencia</quote>. Podes
+	utilizar a opción <opt>band-style</opt> para especificar unha cor
+	para as franxas, indicada ben mediante formato hexadecimal, ou ben
+	mediante un nome que resulte recoñecible por gnuplot (consulta a
+	sección previa). Debaixo amósase un exemplo para representar unha
+	única franxa:
+      </para>
+      <code>
+	open AWM17 --quiet
+	series dum = obs &gt;= 1990:1 &amp;&amp; obs &lt;= 1994:2
+	gnuplot YER URX --with-lines --time-series \
+	  --band=dum --band-style=0xcccccc --output=display \
+	  {set key top left;}
+      </code>
       <subhead>Controlando o resultado</subhead>
       <para>
 	En modo interactivo, a gráfica amósase inmediatamente, mais en modo
@@ -9610,6 +9639,14 @@
 	<lit>v1</lit>, <lit>v2</lit>, etc. Está nas mans do usuario o
 	facilitar nomes con significado e/ou descricións, utilizando para elo
 	as instrucións <cmdref targ="rename"/> e/ou <cmdref targ="setinfo"/>.
+      </para>
+      <subhead context="gui">Series con valores en formato de cadea de texto</subhead>
+      <para>
+	Por defecto, cando importas un ficheiro que contén series con valores
+	en formato de cadea de texto, ábrese unha caixa de texto amosándote
+	o contido do ficheiro <lit>string_table.txt</lit>, que consiste na
+	correspondencia entre as cadeas e a súa codificación numérica.
+	Podes eliminar este proceder mediante a opción<opt>quiet</opt>.
       </para>
     </description>
 

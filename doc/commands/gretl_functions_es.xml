@@ -892,8 +892,15 @@
 	  </li>
 	  <li>
             <para>
-              <lit>nproc</lit>: número entero que indica el número de
-              procesadores disponibles.
+              <lit>ncores</lit>: número entero que indica el número de
+              núcleos físicos de procesador disponibles.
+            </para>
+	  </li>
+	  <li>
+            <para>
+              <lit>nproc</lit>: número entero que indica el número
+              de procesadores disponibles, y que será mayor que
+              <lit>ncores</lit> si está habilitado el Hyper-threading.
             </para>
 	  </li>
 	  <li>
@@ -2055,6 +2062,11 @@
 	  </li>
 	  <li>
             <para>
+              Beta (beta): 2 parámetros de forma
+            </para>
+	  </li>
+	  <li>
+            <para>
               Binomial (b o B): probabilidad, cantidad de ensayos
             </para>
 	  </li>
@@ -2445,6 +2457,38 @@
             <fncref targ="unvech"/>
             <fncref targ="vec"/>
             <fncref targ="vech"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="conv2d" section="linalg" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">A</fnarg>
+	<fnarg type="matrix">B</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devuelve una matriz con el cálculo de la convolución bidimensional
+	  (2D) de dos matrices <argname>A</argname> y <argname>B</argname>.
+	  Si la matriz <argname>A</argname> tiene <math>r</math> filas y
+	  <math>c</math> columnas, y <argname>B</argname> tiene
+	  <math>m</math> filas y <math>n</math> columnas, entonces
+	  la matriz que se devuelve será <math>r+m-1</math> por
+	  <math>c+n-1</math>.
+	  <para context="tex">
+	    La convolución 2D de <argname>A</argname> y
+	    <argname>B</argname> se define como
+	    \[
+	    C_{i,j} =
+	    \sum_{k=1}^r\sum_{l=1}^c A_{k,l} B_{i-k+1,j-l+1},
+	    \]
+	    donde los sumatorios admiten solo aquellos valores de $k$ y $l$ para
+	    los que los subíndices de $B$ están dentro de los límites definidos.
+	</para>
+	  <seelist>
+            <fncref targ="fft"/>
+            <fncref targ="filter"/>
 	  </seelist>
 	</para>
       </description>
@@ -3104,7 +3148,7 @@
 
     <function name="dsort" section="matshape" output="asinput">
       <fnargs>
-	<fnarg type="series-or-vec">x</fnarg>
+	<fnarg type="series-vec-or-strings">x</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -3845,6 +3889,33 @@
       </description>
     </function>
 
+    <function name="flatten" section="data-utils" output="seebelow">
+      <fnargs>
+	<fnarg type="matrices-or-strings">A</fnarg>
+	<fnarg optional="true" type="bool">vertic</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  <quote>Allana</quote> bien una formación de matrices en una única
+	  matriz, o bien una formación de cadenas de texto en una única cadena.
+	</para>
+	<para>
+	  Los argumentos se indican entre paréntesis. Con matrices, por defecto,
+	  se concatenan horizontalmente las matrices de <argname>A</argname>;
+	  pero cuando indicas un valor no nulo para <argname>vertic</argname>,
+	  la concatenación se hace verticalmente. En cualquier caso, se muestra
+	  un fallo si las matrices no son conformables para realizar esta
+	  operación. Consulta <fncref targ="msplitby"/> para la operación
+	  inversa.
+	</para>
+	<para>
+	  En el caso de cadenas de texto, <argname>vertic</argname> se ignora,
+	  y el resultado contiene las cadenas de <argname>A</argname> ordenadas
+	  una en cada línea.
+	</para>
+      </description>
+    </function>
+
     <function name="floor" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">y</fnarg>
@@ -3886,6 +3957,71 @@
 	  Puedes utilizar valores negativos para <argname>d</argname>, y en ese
 	  caso la función realiza la integración fraccionaria.
 	</para>
+      </description>
+    </function>
+
+    <function name="fzero" section="numerical" output="scalar">
+      <fnargs>
+	<fnarg type="fncall">fcall</fnarg>
+	<fnarg optional="true" type="scalar-or-vec">inicio</fnarg>
+	<fnarg optional="true" type="scalar">toler</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Trata de encontrar una raíz simple de una función continua <math>f</math>
+	  (normalmente no lineal) &mdash;es decir, un valor de la variable escalar
+	  <math>x</math> que hace que <math>f</math>(<math>x</math>) = 0.
+	  El argumento <argname>fcall</argname> debe proporcionar una
+	  llamada a la función en cuestión. El segundo argumento (opcional)
+	  debe ser un escalar que represente el papel de <math>x</math>, y
+	  puede ir seguido de los parámetros que sean necesarios.
+	  Cuando se complete la función con éxito, se va a devolver el
+	  valor de la raíz.
+	</para>
+	<para>
+	  El método utilizado es el de <cite key="ridders79">Ridders (1979)</cite>.
+	  Esto requiere un intervalo inicial
+	  &lbr;<math>x</math><sub>0</sub>, <math>x</math><sub>1</sub>&rbr;
+	  tal que ambos valores <math>x</math> pertenezcan al
+	  dominio de la función, y que los respectivos valores de la
+	  función sean de signo contrario. Probablemente, vas a
+	  obtener mejores resultados si eres capaz de proporcionar,
+	  mediante el segundo argumento, un vector bidimensional
+	  que contenga puntos finales adecuados para el intervalo. Si
+	  esto falla, puedes proporcionar un único valor escalar, y
+	  <lit>fzero</lit> tratará de encontrar una pareja. Si omites
+	  el segundo argumento, el valor de <math>x</math><sub>0</sub>
+	  se inicia con un pequeño número positivo, y luego se va a
+	  buscar un valor adecuado para <math>x</math><sub>1</sub>.
+	</para>
+	<para>
+	  Puedes usar el argumento <argname>toler</argname> (opcional)
+	  para ajustar la máxima diferencia absoluta que resulte aceptable
+	  entre <math>f</math>(<math>x</math>) y cero, siendo esta igual a
+	  1.0e&minus;14 por defecto.
+	</para>
+	<para>
+	  Por defecto, esta función opera silenciosamente, pero puedes
+	  mostrar la evolución del método iterativo ejecutando la instrucción
+	  <quote><lit>set max_verbose on</lit></quote> antes de llamar
+	  a <lit>fzero</lit>.
+	</para>
+	<para>
+	  A continuación se indican algunos ejemplos sencillos:
+	</para>
+	<code>
+	  # Aproximar 'pi' encontrando el valor que anula la
+	  # función sin() en el intervalo de 2.8 a 3.2
+	  x = fzero(sin(x), {2.8, 3.2})
+	  printf "\nx = %.12f vs pi = %.12f\n\n", x, $pi
+
+	  # Aproximar la 'constante Omega' comezando en x = 0.5
+	  function scalar f(scalar x)
+	      return log(x) + x
+	  end function
+	  x = fzero(f(x), 0.5)
+	  printf "x = %.12f f(x) = %.15f\n", x, f(x)
+	</code>
       </description>
     </function>
 
@@ -6832,7 +6968,14 @@
       </fnargs>
       <description>
 	<para>
-	  Lee una matriz guardada en el archivo llamado <argname>nombrearchivo</argname>.
+	  Lee una matriz guardada en el archivo llamado
+	  <argname>nombrearchivo</argname>. Esto está pensado principalmente
+	  para leer archivos con un formato específico, como se describe más
+	  abajo, pero también puedes usarlo con archivos de texto delimitado
+	  de varios tipos. Para este último tipo de uso, consulta la sección
+	  titulada <quote>Archivos con texto delimitado</quote>.
+	</para>
+	<para>
 	  Si el archivo posee la extensión <quote><lit>.gz</lit></quote> se asume
 	  que se aplicó la compresión gzip al guardar los datos. Si tiene la
 	  extensión <quote><lit>.bin</lit></quote> se asume que el archivo
@@ -6881,6 +7024,18 @@
 	  y que se ofrecen en el contexto de la instrucción <cmdref targ="foreign"/>.
 	  En ese caso, el argumento <argname>nombrearchivo</argname> debe ser un nombre
 	  de archivo simple, sin indicar la ruta hasta el archivo.
+	</para>
+	<subhead>Archivos con texto delimitado</subhead>
+	<para>
+	  Si el nombre del archivo que se va a leer tiene la extensión
+	  <quote><lit>.csv</lit></quote> o <quote><lit>.txt</lit></quote>,
+	  se relajan las reglas que administran la lectura del archivo según
+	  su formato (en particular, no se necesita que el conjunto de datos
+	  presentes esté precedido por la especificación del número de filas
+	  y de columnas). El programa tratará de determinar el delimitador
+	  utilizado (espacio, tabulador, coma, o punto y coma), y hará lo
+	  que pueda para importar la matriz, permitiendo el uso de la coma
+	  como separador decimal, si es necesario.
 	</para>
 	<para>
 	  <seelist>
@@ -6983,6 +7138,46 @@
 	  elementos de la columna <argname>j</argname>. Este orden es estable: las
 	  filas que comparten el mismo valor en la columna <argname>j</argname>
 	  no se intercambian.
+	</para>
+      </description>
+    </function>
+
+    <function name="msplitby" section="matshape" output="matrices">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+	<fnarg type="int">j</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devuelve una formación de matrices, como resultado de separar las
+	  filas de <argname>X</argname> verticalmente, bajo el control de la
+	  columna <argname>j</argname>. Esta columna debe contener valores
+	  enteros, con 1 como valor mínimo y un máximo igual al número de
+	  matrices que tendrá la formación deseada, de forma que estén
+	  indicando a qué fila de la formación de matrices se debe asignar
+	  cada fila de la matriz <argname>X</argname>. Los valores de la
+	  columna <argname>j</argname> no forman parte del resultado final.
+	</para>
+	<para>
+	  En el siguiente ejemplo se separan las filas de una matriz <by r="3" c="3"/>
+	  en una formación de tres matrices, dejando vacía la segunda de ellas.
+	</para>
+	<code>
+	  matrix X = {1,2,3; 4,5,6; 7,8,9}
+	  matrices M = msplitby(X ~ {1,1,3}', 4)
+	  print M
+	</code>
+	<para>
+	  La orden de impresión depara
+	</para>
+	<code>
+	  Array de matrices, longitud 3
+	  [1] 2 x 3
+	  [2] null
+	  [3] 1 x 3
+	</code>
+	<para>
+	  Consulta la función <fncref targ="flatten"/> para la operación inversa.
 	</para>
       </description>
     </function>
@@ -7883,7 +8078,7 @@
 	  <argname>d</argname>. Consulta <fncref targ="cdf"/> para obtener más
 	  detalles acerca de los argumentos (escalares) exigidos. Esta función
 	  <lit>pdf</lit> acepta las distribuciones: Normal, <math>t</math> de
-	  Student, Chi-cuadrado, <math>F</math>, Gamma, Exponencial, Weibull,
+	  Student, Chi-cuadrado, <math>F</math>, Gamma, Beta, Exponencial, Weibull,
 	  Laplace, Error Generalizado, Binomial y Poisson. Ten en cuenta que
 	  para la Binomial y la Poisson, lo que se calcula de hecho es la masa de
 	  probabilidad en el punto especificado. Para <math>t</math> de Student,
@@ -9637,7 +9832,7 @@
 
     <function name="sort" section="matshape" output="asinput">
       <fnargs>
-	<fnarg type="series-or-vec">x</fnarg>
+	<fnarg type="series-vec-or-strings">x</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -9768,7 +9963,7 @@
 
     <function name="sscanf" section="strings" output="int">
       <fnargs>
-	<fnarg type="string">origen</fnarg>
+	<fnarg type="string-or-strings">origen</fnarg>
 	<fnarg type="string">formato</fnarg>
 	<fnarg type="varargs"/>
       </fnargs>
@@ -9779,7 +9974,11 @@
 	  valores a uno o más de los argumentos siguientes, indicados por los
 	  puntos de arriba. Devuelve un entero con el número de valores que se
 	  asignan. Esta función es una versión simplificada de la función
-	  <lit>sscanf</lit> del lenguaje C de programación.
+	  <lit>sscanf</lit> del lenguaje C de programación, con una extensión
+	  para escanear una matriz entera, y que se describe más abajo bajo el
+	  título <quote>Escaneando una matriz</quote>. Ten en cuenta que indicar
+	  una formación de cadenas de texto como <argname>origen</argname>
+	  solo se acepta en caso de que escanees una matriz.
 	</para>
 	<para>
 	  Como argumento <repl>origen</repl> puedes usar una cadena de texto literal
@@ -9790,36 +9989,25 @@
 	  <repl>elementos</repl> debe ser una lista de variables definidas antes,
 	  separadas por comas y que son los objetivos de la conversión de
 	  <repl>origen</repl>. (Para los acostumbrados a C: podéis fijar previamente los
-	  nombres de las variables numéricas con <lit>&amp;</lit>, pero es necesario.)
+	  nombres de las variables numéricas con <lit>&amp;</lit>, pero no es necesario.)
 	</para>
 	<para>
 	  El texto literal en el argumento <repl>formato</repl> se compara con
-	  <repl>origen</repl>. Los elementos que especifican la conversión comienzan
+	  <repl>origen</repl>. Los elementos que especifican la conversión empiezan
 	  con el carácter <lit>%</lit>, y las conversiones que están admitidas
 	  incluyen: <lit>%f</lit>, <lit>%g</lit> o <lit>%lf</lit> para números
-	  de punto flotante; <lit>%d</lit> para números enteros; <lit>%s</lit>
-	  para cadenas de texto; y <lit>%m</lit> para matrices. Puedes insertar
-	  un entero positivo después del símbolo de porcentaje, que establece
-	  el número máximo de caracteres que se van a leer para la conversión
-	  indicada (o el número máximo de filas en caso de la conversión de una
-	  matriz). Como forma alternativa, puedes insertar un carácter literal de
-	  asterisco, <lit>*</lit>, después del símbolo de porcentaje para eliminar
-	  la conversión (saltándose así cualquier carácter que, de otro modo,
-	  podría haberse convertido al tipo indicado). Por ejemplo,
-	  la expresión <lit>%3d</lit> convierte los siguientes 3 caracteres de
-	  <repl>origen</repl> en un entero, en caso de que sea posible;
-	  y la expresión <lit>%*g</lit> permite saltarse tantos caracteres de
-	  <repl>origen</repl> como los que podrían convertirse en un número
-	  de punto flotante simple.
-	</para>
-	<para>
-	  La conversión para matrices funciona así: el escáner lee una línea del
-	  argumento, y cuenta la cantidad de campos numéricos (separados por
-	  espacios o por tabulaciones). De este modo se define el número de
-	  columnas de la matriz. Por defecto, el proceso de lectura continúa entonces
-	  con tantas líneas (filas) como contengan el mismo número de columnas,
-	  pero el número máximo de filas que se van a leer puede limitarse tal como
-	  se describe arriba.
+	  de punto flotante; <lit>%d</lit> para números enteros; y <lit>%s</lit>
+	  para cadenas de texto. Puedes insertar un entero positivo después del
+	  símbolo de porcentaje, que establece el número máximo de caracteres
+	  que se van a leer para la conversión indicada. Como forma alternativa,
+	  puedes insertar un carácter literal de asterisco, <lit>*</lit>, después
+	  del símbolo de porcentaje para eliminar la conversión (saltándose así
+	  cualquier carácter que, de otro modo, podría haberse convertido al
+	  tipo indicado). Por ejemplo, la expresión <lit>%3d</lit> convierte
+	  los siguientes 3 caracteres de <repl>origen</repl> en un entero, en
+	  caso de que sea posible; y la expresión <lit>%*g</lit> permite saltarse
+	  tantos caracteres de <repl>origen</repl> como los que podrían
+	  convertirse en un número de punto flotante simple.
 	</para>
 	<para>
 	  Además de la conversión <lit>%s</lit> para cadenas de texto, también
@@ -9842,20 +10030,57 @@
 	  de argumentos indicados. Esto no es por si mismo un fallo en lo que
 	  atañe a Gretl. Así y todo, podrías querer comprobar el número de
 	  conversiones que se completaron; esto se indica en el valor que se
-	  devuelve.
-	</para>
-	<para>
-	  A continuación tienes varios ejemplos:
+	  devuelve  Some simple examples follow:
 	</para>
 	<code>
+	  # Escaneando valores escalares
 	  scalar x
 	  scalar y
 	  sscanf("123456", "%3d%3d", x, y)
-
-	  S = sprintf("1 2 3 4\n5 6 7 8")
-	  S
+	  # Escaneando valores de cadena de texto
+	  string s = "uno dos"
+	  string s1
+	  string s2
+	  sscanf(s, "%s %s", s1, s2)
+	  print s1 s2
+	</code>
+	<subhead>Escaneando una matriz</subhead>
+	<para>
+	  El escaneado de matrices debe señalarse mediante la especificación
+	  especial de conversión, <quote><lit>%m</lit></quote>. Puedes indicar
+	  el número máximo de filas a leer, insertando un número entero entre el
+	  signo <quote><lit>%</lit></quote> y la <quote><lit>m</lit></quote>
+	  indicativa de matriz. Se permiten dos variantes: que
+	  <argname>origen</argname> indique una cadena de texto única que
+	  represente una matriz, y que <argname>origen</argname> indique una
+	  formación de cadenas de texto. Estas opciones se describen por turno.
+	</para>
+	<para>
+	  Si <argname>origen</argname> es un argumento de cadena de texto única,
+	  el escáner lee una línea de la entrada y cuenta el número de campos
+	  numéricos (separados por espacios o por tabuladores). Esto define el
+	  número de columnas de la matriz. Por defecto, el proceso de lectura
+	  continúa con todas las líneas (filas) que contengan el mismo número de
+	  columnas numéricas, pero el número máximo de filas puede limitarse
+	  mediante el valor entero opcional mencionado antes.
+	</para>
+	<para>
+	  Si <argname>origen</argname> es una formación de cadenas de texto,
+	  el resultado va a ser forzosamente un vector columna, del que cada
+	  elemento va a ser la conversión numérica de la cadena correspondiente,
+	  o <lit>NA</lit> si la cadena de texto no representa un número.
+	  A continuación, tienes varios ejemplos:
+	</para>
+	<code>
+	  # Escaneando una única cadena de texto
+	  string s = sprintf("1 2 3 4\n5 6 7 8")
+	  print s
 	  matrix m
-	  sscanf(S, "%m", m)
+	  sscanf(s, "%m", m)
+	  print m
+	  # Escaneando una formación de cadenas de texto
+	  strings S = defarray("1.1", "2.2", "3.3", "4.4", "5.5")
+	  sscanf(S, "%4m", m)
 	  print m
 	</code>
       </description>

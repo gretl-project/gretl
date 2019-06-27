@@ -2471,12 +2471,12 @@
 	<para>
 	  Computes the 2-dimensional convolution of the matrices
 	  <argname>A</argname> and <argname>B</argname>. If
-	  <argname>A</argname> has <math>r</math> rows and
-	  <math>c</math> columns and <argname>B</argname> has
-	  <math>m</math> rows and <math>n</math> coumns, then the
-	  returned matrix will be <math>r+m-1</math> by
-	  <math>c+n-1</math>.
-	  <para context="tex">
+	  <argname>A</argname> is <by r="r" c="c"/> and
+	  <argname>B</argname> is <by r="m" c="n"/> then the returned
+	  matrix will have <math>r+m-1</math> rows and
+	  <math>c+n-1</math> columns.
+	</para>
+	<para context="tex">
 	    The 2-D convolution of <argname>A</argname> and
 	    <argname>B</argname> is defined as
 	    \[
@@ -2486,6 +2486,7 @@
 	    where the summations include just those values of $k$ and
 	    $l$ for which the subscripts of $B$ are within bounds.
 	</para>
+	<para>
 	  <seelist>
             <fncref targ="fft"/>
             <fncref targ="filter"/>
@@ -3973,10 +3974,10 @@
 	  the scalar variable <math>x</math> such that
 	  <math>f</math>(<math>x</math>) = 0.  The
 	  <argname>fcall</argname> argument should provide a call to
-	  the function in question. The first argument should be the
-	  scalar playing the role of <math>x</math>, which may be
-	  followed by any required parameters. On successful
-	  completion the value of the root is returned.
+	  the function in question; <argname>fcall</argname> may
+	  include an arbitrary number of arguments but the first one
+	  must be the scalar playing the role of <math>x</math>.  On
+	  successful completion the value of the root is returned.
 	</para>
 	<para>
 	  The method used is that of <cite key="ridders79">Ridders

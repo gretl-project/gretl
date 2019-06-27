@@ -5382,6 +5382,35 @@
       <code>
 	eval readfile("@gretldir/data/gnuplot/gpcolors.txt")
       </code>
+      <subhead>Franjas de recesión</subhead>
+      <para>
+	También puedes utilizar las opciones <quote>band</quote> que se han
+	descrito más arriba, para añadir <quote>franjas de recesión</quote>
+	a un	gráfico. De este modo nos referimos a franjas verticales que
+	ocupan todo el rango de la dimensión <math>y</math> del gráfico, y
+	que indican la presencia (con franja) o ausencia (sin franja) de
+	alguna característica cualitativa, en un gráfico de series de tiempo.
+	Estas franjas habitualmente se utilizan para indicar períodos de
+	recesión; pero también puedes usarlas para señalar períodos de guerra,
+	o cualquier cosa que pueda codificarse con una variable ficticia 0/1.
+      </para>
+      <para>
+	En este contexto, la opción <opt>band</opt> requiere un único parámetro:
+	el identificador de una serie que tenga valores 0 y 1, donde el 1 indica
+	<quote>presencia</quote> y el 0 indica <quote>ausencia</quote>. Puedes
+	utilizar la opción <opt>band-style</opt> para especificar un color para
+	las franjas, indicado bien mediante formato hexadecimal, o bien mediante
+	un nombre que resulte reconocible por gnuplot (consulta la sección
+	previa). Aquí debajo se presenta un ejemplo para representar una única
+	franja:
+      </para>
+      <code>
+	open AWM17 --quiet
+	series dum = obs &gt;= 1990:1 &amp;&amp; obs &lt;= 1994:2
+	gnuplot YER URX --with-lines --time-series \
+	  --band=dum --band-style=0xcccccc --output=display \
+	  {set key top left;}
+      </code>
       <subhead>Controlando el resultado</subhead>
       <para>
 	En modo interactivo, el gráfico se muestra inmediatamente pero, en modo
@@ -9610,6 +9639,14 @@
 	<lit>v1</lit>, <lit>v2</lit>, etc. Está en manos del usuario el
 	facilitar nombres con significado y/o descripciones, utilizando para ello
 	las instrucciones <cmdref targ="rename"/> y/o <cmdref targ="setinfo"/>.
+      </para>
+      <subhead context="gui">Series con valores en formato de cadena de texto</subhead>
+      <para>
+	Por defecto, cuando importas un archivo que contiene series con valores
+	en formato de cadena de texto, se abre una caja de texto mostrándote
+	el contenido del archivo <lit>string_table.txt</lit>, que consiste en
+	la correspondencia entre las cadenas y su codificación numérica.
+	Puedes eliminar este proceder mediante la opción<opt>quiet</opt>.
       </para>
     </description>
 
