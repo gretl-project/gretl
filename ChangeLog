@@ -5,6 +5,8 @@ version 2019c, in progress
   out-of-sample forecasting after estimation of a VAR
 - Fix bug: typeof() function not working correctly for
   string objects inside bundles and arrays
+- Fix bug: robust variant of "chow" failing in case of
+  exact collinearity in the augmented regression
 - New function fzero(): find a root of a nonlinear function
 - New function conv2d(): 2-dimensional convolution of two
   matrices
@@ -12,6 +14,8 @@ version 2019c, in progress
   matrix or array of strings to single string
 - New function msplitby(): split a matrix into an array of
   matrices
+- "gnuplot" and "plot": add support for scriptable "recession
+  bars"
 - GUI plot editor: try to ensure that choice of font carries
   over in copying a plot to the clipboard
 - svm() function: add support for ordinal data, plus small
@@ -21,7 +25,7 @@ version 2019c, in progress
   strings to a column vector
   files, non-conformant with the mwrite() format
 - GUI model table: show up to three "significance" stars
-- Remove the deprecated functions insnull() and isstring()
+- Remove the deprecated function isstring()
 
 2019-05-21 version 2019b
 - New command "panplot": plot a single panel-data series
