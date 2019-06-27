@@ -1,0 +1,308 @@
+/*
+LLTestim.inp
+
+The code in this script comes from the retired function package "LLTestim"
+by Ignacio Diaz-Emparanza.
+It shows how a Kalman filter can be programmed "by hand" in gretl's
+language hansl. Nowadays this is not necessary anymore but may still be 
+interesting for pedagogical reasons.
+
+Below this comment the original help text of the package is reproduced, 
+  then up to about line 300 the necessary functions are defined, then the 
+  code from the old package's sample script appears below.
+   
+(Some syntax has been marginally edited by Sven.)
+*/
+
+/*
+Help text:
+
+This package carries out the estimation of a Local Linear Trend Model
+(see Harvey, 1991). The model is represented in state-space form and the
+likelihood function, in the form of decomposition of the prediction error,
+is evaluated using the Kalman filter. The BFGS iterative method (BFGSmax
+function of gretl) is used to find the parameter values that maximize the
+likelihood.
+
+# Local Linear Trend Model: 
+#
+# The model:
+# y(t) = mu(t) + e(t)
+# mu(t) = mu(t-1)+beta(t-1)+eta(t)
+# beta(t) = beta(t-1)+xi(t)
+#
+# in state-space form:
+#
+# alpha(t) = [mu(t), beta(t)]'
+#
+# bT = ( 1, 1, 
+#        0, 1, )
+#
+# Z[t,] = (1, 0) for all t
+#
+# w(t) = [eta(t), xi(t)]' 
+# so Sigma_w = sigma^2_e (q1, 0,
+#                          0, q2,)
+# 
+
+The algorithm starts by concentrating the likelihood on sigma^2_e, and runs
+a short number of iterations (with a low tolerance) to detect the maximum
+variance of the model. In a second step this maximum variance is used to
+concentrate the likelihood (using now the default tolerance of gretl).
+
+You can restrict any of the variances of the model to zero by selecting the
+corresponding tickmarks in the dialog box.
+
+The q matrix, containing q1 and q2, may be saved assigning a name in the
+dialog box. 
+
+WARNING: depending on the variance used for concentrating the likelihood,
+q1 and q2 may represent different ratios. For example if the model is
+concentrated with respect to sigma^2_xi:
+
+    q1 = sigma^2_e/sigma^2_xi and 
+    q2 = sigma^2_eta/sigma^2_xi
+
+*/
+
+# private functions
+
+function series kf_filt (series y,
+                         matrix a0,
+                         matrix p0,
+                         matrix bT,
+                         matrix Z,
+                         matrix Sigma_w,
+                         scalar sigma_e,
+                         matrix *at,
+                         matrix *pstar,
+                         series *V,
+                         series *F,
+                         scalar *logLc)
+  /*
+  Measurement equation:
+  y(t) = Z[t,]*alpha(t)+e(t)	(1.1a)
+  State transition:
+  alpha(t)=bT*alpha(t-1)+w(t);  (1.2a)
+  bT is for "bold T" and w(t)=R(t)*eta(t) in Harvey 1990
+  a(t) is the estimator of alpha(t)
+  Parameters:
+  y       = observable series
+  a0      = m x 1 vector, prior a(0)
+  p0      = m x m matrix, prior p(0)=var(a(0))
+  bT      = m x m matrix (transition matrix)
+  Z       = T x m matrix
+  Sigma_w = m x m symmetric matrix of variance of w(t), fixed for all t
+  sigma_e = scalar variance of e(t), fixed for all t
+  at      = m x T  matrix (output) with the estimated states
+  pstar   = m^2 x T matrix (output)
+  */
+  #
+  # Forward solution
+  #
+  scalar T = rows(Z)
+  scalar m = rows(a0)
+  matrix at_t = a0
+  matrix pt_t = p0
+  matrix at = zeros(m,T)
+  # printf "\n...Filtering...\n"
+  loop i=1..T --quiet
+    # Prediction equations
+    # eq. (2.2a)
+    matrix at_t = bT*at_t
+    # eq. (2.2b)
+    matrix pt_t1 = qform(bT,pt_t)+Sigma_w
+    # eq. (2.3c)
+    matrix zt = Z[$i,]
+    matrix H = pt_t1*zt'
+    matrix f = zt*H + sigma_e
+    if i>1
+      matrix pstar_t = (bT*pt_t)' inv(pt_t1)
+    endif
+    # Updating equations
+    # eq. (2.4a)
+    genr V[$i] = y[$i] - zt*at_t
+    matrix at_t = at_t + H*(V[$i]/f)
+    genr F[$i] = f
+    # eq (2.4b)
+    matrix pt_t = pt_t1 - H*H' * (1/f)
+    matrix at[,$i]=at_t
+    if i>1
+      if i==2
+        matrix pstar=vec(pstar_t)
+      else
+        matrix pstar=pstar~vec(pstar_t)
+      endif
+    endif
+  endloop
+  # Concentrated Log-likelihood fuction
+  scalar logLc = -(T/2)*(log(2*$pi)+1)-(1/2)*sum(log(F))-(T/2)*log((1/T)*sum((V^2)/F))
+  series filtered = at[1,]
+  #  printf "\nFilter done\n"
+  return filtered
+end function
+
+function series kf_smooth (matrix pstar,
+                           matrix *at,
+                           matrix bT)
+  /*
+  Fixed-interval smoothing
+  The matrix pt is not used here, but could be used if
+  one wants to calculate confidence intervals for the
+  at estimators.
+  */
+  scalar m = rows(at)
+  scalar T = cols(at)
+  #printf "\n...Smoothing...\n"
+  scalar T1=T-1
+  loop i=1..T1 --quiet
+    scalar j=T-i
+    matrix pstar_t = mshape(pstar[,j],m,m)
+    # eq. (2.9a)
+    matrix at[,j] += pstar_t*(at[,(j+1)]-bT*at[,j])
+  endloop
+  series ret = at[1,]
+  #printf "\nSmoothing done\n"
+  return ret
+end function
+
+function scalar LLT (matrix *param,
+                     series y,
+                     scalar sigma_e,
+                     matrix *bT,
+                     matrix *at,
+                     matrix *pstar,
+                     series *V,
+                     series *F,
+                     scalar *logLc,
+                     scalar sigmatol[0.0001],
+                     scalar concent[1],
+                     matrix fixed)
+  # set echo on
+  # set messages on
+  if concent > 4
+    funcerr "concent must be 1, 2, or 3"
+  endif
+  genr time
+  scalar sstart = int(min(time))
+  scalar send = int(max(time))
+  scalar T=send-sstart+1
+  matrix bT = { 1, 1; 0, 1 }
+  scalar m = cols(bT)
+  matrix Z = ones(T,1) ~ zeros(T,1)
+  matrix a0 = y[sstart] * ones(2,1)
+  matrix p0 = 400000*I(2)
+  matrix Sigma_w = zeros(2,2)
+  if concent==1
+    scalar sigma_e=1
+    scalar tmp = exp(2*param[1])*fixed[2]
+    Sigma_w[1,1] = (tmp>sigmatol) ? tmp : 0
+    matrix param[1] = (tmp>sigmatol) ? param[1] : -500
+    scalar tmp = exp(2*param[2])*fixed[3]
+    Sigma_w[2,2] = (tmp>sigmatol) ? tmp : 0
+    matrix param[2] = (tmp>sigmatol) ? param[2] : -500
+  elif concent==2
+    scalar tmp = exp(2*param[1])*fixed[1]
+    scalar sigma_e=(tmp>sigmatol) ? tmp : 0
+    matrix param[1] = (tmp>sigmatol) ? param[1] : -500
+    Sigma_w[1,1] = 1
+    scalar tmp = exp(2*param[2])*fixed[3]
+    Sigma_w[2,2] = (tmp>sigmatol) ? tmp : 0
+    matrix param[2] = (tmp>sigmatol) ? param[2] : -500
+  else # concent=3
+    scalar tmp = exp(2*param[1])*fixed[1]
+    scalar sigma_e=(tmp>sigmatol) ? tmp : 0
+    matrix param[1] = (tmp>sigmatol) ? param[1] : -500
+    Sigma_w[2,2] = 1
+    scalar tmp = exp(2*param[2])*fixed[2]
+    Sigma_w[1,1] = (tmp>sigmatol) ? tmp : 0
+    matrix param[2] = (tmp>sigmatol) ? param[2] : -500
+  endif
+  kf_filt(y, a0, p0, bT, Z, Sigma_w, sigma_e, &at, &pstar, &V, &F, &logLc)
+  return logLc
+end function
+
+# public functions
+
+function list LLTestim (series y,
+                        matrix *q[null],
+                        bool restrict_irreg[0],
+                        bool restrict_level[0],
+                        bool restrict_slope[0],
+                        scalar sigmatol[0.0001])
+  #if $pd>1
+  #  print "LLTestim warning: your data are seasonal, you should use the BSMestim function"
+  #end if
+  scalar irreg = (restrict_irreg)? 0 : 1
+  scalar level = (restrict_level)? 0 : 1
+  scalar slope = (restrict_slope)? 0 : 1
+  matrix fixed = { irreg, level, slope }
+  # fixed
+  matrix theta = { -0.5, -1.5 }
+  matrix at
+  series V = 0
+  series F = 0
+  scalar logLc=0
+  matrix pstar
+  scalar sigma_e=1
+  matrix bT
+  set bfgs_toler 1.E-2
+  M = BFGSmax(theta, "LLT(&theta, y, sigma_e, &bT, &at, &pstar, &V, &F, &logLc, sigmatol, 1, fixed)")
+  scalar sstart = int(min(t))
+  scalar send = int(max(t))
+  scalar T=send-sstart+1
+  scalar sstar = (1/T)*(sum((V^2)/F))
+  scalar q1=exp(2*theta[1])*sstar
+  scalar q2=exp(2*theta[2])*sstar
+  matrix qp = { sstar, q1, q2 }
+  matrix conc=imaxr(qp)
+  scalar concent = conc[1]
+  # concent
+  set bfgs_toler default
+  matrix theta = { -0.5, -1.5 }
+  M = BFGSmax(theta, "LLT(&theta, y, sigma_e, &bT, &at, &pstar, &V, &F, &logLc, sigmatol, concent, fixed)")
+  scalar sstar = (1/T)*(sum((V^2)/F))
+  scalar q1=exp(2*theta[1])
+  scalar q2=exp(2*theta[2])
+  series LLTtrend = kf_smooth(pstar, &at, bT)
+  setinfo LLTtrend -d "Trend"
+  series LLTslope = at[2,]
+  setinfo LLTslope -d "Slope"
+  list compo = LLTtrend LLTslope
+  printf "\nLocal Linear Trend Model estimation:\n"
+  printf "-----------------------------------------\n"
+  printf "    loglikelihood\t%#.8g\n", M
+  if concent==1
+    printf "    sigma* =\t\t Var(eps)  = %8.6E\n", sstar
+    printf "    q1 = %8.5f,\t Var(eta) = %8.6E\n", q1, q1*sstar
+    printf "    q2 = %8.5f,\t Var(xi)  = %8.6E\n", q2, q2*sstar
+    if !isnull(q)
+      q = {1, q1, q2}'
+    endif
+  elif concent==2
+    printf "    q1 = %8.5f,\t Var(eps) = %8.6E\n", q1, q1*sstar
+    printf "    sigma* = \t\t Var(eta) = %8.6E\n", sstar
+    printf "    q2 = %8.5f,\t Var(xi)  = %8.6E\n", q2, q2*sstar
+    if !isnull(q)
+      q = {q1, 1, q2}'
+    endif
+  else # concent = 3
+    printf "q1 = %8.5f,\t Var(eps) = %8.6E\n", q1, q1*sstar
+    printf "q2 = %8.5f,\t Var(eta) = %8.6E\n", q2, q2*sstar
+    printf "sigma* = \t\t Var(xi)  = %8.6E\n", sstar
+    if !isnull(q)
+      q = {q1, q2, 1}'
+    endif
+  endif
+  printf "------------------------------------------\n \n"
+  return compo
+end function
+
+###################
+
+# Original sample script of the package:
+open australia.gdt
+matrix q
+list compon = LLTestim(IAU, &q)
+print q
+print compon --byobs
