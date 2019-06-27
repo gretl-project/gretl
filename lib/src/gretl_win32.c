@@ -766,6 +766,13 @@ int gretl_win32_grab_output (const char *cmdline,
     return run_cmd_with_pipes(cmdline, currdir, sout, NULL, PROG_RUN);
 }
 
+int gretl_win32_pipe_output (const char *cmdline,
+			     const char *currdir,
+			     PRN *prn)
+{
+    return run_cmd_with_pipes(cmdline, currdir, NULL, prn, PROG_RUN);
+}
+
 /* note: gretl_shell_grab() is declared in interact.h,
    and the non-Windows implementation is defined in
    interact.c
