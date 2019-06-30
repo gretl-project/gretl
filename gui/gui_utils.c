@@ -5744,7 +5744,7 @@ void run_foreign_script (gchar *buf, int lang, gretlopt opt)
 		pputc(prn, '\n');
 	    }
 	} else {
-	    err = gretl_win32_pipe_output(cmd, gretl_dotdir(), prn);
+	    err = gretl_win32_pipe_output(cmd, gretl_dotdir(), OPT_NONE, prn);
 	}
 
 	if (got_printable_output(prn)) {

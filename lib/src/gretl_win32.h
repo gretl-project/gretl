@@ -67,6 +67,7 @@ int gretl_win32_grab_output (const char *cmdline,
 
 int gretl_win32_pipe_output (const char *cmdline,
 			     const char *currdir,
+			     gretlopt opt,
 			     PRN *prn);
 
 char *slash_convert (char *str, int which);

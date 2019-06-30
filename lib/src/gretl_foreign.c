@@ -521,7 +521,7 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 	return 1;
     }
 
-    err = gretl_win32_pipe_output(cmd, gretl_workdir(), prn);
+    err = gretl_win32_pipe_output(cmd, gretl_workdir(), OPT_NONE, prn);
 
     if (!err && foreign_lang == LANG_STATA && !(opt & OPT_Q)) {
 	/* output will be in log file, not stdout */
@@ -604,7 +604,11 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	    pputc(prn, '\n');
 	}
 
-	err = gretl_win32_pipe_output(cmd, gretl_workdir(), prn);
+	/* Below: should enable OPT_R for real-time output, but
+	   only once run_child_with_pipe() in gretl_win32.c is
+	   fixed, to avoid an infinite wait loop.
+	*/
+	err = gretl_win32_pipe_output(cmd, gretl_workdir(), OPT_NONE, prn);
 
 	g_free(mpiprog);
 	g_free(hostbit);

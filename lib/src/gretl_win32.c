@@ -515,8 +515,6 @@ static gchar *compose_command_line (const char *arg)
 static int read_from_pipe (HANDLE hwrite, HANDLE hread,
 			   char **sout, PRN *inprn)
 {
-    DWORD dwread;
-    CHAR buf[BUFSIZE];
     PRN *prn;
     int ok;
 
@@ -534,6 +532,9 @@ static int read_from_pipe (HANDLE hwrite, HANDLE hread,
     } else {
 	/* read output from the child process: note that the buffer
 	   must be NUL-terminated for use with pputs() */
+	CHAR buf[BUFSIZE];
+	DWORD dwread;
+
 	while (1) {
 	    memset(buf, '\0', BUFSIZE);
 	    ok = ReadFile(hread, buf, BUFSIZE-1, &dwread, NULL);
@@ -552,14 +553,15 @@ static int read_from_pipe (HANDLE hwrite, HANDLE hread,
     return ok;
 }
 
-enum {
-    SHELL_RUN,
-    PROG_RUN
-};
+/* options: OPT_S for shell mode, as opposed to running an
+   executable directly; OPT_R to try to pass back output
+   in real time
+*/
 
 static int
 run_child_with_pipe (const char *arg, const char *currdir,
-		     HANDLE hwrite, HANDLE hread, int flag)
+		     HANDLE hwrite, HANDLE hread,
+		     gretlopt opt, PRN *prn)
 {
     PROCESS_INFORMATION pinfo;
     STARTUPINFO sinfo;
@@ -569,12 +571,14 @@ run_child_with_pipe (const char *arg, const char *currdir,
     gchar *ls2 = NULL;
     int ok, err;
 
+    /* FIXME? */
     err = ensure_locale_encoding(&arg, &ls1, &currdir, &ls2);
     if (err) {
 	return err;
     }
 
-    if (flag == SHELL_RUN) {
+    if (opt & OPT_S) {
+	/* shell mode */
 	cmdline = compose_command_line(arg);
     } else {
 	cmdline = g_strdup(arg);
@@ -614,6 +618,39 @@ run_child_with_pipe (const char *arg, const char *currdir,
     if (!ok) {
 	win_show_last_error();
     } else {
+	if (prn != NULL) {
+	    /* try reading in real time */
+	    int gui = gretl_in_gui_mode();
+	    CHAR buf[1024];
+	    DWORD dwread;
+
+	    /* The following doesn't work: it shows output in
+	       real time OK but it never returns, because once
+	       the child's output is exhausted ReadFile() doesn't
+	       return, it just waits indefinitely. The loop
+	       needs an independent, non-blocking check on the
+	       termination of the child process.
+	    */
+
+	    while (1) {
+		memset(buf, 0, 1024);
+		fprintf(stderr, "calling ReadFile...\n");
+		ok = ReadFile(hread, buf, 1023, &dwread, NULL);
+		fprintf(stderr, "ReadFile: ok=%d, dwread=%d\n",
+			ok, (int) dwread);
+		if (!ok || dwread == 0) {
+		    CloseHandle(hwrite);
+		    break;
+		}
+		pputs(prn, buf);
+		if (gui) {
+		    manufacture_gui_callback(FLUSH);
+		} else {
+		    gretl_print_flush_stream(prn);
+		}
+		g_usleep(250000); /* 0.25 seconds */
+	    }
+	}
 	CloseHandle(pinfo.hProcess);
 	CloseHandle(pinfo.hThread);
     }
@@ -627,7 +664,7 @@ run_child_with_pipe (const char *arg, const char *currdir,
 }
 
 static int run_cmd_with_pipes (const char *arg, const char *currdir,
-			       char **sout, PRN *prn, int flag)
+			       char **sout, PRN *prn, gretlopt opt)
 {
     HANDLE hread, hwrite;
     SECURITY_ATTRIBUTES sattr;
@@ -647,14 +684,18 @@ static int run_cmd_with_pipes (const char *arg, const char *currdir,
 	/* ensure that the read handle to the child process's pipe for
 	   STDOUT is not inherited */
 	SetHandleInformation(hread, HANDLE_FLAG_INHERIT, 0);
-	ok = run_child_with_pipe(arg, currdir, hwrite, hread, flag);
-	if (ok) {
-	    /* read from child's output pipe */
-	    read_from_pipe(hwrite, hread, sout, prn);
+	if (prn != NULL && (opt & OPT_R)) {
+	    ok = run_child_with_pipe(arg, currdir, hwrite, hread, opt, prn);
+	} else {
+	    ok = run_child_with_pipe(arg, currdir, hwrite, hread, opt, NULL);
+	    if (ok) {
+		/* read from child's output pipe on termination */
+		read_from_pipe(hwrite, hread, sout, prn);
+	    }
 	}
     }
 
-    return 0;
+    return !ok; /* error return */
 }
 
 /* used only by gretl_shell() below */
@@ -763,14 +804,15 @@ int gretl_win32_grab_output (const char *cmdline,
 			     const char *currdir,
 			     char **sout)
 {
-    return run_cmd_with_pipes(cmdline, currdir, sout, NULL, PROG_RUN);
+    return run_cmd_with_pipes(cmdline, currdir, sout, NULL, OPT_NONE);
 }
 
 int gretl_win32_pipe_output (const char *cmdline,
 			     const char *currdir,
+			     gretlopt opt,
 			     PRN *prn)
 {
-    return run_cmd_with_pipes(cmdline, currdir, NULL, prn, PROG_RUN);
+    return run_cmd_with_pipes(cmdline, currdir, NULL, prn, opt);
 }
 
 /* note: gretl_shell_grab() is declared in interact.h,
@@ -780,7 +822,7 @@ int gretl_win32_pipe_output (const char *cmdline,
 
 int gretl_shell_grab (const char *arg, char **sout)
 {
-    return run_cmd_with_pipes(arg, NULL, sout, NULL, SHELL_RUN);
+    return run_cmd_with_pipes(arg, NULL, sout, NULL, OPT_S);
 }
 
 int gretl_shell (const char *arg, gretlopt opt, PRN *prn)
@@ -801,7 +843,7 @@ int gretl_shell (const char *arg, gretlopt opt, PRN *prn)
     if (opt & OPT_A) {
 	err = run_shell_cmd_async(arg);
     } else if (getenv("GRETL_SHELL_NEW")) {
-	err = run_cmd_with_pipes(arg, NULL, NULL, prn, SHELL_RUN);
+	err = run_cmd_with_pipes(arg, NULL, NULL, prn, OPT_S);
     } else {
 	err = run_shell_cmd_wait(arg, prn);
     }
