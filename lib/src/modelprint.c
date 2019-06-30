@@ -3482,6 +3482,10 @@ int printmodel (MODEL *pmod, const DATASET *dset, gretlopt opt,
 
     if (pmod->ci == AR || pmod->ci == AR1) {
 	alternate_stats_message(RHODIFF_STATS, prn);
+	print_middle_table(pmod, prn, MIDDLE_TRANSFORM);
+	alternate_stats_message(ORIG_STATS, prn);
+	print_middle_table(pmod, prn, MIDDLE_ORIG);
+	goto pval_max;
     }
 
     /* print table of model stats */
