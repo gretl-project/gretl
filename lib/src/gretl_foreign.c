@@ -604,11 +604,7 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	    pputc(prn, '\n');
 	}
 
-	/* Below: should enable OPT_R for real-time output, but
-	   only once run_child_with_pipe() in gretl_win32.c is
-	   fixed, to avoid an infinite wait loop.
-	*/
-	err = gretl_win32_pipe_output(cmd, gretl_workdir(), OPT_NONE, prn);
+	err = gretl_win32_pipe_output(cmd, gretl_workdir(), OPT_R, prn);
 
 	g_free(mpiprog);
 	g_free(hostbit);

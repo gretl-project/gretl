@@ -619,27 +619,16 @@ run_child_with_pipe (const char *arg, const char *currdir,
 	win_show_last_error();
     } else {
 	if (prn != NULL) {
-	    /* try reading in real time */
+	    /* try reading output in real time */
 	    int gui = gretl_in_gui_mode();
 	    CHAR buf[1024];
-	    DWORD dwread;
+	    DWORD dwread, excode;
 
-	    /* The following doesn't work: it shows output in
-	       real time OK but it never returns, because once
-	       the child's output is exhausted ReadFile() doesn't
-	       return, it just waits indefinitely. The loop
-	       needs an independent, non-blocking check on the
-	       termination of the child process.
-	    */
-
-	    while (1) {
+	    while (GetExitCodeProcess(pinfo.hProcess, &excode)
+		   && excode == STILL_ACTIVE) {
 		memset(buf, 0, 1024);
-		fprintf(stderr, "calling ReadFile...\n");
 		ok = ReadFile(hread, buf, 1023, &dwread, NULL);
-		fprintf(stderr, "ReadFile: ok=%d, dwread=%d\n",
-			ok, (int) dwread);
-		if (!ok || dwread == 0) {
-		    CloseHandle(hwrite);
+		if (!ok) {
 		    break;
 		}
 		pputs(prn, buf);
@@ -650,6 +639,7 @@ run_child_with_pipe (const char *arg, const char *currdir,
 		}
 		g_usleep(250000); /* 0.25 seconds */
 	    }
+	    CloseHandle(hwrite);
 	}
 	CloseHandle(pinfo.hProcess);
 	CloseHandle(pinfo.hThread);
