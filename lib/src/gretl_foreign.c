@@ -697,7 +697,7 @@ static void mpi_childwatch (GPid pid, gint status, gpointer p)
 
 static int run_mpi_with_pipes (char **argv, gretlopt opt, PRN *prn)
 {
-    gint sout, errout, got;
+    gint sout, got;
     gint finished = 0;
     char buf[1024];
     GError *gerr = NULL;
@@ -714,7 +714,7 @@ static int run_mpi_with_pipes (char **argv, gretlopt opt, PRN *prn)
 			     &child_pid,
 			     NULL, /* stdin */
 			     &sout,
-			     &errout,
+			     NULL,
 			     &gerr);
 
     if (gerr != NULL) {
@@ -740,7 +740,6 @@ static int run_mpi_with_pipes (char **argv, gretlopt opt, PRN *prn)
 	    g_main_context_iteration(NULL, FALSE);
 	}
 	close(sout);
-	close(errout);
     }
 
     return err;

@@ -29,6 +29,10 @@
 # include "matrix_extra.h"
 #endif
 
+#ifdef _OPENMP
+# include <omp.h>
+#endif
+
 #include "svmlib.h"
 
 #define DATA_DEBUG 0
@@ -3100,6 +3104,10 @@ static int check_svm_params (sv_data *data,
     return err;
 }
 
+/* note: if we're in auto-MPI mode, only the rank 0 process
+   executes this function
+*/
+
 static int svm_predict_main (const int *list,
 			     gretl_bundle *bmodel,
 			     double *yhat,
@@ -3162,6 +3170,18 @@ static int svm_predict_main (const int *list,
 	    wrap->predict = do_training = 0;
 	}
     }
+
+#if defined(HAVE_MPI) && defined(_OPENMP)
+    if (wrap->nproc > 1) {
+	/* we're running more than one process, but from this point
+	   only rank 0 is working, so we can assign more than one OMP
+	   thread to it without worrying about contention?
+	*/
+	int nc = gretl_n_physical_cores();
+
+	omp_set_num_threads(nc);
+    }
+#endif
 
     if (!err && do_training) {
 	pputs(prn, "Calling training function (this may take a while)\n");
