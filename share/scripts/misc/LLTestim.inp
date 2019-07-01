@@ -279,21 +279,21 @@ function list LLTestim (series y,
     printf "    sigma* =\t\t Var(eps)  = %8.6E\n", sstar
     printf "    q1 = %8.5f,\t Var(eta) = %8.6E\n", q1, q1*sstar
     printf "    q2 = %8.5f,\t Var(xi)  = %8.6E\n", q2, q2*sstar
-    if !isnull(q)
+    if exists(q)
       q = {1, q1, q2}'
     endif
   elif concent==2
     printf "    q1 = %8.5f,\t Var(eps) = %8.6E\n", q1, q1*sstar
     printf "    sigma* = \t\t Var(eta) = %8.6E\n", sstar
     printf "    q2 = %8.5f,\t Var(xi)  = %8.6E\n", q2, q2*sstar
-    if !isnull(q)
+    if exists(q)
       q = {q1, 1, q2}'
     endif
   else # concent = 3
     printf "q1 = %8.5f,\t Var(eps) = %8.6E\n", q1, q1*sstar
     printf "q2 = %8.5f,\t Var(eta) = %8.6E\n", q2, q2*sstar
     printf "sigma* = \t\t Var(xi)  = %8.6E\n", sstar
-    if !isnull(q)
+    if exists(q)
       q = {q1, q2, 1}'
     endif
   endif
