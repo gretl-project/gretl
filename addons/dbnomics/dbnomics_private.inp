@@ -71,8 +71,21 @@ function void fix_dimensions_bundle (const string J, bundle *sd)
             b.dimension_label = key
         endif
         b.value = value
-	if typeof(dvl[key]) == 6 # array (will be all nulls)
-            b.value_label = "<unknown value label>"
+	if typeof(dvl[key]) == 6 # array
+	    got_vlabel = 0
+	    loop j=1..nelem(dvl[key]) -q
+	        if typeof(dvl[key][j]) == 5 # bundle
+	            bundle sub = dvl[key][j]
+		    if inbundle(sub, value)
+		        b.value_label = sub[value]
+			got_vlabel = 1
+		        break
+		    endif
+		endif
+	    endloop
+	    if !got_vlabel
+                b.value_label = "<unknown value label>"
+	    endif
 	else
 	    b.value_label = dvl[key][value]
 	endif

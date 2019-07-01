@@ -581,6 +581,69 @@ static int jb_add_bundle (jbundle *jb, const char *name,
     return err;
 }
 
+/* given an array of two strings, interpret the strings as key and
+   value, and convert to a bundle with a single member */
+
+static int jb_do_array_as_object (JsonReader *reader, jbundle *jb)
+{
+    char *key = NULL;
+    char *val = NULL;
+    gboolean ok;
+    int i, n, err = 0;
+
+    n = json_reader_count_elements(reader);
+    if (n != 2) {
+        fprintf(stderr, "array_as_object: n_elements = %d (!= 2)\n", n);
+        return E_DATA;
+    }
+
+    for (i=0; i<n && !err; i++) {
+	ok = json_reader_read_element(reader, i);
+	if (!ok) {
+	    gretl_errmsg_set("JSON array: couldn't read element");
+	    err = E_DATA;
+	    break;
+	}
+	if (json_reader_is_value(reader)) {
+	    JsonNode *node = json_reader_get_value(reader);
+	    GType type = json_node_get_value_type(node);
+
+            if (type == G_TYPE_STRING) {
+	        if (i == 0) {
+	            key = gretl_strdup(json_reader_get_string_value(reader));
+		} else {
+		    val = gretl_strdup(json_reader_get_string_value(reader));
+		}
+	    } else {
+	        fprintf(stderr, "array_as_object: value is not a string\n");
+		err = E_DATA;
+		break;
+	    }
+	} else {
+	    fprintf(stderr, "array_as_object: element is not a value\n");
+	    err = E_DATA;
+	    break;
+	}
+	json_reader_end_element(reader);
+    }
+
+    if (!err && key != NULL && val != NULL) {
+#if JB_DEBUG
+	fprintf(stderr, "array_as_object: key='%s', val='%s'\n", key, val);
+#endif
+        err = gretl_bundle_set_string(jb->curr, key, val);
+    }
+
+    free(key);
+    free(val);
+
+    if (err) {
+	fprintf(stderr, "array_as_object: err = %d\n", err);
+    }
+
+    return err;
+}
+
 /* Process a JSON object node: it becomes a gretl bundle */
 
 static int jb_do_object (JsonReader *reader, jbundle *jb,
@@ -718,7 +781,8 @@ static int jb_do_array (JsonReader *reader, jbundle *jb)
 	    } else {
 		err = jb_do_value(reader, jb, a, i);
 	    }
-	} else if (json_reader_is_object(reader)) {
+	} else if (json_reader_is_object(reader) ||
+		   json_reader_is_array(reader)) {
 	    if (atype != GRETL_TYPE_BUNDLES) {
 		/* try switching to bundles */
 		err = jb_transmute_array(a, &atype);
@@ -727,6 +791,7 @@ static int jb_do_array (JsonReader *reader, jbundle *jb)
 		/* note: since array elements do not have names it's
 		   not possible to include/exclude them by name
 		*/
+		int nested = json_reader_is_array(reader);
 		gretl_bundle *bsave = jb->curr;
 
 		err = jb_add_bundle(jb, NULL, a, i);
@@ -734,20 +799,14 @@ static int jb_do_array (JsonReader *reader, jbundle *jb)
 		    int lsave = jb->level;
 
 		    jb->level += 1;
-		    err = jb_do_object(reader, jb, a);
+		    if (nested) {
+			jb_do_array_as_object(reader, jb);
+		    } else {
+			err = jb_do_object(reader, jb, a);
+		    }
 		    jb->level = lsave;
 		}
 		jb->curr = bsave;
-	    }
-	} else if (json_reader_is_array(reader)) {
-	    if (!strcmp(name, "observations_attributes")) {
-		/* dbnomics: this element should really be an
-		   object, not an array */
-		fprintf(stderr, "%s: skipping array that should be object\n",
-			name);
-	    } else {
-		fprintf(stderr, "Warning: skipping nested array at depth %d,\n"
-			" under element '%s'\n", jb->level, name);
 	    }
 	} else {
 	    gretl_errmsg_set("JSON array: unrecognized type");
