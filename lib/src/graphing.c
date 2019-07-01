@@ -5625,6 +5625,7 @@ static int parse_band_pm_option (const int *list,
     }
 
     if (strchr(s, ',') == NULL) {
+	/* a single field: try for "recession bars" */
 	v = current_series_index(dset, s);
 	if (v >= 0 && v < dset->v) {
 	    if (gretl_isdummy(dset->t1, dset->t2, dset->Z[v])) {
@@ -5970,12 +5971,13 @@ static int plot_with_band (int mode, gnuplot_info *gi,
 
     if (!err) {
 	if (biglist != NULL) {
-	    err = list_adjust_sample(biglist, &t1, &t2, dset, &nmiss);
+	    err = graph_list_adjust_sample(biglist, gi, dset, 1);
 	} else {
-	    err = list_adjust_sample(gi->list, &t1, &t2, dset, &nmiss);
+	    err = graph_list_adjust_sample(gi->list, gi, dset, 1);
 	}
-	if (!err && t2 - t1 - nmiss < 3) {
-	    err = E_DATA;
+	if (!err) {
+	    t1 = gi->t1;
+	    t2 = gi->t2;
 	}
     }
 
