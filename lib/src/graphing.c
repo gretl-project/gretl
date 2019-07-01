@@ -5951,7 +5951,6 @@ static int plot_with_band (int mode, gnuplot_info *gi,
     int show_zero = 0;
     int t1 = dset->t1;
     int t2 = dset->t2;
-    int nmiss = 0;
     int i, n_yvars = 0;
     int err = 0;
 
