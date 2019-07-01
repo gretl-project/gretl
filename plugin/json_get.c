@@ -599,7 +599,7 @@ static int jb_do_array_as_bundle (JsonReader *reader, jbundle *jb)
 
     n = json_reader_count_elements(reader);
     if (n != 2) {
-        fprintf(stderr, "array_as_object: n_elements = %d (!= 2)\n", n);
+        fprintf(stderr, "array_as_bundle: n_elements = %d (!= 2)\n", n);
         return E_DATA;
     }
 
@@ -621,12 +621,12 @@ static int jb_do_array_as_bundle (JsonReader *reader, jbundle *jb)
 		    val = gretl_strdup(json_reader_get_string_value(reader));
 		}
 	    } else {
-	        fprintf(stderr, "array_as_object: element is not a string\n");
+	        fprintf(stderr, "array_as_bundle: element is not a string\n");
 		err = E_DATA;
 		break;
 	    }
 	} else {
-	    fprintf(stderr, "array_as_object: element is not a value\n");
+	    fprintf(stderr, "array_as_bundle: element is not a value\n");
 	    err = E_DATA;
 	    break;
 	}
@@ -635,7 +635,7 @@ static int jb_do_array_as_bundle (JsonReader *reader, jbundle *jb)
 
     if (!err && key != NULL && val != NULL) {
 #if JB_DEBUG
-	fprintf(stderr, "array_as_object: key='%s', val='%s'\n", key, val);
+	fprintf(stderr, "array_as_bundle: key='%s', val='%s'\n", key, val);
 #endif
         err = gretl_bundle_set_string(jb->curr, key, val);
     }
@@ -644,7 +644,7 @@ static int jb_do_array_as_bundle (JsonReader *reader, jbundle *jb)
     free(val);
 
     if (err) {
-	fprintf(stderr, "array_as_object: err = %d\n", err);
+	fprintf(stderr, "array_as_bundle: err = %d\n", err);
     }
 
     return err;
@@ -806,7 +806,7 @@ static int jb_do_array (JsonReader *reader, jbundle *jb)
 
 		    jb->level += 1;
 		    if (nested) {
-			jb_do_array_as_object(reader, jb);
+			jb_do_array_as_bundle(reader, jb);
 		    } else {
 			err = jb_do_object(reader, jb, a);
 		    }
