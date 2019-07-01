@@ -581,10 +581,16 @@ static int jb_add_bundle (jbundle *jb, const char *name,
     return err;
 }
 
-/* given an array of two strings, interpret the strings as key and
-   value, and convert to a bundle with a single member */
+/* Given a (nested) JSON array holding two strings, interpret the
+   strings as key and value, and convert to a bundle with a single
+   member.
 
-static int jb_do_array_as_object (JsonReader *reader, jbundle *jb)
+   This works around what I consider a design flaw in dbnomics:
+   the data structure really should be a JSON object. Note that
+   it will not work on arbitrary arrays.
+*/
+
+static int jb_do_array_as_bundle (JsonReader *reader, jbundle *jb)
 {
     char *key = NULL;
     char *val = NULL;
@@ -615,7 +621,7 @@ static int jb_do_array_as_object (JsonReader *reader, jbundle *jb)
 		    val = gretl_strdup(json_reader_get_string_value(reader));
 		}
 	    } else {
-	        fprintf(stderr, "array_as_object: value is not a string\n");
+	        fprintf(stderr, "array_as_object: element is not a string\n");
 		err = E_DATA;
 		break;
 	    }
