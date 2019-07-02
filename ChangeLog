@@ -1,3 +1,6 @@
+version 2019d, in progress
+- Make a start on enabling nested arrays
+
 2019-07-02 version 2019c
 - Fix bug: "dataset sortby" not handling missing values
   correctly on MS Windows
