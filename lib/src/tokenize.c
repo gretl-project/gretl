@@ -2479,7 +2479,8 @@ static void maybe_report_command_index (CMD *cmd, const char *s)
 
 static int try_for_command_index (CMD *cmd, int i,
 				  DATASET *dset,
-				  int compmode)
+				  int compmode,
+				  int *err)
 {
     cmd_token *toks = cmd->toks;
     const char *test = toks[i].s;
@@ -2577,6 +2578,9 @@ static int try_for_command_index (CMD *cmd, int i,
 
 		if (compmode == FUNC && endci == FUNC) {
 		    cmd->flags |= CMD_ENDFUN;
+		} else if (endci == LOOP) {
+		    gretl_errmsg_set("'end loop': should be 'endloop'");
+		    *err = E_PARSE;
 		}
 	    }
 	}
@@ -3479,7 +3483,7 @@ static int tokenize_line (ExecState *state, DATASET *dset,
 	    int imin = min_token_index(cmd, compmode);
 
 	    if (cmd->ntoks > imin) {
-		try_for_command_index(cmd, imin, dset, compmode);
+		try_for_command_index(cmd, imin, dset, compmode, &err);
 #if TDEBUG
 		if (cmd->ci > 0) {
 		    fprintf(stderr, "ntoks=%d, imin=%d, ci=%d (%s)\n",

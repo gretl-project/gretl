@@ -3496,7 +3496,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	} else if (!strcmp(cmd->param, "outfile")) {
 	    err = do_outfile_command(OPT_C, NULL, NULL, prn);
 	} else {
-	    err = 1;
+	    err = E_PARSE;
 	}
 	break;
 
