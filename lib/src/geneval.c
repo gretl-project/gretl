@@ -4718,6 +4718,11 @@ static NODE *array_element_node (gretl_array *a, int i,
 	    if (ret != NULL) {
 		ret->v.b = data;
 	    }
+	} else if (type == GRETL_TYPE_ARRAY) {
+	    ret = array_pointer_node(p);
+	    if (ret != NULL) {
+		ret->v.a = data;
+	    }
 	} else if (type == GRETL_TYPE_LIST) {
 	    /* last revised 2018-08-04 */
 	    p->err = stored_list_check((const int *) data, p->dset);
@@ -10313,6 +10318,11 @@ static int set_array_value (NODE *lhs, NODE *rhs, parser *p)
 	case LIST:
 	    ptr = rhs->v.ivec;
 	    type = GRETL_TYPE_LIST;
+	    donate = is_tmp_node(rhs);
+	    break;
+	case ARRAY:
+	    ptr = rhs->v.a;
+	    type = GRETL_TYPE_ARRAY;
 	    donate = is_tmp_node(rhs);
 	    break;
 	default:
@@ -17684,7 +17694,7 @@ static void do_array_append (parser *p)
 	/* special: not actually appending an _element_;
 	   stick rhs array onto end of lhs array
 	*/
-	p->err = gretl_array_append_array(A, rhs->v.a);
+	p->err = gretl_array_copy_into(A, rhs->v.a);
     } else {
 	p->err = E_TYPES;
     }

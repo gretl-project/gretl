@@ -34,10 +34,12 @@ static struct type_map gretl_type_map[] = {
       GRETL_TYPE_BUNDLES,  GRETL_TYPE_BUNDLES_REF},
     { GRETL_TYPE_STRING,   GRETL_TYPE_STRING_REF,
       GRETL_TYPE_STRINGS,  GRETL_TYPE_STRINGS_REF},
+    { GRETL_TYPE_ARRAY,    GRETL_TYPE_ARRAY_REF,
+      GRETL_TYPE_ARRAYS,   GRETL_TYPE_ARRAYS_REF},
     { GRETL_TYPE_LIST,     0,
       GRETL_TYPE_LISTS,    GRETL_TYPE_LISTS_REF},
     { GRETL_TYPE_SERIES,   GRETL_TYPE_SERIES_REF, 0, 0},
-    { GRETL_TYPE_DOUBLE,   GRETL_TYPE_SCALAR_REF, 0, 0},
+    { GRETL_TYPE_DOUBLE,   GRETL_TYPE_SCALAR_REF, 0, 0}
 };
 
 GretlType gretl_type_get_plural (GretlType type)
@@ -141,6 +143,7 @@ const char *gretl_type_get_name (GretlType type)
     case GRETL_TYPE_SERIES_REF: return "series *";
     case GRETL_TYPE_MATRIX_REF: return "matrix *";
     case GRETL_TYPE_BUNDLE_REF: return "bundle *";
+    case GRETL_TYPE_ARRAY_REF:  return "array *";
     case GRETL_TYPE_STRING:     return "string";
     case GRETL_TYPE_STRING_REF: return "string *";
 
@@ -148,11 +151,13 @@ const char *gretl_type_get_name (GretlType type)
     case GRETL_TYPE_MATRICES:     return "matrices";
     case GRETL_TYPE_BUNDLES:      return "bundles";
     case GRETL_TYPE_LISTS:        return "lists";
+    case GRETL_TYPE_ARRAYS:       return "arrays";
 
     case GRETL_TYPE_STRINGS_REF:  return "strings *";
     case GRETL_TYPE_MATRICES_REF: return "matrices *";
     case GRETL_TYPE_BUNDLES_REF:  return "bundles *";
     case GRETL_TYPE_LISTS_REF:    return "lists *";
+    case GRETL_TYPE_ARRAYS_REF:   return "arrays *";
 
     case GRETL_TYPE_VOID:       return "void";
     case GRETL_TYPE_NONE:       return "null";
@@ -201,6 +206,20 @@ GretlType gretl_type_from_string (const char *s)
 	} else if (!strcmp(p, " *") || !strcmp(p, "ref")) {
 	    return GRETL_TYPE_BUNDLE_REF;
 	}
+    } else if (!strncmp(s, "array", 5)) {
+	p = s + 5;
+	if (*p == 's') {
+	    p++;
+	    if (*p == '\0') {
+		return GRETL_TYPE_ARRAYS;
+	    } else if (!strcmp(p, " *") || !strcmp(p, "ref")) {
+		return GRETL_TYPE_ARRAYS_REF;
+	    }
+	} else if (*p == '\0') {
+	    return GRETL_TYPE_ARRAY;
+	} else if (!strcmp(p, " *") || !strcmp(p, "ref")) {
+	    return GRETL_TYPE_ARRAY_REF;
+	}
     } else if (!strncmp(s, "string", 6)) {
 	p = s + 6;
 	if (*p == 's') {
@@ -241,7 +260,6 @@ GretlType gretl_type_from_string (const char *s)
 	if (!strcmp(s, "int"))      return GRETL_TYPE_INT;
 	if (!strcmp(s, "unsigned")) return GRETL_TYPE_UNSIGNED;
 	if (!strcmp(s, "obs"))      return GRETL_TYPE_OBS;
-	if (!strcmp(s, "array"))    return GRETL_TYPE_ARRAY;
     }
 
     return GRETL_TYPE_NONE;
@@ -262,7 +280,8 @@ static const struct lookup gentypes[] = {
     { "strings",  GRETL_TYPE_STRINGS },
     { "matrices", GRETL_TYPE_MATRICES },
     { "bundles",  GRETL_TYPE_BUNDLES },
-    { "lists",    GRETL_TYPE_LISTS }
+    { "lists",    GRETL_TYPE_LISTS },
+    { "arrays",   GRETL_TYPE_ARRAYS },
 };
 
 GretlType gretl_get_gen_type (const char *s)
@@ -303,7 +322,8 @@ int gretl_is_array_type (GretlType type)
     return type == GRETL_TYPE_STRINGS ||
 	type == GRETL_TYPE_MATRICES ||
 	type == GRETL_TYPE_BUNDLES ||
-	type == GRETL_TYPE_LISTS;
+	type == GRETL_TYPE_LISTS ||
+	type == GRETL_TYPE_ARRAYS;
 }
 
 void gretl_typemap_cleanup (void)
