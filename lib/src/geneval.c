@@ -3578,25 +3578,50 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
 	    return NULL;
 	}
 
-	if (f == F_MSPLITBY) {
-	    ret = aux_array_node(p);
-	} else {
-	    ret = aux_matrix_node(p);
-	}
+	ret = aux_matrix_node(p);
 
-	if (ret == NULL) {
-	    return NULL;
-	}
-
-	if (f == F_MSORTBY) {
-	    ret->v.m = gretl_matrix_sort_by_column(m, k-1, &p->err);
-	} else if (f == F_MSPLITBY) {
-	    ret->v.a = gretl_matrix_split_by_column(m, k-1, &p->err);
-	} else if (f == HF_CXTRACT) {
-	    ret->v.m = gretl_cxtract(m, k, &p->err);
+	if (ret != NULL) {
+	    if (f == F_MSORTBY) {
+		ret->v.m = gretl_matrix_sort_by_column(m, k-1, &p->err);
+	    } else if (f == HF_CXTRACT) {
+		ret->v.m = gretl_cxtract(m, k, &p->err);
+	    }
 	}
     } else {
-	ret = aux_any_node(p);
+	ret = aux_matrix_node(p);
+    }
+
+    return ret;
+}
+
+static NODE *matrix_vector_func (NODE *l, NODE *r,
+				 int f, parser *p)
+{
+    NODE *ret = NULL;
+
+    if (starting(p)) {
+	gretl_matrix *m = l->v.m;
+	gretl_matrix *v = r->v.m;
+	int vlen = 0;
+
+	if (gretl_is_null_matrix(m)) {
+	    p->err = E_INVARG;
+	} else {
+	    vlen = gretl_vector_get_length(v);
+	    if (vlen != m->rows) {
+		p->err = E_NONCONF;
+	    }
+	}
+	if (p->err) {
+	    return NULL;
+	}
+	/* currently only F_MSPLITBY comes here */
+	ret = aux_array_node(p);
+	if (ret != NULL) {
+	    ret->v.a = gretl_matrix_split_by(m, v, &p->err);
+	}
+    } else {
+	ret = aux_array_node(p);
     }
 
     return ret;
@@ -15112,7 +15137,6 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_MSORTBY:
-    case F_MSPLITBY:
     case HF_CXTRACT:
 	/* matrix on left, scalar on right */
 	if (l->t == MAT && scalar_node(r)) {
@@ -15121,6 +15145,14 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, 2, NUM, r, p);
 	} else {
 	    node_type_error(t->t, 1, MAT, l, p);
+	}
+	break;
+    case F_MSPLITBY:
+	/* matrix on left, vector on right */
+	if (l->t == MAT && r->t == MAT) {
+	    ret = matrix_vector_func(l, r, t->t, p);
+	} else {
+	    p->err = E_TYPES;
 	}
 	break;
     case F_LLAG:

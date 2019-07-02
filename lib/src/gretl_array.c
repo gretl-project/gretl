@@ -506,35 +506,33 @@ gretl_matrix *gretl_matrix_array_flatten (gretl_array *A,
     return ret;
 }
 
-gretl_array *gretl_matrix_split_by_column (gretl_matrix *X,
-					   int splitcol,
-					   int *err)
+gretl_array *gretl_matrix_split_by (const gretl_matrix *X,
+				    const gretl_matrix *v,
+				    int *err)
 {
     gretl_array *ret = NULL;
     int i, j, k, l, n = 1;
-    int nc = X->cols;
     gretl_matrix *tmp = NULL;
     gretl_matrix *vals = NULL;
     const double *sel;
     int *nrows = NULL;
     double x;
 
-    /* @splitcol must be a valid column */
-    if (splitcol < 0 || splitcol >= nc) {
+    if (gretl_vector_get_length(v) != X->rows) {
 	*err = E_INVARG;
 	return ret;
     }
 
     /* only positive integers allowed */
     for (i=0; i<X->rows; i++) {
-	x = gretl_matrix_get(X, i, splitcol);
+	x = v->val[i];
 	if (x != floor(x) || x <= 0 || x >= INT_MAX) {
 	    *err = E_INVARG;
 	    return ret;
 	}
     }
 
-    sel = X->val + splitcol * X->rows;
+    sel = v->val;
     vals = gretl_matrix_values(sel, X->rows, OPT_NONE, err);
     if (*err) {
 	return ret;
@@ -557,13 +555,13 @@ gretl_array *gretl_matrix_split_by_column (gretl_matrix *X,
 	*err = E_ALLOC;
     } else {
 	for (i=0; i<X->rows; i++) {
-	    j = sel[i]-1;
+	    j = sel[i] - 1;
 	    nrows[j] += 1;
 	}
     }
     for (i=0; i<n && !*err; i++) {
 	if (nrows[i] > 0) {
-	    tmp = gretl_matrix_alloc(nrows[i], nc - 1);
+	    tmp = gretl_matrix_alloc(nrows[i], X->cols);
 	    if (tmp == NULL) {
 		*err = E_ALLOC;
 	    } else {
@@ -574,16 +572,14 @@ gretl_array *gretl_matrix_split_by_column (gretl_matrix *X,
 	}
     }
 
-    /* fill the individual matrices, skipping the split column */
+    /* fill the individual matrices */
     for (i=0; i<X->rows; i++) {
 	k = sel[i] - 1;
 	l = 0;
-	for (j=0; j<nc; j++) {
-	    if (j != splitcol) {
-		x = gretl_matrix_get(X, i, j);
-		tmp = ret->data[k];
-		gretl_matrix_set(tmp, nrows[k], l++, x);
-	    }
+	for (j=0; j<X->cols; j++) {
+	    x = gretl_matrix_get(X, i, j);
+	    tmp = ret->data[k];
+	    gretl_matrix_set(tmp, nrows[k], l++, x);
 	}
 	/* advance the write position */
 	nrows[k] += 1;
