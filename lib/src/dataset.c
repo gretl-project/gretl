@@ -3735,23 +3735,24 @@ int dataset_set_time_series (DATASET *dset, int pd,
     } else if (pd > 1 && (minor0 < 1 || minor0 > pd)) {
 	err = E_DATA;
     } else {
-	char stobs[OBSLEN];
+	gchar *stobs = NULL;
 
 	dataset_destroy_obs_markers(dset);
 	dset->structure = TIME_SERIES;
 	dset->pd = pd;
 
 	if (pd == 1) {
-	    sprintf(stobs, "%d", yr0);
+	    stobs = g_strdup_printf("%d", yr0);
 	} else if (pd == 4) {
-	    sprintf(stobs, "%d.%d", yr0, minor0);
+	    stobs = g_strdup_printf("%d.%d", yr0, minor0);
 	} else {
-	    sprintf(stobs, "%d.%02d", yr0, minor0);
+	    stobs = g_strdup_printf("%d.%02d", yr0, minor0);
 	}
 
 	dset->sd0 = dot_atof(stobs);
 	ntodate(dset->stobs, 0, dset);
 	ntodate(dset->endobs, dset->n - 1, dset);
+	g_free(stobs);
     }
 
     return err;

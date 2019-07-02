@@ -1207,7 +1207,7 @@ char **gretl_list_get_names_array (const int *list,
 char *gretl_list_to_lags_string (const int *list, int *err)
 {
     char *buf;
-    char numstr[8];
+    char numstr[16];
     int len, i;
 
     len = 4 * (list[0] + 1) + 2;
@@ -1217,13 +1217,11 @@ char *gretl_list_to_lags_string (const int *list, int *err)
 	return NULL;
     }
 
-    buf = malloc(len);
+    buf = calloc(len, 1);
     if (buf == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
-
-    *buf = '\0';
 
     for (i=1; i<=list[0]; i++) {
 	if (abs(list[i] >= 999)) {

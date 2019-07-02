@@ -438,7 +438,7 @@ static void move_to_next_cell (Spreadsheet *sheet, GtkTreePath *path,
 
     if (newrow >= 0 && newrow < sheet->datarows) {
 	GtkTreePath *newpath;
-	gchar pstr[8];
+	gchar pstr[12];
 
 	sprintf(pstr, "%d", newrow);
 	newpath = gtk_tree_path_new_from_string(pstr);
