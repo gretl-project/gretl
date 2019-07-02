@@ -7145,18 +7145,17 @@
     <function name="msplitby" section="matshape" output="matrices">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg type="int">j</fnarg>
+	<fnarg type="vector">v</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Devuelve una formación de matrices, como resultado de separar las
-	  filas de <argname>X</argname> verticalmente, bajo el control de la
-	  columna <argname>j</argname>. Esta columna debe contener valores
+	  filas de <argname>X</argname> verticalmente, bajo el control del
+	  vector <argname>v</argname>. Esta vector debe contener valores
 	  enteros, con 1 como valor mínimo y un máximo igual al número de
 	  matrices que tendrá la formación deseada, de forma que estén
 	  indicando a qué fila de la formación de matrices se debe asignar
-	  cada fila de la matriz <argname>X</argname>. Los valores de la
-	  columna <argname>j</argname> no forman parte del resultado final.
+	  cada fila de la matriz <argname>X</argname>.
 	</para>
 	<para>
 	  En el siguiente ejemplo se separan las filas de una matriz <by r="3" c="3"/>
@@ -7164,7 +7163,7 @@
 	</para>
 	<code>
 	  matrix X = {1,2,3; 4,5,6; 7,8,9}
-	  matrices M = msplitby(X ~ {1,1,3}', 4)
+	  matrices M = msplitby(X, {1,1,3})
 	  print M
 	</code>
 	<para>

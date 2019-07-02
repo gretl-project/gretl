@@ -7145,18 +7145,17 @@
     <function name="msplitby" section="matshape" output="matrices">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
-	<fnarg type="int">j</fnarg>
+	<fnarg type="vector">v</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Devolve un arranxo de matrices, como resultado de separar as filas
-	  de <argname>X</argname> verticalmente, baixo o control da columna
-	  <argname>j</argname>. Esta columna debe conter valores enteiros,
+	  de <argname>X</argname> verticalmente, baixo o control do vector
+	  <argname>v</argname>. Este vector debe conter valores enteiros,
 	  con 1 como valor mínimo e un máximo igual ao número de matrices que
 	  terá o arranxo desexado, de xeito que estean indicando a que fila
 	  do arranxo de matrices se debe asignar cada fila da matriz
-	  <argname>X</argname>. Os valores da columna <argname>j</argname>
-	  non forman parte do resultado final.
+	  <argname>X</argname>.
 	</para>
 	<para>
 	  No seguinte exemplo separamos as filas dunha matriz <by r="3" c="3"/>
@@ -7164,7 +7163,7 @@
 	</para>
 	<code>
 	  matrix X = {1,2,3; 4,5,6; 7,8,9}
-	  matrices M = msplitby(X ~ {1,1,3}', 4)
+	  matrices M = msplitby(X, {1,1,3})
 	  print M
 	</code>
 	<para>
