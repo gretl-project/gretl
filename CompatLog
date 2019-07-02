@@ -1,4 +1,4 @@
-version 2019d, in progress
+2019-07-02 version 2019d
 
 The deprecated function isstring() has been removed.
 Reminder: isnull() is also deprecated, but it has not yet
