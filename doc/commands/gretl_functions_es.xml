@@ -2471,12 +2471,12 @@
 	<para>
 	  Devuelve una matriz con el cálculo de la convolución bidimensional
 	  (2D) de dos matrices <argname>A</argname> y <argname>B</argname>.
-	  Si la matriz <argname>A</argname> tiene <math>r</math> filas y
-	  <math>c</math> columnas, y <argname>B</argname> tiene
-	  <math>m</math> filas y <math>n</math> columnas, entonces
-	  la matriz que se devuelve será <math>r+m-1</math> por
-	  <math>c+n-1</math>.
-	  <para context="tex">
+	  Si <argname>A</argname> es de orden <by r="r" c="c"/> y
+	  <argname>B</argname> es de orden <by r="m" c="n"/>, entonces
+	  la matriz que se devuelve tendrá <math>r+m-1</math> filas
+	  y <math>c+n-1</math> columnas.
+	</para>
+	<para context="tex">
 	    La convolución 2D de <argname>A</argname> y
 	    <argname>B</argname> se define como
 	    \[
@@ -2486,6 +2486,7 @@
 	    donde los sumatorios admiten solo aquellos valores de $k$ y $l$ para
 	    los que los subíndices de $B$ están dentro de los límites definidos.
 	</para>
+	<para>
 	  <seelist>
             <fncref targ="fft"/>
             <fncref targ="filter"/>
@@ -3972,9 +3973,9 @@
 	  (normalmente no lineal) &mdash;es decir, un valor de la variable escalar
 	  <math>x</math> que hace que <math>f</math>(<math>x</math>) = 0.
 	  El argumento <argname>fcall</argname> debe proporcionar una
-	  llamada a la función en cuestión. El segundo argumento (opcional)
-	  debe ser un escalar que represente el papel de <math>x</math>, y
-	  puede ir seguido de los parámetros que sean necesarios.
+	  llamada a la función en cuestión. <argname>fcall</argname> puede
+	  incluir un número arbitrario de argumentos, pero el primero
+	  debe ser un escalar que represente el papel de <math>x</math>.
 	  Cuando se complete la función con éxito, se va a devolver el
 	  valor de la raíz.
 	</para>
@@ -7149,21 +7150,25 @@
       </fnargs>
       <description>
 	<para>
-	  Devuelve una formación de matrices, como resultado de separar las
-	  filas de <argname>X</argname> verticalmente, bajo el control del
-	  vector <argname>v</argname>. Esta vector debe contener valores
-	  enteros, con 1 como valor mínimo y un máximo igual al número de
-	  matrices que tendrá la formación deseada, de forma que estén
-	  indicando a qué fila de la formación de matrices se debe asignar
-	  cada fila de la matriz <argname>X</argname>.
+	  Devuelve una formación de matrices, como resultado de separar
+	  las filas de <argname>X</argname> verticalmente, bajo el control
+	  del vector <argname>v</argname>. Este vector debe ser de longitud
+	  igual a la dimensión en filas de <argname>X</argname>, y debe
+	  constar de valores enteros con 1 como valor mínimo, y un máximo
+	  igual al número de matrices que tendrá la formación deseada.
+	  Cada elemento de <argname>v</argname> indica a qué fila de la
+	  formación de matrices se debe asignar cada fila de la matriz
+	  <argname>X</argname>.
 	</para>
 	<para>
-	  En el siguiente ejemplo se separan las filas de una matriz <by r="3" c="3"/>
-	  en una formación de tres matrices, dejando vacía la segunda de ellas.
+	  En el siguiente ejemplo se separan las filas de una matriz
+	  <by r="3" c="3"/> en una formación de tres matrices: las dos primeras
+	  filas se asignan a la primera matriz; la segunda matriz se deja vacía;
+	  y la tercera matriz incluye la tercera fila de <argname>X</argname>.
 	</para>
 	<code>
 	  matrix X = {1,2,3; 4,5,6; 7,8,9}
-	  matrices M = msplitby(X, {1,1,3})
+	  matrices M = msplitby(X,{1,1,3})
 	  print M
 	</code>
 	<para>

@@ -2471,12 +2471,12 @@
 	<para>
 	  Devolve unha matriz co cálculo da convolución bidimensional (2D)
 	  de dúas matrices <argname>A</argname> e <argname>B</argname>.
-	  Se a matriz <argname>A</argname> ten <math>r</math> filas e
-	  <math>c</math> columnas, e <argname>B</argname> ten
-	  <math>m</math> filas e <math>n</math> columnas, entón
-	  a matriz que se devolve será <math>r+m-1</math> por
-	  <math>c+n-1</math>.
-	  <para context="tex">
+	  Se <argname>A</argname> é de orde <by r="r" c="c"/>, e
+	  <argname>B</argname> é de orde <by r="m" c="n"/>, entón
+	  a matriz que se devolve vai ter <math>r+m-1</math> filas
+	  e <math>c+n-1</math> columnas.
+	</para>
+	<para context="tex">
 	    A convolución 2D de <argname>A</argname> e
 	    <argname>B</argname> defínese como
 	    \[
@@ -2486,6 +2486,7 @@
 	    onde as sumas admiten só aqueles valores de $k$ e de $l$ para
 	    os que os subíndices de $B$ están dentro dos límites definidos.
 	</para>
+	<para>
 	  <seelist>
             <fncref targ="fft"/>
             <fncref targ="filter"/>
@@ -3972,9 +3973,9 @@
 	  (normalmente non linear) &mdash;é dicir, un valor da variable escalar
 	  <math>x</math> que fai que <math>f</math>(<math>x</math>) = 0.
 	  O argumento <argname>fcall</argname> debe de proporcionar unha
-	  chamada á función en cuestión. O segundo argumento (opcional)
-	  deberá ser un escalar que represente o papel de <math>x</math>,
-	  e poderá ir seguido dos parámetros que sexan necesarios.
+	  chamada á función en cuestión;<argname>fcall</argname> pode
+	  incluír un número arbitrario de argumentos, pero o primeiro
+	  debe de ser un escalar que represente o papel de <math>x</math>.
 	  Cando se complete a función con éxito, vaise devolver o valor
 	  da raíz.
 	</para>
@@ -7149,17 +7150,21 @@
       </fnargs>
       <description>
 	<para>
-	  Devolve un arranxo de matrices, como resultado de separar as filas
-	  de <argname>X</argname> verticalmente, baixo o control do vector
-	  <argname>v</argname>. Este vector debe conter valores enteiros,
-	  con 1 como valor mínimo e un máximo igual ao número de matrices que
-	  terá o arranxo desexado, de xeito que estean indicando a que fila
-	  do arranxo de matrices se debe asignar cada fila da matriz
+	  Devolve un arranxo de matrices, como resultado de separar as
+	  filas de <argname>X</argname> verticalmente, baixo o control
+	  do vector <argname>v</argname>. Este vector debe ser de longura
+	  igual á dimensión en filas de <argname>X</argname>, e debe
+	  constar de valores enteiros con 1 como valor mínimo, e un máximo
+	  igual ao número de matrices que terá o arranxo desexado. Cada
+	  elemento de <argname>v</argname> indica a que fila do arranxo
+	  de matrices se debe asignar cada fila da matriz
 	  <argname>X</argname>.
 	</para>
 	<para>
-	  No seguinte exemplo separamos as filas dunha matriz <by r="3" c="3"/>
-	  nun arranxo de tres matrices, deixando baleira a segunda delas.
+	  No seguinte exemplo separamos as filas dunha matriz
+	  <by r="3" c="3"/> nun arranxo de tres matrices: as dúas primeiras
+	  filas asígnanse á primeira matriz; a segunda matriz déixase baleira;
+	  e a terceira matriz inclúe a terceira fila de <argname>X</argname>.
 	</para>
 	<code>
 	  matrix X = {1,2,3; 4,5,6; 7,8,9}
