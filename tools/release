@@ -4,6 +4,7 @@ Local:
 * Update the fedstl database if it needs it
 * Ensure the addon zipfiles are up to date with git
 * Update lib/src/version.h
+* Re-run the configure script in all build directories
 * Update src/Changelog and src/CompatLog with the current date
 * Commit the above changes to git
 * Rebuild and publish the PDF docs
