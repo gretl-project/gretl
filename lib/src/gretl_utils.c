@@ -2055,10 +2055,10 @@ static double gretl_unix_stopwatch (void)
     struct tms timebuf;
 
     ut1 = times(&timebuf);
-    x = (double) (ut1 - ut0) / ticks_per_sec;
+    x = (ut1 - ut0) / (double) ticks_per_sec;
 #else
     ut1 = clock();
-    x = (double) (ut1 - ut0) / CLOCKS_PER_SEC;
+    x = (ut1 - ut0) / (double) CLOCKS_PER_SEC;
 #endif
 
     ut0 = ut1;
