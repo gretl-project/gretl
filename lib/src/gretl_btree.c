@@ -24,6 +24,10 @@
    See glib/gtree.c at https://github.com/GNOME/glib for the
    original code, which is under the GNU Lesser General Public
    License, version 2.1 or higher.
+
+   We could have used the unmodified GTree API (replacing the
+   doubles by pointers-to-doubles) but it turns out that this
+   simplified version is a good deal faster for the purpose.
 */
 
 #include <glib.h>
