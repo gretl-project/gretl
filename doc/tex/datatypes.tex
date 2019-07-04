@@ -55,8 +55,9 @@ course $n$ numerical values. A series may also have a description
 (which is shown in the main window and is also accessible via the
 \texttt{labels} command), a ``display name'' for use in graphs, a
 record of the compaction method used in reducing the variable's
-frequency (for time-series data only) and a flag marking the variable
-as discrete. These attributes can be edited in the GUI by choosing
+frequency (for time-series data only) and flags marking the variable
+as discrete and/or as a numeric encoding of a qualitative
+characteristic. These attributes can be edited in the GUI by choosing
 \textsf{Edit Attributes} (either under the \textsf{Variable} menu or
 via right-click), or by means of the \texttt{setinfo} command.
 
@@ -179,37 +180,42 @@ These two formulations are basically equivalent, in that they both
 create an empty bundle. The difference is that the second variant may
 be reused---if a bundle named \texttt{foo} already exists the effect
 is to empty it---while the first may only be used once in a given
-gretl session; it is an error to declare a variable that already
-exists.
+gretl session; it is an error to attempt to declare a variable that
+already exists.
 
 To add an object to a bundle you assign to a compound left-hand value:
 the name of the bundle followed by the key. Two forms of syntax are
-acceptable in this context. The currently recommended syntax (for most
-uses) is \textsl{bundlename}.\textsl{key}; that is, the name of the
-bundle followed by a dot, then the key. Both the bundle name and the
-key must be valid gretl identifiers.\footnote{As a reminder: 31
-  characters maximum, starting with a letter and composed of just
-  letters, numbers or underscore.} For example, the statement
+acceptable in this context. The recommended syntax (for most uses) is
+\textsl{bundlename}.\textsl{key}; that is, the name of the bundle
+followed by a dot, then the key. Both the bundle name and the key must
+be valid gretl identifiers.\footnote{As a reminder: 31 characters
+  maximum, starting with a letter and composed of just letters,
+  numbers or underscore.} For example, the statement
 %
 \begin{code}
 foo.matrix1 = m
 \end{code}
 %
 adds an object called \texttt{m} (presumably a matrix) to bundle
-\texttt{foo} under the key \texttt{matrix1}. The original syntax (and
-the only form supported prior to version 1.9.12 of gretl) requires
-that the key be given as a quoted string literal enclosed in square
-brackets, as in
+\texttt{foo} under the key \texttt{matrix1}. If you wish to make it
+explicit that \texttt{m} is supposed to be a matrix you can use the
+form
+%
+\begin{code}
+matrix foo.matrix1 = m
+\end{code}
+
+Alternatively, a bundle key may be given as a string enclosed in
+square brackets, as in
 %
 \begin{code}
 foo["matrix1"] = m
 \end{code}
 %
-This syntax is still acceptable, and it offers greater flexibility in
-that the key string does not have to be a valid identifier (for
-example it can include spaces). In addition, when using the square
-bracket syntax it is possible to use a string variable to define or
-access the key in question. For example:
+This syntax offers greater flexibility in that the key string does not
+have to be a valid identifier (for example it can include spaces). In
+addition, when using the square bracket syntax it is possible to use a
+string variable to define or access the key in question. For example:
 %
 \begin{code}
 string s = "matrix 1"
@@ -258,8 +264,8 @@ with the bundle/key combination, as in
 delete foo.mykey
 \end{code}
 
-This destroys the object associated with the key and removes the key
-from the hash table.
+This destroys the object associated with \texttt{mykey} and removes
+the key from the hash table.
 
 To determine whether a bundle contains an object associated with a
 given key, use the \texttt{inbundle()} function. This takes two
@@ -305,6 +311,11 @@ bundle b:
  mat (matrix)
  inside (bundle)
 \end{code}
+
+Note that in the example above the bundle \texttt{b} nests a bundle
+named \texttt{inside}. If you want to see what's inside nested bundles
+(with a single command) you can append the \option{tree} option to the
+print command.
 
 \subsection{Series and lists as bundle members}
 
@@ -474,22 +485,18 @@ will be shown as ``covariance matrix'' in a GUI menu.
 \section{Arrays}
 \label{sec:arrays}
 
-The gretl array type was developed in summer 2014 and is first
-documented in gretl 1.10.  Arrays are intended for scripting use only:
-they have no GUI representation and they're unlikely ever to acquire
-one.\footnote{However, it's possible to save arrays ``invisibly'' in
-  the context of a GUI session, by virtue of the fact that they can be
-  packed into bundles (see below), and bundles can be saved as part of
-  a ``session''.} Since this type is a relative newcomer there are at
-present relatively few built-in functions that take arrays as
-arguments or that return arrays; further development can be expected.
+The gretl array type is intended for scripting use. Arrays have no GUI
+representation and they're unlikely to acquire one.\footnote{However,
+  it's possible to save arrays ``invisibly'' in the context of a GUI
+  session, by virtue of the fact that they can be packed into bundles
+  (see below), and bundles can be saved as part of a ``session''.}
 
 A gretl array is, as you might expect, a container which can hold zero
 or more objects of a certain type, indexed by consecutive integers
 starting at 1. It is one-dimensional. This type is implemented by a
 quite ``generic'' back-end. The types of object that can be put into
-arrays are strings, matrices and bundles; a given array can hold only
-one of these types.
+arrays are strings, matrices, lists, bundles and arrays (that is,
+arrays can be nested).
 
 Of gretl's ``primary'' types, then, neither scalars nor series are
 supported by the array mechanism. There would be little point in
@@ -504,11 +511,12 @@ functions as a sort of array for subsets of the series in a dataset.
 An array can be brought into existence in any of four ways: bare
 declaration, assignment from \texttt{null}, or using one of the
 functions \texttt{array()} or \texttt{defarray()}.  In each case one
-of the specific type-words \texttt{strings}, \texttt{matrices} or
-\texttt{bundles} must be used. Here are some examples:
+of the specific type-words \texttt{strings}, \texttt{matrices},
+\texttt{lists}, \texttt{bundles} or \texttt{arrays} must be used. Here
+are some examples:
 
 \begin{code}
-# make an empty array of strings
+# declare an empty array of strings
 strings S
 # make an empty array of matrices
 matrices M = null
@@ -525,10 +533,11 @@ used to destroy the content of an existing array and reduce it to size
 zero). The \texttt{array()} function expects a positive integer
 argument and can be used to create an array of pre-given size; in this
 case the elements are initialized appropriately as empty strings, null
-matrices or empty bundles. The \texttt{defarray()} function takes a
-variable number of arguments (one or more), each of which may be the
-name of a variable of the appropriate type or an expression which
-evaluates to an object of the appropriate type.
+matrices, empty lists, empty bundles or empty arrays. The
+\texttt{defarray()} function takes a variable number of arguments (one
+or more), each of which may be the name of a variable of the
+appropriate type or an expression which evaluates to an object of the
+appropriate type.
 
 \subsection{Setting and getting elements}
 
@@ -608,6 +617,27 @@ something like:
 Array of strings, length 5
 \end{code}
 
+\subsection{Nesting arrays}
+
+While gretl's \texttt{array} structure is in itself one-dimensional
+you can add extra dimensions by nesting. For example, the code below
+creates an array holding $n$ arrays of $m$ bundles.
+\begin{code}
+arrays BB = array(n)
+loop i=1..n -q
+    bundles BB[i] = array(m)
+endloop
+\end{code}
+The syntax for setting or accessing any of the $n \times m$ bundles
+(or their members) is then on the following pattern:
+\begin{code}
+BB[i][j].m = I(3)
+eval BB[i][j]
+eval BB[i][j].m # or eval BB[i][j]["m"]
+\end{code}
+where the respective array subscripts are each put into square
+brackets.
+
 \subsection{Arrays and bundles}
 
 As mentioned, the \texttt{bundle} type is supported by the array
@@ -642,7 +672,7 @@ and so forth. In that case the object in question is given a default
 initialization, as follows: a new scalar has value \texttt{NA}
 (missing); a new series is filled with \texttt{NA}s; a new matrix is
 null (zero rows and columns); a new string is empty; a new list has no
-members, and a new bundle is empty.
+members, new bundle and new arrays are empty.
 
 Declaration can be supplemented by a definite initialization, as in
 
@@ -652,33 +682,25 @@ series y = log(x)
 matrix A = zeros(10,4)
 \end{code}
 
-The traditional way of creating a new variable in gretl was via
-the \app{genr} command (which is still supported), as in
-
-\begin{code}
-genr x = y/100
-\end{code}
-
-Here the type of \texttt{x} is left implicit and will be determined
-automatically depending on the context: if \texttt{y} is a scalar, a
-series or a matrix \texttt{x} will inherit \texttt{y}'s type
-(otherwise an error will be generated, since division is applicable to
-these types only). Moreover, the type of a new variable can be left
-implicit \textit{without} use of \texttt{genr}:\footnote{Apart from
-  the bundle type: that must always be specified.}
-
+The type of a new variable may be left implicit, as in
 \begin{code}
 x = y/100
+z = 3.5
 \end{code}
+Here the type of \texttt{x} will be determined automatically depending
+on the context.  If \texttt{y} is a scalar, a series or a matrix
+\texttt{x} will inherit \texttt{y}'s type (otherwise an error will be
+generated, since division is applicable to these types only). The new
+variable \texttt{z} will ``naturally'' be of scalar type.
 
-In ``modern'' gretl scripting we recommend that you state the
-type of a new variable explicitly. This makes the intent clearer to a
-reader of the script and also guards against errors that might
-otherwise be difficult to understand (i.e.\ a certain variable turns
-out to be of the wrong type for some subsequent calculation, but you
-don't notice at first because you didn't say what type you needed). An
-exception to this rule might reasonably be granted for clear and
-simple cases where there's little possibility of confusion.
+In general, however, we recommend that you state the type of a new
+variable explicitly. This makes the intent clearer to a reader of the
+script and also guards against errors that might otherwise be
+difficult to understand (i.e.\ a certain variable turns out to be of
+the wrong type for some subsequent calculation, but you don't notice
+at first because you didn't say what type you wanted). Exceptions to
+this rule might reasonably be granted for clear and simple cases where
+there's little possibility of confusion.
 
 \subsection{Modification}
 
