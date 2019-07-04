@@ -17690,6 +17690,8 @@ static void do_array_append (parser *p)
 	ptr = rhs->v.b;
     } else if (atype == GRETL_TYPE_LIST && rhs->t == LIST) {
 	ptr = rhs->v.ivec;
+    } else if (atype == GRETL_TYPE_ARRAY && rhs->t == ARRAY) {
+	ptr = rhs->v.a;
     } else if (rhs->t == ARRAY) {
 	/* special: not actually appending an _element_;
 	   stick rhs array onto end of lhs array
