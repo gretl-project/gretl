@@ -495,8 +495,8 @@ A gretl array is, as you might expect, a container which can hold zero
 or more objects of a certain type, indexed by consecutive integers
 starting at 1. It is one-dimensional. This type is implemented by a
 quite ``generic'' back-end. The types of object that can be put into
-arrays are strings, matrices, lists, bundles and arrays (that is,
-arrays can be nested).
+arrays are strings, matrices, lists, bundles and arrays.\footnote{It
+  was not possible to nest arrays prior to version 2019d of gretl.}
 
 Of gretl's ``primary'' types, then, neither scalars nor series are
 supported by the array mechanism. There would be little point in
@@ -637,6 +637,16 @@ eval BB[i][j].m # or eval BB[i][j]["m"]
 \end{code}
 where the respective array subscripts are each put into square
 brackets.
+
+The elements of an array of arrays must (obviously) all be arrays, but
+it's not required that they have a common content-type. For example,
+the following code creates an array holding an array of matrices plus
+an array of strings.
+\begin{code}
+arrays AA = array(2)
+matrices AA[1] = array(3)
+strings AA[2] = array(3)
+\end{code}
 
 \subsection{Arrays and bundles}
 
