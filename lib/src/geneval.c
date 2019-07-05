@@ -17033,13 +17033,23 @@ static int overwrite_const_check (const char *name, int vnum)
 /* Check that we're not trying to modify a const object
    via a compound LHS expression; and while we're at
    it, check whether we should be generating a list
-   (an element of an array of lists).
+   (a list member of a bundle or an element of an array
+   of lists).
 */
 
 static int compound_const_check (NODE *lhs, parser *p)
 {
     NODE *n = lhs;
     int i = 0, err = 0;
+
+    if (n->t == BMEMB && n->R != NULL && n->R->t == STR) {
+	GretlType t;
+
+	t = gretl_bundle_get_member_type(n->L->v.b, n->R->v.str, NULL);
+	if (t == GRETL_TYPE_LIST) {
+	    p->flags |= P_LISTDEF;
+	}
+    }
 
     while (n->t == MSL || n->t == OBS || n->t == BMEMB || n->t == OSL) {
 	n = n->L;
