@@ -609,10 +609,12 @@ BundleType gretl_bundle_get_type (gretl_bundle *bundle)
  * gretl_bundle_get_member_type:
  * @bundle: bundle to access.
  * @key: name of key to access.
- * @err:location to receive error code.
+ * @err:location to receive error code, or NULL.
  *
  * Returns: the data type associated with @key in the
- * specified @bundle, or 0 on failure.
+ * specified @bundle, or 0 on failure. Set the @err
+ * argument to NULL if you do not want an error flagged
+ * in case there's no such key in @bundle.
  */
 
 GretlType gretl_bundle_get_member_type (gretl_bundle *bundle,
@@ -621,30 +623,31 @@ GretlType gretl_bundle_get_member_type (gretl_bundle *bundle,
 {
     GretlType ret = GRETL_TYPE_NONE;
     int reserved = 0;
+    int myerr = 0;
 
     if (bundle == NULL) {
-	*err = E_DATA;
-	return GRETL_TYPE_NONE;
-    }
-
-    if (bundle->type == BUNDLE_KALMAN) {
+	myerr = E_DATA;
+    } else if (bundle->type == BUNDLE_KALMAN) {
 	maybe_retrieve_kalman_element(bundle->data, key,
 				      &ret, &reserved,
-				      err);
+				      &myerr);
     }
 
-    if (!*err && ret == GRETL_TYPE_NONE && !reserved) {
+    if (!myerr && ret == GRETL_TYPE_NONE && !reserved) {
 	gpointer p = g_hash_table_lookup(bundle->ht, key);
 
 	if (p != NULL) {
 	    bundled_item *item = p;
 
 	    ret = item->type;
-	} else {
+	} else if (err != NULL) {
 	    gretl_errmsg_sprintf("\"%s\": %s", key, _("no such item"));
-	    *err = E_DATA;
+	    myerr = E_DATA;
 	}
+    }
 
+    if (err != NULL) {
+	*err = myerr;
     }
 
     return ret;
