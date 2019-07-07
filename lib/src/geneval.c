@@ -4381,8 +4381,8 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
     NODE *ret = NULL;
 
     if (!p->err) {
-	if (f == F_IMAT) {
-	    /* has to be square */
+	if (f == F_IMAT && null_node(r)) {
+	    /* default to square */
 	    cols = rows;
 	} else if (null_node(r)) {
 	    /* default to a column vector */
@@ -4407,7 +4407,10 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
 
     switch (f) {
     case F_IMAT:
-	gretl_matrix_inscribe_I(ret->v.m, 0, 0, rows);
+	if (rows != cols) {
+	    gretl_matrix_zero(ret->v.m);
+	}
+	gretl_matrix_inscribe_I(ret->v.m, 0, 0, MIN(rows, cols));
 	break;
     case F_ZEROS:
 	gretl_matrix_fill(ret->v.m, 0.0);
