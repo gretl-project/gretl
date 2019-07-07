@@ -123,9 +123,9 @@ enum {
 
 #define stringvec_node(n) (n->flags & SVL_NODE)
 
-#define empty_or_num(n) (n == NULL || n->t == EMPTY || n->t == NUM)
-#define empty_or_string(n) (n == NULL || n->t == EMPTY || n->t == STR)
-#define null_or_empty(n) (n == NULL || n->t == EMPTY)
+#define null_node(n) (n == NULL || n->t == EMPTY)
+#define null_or_scalar(n) (null_node(n) || scalar_node(n))
+#define null_or_string(n) (null_node(n) || n->t == STR)
 
 #define ok_bundled_type(t) (t == NUM || t == STR || t == MAT || t == LIST || \
 			    t == SERIES || t == BUNDLE || t == ARRAY)
@@ -1566,7 +1566,7 @@ static int node_get_bool (NODE *n, parser *p, int deflt)
 {
     int ret = -1;
 
-    if (!null_or_empty(n)) {
+    if (!null_node(n)) {
 	int k = node_get_int(n, p);
 
 	if (!p->err) {
@@ -2186,7 +2186,7 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 	    /* optional root specification */
 	    NODE *rootspec = (f == F_BCAST)? r : r2;
 
-	    if (!null_or_empty(rootspec)) {
+	    if (!null_node(rootspec)) {
 		root = node_get_int(rootspec, p);
 	    }
 	}
@@ -3169,7 +3169,7 @@ static NODE *numeric_jacobian_or_hessian (NODE *l, NODE *m, NODE *r,
 	    return NULL;
 	}
 
-	if (!null_or_empty(r)) {
+	if (!null_node(r)) {
 	    eps = node_get_scalar(r, p);
 	}
 
@@ -3297,7 +3297,7 @@ static NODE *BFGS_constrained_max (NODE *t, parser *p)
 	    }
 	} else if (i == 2) {
 	    sf = node_get_fncall(e, p);
-	} else if (i == 3 && !null_or_empty(e)) {
+	} else if (i == 3 && !null_node(e)) {
 	    sg = node_get_fncall(e, p);
 	}
     }
@@ -3394,7 +3394,7 @@ static NODE *deriv_free_node (NODE *l, NODE *m, NODE *r,
 		} else {
 		    maxit = node_get_int(r, p);
 		}
-	    } else if (!null_or_empty(r)) {
+	    } else if (!null_node(r)) {
 		p->err = E_TYPES;
 	    }
 	}
@@ -3431,9 +3431,9 @@ static NODE *fzero_node (NODE *l, NODE *m, NODE *r, parser *p)
 	double tol = NADBL;
 	int free_b = 0;
 
-	if (null_or_empty(m) || m->t == NUM) {
+	if (null_or_scalar(m)) {
 	    b = gretl_matrix_alloc(1, 2);
-	    b->val[0] = m->t == NUM ? node_get_scalar(m, p) : NADBL;
+	    b->val[0] = null_node(m) ? NADBL : node_get_scalar(m, p);
 	    b->val[1] = NADBL;
 	    free_b = 1;
 	} else if (m->t == MAT) {
@@ -3450,8 +3450,8 @@ static NODE *fzero_node (NODE *l, NODE *m, NODE *r, parser *p)
 	}
 	if (!p->err) {
 	    if (scalar_node(r)) {
-		tol = r->v.xval;
-	    } else if (!null_or_empty(r)) {
+		tol = node_get_scalar(r, p);
+	    } else if (!null_node(r)) {
 		p->err = E_TYPES;
 	    }
 	}
@@ -3520,11 +3520,8 @@ static NODE *matrix_file_write (NODE *l, NODE *m, NODE *r, parser *p)
 	    }
 #endif
 	    if (!done) {
-		int export = 0;
+		int export = node_get_bool(r, p, 0);
 
-		if (!null_or_empty(r)) {
-		    export = (r->v.xval != 0);
-		}
 		ret->v.xval = gretl_matrix_write_to_file(l->v.m, fname, export);
 	    }
 	}
@@ -3543,7 +3540,7 @@ static NODE *bundle_file_write (NODE *l, NODE *m, NODE *r, parser *p)
 	const char *s = m->v.str;
 	int export = 0;
 
-	if (!null_or_empty(r)) {
+	if (!null_node(r)) {
 	    export = (r->v.xval != 0);
 	}
 
@@ -3865,7 +3862,7 @@ static NODE *matrix_add_names (NODE *l, NODE *r, int f, parser *p)
 static NODE *matrix_get_col_or_row_name (int f, NODE *l, NODE *r,
 					 parser *p)
 {
-    int get_all = null_or_empty(r);
+    int get_all = null_node(r);
     NODE *ret = get_all ? aux_array_node(p) : aux_string_node(p);
 
     if (ret != NULL && starting(p)) {
@@ -3920,7 +3917,7 @@ static NODE *bkw_node (NODE *l, NODE *m, NODE *r, parser *p)
 	PRN *vprn = NULL;
 	int ns = 0;
 
-	if (!null_or_empty(m)) {
+	if (!null_node(m)) {
 	    if (m->t == STR) {
 		/* for compat with Lee's bkw() we expect comma-
 		   separated parameter names here
@@ -4065,9 +4062,9 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    f == F_MCOV || f == F_CDEMEAN || f == F_PSDROOT) {
 	    /* the r node may be absent, but if present it should
 	       hold a scalar */
-	    if (!empty_or_num(r)) {
+	    if (!null_or_scalar(r)) {
 		node_type_error(f, 2, NUM, r, p);
-	    } else if (!null_or_empty(r)) {
+	    } else if (!null_node(r)) {
 		optparm = node_get_int(r, p);
 		gotopt = 1;
 	    }
@@ -4286,12 +4283,8 @@ static NODE *read_object_func (NODE *n, NODE *r, int f, parser *p)
 
     if (ret != NULL && starting(p)) {
 	const char *fname = n->v.str;
-	int import = 0;
+	int import = node_get_bool(r, p, 0);
 	int done = 0;
-
-	if (!null_or_empty(r)) {
-	    import = (r->v.xval != 0);
-	}
 
 	gretl_error_clear();
 
@@ -4388,7 +4381,15 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
     NODE *ret = NULL;
 
     if (!p->err) {
-	cols = (f == F_IMAT)? rows : node_get_int(r, p);
+	if (f == F_IMAT) {
+	    /* has to be square */
+	    cols = rows;
+	} else if (null_node(r)) {
+	    /* default to a column vector */
+	    cols = 1;
+	} else {
+	    cols = node_get_int(r, p);
+	}
     }
 
     if (!p->err && !ok_matrix_dim(rows, cols, f)) {
@@ -5467,7 +5468,7 @@ static NODE *dummify_func (NODE *l, NODE *r, parser *p)
 	int *list = NULL;
 	double oddval = NADBL;
 
-	if (!null_or_empty(r)) {
+	if (!null_node(r)) {
 	    if (r->t != NUM) {
 		p->err = E_TYPES;
 		return ret;
@@ -5727,7 +5728,7 @@ static NODE *apply_list_func (NODE *n, NODE *r, int f, parser *p)
 	} else if (f == F_DROPCOLL || f == F_HFDIFF ||
 		   f == F_HFLDIFF) {
 	    /* handle optional parameter */
-	    if (!null_or_empty(r)) {
+	    if (!null_node(r)) {
 		parm = node_get_scalar(r, p);
 		if (p->err) {
 		    return ret;
@@ -5868,17 +5869,15 @@ static NODE *seasonals_node (NODE *l, NODE *r, parser *p)
     } else {
 	int ref = 0, center = 0;
 
-	if (!null_or_empty(l)) {
+	if (!null_node(l)) {
 	    ref = node_get_int(l, p);
 	}
-	if (!null_or_empty(r)) {
+	if (!null_node(r)) {
 	    center = node_is_true(r, p);
 	}
-
 	if (!p->err) {
 	    ret = aux_list_node(p);
 	}
-
 	if (ret != NULL) {
 	    ret->v.ivec = seasonals_list(p->dset, ref, center, &p->err);
 	}
@@ -6035,7 +6034,7 @@ int *node_get_list (NODE *n, parser *p)
 		}
 	    }
 	}
-    } else if (n->t == EMPTY) {
+    } else if (null_node(n)) {
 	list = gretl_null_list();
     } else if (dataset_dum(n)) {
 	list = full_var_list(p->dset, NULL);
@@ -6541,7 +6540,7 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
 	}
 
 	if (!p->err) {
-	    if (null_or_empty(r)) {
+	    if (null_node(r)) {
 		; /* OK for duration funcs */
 	    } else if (r->t == SERIES) {
 		/* series on right */
@@ -6636,7 +6635,7 @@ static gretlopt get_npcorr_option (NODE *n, parser *p)
 {
     gretlopt opt = OPT_NONE;
 
-    if (null_or_empty(n)) {
+    if (null_node(n)) {
 	; /* OK */
     } else {
 	/* screened already: must be string */
@@ -6945,7 +6944,7 @@ static NODE *list_info_node (NODE *l, NODE *r, parser *p)
 	p->err = E_NODATA;
     }
 
-    if (!p->err && !null_or_empty(r)) {
+    if (!p->err && !null_node(r)) {
 	k = node_get_int(r, p);
     }
 
@@ -6972,7 +6971,7 @@ static NODE *argname_from_uvar (NODE *n, NODE *r, parser *p)
     if (ret != NULL && starting(p)) {
 	const char *vname = NULL;
 
-	if (!null_or_empty(r) && r->t != STR) {
+	if (!null_or_string(r)) {
 	    /* if @r is present it must hold a string */
 	    p->err = E_TYPES;
 	    return ret;
@@ -6991,7 +6990,7 @@ static NODE *argname_from_uvar (NODE *n, NODE *r, parser *p)
 	}
 
 	if (ret->v.str == NULL || ret->v.str[0] == '\0') {
-	    if (!null_or_empty(r)) {
+	    if (!null_node(r)) {
 		ret->v.str = gretl_strdup(r->v.str);
 	    }
 	}
@@ -7137,7 +7136,7 @@ static NODE *single_string_func (NODE *n, NODE *x, int f, parser *p)
 	if (f == F_ARGNAME) {
 	    char *deflt = NULL;
 
-	    if (!null_or_empty(x)) {
+	    if (!null_node(x)) {
 		if (x->t == STR) {
 		    deflt = x->v.str;
 		} else {
@@ -7156,7 +7155,7 @@ static NODE *single_string_func (NODE *n, NODE *x, int f, parser *p)
 	} else if (f == F_FIXNAME) {
 	    int uscore = 0;
 
-	    if (!null_or_empty(x)) {
+	    if (!null_node(x)) {
 		uscore = node_get_bool(x, p, 0);
 	    }
 	    ret->v.str = calloc(VNAMELEN, 1);
@@ -7194,7 +7193,7 @@ static NODE *country_code_node (NODE *n, NODE *r, parser *p)
     if (!p->err) {
 	int output = 0; /* default to automatic */
 
-	if (!null_or_empty(r)) {
+	if (!null_node(r)) {
 	    output = node_get_int(r, p);
 	}
 	if (!p->err && src != NULL) {
@@ -7256,7 +7255,7 @@ static NODE *readfile_node (NODE *l, NODE *r, parser *p)
     if (ret != NULL && starting(p)) {
 	const char *codeset = NULL;
 
-	if (!null_or_empty(r)) {
+	if (!null_node(r)) {
 	    if (r->t == STR) {
 		codeset = r->v.str;
 	    } else {
@@ -7354,7 +7353,7 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
 			    int *, int *) = NULL;
 	    user_var *uv = NULL;
 
-	    if (!null_or_empty(x)) {
+	    if (!null_node(x)) {
 		uv = ptr_node_get_uvar(x, NUM, p);
 	    }
 	    if (!p->err) {
@@ -7374,7 +7373,7 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
 	    }
 	} else if (f == F_JSONGETB) {
 	    gretl_bundle *(*jfunc) (const char *, const char *, int *) = NULL;
-	    const char *path = null_or_empty(r) ? NULL: r->v.str;
+	    const char *path = null_node(r) ? NULL: r->v.str;
 
 	    jfunc = get_plugin_function("json_get_bundle");
 	    if (jfunc == NULL) {
@@ -7384,7 +7383,7 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
 	    }
 	} else if (f == F_JSONGETA) {
 	    gretl_array *(*jfunc) (const char *, const char *, int *) = NULL;
-	    const char *path = null_or_empty(r) ? NULL: r->v.str;
+	    const char *path = null_node(r) ? NULL: r->v.str;
 
 	    jfunc = get_plugin_function("json_get_array");
 	    if (jfunc == NULL) {
@@ -7397,7 +7396,7 @@ static NODE *two_string_func (NODE *l, NODE *r, NODE *x,
 			    int *, int *) = NULL;
 	    user_var *uv = NULL;
 
-	    if (!null_or_empty(x)) {
+	    if (!null_node(x)) {
 		uv = ptr_node_get_uvar(x, NUM, p);
 	    }
 	    if (!p->err) {
@@ -7632,17 +7631,16 @@ static NODE *errmsg_node (NODE *l, parser *p)
     if (ret != NULL && starting(p)) {
 	const char *src = NULL;
 
-	if (l->t == NUM) {
-	    int errval = l->v.xval;
+	if (null_node(l)) {
+	    src = gretl_errmsg_get();
+	} else {
+	    int errval = node_get_int(l, p);
 
 	    if (errval < 0 || errval >= E_MAX) {
 		p->err = E_DATA;
 	    } else {
 		src = errmsg_get_with_default(errval);
 	    }
-	} else {
-	    /* empty input node */
-	    src = gretl_errmsg_get();
 	}
 
 	if (src != NULL) {
@@ -7879,7 +7877,7 @@ static NODE *getline_node (NODE *l, NODE *r, parser *p)
     if (ret != NULL && starting(p)) {
 	const char *buf = l->v.str;
 
-	if (null_or_empty(r)) {
+	if (null_node(r)) {
 	    bufgets_finalize(buf);
 	} else if (l->vname == NULL) {
 	    gretl_errmsg_set("getline: the source must be a named string variable");
@@ -8077,7 +8075,7 @@ static gretlopt get_normtest_option (NODE *n, parser *p)
 {
     gretlopt opt = OPT_NONE;
 
-    if (null_or_empty(n)) {
+    if (null_node(n)) {
 	; /* OK */
     } else if (n->t == STR) {
 	const char *s = n->v.str;
@@ -8188,7 +8186,7 @@ static NODE *series_scalar_scalar_func (NODE *l, NODE *r,
 	int t2 = p->dset->t2;
 	int pd = 1;
 
-	if (f == F_LRVAR && null_or_empty(r)) {
+	if (f == F_LRVAR && null_node(r)) {
 	    ; /* OK, second arg is optional */
 	} else {
 	    rval = node_get_scalar(r, p);
@@ -8214,7 +8212,7 @@ static NODE *series_scalar_scalar_func (NODE *l, NODE *r,
 	    xvec = l->v.xvec;
 	}
 
-	if (f == F_LRVAR && !null_or_empty(r2)) {
+	if (f == F_LRVAR && !null_node(r2)) {
 	    /* optional third arg */
 	    r2val = node_get_scalar(r2, p);
 	}
@@ -8252,7 +8250,7 @@ static NODE *series_scalar_scalar_func (NODE *l, NODE *r,
 
 static NODE *isconst_or_dum_node (NODE *l, NODE *r, parser *p, int f)
 {
-    if (f == F_ISDUMMY || null_or_empty(r)) {
+    if (f == F_ISDUMMY || null_node(r)) {
 	return series_scalar_func(l, f, NULL, p);
     } else if (l->t == MAT) {
 	node_type_error(f, 1, SERIES, l, p);
@@ -8566,7 +8564,7 @@ static NODE *series_series_func (NODE *l, NODE *r, NODE *o,
 	rtype = SERIES;
     }
 
-    if (null_or_empty(r)) {
+    if (null_node(r)) {
 	rtype = 0; /* not present, OK */
     } else if (rtype == NUM) {
 	if (!scalar_node(r)) {
@@ -8727,7 +8725,7 @@ static NODE *pergm_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = NULL;
 
-    if (!empty_or_num(r)) {
+    if (!null_or_scalar(r)) {
 	/* optional 'r' node must be scalar */
 	node_type_error(F_PERGM, 2, NUM, r, p);
     } else if (l->t == MAT && gretl_vector_get_length(l->v.m) == 0) {
@@ -8752,11 +8750,13 @@ static NODE *pergm_node (NODE *l, NODE *r, parser *p)
 	    t2 = gretl_vector_get_length(l->v.m) - 1;
 	}
 
-	if (r != NULL && r->t == NUM) {
-	    width = r->v.xval;
+	if (!null_node(r)) {
+	    width = node_get_int(r, p);
 	}
 
-	ret->v.m = periodogram_matrix(x, t1, t2, width, &p->err);
+	if (!p->err) {
+	    ret->v.m = periodogram_matrix(x, t1, t2, width, &p->err);
+	}
     }
 
     return ret;
@@ -9632,11 +9632,11 @@ static NODE *svm_driver_node (NODE *t, parser *p)
 	} else if (i == 1) {
 	    bparm = node_get_bundle(e, p);
 	} else if (i == 2) {
-	    if (!null_or_empty(e)) {
+	    if (!null_node(e)) {
 		bmod = node_get_bundle(e, p);
 	    }
 	} else {
-	    if (!null_or_empty(e)) {
+	    if (!null_node(e)) {
 		bprob = node_get_bundle(e, p);
 	    }
 	}
@@ -10935,10 +10935,10 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	if (l->t != MAT) {
 	    node_type_error(f, 1, MAT, l, p);
 	} else {
-	    if (!null_or_empty(m)) {
+	    if (!null_node(m)) {
 		vl = ptr_node_get_matrix(m, p);
 	    }
-	    if (!null_or_empty(r)) {
+	    if (!null_node(r)) {
 		vr = ptr_node_get_matrix(r, p);
 	    }
 	}
@@ -10977,14 +10977,17 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    node_type_error(f, 1, STR, l, p);
 	} else if (m->t != STR) {
 	    node_type_error(f, 2, STR, m, p);
-	} else if (!empty_or_num(r)) {
+	} else if (!null_or_scalar(r)) {
 	    node_type_error(f, 3, NUM, r, p);
 	} else {
 	    ret = aux_scalar_node(p);
 	    if (ret != NULL) {
-		if (r != NULL && r->t == NUM) {
-		    ret->v.xval = strncmp(l->v.str, m->v.str,
-					  (int) r->v.xval);
+		if (!null_node(r)) {
+		    int len = node_get_int(r, p);
+
+		    if (!p->err) {
+			ret->v.xval = strncmp(l->v.str, m->v.str, len);
+		    }
 		} else {
 		    ret->v.xval = strcmp(l->v.str, m->v.str);
 		}
@@ -11260,11 +11263,11 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    }
 	}
     } else if (f == F_AGGRBY) {
-	if (l->t != SERIES && l->t != LIST && !null_or_empty(l)) {
+	if (l->t != SERIES && l->t != LIST && !null_node(l)) {
 	    node_type_error(f, 1, SERIES, l, p);
 	} else if (m->t != SERIES && m->t != LIST) {
 	    node_type_error(f, 2, SERIES, m, p);
-	} else if (r->t != STR && !null_or_empty(r)) {
+	} else if (!null_or_string(r)) {
 	    node_type_error(f, 3, STR, r, p);
 	} else {
 	    const char *fncall = NULL;
@@ -11417,7 +11420,7 @@ static NODE *eval_print_scan (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	if (!p->err) {
 	    const char *args = NULL;
 
-	    if (!null_or_empty(r)) {
+	    if (!null_node(r)) {
 		args = r->v.str;
 	    }
 	    if (f == F_SSCANF) {
@@ -11926,7 +11929,7 @@ static NODE *isoconv_node (NODE *t, parser *p)
     for (i=1; i<k && !p->err; i++) {
 	/* the remaining args must be addresses of series */
 	e = n->v.bn.n[i];
-	if (i == 3 && null_or_empty(e)) {
+	if (i == 3 && null_node(e)) {
 	    ; /* OK for the last one to be omitted */
 	} else if (e->t != U_ADDR) {
 	    node_type_error(t->t, i+1, U_ADDR, e, p);
@@ -12495,14 +12498,14 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
 	    } else if (i == 0) {
 		order = node_get_int(e, p);
-	    } else if (!empty_or_num(e)) {
+	    } else if (!null_or_scalar(e)) {
 		node_type_error(t->t, i+1, NUM, e, p);
 	    } else if (i == 1) {
 		method = node_get_int(e, p);
 	    } else if (i == 2) {
-		a = e->v.xval;
+		a = node_get_scalar(e, p);
 	    } else {
-		b = e->v.xval;
+		b = node_get_scalar(e, p);
 	    }
 	}
 	if (!p->err) {
@@ -12605,12 +12608,12 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
 	    } else if (i == 0) {
 		cnum = node_get_int(e, p);
-	    } else if (!empty_or_num(e)) {
+	    } else if (!null_or_scalar(e)) {
 		node_type_error(t->t, i+1, NUM, e, p);
 	    } else if (i == 1) {
 		B = node_get_int(e, p);
 	    } else if (i == 2) {
-		alpha = e->v.xval;
+		alpha = node_get_scalar(e, p);
 	    } else if (i == 3) {
 		method = node_get_int(e, p);
 	    } else {
@@ -12638,7 +12641,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
 	    } else if (i == 0) {
 		cnum = node_get_int(e, p);
-	    } else if (!empty_or_num(e)) {
+	    } else if (!null_or_scalar(e)) {
 		node_type_error(t->t, i+1, NUM, e, p);
 	    } else if (i == 1) {
 		B = node_get_int(e, p);
@@ -12665,7 +12668,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	}
 
 	for (i=0; i<k && !p->err; i++) {
-	    if (i > 1 && null_or_empty(n->v.bn.n[i])) {
+	    if (i > 1 && null_node(n->v.bn.n[i])) {
 		continue; /* OK */
 	    }
 	    e = eval(n->v.bn.n[i], p);
@@ -13682,7 +13685,7 @@ static NODE *gen_array_node (NODE *n, parser *p)
 {
     NODE *ret = NULL;
 
-    if (!empty_or_num(n)) {
+    if (!null_or_scalar(n)) {
 	p->err = E_TYPES;
     } else if (p->lh.gtype == 0) {
 	gretl_errmsg_set(_("array: no type was specified"));
@@ -13690,7 +13693,7 @@ static NODE *gen_array_node (NODE *n, parser *p)
     } else {
 	int len = 0;
 
-	if (n != NULL && n->t == NUM) {
+	if (!null_node(n)) {
 	    len = node_get_int(n, p);
 	}
 
@@ -14296,10 +14299,10 @@ static NODE *fevd_node (NODE *l, NODE *m, NODE *r, parser *p)
 	int targ = node_get_int(l, p);
 	int shock = 0;
 
-	if (!p->err && !null_or_empty(m)) {
+	if (!p->err && !null_node(m)) {
 	    shock = node_get_int(m, p);
 	}
-	if (!p->err && !null_or_empty(r) && r->t != BUNDLE) {
+	if (!p->err && !null_node(r) && r->t != BUNDLE) {
 	    p->err = E_INVARG;
 	}
 
@@ -14863,6 +14866,7 @@ static NODE *eval (NODE *t, parser *p)
     NODE *ret = NULL;
 
     if (t == NULL) {
+	/* catch NULL node right away */
 	return NULL;
     }
 
@@ -15166,7 +15170,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_LLAG:
-	if (null_or_empty(m)) {
+	if (null_node(m)) {
 	    p->err = E_ARGS;
 	} else if (ok_matrix_node(l) && m->t != MAT && ok_list_node(m, p)) {
 	    ret = list_make_lags(l, m, r, p);
@@ -15192,7 +15196,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_HFDIFF:
     case F_HFLDIFF:
-	if (ok_list_node(l, p) && empty_or_num(r)) {
+	if (ok_list_node(l, p) && null_or_scalar(r)) {
 	    ret = apply_list_func(l, r, t->t, p);
 	} else {
 	    p->err = E_TYPES;
@@ -15280,9 +15284,9 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_SEASONALS:
 	/* two optional args: int, bool */
-	if (!null_or_empty(l) && l->t != NUM) {
+	if (!null_or_scalar(l)) {
 	    node_type_error(t->t, 1, NUM, l, p);
-	} else if (!null_or_empty(r) && r->t != NUM) {
+	} else if (!null_or_scalar(r)) {
 	    node_type_error(t->t, 2, NUM, r, p);
 	} else {
 	    ret = seasonals_node(l, r, p);
@@ -15533,7 +15537,7 @@ static NODE *eval (NODE *t, parser *p)
 	} else if (t->t == F_DIFF && ok_list_node(l, p)) {
 	    ret = apply_list_func(l, NULL, t->t, p);
 	} else if (t->t == F_RESAMPLE && ok_list_node(l, p) &&
-		   null_or_empty(r)) {
+		   null_node(r)) {
 	    ret = apply_list_func(l, NULL, t->t, p);
 	} else {
 	    node_type_error(t->t, 0, SERIES, l, p);
@@ -15611,7 +15615,7 @@ static NODE *eval (NODE *t, parser *p)
 	   normtest); returns matrix */
 	if (l->t != SERIES && l->t != MAT) {
 	    p->err = E_TYPES;
-	} else if (null_or_empty(r) || r->t == STR) {
+	} else if (null_or_string(r)) {
 	    ret = series_matrix_node(l, r, t->t, p);
 	} else {
 	    p->err = E_TYPES;
@@ -15688,7 +15692,7 @@ static NODE *eval (NODE *t, parser *p)
 	    (r->t == SERIES || r->t == MAT || r->t == NUM)) {
 	    ret = series_2_func(l, r, t->t, p);
 	} else if ((l->t == SERIES || l->t == MAT) &&
-		   null_or_empty(r) &&
+		   null_node(r) &&
 		   (t->t == F_NAALEN || t->t == F_KMEIER)) {
 	    ret = series_2_func(l, NULL, t->t, p);
 	} else if ((l->t == SERIES || l->t == MAT) &&
@@ -15702,7 +15706,7 @@ static NODE *eval (NODE *t, parser *p)
 	/* two series or vectors, plus optional control string */
 	if ((l->t == SERIES || l->t == MAT) &&
 	    (m->t == SERIES || m->t == MAT) &&
-	    (null_or_empty(r) || r->t == STR)) {
+	    null_or_string(r)) {
 	    ret = npcorr_node(l, m, r, p);
 	} else {
 	    p->err = E_INVARG;
@@ -15733,7 +15737,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_MUNIF:
     case F_MNORM:
 	/* matrix-creation functions */
-	if (scalar_node(l) && (r == NULL || scalar_node(r))) {
+	if (scalar_node(l) && null_or_scalar(r)) {
 	    ret = matrix_fill_func(l, r, t->t, p);
 	} else if (!scalar_node(l)) {
 	    node_type_error(t->t, 1, NUM, l, p);
@@ -15811,7 +15815,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_BREAD:
 	if (l->t != STR) {
 	    node_type_error(t->t, 1, STR, l, p);
-	} else if (!empty_or_num(r)) {
+	} else if (!null_or_scalar(r)) {
 	    node_type_error(t->t, 2, NUM, r, p);
 	} else {
 	    ret = read_object_func(l, r, t->t, p);
@@ -15852,9 +15856,9 @@ static NODE *eval (NODE *t, parser *p)
     case HF_CPRINTF:
 	/* matrix, with string as second arg */
 	if (t->t == F_MWRITE && l->t == MAT &&
-	    m->t == STR && empty_or_num(r)) {
+	    m->t == STR && null_or_scalar(r)) {
 	    ret = matrix_file_write(l, m, r, p);
-	} else if (t->t == HF_CPRINTF && empty_or_string(r)) {
+	} else if (t->t == HF_CPRINTF && null_or_string(r)) {
 	    ret = cmatrix_printf(l, r, p);
 	} else {
 	    p->err = E_TYPES;
@@ -15862,7 +15866,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_BWRITE:
 	/* bundle, with string as second arg */
-	if (l->t == BUNDLE && m->t == STR && empty_or_num(r)) {
+	if (l->t == BUNDLE && m->t == STR && null_or_scalar(r)) {
 	    ret = bundle_file_write(l, m, r, p);
 	} else {
 	    p->err = E_TYPES;
@@ -15915,7 +15919,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_FEVD:
 	/* integer target, source plus optional bundle */
-	if (scalar_node(l) && (null_or_empty(m) || scalar_node(m))) {
+	if (scalar_node(l) && null_or_scalar(m)) {
 	    ret = fevd_node(l, m, r, p);
 	} else {
 	    p->err = E_TYPES;
@@ -15933,7 +15937,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_CNAMEGET:
     case F_RNAMEGET:
 	/* matrix, scalar as second arg */
-	if (l->t == MAT && (null_or_empty(r) || scalar_node(r))) {
+	if (l->t == MAT && null_or_scalar(r)) {
 	    ret = matrix_get_col_or_row_name(t->t, l, r, p);
 	} else {
 	    p->err = E_TYPES;
@@ -16000,7 +16004,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_PRINTF:
     case F_SPRINTF:
-	if (l->t == STR && empty_or_string(r)) {
+	if (l->t == STR && null_or_string(r)) {
 	    ret = eval_print_scan(NULL, l, r, t->t, p);
 	} else {
 	    node_type_error(t->t, 0, STR, NULL, p);
@@ -16170,7 +16174,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_SQUARE:
-	if (ok_list_node(l, p) && empty_or_num(r)) {
+	if (ok_list_node(l, p) && null_or_scalar(r)) {
 	    ret = apply_list_func(l, r, t->t, p);
 	} else {
 	    p->err = E_TYPES;
@@ -16282,7 +16286,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_JSONGETB:
     case F_JSONGETA:
-	if (l->t == STR && (null_or_empty(r) || r->t == STR)) {
+	if (l->t == STR && null_or_string(r)) {
 	    ret = two_string_func(l, r, NULL, t->t, p);
 	} else {
 	    p->err = E_TYPES;
@@ -16305,7 +16309,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_GETLINE:
-	if (l->t == STR && (r->t == STR || null_or_empty(r))) {
+	if (l->t == STR && null_or_string(r)) {
 	    ret = getline_node(l, r, p);
 	} else {
 	    node_type_error(t->t, (l->t == STR)? 2 : 1,
@@ -16313,7 +16317,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_ERRMSG:
-	if (l->t == NUM || l->t == EMPTY) {
+	if (null_or_scalar(l)) {
 	    ret = errmsg_node(l, p);
 	} else {
 	    node_type_error(t->t, 0, NUM, l, p);
@@ -16360,7 +16364,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_SCATTER:
 	if (m->t != STR) {
 	    node_type_error(t->t, 2, STR, m, p);
-	} else if (!empty_or_num(r)) {
+	} else if (!null_or_scalar(r)) {
 	    node_type_error(t->t, 3, NUM, r, p);
 	} else {
 	    ret = mpi_transfer_node(l, m, r, t->t, p);
