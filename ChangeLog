@@ -2,7 +2,12 @@ version 2019d, in progress
 - Enable nesting of arrays
 - Fix bug: possible crash on appending multiple lists to a
   list inside a bundle
-
+- For various commands: document the --quiet option
+- Functions ones(), zeros(), muniform(), mnormal(): make
+  the second argument optional; the shape now defaults
+  to a column vector
+- Generalize the I() function: can now create a non-square
+  matrix
 
 2019-07-02 version 2019c
 - Fix bug: "dataset sortby" not handling missing values
