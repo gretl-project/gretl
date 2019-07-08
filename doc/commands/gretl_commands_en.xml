@@ -6876,12 +6876,6 @@
     label="Labels for variables" context="cli">
 
     <usage>
-      <options>
-	<option>
-	  <flag>--quiet</flag>
-	  <effect>produce a <quote>plain</quote> listing of labels (see below)</effect>
-	</option>
-      </options>
       <altforms>
 	<altform><lit>labels [</lit> <repl>varlist</repl> <lit>]</lit></altform>
 	<altform><lit>labels --to-file=</lit><repl>filename</repl></altform>
@@ -6897,9 +6891,10 @@
 
     <description>
       <para>
-	In the first form, prints out the informative labels (if present) for
-	the series in <repl>varlist</repl>, or for all series in the dataset
-	if <repl>varlist</repl> is not specified.
+	In the first form, prints out the informative labels (if
+	present) for the series in <repl>varlist</repl>, or for all
+	series in the dataset if <repl>varlist</repl> is not
+	specified.
       </para>
       <para>
 	With the option <opt>to-file</opt>, writes to the named file
@@ -6919,11 +6914,6 @@
       <para>
 	The <opt>delete</opt> option does what you'd expect: it
 	removes all the series labels from the dataset.
-      </para>
-      <para>
-	The <opt>quiet</opt> option suppresses printing of decorative
-	headers/footers, so that the output is suitable for automated
-	processing if necessary.
       </para>
     </description>
 

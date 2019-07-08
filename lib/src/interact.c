@@ -898,14 +898,11 @@ static void showlabels (const int *list, gretlopt opt,
     }
 
     if (nl == 0) {
-	pprintf(prn, "No labels\n");
+	pprintf(prn, _("No series labels are defined\n"));
 	return;
     }
 
-    if (!(opt & OPT_Q)) {
-	pprintf(prn, _("Listing labels for variables:\n"));
-    }
-
+    pputc(prn, '\n');
     for (i=1; i<=vmax; i++) {
 	v = list == NULL ? i : list[i];
 	if (v >= 0 && v < dset->v) {
@@ -921,10 +918,7 @@ static void showlabels (const int *list, gretlopt opt,
 	    }
 	}
     }
-
-    if (!(opt & OPT_Q)) {
-	pputc(prn, '\n');
-    }
+    pputc(prn, '\n');
 }
 
 static int outfile_redirect (PRN *prn, FILE *fp, const char *strvar,

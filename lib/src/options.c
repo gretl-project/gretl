@@ -55,7 +55,6 @@
                          c == FRACTINT ||       \
 			 c == FREQ ||		\
 			 c == KPSS ||		\
-			 c == LABELS ||         \
 			 c == MAKEPKG ||	\
 			 c == MODTEST ||	\
 			 c == LEVERAGE ||	\
