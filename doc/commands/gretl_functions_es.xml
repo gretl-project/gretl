@@ -4626,14 +4626,18 @@
       </description>
     </function>
 
-    <function name="I" section="matbuild" output="smatrix">
+    <function name="I" section="matbuild" output="matrix">
       <fnargs>
 	<fnarg type="int">n</fnarg>
+	<fnarg optional="true" type="int">m</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Devuelve una matriz identidad con <argname>n</argname> filas y
-	  columnas.
+	  Si omites <argname>m</argname>, o tiene un valor igual a
+	  <argname>n</argname>, devuelve una matriz identidad de orden
+	  <argname>n</argname>. En caso contrario, devuelve una matriz
+	  <by r="n" c="m"/> que tiene unos en la diagonal principal y
+	  ceros en el resto de la matriz.
 	</para>
       </description>
     </function>
