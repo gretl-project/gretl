@@ -699,19 +699,48 @@ figure \ref{fig:movfun}.
 \subsection{Generating data with a prescribed correlation structure}
 \label{sec:CholeskyTrick}
 
-\emph{Problem:} I'd like to generate a bunch of data whose sample
-covariance matrix is exactly equal to a given matrix $\Sigma$. How can
-I do this in \app{gretl}?
+\emph{Problem:} I'd like to generate a bunch of normal random variates
+whose covariance matrix is exactly equal to a given matrix
+$\Sigma$. How can I do this in \app{gretl}?
 
-\emph{Solution:} The Cholesky decomposition is your friend. Try this:
+\emph{Solution:} The Cholesky decomposition is your friend. If you
+want to generate data with a given \emph{population} covariance
+matrix, then all you have to do is post-multiply your pseudo-random
+data by the Cholesky factor (transposed) of the matrix you want. For
+example:
+\begin{code}
+set seed 123
+S = {2,1;1,1}
+T = 1000
+X = mnormal(T, rows(S))
+X = X * cholesky(S)'
+eval mcov(X)
+\end{code}
+should give you
+\begin{code}
+? eval mcov(X)
+      2.0016       1.0157 
+      1.0157       1.0306 
+\end{code}
+
+If, instead, you want your simulated data to have a given \emph{sample}
+covariance matrix, you have to apply the same technique twice: one for
+standardizing the data, another one for giving it the covariance
+structure you want. Example:
 \begin{code}
 S = {2,1;1,1}
-T = 10
-X = mnormal(T, 2)
+T = 1000
+X = mnormal(T, rows(S))
 X = X * (cholesky(S)/cholesky(mcov(X)))'
 eval mcov(X)
 \end{code}
-
+gives you
+\begin{code}
+? eval mcov(X)
+   2   1
+   1   1
+\end{code}
+as required.
 
 \section{Neat tricks}
 \label{sec:cheat-neat}
