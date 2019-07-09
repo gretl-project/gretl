@@ -696,6 +696,23 @@ figure \ref{fig:movfun}.
   \label{fig:movfun}
 \end{figure}
 
+\subsection{Generating data with a prescribed correlation structure}
+\label{sec:CholeskyTrick}
+
+\emph{Problem:} I'd like to generate a bunch of data whose sample
+covariance matrix is exactly equal to a given matrix $\Sigma$. How can
+I do this in \app{gretl}?
+
+\emph{Solution:} The Cholesky decomposition is your friend. Try this:
+\begin{code}
+S = {2,1;1,1}
+T = 10
+X = mnormal(T, 2)
+X = X * (cholesky(S)/cholesky(mcov(X)))'
+eval mcov(X)
+\end{code}
+
+
 \section{Neat tricks}
 \label{sec:cheat-neat}
 
