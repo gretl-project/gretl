@@ -348,14 +348,13 @@ matrix C = X'Y
 %
 produces the product of $X$-transpose and $Y$.  In effect, the
 expression \texttt{X'Y} is shorthand for \texttt{X'*Y}, which is also
-valid. Consider, however, that in the special case $X = Y$, the two
-are not exactly equivalent: the former expression uses a specialized,
-optimized algorithm which has the double advantage of being more
-efficient computationally and of ensuring that the result will be free
-by construction of machine precision artifacts that may render it
-numerically non-symmetric. This, however, is unlikely to affect you
-unless your $X$ matrix is rather large (at least several hundreds
-rows/columns).
+valid syntax. In the special case $X = Y$, however, the two are not
+exactly equivalent. The former expression uses a specialized algorithm
+with two advantages: it is more efficient computationally, and ensures
+that the result is free of machine precision artifacts that may render
+it numerically non-symmetric. This, however, is unlikely to be an
+issue unless your $X$ matrix is rather large (at least several
+hundreds rows/columns).
 
 In matrix ``left division'', the statement 
 %
