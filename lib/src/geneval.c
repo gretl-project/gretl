@@ -4362,8 +4362,8 @@ matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
 
 static int ok_matrix_dim (int r, int c, int f)
 {
-    if (f == F_IMAT || f == F_ZEROS || f == F_ONES || f == F_MUNIF || \
-	f == F_MNORM) {
+    if (f == F_IMAT || f == F_ZEROS || f == F_ONES ||
+	f == F_MUNIF || f == F_MNORM) {
 	/* zero is OK for matrix creation functions, which then
 	   return an empty matrix
 	*/
@@ -4391,6 +4391,8 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
 	    cols = node_get_int(r, p);
 	}
     }
+
+    fprintf(stderr, "HERE cols = %d\n", cols);
 
     if (!p->err && !ok_matrix_dim(rows, cols, f)) {
 	p->err = E_INVARG;
