@@ -511,19 +511,27 @@ int gretl_n_physical_cores (void)
 	return n_cores;
     }
 
+    /* this may well not be what we want, but it's a
+       starting point and fallback
+    */
     n_cores = gretl_n_processors();
 
 #if defined(WIN32)
-    win32_get_core_count();
-    return n_cores; /* FIXME */
-#elif defined(OS_OSX)
-    int nc = 0;
-    size_t len = sizeof nc;
+    int nc = win32_get_core_count();
 
-    if (sysctlbyname("hw.physicalcpu", &nc, &len, NULL, 0) == -1) {
-	perror("could not determine number of physical cores available");
-    } else {
+    if (nc > 0) {
 	n_cores = nc;
+    }
+#elif defined(OS_OSX)
+    if (n_cores > 1) {
+	int nc = 0;
+	size_t len = sizeof nc;
+
+	if (sysctlbyname("hw.physicalcpu", &nc, &len, NULL, 0) == -1) {
+	    perror("could not determine number of physical cores available");
+	} else {
+	    n_cores = nc;
+	}
     }
 #else
     if (n_cores > 1) {
@@ -636,7 +644,7 @@ static void state_vars_init (set_vars *sv)
     fprintf(stderr, "state_vars_init called\n");
 #endif
     sv->flags = STATE_ECHO_ON | STATE_MSGS_ON | STATE_WARN_ON |
-	STATE_SKIP_MISSING | STATE_STRSUB_ON | STATE_MPI_SMT;
+	STATE_SKIP_MISSING | STATE_STRSUB_ON;
 #if 1
     if (getenv("GRETL_STRSUB_OFF")) {
 	sv->flags &= ~STATE_STRSUB_ON;
