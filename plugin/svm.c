@@ -2206,7 +2206,7 @@ static int carve_up_xvalidation (sv_data *data,
     nr1 = nproc - rem;    /* number of matrices with r1 rows */
 
     if (prn != NULL) {
-	pprintf(prn, "MPI: dividing %d parameter combinations "
+	pprintf(prn, "MPI: dividing %d parameter specifications "
 		"between %d processes\n", ncom, nproc);
     }
 
