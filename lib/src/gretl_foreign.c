@@ -572,7 +572,13 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	    hostbit = g_strdup("");
 	    if (np == 0) {
 		/* no hosts file: supply a default np value */
-		np = gretl_n_processors();
+		if (libset_get_bool(MPI_USE_SMT)) {
+		    /* use max number of processes */
+		    np = gretl_n_processors();
+		} else {
+		    /* don't use hyper-threads */
+		    np = gretl_n_physical_cores();
+		}
 	    }
 	}
 
@@ -862,7 +868,7 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	} else if (np == 0) {
 	    /* no user spec, so supply a default np value */
 	    if (libset_get_bool(MPI_USE_SMT)) {
-		/* use max number of threads */
+		/* use max number of processes */
 		np = nproc;
 	    } else {
 		/* don't use hyper-threads */
