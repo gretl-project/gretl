@@ -1213,8 +1213,8 @@ static double xy_calc (double x, double y, int op, int targ, parser *p)
 	return NADBL;
     }
 
-    /* 0 * NA = NA * 0 = 0 */
-    if (op == B_MUL && ((na(x) && y == 0) || (na(y) && x == 0))) {
+    /* 0 times anything (even NA) = 0 ? */
+    if (op == B_MUL && (x == 0 || y == 0)) {
 	return 0;
     }
 
@@ -4391,8 +4391,6 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
 	    cols = node_get_int(r, p);
 	}
     }
-
-    fprintf(stderr, "HERE cols = %d\n", cols);
 
     if (!p->err && !ok_matrix_dim(rows, cols, f)) {
 	p->err = E_INVARG;

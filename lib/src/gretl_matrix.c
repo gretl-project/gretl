@@ -6162,6 +6162,8 @@ static int dot_op_conf (int ra, int ca, int rb, int cb, int *r, int *c)
     return ret;
 }
 
+#define NA_0 1
+
 static void vec_x_op_vec_y (double *z, const double *x,
 			    const double *y, int n,
 			    int op)
@@ -6170,9 +6172,19 @@ static void vec_x_op_vec_y (double *z, const double *x,
 
     switch (op) {
     case '*':
+#if NA_0
+	for (i=0; i<n; i++) {
+	    if (x[i] == 0 || y[i] == 0) {
+		z[i] = 0;
+	    } else {
+		z[i] = x[i] * y[i];
+	    }
+	}
+#else
 	for (i=0; i<n; i++) {
 	    z[i] = x[i] * y[i];
 	}
+#endif
 	break;
     case '/':
 	for (i=0; i<n; i++) {
@@ -6236,9 +6248,19 @@ static void vec_x_op_y (double *z, const double *x,
 
     switch (op) {
     case '*':
+#if NA_0
+	for (i=0; i<n; i++) {
+	    if (y == 0 || x[i] == 0) {
+		z[i] = 0;
+	    } else {
+		z[i] = x[i] * y;
+	    }
+	}
+#else
 	for (i=0; i<n; i++) {
 	    z[i] = x[i] * y;
 	}
+#endif
 	break;
     case '/':
 	for (i=0; i<n; i++) {
