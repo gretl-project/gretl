@@ -553,6 +553,24 @@ static int read_from_pipe (HANDLE hwrite, HANDLE hread,
     return ok;
 }
 
+static int win32_relay_output (HANDLE hread, char *buf, int bufsize,
+			       int gui, PRN *prn)
+{
+    DWORD dwread;
+    int ok = ReadFile(hread, buf, bufsize - 1, &dwread, NULL);
+
+    if (ok) {
+	pputs(prn, buf);
+	if (gui) {
+	    manufacture_gui_callback(FLUSH);
+	} else {
+	    gretl_print_flush_stream(prn);
+	}
+    }
+
+    return ok;
+}
+
 /* options: OPT_S for shell mode, as opposed to running an
    executable directly; OPT_R to try to pass back output
    in real time
@@ -621,24 +639,19 @@ run_child_with_pipe (const char *arg, const char *currdir,
 	if (prn != NULL) {
 	    /* try reading output in real time */
 	    int gui = gretl_in_gui_mode();
-	    CHAR buf[1024];
-	    DWORD dwread, excode;
+	    char buf[1024];
+	    DWORD excode;
 
 	    while (GetExitCodeProcess(pinfo.hProcess, &excode)
 		   && excode == STILL_ACTIVE) {
-		memset(buf, 0, 1024);
-		ok = ReadFile(hread, buf, 1023, &dwread, NULL);
+		memset(buf, 0, sizeof buf);
+		ok = win32_relay_output(hread, buf, sizeof buf, gui, prn);
 		if (!ok) {
 		    break;
 		}
-		pputs(prn, buf);
-		if (gui) {
-		    manufacture_gui_callback(FLUSH);
-		} else {
-		    gretl_print_flush_stream(prn);
-		}
 		g_usleep(250000); /* 0.25 seconds */
 	    }
+	    win32_relay_output(hread, buf, sizeof buf, gui, prn);
 	    CloseHandle(hwrite);
 	}
 	CloseHandle(pinfo.hProcess);

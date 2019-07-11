@@ -701,10 +701,24 @@ static void mpi_childwatch (GPid pid, gint status, gpointer p)
     *finished = 1;
 }
 
+static void relay_mpi_output (gint sout, char *buf, int bufsize,
+			      int gui, PRN *prn)
+{
+    int got = read(sout, buf, bufsize - 1);
+
+    if (got > 0) {
+	pputs(prn, buf);
+	if (gui) {
+	    manufacture_gui_callback(FLUSH);
+	} else {
+	    gretl_print_flush_stream(prn);
+	}
+    }
+}
+
 static int run_mpi_with_pipes (char **argv, gretlopt opt, PRN *prn)
 {
-    gint sout, got;
-    gint finished = 0;
+    gint sout, finished = 0;
     char buf[1024];
     GError *gerr = NULL;
     GPid child_pid;
@@ -733,18 +747,12 @@ static int run_mpi_with_pipes (char **argv, gretlopt opt, PRN *prn)
 	g_child_watch_add(child_pid, mpi_childwatch, &finished);
 	while (!finished) {
 	    memset(buf, 0, sizeof buf);
-	    got = read(sout, buf, sizeof buf - 1);
-	    if (got > 0) {
-		pputs(prn, buf);
-		if (gui) {
-		    manufacture_gui_callback(FLUSH);
-		} else {
-		    gretl_print_flush_stream(prn);
-		}
-	    }
+	    relay_mpi_output(sout, buf, sizeof buf, gui, prn);
 	    g_usleep(250000); /* 0.25 seconds */
 	    g_main_context_iteration(NULL, FALSE);
 	}
+	memset(buf, 0, sizeof buf);
+	relay_mpi_output(sout, buf, sizeof buf, gui, prn);
 	close(sout);
     }
 
