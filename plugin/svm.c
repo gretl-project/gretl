@@ -363,6 +363,7 @@ static int set_or_store_sv_parm (sv_parm *parm, gretl_bundle *b,
 	&parm->shrinking,
 	&parm->probability
     };
+    int got_kspec = 0;
     int i, ival;
     double xval;
     int err = 0;
@@ -401,6 +402,9 @@ static int set_or_store_sv_parm (sv_parm *parm, gretl_bundle *b,
 		    fprintf(stderr, "parameter %d, bad option type\n", i);
 		    err = E_TYPES;
 		}
+		if (i == 1) {
+		    got_kspec = 1;
+		}
 	    } else if (i >= 8 && i <= 10) {
 		pputs(prn, "Sorry, svm weighting not handled yet\n");
 		err = E_INVARG;
@@ -420,6 +424,16 @@ static int set_or_store_sv_parm (sv_parm *parm, gretl_bundle *b,
 		    }
 		}
 	    }
+	}
+    }
+
+    if (!err && !got_kspec) {
+	/* the user didn't specify a kernel type: we default to
+	   Gaussian RBF above, but PERC seems to work better for
+	   ranking
+	*/
+	if (parm->svm_type == C_RNK) {
+	    parm->kernel_type = PERC;
 	}
     }
 
@@ -1755,10 +1769,17 @@ static int grid_set_dimensions (sv_grid *g, const gretl_matrix *m)
 static void sv_grid_default (sv_grid *g, sv_parm *parm)
 {
     int gsearch = parm == NULL || uses_gamma(parm);
+    int altgrid = 0;
 
-    g->row[G_C].start = -5;
-    g->row[G_C].stop = 9; /* grid.py has 15 (too big?) */
-    g->row[G_C].step = 2;
+    if (altgrid) {
+	g->row[G_C].start = -2;
+	g->row[G_C].stop = 6;
+	g->row[G_C].step = 1;
+    } else {
+	g->row[G_C].start = -5;
+	g->row[G_C].stop = 8; /* grid.py has 15 (too big?) */
+	g->row[G_C].step = 2;
+    }
 
     if (gsearch) {
 	g->row[G_g].start = 3;
@@ -2864,14 +2885,16 @@ static int read_params_bundle (gretl_bundle *bparm,
 	err = set_svm_parm(parm, bparm, prn);
     }
 
+#if 0 /* FIXME? */
     if (!err) {
 	/* param search: at present we only support the RBF kernel */
-	if ((wrap->flags & W_SEARCH) && 0 && parm->kernel_type != RBF) {
+	if ((wrap->flags & W_SEARCH) && parm->kernel_type != RBF) {
 	    gretl_errmsg_set("parameter search is only supported for "
 			     "the RBF kernel at present");
 	    err = E_INVARG;
 	}
     }
+#endif
 
     return err;
 }
@@ -3087,14 +3110,17 @@ static int check_svm_params (sv_data *data,
 	pprintf(prn, "svm_type %s, kernel_type %s\n",
 		svm_type_names[parm->svm_type],
 		kernel_type_names[parm->kernel_type]);
-	pprintf(prn, "initial params: C = %g, gamma = %g",
-		parm->C, parm->gamma);
-	if (parm->svm_type == EPSILON_SVR) {
-	    pprintf(prn, ", epsilon = %g\n", parm->p);
-	} else if (parm->svm_type == NU_SVR) {
-	    pprintf(prn, ", nu = %g\n", parm->nu);
+	pprintf(prn, "initial params: C = %g", parm->C);
+	if (uses_gamma(parm)) {
+	    pprintf(prn, ", gamma = %g", parm->gamma);
 	}
-	pputc(prn, '\n');
+	if (uses_epsilon(parm)) {
+	    pprintf(prn, ", epsilon = %g", parm->p);
+	}
+	if (uses_nu(parm)) {
+	    pprintf(prn, ", nu = %g", parm->nu);
+	}
+	pputs(prn, "\n\n");
     }
 
     if (!err && doing_regression(parm) && w->regcrit == 0) {
