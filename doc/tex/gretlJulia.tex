@@ -54,10 +54,12 @@ used as is.
 
 \section{Illustration}
 
-The following is a minimal example on how to interact with Julia from a
-\app{gretl} script.
+Listing~\ref{Julia-example} shows a minimal example of how to interact
+with Julia from a \app{gretl} script.
 
-\begin{code}
+\begin{script}[htbp]
+  \caption{Simple \app{Julia} I/O example}
+\begin{scode}
 set verbose off
 
 matrix A = mnormal(4,4)                # generate a random matrix
@@ -72,9 +74,8 @@ end foreign                            # go back to gretl
 matrix iA = mread("iA.mat", 1)         # read the inverse from Julia
 matrix check = A * iA                  # compute the product
 print check                            # print out the check (should be I)
-\end{code}
-
-The script above should produce output similar to the following:
+\end{scode}
+Output (good approximation to identity matrix):
 \begin{code}
 Hi from Julia!
 
@@ -85,6 +86,8 @@ check (4 x 4)
  -4.4409e-16  -8.3267e-17       1.0000  -6.6613e-16 
  -4.4409e-16  -1.3878e-17  -1.1102e-16       1.0000 
 \end{code}
+\label{Julia-example}
+\end{script}
 
 Since this is a very small job JIT compilation is not worthwhile; in
 our testing the script runs almost 4 times faster if the \app{Julia}
@@ -94,7 +97,6 @@ foreign language=julia --no-compile
 \end{code}
 This has the effect of passing the option \option{compile=no} to the
 \app{Julia} executable.
-
 
 %%% Local Variables: 
 %%% mode: latex

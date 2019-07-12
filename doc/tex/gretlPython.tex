@@ -64,65 +64,59 @@ to use these two functions.
 \label{sec:Python-longley}
 
 Listing~\ref{Python-longley} compares the numerical accuracy of
-gretl's \texttt{ols} command with that of \app{NumPy}'s
-\texttt{linalg.lstsq}, using the notorious Longley test data which
-exhibit extreme multicollinearity.  Unlike some econometrics packages,
-\app{NumPy} does a good job on these data. The script computes and
-prints the log-relative error in estimation of the regression
-coefficients, using the NIST-certified values as a
+gretl's \texttt{ols} command with that of the function
+\texttt{linalg.lstsq} in \app{NumPy}, using the notorious Longley test
+data which exhibit extreme multicollinearity.  Unlike some
+econometrics packages, \app{NumPy} does a good job on these data. The
+script computes and prints the log-relative error in estimation of the
+regression coefficients, using the NIST-certified values as a
 benchmark;\footnote{See
   \url{http://www.itl.nist.gov/div898/strd/lls/data/Longley.shtml}.}
 the error values correspond to the number of correct digits (with a
-maximum of 15). The results will differ somewhat by computer
-architecture; the output shown was obtained on a 32-bit Linux Intel i5
-system.
+maximum of 15). The results will likely differ somewhat by computer
+architecture and compiler.
 
 \begin{script}[htbp]
   \caption{Comparing regression results with \app{Python}}
 \begin{scode}
-set echo off
-set messages off
+set verbose off
 
-function matrix logrel_error (matrix est, matrix true)
+function matrix logrel_err (const matrix est, const matrix true)
   return -log10(abs(est - true) ./ abs(true))
 end function
 
 open longley.gdt -q
 list LX = prdefl .. year
-# gretl's regular OLS
 ols employ 0 LX -q
-matrix b = $coeff
+matrix b_gretl = $coeff
 
-mwrite({employ}, "y.mat", 1)
-mwrite({const} ~ {LX}, "X.mat", 1)
+mwrite({employ} ~ {const} ~ {LX}, "alldata.mat", 1)
 
 foreign language=python
    import numpy as np
-   y = gretl_loadmat('y.mat', 1)
-   X = gretl_loadmat('X.mat', 1)
+   X = gretl_loadmat('alldata.mat', 1)
    # NumPy's OLS   
-   b = np.linalg.lstsq(X, y)[0]
+   b = np.linalg.lstsq(X[:,1:], X[:,0])[0]
    gretl_export(np.transpose(np.matrix(b)), 'py_b.mat', 1)
 end foreign
 
 # NIST's certified coefficient values
-matrix nist_b = {-3482258.63459582, 15.0618722713733,
+matrix b_nist = {-3482258.63459582, 15.0618722713733,
     -0.358191792925910E-01, -2.02022980381683,
     -1.03322686717359, -0.511041056535807E-01,
      1829.15146461355}'
 
-matrix py_b = mread("py_b.mat", 1)
-matrix errs = logrel_error(b, nist_b) ~ logrel_error(py_b, nist_b)
-colnames(errs, "gretl python")
-printf "Log-relative errors, Longley coefficients:\n\n%12.5g\n", errs
-printf "Column means\n%12.5g\n", meanc(errs)
+matrix b_numpy = mread("py_b.mat", 1)
+matrix E = logrel_err(b_gretl, b_nist) ~ logrel_err(b_numpy, b_nist)
+colnames(E, "gretl python")
+printf "Log-relative errors, Longley coefficients:\n\n%#12.5g\n", E
+printf "Column means\n%#12.5g\n", meanc(E)
 \end{scode}
-Output:
 \begin{code}
 Log-relative errors, Longley coefficients:
 
        gretl      python
-      12.844       12.85
+      12.844      12.850
       11.528      11.414
       12.393      12.401
       13.135      13.121
