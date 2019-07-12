@@ -1213,8 +1213,9 @@ static double xy_calc (double x, double y, int op, int targ, parser *p)
 	return NADBL;
     }
 
-    /* 0 times anything (even NA) = 0 ? */
-    if (op == B_MUL && (x == 0 || y == 0)) {
+    /* 0 times anything (even NA) = 0 ? But let's not do this
+       for matrices */
+    if (targ != MAT && op == B_MUL && (x == 0 || y == 0)) {
 	return 0;
     }
 
