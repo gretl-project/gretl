@@ -4119,6 +4119,9 @@ static struct test_strings tstrings[] = {
     { GRETL_TEST_XDEPEND,
       N_("Pesaran CD test for cross-sectional dependence"),
       N_("No cross-sectional dependence") },
+    { GRETL_TEST_PANEL_AR,
+      N_("Wooldridge test for autocorrelation in panel data"),
+      N_("No first-order autocorrelation (rho = -0.5)") },
     { GRETL_TEST_MAX, NULL, NULL }
 };
 
@@ -6120,7 +6123,8 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
 
 #if 1 /* experimental */
     if (ci == MODTEST && pmod->ci == PANEL &&
-	(opt & OPT_A) && dataset_is_panel(dset)) {
+	(opt & OPT_A) && dataset_is_panel(dset) &&
+	dset->pd > 2) {
 	return 1;
     }
 #endif

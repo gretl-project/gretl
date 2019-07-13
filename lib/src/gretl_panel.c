@@ -4555,207 +4555,46 @@ int groupwise_hetero_test (MODEL *pmod, DATASET *dset,
     return err;
 }
 
-static void panel_copy_var (DATASET *targ, int targv,
-			    double *x, DATASET *src, int srcv,
-			    int order)
+static int print_ar_aux_model (MODEL *pmod, DATASET *dset,
+			       int j, PRN *prn)
 {
-    int t, j = 0;
+    const char *heads[] = {
+        N_("First differenced equation (dependent, d_y)"),
+        N_("Autoregression of residuals (dependent, uhat)")
+    };
+    gretl_matrix *cse, *add;
+    gretl_array *S;
+    int i, vi, err = 0;
 
-    for (t=src->t1; t<=src->t2; t++) {
-	if (t % src->pd >= order) {
-	    targ->Z[targv][j++] = x[t];
-	}
-    }
+    cse = gretl_matrix_alloc(pmod->ncoeff, 2);
+    add = gretl_vector_alloc(2);
+    S = gretl_array_new(GRETL_TYPE_STRINGS, pmod->ncoeff + 2, &err);
 
-    if (srcv == -1) {
-	strcpy(targ->varname[targv], "uhat");
-	series_set_label(targ, targv, _("residual"));
-    } else {
-	const char *vlabel = series_get_label(src, srcv);
-
-	strcpy(targ->varname[targv], src->varname[srcv]);
-	series_set_label(targ, targv, vlabel == NULL ? "" : vlabel);
-    }
-}
-
-static void make_reduced_data_info (DATASET *targ, DATASET *src,
-				    int order)
-{
-    targ->pd = src->pd - order;
-    ntodate(targ->stobs, src->t1 + order, src);
-    targ->sd0 = obs_str_to_double(targ->stobs);
-    targ->structure = src->structure;
-}
-
-static void panel_lag (DATASET *tmpset,
-		       double *src, DATASET *srcset,
-		       int v, int order, int lag)
-{
-    int t, j = 0;
-
-    for (t=srcset->t1; t<=srcset->t2; t++) {
-	if (t % srcset->pd >= order) {
-	    tmpset->Z[v][j++] = src[t - lag];
-	}
-    }
-
-    sprintf(tmpset->varname[v], "uhat_%d", lag);
-    series_set_label(tmpset, v, "");
-}
-
-#if 0 /* should be removed -- never actually activated? */
-
-/* - do some sanity checks
-   - create a local copy of the required portion of the data set,
-     skipping the obs that will be missing
-   - copy in the lags of uhat
-   - estimate the aux model
-   - destroy the temporary data set
-*/
-
-int panel_autocorr_test (MODEL *pmod, int order, DATASET *dset,
-			 gretlopt opt, PRN *prn)
-{
-    int *aclist;
-    DATASET *tmpset;
-    MODEL aux;
-    double trsq, LMF;
-    int i, nv, nunits, nobs, err = 0;
-    int sn = dset->t2 - dset->t1 + 1;
-
-    if (pmod->ci != OLS) {
-	return E_NOTIMP;
-    }
-
-    if (pmod->missmask != NULL) {
-	return E_DATA;
-    }
-
-    /* basic checks */
-    if (order <= 0) order = 1;
-    if (order > dset->pd - 1) return E_DF;
-    if (pmod->ncoeff + order >= sn) return E_DF;
-
-    /* get number of cross-sectional units */
-    nunits = sn / dset->pd;
-
-    /* we lose "order" observations for each unit */
-    nobs = sn - nunits * order;
-
-    /* the required number of variables */
-    nv = pmod->list[0] + order;
-
-    /* create temporary reduced dataset */
-    tmpset = create_auxiliary_dataset(nv, nobs, 0);
-    if (tmpset == NULL) {
+    if (cse == NULL || add == NULL || S == NULL) {
 	return E_ALLOC;
     }
 
-    make_reduced_data_info(tmpset, dset, order);
-
-#if PDEBUG
-    fprintf(stderr, "Created data set, n=%d, pd=%d, vars=%d, stobs='%s'\n",
-	    tmpset->n, tmpset->pd, tmpset->v, tmpset->stobs);
-#endif
-
-    /* allocate the auxiliary regression list */
-    aclist = malloc((nv + 1) * sizeof *aclist);
-    if (aclist == NULL) {
-	err = E_ALLOC;
+    for (i=0; i<pmod->ncoeff; i++) {
+	gretl_matrix_set(cse, i, 0, pmod->coeff[i]);
+	gretl_matrix_set(cse, i, 1, pmod->sderr[i]);
+	vi = pmod->list[i+2];
+	gretl_array_set_string(S, i, dset->varname[vi], 1);
     }
 
-    if (!err) {
-	int k, v;
+    add->val[0] = pmod->nobs;
+    add->val[1] = pmod->rsq;
+    gretl_array_set_string(S, i++, "n", 1);
+    gretl_array_set_string(S, i, "R-squared", 1);
 
-	aclist[0] = pmod->list[0] + order;
-	/* copy model uhat to position 1 in temp data set */
-	aclist[1] = 1;
-	panel_copy_var(tmpset, 1,
-		       &pmod->uhat[0], dset, -1,
-		       order);
-	/* copy across the original indep vars, making
-	   the new regression list while we're at it */
-	k = 2;
-	for (i=2; i<=pmod->list[0]; i++) {
-	    v = pmod->list[i];
-	    if (v == 0) { /* the constant */
-		aclist[i] = 0;
-	    } else {
-		aclist[i] = k;
-		panel_copy_var(tmpset, k,
-			       dset->Z[v], dset, v,
-			       order);
-		k++;
-	    }
-	}
-    }
+    pprintf(prn, "%s:\n", _(heads[j]));
+    print_model_from_matrices(cse, add, S, prn);
 
-    if (!err) {
-	int v = pmod->list[0] - 1;
+    gretl_matrix_free(cse);
+    gretl_matrix_free(add);
+    gretl_array_destroy(S);
 
-	/* add lags of uhat to temp data set */
-	for (i=1; i<=order; i++) {
-	    panel_lag(tmpset, pmod->uhat,
-		      dset, v + i, order, i);
-	    aclist[v + i + 1] = v + i;
-	}
-    }
-
-    if (!err) {
-	aux = lsq(aclist, tmpset, OLS, OPT_A);
-	err = aux.errcode;
-	if (err) {
-	    errmsg(aux.errcode, prn);
-	}
-    }
-
-    if (!err) {
-	int dfd = aux.nobs - pmod->ncoeff - order;
-	double pval;
-
-	aux.aux = AUX_AR;
-	gretl_model_set_int(&aux, "BG_order", order);
-	printmodel(&aux, tmpset, OPT_NONE, prn);
-	trsq = aux.rsq * aux.nobs;
-	/* FIXME LMF */
-	LMF = (aux.rsq / (1.0 - aux.rsq)) * dfd / order;
-	pval = snedecor_cdf_comp(order, dfd, LMF);
-
-	pprintf(prn, "\n%s: LMF = %f,\n", _("Test statistic"), LMF);
-	pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"),
-		order, dfd, LMF, pval);
-
-	pprintf(prn, "\n%s: TR^2 = %f,\n",
-		_("Alternative statistic"), trsq);
-	pprintf(prn, "%s = P(%s(%d) > %g) = %.3g\n\n", 	_("with p-value"),
-		_("Chi-square"), order, trsq, chisq_cdf_comp(order, trsq));
-
-	if (opt & OPT_S) {
-	    ModelTest *test = model_test_new(GRETL_TEST_AUTOCORR);
-
-	    if (test != NULL) {
-		int dfd = aux.nobs - pmod->ncoeff - order;
-
-		model_test_set_teststat(test, GRETL_STAT_LMF);
-		model_test_set_order(test, order);
-		model_test_set_dfn(test, order);
-		model_test_set_dfd(test, dfd);
-		model_test_set_value(test, LMF);
-		model_test_set_pvalue(test, pval);
-		maybe_add_test_to_model(pmod, test);
-	    }
-	}
-    }
-
-    free(aclist);
-    clear_model(&aux);
-
-    destroy_dataset(tmpset);
-
-    return err;
+    return 0;
 }
-
-#endif /* unused code */
 
 int wooldridge_autocorr_test (MODEL *pmod, DATASET *dset,
 			      gretlopt opt, PRN *prn)
@@ -4764,40 +4603,34 @@ int wooldridge_autocorr_test (MODEL *pmod, DATASET *dset,
     int quiet = (opt & OPT_Q);
     int orig_v = dset->v;
     int *dlist = NULL;
-    int i, j, k, vi, t;
+    int i, vi;
     int clearit = 0;
     int err = 0;
 
-    k = pmod->ncoeff;
-    if (pmod->ifc) {
-	k--;
-    }
-
-    dlist = gretl_list_new(k + 1);
+    dlist = gretl_list_new(pmod->ncoeff + 1);
     if (dlist == NULL) {
 	return E_ALLOC;
     }
 
-    dlist[0] = 0;
-    for (i=1, j=1; i<=pmod->list[0] && !err; i++) {
+    for (i=1; i<=pmod->list[0] && !err; i++) {
 	vi = pmod->list[i];
-	if (vi != 0) {
-	    dlist[j] = diffgenr(vi, DIFF, dset);
-	    if (dlist[j] < 0) {
+	if (vi == 0) {
+	    dlist[i] = 0;
+	} else {
+	    dlist[i] = diffgenr(vi, DIFF, dset);
+	    if (dlist[i] < 0) {
 		err = E_DATA;
 	    }
-	    j++;
-	    dlist[0] += 1;
 	}
     }
 
     if (!err) {
-	/* estimate model in first-difference form */
+	/* estimate model in first-differenced form */
 	tmp = lsq(dlist, dset, OLS, OPT_A | OPT_R);
 	err = tmp.errcode;
 	if (!err && !quiet) {
-	    tmp.aux = AUX_AR;
-	    printmodel(&tmp, dset, OPT_S, prn);
+	    pputc(prn, '\n');
+	    print_ar_aux_model(&tmp, dset, 0, prn);
 	}
     }
 
@@ -4808,7 +4641,7 @@ int wooldridge_autocorr_test (MODEL *pmod, DATASET *dset,
     }
 
     if (!err) {
-	vi = dset->v - 1;
+	vi = dset->v - 1; /* the last series added */
 	strcpy(dset->varname[vi], "uhat");
 	dlist[0] = 2;
 	dlist[1] = vi;
@@ -4820,8 +4653,8 @@ int wooldridge_autocorr_test (MODEL *pmod, DATASET *dset,
 	    tmp = lsq(dlist, dset, OLS, OPT_A | OPT_R);
 	    err = tmp.errcode;
 	    if (!err && !quiet) {
-		tmp.aux = AUX_AR;
-		printmodel(&tmp, dset, OPT_S, prn);
+		strcpy(dset->varname[dlist[2]], "uhat(-1)");
+		print_ar_aux_model(&tmp, dset, 1, prn);
 	    }
 	    clearit = 1;
 	}
@@ -4836,15 +4669,8 @@ int wooldridge_autocorr_test (MODEL *pmod, DATASET *dset,
 	F = c * c / (s * s);
 	pval = snedecor_cdf_comp(1, dfd, F);
 
-	if (!(opt & OPT_I)) {
-	    pputc(prn, '\n');
-	    pputs(prn, _("Wooldridge test for first-order autocorrelation"));
-	    pprintf(prn, "\n%s: F(%d, %d) = %g,\n", _("Test statistic"), 1, dfd, F);
-	    pprintf(prn, "%s = P(F > %g) = %.3g\n", _("with p-value"),
-		    F, pval);
-	}
-	if (opt & OPT_S) {
-	    ModelTest *test = model_test_new(GRETL_TEST_AUTOCORR);
+	if ((opt & OPT_S) || !(opt & OPT_I)) {
+	    ModelTest *test = model_test_new(GRETL_TEST_PANEL_AR);
 
 	    if (test != NULL) {
 		model_test_set_teststat(test, GRETL_STAT_F);
@@ -4852,7 +4678,18 @@ int wooldridge_autocorr_test (MODEL *pmod, DATASET *dset,
 		model_test_set_dfn(test, 1);
 		model_test_set_dfd(test, dfd);
 		model_test_set_pvalue(test, pval);
-		maybe_add_test_to_model(pmod, test);
+		if (!(opt & OPT_I)) {
+		    if (quiet) {
+			/* nothing was printed above */
+			pputc(prn, '\n');
+		    }
+		    gretl_model_test_print_direct(test, 1, prn);
+		}
+		if (opt & OPT_S) {
+		    maybe_add_test_to_model(pmod, test);
+		} else {
+		    free(test);
+		}
 	    }
 	}
 	record_test_result(F, pval);

@@ -3293,6 +3293,7 @@ void do_autocorr (GtkAction *action, gpointer p)
     }
 
     if (dataset_is_panel(dataset)) {
+	/* Wooldridge test: first-order */
 	if (bufopen(&prn)) {
 	    return;
 	}

@@ -2444,8 +2444,12 @@ int autocorr_test (MODEL *pmod, int order, DATASET *dset,
     } else if (pmod->ci == ARMA) {
 	return lb_autocorr_test(pmod, order, opt, prn);
     } else if (pmod->ci == PANEL && (pmod->opt & (OPT_F | OPT_U))) {
-	/* FIXME order? */
-	return wooldridge_autocorr_test(pmod, dset, opt, prn);
+	if (dset->pd < 3) {
+	    /* time series not long enough */
+	    return E_NOTIMP;
+	} else {
+	    return wooldridge_autocorr_test(pmod, dset, opt, prn);
+	}
     }
 
     if (pmod->ci != OLS && pmod->ci != VAR) {

@@ -1976,7 +1976,7 @@ static void print_model_heading (const MODEL *pmod,
 	if (order > 0) {
 	    godfrey_test_string(pmod->ci, order, prn);
 	} else {
-	    pputc(prn, '\n'); /* FIXME? */
+	    pputc(prn, '\n');
 	}
 	break;
     case AUX_ARCH:
