@@ -503,7 +503,7 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 	cmd = g_strdup_printf("\"%s\" \"%s\"", exe, fname);
     } else if (foreign_lang == LANG_OCTAVE) {
 	exe = gretl_octave_path();
-	cmd = g_strdup_printf("\"%s\" --silent \"%s\"", exe, fname);
+	cmd = g_strdup_printf("\"%s\" --silent -H \"%s\"", exe, fname);
     } else if (foreign_lang == LANG_STATA) {
 	exe = gretl_stata_path();
 	cmd = g_strdup_printf("\"%s\" /q /e do \"%s\"", exe, fname);
@@ -519,6 +519,11 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 	}
     } else {
 	return 1;
+    }
+
+    if (foreign_lang == LANG_OCTAVE) {
+	/* try to suppress octave history mechanism */
+	gretl_setenv("OCTAVE_HISTFILE", "c:\\nul");
     }
 
     err = gretl_win32_pipe_output(cmd, gretl_workdir(), OPT_NONE, prn);
@@ -790,8 +795,9 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
     } else if (foreign_lang == LANG_OCTAVE) {
 	argv[0] = (char *) gretl_octave_path();
 	argv[1] = "--silent";
-	argv[2] = scriptpath;
-	argv[3] = NULL;
+	argv[2] = "-H";
+	argv[3] = scriptpath;
+	argv[4] = NULL;
     } else if (foreign_lang == LANG_PYTHON) {
 	argv[0] = (char *) gretl_python_path();
 	argv[1] = scriptpath;
@@ -813,6 +819,11 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 	argv[3] = "do";
 	argv[4] = scriptpath;
 	argv[5] = NULL;
+    }
+
+    if (foreign_lang == LANG_OCTAVE) {
+	/* suppress history mechanism */
+	gretl_setenv("OCTAVE_HISTFILE", "/dev/null");
     }
 
     err = lib_run_prog_sync(argv, opt, prn);
