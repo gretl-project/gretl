@@ -8,6 +8,8 @@ version 2019d, in progress
   to a column vector
 - Generalize the I() function: can now create a non-square
   matrix
+- "modtest" command with --autocorr option: add support for
+  Wooldridge's first-order test for panel data
 
 2019-07-02 version 2019c
 - Fix bug: "dataset sortby" not handling missing values
