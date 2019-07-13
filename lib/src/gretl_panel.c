@@ -4603,6 +4603,8 @@ static void panel_lag (DATASET *tmpset,
     series_set_label(tmpset, v, "");
 }
 
+#if 0 /* should be removed -- never actually activated? */
+
 /* - do some sanity checks
    - create a local copy of the required portion of the data set,
      skipping the obs that will be missing
@@ -4749,6 +4751,118 @@ int panel_autocorr_test (MODEL *pmod, int order, DATASET *dset,
     clear_model(&aux);
 
     destroy_dataset(tmpset);
+
+    return err;
+}
+
+#endif /* unused code */
+
+int wooldridge_autocorr_test (MODEL *pmod, DATASET *dset,
+			      gretlopt opt, PRN *prn)
+{
+    MODEL tmp;
+    int quiet = (opt & OPT_Q);
+    int orig_v = dset->v;
+    int *dlist = NULL;
+    int i, j, k, vi, t;
+    int clearit = 0;
+    int err = 0;
+
+    k = pmod->ncoeff;
+    if (pmod->ifc) {
+	k--;
+    }
+
+    dlist = gretl_list_new(k + 1);
+    if (dlist == NULL) {
+	return E_ALLOC;
+    }
+
+    dlist[0] = 0;
+    for (i=1, j=1; i<=pmod->list[0] && !err; i++) {
+	vi = pmod->list[i];
+	if (vi != 0) {
+	    dlist[j] = diffgenr(vi, DIFF, dset);
+	    if (dlist[j] < 0) {
+		err = E_DATA;
+	    }
+	    j++;
+	    dlist[0] += 1;
+	}
+    }
+
+    if (!err) {
+	/* estimate model in first-difference form */
+	tmp = lsq(dlist, dset, OLS, OPT_A | OPT_R);
+	err = tmp.errcode;
+	if (!err && !quiet) {
+	    tmp.aux = AUX_AR;
+	    printmodel(&tmp, dset, OPT_S, prn);
+	}
+    }
+
+    if (!err) {
+	err = dataset_add_allocated_series(dset, tmp.uhat);
+	tmp.uhat = NULL;
+	clear_model(&tmp);
+    }
+
+    if (!err) {
+	vi = dset->v - 1;
+	strcpy(dset->varname[vi], "uhat");
+	dlist[0] = 2;
+	dlist[1] = vi;
+	dlist[2] = laggenr(vi, 1, dset);
+	if (dlist[2] < 0) {
+	    err = E_DATA;
+	} else {
+	    /* regress residual on its first lag */
+	    tmp = lsq(dlist, dset, OLS, OPT_A | OPT_R);
+	    err = tmp.errcode;
+	    if (!err && !quiet) {
+		tmp.aux = AUX_AR;
+		printmodel(&tmp, dset, OPT_S, prn);
+	    }
+	    clearit = 1;
+	}
+    }
+
+    if (!err) {
+	double c, s, F, pval;
+	int dfd = tmp.nobs - 1;
+
+	c = tmp.coeff[0] + 0.5;
+	s = tmp.sderr[0];
+	F = c * c / (s * s);
+	pval = snedecor_cdf_comp(1, dfd, F);
+
+	if (!(opt & OPT_I)) {
+	    pputc(prn, '\n');
+	    pputs(prn, _("Wooldridge test for first-order autocorrelation"));
+	    pprintf(prn, "\n%s: F(%d, %d) = %g,\n", _("Test statistic"), 1, dfd, F);
+	    pprintf(prn, "%s = P(F > %g) = %.3g\n", _("with p-value"),
+		    F, pval);
+	}
+	if (opt & OPT_S) {
+	    ModelTest *test = model_test_new(GRETL_TEST_AUTOCORR);
+
+	    if (test != NULL) {
+		model_test_set_teststat(test, GRETL_STAT_F);
+		model_test_set_value(test, F);
+		model_test_set_dfn(test, 1);
+		model_test_set_dfd(test, dfd);
+		model_test_set_pvalue(test, pval);
+		maybe_add_test_to_model(pmod, test);
+	    }
+	}
+	record_test_result(F, pval);
+    }
+
+    if (clearit) {
+	clear_model(&tmp);
+    }
+    dataset_drop_last_variables(dset, dset->v - orig_v);
+    free(dlist);
 
     return err;
 }

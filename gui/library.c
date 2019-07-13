@@ -3285,27 +3285,32 @@ void do_autocorr (GtkAction *action, gpointer p)
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
     PRN *prn;
-    int order;
+    int order = 1;
     int resp, err;
 
     if (gui_exact_fit_check(pmod)) {
 	return;
     }
 
-    order = default_lag_order(dataset);
+    if (dataset_is_panel(dataset)) {
+	if (bufopen(&prn)) {
+	    return;
+	}
+    } else {
+	order = default_lag_order(dataset);
+	resp = spin_dialog(_("gretl: autocorrelation"), NULL,
+			   &order, _("Lag order for test:"),
+			   1, dataset->n / 2, 0,
+			   vwin_toplevel(vwin));
 
-    resp = spin_dialog(_("gretl: autocorrelation"), NULL,
-		       &order, _("Lag order for test:"),
-		       1, dataset->n / 2, 0,
-		       vwin_toplevel(vwin));
-
-    if (canceled(resp) || bufopen(&prn)) {
-	return;
+	if (canceled(resp) || bufopen(&prn)) {
+	    return;
+	}
     }
 
     if (dataset_is_panel(dataset)) {
-	err = panel_autocorr_test(pmod, order, dataset,
-				  OPT_S, prn);
+	err = wooldridge_autocorr_test(pmod, dataset,
+				       OPT_S, prn);
     } else {
 	err = autocorr_test(pmod, order, dataset, OPT_S, prn);
     }

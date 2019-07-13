@@ -1973,7 +1973,11 @@ static void print_model_heading (const MODEL *pmod,
 	break;
     case AUX_AR:
 	order = gretl_model_get_int(pmod, "BG_order");
-	godfrey_test_string(pmod->ci, order, prn);
+	if (order > 0) {
+	    godfrey_test_string(pmod->ci, order, prn);
+	} else {
+	    pputc(prn, '\n'); /* FIXME? */
+	}
 	break;
     case AUX_ARCH:
 	order = gretl_model_get_int(pmod, "arch_order");

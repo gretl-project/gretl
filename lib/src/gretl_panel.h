@@ -29,8 +29,8 @@ MODEL real_panel_model (const int *list, DATASET *dset,
 MODEL panel_wls_by_unit (const int *list, DATASET *dset,
 			 gretlopt opt, PRN *prn);
 
-int panel_autocorr_test (MODEL *pmod, int order, DATASET *dset, 
-			 gretlopt opt, PRN *prn);
+int wooldridge_autocorr_test (MODEL *pmod, DATASET *dset,
+			      gretlopt opt, PRN *prn);
 
 int panel_xdepend_test (MODEL *pmod, DATASET *dset, 
 			gretlopt opt, PRN *prn);

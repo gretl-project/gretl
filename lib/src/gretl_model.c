@@ -1244,6 +1244,15 @@ int gretl_is_between_model (const MODEL *pmod)
     }
 }
 
+static int fixed_or_random_effects (const MODEL *pmod)
+{
+    if (pmod->ci == PANEL && (pmod->opt & (OPT_F | OPT_U))) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 #define arma_included(m,i) (m == NULL || m[i] == '1')
 
 /**
@@ -5940,6 +5949,7 @@ int command_ok_for_model (int test_ci, gretlopt opt,
 			  const MODEL *pmod)
 {
     int between = 0;
+    int fe_or_re = 0;
     int mci = pmod->ci;
     int ok = 1;
 
@@ -5969,6 +5979,7 @@ int command_ok_for_model (int test_ci, gretlopt opt,
     }
 
     between = gretl_is_between_model(pmod);
+    fe_or_re = fixed_or_random_effects(pmod);
 
     switch (test_ci) {
 
@@ -6030,8 +6041,10 @@ int command_ok_for_model (int test_ci, gretlopt opt,
 		ok = 1;
 	    } else if (mci == PANEL && (opt & OPT_P)) {
 		ok = 1;
+	    } else if (fe_or_re && (opt & OPT_A)) {
+		ok = 1;
 	    } else {
-		ok = 0; /* FIXME? */
+		ok = 0;
 	    }
 	}
 	break;
@@ -6085,8 +6098,10 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
     }
 
     if (ok && pmod->missmask != NULL) {
-	/* can't do these with embedded missing obs */
-	if (ci == CUSUM ||
+	/* can't do these with embedded missing obs? */
+	if (pmod->ci == PANEL) {
+	    ; /* OK? */
+	} else if (ci == CUSUM ||
 	    (ci == MODTEST && (opt & (OPT_A | OPT_H)))) {
 	    ok = 0;
 	}
@@ -6103,6 +6118,13 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
 	}
     }
 
+#if 1 /* experimental */
+    if (ci == MODTEST && pmod->ci == PANEL &&
+	(opt & OPT_A) && dataset_is_panel(dset)) {
+	return 1;
+    }
+#endif
+
     if (ok && !dataset_is_time_series(dset)) {
 	/* time-series-only tests */
 	if (ci == CUSUM || ci == QLRTEST ||
@@ -6110,16 +6132,6 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
 	    ok = 0;
 	}
     }
-
-#if 0
-    if (ok && !dataset_is_time_series(dset) &&
-	!dataset_is_panel(dset)) {
-	/* time-series or panel tests */
-	if (ci == MODTEST && (opt & OPT_A)) {
-	    ok = 0;
-	}
-    }
-#endif
 
     if (ok && !dataset_is_panel(dset)) {
 	/* panel-only tests */

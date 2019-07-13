@@ -2255,7 +2255,7 @@ static int lb_autocorr_test (MODEL *pmod, int order,
 }
 
 /**
- * autocorr_test:
+ * regular_autocorr_test:
  * @pmod: pointer to model to be tested.
  * @order: lag order for test.
  * @dset: dataset struct.
@@ -2270,8 +2270,8 @@ static int lb_autocorr_test (MODEL *pmod, int order,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int autocorr_test (MODEL *pmod, int order, DATASET *dset,
-		   gretlopt opt, PRN *prn)
+static int regular_autocorr_test (MODEL *pmod, int order, DATASET *dset,
+				  gretlopt opt, PRN *prn)
 {
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
@@ -2281,30 +2281,6 @@ int autocorr_test (MODEL *pmod, int order, DATASET *dset,
     int i, t, n = dset->n, v = dset->v;
     double trsq, LMF, lb, pval = 1.0;
     int err = 0;
-
-    if (pmod->ci == IVREG) {
-	return ivreg_autocorr_test(pmod, order, dset, opt, prn);
-    }
-
-    if (pmod->ci == ARMA) {
-	return lb_autocorr_test(pmod, order, opt, prn);
-    }
-
-    if (pmod->ci != OLS && pmod->ci != VAR) {
-	return E_NOTIMP;
-    }
-
-    if (model_has_missing_obs(pmod)) {
-	return E_MISSDATA;
-    }
-
-    if (dataset_is_panel(dset)) {
-#if 1 /* FIXME */
-	return E_NOTIMP;
-#else
-	return panel_autocorr_test(pmod, order, dset, opt, prn);
-#endif
-    }
 
     gretl_model_init(&aux, dset);
 
@@ -2412,7 +2388,6 @@ int autocorr_test (MODEL *pmod, int order, DATASET *dset,
 		pprintf(prn, "%s = P(%s(%d) > %g) = %.3g\n", _("with p-value"),
 			_("Chi-square"), order, lb, chisq_cdf_comp(order, lb));
 	    }
-
 	    pputc(prn, '\n');
 	}
 
@@ -2443,6 +2418,43 @@ int autocorr_test (MODEL *pmod, int order, DATASET *dset,
     dset->t2 = save_t2;
 
     return err;
+}
+
+/**
+ * autocorr_test:
+ * @pmod: pointer to model to be tested.
+ * @order: lag order for test.
+ * @dset: dataset struct.
+ * @opt: if flags include OPT_S, save test results to model;
+ * if OPT_Q, be less verbose; if OPT_I, be silent.
+ * @prn: gretl printing struct.
+ *
+ * Tests the given model for autocorrelation of order equal to
+ * the specified value, or equal to the frequency of the data if
+ * the supplied @order is zero.
+ *
+ * Returns: 0 on successful completion, error code on error.
+ */
+
+int autocorr_test (MODEL *pmod, int order, DATASET *dset,
+		   gretlopt opt, PRN *prn)
+{
+    if (pmod->ci == IVREG) {
+	return ivreg_autocorr_test(pmod, order, dset, opt, prn);
+    } else if (pmod->ci == ARMA) {
+	return lb_autocorr_test(pmod, order, opt, prn);
+    } else if (pmod->ci == PANEL && (pmod->opt & (OPT_F | OPT_U))) {
+	/* FIXME order? */
+	return wooldridge_autocorr_test(pmod, dset, opt, prn);
+    }
+
+    if (pmod->ci != OLS && pmod->ci != VAR) {
+	return E_NOTIMP;
+    } else if (model_has_missing_obs(pmod)) {
+	return E_MISSDATA;
+    }
+
+    return regular_autocorr_test(pmod, order, dset, opt, prn);
 }
 
 static int chow_active (int split, const double *x, int t)
