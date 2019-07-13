@@ -856,12 +856,12 @@ int main (int argc, char *argv[])
     }
 
     free(line);
-
     gretl_print_destroy(prn);
     gretl_cmd_free(&cmd);
     libgretl_cleanup();
 
-    return 0;
+    exit(err ? EXIT_FAILURE : EXIT_SUCCESS);
+    /* was just return 0; */
 }
 
 static void printline (const char *s)
@@ -1093,7 +1093,7 @@ static int run_include_error (ExecState *s, const char *param,
     return process_command_error(s, err);
 }
 
-static void cli_quit (ExecState *s, PRN *cmdprn)
+static void cli_quit (ExecState *s, PRN *cmdprn, int err)
 {
     if (runit || batch_stdin) {
 	*s->runfile = '\0';
@@ -1102,7 +1102,11 @@ static void cli_quit (ExecState *s, PRN *cmdprn)
 	fb = pop_input_file();
 	if (fb == NULL) {
 	    if (gretl_messages_on()) {
-		pputs(s->prn, _("Done\n"));
+		if (err) {
+		    pputs(s->prn, _("Terminated on error\n"));
+		} else {
+		    pputs(s->prn, _("Done\n"));
+		}
 	    }
 	} else {
 	    s->cmd->ci = ENDRUN;
@@ -1304,7 +1308,7 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	break;
 
     case QUIT:
-	cli_quit(s, cmdprn);
+	cli_quit(s, cmdprn, err);
 	break;
 
     case RUN:
@@ -1388,7 +1392,7 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
     if (err) {
 	gretl_exec_state_uncomment(s);
 	if ((runit || batch) && cmd->ci != QUIT) {
-	    cli_quit(s, cmdprn);
+	    cli_quit(s, cmdprn, err);
 	}
     }
 
