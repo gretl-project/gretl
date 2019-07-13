@@ -68,6 +68,10 @@ static void gretl_array_destroy_data (gretl_array *A)
     }
 }
 
+/* Destroy the whole array, including freeing its
+   contents.
+*/
+
 void gretl_array_destroy (gretl_array *A)
 {
     if (A != NULL) {
@@ -76,11 +80,32 @@ void gretl_array_destroy (gretl_array *A)
     }
 }
 
+/* Reduce the array to empty status, freeing the
+   contents but not the array structure itself.
+*/
+
 void gretl_array_void_content (gretl_array *A)
 {
     if (A != NULL) {
 	gretl_array_destroy_data(A);
 	A->n = 0;
+    }
+}
+
+/* Set the array's element pointers to NULL, without
+   freeing them. Makes sense only if the element
+   pointers are actually "owned" by something else
+   (have not been copied into the array).
+*/
+
+void gretl_array_nullify_elements (gretl_array *A)
+{
+    if (A != NULL && A->data != NULL) {
+	int i;
+
+	for (i=0; i<A->n; i++) {
+	    A->data[i] = NULL;
+	}
     }
 }
 

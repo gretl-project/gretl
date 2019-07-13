@@ -4578,19 +4578,20 @@ static int print_ar_aux_model (MODEL *pmod, DATASET *dset,
 	gretl_matrix_set(cse, i, 0, pmod->coeff[i]);
 	gretl_matrix_set(cse, i, 1, pmod->sderr[i]);
 	vi = pmod->list[i+2];
-	gretl_array_set_string(S, i, dset->varname[vi], 1);
+	gretl_array_set_string(S, i, dset->varname[vi], 0);
     }
 
     add->val[0] = pmod->nobs;
     add->val[1] = pmod->rsq;
-    gretl_array_set_string(S, i++, "n", 1);
-    gretl_array_set_string(S, i, "R-squared", 1);
+    gretl_array_set_string(S, i++, "n", 0);
+    gretl_array_set_string(S, i, "R-squared", 0);
 
     pprintf(prn, "%s:\n", _(heads[j]));
     print_model_from_matrices(cse, add, S, prn);
 
     gretl_matrix_free(cse);
     gretl_matrix_free(add);
+    gretl_array_nullify_elements(S);
     gretl_array_destroy(S);
 
     return 0;
