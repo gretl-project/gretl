@@ -966,6 +966,7 @@ static DATASET *within_groups_dataset (const DATASET *dset,
 
     for (j=1; j<=vlist[0]; j++) {
 	double xbar, gxbar = 0.0;
+	int allzero = 1;
 
 	vj = vlist[j];
 	gxbar = 0.0;
@@ -973,10 +974,13 @@ static DATASET *within_groups_dataset (const DATASET *dset,
 
 #if PDEBUG
 	strcpy(wset->varname[j], dset->varname[vj]);
+	fprintf(stderr, "de-meaning: working on list[%d], %s\n",
+		j, dset->varname[vj]);
 #endif
 
 	for (i=0; i<pan->nunits; i++) {
 	    int Ti = pan->unit_obs[i];
+	    int grpzero = 1;
 	    int got = 0;
 
 	    if (Ti == 0) {
@@ -1001,6 +1005,9 @@ static DATASET *within_groups_dataset (const DATASET *dset,
 		bigt = panel_index(i, t);
 		if (!panel_missing(pan, bigt)) {
 		    wset->Z[j][s] = dset->Z[vj][bigt] - xbar;
+		    if (wset->Z[j][s] != 0.0) {
+			grpzero = 0;
+		    }
 		    got++;
 		    if (pan->small2big != NULL) {
 			pan->small2big[s] = bigt;
@@ -1009,10 +1016,20 @@ static DATASET *within_groups_dataset (const DATASET *dset,
 		    s++;
 		}
 	    }
+
+	    if (!grpzero) {
+		allzero = 0;
+	    }
+	} /* end loop over units */
+
+	gxbar /= pan->NT;
+
+	if (j == 1 && allzero) {
+	    /* the dependent variable is not time-varying */
+	    fprintf(stderr, "fixed effects: dependent var is time-invariant\n");
 	}
 
 	/* wZ = data - group mean + grand mean */
-	gxbar /= pan->NT;
 	for (s=0; s<pan->NT; s++) {
 	    wset->Z[j][s] += gxbar;
 	}
@@ -2396,10 +2413,11 @@ hausman_move_uhat (MODEL *pmod, panelmod_t *pan)
 static void verbose_femod_print (MODEL *femod, DATASET *wset,
 				 PRN *prn)
 {
-    int i, j;
-
     pprintf(prn, "*** initial FE model (on within data)\n");
     printmodel(femod, wset, OPT_O, prn);
+
+# if PDEBUG > 2
+    int i, j;
 
     fprintf(stderr, "femod: data series length = %d\n", wset->n);
     for (i=0; i<wset->n; i++) {
@@ -2410,6 +2428,7 @@ static void verbose_femod_print (MODEL *femod, DATASET *wset,
 	}
 	fputc('\n', stderr);
     }
+# endif
 }
 
 #endif
@@ -2425,6 +2444,7 @@ fixed_effects_model (panelmod_t *pan, DATASET *dset, PRN *prn)
     gretlopt lsqopt = OPT_A | OPT_X;
     DATASET *wset = NULL;
     int *felist = NULL;
+    int save_qr = 0;
     int i;
 
 #if PDEBUG
@@ -2457,7 +2477,12 @@ fixed_effects_model (panelmod_t *pan, DATASET *dset, PRN *prn)
 	lsqopt |= OPT_Z;
     }
 
+    save_qr = libset_get_bool(USE_QR);
+    libset_set_bool(USE_QR, 1);
+
     femod = lsq(felist, wset, OLS, lsqopt);
+
+    libset_set_bool(USE_QR, save_qr);
 
     if (femod.errcode) {
 	fprintf(stderr, "femod.errcode = %d\n", femod.errcode);
@@ -3336,7 +3361,7 @@ static int panel_obs_accounts (panelmod_t *pan)
 	uobs[i] = 0;
 	for (t=0; t<pan->T; t++) {
 	    bigt = panel_index(i, t);
-#if PDEBUG > 1
+#if PDEBUG > 2
 	    fprintf(stderr, "unit %d, bigt=%d, pmod->uhat[%d]: %s\n", i, t,
 		    bigt, (panel_missing(pan, bigt))? "NA" : "OK");
 #endif
@@ -3964,7 +3989,7 @@ MODEL real_panel_model (const int *list, DATASET *dset,
 	    mod = *pan.realmod;
 	    mod.missmask = mask;
 	} else if (!(opt & OPT_P)) {
-	    /* not the pooled model, in which case @mod would
+	    /* not doing pooled OLS, in which case @mod would
 	       already hold the correct model
 	    */
 	    clear_model(&mod);
