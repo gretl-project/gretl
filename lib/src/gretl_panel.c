@@ -4596,6 +4596,12 @@ static int print_ar_aux_model (MODEL *pmod, DATASET *dset,
     return 0;
 }
 
+/* See Wooldridge's Econometric Analysis of Cross Section
+   and Panel Data (MIT Press, 2002), pages 282-3. Test
+   for first order autocorrelation based on the residuals
+   from the first-differenced model.
+*/
+
 int wooldridge_autocorr_test (MODEL *pmod, DATASET *dset,
 			      gretlopt opt, PRN *prn)
 {
@@ -4668,8 +4674,10 @@ int wooldridge_autocorr_test (MODEL *pmod, DATASET *dset,
 	s = tmp.sderr[0];
 	F = c * c / (s * s);
 	pval = snedecor_cdf_comp(1, dfd, F);
+	record_test_result(F, pval);
 
 	if ((opt & OPT_S) || !(opt & OPT_I)) {
+	    /* saving the test onto @pmod, or not silent */
 	    ModelTest *test = model_test_new(GRETL_TEST_PANEL_AR);
 
 	    if (test != NULL) {
@@ -4692,7 +4700,6 @@ int wooldridge_autocorr_test (MODEL *pmod, DATASET *dset,
 		}
 	    }
 	}
-	record_test_result(F, pval);
     }
 
     if (clearit) {
