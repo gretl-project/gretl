@@ -595,7 +595,8 @@ enum {
     PRX_NODE = 1 << 3, /* aux node is proxy (don't reuse!) */
     ALS_NODE = 1 << 4, /* node holds aliased function call */
     LHT_NODE = 1 << 5, /* node holds terminal of LHS */
-    MSL_NODE = 1 << 6  /* (scalar) node is matrix element */
+    MSL_NODE = 1 << 6, /* (scalar) node is matrix element */
+    MUT_NODE = 1 << 7  /* node is inherently mutable in type */
 };
 
 struct node {

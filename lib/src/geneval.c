@@ -122,6 +122,7 @@ enum {
 #define matrix_element_node(n) (n->t == NUM && (n->flags & MSL_NODE))
 
 #define stringvec_node(n) (n->flags & SVL_NODE)
+#define mutable_node(n) (n->flags & MUT_NODE)
 
 #define null_node(n) (n == NULL || n->t == EMPTY)
 #define null_or_scalar(n) (null_node(n) || scalar_node(n))
@@ -703,6 +704,43 @@ static void clear_tmp_node_data (NODE *n, parser *p)
     }
 }
 
+static int mutate_bundle_member_node (NODE *n, int type,
+				      int flags, parser *p)
+{
+    int err = 0;
+
+    fprintf(stderr, "mutate_bundle_member: %s -> %s, node TMP %d, flags TMP %d\n",
+	    getsymb(n->t), getsymb(type), n->flags & TMP_NODE, flags & TMP_NODE);
+
+    if (is_tmp_node(n)) {
+	fprintf(stderr, "  clearing tmp node data\n");
+	clear_tmp_node_data(n, p);
+    } else if (flags & TMP_NODE) {
+	fprintf(stderr, "  allocation needed?\n");
+    }
+
+    if (type == SERIES) {
+	/* creating a bundled series node */
+	fprintf(stderr, "  allocating xvec\n");
+	n->v.xvec = malloc(p->dset->n * sizeof(double));
+	if (n->v.xvec == NULL) {
+	    err = E_ALLOC;
+	}
+    } else if (n->t == SERIES) {
+	/* replacing a bundled series node */
+	fprintf(stderr, "  freeing xvec at %p\n", (void *) n->v.xvec);
+	free(n->v.xvec);
+	n->v.xvec = NULL;
+    }
+
+    if (!err) {
+	n->t = type;
+	n->flags = flags;
+    }
+
+    return err;
+}
+
 /* We allow here for some equivocation in type between
    1 x 1 matrices and scalars in the course of executing
    a compiled parser with saved aux nodes.
@@ -711,7 +749,10 @@ static void clear_tmp_node_data (NODE *n, parser *p)
 static void maybe_switch_node_type (NODE *n, int type,
 				    int flags, parser *p)
 {
-    if (n->t == MAT && type == NUM) {
+    if (0 && mutable_node(n)) {
+	/* bundle members only : FIXME */
+	p->err = mutate_bundle_member_node(n, type, flags, p);
+    } else if (n->t == MAT && type == NUM) {
 	/* switch aux node @n from matrix to scalar */
 	if (is_tmp_node(n)) {
 	    gretl_matrix_free(n->v.m);
@@ -9354,8 +9395,8 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
 {
     char *key = r->v.str;
     GretlType type;
-    int copied = 0;
     int size = 0;
+    int alloc = 0;
     void *val = NULL;
     NODE *ret = NULL;
 
@@ -9365,7 +9406,6 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
 #endif
 
     val = gretl_bundle_get_data(l->v.b, key, &type, &size, &p->err);
-
     if (p->err) {
 	return ret;
     }
@@ -9390,20 +9430,12 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
 	    ret->v.str = (char *) val;
 	}
     } else if (type == GRETL_TYPE_MATRIX) {
-	if (copied) {
-	    ret = aux_matrix_node(p);
-	} else {
-	    ret = matrix_pointer_node(p);
-	}
+	ret = matrix_pointer_node(p);
 	if (ret != NULL) {
 	    ret->v.m = (gretl_matrix *) val;
 	}
     } else if (type == GRETL_TYPE_BUNDLE) {
-	if (copied) {
-	    ret = aux_bundle_node(p);
-	} else {
-	    ret = bundle_pointer_node(p);
-	}
+	ret = bundle_pointer_node(p);
 	if (ret != NULL) {
 	    ret->v.b = (gretl_bundle *) val;
 	}
@@ -9440,11 +9472,7 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
 	p->err = stored_list_check((const int *) val, p->dset);
 	if (!p->err) {
 	    /* OK, extract list as such */
-	    if (copied) {
-		ret = aux_list_node(p);
-	    } else {
-		ret = list_pointer_node(p);
-	    }
+	    ret = list_pointer_node(p);
 	    if (!p->err) {
 		ret->v.ivec = (int *) val;
 	    }
@@ -9459,6 +9487,10 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
 	}
     } else {
 	p->err = E_DATA;
+    }
+
+    if (ret != NULL) {
+	ret->flags |= MUT_NODE;
     }
 
     return ret;
