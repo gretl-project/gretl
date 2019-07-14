@@ -1157,6 +1157,15 @@ static char *get_quoted_string (parser *p)
 	}
     }
 
+    if (s != NULL && !strcmp(s, "\\\"")) {
+	gchar *gs;
+
+	free(s);
+	gs = g_strdup_printf("\"");
+	s = gretl_strdup(s);
+	free(gs);
+    }
+
     return s;
 }
 
