@@ -4562,15 +4562,14 @@ static int print_ar_aux_model (MODEL *pmod, DATASET *dset,
         N_("First differenced equation (dependent, d_y)"),
         N_("Autoregression of residuals (dependent, uhat)")
     };
-    gretl_matrix *cse, *add;
+    gretl_matrix *cse;
     gretl_array *S;
     int i, vi, err = 0;
 
     cse = gretl_matrix_alloc(pmod->ncoeff, 2);
-    add = gretl_vector_alloc(2);
-    S = gretl_array_new(GRETL_TYPE_STRINGS, pmod->ncoeff + 2, &err);
+    S = gretl_array_new(GRETL_TYPE_STRINGS, pmod->ncoeff, &err);
 
-    if (cse == NULL || add == NULL || S == NULL) {
+    if (cse == NULL || S == NULL) {
 	return E_ALLOC;
     }
 
@@ -4581,16 +4580,11 @@ static int print_ar_aux_model (MODEL *pmod, DATASET *dset,
 	gretl_array_set_string(S, i, dset->varname[vi], 0);
     }
 
-    add->val[0] = pmod->nobs;
-    add->val[1] = pmod->rsq;
-    gretl_array_set_string(S, i++, "n", 0);
-    gretl_array_set_string(S, i, "R-squared", 0);
-
     pprintf(prn, "%s:\n", _(heads[j]));
-    print_model_from_matrices(cse, add, S, prn);
+    print_model_from_matrices(cse, NULL, S, prn);
+    pprintf(prn, "  n = %d, R-squared = %.4f\n\n", pmod->nobs, pmod->rsq);
 
     gretl_matrix_free(cse);
-    gretl_matrix_free(add);
     gretl_array_nullify_elements(S);
     gretl_array_destroy(S);
 
@@ -4607,6 +4601,7 @@ int wooldridge_autocorr_test (MODEL *pmod, DATASET *dset,
 			      gretlopt opt, PRN *prn)
 {
     MODEL tmp;
+    gretlopt tmp_opt;
     int quiet = (opt & OPT_Q);
     int orig_v = dset->v;
     int *dlist = NULL;
@@ -4631,9 +4626,12 @@ int wooldridge_autocorr_test (MODEL *pmod, DATASET *dset,
 	}
     }
 
+    /* aux panel models: pooled, robust, quiet */
+    tmp_opt = OPT_P | OPT_R | OPT_Q;
+
     if (!err) {
 	/* estimate model in first-differenced form */
-	tmp = lsq(dlist, dset, OLS, OPT_A | OPT_R);
+	tmp = real_panel_model(dlist, dset, tmp_opt, NULL);
 	err = tmp.errcode;
 	if (!err && !quiet) {
 	    pputc(prn, '\n');
@@ -4657,7 +4655,7 @@ int wooldridge_autocorr_test (MODEL *pmod, DATASET *dset,
 	    err = E_DATA;
 	} else {
 	    /* regress residual on its first lag */
-	    tmp = lsq(dlist, dset, OLS, OPT_A | OPT_R);
+	    tmp = real_panel_model(dlist, dset, tmp_opt, NULL);
 	    err = tmp.errcode;
 	    if (!err && !quiet) {
 		strcpy(dset->varname[dlist[2]], "uhat(-1)");

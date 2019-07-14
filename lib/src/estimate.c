@@ -4310,7 +4310,7 @@ static int check_panel_options (gretlopt opt)
  * @list: regression list (dependent variable plus independent
  * variables).
  * @dset: dataset struct.
- * @opt: can include OPT_Q (quiet estimation), OPT_R (random
+ * @opt: can include OPT_Q (quiet estimation), OPT_U (random
  * effects model), OPT_H (weights based on the error variance
  * for the respective cross-sectional units), OPT_I (iterate,
  * only available in conjunction with OPT_H).
