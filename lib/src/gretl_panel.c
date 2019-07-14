@@ -4605,7 +4605,7 @@ int wooldridge_autocorr_test (MODEL *pmod, DATASET *dset,
     int quiet = (opt & OPT_Q);
     int orig_v = dset->v;
     int *dlist = NULL;
-    int i, vi;
+    int i, j, vi;
     int clearit = 0;
     int err = 0;
 
@@ -4614,14 +4614,16 @@ int wooldridge_autocorr_test (MODEL *pmod, DATASET *dset,
 	return E_ALLOC;
     }
 
-    for (i=1; i<=pmod->list[0] && !err; i++) {
+    dlist[0] = 0;
+    for (i=1, j=1; i<=pmod->list[0] && !err; i++) {
 	vi = pmod->list[i];
-	if (vi == 0) {
-	    dlist[i] = 0;
-	} else {
-	    dlist[i] = diffgenr(vi, DIFF, dset);
-	    if (dlist[i] < 0) {
+	if (vi != 0 && !gretl_isconst(dset->t1, dset->t2, dset->Z[vi])) {
+	    dlist[j] = diffgenr(vi, DIFF, dset);
+	    if (dlist[j] < 0) {
 		err = E_DATA;
+	    } else {
+		j++;
+		dlist[0] += 1;
 	    }
 	}
     }
