@@ -4669,12 +4669,11 @@ int wooldridge_autocorr_test (MODEL *pmod, DATASET *dset,
 
     if (!err) {
 	double c, s, F, pval;
-	int dfd = tmp.nobs - 1;
 
 	c = tmp.coeff[0] + 0.5;
 	s = tmp.sderr[0];
 	F = c * c / (s * s);
-	pval = snedecor_cdf_comp(1, dfd, F);
+	pval = snedecor_cdf_comp(1, tmp.dfd, F);
 	record_test_result(F, pval);
 
 	if ((opt & OPT_S) || !(opt & OPT_I)) {
@@ -4685,7 +4684,7 @@ int wooldridge_autocorr_test (MODEL *pmod, DATASET *dset,
 		model_test_set_teststat(test, GRETL_STAT_F);
 		model_test_set_value(test, F);
 		model_test_set_dfn(test, 1);
-		model_test_set_dfd(test, dfd);
+		model_test_set_dfd(test, tmp.dfd);
 		model_test_set_pvalue(test, pval);
 		if (!(opt & OPT_I)) {
 		    if (quiet) {
