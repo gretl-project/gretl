@@ -4625,6 +4625,9 @@ int wooldridge_autocorr_test (MODEL *pmod, DATASET *dset,
 		j++;
 		dlist[0] += 1;
 	    }
+	} else if (i == 1) {
+	    gretl_errmsg_set("The dependent variable is constant");
+	    err = E_DATA;
 	}
     }
 
