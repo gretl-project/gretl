@@ -160,6 +160,10 @@
 	  <optparm optional="true">criterio</optparm>
 	  <effect>ordine di ritardo automatico</effect>
 	</option>
+	<option>
+	  <flag>--perron-qu</flag>
+	  <effect>si veda di seguito</effect>
+	</option>
       </options>
       <examples>
 	<example>adf 0 y</example>
@@ -202,6 +206,20 @@
         test: una basata su una regressione che contiene solo una costante,
         e una che include la costante e un trend lineare. È possibile
         controllare le varianti specificando una o più opzioni.
+      </para>
+      
+        <para context="cli">
+	L'opzione <opt>gls</opt> può essere utilizzata congiuntamente
+	con una o più opzioni <opt>c</opt> e <opt>ct</opt> (referenti
+	al modello con solo una costante ed ad uno che include sia la
+	costante che un trend lineare).  L'effetto di questa opzione è
+	che la rimozione della media o del trend lineare dalla
+	variabile che deve essere testata è fatta utilizzando la
+	procedura GLS suggerita da <cite key="ERS96">Elliott,
+	Rothenberg and Stock (1996)</cite>, la quale restituisce un
+	test di potenza superiore al test standard di
+	Dickey&ndash;Fuller.  Questa opzione non è compatibile con
+	<opt>nc</opt>,<opt>ctt</opt> o <opt>seasonals</opt>.
       </para>
       
       <para>
@@ -367,7 +385,7 @@
       <options>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>non stampare i risultati</effect>
+	  <effect>non stampa i risultati</effect>
 	</option>
       </options>
     </usage>
@@ -443,6 +461,19 @@
 	  <flag>--time-series</flag>
 	  <effect>si veda oltre</effect>
 	</option>
+	<option>
+	  <flag>--fixed-sample</flag>
+	  <effect>si veda oltre</effect>
+	</option>
+	<option>
+	  <flag>--update-overlap</flag>
+	  <effect>si veda oltre</effect>
+	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>non stampa nulla</effect>
+	</option>
+	<optnote>Si veda oltre per opzioni speciali addizionali</optnote>
       </options>
     </usage>
 
@@ -472,7 +503,7 @@
       </para>
       <para>
 	Nel caso di aggiunta di dati a un dataset panel, c'è una
-	possibilità speciale. Detti <math>n</math> il numero di unità
+	possibilità speciale. Siano <math>n</math> il numero di unità
 	cross-section, <math>T</math> il numero di periodi temporali,
 	e <math>m</math> il numero di nuove osservazioni da
 	aggiungere. Se <math>m = n</math> i nuovi dati saranno
@@ -498,9 +529,9 @@
 	quel momento saranno lasciati inalterati.
       </para>
       <para>
-	Lo opzioni specializzate aggiuntive <opt>sheet</opt>,
+	Le opzioni specializzate aggiuntive <opt>sheet</opt>,
 	<opt>coloffset</opt>, <opt>rowoffset</opt> e
-	<opt>fixed-cols</opt> funzionan come quelle corrispondenti per
+	<opt>fixed-cols</opt> funzionano come quelle corrispondenti per
 	il comando <cmdref targ="open"/>.
       </para>
       <para>
@@ -528,6 +559,10 @@
 	<option>
 	  <flag>--vcv</flag>
 	  <effect>mostra la matrice di covarianza</effect>
+	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>non riporta i parametri stimati</effect>
 	</option>
       </options>
       <examples>
@@ -602,6 +637,10 @@
 	  <flag>--loose</flag>
 	  <effect>usa un criterio di convergenza più blando</effect>
 	</option>
+	<option>
+	  <flag>--quite</flag>
+	  <effect>non stampa nulla</effect>
+	</option>
       </options>
       <examples>
         <example>ar1 1 0 2 4 6 7</example>
@@ -622,7 +661,8 @@
 	procedura termina quando le stime successive del coefficiente
 	di autocorrelazione non differiscono per più di 0.001, oppure
 	dopo 20 iterazioni. Sarà segnalato un errore se la convergenza
-	non è avvenuta dopo 100 iterazioni.
+	non è avvenuta dopo 100 iterazioni. Se ciò non si verifica entro la
+	100esima iterata verrà stampato un messaggio di errore.
       </para>
       <para>
         Se si usa l'opzione <opt>pwe</opt>, viene usato lo stimatore di
@@ -747,7 +787,8 @@
 	della stima a un passo (con errori standard robusti), ma è
 	possibile scegliere una stima a due passi. In entrambi i casi,
 	vengono mostrati i testi per l'autocorrelazione di ordine 1 e
-	2, oltre al test di sovraidentificazione di Sargan. Si noti
+	2, oltre al test di sovraidentificazione di Sargan ed a un Wald test
+	per la significatività congiunta dei regressori. Si noti
 	che in questo modello differenziato l'autocorrelazione del
 	prim'ordine non contrasta con la validità del modello, mentre
 	quella di ordine 2 viola le ipotesi statistiche che ne sono
@@ -787,6 +828,12 @@
         <argument>variabile-dipendente</argument>
 	<argument>variabili-indipendenti</argument>
       </arguments>
+           <options>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>non stampa nulla</effect>
+        </option>
+      </options>
       <examples>
         <example>arch 4 y 0 x1 x2 x3</example>
       </examples>
@@ -848,6 +895,10 @@
 	<option>
 	  <flag>--verbose</flag>
 	  <effect>mostra i dettagli delle iterazioni</effect>
+        </option>
+        <option>
+	  <flag>--quite</flag>
+	  <effect>non mostra i risultati</effect>
         </option>
         <option>
 	  <flag>--vcv</flag>
@@ -1066,7 +1117,7 @@
       </para>
 
       <para context="notex">
-	Le radici AR e MA mostrate in occasione delkla stima ARMA sono
+	Le radici AR e MA mostrate in occasione della stima ARMA sono
 	basate sulla seguente rappresentazione	di un processo ARMA(p,q):
       </para>
       <mono context="notex">
@@ -1223,6 +1274,53 @@
     </description>
   </command>
 
+  <command name="bkw" section="Tests" context="cli"
+	   label="Collinearity Diagnostics">
+    <usage>
+      <options>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>non stampa nulla</effect>
+        </option>
+      </options>
+	<examples>
+	<demos>
+	  <demo>longley.inp</demo>
+	</demos>
+    </examples>
+    </usage>
+
+    <description>
+      <para>
+	Deve seguire la stima di un modello che includa almeno due
+	variabili indipendenti. Calcola e mostra le informazioni relative
+	alla collinearità, ovvero la tabella BKW, basandosi sul lavoro di
+	<cite key="belsley-etal80">Belsley, Kuh e Welsch (1980)</cite>.
+	Questa tabella riporta una sofisticata analisi del grado di
+	collinearità e delle sue fonti, attraverso l'analisi degli
+	autovalori ed autovettori dell'inversa della matrice di
+	correlazione. Per un resoconto completo circa l'approccio BKW con
+	riferimento a gretl, ed a diversi altri esempi, si veda <cite
+	key="adkins15">Adkins, Waters e Hill (2015)</cite>.
+      </para>
+      <para>
+	Utilizzando l'accessore <fncref targ="$result"/> è possibile
+	recuperare la tabella BKW come matrice. Si veda anche il
+	comando <cmdref targ="vif"/> per un approccio semplificato
+	alla diagnostica della collinearità.
+      </para>
+      <para>
+	Esiste anche una funzione chiamata <fncref targ="bkw"/> che
+	offre maggior flessibilità.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Finestra del modello, /Analisi/Collinearità</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="bootstrap" section="Tests" label="Opzioni bootstrap"
     context="gui">
 
@@ -1240,19 +1338,21 @@
 	<li>
 	  <para>
             Il tipo di analisi da eseguire. L'intervallo di confidenza
-            predefinito (95 per cento) è basato direttamente sui quantili delle
-            stime bootstrap del coefficiente. La versione
-	    <quote>studentizzata</quote> corrisponde a quella presentata nel
-            capitolo 5 di <book>Economic Theory and Methods</book> (ETM) di
-            Davidson e MacKinnon: ad ogni replicazione bootstrap, viene
-            calcolato un rapporto
-	    <math>t</math> come (a) la differenza tra la stima attuale
-            del coefficiente e quella di riferimento, divisa per (b) l'errore
-            standard di riferimento. Quindi l'intervallo di confidenza viene
-            calcolato usando i quantili di questo rapporto t, come spiegato in
-            ETM. L'opzione p-value si basa sulla distribuzione del rapporto
-	    <math>t</math> bootstrap: è la proporzione delle replicazioni
-            in cui il valore assoluto di questa statistica eccede il valore
+            predefinito (95 per cento) è basato direttamente sui
+            quantili delle stime bootstrap del coefficiente. La
+            versione <quote>studentizzata</quote> corrisponde a quella
+            presentata nel capitolo 5 di <cite
+            key="davidson-mackinnon04">Economic Theory and
+            Methods</cite> (ETM) di Davidson e MacKinnon: ad ogni
+            replicazione bootstrap, viene calcolato un rapporto
+            <math>t</math> come (a) la differenza tra la stima attuale
+            del coefficiente e quella di riferimento, divisa per (b)
+            l'errore standard di riferimento. Quindi l'intervallo di
+            confidenza viene calcolato usando i quantili di questo
+            rapporto t, come spiegato in ETM. L'opzione p-value si
+            basa sulla distribuzione del rapporto <math>t</math>
+            bootstrap: è la proporzione delle replicazioni in cui il
+            valore assoluto di questa statistica eccede il valore
             assoluto del rapporto <math>t</math> di riferimento.
 	  </para>
 	</li>
@@ -1337,7 +1437,7 @@
 	punti. Una linea trasversale sulla scatola indica la mediana,
 	mentre un segno <quote>+</quote> indica la media. Se viene
 	selezionata l'opzione di mostrare un intervallo di confidenza
-	per la mediana, quetso viene calcolato via bootstrap e
+	per la mediana, questo viene calcolato via bootstrap e
 	mostrato sotto forma di lnee tratteggiate orizzontali sopra e
 	sotto la mediana.
       </para> 
@@ -1348,7 +1448,7 @@
 	fattore discreto. Ad esempio, se un dataset contiene salari e
 	una variable binaria per il genere, si può scegliere di
 	analizzare la distribuzione del salario condizionata al genere
-	e visualizzare boxplot dei salri per i maschi e per le femmine
+	e visualizzare boxplot dei salari per i maschi e per le femmine
 	uno di fianco all'altro.
       </para>
       
@@ -1358,7 +1458,7 @@
 	fattore discreto. Ad esempio, se un dataset contiene salari e
 	una variable binaria per il genere, si può scegliere di
 	analizzare la distribuzione del salario condizionata al genere
-	e visualizzare boxplot dei salri per i maschi e per le femmine
+	e visualizzare boxplot dei salari per i maschi e per le femmine
 	uno di fianco all'altro, come ad esempio
       </para>
       <code context="cli">
@@ -1623,6 +1723,12 @@
       <arguments>
         <argument>lista-variabili</argument>
       </arguments>
+      <options>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>non stampa nulla</effect>
+	</option>
+      </options>
       <examples>
         <example>coeffsum xt xt_1 xr_2</example>
 	<demos>
@@ -1650,6 +1756,11 @@
 	  targ="omit"/>, che assume come ipotesi nulla l'uguaglianza a zero
           di <emphasis>tutti</emphasis> i coefficienti di un gruppo di variabili
           indipendenti.</para>
+      <para context="cli">
+	L'opzione <opt>quiet</opt> potrebbe risultare utile se si vuole
+	accedere ai valori <fncref targ="$test"/> e <fncref targ="$pvalue"/>,
+	che vengono registrati al completamento della procedura.
+      </para>
     </description>
 
     <gui-access>
@@ -1836,6 +1947,10 @@
         <example>coint2 2 y x</example>
 	<example>coint2 4 y x1 x2 --verbose</example>
 	<example>coint2 3 y x1 x2 --rc</example>
+	<demos>
+	  <demo>hamilton.inp</demo>
+	  <demo>denmark.inp</demo>
+	</demos>
       </examples>
     </usage>
 
@@ -1846,12 +1961,12 @@
         di ritardi. Per dettagli, si veda <guideref targ="chap:vecm"/>
         oppure <cite key="hamilton94">Hamilton (1994)</cite>, capitolo
         20. I valori critici sono calcolati con l'approssimazione
-        gamma di J. Doornik (Doornik, 1998). Per il test traccia,
-        vengono formiti due set di valori critici: asintotici e
-        aggiustati per l'ampiezza campionaria. Di default, l'accessore
-        <fncref targ="$pvalue"/> riporta la variante aggiustata, ma i valori
-        asintotici possono essere ottenuti usando l'opzione
-        <opt>asy</opt>
+        gamma di J. Doornik <cite key="doornik98" p="true">(Doornik,
+        1998)</cite>. Per il test traccia, vengono formiti due set di
+        valori critici: asintotici e aggiustati per l'ampiezza
+        campionaria.  Di default, l'accessore <fncref targ="$pvalue"/>
+        riporta la variante aggiustata, ma i valori asintotici possono
+        essere ottenuti usando l'opzione <opt>asy</opt>.
       </para>
       <para context="gui">
         Esegue il test di Johansen per la cointegrazione tra le variabili
@@ -1901,7 +2016,7 @@
 	È possibile controllare per le variabili esogene aggiungendole
 	nel campo inferiore. Per impostazione predefinita, le
 	variabili vengono aggiunte al modello in forma non vincolata
-	(indicata da una lettera <lit>N</lit> vicino al nome della
+	(indicata da una lettera <lit>U</lit> vicino al nome della
 	variabile). Se si vuole che una certa variabile esogena sia
 	vincolata allo spazio di cointegrazione, basta fare clic col
 	tasto destro e selezionare <quote>Vincolata</quote> dal menu
@@ -2067,9 +2182,10 @@
   <command name="corr" section="Statistics" label="Coefficienti di correlazione">
 
     <usage>
-      <arguments>
-        <argument optional="true">lista-variabili</argument>
-      </arguments>
+     <altforms>
+	<altform><lit>corr [</lit> <repl>lista-variabili</repl> ]</altform>
+	<altform><lit>corr --matrix=</lit><repl>nome-matrice</repl></altform>
+      </altforms>
       <options>
  	<option>
 	 <flag>--uniform</flag>
@@ -2089,12 +2205,12 @@
 	</option>
         <option>
 	  <flag>--plot</flag>
-	  <optparm>mode-or-filename</optparm>
-	  <effect>see below</effect>
+	  <optparm>modo o nome del file</optparm>
+	  <effect>si veda di seguito</effect>
         </option>
 	<option>
 	  <flag>--triangle</flag>
-	  <effect>see below</effect>
+	  <effect>si veda di seguito</effect>
 	</option>
       </options>
       <examples>
@@ -2151,7 +2267,7 @@
 	Se <repl>lista-variabili</repl> contiene più di due serie e il
 	programma non è in modalità batch, verrà mostrato un grafico a
 	<quote>temperatura</quote> della matrice di correlazione,
-	regolato dall'opzione <opt>plot</opt> option. Per questa
+	regolato dall'opzione <opt>plot</opt>. Per questa
 	opzione, i parametri possibili sono <lit>none</lit> (per non
 	averlo), <lit>display</lit> (per mostrarlo a video anche in
 	modo batch), o un nome di file. Quest'ultima scelta ha effetti
@@ -2159,6 +2275,18 @@
 	<cmdref targ="gnuplot"/>. L'opzione <opt>triangle</opt> fa sì
 	che il grafico contenga solo il triangolo inferiore della
 	matrice.
+      </para>
+      <para>
+	Se si usa la forma alternativa, dando come argomento un nome
+	di matrice piuttosto che una lista variabili, le opzioni
+	<opt>spearman</opt> e <opt>kendall</opt> non sono
+	disponibili&mdash; si veda quindi la funzione <fncref
+	targ="npcorr"/>.
+      </para>
+      <para>
+	L'accessore <fncref targ="$result"/> può essere utilizzato per
+	ottenere le correlazioni risultati dal comando sottoforma di
+	matrice utilizzabile.
       </para>      
     </description>
 
@@ -2183,8 +2311,12 @@
         </option>	
        <option>
 	  <flag>--plot</flag>
-	  <optparm>mode-or-filename</optparm>
+	  <optparm>modo o nome di file</optparm>
 	  <effect>si veda sotto</effect>
+       <option>
+	  <flag>--quiet</flag>
+	  <effect>non mostra il grafico</effect>
+       </option>
         </option>	  
       </options>
       <examples>
@@ -2361,7 +2493,7 @@
       <para>
 	Va eseguito dopo la stima di un modello OLS. Esegue il test
 	CUSUM (o, se si usa l'opzione <opt>squares</opt>, il test
-        CUSUMSQ ) per la stabilità dei parametri. Viene calcolata una 
+        CUSUMSQ) per la stabilità dei parametri. Viene calcolata una 
         serie di errori di previsione per il periodo successivo,
         attraverso una serie di regressioni: la prima usa le prime
 	<math>k</math> osservazioni e viene usata per generare
@@ -2386,7 +2518,8 @@
         della stabilità dei parametri. Si veda il Capitolo 7 di
         <book>Econometric Analysis</book> di Greene, per i dettagli. Per il test
 	CUSUMSQ, la banda di confidenza al 95% è calcolata usando l'algoritmo
-        descritto in Edgerton e Wells (1994).
+        descritto in <cite key="edgerton94">Edgerton e Wells
+	(1994)</cite>.
 
       </para>
     </description>
