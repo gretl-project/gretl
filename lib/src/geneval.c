@@ -709,28 +709,29 @@ static int mutate_bundle_member_node (NODE *n, int type,
 {
     int err = 0;
 
-    fprintf(stderr, "mutate_bundle_member: %s -> %s, node TMP %d, flags TMP %d\n",
-	    getsymb(n->t), getsymb(type), n->flags & TMP_NODE, flags & TMP_NODE);
+#if EDEBUG > 1
+    fprintf(stderr, "mutate_bundle_member: %p, %s -> %s, tmp %d -> %d\n",
+	    (void *) n, getsymb(n->t), getsymb(type),
+	    (n->flags & TMP_NODE)? 1 : 0,
+	    (flags & TMP_NODE)? 1 : 0);
+#endif
 
     if (is_tmp_node(n)) {
-	fprintf(stderr, "  clearing tmp node data\n");
-	clear_tmp_node_data(n, p);
-    } else if (flags & TMP_NODE) {
-	fprintf(stderr, "  allocation needed?\n");
+	/* some allocated storage should be freed */
+	if (n->t == SERIES) {
+	    free(n->v.xvec);
+	} else if (n->t == MAT) {
+	    gretl_matrix_free(n->v.m);
+	}
+	n->v.ptr = NULL;
     }
 
     if (type == SERIES) {
-	/* creating a bundled series node */
-	fprintf(stderr, "  allocating xvec\n");
+	/* switching to a series node : allocate xvec */
 	n->v.xvec = malloc(p->dset->n * sizeof(double));
 	if (n->v.xvec == NULL) {
 	    err = E_ALLOC;
 	}
-    } else if (n->t == SERIES) {
-	/* replacing a bundled series node */
-	fprintf(stderr, "  freeing xvec at %p\n", (void *) n->v.xvec);
-	free(n->v.xvec);
-	n->v.xvec = NULL;
     }
 
     if (!err) {
@@ -749,8 +750,8 @@ static int mutate_bundle_member_node (NODE *n, int type,
 static void maybe_switch_node_type (NODE *n, int type,
 				    int flags, parser *p)
 {
-    if (0 && mutable_node(n)) {
-	/* bundle members only : FIXME */
+    if (mutable_node(n)) {
+	/* bundle members only */
 	p->err = mutate_bundle_member_node(n, type, flags, p);
     } else if (n->t == MAT && type == NUM) {
 	/* switch aux node @n from matrix to scalar */
