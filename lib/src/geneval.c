@@ -9397,7 +9397,6 @@ static NODE *get_bundle_member (NODE *l, NODE *r, parser *p)
     char *key = r->v.str;
     GretlType type;
     int size = 0;
-    int alloc = 0;
     void *val = NULL;
     NODE *ret = NULL;
 
