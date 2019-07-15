@@ -9,6 +9,9 @@
 /* allow deprecated "addobs" for "dataset addobs"? */
 #define ALLOW_ADDOBS 1
 
+/* experiment: allow statements separated by ';' */
+#define SEMIC_TEST 0
+
 typedef enum {
     CI_LIST  = 1 << 0,  /* list may be present */
     CI_LLEN1 = 1 << 1,  /* list must contain exactly 1 member */
@@ -262,6 +265,61 @@ static void check_for_shadowed_commands (void)
 	    gretl_cmds[i].flags |= CI_FFORM;
 	}
     }
+}
+
+/* Get the maximum number of (semicolon) separators
+   supported by the command with index @ci. For most
+   commands this is zero. If @pmin is non-NULL it
+   gets the minimum number of such separators needed
+   by the command.
+*/
+
+static int get_sep_max (int ci, int *pmin)
+{
+    /* default: semicolon separator neither required nor allowed */
+    int minsep = 0, maxsep = 0;
+
+    switch (ci) {
+    case AR:
+    case GARCH:
+    case HECKIT:
+    case IVREG:
+    case MIDASREG:
+	minsep = maxsep = 1;
+	break;
+    case ARBOND:
+    case DPANEL:
+    case ARMA:
+	minsep = 1;
+	maxsep = 2;
+	break;
+    case COINT2:
+    case VECM:
+	maxsep = 2;
+	break;
+    case BIPROBIT:
+    case DURATION:
+    case EQUATION:
+    case MPOLS:
+    case NEGBIN:
+    case POISSON:
+    case VAR:
+    case XTAB:
+    case LAGS:
+    case SCATTERS:
+    case HFPLOT:
+    case SMPL:
+	maxsep = 1;
+	break;
+    default:
+	break;
+    }
+
+    if (pmin != NULL) {
+	*pmin = minsep;
+    }
+
+    return maxsep;
 }
 
 /* The difference between TOK_JOINED and TOK_NOGAP below is that we
@@ -575,10 +633,12 @@ static int push_string_token (CMD *c, const char *tok,
     return push_token(c, tok, s, pos, type, 0);
 }
 
-static int push_symbol_token (CMD *c, const char *tok,
-			      const char *s, int pos)
+static int push_symbol_token (ExecState *state,
+			      const char *tok,
+			      char *s, int pos)
 {
     char type = TOK_SYMB;
+    CMD *c = state->cmd;
 
     if (!strcmp(tok, "-")) {
 	type = TOK_DASH;
@@ -605,6 +665,22 @@ static int push_symbol_token (CMD *c, const char *tok,
     } else if (c->ntoks == 1 && !strcmp(tok, "<-")) {
 	/* FIXME allow for "catch" */
 	type = TOK_ASSIGN;
+    }
+
+    if (type == TOK_SEMIC) {
+	if (c->ci > 0 && get_sep_max(c->ci, NULL) == 0) {
+#if SEMIC_TEST
+	    char *p = s + 1;
+
+	    p += strspn(p, " \t");
+	    state->more = p;
+	    return 0;
+#else
+	    gretl_errmsg_sprintf(_("The symbol '%c' is not valid in this context\n"),
+				 ';');
+	    return E_PARSE;
+#endif
+	}
     }
 
     return push_token(c, tok, s, pos, type, 0);
@@ -2264,47 +2340,10 @@ static int check_for_stray_tokens (CMD *c)
 
 static int check_list_sepcount (int ci, int nsep)
 {
-    /* default: separators neither required nor allowed */
-    int minsep = 0, maxsep = 0;
+    int minsep, maxsep;
     int err = 0;
 
-    /* record of minimum and maximum list separator
-       counts for gretl commands */
-
-    switch (ci) {
-    case AR:
-    case GARCH:
-    case HECKIT:
-    case IVREG:
-    case MIDASREG:
-	minsep = maxsep = 1;
-	break;
-    case ARBOND:
-    case DPANEL:
-    case ARMA:
-	minsep = 1;
-	maxsep = 2;
-	break;
-    case COINT2:
-    case VECM:
-	maxsep = 2;
-	break;
-    case BIPROBIT:
-    case DURATION:
-    case EQUATION:
-    case MPOLS:
-    case NEGBIN:
-    case POISSON:
-    case VAR:
-    case XTAB:
-    case LAGS:
-    case SCATTERS:
-    case HFPLOT:
-	maxsep = 1;
-	break;
-    default:
-	break;
-    }
+    maxsep = get_sep_max(ci, &minsep);
 
     if (nsep < minsep) {
 	err = E_ARGS;
@@ -2579,7 +2618,7 @@ static int try_for_command_index (CMD *cmd, int i,
 		if (compmode == FUNC && endci == FUNC) {
 		    cmd->flags |= CMD_ENDFUN;
 		} else if (endci == LOOP) {
-		    gretl_errmsg_set("'end loop': should be 'endloop'");
+		    gretl_errmsg_set("'end loop': did you mean 'endloop'");
 		    *err = E_PARSE;
 		}
 	    }
@@ -3061,6 +3100,28 @@ static int n_regular_tokens (CMD *c)
     return n;
 }
 
+#if SEMIC_TEST
+
+static char *unquoted_semic (char *s)
+{
+    int quoted = 0;
+    char *ret = NULL;
+
+    while (*s) {
+	if (*s == '"') {
+	    quoted = !quoted;
+	} else if (*s == ';' && !quoted) {
+	    ret = s;
+	    break;
+	}
+	s++;
+    }
+
+    return ret;
+}
+
+#endif
+
 static int handle_command_extra (CMD *c)
 {
     cmd_token *tok;
@@ -3137,7 +3198,8 @@ static int handle_command_extra (CMD *c)
    be passed to the shell, or a varargs expression.
 */
 
-static int set_command_vstart (CMD *cmd, PRN *prn)
+static int set_command_vstart (CMD *cmd, ExecState *state,
+			       PRN *prn)
 {
     cmd_token *tok;
     const char *s = NULL;
@@ -3189,6 +3251,19 @@ static int set_command_vstart (CMD *cmd, PRN *prn)
 	    return E_INVARG;
 	}
     }
+
+#if SEMIC_TEST
+    if (state != NULL && s != NULL && strchr(s, ';')) {
+	char *p = unquoted_semic((char *) s);
+
+	if (p != NULL) {
+	    *p = '\0';
+	    p++;
+	    p += strspn(p, " \t");
+	    state->more = p;
+	}
+    }
+#endif
 
     cmd->vstart = s;
 
@@ -3338,7 +3413,7 @@ static int tokenize_line (ExecState *state, DATASET *dset,
 			  int compmode)
 {
     char tok[FN_NAMELEN];
-    const char *s = state->line;
+    char *s = state->line;
     CMD *cmd = state->cmd;
     char *vtok;
     int n, m, pos = 0;
@@ -3358,6 +3433,7 @@ static int tokenize_line (ExecState *state, DATASET *dset,
     }
 
     gretl_push_c_numeric_locale();
+    state->more = NULL;
 
     while (!err && *s) {
 	int skipped = 0;
@@ -3444,7 +3520,10 @@ static int tokenize_line (ExecState *state, DATASET *dset,
 		/* operator / symbol */
 		m = (n < FN_NAMELEN)? n : FN_NAMELEN - 1;
 		strncat(tok, s, m);
-		err = push_symbol_token(cmd, tok, s, pos);
+		err = push_symbol_token(state, tok, s, pos);
+		if (state->more != NULL) {
+		    break;
+		}
 	    }
 	} else if (isdigit(*s)) {
 	    /* numeric string */
@@ -3781,13 +3860,18 @@ static void handle_option_inflections (CMD *cmd)
 }
 
 static int assemble_command (CMD *cmd, DATASET *dset,
-			     char *line, PRN *prn)
+			     ExecState *s, char *line)
 {
     /* defer handling option(s) till param is known? */
     int options_later = cmd->ci == SETOPT;
+    PRN *prn = NULL;
 
     if (cmd->ntoks == 0) {
 	return cmd->err;
+    }
+
+    if (s != NULL) {
+	prn = s->prn;
     }
 
 #if CDEBUG > 1
@@ -3877,7 +3961,7 @@ static int assemble_command (CMD *cmd, DATASET *dset,
 	if (cmd->ciflags & CI_ADHOC) {
 	    handle_adhoc_string(cmd);
 	} else if (cmd->ciflags & (CI_EXPR | CI_VARGS)) {
-	    cmd->err = set_command_vstart(cmd, prn);
+	    cmd->err = set_command_vstart(cmd, s, prn);
 	}
     }
 
@@ -4010,7 +4094,7 @@ static int real_parse_command (ExecState *s,
 	       ought to be unitary.
 	    */
 	    if (!err && compmode == LOOP && cmd->ci == LOOP) {
-		err = assemble_command(cmd, dset, line, s->prn);
+		err = assemble_command(cmd, dset, s, line);
 		compmode = 0;
 	    }
 	    goto parse_exit;
@@ -4032,7 +4116,7 @@ static int real_parse_command (ExecState *s,
 
 	/* Otherwise proceed to "assemble" the parsed command */
 	if (!err && !simple_flow_control(cmd)) {
-	    err = assemble_command(cmd, dset, line, s->prn);
+	    err = assemble_command(cmd, dset, s, line);
 	}
     }
 

@@ -375,7 +375,14 @@ static int cli_get_input_line (ExecState *s)
 {
     int err = 0;
 
-    if (runit || batch) {
+    if (s->more != NULL) {
+	/* pick up next concatented statement */
+	char *tmp = gretl_strdup(s->more);
+
+	*s->line = '\0';
+	strncat(s->line, tmp, MAXLINE - 2);
+	free(tmp);
+    } else if (runit || batch) {
 	/* reading from script file */
 	err = file_get_line(s);
     } else {
