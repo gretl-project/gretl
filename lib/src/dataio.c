@@ -100,6 +100,11 @@ static int real_check_varname (const char *vname,
 
     gretl_error_clear();
 
+    if (vname == NULL || *vname == '\0') {
+	gretl_errmsg_set("Expected an identifier");
+	return E_PARSE;
+    }
+
     if (strlen(vname) >= VNAMELEN) {
 	gretl_errmsg_set(_("Varname exceeds the maximum of 31 characters"));
 	err = E_DATA;
