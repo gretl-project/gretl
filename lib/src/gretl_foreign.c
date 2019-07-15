@@ -995,12 +995,12 @@ static void write_octave_io_file (FILE *fp, const char *ddir)
     fprintf(fp, "  dotdir = \"%s\";\n", ddir);
     fputs("endfunction\n\n", fp);
 
-    fputs("function gretl_export(X, str, autodot=1)\n", fp);
-    fputs("  if (autodot)\n", fp);
+    fputs("function gretl_export(X, fname, autodot=1)\n", fp);
+    fputs("  if (autodot && !is_absolute_filename(fname))\n", fp);
     fputs("    dname = gretl_dotdir();\n", fp);
-    fputs("    fd = fopen(strcat(dname, str), \"w\");\n", fp);
+    fputs("    fd = fopen(strcat(dname, fname), \"w\");\n", fp);
     fputs("  else\n", fp);
-    fputs("    fd = fopen(str, \"w\");\n", fp);
+    fputs("    fd = fopen(fname, \"w\");\n", fp);
     fputs("  endif\n", fp);
     fputs("  fprintf(fd, \"%d %d\\n\", size(X));\n", fp);
     fputs("  c = columns(X);\n", fp);
@@ -1011,12 +1011,12 @@ static void write_octave_io_file (FILE *fp, const char *ddir)
     fputs("  fclose(fd);\n", fp);
     fputs("endfunction\n\n", fp);
 
-    fputs("function A = gretl_loadmat(str, autodot=1)\n", fp);
-    fputs("  if (autodot)\n", fp);
+    fputs("function A = gretl_loadmat(fname, autodot=1)\n", fp);
+    fputs("  if (autodot && !is_absolute_filename(fname))\n", fp);
     fputs("    dname = gretl_dotdir();\n", fp);
-    fputs("    fd = fopen(strcat(dname, str), \"r\");\n", fp);
+    fputs("    fd = fopen(strcat(dname, fname), \"r\");\n", fp);
     fputs("  else\n", fp);
-    fputs("    fd = fopen(str, \"r\");\n", fp);
+    fputs("    fd = fopen(fname, \"r\");\n", fp);
     fputs("  endif\n", fp);
     fputs("  [r,c] = fscanf(fd, \"%d %d\", \"C\");\n", fp);
     fputs("  A = reshape(fscanf(fd, \"%g\", r*c),c,r)';\n", fp);
