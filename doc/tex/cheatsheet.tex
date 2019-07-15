@@ -847,8 +847,9 @@ more elegant:
 \emph{Problem:} How do I multiply polynomials? There's no dedicated
 function to do that, and yet it's a fairly basic mathematical task.
 
-\emph{Solution:} Never fear! We have the \cmd{filter} function, which
-is advertised as a time series tool, but in fact does just that.
+\emph{Solution:} Never fear! We have the \cmd{conv2d} function, which
+is a tool for a more general problem, but includes polynomial
+multiplication as a special case..
 
 Suppose you want to multiply two finite-order polynomials $P(x) =
 \sum_{i=0}^m p_i x^i$ and $Q(x) = \sum_{i=0}^n q_i x^i$. What you want
@@ -862,7 +863,7 @@ where
 \]
 is the \emph{convolution} of the $p_i$ and $q_i$ coefficients. The
 same operation can be performed via the FFT, but in most cases using
-\cmd{filter} is quicker and more natural.
+\cmd{conv2d} is quicker and more natural.
 
 As an example, we'll use the same one we used in Section
 \ref{sec:genr-fft}: consider the multiplication of two polynomials:
@@ -875,7 +876,7 @@ The following code snippet performs all the necessary calculations:
 \begin{code}
 p = {1; 0.5}
 q = {1; 0.3; -0.8}
-r = filter(p | zeros(rows(q)-1, 1), q)
+r = conv2d(p, q)
 print r  
 \end{code}
 Runnning the above produces
@@ -887,7 +888,9 @@ r (4 x 1)
   -0.65 
    -0.4 
 \end{code}
-which is indeed the desired result.
+which is indeed the desired result. Note that the same computation
+could also be performed via the \cmd{filter} function, at the price of
+slightly more elaborate syntax.
 
 \subsection{Comparing two lists}
 
