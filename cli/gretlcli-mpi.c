@@ -269,7 +269,13 @@ static int cli_clear_data (CMD *cmd, DATASET *dset, MODEL *model)
 
 static int cli_get_input_line (ExecState *s)
 {
-    return file_get_line(s);
+    if (s->more != NULL) {
+	/* pick up next concatented statement */
+	memmove(s->line, s->more, strlen(s->more) + 1);
+	return 0;
+    } else {
+	return file_get_line(s);
+    }
 }
 
 /* allow for continuation of lines */

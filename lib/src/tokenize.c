@@ -672,8 +672,7 @@ static int push_symbol_token (ExecState *state,
 #if SEMIC_TEST
 	    char *p = s + 1;
 
-	    p += strspn(p, " \t");
-	    state->more = p;
+	    state->more = p + strspn(p, " \t");
 	    return 0;
 #else
 	    gretl_errmsg_sprintf(_("The symbol '%c' is not valid in this context\n"),
@@ -3102,15 +3101,20 @@ static int n_regular_tokens (CMD *c)
 
 #if SEMIC_TEST
 
-static char *unquoted_semic (char *s)
+static char *free_semicolon (char *s)
 {
     int quoted = 0;
+    int braced = 0;
     char *ret = NULL;
 
     while (*s) {
 	if (*s == '"') {
 	    quoted = !quoted;
-	} else if (*s == ';' && !quoted) {
+	} else if (*s == '{') {
+	    braced++;
+	} else if (*s == '}') {
+	    braced--;
+	} else if (*s == ';' && !quoted && !braced) {
 	    ret = s;
 	    break;
 	}
@@ -3254,13 +3258,12 @@ static int set_command_vstart (CMD *cmd, ExecState *state,
 
 #if SEMIC_TEST
     if (state != NULL && s != NULL && strchr(s, ';')) {
-	char *p = unquoted_semic((char *) s);
+	char *p = free_semicolon((char *) s);
 
 	if (p != NULL) {
 	    *p = '\0';
 	    p++;
-	    p += strspn(p, " \t");
-	    state->more = p;
+	    state->more = p + strspn(p, " \t");
 	}
     }
 #endif
@@ -4064,7 +4067,7 @@ static int real_parse_command (ExecState *s,
     CMD *cmd = s->cmd;
     int err = 0;
 
-#if 0
+#if CDEBUG
     fprintf(stderr, "real_parse: '%s', compmode = %d\n", line, compmode);
 #endif
 
@@ -4100,11 +4103,15 @@ static int real_parse_command (ExecState *s,
 	    goto parse_exit;
 	}
 
+	if (!err && (cmd->ci == IF || cmd->ci == ELIF)) {
+	    err = set_command_vstart(cmd, s, s->prn);
+	}
+
 	/* If we haven't already hit an error, then we need to consult
 	   and perhaps modify the flow control state -- and if we're
 	   blocked, return.
 	*/
-	if (!err && flow_control(line, dset, cmd, ptr)) {
+	if (!err && flow_control(cmd, dset, ptr)) {
 	    if (cmd->err) {
 		/* we hit an error evaluating the if state */
 		err = cmd->err;
