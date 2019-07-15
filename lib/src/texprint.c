@@ -1241,7 +1241,7 @@ static void landscape_modify_line (char *line)
 
 void gretl_tex_preamble (PRN *prn, int fmt)
 {
-    char* lang = getenv("LANG");
+    char *lang = getenv("LANG");
     FILE *fp = NULL;
     int userfile = 0;
 

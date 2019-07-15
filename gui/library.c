@@ -3293,7 +3293,7 @@ void do_autocorr (GtkAction *action, gpointer p)
     }
 
     if (dataset_is_panel(dataset)) {
-	/* Wooldridge test: first-order */
+	/* first-order test only */
 	if (bufopen(&prn)) {
 	    return;
 	}
@@ -3310,8 +3310,7 @@ void do_autocorr (GtkAction *action, gpointer p)
     }
 
     if (dataset_is_panel(dataset)) {
-	err = wooldridge_autocorr_test(pmod, dataset,
-				       OPT_S, prn);
+	err = panel_autocorr_test(pmod, dataset, OPT_S, prn);
     } else {
 	err = autocorr_test(pmod, order, dataset, OPT_S, prn);
     }

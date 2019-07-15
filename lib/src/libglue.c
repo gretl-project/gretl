@@ -611,12 +611,13 @@ int do_modprint (const char *mname, const char *names,
 	    if (!err) {
 		gretl_print_set_format(myprn, fmt);
 		err = print_model_from_matrices(coef_se, addstats,
-						parnames, myprn);
+						parnames, 0, myprn);
 		gretl_print_destroy(myprn);
 	    }
 	} else {
 	    gretl_print_set_format(prn, fmt);
-	    err = print_model_from_matrices(coef_se, addstats, parnames, prn);
+	    err = print_model_from_matrices(coef_se, addstats,
+					    parnames, 0, prn);
 	}
     }
 

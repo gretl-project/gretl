@@ -1244,12 +1244,20 @@ int gretl_is_between_model (const MODEL *pmod)
     }
 }
 
-static int fixed_or_random_effects (const MODEL *pmod)
+/* "regular" here means pooled OLS, fixed effects or
+   random effects
+*/
+
+int gretl_is_regular_panel_model (const MODEL *pmod)
 {
-    if (pmod->ci == PANEL && (pmod->opt & (OPT_F | OPT_U))) {
+    if (pmod->ci == OLS && gretl_model_get_int(pmod, "pooled")) {
 	return 1;
-    } else {
+    } else if (pmod->ci != PANEL) {
 	return 0;
+    } else {
+	gretlopt opt = pmod->opt & (OPT_P | OPT_F | OPT_U);
+
+	return opt != 0;
     }
 }
 
@@ -4262,9 +4270,14 @@ static void gretl_test_print_h_0 (const ModelTest *test, int heading,
     const char *H0 = NULL;
     int i;
 
-    for (i=0; tstrings[i].ID < GRETL_TEST_MAX; i++) {
-	if (test->type == tstrings[i].ID) {
-	    H0 = tstrings[i].H0;
+    if (test->type == GRETL_TEST_PANEL_AR &&
+	test->teststat == GRETL_STAT_STUDENT) {
+	H0 = N_("No first-order autocorrelation (rho = 0)");
+    } else {
+	for (i=0; tstrings[i].ID < GRETL_TEST_MAX; i++) {
+	    if (test->type == tstrings[i].ID) {
+		H0 = tstrings[i].H0;
+	    }
 	}
     }
 
@@ -4379,6 +4392,13 @@ get_test_stat_string (const ModelTest *test, char *str, PRN *prn)
 	    sprintf(str, "z = %g", test->value);
 	}
 	break;
+    case GRETL_STAT_STUDENT:
+	if (tex) {
+	    sprintf(str, "$t$(%d) = %g", test->dfn, test->value);
+	} else {
+	    sprintf(str, "t(%d) = %g", test->dfn, test->value);
+	}
+	break;
     default:
 	*str = 0;
     }
@@ -4431,6 +4451,15 @@ get_test_pval_string (const ModelTest *test, char *str, PRN *prn)
 	} else {
 	    sprintf(str, "P(t(%d) > %g) = %g",
 		    test->dfn, test->value, test->pvalue);
+	}
+	break;
+    case GRETL_STAT_STUDENT:
+	if (tex) {
+	    sprintf(str, "$P$($|t| >$ %g) = %g",
+		    fabs(test->value), test->pvalue);
+	} else {
+	    sprintf(str, "P(|t| > %g) = %g",
+		    fabs(test->value), test->pvalue);
 	}
 	break;
     case GRETL_STAT_NORMAL_CHISQ:
@@ -5952,7 +5981,7 @@ int command_ok_for_model (int test_ci, gretlopt opt,
 			  const MODEL *pmod)
 {
     int between = 0;
-    int fe_or_re = 0;
+    int regular_panel = 0;
     int mci = pmod->ci;
     int ok = 1;
 
@@ -5982,7 +6011,7 @@ int command_ok_for_model (int test_ci, gretlopt opt,
     }
 
     between = gretl_is_between_model(pmod);
-    fe_or_re = fixed_or_random_effects(pmod);
+    regular_panel = gretl_is_regular_panel_model(pmod);
 
     switch (test_ci) {
 
@@ -6044,7 +6073,7 @@ int command_ok_for_model (int test_ci, gretlopt opt,
 		ok = 1;
 	    } else if (mci == PANEL && (opt & OPT_P)) {
 		ok = 1;
-	    } else if (fe_or_re && (opt & OPT_A)) {
+	    } else if (regular_panel && (opt & OPT_A)) {
 		ok = 1;
 	    } else {
 		ok = 0;
@@ -6102,7 +6131,7 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
 
     if (ok && pmod->missmask != NULL) {
 	/* can't do these with embedded missing obs? */
-	if (pmod->ci == PANEL) {
+	if (gretl_is_regular_panel_model(pmod)) {
 	    ; /* OK? */
 	} else if (ci == CUSUM ||
 	    (ci == MODTEST && (opt & (OPT_A | OPT_H)))) {
@@ -6122,9 +6151,8 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
     }
 
 #if 1 /* experimental */
-    if (ci == MODTEST && pmod->ci == PANEL &&
-	(opt & OPT_A) && dataset_is_panel(dset) &&
-	dset->pd > 2) {
+    if (ci == MODTEST && (opt & OPT_A) &&
+	gretl_is_regular_panel_model(pmod)) {
 	return 1;
     }
 #endif
@@ -6350,7 +6378,7 @@ double coeff_pval (int ci, double x, int df)
     double p = NADBL;
 
     if (!na(x)) {
-	if (df == 0 || ci == MODPRINT || ASYMPTOTIC_MODEL(ci)) {
+	if (df == 0 || ASYMPTOTIC_MODEL(ci)) {
 	    p = normal_pvalue_2(x);
 	} else {
 	    p = student_pvalue_2(df, x);

@@ -2443,12 +2443,12 @@ int autocorr_test (MODEL *pmod, int order, DATASET *dset,
 	return ivreg_autocorr_test(pmod, order, dset, opt, prn);
     } else if (pmod->ci == ARMA) {
 	return lb_autocorr_test(pmod, order, opt, prn);
-    } else if (pmod->ci == PANEL && (pmod->opt & (OPT_F | OPT_U))) {
+    } else if (gretl_is_regular_panel_model(pmod)) {
 	if (dset->pd < 3) {
 	    /* time series not long enough */
 	    return E_NOTIMP;
 	} else {
-	    return wooldridge_autocorr_test(pmod, dset, opt, prn);
+	    return panel_autocorr_test(pmod, dset, opt, prn);
 	}
     }
 

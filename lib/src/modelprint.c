@@ -4355,7 +4355,7 @@ static int plain_print_aux_coeffs (const double *b,
 	return E_ALLOC;
     }
 
-    if (ci == MODPRINT) {
+    if (df == 0 || ASYMPTOTIC_MODEL(ci)) {
 	headings[2] = N_("z");
     }
 
@@ -4380,7 +4380,7 @@ static int plain_print_aux_coeffs (const double *b,
 	    if (j < 2) {
 		/* coeff, standard error */
 		d = get_gretl_digits();
-		vals[i][j].x = (j==0)? b[i] : sei;
+		vals[i][j].x = (j == 0)? b[i] : sei;
 	    } else if (j == 2) {
 		/* t-ratio */
 		d = 4;
@@ -5552,6 +5552,7 @@ int ols_print_anova (const MODEL *pmod, PRN *prn)
  * @cs: k x 2 matrix containing coefficients and standard errors.
  * @adds: matrix containing an additional p statistics, or NULL.
  * @names: array of strings containing all required names.
+ * @df: degrees of freedom, or 0 for asymptotic.
  * @prn: gretl printer.
  *
  * Prints to @prn the coefficient table and optional additional statistics
@@ -5567,7 +5568,7 @@ int ols_print_anova (const MODEL *pmod, PRN *prn)
 int print_model_from_matrices (const gretl_matrix *cs,
 			       const gretl_matrix *adds,
 			       gretl_array *names,
-			       PRN *prn)
+			       int df, PRN *prn)
 {
     int k = gretl_matrix_rows(cs);
     int p = gretl_vector_get_length(adds);
@@ -5592,7 +5593,7 @@ int print_model_from_matrices (const gretl_matrix *cs,
 
     model_format_start(prn);
 
-    print_coeffs(b, se, (const char **) S, k, 0, MODPRINT, prn);
+    print_coeffs(b, se, (const char **) S, k, df, MODPRINT, prn);
 
     if (p > 0) {
 	print_model_stats_table(adds->val, (const char **) S + k,

@@ -465,26 +465,29 @@ arellano_vcv (MODEL *pmod, panelmod_t *pan, const DATASET *dset,
 	goto bailout;
     }
 
-    /* Small N adjustment factor: "reduce downward bias in
-       case of finite N" (Cameron and Miller, "A Practitioner's
-       Guide to Cluster-Robust Inference", Journal of Human
-       Resources, Spring 2015).
-    */
-    if (pmod->ci != IVREG) {
-	/* FIXME IVREG? */
-	Nfac = pan->effn / (pan->effn - 1.0);
-	Nfac *= (pmod->nobs - 1.0) / (pmod->nobs - k);
-	Nfac = sqrt(Nfac);
-    }
-    s = 0;
-
+    if (getenv("ARELLANO_ASY") != NULL) {
+	/* don't do the @Nfac thing */
+	fprintf(stderr, "skipping Cameron-Miller adjustment\n");
+    } else {
+	/* Small N adjustment factor: "reduce downward bias in
+	   case of finite N" (Cameron and Miller, "A Practitioner's
+	   Guide to Cluster-Robust Inference", Journal of Human
+	   Resources, Spring 2015).
+	*/
+	if (pmod->ci != IVREG) {
+	    /* FIXME IVREG? */
+	    Nfac = pan->effn / (pan->effn - 1.0);
+	    Nfac *= (pmod->nobs - 1.0) / (pmod->nobs - k);
+	    Nfac = sqrt(Nfac);
+	}
 #if 0
-    fprintf(stderr, "Nfac1 = %d/%d = %g\n", pan->effn, pan->effn-1,
-	    pan->effn / (pan->effn - 1.0));
-    fprintf(stderr, "Nfac2 = %d/%d = %g\n", pmod->nobs-1, pmod->nobs-k,
-	    (pmod->nobs - 1.0) / (pmod->nobs - k));
-    fprintf(stderr, "Nfac final = %g\n", Nfac);
+	fprintf(stderr, "Nfac1 = %d/%d = %g\n", pan->effn, pan->effn-1,
+		pan->effn / (pan->effn - 1.0));
+	fprintf(stderr, "Nfac2 = %d/%d = %g\n", pmod->nobs-1, pmod->nobs-k,
+		(pmod->nobs - 1.0) / (pmod->nobs - k));
+	fprintf(stderr, "Nfac final = %g\n", Nfac);
 #endif
+    }
 
     for (i=0; i<pan->nunits; i++) {
 	int Ti = pan->unit_obs[i];
@@ -1772,6 +1775,10 @@ static double panel_overall_test (MODEL *pmod, panelmod_t *pan,
 {
     double test = NADBL;
     int *omitlist = NULL;
+
+    if (pmod->ncoeff == 1) {
+	return test;
+    }
 
     if (nskip > 0) {
 	int i, k = pmod->list[0] - nskip - 2;
@@ -4560,7 +4567,8 @@ static int print_ar_aux_model (MODEL *pmod, DATASET *dset,
 {
     const char *heads[] = {
         N_("First differenced equation (dependent, d_y)"),
-        N_("Autoregression of residuals (dependent, uhat)")
+        N_("Autoregression of residuals (dependent, uhat)"),
+	N_("Auxiliary regression including lagged residual"),
     };
     gretl_matrix *cse;
     gretl_array *S;
@@ -4580,8 +4588,10 @@ static int print_ar_aux_model (MODEL *pmod, DATASET *dset,
 	gretl_array_set_string(S, i, dset->varname[vi], 0);
     }
 
-    pprintf(prn, "%s:\n", _(heads[j]));
-    print_model_from_matrices(cse, NULL, S, prn);
+    if (j >= 0) {
+	pprintf(prn, "%s:\n", _(heads[j]));
+    }
+    print_model_from_matrices(cse, NULL, S, pmod->dfd, prn);
     pprintf(prn, "  n = %d, R-squared = %.4f\n\n", pmod->nobs, pmod->rsq);
 
     gretl_matrix_free(cse);
@@ -4591,19 +4601,121 @@ static int print_ar_aux_model (MODEL *pmod, DATASET *dset,
     return 0;
 }
 
+static void finalize_autocorr_test (MODEL *pmod, ModelTest *test,
+				    gretlopt opt, PRN *prn)
+{
+    if (!(opt & OPT_I)) {
+	if (opt & OPT_Q) {
+	    pputc(prn, '\n');
+	}
+	gretl_model_test_print_direct(test, 1, prn);
+    }
+    if (opt & OPT_S) {
+	maybe_add_test_to_model(pmod, test);
+    } else {
+	free(test);
+    }
+}
+
+/* See Wooldridge's Econometric Analysis of Cross Section
+   and Panel Data (MIT Press, 2002), pages 176-7. Test
+   for first order autocorrelation in the context of pooled OLS.
+*/
+
+static int pooled_autocorr_test (MODEL *pmod, DATASET *dset,
+				 gretlopt opt, PRN *prn)
+{
+    int quiet = (opt & OPT_Q);
+    int *ulist = NULL;
+    int i, vi = 0;
+    int err = 0;
+
+    if (pmod->full_n != dset->n) {
+	return E_DATA;
+    }
+
+    err = dataset_add_NA_series(dset, 1);
+    if (!err) {
+	vi = dset->v - 1;
+	strcpy(dset->varname[vi], "uhat");
+	for (i=0; i<dset->n; i++) {
+	    dset->Z[vi][i] = pmod->uhat[i];
+	}
+    }
+
+    if (!err) {
+	ulist = gretl_list_new(pmod->ncoeff + 2);
+	if (ulist == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    for (i=1; i<=pmod->list[0]; i++) {
+		ulist[i] = pmod->list[i];
+	    }
+	    /* append lagged residual to list */
+	    ulist[i] = laggenr(vi, 1, dset);
+	    if (ulist[i] < 0) {
+		err = E_DATA;
+	    } else {
+		strcpy(dset->varname[ulist[i]], "uhat(-1)");
+	    }
+	}
+    }
+
+    if (!err) {
+	gretlopt auxopt = OPT_P | OPT_R | OPT_Q;
+	MODEL tmp;
+
+	/* estimate model including lagged residual */
+	tmp = real_panel_model(ulist, dset, auxopt, NULL);
+	err = tmp.errcode;
+	if (!err && !quiet) {
+	    if (gretl_echo_on()) {
+		pputc(prn, '\n');
+	    }
+	    print_ar_aux_model(&tmp, dset, 2, prn);
+	}
+	if (!err) {
+	    double tstat, pval;
+	    int df = tmp.dfd;
+
+	    i = tmp.ncoeff - 1;
+	    tstat = tmp.coeff[i] / tmp.sderr[i];
+	    pval = student_pvalue_2(df, tstat);
+	    record_test_result(tstat, pval);
+
+	    if ((opt & OPT_S) || !(opt & OPT_I)) {
+		/* saving the test onto @pmod, or not silent */
+		ModelTest *test = model_test_new(GRETL_TEST_PANEL_AR);
+
+		if (test != NULL) {
+		    model_test_set_teststat(test, GRETL_STAT_STUDENT);
+		    model_test_set_value(test, tstat);
+		    model_test_set_dfn(test, df);
+		    model_test_set_pvalue(test, pval);
+		    finalize_autocorr_test(pmod, test, opt, prn);
+		}
+	    }
+	}
+	clear_model(&tmp);
+    }
+
+    free(ulist);
+
+    return err;
+}
+
 /* See Wooldridge's Econometric Analysis of Cross Section
    and Panel Data (MIT Press, 2002), pages 282-3. Test
    for first order autocorrelation based on the residuals
    from the first-differenced model.
 */
 
-int wooldridge_autocorr_test (MODEL *pmod, DATASET *dset,
-			      gretlopt opt, PRN *prn)
+static int wooldridge_autocorr_test (MODEL *pmod, DATASET *dset,
+				     gretlopt opt, PRN *prn)
 {
     MODEL tmp;
     gretlopt tmp_opt;
     int quiet = (opt & OPT_Q);
-    int orig_v = dset->v;
     int *dlist = NULL;
     int i, j, vi;
     int clearit = 0;
@@ -4639,7 +4751,9 @@ int wooldridge_autocorr_test (MODEL *pmod, DATASET *dset,
 	tmp = real_panel_model(dlist, dset, tmp_opt, NULL);
 	err = tmp.errcode;
 	if (!err && !quiet) {
-	    pputc(prn, '\n');
+	    if (gretl_echo_on()) {
+		pputc(prn, '\n');
+	    }
 	    print_ar_aux_model(&tmp, dset, 0, prn);
 	}
     }
@@ -4689,18 +4803,7 @@ int wooldridge_autocorr_test (MODEL *pmod, DATASET *dset,
 		model_test_set_dfn(test, 1);
 		model_test_set_dfd(test, tmp.dfd);
 		model_test_set_pvalue(test, pval);
-		if (!(opt & OPT_I)) {
-		    if (quiet) {
-			/* nothing was printed above */
-			pputc(prn, '\n');
-		    }
-		    gretl_model_test_print_direct(test, 1, prn);
-		}
-		if (opt & OPT_S) {
-		    maybe_add_test_to_model(pmod, test);
-		} else {
-		    free(test);
-		}
+		finalize_autocorr_test(pmod, test, opt, prn);
 	    }
 	}
     }
@@ -4708,8 +4811,24 @@ int wooldridge_autocorr_test (MODEL *pmod, DATASET *dset,
     if (clearit) {
 	clear_model(&tmp);
     }
-    dataset_drop_last_variables(dset, dset->v - orig_v);
     free(dlist);
+
+    return err;
+}
+
+int panel_autocorr_test (MODEL *pmod, DATASET *dset,
+			 gretlopt opt, PRN *prn)
+{
+    int orig_v = dset->v;
+    int err;
+
+    if (pmod->ci == OLS || (pmod->opt & OPT_P)) {
+	err = pooled_autocorr_test(pmod, dset, opt, prn);
+    } else {
+	err = wooldridge_autocorr_test(pmod, dset, opt, prn);
+    }
+
+    dataset_drop_last_variables(dset, dset->v - orig_v);
 
     return err;
 }
