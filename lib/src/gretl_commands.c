@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* gretl_commands.c */
@@ -31,12 +31,12 @@ struct gretl_cmd {
 };
 
 static struct gretl_cmd gretl_cmds[] = {
-    { SEMIC,    ";" },     
+    { 0,        "" },
     { ADD,      "add" },
-    { ADF,      "adf" }, 
-    { ANOVA,    "anova" }, 
+    { ADF,      "adf" },
+    { ANOVA,    "anova" },
     { APPEND,   "append" },
-    { AR,       "ar" },  
+    { AR,       "ar" },
     { AR1,      "ar1" },
     { ARBOND,   "arbond" },
     { ARCH,     "arch" },
@@ -45,13 +45,13 @@ static struct gretl_cmd gretl_cmds[] = {
     { BKW,      "bkw" },
     { BREAK,    "break" },
     { BXPLOT,   "boxplot" },
-    { CHOW,     "chow" },     
+    { CHOW,     "chow" },
     { CLEAR,    "clear" },
     { COEFFSUM, "coeffsum" },
     { COINT,    "coint" },
     { COINT2,   "coint2" },
-    { CORR,     "corr" },     
-    { CORRGM,   "corrgm" },   
+    { CORR,     "corr" },
+    { CORRGM,   "corrgm" },
     { CUSUM,    "cusum" },
     { DATA,     "data" },
     { DATAMOD,  "dataset" },
@@ -73,21 +73,21 @@ static struct gretl_cmd gretl_cmds[] = {
     { EVAL,     "eval" },
     { FCAST,    "fcast" },
     { FLUSH,    "flush" },
-    { FOREIGN,  "foreign" }, 
-    { FRACTINT, "fractint" }, 
-    { FREQ,     "freq" }, 
+    { FOREIGN,  "foreign" },
+    { FRACTINT, "fractint" },
+    { FREQ,     "freq" },
     { FUNC,     "function" },
     { FUNCERR,  "funcerr" },
     { GARCH,    "garch" },
-    { GENR,     "genr" },  
+    { GENR,     "genr" },
     { GMM,      "gmm" },
-    { GNUPLOT,  "gnuplot" },  
-    { GRAPHPG,  "graphpg" }, 
+    { GNUPLOT,  "gnuplot" },
+    { GRAPHPG,  "graphpg" },
     { HAUSMAN,  "hausman" },
     { HECKIT,   "heckit" },
     { HELP,     "help" },
     { HFPLOT,   "hfplot" },
-    { HSK,      "hsk" }, 
+    { HSK,      "hsk" },
     { HURST,    "hurst" },
     { IF,       "if" },
     { INCLUDE,  "include" },
@@ -97,7 +97,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { KPSS,     "kpss" },
     { LABELS,   "labels" },
     { LAD,      "lad" },
-    { LAGS,     "lags" },    
+    { LAGS,     "lags" },
     { LDIFF,    "ldiff" },
     { LEVERAGE, "leverage" },
     { LEVINLIN, "levinlin" },
@@ -120,7 +120,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { NLS,      "nls" },
     { NORMTEST, "normtest" },
     { NULLDATA, "nulldata" },
-    { OLS,      "ols" },     
+    { OLS,      "ols" },
     { OMIT,     "omit" },
     { OPEN,     "open" },
     { ORTHDEV,  "orthdev" },
@@ -129,16 +129,16 @@ static struct gretl_cmd gretl_cmds[] = {
     { PANPLOT,  "panplot" },
     { PCA,      "pca" },
     { PERGM,    "pergm" },
-    { PLOT,     "plot" },    
+    { PLOT,     "plot" },
     { POISSON,  "poisson" },
-    { PRINT,    "print" }, 
+    { PRINT,    "print" },
     { PRINTF,   "printf" },
     { PROBIT,   "probit" },
-    { PVAL,     "pvalue" }, 
+    { PVAL,     "pvalue" },
     { QUANTREG, "quantreg" },
-    { QLRTEST,  "qlrtest" }, 
+    { QLRTEST,  "qlrtest" },
     { QQPLOT,   "qqplot" },
-    { QUIT,     "quit" }, 
+    { QUIT,     "quit" },
     { RENAME,   "rename" },
     { RESET,    "reset" },
     { RESTRICT, "restrict" },
@@ -158,7 +158,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { SPRINTF,  "sprintf" },
     { SQUARE,   "square" },
     { SSCANF,   "sscanf" },
-    { STORE,    "store" },   
+    { STORE,    "store" },
     { SUMMARY,  "summary" },
     { SYSTEM,   "system" },
     { TABPRINT, "tabprint" },
@@ -178,12 +178,12 @@ static struct gretl_cmd gretl_cmds[] = {
     { CATCH,    "catch" },
     { PKG,      "pkg" },
     { NC,       NULL}
-}; 
+};
 
 static struct gretl_cmd gretl_cmd_aliases[] = {
-    { GENR, "series" },   
-    { GENR, "scalar" },  
-    { GENR, "matrix" },  
+    { GENR, "series" },
+    { GENR, "scalar" },
+    { GENR, "matrix" },
     { GENR, "string" },
     { GENR, "list" },
     { GENR, "bundle" },
@@ -211,7 +211,7 @@ int word_is_genr_alias (const char *s)
 
 const char *gretl_command_word (int i)
 {
-    if (i >= 0 && i < NC) {
+    if (i > 0 && i < NC) {
 	return gretl_cmds[i].cword;
     } else {
 	return "";
@@ -226,19 +226,19 @@ static void gretl_command_hash_init (void)
 
     ht = g_hash_table_new(g_str_hash, g_str_equal);
 
-    for (i=0; gretl_cmds[i].cword != NULL; i++) {
-	g_hash_table_insert(ht, (gpointer) gretl_cmds[i].cword, 
+    for (i=1; gretl_cmds[i].cword != NULL; i++) {
+	g_hash_table_insert(ht, (gpointer) gretl_cmds[i].cword,
 			    GINT_TO_POINTER(gretl_cmds[i].cnum));
     }
 
     for (i=0; gretl_cmd_aliases[i].cword != NULL; i++) {
-	g_hash_table_insert(ht, (gpointer) gretl_cmd_aliases[i].cword, 
+	g_hash_table_insert(ht, (gpointer) gretl_cmd_aliases[i].cword,
 			    GINT_TO_POINTER(gretl_cmd_aliases[i].cnum));
     }
 }
 
 int gretl_command_number (const char *s)
-{    
+{
     gpointer p;
     int ret = 0;
 
@@ -274,9 +274,9 @@ const char *gretl_command_complete_next (const char *s,
     }
 
     return NULL;
-}  
+}
 
 const char *gretl_command_complete (const char *s)
 {
     return gretl_command_complete_next(s, 0);
-}  
+}

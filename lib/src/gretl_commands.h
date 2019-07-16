@@ -21,8 +21,7 @@
 #define COMMANDS_H
 
 typedef enum {
-    SEMIC = 0,    
-    ADD,
+    ADD = 1,
     ADF,
     ANOVA,
     APPEND,

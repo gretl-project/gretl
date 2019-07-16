@@ -72,7 +72,7 @@ struct gretl_cmd {
 */
 
 static struct gretl_cmd gretl_cmds[] = {
-    { SEMIC,    ";",        0 },
+    { 0,        "",         0},
     { ADD,      "add",      CI_LIST },
     { ADF,      "adf",      CI_ORD1 | CI_LIST },
     { ANOVA,    "anova",    CI_LIST },
@@ -4103,15 +4103,17 @@ static int real_parse_command (ExecState *s,
 	    goto parse_exit;
 	}
 
+#if SEMIC_TEST
 	if (!err && (cmd->ci == IF || cmd->ci == ELIF)) {
 	    err = set_command_vstart(cmd, s, s->prn);
 	}
+#endif
 
 	/* If we haven't already hit an error, then we need to consult
 	   and perhaps modify the flow control state -- and if we're
 	   blocked, return.
 	*/
-	if (!err && flow_control(cmd, dset, ptr)) {
+	if (!err && flow_control(cmd, line, dset, ptr)) {
 	    if (cmd->err) {
 		/* we hit an error evaluating the if state */
 		err = cmd->err;

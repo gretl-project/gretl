@@ -66,6 +66,11 @@ static int if_eval (int ci, const char *s, DATASET *dset,
     fprintf(stderr, "if_eval: s = '%s'\n", s);
 #endif
 
+    if (s != NULL) {
+	s += (ci == IF)? 2 : 4;
+	while (*s == ' ') s++;
+    }
+
     if (ptr != NULL) {
 	/* We're being called from a loop, with the implicit
 	   request that the if-condition be "compiled" (if
@@ -316,9 +321,13 @@ int gretl_if_state_check (int indent0)
    we always return 1, which indicates to the machinery in
    interact.c that execution of the current command is
    completed.
+
+   We need the @line (command line) and @dset arguments
+   in case we have to evaluate a new IF condition.
 */
 
-int flow_control (CMD *cmd, DATASET *dset, void *ptr)
+int flow_control (CMD *cmd, const char *line, DATASET *dset,
+		  void *ptr)
 {
     int ci = cmd->ci;
     int blocked = get_if_state(IS_FALSE);
@@ -334,7 +343,7 @@ int flow_control (CMD *cmd, DATASET *dset, void *ptr)
 	    err = set_if_state(SET_FALSE);
 	} else {
 	    /* actually evaluate the condition */
-	    ok = if_eval(ci, cmd->vstart, dset, ptr, &err);
+	    ok = if_eval(ci, line, dset, ptr, &err);
 	    if (!err) {
 		err = set_if_state(ok? SET_TRUE : SET_FALSE);
 	    }
@@ -345,7 +354,7 @@ int flow_control (CMD *cmd, DATASET *dset, void *ptr)
 	err = set_if_state(SET_ELIF);
 	if (!err && get_if_state(IS_TRUE)) {
 	    set_if_state(UNINDENT);
-	    ok = if_eval(ci, cmd->vstart, dset, ptr, &err);
+	    ok = if_eval(ci, line, dset, ptr, &err);
 	    if (!err) {
 		err = set_if_state(ok? SET_TRUE : SET_FALSE);
 	    }
