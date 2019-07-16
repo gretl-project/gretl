@@ -153,9 +153,7 @@ int gretl_start_compiling_function (const char *line,
 				    const DATASET *dset,
 				    PRN *prn);
 
-int gretl_function_append_line (const char *line);
-
-int gretl_function_append_line2 (ExecState *s);
+int gretl_function_append_line (ExecState *s);
 
 int gretl_is_public_user_function (const char *name);
 

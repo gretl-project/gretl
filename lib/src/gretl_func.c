@@ -1724,7 +1724,7 @@ static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
     return err;
 }
 
-static int push_function_line (ufunc *fun, const char *s)
+static int push_function_line (ufunc *fun, char *s, int donate)
 {
     int err = 0;
 
@@ -1743,13 +1743,18 @@ static int push_function_line (ufunc *fun, const char *s)
 
 	    fun->lines = lines;
 	    lines[i].idx = fun->line_idx;
-	    lines[i].s = gretl_strdup(s);
-	    lines[i].loop = NULL;
-	    lines[i].next_idx = -1;
-	    lines[i].ignore = 0;
-	    if (lines[i].s == NULL) {
-		err = E_ALLOC;
+	    if (donate) {
+		lines[i].s = s;
 	    } else {
+		lines[i].s = gretl_strdup(s);
+		if (lines[i].s == NULL) {
+		    err = E_ALLOC;
+		}
+	    }
+	    if (!err) {
+		lines[i].loop = NULL;
+		lines[i].next_idx = -1;
+		lines[i].ignore = 0;
 		fun->n_lines = n;
 		fun->line_idx += 1;
 	    }
@@ -1779,7 +1784,7 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
 	s = line;
 	while (isspace(*s)) s++;
 	tailstrip(s);
-	err = push_function_line(fun, s);
+	err = push_function_line(fun, s, 0);
     }
 
     bufgets_finalize(buf);
@@ -6907,114 +6912,14 @@ static void python_check (const char *line)
 
 /**
  * gretl_function_append_line:
- * @line: line of code to append.
+ * @s: pointer to execution state.
  *
  * Continuation of definition of user-function.
  *
  * Returns: 0 on success, non-zero on error.
  */
 
-int gretl_function_append_line (const char *line)
-{
-    static CMD *cmd;
-    static int ifdepth;
-    char tmpline[MAXLINE];
-    ufunc *fun = current_fdef;
-    int blank = 0;
-    int abort = 0;
-    int ignore = 0;
-    int err = 0;
-
-    if (fun == NULL) {
-	fprintf(stderr, "gretl_function_append_line: fun is NULL\n");
-	return 1;
-    }
-
-#if FNPARSE_DEBUG
-    fprintf(stderr, "gretl_function_append_line: '%s' (idx = %d)\n",
-	    line, fun->line_idx);
-#endif
-
-    if (cmd == NULL) {
-	cmd = gretl_cmd_new();
-	if (cmd == NULL) {
-	    return E_ALLOC;
-	}
-    }
-
-    blank = string_is_blank(line);
-
-    /* below: append line to function, carrying out some
-       basic structural checks as we go
-    */
-
-    if (!blank) {
-	/* note: avoid losing comment lines */
-	strcpy(tmpline, line);
-	err = get_command_index(tmpline, FUNC, cmd);
-	if (!err) {
-	    if (cmd->ci == QUIT) {
-		abort = 1;
-	    } else if (cmd->flags & CMD_ENDFUN) {
-		if (fun->n_lines == 0) {
-		    gretl_errmsg_sprintf("%s: empty function", fun->name);
-		    err = 1;
-		}
-		set_compiling_off();
-	    } else if (cmd->ci == FUNC) {
-		err = E_FNEST;
-	    } else if (cmd->ci == IF) {
-		ifdepth++;
-	    } else if (NEEDS_IF(cmd->ci) && ifdepth == 0) {
-		gretl_errmsg_sprintf("%s: unbalanced if/else/endif", fun->name);
-		err = E_PARSE;
-	    } else if (cmd->ci == ENDIF) {
-		ifdepth--;
-	    } else if (cmd->ci < 0) {
-		ignore = 1;
-	    }
-	}
-    }
-
-    if (abort || err) {
-	set_compiling_off();
-    }
-
-    if (compiling) {
-	/* actually add the line */
-	int i = fun->n_lines;
-
-	err = push_function_line(fun, line);
-	if (!err) {
-	    if (ignore) {
-		fun->lines[i].ignore = 1;
-	    } else if (!blank) {
-		python_check(line);
-	    }
-	}
-    } else {
-	/* finished compilation */
-	if (!abort && !err && ifdepth != 0) {
-	    gretl_errmsg_sprintf("%s: unbalanced if/else/endif", fun->name);
-	    err = E_PARSE;
-	}
-#if GLOBAL_TRACE
-	fprintf(stderr, "finished compiling function %s\n", fun->name);
-#endif
-	/* reset static vars */
-	gretl_cmd_destroy(cmd);
-	cmd = NULL;
-	ifdepth = 0;
-    }
-
-    if (abort || err) {
-	ufunc_unload(fun);
-    }
-
-    return err;
-}
-
-int gretl_function_append_line2 (ExecState *s)
+int gretl_function_append_line (ExecState *s)
 {
     static int ifdepth;
     CMD *cmd = s->cmd;
@@ -7044,7 +6949,7 @@ int gretl_function_append_line2 (ExecState *s)
        basic structural checks as we go
     */
     if (!blank) {
-	err = get_command_index2(s, FUNC);
+	err = get_command_index(s, FUNC);
 	if (!err) {
 	    if (cmd->ci == QUIT) {
 		abort = 1;
@@ -7077,8 +6982,9 @@ int gretl_function_append_line2 (ExecState *s)
 	/* actually add the line */
 	int i = fun->n_lines;
 
-	err = push_function_line(fun, origline);
+	err = push_function_line(fun, origline, 1);
 	if (!err) {
+	    origline = NULL; /* successfully donated */
 	    if (ignore) {
 		fun->lines[i].ignore = 1;
 	    } else if (!blank) {
