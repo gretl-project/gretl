@@ -633,12 +633,10 @@ static int push_string_token (CMD *c, const char *tok,
     return push_token(c, tok, s, pos, type, 0);
 }
 
-static int push_symbol_token (ExecState *state,
-			      const char *tok,
+static int push_symbol_token (CMD *c, const char *tok,
 			      char *s, int pos)
 {
     char type = TOK_SYMB;
-    CMD *c = state->cmd;
 
     if (!strcmp(tok, "-")) {
 	type = TOK_DASH;
@@ -669,16 +667,9 @@ static int push_symbol_token (ExecState *state,
 
     if (type == TOK_SEMIC) {
 	if (c->ci > 0 && get_sep_max(c->ci, NULL) == 0) {
-#if SEMIC_TEST
-	    char *p = s + 1;
-
-	    state->more = p + strspn(p, " \t");
-	    return 0;
-#else
 	    gretl_errmsg_sprintf(_("The symbol '%c' is not valid in this context\n"),
 				 ';');
 	    return E_PARSE;
-#endif
 	}
     }
 
@@ -3264,6 +3255,9 @@ static int set_command_vstart (CMD *cmd, ExecState *state,
 	    *p = '\0';
 	    p++;
 	    state->more = p + strspn(p, " \t");
+# if 0
+	    fprintf(stderr, "SEMIC_TEST: s->more = '%s'\n", state->more);
+# endif
 	}
     }
 #endif
@@ -3523,10 +3517,7 @@ static int tokenize_line (ExecState *state, DATASET *dset,
 		/* operator / symbol */
 		m = (n < FN_NAMELEN)? n : FN_NAMELEN - 1;
 		strncat(tok, s, m);
-		err = push_symbol_token(state, tok, s, pos);
-		if (state->more != NULL) {
-		    break;
-		}
+		err = push_symbol_token(cmd, tok, s, pos);
 	    }
 	} else if (isdigit(*s)) {
 	    /* numeric string */
@@ -4100,14 +4091,14 @@ static int real_parse_command (ExecState *s,
 		err = assemble_command(cmd, dset, s, line);
 		compmode = 0;
 	    }
+#if SEMIC_TEST
+	    else if (!err && cmd->ci == GENR) {
+		/* experiment!!! */
+		set_command_vstart(cmd, s, s->prn);
+	    }
+#endif
 	    goto parse_exit;
 	}
-
-#if SEMIC_TEST
-	if (!err && (cmd->ci == IF || cmd->ci == ELIF)) {
-	    err = set_command_vstart(cmd, s, s->prn);
-	}
-#endif
 
 	/* If we haven't already hit an error, then we need to consult
 	   and perhaps modify the flow control state -- and if we're
