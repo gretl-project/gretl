@@ -724,7 +724,7 @@ static int cli_exec_line (ExecState *s, int id, DATASET *dset,
     int err = 0;
 
     if (gretl_compiling_function()) {
-	err = gretl_function_append_line(line);
+	err = gretl_function_append_line(s);
 	if (err) {
 	    errmsg(err, prn);
 	}
@@ -753,11 +753,7 @@ static int cli_exec_line (ExecState *s, int id, DATASET *dset,
 
     if (gretl_compiling_loop()) {
 	/* if we're stacking commands for a loop, parse "lightly" */
-#if 1
-	err = get_command_index2(s, LOOP);
-#else
-	err = get_command_index(line, LOOP, cmd);
-#endif
+	err = get_command_index(s, LOOP);
     } else {
 	err = parse_command_line(s, dset, NULL);
     }
