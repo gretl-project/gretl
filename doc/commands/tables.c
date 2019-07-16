@@ -179,8 +179,8 @@ int print_non_loop_commands (void)
     int i, n = 0;
     int err = 0;
 
-    for (i=0; i<NC && !err; i++) {
-	if (!ok_in_loop(i) && i != SEMIC && !(HIDDEN_COMMAND(i))) {
+    for (i=1; i<NC && !err; i++) {
+	if (!ok_in_loop(i) && !(HIDDEN_COMMAND(i))) {
 	    err = push_string_on_array(&S, gretl_command_word(i), n++);
 	}
     }
