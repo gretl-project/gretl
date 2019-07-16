@@ -7014,6 +7014,100 @@ int gretl_function_append_line (const char *line)
     return err;
 }
 
+int gretl_function_append_line2 (ExecState *s)
+{
+    static int ifdepth;
+    CMD *cmd = s->cmd;
+    char *line = s->line;
+    char *origline = NULL;
+    ufunc *fun = current_fdef;
+    int blank = 0;
+    int abort = 0;
+    int ignore = 0;
+    int err = 0;
+
+    if (fun == NULL) {
+	fprintf(stderr, "gretl_function_append_line: fun is NULL\n");
+	return 1;
+    }
+
+#if FNPARSE_DEBUG
+    fprintf(stderr, "gretl_function_append_line: '%s' (idx = %d)\n",
+	    line, fun->line_idx);
+#endif
+
+    /* note: avoid losing comment lines */
+    origline = gretl_strdup(line);
+    blank = string_is_blank(line);
+
+    /* below: append line to function, carrying out some
+       basic structural checks as we go
+    */
+    if (!blank) {
+	err = get_command_index2(s, FUNC);
+	if (!err) {
+	    if (cmd->ci == QUIT) {
+		abort = 1;
+	    } else if (cmd->flags & CMD_ENDFUN) {
+		if (fun->n_lines == 0) {
+		    gretl_errmsg_sprintf("%s: empty function", fun->name);
+		    err = 1;
+		}
+		set_compiling_off();
+	    } else if (cmd->ci == FUNC) {
+		err = E_FNEST;
+	    } else if (cmd->ci == IF) {
+		ifdepth++;
+	    } else if (NEEDS_IF(cmd->ci) && ifdepth == 0) {
+		gretl_errmsg_sprintf("%s: unbalanced if/else/endif", fun->name);
+		err = E_PARSE;
+	    } else if (cmd->ci == ENDIF) {
+		ifdepth--;
+	    } else if (cmd->ci < 0) {
+		ignore = 1;
+	    }
+	}
+    }
+
+    if (abort || err) {
+	set_compiling_off();
+    }
+
+    if (compiling) {
+	/* actually add the line */
+	int i = fun->n_lines;
+
+	err = push_function_line(fun, origline);
+	if (!err) {
+	    if (ignore) {
+		fun->lines[i].ignore = 1;
+	    } else if (!blank) {
+		python_check(line);
+	    }
+	}
+    } else {
+	/* finished compilation */
+	if (!abort && !err && ifdepth != 0) {
+	    gretl_errmsg_sprintf("%s: unbalanced if/else/endif", fun->name);
+	    err = E_PARSE;
+	}
+#if GLOBAL_TRACE
+	fprintf(stderr, "finished compiling function %s\n", fun->name);
+#endif
+	/* reset static var */
+	ifdepth = 0;
+    }
+
+    free(origline);
+    cmd->flags &= ~CMD_ENDFUN;
+
+    if (abort || err) {
+	ufunc_unload(fun);
+    }
+
+    return err;
+}
+
 /* next block: handling function arguments */
 
 static int maybe_set_arg_const (fn_arg *arg, fn_param *fp)

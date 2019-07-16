@@ -3636,7 +3636,11 @@ int maybe_exec_line (ExecState *s, DATASET *dset, int *loopstart)
     }
 
     if (gretl_compiling_loop()) {
+#if 1
+	err = get_command_index2(s, LOOP);
+#else
 	err = get_command_index(s->line, LOOP, s->cmd);
+#endif
     } else {
 	/* FIXME last arg to parse_command_line() ? */
 	err = parse_command_line(s, dset, NULL);
@@ -3687,7 +3691,7 @@ int maybe_exec_line (ExecState *s, DATASET *dset, int *loopstart)
  * Parse @line and assign to the %ci field of @cmd the index number of
  * the command embedded in @line.  Note: this is a "lite" version of
  * parse_command_line().  It is used when commands are being stacked
- * for execution within a loop.  Command options are not parsed out of
+ * for execution within a loop. Command options are not parsed out of
  * @line.
  *
  * Returns: 1 on error, otherwise 0.
@@ -3718,6 +3722,72 @@ int get_command_index (char *line, int cmode, CMD *cmd)
     s.line = line;
     s.cmd = cmd;
     err = real_parse_command(&s, NULL, cmode, NULL);
+
+    if (!err && cmd->ci == 0) {
+	/* maybe genr via series name? */
+	const char *s = cmd->toks[0].s;
+
+	if (s != NULL) {
+	    if (*s == '$' || *s == '@') s++;
+	    if (strlen(s) == gretl_namechar_spn(s)) {
+		cmd->ci = GENR;
+	    }
+	}
+    }
+
+    if (!err && cmd->ci == 0) {
+	/* FIXME watch out for fallout! (2012-03-01) */
+	cmd->ci = CMD_NULL;
+	err = E_PARSE;
+    }
+
+    if (err) {
+	return err;
+    }
+
+    if (cmd->ci == END) {
+	cmd->context = 0;
+    } else if (cmd->context) {
+	cmd->ci = cmd->context;
+    }
+
+    if (cmd->ci == NLS || cmd->ci == MLE ||
+	cmd->ci == GMM || cmd->ci == FOREIGN ||
+	cmd->ci == PLOT || cmd->ci == MPI) {
+	cmd->context = cmd->ci;
+    }
+
+#if CMD_DEBUG
+    fprintf(stderr, " get_command_index: cmd->ci set to %d\n", cmd->ci);
+#endif
+
+    return 0;
+}
+
+int get_command_index2 (ExecState *s, int cmode)
+{
+    CMD *cmd = s->cmd;
+    char *line = s->line;
+    int err = 0;
+
+    gretl_cmd_clear(cmd);
+
+#if CMD_DEBUG
+    fprintf(stderr, "get_command_index2: line='%s'\n", line);
+#endif
+
+    if ((cmd->context == FOREIGN || cmd->context == MPI) &&
+	!ends_foreign_block(line)) {
+	cmd->opt = OPT_NONE;
+	cmd->ci = cmd->context;
+	return 0;
+    }
+
+    if (filter_comments(line, cmd)) {
+	return 0;
+    }
+
+    err = real_parse_command(s, NULL, cmode, NULL);
 
     if (!err && cmd->ci == 0) {
 	/* maybe genr via series name? */

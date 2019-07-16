@@ -155,6 +155,8 @@ int gretl_start_compiling_function (const char *line,
 
 int gretl_function_append_line (const char *line);
 
+int gretl_function_append_line2 (ExecState *s);
+
 int gretl_is_public_user_function (const char *name);
 
 int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
