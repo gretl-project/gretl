@@ -10152,14 +10152,16 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
     fprintf(stderr, "gui_exec_line: flags = %d\n", s->flags);
 #endif
 
+ next_line:
+
     if (gretl_compiling_function()) {
-	err = gretl_function_append_line(line);
+	err = gretl_function_append_line(s);
 	if (err) {
 	    errmsg(err, prn);
 	} else if (s->flags & CONSOLE_EXEC) {
 	    add_command_to_stack(line, 0);
 	}
-	return err;
+	goto more_check; /* was return err; */
     }
 
     if (string_is_blank(line)) {
@@ -10183,11 +10185,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 
     if (gretl_compiling_loop()) {
 	/* when stacking commands for a loop, parse "lightly" */
-#if 1
-	err = get_command_index2(s, LOOP);
-#else
-	err = get_command_index(line, LOOP, cmd);
-#endif
+	err = get_command_index(s, LOOP);
     } else {
 	err = parse_command_line(s, dset, NULL);
     }
@@ -10239,7 +10237,7 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 	    lib_command_strcpy(line);
 	    record_command_verbatim();
 	}
-	return err;
+	goto more_check; /* was return err; */
     }
 
     /* Set up to save output to a specific buffer, if wanted */
@@ -10417,6 +10415,14 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
     /* save specific output buffer? */
     if (!err && *cmd->savename != '\0' && TEXTSAVE_OK(cmd->ci)) {
 	save_text_buffer(cmd->savename, prn, ppos);
+    }
+
+ more_check:
+
+    /* check for more input */
+    if (!err && s->more != NULL) {
+	memmove(s->line, s->more, strlen(s->more) + 1);
+	goto next_line;
     }
 
     return err;
