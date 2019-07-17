@@ -1027,6 +1027,7 @@ static void write_octave_io_file (FILE *fp, const char *ddir)
 static void write_python_io_file (FILE *fp, const char *ddir)
 {
     fprintf(fp, "gretl_dotdir = \"%s\"\n\n", ddir);
+    fputs("  import os\n", fp);
     /* export matrix for reading by gretl */
     fputs("def gretl_export(X, fname, autodot=1):\n", fp);
     fputs("  binwrite = 0\n", fp);
@@ -1038,7 +1039,7 @@ static void write_python_io_file (FILE *fp, const char *ddir)
     fputs("    from numpy import asmatrix, savetxt\n", fp);
     fputs("  M = asmatrix(X)\n", fp);
     fputs("  r, c = M.shape\n", fp);
-    fputs("  if autodot:\n", fp);
+    fputs("  if autodot and not os.path.isabs(fname):\n", fp);
     fputs("    fname = gretl_dotdir + fname\n", fp);
     fputs("  if binwrite:\n", fp);
     fputs("    from sys import byteorder\n", fp);
@@ -1060,7 +1061,7 @@ static void write_python_io_file (FILE *fp, const char *ddir)
 
     /* import matrix from gretl */
     fputs("def gretl_loadmat(fname, autodot=1):\n", fp);
-    fputs("  if autodot:\n", fp);
+    fputs("  if autodot and not os.path.isabs(fname):\n", fp);
     fputs("    fname = gretl_dotdir + fname\n", fp);
     fputs("  if fname[-4:] == '.bin':\n", fp);
     fputs("    from numpy import ndarray, asmatrix\n", fp);
@@ -1094,7 +1095,7 @@ static void write_julia_io_file (FILE *fp, const char *ddir)
     fputs("end\n\n", fp);
     fputs("function gretl_export(M, fname, autodot=1)\n", fp);
     fputs("  r,c = size(M)\n", fp);
-    fputs("  if autodot != 0\n", fp);
+    fputs("  if autodot != 0 && !isabspath(fname)\n", fp);
     fputs("    fname = gretl_dotdir * fname\n", fp);
     fputs("  end\n", fp);
     fputs("  f = open(fname, \"w\")\n", fp);
@@ -1138,7 +1139,7 @@ static void write_julia_io_file (FILE *fp, const char *ddir)
     fputs("end\n\n", fp);
 
     fputs("function gretl_loadmat(fname, autodot=1)\n", fp);
-    fputs("  if autodot != 0\n", fp);
+    fputs("  if autodot != 0 && !isabspath(fname)\n", fp);
     fputs("    fname = gretl_dotdir * fname\n", fp);
     fputs("  end\n", fp);
     fputs("  if v1\n", fp);
