@@ -1829,6 +1829,12 @@ static void write_R_io_funcs (FILE *fp)
 
     fprintf(fp, "gretl.dotdir <- \"%s\"\n", ddir);
 
+#if 0
+    fputs("is_abspath <- function(path) {\n", fp);
+    fputs("grepl(\"^(/|[A-Za-z]:|\\\\\\\\|~)\", path)\n");
+    fputs("}\n", fp);
+#endif
+
     fputs("gretl.export <- function(x, sx) {\n", fp);
     fprintf(fp, "  prefix <- \"%s\"\n", ddir);
     fputs(export_body, fp);

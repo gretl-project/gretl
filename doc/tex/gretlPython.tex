@@ -47,10 +47,10 @@ By default the traffic in matrices goes via the dot directory on the
 \app{Python} side; that is, the name of this directory is prepended to
 \texttt{filename} for both reading and writing. (This is complementary
 to use of the \textsl{export} and \textsl{import} parameters with
-gretl's \texttt{mwrite} and \texttt{mread} functions,
-respectively.) However, if you wish to take control over the reading
-and writing locations you can supply a zero value for
-\texttt{autodot} when calling \verb|gretl_loadmat| and
+gretl's \texttt{mwrite} and \texttt{mread} functions, respectively.)
+However, if you wish to take control over the reading and writing
+locations you can supply a zero value for \texttt{autodot} (or give an
+absolute path) when calling \verb|gretl_loadmat| and
 \verb|gretl_export|: in that case the \texttt{filename} argument is
 used as is.
 

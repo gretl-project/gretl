@@ -42,13 +42,14 @@ replicate some results from \cite{greene00}.
   \label{fig:Octout}
 \end{figure}
 
-In addition you can embed \app{Octave} code within a gretl
-script using a \texttt{foreign} block, as described in connection with
-\app{R}.  A trivial example, which simply loads and prints the
-gretl data matrix within \app{Octave}, is shown below. (Note
-that in \app{Octave}, appending ``\texttt{;}'' to a line suppresses
-verbose output; leaving off the semicolon results in printing of the
-object that is produced, if any.)
+In addition you can embed \app{Octave} code within a gretl script
+using a \texttt{foreign} block, as described in connection with
+\app{R}.  A trivial example is shown below: it simply loads and prints
+the gretl data matrix within \app{Octave}, then takes it back to gretl
+and checks for any difference (there should be none). (Note that in
+\app{Octave}, appending ``\texttt{;}'' to a line suppresses verbose
+output; leaving off the semicolon results in printing of the object
+that is produced, if any.)
 %
 \begin{code}
 open data4-1
@@ -57,14 +58,32 @@ mwrite(m, "gretl.mat", 1)
 
 foreign language=Octave
    gmat = gretl_loadmat("gretl.mat")
+   gretl_export(gmat, "octave.mat")
 end foreign
+
+matric chk = mread("octave.mat", 1)
+eval maxr(maxc(abs(m - chk)))
 \end{code}
 
-We use the \texttt{mwrite} function to write a matrix into the user's
-``dotdir'' (see section~\ref{sec:named-strings}), then in \app{Octave}
-we use the function \verb|gretl_loadmat| to retrieve the matrix. The
-``magic'' behind \verb|gretl_loadmat| works in essentially the same
-way as for \app{Ox} (chapter~\ref{chap:gretlOx}).
+The functions \texttt{gretl\_loadmat} and \texttt{gretl\_export},
+which are predefined when you run \app{Octave} from within gretl, have
+the following signatures:
+\begin{code}
+function A = gretl_loadmat(fname, autodot=1)
+
+function gretl_export(X, fname, autodot=1)
+\end{code}
+
+By default traffic in matrices goes via the user's ``dotdir'' (see
+section~\ref{sec:named-strings}) on the \app{Octave} side; that is,
+the name of this directory is prepended to \texttt{filename} for both
+reading and writing. (This is complementary to use of the
+\textsl{export} and \textsl{import} parameters with gretl's
+\texttt{mwrite} and \texttt{mread} functions, respectively.)  However,
+if you wish to take control over the reading and writing locations you
+can supply a zero value for \texttt{autodot} (or give an absolute
+path) when calling \verb|gretl_loadmat| and \verb|gretl_export|: in
+that case the \texttt{filename} argument is used as is.
 
 \section{Illustration: spectral methods}
 \label{sec:octave-coher}
@@ -122,11 +141,8 @@ With everything set up on the \app{Octave} side we now write a gretl
 script (see Listing~\ref{Octave-coher}) which opens a time-series
 dataset, constructs and writes a matrix containing two series, and
 defines a \texttt{foreign} block containing the \app{Octave}
-statements needed to produce the spectral coherence matrix. The matrix
-is exported via the \verb|gretl_export| function, which is
-automatically defined for you; this function takes two arguments, a
-matrix and a file name.  The file is written into the user's
-``dotdir'', from where it can be picked up using
+statements needed to produce the spectral coherence matrix. This
+matrix is exported via \verb|gretl_export| and picked up using
 \texttt{mread}. Finally, we produce a graph from the matrix in gretl.
 In the script this is sent to the screen; Figure~\ref{fig:coherence}
 shows the same graph in PDF format.
