@@ -507,6 +507,7 @@ struct str_table funcs[] = {
     { F_CONV2D,    "conv2d" },
     { F_MSPLITBY,  "msplitby" },
     { F_FLATTEN,   "flatten" },
+    { F_FUNCERR,   "funcerr" },
     { 0,           NULL }
 };
 

@@ -7172,6 +7172,34 @@ static NODE *do_getenv (NODE *l, int f, parser *p)
     return ret;
 }
 
+static NODE *do_funcerr (NODE *n, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+    if (gretl_function_depth() == 0) {
+	gretl_errmsg_set("funcerr: no function is executing");
+	p->err = E_DATA;
+    } else {
+	const char *funcname = NULL;
+
+	current_function_info(&funcname, NULL);
+	if (n != NULL && n->t == STR) {
+	    gretl_errmsg_sprintf(_("Error message from %s():\n %s"),
+				 funcname, n->v.str);
+	} else {
+	    gretl_errmsg_sprintf(_("Error triggered in function %s()"),
+				 funcname);
+	}
+	p->err = E_FUNCERR;
+    }
+
+    if (ret != NULL) {
+	ret->v.xval = 1;
+    }
+
+    return ret;
+}
+
 static NODE *single_string_func (NODE *n, NODE *x, int f, parser *p)
 {
     NODE *ret = aux_string_node(p);
@@ -16272,6 +16300,9 @@ static NODE *eval (NODE *t, parser *p)
 	} else {
 	    node_type_error(t->t, 0, STR, l, p);
 	}
+	break;
+    case F_FUNCERR:
+	ret = do_funcerr(l, p);
 	break;
     case F_OBSLABEL:
 	if (l->t == NUM || l->t == MAT) {

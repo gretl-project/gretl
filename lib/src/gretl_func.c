@@ -8471,8 +8471,8 @@ static void set_func_error_message (int err, ufunc *u,
 	const char *msg = get_funcerr_message(state);
 
 	if (msg != NULL && strcmp(msg, "none")) {
-	    gretl_errmsg_sprintf(_("Error message from %s():\n %s"), u->name,
-				 get_funcerr_message(state));
+	    gretl_errmsg_sprintf(_("Error message from %s():\n %s"),
+				 u->name, msg);
 	    return;
 	}
     }
@@ -8482,17 +8482,22 @@ static void set_func_error_message (int err, ufunc *u,
     } else {
 	/* we'll handle this here */
 	const char *msg = gretl_errmsg_get();
+	int showline = 1;
 
 	if (*msg == '\0') {
 	    msg = errmsg_get_with_default(err);
 	    gretl_errmsg_set(msg);
 	}
 
+	if (*line == '\0' || strncmp(line, "funcerr(", 8) == 0) {
+	    showline = 0;
+	}
+
 	if (lineno < 0) {
 	    /* indicates that we don't have a real line number
 	       available (the error occurred inside a loop)
 	    */
-	    if (*line != '\0' && err != E_FNEST) {
+	    if (showline && err != E_FNEST) {
 		gretl_errmsg_sprintf("*** error within loop in function %s\n> %s",
 				     u->name, line);
 	    } else {
@@ -8500,7 +8505,7 @@ static void set_func_error_message (int err, ufunc *u,
 				     u->name, lineno);
 	    }
 	} else {
-	    if (*line != '\0' && err != E_FNEST) {
+	    if (showline && err != E_FNEST) {
 		gretl_errmsg_sprintf("*** error in function %s, line %d\n> %s",
 				     u->name, lineno, line);
 	    } else {

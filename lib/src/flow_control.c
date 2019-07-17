@@ -66,11 +66,6 @@ static int if_eval (int ci, const char *s, DATASET *dset,
     fprintf(stderr, "if_eval: s = '%s'\n", s);
 #endif
 
-    if (s != NULL) {
-	s += (ci == IF)? 2 : 4;
-	while (*s == ' ') s++;
-    }
-
     if (ptr != NULL) {
 	/* We're being called from a loop, with the implicit
 	   request that the if-condition be "compiled" (if
@@ -104,12 +99,19 @@ static int if_eval (int ci, const char *s, DATASET *dset,
 #endif
 
     if (*err) {
-	gretl_errmsg_set(_("error evaluating 'if'"));
+	gretl_errmsg_append(_("error evaluating 'if'"), 0);
     } else if (na(val)) {
 	*err = 1;
-	gretl_errmsg_set(_("indeterminate condition for 'if'"));
+	gretl_errmsg_append(_("indeterminate condition for 'if'"), 0);
     } else {
 	ret = (int) val;
+    }
+
+    if (*err && s != NULL && *s != '\0') {
+	gchar *cond = g_strdup_printf("> %s", s);
+
+	gretl_errmsg_append(cond, 0);
+	g_free(cond);
     }
 
 #if IFDEBUG
@@ -322,12 +324,11 @@ int gretl_if_state_check (int indent0)
    interact.c that execution of the current command is
    completed.
 
-   We need the @line (command line) and @dset arguments
-   in case we have to evaluate a new IF condition.
+   We need the @dset argument in case we have to evaluate a
+   new IF condition.
 */
 
-int flow_control (CMD *cmd, const char *line, DATASET *dset,
-		  void *ptr)
+int flow_control (CMD *cmd, DATASET *dset, void *ptr)
 {
     int ci = cmd->ci;
     int blocked = get_if_state(IS_FALSE);
@@ -343,7 +344,7 @@ int flow_control (CMD *cmd, const char *line, DATASET *dset,
 	    err = set_if_state(SET_FALSE);
 	} else {
 	    /* actually evaluate the condition */
-	    ok = if_eval(ci, line, dset, ptr, &err);
+	    ok = if_eval(ci, cmd->vstart, dset, ptr, &err);
 	    if (!err) {
 		err = set_if_state(ok? SET_TRUE : SET_FALSE);
 	    }
@@ -354,7 +355,7 @@ int flow_control (CMD *cmd, const char *line, DATASET *dset,
 	err = set_if_state(SET_ELIF);
 	if (!err && get_if_state(IS_TRUE)) {
 	    set_if_state(UNINDENT);
-	    ok = if_eval(ci, line, dset, ptr, &err);
+	    ok = if_eval(ci, cmd->vstart, dset, ptr, &err);
 	    if (!err) {
 		err = set_if_state(ok? SET_TRUE : SET_FALSE);
 	    }

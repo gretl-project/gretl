@@ -4020,9 +4020,9 @@ const char *get_parser_errline (void)
    the if-state.
 */
 
-static int get_flow_control_ci (const char *s)
+static int get_flow_control_ci (ExecState *state)
 {
-    char word[6];
+    char word[6], *s = state->line;
     int ci = 0;
 
     if (sscanf(s, "%5s", word) == 1) {
@@ -4043,6 +4043,10 @@ static int get_flow_control_ci (const char *s)
 	}
 	if (ci > 0 && s[n] != '\0' && !isspace(s[n])) {
 	    ci = 0;
+	}
+	if (s[n] != '\0' && (ci == IF || ci == ELIF)) {
+	    /* set pointer to the condition */
+	    state->cmd->vstart = s + n + 1;
 	}
     }
 
@@ -4067,7 +4071,7 @@ static int real_parse_command (ExecState *s,
     if (*line != '\0') {
 	if (!compmode && gretl_if_state_false()) {
 	    /* take a short-cut */
-	    cmd->ci = get_flow_control_ci(line);
+	    cmd->ci = get_flow_control_ci(s);
 	} else {
 	    /* not compiling or not blocked */
 	    err = tokenize_line(s, dset, compmode);
@@ -4080,6 +4084,10 @@ static int real_parse_command (ExecState *s,
 	    err = check_for_stray_tokens(cmd);
 	}
 
+	if (err) {
+	    goto parse_exit;
+	}
+
 	if (compmode) {
 	    /* Are we doing get_command_index(), for compilation?
 	       In that case we shouldn't do any further processing
@@ -4087,24 +4095,32 @@ static int real_parse_command (ExecState *s,
 	       want to extract the options), or we got a ci that
 	       ought to be unitary.
 	    */
-	    if (!err && compmode == LOOP && cmd->ci == LOOP) {
+	    if (compmode == LOOP && cmd->ci == LOOP) {
 		err = assemble_command(cmd, dset, s, line);
 		compmode = 0;
+	    } else if (cmd->ci == IF || cmd->ci == ELIF) {
+		err = set_command_vstart(cmd, s, s->prn);
 	    }
 #if SEMIC_TEST
-	    else if (!err && cmd->ci == GENR) {
-		/* experiment!!! */
+	    else if (cmd->ci == GENR) {
 		set_command_vstart(cmd, s, s->prn);
 	    }
 #endif
 	    goto parse_exit;
 	}
 
+	/* cmd->vstart must be set for the benefit of flow_control():
+	   it will hold the condition attached to IF or ELIF
+	*/
+	if ((cmd->ci == IF || cmd->ci == ELIF) && cmd->vstart == NULL) {
+	    err = set_command_vstart(cmd, s, s->prn);
+	}
+
 	/* If we haven't already hit an error, then we need to consult
 	   and perhaps modify the flow control state -- and if we're
 	   blocked, return.
 	*/
-	if (!err && flow_control(cmd, line, dset, ptr)) {
+	if (!err && flow_control(cmd, dset, ptr)) {
 	    if (cmd->err) {
 		/* we hit an error evaluating the if state */
 		err = cmd->err;
