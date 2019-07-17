@@ -217,7 +217,10 @@ static int cmatrix_validate (const gretl_matrix *m, int square)
 
 /* Multiplication of complex matrices via BLAS zgemm() */
 
-gretl_matrix *gretl_zgemm (const gretl_matrix *A, gretl_matrix *B,
+gretl_matrix *gretl_zgemm (const gretl_matrix *A,
+			   GretlMatrixMod amod,
+			   const gretl_matrix *B,
+			   GretlMatrixMod bmod,
 			   int *err)
 {
     gretl_matrix *C;
@@ -229,10 +232,15 @@ gretl_matrix *gretl_zgemm (const gretl_matrix *A, gretl_matrix *B,
     integer lda, ldb, ldc;
     integer m, n, k;
 
+    /* FIXME: the @amod and @bmod arguments are not yet
+       respected! */
+
     if (!cmatrix_validate(A, 0) || !cmatrix_validate(B, 0)) {
 	*err = E_INVARG;
 	return NULL;
-    } else if (A->cols != B->rows / 2) {
+    }
+
+    if (A->cols != B->rows / 2) {
 	*err = E_NONCONF;
 	return NULL;
     }

@@ -2778,21 +2778,26 @@ static int real_matrix_calc (const gretl_matrix *A,
 	C = gretl_matrix_direct_sum(A, B, &err);
 	break;
     case B_MUL:
-	ra = gretl_matrix_rows(A);
-	ca = gretl_matrix_cols(A);
-	rb = gretl_matrix_rows(B);
-	cb = gretl_matrix_cols(B);
-
-	r = (ra == 1 && ca == 1)? rb : ra;
-	c = (rb == 1 && cb == 1)? ca : cb;
-
-	C = calc_get_matrix(pM, r, c);
-	if (C == NULL) {
-	    err = E_ALLOC;
+	if (A->is_complex && B->is_complex) {
+	    C = gretl_zgemm(A, GRETL_MOD_NONE,
+			    B, GRETL_MOD_NONE,
+			    &err);
 	} else {
-	    err = gretl_matrix_multiply(A, B, C);
-	    if (!err) {
-		gretl_matrix_transcribe_obs_info(C, A);
+	    ra = gretl_matrix_rows(A);
+	    ca = gretl_matrix_cols(A);
+	    rb = gretl_matrix_rows(B);
+	    cb = gretl_matrix_cols(B);
+	    r = (ra == 1 && ca == 1)? rb : ra;
+	    c = (rb == 1 && cb == 1)? ca : cb;
+
+	    C = calc_get_matrix(pM, r, c);
+	    if (C == NULL) {
+		err = E_ALLOC;
+	    } else {
+		err = gretl_matrix_multiply(A, B, C);
+		if (!err) {
+		    gretl_matrix_transcribe_obs_info(C, A);
+		}
 	    }
 	}
 	break;
@@ -3086,6 +3091,9 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 	ret = aux_matrix_node(p);
     } else {
 	ret = aux_sized_matrix_node(p, m->rows, m->cols);
+	if (!p->err && m->is_complex) {
+	    ret->v.m->is_complex = 1;
+	}
     }
 
     if (ret == NULL) {
@@ -3674,6 +3682,18 @@ static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
     gretl_matrix *ml = NULL, *mr = NULL;
     NODE *ret;
 
+    if (op == B_MUL && l->t == MAT && r->t == MAT) {
+	ml = l->v.m;
+	mr = l->v.m;
+	if (ml->is_complex && mr->is_complex) {
+	    ret = aux_matrix_node(p);
+	    if (!p->err) {
+		p->err = real_matrix_calc(ml, mr, op, &ret->v.m);
+	    }
+	    return ret;
+	}
+    }
+
     if (op == B_DOTPOW || op == B_POW) {
 	ret = aux_matrix_node(p);
     } else {
@@ -3697,9 +3717,13 @@ static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
 	}
     }
 
-    ml = node_get_matrix(l, p, 0, 1);
-    if (op != B_POW) {
-	mr = node_get_matrix(r, p, 1, 2);
+ next_step:
+
+    if (ml == NULL) {
+	ml = node_get_matrix(l, p, 0, 1);
+	if (op != B_POW) {
+	    mr = node_get_matrix(r, p, 1, 2);
+	}
     }
 
     if (ret != NULL && starting(p)) {
@@ -4261,7 +4285,9 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    ret->v.m = gretl_cmatrix(m, r->v.m, &p->err);
 	    break;
 	case HF_CMMULT:
-	    ret->v.m = gretl_zgemm(m, r->v.m, &p->err);
+	    ret->v.m = gretl_zgemm(m, GRETL_MOD_NONE,
+				   r->v.m, GRETL_MOD_NONE,
+				   &p->err);
 	    break;
 	case HF_CHPROD:
 	    ret->v.m = gretl_complex_hprod(m, r->v.m, &p->err);

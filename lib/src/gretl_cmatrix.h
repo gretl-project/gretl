@@ -24,7 +24,10 @@ gretl_matrix *gretl_matrix_fft (const gretl_matrix *y, int *err);
 
 gretl_matrix *gretl_matrix_ffti (const gretl_matrix *y, int *err);
 
-gretl_matrix *gretl_zgemm (const gretl_matrix *A, gretl_matrix *B,
+gretl_matrix *gretl_zgemm (const gretl_matrix *A,
+			   GretlMatrixMod amod,
+			   const gretl_matrix *B,
+			   GretlMatrixMod bmod,
 			   int *err);
 
 gretl_matrix *gretl_zgetri (const gretl_matrix *A, int *err);
