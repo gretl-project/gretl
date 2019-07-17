@@ -3961,6 +3961,30 @@
       </description>
     </function>
 
+    <function name="funcerr" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg optional="true" type="string">message</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Applicable only in the context of a user-defined function.
+	  Causes execution of the current function to terminate with
+	  an error condition flagged.
+	</para>
+	<para>
+	  If the optional <argname>message</argname> argument is
+	  provided it will be printed as part of the error message
+	  shown to the caller of the function. This gives function
+	  writers the chance to provide a more specific error message
+	  than would otherwise be shown.
+	</para>
+	<para>
+	  The return value from this function is purely nominal since
+	  invoking it necessarily creates an error condition.
+	</para>
+      </description>
+    </function>
+
     <function name="fzero" section="numerical" output="scalar">
       <fnargs>
 	<fnarg type="fncall">fcall</fnarg>

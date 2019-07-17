@@ -281,6 +281,7 @@ enum {
     F_CDUMIFY,
     F_GETKEYS,
     F_MCORR,
+    F_FUNCERR,
     HF_CINV,
     HF_CTRAN,
     HF_CEXP,

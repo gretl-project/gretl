@@ -4499,6 +4499,10 @@
 	present it is printed as part of the error message shown to
 	the caller of the function.
       </para>
+      <para>
+	This command is also available in the form of a function (of
+	the same name, <fncref targ="funcerr"/>).
+      </para>
     </description>
 
   </command>
