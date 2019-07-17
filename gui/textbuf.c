@@ -3021,6 +3021,12 @@ static void indent_region (GtkWidget *w, gpointer p)
     }
 }
 
+void indent_hansl (GtkWidget *w, windata_t *vwin)
+{
+    /* make this work on just the selection if wanted? */
+    auto_indent_script(w, vwin);
+}
+
 static void unindent_region (GtkWidget *w, gpointer p)
 {
     struct textbit *tb = (struct textbit *) p;

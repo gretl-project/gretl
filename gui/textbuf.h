@@ -142,4 +142,6 @@ void textview_delete_processing_message (GtkWidget *view);
 
 void textview_format_paragraph (GtkWidget *view);
 
+void indent_hansl (GtkWidget *w, windata_t *vwin);
+
 #endif /* TEXTBUF_H */
