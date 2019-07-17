@@ -10,6 +10,7 @@ version 2019d, in progress
   matrix
 - "modtest" command with --autocorr option: add support for
   Wooldridge's first-order test for panel data
+- "funcerr" command: add a function version of this
 
 2019-07-02 version 2019c
 - Fix bug: "dataset sortby" not handling missing values
