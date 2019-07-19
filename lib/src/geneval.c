@@ -3684,7 +3684,7 @@ static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
 
     if (op == B_MUL && l->t == MAT && r->t == MAT) {
 	ml = l->v.m;
-	mr = l->v.m;
+	mr = r->v.m;
 	if (ml->is_complex && mr->is_complex) {
 	    ret = aux_matrix_node(p);
 	    if (!p->err) {
