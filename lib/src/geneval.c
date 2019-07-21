@@ -3695,6 +3695,14 @@ static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
     }
 
     if (op == B_DOTPOW || op == B_POW) {
+	if (op == B_POW) {
+	    if (scalar_node(l) && scalar_node(r)) {
+		op = B_DOTPOW;
+	    } else if (!scalar_node(r)) {
+		p->err = E_TYPES;
+		return NULL;
+	    }
+	}
 	ret = aux_matrix_node(p);
     } else {
 	/* experiment: try reusing aux matrix */
@@ -3707,17 +3715,6 @@ static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
     fprintf(stderr, "matrix_matrix_calc: l=%p, r=%p, ret=%p\n",
 	    (void *) l, (void *) r, (void *) ret);
 #endif
-
-    if (op == B_POW) {
-	if (scalar_node(l) && scalar_node(r)) {
-	    op = B_DOTPOW;
-	} else if (!scalar_node(r)) {
-	    p->err = E_TYPES;
-	    return NULL;
-	}
-    }
-
- next_step:
 
     if (ml == NULL) {
 	ml = node_get_matrix(l, p, 0, 1);
