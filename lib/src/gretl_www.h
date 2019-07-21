@@ -103,4 +103,11 @@ int gretl_curl (const char *url, const char *header,
 
 int try_http (const char *s, char *fname, int *http);
 
+int curl_send_mail (const char *from_addr,
+		    const char *to_addr,
+		    const char *server,
+		    const char *username,
+		    const char *password,
+		    const char *filename);
+
 #endif /* GRETL_WWW_H */

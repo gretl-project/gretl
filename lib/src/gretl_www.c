@@ -739,6 +739,113 @@ int upload_function_package (const char *login, const char *pass,
     return err;
 }
 
+struct uploader {
+    FILE *fp;
+    char rem[80];
+};
+
+/* FIXME need to understand what's supposed to happen
+   in the following function!!
+*/
+
+static size_t get_payload (void *buf, size_t size,
+			   size_t nitems, void *ptr)
+{
+    struct uploader *ul = ptr;
+    size_t bufmax = size * nitems;
+    const char *data;
+    char line[80];
+
+    if (size == 0 || nitems == 0 || bufmax < 1) {
+	return 0;
+    }
+
+    if (ul->rem[0] != '\0') {
+	data = ul->rem;
+    } else {
+	data = fgets(line, sizeof line, ul->fp);
+    }
+
+    if (data != NULL) {
+	size_t len = strlen(data);
+	size_t wrote;
+
+	if (len <= bufmax) {
+	    memcpy(buf, data, len);
+	    wrote = len;
+	    ul->rem[0] = '\0';
+	} else {
+	    memcpy(buf, data, bufmax);
+	    wrote = bufmax;
+	    strcpy(ul->rem, data + bufmax);
+	}
+	return wrote;
+    }
+
+    return 0;
+}
+
+/* See also https://curl.haxx.se/libcurl/c/CURLOPT_READDATA.html */
+/* server: e.g. "smtp://mail.example.com" */
+
+int curl_send_mail (const char *from_addr,
+		    const char *to_addr,
+		    const char *server,
+		    const char *username,
+		    const char *password,
+		    const char *filename)
+{
+    CURL *curl;
+    CURLcode res = CURLE_OK;
+    struct curl_slist *recip = NULL;
+    struct uploader upload_ctx;
+    int err = 0;
+
+    upload_ctx.rem[0] = '\0';
+    upload_ctx.fp = gretl_fopen(filename, "rb");
+    if (upload_ctx.fp == NULL) {
+	return E_FOPEN;
+    }
+
+    curl = curl_easy_init();
+
+    if (curl != NULL) {
+	curl_easy_setopt(curl, CURLOPT_USERNAME, username);
+	curl_easy_setopt(curl, CURLOPT_PASSWORD, password);
+	curl_easy_setopt(curl, CURLOPT_URL, server);
+	curl_easy_setopt(curl, CURLOPT_MAIL_FROM, from_addr);
+
+	recip = curl_slist_append(recip, to_addr);
+	curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, recip);
+
+	/* We're using a callback function to specify the payload (the headers and
+	 * body of the message). You could just use the CURLOPT_READDATA option to
+	 * specify a FILE pointer to read from. */
+	curl_easy_setopt(curl, CURLOPT_READFUNCTION, get_payload);
+	curl_easy_setopt(curl, CURLOPT_READDATA, &upload_ctx);
+	curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
+
+	/* Send the message */
+	res = curl_easy_perform(curl);
+
+	/* Check for errors */
+	if (res != CURLE_OK) {
+	    fprintf(stderr, "curl_easy_perform() failed: %s\n",
+		    curl_easy_strerror(res));
+	    err = E_DATA;
+	}
+
+	/* Free the list of recipients */
+	curl_slist_free_all(recip);
+
+	curl_easy_cleanup(curl);
+    }
+
+    fclose(upload_ctx.fp);
+
+    return err;
+}
+
 int list_remote_dbs (char **getbuf)
 {
     return retrieve_url(dbhost, LIST_DBS, NULL, NULL,
