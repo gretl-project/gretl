@@ -4819,8 +4819,11 @@ static int wooldridge_autocorr_test (MODEL *pmod, DATASET *dset,
 int panel_autocorr_test (MODEL *pmod, DATASET *dset,
 			 gretlopt opt, PRN *prn)
 {
+    int save_pcse = libset_get_bool(PCSE);
     int orig_v = dset->v;
     int err;
+
+    libset_set_bool(PCSE, 0);
 
     if (pmod->ci == OLS || (pmod->opt & OPT_P)) {
 	err = pooled_autocorr_test(pmod, dset, opt, prn);
@@ -4828,6 +4831,7 @@ int panel_autocorr_test (MODEL *pmod, DATASET *dset,
 	err = wooldridge_autocorr_test(pmod, dset, opt, prn);
     }
 
+    libset_set_bool(PCSE, save_pcse);
     dataset_drop_last_variables(dset, dset->v - orig_v);
 
     return err;
