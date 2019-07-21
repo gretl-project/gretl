@@ -23,6 +23,7 @@
 
 #include "libgretl.h"
 #include "version.h"
+#include "gretl_www.h"
 
 #include <gtk/gtk.h>
 #include <stdlib.h>
@@ -1244,6 +1245,16 @@ static int pack_and_mail (const char *fname,
 	fclose(fpout);
     }
 
+#if 0
+    if (!err) {
+	/* just testing */
+	err = curl_send_mail(msg->sender, msg->recip,
+			     "smtps://smtp.gmail.com:465",
+			     "cottrell@wfu.edu",
+			     "XXXXXXX",
+			     tmpfname);
+    }
+#else
     if (!err) {
 	fpin = gretl_fopen(tmpfname, "rb");
 	if (fpin == NULL) {
@@ -1261,6 +1272,7 @@ static int pack_and_mail (const char *fname,
 	    fclose(fpin);
 	}
     }
+#endif
 
     gretl_remove(tmpfname);
 
