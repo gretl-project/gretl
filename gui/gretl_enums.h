@@ -124,6 +124,7 @@ enum extra_cmds {
     POLYWEIGHTS,
     EMAFILTER,
     X12AHELP,
+    MAILHELP,
     LOESS,
     NADARWAT,
     SSHEET,

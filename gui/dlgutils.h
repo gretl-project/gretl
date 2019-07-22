@@ -90,6 +90,8 @@ gint gretl_dialog_set_destruction (GtkWidget *w, gpointer p);
 
 int maybe_raise_dialog (void);
 
+void set_plugin_dialog_open (gboolean s);
+
 void vbox_add_hsep (GtkWidget *vbox);
 
 void pack_in_hbox (GtkWidget *w, GtkWidget *vbox, int vspace);

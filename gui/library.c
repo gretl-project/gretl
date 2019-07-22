@@ -5688,9 +5688,11 @@ static void real_do_tramo_x12a (int v, int tramo)
 
     series_adjust_sample(dataset->Z[v], &dataset->t1, &dataset->t2);
 
+    set_plugin_dialog_open(1);
     err = write_tx_data(outfile, v, dataset, &opt, tramo,
 			&warning, GTK_WINDOW(mdata->main),
 			x12a_help);
+    set_plugin_dialog_open(0);
 
     dataset->t1 = save_t1;
     dataset->t2 = save_t2;

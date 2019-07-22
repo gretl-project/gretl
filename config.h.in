@@ -38,6 +38,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Using libcurl for http? */
 #undef USE_CURL
 
+/* Support SMTP? */
+#undef ENABLE_MAILER
+
 /* Are we using openmp? */
 #undef OPENMP_BUILD
 
@@ -127,13 +130,6 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 /* Do we have posix_memalign */
 #undef HAVE_POSIX_MEMALIGN
-
-/* Do we have the stuff needed for SMTP? */
-#undef HAVE_SYS_SOCKET_H
-#undef HAVE_NETDB_H
-#undef ENABLE_MAILER
-#undef HAVE_SOCKADDR_IN
-#undef HAVE_IN_ADDR
 
 /* Define if the 'long double' type works.  */
 #undef HAVE_LONG_DOUBLE

@@ -33,7 +33,6 @@
 #include <gdk/gdkwin32.h>
 
 /* extra Windows headers */
-#include <mapi.h>
 #include <shlobj.h>
 #include <shellapi.h>
 #include <shlwapi.h>
@@ -374,99 +373,6 @@ int prn_to_clipboard (PRN *prn, int fmt)
 
     free(buf);
     free(modbuf);
-
-    return err;
-}
-
-static char *fname_from_fullname (char *fullname)
-{
-    char *fname = fullname;
-    char *p;
-
-    p = strrchr(fullname, '\\');
-    if (p == NULL) {
-	p = strrchr(fullname, '/');
-    }
-
-    if (p != NULL) {
-	fname = p + 1;
-    }
-
-    return fname;
-}
-
-static int real_send_file (char *fullname, LPMAPISENDMAIL send_mail)
-{
-    char *fname = fname_from_fullname(fullname);
-    gchar *note = NULL;
-    gchar *tmp = NULL;
-    MapiFileDesc mfd;
-    MapiMessage msg;
-    ULONG sd;
-    int err = 0;
-
-    memset(&mfd, 0, sizeof mfd);
-    memset(&msg, 0, sizeof msg);
-
-    mfd.lpszPathName = fullname;
-    mfd.lpszFileName = fname;
-    mfd.nPosition = 1; /* ? */
-
-    if (strstr(fname, ".gdt") != NULL) {
-	tmp = g_strdup_printf(_("Please find the gretl data file %s attached."),
-			      fname);
-	msg.lpszSubject  = "dataset";
-    } else {
-	tmp = g_strdup_printf(_("Please find the gretl script %s attached."),
-			      fname);
-	msg.lpszSubject  = "script";
-    }
-
-    note = g_strdup_printf("%s\n", tmp);
-    g_free(tmp);
-
-    msg.lpszNoteText = note;
-    msg.nFileCount = 1;
-    msg.lpFiles = &mfd;
-
-    sd = send_mail(0L, 0, &msg, MAPI_DIALOG, 0L);
-
-    if (sd != SUCCESS_SUCCESS && sd != MAPI_E_USER_ABORT) {
-	err = 1;
-    }
-
-    g_free(note);
-
-    return err;
-}
-
-int send_file (char *fullname)
-{
-    HINSTANCE mapilib = NULL;
-    LPMAPISENDMAIL send_mail = NULL;
-    int err = 0;
-
-    mapilib = LoadLibrary("MAPI32.DLL");
-    if (mapilib == NULL) {
-	err = 1;
-    } else {
-	send_mail = (LPMAPISENDMAIL) GetProcAddress(mapilib, "MAPISendMail");
-	if (send_mail == NULL) {
-	    err = 1;
-	}
-    }
-
-    if (!err) {
-	err = real_send_file(fullname, send_mail);
-    }
-
-    if (err) {
-	win_show_last_error();
-    }
-
-    if (mapilib != NULL) {
-	FreeLibrary(mapilib);
-    }
 
     return err;
 }

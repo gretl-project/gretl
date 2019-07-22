@@ -142,6 +142,7 @@ static struct gui_help_item gui_help_items[] = {
     { POLYWEIGHTS,    "polyweights" },
     { EMAFILTER,      "ema-filter" },
     { X12AHELP,       "x12a" },
+    { MAILHELP,       "mailer" },
     { LOESS,          "loess" },
     { NADARWAT,       "nadarwat" },
     { CLUSTER,        "cluster" },

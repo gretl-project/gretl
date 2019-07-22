@@ -7732,6 +7732,24 @@
 
   </command>
 
+  <command name="mailer" section="Utilities" context="gui"
+    label="Sending a file by email">
+
+    <description>
+      <para>
+	Gretl allows you to send a data or script file as an
+	email attachment from within the program. To do this
+	you must first supply <quote>Mail setup</quote>
+	information: the name of your SMTP server and your
+	email username.
+      </para>
+      <para>
+	FIXME complete this help text.
+      </para>
+    </description>
+
+  </command>
+
   <command name="makepkg" section="Programming" context="cli"
     label="Make function package">
 

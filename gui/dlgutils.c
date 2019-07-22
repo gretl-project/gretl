@@ -198,12 +198,15 @@ static void gretl_dialog_set_resizeable (GtkWidget *w, gboolean s)
 
 static GtkWidget *current_dialog;
 static GtkWidget *open_edit_dialog;
+static int plugin_dialog_open;
 
 int maybe_raise_dialog (void)
 {
     int ret = 0;
 
-    if (current_dialog != NULL) {
+    if (plugin_dialog_open) {
+	ret = 1;
+    } else if (current_dialog != NULL) {
 	gtk_window_present(GTK_WINDOW(current_dialog));
 	ret = 1;
     } else if (open_edit_dialog != NULL) {
@@ -212,6 +215,11 @@ int maybe_raise_dialog (void)
     }
 
     return ret;
+}
+
+void set_plugin_dialog_open (gboolean s)
+{
+    plugin_dialog_open = s;
 }
 
 static gint dialog_unblock (GtkWidget *w, gpointer p)

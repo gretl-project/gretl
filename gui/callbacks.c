@@ -962,16 +962,27 @@ void do_nistcheck (GtkAction *action)
     g_free(fname);
 }
 
-#if defined(ENABLE_MAILER) && !defined(G_OS_WIN32)
+#ifdef ENABLE_MAILER
 
-void send_file (char *fullname)
+static void mailer_help (void)
 {
-    int (*email_file) (const char *, const char *);
+    show_gui_help(MAILHELP);
+}
+
+void send_attachment (const char *filename)
+{
+    int (*email_file) (const char *, GtkWindow *, void *);
+    int err = 0;
 
     email_file = gui_get_plugin_function("email_file");
 
     if (email_file != NULL) {
-	email_file(fullname, gretl_dotdir());
+	set_plugin_dialog_open(1);
+	err = email_file(filename, GTK_WINDOW(mdata->main), mailer_help);
+	set_plugin_dialog_open(0);
+	if (err) {
+	    gui_errmsg(err);
+	}
     }
 }
 

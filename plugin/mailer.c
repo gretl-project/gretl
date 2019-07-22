@@ -42,7 +42,6 @@ struct msg_info {
 };
 
 struct mail_info {
-    int cancel;
     gchar *sender;
     gchar *sig;
     int want_sig;
@@ -56,6 +55,7 @@ struct mail_info {
 
 struct mail_dialog {
     GtkWidget *dlg;
+    GtkWidget *nb;
     GtkWidget *recip_combo;
     GtkWidget *sender_entry;
     GtkWidget *subj_entry;
@@ -110,7 +110,6 @@ static struct mail_info *mail_info_new (void)
 	return NULL;
     }
 
-    minfo->cancel = 0;
     minfo->sender = NULL;
     minfo->sig = NULL;
     minfo->want_sig = 1;
@@ -148,7 +147,7 @@ static void mail_info_free (struct mail_info *minfo)
     free(minfo);
 }
 
-static void save_email_info (struct mail_info *minfo)
+static void write_mail_info (struct mail_info *minfo)
 {
     FILE *fp;
 
@@ -177,6 +176,50 @@ static void save_email_info (struct mail_info *minfo)
     }
 }
 
+static void read_mail_info (struct mail_info *minfo)
+{
+    GList *addrs = NULL;
+    FILE *fp;
+
+    minfo->addrfile = g_strdup_printf("%sgretl.addresses", gretl_dotdir());
+
+    fp = gretl_fopen(minfo->addrfile, "r");
+    if (fp != NULL) {
+	char line[128];
+
+	while (fgets(line, sizeof line, fp)) {
+	    if (string_is_blank(line)) {
+		continue;
+	    }
+	    gretl_strstrip(line);
+	    if (!strncmp(line, "Reply-To:", 9)) {
+		minfo->sender = g_strdup(line + 10);
+	    } else if (!strncmp(line, "SMTP server:", 12)) {
+		minfo->server = g_strdup(line + 13);
+	    } else if (!strncmp(line, "mail user:", 10)) {
+		minfo->mail_user = g_strdup(line + 11);
+	    } else if (!strncmp(line, "password needed:", 16)) {
+		minfo->pass_needed = atoi(line + 17);
+	    } else {
+		addrs = g_list_append(addrs, g_strdup(line));
+	    }
+	}
+
+	fclose(fp);
+    }
+
+    /* default to google's SMTP server */
+    if (minfo->server == NULL) {
+	minfo->server = g_strdup("smtps://smtp.gmail.com:465");
+    } else if (strncmp(minfo->server, "smtp://", 7) &&
+	       strncmp(minfo->server, "smtps://", 8)) {
+	g_free(minfo->server);
+	minfo->server = g_strdup("smtps://smtp.gmail.com:465");
+    }
+
+    minfo->addrs = addrs;
+}
+
 static char *get_signature (void)
 {
     char *home = getenv("HOME");
@@ -203,13 +246,7 @@ static char *get_signature (void)
     return sig;
 }
 
-static void cancel_mail_settings (GtkWidget *w, struct mail_dialog *md)
-{
-    md->minfo->cancel = 1;
-    gtk_widget_destroy(md->dlg);
-}
-
-static void finalize_mail_settings (GtkWidget *w, struct mail_dialog *md)
+static int finalize_mail_settings (struct mail_dialog *md)
 {
     struct mail_info *minfo = md->minfo;
     struct msg_info *msg = md->msg;
@@ -252,9 +289,12 @@ static void finalize_mail_settings (GtkWidget *w, struct mail_dialog *md)
     }
     if (targ != NULL) {
 	/* focus the widget holding the missing field */
+	int page = gtk_notebook_page_num(GTK_NOTEBOOK(md->nb), targ);
+
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(md->nb), page);
 	gtk_widget_grab_focus(targ);
 	g_free(recip);
-	return;
+	return 1;
     }
 
     /* handle recipient info */
@@ -303,6 +343,7 @@ static void finalize_mail_settings (GtkWidget *w, struct mail_dialog *md)
 	minfo->mail_user = g_strdup(user);
 	save = 1;
     }
+    fprintf(stderr, "username = '%s'\n", minfo->mail_user);
 
     /* message subject */
     txt = gtk_entry_get_text(GTK_ENTRY(md->subj_entry));
@@ -326,10 +367,33 @@ static void finalize_mail_settings (GtkWidget *w, struct mail_dialog *md)
     }
 
     if (save) {
-	save_email_info(minfo);
+	write_mail_info(minfo);
     }
 
-    gtk_widget_destroy(md->dlg);
+    return 0;
+}
+
+/* callback for "response" signal from @dlg */
+
+static void mail_dialog_callback (GtkDialog *dlg, gint id, int *ret)
+{
+    int err = 0;
+
+    if (id == GTK_RESPONSE_REJECT || id == GTK_RESPONSE_ACCEPT) {
+	*ret = id;
+    } else if (id == GTK_RESPONSE_DELETE_EVENT) {
+	*ret = GTK_RESPONSE_REJECT;
+    }
+
+    if (*ret == GTK_RESPONSE_ACCEPT) {
+	struct mail_dialog *md = g_object_get_data(G_OBJECT(dlg), "md");
+
+	err = finalize_mail_settings(md);
+    }
+
+    if (!err) {
+	gtk_widget_destroy(GTK_WIDGET(dlg));
+    }
 }
 
 static void border_width (GtkWidget *w, int b)
@@ -347,48 +411,6 @@ static void set_dialog_border_widths (GtkWidget *dlg)
     gtk_box_set_spacing(GTK_BOX(box), w2);
     box = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
     border_width(box, w2);
-}
-
-static void get_email_info (struct mail_info *minfo)
-{
-    GList *addrs = NULL;
-    FILE *fp;
-
-    minfo->addrfile = g_strdup_printf("%sgretl.addresses", gretl_dotdir());
-
-    fp = gretl_fopen(minfo->addrfile, "r");
-    if (fp != NULL) {
-	char line[128];
-
-	while (fgets(line, sizeof line, fp)) {
-	    if (string_is_blank(line)) {
-		continue;
-	    }
-	    gretl_strstrip(line);
-	    if (!strncmp(line, "Reply-To:", 9)) {
-		minfo->sender = g_strdup(line + 10);
-	    } else if (!strncmp(line, "SMTP server:", 12)) {
-		minfo->server = g_strdup(line + 13);
-	    } else if (!strncmp(line, "mail user:", 10)) {
-		minfo->mail_user = g_strdup(line + 11);
-	    } else if (!strncmp(line, "password needed:", 16)) {
-		minfo->pass_needed = atoi(line + 17);
-	    } else {
-		addrs = g_list_append(addrs, g_strdup(line));
-	    }
-	}
-
-	fclose(fp);
-    }
-
-    minfo->addrs = addrs;
-}
-
-static gboolean
-mail_dialog_delete (GtkWidget *w, GdkEvent *e, struct mail_info *minfo)
-{
-    minfo->cancel = 1;
-    return FALSE;
 }
 
 static int is_data_file (const char *fname)
@@ -437,41 +459,70 @@ static void set_combo_strings_from_list (GtkComboBox *box, GList *list)
     }
 }
 
+static GtkWidget *mailer_help_button (GtkWidget *hbox,
+				      void (*help_func))
+{
+    GtkWidget *button;
+
+    button = gtk_button_new_from_stock(GTK_STOCK_HELP);
+    gtk_container_add(GTK_CONTAINER(hbox), button);
+    gtk_button_box_set_child_secondary(GTK_BUTTON_BOX(hbox),
+				       button, TRUE);
+#if GTK_MAJOR_VERSION == 3 && GTK_MINOR_VERSION >= 2
+    gtk_button_box_set_child_non_homogeneous(GTK_BUTTON_BOX(hbox),
+					     button, TRUE);
+#endif
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(help_func), NULL);
+
+    return button;
+}
+
 /* Below: notebook-style dialog with two pages, one pertaining to
    the current message and one for general "mail setup" (server
    and credentials).
 */
 
-static void mail_to_dialog (const char *fname, struct mail_info *minfo,
-			    struct msg_info *msg)
+static int mail_to_dialog (const char *fname,
+			   struct mail_info *minfo,
+			   struct msg_info *msg,
+			   GtkWindow *parent,
+			   void (*help_func))
 {
+    struct mail_dialog md;
     const gchar *lbls[] = {
 	N_("To:"),
 	N_("From:"),
 	N_("Subject:"),
 	N_("Note:")
     };
-    GtkWidget *tbl, *lbl, *vbox;
-    GtkWidget *nb, *hbox, *button;
-    gchar *port_str;
-    const char *short_fname, *p;
-    struct mail_dialog md;
+    GtkWidget *tbl, *lbl;
+    GtkWidget *hbox, *vbox;
+    gchar *shortname = NULL;
     int i, datafile, nrows;
+    gint ret = 0;
 
-    md.dlg = gtk_dialog_new();
+    md.dlg =
+	gtk_dialog_new_with_buttons(_("gretl: send mail"),
+				    parent,
+				    GTK_DIALOG_DESTROY_WITH_PARENT,
+				    GTK_STOCK_CANCEL,
+				    GTK_RESPONSE_REJECT,
+				    GTK_STOCK_OK,
+				    GTK_RESPONSE_ACCEPT,
+				    NULL);
+    g_object_set_data(G_OBJECT(md.dlg), "md", &md);
+
     md.minfo = minfo;
     md.msg = msg;
 
-    get_email_info(minfo);
+    read_mail_info(minfo);
     minfo->sig = get_signature();
     minfo->want_sig = minfo->sig != NULL;
 
-    g_signal_connect(G_OBJECT(md.dlg), "delete_event",
-		     G_CALLBACK(mail_dialog_delete), minfo);
     g_signal_connect(G_OBJECT(md.dlg), "destroy",
 		     G_CALLBACK(mail_dialog_quit), NULL);
 
-    gtk_window_set_title(GTK_WINDOW(md.dlg), _("gretl: send mail"));
     set_dialog_border_widths(md.dlg);
 #if GTK_MAJOR_VERSION < 3
     gtk_dialog_set_has_separator(GTK_DIALOG(md.dlg), FALSE);
@@ -479,9 +530,9 @@ static void mail_to_dialog (const char *fname, struct mail_info *minfo,
     gtk_window_set_position(GTK_WINDOW(md.dlg), GTK_WIN_POS_MOUSE);
 
     /* set up the notebook */
-    nb = gtk_notebook_new();
+    md.nb = gtk_notebook_new();
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(md.dlg));
-    gtk_container_add(GTK_CONTAINER(vbox), nb);
+    gtk_container_add(GTK_CONTAINER(vbox), md.nb);
 
     /* the first page */
     hbox = gtk_hbox_new(FALSE, 5);
@@ -490,7 +541,7 @@ static void mail_to_dialog (const char *fname, struct mail_info *minfo,
     border_width(vbox, 5);
     gtk_container_add(GTK_CONTAINER(hbox), vbox);
     lbl = gtk_label_new(_("Message"));
-    gtk_notebook_append_page(GTK_NOTEBOOK(nb), hbox, lbl);
+    gtk_notebook_append_page(GTK_NOTEBOOK(md.nb), hbox, lbl);
 
     nrows = (minfo->sig == NULL)? 4 : 5;
 
@@ -501,11 +552,8 @@ static void mail_to_dialog (const char *fname, struct mail_info *minfo,
     gtk_container_add(GTK_CONTAINER(vbox), tbl);
 
     /* what sort of file are we sending? */
-    short_fname = fname;
-    if ((p = strrchr(fname, '/')) != NULL) {
-	short_fname = p + 1;
-    }
-    datafile = is_data_file(short_fname);
+    shortname = g_path_get_basename(fname);
+    datafile = is_data_file(shortname);
 
     /* loop across data enty widgets on page 1 */
     for (i=0; i<4; i++) {
@@ -539,10 +587,10 @@ static void mail_to_dialog (const char *fname, struct mail_info *minfo,
 
 	    if (datafile) {
 		note = g_strdup_printf(_("Please find the gretl data file %s attached."),
-				       short_fname);
+				       shortname);
 	    } else {
 		note = g_strdup_printf(_("Please find the gretl script %s attached."),
-				       short_fname);
+				       shortname);
 	    }
 	    gtk_entry_set_text(GTK_ENTRY(w), note);
 	    g_free(note);
@@ -569,6 +617,8 @@ static void mail_to_dialog (const char *fname, struct mail_info *minfo,
 	}
     }
 
+    g_free(shortname);
+
     /* conditional addition of another widget on page 1 */
     if (minfo->sig != NULL) {
 	GtkWidget *w;
@@ -587,7 +637,7 @@ static void mail_to_dialog (const char *fname, struct mail_info *minfo,
     border_width(vbox, 5);
     gtk_container_add(GTK_CONTAINER(hbox), vbox);
     lbl = gtk_label_new(_("Mail setup"));
-    gtk_notebook_append_page(GTK_NOTEBOOK(nb), hbox, lbl);
+    gtk_notebook_append_page(GTK_NOTEBOOK(md.nb), hbox, lbl);
 
     /* table for second page */
     tbl = gtk_table_new(3, 2, FALSE);
@@ -623,34 +673,24 @@ static void mail_to_dialog (const char *fname, struct mail_info *minfo,
     gtk_table_attach(GTK_TABLE(tbl), md.pass_check, 0, 2, 2, 3,
 		     GTK_FILL, GTK_FILL, 0, 0);
 
-    /* buttons zone */
+    /* Help button */
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(md.dlg));
-
-    /* Cancel button */
-    button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
-    gtk_widget_set_can_default(button, TRUE);
-    gtk_container_add(GTK_CONTAINER(hbox), button);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(cancel_mail_settings), &md);
-
-    /* Create the "OK" button */
-    button = gtk_button_new_from_stock(GTK_STOCK_OK);
-    gtk_widget_set_can_default(button, TRUE);
-    gtk_container_add(GTK_CONTAINER(hbox), button);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(finalize_mail_settings), &md);
-    gtk_widget_grab_default(button);
+    mailer_help_button(hbox, help_func);
 
     gtk_widget_set_size_request(md.dlg, 460, -1);
+
+    g_signal_connect(G_OBJECT(md.dlg), "response",
+		     G_CALLBACK(mail_dialog_callback), &ret);
     gtk_widget_show_all(md.dlg);
 
     if (minfo->server == NULL) {
 	/* no server info recorded yet */
-	gtk_notebook_set_current_page(GTK_NOTEBOOK(nb), 1);
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(md.nb), 1);
     }
 
-    gtk_window_set_modal(GTK_WINDOW(md.dlg), TRUE);
-    gtk_main();
+    gtk_main(); /* blocking, but not modal */
+
+    return (ret == GTK_RESPONSE_ACCEPT)? 1 : 0;
 }
 
 static void cancel_password (GtkWidget *w, struct passwd_dialog *pwd)
@@ -685,6 +725,7 @@ static void password_dialog (struct mail_info *minfo)
 		     G_CALLBACK(mail_dialog_quit), NULL);
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(pwd.dlg));
+    border_width(vbox, 5);
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_container_add(GTK_CONTAINER(vbox), hbox);
 
@@ -720,24 +761,23 @@ static void password_dialog (struct mail_info *minfo)
     gtk_main();
 }
 
-static void mail_infobox (const char *msg, int err)
+static void mail_infobox (const char *msg)
 {
     GtkWidget *dialog;
 
-    dialog = gtk_message_dialog_new (NULL,
-				     GTK_DIALOG_DESTROY_WITH_PARENT,
-				     (err)? GTK_MESSAGE_ERROR : GTK_MESSAGE_INFO,
-				     GTK_BUTTONS_CLOSE,
-				     "%s",
-				     msg);
-    gtk_dialog_run(GTK_DIALOG (dialog));
+    dialog = gtk_message_dialog_new(NULL,
+				    GTK_DIALOG_DESTROY_WITH_PARENT,
+				    GTK_MESSAGE_INFO,
+				    GTK_BUTTONS_CLOSE,
+				    "%s",
+				    msg);
+    gtk_dialog_run(GTK_DIALOG(dialog));
     gtk_widget_destroy(dialog);
 }
 
 static int pack_and_mail (const char *fname,
 			  struct msg_info *msg,
-			  struct mail_info *minfo,
-			  const char *userdir)
+			  struct mail_info *minfo)
 {
     char tmpfname[FILENAME_MAX];
     FILE *fpin, *fpout;
@@ -750,7 +790,7 @@ static int pack_and_mail (const char *fname,
 	err = 1;
     }
 
-    sprintf(tmpfname, "%smpack.XXXXXX", userdir);
+    sprintf(tmpfname, "%smpack.XXXXXX", gretl_dotdir());
     fpout = gretl_mktemp(tmpfname, "wb");
     if (fpout == NULL) {
 	err = 1;
@@ -786,7 +826,8 @@ static int pack_and_mail (const char *fname,
 	fprintf(stderr, "  recipient = '%s'\n", msg->recip);
 	fprintf(stderr, "  server = '%s'\n", minfo->server);
 	fprintf(stderr, "  username = '%s'\n", minfo->mail_user);
-	fprintf(stderr, "  password = (%d bytes)\n", strlen(minfo->mail_pass));
+	fprintf(stderr, "  password = (%d bytes)\n",
+		(int) strlen(minfo->mail_pass));
 	fprintf(stderr, "  filename = '%s'\n", tmpfname);
 #endif
 	err = curl_send_mail(msg->sender, msg->recip,
@@ -799,11 +840,11 @@ static int pack_and_mail (const char *fname,
     return err;
 }
 
-int email_file (const char *fname, const char *userdir)
+int email_file (const char *fname, GtkWindow *parent, void (*help_func))
 {
     struct mail_info *minfo = NULL;
     struct msg_info *msg = NULL;
-    gchar *errmsg = NULL;
+    int doit = 0;
     int err = 0;
 
     minfo = mail_info_new();
@@ -815,16 +856,13 @@ int email_file (const char *fname, const char *userdir)
 	return E_ALLOC;
     }
 
-    mail_to_dialog(fname, minfo, msg);
+    doit = mail_to_dialog(fname, minfo, msg, parent, help_func);
 
-    if (!minfo->cancel) {
-	err = pack_and_mail(fname, msg, minfo, userdir);
-    }
-
-    if (errmsg != NULL) {
-	mail_infobox(errmsg, 1);
-	g_free(errmsg);
-	err = 1;
+    if (doit) {
+	err = pack_and_mail(fname, msg, minfo);
+	if (!err) {
+	    mail_infobox(_("Mail sent"));
+	}
     }
 
     mail_msg_free(msg);

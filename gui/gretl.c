@@ -273,7 +273,7 @@ static void email_data (gpointer p, guint u, GtkWidget *w)
 
     err = gretl_write_gdt(gdttmp, NULL, dataset, OPT_Z, 0);
     if (!err) {
-	send_file(gdttmp);
+	send_attachment(gdttmp);
     }
     gretl_remove(gdttmp);
 }

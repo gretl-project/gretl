@@ -35,6 +35,7 @@ build_gui="yes"
 prefer_gtk2="no"
 build_docs="no"
 build_addons="no"
+build_mailer="no"
 use_lucida="no"
 build_po="no"
 have_readline="no"
@@ -407,26 +408,12 @@ if test "$try_mpi" = "yes" ; then
   fi
 fi
 
-dnl try to build mailer plugin?
-if test $win32_build = "yes" ; then
-  AC_DEFINE(ENABLE_MAILER)
-  build_mailer="no"
-else
-  AC_CHECK_HEADERS(netdb.h sys/socket.h,
-	  build_mailer="yes" ; AC_DEFINE(ENABLE_MAILER),
-	  build_mailer="no"
-  )
-  if test "$build_mailer" = "yes" ; then
-    AC_CHECK_TYPE(struct sockaddr_in,
-      AC_DEFINE(HAVE_SOCKADDR_IN, 1, [Do we have sockaddr_in?]),,
-      #include <sys/socket.h>
-      #include <netdb.h>
-    )
-    AC_CHECK_TYPE(struct in_addr,
-      AC_DEFINE(HAVE_IN_ADDR, 1, [Do we have in_addr?]),,
-      #include <sys/socket.h>
-      #include <netdb.h>
-    )
+dnl (try to) build mailer plugin?
+if test $build_gui = "yes" ; then
+  PKG_CHECK_MODULES(CURL, libcurl >= 7.20.0, curl_mail="yes", curl_mail="no")
+  if test $curl_mail = "yes" ; then
+    AC_DEFINE(ENABLE_MAILER)
+    build_mailer="yes"
   fi
 fi
 

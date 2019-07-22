@@ -343,7 +343,7 @@ static void mail_script_callback (GtkWidget *w, windata_t *vwin)
 	return;
     }
 
-    send_file(vwin->fname);
+    send_attachment(vwin->fname);
 }
 
 #endif
