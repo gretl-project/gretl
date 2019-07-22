@@ -27,43 +27,12 @@
 
 #include <gtk/gtk.h>
 #include <stdlib.h>
-#include <stdarg.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <errno.h>
 
 #if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 18)
 # include "gtk_compat.h"
 #endif
 
 #include "mpack/mpack.h"
-
-typedef enum {
-    SMTP_OK,
-    SMTP_NO_CONNECT,
-    SMTP_NO_RELAY,
-    SMTP_POP_FIRST,
-    SMTP_TLS_FIRST,
-    SMTP_BAD_SENDER,
-    SMTP_BAD_ADDRESS,
-    SMTP_OLD_SERVER,
-    SMTP_ERR
-} SMTPError;
-
-typedef enum {
-    SMTP_CONN,
-    SMTP_EHLO,
-    SMTP_STARTTLS,
-    SMTP_MAIL,
-    SMTP_RCPT,
-    SMTP_DATA,
-    SMTP_DOT,
-    SMTP_QUIT
-} SMTPCode;
-
-#define SBSIZE 4096
 
 struct msg_info {
     gchar *recip;
@@ -78,10 +47,9 @@ struct mail_info {
     gchar *sig;
     int want_sig;
     gchar *server;
-    unsigned short port;
-    gchar *pop_server;
     gchar *mail_user;
     gchar *mail_pass;
+    int pass_needed;
     gchar *addrfile;
     GList *addrs;
 };
@@ -93,16 +61,15 @@ struct mail_dialog {
     GtkWidget *subj_entry;
     GtkWidget *note_entry;
     GtkWidget *server_entry;
-    GtkWidget *port_entry;
+    GtkWidget *user_entry;
+    GtkWidget *pass_check;
     struct mail_info *minfo;
     struct msg_info *msg;
 };
 
-struct pop_dialog {
+struct passwd_dialog {
     GtkWidget *dlg;
-    GtkWidget *server_entry;
-    GtkWidget *user_entry;
-    GtkWidget *pass_entry;
+    GtkWidget *entry;
     struct mail_info *minfo;
 };
 
@@ -148,10 +115,9 @@ static struct mail_info *mail_info_new (void)
     minfo->sig = NULL;
     minfo->want_sig = 1;
     minfo->server = NULL;
-    minfo->port = 25;
-    minfo->pop_server = NULL;
     minfo->mail_user = NULL;
     minfo->mail_pass = NULL;
+    minfo->pass_needed = 1;
     minfo->addrfile = NULL;
     minfo->addrs = NULL;
 
@@ -169,7 +135,6 @@ static void mail_info_free (struct mail_info *minfo)
     g_free(minfo->sender);
     g_free(minfo->sig);
     g_free(minfo->server);
-    g_free(minfo->pop_server);
     g_free(minfo->mail_user);
     g_free(minfo->mail_pass);
     g_free(minfo->addrfile);
@@ -199,15 +164,10 @@ static void save_email_info (struct mail_info *minfo)
 	if (minfo->server != NULL && *minfo->server != '\0') {
 	    fprintf(fp, "SMTP server: %s\n", minfo->server);
 	}
-	if (minfo->port != 25) {
-	    fprintf(fp, "SMTP port: %d\n", minfo->port);
-	}
-	if (minfo->pop_server != NULL && *minfo->pop_server != '\0') {
-	    fprintf(fp, "POP server: %s\n", minfo->pop_server);
-	}
 	if (minfo->mail_user != NULL && *minfo->mail_user != '\0') {
-	    fprintf(fp, "POP user: %s\n", minfo->mail_user);
+	    fprintf(fp, "mail user: %s\n", minfo->mail_user);
 	}
+	fprintf(fp, "password needed: %d\n", minfo->pass_needed);
 	for (i=0; i<maxaddrs && list != NULL; i++) {
 	    fprintf(fp, "%s\n", (char *) list->data);
 	    list = list->next;
@@ -258,6 +218,7 @@ static void finalize_mail_settings (GtkWidget *w, struct mail_dialog *md)
     gchar *recip = NULL;
     const gchar *sender = NULL;
     const gchar *server = NULL;
+    const gchar *user = NULL;
     const gchar *txt;
     int i, save = 0;
 
@@ -281,6 +242,12 @@ static void finalize_mail_settings (GtkWidget *w, struct mail_dialog *md)
 	server = gtk_entry_get_text(GTK_ENTRY(md->server_entry));
 	if (server == NULL || *server == '\0') {
 	    targ = md->server_entry;
+	}
+    }
+    if (targ == NULL) {
+	user = gtk_entry_get_text(GTK_ENTRY(md->user_entry));
+	if (user == NULL || *user == '\0') {
+	    targ = md->user_entry;
 	}
     }
     if (targ != NULL) {
@@ -330,6 +297,13 @@ static void finalize_mail_settings (GtkWidget *w, struct mail_dialog *md)
     }
     fprintf(stderr, "server = '%s'\n", minfo->server);
 
+    /* email userID */
+    if (minfo->mail_user == NULL || strcmp(user, minfo->mail_user)) {
+	g_free(minfo->mail_user);
+	minfo->mail_user = g_strdup(user);
+	save = 1;
+    }
+
     /* message subject */
     txt = gtk_entry_get_text(GTK_ENTRY(md->subj_entry));
     if (txt != NULL && *txt != '\0') {
@@ -351,77 +325,11 @@ static void finalize_mail_settings (GtkWidget *w, struct mail_dialog *md)
 	}
     }
 
-    /* port number */
-    txt = gtk_entry_get_text(GTK_ENTRY(md->port_entry));
-    if (txt != NULL && *txt != '\0') {
-	minfo->port = atoi(txt);
-	if (minfo->port != 25) {
-	    save = 1;
-	}
-    }
-
     if (save) {
 	save_email_info(minfo);
     }
 
     gtk_widget_destroy(md->dlg);
-}
-
-static void cancel_pop_settings (GtkWidget *w, struct pop_dialog *pd)
-{
-    pd->minfo->cancel = 1;
-    gtk_widget_destroy(pd->dlg);
-}
-
-static void finalize_pop_settings (GtkWidget *w, struct pop_dialog *pd)
-{
-    struct mail_info *minfo = pd->minfo;
-    GtkWidget *entries[] = {
-        pd->server_entry,
-	pd->user_entry,
-	pd->pass_entry
-    };
-    const gchar *fields[3];
-    int i, save = 0;
-
-    /* get entry text, checking for missing info */
-    for (i=0; i<3; i++) {
-	fields[i] = gtk_entry_get_text(GTK_ENTRY(entries[i]));
-	if (fields[i] == NULL || fields[i][0] == '\0') {
-	    gtk_widget_grab_focus(entries[i]);
-	    return;
-	}
-    }
-
-    /* server */
-    if (minfo->pop_server == NULL || strcmp(fields[0], minfo->pop_server)) {
-	g_free(minfo->pop_server);
-	minfo->pop_server = g_strdup(fields[0]);
-	save = 1;
-    }
-    fprintf(stderr, "POP server = '%s'\n", minfo->pop_server);
-
-    /* username */
-    if (minfo->mail_user == NULL || strcmp(fields[1], minfo->mail_user)) {
-	g_free(minfo->mail_user);
-	minfo->mail_user = g_strdup(fields[1]);
-	save = 1;
-    }
-    fprintf(stderr, "POP user = '%s'\n", minfo->mail_user);
-
-    /* password */
-    if (minfo->mail_pass == NULL || strcmp(fields[2], minfo->mail_pass)) {
-	g_free(minfo->mail_pass);
-	minfo->mail_pass = g_strdup(fields[2]);
-	save = 1;
-    }
-    fprintf(stderr, "got %d character password\n", (int) strlen(minfo->mail_pass));
-
-    if (save) {
-	save_email_info(minfo);
-    }
-
-    gtk_widget_destroy(pd->dlg);
 }
 
 static void border_width (GtkWidget *w, int b)
@@ -461,12 +369,10 @@ static void get_email_info (struct mail_info *minfo)
 		minfo->sender = g_strdup(line + 10);
 	    } else if (!strncmp(line, "SMTP server:", 12)) {
 		minfo->server = g_strdup(line + 13);
-	    } else if (!strncmp(line, "SMTP port:", 10)) {
-		minfo->port = atoi(line + 11);
-	    } else if (!strncmp(line, "POP server:", 11)) {
-		minfo->pop_server = g_strdup(line + 12);
-	    } else if (!strncmp(line, "POP user:", 9)) {
-		minfo->mail_user = g_strdup(line + 10);
+	    } else if (!strncmp(line, "mail user:", 10)) {
+		minfo->mail_user = g_strdup(line + 11);
+	    } else if (!strncmp(line, "password needed:", 16)) {
+		minfo->pass_needed = atoi(line + 17);
 	    } else {
 		addrs = g_list_append(addrs, g_strdup(line));
 	    }
@@ -531,9 +437,13 @@ static void set_combo_strings_from_list (GtkComboBox *box, GList *list)
     }
 }
 
-static void
-mail_to_dialog (const char *fname, struct mail_info *minfo,
-		struct msg_info *msg)
+/* Below: notebook-style dialog with two pages, one pertaining to
+   the current message and one for general "mail setup" (server
+   and credentials).
+*/
+
+static void mail_to_dialog (const char *fname, struct mail_info *minfo,
+			    struct msg_info *msg)
 {
     const gchar *lbls[] = {
 	N_("To:"),
@@ -558,7 +468,6 @@ mail_to_dialog (const char *fname, struct mail_info *minfo,
 
     g_signal_connect(G_OBJECT(md.dlg), "delete_event",
 		     G_CALLBACK(mail_dialog_delete), minfo);
-
     g_signal_connect(G_OBJECT(md.dlg), "destroy",
 		     G_CALLBACK(mail_dialog_quit), NULL);
 
@@ -569,9 +478,12 @@ mail_to_dialog (const char *fname, struct mail_info *minfo,
 #endif
     gtk_window_set_position(GTK_WINDOW(md.dlg), GTK_WIN_POS_MOUSE);
 
+    /* set up the notebook */
     nb = gtk_notebook_new();
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(md.dlg));
     gtk_container_add(GTK_CONTAINER(vbox), nb);
+
+    /* the first page */
     hbox = gtk_hbox_new(FALSE, 5);
     border_width(hbox, 5);
     vbox = gtk_vbox_new(FALSE, 5);
@@ -582,18 +494,20 @@ mail_to_dialog (const char *fname, struct mail_info *minfo,
 
     nrows = (minfo->sig == NULL)? 4 : 5;
 
+    /* table within the first page */
     tbl = gtk_table_new(nrows, 2, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
     gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
     gtk_container_add(GTK_CONTAINER(vbox), tbl);
 
+    /* what sort of file are we sending? */
     short_fname = fname;
     if ((p = strrchr(fname, '/')) != NULL) {
 	short_fname = p + 1;
     }
-
     datafile = is_data_file(short_fname);
 
+    /* loop across data enty widgets on page 1 */
     for (i=0; i<4; i++) {
 	GtkWidget *w;
 
@@ -655,6 +569,7 @@ mail_to_dialog (const char *fname, struct mail_info *minfo,
 	}
     }
 
+    /* conditional addition of another widget on page 1 */
     if (minfo->sig != NULL) {
 	GtkWidget *w;
 
@@ -665,6 +580,7 @@ mail_to_dialog (const char *fname, struct mail_info *minfo,
 	i++;
     }
 
+    /* setup for second page */
     hbox = gtk_hbox_new(FALSE, 5);
     border_width(hbox, 5);
     vbox = gtk_vbox_new(FALSE, 5);
@@ -673,36 +589,41 @@ mail_to_dialog (const char *fname, struct mail_info *minfo,
     lbl = gtk_label_new(_("Mail setup"));
     gtk_notebook_append_page(GTK_NOTEBOOK(nb), hbox, lbl);
 
-    tbl = gtk_table_new(2, 3, FALSE);
+    /* table for second page */
+    tbl = gtk_table_new(3, 2, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
     gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
-    gtk_container_add(GTK_CONTAINER(vbox), tbl);
+    gtk_box_pack_start(GTK_BOX(vbox), tbl, 0, 0, 0);
 
-    /* SMTP server */
+    /* SMTP server entry */
     lbl = gtk_label_new(_("SMTP server:"));
     gtk_misc_set_alignment(GTK_MISC(lbl), 1, 0.5);
     gtk_table_attach(GTK_TABLE(tbl), lbl, 0, 1, 0, 1, GTK_FILL, GTK_FILL, 0, 0);
     md.server_entry = gtk_entry_new();
-    gtk_table_attach_defaults(GTK_TABLE(tbl), md.server_entry, 1, 3, 0, 1);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), md.server_entry, 1, 2, 0, 1);
     if (minfo->server != NULL) {
 	gtk_entry_set_text(GTK_ENTRY(md.server_entry), minfo->server);
     }
 
-    /* SMTP port number */
-    lbl = gtk_label_new(_("port:"));
+    /* email userID entry */
+    lbl = gtk_label_new(_("Mail username:"));
     gtk_misc_set_alignment(GTK_MISC(lbl), 1, 0.5);
     gtk_table_attach(GTK_TABLE(tbl), lbl, 0, 1, 1, 2, GTK_FILL, GTK_FILL, 0, 0);
-    md.port_entry = gtk_entry_new();
-    gtk_entry_set_max_length(GTK_ENTRY(md.port_entry), 5);
-    gtk_entry_set_width_chars(GTK_ENTRY(md.port_entry), 8);
-    gtk_table_attach_defaults(GTK_TABLE(tbl), md.port_entry, 1, 2, 1, 2);
-    port_str = g_strdup_printf("%d", minfo->port);
-    gtk_entry_set_text(GTK_ENTRY(md.port_entry), port_str);
-    g_free(port_str);
+    md.user_entry = gtk_entry_new();
+    gtk_table_attach_defaults(GTK_TABLE(tbl), md.user_entry, 1, 2, 1, 2);
+    if (minfo->mail_user != NULL) {
+	gtk_entry_set_text(GTK_ENTRY(md.user_entry), minfo->mail_user);
+    }
 
-    lbl = gtk_label_new("                     ");
-    gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 2, 3, 1, 2);
+    /* "password required" checkbox */
+    md.pass_check = gtk_check_button_new_with_label
+	(_("A password is required for sending mail"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(md.pass_check),
+				 minfo->pass_needed);
+    gtk_table_attach(GTK_TABLE(tbl), md.pass_check, 0, 2, 2, 3,
+		     GTK_FILL, GTK_FILL, 0, 0);
 
+    /* buttons zone */
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(md.dlg));
 
     /* Cancel button */
@@ -720,7 +641,7 @@ mail_to_dialog (const char *fname, struct mail_info *minfo,
 		     G_CALLBACK(finalize_mail_settings), &md);
     gtk_widget_grab_default(button);
 
-    gtk_widget_set_size_request(md.dlg, 420, -1);
+    gtk_widget_set_size_request(md.dlg, 460, -1);
     gtk_widget_show_all(md.dlg);
 
     if (minfo->server == NULL) {
@@ -732,95 +653,70 @@ mail_to_dialog (const char *fname, struct mail_info *minfo,
     gtk_main();
 }
 
-static void auth_info_dialog (struct mail_info *minfo)
+static void cancel_password (GtkWidget *w, struct passwd_dialog *pwd)
 {
-    const gchar *lbls[] = {
-	N_("POP server:"),
-	N_("Username:"),
-	N_("Password:")
-    };
-    GtkWidget *tbl, *lbl, *button;
+    g_free(pwd->minfo->mail_pass);
+    pwd->minfo->mail_pass = NULL;
+    gtk_widget_destroy(pwd->dlg);
+}
+
+static void set_password (GtkWidget *w, struct passwd_dialog *pwd)
+{
+    const gchar *passwd = gtk_entry_get_text(GTK_ENTRY(pwd->entry));
+
+    g_free(pwd->minfo->mail_pass);
+    pwd->minfo->mail_pass = g_strdup(passwd);
+    gtk_widget_destroy(pwd->dlg);
+}
+
+static void password_dialog (struct mail_info *minfo)
+{
     GtkWidget *hbox, *vbox;
-    struct pop_dialog pd;
-    int i;
+    GtkWidget *lbl, *button;
+    struct passwd_dialog pwd;
 
-    pd.dlg = gtk_dialog_new();
-    pd.minfo = minfo;
+    pwd.dlg = gtk_dialog_new();
+    pwd.minfo = minfo;
 
-    g_signal_connect(G_OBJECT(pd.dlg), "delete_event",
-		     G_CALLBACK(mail_dialog_delete), minfo);
-
-    g_signal_connect(G_OBJECT(pd.dlg), "destroy",
+    gtk_window_set_title(GTK_WINDOW(pwd.dlg), _("gretl: mail password"));
+    set_dialog_border_widths(pwd.dlg);
+    gtk_window_set_position(GTK_WINDOW(pwd.dlg), GTK_WIN_POS_MOUSE);
+    g_signal_connect(G_OBJECT(pwd.dlg), "destroy",
 		     G_CALLBACK(mail_dialog_quit), NULL);
 
-    gtk_window_set_title(GTK_WINDOW(pd.dlg), _("gretl: POP info"));
-    set_dialog_border_widths(pd.dlg);
-    gtk_window_set_position(GTK_WINDOW(pd.dlg), GTK_WIN_POS_MOUSE);
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(pwd.dlg));
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_container_add(GTK_CONTAINER(vbox), hbox);
 
-    vbox = gtk_dialog_get_content_area(GTK_DIALOG(pd.dlg));
+    lbl = gtk_label_new(_("Email password:"));
+    gtk_box_pack_start(GTK_BOX(hbox), lbl, 0, 0, 5);
+    pwd.entry = gtk_entry_new();
+    gtk_entry_set_visibility(GTK_ENTRY(pwd.entry), FALSE);
+    gtk_entry_set_activates_default(GTK_ENTRY(pwd.entry), TRUE);
+    gtk_container_add(GTK_CONTAINER(hbox), pwd.entry);
 
-    tbl = gtk_table_new(3, 2, FALSE);
-    gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
-    gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
-    gtk_container_add(GTK_CONTAINER(vbox), tbl);
-
-    for (i=0; i<3; i++) {
-	GtkWidget *w;
-
-	lbl = gtk_label_new(_(lbls[i]));
-	gtk_misc_set_alignment(GTK_MISC(lbl), 1, 0.5);
-	gtk_table_attach(GTK_TABLE(tbl), lbl, 0, 1, i, i+1, GTK_FILL, GTK_FILL, 0, 0);
-
-	w = gtk_entry_new();
-
-	if (i == 0) {
-	    if (minfo->pop_server != NULL) {
-		gtk_entry_set_text(GTK_ENTRY(w), minfo->pop_server);
-	    }
-	} else if (i == 1) {
-	    if (minfo->mail_user != NULL) {
-		gtk_entry_set_text(GTK_ENTRY(w), minfo->mail_user);
-	    }
-	} else if (i == 2) {
-	    if (minfo->mail_pass != NULL) {
-		gtk_entry_set_text(GTK_ENTRY(w), minfo->mail_pass);
-	    }
-	    gtk_entry_set_visibility(GTK_ENTRY(w), FALSE);
-	}
-
-	gtk_entry_set_activates_default(GTK_ENTRY(w), TRUE);
-	gtk_table_attach_defaults(GTK_TABLE(tbl), w, 1, 2, i, i+1);
-
-	if (i == 0) {
-	    pd.server_entry = w;
-	} else if (i == 1) {
-	    pd.user_entry = w;
-	} else if (i == 2) {
-	    pd.pass_entry = w;
-	}
-    }
-
-    hbox = gtk_dialog_get_action_area(GTK_DIALOG(pd.dlg));
+    /* button zone */
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(pwd.dlg));
 
     /* Cancel button */
     button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
     gtk_widget_set_can_default(button, TRUE);
     gtk_container_add(GTK_CONTAINER(hbox), button);
     g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(cancel_pop_settings), &pd);
+		     G_CALLBACK(cancel_password), &pwd);
 
     /* "OK" button */
     button = gtk_button_new_from_stock(GTK_STOCK_OK);
     gtk_widget_set_can_default(button, TRUE);
     gtk_container_add(GTK_CONTAINER(hbox), button);
     g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(finalize_pop_settings), &pd);
+		     G_CALLBACK(set_password), &pwd);
     gtk_widget_grab_default(button);
 
-    gtk_widget_set_size_request(pd.dlg, 360, -1);
-    gtk_widget_show_all(pd.dlg);
+    gtk_widget_set_size_request(pwd.dlg, 360, -1);
+    gtk_widget_show_all(pwd.dlg);
 
-    gtk_window_set_modal(GTK_WINDOW(pd.dlg), TRUE);
+    gtk_window_set_modal(GTK_WINDOW(pwd.dlg), TRUE);
     gtk_main();
 }
 
@@ -838,376 +734,6 @@ static void mail_infobox (const char *msg, int err)
     gtk_widget_destroy(dialog);
 }
 
-#define VERBOSE 1
-
-static int get_pop_response (int fd, char *buf)
-{
-    int got;
-
-    memset(buf, 0, SBSIZE);
-#if VERBOSE
-    fputs("doing read() on socket...\n", stderr);
-#endif
-    got = read(fd, buf, SBSIZE - 1);
-#if VERBOSE
-    if (got == -1) {
-	perror("read error");
-    } else if (got == 0 || string_is_blank(buf)) {
-	fprintf(stderr, "response:\nempty\n");
-    } else {
-	fprintf(stderr, "response:\n%s\n", buf);
-    }
-#endif
-
-    return got > 0;
-}
-
-static int get_smtp_response (int fd, char *buf, int code)
-{
-    gchar *errmsg = NULL;
-    int resp, got;
-    int err = SMTP_OK;
-
-    errno = 0;
-
-    memset(buf, 0, SBSIZE);
-#if VERBOSE
-    fputs("doing read() on socket...\n", stderr);
-#endif
-    got = read(fd, buf, SBSIZE - 1);
-#if VERBOSE
-    if (got == -1) {
-	perror("read error");
-    } else if (got == 0 || string_is_blank(buf)) {
-	fprintf(stderr, "response:\nempty\n");
-    } else {
-	fprintf(stderr, "response:\n%s\n", buf);
-    }
-#endif
-
-    if (got < 0) {
-	errmsg = g_strdup("Failed to read from server");
-	err = SMTP_ERR;
-    } else if (got == 0) {
-	errmsg = g_strdup("No response from server");
-	err = SMTP_ERR;
-    }
-
-    if (err) {
-	goto bailout;
-    }
-
-    resp = atoi(buf);
-
-    if (code == SMTP_CONN) {
-	if (resp != 220) {
-	    gretl_strstrip(buf);
-	    errmsg = g_strdup_printf("Server response to connect:\n%s", buf);
-	    err = SMTP_ERR;
-	}
-    } else if (code == SMTP_EHLO) {
-	if (resp == 500) {
-	    err = SMTP_OLD_SERVER;
-	} else if (resp != 250) {
-	    gretl_strstrip(buf);
-	    errmsg = g_strdup_printf("Server response to . :\n%s", buf);
-	    err = SMTP_ERR;
-	}
-    } else if (code == SMTP_MAIL || code == SMTP_RCPT) {
-	if (resp == 553 && strstr(buf, "ust check")) {
-	    err = SMTP_POP_FIRST;
-	} else if (resp == 530 && strstr(buf, "ust issue a STARTTLS")) {
-	    err = SMTP_TLS_FIRST;
-	} else if (resp != 250) {
-	    gretl_strstrip(buf);
-	    errmsg = g_strdup_printf("Server response to RCPT:\n%s", buf);
-	    err = SMTP_ERR;
-	}
-    } else if (code == SMTP_DATA) {
-	if (resp != 354) {
-	    gretl_strstrip(buf);
-	    errmsg = g_strdup_printf("Server response to RCPT:\n%s", buf);
-	    err = SMTP_ERR;
-	}
-    } else if (code == SMTP_DOT) {
-	if (resp != 250) {
-	    gretl_strstrip(buf);
-	    errmsg = g_strdup_printf("Server response to . :\n%s", buf);
-	    err = SMTP_ERR;
-	}
-    } else if (code == SMTP_STARTTLS) {
-	if (resp != 220) {
-	    gretl_strstrip(buf);
-	    errmsg = g_strdup_printf("Server response to STARTTLS:\n%s", buf);
-	    err = SMTP_ERR;
-	}
-    }
-
- bailout:
-
-    if (errmsg != NULL) {
-	mail_infobox(errmsg, 1);
-	g_free(errmsg);
-    }
-
-    return err;
-}
-
-static int send_to_server (FILE *fp, const char *template, ...)
-{
-    va_list args;
-    int plen = 0;
-
-#if VERBOSE
-    char word[32] = {0};
-
-    sscanf(template, "%31s", word);
-    fprintf(stderr, "sending %s...\n", word);
-#endif
-
-    va_start(args, template);
-    plen = vfprintf(fp, template, args);
-    va_end(args);
-
-    fflush(fp);
-
-    return plen;
-}
-
-#ifndef HAVE_IN_ADDR
-struct in_addr {
-    unsigned long s_addr;
-};
-#endif
-
-#ifndef HAVE_SOCKADDR_IN
-struct sockaddr_in {
-    short int          sin_family;
-    unsigned short int sin_port;
-    struct in_addr     sin_addr;
-    unsigned char      sin_zero[8];
-};
-#endif
-
-static int connect_to_server (char *hostname, unsigned short port)
-{
-    gchar *msg;
-    struct sockaddr_in soaddr;
-    struct hostent *ip;
-    int unit;
-
-    ip = gethostbyname(hostname);
-    if (ip == NULL) {
-	msg = g_strdup_printf("Couldn't resolve name of server '%s': %s",
-			      hostname, hstrerror(h_errno));
-	mail_infobox(msg, 1);
-	g_free(msg);
-	return -1;
-    }
-
-    fprintf(stderr, "got server ip\n");
-
-    unit = socket(PF_INET, SOCK_STREAM, 6); /* 6 = TCP */
-    if (unit == -1) {
-	mail_infobox("Couldn't open socket", 1);
-	return -1;
-    }
-
-    soaddr.sin_family = AF_INET;
-    memcpy(&soaddr.sin_addr, &((struct in_addr *) ip->h_addr)->s_addr,
-	   sizeof(struct in_addr));
-    soaddr.sin_port = htons(port);
-    memset(&soaddr.sin_zero, '\0', 8);
-
-    if (connect(unit, (struct sockaddr *) &soaddr, sizeof soaddr) < 0) {
-	msg = g_strdup_printf("Couldn't connect to %s", hostname);
-	mail_infobox(msg, 1);
-	g_free(msg);
-	close(unit);
-	return -1;
-    }
-
-    return unit;
-}
-
-static int set_auth_defaults (struct mail_info *minfo, int pre)
-{
-    char *p;
-
-    if (minfo->server == NULL || minfo->sender == NULL) {
-	/* these must be defined at this point */
-	return 1;
-    }
-
-    if (pre == SMTP_POP_FIRST && minfo->pop_server == NULL) {
-	p = strchr(minfo->server, '.');
-	if (p != NULL) {
-	    minfo->pop_server = g_strdup_printf("pop%s", p);
-	}
-    }
-
-    if (minfo->mail_user == NULL) {
-	p = strchr(minfo->sender, '@');
-	if (p != NULL) {
-	    minfo->mail_user = g_strdup(minfo->sender);
-	    p = strchr(minfo->mail_user, '@');
-	    *p = '\0';
-	}
-    }
-
-    return 0;
-}
-
-static int get_POP_error (char *buf)
-{
-    int err = 0;
-
-    if (*buf == '-') {
-	gchar *errmsg;
-
-	gretl_strstrip(buf);
-	errmsg = g_strdup_printf("POP server said:\n%s", buf);
-	mail_infobox(errmsg, 1);
-	g_free(errmsg);
-	err = 1;
-    }
-
-    return err;
-}
-
-static int pop_login (struct mail_info *minfo)
-{
-    FILE *fp;
-    char buf[SBSIZE];
-    int unit, err;
-
-    set_auth_defaults(minfo, SMTP_POP_FIRST);
-    auth_info_dialog(minfo);
-
-    if (minfo->cancel) {
-	return 1;
-    }
-
-    fprintf(stderr, "trying POP before SMTP, with %s\n", minfo->pop_server);
-
-    unit = connect_to_server(minfo->pop_server, 110);
-    if (unit < 0) {
-	return 1;
-    }
-
-    fp = fdopen(unit, "w");
-    if (fp == NULL) {
-	close(unit);
-	return 1;
-    }
-
-    get_pop_response(unit, buf);
-
-    send_to_server(fp, "USER %s\n", minfo->mail_user);
-    get_pop_response(unit, buf);
-    err = get_POP_error(buf);
-
-    if (!err) {
-	send_to_server(fp, "PASS %s\n", minfo->mail_pass);
-	get_pop_response(unit, buf);
-	err = get_POP_error(buf);
-    }
-
-    send_to_server(fp, "QUIT\r\n");
-    get_pop_response(unit, buf);
-
-    fclose(fp);
-    close(unit);
-
-    return err;
-}
-
-static int
-smtp_send_mail (FILE *infile, char *sender, char *recipient,
-		struct mail_info *minfo)
-{
-    char localhost[256] = "localhost";
-    char buf[SBSIZE];
-    FILE *fp;
-    int unit, err = SMTP_OK;
-
-    gethostname(localhost, sizeof localhost);
-    fprintf(stderr, "localhost = '%s'\n", localhost);
-
-    unit = connect_to_server(minfo->server, minfo->port);
-    if (unit < 0) {
-	return SMTP_NO_CONNECT;
-    }
-
-    fprintf(stderr, "opened SMTP socket, unit = %d\n", unit);
-
-    fp = fdopen(unit, "w");
-    if (fp == NULL) {
-	close(unit);
-	return SMTP_ERR;
-    }
-
-    get_smtp_response(unit, buf, SMTP_CONN);
-
-    send_to_server(fp, "EHLO %s\r\n", localhost);
-    err = get_smtp_response(unit, buf, SMTP_EHLO);
-    if (err == SMTP_OLD_SERVER) {
-	send_to_server(fp, "HELO %s\r\n", localhost);
-	err = get_smtp_response(unit, buf, SMTP_EHLO);
-    }
-    if (err) goto bailout;
-
-    send_to_server(fp, "MAIL FROM:<%s>\r\n", sender);
-    err = get_smtp_response(unit, buf, SMTP_MAIL);
-
-    if (err == SMTP_TLS_FIRST) {
-	send_to_server(fp, "STARTTLS\r\n");
-	err = get_smtp_response(unit, buf, SMTP_STARTTLS);
-	if (!err) {
-	    send_to_server(fp, "EHLO %s\r\n", localhost);
-	    err = get_smtp_response(unit, buf, SMTP_EHLO);
-	}
-    }
-    if (err) goto bailout;
-
-    send_to_server(fp, "RCPT TO:<%s>\r\n", recipient);
-    err = get_smtp_response(unit, buf, SMTP_RCPT);
-    if (err) goto bailout;
-
-    send_to_server(fp, "DATA\r\n");
-    err = get_smtp_response(unit, buf, SMTP_DATA);
-    if (err) goto bailout;
-
-#if VERBOSE
-    fputs("sending actual message...\n", stderr);
-#endif
-    while (fgets(buf, sizeof buf - 1, infile)) {
-	int n = strlen(buf);
-
-	/* rfc2821: ensure CRLF termination */
-	if (buf[n-1] == '\n' && buf[n-2] != '\r') {
-	    buf[n-1] = '\r';
-	    buf[n] = '\n';
-	    buf[n+1] = '\0';
-	}
-	fputs(buf, fp);
-    }
-    fputs("\r\n.\r\n", fp);
-    fflush(fp);
-
-    err = get_smtp_response(unit, buf, SMTP_DOT);
-
- bailout:
-
-    send_to_server(fp, "QUIT\r\n");
-    get_smtp_response(unit, buf, SMTP_QUIT);
-
-    fclose(fp);
-    close(unit);
-
-    return err;
-}
-
 static int pack_and_mail (const char *fname,
 			  struct msg_info *msg,
 			  struct mail_info *minfo,
@@ -1215,6 +741,7 @@ static int pack_and_mail (const char *fname,
 {
     char tmpfname[FILENAME_MAX];
     FILE *fpin, *fpout;
+    int canceled = 0;
     int err = 0;
 
     fpin = gretl_fopen(fname, "rb");
@@ -1233,8 +760,8 @@ static int pack_and_mail (const char *fname,
 	const char *ctype = is_data_file(fname) ?
 	    "application/x-gretldata" : "application/x-gretlscript";
 
-	err = mpack_encode(fpin, fname, msg->note, msg->subj, msg->recip,
-			   msg->sender, ctype, fpout);
+	err = mpack_encode(fpin, fname, msg->note, msg->subj,
+			   msg->recip, msg->sender, ctype, fpout);
     }
 
     if (fpin != NULL) {
@@ -1245,34 +772,27 @@ static int pack_and_mail (const char *fname,
 	fclose(fpout);
     }
 
-#if 0
-    if (!err) {
-	/* just testing */
-	err = curl_send_mail(msg->sender, msg->recip,
-			     "smtps://smtp.gmail.com:465",
-			     "cottrell@wfu.edu",
-			     "XXXXXXX",
-			     tmpfname);
-    }
-#else
-    if (!err) {
-	fpin = gretl_fopen(tmpfname, "rb");
-	if (fpin == NULL) {
-	    perror(tmpfname);
-	    err = 1;
-	} else {
-	    err = smtp_send_mail(fpin, msg->sender, msg->recip, minfo);
-	    if (err == SMTP_POP_FIRST) {
-		err = pop_login(minfo);
-		if (!err) {
-		    /* try again after authorizing */
-		    err = smtp_send_mail(fpin, msg->sender, msg->recip, minfo);
-		}
-	    }
-	    fclose(fpin);
+    if (!err && minfo->pass_needed) {
+	password_dialog(minfo);
+	if (minfo->mail_pass == NULL) {
+	    canceled = 1;
 	}
     }
+
+    if (!err && !canceled) {
+#if 1
+	fprintf(stderr, "calling curl_send_mail:\n");
+	fprintf(stderr, "  sender = '%s'\n", msg->sender);
+	fprintf(stderr, "  recipient = '%s'\n", msg->recip);
+	fprintf(stderr, "  server = '%s'\n", minfo->server);
+	fprintf(stderr, "  username = '%s'\n", minfo->mail_user);
+	fprintf(stderr, "  password = (%d bytes)\n", strlen(minfo->mail_pass));
+	fprintf(stderr, "  filename = '%s'\n", tmpfname);
 #endif
+	err = curl_send_mail(msg->sender, msg->recip,
+			     minfo->server, minfo->mail_user,
+			     minfo->mail_pass, tmpfname);
+    }
 
     gretl_remove(tmpfname);
 
