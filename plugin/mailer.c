@@ -217,6 +217,11 @@ static void read_mail_info (struct mail_info *minfo)
 	minfo->server = g_strdup("smtps://smtp.gmail.com:465");
     }
 
+    if (minfo->sender == NULL && minfo->mail_user != NULL &&
+	strchr(minfo->mail_user, '@') != NULL) {
+	minfo->sender = g_strdup(minfo->mail_user);
+    }
+
     minfo->addrs = addrs;
 }
 
@@ -683,8 +688,8 @@ static int mail_to_dialog (const char *fname,
 		     G_CALLBACK(mail_dialog_callback), &ret);
     gtk_widget_show_all(md.dlg);
 
-    if (minfo->server == NULL) {
-	/* no server info recorded yet */
+    if (minfo->server == NULL || minfo->mail_user == NULL) {
+	/* Mail setup not completed yet */
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(md.nb), 1);
     }
 

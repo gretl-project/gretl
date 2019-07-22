@@ -7737,14 +7737,93 @@
 
     <description>
       <para>
-	Gretl allows you to send a data or script file as an
-	email attachment from within the program. To do this
-	you must first supply <quote>Mail setup</quote>
-	information: the name of your SMTP server and your
-	email username.
+	Gretl allows you to send a dataset or script as an email
+	attachment from within the program using SMTP (Simple Mail
+	Transfer Protocol). We explain below how to understand the two
+	tabs (<quote>Mail setup</quote> and <quote>Message</quote>) in
+	the mail dialog box. We also comment on the password
+	requirement.
+      </para>
+      <subhead>Mail setup</subhead>
+      <ilist>
+	<li>
+	  <para>
+	    SMTP server: the server by which your mail should be
+	    sent. Those who use gmail should hopefully find that the
+	    default setting, <lit>smtps://smtp.gmail.com:465</lit>,
+	    works; others will have to enter the information
+	    themselves. Note that the server string must start with
+	    either <lit>smtp://</lit> or <lit>smtps://</lit>.
+	    Following the name of the server it may be necessary to
+	    add a colon followed by a port number, as in the
+	    <quote><lit>:465</lit></quote> shown above. Other possible
+	    values for the SMTP port number are 25 and 587.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Mail username: the username that identifies you to
+	    your mail server. This is likely the same as your email
+	    address.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    The <quote>password required</quote> checkbox. Most likely
+	    your SMTP server wants to see a password, but if not you
+	    can uncheck the box.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	This setup information is remembered from one gretl session to
+	the next so you should only have to enter it once.
+      </para>
+      <subhead>Message</subhead>
+      <ilist>
+       <li>
+	 <para>
+	   To: the email address of the recipient. You will have to
+	   type this yourself: gretl does not have access to your
+	   address book. But once you have entered an address it is
+	   remembered and can be selected subsequently via a drop-down
+	   list.
+	 </para>
+       </li>
+       <li>
+	 <para>
+	   From: your own email address. This is remembered from one
+	   gretl session to the next.
+	 </para>
+       </li>
+       <li>
+	 <para>
+	   Subject: this is filled out automatically but you can edit
+	   it if you wish.
+	 </para>
+       </li>
+       <li>
+	 <para>
+	   Note: also filled out automatically, but can be edited.
+	 </para>
+       </li>
+      </ilist>
+      <subhead>Email password</subhead>
+      <para>
+	Once the Mail setup and Message fields are completed, on
+	clicking <quote>OK</quote> you will be asked for your email
+	password (unless you know that your server does not require
+	one, and have unchecked the <quote>password required</quote>
+	box as described above). Please note, gretl does
+	<emphasis>not</emphasis> store this password&mdash;we don't
+	wish to expose you to hacking.
       </para>
       <para>
-	FIXME complete this help text.
+	If you're a gmail user and you employ 2-step authentication,
+	please note: your regular gmail password will not work in
+	this context. You will need an <quote>App password</quote>
+	for use with gretl, see
+	<url>https://support.google.com/accounts/answer/185833</url>.
       </para>
     </description>
 
