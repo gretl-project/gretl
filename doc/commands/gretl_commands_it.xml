@@ -2577,6 +2577,11 @@
 	  <flag>--quiet</flag>
 	  <effect>non mostra i risultati tranne che in caso di errore</effect>
 	</option>
+	<option>
+	  <flag>--name</flag>
+	  <optparm>identificatore</optparm>
+	  <effect>rinomina le serie importate</effect>
+	</option>	
       </options>
     </usage>
 
@@ -2634,7 +2639,7 @@
 	Se la serie in ingresso è a frequenza più bassa di quella del
 	dataset, il default è ripetere il valore dei dati in ingresso;
 	tuttavia, con l'opzione <opt>interpolate</opt> si azionerà il
-	metodo di interpolazione di <cite key="chowlin71">Chow and Lin
+	metodo di interpolazione di <cite key="chowlin71">Chow e Lin
 	(1971)</cite>, con costante, trend quadratico e dirsturbi
 	AR(1). Si noti, però, che questa opzione è disponibile solo
 	nel caso di conversione da trimestrale a mensile e da annua a
@@ -2650,9 +2655,14 @@
       <code>
 	data cpi*
       </code>
-
+      <para>
+   L'opzione <opt>name</opt> può essere utilizzata per impostare
+   un nome diverso dall'originale per le nuove serie storiche importate
+   nel dataset. Il parametro deve essere un valido idenficatore per gretl.
+   Questa opzione è circoscritta al caso in cui è stata specificata una singola
+   serie storica per l'importazione.
+      </para>
     </description>
-
     <gui-access>
       <menu-path>/File/Database</menu-path>
     </gui-access>
@@ -2664,11 +2674,11 @@
     <description>
       <para>
 	Questa finestra di dialogo permette di specificare file
-	aggiuntivi da uincludere al pacchetto. Tale inclusione implica
+	aggiuntivi da includere al pacchetto. Tale inclusione implica
 	che il pacchetto avrà la forma di un file zip.  Se gretl dovrà
-	occuparsi creare il file zip per voi, allora tutti i file
-	specificati qui dovrenno essere nella stessa directory del
-	file gfn. È anche possibile includere sottodirectory, nel qual
+	occuparsi di creare il file zip per voi, allora tutti i file
+	specificati qui dovranno essere nella stessa directory del
+	file gfn. È anche possibile includere delle sottodirectory, nel qual
 	caso si dà per inteso che verranno inclusi nel file zip anche
 	tutti i file in esse contenuti.
       </para>
@@ -2678,7 +2688,7 @@
 	del pacchetto, se nessuno dei file di dati di esempio
 	normalmente presenti nella distribuzione vanno bene allo
 	scopo. In tal caso, i dati dovranno essere in formato nativo
-	(<lit>gdt</lit> o binario <lit>gdtb</lit>). In aggiunta, se il
+	(<lit>gdt</lit> o binario <lit>gdtb</lit>). In secundis, se il
 	pacchetto richiede l'uso di grandi matrici pre-calcolate (ad
 	esempio, contenenti i valori critici di una statistica test
 	particolare), potrebbe essere più comodo includerle come
@@ -2720,6 +2730,7 @@
       </arguments>
       <examples>
         <example>dataset addobs 24</example>
+        <example>dataset insobs 10</example>
         <example>dataset compact 1</example>
         <example>dataset compact 4 last</example>
         <example>dataset expand interp</example>
@@ -2727,6 +2738,7 @@
         <example>dataset sortby x1</example>
 	<example>dataset resample 500</example>
 	<example>dataset renumber x 4</example>
+	<example>dataset pad-daily 7</example>
 	<example>dataset clear</example>
       </examples>
     </usage>
@@ -2737,11 +2749,11 @@
 	<repl>parola-chiave</repl> usata, che può essere
 	<lit>addobs</lit>, <lit>insobs</lit>, <lit>clear</lit>,
 	<lit>compact</lit>, <lit>expand</lit>, <lit>transpose</lit>,
-	<lit>sortby</lit>, <lit>dsortby</lit>, <lit>resample</lit> o
-	<lit>renumber</lit>.  Nota: questi comandi non sono
-	disponibili quando sul dataset è definito un sotto-campione
-	ottenuto selezionando le osservazioni con un criterio
-	Booleano.
+	<lit>sortby</lit>, <lit>dsortby</lit>, <lit>resample</lit>,
+	<lit>renumber</lit> o <lit>pad-daily</lit>. Nota: ad eccezione
+	del comando <lit>clear</lit> questi comandi non sono disponibili
+	quando sul dataset è definito un sotto-campione ottenuto
+	selezionando le osservazioni con un criterio	Booleano.
       </para>
       <para>
 	<lit>addobs</lit>: deve essere seguito da un intero positivo. Aggiunge
@@ -2754,7 +2766,7 @@
       <para>
 	<lit>insobs</lit>: Deve essere seguito da un intero positivo inferiore
 	o uguale al numero corrente  di osservazioni. Inserisce una singola
-	ossrevazione nella posizione specificata. Tutti i dati successivi sono
+	osservazione nella posizione specificata. Tutti i dati successivi sono
 	spostati di una posizione e il dataset è allungato di un'osservazione. 
 	In corrispondenza della nuova osservazione a tutte le variabili, 
 	a parte la costante, vengono assegnati valori mancanti. Questa azione non
@@ -2786,7 +2798,7 @@
 	vecchio dataset, ma con il modificatore <lit>interp</lit> le
 	serie vengono espanse usando l'interpolazione di
 	Chow&ndash;Lin (si veda <cite key="chowlin71">Chow e Lin,
-	1971</cite>): i regressori sono costante e trend quadratico;
+	1971</cite>): i regressori sono una costante ed un trend quadratico;
 	il disturbo è assunto AR(1).
       </para>
       <para>
@@ -2802,9 +2814,12 @@
         ordinamento. Le osservazioni di tutte le altre variabili del
         dataset sono riordinate secondo valori crescenti della
         variabile indicata. Nel caso di una lista, il comando procede
-        gerarchicamente: il primo criterio di rdinamento è la prima
-        variabile, e così via. Questo comando è disponibile solo per
-        dati non datati.
+        gerarchicamente: il primo criterio di ordinamento è la prima
+        variabile, nel caso in cui si arrivi ad una situazione di stallo
+        si passa alla seconda variabile della lista per risolvere il problema,
+        e se il problema persiste si passa alla terza e così via, finchè lo stallo
+        non si esaurisce o si esauriscono le variabili presenti nella lista.
+        Questo comando è disponibile solo per dati non datati.
       </para>
       <para>
        <lit>dsortby</lit>: funziona come <lit>sortby</lit> ma riordina le
@@ -2825,6 +2840,20 @@
 	variabili di conseguenza. (La posizione 0 è occupata dalla costante che non può
 	essere spostata.)
       </para>
+      <para>
+	<lit>pad-daily</lit>: valido solamente se il dataset corrente
+	contiene dei dati giornalieri di un calendario incompleto. L'effetto
+	prodotto dal comando sarà quello di riempire il calendario aggiungendo
+	le date mancanti come righe vuote (in pratica significa creare delle righe
+	vuote contenenti solamente valori <lit>NA</lit>). Quest'opzione richiede un
+	parametro intero, ovvero il numero di giorni della settimana (che deve essere
+	un numero tra 5, 6 o 7), e deve essere maggiore, o uguale, alle correnti
+	frequenze del dataset. Una volta avvenuto con successo il completamento,
+	il calendario dei dati risulterà <quote>completo</quote> relativamente al
+	valore del parametro dato. Ad esempio, se i giorni della settimana sono 5
+	allora tutti i giorni della settimana verranno rappresentati, sia che i dati
+	per questi giorni siano disponibili oppure no.
+	   </para>
     </description>
 
     <gui-access>
@@ -2850,7 +2879,7 @@
     <description>
       <para>
 	Questa finestra di dialogo permette di cercare e scaricare
-	serie di dati dal serveri di dbnomics. Visitando il sito
+	serie di dati dal server di dbnomics. Visitando il sito
 	<url>https://next.nomics.world/</url> si trovano gli
 	identificatori e i codici di interesse. Essi si compongono in
 	gruppi di tre, con i termini separati da barre. Ad esempio
@@ -2868,7 +2897,7 @@
       </para>
       <para>
 	Una volta inserito un identificativo di serie, cliccando
-	<quote>OK</quote> si aprirà una finestra contenete
+	<quote>OK</quote> si aprirà una finestra contenente
 	informazioni sulla serie. A quel punto, usando i bottoni in
 	alto nella finestra si potranno visualizzare i valori della
 	serie in forma numerica o grafica, oppure aggiungere la serie
@@ -2914,9 +2943,12 @@
   <command name="delete" section="Dataset" label="Elimina variabili" context="cli">
 
     <usage>
-      <arguments>
-        <argument optional="true">lista-variabili</argument>
-      </arguments>
+    <altforms>
+        <altform><lit>delete</lit> <repl>varlist</repl></altform>
+        <altform><lit>delete</lit> <repl>varname</repl></altform>
+	<altform><lit>delete --type=</lit><repl>type-name</repl></altform>
+	<altform><lit>delete</lit> <repl>pkgname</repl></altform>
+      </altforms>
       <options>
        <option>
          <flag>--db</flag>
@@ -2932,30 +2964,50 @@
 
     <description>
       <para>
-	Questo comando è uno strumento multi-uso per eliminare variabili con un nome
-	(serie, scalari, matrici, stringhe o bundle). Deve essere usato con
-	cautela: non viene chiesta alcuna conferma.
+	Questo comando è uno strumento multi-uso per eliminare
+	variabili con un nome (serie, scalari, matrici, stringhe o
+	bundle). Deve essere usato con cautela: non viene chiesta
+	alcuna conferma.
       </para>
       <para>
-	Nel caso di variabili, <repl>varname</repl> può essere il nome di una lista,
-	e in questo caso vengono eliminate tutte le variabili incluse in essa, oppure
-	può essere una lista esplicita di variabili indicate per nome o numero ID. 
-	Si noti che quando cancellate variabili, quelle con numeri ID maggiori di quelli
-	inclusi nella lista da cancellare saranno rinumerati.
+	Utilizzandolo nella sua prima forma, <repl>varlist</repl> è un
+	lista di variabili aventi un nome ed un numero identificativo
+	(ID).  Si noti che quando si elimina una serie tutte le
+	restanti serie con un ID maggiore della precedente vengono
+	rinumerate dopo l'eliminazione di quelle selezionate. Se si
+	utilizza l'opzione <opt>db</opt> con questo comando verranno
+	eliminate le liste di variabili non dal corrente dataset ma
+	dal database di gretl, assumendo che un database sia stato
+	aperto e che l'utente abbia il permesso scritto per il file in
+	questione. Si veda anche il comando <cmdref targ="open"/>.
       </para>
       <para>
-       Se si usa l'opzione <opt>db</opt>, il comando rimuove le variabili
-       elencate non dal dataset attuale ma da un database gretl, assumendo che
-       questo sia stato aperto in precedenza e che l'utente abbia il permesso
-       di scrittura sul file che contiene il database. Si veda anche il comando
-       <cmdref targ="open"/>.
+	Nella seconda forma, il nome di uno scalare, matrice, stringa
+	o bundle può essere dato al comando per la cancellazione. In
+	questo caso l'opzione <opt>db</opt> non è applicabile. Si noti
+	che serie e variabili di tipo diverso non dovrebbero essere
+	mixate all'interno della chiamata <lit>delete</lit>.
       </para>
       <para>
-	Se viene indicata l'opzione <opt>type</opt> è necessario accompagnarla
-	con uno dei nomi di tipi seguenti: <lit>matrix</lit>, <lit>bundle</lit>, 
-	<lit>string</lit>, 	<lit>list</lit> o <lit>scalar</lit>. L'effetto 
-	è quello di cancellare tutte le variabili di un certo tipo. Solo in questo caso
-	non è necessario fornire l'argomento <repl>varname</repl>.
+	Nella terza forma l'opzione <opt>type</opt> deve essere
+	accompagnata da uno dei seguenti
+	qualificatori:<lit>matrix</lit>, <lit>bundle</lit>,
+	<lit>string</lit>, <lit>list</lit>, <lit>scalar</lit> o
+	<lit>array</lit>.  L'effetto è quello di eliminare tutte le
+	variabili di un certo tipo. In questo caso nessun altro
+	argomento è richiesto oltre l'opzione successiva richiesta.
+      </para>
+      <para>
+	La quarta forma può essere utilizzata per rimuovere un
+	pacchetto di funzioni. In questo caso il suffisso
+	<lit>.gfn</lit> deve essere fornito, come ad esempio
+      </para>
+      <code>
+	delete somepkg.gfn
+      </code>
+      <para>
+	Si noti che non elimina il pacchetto, quanto piuttosto lo
+	deselezione e lo rimuove dalla memoria.
       </para>
     </description>
 
@@ -2994,7 +3046,7 @@
       <para>
 	È possibile usare un kernel Gaussiano (la densità normale
 	standard) o il kernel di Epanechnikov, mentre la larghezza di
-	banda predefinita è quella suggerita da Silverman (1986),
+	banda predefinita è quella suggerita da <cite key="silverman96">Silverman (1986)</cite>,
 	ossia
 	<equation status="display"
 	  tex="\[h=0.9 {\rm min}(s, {\rm IQR}/1.349) n^{1/5}\]"
@@ -3023,13 +3075,24 @@
 
     <description>
       <para>
-       Il test ADF-GLS è una variante del test Dickey&ndash;Fuller per radici
-       unitarie, per il caso in cui la variabile da testare ha media diversa da
-       zero o esibisce un trend lineare. La differenza consiste nel fatto che la
-       rimozione della media o del trend è eseguita secondo la procedura
-       suggerita da Elliott, Rothenberg e Stock (1996). Questa produce un test
-       di potenza maggiore rispetto a quello dell'approccio standard di
-       Dickey&ndash;Fuller.
+       Il test ADF-GLS è una variante del test Dickey&ndash;Fuller per
+       radici unitarie, per il caso in cui la variabile da testare ha
+       media diversa da zero o esibisce un trend lineare. La
+       differenza consiste nel fatto che la rimozione della media o
+       del trend è eseguita secondo la procedura suggerita da <cite
+       key="ERS96">Elliott, Rothenberg e Stock (1996)</cite>.  Questa
+       produce un test di potenza maggiore rispetto a quello
+       dell'approccio standard di Dickey&ndash;Fuller.
+      </para>
+      <para>
+	Quando si testa per un dato ordine massimo di ritardo i
+	criteri AIC e BIC sono <quote>modificati</quote> come
+	descritto in <cite key="ng-perron01">Ng e Perron
+	(2001)</cite>, con o senza la modifica proposta da <cite
+	key="perron-qu07">Perron e Qu (2007)</cite>.  La modifica in
+	questione riguarda l'utilizzo dei dati OLS detrended durante
+	la fase di determinazione dell'ordine di ritardo massimo,
+	seguito da un GLS-detrending nella fase conclusiva del test.
       </para>
       <para>
        Si veda anche l'opzione <opt>gls</opt> del comando <cmdref
@@ -3076,6 +3139,13 @@
       <arguments>
         <argument>lista-variabili</argument>
       </arguments>
+      <examples>
+	<demos>
+	  <demo>penngrow.inp</demo>
+	  <demo>sw_ch12.inp</demo>
+	  <demo>sw_ch14.inp</demo>
+	</demos>
+    </examples>
     </usage>
 
     <description>
@@ -3092,7 +3162,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Aggiungi/Differenze</menu-path>
+      <menu-path>/Aggiungi/Differenze prime delle variabili selezionate</menu-path>
     </gui-access>
 
   </command>
@@ -3122,7 +3192,16 @@
 	  <flag>--verbose</flag>
 	  <effect>Mostra informazioni aggiuntive</effect>
 	</option>
+   <option>
+	  <flag>--quiet</flag>
+	  <effect>Non stampa l'output</effect>
+	</option>
       </options>
+	<examples>
+	<demos>
+	  <demo>ooballot.inp</demo>
+	</demos>
+    </examples>
     </usage>
 
     <description>
@@ -3181,6 +3260,12 @@
         mostrato l'ordinamento delle osservazioni (l'opzione non ha effetto se
         usata con il test del segno).
       </para>
+      <para>
+	Se il comando non ha dato errori, sono disponibili gli
+	accessori <fncref targ="$test"/> e <fncref
+	targ="$pvalue"/>. Per ottenere solo questi valori, si può
+	usare l'opzione <opt>quiet</opt>.
+      </para>
     </description>
 
   </command>
@@ -3198,6 +3283,12 @@
 	  <effect>marca le variabili come continue</effect>
 	</option>
       </options>
+    <examples>
+	<demos>
+	  <demo>ooballot.inp</demo>
+	  <demo>oprobit.inp</demo>
+	</demos>
+    </examples>
     </usage>
 
     <description>
@@ -3299,9 +3390,9 @@
 	gli effetti individuali).
       </para>
       <para context="cli">
-	L'ultimo campo (opzionale) nel comando serve a specificare
+	L'ultimo campo (opzionale) nel comando serve a specificare gli
 	strumenti.  Se questi ultimi non vengono indicati si assume
-	che tutte le variabili indipendenti siano strettamente
+	che le variabili indipendenti siano tutte strettamente
 	esogene. Se si sceglie di specificare alcuni strumenti è
 	opportuno includere nell'elenco anche le variabili
 	indipendenti strettamente esogene. Nel caso di regressori
@@ -3511,10 +3602,17 @@
           <flag>--verbose</flag>
           <effect>mostra dettagli delle iterazioni</effect>
         </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>non mostra nulla</effect>
+        </option>
       </options>      
       <examples>
         <example>duration y 0 x1 x2</example>
 	<example>duration y 0 x1 x2 ; cens</example>
+	<demos>
+	  <demo>weibull.inp</demo>
+	</demos>
       </examples>
     </usage>
 
@@ -3548,7 +3646,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Nonlinear models/Duration data...</menu-path>
+      <menu-path>/Modello/Variabile dipendente limitata/Dati di durata</menu-path>
     </gui-access>
 
   </command>  
@@ -3571,7 +3669,7 @@
 	else # OK, fa' un'altra cosa
       </code>
       <para>
-	ma nn si può aggiungere un comando, come in
+	ma non si può aggiungere un comando, come in
       </para>
       <code>
 	else x = 5 # wrong!
@@ -3654,7 +3752,7 @@
         <option>
 	  <flag>--output</flag>
 	  <optparm>filename</optparm>
-	  <effect>send output to specified file</effect>
+	  <effect>indirizza l'output ad uno specifico file</effect>
         </option>
       </options>
     </usage>
@@ -3671,9 +3769,9 @@
 	veda anche <cmdref targ="tabprint"/>.
       </para>
       <para>
-	Il file di output verrà scritto nella directory corrispondente
-	al valore corrente di <cmdref targ="workdir"/>, a meno che il nome
-	di file contenga un percorso completo. 
+	Il file di output verrà scritto nella directory correntamente
+	impostata <cmdref targ="workdir"/>, a meno che la stringa
+	<repl>filename</repl> contenga il percorso specifico completo. 
       </para>
       <para>
 	Usando l'opzione <opt>complete</opt>, il file &latex; è un
@@ -3881,15 +3979,16 @@
         frequenza
       </para>
       <para>
-	Ciò premesso, gretl offre due opzioni: valori ad altra
+	Ciò premesso, gretl offre due opzioni: valori ad alta
 	frequenza possono essere espansi usando il metodo di <cite
-	key="chowlin71">Chow e Lin (1971)</cite> oppure ripetendo i
-	dati a frequenza più bassa per il numero necessario di volte.
+	key="chowlin71">Chow e Lin (1971)</cite> oppure per valori di
+	dati a frequenza più bassa si procede ripetendo per il
+	numero necessario di volte.
       </para>
       <para>
-	Il metodo di Chow&ndash;Lin è basato su una regressione su
-	costante e trend quadratico; il disturbo è assunto
-	AR(1). Questa procedura richiede 4 gradi di libertà.
+	Il metodo di Chow&ndash;Lin è basato su una regressione avente
+	una costante, trend quadratico ed assumendo che il disturbo è
+	assunto AR(1). Questa procedura richiede 4 gradi di libertà.
       </para>
       <para>
 	Per quanto riguarda il metodo della ripetizione del dato,
@@ -3920,7 +4019,7 @@
       <para>
 	E' anche possibile esportare dati sotto forma di file di dati 
 	<quote>native</quote> di gretl, oppure (se i dati lo rendono possibile)
-	esportare un database di gretl. V. <url>gretl.sourceforge.net/gretl_data.html</url> 
+	esportare un database di gretl. Vedi <url>gretl.sourceforge.net/gretl_data.html</url> 
 	per una discussione dei database di gretl.
       </para>
       <para>
@@ -3929,17 +4028,25 @@
       </para>
       <ilist>
 	<li>
-	  <para>GNU R (<url>www.r-project.org</url>)</para>
+	  <para>GNU R (<url>www.r-project.org</url>): i dati verranno scritti
+	  in un formato separato da spazi in maniera che sia facilmente digeribile
+	  dalla function <lit>read.table</lit> di R. Il nome di default del file
+	  avrà il suffisso <lit>.txt</lit>
+	 </para>
 	</li>
 	<li>
-	  <para>GNU octave (<url>www.gnu.org/software/octave</url>)
+	  <para>GNU octave (<url>www.gnu.org/software/octave</url>): i dati verranno
+	  scritti in forma matriciale secondo il formato preferito da Octave.
+	  Di default il nome del file avrà come suffisso <lit>.m</lit>
 	  </para>
 	</li>
 	<li>
-	  <para>JMulTi (<url>www.jmulti.de</url>)</para>
+	  <para>JMulTi (<url>www.jmulti.de</url>): di default il nome del file
+	  avrà il suffisso: <lit>.dat</lit></para>
 	</li>
 	<li>
-	  <para>PcGive (<url>www.pcgive.com</url>)</para>
+	  <para>PcGive (<url>www.pcgive.com</url>): di default il nome del file
+	  avrà il suffisso: <lit>.dat</lit></para>
 	</li>
       </ilist>
       <para>
@@ -3965,8 +4072,8 @@
 
       <para>Esempio: si hanno dati sui salari e il livello di scolarità
         per un campione di persone; si dispone anche di una variabile
-        dummy che vale 1 per gli uomini e 2 per le donne (come nel file
-	<filename>data7-2</filename> di Ramanathan).  Un <quote>Grafico
+        dummy che vale 1 per gli uomini e 0 per le donne (come nel file
+	<filename>data7-2</filename> di Ramanathan).  Un <quote>grafico
         X-Y con fattore</quote> di <lit>WAGE</lit> rispetto a <lit>EDUC</lit>
 	usando la dummy <lit>GENDER</lit> mostrerà le osservazioni che si
         riferiscono agli uomini in un colore e quelle delle donne in un altro
@@ -3976,13 +4083,12 @@
 
   </command>
   
-
   <command name="fcast" section="Prediction" label="Genera previsioni">
 
     <usage>
       <altforms>
 	<altform><lit>fcast [</lit><repl>oss-iniziale oss-finale</repl><lit>] [</lit><repl>nome-variabile</repl><lit>]</lit></altform>
-	<altform><lit>fcast [</lit><repl>oss-iniziale oss-finale</repl><lit>]</lit> <repl>passi-avanti</repl> <lit>[</lit><repl>nome-variabile</repl><lit>] --rolling</lit></altform>
+	<altform><lit>fcast [</lit><repl>oss-iniziale oss-finale</repl><lit>]</lit> <repl>passi-avanti</repl> <lit>[</lit><repl>nome-variabile</repl><lit>] --recursive</lit></altform>
       </altforms>
       <options>
 	<option>
@@ -4001,12 +4107,16 @@
 	  <flag>--no-stats</flag>
 	  <effect>non mostra le statistiche di previsione</effect>
 	</option>
+	<option>
+	  <flag>--stats-only</flag>
+	  <effect>stampa solo le statistiche di previsione</effect>
+   </option>
         <option>
 	  <flag>--quiet</flag>
 	  <effect>non mostra le previsioni</effect>
         </option>
         <option>
-          <flag>--rolling</flag>
+          <flag>--recursive</flag>
           <effect>vedi sotto</effect>
         </option>
         <option>
@@ -4018,7 +4128,10 @@
       <examples>
         <example>fcast 1997:1 2001:4 f1</example>
 	<example>fcast fit2</example>
-        <example>fcast 2004:1 2008:3 4 rfcast --rolling</example>
+        <example>fcast 2004:1 2008:3 4 rfcast --recursive</example>
+   <demos>
+	  <demo>gdp_midas.inp</demo>
+	</demos>
       </examples>
     </usage>
 
@@ -4039,7 +4152,7 @@
         impostato. Se si sceglie una previsione fuori dal campione ma non sono
         disponibili osservazioni, viene segnalato un errore. A seconda del tipo
         di modello, calcola anche gli errori standard (si veda oltre).
-        L'opzione <opt>rolling</opt> produce un comportamento speciale
+        L'opzione <opt>recursive</opt> produce un comportamento speciale
         spiegato oltre.
       </para>
       <para context="cli">
@@ -4052,9 +4165,9 @@
         effettuare la previsione (l'impostazione predefinita consiste nel
         produrre previsioni per tutte le variabili endogene). Nel caso del
         sistema, o se non viene specificata <repl>nome-variabile</repl>, i
-        valori della previsione possono essere recuperati usando la varaiabile
+        valori della previsione possono essere recuperati usando la variabile
         accessoria <fncref targ="$fcast"/>, mentre gli errori standard, se
-        disponibili, con <fncref targ="$fcse"/>.
+        disponibili, sono recuperabili con <fncref targ="$fcse"/>.
       </para>
       <para>
 	La scelta tra previsione statica e dinamica è rilevante solo nel caso di
@@ -4082,7 +4195,7 @@
        </para>
 
        <para context="cli">
-         L'opzione <lit>rolling</lit> al momento è disponibile solo per i
+         L'opzione <lit>recursive</lit> al momento è disponibile solo per i
          modelli composti da una singola equazione e stimati via OLS. Quando si
          usa questa opzione, le previsioni calcolate sono ricorsive, ossia: ogni
          previsione è generata da una stima del modello che usa i dati
@@ -4092,7 +4205,7 @@
          <lit>passi-avanti</lit> specificato come argomento. Le previsioni sono
          sempre dinamiche quando è possibile. Si noti che l'argomento
          <lit>passi-avanti</lit> deve essere utilizzato solo insieme all'opzione
-         <lit>rolling</lit>.
+         <lit>recursive</lit>.
        </para>
  
       <para context="cli">
@@ -4116,16 +4229,18 @@
       </para>
 
        <para>
- 	La natura degli errori standard della previsione (se disponibili)
-        dipende dalla natura del modello e della previsione. Per i modelli
-        lineari statici, gli errori standard sono calcolati seguendo il metodo
-        delineato in Davidson and MacKinnon (2004); essi incorporano sia
-        l'incertezza dovuta al processo d'errore, sia l'incertezza dei parametri
-        (sintetizzata dalla matrice di covarianza delle stime dei parametri).
-        Per modelli dinamici, gli errori standard della previsione sono
-        calcolati solo nel caso di previsione dinamica, e non incorporano
-        incertezza dei parametri. Per modelli non lineari, al momento non sono
-        disponibili errori standard della previsione.
+ 	La natura degli errori standard della previsione (se
+ 	disponibili) dipende dalla natura del modello e della
+ 	previsione. Per i modelli lineari statici, gli errori standard
+ 	sono calcolati seguendo il metodo descritto in <cite
+ 	key="davidson-mackinnon04">Davidson e MacKinnon (2004)</cite>;
+ 	essi incorporano sia l'incertezza dovuta al processo d'errore,
+ 	sia l'incertezza dei parametri (sintetizzata dalla matrice di
+ 	covarianza delle stime dei parametri). Per modelli dinamici,
+ 	gli errori standard della previsione sono calcolati solo nel
+ 	caso di previsione dinamica, e non incorporano incertezza dei
+ 	parametri. Per modelli non lineari, al momento non sono
+ 	disponibili errori standard della previsione.
        </para>
 
     </description>
@@ -4140,7 +4255,7 @@
 
     <description>
      <para>
-       Questo smplice comando non ha argomenti né opzioni; è pensato
+       Questo semplice comando non ha argomenti né opzioni; è pensato
        per l'esecuzione di script, la cui esecuzione richieda qualche
        tempo, attraverso l'interfaccia grafica (la versione di gretl
        da linea di comando lo ignora). L'idea è di fornire all'utente
@@ -4165,7 +4280,7 @@
 	 <para>
 	   Ad ogni invocazione successiva, il testo mostrato nella
 	   finestra di output viene aggiornato e un nuovo messaggio
-	   <quote>elaborazione in corso</quote> viene aggiunto.
+	   <quote>elaborazione in corso...</quote> viene aggiunto.
 	 </para>
        </li>
      </ilist>
@@ -4174,11 +4289,11 @@
        completamenteo dell'esecuzione dello script.
      </para>
      <para>
-       Attenzione: non ha senso usare <lit>flush</lit> in script la
-       cui esecuzione richiede pochi secondi. Inoltre, bisognerebbe
+       Attenzione: non ha senso usare <lit>flush</lit> in uno script
+       la cui esecuzione richiede pochi secondi. Inoltre, bisognerebbe
        evitare di usare questo comando in un punto dello script dove
        non c'è più output da mostrare, perché il messaggio
-       <quote>elaborazione in corso</quote> risulterebbe fuorviante.
+       <quote>elaborazione in corso...</quote> risulterebbe fuorviante.
      </para>
      <para>
        L'uso che abbiamo in mente per il comando <lit>flush</lit> è
@@ -4230,16 +4345,24 @@
       </para>
       <para>
        Al momento, i programmi esterni compatibili con questa modalità
-       sono (<lit>language=R</lit>), Ox di Jurgen Doornik Ox
+       sono GNU R (<lit>language=R</lit>), Ox di Jurgen Doornik Ox
        (<lit>language=Ox</lit>), GNU Octave
-       (<lit>language=Octave</lit>), Python e, in minor misura, Stata.
+       (<lit>language=Octave</lit>), Python, Julia e Stata.
        I nomi dei programmi esterni sono case-insensitive.
       </para>
       <para>
 	Con R, Octave e Stata l'opzione <opt>send-data</opt> ha
 	l'effetto di rendere disponibile all'interno del programma di
-	destinazione l'intero dataset corrente.
+	destinazione l'intero dataset corrente. È possibile limitare
+	l'invio dell'intero dataset al programma di destinazione attraverso
+	la creazione preventiva di una lista di variabili, a cui va assegnato
+	un nome che dovrà essere dato in specifica al comando.
+	Di seguito un esempio:
       </para>
+      <code>
+	list Rlist = x1 x2 x3
+	foreign language=R --send-data=Rlist
+      </code>
       <para>
        Si veda la <guideref targ="chap:gretlR"/> per dettagli ed esempi.
       </para>
@@ -4302,7 +4425,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Variable/Unit root tests/Fractional integration</menu-path>
+      <menu-path>/Variabile/Test per radici unitarie/Integrazione frazionale</menu-path>
     </gui-access>
 
   </command>
@@ -4330,10 +4453,6 @@
 	  <effect>specifica l'ampiezza degli intervalli, v. oltre</effect>
         </option>
         <option>
-         <flag>--quiet</flag>
-         <effect>non mostra il grafico</effect>
-        </option>
-        <option>
          <flag>--normal</flag>
          <effect>test per la distribuzione normale</effect>
         </option>
@@ -4346,13 +4465,17 @@
          <effect>non mostra nulla</effect>
         </option>
         <option>
+	  <flag>--matrix</flag>
+	  <optparm>nome</optparm>
+	  <effect>usa una colonna di una matrice indicata per nome</effect>
+        </option>
+        <option>
 	  <flag>--show-plot</flag>
 	  <effect>v. oltre</effect>
         </option>
         <option>
-	  <flag>--matrix</flag>
-	  <optparm>nome</optparm>
-	  <effect>usa una colonna di una matrice indicata per nome</effect>
+         <flag>--quiet</flag>
+         <effect>non mostra il grafico</effect>
         </option>
       </options>
       <examples>
@@ -4373,6 +4496,8 @@
 	Se viene indicata l'opzione <opt>matrix</opt>, <repl>var</repl>
 	(che deve essere un intero) viene invece interpretato come un indice
 	di base 1 che individua una colonna in una matrice indicata per nome.
+	Nel caso in cui la matrice in questione sia un vettore colonna allora
+	l'argomento <repl>var</repl> può essere omesso.
       </para>
       <para>
 	Per controllare la presentazione della distribuzione è
@@ -4394,6 +4519,17 @@
        distribuzione gamma in gretl è (forma, scala).
       </para>
       <para>
+	Di default, viene mostrato un grafico della distribuzione se
+	il programma non è in batch mode ma in modalità
+	interattiva. Questo comportamento può essere modulato con
+	l'opzione <opt>plot</opt>. I parametri accettabili per questa
+	opzione sono <lit>none</lit>, per sopprimere il grafico,
+	<lit>display</lit>, per mostrare il grafico a video anche in
+	batch mode, o un nome di file. L'effetto del fornire un nome
+	di file è lo stesso di quello descritto dall'opzione
+	<opt>output</opt> del comando <cmdref targ="gnuplot"/>.
+      </para>
+      <para>
         In modalità interattiva viene mostrato anche un grafico della
         distribuzione, a meno che non si usi l'opzione
         <opt>quiet</opt>. Per converso, il grafico non viene
@@ -4406,13 +4542,21 @@
        L'opzione <opt>silent</opt> sopprime interamente l'output
        mostrato di solito. Ha senso usarla insieme a una delle opzioni
        riguardanti la distribuzione: in questo modo la statistica test
-       e il suo p-value verranno salvati nelle variabili accessorie
-       <fncref targ="$test"/> e <fncref targ="$pvalue"/>.
+       e il suo p-value verranno salvati, e potranno essere recuperati
+       attraverso l'utilizzo degli accessori <fncref targ="$test"/> e 
+       <fncref targ="$pvalue"/>. Può anche essere utilizzato assieme
+       all'opzione <opt>plot</opt> se si è solamente interessati alla
+       visione dei relativi istogrammi e non si è interessati al resto
+       del testo.
       </para>
       <para>
-	Si noti che una funzione parallela a questo comando non è
-	disponibile, ma è possibile usare allo scopo la funzione
-	<fncref targ="aggregate"/>.  
+      Si noti che in gretl non è disponibile una funzione che 
+      è parallela a questo comando, ma è possibile utilizzare 
+      una funzione parallela che permette di raggiungere lo 
+      stesso scopo, che è <fncref targ="aggregate"/>. Inoltre
+      la distribuzione di frequenza costruita con il comando
+      <lit>freq</lit> può essere ottenuta in forma matriciale
+      attraverso l'utilizzo dell'accessore <fncref targ="$result"/>.  
       </para>
     </description>
  
@@ -4469,7 +4613,7 @@
     <description>
       <para>
        Questo comando è utilizzabile soltanto nel contesto di funzioni
-       difinite dall'utente (vedi <cmdref targ="function"/>); esso
+       definite dall'utente (vedi <cmdref targ="function"/>); esso
        provoca un'interruzione della funzione con errore.
       </para>
       <para>
@@ -4519,6 +4663,10 @@
 	  <effect>mostra i dettagli delle iterazioni</effect>
         </option>
         <option>
+	  <flag>--quiet</flag>
+	  <effect>non stampa nulla</effect>
+        </option>
+        <option>
 	  <flag>--vcv</flag>
 	  <effect>mostra la matrice di covarianza</effect>
         </option>
@@ -4542,6 +4690,10 @@
       <examples>
         <example>garch 1 1 ; y</example>
 	<example>garch 1 1 ; y 0 x1 x2 --robust</example>
+	<demos>
+	  <demo>garch.inp</demo>
+	  <demo>sw_ch14.inp</demo>
+	</demos>
       </examples>
     </usage>
 
@@ -4561,15 +4713,17 @@
 	  graphic="garch_h"/>
       </para>
       <para context="cli">
-	Il parametro <repl>p</repl> rappresenta quindi l'ordine generalizzato
-	(o <quote>AR</quote>), mentre <repl>q</repl> rappresenta il consueto
-        ordine ARCH (o <quote>MA</quote>). Se <repl>p</repl> è diverso da zero,
-	anche <repl>q</repl> deve essere diverso da zero, altrimenti il modello
-        non è identificato. Comunque, è possibile stimare un modello ARCH
-        consueto impostando <repl>q</repl> a un valore positivo e <repl>p</repl>
-        a zero. La somma di <repl>p</repl> e <repl>q</repl> non deve superare 5.
-        Si noti che nell'equazione della media viene automaticamente inclusa una
-        costante, a meno che non si usi l'opzione <opt>nc</opt>.
+	Il parametro <repl>p</repl> rappresenta quindi l'ordine
+	generalizzato (o <quote>AR</quote>), mentre <repl>q</repl>
+	rappresenta il consueto ordine ARCH (o <quote>MA</quote>). Se
+	<repl>p</repl> è diverso da zero, anche <repl>q</repl> deve
+	essere diverso da zero, altrimenti il modello non è
+	identificato. Comunque, è possibile stimare un semplice
+	modello ARCH impostando <repl>q</repl> a un valore positivo e
+	<repl>p</repl> a zero. La somma di <repl>p</repl> e
+	<repl>q</repl> non deve superare 5.  Si noti che
+	nell'equazione della media viene automaticamente inclusa una
+	costante, a meno che non si usi l'opzione <opt>nc</opt>.
       </para>
 
       <para context="gui">
@@ -4583,21 +4737,25 @@
 	somma(j da 1 a p) b(j)*h(t-j)" graphic="garch_h"/>
       </para>
       <para context="gui">
-	Il parametro <repl>p</repl> rappresenta quindi l'ordine generalizzato
-	(o <quote>AR</quote>), mentre <repl>q</repl> rappresenta il consueto
-        ordine ARCH (o <quote>MA</quote>). Se <repl>p</repl> è diverso da zero,
-	anche <repl>q</repl> deve essere diverso da zero, altrimenti il modello
-        non è identificato. Comunque, è possibile stimare un modello ARCH
-        consueto impostando <repl>q</repl> a un valore positivo e <repl>p</repl>
-        a zero. La somma di <repl>p</repl> e <repl>q</repl> non deve superare 5.
+	Il parametro <repl>p</repl> rappresenta quindi l'ordine
+	generalizzato (o <quote>AR</quote>), mentre <repl>q</repl>
+	rappresenta il consueto ordine ARCH (o <quote>MA</quote>). Se
+	<repl>p</repl> è diverso da zero, anche <repl>q</repl> deve
+	essere diverso da zero, altrimenti il modello non è
+	identificato. Comunque, è possibile stimare un semplice
+	modello ARCH impostando <repl>q</repl> a un valore positivo e
+	<repl>p</repl> a zero. La somma di <repl>p</repl> e
+	<repl>q</repl> non deve superare 5.
       </para>
 
       <para>
-        Per impostazione predefinita, i modelli GARCH vengono stimati usando il
-        codice nativo gretl, ma è anche possibile usare l'algoritmo di
-        Fiorentini, Calzolari e Panattoni (1996). Il primo usa il massimizzatore
-        BFGS, mentre il secondo usa la matrice di informazione per massimizzare
-        la verosimiglianza, con un raffinamento usando l'Hessiana.
+        Per impostazione predefinita, i modelli GARCH vengono stimati
+        usando il codice nativo gretl, ma è anche possibile usare
+        l'algoritmo di <cite key="fiorentini96">Fiorentini, Calzolari
+        e Panattoni (1996)</cite>.  Il primo usa il massimizzatore
+        BFGS, mentre il secondo usa un algoritmo di tipo
+        Newton-Raphson con la matrice di informazione e un successivo
+        raffinamento usando l'Hessiana.
       </para>
 
       <para context="cli">
@@ -4624,7 +4782,7 @@
       richiamata ed aggiunta al dataset usando il menù
       <quote>Analisi</quote> presente nella finestra del modello. Se
       viene spillata la casella <quote>Standardizza i residui</quote>,
-      i resuidi vengono divisi per la radice della varianzqa
+      i residui vengono divisi per la radice della varianza
       condizionale stimata.
       </para>
 
@@ -4677,15 +4835,16 @@
       <para>
 	NOTA: questo comando ha subito molti cambiamenti e migliorie
 	da quando l'help seguente è stato scritto, per cui per
-	informazioni complete e aggornate consigliamo di far
+	informazioni complete e aggiornate consigliamo di far
 	riferimento alla <guideref targ="chap:genr"/>. D'altro canto,
 	il testo che segue non contiene informazioni erronee, per cui
 	può essere interpretato come <quote>questo ed altro</quote>.
       </para>
 
       <para>
-	In contesti appropriati, <lit>series</lit>, <lit>scalar</lit>
-	e <lit>matrix</lit> sono sinonimi per questo comando.
+	In contesti appropriati, <lit>series</lit>, <lit>scalar</lit>,
+	<lit>matrix</lit>, <lit>string</lit> e <lit>bundle</lit> sono
+	sinonimi per questo comando.
       </para>
       <para context="cli">
 	Crea nuove variabili, di solito per mezzo di trasformazioni di
@@ -4828,18 +4987,19 @@
 
       <para>
         La variabile speciale <lit>obs</lit> serve da indice per le
-        osservazioni.  Ad esempio, <lit>genr dum = (obs=15)</lit> crea
+        osservazioni.  Ad esempio, <lit>genr dum = (obs==15)</lit> crea
         una variabile dummy che vale 1 per l'osservazione 15 e 0
         altrove. È anche possibile usare questa variabile per
         selezionare alcune osservazioni particolari secondo la data o
-        il nome. Ad esempio <lit>genr d = (obs&gt;1986:4)</lit>,
-        <lit>genr d = (obs&gt;"2008/04/01")</lit>, <lit>genr d =
-        (obs="CA")</lit>.  Quando si usano in questo contesto date
+        il nome. Ad esempio
+        <lit>genr d = (obs&gt;1986:4)</lit>,
+        <lit>genr d = (obs&gt;"2008/04/01")</lit>, oppure
+        <lit>genr d = (obs=="CA")</lit>. Quando si usano in questo contesto date
         giornaliere o etichette per le osservazioni, bisogna
         racchiuderle fra virgolette.  Questo non è necessario per date
 	trimestrali o annuali. Si noti che, per serie storiche
 	annuali, l'anno non è sintatticmante distiguibile da un
-	sempilce intero; per cui, per confrontare un'osservazione con
+	semplice intero; per cui, per confrontare un'osservazione con
 	<lit>obs</lit> per anno, bisogna usare la funzione
 	<lit>obsnum</lit> per convertire l'anno in un numero
 	progressivo, come ad esempio in in <lit>genr d =
@@ -5080,23 +5240,34 @@
 	  <flag>--verbose</flag>
 	  <effect>Mostra i dettagli delle iterazioni</effect>
 	</option>
+   <option>
+	  <flag>--quiet</flag>
+	  <effect>non stampa nulla</effect>
+   </option>
 	<option>
 	  <flag>--lbfgs</flag>
 	  <effect>usa il massimizzatore L-BFGS-B anziché il BFGS standard</effect>
 	</option>
       </options>
+   <examples>
+     <demos>
+	  <demo>hall_cbapm.inp</demo>
+	</demos>
+   </examples>
     </usage>
 
     <description>
 
       <para>
-        Esegue la stima col metodo dei momenti generalizzato (Generalized Method
-        of Moments, GMM) usando l'algoritmo BFGS (Broyden, Fletcher, Goldfarb,
-        Shanno). Occorre specificare uno o più comandi per aggiornare le
-        quantità rilevanti (tipicamente i residui GMM), una o più condizioni di
-        ortogonalità, una matrice iniziale dei pesi e un elenco dei parametri da
-        stimare, il tutto racchiuso tra le parole chiave
-	<lit>gmm</lit> e <lit>end gmm</lit>.
+        Esegue la stima col metodo dei momenti generalizzato
+        (Generalized Method of Moments, GMM) usando l'algoritmo BFGS
+        (Broyden, Fletcher, Goldfarb, Shanno). Occorre specificare uno
+        o più comandi per aggiornare le quantità rilevanti
+        (tipicamente i residui GMM), una o più condizioni di
+        ortogonalità, una matrice iniziale dei pesi e un elenco dei
+        parametri da stimare, il tutto racchiuso tra le parole chiave
+        <lit>gmm</lit> e <lit>end gmm</lit>. Ogni opzione aggiuntiva
+        va messa nella riga del comando <lit>end gmm</lit>.
       </para>
       <para>
 	Si veda la <guideref targ="chap:gmm"/> per i dettagli. Quello che segue
@@ -5123,7 +5294,21 @@
         ortogonale ad ognuno degli strumenti che compongono le colonne di
 	<lit>W</lit>.
       </para>
-
+      <subhead>Nome dei parametri</subhead>
+      <para>
+	Nella stima di un modello non lineare spesso risulta
+	conveniente rinominare i parametri in maniera concisa. Durante
+	la stampa dei risultati, comunque, risulta desiderabile
+	l'utilizzo di etichette il più informative possibile. Questo
+	può essere fatto attraverso l'aggiunta della parola chiave
+	<lit>param_names</lit> dentro il blocco di comando. Per un
+	modello con <math>k</math> parametri l'argomento che segue
+	questa parola chiave dovrebbe essere o una stringa letterale
+	contenente tutti i <math>k</math> nomi separati da spazi e
+	racchiusi dentro le doppie virgolette, oppure il nome di nome
+	di una variabile stringa contenente tutti <math>k</math> nomi
+	dell'elenco.
+      </para>
     </description>
  
     <gui-access>
@@ -5183,6 +5368,11 @@
 	  <effect>si veda sotto</effect>
         </option>
         <option>
+	  <flag>--font</flag>
+	  <optparm>fontspec</optparm>
+	  <effect>si veda sotto</effect>
+        </option>
+        <option>
 	  <flag>--band</flag>
 	  <optparm>bandspec</optparm>
 	  <effect>si veda sotto</effect>
@@ -5211,8 +5401,9 @@
       <examples>
         <example>gnuplot y1 y2 x</example>
         <example>gnuplot x --time-series --with-lines</example>
-	<example>gnuplot wages educ gender --dummy</example>
-	<example>gnuplot y1 y2 x --with-lines=y2</example>
+	     <example>gnuplot wages educ gender --dummy</example>
+		  <example>gnuplot y x --fit=quadratic</example>
+	     <example>gnuplot y1 y2 x --with-lines=y2</example>
       </examples>
     </usage>
 
@@ -5234,8 +5425,8 @@
 	sottoinsieme delle variabili usando il parametro
 	<repl>varspec</repl>. Esso deve essere dato sotto forma di una
 	lista separata da virgole dei nomi (o dei numeri) delle
-	variabili da tracciare con linee e/o con impulsi. L'esempio
-	più sotto mostra come tracciare <lit>y1</lit> e <lit>y2</lit>
+	variabili da tracciare con linee e/o con impulsi. L'ultimo tra gli
+	esempi di cui sopra mostra come tracciare <lit>y1</lit> e <lit>y2</lit>
 	contro <lit>x</lit>, in modo tale che <lit>y2</lit> sia
 	rappresentata da una linea ma <lit>y1</lit> da punti.
       </para>
@@ -5321,7 +5512,7 @@
 	assieme ad una <quote>banda</quote> (spesso, ma non sempre,
 	associata ad un intervallo di confidenza). Questa opzione
 	richede due parametri, separati da una virgola: il nome (o
-	numero ID) di una serie con il centro della bandae il nome(o
+	numero ID) di una serie con il centro della banda e il nome(o
 	numero ID) di una con la sua ampiezza: l'effetto ottenuto è
 	una banda con coordinate in ordinata date dal centro, più o
 	meno l'ampiezza. Si può usare un terzo parametro opzionale
@@ -5363,6 +5554,36 @@
       <code>
 	eval readfile("@gretldir/data/gnuplot/gpcolors.txt")
       </code>
+      <subhead>Barre di recessione</subhead>
+      <para>
+	L'opzione <quote>band</quote> descritta sopra può inoltre
+	essere utilizzata per aggiungere di barre di recessione al
+	grafico. Con ciò si intendono delle barre verticali che
+	occuperanno l'intera dimensione <math>y</math> del grafico ed
+	indicando la presenza (con barra) o l'assenza (senza barra) di
+	alcune caratteristiche qualitative in grafico di serie
+	storiche.  Queste barre sono comunemente utilizzate per
+	indicare periodi di recessione/periodi di guerra/qualasiasi
+	cosa possa essere codificata da una variabile dummy 0/1.
+      </para>
+      <para>
+	In questo contesto l'opzione <opt>band</opt> richiede un solo
+	paramentro: l'identificatore di serie con valori 0 e 1, dove 1
+	indica <quote>on</quote> e 0 indica
+	<quote>off</quote>. L'opzione <opt>band-style</opt> può essere
+	utilizzata per specificare il colore delle barre, dando o
+	l'idendificatore esadecimale del colore o il nome riconosciuto
+	da gnuplot (vedi la sezione precedente).  Un esempio che
+	mostra l'utilizzo del comandso su una singola barra è il
+	seguente:
+      </para>
+      <code>
+	open AWM17 --quiet
+	series dum = obs &gt;= 1990:1 &amp;&amp; obs &lt;= 1994:2
+	gnuplot YER URX --with-lines --time-series \
+	  --band=dum --band-style=0xcccccc --output=display \
+	  {set key top left;}
+      </code>
       <subhead>Controllo dell'output</subhead>
       <para>
 	In modalità interattiva il risultato è mostrato
@@ -5387,6 +5608,24 @@
 	interattiva.  Se si indica un nome del file con un'estensione
 	diversa da quelle appena citate viene prodotto un file di
 	comandi gnuplot.
+      </para>
+      <subhead>Specificare un font</subhead>
+      <para>
+	L'opzione <opt>font</opt> può essere utilizzata per specificare
+	un particolare tipo di font per il grafico. Il parametro
+	<repl>fontspec</repl> dovrebbe assumere la forma del nome di un
+	carattere, ed opzionalmente dovrebbe essere seguito da la grandezza
+	dei punti (separati dal nome da una virgola od uno spazione, il tutto
+	messo dentro le doppie virgolette ""). Di seguito un esempio:
+      </para>
+      <code>
+	--font="serif,12"
+      </code>
+      <para>
+	Nota: i font disponibili per gnuplot variano da piattaforma a
+	piattaforma, quindi se si intende scrivere un comando di
+	<lit>plot</lit> portabile allora è consigliabile optare per
+	font generici come <lit>sans</lit> oppure <lit>serif</lit>.
       </para>
       <subhead>Aggiungere comandi gnuplot</subhead>
       <para>
@@ -5517,13 +5756,11 @@
     </usage>
 
     <description>
-
       <para>
         La <quote>pagina dei grafici</quote> funzionerà solo se
         si è installato il sistema di composizione &latex; e si è
         in grado di generare e visualizzare file in formato postscript.
       </para>
-
       <para>
         Nella finestra della sessione, è possibile trascinare fino
 	a otto grafici sull'icona della pagina dei grafici. Facendo doppio
@@ -5532,22 +5769,20 @@
         i grafici selezionati verrà composta e aperta con il proprio
         visualizzatore di file postscript, da cui sarà possibile stamparla.
       </para>
-
       <para>
         Per pulire la pagina dei grafici, fare clic col tasto destro
         sull'icona e selezionare <quote>Pulisci</quote>.
       </para> 
-
       <para>
         Su sistemi diversi da MS Windows, può essere necessario modificare
         l'impostazione del programma per visualizzare il postscript, che si
         trova nella sezione <quote>Programmi</quote> della finestra di dialogo
         delle Preferenze di gretl (nel menù Strumenti della finestra principale).
       </para>
-
       <para>
-	E' anche possibile operare sulla pagina del grafico usanod uno script
-	oppure usando la console (nel programma GUI). Sono disponibili i comandi seguenti:
+	È anche possibile operare sulla pagina del grafico via script,
+	oppure usando la console (nel programma GUI). Sono disponibili
+	i comandi seguenti:
       </para>
       <para>
 	Per aggiungere un grafico alla pagina dei grafici, digitate il comando
@@ -5603,24 +5838,23 @@
 
     <description>
       <para>
-        Questa funzionalità consente di manipolare il grafico 3D con
-        il mouse (ruotandolo ed allungando o riducendo gli assi).
+         Se il bottone <quote>Rendi il grafico interattivo</quote> è
+         disponibili e selezionato quest'ultimo consentirà di manipolare
+         il grafico 3-D con il mouse (ruotandolo, espandendolo e rimpicciolendolo
+         lungo gli assi).
       </para>
-
       <para>
         Nella composizione di un grafico 3D, si noti che l'asse Z
         sarà l'asse verticale, quindi se si ha una variabile dipendente
         che si pensa possa essere influenzata da due variabili indipendenti,
         è meglio mettere la variabile dipendente sull'asse Z e le altre
         due variabili sugli assi X e Y.
-      </para>  
-
+      </para>
       <para>
         A differenza di molti altri grafici di gretl, i grafici 3D
         sono controllati da gnuplot invece che da gretl, quindi il menù
         di modifica dei grafici in questo caso non è disponibile.
       </para>
-
     </description>
   </command>
 
@@ -5677,6 +5911,23 @@
 	  </para>
 	</li>	
       </ilist>
+     <para>
+       In aggiunta alcune funzioni possono essere marcate con
+       l'opzione <quote>no-print</quote>. Solitamente, quando una
+       funzione è richiamata attraverso l'interfaccia grafica gretl
+       apre un finestra la quale mostra il suo successivo output;
+       selezionando questa opzione si dice a gretl di non farlo. In
+       conclusione nessun output di testo verrà prodotto da gretl se
+       l'opzione <quote>no-print</quote> è stata selezionata.
+      </para>
+      <para>
+	Infine, la funzione <lit>gui-main</lit> (se presente) può
+	essere contrassegnata come <quote>menu-only</quote>. Così
+	facendo si dice a gretl che la funzione in questione è
+	specificamente progettata ad essere chiamata dall'interfaccia
+	grafica del menu al quale è allegata, e che non dovrebbe
+	essere presentata all'utente in nessun'altra forma.
+      </para>
     </description>
   </command>
 
@@ -5686,7 +5937,7 @@
     <description>
       <para>
 	Il calcolatore dei test di Gretl calcola statistiche test e p-value
-        per molti tipi di test di ipotesi su una o più popolazioni.
+        per molti tipi di test di ipotesi su una o due popolazioni.
         Per utilizzarlo, occorre indicare le statistiche campionarie derivate
         da uno o due campioni, a seconda del test scelto. Queste possono essere
         indicate esplicitamente in forma numerica, oppure, se si ha un file di
@@ -5694,29 +5945,26 @@
         una o più variabili selezionate dal dataset (nel caso delle medie e
         varianze, ma non nel caso delle proporzioni).
       </para>
-
       <para>
 	Per eseguire un test indicando una variabile del dataset, occorre per
-        prima cosa attivare questa opzione selezionando la casella "Usa
-        variabile dal dataset", e poi scegliere la variabile nella lista.
-        Appena si sceglie una variabile, i valori della statistica rilevante
+        prima cosa attivare questa opzione selezionando la casella <quote>Usa
+        variabile dal dataset</quote>, e poi scegliere la variabile nella lista.
+        Appena si sceglie una variabile, i valori delle statistiche rilevanti
         sono automaticamente inseriti nelle caselle sottostanti.
       </para>
-
       <para>
 	Oltre che selezionare semplicemente una variabile, è possibile
         specificare un sotto-campione. Ad esempio, si ipotizzi di avere dei dati
-        sui salari in una variabile chiamata "salari" e una variabile dummy
-        chiamata "genere", pari a 1 per gli uomini e 0 per le donne (o
+        sui salari in una variabile chiamata <lit>wage</lit> e una variabile dummy
+        chiamata <lit>gender</lit>, pari a 1 per gli uomini e 0 per le donne (o
         viceversa). Quindi, nel test per la differenza fra le medie, è possibile
-        selezionare "salari" in entrambi i campi, ma aggiungendo nel campo
-        superiore "(genere=0)" e nel campo inferiore "(genere=1)" si otterrà
+        selezionare <lit>wage</lit> in entrambi i campi, ma aggiungendo nel campo
+        superiore <lit>(gender=0)</lit> e nel campo inferiore <lit>(gender=1)</lit> si otterrà
         un test per la differenza tra il reddito medio degli uomini e delle
         donne. Quando si specifica un vincolo che identifica un sotto-campione,
         occorre premere il tasto Invio perché le statistiche campionarie siano
         calcolate.
       </para>
-
       <para>
 	Il vincolo che definisce il sotto-campione deve essere indicato tra
         parentesi e in generale prende la forma "variabile operatore valore",
@@ -5735,12 +5983,21 @@
 
     <description>
       <para>
-       Nella finestra <quote>Test delle differenze</quote> è possibile svolgere
-       dei test non parametrici per la differenza tra due popolazioni o gruppi;
-       è possibile scegliere vari tipi specifici di test:
+      Tre tipologie di test non parametrici sono disponibili
+      tramite questa finestra di dialogo: test delle differenze
+      tra gruppi, per la casualità e per la correlazione (o il rango).
       </para>
+
+      <subhead>Test delle differenze</subhead>
       <para>
-       Test del segno: si basa sul fatto che per due campioni
+       Nella finestra <quote>Test delle differenze</quote> è possibile svolgere
+       dei test non parametrici per la differenza tra due popolazioni o gruppi,
+       ed è possibile scegliere vari tipi specifici di test:
+      </para>
+      <ilist>
+	   <li>
+      <para>
+       <emphasis>Test del segno</emphasis>: si basa sul fatto che per due campioni
 	<math>x</math> e <math>y</math> estratti casualmente dalla
         stessa distribuzione, la probabilità che valga
 	<math>x</math><sub>i</sub> &gt;
@@ -5753,8 +6010,10 @@
 	(<math>n</math>, 0.5), dove <math>n</math> è il numero di
         osservazioni.
       </para>
+      </li>
+      <li>
       <para>
-       Test rank sum di Wilcoxon. Questo test procede ordinando le
+       <emphasis>Test rank sum di Wilcoxon</emphasis>: questo test procede ordinando le
        osservazioni estratte da entrambi i campioni dalla più piccola
        alla più grande, e quindi calcolando la somma dei ranghi delle
        osservazioni da uno dei campioni. I due campioni non devono
@@ -5766,8 +6025,10 @@
        ogni valore dell'ampiezza dei due campioni, mentre per campioni
        abbastanza ampi essa approssima la distribuzione normale.
       </para>
+      </li>
+      <li>
       <para>
-       Test signed rank di Wilcoxon.  Questo test è valido per "coppie di
+       <emphasis>Test signed rank di Wilcoxon</emphasis>: questo test è valido per "coppie di
        campioni", come possono essere ad esempio i valori di una variabile in un
        gruppo di individui prima e dopo un certo trattamento. Il test procede
        calcolando le differenze tra le coppie di osservazioni
@@ -5781,6 +6042,9 @@
        zero, distribuzione che converte alla normale nel caso di campioni
        abbastanza ampi.
       </para>
+      </li>
+      </ilist>
+      <subhead>Casualità</subhead>
       <para>
        Nella finestra <quote>Test delle successioni</quote> è possibile
        eseguire un test per la casualità di una certa variabile, basato
@@ -5792,11 +6056,27 @@
        normale alla distribuzione del numero di sequenze sotto l'ipotesi nulla
        di casualità.
       </para>
+      <subhead>Correlazione</subhead>
+      <para>
+      Nella finestra <quote>Correlazione</quote> si ha a disposione il test per il
+      rango della correlazione rho di Spearman e tau di Kendall.
+      </para>
     </description>
   </command>
     
   <command name="hausman" section="Tests" label="Diagnosi panel">
-
+     <usage>      
+      <options>
+	<option>
+	  <flag>--nerlove</flag>
+	  <effect>usa il metodo di Nervole per effetti casuali</effect>
+	</option>
+	<option>
+	  <flag>--matrix_diff</flag>
+	  <effect>usa il metodo di differenze tra matrici per il test di Hausman</effect>
+	</option>
+      </options>
+    </usage>
     <description>
       <para>
         Questo test è disponibile solo dopo aver stimato un modello OLS su dati
@@ -5805,20 +6085,18 @@
         indistintamente) contro le principali alternative: il modello a effetti
         fissi e quello a effetti casuali.
       </para>
-
       <para>
         Il modello a effetti fissi permette all'intercetta della regressione di
         variare per ogni unità cross section. Viene eseguito un test
         <math>F</math> per l'ipotesi nulla che le intercette non
         differiscano tra loro.  Il modello a effetti casuali scompone la
-        varianza dei residui in due parti: una specifica all'unità cross section
+        varianza dei residui in due parti: una specifica alle unità cross section
         e una specifica all'osservazione particolare (la stima può essere
         eseguita solo se il numero delle unità cross section nel dataset è
         maggiore del numero dei parametri da stimare). La statistica LM di
         Breusch&ndash;Pagan testa l'ipotesi nulla che il modello pooled OLS sia
         adeguato contro l'alternativo modello a effetti casuali.
       </para>
-
       <para>
 	Può accadere che il modello pooled OLS sia rifiutato nei confronti
         di entrambe le alternative, a effetti fissi o casuali. A patto
@@ -5832,6 +6110,15 @@
         modello a effetti casuali sia preferibile). Un basso p-value per
         questo test suggerisce di rifiutare il modello a effetti casuali
         in favore del modello a effetti fissi.
+      </para>
+      <para>
+	Le due opzioni per questo comando riguardano il modello ad
+	effetti casuali.  Di default viene utilizzato il metodo di
+	Swamy e Arora ed il test di Hausman viene calcolato usando il
+	metodo di regressione. Le opzioni di cui sopra consentono di
+	abilitare, in alternativa, il metodo di Nerlove per effetti
+	casuali e/o l'approccio di differenza tra matrici per il
+	calcolo del test di Hausman.
       </para>
     </description>
 
@@ -5851,35 +6138,43 @@
         robusti in presenza di eteroschedasticità (e, nel caso dello
         stimatore HAC, di autocorrelazione).
       </para>
-
-      <para>HC0 produce gli <quote>errori standard originali di
+      <para>
+      HC0 produce gli <quote>errori standard originali di
       White</quote>; HC1, HC2, HC3 e HC3a sono varianti che si ritiene
       producano risultati migliori (più affidabili). Per i dettagli
       sugli stimatori, si veda <cite key="mackinnon-white85">MacKinnon
-      and White (Journal of Econometrics, 1985)</cite> o <cite
-      key="davidson-mackinnon04">Davidson and MacKinnon, Econometric
+      e White (Journal of Econometrics, 1985)</cite> o <cite
+      key="davidson-mackinnon04">Davidson e MacKinnon, Econometric
       Theory and Methods (Oxford, 2004)</cite>. Le sigle usate sono
       quelle proposte da Davidson e MacKinnon. La variante
       <quote>HC3a</quote> è il <quote>jackknife</quote> descritto da
       MacKinnon e White (1985); HC3 è una sua vicina approssimazione.
       </para>
-
-      <para>Se si usa lo stimatore HAC per serie storiche, è possibile calibrare
+      <para>
+      Se si usa lo stimatore HAC per serie storiche, è possibile calibrare
         la lunghezza dei ritardi usando il comando <cmd>set</cmd>. Si veda il
-        manuale di gretl o i file di aiuto per i dettagli.</para>
-
-      <para>Quando si stima un  modello OLS su dati panel, lo stimatore robusto
+        manuale di gretl o i file di aiuto per i dettagli.
+      </para>
+      <para>
+      Quando si stima un  modello OLS su dati panel, lo stimatore robusto
         predefinito per la matrice di covarianza è quello dato da Arellano.
         L'alternativa è lo stimatore PCSE (Panel Corrected Standard Errors) di
         Beck e Katz, che tiene conto dell'eteroschedasticità, ma non
         dell'autocorrelazione.
       </para>
-
-      <para>Per i modelli GARCH sono disponibili due stimatori robusti della
+      <para>
+      Per i modelli GARCH sono disponibili due stimatori robusti della
         matrice di covarianza: QML è lo stimatore di quasi massima verosimiglianza,
         e BW è lo stimatore di Bollerslev-Wooldridge.
       </para>
-
+      <para>
+	Di default gretl utilizza la distribuzione <math>t</math> di
+	Student quando calcola i p-value basati su errori standard
+	robusti, in un contesto di stimatori dei minimi
+	quadrati. L'opzione denomionata <quote>Usa la distribuzione
+	normale per p-value robusti</quote> può essere utilizzata in
+	alternativa al metodo predefinito.
+      </para>
     </description>
 
   </command>
@@ -5947,13 +6242,13 @@
         usando l'inversa negativa dell'Hessiana. Se si vuole usare la procedura
         di stima in due passi, basta usare l'opzione <lit>--two-step</lit>.
         In questo caso, la matrice di covarianza dei parametri dell'equazione
-        principale è corretta nel modo descritto da Heckman (1979).
+        principale è corretta nel modo descritto da <cite key="heckman79">Heckman (1979)</cite>.
       </para>
 
     </description>
 
     <gui-access>
-      <menu-path>/Modello/Modelli non lineari/Heckit</menu-path>
+      <menu-path>/Modello/Variabile dipendente limitata/Heckit</menu-path>
     </gui-access>
 
   </command>
@@ -5984,8 +6279,8 @@
       <para> 
         <cmd>help</cmd> <repl>comando</repl> descrive il <repl>comando</repl>
         (ad es.  <cmd>help smpl</cmd>). <lit>help</lit> <repl>funzione</repl>
-        descrive la <repl>funzione</repl> (ad es. <lit>help ldet</lit>).
-        Alcune funzioni hanno lo stesso nome dei comandi relativi (ad esempio
+        descrive la <repl>funzione</repl> (&eg; <lit>help ldet</lit>).
+        Alcune funzioni hanno lo stesso nome dei comandi relativi (&eg;
         <lit>diff</lit>): in questo caso verrà mostrato l'aiuto relativo al
         comando, a meno che non si usi l'opzione <opt>func</opt>.
       </para> 
@@ -6032,7 +6327,7 @@
 	essere normali serie a bassa frequenza.
       </para>
       <para>
-	per dettagli sull'effetto dell'opzione <opt>output</opt>,
+	Per ulteriori dettagli sull'effetto dell'opzione <opt>output</opt>,
 	consultare lo help per il comando <cmdref targ="gnuplot"/>.
       </para> 
     </description>
@@ -6048,10 +6343,18 @@
         <argument>variabili-indipendenti</argument>
       </arguments>
       <options>
+    <option>
+	  <flag>--no-squares</flag>
+	  <effect>si veda sotto</effect>
+	</option>
 	<option>
 	  <flag>--vcv</flag>
 	  <effect>mostra la matrice di covarianza</effect>
 	</option>
+   <option>
+	  <flag>--quiet</flag>
+	  <effect>non stampa nulla</effect>
+   </option>
       </options>
     </usage>
 
@@ -6072,11 +6375,25 @@
       <para>
         Nella regressione ausiliaria (b) il logaritmo dei quadrati dei residui
         dalla prima regressione OLS viene regredito sui regressori originali e
-        sui loro quadrati. La trasformazione logaritmica viene effettuata per
+        sui loro quadrati (o solamente sui regressori originali se l'opzione <opt>no-squares</opt>
+        è data). La trasformazione logaritmica viene effettuata per
         assicurarsi che le varianze stimate siano non negative. Indicando con
         <math>u</math><sup>*</sup> i valori stimati da questa regressione, la
         serie dei pesi per la regressione con minimi quadrati ponderati è data
         da 1/exp(<math>u</math><sup>*</sup>).
+      </para>
+      <para context="gui">
+	Nella regressione ausiliaria (b) il logaritmo dei quadrati dei
+	residui dalla prima regressione OLS viene regredito sui
+	regressori originali e sui loro quadrati (di default), o
+	solamente sui regressori originali qualora la casella
+	<quote>include squares</quote> sia stata deselezionata.  La
+	trasformazione logaritmica viene effettuata per assicurarsi
+	che le varianze stimate siano non negative. Indicando con
+	<math>u</math><sup>*</sup> i valori stimati da questa
+	regressione, la serie dei pesi per la regressione con minimi
+	quadrati ponderati è data da
+	1/exp(<math>u</math><sup>*</sup>).
      </para>
     </description>
 
@@ -6093,6 +6410,13 @@
       <arguments>
         <argument>nome-variabile</argument>
       </arguments>
+       <options>
+	<option>
+	  <flag>--plot</flag>
+	  <optparm>tipologia o nome del file</optparm>
+	  <effect>si veda sotto</effect>
+        </option>
+      </options>
     </usage>
   
     <description>
@@ -6102,8 +6426,8 @@
       </para>
   
       <para>
-       L'esponente di Hurst è discusso da Mandelbrot. In termini teorici è
-       l'esponente <math>H</math> nella relazione
+       L'esponente di Hurst è discusso da <cite key="mandelbrot83">Mandelbrot (1983)</cite>.
+       In termini teorici è l'esponente <math>H</math> nella relazione
        <equation status="display"
          tex="\[\mathrm{RS}(x) = an^H\]"
          ascii="RS(x) = an^H"
@@ -6131,12 +6455,23 @@
       <para>
        In gretl, l'esponente è stimato usando il sotto-campionamento binario:
        si inizia dall'intero intervallo dei dati, quindi si usano le due metà
-       dell'intervallo, poi i quattro quarti, e così via. Il valore RS è la
+       dell'intervallo, poi i quattro quarti, e così via. Per ampiezze campionarie
+       minori dell'intervallo dei dati complessivo il valore RS è la
        media presa sui vari campioni. L'esponente è quindi stimato come il
        coefficiente di pendenza della regressione del logaritmo di RS sul
        logaritmo dell'ampiezza del campione.
       </para>
-
+      <para>
+	Di default, viene mostrato un grafico dell'intervallo
+	riscalato se il programma è in modalità interattiva. Questo
+	comportamento può essere calibrato attraverso l'opzione
+	<opt>plot</opt>. I parametri accettabili dall'opzione sono
+	<lit>none</lit>, per non mostrare il grafico,
+	<lit>display</lit>, per mostrare il grafico anche in batch
+	mode, o un nome di file. L'effetto di fornire un nome di file
+	è reperibile alla descrizione del comando <cmdref
+	targ="gnuplot"/>, sotto l'opzione <opt>output</opt>.
+      </para>
     </description>
 
     <gui-access>
