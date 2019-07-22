@@ -740,12 +740,14 @@ int upload_function_package (const char *login, const char *pass,
 }
 
 struct uploader {
-    FILE *fp;
-    char rem[80];
+    FILE *fp;     /* from which we read */
+    char rem[80]; /* to hold any overslop */
 };
 
-/* FIXME need to understand what's supposed to happen
-   in the following function!!
+/* It seems that the size of the @buf made available by
+   libcurl is probably 65536 bytes, so if we're supplying
+   an mpack'd email line by line there shouldn't be any
+   problem sending a whole line at a time.
 */
 
 static size_t get_payload (void *buf, size_t size,
@@ -755,6 +757,7 @@ static size_t get_payload (void *buf, size_t size,
     size_t bufmax = size * nitems;
     const char *data;
     char line[80];
+    size_t ret = 0;
 
     if (size == 0 || nitems == 0 || bufmax < 1) {
 	return 0;
@@ -775,18 +778,18 @@ static size_t get_payload (void *buf, size_t size,
 	    wrote = len;
 	    ul->rem[0] = '\0';
 	} else {
+	    /* this should not be necessary, but... */
 	    memcpy(buf, data, bufmax);
 	    wrote = bufmax;
-	    strcpy(ul->rem, data + bufmax);
+	    memmove(ul->rem, data + bufmax, strlen(data + bufmax));
 	}
-	return wrote;
+	ret = wrote;
     }
 
-    return 0;
+    return ret;
 }
 
 /* See also https://curl.haxx.se/libcurl/c/CURLOPT_READDATA.html */
-/* server: e.g. "smtp://mail.example.com" */
 
 int curl_send_mail (const char *from_addr,
 		    const char *to_addr,
@@ -795,52 +798,53 @@ int curl_send_mail (const char *from_addr,
 		    const char *password,
 		    const char *filename)
 {
-    CURL *curl;
+    CURL *curl = NULL;
     CURLcode res = CURLE_OK;
     struct curl_slist *recip = NULL;
     struct uploader upload_ctx;
-    int err = 0;
+    int err;
+
+    err = common_curl_setup(&curl);
+    if (err) {
+	return err;
+    }
 
     upload_ctx.rem[0] = '\0';
     upload_ctx.fp = gretl_fopen(filename, "rb");
     if (upload_ctx.fp == NULL) {
+	curl_easy_cleanup(curl);
 	return E_FOPEN;
     }
 
-    curl = curl_easy_init();
-
-    if (curl != NULL) {
-	curl_easy_setopt(curl, CURLOPT_USERNAME, username);
+    curl_easy_setopt(curl, CURLOPT_USERNAME, username);
+    if (password != NULL && *password != '\0') {
 	curl_easy_setopt(curl, CURLOPT_PASSWORD, password);
-	curl_easy_setopt(curl, CURLOPT_URL, server);
-	curl_easy_setopt(curl, CURLOPT_MAIL_FROM, from_addr);
+    }
+    curl_easy_setopt(curl, CURLOPT_URL, server);
+    curl_easy_setopt(curl, CURLOPT_MAIL_FROM, from_addr);
 
-	recip = curl_slist_append(recip, to_addr);
-	curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, recip);
+    recip = curl_slist_append(recip, to_addr);
+    curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, recip);
 
-	/* We're using a callback function to specify the payload (the headers and
-	 * body of the message). You could just use the CURLOPT_READDATA option to
-	 * specify a FILE pointer to read from. */
-	curl_easy_setopt(curl, CURLOPT_READFUNCTION, get_payload);
-	curl_easy_setopt(curl, CURLOPT_READDATA, &upload_ctx);
-	curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
+    /* We're using a callback function, sincethe online curl doc
+       states that otherwise the curl DLL on Windows may crash.
+    */
+    curl_easy_setopt(curl, CURLOPT_READFUNCTION, get_payload);
+    curl_easy_setopt(curl, CURLOPT_READDATA, &upload_ctx);
+    curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
 
-	/* Send the message */
-	res = curl_easy_perform(curl);
+    /* Send the message */
+    res = curl_easy_perform(curl);
 
-	/* Check for errors */
-	if (res != CURLE_OK) {
-	    fprintf(stderr, "curl_easy_perform() failed: %s\n",
-		    curl_easy_strerror(res));
-	    err = E_DATA;
-	}
-
-	/* Free the list of recipients */
-	curl_slist_free_all(recip);
-
-	curl_easy_cleanup(curl);
+    /* Check for errors */
+    if (res != CURLE_OK) {
+	fprintf(stderr, "curl_easy_perform() failed: %s\n",
+		curl_easy_strerror(res));
+	err = E_DATA;
     }
 
+    curl_slist_free_all(recip);
+    curl_easy_cleanup(curl);
     fclose(upload_ctx.fp);
 
     return err;
