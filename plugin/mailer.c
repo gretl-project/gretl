@@ -70,6 +70,7 @@ struct mail_dialog {
 struct passwd_dialog {
     GtkWidget *dlg;
     GtkWidget *entry;
+    int store;
     struct mail_info *minfo;
 };
 
@@ -705,12 +706,30 @@ static void cancel_password (GtkWidget *w, struct passwd_dialog *pwd)
     gtk_widget_destroy(pwd->dlg);
 }
 
+static gchar *twiddle (const gchar *s)
+{
+    return g_base64_encode(s, strlen(s) + 1);
+}
+
+static gchar *untwiddle (const gchar *s)
+{
+    gsize outlen;
+    
+    return g_base64_decode(s, &outlen);
+}
+
 static void set_password (GtkWidget *w, struct passwd_dialog *pwd)
 {
-    const gchar *passwd = gtk_entry_get_text(GTK_ENTRY(pwd->entry));
+    const gchar *word = gtk_entry_get_text(GTK_ENTRY(pwd->entry));
 
     g_free(pwd->minfo->mail_pass);
-    pwd->minfo->mail_pass = g_strdup(passwd);
+    pwd->minfo->mail_pass = g_strdup(word);
+    if (pwd->store) {
+	gchar *tw = twiddle(word);
+
+	fprintf(stderr, "tw = '%s'\n", tw);
+	g_free(tw);
+    }
     gtk_widget_destroy(pwd->dlg);
 }
 
@@ -720,6 +739,7 @@ static void password_dialog (struct mail_info *minfo)
     GtkWidget *lbl, *button;
     struct passwd_dialog pwd;
 
+    pwd.store = 0;
     pwd.dlg = gtk_dialog_new();
     pwd.minfo = minfo;
 
