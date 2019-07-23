@@ -7737,12 +7737,11 @@
 
     <description>
       <para>
-	Gretl allows you to send a dataset or script as an email
-	attachment from within the program using SMTP (Simple Mail
-	Transfer Protocol). We explain below how to understand the two
-	tabs (<quote>Mail setup</quote> and <quote>Message</quote>) in
-	the mail dialog box. We also comment on the password
-	requirement.
+	You can send a dataset or script as an email attachment from
+	within gretl using SMTP (Simple Mail Transfer Protocol). We
+	explain below how to understand the two tabs (<quote>Mail
+	setup</quote> and <quote>Message</quote>) in the mail dialog
+	box. We also comment on the password requirement.
       </para>
       <subhead>Mail setup</subhead>
       <ilist>
@@ -7814,9 +7813,11 @@
 	clicking <quote>OK</quote> you will be asked for your email
 	password (unless you know that your server does not require
 	one, and have unchecked the <quote>password required</quote>
-	box as described above). Please note, gretl does
-	<emphasis>not</emphasis> store this password&mdash;we don't
-	wish to expose you to hacking.
+	box as described above). You can choose to have gretl store
+	this password; in that case it is saved in obfuscated form
+	in a directory that is private to you on your own computer
+	(not on any internet server). However, we cannot guarantee
+	its security.
       </para>
       <para>
 	If you're a gmail user and you employ 2-step authentication,

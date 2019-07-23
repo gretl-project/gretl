@@ -45,8 +45,6 @@
 # include "gretlwin32.h"
 #endif
 
-#define USE_MAILTO 0
-
 /* for viewer window toolbars */
 #include "../pixmaps/mini.tex.xpm"
 #include "../pixmaps/mini.tsplot.xpm"
@@ -64,7 +62,7 @@
 #include "../pixmaps/mini.bundle.xpm"
 #include "../pixmaps/mini.heatmap.xpm"
 #include "../pixmaps/mini.dbnomics.xpm"
-#if USE_MAILTO
+#ifdef ENABLE_MAILER
 # include "../pixmaps/mail_16.xpm"
 #endif
 
@@ -137,7 +135,7 @@ void gretl_stock_icons_init (void)
 {
     struct stock_maker stocks[] = {
 	{ mini_tex_xpm, GRETL_STOCK_TEX },
-#if USE_MAILTO
+#ifdef ENABLE_MAILER
 	{ mail_16_xpm, GRETL_STOCK_MAIL },
 #endif
 	{ mini_tsplot_xpm, GRETL_STOCK_TS },
@@ -330,7 +328,7 @@ static void display_digits_callback (GtkWidget *w, windata_t *vwin)
     }
 }
 
-#if USE_MAILTO
+#ifdef ENABLE_MAILER
 
 static void mail_script_callback (GtkWidget *w, windata_t *vwin)
 {
@@ -829,10 +827,9 @@ static GretlToolItem viewbar_items[] = {
     { N_("Sort"), GTK_STOCK_SORT_ASCENDING, G_CALLBACK(series_view_toggle_sort), SORT_ITEM },
     { N_("Sort by..."), GTK_STOCK_SORT_ASCENDING, G_CALLBACK(multi_series_view_sort_by), SORT_BY_ITEM },
     { N_("Preferences..."), GTK_STOCK_PREFERENCES, G_CALLBACK(editor_prefs_callback), EDIT_HANSL_ITEM },
-#if USE_MAILTO
-    { N_("Send To..."), GRETL_STOCK_MAIL, G_CALLBACK(mail_script_callback), MAIL_ITEM },
-#else
     { N_("Auto-indent script"), GTK_STOCK_INDENT, G_CALLBACK(indent_hansl), EDIT_HANSL_ITEM },
+#ifdef ENABLE_MAILER
+    { N_("Send To..."), GRETL_STOCK_MAIL, G_CALLBACK(mail_script_callback), MAIL_ITEM },
 #endif
     { N_("Scripts index"), GTK_STOCK_INDEX, G_CALLBACK(script_index), INDEX_ITEM },
     { N_("Confidence level..."), GRETL_STOCK_ALPHA, G_CALLBACK(coeffint_set_alpha), ALPHA_ITEM },

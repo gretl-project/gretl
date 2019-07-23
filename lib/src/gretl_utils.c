@@ -2199,7 +2199,7 @@ static void dotdir_cleanup (void)
 		    strcmp(fname, ".") &&
 		    strcmp(fname, ".gretl2rc") &&
 		    strcmp(fname, "gretl.pid") &&
-		    strcmp(fname, "gretl.addresses") &&
+		    strcmp(fname, "mail.dat") &&
 		    !gretl_isdir(fname)) {
 		    remove(fname);
 		}

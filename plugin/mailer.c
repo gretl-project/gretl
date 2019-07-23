@@ -25,6 +25,8 @@
 #include "version.h"
 #include "gretl_www.h"
 
+#include "../pixmaps/eye.xpm"
+
 #include <gtk/gtk.h>
 #include <stdlib.h>
 
@@ -39,6 +41,8 @@ struct msg_info {
     gchar *sender;
     gchar *subj;
     gchar *note;
+    int canceled;
+    int changed;
 };
 
 struct mail_info {
@@ -51,6 +55,7 @@ struct mail_info {
     int pass_needed;
     gchar *addrfile;
     GList *addrs;
+    int store;
 };
 
 struct mail_dialog {
@@ -70,8 +75,8 @@ struct mail_dialog {
 struct passwd_dialog {
     GtkWidget *dlg;
     GtkWidget *entry;
-    int store;
     struct mail_info *minfo;
+    struct msg_info *msg;
 };
 
 static struct msg_info *mail_msg_new (void)
@@ -87,6 +92,8 @@ static struct msg_info *mail_msg_new (void)
     msg->sender = NULL;
     msg->subj = NULL;
     msg->note = NULL;
+    msg->canceled = 0;
+    msg->changed = 0;
 
     return msg;
 }
@@ -120,6 +127,7 @@ static struct mail_info *mail_info_new (void)
     minfo->pass_needed = 1;
     minfo->addrfile = NULL;
     minfo->addrs = NULL;
+    minfo->store = 0;
 
     return minfo;
 }
@@ -148,47 +156,99 @@ static void mail_info_free (struct mail_info *minfo)
     free(minfo);
 }
 
+static void dump_content (gchar *s, FILE *fp)
+{
+    guchar u[2];
+    gint n = strlen(s) + 1;
+    int i, k = 13;
+
+    fwrite(&n, sizeof n, 1, fp);
+    for (i=0; i<n; i++) {
+	u[0] = s[i] / k;
+	u[1] = s[i] % k;
+	fwrite(u, 1, 2, fp);
+    }
+}
+
+static gchar *grab_content (FILE *fp)
+{
+    gchar *content = NULL;
+    gint n, got;
+
+    got = fread(&n, sizeof n, 1, fp);
+
+    if (got == 1) {
+	guchar u[2];
+	int i, k = 13;
+
+	content = g_malloc0(n);
+	for (i=0; i<n; i++) {
+	    got = fread(u, 1, 2, fp);
+	    if (got == 2) {
+		content[i] = k * u[0] + u[1];
+	    }
+	}
+    }
+
+    return content;
+}
+
 static void write_mail_info (struct mail_info *minfo)
 {
     FILE *fp;
 
-    fp = gretl_fopen(minfo->addrfile, "w");
+    fp = gretl_fopen(minfo->addrfile, "wb");
 
     if (fp != NULL) {
+	GString *str = g_string_new(NULL);
 	GList *list = minfo->addrs;
+	gchar *content = NULL;
 	int i, maxaddrs = 10;
 
 	if (minfo->sender != NULL && *minfo->sender != '\0') {
-	    fprintf(fp, "Reply-To: %s\n", minfo->sender);
+	    g_string_append_printf(str, "Reply-To: %s\n", minfo->sender);
 	}
 	if (minfo->server != NULL && *minfo->server != '\0') {
-	    fprintf(fp, "SMTP server: %s\n", minfo->server);
+	    g_string_append_printf(str, "SMTP server: %s\n", minfo->server);
 	}
 	if (minfo->mail_user != NULL && *minfo->mail_user != '\0') {
-	    fprintf(fp, "mail user: %s\n", minfo->mail_user);
+	    g_string_append_printf(str, "mail user: %s\n", minfo->mail_user);
 	}
-	fprintf(fp, "password needed: %d\n", minfo->pass_needed);
+	if (minfo->store && minfo->mail_pass != NULL && *minfo->mail_pass != '\0') {
+	    g_string_append_printf(str, "mail pass: %s\n", minfo->mail_pass);
+	}
+	g_string_append_printf(str, "password needed: %d\n", minfo->pass_needed);
 	for (i=0; i<maxaddrs && list != NULL; i++) {
-	    fprintf(fp, "%s\n", (char *) list->data);
+	    g_string_append_printf(str, "%s\n", (char *) list->data);
 	    list = list->next;
 	}
 
+	content = g_string_free(str, FALSE);
+	dump_content(content, fp);
+	g_free(content);
 	fclose(fp);
     }
 }
 
 static void read_mail_info (struct mail_info *minfo)
 {
+    gchar *content = NULL;
     GList *addrs = NULL;
     FILE *fp;
 
-    minfo->addrfile = g_strdup_printf("%sgretl.addresses", gretl_dotdir());
+    minfo->addrfile = g_strdup_printf("%smail.dat", gretl_dotdir());
+    fp = gretl_fopen(minfo->addrfile, "rb");
 
-    fp = gretl_fopen(minfo->addrfile, "r");
     if (fp != NULL) {
+	content = grab_content(fp);
+	fclose(fp);
+    }
+
+    if (content != NULL) {
 	char line[128];
 
-	while (fgets(line, sizeof line, fp)) {
+	bufgets_init(content);
+	while (bufgets(line, sizeof line, content)) {
 	    if (string_is_blank(line)) {
 		continue;
 	    }
@@ -199,14 +259,16 @@ static void read_mail_info (struct mail_info *minfo)
 		minfo->server = g_strdup(line + 13);
 	    } else if (!strncmp(line, "mail user:", 10)) {
 		minfo->mail_user = g_strdup(line + 11);
+	    } else if (!strncmp(line, "mail pass:", 10)) {
+		minfo->mail_pass = g_strdup(line + 11);
 	    } else if (!strncmp(line, "password needed:", 16)) {
 		minfo->pass_needed = atoi(line + 17);
 	    } else {
 		addrs = g_list_append(addrs, g_strdup(line));
 	    }
 	}
-
-	fclose(fp);
+	bufgets_finalize(content);
+	g_free(content);
     }
 
     /* default to google's SMTP server */
@@ -221,6 +283,10 @@ static void read_mail_info (struct mail_info *minfo)
     if (minfo->sender == NULL && minfo->mail_user != NULL &&
 	strchr(minfo->mail_user, '@') != NULL) {
 	minfo->sender = g_strdup(minfo->mail_user);
+    }
+
+    if (minfo->mail_pass != NULL) {
+	minfo->store = 1;
     }
 
     minfo->addrs = addrs;
@@ -699,49 +765,75 @@ static int mail_to_dialog (const char *fname,
     return (ret == GTK_RESPONSE_ACCEPT)? 1 : 0;
 }
 
+static void toggle_store (GtkToggleButton *b, struct mail_info *minfo)
+{
+    gboolean store = gtk_toggle_button_get_active(b);
+
+    if (!store) {
+	minfo->store = 0;
+    } else {
+	GtkWidget *d;
+	gint resp;
+
+	d = gtk_message_dialog_new(NULL,
+				   GTK_DIALOG_MODAL,
+				   GTK_MESSAGE_QUESTION,
+				   GTK_BUTTONS_YES_NO,
+				   "%s",
+				   _("Really store password?"));
+	resp = gtk_dialog_run(GTK_DIALOG(d));
+	gtk_widget_destroy(d);
+	if (resp == GTK_RESPONSE_YES) {
+	    minfo->store = 1;
+	}
+    }
+}
+
 static void cancel_password (GtkWidget *w, struct passwd_dialog *pwd)
 {
-    g_free(pwd->minfo->mail_pass);
-    pwd->minfo->mail_pass = NULL;
     gtk_widget_destroy(pwd->dlg);
-}
-
-static gchar *twiddle (const gchar *s)
-{
-    return g_base64_encode(s, strlen(s) + 1);
-}
-
-static gchar *untwiddle (const gchar *s)
-{
-    gsize outlen;
-    
-    return g_base64_decode(s, &outlen);
 }
 
 static void set_password (GtkWidget *w, struct passwd_dialog *pwd)
 {
     const gchar *word = gtk_entry_get_text(GTK_ENTRY(pwd->entry));
 
-    g_free(pwd->minfo->mail_pass);
-    pwd->minfo->mail_pass = g_strdup(word);
-    if (pwd->store) {
-	gchar *tw = twiddle(word);
-
-	fprintf(stderr, "tw = '%s'\n", tw);
-	g_free(tw);
+    if (pwd->minfo->mail_pass == NULL ||
+	strcmp(word, pwd->minfo->mail_pass)) {
+	pwd->msg->changed = 1;
+	g_free(pwd->minfo->mail_pass);
+	pwd->minfo->mail_pass = g_strdup(word);
     }
+    pwd->msg->canceled = 0;
     gtk_widget_destroy(pwd->dlg);
 }
 
-static void password_dialog (struct mail_info *minfo)
+static void icon_press_callback (GtkEntry *entry,
+				 GtkEntryIconPosition pos,
+				 GdkEvent *event,
+				 gpointer user_data)
+{
+    gboolean vis = gtk_entry_get_visibility(entry);
+
+    gtk_entry_set_visibility(entry, !vis);
+}
+
+static void password_dialog (struct msg_info *msg,
+			     struct mail_info *minfo)
 {
     GtkWidget *hbox, *vbox;
     GtkWidget *lbl, *button;
+    GdkPixbuf *pbuf = NULL;
     struct passwd_dialog pwd;
 
-    pwd.store = 0;
     pwd.dlg = gtk_dialog_new();
     pwd.minfo = minfo;
+    pwd.msg = msg;
+
+    /* this will be controverted by clicking OK */
+    msg->canceled = 1;
+
+    pbuf = gdk_pixbuf_new_from_xpm_data((const char **) eye_xpm);
 
     gtk_window_set_title(GTK_WINDOW(pwd.dlg), _("gretl: mail password"));
     set_dialog_border_widths(pwd.dlg);
@@ -750,16 +842,36 @@ static void password_dialog (struct mail_info *minfo)
 		     G_CALLBACK(mail_dialog_quit), NULL);
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(pwd.dlg));
-    border_width(vbox, 5);
     hbox = gtk_hbox_new(FALSE, 5);
-    gtk_container_add(GTK_CONTAINER(vbox), hbox);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, 0, 0, 5);
 
     lbl = gtk_label_new(_("Email password:"));
     gtk_box_pack_start(GTK_BOX(hbox), lbl, 0, 0, 5);
     pwd.entry = gtk_entry_new();
     gtk_entry_set_visibility(GTK_ENTRY(pwd.entry), FALSE);
+    if (minfo->mail_pass != NULL) {
+	gtk_entry_set_text(GTK_ENTRY(pwd.entry), minfo->mail_pass);
+    }
     gtk_entry_set_activates_default(GTK_ENTRY(pwd.entry), TRUE);
+    gtk_entry_set_icon_from_pixbuf(GTK_ENTRY(pwd.entry),
+				   GTK_ENTRY_ICON_SECONDARY,
+				   pbuf);
+    gtk_entry_set_icon_activatable(GTK_ENTRY(pwd.entry),
+				   GTK_ENTRY_ICON_SECONDARY,
+				   TRUE);
+    g_signal_connect(G_OBJECT(pwd.entry), "icon-press",
+		     G_CALLBACK(icon_press_callback), NULL);
     gtk_container_add(GTK_CONTAINER(hbox), pwd.entry);
+
+    /* check button for storing password */
+    button = gtk_check_button_new_with_label(_("Store password"));
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), button, 0, 0, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, 0, 0, 5);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button),
+				 minfo->store);
+    g_signal_connect(G_OBJECT(button), "toggled",
+		     G_CALLBACK(toggle_store), minfo);
 
     /* button zone */
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(pwd.dlg));
@@ -800,13 +912,30 @@ static void mail_infobox (const char *msg)
     gtk_widget_destroy(dialog);
 }
 
+static void get_password (struct msg_info *msg,
+			  struct mail_info *minfo)
+{
+    int old_store = minfo->store;
+
+    password_dialog(msg, minfo);
+
+    if (!msg->canceled) {
+	if (minfo->store) {
+	    if (!old_store || msg->changed) {
+		write_mail_info(minfo);
+	    }
+	} else if (old_store) {
+	    write_mail_info(minfo);
+	}
+    }
+}
+
 static int pack_and_mail (const char *fname,
 			  struct msg_info *msg,
 			  struct mail_info *minfo)
 {
     char tmpfname[FILENAME_MAX];
     FILE *fpin, *fpout;
-    int canceled = 0;
     int err = 0;
 
     fpin = gretl_fopen(fname, "rb");
@@ -838,14 +967,11 @@ static int pack_and_mail (const char *fname,
     }
 
     if (!err && minfo->pass_needed) {
-	password_dialog(minfo);
-	if (minfo->mail_pass == NULL) {
-	    canceled = 1;
-	}
+	get_password(msg, minfo);
     }
 
-    if (!err && !canceled) {
-#if 1
+    if (!err && !msg->canceled) {
+#if 0
 	fprintf(stderr, "calling curl_send_mail:\n");
 	fprintf(stderr, "  sender = '%s'\n", msg->sender);
 	fprintf(stderr, "  recipient = '%s'\n", msg->recip);
@@ -885,7 +1011,7 @@ int email_file (const char *fname, GtkWindow *parent, void (*help_func))
 
     if (doit) {
 	err = pack_and_mail(fname, msg, minfo);
-	if (!err) {
+	if (!err && !msg->canceled) {
 	    mail_infobox(_("Mail sent"));
 	}
     }
