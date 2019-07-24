@@ -200,6 +200,8 @@ gretl_matrix *gretl_matrix_ffti (const gretl_matrix *y, int *err)
     return ft;
 }
 
+/* end fftw-based real FFT functions */
+
 static int cmatrix_validate (const gretl_matrix *m, int square)
 {
     if (gretl_is_null_matrix(m)) {
@@ -213,7 +215,31 @@ static int cmatrix_validate (const gretl_matrix *m, int square)
     }
 }
 
-/* end fftw-based real FFT functions */
+static gretl_matrix *complex_from_real (const gretl_matrix *A,
+					int *err)
+{
+    gretl_matrix *C = NULL;
+
+    if (gretl_is_null_matrix(A)) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    C = gretl_zero_matrix_new(A->rows * 2, A->cols);
+
+    if (C == NULL) {
+	*err = E_ALLOC;
+    } else {
+	int n = C->rows * C->cols;
+	int i, j = 0;
+
+	for (i=0; i<n; i+=2) {
+	    C->val[i] = A->val[j++];
+	}
+    }
+
+    return C;
+}
 
 /* Multiplication of complex matrices via BLAS zgemm() */
 
@@ -267,6 +293,34 @@ gretl_matrix *gretl_zgemm (const gretl_matrix *A,
 	   b, &ldb, &beta, c, &ldc);
 
     C->is_complex = 1;
+
+    return C;
+}
+
+gretl_matrix *gretl_cmatrix_multiply (const gretl_matrix *A,
+				      const gretl_matrix *B,
+				      int *err)
+{
+    gretl_matrix *T = NULL;
+    gretl_matrix *C = NULL;
+
+    if (A->is_complex && B->is_complex) {
+	C = gretl_zgemm(A, 0, B, 0, err);
+    } else if (A->is_complex) {
+	T = complex_from_real(B, err);
+	if (T != NULL) {
+	    C = gretl_zgemm(A, 0, T, 0, err);
+	    gretl_matrix_free(T);
+	}
+    } else if (B->is_complex) {
+	T = complex_from_real(A, err);
+	if (T != NULL) {
+	    C = gretl_zgemm(T, 0, B, 0, err);
+	    gretl_matrix_free(T);
+	}
+    } else {
+	*err = E_TYPES;
+    }
 
     return C;
 }

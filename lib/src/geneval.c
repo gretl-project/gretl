@@ -2778,10 +2778,8 @@ static int real_matrix_calc (const gretl_matrix *A,
 	C = gretl_matrix_direct_sum(A, B, &err);
 	break;
     case B_MUL:
-	if (A->is_complex && B->is_complex) {
-	    C = gretl_zgemm(A, GRETL_MOD_NONE,
-			    B, GRETL_MOD_NONE,
-			    &err);
+	if (A->is_complex || B->is_complex) {
+	    C = gretl_cmatrix_multiply(A, B, &err);
 	} else {
 	    ra = gretl_matrix_rows(A);
 	    ca = gretl_matrix_cols(A);
@@ -3685,7 +3683,7 @@ static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
     if (op == B_MUL && l->t == MAT && r->t == MAT) {
 	ml = l->v.m;
 	mr = r->v.m;
-	if (ml->is_complex && mr->is_complex) {
+	if (ml->is_complex || mr->is_complex) {
 	    ret = aux_matrix_node(p);
 	    if (!p->err) {
 		p->err = real_matrix_calc(ml, mr, op, &ret->v.m);

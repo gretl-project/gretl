@@ -30,6 +30,10 @@ gretl_matrix *gretl_zgemm (const gretl_matrix *A,
 			   GretlMatrixMod bmod,
 			   int *err);
 
+gretl_matrix *gretl_cmatrix_multiply (const gretl_matrix *A,
+				      const gretl_matrix *B,
+				      int *err);
+
 gretl_matrix *gretl_zgetri (const gretl_matrix *A, int *err);
 
 gretl_matrix *gretl_zheev (const gretl_matrix *A, gretl_matrix *V,
