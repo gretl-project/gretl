@@ -2800,21 +2800,27 @@ static int real_matrix_calc (const gretl_matrix *A,
 	}
 	break;
     case B_TRMUL:
-	ra = gretl_matrix_cols(A);
-	ca = gretl_matrix_rows(A);
-	rb = gretl_matrix_rows(B);
-	cb = gretl_matrix_cols(B);
-
-	r = (ra == 1 && ca == 1)? rb : ra;
-	c = (rb == 1 && cb == 1)? ca : cb;
-
-	C = calc_get_matrix(pM, r, c);
-	if (C == NULL) {
-	    err = E_ALLOC;
+	if (A->is_complex || B->is_complex) {
+	    C = gretl_cmatrix_multiply_mod(A, GRETL_MOD_TRANSPOSE,
+					   B, GRETL_MOD_NONE,
+					   &err);
 	} else {
-	    err = gretl_matrix_multiply_mod(A, GRETL_MOD_TRANSPOSE,
-					    B, GRETL_MOD_NONE,
-					    C, GRETL_MOD_NONE);
+	    ra = gretl_matrix_cols(A);
+	    ca = gretl_matrix_rows(A);
+	    rb = gretl_matrix_rows(B);
+	    cb = gretl_matrix_cols(B);
+
+	    r = (ra == 1 && ca == 1)? rb : ra;
+	    c = (rb == 1 && cb == 1)? ca : cb;
+
+	    C = calc_get_matrix(pM, r, c);
+	    if (C == NULL) {
+		err = E_ALLOC;
+	    } else {
+		err = gretl_matrix_multiply_mod(A, GRETL_MOD_TRANSPOSE,
+						B, GRETL_MOD_NONE,
+						C, GRETL_MOD_NONE);
+	    }
 	}
 	break;
     case F_QFORM:
@@ -3680,7 +3686,7 @@ static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
     gretl_matrix *ml = NULL, *mr = NULL;
     NODE *ret;
 
-    if (op == B_MUL && l->t == MAT && r->t == MAT) {
+    if ((op == B_MUL || op == B_TRMUL) && l->t == MAT && r->t == MAT) {
 	ml = l->v.m;
 	mr = r->v.m;
 	if (ml->is_complex || mr->is_complex) {
@@ -4280,9 +4286,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    ret->v.m = gretl_cmatrix(m, r->v.m, &p->err);
 	    break;
 	case HF_CMMULT:
-	    ret->v.m = gretl_zgemm(m, GRETL_MOD_NONE,
-				   r->v.m, GRETL_MOD_NONE,
-				   &p->err);
+	    ret->v.m = gretl_cmatrix_multiply(m, r->v.m, &p->err);
 	    break;
 	case HF_CHPROD:
 	    ret->v.m = gretl_complex_hprod(m, r->v.m, &p->err);

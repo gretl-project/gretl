@@ -24,4 +24,8 @@ void zgemm_ (const char *transa, const char *transb,
 	     cmplx *b, integer *ldb, cmplx *beta,
 	     cmplx *c, integer *ldc);
 
+void zsyrk_ (const char *uplo, const char *trans, integer *n,
+	     integer *k, cmplx *alpha, cmplx *a, integer *lda,
+	     cmplx *beta, cmplx *c, integer *ldc);
+
 #endif /* CLAPACK_COMPLEX_H */

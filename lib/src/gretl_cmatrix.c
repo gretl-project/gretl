@@ -243,11 +243,11 @@ static gretl_matrix *complex_from_real (const gretl_matrix *A,
 
 /* Multiplication of complex matrices via BLAS zgemm() */
 
-gretl_matrix *gretl_zgemm (const gretl_matrix *A,
-			   GretlMatrixMod amod,
-			   const gretl_matrix *B,
-			   GretlMatrixMod bmod,
-			   int *err)
+static gretl_matrix *gretl_zgemm (const gretl_matrix *A,
+				  GretlMatrixMod amod,
+				  const gretl_matrix *B,
+				  GretlMatrixMod bmod,
+				  int *err)
 {
     gretl_matrix *C;
     cmplx *a, *b, *c;
@@ -320,6 +320,81 @@ gretl_matrix *gretl_cmatrix_multiply (const gretl_matrix *A,
 	}
     } else {
 	*err = E_TYPES;
+    }
+
+    return C;
+}
+
+/* Note: zsyrk uses the straight transpose, not the conjugate
+   transpose
+*/
+
+static gretl_matrix *gretl_zsyrk (const gretl_matrix *A, int *err)
+{
+    gretl_matrix *C = NULL;
+    char uplo = 'L';
+    char trans = 'T';
+    integer n, k, lda, ldc;
+    cmplx alpha = {1, 0};
+    cmplx beta = {0, 0};
+
+    if (!cmatrix_validate(A, 0)) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    n = A->cols;     /* order of C */
+    k = A->rows / 2; /* complex rows of A */
+    lda = k;
+    ldc = n;
+
+    C = gretl_zero_matrix_new(2 * n, n);
+    if (C == NULL) {
+	*err = E_ALLOC;
+    } else {
+	C->is_complex = 1;
+	zsyrk_(&uplo, &trans, &n, &k, &alpha, (cmplx *) A->val, &lda,
+	       &beta, (cmplx *) C->val, &ldc);
+#if 0   /* FIXME completing the upper triangle! */
+	int i, j, r, c;
+	double x;
+	
+	r = 0;
+	for (j=1; j<n; j++) {
+	    fprintf(stderr, "j=%d\n", j);
+	    c = j;
+	    for (i=j*2; i<2*n; i+=2) {
+		x = gretl_matrix_get(C, i, j);
+		fprintf(stderr, " i=%d, x=%g\n", i, x);
+		gretl_matrix_set(C, r, c, x);
+		fprintf(stderr, " set x at r=%d, c=%d\n", r, c);
+		x = gretl_matrix_get(C, i+1, j);
+		gretl_matrix_set(C, r+1, c, x);
+		c++;
+	    }
+	    r += 2;
+	}
+#endif	
+    }
+
+    return C;
+}
+
+gretl_matrix *gretl_cmatrix_multiply_mod (const gretl_matrix *A,
+					  GretlMatrixMod amod,
+					  const gretl_matrix *B,
+					  GretlMatrixMod bmod,
+					  int *err)
+{
+    const int atr = (amod == GRETL_MOD_TRANSPOSE);
+    const int btr = (bmod == GRETL_MOD_TRANSPOSE);
+    gretl_matrix *C = NULL;
+    
+    if (A->is_complex && atr && B == A && !btr) {
+	C = gretl_zsyrk(A, err);
+    } else {
+	/* FIXME!! */
+	*err = E_DATA;
     }
 
     return C;
