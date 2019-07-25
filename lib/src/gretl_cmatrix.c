@@ -242,7 +242,12 @@ static gretl_matrix *complex_from_real (const gretl_matrix *A,
     return C;
 }
 
-/* Multiplication of complex matrices via BLAS zgemm() */
+/* Multiplication of complex matrices via BLAS zgemm().
+   At present we have no use case for the @amod and
+   @bmod flags; they're not hooked up to anything. We
+   should remove them if it turns out they're really
+   not useful.
+*/
 
 static gretl_matrix *gretl_zgemm (const gretl_matrix *A,
 				  GretlMatrixMod amod,
@@ -258,9 +263,6 @@ static gretl_matrix *gretl_zgemm (const gretl_matrix *A,
     char transb = 'N';
     integer lda, ldb, ldc;
     integer m, n, k;
-
-    /* FIXME: the @amod and @bmod arguments are not yet
-       respected! */
 
     if (!cmatrix_validate(A, 0) || !cmatrix_validate(B, 0)) {
 	*err = E_INVARG;
@@ -326,156 +328,20 @@ gretl_matrix *gretl_cmatrix_multiply (const gretl_matrix *A,
     return C;
 }
 
-#if 0
+/* returns (conjugate transpose of A, or A^H) times B */
 
-/* Note: zsyrk uses the straight transpose, not the conjugate
-   transpose
-*/
-
-static gretl_matrix *gretl_zsyrk (const gretl_matrix *A, int *err)
+gretl_matrix *gretl_cmatrix_AHB (const gretl_matrix *A,
+				 const gretl_matrix *B,
+				 int *err)
 {
-    gretl_matrix *C = NULL;
-    char uplo = 'L';
-    char trans = 'T';
-    integer n, k, lda, ldc;
-    cmplx alpha = {1, 0};
-    cmplx beta = {0, 0};
+    gretl_matrix *AH;
+    gretl_matrix *C;
 
-    if (!cmatrix_validate(A, 0)) {
-	*err = E_INVARG;
-	return NULL;
-    }
+    AH = gretl_ctrans(A, err);
 
-    n = A->cols;     /* order of C */
-    k = A->rows / 2; /* complex rows of A */
-    lda = k;
-    ldc = n;
-
-    C = gretl_zero_matrix_new(2 * n, n);
-
-    if (C == NULL) {
-	*err = E_ALLOC;
-    } else {
-	int r, c, ur, uc, rmin;
-	double x;
-
-	zsyrk_(&uplo, &trans, &n, &k, &alpha, (cmplx *) A->val, &lda,
-	       &beta, (cmplx *) C->val, &ldc);
-
-	/* complete the upper triangle of C */
-	for (c=0, rmin=2; c<C->cols; c++, rmin+=2) {
-	    ur = rmin - 2;
-	    uc = c + 1;
-	    for (r=rmin; r<C->rows; r+=2) {
-		x = gretl_matrix_get(C, r, c);
-		gretl_matrix_set(C, ur, uc, x);
-		x = gretl_matrix_get(C, r+1, c);
-		gretl_matrix_set(C, ur+1, uc, x);
-		uc++;
-	    }
-	}
-	C->is_complex = 1;
-    }
-
-    return C;
-}
-
-#endif
-
-/*
-    hansl version:
-    scalar c = cols(C)
-    matrix A = Re(C)
-    matrix B = Im(C)
-    matrix uno = A'(A ~ B)
-    matrix due = B'B
-    matrix tre = uno[,c+1:]
-    return _cmatrix(uno[,1:c] + due, tre - tre')
-*/
-
-gretl_matrix *cselftran (const gretl_matrix *C, int *err)
-{
-    gretl_matrix *CC = NULL;
-    gretl_matrix_block *Blk;
-    gretl_matrix *A, *B, *AB;
-    gretl_matrix *uno, *due, *tre;
-    gretl_matrix *Re, *Im;
-    size_t vsize;
-    int r = C->rows / 2;
-    int c = C->cols;
-    int n = r * c;
-
-    A = gretl_cxtract(C, 0, err);
-    B = gretl_cxtract(C, 1, err);
-
-    Blk = gretl_matrix_block_new(&AB,  r, 2*c,
-				 &uno, c, 2*c,
-				 &due, c, c,
-				 &tre, c, c,
-				 &Re,  c, c,
-				 &Im,  c, c,
-				 NULL);
-
-    if (A == NULL || B == NULL || Blk == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    /* form AB = (A ~ B) */
-    vsize = n * sizeof(double);
-    memcpy(AB->val, A->val, vsize);
-    memcpy(AB->val + n, B->val, vsize);
-
-    /* form uno = A'(A ~ B) */
-    gretl_matrix_multiply_mod(A, GRETL_MOD_TRANSPOSE,
-			      AB, GRETL_MOD_NONE,
-			      uno, GRETL_MOD_NONE);
-
-    /* form due = B'B */
-    gretl_matrix_multiply_mod(B, GRETL_MOD_TRANSPOSE,
-			      B, GRETL_MOD_NONE,
-			      due, GRETL_MOD_NONE);
-
-    /* form tre = uno[,c+1:] */
-    n = c * c;
-    vsize = n * sizeof(double);
-    memcpy(tre->val, uno->val + n, vsize);
-
-    /* let Re equal "uno[,1:c] + due" */
-    memcpy(Re->val, uno->val, vsize);
-    gretl_matrix_add_to(Re, due);
-
-    /* let Im equal tre - tre' */
-    memcpy(Im->val, tre->val, vsize);
-    gretl_matrix_transpose_in_place(tre);
-    gretl_matrix_subtract_from(Im, tre);
-
-    /* stick Re and Im together */
-    CC = gretl_cmatrix(Re, Im, err);
-
-    gretl_matrix_block_destroy(Blk);
-    gretl_matrix_free(A);
-    gretl_matrix_free(B);
-
-    return CC;
-}
-
-gretl_matrix *gretl_cmatrix_multiply_mod (const gretl_matrix *A,
-					  GretlMatrixMod amod,
-					  const gretl_matrix *B,
-					  GretlMatrixMod bmod,
-					  int *err)
-{
-    const int atr = (amod == GRETL_MOD_TRANSPOSE);
-    const int btr = (bmod == GRETL_MOD_TRANSPOSE);
-    gretl_matrix *C = NULL;
-
-    if (A->is_complex && atr && B == A && !btr) {
-	// C = gretl_zsyrk(A, err);
-	C = cselftran(A, err);
-    } else {
-	/* FIXME!! */
-	*err = E_DATA;
+    if (AH != NULL) {
+	C = gretl_zgemm(AH, 0, B, 0, err);
+	gretl_matrix_free(AH);
     }
 
     return C;
@@ -1082,7 +948,7 @@ gretl_matrix *gretl_cxtract (const gretl_matrix *A, int im,
 
 /* Return conjugate transpose of complex matrix @A */
 
-gretl_matrix *gretl_ctran (const gretl_matrix *A, int *err)
+gretl_matrix *gretl_ctrans (const gretl_matrix *A, int *err)
 {
     gretl_matrix *C = NULL;
     cmplx *a, *c, aij;
@@ -1117,7 +983,7 @@ gretl_matrix *gretl_ctran (const gretl_matrix *A, int *err)
     return C;
 }
 
-int gretl_ctran_in_place (gretl_matrix *A)
+int gretl_ctrans_in_place (gretl_matrix *A)
 {
     gretl_matrix *C = NULL;
     cmplx *a, *c, aij;

@@ -28,11 +28,9 @@ gretl_matrix *gretl_cmatrix_multiply (const gretl_matrix *A,
 				      const gretl_matrix *B,
 				      int *err);
 
-gretl_matrix *gretl_cmatrix_multiply_mod (const gretl_matrix *A,
-					  GretlMatrixMod amod,
-					  const gretl_matrix *B,
-					  GretlMatrixMod bmod,
-					  int *err);
+gretl_matrix *gretl_cmatrix_AHB (const gretl_matrix *A,
+				 const gretl_matrix *B,
+				 int *err);
 
 gretl_matrix *gretl_zgetri (const gretl_matrix *A, int *err);
 
@@ -58,9 +56,9 @@ gretl_matrix *gretl_cmatrix (const gretl_matrix *Re,
 gretl_matrix *gretl_cxtract (const gretl_matrix *A, int im,
 			    int *err);
 
-gretl_matrix *gretl_ctran (const gretl_matrix *A, int *err);
+gretl_matrix *gretl_ctrans (const gretl_matrix *A, int *err);
 
-int gretl_ctran_in_place (gretl_matrix *A);
+int gretl_ctrans_in_place (gretl_matrix *A);
 
 gretl_matrix *gretl_cexp (const gretl_matrix *A, int *err);
 

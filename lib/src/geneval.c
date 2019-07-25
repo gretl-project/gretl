@@ -2801,9 +2801,7 @@ static int real_matrix_calc (const gretl_matrix *A,
 	break;
     case B_TRMUL:
 	if (A->is_complex || B->is_complex) {
-	    C = gretl_cmatrix_multiply_mod(A, GRETL_MOD_TRANSPOSE,
-					   B, GRETL_MOD_NONE,
-					   &err);
+	    C = gretl_cmatrix_AHB(A, B, &err);
 	} else {
 	    ra = gretl_matrix_cols(A);
 	    ca = gretl_matrix_rows(A);
@@ -3165,7 +3163,7 @@ static NODE *matrix_transpose_node (NODE *n, parser *p)
 	if (is_tmp_node(n)) {
 	    /* transpose temp matrix in place */
 	    if (n->v.m->is_complex) {
-		p->err = gretl_ctran_in_place(n->v.m);
+		p->err = gretl_ctrans_in_place(n->v.m);
 	    } else {
 		p->err = gretl_matrix_transpose_in_place(n->v.m);
 	    }
@@ -3175,7 +3173,7 @@ static NODE *matrix_transpose_node (NODE *n, parser *p)
 	    ret = aux_matrix_node(p);
 	    if (!p->err) {
 		if (n->v.m->is_complex) {
-		    ret->v.m = gretl_ctran(n->v.m, &p->err);
+		    ret->v.m = gretl_ctrans(n->v.m, &p->err);
 		} else {
 		    ret->v.m = gretl_matrix_copy_transpose(n->v.m);
 		}
@@ -4232,7 +4230,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    break;
 	case F_TRANSP:
 	    if (m->is_complex) {
-		ret->v.m = gretl_ctran(m, &p->err);
+		ret->v.m = gretl_ctrans(m, &p->err);
 	    } else {
 		ret->v.m = gretl_matrix_copy_transpose(m);
 	    }
@@ -4298,7 +4296,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    ret->v.m = gretl_complex_fft(m, a, &p->err);
 	    break;
 	case HF_CTRAN:
-	    ret->v.m = gretl_ctran(m, &p->err);
+	    ret->v.m = gretl_ctrans(m, &p->err);
 	    break;
 	case HF_CEXP:
 	    ret->v.m = gretl_cexp(m, &p->err);
