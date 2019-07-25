@@ -64,6 +64,10 @@ int gretl_ctran_in_place (gretl_matrix *A);
 
 gretl_matrix *gretl_cexp (const gretl_matrix *A, int *err);
 
+gretl_matrix *mixed_matrix_add_subt (const gretl_matrix *A,
+				     const gretl_matrix *B,
+				     int sgn, int *err);
+
 int complex_matrix_print (gretl_matrix *A, const char *name, PRN *prn);
 
 int complex_matrix_printf (gretl_matrix *A, const char *fmt, PRN *prn);

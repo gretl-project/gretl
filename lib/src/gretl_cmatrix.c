@@ -326,6 +326,8 @@ gretl_matrix *gretl_cmatrix_multiply (const gretl_matrix *A,
     return C;
 }
 
+#if 0
+
 /* Note: zsyrk uses the straight transpose, not the conjugate
    transpose
 */
@@ -377,6 +379,8 @@ static gretl_matrix *gretl_zsyrk (const gretl_matrix *A, int *err)
 
     return C;
 }
+
+#endif
 
 /*
     hansl version:
@@ -1178,4 +1182,66 @@ gretl_matrix *gretl_cexp (const gretl_matrix *A, int *err)
     }
 
     return B;
+}
+
+/* Addition or subtraction of matrices: handle the case
+   where one operand is complex and the other is real.
+*/
+
+gretl_matrix *mixed_matrix_add_subt (const gretl_matrix *A,
+				     const gretl_matrix *B,
+				     int sgn, int *err)
+{
+    const gretl_matrix *R;
+    gretl_matrix *C = NULL;
+    int r, c;
+
+    if (A->is_complex) {
+	/* B must be real */
+	R = B;
+	r = A->rows / 2;
+	c = A->cols;
+	if (B->rows != r || B->cols != c) {
+	    *err = E_NONCONF;
+	} else {
+	    C = gretl_matrix_copy(A);
+	}
+    } else {
+	/* B is the complex one */
+	R = A;
+	r = B->rows / 2;
+	c = B->cols;
+	if (A->rows != r || A->cols != c) {
+	    *err = E_NONCONF;
+	} else {
+	    C = gretl_matrix_copy(B);
+	    if (C != NULL && sgn < 0) {
+		gretl_matrix_multiply_by_scalar(C, -1);
+		sgn = 1;
+	    }
+	}
+    }
+
+    if (!*err && C == NULL) {
+	*err = E_ALLOC;
+    }
+
+    if (!*err) {
+	double x, y;
+	int i, j, k;
+
+	for (j=0; j<c; j++) {
+	    for (i=0, k=0; i<r; i++, k+=2) {
+		x = gretl_matrix_get(R, i, j);
+		y = gretl_matrix_get(C, k, j);
+		if (sgn < 0) {
+		    gretl_matrix_set(C, k, j, y - x);
+		} else {
+		    gretl_matrix_set(C, k, j, y + x);
+		}
+	    }
+	}
+    }
+
+    return C;
 }
