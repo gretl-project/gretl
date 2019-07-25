@@ -7743,7 +7743,7 @@
 	setup</quote> and <quote>Message</quote>) in the mail dialog
 	box. We also comment on the password requirement.
       </para>
-      <subhead>Mail setup</subhead>
+      <subhead>Mail setup tab</subhead>
       <ilist>
 	<li>
 	  <para>
@@ -7768,17 +7768,24 @@
 	</li>
 	<li>
 	  <para>
-	    The <quote>password required</quote> checkbox. Most likely
-	    your SMTP server wants to see a password, but if not you
-	    can uncheck the box.
+	    Mail password: most likely your SMTP server wants to see a
+	    password, but if not you can click on <quote>A password is
+	    not required</quote>.
 	  </para>
 	</li>
       </ilist>
       <para>
-	This setup information is remembered from one gretl session to
-	the next so you should only have to enter it once.
+	Your server and username information is remembered from one
+	gretl session to the next so you should only have to enter it
+	once. As for the password, to store it or not is your
+	choice; see the <emphasis>Email password</emphasis> section
+	below for more details.
       </para>
-      <subhead>Message</subhead>
+      <para>
+	Clicking <lit>OK</lit> in the Mail setup tab moves you to the
+	message tab (unless required information is missing).
+      </para>
+      <subhead>Message tab</subhead>
       <ilist>
        <li>
 	 <para>
@@ -7786,7 +7793,7 @@
 	   type this yourself: gretl does not have access to your
 	   address book. But once you have entered an address it is
 	   remembered and can be selected subsequently via a drop-down
-	   list.
+	   list. Up to ten addresses can be stored in this way.
 	 </para>
        </li>
        <li>
@@ -7807,17 +7814,17 @@
 	 </para>
        </li>
       </ilist>
+      <para>
+	Clicking <lit>OK</lit> in the Message tab sends the message
+	(unless some required information is missing).
+      </para>
       <subhead>Email password</subhead>
       <para>
-	Once the Mail setup and Message fields are completed, on
-	clicking <quote>OK</quote> you will be asked for your email
-	password (unless you know that your server does not require
-	one, and have unchecked the <quote>password required</quote>
-	box as described above). You can choose to have gretl store
-	this password; in that case it is saved in obfuscated form
-	in a directory that is private to you on your own computer
-	(not on any internet server). However, we cannot guarantee
-	its security.
+	If a password is required to send mail, you can choose to have
+	gretl store it; in that case it is saved in obfuscated form in
+	a directory that is private to you on your own computer (not
+	on any internet server). However, we cannot guarantee its
+	security.
       </para>
       <para>
 	If you're a gmail user and you employ 2-step authentication,
