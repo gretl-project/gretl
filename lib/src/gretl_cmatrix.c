@@ -349,32 +349,29 @@ static gretl_matrix *gretl_zsyrk (const gretl_matrix *A, int *err)
     ldc = n;
 
     C = gretl_zero_matrix_new(2 * n, n);
+
     if (C == NULL) {
 	*err = E_ALLOC;
     } else {
+	int r, c, ur, uc, rmin;
+	double x;
+
 	C->is_complex = 1;
 	zsyrk_(&uplo, &trans, &n, &k, &alpha, (cmplx *) A->val, &lda,
 	       &beta, (cmplx *) C->val, &ldc);
-#if 0   /* FIXME completing the upper triangle! */
-	int i, j, r, c;
-	double x;
-	
-	r = 0;
-	for (j=1; j<n; j++) {
-	    fprintf(stderr, "j=%d\n", j);
-	    c = j;
-	    for (i=j*2; i<2*n; i+=2) {
-		x = gretl_matrix_get(C, i, j);
-		fprintf(stderr, " i=%d, x=%g\n", i, x);
-		gretl_matrix_set(C, r, c, x);
-		fprintf(stderr, " set x at r=%d, c=%d\n", r, c);
-		x = gretl_matrix_get(C, i+1, j);
-		gretl_matrix_set(C, r+1, c, x);
-		c++;
+
+	/* complete the upper triangle of C */
+	for (c=0, rmin=2; c<C->cols; c++, rmin+=2) {
+	    ur = rmin - 2;
+	    uc = c + 1;
+	    for (r=rmin; r<C->rows; r+=2) {
+		x = gretl_matrix_get(C, r, c);
+		gretl_matrix_set(C, ur, uc, x);
+		x = gretl_matrix_get(C, r+1, c);
+		gretl_matrix_set(C, ur+1, uc, x);
+		uc++;
 	    }
-	    r += 2;
 	}
-#endif	
     }
 
     return C;
@@ -389,7 +386,7 @@ gretl_matrix *gretl_cmatrix_multiply_mod (const gretl_matrix *A,
     const int atr = (amod == GRETL_MOD_TRANSPOSE);
     const int btr = (bmod == GRETL_MOD_TRANSPOSE);
     gretl_matrix *C = NULL;
-    
+
     if (A->is_complex && atr && B == A && !btr) {
 	C = gretl_zsyrk(A, err);
     } else {
