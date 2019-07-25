@@ -56,7 +56,8 @@ gretl_matrix *gretl_cmatrix (const gretl_matrix *Re,
 gretl_matrix *gretl_cxtract (const gretl_matrix *A, int im,
 			    int *err);
 
-gretl_matrix *gretl_ctrans (const gretl_matrix *A, int *err);
+gretl_matrix *gretl_ctrans (const gretl_matrix *A,
+			    int conjugate, int *err);
 
 int gretl_ctrans_in_place (gretl_matrix *A);
 

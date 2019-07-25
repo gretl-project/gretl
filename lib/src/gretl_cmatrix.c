@@ -337,7 +337,7 @@ gretl_matrix *gretl_cmatrix_AHB (const gretl_matrix *A,
     gretl_matrix *C = NULL;
     gretl_matrix *AH;
 
-    AH = gretl_ctrans(A, err);
+    AH = gretl_ctrans(A, 1, err);
 
     if (AH != NULL) {
 	C = gretl_zgemm(AH, 0, B, 0, err);
@@ -946,9 +946,10 @@ gretl_matrix *gretl_cxtract (const gretl_matrix *A, int im,
     return C;
 }
 
-/* Return conjugate transpose of complex matrix @A */
+/* Return [conjugate] transpose of complex matrix @A */
 
-gretl_matrix *gretl_ctrans (const gretl_matrix *A, int *err)
+gretl_matrix *gretl_ctrans (const gretl_matrix *A,
+			    int conjugate, int *err)
 {
     gretl_matrix *C = NULL;
     cmplx *a, *c, aij;
@@ -973,7 +974,9 @@ gretl_matrix *gretl_ctrans (const gretl_matrix *A, int *err)
     for (j=0; j<A->cols; j++) {
 	for (i=0; i<ra; i++) {
 	    aij = a[j*ra+i];
-	    aij.i = -aij.i;
+	    if (conjugate) {
+		aij.i = -aij.i;
+	    }
 	    c[i*rc+j] = aij;
 	}
     }
@@ -982,6 +985,8 @@ gretl_matrix *gretl_ctrans (const gretl_matrix *A, int *err)
 
     return C;
 }
+
+/* Convert complex matrix @A to its conjugate transpose */
 
 int gretl_ctrans_in_place (gretl_matrix *A)
 {

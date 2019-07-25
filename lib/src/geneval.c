@@ -3173,7 +3173,7 @@ static NODE *matrix_transpose_node (NODE *n, parser *p)
 	    ret = aux_matrix_node(p);
 	    if (!p->err) {
 		if (n->v.m->is_complex) {
-		    ret->v.m = gretl_ctrans(n->v.m, &p->err);
+		    ret->v.m = gretl_ctrans(n->v.m, 1, &p->err);
 		} else {
 		    ret->v.m = gretl_matrix_copy_transpose(n->v.m);
 		}
@@ -4230,7 +4230,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    break;
 	case F_TRANSP:
 	    if (m->is_complex) {
-		ret->v.m = gretl_ctrans(m, &p->err);
+		ret->v.m = gretl_ctrans(m, 0, &p->err);
 	    } else {
 		ret->v.m = gretl_matrix_copy_transpose(m);
 	    }
@@ -4296,7 +4296,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    ret->v.m = gretl_complex_fft(m, a, &p->err);
 	    break;
 	case HF_CTRAN:
-	    ret->v.m = gretl_ctrans(m, &p->err);
+	    ret->v.m = gretl_ctrans(m, 1, &p->err);
 	    break;
 	case HF_CEXP:
 	    ret->v.m = gretl_cexp(m, &p->err);
