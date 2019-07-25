@@ -334,8 +334,8 @@ gretl_matrix *gretl_cmatrix_AHB (const gretl_matrix *A,
 				 const gretl_matrix *B,
 				 int *err)
 {
+    gretl_matrix *C = NULL;
     gretl_matrix *AH;
-    gretl_matrix *C;
 
     AH = gretl_ctrans(A, err);
 
