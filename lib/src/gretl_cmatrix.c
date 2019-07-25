@@ -236,6 +236,7 @@ static gretl_matrix *complex_from_real (const gretl_matrix *A,
 	for (i=0; i<n; i+=2) {
 	    C->val[i] = A->val[j++];
 	}
+	C->is_complex = 1;
     }
 
     return C;
@@ -356,7 +357,6 @@ static gretl_matrix *gretl_zsyrk (const gretl_matrix *A, int *err)
 	int r, c, ur, uc, rmin;
 	double x;
 
-	C->is_complex = 1;
 	zsyrk_(&uplo, &trans, &n, &k, &alpha, (cmplx *) A->val, &lda,
 	       &beta, (cmplx *) C->val, &ldc);
 
@@ -372,9 +372,88 @@ static gretl_matrix *gretl_zsyrk (const gretl_matrix *A, int *err)
 		uc++;
 	    }
 	}
+	C->is_complex = 1;
     }
 
     return C;
+}
+
+/*
+    hansl version:
+    scalar c = cols(C)
+    matrix A = Re(C)
+    matrix B = Im(C)
+    matrix uno = A'(A ~ B)
+    matrix due = B'B
+    matrix tre = uno[,c+1:]
+    return _cmatrix(uno[,1:c] + due, tre - tre')
+*/
+
+gretl_matrix *cselftran (const gretl_matrix *C, int *err)
+{
+    gretl_matrix *CC = NULL;
+    gretl_matrix_block *Blk;
+    gretl_matrix *A, *B, *AB;
+    gretl_matrix *uno, *due, *tre;
+    gretl_matrix *Re, *Im;
+    size_t vsize;
+    int r = C->rows / 2;
+    int c = C->cols;
+    int n = r * c;
+
+    A = gretl_cxtract(C, 0, err);
+    B = gretl_cxtract(C, 1, err);
+
+    Blk = gretl_matrix_block_new(&AB,  r, 2*c,
+				 &uno, c, 2*c,
+				 &due, c, c,
+				 &tre, c, c,
+				 &Re,  c, c,
+				 &Im,  c, c,
+				 NULL);
+
+    if (A == NULL || B == NULL || Blk == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    /* form AB = (A ~ B) */
+    vsize = n * sizeof(double);
+    memcpy(AB->val, A->val, vsize);
+    memcpy(AB->val + n, B->val, vsize);
+
+    /* form uno = A'(A ~ B) */
+    gretl_matrix_multiply_mod(A, GRETL_MOD_TRANSPOSE,
+			      AB, GRETL_MOD_NONE,
+			      uno, GRETL_MOD_NONE);
+
+    /* form due = B'B */
+    gretl_matrix_multiply_mod(B, GRETL_MOD_TRANSPOSE,
+			      B, GRETL_MOD_NONE,
+			      due, GRETL_MOD_NONE);
+
+    /* form tre = uno[,c+1:] */
+    n = c * c;
+    vsize = n * sizeof(double);
+    memcpy(tre->val, uno->val + n, vsize);
+
+    /* let Re equal "uno[,1:c] + due" */
+    memcpy(Re->val, uno->val, vsize);
+    gretl_matrix_add_to(Re, due);
+
+    /* let Im equal tre - tre' */
+    memcpy(Im->val, tre->val, vsize);
+    gretl_matrix_transpose_in_place(tre);
+    gretl_matrix_subtract_from(Im, tre);
+
+    /* stick Re and Im together */
+    CC = gretl_cmatrix(Re, Im, err);
+
+    gretl_matrix_block_destroy(Blk);
+    gretl_matrix_free(A);
+    gretl_matrix_free(B);
+
+    return CC;
 }
 
 gretl_matrix *gretl_cmatrix_multiply_mod (const gretl_matrix *A,
@@ -388,7 +467,8 @@ gretl_matrix *gretl_cmatrix_multiply_mod (const gretl_matrix *A,
     gretl_matrix *C = NULL;
 
     if (A->is_complex && atr && B == A && !btr) {
-	C = gretl_zsyrk(A, err);
+	// C = gretl_zsyrk(A, err);
+	C = cselftran(A, err);
     } else {
 	/* FIXME!! */
 	*err = E_DATA;
@@ -1065,11 +1145,9 @@ int gretl_ctran_in_place (gretl_matrix *A)
     A->rows = C->rows;
     A->cols = C->cols;
 
-    free(A->val);
-    A->val = C->val;
+    memcpy(A->val, C->val, C->rows * C->cols * sizeof(double));
     gretl_matrix_destroy_info(A);
 
-    C->val = NULL;
     gretl_matrix_free(C);
 
     return err;
