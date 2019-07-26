@@ -18,12 +18,13 @@
  */
 
 #include "libgretl.h"
-#include "gretl_f2c.h"
+#include "genparse.h"
 #include "clapack_complex.h"
 #include "gretl_cmatrix.h"
 
 #include <fftw3.h>
 #include <complex.h>
+#include <errno.h>
 
 typedef union _cz {
     cmplx c;
@@ -1088,6 +1089,31 @@ gretl_matrix *gretl_cexp (const gretl_matrix *A, int *err)
     return B;
 }
 
+gretl_matrix *gretl_clog (const gretl_matrix *A, int *err)
+{
+    gretl_vector *B = NULL;
+
+    if (gretl_vector_get_length(A) != 2) {
+	*err = E_INVARG;
+    } else {
+	cz res;
+
+	res.c.r = A->val[0];
+	res.c.i = A->val[1];
+	res.z = clog(res.z);
+
+	B = gretl_column_vector_alloc(2);
+	if (B == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    B->val[0] = res.c.r;
+	    B->val[1] = res.c.i;
+	}
+    }
+
+    return B;
+}
+
 /* Addition or subtraction of matrices: handle the case
    where one operand is complex and the other is real.
 */
@@ -1184,4 +1210,66 @@ int cmatrix_add_scalar (gretl_matrix *targ,
     }
 
     return 0;
+}
+
+int apply_cmatrix_func (gretl_matrix *targ,
+			const gretl_matrix *src,
+			int f)
+{
+    double complex (*cfunc) (double complex);
+    double complex *csrc = (double complex *) src->val;
+    double complex *ctarg = (double complex *) targ->val;
+    int i, n, err = 0;
+
+    /* FIXME add more functions below */
+
+    if (f == F_ACOS) {
+	cfunc = cacos;
+    } else if (f == F_ASIN) {
+	cfunc = casin;
+    } else if (f == F_ATAN) {
+	cfunc = catan;
+    } else if (f == F_COS) {
+	cfunc = ccos;
+    } else if (f == F_SIN) {
+	cfunc = csin;
+    } else if (f == F_TAN) {
+	cfunc = ctan;
+    } else if (f == F_ACOSH) {
+	cfunc = cacosh;
+    } else if (f == F_ASINH) {
+	cfunc = casinh;
+    } else if (f == F_ATANH) {
+	cfunc = catanh;
+    } else if (f == F_COSH) {
+	cfunc = ccosh;
+    } else if (f == F_SINH) {
+	cfunc = csinh;
+    } else if (f == F_TANH) {
+	cfunc = ctanh;
+    } else if (f == F_ABS) {
+	cfunc = cabs;
+    } else if (f == F_SQRT) {
+	cfunc = csqrt;
+    } else if (f == F_LOG) {
+	cfunc = clog;
+    } else if (f == F_EXP) {
+	cfunc = cexp;
+    } else {
+	return E_TYPES;
+    }
+
+    n = (src->rows / 2) * src->cols;
+    errno = 0;
+
+    for (i=0; i<n && !errno; i++) {
+	ctarg[i] = cfunc(csrc[i]);
+    }
+
+    if (errno) {
+	gretl_errmsg_set_from_errno(NULL, errno);
+	err = E_DATA;
+    }
+
+    return err;
 }

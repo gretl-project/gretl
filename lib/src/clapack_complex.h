@@ -3,6 +3,11 @@
 
 /* LAPACK subroutines: double-precision complex versions only */
 
+#ifndef integer
+# include <stdint.h>
+typedef int32_t integer;
+#endif
+
 void zheev_ (const char *jobz, const char *uplo, integer *n,
 	     cmplx *a, integer *lda, double *w, cmplx *work,
 	     integer *lwork, double *rwork, integer *info);

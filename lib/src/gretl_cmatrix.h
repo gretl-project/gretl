@@ -63,6 +63,8 @@ int gretl_ctrans_in_place (gretl_matrix *A);
 
 gretl_matrix *gretl_cexp (const gretl_matrix *A, int *err);
 
+gretl_matrix *gretl_clog (const gretl_matrix *A, int *err);
+
 gretl_matrix *cmatrix_add_sub (const gretl_matrix *A,
 			       const gretl_matrix *B,
 			       int sgn, int *err);
@@ -70,6 +72,10 @@ gretl_matrix *cmatrix_add_sub (const gretl_matrix *A,
 int cmatrix_add_scalar (gretl_matrix *targ,
 			const gretl_matrix *A,
 			double x, int Asign);
+
+int apply_cmatrix_func (gretl_matrix *targ,
+			const gretl_matrix *src,
+			int f);
 
 int complex_matrix_print (gretl_matrix *A, const char *name, PRN *prn);
 

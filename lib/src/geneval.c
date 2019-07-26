@@ -4400,6 +4400,24 @@ static NODE *read_object_func (NODE *n, NODE *r, int f, parser *p)
     return ret;
 }
 
+static NODE *complex_scalar_node (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_matrix_node(p);
+
+    if (ret != NULL) {
+	ret->v.m = gretl_matrix_alloc(2, 1);
+	if (ret->v.m == NULL) {
+	    p->err = E_ALLOC;
+	} else {
+	    ret->v.m->val[0] = l->v.xval;
+	    ret->v.m->val[1] = r->v.xval;
+	    ret->v.m->is_complex = 1;
+	}
+    }
+
+    return ret;
+}
+
 static NODE *
 matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
 {
@@ -8881,17 +8899,23 @@ static NODE *pergm_node (NODE *l, NODE *r, parser *p)
 
 static NODE *apply_matrix_func (NODE *t, int f, parser *p)
 {
-    NODE *ret;
     const gretl_matrix *m = t->v.m;
-    int i, n = m->rows * m->cols;
-    double x;
+    NODE *ret;
 
     ret = aux_sized_matrix_node(p, m->rows, m->cols);
 
-    for (i=0; i<n && !p->err; i++) {
-	/* FIXME error handling? */
-	x = real_apply_func(m->val[i], f, p);
-	ret->v.m->val[i] = x;
+    if (!p->err && m->is_complex) {
+	ret->v.m->is_complex = 1;
+	p->err = apply_cmatrix_func(ret->v.m, m, f);
+    } else if (!p->err) {
+	int i, n = m->rows * m->cols;
+	double x;
+
+	for (i=0; i<n && !p->err; i++) {
+	    /* FIXME error handling? */
+	    x = real_apply_func(m->val[i], f, p);
+	    ret->v.m->val[i] = x;
+	}
     }
 
     return ret;
@@ -15944,6 +15968,8 @@ static NODE *eval (NODE *t, parser *p)
     case HF_CHPROD:
 	if (l->t == MAT && r->t == MAT) {
 	    ret = matrix_to_matrix_func(l, r, t->t, p);
+	} else if (t->t == HF_CMATRIX && l->t == NUM && r->t == NUM) {
+	    ret = complex_scalar_node(l, r, p);
 	} else {
 	    p->err = E_TYPES;
 	}
