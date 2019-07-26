@@ -995,7 +995,7 @@ static int real_boxplots (const int *list,
 /* boxplots using a single selected series, by panel group */
 
 static int panel_group_boxplots (int vnum, const DATASET *dset,
-				 gretlopt opt)
+				 const char *literal, gretlopt opt)
 {
     DATASET *gdset;
     int nunits, T = dset->pd;
@@ -1029,7 +1029,7 @@ static int panel_group_boxplots (int vnum, const DATASET *dset,
 	}
     }
 
-    err = real_boxplots(list, gdset, NULL, u1, opt);
+    err = real_boxplots(list, gdset, literal, u1, opt);
 
     destroy_dataset(gdset);
     free(list);
@@ -1061,7 +1061,7 @@ int boxplots (const int *list, const char *literal,
 	    list[0] > 1 || (opt & OPT_Z)) {
 	    err = E_BADOPT;
 	} else {
-	    err = panel_group_boxplots(list[1], dset, opt);
+	    err = panel_group_boxplots(list[1], dset, literal, opt);
 	}
     } else {
 	err = real_boxplots(list, dset, literal, 0, opt);
