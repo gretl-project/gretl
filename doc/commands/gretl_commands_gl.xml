@@ -4499,6 +4499,10 @@
 	de cadea; se está presente, preséntase como parte da mensaxe
 	de fallo que se lle amosa a quen invoca a función.
       </para>
+      <para>
+	Esta instrución tamén está dispoñible en forma de función (co mesmo
+	nome, <fncref targ="funcerr"/>).
+      </para>
     </description>
 
   </command>
@@ -7725,6 +7729,111 @@
     <gui-access>
       <menu-path>/Ver/Distancias de Mahalanobis</menu-path>
     </gui-access>
+
+  </command>
+
+  <command name="mailer" section="Utilities" context="gui"
+    label="Enviar un ficheiro por correo">
+
+    <description>
+      <para>
+	Podes enviar un banco de datos (ou un guión de instrucións) como engadido
+	de correo desde dentro de Gretl, usando o SMTP (Simple Mail Transfer
+	Protocol). Deseguido, explícase como interpretar as dúas táboas
+	(<quote>Configuración de correo</quote> e <quote>Mensaxe</quote>) da caixa
+	de diálogo do correo. Tamén se comentan os requirimentos de contrasinal.
+      </para>
+      <subhead>Lapela de configuración de correo</subhead>
+      <ilist>
+	<li>
+	  <para>
+	    Servidor SMTP: é o servidor co que debera de enviarse o teu
+	    correo. Se es usuario de gmail é de agardar que te atopes
+	    con que te funciona a configuración por defecto,
+	    <lit>smtps://smtp.gmail.com:465</lit>; do contrario, vas ter
+	    que introducir a información pola túa conta. Fíxate que a cadea
+	    de texto do servidor debe comezar ben con <lit>smtp://</lit>,
+	    ou ben con <lit>smtps://</lit>. Despois do nome do servidor é
+	    necesario engadir dous puntos, seguidos por o número dun porto,
+	    como no <quote><lit>:465</lit></quote> indicado antes. Outros
+	    valores posibles para o número do porto SMTP son 25 e 587.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Nome de usuario de correo: é o nome de usuario co que te
+	    identifica o teu servidor de correo. Probablemente é o mesmo
+	    nome que ten a túa dirección de correo.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Contrasinal de correo: o máis probable é que o teu servidor SMTP
+	    desexe comprobar un contrasinal, pero se non, podes premer en
+	    <quote>Non é necesario contrasinal</quote>.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	A túa información de servidor e de usuario lémbrase dunha sesión de
+	Gretl ata a seguinte, de xeito que só tes que introducila unha vez.
+	De igual xeito que co contrasinal, é elección túa decidir gardala ou
+	non; consulta a sección <emphasis>Contrasinal de correo</emphasis>
+	de máis abaixo para obter máis detalles.
+      </para>
+      <para>
+	Ao premer <lit>OK</lit> na ficha de configuración de correo, vaste mover
+	á ficha de mensaxe (agás que se perdese a información requirida).
+      </para>
+      <subhead>Lapela de mensaxe</subhead>
+      <ilist>
+       <li>
+	 <para>
+	   A: é a dirección de correo do destinatario. Vas ter que introducila
+	   pola túa conta, pois Gretl non ten acceso á túa axenda de direccións.
+	   Agora ben, unha vez introducida unha dirección, esta lémbrase e
+	   podes seleccionala máis adiante mediante unha lista despregable.
+	   Podes gardar ata dez direccións deste xeito.
+	 </para>
+       </li>
+       <li>
+	 <para>
+	   De: é a túa propia dirección de correo. Esta lémbrase dunha
+	   sesión de Gretl ata a seguinte.
+	 </para>
+       </li>
+       <li>
+	 <para>
+	   Tema: isto énchese automaticamente, pero se o desexas podes
+	   editalo.
+	 </para>
+       </li>
+       <li>
+	 <para>
+	   Nota: tamén énchese automaticamente, pero podes editala.
+	 </para>
+       </li>
+      </ilist>
+      <para>
+	Ao premer <lit>OK</lit> na ficha de mensaxe, enviarás a mensaxe
+	(agás que se perdese algunha información requirida).
+      </para>
+      <subhead>Contrasinal de correo</subhead>
+      <para>
+	Si se necesita un contrasinal para enviar o correo, podes elixir que
+	Gretl o teña gardado; nese caso, gárdase en formato arrevesado nun
+	directorio que está reservado para ti no teu ordenador (en ningún
+	servidor de internet). Porén, non podemos garantir a súa
+	seguridade.
+      </para>
+      <para>
+	Se ti es usuario de gmail e utilizas a autenticación en 2-pasos,
+	ten en conta que o teu contrasinal habitual de gmail non vai
+	funcionar neste contexto. Vas necesitar unha
+	<quote>App de contrasinal</quote> para utilizala con Gretl; consulta
+	<url>https://support.google.com/accounts/answer/185833</url>.
+      </para>
+    </description>
 
   </command>
 

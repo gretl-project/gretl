@@ -3961,6 +3961,30 @@
       </description>
     </function>
 
+    <function name="funcerr" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg optional="true" type="string">mensaje</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esta función solo es aplicable en el contexto de una función definida
+	  por el usuario. Implica que la ejecución de la función vigente acabe con
+	  la presentación de un mensaje condicionado a que se produzca un fallo.
+	</para>
+	<para>
+	  Si indicas el argumento <argname>mensaje</argname> (opcional), este
+	  se va a presentar como parte del mensaje de fallo que se muestra al
+	  llamar a la función. Esto proporciona a los redactores de funciones,
+	  la oportunidad de indicar un mensaje de fallo más específico del
+	  que se podría mostrar de otro modo.
+	</para>
+	<para>
+	  El valor que se devuelve con esta función es simplemente nominal,
+	  pues al invocarla se crea inevitablemente una condición de fallo.
+	</para>
+      </description>
+    </function>
+
     <function name="fzero" section="numerical" output="scalar">
       <fnargs>
 	<fnarg type="fncall">fcall</fnarg>
@@ -4633,11 +4657,10 @@
       </fnargs>
       <description>
 	<para>
-	  Si omites <argname>m</argname>, o tiene un valor igual a
-	  <argname>n</argname>, devuelve una matriz identidad de orden
-	  <argname>n</argname>. En caso contrario, devuelve una matriz
-	  <by r="n" c="m"/> que tiene unos en la diagonal principal y
-	  ceros en el resto de la matriz.
+	  Si omites <argname>m</argname>, devuelve una matriz identidad de
+	  orden <argname>n</argname>. En caso contrario, devuelve una matriz
+	  <by r="n" c="m"/> que tiene unos en la diagonal principal y ceros
+	  en el resto de la matriz.
 	</para>
       </description>
     </function>
@@ -6767,13 +6790,14 @@
     <function name="mnormal" section="matbuild" output="matrix">
       <fnargs>
 	<fnarg type="int">r</fnarg>
-	<fnarg type="int">c</fnarg>
+	<fnarg optional="true" type="int">c</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Devuelve una matriz formada con valores generados de forma pseudoaleatoria
 	  mediante variables con distribución Normal estándar, y que va a tener
-	  <argname>r</argname> filas y <argname>c</argname> columnas.
+	  <argname>r</argname> filas y <argname>c</argname> columnas. Si lo omites,
+	  el número de columnas se establece en 1 (vector columna) por defecto.
 	  <seelist>
             <fncref targ="normal"/>
             <fncref targ="muniform"/>
@@ -7193,13 +7217,14 @@
     <function name="muniform" section="matbuild" output="matrix">
       <fnargs>
 	<fnarg type="int">r</fnarg>
-	<fnarg type="int">c</fnarg>
+	<fnarg optional="true" type="int">c</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Devuelve una matriz formada con números generados de forma pseudoaleatoria
 	  mediante variables con distribución Uniforme (0,1), y que va a tener
-	  <argname>r</argname> filas y <argname>c</argname> columnas.
+	  <argname>r</argname> filas y <argname>c</argname> columnas. Si lo omites,
+	  el número de columnas se establece en 1 (vector columna), por defecto.
 	  Aviso: El método predilecto para generar números pseudoaleatorios con
 	  distribución Uniforme es el que usa la función <fncref targ="randgen1"/>.
 	</para>
@@ -8015,12 +8040,13 @@
     <function name="ones" section="matbuild" output="matrix">
       <fnargs>
 	<fnarg type="int">r</fnarg>
-	<fnarg type="int">c</fnarg>
+	<fnarg optional="true" type="int">c</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Devuelve una matriz con <math>r</math> filas y <math>c</math>
-	  columnas, cubierta con valores iguales a 1.
+	  columnas, cubierta con valores iguales a 1. Si lo omites, el número
+	  de columnas se establece en 1 (vector columna), por defecto.
 	</para>
 	<para>
 	  <seelist>
@@ -11357,12 +11383,13 @@
     <function name="zeros" section="matbuild" output="matrix">
       <fnargs>
 	<fnarg type="int">r</fnarg>
-	<fnarg type="int">c</fnarg>
+	<fnarg optional="true" type="int">c</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Devuelve una matriz nula con <math>r</math> filas y <math>c</math>
-	  columnas.
+	  columnas. Si lo omites, el número de columnas se establece en 1
+	  (vector columna), por defecto.
       <seelist>
         <fncref targ="ones"/>
         <fncref targ="seq"/>

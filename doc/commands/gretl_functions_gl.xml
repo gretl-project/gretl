@@ -3961,6 +3961,30 @@
       </description>
     </function>
 
+    <function name="funcerr" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg optional="true" type="string">mensaxe</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Esta función só se aplica no contexto dunha función definida polo
+	  usuario. Implica que a execución da función vixente remate coa
+	  presentación dunha mensaxe condicionada a que se produza un fallo.
+	</para>
+	<para>
+	  Se indicas o argumento <argname>mensaxe</argname> (opcional),
+	  este vaise presentar como parte da mensaxe de fallo que se amosa
+	  ao chamar á función. Isto proporciona aos redactores de funcións, a
+	  oportunidade de indicar unha mensaxe de fallo máis específica da
+	  que se podería amosar doutro xeito.
+	</para>
+	<para>
+	  O valor que se devolve con esta función é simplemente nominal,
+	  pois ao invocala créase inevitablemente unha condición de fallo.
+	</para>
+      </description>
+    </function>
+
     <function name="fzero" section="numerical" output="scalar">
       <fnargs>
 	<fnarg type="fncall">fcall</fnarg>
@@ -4633,11 +4657,10 @@
       </fnargs>
       <description>
 	<para>
-	  Se omites <argname>m</argname>, ou ten un valor igual a
-	  <argname>n</argname>, devolve unha matriz identidade de orde
-	  <argname>n</argname>. Doutro xeito, devolve unha matriz
-	  <by r="n" c="m"/> que contén uns na diagonal principal e
-	  ceros no resto da matriz.
+	  Se omites <argname>m</argname>, devolve unha matriz identidade
+	  de orde <argname>n</argname>. Doutro xeito, devolve unha matriz
+	  <by r="n" c="m"/> que contén uns na diagonal principal e ceros
+	  no resto da matriz.
 	</para>
       </description>
     </function>
@@ -6767,13 +6790,14 @@
     <function name="mnormal" section="matbuild" output="matrix">
       <fnargs>
 	<fnarg type="int">r</fnarg>
-	<fnarg type="int">c</fnarg>
+	<fnarg optional="true" type="int">c</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Devolve unha matriz feita con valores xerados de forma pseudoaleatoria
 	  mediante variables con distribución Normal estándar, e que vai ter
-	  <argname>r</argname> filas e <argname>c</argname> columnas.
+	  <argname>r</argname> filas e <argname>c</argname> columnas. Se o omites,
+	  o número de columnas establécese en 1 (vector columna), por defecto.
 	  <seelist>
             <fncref targ="normal"/>
             <fncref targ="muniform"/>
@@ -7193,13 +7217,14 @@
     <function name="muniform" section="matbuild" output="matrix">
       <fnargs>
 	<fnarg type="int">r</fnarg>
-	<fnarg type="int">c</fnarg>
+	<fnarg optional="true" type="int">c</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Devolve unha matriz feita con números xerados de forma pseudoaleatoria
 	  mediante variables con distribución Uniforme (0,1), e que vai ter
-	  <argname>r</argname> filas e <argname>c</argname> columnas.
+	  <argname>r</argname> filas e <argname>c</argname> columnas. Se o omites,
+	  o número de columnas establécese en 1 (vector columna), por defecto.
 	  Aviso: O método predilecto para xerar números pseudoaleatorios con
 	  distribución Uniforme é o que usa a función <fncref targ="randgen1"/>.
 	</para>
@@ -8015,12 +8040,13 @@
     <function name="ones" section="matbuild" output="matrix">
       <fnargs>
 	<fnarg type="int">r</fnarg>
-	<fnarg type="int">c</fnarg>
+	<fnarg optional="true" type="int">c</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Devolve unha matriz con <math>r</math> filas e <math>c</math>
-	  columnas, cuberta con valores iguais a 1.
+	  columnas, cuberta con valores iguais a 1. Se o omites, o número
+	  de columnas establécese en 1 (vector columna), por defecto.
 	</para>
 	<para>
 	  <seelist>
@@ -11357,12 +11383,13 @@
     <function name="zeros" section="matbuild" output="matrix">
       <fnargs>
 	<fnarg type="int">r</fnarg>
-	<fnarg type="int">c</fnarg>
+	<fnarg optional="true" type="int">c</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Devolve unha matriz nula con <math>r</math> filas e <math>c</math>
-	  columnas.
+	  columnas. Se o omites, o número de columnas establécese en 1
+	  (vector columna), por defecto.
       <seelist>
         <fncref targ="ones"/>
         <fncref targ="seq"/>

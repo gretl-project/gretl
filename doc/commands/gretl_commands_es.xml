@@ -4499,6 +4499,10 @@
 	de cadena; si está presente, se presenta como parte del mensaje
 	de fallo que se le muestra a quien invoca la función.
       </para>
+      <para>
+	Esta instrucción también está disponible en forma de función (con el
+	mismo nombre, <fncref targ="funcerr"/>).
+      </para>
     </description>
 
   </command>
@@ -7725,6 +7729,111 @@
     <gui-access>
       <menu-path>/Ver/Distancias de Mahalanobis</menu-path>
     </gui-access>
+
+  </command>
+
+  <command name="mailer" section="Utilities" context="gui"
+    label="Enviar un archivo por correo">
+
+    <description>
+      <para>
+	Puedes enviar una base de datos (o un guion de instrucciones) como añadido
+	de correo desde dentro de Gretl, usando el SMTP (Simple Mail Transfer
+	Protocol). A continuación, se explica cómo interpretar las dos tablas
+	(<quote>Configuración de correo</quote> y <quote>Mensaje</quote>) de la caja
+	de diálogo del correo. También se comentan los requerimientos de contraseña.
+      </para>
+      <subhead>Pestaña de configuración de correo</subhead>
+      <ilist>
+	<li>
+	  <para>
+	    Servidor SMTP: es el servidor con el que debiera de enviarse
+	    tu correo. Si eres usuario de gmail es de esperar que te
+	    encuentres con que te funciona la configuración por defecto,
+	    <lit>smtps://smtp.gmail.com:465</lit>; de lo contrario, vas a tener
+	    que introducir la información por tu cuenta. Fíjate en que la cadena
+	    de texto del servidor debe comenzar o bien con <lit>smtp://</lit>,
+	    o bien con <lit>smtps://</lit>. Después del nombre del servidor es
+	    necesario añadir dos puntos, seguidos por el número de un puerto,
+	    como en el <quote><lit>:465</lit></quote> indicado antes. Otros
+	    valores posibles para el número del puerto SMTP son 25 y 587.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Nombre de usuario de correo: es el nombre de usuario con el que
+	    te identifica tu servidor de correo. Probablemente es el mismo
+	    nombre que tiene tu dirección de correo.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Contraseña de correo: lo más probable es que tu servidor SMTP
+	    desee comprobar una contraseña, pero si no, puedes pulsar en
+	    <quote>No es necesaria contraseña</quote>.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	Tu información de servidor y de usuario se recuerda de una sesión de
+	Gretl hasta la siguiente, de forma que solo tienes que introducirla una
+	vez. De igual modo que con la contraseña, es elección tuya el guardarla
+	o no; consulta la sección <emphasis>Contraseña de correo</emphasis>
+	de más abajo para obtener más detalles.
+      </para>
+      <para>
+	Pulsando <lit>OK</lit> en la ficha de configuración de correo, te moverás
+	a la ficha de mensaje (excepto que se perdiese la información requerida).
+      </para>
+      <subhead>Pestaña de mensaje</subhead>
+      <ilist>
+       <li>
+	 <para>
+	   A: es la dirección de correo del destinatario. Tendrás que introducirla
+	   por tu cuenta, pues Gretl no tiene acceso a tu agenda de direcciones.
+	   Ahora bien, una vez introducida una dirección, esta se recuerda y
+	   puedes seleccionarla más adelante mediante una lista desplegable.
+	   Puedes guardar hasta diez direcciones de esta forma.
+	 </para>
+       </li>
+       <li>
+	 <para>
+	   De: es tu propia dirección de correo. Esta se recuerda de una
+	   sesión de Gretl hasta la siguiente.
+	 </para>
+       </li>
+       <li>
+	 <para>
+	   Tema: esto se rellena automáticamente, pero si lo deseas puedes
+	   editarlo.
+	 </para>
+       </li>
+       <li>
+	 <para>
+	   Nota: también se rellena automáticamente, pero puedes editarla.
+	 </para>
+       </li>
+      </ilist>
+      <para>
+	Pulsando <lit>OK</lit> en la ficha de mensaje, enviarás el mensaje
+	(excepto que se perdiese alguna información requerida).
+      </para>
+      <subhead>Contraseña de correo</subhead>
+      <para>
+	Si se necesita una contraseña para enviar el correo, puedes elegir
+	que Gretl tenga guardada esta contraseña; en ese caso, se guarda en
+	formato enrevesado en un directorio que está reservado para ti en tu
+	ordenador (en ningún servidor de internet). Sin embrago, no podemos
+	garantizar su seguridad.
+      </para>
+      <para>
+	Si eres usuario de gmail y utilizas la autentificación en 2-pasos,
+	ten en cuenta que tu contraseña habitual de gmail no va a funcionar
+	en este contexto. Vas a necesitar una
+	<quote>App de contraseña</quote> para utilizarla con Gretl; consulta
+	<url>https://support.google.com/accounts/answer/185833</url>.
+      </para>
+    </description>
 
   </command>
 
