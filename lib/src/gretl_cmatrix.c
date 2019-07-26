@@ -300,6 +300,12 @@ static gretl_matrix *gretl_zgemm (const gretl_matrix *A,
     return C;
 }
 
+/* Multiplication of @A times @B where we know that at
+   least one of them is complex; the other, if it's not
+   complex, must be converted to a complex matrix with
+   a zero imaginary part first.
+*/
+
 gretl_matrix *gretl_cmatrix_multiply (const gretl_matrix *A,
 				      const gretl_matrix *B,
 				      int *err)
@@ -310,39 +316,66 @@ gretl_matrix *gretl_cmatrix_multiply (const gretl_matrix *A,
     if (A->is_complex && B->is_complex) {
 	C = gretl_zgemm(A, 0, B, 0, err);
     } else if (A->is_complex) {
+	/* case of real B */
 	T = complex_from_real(B, err);
 	if (T != NULL) {
 	    C = gretl_zgemm(A, 0, T, 0, err);
-	    gretl_matrix_free(T);
 	}
     } else if (B->is_complex) {
+	/* case of real A */
 	T = complex_from_real(A, err);
 	if (T != NULL) {
 	    C = gretl_zgemm(T, 0, B, 0, err);
-	    gretl_matrix_free(T);
 	}
     } else {
 	*err = E_TYPES;
     }
 
+    gretl_matrix_free(T);
+
     return C;
 }
 
-/* returns (conjugate transpose of A, or A^H) times B */
+/* Returns (conjugate transpose of A, or A^H) times B,
+   allowing for the possibility that either A or B (but
+   not both!) may be a real matrix on input.
+*/
 
 gretl_matrix *gretl_cmatrix_AHB (const gretl_matrix *A,
 				 const gretl_matrix *B,
 				 int *err)
 {
+    gretl_matrix *T1 = NULL;
+    gretl_matrix *T2 = NULL;
     gretl_matrix *C = NULL;
-    gretl_matrix *AH;
 
-    AH = gretl_ctrans(A, 1, err);
-
-    if (AH != NULL) {
-	C = gretl_zgemm(AH, 0, B, 0, err);
-	gretl_matrix_free(AH);
+    if (A->is_complex && B->is_complex) {
+	T1 = gretl_ctrans(A, 1, err);
+	if (T1 != NULL) {
+	    C = gretl_zgemm(T1, 0, B, 0, err);
+	}
+    } else if (A->is_complex) {
+	/* case of real B */
+	T1 = gretl_ctrans(A, 1, err);
+	if (T1 != NULL) {
+	    T2 = complex_from_real(B, err);
+	    if (T2 != NULL) {
+		C = gretl_zgemm(T1, 0, T2, 0, err);
+	    }
+	}
+    } else {
+	/* case of real A */
+	T1 = complex_from_real(A, err);
+	if (T1 != NULL) {
+	    T2 = gretl_ctrans(T1, 0, err);
+	    if (T2 != NULL) {
+		C = gretl_zgemm(T2, 0, B, 0, err);
+	    }
+	}
     }
+
+    gretl_matrix_free(T1);
+    gretl_matrix_free(T2);
 
     return C;
 }
