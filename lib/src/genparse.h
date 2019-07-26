@@ -285,6 +285,7 @@ enum {
     HF_CINV,
     HF_CTRAN,
     HF_CEXP,
+    HF_CARG,
     HF_JBTERMS,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     HF_LISTINFO,

@@ -1216,54 +1216,65 @@ int apply_cmatrix_func (gretl_matrix *targ,
 			const gretl_matrix *src,
 			int f)
 {
-    double complex (*cfunc) (double complex);
     double complex *csrc = (double complex *) src->val;
-    double complex *ctarg = (double complex *) targ->val;
-    int i, n, err = 0;
+    int n = (src->rows / 2) * src->cols;
+    int i, err = 0;
 
-    /* FIXME add more functions below */
-
-    if (f == F_ACOS) {
-	cfunc = cacos;
-    } else if (f == F_ASIN) {
-	cfunc = casin;
-    } else if (f == F_ATAN) {
-	cfunc = catan;
-    } else if (f == F_COS) {
-	cfunc = ccos;
-    } else if (f == F_SIN) {
-	cfunc = csin;
-    } else if (f == F_TAN) {
-	cfunc = ctan;
-    } else if (f == F_ACOSH) {
-	cfunc = cacosh;
-    } else if (f == F_ASINH) {
-	cfunc = casinh;
-    } else if (f == F_ATANH) {
-	cfunc = catanh;
-    } else if (f == F_COSH) {
-	cfunc = ccosh;
-    } else if (f == F_SINH) {
-	cfunc = csinh;
-    } else if (f == F_TANH) {
-	cfunc = ctanh;
-    } else if (f == F_ABS) {
-	cfunc = cabs;
-    } else if (f == F_SQRT) {
-	cfunc = csqrt;
-    } else if (f == F_LOG) {
-	cfunc = clog;
-    } else if (f == F_EXP) {
-	cfunc = cexp;
-    } else {
-	return E_TYPES;
-    }
-
-    n = (src->rows / 2) * src->cols;
     errno = 0;
 
-    for (i=0; i<n && !errno; i++) {
-	ctarg[i] = cfunc(csrc[i]);
+    if (f == F_ABS || f == HF_CARG) {
+	double (*cfunc) (double complex) = (f == F_ABS) ? cabs : carg;
+
+	for (i=0; i<n && !errno; i++) {
+	    targ->val[i] = cfunc(csrc[i]);
+	}
+    } else {
+	double complex *ctarg = (double complex *) targ->val;
+	double complex (*cfunc) (double complex);
+
+	targ->is_complex = 1;
+
+	/* FIXME add more functions below */
+
+	if (f == F_ACOS) {
+	    cfunc = cacos;
+	} else if (f == F_ASIN) {
+	    cfunc = casin;
+	} else if (f == F_ATAN) {
+	    cfunc = catan;
+	} else if (f == F_COS) {
+	    cfunc = ccos;
+	} else if (f == F_SIN) {
+	    cfunc = csin;
+	} else if (f == F_TAN) {
+	    cfunc = ctan;
+	} else if (f == F_ACOSH) {
+	    cfunc = cacosh;
+	} else if (f == F_ASINH) {
+	    cfunc = casinh;
+	} else if (f == F_ATANH) {
+	    cfunc = catanh;
+	} else if (f == F_COSH) {
+	    cfunc = ccosh;
+	} else if (f == F_SINH) {
+	    cfunc = csinh;
+	} else if (f == F_TANH) {
+	    cfunc = ctanh;
+	} else if (f == F_ABS) {
+	    cfunc = cabs;
+	} else if (f == F_SQRT) {
+	    cfunc = csqrt;
+	} else if (f == F_LOG) {
+	    cfunc = clog;
+	} else if (f == F_EXP) {
+	    cfunc = cexp;
+	} else {
+	    return E_TYPES;
+	}
+
+	for (i=0; i<n && !errno; i++) {
+	    ctarg[i] = cfunc(csrc[i]);
+	}
     }
 
     if (errno) {

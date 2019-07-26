@@ -8900,14 +8900,21 @@ static NODE *pergm_node (NODE *l, NODE *r, parser *p)
 static NODE *apply_matrix_func (NODE *t, int f, parser *p)
 {
     const gretl_matrix *m = t->v.m;
+    int rows = m->rows;
     NODE *ret;
 
-    ret = aux_sized_matrix_node(p, m->rows, m->cols);
+    if (m->is_complex && (f == F_ABS || f == HF_CARG)) {
+	rows /= 2;
+    }
 
-    if (!p->err && m->is_complex) {
-	ret->v.m->is_complex = 1;
+    ret = aux_sized_matrix_node(p, rows, m->cols);
+    if (ret == NULL) {
+	return ret;
+    }
+
+    if (m->is_complex) {
 	p->err = apply_cmatrix_func(ret->v.m, m, f);
-    } else if (!p->err) {
+    } else {
 	int i, n = m->rows * m->cols;
 	double x;
 
@@ -15378,6 +15385,13 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = apply_matrix_func(l, t->t, p);
 	} else if (ok_list_node(l, p) && t->t == F_LOG) {
 	    ret = apply_list_func(l, NULL, t->t, p);
+	} else {
+	    p->err = E_TYPES;
+	}
+	break;
+    case HF_CARG:
+	if (l->t == MAT && l->v.m->is_complex) {
+	    ret = apply_matrix_func(l, t->t, p);
 	} else {
 	    p->err = E_TYPES;
 	}
