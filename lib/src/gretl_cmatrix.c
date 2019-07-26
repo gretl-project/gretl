@@ -1092,16 +1092,27 @@ gretl_matrix *gretl_cexp (const gretl_matrix *A, int *err)
    where one operand is complex and the other is real.
 */
 
-gretl_matrix *mixed_matrix_add_subt (const gretl_matrix *A,
-				     const gretl_matrix *B,
-				     int sgn, int *err)
+gretl_matrix *cmatrix_add_sub (const gretl_matrix *A,
+			       const gretl_matrix *B,
+			       int sgn, int *err)
 {
     const gretl_matrix *R;
     gretl_matrix *C = NULL;
     int r, c;
 
-    if (A->is_complex) {
-	/* B must be real */
+    if (A->is_complex && B->is_complex) {
+	/* both complex */
+	C = gretl_matrix_copy(A);
+	if (C == NULL) {
+	    *err = E_ALLOC;
+	} else if (sgn < 0) {
+	    *err = gretl_matrix_subtract_from(C, B);
+	} else {
+	    *err = gretl_matrix_add_to(C, B);
+	}
+	return C; /* done */
+    } else if (A->is_complex) {
+	/* B is real */
 	R = B;
 	r = A->rows / 2;
 	c = A->cols;
@@ -1111,7 +1122,7 @@ gretl_matrix *mixed_matrix_add_subt (const gretl_matrix *A,
 	    C = gretl_matrix_copy(A);
 	}
     } else {
-	/* B is the complex one */
+	/* A is real */
 	R = A;
 	r = B->rows / 2;
 	c = B->cols;
@@ -1148,4 +1159,29 @@ gretl_matrix *mixed_matrix_add_subt (const gretl_matrix *A,
     }
 
     return C;
+}
+
+/* When adding a real scalar to a complex matrix, only
+   the real elements of the matrix should be changed.
+*/
+
+int cmatrix_add_scalar (gretl_matrix *targ,
+			const gretl_matrix *A,
+			double x, int Asign)
+{
+    double y;
+    int i, j;
+
+    for (j=0; j<A->cols; j++) {
+	for (i=0; i<A->rows; i++) {
+	    y = gretl_matrix_get(A, i, j);
+	    if (i % 2) {
+		gretl_matrix_set(targ, i, j, Asign < 0 ? -y : y);
+	    } else {
+		gretl_matrix_set(targ, i, j, Asign < 0 ? x - y : x + y);
+	    }
+	}
+    }
+
+    return 0;
 }

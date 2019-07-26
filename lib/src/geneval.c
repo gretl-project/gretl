@@ -2751,8 +2751,12 @@ static int real_matrix_calc (const gretl_matrix *A,
     switch (op) {
     case B_ADD:
     case B_SUB:
-	if (gretl_matrix_is_scalar(A) ||
-	    gretl_matrix_is_scalar(B)) {
+	if (A->is_complex || B->is_complex) {
+	    int sgn = (op == B_SUB)? -1 : 1;
+
+	    C = cmatrix_add_sub(A, B, sgn, &err);
+	} else if (gretl_matrix_is_scalar(A) ||
+		   gretl_matrix_is_scalar(B)) {
 	    C = matrix_add_sub_scalar(A, B, op);
 	    if (C == NULL) {
 		err = E_ALLOC;
@@ -3093,8 +3097,8 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 	ret = aux_matrix_node(p);
     } else {
 	ret = aux_sized_matrix_node(p, m->rows, m->cols);
-	if (!p->err && m->is_complex) {
-	    ret->v.m->is_complex = 1;
+	if (!p->err) {
+	    ret->v.m->is_complex = m->is_complex;
 	}
     }
 
@@ -3112,6 +3116,19 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 	    ret->v.m = gretl_matrix_pow(m, s, &p->err);
 	}
 	return ret;
+    } else if (m->is_complex && (op == B_ADD || op == B_SUB)) {
+	int sgn = 1;
+
+	if (op == B_SUB) {
+	    if (l->t == MAT) {
+		/* A - x -> A + (-x) */
+		x = -x;
+	    } else {
+		/* x - A -> -A + x */
+		sgn = -1;
+	    }
+	}
+	cmatrix_add_scalar(ret->v.m, m, x, sgn);
     } else {
 	int i, n = m->rows * m->cols;
 	double y;
@@ -3684,7 +3701,8 @@ static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
     gretl_matrix *ml = NULL, *mr = NULL;
     NODE *ret;
 
-    if ((op == B_MUL || op == B_TRMUL) && l->t == MAT && r->t == MAT) {
+    if ((op == B_MUL || op == B_TRMUL || op == B_ADD || op == B_SUB) &&
+	l->t == MAT && r->t == MAT) {
 	ml = l->v.m;
 	mr = r->v.m;
 	if (ml->is_complex || mr->is_complex) {
