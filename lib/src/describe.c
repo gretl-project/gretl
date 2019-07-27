@@ -4017,7 +4017,7 @@ static gretl_matrix *gretl_matrix_pergm (const gretl_matrix *x, int m,
 struct LWE_helper {
     gretl_matrix *lambda;
     gretl_matrix *lpow;
-    gretl_matrix *I;
+    gretl_matrix *I1;
     gretl_matrix *I2;
     double lcm;
 };
@@ -4026,7 +4026,7 @@ static void LWE_free (struct LWE_helper *L)
 {
     gretl_matrix_free(L->lambda);
     gretl_matrix_free(L->lpow);
-    gretl_matrix_free(L->I);
+    gretl_matrix_free(L->I1);
     gretl_matrix_free(L->I2);
 }
 
@@ -4038,17 +4038,17 @@ static double LWE_obj_func (struct LWE_helper *L, double d)
     gretl_matrix_copy_values(L->lpow, L->lambda);
     gretl_matrix_raise(L->lpow, dd);
 
-    for (i=0; i<L->I->rows; i++) {
-	L->I2->val[i] = L->I->val[i] * L->lpow->val[i];
+    for (i=0; i<L->I1->rows; i++) {
+	L->I2->val[i] = L->I1->val[i] * L->lpow->val[i];
     }
 
     return -(log(gretl_vector_mean(L->I2)) - dd * L->lcm);
 }
 
-static gretl_matrix *LWE_lambda (const gretl_matrix *I, int n)
+static gretl_matrix *LWE_lambda (const gretl_matrix *I1, int n)
 {
     gretl_matrix *lambda;
-    int i, m = gretl_vector_get_length(I);
+    int i, m = gretl_vector_get_length(I1);
 
     lambda = gretl_column_vector_alloc(m);
 
@@ -4068,19 +4068,19 @@ LWE_init (struct LWE_helper *L, const gretl_matrix *X, int m)
 
     L->I2 = L->lpow = NULL;
 
-    L->I = gretl_matrix_pergm(X, m, &err);
+    L->I1 = gretl_matrix_pergm(X, m, &err);
     if (err) {
 	return err;
     }
 
-    L->lambda = LWE_lambda(L->I, X->rows);
+    L->lambda = LWE_lambda(L->I1, X->rows);
     if (L->lambda == NULL) {
-	gretl_matrix_free(L->I);
+	gretl_matrix_free(L->I1);
 	return E_ALLOC;
     }
 
     L->lpow = gretl_matrix_copy(L->lambda);
-    L->I2 = gretl_matrix_copy(L->I);
+    L->I2 = gretl_matrix_copy(L->I1);
 
     if (L->lpow == NULL || L->I2 == NULL) {
 	err = E_ALLOC;
