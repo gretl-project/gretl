@@ -5232,7 +5232,7 @@ static double real_apply_func (double x, NODE *fun, parser *p)
     if (fun->v.ptr != NULL) {
 	double (*dfunc) (double) = fun->v.ptr;
 
-#if 1
+#if 0
 	fprintf(stderr, "%s: using %p\n", getsymb(f), fun->v.ptr);
 #endif
 	y = dfunc(x);
@@ -5519,34 +5519,6 @@ static NODE *apply_series_func (NODE *n, NODE *f, parser *p)
     NODE *ret = aux_series_node(p);
     int t;
 
-#if 0 /* initial parallelization experiment */
-    if (ret != NULL) {
-	const double *x;
-
-	if (n->t == SERIES) {
-	    x = n->v.xvec;
-	} else {
-	    x = get_colvec_as_series(n, f->t, p);
-	}
-
-	if (!p->err) {
-	    if (autoreg(p)) {
-		ret->v.xvec[p->obs] = real_apply_func(x[p->obs], f, p);
-	    } else {
-#if defined(_OPENMP)
-#pragma omp parallel for private(t)
-		for (t=p->dset->t1; t<=p->dset->t2; t++) {
-		    ret->v.xvec[t] = real_apply_func(x[t], f, p);
-		}
-#else
-		for (t=p->dset->t1; t<=p->dset->t2; t++) {
-		    ret->v.xvec[t] = real_apply_func(x[t], f, p);
-		}
-#endif
-	    }
-	}
-    }
-#else
     if (ret != NULL) {
 	const double *x;
 
@@ -5566,7 +5538,6 @@ static NODE *apply_series_func (NODE *n, NODE *f, parser *p)
 	    }
 	}
     }
-#endif
 
     return ret;
 }
