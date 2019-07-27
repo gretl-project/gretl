@@ -357,7 +357,7 @@ gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset,
     integer info, lwork;
     integer m, n, lda;
     gretl_matrix *Q, *S = NULL;
-    doublereal *tau, *work;
+    double *tau, *work;
     double Xvalcrit, df_adj = 0;
     int xvc_only = 0;
     int i, j, s, t, vi;

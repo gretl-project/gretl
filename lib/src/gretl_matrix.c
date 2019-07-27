@@ -3795,8 +3795,8 @@ static int QR_solve (gretl_matrix *A, gretl_matrix *B)
     integer rank, info = 0;
     integer lwork = -1;
     integer *jpvt = NULL;
-    doublereal *work = NULL;
-    doublereal rcond = QR_RCOND_MIN;
+    double *work = NULL;
+    double rcond = QR_RCOND_MIN;
     int i, err = 0;
 
     lda = m = A->rows;
@@ -8073,8 +8073,8 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,
     integer lwork = -1;
     integer lda = m;
     integer *iwork = NULL;
-    doublereal *tau = NULL;
-    doublereal *work = NULL;
+    double *tau = NULL;
+    double *work = NULL;
     integer *jpvt = NULL;
     int i, j;
     int moved = 0;
@@ -8198,8 +8198,8 @@ int gretl_matrix_QR_decomp (gretl_matrix *M, gretl_matrix *R)
     integer m, n, lda;
     integer info = 0;
     integer lwork = -1;
-    doublereal *tau = NULL;
-    doublereal *work = NULL;
+    double *tau = NULL;
+    double *work = NULL;
     int i, j;
     int err = 0;
 
@@ -8318,9 +8318,9 @@ static int get_R_rank (const gretl_matrix *R)
 int gretl_check_QR_rank (const gretl_matrix *R, int *err, double *rcnd)
 {
     integer *iwork = NULL;
-    doublereal *work = NULL;
+    double *work = NULL;
     integer n, info = 0;
-    doublereal rcond;
+    double rcond;
     char uplo = 'U';
     char diag = 'N';
     char norm = '1';

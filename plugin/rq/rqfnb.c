@@ -7,40 +7,40 @@
 
 /* Table of constant values */
 
-static doublereal c_b4 = 1.;
+static double c_b4 = 1.;
 static integer one = 1;
-static doublereal zero = 0.;
-static doublereal c_b13 = -1.;
+static double zero = 0.;
+static double c_b13 = -1.;
 
 /* lapack/blas functions called below */
 
-extern int dsyr_ (char *, integer *, doublereal *, doublereal *, 
-		  integer *, doublereal *, integer *);
+extern int dsyr_ (char *, integer *, double *, double *, 
+		  integer *, double *, integer *);
 
-extern int dposv_ (char *, integer *, integer *, doublereal *, integer *, 
-		   doublereal *, integer *, integer *);
+extern int dposv_ (char *, integer *, integer *, double *, integer *, 
+		   double *, integer *, integer *);
 
-extern int dgemv_ (char *, integer *, integer *, doublereal *, doublereal *, 
-		   integer *, doublereal *, integer *, doublereal *, 
-		   doublereal *, integer *);
+extern int dgemv_ (char *, integer *, integer *, double *, double *, 
+		   integer *, double *, integer *, double *, 
+		   double *, integer *);
 
-extern int dcopy_ (integer *, doublereal *, integer *, doublereal *, 
+extern int dcopy_ (integer *, double *, integer *, double *, 
 		   integer *);
 
-extern int dswap_ (integer *, doublereal *, integer *, doublereal *, 
+extern int dswap_ (integer *, double *, integer *, double *, 
 		   integer *);
 
-extern int daxpy_ (integer *, doublereal *, doublereal *, integer *, 
-		   doublereal *, integer *);
+extern int daxpy_ (integer *, double *, double *, integer *, 
+		   double *, integer *);
 
-extern int dpotrs_ (char *, integer *, integer *, doublereal *, integer *, 
-		    doublereal *, integer *, integer *);
+extern int dpotrs_ (char *, integer *, integer *, double *, integer *, 
+		    double *, integer *, integer *);
 
-extern doublereal ddot_ (integer *, doublereal *, integer *, doublereal *, 
-			 integer *);
+extern double ddot_ (integer *, double *, integer *, double *, 
+		     integer *);
 
-static int stepy_ (integer *n, integer *p, doublereal *a, 
-		   doublereal *d, doublereal *b, doublereal *ada, 
+static int stepy_ (integer *n, integer *p, double *a, 
+		   double *d, double *b, double *ada, 
 		   integer *info)
 {
     integer i, m = *p * *p;
@@ -87,22 +87,22 @@ static int stepy_ (integer *n, integer *p, doublereal *a,
 
 #define ITERSTEP 5
 
-static int lpfnb_ (integer *n, integer *p, doublereal *a, doublereal *c__, 
-		   doublereal *b, doublereal *d__, doublereal *u, doublereal *beta,
-		   doublereal *eps, doublereal *x, doublereal *s, doublereal *y, 
-		   doublereal *z__, doublereal *w, doublereal *dx, doublereal *ds, 
-		   doublereal *dy, doublereal *dz, doublereal *dw, doublereal *dr, 
-		   doublereal *rhs, doublereal *ada, integer *nit, integer *info,
+static int lpfnb_ (integer *n, integer *p, double *a, double *c__, 
+		   double *b, double *d__, double *u, double *beta,
+		   double *eps, double *x, double *s, double *y, 
+		   double *z__, double *w, double *dx, double *ds, 
+		   double *dy, double *dz, double *dw, double *dr, 
+		   double *rhs, double *ada, integer *nit, integer *info,
 		   void (*callback)(void))
 {
     integer a_dim1 = *p, ada_dim1 = *p;
     integer a_offset = 1 + a_dim1, ada_offset = 1 + ada_dim1;
-    doublereal d1, d2;
-    static doublereal g;
+    double d1, d2;
+    static double g;
     static integer i;
-    static doublereal mu, gap;
-    static doublereal dsdw, dxdz;
-    static doublereal deltad, deltap;
+    static double mu, gap;
+    static double dsdw, dxdz;
+    static double deltad, deltap;
     int main_iters = 0;
     int err = 0;
 
@@ -228,7 +228,7 @@ looptop:
 		deltad * ddot_(n, &dw[1], &one, &s[1], &one) + 
 		deltap * deltad * ddot_(n, &ds[1], &one, &dw[1], &one);
 	    d1 = g / mu;
-	    mu = mu * (d1 * (d1 * d1)) / (doublereal) (*n << 1);
+	    mu = mu * (d1 * (d1 * d1)) / (double) (*n << 1);
 	    for (i = 1; i <= *n; ++i) {
 		dr[i] = d__[i] * (mu * (1 / s[i] - 1 / x[i]) + dx[i]
 				  * dz[i] / x[i] - ds[i] * dw[i] / s[i]);
@@ -291,9 +291,9 @@ looptop:
     return err;
 } /* end of lpfnb_ */
 
-int rqfnb_ (integer *n, integer *p, doublereal *a, doublereal *y, 
-	    doublereal *rhs, doublereal *d, doublereal *u, doublereal *beta,
-	    doublereal *eps, doublereal *wn, doublereal *wp, integer *nit, 
+int rqfnb_ (integer *n, integer *p, double *a, double *y, 
+	    double *rhs, double *d, double *u, double *beta,
+	    double *eps, double *wn, double *wp, integer *nit, 
 	    integer *info, void (*callback)(void))
 {
     integer a_dim = *p, wn_dim = *n, wp_dim = *p;
