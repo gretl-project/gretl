@@ -115,13 +115,13 @@ static void *mpiget (void *handle, const char *name, int *err)
 #endif
 
     if (p == NULL) {
-	printf("mpi_dlget: couldn't find '%s'\n", name);
+	printf("mpiget: couldn't find '%s'\n", name);
 	*err += 1;
     }
 
 #if MPI_DEBUG
     else {
-	printf("mpi_dlget: '%s' -> %p\n", name, p);
+	printf("mpiget: '%s' -> %p\n", name, p);
     }
 #endif
 
