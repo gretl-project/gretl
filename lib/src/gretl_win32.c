@@ -2108,3 +2108,132 @@ int win32_get_core_count (void)
 
     return n_cores;
 }
+
+/* The following code is ripped from dlfcn-win32, under LGPL,
+ * Copyright (c) 2007 Ramiro Polla
+ * Copyright (c) 2015 Tiancheng "Timothy" Gu
+ * Copyright (c) 2019 Pali Rohár <pali.rohar@gmail.com>
+ *
+ * Since we only need the dlsym() emulation we don't use the full
+ * library.
+ */
+
+#ifdef _MSC_VER
+/* https://docs.microsoft.com/en-us/cpp/intrinsics/returnaddress */
+#include <intrin.h>
+#pragma intrinsic(_ReturnAddress)
+#else
+/* https://gcc.gnu.org/onlinedocs/gcc/Return-Address.html */
+#ifndef _ReturnAddress
+#define _ReturnAddress() (__builtin_extract_return_addr(__builtin_return_address(0)))
+#endif
+#endif
+
+typedef struct local_object {
+    HMODULE hModule;
+    struct local_object *previous;
+    struct local_object *next;
+} local_object;
+
+static local_object first_object;
+
+/* These functions implement a double linked list for the local objects. */
+static local_object *local_search (HMODULE hModule)
+{
+    local_object *pobject;
+
+    if (hModule == NULL) {
+        return NULL;
+    }
+
+    for (pobject = &first_object; pobject; pobject = pobject->next) {
+        if (pobject->hModule == hModule) {
+            return pobject;
+	}
+    }
+
+    return NULL;
+}
+
+/* Load Psapi.dll at runtime, this avoids linking caveat */
+
+static BOOL MyEnumProcessModules (HANDLE hProcess, HMODULE *lphModule,
+				  DWORD cb, LPDWORD lpcbNeeded)
+{
+    static BOOL (WINAPI *EnumProcessModulesPtr)(HANDLE, HMODULE *, DWORD, LPDWORD);
+    HMODULE psapi;
+
+    if (!EnumProcessModulesPtr) {
+        psapi = LoadLibraryA("Psapi.dll");
+        if (psapi) {
+            EnumProcessModulesPtr = (BOOL (WINAPI *)(HANDLE, HMODULE *, DWORD, LPDWORD))
+		GetProcAddress(psapi, "EnumProcessModules");
+	}
+        if (!EnumProcessModulesPtr) {
+            return 0;
+	}
+    }
+
+    return EnumProcessModulesPtr(hProcess, lphModule, cb, lpcbNeeded);
+}
+
+__declspec(noinline) /* Needed for _ReturnAddress() */
+void *dlsym (void *handle, const char *name)
+{
+    FARPROC symbol;
+    HMODULE hCaller;
+    HMODULE hModule;
+    HANDLE hCurrentProc;
+
+    symbol = NULL;
+    hCaller = NULL;
+    hModule = GetModuleHandle(NULL);
+    hCurrentProc = GetCurrentProcess();
+
+    if (handle == RTLD_DEFAULT) {
+        /* The symbol lookup happens in the normal global scope; that is,
+         * a search for a symbol using this handle would find the same
+         * definition as a direct use of this symbol in the program code.
+         * So use same lookup procedure as when filename is NULL.
+         */
+        handle = hModule;
+    }
+
+    symbol = GetProcAddress((HMODULE) handle, name);
+
+    /* If the handle for the original program file is passed, also search
+     * in all globally loaded objects.
+     */
+
+    if (symbol == NULL && hModule == handle) {
+        HMODULE *modules;
+        DWORD cbNeeded;
+        DWORD dwSize;
+        size_t i;
+
+        /* GetModuleHandle(NULL) only returns the current program file. So
+         * if we want to get ALL loaded module including those in linked DLLs,
+         * we have to use EnumProcessModules().
+         */
+        if (MyEnumProcessModules(hCurrentProc, NULL, 0, &dwSize) != 0) {
+	    modules = malloc(dwSize);
+            if (modules != NULL) {
+		if (MyEnumProcessModules(hCurrentProc, modules, dwSize, &cbNeeded) != 0 &&
+		    dwSize == cbNeeded) {
+                    for (i = 0; i < dwSize / sizeof(HMODULE); i++) {
+			if (local_search(modules[i])) {
+                            continue;
+			}
+                        symbol = GetProcAddress(modules[i], name);
+                        if (symbol != NULL) {
+                            break;
+			}
+                    }
+                }
+                free(modules);
+            }
+        }
+    }
+
+    return (void *) symbol;
+}
