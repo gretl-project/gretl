@@ -3257,22 +3257,6 @@ static NODE *numeric_jacobian_or_hessian (NODE *l, NODE *m, NODE *r,
     return ret;
 }
 
-static NODE *cmatrix_printf (NODE *l, NODE *r, parser *p)
-{
-    NODE *ret = aux_scalar_node(p);
-
-    if (ret != NULL) {
-	const char *s = NULL;
-
-	if (r != NULL && r->t == STR) {
-	    s = r->v.str;
-	}
-	ret->v.xval = complex_matrix_printf(l->v.m, s, p->prn);
-    }
-
-    return ret;
-}
-
 /* note: allows @n to be either a regular matrix node or a
    matrix-pointer node
 */
@@ -16059,13 +16043,9 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_MWRITE:
-    case HF_CPRINTF:
 	/* matrix, with string as second arg */
-	if (t->t == F_MWRITE && l->t == MAT &&
-	    m->t == STR && null_or_scalar(r)) {
+	if (l->t == MAT && m->t == STR && null_or_scalar(r)) {
 	    ret = matrix_file_write(l, m, r, p);
-	} else if (t->t == HF_CPRINTF && null_or_string(r)) {
-	    ret = cmatrix_printf(l, r, p);
 	} else {
 	    p->err = E_TYPES;
 	}

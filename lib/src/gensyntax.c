@@ -342,7 +342,6 @@ static NODE *base (parser *p, NODE *up)
     case CON:
     case DVAR:
     case MVAR:
-    case OBS:
     case LIST:
     case WLIST:
     case DBUNDLE:
@@ -350,9 +349,6 @@ static NODE *base (parser *p, NODE *up)
     case NUM_M:
     case OSL:
     case UNDEF:
-	if (p->sym == OBS) {
-	    fprintf(stderr, "*** gensyntax: base: sym = OBS\n");
-	}
 	t = newref(p, p->sym);
 	lex(p);
 	break;
@@ -400,22 +396,6 @@ static NODE *base (parser *p, NODE *up)
 	context_error(0, p, "base");
 	break;
     }
-
-#if 0
-    /* This check ought to be redundant, and I believe it is
-       now redundant, but I'm leaving it here for the present,
-       just in case. AC 2011-09-05
-    */
-    if (p->err == 0 && p->sym != EOT && p->sym != QUERY &&
-	!(p->sym > U_MAX && p->sym < PUNCT_MAX)) {
-	/* catch high-level syntax errors: a "base" is followed
-	   by something that cannot really follow, e.g. a series
-	   is followed by another series
-	*/
-	fprintf(stderr, "gensytax: base: bad exit-sym = %d\n", p->sym);
-	p->err = E_PARSE;
-    }
-#endif
 
 #if SDEBUG
     notify("base", t, p);
