@@ -20,6 +20,7 @@
 #include "libgretl.h"
 #include "libset.h"
 #include "gretl_matrix.h"
+#include "gretl_cmatrix.h"
 
 #include <errno.h>
 #include <assert.h>
@@ -3157,6 +3158,16 @@ void gretl_matrix_print (const gretl_matrix *m, const char *msg)
 	    fprintf(stderr, "%s: matrix is NULL\n", msg);
 	} else {
 	    fputs("matrix is NULL\n", stderr);
+	}
+	return;
+    }
+
+    if (m->is_complex) {
+	PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+
+	if (prn != NULL) {
+	    complex_matrix_print(m, msg, prn);
+	    gretl_print_destroy(prn);
 	}
 	return;
     }

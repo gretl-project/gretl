@@ -19,8 +19,9 @@
 
 #include "libgretl.h"
 #include "usermat.h"
-#include "matrix_extra.h"
 #include "libset.h"
+#include "gretl_cmatrix.h"
+#include "matrix_extra.h"
 #include "swap_bytes.h"
 
 #ifdef WIN32
@@ -1823,17 +1824,17 @@ void gretl_matrix_print_with_format (const gretl_matrix *m,
 
     if (gretl_is_null_matrix(m) || fmt == NULL || *fmt == '\0') {
 	real_matrix_print_to_prn(m, NULL, 1, NULL, NULL, -1, -1, prn);
+    } else if (m->is_complex) {
+	complex_matrix_printf(m, fmt, prn);
     } else {
 	const char **rownames = NULL;
 	char *ifmt = NULL, *xfmt = NULL;
 	char *intcols = NULL;
 	int llen = 0, intcast = 0;
-	double x;
 	int cpos = strlen(fmt) - 1;
-	char c;
+	char c = fmt[cpos];
 	int i, j, k;
-
-	c = fmt[cpos];
+	double x;
 
 	if (c == 'd' || c == 'u' || c == 'x' || c == 'l') {
 	    intcast = 1;

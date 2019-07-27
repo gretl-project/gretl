@@ -4118,7 +4118,7 @@ static void matrix_minmax_indices (int f, int *mm, int *rc, int *idx)
 #define cmplx_func(f) (f == HF_CMATRIX || f == HF_CMMULT || \
 		       f == HF_CINV || f == HF_CFFT || \
 		       f == HF_CTRAN || f == HF_CHPROD || \
-		       f == HF_CEXP)
+		       f == HF_CEXP || f == HF_CDET)
 
 static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 {
@@ -4233,10 +4233,16 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 		ret->v.m = gretl_matrix_resample(m, &p->err);
 	    }
 	    break;
+	case F_INV:
+	    if (m->is_complex) {
+		ret->v.m = gretl_zgetri(m, &p->err);
+	    } else {
+		ret->v.m = apply_ovwrite_func(m, f, optparm, tmpmat, &p->err);
+	    }
+	    break;
 	case F_CDEMEAN:
 	case F_CHOL:
 	case F_PSDROOT:
-	case F_INV:
 	case F_INVPD:
 	case F_GINV:
 	case F_UPPER:
@@ -4318,6 +4324,9 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    break;
 	case HF_CEXP:
 	    ret->v.m = gretl_cexp(m, &p->err);
+	    break;
+	case HF_CDET:
+	    ret->v.m = gretl_cmatrix_determinant(m, &p->err);
 	    break;
 	default:
 	    break;
@@ -15928,6 +15937,7 @@ static NODE *eval (NODE *t, parser *p)
     case HF_CFFT:
     case HF_CTRAN:
     case HF_CEXP:
+    case HF_CDET:
 	/* matrix -> matrix functions */
 	if (l->t == MAT || l->t == NUM) {
 	    ret = matrix_to_matrix_func(l, r, t->t, p);
