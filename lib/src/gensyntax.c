@@ -247,6 +247,12 @@ static int push_bn_node (NODE *t, NODE *n)
 
 #ifdef G_OS_WIN32
 
+#if 1
+
+# include "dlfcn-win32.c"
+
+#else
+
 #define RTLD_DEFAULT (void *) 0
 
 static void *dlsym (void *unused, const char *name)
@@ -277,6 +283,8 @@ static void *dlsym (void *unused, const char *name)
 
     return ptr;
 }
+
+# endif
 
 #endif
 
