@@ -5232,7 +5232,7 @@ static double real_apply_func (double x, NODE *fun, parser *p)
     if (fun->v.ptr != NULL) {
 	double (*dfunc) (double) = fun->v.ptr;
 
-#if 0
+#if 1
 	fprintf(stderr, "%s: using %p\n", getsymb(f), fun->v.ptr);
 #endif
 	y = dfunc(x);

@@ -26,6 +26,8 @@
 
 #ifndef G_OS_WIN32
 # include <dlfcn.h>
+#else
+# include <windows.h>
 #endif
 
 #if GENDEBUG
@@ -249,13 +251,31 @@ static int push_bn_node (NODE *t, NODE *n)
 
 static void *dlsym (void *unused, const char *name)
 {
-    static void *self;
+    static HMODULE self;
+    void *ptr;
 
-    if (self == NULL) {
+    if (!self) {
 	self = GetModuleHandle(NULL);
     }
+    fprintf(stderr, "self = %p\n", (void *) self);
 
-    return GetProcAddress(self, symbol);
+    ptr = GetProcAddress(self, name);
+    if (ptr) {
+        fprintf(stderr, "got addr for %s\n", name);
+    } else {
+        fprintf(stderr, "try log -> %p\n", GetProcAddress(self, "log"));
+        fprintf(stderr, "try log_ -> %p\n", GetProcAddress(self, "log_"));
+        fprintf(stderr, "try __imp_log -> %p\n",
+            GetProcAddress(self, "__imp_log"));
+        fprintf(stderr, "try digamma -> %p\n",
+            GetProcAddress(self, "digamma"));
+        fprintf(stderr, "try menu_op_action -> %p\n",
+            GetProcAddress(self, "menu_op_action"));
+        fprintf(stderr, "try menu_op_action_ -> %p\n",
+            GetProcAddress(self, "menu_op_action_"));
+    }
+
+    return ptr;
 }
 
 #endif
