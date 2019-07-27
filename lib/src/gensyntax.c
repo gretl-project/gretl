@@ -24,6 +24,10 @@
 #include "gretl_string_table.h"
 #include "genr_optim.h"
 
+#ifndef G_OS_WIN32
+# include <dlfcn.h>
+#endif
+
 #if GENDEBUG
 # define SDEBUG GENDEBUG
 # define MDEBUG GENDEBUG
@@ -237,6 +241,45 @@ static int push_bn_node (NODE *t, NODE *n)
 #endif
 
     return 0;
+}
+
+#ifdef G_OS_WIN32
+
+#define RTLD_DEFAULT (void *) 0
+
+static void *dlsym (void *unused, const char *name)
+{
+    static void *self;
+
+    if (self == NULL) {
+	self = GetModuleHandle(NULL);
+    }
+
+    return GetProcAddress(self, symbol);
+}
+
+#endif
+
+void *get_c_function_pointer (const char *name)
+{
+    return dlsym(RTLD_DEFAULT, name);
+}
+
+static void maybe_attach_fn_pointer (NODE *n)
+{
+    if (n->t <= F_SQRT) {
+	n->v.ptr = dlsym(RTLD_DEFAULT, getsymb(n->t));
+    } else if (n->t <= F_DIGAMMA) {
+	if (n->t == F_ABS) {
+	    n->v.ptr = dlsym(RTLD_DEFAULT, "fabs");
+	} else if (n->t == F_GAMMA) {
+	    n->v.ptr = dlsym(RTLD_DEFAULT, "gamma_function");
+	} else if (n->t == F_LNGAMMA) {
+	    n->v.ptr = dlsym(RTLD_DEFAULT, "ln_gamma");
+	} else if (n->t == F_DIGAMMA) {
+	    n->v.ptr = dlsym(RTLD_DEFAULT, "digamma");
+	}
+    }
 }
 
 static void expected_symbol_error (int c, parser *p)
@@ -1357,6 +1400,7 @@ static NODE *powterm (parser *p, NODE *l)
     } else if (func1_symb(sym)) {
 	t = newb1(sym, NULL);
 	if (t != NULL) {
+	    maybe_attach_fn_pointer(t);
 	    lex(p);
 	    get_args(t, p, sym, 1, opt, &next);
 	}

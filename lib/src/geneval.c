@@ -4118,7 +4118,7 @@ static void matrix_minmax_indices (int f, int *mm, int *rc, int *idx)
 #define cmplx_func(f) (f == HF_CMATRIX || f == HF_CMMULT || \
 		       f == HF_CINV || f == HF_CFFT || \
 		       f == HF_CTRAN || f == HF_CHPROD || \
-		       f == HF_CEXP || f == HF_CDET)
+		       f == HF_CEXP || f == HF_CDET || f == HF_CONJ)
 
 static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 {
@@ -5226,8 +5226,9 @@ static NODE *process_subslice (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static double real_apply_func (double x, int f, parser *p)
+static double real_apply_func (double x, NODE *fun, parser *p)
 {
+    int f = fun->t;
     double y;
 
     errno = 0;
@@ -5242,6 +5243,20 @@ static double real_apply_func (double x, int f, parser *p)
 	default:
 	    return NADBL;
 	}
+    }
+
+    if (fun->v.ptr != NULL) {
+	double (*dfunc) (double) = fun->v.ptr;
+
+#if 0
+	fprintf(stderr, "%s: using %p\n", getsymb(f), fun->v.ptr);
+#endif
+	y = dfunc(x);
+	if (na(y)) {
+	    /* do we want this? */
+	    eval_warning(p, f, errno);
+	}
+	return y;
     }
 
     switch (f) {
@@ -5449,7 +5464,7 @@ static NODE *atan2_node (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *apply_scalar_func (NODE *n, int f, parser *p)
+static NODE *apply_scalar_func (NODE *n, NODE *f, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
 
@@ -5515,7 +5530,7 @@ static NODE *matrix_isnan_node (NODE *n, parser *p)
     return ret;
 }
 
-static NODE *apply_series_func (NODE *n, int f, parser *p)
+static NODE *apply_series_func (NODE *n, NODE *f, parser *p)
 {
     NODE *ret = aux_series_node(p);
     int t;
@@ -5527,7 +5542,7 @@ static NODE *apply_series_func (NODE *n, int f, parser *p)
 	if (n->t == SERIES) {
 	    x = n->v.xvec;
 	} else {
-	    x = get_colvec_as_series(n, f, p);
+	    x = get_colvec_as_series(n, f->t, p);
 	}
 
 	if (!p->err) {
@@ -5554,7 +5569,7 @@ static NODE *apply_series_func (NODE *n, int f, parser *p)
 	if (n->t == SERIES) {
 	    x = n->v.xvec;
 	} else {
-	    x = get_colvec_as_series(n, f, p);
+	    x = get_colvec_as_series(n, f->t, p);
 	}
 
 	if (!p->err) {
@@ -8904,15 +8919,22 @@ static NODE *pergm_node (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static int not_for_complex (int f)
+{
+    gretl_errmsg_sprintf("%s: %s", getsymb(f),
+			 _("complex arguments are not supported"));
+    return E_TYPES;
+}
+
 /* application of scalar function to each element of matrix */
 
-static NODE *apply_matrix_func (NODE *t, int f, parser *p)
+static NODE *apply_matrix_func (NODE *t, NODE *f, parser *p)
 {
     const gretl_matrix *m = t->v.m;
     int rows = m->rows;
     NODE *ret;
 
-    if (m->is_complex && (f == F_ABS || f == HF_CARG)) {
+    if (m->is_complex && (f->t == F_ABS || f->t == HF_CARG)) {
 	rows /= 2;
     }
 
@@ -8922,13 +8944,41 @@ static NODE *apply_matrix_func (NODE *t, int f, parser *p)
     }
 
     if (m->is_complex) {
-	p->err = apply_cmatrix_func(ret->v.m, m, f);
+	double complex (*cfunc) (double complex) = NULL;
+	double (*dfunc) (double complex) = NULL;
+
+	if (f->t == F_ABS) {
+	    dfunc = cabs;
+	} else if (f->t == HF_CARG) {
+	    dfunc = carg;
+	} else {
+	    const char *s = getsymb(f->t);
+	    char symbol[8];
+
+	    if (strlen(s) > 6) {
+		*symbol = '\0';
+	    } else if (*s == '_') {
+		strcpy(symbol, s + 1);
+	    } else {
+		/* revise after unhiding complex funcs! */
+		sprintf(symbol, "c%s", s);
+	    }
+	    if (*symbol != '\0') {
+		cfunc = get_c_function_pointer(symbol);
+	    }
+	}
+
+	if (dfunc == NULL && cfunc == NULL) {
+	    p->err = not_for_complex(f->t);
+	} else {
+	    p->err = apply_cmatrix_func(ret->v.m, m,
+					cfunc, dfunc);
+	}
     } else {
 	int i, n = m->rows * m->cols;
 	double x;
 
 	for (i=0; i<n && !p->err; i++) {
-	    /* FIXME error handling? */
 	    x = real_apply_func(m->val[i], f, p);
 	    ret->v.m->val[i] = x;
 	}
@@ -15383,15 +15433,15 @@ static NODE *eval (NODE *t, parser *p)
     case F_EASTER:
 	/* functions taking one argument, any type */
 	if (l->t == NUM) {
-	    ret = apply_scalar_func(l, t->t, p);
+	    ret = apply_scalar_func(l, t, p);
 	} else if (l->t == SERIES) {
 	    if (cast_series_to_list(p, l, t->t)) {
 		ret = apply_list_func(l, NULL, t->t, p);
 	    } else {
-		ret = apply_series_func(l, t->t, p);
+		ret = apply_series_func(l, t, p);
 	    }
 	} else if (l->t == MAT) {
-	    ret = apply_matrix_func(l, t->t, p);
+	    ret = apply_matrix_func(l, t, p);
 	} else if (ok_list_node(l, p) && t->t == F_LOG) {
 	    ret = apply_list_func(l, NULL, t->t, p);
 	} else {
@@ -15399,8 +15449,9 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case HF_CARG:
+    case HF_CONJ:
 	if (l->t == MAT && l->v.m->is_complex) {
-	    ret = apply_matrix_func(l, t->t, p);
+	    ret = apply_matrix_func(l, t, p);
 	} else {
 	    p->err = E_TYPES;
 	}
@@ -15448,9 +15499,9 @@ static NODE *eval (NODE *t, parser *p)
     case F_ZEROMISS:
 	/* one series or scalar argument needed */
 	if (l->t == SERIES || l->t == MAT) {
-	    ret = apply_series_func(l, t->t, p);
+	    ret = apply_series_func(l, t, p);
 	} else if (l->t == NUM) {
-	    ret = apply_scalar_func(l, t->t, p);
+	    ret = apply_scalar_func(l, t, p);
 	} else {
 	    node_type_error(t->t, 0, SERIES, l, p);
 	}
@@ -15465,9 +15516,9 @@ static NODE *eval (NODE *t, parser *p)
 		node_type_error(t->t, 0, SERIES, l, p);
 	    }
 	} else if (l->t == SERIES) {
-	    ret = apply_series_func(l, t->t, p);
+	    ret = apply_series_func(l, t, p);
 	} else if (l->t == NUM) {
-	    ret = apply_scalar_func(l, t->t, p);
+	    ret = apply_scalar_func(l, t, p);
 	} else if (l->t == LIST) {
 	    ret = list_ok_func(l, t->t, p);
 	} else {

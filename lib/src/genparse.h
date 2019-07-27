@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* shared private header for all 'genr' related modules */
@@ -34,13 +34,13 @@ enum {
               U_POS,
               U_NOT,
               U_ADDR,
-              U_MAX,      /* SEPARATOR: end of unary operators */ 
+              U_MAX,      /* SEPARATOR: end of unary operators */
               B_ASN,
               B_ADD,
               B_SUB,
               B_MUL,
   /* 10 */    B_DIV,
-              B_MOD, 
+              B_MOD,
               B_POW,
               B_EQ,
               B_LT,
@@ -77,7 +77,7 @@ enum {
               G_LBR,      /* left bracket */
               G_RBR,      /* right bracket */
               G_LCB,      /* left curly bracket */
-	      G_RCB,      /* right curly bracket */  
+	      G_RCB,      /* right curly bracket */
 	      P_COM,	  /* punctuation: comma */
   /* 50 */    P_DOT,	  /* period */
 	      P_SEMI,	  /* semi-colon */
@@ -104,7 +104,7 @@ enum {
 	      MSPEC,	  /* evaluated matrix subspec */
 	      SUBSL,	  /* row or column component of MSPEC */
 	      MDEF,	  /* explicit matrix definition {...} */
-              LAG,        /* variable plus lag length */	  
+              LAG,        /* variable plus lag length */
 	      DVAR,	  /* $ "dataset" variable (mostly scalar or series) */
 	      MVAR,	  /* $ model var (scalar, series, or matrix) */
 	      LISTVAR,    /* variable in list, dot syntax */
@@ -128,18 +128,15 @@ enum {
 	      QUERY,      /* ternary "?" expression */
 	      PTR,        /* miscellaneous pointer */
 	      EOT,	  /* end of transmission */
-	      UNK 
+	      UNK
 };
 
 /* functions: don't collide with the enumeration above */
 
 enum {
     F1_MIN = 1 << 8,
-    F_ABS,
-    F_TOINT,
     F_CEIL,
     F_FLOOR,
-    F_ROUND,
     F_SIN,
     F_COS,
     F_TAN,
@@ -156,13 +153,19 @@ enum {
     F_LOG10,
     F_LOG2,
     F_EXP,
-    F_SQRT,
+    F_SQRT,       /* to here: C-library functions */
+    F_ABS,
+    F_GAMMA,
+    F_LNGAMMA,
+    F_DIGAMMA,    /* to here libgretl C functions */
+    F_TOINT,
+    F_ROUND,
     F_DIFF,	  /* first difference */
     F_LDIFF,	  /* log difference */
     F_SDIFF,	  /* seasonal difference */
     F_SORT,	  /* ascending sort */
     F_DSORT,	  /* descending sort */
-    F_RANKING,    
+    F_RANKING,
     F_ODEV,	  /* orthogonal deviation */
     F_NOBS,
     F_CUM,
@@ -172,7 +175,7 @@ enum {
     F_ZEROMISS,
     F_MEDIAN,
     F_GINI,
-    F_SUM, 
+    F_SUM,
     F_SUMALL,
     F_MEAN,
     F_MIN,
@@ -185,14 +188,11 @@ enum {
     F_CNORM,
     F_DNORM,
     F_QNORM,
-    F_GAMMA,	
-    F_LNGAMMA,
-    F_DIGAMMA,
     F_SUMR,
     F_SUMC,
     F_PRODR,
     F_PRODC,
-    F_MEANR,	 
+    F_MEANR,
     F_MEANC,
     F_CHOL,
     F_PSDROOT,
@@ -202,7 +202,7 @@ enum {
     F_DIAG,
     F_TRANSP,
     F_VEC,
-    F_VECH,	
+    F_VECH,
     F_UNVECH,
     F_ROWS,
     F_COLS,
@@ -212,7 +212,7 @@ enum {
     F_NORM1,
     F_INFNORM,
     F_RCOND,
-    F_RANK, 
+    F_RANK,
     F_OBSNUM,
     F_ISDISCR,
     F_ISDUMMY,
@@ -223,7 +223,7 @@ enum {
     F_PVAL,
     F_CDF,
     F_INVCDF,
-    F_CRIT, 
+    F_CRIT,
     F_URCPVAL,
     F_RANDGEN,
     F_MRANDGEN,
@@ -236,7 +236,7 @@ enum {
     F_MAXC,
     F_MINR,
     F_MAXR,
-    F_IMINC, 
+    F_IMINC,
     F_IMAXC,
     F_IMINR,
     F_IMAXR,
@@ -287,6 +287,7 @@ enum {
     HF_CEXP,
     HF_CARG,
     HF_CDET,
+    HF_CONJ,
     HF_JBTERMS,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     HF_LISTINFO,
@@ -309,7 +310,7 @@ enum {
     F_MNORM,
     F_QFORM,
     F_QR,
-    F_EIGSYM,	 
+    F_EIGSYM,
     F_EIGGEN,
     HF_CEIGH,
     F_QUANTILE,
@@ -581,7 +582,7 @@ union val {
     struct branchn bn;
     int idnum;
     char *str;
-    double xval; 
+    double xval;
     double *xvec;
     int *ivec;
     gretl_matrix *m;
@@ -645,7 +646,7 @@ enum parser_flags {
 
 struct lhinfo {
     int t;                 /* type of pre-existing LHS variable, if any */
-    char name[VNAMELEN];   /* name of LHS variable */   
+    char name[VNAMELEN];   /* name of LHS variable */
     char *label;           /* descriptive string for series */
     int vnum;              /* ID number of pre-existing LHS series */
     user_var *uv;          /* address of pre-existing LHS variable */
@@ -705,7 +706,7 @@ const char *getsymb_full (int t, const parser *p);
 void set_parsing_query (int s);
 void set_doing_genseries (int s);
 
-int realgen (const char *s, parser *p, DATASET *dset, 
+int realgen (const char *s, parser *p, DATASET *dset,
 	     PRN *prn, int flags, int targtype);
 void gen_save_or_print (parser *p, PRN *prn);
 void gen_cleanup (parser *p);
@@ -730,10 +731,10 @@ int delete_function_override (const char *funname,
 int check_declarations (char ***pS, parser *p);
 
 /* in genfuncs.c, used only internally */
-int cross_sectional_stat (double *x, const int *list, 
+int cross_sectional_stat (double *x, const int *list,
 			  const DATASET *dset,
 			  int f);
-int x_sectional_weighted_stat (double *x, const int *list, 
+int x_sectional_weighted_stat (double *x, const int *list,
 			       const int *wlist,
 			       const DATASET *dset,
 			       int f);
@@ -741,6 +742,9 @@ int x_sectional_weighted_stat (double *x, const int *list,
 /* in geneval.c, used only internally */
 double dvar_get_scalar (int i, const DATASET *dset);
 int *node_get_list (NODE *n, parser *p);
+
+/* in gensyntax.c, used only internally */
+void *get_c_function_pointer (const char *name);
 
 /* helper functions for manual, gretl.lang file */
 int gen_func_count (void);

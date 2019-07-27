@@ -18,13 +18,12 @@
  */
 
 #include "libgretl.h"
-#include "genparse.h"
 #include "clapack_complex.h"
-#include "gretl_cmatrix.h"
 
 #include <fftw3.h>
-#include <complex.h>
 #include <errno.h>
+
+#include "gretl_cmatrix.h"
 
 typedef union _cz {
     cmplx c;
@@ -1196,7 +1195,8 @@ int cmatrix_add_scalar (gretl_matrix *targ,
 
 int apply_cmatrix_func (gretl_matrix *targ,
 			const gretl_matrix *src,
-			int f)
+			double complex (*cfunc) (double complex),
+			double (*dfunc) (double complex))
 {
     double complex *csrc = (double complex *) src->val;
     int n = (src->rows / 2) * src->cols;
@@ -1204,55 +1204,15 @@ int apply_cmatrix_func (gretl_matrix *targ,
 
     errno = 0;
 
-    if (f == F_ABS || f == HF_CARG) {
-	double (*dfunc) (double complex) = (f == F_ABS) ? cabs : carg;
-
-	for (i=0; i<n && !errno; i++) {
+    if (dfunc != NULL) {
+	for (i=0; i<n; i++) {
 	    targ->val[i] = dfunc(csrc[i]);
 	}
     } else {
 	double complex *ctarg = (double complex *) targ->val;
-	double complex (*cfunc) (double complex);
 
 	targ->is_complex = 1;
-
-	/* FIXME add more functions below */
-
-	if (f == F_ACOS) {
-	    cfunc = cacos;
-	} else if (f == F_ASIN) {
-	    cfunc = casin;
-	} else if (f == F_ATAN) {
-	    cfunc = catan;
-	} else if (f == F_COS) {
-	    cfunc = ccos;
-	} else if (f == F_SIN) {
-	    cfunc = csin;
-	} else if (f == F_TAN) {
-	    cfunc = ctan;
-	} else if (f == F_ACOSH) {
-	    cfunc = cacosh;
-	} else if (f == F_ASINH) {
-	    cfunc = casinh;
-	} else if (f == F_ATANH) {
-	    cfunc = catanh;
-	} else if (f == F_COSH) {
-	    cfunc = ccosh;
-	} else if (f == F_SINH) {
-	    cfunc = csinh;
-	} else if (f == F_TANH) {
-	    cfunc = ctanh;
-	} else if (f == F_SQRT) {
-	    cfunc = csqrt;
-	} else if (f == F_LOG) {
-	    cfunc = clog;
-	} else if (f == F_EXP) {
-	    cfunc = cexp;
-	} else {
-	    return E_TYPES;
-	}
-
-	for (i=0; i<n && !errno; i++) {
+	for (i=0; i<n; i++) {
 	    ctarg[i] = cfunc(csrc[i]);
 	}
     }
@@ -1265,7 +1225,7 @@ int apply_cmatrix_func (gretl_matrix *targ,
     return err;
 }
 
-static gretl_matrix *complex_scalar_to_mat (complex double z)
+static gretl_matrix *complex_scalar_to_mat (double complex z)
 {
     gretl_matrix *ret = gretl_matrix_alloc(2, 1);
 

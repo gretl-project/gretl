@@ -20,6 +20,8 @@
 #ifndef GRETL_CMATRIX_H
 #define GRETL_CMATRIX_H
 
+#include <complex.h>
+
 gretl_matrix *gretl_matrix_fft (const gretl_matrix *y, int *err);
 
 gretl_matrix *gretl_matrix_ffti (const gretl_matrix *y, int *err);
@@ -73,7 +75,8 @@ int cmatrix_add_scalar (gretl_matrix *targ,
 
 int apply_cmatrix_func (gretl_matrix *targ,
 			const gretl_matrix *src,
-			int f);
+			double complex (*cfunc) (double complex),
+			double (*dfunc) (double complex));
 
 gretl_matrix *gretl_cmatrix_determinant (const gretl_matrix *X,
 					 int *err);
