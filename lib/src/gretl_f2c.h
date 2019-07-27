@@ -10,8 +10,6 @@
 typedef int32_t integer;
 typedef float real;
 typedef double doublereal;
-typedef struct { real r, i; } complex;
-typedef struct { doublereal r, i; } doublecomplex;
 typedef int logical;
 
 /* I/O stuff */

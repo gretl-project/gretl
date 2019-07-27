@@ -1408,15 +1408,15 @@ int dtzrzf_(integer *m, integer *n, doublereal *a, integer *
 int dpstrf_(char *uplo, integer *n, doublereal *a, integer *lda, integer *piv,
 	    integer *rank, double *tol, double *work, integer *info);
  
-integer icmax1_(integer *n, complex *cx, integer *incx);
- 
 integer ieeeck_(integer *ispec, real *zero, real *one);
  
 integer ilaenv_(integer *ispec, char *name__, char *opts, integer *n1, 
 		integer *n2, integer *n3, integer *n4, ftnlen name_len, ftnlen 
 		opts_len);
+
+/* integer icmax1_(integer *n, complex *cx, integer *incx); */
  
-integer izmax1_(integer *n, doublecomplex *cx, integer *incx);
+/* integer izmax1_(integer *n, cmplx *cx, integer *incx); */
 
 /* selected BLAS functions */
 
