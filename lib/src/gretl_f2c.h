@@ -1,15 +1,14 @@
 #ifndef GRETL_F2C_H
 #define GRETL_F2C_H
 
-/* minimal support for f2c'd source files: we assume that
-   most fortran-isms will be purged from such files
+/* Minimal support for f2c'd source files: we assume that
+   most fortran-isms will be purged from such files,
+   including real -> float and doublereal -> double.
 */
 
 #include <stdint.h>
 
 typedef int32_t integer;
-typedef float real;
-typedef double doublereal;
 typedef int logical;
 
 /* I/O stuff */
