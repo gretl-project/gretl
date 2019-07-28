@@ -555,13 +555,13 @@ static void duration_set_predictions (MODEL *pmod, duration_info *dinfo,
 	if (medians) {
 	    G = pow(log(2.0), s);
 	} else {
-	    G = gamma_function(1 + s);
+	    G = gammafun(1 + s);
 	}
     } else if (dinfo->dist == DUR_EXPON) {
 	if (medians) {
 	    G = log(2.0);
 	} else {
-	    G = gamma_function(2.0);
+	    G = gammafun(2.0);
 	}
     } else if (dinfo->dist == DUR_LOGNORM) {
 	s22 = s * s / 2;

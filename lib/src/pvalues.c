@@ -46,13 +46,13 @@
 static int nct_pdf_array (double df, double delta, double *x, int n);
 
 /**
- * gamma_function:
+ * gammafun:
  * @x: argument.
  *
  * Returns: the gamma function of @x, or #NADBL on failure.
  */
 
-double gamma_function (double x)
+double gammafun (double x)
 {
     double ret = cephes_gamma(x);
 
@@ -64,13 +64,13 @@ double gamma_function (double x)
 }
 
 /**
- * ln_gamma:
+ * lngamma:
  * @x: argument.
  *
  * Returns: the log gamma function of @x, or #NADBL on failure.
  */
 
-double ln_gamma (double x)
+double lngamma (double x)
 {
     double ret = cephes_lgamma(x);
 
@@ -788,9 +788,9 @@ static double Binv (double p, double q)
     errno = 0;
 
     if (p > 0 && q > 0) {
-	double x1 = ln_gamma(p + q);
-	double x2 = ln_gamma(p);
-	double x3 = ln_gamma(q);
+	double x1 = lngamma(p + q);
+	double x2 = lngamma(p);
+	double x3 = lngamma(q);
 
 	if (!na(x1) && !na(x2) && !na(x3)) {
 	    f = exp(x1 - x2 - x3);
@@ -864,7 +864,7 @@ static int chisq_pdf_array (int m, double *x, int n)
     if (m > 0) {
 	double m2 = m / 2.0;
 	double x1 = pow(.5, m2);
-	double x2 = gamma_function(m2);
+	double x2 = gammafun(m2);
 	double x3, x4;
 
 	if (errno) {
@@ -1034,7 +1034,7 @@ static int beta_pdf_array (double a, double b, double *x, int n)
 	    x[i] = NADBL;
 	}
     } else {
-	double k = exp(ln_gamma(a + b) - ln_gamma(a) - ln_gamma(b));
+	double k = exp(lngamma(a + b) - lngamma(a) - lngamma(b));
 
 	for (i=0; i<n; i++) {
 	    x[i] = k * pow(x[i], a-1) * pow(1.0 - x[i], b-1);
@@ -1294,7 +1294,7 @@ static int gamma_pdf_array (double shape, double scale,
     if (!na(shape) && shape > 0 && !na(scale) && scale > 0) {
 	double x1, x2;
 	double x3 = pow(scale, shape);
-	double x4 = gamma_function(shape);
+	double x4 = gammafun(shape);
 
 	if (errno || na(x4)) {
 	    err = E_NAN;
@@ -1604,8 +1604,8 @@ static double weibull_cdf_comp (double shape, double scale, double x)
 double GED_pdf (double nu, double x)
 {
     if (nu > 0) {
-	double lg1 = ln_gamma(1/nu);
-	double lg3 = ln_gamma(3/nu);
+	double lg1 = lngamma(1/nu);
+	double lg3 = lngamma(3/nu);
 	double lC  = 0.5*(lg3 - 3*lg1);
 	double k   = pow(0.5, 1/nu) * exp(0.5*(lg1 - lg3));
 	double znu = pow(fabs(x/k), nu);
@@ -1621,8 +1621,8 @@ static int GED_pdf_array (double nu, double *x, int n)
     int i, err = 0;
 
     if (nu > 0) {
-	double lg1 = ln_gamma(1/nu);
-	double lg3 = ln_gamma(3/nu);
+	double lg1 = lngamma(1/nu);
+	double lg3 = lngamma(3/nu);
 	double lC  = 0.5*(lg3 - 3*lg1);
 	double k   = pow(0.5, 1/nu) * exp(0.5*(lg1 - lg3));
 	double znu;
@@ -1665,8 +1665,8 @@ double GED_cdf (double nu, double x)
     if (nu > 0) {
 	int sgn    = (x > 0)? 1 : -1;
 	double p   = 1/nu;
-	double lg1 = ln_gamma(p);
-	double lg3 = ln_gamma(3*p);
+	double lg1 = lngamma(p);
+	double lg3 = lngamma(3*p);
 	double k   = pow(0.5, p) * exp(0.5*(lg1 - lg3));
 	double znu = pow(fabs(x/k), nu);
 	double P   = gamma_cdf(p, 2, znu, 1);
@@ -1695,8 +1695,8 @@ double GED_cdf_comp (double nu, double x)
     if (nu > 0) {
 	int sgn    = (x > 0)? 1 : -1;
 	double p   = 1/nu;
-	double lg1 = ln_gamma(p);
-	double lg3 = ln_gamma(3*p);
+	double lg1 = lngamma(p);
+	double lg3 = lngamma(3*p);
 	double k   = pow(0.5, p) * exp(0.5*(lg1 - lg3));
 	double znu = pow(fabs(x/k), nu);
 	double P   = gamma_cdf_comp(p, 2, znu, 1);
@@ -1735,8 +1735,8 @@ double GED_cdf_inverse (double nu, double a)
 	}
 
 	p   = 1/nu;
-	lg1 = ln_gamma(p);
-	lg3 = ln_gamma(3*p);
+	lg1 = lngamma(p);
+	lg3 = lngamma(3*p);
 	sd  = pow(2.0, p) * exp(0.5*(lg3 - lg1));
 	x   = gamma_cdf_inverse(p, 2.0, a2);
 
@@ -1953,7 +1953,7 @@ double nc_chisq_cdf (double df, double delta, double x)
     */
 
     T1 = (double) (icent + 1);
-    lfact = ln_gamma(T1);
+    lfact = lngamma(T1);
     lcntwt = -xnonc + (double)icent*log(xnonc) - lfact;
     centwt = exp(lcntwt);
 
@@ -1969,7 +1969,7 @@ double nc_chisq_cdf (double df, double delta, double x)
 
     dfd2 = df / 2.0 + icent;
     T3 = dfd2 + 1.0;
-    lfact = ln_gamma(T3);
+    lfact = lngamma(T3);
     lcntaj = dfd2 * log(chid2) - chid2 - lfact;
     centaj = exp(lcntaj);
     sum = centwt * pcent;
@@ -2217,7 +2217,7 @@ double nc_snedecor_cdf (double dfn, double dfd, double delta, double x)
       Compute central weight term
     */
     T1 = (double) (icent + 1);
-    centwt = exp(-xnonc + (double) icent * log(xnonc) - ln_gamma(T1));
+    centwt = exp(-xnonc + (double) icent * log(xnonc) - lngamma(T1));
 
     /*
       Compute central incomplete beta term
@@ -2251,7 +2251,7 @@ double nc_snedecor_cdf (double dfn, double dfd, double delta, double x)
     i = icent;
     T4 = adn + b;
     T5 = adn + 1.0;
-    dnterm = exp(ln_gamma(T4)-ln_gamma(T5)-ln_gamma(b) + adn*log(xx) + b*log(yy));
+    dnterm = exp(lngamma(T4)-lngamma(T5)-lngamma(b) + adn*log(xx) + b*log(yy));
 
     while (!qsmall(sum, xmult*betdn) && i > 0) {
 	xmult *= (double) i /xnonc;
@@ -2269,11 +2269,11 @@ double nc_snedecor_cdf (double dfn, double dfd, double delta, double x)
     */
     xmult = centwt;
     if (aup-1.0+b == 0) {
-	upterm = exp(-ln_gamma(aup) - ln_gamma(b) +
+	upterm = exp(-lngamma(aup) - lngamma(b) +
 		     (aup-1.0)*log(xx) + b*log(yy));
     } else {
         T6 = aup - 1.0 + b;
-        upterm = exp(ln_gamma(T6) - ln_gamma(aup) - ln_gamma(b) +
+        upterm = exp(lngamma(T6) - lngamma(aup) - lngamma(b) +
 		     (aup-1.0)*log(xx) + b*log(yy));
     }
 
@@ -2369,9 +2369,9 @@ static int ncf_pdf_array (double dfn, double dfd, double c,
     start = (int) floor(ch);
 
     /* Poisson weight */
-    pw = exp(-ch - ln_gamma(start+1) + start * log(ch));
+    pw = exp(-ch - lngamma(start+1) + start * log(ch));
     /* Beta */
-    beta = exp(ln_gamma(k1+start) + ln_gamma(dfd/2.0) - ln_gamma(start + k2));
+    beta = exp(lngamma(k1+start) + lngamma(dfd/2.0) - lngamma(start + k2));
     a = pw / beta;
     b = (k1 + start) * k;
 
@@ -2567,8 +2567,8 @@ double nc_student_cdf (double df, double delta, double x)
     */
 
     tmp = -dels + k * log(dels);
-    pkf = pkb = exp(tmp - ln_gamma(k + 1));
-    qkf = qkb = exp(tmp - ln_gamma(k + 1.5));
+    pkf = pkb = exp(tmp - lngamma(k + 1));
+    qkf = qkb = exp(tmp - lngamma(k + 1.5));
     pbetaf = pbetab = incbet(a, b, y);
     qbetaf = qbetab = incbet(c, b, y);
 
@@ -2577,11 +2577,11 @@ double nc_student_cdf (double df, double delta, double x)
       associated with the P_i and the Q_i recursively:
     */
 
-    tmp = b * log(1-y) - ln_gamma(b);
-    pgamf = exp(ln_gamma(a+b-1) - ln_gamma(a) + (a-1) * log(y) + tmp);
+    tmp = b * log(1-y) - lngamma(b);
+    pgamf = exp(lngamma(a+b-1) - lngamma(a) + (a-1) * log(y) + tmp);
     pgamb = pgamf * y * (a + b - 1)/a;
 
-    qgamf = exp(ln_gamma(c+b-1) - ln_gamma(c) + (c-1) * log(y) + tmp);
+    qgamf = exp(lngamma(c+b-1) - lngamma(c) + (c-1) * log(y) + tmp);
     qgamb = qgamf * y * (c + b - 1)/c;
 
     /*
@@ -2662,7 +2662,7 @@ double nc_student_pdf (double df, double delta, double x)
     }
 
     if (fabs(x) < 1.0e-12) {
-	tmp = ln_gamma((df+1)/2) - ln_gamma(df/2);
+	tmp = lngamma((df+1)/2) - lngamma(df/2);
 	ret = exp(tmp - 0.5 * delta*delta) / (sqrt(M_PI * df));
     } else {
 	tmp = nc_student_cdf(df+2, delta, x * sqrt(1 + 2.0/df)) -

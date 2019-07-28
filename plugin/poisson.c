@@ -194,19 +194,19 @@ static double negbin_loglik (const double *theta, void *data)
 	/* in NegBin2 psi is the same for all obs, so it can 
 	   be dealt with outside the loop */
 	psi = 1/alpha;
-	lgpsi = ln_gamma(psi);
+	lgpsi = lngamma(psi);
     }
 
     for (t=0; t<nbinfo->T; t++) {
 	if (nbinfo->type == 1) {
 	    psi = mu[t]/alpha;
-	    lgpsi = ln_gamma(psi);
+	    lgpsi = lngamma(psi);
 	}
 
 	mpp = mu[t] + psi;
 	rat = psi/mpp;
 
-	ll[t] = ln_gamma(y[t] + psi) - lgpsi - ln_gamma(y[t] + 1.0);
+	ll[t] = lngamma(y[t] + psi) - lgpsi - lngamma(y[t] + 1.0);
 	ll[t] += psi * log(rat) + y[t] * log(1-rat);
 	nbinfo->ll += ll[t];
     }

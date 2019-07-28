@@ -46,9 +46,9 @@ typedef enum {
     D_LOGISTIC
 } DistCode;
 
-double gamma_function (double x);
+double gammafun (double x);
 
-double ln_gamma (double x);
+double lngamma (double x);
 
 double digamma (double x);
 

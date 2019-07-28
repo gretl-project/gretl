@@ -1260,7 +1260,7 @@ int gretl_rand_GED (double *a, int t1, int t2, double nu)
     }
 
     p = 1.0/nu;
-    scale = pow(0.5, p) * sqrt(gamma_function(p) / gamma_function(3.0*p));
+    scale = pow(0.5, p) * sqrt(gammafun(p) / gammafun(3.0*p));
     err = gretl_rand_gamma(a, t1, t2, p, 2);
 
     if (!err) {
