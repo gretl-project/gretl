@@ -1148,16 +1148,19 @@ static void maybe_preserve_names (gretl_matrix *targ,
 /**
  * gretl_matrix_reverse_rows:
  * @m: source matrix whose rows are to be reversed.
+ * @err: location to receive error code.
  *
  * Returns: a matrix with the same rows as @m, last to first.
  */
 
-gretl_matrix *gretl_matrix_reverse_rows (const gretl_matrix *m)
+gretl_matrix *gretl_matrix_reverse_rows (const gretl_matrix *m,
+					 int *err)
 {
     gretl_matrix *ret;
     int i, r, c;
 
     if (m == NULL) {
+	*err = E_INVARG;
 	return NULL;
     }
 
@@ -1169,14 +1172,15 @@ gretl_matrix *gretl_matrix_reverse_rows (const gretl_matrix *m)
     c = m->cols;
     ret = gretl_matrix_alloc(r, c);
 
-    if (ret != NULL) {
+    if (ret == NULL) {
+	*err = E_ALLOC;
+    } else {
 	for (i=0; i<r; i++) {
 	    gretl_matrix_copy_row(ret, i, m, r-i-1);
 	}
+	maybe_preserve_names(ret, m, 0, 1);
+	maybe_preserve_names(ret, m, 1, 0);
     }
-
-    maybe_preserve_names(ret, m, 0, 1);
-    maybe_preserve_names(ret, m, 1, 0);
 
     return ret;
 }
@@ -1184,11 +1188,13 @@ gretl_matrix *gretl_matrix_reverse_rows (const gretl_matrix *m)
 /**
  * gretl_matrix_reverse_cols:
  * @m: source matrix whose columns are to be reversed.
+ * @err: location to receive error code.
  *
  * Returns: a matrix with the same columns as @m, last to first.
  */
 
-gretl_matrix *gretl_matrix_reverse_cols (const gretl_matrix *m)
+gretl_matrix *gretl_matrix_reverse_cols (const gretl_matrix *m,
+					 int *err)
 {
     gretl_matrix *ret;
     const double *x;
@@ -1197,10 +1203,9 @@ gretl_matrix *gretl_matrix_reverse_cols (const gretl_matrix *m)
     int i, r, c;
 
     if (m == NULL) {
+	*err = E_INVARG;
         return NULL;
-    }
-
-    if (gretl_is_null_matrix(m)) {
+    } else if (gretl_is_null_matrix(m)) {
         return gretl_null_matrix_new();
     }
 
@@ -1209,21 +1214,23 @@ gretl_matrix *gretl_matrix_reverse_cols (const gretl_matrix *m)
     ret = gretl_matrix_alloc(r, c);
 
     if (ret == NULL) {
-        return NULL;
+	*err = E_ALLOC;
+    } else {
+	x = m->val;
+	y = ret->val + r * (c-1);
+	csize = r * sizeof *x;
+
+	for (i=0; i<c; i++) {
+	    memcpy(y, x, csize);
+	    x += r;
+	    y -= r;
+	}
+
+	maybe_preserve_names(ret, m, 1, 1);
+	maybe_preserve_names(ret, m, 0, 0);
+
+	ret->is_complex = m->is_complex;
     }
-
-    x = m->val;
-    y = ret->val + r * (c-1);
-    csize = r * sizeof *x;
-
-    for (i=0; i<c; i++) {
-        memcpy(y, x, csize);
-        x += r;
-        y -= r;
-    }
-
-    maybe_preserve_names(ret, m, 1, 1);
-    maybe_preserve_names(ret, m, 0, 0);
 
     return ret;
 }
@@ -2855,6 +2862,7 @@ gretl_matrix_vectorize (gretl_matrix *targ, const gretl_matrix *src)
     }
 
     memcpy(targ->val, src->val, n * sizeof *src->val);
+    targ->is_complex = src->is_complex;
 
     return 0;
 }

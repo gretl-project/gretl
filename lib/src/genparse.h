@@ -153,13 +153,18 @@ enum {
     F_LOG10,
     F_LOG2,
     F_EXP,
-    F_SQRT,       /* to here: C-library functions */
-    F_ABS,
+    F_SQRT,
     F_GAMMA,
     F_LNGAMMA,
-    F_DIGAMMA,    /* to here libgretl C functions */
-    F_TOINT,
+    F_DIGAMMA,
+    F_INVMILLS, /* to here: hansl function maps to C-function of same name */
     F_ROUND,
+    F_ABS,
+    F_CNORM,
+    F_DNORM,
+    F_QNORM,
+    F_LOGISTIC, /* to here: hansl function maps to 'translated' C-function */
+    F_TOINT,
     F_DIFF,	  /* first difference */
     F_LDIFF,	  /* log difference */
     F_SDIFF,	  /* seasonal difference */
@@ -185,9 +190,6 @@ enum {
     F_SKEWNESS,
     F_KURTOSIS,
     F_SST,
-    F_CNORM,
-    F_DNORM,
-    F_QNORM,
     F_SUMR,
     F_SUMC,
     F_PRODR,
@@ -254,8 +256,6 @@ enum {
     F_TOLOWER,
     F_TOUPPER,
     F_IRR,
-    F_LOGISTIC,
-    F_INVMILLS,
     F_ERRMSG,
     F_GETENV,
     F_NGETENV,
@@ -286,7 +286,6 @@ enum {
     HF_CTRAN,
     HF_CEXP,
     HF_CARG,
-    HF_CDET,
     HF_CONJ,
     HF_JBTERMS,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */

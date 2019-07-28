@@ -257,9 +257,9 @@ int gretl_matrix_inscribe_I (gretl_matrix *m, int row, int col, int n);
 
 gretl_matrix *gretl_matrix_copy_transpose (const gretl_matrix *m);
 
-gretl_matrix *gretl_matrix_reverse_rows (const gretl_matrix *m);
+gretl_matrix *gretl_matrix_reverse_rows (const gretl_matrix *m, int *err);
 
-gretl_matrix *gretl_matrix_reverse_cols (const gretl_matrix *m);
+gretl_matrix *gretl_matrix_reverse_cols (const gretl_matrix *m, int *err);
 
 gretl_matrix *gretl_matrix_get_diagonal (const gretl_matrix *m, int *err);
 

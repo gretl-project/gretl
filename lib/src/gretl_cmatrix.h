@@ -81,6 +81,23 @@ int apply_cmatrix_func (gretl_matrix *targ,
 gretl_matrix *gretl_cmatrix_determinant (const gretl_matrix *X,
 					 int *err);
 
+gretl_matrix *gretl_cmatrix_trace (const gretl_matrix *X,
+				   int *err);
+
+gretl_matrix *gretl_cmatrix_diag (const gretl_matrix *X,
+				  int *err);
+
+gretl_matrix *gretl_cmatrix_vech (const gretl_matrix *X,
+				  int *err);
+
+gretl_matrix *gretl_cmatrix_unvech (const gretl_matrix *X,
+				    int *err);
+
+gretl_matrix *gretl_cmatrix_reverse_rows (const gretl_matrix *X,
+					  int *err);
+
+int gretl_cmatrix_zero_triangle (gretl_matrix *m, char t);
+
 int complex_matrix_print (const gretl_matrix *A,
 			  const char *name,
 			  PRN *prn);

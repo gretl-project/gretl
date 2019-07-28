@@ -3841,6 +3841,13 @@ static void matrix_error (parser *p)
     }
 }
 
+static int not_for_complex (int f)
+{
+    gretl_errmsg_sprintf("%s: %s", getsymb(f),
+			 _("complex arguments are not supported"));
+    return E_TYPES;
+}
+
 /* functions taking a matrix argument and returning a
    scalar result */
 
@@ -3850,7 +3857,11 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
 
     if (ret != NULL && starting(p)) {
 	gretl_matrix *m = node_get_matrix(n, p, 0, 0);
-	int tmpmat = (n->t == MAT && is_tmp_node(n));
+
+	if (m->is_complex && f != F_ROWS && f != F_COLS) {
+	    p->err = not_for_complex(f);
+	    return ret;
+	}
 
 	switch (f) {
 	case F_ROWS:
@@ -3858,13 +3869,6 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
 	    break;
 	case F_COLS:
 	    ret->v.xval = m->cols;
-	    break;
-	case F_DET:
-	case F_LDET:
-	    ret->v.xval = user_matrix_get_determinant(m, tmpmat, f, &p->err);
-	    break;
-	case F_TRACE:
-	    ret->v.xval = gretl_matrix_trace(m);
 	    break;
 	case F_NORM1:
 	    ret->v.xval = gretl_matrix_one_norm(m);
@@ -3888,6 +3892,43 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
 
 	if (p->err) {
 	    matrix_error(p);
+	}
+    }
+
+    return ret;
+}
+
+/* Compute a value which will be a scalar for a real matrix
+   but a complex scalar (2-vector) for a complex matrix:
+   handles determinant and trace.
+*/
+
+static NODE *matrix_to_alt_node (NODE *n, int f, parser *p)
+{
+    gretl_matrix *m = node_get_matrix(n, p, 0, 0);
+    NODE *ret = NULL;
+
+    if (!p->err) {
+	ret = m->is_complex ? aux_matrix_node(p) : aux_scalar_node(p);
+    }
+
+    if (!p->err) {
+	if (m->is_complex) {
+	    if (f == F_LDET) {
+		p->err = not_for_complex(f);
+	    } else {
+		if (f == F_DET) {
+		    ret->v.m = gretl_cmatrix_determinant(m, &p->err);
+		} else {
+		    ret->v.m = gretl_cmatrix_trace(m, &p->err);
+		}
+	    }
+	} else if (f == F_TRACE) {
+	    ret->v.xval = gretl_matrix_trace(m);
+	} else {
+	    int tmpmat = (n->t == MAT && is_tmp_node(n));
+
+	    ret->v.xval = user_matrix_get_determinant(m, tmpmat, f, &p->err);
 	}
     }
 
@@ -4077,9 +4118,17 @@ static gretl_matrix *apply_ovwrite_func (gretl_matrix *m,
 	} else if (f == F_INV) {
 	    *err = gretl_invert_matrix(R);
 	} else if (f == F_UPPER) {
-	    *err = gretl_matrix_zero_lower(R);
+	    if (m->is_complex) {
+		*err = gretl_cmatrix_zero_triangle(R, 'L');
+	    } else {
+		*err = gretl_matrix_zero_lower(R);
+	    }
 	} else if (f == F_LOWER) {
-	    *err = gretl_matrix_zero_upper(R);
+	    if (m->is_complex) {
+		*err = gretl_cmatrix_zero_triangle(R, 'U');
+	    } else {
+		*err = gretl_matrix_zero_upper(R);
+	    }
 	} else {
 	    *err = E_DATA;
 	}
@@ -4102,7 +4151,7 @@ static void matrix_minmax_indices (int f, int *mm, int *rc, int *idx)
 #define cmplx_func(f) (f == HF_CMATRIX || f == HF_CMMULT || \
 		       f == HF_CINV || f == HF_CFFT || \
 		       f == HF_CTRAN || f == HF_CHPROD || \
-		       f == HF_CEXP || f == HF_CDET || f == HF_CONJ)
+		       f == HF_CEXP || f == HF_CONJ)
 
 static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 {
@@ -4234,7 +4283,11 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    ret->v.m = apply_ovwrite_func(m, f, optparm, tmpmat, &p->err);
 	    break;
 	case F_DIAG:
-	    ret->v.m = gretl_matrix_get_diagonal(m, &p->err);
+	    if (m->is_complex) {
+		ret->v.m = gretl_cmatrix_diag(m, &p->err);
+	    } else {
+		ret->v.m = gretl_matrix_get_diagonal(m, &p->err);
+	    }
 	    break;
 	case F_TRANSP:
 	    if (m->is_complex) {
@@ -4247,16 +4300,26 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    ret->v.m = user_matrix_vec(m, &p->err);
 	    break;
 	case F_VECH:
-	    ret->v.m = user_matrix_vech(m, &p->err);
+	    if (m->is_complex) {
+		ret->v.m = gretl_cmatrix_vech(m, &p->err);
+	    } else {
+		ret->v.m = user_matrix_vech(m, &p->err);
+	    }
 	    break;
 	case F_UNVECH:
-	    ret->v.m = user_matrix_unvech(m, &p->err);
+	    if (m->is_complex) {
+		ret->v.m = gretl_cmatrix_unvech(m, &p->err);
+	    } else {
+		ret->v.m = user_matrix_unvech(m, &p->err);
+	    }
 	    break;
 	case F_MREVERSE:
 	    if (optparm != 0) {
-		ret->v.m = gretl_matrix_reverse_cols(m);
+		ret->v.m = gretl_matrix_reverse_cols(m, &p->err);
+	    } else if (m->is_complex) {
+		ret->v.m = gretl_cmatrix_reverse_rows(m, &p->err);
 	    } else {
-		ret->v.m = gretl_matrix_reverse_rows(m);
+		ret->v.m = gretl_matrix_reverse_rows(m, &p->err);
 	    }
 	    break;
 	case F_NULLSPC:
@@ -4308,9 +4371,6 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    break;
 	case HF_CEXP:
 	    ret->v.m = gretl_cexp(m, &p->err);
-	    break;
-	case HF_CDET:
-	    ret->v.m = gretl_cmatrix_determinant(m, &p->err);
 	    break;
 	default:
 	    break;
@@ -5210,9 +5270,8 @@ static NODE *process_subslice (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static double real_apply_func (double x, NODE *fun, parser *p)
+static double real_apply_func (double x, int f, parser *p)
 {
-    int f = fun->t;
     double y;
 
     errno = 0;
@@ -5229,20 +5288,6 @@ static double real_apply_func (double x, NODE *fun, parser *p)
 	}
     }
 
-    if (fun->v.ptr != NULL) {
-	double (*dfunc) (double) = fun->v.ptr;
-
-#if 0
-	fprintf(stderr, "%s: using %p\n", getsymb(f), fun->v.ptr);
-#endif
-	y = dfunc(x);
-	if (na(y)) {
-	    /* do we want this? */
-	    eval_warning(p, f, errno);
-	}
-	return y;
-    }
-
     switch (f) {
     case U_NEG:
 	return -x;
@@ -5250,10 +5295,36 @@ static double real_apply_func (double x, NODE *fun, parser *p)
 	return x;
     case U_NOT:
 	return x == 0;
-    case F_ABS:
-	return fabs(x);
     case F_TOINT:
 	return (double) (int) x;
+    case F_MISSING:
+	return 0.0;
+    case F_DATAOK:
+	return 1.0;
+    case F_MISSZERO:
+	return x;
+    case F_ZEROMISS:
+	return (x == 0.0)? NADBL : x;
+    case F_EASTER:
+	y = easterdate(x);
+	return y;
+	/* below: functions that should already be mapped */
+    case F_CNORM:
+	return normal_cdf(x);
+    case F_DNORM:
+	return normal_pdf(x);
+    case F_QNORM:
+	return normal_cdf_inverse(x);
+    case F_LOGISTIC:
+	return logistic_cdf(x);
+    case F_INVMILLS:
+	y = invmills(x);
+	if (na(y)) {
+	    eval_warning(p, f, errno);
+	}
+	return y;
+    case F_ABS:
+	return fabs(x);
     case F_CEIL:
 	return ceil(x);
     case F_FLOOR:
@@ -5284,22 +5355,14 @@ static double real_apply_func (double x, NODE *fun, parser *p)
 	return acosh(x);
     case F_ATANH:
 	return atanh(x);
-    case F_CNORM:
-	return normal_cdf(x);
-    case F_DNORM:
-	return normal_pdf(x);
-    case F_QNORM:
-	return normal_cdf_inverse(x);
-    case F_LOGISTIC:
-	return logistic_cdf(x);
     case F_GAMMA:
-	y = gamma_function(x);
+	y = gammafun(x);
 	if (na(y)) {
 	    eval_warning(p, f, errno);
 	}
 	return y;
     case F_LNGAMMA:
-	y = ln_gamma(x);
+	y = lngamma(x);
 	if (na(y)) {
 	    eval_warning(p, f, errno);
 	}
@@ -5310,14 +5373,6 @@ static double real_apply_func (double x, NODE *fun, parser *p)
 	    eval_warning(p, f, errno);
 	}
 	return y;
-    case F_MISSING:
-	return 0.0;
-    case F_DATAOK:
-	return 1.0;
-    case F_MISSZERO:
-	return x;
-    case F_ZEROMISS:
-	return (x == 0.0)? NADBL : x;
     case F_SQRT:
 	y = sqrt(x);
 	if (errno) {
@@ -5351,15 +5406,6 @@ static double real_apply_func (double x, NODE *fun, parser *p)
 		eval_warning(p, f, errno);
 	    }
 	}
-	return y;
-    case F_INVMILLS:
-	y = invmills(x);
-	if (na(y)) {
-	    eval_warning(p, f, errno);
-	}
-	return y;
-    case F_EASTER:
-	y = easterdate(x);
 	return y;
     default:
 	return 0.0;
@@ -5453,7 +5499,13 @@ static NODE *apply_scalar_func (NODE *n, NODE *f, parser *p)
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL) {
-	ret->v.xval = real_apply_func(n->v.xval, f, p);
+	double (*dfunc) (double) = f->v.ptr;
+
+	if (dfunc != NULL) {
+	    ret->v.xval = dfunc(n->v.xval);
+	} else {
+	    ret->v.xval = real_apply_func(n->v.xval, f->t, p);
+	}
     }
 
     return ret;
@@ -5507,6 +5559,7 @@ static NODE *matrix_isnan_node (NODE *n, parser *p)
 		for (i=0; i<n; i++) {
 		    ret->v.m->val[i] = isnan(m->val[i]);
 		}
+		ret->v.m->is_complex = m->is_complex;
 	    }
 	}
     }
@@ -5520,6 +5573,7 @@ static NODE *apply_series_func (NODE *n, NODE *f, parser *p)
     int t;
 
     if (ret != NULL) {
+	double (*dfunc) (double) = f->v.ptr;
 	const double *x;
 
 	if (n->t == SERIES) {
@@ -5530,10 +5584,18 @@ static NODE *apply_series_func (NODE *n, NODE *f, parser *p)
 
 	if (!p->err) {
 	    if (autoreg(p)) {
-		ret->v.xvec[p->obs] = real_apply_func(x[p->obs], f, p);
+		if (dfunc != NULL) {
+		    ret->v.xvec[p->obs] = dfunc(x[p->obs]);
+		} else {
+		    ret->v.xvec[p->obs] = real_apply_func(x[p->obs], f->t, p);
+		}
+	    } else if (dfunc != NULL) {
+		for (t=p->dset->t1; t<=p->dset->t2; t++) {
+		    ret->v.xvec[t] = dfunc(x[t]);
+		}
 	    } else {
 		for (t=p->dset->t1; t<=p->dset->t2; t++) {
-		    ret->v.xvec[t] = real_apply_func(x[t], f, p);
+		    ret->v.xvec[t] = real_apply_func(x[t], f->t, p);
 		}
 	    }
 	}
@@ -8874,13 +8936,6 @@ static NODE *pergm_node (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static int not_for_complex (int f)
-{
-    gretl_errmsg_sprintf("%s: %s", getsymb(f),
-			 _("complex arguments are not supported"));
-    return E_TYPES;
-}
-
 /* application of scalar function to each element of matrix */
 
 static NODE *apply_matrix_func (NODE *t, NODE *f, parser *p)
@@ -8930,12 +8985,17 @@ static NODE *apply_matrix_func (NODE *t, NODE *f, parser *p)
 					cfunc, dfunc);
 	}
     } else {
+	double (*dfunc) (double) = f->v.ptr;
 	int i, n = m->rows * m->cols;
-	double x;
 
-	for (i=0; i<n && !p->err; i++) {
-	    x = real_apply_func(m->val[i], f, p);
-	    ret->v.m->val[i] = x;
+	if (dfunc != NULL) {
+	    for (i=0; i<n && !p->err; i++) {
+		ret->v.m->val[i] = dfunc(m->val[i]);
+	    }
+	} else {
+	    for (i=0; i<n && !p->err; i++) {
+		ret->v.m->val[i] = real_apply_func(m->val[i], f->t, p);
+	    }
 	}
     }
 
@@ -15943,7 +16003,6 @@ static NODE *eval (NODE *t, parser *p)
     case HF_CFFT:
     case HF_CTRAN:
     case HF_CEXP:
-    case HF_CDET:
 	/* matrix -> matrix functions */
 	if (l->t == MAT || l->t == NUM) {
 	    ret = matrix_to_matrix_func(l, r, t->t, p);
@@ -15955,9 +16014,6 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_ROWS:
     case F_COLS:
-    case F_DET:
-    case F_LDET:
-    case F_TRACE:
     case F_NORM1:
     case F_INFNORM:
     case F_RCOND:
@@ -15968,6 +16024,13 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = matrix_to_scalar_func(l, t->t, p);
 	} else {
 	    node_type_error(t->t, 0, MAT, l, p);
+	}
+	break;
+    case F_DET:
+    case F_LDET:
+    case F_TRACE:
+	if (l->t == MAT || l->t == NUM) {
+	    ret = matrix_to_alt_node(l, t->t, p);
 	}
 	break;
     case F_MREAD:

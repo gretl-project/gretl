@@ -19,16 +19,13 @@
 
 #include "libgretl.h"
 #include "clapack_complex.h"
+#include "gretl_cmatrix.h"
 
 #include <fftw3.h>
 #include <errno.h>
 
-#include "gretl_cmatrix.h"
-
-typedef union _cz {
-    cmplx c;
-    double complex z;
-} cz;
+#define gretl_cmatrix_get(z,r,i,j) (z[(j)*r+(i)])
+#define gretl_cmatrix_set(z,r,i,j,v) (z[(j)*r+(i)]=v)
 
 /* helper function for fftw-based real FFT functions */
 
@@ -83,7 +80,7 @@ gretl_matrix *gretl_matrix_fft (const gretl_matrix *y, int *err)
 	return NULL;
     }
 
-    c = gretl_matrix_cols(y);
+    c = y->cols;
     m = r / 2;
     odd = r % 2;
     cr = 0;
@@ -110,12 +107,12 @@ gretl_matrix *gretl_matrix_fft (const gretl_matrix *y, int *err)
 
 	/* transcribe the result */
 	for (i=0; i<=m+odd; i++) {
-	    gretl_matrix_set(ft, i, cr, out[i][0]);
-	    gretl_matrix_set(ft, i, ci, out[i][1]);
+	    gretl_matrix_set(ft, i, cr, creal(out[i]));
+	    gretl_matrix_set(ft, i, ci, cimag(out[i]));
 	}
 	for (i=m; i>0; i--) {
-	    gretl_matrix_set(ft, r-i, cr,  out[i][0]);
-	    gretl_matrix_set(ft, r-i, ci, -out[i][1]);
+	    gretl_matrix_set(ft, r-i, cr,  creal(out[i]));
+	    gretl_matrix_set(ft, r-i, ci, -cimag(out[i]));
 	}
 	cr += 2;
 	ci += 2;
@@ -143,6 +140,7 @@ gretl_matrix *gretl_matrix_ffti (const gretl_matrix *y, int *err)
     gretl_matrix *ft = NULL;
     fftw_plan p = NULL;
     double *tmp = NULL;
+    double xr, xi;
     fftw_complex *in;
     int c, r = gretl_matrix_rows(y);
     int m, odd, cr, ci;
@@ -173,8 +171,9 @@ gretl_matrix *gretl_matrix_ffti (const gretl_matrix *y, int *err)
     for (j=0; j<c; j++) {
 	/* load the data */
 	for (i=0; i<=m+odd; i++) {
-	    in[i][0] = gretl_matrix_get(y, i, cr);
-	    in[i][1] = gretl_matrix_get(y, i, ci);
+	    xr = gretl_matrix_get(y, i, cr);
+	    xi = gretl_matrix_get(y, i, ci);
+	    in[i] = xr + xi * I;
 	}
 
 	if (j == 0) {
@@ -214,6 +213,10 @@ static int cmatrix_validate (const gretl_matrix *m, int square)
 	return 1;
     }
 }
+
+/* Construct a complex matrix, with all-zero imaginary part,
+   from real matrix @A.
+*/
 
 static gretl_matrix *complex_from_real (const gretl_matrix *A,
 					int *err)
@@ -300,7 +303,7 @@ static gretl_matrix *gretl_zgemm (const gretl_matrix *A,
     return C;
 }
 
-/* Multiplication of @A times @B where we know that at
+/* Multiplication of @A times @B, where we know that at
    least one of them is complex; the other, if it's not
    complex, must be converted to a complex matrix with
    a zero imaginary part first.
@@ -712,8 +715,7 @@ gretl_matrix *gretl_complex_fft (const gretl_matrix *A, int inverse,
 	    So should we do the following?
 	*/
 	for (j=0; j<r*c; j++) {
-	    tmp[j][0] = tmp[j][0] / r;
-	    tmp[j][1] = tmp[j][1] / r;
+	    tmp[j] /= r;
 	}
     }
 
@@ -1077,18 +1079,15 @@ gretl_matrix *gretl_cexp (const gretl_matrix *A, int *err)
     if (gretl_vector_get_length(A) != 2) {
 	*err = E_INVARG;
     } else {
-	cz res;
-
-	res.c.r = A->val[0];
-	res.c.i = A->val[1];
-	res.z = cexp(res.z);
-
 	B = gretl_column_vector_alloc(2);
 	if (B == NULL) {
 	    *err = E_ALLOC;
 	} else {
-	    B->val[0] = res.c.r;
-	    B->val[1] = res.c.i;
+	    double complex *za = (double complex *) A->val;
+	    double complex *zb = (double complex *) B->val;
+
+	    zb[0] = cexp(za[0]);
+	    B->is_complex = 1;
 	}
     }
 
@@ -1225,13 +1224,18 @@ int apply_cmatrix_func (gretl_matrix *targ,
     return err;
 }
 
-static gretl_matrix *complex_scalar_to_mat (double complex z)
+static gretl_matrix *complex_scalar_to_mat (double complex z,
+					    int *err)
 {
     gretl_matrix *ret = gretl_matrix_alloc(2, 1);
 
-    ret->val[0] = creal(z);
-    ret->val[1] = cimag(z);
-    ret->is_complex = 1;
+    if (ret == NULL) {
+	*err = E_ALLOC;
+    } else {
+	ret->val[0] = creal(z);
+	ret->val[1] = cimag(z);
+	ret->is_complex = 1;
+    }
 
     return ret;
 }
@@ -1242,7 +1246,7 @@ gretl_matrix *gretl_cmatrix_determinant (const gretl_matrix *X,
     gretl_matrix *E = NULL;
     gretl_matrix *ret = NULL;
 
-    if (X->rows / X->cols != 2) {
+    if (!cmatrix_validate(X, 1)) {
 	*err = E_INVARG;
 	return ret;
     }
@@ -1264,8 +1268,205 @@ gretl_matrix *gretl_cmatrix_determinant (const gretl_matrix *X,
 	    k += 2;
 	}
 	gretl_matrix_free(E);
-	ret = complex_scalar_to_mat(cret);
+	ret = complex_scalar_to_mat(cret, err);
     }
 
     return ret;
+}
+
+gretl_matrix *gretl_cmatrix_trace (const gretl_matrix *X,
+				   int *err)
+{
+    gretl_matrix *ret = NULL;
+
+    if (!cmatrix_validate(X, 1)) {
+	*err = E_INVARG;
+    } else {
+	complex double *zx = (complex double *) X->val;
+	complex double tr = 0 + 0*I;
+	int i, r = X->rows / 2;
+
+	for (i=0; i<r; i++) {
+	    tr += gretl_cmatrix_get(zx, r, i, i);
+	}
+	ret = complex_scalar_to_mat(tr, err);
+    }
+
+    return ret;
+}
+
+gretl_matrix *gretl_cmatrix_diag (const gretl_matrix *X,
+				  int *err)
+{
+    gretl_matrix *ret = NULL;
+
+    if (!cmatrix_validate(X, 0)) {
+	*err = E_INVARG;
+    } else {
+	int r = X->rows / 2;
+	int d = MIN(r, X->cols);
+
+	ret = gretl_matrix_alloc(2*d, 1);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    complex double *zx = (complex double *) X->val;
+	    complex double *zd = (complex double *) ret->val;
+	    int i;
+
+	    for (i=0; i<d; i++) {
+		zd[i] = gretl_cmatrix_get(zx, r, i, i);
+	    }
+	    ret->is_complex = 1;
+	}
+    }
+
+    return ret;
+}
+
+gretl_matrix *gretl_cmatrix_vech (const gretl_matrix *X,
+				  int *err)
+{
+    gretl_matrix *ret = NULL;
+
+    if (!cmatrix_validate(X, 1)) {
+	*err = E_INVARG;
+    } else {
+	int r = X->rows / 2;
+	int m = r * (r+1) / 2;
+
+	ret = gretl_matrix_alloc(2*m, 1);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    complex double *zx = (complex double *) X->val;
+	    complex double *zv = (complex double *) ret->val;
+	    int i, j;
+
+	    m = 0;
+	    for (i=0; i<r; i++) {
+		for (j=i; j<r; j++) {
+		    zv[m++] = gretl_cmatrix_get(zx, r, i, j);
+		}
+	    }
+	    ret->is_complex = 1;
+	}
+    }
+
+    return ret;
+}
+
+gretl_matrix *gretl_cmatrix_unvech (const gretl_matrix *X,
+				    int *err)
+{
+    gretl_matrix *ret = NULL;
+
+    if (!cmatrix_validate(X, 0) || X->cols != 1) {
+	*err = E_INVARG;
+    } else {
+	int r = X->rows / 2;
+	int n = (int) ((sqrt(1.0 + 8.0 * r) - 1.0) / 2.0);
+
+	ret = gretl_matrix_alloc(2*n, n);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    complex double *zx = (complex double *) X->val;
+	    complex double *zu = (complex double *) ret->val;
+	    complex double zk;
+	    int i, j, k = 0;
+
+	    for (j=0; j<n; j++) {
+		for (i=j; i<n; i++) {
+		    zk = zx[k++];
+		    gretl_cmatrix_set(zu, n, i, j, zk);
+		    gretl_cmatrix_set(zu, n, j, i, zk);
+		}
+	    }
+	    ret->is_complex = 1;
+	}
+    }
+
+    return ret;
+}
+
+/*
+  Copies the values from row @is of @src into row @id
+  of @dest, provided @src and @dest have the same number
+  of columns.
+*/
+
+static void cmatrix_copy_row (gretl_matrix *dest, int id,
+			      const gretl_matrix *src, int is)
+{
+    complex double *zd = (complex double *) dest->val;
+    complex double *zs = (complex double *) src->val;
+    complex double zj;
+    int j, r = src->rows / 2;
+
+    for (j=0; j<src->cols; j++) {
+	zj = gretl_cmatrix_get(zs, r, is, j);
+	gretl_cmatrix_set(zd, r, id, j, zj);
+    }
+}
+
+gretl_matrix *gretl_cmatrix_reverse_rows (const gretl_matrix *X,
+					  int *err)
+{
+    gretl_matrix *ret;
+    int i, r, c;
+
+    if (!cmatrix_validate(X, 0)) {
+	*err = E_INVARG;
+	return NULL;
+    } else if (gretl_is_null_matrix(X)) {
+	return gretl_null_matrix_new();
+    }
+
+    r = X->rows;
+    c = X->cols;
+    ret = gretl_matrix_alloc(r, c);
+
+    if (ret == NULL) {
+	*err = E_ALLOC;
+    } else {
+	r /= 2;
+	for (i=0; i<r; i++) {
+	    cmatrix_copy_row(ret, i, X, r-i-1);
+	}
+	ret->is_complex = 1;
+    }
+
+    return ret;
+}
+
+int gretl_cmatrix_zero_triangle (gretl_matrix *m, char t)
+{
+    complex double *zm;
+    complex double z0;
+    int i, j, r;
+
+    if (!cmatrix_validate(m, 1)) {
+	return E_INVARG;
+    }
+
+    zm = (complex double *) m->val;
+    z0 = 0 + 0*I;
+    r = m->rows / 2;
+
+    if (t == 'U') {
+	for (i=0; i<r-1; i++) {
+	    for (j=i+1; j<m->cols; j++) {
+		gretl_cmatrix_set(zm, r, i, j, z0);
+	    }
+	}
+    } else {
+	for (i=1; i<r; i++) {
+	    for (j=0; j<i; j++) {
+		gretl_cmatrix_set(zm, r, i, j, z0);
+	    }
+	}
+    }
+
+    return 0;
 }

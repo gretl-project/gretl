@@ -245,24 +245,42 @@ static int push_bn_node (NODE *t, NODE *n)
     return 0;
 }
 
+/* called from geneval.c to get a complex C function */
+
 void *get_c_function_pointer (const char *name)
 {
     return dlsym(RTLD_DEFAULT, name);
 }
 
-static void maybe_attach_fn_pointer (NODE *n)
+/* For faster execution of functions as applied to
+   C arrays (series or matrice): store the function
+   pointer on the NODE. We do this only for functions
+   that take a single double argument and return a
+   double value.
+*/
+
+static void maybe_attach_f1_pointer (NODE *n)
 {
-    if (n->t <= F_SQRT) {
+    if (n->t <= F_INVMILLS) {
+	/* same functions names in hansl and C */
 	n->v.ptr = dlsym(RTLD_DEFAULT, getsymb(n->t));
-    } else if (n->t <= F_DIGAMMA) {
+#if 0
+	fprintf(stderr, "%s: got %p\n", getsymb(n->t), n->v.ptr);
+#endif
+    } else if (n->t <= F_LOGISTIC) {
+	/* name translation required */
 	if (n->t == F_ABS) {
-	    n->v.ptr = dlsym(RTLD_DEFAULT, "fabs");
-	} else if (n->t == F_GAMMA) {
-	    n->v.ptr = dlsym(RTLD_DEFAULT, "gamma_function");
-	} else if (n->t == F_LNGAMMA) {
-	    n->v.ptr = dlsym(RTLD_DEFAULT, "ln_gamma");
-	} else if (n->t == F_DIGAMMA) {
-	    n->v.ptr = dlsym(RTLD_DEFAULT, "digamma");
+	    n->v.ptr = fabs;
+	} else if (n->t == F_ROUND) {
+	    n->v.ptr = gretl_round;
+	} else if (n->t == F_CNORM) {
+	    n->v.ptr = normal_cdf;
+	} else if (n->t == F_DNORM) {
+	    n->v.ptr = normal_pdf;
+	} else if (n->t == F_QNORM) {
+	    n->v.ptr = normal_cdf_inverse;
+	} else if (n->t == F_LOGISTIC) {
+	    n->v.ptr = logistic_cdf;
 	}
     }
 }
@@ -1365,7 +1383,9 @@ static NODE *powterm (parser *p, NODE *l)
     } else if (func1_symb(sym)) {
 	t = newb1(sym, NULL);
 	if (t != NULL) {
-	    maybe_attach_fn_pointer(t);
+#if 1
+	    maybe_attach_f1_pointer(t);
+#endif
 	    lex(p);
 	    get_args(t, p, sym, 1, opt, &next);
 	}
