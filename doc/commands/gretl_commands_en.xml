@@ -10035,7 +10035,13 @@
 	For full details on installing and working with function
 	packages, see <mnu targ="Pkgbook">the Function package
 	guide</mnu> (under the Help menu). This guide also contains
-	details on writing function packages.
+	details on writing function packages. A nice, short take on
+	package writing can be found at
+	<url>http://gretl.sf.net/gfnguide/gfn_for_dummies.html</url>.
+      </para>
+      <para>
+	To deal with packages via the gretl command line, see the
+	<cmdref targ="pkg"/> command.
       </para>
     </description>
   </command>
