@@ -698,10 +698,13 @@ gretl_matrix *gretl_complex_fft (const gretl_matrix *A, int inverse,
     return B;
 }
 
+#define cscalar(m) (m->rows == 2 && m->cols == 1)
+
 /* Hadamard product for complex matrices that match by both
    row and column dimension, or we have a row match and one
    matrix has a single column, or we have a column match and
-   one matrix has a single (complex) row.
+   one matrix has a single (complex) row, or one of the
+   operands is a complex scalar (2x1 matrix).
 */
 
 gretl_matrix *gretl_complex_hprod (const gretl_matrix *A,
@@ -726,7 +729,15 @@ gretl_matrix *gretl_complex_hprod (const gretl_matrix *A,
     cr = A->rows;
     cc = A->cols;
 
-    if (A->rows == B->rows && A->cols == B->cols) {
+    if (cscalar(A)) {
+	match = 5;
+	cr = B->rows;
+	cc = B->cols;
+    } else if (cscalar(B)) {
+	match = 5;
+	L = B;
+	R = A;
+    } else if (A->rows == B->rows && A->cols == B->cols) {
 	match = 1;
     } else if (A->rows == B->rows) {
 	if (B->cols == 1) {
@@ -798,6 +809,13 @@ gretl_matrix *gretl_complex_hprod (const gretl_matrix *A,
 		c[k++] = a[j*cr+i] * b[j];
 	    }
 	}
+    } else if (match == 5) {
+	/* A or B is a complex scalar */
+	for (j=0; j<cc; j++) {
+	    for (i=0; i<cr; i++) {
+		c[k++] = a[0] * b[j*cr+i];
+	    }
+	}
     } else {
 	/* col vector times row vector */
 	k = 0;
@@ -807,6 +825,8 @@ gretl_matrix *gretl_complex_hprod (const gretl_matrix *A,
 	    }
 	}
     }
+
+    C->is_complex = 1;
 
     return C;
 }
