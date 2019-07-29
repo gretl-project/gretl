@@ -10,6 +10,8 @@
 
 typedef int32_t integer;
 typedef int logical;
+typedef float real;
+typedef double doublereal;
 
 /* I/O stuff */
 
