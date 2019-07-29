@@ -3620,9 +3620,15 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
 
     if (starting(p)) {
 	gretl_matrix *m = l->v.m;
-	int k = node_get_int(r, p);
+	int k;
 
-	if (gretl_is_null_matrix(m)) {
+	if (f == HF_CSWITCH) {
+	    k = node_get_bool(r, p, 1);
+	} else {
+	    k = node_get_int(r, p);
+	}
+
+	if (!p->err && gretl_is_null_matrix(m)) {
 	    p->err = E_INVARG;
 	}
 
@@ -3637,6 +3643,8 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
 		ret->v.m = gretl_matrix_sort_by_column(m, k-1, &p->err);
 	    } else if (f == HF_CXTRACT) {
 		ret->v.m = gretl_cxtract(m, k, &p->err);
+	    } else if (f == HF_CSWITCH) {
+		ret->v.m = gretl_cmatrix_switch(m, k, &p->err);
 	    }
 	}
     } else {
@@ -15372,8 +15380,9 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_MSORTBY:
     case HF_CXTRACT:
+    case HF_CSWITCH:
 	/* matrix on left, scalar on right */
-	if (l->t == MAT && scalar_node(r)) {
+	if (l->t == MAT && null_or_scalar(r)) {
 	    ret = matrix_scalar_func(l, r, t->t, p);
 	} else if (l->t == MAT) {
 	    node_type_error(t->t, 2, NUM, r, p);

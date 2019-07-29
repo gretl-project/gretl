@@ -396,6 +396,7 @@ enum {
     HF_CMATRIX,
     HF_CXTRACT,
     HF_CHPROD,
+    HF_CSWITCH,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_HFLAG,

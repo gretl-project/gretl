@@ -96,6 +96,9 @@ gretl_matrix *gretl_cmatrix_reverse_rows (const gretl_matrix *X,
 
 int gretl_cmatrix_zero_triangle (gretl_matrix *m, char t);
 
+gretl_matrix *gretl_cmatrix_switch (const gretl_matrix *m,
+				    int to_new, int *err);
+
 int complex_matrix_print (const gretl_matrix *A,
 			  const char *name,
 			  PRN *prn);

@@ -1422,3 +1422,58 @@ int gretl_cmatrix_zero_triangle (gretl_matrix *m, char t)
 
     return 0;
 }
+
+gretl_matrix *gretl_cmatrix_switch (const gretl_matrix *m,
+				    int to_new, int *err)
+{
+    gretl_matrix *ret = NULL;
+    int r, c, i, j, k, jj;
+    double x;
+
+    if (gretl_is_null_matrix(m)) {
+	return gretl_null_matrix_new();
+    }
+
+    if (to_new) {
+	r = m->rows * 2;
+	c = m->cols / 2;
+    } else {
+	r = m->rows / 2;
+	c = m->cols * 2;
+    }
+
+    ret = gretl_matrix_alloc(r, c);
+    if (ret == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    jj = 0;
+
+    if (to_new) {
+	for (j=0; j<ret->cols; j++) {
+	    k = 0;
+	    for (i=0; i<m->rows; i++) {
+		x = gretl_matrix_get(m, i, jj);
+		gretl_matrix_set(ret, k++, j, x);
+		x = gretl_matrix_get(m, i, jj+1);
+		gretl_matrix_set(ret, k++, j, x);
+	    }
+	    jj += 2;
+	}
+	ret->is_complex = 1;
+    } else {
+	for (j=0; j<m->cols; j++) {
+	    k = 0;
+	    for (i=0; i<ret->rows; i++) {
+		x = gretl_matrix_get(m, k++, j);
+		gretl_matrix_set(ret, i, jj, x);
+		x = gretl_matrix_get(m, k++, j);
+		gretl_matrix_set(ret, i, jj+1, x);
+	    }
+	    jj += 2;
+	}
+    }
+
+    return ret;
+}

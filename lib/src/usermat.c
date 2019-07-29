@@ -1871,6 +1871,7 @@ user_matrix_eigen_analysis (const gretl_matrix *m,
 		E = gretl_symmetric_matrix_eigenvals(C, vecs, err);
 	    }
 	} else {
+	    /* the complex case is handled elsewhere */
 	    E = gretl_general_matrix_eigenvals(C, vecs, err);
 	    if (E != NULL && E->cols == 2) {
 		maybe_eigen_trim(E);

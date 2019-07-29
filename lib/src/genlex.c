@@ -544,6 +544,7 @@ struct str_table hidden_funcs[] = {
     { HF_CARG,     "_carg" },
     { HF_CONJ,     "_conj" },
     { HF_CHPROD,   "_chprod" },
+    { HF_CSWITCH,  "_cswitch" },
     { HF_JBTERMS,  "_jbterms" },
     { HF_LISTINFO, "_listinfo" },
     { 0,           NULL }
