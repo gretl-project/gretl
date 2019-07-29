@@ -284,7 +284,6 @@ enum {
     F_FUNCERR,
     HF_CINV,
     HF_CTRAN,
-    HF_CEXP,
     HF_CARG,
     HF_CONJ,
     HF_JBTERMS,

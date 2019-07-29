@@ -1048,30 +1048,6 @@ int gretl_ctrans_in_place (gretl_matrix *A)
     return err;
 }
 
-/* return cexp() of a complex argument given as a 2-vector */
-
-gretl_matrix *gretl_cexp (const gretl_matrix *A, int *err)
-{
-    gretl_vector *B = NULL;
-
-    if (gretl_vector_get_length(A) != 2) {
-	*err = E_INVARG;
-    } else {
-	B = gretl_column_vector_alloc(2);
-	if (B == NULL) {
-	    *err = E_ALLOC;
-	} else {
-	    double complex *za = (double complex *) A->val;
-	    double complex *zb = (double complex *) B->val;
-
-	    zb[0] = cexp(za[0]);
-	    B->is_complex = 1;
-	}
-    }
-
-    return B;
-}
-
 /* Addition or subtraction of matrices: handle the case
    where one operand is complex and the other is real.
 */
