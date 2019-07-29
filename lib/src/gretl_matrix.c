@@ -9176,7 +9176,8 @@ int gretl_invert_packed_symmetric_matrix (gretl_matrix *v)
  */
 
 gretl_matrix *
-gretl_general_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
+gretl_general_matrix_eigenvals (gretl_matrix *m, int eigenvecs,
+				int *err)
 {
     gretl_matrix *evals = NULL;
     integer n, info, lwork;

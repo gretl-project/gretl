@@ -120,6 +120,7 @@ enum {
 #define scalar_node(n) (n->t == NUM || scalar_matrix_node(n))
 #define ok_matrix_node(n) (n->t == MAT || n->t == NUM)
 #define matrix_element_node(n) (n->t == NUM && (n->flags & MSL_NODE))
+#define complex_node(n) (n->t == MAT && n->v.m->is_complex)
 
 #define stringvec_node(n) (n->flags & SVL_NODE)
 #define mutable_node(n) (n->flags & MUT_NODE)
@@ -11146,7 +11147,8 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 		A = gretl_matrix_varsimul(m1, m2, m3, &p->err);
 	    }
 	}
-    } else if (f == HF_CEIGG) {
+    } else if (f == HF_CEIGG || f == F_EIGGEN) {
+	/* note: F_EIGGEN redirects here for complex input */
 	gretl_matrix *lm = node_get_matrix(l, p, 0, 1);
 	gretl_matrix *vl = NULL, *vr = NULL;
 
@@ -15473,7 +15475,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case HF_CARG:
     case HF_CONJ:
-	if (l->t == MAT && l->v.m->is_complex) {
+	if (complex_node(l)) {
 	    ret = apply_matrix_func(l, t, p);
 	} else {
 	    p->err = E_TYPES;
@@ -16059,6 +16061,8 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, 1, MAT, l, p);
 	} else if (r->t != U_ADDR && r->t != EMPTY) {
 	    node_type_error(t->t, 2, U_ADDR, r, p);
+	} else if (t->t == F_EIGGEN && complex_node(l)) {
+	    ret = eval_3args_func(l, r, NULL, t->t, p);
 	} else {
 	    ret = matrix_to_matrix2_func(l, r, t->t, p);
 	}

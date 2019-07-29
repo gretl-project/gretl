@@ -1853,7 +1853,7 @@ user_matrix_eigen_analysis (const gretl_matrix *m,
     }
 
     if (R != NULL) {
-	/* computing eigenvectors */
+	/* computing (right) eigenvectors */
 	vecs = 1;
     }
 

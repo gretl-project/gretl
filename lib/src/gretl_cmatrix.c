@@ -246,16 +246,15 @@ static gretl_matrix *complex_from_real (const gretl_matrix *A,
 }
 
 /* Multiplication of complex matrices via BLAS zgemm().
-   At present we have no use case for the @amod and
-   @bmod flags; they're not hooked up to anything. We
-   should remove them if it turns out they're really
-   not useful.
+   We allow for the possibility that the conjugate
+   transpose of @A should be used. This could be
+   generalized to allow [conjugate] transposition of
+   B too.
 */
 
 static gretl_matrix *gretl_zgemm (const gretl_matrix *A,
 				  GretlMatrixMod amod,
 				  const gretl_matrix *B,
-				  GretlMatrixMod bmod,
 				  int *err)
 {
     gretl_matrix *C;
@@ -272,16 +271,22 @@ static gretl_matrix *gretl_zgemm (const gretl_matrix *A,
 	return NULL;
     }
 
-    if (A->cols != B->rows / 2) {
+    if (amod == GRETL_MOD_CTRANSP) {
+	transa = 'C';
+	m = A->cols;     /* rows of op(A) */
+	k = A->rows / 2; /* cols of op(A) */
+    } else {
+	m = A->rows / 2; /* complex rows of A */
+	k = A->cols;     /* cols of A */
+    }
+    n = B->cols;
+
+    if (k != B->rows / 2) {
 	*err = E_NONCONF;
 	return NULL;
     }
 
-    m = A->rows / 2;
-    n = B->cols;
-    k = A->cols;
-
-    C = gretl_matrix_alloc(A->rows, B->cols);
+    C = gretl_matrix_alloc(m*2, n);
     if (C == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -317,18 +322,18 @@ gretl_matrix *gretl_cmatrix_multiply (const gretl_matrix *A,
     gretl_matrix *C = NULL;
 
     if (A->is_complex && B->is_complex) {
-	C = gretl_zgemm(A, 0, B, 0, err);
+	C = gretl_zgemm(A, 0, B, err);
     } else if (A->is_complex) {
 	/* case of real B */
 	T = complex_from_real(B, err);
 	if (T != NULL) {
-	    C = gretl_zgemm(A, 0, T, 0, err);
+	    C = gretl_zgemm(A, 0, T, err);
 	}
     } else if (B->is_complex) {
 	/* case of real A */
 	T = complex_from_real(A, err);
 	if (T != NULL) {
-	    C = gretl_zgemm(T, 0, B, 0, err);
+	    C = gretl_zgemm(T, 0, B, err);
 	}
     } else {
 	*err = E_TYPES;
@@ -348,37 +353,27 @@ gretl_matrix *gretl_cmatrix_AHB (const gretl_matrix *A,
 				 const gretl_matrix *B,
 				 int *err)
 {
-    gretl_matrix *T1 = NULL;
-    gretl_matrix *T2 = NULL;
     gretl_matrix *C = NULL;
 
     if (A->is_complex && B->is_complex) {
-	T1 = gretl_ctrans(A, 1, err);
-	if (T1 != NULL) {
-	    C = gretl_zgemm(T1, 0, B, 0, err);
-	}
+	C = gretl_zgemm(A, GRETL_MOD_CTRANSP, B, err);
     } else if (A->is_complex) {
 	/* case of real B */
-	T1 = gretl_ctrans(A, 1, err);
-	if (T1 != NULL) {
-	    T2 = complex_from_real(B, err);
-	    if (T2 != NULL) {
-		C = gretl_zgemm(T1, 0, T2, 0, err);
-	    }
+	gretl_matrix *CB = complex_from_real(B, err);
+
+	if (CB != NULL) {
+	    C = gretl_zgemm(A, GRETL_MOD_CTRANSP, CB, err);
+	    gretl_matrix_free(CB);
 	}
     } else {
 	/* case of real A */
-	T1 = complex_from_real(A, err);
-	if (T1 != NULL) {
-	    T2 = gretl_ctrans(T1, 0, err);
-	    if (T2 != NULL) {
-		C = gretl_zgemm(T2, 0, B, 0, err);
-	    }
+	gretl_matrix *CA = complex_from_real(A, err);
+
+	if (CA != NULL) {
+	    C = gretl_zgemm(CA, GRETL_MOD_CTRANSP, B, err);
+	    gretl_matrix_free(CA);
 	}
     }
-
-    gretl_matrix_free(T1);
-    gretl_matrix_free(T2);
 
     return C;
 }
@@ -532,6 +527,7 @@ gretl_matrix *gretl_zgeev (const gretl_matrix *A,
     }
 
     w = ret->val;
+    ret->is_complex = 1;
 
     /* get optimal workspace size */
     lwork = -1;
@@ -553,9 +549,11 @@ gretl_matrix *gretl_zgeev (const gretl_matrix *A,
     } else {
 	if (Ltmp != NULL) {
 	    gretl_matrix_replace_content(VL, Ltmp);
+	    VL->is_complex = 1;
 	}
 	if (Rtmp != NULL) {
 	    gretl_matrix_replace_content(VR, Rtmp);
+	    VR->is_complex = 1;
 	}
     }
 
