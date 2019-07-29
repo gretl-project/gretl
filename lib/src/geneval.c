@@ -4495,13 +4495,11 @@ matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
 	    ret->v.m = user_matrix_QR_decomp(m1, m2, &p->err);
 	    break;
 	case F_EIGSYM:
+	case HF_CEIGH:
 	    ret->v.m = user_matrix_eigen_analysis(m1, m2, 1, &p->err);
 	    break;
 	case F_EIGGEN:
 	    ret->v.m = user_matrix_eigen_analysis(m1, m2, 0, &p->err);
-	    break;
-	case HF_CEIGH:
-	    ret->v.m = gretl_zheev(m1, m2, &p->err);
 	    break;
 	}
 

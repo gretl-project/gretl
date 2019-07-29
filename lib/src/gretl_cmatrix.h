@@ -36,7 +36,7 @@ gretl_matrix *gretl_cmatrix_AHB (const gretl_matrix *A,
 
 gretl_matrix *gretl_zgetri (const gretl_matrix *A, int *err);
 
-gretl_matrix *gretl_zheev (const gretl_matrix *A, gretl_matrix *V,
+gretl_matrix *gretl_zheev (const gretl_matrix *A, int eigenvecs,
 			   int *err);
 
 gretl_matrix *gretl_zgeev (const gretl_matrix *A,

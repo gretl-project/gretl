@@ -20,6 +20,7 @@
 #include "libgretl.h"
 #include "gretl_matrix.h"
 #include "matrix_extra.h"
+#include "gretl_cmatrix.h"
 #include "gretl_normal.h"
 #include "usermat.h"
 #include "genparse.h"
@@ -1856,6 +1857,7 @@ user_matrix_eigen_analysis (const gretl_matrix *m,
 	vecs = 1;
     }
 
+    /* @m would be destroyed by this operation */
     C = gretl_matrix_copy(m);
     if (C == NULL) {
 	*err = E_ALLOC;
@@ -1863,7 +1865,11 @@ user_matrix_eigen_analysis (const gretl_matrix *m,
 
     if (!*err) {
 	if (symm) {
-	    E = gretl_symmetric_matrix_eigenvals(C, vecs, err);
+	    if (m->is_complex) {
+		E = gretl_zheev(C, vecs, err);
+	    } else {
+		E = gretl_symmetric_matrix_eigenvals(C, vecs, err);
+	    }
 	} else {
 	    E = gretl_general_matrix_eigenvals(C, vecs, err);
 	    if (E != NULL && E->cols == 2) {
@@ -1874,6 +1880,7 @@ user_matrix_eigen_analysis (const gretl_matrix *m,
 
     if (!*err && vecs) {
 	maybe_replace_content(R, C, 0);
+	R->is_complex = m->is_complex;
     }
 
     if (!vecs) {

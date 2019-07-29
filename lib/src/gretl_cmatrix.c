@@ -386,18 +386,17 @@ gretl_matrix *gretl_cmatrix_AHB (const gretl_matrix *A,
 /* Eigen decomposition of complex (Hermitian) matrix using
    LAPACK's zheev() */
 
-gretl_matrix *gretl_zheev (const gretl_matrix *A, gretl_matrix *V,
-			   int *err)
+gretl_matrix *
+gretl_zheev (const gretl_matrix *A, int eigenvecs, int *err)
 {
-    gretl_matrix *ret = NULL;
-    gretl_matrix *Acpy = NULL;
+    gretl_matrix *evals = NULL;
     integer n, info, lwork;
     double *w = NULL;
     double *rwork = NULL;
     cmplx *a = NULL;
     cmplx *work = NULL;
     cmplx wsz;
-    char jobz = V != NULL ? 'V' : 'N';
+    char jobz = eigenvecs ? 'V' : 'N';
     char uplo = 'U';
 
     if (!cmatrix_validate(A, 1)) {
@@ -405,32 +404,16 @@ gretl_matrix *gretl_zheev (const gretl_matrix *A, gretl_matrix *V,
 	return NULL;
     }
 
-    if (V != NULL && V->rows * V->cols == A->rows * A->cols) {
-	/* we can use V->val as workspace */
-	gretl_matrix_destroy_info(V);
-	V->rows = A->rows;
-	V->cols = A->cols;
-	gretl_matrix_copy_values(V, A);
-	a = (cmplx *) V->val;
-    } else {
-	/* we need a copy for workspace */
-	Acpy = gretl_matrix_copy(A);
-	if (Acpy == NULL) {
-	    *err = E_ALLOC;
-	    return NULL;
-	}
-	a = (cmplx *) Acpy->val;
-    }
-
     n = A->rows / 2;
 
-    ret = gretl_matrix_alloc(n, 1);
-    if (ret == NULL) {
+    evals = gretl_matrix_alloc(n, 1);
+    if (evals == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
     }
 
-    w = ret->val;
+    w = evals->val;
+    a = (cmplx *) A->val;
 
     /* get optimal workspace size */
     lwork = -1;
@@ -449,24 +432,19 @@ gretl_matrix *gretl_zheev (const gretl_matrix *A, gretl_matrix *V,
     if (info != 0) {
 	fprintf(stderr, "zheev: info = %d\n", info);
 	*err = E_DATA;
-    } else if (V != NULL && Acpy != NULL) {
-	gretl_matrix_replace_content(V, Acpy);
     }
 
  bailout:
 
     free(rwork);
     free(work);
-    if (Acpy != NULL) {
-	gretl_matrix_free(Acpy);
-    }
 
     if (*err) {
-	gretl_matrix_free(ret);
-	ret = NULL;
+	gretl_matrix_free(evals);
+	evals = NULL;
     }
 
-    return ret;
+    return evals;
 }
 
 /* Eigen decomposition of complex (non-Hermitian) matrix using
