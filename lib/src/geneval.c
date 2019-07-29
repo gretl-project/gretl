@@ -2620,6 +2620,24 @@ static int op_symbol (int op)
     }
 }
 
+static const char *op_string (int op)
+{
+    switch (op) {
+    case B_DOTMULT: return ".*";
+    case B_DOTDIV:  return "./";
+    case B_DOTPOW:  return ".^";
+    case B_DOTADD:  return ".+";
+    case B_DOTSUB:  return ".-";
+    case B_DOTEQ:   return ".=";
+    case B_DOTGT:   return ".>";
+    case B_DOTLT:   return ".<";
+    case B_DOTGTE:  return ".>=";
+    case B_DOTLTE:  return ".<=";
+    case B_DOTNEQ:  return ".!=";
+    default: return NULL;
+    }
+}
+
 static gretl_matrix *nullmat_multiply (const gretl_matrix *A,
 				       const gretl_matrix *B,
 				       int op, int *err)
@@ -2695,6 +2713,20 @@ matrix_add_sub_scalar (const gretl_matrix *A,
     }
 
     return C;
+}
+
+static int operator_real_only (int op)
+{
+    gretl_errmsg_sprintf("'%s': %s", op_string(op),
+			 _("complex operands are not supported"));
+    return E_TYPES;
+}
+
+static int no_mixed_operands (int op)
+{
+    gretl_errmsg_sprintf("'%s': %s", op_string(op),
+			 _("mixed complex and real operands are not supported"));
+    return E_TYPES;
 }
 
 /* See if we can reuse an existing matrix on an
@@ -2883,6 +2915,21 @@ static int real_matrix_calc (const gretl_matrix *A,
     case B_DOTGTE:
     case B_DOTLTE:
     case B_DOTNEQ:
+	/* dot operators and complex values: maybe we can
+	   lighten up a bit with some more work
+	*/
+	if (A->is_complex && B->is_complex) {
+	    if (op == B_DOTMULT) {
+		C = gretl_complex_hprod(A, B, &err);
+		break;
+	    } else if (op != B_DOTADD && op != B_DOTSUB) {
+		err = operator_real_only(op);
+		break;
+	    }
+	} else if (A->is_complex || B->is_complex) {
+	    err = no_mixed_operands(op);
+	    break;
+	}
 	/* apply operator element-wise */
 	C = gretl_matrix_dot_op(A, B, op_symbol(op), &err);
 	break;
@@ -3850,7 +3897,7 @@ static void matrix_error (parser *p)
     }
 }
 
-static int not_for_complex (int f)
+static int function_real_only (int f)
 {
     gretl_errmsg_sprintf("%s: %s", getsymb(f),
 			 _("complex arguments are not supported"));
@@ -3868,7 +3915,7 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
 	gretl_matrix *m = node_get_matrix(n, p, 0, 0);
 
 	if (m->is_complex && f != F_ROWS && f != F_COLS) {
-	    p->err = not_for_complex(f);
+	    p->err = function_real_only(f);
 	    return ret;
 	}
 
@@ -3924,7 +3971,7 @@ static NODE *matrix_to_alt_node (NODE *n, int f, parser *p)
     if (!p->err) {
 	if (m->is_complex) {
 	    if (f == F_LDET) {
-		p->err = not_for_complex(f);
+		p->err = function_real_only(f);
 	    } else {
 		if (f == F_DET) {
 		    ret->v.m = gretl_cmatrix_determinant(m, &p->err);
@@ -8996,7 +9043,7 @@ static NODE *apply_matrix_func (NODE *t, NODE *f, parser *p)
 	}
 
 	if (dfunc == NULL && cfunc == NULL) {
-	    p->err = not_for_complex(f->t);
+	    p->err = function_real_only(f->t);
 	} else {
 	    p->err = apply_cmatrix_func(ret->v.m, m,
 					cfunc, dfunc);

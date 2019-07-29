@@ -786,6 +786,7 @@ gretl_matrix *gretl_complex_hprod (const gretl_matrix *A,
     a = (complex double *) L->val;
     b = (complex double *) R->val;
     c = (complex double *) C->val;
+    k = 0; /* initialize! */
 
     if (match == 1) {
 	int n = cr * cc;
@@ -795,7 +796,6 @@ gretl_matrix *gretl_complex_hprod (const gretl_matrix *A,
 	}
     } else if (match == 2) {
 	/* b has just one column */
-	k = 0;
 	for (j=0; j<cc; j++) {
 	    for (i=0; i<cr; i++) {
 		c[k++] = a[j*cr+i] * b[i];
@@ -803,7 +803,6 @@ gretl_matrix *gretl_complex_hprod (const gretl_matrix *A,
 	}
     } else if (match == 3) {
 	/* b has just one row */
-	k = 0;
 	for (j=0; j<cc; j++) {
 	    for (i=0; i<cr; i++) {
 		c[k++] = a[j*cr+i] * b[j];
@@ -818,7 +817,6 @@ gretl_matrix *gretl_complex_hprod (const gretl_matrix *A,
 	}
     } else {
 	/* col vector times row vector */
-	k = 0;
 	for (j=0; j<cc; j++) {
 	    for (i=0; i<cr; i++) {
 		c[k++] = a[i] * b[j];
