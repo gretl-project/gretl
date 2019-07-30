@@ -1386,6 +1386,9 @@ int gretl_cmatrix_zero_triangle (gretl_matrix *m, char t)
     return 0;
 }
 
+/* switch between "legacy" and new representations of a
+   complex matrix */
+
 gretl_matrix *gretl_cmatrix_switch (const gretl_matrix *m,
 				    int to_new, int *err)
 {
@@ -1414,6 +1417,7 @@ gretl_matrix *gretl_cmatrix_switch (const gretl_matrix *m,
     jj = 0;
 
     if (to_new) {
+	/* make re and im components contiguous */
 	for (j=0; j<ret->cols; j++) {
 	    k = 0;
 	    for (i=0; i<m->rows; i++) {
@@ -1426,6 +1430,7 @@ gretl_matrix *gretl_cmatrix_switch (const gretl_matrix *m,
 	}
 	ret->is_complex = 1;
     } else {
+	/* put re and im components in adjacent columns */
 	for (j=0; j<m->cols; j++) {
 	    k = 0;
 	    for (i=0; i<ret->rows; i++) {
