@@ -28,6 +28,7 @@
 
 #define MDEBUG 0
 #define CONTIG_DEBUG 0
+#define CIDX 0
 
 #define mspec_get_offset(m) (m->lsel.range[0])
 #define mspec_get_n_elem(m) (m->lsel.range[1])
@@ -36,6 +37,17 @@
 #define mspec_set_n_elem(m,n) (m->lsel.range[1] = n)
 
 #define mspec_set_element(m,i) (m->lsel.range[0] = i)
+
+#if CIDX
+static int gretl_vector_real_length (const gretl_matrix *v)
+{
+    if (v->is_complex) {
+	return v->rows == 2 ? v->cols : v->cols == 1 ? v->rows/2 : 0;
+    } else {
+	return gretl_vector_get_length(v);
+    }
+}
+#endif
 
 /**
  * get_matrix_by_name:
@@ -400,16 +412,21 @@ static int spec_check_dimensions (matrix_subspec *spec,
 				  const gretl_matrix *m)
 {
     int colvec = m->cols == 1 && m->rows > 1;
+    int maxrow = m->rows;
     int lt = spec->ltype;
     int rt = spec->rtype;
     int err = 0;
 
+#if CIDX
+    maxrow /= 2;
+#endif
+
     if (colvec || rt != SEL_NULL) {
 	/* spec->lsel must pertain to rows */
 	if (lt == SEL_MATRIX) {
-	    err = bad_sel_vector(spec->lsel.m, m->rows);
+	    err = bad_sel_vector(spec->lsel.m, maxrow);
 	} else if (lt == SEL_RANGE || lt == SEL_ELEMENT) {
-	    err = bad_sel_range(spec->lsel.range, m->rows);
+	    err = bad_sel_range(spec->lsel.range, maxrow);
 	}
 	if (!err) {
 	    /* check spec->rsel against cols */
@@ -448,6 +465,11 @@ static void subspec_debug_print (const matrix_subspec *spec,
         "SEL_SINGLE",
         "SEL_STR"
     };
+#if CIDX
+    int r = m->is_complex ? m->rows/2 : m->rows;
+#else
+    int r = m->rows;
+#endif
 
     fprintf(stderr, "check_matrix_subspec: types = (%s,%s), ",
 	    snames[spec->ltype], snames[spec->rtype]);
@@ -463,7 +485,7 @@ static void subspec_debug_print (const matrix_subspec *spec,
 	fprintf(stderr, "rsel->range = (%d,%d), ", spec->rsel.range[0],
 		spec->rsel.range[1]);
     }
-    fprintf(stderr, "m is %d x %d\n", m->rows, m->cols);
+    fprintf(stderr, "m is %d x %d\n", r, m->cols);
     fprintf(stderr, "lh scalar %d, rh scalar %d\n",
 	    lhs_is_scalar(spec, m), rhs_is_scalar(spec, m));
 }
@@ -496,7 +518,11 @@ static int submatrix_contig (matrix_subspec *spec, const gretl_matrix *m)
     return contig;
 }
 
+#if CIDX
+#define rowmax(s,m) (s->range[1] == MSEL_MAX ? (m->is_complex ? m->rows/2 : m->rows) : s->range[1])
+#else
 #define rowmax(s,m) (s->range[1] == MSEL_MAX ? m->rows : s->range[1])
+#endif
 #define colmax(s,m) (s->range[1] == MSEL_MAX ? m->cols : s->range[1])
 
 static int get_offset_nelem (matrix_subspec *spec,
@@ -585,7 +611,11 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 	return 0;
     }
 
+#if CIDX
+    veclen = gretl_vector_real_length(m);
+#else
     veclen = gretl_vector_get_length(m);
+#endif
 
     if (spec->rtype == SEL_NULL && veclen == 0) {
 	gretl_errmsg_set(_("Ambiguous matrix index"));
