@@ -6480,7 +6480,6 @@
 
   </command>
 
-
   <command name="if" section="Programming" label="Strutture di controllo" context="cli">
 
     <description>
@@ -6488,7 +6487,6 @@
         Struttura di controllo per l'esecuzione dei comandi. Sono supportate le
         tre forme seguenti:
       </para>
-
       <code>
 	# forma semplice
 	if condition
@@ -6511,13 +6509,12 @@
 	    commands3
 	endif
       </code>
- 
       <para>
         La <repl quote="true">condizione</repl> deve essere un'espressione
         Booleana, per la cui sintassi si veda <cmdref targ="genr"/>.
         Può essere incluso più di un blocco <cmd>elif</cmd>.
-        Inoltre, i blocchi <lit>if</lit> &hellip;
-	<lit>endif</lit> possono essere nidificati.
+        Inoltre, i blocchi <lit>if</lit> &hellip; <lit>endif</lit>
+        possono essere nidificati.
       </para>
 
     </description>
@@ -6529,17 +6526,36 @@
 
     <usage>
       <arguments>
-        <argument>file-input</argument>
+        <argument>filename</argument>
       </arguments>
+   <options>
+	<option>
+	  <flag>--force</flag>
+	  <effect>forza una rilettura dal file</effect>
+        </option>
+      </options>
+      <examples>
+        <example>include myfile.inp</example>
+        <example>include sols.gfn</example>
+      </examples>
     </usage>
 
     <description>
       <para>
         Da usare in uno script di comandi, principalmente per includere
-        definizioni di funzioni. Esegue i comandi nel <repl>file-input</repl>
-        e ripassa il controllo allo script principale. Per includere una funzione
-        che fa parte di un pacchetto, occorre specificare anche l'estensione del
-        file.
+        definizioni di funzioni. Il comando <repl>filename</repl> dovrebbe
+        includere l'estensione <lit>inp</lit> (un script di testo semplice)
+        oppure l'estensione <lit>gfn</lit> (una pacchetto di funzioni gretl).
+        I comandi del <repl>filename</repl> vengono eseguiti e il controllo viene
+        restituito allo script principale.
+      </para>
+      <para>
+      L'opzione <opt>force</opt> è specifica dei file di tipo
+      <lit>gfn</lit>: quest'ultima ha come effetto quello di forzare
+      gretl a rileggere il pacchetto di funzioni anche se quest'ultimo
+      è già stato caricato in memoria.  (In risposta a questo comando,
+      gli script di testo semplici <lit>inp</lit> sono sempre
+      ricaricati.)
       </para>
       <para>
 	Si veda anche il comando <cmdref targ="run"/>.
@@ -6569,7 +6585,6 @@
 
     <usage>
       <arguments>
-        <argument></argument>
         <argument>var-min</argument>
         <argument>var-max</argument>
         <argument>var-indip</argument>
@@ -6607,19 +6622,22 @@
 
     <description>
       <para>
-	Stima un modello di regressione per intervallo. Questo modello è adatto
-        al caso in cui la variabile dipendente è osservata in modo imperfetto
-        per alcune osservazioni (o anche tutte). In altre parole, si ipotizza
-        che il processo generatore dei dati sia
-	<equation status="display"
-	tex="\[y^*_t = x_t \beta+\epsilon_t\]" ascii="y* = x b + u"/> ma che
-        solo
-	<equation status="inline" tex="\[m_t \le
-	y_t \le M_t\]" ascii="m &lt;= y* &lt;= M"/> sia osservato (l'intervallo
-        può essere limitato a destra o a sinistra). Si noti che per alcune
-        osservazioni <math>m</math> può essere uguale a <math>M</math>. Le variabili
-        <repl>var-min</repl> e <repl>var-max</repl> devono contenere valori <lit>NA</lit>
-        nel caso di osservazioni non limitate a sinistra o a destra.
+	Stima un modello di regressione per intervallo. Questo modello
+	è adatto al caso in cui la variabile dipendente è osservata in
+	modo imperfetto per alcune osservazioni (o anche tutte). In
+	altre parole, si ipotizza che il processo generatore dei dati
+	sia
+	<equation status="display" tex="\[y^*_t = x_t
+					\beta+\epsilon_t\]" ascii="y* = x b + u"/>
+	ma che solo
+	<equation status="inline" tex="\[m_t \le y_t \le M_t\]"
+		  ascii="m &lt;= y* &lt;= M"/>
+	sia osservato (l'intervallo può
+	essere limitato a destra o a sinistra). Si noti che per alcune
+	osservazioni <math>m</math> può essere uguale a
+	<math>M</math>. Le variabili <repl>var-min</repl> e
+	<repl>var-max</repl> devono contenere valori <lit>NA</lit> nel
+	caso di osservazioni non limitate a sinistra o a destra.
       </para>
 
       <para context="gui">
@@ -6629,8 +6647,8 @@
       </para>
 
       <para>
-	Il modello è stimato per massima verosimiglianza, ipotizzando la
-        normalità del termine di disturbo.
+    	Il modello è stimato per massima verosimiglianza, ipotizzando la
+      normalità del termine di disturbo.
       </para>
 
       <para context="cli">
@@ -6640,7 +6658,7 @@
 	standard QML o Huber&ndash;White. In questo caso la matrice di
 	covarianza stimata è un <quote>sandwich</quote> dell'inversa
 	dell'Hessiana stimata e del prodotto esterno del gradiente. In
-	alternativa, l'opzione <opt>opg</opt> produce una matrica
+	alternativa, l'opzione <opt>opg</opt> produce una matrice
 	varianze-covarianze basata sul prodotto esterno dei gradienti.
       </para>
       <para context="gui">
@@ -6676,7 +6694,7 @@
 	stime originali dei parametri e i residui ri-campionati, viene
 	ri-stimato il sistema e vengono ri-calcolate le funzioni di
 	impulso-risposta.  Questa procedura viene ripetuta 999 volte e
-	vengono mostrati i quantili 0.025 e 0.975 per le risposte,
+	vengono mostrati i quantili &alpha;/2 e 1 &minus; &alpha;/2 per le risposte,
 	insieme alle stime puntuali.  L'opzione bootstrap al momento
 	non è disponibile per il VECM vincolati.
       </para>
@@ -6687,6 +6705,13 @@
 	il quale le variabili vengono elencate nella specificazione del modello,
 	ma è possibile usare le frecce verso l'alto e verso il basso per spostare
 	una variabile selezionata.
+      </para>
+      <para>
+	In riferimento alla scala delle risposte di impulso,: lo
+	<quote>shock</quote> è porporzionato alla deviazione standard
+	delle innovazioni stimate nella variabile sorgente, e la
+	risposta è data in qualunque sia l'unità di misura
+	<quote>naturale</quote> della variabile obiettivo.
       </para>
     </description>
 
@@ -6742,10 +6767,10 @@
       <para>
 	Questo comando importa una serie di dati dal file di origine 
 	<repl>filename</repl> (che deve essere un file di dati testuale 
-	delimitato) assegnandoli alla variabile <repl>varname</repl>. 
-	Per maggiori dettagli, si veda <guideref targ="chap:join"/>; 
-	in questa sede ci limitiamo a ricordare brevemente le opzioni 
-	disponibili.
+	delimitato o un file di dati nativo di gretl) assegnandoli alla
+	variabile <repl>varname</repl>. Per maggiori dettagli, si veda
+	<guideref targ="chap:join"/>; in questa sede ci limitiamo a
+	ricordare brevemente le opzioni disponibili.
       </para>
       <para>
 	L'opzione <opt>data</opt> può essere usata per specificare 
@@ -6756,7 +6781,7 @@
       <para>
 	L'opzione <opt>filter</opt> può essere usata per specificare un criterio
 	da seguire per filtrare i dati di origine (in altre parole,
-	per selezionare un osttoinsieme di osservazioni).
+	per selezionare un sottoinsieme di osservazioni).
       </para> 
       <para>
 	Le opzioni <opt>ikey</opt> e <opt>okey</opt> possono essere utilizzate
@@ -6766,13 +6791,13 @@
       </para>
       <para>
 	L'opzione <opt>aggr</opt> viene usata quando la relazione fra
-	osservazioni nel dataset corrente e nel file di oriogine non è
+	osservazioni nel dataset corrente e nel file di origine non è
 	biunivoca.
       </para>      
       <para>
 	L'opzione <opt>tkey</opt> è applicabile solo quando il dataset
 	corrente ha una struttura di serie storiche. Viene usato per
-	specificare il nome di una colonna contenete le date da
+	specificare il nome di una colonna contenente le date da
 	accoppiare al dataset e/o il formato in cui le date sono
 	rappresentate in quella colonna.
       </para>     
@@ -6836,9 +6861,7 @@
     </description>
   </command>
 
-
   <command name="kpss" section="Tests" label="Test KPSS di stazionarietà">
-
     <usage>
       <arguments>
         <argument>ordine</argument>
@@ -6848,6 +6871,10 @@
 	<option>
 	  <flag>--trend</flag>
 	  <effect>include un trend</effect>
+	</option>
+	<option>
+	  <flag>--seasonals</flag>
+	  <effect>include dummy stagionali</effect>
 	</option>
 	<option>
 	  <flag>--verbose</flag>
@@ -6869,6 +6896,7 @@
     </usage>
 
     <description>
+    
       <para context="gui">
 	Calcola il test KPSS (Kwiatkowski, Phillips, Schmidt e Shin,
 	1992) per la stazionarietà di una variabile (o della sua
@@ -6896,29 +6924,37 @@
       </para>
 
       <para context="gui">
-	L'argomento ordine determina la dimensione della finestra usata per
+	     L'argomento ordine determina la dimensione della finestra usata per
         il livellamento di Bartlett.  Se si usa l'opzione <lit>Mostra i risultati
         della regressione</lit>, vengono mostrati anche i risultati della
         regressione ausiliaria, insieme alla varianza stimata della componente
         random walk della variabile.
       </para>
-
-      <para context="cli">
-	L'argomento ordine determina la dimensione della finestra usata per
-        il livellamento di Bartlett.  Se si usa l'opzione <opt>verbose</opt>,
-        vengono mostrati anche i risultati della regressione ausiliaria, insieme
-        alla varianza stimata della componente random walk della variabile.
+      <para context="cli">> L'argomento <repl>order</repl> determina
+      l'ampiezza della finestra usata per il livellamento di
+      Bartlett. Se viene dato un valore negativo questo è considerato
+      come un segnale per l'utilizzo in automatico di una finestra di
+      riferimento di ampiezza 4(<math>T</math>/100)<sup>0.25</sup>,
+      dove <math>T</math> è l'ampiezza del campione.
       </para>
-
+      <para context="cli">
+	   Se si sceglie l'opzione <opt>verbose</opt> il risultato
+	   della regressione ausiliaria verrà stampato insieme alla
+	   varianza stimata della componente di random walk della
+	   variabile
+      </para>
       <para>
 	Il valori critici riportati per questa statistica test sono
-	basati sulle superfici di risposta stimati da <cite
-	key="sephton95">Sephton (Economics Letters, 1995)</cite>, che
-	per piccoli campioni sono più accurati di quelli forniti
-	nell'articolo originale di KPSS. Quando la statistica test si
-	trova fra i valori critici al 10 e all'1 per cento viene
-	mostrato un p-value ottenuto per interpolazione lineare, che
-	non dovrebbe essere accettato in maniera acritica.
+	basati sulle superfici di risposta stimate secondo il metodo
+	descritto da <cite key="sephton95">Sephton (Economics Letters,
+	1995)</cite>, che per piccoli campioni sono più accurate di
+	quelle fornite nell'articolo originale di KPSS. Quando la
+	statistica test si trova fra i valori critici al 10 e all'1
+	per cento viene mostrato un p-value ottenuto per
+	interpolazione lineare, che non dovrebbe essere accettato in
+	maniera acritica. Vedi anche la funzione <fncref
+	targ="kpsscrit"/> per ottenere questi valori critici come
+	codice.
       </para>
 
       <subhead context="cli">Dati panel</subhead>
@@ -6930,7 +6966,7 @@
 	diversi. Mentre nel caso di serie storiche regolari potete
 	fornire una lista di variabili da testare, con dati panel il
 	comando può testare solo una variabile alla volta. L'opzione
-	<opt>verbose</opt>, inoltre, ha un isgnificato diverso:
+	<opt>verbose</opt>, inoltre, ha un significato diverso:
 	produce un breve resoconto del test per ciascuna singola serie
 	storica (di default viene mostrato solo il risultato
 	complessivo).
@@ -6938,11 +6974,11 @@
 
       <para context="cli">
 	Se possibile, viene calcolato il test complessivo (ipotesi
-	nulla: la ariabile in questione è stazionaria per tutte le
+	nulla: la variabile in questione è stazionaria per tutte le
 	unità panel) usando il metodo di <cite key="choi01">Choi
 	(Journal of International Money and Finance,
-	2001)</cite>. Questo calcolo non è sempre immediato perchè
-	mentre il test di Choi è basato sui p-valu dei test sulle
+	2001)</cite>. Questo calcolo non è sempre immediato perchè,
+	mentre il test di Choi è basato sui p-value dei test sulle
 	singole serie, attualmente non esiste un modo per calcolare i
 	p-value della statistica test KPSS; dobbiamo perciò basarci su
 	qualche valore critico.
@@ -6953,20 +6989,20 @@
 	critici al 10 e all'1 per cento siamo in grado di interpolare
 	un p-value. Ma se il test cade a sinistra del valore critico
 	al 10 per cento, o supera quello all'1 per cento, non
-	riusciamo a interpolare e tutto ciò che possiamo ottenere è un
-	limite superiore al test globale di Choi. Se le singole
-	statistiche test si trovano a sinistra del valore critico al
-	10 per cento per alcune unità ma superano quello all'1 per
-	cento per altre non è possibile neppure il calcolo del limite
-	superiore del test globale.
+	riusciamo a compiere l'interpolazione e tutto ciò che possiamo
+	al limite fare è apporre un limite al test globale di Choi. Se
+	le singole statistiche test si trovano a sinistra del valore
+	critico al 10 per cento per alcune unità, ma superano quello
+	all'1 per cento per altre, non è possibile neppure il calcolo
+	del limite superiore del test globale.
      </para>
     </description>
 
     <gui-access>
       <menu-path>/Variabile/Test di radice unitaria/Test KPSS</menu-path>
     </gui-access>
-
   </command>
+  
   <command name="labels" section="Dataset" label="Mostra etichette delle variabili" context="cli">
 
     <usage>
@@ -6976,6 +7012,11 @@
 	<altform><lit>labels --from-file=</lit><repl>filename</repl></altform>
 	<altform><lit>labels --delete</lit></altform>
       </altforms>
+    <examples>
+	<demos>
+	  <demo>oprobit.inp</demo>
+	</demos>
+    </examples>
     </usage>
 
     <description>
@@ -6992,7 +7033,7 @@
 	d'errore; se alcune variabili hanno etichette e altre no, per
 	le seconde viene mostrata una linea vuota. Il file di output
 	verrà scritto nella directory corrispondente al valore
-	corrente di <cmdref targ="workdir"/>, a meno che il nome di file
+	corrente di <cmdref targ="workdir"/>, a meno che il <repl>nome di file</repl>
 	contenga un percorso completo.
       </para>
       <para>
@@ -7005,7 +7046,9 @@
 	rimuove dal dataset tutte le etichette di variabili.
       </para>      
     </description>
-
+    <gui-access>
+      <menu-path>/Dati/Etichette delle variabili</menu-path>
+    </gui-access>
   </command>
 
   <command name="lad" section="Estimation"
@@ -7025,17 +7068,21 @@
 	  <flag>--no-vcv</flag>
 	  <effect>non calcolare la matrice di covarianza</effect>
         </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>non stampa nulla</effect>
+        </option>
       </options>
     </usage>
 
     <description>
       <para>
-	Calcola una regressione che minimizza la somma delle deviazioni
-        assolute dei valori stimati dai valori effettivi della variabile
-        dipendente. Le stime dei coefficienti sono derivate usando
-        l'algoritmo del simplesso di Barrodale&ndash;Roberts; viene
-        mostrato un messaggio di avvertimento se la soluzione non è
-        unica.
+	Calcola una regressione che minimizza la somma delle
+	deviazioni assolute dei valori stimati dai valori effettivi
+	della variabile dipendente. Le stime dei coefficienti sono
+	derivate usando l'algoritmo del simplesso di
+	Barrodale&ndash;Roberts; viene mostrato un messaggio di
+	avvertimento se la soluzione non è unica.
       </para>
       <para>
 	Gli errori standard sono derivati usando la procedura
@@ -7050,12 +7097,16 @@
       <para>
 	Si noti che questo stimatore può richiedere molto tempo di
 	calcolo per campioni grandi o modelli con molte variabili
-	esplicative; in in questi casi, consigliamo di usare il comando
+	esplicative; in questi casi, consigliamo di usare il comando
 	<cmdref targ="quantreg"/>. I due comandi sono di fatto
 	equivalenti, a parte il fatto che quantreg usa l'algoritmo di
 	Frisch&ndash;Newton (più efficiente) e fornisce errori
 	standard analitici anziché via bootstrap.
       </para>
+      <code>
+	lad y const X
+	quantreg 0.5 y const X
+      </code>
     </description>
 
     <gui-access>
@@ -7069,21 +7120,32 @@
     <usage>
       <arguments>
         <argument optional="true" separated="true">ordine</argument>
-	<argument>lista-variabilii</argument>
+	<argument>lista-variabili</argument>
       </arguments>
-      <examples>
-       <example>lags x y</example>
-       <example>lags 12 ; x y</example>
-      </examples>
+      <options>
+	<option>
+	  <flag>--bylag</flag>
+	  <effect>ordina i termini per ritardo</effect>
+	</option>
+      </options>
+   <examples>
+	<example>lags x y</example>
+	<example>lags 12 ; x y</example>
+	<example>lags 4 ; x1 x2 x3 --bylag</example>
+	<demos>
+	  <demo>sw_ch12.inp</demo>
+	  <demo>sw_ch14.inp</demo>
+	</demos>
+	</examples>
     </usage>
-
+    
     <description>
       <para>
-	Crea delle nuove variabili come valori ritardati di ognuna delle
+	Crea delle nuove variabili le quali sono i valori ritardati di ognuna delle
 	variabili nella <repl>lista-variabili</repl>. Il numero dei ritardi può
-        essere indicato dal primo parametro opzionale, altrimenti sarà pari
-        alla periodicità del dataset.  Ad esempio, se la periodicità è 4
-        (trimestrale), il comando <cmd>lags x y</cmd> crea
+   essere indicato dal primo parametro opzionale, altrimenti sarà pari
+   alla periodicità del dataset.  Ad esempio, se la periodicità è 4
+   (trimestrale), il comando <cmd>lags x y</cmd> crea
       </para>
       <code>
        x_1 = x(t-1)
@@ -7094,6 +7156,18 @@
       <para>
         Il numero dei ritardi creati può essere indicato come primo parametro
         opzionale (se presente, deve essere seguito da un punto e virgola).
+      </para>
+      <para>
+	L'opzione <opt>bylag</opt> ha senso solo se la
+	<repl>lista-variabili</repl> contiene più di una serie di
+	variabili con ordine massimo di ritardo maggiore di 1. Da
+	impostazione predefinita, i termini ritardati vengono aggiunti
+	al dataset come variabili: si inizia con tutti i ritardi della
+	prima serie, poi si passa quelli della seconda, poi della
+	terza e così via. Tuttavia, se l'opzione <opt>bylag</opt> è
+	data il riordino viene fatto per ritardi: si inizia con il
+	primo ritardo di tutte le variabili, poi si passa al secondo e
+	così via.
       </para>
     </description>
 
@@ -7109,40 +7183,37 @@
     <description>
       <para>
 	In questa finestra di dialogo è possibile selezionare l'ordine dei
-        ritardi per le variabili indipendenti in un modello di serie storiche, e
-        in alcuni casi anche per la variabile dipendente (ma si noti che
-        l'ordine di ritardi comune per modelli vettoriali come i VAR e i VECM è
-        gestito separatamente attraverso un selettore nella finestra di dialogo
-        principale del modello).
+   ritardi per le variabili indipendenti in un modello di serie storiche, e
+   in alcuni casi anche per la variabile dipendente (ma si noti che
+   l'ordine di ritardi comune per modelli vettoriali come i VAR e i VECM è
+   gestito separatamente attraverso un selettore nella finestra di dialogo
+   principale del modello).
       </para>
-
       <para>
 	I selettori sulla sinistra permettono di selezionare un intervallo di
-        ritardi consecutivi per ogni variabile. Per specificare ritardi non
-        consecutivi, occorre selezionare la casella vicino al campo intitolato
+   ritardi consecutivi per ogni variabile. Per specificare ritardi non
+   consecutivi, occorre selezionare la casella vicino al campo intitolato
 	<quote>ritardi specifici</quote>. In questo modo si attiva il campo,
-        all'interno del quale è possibile inserire una lista di ritardi separati
-        da spazi.
+   all'interno del quale è possibile inserire una lista di ritardi separati
+   da spazi.
       </para>
-
       <para>
-        La riga denominata <quote>predefinito</quote> offre un modo veloce per
-        impostare una specificazione di ritardi comune a tutte le variabili
-        indipendenti: i valori inseriti in questa riga vengono copiati in tutte
-        le righe successive (tranne quella della variabile dipendente, se
-        esiste).
+   La riga denominata <quote>predefinito</quote> offre un modo veloce per
+   impostare una specificazione di ritardi comune a tutte le variabili
+   indipendenti: i valori inseriti in questa riga vengono copiati in tutte
+   le righe successive (tranne quella della variabile dipendente, se
+   esiste).
       </para>
-
       <para>
-        La variabile dipendente è trattata in modo speciale: il ritardo di
-        ordine zero indica che la variabile apparirà nel modello a sinistra del
-        segno uguale, mentre ulteriori ordini di ritardo saranno aggiunti a
-        destra dell'uguale, insieme alle variabili indipendenti.
+   La variabile dipendente è trattata in modo speciale: il ritardo di
+   ordine zero indica che la variabile apparirà nel modello a sinistra del
+   segno uguale, mentre ulteriori ordini di ritardo saranno aggiunti a
+   destra dell'uguale, insieme alle variabili indipendenti.
       </para>
 
       <para>
 	I valori selezionati in questa finestra di dialogo vengono ricordati per
-        l'intera durata della sessione di lavoro con un certo dataset.
+   l'intera durata della sessione di lavoro con un certo dataset.
       </para>
 
     </description>
@@ -7160,8 +7231,8 @@
     <description>
       <para>
 	Calcola la differenza prima del logaritmo naturale di ogni
-        variabile della <repl>lista-variabili</repl> e la salva in una
-        nuova variabile con il prefisso <lit>ld_</lit>.  Così, <cmd>ldiff
+   variabile della <repl>lista-variabili</repl> e la salva in una
+   nuova variabile con il prefisso <lit>ld_</lit>. Così, <cmd>ldiff
 	x y</cmd> crea le nuove variabili 
       </para>
       <code>
@@ -7184,7 +7255,21 @@
 	  <flag>--save</flag>
 	  <effect>salva le variabili risultato</effect>
 	</option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>non mostra i risultati</effect>
+	</option>
+	<option>
+	  <flag>--plot</flag>
+	  <optparm>mode-or-filename</optparm>
+	  <effect>si veda oltre</effect>
+        </option>
       </options>
+	<examples>
+	<demos>
+	  <demo>leverage.inp</demo>
+	</demos>
+    </examples>
     </usage>
 
     <description>
@@ -7202,53 +7287,54 @@
 	numero dei parametri stimati e <math>n</math> è l'ampiezza del
 	campione) sono indicati con un asterisco. Per i dettagli sui
 	concetti di leverage e influenza, si veda <cite
-	key="davidson-mackinnon93">Davidson and MacKinnon
+	key="davidson-mackinnon93">Davidson e MacKinnon
 	(1993)</cite>, capitolo 2.
       </para>
-
       <para>
 	Vengono mostrati anche i valori DFFITS: questi sono
 	<quote>residui studentizzati</quote> (ossia i residui
 	previsti, divisi per i propri errori standard) moltiplicati
-	per <equation status="inline" tex="$\sqrt{h/(1 - h)}$"
-	ascii="sqrt[h/(1 - h)]" graphic="dffit"/>. Per una discussione
-	dei residui studentizzati e dei valori DFFITS si veda Maddala,
-	<cite key="maddala92">Introduction to Econometrics</cite>,
-	cap. 12, oppure <cite key="belsley-etal80">Belsley, Kuh and
-	Welsch (1980)</cite>.
+	per <equation status="inline"
+	tex="$\sqrt{h/(1 - h)}$"
+	ascii="sqrt[h/(1 - h)]"
+	graphic="dffit"/>. Per una discussione dei residui studentizzati
+	e dei valori DFFITS si veda Maddala,<cite key="maddala92">Introduction
+	to Econometrics</cite>, cap. 12, oppure <cite key="belsley-etal80">Belsley,
+	Kuh e	Welsch (1980)</cite>.
       </para>
       <para>
-        In breve, i <quote>residui previsti</quote>
-	sono la differenza tra il valore osservato e il valore stimato 
-        della variabile dipendente all'osservazione
-        <math>t</math>, ottenuti da una regressione in cui
-        quell'osservazione è stata omessa (oppure in cui è stata
-        aggiunta una variabile dummy che vale 1 solo per l'osservazione
-	<math>t</math>); il residuo studentizzato si ottiene
-        dividendo il residuo previsto per il proprio errore standard.
+	In breve, i <quote>residui previsti</quote> sono la differenza
+	tra il valore osservato e il valore stimato della variabile
+	dipendente all'osservazione <math>t</math>, ottenuti da una
+	regressione in cui quell'osservazione è stata omessa (oppure
+	in cui è stata aggiunta una variabile dummy che vale 1 solo
+	per l'osservazione <math>t</math>); il residuo studentizzato
+	si ottiene dividendo il residuo previsto per il proprio errore
+	standard.
       </para>
-
-      <para context="cli">Se si usa l'opzione <opt>save</opt>, il
-      leverage, il valore di influenza e il valore DFFITS vengono
-      aggiunti al dataset in uso. In questo contesto, l'opzione
-      <opt>quiet</opt> evita che i risultati vengano stampati. I nomi
-      di default delle serie prodotte sono rispettivamente
-      <lit>lever</lit>, <lit>influ</lit> and <lit>dffits</lit>. Se
-      però serie con questo nome già esistono, i nomi delle serie
-      prodotte sarano ritoccati per assicurarne l'unicità; se così
-      avvenisse, occuperanno i tre numeri di serie più alti nel
-      dataset.
+      <para context="cli">
+	Se si usa l'opzione <opt>save</opt>, il leverage, il valore di
+	influenza e il valore DFFITS vengono aggiunti al dataset in
+	uso. In questo contesto, l'opzione <opt>quiet</opt> evita che
+	i risultati vengano stampati. I nomi di default delle serie
+	prodotte sono rispettivamente <lit>lever</lit>,
+	<lit>influ</lit> e <lit>dffits</lit>.  Se però serie con
+	questo nome già esistono, i nomi delle serie prodotte sarano
+	ritoccati per assicurarne l'unicità; se così avvenisse,
+	occuperanno i tre numeri di serie più alti nel dataset.
       </para>
-
       <para context="gui">
-	L'icona "+" in cima alla finestra del test di leverage apre una
-        finestra di dialogo che permette di salvare nel dataset in uso
-        una o più delle variabili del test.</para>
+      L'icona "+" in cima alla finestra del test di leverage apre una
+      finestra di dialogo che permette di salvare nel dataset in uso
+      una o più delle variabili del test.</para>
       <para context="tex">
 	Dopo l'esecuzione l'accessore <fncref targ="$test"/>
 	restituisce il criterio di validazione incrociata, definito
-	come \[ \sum_{i=1}^n (y_i - \hat{y}_{-i})^2 \] dove
-	$\hat{y}_{-i}$ è l'errore di previsione per la $i$-esima
+	come 
+	\[
+	\sum_{i=1}^n (y_i - \hat{y}_{-i})^2
+	\]
+	dove $\hat{y}_{-i}$ è l'errore di previsione per la $i$-esima
 	osservazione, dopo che quest'ultima è stata esclusa dal
 	campione. Di conseguenza, il criterio è la somma dei quadrati
 	degli errori di previsione nella quale per prevedere la
@@ -7266,12 +7352,22 @@
 	come la somma dei quadrati degli scarti fra la variabile
 	dipendente e il suo valore previsto, calcolato a partire da un
 	campione dal quale quell'osservazione è stata esclusa.
-	(Questo stimatore è chiamato
-	<emphasis>leave-one-out</emphasis>).  Per una discussione più
-	approfondita del criterio di validazione incrociata,
-	v. Davidson e MacKinnon's <book>Econometric Theory and
-	Methods</book>, pag. 685&ndash;686, e i riferimenti
-	bibliografici ivi citati.
+	(Questo stimatore è chiamato <emphasis>leave-one-out</emphasis>).
+	Per una discussione più approfondita del criterio di validazione
+	incrociata, v. Davidson e MacKinnon's <book>Econometric Theory and
+	Methods</book>, pag. 685&ndash;686, e i riferimenti bibliografici ivi citati.
+      </para>
+      <para context="cli">
+	Per impostazione predefinita, se questo comando viene invocato
+	verrà mostrata una versione interattiva del grafico del
+	leverage e dei valori d'influenza. Questo può essere
+	aggiustato tramite l'opzione <opt>plot</opt>. I parametri
+	accettabili per quest'opzione sono <lit>none</lit> per
+	sopprimere il grafico, <lit>display</lit> per mostrare il
+	grafico anche in modalità script, oppure il nome del file.
+	L'effetto di dare un nome di file al comando è descritto
+	all'interno dell'opzione <opt>output</opt> del comando <cmdref
+	targ="gnuplot"/>.
       </para>
     </description>
 
@@ -7316,7 +7412,7 @@
     <description>
       <para>
 	Calcola il test di radice unitaria per dati panel di <cite
-	key="LLC2002">Levin, Lin and Chu (2002)</cite>. L'ipotesi
+	key="LLC2002">Levin, Lin e Chu (2002)</cite>. L'ipotesi
 	nulla che tutte le singole serie storiche contengano una
 	radica unitaria, mentre l'alternativa è che nessuna delle
 	serie storiche ne contenga una.  (In altre parole, si assume
@@ -7328,7 +7424,7 @@
 	Di default le regressioni dei test ADF contengono una
 	costante; per eliminarla usate l'opzione <opt>nc</opt>; per
 	aggiungere un trend lineare usate l'opzione <opt>ct</opt>.
-	(V. il comando <cmdref targ="adf"/> per una spiegazione delle
+	(Vedi il comando <cmdref targ="adf"/> per una spiegazione delle
 	regressioni ADF.)
       </para>
       <para context="cli">
@@ -7370,7 +7466,7 @@
       <para>
 	Stima una regressione polinomiale locally-weighted e produce
 	una serie che contiene i valori previsti della variabile
-	dipendente in corrispondenza di tutti i valori non missing
+	dipendente in corrispondenza di tutti i valori non-missing
 	della variabile indipendente.  Il metodo applicato è quello
 	descritto da <cite key="cleveland79">William Cleveland
 	(1979)</cite>.
@@ -7379,7 +7475,7 @@
 	I parametri vi permettono di specificare l'ordine del polinomio
 	nella variabile indipendente e la percentuale di punti osservati
 	da utilizzare in ciascuna regressione locale (l'ampiezza di banda).
-	Valori più elevati di quest'ultima generato un risultato più liscio.
+	Valori più elevati di quest'ultima generano un risultato più liscio.
       </para>
       <para>
 	Se viene selezionata l'opzione dei pesi robusti la procedura
@@ -7390,8 +7486,7 @@
      </description>
   </command>
 
-  <command name="logistic" section="Estimation"
-    label="Regressione logistica">
+  <command name="logistic" section="Estimation" label="Regressione logistica">
 
     <usage>
       <arguments>
@@ -7405,9 +7500,26 @@
 	  <effect>specifica il massimo della variabile dipendente</effect>
 	</option>	
 	<option>
+	  <flag>--robust</flag>
+	  <effect>utilizza errori standard robusti</effect>
+        </option>
+	<option>
+	  <flag>--cluster</flag>
+	  <optparm>clustvar</optparm>
+	  <effect>si veda <cmdref targ="logit"/> per una ulteriore spiegazione</effect>
+        </option>
+	<option>
 	  <flag>--vcv</flag>
-	  <effect>mostra la matrice di covarianza</effect>
+	  <effect>mostra la matrice di varianza-covarianza</effect>
 	</option>
+	<option>
+	  <flag>--fixed-effects</flag>
+	  <effect>si veda oltre</effect>
+	</option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>non mostra nulla</effect>
+        </option>
       </options>
       <examples>
         <example>logistic y const x</example>
@@ -7418,49 +7530,56 @@
     <description>
       <para>
 	Regressione logistica: esegue una regressione OLS usando la
-        trasformazione logistica sulla variabile dipendente:
+   trasformazione logistica sulla variabile dipendente:
 	<equation status="display" 
-	  tex="\[\log\left(\frac{y}{y^*-y}\right)\]"
-	  ascii="log(y/(y* - y))"
-	  graphic="logistic1"/>
-      </para>
-
-      <para context="cli">La variabile dipendente dev'essere
-        strettamente positiva. Se è una frazione decimale, compresa tra
-        0 e 1, il valore predefinito per <math>y</math><sup>*</sup>
-        (il massimo asintotico della variabile dipendente) è 1.
-        Se la variabile dipendente è una percentuale, compresa tra 0 e
-        100, il valore predefinito di <math>y</math><sup>*</sup>
-        è 100.
-      </para>
-        
-      <para context="cli">
-        È possibile indicare un valore diverso per il massimo, usando
-        l'opzione <opt>ymax</opt>. Il valore fornito deve essere
-        maggiore di tutti i valori osservati della variabile
-        dipendente.
-      </para>
-        
-      <para context="gui">
-        Nella finestra di dialogo del comando, è possibile specificare
-        un valore diverso per il massimo. Il valore fornito deve essere
-        maggiore di tutti i valori osservati della variabile dipendente.
-      </para>
-
-      <para>I valori stimati e i residui della regressione sono
-        trasformati automaticamente usando 	  
+	tex="\[\log\left(\frac{y}{y^*-y}\right)\]"
+	ascii="log(y/(y* - y))"
+	graphic="logistic1"/>
+     </para>
+     <para context="cli">
+   La variabile dipendente dev'essere strettamente positiva.
+   Se è una frazione decimale, compresa tra 0 e 1, il valore
+   predefinito per <math>y</math><sup>*</sup> (il massimo
+   asintotico della variabile dipendente) è 1. Se la variabile
+   dipendente è una percentuale, compresa tra 0 e 100, il valore
+   predefinito di <math>y</math><sup>*</sup> è 100.
+     </para>
+     <para context="cli">
+   È possibile indicare un valore diverso per il massimo, usando
+   l'opzione <opt>ymax</opt>. Il valore fornito deve essere
+   maggiore di tutti i valori osservati della variabile
+   dipendente.
+     </para>      
+     <para context="gui">
+   Nella finestra di dialogo del comando, è possibile specificare
+   un valore diverso per il massimo. Il valore fornito deve essere
+   maggiore di tutti i valori osservati della variabile dipendente.
+     </para>
+     <para>
+   I valori stimati e i residui della regressione sono
+   trasformati automaticamente usando l'inversa della
+   trasformazione logistica: 	  
 	<equation status="display" 
-	  tex="\[y=\frac{y^*}{1+e^{-x}}\]"
-	  ascii="y = y* / (1 + exp(-x))"
-	  graphic="logistic2"/> dove <math>x</math> rappresenta
-	un valore stimato oppure un residuo della regressione OLS,
-        usando la variabile dipendente trasformata. I valori riportati
-        sono dunque confrontabili con la variabile dipendente originale.
-	</para>
-
-      <para>Si noti che se la variabile dipendente è binaria, occorre
-        usare il comando <cmdref targ="logit"/> invece di questo comando.
-      </para>
+	tex="\[y=\frac{y^*}{1+e^{-x}}\]"
+	ascii="y = y* / (1 + exp(-x))"
+	graphic="logistic2"/>
+	dove <math>x</math> rappresenta un valore stimato oppure un
+	residuo della regressione OLS, usando la variabile dipendente
+	trasformata. I valori riportati sono dunque confrontabili con
+	la variabile dipendente originale. Il bisogno dell'approssimazione
+	sorge dal fatto che la trasformazione inversa è una di natura
+	non-lineare e quindi quest'ultima non conserva un valore atteso.
+     </para>
+     <para>
+       L'opzione <opt>fixed-effects</opt> è utilizzabile solo se il dataset
+       assume una forma panel. In questo caso si sottrae la media del gruppo
+       dalla trasformazione logistica della variabile dipendente e si procede
+       alla classica stima ad effetti fissi.
+     </para>
+    <para>
+   Si noti che se la variabile dipendente è binaria, occorre
+   usare il comando <cmdref targ="logit"/> invece di questo comando.
+    </para>
     </description>
 
     <gui-access>
@@ -7496,14 +7615,24 @@
 	  <effect>mostra la matrice di covarianza</effect>
 	</option>
 	<option>
-          <flag>--verbose</flag>
+     <flag>--verbose</flag>
 	  <effect>mostra i dettagli delle iterazioni</effect>
 	</option>
+   <option>
+	  <flag>--quiet</flag>
+	  <effect>non mostra i risultati</effect>
+   </option>
 	<option>
 	  <flag>--p-values</flag>
 	  <effect>mostra i p-value invece delle pendenze</effect>
 	</option>
       </options>
+  	<examples>
+	<demos>
+	  <demo>keane.inp</demo>
+	  <demo>oprobit.inp</demo>
+	</demos>
+    </examples>
     </usage>
 
     <description>
@@ -7511,8 +7640,7 @@
         Se la variabile dipendente è binaria (i suoi valori sono 0 o
         1), esegue una stima di massima verosimiglianza dei
         coefficienti per le <repl>variabili-indipendenti</repl> con il
-        metodo BRMR (<quote>binary response model regression</quote>)
-        descritto in Davidson e MacKinnon (2004). Visto che il modello
+        metodo di Newton&ndash;Raphson. Visto che il modello
         è nonlineare, le pendenze dipendono dai valori delle variabili
         indipendenti: per impostazione predefinita, al posto dei
         p-value vengono mostrate le pendenze rispetto ad ognuna delle
@@ -7523,47 +7651,47 @@
         coefficienti tranne la costante siano pari a zero.
       </para>
       <para context="cli">
-        In modalità predefinita, gli errori standard sono calcolati
-        con l'inversa negativa dell'Hessiana.  Se si usa l'opzione
-        <opt>robust</opt>, verranno calcolati gli errori standard QML
-        o quelli di Huber&ndash;White. In questo caso, la matrice di
-        covarianza stimata è un <quote>sandwich</quote> dell'inversa
-        dell'Hessiana stimata e del prodotto esterno del
-        gradiente. Per i dettagli, si veda Davidson e MacKinnon 2004,
-        cap. 10. Ma se viene usata l'opzione <opt>cluster</opt>,
-        verranno prodotti errori standard
-        <quote>cluster-robusti</quote>; vedi <guideref
-        targ="chap:robust_vcv"/> per dettagli.
+	In modalità predefinita, gli errori standard sono calcolati
+	con l'inversa negativa dell'Hessiana.  Se si usa l'opzione
+	<opt>robust</opt>, verranno calcolati gli errori standard QML
+	o quelli di Huber&ndash;White. In questo caso, la matrice di
+	covarianza stimata è un <quote>sandwich</quote> dell'inversa
+	dell'Hessiana stimata e del prodotto esterno del gradiente.
+	Per i dettagli, si veda il cap. 10 di <cite
+	key="davidson-mackinnon04">Davidson e MacKinnon
+	(2004)</cite>. Ma se viene usata l'opzione <opt>cluster</opt>,
+	verranno prodotti errori standard
+	<quote>cluster-robusti</quote>; vedi <guideref
+	targ="chap:robust_vcv"/> per maggiori dettagli.
       </para>
       <para context="gui">
-        In modalità predefinita, gli errori standard sono calcolati
-        con l'inversa negativa dell'Hessiana.  Se si seleziona la
-        casella "Errori standard robusti", verranno calcolati gli
-        errori standard QML o quelli di Huber&ndash;White. In questo
-        caso, la matrice di covarianza stimata è un
-        <quote>sandwich</quote> dell'inversa dell'Hessiana stimata e
-        del prodotto esterno del gradiente. Per i dettagli, si veda
-        Davidson e MacKinnon 2004, cap. 10. 
-      </para>
-      <para>
-        Se la variabile dipendente non è binaria, ma è discreta, si
-        ottengono stime Logit ordinate. Tuttavia, se viene fornita
-        l'opzione <opt>multinomial</opt>, la variabile dipendente è
-        interpretata come non ordinale, e vengono prodotte stime Logit
-        Multinomiali. (In ambo i casi, verrà dato un errore se la
-        dipendente non è discreta.) Nel caso multinomiale, l'accessore
-        <fncref targ="$mnlprobs"/> sarà disponibile dopo la stima; esso
-        conterrà una matrice con le probabilità stimate dei possibili
-        valori della dipendente per ogni osservazione (osservazioni
-        per riga, valori per colonna).
+   In modalità predefinita, gli errori standard sono calcolati
+   con l'inversa negativa dell'Hessiana.  Se si seleziona la
+   casella "Errori standard robusti", verranno calcolati gli
+   errori standard QML o quelli di Huber&ndash;White. In questo
+   caso, la matrice di covarianza stimata è un <quote>sandwich</quote>
+   dell'inversa dell'Hessiana stimata e del prodotto esterno del gradiente.
+   Per i dettagli, si veda Davidson e MacKinnon 2004, cap. 10. 
+     </para>
+     <para>
+   Se la variabile dipendente non è binaria, ma è discreta, si
+   ottengono stime Logit ordinate. Tuttavia, se viene fornita
+   l'opzione <opt>multinomial</opt>, la variabile dipendente è
+   interpretata come non ordinale, e vengono prodotte stime Logit
+   Multinomiali. (In ambo i casi, verrà dato un errore se la
+   dipendente non è discreta.) Nel caso multinomiale, l'accessore
+   <fncref targ="$mnlprobs"/> sarà disponibile dopo la stima; esso
+   conterrà una matrice con le probabilità stimate dei possibili
+   valori della dipendente per ogni osservazione (osservazioni
+   per riga, valori per colonna).
       </para>
       <para>
 	Per condurre un'analisi delle proporzioni (dove la variabile
 	dipendente è la proporzione dei casi che hanno una certa
-        caratteristica in ogni osservazione, invece che una variabile
-        binaria che indica se la caratteristica è presente o no), non
-        bisogna usare il comando <cmd>logit</cmd>, ma occorre costruire
-        la variabile logit come
+   caratteristica in ogni osservazione, invece che una variabile
+   binaria che indica se la caratteristica è presente o no), non
+   bisogna usare il comando <cmd>logit</cmd>, ma occorre costruire
+   la variabile logit come
       </para>
       <code>
 	genr lgt_p = log(p/(1 - p))
@@ -7591,11 +7719,11 @@
     <description>
       <para>
 	Calcola il logaritmo naturale di ognuna delle variabili
-        della <repl>lista-variabili</repl> e lo salva in una nuova
-        variabile col prefisso <lit>l_</lit>, ossia una
-        <quote>elle</quote> seguita da un trattino basso. Ad esempio
-        <cmd>logs x y</cmd> crea le nuove variabili <lit>l_x</lit> =
-        ln(<lit>x</lit>) e <lit>l_y</lit> = ln(<lit>y</lit>).
+   della <repl>lista-variabili</repl> e lo salva in una nuova
+   variabile col prefisso <lit>l_</lit>, ossia una
+   <quote>elle</quote> seguita da un trattino basso. Ad esempio
+   <cmd>logs x y</cmd> crea le nuove variabili <lit>l_x</lit> =
+   ln(<lit>x</lit>) e <lit>l_y</lit> = ln(<lit>y</lit>).
       </para>
     </description>
 
@@ -7627,12 +7755,16 @@
       </options>
       <examples>
         <example>loop 1000</example>
-	<example>loop 1000 --progressive</example>
+	     <example>loop 1000 --progressive</example>
         <example>loop while essdiff > .00001</example>
         <example>loop i=1991..2000</example>
         <example>loop for (r=-.99; r&lt;=.99; r+=.01)</example>
         <example>loop foreach i xlist</example>
-      </examples>
+   <demos>
+	<demo>armaloop.inp</demo>
+	<demo>keane.inp</demo>
+	</demos>
+	</examples>
     </usage>
 
     <description>
@@ -7642,17 +7774,15 @@
         l'istruzione <cmd>endloop</cmd>: solo a questo punto i comandi indicati
         vengono eseguiti.
       </para>
-      <para>Il parametro <repl quote="true">controllo</repl> deve
-        assumere uno dei cinque valori mostrati negli esempi: un numero di volte
-        per cui ripetere i comandi all'interno del loop;
-        <quote><lit>while</lit></quote> seguito da una condizione booleana;
-        un intervallo di valori interi per una variabile indice;
-        <quote><lit>for</lit></quote> seguito
-        da tre espressioni tra parentesi, separate da punti e virgola
-        (in modo simile all'istruzione <lit>for</lit> nel
-        linguaggio di programmazione C); infine, 
-	<quote><lit>foreach</lit></quote> seguito da una variabile indice e una
-        lista.
+      <para>
+        Il parametro <repl quote="true">controllo</repl> deve assumere uno dei
+        cinque valori mostrati negli esempi: un numero di volte per cui ripetere
+        i comandi all'interno del loop; <quote><lit>while</lit></quote> seguito
+        da una condizione booleana; un intervallo di valori interi per una variabile
+        indice; <quote><lit>for</lit></quote> seguito da tre espressioni tra parentesi,
+        separate da punti e virgola (in modo simile all'istruzione <lit>for</lit> nel
+        linguaggio di programmazione C); infine, <quote><lit>foreach</lit></quote>
+        seguito da una variabile indice e una lista.
       </para>
       <para>
         Si veda la <guideref targ="chap:looping"/> per altri dettagli ed esempi,
@@ -7706,33 +7836,148 @@
        la matrice identità, la distanza di Mahalanobis corrisponde alla distanza
        Euclidea.
       </para>
-
-      <para>Lo spazio in cui vengono calcolate le distanze è definito dalle
+      <para>
+      Lo spazio in cui vengono calcolate le distanze è definito dalle
       variabili selezionate; per ogni osservazione nell'intervallo attuale
       viene calcolata la distanza tra l'osservazione e il centroide delle
       variabili selezionate. La distanza è la controparte multidimensionale di uno
       <math>z</math>-score standard e può essere usata per giudicare se una certa
       osservazione <quote>appartiene</quote> a un gruppo di altre osservazioni.
       </para>
-
-      <para context="cli">Se si usa l'opzione <opt>vcv</opt>, vengono mostrate
+      <para context="cli">
+      Se si usa l'opzione <opt>vcv</opt>, vengono mostrate
       la matrice di covarianza e la sua inversa. Se si usa l'opzione
       <opt>save</opt>, le distanze vengono salvate nel dataset con il nome
       <lit>mdist</lit> (o <lit>mdist1</lit>, <lit>mdist2</lit> e così via, se
       esiste già una variabile con quel nome).
       </para>
-
-      <para context="gui">Se il numero delle variabili selezionate è minore o
-       uguale a 4, vengono mostrate la matrice di covarianza e la sua inversa.
-       Facendo clic sul pulsante "+" in cima alla finestra che mostra le
-       distanze è possibile aggiungerle al dataset come nuova variabile.
+      <para context="gui">
+      Se il numero delle variabili selezionate è minore o uguale a 4,
+      vengono mostrate la matrice di covarianza e la sua inversa.
+      Facendo clic sul pulsante "+" in cima alla finestra che mostra le
+      distanze è possibile aggiungerle al dataset come nuova variabile.
       </para>
-
     </description>
 
     <gui-access>
       <menu-path>/Visualizza/Distanze di Mahalanobis</menu-path>
     </gui-access>
+  </command>
+  
+  <command name="mailer" section="Utilities" context="gui"
+    label="Invia un file via email">
+
+    <description>
+      <para>
+	Consente di inviare da dentro gretl un dataset o uno script
+	come allegato ad una email, questo tramite l'utilizzo del SMTP
+	(Protocollo di Trasfermento Mail Semplificato). Sotto
+	spieghiamo come capire le due etichette (<quote>Mail
+	setup</quote> e <quote>Message</quote>) presenti nella
+	finestra di dialogo della mail.  Inoltre sotto verranno
+	fornite informazioni circa i requisti necessari della
+	password.
+   </para>
+      <subhead>Etichetta: Mail setup</subhead>
+      <ilist>
+	<li>
+	  <para>
+	    SMTP server: il server con il quale la vostra mail
+	    dovrebbe venire inviata. Coloro che usano gmail dovrebbero
+	    già trovare funzionante l'impostazione predefinita
+	    <lit>smpts://smtp.gmail.com:465</lit>; altrimenti, il
+	    campo andrà riempito a mano.  Si noti che la stringa dovrà
+	    per forza iniziare con <lit>smtp://</lit> oppure
+	    <lit>smtps://</lit>.  Subito di seguito al nome del server
+	    potrebbe rivelarsi necessaria l'aggiunta dei "due punti"
+	    seguiti dal numero della porta di ingresso come nell'
+	    esempio <quote><lit>:465</lit></quote> mostra sopra.
+	    Altri valori possibili per la porta SMTP sono 25 e 587.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Mail username: è il nome utente che vi identifica nel
+	    server della vostra posta elettronica. Quest'ultimo è con
+	    ogni probabilità identico a quello del vostro indirizzo di
+	    posta.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Mail password: molto probabilmente il vostro server SMTP potrebbe
+	    richiedervi una password, se questo non fosse il caso allora potete
+	    cliccare su <quote>La password non è richiesta</quote>.
+	  </para>
+	</li>
+      </ilist>
+      <para>
+	Il vostro server ed informazioni verranno ricordate da una
+	sessione di gretl all'altra, lasciandovi così solo il l'onere
+	di effettuare l'ingresso una volta sola. Per quanto riguarda
+	la password potete scegliere se conservarla oppure no; vedi
+	oltre la sezione <emphasis>Email password</emphasis> per
+	maggiori informazioni a riguardo.
+      </para>
+      <para>
+	Cliccando <lit>OK</lit> nell'etichetta di Mail setup verrete
+	reindirizzati alla finestra di testo (a meno che non manchino
+	delle informazioni).
+      </para>
+      <subhead>Finestra di testo</subhead>
+      <ilist>
+       <li>
+	 <para>
+	   A: inserire l'indirizzo mail del destinatario. Dovrete
+	   scriverlo a mano poiché gretl non ha accesso alla vostra
+	   rubrica. Tuttavia, una volta inserito l'indirizzo
+	   quest'ultimo verrà ricordato e potrà essere selezionato
+	   successivamente tramite una tendina a cascata. Gretl
+	   memorizza sino a 10 indirizzi.
+	 </para>
+       </li>
+       <li>
+	 <para>
+	   DA: inserire il vostro indirizzo email. Questo verrà
+	   ricordato per tutte le successive sessioni di gretl.
+	 </para>
+       </li>
+       <li>
+	 <para>
+	   SOGGETTO: questo campo verrà riempito in automatico ma
+	   potrà venire successivamente modificato se lo si desidera.
+	 </para>
+       </li>
+       <li>
+	 <para>
+	   NOTA: anche questo campo viene riempito in automatico, e
+	   se serve può essere modificato.
+	 </para>
+       </li>
+      </ilist>
+      <para>
+	Cliccando <lit>OK</lit> nella finestra di messaggio il
+	messaggio sarà inviato (a meno che non siano richieste
+	ulteriori informazioni mancanti).
+      </para>
+      <subhead>Email password</subhead>
+      <para>
+	Se la password è richiesta per l'invio della mail allora
+	potrete scegliere di salvarla in gretl; in questo caso verrà
+	salvata in formato offuscato in una directory che sarà privata
+	solo per voi all'interno del vostro pc (nessun collegamento o
+	server internet è richiesto). In ogni caso, non ci assumiamo
+	responsabilità riguardo alla sicurezza dei vostri dati.
+      </para>
+      <para>
+	Gli utenti gmail che usano un'autenticazione a 2-step pongano
+	attenzione a questo: la vostra password "standard" non
+	funzionerà in questo caso ed avrete bisogno di una <quote>App
+	password</quote> per l'utilizzo in gretl.  Per maggiori
+	informazioni consultate il sito:
+	<url>https://support.google.com/accounts/answer/185833</url>.
+      </para>
+    </description>
 
   </command>
 
@@ -7752,6 +7997,10 @@
 	  <flag>--translations</flag>
 	  <effect>crea un file ausiliario di stringhe</effect>
         </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>lavora silenziosamente</effect>
+        </option>
       </options>
     </usage>    
 
@@ -7768,7 +8017,7 @@
 	specificazione del pacchetto, con lo stesso nome di
 	<repl>filename</repl> ma con estensione <lit>.spec</lit>;
 	devono anche esistere tutti gli eventuali file ausiliatri in
-	esso menzionati. Infone, si assume che tutte le funzioni da
+	esso menzionati. Infine, si assume che tutte le funzioni da
 	inserire nel pacchetto siano presenti in memoria.
       </para>
       <subhead>Modalità zip</subhead>
@@ -7788,11 +8037,11 @@
 	con gli <quote>addon</quote> di gretl. Il file indice è un
 	breve documento XML contenente alcune informazioni base sul
 	pacchetto; ha lo stesso nome del pacchetto stesso ed
-	estensione <lit>.xml</lit>. Il file di traduzioni contiene le
+	estensione <lit>.xml</lit>. Il file di traduzione contiene le
 	stringhe da tradurre del pacchetto, in formato C; per il
-	pacchetto <lit>pippo</lit> questo file deve chiamarsi
-	<lit>pippo-i18n.c</lit>. Questi file non vengono prodotti in
-	modalità zip ed esiste un file gfn precedente.
+	pacchetto <lit>pippo</lit> questo file in questione dovrà chiamarsi
+	<lit>pippo-i18n.c</lit>. Questi file non vengono prodotti se si opera
+	tramite la modalità zip con l'utilizzo di un file gfn pre-esistente.
       </para>
       <para>
 	Per maggiori dettagli, consultare <mnu targ="Pkgbook">Guida ai
@@ -7802,7 +8051,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Tools/Function packages/New package</menu-path>
+      <menu-path>/Strumenti/Pacchetti di funzioni/Nuovo pacchetto</menu-path>
     </gui-access>
 
   </command>
@@ -7863,25 +8112,24 @@
       <para context="cli">
 	Calcola la statistica <math>t</math> per l'ipotesi
 	nulla che le medie della popolazione siano uguali per le
-        variabili <repl>var1</repl> e <repl>var2</repl>, mostrando il
-        suo p-value.
+   variabili <repl>var1</repl> e <repl>var2</repl>, mostrando il
+   suo p-value.
       </para>
       <para>
-        L'impostazione predefinita prevede di assumere che
-        le varianze delle due variabili siano uguali, mentre usando
-        l'opzione <lit>--unequal-vars</lit>, si assume che esse siano
-        diverse. Questo è rilevante per la statistica test solo se le
-        due variabili contengono un diverso numero di osservazioni
-        valide (non mancanti).
+   L'impostazione predefinita prevede di assumere che
+   le varianze delle due variabili siano uguali, mentre usando
+   l'opzione <lit>--unequal-vars</lit>, si assume che esse siano
+   diverse; in questo caso i gradi di libertà per la statistica
+   test saranno approssimati per <cite key="satter46">Satterthwaite (1946)</cite>.
       </para>
       <para context="gui">
-        Calcola la statistica t per l'ipotesi nulla che le medie della
-        popolazione siano uguali per due variabili selezionate,
-        mostrando il suo p-value. Il comando può essere eseguito con o
-        senza l'ipotesi che le varianze delle due variabili siano uguali
-        (anche se questo è rilevante per la statistica test solo se le
-        due variabili contengono un diverso numero di osservazioni
-        valide).</para>
+   Calcola la statistica t per l'ipotesi nulla che le medie della
+   popolazione siano uguali per due variabili selezionate,
+   mostrando il suo p-value. Il comando può essere eseguito con o
+   senza l'ipotesi che le varianze delle due variabili siano uguali.
+   In quest'ultimo caso i gradi di libertà per la statistica test
+   verranno approssimato per <cite key="satter46">Satterthwaite (1946)</cite>.
+   </para>
     </description>
 
     <gui-access>
@@ -7905,19 +8153,19 @@
       <para>
 	Questa lista deve avere <math>m</math> elementi, dove
 	<math>m</math> è il numero di sottoperiodi ad alta frequenza:
-	ogni serie contiene i valori per un dato sottoperiodo. nel
+	ogni serie contiene i valori per un dato sottoperiodo. Nel
 	caso mensile/trimestrale, ciò fa sì che la lista abbia tre
-	elementi: uno contiene i valori per il primo mese del
+	elementi: uno contenente i valori per il primo mese del
 	trimestre, un altro per il secondo mese e l'ultimo i valori
 	per il terzo mese.
       </para>
       <para>
-	Questi elementi devone essere in un certo ordine ossia
+	Questi elementi devono essere in un certo ordine, ossia
 	<emphasis>prima il più recente</emphasis>. Usando di nuovo
 	l'esempio mensile/trimestrale, l'ordine deve essere mese 3,
 	mese 2, mese 1. Per controintuitivo che possa sembrare questo
 	è l'ordine richiesto per formare liste di ritardi, cosa molto
-	comune nei modelli  MIDAS.
+	comune nei modelli MIDAS.
       </para>
       <para>
 	Per una guida sul come creare un dataset che contenga liste
@@ -8020,15 +8268,15 @@
 	un modello in cui una o più delle variabili esplicative sono
 	osservate a frequenza più alta della dipendente; per una buona
 	introduzione all'argomento si veda <cite
-	key="armesto10">Armesto, Engemann and Owyang (2010)</cite>.
+	key="armesto10">Armesto, Engemann e Owyang (2010)</cite>.
       </para>
       <para context="cli">
 	Le variabili in <repl>indepvars</repl> devono essere alla
 	stessa frequenza della dipendente. Questa lista normalmente
 	contiene anche <lit>const</lit> o <lit>0</lit> (intercetta) e,
-	di solito, uno o più ritardi della variabile dipendente.  I
-	termini ad alta frequenza vengono formiti dopo un punto e
-	virgola; ognuno di essi, sotto forma di argomenti separati da
+	di solito, uno o più ritardi della variabile dipendente. I
+	termini ad alta frequenza vengono forniti dopo un punto e
+	virgola; ognuno di essi sotto forma di numeri separati da
 	virgole fra parentesi, col prefisso <lit>mds</lit> oppure
 	<lit>mdsl</lit>.
       </para>
@@ -8047,7 +8295,7 @@
 	Quando si aggiunge un termine MIDAS, si apre una finestra per
 	la selezione dei ritardi, il tipo di parametrizzazione e (per
 	i tipi che non hanno un numero fisso di parametri) il numero
-	di iperparametri. Per riattivare questa finestra e rivedere la
+	di iper-parametri. Per riattivare questa finestra e rivedere la
 	specificazione, basta cliccare col pulsante destro su un
 	termine MIDAS sulla destra.
       </para>      
@@ -8057,7 +8305,7 @@
 	col minimo e massimo ritardo ad alta frequenza, un intero fra
 	0 e 4, che specifica il tipo di parametrizzazione da usare, e
 	il nome di un vettore contenente i valori iniziali dei
-	parametri. l'esempio qui sotto usa i ritardi da 3 a 11 della
+	parametri. L'esempio qui sotto usa i ritardi da 3 a 11 della
 	serie ad alta frequenza contenuta nella lista <lit>X</lit>,
 	usando la parametrizzazione di tipo 1 (Almon esponenziale,
 	vedi sotto) con inizializzazione <lit>theta</lit>.
@@ -8079,24 +8327,27 @@
 	mdsl(XLags, 1, theta)
       </code>
       <para context="cli">
-	I tipi di parametrizzazione disponibili sono:
+	I tipi di parametrizzazione sono disponibili come segue; nel
+	contesto <lit>mds</lit> e <lit>mdsl</lit> le specificazioni
+	in questione dovrebbero essere date in forma di codice numerio o
+	di stringhe virgolettate esposte dopo i numeri. 
       </para>
       <para context="cli">
-	0 = <quote>MIDAS non vincolato</quote> o U-MIDAS (un
+	0 o <lit>"umidas"</lit>: <quote>MIDAS non vincolato</quote> o U-MIDAS (un
 	coefficiente per ritardo)
       </para>
       <para context="cli">
-	1 = Almon esponenziale normalizzato; necessita di almeno un
+	1 o <lit>"nealmon"</lit>: Almon esponenziale normalizzato; necessita di almeno un
 	parametro, di solito due
       </para>
       <para context="cli">
-	2 = beta normalizzato con zero finale; richiede due parametri
+	2 o <lit>"beta0"</lit>: beta normalizzato con zero finale; richiede due parametri
       </para>
       <para context="cli">
-	3 = beta normalizzato senza zero finale; richiede tre parametri
+	3 o <lit>"betan"</lit>: beta normalizzato senza zero finale; richiede tre parametri
       </para>
       <para context="cli">
-	4 = polinomio di Almon non normalizzato; richiede almeno un
+	4 o <lit>"almonp"</lit>: polinomio di Almon non normalizzato; richiede almeno un
 	parametro
       </para>
       <para context="cli">
@@ -8111,7 +8362,8 @@
 	  <para>
 	    La parola chiave <lit>null</lit>: accettabile solo se la
 	    parameterizzazione scelta ha un numero fisso di termini (i
-	    casi beta, 2 o 3).
+	    casi beta, 2 o 3). È accettata anche nel caso di Almon
+	    esponenziale, implicando come valori predifiniti 2 parametri.
 	  </para>
 	</li>
 	<li>
@@ -8152,12 +8404,14 @@
     label="Valori dati mancanti">
 
     <description>
-      <para>Imposta un valore numerico che sarà interpretato come
-	<quote>mancante</quote> o <quote>non disponibile</quote>, per
-        una serie particolare (nel menù Variabile) o globalmente per
-        l'intero dataset (nel menù Campione).</para> 
-
-      <para>Gretl ha un codice interno per i valori mancanti, che non
+      <para>
+      Imposta un valore numerico che sarà interpretato come
+	   <quote>mancante</quote> o <quote>non disponibile</quote>, per
+      una serie particolare (nel menù Variabile) o globalmente per
+      l'intero dataset (nel menù Campione).
+      </para> 
+      <para>
+      Gretl ha un codice interno per i valori mancanti, che non
       sempre può coincidere con quello usato dai dati importati. Ad
       esempio, se una serie usa il valore -1 col significato di
       <quote>non disponibile</quote>, è possibile selezionare
@@ -8176,22 +8430,32 @@
 	menu attaccare il pacchetto. A tal fine, bisogna riempire i
 	tre campi previsti.
       </para>
-      <subhead>Etichetta</subhead>
+      <subhead>1. Etichetta</subhead>
       <para>
 	Una breve stringa, che apparirà nel menu.
       </para>
-      <subhead>Finestra</subhead>
+      <subhead>2. Finestra</subhead>
       <para>
 	Selezionare <quote>finestra del modello</quote> per un
-	pacchetto che fa qualcosa copn un modello stimato da gretl, e
+	pacchetto che fa qualcosa con un modello stimato da gretl, e
 	deve apparire nella barra del menu di un modello. In tutti gli
 	altri casi, selezionare <quote>finestra principale</quote>.
       </para>
-      <subhead>Albero del menu</subhead>
+      <subhead>3. Albero del menu</subhead>
       <para>
 	Selezionare la posizione nell'albero del menu (per la finestra
 	principale o per la finestra del modello, come da scelta
 	sopra) dove il pacchetto deve apparire.
+      </para>
+      <subhead>Elementi opzionali</subhead>
+      <para>
+	In aggiunta è consentito utilizzare il pulsante <quote>GUI
+	testo guida</quote> per aggiungere o modificare un testo guida
+	GUI specifico, per visualizzare quando un pacchetto viene
+	chiamato dal menu. Inoltre, se si vuole richiamare il
+	pacchetto prescelto dalla finestra del modello è possibile
+	specificare un determinato tipo di modello (identificato dal
+	suo comando gretl) come requisito.
       </para>
     </description>
   </command>
@@ -8202,7 +8466,7 @@
     <usage>
       <arguments>
         <argument>funzione di log-verosimiglianza</argument>
-        <argument>derivate</argument>
+        <argument optional="true">derivate</argument>
       </arguments>
       <options>
 	<option>
@@ -8235,6 +8499,10 @@
 	  <effect>si veda sotto</effect>
 	</option>
 	<option>
+	  <flag>--auxiliary</flag>
+	  <effect>si veda sotto</effect>
+	</option>
+	<option>
 	  <flag>--lbfgs</flag>
 	  <effect>usa L-BFGS-B invece di BFGS</effect>
 	</option>
@@ -8242,19 +8510,21 @@
       <examples>
 	<demos>
 	  <demo>weibull.inp</demo>
+	  <demo>biprobit_via_ghk.inp</demo>
+	  <demo>frontier.inp</demo>
+	  <demo>keane.inp</demo>
 	</demos>
       </examples>
     </usage>
 
     <description context="gui">
-
-      <para>Esegue la stima di massima verosimiglianza (ML, Maximum
-        Likelihood) usando l'algoritmo BFGS (Broyden, Fletcher, Goldfarb, Shanno).
-        Occorre specificare la funzione di log-verosimiglianza, e se possibile è
-        consigliabile indicare anche espressioni per le derivate di questa
-        funzione, rispetto ad ognuno dei parametri.
+      <para>
+      Esegue la stima di massima verosimiglianza (ML, Maximum
+      Likelihood) usando l'algoritmo BFGS (Broyden, Fletcher, Goldfarb, Shanno).
+      Occorre specificare la funzione di log-verosimiglianza, e se possibile è
+      consigliabile indicare anche espressioni per le derivate di questa
+      funzione, rispetto ad ognuno dei parametri.
       </para>
-
       <para>
         Esempio: si supponga di avere una serie <lit>X</lit> con
         valori 0 o 1 e di voler ottenere la stima di massima
@@ -8263,93 +8533,102 @@
         <lit>p</lit> corrisponderà alla proporzione dei valori 1 nel
         campione).
       </para>
-
-      <para>Occorre per prima cosa aggiungere <lit>p</lit> al dataset
+      <para>
+      Occorre per prima cosa aggiungere <lit>p</lit> al dataset
       e assegnargli un valore iniziale, attraverso il comando
       <cmd>genr</cmd> o i comandi del menù.  È possibile scrivere
       delle istruzioni <quote>genr</quote> appropriate nella finestra
       di specificazione del comando di stima, prima di indicare la
       specificazione della funzione di log-verosimiglianza.
       </para>
-
-      <para>Si scrivano i seguenti comandi nella finestra del comando:</para>
-
+      <para>
+      Si scrivano i seguenti comandi nella finestra del comando:
+      </para>
       <code>
 	loglik = X*log(p) + (1-X)*log(1-p)
 	deriv p = X/p - (1-X)/(1-p)
       </code>
-
       <para>
-	La prima riga specifica la funzione di log-verosimiglianza, mentre
-        la seconda indica la derivata della funzione rispetto a p. Se non si
-        indicanto righe "deriv", viene calcolata un'approssimazione numerica
-        delle derivate.
+	   La prima riga specifica la funzione di log-verosimiglianza, mentre
+      la seconda indica la derivata della funzione rispetto a p. Se non si
+      indicano righe "deriv", viene calcolata un'approssimazione numerica
+      delle derivate.
       </para>
-
       <para>
 	Se non si era dichiarato in precedenza il parametro p, sarebbe stato
         necessario premettere alle righe precedenti la riga:
       </para>
-
       <code>
-	genr p = 0.5
+	   scalar p = 0.5
       </code>
-
       <para>
-	Per impostazione predefinita, gli errori standard sono basati sul
-        prodotto esterno del gradiente. Se si richiedono errori standard
-        robusti, viene usato uno stimatore QML (ossia, un sandwich dell'inversa
-        negativa dell'Hessiana e della matrice di covarianza del gradiente).
-        L'Hessiana è approssimata numericamente.
+	Per impostazione predefinita, gli errori standard sono basati
+	sul prodotto esterno del gradiente. Se si richiedono errori
+	standard robusti, viene usato uno stimatore QML (ossia, un
+	sandwich dell'inversa negativa dell'Hessiana e della matrice
+	di covarianza del gradiente).  L'Hessiana è approssimata
+	numericamente.
       </para>
-
+      <para>
+	Per maggiori informazioni a riguardo della <cmd>massima
+	verosimiglianza (mle)</cmd>, consultare <guideref
+	targ="chap:mle"/>.
+      </para>
     </description>
-
+    
     <description context="cli">
-
-      <para>Esegue la stima di massima verosimiglianza (ML, Maximum
-        Likelihood) usando l'algoritmo BFGS (Broyden, Fletcher, Goldfarb, Shanno).
-        Occorre specificare la funzione di log-verosimiglianza e indicare dei
-        valori iniziali per i parametri della funzione (utilizzando il comando
-        <cmd>genr</cmd>.  Se possibile è consigliabile indicare anche
-        espressioni per le derivate di questa funzione, rispetto ad ognuno dei
-        parametri; se non si indicano le derivate analitiche, verrà calcolata
-        un'approssimazione numerica.
-      </para>
-
       <para>
-        Esempio: si supponga di avere una serie <lit>X</lit> con
-        valori 0 o 1 e di voler ottenere la stima di massima
-        verosimiglianza della probabilità <lit>p</lit> che
-        <lit>X</lit> valga 1 (è semplice intuire che la stima ML di
-        <lit>p</lit> corrisponderà alla proporzione dei valori 1 nel
-        campione).
+      Esegue la stima di massima verosimiglianza (ML, Maximum
+      Likelihood) usando a scelta o l'algoritmo BFGS (Broyden,
+      Fletcher, Goldfarb, Shanno) o l'algoritmo di Newton.
+      Occorre specificare la funzione di log-verosimiglianza e
+      dichiarare i valori iniziali per i parametri della funzione
+      Se possibile è consigliabile indicare anche le espressioni
+      per le derivate di questa funzione, rispetto ad ognuno dei
+      parametri; se non si indicano le derivate analitiche, verrà
+      calcolata un'approssimazione numerica.
       </para>
-
-      <para>Occorre per prima cosa aggiungere <lit>p</lit> al dataset
-      e assegnargli un valore iniziale; ad esempio, <lit>scalar p = 0.5</lit>.
-	</para>
-
-      <para>Quindi costruiamo il blocco di comandi per la stima di massima
-      verosimiglianza:</para>
-
+      <para>
+	   Questo messaggio di aiuto presuppone l'utilizzo dell'algoritmo
+	   di massimizzazione BFGS, per maggiori informazioni circa l'uso
+	   dell'algoritmo di Newton si consulti <guideref targ="chap:mle"/>.
+      </para>
+      <para>
+      Esempio: si supponga di avere una serie <lit>X</lit> con
+      valori 0 o 1 e di voler ottenere la stima di massima
+      verosimiglianza della probabilità <lit>p</lit> che
+      <lit>X</lit> valga 1 (è semplice intuire che la stima ML di
+      <lit>p</lit> corrisponderà alla proporzione dei valori 1 nel
+      campione).
+      </para>
+      <para>
+      Occorre per prima cosa aggiungere <lit>p</lit> al dataset e
+      assegnargli un valore iniziale; ad esempio, 
+      </para>      
+      <code>
+      scalar p = 0.5
+	   </code>
+      <para>
+      Quindi costruiamo il blocco di comandi per la stima di massima
+      verosimiglianza:
+      </para>
       <code>
        mle loglik = X*log(p) + (1-X)*log(1-p)
        deriv p = X/p - (1-X)/(1-p)
        end mle
       </code>
-
       <para>
-        La prima riga specifica la funzione di log-verosimiglianza: inizia con
-        la parola chiave <lit>mle</lit>, quindi contiene la variabile
-        dipendente e una specificazione per la log-verosimiglianza usando la
-        stessa sintassi del comando <cmd>genr</cmd>. La riga seguente (che è
-        opzionale), inizia con la parola chiave <lit>deriv</lit> e fornisce
-        la derivata della funzione di log-verosimiglianza rispetto al parametro
-        <lit>p</lit>. Se non vengono indicate derivate, occorre includere una
-        dichiarazione che identifica i parametri liberi (separati da spazi)
-        utilizzando la parola chiave <lit>params</lit>. Ad esempio si
-        sarebbe potuto scrivere:
+       La prima riga specifica la funzione di log-verosimiglianza: inizia con
+       la parola chiave <lit>mle</lit>, quindi contiene la variabile
+       dipendente e una specificazione per la log-verosimiglianza usando la
+       stessa sintassi del comando <cmd>genr</cmd>. La riga seguente (che è
+       opzionale), inizia con la parola chiave <lit>deriv</lit> e fornisce
+       la derivata della funzione di log-verosimiglianza rispetto al parametro
+       <lit>p</lit>. Se non vengono indicate derivate, occorre includere una
+       dichiarazione che identifica i parametri liberi (separati da spazi)
+       utilizzando la parola chiave <lit>params</lit>; questi parametri liberi
+       possono essere sia scalari, che vettori, che una qualsiasi combinazione dei
+       due. Ad esempio si sarebbe potuto scrivere:
       </para>
       <code>
        mle loglik = X*log(p) + (1-X)*log(1-p)
@@ -8363,31 +8642,63 @@
        Si noti che eventuali opzioni vanno indicate nella riga finale del blocco
        MLE.
       </para>
-
+      <subhead>Matrice di covarianza ed errori standard</subhead>
       <para>
-	Per impostazione predefinita, gli errori standard sono basati sul
-        prodotto esterno del gradiente. Se si usa l'opzione
-        <opt>hessian</opt>, vengono basati sull'inversa
-        negativa dell'Hessiana (che è approssimata numericamente). Se si usa
-        l'opzione <opt>robust</opt>, viene usato uno stimatore QML
-        (ossia, un sandwich dell'inversa negativa dell'Hessiana e della matrice
-        di covarianza del gradiente).
+      Se la funzione di log-verosimiglianza restituisce una variabile
+      o un vettore per ogni valore delle osservazioni allora gli errori
+      standard sono, per impostazione predefinita, basati sul prodotto
+      esterno del gradiente (OPG), mentre se l'opzione <opt>hessian</opt>
+      è fornita allora quest'ultimi saranno ottenuti sulla base dell'inversa
+      negativa della matrice hessiana, la quale verrà approssimata numericamente.
+      Se l'opzione <opt>robust</opt> è data allora verrà utilizzato uno
+      stimatore di quasi-massima verosimiglianza (QML), ossia uno stimatore
+      ottenuto dal sandwich dell'inversa negativa della matrice hessiana e
+      del prodotto esterno del gradiente (OPG). In ogni caso, se la funzione di
+      log-verosimiglianza restituisce semplicemente un valore scalare il metodo
+      OPG non risulta disponibile (come anche lo stimatore QML), e gli errori
+      standard sono necessariamente calcolati usando l'hessiana numerica.
       </para>
       <para>
-	Se vengono fornite derivate analitiche, per default gretl effettua un
-	controllo numerico per valutarne l'attendibilità. Talvolta questo controllo
-	può produrre dei falsi positivi; altre parole derivate corrette sembrano 
-	essere errate e il comando si rifiuta di completare la stima. Per evitare
-	questa possibilità o per realizzare un piccolo guadagno in termini
-	di tempo è possibile ricorrere all'opzione 
-	<opt>no-gradient-check</opt>. Naturalmente è opportuno ricorrere a questa opzione
-	solo se si è convinti convinti della correttezza del gradiente specificato.
+      Nel caso in cui si volesse solo il parametro primario delle stime
+      è possibile dare l'opzione <opt>auxiliary</opt>, la quale sopprime
+      il calcolo della matrice di covarianza e degli errori standard; questo
+      permetterà di risparmiare alcuni cicli della CPU, salvando anche un
+      po' di memoria.
+      </para>
+      <subhead>Controllo analitico delle derivate</subhead>
+      <para>
+	Se si forniscono le derivate analitiche della funzione di
+	log-verosimiglianza, di default gretl esegue un controllo
+	numerico circa la loro attendibilità. Occasionalmente, questo
+	controllo potrebbe produrre dei falsi positivi, ovvero casi in
+	cui derivate calcolate correttamente vengono segnalate come
+	errate e di cui la stima viene quindi negata.  Per impedire
+	che ciò accada, o per aggiungere un poco di velocità in più al
+	processo, è possibile dare l'opzione
+	<opt>no-gradient-check</opt>.  Ovviamente questo andrebbe
+	fatto solo nel caso in cui si è assolutamente sicuri che il
+	gradiente dato in specifica è corretto.
+      </para>
+      <subhead>Nomi dei parametri</subhead>
+      <para>
+	Quando si stima un modello non lineare spesso risulta
+	conveniente nominare i parametri in maniera concisa. Nella
+	stampa dei risultati, comunque, risulta desiderabile che le
+	etichette data siano le più informative e sintetiche
+	possibili. Questo risultato pyò venire ottenuto aggiungendo la
+	parola chiave <lit>param_names</lit> all'interno del blocco di
+	comando. Per un modello con <math>k</math> parametri
+	l'argomento successivo a questa parola chiave può essere sia
+	una stringa di testo, messa tra virgolette, contenente
+	<math>k</math> nomi separati da uno spazio, sia il nome di una
+	stringa di variabili avente al suo interno tutti i
+	<math>k</math> nomi.
       </para>
       <para>
-	Per una descrizione molto più approfondita di <cmd>mle</cmd>, per favore 
-	consultate <guideref targ="chap:mle"/>.
+      Per maggiori informazioni circa la massima verosimiglianza
+      (<cmd>mle</cmd>) raccomandiamo di consultare <guideref
+      targ="chap:mle"/>.
       </para>
-
     </description>
 
     <gui-access>
@@ -8410,75 +8721,94 @@
 
     <description context="gui"> 
       <para>
-	Nella ricerca econometrica si è soliti stimare vari modelli con una
+	     Nella ricerca econometrica si è soliti stimare vari modelli con una
         variabile dipendente comune, che differiscono tra loro per le variabili
-        indipendenti o per lo stimatore usato.  In questa situazione è comodo
+        indipendenti o per il tipo di stimatore usato. In questa situazione è comodo
         poter rappresentare i risultati delle regressioni sotto forma di una
         tabella dove ogni colonna contiene i risultati (stime dei coefficienti
         e errori standard) per un dato modello e ogni riga contiene le stime
-        per una certa variabile nei differenti modelli.</para>
+        per una certa variabile nei differenti modelli.
+      </para>
 
-      <para>Gretl dà la possibilità di costruire una tabella simile (e
-      di esportarla in testo semplice, &latex; o RTF - Rich Text Format).
-      Ecco come fare:</para>
-
+      <para>
+        Gretl dà la possibilità di costruire una tabella simile (e
+        di esportarla in testo semplice, &latex; o RTF - Rich Text Format).
+        Ecco come fare:
+      </para>
+      
       <nlist>
-	<li><para>Stimare un modello che si vuole includere nella
-            tabella e selezionare, nel menù File della finestra di
-            visualizzazione del modello, <quote>Salva alla sessione come
-            icona</quote> o <quote>Salva come icona e chiudi</quote>.</para>
-	</li>
-
-	<li><para>Ripetere il punto 1 per gli alri modelli da
-        includere nella tabella (fino a un massimo di sei modelli).</para>
-	</li>
-
-	<li><para>Completata la stima dei modelli, aprire l'icona
-        della sessione di gretl (selezionando <quote>Visualizza Icone</quote>
-        nel menù Sessione della finestra principale di gretl, o facendo
-        clic su <quote>Finestra icone</quote> sulla barra degli
-        strumenti di gretl).</para>
-	</li>
-
-        <li><para>La finestra delle icone contiene un'icona chiamata
-        <quote>Tabella Modelli</quote>. Per aggiungere alla tabella
-        modelli il modello che deve apparire nella colonna più a
-        sinistra della tabella, basta trascinare l'icona del modello
-        sull'icona della Tabella Modelli, oppure fare clic col tasto
-        destro sull'icona del modello e selezionare <quote>Aggiungi
-        alla tabella modelli</quote> dal menù pop-up.</para>
-	</li>
-
-	<li><para>Ripetere il punto 4 per gli altri modelli da
-        aggiungere alla tabella. Il secondo modello scelto apparirà
-        nella seconda colonna da sinistra della tabella, e così via.
-	</para>
-	</li>
-
-	<li><para>Ultimata la composizione della tabella, è possibile
-        visualizzarla facendo doppio clic sulla sua icona. Per copiare
-        la tabella negli appunti in uno dei formati supportati, basta
-        fare clic sul menù Modifica della finestra in cui appare la
-        tabella.</para>
-	</li>
-
-	<li><para>Se l'ordinamento dei modelli nella tabella non è
-        quello voluto, fare clic col tasto destro sull'icona della
-        tabella modelli e selezionare <quote>Pulisci</quote>, quindi
-        tornare al punto 4.</para>
-	</li>
+    	 <li>
+	   <para>
+	     Stimare un modello che si vuole includere nella
+             tabella e selezionare, nel menù File della finestra di
+             visualizzazione del modello, <quote>Salva alla sessione come
+             icona</quote> o <quote>Salva come icona e chiudi</quote>.
+           </para>
+	 </li>
+	 <li>
+           <para>
+             Ripetere il punto 1 per gli alri modelli da
+             includere nella tabella (fino a un massimo di sei modelli).
+           </para>
+	 </li>
+	 <li>
+           <para>
+             Completata la stima dei modelli, aprire l'icona
+             della sessione di gretl (selezionando <quote>Visualizza Icone</quote>
+             nel menù Sessione della finestra principale di gretl, o facendo
+             clic su <quote>Finestra icone</quote> sulla barra degli
+             strumenti di gretl).
+           </para>
+	 </li>
+	 <li>
+           <para>
+             La finestra delle icone contiene un'icona chiamata
+             <quote>Tabella Modelli</quote>. Per aggiungere alla tabella
+             modelli il modello che deve apparire nella colonna più a
+             sinistra della tabella, basta trascinare l'icona del modello
+             sull'icona della <quote>Tabella Modelli</quote>, oppure fare
+             clic col tasto destro sull'icona del modello e selezionare
+             <quote>Aggiungi alla tabella modelli</quote> dal menù pop-up.
+           </para>
+	 </li>
+	 <li>
+	   <para>
+	     Ripetere il punto 4 per gli altri modelli da aggiungere alla tabella.
+	     Il secondo modello scelto apparirà nella seconda colonna da sinistra
+	     della tabella, e così via.
+           </para>
+	 </li>
+	 <li>
+           <para>
+             Ultimata la composizione della tabella, è possibile
+             visualizzarla facendo doppio clic sulla sua icona. Per copiare
+             la tabella negli appunti in uno dei formati supportati, basta
+             fare clic sul menù Modifica della finestra in cui appare la
+             tabella.
+           </para>
+	 </li>
+	 <li>
+           <para>
+             Se l'ordinamento dei modelli nella tabella non è
+             quello voluto, fare clic col tasto destro sull'icona della
+             tabella modelli e selezionare <quote>Pulisci</quote>, quindi
+             tornare al punto 4.
+	   </para>
+	 </li>
       </nlist>
     </description>
 
     <description context="cli">
-      <para>Manipola la <quote>tabella modelli</quote> di gretl. Si veda la
-      	<guideref targ="chap:modes"/> per i dettagli. Le opzioni hanno i
-        seguenti effetti: <cmd>add</cmd> aggiunge l'ultimo modello
-        stimato alla tabella modelli, se possibile; <cmd>show</cmd>
-	mostra la tabella modelli in una finestra; <cmd>free</cmd>
-	pulisce la tabella.</para>
       <para>
-	Per stampare la tabella del modello usate l'opzione
+	Manipola la <quote>tabella modelli</quote> di gretl. Si veda
+	la <guideref targ="chap:modes"/> per i dettagli. Le opzioni
+	hanno i seguenti effetti: <cmd>add</cmd> aggiunge l'ultimo
+	modello stimato alla tabella modelli, se possibile;
+	<cmd>show</cmd> mostra la tabella modelli in una finestra;
+	<cmd>free</cmd> pulisce la tabella.
+      </para>
+      <para>
+   	Per stampare la tabella del modello usate l'opzione
 	<opt>output=</opt> seguita dal nome di un file. Se
 	quest'ultimo ha il suffisso <quote><lit>.tex</lit></quote>,
 	l'output sarà in formato &tex;; se il suffisso è
@@ -8527,14 +8857,15 @@
       </para>
       <para>
 	L'argomento <repl>matcoeff</repl> deve essere una matrice
-	<math>k</math> per 2 che contiene <math>k</math> coefficienti
-	e i <math>k</math> relativi errori standard
-	associati. L'argomento <repl>nomi</repl> deve fornire almeno
-	<math>k</math> etichette per i coefficienti. Può avere la
-	forma di una stringa fissa (fra virgolette doppie) o di una
-	variabile di tipo stringa, nel qual caso le etichette vanno
-	separate con spazi oppure virgole. Alternativamente, si può
-	usare allo scopo un array di stringhe.
+	<math>k</math> per 2 che contiene i <math>k</math>
+	coefficienti stimati nella prima colonna ed i <math>k</math>
+	relativi errori standard associati nella seconda. L'argomento
+	<repl>nomi</repl> deve fornire almeno <math>k</math> etichette
+	per i coefficienti. Può avere la forma di una stringa fissa
+	(fra virgolette doppie) o di una variabile di tipo stringa,
+	nel qual caso le etichette vanno separate con spazi oppure
+	virgole. Alternativamente, si può usare allo scopo un array di
+	stringhe.
       </para>
       <para>
 	L'argomento opzionale <repl>stat</repl> è un vettore che
@@ -8578,31 +8909,31 @@
         </option>
         <option>
 	  <flag>--logs</flag>
-	  <effect>non-linearità, logaritmi</effect>
+	  <effect>non linearità, logaritmi</effect>
+        </option>
+        <option>
+	  <flag>--squares</flag>
+	  <effect>non linearità, quadrati</effect>
         </option>
         <option>
 	  <flag>--autocorr</flag>
-	  <effect>correlazione seriale</effect>
+	  <effect>autocorrelazione</effect>
         </option>
         <option>
 	  <flag>--arch</flag>
 	  <effect>ARCH</effect>
         </option>
         <option>
-	  <flag>--squares</flag>
-	  <effect>non-linearità, quadrati</effect>
-        </option>
-        <option>
 	  <flag>--white</flag>
-	  <effect>eteroschedasticità, test di White</effect>
+	  <effect>test di White per l'eteroschedasticità</effect>
         </option>
         <option>
 	  <flag>--white-nocross</flag>
-	  <effect>eteroschedasticità, test di White (solo quadrati)</effect>
+	  <effect>test di White per l'eteroschedasticità cono solo i quadrati</effect>
         </option>
         <option>
 	  <flag>--breusch-pagan</flag>
-	  <effect>eteroschedasticità, test di Breusch&ndash;Pagan</effect>
+	  <effect>test per l'eteroschedasticità di Breusch&ndash;Pagan</effect>
         </option>
         <option>
 	  <flag>--robust</flag>
@@ -8614,13 +8945,26 @@
         </option>
         <option>
 	  <flag>--comfac</flag>
-	  <effect>restrizione a fattore comune, (solo modelli AR1)</effect>
+	  <effect>restrizione a fattor comune, solo per modelli AR1</effect>
+        </option>
+        <option>
+	  <flag>--xdepend</flag>
+	  <effect>dipendenza cross-section, solo per dati panel</effect>
         </option>
         <option>
 	  <flag>--quiet</flag>
-	  <effect>non mostra la regressione ausiliaria</effect>
+	  <effect>non mostra i dettagli</effect>
+        </option>
+        <option>
+	  <flag>--silent</flag>
+	  <effect>non mostra i risultati</effect>
         </option>
       </options>
+	  <examples>
+	<demos>
+	  <demo>credscore.inp</demo>
+	</demos>
+      </examples>
     </usage>
 
     <description>
@@ -8642,17 +8986,19 @@
 	veda <cite key="kiviet86" p="true">(Kiviet, 1986)</cite>);
 	test per il modello ARCH (Autoregressive Conditional
 	Heteroskedasticity, si veda anche il comando <cmd>arch</cmd>);
-	o restrizione a fattore comune, (solo modelli AR1). La maggior
-	parte delle opzioni sono disponibili solo per modelli stimati
-	con OLS, ma si veda oltre per alcuni dettagli riguardanti la
-	stima con i minimi quadrati a due stadi.
+	o restrizione a fattore comune, (solo modelli AR1); o un test
+	per la dipendenza tra unità cross-sectio in caso di modelli con
+	dati panel. Ad eccezione dei test sulla normalità, a fattor comune
+	e sulla dipendenza cross-section, la maggior parte dei test risultano
+	disponibili solo in caso di stima OLS; per ulteriori dettagli circa lo
+	stimatore TSLS (two-stage least squares) si veda oltre.
       </para>
       <para>
 	L'argomento opzionale <lit>ordine</lit> è rilevante solo nel caso si
-        scelga l'opzione <opt>autocorr</opt> o l'opzione <opt>arch</opt>.
-        Per impostazione predefinita, questi test sono eseguiti usando un ordine
-        di ritardo pari alla periodicità dei dati, ma è possibile anche
-        impostare un ordine di ritardo specifico.
+   scelga l'opzione <opt>autocorr</opt> o l'opzione <opt>arch</opt>.
+   Per impostazione predefinita, questi test sono eseguiti usando un ordine
+   di ritardo pari alla periodicità dei dati, ma è possibile anche
+   impostare un ordine di ritardo specifico.
       </para>
        <para>
 	L'opzione <opt>robust</opt> ha effetto solo se viene scelto
@@ -8663,9 +9009,9 @@
       </para>
       <para>
 	L'opzione <opt>panel</opt> è disponibile solo se il modello viene
-        stimato su dati panel: in questo caso viene eseguito un test per
-        eteroschedasticità a gruppi (ossia per una varianza dell'errore diversa
-        fra le unità cross section).
+   stimato su dati panel: in questo caso viene eseguito un test per
+   eteroschedasticità a gruppi (ossia per una varianza dell'errore diversa
+   fra le unità cross section).
       </para>
       <para>
 	L'opzione <opt>comfac</opt> è disponibile solo quando il
@@ -8676,20 +9022,39 @@
 	specificazione AR(1).
       </para>
       <para>
-	Per impostazione predefinita, il programma mostra la regressione
-        ausiliaria su cui si basa la statistica test, ma è possibile evitarlo
-        usando l'opzione <opt>quiet</opt>. La statistica test e il suo p-value
-        possono essere recuperati usando le variabili accessorie <fncref targ="$test"/>
-        e <fncref targ="$pvalue"/>.
+	L'opzione <opt>xdepend</opt> è disponibile solo se il modello
+	viene stimato su dati panel. La statistica test è sviluppata
+	secondo il metodo di <cite key="pesaran04">Pesaran
+	(2004)</cite>.  L'ipotesi nulla riguarda il termine di errore
+	assunto come indipendentemente distribuito per tutte le
+	osservazioni cross-section o gli individui.
       </para>
       <para>
-        Nel caso di modelli stimati col metodo dei minimi quadrati a
-        due stadi (si veda <cmdref targ="tsls"/>), non è possibile
-        usare il test LM, quindi gretl offre alcuni test equivalenti;
-        in questo caso, l'opzione <flag>--autocorr</flag> calcola il
-        test di Godfrey per l'autocorrelazione (si veda Godfrey 1994),
-        mentre l'opzione <flag>--white</flag> produce il test HET1 per
-        l'eteroschedasticità (si veda Pesaran e Taylor 1999).
+	Per impostazione predefinita il programma mostra la
+	regressione ausiliaria sulla quale la statistica test è
+	basata, laddove possibile.  Questa funzione può venir
+	soppressa utilizzando o l'opzione <opt>quiet</opt> (che mostra
+	le informazioni strettamente necessarie) oppure con l'opzione
+	<opt>silent</opt> (che non mostra alcuna informazione). La
+	statistica test ed il relativo p-value possono essere
+	richiamati utilizzando gli accessori <fncref targ="$test"/> e
+	<fncref targ="$pvalue"/>.
+      </para>
+      <para>
+	Nel caso di modelli stimati col metodo dei minimi quadrati a
+	due stadi (si veda <cmdref targ="tsls"/>), non è possibile
+	usare il test LM, quindi gretl offre alcuni test equivalenti;
+	in questo caso, l'opzione <flag>--autocorr</flag> calcola il
+	test di Godfrey per l'autocorrelazione (si veda <cite
+	key="godfrey94" p="true">Godfrey, 1994</cite>), mentre
+	l'opzione <flag>--white</flag> produce il test HET1 per
+	l'eteroschedasticità (si veda <cite key="pesaran99"
+	p="true">Pesaran e Taylor, 1999</cite>.
+      </para>
+      <para>
+	Per ulteriori test diagnostici sui modelli si vedano anche le voci
+	<cmdref targ="chow"/>, <cmdref targ="cusum"/>, <cmdref
+	targ="reset"/> e <cmdref targ="qlrtest"/>.
       </para>
     </description>
 
@@ -8725,7 +9090,7 @@
 
     <description>
       <para>
-	Calcola le stime OLS per il modello indicato usando aritmetica
+	     Calcola le stime OLS per il modello indicato usando aritmetica
         in virgola mobile a precisione multipla. Questo comando è
         disponibile solo se <program>gretl</program> è compilato con il
         supporto per la libreria Gnu Multiple Precision (GMP). Per impostazione
@@ -8738,16 +9103,15 @@
       <code>
 	export GRETL_MP_BITS=1024
       </code>
-
       <para context="cli">
-	Per questo comando è disponibile un'opzione abbastanza speciale (utile
+	     Per questo comando è disponibile un'opzione abbastanza speciale (utile
         soprattutto a scopo di test): se la lista <repl>variabili-indipendenti</repl>
         è seguita da un punto e virgola, e da un'ulteriore lista di numeri,
         questi numeri vengono interpretati come potenze di <repl>x</repl> da aggiungere
         alla regressione, dove <repl>x</repl> è l'ultima variabile della lista
         <repl>variabili-indipendeti</repl>. Questi termini addizionali vengono
         calcolati e memorizzati in precisione multipla. Nell'esempio seguente,
-	<lit>y</lit> è regredita su <lit>x</lit> e sulla seconda, terza e quarta
+	     <lit>y</lit> è regredita su <lit>x</lit> e sulla seconda, terza e quarta
         potenza di <lit>x</lit>:
       </para>
       <code context="cli">
@@ -8773,13 +9137,16 @@
       <para>
 	La funzione kernel <math>K</math> è data da <math>K =
 	exp(-x</math><sup>2</sup><math> / 2h)</math> per <math>|x|
-	&lt; T</math> e zero altrove.
+	&lt; T</math> e zero altrove. <math>T</math> è un parametro
+	di rifinitura che di default è impostato su 4<math>h</math>.
       </para>
       <para>
 	L'ampiezza di banda, che di solito è un numero piccolo,
 	controlla quanto liscia debba essere la funzione
 	<math>m(x)</math> (più è alto il valore, più liscia sarà la
-	funzione); il valore di default è <math>n</math><sup>-0.2</sup>.
+	funzione); per impostazione predefinita quest'ultimo è un valore
+	determinato dai dati proprozionale a <math>n</math><sup>-0.2</sup>,
+	dove <math>n</math> è l'ampiezza del campione.
       </para>
       <para>
 	Se viene spillata la casella <quote>escludine uno</quote>,
@@ -8789,6 +9156,10 @@
 	rende lo stimatore Nadaraya&ndash;Watson più robusto
 	numericamente e il suo uso è, di norma, consigliabile quando
 	lo stimatore è usato per l'inferenza.
+      </para>
+      <para>
+	Per maggiori dettagli in merito alla stima non-parametrica si
+	veda <guideref targ="chap:nonparam"/>.
       </para>
      </description>
   </command>
@@ -8828,7 +9199,16 @@
 	  <flag>--verbose</flag>
 	  <effect>mostra i dettagli delle iterazioni</effect>
 	</option>
-      </options>
+   <option>
+	  <flag>--quiet</flag>
+	  <effect>non mostra i risultati</effect>
+   </option>
+	 <examples>
+	<demos>
+	  <demo>camtriv.inp</demo>
+	</demos>
+      </examples>
+   </options>
     </usage>  
 
     <description>
@@ -8860,7 +9240,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Nonlinear models/Count data...</menu-path>
+      <menu-path>/Modelli/Modelli non lineari/Dati di conto</menu-path>
     </gui-access>
   </command>
 
@@ -8888,101 +9268,103 @@
 	  <flag>--verbose</flag>
 	  <effect>mostra i dettagli delle iterazioni</effect>
 	</option>
+      <option>
+	  <flag>--no-gradient-check</flag>
+	  <effect>si veda oltre</effect>
+	</option>
       </options>
       <examples>
 	<demos>
 	  <demo>wg_nls.inp</demo>
+	  <demo>ects_nls.inp</demo>
 	</demos>
       </examples>
     </usage>
 
     <description context="gui">
-
       <para>
         Esegue una stima con minimi quadrati non-lineari (NLS:
         Nonlinear Least Squares) usando una versione modificata
-        dell'algoritmo di Levenberg&ndash;Marquardt. Occorre fornire una
-        specificazione di funzione e si raccomanda di specificare anche le
-        espressioni per le derivate di questa funzione rispetto a ognuno
-        dei parametri, se possibile. Se non si indicano le derivate, occorre
-        fornire una lista dei parametri da stimare (separati da spazi o virgole),
-        preceduta dalla parola chiave <lit>params</lit>.
+        dell'algoritmo di Levenberg&ndash;Marquardt. Occorre fornire
+        una specificazione di funzione e si raccomanda di specificare
+        anche le espressioni per le derivate di questa funzione
+        rispetto a ognuno dei parametri, se possibile. Se non si
+        indicano le derivate, occorre fornire una lista dei parametri
+        da stimare (separati da spazi o virgole), preceduta dalla
+        parola chiave <lit>params</lit>; quest'ultimi possono essere
+        sia scalari che vettori, che una qualsiasi combinazione tra i
+        due.
       </para>
-
       <para>
         Esempio: si supponga di avere un dataset con le variabili
-        <math>C</math> e <math>Y</math> (ad es.
-        <lit>greene11_3.gdt</lit>) e di voler stimare una funzione di consumo
-        non-lineare del tipo:
-	<equation status="display"
-	  tex="\[C = \alpha + \beta Y^{\gamma}\]"
-	  ascii="C = alfa + beta * Y^gamma"
-	  graphic="greene_Cfunc"/></para>
-
-      <para>I parametri alfa, beta e gamma devono per prima cosa essere
-      aggiunti al dataset, indicando un valore iniziale; è possibile
-      farlo usando il comando genr o attraverso i menù. È possibile
-      inserire i comandi <quote>genr</quote> appropriati nella finestra
-      di dialogo della specificazione NLS prima di specificare la
-      funzione.</para>
-
+        <math>C</math> e <math>Y</math> (&eg; <lit>greene11_3.gdt</lit>)
+        e di voler stimare una funzione di consumo non-lineare del tipo:
+        <equation status="display"
+	     tex="\[C = \alpha + \beta Y^{\gamma}\]"
+	     ascii="C = alfa + beta * Y^gamma"
+	     graphic="greene_Cfunc"/>
+	   </para>
+      <para>
+      I parametri alfa, beta e gamma devono per prima cosa
+      essere aggiunti al dataset, con i relativi valori iniziali
+      indicati. Le linee appropriate possono essere digitate in
+      seguito nella finestra di specificazione degli NLS prima di
+      specificare la funzione obiettivo.
+      </para>
       <para>Nella finestra NLS si inseriranno le righe seguenti:</para>
-
       <code>
-	C = alfa + beta * Y^gamma
-	deriv alfa = 1
-	deriv beta = Y^gamma
-	deriv gamma = beta * Y^gamma * log(Y)
+	   C = alfa + beta * Y^gamma
+	   deriv alfa = 1
+	   deriv beta = Y^gamma
+	   deriv gamma = beta * Y^gamma * log(Y)
       </code>
-
-      <para>La prima riga indica la specificazione della funzione, mentre
+      <para>
+      La prima riga indica la specificazione della funzione, mentre
       le righe successive forniscono le derivate della funzione rispetto
       ad ognuno dei tre parametri. Se non vengono fornite le righe
       "deriv", viene calcolata un'approssimazione numerica del
-      Jacobiano.</para>
-
-      <para>Se i parametri alfa, beta e gamma non sono stati
-      dichiarati in precedenza, è possibile premettere alle righe viste
-      sopra le seguenti:</para>
-
+      Jacobiano.
+      </para>
+      <para>
+      Se i parametri alfa, beta e gamma non sono stati dichiarati in precedenza,
+      è possibile premettere alle righe viste sopra le seguenti:
+      </para>
       <code>
-	genr alpha = 1
-	genr beta = 1
-	genr gamma = 1
+	   scalar alpha = 1
+	   scalar beta = 1
+	   scalar gamma = 1
       </code>
-
-      <para>Per ulteriori dettagli sulla stima NLS si veda la
-	<guideref targ="chap:nls"/>.</para>
-
+      <para>
+      Per ulteriori dettagli sulla stima NLS si veda la <guideref targ="chap:nls"/>.
+	   </para>
     </description>
 
     <description context="cli">
-
       <para>
-        Esegue una stima con minimi quadrati non-lineari (NLS: Nonlinear Least
-        Squares) usando una versione modificata dell'algoritmo di
-        Levenberg&ndash;Marquardt. Occorre fornire una specificazione di
-        funzione e dichiarare i parametri della funzione (usando il comando
-        <cmd>genr</cmd>) prima della stima.  Opzionalmente, è anche possibile
-        specificare le espressioni per le derivate della funzione rispetto a
-        ognuno dei parametri. Se non si indicano le derivate, occorre fornire
-        una lista dei parametri da stimare (separati da spazi o virgole),
-        preceduta dalla parola chiave <lit>params</lit>. In quest'ultimo caso,
-        viene calcolata un'approssimazione numerica del Jacobiano.
+        Esegue una stima con minimi quadrati non-lineari (NLS:
+        Nonlinear Least Squares) usando una versione modificata
+        dell'algoritmo di Levenberg&ndash;Marquardt. Occorre fornire
+        una specificazione di funzione e dichiarare i parametri di
+        interesse della funzione ed i relativi valori iniziali prima
+        che la stima venga eseguita.  Opzionalmente, è anche possibile
+        specificare le espressioni per le derivate della funzione
+        rispetto a ognuno dei parametri. Se non si indicano le
+        derivate, occorre fornire una lista dei parametri da stimare
+        (separati da spazi o virgole), preceduta dalla parola chiave
+        <lit>params</lit>. In quest'ultimo caso, viene calcolata
+        un'approssimazione numerica del Jacobiano.
       </para>
-
       <para>
-	È più semplice mostrare il funzionamento con un esempio. Quello
+	     È più semplice mostrare il funzionamento con un esempio. Quello
         che segue è uno script completo per stimare la funzione di
         consumo non-lineare presentata in <book>Econometric
         Analysis</book> di William Greene (capitolo 11 della quarta
         edizione, o capitolo 9 della quinta). I numeri alla sinistra
         delle righe sono dei punti di riferimento e non fanno parte dei
-        comandi. Si noti che le opzioni, come ad esempio <opt>vcv</opt> per mostrare la
-	matrice di covarianza delle stime dei parametri, vanno aggiunte al
-        comando finale <lit>end nls</lit>.
+        comandi. Si noti che le opzioni, come ad esempio <opt>vcv</opt>
+        per mostrare la matrice di covarianza delle stime dei parametri,
+        vanno aggiunte al comando finale <lit>end nls</lit>.
       </para>
-
       <code>
 	1   open greene11_3.gdt
 	2   ols C 0 Y
@@ -8997,22 +9379,22 @@
       </code>
 
       <para>
-	Spesso è comodo inizializzare i parametri con riferimento a un
+	     Spesso è comodo inizializzare i parametri con riferimento a un
         modello lineare collegato, come è mostrato nelle righe da 2 a 5.
-	I parametri alfa, beta e gamma possono essere impostati a
+	     I parametri alfa, beta e gamma possono essere impostati a
         qualunque valore iniziale (non necessariamente sulla base di un
         modello stimato con OLS), ma la convergenza della procedura NLS
-        non è garantita per qualunque punto di partenza.</para>
-
+        non è garantita per qualunque punto di partenza.
+      </para>
       <para>
-	I veri comandi NLS occupano le righe da 6 a 10. Sulla riga 6
+	     I veri comandi NLS occupano le righe da 6 a 10. Sulla riga 6
         viene dato il comando <cmd>nls</cmd>: viene specificata una
         variabile dipendente, seguita dal segno uguale, seguito da una
         specificazione di funzione. La sintassi per l'espressione a
         destra è la stessa usata per il comando <cmd>genr</cmd>. Le tre
         righe successive specificano le derivate della funzione di
         regressione rispetto a ognuno dei parametri. Ogni riga inizia
-        con il comando <cmd>deriv</cmd>, indica il nome di un parametro,
+        con il comando <cmd>deriv</cmd>, che indica il nome di un parametro,
         il segno di uguale e un'espressione che indica come calcolare la
         derivata (anche qui la sintassi è la stessa di <cmd>genr</cmd>).
         In alternativa, invece di fornire le derivate, è possibile sostituire
@@ -9024,10 +9406,37 @@
       <para> 
         La riga 10, <cmd>end nls</cmd>, completa il comando ed esegue la stima.
       </para>
-
-      <para>Per ulteriori dettagli sulla stima NLS si veda la
-	<guideref targ="chap:nls"/>.</para>
-
+      <para>
+	Se si forniscono le derivate in forma analitica, di default
+	gretl effettuerà una verifica numerica sulla correttezza
+	dell'espressione data. Occasionalmente, questa procedura
+	potrebbe produrre <quote>falsi positivi</quote>, ad esempio
+	indicando come errate delle derivate che invece sono correte,
+	facendo si che la stima di quest'ultime venga negata. Per
+	evitare che ciò accada, e/o per compilare leggermente più
+	velocemente il codice, è possibile utilizzare l'opzione
+	<opt>no-gradient-check</opt>. Ovviamente questo andrebbe fatto
+	solo in caso di assoluta certezza circa la correttezza delle
+	derivate analitiche.
+      </para>
+      <subhead>Nomi dei parametri</subhead>
+      <para>
+	Quando si stima un modello non lineare spesso risulta
+	conveniente rinominare i parametri in maniera
+	sintetica. Durante la stampa del risultato, comunque, è
+	desiderabile che le etichette date, per quanto sintetiche,
+	risultino le più informative possibili. Questo risultato può
+	essere ottenuto aggiungendo al comando la parola chiave
+	<lit>param_names</lit>. Per un modello con <math>k</math>
+	parametri l'argomento che segue a questa parola chiave
+	dovrebbe essere o una stringa letterale, posta tra virgolette,
+	contenente <math>k</math> nomi diversi separati da spazi o
+	virgole, oppure il nome di un vettore contente un lista di
+	nomi <math>k</math> di variabile al suo interno.
+      </para>
+      <para>
+      Per ulteriori dettagli sulla stima NLS si veda la <guideref targ="chap:nls"/>.
+      </para>
     </description>
 
     <gui-access>
@@ -9036,8 +9445,7 @@
 
   </command>
  
-  <command name="normtest" section="Tests"
-    label="Test di normalità">
+  <command name="normtest" section="Tests" label="Test di normalità">
 
     <usage>
       <arguments>
@@ -9046,7 +9454,7 @@
       <options>
 	<option>
 	  <flag>--dhansen</flag>
-	  <effect>test Doornik&ndash;Hansen</effect>
+	  <effect>test di Doornik&ndash;Hansen, utilizzato di default</effect>
         </option>
 	<option>
 	  <flag>--swilk</flag>
@@ -9073,18 +9481,21 @@
 
     <description>
       <para>
-	Conduce un test di normalità per la <repl>serie</repl> specificata. Il
-        tipo di test eseguito è determinato dalle opzioni del comando (se non ne
-        viene usata alcuna, viene eseguito il test di Doornik&ndash;Hansen). Si
-        noti che il test di Jarque&ndash;Bera test, sebbene semplice da
-        calcolare, ha un'accuratezza relativamente bassa in campioni limitati,
-        quindi se ne raccomanda l'uso principalmente a scopo di confronto.
+	     Conduce un test di normalità per la <repl>serie</repl>
+	     specificata. Il tipo di test eseguito è determinato dalle
+	     opzioni del comando (se non ne viene usata alcuna, viene
+	     eseguito il test di Doornik&ndash;Hansen).  Nota: si
+	     raccomanda l'utilizzo dei test di Doornik&ndash;Hansen e
+	     Shapiro&ndash;Wilk rispetto agli altri test per via delle
+	     loro migliori proprietà in campioni relativamente
+	     piccoli.
       </para>
       <para>
-	La statistica test e il suo p-value possono essere recuperati usando gli
-        accessori <fncref targ="$test"/> e <fncref targ="$pvalue"/>. Se si usa l'opzione
-        <opt>all</opt>, i risultati salvati saranno queslli del test di
-        Doornik&ndash;Hansen.
+	     La statistica test e il suo p-value possono essere
+	     recuperati usando gli accessori <fncref targ="$test"/> e
+	     <fncref targ="$pvalue"/>. Se si usa l'opzione
+	     <opt>all</opt>, i risultati richiamati saranno quelli del
+	     test di Doornik&ndash;Hansen.
       </para>
     </description>
 
@@ -9110,17 +9521,20 @@
 
     <description>
       <para>
-	Crea un dataset <quote>vuoto</quote>, che contiene solo una
-        costante e una variabile indice, con periodicità 1 e il numero
-        indicato di osservazioni. Ad esempio, è possibile creare un dataset
-        a scopo di simulazione usando alcuni comandi <cmd>genr</cmd> (come
-        <cmd>genr uniform()</cmd> e <cmd>genr normal()</cmd>) per generare
-        dati di prova. Questo comando può essere usato insieme a
-        <cmd>loop</cmd>.  Si veda anche l'opzione <quote>seed</quote> del
-        comando <cmdref targ="set"/>.
+	     Crea un dataset <quote>vuoto</quote>, che contiene solo
+	     una costante e una variabile indice, con periodicità 1 e
+	     il numero indicato di osservazioni. Ad esempio, è
+	     possibile creare un dataset a scopo di simulazione usando
+	     alcuni comandi come <cmd>uniform()</cmd> e
+	     <cmd>normal()</cmd>) i quali genereranno serie di dati ex
+	     nihilo che dovranno poi venir riempiti con dati. Questo
+	     comando può risultare particolarmente comodo se
+	     utilizzato assieme a <cmd>loop</cmd>.  Si veda anche
+	     l'opzione <quote>seed</quote> del comando <cmdref
+	     targ="set"/>.
       </para>
       <para>
-	Per impostazione predefinita, questo comando cancella tutti i dati
+	     Per impostazione predefinita, questo comando cancella tutti i dati
         presenti nell'ambiente di lavoro di gretl. Usando l'opzione
         <opt>preserve</opt>, verranno mantenute tutte le matrici attualmente
         definite.
