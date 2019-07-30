@@ -230,7 +230,7 @@ result. For example:
 \begin{code}
 matrix x1 = { 1 ; 2 ; 3 }
 # perform the transform
-matrix f = fft(a)
+matrix f = fft(x1)
 # perform the inverse transform
 matrix x2 = ffti(f)
 \end{code}
@@ -312,7 +312,7 @@ X = { x }
 F = fft(X)
 S = sumr(F.^2)
 S = S[2:($nobs/2)+1]/scale
-omega = seq(1,($nobs/2))' .* (2*pi/$nobs)
+omega = seq(1,($nobs/2))' .* (2*$pi/$nobs)
 omega = omega ~ S
 # compare the built-in command
 pergm x  
