@@ -5987,7 +5987,7 @@ gretl_matrix *gretl_matrix_pow (const gretl_matrix *A,
     if (gretl_is_null_matrix(A)) {
 	*err = E_DATA;
 	return NULL;
-    } else if (A->rows != A->cols) {
+    } else if (A->rows != A->cols || A->is_complex) {
 	*err = E_INVARG;
 	return NULL;
     } else if (s != floor(s) || s < 0) {

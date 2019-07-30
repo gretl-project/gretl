@@ -2620,24 +2620,6 @@ static int op_symbol (int op)
     }
 }
 
-static const char *op_string (int op)
-{
-    switch (op) {
-    case B_DOTMULT: return ".*";
-    case B_DOTDIV:  return "./";
-    case B_DOTPOW:  return ".^";
-    case B_DOTADD:  return ".+";
-    case B_DOTSUB:  return ".-";
-    case B_DOTEQ:   return ".=";
-    case B_DOTGT:   return ".>";
-    case B_DOTLT:   return ".<";
-    case B_DOTGTE:  return ".>=";
-    case B_DOTLTE:  return ".<=";
-    case B_DOTNEQ:  return ".!=";
-    default: return NULL;
-    }
-}
-
 static gretl_matrix *nullmat_multiply (const gretl_matrix *A,
 				       const gretl_matrix *B,
 				       int op, int *err)
@@ -2717,14 +2699,14 @@ matrix_add_sub_scalar (const gretl_matrix *A,
 
 static int operator_real_only (int op)
 {
-    gretl_errmsg_sprintf("'%s': %s", op_string(op),
+    gretl_errmsg_sprintf("'%s': %s", getsymb(op),
 			 _("complex operands are not supported"));
     return E_TYPES;
 }
 
 static int no_mixed_operands (int op)
 {
-    gretl_errmsg_sprintf("'%s': %s", op_string(op),
+    gretl_errmsg_sprintf("'%s': %s", getsymb(op),
 			 _("mixed complex and real operands are not supported"));
     return E_TYPES;
 }
@@ -2756,6 +2738,10 @@ static gretl_matrix *calc_get_matrix (gretl_matrix **pM,
     }
 }
 
+#define m_op_does_complex(o) (o==B_ADD || o==B_SUB || o==B_MUL || \
+			      o==B_TRMUL || o==B_DOTMULT || o==B_DOTADD || \
+			      o==B_DOTSUB || o==B_DOTPOW)
+
 /* return allocated result of binary operation performed on
    two matrices */
 
@@ -2779,6 +2765,11 @@ static int real_matrix_calc (const gretl_matrix *A,
 	    C = nullmat_multiply(A, B, op, &err);
 	    goto finish;
 	}
+    }
+
+    if ((A->is_complex || B->is_complex) && !m_op_does_complex(op)) {
+	/* gatekeeper for complex */
+	return operator_real_only(op);
     }
 
     switch (op) {
@@ -3785,7 +3776,12 @@ static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
 
     if (ret != NULL && starting(p)) {
 	if (op == B_DOTPOW) {
-	    ret->v.m = gretl_matrix_dot_op(ml, mr, '^', &p->err);
+	    if (0 && ml->is_complex) {
+		/* FIXME: not yet: breaks cmatrix.gfn */
+		ret->v.m = gretl_cmatrix_dot_pow(ml, mr, &p->err);
+	    } else {
+		ret->v.m = gretl_matrix_dot_op(ml, mr, '^', &p->err);
+	    }
 	} else if (op == B_POW) {
 	    int s = node_get_int(r, p);
 
@@ -3915,6 +3911,7 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
 	gretl_matrix *m = node_get_matrix(n, p, 0, 0);
 
 	if (m->is_complex && f != F_ROWS && f != F_COLS) {
+	    /* gatekeeper for complex */
 	    p->err = function_real_only(f);
 	    return ret;
 	}
@@ -3971,6 +3968,7 @@ static NODE *matrix_to_alt_node (NODE *n, int f, parser *p)
     if (!p->err) {
 	if (m->is_complex) {
 	    if (f == F_LDET) {
+		/* gatekeeper for complex */
 		p->err = function_real_only(f);
 	    } else {
 		if (f == F_DET) {
@@ -4219,6 +4217,12 @@ static void fix_complex_flags (gretl_matrix *m1, gretl_matrix *m2)
     }
 }
 
+#define mmf_does_complex(f) (f==HF_CFFT || f==F_INV || f==F_UPPER || \
+			     f==F_LOWER || f==F_DIAG || f==F_TRANSP ||	\
+			     f==F_VEC || f==F_VECH || f==F_UNVECH ||	\
+			     f==F_MREVERSE || f==F_FFT || f==F_FFTI ||	\
+			     f==HF_CMMULT || f==HF_CINV || f==HF_CTRAN)
+
 static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 {
     NODE *ret = aux_matrix_node(p);
@@ -4235,6 +4239,13 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	} else {
 	    m = node_get_matrix(n, p, 0, 0);
 	    tmpmat = n->t == MAT && is_tmp_node(n);
+	}
+
+	if (!p->err && m != NULL && m->is_complex) {
+	    /* gatekeeper for complex */
+	    if (!mmf_does_complex(f)) {
+		p->err = function_real_only(f);
+	    }
 	}
 
 	if (p->err) {
@@ -4344,8 +4355,8 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	case F_PSDROOT:
 	case F_INVPD:
 	case F_GINV:
-	case F_UPPER:
-	case F_LOWER:
+	case F_UPPER: /* complex supported */
+	case F_LOWER: /* complex supported */
 	    ret->v.m = apply_ovwrite_func(m, f, optparm, tmpmat, &p->err);
 	    break;
 	case F_DIAG:
@@ -9048,6 +9059,7 @@ static NODE *apply_matrix_func (NODE *t, NODE *f, parser *p)
 	}
 
 	if (dfunc == NULL && cfunc == NULL) {
+	    /* gatekeeper for complex */
 	    p->err = function_real_only(f->t);
 	} else {
 	    p->err = apply_cmatrix_func(ret->v.m, m,

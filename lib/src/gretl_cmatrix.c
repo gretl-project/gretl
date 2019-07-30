@@ -1445,3 +1445,57 @@ gretl_matrix *gretl_cmatrix_switch (const gretl_matrix *m,
 
     return ret;
 }
+
+/* Element-wise raising to a power: @A must be complex,
+   @P may be complex or real, and must be conformable
+   with @A (or scalar).
+*/
+
+gretl_matrix *gretl_cmatrix_dot_pow (const gretl_matrix *A,
+				     const gretl_matrix *P,
+				     int *err)
+{
+    gretl_matrix *ret = NULL;
+    double complex *pz = NULL;
+    double complex pzi = 0;
+    double *px = NULL;
+
+    if (gretl_matrix_is_scalar(P)) {
+	pzi = P->val[0];
+    } else if (cscalar(P)) {
+	pzi = *(double complex *) P->val;
+    } else if (P->is_complex) {
+	pz = (double complex *) P->val;
+	if (P->rows != A->rows || P->cols != A->cols) {
+	    *err = E_NONCONF;
+	}
+    } else if (P->rows != A->rows/2 || P->cols != A->cols) {
+	px = P->val;
+	*err = E_NONCONF;
+    }
+
+    if (!*err) {
+	ret = gretl_matrix_alloc(A->rows, A->cols);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (!*err) {
+	double complex *rz = (double complex *) ret->val;
+	double complex *az = (double complex *) A->val;
+	int i, n = A->cols * A->rows / 2;
+
+	for (i=0; i<n; i++) {
+	    if (pz != NULL) {
+		pzi = pz[i];
+	    } else if (px != NULL) {
+		pzi = px[i];
+	    }
+	    rz[i] = cpow(az[i], pzi);
+	}
+	ret->is_complex = 1;
+    }
+
+    return ret;
+}
