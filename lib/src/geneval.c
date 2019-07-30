@@ -4363,6 +4363,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    }
 	    break;
 	case F_VEC:
+	    /* note: the complex case is handled OK */
 	    ret->v.m = user_matrix_vec(m, &p->err);
 	    break;
 	case F_VECH:
@@ -4395,10 +4396,18 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    ret->v.m = gretl_matrix_exp(m, &p->err);
 	    break;
 	case F_FFT:
-	    ret->v.m = gretl_matrix_fft(m, &p->err);
+	    if (m->is_complex) {
+		ret->v.m = gretl_complex_fft(m, 0, &p->err);
+	    } else {
+		ret->v.m = gretl_matrix_fft(m, &p->err);
+	    }
 	    break;
 	case F_FFTI:
-	    ret->v.m = gretl_matrix_ffti(m, &p->err);
+	    if (m->is_complex) {
+		ret->v.m = gretl_complex_fft(m, 1, &p->err);
+	    } else {
+		ret->v.m = gretl_matrix_ffti(m, &p->err);
+	    }
 	    break;
 	case F_POLROOTS:
 	    ret->v.m = gretl_matrix_polroots(m, 0, &p->err);
