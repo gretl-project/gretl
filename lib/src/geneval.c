@@ -1319,6 +1319,56 @@ static double xy_calc (double x, double y, int op, int targ, parser *p)
     }
 }
 
+#if 0 /* not just yet */
+
+static double complex complex_xy_calc (double complex x,
+				       double complex y,
+				       int op, parser *p)
+{
+    double complex z = NADBL;
+
+#if EDEBUG > 1
+    fprintf(stderr, "complex xy_calc: op = %d ('%s')\n", op, getsymb(op));
+#endif
+
+    /* assignment */
+    if (op == B_ASN) {
+	return y;
+    }
+
+    /* propagate NA */
+    if (na(x) || na(y)) {
+	return x * y;
+    }
+
+    errno = 0;
+
+    switch (op) {
+    case B_ADD:
+	return x + y;
+    case B_SUB:
+	return x - y;
+    case B_MUL:
+	return x * y;
+    case B_DIV:
+	return x / y;
+    case B_EQ:
+	return x == y;
+    case B_NEQ:
+	return x != y;
+    case B_POW:
+	z = cpow(x, y);
+	if (errno) {
+	    eval_warning(p, op, errno);
+	}
+	return z;
+    default:
+	return z;
+    }
+}
+
+#endif /* not yet */
+
 #define randgen(f) (f == F_RANDGEN || f == F_MRANDGEN || f == F_RANDGEN1)
 
 static int check_dist_count (int d, int f, int *np, int *argc)
