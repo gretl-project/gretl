@@ -99,6 +99,10 @@ int gretl_cmatrix_zero_triangle (gretl_matrix *m, char t);
 gretl_matrix *gretl_cmatrix_switch (const gretl_matrix *m,
 				    int to_new, int *err);
 
+gretl_matrix *gretl_cmatrix_dot_pow (const gretl_matrix *A,
+				     const gretl_matrix *P,
+				     int *err);
+
 int complex_matrix_print (const gretl_matrix *A,
 			  const char *name,
 			  PRN *prn);

@@ -1386,6 +1386,9 @@ int gretl_cmatrix_zero_triangle (gretl_matrix *m, char t)
     return 0;
 }
 
+/* switch between "legacy" and new representations of a
+   complex matrix */
+
 gretl_matrix *gretl_cmatrix_switch (const gretl_matrix *m,
 				    int to_new, int *err)
 {
@@ -1414,6 +1417,7 @@ gretl_matrix *gretl_cmatrix_switch (const gretl_matrix *m,
     jj = 0;
 
     if (to_new) {
+	/* make re and im components contiguous */
 	for (j=0; j<ret->cols; j++) {
 	    k = 0;
 	    for (i=0; i<m->rows; i++) {
@@ -1426,6 +1430,7 @@ gretl_matrix *gretl_cmatrix_switch (const gretl_matrix *m,
 	}
 	ret->is_complex = 1;
     } else {
+	/* put re and im components in adjacent columns */
 	for (j=0; j<m->cols; j++) {
 	    k = 0;
 	    for (i=0; i<ret->rows; i++) {
@@ -1436,6 +1441,60 @@ gretl_matrix *gretl_cmatrix_switch (const gretl_matrix *m,
 	    }
 	    jj += 2;
 	}
+    }
+
+    return ret;
+}
+
+/* Element-wise raising to a power: @A must be complex,
+   @P may be complex or real, and must be conformable
+   with @A (or scalar).
+*/
+
+gretl_matrix *gretl_cmatrix_dot_pow (const gretl_matrix *A,
+				     const gretl_matrix *P,
+				     int *err)
+{
+    gretl_matrix *ret = NULL;
+    double complex *pz = NULL;
+    double complex pzi = 0;
+    double *px = NULL;
+
+    if (gretl_matrix_is_scalar(P)) {
+	pzi = P->val[0];
+    } else if (cscalar(P)) {
+	pzi = *(double complex *) P->val;
+    } else if (P->is_complex) {
+	pz = (double complex *) P->val;
+	if (P->rows != A->rows || P->cols != A->cols) {
+	    *err = E_NONCONF;
+	}
+    } else if (P->rows != A->rows/2 || P->cols != A->cols) {
+	px = P->val;
+	*err = E_NONCONF;
+    }
+
+    if (!*err) {
+	ret = gretl_matrix_alloc(A->rows, A->cols);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (!*err) {
+	double complex *rz = (double complex *) ret->val;
+	double complex *az = (double complex *) A->val;
+	int i, n = A->cols * A->rows / 2;
+
+	for (i=0; i<n; i++) {
+	    if (pz != NULL) {
+		pzi = pz[i];
+	    } else if (px != NULL) {
+		pzi = px[i];
+	    }
+	    rz[i] = cpow(az[i], pzi);
+	}
+	ret->is_complex = 1;
     }
 
     return ret;
