@@ -793,8 +793,12 @@ int complex_matrix_print (const gretl_matrix *A,
 			  const char *name,
 			  PRN *prn)
 {
-    double re, im;
+    double complex *az;
+    double complex aij;
+    double re, im, xmax;
     char s[4] = "   ";
+    int all_ints = 1;
+    int zwidth = 0;
     int r, c, i, j;
 
     if (!cmatrix_validate(A, 0)) {
@@ -803,6 +807,33 @@ int complex_matrix_print (const gretl_matrix *A,
 
     r = A->rows / 2;
     c = A->cols;
+
+    az = (double complex *) A->val;
+    xmax = 0;
+
+    for (j=0; j<c && all_ints; j++) {
+	for (i=0; i<r && all_ints; i++) {
+	    aij = gretl_cmatrix_get(az, r, i, j);
+	    re = creal(aij);
+	    im = cimag(aij);
+	    if (floor(re) != re || floor(im) != im) {
+		all_ints = 0;
+	    } else {
+		re = MAX(fabs(re), fabs(im));
+		if (re > xmax) {
+		    xmax = re;
+		}
+	    }
+	}
+    }
+
+    if (all_ints) {
+	/* try for a more compact format */
+	xmax = log10(xmax);
+	if (xmax < 3) {
+	    zwidth = floor(xmax) + 2;
+	}
+    }
 
     if (name != NULL && *name != '\0') {
 	pprintf(prn, "%s (%d x %d)", name, r, c);
@@ -814,7 +845,11 @@ int complex_matrix_print (const gretl_matrix *A,
 	    re = cmatrix_get_re(A, i, j);
 	    im = cmatrix_get_im(A, i, j);
 	    s[1] = (im >= 0) ? '+' : '-';
-	    pprintf(prn, "%7.4f%s%6.4fi", re, s, fabs(im));
+	    if (zwidth) {
+		pprintf(prn, "%*g%s%*gi", zwidth, re, s, zwidth-1, fabs(im));
+	    } else {
+		pprintf(prn, "%7.4f%s%6.4fi", re, s, fabs(im));
+	    }
 	    if (j < c - 1) {
 		pputs(prn, "  ");
 	    }
