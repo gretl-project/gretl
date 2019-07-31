@@ -4720,40 +4720,44 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
 
 static void print_mspec (matrix_subspec *mspec)
 {
-    const char *mstypes[] = {
-         "SEL_NULL",
-         "SEL_RANGE",
-         "SEL_ELEMENT",
-         "SEL_MATRIX",
-         "SEL_DIAG",
-         "SEL_ALL",
-         "SEL_CONTIG",
-         "SEL_EXCL",
-         "SEL_SINGLE",
-	 "SEL_STR"
+    static const char *mstypes[] = {
+        "SEL_NULL",
+        "SEL_RANGE",
+	"SEL_ELEMENT",
+	"SEL_MATRIX",
+	"SEL_DIAG",
+	"SEL_ALL",
+	"SEL_CONTIG",
+	"SEL_EXCL",
+	"SEL_SINGLE",
+	"SEL_STR"
     };
-
     fprintf(stderr, "mspec at %p:\n", (void *) mspec);
 
     if (mspec != NULL) {
-	fprintf(stderr, "ltype = %s\n", mstypes[mspec->ltype]);
-	if (mspec->ltype == SEL_RANGE) {
-	    fprintf(stderr, "lsel.range[0] = %d\n", mspec->lsel.range[0]);
-	    fprintf(stderr, "lsel.range[1] = %d\n", mspec->lsel.range[1]);
+	fprintf(stderr, "  ltype = %s\n", mstypes[mspec->ltype]);
+        if (mspec->ltype == SEL_ELEMENT) {
+	    fprintf(stderr, "    element = %d\n", mspec->lsel.range[0]);
+	} else if (mspec->ltype == SEL_RANGE) {
+	    fprintf(stderr, "    lsel.range[0] = %d\n", mspec->lsel.range[0]);
+	    fprintf(stderr, "    lsel.range[1] = %d\n", mspec->lsel.range[1]);
 	} else if (mspec->ltype == SEL_MATRIX) {
 	    gretl_matrix_print(mspec->lsel.m, "sel matrix");
 	}
-	fprintf(stderr, "rtype = %s\n", mstypes[mspec->rtype]);
-	if (mspec->rtype == SEL_RANGE) {
-	    fprintf(stderr, "rsel.range[0] = %d\n", mspec->rsel.range[0]);
-	    fprintf(stderr, "rsel.range[1] = %d\n", mspec->rsel.range[1]);
+	fprintf(stderr, "  rtype = %s\n", mstypes[mspec->rtype]);
+	if (mspec->rtype == SEL_ELEMENT) {
+	    fprintf(stderr, "    element = %d\n", mspec->rsel.range[0]);
+	} else if (mspec->rtype == SEL_RANGE) {
+	    fprintf(stderr, "    rsel.range[0] = %d\n", mspec->rsel.range[0]);
+	    fprintf(stderr, "    rsel.range[1] = %d\n", mspec->rsel.range[1]);
 	} else if (mspec->rtype == SEL_MATRIX) {
 	    gretl_matrix_print(mspec->rsel.m, "sel matrix");
 	}
+	fputs("end of mspec\n", stderr);
     }
 }
 
-#endif
+#endif /* debugging */
 
 /* Compose a sub-matrix specification, from scalars and/or
    index matrices. FIXME: some of the work below ought to be

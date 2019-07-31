@@ -28,7 +28,7 @@
 
 #define MDEBUG 0
 #define CONTIG_DEBUG 0
-#define CIDX 0
+#define CIDX_TEST 0
 
 #define mspec_get_offset(m) (m->lsel.range[0])
 #define mspec_get_n_elem(m) (m->lsel.range[1])
@@ -38,11 +38,11 @@
 
 #define mspec_set_element(m,i) (m->lsel.range[0] = i)
 
-#if CIDX
+#if CIDX_TEST
 static int gretl_vector_real_length (const gretl_matrix *v)
 {
     if (v->is_complex) {
-	return v->rows == 2 ? v->cols : v->cols == 1 ? v->rows/2 : 0;
+	return v->rows == 2 ? v->cols : v->cols == 1 ? v->rows : 0;
     } else {
 	return gretl_vector_get_length(v);
     }
@@ -412,21 +412,16 @@ static int spec_check_dimensions (matrix_subspec *spec,
 				  const gretl_matrix *m)
 {
     int colvec = m->cols == 1 && m->rows > 1;
-    int maxrow = m->rows;
     int lt = spec->ltype;
     int rt = spec->rtype;
     int err = 0;
 
-#if CIDX
-    maxrow /= 2;
-#endif
-
     if (colvec || rt != SEL_NULL) {
 	/* spec->lsel must pertain to rows */
 	if (lt == SEL_MATRIX) {
-	    err = bad_sel_vector(spec->lsel.m, maxrow);
+	    err = bad_sel_vector(spec->lsel.m, m->rows);
 	} else if (lt == SEL_RANGE || lt == SEL_ELEMENT) {
-	    err = bad_sel_range(spec->lsel.range, maxrow);
+	    err = bad_sel_range(spec->lsel.range, m->rows);
 	}
 	if (!err) {
 	    /* check spec->rsel against cols */
@@ -448,49 +443,100 @@ static int spec_check_dimensions (matrix_subspec *spec,
     return err;
 }
 
-#if CONTIG_DEBUG
+#if CIDX_TEST || CONTIG_DEBUG
 
-static void subspec_debug_print (const matrix_subspec *spec,
-				 const gretl_matrix *m)
-{
-    const char *snames[] = {
-        "SEL_NULL",
-        "SEL_RANGE",
-        "SEL_ELEMENT",
-        "SEL_MATRIX",
-        "SEL_DIAG",
-        "SEL_ALL",
-        "SEL_CONTIG",
-        "SEL_EXCL",
-        "SEL_SINGLE",
-        "SEL_STR"
-    };
-#if CIDX
-    int r = m->is_complex ? m->rows/2 : m->rows;
-#else
-    int r = m->rows;
+static const char *snames[] = {
+     "SEL_NULL",
+     "SEL_RANGE",
+     "SEL_ELEMENT",
+     "SEL_MATRIX",
+     "SEL_DIAG",
+     "SEL_ALL",
+     "SEL_CONTIG",
+     "SEL_EXCL",
+     "SEL_SINGLE",
+     "SEL_STR"
+};
+
 #endif
 
-    fprintf(stderr, "check_matrix_subspec: types = (%s,%s), ",
+#if CIDX_TEST
+
+static int mspec_convert (matrix_subspec *mspec)
+{
+    fprintf(stderr, "Convert mspec to 8-byte mode:\n");
+    fprintf(stderr, "  original ltype: %s\n", snames[mspec->ltype]);
+    if (mspec->ltype == SEL_ELEMENT) {
+	int i0 = mspec->lsel.range[0];
+	int i08 = 2*(i0-1) + 1;
+	int i18 = i08 + 1;
+
+	fprintf(stderr, "    original element = %d\n", i0);
+	fprintf(stderr, "    converted to range[%d:%d]\n", i08, i18);
+	fprintf(stderr, "  rtype: %s -> %s\n", snames[mspec->rtype],
+		snames[SEL_SINGLE]);
+# if CIDX_TEST > 1
+	mspec->ltype = SEL_RANGE;
+	mspec->lsel.range[0] = i08;
+	mspec->lsel.range[1] = i18;
+	mspec->rtype = SEL_RANGE;
+# endif
+    } else if (mspec->ltype == SEL_RANGE) {
+	int i0 = mspec->lsel.range[0];
+	int i1 = mspec->lsel.range[1];
+	int i08 = 2*(i0-1) + 1;
+	int i18 = 2*(i1-1) + 1;
+
+	i18 += i18 % 2;
+	fprintf(stderr, "    original  row range[%d:%d]\n", i0, i1);
+	fprintf(stderr, "    converted row range[%d:%d]\n", i08, i18);
+# if CIDX_TEST > 1
+	mspec->lsel.range[0] = i08;
+	mspec->lsel.range[1] = i18;
+# endif
+    } else if (mspec->ltype == SEL_MATRIX) {
+	gretl_matrix *m = gretl_matrix_copy(mspec->lsel.m);
+	int i, mi, mj08, mj18, j = 1;
+
+	gretl_matrix_print(mspec->lsel.m, "original lsel matrix");
+	for (i=0; i<m->cols; i++) {
+	    mi = (int) m->val[i];
+	    mj08 = 2*(mi-1) + 1;
+	    fprintf(stderr, "  revised m[%d] = %d\n", j++, mj08);
+	    mj18 = mj08 + 1;
+	    fprintf(stderr, "  revised m[%d] = %d\n", j++, mj18);
+	}
+    }
+    fputc('\n', stderr);
+}
+
+#endif /* CIDX_TEST */
+
+#if CONTIG_DEBUG
+
+static void subspec_debug_print (matrix_subspec *spec,
+				 const gretl_matrix *m)
+{
+    fprintf(stderr, "check_matrix_subspec: types = (%s, %s)\n",
 	    snames[spec->ltype], snames[spec->rtype]);
     if (spec->ltype == SEL_MATRIX) {
-	fputs("vector sel, ", stderr);
+	fputs(" vector sel,", stderr);
     } else if (spec->ltype != SEL_NULL) {
-	fprintf(stderr, "lsel->range = (%d,%d), ", spec->lsel.range[0],
+	fprintf(stderr, " lsel->range = (%d,%d),", spec->lsel.range[0],
 		spec->lsel.range[1]);
     }
     if (spec->rtype == SEL_MATRIX) {
-	fputs("vector sel, ", stderr);
+	fputs(" vector sel, ", stderr);
     } else if (spec->rtype != SEL_NULL) {
-	fprintf(stderr, "rsel->range = (%d,%d), ", spec->rsel.range[0],
+	fprintf(stderr, " rsel->range = (%d,%d), ", spec->rsel.range[0],
 		spec->rsel.range[1]);
     }
-    fprintf(stderr, "m is %d x %d\n", r, m->cols);
-    fprintf(stderr, "lh scalar %d, rh scalar %d\n",
+    fprintf(stderr, "m is %d x %d\n", m->rows, m->cols);
+    fprintf(stderr, " lh scalar %d, rh scalar %d\n",
 	    lhs_is_scalar(spec, m), rhs_is_scalar(spec, m));
 }
 
-#endif
+#endif /* CONTIG_DEBUG */
 
 /* When we come here we've already screened out DIAG
    selection and single-element selection.
@@ -518,12 +564,13 @@ static int submatrix_contig (matrix_subspec *spec, const gretl_matrix *m)
     return contig;
 }
 
-#if CIDX
-#define rowmax(s,m) (s->range[1] == MSEL_MAX ? (m->is_complex ? m->rows/2 : m->rows) : s->range[1])
-#else
 #define rowmax(s,m) (s->range[1] == MSEL_MAX ? m->rows : s->range[1])
-#endif
 #define colmax(s,m) (s->range[1] == MSEL_MAX ? m->cols : s->range[1])
+
+/* Determine the offset from the start of m->val, and the
+   number of elements, in a matrix slice that has been found
+   to consist of contiguous data.
+*/
 
 static int get_offset_nelem (matrix_subspec *spec,
 			     const gretl_matrix *m,
@@ -602,6 +649,11 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 #if CONTIG_DEBUG
     subspec_debug_print(spec, m);
 #endif
+#if CIDX_TEST
+    if (m->is_complex) {
+	mspec_convert(spec);
+    }
+#endif
 
     if (spec->ltype == SEL_DIAG) {
 	/* there's nothing to check, since this is OK even
@@ -611,7 +663,7 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 	return 0;
     }
 
-#if CIDX
+#if CIDX_TEST > 1
     veclen = gretl_vector_real_length(m);
 #else
     veclen = gretl_vector_get_length(m);
@@ -969,9 +1021,9 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
     }
 
     if (spec->ltype == SEL_DIAG) {
-	return gretl_matrix_get_diagonal(M, err);
+	S = gretl_matrix_get_diagonal(M, err);
     } else if (spec->ltype == SEL_CONTIG) {
-	return matrix_get_chunk(M, spec, err);
+	return  matrix_get_chunk(M, spec, err);
     } else if (spec->ltype == SEL_ELEMENT) {
 	int i = mspec_get_element(spec);
 	double x = matrix_get_element(M, i, err);
@@ -979,7 +1031,10 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 	if (!*err) {
 	    S = gretl_matrix_from_scalar(x);
 	}
-	return S;
+    }
+
+    if (S != NULL) {
+	goto finish;
     }
 
     if (spec->rslice == NULL && spec->cslice == NULL) {
@@ -1050,6 +1105,14 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 	}
     }
 
+ finish:
+
+#if CIDX_TEST > 1
+    if (S != NULL && M->is_complex) {
+	S->is_complex = 1;
+    }
+#endif
+
     return S;
 }
 
@@ -1116,6 +1179,12 @@ gretl_matrix *matrix_get_chunk (const gretl_matrix *M,
 	    matrix_transcribe_dates(ret, M);
 	}
     }
+
+#if CIDX_TEST > 1
+    if (ret != NULL && M->is_complex) {
+	ret->is_complex = 1;
+    }
+#endif
 
     return ret;
 }
