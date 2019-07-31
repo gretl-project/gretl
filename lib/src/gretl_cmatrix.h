@@ -71,10 +71,13 @@ int cmatrix_add_scalar (gretl_matrix *targ,
 			const gretl_matrix *A,
 			double x, int Asign);
 
-int apply_cmatrix_func (gretl_matrix *targ,
-			const gretl_matrix *src,
-			double complex (*cfunc) (double complex),
-			double (*dfunc) (double complex));
+int apply_cmatrix_dfunc (gretl_matrix *targ,
+			 const gretl_matrix *src,
+			 double (*dfunc) (double complex));
+
+int apply_cmatrix_cfunc (gretl_matrix *targ,
+			 const gretl_matrix *src,
+			 double complex (*cfunc) (double complex));
 
 gretl_matrix *gretl_cmatrix_determinant (const gretl_matrix *X,
 					 int *err);

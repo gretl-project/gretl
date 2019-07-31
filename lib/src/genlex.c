@@ -23,6 +23,7 @@
 #include "gretl_func.h"
 #include "uservar.h"
 #include "gretl_string_table.h"
+#include "gretl_normal.h"
 #include "gretl_bundle.h"
 #include "uservar_priv.h"
 
@@ -48,6 +49,12 @@ const char *wordchars = "abcdefghijklmnopqrstuvwxyz"
 struct str_table {
     int id;
     const char *str;
+};
+
+struct str_table_ex {
+    int id;
+    const char *str;
+    void *ptr;
 };
 
 struct str_table consts[] = {
@@ -174,26 +181,44 @@ struct str_table bvars[] = {
     { 0,         NULL }
 };
 
+/* functions for which we wish to attach function-pointers
+   to the relevant NODE */
+
+struct str_table_ex ptrfuncs[] = {
+    { F_CEIL,  "ceil",  ceil },
+    { F_FLOOR, "floor", floor },
+    { F_SIN,   "sin",   sin },
+    { F_COS,   "cos",   cos },
+    { F_TAN,   "tan",   tan },
+    { F_ASIN,  "asin",  asin },
+    { F_ACOS,  "acos",  acos },
+    { F_ATAN,  "atan",  atan },
+    { F_SINH,  "sinh",  sinh },
+    { F_COSH,  "cosh",  cosh },
+    { F_TANH,  "tanh",  tanh },
+    { F_ASINH, "asinh", asinh },
+    { F_ACOSH, "acosh", acosh },
+    { F_ATANH, "atanh", atanh },
+    { F_LOG,   "log",   log },
+    { F_LOG10, "log10", log10 },
+    { F_LOG2,  "log2",  log2 },
+    { F_EXP,   "exp",   exp },
+    { F_SQRT,  "sqrt",  sqrt },
+    { F_GAMMA,    "gammafun", gammafun},
+    { F_LNGAMMA,  "lngamma",  lngamma },
+    { F_DIGAMMA,  "digamma",  digamma },
+    { F_INVMILLS, "invmills", invmills },
+    { F_ROUND,    "round",    gretl_round },
+    { F_LOGISTIC, "logistic", logistic_cdf },
+    { F_ABS,   "fabs",  fabs },
+    { F_CNORM, "cnorm", normal_cdf },
+    { F_DNORM, "dnorm", normal_pdf },
+    { F_QNORM, "qnorm", normal_cdf_inverse},
+    { 0, NULL, NULL }
+};
+
 struct str_table funcs[] = {
-    { F_ABS,      "abs" },
-    { F_SIN,      "sin" },
-    { F_COS,      "cos" },
-    { F_TAN,      "tan" },
-    { F_ASIN,     "asin" },
-    { F_ACOS,     "acos" },
-    { F_ATAN,     "atan" },
     { F_ATAN2,    "atan2" },
-    { F_SINH,     "sinh" },
-    { F_COSH,     "cosh" },
-    { F_TANH,     "tanh" },
-    { F_ASINH,    "asinh" },
-    { F_ACOSH,    "acosh" },
-    { F_ATANH,    "atanh" },
-    { F_LOG,      "log" },
-    { F_LOG10,    "log10" },
-    { F_LOG2,     "log2" },
-    { F_EXP,      "exp" },
-    { F_SQRT,     "sqrt" },
     { F_DIFF,     "diff" },
     { F_LDIFF,    "ldiff" },
     { F_SDIFF,    "sdiff" },
@@ -201,9 +226,6 @@ struct str_table funcs[] = {
     { F_HFLAG,    "hflags" },
     { F_DROPCOLL, "dropcoll" },
     { F_TOINT,    "int" },
-    { F_ROUND,    "round" },
-    { F_CEIL,     "ceil" },
-    { F_FLOOR,    "floor" },
     { F_SORT,     "sort" },
     { F_DSORT,    "dsort" },
     { F_SORTBY,   "sortby" },
@@ -235,12 +257,6 @@ struct str_table funcs[] = {
     { F_SKEWNESS, "skewness" },
     { F_KURTOSIS, "kurtosis" },
     { F_SST,      "sst" },
-    { F_CNORM,    "cnorm" },
-    { F_DNORM,    "dnorm" },
-    { F_QNORM,    "qnorm" },
-    { F_GAMMA,    "gammafun" },
-    { F_LNGAMMA,  "lngamma" },
-    { F_DIGAMMA,  "digamma" },
     { F_RESAMPLE, "resample" },
     { F_PNOBS,    "pnobs" },     /* per-unit nobs in panels */
     { F_PMIN,     "pmin" },      /* panel min */
@@ -408,7 +424,6 @@ struct str_table funcs[] = {
     { F_PERGM,    "pergm" },
     { F_IRR,      "irr" },
     { F_NPV,      "npv" },
-    { F_LOGISTIC, "logistic" },
     { F_WEEKDAY,  "weekday" },
     { F_KDENSITY, "kdensity" },
     { F_MONTHLEN, "monthlen" },
@@ -583,14 +598,17 @@ static GHashTable *gretl_function_hash_init (void)
 
     ht = g_hash_table_new(g_str_hash, g_str_equal);
 
+    for (i=0; ptrfuncs[i].str != NULL; i++) {
+	g_hash_table_insert(ht, (gpointer) ptrfuncs[i].str, &ptrfuncs[i]);
+    }
+
     for (i=0; funcs[i].str != NULL; i++) {
-	g_hash_table_insert(ht, (gpointer) funcs[i].str,
-			    GINT_TO_POINTER(funcs[i].id));
+	g_hash_table_insert(ht, (gpointer) funcs[i].str, &funcs[i]);
     }
 
     for (i=0; hidden_funcs[i].str != NULL; i++) {
 	g_hash_table_insert(ht, (gpointer) hidden_funcs[i].str,
-			    GINT_TO_POINTER(hidden_funcs[i].id));
+			    &hidden_funcs[i]);
     }
 
     return ht;
@@ -660,6 +678,11 @@ static ufunc *get_function_override (const char *sf,
     return uf;
 }
 
+/* Attention: this function is called from function_loopkup()
+   below, and in that context @p will be NULL -- so don't
+   dereference @p without checking it for nullity first!
+*/
+
 static int real_function_lookup (const char *s, int aliases,
 				 parser *p)
 {
@@ -681,7 +704,14 @@ static int real_function_lookup (const char *s, int aliases,
 
     fnp = g_hash_table_lookup(fht, s);
     if (fnp != NULL) {
-	return GPOINTER_TO_INT(fnp);
+	struct str_table *st = (struct str_table *) fnp;
+
+	if (p != NULL && st->id > 0 && st->id <= F_LOGISTIC) {
+	    struct str_table_ex *sx = (struct str_table_ex *) fnp;
+
+	    p->data = sx->ptr;
+	}
+	return st->id;
     }
 
     if (aliases) {
@@ -756,6 +786,12 @@ static int function_lookup_with_alias (const char *s,
 static const char *funname (int t)
 {
     int i;
+
+    for (i=0; ptrfuncs[i].id != 0; i++) {
+	if (t == ptrfuncs[i].id) {
+	    return ptrfuncs[i].str;
+	}
+    }
 
     for (i=0; funcs[i].id != 0; i++) {
 	if (t == funcs[i].id) {
@@ -1430,6 +1466,7 @@ static void look_up_word (const char *s, parser *p)
 
     /* initialize */
     p->sym = 0;
+    p->data = NULL;
 
     if (lpnext) {
 	/* identifier is immediately followed by left paren:

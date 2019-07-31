@@ -9083,6 +9083,27 @@ static NODE *pergm_node (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static void *get_complex_counterpart (void *func)
+{
+    if (func == acos) return cacos;
+    if (func == asin) return casin;
+    if (func == atan) return catan;
+    if (func == cos) return ccos;
+    if (func == sin) return csin;
+    if (func == tan) return ctan;
+    if (func == acosh) return cacosh;
+    if (func == asinh) return casinh;
+    if (func == atanh) return catanh;
+    if (func == cosh) return ccosh;
+    if (func == sinh) return csinh;
+    if (func == tanh) return ctanh;
+    if (func == exp)  return cexp;
+    if (func == log)  return clog;
+    if (func == sqrt) return csqrt;
+
+    return NULL;
+}
+
 /* application of scalar function to each element of matrix */
 
 static NODE *apply_matrix_func (NODE *t, NODE *f, parser *p)
@@ -9101,36 +9122,24 @@ static NODE *apply_matrix_func (NODE *t, NODE *f, parser *p)
     }
 
     if (m->is_complex) {
-	double complex (*cfunc) (double complex) = NULL;
-	double (*dfunc) (double complex) = NULL;
-
 	if (f->t == F_ABS) {
-	    dfunc = cabs;
+	    apply_cmatrix_dfunc(ret->v.m, m, cabs);
 	} else if (f->t == HF_CARG) {
-	    dfunc = carg;
+	    apply_cmatrix_dfunc(ret->v.m, m, carg);
+	} else if (f->t == HF_CONJ) {
+	    apply_cmatrix_cfunc(ret->v.m, m, conj);
 	} else {
-	    const char *s = getsymb(f->t);
-	    char symbol[8];
+	    double complex (*cfunc) (double complex) = NULL;
 
-	    if (strlen(s) > 6) {
-		*symbol = '\0';
-	    } else if (*s == '_') {
-		strcpy(symbol, s + 1);
+	    if (f->v.ptr != NULL) {
+		cfunc = get_complex_counterpart(f->v.ptr);
+	    }
+	    if (cfunc == NULL) {
+		/* gatekeeper for complex */
+		p->err = function_real_only(f->t);
 	    } else {
-		/* revise after unhiding complex funcs! */
-		sprintf(symbol, "c%s", s);
+		p->err = apply_cmatrix_cfunc(ret->v.m, m, cfunc);
 	    }
-	    if (*symbol != '\0') {
-		cfunc = get_c_function_pointer(symbol);
-	    }
-	}
-
-	if (dfunc == NULL && cfunc == NULL) {
-	    /* gatekeeper for complex */
-	    p->err = function_real_only(f->t);
-	} else {
-	    p->err = apply_cmatrix_func(ret->v.m, m,
-					cfunc, dfunc);
 	}
     } else {
 	double (*dfunc) (double) = f->v.ptr;

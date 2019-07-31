@@ -1142,9 +1142,8 @@ int cmatrix_add_scalar (gretl_matrix *targ,
     return 0;
 }
 
-int apply_cmatrix_func (gretl_matrix *targ,
+int apply_cmatrix_dfunc (gretl_matrix *targ,
 			const gretl_matrix *src,
-			double complex (*cfunc) (double complex),
 			double (*dfunc) (double complex))
 {
     double complex *csrc = (double complex *) src->val;
@@ -1157,13 +1156,30 @@ int apply_cmatrix_func (gretl_matrix *targ,
 	for (i=0; i<n; i++) {
 	    targ->val[i] = dfunc(csrc[i]);
 	}
-    } else {
-	double complex *ctarg = (double complex *) targ->val;
+    }
 
-	targ->is_complex = 1;
-	for (i=0; i<n; i++) {
-	    ctarg[i] = cfunc(csrc[i]);
-	}
+    if (errno) {
+	gretl_errmsg_set_from_errno(NULL, errno);
+	err = E_DATA;
+    }
+
+    return err;
+}
+
+int apply_cmatrix_cfunc (gretl_matrix *targ,
+			const gretl_matrix *src,
+			double complex (*cfunc) (double complex))
+{
+    double complex *csrc = (double complex *) src->val;
+    double complex *ctarg = (double complex *) targ->val;
+    int n = src->cols * src->rows / 2;
+    int i, err = 0;
+
+    errno = 0;
+
+    targ->is_complex = 1;
+    for (i=0; i<n; i++) {
+	ctarg[i] = cfunc(csrc[i]);
     }
 
     if (errno) {

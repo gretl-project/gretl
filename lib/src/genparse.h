@@ -740,9 +740,6 @@ int x_sectional_weighted_stat (double *x, const int *list,
 double dvar_get_scalar (int i, const DATASET *dset);
 int *node_get_list (NODE *n, parser *p);
 
-/* in gensyntax.c, used only internally */
-void *get_c_function_pointer (const char *name);
-
 /* helper functions for manual, gretl.lang file */
 int gen_func_count (void);
 const char *gen_func_name (int i);

@@ -24,12 +24,6 @@
 #include "gretl_string_table.h"
 #include "genr_optim.h"
 
-#ifndef G_OS_WIN32
-# include <dlfcn.h>
-#else
-# include "gretl_win32.h"
-#endif
-
 #if GENDEBUG
 # define SDEBUG GENDEBUG
 # define MDEBUG GENDEBUG
@@ -243,46 +237,6 @@ static int push_bn_node (NODE *t, NODE *n)
 #endif
 
     return 0;
-}
-
-/* called from geneval.c to get a complex C function */
-
-void *get_c_function_pointer (const char *name)
-{
-    return dlsym(RTLD_DEFAULT, name);
-}
-
-/* For faster execution of functions as applied to
-   C arrays (series or matrice): store the function
-   pointer on the NODE. We do this only for functions
-   that take a single double argument and return a
-   double value.
-*/
-
-static void maybe_attach_f1_pointer (NODE *n)
-{
-    if (n->t <= F_INVMILLS) {
-	/* same functions names in hansl and C */
-	n->v.ptr = dlsym(RTLD_DEFAULT, getsymb(n->t));
-#if 0
-	fprintf(stderr, "%s: got %p\n", getsymb(n->t), n->v.ptr);
-#endif
-    } else if (n->t <= F_LOGISTIC) {
-	/* name translation required */
-	if (n->t == F_ABS) {
-	    n->v.ptr = fabs;
-	} else if (n->t == F_ROUND) {
-	    n->v.ptr = gretl_round;
-	} else if (n->t == F_CNORM) {
-	    n->v.ptr = normal_cdf;
-	} else if (n->t == F_DNORM) {
-	    n->v.ptr = normal_pdf;
-	} else if (n->t == F_QNORM) {
-	    n->v.ptr = normal_cdf_inverse;
-	} else if (n->t == F_LOGISTIC) {
-	    n->v.ptr = logistic_cdf;
-	}
-    }
 }
 
 static void expected_symbol_error (int c, parser *p)
@@ -1383,9 +1337,7 @@ static NODE *powterm (parser *p, NODE *l)
     } else if (func1_symb(sym)) {
 	t = newb1(sym, NULL);
 	if (t != NULL) {
-#if 1
-	    maybe_attach_f1_pointer(t);
-#endif
+	    t->v.ptr = p->data; /* attach function pointer, if available */
 	    lex(p);
 	    get_args(t, p, sym, 1, opt, &next);
 	}
