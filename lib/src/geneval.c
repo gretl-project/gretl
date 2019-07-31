@@ -224,6 +224,9 @@ static const char *typestr (int t)
 static void free_mspec (matrix_subspec *spec, parser *p)
 {
     if (spec != NULL) {
+	if (spec->free_lmat) {
+	    gretl_matrix_free(spec->lsel.m);
+	}
 	free(spec->rslice);
 	free(spec->cslice);
 	free(spec);
@@ -244,6 +247,8 @@ static void clear_mspec (matrix_subspec *spec, parser *p)
 	free(spec->cslice);
 	spec->cslice = NULL;
     }
+
+    /* FIXME what about free_lmat? */
 }
 
 #if EDEBUG || LHDEBUG

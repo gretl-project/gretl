@@ -460,6 +460,50 @@ static const char *snames[] = {
 
 #endif
 
+#if CIDX_TEST > 1
+
+static int convert_lsel_matrix (matrix_subspec *mspec)
+{
+    gretl_matrix *m8, *m = mspec->lsel.m;
+    int i, mi, mj, j = 0;
+
+    m8 = gretl_matrix_alloc(1, 2 * m->cols);
+    if (m8 == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<m->cols; i++) {
+	mi = (int) m->val[i];
+	if (mi < 0) {
+	    mj = 2*(-mi-1) + 1;
+	    m8->val[j++] = -mj;
+	    m8->val[j++] = -mj - 1;
+	} else {
+	    mj = 2*(mi-1) + 1;
+	    m8->val[j++] = mj;
+	    m8->val[j++] = mj + 1;
+	}
+    }
+
+    if (mspec->free_lmat) {
+	/* By default this selection matrix does not "belong"
+	   to @mspec: it's a pointer to elsewhere, and must
+	   not be freed here or on destruction of @mspec.
+	*/
+	gretl_matrix_free(mspec->lsel.m);
+    }
+    /* But here we're replacing the original selection matrix
+       with one that does belong to @mspec, and we need to
+       flag that fact.
+    */
+    mspec->lsel.m = m8;
+    mspec->free_lmat = 1;
+
+    return 0;
+}
+
+#endif /* CIDX_TEST */
+
 #if CIDX_TEST
 
 static int mspec_convert (matrix_subspec *mspec)
@@ -495,17 +539,29 @@ static int mspec_convert (matrix_subspec *mspec)
 	mspec->lsel.range[1] = i18;
 # endif
     } else if (mspec->ltype == SEL_MATRIX) {
-	gretl_matrix *m = gretl_matrix_copy(mspec->lsel.m);
-	int i, mi, mj08, mj18, j = 1;
-
 	gretl_matrix_print(mspec->lsel.m, "original lsel matrix");
-	for (i=0; i<m->cols; i++) {
-	    mi = (int) m->val[i];
-	    mj08 = 2*(mi-1) + 1;
-	    fprintf(stderr, "  revised m[%d] = %d\n", j++, mj08);
-	    mj18 = mj08 + 1;
-	    fprintf(stderr, "  revised m[%d] = %d\n", j++, mj18);
-	}
+# if CIDX_TEST > 1
+	convert_lsel_matrix(mspec);
+# endif
+    } else if (mspec->ltype == SEL_EXCL) {
+	/* exclusion of a single row must be extended to two,
+	   in matrix form */
+	gretl_matrix *m;
+	int i0 = mspec->lsel.range[0];
+	int i8 = 2*(-i0-1) + 1;
+
+	m = gretl_matrix_alloc(1, 2);
+	m->val[0] = -i8;
+	m->val[1] = -i8 - 1;
+	fprintf(stderr, "    original selection %d\n", i0);
+	gretl_matrix_print(m, "revised lsel matrix");
+# if CIDX_TEST > 1
+	mspec->ltype = SEL_MATRIX;
+	mspec->lsel.m = m;
+	mspec->free_lmat = 1;
+# else
+	gretl_matrix_free(m);
+# endif
     }
     fputc('\n', stderr);
 }
@@ -1021,8 +1077,13 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
     }
 
     if (spec->ltype == SEL_DIAG) {
-	S = gretl_matrix_get_diagonal(M, err);
+	if (M->is_complex) {
+	    return gretl_cmatrix_diag(M, err);
+	} else {
+	    return gretl_matrix_get_diagonal(M, err);
+	}
     } else if (spec->ltype == SEL_CONTIG) {
+	/* note: the complex flag is handled here */
 	return  matrix_get_chunk(M, spec, err);
     } else if (spec->ltype == SEL_ELEMENT) {
 	int i = mspec_get_element(spec);

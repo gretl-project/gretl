@@ -44,6 +44,7 @@ union msel {
 };
 
 struct matrix_subspec_ {
+    int free_lmat;
     SelType ltype, rtype;
     union msel lsel, rsel;
     int *rslice;
