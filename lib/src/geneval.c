@@ -4757,7 +4757,7 @@ static void print_mspec (matrix_subspec *mspec)
 #endif /* debugging */
 
 static int set_sel_vector (matrix_subspec *spec, int i,
-			   const gretl_matrix *m)
+			   gretl_matrix *m)
 {
     if (gretl_vector_get_length(m) > 0) {
 	if (i == 0) {
@@ -4767,6 +4767,7 @@ static int set_sel_vector (matrix_subspec *spec, int i,
 	    spec->rsel.m = m;
 	    spec->rtype = SEL_MATRIX;
 	}
+	return 0;
     } else {
 	/* the selection matrix must be a vector */
 	return E_TYPES;
