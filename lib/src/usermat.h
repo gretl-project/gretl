@@ -23,17 +23,22 @@
 #define MSEL_MAX -999
 
 typedef enum {
-      SEL_NULL,
-      SEL_RANGE,
-      SEL_ELEMENT,
-      SEL_MATRIX,
-      SEL_DIAG,
-      SEL_ALL,
-      SEL_CONTIG,
-      SEL_EXCL,
-      SEL_SINGLE,
-      SEL_STR
+    SEL_NULL,    /* nothing supplied */
+    SEL_RANGE,   /* integer range p:q */
+    SEL_ELEMENT, /* derived: selection is a single element */
+    SEL_MATRIX,  /* selection matrix provided */
+    SEL_DIAG,    /* using the "diag" dummy constant */
+    SEL_ALL,     /* comma-separated blank */
+    SEL_CONTIG,  /* derived: selection is contiguous */
+    SEL_EXCL,    /* single exclusion (negative index) */
+    SEL_SINGLE,  /* degenerate range + null */
+    SEL_STR      /* for use with bundles only */
 } SelType;
+
+/* Note SEL_EXCL is flagged only in the case of a single negative
+   index. SEL_MATRIX can also do exclusion, if all the elements
+   of the vector are negative.
+*/
 
 typedef struct matrix_subspec_ matrix_subspec;
 
@@ -44,7 +49,7 @@ union msel {
 };
 
 struct matrix_subspec_ {
-    int free_lmat;
+    int owns_lmat;
     SelType ltype, rtype;
     union msel lsel, rsel;
     int *rslice;

@@ -224,7 +224,7 @@ static const char *typestr (int t)
 static void free_mspec (matrix_subspec *spec, parser *p)
 {
     if (spec != NULL) {
-	if (spec->free_lmat) {
+	if (spec->ltype == SEL_MATRIX && spec->owns_lmat) {
 	    gretl_matrix_free(spec->lsel.m);
 	}
 	free(spec->rslice);
@@ -235,20 +235,13 @@ static void free_mspec (matrix_subspec *spec, parser *p)
 
 static void clear_mspec (matrix_subspec *spec, parser *p)
 {
-    spec->lsel.range[0] = spec->lsel.range[1] = 0;
-    spec->rsel.range[0] = spec->rsel.range[1] = 0;
-
-    /* the slice elements may not be reusable as is */
-    if (spec->rslice != NULL) {
-	free(spec->rslice);
-	spec->rslice = NULL;
+    if (spec->ltype == SEL_MATRIX && spec->owns_lmat) {
+	gretl_matrix_free(spec->lsel.m);
     }
-    if (spec->cslice != NULL) {
-	free(spec->cslice);
-	spec->cslice = NULL;
-    }
+    free(spec->rslice);
+    free(spec->cslice);
 
-    /* FIXME what about free_lmat? */
+    memset(spec, 0, sizeof(*spec));
 }
 
 #if EDEBUG || LHDEBUG
@@ -795,10 +788,9 @@ static NODE *get_aux_node (parser *p, int t, int n, int flags)
     NODE *ret = p->aux;
 
 #if EDEBUG
-    fprintf(stderr, "get_aux_node: p=%p, t=%s, tmp=%d, starting=%d, "
-	    "p->aux=%p\n", (void *) p, getsymb(t),
-	    (flags & TMP_NODE)? 1 : 0, starting(p) ? 1 : 0,
-	    (void *) p->aux);
+    fprintf(stderr, "get_aux_node: t=%s, tmp=%d, starting=%d, "
+	    "p->aux=%p\n", getsymb(t), (flags & TMP_NODE)? 1 : 0,
+	    starting(p) ? 1 : 0, (void *) p->aux);
 #endif
 
     if (is_proxy_node(ret)) {
@@ -958,7 +950,7 @@ static NODE *list_pointer_node (parser *p)
 #define aux_ivec_node(p,n) get_aux_node(p,IVEC,n,TMP_NODE)
 #define aux_matrix_node(p) get_aux_node(p,MAT,0,TMP_NODE)
 #define matrix_pointer_node(p) get_aux_node(p,MAT,0,0)
-#define aux_mspec_node(p) get_aux_node(p,MSPEC,0,0)
+#define aux_mspec_node(p) get_aux_node(p,MSPEC,0,TMP_NODE) /* was 0 */
 #define aux_string_node(p) get_aux_node(p,STR,0,TMP_NODE)
 #define string_pointer_node(p) get_aux_node(p,STR,0,0)
 #define aux_bundle_node(p) get_aux_node(p,BUNDLE,0,TMP_NODE)
@@ -4764,6 +4756,23 @@ static void print_mspec (matrix_subspec *mspec)
 
 #endif /* debugging */
 
+static int set_sel_vector (matrix_subspec *spec, int i,
+			   const gretl_matrix *m)
+{
+    if (gretl_vector_get_length(m) > 0) {
+	if (i == 0) {
+	    spec->lsel.m = m;
+	    spec->ltype = SEL_MATRIX;
+	} else {
+	    spec->rsel.m = m;
+	    spec->rtype = SEL_MATRIX;
+	}
+    } else {
+	/* the selection matrix must be a vector */
+	return E_TYPES;
+    }
+}
+
 /* Compose a sub-matrix specification, from scalars and/or
    index matrices. FIXME: some of the work below ought to be
    redundant if we're on the second or subsequent iteration
@@ -4855,8 +4864,7 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
 	    spec->ltype = SEL_RANGE;
 	    mspec_set_row_index(spec, l->v.m->val[0]);
 	} else {
-	    spec->ltype = SEL_MATRIX;
-	    spec->lsel.m = l->v.m;
+	    p->err = set_sel_vector(spec, 0, l->v.m);
 	}
     } else if (l->t == EMPTY) {
 	spec->ltype = SEL_ALL;
@@ -4879,8 +4887,7 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
 	    spec->rtype = SEL_RANGE;
 	    mspec_set_col_index(spec, r->v.m->val[0]);
 	} else {
-	    spec->rtype = SEL_MATRIX;
-	    spec->rsel.m = r->v.m;
+	    p->err = set_sel_vector(spec, 1, r->v.m);
 	}
     } else if (r->t == EMPTY) {
 	spec->rtype = SEL_ALL;

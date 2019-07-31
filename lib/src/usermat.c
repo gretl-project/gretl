@@ -28,7 +28,13 @@
 
 #define MDEBUG 0
 #define CONTIG_DEBUG 0
-#define CIDX_TEST 0
+#define USE_CIDX 0 /* not just yet */
+#define CIDX_DEBUG 0
+
+/* USE_CIDX: set to interpret user-supplied row indices for
+   complex matrices as pertaining to 16-byte values, and so
+   convert them to 8-byte values as needed.
+*/
 
 #define mspec_get_offset(m) (m->lsel.range[0])
 #define mspec_get_n_elem(m) (m->lsel.range[1])
@@ -38,7 +44,7 @@
 
 #define mspec_set_element(m,i) (m->lsel.range[0] = i)
 
-#if CIDX_TEST
+#if USE_CIDX
 static int gretl_vector_real_length (const gretl_matrix *v)
 {
     if (v->is_complex) {
@@ -443,7 +449,7 @@ static int spec_check_dimensions (matrix_subspec *spec,
     return err;
 }
 
-#if CIDX_TEST || CONTIG_DEBUG
+#if CIDX_DEBUG || CONTIG_DEBUG
 
 static const char *snames[] = {
      "SEL_NULL",
@@ -460,14 +466,20 @@ static const char *snames[] = {
 
 #endif
 
-#if CIDX_TEST > 1
+#if USE_CIDX
+
+/* 16-byte to 8-byte conversion for selection matrix,
+   allowing for the possibility that the values are
+   negative (row exclusions).
+*/
 
 static int convert_lsel_matrix (matrix_subspec *mspec)
 {
     gretl_matrix *m8, *m = mspec->lsel.m;
+    int n = gretl_vector_get_length(m);
     int i, mi, mj, j = 0;
 
-    m8 = gretl_matrix_alloc(1, 2 * m->cols);
+    m8 = gretl_matrix_alloc(1, 2 * n);
     if (m8 == NULL) {
 	return E_ALLOC;
     }
@@ -475,56 +487,54 @@ static int convert_lsel_matrix (matrix_subspec *mspec)
     for (i=0; i<m->cols; i++) {
 	mi = (int) m->val[i];
 	if (mi < 0) {
+	    /* exclusion */
 	    mj = 2*(-mi-1) + 1;
 	    m8->val[j++] = -mj;
 	    m8->val[j++] = -mj - 1;
 	} else {
+	    /* positive selection */
 	    mj = 2*(mi-1) + 1;
 	    m8->val[j++] = mj;
 	    m8->val[j++] = mj + 1;
 	}
     }
 
-    if (mspec->free_lmat) {
-	/* By default this selection matrix does not "belong"
-	   to @mspec: it's a pointer to elsewhere, and must
-	   not be freed here or on destruction of @mspec.
-	*/
-	gretl_matrix_free(mspec->lsel.m);
-    }
-    /* But here we're replacing the original selection matrix
-       with one that does belong to @mspec, and we need to
-       flag that fact.
+    /* The original user-supplied selection matrix does not
+       "belong" to @mspec: it's a pointer to another "genr"
+       node, and so must not be freed here or on destruction
+       of @mspec. However, here we're replacing the original
+       selection matrix with one that does belong to @mspec,
+       and we need to flag that fact.
     */
     mspec->lsel.m = m8;
-    mspec->free_lmat = 1;
+    mspec->owns_lmat = 1;
 
     return 0;
 }
 
-#endif /* CIDX_TEST */
-
-#if CIDX_TEST
+/* Assuming that the row index values in @mspec, if any,
+   are expressed in 16-byte terms, convert to 8-byte.
+*/
 
 static int mspec_convert (matrix_subspec *mspec)
 {
+# if CIDX_DEBUG
     fprintf(stderr, "Convert mspec to 8-byte mode:\n");
-    fprintf(stderr, "  original ltype: %s\n", snames[mspec->ltype]);
-    if (mspec->ltype == SEL_ELEMENT) {
+    fprintf(stderr, "  original types (%s,%s)\n", snames[mspec->ltype],
+	    snames[mspec->rtype]);
+# endif
+    if (mspec->ltype == SEL_ELEMENT || mspec->ltype == SEL_SINGLE) {
 	int i0 = mspec->lsel.range[0];
 	int i08 = 2*(i0-1) + 1;
 	int i18 = i08 + 1;
 
-	fprintf(stderr, "    original element = %d\n", i0);
-	fprintf(stderr, "    converted to range[%d:%d]\n", i08, i18);
-	fprintf(stderr, "  rtype: %s -> %s\n", snames[mspec->rtype],
-		snames[SEL_SINGLE]);
-# if CIDX_TEST > 1
 	mspec->ltype = SEL_RANGE;
 	mspec->lsel.range[0] = i08;
 	mspec->lsel.range[1] = i18;
-	mspec->rtype = SEL_RANGE;
-# endif
+	if (mspec->rtype == SEL_ELEMENT) {
+	    /* it's not a single 8-byte element */
+	    mspec->rtype = SEL_RANGE;
+	}
     } else if (mspec->ltype == SEL_RANGE) {
 	int i0 = mspec->lsel.range[0];
 	int i1 = mspec->lsel.range[1];
@@ -532,20 +542,13 @@ static int mspec_convert (matrix_subspec *mspec)
 	int i18 = 2*(i1-1) + 1;
 
 	i18 += i18 % 2;
-	fprintf(stderr, "    original  row range[%d:%d]\n", i0, i1);
-	fprintf(stderr, "    converted row range[%d:%d]\n", i08, i18);
-# if CIDX_TEST > 1
 	mspec->lsel.range[0] = i08;
 	mspec->lsel.range[1] = i18;
-# endif
     } else if (mspec->ltype == SEL_MATRIX) {
-	gretl_matrix_print(mspec->lsel.m, "original lsel matrix");
-# if CIDX_TEST > 1
 	convert_lsel_matrix(mspec);
-# endif
     } else if (mspec->ltype == SEL_EXCL) {
 	/* exclusion of a single row must be extended to two,
-	   in matrix form */
+	   via use of a vector */
 	gretl_matrix *m;
 	int i0 = mspec->lsel.range[0];
 	int i8 = 2*(-i0-1) + 1;
@@ -553,20 +556,19 @@ static int mspec_convert (matrix_subspec *mspec)
 	m = gretl_matrix_alloc(1, 2);
 	m->val[0] = -i8;
 	m->val[1] = -i8 - 1;
-	fprintf(stderr, "    original selection %d\n", i0);
-	gretl_matrix_print(m, "revised lsel matrix");
-# if CIDX_TEST > 1
 	mspec->ltype = SEL_MATRIX;
 	mspec->lsel.m = m;
-	mspec->free_lmat = 1;
-# else
-	gretl_matrix_free(m);
-# endif
+	mspec->owns_lmat = 1;
     }
-    fputc('\n', stderr);
+# if CIDX_DEBUG
+    fprintf(stderr, "  converted types (%s,%s)\n", snames[mspec->ltype],
+	    snames[mspec->rtype]);
+# endif
+
+    return 0;
 }
 
-#endif /* CIDX_TEST */
+#endif /* USE_CIDX */
 
 #if CONTIG_DEBUG
 
@@ -705,7 +707,7 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 #if CONTIG_DEBUG
     subspec_debug_print(spec, m);
 #endif
-#if CIDX_TEST
+#if USE_CIDX
     if (m->is_complex) {
 	mspec_convert(spec);
     }
@@ -719,7 +721,7 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 	return 0;
     }
 
-#if CIDX_TEST > 1
+#if USE_CIDX
     veclen = gretl_vector_real_length(m);
 #else
     veclen = gretl_vector_get_length(m);
@@ -1168,7 +1170,7 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 
  finish:
 
-#if CIDX_TEST > 1
+#if USE_CIDX
     if (S != NULL && M->is_complex) {
 	S->is_complex = 1;
     }
@@ -1241,7 +1243,7 @@ gretl_matrix *matrix_get_chunk (const gretl_matrix *M,
 	}
     }
 
-#if CIDX_TEST > 1
+#if USE_CIDX
     if (ret != NULL && M->is_complex) {
 	ret->is_complex = 1;
     }
