@@ -50,6 +50,12 @@ typedef enum {
     GRETL_MATRIX_SCALAR,
 } GretlMatrixStructure;
 
+enum {
+    Q_SUM,
+    Q_PROD,
+    Q_MEAN
+};
+
 typedef struct gretl_matrix_ gretl_vector;
 
 typedef struct matrix_info_ matrix_info;

@@ -4268,7 +4268,9 @@ static void fix_complex_flags (gretl_matrix *m1, gretl_matrix *m2)
 			     f==F_LOWER || f==F_DIAG || f==F_TRANSP ||	\
 			     f==F_VEC || f==F_VECH || f==F_UNVECH ||	\
 			     f==F_MREVERSE || f==F_FFT || f==F_FFTI ||	\
-			     f==HF_CMMULT || f==HF_CINV || f==HF_CTRAN)
+			     f==HF_CMMULT || f==HF_CINV || f==HF_CTRAN || \
+			     f==F_SUMC || f==F_SUMR || f==F_PRODC || \
+			     f==F_PRODR || f==F_MEANC || f==F_MEANR)
 
 static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 {
@@ -4336,22 +4338,22 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 
 	switch (f) {
 	case F_SUMC:
-	    ret->v.m = gretl_matrix_column_sum(m, &p->err);
+	    ret->v.m = gretl_matrix_vector_stat(m, Q_SUM, 0, &p->err);
 	    break;
 	case F_SUMR:
-	    ret->v.m = gretl_matrix_row_sum(m, &p->err);
+	    ret->v.m = gretl_matrix_vector_stat(m, Q_SUM, 1, &p->err);
 	    break;
 	case F_PRODC:
-	    ret->v.m = gretl_matrix_column_prod(m, &p->err);
+	    ret->v.m = gretl_matrix_vector_stat(m, Q_PROD, 0, &p->err);
 	    break;
 	case F_PRODR:
-	    ret->v.m = gretl_matrix_row_prod(m, &p->err);
+	    ret->v.m = gretl_matrix_vector_stat(m, Q_PROD, 1, &p->err);
 	    break;
 	case F_MEANC:
-	    ret->v.m = gretl_matrix_column_mean(m, &p->err);
+	    ret->v.m = gretl_matrix_vector_stat(m, Q_MEAN, 0, &p->err);
 	    break;
 	case F_MEANR:
-	    ret->v.m = gretl_matrix_row_mean(m, &p->err);
+	    ret->v.m = gretl_matrix_vector_stat(m, Q_MEAN, 1, &p->err);
 	    break;
 	case F_SD:
 	    ret->v.m = gretl_matrix_column_sd(m, &p->err);

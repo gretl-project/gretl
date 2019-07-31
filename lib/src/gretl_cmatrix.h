@@ -106,6 +106,10 @@ gretl_matrix *gretl_cmatrix_dot_pow (const gretl_matrix *A,
 				     const gretl_matrix *P,
 				     int *err);
 
+gretl_matrix *gretl_cmatrix_vector_stat (const gretl_matrix *m,
+					 int op, int rowwise,
+					 int *err);
+
 int complex_matrix_print (const gretl_matrix *A,
 			  const char *name,
 			  PRN *prn);

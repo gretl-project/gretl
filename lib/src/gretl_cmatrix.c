@@ -1550,3 +1550,77 @@ gretl_matrix *gretl_cmatrix_dot_pow (const gretl_matrix *A,
 
     return ret;
 }
+
+gretl_matrix *gretl_cmatrix_vector_stat (const gretl_matrix *m,
+					 int op, int rowwise,
+					 int *err)
+{
+    double complex *rz, *mz;
+    double complex z;
+    gretl_matrix *ret;
+    int r, c, i, j;
+    int mr, rr;
+
+    if (gretl_is_null_matrix(m)) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    /* note: 8-byte rows */
+    r = rowwise ? m->rows : 2;
+    c = rowwise ? 1 : m->cols;
+
+    ret = gretl_matrix_alloc(r, c);
+    if (ret == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    ret->is_complex = 1;
+
+    mz = (double complex *) m->val;
+    rz = (double complex *) ret->val;
+
+    mr = m->rows / 2;
+    rr = r / 2;
+
+    if (rowwise) {
+	/* by rows */
+	int jmin = op == Q_PROD ? 1 : 0;
+
+	for (i=0; i<mr; i++) {
+	    z = op == Q_PROD ? mz[0] : 0;
+	    for (j=jmin; j<m->cols; j++) {
+		if (op == Q_PROD) {
+		    z *= gretl_cmatrix_get(mz, mr, i, j);
+		} else {
+		    z += gretl_cmatrix_get(mz, mr, i, j);
+		}
+	    }
+	    if (op == Q_MEAN) {
+		z /= m->cols;
+	    }
+	    gretl_cmatrix_set(rz, rr, i, 0, z);
+	}
+    } else {
+	/* by columns */
+	int imin = op == Q_PROD ? 1 : 0;
+
+	for (j=0; j<m->cols; j++) {
+	    z = op == Q_PROD ? mz[0] : 0;
+	    for (i=imin; i<mr; i++) {
+		if (op == Q_PROD) {
+		    z *= gretl_cmatrix_get(mz, mr, i, j);
+		} else {
+		    z += gretl_cmatrix_get(mz, mr, i, j);
+		}
+	    }
+	    if (op == Q_MEAN) {
+		z /= mr;
+	    }
+	    gretl_cmatrix_set(rz, rr, 0, j, z);
+	}
+    }
+
+    return ret;
+}
