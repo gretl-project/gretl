@@ -10534,20 +10534,26 @@
 	  <flag>--local</flag>
 	  <effect>install from local file</effect>
         </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>see below</effect>
+        </option>
       </options>
      <examples>
         <example>pkg install armax</example>
 	<example>pkg install /path/to/myfile.gfn --local</example>
+	<example>pkg query ghosts</example>
 	<example>pkg unload armax</example>
      </examples>
     </usage>
 
     <description>
       <para>
-	This command provides a means of installing, unloading, or
-	deleting gretl function packages. The <repl>action</repl>
-	argument must be one of <lit>install</lit>, <lit>unload</lit>
-	or <lit>remove</lit>.
+	This command provides a means of installing, unloading,
+	querying or deleting gretl function packages. The
+	<repl>action</repl> argument must be one of
+	<lit>install</lit>, <lit>query</lit>, <lit>unload</lit> or
+	<lit>remove</lit>.
       </para>
       <para>
 	<lit>install</lit>: In the most basic form, with no option
@@ -10565,6 +10571,14 @@
 	is to copy the file into place (<lit>gfn</lit>), or unzip it
 	into place (<lit>zip</lit>), <quote>into place</quote> meaning
 	where the <cmdref targ="include"/> command will find it.
+      </para>
+      <para>
+	<lit>query</lit>: The default effect is to print basic
+	information about the specified package (author, version,
+	etc.). But if the <opt>quiet</opt> option is appended nothing
+	is printed; the package information is instead stored in the
+	form of a gretl bundle, which can be accessed via <fncref
+	targ="$result"/>.
       </para>
       <para>
 	<lit>unload</lit>: <repl>pkgname</repl> should be given in

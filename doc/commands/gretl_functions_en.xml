@@ -717,9 +717,10 @@
 	  Provides stored information following certain commands that
 	  do not have specific accessors. The commands in question
 	  include <cmdref targ="corr"/>, <cmdref targ="freq"/>,
-	  <cmdref targ="summary"/> and <cmdref targ="xtab"/> (in which
-	  cases the result is a matrix) plus <cmdref targ="vif"/> (in
-	  which case the result is a bundle).
+	  <cmdref targ="summary"/>, <cmdref targ="xtab"/>, <cmdref
+	  targ="vif"/> and <cmdref targ="bkw"/> (in which cases the
+	  result is a matrix), plus <cmdref targ="pkg"/> (which
+	  optionally stores a bundle result).
 	</para>
       </description>
     </function>
