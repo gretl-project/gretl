@@ -185,6 +185,7 @@ struct str_table bvars[] = {
    to the relevant NODE */
 
 struct str_table_ex ptrfuncs[] = {
+    { F_ABS,   "abs",   fabs },
     { F_CEIL,  "ceil",  ceil },
     { F_FLOOR, "floor", floor },
     { F_SIN,   "sin",   sin },
@@ -210,7 +211,6 @@ struct str_table_ex ptrfuncs[] = {
     { F_INVMILLS, "invmills", invmills },
     { F_ROUND,    "round",    gretl_round },
     { F_LOGISTIC, "logistic", logistic_cdf },
-    { F_ABS,   "fabs",  fabs },
     { F_CNORM, "cnorm", normal_cdf },
     { F_DNORM, "dnorm", normal_pdf },
     { F_QNORM, "qnorm", normal_cdf_inverse},
