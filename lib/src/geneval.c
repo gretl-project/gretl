@@ -8266,6 +8266,8 @@ static void cast_to_series (NODE *n, int f, gretl_matrix **tmp,
 
     if (gretl_is_null_matrix(m)) {
 	p->err = E_DATA;
+    } else if (m->is_complex) {
+	node_type_error(f, 1, SERIES, n, p);
     } else if (len > 0 && len == p->dset->n) {
 	*tmp = m;
 	n->v.xvec = m->val;
@@ -11268,6 +11270,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    }
 	}
     } else if (f == F_SVD) {
+	/* note: the complex case is supported */
 	gretl_matrix *lm = node_get_matrix(l, p, 0, 1);
 	gretl_matrix *U = NULL;
 	gretl_matrix *V = NULL;

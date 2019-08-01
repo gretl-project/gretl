@@ -1768,7 +1768,11 @@ gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
     pU = (U != NULL)? &Utmp : NULL;
     pV = (V != NULL)? &Vtmp : NULL;
 
-    *err = gretl_matrix_SVD(m, pU, &S, pV);
+    if (m->is_complex) {
+	*err = gretl_cmatrix_SVD(m, pU, &S, pV, 1);
+    } else {
+	*err = gretl_matrix_SVD(m, pU, &S, pV);
+    }
 
     if (!*err && (Utmp != NULL || Vtmp != NULL)) {
 	int tall = m->rows - m->cols;

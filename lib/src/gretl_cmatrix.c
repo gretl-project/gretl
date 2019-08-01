@@ -604,6 +604,157 @@ gretl_matrix *gretl_zgetri (const gretl_matrix *A, int *err)
     return Ainv;
 }
 
+enum {
+    SVD_THIN,
+    SVD_FULL
+};
+
+/* SVD of a complex matrix via the LAPACK function zgesvd() */
+
+int gretl_cmatrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
+		       gretl_vector **ps, gretl_matrix **pvt,
+		       int smod)
+{
+    integer m, n, lda;
+    integer ldu = 1, ldvt = 1;
+    integer lwork = -1L;
+    double *rwork = NULL;
+    integer info;
+    gretl_matrix *a = NULL;
+    gretl_matrix *s = NULL;
+    gretl_matrix *u = NULL;
+    gretl_matrix *vt = NULL;
+    cmplx *az;
+    char jobu = 'N', jobvt = 'N';
+    cmplx zu, zvt;
+    cmplx *uval = &zu;
+    cmplx *vtval = &zvt;
+    cmplx *work = NULL;
+    int xsize, k, err = 0;
+
+    if (pu == NULL && ps == NULL && pvt == NULL) {
+	/* no-op */
+	return 0;
+    }
+
+    if (gretl_is_null_matrix(x)) {
+	return E_DATA;
+    }
+
+    lda = m = x->rows / 2;
+    n = x->cols;
+    xsize = lda * n;
+
+    if (smod == SVD_THIN && m < n) {
+	fprintf(stderr, "real_gretl_matrix_SVD: a is %d x %d, should be 'thin'\n",
+		a->rows, a->cols);
+	return E_NONCONF;
+    }
+
+    az = malloc(xsize * sizeof *az);
+    if (az == NULL) {
+	return E_ALLOC;
+    }
+    memcpy(az, x->val, xsize * sizeof *az);
+
+    k = (m < n)? m : n;
+
+    s = gretl_vector_alloc(k);
+    if (s == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    if (pu != NULL) {
+	ldu = m;
+	if (smod == SVD_FULL) {
+	    u = gretl_matrix_alloc(2*ldu, m);
+	} else {
+	    u = gretl_matrix_alloc(2*ldu, n);
+	}
+	if (u == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	} else {
+	    u->is_complex = 1;
+	    uval = (cmplx *) u->val;
+	    jobu = (smod == SVD_FULL)? 'A' : 'S';
+	}
+    }
+
+    if (pvt != NULL) {
+	ldvt = n;
+	vt = gretl_matrix_alloc(2*ldvt, n);
+	if (vt == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	} else {
+	    vt->is_complex = 1;
+	    vtval = (cmplx *) vt->val;
+	    jobvt = 'A';
+	}
+    }
+
+    work = malloc(sizeof *work);
+    rwork = malloc((5 * MIN(m,n)) * sizeof *rwork);
+    if (work == NULL || rwork == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* workspace query */
+    lwork = -1;
+    zgesvd_(&jobu, &jobvt, &m, &n, az, &lda, s->val, uval, &ldu,
+	    vtval, &ldvt, work, &lwork, rwork, &info);
+
+    if (info != 0 || work[0].r <= 0.0) {
+	fprintf(stderr, "zgesvd: workspace query failed\n");
+	err = E_DATA;
+	goto bailout;
+    }
+
+    lwork = (integer) work[0].r;
+    work = realloc(work, lwork * sizeof *work);
+    if (work == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* actual computation */
+    zgesvd_(&jobu, &jobvt, &m, &n, az, &lda, s->val, uval, &ldu,
+	    vtval, &ldvt, work, &lwork, rwork, &info);
+
+    if (info != 0) {
+	fprintf(stderr, "gretl_cmatrix_SVD: info = %d\n", (int) info);
+	err = E_DATA;
+	goto bailout;
+    }
+
+    if (ps != NULL) {
+	*ps = s;
+	s = NULL;
+    }
+    if (pu != NULL) {
+	*pu = u;
+	u = NULL;
+    }
+    if (pvt != NULL) {
+	*pvt = vt;
+	vt = NULL;
+    }
+
+ bailout:
+
+    free(az);
+    free(work);
+    free(rwork);
+    gretl_matrix_free(s);
+    gretl_matrix_free(u);
+    gretl_matrix_free(vt);
+
+    return err;
+}
+
 /* Complex FFT (or inverse) via fftw */
 
 gretl_matrix *gretl_complex_fft (const gretl_matrix *A,

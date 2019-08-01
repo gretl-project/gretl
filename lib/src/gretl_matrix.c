@@ -703,6 +703,7 @@ int gretl_matrix_replace_content (gretl_matrix *targ,
     } else {
 	gretl_matrix_destroy_info(targ);
 	free(targ->val);
+	targ->is_complex = donor->is_complex;
 	targ->rows = donor->rows;
 	targ->cols = donor->cols;
 	targ->val = donor->val;
@@ -9512,7 +9513,7 @@ enum {
 
 /**
  * gretl_matrix_SVD:
- * @a: matrix to decompose.
+ * @x: matrix to decompose.
  * @pu: location for matrix U, or NULL if not wanted.
  * @ps: location for vector of singular values, or NULL if not wanted.
  * @pvt: location for matrix V (transposed), or NULL if not wanted.
@@ -9524,7 +9525,7 @@ enum {
  */
 
 static int
-real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
+real_gretl_matrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
 		       gretl_vector **ps, gretl_matrix **pvt,
 		       int smod)
 {
@@ -9532,7 +9533,7 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
     integer ldu = 1, ldvt = 1;
     integer lwork = -1L;
     integer info;
-    gretl_matrix *b = NULL;
+    gretl_matrix *a = NULL;
     gretl_matrix *s = NULL;
     gretl_matrix *u = NULL;
     gretl_matrix *vt = NULL;
@@ -9547,21 +9548,21 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
 	return 0;
     }
 
-    if (gretl_is_null_matrix(a)) {
+    if (gretl_is_null_matrix(x)) {
 	return E_DATA;
     }
 
-    lda = m = a->rows;
-    n = a->cols;
+    lda = m = x->rows;
+    n = x->cols;
 
     if (smod == SVD_THIN && m < n) {
 	fprintf(stderr, "real_gretl_matrix_SVD: a is %d x %d, should be 'thin'\n",
-		a->rows, a->cols);
+		x->rows, x->cols);
 	return E_NONCONF;
     }
 
-    b = gretl_matrix_copy_tmp(a);
-    if (b == NULL) {
+    a = gretl_matrix_copy_tmp(x);
+    if (a == NULL) {
 	return E_ALLOC;
     }
 
@@ -9574,28 +9575,28 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
     }
 
     if (pu != NULL) {
+	ldu = m;
 	if (smod == SVD_FULL) {
-	    u = gretl_matrix_alloc(m, m);
+	    u = gretl_matrix_alloc(ldu, m);
 	} else {
-	    u = gretl_matrix_alloc(m, n);
+	    u = gretl_matrix_alloc(ldu, n);
 	}
 	if (u == NULL) {
 	    err = E_ALLOC;
 	    goto bailout;
 	} else {
-	    ldu = m;
 	    uval = u->val;
 	    jobu = (smod == SVD_FULL)? 'A' : 'S';
 	}
     }
 
     if (pvt != NULL) {
-	vt = gretl_matrix_alloc(n, n);
+	ldvt = n;
+	vt = gretl_matrix_alloc(ldvt, n);
 	if (vt == NULL) {
 	    err = E_ALLOC;
 	    goto bailout;
 	} else {
-	    ldvt = n;
 	    vtval = vt->val;
 	    jobvt = 'A';
 	}
@@ -9609,7 +9610,7 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
 
     /* workspace query */
     lwork = -1;
-    dgesvd_(&jobu, &jobvt, &m, &n, b->val, &lda, s->val, uval, &ldu,
+    dgesvd_(&jobu, &jobvt, &m, &n, a->val, &lda, s->val, uval, &ldu,
 	    vtval, &ldvt, work, &lwork, &info);
 
     if (info != 0 || work[0] <= 0.0) {
@@ -9626,7 +9627,7 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
     }
 
     /* actual computation */
-    dgesvd_(&jobu, &jobvt, &m, &n, b->val, &lda, s->val, uval, &ldu,
+    dgesvd_(&jobu, &jobvt, &m, &n, a->val, &lda, s->val, uval, &ldu,
 	    vtval, &ldvt, work, &lwork, &info);
 
     if (info != 0) {
@@ -9639,12 +9640,10 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
 	*ps = s;
 	s = NULL;
     }
-
     if (pu != NULL) {
 	*pu = u;
 	u = NULL;
     }
-
     if (pvt != NULL) {
 	*pvt = vt;
 	vt = NULL;
@@ -9653,7 +9652,7 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
  bailout:
 
     lapack_free(work);
-    gretl_matrix_free(b);
+    gretl_matrix_free(a);
     gretl_matrix_free(s);
     gretl_matrix_free(u);
     gretl_matrix_free(vt);

@@ -33,4 +33,9 @@ void zsyrk_ (const char *uplo, const char *trans, integer *n,
 	     integer *k, cmplx *alpha, cmplx *a, integer *lda,
 	     cmplx *beta, cmplx *c, integer *ldc);
 
+void zgesvd_ (const char *jobu, const char *jobvt,
+	      integer *m, integer *n, cmplx *a, integer *lda,
+	      double *s, cmplx *u, integer *ldu, cmplx *vt, integer *ldvt,
+	      cmplx *work, integer *lwork, double *rwork, integer *info);
+
 #endif /* CLAPACK_COMPLEX_H */
