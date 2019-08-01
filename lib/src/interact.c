@@ -1180,6 +1180,39 @@ static int do_pca (int *list, DATASET *dset,
     return err;
 }
 
+static void query_package (const char *pkgname,
+			   gretlopt opt, PRN *prn)
+{
+    char path[MAXLEN];
+    int err = 0;
+
+    if (has_suffix(pkgname, ".gfn")) {
+	err = get_full_filename(pkgname, path, OPT_I);
+    } else {
+	gchar *gfn = g_strdup_printf("%s.gfn", pkgname);
+
+	err = get_full_filename(gfn, path, OPT_I);
+	g_free(gfn);
+    }
+    if (opt & OPT_Q) {
+	gretl_bundle *b = gretl_bundle_new();
+
+	if (b != NULL && err) {
+	    gretl_bundle_set_int(b, "not_found", 1);
+	    set_last_result_data(b, GRETL_TYPE_BUNDLE);
+	} else if (b != NULL) {
+	    bundle_function_package_info(path, b);
+	    set_last_result_data(b, GRETL_TYPE_BUNDLE);
+	}
+    } else {
+	if (err) {
+	    pprintf(prn, "%s: not found\n\n", pkgname);
+	} else {
+	    print_function_package_info(path, 0, prn);
+	}
+    }
+}
+
 static int do_pkg_command (const char *action,
 			   const char *pkgname,
 			   gretlopt opt,
@@ -1195,23 +1228,9 @@ static int do_pkg_command (const char *action,
     } else if (!strcmp(action, "remove")) {
 	err = uninstall_function_package(pkgname, OPT_P, prn);
     } else if (!strcmp(action, "query")) {
-	char path[MAXLEN];
-
-	if (has_suffix(pkgname, ".gfn")) {
-	    err = get_full_filename(pkgname, path, OPT_I);
-	} else {
-	    gchar *gfn = g_strdup_printf("%s.gfn", pkgname);
-
-	    err = get_full_filename(gfn, path, OPT_I);
-	    g_free(gfn);
-	}
-	if (err) {
-	    pprintf(prn, "%s: not installed\n\n", pkgname);
-	    err = 0;
-	} else {
-	    print_function_package_info(path, 0, prn);
-	}
+	query_package(pkgname, opt, prn);
     } else {
+	gretl_errmsg_sprintf("pkg: unknown action '%s'", action);
 	err = E_PARSE;
     }
 

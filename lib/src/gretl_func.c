@@ -5225,6 +5225,46 @@ static void plain_print_package_info (const fnpkg *pkg,
     pputc(prn, '\n');
 }
 
+static void real_bundle_package_info (const fnpkg *pkg,
+				      const char *fname,
+				      gretl_bundle *b)
+{
+    int err = 0;
+
+    if (g_path_is_absolute(fname) && !strstr(fname, "dltmp.")) {
+	gretl_bundle_set_string(b, "file", fname);
+    }
+    if (pkg->name[0] == '\0' || pkg->author == NULL ||
+	pkg->minver <= 0 || pkg->descrip == NULL ||
+	pkg->version == NULL || pkg->date == NULL ||
+	pkg->help == NULL) {
+	gretl_bundle_set_int(b, "broken", 1);
+	return;
+    }
+
+    gretl_bundle_set_string(b, "name", pkg->name);
+    gretl_bundle_set_string(b, "author", pkg->author);
+    gretl_bundle_set_string(b, "version", pkg->version);
+    gretl_bundle_set_string(b, "date", pkg->date);
+    if (pkg->email != NULL && *pkg->email != '\0') {
+	gretl_bundle_set_string(b, "email", pkg->email);
+    }
+    gretl_bundle_set_int(b, "gretl_version", pkg->minver);
+    gretl_bundle_set_string(b, "description", gretl_strstrip(pkg->descrip));
+    gretl_bundle_set_int(b, "gretl_version", pkg->minver);
+    gretl_bundle_set_string(b, "data_requirement", data_needs_string(pkg->dreq));
+
+    if (pkg->n_depends > 0) {
+	gretl_array *D = gretl_array_from_strings(pkg->depends,
+						  pkg->n_depends,
+						  1, &err);
+	gretl_bundle_donate_data(b, "depends", D, GRETL_TYPE_ARRAY, 0);
+    }
+    if (pkg->provider != NULL) {
+	gretl_bundle_set_string(b, "provider", pkg->provider);
+    }
+}
+
 /* simple plain-text help output */
 
 static void print_package_help (const fnpkg *pkg,
@@ -5803,7 +5843,8 @@ const char *get_function_package_path_by_name (const char *pkgname)
 */
 
 static int real_print_gfn_data (const char *fname, PRN *prn,
-				int tabwidth, int task)
+				int tabwidth, int task,
+				gretl_bundle *b)
 {
     fnpkg *pkg;
     int free_pkg = 0;
@@ -5821,7 +5862,7 @@ static int real_print_gfn_data (const char *fname, PRN *prn,
 	int get_funcs = 1;
 
 	if (task == FUNCS_HELP || task == FUNCS_INFO ||
-	    task == FUNCS_SAMPLE) {
+	    task == FUNCS_SAMPLE || task == FUNCS_QUERY) {
 	    get_funcs = 0;
 	}
 	pkg = read_package_file(fname, get_funcs, &err);
@@ -5834,7 +5875,11 @@ static int real_print_gfn_data (const char *fname, PRN *prn,
 	} else if (task == FUNCS_INFO) {
 	    print_package_info(pkg, fname, prn);
 	} else if (task == FUNCS_QUERY) {
-	    plain_print_package_info(pkg, fname, prn);
+	    if (b != NULL) {
+		real_bundle_package_info(pkg, fname, b);
+	    } else {
+		plain_print_package_info(pkg, fname, prn);
+	    }
 	} else if (task == FUNCS_SAMPLE) {
 	    pputs(prn, pkg->sample);
 	} else {
@@ -5860,7 +5905,14 @@ int print_function_package_info (const char *fname, int gui_mode,
 {
     int mode = gui_mode ? FUNCS_INFO : FUNCS_QUERY;
 
-    return real_print_gfn_data(fname, prn, 0, mode);
+    return real_print_gfn_data(fname, prn, 0, mode, NULL);
+}
+
+/* callback used by "pkg" command with query action + --quiet */
+
+int bundle_function_package_info (const char *fname, gretl_bundle *b)
+{
+    return real_print_gfn_data(fname, NULL, 0, FUNCS_QUERY, b);
 }
 
 /* callback used in the GUI function package browser */
@@ -5868,7 +5920,7 @@ int print_function_package_info (const char *fname, int gui_mode,
 int print_function_package_code (const char *fname, int tabwidth,
 				 PRN *prn)
 {
-    return real_print_gfn_data(fname, prn, tabwidth, FUNCS_CODE);
+    return real_print_gfn_data(fname, prn, tabwidth, FUNCS_CODE, NULL);
 }
 
 /* callback used in the GUI function package browser */
@@ -5876,14 +5928,14 @@ int print_function_package_code (const char *fname, int tabwidth,
 int print_function_package_sample (const char *fname, int tabwidth,
 				   PRN *prn)
 {
-    return real_print_gfn_data(fname, prn, tabwidth, FUNCS_SAMPLE);
+    return real_print_gfn_data(fname, prn, tabwidth, FUNCS_SAMPLE, NULL);
 }
 
 /* callback used via command line */
 
 int print_function_package_help (const char *fname, PRN *prn)
 {
-    return real_print_gfn_data(fname, prn, 0, FUNCS_HELP);
+    return real_print_gfn_data(fname, prn, 0, FUNCS_HELP, NULL);
 }
 
 static void maybe_fix_broken_date (char **pdate)

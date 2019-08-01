@@ -65,6 +65,7 @@
 			 c == OLS ||		\
 			 c == OMIT ||		\
 			 c == OPEN ||		\
+			 c == PKG ||		\
 			 c == QLRTEST ||        \
 			 c == RENAME ||		\
 			 c == RESET ||		\

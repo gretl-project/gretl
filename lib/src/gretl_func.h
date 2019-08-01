@@ -269,6 +269,8 @@ int uninstall_function_package (const char *package, gretlopt opt,
 int print_function_package_info (const char *fname, int gui_mode,
 				 PRN *prn);
 
+int bundle_function_package_info (const char *fname, gretl_bundle *b);
+
 int print_function_package_code (const char *fname, int tabwidth,
 				 PRN *prn);
 
