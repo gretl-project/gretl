@@ -37,9 +37,6 @@ enum {
     RBASE
 };
 
-/* for dlsym() */
-#define RTLD_DEFAULT (void *) 0
-
 void set_windebug (int s);
 
 int ensure_locale_encoding (const char **ps1, gchar **ls1,
@@ -115,8 +112,6 @@ int win32_set_console_charset (const char *package);
 int windows_is_xp (void);
 
 int win32_get_core_count (void);
-
-void *dlsym (void *handle, const char *name);
 
 #endif /* WIN32 */
 

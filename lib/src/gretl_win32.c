@@ -2109,6 +2109,8 @@ int win32_get_core_count (void)
     return n_cores;
 }
 
+#if 0 /* dlsym() emulation not actually used at present */
+
 /* The following code is ripped from dlfcn-win32, under LGPL,
  * Copyright (c) 2007 Ramiro Polla
  * Copyright (c) 2015 Tiancheng "Timothy" Gu
@@ -2140,15 +2142,15 @@ static local_object first_object;
 /* These functions implement a double linked list for the local objects. */
 static local_object *local_search (HMODULE hModule)
 {
-    local_object *pobject;
+    local_object *pobj;
 
     if (hModule == NULL) {
         return NULL;
     }
 
-    for (pobject = &first_object; pobject; pobject = pobject->next) {
-        if (pobject->hModule == hModule) {
-            return pobject;
+    for (pobj = &first_object; pobj; pobj = pobj->next) {
+        if (pobj->hModule == hModule) {
+            return pobj;
 	}
     }
 
@@ -2207,20 +2209,19 @@ void *dlsym (void *handle, const char *name)
 
     if (symbol == NULL && hModule == handle) {
         HMODULE *modules;
-        DWORD cbNeeded;
-        DWORD dwSize;
+        DWORD sz, needed;
         size_t i;
 
         /* GetModuleHandle(NULL) only returns the current program file. So
          * if we want to get ALL loaded module including those in linked DLLs,
          * we have to use EnumProcessModules().
          */
-        if (MyEnumProcessModules(hCurrentProc, NULL, 0, &dwSize) != 0) {
-	    modules = malloc(dwSize);
+        if (MyEnumProcessModules(hCurrentProc, NULL, 0, &sz) != 0) {
+	    modules = malloc(sz);
             if (modules != NULL) {
-		if (MyEnumProcessModules(hCurrentProc, modules, dwSize, &cbNeeded) != 0 &&
-		    dwSize == cbNeeded) {
-                    for (i = 0; i < dwSize / sizeof(HMODULE); i++) {
+		if (MyEnumProcessModules(hCurrentProc, modules, sz, &needed) != 0 &&
+		    sz == needed) {
+                    for (i = 0; i < sz / sizeof(HMODULE); i++) {
 			if (local_search(modules[i])) {
                             continue;
 			}
@@ -2237,3 +2238,5 @@ void *dlsym (void *handle, const char *name)
 
     return (void *) symbol;
 }
+
+#endif /* currently unused */
