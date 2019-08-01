@@ -845,6 +845,10 @@ int gen_func_count (void)
 {
     int i, n = 0;
 
+    for (i=0; ptrfuncs[i].id != 0; i++) {
+	n++;
+    }
+
     for (i=0; funcs[i].id != 0; i++) {
 	n++;
     }
@@ -863,6 +867,13 @@ int gen_func_count (void)
 const char *gen_func_name (int i)
 {
     int j, seq = -1;
+
+    for (j=0; ptrfuncs[j].id != 0; j++) {
+	seq++;
+	if (seq == i) {
+	    return ptrfuncs[i].str;
+	}
+    }
 
     for (j=0; funcs[j].id != 0; j++) {
 	seq++;
@@ -931,6 +942,12 @@ const char *gretl_function_complete (const char *s)
 {
     size_t n = strlen(s);
     int i;
+
+    for (i=0; ptrfuncs[i].str != NULL; i++) {
+	if (!strncmp(s, ptrfuncs[i].str, n)) {
+	    return ptrfuncs[i].str;
+	}
+    }
 
     for (i=0; funcs[i].str != NULL; i++) {
 	if (!strncmp(s, funcs[i].str, n)) {
