@@ -6879,246 +6879,81 @@ gretl_matrix *gretl_matrix_complex_divide (const gretl_matrix *a,
     return gretl_matrix_complex_multdiv(a, b, 0, force_complex, err);
 }
 
-/* return sum of elements in row i */
-
-static double row_sum (const gretl_matrix *m, int i)
-{
-    double x = 0.0;
-    int j;
-
-    if (i < 0 || i >= m->rows) {
-	return NADBL;
-    }
-
-    for (j=0; j<m->cols; j++) {
-	x += gretl_matrix_get(m, i, j);
-    }
-
-    return x;
-}
-
-/* return sum of elements in column j */
-
-static double col_sum (const gretl_matrix *m, int j)
-{
-    double x = 0.0;
-    int i;
-
-    if (j < 0 || j >= m->cols) {
-	return NADBL;
-    }
-
-    for (i=0; i<m->rows; i++) {
-	x += gretl_matrix_get(m, i, j);
-    }
-
-    return x;
-}
-
-/* Returns a column vector containing the sums of the rows of @m,
-   or a row vector containing the column sums if @bycol != 0.
-*/
-
-static gretl_matrix *gretl_matrix_sum (const gretl_matrix *m,
-				       int bycol, int *err)
-{
-
-    gretl_matrix *s = NULL;
-    int dim, i;
-
-    if (gretl_is_null_matrix(m)) {
-	*err = E_DATA;
-	return NULL;
-    }
-
-    if (bycol) {
-	dim = m->cols;
-	s = gretl_matrix_alloc(1, dim);
-    } else {
-	dim = m->rows;
-	s = gretl_matrix_alloc(dim, 1);
-    }
-
-    if (s == NULL) {
-	*err = E_ALLOC;
-    } else {
-	for (i=0; i<dim; i++) {
-	    s->val[i] = (bycol)? col_sum(m, i) : row_sum(m, i);
-	}
-	maybe_preserve_names(s, m, bycol, 0);
-    }
-
-    return s;
-}
-
 /**
- * gretl_matrix_row_sum:
+ * gretl_rmatrix_vector_stat:
  * @m: source matrix.
- *
- * Returns: a column vector containing the sums of
- * the rows of @m, or NULL on failure.
- */
-
-gretl_matrix *gretl_matrix_row_sum (const gretl_matrix *m, int *err)
-{
-    return gretl_matrix_sum(m, 0, err);
-}
-
-/**
- * gretl_matrix_column_sum:
- * @m: source matrix.
- *
- * Returns: a row vector containing the sums of
- * the columns of @m, or NULL on failure.
- */
-
-gretl_matrix *gretl_matrix_column_sum (const gretl_matrix *m, int *err)
-{
-    return gretl_matrix_sum(m, 1, err);
-}
-
-/* return product of elements in row i */
-
-static double row_prod (const gretl_matrix *m, int i)
-{
-    double ret = 1.0;
-    int j;
-
-    if (i < 0 || i >= m->rows) {
-	return NADBL;
-    }
-
-    for (j=0; j<m->cols; j++) {
-	ret *= gretl_matrix_get(m, i, j);
-    }
-
-    return ret;
-}
-
-/* return product of elements in column j */
-
-static double col_prod (const gretl_matrix *m, int j)
-{
-    double ret = 1.0;
-    int i;
-
-    if (j < 0 || j >= m->cols) {
-	return NADBL;
-    }
-
-    for (i=0; i<m->rows; i++) {
-	ret *= gretl_matrix_get(m, i, j);
-    }
-
-    return ret;
-}
-
-/* return col vector containing row products, or row vector containing
-   column products */
-
-static gretl_matrix *gretl_matrix_prod (const gretl_matrix *m, int bycol,
-				       int *err)
-{
-
-    gretl_matrix *s = NULL;
-    int dim, i;
-
-    if (gretl_is_null_matrix(m)) {
-	*err = E_DATA;
-	return NULL;
-    }
-
-    if (bycol) {
-	dim = m->cols;
-	s = gretl_matrix_alloc(1, dim);
-    } else {
-	dim = m->rows;
-	s = gretl_matrix_alloc(dim, 1);
-    }
-
-    if (s == NULL) {
-	*err = E_ALLOC;
-    } else {
-	for (i=0; i<dim; i++) {
-	    s->val[i] = (bycol)? col_prod(m, i) : row_prod(m, i);
-	}
-    }
-
-    return s;
-}
-
-/**
- * gretl_matrix_row_prod:
- * @m: source matrix.
- *
- * Returns: a column vector containing the products of
- * the rows of @m, or NULL on failure.
- */
-
-gretl_matrix *gretl_matrix_row_prod (const gretl_matrix *m, int *err)
-{
-    return gretl_matrix_prod(m, 0, err);
-}
-
-/**
- * gretl_matrix_column_prod:
- * @m: source matrix.
- *
- * Returns: a row vector containing the products of
- * the columns of @m, or NULL on failure.
- */
-
-gretl_matrix *gretl_matrix_column_prod (const gretl_matrix *m, int *err)
-{
-    return gretl_matrix_prod(m, 1, err);
-}
-
-/**
- * gretl_matrix_row_mean:
- * @m: source matrix.
+ * @vs: the required statistic or quantity: sum, product or mean.
+ * @rowwise: if non-zero go by rows, otherwise go by columns.
  * @err: location to receive error code.
  *
- * Returns: a column vector containing the means of
- * the rows of @m, or NULL on failure.
+ * Returns: a row vector or column vector containing the sums,
+ * products or means of the columns or rows of @m. See also
+ * gretl_rmatrix_vector_stat() for the complex variant.
  */
 
-gretl_matrix *gretl_matrix_row_mean (const gretl_matrix *m, int *err)
+gretl_matrix *gretl_rmatrix_vector_stat (const gretl_matrix *m,
+					 GretlVecStat vs, int rowwise,
+					 int *err)
 {
-    gretl_matrix *s = gretl_matrix_sum(m, 0, err);
+    gretl_matrix *ret;
+    double x;
+    int r, c, i, j;
 
-    if (s != NULL) {
-	int i;
+    if (gretl_is_null_matrix(m)) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    r = rowwise ? m->rows : 1;
+    c = rowwise ? 1 : m->cols;
+
+    ret = gretl_matrix_alloc(r, c);
+    if (ret == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    if (rowwise) {
+	/* by rows */
+	int jmin = vs == V_PROD ? 1 : 0;
 
 	for (i=0; i<m->rows; i++) {
-	    s->val[i] /= m->cols;
+	    x = vs == V_PROD ? m->val[0] : 0;
+	    for (j=jmin; j<m->cols; j++) {
+		if (vs == V_PROD) {
+		    x *= gretl_matrix_get(m, i, j);
+		} else {
+		    x += gretl_matrix_get(m, i, j);
+		}
+	    }
+	    if (vs == V_MEAN) {
+		x /= m->cols;
+	    }
+	    gretl_matrix_set(ret, i, 0, x);
 	}
-    }
-
-    return s;
-}
-
-/**
- * gretl_matrix_column_mean:
- * @m: source matrix.
- * @err: location to receive error code.
- *
- * Returns: a row vector containing the means of
- * the columns of @m, or NULL on failure.
- */
-
-gretl_matrix *gretl_matrix_column_mean (const gretl_matrix *m, int *err)
-{
-    gretl_matrix *s = gretl_matrix_sum(m, 1, err);
-
-    if (s != NULL) {
-	int j;
+    } else {
+	/* by columns */
+	int imin = vs == V_PROD ? 1 : 0;
 
 	for (j=0; j<m->cols; j++) {
-	    s->val[j] /= m->rows;
+	    x = vs == V_PROD ? m->val[0] : 0;
+	    for (i=imin; i<m->rows; i++) {
+		if (vs == V_PROD) {
+		    x *= gretl_matrix_get(m, i, j);
+		} else {
+		    x += gretl_matrix_get(m, i, j);
+		}
+	    }
+	    if (vs == V_MEAN) {
+		x /= m->rows;
+	    }
+	    gretl_matrix_set(ret, 0, j, x);
 	}
     }
 
-    return s;
+    maybe_preserve_names(ret, m, !rowwise, 0);
+
+    return ret;
 }
 
 /**
@@ -7189,46 +7024,6 @@ gretl_matrix *gretl_matrix_column_sd (const gretl_matrix *m, int *err)
 }
 
 /**
- * gretl_matrix_row_i_mean:
- * @m: source matrix.
- * @row: zero-based index of row.
- *
- * Returns: the mean of the elements in row @row of @m,
- * or #NADBL if the row is out of bounds.
- */
-
-double gretl_matrix_row_i_mean (const gretl_matrix *m, int i)
-{
-    double x = row_sum(m, i);
-
-    if (!na(x)) {
-	x /= (double) m->cols;
-    }
-
-    return x;
-}
-
-/**
- * gretl_matrix_column_j_mean:
- * @m: source matrix.
- * @col: zero-based index of column.
- *
- * Returns: the mean of the elements in column @col of @m,
- * or #NADBL if the column is out of bounds.
- */
-
-double gretl_matrix_column_j_mean (const gretl_matrix *m, int j)
-{
-    double x = col_sum(m, j);
-
-    if (!na(x)) {
-	x /= (double) m->rows;
-    }
-
-    return x;
-}
-
-/**
  * gretl_matrix_demean_by_row:
  * @m: matrix on which to operate.
  *
@@ -7238,13 +7033,17 @@ double gretl_matrix_column_j_mean (const gretl_matrix *m, int j)
 
 void gretl_matrix_demean_by_row (gretl_matrix *m)
 {
-    double rowmean;
+    double rmean;
     int i, j;
 
     for (i=0; i<m->rows; i++) {
-	rowmean = gretl_matrix_row_i_mean(m, i);
+	rmean = 0;
 	for (j=0; j<m->cols; j++) {
-	    gretl_matrix_cum(m, i, j, -rowmean);
+	    rmean += gretl_matrix_get(m, i, j);
+	}
+	rmean /= m->cols;
+	for (j=0; j<m->cols; j++) {
+	    gretl_matrix_cum(m, i, j, -rmean);
 	}
     }
 }

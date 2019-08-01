@@ -1552,7 +1552,7 @@ gretl_matrix *gretl_cmatrix_dot_pow (const gretl_matrix *A,
 }
 
 gretl_matrix *gretl_cmatrix_vector_stat (const gretl_matrix *m,
-					 int op, int rowwise,
+					 GretlVecStat vs, int rowwise,
 					 int *err)
 {
     double complex *rz, *mz;
@@ -1586,36 +1586,36 @@ gretl_matrix *gretl_cmatrix_vector_stat (const gretl_matrix *m,
 
     if (rowwise) {
 	/* by rows */
-	int jmin = op == Q_PROD ? 1 : 0;
+	int jmin = vs == V_PROD ? 1 : 0;
 
 	for (i=0; i<mr; i++) {
-	    z = op == Q_PROD ? mz[0] : 0;
+	    z = vs == V_PROD ? mz[0] : 0;
 	    for (j=jmin; j<m->cols; j++) {
-		if (op == Q_PROD) {
+		if (vs == V_PROD) {
 		    z *= gretl_cmatrix_get(mz, mr, i, j);
 		} else {
 		    z += gretl_cmatrix_get(mz, mr, i, j);
 		}
 	    }
-	    if (op == Q_MEAN) {
+	    if (vs == V_MEAN) {
 		z /= m->cols;
 	    }
 	    gretl_cmatrix_set(rz, rr, i, 0, z);
 	}
     } else {
 	/* by columns */
-	int imin = op == Q_PROD ? 1 : 0;
+	int imin = vs == V_PROD ? 1 : 0;
 
 	for (j=0; j<m->cols; j++) {
-	    z = op == Q_PROD ? mz[0] : 0;
+	    z = vs == V_PROD ? mz[0] : 0;
 	    for (i=imin; i<mr; i++) {
-		if (op == Q_PROD) {
+		if (vs == V_PROD) {
 		    z *= gretl_cmatrix_get(mz, mr, i, j);
 		} else {
 		    z += gretl_cmatrix_get(mz, mr, i, j);
 		}
 	    }
-	    if (op == Q_MEAN) {
+	    if (vs == V_MEAN) {
 		z /= mr;
 	    }
 	    gretl_cmatrix_set(rz, rr, 0, j, z);

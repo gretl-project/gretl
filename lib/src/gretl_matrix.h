@@ -50,11 +50,11 @@ typedef enum {
     GRETL_MATRIX_SCALAR,
 } GretlMatrixStructure;
 
-enum {
-    Q_SUM,
-    Q_PROD,
-    Q_MEAN
-};
+typedef enum {
+    V_SUM,
+    V_PROD,
+    V_MEAN
+} GretlVecStat;
 
 typedef struct gretl_matrix_ gretl_vector;
 
@@ -470,26 +470,14 @@ double gretl_matrix_dot_product (const gretl_matrix *a, GretlMatrixMod amod,
 double gretl_vector_dot_product (const gretl_vector *a, const gretl_vector *b,
 				 int *err);
 
-gretl_matrix *gretl_matrix_row_sum (const gretl_matrix *m, int *err);
-
-gretl_matrix *gretl_matrix_column_sum (const gretl_matrix *m, int *err);
-
-gretl_matrix *gretl_matrix_row_prod (const gretl_matrix *m, int *err);
-
-gretl_matrix *gretl_matrix_column_prod (const gretl_matrix *m, int *err);
-
-gretl_matrix *gretl_matrix_row_mean (const gretl_matrix *m, int *err);
-
-gretl_matrix *gretl_matrix_column_mean (const gretl_matrix *m, int *err);
+gretl_matrix *gretl_rmatrix_vector_stat (const gretl_matrix *m,
+					 GretlVecStat vs, int rowwise,
+					 int *err);
 
 gretl_matrix *gretl_matrix_column_sd (const gretl_matrix *m, int *err);
 
 gretl_matrix *gretl_matrix_column_sd2 (const gretl_matrix *m,
 				       int df, int *err);
-
-double gretl_matrix_row_i_mean (const gretl_matrix *m, int row);
-
-double gretl_matrix_column_j_mean (const gretl_matrix *m, int col);
 
 void gretl_matrix_demean_by_row (gretl_matrix *m);
 

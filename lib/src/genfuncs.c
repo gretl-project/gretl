@@ -7554,36 +7554,15 @@ double clogit_fi (int T, int k, gretl_matrix *z,
     return ret;
 }
 
-/* Driver function: should be cleaned up somewhat if and when the
-   relevant functions in gretl_matrix.c are rationalized.
-*/
+/* simple driver function */
 
 gretl_matrix *gretl_matrix_vector_stat (const gretl_matrix *m,
-					int op, int rowwise,
+					GretlVecStat vs, int rowwise,
 					int *err)
 {
     if (m->is_complex) {
-	return gretl_cmatrix_vector_stat(m, op, rowwise, err);
-    } else if (op == Q_SUM) {
-	if (rowwise) {
-	    return gretl_matrix_row_sum(m, err);
-	} else {
-	    return gretl_matrix_column_sum(m, err);
-	}
-    } else if (op == Q_PROD) {
-	if (rowwise) {
-	    return gretl_matrix_row_prod(m, err);
-	} else {
-	    return gretl_matrix_column_prod(m, err);
-	}
-    } else if (op == Q_MEAN) {
-	if (rowwise) {
-	    return gretl_matrix_row_mean(m, err);
-	} else {
-	    return gretl_matrix_column_mean(m, err);
-	}
+	return gretl_cmatrix_vector_stat(m, vs, rowwise, err);
     } else {
-	*err = E_DATA;
-	return NULL;
+	return gretl_rmatrix_vector_stat(m, vs, rowwise, err);
     }
 }
