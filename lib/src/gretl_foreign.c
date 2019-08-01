@@ -1027,7 +1027,7 @@ static void write_octave_io_file (FILE *fp, const char *ddir)
 static void write_python_io_file (FILE *fp, const char *ddir)
 {
     fprintf(fp, "gretl_dotdir = \"%s\"\n\n", ddir);
-    fputs("  import os\n", fp);
+    fputs("import os\n", fp);
     /* export matrix for reading by gretl */
     fputs("def gretl_export(X, fname, autodot=1):\n", fp);
     fputs("  binwrite = 0\n", fp);
