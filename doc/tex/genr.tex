@@ -307,7 +307,7 @@ series e = normal()
 series x = 0
 x = 0.9*x(-1) + e
 # compute the periodogram
-scale = 2*pi*$nobs
+scale = 2*$pi*$nobs
 X = { x }
 F = fft(X)
 S = sumr(F.^2)
