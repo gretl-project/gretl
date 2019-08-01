@@ -181,8 +181,10 @@ struct str_table bvars[] = {
     { 0,         NULL }
 };
 
-/* functions for which we wish to attach function-pointers
-   to the relevant NODE */
+/* Functions for which we wish to attach function-pointers
+   to the relevant NODE. Nota bene: it's crucial that no
+   function in @ptrfuncs is also listed in @funcs below!
+*/
 
 struct str_table_ex ptrfuncs[] = {
     { F_ABS,   "abs",   fabs },
@@ -205,15 +207,15 @@ struct str_table_ex ptrfuncs[] = {
     { F_LOG2,  "log2",  log2 },
     { F_EXP,   "exp",   exp },
     { F_SQRT,  "sqrt",  sqrt },
-    { F_GAMMA,    "gammafun", gammafun},
+    { F_GAMMA,    "gammafun", gammafun },
     { F_LNGAMMA,  "lngamma",  lngamma },
     { F_DIGAMMA,  "digamma",  digamma },
     { F_INVMILLS, "invmills", invmills },
     { F_ROUND,    "round",    gretl_round },
-    { F_LOGISTIC, "logistic", logistic_cdf },
     { F_CNORM, "cnorm", normal_cdf },
     { F_DNORM, "dnorm", normal_pdf },
-    { F_QNORM, "qnorm", normal_cdf_inverse},
+    { F_QNORM, "qnorm", normal_cdf_inverse },
+    { F_LOGISTIC, "logistic", logistic_cdf },
     { 0, NULL, NULL }
 };
 
@@ -429,7 +431,6 @@ struct str_table funcs[] = {
     { F_MONTHLEN, "monthlen" },
     { F_EPOCHDAY, "epochday" },
     { F_SETNOTE,  "setnote" },
-    { F_INVMILLS, "invmills" },
     { F_POLYFIT,  "polyfit" },
     { F_CHOWLIN,  "chowlin" },
     { F_VARSIMUL, "varsimul" },
