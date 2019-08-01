@@ -522,7 +522,7 @@ static int convert_lsel_matrix (matrix_subspec *mspec)
    are expressed in 16-byte terms, convert to 8-byte.
 */
 
-static int mspec_convert (matrix_subspec *mspec)
+static int mspec_convert (matrix_subspec *mspec, const gretl_matrix *m)
 {
 # if CIDX_DEBUG
     fprintf(stderr, "Convert mspec to 8-byte mode:\n");
@@ -533,7 +533,13 @@ static int mspec_convert (matrix_subspec *mspec)
 		mspec->lsel.range[1]);
     }
 # endif
-    if (mspec->ltype == SEL_ELEMENT || mspec->ltype == SEL_SINGLE) {
+    if (mspec->rtype == SEL_NULL && m->rows == 2) {
+	/* complex row vector: transfer spec to column dimension */
+	mspec->rtype = mspec->ltype;
+	mspec->rsel = mspec->lsel;
+	memset(&mspec->lsel, 0, sizeof mspec->lsel);
+	mspec->ltype = SEL_ALL;
+    } else if (mspec->ltype == SEL_ELEMENT || mspec->ltype == SEL_SINGLE) {
 	int i0 = mspec->lsel.range[0];
 	int i08 = 2*(i0-1) + 1;
 	int i18 = i08 + 1;
@@ -723,7 +729,7 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 #endif
 #if USE_CIDX
     if (m->is_complex) {
-	mspec_convert(spec);
+	mspec_convert(spec, m);
     }
 #endif
 

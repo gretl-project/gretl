@@ -118,6 +118,8 @@ gretl_matrix *gretl_cmatrix_vector_stat (const gretl_matrix *m,
 
 int gretl_cmatrix_fill (gretl_matrix *m, double complex z);
 
+gretl_matrix *scalar_to_complex (double x, int *err);
+
 int complex_matrix_print (const gretl_matrix *A,
 			  const char *name,
 			  PRN *prn);

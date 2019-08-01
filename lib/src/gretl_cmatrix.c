@@ -1787,3 +1787,18 @@ int gretl_cmatrix_fill (gretl_matrix *m, double complex z)
 
     return 0;
 }
+
+gretl_matrix *scalar_to_complex (double x, int *err)
+{
+    gretl_matrix *m = gretl_matrix_alloc(2, 1);
+
+    if (m != NULL) {
+	m->val[0] = x;
+	m->val[1] = 0;
+	m->is_complex = 1;
+    } else {
+	*err = E_ALLOC;
+    }
+
+    return m;
+}
