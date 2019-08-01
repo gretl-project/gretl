@@ -13369,8 +13369,8 @@ gretl_matrix *gretl_matrix_bool_sel (const gretl_matrix *A,
 				     int rowsel, int *err)
 {
     gretl_matrix *ret = NULL;
+    int rdim, nonzero = 0;
     int ra, ca, rs, cs;
-    int nonzero = 0;
     int i, j, k, n;
     double x;
 
@@ -13380,7 +13380,9 @@ gretl_matrix *gretl_matrix_bool_sel (const gretl_matrix *A,
 	return gretl_null_matrix_new();
     }
 
-    ra = A->rows;
+    rdim = A->is_complex ? 2 : 1;
+
+    ra = A->rows / rdim;
     ca = A->cols;
     rs = sel->rows;
     cs = sel->cols;
@@ -13417,32 +13419,53 @@ gretl_matrix *gretl_matrix_bool_sel (const gretl_matrix *A,
 
     /* copy selected row/columns */
     if (rowsel) {
-	ret = gretl_matrix_alloc(nonzero, ca);
+	/* selection of rows */
+	ret = gretl_matrix_alloc(rdim * nonzero, ca);
 	if (ret == NULL) {
 	    goto bailout;
 	}
 	k = 0;
-	for (i=0; i<ra; i++) {
-	    if (gretl_vector_get(sel, i) != 0) {
-		for (j=0; j<ca; j++) {
-		    x = gretl_matrix_get(A, i, j);
-		    gretl_matrix_set(ret, k, j, x);
+	if (rdim == 2) {
+	    int ci;
+
+	    for (i=0, ci=0; i<ra; i++, ci+=2) {
+		if (gretl_vector_get(sel, i) != 0) {
+		    for (j=0; j<ca; j++) {
+			x = gretl_matrix_get(A, ci, j);
+			gretl_matrix_set(ret, k, j, x);
+			x = gretl_matrix_get(A, ci+1, j);
+			gretl_matrix_set(ret, k+1, j, x);
+		    }
+		    k += 2;
 		}
-		k++;
+	    }
+	} else {
+	    for (i=0; i<ra; i++) {
+		if (gretl_vector_get(sel, i) != 0) {
+		    for (j=0; j<ca; j++) {
+			x = gretl_matrix_get(A, i, j);
+			gretl_matrix_set(ret, k, j, x);
+		    }
+		    k++;
+		}
 	    }
 	}
     } else {
-	ret = gretl_matrix_alloc(ra, nonzero);
+	/* selection of columns */
+	ret = gretl_matrix_alloc(rdim * ra, nonzero);
 	if (ret == NULL) {
 	    goto bailout;
-	}
-	for (i=0; i<ra; i++) {
-	    k = 0;
+	} else {
+	    double *targ = ret->val;
+	    double *src = A->val;
+	    size_t colsize = rdim * ra * sizeof(double);
+
 	    for (j=0; j<ca; j++) {
 		if (gretl_vector_get(sel, j) != 0) {
-		    x = gretl_matrix_get(A, i, j);
-		    gretl_matrix_set(ret, i, k++, x);
+		    memcpy(targ, src, colsize);
+		    targ += ra * rdim;
 		}
+		src += ra * rdim;
 	    }
 	}
     }
@@ -13453,6 +13476,8 @@ gretl_matrix *gretl_matrix_bool_sel (const gretl_matrix *A,
 
     if (ret == NULL) {
 	*err = E_ALLOC;
+    } else {
+	ret->is_complex = A->is_complex;
     }
 
     return ret;

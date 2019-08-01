@@ -2787,7 +2787,8 @@ static gretl_matrix *calc_get_matrix (gretl_matrix **pM,
 
 #define m_op_does_complex(o) (o==B_ADD || o==B_SUB || o==B_MUL || \
 			      o==B_TRMUL || o==B_DOTMULT || o==B_DOTADD || \
-			      o==B_DOTSUB || o==B_DOTPOW)
+			      o==B_DOTSUB || o==B_DOTPOW || o==F_MCSEL || \
+			      o==F_MRSEL)
 
 /* return allocated result of binary operation performed on
    two matrices */
