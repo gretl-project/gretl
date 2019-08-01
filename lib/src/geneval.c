@@ -11000,7 +11000,12 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
     if (scalar_node(rhs)) {
 	/* single value (could be 1 x 1 matrix) on RHS */
 	y = (rhs->t == NUM)? rhs->v.xval: rhs->v.m->val[0];
-	rhs_scalar = 1;
+	if (m1->is_complex) {
+	    m2 = scalar_to_complex(y, &p->err);
+	    free_m2 = 1;
+	} else {
+	    rhs_scalar = 1;
+	}
     } else if (rhs->t == MAT) {
 	/* not a scalar: get the RHS matrix */
 	m2 = rhs->v.m;
