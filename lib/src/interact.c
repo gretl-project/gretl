@@ -1194,6 +1194,23 @@ static int do_pkg_command (const char *action,
 	err = uninstall_function_package(pkgname, OPT_NONE, prn);
     } else if (!strcmp(action, "remove")) {
 	err = uninstall_function_package(pkgname, OPT_P, prn);
+    } else if (!strcmp(action, "query")) {
+	char path[MAXLEN];
+
+	if (has_suffix(pkgname, ".gfn")) {
+	    err = get_full_filename(pkgname, path, OPT_I);
+	} else {
+	    gchar *gfn = g_strdup_printf("%s.gfn", pkgname);
+
+	    err = get_full_filename(gfn, path, OPT_I);
+	    g_free(gfn);
+	}
+	if (err) {
+	    pprintf(prn, "%s: not installed\n\n", pkgname);
+	    err = 0;
+	} else {
+	    print_function_package_info(path, 0, prn);
+	}
     } else {
 	err = E_PARSE;
     }

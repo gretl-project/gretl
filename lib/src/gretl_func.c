@@ -1568,7 +1568,8 @@ enum {
     FUNCS_LOAD,
     FUNCS_CODE,
     FUNCS_SAMPLE,
-    FUNCS_HELP
+    FUNCS_HELP,
+    FUNCS_QUERY
 };
 
 static const char *arg_type_xml_string (int t)
@@ -5183,6 +5184,47 @@ static void print_package_info (const fnpkg *pkg, const char *fname, PRN *prn)
     }
 }
 
+static void plain_print_package_info (const fnpkg *pkg,
+				      const char *fname,
+				      PRN *prn)
+{
+    char vstr[8];
+    int i;
+
+    if (g_path_is_absolute(fname) && !strstr(fname, "dltmp.")) {
+	pprintf(prn, "File: %s\n", fname);
+    }
+    if (pkg->name[0] == '\0' || pkg->author == NULL ||
+	pkg->minver <= 0 || pkg->descrip == NULL ||
+	pkg->version == NULL || pkg->date == NULL ||
+	pkg->help == NULL) {
+	pprintf(prn, "Broken package! Basic information is missing\n");
+	return;
+    }
+
+    gretl_version_string(vstr, pkg->minver);
+
+    pprintf(prn, "Package: %s %s (%s)\n", pkg->name, pkg->version, pkg->date);
+    pprintf(prn, "Author: %s\n", pkg->author);
+    if (pkg->email != NULL && *pkg->email != '\0') {
+	pprintf(prn, "Email: %s\n", pkg->email);
+    }
+    pprintf(prn, "Required gretl version: %s (%d)\n", vstr, pkg->minver);
+    pprintf(prn, "Data requirement: %s\n", _(data_needs_string(pkg->dreq)));
+    pprintf(prn, "Description: %s\n", gretl_strstrip(pkg->descrip));
+    if (pkg->n_depends > 0) {
+	pputs(prn, "Dependencies: ");
+	for (i=0; i<pkg->n_depends; i++) {
+	    pprintf(prn, "%s%s", pkg->depends[i],
+		    (i < pkg->n_depends-1)? ", " : "\n");
+	}
+    }
+    if (pkg->provider != NULL) {
+	pprintf(prn, "Provider: %s\n", pkg->provider);
+    }
+    pputc(prn, '\n');
+}
+
 /* simple plain-text help output */
 
 static void print_package_help (const fnpkg *pkg,
@@ -5791,6 +5833,8 @@ static int real_print_gfn_data (const char *fname, PRN *prn,
 	    print_package_help(pkg, fname, prn);
 	} else if (task == FUNCS_INFO) {
 	    print_package_info(pkg, fname, prn);
+	} else if (task == FUNCS_QUERY) {
+	    plain_print_package_info(pkg, fname, prn);
 	} else if (task == FUNCS_SAMPLE) {
 	    pputs(prn, pkg->sample);
 	} else {
@@ -5811,9 +5855,12 @@ static int real_print_gfn_data (const char *fname, PRN *prn,
 
 /* callback used in the GUI function package browser */
 
-int print_function_package_info (const char *fname, PRN *prn)
+int print_function_package_info (const char *fname, int gui_mode,
+				 PRN *prn)
 {
-    return real_print_gfn_data(fname, prn, 0, FUNCS_INFO);
+    int mode = gui_mode ? FUNCS_INFO : FUNCS_QUERY;
+
+    return real_print_gfn_data(fname, prn, 0, mode);
 }
 
 /* callback used in the GUI function package browser */

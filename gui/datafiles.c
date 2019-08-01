@@ -979,7 +979,7 @@ windata_t *display_function_package_data (const char *pkgname,
     }
 
     if (role == VIEW_PKG_INFO) {
-	err = print_function_package_info(path, prn);
+	err = print_function_package_info(path, 1, prn);
     } else if (role == VIEW_PKG_SAMPLE) {
 	err = print_function_package_sample(path, tabwidth, prn);
     } else {

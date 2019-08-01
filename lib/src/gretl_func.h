@@ -266,7 +266,8 @@ int delete_function_package (const char *gfnname);
 int uninstall_function_package (const char *package, gretlopt opt,
 				PRN *prn);
 
-int print_function_package_info (const char *fname, PRN *prn);
+int print_function_package_info (const char *fname, int gui_mode,
+				 PRN *prn);
 
 int print_function_package_code (const char *fname, int tabwidth,
 				 PRN *prn);
