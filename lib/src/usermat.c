@@ -229,6 +229,7 @@ static int bad_sel_range (int *range, int n)
     for (i=0; i<2; i++) {
 	k = range[i];
 	if (k != MSEL_MAX && (k < 1 || k > n)) {
+	    fprintf(stderr, "bad_sel_range (n=%d)\n", n);
 	    gretl_errmsg_sprintf(_("Index value %d is out of bounds"), k);
 	    return E_INVARG;
 	}
@@ -293,7 +294,7 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 		exclude = sr0;
 	    }
 	} else if (bad_sel_range(sel->range, n)) {
-	    *err = E_DATA;
+	    *err = E_DATA; /* CIDX error here! */
 	} else {
 	    ns = sr1 - sr0 + 1;
 	    if (ns <= 0) {
@@ -439,10 +440,15 @@ static int spec_check_dimensions (matrix_subspec *spec,
 	}
     } else {
 	/* spec->lsel must pertain to cols */
+#if USE_CIDX /* ?? */
+	int kmax = m->is_complex ? m->cols * 2 : m->cols;
+#else
+	int kmax = m->cols;
+#endif
 	if (lt == SEL_MATRIX) {
-	    err = bad_sel_vector(spec->lsel.m, m->cols);
+	    err = bad_sel_vector(spec->lsel.m, kmax);
 	} else if (lt == SEL_RANGE || lt == SEL_ELEMENT) {
-	    err = bad_sel_range(spec->lsel.range, m->cols);
+	    err = bad_sel_range(spec->lsel.range, kmax);
 	}
     }
 
@@ -522,6 +528,10 @@ static int mspec_convert (matrix_subspec *mspec)
     fprintf(stderr, "Convert mspec to 8-byte mode:\n");
     fprintf(stderr, "  original types (%s,%s)\n", snames[mspec->ltype],
 	    snames[mspec->rtype]);
+    if (mspec->ltype != SEL_MATRIX && mspec->ltype != SEL_EXCL) {
+	fprintf(stderr, "  incoming range [%d:%d]\n", mspec->lsel.range[0],
+		mspec->lsel.range[1]);
+    }
 # endif
     if (mspec->ltype == SEL_ELEMENT || mspec->ltype == SEL_SINGLE) {
 	int i0 = mspec->lsel.range[0];
@@ -563,6 +573,10 @@ static int mspec_convert (matrix_subspec *mspec)
 # if CIDX_DEBUG
     fprintf(stderr, "  converted types (%s,%s)\n", snames[mspec->ltype],
 	    snames[mspec->rtype]);
+    if (mspec->ltype == SEL_RANGE) {
+	fprintf(stderr, "  outgoing range [%d:%d]\n", mspec->lsel.range[0],
+		mspec->lsel.range[1]);
+    }
 # endif
 
     return 0;
@@ -794,13 +808,24 @@ const char *mspec_get_string (matrix_subspec *spec, int i)
 static int get_slices (matrix_subspec *spec,
 		       const gretl_matrix *M)
 {
-    int err = 0;
+    int rowvec, kmax, err = 0;
 
-    if (M->rows == 1 && spec->rtype == SEL_NULL) {
+#if USE_CIDX
+    rowvec = M->is_complex ? M->rows == 2 : M->rows == 1;
+#else
+    rowvec = M->rows == 1;
+#endif
+
+    if (rowvec && spec->rtype == SEL_NULL) {
 	/* transfer ltype and lsel to the column dimension */
+#if USE_CIDX
+	kmax = M->is_complex ? M->cols * 2 : M->cols;
+#else
+	kmax = M->cols;
+#endif
 	spec->rslice = NULL;
 	spec->cslice = mspec_make_list(spec->ltype, &spec->lsel,
-				       M->cols, &err);
+				       kmax, &err);
     } else {
 	spec->rslice = mspec_make_list(spec->ltype, &spec->lsel,
 				       M->rows, &err);

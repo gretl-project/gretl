@@ -10293,7 +10293,7 @@ static void *get_mod_assign_result (void *lp, GretlType ltype,
     return ret;
 }
 
-/* ".=" : we need a scalar on the RHS */
+/* ".=" : we need a scalar (possibly complex) on the RHS */
 
 static int dot_assign_to_matrix (gretl_matrix *m, parser *p)
 {
@@ -10303,6 +10303,10 @@ static int dot_assign_to_matrix (gretl_matrix *m, parser *p)
 	double x = p->ret->v.xval;
 
 	gretl_matrix_fill(m, x);
+    } else if (p->ret->t == MAT && complex_scalar(p->ret->v.m)) {
+	double complex z = *(double complex *) p->ret->v.m->val;
+
+	gretl_cmatrix_fill(m, z);
     } else {
 	err = E_TYPES;
     }

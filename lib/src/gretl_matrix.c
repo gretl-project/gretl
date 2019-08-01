@@ -24,6 +24,7 @@
 
 #include <errno.h>
 #include <assert.h>
+#include <complex.h>
 
 #include "gretl_f2c.h"
 #include "clapack_double.h"
@@ -945,10 +946,20 @@ gretl_matrix *gretl_matrix_seq (double start, double end,
 void gretl_matrix_fill (gretl_matrix *m, double x)
 {
     if (m != NULL) {
-	int i, n = m->rows * m->cols;
+	int i, n;
 
-	for (i=0; i<n; i++) {
-	    m->val[i] = x;
+	if (m->is_complex) {
+	    double complex *mz = (double complex *) m->val;
+
+	    n = m->cols * m->rows / 2;
+	    for (i=0; i<n; i++) {
+		mz[i] = x;
+	    }
+	} else {
+	    n = m->rows * m->cols;
+	    for (i=0; i<n; i++) {
+		m->val[i] = x;
+	    }
 	}
     }
 }

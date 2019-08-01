@@ -1624,3 +1624,15 @@ gretl_matrix *gretl_cmatrix_vector_stat (const gretl_matrix *m,
 
     return ret;
 }
+
+int gretl_cmatrix_fill (gretl_matrix *m, double complex z)
+{
+    double complex *mz = (double complex *) m->val;
+    int i, n = m->cols * m->rows / 2;
+
+    for (i=0; i<n; i++) {
+	mz[i] = z;
+    }
+
+    return 0;
+}
