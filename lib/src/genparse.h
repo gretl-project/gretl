@@ -135,6 +135,7 @@ enum {
 
 enum {
     F1_MIN = 1 << 8,
+    F_ABS,
     F_CEIL,
     F_FLOOR,
     F_SIN,
@@ -157,13 +158,12 @@ enum {
     F_GAMMA,
     F_LNGAMMA,
     F_DIGAMMA,
-    F_INVMILLS, /* to here: hansl function maps to C-function of same name */
+    F_INVMILLS,
     F_ROUND,
-    F_ABS,
     F_CNORM,
     F_DNORM,
     F_QNORM,
-    F_LOGISTIC, /* to here: hansl function maps to 'translated' C-function */
+    F_LOGISTIC,   /* to here: store C-function pointers: see genlex.c */
     F_TOINT,
     F_DIFF,	  /* first difference */
     F_LDIFF,	  /* log difference */

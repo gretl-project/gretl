@@ -181,9 +181,30 @@ struct str_table bvars[] = {
     { 0,         NULL }
 };
 
-/* Functions for which we wish to attach function-pointers
-   to the relevant NODE. Nota bene: it's crucial that no
-   function in @ptrfuncs is also listed in @funcs below!
+/* Below: sentinel value, recording the highest-numbered
+   function symbol (see genparse.h, enumeration of F_* and
+   HF_* values) for which we store a pointer to the
+   associated C-function. All such functions take a single
+   double argument and return a double; generally the
+   hansl function name is the same as that of the C
+   function though there are a few exceptions for libgretl
+   C-functions.
+*/
+
+#define MAX_PTR_FUNC F_LOGISTIC
+
+/* Below, @ptrfuncs: table of functions for which we wish to
+   attach function-pointers to the relevant NODE. Nota bene:
+   it's crucial that no function in @ptrfuncs is also listed
+   in @funcs below!
+
+   The order of function symbols in @ptrfuncs need not match
+   the order in which they're listed in genparse.h, but it's
+   crucial that every function with ID number <= MAX_PTR_FUNC
+   has an entry in @ptrfuncs.
+
+   "Crucial" -> certain crash on calling wrongly classified
+   function!
 */
 
 struct str_table_ex ptrfuncs[] = {
@@ -707,7 +728,7 @@ static int real_function_lookup (const char *s, int aliases,
     if (fnp != NULL) {
 	struct str_table *st = (struct str_table *) fnp;
 
-	if (p != NULL && st->id > 0 && st->id <= F_LOGISTIC) {
+	if (p != NULL && st->id > 0 && st->id <= MAX_PTR_FUNC) {
 	    struct str_table_ex *sx = (struct str_table_ex *) fnp;
 
 	    p->data = sx->ptr;
