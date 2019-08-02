@@ -978,10 +978,10 @@ int complex_matrix_print (const gretl_matrix *A,
 	}
     }
 
-    if (all_ints) {
+    if (all_ints && xmax > 0) {
 	/* try for a more compact format */
 	xmax = log10(xmax);
-	if (xmax < 3) {
+	if (xmax > 0 && xmax < 3) {
 	    zwidth = floor(xmax) + 2;
 	}
     }
@@ -996,7 +996,7 @@ int complex_matrix_print (const gretl_matrix *A,
 	    re = cmatrix_get_re(A, i, j);
 	    im = cmatrix_get_im(A, i, j);
 	    s[1] = (im >= 0) ? '+' : '-';
-	    if (zwidth) {
+	    if (zwidth > 0) {
 		pprintf(prn, "%*g%s%*gi", zwidth, re, s, zwidth-1, fabs(im));
 	    } else {
 		pprintf(prn, "%7.4f%s%6.4fi", re, s, fabs(im));
