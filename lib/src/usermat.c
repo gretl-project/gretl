@@ -135,63 +135,68 @@ gretl_matrix *get_matrix_copy_by_name (const char *name, int *err)
     return ret;
 }
 
-static int vec_is_exclusion (const gretl_matrix *m, int n,
-			     gretl_matrix **pv, int *err)
+/* @s is the user-supplied selection vector.
+   @n is the max possible value of row or col.
+   @pslice is location to receive positive selection
+   list.
+*/
+
+static int handle_vector_exclusion (const gretl_vector *s,
+				    int n, int **pslice)
 {
-    int len = gretl_vector_get_length(m);
-    int i, k, neg = 0;
+    int slen = gretl_vector_get_length(s);
+    int i, j, k, nsel = n;
+    int err = 0;
 
-    for (i=0; i<len; i++) {
-	if (m->val[i] < 0) {
-	    neg++;
-	    k = (int) fabs(m->val[i]);
-	    if (k > n) {
-		gretl_errmsg_sprintf(_("Index value %d is out of bounds"), k);
-		*err = E_DATA;
-		return 0;
+    /* do we need this check here? */
+    for (i=0; i<slen; i++) {
+	k = (int) fabs(s->val[i]);
+	if (k > n) {
+	    gretl_errmsg_sprintf(_("Index value %d is out of bounds"), k);
+	    return E_DATA;
+	}
+    }
+
+    /* how many of the @n values are selected? */
+    for (i=1; i<=n; i++) {
+	for (j=0; j<slen; j++) {
+	    if (s->val[j] == -i) {
+		/* element i is dropped */
+		nsel--;
+		break;
 	    }
 	}
     }
 
-    if (neg == len) {
-	int excluded, j, nsel = n;
+    if (nsel == 0) {
+	*pslice = gretl_null_list();
+    } else {
+	/* compose positive selection list */
+	int *slice = gretl_list_new(nsel);
+	int excluded, k = 1;
 
-	for (i=1; i<=n; i++) {
-	    for (j=0; j<len; j++) {
-		if (m->val[j] == -i) {
-		    nsel--;
-		    break;
+	if (slice != NULL) {
+	    for (i=1; i<=n; i++) {
+		excluded = 0;
+		for (j=0; j<slen; j++) {
+		    if (s->val[j] == -i) {
+			excluded = 1;
+			break;
+		    }
+		}
+		if (!excluded) {
+		    slice[k++] = i;
 		}
 	    }
+	    *pslice = slice;
 	}
-
-	if (nsel == 0) {
-	    return 1;
-	}
-
-	*pv = gretl_vector_alloc(nsel);
-	if (*pv == NULL) {
-	    *err = E_ALLOC;
-	    return 0;
-	}
-
-	k = 0;
-	for (i=1; i<=n; i++) {
-	    excluded = 0;
-	    for (j=0; j<len; j++) {
-		if (m->val[j] == -i) {
-		    excluded = 1;
-		    break;
-		}
-	    }
-	    if (!excluded) {
-		(*pv)->val[k++] = i;
-	    }
-	}
-	return 1;
     }
 
-    return 0;
+    if (*pslice == NULL) {
+	err = E_ALLOC;
+    }
+
+    return err;
 }
 
 static int bad_sel_vector (const gretl_matrix *v, int n)
@@ -254,9 +259,8 @@ static int bad_sel_single (int k, int n)
 static int *mspec_make_list (int type, union msel *sel, int n,
 			     int *err)
 {
-    gretl_vector *ivec = NULL;
     int *slice = NULL;
-    int exclude = 0;
+    int single_exclude = 0;
     int i, ns = 0;
 
     if (type == SEL_ALL || type == SEL_NULL) {
@@ -267,15 +271,14 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 	if (sel->m == NULL) {
 	    gretl_errmsg_set(_("Range is non-positive!"));
 	    *err = E_DATA;
+	} else if (sel->m->val[0] < 0) {
+	    *err = handle_vector_exclusion(sel->m, n, &slice);
+	    return slice; /* we're done */
 	} else {
-	    if (vec_is_exclusion(sel->m, n, &ivec, err)) {
-		ns = (ivec == NULL)? 0 : gretl_vector_get_length(ivec);
-	    } else {
-		ns = gretl_vector_get_length(sel->m);
-	    }
+	    ns = gretl_vector_get_length(sel->m);
 	}
     } else {
-	/* range or exclusion */
+	/* range or single exclusion */
 	int sr0 = sel->range[0];
 	int sr1 = sel->range[1];
 
@@ -291,10 +294,10 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 		*err = E_DATA;
 	    } else {
 		ns = n - 1;
-		exclude = sr0;
+		single_exclude = sr0;
 	    }
 	} else if (bad_sel_range(sel->range, n)) {
-	    *err = E_DATA; /* CIDX error here! */
+	    *err = E_DATA; /* CIDX error here? */
 	} else {
 	    ns = sr1 - sr0 + 1;
 	    if (ns <= 0) {
@@ -306,53 +309,40 @@ static int *mspec_make_list (int type, union msel *sel, int n,
     }
 
     if (!*err) {
-	if (ns == 0) {
-	    slice = gretl_null_list();
-	} else {
-	    slice = gretl_list_new(ns);
-	}
+	slice = gretl_list_new(ns);
 	if (slice == NULL) {
 	    *err = E_ALLOC;
 	}
     }
 
-    if (*err) {
-	goto bailout;
-    }
+    if (!*err) {
+	/* compose and check slice */
+	if (single_exclude > 0) {
+	    int k = 1;
 
-    if (exclude) {
-	int k = 1;
-
-	for (i=1; i<=slice[0]; i++) {
-	    if (i == exclude) {
-		k++;
+	    for (i=1; i<=slice[0]; i++) {
+		if (i == single_exclude) {
+		    k++;
+		}
+		slice[i] = k++;
 	    }
-	    slice[i] = k++;
-	}
-    } else {
-	for (i=0; i<slice[0]; i++) {
-	    if (ivec != NULL) {
-		slice[i+1] = ivec->val[i];
-	    } else if (type == SEL_MATRIX) {
-		slice[i+1] = sel->m->val[i];
-	    } else {
-		slice[i+1] = sel->range[0] + i;
+	} else {
+	    for (i=0; i<slice[0]; i++) {
+		if (type == SEL_MATRIX) {
+		    slice[i+1] = sel->m->val[i];
+		} else {
+		    slice[i+1] = sel->range[0] + i;
+		}
 	    }
 	}
-    }
 
-    for (i=1; i<=slice[0] && !*err; i++) {
-	if (slice[i] < 1 || slice[i] > n) {
-	    gretl_errmsg_sprintf(_("Index value %d is out of bounds"),
-				 slice[i]);
-	    *err = 1;
+	for (i=1; i<=slice[0] && !*err; i++) {
+	    if (slice[i] < 1 || slice[i] > n) {
+		gretl_errmsg_sprintf(_("Index value %d is out of bounds"),
+				     slice[i]);
+		*err = 1;
+	    }
 	}
-    }
-
- bailout:
-
-    if (ivec != NULL) {
-	gretl_matrix_free(ivec);
     }
 
     if (*err) {
@@ -518,70 +508,70 @@ static int convert_lsel_matrix (matrix_subspec *mspec)
     return 0;
 }
 
-/* Assuming that the row index values in @mspec, if any,
+/* Assuming that the row index values in @spec, if any,
    are expressed in 16-byte terms, convert to 8-byte.
 */
 
-static int mspec_convert (matrix_subspec *mspec, const gretl_matrix *m)
+static int mspec_convert (matrix_subspec *spec, const gretl_matrix *m)
 {
 # if CIDX_DEBUG
-    fprintf(stderr, "Convert mspec to 8-byte mode:\n");
-    fprintf(stderr, "  original types (%s,%s)\n", snames[mspec->ltype],
-	    snames[mspec->rtype]);
-    if (mspec->ltype != SEL_MATRIX && mspec->ltype != SEL_EXCL) {
-	fprintf(stderr, "  incoming range [%d:%d]\n", mspec->lsel.range[0],
-		mspec->lsel.range[1]);
+    fprintf(stderr, "Convert spec to 8-byte mode:\n");
+    fprintf(stderr, "  original types (%s,%s)\n", snames[spec->ltype],
+	    snames[spec->rtype]);
+    if (spec->ltype != SEL_MATRIX && spec->ltype != SEL_EXCL) {
+	fprintf(stderr, "  incoming range [%d:%d]\n", spec->lsel.range[0],
+		spec->lsel.range[1]);
     }
 # endif
-    if (mspec->rtype == SEL_NULL && m->rows == 2) {
+    if (spec->rtype == SEL_NULL && m->rows == 2) {
 	/* complex row vector: transfer spec to column dimension */
-	mspec->rtype = mspec->ltype;
-	mspec->rsel = mspec->lsel;
-	memset(&mspec->lsel, 0, sizeof mspec->lsel);
-	mspec->ltype = SEL_ALL;
-    } else if (mspec->ltype == SEL_ELEMENT || mspec->ltype == SEL_SINGLE) {
-	int i0 = mspec->lsel.range[0];
+	spec->rtype = spec->ltype;
+	spec->rsel = spec->lsel;
+	memset(&spec->lsel, 0, sizeof spec->lsel);
+	spec->ltype = SEL_ALL;
+    } else if (spec->ltype == SEL_ELEMENT || spec->ltype == SEL_SINGLE) {
+	int i0 = spec->lsel.range[0];
 	int i08 = 2*(i0-1) + 1;
 	int i18 = i08 + 1;
 
-	mspec->ltype = SEL_RANGE;
-	mspec->lsel.range[0] = i08;
-	mspec->lsel.range[1] = i18;
-	if (mspec->rtype == SEL_ELEMENT) {
+	spec->ltype = SEL_RANGE;
+	spec->lsel.range[0] = i08;
+	spec->lsel.range[1] = i18;
+	if (spec->rtype == SEL_ELEMENT) {
 	    /* it's not a single 8-byte element */
-	    mspec->rtype = SEL_RANGE;
+	    spec->rtype = SEL_RANGE;
 	}
-    } else if (mspec->ltype == SEL_RANGE) {
-	int i0 = mspec->lsel.range[0];
-	int i1 = mspec->lsel.range[1];
+    } else if (spec->ltype == SEL_RANGE) {
+	int i0 = spec->lsel.range[0];
+	int i1 = spec->lsel.range[1];
 	int i08 = 2*(i0-1) + 1;
 	int i18 = 2*(i1-1) + 1;
 
 	i18 += i18 % 2;
-	mspec->lsel.range[0] = i08;
-	mspec->lsel.range[1] = i18;
-    } else if (mspec->ltype == SEL_MATRIX) {
-	convert_lsel_matrix(mspec);
-    } else if (mspec->ltype == SEL_EXCL) {
+	spec->lsel.range[0] = i08;
+	spec->lsel.range[1] = i18;
+    } else if (spec->ltype == SEL_MATRIX) {
+	convert_lsel_matrix(spec);
+    } else if (spec->ltype == SEL_EXCL) {
 	/* exclusion of a single row must be extended to two,
 	   via use of a vector */
 	gretl_matrix *m;
-	int i0 = mspec->lsel.range[0];
+	int i0 = spec->lsel.range[0];
 	int i8 = 2*(-i0-1) + 1;
 
 	m = gretl_matrix_alloc(1, 2);
 	m->val[0] = -i8;
 	m->val[1] = -i8 - 1;
-	mspec->ltype = SEL_MATRIX;
-	mspec->lsel.m = m;
-	mspec->owns_lmat = 1;
+	spec->ltype = SEL_MATRIX;
+	spec->lsel.m = m;
+	spec->owns_lmat = 1;
     }
 # if CIDX_DEBUG
-    fprintf(stderr, "  converted types (%s,%s)\n", snames[mspec->ltype],
-	    snames[mspec->rtype]);
-    if (mspec->ltype == SEL_RANGE) {
-	fprintf(stderr, "  outgoing range [%d:%d]\n", mspec->lsel.range[0],
-		mspec->lsel.range[1]);
+    fprintf(stderr, "  converted types (%s,%s)\n", snames[spec->ltype],
+	    snames[spec->rtype]);
+    if (spec->ltype == SEL_RANGE) {
+	fprintf(stderr, "  outgoing range [%d:%d]\n", spec->lsel.range[0],
+		spec->lsel.range[1]);
     }
 # endif
 
@@ -724,6 +714,14 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 {
     int veclen, err = 0;
 
+    if (spec->ltype == SEL_DIAG) {
+	/* There's nothing to check, since this is OK even
+	   for an empty matrix argument. FIXME maybe convert
+	   for 1 x 1 matrix or complex scalar?
+	*/
+	return 0;
+    }
+
 #if CONTIG_DEBUG
     subspec_debug_print(spec, m);
 #endif
@@ -731,15 +729,15 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
     if (m->is_complex) {
 	mspec_convert(spec, m);
     }
-#endif
-
-    if (spec->ltype == SEL_DIAG) {
-	/* there's nothing to check, since this is OK even
-	   for an empty matrix argument, and for a non-empty
-	   matrix the data will not be contiguous
-	*/
-	return 0;
+#else
+    if (0 && spec->rtype == SEL_NULL && m->rows == 1) {
+	/* row vector: transfer spec to column dimension */
+	spec->rtype = spec->ltype;
+	spec->rsel = spec->lsel;
+	memset(&spec->lsel, 0, sizeof spec->lsel);
+	spec->ltype = SEL_ALL;
     }
+#endif
 
 #if USE_CIDX
     veclen = gretl_vector_real_length(m);
