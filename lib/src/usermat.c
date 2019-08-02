@@ -199,27 +199,15 @@ static int handle_vector_exclusion (const gretl_vector *s,
     return err;
 }
 
-static int bad_sel_vector (const gretl_matrix *v, int n)
+static int bad_sel_vector (const gretl_vector *v, int n)
 {
-    int i, len = gretl_vector_get_length(v);
-    int exclude = 0;
-    int vvi, neg = 0;
+    int i, k, len = gretl_vector_get_length(v);
+    int exclude = v->val[0] < 0;
 
     for (i=0; i<len; i++) {
-	if (v->val[i] < 0) {
-	    neg++;
-	}
-    }
-
-    if (neg == len) {
-	exclude = 1;
-    }
-
-    for (i=0; i<len; i++) {
-	vvi = exclude ? -v->val[i] : v->val[i];
-	if (vvi < 1 || vvi > n) {
-	    gretl_errmsg_sprintf(_("Index value %g is out of bounds"),
-				 v->val[i]);
+	k = exclude ? -v->val[i] : v->val[i];
+	if (k < 1 || k > n) {
+	    gretl_errmsg_sprintf(_("Index value %d is out of bounds"), k);
 	    return E_INVARG;
 	}
     }
@@ -360,15 +348,13 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 
 #define all_or_null(t) (t == SEL_ALL || t == SEL_NULL)
 
-#define lhs_is_scalar(s,m) (s->ltype == SEL_ELEMENT ||		\
+#define lhs_is_scalar(s,m) (s->ltype == SEL_ELEMENT || \
 			    (m->rows == 1 && s->ltype == SEL_ALL) || \
 			    singleton_left_range(s))
 
-#define rhs_is_scalar(s,m) (s->rtype == SEL_ELEMENT ||		\
+#define rhs_is_scalar(s,m) (s->rtype == SEL_ELEMENT || \
 			    (m->cols == 1 && all_or_null(s->rtype)) || \
 			    singleton_right_range(s))
-
-#define lhs_is_colspec(s,m) (m->rows == 1 && spec->rtype == SEL_NULL)
 
 static int set_element_index (matrix_subspec *spec,
 			      const gretl_matrix *m)
@@ -408,37 +394,22 @@ static int set_element_index (matrix_subspec *spec,
 static int spec_check_dimensions (matrix_subspec *spec,
 				  const gretl_matrix *m)
 {
-    int colvec = m->cols == 1 && m->rows > 1;
     int lt = spec->ltype;
     int rt = spec->rtype;
     int err = 0;
 
-    if (colvec || rt != SEL_NULL) {
-	/* spec->lsel must pertain to rows */
-	if (lt == SEL_MATRIX) {
-	    err = bad_sel_vector(spec->lsel.m, m->rows);
-	} else if (lt == SEL_RANGE || lt == SEL_ELEMENT) {
-	    err = bad_sel_range(spec->lsel.range, m->rows);
-	}
-	if (!err) {
-	    /* check spec->rsel against cols */
-	    if (rt == SEL_MATRIX) {
-		err = bad_sel_vector(spec->rsel.m, m->cols);
-	    } else if (rt == SEL_RANGE || rt == SEL_ELEMENT) {
-		err = bad_sel_range(spec->rsel.range, m->cols);
-	    }
-	}
-    } else {
-	/* spec->lsel must pertain to cols */
-#if USE_CIDX /* ?? */
-	int kmax = m->is_complex ? m->cols * 2 : m->cols;
-#else
-	int kmax = m->cols;
-#endif
-	if (lt == SEL_MATRIX) {
-	    err = bad_sel_vector(spec->lsel.m, kmax);
-	} else if (lt == SEL_RANGE || lt == SEL_ELEMENT) {
-	    err = bad_sel_range(spec->lsel.range, kmax);
+    /* check spec->lsel against rows */
+    if (lt == SEL_MATRIX) {
+	err = bad_sel_vector(spec->lsel.m, m->rows);
+    } else if (lt == SEL_RANGE || lt == SEL_ELEMENT) {
+	err = bad_sel_range(spec->lsel.range, m->rows);
+    }
+    if (!err) {
+	/* check spec->rsel against cols */
+	if (rt == SEL_MATRIX) {
+	    err = bad_sel_vector(spec->rsel.m, m->cols);
+	} else if (rt == SEL_RANGE || rt == SEL_ELEMENT) {
+	    err = bad_sel_range(spec->rsel.range, m->cols);
 	}
     }
 
@@ -525,7 +496,12 @@ static int mspec_convert (matrix_subspec *spec, const gretl_matrix *m)
 # endif
     if (spec->rtype == SEL_NULL && m->rows == 2) {
 	/* complex row vector: transfer spec to column dimension */
-	spec->rtype = spec->ltype;
+	if (spec->ltype == SEL_SINGLE) {
+	    /* a single column is not a single value */
+	    spec->rtype = SEL_RANGE;
+	} else {
+	    spec->rtype = spec->ltype;
+	}
 	spec->rsel = spec->lsel;
 	memset(&spec->lsel, 0, sizeof spec->lsel);
 	spec->ltype = SEL_ALL;
@@ -585,8 +561,8 @@ static int mspec_convert (matrix_subspec *spec, const gretl_matrix *m)
 static void subspec_debug_print (matrix_subspec *spec,
 				 const gretl_matrix *m)
 {
-    fprintf(stderr, "check_matrix_subspec: types = (%s, %s)\n",
-	    snames[spec->ltype], snames[spec->rtype]);
+    fprintf(stderr, "matrix_subspec: types = (%s, %s), m is %d x %d\n",
+	    snames[spec->ltype], snames[spec->rtype], m->rows, m->cols);
     if (spec->ltype == SEL_MATRIX) {
 	fputs(" vector sel,", stderr);
     } else if (spec->ltype != SEL_NULL) {
@@ -599,7 +575,6 @@ static void subspec_debug_print (matrix_subspec *spec,
 	fprintf(stderr, " rsel->range = (%d,%d), ", spec->rsel.range[0],
 		spec->rsel.range[1]);
     }
-    fprintf(stderr, "m is %d x %d\n", m->rows, m->cols);
     fprintf(stderr, " lh scalar %d, rh scalar %d\n",
 	    lhs_is_scalar(spec, m), rhs_is_scalar(spec, m));
 }
@@ -704,6 +679,21 @@ static int get_offset_nelem (matrix_subspec *spec,
     return 0;
 }
 
+/* to make clear that spec->lsel pertains to columns, move
+   it to the right position */
+
+static void commute_selectors (matrix_subspec *spec)
+{
+    spec->rtype = spec->ltype;
+    spec->rsel = spec->lsel;
+    memset(&spec->lsel, 0, sizeof spec->lsel);
+    spec->ltype = SEL_ALL;
+}
+
+#define spec_is_single(s) (s->ltype==SEL_SINGLE || s->rtype==SEL_SINGLE)
+#define spec_single_val(s) (s->ltype==SEL_SINGLE ? s->lsel.range[0] : \
+	                    s->rsel.range[0])
+
 /* Catch the case of an implicit column or row specification for
    a sub-matrix of an (n x 1) or (1 x m) matrix; also catch the
    error of giving just one row/col spec for a matrix that has
@@ -725,17 +715,17 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 #if CONTIG_DEBUG
     subspec_debug_print(spec, m);
 #endif
+
 #if USE_CIDX
     if (m->is_complex) {
 	mspec_convert(spec, m);
+    } else if (spec->rtype == SEL_NULL && m->rows == 1) {
+	commute_selectors(spec);
     }
 #else
-    if (0 && spec->rtype == SEL_NULL && m->rows == 1) {
+    if (spec->rtype == SEL_NULL && m->rows == 1) {
 	/* row vector: transfer spec to column dimension */
-	spec->rtype = spec->ltype;
-	spec->rsel = spec->lsel;
-	memset(&spec->lsel, 0, sizeof spec->lsel);
-	spec->ltype = SEL_ALL;
+	commute_selectors(spec);
     }
 #endif
 
@@ -750,13 +740,13 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 	return E_DATA;
     }
 
-    if (spec->ltype == SEL_SINGLE) {
-	int lr0 = spec->lsel.range[0];
+    if (spec_is_single(spec)) {
+	int k = spec_single_val(spec);
 
-	err = bad_sel_single(lr0, veclen);
+	err = bad_sel_single(k, veclen);
 	if (!err) {
 	    spec->ltype = spec->rtype = SEL_ELEMENT;
-	    mspec_set_offset(spec, lr0 - 1);
+	    mspec_set_offset(spec, k - 1);
 	    mspec_set_n_elem(spec, 1);
 	}
 	/* nothing more to do */
@@ -773,13 +763,11 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 	return 0;
     }
 
-    if (lhs_is_scalar(spec, m)) {
-	if (rhs_is_scalar(spec, m) || lhs_is_colspec(spec, m)) {
-	    /* we're looking at just one element */
-	    set_element_index(spec, m);
-	    spec->ltype = spec->rtype = SEL_ELEMENT;
-	    return 0;
-	}
+    if (lhs_is_scalar(spec, m) && rhs_is_scalar(spec, m)) {
+	/* we're looking at just one element */
+	set_element_index(spec, m);
+	spec->ltype = spec->rtype = SEL_ELEMENT;
+	return 0;
     }
 
     if (submatrix_contig(spec, m)) {
@@ -812,31 +800,13 @@ const char *mspec_get_string (matrix_subspec *spec, int i)
 static int get_slices (matrix_subspec *spec,
 		       const gretl_matrix *M)
 {
-    int rowvec, kmax, err = 0;
+    int err = 0;
 
-#if USE_CIDX
-    rowvec = M->is_complex ? M->rows == 2 : M->rows == 1;
-#else
-    rowvec = M->rows == 1;
-#endif
-
-    if (rowvec && spec->rtype == SEL_NULL) {
-	/* transfer ltype and lsel to the column dimension */
-#if USE_CIDX
-	kmax = M->is_complex ? M->cols * 2 : M->cols;
-#else
-	kmax = M->cols;
-#endif
-	spec->rslice = NULL;
-	spec->cslice = mspec_make_list(spec->ltype, &spec->lsel,
-				       kmax, &err);
-    } else {
-	spec->rslice = mspec_make_list(spec->ltype, &spec->lsel,
-				       M->rows, &err);
-	if (!err) {
-	    spec->cslice = mspec_make_list(spec->rtype, &spec->rsel,
-					   M->cols, &err);
-	}
+    spec->rslice = mspec_make_list(spec->ltype, &spec->lsel,
+				   M->rows, &err);
+    if (!err) {
+	spec->cslice = mspec_make_list(spec->rtype, &spec->rsel,
+				       M->cols, &err);
     }
 
 #if MDEBUG
