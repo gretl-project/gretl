@@ -2469,6 +2469,8 @@ const char *getsymb_full (int t, const parser *p)
 	return ".<=";
     case B_DOTNEQ:
 	return ".!=";
+    case B_DOTASN:
+	return "dot-assign";
     case B_KRON:
 	return "**";
     case B_HCAT:
