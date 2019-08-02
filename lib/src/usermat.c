@@ -36,6 +36,8 @@
    convert them to 8-byte values as needed.
 */
 
+/* mspec convenience macros */
+
 #define mspec_get_offset(m) (m->lsel.range[0])
 #define mspec_get_n_elem(m) (m->lsel.range[1])
 
@@ -43,6 +45,29 @@
 #define mspec_set_n_elem(m,n) (m->lsel.range[1] = n)
 
 #define mspec_set_element(m,i) (m->lsel.range[0] = i)
+
+#define spec_is_single(s) (s->ltype==SEL_SINGLE || s->rtype==SEL_SINGLE)
+#define spec_single_val(s) (s->ltype==SEL_SINGLE ? s->lsel.range[0] : \
+	                    s->rsel.range[0])
+
+#define singleton_left_range(s) (s->ltype == SEL_RANGE && \
+				 s->lsel.range[0] == s->lsel.range[1])
+#define singleton_right_range(s) (s->rtype == SEL_RANGE && \
+				  s->rsel.range[0] == s->rsel.range[1])
+
+#define all_or_null(t) (t == SEL_ALL || t == SEL_NULL)
+
+#define lhs_is_scalar(s,m) (s->ltype == SEL_ELEMENT || \
+			    (m->rows == 1 && s->ltype == SEL_ALL) || \
+			    singleton_left_range(s))
+#define rhs_is_scalar(s,m) (s->rtype == SEL_ELEMENT || \
+			    (m->cols == 1 && all_or_null(s->rtype)) || \
+			    singleton_right_range(s))
+
+#define rowmax(s,m) (s->range[1] == MSEL_MAX ? m->rows : s->range[1])
+#define colmax(s,m) (s->range[1] == MSEL_MAX ? m->cols : s->range[1])
+
+/* end mspec convenience macros */
 
 #if USE_CIDX
 static int gretl_vector_real_length (const gretl_matrix *v)
@@ -285,7 +310,7 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 		single_exclude = sr0;
 	    }
 	} else if (bad_sel_range(sel->range, n)) {
-	    *err = E_DATA; /* CIDX error here? */
+	    *err = E_DATA;
 	} else {
 	    ns = sr1 - sr0 + 1;
 	    if (ns <= 0) {
@@ -340,21 +365,6 @@ static int *mspec_make_list (int type, union msel *sel, int n,
 
     return slice;
 }
-
-#define singleton_left_range(s) (s->ltype == SEL_RANGE && \
-				 s->lsel.range[0] == s->lsel.range[1])
-#define singleton_right_range(s) (s->rtype == SEL_RANGE && \
-				  s->rsel.range[0] == s->rsel.range[1])
-
-#define all_or_null(t) (t == SEL_ALL || t == SEL_NULL)
-
-#define lhs_is_scalar(s,m) (s->ltype == SEL_ELEMENT || \
-			    (m->rows == 1 && s->ltype == SEL_ALL) || \
-			    singleton_left_range(s))
-
-#define rhs_is_scalar(s,m) (s->rtype == SEL_ELEMENT || \
-			    (m->cols == 1 && all_or_null(s->rtype)) || \
-			    singleton_right_range(s))
 
 static int set_element_index (matrix_subspec *spec,
 			      const gretl_matrix *m)
@@ -607,9 +617,6 @@ static int submatrix_contig (matrix_subspec *spec, const gretl_matrix *m)
     return contig;
 }
 
-#define rowmax(s,m) (s->range[1] == MSEL_MAX ? m->rows : s->range[1])
-#define colmax(s,m) (s->range[1] == MSEL_MAX ? m->cols : s->range[1])
-
 /* Determine the offset from the start of m->val, and the
    number of elements, in a matrix slice that has been found
    to consist of contiguous data.
@@ -690,10 +697,6 @@ static void commute_selectors (matrix_subspec *spec)
     spec->ltype = SEL_ALL;
 }
 
-#define spec_is_single(s) (s->ltype==SEL_SINGLE || s->rtype==SEL_SINGLE)
-#define spec_single_val(s) (s->ltype==SEL_SINGLE ? s->lsel.range[0] : \
-	                    s->rsel.range[0])
-
 /* Catch the case of an implicit column or row specification for
    a sub-matrix of an (n x 1) or (1 x m) matrix; also catch the
    error of giving just one row/col spec for a matrix that has
@@ -741,6 +744,7 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
     }
 
     if (spec_is_single(spec)) {
+	/* can't happen in the (properly indexed) complex case */
 	int k = spec_single_val(spec);
 
 	err = bad_sel_single(k, veclen);
@@ -821,8 +825,8 @@ static int get_slices (matrix_subspec *spec,
 int assign_scalar_to_submatrix (gretl_matrix *M, double x,
 				matrix_subspec *spec)
 {
-    int mr = gretl_matrix_rows(M);
-    int mc = gretl_matrix_cols(M);
+    int mr = M->rows;
+    int mc = M->cols;
     int i, err = 0;
 
     if (spec == NULL) {
@@ -885,11 +889,10 @@ matrix_subspec *matrix_subspec_new (void)
 }
 
 static int matrix_insert_diagonal (gretl_matrix *M,
-				   const gretl_matrix *S,
-				   int mr, int mc)
+				   const gretl_matrix *S)
 {
     int i, n = gretl_vector_get_length(S);
-    int k = (mr < mc)? mr : mc;
+    int k = MIN(M->rows, M->cols);
 
     if (n != k) {
 	return E_NONCONF;
@@ -965,7 +968,7 @@ int matrix_replace_submatrix (gretl_matrix *M,
     }
 
     if (spec->ltype == SEL_DIAG) {
-	return matrix_insert_diagonal(M, S, mr, mc);
+	return matrix_insert_diagonal(M, S);
     }
 
     if (spec->rslice == NULL && spec->cslice == NULL) {
