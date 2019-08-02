@@ -3780,6 +3780,7 @@ static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
     gretl_matrix *ml = NULL, *mr = NULL;
     NODE *ret;
 
+#if 1
     if ((op == B_MUL || op == B_TRMUL || op == B_ADD || op == B_SUB) &&
 	l->t == MAT && r->t == MAT) {
 	ml = l->v.m;
@@ -3792,6 +3793,7 @@ static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
 	    return ret;
 	}
     }
+#endif
 
     if (op == B_DOTPOW || op == B_POW) {
 	if (op == B_POW) {
@@ -5241,11 +5243,30 @@ static int mspec_get_series_index (matrix_subspec *s,
     return t;
 }
 
+static int mspec_get_array_index (matrix_subspec *spec,
+				  int *err)
+{
+    int idx = 0;
+
+    if (spec->ltype == SEL_SINGLE) {
+	idx = spec->lsel.range[0];
+    } else if (spec->ltype == SEL_RANGE &&
+	spec->rtype == SEL_NULL &&
+	spec->lsel.range[0] == spec->lsel.range[1]) {
+	idx = spec->lsel.range[0];
+    } else {
+	gretl_errmsg_set("Invalid left-hand side index value");
+	*err = E_TYPES;
+    }
+
+    return idx;
+}
+
 /* Here we're checking @spec for suitability in specifying
    a "slice" of an array, list or string: unlike the matrix
    case, @spec must be one-dimensional, and moreover (at
    present) it must come down to a single element or a
-   straightfoward range (so not a vector).
+   straightforward range (so not a vector).
 */
 
 static int test_for_single_range (matrix_subspec *spec,
@@ -5256,6 +5277,9 @@ static int test_for_single_range (matrix_subspec *spec,
     if (spec->ltype == SEL_SINGLE) {
 	ret = spec->lsel.range[0];
     } else if (spec->ltype == SEL_RANGE && spec->rtype == SEL_NULL) {
+	/* note: it's not an error if the range is non-degenerate,
+	   we just don't return a valid single index value
+	*/
 	if (spec->lsel.range[0] == spec->lsel.range[1]) {
 	    ret = spec->lsel.range[0];
 	}
@@ -10589,24 +10613,6 @@ static int set_bundle_value (NODE *lhs, NODE *rhs, parser *p)
     return err;
 }
 
-static int array_index_from_mspec (matrix_subspec *spec, int *err)
-{
-    int idx = 0;
-
-    if (spec->ltype == SEL_SINGLE) {
-	idx = spec->lsel.range[0];
-    } else if (spec->ltype == SEL_RANGE &&
-	spec->rtype == SEL_NULL &&
-	spec->lsel.range[0] == spec->lsel.range[1]) {
-	idx = spec->lsel.range[0];
-    } else {
-	gretl_errmsg_set("Invalid left-hand side index value");
-	*err = E_TYPES;
-    }
-
-    return idx;
-}
-
 static int set_array_value (NODE *lhs, NODE *rhs, parser *p)
 {
     NODE *lh1 = lhs->L;
@@ -10626,7 +10632,7 @@ static int set_array_value (NODE *lhs, NODE *rhs, parser *p)
 
     if (lh2->t == MSPEC) {
 	/* FIXME allow a range here? */
-	idx = array_index_from_mspec(lh2->v.mspec, &err);
+	idx = mspec_get_array_index(lh2->v.mspec, &err);
 	if (err) {
 	    return err;
 	}
@@ -10774,7 +10780,7 @@ static int set_list_value (NODE *lhs, NODE *rhs, parser *p)
     }
 
     if (lh2->t == MSPEC) {
-	idx = array_index_from_mspec(lh2->v.mspec, &err);
+	idx = mspec_get_array_index(lh2->v.mspec, &err);
 	if (err) {
 	    return err;
 	}
@@ -10844,7 +10850,7 @@ static int set_string_value (NODE *lhs, NODE *rhs, parser *p)
     }
 
     if (lh2->t == MSPEC) {
-	idx = array_index_from_mspec(lh2->v.mspec, &err);
+	idx = mspec_get_array_index(lh2->v.mspec, &err);
 	if (err) {
 	    return err;
 	}
@@ -19121,6 +19127,10 @@ void gen_cleanup (parser *p)
 
 	free(p->lh.expr);
     }
+
+#if EDEBUG
+    fprintf(stderr, "gen cleanup finished\n");
+#endif
 }
 
 #define LS_DEBUG 0
