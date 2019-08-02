@@ -4759,22 +4759,46 @@ static void print_mspec (matrix_subspec *mspec)
 
 #endif /* debugging */
 
-static int set_sel_vector (matrix_subspec *spec, int i,
+/* Putative row or column selection matrix: must be a vector;
+   cannot contain zero; cannot have both positive and negative
+   entries; and entries must be integer-valued.
+*/
+
+static int set_sel_vector (matrix_subspec *spec, int r,
 			   gretl_matrix *m)
 {
-    if (gretl_vector_get_length(m) > 0) {
-	if (i == 0) {
-	    spec->lsel.m = m;
-	    spec->ltype = SEL_MATRIX;
-	} else {
-	    spec->rsel.m = m;
-	    spec->rtype = SEL_MATRIX;
+    int i, n = gretl_vector_get_length(m);
+    int err = 0;
+
+    if (n > 0) {
+	double x;
+	int nneg = 0;
+
+	for (i=0; i<n && !err; i++) {
+	    x = m->val[i];
+	    if (x == 0 || na(x) || x != floor(x)) {
+		err = E_DATA;
+	    }
+	    nneg += x < 0;
 	}
-	return 0;
+	if (!err && nneg > 0 && nneg < n) {
+	    err = E_DATA;
+	}
     } else {
-	/* the selection matrix must be a vector */
-	return E_TYPES;
+	err = E_TYPES;
     }
+
+    if (err) {
+	gretl_errmsg_set("Invalid selection vector");
+    } else if (r) {
+	spec->rsel.m = m;
+	spec->rtype = SEL_MATRIX;
+    } else {
+	spec->lsel.m = m;
+	spec->ltype = SEL_MATRIX;
+    }
+
+    return err;
 }
 
 /* Compose a sub-matrix specification, from scalars and/or
