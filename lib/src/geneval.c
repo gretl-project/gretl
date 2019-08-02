@@ -2788,7 +2788,7 @@ static gretl_matrix *calc_get_matrix (gretl_matrix **pM,
 #define m_op_does_complex(o) (o==B_ADD || o==B_SUB || o==B_MUL || \
 			      o==B_TRMUL || o==B_DOTMULT || o==B_DOTADD || \
 			      o==B_DOTSUB || o==B_DOTPOW || o==F_MCSEL || \
-			      o==F_MRSEL)
+			      o==F_MRSEL || o==B_DOTASN)
 
 /* return allocated result of binary operation performed on
    two matrices */
@@ -5455,8 +5455,11 @@ static NODE *process_subslice (NODE *l, NODE *r, parser *p)
 	    ret = aux_ivec_node(p, 2);
 	    if (ret != NULL) {
 		ret->v.ivec[0] = node_get_int(l, p);
-		ret->v.ivec[1] = (r->t == EMPTY)?
-		    MSEL_MAX : node_get_int(r, p);
+		if (r->t == EMPTY) {
+		    ret->v.ivec[1] = MSEL_MAX; /* placeholder */
+		} else {
+		    ret->v.ivec[1] = node_get_int(r, p);
+		}
 	    }
 	} else {
 	    p->err = E_TYPES;
@@ -10980,7 +10983,7 @@ static int set_series_obs_value (NODE *lhs, NODE *rhs, parser *p)
     return p->err;
 }
 
-/* Here we're replacing a sub-matrix of the original LHS matrix, by
+/* Here we're replacing a submatrix of the original LHS matrix, by
    either straight or inflected assignment. The value that we're
    using for replacement will be either a matrix or a scalar.
 */
@@ -11033,13 +11036,17 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 	y = (rhs->t == NUM)? rhs->v.xval: rhs->v.m->val[0];
 	if (m1->is_complex) {
 	    m2 = scalar_to_complex(y, &p->err);
-	    free_m2 = 1;
+	    free_m2 = 1; /* flag temporary status of @m2 */
 	} else {
 	    rhs_scalar = 1;
 	}
     } else if (rhs->t == MAT) {
 	/* not a scalar: get the RHS matrix */
 	m2 = rhs->v.m;
+	if (m2->is_complex && !m1->is_complex) {
+	    gretl_errmsg_set("Cannot assign complex values to a real matrix");
+	    p->err = E_TYPES;
+	}
     } else if (rhs->t == SERIES) {
 	/* legacy: this has long been accepted */
 	m2 = series_to_matrix(rhs->v.xvec, p);
