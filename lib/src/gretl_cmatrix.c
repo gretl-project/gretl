@@ -21,6 +21,11 @@
 #include "clapack_complex.h"
 #include "gretl_cmatrix.h"
 
+/* Note: since we include gretl_cmatrix.h (which in turn includes
+   C99's complex.h) before fftw3.h, FFTW will use the C99
+   representation of complex numbers.
+*/
+
 #include <fftw3.h>
 #include <errno.h>
 
@@ -1440,6 +1445,12 @@ gretl_matrix *gretl_cmatrix_diag (const gretl_matrix *X,
 
     return ret;
 }
+
+/* Set the diagonal of complex matrix @targ using either
+   @src (if not NULL) or @x. In the first case @src can
+   be either a complex vector of the right length, or a
+   real vector, or a complex scalar.
+*/
 
 int gretl_cmatrix_set_diag (gretl_matrix *targ,
 			    const gretl_matrix *src,
