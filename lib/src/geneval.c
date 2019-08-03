@@ -11086,6 +11086,12 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 	return p->err; /* we're done */
     }
 
+    if (m1->is_complex && spec->ltype == SEL_DIAG && p->op == B_ASN) {
+	/* a somewhat finicky case */
+	p->err = gretl_cmatrix_set_diag(m1, m2, y);
+	return p->err; /* we're done */
+    }
+
     if (rhs_scalar && p->op == B_ASN) {
 	/* straight assignment of a scalar value to a
 	   non-scalar submatrix */
