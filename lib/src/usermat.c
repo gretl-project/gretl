@@ -25,10 +25,10 @@
 #include "usermat.h"
 #include "genparse.h"
 #include "uservar.h"
+#include "complex_def.h" /* temporary */
 
 #define MDEBUG 0
 #define CONTIG_DEBUG 0
-#define USE_CIDX 0 /* not just yet */
 #define CIDX_DEBUG 0
 
 /* USE_CIDX: set to interpret user-supplied row indices for

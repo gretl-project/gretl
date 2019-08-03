@@ -40,6 +40,7 @@
 #include "qr_estimate.h"
 #include "gretl_foreign.h"
 #include "var.h"
+#include "complex_def.h" /* temporary */
 
 #include "../../cephes/cephes.h" /* for hyp2f1 */
 #include <time.h> /* for the $now accessor */
@@ -3826,12 +3827,16 @@ static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
 
     if (ret != NULL && starting(p)) {
 	if (op == B_DOTPOW) {
-	    if (0 && ml->is_complex) {
-		/* FIXME: not yet: breaks cmatrix.gfn */
+#if USE_CIDX
+	    if (ml->is_complex) {
+		/* breaks cmatrix.gfn */
 		ret->v.m = gretl_cmatrix_dot_pow(ml, mr, &p->err);
 	    } else {
 		ret->v.m = gretl_matrix_dot_op(ml, mr, '^', &p->err);
 	    }
+#else
+	    ret->v.m = gretl_matrix_dot_op(ml, mr, '^', &p->err);
+#endif
 	} else if (op == B_POW) {
 	    int s = node_get_int(r, p);
 

@@ -1441,6 +1441,65 @@ gretl_matrix *gretl_cmatrix_diag (const gretl_matrix *X,
     return ret;
 }
 
+int gretl_cmatrix_set_diag (gretl_matrix *targ,
+			    const gretl_matrix *src,
+			    double x)
+{
+    double complex *zsrc = NULL;
+    double complex *ztarg;
+    double complex zi;
+    int r, d, i;
+    int match = 0;
+    int err = 0;
+
+    if (!cmatrix_validate(targ, 0)) {
+	return E_INVARG;
+    }
+
+    r = targ->rows / 2;
+    d = MIN(r, targ->cols);
+
+    if (src != NULL) {
+	if (src->is_complex) {
+	    if ((src->rows == 2 && src->cols == d) ||
+		(src->cols == 1 && src->rows == 2*d)) {
+		/* conformable complex vector */
+		zsrc = (double complex *) src->val;
+		match = 1;
+	    } else if (src->rows == 2 && src->cols == 1) {
+		/* complex scalar */
+		zi = *(double complex *) src->val;
+		match = 2;
+	    }
+	} else if (gretl_vector_get_length(src) == d) {
+	    /* conformable real vector */
+	    match = 3;
+	}
+    } else {
+	/* use real scalar, @x */
+	zi = x;
+	match = 4;
+    }
+
+    if (match == 0) {
+	return E_NONCONF;
+    }
+
+    ztarg = (double complex *) targ->val;
+
+    for (i=0; i<d; i++) {
+	if (match == 1) {
+	    gretl_cmatrix_set(ztarg, r, i, i, zsrc[i]);
+	} else if (match == 3) {
+	    gretl_cmatrix_set(ztarg, r, i, i, src->val[i]);
+	} else {
+	    gretl_cmatrix_set(ztarg, r, i, i, zi);
+	}
+    }
+
+    return err;
+}
+
 gretl_matrix *gretl_cmatrix_vech (const gretl_matrix *X,
 				  int *err)
 {
