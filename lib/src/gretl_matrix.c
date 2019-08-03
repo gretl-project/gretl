@@ -6711,17 +6711,23 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
     return c;
 }
 
+/* Multiplication or division for complex matrices in the old
+   gretl representation, with real parts in the first column
+   and imaginary parts (if present) in the second.
+*/
+
 static gretl_matrix *
-gretl_matrix_complex_multdiv (const gretl_matrix *a,
-			      const gretl_matrix *b,
-			      int multiply,
-			      int force_complex,
-			      int *err)
+gretl_matrix_complex_muldiv (const gretl_matrix *a,
+			     const gretl_matrix *b,
+			     int multiply,
+			     int force_complex,
+			     int *err)
 {
     gretl_matrix *c = NULL;
     double *ar, *ai;
     double *br, *bi;
     double *cr, *ci;
+    double complex az, bz, cz;
     int m, n, p, q;
     int i, izero = 1;
     double r2;
@@ -6770,47 +6776,20 @@ gretl_matrix_complex_multdiv (const gretl_matrix *a,
     ci = (c->cols == 2)? cr + m : NULL;
 
     for (i=0; i<m; i++) {
-	cr[i] = ar[i] * br[i];
-	if (multiply) {
-	    if (ai != NULL && bi != NULL) {
-		cr[i] -= ai[i] * bi[i];
+	az = ai == NULL ? ar[i] : ar[i] + ai[i] * I;
+	bz = bi == NULL ? br[i] : br[i] + bi[i] * I;
+	cz = multiply ? az * bz : az / bz;
+	cr[i] = creal(cz);
+	if (ci != NULL) {
+	    ci[i] = cimag(cz);
+	    if (ci[i] != 0.0) {
+		izero = 0;
 	    }
-	    if (ci != NULL) {
-		ci[i] = 0.0;
-	    }
-	    if (bi != NULL) {
-		ci[i] += ar[i] * bi[i];
-	    }
-	    if (ai != NULL) {
-		ci[i] += br[i] * ai[i];
-	    }
-	} else {
-	    r2 = br[i] * br[i];
-	    if (bi != NULL) {
-		r2 += bi[i] * bi[i];
-	    }
-	    if (ai != NULL && bi != NULL) {
-		cr[i] += ai[i] * bi[i];
-	    }
-	    if (ci != NULL) {
-		ci[i] = 0.0;
-		if (bi != NULL) {
-		    ci[i] -= ar[i] * bi[i];
-		}
-		if (ai != NULL) {
-		    ci[i] += br[i] * ai[i];
-		}
-		ci[i] /= r2;
-	    }
-	    cr[i] /= r2;
-	}
-	if (ci != NULL && ci[i] != 0.0) {
-	    izero = 0;
 	}
     }
 
     if (errno) {
-	*err = math_err_check("gretl_matrix_complex_multdiv", errno);
+	*err = math_err_check("gretl_matrix_complex_muldiv", errno);
 	if (*err) {
 	    gretl_matrix_free(c);
 	    c = NULL;
@@ -6818,6 +6797,7 @@ gretl_matrix_complex_multdiv (const gretl_matrix *a,
     }
 
     if (!*err && !force_complex && c->cols == 2 && izero) {
+	/* drop the all-zero imaginary part */
 	*err = gretl_matrix_realloc(c, c->rows, 1);
 	if (*err) {
 	    gretl_matrix_free(c);
@@ -6851,7 +6831,7 @@ gretl_matrix *gretl_matrix_complex_multiply (const gretl_matrix *a,
 					     int force_complex,
 					     int *err)
 {
-    return gretl_matrix_complex_multdiv(a, b, 1, force_complex, err);
+    return gretl_matrix_complex_muldiv(a, b, 1, force_complex, err);
 }
 
 /**
@@ -6877,7 +6857,7 @@ gretl_matrix *gretl_matrix_complex_divide (const gretl_matrix *a,
 					   int force_complex,
 					   int *err)
 {
-    return gretl_matrix_complex_multdiv(a, b, 0, force_complex, err);
+    return gretl_matrix_complex_muldiv(a, b, 0, force_complex, err);
 }
 
 /**
