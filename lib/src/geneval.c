@@ -2787,9 +2787,9 @@ static gretl_matrix *calc_get_matrix (gretl_matrix **pM,
 }
 
 #define m_op_does_complex(o) (o==B_ADD || o==B_SUB || o==B_MUL || \
-			      o==B_TRMUL || o==B_DOTMULT || o==B_DOTADD || \
-			      o==B_DOTSUB || o==B_DOTPOW || o==F_MCSEL || \
-			      o==F_MRSEL || o==B_DOTASN)
+			      o==B_TRMUL || o==B_DOTMULT || o==B_DOTDIV || \
+			      o==B_DOTADD || o==B_DOTSUB || o==B_DOTPOW || \
+			      o==F_MCSEL || o==F_MRSEL || o==B_DOTASN)
 
 /* return allocated result of binary operation performed on
    two matrices */
@@ -2960,7 +2960,10 @@ static int real_matrix_calc (const gretl_matrix *A,
 	*/
 	if (A->is_complex && B->is_complex) {
 	    if (op == B_DOTMULT) {
-		C = gretl_complex_hprod(A, B, &err);
+		C = gretl_complex_hprod(A, B, 0, &err);
+		break;
+	    } else if (op == B_DOTDIV) {
+		C = gretl_complex_hprod(A, B, 1, &err);
 		break;
 	    } else if (op != B_DOTADD && op != B_DOTSUB) {
 		err = operator_real_only(op);

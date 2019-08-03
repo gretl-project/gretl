@@ -22,8 +22,9 @@
 #include "gretl_cmatrix.h"
 
 /* Note: since we include gretl_cmatrix.h (which in turn includes
-   C99's complex.h) before fftw3.h, FFTW will use the C99
-   representation of complex numbers.
+   C99's complex.h) before fftw3.h, FFTW's fftw_complex will be
+   typedef'd to C99's "double complex" and can be manipulated as
+   such.
 */
 
 #include <fftw3.h>
@@ -282,7 +283,7 @@ gretl_matrix *gretl_cmatrix_multiply (const gretl_matrix *A,
 
     if (A->is_complex && B->is_complex) {
 	if (cscalar(A) || cscalar(B)) {
-	    return gretl_complex_hprod(A, B, err);
+	    return gretl_complex_hprod(A, B, 0, err);
 	} else {
 	    C = gretl_zgemm(A, 0, B, err);
 	}
@@ -817,10 +818,14 @@ gretl_matrix *gretl_complex_fft (const gretl_matrix *A,
    matrix has a single column, or we have a column match and
    one matrix has a single (complex) row, or one of the
    operands is a complex scalar (2x1 matrix).
+
+   If the @divide argument is non-zero we do the same thing
+   but with complex division rather than multiplication.
 */
 
 gretl_matrix *gretl_complex_hprod (const gretl_matrix *A,
 				   const gretl_matrix *B,
+				   int divide,
 				   int *err)
 {
     gretl_matrix *C = NULL;
@@ -842,10 +847,12 @@ gretl_matrix *gretl_complex_hprod (const gretl_matrix *A,
     cc = A->cols;
 
     if (cscalar(A)) {
+	/* complex scalar on left */
 	match = 1;
 	cr = B->rows;
 	cc = B->cols;
     } else if (cscalar(B)) {
+	/* complex scalar on right */
 	match = 1;
 	L = B;
 	R = A;
@@ -904,7 +911,11 @@ gretl_matrix *gretl_complex_hprod (const gretl_matrix *A,
 	/* A or B is a complex scalar */
 	for (j=0; j<cc; j++) {
 	    for (i=0; i<cr; i++) {
-		c[k++] = a[0] * b[j*cr+i];
+		if (divide && L == B) {
+		    c[k++] = b[j*cr+i] / a[0];
+		} else {
+		    c[k++] = divide ? a[0] / b[j*cr+i] : a[0] * b[j*cr+i];
+		}
 	    }
 	}
     } else if (match == 2) {
@@ -912,27 +923,39 @@ gretl_matrix *gretl_complex_hprod (const gretl_matrix *A,
 	int n = cr * cc;
 
 	for (k=0; k<n; k++) {
-	    c[k] = a[k] * b[k];
+	    c[k] = divide ? a[k] / b[k] : a[k] * b[k];
 	}
     } else if (match == 3) {
 	/* b has just one column */
 	for (j=0; j<cc; j++) {
 	    for (i=0; i<cr; i++) {
-		c[k++] = a[j*cr+i] * b[i];
+		if (divide && L == B) {
+		    c[k++] = b[i] / a[j*cr+i];
+		} else {
+		    c[k++] = divide ? a[j*cr+i] / b[i] : a[j*cr+i] * b[i];
+		}
 	    }
 	}
     } else if (match == 4) {
 	/* b has just one row */
 	for (j=0; j<cc; j++) {
 	    for (i=0; i<cr; i++) {
-		c[k++] = a[j*cr+i] * b[j];
+		if (divide && L == B) {
+		    c[k++] = b[j] / a[j*cr+i];
+		} else {
+		    c[k++] = divide ? a[j*cr+i] / b[j] : a[j*cr+i] * b[j];
+		}
 	    }
 	}
     } else {
 	/* col vector times row vector */
 	for (j=0; j<cc; j++) {
 	    for (i=0; i<cr; i++) {
-		c[k++] = a[i] * b[j];
+		if (divide && L == B) {
+		    c[k++] = b[j] / a[i];
+		} else {
+		    c[k++] = divide ? a[i] / b[j] : a[i] * b[j];
+		}
 	    }
 	}
     }
