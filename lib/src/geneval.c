@@ -2739,7 +2739,8 @@ static gretl_matrix *calc_get_matrix (gretl_matrix **pM,
 #define m_op_does_complex(o) (o==B_ADD || o==B_SUB || o==B_MUL || \
 			      o==B_TRMUL || o==B_DOTMULT || o==B_DOTDIV || \
 			      o==B_DOTADD || o==B_DOTSUB || o==B_DOTPOW || \
-			      o==F_MCSEL || o==F_MRSEL || o==B_DOTASN)
+			      o==F_MCSEL || o==F_MRSEL || o==B_DOTASN || \
+	                      o==B_HCAT || o==B_VCAT)
 
 /* return allocated result of binary operation performed on
    two matrices */
@@ -2796,10 +2797,17 @@ static int real_matrix_calc (const gretl_matrix *A,
 	}
 	break;
     case B_HCAT:
-	C = gretl_matrix_col_concat(A, B, &err);
-	break;
     case B_VCAT:
-	C = gretl_matrix_row_concat(A, B, &err);
+#if USE_CIDX
+	if (A->is_complex + B->is_complex == 1) {
+	    return no_mixed_operands(op);
+	}
+#endif
+	if (op == B_HCAT) {
+	    C = gretl_matrix_col_concat(A, B, &err);
+	} else {
+	    C = gretl_matrix_row_concat(A, B, &err);
+	}
 	break;
     case F_DSUM:
 	C = gretl_matrix_direct_sum(A, B, &err);
