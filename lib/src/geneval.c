@@ -3659,6 +3659,25 @@ static NODE *bundle_file_write (NODE *l, NODE *m, NODE *r, parser *p)
     return ret;
 }
 
+/* temporary, transitional function to toggle the 'complex'
+   flag on a matrix manually
+*/
+
+static int matrix_set_complex (gretl_matrix *m, int c)
+{
+    if (c) {
+	if (m->rows % 2 != 0) {
+	    return E_INVARG;
+	} else {
+	    m->is_complex = 1;
+	}
+    } else {
+	m->is_complex = 0;
+    }
+
+    return 0;
+}
+
 /* matrix on left, scalar on right */
 
 static NODE *matrix_scalar_func (NODE *l, NODE *r,
@@ -3670,7 +3689,7 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
 	gretl_matrix *m = l->v.m;
 	int k;
 
-	if (f == HF_CSWITCH) {
+	if (f == HF_CSWITCH || HF_SETCMPLX) {
 	    k = node_get_bool(r, p, 1);
 	} else {
 	    k = node_get_int(r, p);
@@ -3684,7 +3703,7 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
 	    return NULL;
 	}
 
-	ret = aux_matrix_node(p);
+	ret = (f == HF_SETCMPLX)? aux_scalar_node(p) : aux_matrix_node(p);
 
 	if (ret != NULL) {
 	    if (f == F_MSORTBY) {
@@ -3693,10 +3712,12 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
 		ret->v.m = gretl_cxtract(m, k, &p->err);
 	    } else if (f == HF_CSWITCH) {
 		ret->v.m = gretl_cmatrix_switch(m, k, &p->err);
+	    } else if (f == HF_SETCMPLX) {
+		ret->v.xval = p->err = matrix_set_complex(m, k);
 	    }
 	}
     } else {
-	ret = aux_matrix_node(p);
+	ret = aux_any_node(p);
     }
 
     return ret;
@@ -15561,6 +15582,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_MSORTBY:
     case HF_CXTRACT:
     case HF_CSWITCH:
+    case HF_SETCMPLX:
 	/* matrix on left, scalar on right */
 	if (l->t == MAT && null_or_scalar(r)) {
 	    ret = matrix_scalar_func(l, r, t->t, p);
