@@ -5318,6 +5318,9 @@ static void print_package_code (const fnpkg *pkg,
 {
     int i;
 
+    pprintf(prn, "# hansl code from package %s %s (%s)\n\n",
+	    pkg->name, pkg->version, pkg->date);
+
     if (pkg->priv != NULL) {
 	pputs(prn, "# private functions\n\n");
 	for (i=0; i<pkg->n_priv; i++) {
