@@ -1320,7 +1320,7 @@ gretl_matrix *gretl_matrix_get_diagonal (const gretl_matrix *m, int *err)
     if (gretl_is_null_matrix(m)) {
 	d = gretl_null_matrix_new();
     } else {
-	n = (m->rows < m->cols)? m->rows : m->cols;
+	n = MIN(m->rows, m->cols);
 	d = gretl_column_vector_alloc(n);
     }
 
@@ -1333,6 +1333,62 @@ gretl_matrix *gretl_matrix_get_diagonal (const gretl_matrix *m, int *err)
     }
 
     return d;
+}
+
+/**
+ * gretl_matrix_set_diagonal:
+ * @targ: target matrix.
+ * @src: source vector (or NULL).
+ * @x: (alternative) source scalar.
+ *
+ * Sets the diagonal elements of @targ using the elements of
+ * @src, if non-NULL, or otherwise the constant value @x.
+ * If @src is given it must be a vector of length equal to
+ * that of the diagonal of @targ (that is, the minimum of
+ * its rows and columns).
+ *
+ * Returns: 0 on success, error code on non-conformability.
+ */
+
+int gretl_matrix_set_diagonal (gretl_matrix *targ,
+			       const gretl_matrix *src,
+			       double x)
+{
+    int i, n, match = 0;
+    int err = 0;
+
+    if (gretl_is_null_matrix(targ) || targ->is_complex) {
+	return E_INVARG;
+    } else if (src != NULL && src->is_complex) {
+	return E_INVARG;
+    }
+
+    n = MIN(targ->rows, targ->cols);
+
+    if (src != NULL) {
+	if (gretl_vector_get_length(src) == n) {
+	    match = 1;
+	} else if (gretl_matrix_is_scalar(src)) {
+	    x = src->val[0];
+	    match = 2;
+	}
+    } else {
+	match = 2;
+    }
+
+    if (match == 0) {
+	err = E_NONCONF;
+    } else {
+	for (i=0; i<n; i++) {
+	    if (match == 1) {
+		gretl_matrix_set(targ, i, i, src->val[i]);
+	    } else {
+		gretl_matrix_set(targ, i, i, x);
+	    }
+	}
+    }
+
+    return err;
 }
 
 /**

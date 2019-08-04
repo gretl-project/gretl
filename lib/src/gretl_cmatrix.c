@@ -1234,6 +1234,8 @@ int gretl_ctrans_in_place (gretl_matrix *A)
 
 /* Addition or subtraction of matrices: handle the case
    where one operand is complex and the other is real.
+   In addition, if both matrices are complex, handle the
+   case where one of them is a complex scalar.
 */
 
 gretl_matrix *cmatrix_add_sub (const gretl_matrix *A,
@@ -1243,6 +1245,18 @@ gretl_matrix *cmatrix_add_sub (const gretl_matrix *A,
     gretl_matrix *C = NULL;
     int cr = A->rows;
     int cc = A->cols;
+    int a_scalar = 0;
+    int b_scalar = 0;
+
+    if (A->is_complex && cscalar(B)) {
+	b_scalar = 1;
+	goto allocate;
+    } else if (cscalar(A) && B->is_complex) {
+	cr = B->rows;
+	cc = B->cols;
+	a_scalar = 1;
+	goto allocate;
+    }
 
     if (B->cols != A->cols) {
 	*err = E_NONCONF;
@@ -1267,6 +1281,8 @@ gretl_matrix *cmatrix_add_sub (const gretl_matrix *A,
 	}
     }
 
+ allocate:
+
     if (!*err) {
 	C = gretl_matrix_alloc(cr, cc);
 	if (C == NULL) {
@@ -1276,22 +1292,27 @@ gretl_matrix *cmatrix_add_sub (const gretl_matrix *A,
 
     if (!*err) {
 	double complex *cz = (double complex *) C->val;
-	double complex *az, *bz;
+	double complex *az = (double complex *) A->val;
+	double complex *bz = (double complex *) B->val;
 	int i, n = cc * cr / 2;
 
-	if (A->is_complex && B->is_complex) {
-	    az = (double complex *) A->val;
-	    bz = (double complex *) B->val;
+	if (b_scalar) {
+	    for (i=0; i<n; i++) {
+		cz[i] = sgn < 0 ? az[i] - bz[0] : az[i] + bz[0];
+	    }
+	} else if (a_scalar) {
+	    for (i=0; i<n; i++) {
+		cz[i] = sgn < 0 ? az[0] - bz[i] : az[0] + bz[i];
+	    }
+	} else if (A->is_complex && B->is_complex) {
 	    for (i=0; i<n; i++) {
 		cz[i] = sgn < 0 ? az[i] - bz[i] : az[i] + bz[i];
 	    }
 	} else if (A->is_complex) {
-	    az = (double complex *) A->val;
 	    for (i=0; i<n; i++) {
 		cz[i] = sgn < 0 ? az[i] - B->val[i] : az[i] + B->val[i];
 	    }
 	} else {
-	    bz = (double complex *) B->val;
 	    for (i=0; i<n; i++) {
 		cz[i] = sgn < 0 ? A->val[i] - bz[i] : A->val[i] + bz[i];
 	    }
@@ -1440,8 +1461,12 @@ gretl_matrix *gretl_cmatrix_trace (const gretl_matrix *X,
     return ret;
 }
 
-gretl_matrix *gretl_cmatrix_diag (const gretl_matrix *X,
-				  int *err)
+/* Retrieve the diagonal of complex matrix @X in the form
+   of a complex column vector.
+*/
+
+gretl_matrix *gretl_cmatrix_get_diagonal (const gretl_matrix *X,
+					  int *err)
 {
     gretl_matrix *ret = NULL;
 
@@ -1475,9 +1500,9 @@ gretl_matrix *gretl_cmatrix_diag (const gretl_matrix *X,
    real vector, or a complex scalar.
 */
 
-int gretl_cmatrix_set_diag (gretl_matrix *targ,
-			    const gretl_matrix *src,
-			    double x)
+int gretl_cmatrix_set_diagonal (gretl_matrix *targ,
+				const gretl_matrix *src,
+				double x)
 {
     double complex *zsrc = NULL;
     double complex *ztarg;

@@ -270,6 +270,10 @@ gretl_matrix *gretl_matrix_reverse_cols (const gretl_matrix *m, int *err);
 
 gretl_matrix *gretl_matrix_get_diagonal (const gretl_matrix *m, int *err);
 
+int gretl_matrix_set_diagonal (gretl_matrix *targ,
+			       const gretl_matrix *src,
+			       double x);
+
 int gretl_matrix_get_row (const gretl_matrix *m, int i, gretl_vector *v);
 
 double gretl_matrix_trace (const gretl_matrix *m);

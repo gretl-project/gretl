@@ -1245,7 +1245,7 @@ static double xy_calc (double x, double y, int op, int targ, parser *p)
 #endif
 
     /* assignment */
-    if (op == B_ASN) {
+    if (op == B_ASN || op == B_DOTASN) {
 	return y;
     }
 
@@ -1316,56 +1316,6 @@ static double xy_calc (double x, double y, int op, int targ, parser *p)
 	return z;
     }
 }
-
-#if 0 /* not just yet */
-
-static double complex complex_xy_calc (double complex x,
-				       double complex y,
-				       int op, parser *p)
-{
-    double complex z = NADBL;
-
-#if EDEBUG > 1
-    fprintf(stderr, "complex xy_calc: op = %d ('%s')\n", op, getsymb(op));
-#endif
-
-    /* assignment */
-    if (op == B_ASN) {
-	return y;
-    }
-
-    /* propagate NA */
-    if (na(x) || na(y)) {
-	return x * y;
-    }
-
-    errno = 0;
-
-    switch (op) {
-    case B_ADD:
-	return x + y;
-    case B_SUB:
-	return x - y;
-    case B_MUL:
-	return x * y;
-    case B_DIV:
-	return x / y;
-    case B_EQ:
-	return x == y;
-    case B_NEQ:
-	return x != y;
-    case B_POW:
-	z = cpow(x, y);
-	if (errno) {
-	    eval_warning(p, op, errno);
-	}
-	return z;
-    default:
-	return z;
-    }
-}
-
-#endif /* not yet */
 
 #define randgen(f) (f == F_RANDGEN || f == F_MRANDGEN || f == F_RANDGEN1)
 
@@ -4421,7 +4371,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    break;
 	case F_DIAG:
 	    if (m->is_complex) {
-		ret->v.m = gretl_cmatrix_diag(m, &p->err);
+		ret->v.m = gretl_cmatrix_get_diagonal(m, &p->err);
 	    } else {
 		ret->v.m = gretl_matrix_get_diagonal(m, &p->err);
 	    }
@@ -11004,6 +10954,7 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
     matrix_subspec *spec;
     double y = NADBL;
     int rhs_scalar = 0;
+    int inflected = 0;
     int free_m2 = 0;
 
     if (p->op == B_HCAT || p->op == B_VCAT) {
@@ -11067,39 +11018,53 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 	return p->err;
     }
 
+    /* Is the assignment straight or inflected?  Note that in
+       this context there's no distinction between '=' and '.='
+       and the latter doesn't count as inflected.
+    */
+    if (p->op != B_ASN && p->op != B_DOTASN) {
+	inflected = 1;
+    }
+
     if (spec->ltype == SEL_ELEMENT) {
 	/* assignment, plain or inflected, to a single
-	   element of target matrix
+	   element of target matrix; note that we'll
+	   never come here if @m1 is complex
 	*/
 	if (rhs_scalar) {
 	    int i = mspec_get_element(spec);
 
-	    if (p->op == B_ASN) {
+	    if (!inflected) {
 		m1->val[i] = y;
 	    } else {
 		m1->val[i] = xy_calc(m1->val[i], y, p->op, MAT, p);
 	    }
 	} else {
-	    /* the RHS must be 1 x 1 */
+	    /* here the RHS must be 1 x 1 */
 	    p->err = E_NONCONF;
 	}
 	return p->err; /* we're done */
     }
 
-    if (m1->is_complex && spec->ltype == SEL_DIAG && p->op == B_ASN) {
+    if (spec->ltype == SEL_DIAG && !inflected) {
 	/* a somewhat finicky case */
-	p->err = gretl_cmatrix_set_diag(m1, m2, y);
+	if (m1->is_complex) {
+	    p->err = gretl_cmatrix_set_diagonal(m1, m2, y);
+	} else {
+	    p->err = gretl_matrix_set_diagonal(m1, m2, y);
+	}
 	return p->err; /* we're done */
     }
 
-    if (rhs_scalar && p->op == B_ASN) {
+    if (rhs_scalar && !inflected) {
 	/* straight assignment of a scalar value to a
-	   non-scalar submatrix */
+	   non-scalar submatrix -- FIXME m1 complex?
+	*/
 	p->err = assign_scalar_to_submatrix(m1, y, spec);
 	return p->err; /* we're done */
     }
 
-    if (p->op != B_ASN) {
+    if (inflected) {
 	/* Here we're doing '+=' or some such, in which case a new
 	   submatrix must be calculated using the original
 	   submatrix @a and the newly generated matrix (or
@@ -11131,6 +11096,7 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 		m2 = b;
 		free_m2 = 1;
 	    }
+	    /* we now proceed to matrix_replace_submatrix() */
 	}
     }
 
