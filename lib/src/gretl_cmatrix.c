@@ -813,97 +813,72 @@ gretl_matrix *gretl_complex_fft (const gretl_matrix *A,
     return B;
 }
 
-/* Hadamard product for complex matrices that match by both
-   row and column dimension, or we have a row match and one
-   matrix has a single column, or we have a column match and
-   one matrix has a single (complex) row, or one of the
-   operands is a complex scalar (2x1 matrix).
+static int complex_dotmatch (const gretl_matrix *A,
+			     const gretl_matrix *B,
+			     int *cr, int *cc,
+			     int *swap)
+{
+    int match = 0;
 
-   If the @divide argument is non-zero we do the same thing
-   but with complex division rather than multiplication.
-*/
+    if (cscalar(A)) {
+	/* complex scalar on left */
+	match = 1;
+	*cr = B->rows;
+	*cc = B->cols;
+    } else if (cscalar(B)) {
+	/* complex scalar on right */
+	*swap = match = 1;
+    } else if (A->rows == B->rows && A->cols == B->cols) {
+	match = 2;
+    } else if (A->rows == B->rows) {
+	if (B->cols == 1) {
+	    match = 3;
+	} else if (A->cols == 1) {
+	    *cc = B->cols;
+	    *swap = match = 3;
+	}
+    } else if (A->cols == B->cols) {
+	if (B->rows == 2) {
+	    match = 4;
+	} else if (A->rows == 2) {
+	    *cr = B->rows;
+	    *swap = match = 4;
+	}
+    } else if ((A->cols == 1 && B->rows == 2) ||
+	       (B->cols == 1 && A->rows == 2)) {
+	if (B->cols == 1) {
+	    *cr = B->rows;
+	    *swap = match = 5;
+	} else {
+	    *cc = B->cols;
+	    match = 5;
+	}
+    }
 
-gretl_matrix *gretl_complex_hprod (const gretl_matrix *A,
-				   const gretl_matrix *B,
-				   int divide,
-				   int *err)
+    return match;
+}
+
+static gretl_matrix *complex_hprod (const gretl_matrix *A,
+				    const gretl_matrix *B,
+				    int divide, int *err)
 {
     gretl_matrix *C = NULL;
     const gretl_matrix *L = A;
     const gretl_matrix *R = B;
-    double complex *a;
-    double complex *b;
-    double complex *c;
+    double complex *a, *b, *c;
     int match = 0;
     int swap = 0;
     int i, j, k;
     int cr, cc;
 
-#if 0
     if (!cmatrix_validate(A, 0) || !cmatrix_validate(B, 0)) {
 	*err = E_INVARG;
 	return NULL;
     }
-#endif
 
     cr = A->rows;
     cc = A->cols;
-
-    if (A->is_complex && B->is_complex) {
-	if (cscalar(A)) {
-	    /* complex scalar on left */
-	    match = 1;
-	    cr = B->rows;
-	    cc = B->cols;
-	} else if (cscalar(B)) {
-	    /* complex scalar on right */
-	    swap = match = 1;
-	} else if (A->rows == B->rows && A->cols == B->cols) {
-	    match = 2;
-	} else if (A->rows == B->rows) {
-	    if (B->cols == 1) {
-		match = 3;
-	    } else if (A->cols == 1) {
-		cc = B->cols;
-		swap = match = 3;
-	    }
-	} else if (A->cols == B->cols) {
-	    if (B->rows == 2) {
-		match = 4;
-	    } else if (A->rows == 2) {
-		cr = B->rows;
-		swap = match = 4;
-	    }
-	} else if ((A->cols == 1 && B->rows == 2) ||
-		   (B->cols == 1 && A->rows == 2)) {
-	    if (B->cols == 1) {
-		cr = B->rows;
-		swap = match = 5;
-	    } else {
-		cc = B->cols;
-		match = 5;
-	    }
-	}
-    } else if (!B->is_complex) {
-	if (B->rows == A->rows/2 && B->cols == A->cols) {
-	    match = 6;
-	} else if (B->rows == A->rows/2) {
-	    if (B->cols == 1) {
-		match = 7;
-	    } else if (A->cols == 1) {
-		cc = B->cols;
-		swap = match = 7;
-	    }
-	} else if (A->cols == B->cols) {
-	    if (B->rows == 1) {
-		match = 8;
-	    } else if (A->rows == 2) {
-		cr = B->rows * 2;
-		swap = match = 8;
-	    }
-	}
-    }
-
+    match = complex_dotmatch(A, B, &cr, &cc, &swap);
     if (match == 0) {
 	*err = E_NONCONF;
 	return NULL;
@@ -915,13 +890,12 @@ gretl_matrix *gretl_complex_hprod (const gretl_matrix *A,
 	return NULL;
     }
 
+    cr /= 2; /* rows of 16-byte values */
+
     if (swap) {
 	L = B;
 	R = A;
     }
-
-    cr /= 2; /* rows of 16-byte values */
-
     a = (double complex *) L->val;
     b = (double complex *) R->val;
     c = (double complex *) C->val;
@@ -978,43 +952,184 @@ gretl_matrix *gretl_complex_hprod (const gretl_matrix *A,
 		}
 	    }
 	}
-    } else if (match == 6) {
-	/* A and B of same dimensions */
-	double *bx = (double *) b;
-	int n = cr * cc;
+    }
 
-	for (k=0; k<n; k++) {
-	    c[k] = divide ? a[k] / bx[k] : a[k] * bx[k];
-	}
-    } else if (match == 7) {
-	/* b has just one (real) column */
-	double *bx = (double *) b;
+    C->is_complex = 1;
 
+    return C;
+}
+
+static gretl_matrix *complex_hpm (const gretl_matrix *A,
+				  const gretl_matrix *B,
+				  int minus, int *err)
+{
+    gretl_matrix *C = NULL;
+    const gretl_matrix *L = A;
+    const gretl_matrix *R = B;
+    double complex *a, *b, *c;
+    int match = 0;
+    int swap = 0;
+    int i, j, k;
+    int cr, cc;
+
+    if (!cmatrix_validate(A, 0) || !cmatrix_validate(B, 0)) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    cr = A->rows;
+    cc = A->cols;
+    match = complex_dotmatch(A, B, &cr, &cc, &swap);
+    if (match == 0) {
+	*err = E_NONCONF;
+	return NULL;
+    }
+
+    C = gretl_matrix_alloc(cr, cc);
+    if (C == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    cr /= 2; /* rows of 16-byte values */
+
+    if (swap) {
+	L = B;
+	R = A;
+    }
+    a = (double complex *) L->val;
+    b = (double complex *) R->val;
+    c = (double complex *) C->val;
+    k = 0; /* initialize! */
+
+    if (match == 1) {
+	/* A or B is a complex scalar */
 	for (j=0; j<cc; j++) {
 	    for (i=0; i<cr; i++) {
-		if (divide) {
-		    c[k++] = swap ? bx[i] / a[j*cr+i] : a[j*cr+i] / bx[i];
+		if (minus) {
+		    c[k++] = swap ? b[j*cr+i] - a[0] : a[0] - b[j*cr+i];
 		} else {
-		    c[k++] = a[j*cr+i] * bx[i];
+		    c[k++] = a[0] + b[j*cr+i];
 		}
 	    }
 	}
-    } else if (match == 8) {
-	/* b has just one (real) row */
-	double *bx = (double *) b;
+    } else if (match == 2) {
+	/* A and B of same dimensions */
+	int n = cr * cc;
 
+	for (k=0; k<n; k++) {
+	    c[k] = minus ? a[k] - b[k] : a[k] + b[k];
+	}
+    } else if (match == 3) {
+	/* b has just one column */
 	for (j=0; j<cc; j++) {
 	    for (i=0; i<cr; i++) {
-		if (divide) {
-		    c[k++] = swap ? bx[j] / a[j*cr+i] : a[j*cr+i] / bx[j];
+		if (minus) {
+		    c[k++] = swap ? b[i] - a[j*cr+i] : a[j*cr+i] - b[i];
 		} else {
-		    c[k++] = a[j*cr+i] * bx[j];
+		    c[k++] = a[j*cr+i] + b[i];
+		}
+	    }
+	}
+    } else if (match == 4) {
+	/* b has just one row */
+	for (j=0; j<cc; j++) {
+	    for (i=0; i<cr; i++) {
+		if (minus) {
+		    c[k++] = swap ? b[j] - a[j*cr+i] : a[j*cr+i] - b[j];
+		} else {
+		    c[k++] = a[j*cr+i] + b[j];
+		}
+	    }
+	}
+    } else if (match == 5) {
+	/* col vector times row vector */
+	for (j=0; j<cc; j++) {
+	    for (i=0; i<cr; i++) {
+		if (minus) {
+		    c[k++] = swap ? b[j] - a[i] : a[i] - b[j];
+		} else {
+		    c[k++] = a[i] + b[j];
 		}
 	    }
 	}
     }
 
     C->is_complex = 1;
+
+    return C;
+}
+
+/* Hadamard product for complex matrices that match by both
+   row and column dimension, or we have a row match and one
+   matrix has a single column, or we have a column match and
+   one matrix has a single (complex) row, or one of the
+   operands is a complex scalar (2x1 matrix).
+
+   We allow for the possibility that either A or B is real,
+   in which case it is promoted to complex for the purpose
+   of the calculation.
+
+   If the @divide argument is non-zero we do the same thing
+   but with complex division rather than multiplication.
+*/
+
+gretl_matrix *gretl_complex_hprod (const gretl_matrix *A,
+				   const gretl_matrix *B,
+				   int divide, int *err)
+{
+    gretl_matrix *T = NULL;
+    gretl_matrix *C = NULL;
+
+    if (A->is_complex && B->is_complex) {
+	C = complex_hprod(A, B, divide, err);
+    } else if (A->is_complex) {
+	/* case of real B */
+	T = complex_from_real(B, err);
+	if (T != NULL) {
+	    C = complex_hprod(A, T, divide, err);
+	}
+    } else if (B->is_complex) {
+	/* case of real A */
+	T = complex_from_real(A, err);
+	if (T != NULL) {
+	    C = complex_hprod(T, B, divide, err);
+	}
+    } else {
+	*err = E_TYPES;
+    }
+
+    gretl_matrix_free(T);
+
+    return C;
+}
+
+gretl_matrix *gretl_complex_hsum (const gretl_matrix *A,
+				  const gretl_matrix *B,
+				  int minus, int *err)
+{
+    gretl_matrix *T = NULL;
+    gretl_matrix *C = NULL;
+
+    if (A->is_complex && B->is_complex) {
+	C = complex_hpm(A, B, minus, err);
+    } else if (A->is_complex) {
+	/* case of real B */
+	T = complex_from_real(B, err);
+	if (T != NULL) {
+	    C = complex_hpm(A, T, minus, err);
+	}
+    } else if (B->is_complex) {
+	/* case of real A */
+	T = complex_from_real(A, err);
+	if (T != NULL) {
+	    C = complex_hpm(T, B, minus, err);
+	}
+    } else {
+	*err = E_TYPES;
+    }
+
+    gretl_matrix_free(T);
 
     return C;
 }

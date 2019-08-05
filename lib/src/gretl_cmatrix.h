@@ -58,6 +58,10 @@ gretl_matrix *gretl_complex_hprod (const gretl_matrix *A,
 				   int divide,
 				   int *err);
 
+gretl_matrix *gretl_complex_hsum (const gretl_matrix *A,
+				  const gretl_matrix *B,
+				  int minus, int *err);
+
 gretl_matrix *gretl_cmatrix (const gretl_matrix *Re,
 			     const gretl_matrix *Im,
 			     int *err);

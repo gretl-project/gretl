@@ -2738,9 +2738,9 @@ static gretl_matrix *calc_get_matrix (gretl_matrix **pM,
 
 #define m_op_does_complex(o) (o==B_ADD || o==B_SUB || o==B_MUL || \
 			      o==B_TRMUL || o==B_DOTMULT || o==B_DOTDIV || \
-			      o==B_DOTADD || o==B_DOTSUB || o==B_DOTPOW || \
-			      o==F_MCSEL || o==F_MRSEL || o==B_DOTASN || \
-	                      o==B_HCAT || o==B_VCAT)
+			      o==B_DOTPOW || o==F_MCSEL || o==F_MRSEL || \
+			      o==B_DOTASN || o==B_HCAT || o==B_VCAT || \
+			      o==B_DOTADD || o==B_DOTSUB)
 
 /* return allocated result of binary operation performed on
    two matrices */
@@ -2753,6 +2753,7 @@ static int real_matrix_calc (const gretl_matrix *A,
     int ra, ca;
     int rb, cb;
     int r, c;
+    int abc = 0;
     int err = 0;
 
     if (gretl_is_null_matrix(A) ||
@@ -2924,24 +2925,20 @@ static int real_matrix_calc (const gretl_matrix *A,
     case B_DOTLTE:
     case B_DOTNEQ:
 	/* dot operators and complex values: maybe we can
-	   lighten up a bit with some more work
+	   lighten up a bit with some more work: B_DOTEQ,
+	   B_DOTNEQ, for example?
 	*/
-	if (A->is_complex && B->is_complex) {
-	    if (op == B_DOTMULT || op == B_DOTDIV) {
-		C = gretl_complex_hprod(A, B, op==B_DOTDIV, &err);
-		break;
-	    } else if (op != B_DOTADD && op != B_DOTSUB) {
-		err = operator_real_only(op);
-		break;
-	    }
-	}
-	if (A->is_complex && !B->is_complex &&
-	    (op == B_DOTMULT || op == B_DOTDIV)) {
+	abc = A->is_complex + B->is_complex;
+	if (abc > 0 && (op == B_DOTMULT || op == B_DOTDIV)) {
+	    /* complex and mixed case both handled */
 	    C = gretl_complex_hprod(A, B, op==B_DOTDIV, &err);
 	    break;
-	}
-	if (A->is_complex || B->is_complex) {
-	    err = no_mixed_operands(op);
+	} else if (abc > 0 && (op == B_DOTADD || op == B_DOTSUB)) {
+	    /* complex and mixed case both handled */
+	    C = gretl_complex_hsum(A, B, op==B_DOTSUB, &err);
+	    break;
+	} else if (abc > 0) {
+	    err = operator_real_only(op);
 	    break;
 	}
 	/* apply operator element-wise */

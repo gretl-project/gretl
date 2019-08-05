@@ -6176,10 +6176,8 @@ enum {
 
 /**
  * dot_op_conf:
- * @ra: rows of A
- * @ca: columns of A
- * @rb: rows of B
- * @cb: columns of B
+ * @A: first matrix.
+ * @B: second matrix.
  * @r: pointer to rows of result
  * @c: pointer to columns of result
  *
@@ -6189,14 +6187,19 @@ enum {
  * %CONF_NONE indicates non-conformability.
  */
 
-static int dot_op_conf (int ra, int ca, int rb, int cb, int *r, int *c)
+static int dot_op_conf (const gretl_matrix *A, const gretl_matrix *B,
+			int *r, int *c)
 {
+    int ra = A->rows;
+    int rb = B->rows;
+    int ca = A->cols;
+    int cb = B->cols;
     int confr = (ra == rb);
     int confc = (ca == cb);
-    int rowva = (ra == 1);
     int colva = (ca == 1);
-    int rowvb = (rb == 1);
     int colvb = (cb == 1);
+    int rowva = ra == 1;
+    int rowvb = (rb == 1);
     int ret = CONF_NONE;
 
     if (confr && confc) {
@@ -6224,12 +6227,12 @@ static int dot_op_conf (int ra, int ca, int rb, int cb, int *r, int *c)
 	ret = CONF_B_ROWVEC;
 	*r = (rowva)? rb : ra;
 	*c = ca;
-    } else if (rowva && colva) {
+    } else if (ra == 1 && ca == 1) {
 	/* A is a scalar in disguise */
 	ret = CONF_A_SCALAR;
 	*r = rb;
 	*c = cb;
-    } else if (rowvb && colvb) {
+    } else if (rb == 1 && cb == 1) {
 	/* B is a scalar in disguise */
 	ret = CONF_B_SCALAR;
 	*r = ra;
@@ -6248,6 +6251,8 @@ static int dot_op_conf (int ra, int ca, int rb, int cb, int *r, int *c)
 
     return ret;
 }
+
+/* give an OPENMP parallelization? */
 
 static void vec_x_op_vec_y (double *z, const double *x,
 			    const double *y, int n,
@@ -6530,25 +6535,16 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 {
     gretl_matrix *c = NULL;
     double x, y;
-    int m, n, p, q, nr, nc;
+    int nr, nc;
     int conftype;
     int i, j, off;
-#if defined(_OPENMP)
-    guint64 psize;
-    int nv;
-#endif
 
     if (gretl_is_null_matrix(a) || gretl_is_null_matrix(b)) {
 	*err = E_DATA;
 	return NULL;
     }
 
-    m = a->rows;
-    n = a->cols;
-    p = b->rows;
-    q = b->cols;
-
-    conftype = dot_op_conf(m, n, p, q, &nr, &nc);
+    conftype = dot_op_conf(a, b, &nr, &nc);
 
     if (conftype == CONF_NONE) {
 	fputs("gretl_matrix_dot_op: matrices not conformable\n", stderr);
@@ -6566,127 +6562,9 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 
     math_err_init();
 
-#if defined(_OPENMP)
-    if (conftype == CONF_ELEMENTS) {
-	nv = m * n;
-	psize = (guint64) m * n;
-    } else if (conftype == CONF_A_ROWVEC ||
-	       conftype == CONF_B_ROWVEC ||
-	       conftype == CONF_AR_BC) {
-	psize = nc;
-    } else {
-	psize = nr;
-    }
-    if (!libset_use_openmp(psize)) {
-	goto st_mode;
-    }
-
     switch (conftype) {
     case CONF_ELEMENTS:
-#pragma omp parallel for private(i)
-	for (i=0; i<nv; i++) {
-	    c->val[i] = x_op_y(a->val[i], b->val[i], op);
-	}
-	break;
-    case CONF_A_COLVEC:
-#pragma omp parallel for private(i,j,x,y)
-	for (i=0; i<nr; i++) {
-	    x = gretl_vector_get(a, i);
-	    for (j=0; j<nc; j++) {
-		y = gretl_matrix_get(b, i, j);
-		y = x_op_y(x, y, op);
-		gretl_matrix_set(c, i, j, y);
-	    }
-	}
-	break;
-    case CONF_B_COLVEC:
-#pragma omp parallel for private(i,j,x,y)
-	for (i=0; i<nr; i++) {
-	    y = gretl_vector_get(b, i);
-	    for (j=0; j<nc; j++) {
-		x = gretl_matrix_get(a, i, j);
-		x = x_op_y(x, y, op);
-		gretl_matrix_set(c, i, j, x);
-	    }
-	}
-	break;
-    case CONF_A_ROWVEC:
-#pragma omp parallel for private(i,j,x,y)
-	for (j=0; j<nc; j++) {
-	    x = gretl_vector_get(a, j);
-	    for (i=0; i<nr; i++) {
-		y = gretl_matrix_get(b, i, j);
-		y = x_op_y(x, y, op);
-		gretl_matrix_set(c, i, j, y);
-	    }
-	}
-	break;
-    case CONF_B_ROWVEC:
-#pragma omp parallel for private(i,j,x,y)
-	for (j=0; j<nc; j++) {
-	    y = gretl_vector_get(b, j);
-	    for (i=0; i<nr; i++) {
-		x = gretl_matrix_get(a, i, j);
-		x = x_op_y(x, y, op);
-		gretl_matrix_set(c, i, j, x);
-	    }
-	}
-	break;
-    case CONF_A_SCALAR:
-	x = a->val[0];
-#pragma omp parallel for private(i,j,y)
-	for (i=0; i<nr; i++) {
-	    for (j=0; j<nc; j++) {
-		y = gretl_matrix_get(b, i, j);
-		y = x_op_y(x, y, op);
-		gretl_matrix_set(c, i, j, y);
-	    }
-	}
-	break;
-    case CONF_B_SCALAR:
-	y = b->val[0];
-#pragma omp parallel for private(i,j,x)
-	for (i=0; i<nr; i++) {
-	    for (j=0; j<nc; j++) {
-		x = gretl_matrix_get(a, i, j);
-		x = x_op_y(x, y, op);
-		gretl_matrix_set(c, i, j, x);
-	    }
-	}
-	break;
-    case CONF_AC_BR:
-#pragma omp parallel for private(i,j,x,y)
-	for (i=0; i<nr; i++) {
-	    x = a->val[i];
-	    for (j=0; j<nc; j++) {
-		y = b->val[j];
-		y = x_op_y(x, y, op);
-		gretl_matrix_set(c, i, j, y);
-	    }
-	}
-	break;
-    case CONF_AR_BC:
-#pragma omp parallel for private(i,j,x,y)
-	for (j=0; j<nc; j++) {
-	    x = a->val[j];
-	    for (i=0; i<nr; i++) {
-		y = b->val[i];
-		y = x_op_y(x, y, op);
-		gretl_matrix_set(c, i, j, y);
-	    }
-	}
-	break;
-    }
-
-    goto finish;
-
- st_mode:
-
-#endif /* _OPENMP */
-
-    switch (conftype) {
-    case CONF_ELEMENTS:
-	vec_x_op_vec_y(c->val, a->val, b->val, m*n, op);
+	vec_x_op_vec_y(c->val, a->val, b->val, nr*nc, op);
 	break;
     case CONF_A_COLVEC:
 	for (i=0; i<nr; i++) {
@@ -6751,10 +6629,6 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 	}
 	break;
     }
-
-#if defined(_OPENMP)
- finish:
-#endif
 
     if (errno) {
 	*err = math_err_check("gretl_matrix_dot_op", errno);
