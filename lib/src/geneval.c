@@ -2927,17 +2927,20 @@ static int real_matrix_calc (const gretl_matrix *A,
 	   lighten up a bit with some more work
 	*/
 	if (A->is_complex && B->is_complex) {
-	    if (op == B_DOTMULT) {
-		C = gretl_complex_hprod(A, B, 0, &err);
-		break;
-	    } else if (op == B_DOTDIV) {
-		C = gretl_complex_hprod(A, B, 1, &err);
+	    if (op == B_DOTMULT || op == B_DOTDIV) {
+		C = gretl_complex_hprod(A, B, op==B_DOTDIV, &err);
 		break;
 	    } else if (op != B_DOTADD && op != B_DOTSUB) {
 		err = operator_real_only(op);
 		break;
 	    }
-	} else if (A->is_complex || B->is_complex) {
+	}
+	if (A->is_complex && !B->is_complex &&
+	    (op == B_DOTMULT || op == B_DOTDIV)) {
+	    C = gretl_complex_hprod(A, B, op==B_DOTDIV, &err);
+	    break;
+	}
+	if (A->is_complex || B->is_complex) {
 	    err = no_mixed_operands(op);
 	    break;
 	}

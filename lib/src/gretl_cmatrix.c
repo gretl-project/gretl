@@ -835,58 +835,73 @@ gretl_matrix *gretl_complex_hprod (const gretl_matrix *A,
     double complex *b;
     double complex *c;
     int match = 0;
+    int swap = 0;
     int i, j, k;
     int cr, cc;
 
+#if 0
     if (!cmatrix_validate(A, 0) || !cmatrix_validate(B, 0)) {
 	*err = E_INVARG;
 	return NULL;
     }
+#endif
 
     cr = A->rows;
     cc = A->cols;
 
-    if (cscalar(A)) {
-	/* complex scalar on left */
-	match = 1;
-	cr = B->rows;
-	cc = B->cols;
-    } else if (cscalar(B)) {
-	/* complex scalar on right */
-	match = 1;
-	L = B;
-	R = A;
-    } else if (A->rows == B->rows && A->cols == B->cols) {
-	match = 2;
-    } else if (A->rows == B->rows) {
-	if (B->cols == 1) {
-	    cc = A->cols;
-	    match = 3;
-	} else if (A->cols == 1) {
-	    cc = B->cols;
-	    L = B;
-	    R = A;
-	    match = 3;
-	}
-    } else if (A->cols == B->cols) {
-	if (B->rows == 2) {
-	    match = 4;
-	} else if (A->rows == 2) {
+    if (A->is_complex && B->is_complex) {
+	if (cscalar(A)) {
+	    /* complex scalar on left */
+	    match = 1;
 	    cr = B->rows;
-	    L = B;
-	    R = A;
-	    match = 4;
-	}
-    } else if ((A->cols == 1 && B->rows == 2) ||
-	       (B->cols == 1 && A->rows == 2)) {
-	if (B->cols == 1) {
-	    cr = B->rows;
-	    L = B;
-	    R = A;
-	} else {
 	    cc = B->cols;
+	} else if (cscalar(B)) {
+	    /* complex scalar on right */
+	    swap = match = 1;
+	} else if (A->rows == B->rows && A->cols == B->cols) {
+	    match = 2;
+	} else if (A->rows == B->rows) {
+	    if (B->cols == 1) {
+		match = 3;
+	    } else if (A->cols == 1) {
+		cc = B->cols;
+		swap = match = 3;
+	    }
+	} else if (A->cols == B->cols) {
+	    if (B->rows == 2) {
+		match = 4;
+	    } else if (A->rows == 2) {
+		cr = B->rows;
+		swap = match = 4;
+	    }
+	} else if ((A->cols == 1 && B->rows == 2) ||
+		   (B->cols == 1 && A->rows == 2)) {
+	    if (B->cols == 1) {
+		cr = B->rows;
+		swap = match = 5;
+	    } else {
+		cc = B->cols;
+		match = 5;
+	    }
 	}
-	match = 5;
+    } else if (!B->is_complex) {
+	if (B->rows == A->rows/2 && B->cols == A->cols) {
+	    match = 6;
+	} else if (B->rows == A->rows/2) {
+	    if (B->cols == 1) {
+		match = 7;
+	    } else if (A->cols == 1) {
+		cc = B->cols;
+		swap = match = 7;
+	    }
+	} else if (A->cols == B->cols) {
+	    if (B->rows == 1) {
+		match = 8;
+	    } else if (A->rows == 2) {
+		cr = B->rows * 2;
+		swap = match = 8;
+	    }
+	}
     }
 
     if (match == 0) {
@@ -900,6 +915,11 @@ gretl_matrix *gretl_complex_hprod (const gretl_matrix *A,
 	return NULL;
     }
 
+    if (swap) {
+	L = B;
+	R = A;
+    }
+
     cr /= 2; /* rows of 16-byte values */
 
     a = (double complex *) L->val;
@@ -911,10 +931,10 @@ gretl_matrix *gretl_complex_hprod (const gretl_matrix *A,
 	/* A or B is a complex scalar */
 	for (j=0; j<cc; j++) {
 	    for (i=0; i<cr; i++) {
-		if (divide && L == B) {
-		    c[k++] = b[j*cr+i] / a[0];
+		if (divide) {
+		    c[k++] = swap ? b[j*cr+i] / a[0] : a[0] / b[j*cr+i];
 		} else {
-		    c[k++] = divide ? a[0] / b[j*cr+i] : a[0] * b[j*cr+i];
+		    c[k++] = a[0] * b[j*cr+i];
 		}
 	    }
 	}
@@ -929,10 +949,10 @@ gretl_matrix *gretl_complex_hprod (const gretl_matrix *A,
 	/* b has just one column */
 	for (j=0; j<cc; j++) {
 	    for (i=0; i<cr; i++) {
-		if (divide && L == B) {
-		    c[k++] = b[i] / a[j*cr+i];
+		if (divide) {
+		    c[k++] = swap ? b[i] / a[j*cr+i] : a[j*cr+i] / b[i];
 		} else {
-		    c[k++] = divide ? a[j*cr+i] / b[i] : a[j*cr+i] * b[i];
+		    c[k++] = a[j*cr+i] * b[i];
 		}
 	    }
 	}
@@ -940,21 +960,55 @@ gretl_matrix *gretl_complex_hprod (const gretl_matrix *A,
 	/* b has just one row */
 	for (j=0; j<cc; j++) {
 	    for (i=0; i<cr; i++) {
-		if (divide && L == B) {
-		    c[k++] = b[j] / a[j*cr+i];
+		if (divide) {
+		    c[k++] = swap ? b[j] / a[j*cr+i] : a[j*cr+i] / b[j];
 		} else {
-		    c[k++] = divide ? a[j*cr+i] / b[j] : a[j*cr+i] * b[j];
+		    c[k++] = a[j*cr+i] * b[j];
 		}
 	    }
 	}
-    } else {
+    } else if (match == 5) {
 	/* col vector times row vector */
 	for (j=0; j<cc; j++) {
 	    for (i=0; i<cr; i++) {
-		if (divide && L == B) {
-		    c[k++] = b[j] / a[i];
+		if (divide) {
+		    c[k++] = swap ? b[j] / a[i] : a[i] / b[j];
 		} else {
-		    c[k++] = divide ? a[i] / b[j] : a[i] * b[j];
+		    c[k++] = a[i] * b[j];
+		}
+	    }
+	}
+    } else if (match == 6) {
+	/* A and B of same dimensions */
+	double *bx = (double *) b;
+	int n = cr * cc;
+
+	for (k=0; k<n; k++) {
+	    c[k] = divide ? a[k] / bx[k] : a[k] * bx[k];
+	}
+    } else if (match == 7) {
+	/* b has just one (real) column */
+	double *bx = (double *) b;
+
+	for (j=0; j<cc; j++) {
+	    for (i=0; i<cr; i++) {
+		if (divide) {
+		    c[k++] = swap ? bx[i] / a[j*cr+i] : a[j*cr+i] / bx[i];
+		} else {
+		    c[k++] = a[j*cr+i] * bx[i];
+		}
+	    }
+	}
+    } else if (match == 8) {
+	/* b has just one (real) row */
+	double *bx = (double *) b;
+
+	for (j=0; j<cc; j++) {
+	    for (i=0; i<cr; i++) {
+		if (divide) {
+		    c[k++] = swap ? bx[j] / a[j*cr+i] : a[j*cr+i] / bx[j];
+		} else {
+		    c[k++] = a[j*cr+i] * bx[j];
 		}
 	    }
 	}
