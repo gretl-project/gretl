@@ -2800,11 +2800,21 @@ static int real_matrix_calc (const gretl_matrix *A,
     case B_VCAT:
 #if USE_CIDX
 	if (A->is_complex + B->is_complex == 1) {
-	    return no_mixed_operands(op);
+	    if (B->is_complex && A->rows == 0 && A->cols == 0) {
+		; /* OK */
+	    } else {
+		return no_mixed_operands(op);
+	    }
 	}
 #endif
 	if (op == B_HCAT) {
 	    C = gretl_matrix_col_concat(A, B, &err);
+#if !USE_CIDX
+	    if (!A->is_complex) {
+		/* hack to keep ghosts working! */
+		C->is_complex = 0;
+	    }
+#endif
 	} else {
 	    C = gretl_matrix_row_concat(A, B, &err);
 	}
@@ -3955,7 +3965,16 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
 
 	switch (f) {
 	case F_ROWS:
+#if USE_CIDX > 1
+	    /* this breaks existing complex hansl! */
+	    if (m->is_complex) {
+		ret->v.xval = m->rows > 0 ? m->rows/2 : 0;
+	    } else {
+		ret->v.xval = m->rows;
+	    }
+#else
 	    ret->v.xval = m->rows;
+#endif
 	    break;
 	case F_COLS:
 	    ret->v.xval = m->cols;
@@ -9171,6 +9190,8 @@ static NODE *apply_matrix_func (NODE *t, NODE *f, parser *p)
 	    apply_cmatrix_dfunc(ret->v.m, m, carg);
 	} else if (f->t == HF_CONJ) {
 	    apply_cmatrix_cfunc(ret->v.m, m, conj);
+	} else if (f->t == U_NEG || f->t == U_POS || f->t == U_NOT) {
+	    apply_cmatrix_unary_op(ret->v.m, m, f->t);
 	} else {
 	    double complex (*cfunc) (double complex) = NULL;
 

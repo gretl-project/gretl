@@ -1095,12 +1095,13 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 
     if (spec->ltype == SEL_DIAG) {
 	if (M->is_complex) {
+	    /* note: handles the complex flag */
 	    return gretl_cmatrix_get_diagonal(M, err);
 	} else {
 	    return gretl_matrix_get_diagonal(M, err);
 	}
     } else if (spec->ltype == SEL_CONTIG) {
-	/* note: the complex flag is handled here */
+	/* note: handles the complex flag */
 	return  matrix_get_chunk(M, spec, err);
     } else if (spec->ltype == SEL_ELEMENT) {
 	int i = mspec_get_element(spec);
@@ -1185,7 +1186,7 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 
  finish:
 
-#if USE_CIDX
+#if 1 || USE_CIDX
     if (S != NULL && M->is_complex) {
 	S->is_complex = 1;
     }
@@ -1258,7 +1259,7 @@ gretl_matrix *matrix_get_chunk (const gretl_matrix *M,
 	}
     }
 
-#if USE_CIDX
+#if 1 || USE_CIDX
     if (ret != NULL && M->is_complex) {
 	ret->is_complex = 1;
     }

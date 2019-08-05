@@ -86,6 +86,10 @@ int apply_cmatrix_cfunc (gretl_matrix *targ,
 			 const gretl_matrix *src,
 			 double complex (*cfunc) (double complex));
 
+int apply_cmatrix_unary_op (gretl_matrix *targ,
+			    const gretl_matrix *src,
+			    int op);
+
 gretl_matrix *gretl_cmatrix_determinant (const gretl_matrix *X,
 					 int *err);
 

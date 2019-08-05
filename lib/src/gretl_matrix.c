@@ -6786,7 +6786,6 @@ gretl_matrix_complex_muldiv (const gretl_matrix *a,
     double complex az, bz, cz;
     int m, n, p, q;
     int i, izero = 1;
-    double r2;
 
     if (gretl_is_null_matrix(a) || gretl_is_null_matrix(b)) {
 	*err = E_DATA;
@@ -10213,6 +10212,7 @@ gretl_matrix_col_concat (const gretl_matrix *a, const gretl_matrix *b,
 	if (c == NULL) {
 	    *err = E_ALLOC;
 	} else {
+	    c->is_complex = a->is_complex || b->is_complex;
 	    maybe_preserve_names(c, a, 0, 0);
 	}
     }

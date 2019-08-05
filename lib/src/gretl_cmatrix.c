@@ -1390,6 +1390,34 @@ int apply_cmatrix_cfunc (gretl_matrix *targ,
     return err;
 }
 
+int apply_cmatrix_unary_op (gretl_matrix *targ,
+			    const gretl_matrix *src,
+			    int op)
+{
+    double complex *csrc = (double complex *) src->val;
+    double complex *ctarg = (double complex *) targ->val;
+    int i, n = src->cols * src->rows / 2;
+    int err = 0;
+
+    targ->is_complex = 1;
+    for (i=0; i<n && !err; i++) {
+	if (op == 1) {
+	    /* U_NEG */
+	    ctarg[i] = -csrc[i];
+	} else if (op == 2) {
+	    /* U_POS */
+	    ctarg[i] = csrc[i];
+	} else if (op == 3) {
+	    /* U_NOT */
+	    ctarg[i] = (csrc[i] == 0);
+	} else {
+	    err = E_INVARG;
+	}
+    }
+
+    return err;
+}
+
 static gretl_matrix *complex_scalar_to_mat (double complex z,
 					    int *err)
 {
@@ -1505,8 +1533,8 @@ int gretl_cmatrix_set_diagonal (gretl_matrix *targ,
 				double x)
 {
     double complex *zsrc = NULL;
-    double complex *ztarg;
-    double complex zi;
+    double complex *ztarg = NULL;
+    double complex zi = 0;
     int r, d, i;
     int match = 0;
     int err = 0;
