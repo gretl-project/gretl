@@ -12801,7 +12801,12 @@ gretl_matrix *gretl_matrix_trim_rows (const gretl_matrix *A,
 	return NULL;
     }
 
-    m = A->rows - (ttop + tbot);
+    if (A->is_complex) {
+	ttop *= 2;
+	m = A->rows - (ttop + 2*tbot);
+    } else {
+	m = A->rows - (ttop + tbot);
+    }
 
     if (ttop < 0 || tbot < 0 || m <= 0) {
 	*err = E_DATA;
@@ -12820,6 +12825,8 @@ gretl_matrix *gretl_matrix_trim_rows (const gretl_matrix *A,
 	    gretl_matrix_set(B, i, j, x);
 	}
     }
+
+    B->is_complex = A->is_complex;
 
     return B;
 }
