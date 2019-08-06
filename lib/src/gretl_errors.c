@@ -85,6 +85,7 @@ static const char *gretl_error_messages[] = {
     N_("Error executing function"),                              /* E_FUNCERR */
     N_("Execution aborted by request"),                          /* E_STOP */
     N_("'catch' cannot be used in this context"),                /* E_BADCATCH */
+    N_("complex arguments/operands not supported"),              /* E_CMPLX */
     NULL,                                                        /* E_DB_DUP */
     NULL,                                                        /* E_OK */
     NULL                                                         /* E_MAX */
