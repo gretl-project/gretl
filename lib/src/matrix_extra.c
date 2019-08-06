@@ -1058,16 +1058,25 @@ static gretl_matrix *read_binary_matrix_file (FILE *fp, int *err)
 {
     gretl_matrix *A = NULL;
     char header[20] = {0};
+    int is_complex = 0;
     gint32 dim[2];
 
     if (fread(header, 1, 19, fp) < 19) {
-	*err = E_DATA;
-    } else if (strcmp(header, "gretl_binary_matrix")) {
 	*err = E_DATA;
     } else if (fread(dim, sizeof *dim, 2, fp) < 2) {
 	*err = E_DATA;
     } else if (dim[0] <= 0 || dim[1] <= 0) {
 	*err = E_DATA;
+    }
+
+    if (!*err) {
+	if (!strcmp(header, "gretl_binary_matrix")) {
+	    ; /* OK */
+	} else if (!strcmp(header, "gretl_binar_cmatrix")) {
+	    is_complex = 1;
+	} else {
+	    *err = E_DATA;
+	}
     }
 
     if (!*err) {
@@ -1088,6 +1097,8 @@ static gretl_matrix *read_binary_matrix_file (FILE *fp, int *err)
 	    *err = E_DATA;
 	    gretl_matrix_free(A);
 	    A = NULL;
+	} else {
+	    A->is_complex = is_complex;
 	}
     }
 
@@ -1195,11 +1206,13 @@ gretl_matrix *gretl_matrix_read_from_file (const char *fname,
     }
 
     if (!*err) {
+	char ctest[8] = {0};
+
 	if (r >= 0 && c >= 0) {
 	    /* we got dimensions from the preamble */
 	    n = 2;
 	} else {
-	    n = fscanf(fp, "%d %d\n", &r, &c);
+	    n = fscanf(fp, "%d %d %7s\n", &r, &c, ctest);
 	}
 	if (n < 2 || r < 0 || c < 0) {
 	    fprintf(stderr, "error reading rows, cols (r=%d, c=%d)\n",
@@ -1209,6 +1222,8 @@ gretl_matrix *gretl_matrix_read_from_file (const char *fname,
 	    A = gretl_matrix_alloc(r, c);
 	    if (A == NULL) {
 		*err = E_ALLOC;
+	    } else if (!strcmp(ctest, "complex")) {
+		A->is_complex = 1;
 	    }
 	}
     }
@@ -1346,7 +1361,8 @@ int gretl_matrix_write_to_file (gretl_matrix *A, const char *fname,
     }
 
     if (bin && fp != NULL) {
-	const char *header = "gretl_binary_matrix";
+	const char *header = A->is_complex ? "gretl_binar_cmatrix" :
+	    "gretl_binary_matrix";
 	gint32 dim[2] = {r, c};
 	size_t n = r * c;
 
@@ -1375,9 +1391,17 @@ int gretl_matrix_write_to_file (gretl_matrix *A, const char *fname,
     }
 
     if (fz) {
-	gzprintf(fz, "%d%c%d\n", r, d, c);
+	if (A->is_complex) {
+	    gzprintf(fz, "%d%c%d%ccomplex\n", r, d, c, d);
+	} else {
+	    gzprintf(fz, "%d%c%d\n", r, d, c);
+	}
     } else if (fp) {
-	fprintf(fp, "%d%c%d\n", r, d, c);
+	if (A->is_complex) {
+	    fprintf(fp, "%d%c%d%ccomplex\n", r, d, c, d);
+	} else {
+	    fprintf(fp, "%d%c%d\n", r, d, c);
+	}
     } else {
 	return E_FOPEN;
     }

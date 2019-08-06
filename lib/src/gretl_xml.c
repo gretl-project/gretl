@@ -560,6 +560,10 @@ void gretl_matrix_serialize (const gretl_matrix *m,
 		name, m->rows, m->cols);
     }
 
+    if (m->is_complex) {
+	fputs(" complex=\"1\"", fp);
+    }
+
     if (gretl_matrix_is_dated(m)) {
 	int mt1 = gretl_matrix_get_t1(m);
 	int mt2 = gretl_matrix_get_t2(m);
@@ -1562,45 +1566,27 @@ static int maybe_add_matrix_labels (gretl_matrix *m,
  * on failure.
  */
 
-gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node, xmlDocPtr doc,
+gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node,
+				    xmlDocPtr doc,
 				    int *err)
 {
     gretl_matrix *m = NULL;
-    char *names;
-    xmlChar *tmp;
+    char *names = NULL;
+    xmlChar *tmp = NULL;
     const char *p;
     double x;
-    int rows, cols;
+    int rows = 0, cols = 0;
     int t1 = -1, t2 = -1;
+    int complex = 0;
     int i, j;
 
-    tmp = xmlGetProp(node, (XUC) "rows");
-    if (tmp == NULL) {
+    if (!gretl_xml_get_prop_as_int(node, "rows", &rows) ||
+	!gretl_xml_get_prop_as_int(node, "cols", &cols)) {
 	*err = E_DATA;
 	return NULL;
     }
 
-    if (sscanf((const char *) tmp, "%d", &rows) != 1) {
-	free(tmp);
-	*err = E_DATA;
-	return NULL;
-    }
-
-    free(tmp);
-
-    tmp = xmlGetProp(node, (XUC) "cols");
-    if (tmp == NULL) {
-	*err = E_DATA;
-	return NULL;
-    }
-
-    if (sscanf((const char *) tmp, "%d", &cols) != 1) {
-	free(tmp);
-	*err = E_DATA;
-	return NULL;
-    }
-
-    free(tmp);
+    complex = gretl_xml_get_prop_as_bool(node, "complex");
 
     if (rows == 0 && cols == 0) {
 	/* allow case of empty matrix */
@@ -1609,24 +1595,13 @@ gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node, xmlDocPtr doc,
 	    *err = E_ALLOC;
 	}
 	return m;
-    }
-
-    if (rows <= 0 || cols <= 0) {
+    } else if (rows <= 0 || cols <= 0) {
 	*err = E_DATA;
 	return NULL;
     }
 
-    tmp = xmlGetProp(node, (XUC) "t1");
-    if (tmp != NULL) {
-	t1 = atoi((char *) tmp);
-	free(tmp);
-    }
-
-    tmp = xmlGetProp(node, (XUC) "t2");
-    if (tmp != NULL) {
-	t2 = atoi((char *) tmp);
-	free(tmp);
-    }
+    gretl_xml_get_prop_as_int(node, "t1", &t1);
+    gretl_xml_get_prop_as_int(node, "t2", &t2);
 
     m = gretl_matrix_alloc(rows, cols);
     if (m == NULL) {
@@ -1690,6 +1665,7 @@ gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node, xmlDocPtr doc,
 	gretl_matrix_free(m);
 	m = NULL;
     } else {
+	m->is_complex = complex;
 	if (t1 >= 0 && t2 >= t1) {
 	    gretl_matrix_set_t1(m, t1);
 	    gretl_matrix_set_t2(m, t2);
