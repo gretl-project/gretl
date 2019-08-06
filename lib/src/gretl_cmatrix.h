@@ -53,18 +53,9 @@ int gretl_cmatrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
 gretl_matrix *gretl_complex_fft (const gretl_matrix *A, int inverse,
 				 int *err);
 
-gretl_matrix *gretl_complex_hprod (const gretl_matrix *A,
-				   const gretl_matrix *B,
-				   int divide,
-				   int *err);
-
-gretl_matrix *gretl_complex_hsum (const gretl_matrix *A,
-				  const gretl_matrix *B,
-				  int minus, int *err);
-
 gretl_matrix *gretl_cmatrix (const gretl_matrix *Re,
 			     const gretl_matrix *Im,
-			     int *err);
+			     double ival, int *err);
 
 gretl_matrix *gretl_cxtract (const gretl_matrix *A, int im,
 			    int *err);
@@ -140,5 +131,9 @@ int complex_matrix_print (const gretl_matrix *A,
 int complex_matrix_printf (const gretl_matrix *A,
 			   const char *fmt,
 			   PRN *prn);
+
+gretl_matrix *gretl_cmatrix_dot_op (const gretl_matrix *a,
+				    const gretl_matrix *b,
+				    int op, int *err);
 
 #endif /* GRETL_CMATRIX_H */

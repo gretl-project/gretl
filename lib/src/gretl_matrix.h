@@ -56,6 +56,19 @@ typedef enum {
     V_MEAN
 } GretlVecStat;
 
+typedef enum {
+    CONF_NONE = 0,
+    CONF_ELEMENTS,
+    CONF_A_COLVEC,
+    CONF_B_COLVEC,
+    CONF_A_ROWVEC,
+    CONF_B_ROWVEC,
+    CONF_A_SCALAR,
+    CONF_B_SCALAR,
+    CONF_AC_BR,
+    CONF_AR_BC
+} ConfType;
+
 typedef struct gretl_matrix_ gretl_vector;
 
 typedef struct matrix_info_ matrix_info;
@@ -312,9 +325,13 @@ int gretl_matrix_divide_by_scalar (gretl_matrix *m, double x);
 
 void gretl_matrix_switch_sign (gretl_matrix *m);
 
-gretl_matrix *
-gretl_matrix_dot_op (const gretl_matrix *a, const gretl_matrix *b,
-		     int op, int *err);
+gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
+				   const gretl_matrix *b,
+				   int op, int *err);
+
+ConfType dot_operator_conf (const gretl_matrix *A,
+			    const gretl_matrix *B,
+			    int *r, int *c);
 
 gretl_matrix *gretl_matrix_complex_multiply (const gretl_matrix *a,
 					     const gretl_matrix *b,

@@ -2649,10 +2649,9 @@ static gretl_matrix *nullmat_multiply (const gretl_matrix *A,
     return C;
 }
 
-static gretl_matrix *
-matrix_add_sub_scalar (const gretl_matrix *A,
-		       const gretl_matrix *B,
-		       int op)
+static gretl_matrix *matrix_add_sub_scalar (const gretl_matrix *A,
+					    const gretl_matrix *B,
+					    int op)
 {
     gretl_matrix *C;
     double xval, *xvec;
@@ -2699,15 +2698,19 @@ static int operator_real_only (int op)
 {
     gretl_errmsg_sprintf("'%s': %s", getsymb(op),
 			 _("complex operands are not supported"));
-    return E_TYPES;
+    return E_CMPLX;
 }
+
+#if USE_CIDX
 
 static int no_mixed_operands (int op)
 {
     gretl_errmsg_sprintf("'%s': %s", getsymb(op),
 			 _("mixed complex and real operands are not supported"));
-    return E_TYPES;
+    return E_CMPLX;
 }
+
+#endif
 
 /* See if we can reuse an existing matrix on an
    auxiliary node. If so, return it; otherwise
@@ -2740,7 +2743,8 @@ static gretl_matrix *calc_get_matrix (gretl_matrix **pM,
 			      o==B_TRMUL || o==B_DOTMULT || o==B_DOTDIV || \
 			      o==B_DOTPOW || o==F_MCSEL || o==F_MRSEL || \
 			      o==B_DOTASN || o==B_HCAT || o==B_VCAT || \
-			      o==B_DOTADD || o==B_DOTSUB)
+			      o==B_DOTADD || o==B_DOTSUB || \
+			      o==B_DOTEQ || o==B_DOTNEQ)
 
 /* return allocated result of binary operation performed on
    two matrices */
@@ -2753,7 +2757,6 @@ static int real_matrix_calc (const gretl_matrix *A,
     int ra, ca;
     int rb, cb;
     int r, c;
-    int abc = 0;
     int err = 0;
 
     if (gretl_is_null_matrix(A) ||
@@ -2924,25 +2927,12 @@ static int real_matrix_calc (const gretl_matrix *A,
     case B_DOTGTE:
     case B_DOTLTE:
     case B_DOTNEQ:
-	/* dot operators and complex values: maybe we can
-	   lighten up a bit with some more work: B_DOTEQ,
-	   B_DOTNEQ, for example?
-	*/
-	abc = A->is_complex + B->is_complex;
-	if (abc > 0 && (op == B_DOTMULT || op == B_DOTDIV)) {
-	    /* complex and mixed case both handled */
-	    C = gretl_complex_hprod(A, B, op==B_DOTDIV, &err);
-	    break;
-	} else if (abc > 0 && (op == B_DOTADD || op == B_DOTSUB)) {
-	    /* complex and mixed case both handled */
-	    C = gretl_complex_hsum(A, B, op==B_DOTSUB, &err);
-	    break;
-	} else if (abc > 0) {
-	    err = operator_real_only(op);
-	    break;
-	}
 	/* apply operator element-wise */
-	C = gretl_matrix_dot_op(A, B, op_symbol(op), &err);
+	if (A->is_complex || B->is_complex) {
+	    C = gretl_cmatrix_dot_op(A, B, op_symbol(op), &err);
+	} else {
+	    C = gretl_matrix_dot_op(A, B, op_symbol(op), &err);
+	}
 	break;
     case B_KRON:
 	/* Kronecker product */
@@ -3449,25 +3439,20 @@ static NODE *BFGS_maximize (NODE *l, NODE *m, NODE *r,
 		p->err = E_TYPES;
 	    }
 	}
-
 	if (!p->err && !is_function_call(sf)) {
 	    p->err = E_TYPES;
 	}
-
 	if (!p->err && sg != NULL && !is_function_call(sg)) {
 	    p->err = E_TYPES;
 	}
-
 	if (!p->err && gretl_is_null_matrix(b)) {
 	    p->err = E_DATA;
 	}
-
 	if (p->err) {
 	    return NULL;
 	}
 
 	ret = aux_scalar_node(p);
-
 	if (ret != NULL) {
 	    int minimize = (t->flags & ALS_NODE)? 1 : 0;
 
@@ -3822,7 +3807,7 @@ static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
 #if USE_CIDX
 	    if (ml->is_complex) {
 		/* breaks cmatrix.gfn */
-		ret->v.m = gretl_cmatrix_dot_pow(ml, mr, &p->err);
+		ret->v.m = gretl_cmatrix_dot_op(ml, mr, '^', &p->err);
 	    } else {
 		ret->v.m = gretl_matrix_dot_op(ml, mr, '^', &p->err);
 	    }
@@ -3944,7 +3929,7 @@ static int function_real_only (int f)
 {
     gretl_errmsg_sprintf("%s: %s", getsymb(f),
 			 _("complex arguments are not supported"));
-    return E_TYPES;
+    return E_CMPLX;
 }
 
 /* functions taking a matrix argument and returning a
@@ -4495,9 +4480,6 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    matrix_minmax_indices(f, &a, &b, &c);
 	    ret->v.m = gretl_matrix_minmax(m, a, b, c, &p->err);
 	    break;
-	case HF_CMATRIX:
-	    ret->v.m = gretl_cmatrix(m, r->v.m, &p->err);
-	    break;
 	case HF_CMMULT:
 	    /* hack: fix absence of is_complex flag */
 	    fix_complex_flags(m, r->v.m);
@@ -4593,18 +4575,26 @@ static NODE *read_object_func (NODE *n, NODE *r, int f, parser *p)
     return ret;
 }
 
-static NODE *complex_scalar_node (NODE *l, NODE *r, parser *p)
+static NODE *complex_matrix_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL) {
-	ret->v.m = gretl_matrix_alloc(2, 1);
-	if (ret->v.m == NULL) {
-	    p->err = E_ALLOC;
+	if (l->t == NUM && r->t == NUM) {
+	    ret->v.m = gretl_matrix_alloc(2, 1);
+	    if (ret->v.m == NULL) {
+		p->err = E_ALLOC;
+	    } else {
+		ret->v.m->val[0] = l->v.xval;
+		ret->v.m->val[1] = r->v.xval;
+		ret->v.m->is_complex = 1;
+	    }
+	} else if (l->t == MAT && r->t == MAT) {
+	    ret->v.m = gretl_cmatrix(l->v.m, r->v.m, 0, &p->err);
+	} else if (l->t == MAT && r->t == NUM) {
+	    ret->v.m = gretl_cmatrix(l->v.m, NULL, r->v.xval, &p->err);
 	} else {
-	    ret->v.m->val[0] = l->v.xval;
-	    ret->v.m->val[1] = r->v.xval;
-	    ret->v.m->is_complex = 1;
+	    p->err = E_TYPES;
 	}
     }
 
@@ -15464,7 +15454,8 @@ static NODE *eval (NODE *t, parser *p)
 	*/
 	if (t->t == B_ADD && l->t == STR && r->t == NUM) {
 	    ret = string_offset(l, r, p);
-	} else if ((t->t == B_EQ || t->t == B_NEQ) && l->t == STR && r->t == STR) {
+	} else if ((t->t == B_EQ || t->t == B_NEQ) &&
+		   l->t == STR && r->t == STR) {
 	    ret = compare_strings(l, r, t->t, p);
 	} else if (l->t == NUM && r->t == NUM) {
 	    ret = scalar_calc(l, r, t->t, p);
@@ -16299,12 +16290,17 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = matrix_to_matrix2_func(l, r, t->t, p);
 	}
 	break;
-    case HF_CMATRIX:
-    case HF_CMMULT:
+    case HF_CMMULT: /* legacy! */
 	if (l->t == MAT && r->t == MAT) {
 	    ret = matrix_to_matrix_func(l, r, t->t, p);
-	} else if (t->t == HF_CMATRIX && l->t == NUM && r->t == NUM) {
-	    ret = complex_scalar_node(l, r, p);
+	} else {
+	    p->err = E_TYPES;
+	}
+	break;
+    case HF_CMATRIX:
+	if ((l->t == MAT || l->t == NUM) &&
+	    (r->t == MAT || r->t == NUM)) {
+	    ret = complex_matrix_node(l, r, p);
 	} else {
 	    p->err = E_TYPES;
 	}

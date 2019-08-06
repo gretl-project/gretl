@@ -216,6 +216,39 @@ static void lapack_free (void *p)
     return;
 }
 
+static void math_err_init (void)
+{
+    errno = 0;
+#ifdef HAVE_FENV_H
+    feclearexcept(FE_ALL_EXCEPT);
+#endif
+}
+
+/* the following is called after math operations only
+   if @errno is found to be non-zero */
+
+static int math_err_check (const char *msg, int errnum)
+{
+#ifdef HAVE_FENV_H
+    int err = E_DATA;
+
+    if (!fetestexcept(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW)) {
+	/* we'll let "pure" underflow pass */
+	fprintf(stderr, "warning: calculation underflow\n");
+	err = 0;
+    } else {
+	gretl_errmsg_set_from_errno(msg, errnum);
+    }
+    feclearexcept(FE_ALL_EXCEPT);
+    errno = 0;
+    return err;
+#else
+    gretl_errmsg_set_from_errno(msg, errnum);
+    errno = 0;
+    return E_DATA;
+#endif
+}
+
 static int matrix_block_error (const char *f)
 {
     fprintf(stderr, "CODING ERROR: illegal call to %s on "
@@ -6054,9 +6087,13 @@ gretl_matrix *gretl_matrix_pow (const gretl_matrix *A,
 {
     if (gretl_is_null_matrix(A)) {
 	*err = E_DATA;
-	return NULL;
-    } else if (A->rows != A->cols || A->is_complex) {
-	*err = E_INVARG;
+    } else if (A->is_complex) {
+	*err = E_CMPLX;
+    } else if (A->rows != A->cols) {
+	*err = E_NONCONF;
+    }
+
+    if (*err) {
 	return NULL;
     } else if (s != floor(s) || s < 0) {
 	return matrix_frac_pow(A, s, err);
@@ -6082,7 +6119,8 @@ gretl_matrix *gretl_matrix_pow (const gretl_matrix *A,
  * failure.
  */
 
-double gretl_vector_dot_product (const gretl_vector *a, const gretl_vector *b,
+double gretl_vector_dot_product (const gretl_vector *a,
+				 const gretl_vector *b,
 				 int *err)
 {
     int i, dima, dimb;
@@ -6122,8 +6160,10 @@ double gretl_vector_dot_product (const gretl_vector *a, const gretl_vector *b,
  * @b (or @b-transpose), or #NADBL on failure.
  */
 
-double gretl_matrix_dot_product (const gretl_matrix *a, GretlMatrixMod amod,
-				 const gretl_matrix *b, GretlMatrixMod bmod,
+double gretl_matrix_dot_product (const gretl_matrix *a,
+				 GretlMatrixMod amod,
+				 const gretl_matrix *b,
+				 GretlMatrixMod bmod,
 				 int *err)
 {
     gretl_matrix *c = NULL;
@@ -6161,44 +6201,33 @@ double gretl_matrix_dot_product (const gretl_matrix *a, GretlMatrixMod amod,
     return ret;
 }
 
-enum {
-    CONF_NONE = 0,
-    CONF_ELEMENTS,
-    CONF_A_COLVEC,
-    CONF_B_COLVEC,
-    CONF_A_ROWVEC,
-    CONF_B_ROWVEC,
-    CONF_A_SCALAR,
-    CONF_B_SCALAR,
-    CONF_AC_BR,
-    CONF_AR_BC
-};
-
 /**
- * dot_op_conf:
+ * dot_operator_conf:
  * @A: first matrix.
  * @B: second matrix.
- * @r: pointer to rows of result
- * @c: pointer to columns of result
+ * @r: pointer to rows of result.
+ * @c: pointer to columns of result.
  *
- * Used to establish the dimensions of the result of a "dot" operation.
+ * Used to establish the dimensions of the result of a "dot"
+ * operation such as A .* B or A .+ B.
  *
  * Returns: a numeric code identifying the convention to be used;
  * %CONF_NONE indicates non-conformability.
  */
 
-static int dot_op_conf (const gretl_matrix *A, const gretl_matrix *B,
-			int *r, int *c)
+ConfType dot_operator_conf (const gretl_matrix *A,
+			    const gretl_matrix *B,
+			    int *r, int *c)
 {
-    int ra = A->rows;
-    int rb = B->rows;
+    int ra = A->is_complex ? A->rows/2 : A->rows;
+    int rb = B->is_complex ? B->rows/2 : B->rows;
     int ca = A->cols;
     int cb = B->cols;
     int confr = (ra == rb);
     int confc = (ca == cb);
     int colva = (ca == 1);
     int colvb = (cb == 1);
-    int rowva = ra == 1;
+    int rowva = (ra == 1);
     int rowvb = (rb == 1);
     int ret = CONF_NONE;
 
@@ -6484,39 +6513,6 @@ static double x_op_y (double x, double y, int op)
     }
 }
 
-static void math_err_init (void)
-{
-    errno = 0;
-#ifdef HAVE_FENV_H
-    feclearexcept(FE_ALL_EXCEPT);
-#endif
-}
-
-/* the following is called after math operations only
-   if @errno is found to be non-zero */
-
-static int math_err_check (const char *msg, int errnum)
-{
-#ifdef HAVE_FENV_H
-    int err = E_DATA;
-
-    if (!fetestexcept(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW)) {
-	/* we'll let "pure" underflow pass */
-	fprintf(stderr, "warning: calculation underflow\n");
-	err = 0;
-    } else {
-	gretl_errmsg_set_from_errno(msg, errnum);
-    }
-    feclearexcept(FE_ALL_EXCEPT);
-    errno = 0;
-    return err;
-#else
-    gretl_errmsg_set_from_errno(msg, errnum);
-    errno = 0;
-    return E_DATA;
-#endif
-}
-
 /**
  * gretl_matrix_dot_op:
  * @a: left-hand matrix.
@@ -6533,10 +6529,10 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 				   const gretl_matrix *b,
 				   int op, int *err)
 {
+    ConfType conftype;
     gretl_matrix *c = NULL;
     double x, y;
     int nr, nc;
-    int conftype;
     int i, j, off;
 
     if (gretl_is_null_matrix(a) || gretl_is_null_matrix(b)) {
@@ -6544,7 +6540,7 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 	return NULL;
     }
 
-    conftype = dot_op_conf(a, b, &nr, &nc);
+    conftype = dot_operator_conf(a, b, &nr, &nc);
 
     if (conftype == CONF_NONE) {
 	fputs("gretl_matrix_dot_op: matrices not conformable\n", stderr);
@@ -6627,6 +6623,8 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 		gretl_matrix_set(c, i, j, y);
 	    }
 	}
+	break;
+    default: /* hush a warning */
 	break;
     }
 
@@ -6802,8 +6800,8 @@ gretl_matrix *gretl_matrix_complex_divide (const gretl_matrix *a,
  */
 
 gretl_matrix *gretl_rmatrix_vector_stat (const gretl_matrix *m,
-					 GretlVecStat vs, int rowwise,
-					 int *err)
+					 GretlVecStat vs,
+					 int rowwise, int *err)
 {
     gretl_matrix *ret;
     double x;
@@ -6888,6 +6886,9 @@ gretl_matrix *gretl_matrix_column_sd2 (const gretl_matrix *m,
 
     if (gretl_is_null_matrix(m)) {
 	*err = E_DATA;
+	return NULL;
+    } else if (m->is_complex) {
+	*err = E_CMPLX;
 	return NULL;
     }
 
@@ -13668,6 +13669,13 @@ gretl_matrix *gretl_matrix_covariogram (const gretl_matrix *X,
     int j, k, t, T;
 
     if (gretl_is_null_matrix(X)) {
+	return NULL;
+    }
+
+    if (gretl_is_complex_matrix(X) ||
+	gretl_is_complex_matrix(u) ||
+	gretl_is_complex_matrix(w)) {
+	*err = E_CMPLX;
 	return NULL;
     }
 
