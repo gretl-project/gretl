@@ -1561,6 +1561,46 @@ gretl_matrix *gretl_cmatrix_reverse_rows (const gretl_matrix *X,
     return ret;
 }
 
+gretl_matrix *gretl_cmatrix_shape (const gretl_matrix *A,
+				   int r, int c, int *err)
+{
+    gretl_matrix *B;
+    double complex *az;
+    double complex *bz;
+    int i, k, nA, nB;
+
+    if (gretl_is_null_matrix(A) || r < 0 || c < 0) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    if (r == 0 && c == 0) {
+	return gretl_null_matrix_new();
+    }
+
+    B = gretl_matrix_alloc(2*r, c);
+    if (B == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    az = (double complex *) A->val;
+    bz = (double complex *) B->val;
+    nA = A->cols * A->rows/2;
+    nB = r * c;
+    B->is_complex = 1;
+
+    k = 0;
+    for (i=0; i<nB; i++) {
+	bz[i] = az[k++];
+	if (k == nA) {
+	    k = 0;
+	}
+    }
+
+    return B;
+}
+
 int gretl_cmatrix_zero_triangle (gretl_matrix *m, char t)
 {
     double complex *zm;

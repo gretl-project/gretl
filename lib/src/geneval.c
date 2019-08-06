@@ -11322,6 +11322,8 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    if (!p->err) {
 		if (l->t == NUM) {
 		    A = mshape_scalar(l->v.xval, k1, k2, &p->err);
+		} else if (l->v.m->is_complex) {
+		    A = gretl_cmatrix_shape(l->v.m, k1, k2, &p->err);
 		} else {
 		    A = gretl_matrix_shape(l->v.m, k1, k2, &p->err);
 		}

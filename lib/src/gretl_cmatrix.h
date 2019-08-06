@@ -107,6 +107,9 @@ gretl_matrix *gretl_cmatrix_unvech (const gretl_matrix *X,
 gretl_matrix *gretl_cmatrix_reverse_rows (const gretl_matrix *X,
 					  int *err);
 
+gretl_matrix *gretl_cmatrix_shape (const gretl_matrix *A,
+				   int r, int c, int *err);
+
 int gretl_cmatrix_zero_triangle (gretl_matrix *m, char t);
 
 gretl_matrix *gretl_cmatrix_switch (const gretl_matrix *m,
