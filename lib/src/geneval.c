@@ -3693,6 +3693,9 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
 	if (!p->err && gretl_is_null_matrix(m)) {
 	    p->err = E_INVARG;
 	}
+	if (!p->err && m->is_complex) {
+	    p->err = E_CMPLX;
+	}
 
 	if (p->err) {
 	    return NULL;
@@ -4037,6 +4040,11 @@ static NODE *matrix_add_names (NODE *l, NODE *r, int f, parser *p)
     if (ret != NULL && starting(p)) {
 	gretl_matrix *m = l->v.m;
 	int byrow = (f == F_RNAMESET);
+
+	if (m->is_complex) {
+	    p->err = E_CMPLX;
+	    return ret;
+	}
 
 	if (r->t == STR) {
 	    ret->v.xval = umatrix_set_names_from_string(m, r->v.str, byrow);
@@ -8788,6 +8796,8 @@ static NODE *vector_sort (NODE *l, int f, parser *p)
 	    ret->v.m = gretl_matrix_from_scalar(l->v.xval);
 	} else if (gretl_is_null_matrix(l->v.m)) {
 	    ret->v.m = gretl_null_matrix_new();
+	} else if (l->v.m->is_complex) {
+	    p->err = E_CMPLX;
 	} else {
 	    int descending = (f == F_DSORT);
 
