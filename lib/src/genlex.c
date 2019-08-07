@@ -583,6 +583,8 @@ struct str_table hidden_funcs[] = {
     { HF_CONJ,     "_conj" },
     { HF_CSWITCH,  "_cswitch" },
     { HF_SETCMPLX, "_setcmplx" },
+    { HF_REAL,     "_Re" },
+    { HF_IMAG,     "_Im" },
     { HF_JBTERMS,  "_jbterms" },
     { HF_LISTINFO, "_listinfo" },
     { 0,           NULL }
