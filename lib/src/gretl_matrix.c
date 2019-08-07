@@ -2268,10 +2268,11 @@ int gretl_matrix_copy_values (gretl_matrix *targ,
     }
 
     n = src->rows * src->cols;
-
     if (n > 0) {
 	memcpy(targ->val, src->val, n * sizeof *targ->val);
     }
+
+    targ->is_complex = src->is_complex;
 
     return 0;
 }
@@ -2298,6 +2299,7 @@ int gretl_matrix_copy_data (gretl_matrix *targ,
 
     if (!err) {
 	err = gretl_matrix_copy_info(targ, src);
+	targ->is_complex = src->is_complex;
     }
 
     return err;
@@ -3601,14 +3603,16 @@ static void pivot_check (integer *ipiv, int n)
     }
 }
 
-/* calculate determinant using LU factorization.
-   if logdet != 0, return the log of the determinant.
+/* Calculate the determinant of @a using LU factorization.
+   If logdet != 0 and absval == 0, return the log of the
+   determinant, or NA if the determinant is non-positive.
    if logdet != 0 and absval != 0, return the log of the
-   absolute value of the determinant.
+   absolute value of the determinant. Otherwise return the
+   determinant itself.
 */
 
-static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval,
-				    int *err)
+static double gretl_LU_determinant (gretl_matrix *a, int logdet,
+				    int absval, int *err)
 {
     integer n, info;
     integer *ipiv;
@@ -3622,7 +3626,6 @@ static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval,
 
     *err = 0;
     n = a->rows;
-
     if (a->cols != n) {
 	fputs("gretl_LU_determinant: matrix must be square\n", stderr);
 	*err = E_NONCONF;
@@ -3630,16 +3633,18 @@ static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval,
     }
 
     if (n == 1) {
-	if (!logdet) {
-	    return a->val[0];
-	} else if (a->val[0] > 0) {
-	    return log(a->val[0]);
+	/* simple 1 x 1 case */
+	det = a->val[0];
+	if (logdet) {
+	    if (det > 0) {
+		return log(det);
+	    } else if (det < 0) {
+		return absval ? log(-det) : NADBL;
+	    } else {
+		return NADBL;
+	    }
 	} else {
-#if 0
-	    fputs("gretl_matrix_log_determinant: determinant is <= 0\n", stderr);
-#endif
-	    *err = 1;
-	    return NADBL;
+	    return det;
 	}
     }
 
@@ -3676,18 +3681,15 @@ static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval,
 	   rather than by multiplying terms then taking the log of the
 	   product?
 	*/
-
 	det = 0.0;
 	for (i=0; i<n; i++) {
 	    double aii = gretl_matrix_get(a, i, i);
 
 	    if (aii == 0.0) {
 		fputs("gretl_matrix_log_determinant: determinant = 0\n", stderr);
-		*err = 1;
 		det = NADBL;
 		break;
 	    }
-
 	    if (ipiv[i] != i + 1) {
 		aii = -aii;
 	    }
@@ -3699,10 +3701,10 @@ static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval,
 	}
 	if (!absval && negcount % 2) {
 	    fputs("gretl_matrix_log_determinant: determinant is < 0\n", stderr);
-	    *err = 1;
 	    det = NADBL;
 	}
     } else {
+	/* plain determinant */
 	det = 1.0;
 	for (i=0; i<n; i++) {
 	    if (ipiv[i] != i + 1) {
@@ -3710,10 +3712,6 @@ static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval,
 	    }
 	    det *= gretl_matrix_get(a, i, i);
 	}
-    }
-
-    if (!*err && na(det)) {
-	*err = E_NAN;
     }
 
     free(ipiv);
@@ -10442,7 +10440,7 @@ static int gretl_matrix_copy_info (gretl_matrix *targ,
 	return E_DATA;
     }
 
-    if (src->info == NULL) {
+    if (src->info == NULL || src->is_complex) {
 	if (targ->info != NULL) {
 	    gretl_matrix_destroy_info(targ);
 	}
