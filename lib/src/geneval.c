@@ -3673,7 +3673,9 @@ static int matrix_set_complex (gretl_matrix *m, int c)
     return 0;
 }
 
-/* matrix on left, scalar on right */
+/* matrix on left, scalar on right: returns a matrix,
+   except when the function is _setcmplx
+*/
 
 static NODE *matrix_scalar_func (NODE *l, NODE *r,
 				 int f, parser *p)
@@ -3696,7 +3698,6 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
 	if (!p->err && f == F_MSORTBY && m->is_complex) {
 	    p->err = E_CMPLX;
 	}
-
 	if (p->err) {
 	    return NULL;
 	}
@@ -4036,7 +4037,10 @@ static NODE *matrix_add_names (NODE *l, NODE *r, int f, parser *p)
 	gretl_matrix *m = l->v.m;
 	int byrow = (f == F_RNAMESET);
 
-	if (byrow && m->is_complex) {
+	if (m->is_complex) {
+	    /* we could set column names for a complex matrix
+	       but they wouldn't show up on printing
+	    */
 	    p->err = E_CMPLX;
 	    return ret;
 	}
@@ -9169,7 +9173,8 @@ static NODE *apply_matrix_func (NODE *t, NODE *f, parser *p)
     int rows = m->rows;
     NODE *ret;
 
-    if (m->is_complex && (f->t == F_ABS || f->t == HF_CARG)) {
+    if (m->is_complex && (f->t == F_ABS || f->t == HF_CARG ||
+			  f->t == HF_REAL || f->t == HF_IMAG)) {
 	rows /= 2;
     }
 
@@ -9183,6 +9188,10 @@ static NODE *apply_matrix_func (NODE *t, NODE *f, parser *p)
 	    apply_cmatrix_dfunc(ret->v.m, m, cabs);
 	} else if (f->t == HF_CARG) {
 	    apply_cmatrix_dfunc(ret->v.m, m, carg);
+	} else if (f->t == HF_REAL) {
+	    apply_cmatrix_dfunc(ret->v.m, m, creal);
+	} else if (f->t == HF_IMAG) {
+	    apply_cmatrix_dfunc(ret->v.m, m, cimag);
 	} else if (f->t == HF_CONJ) {
 	    apply_cmatrix_cfunc(ret->v.m, m, conj);
 	} else if (f->t == U_NEG || f->t == U_POS || f->t == U_NOT) {
@@ -15705,6 +15714,8 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case HF_CARG:
     case HF_CONJ:
+    case HF_REAL:
+    case HF_IMAG:
 	if (complex_node(l)) {
 	    ret = apply_matrix_func(l, t, p);
 	} else {

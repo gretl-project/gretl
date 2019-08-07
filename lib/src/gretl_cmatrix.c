@@ -816,9 +816,10 @@ gretl_matrix *gretl_complex_fft (const gretl_matrix *A,
 #define cmatrix_get_re(m,i,j) (m->val[(j)*m->rows+(i)*2])
 #define cmatrix_get_im(m,i,j) (m->val[(j)*m->rows+(i)*2+1])
 
-int complex_matrix_print (const gretl_matrix *A,
-			  const char *name,
-			  PRN *prn)
+int complex_matrix_print_range (const gretl_matrix *A,
+				const char *name,
+				int rmin, int rmax,
+				PRN *prn)
 {
     double complex *az;
     double complex aij;
@@ -835,11 +836,14 @@ int complex_matrix_print (const gretl_matrix *A,
     r = A->rows / 2;
     c = A->cols;
 
+    if (rmin < 0) rmin = 0;
+    if (rmax < 0) rmax = r;
+
     az = (double complex *) A->val;
     xmax = 0;
 
     for (j=0; j<c && all_ints; j++) {
-	for (i=0; i<r && all_ints; i++) {
+	for (i=rmin; i<rmax && all_ints; i++) {
 	    aij = gretl_cmatrix_get(az, r, i, j);
 	    re = creal(aij);
 	    im = cimag(aij);
@@ -867,7 +871,7 @@ int complex_matrix_print (const gretl_matrix *A,
 	pputs(prn, "\n\n");
     }
 
-    for (i=0; i<r; i++) {
+    for (i=rmin; i<rmax; i++) {
 	for (j=0; j<c; j++) {
 	    re = cmatrix_get_re(A, i, j);
 	    im = cmatrix_get_im(A, i, j);
@@ -886,6 +890,13 @@ int complex_matrix_print (const gretl_matrix *A,
     pputc(prn, '\n');
 
     return 0;
+}
+
+int complex_matrix_print (const gretl_matrix *A,
+			  const char *name,
+			  PRN *prn)
+{
+    return complex_matrix_print_range(A, name, -1, -1, prn);
 }
 
 int complex_matrix_printf (const gretl_matrix *A,

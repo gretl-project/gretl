@@ -1682,8 +1682,12 @@ void gretl_matrix_print_range (const gretl_matrix *m,
 			       int rmin, int rmax,
 			       PRN *prn)
 {
-    real_matrix_print_to_prn(m, msg, 0, NULL, NULL,
-			     rmin, rmax, prn);
+    if (m->is_complex) {
+	complex_matrix_print_range(m, msg, rmin, rmax, prn);
+    } else {
+	real_matrix_print_to_prn(m, msg, 0, NULL, NULL,
+				 rmin, rmax, prn);
+    }
 }
 
 /**

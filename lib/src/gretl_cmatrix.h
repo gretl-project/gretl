@@ -127,6 +127,11 @@ int gretl_cmatrix_fill (gretl_matrix *m, double complex z);
 
 gretl_matrix *scalar_to_complex (double x, int *err);
 
+int complex_matrix_print_range (const gretl_matrix *A,
+				const char *name,
+				int rmin, int rmax,
+				PRN *prn);
+
 int complex_matrix_print (const gretl_matrix *A,
 			  const char *name,
 			  PRN *prn);
