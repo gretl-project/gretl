@@ -3693,7 +3693,7 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
 	if (!p->err && gretl_is_null_matrix(m)) {
 	    p->err = E_INVARG;
 	}
-	if (!p->err && m->is_complex) {
+	if (!p->err && f == F_MSORTBY && m->is_complex) {
 	    p->err = E_CMPLX;
 	}
 
@@ -4011,15 +4011,10 @@ static NODE *matrix_to_alt_node (NODE *n, int f, parser *p)
 
     if (!p->err) {
 	if (m->is_complex) {
-	    if (f == F_LDET) {
-		/* gatekeeper for complex */
-		p->err = function_real_only(f);
+	    if (f == F_TRACE) {
+		ret->v.m = gretl_cmatrix_trace(m, &p->err);
 	    } else {
-		if (f == F_DET) {
-		    ret->v.m = gretl_cmatrix_determinant(m, &p->err);
-		} else {
-		    ret->v.m = gretl_cmatrix_trace(m, &p->err);
-		}
+		ret->v.m = gretl_cmatrix_determinant(m, f==F_LDET, &p->err);
 	    }
 	} else if (f == F_TRACE) {
 	    ret->v.xval = gretl_matrix_trace(m);

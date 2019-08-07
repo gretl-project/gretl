@@ -1293,7 +1293,7 @@ static gretl_matrix *complex_scalar_to_mat (double complex z,
 }
 
 gretl_matrix *gretl_cmatrix_determinant (const gretl_matrix *X,
-					 int *err)
+					 int log, int *err)
 {
     gretl_matrix *E = NULL;
     gretl_matrix *ret = NULL;
@@ -1320,6 +1320,9 @@ gretl_matrix *gretl_cmatrix_determinant (const gretl_matrix *X,
 	    k += 2;
 	}
 	gretl_matrix_free(E);
+	if (log) {
+	    cret = clog(cret);
+	}
 	ret = complex_scalar_to_mat(cret, err);
     }
 
