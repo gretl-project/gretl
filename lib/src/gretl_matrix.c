@@ -10096,7 +10096,7 @@ gretl_matrix_col_concat (const gretl_matrix *a, const gretl_matrix *b,
 }
 
 /**
- * gretl_matrix_inplace_colcat:
+ * gretl_matrix_direct_sum:
  * @a: top left matrix.
  * @b: bottom right matrix.
  * @err: location to receive error code.
@@ -10113,6 +10113,9 @@ gretl_matrix *gretl_matrix_direct_sum (const gretl_matrix *a,
 
     if (gretl_is_null_matrix(a) && gretl_is_null_matrix(b)) {
 	c = gretl_null_matrix_new();
+    } else if (a->is_complex + b->is_complex == 1) {
+	/* can't handle mixed arguments */
+	*err = E_TYPES;
     } else if (gretl_is_null_matrix(a)) {
 	c = gretl_matrix_copy(b);
     } else if (gretl_is_null_matrix(b)) {
@@ -10138,6 +10141,7 @@ gretl_matrix *gretl_matrix_direct_sum (const gretl_matrix *a,
 		    gretl_matrix_set(c, i + a->rows, j + a->cols, x);
 		}
 	    }
+	    c->is_complex = a->is_complex;
 	}
     }
 

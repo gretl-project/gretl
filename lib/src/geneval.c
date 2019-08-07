@@ -2743,7 +2743,7 @@ static gretl_matrix *calc_get_matrix (gretl_matrix **pM,
 			      o==B_TRMUL || o==B_DOTMULT || o==B_DOTDIV || \
 			      o==B_DOTPOW || o==F_MCSEL || o==F_MRSEL || \
 			      o==B_DOTASN || o==B_HCAT || o==B_VCAT || \
-			      o==B_DOTADD || o==B_DOTSUB || \
+			      o==B_DOTADD || o==B_DOTSUB || op==F_DSUM || \
 			      o==B_DOTEQ || o==B_DOTNEQ)
 
 /* return allocated result of binary operation performed on
@@ -4041,7 +4041,7 @@ static NODE *matrix_add_names (NODE *l, NODE *r, int f, parser *p)
 	gretl_matrix *m = l->v.m;
 	int byrow = (f == F_RNAMESET);
 
-	if (m->is_complex) {
+	if (byrow && m->is_complex) {
 	    p->err = E_CMPLX;
 	    return ret;
 	}
