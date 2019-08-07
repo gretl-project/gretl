@@ -2744,7 +2744,7 @@ static gretl_matrix *calc_get_matrix (gretl_matrix **pM,
 			      o==B_DOTPOW || o==F_MCSEL || o==F_MRSEL || \
 			      o==B_DOTASN || o==B_HCAT || o==B_VCAT || \
 			      o==B_DOTADD || o==B_DOTSUB || op==F_DSUM || \
-			      o==B_DOTEQ || o==B_DOTNEQ)
+			      o==B_DOTEQ || o==B_DOTNEQ || op==F_HDPROD)
 
 /* return allocated result of binary operation performed on
    two matrices */
@@ -2939,7 +2939,11 @@ static int real_matrix_calc (const gretl_matrix *A,
 	C = gretl_matrix_kronecker_product_new(A, B, &err);
 	break;
     case F_HDPROD:
-	C = gretl_matrix_hdproduct_new(A, B, &err);
+	if (A->is_complex && B->is_complex) {
+	    C = gretl_cmatrix_hdprod(A, B, &err);;
+	} else {
+	    C = gretl_matrix_hdproduct_new(A, B, &err);
+	}
 	break;
     case F_CMULT:
 	C = gretl_matrix_complex_multiply(A, B, 0, &err);
@@ -4271,7 +4275,8 @@ static void fix_complex_flags (gretl_matrix *m1, gretl_matrix *m2)
 			     f==F_MREVERSE || f==F_FFT || f==F_FFTI ||	\
 			     f==HF_CMMULT || f==HF_CINV || f==HF_CTRAN || \
 			     f==F_SUMC || f==F_SUMR || f==F_PRODC || \
-			     f==F_PRODR || f==F_MEANC || f==F_MEANR)
+			     f==F_PRODR || f==F_MEANC || f==F_MEANR || \
+			     f==F_GINV)
 
 static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 {
@@ -4395,7 +4400,14 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    break;
 	case F_INV:
 	    if (m->is_complex) {
-		ret->v.m = gretl_zgetri(m, &p->err);
+		ret->v.m = gretl_cmatrix_inverse(m, &p->err);
+	    } else {
+		ret->v.m = apply_ovwrite_func(m, f, optparm, tmpmat, &p->err);
+	    }
+	    break;
+	case F_GINV:
+	    if (m->is_complex) {
+		ret->v.m = gretl_cmatrix_ginv(m, &p->err);
 	    } else {
 		ret->v.m = apply_ovwrite_func(m, f, optparm, tmpmat, &p->err);
 	    }
@@ -4404,7 +4416,6 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	case F_CHOL:
 	case F_PSDROOT:
 	case F_INVPD:
-	case F_GINV:
 	case F_UPPER: /* complex supported */
 	case F_LOWER: /* complex supported */
 	    ret->v.m = apply_ovwrite_func(m, f, optparm, tmpmat, &p->err);
@@ -4493,7 +4504,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    ret->v.m = gretl_cmatrix_multiply(m, r->v.m, &p->err);
 	    break;
 	case HF_CINV:
-	    ret->v.m = gretl_zgetri(m, &p->err);
+	    ret->v.m = gretl_cmatrix_inverse(m, &p->err);
 	    break;
 	case HF_CFFT:
 	    ret->v.m = gretl_complex_fft(m, a, &p->err);

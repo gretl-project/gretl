@@ -205,16 +205,14 @@ static gretl_matrix *complex_from_real (const gretl_matrix *A,
     return C;
 }
 
-/* Multiplication of complex matrices via BLAS zgemm().
-   We allow for the possibility that the conjugate
-   transpose of @A should be used. This could be
-   generalized to allow [conjugate] transposition of
-   B too.
+/* Multiplication of complex matrices via BLAS zgemm(),
+   allowing for conjugate transposition of @A or @B.
 */
 
 static gretl_matrix *gretl_zgemm (const gretl_matrix *A,
 				  GretlMatrixMod amod,
 				  const gretl_matrix *B,
+				  GretlMatrixMod bmod,
 				  int *err)
 {
     gretl_matrix *C;
@@ -224,7 +222,7 @@ static gretl_matrix *gretl_zgemm (const gretl_matrix *A,
     char transa = 'N';
     char transb = 'N';
     integer lda, ldb, ldc;
-    integer m, n, k;
+    integer m, n, k, kb;
 
     if (!cmatrix_validate(A, 0) || !cmatrix_validate(B, 0)) {
 	*err = E_INVARG;
@@ -239,9 +237,17 @@ static gretl_matrix *gretl_zgemm (const gretl_matrix *A,
 	m = A->rows / 2; /* complex rows of A */
 	k = A->cols;     /* cols of A */
     }
-    n = B->cols;
 
-    if (k != B->rows / 2) {
+    if (bmod == GRETL_MOD_CTRANSP) {
+	transb = 'C';
+	n = B->rows / 2; /* columns of op(B) */
+	kb = B->cols;    /* rows of op(B) */
+    } else {
+	n = B->cols;
+	kb = B->rows / 2;
+    }
+
+    if (k != kb) {
 	*err = E_NONCONF;
 	return NULL;
     }
@@ -285,19 +291,19 @@ gretl_matrix *gretl_cmatrix_multiply (const gretl_matrix *A,
 	if (cscalar(A) || cscalar(B)) {
 	    return gretl_cmatrix_dot_op(A, B, '*', err);
 	} else {
-	    C = gretl_zgemm(A, 0, B, err);
+	    C = gretl_zgemm(A, 0, B, 0, err);
 	}
     } else if (A->is_complex) {
 	/* case of real B */
 	T = complex_from_real(B, err);
 	if (T != NULL) {
-	    C = gretl_zgemm(A, 0, T, err);
+	    C = gretl_zgemm(A, 0, T, 0, err);
 	}
     } else if (B->is_complex) {
 	/* case of real A */
 	T = complex_from_real(A, err);
 	if (T != NULL) {
-	    C = gretl_zgemm(T, 0, B, err);
+	    C = gretl_zgemm(T, 0, B, 0, err);
 	}
     } else {
 	*err = E_TYPES;
@@ -318,26 +324,25 @@ gretl_matrix *gretl_cmatrix_AHB (const gretl_matrix *A,
 				 int *err)
 {
     gretl_matrix *C = NULL;
+    gretl_matrix *T = NULL;
 
     if (A->is_complex && B->is_complex) {
-	C = gretl_zgemm(A, GRETL_MOD_CTRANSP, B, err);
+	C = gretl_zgemm(A, GRETL_MOD_CTRANSP, B, 0, err);
     } else if (A->is_complex) {
 	/* case of real B */
-	gretl_matrix *CB = complex_from_real(B, err);
-
-	if (CB != NULL) {
-	    C = gretl_zgemm(A, GRETL_MOD_CTRANSP, CB, err);
-	    gretl_matrix_free(CB);
+	T = complex_from_real(B, err);
+	if (T != NULL) {
+	    C = gretl_zgemm(A, GRETL_MOD_CTRANSP, T, 0, err);
 	}
     } else {
 	/* case of real A */
-	gretl_matrix *CA = complex_from_real(A, err);
-
-	if (CA != NULL) {
-	    C = gretl_zgemm(CA, GRETL_MOD_CTRANSP, B, err);
-	    gretl_matrix_free(CA);
+	T = complex_from_real(A, err);
+	if (T != NULL) {
+	    C = gretl_zgemm(T, GRETL_MOD_CTRANSP, B, 0, err);
 	}
     }
+
+    gretl_matrix_free(T);
 
     return C;
 }
@@ -541,7 +546,7 @@ gretl_matrix *gretl_zgeev (const gretl_matrix *A,
    LAPACK functions zgetrf() and zgetri()
 */
 
-gretl_matrix *gretl_zgetri (const gretl_matrix *A, int *err)
+gretl_matrix *gretl_cmatrix_inverse (const gretl_matrix *A, int *err)
 {
     gretl_matrix *Ainv = NULL;
     integer lwork = -1;
@@ -759,6 +764,98 @@ int gretl_cmatrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
     gretl_matrix_free(vt);
 
     return err;
+}
+
+/* generalized inverse of a complex matrix via its SVD */
+
+gretl_matrix *gretl_cmatrix_ginv (const gretl_matrix *A, int *err)
+{
+    gretl_matrix *U = NULL;
+    gretl_matrix *V = NULL;
+    gretl_matrix *s = NULL;
+    gretl_matrix *Vt = NULL;
+    gretl_matrix *ret = NULL;
+
+    *err = gretl_cmatrix_SVD(A, &U, &s, &V, 1);
+
+    if (!*err) {
+	double vij;
+	int i, j, h = 0;
+
+	for (i=0; i<s->cols; i++) {
+	    h += s->val[i] > 1.0e-13;
+	}
+	Vt = gretl_ctrans(V, 1, err);
+	if (!*err) {
+	    for (j=0; j<h; j++) {
+		for (i=0; i<Vt->rows; i++) {
+		    vij = gretl_matrix_get(Vt, i, j);
+		    gretl_matrix_set(Vt, i, j, vij / s->val[j]);
+		}
+	    }
+	}
+	if (!*err) {
+	    Vt->cols = U->cols = h;
+	    ret = gretl_zgemm(Vt, 0, U, GRETL_MOD_CTRANSP, err);
+	}
+    }
+
+    gretl_matrix_free(U);
+    gretl_matrix_free(V);
+    gretl_matrix_free(s);
+    gretl_matrix_free(Vt);
+
+    return ret;
+}
+
+gretl_matrix *gretl_cmatrix_hdprod (const gretl_matrix *A,
+				    const gretl_matrix *B,
+				    int *err)
+{
+    gretl_matrix *C = NULL;
+    int r, p, q;
+
+    if (!cmatrix_validate(A,0) || !cmatrix_validate(B,0)) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    if (B->rows != A->rows) {
+	*err = E_NONCONF;
+	return NULL;
+    }
+
+    r = A->rows / 2;
+    p = A->cols;
+    q = B->cols;
+
+    C = gretl_zero_matrix_new(2*r, p*q);
+
+    if (C == NULL) {
+	*err = E_ALLOC;
+    } else {
+	double complex *az = (double complex *) A->val;
+	double complex *bz = (double complex *) B->val;
+	double complex *cz = (double complex *) C->val;
+	double complex aij, bik;
+	int i, j, k, joff;
+
+	for (i=0; i<r; i++) {
+	    for (j=0; j<p; j++) {
+		aij = gretl_cmatrix_get(az, r, i, j);
+		if (aij != 0.0) {
+		    joff = j * q;
+		    for (k=0; k<q; k++) {
+			bik = gretl_cmatrix_get(bz, r, i, k);
+			gretl_cmatrix_set(cz, r, i, joff + k, aij*bik);
+		    }
+		}
+	    }
+	}
+	C->is_complex = 1;
+    }
+
+    return C;
 }
 
 /* Complex FFT (or inverse) via fftw */

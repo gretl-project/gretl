@@ -1837,10 +1837,8 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 	return NULL;
     }
 
-    if (gretl_is_complex_matrix(Y) ||
-	gretl_is_complex_matrix(X) ||
-	gretl_is_complex_matrix(U) ||
-	gretl_is_complex_matrix(V)) {
+    if (gretl_is_complex(Y) || gretl_is_complex(X) ||
+	gretl_is_complex(U) || gretl_is_complex(V)) {
 	*err = E_CMPLX;
 	return NULL;
     }
@@ -1932,10 +1930,8 @@ gretl_matrix *user_matrix_rls (const gretl_matrix *Y,
 	return NULL;
     }
 
-    if (gretl_is_complex_matrix(Y) ||
-	gretl_is_complex_matrix(X) ||
-	gretl_is_complex_matrix(R) ||
-	gretl_is_complex_matrix(Q)) {
+    if (gretl_is_complex(Y) || gretl_is_complex(X) ||
+	gretl_is_complex(R) || gretl_is_complex(Q)) {
 	*err = E_CMPLX;
 	return NULL;
     }

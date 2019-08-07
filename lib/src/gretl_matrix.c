@@ -4587,6 +4587,12 @@ gretl_vector *gretl_toeplitz_solve (const gretl_vector *c,
     int m = gretl_vector_get_length(c);
     gretl_matrix *y = NULL;
 
+    if (gretl_is_complex(c) || gretl_is_complex(r) ||
+	gretl_is_complex(b)) {
+	*err = E_CMPLX;
+	return NULL;
+    }
+
     /* a few sanity checks */
 
     if (m == 0 ||
@@ -5807,9 +5813,9 @@ gretl_matrix_kronecker_product_new (const gretl_matrix *A,
 
 /**
  * gretl_matrix_hdproduct:
- * @A: left-hand matrix, p x q.
- * @B: right-hand matrix, p x s.
- * @C: target matrix, p x (q * r).
+ * @A: left-hand matrix, r x p.
+ * @B: right-hand matrix, r x q.
+ * @C: target matrix, r x (p * q).
  *
  * Writes into @C the horizontal direct product of @A and @B.
  * That is, $C_i' = A_i' \otimes B_i'$ (in TeX notation)
@@ -5824,7 +5830,7 @@ int gretl_matrix_hdproduct (const gretl_matrix *A,
 			    gretl_matrix *C)
 {
     double aij, bik;
-    int p, q, r;
+    int r, p, q;
     int i, j, k;
     int joff;
 
@@ -5834,20 +5840,20 @@ int gretl_matrix_hdproduct (const gretl_matrix *A,
 	return E_DATA;
     }
 
-    p = A->rows;
-    q = A->cols;
-    r = B->cols;
+    r = A->rows;
+    p = A->cols;
+    q = B->cols;
 
-    if (B->rows != p || C->rows != p || C->cols != q * r) {
+    if (B->rows != r || C->rows != r || C->cols != p * q) {
 	return E_NONCONF;
     }
 
-    for (i=0; i<p; i++) {
-	for (j=0; j<q; j++) {
+    for (i=0; i<r; i++) {
+	for (j=0; j<p; j++) {
 	    aij = gretl_matrix_get(A, i, j);
 	    if (aij != 0.0) {
-		joff = j * r;
-		for (k=0; k<r; k++) {
+		joff = j * q;
+		for (k=0; k<q; k++) {
 		    bik = gretl_matrix_get(B, i, k);
 		    gretl_matrix_set(C, i, joff + k, aij*bik);
 		}
@@ -5860,11 +5866,11 @@ int gretl_matrix_hdproduct (const gretl_matrix *A,
 
 /**
  * gretl_matrix_hdproduct_new:
- * @A: left-hand matrix, p x q.
- * @B: right-hand matrix, p x r.
+ * @A: left-hand matrix, r x p.
+ * @B: right-hand matrix, r x q.
  * @err: location to receive error code.
  *
- * Returns: A newly allocated p x (r * s) matrix which is the
+ * Returns: newly allocated r x (p * q) matrix which is the
  * horizontal direct product of matrices @A and @B, or NULL on
  * failure.
  */
@@ -5874,30 +5880,31 @@ gretl_matrix_hdproduct_new (const gretl_matrix *A,
 			    const gretl_matrix *B,
 			    int *err)
 {
-    gretl_matrix *K;
-    int p, q, r;
+    gretl_matrix *K = NULL;
+    int r, p, q;
 
     if (gretl_is_null_matrix(A) || gretl_is_null_matrix(B)) {
 	*err = E_DATA;
 	return NULL;
     }
-
-    p = A->rows;
-
-    if (p != B->rows) {
-	*err = E_NONCONF;
+    if (gretl_is_complex(A) || gretl_is_complex(B)) {
+	*err = E_CMPLX;
 	return NULL;
     }
 
-    q = A->cols;
-    r = B->cols;
+    r = A->rows;
+    p = A->cols;
+    q = B->cols;
 
-    K = gretl_zero_matrix_new(p, q * r);
-
-    if (K == NULL) {
-	*err = E_ALLOC;
+    if (B->rows != r) {
+	*err = E_NONCONF;
     } else {
-	gretl_matrix_hdproduct(A, B, K);
+	K = gretl_zero_matrix_new(r, p * q);
+	if (K == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    gretl_matrix_hdproduct(A, B, K);
+	}
     }
 
     return K;
@@ -13681,9 +13688,9 @@ gretl_matrix *gretl_matrix_covariogram (const gretl_matrix *X,
 	return NULL;
     }
 
-    if (gretl_is_complex_matrix(X) ||
-	gretl_is_complex_matrix(u) ||
-	gretl_is_complex_matrix(w)) {
+    if (gretl_is_complex(X) ||
+	gretl_is_complex(u) ||
+	gretl_is_complex(w)) {
 	*err = E_CMPLX;
 	return NULL;
     }

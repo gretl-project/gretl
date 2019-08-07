@@ -860,9 +860,9 @@ gretl_matrix *filter_matrix (gretl_matrix *X, gretl_vector *A,
     double *a = NULL, *b = NULL;
     int i, j;
 
-    if (gretl_is_complex_matrix(X) ||
-	gretl_is_complex_matrix(A) ||
-	gretl_is_complex_matrix(C)) {
+    if (gretl_is_complex(X) ||
+	gretl_is_complex(A) ||
+	gretl_is_complex(C)) {
 	*err = E_CMPLX;
 	return NULL;
     }

@@ -36,7 +36,9 @@ gretl_matrix *gretl_cmatrix_AHB (const gretl_matrix *A,
 				 const gretl_matrix *B,
 				 int *err);
 
-gretl_matrix *gretl_zgetri (const gretl_matrix *A, int *err);
+gretl_matrix *gretl_cmatrix_inverse (const gretl_matrix *A, int *err);
+
+gretl_matrix *gretl_cmatrix_ginv (const gretl_matrix *A, int *err);
 
 gretl_matrix *gretl_zheev (const gretl_matrix *A, int eigenvecs,
 			   int *err);
@@ -110,14 +112,14 @@ gretl_matrix *gretl_cmatrix_reverse_rows (const gretl_matrix *X,
 gretl_matrix *gretl_cmatrix_shape (const gretl_matrix *A,
 				   int r, int c, int *err);
 
+gretl_matrix *gretl_cmatrix_hdprod (const gretl_matrix *A,
+				    const gretl_matrix *B,
+				    int *err);
+
 int gretl_cmatrix_zero_triangle (gretl_matrix *m, char t);
 
 gretl_matrix *gretl_cmatrix_switch (const gretl_matrix *m,
 				    int to_new, int *err);
-
-gretl_matrix *gretl_cmatrix_dot_pow (const gretl_matrix *A,
-				     const gretl_matrix *P,
-				     int *err);
 
 gretl_matrix *gretl_cmatrix_vector_stat (const gretl_matrix *m,
 					 GretlVecStat vs, int rowwise,
