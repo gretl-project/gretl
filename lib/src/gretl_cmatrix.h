@@ -116,6 +116,10 @@ gretl_matrix *gretl_cmatrix_hdprod (const gretl_matrix *A,
 				    const gretl_matrix *B,
 				    int *err);
 
+gretl_matrix *gretl_matrix_kronecker (const gretl_matrix *A,
+				      const gretl_matrix *B,
+				      int *err);
+
 int gretl_cmatrix_zero_triangle (gretl_matrix *m, char t);
 
 gretl_matrix *gretl_cmatrix_switch (const gretl_matrix *m,

@@ -2744,7 +2744,8 @@ static gretl_matrix *calc_get_matrix (gretl_matrix **pM,
 			      o==B_DOTPOW || o==F_MCSEL || o==F_MRSEL || \
 			      o==B_DOTASN || o==B_HCAT || o==B_VCAT || \
 			      o==B_DOTADD || o==B_DOTSUB || op==F_DSUM || \
-			      o==B_DOTEQ || o==B_DOTNEQ || op==F_HDPROD)
+			      o==B_DOTEQ || o==B_DOTNEQ || op==F_HDPROD || \
+			      o==B_KRON)
 
 /* return allocated result of binary operation performed on
    two matrices */
@@ -2935,12 +2936,15 @@ static int real_matrix_calc (const gretl_matrix *A,
 	}
 	break;
     case B_KRON:
-	/* Kronecker product */
-	C = gretl_matrix_kronecker_product_new(A, B, &err);
+	if (A->is_complex || B->is_complex) {
+	    C = gretl_cmatrix_kronecker(A, B, &err);
+	} else {
+	    C = gretl_matrix_kronecker_product_new(A, B, &err);
+	}
 	break;
     case F_HDPROD:
-	if (A->is_complex && B->is_complex) {
-	    C = gretl_cmatrix_hdprod(A, B, &err);;
+	if (A->is_complex || B->is_complex) {
+	    C = gretl_cmatrix_hdprod(A, B, &err);
 	} else {
 	    C = gretl_matrix_hdproduct_new(A, B, &err);
 	}
