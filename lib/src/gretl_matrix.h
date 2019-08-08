@@ -210,7 +210,7 @@ typedef struct gretl_matrix_block_ gretl_matrix_block;
 
 #define gretl_is_complex(m) (m != NULL && m->is_complex == 1)
 
-#define gretl_set_complex(m, i) (m->is_complex = i)
+int gretl_matrix_set_complex (gretl_matrix *m, int c);
 
 int get_gretl_matrix_err (void);
 

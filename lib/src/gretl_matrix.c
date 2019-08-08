@@ -304,6 +304,24 @@ gretl_matrix *gretl_matrix_alloc (int rows, int cols)
     return m;
 }
 
+int gretl_matrix_set_complex (gretl_matrix *m, int c)
+{
+    if (m == NULL) {
+	fprintf(stderr, "gretl_matrix_set_complex: m is NULL\n");
+	return E_DATA;
+    } else if (c) {
+	if (m->rows % 2 != 0) {
+	    return E_INVARG;
+	} else {
+	    m->is_complex = 1;
+	}
+    } else {
+	m->is_complex = 0;
+    }
+
+    return 0;
+}
+
 void gretl_matrix_block_destroy (gretl_matrix_block *B)
 {
     int i;
