@@ -1188,7 +1188,7 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 
 #if 1 || USE_CIDX
     if (S != NULL && M->is_complex) {
-	S->is_complex = 1;
+	gretl_matrix_set_complex(S, 1);
     }
 #endif
 
@@ -1261,7 +1261,7 @@ gretl_matrix *matrix_get_chunk (const gretl_matrix *M,
 
 #if 1 || USE_CIDX
     if (ret != NULL && M->is_complex) {
-	ret->is_complex = 1;
+	gretl_matrix_set_complex(ret, 1);
     }
 #endif
 
@@ -2075,7 +2075,7 @@ user_matrix_eigen_analysis (const gretl_matrix *m,
 
     if (!*err && vecs) {
 	maybe_replace_content(R, C, 0);
-	R->is_complex = m->is_complex;
+	gretl_matrix_set_complex(R, m->is_complex);
     }
 
     if (!vecs) {

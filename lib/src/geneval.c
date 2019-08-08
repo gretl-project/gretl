@@ -2817,7 +2817,7 @@ static int real_matrix_calc (const gretl_matrix *A,
 #if !USE_CIDX
 	    if (!A->is_complex) {
 		/* hack to keep ghosts working! */
-		C->is_complex = 0;
+		gretl_matrix_set_complex(C, 0);
 	    }
 #endif
 	} else {
@@ -3155,7 +3155,7 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
     } else {
 	ret = aux_sized_matrix_node(p, m->rows, m->cols);
 	if (!p->err) {
-	    ret->v.m->is_complex = m->is_complex;
+	    gretl_matrix_set_complex(ret->v.m, m->is_complex);
 	}
     }
 
@@ -4246,10 +4246,10 @@ static void fix_complex_flags (gretl_matrix *m1, gretl_matrix *m2)
 {
     /* get rid of this before too long! */
     if (!m1->is_complex && m1->rows % 2 == 0) {
-	m1->is_complex = 1;
+	gretl_matrix_set_complex(m1, 1);
     }
     if (!m2->is_complex && m2->rows % 2 == 0) {
-	m2->is_complex = 1;
+	gretl_matrix_set_complex(m2, 1);
     }
 }
 
@@ -4583,13 +4583,14 @@ static NODE *complex_matrix_node (NODE *l, NODE *r, parser *p)
 
     if (ret != NULL) {
 	if (l->t == NUM && r->t == NUM) {
+	    /* FIXME delegate this */
 	    ret->v.m = gretl_matrix_alloc(2, 1);
 	    if (ret->v.m == NULL) {
 		p->err = E_ALLOC;
 	    } else {
 		ret->v.m->val[0] = l->v.xval;
 		ret->v.m->val[1] = r->v.xval;
-		ret->v.m->is_complex = 1;
+		gretl_matrix_set_complex(ret->v.m, 1);
 	    }
 	} else if (l->t == MAT && r->t == MAT) {
 	    ret->v.m = gretl_cmatrix(l->v.m, r->v.m, 0, &p->err);
@@ -5758,7 +5759,7 @@ static NODE *matrix_isnan_node (NODE *n, parser *p)
 		for (i=0; i<n; i++) {
 		    ret->v.m->val[i] = isnan(m->val[i]);
 		}
-		ret->v.m->is_complex = m->is_complex;
+		gretl_matrix_set_complex(ret->v.m, m->is_complex);
 	    }
 	}
     }
