@@ -3962,8 +3962,7 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
 
 	switch (f) {
 	case F_ROWS:
-#if USE_CIDX > 1
-	    /* this breaks existing complex hansl! */
+#if USE_CIDX
 	    if (m->is_complex) {
 		ret->v.xval = m->rows > 0 ? m->rows/2 : 0;
 	    } else {
