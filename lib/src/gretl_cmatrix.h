@@ -100,6 +100,9 @@ int gretl_cmatrix_set_diagonal (gretl_matrix *targ,
 				const gretl_matrix *src,
 				double x);
 
+gretl_matrix *gretl_cmatrix_vec (const gretl_matrix *X,
+				 int *err);
+
 gretl_matrix *gretl_cmatrix_vech (const gretl_matrix *X,
 				  int *err);
 

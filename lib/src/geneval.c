@@ -4419,8 +4419,11 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    }
 	    break;
 	case F_VEC:
-	    /* note: the complex case is handled OK */
-	    ret->v.m = user_matrix_vec(m, &p->err);
+	    if (m->is_complex) {
+		ret->v.m = gretl_cmatrix_vec(m, &p->err);
+	    } else {
+		ret->v.m = user_matrix_vec(m, &p->err);
+	    }
 	    break;
 	case F_VECH:
 	    if (m->is_complex) {

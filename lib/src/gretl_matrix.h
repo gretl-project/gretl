@@ -89,7 +89,6 @@ typedef struct gretl_matrix_ {
     int cols;
     double *val;
     double complex *z;
-    int rz;
     int is_complex;
     /*< private >*/
     matrix_info *info;
@@ -107,7 +106,7 @@ typedef struct gretl_matrix_block_ gretl_matrix_block;
  */
 
 #define gretl_matrix_get(m,i,j) (m->val[(j)*m->rows+(i)])
-#define gretl_cmatrix_get(m,i,j) (m->z[(j)*m->rz+(i)])
+#define gretl_cmatrix_get(m,i,j) (m->z[(j)*m->rows+(i)])
 
 /**
  * gretl_vector_get:
@@ -130,7 +129,7 @@ typedef struct gretl_matrix_block_ gretl_matrix_block;
  */
 
 #define gretl_matrix_set(m,i,j,x) ((m)->val[(j)*(m)->rows+(i)]=x)
-#define gretl_cmatrix_set(m,i,j,x) ((m)->z[(j)*(m)->rz+(i)]=x)    
+#define gretl_cmatrix_set(m,i,j,x) ((m)->z[(j)*(m)->rows+(i)]=x)
 
 /**
  * gretl_vector_set:

@@ -1591,6 +1591,29 @@ int gretl_cmatrix_set_diagonal (gretl_matrix *targ,
     return err;
 }
 
+gretl_matrix *gretl_cmatrix_vec (const gretl_matrix *X,
+				 int *err)
+{
+    gretl_matrix *ret = NULL;
+
+    if (!cmatrix_validate(X, 0)) {
+	*err = E_INVARG;
+    } else {
+	int i, n = X->cols * X->rows / 2;
+
+	ret = gretl_cmatrix_new(n, 1);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    for (i=0; i<n; i++) {
+		ret->z[i] = X->z[i];
+	    }
+	}
+    }
+
+    return ret;
+}
+
 gretl_matrix *gretl_cmatrix_vech (const gretl_matrix *X,
 				  int *err)
 {
