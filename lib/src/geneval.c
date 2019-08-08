@@ -3694,7 +3694,7 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
 	gretl_matrix *m = l->v.m;
 	int k;
 
-	if (f == HF_CSWITCH || HF_SETCMPLX) {
+	if (f == HF_CSWITCH || f == HF_SETCMPLX) {
 	    k = node_get_bool(r, p, 1);
 	} else {
 	    k = node_get_int(r, p);
