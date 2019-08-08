@@ -299,9 +299,54 @@ gretl_matrix *gretl_matrix_alloc (int rows, int cols)
     m->rows = rows;
     m->cols = cols;
     m->is_complex = 0;
+    m->z = NULL;
+    m->rz = 0;
     m->info = NULL;
 
     return m;
+}
+
+gretl_matrix *gretl_cmatrix_new (int r, int c)
+{
+    gretl_matrix *m = gretl_matrix_alloc(2*r, c);
+
+    if (m != NULL) {
+	m->is_complex = 1;
+	m->z = (double complex *) m->val;
+	m->rz = r;
+    }
+    return m;
+}
+
+gretl_matrix *gretl_cmatrix_new0 (int r, int c)
+{
+    gretl_matrix *m = gretl_zero_matrix_new(2*r, c);
+
+    if (m != NULL) {
+	m->is_complex = 1;
+	m->z = (double complex *) m->val;
+	m->rz = r;
+    }
+    return m;
+}
+
+int gretl_matrix_set_complex (gretl_matrix *m, int c)
+{
+    if (c) {
+	if (m->rows % 2 != 0) {
+	    return E_INVARG;
+	} else {
+	    m->is_complex = 1;
+	    m->z = (double complex *) m->val;
+	    m->rz = m->rows / 2;
+	}
+    } else {
+	m->is_complex = 0;
+	m->z = NULL;
+	m->rz = 0;
+    }
+
+    return 0;
 }
 
 void gretl_matrix_block_destroy (gretl_matrix_block *B)

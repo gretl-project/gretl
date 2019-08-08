@@ -1577,7 +1577,7 @@ gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node,
     double x;
     int rows = 0, cols = 0;
     int t1 = -1, t2 = -1;
-    int complex = 0;
+    int is_complex = 0;
     int i, j;
 
     if (!gretl_xml_get_prop_as_int(node, "rows", &rows) ||
@@ -1586,7 +1586,7 @@ gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node,
 	return NULL;
     }
 
-    complex = gretl_xml_get_prop_as_bool(node, "complex");
+    is_complex = gretl_xml_get_prop_as_bool(node, "complex");
 
     if (rows == 0 && cols == 0) {
 	/* allow case of empty matrix */
@@ -1665,7 +1665,9 @@ gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node,
 	gretl_matrix_free(m);
 	m = NULL;
     } else {
-	m->is_complex = complex;
+	if (is_complex) {
+	    gretl_matrix_set_complex(m, 1);
+	}
 	if (t1 >= 0 && t2 >= t1) {
 	    gretl_matrix_set_t1(m, t1);
 	    gretl_matrix_set_t2(m, t2);

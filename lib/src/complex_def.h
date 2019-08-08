@@ -5,4 +5,4 @@
    given in 16-byte mode.
 */
 
-#define USE_CIDX 0
+#define USE_CIDX 1

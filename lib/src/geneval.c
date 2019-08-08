@@ -3662,25 +3662,6 @@ static NODE *bundle_file_write (NODE *l, NODE *m, NODE *r, parser *p)
     return ret;
 }
 
-/* temporary, transitional function to toggle the 'complex'
-   flag on a matrix manually
-*/
-
-static int matrix_set_complex (gretl_matrix *m, int c)
-{
-    if (c) {
-	if (m->rows % 2 != 0) {
-	    return E_INVARG;
-	} else {
-	    m->is_complex = 1;
-	}
-    } else {
-	m->is_complex = 0;
-    }
-
-    return 0;
-}
-
 /* matrix on left, scalar on right: returns a matrix,
    except when the function is _setcmplx
 */
@@ -3720,7 +3701,7 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
 	    } else if (f == HF_CSWITCH) {
 		ret->v.m = gretl_cmatrix_switch(m, k, &p->err);
 	    } else if (f == HF_SETCMPLX) {
-		ret->v.xval = p->err = matrix_set_complex(m, k);
+		ret->v.xval = p->err = gretl_matrix_set_complex(m, k);
 	    }
 	}
     } else {
