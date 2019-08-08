@@ -1098,7 +1098,7 @@ static gretl_matrix *read_binary_matrix_file (FILE *fp, int *err)
 	    gretl_matrix_free(A);
 	    A = NULL;
 	} else {
-	    A->is_complex = is_complex;
+	    gretl_matrix_set_complex(A, is_complex);
 	}
     }
 
@@ -1223,7 +1223,7 @@ gretl_matrix *gretl_matrix_read_from_file (const char *fname,
 	    if (A == NULL) {
 		*err = E_ALLOC;
 	    } else if (!strcmp(ctest, "complex")) {
-		A->is_complex = 1;
+		gretl_matrix_set_complex(A, 1);
 	    }
 	}
     }
