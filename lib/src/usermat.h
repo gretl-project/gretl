@@ -49,7 +49,6 @@ union msel {
 };
 
 struct matrix_subspec_ {
-    int owns_lmat;
     SelType ltype, rtype;
     union msel lsel, rsel;
     int *rslice;
