@@ -761,6 +761,74 @@ static int contig_cols (matrix_subspec *spec,
     }
 }
 
+static void transcribe_cols_8 (gretl_matrix *M,
+			       const gretl_matrix *S,
+			       const int *cslice,
+			       int sscalar)
+{
+    int i, j, mcol, nr = M->rows;
+
+    if (sscalar) {
+	/* write RHS scalar into all rows of each selected col */
+	for (j=1; j<=cslice[0]; j++) {
+	    mcol = cslice[j] - 1;
+	    for (i=0; i<nr; i++) {
+		gretl_matrix_set(M, i, mcol, S->val[0]);
+	    }
+	}
+    } else {
+	/* zap from (cols of) S into selected cols of M */
+	double *xtarg, *xsrc = S->val;
+	size_t colsize = nr * sizeof *M->val;
+
+	for (j=1; j<=cslice[0]; j++) {
+	    mcol = cslice[j] - 1;
+	    xtarg = M->val + mcol * nr;
+	    memcpy(xtarg, xsrc, colsize);
+	    xsrc += nr;
+	}
+    }
+}
+
+static void transcribe_cols_16 (gretl_matrix *M,
+			       const gretl_matrix *S,
+			       const int *cslice,
+			       int sscalar)
+{
+    int i, j, mcol, nr = M->rows;
+
+    if (sscalar) {
+	/* write RHS scalar into all rows of each selected col */
+	double complex z = S->is_complex ? S->z[0] : S->val[0];
+
+	for (j=1; j<=cslice[0]; j++) {
+	    mcol = cslice[j] - 1;
+	    for (i=0; i<nr; i++) {
+		gretl_cmatrix_set(M, i, mcol, z);
+	    }
+	}
+    } else {
+	/* zap from (cols of) S into selected cols of M */
+	double complex *ztarg, *zsrc = S->z;
+	double *xsrc = S->val;
+	size_t colsize = nr * sizeof *M->z;
+
+	for (j=1; j<=cslice[0]; j++) {
+	    mcol = cslice[j] - 1;
+	    ztarg = M->z + mcol * nr;
+	    if (!S->is_complex) {
+		for (i=0; i<nr; i++) {
+		    ztarg[i] = xsrc[i];
+		}
+		xsrc += nr;
+	    } else {
+		memcpy(ztarg, zsrc, colsize);
+		zsrc += nr;
+	    }
+	}
+    }
+}
+
 /* @M is the target for partial replacement, @S is the source to
    substitute, and @spec tells how/where to make the
    substitution.
@@ -863,56 +931,10 @@ int matrix_replace_submatrix (gretl_matrix *M,
 
     if (!err && spec->rslice == NULL && spec->cslice != NULL) {
 	/* the target is just specified by column(s) */
-	int mcol, nr = M->rows;
-
-	if (sscalar) {
-	    /* write RHS scalar into all rows of each selected col */
-	    double complex z = 0;
-
-	    if (M->is_complex) {
-		z = S->is_complex ? S->z[0] : S->val[0];
-	    }
-	    for (j=1; j<=spec->cslice[0]; j++) {
-		mcol = spec->cslice[j] - 1;
-		for (i=0; i<nr; i++) {
-		    if (M->is_complex) {
-			gretl_cmatrix_set(M, i, mcol, z);
-		    } else {
-			gretl_matrix_set(M, i, mcol, S->val[0]);
-		    }
-		}
-	    }
+	if (M->is_complex) {
+	    transcribe_cols_16(M, S, spec->cslice, sscalar);
 	} else {
-	    /* zap from (cols of) S into selected cols of M */
-	    double complex *ztarg, *zsrc = S->z;
-	    double *xtarg, *xsrc = S->val;
-	    size_t colsize;
-
-	    if (M->is_complex) {
-		colsize = nr * sizeof *M->z;
-	    } else {
-		colsize = nr * sizeof *M->val;
-	    }
-
-	    for (j=1; j<=spec->cslice[0]; j++) {
-		mcol = spec->cslice[j] - 1;
-		if (M->is_complex) {
-		    ztarg = M->z + mcol * nr;
-		    if (!S->is_complex) {
-			for (i=0; i<nr; i++) {
-			    ztarg[i] = xsrc[i];
-			}
-			xsrc += nr;
-		    } else {
-			memcpy(ztarg, zsrc, colsize);
-			zsrc += nr;
-		    }
-		} else {
-		    xtarg = M->val + mcol * nr;
-		    memcpy(xtarg, xsrc, colsize);
-		    xsrc += nr;
-		}
-	    }
+	    transcribe_cols_8(M, S, spec->cslice, sscalar);
 	}
     } else if (!err) {
 	/* the general case, no special shortcuts */
