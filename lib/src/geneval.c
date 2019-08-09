@@ -11043,8 +11043,7 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 
     if (rhs_scalar && !inflected) {
 	/* straight assignment of a scalar value to a
-	   non-scalar submatrix -- FIXME m1 complex?
-	*/
+	   non-scalar submatrix */
 	p->err = assign_scalar_to_submatrix(m1, y, spec);
 	return p->err; /* we're done */
     }

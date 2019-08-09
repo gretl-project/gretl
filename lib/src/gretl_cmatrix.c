@@ -1493,9 +1493,9 @@ gretl_matrix *gretl_cmatrix_trace (const gretl_matrix *X,
 	*err = E_INVARG;
     } else {
 	double complex tr = 0;
-	int i, r = X->rows;
+	int i;
 
-	for (i=0; i<r; i++) {
+	for (i=0; i<X->rows; i++) {
 	    tr += gretl_cmatrix_get(X, i, i);
 	}
 	ret = complex_scalar_to_mat(tr, err);
@@ -1512,19 +1512,16 @@ gretl_matrix *gretl_cmatrix_get_diagonal (const gretl_matrix *X,
 					  int *err)
 {
     gretl_matrix *ret = NULL;
+    int d, i;
 
     if (!cmatrix_validate(X, 0)) {
 	*err = E_INVARG;
     } else {
-	int r = X->rows;
-	int d = MIN(r, X->cols);
-
+	d = MIN(X->rows, X->cols);
 	ret = gretl_cmatrix_new(d, 1);
 	if (ret == NULL) {
 	    *err = E_ALLOC;
 	} else {
-	    int i;
-
 	    for (i=0; i<d; i++) {
 		ret->z[i] = gretl_cmatrix_get(X, i, i);
 	    }

@@ -25,16 +25,9 @@
 #include "usermat.h"
 #include "genparse.h"
 #include "uservar.h"
-#include "complex_def.h" /* temporary */
 
 #define MDEBUG 0
 #define CONTIG_DEBUG 0
-#define CIDX_DEBUG 0
-
-/* USE_CIDX: set to interpret user-supplied row indices for
-   complex matrices as pertaining to 16-byte values, and so
-   convert them to 8-byte values as needed.
-*/
 
 /* mspec convenience macros */
 
@@ -68,17 +61,6 @@
 #define colmax(s,m) (s->range[1] == MSEL_MAX ? m->cols : s->range[1])
 
 /* end mspec convenience macros */
-
-#if USE_CIDX
-static int gretl_vector_real_length (const gretl_matrix *v)
-{
-    if (v->is_complex) {
-	return v->rows == 2 ? v->cols : v->cols == 1 ? v->rows : 0;
-    } else {
-	return gretl_vector_get_length(v);
-    }
-}
-#endif
 
 /**
  * get_matrix_by_name:
@@ -426,7 +408,7 @@ static int spec_check_dimensions (matrix_subspec *spec,
     return err;
 }
 
-#if CIDX_DEBUG || CONTIG_DEBUG
+#if CONTIG_DEBUG
 
 static const char *snames[] = {
      "SEL_NULL",
@@ -440,133 +422,6 @@ static const char *snames[] = {
      "SEL_SINGLE",
      "SEL_STR"
 };
-
-#endif
-
-#if USE_CIDX
-
-/* 16-byte to 8-byte conversion for selection matrix,
-   allowing for the possibility that the values are
-   negative (row exclusions).
-*/
-
-static int convert_lsel_matrix (matrix_subspec *mspec)
-{
-    gretl_matrix *m8, *m = mspec->lsel.m;
-    int n = gretl_vector_get_length(m);
-    int i, mi, mj, j = 0;
-
-    m8 = gretl_matrix_alloc(1, 2 * n);
-    if (m8 == NULL) {
-	return E_ALLOC;
-    }
-
-    for (i=0; i<m->cols; i++) {
-	mi = (int) m->val[i];
-	if (mi < 0) {
-	    /* exclusion */
-	    mj = 2*(-mi-1) + 1;
-	    m8->val[j++] = -mj;
-	    m8->val[j++] = -mj - 1;
-	} else {
-	    /* positive selection */
-	    mj = 2*(mi-1) + 1;
-	    m8->val[j++] = mj;
-	    m8->val[j++] = mj + 1;
-	}
-    }
-
-    /* The original user-supplied selection matrix does not
-       "belong" to @mspec: it's a pointer to another "genr"
-       node, and so must not be freed here or on destruction
-       of @mspec. However, here we're replacing the original
-       selection matrix with one that does belong to @mspec,
-       and we need to flag that fact.
-    */
-    mspec->lsel.m = m8;
-    mspec->owns_lmat = 1;
-
-    return 0;
-}
-
-/* Assuming that the row index values in @spec, if any,
-   are expressed in 16-byte terms, convert to 8-byte.
-*/
-
-static int mspec_convert (matrix_subspec *spec, const gretl_matrix *m)
-{
-# if CIDX_DEBUG
-    fprintf(stderr, "Convert spec to 8-byte mode:\n");
-    fprintf(stderr, "  original types (%s,%s)\n", snames[spec->ltype],
-	    snames[spec->rtype]);
-    if (spec->ltype != SEL_MATRIX && spec->ltype != SEL_EXCL) {
-	fprintf(stderr, "  incoming range [%d:%d]\n", spec->lsel.range[0],
-		spec->lsel.range[1]);
-    }
-# endif
-    if (spec->rtype == SEL_NULL && m->rows == 2) {
-	/* complex row vector: transfer spec to column dimension */
-	if (spec->ltype == SEL_SINGLE) {
-	    /* a single column is not a single value */
-	    spec->rtype = SEL_RANGE;
-	} else {
-	    spec->rtype = spec->ltype;
-	}
-	spec->rsel = spec->lsel;
-	memset(&spec->lsel, 0, sizeof spec->lsel);
-	spec->ltype = SEL_ALL;
-    } else if (spec->ltype == SEL_ELEMENT || spec->ltype == SEL_SINGLE) {
-	int i0 = spec->lsel.range[0];
-	int i08 = 2*(i0-1) + 1;
-	int i18 = i08 + 1;
-
-	spec->ltype = SEL_RANGE;
-	spec->lsel.range[0] = i08;
-	spec->lsel.range[1] = i18;
-	if (spec->rtype == SEL_ELEMENT) {
-	    /* it's not a single 8-byte element */
-	    spec->rtype = SEL_RANGE;
-	}
-    } else if (spec->ltype == SEL_RANGE) {
-	int i0 = spec->lsel.range[0];
-	int i1 = spec->lsel.range[1];
-	int i08 = 2*(i0-1) + 1;
-	int i18 = 2*(i1-1) + 1;
-
-	i18 += i18 % 2;
-	spec->lsel.range[0] = i08;
-	spec->lsel.range[1] = i18;
-    } else if (spec->ltype == SEL_MATRIX) {
-	convert_lsel_matrix(spec);
-    } else if (spec->ltype == SEL_EXCL) {
-	/* exclusion of a single row must be extended to two,
-	   via use of a vector */
-	gretl_matrix *m;
-	int i0 = spec->lsel.range[0];
-	int i8 = 2*(-i0-1) + 1;
-
-	m = gretl_matrix_alloc(1, 2);
-	m->val[0] = -i8;
-	m->val[1] = -i8 - 1;
-	spec->ltype = SEL_MATRIX;
-	spec->lsel.m = m;
-	spec->owns_lmat = 1;
-    }
-# if CIDX_DEBUG
-    fprintf(stderr, "  converted types (%s,%s)\n", snames[spec->ltype],
-	    snames[spec->rtype]);
-    if (spec->ltype == SEL_RANGE) {
-	fprintf(stderr, "  outgoing range [%d:%d]\n", spec->lsel.range[0],
-		spec->lsel.range[1]);
-    }
-# endif
-
-    return 0;
-}
-
-#endif /* USE_CIDX */
-
-#if CONTIG_DEBUG
 
 static void subspec_debug_print (matrix_subspec *spec,
 				 const gretl_matrix *m)
@@ -709,8 +564,7 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 
     if (spec->ltype == SEL_DIAG) {
 	/* There's nothing to check, since this is OK even
-	   for an empty matrix argument. FIXME maybe convert
-	   for 1 x 1 matrix or complex scalar?
+	   for an empty matrix argument.
 	*/
 	return 0;
     }
@@ -719,24 +573,12 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
     subspec_debug_print(spec, m);
 #endif
 
-#if USE_CIDX
-    if (m->is_complex) {
-	mspec_convert(spec, m);
-    } else if (spec->rtype == SEL_NULL && m->rows == 1) {
-	commute_selectors(spec);
-    }
-#else
     if (spec->rtype == SEL_NULL && m->rows == 1) {
 	/* row vector: transfer spec to column dimension */
 	commute_selectors(spec);
     }
-#endif
 
-#if USE_CIDX
-    veclen = gretl_vector_real_length(m);
-#else
     veclen = gretl_vector_get_length(m);
-#endif
 
     if (spec->rtype == SEL_NULL && veclen == 0) {
 	gretl_errmsg_set(_("Ambiguous matrix index"));
@@ -744,7 +586,6 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
     }
 
     if (spec_is_single(spec)) {
-	/* can't happen in the (properly indexed) complex case */
 	int k = spec_single_val(spec);
 
 	err = bad_sel_single(k, veclen);
@@ -825,6 +666,7 @@ static int get_slices (matrix_subspec *spec,
 int assign_scalar_to_submatrix (gretl_matrix *M, double x,
 				matrix_subspec *spec)
 {
+    double complex z = 0;
     int mr = M->rows;
     int mc = M->cols;
     int i, err = 0;
@@ -834,12 +676,20 @@ int assign_scalar_to_submatrix (gretl_matrix *M, double x,
 	return E_DATA;
     }
 
+    if (M->is_complex) {
+	z = x;
+    }
+
     if (spec->ltype == SEL_CONTIG) {
 	int ini = mspec_get_offset(spec);
 	int fin = ini + mspec_get_n_elem(spec);
 
 	for (i=ini; i<fin; i++) {
-	    M->val[i] = x;
+	    if (M->is_complex) {
+		M->z[i] = z;
+	    } else {
+		M->val[i] = x;
+	    }
 	}
 	return 0;
     }
@@ -848,7 +698,11 @@ int assign_scalar_to_submatrix (gretl_matrix *M, double x,
 	int n = (mr < mc)? mr : mc;
 
 	for (i=0; i<n; i++) {
-	    gretl_matrix_set(M, i, i, x);
+	    if (M->is_complex) {
+		gretl_cmatrix_set(M, i, i, z);
+	    } else {
+		gretl_matrix_set(M, i, i, x);
+	    }
 	}
 	return 0;
     }
@@ -869,7 +723,11 @@ int assign_scalar_to_submatrix (gretl_matrix *M, double x,
 	    l = 0;
 	    for (j=0; j<sc; j++) {
 		mj = (spec->cslice == NULL)? l++ : spec->cslice[j+1] - 1;
-		gretl_matrix_set(M, mi, mj, x);
+		if (M->is_complex) {
+		    gretl_cmatrix_set(M, mi, mj, z);
+		} else {
+		    gretl_matrix_set(M, mi, mj, x);
+		}
 	    }
 	}
     }
@@ -916,10 +774,14 @@ int matrix_replace_submatrix (gretl_matrix *M,
     int mc = gretl_matrix_cols(M);
     int sr = gretl_matrix_rows(S);
     int sc = gretl_matrix_cols(S);
-    int i, j;
     int sscalar = 0;
-    int ctile = 0;
+    int i, j;
     int err = 0;
+
+    if (!M->is_complex && S->is_complex) {
+	fputs("matrix_replace_submatrix: M is real but S is complex\n", stderr);
+	return E_MIXED;
+    }
 
 #if MDEBUG
     fprintf(stderr, "\nmatrix_replace_submatrix\n");
@@ -930,30 +792,26 @@ int matrix_replace_submatrix (gretl_matrix *M,
 	return E_DATA;
     }
 
-    if (complex_scalar(S)) {
-	/* we need to "tile" the complex scalar on right */
-	ctile = 1;
-    }
-
     if (spec->ltype == SEL_CONTIG) {
 	int ini = mspec_get_offset(spec);
 	int n = mspec_get_n_elem(spec);
 	int ccols = contig_cols(spec, M);
-	double *targ = M->val + ini;
 
-	if (ctile) {
-	    for (i=0; i<n; i++) {
-		targ[i] = S->val[i % 2];
-	    }
-	    return 0;
-	} else if (S->rows * S->cols != n) {
-	    return E_NONCONF;
+	if (S->rows * S->cols != n) {
+	    err = E_NONCONF;
 	} else if (ccols > 1 && M->rows != S->rows) {
-	    return E_NONCONF;
+	    err = E_NONCONF;
+	} else if (M->is_complex && !S->is_complex) {
+	    /* can't use memcpy here! */
+	    for (i=0; i<n; i++) {
+		M->z[ini + i] = S->val[i];
+	    }
+	} else if (M->is_complex) {
+	    memcpy(M->z + ini, S->z, n * sizeof *M->z);
 	} else {
-	    memcpy(targ, S->val, n * sizeof(double));
-	    return 0;
+	    memcpy(M->val + ini, S->val, n * sizeof *M->val);
 	}
+	return err;
     }
 
     if (sr > mr || sc > mc) {
@@ -988,12 +846,8 @@ int matrix_replace_submatrix (gretl_matrix *M,
     fprintf(stderr, "orig M = %d x %d, S = %d x %d\n", mr, mc, sr, sc);
 #endif
 
-    if (ctile) {
-	/* the replacement is a complex scalar */
-	sr = (spec->rslice == NULL)? mr : spec->rslice[0];
-	sc = (spec->cslice == NULL)? mc : spec->cslice[0];
-    } else if (sr == 1 && sc == 1) {
-	/* the replacement is a real scalar */
+    if (sr == 1 && sc == 1) {
+	/* the replacement is a scalar */
 	sscalar = 1;
 	sr = (spec->rslice == NULL)? mr : spec->rslice[0];
 	sc = (spec->cslice == NULL)? mc : spec->cslice[0];
@@ -1013,49 +867,84 @@ int matrix_replace_submatrix (gretl_matrix *M,
 
 	if (sscalar) {
 	    /* write RHS scalar into all rows of each selected col */
-	    double x = S->val[0];
+	    double complex z = 0;
 
+	    if (M->is_complex) {
+		z = S->is_complex ? S->z[0] : S->val[0];
+	    }
 	    for (j=1; j<=spec->cslice[0]; j++) {
 		mcol = spec->cslice[j] - 1;
 		for (i=0; i<nr; i++) {
-		    gretl_matrix_set(M, i, mcol, x);
+		    if (M->is_complex) {
+			gretl_cmatrix_set(M, i, mcol, z);
+		    } else {
+			gretl_matrix_set(M, i, mcol, S->val[0]);
+		    }
 		}
 	    }
 	} else {
 	    /* zap from (cols of) S into selected cols of M */
-	    double *targ, *src = S->val;
-	    size_t colsize = nr * sizeof *src;
+	    double complex *ztarg, *zsrc = S->z;
+	    double *xtarg, *xsrc = S->val;
+	    size_t colsize;
+
+	    if (M->is_complex) {
+		colsize = nr * sizeof *M->z;
+	    } else {
+		colsize = nr * sizeof *M->val;
+	    }
 
 	    for (j=1; j<=spec->cslice[0]; j++) {
 		mcol = spec->cslice[j] - 1;
-		targ = M->val + mcol * nr;
-		if (ctile) {
-		    for (i=0; i<nr; i++) {
-			targ[i] = src[i % 2];
+		if (M->is_complex) {
+		    ztarg = M->z + mcol * nr;
+		    if (!S->is_complex) {
+			for (i=0; i<nr; i++) {
+			    ztarg[i] = xsrc[i];
+			}
+			xsrc += nr;
+		    } else {
+			memcpy(ztarg, zsrc, colsize);
+			zsrc += nr;
 		    }
 		} else {
-		    memcpy(targ, src, colsize);
-		    src += nr;
+		    xtarg = M->val + mcol * nr;
+		    memcpy(xtarg, xsrc, colsize);
+		    xsrc += nr;
 		}
 	    }
 	}
     } else if (!err) {
 	/* the general case, no special shortcuts */
-	double x = sscalar ? S->val[0] : 0.0;
+	double complex z = 0;
+	double x = 0;
 	int l, k = 0;
 	int mi, mj;
+
+	if (sscalar && S->is_complex) {
+	    z = S->z[0];
+	} else if (sscalar) {
+	    x = S->val[0];
+	    z = x; /* in case M is complex */
+	}
 
 	for (j=0; j<sc; j++) {
 	    mj = (spec->cslice == NULL)? k++ : spec->cslice[j+1] - 1;
 	    l = 0;
 	    for (i=0; i<sr; i++) {
 		mi = (spec->rslice == NULL)? l++ : spec->rslice[i+1] - 1;
-		if (ctile) {
-		    x = S->val[i % 2];
-		} else if (!sscalar) {
-		    x = gretl_matrix_get(S, i, j);
+		if (!sscalar) {
+		    if (S->is_complex) {
+			z = gretl_cmatrix_get(S, i, j);
+		    } else {
+			x = gretl_matrix_get(S, i, j);
+		    }
 		}
-		gretl_matrix_set(M, mi, mj, x);
+		if (M->is_complex) {
+		    gretl_cmatrix_set(M, mi, mj, z);
+		} else {
+		    gretl_matrix_set(M, mi, mj, x);
+		}
 	    }
 	}
     }
@@ -1095,25 +984,27 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 
     if (spec->ltype == SEL_DIAG) {
 	if (M->is_complex) {
-	    /* note: handles the complex flag */
 	    return gretl_cmatrix_get_diagonal(M, err);
 	} else {
 	    return gretl_matrix_get_diagonal(M, err);
 	}
     } else if (spec->ltype == SEL_CONTIG) {
-	/* note: handles the complex flag */
-	return  matrix_get_chunk(M, spec, err);
+	return matrix_get_chunk(M, spec, err);
     } else if (spec->ltype == SEL_ELEMENT) {
 	int i = mspec_get_element(spec);
-	double x = matrix_get_element(M, i, err);
 
-	if (!*err) {
-	    S = gretl_matrix_from_scalar(x);
+	if (M->is_complex) {
+	    S = gretl_cmatrix_new(1, 1);
+	    if (S != NULL) {
+		S->z[0] = M->z[i];
+	    }
+	} else {
+	    S = gretl_matrix_from_scalar(M->val[i]);
 	}
-    }
-
-    if (S != NULL) {
-	goto finish;
+	if (S == NULL) {
+	    *err = E_ALLOC;
+	}
+	return S;
     }
 
     if (spec->rslice == NULL && spec->cslice == NULL) {
@@ -1132,7 +1023,11 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
     r = (spec->rslice == NULL)? M->rows : spec->rslice[0];
     c = (spec->cslice == NULL)? M->cols : spec->cslice[0];
 
-    S = gretl_matrix_alloc(r, c);
+    if (M->is_complex) {
+	S = gretl_cmatrix_new(r, c);
+    } else {
+	S = gretl_matrix_alloc(r, c);
+    }
     if (S == NULL) {
 	*err = E_ALLOC;
     }
@@ -1142,16 +1037,28 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 
 	if (spec->cslice != NULL && spec->rslice == NULL) {
 	    /* copying entire columns */
-	    double *dest = S->val;
-	    size_t csize = r * sizeof *dest;
+	    if (M->is_complex) {
+		double complex *dest = S->z;
+		size_t csize = r * sizeof *dest;
 
-	    for (j=0; j<c; j++) {
-		mj = spec->cslice[j+1] - 1;
-		memcpy(dest, M->val + mj * r, csize);
-		dest += r;
+		for (j=0; j<c; j++) {
+		    mj = spec->cslice[j+1] - 1;
+		    memcpy(dest, M->z + mj * r, csize);
+		    dest += r;
+		}
+	    } else {
+		double *dest = S->val;
+		size_t csize = r * sizeof *dest;
+
+		for (j=0; j<c; j++) {
+		    mj = spec->cslice[j+1] - 1;
+		    memcpy(dest, M->val + mj * r, csize);
+		    dest += r;
+		}
 	    }
 	} else {
 	    int i, mi, l, k = 0;
+	    double complex z;
 	    double x;
 
 	    for (j=0; j<c; j++) {
@@ -1159,8 +1066,13 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 		l = 0;
 		for (i=0; i<r; i++) {
 		    mi = (spec->rslice == NULL)? l++ : spec->rslice[i+1] - 1;
-		    x = gretl_matrix_get(M, mi, mj);
-		    gretl_matrix_set(S, i, j, x);
+		    if (M->is_complex) {
+			z = gretl_cmatrix_get(M, mi, mj);
+			gretl_cmatrix_set(S, i, j, z);
+		    } else {
+			x = gretl_matrix_get(M, mi, mj);
+			gretl_matrix_set(S, i, j, x);
+		    }
 		}
 	    }
 	}
@@ -1183,14 +1095,6 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 	    }
 	}
     }
-
- finish:
-
-#if 1 || USE_CIDX
-    if (S != NULL && M->is_complex) {
-	gretl_matrix_set_complex(S, 1);
-    }
-#endif
 
     return S;
 }
@@ -1226,7 +1130,7 @@ gretl_matrix *matrix_get_chunk (const gretl_matrix *M,
     int offset = spec->lsel.range[0];
     int nelem = spec->lsel.range[1];
     gretl_matrix *ret;
-    int rows;
+    int rows, cols;
 
     if (offset < 0) {
 	fprintf(stderr, "matrix_get_chunk: offset = %d\n", offset);
@@ -1235,35 +1139,39 @@ gretl_matrix *matrix_get_chunk (const gretl_matrix *M,
     }
 
     if (M->cols > 1 && M->rows > 1) {
-	int cols = contig_cols(spec, M);
-
+	cols = contig_cols(spec, M);
 	rows = nelem / cols;
-	ret = gretl_matrix_alloc(rows, cols);
     } else if (M->rows == 1) {
 	rows = 1;
-	ret = gretl_matrix_alloc(1, nelem);
+	cols = nelem;
     } else {
 	rows = nelem;
-	ret = gretl_matrix_alloc(nelem, 1);
+	cols = 1;
+    }
+
+    if (M->is_complex) {
+	ret = gretl_cmatrix_new(rows, cols);
+    } else {
+	ret = gretl_matrix_alloc(rows, cols);
     }
 
     if (ret == NULL) {
 	*err = E_ALLOC;
     } else {
-	size_t sz = nelem * sizeof(double);
+	size_t sz;
 
-	memcpy(ret->val, M->val + offset, sz);
+	if (M->is_complex) {
+	    sz = nelem * sizeof *M->z;
+	    memcpy(ret->z, M->z + offset, sz);
+	} else {
+	    sz = nelem * sizeof *M->val;
+	    memcpy(ret->val, M->val + offset, sz);
+	}
 	if (M->rows > 1 && rows == M->rows && offset == 0 &&
 	    gretl_matrix_is_dated(M)) {
 	    matrix_transcribe_dates(ret, M);
 	}
     }
-
-#if 1 || USE_CIDX
-    if (ret != NULL && M->is_complex) {
-	gretl_matrix_set_complex(ret, 1);
-    }
-#endif
 
     return ret;
 }
