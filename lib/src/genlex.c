@@ -571,11 +571,6 @@ struct str_table func_alias[] = {
 
 struct str_table hidden_funcs[] = {
     { HF_CLOGFI,   "_clogitfi" },
-    { HF_CEIGH,    "_ceigh" },
-    { HF_CEIGG,    "_ceigg" },
-    { HF_CINV,     "_cinv" },
-    { HF_CMMULT,   "_cmmult" },
-    { HF_CFFT,     "_cfft" },
     { HF_CMATRIX,  "_cmatrix" },
     { HF_CXTRACT,  "_cxtract" },
     { HF_CTRAN,    "_ctran" },

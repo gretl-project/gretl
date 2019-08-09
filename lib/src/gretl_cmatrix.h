@@ -22,7 +22,7 @@
 
 #include <complex.h>
 
-#define complex_scalar(m) (m->is_complex && m->rows == 2 && m->cols == 1)
+#define complex_scalar(m) (m->is_complex && m->rows == 1 && m->cols == 1)
 
 gretl_matrix *gretl_matrix_fft (const gretl_matrix *y, int *err);
 
@@ -135,6 +135,9 @@ gretl_matrix *gretl_cmatrix_vector_stat (const gretl_matrix *m,
 int gretl_cmatrix_fill (gretl_matrix *m, double complex z);
 
 gretl_matrix *scalar_to_complex (double x, int *err);
+
+gretl_matrix *two_scalars_to_complex (double xr, double xi,
+				      int *err);
 
 int complex_matrix_print_range (const gretl_matrix *A,
 				const char *name,

@@ -282,7 +282,6 @@ enum {
     F_GETKEYS,
     F_MCORR,
     F_FUNCERR,
-    HF_CINV,
     HF_CTRAN,
     HF_CARG,
     HF_CONJ,
@@ -311,8 +310,6 @@ enum {
     F_QFORM,
     F_QR,
     F_EIGSYM,
-    F_EIGGEN,
-    HF_CEIGH,
     F_QUANTILE,
     F_CMULT,	  /* complex multiplication */
     F_HDPROD,     /* horizontal direct product */
@@ -393,8 +390,6 @@ enum {
     F_CONV2D,
     F_FLATTEN,
     F_IMAT,
-    HF_CMMULT,
-    HF_CFFT,
     HF_CMATRIX,
     HF_CXTRACT,
     HF_CSWITCH,
@@ -456,7 +451,7 @@ enum {
     F_ISOWEEK,
     F_BKW,
     F_FZERO,
-    HF_CEIGG,
+    F_EIGGEN,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,
