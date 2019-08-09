@@ -6765,6 +6765,16 @@ int panel_means_XY_scatter (const int *list, const DATASET *dset,
     return err;
 }
 
+static void copy_string_stripped (char *targ, const char *src,
+				  int strip)
+{
+    char *tmp = gretl_strdup(src);
+    size_t len = strlen(tmp) - strip;
+
+    strcpy(targ, gretl_utf8_truncate(tmp, len));
+    free(tmp);
+}
+
 /* Here we're trying to find out if the observation labels
    for a panel dataset are such that they uniquely identify
    the units/individuals (e.g. country or city names,
@@ -6871,7 +6881,7 @@ static int dataset_has_panel_labels (const DATASET *dset,
 		if (*use > 0) {
 		    strncat(s1, dset->S[t], *use);
 		} else {
-		    strncat(s1, dset->S[t], strlen(dset->S[t]) - *strip);
+		    copy_string_stripped(s1, dset->S[t], *strip);
 		}
 		if (u == ubak && strcmp(s1, s0)) {
 		    /* same unit, different label: no */
@@ -6986,8 +6996,7 @@ static int panel_overlay_ts_plot (const int vnum,
 	    if (use > 0) {
 		strncat(gset->varname[i+1], dset->S[s], use);
 	    } else if (strip > 0) {
-		strncat(gset->varname[i+1], dset->S[s],
-			strlen(dset->S[s]) - strip);
+		copy_string_stripped(gset->varname[i+1], dset->S[s], strip);
 	    } else {
 		strcpy(gset->varname[i+1], dset->S[s]);
 	    }
@@ -7150,7 +7159,7 @@ static int panel_grid_ts_plot (int vnum, const DATASET *dset,
 	    if (use > 0) {
 		strncat(uname, dset->S[s], use);
 	    } else if (strip > 0) {
-		strncat(uname, dset->S[s], strlen(dset->S[s]) - strip);
+		copy_string_stripped(uname, dset->S[s], strip);
 	    } else {
 		strcpy(uname, dset->S[s]);
 	    }
