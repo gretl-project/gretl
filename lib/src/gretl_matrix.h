@@ -207,6 +207,7 @@ typedef struct gretl_matrix_block_ gretl_matrix_block;
  */
 
 #define gretl_matrix_is_scalar(m) ((m) != NULL && \
+				   (m)->is_complex == 0 && \
                                    (m)->rows == 1 && \
                                    (m)->cols == 1)
 

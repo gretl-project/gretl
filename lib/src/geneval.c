@@ -3637,6 +3637,32 @@ static NODE *bundle_file_write (NODE *l, NODE *m, NODE *r, parser *p)
     return ret;
 }
 
+/* Supports a hidden (and hackish) function that converts
+   between real matrix and complex matrix simply via
+   reinterpretation, plus resetting of the rows member.
+*/
+
+static int hack_set_complex (gretl_matrix *m, int c)
+{
+    int err = 0;
+
+    if (c && !m->is_complex) {
+	err = gretl_matrix_set_complex(m, 1);
+	if (!err) {
+	    /* convert to 16-byte row indexing */
+	    m->rows /= 2;
+	}
+    } else if (!c && m->is_complex) {
+	err = gretl_matrix_set_complex(m, 0);
+	if (!err) {
+	    /* convert to 8-byte row indexing */
+	    m->rows *= 2;
+	}
+    }
+
+    return err;
+}
+
 /* matrix on left, scalar on right: returns a matrix,
    except when the function is _setcmplx
 */
@@ -3676,8 +3702,7 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
 	    } else if (f == HF_CSWITCH) {
 		ret->v.m = gretl_cmatrix_switch(m, k, &p->err);
 	    } else if (f == HF_SETCMPLX) {
-		/* FIXME */
-		ret->v.xval = p->err = gretl_matrix_set_complex(m, k);
+		ret->v.xval = p->err = hack_set_complex(m, k);
 	    }
 	}
     } else {

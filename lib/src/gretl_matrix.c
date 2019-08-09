@@ -334,14 +334,16 @@ gretl_matrix *gretl_cmatrix_new0 (int r, int c)
 
 int gretl_matrix_set_complex (gretl_matrix *m, int c)
 {
-    if (c) {
+    if (m == NULL) {
+	return E_INVARG;
+    } else if (c && !m->is_complex) {
 	if (m->rows % 2 != 0) {
 	    return E_INVARG;
 	} else {
 	    m->is_complex = 1;
 	    m->z = (double complex *) m->val;
 	}
-    } else {
+    } else if (!c && m->is_complex) {
 	m->is_complex = 0;
 	m->z = NULL;
     }
