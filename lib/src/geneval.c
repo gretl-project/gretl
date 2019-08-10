@@ -1321,6 +1321,34 @@ static double xy_calc (double x, double y, int op, int targ, parser *p)
     }
 }
 
+static double complex c_xy_calc (double complex x,
+				 double complex y,
+				 int op, parser *p)
+{
+    double complex z = NADBL;
+
+    if (op == B_ASN || op == B_DOTASN) {
+	return y;
+    }
+
+    switch (op) {
+    case B_ADD:
+	return x + y;
+    case B_SUB:
+	return x - y;
+    case B_MUL:
+	return x * y;
+    case B_DIV:
+	return x / y;
+    case B_EQ:
+	return x == y;
+    case B_NEQ:
+	return x != y;
+    default:
+	return z;
+    }
+}
+
 #define randgen(f) (f == F_RANDGEN || f == F_MRANDGEN || f == F_RANDGEN1)
 
 static int check_dist_count (int d, int f, int *np, int *argc)
@@ -3166,6 +3194,7 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 	double y;
 
 	if (comp) {
+	    /* complex case: do we come here at all? */
 	    ret->v.xval = 1;
 	    if (l->t == NUM) {
 		for (i=0; i<n; i++) {
@@ -3183,19 +3212,28 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 		}
 	    }
 	} else {
+	    double *xtarg = ret->v.m->val;
+	    double complex *ztarg = ret->v.m->z;
+
 	    if (gretl_matrix_is_dated(m)) {
 		gretl_matrix_set_t1(ret->v.m, gretl_matrix_get_t1(m));
 		gretl_matrix_set_t2(ret->v.m, gretl_matrix_get_t2(m));
 	    }
 	    if (l->t == NUM) {
 		for (i=0; i<n; i++) {
-		    y = xy_calc(x, m->val[i], op, MAT, p);
-		    ret->v.m->val[i] = y;
+		    if (m->is_complex) {
+			ztarg[i] = c_xy_calc(x, m->z[i], op, p);
+		    } else {
+			xtarg[i] = xy_calc(x, m->val[i], op, MAT, p);
+		    }
 		}
 	    } else {
 		for (i=0; i<n; i++) {
-		    y = xy_calc(m->val[i], x, op, MAT, p);
-		    ret->v.m->val[i] = y;
+		    if (m->is_complex) {
+			ztarg[i] = c_xy_calc(m->z[i], x, op, p);
+		    } else {
+			xtarg[i] = xy_calc(m->val[i], x, op, MAT, p);
+		    }
 		}
 	    }
 	}
@@ -4922,10 +4960,19 @@ static NODE *submatrix_node (NODE *l, NODE *r, parser *p)
 		    ret->v.m = matrix_get_chunk(m, spec, &p->err);
 		}
 	    } else if (spec->ltype == SEL_ELEMENT) {
-		ret = aux_scalar_node(p);
-		if (!p->err) {
-		    ret->v.xval = m->val[mspec_get_element(spec)];
-		    ret->flags |= MSL_NODE;
+		int i = mspec_get_element(spec);
+
+		if (m->is_complex) {
+		    ret = aux_matrix_node(p);
+		    if (!p->err) {
+			ret->v.m = cmatrix_get_element(m, i, &p->err);
+		    }
+		} else {
+		    ret = aux_scalar_node(p);
+		    if (!p->err) {
+			ret->v.xval = m->val[i];
+			ret->flags |= MSL_NODE;
+		    }
 		}
 	    } else if (spec->ltype == SEL_STR) {
 		p->err = E_TYPES;
@@ -10958,6 +11005,7 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
     matrix_subspec *spec;
     double y = NADBL;
     int rhs_scalar = 0;
+    int rhs_cscalar = 0;
     int inflected = 0;
     int free_m2 = 0;
 
@@ -10994,12 +11042,21 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
     print_mspec(spec);
 #endif
 
+    /* Is the assignment straight or inflected?  Note that in
+       this context there's no distinction between '=' and '.='
+       and the latter doesn't count as inflected.
+    */
+    if (p->op != B_ASN && p->op != B_DOTASN) {
+	inflected = 1;
+    }
+
     if (scalar_node(rhs)) {
 	/* single value (could be 1 x 1 matrix) on RHS */
 	y = (rhs->t == NUM)? rhs->v.xval: rhs->v.m->val[0];
-	if (m1->is_complex) {
+	if (m1->is_complex && inflected) {
 	    m2 = scalar_to_complex(y, &p->err);
 	    free_m2 = 1; /* flag temporary status of @m2 */
+	    rhs_cscalar = 1;
 	} else {
 	    rhs_scalar = 1;
 	}
@@ -11022,22 +11079,15 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 	return p->err;
     }
 
-    /* Is the assignment straight or inflected?  Note that in
-       this context there's no distinction between '=' and '.='
-       and the latter doesn't count as inflected.
-    */
-    if (p->op != B_ASN && p->op != B_DOTASN) {
-	inflected = 1;
-    }
-
     if (spec->ltype == SEL_ELEMENT) {
 	/* assignment, plain or inflected, to a single
-	   element of target matrix; note that we'll
-	   never come here if @m1 is complex
+	   element of target matrix.
 	*/
-	if (rhs_scalar) {
-	    int i = mspec_get_element(spec);
+	int i = mspec_get_element(spec);
 
+	if (rhs_cscalar) {
+	    m1->z[i] = c_xy_calc(m1->z[i], m2->z[0], p->op, p);
+	} else if (rhs_scalar) {
 	    if (!inflected) {
 		m1->val[i] = y;
 	    } else {
