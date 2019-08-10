@@ -865,7 +865,11 @@ int matrix_replace_submatrix (gretl_matrix *M,
 	int n = mspec_get_n_elem(spec);
 	int ccols = contig_cols(spec, M);
 
-	if (S->rows * S->cols != n) {
+	if (M->is_complex && S->rows == 1 && S->cols == 1) {
+	    for (i=0; i<n; i++) {
+		M->z[ini + i] = S->z[0];
+	    }
+	} else if (S->rows * S->cols != n) {
 	    err = E_NONCONF;
 	} else if (ccols > 1 && M->rows != S->rows) {
 	    err = E_NONCONF;
