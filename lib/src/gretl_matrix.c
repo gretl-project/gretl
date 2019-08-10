@@ -1042,7 +1042,7 @@ void gretl_matrix_fill (gretl_matrix *m, double x)
 	if (m->is_complex) {
 	    double complex *mz = (double complex *) m->val;
 
-	    n = m->cols * m->rows / 2;
+	    n = m->cols * m->rows;
 	    for (i=0; i<n; i++) {
 		mz[i] = x;
 	    }
@@ -7460,6 +7460,9 @@ gretl_matrix *gretl_matrix_divide (const gretl_matrix *a,
 	gretl_is_null_matrix(b)) {
 	*err = E_DATA;
 	return NULL;
+    } else if (a->is_complex || b->is_complex) {
+	*err = E_CMPLX;
+	return NULL;
     }
 
     /* detect and handle scalar cases */
@@ -13046,6 +13049,7 @@ gretl_matrix *gretl_matrix_trim_rows (const gretl_matrix *A,
 				      int *err)
 {
     gretl_matrix *B;
+    double complex z;
     double x;
     int i, j, m;
 
@@ -13054,33 +13058,34 @@ gretl_matrix *gretl_matrix_trim_rows (const gretl_matrix *A,
 	return NULL;
     }
 
-    if (A->is_complex) {
-	ttop *= 2;
-	m = A->rows - (ttop + 2*tbot);
-    } else {
-	m = A->rows - (ttop + tbot);
-    }
+    m = A->rows - (ttop + tbot);
 
     if (ttop < 0 || tbot < 0 || m <= 0) {
 	*err = E_DATA;
 	return NULL;
     }
 
-    B = gretl_matrix_alloc(m, A->cols);
+    if (A->is_complex) {
+	B = gretl_cmatrix_new(m, A->cols);
+    } else {
+	B = gretl_matrix_alloc(m, A->cols);
+    }
+
     if (B == NULL) {
 	*err = E_ALLOC;
-	return NULL;
-    }
-
-    for (j=0; j<A->cols; j++) {
-	for (i=0; i<m; i++) {
-	    x = gretl_matrix_get(A, i + ttop, j);
-	    gretl_matrix_set(B, i, j, x);
+    } else {
+	for (j=0; j<A->cols; j++) {
+	    for (i=0; i<m; i++) {
+		if (A->is_complex) {
+		    z = gretl_cmatrix_get(A, i + ttop, j);
+		    gretl_cmatrix_set(B, i, j, z);
+		} else {
+		    x = gretl_matrix_get(A, i + ttop, j);
+		    gretl_matrix_set(B, i, j, x);
+		}
+	    }
 	}
     }
-
-    /* FIXME relevant */
-    gretl_matrix_set_complex(B, A->is_complex);
 
     return B;
 }
