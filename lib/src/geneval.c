@@ -4221,17 +4221,9 @@ static gretl_matrix *apply_ovwrite_func (gretl_matrix *m,
 	} else if (f == F_INV) {
 	    *err = gretl_invert_matrix(R);
 	} else if (f == F_UPPER) {
-	    if (m->is_complex) {
-		*err = gretl_cmatrix_zero_triangle(R, 'L');
-	    } else {
-		*err = gretl_matrix_zero_lower(R);
-	    }
+	    *err = gretl_matrix_zero_lower(R);
 	} else if (f == F_LOWER) {
-	    if (m->is_complex) {
-		*err = gretl_cmatrix_zero_triangle(R, 'U');
-	    } else {
-		*err = gretl_matrix_zero_upper(R);
-	    }
+	    *err = gretl_matrix_zero_upper(R);
 	} else {
 	    *err = E_DATA;
 	}
@@ -4416,31 +4408,17 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    }
 	    break;
 	case F_VEC:
-	    if (m->is_complex) {
-		ret->v.m = gretl_cmatrix_vec(m, &p->err);
-	    } else {
-		ret->v.m = user_matrix_vec(m, &p->err);
-	    }
+	    ret->v.m = user_matrix_vec(m, &p->err);
 	    break;
 	case F_VECH:
-	    if (m->is_complex) {
-		ret->v.m = gretl_cmatrix_vech(m, &p->err);
-	    } else {
-		ret->v.m = user_matrix_vech(m, &p->err);
-	    }
+	    ret->v.m = user_matrix_vech(m, &p->err);
 	    break;
 	case F_UNVECH:
-	    if (m->is_complex) {
-		ret->v.m = gretl_cmatrix_unvech(m, &p->err);
-	    } else {
-		ret->v.m = user_matrix_unvech(m, &p->err);
-	    }
+	    ret->v.m = user_matrix_unvech(m, &p->err);
 	    break;
 	case F_MREVERSE:
 	    if (optparm != 0) {
 		ret->v.m = gretl_matrix_reverse_cols(m, &p->err);
-	    } else if (m->is_complex) {
-		ret->v.m = gretl_cmatrix_reverse_rows(m, &p->err);
 	    } else {
 		ret->v.m = gretl_matrix_reverse_rows(m, &p->err);
 	    }
@@ -11313,8 +11291,6 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    if (!p->err) {
 		if (l->t == NUM) {
 		    A = mshape_scalar(l->v.xval, k1, k2, &p->err);
-		} else if (l->v.m->is_complex) {
-		    A = gretl_cmatrix_shape(l->v.m, k1, k2, &p->err);
 		} else {
 		    A = gretl_matrix_shape(l->v.m, k1, k2, &p->err);
 		}

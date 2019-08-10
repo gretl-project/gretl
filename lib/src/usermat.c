@@ -1020,10 +1020,7 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 	int i = mspec_get_element(spec);
 
 	if (M->is_complex) {
-	    S = gretl_cmatrix_new(1, 1);
-	    if (S != NULL) {
-		S->z[0] = M->z[i];
-	    }
+	    S = complex_scalar_to_mat(M->z[i], err);
 	} else {
 	    S = gretl_matrix_from_scalar(M->val[i]);
 	}
@@ -1049,16 +1046,11 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
     r = (spec->rslice == NULL)? M->rows : spec->rslice[0];
     c = (spec->cslice == NULL)? M->cols : spec->cslice[0];
 
-    if (M->is_complex) {
-	S = gretl_cmatrix_new(r, c);
-    } else {
-	S = gretl_matrix_alloc(r, c);
-    }
+    S = gretl_matching_matrix_new(r, c, M);
+
     if (S == NULL) {
 	*err = E_ALLOC;
-    }
-
-    if (S != NULL) {
+    } else {
 	int j, mj;
 
 	if (spec->cslice != NULL && spec->rslice == NULL) {
@@ -1175,11 +1167,7 @@ gretl_matrix *matrix_get_chunk (const gretl_matrix *M,
 	cols = 1;
     }
 
-    if (M->is_complex) {
-	ret = gretl_cmatrix_new(rows, cols);
-    } else {
-	ret = gretl_matrix_alloc(rows, cols);
-    }
+    ret = gretl_matching_matrix_new(rows, cols, M);
 
     if (ret == NULL) {
 	*err = E_ALLOC;
@@ -1531,7 +1519,7 @@ gretl_matrix *user_matrix_vec (const gretl_matrix *m, int *err)
     if (gretl_is_null_matrix(m)) {
 	R = gretl_null_matrix_new();
     } else {
-	R = gretl_matrix_alloc(m->rows * m->cols, 1);
+	R = gretl_matching_matrix_new(m->rows * m->cols, 1, m);
 	if (R != NULL) {
 	    gretl_matrix_vectorize(R, m);
 	}
@@ -1556,7 +1544,7 @@ gretl_matrix *user_matrix_vech (const gretl_matrix *m, int *err)
 	int n = m->rows;
 	int k = n * (n + 1) / 2;
 
-	R = gretl_matrix_alloc(k, 1);
+	R = gretl_matching_matrix_new(k, 1, m);
 	if (R != NULL) {
 	    *err = gretl_matrix_vectorize_h(R, m);
 	}
@@ -1580,7 +1568,7 @@ gretl_matrix *user_matrix_unvech (const gretl_matrix *m, int *err)
     } else {
 	int n = (int) ((sqrt(1.0 + 8.0 * m->rows) - 1.0) / 2.0);
 
-	R = gretl_matrix_alloc(n, n);
+	R = gretl_matching_matrix_new(n, n, m);
 	if (R != NULL) {
 	    *err = gretl_matrix_unvectorize_h(R, m);
 	}

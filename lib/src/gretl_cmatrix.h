@@ -96,21 +96,6 @@ int gretl_cmatrix_set_diagonal (gretl_matrix *targ,
 				const gretl_matrix *src,
 				double x);
 
-gretl_matrix *gretl_cmatrix_vec (const gretl_matrix *X,
-				 int *err);
-
-gretl_matrix *gretl_cmatrix_vech (const gretl_matrix *X,
-				  int *err);
-
-gretl_matrix *gretl_cmatrix_unvech (const gretl_matrix *X,
-				    int *err);
-
-gretl_matrix *gretl_cmatrix_reverse_rows (const gretl_matrix *X,
-					  int *err);
-
-gretl_matrix *gretl_cmatrix_shape (const gretl_matrix *A,
-				   int r, int c, int *err);
-
 gretl_matrix *gretl_cmatrix_hdprod (const gretl_matrix *A,
 				    const gretl_matrix *B,
 				    int *err);
@@ -118,8 +103,6 @@ gretl_matrix *gretl_cmatrix_hdprod (const gretl_matrix *A,
 gretl_matrix *gretl_cmatrix_kronecker (const gretl_matrix *A,
 				       const gretl_matrix *B,
 				       int *err);
-
-int gretl_cmatrix_zero_triangle (gretl_matrix *m, char t);
 
 gretl_matrix *gretl_cmatrix_switch (const gretl_matrix *m,
 				    int to_new, int *err);
@@ -134,6 +117,8 @@ gretl_matrix *scalar_to_complex (double x, int *err);
 
 gretl_matrix *two_scalars_to_complex (double xr, double xi,
 				      int *err);
+
+gretl_matrix *complex_scalar_to_mat (double complex z, int *err);
 
 int complex_matrix_print_range (const gretl_matrix *A,
 				const char *name,

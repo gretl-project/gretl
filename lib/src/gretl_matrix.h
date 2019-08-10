@@ -243,6 +243,9 @@ gretl_matrix *gretl_cmatrix_new (int r, int c);
 
 gretl_matrix *gretl_cmatrix_new0 (int r, int c);
 
+gretl_matrix *gretl_matching_matrix_new (int r, int c,
+					 const gretl_matrix *m);
+
 gretl_matrix *gretl_matrix_reuse (gretl_matrix *m, int rows, int cols);
 
 int gretl_matrix_realloc (gretl_matrix *m, int rows, int cols);
