@@ -13546,22 +13546,22 @@ gretl_matrix *gretl_matrix_bool_sel (const gretl_matrix *A,
 				     int rowsel, int *err)
 {
     gretl_matrix *ret = NULL;
-    int rdim, nonzero = 0;
+    int nonzero = 0;
     int ra, ca, rs, cs;
+    int rret, cret;
     int i, j, k, n;
     double x;
-
-    /* FIXME newcomplex! */
 
     *err = 0;
 
     if (gretl_is_null_matrix(A)) {
 	return gretl_null_matrix_new();
+    } else if (sel->is_complex) {
+	*err = E_INVARG;
+	return NULL;
     }
 
-    rdim = A->is_complex ? 2 : 1;
-
-    ra = A->rows / rdim;
+    ra = A->rows;
     ca = A->cols;
     rs = sel->rows;
     cs = sel->cols;
@@ -13582,7 +13582,11 @@ gretl_matrix *gretl_matrix_bool_sel (const gretl_matrix *A,
     /* count nonzeros */
     n = (rowsel)? rs : cs ;
     for (i=0; i<n; i++) {
-	if (gretl_vector_get(sel, i) != 0) {
+	x = gretl_vector_get(sel, i);
+	if (na(x)) {
+	    *err = E_MISSDATA;
+	    return NULL;
+	} else if (x != 0) {
 	    nonzero++;
 	}
     }
@@ -13596,56 +13600,51 @@ gretl_matrix *gretl_matrix_bool_sel (const gretl_matrix *A,
 	goto bailout;
     }
 
+    rret = rowsel ? nonzero : ra;
+    cret = rowsel ? ca : nonzero;
+
+    if (A->is_complex) {
+	ret = gretl_cmatrix_new(rret, cret);
+    } else {
+	ret = gretl_matrix_alloc(rret, cret);
+    }
+    if (ret == NULL) {
+	goto bailout;
+    }
+
     /* copy selected row/columns */
     if (rowsel) {
 	/* selection of rows */
-	ret = gretl_matrix_alloc(rdim * nonzero, ca);
-	if (ret == NULL) {
-	    goto bailout;
-	}
-	k = 0;
-	if (rdim == 2) {
-	    int ci;
+	double complex z;
 
-	    for (i=0, ci=0; i<ra; i++, ci+=2) {
-		if (gretl_vector_get(sel, i) != 0) {
-		    for (j=0; j<ca; j++) {
-			x = gretl_matrix_get(A, ci, j);
-			gretl_matrix_set(ret, k, j, x);
-			x = gretl_matrix_get(A, ci+1, j);
-			gretl_matrix_set(ret, k+1, j, x);
-		    }
-		    k += 2;
-		}
-	    }
-	} else {
-	    for (i=0; i<ra; i++) {
-		if (gretl_vector_get(sel, i) != 0) {
-		    for (j=0; j<ca; j++) {
+	k = 0;
+	for (i=0; i<ra; i++) {
+	    if (gretl_vector_get(sel, i) != 0) {
+		for (j=0; j<ca; j++) {
+		    if (A->is_complex) {
+			z = gretl_cmatrix_get(A, i, j);
+			gretl_cmatrix_set(ret, k, j, z);
+		    } else {
 			x = gretl_matrix_get(A, i, j);
 			gretl_matrix_set(ret, k, j, x);
 		    }
-		    k++;
 		}
+		k++;
 	    }
 	}
     } else {
 	/* selection of columns */
-	ret = gretl_matrix_alloc(rdim * ra, nonzero);
-	if (ret == NULL) {
-	    goto bailout;
-	} else {
-	    double *targ = ret->val;
-	    double *src = A->val;
-	    size_t colsize = rdim * ra * sizeof(double);
+	double *targ = ret->val;
+	double *src = A->val;
+	int rdim = A->is_complex ? 2 : 1;
+	size_t colsize = ra * rdim * sizeof *src;
 
-	    for (j=0; j<ca; j++) {
-		if (gretl_vector_get(sel, j) != 0) {
-		    memcpy(targ, src, colsize);
-		    targ += ra * rdim;
-		}
-		src += ra * rdim;
+	for (j=0; j<ca; j++) {
+	    if (gretl_vector_get(sel, j) != 0) {
+		memcpy(targ, src, colsize);
+		targ += ra * rdim;
 	    }
+	    src += ra * rdim;
 	}
     }
 
@@ -13655,9 +13654,6 @@ gretl_matrix *gretl_matrix_bool_sel (const gretl_matrix *A,
 
     if (ret == NULL) {
 	*err = E_ALLOC;
-    } else {
-	/* FIXME MARKER of BREAKAGE! */
-	gretl_matrix_set_complex(ret, A->is_complex);
     }
 
     return ret;
