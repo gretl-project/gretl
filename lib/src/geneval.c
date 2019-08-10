@@ -1321,6 +1321,13 @@ static double xy_calc (double x, double y, int op, int targ, parser *p)
     }
 }
 
+static int operator_real_only (int op)
+{
+    gretl_errmsg_sprintf("'%s': %s", getsymb(op),
+			 _("complex operands are not supported"));
+    return E_CMPLX;
+}
+
 static double complex c_xy_calc (double complex x,
 				 double complex y,
 				 int op, parser *p)
@@ -1345,7 +1352,8 @@ static double complex c_xy_calc (double complex x,
     case B_NEQ:
 	return x != y;
     default:
-	return z;
+	p->err = operator_real_only(op);
+	return NADBL;
     }
 }
 
@@ -2726,13 +2734,6 @@ static gretl_matrix *matrix_add_sub_scalar (const gretl_matrix *A,
     return C;
 }
 
-static int operator_real_only (int op)
-{
-    gretl_errmsg_sprintf("'%s': %s", getsymb(op),
-			 _("complex operands are not supported"));
-    return E_CMPLX;
-}
-
 /* See if we can reuse an existing matrix on an
    auxiliary node. If so, return it; otherwise
    free it and return a newly allocated matrix.
@@ -3176,19 +3177,6 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 	    ret->v.m = gretl_matrix_pow(m, s, &p->err);
 	}
 	return ret;
-    } else if (m->is_complex && (op == B_ADD || op == B_SUB)) {
-	int sgn = 1;
-
-	if (op == B_SUB) {
-	    if (l->t == MAT) {
-		/* A - x -> A + (-x) */
-		x = -x;
-	    } else {
-		/* x - A -> -A + x */
-		sgn = -1;
-	    }
-	}
-	cmatrix_add_scalar(ret->v.m, m, x, sgn);
     } else {
 	int i, n = m->rows * m->cols;
 	double y;
@@ -3215,12 +3203,8 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 	    double *xtarg = ret->v.m->val;
 	    double complex *ztarg = ret->v.m->z;
 
-	    if (gretl_matrix_is_dated(m)) {
-		gretl_matrix_set_t1(ret->v.m, gretl_matrix_get_t1(m));
-		gretl_matrix_set_t2(ret->v.m, gretl_matrix_get_t2(m));
-	    }
 	    if (l->t == NUM) {
-		for (i=0; i<n; i++) {
+		for (i=0; i<n && !p->err; i++) {
 		    if (m->is_complex) {
 			ztarg[i] = c_xy_calc(x, m->z[i], op, p);
 		    } else {
@@ -3228,13 +3212,17 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 		    }
 		}
 	    } else {
-		for (i=0; i<n; i++) {
+		for (i=0; i<n && !p->err; i++) {
 		    if (m->is_complex) {
 			ztarg[i] = c_xy_calc(m->z[i], x, op, p);
 		    } else {
 			xtarg[i] = xy_calc(m->val[i], x, op, MAT, p);
 		    }
 		}
+	    }
+	    if (gretl_matrix_is_dated(m)) {
+		gretl_matrix_set_t1(ret->v.m, gretl_matrix_get_t1(m));
+		gretl_matrix_set_t2(ret->v.m, gretl_matrix_get_t2(m));
 	    }
 	}
     }
