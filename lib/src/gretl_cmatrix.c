@@ -2258,3 +2258,20 @@ gretl_matrix *gretl_cmatrix_dot_op (const gretl_matrix *A,
 
     return C;
 }
+
+gretl_matrix *cmatrix_get_element (const gretl_matrix *M,
+				   int i, int *err)
+{
+    gretl_matrix *ret = NULL;
+
+    if (M == NULL) {
+	*err = E_DATA;
+    } else if (i < 0 || i >= M->rows * M->cols) {
+	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), i+1);
+	*err = E_INVARG;
+    } else {
+	ret = complex_scalar_to_mat(M->z[i], err);
+    }
+
+    return ret;
+}
