@@ -217,6 +217,8 @@ typedef struct gretl_matrix_block_ gretl_matrix_block;
 
 int gretl_matrix_set_complex (gretl_matrix *m, int c);
 
+int gretl_matrix_set_complex_full (gretl_matrix *m, int c);
+
 int get_gretl_matrix_err (void);
 
 void clear_gretl_matrix_err (void);

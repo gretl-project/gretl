@@ -332,7 +332,7 @@ gretl_matrix *gretl_cmatrix_new0 (int r, int c)
     return m;
 }
 
-int gretl_matrix_set_complex (gretl_matrix *m, int c)
+static int matrix_set_complex (gretl_matrix *m, int c, int full)
 {
     if (m == NULL) {
 	return E_INVARG;
@@ -342,13 +342,29 @@ int gretl_matrix_set_complex (gretl_matrix *m, int c)
 	} else {
 	    m->is_complex = 1;
 	    m->z = (double complex *) m->val;
+	    if (full) {
+		m->rows /= 2;
+	    }
 	}
     } else if (!c && m->is_complex) {
 	m->is_complex = 0;
 	m->z = NULL;
+	if (full) {
+	    m->rows *= 2;
+	}
     }
 
     return 0;
+}
+
+int gretl_matrix_set_complex (gretl_matrix *m, int c)
+{
+    return matrix_set_complex(m, c, 0);
+}
+
+int gretl_matrix_set_complex_full (gretl_matrix *m, int c)
+{
+    return matrix_set_complex(m, c, 1);
 }
 
 void gretl_matrix_block_destroy (gretl_matrix_block *B)

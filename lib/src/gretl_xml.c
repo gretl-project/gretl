@@ -544,6 +544,7 @@ void gretl_matrix_serialize (const gretl_matrix *m,
 			     const char *name,
 			     FILE *fp)
 {
+    int is_complex = 0;
     const char **S;
     double x;
     int i, j;
@@ -561,6 +562,7 @@ void gretl_matrix_serialize (const gretl_matrix *m,
     }
 
     if (m->is_complex) {
+	is_complex = 1;
 	fputs(" complex=\"1\"", fp);
     }
 
@@ -593,6 +595,10 @@ void gretl_matrix_serialize (const gretl_matrix *m,
 
     fputs(">\n", fp);
 
+    if (is_complex) {
+	gretl_matrix_set_complex_full((gretl_matrix *) m, 0);
+    }
+
     for (i=0; i<m->rows; i++) {
 	for (j=0; j<m->cols; j++) {
 	    x = gretl_matrix_get(m, i, j);
@@ -606,6 +612,10 @@ void gretl_matrix_serialize (const gretl_matrix *m,
 	    fprintf(fp, "%.16g ", x);
 	}
 	fputc('\n', fp);
+    }
+
+    if (is_complex) {
+	gretl_matrix_set_complex_full((gretl_matrix *) m, 1);
     }
 
     fputs("</gretl-matrix>\n", fp);
@@ -1586,7 +1596,10 @@ gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node,
 	return NULL;
     }
 
-    is_complex = gretl_xml_get_prop_as_bool(node, "complex");
+    if (gretl_xml_get_prop_as_bool(node, "complex")) {
+	is_complex = 1;
+	rows *= 2; /* 8-byte indexing */
+    }
 
     if (rows == 0 && cols == 0) {
 	/* allow case of empty matrix */
@@ -1666,7 +1679,7 @@ gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node,
 	m = NULL;
     } else {
 	if (is_complex) {
-	    gretl_matrix_set_complex(m, 1);
+	    gretl_matrix_set_complex_full(m, 1);
 	}
 	if (t1 >= 0 && t2 >= t1) {
 	    gretl_matrix_set_t1(m, t1);

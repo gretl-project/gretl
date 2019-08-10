@@ -1097,8 +1097,8 @@ static gretl_matrix *read_binary_matrix_file (FILE *fp, int *err)
 	    *err = E_DATA;
 	    gretl_matrix_free(A);
 	    A = NULL;
-	} else {
-	    A->is_complex = is_complex;
+	} else if (is_complex) {
+	    gretl_matrix_set_complex_full(A, 1);
 	}
     }
 
@@ -1159,6 +1159,7 @@ gretl_matrix *gretl_matrix_read_from_file (const char *fname,
     int r = -1, c = -1, n = 0;
     int gz, bin = 0;
     gretl_matrix *A = NULL;
+    int is_complex = 0;
     FILE *fp = NULL;
 
     gz = has_suffix(fname, ".gz");
@@ -1223,7 +1224,7 @@ gretl_matrix *gretl_matrix_read_from_file (const char *fname,
 	    if (A == NULL) {
 		*err = E_ALLOC;
 	    } else if (!strcmp(ctest, "complex")) {
-		A->is_complex = 1;
+		is_complex = 1;
 	    }
 	}
     }
@@ -1263,6 +1264,10 @@ gretl_matrix *gretl_matrix_read_from_file (const char *fname,
     if (unzname != NULL) {
 	gretl_remove(unzname);
 	g_free(unzname);
+    }
+
+    if (!*err && is_complex) {
+	gretl_matrix_set_complex_full(A, 1);
     }
 
     if (*err && A != NULL) {
@@ -1322,22 +1327,21 @@ static void win32_xna_out (double x, gzFile fz, FILE *fp,
 int gretl_matrix_write_to_file (gretl_matrix *A, const char *fname,
 				int export)
 {
-    int r = A->rows;
-    int c = A->cols;
-    int i, j, err = 0;
+    int r, c, i, j;
     int format_g = 0;
+    int is_complex = 0;
     gzFile fz = Z_NULL;
     FILE *fp = NULL;
     double x;
     char pad, d = '\t';
     int gz, bin = 0;
+    int err = 0;
 
     gz = has_suffix(fname, ".gz");
 
     if (!gz) {
 	bin = has_suffix(fname, ".bin");
     }
-
     if (!bin) {
 	format_g = libset_get_bool(MWRITE_G);
     }
@@ -1360,8 +1364,17 @@ int gretl_matrix_write_to_file (gretl_matrix *A, const char *fname,
 	}
     }
 
+    if (A->is_complex) {
+	/* reset to "pretend real" for writing */
+	is_complex = 1;
+	gretl_matrix_set_complex_full(A, 0);
+    }
+
+    c = A->cols;
+    r = A->rows;
+
     if (bin && fp != NULL) {
-	const char *header = A->is_complex ? "gretl_binar_cmatrix" :
+	const char *header = is_complex ? "gretl_binar_cmatrix" :
 	    "gretl_binary_matrix";
 	gint32 dim[2] = {r, c};
 	size_t n = r * c;
@@ -1391,13 +1404,13 @@ int gretl_matrix_write_to_file (gretl_matrix *A, const char *fname,
     }
 
     if (fz) {
-	if (A->is_complex) {
+	if (is_complex) {
 	    gzprintf(fz, "%d%c%d%ccomplex\n", r, d, c, d);
 	} else {
 	    gzprintf(fz, "%d%c%d\n", r, d, c);
 	}
     } else if (fp) {
-	if (A->is_complex) {
+	if (is_complex) {
 	    fprintf(fp, "%d%c%d%ccomplex\n", r, d, c, d);
 	} else {
 	    fprintf(fp, "%d%c%d\n", r, d, c);
@@ -1439,6 +1452,11 @@ int gretl_matrix_write_to_file (gretl_matrix *A, const char *fname,
     gretl_pop_c_numeric_locale();
 
  finish:
+
+    if (is_complex) {
+	/* reset A's original status */
+	gretl_matrix_set_complex_full(A, 1);
+    }
 
     if (fz) {
 	gzclose(fz);
