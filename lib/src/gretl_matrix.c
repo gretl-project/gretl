@@ -13551,6 +13551,8 @@ gretl_matrix *gretl_matrix_bool_sel (const gretl_matrix *A,
     int i, j, k, n;
     double x;
 
+    /* FIXME newcomplex! */
+
     *err = 0;
 
     if (gretl_is_null_matrix(A)) {
@@ -13654,6 +13656,7 @@ gretl_matrix *gretl_matrix_bool_sel (const gretl_matrix *A,
     if (ret == NULL) {
 	*err = E_ALLOC;
     } else {
+	/* FIXME MARKER of BREAKAGE! */
 	gretl_matrix_set_complex(ret, A->is_complex);
     }
 
