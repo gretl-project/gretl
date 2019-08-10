@@ -1391,7 +1391,7 @@ int apply_cmatrix_cfunc (gretl_matrix *targ,
 			 double complex (*cfunc) (double complex))
 {
     int n = src->cols * src->rows;
-    int i, err;
+    int i, err = 0;
 
     if (!cmatrix_validate(src, 0) || !cmatrix_validate(targ, 0)) {
 	return E_INVARG;
