@@ -1259,8 +1259,8 @@ int gretl_ctrans_in_place (gretl_matrix *A)
 
 /* Addition or subtraction of matrices: handle the case
    where one operand is complex and the other is real.
-   In addition, if both matrices are complex, handle the
-   case where one of them is a complex scalar.
+   In addition handle the case where one of them is a
+   scalar matrix, real or complex.
 */
 
 gretl_matrix *cmatrix_add_sub (const gretl_matrix *A,
@@ -1268,18 +1268,22 @@ gretl_matrix *cmatrix_add_sub (const gretl_matrix *A,
 			       int sgn, int *err)
 {
     gretl_matrix *C = NULL;
+    double complex aval = 0;
+    double complex bval = 0;
     int cr = A->rows;
     int cc = A->cols;
     int a_scalar = 0;
     int b_scalar = 0;
 
-    if (A->is_complex && cscalar(B)) {
+    if (A->is_complex && B->rows == 1 && B->cols == 1) {
 	b_scalar = 1;
+	bval = B->is_complex ? B->z[0] : B->val[0];
 	goto allocate;
-    } else if (cscalar(A) && B->is_complex) {
+    } else if (B->is_complex && A->rows == 1 && A->cols == 1) {
 	cr = B->rows;
 	cc = B->cols;
 	a_scalar = 1;
+	aval = A->is_complex ? A->z[0] : A->val[0];
 	goto allocate;
     }
 
@@ -1320,11 +1324,11 @@ gretl_matrix *cmatrix_add_sub (const gretl_matrix *A,
 
 	if (b_scalar) {
 	    for (i=0; i<n; i++) {
-		C->z[i] = sgn < 0 ? A->z[i] - B->z[0] : A->z[i] + B->z[0];
+		C->z[i] = sgn < 0 ? A->z[i] - bval : A->z[i] + bval;
 	    }
 	} else if (a_scalar) {
 	    for (i=0; i<n; i++) {
-		C->z[i] = sgn < 0 ? A->z[0] - B->z[i] : A->z[0] + B->z[i];
+		C->z[i] = sgn < 0 ? aval - B->z[i] : aval + B->z[i];
 	    }
 	} else if (A->is_complex && B->is_complex) {
 	    for (i=0; i<n; i++) {
