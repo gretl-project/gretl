@@ -1321,6 +1321,26 @@ static double xy_calc (double x, double y, int op, int targ, parser *p)
     }
 }
 
+static int rmatrix_xy_calc (gretl_matrix *targ,
+			    gretl_matrix *src,
+			    double x, int xleft,
+			    int op, parser *p)
+{
+    int i, n = targ->rows * targ->cols;
+
+    if (xleft) {
+	for (i=0; i<n; i++) {
+	    targ->val[i] = xy_calc(x, src->val[i], op, MAT, p);
+	}
+    } else {
+	for (i=0; i<n; i++) {
+	    targ->val[i] = xy_calc(src->val[i], x, op, MAT, p);
+	}
+    }
+
+    return p->err;
+}
+
 static int operator_real_only (int op)
 {
     gretl_errmsg_sprintf("'%s': %s", getsymb(op),
@@ -1332,8 +1352,6 @@ static double complex c_xy_calc (double complex x,
 				 double complex y,
 				 int op, parser *p)
 {
-    double complex z = NADBL;
-
     if (op == B_ASN || op == B_DOTASN) {
 	return y;
     }
@@ -1355,6 +1373,27 @@ static double complex c_xy_calc (double complex x,
 	p->err = operator_real_only(op);
 	return NADBL;
     }
+}
+
+static int cmatrix_xy_calc (gretl_matrix *targ,
+			    gretl_matrix *src,
+			    double complex x,
+			    int xleft, int op,
+			    parser *p)
+{
+    int i, n = targ->rows * targ->cols;
+
+    if (xleft) {
+	for (i=0; i<n && !p->err; i++) {
+	    targ->z[i] = c_xy_calc(x, src->z[i], op, p);
+	}
+    } else {
+	for (i=0; i<n && !p->err; i++) {
+	    targ->z[i] = c_xy_calc(src->z[i], x, op, p);
+	}
+    }
+
+    return p->err;
 }
 
 #define randgen(f) (f == F_RANDGEN || f == F_MRANDGEN || f == F_RANDGEN1)
@@ -3127,7 +3166,7 @@ static NODE *matrix_scalar_calc2 (NODE *l, NODE *r, int op,
 
 static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 {
-    const gretl_matrix *m = NULL;
+    gretl_matrix *m = NULL;
     int comp = comparison_op(op);
     double x;
     NODE *ret = NULL;
@@ -3179,7 +3218,6 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 	return ret;
     } else {
 	int i, n = m->rows * m->cols;
-	double y;
 
 	if (comp) {
 	    /* complex case: do we come here at all? */
@@ -3200,25 +3238,12 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 		}
 	    }
 	} else {
-	    double *xtarg = ret->v.m->val;
-	    double complex *ztarg = ret->v.m->z;
+	    int xleft = (l->t == NUM);
 
-	    if (l->t == NUM) {
-		for (i=0; i<n && !p->err; i++) {
-		    if (m->is_complex) {
-			ztarg[i] = c_xy_calc(x, m->z[i], op, p);
-		    } else {
-			xtarg[i] = xy_calc(x, m->val[i], op, MAT, p);
-		    }
-		}
+	    if (m->is_complex) {
+		p->err = cmatrix_xy_calc(ret->v.m, m, x, xleft, op, p);
 	    } else {
-		for (i=0; i<n && !p->err; i++) {
-		    if (m->is_complex) {
-			ztarg[i] = c_xy_calc(m->z[i], x, op, p);
-		    } else {
-			xtarg[i] = xy_calc(m->val[i], x, op, MAT, p);
-		    }
-		}
+		p->err = rmatrix_xy_calc(ret->v.m, m, x, xleft, op, p);
 	    }
 	    if (gretl_matrix_is_dated(m)) {
 		gretl_matrix_set_t1(ret->v.m, gretl_matrix_get_t1(m));
@@ -11089,10 +11114,11 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 
 	if (!p->err) {
 	    if (rhs_scalar) {
-		int i, n = a->rows * a->cols;
-
-		for (i=0; i<n; i++) {
-		    a->val[i] = xy_calc(a->val[i], y, p->op, MAT, p);
+		if (a->is_complex) {
+		    /* FIXME do we ever come here? */
+		    cmatrix_xy_calc(a, a, y, 0, p->op, p);
+		} else {
+		    rmatrix_xy_calc(a, a, y, 0, p->op, p);
 		}
 		/* assign computed matrix to m2, and mark it for
 		   freeing */
