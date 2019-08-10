@@ -1396,6 +1396,25 @@ static int cmatrix_xy_calc (gretl_matrix *targ,
     return p->err;
 }
 
+static double cmatrix_xy_comp (gretl_matrix *m, double x,
+			       int op, parser *p)
+{
+    int i, n = m->rows * m->cols;
+    double complex zcond, z = x;
+    double ret = 1;
+
+    for (i=0; i<n && ret==1; i++) {
+	zcond = c_xy_calc(m->z[i], z, op, p);
+	if (p->err) {
+	    ret = NADBL;
+	} else if (zcond == 0) {
+	    ret = 0;
+	}
+    }
+
+    return ret;
+}
+
 #define randgen(f) (f == F_RANDGEN || f == F_MRANDGEN || f == F_RANDGEN1)
 
 static int check_dist_count (int d, int f, int *np, int *argc)
@@ -3219,24 +3238,21 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
     } else {
 	int i, n = m->rows * m->cols;
 
-	if (comp) {
-	    /* complex case: do we come here at all? */
-	    ret->v.xval = 1;
-	    if (l->t == NUM) {
-		for (i=0; i<n; i++) {
-		    if (xy_calc(x, m->val[i], op, MAT, p) == 0) {
-			ret->v.xval = 0;
-			break;
-		    }
-		}
-	    } else {
-		for (i=0; i<n; i++) {
-		    if (xy_calc(m->val[i], x, op, MAT, p) == 0) {
-			ret->v.xval = 0;
-			break;
-		    }
+	if (comp && m->is_complex) {
+	    /* B_EQ and B_NOTEQ; needs special treatment */
+	    ret->v.xval = cmatrix_xy_comp(m, x, op, p);
+	} else if (comp) {
+	    /* condition assumed true by until shown false */
+	    double cond = 1;
+
+	    for (i=0; i<n && cond==1; i++) {
+		if (l->t == NUM) {
+		    cond = xy_calc(x, m->val[i], op, MAT, p);
+		} else {
+		    cond = xy_calc(m->val[i], x, op, MAT, p);
 		}
 	    }
+	    ret->v.xval = cond;
 	} else {
 	    int xleft = (l->t == NUM);
 
