@@ -171,7 +171,7 @@ static int cmatrix_validate (const gretl_matrix *m, int square)
     }
 
     if (!ret) {
-	fprintf(stderr, "cmatrix_validate: matrix is not OK\n");
+	fprintf(stderr, "cmatrix_validate: failed\n");
     }
 
     return ret;
@@ -1134,6 +1134,8 @@ gretl_matrix *gretl_cmatrix (const gretl_matrix *Re,
     } else if (Im != NULL) {
 	if (Im->rows != Re->rows || Im->cols != Re->cols) {
 	    *err = E_NONCONF;
+	} else if (Im->is_complex) {
+	    *err = E_INVARG;
 	}
     }
 
@@ -1355,7 +1357,7 @@ int apply_cmatrix_dfunc (gretl_matrix *targ,
     int n = src->cols * src->rows;
     int i, err = 0;
 
-    if (!cmatrix_validate(src, 0)) {
+    if (!cmatrix_validate(src, 0) || targ->is_complex) {
 	return E_INVARG;
     }
 
@@ -1490,33 +1492,6 @@ gretl_matrix *gretl_cmatrix_trace (const gretl_matrix *X,
     return ret;
 }
 
-/* Retrieve the diagonal of complex matrix @X in the form
-   of a complex column vector.
-*/
-
-gretl_matrix *gretl_cmatrix_get_diagonal (const gretl_matrix *X,
-					  int *err)
-{
-    gretl_matrix *ret = NULL;
-    int d, i;
-
-    if (!cmatrix_validate(X, 0)) {
-	*err = E_INVARG;
-    } else {
-	d = MIN(X->rows, X->cols);
-	ret = gretl_cmatrix_new(d, 1);
-	if (ret == NULL) {
-	    *err = E_ALLOC;
-	} else {
-	    for (i=0; i<d; i++) {
-		ret->z[i] = gretl_cmatrix_get(X, i, i);
-	    }
-	}
-    }
-
-    return ret;
-}
-
 /* Set the diagonal of complex matrix @targ using either
    @src (if not NULL) or @x. In the first case @src can
    be either a complex vector of the right length, or a
@@ -1545,7 +1520,7 @@ int gretl_cmatrix_set_diagonal (gretl_matrix *targ,
 		match = 1;
 	    } else if (cscalar(src)) {
 		/* complex scalar */
-		zi = *(double complex *) src->val;
+		zi = src->z[0];
 		match = 2;
 	    }
 	} else if (gretl_vector_get_length(src) == d) {
@@ -1703,14 +1678,16 @@ gretl_matrix *gretl_cmatrix_vector_stat (const gretl_matrix *m,
 
 int gretl_cmatrix_fill (gretl_matrix *m, double complex z)
 {
-    double complex *mz = (double complex *) m->val;
-    int i, n = m->cols * m->rows;
+    if (!cmatrix_validate(m, 0)) {
+	return E_TYPES;
+    } else {
+	int i, n = m->cols * m->rows;
 
-    for (i=0; i<n; i++) {
-	mz[i] = z;
+	for (i=0; i<n; i++) {
+	    m->z[i] = z;
+	}
+	return 0;
     }
-
-    return 0;
 }
 
 gretl_matrix *scalar_to_complex (double x, int *err)

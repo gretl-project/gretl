@@ -664,9 +664,9 @@ static int get_slices (matrix_subspec *spec,
 }
 
 int assign_scalar_to_submatrix (gretl_matrix *M, double x,
+				double complex z,
 				matrix_subspec *spec)
 {
-    double complex z = 0;
     int mr = M->rows;
     int mc = M->cols;
     int i, err = 0;
@@ -674,10 +674,6 @@ int assign_scalar_to_submatrix (gretl_matrix *M, double x,
     if (spec == NULL) {
 	fprintf(stderr, "matrix_replace_submatrix: spec is NULL!\n");
 	return E_DATA;
-    }
-
-    if (M->is_complex) {
-	z = x;
     }
 
     if (spec->ltype == SEL_CONTIG) {
@@ -1009,11 +1005,7 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
     }
 
     if (spec->ltype == SEL_DIAG) {
-	if (M->is_complex) {
-	    return gretl_cmatrix_get_diagonal(M, err);
-	} else {
-	    return gretl_matrix_get_diagonal(M, err);
-	}
+	return gretl_matrix_get_diagonal(M, err);
     } else if (spec->ltype == SEL_CONTIG) {
 	return matrix_get_chunk(M, spec, err);
     } else if (spec->ltype == SEL_ELEMENT) {
@@ -1997,7 +1989,6 @@ user_matrix_eigen_analysis (const gretl_matrix *m,
 
     if (!*err && vecs) {
 	maybe_replace_content(R, C, 0);
-	gretl_matrix_set_complex(R, m->is_complex);
     }
 
     if (!vecs) {

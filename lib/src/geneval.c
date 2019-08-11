@@ -121,6 +121,7 @@ enum {
 #define ok_matrix_node(n) (n->t == MAT || n->t == NUM)
 #define matrix_element_node(n) (n->t == NUM && (n->flags & MSL_NODE))
 #define complex_node(n) (n->t == MAT && n->v.m->is_complex)
+#define cscalar_node(n) (n->t == MAT && gretl_matrix_is_cscalar(n->v.m))
 
 #define stringvec_node(n) (n->flags & SVL_NODE)
 #define mutable_node(n) (n->flags & MUT_NODE)
@@ -4261,11 +4262,11 @@ static void matrix_minmax_indices (int f, int *mm, int *rc, int *idx)
 
 #define cmplx_func(f) (f == HF_CMATRIX || f == HF_CTRAN || f == HF_CONJ)
 
-#define mmf_does_complex(f) (f==F_INV || f==F_UPPER || \
-			     f==F_LOWER || f==F_DIAG || f==F_TRANSP ||	\
-			     f==F_VEC || f==F_VECH || f==F_UNVECH ||	\
-			     f==F_MREVERSE || f==F_FFT || f==F_FFTI ||	\
-			     f==HF_CTRAN || \
+#define mmf_does_complex(f) (f==F_INV || f==F_UPPER || f==F_LOWER || \
+			     f==F_DIAG || f==F_TRANSP || \
+			     f==F_VEC || f==F_VECH || f==F_UNVECH || \
+			     f==F_MREVERSE || f==F_FFT || f==F_FFTI || \
+			     f==HF_CTRAN || f==F_CUM || f==F_DIFF || \
 			     f==F_SUMC || f==F_SUMR || f==F_PRODC || \
 			     f==F_PRODR || f==F_MEANC || f==F_MEANR || \
 			     f==F_GINV)
@@ -4410,11 +4411,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    ret->v.m = apply_ovwrite_func(m, f, optparm, tmpmat, &p->err);
 	    break;
 	case F_DIAG:
-	    if (m->is_complex) {
-		ret->v.m = gretl_cmatrix_get_diagonal(m, &p->err);
-	    } else {
-		ret->v.m = gretl_matrix_get_diagonal(m, &p->err);
-	    }
+	    ret->v.m = gretl_matrix_get_diagonal(m, &p->err);
 	    break;
 	case F_TRANSP:
 	    if (m->is_complex) {
@@ -4560,6 +4557,9 @@ static NODE *read_object_func (NODE *n, NODE *r, int f, parser *p)
     return ret;
 }
 
+/* Build a node holding a complex matrix, given two scalars,
+   two matrices, or matrix plus scalar. */
+
 static NODE *complex_matrix_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_matrix_node(p);
@@ -4596,20 +4596,14 @@ matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
 	if (!p->err && r->t != EMPTY) {
 	    m2 = ptr_node_get_matrix(r, p);
 	}
-	if (p->err) {
-	    goto finalize;
-	}
 
-	switch (f) {
-	case F_QR:
-	    ret->v.m = user_matrix_QR_decomp(m1, m2, &p->err);
-	    break;
-	case F_EIGSYM:
-	    ret->v.m = user_matrix_eigen_analysis(m1, m2, 1, &p->err);
-	    break;
+	if (!p->err) {
+	    if (f == F_QR) {
+		ret->v.m = user_matrix_QR_decomp(m1, m2, &p->err);
+	    } else if (f == F_EIGSYM) {
+		ret->v.m = user_matrix_eigen_analysis(m1, m2, 1, &p->err);
+	    }
 	}
-
-    finalize:
 
 	if (ret->v.m == NULL) {
 	    matrix_error(p);
@@ -5490,7 +5484,9 @@ static double real_apply_func (double x, int f, parser *p)
     case F_EASTER:
 	y = easterdate(x);
 	return y;
-	/* below: functions that should already be mapped */
+	/* below: functions that should already be mapped;
+	   it should be possible to delete them
+	*/
     case F_CNORM:
 	return normal_cdf(x);
     case F_DNORM:
@@ -10341,16 +10337,13 @@ static void *get_mod_assign_result (void *lp, GretlType ltype,
 
 static int dot_assign_to_matrix (gretl_matrix *m, parser *p)
 {
+    NODE *n = p->ret;
     int err = 0;
 
-    if (p->ret->t == NUM) {
-	double x = p->ret->v.xval;
-
-	gretl_matrix_fill(m, x);
-    } else if (p->ret->t == MAT && complex_scalar(p->ret->v.m)) {
-	double complex z = *(double complex *) p->ret->v.m->val;
-
-	gretl_cmatrix_fill(m, z);
+    if (scalar_node(n)) {
+	gretl_matrix_fill(m, node_get_scalar(n, p));
+    } else if (cscalar_node(n)) {
+	err = gretl_cmatrix_fill(m, n->v.m->z[0]);
     } else {
 	err = E_TYPES;
     }
@@ -10984,7 +10977,8 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
     NODE *lh2 = lhs->R;
     gretl_matrix *m1, *m2 = NULL;
     matrix_subspec *spec;
-    double y = NADBL;
+    double rhs_y = NADBL;
+    double complex rhs_z = NADBL;
     int rhs_scalar = 0;
     int rhs_cscalar = 0;
     int inflected = 0;
@@ -11033,13 +11027,16 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 
     if (scalar_node(rhs)) {
 	/* single value (could be 1 x 1 matrix) on RHS */
-	y = (rhs->t == NUM)? rhs->v.xval: rhs->v.m->val[0];
-	if (m1->is_complex && inflected) {
-	    m2 = scalar_to_complex(y, &p->err);
-	    free_m2 = 1; /* flag temporary status of @m2 */
-	    rhs_cscalar = 1;
+	rhs_y = (rhs->t == NUM)? rhs->v.xval: rhs->v.m->val[0];
+	rhs_z = rhs_y;
+	rhs_scalar = 1;
+    } else if (cscalar_node(rhs)) {
+	if (!m1->is_complex) {
+	    gretl_errmsg_set("Cannot assign complex values to a real matrix");
+	    p->err = E_TYPES;
 	} else {
-	    rhs_scalar = 1;
+	    rhs_z = rhs->v.m->z[0];
+	    rhs_cscalar = 1;
 	}
     } else if (rhs->t == MAT) {
 	/* not a scalar: get the RHS matrix */
@@ -11067,12 +11064,16 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 	int i = mspec_get_element(spec);
 
 	if (rhs_cscalar) {
-	    m1->z[i] = c_xy_calc(m1->z[i], m2->z[0], p->op, p);
+	    if (!inflected) {
+		m1->z[i] = rhs_z;
+	    } else {
+		m1->z[i] = c_xy_calc(m1->z[i], rhs_z, p->op, p);
+	    }
 	} else if (rhs_scalar) {
 	    if (!inflected) {
-		m1->val[i] = y;
+		m1->val[i] = rhs_y;
 	    } else {
-		m1->val[i] = xy_calc(m1->val[i], y, p->op, MAT, p);
+		m1->val[i] = xy_calc(m1->val[i], rhs_y, p->op, MAT, p);
 	    }
 	} else {
 	    /* here the RHS must be 1 x 1 */
@@ -11081,21 +11082,18 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 	return p->err; /* we're done */
     }
 
-    if (spec->ltype == SEL_DIAG && !inflected) {
-	/* a somewhat finicky case */
-	if (m1->is_complex) {
-	    p->err = gretl_cmatrix_set_diagonal(m1, m2, y);
-	} else {
-	    p->err = gretl_matrix_set_diagonal(m1, m2, y);
+    if (!inflected) {
+	if (rhs_scalar || rhs_cscalar) {
+	    p->err = assign_scalar_to_submatrix(m1, rhs_y, rhs_z, spec);
+	    return p->err; /* we're done */
+	} else if (spec->ltype == SEL_DIAG) {
+	    if (m1->is_complex) {
+		p->err = gretl_cmatrix_set_diagonal(m1, m2, 0);
+	    } else {
+		p->err = gretl_matrix_set_diagonal(m1, m2, 0);
+	    }
+	    return p->err; /* we're done */
 	}
-	return p->err; /* we're done */
-    }
-
-    if (rhs_scalar && !inflected) {
-	/* straight assignment of a scalar value to a
-	   non-scalar submatrix */
-	p->err = assign_scalar_to_submatrix(m1, y, spec);
-	return p->err; /* we're done */
     }
 
     if (inflected) {
@@ -11107,16 +11105,13 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 	gretl_matrix *a = matrix_get_submatrix(m1, spec, 1, &p->err);
 
 	if (!p->err) {
-	    if (rhs_scalar) {
+	    if (rhs_scalar || rhs_cscalar) {
 		if (a->is_complex) {
-		    /* FIXME do we ever come here? */
-		    cmatrix_xy_calc(a, a, y, 0, p->op, p);
+		    cmatrix_xy_calc(a, a, rhs_z, 0, p->op, p);
 		} else {
-		    rmatrix_xy_calc(a, a, y, 0, p->op, p);
+		    rmatrix_xy_calc(a, a, rhs_y, 0, p->op, p);
 		}
-		/* assign computed matrix to m2, and mark it for
-		   freeing */
-		m2 = a;
+		m2 = a; /* assign computed matrix to m2 */
 		free_m2 = 1;
 	    } else {
 		gretl_matrix *b = NULL;
@@ -18121,6 +18116,24 @@ static gretl_matrix *assign_to_matrix_mod (gretl_matrix *m1,
 	if (p->op == B_DOTASN) {
 	    p->err = dot_assign_to_matrix(m1, p);
 	    m2 = m1; /* no change in matrix pointer */
+	} else if (scalar_node(p->ret)) {
+	    double x = node_get_scalar(p->ret, p);
+
+	    if (m1->is_complex) {
+		cmatrix_xy_calc(m1, m1, x, 0, p->op, p);
+	    } else {
+		rmatrix_xy_calc(m1, m1, x, 0, p->op, p);
+	    }
+	    m2 = m1; /* no change in matrix pointer */
+	} else if (cscalar_node(p->ret)) {
+	    if (m1->is_complex) {
+		double complex z = p->ret->v.m->z[0];
+
+		cmatrix_xy_calc(m1, m1, z, 0, p->op, p);
+		m2 = m1; /* no change in matrix pointer */
+	    } else {
+		p->err = E_TYPES;
+	    }
 	} else {
 	    gretl_matrix *tmp = retrieve_matrix_result(p);
 

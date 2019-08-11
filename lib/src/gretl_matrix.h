@@ -211,6 +211,11 @@ typedef struct gretl_matrix_block_ gretl_matrix_block;
                                    (m)->rows == 1 && \
                                    (m)->cols == 1)
 
+#define gretl_matrix_is_cscalar(m) ((m) != NULL && \
+				    (m)->is_complex && \
+                                    (m)->rows == 1 && \
+                                    (m)->cols == 1)
+
 #define gretl_is_null_matrix(m) (m == NULL || m->rows == 0 || m->cols == 0)
 
 #define gretl_is_complex(m) (m != NULL && m->is_complex == 1)

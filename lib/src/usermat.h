@@ -74,6 +74,7 @@ gretl_matrix *get_matrix_copy_by_name (const char *name, int *err);
 gretl_matrix *steal_matrix_by_name (const char *name);
 
 int assign_scalar_to_submatrix (gretl_matrix *M, double x,
+				double complex z,
 				matrix_subspec *spec);
 
 int matrix_replace_submatrix (gretl_matrix *M,
