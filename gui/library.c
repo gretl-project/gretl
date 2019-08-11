@@ -7164,9 +7164,11 @@ void display_selected (void)
 
     if (!err) {
 	series_view *sview = multi_series_view_new(list);
+	windata_t *vwin;
 
-	view_buffer(prn, 78, 400, _("gretl: display data"),
-		    PRINT, sview);
+	preset_viewer_flag(VWIN_MULTI_SERIES);
+	vwin = view_buffer(prn, 78, 400, _("gretl: display data"),
+			   PRINT, sview);
     }
 
  display_exit:

@@ -31,6 +31,7 @@
 #include "usermat.h"
 #include "uservar.h"
 #include "matrix_extra.h"
+#include "gretl_cmatrix.h"
 
 #include <errno.h>
 #include <ctype.h>
@@ -4027,22 +4028,71 @@ void fncall_add_matrix (GtkWidget *parent)
     real_gui_new_matrix(NULL, NULL, parent, 1);
 }
 
+static void display_complex_matrix (gretl_matrix *m,
+				    const char *name)
+{
+    windata_t *vwin;
+    gchar *title = NULL;
+    PRN *prn = NULL;
+    int hsize, vsize;
+    int err = 0;
+
+    if (bufopen(&prn)) {
+	return;
+    }
+
+    hsize = m->cols * 10;
+    if (hsize < 70) {
+	hsize = 70;
+    } else if (hsize > 120) {
+	hsize = 120;
+    }
+
+    vsize = 24 * (m->rows + 2);
+    if (vsize < 200) {
+	vsize = 200;
+    } else if (vsize > 500) {
+	vsize = 500;
+    }
+
+    complex_matrix_print(m, name, prn);
+    title = g_strdup_printf("gretl: %s %s", _("complex matrix"), name);
+    preset_viewer_flag(VWIN_NO_SAVE);
+    vwin = view_buffer(prn, hsize, vsize, title, PRINT, m);
+    g_free(title);
+}
+
 void edit_user_matrix_by_name (const char *name, GtkWidget *parent)
 {
     user_var *u = get_user_var_by_name(name);
     gretl_matrix *m = user_var_get_value(u);
     GtkWidget *w;
 
-    /* do we already have a window open, editing this
-       matrix? */
-    w = get_window_for_data(u);
-    if (w != NULL) {
-	gtk_window_present(GTK_WINDOW(w));
+    if (m == NULL) {
+	errbox_printf(_("Couldn't open '%s'"), name);
 	return;
     }
 
-    if (m == NULL) {
-	errbox_printf(_("Couldn't open '%s'"), name);
+    /* do we already have a window open for this matrix? */
+
+    if (m->is_complex) {
+	windata_t *vwin = get_viewer_for_data(m);
+
+	if (vwin != NULL) {
+	    gtk_window_present(GTK_WINDOW(vwin->main));
+	    return;
+	}
+    } else {
+	w = get_window_for_data(u);
+	if (w != NULL) {
+	    gtk_window_present(GTK_WINDOW(w));
+	    return;
+	}
+    }
+
+    if (m->is_complex) {
+	/* we'll just display it for now */
+	display_complex_matrix(m, name);
     } else if (gretl_is_null_matrix(m)) {
 	real_gui_new_matrix(m, name, parent, 0);
     } else {

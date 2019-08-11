@@ -95,5 +95,7 @@ void gretl_viewer_destroy (windata_t *vwin);
 
 void gretl_viewer_set_title (windata_t *vwin, const char *title);
 
+void preset_viewer_flag (windata_flags f);
+
 #endif
 

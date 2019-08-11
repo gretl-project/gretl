@@ -1232,6 +1232,20 @@ GList *windowed_model_list (void)
 
 /* end of window-list apparatus */
 
+static windata_flags vwin_presets;
+
+/* This is used in a couple of special cases to apply a flag
+   before the vwin GUI get built. It's a bit of a hack, but
+   avoids the alternatives of either (a) proliferating vwin
+   "roles" or (b) adding another argument to all vwin-creating
+   functions.
+*/
+
+void preset_viewer_flag (windata_flags f)
+{
+    vwin_presets = f;
+}
+
 windata_t *vwin_new (int role, gpointer data)
 {
     windata_t *vwin = mymalloc(sizeof *vwin);
@@ -1240,7 +1254,10 @@ windata_t *vwin_new (int role, gpointer data)
 	memset(vwin, 0, sizeof *vwin);
 	vwin->role = role;
 	vwin->data = data;
+	vwin->flags = vwin_presets;
     }
+
+    vwin_presets = 0;
 
     return vwin;
 }
