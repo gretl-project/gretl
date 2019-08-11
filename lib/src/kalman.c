@@ -2122,7 +2122,7 @@ static int kalman_bundle_recheck_matrices (kalman *K, PRN *prn)
 	    err = construct_Pini(K);
 	}
     }
-    
+
     return err;
 }
 
@@ -2210,7 +2210,7 @@ int kalman_bundle_run (gretl_bundle *b, PRN *prn, int *errp)
 	if (K->LL == NULL) {
 	    err = E_ALLOC;
 	}
-    }    
+    }
 
     if (!err) {
 	err = kalman_forecast(K, prn);
