@@ -465,7 +465,7 @@ gretl_matrix_block *gretl_matrix_block_new (gretl_matrix **pm, ...)
 	B->matrix[i] = NULL;
     }
 
-    /* now allocate the matrices */
+    /* now allocate and initialize the matrices */
     for (i=0; i<B->n; i++) {
 	B->matrix[i] = malloc(sizeof **B->matrix);
 	if (B->matrix[i] == NULL) {
@@ -474,6 +474,8 @@ gretl_matrix_block *gretl_matrix_block_new (gretl_matrix **pm, ...)
 	}
 	B->matrix[i]->info = (matrix_info *) INFO_INVALID;
 	B->matrix[i]->val = NULL;
+	B->matrix[i]->z = NULL;
+	B->matrix[i]->is_complex = 0;
     }
 
     /* second pass through arg list */
@@ -511,15 +513,15 @@ gretl_matrix_block *gretl_matrix_block_new (gretl_matrix **pm, ...)
 	gretl_matrix_block_destroy(B);
 	B = NULL;
     } else {
-	B->matrix[0]->val = B->val;
-	B->matrix[0]->is_complex = 0;
-	B->matrix[0]->z = NULL;
+	/* set the val pointers */
+	double *val = B->val;
 
-	for (i=1; i<B->n; i++) {
-	    m = B->matrix[i-1];
-	    B->matrix[i]->val = m->val + (m->rows * m->cols);
-	    B->matrix[i]->is_complex = 0;
-	    B->matrix[i]->z = NULL;
+	for (i=0; i<B->n; i++) {
+	    m = B->matrix[i];
+	    if (m->rows > 0 && m->cols > 0) {
+		m->val = val;
+		val += m->rows * m->cols;
+	    }
 	}
     }
 
@@ -913,15 +915,13 @@ static gretl_matrix *gretl_filled_matrix_new (int r, int c,
 	    m->cols = c;
 	}
     } else {
-	int n = r * c;
+	int i, n = r * c;
 
 	m = gretl_matrix_alloc(r, c);
 	if (m != NULL) {
 	    if (val == 0.0) {
 		memset(m->val, 0, n * sizeof *m->val);
 	    } else {
-		int i;
-
 		for (i=0; i<n; i++) {
 		    m->val[i] = val;
 		}
