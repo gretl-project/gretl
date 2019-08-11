@@ -512,6 +512,9 @@ gretl_matrix_block *gretl_matrix_block_new (gretl_matrix **pm, ...)
 	B = NULL;
     } else {
 	B->matrix[0]->val = B->val;
+	B->matrix[0]->is_complex = 0;
+	B->matrix[0]->z = NULL;
+
 	for (i=1; i<B->n; i++) {
 	    m = B->matrix[i-1];
 	    B->matrix[i]->val = m->val + (m->rows * m->cols);
@@ -2586,6 +2589,7 @@ gretl_matrix_add (const gretl_matrix *a, const gretl_matrix *b,
     int i, n;
 
     if (a->is_complex || b->is_complex) {
+	fprintf(stderr, "E_CMPLX in gretl_matrix_add\n");
 	return E_CMPLX;
     } else if (b->rows != rows || c->rows != rows ||
 	b->cols != cols || c->cols != cols) {
@@ -2626,6 +2630,7 @@ int gretl_matrix_add_transpose_to (gretl_matrix *targ,
     int i, j, k = 0;
 
     if (targ->is_complex || src->is_complex) {
+	fprintf(stderr, "E_CMPLX in gretl_matrix_add_transpose_to\n");
 	return E_CMPLX;
     } else if (targ->rows != src->cols || targ->cols != src->rows) {
 	fprintf(stderr, "gretl_matrix_add_transpose_to: "
@@ -2665,6 +2670,7 @@ gretl_matrix_subtract_from (gretl_matrix *targ, const gretl_matrix *src)
     int i, n;
 
     if (targ->is_complex || src->is_complex) {
+	fprintf(stderr, "E_CMPLX in gretl_matrix_subtract_from\n");
 	return E_CMPLX;
     } else if (targ->rows != src->rows || targ->cols != src->cols) {
 	if (matrix_is_scalar(src)) {
@@ -2723,6 +2729,7 @@ gretl_matrix_subtract (const gretl_matrix *a, const gretl_matrix *b,
     int i, n;
 
     if (a->is_complex || b->is_complex) {
+	fprintf(stderr, "E_CMPLX in gretl_matrix_subtract\n");
 	return E_CMPLX;
     } else if (b->rows != rows || c->rows != rows ||
 	b->cols != cols || c->cols != cols) {
@@ -4762,6 +4769,7 @@ gretl_vector *gretl_toeplitz_solve (const gretl_vector *c,
 
     if (gretl_is_complex(c) || gretl_is_complex(r) ||
 	gretl_is_complex(b)) {
+	fprintf(stderr, "E_CMPLX in gretl_toeplitz_solve\n");
 	*err = E_CMPLX;
 	return NULL;
     }
@@ -6061,6 +6069,7 @@ gretl_matrix_hdproduct_new (const gretl_matrix *A,
 	return NULL;
     }
     if (gretl_is_complex(A) || gretl_is_complex(B)) {
+	fprintf(stderr, "E_CMPLX in gretl_matrix_hdproduct_new\n");
 	*err = E_CMPLX;
 	return NULL;
     }
@@ -6266,6 +6275,7 @@ gretl_matrix *gretl_matrix_pow (const gretl_matrix *A,
     if (gretl_is_null_matrix(A)) {
 	*err = E_DATA;
     } else if (A->is_complex) {
+	fprintf(stderr, "E_CMPLX in gretl_matrix_pow\n");
 	*err = E_CMPLX;
     } else if (A->rows != A->cols) {
 	*err = E_NONCONF;
@@ -7066,6 +7076,7 @@ gretl_matrix *gretl_matrix_column_sd2 (const gretl_matrix *m,
 	*err = E_DATA;
 	return NULL;
     } else if (m->is_complex) {
+	fprintf(stderr, "E_CMPLX in gretl_matrix_columns_sd2\n");
 	*err = E_CMPLX;
 	return NULL;
     }
@@ -7492,6 +7503,7 @@ gretl_matrix *gretl_matrix_divide (const gretl_matrix *a,
 	*err = E_DATA;
 	return NULL;
     } else if (a->is_complex || b->is_complex) {
+	fprintf(stderr, "E_CMPLX in gretl_matrix_divide\n");
 	*err = E_CMPLX;
 	return NULL;
     }
@@ -10426,6 +10438,7 @@ int gretl_matrix_inplace_colcat (gretl_matrix *a,
     if (a == NULL || b == NULL) {
 	return E_DATA;
     } else if (a->is_complex || b->is_complex) {
+	fprintf(stderr, "E_CMPLX in gretl_matrix_inplace_colcat\n");
 	return E_CMPLX;
     } else if (a->rows != b->rows) {
 	return E_NONCONF;
@@ -12504,6 +12517,9 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
 	gretl_is_null_matrix(C)) {
 	return E_DATA;
     } else if (A->is_complex || X->is_complex) {
+	fprintf(stderr, "E_CMPLX in gretl_matrix_qform\n");
+	if (A->is_complex) fprintf(stderr, "\touter is complex\n");
+	if (X->is_complex) fprintf(stderr, "\tinner is complex\n");
 	return E_CMPLX;
     }
 
@@ -13980,6 +13996,7 @@ gretl_matrix *gretl_matrix_covariogram (const gretl_matrix *X,
     if (gretl_is_complex(X) ||
 	gretl_is_complex(u) ||
 	gretl_is_complex(w)) {
+	fprintf(stderr, "E_CMPLX in gretl_matrix_covariogram\n");
 	*err = E_CMPLX;
 	return NULL;
     }
