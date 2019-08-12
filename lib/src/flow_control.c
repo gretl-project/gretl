@@ -328,8 +328,9 @@ int gretl_if_state_check (int indent0)
    new IF condition.
 */
 
-int flow_control (CMD *cmd, DATASET *dset, void *ptr)
+int flow_control (ExecState *s, DATASET *dset, void *ptr)
 {
+    CMD *cmd = s->cmd;
     int ci = cmd->ci;
     int blocked = get_if_state(IS_FALSE);
     int ok, err = 0;

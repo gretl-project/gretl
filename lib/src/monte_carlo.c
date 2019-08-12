@@ -3641,7 +3641,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		if (ci == ELSE || ci == ENDIF) {
 		    cmd->ci = ci;
 		    cmd->err = 0;
-		    flow_control(cmd, NULL, NULL);
+		    flow_control(s, NULL, NULL);
 		    if (cmd->err) {
 			err = cmd->err;
 			goto handle_err;
@@ -3702,7 +3702,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	    if (cond_compiled(loop, j)) {
 		/* compiled IF or ELIF */
 		cmd->ci = ci;
-		flow_control(cmd, dset, &loop->cmds[j].genr);
+		flow_control(s, dset, &loop->cmds[j].genr);
 		if (cmd->err) {
 		    /* we hit an error evaluating the if state */
 		    err = cmd->err;
@@ -3713,7 +3713,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 	    } else if (ends_condition(loop, j)) {
 		/* plain ELSE or ENDIF */
 		cmd->ci = ci;
-		flow_control(cmd, NULL, NULL);
+		flow_control(s, NULL, NULL);
 		if (cmd->err) {
 		    err = cmd->err;
 		} else {
