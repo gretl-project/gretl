@@ -4120,7 +4120,7 @@ static int real_parse_command (ExecState *s,
 	   and perhaps modify the flow control state -- and if we're
 	   blocked, return.
 	*/
-	if (!err && flow_control(cmd, dset, ptr)) {
+	if (!err && flow_control(s, dset, ptr)) {
 	    if (cmd->err) {
 		/* we hit an error evaluating the if state */
 		err = cmd->err;
