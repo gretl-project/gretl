@@ -1126,10 +1126,6 @@ static void function_noargs_error (const char *s, parser *p)
 {
     parser_print_input(p);
 
-#if 0
-    pprintf(p->prn, _("'%s': no argument was given"), s);
-    pputc(p->prn, '\n');
-#endif
     gretl_errmsg_sprintf(_("'%s': no argument was given"), s);
 
     p->err = E_ARGS;

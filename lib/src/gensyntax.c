@@ -1253,10 +1253,14 @@ static NODE *powterm (parser *p, NODE *l)
 		}
 	    }
 	} else if (sym == G_LPR) {
-	    /* bundle member or array element plus lag spec? */
-	    t = newb2(LAG, l, NULL);
-	    if (t != NULL) {
-		t->R = expr(p);
+	    /* bundle member plus lag spec? */
+	    if (l->t == BMEMB) {
+		t = newb2(LAG, l, NULL);
+		if (t != NULL) {
+		    t->R = expr(p);
+		}
+	    } else {
+		context_error('(', p, "powterm");
 	    }
 	}
 	goto maybe_recurse;
