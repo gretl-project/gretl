@@ -4089,7 +4089,7 @@ static NODE *matrix_add_names (NODE *l, NODE *r, int f, parser *p)
 }
 
 static NODE *matrix_get_col_or_row_name (int f, NODE *l, NODE *r,
-					 parser *p)
+					 parser *p) 
 {
     int get_all = null_node(r);
     NODE *ret = get_all ? aux_array_node(p) : aux_string_node(p);
