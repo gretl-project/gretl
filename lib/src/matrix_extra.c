@@ -1002,7 +1002,7 @@ int gretl_plotfit_matrices (const double *yvar, const double *xvar,
 }
 
 static int skip_matrix_comment (FILE *fp, int *rows, int *cols,
-				int *err)
+				int *is_complex, int *err)
 {
     int c, ret = 0;
 
@@ -1027,6 +1027,10 @@ static int skip_matrix_comment (FILE *fp, int *rows, int *cols,
 	} else if ((p = strstr(test, "columns:")) != NULL) {
 	    if (sscanf(p + 8, "%d", &n) == 1) {
 		*cols = n;
+	    }
+	} else if ((p = strstr(test, "complex:")) != NULL) {
+	    if (sscanf(p + 8, "%d", &n) == 1) {
+		*is_complex = (n == 1);
 	    }
 	}
     } else {
@@ -1158,6 +1162,7 @@ gretl_matrix *gretl_matrix_read_from_file (const char *fname,
     gchar *unzname = NULL;
     int r = -1, c = -1, n = 0;
     int gz, bin = 0;
+    int is_complex = 0;
     gretl_matrix *A = NULL;
     FILE *fp = NULL;
 
@@ -1201,19 +1206,15 @@ gretl_matrix *gretl_matrix_read_from_file (const char *fname,
        but while we go, scan for Matlab-style rows/columns
        specification.
     */
-    while (!*err && skip_matrix_comment(fp, &r, &c, err)) {
+    while (!*err && skip_matrix_comment(fp, &r, &c, &is_complex, err)) {
 	;
     }
 
     if (!*err) {
-	char ctest[8] = {0};
-
 	if (r >= 0 && c >= 0) {
 	    /* we got dimensions from the preamble */
 	    n = 2;
 	} else {
-	    /* FIXME */
-	    // n = fscanf(fp, "%d %d %7s\n", &r, &c, ctest);
 	    n = fscanf(fp, "%d %d\n", &r, &c);
 	}
 	if (n < 2 || r < 0 || c < 0) {
@@ -1224,7 +1225,7 @@ gretl_matrix *gretl_matrix_read_from_file (const char *fname,
 	    A = gretl_matrix_alloc(r, c);
 	    if (A == NULL) {
 		*err = E_ALLOC;
-	    } else if (!strcmp(ctest, "complex")) {
+	    } else if (is_complex) {
 		gretl_matrix_set_complex(A, 1);
 	    }
 	}
@@ -1362,7 +1363,11 @@ int gretl_matrix_write_to_file (gretl_matrix *A, const char *fname,
 	}
     }
 
-    if (bin && fp != NULL) {
+    if (fp == NULL && fz == NULL) {
+	return E_FOPEN;
+    }
+
+    if (bin) {
 	const char *header = A->is_complex ? "gretl_binar_cmatrix" :
 	    "gretl_binary_matrix";
 	gint32 dim[2] = {r, c};
@@ -1392,20 +1397,22 @@ int gretl_matrix_write_to_file (gretl_matrix *A, const char *fname,
 	goto finish;
     }
 
-    if (fz) {
+    if (gz) {
 	if (A->is_complex) {
-	    gzprintf(fz, "%d%c%d%ccomplex\n", r, d, c, d);
+	    gzprintf(fz, "# rows: %d\n", r);
+	    gzprintf(fz, "# columns: %d\n", c);
+	    gzprintf(fz, "# complex: %d\n", 1);
 	} else {
 	    gzprintf(fz, "%d%c%d\n", r, d, c);
 	}
-    } else if (fp) {
+    } else {
 	if (A->is_complex) {
-	    fprintf(fp, "%d%c%d%ccomplex\n", r, d, c, d);
+	    fprintf(fp, "# rows: %d\n", r);
+	    fprintf(fp, "# columns: %d\n", c);
+	    fprintf(fp, "# complex: %d\n", 1);
 	} else {
 	    fprintf(fp, "%d%c%d\n", r, d, c);
 	}
-    } else {
-	return E_FOPEN;
     }
 
     gretl_push_c_numeric_locale();
