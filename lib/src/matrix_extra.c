@@ -1212,7 +1212,9 @@ gretl_matrix *gretl_matrix_read_from_file (const char *fname,
 	    /* we got dimensions from the preamble */
 	    n = 2;
 	} else {
-	    n = fscanf(fp, "%d %d %7s\n", &r, &c, ctest);
+	    /* FIXME */
+	    // n = fscanf(fp, "%d %d %7s\n", &r, &c, ctest);
+	    n = fscanf(fp, "%d %d\n", &r, &c);
 	}
 	if (n < 2 || r < 0 || c < 0) {
 	    fprintf(stderr, "error reading rows, cols (r=%d, c=%d)\n",
