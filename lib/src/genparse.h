@@ -659,6 +659,7 @@ struct parser_ {
     const char *rhs;   /* for use in labelling */
     DATASET *dset;     /* convenience pointer to dataset */
     PRN *prn;          /* for printing messages */
+    PRN *errprn;       /* for storing error message in case @prn is NULL */
     int flags;         /* various attributes (see @parser_flags above) */
     int targ;          /* target type */
     int op;            /* assignment operator (possibly inflected) */
@@ -694,12 +695,14 @@ NODE *newdbl (double x);
 NODE *newempty (void);
 NODE *newb2 (int t, NODE *l, NODE *r);
 NODE *obs_node (parser *p);
-void context_error (int c, parser *p, const char *func);
-void undefined_symbol_error (const char *s, parser *p);
 const char *getsymb (int t);
 const char *getsymb_full (int t, const parser *p);
 void set_parsing_query (int s);
 void set_doing_genseries (int s);
+
+int parser_ensure_error_buffer (parser *p);
+void context_error (int c, parser *p, const char *func);
+void undefined_symbol_error (const char *s, parser *p);
 
 int realgen (const char *s, parser *p, DATASET *dset,
 	     PRN *prn, int flags, int targtype);

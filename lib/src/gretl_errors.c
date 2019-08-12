@@ -341,8 +341,7 @@ void gretl_errmsg_append (const char *str, int err)
     n = strlen(gretl_errmsg);
 
     if (n + m + 2 < ERRLEN) {
-	if (n > 0) {
-	    /* there's a message in place already */
+	if (n > 0 && gretl_errmsg[n] != '\n') {
 	    strcat(gretl_errmsg, "\n");
 	}
 	strcat(gretl_errmsg, str);

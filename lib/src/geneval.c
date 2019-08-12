@@ -15231,6 +15231,8 @@ static void node_type_error (int ntype, int argnum, int goodt,
 	return;
     }
 
+    parser_ensure_error_buffer(p);
+
     if (ntype == LAG) {
 	nstr = (goodt == NUM)? "lag order" : "lag variable";
     } else {
@@ -19005,6 +19007,7 @@ static void parser_reinit (parser *p, DATASET *dset, PRN *prn)
     p->idnum = 0;
     p->idstr = NULL;
     p->data = NULL;
+    p->errprn = NULL;
 
     p->ret = NULL;
     p->lhres = NULL;
@@ -19037,6 +19040,7 @@ static void parser_init (parser *p, const char *str,
     p->dset = dset;
     p->dset_n = dset != NULL ? dset->n : 0;
     p->prn = prn;
+    p->errprn = NULL;
     p->flags = flags | P_START;
     p->targ = targtype;
     p->op = 0;
@@ -19296,12 +19300,12 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 	parser_reinit(p, dset, prn);
 	if (p->err) {
 	    fprintf(stderr, "error in parser_reinit\n");
-	    return p->err;
+	    goto gen_finish;
 	} else if (p->op == INC || p->op == DEC) {
 	    /* more or less a no-op: the work is done by
 	       save_generated_var()
 	    */
-	    return p->err;
+	    goto gen_finish;
 	} else {
 	    goto starteval;
 	}
@@ -19311,7 +19315,7 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 	    if (gretl_function_depth() == 0) {
 		errmsg(p->err, prn);
 	    }
-	    return p->err;
+	    goto gen_finish;
 	}
     }
 
@@ -19323,28 +19327,28 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
     if (p->flags & P_DECL) {
 	/* check validity of declaration(s) */
 	decl_check(p, flags);
-	return p->err;
+	goto gen_finish;
     }
 
     if (p->op == INC || p->op == DEC) {
 	/* implemented via save_generated_var() */
-	return p->err;
+	goto gen_finish;
     }
 
     /* fire up the lexer */
     lex(p);
     if (p->err) {
 #if EDEBUG
-	fprintf(stderr, "realgen %p ('%s'): exiting on lex() error %d\n",
+	fprintf(stderr, "realgen %p ('%s'): got on lex() error %d\n",
 		(void *) p, s, p->err);
 #endif
-	return p->err;
+	goto gen_finish;
     }
 
     /* build the syntax tree */
     p->tree = expr(p);
     if (p->err) {
-	return p->err;
+	goto gen_finish;
     }
 
 #if EDEBUG
@@ -19367,12 +19371,12 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 	    c = p->ch;
 	}
 	context_error(c, p, "realgen");
-	return p->err;
+	goto gen_finish;
     }
 
     if (flags & P_NOEXEC) {
 	/* we're done at this point */
-	return p->err;
+	goto gen_finish;
     }
 
     if (!p->err) {
@@ -19433,8 +19437,24 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 	p->callcount += 1;
     }
 
+ gen_finish:
+
+    if (p->errprn != NULL) {
+	/* Pick and forward any error message that may not be
+	   seen if realgen was invoked with a NULL value for
+	   the printer @prn.
+	*/
+	const char *buf = gretl_print_get_buffer(p->errprn);
+
+	if (buf != NULL && *buf != '\0') {
+	    gretl_errmsg_set(buf);
+	}
+	gretl_print_destroy(p->errprn);
+	p->errprn = NULL;
+    }
+
 #if EDEBUG
-    fprintf(stderr, "realgen: post-eval, err = %d\n", p->err);
+    fprintf(stderr, "realgen: at finish, err = %d\n", p->err);
 # if EDEBUG > 1
     printnode(p->ret, p, 0);
     pputc(prn, '\n');

@@ -1106,29 +1106,40 @@ int genr_function_word (const char *s)
     return ret;
 }
 
+int parser_ensure_error_buffer (parser *p)
+{
+    if (p->prn == NULL) {
+	p->errprn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
+	if (p->errprn != NULL) {
+	    p->prn = p->errprn;
+	    return 0;
+	} else {
+	    return E_ALLOC;
+	}
+    }
+
+    return 0;
+}
+
 void undefined_symbol_error (const char *s, parser *p)
 {
+    parser_ensure_error_buffer(p);
     parser_print_input(p);
 
     if (p->ch == '.') {
-	gretl_errmsg_sprintf(_("%s: no such object"), s);
+	pprintf(p->prn, _("%s: no such object"), s);
     } else {
-	gretl_errmsg_sprintf(_("The symbol '%s' is undefined"), s);
+	pprintf(p->prn, _("The symbol '%s' is undefined"), s);
     }
-
     p->err = E_UNKVAR;
 }
 
 static void function_noargs_error (const char *s, parser *p)
 {
+    parser_ensure_error_buffer(p);
     parser_print_input(p);
 
-#if 0
     pprintf(p->prn, _("'%s': no argument was given"), s);
-    pputc(p->prn, '\n');
-#endif
-    gretl_errmsg_sprintf(_("'%s': no argument was given"), s);
-
     p->err = E_ARGS;
 }
 
@@ -1139,6 +1150,7 @@ void context_error (int c, parser *p, const char *func)
 	fprintf(stderr, "context error in %s()\n", func);
     }
 #endif
+    parser_ensure_error_buffer(p);
     if (c != 0) {
 	parser_print_input(p);
 	pprintf(p->prn, _("The symbol '%c' is not valid in this context\n"), c);
