@@ -419,6 +419,7 @@ gretl_matrix_block *gretl_matrix_block_new (gretl_matrix **pm, ...)
 	}
 	B->matrix[i]->info = (matrix_info *) INFO_INVALID;
 	B->matrix[i]->val = NULL;
+	B->matrix[i]->is_complex = 0;
     }
 
     /* second pass through arg list */
@@ -456,11 +457,16 @@ gretl_matrix_block *gretl_matrix_block_new (gretl_matrix **pm, ...)
 	gretl_matrix_block_destroy(B);
 	B = NULL;
     } else {
-	B->matrix[0]->val = B->val;
-	for (i=1; i<B->n; i++) {
-	    m = B->matrix[i-1];
-	    B->matrix[i]->val = m->val + (m->rows * m->cols);
-	    B->matrix[i]->is_complex = 0;
+	double *val = B->val;
+	int n;
+
+	for (i=0; i<B->n; i++) {
+	    m = B->matrix[i];
+	    n = m->rows * m->cols;
+	    if (n > 0) {
+		m->val = val;
+		val += n;
+	    }
 	}
     }
 
