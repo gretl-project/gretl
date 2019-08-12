@@ -4260,8 +4260,6 @@ static void matrix_minmax_indices (int f, int *mm, int *rc, int *idx)
     *idx = (f == F_IMINR || f == F_IMINC || f == F_IMAXR || f == F_IMAXC);
 }
 
-#define cmplx_func(f) (f == HF_CMATRIX || f == HF_CTRAN || f == HF_CONJ)
-
 #define mmf_does_complex(f) (f==F_INV || f==F_UPPER || f==F_LOWER || \
 			     f==F_DIAG || f==F_TRANSP || \
 			     f==F_VEC || f==F_VECH || f==F_UNVECH || \
@@ -4282,12 +4280,8 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	int gotopt = 0;
 	int a = 0, b, c;
 
-	if (n->t == NUM && cmplx_func(f)) {
-	    p->err = E_INVARG;
-	} else {
-	    m = node_get_matrix(n, p, 0, 0);
-	    tmpmat = n->t == MAT && is_tmp_node(n);
-	}
+	m = node_get_matrix(n, p, 0, 0);
+	tmpmat = n->t == MAT && is_tmp_node(n);
 
 	if (!p->err && m != NULL && m->is_complex) {
 	    /* gatekeeper for complex */
@@ -7082,7 +7076,13 @@ static NODE *object_status (NODE *n, NODE *func, parser *p)
 
 	ret->v.xval = NADBL;
 
-	if (f == F_EXISTS) {
+	if (f == F_ISCMPLX) {
+	    gretl_matrix *m = get_matrix_by_name(s);
+
+	    if (m != NULL) {
+		ret->v.xval = m->is_complex;
+	    }
+	} else if (f == F_EXISTS) {
 	    GretlType type = user_var_get_type_by_name(s);
 
 	    if (type == 0 && gretl_is_series(s, p->dset)) {
@@ -9147,8 +9147,8 @@ static NODE *apply_matrix_func (NODE *t, NODE *f, parser *p)
     int ret_complex = m->is_complex;
     NODE *ret;
 
-    if (m->is_complex && (f->t == F_ABS || f->t == HF_CARG ||
-			  f->t == HF_REAL || f->t == HF_IMAG)) {
+    if (m->is_complex && (f->t == F_ABS || f->t == F_CARG ||
+			  f->t == F_REAL || f->t == F_IMAG)) {
 	ret_complex = 0;
     }
 
@@ -9160,13 +9160,13 @@ static NODE *apply_matrix_func (NODE *t, NODE *f, parser *p)
     if (m->is_complex) {
 	if (f->t == F_ABS) {
 	    apply_cmatrix_dfunc(ret->v.m, m, cabs);
-	} else if (f->t == HF_CARG) {
+	} else if (f->t == F_CARG) {
 	    apply_cmatrix_dfunc(ret->v.m, m, carg);
-	} else if (f->t == HF_REAL) {
+	} else if (f->t == F_REAL) {
 	    apply_cmatrix_dfunc(ret->v.m, m, creal);
-	} else if (f->t == HF_IMAG) {
+	} else if (f->t == F_IMAG) {
 	    apply_cmatrix_dfunc(ret->v.m, m, cimag);
-	} else if (f->t == HF_CONJ) {
+	} else if (f->t == F_CONJ) {
 	    apply_cmatrix_cfunc(ret->v.m, m, conj);
 	} else if (f->t == U_NEG || f->t == U_POS || f->t == U_NOT) {
 	    apply_cmatrix_unary_op(ret->v.m, m, f->t);
@@ -15696,10 +15696,10 @@ static NODE *eval (NODE *t, parser *p)
 	    p->err = E_TYPES;
 	}
 	break;
-    case HF_CARG:
-    case HF_CONJ:
-    case HF_REAL:
-    case HF_IMAG:
+    case F_CARG:
+    case F_CONJ:
+    case F_REAL:
+    case F_IMAG:
 	if (complex_node(l)) {
 	    ret = apply_matrix_func(l, t, p);
 	} else {
@@ -16290,7 +16290,7 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = matrix_to_matrix2_func(l, r, t->t, p);
 	}
 	break;
-    case HF_CMATRIX:
+    case F_COMPLEX:
 	if ((l->t == MAT || l->t == NUM) &&
 	    (r->t == MAT || r->t == NUM)) {
 	    ret = complex_matrix_node(l, r, p);
@@ -16553,6 +16553,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_STRLEN:
     case F_NLINES:
     case F_REMOVE:
+    case F_ISCMPLX:
 	if (l->t == STR) {
 	    ret = object_status(l, t, p);
 	} else {

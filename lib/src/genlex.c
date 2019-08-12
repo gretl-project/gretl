@@ -545,6 +545,12 @@ struct str_table funcs[] = {
     { F_MSPLITBY,  "msplitby" },
     { F_FLATTEN,   "flatten" },
     { F_FUNCERR,   "funcerr" },
+    { F_ISCMPLX,   "iscomplex" },
+    { F_REAL,      "Re" },
+    { F_IMAG,      "Im" },
+    { F_CARG,      "carg" },
+    { F_CONJ,      "conj" },
+    { F_COMPLEX,   "complex" },
     { 0,           NULL }
 };
 
@@ -564,7 +570,7 @@ struct str_table func_alias[] = {
     { F_RNAMESET, "rownames" },
     { F_CNAMEGET, "colname" },
     { F_RNAMEGET, "rowname" },
-    { HF_CMATRIX, "complex" },
+    { F_COMPLEX,  "_cmatrix" },
     { F_EIGGEN,   "_ceigg" },
     { F_EIGSYM,   "_ceigh" },
     { F_EXISTS,   "isnull" }, /* deprecated */
@@ -573,15 +579,10 @@ struct str_table func_alias[] = {
 
 struct str_table hidden_funcs[] = {
     { HF_CLOGFI,   "_clogitfi" },
-    { HF_CMATRIX,  "_cmatrix" },
     { HF_CXTRACT,  "_cxtract" },
     { HF_CTRAN,    "_ctran" },
-    { HF_CARG,     "_carg" },
-    { HF_CONJ,     "_conj" },
     { HF_CSWITCH,  "_cswitch" },
     { HF_SETCMPLX, "_setcmplx" },
-    { HF_REAL,     "_Re" },
-    { HF_IMAG,     "_Im" },
     { HF_JBTERMS,  "_jbterms" },
     { HF_LISTINFO, "_listinfo" },
     { 0,           NULL }
@@ -1108,7 +1109,7 @@ int genr_function_word (const char *s)
 
 int parser_ensure_error_buffer (parser *p)
 {
-    if (p->prn == NULL) {
+    if (p->errprn == NULL) {
 	p->errprn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
 	if (p->errprn != NULL) {
 	    p->prn = p->errprn;
@@ -1131,7 +1132,7 @@ void undefined_symbol_error (const char *s, parser *p)
     } else {
 	pprintf(p->prn, _("The symbol '%s' is undefined"), s);
     }
-    p->err = E_UNKVAR;
+    p->err = E_DATA;
 }
 
 static void function_noargs_error (const char *s, parser *p)

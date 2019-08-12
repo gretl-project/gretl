@@ -282,11 +282,12 @@ enum {
     F_GETKEYS,
     F_MCORR,
     F_FUNCERR,
+    F_ISCMPLX,
+    F_REAL,
+    F_IMAG,
+    F_CARG,
+    F_CONJ,
     HF_CTRAN,
-    HF_CARG,
-    HF_CONJ,
-    HF_REAL,
-    HF_IMAG,
     HF_JBTERMS,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     HF_LISTINFO,
@@ -390,7 +391,7 @@ enum {
     F_CONV2D,
     F_FLATTEN,
     F_IMAT,
-    HF_CMATRIX,
+    F_COMPLEX,
     HF_CXTRACT,
     HF_CSWITCH,
     HF_SETCMPLX,
@@ -525,7 +526,8 @@ enum {
 /* function with single string argument */
 #define string_arg_func(s) (s == F_ISDISCR || s == F_OBSNUM || \
 			    s == F_BACKTICK || s == F_VARNUM || \
-			    s == F_EXISTS || s == F_REMOVE)
+			    s == F_EXISTS || s == F_REMOVE || \
+			    s == F_ISCMPLX)
 
 /* function with multiple args, string for first arg */
 #define str0_func(s) (s == F_PVAL || s == F_CDF || s == F_INVCDF || \
