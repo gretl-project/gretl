@@ -18111,16 +18111,24 @@ static gretl_matrix *assign_to_matrix_mod (gretl_matrix *m1,
 					   parser *p)
 {
     gretl_matrix *m2 = NULL;
+    int mcat;
 
     if (m1 == NULL) {
 	p->err = E_DATA;
     }
 
+    /* In most cases we can take a shortcut when the RHS
+       value is scalar, but we can't do that when the
+       inflection is one of the matrix concatenation
+       operators: here we record that fact.
+    */
+    mcat = (p->op == B_HCAT || p->op == B_VCAT);
+
     if (!p->err) {
 	if (p->op == B_DOTASN) {
 	    p->err = dot_assign_to_matrix(m1, p);
 	    m2 = m1; /* no change in matrix pointer */
-	} else if (scalar_node(p->ret)) {
+	} else if (!mcat && scalar_node(p->ret)) {
 	    double x = node_get_scalar(p->ret, p);
 
 	    if (m1->is_complex) {
@@ -18129,7 +18137,7 @@ static gretl_matrix *assign_to_matrix_mod (gretl_matrix *m1,
 		rmatrix_xy_calc(m1, m1, x, 0, p->op, p);
 	    }
 	    m2 = m1; /* no change in matrix pointer */
-	} else if (cscalar_node(p->ret)) {
+	} else if (!mcat && cscalar_node(p->ret)) {
 	    if (m1->is_complex) {
 		double complex z = p->ret->v.m->z[0];
 
