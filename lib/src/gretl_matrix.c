@@ -515,12 +515,14 @@ gretl_matrix_block *gretl_matrix_block_new (gretl_matrix **pm, ...)
     } else {
 	/* set the val pointers */
 	double *val = B->val;
+	int n;
 
 	for (i=0; i<B->n; i++) {
 	    m = B->matrix[i];
-	    if (m->rows > 0 && m->cols > 0) {
+	    n = m->rows * m->cols;
+	    if (n > 0) {
 		m->val = val;
-		val += m->rows * m->cols;
+		val += n;
 	    }
 	}
     }
