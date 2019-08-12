@@ -4031,11 +4031,9 @@ void fncall_add_matrix (GtkWidget *parent)
 static void display_complex_matrix (gretl_matrix *m,
 				    const char *name)
 {
-    windata_t *vwin;
     gchar *title = NULL;
     PRN *prn = NULL;
     int hsize, vsize;
-    int err = 0;
 
     if (bufopen(&prn)) {
 	return;
@@ -4058,7 +4056,7 @@ static void display_complex_matrix (gretl_matrix *m,
     complex_matrix_print(m, name, prn);
     title = g_strdup_printf("gretl: %s %s", _("complex matrix"), name);
     preset_viewer_flag(VWIN_NO_SAVE);
-    vwin = view_buffer(prn, hsize, vsize, title, PRINT, m);
+    view_buffer(prn, hsize, vsize, title, PRINT, m);
     g_free(title);
 }
 
