@@ -40,7 +40,6 @@
 #include "qr_estimate.h"
 #include "gretl_foreign.h"
 #include "var.h"
-#include "complex_def.h" /* temporary */
 
 #include "../../cephes/cephes.h" /* for hyp2f1 */
 #include <time.h> /* for the $now accessor */
@@ -2701,17 +2700,6 @@ static int operator_real_only (int op)
     return E_CMPLX;
 }
 
-#if USE_CIDX
-
-static int no_mixed_operands (int op)
-{
-    gretl_errmsg_sprintf("'%s': %s", getsymb(op),
-			 _("mixed complex and real operands are not supported"));
-    return E_CMPLX;
-}
-
-#endif
-
 /* See if we can reuse an existing matrix on an
    auxiliary node. If so, return it; otherwise
    free it and return a newly allocated matrix.
@@ -2803,23 +2791,8 @@ static int real_matrix_calc (const gretl_matrix *A,
 	break;
     case B_HCAT:
     case B_VCAT:
-#if USE_CIDX
-	if (A->is_complex + B->is_complex == 1) {
-	    if (B->is_complex && A->rows == 0 && A->cols == 0) {
-		; /* OK */
-	    } else {
-		return no_mixed_operands(op);
-	    }
-	}
-#endif
 	if (op == B_HCAT) {
 	    C = gretl_matrix_col_concat(A, B, &err);
-#if !USE_CIDX
-	    if (!A->is_complex) {
-		/* hack to keep ghosts working! */
-		gretl_matrix_set_complex(C, 0);
-	    }
-#endif
 	} else {
 	    C = gretl_matrix_row_concat(A, B, &err);
 	}
@@ -3797,16 +3770,7 @@ static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
 
     if (ret != NULL && starting(p)) {
 	if (op == B_DOTPOW) {
-#if USE_CIDX
-	    if (ml->is_complex) {
-		/* breaks cmatrix.gfn */
-		ret->v.m = gretl_cmatrix_dot_op(ml, mr, '^', &p->err);
-	    } else {
-		ret->v.m = gretl_matrix_dot_op(ml, mr, '^', &p->err);
-	    }
-#else
 	    ret->v.m = gretl_matrix_dot_op(ml, mr, '^', &p->err);
-#endif
 	} else if (op == B_POW) {
 	    int s = node_get_int(r, p);
 
@@ -3943,15 +3907,7 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
 
 	switch (f) {
 	case F_ROWS:
-#if USE_CIDX
-	    if (m->is_complex) {
-		ret->v.xval = m->rows > 0 ? m->rows/2 : 0;
-	    } else {
-		ret->v.xval = m->rows;
-	    }
-#else
 	    ret->v.xval = m->rows;
-#endif
 	    break;
 	case F_COLS:
 	    ret->v.xval = m->cols;
