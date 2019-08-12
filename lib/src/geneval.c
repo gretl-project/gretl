@@ -15793,8 +15793,12 @@ static NODE *eval (NODE *t, parser *p)
     case LAG:
 	if (p->targ == LIST) {
 	    ret = get_lag_list(l, r, p);
-	} else {
+	} else if (l->t == SERIES && scalar_node(r)) {
 	    ret = series_lag(l, r, p);
+	} else if (l->t != SERIES) {
+	    node_type_error(t->t, 1, SERIES, l, p);
+	} else {
+	    node_type_error(t->t, 2, NUM, r, p);
 	}
 	break;
     case F_LJUNGBOX:
