@@ -122,7 +122,7 @@ static xmlDocPtr gretl_xmlParseFile (const char *fname)
     return ptr;
 }
 
-#else
+#else /* not WIN32 */
 # define gretl_xmlParseFile(f) xmlParseFile(f)
 #endif
 
