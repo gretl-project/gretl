@@ -347,7 +347,7 @@ static int matrix_set_complex (gretl_matrix *m, int c, int full)
     if (m == NULL) {
 	return E_INVARG;
     } else if (c && !m->is_complex) {
-	if (m->rows % 2 != 0) {
+	if (full && m->rows % 2 != 0) {
 	    return E_INVARG;
 	} else {
 	    m->is_complex = 1;
