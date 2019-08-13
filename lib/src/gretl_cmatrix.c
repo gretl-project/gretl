@@ -989,6 +989,7 @@ int complex_matrix_print_range (const gretl_matrix *A,
     double complex aij;
     double re, im, xmax;
     char s[4] = "   ";
+    int alt_default = 0;
     int all_ints = 1;
     int zwidth = 0;
     int r, c, i, j;
@@ -1005,18 +1006,17 @@ int complex_matrix_print_range (const gretl_matrix *A,
 
     xmax = 0;
 
-    for (j=0; j<c && all_ints; j++) {
+    for (j=0; j<c; j++) {
 	for (i=rmin; i<rmax && all_ints; i++) {
 	    aij = gretl_cmatrix_get(A, i, j);
 	    re = creal(aij);
 	    im = cimag(aij);
-	    if (floor(re) != re || floor(im) != im) {
+	    if (all_ints && (floor(re) != re || floor(im) != im)) {
 		all_ints = 0;
-	    } else {
-		re = MAX(fabs(re), fabs(im));
-		if (re > xmax) {
-		    xmax = re;
-		}
+	    }
+	    re = MAX(fabs(re), fabs(im));
+	    if (re > xmax) {
+		xmax = re;
 	    }
 	}
     }
@@ -1027,6 +1027,9 @@ int complex_matrix_print_range (const gretl_matrix *A,
 	if (xmax > 0 && xmax < 3) {
 	    zwidth = floor(xmax) + 2;
 	}
+    } else if (xmax > 10) {
+	/* this is not terribly clever! */
+	alt_default = 1;
     }
 
     if (name != NULL && *name != '\0') {
@@ -1042,6 +1045,9 @@ int complex_matrix_print_range (const gretl_matrix *A,
 	    s[1] = (im >= 0) ? '+' : '-';
 	    if (zwidth > 0) {
 		pprintf(prn, "%*g%s%*gi", zwidth, re, s, zwidth-1, fabs(im));
+	    } else if (alt_default) {
+		/* FIXME this helps only slightly */
+		pprintf(prn, "%#9.5g%s%#8.5gi", re, s, fabs(im));
 	    } else {
 		pprintf(prn, "%7.4f%s%6.4fi", re, s, fabs(im));
 	    }
