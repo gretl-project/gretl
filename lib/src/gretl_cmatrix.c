@@ -502,11 +502,9 @@ gretl_matrix *gretl_zgeev (const gretl_matrix *A,
     } else {
 	if (Ltmp != NULL) {
 	    gretl_matrix_replace_content(VL, Ltmp);
-	    VL->is_complex = 1;
 	}
 	if (Rtmp != NULL) {
 	    gretl_matrix_replace_content(VR, Rtmp);
-	    VR->is_complex = 1;
 	}
     }
 
