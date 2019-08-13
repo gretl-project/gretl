@@ -1046,8 +1046,7 @@ int complex_matrix_print_range (const gretl_matrix *A,
 	    if (zwidth > 0) {
 		pprintf(prn, "%*g%s%*gi", zwidth, re, s, zwidth-1, fabs(im));
 	    } else if (alt_default) {
-		/* FIXME this helps only slightly */
-		pprintf(prn, "%#9.5g%s%#8.5gi", re, s, fabs(im));
+		pprintf(prn, "%# 9.4e%s%#8.4ei", re, s, fabs(im));
 	    } else {
 		pprintf(prn, "%7.4f%s%6.4fi", re, s, fabs(im));
 	    }
