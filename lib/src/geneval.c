@@ -11061,7 +11061,7 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 	*/
 	int i = mspec_get_element(spec);
 
-	if (rhs_cscalar) {
+	if (rhs_cscalar || (rhs_scalar && m1->is_complex)) {
 	    if (!inflected) {
 		m1->z[i] = rhs_z;
 	    } else {
