@@ -4087,7 +4087,7 @@ static NODE *matrix_add_names (NODE *l, NODE *r, int f, parser *p)
 }
 
 static NODE *matrix_get_col_or_row_name (int f, NODE *l, NODE *r,
-					 parser *p) 
+					 parser *p)
 {
     int get_all = null_node(r);
     NODE *ret = get_all ? aux_array_node(p) : aux_string_node(p);
@@ -5479,6 +5479,9 @@ static double real_apply_func (double x, int f, parser *p)
 	/* below: functions that should already be mapped;
 	   it should be possible to delete them
 	*/
+    case F_LOG: /* in case it's aliased */
+	return log(x);
+#if 0
     case F_CNORM:
 	return normal_cdf(x);
     case F_DNORM:
@@ -5549,12 +5552,6 @@ static double real_apply_func (double x, int f, parser *p)
 	    eval_warning(p, f, errno);
 	}
 	return y;
-    case F_LOG:
-	y = log(x);
-	if (errno) {
-	    eval_warning(p, f, errno);
-	}
-	return y;
     case F_LOG10:
 	y = log10(x);
 	if (errno) {
@@ -5577,6 +5574,7 @@ static double real_apply_func (double x, int f, parser *p)
 	    }
 	}
 	return y;
+#endif /* excluded because function pointers saved */
     default:
 	return 0.0;
     }
@@ -9137,6 +9135,10 @@ static void *get_complex_counterpart (void *func)
     return NULL;
 }
 
+#define cmplx_to_double(f) (f == F_CARG || f == F_CMOD || \
+			    f == F_REAL || f == F_IMAG || \
+			    f == F_ABS)
+
 /* application of scalar function to each element of matrix */
 
 static NODE *apply_matrix_func (NODE *t, NODE *f, parser *p)
@@ -9145,8 +9147,7 @@ static NODE *apply_matrix_func (NODE *t, NODE *f, parser *p)
     int ret_complex = m->is_complex;
     NODE *ret;
 
-    if (m->is_complex && (f->t == F_ABS || f->t == F_CARG ||
-			  f->t == F_REAL || f->t == F_IMAG)) {
+    if (m->is_complex && cmplx_to_double(f->t)) {
 	ret_complex = 0;
     }
 
@@ -9158,12 +9159,8 @@ static NODE *apply_matrix_func (NODE *t, NODE *f, parser *p)
     if (m->is_complex) {
 	if (f->t == F_ABS) {
 	    apply_cmatrix_dfunc(ret->v.m, m, cabs);
-	} else if (f->t == F_CARG) {
-	    apply_cmatrix_dfunc(ret->v.m, m, carg);
-	} else if (f->t == F_REAL) {
-	    apply_cmatrix_dfunc(ret->v.m, m, creal);
-	} else if (f->t == F_IMAG) {
-	    apply_cmatrix_dfunc(ret->v.m, m, cimag);
+	} else if (!ret_complex) {
+	    apply_cmatrix_dfunc(ret->v.m, m, f->v.ptr);
 	} else if (f->t == F_CONJ) {
 	    apply_cmatrix_cfunc(ret->v.m, m, conj);
 	} else if (f->t == U_NEG || f->t == U_POS || f->t == U_NOT) {

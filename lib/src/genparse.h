@@ -163,7 +163,12 @@ enum {
     F_CNORM,
     F_DNORM,
     F_QNORM,
+    F_CARG,
+    F_CMOD,
+    F_REAL,
+    F_IMAG,
     F_LOGISTIC,   /* to here: store C-function pointers: see genlex.c */
+    F_CONJ,
     F_TOINT,
     F_DIFF,	  /* first difference */
     F_LDIFF,	  /* log difference */
@@ -283,10 +288,6 @@ enum {
     F_MCORR,
     F_FUNCERR,
     F_ISCMPLX,
-    F_REAL,
-    F_IMAG,
-    F_CARG,
-    F_CONJ,
     F_CTRANS,
     HF_JBTERMS,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */

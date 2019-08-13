@@ -236,6 +236,10 @@ struct str_table_ex ptrfuncs[] = {
     { F_CNORM, "cnorm", normal_cdf },
     { F_DNORM, "dnorm", normal_pdf },
     { F_QNORM, "qnorm", normal_cdf_inverse },
+    { F_CARG,  "carg",  carg },
+    { F_CMOD,  "cmod",  cabs },
+    { F_REAL,  "Re",    creal },
+    { F_IMAG,  "Im",    cimag },
     { F_LOGISTIC, "logistic", logistic_cdf },
     { 0, NULL, NULL }
 };
@@ -547,11 +551,8 @@ struct str_table funcs[] = {
     { F_FLATTEN,   "flatten" },
     { F_FUNCERR,   "funcerr" },
     { F_ISCMPLX,   "iscomplex" },
-    { F_REAL,      "Re" },
-    { F_IMAG,      "Im" },
-    { F_CARG,      "carg" },
-    { F_CONJ,      "conj" },
     { F_COMPLEX,   "complex" },
+    { F_CONJ,      "conj" },
     { 0,           NULL }
 };
 
