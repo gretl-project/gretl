@@ -287,7 +287,7 @@ enum {
     F_IMAG,
     F_CARG,
     F_CONJ,
-    HF_CTRAN,
+    F_CTRANS,
     HF_JBTERMS,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     HF_LISTINFO,
@@ -392,7 +392,6 @@ enum {
     F_FLATTEN,
     F_IMAT,
     F_COMPLEX,
-    HF_CXTRACT,
     HF_CSWITCH,
     HF_SETCMPLX,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */

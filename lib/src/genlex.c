@@ -337,6 +337,7 @@ struct str_table funcs[] = {
     { F_GINV,     "ginv" },
     { F_DIAG,     "diag" },
     { F_TRANSP,   "transp" },
+    { F_CTRANS,   "ctrans" },
     { F_VEC,      "vec" },
     { F_VECH,     "vech" },
     { F_UNVECH,   "unvech" },
@@ -572,15 +573,12 @@ struct str_table func_alias[] = {
     { F_RNAMEGET, "rowname" },
     { F_COMPLEX,  "_cmatrix" },
     { F_EIGGEN,   "_ceigg" },
-    { F_EIGSYM,   "_ceigh" },
     { F_EXISTS,   "isnull" }, /* deprecated */
     { 0,          NULL }
 };
 
 struct str_table hidden_funcs[] = {
     { HF_CLOGFI,   "_clogitfi" },
-    { HF_CXTRACT,  "_cxtract" },
-    { HF_CTRAN,    "_ctran" },
     { HF_CSWITCH,  "_cswitch" },
     { HF_SETCMPLX, "_setcmplx" },
     { HF_JBTERMS,  "_jbterms" },

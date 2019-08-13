@@ -3739,8 +3739,6 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
 	if (ret != NULL) {
 	    if (f == F_MSORTBY) {
 		ret->v.m = gretl_matrix_sort_by_column(m, k-1, &p->err);
-	    } else if (f == HF_CXTRACT) {
-		ret->v.m = gretl_cxtract(m, k, &p->err);
 	    } else if (f == HF_CSWITCH) {
 		ret->v.m = gretl_cmatrix_switch(m, k, &p->err);
 	    } else if (f == HF_SETCMPLX) {
@@ -4264,7 +4262,7 @@ static void matrix_minmax_indices (int f, int *mm, int *rc, int *idx)
 			     f==F_DIAG || f==F_TRANSP || \
 			     f==F_VEC || f==F_VECH || f==F_UNVECH || \
 			     f==F_MREVERSE || f==F_FFT || f==F_FFTI || \
-			     f==HF_CTRAN || f==F_CUM || f==F_DIFF || \
+			     f==F_CTRANS || f==F_CUM || f==F_DIFF || \
 			     f==F_SUMC || f==F_SUMR || f==F_PRODC || \
 			     f==F_PRODR || f==F_MEANC || f==F_MEANR || \
 			     f==F_GINV)
@@ -4467,7 +4465,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    matrix_minmax_indices(f, &a, &b, &c);
 	    ret->v.m = gretl_matrix_minmax(m, a, b, c, &p->err);
 	    break;
-	case HF_CTRAN:
+	case F_CTRANS:
 	    ret->v.m = gretl_ctrans(m, 1, &p->err);
 	    break;
 	default:
@@ -15592,7 +15590,6 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_MSORTBY:
-    case HF_CXTRACT:
     case HF_CSWITCH:
     case HF_SETCMPLX:
 	/* matrix on left, scalar on right */
@@ -16238,7 +16235,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_FFT:
     case F_FFTI:
     case F_POLROOTS:
-    case HF_CTRAN:
+    case F_CTRANS:
 	/* matrix -> matrix functions */
 	if (l->t == MAT || l->t == NUM) {
 	    ret = matrix_to_matrix_func(l, r, t->t, p);
