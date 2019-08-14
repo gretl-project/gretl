@@ -468,6 +468,7 @@ struct gretl_option gretl_opts[] = {
     { OUTFILE,  OPT_W, "write", 0 },
     { OUTFILE,  OPT_Q, "quiet", 0 },
     { OUTFILE,  OPT_B, "buffer", 0 },
+    { OUTFILE,  OPT_T, "tempfile", 0 },
     { PANEL,    OPT_B, "between", 0 },
     { PANEL,    OPT_D, "time-dummies", 1 },
     { PANEL,    OPT_F, "fixed-effects", 0 },
