@@ -1414,7 +1414,7 @@ static int mpi_send_data_setup (const DATASET *dset, FILE *fp)
     if (!err) {
 	/* here we're writing into the file to be run
 	   by gretlmpi */
-	fprintf(fp, "open \"%s\"\n", fname);
+	fprintf(fp, "open \"%s\" --quiet\n", fname);
     }
 
     g_free(fname);
