@@ -987,10 +987,13 @@ int complex_matrix_print_range (const gretl_matrix *A,
 				PRN *prn)
 {
     double complex aij;
-    double re, im, xmax;
+    double re, im, ai, xmax;
     int alt_default = 0;
     int all_ints = 1;
+    int intmax = 1000;
+    int altmin = 100;
     int zwidth = 0;
+    int rdecs, idecs;
     char pm;
     int r, c, i, j;
 
@@ -1018,26 +1021,22 @@ int complex_matrix_print_range (const gretl_matrix *A,
 	    if (re > xmax) {
 		xmax = re;
 	    }
-	    if (!all_ints && xmax >= 10) {
+	    if (all_ints && xmax >= intmax) {
+		all_ints = 0;
+	    }
+	    if (!all_ints && xmax >= altmin) {
 		break;
 	    }
 	}
-	if (!all_ints && xmax >= 10) {
+	if (!all_ints && xmax >= altmin) {
 	    break;
 	}
     }
 
     if (all_ints) {
-	/* try for a more compact format */
-	if (xmax == 0) {
-	    zwidth = 2;
-	} else {
-	    xmax = log10(xmax);
-	    if (xmax > 0 && xmax < 3) {
-		zwidth = floor(xmax) + 2;
-	    }
-	}
-    } else if (xmax >= 10) {
+	/* apply a more compact format */
+	zwidth = 2 + (xmax >= 10) + (xmax >= 100);
+    } else if (xmax >= altmin) {
 	/* we'll want a different default format */
 	alt_default = 1;
     }
@@ -1053,12 +1052,15 @@ int complex_matrix_print_range (const gretl_matrix *A,
 	    re = creal(aij);
 	    im = cimag(aij);
 	    pm = (im >= -0) ? '+' : '-';
+	    ai = fabs(im);
 	    if (zwidth > 0) {
-		pprintf(prn, "%*g %c %*gi", zwidth, re, pm, zwidth-1, fabs(im));
+		pprintf(prn, "%*g %c %*gi", zwidth, re, pm, zwidth-1, ai);
 	    } else if (alt_default) {
-		pprintf(prn, "%# 9.4e %c %#8.4ei", re, pm, fabs(im));
+		pprintf(prn, "%# 9.4e %c %#8.4ei", re, pm, ai);
 	    } else {
-		pprintf(prn, "%7.4f %c %6.4fi", re, pm, fabs(im));
+		rdecs = re <= -10 ? 3 : 4;
+		idecs = ai >= 10 ? 3 : 4;
+		pprintf(prn, "%7.*f %c %6.*fi", rdecs, re, pm, idecs, ai);
 	    }
 	    if (j < c - 1) {
 		pputs(prn, "  ");
