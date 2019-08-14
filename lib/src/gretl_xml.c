@@ -57,12 +57,12 @@
 static xmlDocPtr transcribe_and_parse (const char *fname)
 {
     xmlDocPtr ptr = NULL;
-    gchar *xmltmp = g_strdup_printf("%stmp.xml", gretl_dotdir());
+    gchar *xmltmp = gretl_make_dotpath("xmldoc.XXXXXX");
     FILE *fz, *ftmp;
 
     fz = g_fopen(fname, "rb");
     if (fz != NULL) {
-	ftmp = gretl_fopen(xmltmp, "wb");
+	ftmp = gretl_mktemp(xmltmp, "wb");
 	if (ftmp != NULL) {
 	    char buf[BUFLEN];
 	    int len;
@@ -1491,12 +1491,12 @@ static int get_matrix_values_via_file (gretl_matrix *m, const char *s)
     FILE *fp;
     int err = 0;
 
-    fname = gretl_make_dotpath("matrix.xml.tmp");
+    fname = gretl_make_dotpath("matrix.xml.XXXXXX");
     if (fname == NULL) {
 	return E_ALLOC;
     }
 
-    fp = gretl_fopen(fname, "wb");
+    fp = gretl_mktemp(fname, "wb");
     if (fp == NULL) {
 	g_free(fname);
 	return E_FOPEN;

@@ -79,7 +79,8 @@ void *user_var_get_value_and_type (const char *name,
 
 char *user_string_resize (const char *name, size_t len, int *err);
 
-char *user_string_reset (const char *name, int *err);
+char *user_string_reset (const char *name, const char *repl,
+			 int *err);
 
 void *user_var_steal_value (user_var *uvar);
 
