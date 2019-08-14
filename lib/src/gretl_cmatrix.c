@@ -988,10 +988,10 @@ int complex_matrix_print_range (const gretl_matrix *A,
 {
     double complex aij;
     double re, im, xmax;
-    char s[4] = "   ";
     int alt_default = 0;
     int all_ints = 1;
     int zwidth = 0;
+    char pm;
     int r, c, i, j;
 
     if (!cmatrix_validate(A, 0)) {
@@ -1007,7 +1007,7 @@ int complex_matrix_print_range (const gretl_matrix *A,
     xmax = 0;
 
     for (j=0; j<c; j++) {
-	for (i=rmin; i<rmax && all_ints; i++) {
+	for (i=rmin; i<rmax; i++) {
 	    aij = gretl_cmatrix_get(A, i, j);
 	    re = creal(aij);
 	    im = cimag(aij);
@@ -1018,17 +1018,27 @@ int complex_matrix_print_range (const gretl_matrix *A,
 	    if (re > xmax) {
 		xmax = re;
 	    }
+	    if (!all_ints && xmax >= 10) {
+		break;
+	    }
+	}
+	if (!all_ints && xmax >= 10) {
+	    break;
 	}
     }
 
-    if (all_ints && xmax > 0) {
+    if (all_ints) {
 	/* try for a more compact format */
-	xmax = log10(xmax);
-	if (xmax > 0 && xmax < 3) {
-	    zwidth = floor(xmax) + 2;
+	if (xmax == 0) {
+	    zwidth = 2;
+	} else {
+	    xmax = log10(xmax);
+	    if (xmax > 0 && xmax < 3) {
+		zwidth = floor(xmax) + 2;
+	    }
 	}
-    } else if (xmax > 10) {
-	/* this is not terribly clever! */
+    } else if (xmax >= 10) {
+	/* we'll want a different default format */
 	alt_default = 1;
     }
 
@@ -1042,14 +1052,13 @@ int complex_matrix_print_range (const gretl_matrix *A,
 	    aij = gretl_cmatrix_get(A, i, j);
 	    re = creal(aij);
 	    im = cimag(aij);
-	    s[1] = (im >= 0) ? '+' : '-';
+	    pm = (im >= -0) ? '+' : '-';
 	    if (zwidth > 0) {
-		pprintf(prn, "%*g%s%*gi", zwidth, re, s, zwidth-1, fabs(im));
+		pprintf(prn, "%*g %c %*gi", zwidth, re, pm, zwidth-1, fabs(im));
 	    } else if (alt_default) {
-		/* FIXME this helps only slightly */
-		pprintf(prn, "%#9.5g%s%#8.5gi", re, s, fabs(im));
+		pprintf(prn, "%# 9.4e %c %#8.4ei", re, pm, fabs(im));
 	    } else {
-		pprintf(prn, "%7.4f%s%6.4fi", re, s, fabs(im));
+		pprintf(prn, "%7.4f %c %6.4fi", re, pm, fabs(im));
 	    }
 	    if (j < c - 1) {
 		pputs(prn, "  ");
