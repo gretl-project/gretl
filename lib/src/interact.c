@@ -983,7 +983,7 @@ static int redirection_ok (PRN *prn)
     }
 }
 
-static int outbuf_check (const char *name, const DATASET *dset)
+static int outname_check (const char *name, const DATASET *dset)
 {
     GretlType t = gretl_type_from_name(name, dset);
     int err = 0;
@@ -1000,11 +1000,56 @@ static int outbuf_check (const char *name, const DATASET *dset)
     return err;
 }
 
+/* We come here in the --tempfile and --buffer cases of
+   "outfile". The @strvar argument, which names a string
+   variable, plays a different role in each case: with
+   --tempfile (OPT_T) the variable should get as its
+   value the _name_ of the temporary file, but with --buffer
+   (OPT_B) it should get the _content_ of that file when
+   redirection ends. We accomplish the former effect here,
+   but arrange for the latter effect by passing @strvar
+   to outfile_redirect().
+*/
+
+static int redirect_to_tempfile (const char *strvar, PRN *prn,
+				 gretlopt opt, int *vparms)
+{
+    gchar *tempname = NULL;
+    FILE *fp = NULL;
+    int err = 0;
+
+    tempname = gretl_make_dotpath("outfile.XXXXXX");
+    if (opt & OPT_B) {
+	fp = gretl_mktemp(tempname, "wb+");
+    } else {
+	fp = gretl_mktemp(tempname, "wb");
+    }
+
+    if (fp == NULL) {
+	err = E_FOPEN;
+    } else if (opt & OPT_B) {
+	err = outfile_redirect(prn, fp, strvar, opt, vparms);
+    } else {
+	err = outfile_redirect(prn, fp, NULL, opt, vparms);
+    }
+    if (!err && (opt & OPT_T)) {
+	/* write the tempfile name into strvar */
+	user_string_reset(strvar, tempname, &err);
+	if (err) {
+	    fclose(fp);
+	}
+    }
+
+    g_free(tempname);
+
+    return err;
+}
+
 static int
 do_outfile_command (gretlopt opt, const char *fname,
 		    const DATASET *dset, PRN *prn)
 {
-    static char outname[MAXLEN];
+    static char savename[MAXLEN];
     static int vparms[2];
     int rlevel = 0;
     int err = 0;
@@ -1020,8 +1065,8 @@ do_outfile_command (gretlopt opt, const char *fname,
 	opt |= OPT_W;
     }
 
-    /* allow at most one of --append, --buffer and --close */
-    err = incompatible_options(opt, (OPT_A | OPT_B | OPT_C));
+    /* allow at most one of --append, --buffer, --tempfile, --close */
+    err = incompatible_options(opt, (OPT_A | OPT_B | OPT_T | OPT_C));
     if (err) {
 	return err;
     }
@@ -1036,89 +1081,93 @@ do_outfile_command (gretlopt opt, const char *fname,
 	} else {
 	    print_end_redirection(prn);
 	    maybe_restore_vparms(vparms);
-	    if (gretl_messages_on() && *outname != '\0') {
-		pprintf(prn, _("Closed output file '%s'\n"), outname);
+	    if (gretl_messages_on() && *savename != '\0') {
+		pprintf(prn, _("Closed output file '%s'\n"), savename);
 	    }
 	}
 	return err;
     }
 
-    /* command to divert output to file */
-    if (rlevel > 0 && !redirection_ok(prn)) {
-	gretl_errmsg_sprintf(_("Output is already diverted to '%s'"),
-			     outname);
-	return 1;
-    } else if (fname == NULL || *fname == '\0') {
+    /* below: diverting output to a file or buffer: first
+       check that this is feasible */
+
+    if (fname == NULL || *fname == '\0') {
 	return E_ARGS;
-    } else if (!strcmp(fname, "null")) {
+    } else if (rlevel > 0 && !redirection_ok(prn)) {
+	gretl_errmsg_sprintf(_("Output is already diverted to '%s'"),
+			     savename);
+	return 1;
+    }
+
+    /* Handle the cases where we're going via a temporary
+       file (and the @fname that was passed in is really the
+       name of a string variable).
+    */
+    if (opt & (OPT_B | OPT_T)) {
+	const char *strvar = fname;
+
+	err = outname_check(strvar, dset);
+	if (!err) {
+	    err = redirect_to_tempfile(strvar, prn, opt, vparms);
+	}
+	*savename = '\0';
+	return err; /* we're done */
+    }
+
+    /* Handle the remaining file-based cases */
+
+    if (!strcmp(fname, "null")) {
 	if (gretl_messages_on()) {
 	    pputs(prn, _("Now discarding output\n"));
 	}
 	err = outfile_redirect(prn, NULL, NULL, opt, vparms);
-	*outname = '\0';
+	*savename = '\0';
     } else if (!strcmp(fname, "stderr")) {
 	err = outfile_redirect(prn, stderr, NULL, opt, vparms);
-	*outname = '\0';
+	*savename = '\0';
     } else if (!strcmp(fname, "stdout")) {
 	err = outfile_redirect(prn, stdout, NULL, opt, vparms);
-	*outname = '\0';
+	*savename = '\0';
     } else {
 	/* should the stream be opened in binary mode on Windows? */
-	char tmp[FILENAME_MAX];
-	const char *name = tmp;
-	const char *strvar = NULL;
+	char outname[FILENAME_MAX];
+	const char *targ;
 	FILE *fp;
 
-	if (opt & OPT_B) {
-	    /* @fname is actually the name of a string variable */
-	    err = outbuf_check(fname, dset);
-	    if (err) {
-		return err;
-	    } else {
-		gchar *pname = g_strdup_printf("%s.prntmp", fname);
-
-		gretl_build_path(tmp, gretl_dotdir(), pname, NULL);
-		g_free(pname);
-		strvar = fname;
-	    }
-	} else {
-	    /* switches to workdir if needed */
-	    strcpy(tmp, fname);
-	    gretl_maybe_prepend_dir(tmp);
-	}
-
+	/* switch to workdir if needed */
+	strcpy(outname, fname);
+	gretl_maybe_prepend_dir(outname);
 	if (opt & OPT_A) {
-	    fp = gretl_fopen(tmp, "a");
-	} else if (opt & OPT_B) {
-	    fp = gretl_fopen(tmp, "wb+");
+	    /* appending */
+	    fp = gretl_fopen(outname, "a");
 	} else {
-	    fp = gretl_fopen(tmp, "w");
+	    /* writing */
+	    fp = gretl_fopen(outname, "w");
 	}
 
 	if (fp == NULL) {
-	    pprintf(prn, _("Couldn't open %s for writing\n"), tmp);
-	    return 1;
+	    pprintf(prn, _("Couldn't open %s for writing\n"), outname);
+	    return E_FOPEN;
 	}
+
+	/* string to identify the output stream for display */
+	targ = cwd_is_workdir() ? fname : outname;
 
 	if (gretl_messages_on()) {
-	    if (cwd_is_workdir()) {
-		name = fname;
-	    } else if (strvar != NULL) {
-		name = strvar;
-	    }
+	    /* print message before actual redirection! */
 	    if (opt & OPT_A) {
-		pprintf(prn, _("Now appending output to '%s'\n"), name);
+		pprintf(prn, _("Now appending output to '%s'\n"), targ);
 	    } else {
-		pprintf(prn, _("Now writing output to '%s'\n"), name);
+		pprintf(prn, _("Now writing output to '%s'\n"), targ);
 	    }
 	}
 
-	err = outfile_redirect(prn, fp, strvar, opt, vparms);
+	err = outfile_redirect(prn, fp, NULL, opt, vparms);
 	if (err) {
 	    fclose(fp);
-	    remove(tmp);
+	    remove(outname);
 	} else {
-	    strcpy(outname, name);
+	    strcpy(savename, targ);
 	}
     }
 

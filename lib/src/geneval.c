@@ -8222,7 +8222,7 @@ static NODE *getline_node (NODE *l, NODE *r, parser *p)
 
 		if (len == 0) {
 		    bufgets_finalize(buf);
-		    r->v.str = user_string_reset(r->vname, &p->err);
+		    r->v.str = user_string_reset(r->vname, NULL, &p->err);
 		    ret->v.xval = 0;
 		} else {
 		    r->v.str = user_string_resize(r->vname, len, &p->err);

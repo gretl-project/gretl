@@ -9865,9 +9865,11 @@
     label="Direct printing to file" context="cli">
 
     <usage>
-      <arguments>
-	<argument>filename</argument>
-      </arguments>
+      <altforms>
+	<altform><lit>outfile</lit> <repl>filename</repl></altform>
+	<altform><lit>outfile</lit> <repl>strvar</repl> <lit>--buffer</lit></altform>
+	<altform><lit>outfile</lit> <repl>strvar</repl> <lit>--tempfile</lit></altform>
+      </altforms>
       <options>
         <option>
 	  <flag>--append</flag>
@@ -9881,44 +9883,104 @@
 	  <flag>--buffer</flag>
 	  <effect>see below</effect>
         </option>
+        <option>
+	  <flag>--tempfile</flag>
+	  <effect>see below</effect>
+        </option>
       </options>
-      <examples>
-        <example>outfile regress.txt</example>
-        <example>end outfile</example>
-      </examples>
     </usage>
 
     <description>
       <para>
-	Diverts output to <repl>filename</repl>.  By default a new
-	file is created (or an existing one is overwritten); use the
-	<opt>append</opt> flag if you wish to append output to an
-	existing file. Diversion is ended via <quote><lit>end
-	outfile</lit></quote>; output then reverts to the default
-	stream.
+	The <lit>outfile</lit> command starts a block in which any
+	printed output is diverted to a specified file or buffer (or
+	just discarded, if you wish). Such a block is terminated by
+	the command <quote><lit>end outfile</lit></quote>, after which
+	output reverts to the default stream.
+      </para>
+
+      <subhead>Diversion to a named file</subhead>
+      <para>
+	The first form shown above sends output to a file named by the
+	<repl>filename</repl> argument. By default a new file is
+	created (or an existing one is overwritten). The output file
+	will be written in the currently set <cmdref targ="workdir"/>,
+	unless the <repl>filename</repl> string contains a full path
+	specification to the contrary. If you wish to append output to
+	an existing file instead, use the <opt>append</opt> flag.
       </para>
       <para>
-	The output file will be written in the currently set <cmdref
-	targ="workdir"/>, unless the <repl>filename</repl> string
-	contains a full path specification.
+	Some special variations on this first theme are available. If
+	you give the keyword <lit>null</lit> in place of a real
+	filename the effect is to suppress all printed output until
+	redirection is ended. If either of the keywords
+	<lit>stdout</lit> or <lit>stderr</lit> are given in place of a
+	regular filename the effect is to redirect output to standard
+	output or standard error output respectively.
       </para>
       <para>
-	In the first example line above, the file
-	<filename>regress.txt</filename> is opened for writing, and in
-	the second it is closed.  This would make sense as a sequence
-	only if some commands were issued before the closing.  For
-	example if an estimation command intervened, its output would
-	go to <filename>regress.txt</filename> rather than the screen.
+	A simple example follows, where the output from a particular
+	regression is written to a named file.
+      </para>
+      <code>
+	open data4-10
+	outfile regress.txt
+	  ols ENROLL 0 CATHOL INCOME COLLEGE
+	end outfile
+      </code>
+
+      <subhead>Diversion to a string buffer</subhead>
+      <para>
+	The <opt>buffer</opt> option is used to direct output to a
+	string variable. The place of the <repl>filename</repl>
+	argument is taken by <repl>strvar</repl>, the name of such a
+	variable (which must, of course, conform to the requirements
+	for a valid gretl identifier). If a string of the given name
+	already exists, its value will be over-written; otherwise it
+	will be created automatically.  The <opt>append</opt> option
+	is not available in this case.
       </para>
       <para>
-	Three special variants on the above are available. If you give
-	the keyword <lit>null</lit> in place of a real filename the
-	effect is to suppress all printed output until redirection is
-	ended. If either of the keywords <lit>stdout</lit> or
-	<lit>stderr</lit> are given in place of a regular filename the
-	effect is to redirect output to standard output or standard
-	error output respectively.
+	We show below the example given above, revised to write to a
+	string. In this case printing <lit>model_out</lit> will
+	display the redirected output.
       </para>
+      <code>
+	open data4-10
+	outfile model_out --buffer
+	  ols ENROLL 0 CATHOL INCOME COLLEGE
+	end outfile
+      </code>
+
+      <subhead>Diversion to a temporary file</subhead>
+      <para>
+	The <opt>tempfile</opt> option is used to direct output to a
+	temporary file, with a name that is guaranteed to be unique,
+	in the user's <quote>dot</quote> directory. As in the
+	redirection to buffer case, the argument should be the name of
+	a string variable: the value of this variable is over-written
+	with the name of the temporary file. The <opt>append</opt>
+	option is not compatible with this case. Also note: files
+	written to the dot directory are cleaned up on exit from the
+	program, so don't use this form is you want the output to
+	be preserved after your gretl session.
+      </para>
+      <para>
+	We repeat the simple example from above, with a couple of
+	extra lines to illustrate the points that <repl>strvar</repl>
+	tells you where the output went, and you can retrieve it
+	using the <fncref targ="readfile"/> function.
+      </para>
+      <code>
+	open data4-10
+	outfile mytemp --tempfile
+	  ols ENROLL 0 CATHOL INCOME COLLEGE
+	end outfile
+	printf "Output went to %s\n", mytemp
+	printf "The output was:\n%s\n", readfile(mytemp)
+      </code>
+
+      <subhead>Quietness</subhead>
       <para>
 	The effect of the <opt>quiet</opt> option is to turn off the
 	echoing of commands and the printing of auxiliary messages
@@ -9931,9 +9993,11 @@
       <para>
 	except that when redirection is ended the original values of
 	the <lit>echo</lit> and <lit>messages</lit> variables are
-	restored.
+	restored. This option is available in all cases.
       </para>
-      <para>
+
+      <subhead>Levels of diversion</subhead>
+       <para>
 	In general only one file can be opened in this way at any
 	given time, so calls to this command cannot be
 	nested. However, use of this command is permitted inside
@@ -9970,31 +10034,6 @@
       <code>
 	Inside
       </code>
-      <para>
-	As described above, the primary usage of this command is to
-	divert output to a named file. However, the <opt>buffer</opt>
-	option may be used to achieve a different effect, namely
-	directing output to a named string variable. This option is
-	incompatible with <opt>append</opt>. The position of the
-	<repl>filename</repl> argument is occupied by the name of a
-	string variable (which must, of course, conform to the
-	requirements for a valid gretl identifier). If a string
-	variable of the given name already exists, its value will be
-	over-written; if there is no such variable, it will be created
-	automatically. Here is a simple example of usage:
-      </para>
-      <code>
-	open data4-1
-	outfile mybuf --buffer --quiet
-	  labels
-	end outfile
-	printf "mybuf = \n'%s'\n", mybuf
-      </code>
-      <para>
-	In this case the variable <lit>mybuf</lit> captures the output
-	of the <lit>labels</lit> command. This facility may be of use
-	to writers of function packages.
-      </para>
     </description>
 
   </command>
