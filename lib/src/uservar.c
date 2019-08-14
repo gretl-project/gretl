@@ -949,7 +949,7 @@ char *user_string_resize (const char *name, size_t len, int *err)
     return (char *) u->ptr;
 }
 
-char *user_string_reset (const char *name, int *err)
+char *user_string_reset (const char *name, const char *repl, int *err)
 {
     user_var *u;
 
@@ -960,7 +960,11 @@ char *user_string_reset (const char *name, int *err)
 	return NULL;
     } else {
 	free(u->ptr);
-	u->ptr = gretl_strdup("");
+	if (repl == NULL) {
+	    u->ptr = gretl_strdup("");
+	} else {
+	    u->ptr = gretl_strdup(repl);
+	}
 	return (char *) u->ptr;
     }
 }
