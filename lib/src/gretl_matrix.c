@@ -6248,8 +6248,13 @@ ConfType dot_operator_conf (const gretl_matrix *A,
 			    const gretl_matrix *B,
 			    int *r, int *c)
 {
+#if 1
     int ra = A->is_complex ? A->rows/2 : A->rows;
     int rb = B->is_complex ? B->rows/2 : B->rows;
+#else
+    int ra = A->rows;
+    int rb = B->rows;
+#endif
     int ca = A->cols;
     int cb = B->cols;
     int confr = (ra == rb);

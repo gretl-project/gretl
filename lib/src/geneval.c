@@ -3770,7 +3770,17 @@ static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
 
     if (ret != NULL && starting(p)) {
 	if (op == B_DOTPOW) {
+	    int cmplx = 0;
+
+	    /* 2019-08-13: cmatrix.gfn compat! */
+	    if (ml->is_complex) {
+		cmplx = 1;
+		ml->is_complex = 0;
+	    }
 	    ret->v.m = gretl_matrix_dot_op(ml, mr, '^', &p->err);
+	    if (cmplx) {
+		ml->is_complex = 1;
+	    }
 	} else if (op == B_POW) {
 	    int s = node_get_int(r, p);
 

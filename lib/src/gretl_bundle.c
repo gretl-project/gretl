@@ -2095,7 +2095,6 @@ static int load_bundled_items (gretl_bundle *b, xmlNodePtr cur, xmlDocPtr doc)
 		    } else {
 			err = gretl_bundle_set_data(b, key, &u, type, size);
 		    }
-
 		} else if (type == GRETL_TYPE_STRING) {
 		    char *s;
 

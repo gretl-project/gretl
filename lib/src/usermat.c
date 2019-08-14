@@ -1029,12 +1029,6 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 
  finish:
 
-#if 1 /* ?? */
-    if (S != NULL && M->is_complex) {
-	gretl_matrix_set_complex(S, 1);
-    }
-#endif
-
     return S;
 }
 
@@ -1101,12 +1095,6 @@ gretl_matrix *matrix_get_chunk (const gretl_matrix *M,
 	    matrix_transcribe_dates(ret, M);
 	}
     }
-
-#if 1 /* ?? */
-    if (ret != NULL && M->is_complex) {
-	gretl_matrix_set_complex(ret, 1);
-    }
-#endif
 
     return ret;
 }
