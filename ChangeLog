@@ -2,6 +2,8 @@ version 2019d, in progress
 - Enable nesting of arrays
 - Fix bug: possible crash on appending multiple lists to a
   list inside a bundle
+- Fix bug: "(" could in certain cases be misinterpreted as
+  starting a series lag specification
 - For various commands: document the --quiet option
 - Functions ones(), zeros(), muniform(), mnormal(): make
   the second argument optional; the shape now defaults
@@ -12,6 +14,8 @@ version 2019d, in progress
   Wooldridge's first-order test for panel data
 - "funcerr" command: add a function version of this
 - "pkg" command: add "query" action plus --quiet option
+- "outfile" command: add --tempfile option to use an
+  automatically named temporary file
 - Internals: speed up element-wise matrix calculation by
   use of function pointers
 
