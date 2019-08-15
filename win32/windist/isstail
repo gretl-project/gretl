@@ -3,7 +3,7 @@
 Name: "{group}\gretl"; Filename: "{app}\gretl.exe"
 Name: "{group}\Gretl Web Site"; Filename: "{app}\gretl_website.url"
 Name: "{group}\uninstall gretl"; Filename: "{app}\unins000.exe"
-Name: "{userdesktop}\gretl"; Filename: "{app}\gretl.exe"; WorkingDir: "{app}"
+Name: "{userdesktop}\gretl"; Filename: "{app}\gretl.exe"; WorkingDir: "{app}"; Check: DesktopCheck()
 
 [Registry]
 ; Start "gretl" registry keys.
@@ -40,5 +40,19 @@ function ModPathDir(): TArrayOfString;
 begin
    setArrayLength(Result, 1);
    Result[0] := ExpandConstant('{app}');
+end;
+
+function DesktopCheck(): Boolean;
+var
+  Folder: string;
+  Ret: Boolean;
+begin
+  Ret := True;
+  try
+    Folder := ExpandConstant('{userdesktop}');
+  except
+    Ret := False;
+  end;
+  Result := Ret;
 end;
 

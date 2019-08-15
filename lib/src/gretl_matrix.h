@@ -616,6 +616,11 @@ gretl_gensymm_eigenvals (const gretl_matrix *A,
 			 gretl_matrix *V,
 			 int *err);
 
+gretl_matrix *gretl_dgeev (const gretl_matrix *A,
+			   gretl_matrix *VL,
+			   gretl_matrix *VR,
+			   int *err);
+
 double gretl_symm_matrix_lambda_min (const gretl_matrix *m, int *err);
 
 double gretl_symm_matrix_lambda_max (const gretl_matrix *m, int *err);
