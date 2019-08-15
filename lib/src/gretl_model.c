@@ -1799,7 +1799,7 @@ gretl_matrix *arma_spectrum_plot_data (const MODEL *pmod,
     y = get_arma_yvec(pmod, dset, err);
 
     if (!*err) {
-	pergm = gretl_matrix_fft(y, err);
+	pergm = gretl_matrix_fft(y, 0, err);
     }
 
     if (!*err) {

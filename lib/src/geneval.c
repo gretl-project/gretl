@@ -3723,27 +3723,25 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
 	} else {
 	    k = node_get_int(r, p);
 	}
-
 	if (!p->err && gretl_is_null_matrix(m)) {
 	    p->err = E_INVARG;
 	}
 	if (!p->err && f == F_MSORTBY && m->is_complex) {
 	    p->err = E_CMPLX;
 	}
+	if (!p->err) {
+	    ret = (f == HF_SETCMPLX)? aux_scalar_node(p) : aux_matrix_node(p);
+	}
 	if (p->err) {
 	    return NULL;
 	}
 
-	ret = (f == HF_SETCMPLX)? aux_scalar_node(p) : aux_matrix_node(p);
-
-	if (ret != NULL) {
-	    if (f == F_MSORTBY) {
-		ret->v.m = gretl_matrix_sort_by_column(m, k-1, &p->err);
-	    } else if (f == HF_CSWITCH) {
-		ret->v.m = gretl_cmatrix_switch(m, k, &p->err);
-	    } else if (f == HF_SETCMPLX) {
-		ret->v.xval = p->err = gretl_matrix_set_complex_full(m, k);
-	    }
+	if (f == F_MSORTBY) {
+	    ret->v.m = gretl_matrix_sort_by_column(m, k-1, &p->err);
+	} else if (f == HF_CSWITCH) {
+	    ret->v.m = gretl_cmatrix_switch(m, k, &p->err);
+	} else if (f == HF_SETCMPLX) {
+	    ret->v.xval = p->err = gretl_matrix_set_complex_full(m, k);
 	}
     } else {
 	ret = aux_any_node(p);
@@ -4294,14 +4292,16 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 
 	if (f == F_RESAMPLE || f == F_MREVERSE || f == F_SDC ||
 	    f == F_MCOV || f == F_CDEMEAN || f == F_PSDROOT) {
-	    /* the r node may be absent, but if present it should
-	       hold a scalar */
+	    /* if present, the @r node should hold a scalar */
 	    if (!null_or_scalar(r)) {
 		node_type_error(f, 2, NUM, r, p);
 	    } else if (!null_node(r)) {
 		optparm = node_get_int(r, p);
 		gotopt = 1;
 	    }
+	} else if (f == F_FFT) {
+	    /* if present, the r node should hold a boolean */
+	    optparm = node_get_bool(r, p, 0);
 	} else if (f == F_RANKING) {
 	    if (gretl_vector_get_length(m) == 0) {
 		/* m must be a vector */
@@ -4438,7 +4438,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    if (m->is_complex) {
 		ret->v.m = gretl_complex_fft(m, 0, &p->err);
 	    } else {
-		ret->v.m = gretl_matrix_fft(m, &p->err);
+		ret->v.m = gretl_matrix_fft(m, optparm, &p->err);
 	    }
 	    break;
 	case F_FFTI:

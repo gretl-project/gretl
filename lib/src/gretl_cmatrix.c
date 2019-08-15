@@ -35,9 +35,14 @@
 /* helper function for fftw-based real FFT functions */
 
 static int fft_allocate (double **px, gretl_matrix **pm,
-			 fftw_complex **pc, int r, int c)
+			 fftw_complex **pc, int r, int c,
+			 int newstyle)
 {
-    *pm = gretl_matrix_alloc(r, c);
+    if (newstyle) {
+	*pm = gretl_cmatrix_new(r, c/2);
+    } else {
+	*pm = gretl_matrix_alloc(r, c);
+    }
     if (*pm == NULL) {
 	return E_ALLOC;
     }
@@ -61,7 +66,8 @@ static int fft_allocate (double **px, gretl_matrix **pm,
 /* start fftw-based real FFT functions */
 
 static gretl_matrix *
-real_matrix_fft (const gretl_matrix *y, int inverse, int *err)
+real_matrix_fft (const gretl_matrix *y, int inverse,
+		 int newstyle, int *err)
 {
     gretl_matrix *ft = NULL;
     fftw_plan p = NULL;
@@ -87,7 +93,7 @@ real_matrix_fft (const gretl_matrix *y, int inverse, int *err)
     }
 
     cdim = inverse ? c : 2 * c;
-    *err = fft_allocate(&ffx, &ft, &ffz, r, cdim);
+    *err = fft_allocate(&ffx, &ft, &ffz, r, cdim, newstyle);
     if (*err) {
 	return NULL;
     }
@@ -125,6 +131,13 @@ real_matrix_fft (const gretl_matrix *y, int inverse, int *err)
 	    for (i=0; i<r; i++) {
 		gretl_matrix_set(ft, i, j, ffx[i] / r);
 	    }
+	} else if (newstyle) {
+	    for (i=0; i<=m+odd; i++) {
+		gretl_cmatrix_set(ft, i, j, ffz[i]);
+	    }
+	    for (i=m; i>0; i--) {
+		gretl_cmatrix_set(ft, r-i, j, conj(ffz[i]));
+	    }
 	} else {
 	    for (i=0; i<=m+odd; i++) {
 		gretl_matrix_set(ft, i, cr, creal(ffz[i]));
@@ -146,14 +159,14 @@ real_matrix_fft (const gretl_matrix *y, int inverse, int *err)
     return ft;
 }
 
-gretl_matrix *gretl_matrix_fft (const gretl_matrix *y, int *err)
+gretl_matrix *gretl_matrix_fft (const gretl_matrix *y, int cmat, int *err)
 {
-    return real_matrix_fft(y, 0, err);
+    return real_matrix_fft(y, 0, cmat, err);
 }
 
 gretl_matrix *gretl_matrix_ffti (const gretl_matrix *y, int *err)
 {
-    return real_matrix_fft(y, 1, err);
+    return real_matrix_fft(y, 1, 0, err);
 }
 
 /* end fftw-based real FFT functions */
