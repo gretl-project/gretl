@@ -226,7 +226,7 @@ static struct gretl_cmd gretl_cmds[] = {
 
 #define param_optional(c) (c == SET || c == HELP || c == RESTRICT || \
 			   c == SMPL || c == SYSTEM || c == FUNCERR || \
-			   c == GRAPHPG || c == PLOT)
+			   c == GRAPHPG || c == PLOT || c == OUTFILE)
 
 #define parm2_optional(c) (c == SET || c == SETOPT || c == SETOBS || \
 			   c == ESTIMATE || c == HELP || c == GRAPHPG || \
@@ -3803,7 +3803,7 @@ static void handle_option_inflections (CMD *cmd)
 	    cmd->ciflags = 0;
 	}
     } else if (cmd->ci == OUTFILE) {
-	if (cmd->opt == OPT_C) {
+	if (cmd->opt & OPT_C) {
 	    cmd->ciflags = 0;
 	}
     } else if (cmd->ci == GNUPLOT) {
