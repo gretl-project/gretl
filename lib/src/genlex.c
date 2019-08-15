@@ -574,6 +574,7 @@ struct str_table func_alias[] = {
     { F_RNAMEGET, "rowname" },
     { F_COMPLEX,  "_cmatrix" },
     { F_EIGGEN,   "_ceigg" },
+    { HF_CSWITCH, "cswitch" },
     { F_EXISTS,   "isnull" }, /* deprecated */
     { 0,          NULL }
 };

@@ -15694,6 +15694,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_CONJ:
     case F_REAL:
     case F_IMAG:
+    case F_CMOD:
 	if (complex_node(l)) {
 	    ret = apply_matrix_func(l, t, p);
 	} else {
