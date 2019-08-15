@@ -983,7 +983,8 @@ static int redirection_ok (PRN *prn)
     }
 }
 
-static int outname_check (const char *name, const DATASET *dset)
+static int outname_check (const char *name, int backward,
+			  const DATASET *dset)
 {
     GretlType t = gretl_type_from_name(name, dset);
     int err = 0;
@@ -991,9 +992,16 @@ static int outname_check (const char *name, const DATASET *dset)
     if (t != GRETL_TYPE_NONE && t != GRETL_TYPE_STRING) {
 	err = E_TYPES;
     } else if (t == GRETL_TYPE_NONE) {
-	err = check_identifier(name);
-	if (!err) {
-	    err = create_user_var(name, GRETL_TYPE_STRING);
+	if (backward) {
+	    /* compatibility: create the variable if possible */
+	    err = check_identifier(name);
+	    if (!err) {
+		err = create_user_var(name, GRETL_TYPE_STRING);
+	    }
+	} else {
+	    /* we now require that the variable already exists */
+	    gretl_errmsg_sprintf(_("'%s' : not a string variable"), name);
+	    err = E_DATA;
 	}
     }
 
@@ -1045,12 +1053,25 @@ static int redirect_to_tempfile (const char *strvar, PRN *prn,
     return err;
 }
 
+static const char *maybe_get_string_name (gretlopt opt)
+{
+    if (opt & (OPT_B | OPT_T)) {
+	gretlopt active = (opt & OPT_T)? OPT_T : OPT_B;
+
+	return get_optval_string(OUTFILE, active);
+    } else {
+	return NULL;
+    }
+}
+
 static int
 do_outfile_command (gretlopt opt, const char *fname,
 		    const DATASET *dset, PRN *prn)
 {
     static char savename[MAXLEN];
     static int vparms[2];
+    const char *strvar = NULL;
+    const char *check = NULL;
     int rlevel = 0;
     int err = 0;
 
@@ -1088,10 +1109,16 @@ do_outfile_command (gretlopt opt, const char *fname,
 	return err;
     }
 
+    /* pre-check: in the buffer or tempfile cases, did we
+       get a string-name attached to the option flag?
+    */
+    strvar = maybe_get_string_name(opt);
+    check = strvar != NULL ? strvar : fname;
+
     /* below: diverting output to a file or buffer: first
        check that this is feasible */
 
-    if (fname == NULL || *fname == '\0') {
+    if (check == NULL || *check == '\0') {
 	return E_ARGS;
     } else if (rlevel > 0 && !redirection_ok(prn)) {
 	gretl_errmsg_sprintf(_("Output is already diverted to '%s'"),
@@ -1104,9 +1131,14 @@ do_outfile_command (gretlopt opt, const char *fname,
        name of a string variable).
     */
     if (opt & (OPT_B | OPT_T)) {
-	const char *strvar = fname;
+	int backward = 0;
 
-	err = outname_check(strvar, dset);
+	if (strvar == NULL) {
+	    /* backward compatibility */
+	    strvar = fname;
+	    backward = 1;
+	}
+	err = outname_check(strvar, backward, dset);
 	if (!err) {
 	    err = redirect_to_tempfile(strvar, prn, opt, vparms);
 	}
