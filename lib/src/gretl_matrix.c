@@ -3242,7 +3242,7 @@ gretl_matrix_unvectorize_h (gretl_matrix *targ, const gretl_matrix *src)
 	for (i=j; i<n; i++) {
 	    if (src->is_complex) {
 		z = src->z[k++];
-		gretl_cmatrix_set(targ, i, j, z);
+		gretl_cmatrix_set(targ, i, j, conj(z));
 		gretl_cmatrix_set(targ, j, i, z);
 	    } else {
 		x = src->val[k++];
