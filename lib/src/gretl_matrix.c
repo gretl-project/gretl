@@ -9194,6 +9194,133 @@ gretl_general_matrix_eigenvals (gretl_matrix *m, int eigenvecs,
     return evals;
 }
 
+gretl_matrix *gretl_dgeev (const gretl_matrix *A,
+			   gretl_matrix *VL,
+			   gretl_matrix *VR,
+			   int *err)
+{
+    gretl_matrix *ret = NULL;
+    gretl_matrix *Acpy = NULL;
+    gretl_matrix *Ltmp = NULL;
+    gretl_matrix *Rtmp = NULL;
+    integer n, info, lwork;
+    integer ldvl, ldvr;
+    double *wr = NULL;
+    double *wi = NULL;
+    double *a = NULL;
+    double *work = NULL;
+    double *vl = NULL, *vr = NULL;
+    char jobvl = VL != NULL ? 'V' : 'N';
+    char jobvr = VR != NULL ? 'V' : 'N';
+    int asize;
+
+    if (gretl_is_null_matrix(A)) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    n = A->rows;
+    ldvl = VL != NULL ? n : 1;
+    ldvr = VR != NULL ? n : 1;
+
+    /* we need a copy of @A, which gets overwritten */
+    Acpy = gretl_matrix_copy(A);
+    if (Acpy == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    a = Acpy->val;
+    asize = A->rows * A->cols;
+
+    if (VL != NULL) {
+	/* left eigenvectors wanted */
+	if (!VL->is_complex && VL->rows * VL->cols == asize) {
+	    /* VL is useable as is */
+	    VL->rows = A->rows;
+	    VL->cols = A->cols;
+	    vl = VL->val;
+	} else {
+	    /* we need to allocate storage */
+	    Ltmp = gretl_zero_matrix_new(A->rows, A->cols);
+	    if (Ltmp == NULL) {
+		*err = E_ALLOC;
+		goto bailout;
+	    }
+	    vl = Ltmp->val;
+	}
+    }
+
+    if (VR != NULL) {
+	/* right eigenvectors wanted */
+	if (!VR->is_complex && VR->rows * VR->cols == asize) {
+	    /* VR is useable as is */
+	    VR->rows = A->rows;
+	    VR->cols = A->cols;
+	    vr = VR->val;
+	} else {
+	    /* we need to allocate storage */
+	    Rtmp = gretl_zero_matrix_new(A->rows, A->cols);
+	    if (Rtmp == NULL) {
+		*err = E_ALLOC;
+		goto bailout;
+	    }
+	    vr = Rtmp->val;
+	}
+    }
+
+    work = lapack_malloc(sizeof *work);
+    ret = gretl_zero_matrix_new(n, 2);
+
+    if (work == NULL || ret == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    wr = ret->val;
+    wi = wr + n;
+
+    /* get optimal workspace size */
+    lwork = -1;
+    dgeev_(&jobvl, &jobvr, &n, a, &n, wr, wi, vl, &ldvl,
+	   vr, &ldvr, work, &lwork, &info);
+    lwork = (integer) work[0];
+    work = lapack_realloc(work, lwork * sizeof *work);
+    if (work == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* do the actual decomposition */
+    dgeev_(&jobvl, &jobvr, &n, a, &n, wr, wi, vl, &ldvl,
+	   vr, &ldvr, work, &lwork, &info);
+    if (info != 0) {
+	fprintf(stderr, "dgeev: info = %d\n", info);
+	*err = E_DATA;
+    } else {
+	if (Ltmp != NULL) {
+	    gretl_matrix_replace_content(VL, Ltmp);
+	}
+	if (Rtmp != NULL) {
+	    gretl_matrix_replace_content(VR, Rtmp);
+	}
+    }
+
+ bailout:
+
+    lapack_free(work);
+    gretl_matrix_free(Acpy);
+    gretl_matrix_free(Ltmp);
+    gretl_matrix_free(Rtmp);
+
+    if (*err) {
+	gretl_matrix_free(ret);
+	ret = NULL;
+    }
+
+    return ret;
+}
+
 /**
  * gretl_symmetric_eigen_sort:
  * @evals: array of real eigenvalues from symmetric matrix.

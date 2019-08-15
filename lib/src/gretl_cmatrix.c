@@ -501,7 +501,7 @@ gretl_matrix *gretl_zgeev (const gretl_matrix *A,
 	   &wsz, &lwork, rwork, &info);
     lwork = (integer) wsz.r;
     work = malloc(lwork * sizeof *work);
-    if (work == NULL || rwork == NULL) {
+    if (work == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
     }
