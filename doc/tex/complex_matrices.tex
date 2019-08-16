@@ -1,0 +1,201 @@
+\documentclass{article}
+\usepackage[letterpaper,body={6.0in,9.1in},top=0.7in,left=1.25in,nohead]{geometry}
+\usepackage{verbatim,fancyvrb}
+\usepackage{color,gretl}
+\usepackage[authoryear]{natbib}
+\usepackage[pdftex]{graphicx}
+\usepackage[pdftex,hyperfootnotes=false]{hyperref}
+
+\definecolor{steel}{rgb}{0.03,0.20,0.45}
+
+\hypersetup{pdftitle={Complex matrices in gretl},
+            pdfauthor={Allin Cottrell},
+            colorlinks=true,
+            linkcolor=blue,
+            urlcolor=red,
+            citecolor=steel,
+            bookmarksnumbered=true,
+            plainpages=false
+}
+
+\begin{document}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1ex}
+\setcounter{secnumdepth}{2}
+
+\title{Complex matrices in gretl}
+\author{Allin Cottrell}
+\maketitle
+
+\section{Introduction}
+\label{sec:intro}
+
+As of mid-August 2019, gretl has native support for complex
+matrices. Not all of hansl's matrix functions accept complex input,
+but we have enabled a sizable subset of these functions which we
+believe should suffice for most econometric purposes. Complex support
+may be extended in future as the need arises.
+
+A first point to note is that complex values are treated as a special
+case of the hansl \texttt{matrix} type; there's no \texttt{complex}
+type as such. Complex scalars fall under the \texttt{matrix} type as
+$1 \times 1$ matrices; the hansl \texttt{scalar} type is only for real
+values.
+
+This document explains how to create and manipulate complex matrices,
+and discusses some questions of backward compatibility.
+
+\section{Creating a complex matrix}
+\label{sec:create}
+
+The unique explicit constructor for complex matrices is the
+\texttt{complex()} function which takes two arguments, giving the real
+and imaginary parts respectively, and sticks them together, as in
+\begin{code}
+C = complex(A, B)
+\end{code}
+Three cases are supported, as follows.
+\begin{itemize}
+\item \texttt{A} and \texttt{B} are both $m \times n$ matrices
+  (neither of which is in itself complex). Then \texttt{C} is an
+  $m \times n$ complex matrix such that $c_{ij} = a_{ij} + b_{ij}i$.
+\item \texttt{A} and \texttt{B} are both scalars: \texttt{C} is a
+  $1 \times 1$ complex matrix such that $c = a + bi$.
+\item \texttt{A} is an $m \times n$ matrix and \texttt{B} is a scalar:
+  \texttt{C} is an $m \times n$ matrix such that
+  $c_{ij} = a_{ij} + bi$.
+\end{itemize}
+
+In addition, complex matrices may naturally arise as the result of
+various computations.
+
+With both real and complex matrices in circulation, one may wish to
+determine whether a particular matrix is complex. The function
+\texttt{iscomplex()} can tell you. Passed an identifier, it returns 1
+if it names a complex matrix, 0 if it names a real matrix, or
+\texttt{NA} otherwise.
+
+\section{Operators}
+\label{sec:ops}
+
+Most of the operators available for working with real matrices are
+also available for complex ones; this includes the ``dot-operators''
+which work element-wise or by ``broadcasting'' vectors. Moreover,
+``mixed'' operands are accepted, as in \texttt{D = C + A} where
+\texttt{C} is complex and \texttt{A} real. The result, \texttt{D},
+will be complex. In such cases the real operand is treated as a
+complex matrix with an all-zero imaginary part.
+
+The operators \textit{not} accepted for complex matrices are:
+``\texttt{\textbackslash}'' (left division); ``\texttt{/}'' (right
+division); and the element-wise comparison operators that include an
+inequality (such as ``\verb+.>+''), since complex values as such
+cannot be compared as greater or lesser (though they can be compared
+as equal or not equal).
+
+\section{Functions}
+\label{sec:funcs}
+
+To give an idea of what works, and what doesn't work, for complex
+matrices, we'll walk through the hansl function-space using the
+categories employed in gretl's online ``Function reference'' (under the
+\textsf{Help} menu in the GUI program).
+
+\subsection{Linear algebra}
+
+The only functions that accept complex arguments at present are:
+\texttt{det}, \texttt{ldet}, \texttt{eigengen}, \texttt{eigensym} (for
+Hermitian matrices), \texttt{fft}, \texttt{ffti}, \texttt{inv},
+\texttt{ginv}, \texttt{hdprod}, \texttt{svd}, \texttt{tr}, and
+\texttt{transp}.
+
+In addition there's the complex-only function \texttt{ctrans()} which
+gives the conjugate transpose; note that \texttt{transp} gives the
+straight (non-conjugated) transpose of a complex matrix.
+
+\subsection{Matrix building}
+
+Given what was said in section~\ref{sec:create} above, several of the
+functions in this category should be thought of as applying to the
+real or imaginary part of a complex matrix (for example, \texttt{ones}
+and \texttt{mnormal}), and are of course usable in that way.  However,
+some of these functions can be applied to complex matrices as such,
+namely, \texttt{diag}, \texttt{diagcat}, \texttt{vec}, \texttt{vech},
+\texttt{unvech}, \texttt{lower} and \texttt{upper}.
+
+The only functions not available for complex matrices are
+\texttt{cnameset} and \texttt{rnameset}. That is, you cannot name the
+columns or rows of such matrix (although this restriction could
+probably be lifted without great difficulty).
+
+\subsection{Matrix shaping}
+
+The functions that accept complex input are: \texttt{cols},
+\texttt{mreverse}, \texttt{mshape}, \texttt{rows}, \texttt{selifc},
+\texttt{selifr} and \texttt{trimr}.
+
+The functions \texttt{msortby}, \texttt{sort} and \texttt{dsort} are
+excluded for the reason mentioned in section~\ref{sec:ops}.
+
+\subsection{Statistical}
+
+Supported for complex input: \texttt{meanr}, \texttt{meanc},
+\texttt{sumc}, \texttt{sumr}, \texttt{prodr} and \texttt{prodc}. And
+that's all.
+
+\subsection{Mathematical}
+
+In the matrix context, these are functions that are applied element by
+element. For complex input the following are supported: \texttt{log},
+\texttt{exp} and \texttt{sqrt}, plus all of the trigonometric
+functions with the exception of \texttt{atan2}.
+
+In addition there are the complex-only functions \texttt{cmod}
+(complex modulus, also accessible via \texttt{abs}), \texttt{carg}
+(complex ``argument''), \texttt{conj} (complex conjugate), \texttt{Re}
+(real part) and \texttt{Im} (imaginary part).
+
+\section{Backward compatibility}
+\label{sec:compat}
+
+Compatibility issues may arise in two contexts, both related to the
+fact that gretl offered some degree of support for complex matrices
+before they were full citizens of the hansl polity.
+
+\begin{enumerate}
+\item The functions \texttt{fft} (fast Fourier transform) and
+  \texttt{eigengen} (eigenvalues and/or eigenvectors of a
+  non-symmetric real matrix) returned complex matrices in what we'll
+  call the ``legacy'' representation. In the case of \texttt{fft} and
+  the eigenvalues from \texttt{eigengen} this took the form of a
+  regular gretl matrix with real values in the first (or odd-numbered)
+  column(s) and imaginary parts in the second (or even-numbered)
+  column(s). Since calculating with such matrices using the standard
+  matrix operators would result in nonsense, we provided the tailored
+  functions \texttt{cmult} and \texttt{cdiv}.
+
+  In the case of complex eigenvectors from \texttt{eigengen}---well,
+  you probably don't want to know, but if you do, consult the help text
+  for \texttt{eigengen}; they were not easy for a user to handle!
+\item The function packages \texttt{cmatrix} and
+  \texttt{ghosts}. These are relatively recent additions to gretl's
+  functionality, designed to support frequency-domain analysis. Prior
+  to the development of native complex-matrix functionality,
+  \texttt{cmatrix} was needed as an dependency for \texttt{ghosts}
+  (multivariate spectral analysis).
+\end{enumerate}
+
+So what happens with \texttt{fft} and \texttt{eigengen},
+\texttt{cmatrix} and \texttt{ghosts} under the new regime?
+
+The easier question is the one about \texttt{cmatrix} and
+\texttt{ghosts}. The \texttt{cmatrix} package is no longer
+required---or supported---and there will be (or already is) a version
+of \texttt{ghosts} that relies on gretl's native complex-matrix
+support.
+
+As for \texttt{fft} and \texttt{eigengen}, \dots{} FIXME what do we
+want to say here?
+
+\end{document}
