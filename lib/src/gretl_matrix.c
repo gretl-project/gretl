@@ -9205,8 +9205,7 @@ gretl_matrix *gretl_dgeev (const gretl_matrix *A,
     gretl_matrix *Rtmp = NULL;
     integer n, info, lwork;
     integer ldvl, ldvr;
-    double *wr = NULL;
-    double *wi = NULL;
+    double *wr, *wi;
     double *a = NULL;
     double *work = NULL;
     double *vl = NULL, *vr = NULL;
@@ -9297,12 +9296,40 @@ gretl_matrix *gretl_dgeev (const gretl_matrix *A,
     if (info != 0) {
 	fprintf(stderr, "dgeev: info = %d\n", info);
 	*err = E_DATA;
-    } else {
-	if (Ltmp != NULL) {
-	    gretl_matrix_replace_content(VL, Ltmp);
-	}
-	if (Rtmp != NULL) {
-	    gretl_matrix_replace_content(VR, Rtmp);
+    } else if (VL != NULL || VR != NULL) {
+	/* FIXME -- help on tha way! */
+	gretl_matrix *ctmp;
+	gretl_matrix *src;
+	double re, im;
+	int i, j, k, isreal;
+
+	for (k=0; k<2; k++) {
+	    src = (k == 0)? Ltmp : Rtmp;
+	    if (src == NULL) {
+		continue;
+	    }
+	    ctmp = gretl_cmatrix_new(n, n);
+	    for (j=0; j<n; j++) {
+		isreal = (wi[j] == 0);
+		for (i=0; i<n; i++) {
+		    re = gretl_matrix_get(src, i, j);
+		    if (isreal) {
+			/* lambda(i) is real */
+			gretl_cmatrix_set(ctmp, i, j, re);
+		    } else {
+			/* lambda(i) and lambda(i+1) are a conjugate pair */
+			im = gretl_matrix_get(src, i, j+1);
+			gretl_cmatrix_set(ctmp, i, j, re + im * I);
+			gretl_cmatrix_set(ctmp, i, j+1, re - im * I);
+		    }
+		}
+		if (!isreal) {
+		    j++;
+		}
+	    }
+	    // gretl_matrix_print(ctmp, "ctmp");
+	    gretl_matrix_replace_content(src, ctmp);
+	    gretl_matrix_free(ctmp);
 	}
     }
 

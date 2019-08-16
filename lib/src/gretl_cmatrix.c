@@ -994,6 +994,8 @@ gretl_matrix *gretl_complex_fft (const gretl_matrix *A,
     return B;
 }
 
+#define CDEC5 1 /* five decimal places in default format */
+
 int complex_matrix_print_range (const gretl_matrix *A,
 				const char *name,
 				int rmin, int rmax,
@@ -1004,7 +1006,11 @@ int complex_matrix_print_range (const gretl_matrix *A,
     int alt_default = 0;
     int all_ints = 1;
     int intmax = 1000;
+#if CDEC5
+    int altmin = 1000;
+#else
     int altmin = 100;
+#endif
     int zwidth = 0;
     int rdecs, idecs;
     char pm;
@@ -1071,9 +1077,15 @@ int complex_matrix_print_range (const gretl_matrix *A,
 	    } else if (alt_default) {
 		pprintf(prn, "%# 9.4e %c %#8.4ei", re, pm, ai);
 	    } else {
+#if CDEC5
+		rdecs = re <= -100 ? 4 : 5;
+		idecs = ai >= 100 ? 4 : 5;
+		pprintf(prn, "%8.*f %c %7.*fi", rdecs, re, pm, idecs, ai);
+#else
 		rdecs = re <= -10 ? 3 : 4;
 		idecs = ai >= 10 ? 3 : 4;
 		pprintf(prn, "%7.*f %c %6.*fi", rdecs, re, pm, idecs, ai);
+#endif
 	    }
 	    if (j < c - 1) {
 		pputs(prn, "  ");
