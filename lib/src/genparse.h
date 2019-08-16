@@ -393,7 +393,6 @@ enum {
     F_IMAT,
     F_COMPLEX,
     F_FFT,
-    F_EIGGEN,
     HF_CSWITCH,
     HF_SETCMPLX,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
@@ -453,6 +452,7 @@ enum {
     F_ISOWEEK,
     F_BKW,
     F_FZERO,
+    F_EIGGEN,
     F_EIGGEN2,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,

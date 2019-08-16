@@ -349,8 +349,8 @@ gretl_matrix *gretl_cmatrix_AHB (const gretl_matrix *A,
 /* Eigen decomposition of complex (Hermitian) matrix using
    LAPACK's zheev() */
 
-gretl_matrix *
-gretl_zheev (const gretl_matrix *A, int eigenvecs, int *err)
+gretl_matrix *gretl_zheev (gretl_matrix *A, int eigenvecs,
+			   int *err)
 {
     gretl_matrix *evals = NULL;
     integer n, info, lwork;
@@ -409,12 +409,47 @@ gretl_zheev (const gretl_matrix *A, int eigenvecs, int *err)
     return evals;
 }
 
+static int zgeev_eigvecs_alloc (gretl_matrix *m,
+				gretl_matrix **pev,
+				cmplx **evz,
+				int n)
+{
+    gretl_matrix *ev = NULL;
+    int mrc = m->rows * m->cols;
+    int dim = n * n;
+
+    /* We need an n x n complex matrix for output:
+       is @m usable or do we need to allocate a
+       new matrix?
+    */
+    if (m->is_complex && mrc == dim) {
+	m->rows = m->cols = n;
+	*evz = (cmplx *) m->val;
+    } else if (!m->is_complex && mrc == 2*dim) {
+	m->rows = 2*n;
+	m->cols = n;
+	gretl_matrix_set_complex_full(m, 1);
+	*evz = (cmplx *) m->val;
+    } else {
+	/* have to allocate */
+	ev = gretl_cmatrix_new0(n, n);
+	if (ev == NULL) {
+	    return E_ALLOC;
+	} else {
+	    *pev = ev;
+	    *evz = (cmplx *) ev->val;
+	}
+    }
+
+    return 0;
+}
+
 /* Eigen decomposition of complex (non-Hermitian) matrix using
    LAPACK's zgeev() */
 
 gretl_matrix *gretl_zgeev (const gretl_matrix *A,
-			   gretl_matrix *VL,
 			   gretl_matrix *VR,
+			   gretl_matrix *VL,
 			   int *err)
 {
     gretl_matrix *ret = NULL;
@@ -452,37 +487,17 @@ gretl_matrix *gretl_zgeev (const gretl_matrix *A,
 
     if (VL != NULL) {
 	/* left eigenvectors wanted */
-	if (VL->is_complex && VL->rows * VL->cols == A->rows * A->cols) {
-	    /* VL is useable as is */
-	    VL->rows = A->rows;
-	    VL->cols = A->cols;
-	    vl = (cmplx *) VL->val;
-	} else {
-	    /* we need to allocate storage */
-	    Ltmp = gretl_cmatrix_new0(A->rows, A->cols);
-	    if (Ltmp == NULL) {
-		*err = E_ALLOC;
-		goto bailout;
-	    }
-	    vl = (cmplx *) Ltmp->val;
+	*err = zgeev_eigvecs_alloc(VL, &Ltmp, &vl, n);
+	if (*err) {
+	    goto bailout;
 	}
     }
 
     if (VR != NULL) {
 	/* right eigenvectors wanted */
-	if (VR->is_complex && VR->rows * VR->cols == A->rows * A->cols) {
-	    /* VR is useable as is */
-	    VR->rows = A->rows;
-	    VR->cols = A->cols;
-	    vr = (cmplx *) VR->val;
-	} else {
-	    /* we need to allocate storage */
-	    Rtmp = gretl_cmatrix_new0(A->rows, A->cols);
-	    if (Rtmp == NULL) {
-		*err = E_ALLOC;
-		goto bailout;
-	    }
-	    vr = (cmplx *) Rtmp->val;
+	*err = zgeev_eigvecs_alloc(VR, &Rtmp, &vr, n);
+	if (*err) {
+	    goto bailout;
 	}
     }
 

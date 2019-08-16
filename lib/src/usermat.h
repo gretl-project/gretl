@@ -140,10 +140,9 @@ gretl_matrix *user_matrix_GHK (const gretl_matrix *C,
 			       gretl_matrix *dP,
 			       int *err);
 
-gretl_matrix *
-user_matrix_eigen_analysis (const gretl_matrix *m,
-			    gretl_matrix *R,
-			    int symm, int *err);
+gretl_matrix *user_matrix_eigensym (const gretl_matrix *m,
+				    gretl_matrix *R,
+				    int *err);
 
 gretl_matrix *user_gensymm_eigenvals (const gretl_matrix *A,
 				      const gretl_matrix *B,

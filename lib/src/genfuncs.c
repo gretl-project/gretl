@@ -5052,22 +5052,16 @@ static double imhof_integral (double arg, const double *lambda, int k,
 static int imhof_get_eigenvals (const gretl_matrix *m,
 				double **plam, int *pk)
 {
-    gretl_matrix *E, *A;
+    gretl_matrix *E;
     int err = 0;
 
-    A = gretl_matrix_copy(m);
-    if (A == NULL) {
-	return E_ALLOC;
-    }
-
-    E = gretl_general_matrix_eigenvals(A, 0, &err);
+    E = gretl_general_matrix_eigenvals(m, &err);
 
     if (!err) {
 	*pk = E->rows;
 	*plam = gretl_matrix_steal_data(E);
     }
 
-    gretl_matrix_free(A);
     gretl_matrix_free(E);
 
     return err;
@@ -5161,7 +5155,6 @@ double dw_pval (const gretl_matrix *u, const gretl_matrix *X,
     gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
 			      X, GRETL_MOD_NONE,
 			      XX, GRETL_MOD_NONE);
-
     err = gretl_invert_symmetric_matrix(XX);
 
     if (!err) {
@@ -5169,27 +5162,23 @@ double dw_pval (const gretl_matrix *u, const gretl_matrix *X,
 	err = gretl_matrix_qform(X, GRETL_MOD_NONE,
 				 XX, M, GRETL_MOD_DECREMENT);
     }
-
     if (!err) {
 	err = gretl_matrix_multiply(M, A, MA);
     }
-
     if (!err) {
 	uu = gretl_matrix_dot_product(u, GRETL_MOD_TRANSPOSE,
 				      u, GRETL_MOD_NONE,
 				      &err);
     }
-
     if (!err) {
 	DW = gretl_scalar_qform(u, A, &err);
     }
-
     if (!err) {
 	DW /= uu;
 #if 0
 	fprintf(stderr, "DW = %g\n", DW);
 #endif
-	E = gretl_general_matrix_eigenvals(MA, 0, &err);
+	E = gretl_general_matrix_eigenvals(MA, &err);
     }
 
     if (!err) {

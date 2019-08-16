@@ -4593,17 +4593,7 @@ matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
 	    if (f == F_QR) {
 		ret->v.m = user_matrix_QR_decomp(m1, m2, &p->err);
 	    } else if (f == F_EIGSYM) {
-		ret->v.m = user_matrix_eigen_analysis(m1, m2, 1, &p->err);
-	    } else if (f == F_EIGGEN) {
-		if (m1->is_complex) {
-		    /* OK */
-		    ret->v.m = gretl_zgeev(m1, NULL, m2, &p->err);
-		} else {
-		    /* NOT OK! */
-		    ret->v.m = gretl_dgeev(m1, NULL, m2, &p->err);
-		    // BROKEN
-		    // ret->v.m = user_matrix_eigen_analysis(m1, m2, 0, &p->err);
-		}
+		ret->v.m = user_matrix_eigensym(m1, m2, &p->err);
 	    }
 	}
 
@@ -11362,7 +11352,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 		A = gretl_matrix_varsimul(m1, m2, m3, &p->err);
 	    }
 	}
-    } else if (f == F_EIGGEN2) {
+    } else if (f == F_EIGGEN || f == F_EIGGEN2) {
 	gretl_matrix *lm = node_get_matrix(l, p, 0, 1);
 	gretl_matrix *v1 = NULL, *v2 = NULL;
 
@@ -11379,8 +11369,10 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	if (!p->err) {
 	    if (lm->is_complex) {
 		A = gretl_zgeev(lm, v1, v2, &p->err);
-	    } else {
+	    } else if (f == F_EIGGEN2) {
 		A = gretl_dgeev(lm, v1, v2, &p->err);
+	    } else {
+		A = old_eigengen(lm, v1, v2, &p->err);
 	    }
 	}
     } else if (f == F_CORRGM) {
@@ -16281,7 +16273,6 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_QR:
     case F_EIGSYM:
-    case F_EIGGEN:
 	/* matrix -> matrix functions, with indirect return */
 	if (l->t != MAT && l->t != NUM) {
 	    node_type_error(t->t, 1, MAT, l, p);
@@ -16412,6 +16403,8 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_MSHAPE:
     case F_SVD:
+    case F_EIGGEN:
+    case F_EIGGEN2:
     case F_TRIMR:
     case F_TOEPSOLV:
     case F_CORRGM:
@@ -16442,7 +16435,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_LRCOVAR:
     case F_BRENAME:
     case F_ISOWEEK:
-    case F_EIGGEN2:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {
 	    ret = replace_value(l, m, r, p);

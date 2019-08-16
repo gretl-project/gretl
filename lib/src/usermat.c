@@ -1925,28 +1925,9 @@ gretl_matrix *user_matrix_GHK (const gretl_matrix *C,
     return P;
 }
 
-static void maybe_eigen_trim (gretl_matrix *E)
-{
-    double x;
-    int i, allreal = 1;
-
-    for (i=0; i<E->rows; i++) {
-	x = gretl_matrix_get(E, i, 1);
-	if (x != 0.0) {
-	    allreal = 0;
-	    break;
-	}
-    }
-
-    if (allreal) {
-	gretl_matrix_reuse(E, -1, 1);
-    }
-}
-
-gretl_matrix *
-user_matrix_eigen_analysis (const gretl_matrix *m,
-			    gretl_matrix *R,
-			    int symm, int *err)
+gretl_matrix *user_matrix_eigensym (const gretl_matrix *m,
+				    gretl_matrix *R,
+				    int *err)
 {
     gretl_matrix *C = NULL;
     gretl_matrix *E = NULL;
@@ -1974,18 +1955,10 @@ user_matrix_eigen_analysis (const gretl_matrix *m,
     }
 
     if (!*err) {
-	if (symm) {
-	    if (m->is_complex) {
-		E = gretl_zheev(C, vecs, err);
-	    } else {
-		E = gretl_symmetric_matrix_eigenvals(C, vecs, err);
-	    }
+	if (m->is_complex) {
+	    E = gretl_zheev(C, vecs, err);
 	} else {
-	    /* the complex case is handled elsewhere */
-	    E = gretl_general_matrix_eigenvals(C, vecs, err);
-	    if (E != NULL && E->cols == 2) {
-		maybe_eigen_trim(E);
-	    }
+	    E = gretl_symmetric_matrix_eigenvals(C, vecs, err);
 	}
     }
 

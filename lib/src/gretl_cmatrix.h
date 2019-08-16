@@ -40,12 +40,12 @@ gretl_matrix *gretl_cmatrix_inverse (const gretl_matrix *A, int *err);
 
 gretl_matrix *gretl_cmatrix_ginv (const gretl_matrix *A, int *err);
 
-gretl_matrix *gretl_zheev (const gretl_matrix *A, int eigenvecs,
+gretl_matrix *gretl_zheev (gretl_matrix *A, int eigenvecs,
 			   int *err);
 
 gretl_matrix *gretl_zgeev (const gretl_matrix *A,
-			   gretl_matrix *VL,
 			   gretl_matrix *VR,
+			   gretl_matrix *VL,
 			   int *err);
 
 int gretl_cmatrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
