@@ -9202,6 +9202,21 @@ static void eigenvals_to_cmatrix (gretl_matrix *lam,
     matrix_set_complex(lam, 1, 0);
 }
 
+static void maybe_eigen_trim (gretl_matrix *lam)
+{
+    double *lv = lam->val + lam->rows;
+    int i;
+
+    for (i=0; i<lam->rows; i++) {
+	if (lv[i] != 0.0) {
+	    return;
+	}
+    }
+
+    /* drop the second column */
+    gretl_matrix_reuse(lam, -1, 1);
+}
+
 static gretl_matrix *real_gretl_dgeev (const gretl_matrix *A,
 				       gretl_matrix *VR,
 				       gretl_matrix *VL,
@@ -9330,7 +9345,9 @@ static gretl_matrix *real_gretl_dgeev (const gretl_matrix *A,
     if (*err) {
 	gretl_matrix_free(ret);
 	ret = NULL;
-    } else if (!legacy) {
+    } else if (legacy) {
+	maybe_eigen_trim(ret);
+    } else {
 	eigenvals_to_cmatrix(ret, a, n);
     }
 
