@@ -3969,7 +3969,7 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
     if (ret != NULL && starting(p)) {
 	gretl_matrix *m = node_get_matrix(n, p, 0, 0);
 
-	if (m->is_complex && f != F_ROWS && f != F_COLS) {
+	if (m->is_complex && f != F_ROWS && f != F_COLS && f != F_RANK) {
 	    /* gatekeeper for complex */
 	    p->err = function_real_only(f);
 	    return ret;
@@ -3995,7 +3995,11 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
 	    ret->v.xval = gretl_matrix_cond_index(m, &p->err);
 	    break;
 	case F_RANK:
-	    ret->v.xval = gretl_matrix_rank(m, &p->err);
+	    if (m->is_complex) {
+		ret->v.xval = gretl_cmatrix_rank(m, &p->err);
+	    } else {
+		ret->v.xval = gretl_matrix_rank(m, &p->err);
+	    }
 	    break;
 	default:
 	    p->err = E_PARSE;
@@ -4686,6 +4690,10 @@ static void print_mspec (matrix_subspec *mspec)
 	"SEL_ELEMENT",
 	"SEL_MATRIX",
 	"SEL_DIAG",
+	"SEL_UPPER",
+	"SEL_LOWER",
+	"SEL_REAL",
+	"SEL_IMAG",
 	"SEL_ALL",
 	"SEL_CONTIG",
 	"SEL_EXCL",
@@ -4827,9 +4835,17 @@ static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
 	if (r != NULL) {
 	    p->err = E_INVARG;
 	} else {
+	    spec->rtype = SEL_ALL;
 	    if (l->v.idnum == DUM_DIAG) {
 		spec->ltype = SEL_DIAG;
-		spec->rtype = SEL_ALL;
+	    } else if (l->v.idnum == DUM_UPPER) {
+		spec->ltype = SEL_UPPER;
+	    } else if (l->v.idnum == DUM_LOWER) {
+		spec->ltype = SEL_LOWER;
+	    } else if (l->v.idnum == DUM_REAL) {
+		spec->ltype = SEL_REAL;
+	    } else if (l->v.idnum == DUM_IMAG) {
+		spec->ltype = SEL_IMAG;
 	    } else {
 		p->err = E_TYPES;
 	    }
@@ -10972,7 +10988,7 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
     NODE *lh2 = lhs->R;
     gretl_matrix *m1, *m2 = NULL;
     matrix_subspec *spec;
-    double rhs_y = NADBL;
+    double rhs_x = NADBL;
     double complex rhs_z = NADBL;
     int rhs_scalar = 0;
     int rhs_cscalar = 0;
@@ -11004,6 +11020,7 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
     */
     p->err = check_matrix_subspec(spec, m1);
     if (p->err) {
+	fprintf(stderr, "HERE check_matrix_subspec failed\n");
 	return p->err;
     }
 
@@ -11022,14 +11039,15 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 
     if (scalar_node(rhs)) {
 	/* single value (could be 1 x 1 matrix) on RHS */
-	rhs_y = (rhs->t == NUM)? rhs->v.xval: rhs->v.m->val[0];
-	rhs_z = rhs_y;
+	rhs_x = (rhs->t == NUM)? rhs->v.xval: rhs->v.m->val[0];
+	rhs_z = rhs_x;
 	rhs_scalar = 1;
     } else if (cscalar_node(rhs)) {
 	if (!m1->is_complex) {
 	    gretl_errmsg_set("Cannot assign complex values to a real matrix");
 	    p->err = E_TYPES;
 	} else {
+	    m2 = rhs->v.m;
 	    rhs_z = rhs->v.m->z[0];
 	    rhs_cscalar = 1;
 	}
@@ -11066,9 +11084,9 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 	    }
 	} else if (rhs_scalar) {
 	    if (!inflected) {
-		m1->val[i] = rhs_y;
+		m1->val[i] = rhs_x;
 	    } else {
-		m1->val[i] = xy_calc(m1->val[i], rhs_y, p->op, MAT, p);
+		m1->val[i] = xy_calc(m1->val[i], rhs_x, p->op, MAT, p);
 	    }
 	} else {
 	    /* here the RHS must be 1 x 1 */
@@ -11078,17 +11096,14 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
     }
 
     if (!inflected) {
-	if (rhs_scalar || rhs_cscalar) {
-	    p->err = assign_scalar_to_submatrix(m1, rhs_y, rhs_z, spec);
-	    return p->err; /* we're done */
-	} else if (spec->ltype == SEL_DIAG) {
-	    if (m1->is_complex) {
-		p->err = gretl_cmatrix_set_diagonal(m1, m2, 0);
-	    } else {
-		p->err = gretl_matrix_set_diagonal(m1, m2, 0);
-	    }
-	    return p->err; /* we're done */
+	if (rhs_cscalar) {
+	    p->err = assign_scalar_to_submatrix(m1, m2, 0, spec);
+	} else if (rhs_scalar) {
+	    p->err = assign_scalar_to_submatrix(m1, NULL, rhs_x, spec);
+	} else if (is_sel_dummy(spec->ltype)) {
+	    p->err = gretl_matrix_set_part(m1, m2, 0, spec->ltype);
 	}
+	return p->err; /* we're done */
     }
 
     if (inflected) {
@@ -11104,7 +11119,7 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 		if (a->is_complex) {
 		    cmatrix_xy_calc(a, a, rhs_z, 0, p->op, p);
 		} else {
-		    rmatrix_xy_calc(a, a, rhs_y, 0, p->op, p);
+		    rmatrix_xy_calc(a, a, rhs_x, 0, p->op, p);
 		}
 		m2 = a; /* assign computed matrix to m2 */
 		free_m2 = 1;

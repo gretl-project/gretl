@@ -641,7 +641,6 @@ int gretl_cmatrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
     integer lwork = -1L;
     double *rwork = NULL;
     integer info;
-    gretl_matrix *a = NULL;
     gretl_matrix *s = NULL;
     gretl_matrix *u = NULL;
     gretl_matrix *vt = NULL;
@@ -667,8 +666,8 @@ int gretl_cmatrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
     xsize = lda * n;
 
     if (smod == SVD_THIN && m < n) {
-	fprintf(stderr, "gretl_cmatrix_SVD: a is %d x %d, should be 'thin'\n",
-		a->rows, a->cols);
+	fprintf(stderr, "gretl_cmatrix_SVD: X is %d x %d, should be 'thin'\n",
+		x->rows, x->cols);
 	return E_NONCONF;
     }
 
@@ -772,6 +771,57 @@ int gretl_cmatrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
     gretl_matrix_free(vt);
 
     return err;
+}
+
+static double csvd_smin (const gretl_matrix *a, double smax)
+{
+    const double macheps = 2.20e-16;
+    int dmax = (a->rows > a->cols)? a->rows : a->cols;
+
+    /* as per numpy, Matlab (2015-09-28) */
+    return dmax * macheps * smax;
+}
+
+int gretl_cmatrix_rank (const gretl_matrix *A, int *err)
+{
+    gretl_matrix *S = NULL;
+    int i, k, rank = 0;
+
+    if (!cmatrix_validate(A, 0)) {
+	*err = E_INVARG;
+	return 0;
+    }
+
+    k = MIN(A->rows, A->cols);
+
+    if (A->rows > 4 * k || A->cols > 4 * k) {
+	GretlMatrixMod mod1, mod2;
+	gretl_matrix *B;
+
+	mod1 = A->rows > k ? GRETL_MOD_CTRANSP : 0;
+	mod2 = A->cols > k ? GRETL_MOD_CTRANSP : 0;
+	B = gretl_zgemm(A, mod1, A, mod2, err);
+	if (!*err) {
+	    *err = gretl_cmatrix_SVD(B, NULL, &S, NULL, 1);
+	}
+	gretl_matrix_free(B);
+    } else {
+	*err = gretl_cmatrix_SVD(A, NULL, &S, NULL, 1);
+    }
+
+    if (!*err) {
+	double smin = csvd_smin(A, S->val[0]);
+
+	for (i=0; i<k; i++) {
+	    if (S->val[i] > smin) {
+		rank++;
+	    }
+	}
+    }
+
+    gretl_matrix_free(S);
+
+    return rank;
 }
 
 /* generalized inverse of a complex matrix via its SVD */
@@ -1605,6 +1655,77 @@ int gretl_cmatrix_set_diagonal (gretl_matrix *targ,
     return err;
 }
 
+/* Set the lower or upper triangle of square complex matrix
+   @targ using either @src (if not NULL) or @x. In the first
+   case @src can be either a complex vector of the right length,
+   or a real vector, or a complex scalar.
+*/
+
+int gretl_cmatrix_set_triangle (gretl_matrix *targ,
+				const gretl_matrix *src,
+				double x, int upper)
+{
+    double complex zi = 0;
+    int n, d, i, j;
+    int match = 0;
+    int err = 0;
+
+    if (!cmatrix_validate(targ, 1)) {
+	return E_INVARG;
+    }
+
+    n = targ->rows;
+    d = (n * (n-1)) / 2;
+
+    if (src != NULL) {
+	if (src->is_complex) {
+	    if (gretl_vector_get_length(src) == d) {
+		/* conformable complex vector */
+		match = 1;
+	    } else if (cscalar(src)) {
+		/* complex scalar */
+		zi = src->z[0];
+		match = 2;
+	    }
+	} else if (gretl_vector_get_length(src) == d) {
+	    /* conformable real vector */
+	    match = 3;
+	}
+    } else {
+	/* use real scalar, @x */
+	zi = x;
+	match = 4;
+    }
+
+    if (match == 0) {
+	return E_NONCONF;
+    } else {
+	int imin = upper ? 0 : 1;
+	int imax = upper ? 1 : n;
+	int jmin = upper ? 1 : 0;
+	int k = 0;
+
+	for (j=jmin; j<targ->cols; j++) {
+	    for (i=imin; i<imax; i++) {
+		if (match == 1) {
+		    gretl_cmatrix_set(targ, i, j, src->z[k++]);
+		} else if (match == 3) {
+		    gretl_cmatrix_set(targ, i, j, src->val[k++]);
+		} else {
+		    gretl_cmatrix_set(targ, i, j, zi);
+		}
+	    }
+	    if (upper) {
+		imax++;
+	    } else {
+		imin++;
+	    }
+	}
+    }
+
+    return err;
+}
+
 /* switch between "legacy" and new representations of a
    complex matrix */
 
@@ -2102,4 +2223,44 @@ gretl_matrix *cmatrix_get_element (const gretl_matrix *M,
     }
 
     return ret;
+}
+
+/* Set either the real or the imaginary part of @targ,
+   using @src if non-NULL or @x otherwise.
+*/
+
+int complex_matrix_set_part (gretl_matrix *targ,
+			     const gretl_matrix *src,
+			     double x, int im)
+{
+    double complex z;
+    int i, j;
+
+    if (!cmatrix_validate(targ, 0)) {
+	return E_TYPES;
+    } else if (src != NULL) {
+	if (gretl_is_null_matrix(src) ||
+	    src->rows != targ->rows ||
+	    src->cols != targ->cols ||
+	    src->is_complex) {
+	    return E_INVARG;
+	}
+    }
+
+    for (j=0; j<targ->cols; j++) {
+	for (i=0; i<targ->rows; i++) {
+	    if (src != NULL) {
+		x = gretl_matrix_get(src, i, j);
+	    }
+	    z = gretl_cmatrix_get(targ, i, j);
+	    if (im) {
+		z = creal(z) + x * I;
+	    } else {
+		z = x + cimag(z) * I;
+	    }
+	    gretl_cmatrix_set(targ, i, j, z);
+	}
+    }
+
+    return 0;
 }

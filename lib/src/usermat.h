@@ -28,12 +28,18 @@ typedef enum {
     SEL_ELEMENT, /* derived: selection is a single element */
     SEL_MATRIX,  /* selection matrix provided */
     SEL_DIAG,    /* using the "diag" dummy constant */
+    SEL_UPPER,   /* using the "upper" dummy constant */
+    SEL_LOWER,   /* using the "lower" dummy constant */
+    SEL_REAL,    /* using the "real" dummy constant */
+    SEL_IMAG,    /* using the "imag" dummy constant */
     SEL_ALL,     /* comma-separated blank */
     SEL_CONTIG,  /* derived: selection is contiguous */
     SEL_EXCL,    /* single exclusion (negative index) */
     SEL_SINGLE,  /* degenerate range + null */
     SEL_STR      /* for use with bundles only */
 } SelType;
+
+#define is_sel_dummy(s) (s >= SEL_DIAG && s <= SEL_IMAG)
 
 /* Note SEL_EXCL is flagged only in the case of a single negative
    index. SEL_MATRIX can also do exclusion, if all the elements
@@ -73,8 +79,9 @@ gretl_matrix *get_matrix_copy_by_name (const char *name, int *err);
 
 gretl_matrix *steal_matrix_by_name (const char *name);
 
-int assign_scalar_to_submatrix (gretl_matrix *M, double x,
-				double complex z,
+int assign_scalar_to_submatrix (gretl_matrix *M,
+				const gretl_matrix *S,
+				double x,
 				matrix_subspec *spec);
 
 int matrix_replace_submatrix (gretl_matrix *M,
@@ -171,5 +178,9 @@ int matrix_cholesky_in_place (gretl_matrix *m);
 int matrix_transpose_in_place (gretl_matrix *m);
 
 int matrix_XTX_in_place (gretl_matrix *m);
+
+int gretl_matrix_set_part (gretl_matrix *targ,
+			   const gretl_matrix *src,
+			   double x, SelType sel);
 
 #endif /* USERMAT_H_ */

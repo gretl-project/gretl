@@ -52,6 +52,8 @@ int gretl_cmatrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
 		       gretl_vector **ps, gretl_matrix **pvt,
 		       int smod);
 
+int gretl_cmatrix_rank (const gretl_matrix *A, int *err);
+
 gretl_matrix *gretl_complex_fft (const gretl_matrix *A, int inverse,
 				 int *err);
 
@@ -92,6 +94,10 @@ gretl_matrix *gretl_cmatrix_trace (const gretl_matrix *X,
 int gretl_cmatrix_set_diagonal (gretl_matrix *targ,
 				const gretl_matrix *src,
 				double x);
+
+int gretl_cmatrix_set_triangle (gretl_matrix *targ,
+				const gretl_matrix *src,
+				double x, int upper);
 
 gretl_matrix *gretl_cmatrix_hdprod (const gretl_matrix *A,
 				    const gretl_matrix *B,
@@ -136,5 +142,9 @@ gretl_matrix *gretl_cmatrix_dot_op (const gretl_matrix *a,
 
 gretl_matrix *cmatrix_get_element (const gretl_matrix *M,
 				   int i, int *err);
+
+int complex_matrix_set_part (gretl_matrix *targ,
+			     const gretl_matrix *src,
+			     double x, int im);
 
 #endif /* GRETL_CMATRIX_H */

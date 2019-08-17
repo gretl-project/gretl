@@ -1542,6 +1542,134 @@ int gretl_matrix_set_diagonal (gretl_matrix *targ,
 }
 
 /**
+ * gretl_matrix_set_triangle:
+ * @targ: target matrix.
+ * @src: source vector (or NULL).
+ * @x: (alternative) source scalar.
+ * @upper: flag to set the upper triangle, the default
+ * being to set the lower triangle.
+ *
+ * Sets the lower or upper elements of the square matrix
+ * @targ using the elements of @src, if non-NULL, or
+ * otherwise the constant value @x.
+ *
+ * If @src is given it must be a vector of length equal to
+ * that of the number of infra- or super-diagonal elements
+ * of @targ, namely (n * (n-1)) / 2, where n is the
+ * dimension of @targ).
+ *
+ * Returns: 0 on success, error code on non-conformability.
+ */
+
+int gretl_matrix_set_triangle (gretl_matrix *targ,
+			       const gretl_matrix *src,
+			       double x, int upper)
+{
+    int i, j, n, m, match = 0;
+    int err = 0;
+
+    if (gretl_is_null_matrix(targ) || targ->is_complex) {
+	return E_INVARG;
+    } else if (src != NULL && src->is_complex) {
+	return E_INVARG;
+    } else if (targ->rows != targ->cols) {
+	return E_NONCONF;
+    }
+
+    n = targ->rows;
+    m = (n * (n-1)) / 2;
+
+    if (src != NULL) {
+	if (gretl_vector_get_length(src) == m) {
+	    match = 1;
+	} else if (gretl_matrix_is_scalar(src)) {
+	    x = src->val[0];
+	    match = 2;
+	}
+    } else {
+	match = 2;
+    }
+
+    if (match == 0) {
+	err = E_NONCONF;
+    } else {
+	int imin = upper ? 0 : 1;
+	int imax = upper ? 1 : n;
+	int jmin = upper ? 1 : 0;
+	int k = 0;
+
+	for (j=jmin; j<targ->cols; j++) {
+	    for (i=imin; i<imax; i++) {
+		if (src != NULL) {
+		    x = src->val[k++];
+		}
+		gretl_matrix_set(targ, i, j, x);
+	    }
+	    if (upper) {
+		imax++;
+	    } else {
+		imin++;
+	    }
+	}
+    }
+
+    return err;
+}
+
+/**
+ * gretl_matrix_get_triangle:
+ * @m: square source matrix (real or complex).
+ * @upper: flag to get the upper triangle, the default
+ * being to get the lower triangle.
+ * @err: location to receive error code.
+ *
+ * Returns: A column vector holding the vec of either the
+ * lower or upper triangle of @m, or NULL on failure.
+ */
+
+gretl_matrix *gretl_matrix_get_triangle (const gretl_matrix *m,
+					 int upper, int *err)
+{
+    gretl_matrix *ret = NULL;
+    int i, j, n, nt;
+
+    if (gretl_is_null_matrix(m) || m->rows != m->cols) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    n = m->rows;
+    nt = (n * (n-1)) / 2;
+    ret = gretl_matching_matrix_new(nt, 1, m);
+
+    if (ret == NULL) {
+	*err = E_ALLOC;
+    } else {
+	int imin = upper ? 0 : 1;
+	int imax = upper ? 1 : n;
+	int jmin = upper ? 1 : 0;
+	int k = 0;
+
+	for (j=jmin; j<m->cols; j++) {
+	    for (i=imin; i<imax; i++) {
+		if (m->is_complex) {
+		    ret->z[k++] = gretl_cmatrix_get(m, i, j);
+		} else {
+		    ret->val[k++] = gretl_matrix_get(m, i, j);
+		}
+	    }
+	    if (upper) {
+		imax++;
+	    } else {
+		imin++;
+	    }
+	}
+    }
+
+    return ret;
+}
+
+/**
  * gretl_matrix_get_row:
  * @m: input matrix.
  * @i: index of row to access.
@@ -9866,7 +9994,7 @@ real_gretl_matrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
     n = x->cols;
 
     if (smod == SVD_THIN && m < n) {
-	fprintf(stderr, "real_gretl_matrix_SVD: a is %d x %d, should be 'thin'\n",
+	fprintf(stderr, "real_gretl_matrix_SVD: X is %d x %d, should be 'thin'\n",
 		x->rows, x->cols);
 	return E_NONCONF;
     }

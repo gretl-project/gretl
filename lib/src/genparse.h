@@ -505,6 +505,10 @@ enum {
 enum {
     DUM_NULL = 1,
     DUM_DIAG,
+    DUM_UPPER,
+    DUM_LOWER,
+    DUM_REAL,
+    DUM_IMAG,
     DUM_DATASET,
     DUM_TREND
 };

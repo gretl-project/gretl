@@ -306,6 +306,13 @@ int gretl_matrix_set_diagonal (gretl_matrix *targ,
 			       const gretl_matrix *src,
 			       double x);
 
+gretl_matrix *gretl_matrix_get_triangle (const gretl_matrix *m,
+					 int upper, int *err);
+
+int gretl_matrix_set_triangle (gretl_matrix *targ,
+			       const gretl_matrix *src,
+			       double x, int upper);
+
 int gretl_matrix_get_row (const gretl_matrix *m, int i, gretl_vector *v);
 
 double gretl_matrix_trace (const gretl_matrix *m);

@@ -416,6 +416,10 @@ static const char *snames[] = {
      "SEL_ELEMENT",
      "SEL_MATRIX",
      "SEL_DIAG",
+     "SEL_UPPER",
+     "SEL_LOWER",
+     "SEL_REAL",
+     "SEL_IMAG",
      "SEL_ALL",
      "SEL_CONTIG",
      "SEL_EXCL",
@@ -562,9 +566,12 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 {
     int veclen, err = 0;
 
-    if (spec->ltype == SEL_DIAG) {
-	/* There's nothing to check, since this is OK even
-	   for an empty matrix argument.
+    if (spec->ltype == SEL_REAL && !m->is_complex) {
+	spec->ltype = spec->rtype = SEL_ALL;
+	return 0;
+    } else if (is_sel_dummy(spec->ltype)) {
+	/* SEL_DIAG, SEL_UPPER, SEL_LOWER, SEL_IMAG:
+	   nothing to be done here?
 	*/
 	return 0;
     }
@@ -663,10 +670,12 @@ static int get_slices (matrix_subspec *spec,
     return err;
 }
 
-int assign_scalar_to_submatrix (gretl_matrix *M, double x,
-				double complex z,
+int assign_scalar_to_submatrix (gretl_matrix *M,
+				const gretl_matrix *S,
+				double x,
 				matrix_subspec *spec)
 {
+    double complex z = NADBL;
     int mr = M->rows;
     int mc = M->cols;
     int i, err = 0;
@@ -674,6 +683,10 @@ int assign_scalar_to_submatrix (gretl_matrix *M, double x,
     if (spec == NULL) {
 	fprintf(stderr, "matrix_replace_submatrix: spec is NULL!\n");
 	return E_DATA;
+    }
+
+    if (M->is_complex) {
+	z = (S != NULL)? S->z[0] : x;
     }
 
     if (spec->ltype == SEL_CONTIG) {
@@ -690,17 +703,13 @@ int assign_scalar_to_submatrix (gretl_matrix *M, double x,
 	return 0;
     }
 
-    if (spec->ltype == SEL_DIAG) {
-	int n = (mr < mc)? mr : mc;
-
-	for (i=0; i<n; i++) {
-	    if (M->is_complex) {
-		gretl_cmatrix_set(M, i, i, z);
-	    } else {
-		gretl_matrix_set(M, i, i, x);
-	    }
+    if (is_sel_dummy(spec->ltype)) {
+	if (M->is_complex) {
+	    err = gretl_matrix_set_part(M, S, x, spec->ltype);
+	} else {
+	    err = gretl_matrix_set_part(M, NULL, x, spec->ltype);
 	}
-	return 0;
+	return err; /* we're done */
     }
 
     if (spec->rslice == NULL && spec->cslice == NULL) {
@@ -856,6 +865,10 @@ int matrix_replace_submatrix (gretl_matrix *M,
 	return E_DATA;
     }
 
+    if (is_sel_dummy(spec->ltype)) {
+	return gretl_matrix_set_part(M, S, 0, spec->ltype);
+    }
+
     if (spec->ltype == SEL_CONTIG) {
 	int ini = mspec_get_offset(spec);
 	int n = mspec_get_n_elem(spec);
@@ -887,14 +900,6 @@ int matrix_replace_submatrix (gretl_matrix *M,
 	fprintf(stderr, "matrix_replace_submatrix: target is %d x %d but "
 		"replacement part is %d x %d\n", mr, mc, sr, sc);
 	return E_NONCONF;
-    }
-
-    if (spec->ltype == SEL_DIAG) {
-	if (M->is_complex) {
-	    return gretl_cmatrix_set_diagonal(M, S, 0);
-	} else {
-	    return gretl_matrix_set_diagonal(M, S, 0);
-	}
     }
 
     if (spec->rslice == NULL && spec->cslice == NULL) {
@@ -1006,6 +1011,14 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 
     if (spec->ltype == SEL_DIAG) {
 	return gretl_matrix_get_diagonal(M, err);
+    } else if (spec->ltype == SEL_UPPER || spec->ltype == SEL_LOWER) {
+	int upper = (spec->ltype == SEL_UPPER);
+
+	return gretl_matrix_get_triangle(M, upper, err);
+    } else if (spec->ltype == SEL_REAL || spec->ltype == SEL_IMAG) {
+	int im = (spec->ltype == SEL_IMAG);
+
+	return gretl_cxtract(M, im, err);
     } else if (spec->ltype == SEL_CONTIG) {
 	return matrix_get_chunk(M, spec, err);
     } else if (spec->ltype == SEL_ELEMENT) {
@@ -1999,4 +2012,37 @@ gretl_matrix *user_gensymm_eigenvals (const gretl_matrix *A,
     }
 
     return E;
+}
+
+int gretl_matrix_set_part (gretl_matrix *targ,
+			   const gretl_matrix *src,
+			   double x, SelType sel)
+{
+    int err = 0;
+
+    if (sel == SEL_DIAG) {
+	if (targ->is_complex) {
+	    err = gretl_cmatrix_set_diagonal(targ, src, x);
+	} else {
+	    err = gretl_matrix_set_diagonal(targ, src, x);
+	}
+    } else if (sel == SEL_LOWER || sel == SEL_UPPER) {
+	int upper = (sel == SEL_UPPER);
+
+	if (targ->is_complex) {
+	    err = gretl_cmatrix_set_triangle(targ, src, x, upper);
+	} else {
+	    err = gretl_matrix_set_triangle(targ, src, x, upper);
+	}
+    } else if (sel == SEL_REAL || sel == SEL_IMAG) {
+	if (targ->is_complex) {
+	    int im = (sel == SEL_IMAG);
+
+	    err = complex_matrix_set_part(targ, src, x, im);
+	} else {
+	    err = E_TYPES;
+	}
+    }
+
+    return err;
 }

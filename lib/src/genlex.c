@@ -74,6 +74,10 @@ struct str_table consts[] = {
 struct str_table dummies[] = {
     { DUM_NULL,    "null" },
     { DUM_DIAG,    "diag" },
+    { DUM_UPPER,   "upper" },
+    { DUM_LOWER,   "lower" },
+    { DUM_REAL,    "real" },
+    { DUM_IMAG,    "imag" },
     { DUM_DATASET, "dataset" },
     { 0,        NULL }
 };
