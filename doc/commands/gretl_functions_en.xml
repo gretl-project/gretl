@@ -6701,7 +6701,7 @@
       </description>
     </function>
 
-    <function name="mlag" section="stats" output="matrix">
+    <function name="mlag" section="transforms" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="scalar-or-vec">p</fnarg>
@@ -6991,7 +6991,7 @@
       </description>
     </function>
 
-    <function name="mread" section="matbuild" output="matrix">
+    <function name="mread" section="data-utils" output="matrix">
       <fnargs>
 	<fnarg type="string">fname</fnarg>
 	<fnarg optional="true" type="bool">import</fnarg>
