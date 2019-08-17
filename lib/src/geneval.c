@@ -4267,7 +4267,7 @@ static void matrix_minmax_indices (int f, int *mm, int *rc, int *idx)
 			     f==F_CTRANS || f==F_CUM || f==F_DIFF || \
 			     f==F_SUMC || f==F_SUMR || f==F_PRODC || \
 			     f==F_PRODR || f==F_MEANC || f==F_MEANR || \
-			     f==F_GINV)
+			     f==F_GINV || F_FFT2)
 
 static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 {
@@ -4303,9 +4303,6 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 		optparm = node_get_int(r, p);
 		gotopt = 1;
 	    }
-	} else if (f == F_FFT) {
-	    /* if present, the r node should hold a boolean */
-	    optparm = node_get_bool(r, p, 0);
 	} else if (f == F_RANKING) {
 	    if (gretl_vector_get_length(m) == 0) {
 		/* m must be a vector */
@@ -4439,10 +4436,12 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    ret->v.m = gretl_matrix_exp(m, &p->err);
 	    break;
 	case F_FFT:
+	case F_FFT2:
 	    if (m->is_complex) {
 		ret->v.m = gretl_complex_fft(m, 0, &p->err);
 	    } else {
-		ret->v.m = gretl_matrix_fft(m, optparm, &p->err);
+		int newstyle = (f == F_FFT2);
+		ret->v.m = gretl_matrix_fft(m, newstyle, &p->err);
 	    }
 	    break;
 	case F_FFTI:
@@ -16243,6 +16242,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_IMINR:
     case F_IMAXR:
     case F_FFT:
+    case F_FFT2:
     case F_FFTI:
     case F_POLROOTS:
     case F_CTRANS:

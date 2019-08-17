@@ -247,6 +247,8 @@ enum {
     F_IMAXC,
     F_IMINR,
     F_IMAXR,
+    F_FFT,
+    F_FFT2,
     F_FFTI,
     F_UPPER,
     F_LOWER,
@@ -392,7 +394,6 @@ enum {
     F_FLATTEN,
     F_IMAT,
     F_COMPLEX,
-    F_FFT,
     HF_CSWITCH,
     HF_SETCMPLX,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */

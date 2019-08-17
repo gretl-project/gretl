@@ -330,6 +330,7 @@ struct str_table funcs[] = {
     { F_IMINR,    "iminr" },
     { F_IMAXR,    "imaxr" },
     { F_FFT,      "fft" },
+    { F_FFT2,     "fft2" },
     { F_FFTI,     "ffti" },
     { F_CMULT,    "cmult" },
     { F_HDPROD,   "hdprod" },
