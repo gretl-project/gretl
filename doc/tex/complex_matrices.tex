@@ -114,8 +114,8 @@ categories employed in gretl's online ``Function reference'' (under the
 The only functions that accept complex arguments at present are:
 \texttt{det}, \texttt{ldet}, \texttt{eigengen}, \texttt{eigensym} (for
 Hermitian matrices), \texttt{fft}, \texttt{ffti}, \texttt{inv},
-\texttt{ginv}, \texttt{hdprod}, \texttt{svd}, \texttt{tr}, and
-\texttt{transp}.
+\texttt{ginv}, \texttt{hdprod}, \texttt{rank}, \texttt{svd},
+\texttt{tr}, and \texttt{transp}.
 
 In addition there's the complex-only function \texttt{ctrans()} which
 gives the conjugate transpose; note that \texttt{transp} gives the
@@ -128,10 +128,14 @@ functions in this category should be thought of as applying to the
 real or imaginary part of a complex matrix (for example, \texttt{ones}
 and \texttt{mnormal}), and are of course usable in that way.  However,
 some of these functions can be applied to complex matrices as such,
-namely, \texttt{diag}, \texttt{diagcat}, \texttt{vec}, \texttt{vech},
-\texttt{unvech}, \texttt{lower} and \texttt{upper}.
+namely, \texttt{diag}, \texttt{diagcat}, \texttt{lower},
+\texttt{upper}, \texttt{vec}, \texttt{vech} and \texttt{unvech}.
 
-The only functions not available for complex matrices are
+Please note: when \texttt{unvech()} is applied to a suitable real
+vector it produces a symmetric matrix, but when applied to a complex
+vector it produces a Hermitian matrix.
+
+The only functions \textit{not} available for complex matrices are
 \texttt{cnameset} and \texttt{rnameset}. That is, you cannot name the
 columns or rows of such matrix (although this restriction could
 probably be lifted without great difficulty).
@@ -139,7 +143,7 @@ probably be lifted without great difficulty).
 \subsection{Matrix shaping}
 
 The functions that accept complex input are: \texttt{cols},
-\texttt{mreverse}, \texttt{mshape}, \texttt{rows}, \texttt{selifc},
+\texttt{rows}, \texttt{mreverse}, \texttt{mshape}, \texttt{selifc},
 \texttt{selifr} and \texttt{trimr}.
 
 The functions \texttt{msortby}, \texttt{sort} and \texttt{dsort} are
@@ -147,8 +151,8 @@ excluded for the reason mentioned in section~\ref{sec:ops}.
 
 \subsection{Statistical}
 
-Supported for complex input: \texttt{meanr}, \texttt{meanc},
-\texttt{sumc}, \texttt{sumr}, \texttt{prodr} and \texttt{prodc}. And
+Supported for complex input: \texttt{meanc}, \texttt{meanr},
+\texttt{sumc}, \texttt{sumr}, \texttt{prodc} and \texttt{prodr}. And
 that's all.
 
 \subsection{Mathematical}
@@ -163,12 +167,41 @@ In addition there are the complex-only functions \texttt{cmod}
 (complex ``argument''), \texttt{conj} (complex conjugate), \texttt{Re}
 (real part) and \texttt{Im} (imaginary part).
 
+\subsection{Transformations}
+
+The functions \texttt{cum} and \texttt{diff} may be applied to complex
+matrices, but no others.
+
+\section{File input/output}
+
+Complex matrices should be stored and retrieved correctly in the
+XML serialization used for gretl session files (\texttt{*.gretl}).
+
+The functions \texttt{mwrite} and \texttt{mread} also work OK for use
+with gretl itself, but for exchange of data with another program we
+recommend using \texttt{mwrite} on the two parts of a complex matrix
+separately. Here's an example of sending a complex matrix to
+\textsf{octave}:
+\begin{code}
+matrix C = complex(mnormal(3,3), mnormal(3,3))
+print C
+# do stuff with C ..., then
+mwrite(Re(C), "Cre.mat", 1)
+mwrite(Im(C), "Cim.mat", 1)
+foreign language=octave
+  A = gretl_loadmat("Cre.mat");
+  B = gretl_loadmat("Cim.mat");
+  C = complex(A, B)
+end foreign
+\end{code}
+The \texttt{C} displayed in octave should match that in gretl.
+
 \section{Backward compatibility}
 \label{sec:compat}
 
 Compatibility issues may arise in two contexts, both related to the
 fact that gretl offered some degree of support for complex matrices
-before they were full citizens of the hansl polity.
+before they became full citizens of the hansl polity.
 
 \begin{enumerate}
 \item The functions \texttt{fft} (fast Fourier transform) and
@@ -198,11 +231,19 @@ So what happens with \texttt{fft} and \texttt{eigengen},
 
 The easier question is the one about \texttt{cmatrix} and
 \texttt{ghosts}. The \texttt{cmatrix} package is no longer
-required---or supported---and there will be (or already is) a version
+required---or supported---and there will be (or already is?) a version
 of \texttt{ghosts} that relies on gretl's native complex-matrix
 support.
 
-As for \texttt{fft} and \texttt{eigengen}, \dots{} FIXME what do we
-want to say here?
+As for \texttt{fft} and \texttt{eigengen}, our resolution is
+as follows:
+\begin{itemize}
+\item The original functions \texttt{fft} and \texttt{eigengen}
+  continue to behave in the old way (legacy output) when given real
+  input, but produce new-style output if given complex input.
+\item Two new functions \texttt{fft2} and \texttt{eiggen2} accept
+  either real or complex input and produce new-style output in
+  both cases.
+\end{itemize}
 
 \end{document}
