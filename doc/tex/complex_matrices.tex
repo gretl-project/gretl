@@ -94,6 +94,13 @@ inequality (such as ``\verb+.>+''), since complex values as such
 cannot be compared as greater or lesser (though they can be compared
 as equal or not equal).
 
+The ``\texttt{'}'' operator is available in both unary form
+(transpose), as in \texttt{B = A'}, and binary form
+(transpose-multiply), as in \texttt{C = A'B}. But note that for
+complex \texttt{A} this means the conjugate transpose. If you need the
+non-conjugated transpose you can use \texttt{transp()}--- see
+section~\ref{sec:funcs}.
+
 \section{Functions}
 \label{sec:funcs}
 
