@@ -172,20 +172,49 @@ In addition there are the complex-only functions \texttt{cmod}
 The functions \texttt{cum} and \texttt{diff} may be applied to complex
 matrices, but no others.
 
+\section{Indexation}
+
+Indexation of complex matrices works just as with real matrices, on
+the understanding that each element of a complex matrix is a complex
+pair. So for example \texttt{C[i,j]} gets you the complex pair at row
+\texttt{i}, column \texttt{j} of \texttt{C}, in the form of a
+$1 \times 1$ complex matrix.
+
+If you wish to access just the real or imaginary part of a given
+element, or range of elements, you can use \texttt{Re()} or
+\texttt{Im()}, as in
+\begin{code}
+scalar rij = Re(C[i,j])
+\end{code}
+which gets you the real part of $C_{ij}$.
+
+In addition the dummy selectors \texttt{real} and \texttt{imag} can be
+used to assign to just the real or imaginary component of a complex
+matrix. Here are two examples:
+\begin{code}
+# replace the real part of C with random normals
+C[real] = mnormal(rows(C), cols(C))
+
+# set the imginary part of C to all zeros
+C[imag] = 0
+\end{code}
+The replacement must be either a real matrix of the same dimensions as
+the target, or a scalar.
+
+
 \section{File input/output}
 
 Complex matrices should be stored and retrieved correctly in the
 XML serialization used for gretl session files (\texttt{*.gretl}).
 
 The functions \texttt{mwrite} and \texttt{mread} also work OK for use
-with gretl itself, but for exchange of data with another program we
+with gretl itself, but for exchange of data with other programs we
 recommend using \texttt{mwrite} on the two parts of a complex matrix
 separately. Here's an example of sending a complex matrix to
 \textsf{octave}:
 \begin{code}
 matrix C = complex(mnormal(3,3), mnormal(3,3))
 print C
-# do stuff with C ..., then
 mwrite(Re(C), "Cre.mat", 1)
 mwrite(Im(C), "Cim.mat", 1)
 foreign language=octave
@@ -194,19 +223,20 @@ foreign language=octave
   C = complex(A, B)
 end foreign
 \end{code}
-The \texttt{C} displayed in octave should match that in gretl.
+The matrix \texttt{C} displayed in \textsf{octave} should match that
+in gretl.
 
 \section{Backward compatibility}
 \label{sec:compat}
 
-Compatibility issues may arise in two contexts, both related to the
-fact that gretl offered some degree of support for complex matrices
-before they became full citizens of the hansl polity.
+Compatibility issues arise in two contexts, both related to the fact
+that gretl offered some degree of support for complex matrices before
+they became full citizens of the hansl polity.
 
 \begin{enumerate}
-\item The functions \texttt{fft} (fast Fourier transform) and
-  \texttt{eigengen} (eigenvalues and/or eigenvectors of a
-  non-symmetric real matrix) returned complex matrices in what we'll
+\item The functions \texttt{fft} (fast Fourier transform for real
+  input) and \texttt{eigengen} (eigenvalues and/or eigenvectors of a
+  non-symmetric real matrix) returned complex matrices in what we may
   call the ``legacy'' representation. In the case of \texttt{fft} and
   the eigenvalues from \texttt{eigengen} this took the form of a
   regular gretl matrix with real values in the first (or odd-numbered)
@@ -219,31 +249,30 @@ before they became full citizens of the hansl polity.
   you probably don't want to know, but if you do, consult the help text
   for \texttt{eigengen}; they were not easy for a user to handle!
 \item The function packages \texttt{cmatrix} and
-  \texttt{ghosts}. These are relatively recent additions to gretl's
-  functionality, designed to support frequency-domain analysis. Prior
-  to the development of native complex-matrix functionality,
-  \texttt{cmatrix} was needed as an dependency for \texttt{ghosts}
-  (multivariate spectral analysis).
+  \texttt{ghosts}. These are relatively recent additions to gretl,
+  designed to support frequency-domain analysis. Prior to the
+  development of native complex-matrix functionality, \texttt{cmatrix}
+  was needed as an dependency for \texttt{ghosts} (multivariate
+  spectral analysis).
 \end{enumerate}
 
-So what happens with \texttt{fft} and \texttt{eigengen},
-\texttt{cmatrix} and \texttt{ghosts} under the new regime?
+So what happens with these functions and packages under the new
+regime?
 
-The easier question is the one about \texttt{cmatrix} and
-\texttt{ghosts}. The \texttt{cmatrix} package is no longer
-required---or supported---and there will be (or already is?) a version
-of \texttt{ghosts} that relies on gretl's native complex-matrix
-support.
-
-As for \texttt{fft} and \texttt{eigengen}, our resolution is
-as follows:
+Our resolution on the two built-in functions is this:
 \begin{itemize}
-\item The original functions \texttt{fft} and \texttt{eigengen}
-  continue to behave in the old way (legacy output) when given real
-  input, but produce new-style output if given complex input.
-\item Two new functions \texttt{fft2} and \texttt{eiggen2} accept
-  either real or complex input and produce new-style output in
-  both cases.
+\item \texttt{fft} and \texttt{eigengen} continue to behave exactly as
+  before. They do not accept complex input and they produce old-style
+  output. In the documentation they will be marked as legacy
+  functions, not recommended for use in newly written hansl code.
+\item We have added new counterpart functions, \texttt{fft2} and
+  \texttt{eiggen2}. These accept either real or complex input and they
+  produce new-style complex output in both cases.
 \end{itemize}
+
+On the affected packages: \texttt{cmatrix} is no longer required, and
+will not be supported any more: attempting to load this package will
+produce an error message. We will make available an updated version of
+\texttt{ghosts} which uses gretl's native complex functionality.
 
 \end{document}
