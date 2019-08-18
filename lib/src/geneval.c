@@ -11097,13 +11097,12 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
 
     if (!inflected) {
 	if (rhs_cscalar) {
-	    p->err = assign_scalar_to_submatrix(m1, m2, 0, spec);
+	    return assign_scalar_to_submatrix(m1, m2, 0, spec);
 	} else if (rhs_scalar) {
-	    p->err = assign_scalar_to_submatrix(m1, NULL, rhs_x, spec);
+	    return assign_scalar_to_submatrix(m1, NULL, rhs_x, spec);
 	} else if (is_sel_dummy(spec->ltype)) {
-	    p->err = gretl_matrix_set_part(m1, m2, 0, spec->ltype);
+	    return gretl_matrix_set_part(m1, m2, 0, spec->ltype);
 	}
-	return p->err; /* we're done */
     }
 
     if (inflected) {
