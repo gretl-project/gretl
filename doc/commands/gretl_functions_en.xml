@@ -3254,6 +3254,12 @@
       </fnargs>
       <description>
 	<para>
+	  <emphasis>This is a legacy function, predating gretl's
+	  native support for complex matrices. It should not be used
+	  in newly written hansl scripts. Use</emphasis> <fncref targ="eiggen2"/>
+	  <emphasis>instead.</emphasis>
+	</para>
+	<para>
 	  Computes the eigenvalues, and optionally the right eigenvectors, of
 	  the <by r="n" c="n"/> matrix <argname>A</argname>.  If all the
 	  eigenvalues are real an <by r="n" c="1"/> matrix is returned;
@@ -3306,6 +3312,43 @@
             <fncref targ="eigensym"/>
             <fncref targ="eigsolve"/>
             <fncref targ="qrdecomp"/>
+            <fncref targ="svd"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="eiggen2" section="linalg" output="matrix">
+      <fnargs>
+	<fnarg type="smatrix">A</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;V</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;W</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Computes the eigenvalues, and optionally the right and/or
+	  left eigenvectors, of the <by r="n" c="n"/> matrix
+	  <argname>A</argname>, which may be real or complex. The
+	  eigenvalues are returned in a complex column vector.
+	</para>
+	<para>
+	  If you wish to retrieve the right eigenvectors (as an <by
+	  r="n" c="n"/> complex matrix), supply the name of an
+	  existing matrix, preceded by <lit>&amp;</lit> to indicate
+	  the <quote>address</quote> of the matrix in
+	  question. Otherwise this argument can be omitted.
+	</para>
+	<para>
+	  To retrieve the left eigenvectors (again, as a complex
+	  matrix), supply a matrix-address as the third argument.
+	  Note that if you want the left eigenvectors but not the
+	  right ones, you should use the keyword <lit>null</lit>
+	  as a placeholder for the second argument.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="eigensym"/>
+            <fncref targ="eigsolve"/>
             <fncref targ="svd"/>
 	  </seelist>
 	</para>
@@ -3674,6 +3717,12 @@
       </fnargs>
       <description>
 	<para>
+	  <emphasis>This is a legacy function, predating gretl's
+	  native support for complex matrices. It should not be used
+	  in newly written hansl scripts. Use</emphasis> <fncref targ="fft2"/>
+	  <emphasis>instead.</emphasis>
+	</para>
+	<para>
 	  Discrete real Fourier transform. If the input matrix
 	  <argname>X</argname> has <math>n</math> columns, the output has
 	  2<math>n</math> columns, where the real parts are stored in the
@@ -3691,18 +3740,41 @@
       </description>
     </function>
 
+    <function name="fft" section="linalg" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Discrete Fourier transform. The input matrix
+	  <argname>X</argname> may be real or complex. The output is a
+	  complex matrix of the same dimensions as
+	  <argname>X</argname>.
+	</para>
+	<para>
+	  Should it be necessary to compute the Fourier transform on several
+	  vectors with the same number of elements, it is numerically more
+	  efficient to group them into a matrix rather than invoking
+	  <lit>fft2</lit> for each vector separately.
+	  <seelist>
+            <fncref targ="ffti"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="ffti" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Inverse discrete real Fourier transform. It is assumed that
+	  Inverse discrete Fourier transform. It is assumed that
 	  <argname>X</argname> contains <math>n</math> complex column
-	  vectors, with the real part in the odd columns and the imaginary
-	  part in the even ones, so the total number of columns should be
-	  2<math>n</math>. A matrix with <math>n</math> columns is
-	  returned.
+	  vectors. For backward compatibility the input may be given
+	  as a real matrix with 2<math>n</math> columns, the odd columns
+	  holding the real part and the even ones the imaginary part.
+	  A matrix with <math>n</math> columns is returned.
 	</para>
 	<para>
 	  Should it be necessary to compute the inverse Fourier transform on
@@ -3710,7 +3782,7 @@
 	  numerically more efficient to group them into a matrix rather
 	  than invoking <lit>ffti</lit> for each vector separately.
 	  <seelist>
-            <fncref targ="fft"/>
+            <fncref targ="fft2"/>
 	  </seelist>
 	</para>
       </description>
