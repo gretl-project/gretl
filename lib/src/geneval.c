@@ -4263,7 +4263,7 @@ static void matrix_minmax_indices (int f, int *mm, int *rc, int *idx)
 #define mmf_does_complex(f) (f==F_INV || f==F_UPPER || f==F_LOWER || \
 			     f==F_DIAG || f==F_TRANSP || \
 			     f==F_VEC || f==F_VECH || f==F_UNVECH || \
-			     f==F_MREVERSE || f==F_FFT || f==F_FFTI || \
+			     f==F_MREVERSE || f==F_FFTI || \
 			     f==F_CTRANS || f==F_CUM || f==F_DIFF || \
 			     f==F_SUMC || f==F_SUMR || f==F_PRODC || \
 			     f==F_PRODR || f==F_MEANC || f==F_MEANR || \
@@ -4436,12 +4436,13 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    ret->v.m = gretl_matrix_exp(m, &p->err);
 	    break;
 	case F_FFT:
+	    ret->v.m = gretl_matrix_fft(m, 0, &p->err);
+	    break;
 	case F_FFT2:
 	    if (m->is_complex) {
 		ret->v.m = gretl_complex_fft(m, 0, &p->err);
 	    } else {
-		int newstyle = (f == F_FFT2);
-		ret->v.m = gretl_matrix_fft(m, newstyle, &p->err);
+		ret->v.m = gretl_matrix_fft(m, 1, &p->err);
 	    }
 	    break;
 	case F_FFTI:
@@ -11381,12 +11382,20 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    }
 	}
 	if (!p->err) {
-	    if (lm->is_complex) {
-		A = gretl_zgeev(lm, v1, v2, &p->err);
-	    } else if (f == F_EIGGEN2) {
-		A = gretl_dgeev(lm, v1, v2, &p->err);
+	    if (f == F_EIGGEN2) {
+		/* new eiggen2 */
+		if (lm->is_complex) {
+		    A = gretl_zgeev(lm, v1, v2, &p->err);
+		} else {
+		    A = gretl_dgeev(lm, v1, v2, &p->err);
+		}
 	    } else {
-		A = old_eigengen(lm, v1, v2, &p->err);
+		/* legacy eigengen: real input only */
+		if (lm->is_complex) {
+		    p->err = E_TYPES;
+		} else {
+		    A = old_eigengen(lm, v1, v2, &p->err);
+		}
 	    }
 	}
     } else if (f == F_CORRGM) {
