@@ -1143,8 +1143,8 @@ int complex_matrix_print_range (const gretl_matrix *A,
 		pprintf(prn, "%# 9.4e %c %#8.4ei", re, pm, ai);
 	    } else {
 #if CDEC5
-		rdecs = re <= -100 ? 4 : 5;
-		idecs = ai >= 100 ? 4 : 5;
+		rdecs = re <= -10 ? 4 : 5;
+		idecs = ai >= 10 ? 4 : 5;
 		pprintf(prn, "%8.*f %c %7.*fi", rdecs, re, pm, idecs, ai);
 #else
 		rdecs = re <= -10 ? 3 : 4;

@@ -9283,7 +9283,7 @@ static int dgeev_eigvecs_alloc (gretl_matrix *m,
     return 0;
 }
 
-/* Transcribe fron compact representation of eigenvectors
+/* Transcribe from compact representation of eigenvectors
    in the n x n real matrix @src to the "new-style" n x n
    complex matrix @targ. What happens for each column
    depends on whether the associated eigenvalue is real or
