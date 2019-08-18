@@ -86,6 +86,8 @@ struct gretl_matrix_block_ {
 #define INFO_INVALID 0xdeadbeef
 #define is_block_matrix(m) (m->info == (matrix_info *) INFO_INVALID)
 
+#define is_one_by_one(m) (m->rows == 1 && m->cols == 1)
+
 static inline void *mval_malloc (size_t sz)
 {
     /* forestall "invalid reads" by OpenBLAS */
@@ -1111,12 +1113,13 @@ gretl_matrix_copy_mod (const gretl_matrix *m, int mod)
 	int k = 0;
 
 	if (m->is_complex) {
+	    /* we'll do the conjugate transpose */
 	    double complex mij;
 
 	    for (j=0; j<m->cols; j++) {
 		for (i=0; i<m->rows; i++) {
 		    mij = m->z[k++];
-		    gretl_cmatrix_set(c, j, i, mij);
+		    gretl_cmatrix_set(c, j, i, conj(mij));
 		}
 	    }
 	} else {
@@ -4150,9 +4153,11 @@ static void matrix_grab_content (gretl_matrix *targ, gretl_matrix *src)
 {
     targ->rows = src->rows;
     targ->cols = src->cols;
+    targ->is_complex = src->is_complex;
 
     mval_free(targ->val);
     targ->val = src->val;
+    targ->z = src->z;
     src->val = NULL;
     src->z = NULL;
 
@@ -4248,7 +4253,10 @@ static int QR_solve (gretl_matrix *A, gretl_matrix *B)
     integer lwork = -1;
     integer *jpvt = NULL;
     double *work = NULL;
+    cmplx *zwork = NULL;
+    double *rwork = NULL;
     double rcond = QR_RCOND_MIN;
+    int zfunc = 0;
     int i, err = 0;
 
     lda = m = A->rows;
@@ -4264,11 +4272,29 @@ static int QR_solve (gretl_matrix *A, gretl_matrix *B)
 	return E_NONCONF;
     }
 
+    zfunc = A->is_complex;
+    if (zfunc && !B->is_complex) {
+	return E_INVARG;
+    }
+
     jpvt = malloc(n * sizeof *jpvt);
-    work = lapack_malloc(sizeof *work);
-    if (jpvt == NULL || work == NULL) {
+    if (zfunc) {
+	zwork = lapack_malloc(sizeof *zwork);
+    } else {
+	work = lapack_malloc(sizeof *work);
+    }
+    if (jpvt == NULL || (zfunc && zwork == NULL ||
+			 !zfunc && work == NULL)) {
 	err = E_ALLOC;
 	goto bailout;
+    }
+
+    if (zfunc) {
+	rwork = malloc(2 * n * sizeof *rwork);
+	if (rwork == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	}
     }
 
     for (i=0; i<n; i++) {
@@ -4276,30 +4302,51 @@ static int QR_solve (gretl_matrix *A, gretl_matrix *B)
     }
 
     /* workspace query */
-    dgelsy_(&m, &n, &nrhs, A->val, &lda, B->val, &lda,
-	    jpvt, &rcond, &rank, work, &lwork, &info);
+    if (zfunc) {
+	zgelsy_(&m, &n, &nrhs, (cmplx *) A->z, &lda, (cmplx *) B->z, &lda,
+		jpvt, &rcond, &rank, zwork, &lwork, rwork, &info);
+    } else {
+	dgelsy_(&m, &n, &nrhs, A->val, &lda, B->val, &lda,
+		jpvt, &rcond, &rank, work, &lwork, &info);
+    }
     if (info != 0) {
-	fprintf(stderr, "dgelsy: info = %d\n", (int) info);
+	fprintf(stderr, "gelsy: info = %d\n", (int) info);
 	err = 1;
 	goto bailout;
     }
 
     /* optimally sized work array */
-    lwork = (integer) work[0];
-    work = lapack_realloc(work, (size_t) lwork * sizeof *work);
-    if (work == NULL) {
-	err = E_ALLOC;
+    if (zfunc) {
+	lwork = (integer) zwork[0].r;
+	zwork = lapack_realloc(zwork, (size_t) lwork * sizeof *zwork);
+	if (zwork == NULL) {
+	    err = E_ALLOC;
+	}
+    } else {
+	lwork = (integer) work[0];
+	work = lapack_realloc(work, (size_t) lwork * sizeof *work);
+	if (work == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (err) {
 	goto bailout;
     }
 
     /* run actual computation */
-    dgelsy_(&m, &n, &nrhs, A->val, &lda, B->val, &lda,
-	    jpvt, &rcond, &rank, work, &lwork, &info);
+    if (zfunc) {
+	zgelsy_(&m, &n, &nrhs, (cmplx *) A->z, &lda, (cmplx *) B->z, &lda,
+		jpvt, &rcond, &rank, zwork, &lwork, rwork, &info);
+    } else {
+	dgelsy_(&m, &n, &nrhs, A->val, &lda, B->val, &lda,
+		jpvt, &rcond, &rank, work, &lwork, &info);
+    }
     if (info != 0) {
-	fprintf(stderr, "dgelsy: info = %d\n", (int) info);
+	fprintf(stderr, "gelsy: info = %d\n", (int) info);
 	err = 1;
     } else if (rank < n) {
-	fprintf(stderr, "dgelsy: cols(A) = %d, rank(A) = %d\n",
+	fprintf(stderr, "gelsy: cols(A) = %d, rank(A) = %d\n",
 		A->cols, rank);
     }
 
@@ -4316,7 +4363,12 @@ static int QR_solve (gretl_matrix *A, gretl_matrix *B)
  bailout:
 
     free(jpvt);
-    lapack_free(work);
+    if (zfunc) {
+	lapack_free(work);
+    } else {
+	lapack_free(zwork);
+	free(rwork);
+    }
 
     return err;
 }
@@ -7648,6 +7700,31 @@ gretl_matrix *gretl_matrix_multiply_new (const gretl_matrix *a,
     return c;
 }
 
+static int matrix_divide_by_scalmat (gretl_matrix *num,
+				     const gretl_matrix *den)
+{
+    int i, n = num->rows * num->cols;
+
+    if (num->is_complex) {
+	double complex zden;
+
+	zden = den->is_complex ? den->z[0] : den->val[0];
+	for (i=0; i<n; i++) {
+	    num->z[i] /= zden;
+	}
+    } else {
+	if (den->is_complex) {
+	    return E_TYPES;
+	} else {
+	    for (i=0; i<n; i++) {
+		num->val[i] /= den->val[0];
+	    }
+	}
+    }
+
+    return 0;
+}
+
 /**
  * gretl_matrix_divide:
  * @a: left-hand matrix.
@@ -7682,27 +7759,23 @@ gretl_matrix *gretl_matrix_divide (const gretl_matrix *a,
 	gretl_is_null_matrix(b)) {
 	*err = E_DATA;
 	return NULL;
-    } else if (a->is_complex || b->is_complex) {
-	fprintf(stderr, "E_CMPLX in gretl_matrix_divide\n");
-	*err = E_CMPLX;
-	return NULL;
     }
 
     /* detect and handle scalar cases */
-    if (mod == GRETL_MOD_NONE && gretl_matrix_is_scalar(a)) {
+    if (mod == GRETL_MOD_NONE && is_one_by_one(a)) {
 	Q = gretl_matrix_copy(b);
 	if (Q == NULL) {
 	    *err = E_ALLOC;
 	} else {
-	    gretl_matrix_divide_by_scalar(Q, a->val[0]);
+	    *err = matrix_divide_by_scalmat(Q, a);
 	}
 	return Q;
-    } else if (mod == GRETL_MOD_TRANSPOSE && gretl_matrix_is_scalar(b)) {
+    } else if (mod == GRETL_MOD_TRANSPOSE && is_one_by_one(b)) {
 	Q = gretl_matrix_copy(a);
 	if (Q == NULL) {
 	    *err = E_ALLOC;
 	} else {
-	    gretl_matrix_divide_by_scalar(Q, b->val[0]);
+	    *err = matrix_divide_by_scalmat(Q, b);
 	}
 	return Q;
     }
@@ -13496,11 +13569,7 @@ gretl_matrix *gretl_matrix_trim_rows (const gretl_matrix *A,
 	return NULL;
     }
 
-    if (A->is_complex) {
-	B = gretl_cmatrix_new(m, A->cols);
-    } else {
-	B = gretl_matrix_alloc(m, A->cols);
-    }
+    B = gretl_matching_matrix_new(m, A->cols, A);
 
     if (B == NULL) {
 	*err = E_ALLOC;

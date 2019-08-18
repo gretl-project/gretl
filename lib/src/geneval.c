@@ -2826,7 +2826,7 @@ static gretl_matrix *calc_get_matrix (gretl_matrix **pM,
 			      o==B_DOTASN || o==B_HCAT || o==B_VCAT || \
 			      o==B_DOTADD || o==B_DOTSUB || op==F_DSUM || \
 			      o==B_DOTEQ || o==B_DOTNEQ || op==F_HDPROD || \
-			      o==B_KRON)
+			      o==B_KRON || o==B_LDIV || o==B_DIV)
 
 /* return allocated result of binary operation performed on
    two matrices */
@@ -2835,6 +2835,7 @@ static int real_matrix_calc (const gretl_matrix *A,
 			     const gretl_matrix *B,
 			     int op, gretl_matrix **pM)
 {
+    GretlMatrixMod mod;
     gretl_matrix *C = NULL;
     int ra, ca;
     int rb, cb;
@@ -2959,19 +2960,22 @@ static int real_matrix_calc (const gretl_matrix *A,
 	    if (C == NULL) {
 		err = E_ALLOC;
 	    } else {
-		err = gretl_matrix_qform(A, GRETL_MOD_NONE, B,
-					 C, GRETL_MOD_NONE);
+		mod = GRETL_MOD_NONE;
+		err = gretl_matrix_qform(A, mod, B, C, mod);
 	    }
 	}
 	break;
-    case B_DIV:
     case B_LDIV:
-	/* matrix right or left "division" */
-	if (op == B_LDIV) {
-	    C = gretl_matrix_divide(A, B, GRETL_MOD_NONE, &err);
+    case B_DIV:
+	/* Matrix left (A\B) or right (A/B) "division": note that
+	   A/B = (B'\A')', which we handle by passing the transpose
+	   flag to gretl_{c}matrix_divide.
+	*/
+	mod = (op == B_LDIV)? GRETL_MOD_NONE : GRETL_MOD_TRANSPOSE;
+	if (A->is_complex || B->is_complex) {
+	    C = gretl_cmatrix_divide(A, B, mod, &err);
 	} else {
-	    /* A/B = (B'\A')' */
-	    C = gretl_matrix_divide(A, B, GRETL_MOD_TRANSPOSE, &err);
+	    C = gretl_matrix_divide(A, B, mod, &err);
 	}
 	break;
     case F_LSOLVE:

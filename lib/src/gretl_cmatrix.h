@@ -140,6 +140,11 @@ gretl_matrix *gretl_cmatrix_dot_op (const gretl_matrix *a,
 				    const gretl_matrix *b,
 				    int op, int *err);
 
+gretl_matrix *gretl_cmatrix_divide (const gretl_matrix *A,
+				    const gretl_matrix *B,
+				    GretlMatrixMod mod,
+				    int *err);
+
 gretl_matrix *cmatrix_get_element (const gretl_matrix *M,
 				   int i, int *err);
 

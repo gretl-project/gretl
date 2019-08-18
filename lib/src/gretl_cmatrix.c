@@ -2223,6 +2223,37 @@ gretl_matrix *gretl_cmatrix_dot_op (const gretl_matrix *A,
     return C;
 }
 
+gretl_matrix *gretl_cmatrix_divide (const gretl_matrix *A,
+				    const gretl_matrix *B,
+				    GretlMatrixMod mod,
+				    int *err)
+{
+    gretl_matrix *T = NULL;
+    gretl_matrix *C = NULL;
+
+    if (A->is_complex && B->is_complex) {
+	C = gretl_matrix_divide(A, B, mod, err);
+    } else if (A->is_complex) {
+	/* case of real B */
+	T = complex_from_real(B, err);
+	if (T != NULL) {
+	    C = gretl_matrix_divide(A, T, mod, err);
+	}
+    } else if (B->is_complex) {
+	/* case of real A */
+	T = complex_from_real(A, err);
+	if (T != NULL) {
+	    C = gretl_matrix_divide(T, B, mod, err);
+	}
+    } else {
+	*err = E_TYPES;
+    }
+
+    gretl_matrix_free(T);
+
+    return C;
+}
+
 gretl_matrix *cmatrix_get_element (const gretl_matrix *M,
 				   int i, int *err)
 {
