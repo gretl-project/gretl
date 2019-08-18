@@ -76,6 +76,35 @@ determine whether a particular matrix is complex. The function
 if it names a complex matrix, 0 if it names a real matrix, or
 \texttt{NA} otherwise.
 
+\section{Indexation}
+
+Indexation of complex matrices works just as with real matrices, on
+the understanding that each element of a complex matrix is a complex
+pair. So for example \texttt{C[i,j]} gets you the complex pair at row
+\texttt{i}, column \texttt{j} of \texttt{C}, in the form of a
+$1 \times 1$ complex matrix.
+
+If you wish to access just the real or imaginary part of a given
+element, or range of elements, you can use the functions \texttt{Re()}
+or \texttt{Im()}, as in
+\begin{code}
+scalar rij = Re(C[i,j])
+\end{code}
+which gets you the real part of $C_{ij}$.
+
+In addition the dummy selectors \texttt{real} and \texttt{imag} can be
+used to assign to just the real or imaginary component of a complex
+matrix. Here are two examples:
+\begin{code}
+# replace the real part of C with random normals
+C[real] = mnormal(rows(C), cols(C))
+
+# set the imaginary part of C to all zeros
+C[imag] = 0
+\end{code}
+The replacement must be either a real matrix of the same dimensions as
+the target, or a scalar.
+
 \section{Operators}
 \label{sec:ops}
 
@@ -87,12 +116,15 @@ which work element-wise or by ``broadcasting'' vectors. Moreover,
 will be complex. In such cases the real operand is treated as a
 complex matrix with an all-zero imaginary part.
 
-The operators \textit{not} accepted for complex matrices are:
-``\texttt{\textbackslash}'' (left division); ``\texttt{/}'' (right
-division); and the element-wise comparison operators that include an
-inequality (such as ``\verb+.>+''), since complex values as such
-cannot be compared as greater or lesser (though they can be compared
-as equal or not equal).
+The operators \textit{not} accepted for complex values are:
+\begin{itemize}
+\item Those that include an inequality (such as ``\verb+.>+''), since
+  complex values as such cannot be compared as greater or lesser
+  (though they can be compared as equal or not equal).
+\item The (real) modulus operator (percent sign), as in \texttt{x \%
+    y} which gives the remainder on division of \texttt{x} by
+  \texttt{y}.
+\end{itemize}
 
 The ``\texttt{'}'' operator is available in both unary form
 (transpose), as in \texttt{B = A'}, and binary form
@@ -100,6 +132,12 @@ The ``\texttt{'}'' operator is available in both unary form
 complex \texttt{A} this means the conjugate transpose. If you need the
 non-conjugated transpose you can use \texttt{transp()}--- see
 section~\ref{sec:funcs}.
+
+You may wish to note, although none of gretl's explicit regressions
+functions (or commands) accept complex input you can calculate the
+parameter estimates for a regression of complex \texttt{Y}
+($T \times 1$) on complex \texttt{X} ($T \times k$) via
+\verb|B = X \ Y|.
 
 \section{Functions}
 \label{sec:funcs}
@@ -172,36 +210,6 @@ In addition there are the complex-only functions \texttt{cmod}
 The functions \texttt{cum} and \texttt{diff} may be applied to complex
 matrices, but no others.
 
-\section{Indexation}
-
-Indexation of complex matrices works just as with real matrices, on
-the understanding that each element of a complex matrix is a complex
-pair. So for example \texttt{C[i,j]} gets you the complex pair at row
-\texttt{i}, column \texttt{j} of \texttt{C}, in the form of a
-$1 \times 1$ complex matrix.
-
-If you wish to access just the real or imaginary part of a given
-element, or range of elements, you can use \texttt{Re()} or
-\texttt{Im()}, as in
-\begin{code}
-scalar rij = Re(C[i,j])
-\end{code}
-which gets you the real part of $C_{ij}$.
-
-In addition the dummy selectors \texttt{real} and \texttt{imag} can be
-used to assign to just the real or imaginary component of a complex
-matrix. Here are two examples:
-\begin{code}
-# replace the real part of C with random normals
-C[real] = mnormal(rows(C), cols(C))
-
-# set the imginary part of C to all zeros
-C[imag] = 0
-\end{code}
-The replacement must be either a real matrix of the same dimensions as
-the target, or a scalar.
-
-
 \section{File input/output}
 
 Complex matrices should be stored and retrieved correctly in the
@@ -264,7 +272,7 @@ Our resolution on the two built-in functions is this:
 \item \texttt{fft} and \texttt{eigengen} continue to behave exactly as
   before. They do not accept complex input and they produce old-style
   output. In the documentation they will be marked as legacy
-  functions, not recommended for use in newly written hansl code.
+  functions, not for use in newly written hansl code.
 \item We have added new counterpart functions, \texttt{fft2} and
   \texttt{eiggen2}. These accept either real or complex input and they
   produce new-style complex output in both cases.
