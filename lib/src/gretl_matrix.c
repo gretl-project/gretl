@@ -28,6 +28,7 @@
 
 #include "gretl_f2c.h"
 #include "clapack_double.h"
+#include "clapack_complex.h"
 #include "../../cephes/libprob.h"
 
 #ifdef HAVE_FENV_H
@@ -4445,6 +4446,7 @@ int gretl_LU_solve (gretl_matrix *a, gretl_matrix *b)
     integer info;
     integer n, ldb, nrhs = 1;
     integer *ipiv;
+    int zfunc = 0;
     int debug = 0;
     int err = 0;
 
@@ -4458,6 +4460,11 @@ int gretl_LU_solve (gretl_matrix *a, gretl_matrix *b)
 	gretl_is_null_matrix(b) ||
 	a->rows != a->cols) {
 	return E_DATA;
+    }
+
+    zfunc = a->is_complex;
+    if (zfunc && !b->is_complex) {
+	return E_INVARG;
     }
 
     if (debug) {
@@ -4482,10 +4489,14 @@ int gretl_LU_solve (gretl_matrix *a, gretl_matrix *b)
 	return E_ALLOC;
     }
 
-    dgetrf_(&n, &n, a->val, &n, ipiv, &info);
+    if (zfunc) {
+	zgetrf_(&n, &n, (cmplx *) a->val, &n, ipiv, &info);
+    } else {
+	dgetrf_(&n, &n, a->val, &n, ipiv, &info);
+    }
 
     if (info != 0) {
-	fprintf(stderr, "gretl_LU_solve: dgetrf gave info = %d\n",
+	fprintf(stderr, "gretl_LU_solve: getrf gave info = %d\n",
 		(int) info);
 	err = (info < 0)? E_DATA : E_SINGULAR;
     } else {
@@ -4493,7 +4504,12 @@ int gretl_LU_solve (gretl_matrix *a, gretl_matrix *b)
     }
 
     if (!err) {
-	dgetrs_(&trans, &n, &nrhs, a->val, &n, ipiv, b->val, &ldb, &info);
+	if (zfunc) {
+	    zgetrs_(&trans, &n, &nrhs, (cmplx *) a->val, &n, ipiv,
+		    (cmplx *) b->val, &ldb, &info);
+	} else {
+	    dgetrs_(&trans, &n, &nrhs, a->val, &n, ipiv, b->val, &ldb, &info);
+	}
 	if (info != 0) {
 	    fprintf(stderr, "gretl_LU_solve: dgetrs gave info = %d\n",
 		    (int) info);

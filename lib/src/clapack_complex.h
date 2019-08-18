@@ -17,6 +17,9 @@ void zgeev_ (const char *jobvl, const char *jobvr, integer *n,
 	     integer *ldvl, cmplx *vr, integer *ldvr, cmplx *work,
 	     integer *lwork, double *rwork, integer *info);
 
+void zgetrs_ (char *trans, integer *n, integer *nrhs, cmplx *a, integer *lda,
+	      integer *ipiv, cmplx *b, integer *ldb, integer *info);
+
 void zgetrf_ (integer *m, integer *n, cmplx *a, integer *lda,
 	      integer *ipiv, integer *info);
 
