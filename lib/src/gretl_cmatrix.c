@@ -1655,7 +1655,7 @@ int gretl_cmatrix_set_diagonal (gretl_matrix *targ,
     return err;
 }
 
-/* Set the lower or upper triangle of square complex matrix
+/* Set the lower or upper part of square complex matrix
    @targ using either @src (if not NULL) or @x. In the first
    case @src can be either a complex vector of the right length,
    or a real vector, or a complex scalar.
@@ -1666,20 +1666,34 @@ int gretl_cmatrix_set_triangle (gretl_matrix *targ,
 				double x, int upper)
 {
     double complex zi = 0;
-    int n, d, i, j;
+    int r, c, p, i, j, n;
     int match = 0;
     int err = 0;
 
-    if (!cmatrix_validate(targ, 1)) {
+    if (!cmatrix_validate(targ, 0)) {
 	return E_INVARG;
     }
 
-    n = targ->rows;
-    d = (n * (n-1)) / 2;
+    r = targ->rows;
+    c = targ->cols;
+
+    if ((c == 1 && upper) || (r == 1 && !upper)) {
+	/* no such part */
+	return E_INVARG;
+    }
+
+    p = MIN(r, c);
+    n = (p * (p-1)) / 2;
+
+    if (r > c && !upper) {
+	n += (r - c) * c;
+    } else if (c > r && upper) {
+	n += (c - r) * r;
+    }
 
     if (src != NULL) {
 	if (src->is_complex) {
-	    if (gretl_vector_get_length(src) == d) {
+	    if (gretl_vector_get_length(src) == n) {
 		/* conformable complex vector */
 		match = 1;
 	    } else if (cscalar(src)) {
@@ -1687,25 +1701,26 @@ int gretl_cmatrix_set_triangle (gretl_matrix *targ,
 		zi = src->z[0];
 		match = 2;
 	    }
-	} else if (gretl_vector_get_length(src) == d) {
+	} else if (gretl_vector_get_length(src) == n) {
 	    /* conformable real vector */
 	    match = 3;
 	}
     } else {
 	/* use real scalar, @x */
 	zi = x;
-	match = 4;
+	match = 2;
     }
 
     if (match == 0) {
 	return E_NONCONF;
     } else {
-	int imin = upper ? 0 : 1;
-	int imax = upper ? 1 : n;
 	int jmin = upper ? 1 : 0;
+	int jmax = upper ? c : r;
+	int imin = upper ? 0 : 1;
+	int imax = upper ? 1 : r;
 	int k = 0;
 
-	for (j=jmin; j<targ->cols; j++) {
+	for (j=jmin; j<jmax; j++) {
 	    for (i=imin; i<imax; i++) {
 		if (match == 1) {
 		    gretl_cmatrix_set(targ, i, j, src->z[k++]);
@@ -1715,10 +1730,10 @@ int gretl_cmatrix_set_triangle (gretl_matrix *targ,
 		    gretl_cmatrix_set(targ, i, j, zi);
 		}
 	    }
-	    if (upper) {
-		imax++;
-	    } else {
+	    if (!upper) {
 		imin++;
+	    } else if (imax < r) {
+		imax++;
 	    }
 	}
     }
