@@ -4450,11 +4450,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    }
 	    break;
 	case F_FFTI:
-	    if (m->is_complex) {
-		ret->v.m = gretl_complex_fft(m, 1, &p->err);
-	    } else {
-		ret->v.m = gretl_matrix_ffti(m, &p->err);
-	    }
+	    ret->v.m = gretl_matrix_ffti(m, &p->err);
 	    break;
 	case F_POLROOTS:
 	    ret->v.m = gretl_matrix_polroots(m, 0, &p->err);
