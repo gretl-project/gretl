@@ -35,7 +35,7 @@ As of mid-August 2019, gretl has native support for complex
 matrices. Not all of hansl's matrix functions accept complex input,
 but we have enabled a sizable subset of these functions which we
 believe should suffice for most econometric purposes. Complex support
-may be extended in future as the need arises.
+may be extended in future as need arises.
 
 A first point to note is that complex values are treated as a special
 case of the hansl \texttt{matrix} type; there's no \texttt{complex}
@@ -55,20 +55,21 @@ and imaginary parts respectively, and sticks them together, as in
 \begin{code}
 C = complex(A, B)
 \end{code}
-Three cases are supported, as follows.
+Three cases are supported, as follows. (Other than in the subscripts,
+$i$ denotes $\sqrt{-1}$.)
 \begin{itemize}
-\item \texttt{A} and \texttt{B} are both $m \times n$ matrices
-  (neither of which is in itself complex). Then \texttt{C} is an
-  $m \times n$ complex matrix such that $c_{ij} = a_{ij} + b_{ij}i$.
+\item \texttt{A} and \texttt{B} are both $m \times n$ real matrices
+  Then \texttt{C} is an $m \times n$ complex matrix such that
+  $c_{ij} = a_{ij} + b_{ij}i$.
 \item \texttt{A} and \texttt{B} are both scalars: \texttt{C} is a
   $1 \times 1$ complex matrix such that $c = a + bi$.
-\item \texttt{A} is an $m \times n$ matrix and \texttt{B} is a scalar:
-  \texttt{C} is an $m \times n$ matrix such that
+\item \texttt{A} is an $m \times n$ real matrix and \texttt{B} is a
+  scalar: \texttt{C} is an $m \times n$ matrix such that
   $c_{ij} = a_{ij} + bi$.
 \end{itemize}
 
 In addition, complex matrices may naturally arise as the result of
-various computations.
+certain computations.
 
 With both real and complex matrices in circulation, one may wish to
 determine whether a particular matrix is complex. The function
@@ -129,9 +130,9 @@ The operators \textit{not} defined for complex values are:
 The ``\texttt{'}'' operator is available in both unary form
 (transpose), as in \texttt{B = A'}, and binary form
 (transpose-multiply), as in \texttt{C = A'B}. But note that for
-complex \texttt{A} this means the conjugate transpose. If you need the
-non-conjugated transpose you can use \texttt{transp()}--- see
-section~\ref{sec:funcs}.
+complex \texttt{A} this means the conjugate transpose, $A^\mathrm{H}$ or
+$A^*$. If you need the non-conjugated transpose you can use
+\texttt{transp()}--- see section~\ref{sec:funcs}.
 
 You may wish to note, although none of gretl's explicit regressions
 functions (or commands) accept complex input you can calculate
@@ -202,7 +203,8 @@ functions with the exception of \texttt{atan2}.
 In addition there are the complex-only functions \texttt{cmod}
 (complex modulus, also accessible via \texttt{abs}), \texttt{carg}
 (complex ``argument''), \texttt{conj} (complex conjugate), \texttt{Re}
-(real part) and \texttt{Im} (imaginary part).
+(real part) and \texttt{Im} (imaginary part). Note that
+$\mbox{carg}(z) = \mbox{atan2}(y,x)$ for $z=x + yi$.
 
 \subsection{Transformations}
 
@@ -217,21 +219,61 @@ XML serialization used for gretl session files (\texttt{*.gretl}).
 The functions \texttt{mwrite} and \texttt{mread} also work correctly
 for use with gretl itself, but for exchange of data with other
 programs we recommend using \texttt{mwrite} on the two parts of a
-complex matrix separately. Here's an example of sending a complex
-matrix to \textsf{octave}:
-\begin{code}
+complex matrix separately. An example is shown in
+Listing~\ref{cmplx-io}: we export a complex matrix to \textsf{octave},
+\textsf{python} and \textsf{julia} in turn; calculate its inverse in
+the foreign program; then verify that the imported result is the same
+as that produced in gretl.
+
+\begin{script}[htbp]
+  \caption{Exporting and importing complex matrices}
+  \label{cmplx-io}
+\begin{scode}
+set seed 34756
 matrix C = complex(mnormal(3,3), mnormal(3,3))
-print C
-mwrite(Re(C), "Cre.mat", 1)
-mwrite(Im(C), "Cim.mat", 1)
+D = inv(C)
+
+mwrite(Re(C), "Cr.mat", 1)
+mwrite(Im(C), "Ci.mat", 1)
+
 foreign language=octave
-  A = gretl_loadmat("Cre.mat");
-  B = gretl_loadmat("Cim.mat");
-  C = complex(A, B)
+  A = gretl_loadmat('Cr.mat');
+  B = gretl_loadmat('Ci.mat');
+  D = inv(complex(A, B));
+  gretl_export(real(D), 'oct_Dr.mat');
+  gretl_export(imag(D), 'oct_Di.mat');
 end foreign
-\end{code}
-The matrix \texttt{C} displayed in \textsf{octave} should match that
-in gretl.
+
+oct_Dr = mread("oct_Dr.mat", 1)
+oct_Di = mread("oct_Di.mat", 1)
+eval D - complex(oct_Dr, oct_Di)
+
+foreign language=python
+   import numpy as np
+   A = gretl_loadmat('Cr.mat')
+   B = gretl_loadmat('Ci.mat')
+   D = np.linalg.inv(A + B*1j)
+   gretl_export(np.real(D), 'py_Dr.mat')
+   gretl_export(np.imag(D), 'py_Di.mat')
+end foreign
+
+py_Dr = mread("py_Dr.mat", 1)
+py_Di = mread("py_Di.mat", 1)
+eval D - complex(py_Dr, py_Di)
+
+foreign language=julia
+  A = gretl_loadmat("Cr.mat")
+  B = gretl_loadmat("Ci.mat")
+  D = inv(A + B*im)
+  gretl_export(real(D), "jl_Dr.mat")
+  gretl_export(imag(D), "jl_Di.mat")
+end foreign
+
+jl_Dr = mread("jl_Dr.mat", 1)
+jl_Di = mread("jl_Di.mat", 1)
+eval D - complex(jl_Dr, jl_Di)
+\end{scode}
+\end{script}
 
 \section{Backward compatibility}
 \label{sec:compat}
@@ -279,7 +321,45 @@ Our resolution on the two built-in functions is this:
 
 On the affected packages: \texttt{cmatrix} is no longer required, and
 will not be supported any more: attempting to load this package will
-produce an error message. We will make available an updated version of
-\texttt{ghosts} which uses gretl's native complex functionality.
+produce an error message in the next gretl release. We will make
+available an updated version of \texttt{ghosts} which uses gretl's
+native complex functionality.
+
+\section{Internals, testing}
+
+In the \textsf{C} programming language a double-precision complex
+value is basically just two regular ``doubles'' contiguous in memory
+(but with a good deal of useful synactic sugar). Since gretl matrices
+are in column-major order this means that an $m \times n$ complex
+matrix is in a sense equivalent to a $2m \times n$ real matrix, with
+real parts on the odd-numbered rows and imaginary parts on the even
+ones.
+
+In certain special conditions it may be useful to be able to switch
+the interpretation of a given matrix. To this end there's a ``hidden''
+function \verb|_setcmplx|; it takes a matrix argument followed by a
+boolean: 1 to switch the interpretation from real to complex, 0 to go
+from complex to real. While it's always possible to go from complex to
+real, the opposite switch fails if the matrix in question has an odd
+number of rows. Note that \verb|_setcmplx| modifies its matrix
+argument. Example:
+\begin{code}
+? matrix C = complex({1,2;3,4},{0,1;0,1})
+Generated matrix C
+? print C
+C (2 x 2)
+
+ 1 + 0i   2 + 1i
+ 3 + 0i   4 + 1i
+
+? _setcmplx(C, 0)
+? print C
+C (4 x 2)
+
+  1   2
+  0   1
+  3   4
+  0   1
+\end{code}
 
 \end{document}

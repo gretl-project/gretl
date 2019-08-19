@@ -705,33 +705,26 @@ set seed 34756
 matrix v
 A = mnormal(3,3)
 
-/* do the eigen-analysis */
-l = eigengen(A,&v)
-/* eigenvalue 1 is real, 2 and 3 are complex conjugates */
+# do the eigen-analysis
+l = eigengen(A, &v)
+# eigenvalue 1 is real, 2 and 3 are complex conjugates
 print l
 print v
 
-/* 
-  column 1 contains the first eigenvector (real)
-*/
-
+# column 1 contains the first eigenvector (real)
 B = A*v[,1]
-c = l[1,1] * v[,1]
-/* B should equal c */
+C = l[1,1] * v[,1]
+/* B should equal C */
 print B
-print c
+print C
 
-
-/* 
-  columns 2:3 contain the real and imaginary parts
-  of eigenvector 2
-*/
-
+# columns 2:3 contain the real and imaginary parts
+# of eigenvector 2
 B = A*v[,2:3]
-c = cmult(ones(3,1)*(l[2,]),v[,2:3])
-/* B should equal c */
+C = cmult(ones(3,1)*(l[2,]),v[,2:3])
+/* B should equal C */
 print B
-print c
+print C
 \end{scode}
 \end{script}
 
