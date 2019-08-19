@@ -35,7 +35,7 @@
 /* helper function for fftw-based real FFT functions */
 
 static int fft_allocate (double **px, gretl_matrix **pm,
-			 fftw_complex **pc, int r, int c,
+			 double complex **pc, int r, int c,
 			 int newstyle)
 {
     if (newstyle) {
@@ -73,7 +73,7 @@ real_matrix_fft (const gretl_matrix *y, int inverse,
     fftw_plan p = NULL;
     double *ffx = NULL;
     double xr, xi;
-    fftw_complex *ffz;
+    double complex *ffz;
     int r, c, m, odd, cr, ci;
     int i, j, cdim;
 
@@ -1013,7 +1013,7 @@ gretl_matrix *gretl_complex_fft (const gretl_matrix *A,
 				 int inverse, int *err)
 {
     gretl_matrix *B = NULL;
-    fftw_complex *tmp, *ptr;
+    double complex *tmp, *ptr;
     fftw_plan p;
     int sign;
     int r, c, j;
@@ -1032,7 +1032,7 @@ gretl_matrix *gretl_complex_fft (const gretl_matrix *A,
     r = A->rows;
     c = A->cols;
 
-    tmp = (fftw_complex *) B->val;
+    tmp = (double complex *) B->val;
     sign = inverse ? FFTW_BACKWARD : FFTW_FORWARD;
 
     ptr = tmp;

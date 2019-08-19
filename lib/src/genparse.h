@@ -566,11 +566,12 @@ enum {
 /* functions where the right-hand argument is actually a return
    location */
 #define r_return(s) (s == F_QR || s == F_EIGSYM || s == F_EIGGEN || \
-                     s == F_MOLS || s == F_MPOLS || s == F_SVD)
+                     s == F_MOLS || s == F_MPOLS || s == F_SVD || \
+		     s == F_EIGGEN2)
 
 /* functions where the middle argument is actually a return
    location */
-#define m_return(s) (s == F_SVD)
+#define m_return(s) (s == F_SVD || s == F_EIGGEN2)
 
 #define reusable(p) (p->flags & (P_COMPILE | P_EXEC))
 

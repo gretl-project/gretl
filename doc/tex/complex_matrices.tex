@@ -50,8 +50,10 @@ and discusses some questions of backward compatibility.
 \label{sec:create}
 
 The unique explicit constructor for complex matrices is the
-\texttt{complex()} function which takes two arguments, giving the real
-and imaginary parts respectively, and sticks them together, as in
+\texttt{complex()} function.\footnote{At present gretl does not have a
+  notation such as Julia's \texttt{C = A + B*im} for defining a
+  complex matrix.} This takes two arguments, giving the real and
+imaginary parts respectively, and sticks them together, as in
 \begin{code}
 C = complex(A, B)
 \end{code}
