@@ -632,7 +632,7 @@ or more matrices; these are:
 \begin{center}
 \begin{tabular}{ll}
 \texttt{eigensym} & Eigen-analysis of symmetric matrix \\
-\texttt{eigengen} & Eigen-analysis of general matrix \\
+\texttt{eiggen2}  & Eigen-analysis of general matrix \\
 \texttt{mols}     & Matrix OLS \\
 \texttt{qrdecomp} & QR decomposition \\
 \texttt{svd}      & Singular value decomposition (SVD) 
@@ -645,8 +645,7 @@ retrieved using pre-existing matrices, which are passed to the
 function as pointers (see \ref{sec:funscope}). If such values are not
 needed, the pointer may be substituted with the keyword \texttt{null}.
 
-The syntax for \texttt{qrdecomp}, \texttt{eigensym} and
-\texttt{eigengen} is of the form
+The syntax for \texttt{qrdecomp} and \texttt{eigensym} is of the form
 %
 \begin{code}
 matrix B = func(A, &C)
@@ -658,7 +657,7 @@ argument must be either the name of an existing matrix preceded by
 \verb+&+ (to indicate the ``address'' of the matrix in question), in
 which case an auxiliary result is written to that matrix, or the
 keyword \texttt{null}, in which case the auxiliary result is not
-produced, or is discarded.
+produced.
 
 In case a non-null second argument is given, the specified matrix will
 be over-written with the auxiliary result.  (It is not required that
@@ -671,7 +670,7 @@ $n$; if the eigenvectors are required, they are returned in an $n
 \times n$ matrix.  For example:
 %
 \begin{code}
-matrix V
+matrix V = {}
 matrix E = eigensym(M, &V)
 matrix E = eigensym(M, null)
 \end{code}
@@ -680,53 +679,35 @@ In the first case \texttt{E} holds the eigenvalues of \texttt{M} and
 \texttt{V} holds the eigenvectors.  In the second, \texttt{E} holds
 the eigenvalues but the eigenvectors are not computed.
 
-The function \texttt{eigengen} computes the eigenvalues, and
-optionally the eigenvectors, of a general $n \times n$ matrix.  The
-eigenvalues are returned directly in an $n \times 2$ matrix, the first
-column holding the real components and the second column the imaginary
-components.  
+The function \texttt{eiggen2} computes the eigenvalues, and optionally
+the right and/or left eigenvectors, of a general $n \times n$
+matrix.\footnote{The ``legacy'' function \texttt{eigengen} used to be
+  the way to do this prior to gretl 2019d.} Following the input matrix
+argument there are two slots for matrix-addresses, the first to
+retrieve the right eigenvectors and the second for the left.  Calls to
+this function should therefore conform to one of the following
+patterns.
+\begin{code}
+# get the eigenvalues only
+matrix E = eiggen2(M)
 
-If the eigenvectors are required (that is, if the second argument to
-\texttt{eigengen} is not \texttt{null}), they are returned in an $n
-\times n$ matrix. The column arrangement of this matrix is somewhat
-non-trivial: the eigenvectors are stored in the same order as the
-eigenvalues, but the real eigenvectors occupy one column, whereas
-complex eigenvectors take two (the real part comes first); the total
-number of columns is still $n$, because the conjugate eigenvector is
-skipped. Listing \ref{cmplx-evecs} provides a (hopefully) clarifying
-example (see also subsection \ref{sec:complex}).
+# get the right eigenvectors as well
+matrix V = {}
+matrix E = eiggen2(M, &V)
 
-\begin{script}[htbp]
-  \caption{Complex eigenvalues and eigenvectors}
-  \label{cmplx-evecs}
-\begin{scode}
-set seed 34756
+# get both sets of eigenvectors
+matrix V = {}
+matrix W = {}
+matrix E = eiggen2(M, &V, &W)
 
-matrix v
-A = mnormal(3,3)
+# get the left eigenvectors but not the right
+matrix W = {}
+matrix E = eiggen2(M, null, &W)
+\end{code}
 
-# do the eigen-analysis
-l = eigengen(A, &v)
-# eigenvalue 1 is real, 2 and 3 are complex conjugates
-print l
-print v
-
-# column 1 contains the first eigenvector (real)
-B = A*v[,1]
-C = l[1,1] * v[,1]
-/* B should equal C */
-print B
-print C
-
-# columns 2:3 contain the real and imaginary parts
-# of eigenvector 2
-B = A*v[,2:3]
-C = cmult(ones(3,1)*(l[2,]),v[,2:3])
-/* B should equal C */
-print B
-print C
-\end{scode}
-\end{script}
+The eigenvalues are returned directly in a complex $n$-vector. If the
+eigenvectors are wanted they are returned in a $n \times n$ complex
+matrix.
 
 The \texttt{qrdecomp} function computes the QR decomposition of an $m
 \times n$ matrix $A$: $A = QR$, where $Q$ is an $m \times n$
