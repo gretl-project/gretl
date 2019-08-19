@@ -174,10 +174,10 @@ under certain conditions: the functions \texttt{diag, vec, vech,
 arguments is 0; and the function \texttt{nullspace} when its argument
 has full column rank.
 
-\section{Selecting sub-matrices}
+\section{Selecting submatrices}
 \label{sec:matrix-sub}
 
-You can select sub-matrices of a given matrix using the syntax
+You can select submatrices of a given matrix using the syntax
 
 \hspace{1em} \texttt{A[}\textsl{rows},\textsl{cols}\texttt{]}
 
@@ -219,18 +219,30 @@ OK to give just one index specifier and omit the comma. For example,
 \texttt{A[2]} selects the second element of \texttt{A} if \texttt{A}
 is a vector. Otherwise the comma is mandatory.
 
-In addition there is a pre-defined index specification, \texttt{diag},
-which selects the principal diagonal of a square matrix, as in
-\texttt{B[diag]}, where \texttt{B} is square.
+In addition there are some predefined index specifications,
+represented by the keywords \texttt{diag}, \texttt{lower},
+\texttt{upper}, \texttt{real} and \texttt{imag}. These imply specific
+row \textit{and} column selections, and therefore cannot be combined
+with any additional, comma-separated term.
 
-You can use selections of this sort on either the right-hand side of
-a matrix-generating formula or the left.  Here is an example of use of
-a selection on the right, to extract a $2\times 2$ submatrix $B$ from a
-$3\times 3$ matrix $A$:
+\begin{itemize}
+\item The \texttt{diag} specification selects the principal diagonal
+  of a matrix.
+\item \texttt{lower} and \texttt{upper} select, respectively, the
+  elements of a matrix below and those above the principal diagonal.
+\item \texttt{real} and \texttt{imag} are specific to complex matrices
+  and are described in the (forthcoming) chapter on that topic.
+\end{itemize}
+
+You can use submatrix selections on either the right-hand side of a
+matrix-generating formula or the left.  Here is an example of use of a
+selection on the right, to extract a $2\times 2$ submatrix $B$ from a
+$3\times 3$ matrix $A$, then the lower triangle of $A$:
 %
 \begin{code}
 matrix A = {1, 2, 3; 4, 5, 6; 7, 8, 9}
 matrix B = A[1:2,2:3]
+matrix C = A[lower]
 \end{code}
 %
 And here are examples of selection on the left.  The second line below
@@ -245,10 +257,17 @@ matrix d = {1, 1, 1}
 matrix A[diag] = d
 \end{code}
 
+When the \texttt{lower} and \texttt{upper} selections are used on the
+right, they yield the vec of the elements in their scope. When used on
+the left, the replacement must be either (a) a vector of length equal to
+the number of elements in the selection or (b) a scalar value. In case
+(a) the elements of the target matrix are set in column-major order,
+in case (b) they are all set using the scalar.
+
 \section{Deleting rows or columns}
 \label{sec:neg-indices}
 
-A variant of sub-matrix notation is available for convenience in
+A variant of submatrix notation is available for convenience in
 dropping specified rows and/or columns from a matrix, namely giving
 negative values for the indices. Here is a simple example,
 %
@@ -283,7 +302,7 @@ matrix B = A[,-seq(3,7)]
 where \texttt{B} drops columns 3 to 7 from \texttt{A}. Second, use of
 negative indices is valid only on the right-hand side of a matrix
 calculation; there is no ``negative index'' equivalent of assignment
-to a sub-matrix, as in
+to a submatrix, as in
 %
 \begin{code}
 A[1:3,] = ones(3, cols(A))
@@ -956,7 +975,7 @@ matrix v2 = m1.$vcv[1:2,1:2]
 %$
 The first command grabs the residuals from the last model; the second
 grabs the coefficient vector from model \texttt{m1}; and the third
-(which uses the mechanism of sub-matrix selection described above)
+(which uses the mechanism of submatrix selection described above)
 grabs a portion of the covariance matrix from model \texttt{m1}.
 
 If the model in question a VAR or VECM (only) \dollar{compan} and
