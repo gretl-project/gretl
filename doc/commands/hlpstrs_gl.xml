@@ -43,6 +43,7 @@
  <gentext key="smatrix"       text="matriz cadrada"/>
  <gentext key="symmat"        text="matriz simétrica"/>
  <gentext key="pdmat"         text="matriz definida positiva"/>
+ <gentext key="cmatrix"       text="matriz complexa"/>
  <gentext key="matrixref"     text="referencia a matriz"/>
  <gentext key="seriesref"     text="referencia a serie"/>
  <gentext key="bundleref"     text="referencia a feixe"/>
