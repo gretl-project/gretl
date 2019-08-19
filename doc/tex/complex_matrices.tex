@@ -90,7 +90,7 @@ or \texttt{Im()}, as in
 \begin{code}
 scalar rij = Re(C[i,j])
 \end{code}
-which gets you the real part of $C_{ij}$.
+which gets you the real part of $c_{ij}$.
 
 In addition the dummy selectors \texttt{real} and \texttt{imag} can be
 used to assign to just the real or imaginary component of a complex
@@ -116,7 +116,7 @@ which work element-wise or by ``broadcasting'' vectors. Moreover,
 will be complex. In such cases the real operand is treated as a
 complex matrix with an all-zero imaginary part.
 
-The operators \textit{not} accepted for complex values are:
+The operators \textit{not} defined for complex values are:
 \begin{itemize}
 \item Those that include an inequality (such as ``\verb+.>+''), since
   complex values as such cannot be compared as greater or lesser
@@ -134,10 +134,9 @@ non-conjugated transpose you can use \texttt{transp()}--- see
 section~\ref{sec:funcs}.
 
 You may wish to note, although none of gretl's explicit regressions
-functions (or commands) accept complex input you can calculate the
-parameter estimates for a regression of complex \texttt{Y}
-($T \times 1$) on complex \texttt{X} ($T \times k$) via
-\verb|B = X \ Y|.
+functions (or commands) accept complex input you can calculate
+parameter estimates for a least-squares regression of complex $Y$
+($T \times 1$) on complex $X$ ($T \times k$) via \verb|B = X \ Y|.
 
 \section{Functions}
 \label{sec:funcs}
@@ -175,7 +174,7 @@ vector it produces a Hermitian matrix.
 
 The only functions \textit{not} available for complex matrices are
 \texttt{cnameset} and \texttt{rnameset}. That is, you cannot name the
-columns or rows of such matrix (although this restriction could
+columns or rows of such matrices (although this restriction could
 probably be lifted without great difficulty).
 
 \subsection{Matrix shaping}
@@ -215,11 +214,11 @@ matrices, but no others.
 Complex matrices should be stored and retrieved correctly in the
 XML serialization used for gretl session files (\texttt{*.gretl}).
 
-The functions \texttt{mwrite} and \texttt{mread} also work OK for use
-with gretl itself, but for exchange of data with other programs we
-recommend using \texttt{mwrite} on the two parts of a complex matrix
-separately. Here's an example of sending a complex matrix to
-\textsf{octave}:
+The functions \texttt{mwrite} and \texttt{mread} also work correctly
+for use with gretl itself, but for exchange of data with other
+programs we recommend using \texttt{mwrite} on the two parts of a
+complex matrix separately. Here's an example of sending a complex
+matrix to \textsf{octave}:
 \begin{code}
 matrix C = complex(mnormal(3,3), mnormal(3,3))
 print C
