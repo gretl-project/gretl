@@ -41,7 +41,7 @@ A first point to note is that complex values are treated as a special
 case of the hansl \texttt{matrix} type; there's no \texttt{complex}
 type as such. Complex scalars fall under the \texttt{matrix} type as
 $1 \times 1$ matrices; the hansl \texttt{scalar} type is only for real
-values.
+values (as is the \texttt{series} type).
 
 This document explains how to create and manipulate complex matrices,
 and discusses some questions of backward compatibility.
@@ -151,15 +151,18 @@ categories employed in gretl's online ``Function reference'' (under the
 
 \subsection{Linear algebra}
 
-The only functions that accept complex arguments at present are:
-\texttt{det}, \texttt{ldet}, \texttt{eigengen}, \texttt{eigensym} (for
-Hermitian matrices), \texttt{fft}, \texttt{ffti}, \texttt{inv},
-\texttt{ginv}, \texttt{hdprod}, \texttt{rank}, \texttt{svd},
-\texttt{tr}, and \texttt{transp}.
+The functions that accept complex arguments at present are:
+\texttt{det}, \texttt{ldet}, \texttt{eigensym} (for Hermitian
+matrices), \texttt{ffti}, \texttt{inv}, \texttt{ginv},
+\texttt{hdprod}, \texttt{rank}, \texttt{svd}, \texttt{tr}, and
+\texttt{transp}.
 
-In addition there's the complex-only function \texttt{ctrans()} which
-gives the conjugate transpose; note that \texttt{transp} gives the
-straight (non-conjugated) transpose of a complex matrix.
+In addition the new functions \texttt{eiggen2} and \texttt{fft2} are
+complex-supporting versions of \texttt{eigengen} and \texttt{fft},
+respectively (see section~\ref{sec:compat} for details). And there's
+the complex-only function \texttt{ctrans} which gives the conjugate
+transpose; note that \texttt{transp} gives the straight
+(non-conjugated) transpose of a complex matrix.
 
 \subsection{Matrix building}
 
@@ -171,7 +174,7 @@ some of these functions can be applied to complex matrices as such,
 namely, \texttt{diag}, \texttt{diagcat}, \texttt{lower},
 \texttt{upper}, \texttt{vec}, \texttt{vech} and \texttt{unvech}.
 
-Please note: when \texttt{unvech()} is applied to a suitable real
+Please note: when \texttt{unvech} is applied to a suitable real
 vector it produces a symmetric matrix, but when applied to a complex
 vector it produces a Hermitian matrix.
 
