@@ -1707,7 +1707,7 @@ void gretl_matrix_print_range (const gretl_matrix *m,
 			       PRN *prn)
 {
     if (m->is_complex) {
-	complex_matrix_print_range(m, msg, rmin, rmax, prn);
+	gretl_cmatrix_print_range(m, msg, rmin, rmax, prn);
     } else {
 	real_matrix_print_to_prn(m, msg, 0, NULL, NULL,
 				 rmin, rmax, prn);
@@ -1877,7 +1877,7 @@ void gretl_matrix_print_with_format (const gretl_matrix *m,
     if (gretl_is_null_matrix(m) || fmt == NULL || *fmt == '\0') {
 	real_matrix_print_to_prn(m, NULL, 1, NULL, NULL, -1, -1, prn);
     } else if (m->is_complex) {
-	complex_matrix_printf(m, fmt, prn);
+	gretl_cmatrix_printf(m, fmt, prn);
     } else {
 	const char **rownames = NULL;
 	char *ifmt = NULL, *xfmt = NULL;

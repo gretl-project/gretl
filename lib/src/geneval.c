@@ -2865,7 +2865,7 @@ static int real_matrix_calc (const gretl_matrix *A,
 	if (A->is_complex || B->is_complex) {
 	    int sgn = (op == B_SUB)? -1 : 1;
 
-	    C = cmatrix_add_sub(A, B, sgn, &err);
+	    C = gretl_cmatrix_add_sub(A, B, sgn, &err);
 	} else if (gretl_matrix_is_scalar(A) ||
 		   gretl_matrix_is_scalar(B)) {
 	    C = matrix_add_sub_scalar(A, B, op);
@@ -4444,7 +4444,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    break;
 	case F_FFT2:
 	    if (m->is_complex) {
-		ret->v.m = gretl_complex_fft(m, 0, &p->err);
+		ret->v.m = gretl_cmatrix_fft(m, 0, &p->err);
 	    } else {
 		ret->v.m = gretl_matrix_fft(m, 1, &p->err);
 	    }
@@ -4565,11 +4565,11 @@ static NODE *complex_matrix_node (NODE *l, NODE *r, parser *p)
 	if (l->t == NUM && r->t == NUM) {
 	    double xr = l->v.xval, xi = r->v.xval;
 
-	    ret->v.m = cmatrix_from_scalar(xr + xi*I, &p->err);
+	    ret->v.m = gretl_cmatrix_from_scalar(xr + xi*I, &p->err);
 	} else if (l->t == MAT && r->t == MAT) {
-	    ret->v.m = gretl_cmatrix(l->v.m, r->v.m, 0, &p->err);
+	    ret->v.m = gretl_cmatrix_build(l->v.m, r->v.m, 0, &p->err);
 	} else if (l->t == MAT && r->t == NUM) {
-	    ret->v.m = gretl_cmatrix(l->v.m, NULL, r->v.xval, &p->err);
+	    ret->v.m = gretl_cmatrix_build(l->v.m, NULL, r->v.xval, &p->err);
 	} else {
 	    p->err = E_TYPES;
 	}
@@ -19123,7 +19123,7 @@ void gen_save_or_print (parser *p, PRN *prn)
 	    return;
 	} else if (p->ret->t == MAT) {
 	    if (p->ret->v.m->is_complex) {
-		complex_matrix_print(p->ret->v.m, p->lh.name, p->prn);
+		gretl_cmatrix_print(p->ret->v.m, p->lh.name, p->prn);
 	    } else {
 		gretl_matrix_print_to_prn(p->ret->v.m, p->lh.name, p->prn);
 	    }

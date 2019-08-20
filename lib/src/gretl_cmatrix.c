@@ -247,7 +247,7 @@ gretl_matrix *gretl_matrix_ffti (const gretl_matrix *y, int *err)
 	    /* its inverse should be real */
 	    return real_matrix_fft(y, 1, 1, err);
 	} else {
-	    return gretl_complex_fft(y, 1, err);
+	    return gretl_cmatrix_fft(y, 1, err);
 	}
     } else {
 	/* old-style */
@@ -1097,7 +1097,7 @@ gretl_matrix *gretl_cmatrix_kronecker (const gretl_matrix *A,
 
 /* Complex FFT (or inverse) via fftw */
 
-gretl_matrix *gretl_complex_fft (const gretl_matrix *A,
+gretl_matrix *gretl_cmatrix_fft (const gretl_matrix *A,
 				 int inverse, int *err)
 {
     gretl_matrix *B = NULL;
@@ -1149,10 +1149,10 @@ gretl_matrix *gretl_complex_fft (const gretl_matrix *A,
 
 #define CDEC5 1 /* five decimal places in default format */
 
-int complex_matrix_print_range (const gretl_matrix *A,
-				const char *name,
-				int rmin, int rmax,
-				PRN *prn)
+int gretl_cmatrix_print_range (const gretl_matrix *A,
+			       const char *name,
+			       int rmin, int rmax,
+			       PRN *prn)
 {
     double complex aij;
     double re, im, ai, xmax;
@@ -1251,16 +1251,16 @@ int complex_matrix_print_range (const gretl_matrix *A,
     return 0;
 }
 
-int complex_matrix_print (const gretl_matrix *A,
-			  const char *name,
-			  PRN *prn)
+int gretl_cmatrix_print (const gretl_matrix *A,
+			 const char *name,
+			 PRN *prn)
 {
-    return complex_matrix_print_range(A, name, -1, -1, prn);
+    return gretl_cmatrix_print_range(A, name, -1, -1, prn);
 }
 
-int complex_matrix_printf (const gretl_matrix *A,
-			   const char *fmt,
-			   PRN *prn)
+int gretl_cmatrix_printf (const gretl_matrix *A,
+			  const char *fmt,
+			  PRN *prn)
 {
     double complex aij;
     double re, im;
@@ -1315,9 +1315,9 @@ int complex_matrix_printf (const gretl_matrix *A,
    dimensions.
 */
 
-gretl_matrix *gretl_cmatrix (const gretl_matrix *Re,
-			     const gretl_matrix *Im,
-			     double ival, int *err)
+gretl_matrix *gretl_cmatrix_build (const gretl_matrix *Re,
+				   const gretl_matrix *Im,
+				   double ival, int *err)
 {
     gretl_matrix *C = NULL;
     int i, n;
@@ -1356,8 +1356,8 @@ gretl_matrix *gretl_cmatrix (const gretl_matrix *Re,
    if @im is non-zero.
 */
 
-gretl_matrix *gretl_cxtract (const gretl_matrix *A, int im,
-			     int *err)
+gretl_matrix *gretl_cmatrix_extract (const gretl_matrix *A,
+				     int im, int *err)
 {
     gretl_matrix *B = NULL;
     int i, n;
@@ -1458,9 +1458,9 @@ int gretl_ctrans_in_place (gretl_matrix *A)
    scalar matrix, real or complex.
 */
 
-gretl_matrix *cmatrix_add_sub (const gretl_matrix *A,
-			       const gretl_matrix *B,
-			       int sgn, int *err)
+gretl_matrix *gretl_cmatrix_add_sub (const gretl_matrix *A,
+				     const gretl_matrix *B,
+				     int sgn, int *err)
 {
     gretl_matrix *C = NULL;
     double complex aval = 0;
@@ -1630,7 +1630,7 @@ int apply_cmatrix_unary_op (gretl_matrix *targ,
     return err;
 }
 
-gretl_matrix *cmatrix_from_scalar (double complex z, int *err)
+gretl_matrix *gretl_cmatrix_from_scalar (double complex z, int *err)
 {
     gretl_matrix *ret = gretl_cmatrix_new(1, 1);
 
@@ -1669,7 +1669,7 @@ gretl_matrix *gretl_cmatrix_determinant (const gretl_matrix *X,
 	if (log) {
 	    cret = clog(cret);
 	}
-	ret = cmatrix_from_scalar(cret, err);
+	ret = gretl_cmatrix_from_scalar(cret, err);
     }
 
     return ret;
@@ -1689,7 +1689,7 @@ gretl_matrix *gretl_cmatrix_trace (const gretl_matrix *X,
 	for (i=0; i<X->rows; i++) {
 	    tr += gretl_cmatrix_get(X, i, i);
 	}
-	ret = cmatrix_from_scalar(tr, err);
+	ret = gretl_cmatrix_from_scalar(tr, err);
     }
 
     return ret;
@@ -2339,7 +2339,7 @@ gretl_matrix *cmatrix_get_element (const gretl_matrix *M,
 	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), i+1);
 	*err = E_INVARG;
     } else {
-	ret = cmatrix_from_scalar(M->z[i], err);
+	ret = gretl_cmatrix_from_scalar(M->z[i], err);
     }
 
     return ret;
@@ -2349,9 +2349,9 @@ gretl_matrix *cmatrix_get_element (const gretl_matrix *M,
    using @src if non-NULL or @x otherwise.
 */
 
-int complex_matrix_set_part (gretl_matrix *targ,
-			     const gretl_matrix *src,
-			     double x, int im)
+int gretl_cmatrix_set_part (gretl_matrix *targ,
+			    const gretl_matrix *src,
+			    double x, int im)
 {
     double complex z;
     int i, j;

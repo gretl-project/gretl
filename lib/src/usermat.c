@@ -1018,14 +1018,14 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
     } else if (spec->ltype == SEL_REAL || spec->ltype == SEL_IMAG) {
 	int im = (spec->ltype == SEL_IMAG);
 
-	return gretl_cxtract(M, im, err);
+	return gretl_cmatrix_extract(M, im, err);
     } else if (spec->ltype == SEL_CONTIG) {
 	return matrix_get_chunk(M, spec, err);
     } else if (spec->ltype == SEL_ELEMENT) {
 	int i = mspec_get_element(spec);
 
 	if (M->is_complex) {
-	    S = cmatrix_from_scalar(M->z[i], err);
+	    S = gretl_cmatrix_from_scalar(M->z[i], err);
 	} else {
 	    S = gretl_matrix_from_scalar(M->val[i]);
 	}
@@ -2038,7 +2038,7 @@ int gretl_matrix_set_part (gretl_matrix *targ,
 	if (targ->is_complex) {
 	    int im = (sel == SEL_IMAG);
 
-	    err = complex_matrix_set_part(targ, src, x, im);
+	    err = gretl_cmatrix_set_part(targ, src, x, im);
 	} else {
 	    err = E_TYPES;
 	}

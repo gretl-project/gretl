@@ -54,24 +54,24 @@ int gretl_cmatrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
 
 int gretl_cmatrix_rank (const gretl_matrix *A, int *err);
 
-gretl_matrix *gretl_complex_fft (const gretl_matrix *A, int inverse,
+gretl_matrix *gretl_cmatrix_fft (const gretl_matrix *A, int inverse,
 				 int *err);
 
-gretl_matrix *gretl_cmatrix (const gretl_matrix *Re,
-			     const gretl_matrix *Im,
-			     double ival, int *err);
+gretl_matrix *gretl_cmatrix_build (const gretl_matrix *Re,
+				   const gretl_matrix *Im,
+				   double ival, int *err);
 
-gretl_matrix *gretl_cxtract (const gretl_matrix *A, int im,
-			    int *err);
+gretl_matrix *gretl_cmatrix_extract (const gretl_matrix *A,
+				     int im, int *err);
 
 gretl_matrix *gretl_ctrans (const gretl_matrix *A,
 			    int conjugate, int *err);
 
 int gretl_ctrans_in_place (gretl_matrix *A);
 
-gretl_matrix *cmatrix_add_sub (const gretl_matrix *A,
-			       const gretl_matrix *B,
-			       int sgn, int *err);
+gretl_matrix *gretl_cmatrix_add_sub (const gretl_matrix *A,
+				     const gretl_matrix *B,
+				     int sgn, int *err);
 
 int apply_cmatrix_dfunc (gretl_matrix *targ,
 			 const gretl_matrix *src,
@@ -116,20 +116,20 @@ gretl_matrix *gretl_cmatrix_vector_stat (const gretl_matrix *m,
 
 int gretl_cmatrix_fill (gretl_matrix *m, double complex z);
 
-gretl_matrix *cmatrix_from_scalar (double complex z, int *err);
+gretl_matrix *gretl_cmatrix_from_scalar (double complex z, int *err);
 
-int complex_matrix_print_range (const gretl_matrix *A,
-				const char *name,
-				int rmin, int rmax,
-				PRN *prn);
+int gretl_cmatrix_print_range (const gretl_matrix *A,
+			       const char *name,
+			       int rmin, int rmax,
+			       PRN *prn);
 
-int complex_matrix_print (const gretl_matrix *A,
-			  const char *name,
+int gretl_cmatrix_print (const gretl_matrix *A,
+			 const char *name,
+			 PRN *prn);
+
+int gretl_cmatrix_printf (const gretl_matrix *A,
+			  const char *fmt,
 			  PRN *prn);
-
-int complex_matrix_printf (const gretl_matrix *A,
-			   const char *fmt,
-			   PRN *prn);
 
 gretl_matrix *gretl_cmatrix_dot_op (const gretl_matrix *a,
 				    const gretl_matrix *b,
@@ -143,8 +143,8 @@ gretl_matrix *gretl_cmatrix_divide (const gretl_matrix *A,
 gretl_matrix *cmatrix_get_element (const gretl_matrix *M,
 				   int i, int *err);
 
-int complex_matrix_set_part (gretl_matrix *targ,
-			     const gretl_matrix *src,
-			     double x, int im);
+int gretl_cmatrix_set_part (gretl_matrix *targ,
+			    const gretl_matrix *src,
+			    double x, int im);
 
 #endif /* GRETL_CMATRIX_H */
