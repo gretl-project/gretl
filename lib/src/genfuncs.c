@@ -6174,9 +6174,14 @@ gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
 	return NULL;
     }
 
-    if (X != NULL && X->rows / Y->rows != f) {
-	*err = E_INVARG;
-	return NULL;
+    if (X != NULL) {
+	if (X->rows / Y->rows != f) {
+	    *err = E_INVARG;
+	    return NULL;
+	} else if (X->is_complex) {
+	    *err = E_CMPLX;
+	    return NULL;
+	}
     }
 
     chowlin = get_plugin_function("chow_lin_interpolate");

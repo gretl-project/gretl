@@ -58,10 +58,10 @@ enum {
               B_DOTADD,
               B_DOTSUB,
               B_DOTEQ,
-              B_DOTGT,
-  /* 30 */    B_DOTLT,
-	      B_DOTGTE,
+              B_DOTLT,
+  /* 30 */    B_DOTGT,
 	      B_DOTLTE,
+	      B_DOTGTE,
 	      B_DOTNEQ,
               B_DOTASN,
               B_KRON,     /* Kronecker product */
@@ -337,7 +337,7 @@ enum {
     F_RESAMPLE,
     F_FCSTATS,
     F_FRACLAG,
-    F_MREVERSE,
+    F_MREV,
     F_DESEAS,
     F_PERGM,
     F_NPV,
@@ -529,6 +529,8 @@ enum {
 
 #define bnsym(s) (s == MDEF || s == FARGS)
 
+#define alias_reversed(n) (n->flags & ALS_NODE)
+
 /* function with single string argument */
 #define string_arg_func(s) (s == F_ISDISCR || s == F_OBSNUM || \
 			    s == F_BACKTICK || s == F_VARNUM || \
@@ -596,20 +598,20 @@ union val {
     void *ptr;
 };
 
-enum {
+enum node_flags {
     AUX_NODE = 1 << 0, /* auxiliary: free on exit */
     TMP_NODE = 1 << 1, /* temporary: free content on exit */
     SVL_NODE = 1 << 2, /* holds string-valued series */
     PRX_NODE = 1 << 3, /* aux node is proxy (don't reuse!) */
-    ALS_NODE = 1 << 4, /* node holds aliased function call */
-    LHT_NODE = 1 << 5, /* node holds terminal of LHS */
-    MSL_NODE = 1 << 6, /* (scalar) node is matrix element */
-    MUT_NODE = 1 << 7  /* node is inherently mutable in type */
+    LHT_NODE = 1 << 4, /* node holds terminal of LHS */
+    MSL_NODE = 1 << 5, /* (scalar) node is matrix element */
+    MUT_NODE = 1 << 6, /* node is inherently mutable in type */
+    ALS_NODE = 1 << 7  /* function subject to "reversing" alias */
 };
 
 struct node {
-    short t;         /* type identifier */
-    unsigned char flags; /* AUX_NODE etc., see above */
+    gint16 t;        /* type identifier */
+    guint8 flags;    /* AUX_NODE etc., see above */
     int vnum;        /* associated series ID number */
     char *vname;     /* associated variable name */
     user_var *uv;    /* associated named variable */

@@ -13756,7 +13756,10 @@ gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p,
     } else if (X->rows < 2) {
 	*err = E_TOOFEW;
 	return NULL;
-    }
+    } else if (X->is_complex) {
+	*err = E_CMPLX;
+	return NULL;
+    }	
 
     D = gretl_matrix_copy(X);
     if (D == NULL) {

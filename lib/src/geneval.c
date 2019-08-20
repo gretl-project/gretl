@@ -101,7 +101,7 @@ enum {
 			f == F_VEC || f == F_VECH || f == F_UNVECH ||	\
 			f == F_CHOL || f == F_UPPER || f == F_LOWER ||	\
 			f == F_SORT || f == F_DSORT || f == F_VALUES || \
-			f == F_MREVERSE)
+			f == F_MREV)
 
 #define dataset_dum(n) (n->t == DUM && n->v.idnum == DUM_DATASET)
 
@@ -1349,6 +1349,13 @@ static int operator_real_only (int op)
     return E_CMPLX;
 }
 
+static int function_real_only (int f)
+{
+    gretl_errmsg_sprintf("%s: %s", getsymb(f),
+			 _("complex arguments are not supported"));
+    return E_CMPLX;
+}
+
 static double complex c_xy_calc (double complex x,
 				 double complex y,
 				 int op, parser *p)
@@ -1677,6 +1684,19 @@ static gretl_matrix *node_get_matrix (NODE *n, parser *p,
 	ret = mm[i];
 	ret->val[0] = x;
 	return ret;
+    }
+}
+
+static gretl_matrix *node_get_real_matrix (NODE *n, parser *p,
+					   int i, int argnum)
+{
+    gretl_matrix *m = node_get_matrix(n, p, i, argnum);
+
+    if (!p->err && m->is_complex) {
+	p->err = E_CMPLX;
+	return NULL;
+    } else {
+	return m;
     }
 }
 
@@ -2820,13 +2840,12 @@ static gretl_matrix *calc_get_matrix (gretl_matrix **pM,
     }
 }
 
-#define m_op_does_complex(o) (o==B_ADD || o==B_SUB || o==B_MUL || \
-			      o==B_TRMUL || o==B_DOTMULT || o==B_DOTDIV || \
-			      o==B_DOTPOW || o==F_MCSEL || o==F_MRSEL || \
-			      o==B_DOTASN || o==B_HCAT || o==B_VCAT || \
-			      o==B_DOTADD || o==B_DOTSUB || op==F_DSUM || \
-			      o==B_DOTEQ || o==B_DOTNEQ || op==F_HDPROD || \
-			      o==B_KRON || o==B_LDIV || o==B_DIV)
+#define op_no_complex(o) ((o >= B_LT && o <= B_GTE) || \
+			  (o >= B_DOTLT && o <= B_DOTGTE))
+
+#define fn_no_complex(f) (f == F_QFORM || f == F_LSOLVE || \
+			  f == F_CMULT || f == F_CDIV || \
+			  f == F_CONV2D)
 
 /* return allocated result of binary operation performed on
    two matrices */
@@ -2854,9 +2873,13 @@ static int real_matrix_calc (const gretl_matrix *A,
 	}
     }
 
-    if ((A->is_complex || B->is_complex) && !m_op_does_complex(op)) {
+    if (A->is_complex || B->is_complex) {
 	/* gatekeeper for complex */
-	return operator_real_only(op);
+	if (op_no_complex(op)) {
+	    return operator_real_only(op);
+	} else if (fn_no_complex(op)) {
+	    return function_real_only(op);
+	}
     }
 
     switch (op) {
@@ -3122,9 +3145,9 @@ static NODE *matrix_series_calc (NODE *l, NODE *r, int op, parser *p)
 
 	if (l->t == SERIES) {
 	    tmp = a = tmp_matrix_from_series(l, p);
-	    b = node_get_matrix(r, p, 0, 0);
+	    b = node_get_real_matrix(r, p, 0, 0);
 	} else {
-	    a = node_get_matrix(l, p, 0, 0);
+	    a = node_get_real_matrix(l, p, 0, 0);
 	    tmp = b = tmp_matrix_from_series(r, p);
 	}
 
@@ -3365,13 +3388,16 @@ static NODE *numeric_jacobian_or_hessian (NODE *l, NODE *m, NODE *r,
    matrix-pointer node
 */
 
-static gretl_matrix *matrix_node_get_matrix (NODE *n, parser *p)
+static gretl_matrix *mat_node_get_real_matrix (NODE *n, parser *p)
 {
     if (n->t == U_ADDR) {
 	n = n->L;
     }
     if (n == NULL || n->t != MAT) {
 	p->err = E_TYPES;
+	return NULL;
+    } else if (n->v.m->is_complex) {
+	p->err = E_CMPLX;
 	return NULL;
     } else {
 	return n->v.m;
@@ -3447,11 +3473,11 @@ static NODE *BFGS_constrained_max (NODE *t, parser *p)
     for (i=0; i<k && !p->err; i++) {
 	e = n->v.bn.n[i];
 	if (i == 0) {
-	    b = matrix_node_get_matrix(e, p);
+	    b = mat_node_get_real_matrix(e, p);
 	} else if (i == 1) {
 	    e = eval(n->v.bn.n[i], p);
 	    if (!p->err) {
-		bounds = matrix_node_get_matrix(e, p);
+		bounds = mat_node_get_real_matrix(e, p);
 	    }
 	} else if (i == 2) {
 	    sf = node_get_fncall(e, p);
@@ -3466,7 +3492,7 @@ static NODE *BFGS_constrained_max (NODE *t, parser *p)
     }
 
     if (!p->err) {
-	int minimize = (t->flags & ALS_NODE)? 1 : 0;
+	int minimize = alias_reversed(t) ? 1 : 0;
 
 	ret->v.xval = user_BFGS(b, sf, sg, p->dset, bounds,
 				minimize, p->prn, &p->err);
@@ -3485,7 +3511,7 @@ static NODE *BFGS_maximize (NODE *l, NODE *m, NODE *r,
 	const char *sf = m->v.str;
 	const char *sg = NULL;
 
-	b = matrix_node_get_matrix(l, p);
+	b = mat_node_get_real_matrix(l, p);
 
 	if (!p->err) {
 	    if (r->t == STR) {
@@ -3509,7 +3535,7 @@ static NODE *BFGS_maximize (NODE *l, NODE *m, NODE *r,
 
 	ret = aux_scalar_node(p);
 	if (ret != NULL) {
-	    int minimize = (t->flags & ALS_NODE)? 1 : 0;
+	    int minimize = alias_reversed(t) ? 1 : 0;
 
 	    ret->v.xval = user_BFGS(b, sf, sg, p->dset, NULL,
 				    minimize, p->prn, &p->err);
@@ -3532,7 +3558,7 @@ static NODE *deriv_free_node (NODE *l, NODE *m, NODE *r,
 	double tol = NADBL;
 	int maxit = 0;
 
-	b = matrix_node_get_matrix(l, p);
+	b = mat_node_get_real_matrix(l, p);
 	if (!p->err) {
 	    if (gretl_is_null_matrix(b)) {
 		p->err = E_DATA;
@@ -3555,7 +3581,7 @@ static NODE *deriv_free_node (NODE *l, NODE *m, NODE *r,
 	    ret = aux_scalar_node(p);
 	}
 	if (ret != NULL) {
-	    int minimize = (t->flags & ALS_NODE)? 1 : 0;
+	    int minimize = alias_reversed(t) ? 1 : 0;
 	    MaxMethod method = SIMANN_MAX;
 
 	    if (t->t == F_NMMAX) {
@@ -3956,13 +3982,6 @@ static void matrix_error (parser *p)
     }
 }
 
-static int function_real_only (int f)
-{
-    gretl_errmsg_sprintf("%s: %s", getsymb(f),
-			 _("complex arguments are not supported"));
-    return E_CMPLX;
-}
-
 /* functions taking a matrix argument and returning a
    scalar result */
 
@@ -4265,13 +4284,12 @@ static void matrix_minmax_indices (int f, int *mm, int *rc, int *idx)
 }
 
 #define mmf_does_complex(f) (f==F_INV || f==F_UPPER || f==F_LOWER || \
-			     f==F_DIAG || f==F_TRANSP || \
+			     f==F_DIAG || f==F_TRANSP || f==F_CTRANS || \
 			     f==F_VEC || f==F_VECH || f==F_UNVECH || \
-			     f==F_MREVERSE || f==F_FFTI || \
-			     f==F_CTRANS || f==F_CUM || f==F_DIFF || \
-			     f==F_SUMC || f==F_SUMR || f==F_PRODC || \
-			     f==F_PRODR || f==F_MEANC || f==F_MEANR || \
-			     f==F_GINV || F_FFT2)
+			     f==F_MREV || f== F_FFT2 || f==F_FFTI || \
+			     f==F_CUM || f==F_DIFF || f==F_SUMC || \
+			     f==F_SUMR || f==F_PRODC || f==F_PRODR || \
+			     f==F_MEANC || f==F_MEANR || f==F_GINV)
 
 static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 {
@@ -4298,7 +4316,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    goto finalize;
 	}
 
-	if (f == F_RESAMPLE || f == F_MREVERSE || f == F_SDC ||
+	if (f == F_RESAMPLE || f == F_MREV || f == F_SDC ||
 	    f == F_MCOV || f == F_CDEMEAN || f == F_PSDROOT) {
 	    /* if present, the @r node should hold a scalar */
 	    if (!null_or_scalar(r)) {
@@ -4403,8 +4421,8 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	case F_CHOL:
 	case F_PSDROOT:
 	case F_INVPD:
-	case F_UPPER: /* complex supported */
-	case F_LOWER: /* complex supported */
+	case F_UPPER:
+	case F_LOWER:
 	    ret->v.m = apply_ovwrite_func(m, f, optparm, tmpmat, &p->err);
 	    break;
 	case F_DIAG:
@@ -4426,7 +4444,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	case F_UNVECH:
 	    ret->v.m = user_matrix_unvech(m, &p->err);
 	    break;
-	case F_MREVERSE:
+	case F_MREV:
 	    if (optparm != 0) {
 		ret->v.m = gretl_matrix_reverse_cols(m, &p->err);
 	    } else {
@@ -6706,7 +6724,7 @@ static NODE *lincomb_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 
     if (ret != NULL && starting(p)) {
 	int *list = node_get_list(l, p);
-	const gretl_matrix *b = node_get_matrix(m, p, 0, 2);
+	const gretl_matrix *b = node_get_real_matrix(m, p, 0, 2);
 	int k = 0;
 
 	if (!p->err && (list == NULL || gretl_is_null_matrix(b))) {
@@ -7101,7 +7119,7 @@ static NODE *object_status (NODE *n, NODE *func, parser *p)
 	    if (type == 0 && gretl_is_series(s, p->dset)) {
 		type = GRETL_TYPE_SERIES;
 	    }
-	    if (func->flags & ALS_NODE) {
+	    if (alias_reversed(func)) {
 		/* handle the "isnull" alias */
 		ret->v.xval = (type == 0);
 	    } else {
@@ -7164,7 +7182,7 @@ static NODE *generic_typeof_node (NODE *n, NODE *func, parser *p)
 	break;
     }
 
-    if (func->flags & ALS_NODE) {
+    if (alias_reversed(func)) {
 	/* handle the "isnull" alias */
 	ret->v.xval = (t == 0);
     } else {
@@ -8522,7 +8540,7 @@ static NODE *matrix_quantiles_node (NODE *l, NODE *r, parser *p)
     NODE *ret = NULL;
 
     if (starting(p)) {
-	gretl_matrix *pmat = node_get_matrix(r, p, 0, 0);
+	gretl_matrix *pmat = node_get_real_matrix(r, p, 0, 0);
 
 	if (!p->err) {
 	    ret = aux_matrix_node(p);
@@ -11179,9 +11197,12 @@ static gretl_matrix *get_corrgm_matrix (NODE *l,
 	list = l->v.ivec;
     }
 
-    /* if third node is matrix, must be col vector */
+    /* if third node is matrix, must be real col vector */
     if (r->t == MAT) {
 	if (r->v.m->cols != 1) {
+	    p->err = E_NONCONF;
+	    return NULL;
+	} else if (r->v.m->is_complex) {
 	    p->err = E_NONCONF;
 	    return NULL;
 	}
@@ -11237,6 +11258,8 @@ static gretl_matrix *get_density_matrix (NODE *t, double bws,
 	n = gretl_vector_get_length(t->v.m);
 	if (n == 0) {
 	    p->err = E_TYPES;
+	} else if (t->v.m->is_complex) {
+	    p->err = E_CMPLX;
 	} else {
 	    x = t->v.m->val;
 	}
@@ -11356,9 +11379,9 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    A = user_matrix_SVD(lm, U, V, &p->err);
 	}
     } else if (f == F_TOEPSOLV || f == F_VARSIMUL) {
-	gretl_matrix *m1 = node_get_matrix(l, p, 0, 1);
-	gretl_matrix *m2 = node_get_matrix(m, p, 1, 2);
-	gretl_matrix *m3 = node_get_matrix(r, p, 2, 3);
+	gretl_matrix *m1 = node_get_real_matrix(l, p, 0, 1);
+	gretl_matrix *m2 = node_get_real_matrix(m, p, 1, 2);
+	gretl_matrix *m3 = node_get_real_matrix(r, p, 2, 3);
 
 	if (!p->err) {
 	    if (f == F_TOEPSOLV) {
@@ -11392,7 +11415,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    } else {
 		/* legacy eigengen: real input only */
 		if (lm->is_complex) {
-		    p->err = E_TYPES;
+		    p->err = E_CMPLX;
 		} else {
 		    A = old_eigengen(lm, v1, v2, &p->err);
 		}
@@ -11617,8 +11640,8 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    A = matrix_chowlin(l->v.m, X, m->v.xval, &p->err);
 	}
     } else if (f == F_MLAG) {
-	gretl_matrix *m1 = node_get_matrix(l, p, 0, 1);
-	gretl_matrix *m2 = node_get_matrix(m, p, 1, 2);
+	gretl_matrix *m1 = node_get_real_matrix(l, p, 0, 1);
+	gretl_matrix *m2 = node_get_real_matrix(m, p, 1, 2);
 
 	if (p->err) {
 	    ; /* skip the rest */
@@ -11631,19 +11654,18 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    A = gretl_matrix_lag(m1, m2, OPT_L, missval);
 	}
     } else if (f == F_LRCOVAR) {
+	gretl_matrix *mc = node_get_real_matrix(l, p, 0, 1);
 	int d = 1; /* demean the matrix arg? */
 
-	if (l->t != MAT) {
-	    node_type_error(f, 1, MAT, l, p);
-	} else {
+	if (!p->err) {
 	    d = node_get_bool(r, p, d);
 	}
 	if (!p->err) {
-	    A = long_run_covariance(l->v.m, d, &p->err);
+	    A = long_run_covariance(mc, d, &p->err);
 	}
     } else if (f == F_EIGSOLVE) {
-	gretl_matrix *m1 = node_get_matrix(l, p, 0, 1);
-	gretl_matrix *m2 = node_get_matrix(m, p, 1, 2);
+	gretl_matrix *m1 = node_get_real_matrix(l, p, 0, 1);
+	gretl_matrix *m2 = node_get_real_matrix(m, p, 1, 2);
 
 	if (p->err) {
 	    ; /* skip the rest */
@@ -11703,7 +11725,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    /* optional number of replications */
 	    node_type_error(f, 3, NUM, r, p);
 	} else {
-	    gretl_matrix *S = node_get_matrix(l, p, 0, 0);
+	    gretl_matrix *S = node_get_real_matrix(l, p, 0, 0);
 	    int v = node_get_int(m, p);
 	    int N = (r->t == EMPTY)? 0 : node_get_int(r, p);
 
@@ -11780,9 +11802,10 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	} else {
 	    int length = node_get_int(l, p);
 	    int method = node_get_midas_method(r, p);
+	    gretl_matrix *wm = node_get_real_matrix(m, p, 1, 2);
 
 	    if (!p->err) {
-		A = midas_weights(length, m->v.m, method, &p->err);
+		A = midas_weights(length, wm, method, &p->err);
 	    }
 	}
     } else if (f == F_MGRADIENT) {
@@ -11795,9 +11818,10 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	} else {
 	    int length = node_get_int(l, p);
 	    int method = node_get_midas_method(r, p);
+	    gretl_matrix *gm = node_get_real_matrix(m, p, 1, 2);
 
 	    if (!p->err) {
-		A = midas_gradient(length, m->v.m, method, &p->err);
+		A = midas_gradient(length, gm, method, &p->err);
 	    }
 	}
     }
@@ -12593,7 +12617,6 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    reset_p_aux(p, save_aux);
 	    ret = aux_series_node(p);
 	}
-
 	if (!p->err) {
 	    p->err = bkbp_filter(x, ret->v.xvec, p->dset, bk[0], bk[1], bk[2]);
 	}
@@ -12626,14 +12649,14 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		if (e->t != MAT && e->t != NUM && e->t != EMPTY) {
 		    node_type_error(t->t, i+1, MAT, e, p);
 		} else if (e->t != EMPTY) {
-		    C = node_get_matrix(e, p, 0, 2);
+		    C = node_get_real_matrix(e, p, 0, 2);
 		}
 	    } else if (i == 2) {
 		/* matrix for AR polynomial (but we'll take a scalar) */
 		if (e->t != MAT && e->t != NUM && e->t != EMPTY) {
 		    node_type_error(t->t, i+1, MAT, e, p);
 		} else if (e->t != EMPTY) {
-		    A = node_get_matrix(e, p, 1, 3);
+		    A = node_get_real_matrix(e, p, 1, 3);
 		}
 	    } else if (i == 3) {
 		/* initial (scalar) value for output series */
@@ -12684,11 +12707,11 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    } else if (e->t != targ) {
 		node_type_error(t->t, i+1, targ, e, p);
 	    } else if (i == 0) {
-		X = e->v.m;
+		X = mat_node_get_real_matrix(e, p);
 	    } else if (i == 1) {
-		u = e->v.m;
+		u = mat_node_get_real_matrix(e, p);
 	    } else if (i == 2) {
-		w = e->v.m;
+		w = mat_node_get_real_matrix(e, p);
 	    } else if (i == 3) {
 		maxlag = e->v.xval;
 	    }
@@ -12722,7 +12745,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		    M[i] = tmp_matrix_from_series(e, p);
 		    freemat[i] = 1;
 		} else {
-		    M[i] = node_get_matrix(e, p, i, i+1);
+		    M[i] = node_get_real_matrix(e, p, i, i+1);
 		}
 	    } else {
 		if (e->t == EMPTY) {
@@ -12761,7 +12784,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		break;
 	    }
 	    if (i < 4) {
-		M[i] = node_get_matrix(e, p, i, i+1);
+		M[i] = node_get_real_matrix(e, p, i, i+1);
 	    } else {
 		if (e->t == EMPTY) {
 		    ; /* OK */
@@ -12804,7 +12827,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		if (e->t != MAT) {
 		    node_type_error(t->t, i+1, MAT, e, p);
 		} else {
-		    b = e->v.m;
+		    b = mat_node_get_real_matrix(e, p);
 		}
 	    } else if (i == 1) {
 		if (e->t != STR) {
@@ -12839,7 +12862,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	}
 
 	if (!p->err) {
-	    int minimize = (t->flags & ALS_NODE)? 1 : 0;
+	    int minimize = alias_reversed(t) ? 1 : 0;
 
 	    ret->v.xval = user_NR(b, sf, sg, sh, p->dset,
 				  minimize, p->prn, &p->err);
@@ -12912,7 +12935,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    if (e == NULL) {
 		fprintf(stderr, "eval_nargs_func: failed to evaluate arg %d\n", i);
 	    } else if (i < 4) {
-		M[i] = node_get_matrix(e, p, i, i+1);
+		M[i] = node_get_real_matrix(e, p, i, i+1);
 	    } else {
 		/* the optional last argument */
 		if (e->t == EMPTY) {
@@ -13191,7 +13214,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		}
 	    } else if (i == 2) {
 		if (e->t == MAT) {
-		    z = e->v.m;
+		    z = mat_node_get_real_matrix(e, p);
 		} else {
 		    node_type_error(t->t, 3, MAT, e, p);
 		}
@@ -13431,7 +13454,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    if (i < 3) {
 		a[i] = node_get_scalar(e, p);
 	    } else {
-		x = node_get_matrix(e, p, 0, 3);
+		x = node_get_real_matrix(e, p, 0, 3);
 	    }
 	}
 	if (!p->err) {
@@ -13671,11 +13694,13 @@ static NODE *eval_kalman_bundle_func (NODE *t, parser *p)
 	    e = eval(n->v.bn.n[i], p);
 	    if (!p->err) {
 		if (e->t == MAT) {
-		    M[i] = e->v.m;
-		    if (is_tmp_node(e)) {
-			e->v.m = NULL;
-		    } else {
-			copy[i] = 1;
+		    M[i] = mat_node_get_real_matrix(e, p);
+		    if (!p->err) {
+			if (is_tmp_node(e)) {
+			    e->v.m = NULL;
+			} else {
+			    copy[i] = 1;
+			}
 		    }
 		} else if (i == 0) {
 		    /* obsy: accept series or list */
@@ -13762,7 +13787,7 @@ static NODE *eval_kalman_bundle_func (NODE *t, parser *p)
 	    e = eval(n->v.bn.n[i], p);
 	    if (!p->err && i == 1) {
 		if (e->t == MAT) {
-		    U = e->v.m;
+		    U = mat_node_get_real_matrix(e, p);
 		} else {
 		    U = node_get_matrix_lenient(e, SERIES, p);
 		    if (U != NULL) {
@@ -16234,7 +16259,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_GINV:
     case F_DIAG:
     case F_TRANSP:
-    case F_MREVERSE:
+    case F_MREV:
     case F_VEC:
     case F_VECH:
     case F_UNVECH:
@@ -16258,7 +16283,7 @@ static NODE *eval (NODE *t, parser *p)
 	/* matrix -> matrix functions */
 	if (l->t == MAT || l->t == NUM) {
 	    ret = matrix_to_matrix_func(l, r, t->t, p);
-	} else if (t->t == F_MREVERSE && l->t == LIST) {
+	} else if (t->t == F_MREV && l->t == LIST) {
 	    ret = list_reverse_node(l, p);
 	} else {
 	    node_type_error(t->t, 1, MAT, l, p);
