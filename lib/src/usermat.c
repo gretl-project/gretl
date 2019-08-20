@@ -1025,7 +1025,7 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 	int i = mspec_get_element(spec);
 
 	if (M->is_complex) {
-	    S = complex_scalar_to_mat(M->z[i], err);
+	    S = cmatrix_from_scalar(M->z[i], err);
 	} else {
 	    S = gretl_matrix_from_scalar(M->val[i]);
 	}

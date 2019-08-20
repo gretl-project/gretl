@@ -4554,7 +4554,8 @@ static NODE *read_object_func (NODE *n, NODE *r, int f, parser *p)
 }
 
 /* Build a node holding a complex matrix, given two scalars,
-   two matrices, or matrix plus scalar. */
+   two matrices, or matrix plus scalar.
+*/
 
 static NODE *complex_matrix_node (NODE *l, NODE *r, parser *p)
 {
@@ -4564,7 +4565,7 @@ static NODE *complex_matrix_node (NODE *l, NODE *r, parser *p)
 	if (l->t == NUM && r->t == NUM) {
 	    double xr = l->v.xval, xi = r->v.xval;
 
-	    ret->v.m = two_scalars_to_complex(xr, xi, &p->err);
+	    ret->v.m = cmatrix_from_scalar(xr + xi*I, &p->err);
 	} else if (l->t == MAT && r->t == MAT) {
 	    ret->v.m = gretl_cmatrix(l->v.m, r->v.m, 0, &p->err);
 	} else if (l->t == MAT && r->t == NUM) {

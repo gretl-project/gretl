@@ -38,17 +38,20 @@ static int fft_allocate (double **ffx, double complex **ffz,
 			 gretl_matrix **ret, int r, int c,
 			 int inverse, int newstyle)
 {
+    /* real workspace, per series */
     *ffx = fftw_malloc(r * sizeof **ffx);
     if (*ffx == NULL) {
 	return E_ALLOC;
     }
 
+    /* complex workspace, per series */
     *ffz = fftw_malloc((r/2 + 1 + r % 2) * sizeof **ffz);
     if (*ffz == NULL) {
 	free(*ffx);
 	return E_ALLOC;
     }
 
+    /* matrix to hold output */
     if (newstyle && !inverse) {
 	*ret = gretl_cmatrix_new(r, c);
     } else {
@@ -63,7 +66,11 @@ static int fft_allocate (double **ffx, double complex **ffz,
     return 0;
 }
 
-/* start fftw-based real FFT functions */
+/* FFT for real input -> complex output and
+   FFTI for Hermetian input -> real output.
+   Both old and new-style complex formats
+   are supported.
+*/
 
 static gretl_matrix *
 real_matrix_fft (const gretl_matrix *y, int inverse,
@@ -244,11 +251,9 @@ gretl_matrix *gretl_matrix_ffti (const gretl_matrix *y, int *err)
 	}
     } else {
 	/* old-style */
-	real_matrix_fft(y, 1, 0, err);
+	return real_matrix_fft(y, 1, 0, err);
     }
 }
-
-/* end fftw-based real FFT functions */
 
 static int cmatrix_validate (const gretl_matrix *m, int square)
 {
@@ -945,6 +950,8 @@ gretl_matrix *gretl_cmatrix_ginv (const gretl_matrix *A, int *err)
     return ret;
 }
 
+/* Horizontal direct product of complex @A and @B */
+
 static gretl_matrix *real_cmatrix_hdp (const gretl_matrix *A,
 				       const gretl_matrix *B,
 				       int *err)
@@ -990,6 +997,8 @@ static gretl_matrix *real_cmatrix_hdp (const gretl_matrix *A,
 
     return C;
 }
+
+/* Kronecker product of complex @A and @B */
 
 static gretl_matrix *real_cmatrix_kron (const gretl_matrix *A,
 					const gretl_matrix *B,
@@ -1534,6 +1543,10 @@ gretl_matrix *cmatrix_add_sub (const gretl_matrix *A,
     return C;
 }
 
+/* Apply a function which maps from complex to real:
+   creal, cimag, carg, cmod.
+*/
+
 int apply_cmatrix_dfunc (gretl_matrix *targ,
 			const gretl_matrix *src,
 			double (*dfunc) (double complex))
@@ -1558,6 +1571,10 @@ int apply_cmatrix_dfunc (gretl_matrix *targ,
 
     return err;
 }
+
+/* Apply a function which maps from complex to complex;
+   includes trigonometric functions, log, exp.
+*/
 
 int apply_cmatrix_cfunc (gretl_matrix *targ,
 			 const gretl_matrix *src,
@@ -1613,7 +1630,7 @@ int apply_cmatrix_unary_op (gretl_matrix *targ,
     return err;
 }
 
-gretl_matrix *complex_scalar_to_mat (double complex z, int *err)
+gretl_matrix *cmatrix_from_scalar (double complex z, int *err)
 {
     gretl_matrix *ret = gretl_cmatrix_new(1, 1);
 
@@ -1625,6 +1642,8 @@ gretl_matrix *complex_scalar_to_mat (double complex z, int *err)
 
     return ret;
 }
+
+/* Determinant via eigenvalues */
 
 gretl_matrix *gretl_cmatrix_determinant (const gretl_matrix *X,
 					 int log, int *err)
@@ -1650,7 +1669,7 @@ gretl_matrix *gretl_cmatrix_determinant (const gretl_matrix *X,
 	if (log) {
 	    cret = clog(cret);
 	}
-	ret = complex_scalar_to_mat(cret, err);
+	ret = cmatrix_from_scalar(cret, err);
     }
 
     return ret;
@@ -1670,7 +1689,7 @@ gretl_matrix *gretl_cmatrix_trace (const gretl_matrix *X,
 	for (i=0; i<X->rows; i++) {
 	    tr += gretl_cmatrix_get(X, i, i);
 	}
-	ret = complex_scalar_to_mat(tr, err);
+	ret = cmatrix_from_scalar(tr, err);
     }
 
     return ret;
@@ -1883,6 +1902,8 @@ gretl_matrix *gretl_cmatrix_switch (const gretl_matrix *m,
     return ret;
 }
 
+/* Compute column or row sums, means or products */
+
 gretl_matrix *gretl_cmatrix_vector_stat (const gretl_matrix *m,
 					 GretlVecStat vs, int rowwise,
 					 int *err)
@@ -1958,32 +1979,6 @@ int gretl_cmatrix_fill (gretl_matrix *m, double complex z)
 	}
 	return 0;
     }
-}
-
-gretl_matrix *scalar_to_complex (double x, int *err)
-{
-    gretl_matrix *m = gretl_cmatrix_new(1, 1);
-
-    if (m != NULL) {
-	m->z[0] = x;
-    } else {
-	*err = E_ALLOC;
-    }
-
-    return m;
-}
-
-gretl_matrix *two_scalars_to_complex (double xr, double xi, int *err)
-{
-    gretl_matrix *m = gretl_cmatrix_new(1, 1);
-
-    if (m != NULL) {
-	m->z[0] = xr + xi * I;
-    } else {
-	*err = E_ALLOC;
-    }
-
-    return m;
 }
 
 static void vec_x_op_vec_y (double complex *z,
@@ -2344,7 +2339,7 @@ gretl_matrix *cmatrix_get_element (const gretl_matrix *M,
 	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), i+1);
 	*err = E_INVARG;
     } else {
-	ret = complex_scalar_to_mat(M->z[i], err);
+	ret = cmatrix_from_scalar(M->z[i], err);
     }
 
     return ret;
