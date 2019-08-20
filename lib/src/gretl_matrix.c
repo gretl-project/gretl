@@ -4253,10 +4253,10 @@ static int QR_solve (gretl_matrix *A, gretl_matrix *B)
     integer lwork = -1;
     integer *jpvt = NULL;
     double *work = NULL;
-    cmplx *zwork = NULL;
     double *rwork = NULL;
     double rcond = QR_RCOND_MIN;
     int zfunc = 0;
+    int wsz = 1;
     int i, err = 0;
 
     lda = m = A->rows;
@@ -4272,19 +4272,17 @@ static int QR_solve (gretl_matrix *A, gretl_matrix *B)
 	return E_NONCONF;
     }
 
-    zfunc = A->is_complex;
-    if (zfunc && !B->is_complex) {
-	return E_INVARG;
+    if (A->is_complex) {
+	if (!B->is_complex) {
+	    return E_INVARG;
+	}
+	zfunc = 1;
+	wsz = 2;
     }
 
     jpvt = malloc(n * sizeof *jpvt);
-    if (zfunc) {
-	zwork = lapack_malloc(sizeof *zwork);
-    } else {
-	work = lapack_malloc(sizeof *work);
-    }
-    if (jpvt == NULL || (zfunc && zwork == NULL ||
-			 !zfunc && work == NULL)) {
+    work = lapack_malloc(wsz * sizeof *work);
+    if (jpvt == NULL || work == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -4304,7 +4302,7 @@ static int QR_solve (gretl_matrix *A, gretl_matrix *B)
     /* workspace query */
     if (zfunc) {
 	zgelsy_(&m, &n, &nrhs, (cmplx *) A->z, &lda, (cmplx *) B->z, &lda,
-		jpvt, &rcond, &rank, zwork, &lwork, rwork, &info);
+		jpvt, &rcond, &rank, (cmplx *) work, &lwork, rwork, &info);
     } else {
 	dgelsy_(&m, &n, &nrhs, A->val, &lda, B->val, &lda,
 		jpvt, &rcond, &rank, work, &lwork, &info);
@@ -4316,28 +4314,17 @@ static int QR_solve (gretl_matrix *A, gretl_matrix *B)
     }
 
     /* optimally sized work array */
-    if (zfunc) {
-	lwork = (integer) zwork[0].r;
-	zwork = lapack_realloc(zwork, (size_t) lwork * sizeof *zwork);
-	if (zwork == NULL) {
-	    err = E_ALLOC;
-	}
-    } else {
-	lwork = (integer) work[0];
-	work = lapack_realloc(work, (size_t) lwork * sizeof *work);
-	if (work == NULL) {
-	    err = E_ALLOC;
-	}
-    }
-
-    if (err) {
+    lwork = (integer) work[0];
+    work = lapack_realloc(work, (size_t) lwork * wsz * sizeof *work);
+    if (work == NULL) {
+	err = E_ALLOC;
 	goto bailout;
     }
 
     /* run actual computation */
     if (zfunc) {
 	zgelsy_(&m, &n, &nrhs, (cmplx *) A->z, &lda, (cmplx *) B->z, &lda,
-		jpvt, &rcond, &rank, zwork, &lwork, rwork, &info);
+		jpvt, &rcond, &rank, (cmplx *) work, &lwork, rwork, &info);
     } else {
 	dgelsy_(&m, &n, &nrhs, A->val, &lda, B->val, &lda,
 		jpvt, &rcond, &rank, work, &lwork, &info);
@@ -4363,10 +4350,8 @@ static int QR_solve (gretl_matrix *A, gretl_matrix *B)
  bailout:
 
     free(jpvt);
+    lapack_free(work);
     if (zfunc) {
-	lapack_free(work);
-    } else {
-	lapack_free(zwork);
 	free(rwork);
     }
 
