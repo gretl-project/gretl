@@ -167,7 +167,8 @@ enum {
     F_CMOD,
     F_REAL,
     F_IMAG,
-    F_LOGISTIC,   /* to here: store C-function pointers: see genlex.c */
+    F_LOGISTIC,
+    FP_MAX,      /* separator: end of pointerized functions */
     F_CONJ,
     F_TOINT,
     F_DIFF,	  /* first difference */
