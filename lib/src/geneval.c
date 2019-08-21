@@ -66,6 +66,11 @@
 # define LHDEBUG 0
 #endif
 
+#if EDEBUG > 1
+# define IN_GENEVAL
+# include "mspec_debug.c"
+#endif
+
 #define AUX_NODES_DEBUG 0
 
 #if AUX_NODES_DEBUG
@@ -4432,53 +4437,6 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
-#if EDEBUG > 1
-
-static void print_mspec (matrix_subspec *mspec)
-{
-    static const char *mstypes[] = {
-        "SEL_NULL",
-        "SEL_RANGE",
-	"SEL_ELEMENT",
-	"SEL_MATRIX",
-	"SEL_DIAG",
-	"SEL_UPPER",
-	"SEL_LOWER",
-	"SEL_REAL",
-	"SEL_IMAG",
-	"SEL_ALL",
-	"SEL_CONTIG",
-	"SEL_EXCL",
-	"SEL_SINGLE",
-	"SEL_STR"
-    };
-    fprintf(stderr, "mspec at %p:\n", (void *) mspec);
-
-    if (mspec != NULL) {
-	fprintf(stderr, "  ltype = %s\n", mstypes[mspec->ltype]);
-        if (mspec->ltype == SEL_ELEMENT) {
-	    fprintf(stderr, "    element = %d\n", mspec->lsel.range[0]);
-	} else if (mspec->ltype == SEL_RANGE) {
-	    fprintf(stderr, "    lsel.range[0] = %d\n", mspec->lsel.range[0]);
-	    fprintf(stderr, "    lsel.range[1] = %d\n", mspec->lsel.range[1]);
-	} else if (mspec->ltype == SEL_MATRIX) {
-	    gretl_matrix_print(mspec->lsel.m, "sel matrix");
-	}
-	fprintf(stderr, "  rtype = %s\n", mstypes[mspec->rtype]);
-	if (mspec->rtype == SEL_ELEMENT) {
-	    fprintf(stderr, "    element = %d\n", mspec->rsel.range[0]);
-	} else if (mspec->rtype == SEL_RANGE) {
-	    fprintf(stderr, "    rsel.range[0] = %d\n", mspec->rsel.range[0]);
-	    fprintf(stderr, "    rsel.range[1] = %d\n", mspec->rsel.range[1]);
-	} else if (mspec->rtype == SEL_MATRIX) {
-	    gretl_matrix_print(mspec->rsel.m, "sel matrix");
-	}
-	fputs("end of mspec\n", stderr);
-    }
-}
-
-#endif /* debugging */
-
 /* Putative row or column selection matrix: must be a vector;
    cannot contain zero; cannot have both positive and negative
    entries; and entries must be integer-valued.
@@ -4522,9 +4480,7 @@ static int set_sel_vector (matrix_subspec *spec, int r,
 }
 
 /* Compose a sub-matrix specification, from scalars and/or
-   index matrices. FIXME: some of the work below ought to be
-   redundant if we're on the second or subsequent iteration
-   of a loop?
+   index matrices.
 */
 
 static void build_mspec (NODE *targ, NODE *l, NODE *r, parser *p)
@@ -10770,9 +10726,7 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
        adjust it if need be in the light of the
        dimensions of @m.
     */
-    if (p->idstr != NULL && !strcmp(p->idstr, "prechecked")) {
-	;
-    } else {
+    if (!spec->checked) {
 	p->err = check_matrix_subspec(spec, m1);
 	if (p->err) {
 	    fprintf(stderr, "set_matrix_value: check_matrix_subspec failed\n");
@@ -18344,42 +18298,62 @@ static int do_incr_decr (parser *p)
     return p->err;
 }
 
-static void get_primary_matrix_slice (NODE *t, int level,
-				      NODE **pn)
+#define has_aux_mat(n) (n->aux != NULL && n->aux->t == MAT)
+#define has_aux_mspec(n) (n->aux != NULL && n->aux->t == MSPEC)
+
+static void get_primary_matrix_slice (NODE *t,
+				      NODE *pms,
+				      int level,
+				      int *err)
 {
     if (level == 1 && t->t == MSL) {
-	*pn = t;
-    } else if (*pn == NULL) {
-	if (t->L != NULL) {
-	    get_primary_matrix_slice(t->L, level+1, pn);
-	}
-	if (t->R != NULL) {
-	    get_primary_matrix_slice(t->R, level+1, pn);
-	}
+	pms->L = t->L;
+	pms->R = t->R->aux;
+    } else if (level == 2 && (t->t == BMEMB || t->t == OSL) && has_aux_mat(t)) {
+	pms->L = t->aux;
+    } else if (level == 2 && t->t == MSLRAW && has_aux_mspec(t)) {
+	pms->R = t->aux;
+    } else if (level > 2 && has_aux_mat(t)) {
+	/* only two levels of matrix slicing are allowed */
+	*err = E_DATA;
+    }
+    if (!*err && t->L != NULL) {
+	get_primary_matrix_slice(t->L, pms, level+1, err);
+    }
+    if (!*err && t->R != NULL) {
+	get_primary_matrix_slice(t->R, pms, level+1, err);
     }
 }
 
+/* Set_nested_matrix_value: this handles the case of
+   a compound index for a complex matrix, such as
+   m[3,3][real] or m[imag][1:2,1:2], etc.
+*/
+
 static int set_nested_matrix_value (NODE *lhs,
-				    NODE *r,
+				    NODE *rhs,
 				    parser *p)
 {
-    int err = set_matrix_value(lhs, r, p);
+    int err = set_matrix_value(lhs, rhs, p);
+
+#if LHDEBUG
+    fprintf(stderr, "set_nested_matrix_value: lhtree\n");
+    print_tree(p->lhtree, p, 0, 0);
+#endif
 
     if (!err) {
-	NODE *R, *msl0 = NULL;
+	NODE pms = {0};
 
-	get_primary_matrix_slice(p->lhtree, 0, &msl0);
-	if (msl0 != NULL) {
-	    int op = p->op;
+	get_primary_matrix_slice(p->lhtree, &pms, 0, &err);
+	if (err) {
+	    gretl_errmsg_set(_("Invalid concatenation of matrix indices"));
+	} else if (pms.L != NULL && pms.R != NULL) {
+	    int save_op = p->op;
 
-	    R = msl0->R;
-	    msl0->R = msl0->R->aux;
-	    p->idstr = "prechecked"; /* FIXME! */
+	    pms.t = MSL;
 	    p->op = B_ASN;
-	    err = set_matrix_value(msl0, lhs->L, p);
-	    p->op = op;
-	    p->idstr = NULL;
-	    msl0->R = R;
+	    err = set_matrix_value(&pms, lhs->L, p);
+	    p->op = save_op;
 	}
     }
 
@@ -18410,11 +18384,13 @@ static int save_generated_var (parser *p, PRN *prn)
 	p->lhtree->flags |= LHT_NODE;
 	p->flags |= P_START;
 #if LHDEBUG
-	fprintf(stderr, "*** eval lhtree -> lhres ***\n");
+	fprintf(stderr, "\n*** eval lhtree before eval ***\n");
+	print_tree(p->lhtree, p, 0, 0);
 #endif
 	p->lhres = eval(p->lhtree, p);
 #if LHDEBUG
 	if (p->lhres != NULL) {
+	    fprintf(stderr, "*** lhres post-eval ***\n");
 	    print_tree(p->lhres, p, 0, 0);
 	    fprintf(stderr, "*** lhtree post-eval ***\n");
 	    print_tree(p->lhtree, p, 0, 0);

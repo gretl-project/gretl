@@ -24,18 +24,18 @@
 
 typedef enum {
     SEL_NULL,    /* nothing supplied */
-    SEL_RANGE,   /* integer range p:q */
-    SEL_ELEMENT, /* derived: selection is a single element */
+    SEL_RANGE,   /* integer range p:q provided */
     SEL_MATRIX,  /* selection matrix provided */
-    SEL_DIAG,    /* using the "diag" dummy constant */
-    SEL_UPPER,   /* using the "upper" dummy constant */
-    SEL_LOWER,   /* using the "lower" dummy constant */
-    SEL_REAL,    /* using the "real" dummy constant */
-    SEL_IMAG,    /* using the "imag" dummy constant */
     SEL_ALL,     /* comma-separated blank */
+    SEL_DIAG,    /* the "diag" dummy constant */
+    SEL_UPPER,   /* the "upper" dummy constant */
+    SEL_LOWER,   /* the "lower" dummy constant */
+    SEL_REAL,    /* the "real" dummy constant */
+    SEL_IMAG,    /* the "imag" dummy constant */
+    SEL_ELEMENT, /* derived: selection is a single element */
     SEL_CONTIG,  /* derived: selection is contiguous */
     SEL_EXCL,    /* single exclusion (negative index) */
-    SEL_SINGLE,  /* degenerate range + null */
+    SEL_SINGLE,  /* derived: degenerate range + null */
     SEL_STR      /* for use with bundles only */
 } SelType;
 
@@ -55,6 +55,7 @@ union msel {
 };
 
 struct matrix_subspec_ {
+    int checked;
     SelType ltype, rtype;
     union msel lsel, rsel;
     int *rslice;

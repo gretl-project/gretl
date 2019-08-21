@@ -409,46 +409,9 @@ static int spec_check_dimensions (matrix_subspec *spec,
 }
 
 #if CONTIG_DEBUG
-
-static const char *snames[] = {
-     "SEL_NULL",
-     "SEL_RANGE",
-     "SEL_ELEMENT",
-     "SEL_MATRIX",
-     "SEL_DIAG",
-     "SEL_UPPER",
-     "SEL_LOWER",
-     "SEL_REAL",
-     "SEL_IMAG",
-     "SEL_ALL",
-     "SEL_CONTIG",
-     "SEL_EXCL",
-     "SEL_SINGLE",
-     "SEL_STR"
-};
-
-static void subspec_debug_print (matrix_subspec *spec,
-				 const gretl_matrix *m)
-{
-    fprintf(stderr, "matrix_subspec: types = (%s, %s), m is %d x %d\n",
-	    snames[spec->ltype], snames[spec->rtype], m->rows, m->cols);
-    if (spec->ltype == SEL_MATRIX) {
-	fputs(" vector sel,", stderr);
-    } else if (spec->ltype != SEL_NULL) {
-	fprintf(stderr, " lsel->range = (%d,%d),", spec->lsel.range[0],
-		spec->lsel.range[1]);
-    }
-    if (spec->rtype == SEL_MATRIX) {
-	fputs(" vector sel,", stderr);
-    } else if (spec->rtype != SEL_NULL) {
-	fprintf(stderr, " rsel->range = (%d,%d),", spec->rsel.range[0],
-		spec->rsel.range[1]);
-    }
-    fprintf(stderr, " lh scalar %d, rh scalar %d\n",
-	    lhs_is_scalar(spec, m), rhs_is_scalar(spec, m));
-}
-
-#endif /* CONTIG_DEBUG */
+# define IN_USERMAT
+# include "mspec_debug.c"
+#endif
 
 /* When we come here we've already screened out DIAG
    selection and single-element selection.
@@ -566,14 +529,16 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 {
     int veclen, err = 0;
 
-    if (spec->ltype == SEL_REAL && !m->is_complex) {
-	spec->ltype = spec->rtype = SEL_ALL;
+    if (spec->checked) {
 	return 0;
+    } else if (spec->ltype == SEL_REAL && !m->is_complex) {
+	spec->ltype = spec->rtype = SEL_ALL;
+	goto check_done;
     } else if (is_sel_dummy(spec->ltype)) {
 	/* SEL_DIAG, SEL_UPPER, SEL_LOWER, SEL_IMAG:
 	   nothing to be done here?
 	*/
-	return 0;
+	goto check_done;
     }
 
 #if CONTIG_DEBUG
@@ -602,7 +567,7 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 	    mspec_set_n_elem(spec, 1);
 	}
 	/* nothing more to do */
-	return err;
+	goto check_done;
     }
 
     err = spec_check_dimensions(spec, m);
@@ -612,14 +577,14 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 
     if (m->rows == 0 || m->cols == 0) {
 	/* nothing more to do */
-	return 0;
+	goto check_done;
     }
 
     if (lhs_is_scalar(spec, m) && rhs_is_scalar(spec, m)) {
 	/* we're looking at just one element */
 	set_element_index(spec, m);
 	spec->ltype = spec->rtype = SEL_ELEMENT;
-	return 0;
+	goto check_done;
     }
 
     if (submatrix_contig(spec, m)) {
@@ -633,6 +598,12 @@ int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 	    fprintf(stderr, "*** offset = %d, nelem = %d (m: %dx%d) ***\n",
 		    offset, nelem, m->rows, m->cols);
 	}
+    }
+
+ check_done:
+
+    if (!err) {
+	spec->checked = 1;
     }
 
     return err;
