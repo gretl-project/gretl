@@ -439,9 +439,9 @@ static void subspec_debug_print (matrix_subspec *spec,
 		spec->lsel.range[1]);
     }
     if (spec->rtype == SEL_MATRIX) {
-	fputs(" vector sel, ", stderr);
+	fputs(" vector sel,", stderr);
     } else if (spec->rtype != SEL_NULL) {
-	fprintf(stderr, " rsel->range = (%d,%d), ", spec->rsel.range[0],
+	fprintf(stderr, " rsel->range = (%d,%d),", spec->rsel.range[0],
 		spec->rsel.range[1]);
     }
     fprintf(stderr, " lh scalar %d, rh scalar %d\n",
