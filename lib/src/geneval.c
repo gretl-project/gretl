@@ -18347,7 +18347,7 @@ static int set_nested_matrix_value (NODE *lhs,
 
 	get_primary_matrix_slice(p->lhtree, &pms, 0, &err);
 	if (err) {
-	    gretl_errmsg_set(_("Invalid concatenation of matrix indices"));
+	    gretl_errmsg_set(_("Invalid left-hand side expression"));
 	} else if (pms.L != NULL && pms.R != NULL) {
 	    int save_op = p->op;
 
