@@ -18325,9 +18325,44 @@ static void get_primary_matrix_slice (NODE *t,
     }
 }
 
-/* Set_nested_matrix_value: this handles the case of
-   a compound index for a complex matrix, such as
-   m[3,3][real] or m[imag][1:2,1:2], etc.
+/* set_nested_matrix_value(): this and its helper above,
+   get_primary_matrix_slice(), require a little comment.
+   We come here when a hansl statement modifies a matrix
+   that is "under" something else. Original usage was for
+   matrices in bundles or arrays, as in
+
+   # Case 0
+   b.m[diag] = x     # under bundle b
+   a[3][1:2,1:2] = y # under array a
+
+   In those cases the first invocation of set_matrix_value
+   below is sufficient. However, as of August 2019 we also
+   come here when the matrix is "under" another matrix, or,
+   in other words we have a double index or subspec, as in
+   these two examples for a complex matrix, C:
+
+   # Case 1
+   C[real][1:2,1:2] = x
+   C[3,3][real] = y
+
+   and also in these more extended examples where the
+   complex matrix is itself "under" something else:
+
+   # Case 2
+   b.C[real][1:2,1:2] = x
+   a[3][i,j][imag] = y
+
+   To handle such cases we have to crawl the parser's
+   "lhtree" (left-hand side tree) to find the matrix that
+   ultimately has to be modified, and execute a second
+   call to set_matrix_value(). In Case 1 above, the matrix
+   we're looking for will be at depth 1 in the lhtree,
+   while in Case 2 it will be at depth 2.
+
+   If we don't find a matrix at depths 1 or 2, that's
+   not an error -- we're presumably in Case 0 -- but it
+   is an error if we find a matrix at depth greater than
+   2; that's a sign of a malformed left-hand side.
 */
 
 static int set_nested_matrix_value (NODE *lhs,
