@@ -18342,6 +18342,7 @@ static int set_nested_matrix_value (NODE *lhs,
 #endif
 
     if (!err) {
+	/* maybe we have to carry the result back a step? */
 	NODE pms = {0};
 
 	get_primary_matrix_slice(p->lhtree, &pms, 0, &err);
