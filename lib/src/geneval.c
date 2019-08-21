@@ -241,7 +241,7 @@ static void clear_mspec (matrix_subspec *spec, parser *p)
 
 #if EDEBUG || LHDEBUG
 
-static void print_tree (NODE *t, parser *p, int level)
+static void print_tree (NODE *t, parser *p, int level, char pos)
 {
     if (t == NULL) {
 	fprintf(stderr, " %d: node is null\n", level);
@@ -252,37 +252,43 @@ static void print_tree (NODE *t, parser *p, int level)
 	int i;
 
 	for (i=0; i<t->v.bn.n_nodes; i++) {
-	    print_tree(t->v.bn.n[i], p, level+1);
+	    print_tree(t->v.bn.n[i], p, level+1, 0);
 	}
     } else {
 	if (t->L != NULL) {
-	    print_tree(t->L, p, level+1);
+	    print_tree(t->L, p, level+1, 'L');
 	}
 	if (t->M != NULL) {
-	    print_tree(t->M, p, level+1);
+	    print_tree(t->M, p, level+1, 'M');
 	}
 	if (t->R != NULL) {
-	    print_tree(t->R, p, level+1);
+	    print_tree(t->R, p, level+1, 'R');
 	}
     }
 
+    if (pos != 0) {
+	fprintf(stderr, " %d (%c): ", level, pos);
+    } else {
+	fprintf(stderr, " %d: ", level);
+    }
+
     if (t->vname != NULL) {
-	fprintf(stderr, " %d: node at %p (type %03d, %s, flags %d), vname='%s'",
-		level, (void *) t, t->t, getsymb(t->t), t->flags, t->vname);
+	fprintf(stderr, "node at %p (type %03d, %s, flags %d), vname='%s'",
+		(void *) t, t->t, getsymb(t->t), t->flags, t->vname);
 	if (t->t == NUM) {
 	    fprintf(stderr, ", val %g\n", t->v.xval);
 	} else {
-	    fputs("\n", stderr);
+	    fputc('\n', stderr);
 	}
     } else if (t->t == STR) {
-	fprintf(stderr, " %d: node at %p (type %03d, %s, flags %d, val '%s')\n",
-		level, (void *) t, t->t, getsymb(t->t), t->flags, t->v.str);
+	fprintf(stderr, "node at %p (type %03d, %s, flags %d, val '%s')\n",
+		(void *) t, t->t, getsymb(t->t), t->flags, t->v.str);
     } else if (t->t == NUM) {
-	fprintf(stderr, " %d: node at %p (type %03d, %s, flags %d, val %g)\n",
-		level, (void *) t, t->t, getsymb(t->t), t->flags, t->v.xval);
+	fprintf(stderr, "node at %p (type %03d, %s, flags %d, val %g)\n",
+		(void *) t, t->t, getsymb(t->t), t->flags, t->v.xval);
     } else {
-	fprintf(stderr, " %d: node at %p (type %03d, %s, flags %d)\n",
-		level, (void *) t, t->t, getsymb(t->t), t->flags);
+	fprintf(stderr, "node at %p (type %03d, %s, flags %d)\n",
+		(void *) t, t->t, getsymb(t->t), t->flags);
     }
 
     if (t->aux != NULL) {
@@ -10034,14 +10040,14 @@ static void *get_mod_assign_result (void *lp, GretlType ltype,
 
 #if LHDEBUG
 	fputs("*** op tree, before ***\n", stderr);
-	print_tree(op, p, 0);
+	print_tree(op, p, 0, 0);
 #endif
 	p->targ = l->t;
 	p->flags = P_START;
 	ev = eval(op, p);
 #if LHDEBUG
 	fputs("*** ev tree, after ***\n", stderr);
-	print_tree(ev, p, 0);
+	print_tree(ev, p, 0, 0);
 #endif
 
 	if (!p->err) {
@@ -10764,14 +10770,19 @@ static int set_matrix_value (NODE *lhs, NODE *rhs, parser *p)
        adjust it if need be in the light of the
        dimensions of @m.
     */
-    p->err = check_matrix_subspec(spec, m1);
-    if (p->err) {
-	fprintf(stderr, "set_matrix_value: check_matrix_subspec failed\n");
-	return p->err;
+    if (p->idstr != NULL && !strcmp(p->idstr, "prechecked")) {
+	;
+    } else {
+	p->err = check_matrix_subspec(spec, m1);
+	if (p->err) {
+	    fprintf(stderr, "set_matrix_value: check_matrix_subspec failed\n");
+	    return p->err;
+	}
     }
 
 #if EDEBUG > 1
     gretl_matrix_print(m1, "m1, in set_matrix_value");
+    fprintf(stderr, "op = '%s'\n", getsymb(p->op));
     print_mspec(spec);
 #endif
 
@@ -12548,14 +12559,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		break;
 	    }
 	    if (i == 0) {
-		if (e->t == U_ADDR) {
-		    e = e->L;
-		}
-		if (e->t != MAT) {
-		    node_type_error(t->t, i+1, MAT, e, p);
-		} else {
-		    b = mat_node_get_real_matrix(e, p);
-		}
+		b = mat_node_get_real_matrix(e, p);
 	    } else if (i == 1) {
 		if (e->t != STR) {
 		    node_type_error(t->t, i+1, STR, e, p);
@@ -17517,7 +17521,7 @@ static void gen_preprocess (parser *p, int flags)
 	p->lhtree = expr(p);
 #if LHDEBUG
 	fprintf(stderr, "parsed lhtree, err=%d\n", p->err);
-	print_tree(p->lhtree, p, 0);
+	print_tree(p->lhtree, p, 0, 0);
 #endif
 	p->point = savepoint;
 	p->ch = 0;
@@ -18340,6 +18344,48 @@ static int do_incr_decr (parser *p)
     return p->err;
 }
 
+static void get_primary_matrix_slice (NODE *t, int level,
+				      NODE **pn)
+{
+    if (level == 1 && t->t == MSL) {
+	*pn = t;
+    } else if (*pn == NULL) {
+	if (t->L != NULL) {
+	    get_primary_matrix_slice(t->L, level+1, pn);
+	}
+	if (t->R != NULL) {
+	    get_primary_matrix_slice(t->R, level+1, pn);
+	}
+    }
+}
+
+static int set_nested_matrix_value (NODE *lhs,
+				    NODE *r,
+				    parser *p)
+{
+    int err = set_matrix_value(lhs, r, p);
+
+    if (!err) {
+	NODE *R, *msl0 = NULL;
+
+	get_primary_matrix_slice(p->lhtree, 0, &msl0);
+	if (msl0 != NULL) {
+	    int op = p->op;
+
+	    R = msl0->R;
+	    msl0->R = msl0->R->aux;
+	    p->idstr = "prechecked"; /* FIXME! */
+	    p->op = B_ASN;
+	    err = set_matrix_value(msl0, lhs->L, p);
+	    p->op = op;
+	    p->idstr = NULL;
+	    msl0->R = R;
+	}
+    }
+
+    return err;
+}
+
 static int save_generated_var (parser *p, PRN *prn)
 {
     NODE *r = p->ret;
@@ -18369,9 +18415,9 @@ static int save_generated_var (parser *p, PRN *prn)
 	p->lhres = eval(p->lhtree, p);
 #if LHDEBUG
 	if (p->lhres != NULL) {
-	    print_tree(p->lhres, p, 0);
+	    print_tree(p->lhres, p, 0, 0);
 	    fprintf(stderr, "*** lhtree post-eval ***\n");
-	    print_tree(p->lhtree, p, 0);
+	    print_tree(p->lhtree, p, 0, 0);
 	}
 #endif
 	if (p->err) {
@@ -18405,8 +18451,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	    } else if (lh1->t == SERIES) {
 		p->err = set_series_obs_value(p->lhres, r, p);
 	    } else if (lh1->t == MAT) {
-		/* is this ever reached?? */
-		p->err = set_matrix_value(p->lhres, r, p);
+		p->err = set_nested_matrix_value(p->lhres, r, p);
 	    } else {
 		gretl_errmsg_set(_("Invalid left-hand side expression"));
 		p->err = E_TYPES;
@@ -19065,7 +19110,7 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
     if (flags & P_EXEC) {
 #if EDEBUG
 	fprintf(stderr, "*** printing p->tree (before reinit)\n");
-	print_tree(p->tree, p, 0);
+	print_tree(p->tree, p, 0, 0);
 #endif
 	parser_reinit(p, dset, prn);
 	if (p->err) {
@@ -19159,7 +19204,7 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 #if EDEBUG
     if (flags & P_EXEC) {
 	fprintf(stderr, "*** printing p->tree (about to start eval)\n");
-	print_tree(p->tree, p, 0);
+	print_tree(p->tree, p, 0, 0);
     }
 #endif
 
