@@ -3335,8 +3335,8 @@
 	  If you wish to retrieve the right eigenvectors (as an <by
 	  r="n" c="n"/> complex matrix), supply the name of an
 	  existing matrix, preceded by <lit>&amp;</lit> to indicate
-	  the <quote>address</quote> of the matrix in
-	  question. Otherwise this argument can be omitted.
+	  the <quote>address</quote> of the matrix in question, as the
+	  second argument. Otherwise this argument can be omitted.
 	</para>
 	<para>
 	  To retrieve the left eigenvectors (again, as a complex
@@ -3740,7 +3740,7 @@
       </description>
     </function>
 
-    <function name="fft" section="linalg" output="matrix">
+    <function name="fft2" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
