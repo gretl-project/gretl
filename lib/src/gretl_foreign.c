@@ -1144,23 +1144,18 @@ static void write_python_io_file (FILE *fp, const char *ddir)
 static void write_julia_io_file (FILE *fp, const char *ddir)
 {
     fprintf(fp, "gretl_dotdir = \"%s\"\n\n", ddir);
-    /* Julia 1.0 requires more library-loading */
-    fputs("v1 = VERSION > v\"0.6.9\"\n", fp);
-    fputs("if v1\n", fp);
-    fputs("  using Printf\n", fp);
-    fputs("  using DelimitedFiles\n", fp);
-    fputs("end\n\n", fp);
+    fputs("using Printf\n", fp);
+    fputs("using DelimitedFiles\n\n", fp);
     fputs("function gretl_export(M, fname, autodot=1)\n", fp);
+    fputs("  if VERSION < v\"1.0\"\n", fp);
+    fputs("    error(\"gretl_export requires Julia >= 1.0\")\n", fp);
+    fputs("  end\n", fp);
     fputs("  r,c = size(M)\n", fp);
     fputs("  if autodot != 0 && !isabspath(fname)\n", fp);
     fputs("    fname = gretl_dotdir * fname\n", fp);
     fputs("  end\n", fp);
     fputs("  f = open(fname, \"w\")\n", fp);
-    fputs("  if v1\n", fp);
-    fputs("    n = lastindex(fname)\n", fp);
-    fputs("  else\n", fp);
-    fputs("    n = endof(fname)\n", fp);
-    fputs("  end\n", fp);
+    fputs("  n = lastindex(fname)\n", fp);
     fputs("  if fname[n-3:n] == \".bin\"\n", fp);
     fputs("    # binary mode\n", fp);
     fputs("    local cmplx::Bool\n", fp);
@@ -1199,14 +1194,13 @@ static void write_julia_io_file (FILE *fp, const char *ddir)
     fputs("end\n\n", fp);
 
     fputs("function gretl_loadmat(fname, autodot=1)\n", fp);
+    fputs("  if VERSION < v\"1.0\"\n", fp);
+    fputs("    error(\"gretl_loadmat requires Julia >= 1.0\")\n", fp);
+    fputs("  end\n", fp);
     fputs("  if autodot != 0 && !isabspath(fname)\n", fp);
     fputs("    fname = gretl_dotdir * fname\n", fp);
     fputs("  end\n", fp);
-    fputs("  if v1\n", fp);
-    fputs("    n = lastindex(fname)\n", fp);
-    fputs("  else\n", fp);
-    fputs("    n = endof(fname)\n", fp);
-    fputs("  end\n", fp);
+    fputs("  n = lastindex(fname)\n", fp);
     fputs("  if fname[n-3:n] == \".bin\"\n", fp);
     fputs("    # binary mode\n", fp);
     fputs("    local cmplx::Bool\n", fp);
