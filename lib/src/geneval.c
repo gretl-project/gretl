@@ -18337,7 +18337,7 @@ static void get_primary_matrix_slice (NODE *t,
 
    In those cases the first invocation of set_matrix_value
    below is sufficient. However, as of August 2019 we also
-   come here when the matrix is "under" another matrix, or,
+   come here when the matrix is "under" another matrix, or
    in other words we have a double index or subspec, as in
    these two examples for a complex matrix, C:
 
