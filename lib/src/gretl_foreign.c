@@ -990,7 +990,7 @@ static void write_ox_io_file (FILE *fp, const char *ddir)
 
 static void write_octave_io_file (FILE *fp, const char *ddir)
 {
-    fputs("# not a 'function file' as such\n1;\n", fp);
+    fputs("# not a 'function file' as such\n1;\n\n", fp);
     fputs("function dotdir = gretl_dotdir()\n", fp);
     fprintf(fp, "  dotdir = \"%s\";\n", ddir);
     fputs("endfunction\n\n", fp);
@@ -1002,12 +1002,33 @@ static void write_octave_io_file (FILE *fp, const char *ddir)
     fputs("  else\n", fp);
     fputs("    fd = fopen(fname, \"w\");\n", fp);
     fputs("  endif\n", fp);
-    fputs("  fprintf(fd, \"%d %d\\n\", size(X));\n", fp);
-    fputs("  c = columns(X);\n", fp);
-    fputs("  fs = strcat(strrep(sprintf(\"%d \", ones(1, c)), \"1\", \"%.15g\"), \"\\n\");",
-	  fp);
+    fputs("  ext = fname(end-3:end);\n", fp);
+    fputs("  if (strcmp(ext, '.bin'))\n", fp);
+    fputs("    if (iscomplex(X))\n", fp);
+    fputs("      fwrite(fd, 'gretl_binar_cmatrix', \"uchar\");\n", fp);
+    fputs("      fwrite(fd, 2*rows(X), \"int32\", 0, \"l\");\n", fp);
+    fputs("      fwrite(fd, columns(X), \"int32\", 0, \"l\");\n", fp);
+    fputs("      A = real(X);\n", fp);
+    fputs("      B = imag(X);\n", fp);
+    fputs("      N = rows(X) * columns(X);\n", fp);
+    fputs("      for i = 1:N\n", fp);
+    fputs("        fwrite(fd, A(i), \"double\", 0, \"l\");\n", fp);
+    fputs("        fwrite(fd, B(i), \"double\", 0, \"l\");\n", fp);
+    fputs("      endfor\n", fp);
+    fputs("    else\n", fp);
+    fputs("      fwrite(fd, 'gretl_binary_matrix', \"uchar\");\n", fp);
+    fputs("      fwrite(fd, rows(X), \"int32\", 0, \"l\");\n", fp);
+    fputs("      fwrite(fd, columns(X), \"int32\", 0, \"l\");\n", fp);
+    fputs("      fwrite(fd, X, \"double\", 0, \"l\");\n", fp);
+    fputs("    endif\n", fp);
+    fputs("  else\n", fp);
+    fputs("    fprintf(fd, \"%d %d\\n\", size(X));\n", fp);
+    fputs("    c = columns(X);\n", fp);
+    fputs("    fs = strcat(strrep(sprintf(\"%d \", ones(1, c)), "
+	  "\"1\", \"%.15g\"), \"\\n\");", fp);
     fputc('\n', fp);
-    fputs("  fprintf(fd, fs, X');\n", fp);
+    fputs("    fprintf(fd, fs, X');\n", fp);
+    fputs("  endif\n", fp);
     fputs("  fclose(fd);\n", fp);
     fputs("endfunction\n\n", fp);
 
@@ -1022,20 +1043,19 @@ static void write_octave_io_file (FILE *fp, const char *ddir)
     fputs("  if (strcmp(ext, '.bin'))\n", fp);
     fputs("    hdr = fread(fd, 19, \"uchar\")';\n", fp);
     fputs("    if sum(hdr == 'gretl_binary_matrix') == 19\n", fp);
-    fputs("      r = fread(fd, 1, \"int32\");\n", fp);
-    fputs("      c = fread(fd, 1, \"int32\");\n", fp);
-    fputs("      X = fread(fd, r*c, \"double\");\n", fp);
-    fputs("      A = reshape(X, r, c);\n", fp);
+    fputs("      cmplx = 0;\n", fp);
     fputs("    elseif sum(hdr == 'gretl_binar_cmatrix') == 19\n", fp);
-    fputs("      r = fread(fd, 1, \"int32\");\n", fp);
-    fputs("      c = fread(fd, 1, \"int32\");\n", fp);
-    fputs("      X = fread(fd, r*c, \"double\");\n", fp);
-    fputs("      A = reshape(X, r, c);\n", fp);
+    fputs("      cmplx = 1;\n", fp);
+    fputs("    else\n", fp);
+    fputs("      error(\"not a valid gretl binary matrix\");\n", fp);
+    fputs("    endif\n", fp);
+    fputs("    r = fread(fd, 1, \"int32\", 0, \"l\");\n", fp);
+    fputs("    c = fread(fd, 1, \"int32\", 0, \"l\");\n", fp);
+    fputs("    A = fread(fd, [r, c], \"double\", 0, \"l\");\n", fp);
+    fputs("    if cmplx == 1;\n", fp);
     fputs("      Re = A(1:2:end,:);\n", fp);
     fputs("      Im = A(2:2:end,:);\n", fp);
     fputs("      A = complex(Re, Im);\n", fp);
-    fputs("    else\n", fp);
-    fputs("      error(\"not a valid gretl binary matrix\");\n", fp);
     fputs("    endif\n", fp);
     fputs("  else\n", fp);
     fputs("    [r,c] = fscanf(fd, \"%d %d\", \"C\");\n", fp);
@@ -1054,7 +1074,7 @@ static void write_python_io_file (FILE *fp, const char *ddir)
     fputs("  binwrite = 0\n", fp);
     fputs("  if fname[-4:] == '.bin':\n", fp);
     fputs("    binwrite = 1\n", fp);
-    fputs("    from numpy import asmatrix, asarray\n", fp);
+    fputs("    from numpy import asmatrix, asarray, iscomplexobj, real, imag\n", fp);
     fputs("    from struct import pack\n", fp);
     fputs("  else:\n", fp);
     fputs("    from numpy import asmatrix, savetxt\n", fp);
@@ -1064,11 +1084,21 @@ static void write_python_io_file (FILE *fp, const char *ddir)
     fputs("    fname = gretl_dotdir + fname\n", fp);
     fputs("  if binwrite:\n", fp);
     fputs("    from sys import byteorder\n", fp);
+    fputs("    cmplx = iscomplexobj(X)\n", fp);
     fputs("    f = open(fname, 'wb')\n", fp);
-    fputs("    f.write(b'gretl_binary_matrix')\n", fp);
-    fputs("    f.write(pack('<i', r))\n", fp);
+    fputs("    if cmplx:\n", fp);
+    fputs("      f.write(b'gretl_binar_cmatrix')\n", fp);
+    fputs("      f.write(pack('<i', 2*r))\n", fp);
+    fputs("    else:\n", fp);
+    fputs("      f.write(b'gretl_binary_matrix')\n", fp);
+    fputs("      f.write(pack('<i', r))\n", fp);
     fputs("    f.write(pack('<i', c))\n", fp);
-    fputs("    if byteorder == 'big':\n", fp);
+    fputs("    if cmplx:\n", fp);
+    fputs("      for j in range(0, c):\n", fp);
+    fputs("        for i in range(0, r):\n", fp);
+    fputs("          f.write(pack('<d', real(M[i,j])))\n", fp);
+    fputs("          f.write(pack('<d', imag(M[i,j])))\n", fp);
+    fputs("    elif byteorder == 'big':\n", fp);
     fputs("      for j in range(0, c):\n", fp);
     fputs("        for i in range(0, r):\n", fp);
     fputs("          f.write(pack('<d', M[i,j]))\n", fp);
