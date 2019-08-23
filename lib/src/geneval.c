@@ -3488,6 +3488,9 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
 
 	if (f == HF_CSWITCH || f == HF_SETCMPLX) {
 	    k = node_get_bool(r, p, 1);
+	    if (!p->err && k && m->rows % 2) {
+		p->err = E_INVARG;
+	    }
 	} else {
 	    k = node_get_int(r, p);
 	}
@@ -3498,7 +3501,7 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
 	    p->err = E_CMPLX;
 	}
 	if (!p->err) {
-	    ret = (f == HF_SETCMPLX)? aux_scalar_node(p) : aux_matrix_node(p);
+	    ret = aux_matrix_node(p);
 	}
 	if (p->err) {
 	    return NULL;
@@ -3509,7 +3512,12 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
 	} else if (f == HF_CSWITCH) {
 	    ret->v.m = gretl_cmatrix_switch(m, k, &p->err);
 	} else if (f == HF_SETCMPLX) {
-	    ret->v.xval = p->err = gretl_matrix_set_complex_full(m, k);
+	    ret->v.m = gretl_matrix_copy(m);
+	    if (ret->v.m == NULL) {
+		p->err = E_ALLOC;
+	    } else {
+		p->err = gretl_matrix_set_complex_full(ret->v.m, k);
+	    }
 	}
     } else {
 	ret = aux_any_node(p);
