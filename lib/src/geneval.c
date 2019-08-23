@@ -18321,8 +18321,10 @@ static void get_primary_matrix_slice (NODE *t,
 	pms->L = t->aux;
     } else if (level == 2 && t->t == MSLRAW && has_aux_mspec(t)) {
 	pms->R = t->aux;
-    } else if (level > 2 && has_aux_mat(t)) {
+    } else if (level > 2 && t->t != BMEMB && has_aux_mat(t)) {
 	/* only two levels of matrix slicing are allowed */
+	fprintf(stderr, "LHS: found aux MAT on %s at level %d\n",
+		getsymb(t->t), level);
 	*err = E_DATA;
     }
     if (!*err && t->L != NULL) {
