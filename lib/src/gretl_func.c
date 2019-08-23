@@ -4958,6 +4958,8 @@ static int load_public_function (fnpkg *pkg, int i)
 	       bkw package */
 	    gretl_errmsg_sprintf(_("'%s' is the name of a built-in function"),
 				 fun->name);
+	    fprintf(stderr, "%s: function %s would override a built-in\n",
+		    pkg->name, fun->name);
 	    err = E_DATA;
 	}
     }
