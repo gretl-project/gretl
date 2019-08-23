@@ -57,7 +57,7 @@ imaginary parts respectively, and sticks them together, as in
 \begin{code}
 C = complex(A, B)
 \end{code}
-Three cases are supported, as follows. (Other than in the subscripts,
+Four cases are supported, as follows. (Other than in the subscripts,
 $i$ denotes $\sqrt{-1}$.)
 \begin{itemize}
 \item \texttt{A} and \texttt{B} are both $m \times n$ real matrices
@@ -68,6 +68,9 @@ $i$ denotes $\sqrt{-1}$.)
 \item \texttt{A} is an $m \times n$ real matrix and \texttt{B} is a
   scalar: \texttt{C} is an $m \times n$ matrix such that
   $c_{ij} = a_{ij} + b\,i$.
+\item \texttt{A} is a scalar and \texttt{B} is an $m \times n$ real
+  matrix: \texttt{C} is an $m \times n$ matrix such that
+  $c_{ij} = a + b_{ij}\,i$.
 \end{itemize}
 
 In addition, complex matrices may naturally arise as the result of

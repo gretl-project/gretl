@@ -4326,16 +4326,15 @@ static NODE *complex_matrix_node (NODE *l, NODE *r, parser *p)
     NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL) {
-	if (l->t == NUM && r->t == NUM) {
-	    double xr = l->v.xval, xi = r->v.xval;
+	gretl_matrix *Re = l->t == MAT ? l->v.m : NULL;
+	gretl_matrix *Im = r->t == MAT ? r->v.m : NULL;
+	double x = l->t == NUM ? l->v.xval : 0;
+	double y = r->t == NUM ? r->v.xval : 0;
 
-	    ret->v.m = gretl_cmatrix_from_scalar(xr + xi*I, &p->err);
-	} else if (l->t == MAT && r->t == MAT) {
-	    ret->v.m = gretl_cmatrix_build(l->v.m, r->v.m, 0, &p->err);
-	} else if (l->t == MAT && r->t == NUM) {
-	    ret->v.m = gretl_cmatrix_build(l->v.m, NULL, r->v.xval, &p->err);
+	if (l->t == NUM && r->t == NUM) {
+	    ret->v.m = gretl_cmatrix_from_scalar(x + y*I, &p->err);
 	} else {
-	    p->err = E_TYPES;
+	    ret->v.m = gretl_cmatrix_build(Re, Im, x, y, &p->err);
 	}
     }
 

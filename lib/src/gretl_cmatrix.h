@@ -64,7 +64,8 @@ gretl_matrix *gretl_cmatrix_fft (const gretl_matrix *A, int inverse,
 
 gretl_matrix *gretl_cmatrix_build (const gretl_matrix *Re,
 				   const gretl_matrix *Im,
-				   double ival, int *err);
+				   double x, double y,
+				   int *err);
 
 gretl_matrix *gretl_cmatrix_extract (const gretl_matrix *A,
 				     int im, int *err);

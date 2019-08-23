@@ -1426,24 +1426,37 @@ int gretl_cmatrix_printf (const gretl_matrix *A,
 
 gretl_matrix *gretl_cmatrix_build (const gretl_matrix *Re,
 				   const gretl_matrix *Im,
-				   double ival, int *err)
+				   double x, double y,
+				   int *err)
 {
     gretl_matrix *C = NULL;
+    int r = 1, c = 1;
     int i, n;
 
-    if (gretl_is_null_matrix(Re) || Re->is_complex) {
-	*err = E_INVARG;
-    } else if (Im != NULL) {
-	if (Im->rows != Re->rows || Im->cols != Re->cols) {
-	    *err = E_NONCONF;
-	} else if (Im->is_complex) {
+    if (Re != NULL) {
+	if (Re->is_complex) {
 	    *err = E_INVARG;
+	} else {
+	    r = Re->rows;
+	    c = Re->cols;
+	}
+    }
+    if (!*err && Im != NULL) {
+	if (Im->is_complex) {
+	    *err = E_INVARG;
+	} else if (Re != NULL) {
+	    if (Im->rows != r || Im->cols != c) {
+		*err = E_NONCONF;
+	    }
+	} else {
+	    r = Im->rows;
+	    c = Im->cols;
 	}
     }
 
     if (!*err) {
-	n = Re->rows * Re->cols;
-	C = gretl_cmatrix_new(Re->rows, Re->cols);
+	n = r * c;
+	C = gretl_cmatrix_new(r, c);
 	if (C == NULL) {
 	    *err = E_ALLOC;
 	}
@@ -1451,10 +1464,13 @@ gretl_matrix *gretl_cmatrix_build (const gretl_matrix *Re,
 
     if (!*err) {
 	for (i=0; i<n; i++) {
-	    if (Im != NULL) {
-		ival = Im->val[i];
+	    if (Re != NULL) {
+		x = Re->val[i];
 	    }
-	    C->z[i] = Re->val[i] + ival * I;
+	    if (Im != NULL) {
+		y = Im->val[i];
+	    }
+	    C->z[i] = x + y * I;
 	}
     }
 
