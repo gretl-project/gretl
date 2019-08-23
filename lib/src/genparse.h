@@ -456,6 +456,7 @@ enum {
     F_FZERO,
     F_EIGGEN,
     F_EIGGEN2,
+    F_SCHUR,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,

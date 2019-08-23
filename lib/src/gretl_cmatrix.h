@@ -48,6 +48,11 @@ gretl_matrix *gretl_zgeev (const gretl_matrix *A,
 			   gretl_matrix *VL,
 			   int *err);
 
+gretl_matrix *gretl_zgees (const gretl_matrix *A,
+			   gretl_matrix *Z,
+			   gretl_matrix *W,
+			   int *err);
+
 int gretl_cmatrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
 		       gretl_vector **ps, gretl_matrix **pvt,
 		       int smod);

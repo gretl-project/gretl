@@ -45,4 +45,9 @@ void zgesvd_ (const char *jobu, const char *jobvt,
 	      double *s, cmplx *u, integer *ldu, cmplx *vt, integer *ldvt,
 	      cmplx *work, integer *lwork, double *rwork, integer *info);
 
+void zgees_ (const char *jobvs, const char *srt, void *select,
+	     integer *n, cmplx *a, integer *lda, integer *sdim,
+	     cmplx *w, cmplx *vs, integer *ldvs, cmplx *work, integer *lwork,
+	     double *rwork, integer *bwork, integer *info);
+
 #endif /* CLAPACK_COMPLEX_H */

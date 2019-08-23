@@ -493,35 +493,38 @@ gretl_matrix *gretl_zheev (gretl_matrix *A, int eigenvecs,
     return evals;
 }
 
-static int zgeev_eigvecs_alloc (gretl_matrix *m,
-				gretl_matrix **pev,
-				cmplx **evz,
-				int n)
+static int aux_cmatrix_alloc (gretl_matrix *m,
+			      gretl_matrix **paux,
+			      cmplx **ppz,
+			      int r, int c)
 {
-    gretl_matrix *ev = NULL;
-    int mrc = m->rows * m->cols;
-    int dim = n * n;
+    gretl_matrix *aux = NULL;
+    int mrc, dim = r * c;
 
-    /* We need an n x n complex matrix for output:
-       is @m usable or do we need to allocate a
-       new matrix?
+    mrc = (m == NULL)? 0 : m->rows * m->cols;
+
+    /* We need an r x c complex matrix for output:
+       can we just use @m?
     */
-    if (m->is_complex && mrc == dim) {
-	m->rows = m->cols = n;
-	*evz = (cmplx *) m->val;
-    } else if (!m->is_complex && mrc == 2*dim) {
-	m->rows = 2*n;
-	m->cols = n;
+    if (mrc == dim && m->is_complex) {
+	/* OK, reusable complex matrix */
+	m->rows = r;
+	m->cols = c;
+	*ppz = (cmplx *) m->val;
+    } else if (mrc == 2*dim && !m->is_complex) {
+	/* OK, reusable real matrix */
+	m->rows = 2*r;
+	m->cols = c;
 	gretl_matrix_set_complex_full(m, 1);
-	*evz = (cmplx *) m->val;
+	*ppz = (cmplx *) m->val;
     } else {
-	/* have to allocate */
-	ev = gretl_cmatrix_new0(n, n);
-	if (ev == NULL) {
+	/* nope, have to allocate anew */
+	aux = gretl_cmatrix_new0(r, c);
+	if (aux == NULL) {
 	    return E_ALLOC;
 	} else {
-	    *pev = ev;
-	    *evz = (cmplx *) ev->val;
+	    *paux = aux;
+	    *ppz = (cmplx *) aux->val;
 	}
     }
 
@@ -571,7 +574,7 @@ gretl_matrix *gretl_zgeev (const gretl_matrix *A,
 
     if (VL != NULL) {
 	/* left eigenvectors wanted */
-	*err = zgeev_eigvecs_alloc(VL, &Ltmp, &vl, n);
+	*err = aux_cmatrix_alloc(VL, &Ltmp, &vl, n, n);
 	if (*err) {
 	    goto bailout;
 	}
@@ -579,7 +582,7 @@ gretl_matrix *gretl_zgeev (const gretl_matrix *A,
 
     if (VR != NULL) {
 	/* right eigenvectors wanted */
-	*err = zgeev_eigvecs_alloc(VR, &Rtmp, &vr, n);
+	*err = aux_cmatrix_alloc(VR, &Rtmp, &vr, n, n);
 	if (*err) {
 	    goto bailout;
 	}
@@ -627,6 +630,112 @@ gretl_matrix *gretl_zgeev (const gretl_matrix *A,
     gretl_matrix_free(Acpy);
     gretl_matrix_free(Ltmp);
     gretl_matrix_free(Rtmp);
+
+    if (*err) {
+	gretl_matrix_free(ret);
+	ret = NULL;
+    }
+
+    return ret;
+}
+
+/* Schur factorization of @A, with optional assignment of the
+   matrix of Schur vectors to @Z and/or the eigenvalues of @A
+   to @W.
+*/
+
+gretl_matrix *gretl_zgees (const gretl_matrix *A,
+			   gretl_matrix *Z,
+			   gretl_matrix *W,
+			   int *err)
+{
+    gretl_matrix *ret = NULL;
+    gretl_matrix *Acpy = NULL;
+    gretl_matrix *Ztmp = NULL;
+    gretl_matrix *Wtmp = NULL;
+    integer n, info, lwork;
+    integer ldvs;
+    double *rwork = NULL;
+    cmplx *a = NULL;
+    cmplx *work = NULL;
+    cmplx *vs = NULL;
+    cmplx *w = NULL;
+    cmplx wsz;
+    char jobvs = Z != NULL ? 'V' : 'N';
+    char srt = 'N';
+    integer sdim = 0;
+
+    if (!cmatrix_validate(A, 1)) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    n = A->rows;
+    ldvs = Z != NULL ? n : 1;
+
+    /* we need a copy of @A, which gets overwritten */
+    ret = gretl_matrix_copy(A);
+    if (ret == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    a = (cmplx *) ret->z;
+
+    if (Z != NULL) {
+	/* Schur vectors wanted */
+	*err = aux_cmatrix_alloc(Z, &Ztmp, &vs, n, n);
+	if (*err) {
+	    goto bailout;
+	}
+    }
+
+    /* Eigenvalues vector: seems like we need this,
+       regardless of whether @W is passed?
+    */
+    *err = aux_cmatrix_alloc(W, &Wtmp, &w, n, 1);
+    if (*err) {
+	goto bailout;
+    }
+
+    work = malloc(sizeof *work);
+    rwork = malloc(n * sizeof *rwork);
+    if (work == NULL || rwork == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* get optimal workspace size */
+    lwork = -1;
+    zgees_(&jobvs, &srt, NULL, &n, a, &n, &sdim, w, vs, &ldvs,
+	   work, &lwork, rwork, NULL, &info);
+    lwork = (integer) work[0].r;
+    work = realloc(work, lwork * sizeof *work);
+    if (work == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* do the actual factorization */
+    zgees_(&jobvs, &srt, NULL, &n, a, &n, &sdim, w, vs, &ldvs,
+	   work, &lwork, rwork, NULL, &info);
+    if (info != 0) {
+	*err = E_DATA;
+    } else {
+	if (Ztmp != NULL) {
+	    gretl_matrix_replace_content(Z, Ztmp);
+	}
+	if (W != NULL && Wtmp != NULL) {
+	    gretl_matrix_replace_content(W, Wtmp);
+	}
+    }
+
+ bailout:
+
+    free(rwork);
+    free(work);
+    gretl_matrix_free(Ztmp);
+    gretl_matrix_free(Wtmp);
 
     if (*err) {
 	gretl_matrix_free(ret);

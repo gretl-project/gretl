@@ -355,6 +355,7 @@ struct str_table funcs[] = {
     { F_EIGSYM,   "eigensym" },
     { F_EIGGEN,   "eigengen" },
     { F_EIGGEN2,  "eiggen2" },
+    { F_SCHUR,    "schur" },
     { F_EIGSOLVE, "eigsolve" },
     { F_NULLSPC,  "nullspace" },
     { F_PRINCOMP, "princomp" },

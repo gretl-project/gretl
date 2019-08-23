@@ -11121,6 +11121,23 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 		}
 	    }
 	}
+    } else if (f == F_SCHUR) {
+	gretl_matrix *Z = NULL;
+	gretl_matrix *W = NULL;
+
+	if (l->t != MAT || !l->v.m->is_complex) {
+	    node_type_error(f, 1, MAT, l, p);
+	} else {
+	    if (!null_node(m)) {
+		Z = ptr_node_get_matrix(m, p);
+	    }
+	    if (!null_node(r)) {
+		W = ptr_node_get_matrix(r, p);
+	    }
+	}
+	if (!p->err) {
+	    A = gretl_zgees(l->v.m, Z, W, &p->err);
+	}
     } else if (f == F_CORRGM) {
 	if (l->t != SERIES && l->t != MAT && l->t != LIST) {
 	    node_type_error(f, 1, SERIES, l, p);
@@ -16147,6 +16164,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_SVD:
     case F_EIGGEN:
     case F_EIGGEN2:
+    case F_SCHUR:
     case F_TRIMR:
     case F_TOEPSOLV:
     case F_CORRGM:
