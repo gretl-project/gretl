@@ -173,10 +173,11 @@ matrices), \texttt{ffti}, \texttt{inv}, \texttt{ginv},
 
 In addition the new functions \texttt{eiggen2} and \texttt{fft2} are
 complex-supporting versions of \texttt{eigengen} and \texttt{fft},
-respectively (see section~\ref{sec:compat} for details). And there's
-the complex-only function \texttt{ctrans} which gives the conjugate
-transpose; note that \texttt{transp} gives the straight
-(non-conjugated) transpose of a complex matrix.
+respectively (see section~\ref{sec:compat} for details). And there are
+the complex-only functions \texttt{ctrans}, which gives the conjugate
+transpose,\footnote{The \texttt{transp} function gives the straight
+  (non-conjugated) transpose of a complex matrix.} and \texttt{schur}
+for the Schur factorization (see section~\ref{sec:newsigs}).
 
 \subsection{Matrix building}
 
