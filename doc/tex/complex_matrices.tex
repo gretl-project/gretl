@@ -343,7 +343,20 @@ produce an error message in the next gretl release. We will make
 available an updated version of \texttt{ghosts} which uses gretl's
 native complex functionality.
 
+Further note: it should be mentioned that the \texttt{ffti} function
+is inherently backward compatible: the new functionality is just a
+superset of the old. The input must be complex, and is accepted by
+\texttt{ffti} in either the legacy or the new format. The output is
+real if the input is Hermitian, which in this case means that the
+first (zero-frequency) row is real and the remaining rows are
+conjugate symmetrical about their mid-point. That's the only case that
+could arise if \texttt{ffti} is used on output from the old
+\texttt{fft}.  Otherwise (non-Hermitian complex input, which can arise
+only under the new scheme) the output will be complex, and in the new
+format.
+
 \section{Devels corner: internals and testing}
+\label{sec:internals}
 
 In the \textsf{C} programming language a double-precision complex
 value is basically just two regular ``doubles'' contiguous in memory
@@ -418,5 +431,52 @@ C (2 x 2)
 Should they turn out to be useful for more than just testing, one or
 both of these hidden functions might be renamed and exposed for
 general use.
+
+\section{Signatures of new functions}
+\label{sec:newsigs}
+
+In this final section we recap (and elaborate where necessary) on the
+signatures of functions that are specific to the new treatment of
+complex matrices.
+
+\texttt{carg()}: Argument: complex matrix $C$. Returns: real matrix,
+the ``argument'' of $C$.
+
+\texttt{cmod()}: Argument: complex matrix $C$. Returns: real matrix,
+the modulus of $C$.
+
+\texttt{complex()}:
+Arguments: $A$ (real matrix or scalar), $B$ (real matrix or scalar). See
+section~\ref{sec:create} for details.
+
+\texttt{conj()}: Argument: complex matrix $C$. Returns: complex
+matrix, the complex conjugate of $C$.
+
+\texttt{ctrans()}: Argument: complex matrix $C$. Returns: complex
+matrix, the conjugate transpose of $C$.
+
+\texttt{eiggen2()}: Argument 1: matrix $A$, either real or complex.
+Argument 2 (optional): address of matrix. Argument 3 (optional):
+address of matrix. Returns: complex column vector, the eigenvalues of
+$A$. If argument 2 is provided it retrieves a complex matrix holding
+the right eigenvectors of $A$; if argument 3 is provided it retrieves
+a complex matrix holding the left eigenvectors of $A$.
+
+\texttt{fft2()}: Argument: matrix $A$, either real or
+complex. Returns: complex matrix holding the discrete FFT of $A$, by
+column.
+
+\texttt{Re()}: Argument: complex matrix $C$. Returns: real matrix,
+the real part of $C$.
+
+\texttt{Im()}: Argument: complex matrix $C$. Returns: real matrix,
+the imaginary part of $C$.
+
+\texttt{schur()}: Argument 1: complex matrix $A$.  Argument 2
+(optional): address of matrix. Argument 3 (optional): address of
+matrix. Returns: complex triangular matrix $T$. If argument 2 is
+provided it retrieves a complex matrix $Z$ holding the Schur vectors
+associated with $A$ and $T$, such that $A = ZTZ^{\mathrm H}$. If
+argument 3 is provided it retrieves the eigenvalues of $A$.
 
 \end{document}
