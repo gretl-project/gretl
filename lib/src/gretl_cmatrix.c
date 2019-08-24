@@ -650,7 +650,6 @@ gretl_matrix *gretl_zgees (const gretl_matrix *A,
 			   int *err)
 {
     gretl_matrix *ret = NULL;
-    gretl_matrix *Acpy = NULL;
     gretl_matrix *Ztmp = NULL;
     gretl_matrix *Wtmp = NULL;
     integer n, info, lwork;
@@ -660,7 +659,6 @@ gretl_matrix *gretl_zgees (const gretl_matrix *A,
     cmplx *work = NULL;
     cmplx *vs = NULL;
     cmplx *w = NULL;
-    cmplx wsz;
     char jobvs = Z != NULL ? 'V' : 'N';
     char srt = 'N';
     integer sdim = 0;
