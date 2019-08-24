@@ -168,8 +168,10 @@ categories employed in gretl's online ``Function reference'' (under the
 The functions that accept complex arguments at present are:
 \texttt{det}, \texttt{ldet}, \texttt{eigensym} (for Hermitian
 matrices), \texttt{ffti}, \texttt{inv}, \texttt{ginv},
-\texttt{hdprod}, \texttt{rank}, \texttt{svd}, \texttt{tr}, and
-\texttt{transp}.
+\texttt{hdprod}, \texttt{mexp}, \texttt{mlog}, \texttt{rank},
+\texttt{svd}, \texttt{tr}, and \texttt{transp}. Note, however,
+that \texttt{mexp} and \texttt{mlog} require that the input
+matrix be diagonalizable.
 
 In addition the new functions \texttt{eiggen2} and \texttt{fft2} are
 complex-supporting versions of \texttt{eigengen} and \texttt{fft},
@@ -344,17 +346,17 @@ produce an error message in the next gretl release. We will make
 available an updated version of \texttt{ghosts} which uses gretl's
 native complex functionality.
 
-Further note: it should be mentioned that the \texttt{ffti} function
-is inherently backward compatible: the new functionality is just a
-superset of the old. The input must be complex, and is accepted by
-\texttt{ffti} in either the legacy or the new format. The output is
-real if the input is Hermitian, which in this case means that the
-first (zero-frequency) row is real and the remaining rows are
-conjugate symmetrical about their mid-point. That's the only case that
-could arise if \texttt{ffti} is used on output from the old
-\texttt{fft}.  Otherwise (non-Hermitian complex input, which can arise
-only under the new scheme) the output will be complex, and in the new
-format.
+Further note: It should be mentioned that the \texttt{ffti} function
+is backward compatible: the new functionality is just a superset of
+the old. The input must be complex, and is accepted by \texttt{ffti}
+in either the legacy or the new format. The output is real if the
+input is Hermitian, which in this case means that the first
+(zero-frequency) row is real and the remaining rows are conjugate
+symmetrical about their mid-point. That's the only case that can arise
+when \texttt{ffti} is used on output from the old \texttt{fft} (which
+only accepted real input).  Otherwise (non-Hermitian complex input,
+which can arise only under the new scheme) the output will be complex,
+and in the new format.
 
 \section{Devels corner: internals and testing}
 \label{sec:internals}
@@ -440,44 +442,56 @@ In this final section we recap (and elaborate where necessary) on the
 signatures of functions that are specific to the new treatment of
 complex matrices.
 
-\texttt{carg()}: Argument: complex matrix $C$. Returns: real matrix,
-the ``argument'' of $C$.
+\texttt{carg(C)}:\\
+Argument: complex matrix $C$.\\
+Returns: real matrix, the ``argument'' of $C$.
 
-\texttt{cmod()}: Argument: complex matrix $C$. Returns: real matrix,
-the modulus of $C$.
+\texttt{cmod(C)}:\\
+Argument: complex matrix $C$.\\
+Returns: real matrix, the modulus of $C$.
 
-\texttt{complex()}:
-Arguments: $A$ (real matrix or scalar), $B$ (real matrix or scalar). See
-section~\ref{sec:create} for details.
+\texttt{complex(A, B)}:\\
+Arguments: $A$ (real matrix or scalar), $B$ (real matrix or scalar).\\
+See section~\ref{sec:create} for details.
 
-\texttt{conj()}: Argument: complex matrix $C$. Returns: complex
-matrix, the complex conjugate of $C$.
+\texttt{conj(C)}:\\
+Argument: complex matrix $C$.\\
+Returns: complex matrix, the complex conjugate of $C$.
 
-\texttt{ctrans()}: Argument: complex matrix $C$. Returns: complex
-matrix, the conjugate transpose of $C$.
+\texttt{ctrans(C)}:\\
+Argument: complex matrix $C$.\\
+Returns: complex matrix, the conjugate transpose of $C$.
 
-\texttt{eiggen2()}: Argument 1: matrix $A$, either real or complex.
-Argument 2 (optional): address of matrix. Argument 3 (optional):
-address of matrix. Returns: complex column vector, the eigenvalues of
-$A$. If argument 2 is provided it retrieves a complex matrix holding
-the right eigenvectors of $A$; if argument 3 is provided it retrieves
-a complex matrix holding the left eigenvectors of $A$.
+\texttt{eiggen2(A, \&V, \&W)}:\\
+Argument 1: square matrix $A$, either real or complex.\\
+Argument 2 (optional): address of matrix.\\
+Argument 3 (optional): address of matrix.\\
+Returns: complex column vector, the eigenvalues of $A$. If argument 2
+is provided it retrieves a complex matrix holding the right
+eigenvectors of $A$; if argument 3 is provided it retrieves a complex
+matrix holding the left eigenvectors of $A$.
 
-\texttt{fft2()}: Argument: matrix $A$, either real or
-complex. Returns: complex matrix holding the discrete FFT of $A$, by
+\texttt{fft2(A)}:\\
+Argument: matrix $A$, either real or complex.\\
+Returns: complex matrix holding the discrete FFT of $A$, by
 column.
 
-\texttt{Re()}: Argument: complex matrix $C$. Returns: real matrix,
-the real part of $C$.
+\texttt{Re(C)}:\\
+Argument: complex matrix $C$.\\
+Returns: real matrix, the real part of $C$.
 
-\texttt{Im()}: Argument: complex matrix $C$. Returns: real matrix,
-the imaginary part of $C$.
+\texttt{Im(C)}:\\
+Argument: complex matrix $C$.\\
+Returns: real matrix, the imaginary part of $C$.
 
-\texttt{schur()}: Argument 1: complex matrix $A$.  Argument 2
-(optional): address of matrix. Argument 3 (optional): address of
-matrix. Returns: complex upper triangular matrix $T$. If argument 2 is
+\texttt{schur(A, \&Z, \&w)}:\\
+Argument 1: square complex matrix $A$.\\
+Argument 2 (optional): address of matrix.\\
+Argument 3 (optional): address of matrix.\\
+Returns: complex upper triangular matrix $T$. If argument 2 is
 provided it retrieves a complex matrix $Z$ holding the Schur vectors
 associated with $A$ and $T$, such that $A = ZTZ^{\mathrm H}$. If
-argument 3 is provided it retrieves the eigenvalues of $A$.
+argument 3 is provided it retrieves the eigenvalues of $A$ in
+a complex column vector.
 
 \end{document}

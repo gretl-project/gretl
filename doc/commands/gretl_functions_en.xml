@@ -3484,7 +3484,7 @@
       <description>
 	<para>
 	  Returns <math>e</math><sup>x</sup>. Note that in case of
-	  matrices the function acts element by element. For the
+	  matrix input the function acts element by element. For the
 	  matrix exponential function, see <fncref targ="mexp"/>.
 	</para>
       </description>
@@ -6195,6 +6195,11 @@
 	  if necessary, and may be adjusted in case of non-uniqueness
 	  in the set of names thus constructed.
 	</para>
+	<para>
+	  Note that in case of matrix input the function acts element
+	  by element. For the matrix logarithm function, see <fncref
+	  targ="mlog"/>.
+	</para>
       </description>
     </function>
 
@@ -6631,18 +6636,27 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Computes the matrix exponential of <argname>A</argname>,
-	  using algorithm 11.3.1 from <cite key="golub96">Golub and
-	  Van Loan (1996)</cite>.
+	  Computes the matrix exponential of <argname>A</argname>.  If
+	  <argname>A</argname> is a real matrix algorithm 11.3.1 from
+	  <cite key="golub96">Golub and Van Loan (1996)</cite> is
+	  used. If <argname>A</argname> is complex the algorithm uses
+	  eigendecomposition and <argname>A</argname> must be
+	  diagonalizable.
 	</para>
 	<para context="tex">
 	  Computes the matrix exponential,
 	  \[ e^A = \sum_{k=0}^{\infty} \frac{A^k}{k!}
 	  = \frac{I}{0!} + \frac{A}{1!} + \frac{A^2}{2!} + \frac{A^3}{3!}
 	  + \cdots\]
-	  (This series is sure to converge.) The algorithm used
-	  is 11.3.1 from <cite key="golub96">Golub and Van Loan
-	  (1996)</cite>.
+	  (This series is sure to converge.) If <argname>A</argname>
+	  is a real matrix algorithm used is 11.3.1 from <cite
+	  key="golub96">Golub and Van Loan (1996)</cite> is used. If
+	  <argname>A</argname> is complex the algorithm uses
+	  eigendecomposition and <argname>A</argname> must be
+	  diagonalizable.
+	</para>
+	<para>
+	  See also <fncref targ="mlog"/>.
 	</para>
       </description>
     </function>
@@ -6856,6 +6870,20 @@
 	<para>
 	  but use of <lit>mlincomb</lit> saves on some typing and
 	  also some CPU cycles.
+	</para>
+      </description>
+    </function>
+
+    <function name="mlog" section="linalg" output="smatrix">
+      <fnargs>
+	<fnarg type="smatrix">A</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Computes the matrix logarithm of <argname>A</argname>.
+	  The algorithm employed relies on eigendecomposition,
+	  which requires that <argname>A</argname> be
+	  diagonalizable. See also <fncref targ="mexp"/>.
 	</para>
       </description>
     </function>
