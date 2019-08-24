@@ -743,8 +743,11 @@ gretl_matrix *gretl_zgees (const gretl_matrix *A,
     return ret;
 }
 
+#if 0
+
 /* Inverse of a complex matrix via LU decomposition using the
-   LAPACK functions zgetrf() and zgetri()
+   LAPACK functions zgetrf() and zgetri(). This function does
+   not offer adequate detection of rank-deficiency.
 */
 
 gretl_matrix *gretl_cmatrix_inverse (const gretl_matrix *A, int *err)
@@ -754,9 +757,14 @@ gretl_matrix *gretl_cmatrix_inverse (const gretl_matrix *A, int *err)
     integer *ipiv;
     cmplx *a, *work = NULL;
     integer n, info;
+    int rank;
 
     if (!cmatrix_validate(A, 1)) {
 	*err = E_INVARG;
+	return NULL;
+    }
+
+    if (*err) {
 	return NULL;
     }
 
@@ -815,6 +823,8 @@ gretl_matrix *gretl_cmatrix_inverse (const gretl_matrix *A, int *err)
 
     return Ainv;
 }
+
+#endif
 
 enum {
     SVD_THIN,
@@ -1015,9 +1025,15 @@ int gretl_cmatrix_rank (const gretl_matrix *A, int *err)
     return rank;
 }
 
-/* generalized inverse of a complex matrix via its SVD */
+/* Inverse of a complex matrix via its SVD. If the  @generalized
+   flag is non-zero the generalized inverse is produced in case
+   of rank deficiency, othewise an error is flagged if @A is not
+   of full rank.
+*/
 
-gretl_matrix *gretl_cmatrix_ginv (const gretl_matrix *A, int *err)
+static gretl_matrix *cmatrix_SVD_inverse (const gretl_matrix *A,
+					  int generalized,
+					  int *err)
 {
     gretl_matrix *U = NULL;
     gretl_matrix *V = NULL;
@@ -1028,11 +1044,17 @@ gretl_matrix *gretl_cmatrix_ginv (const gretl_matrix *A, int *err)
     *err = gretl_cmatrix_SVD(A, &U, &s, &V, 1);
 
     if (!*err) {
+	double smin = csvd_smin(A, s->val[0]);
 	double complex vij;
 	int i, j, h = 0;
 
 	for (i=0; i<s->cols; i++) {
-	    h += s->val[i] > 1.0e-13;
+	    h += s->val[i] > smin;
+	}
+	if (!generalized && h < s->cols) {
+	    gretl_errmsg_set(_("Matrix is singular"));
+	    *err = E_SINGULAR;
+	    goto bailout;
 	}
 	Vt = gretl_ctrans(V, 1, err);
 	if (!*err) {
@@ -1049,12 +1071,24 @@ gretl_matrix *gretl_cmatrix_ginv (const gretl_matrix *A, int *err)
 	}
     }
 
+ bailout:
+
     gretl_matrix_free(U);
     gretl_matrix_free(V);
     gretl_matrix_free(s);
     gretl_matrix_free(Vt);
 
     return ret;
+}
+
+gretl_matrix *gretl_cmatrix_ginv (const gretl_matrix *A, int *err)
+{
+    return cmatrix_SVD_inverse(A, 1, err);
+}
+
+gretl_matrix *gretl_cmatrix_inverse (const gretl_matrix *A, int *err)
+{
+    return cmatrix_SVD_inverse(A, 0, err);
 }
 
 /* Horizontal direct product of complex @A and @B */
@@ -2524,6 +2558,8 @@ static int imag_part_zero (const gretl_matrix *A)
 
     for (i=0; i<n; i++) {
 	if (fabs(cimag(A->z[i])) > tol) {
+	    fprintf(stderr, "imag_part_zero? no, got %g\n",
+		    cimag(A->z[i]));
 	    return 0;
 	}
     }
@@ -2542,7 +2578,7 @@ gretl_matrix *gretl_matrix_log (const gretl_matrix *A, int *err)
     int i;
 
     if (gretl_is_null_matrix(A) || A->rows != A->cols) {
-	/* we require a square matrix */
+	/* we require a square matrix, real or complex */
 	*err = E_INVARG;
 	return NULL;
     }
@@ -2566,13 +2602,16 @@ gretl_matrix *gretl_matrix_log (const gretl_matrix *A, int *err)
     }
 
     if (!*err) {
-	for (i=0; i<A->rows; i++) {
-	    w->z[i] = clog(w->z[i]);
-	}
+	/* The following step will fail if
+	   @A is not diagonalizable
+	*/
 	Vi = gretl_cmatrix_inverse(V, err);
     }
 
     if (!*err) {
+	for (i=0; i<A->rows; i++) {
+	    w->z[i] = clog(w->z[i]);
+	}
 	R = cmatrix_dot_op(w, Vi, '*', err);
 	if (!*err) {
 	    gretl_matrix_free(Vi);
@@ -2584,7 +2623,7 @@ gretl_matrix *gretl_matrix_log (const gretl_matrix *A, int *err)
 
     if (!*err) {
 	if (imag_part_zero(Vi)) {
-	    /* should we be doing this? */
+	    /* should we do this? */
 	    C = gretl_cmatrix_extract(Vi, 0, err);
 	} else {
 	    C = Vi;
@@ -2602,7 +2641,7 @@ gretl_matrix *gretl_matrix_log (const gretl_matrix *A, int *err)
     return C;
 }
 
-/* how general is this? */
+/* Matrix exponential for a diagonalizable complex matrix */
 
 gretl_matrix *gretl_cmatrix_exp (const gretl_matrix *A, int *err)
 {
@@ -2633,9 +2672,9 @@ gretl_matrix *gretl_cmatrix_exp (const gretl_matrix *A, int *err)
     }
 
     if (!*err) {
-	for (i=0; i<A->rows; i++) {
-	    w->z[i] = cexp(w->z[i]);
-	}
+	/* The following step will fail if
+	   @A is not diagonalizable
+	*/
 	Vi = gretl_cmatrix_inverse(V, err);
     }
 
@@ -2643,6 +2682,9 @@ gretl_matrix *gretl_cmatrix_exp (const gretl_matrix *A, int *err)
     C = NULL;
 
     if (!*err) {
+	for (i=0; i<A->rows; i++) {
+	    w->z[i] = cexp(w->z[i]);
+	}
 	R = cmatrix_dot_op(w, Vi, '*', err);
 	if (!*err) {
 	    C = gretl_cmatrix_multiply(V, R, err);
