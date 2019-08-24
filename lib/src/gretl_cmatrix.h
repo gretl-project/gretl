@@ -153,4 +153,7 @@ int gretl_cmatrix_set_part (gretl_matrix *targ,
 			    const gretl_matrix *src,
 			    double x, int im);
 
+gretl_matrix *gretl_matrix_log (const gretl_matrix *A,
+				int *err);
+
 #endif /* GRETL_CMATRIX_H */

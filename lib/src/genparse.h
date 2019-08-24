@@ -291,6 +291,7 @@ enum {
     F_FUNCERR,
     F_ISCMPLX,
     F_CTRANS,
+    F_MLOG,
     HF_JBTERMS,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     HF_LISTINFO,

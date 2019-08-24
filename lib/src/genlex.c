@@ -360,6 +360,7 @@ struct str_table funcs[] = {
     { F_NULLSPC,  "nullspace" },
     { F_PRINCOMP, "princomp" },
     { F_MEXP,     "mexp" },
+    { F_MLOG,     "mlog" },
     { F_FDJAC,    "fdjac" },
     { F_BFGSMAX,  "BFGSmax" },
     { F_BFGSCMAX, "BFGScmax" },

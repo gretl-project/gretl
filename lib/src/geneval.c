@@ -4203,6 +4203,9 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	case F_MEXP:
 	    ret->v.m = gretl_matrix_exp(m, &p->err);
 	    break;
+	case F_MLOG:
+	    ret->v.m = gretl_matrix_log(m, &p->err);
+	    break;
 	case F_FFT:
 	    ret->v.m = gretl_matrix_fft(m, 0, &p->err);
 	    break;
@@ -15976,6 +15979,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_LOWER:
     case F_NULLSPC:
     case F_MEXP:
+    case F_MLOG:
     case F_MINC:
     case F_MAXC:
     case F_MINR:

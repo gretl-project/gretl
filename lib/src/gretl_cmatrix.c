@@ -2509,3 +2509,63 @@ int gretl_cmatrix_set_part (gretl_matrix *targ,
 
     return 0;
 }
+
+/* matrix log for a real matrix */
+
+gretl_matrix *gretl_matrix_log (const gretl_matrix *A, int *err)
+{
+    gretl_matrix *C = NULL;
+    gretl_matrix *V = NULL;
+    gretl_matrix *Vi = NULL;
+    gretl_matrix *w = NULL;
+    gretl_matrix *R = NULL;
+    int i;
+
+    if (gretl_is_null_matrix(A) || A->rows != A->cols ||
+	A->is_complex) {
+	/* we require a square real matrix */
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    C = gretl_cmatrix_build(A, NULL, 0, 0, err);
+
+    if (!*err) {
+	V = gretl_cmatrix_new(A->rows, A->rows);
+	if (V == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    w = gretl_zgeev(C, V, NULL, err);
+	}
+    }
+
+    if (!*err) {
+	for (i=0; i<A->rows; i++) {
+	    w->z[i] = clog(w->z[i]);
+	}
+	Vi = gretl_cmatrix_inverse(V, err);
+    }
+
+    if (!*err) {
+	R = cmatrix_dot_op(w, Vi, '*', err);
+	if (!*err) {
+	    gretl_matrix_free(Vi);
+	    Vi = gretl_cmatrix_multiply(V, R, err);
+	}
+    }
+
+    gretl_matrix_free(C);
+
+    if (!*err) {
+	C = gretl_cmatrix_extract(Vi, 0, err);
+    } else {
+	C = NULL;
+    }
+
+    gretl_matrix_free(V);
+    gretl_matrix_free(Vi);
+    gretl_matrix_free(w);
+    gretl_matrix_free(R);
+
+    return C;
+}
