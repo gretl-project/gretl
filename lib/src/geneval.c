@@ -4035,7 +4035,8 @@ static void matrix_minmax_indices (int f, int *mm, int *rc, int *idx)
 			     f==F_MREV || f== F_FFT2 || f==F_FFTI || \
 			     f==F_CUM || f==F_DIFF || f==F_SUMC || \
 			     f==F_SUMR || f==F_PRODC || f==F_PRODR || \
-			     f==F_MEANC || f==F_MEANR || f==F_GINV)
+			     f==F_MEANC || f==F_MEANR || f==F_GINV || \
+			     f==F_MLOG || f==F_MEXP)
 
 static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 {
@@ -4201,7 +4202,11 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    ret->v.m = gretl_matrix_right_nullspace(m, &p->err);
 	    break;
 	case F_MEXP:
-	    ret->v.m = gretl_matrix_exp(m, &p->err);
+	    if (m->is_complex) {
+		ret->v.m = gretl_cmatrix_exp(m, &p->err);
+	    } else {
+		ret->v.m = gretl_matrix_exp(m, &p->err);
+	    }
 	    break;
 	case F_MLOG:
 	    ret->v.m = gretl_matrix_log(m, &p->err);

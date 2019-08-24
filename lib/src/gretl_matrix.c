@@ -2273,7 +2273,7 @@ static double log_2 (double x)
     }
 
     if (floor(x) != x || x < 2 || x > (double) INT_MAX) {
-	return log(x) / log(2.0);
+	return log2(x);
     }
 
     s = floor(x);
@@ -2288,7 +2288,7 @@ static double log_2 (double x)
 	}
     }
 
-    return log(x) / log(2.0);
+    return log2(x);
 }
 
 static double mexp_error_eps (int q)
