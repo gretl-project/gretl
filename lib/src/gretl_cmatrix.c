@@ -2698,3 +2698,61 @@ gretl_matrix *gretl_cmatrix_exp (const gretl_matrix *A, int *err)
 
     return C;
 }
+
+static int matrix_is_hermitian (const gretl_matrix *z)
+{
+    double complex zij, zji;
+    int i, j, n = z->rows;
+
+    for (j=0; j<n; j++) {
+	for (i=0; i<n; i++) {
+	    zij = gretl_cmatrix_get(z, i, j);
+	    zji = gretl_cmatrix_get(z, j, i);
+	    if (zji != conj(zij)) {
+		return 0;
+	    }
+	}
+    }
+    return 1;
+}
+
+gretl_matrix *gretl_cmatrix_cholesky (const gretl_matrix *A,
+				      int *err)
+{
+    gretl_matrix *C = NULL;
+    char uplo = 'L';
+    integer n, info;
+
+    if (!cmatrix_validate(A, 1)) {
+	*err = E_INVARG;
+    } else if (!matrix_is_hermitian(A)) {
+	gretl_errmsg_set(_("Matrix is not Hermitian"));
+	*err = E_INVARG;
+    } else {
+	C = gretl_matrix_copy(A);
+	if (C == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (*err) {
+	return NULL;
+    }
+
+    n = A->rows;
+    zpotrf_(&uplo, &n, (cmplx *) C->val, &n, &info);
+    if (info != 0) {
+	fprintf(stderr, "gretl_cmatrix_cholesky: "
+		"zpotrf failed with info = %d (n = %d)\n", (int) info, (int) n);
+	*err = (info > 0)? E_NOTPD : E_DATA;
+    }
+
+    if (*err) {
+	gretl_matrix_free(C);
+	C = NULL;
+    } else {
+	gretl_matrix_zero_upper(C);
+    }
+
+    return C;
+}

@@ -159,4 +159,7 @@ gretl_matrix *gretl_matrix_log (const gretl_matrix *A,
 gretl_matrix *gretl_cmatrix_exp (const gretl_matrix *A,
 				 int *err);
 
+gretl_matrix *gretl_cmatrix_cholesky (const gretl_matrix *A,
+				      int *err);
+
 #endif /* GRETL_CMATRIX_H */

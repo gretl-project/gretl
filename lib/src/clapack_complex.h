@@ -50,4 +50,7 @@ void zgees_ (const char *jobvs, const char *srt, void *select,
 	     cmplx *w, cmplx *vs, integer *ldvs, cmplx *work, integer *lwork,
 	     double *rwork, integer *bwork, integer *info);
 
+void zpotrf_ (const char *uplo, integer *n, cmplx *a, integer *lda,
+	      integer *info);
+
 #endif /* CLAPACK_COMPLEX_H */

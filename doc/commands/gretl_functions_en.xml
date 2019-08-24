@@ -2257,16 +2257,19 @@
       </fnargs>
       <description>
 	<para>
-	  Performs a Cholesky decomposition of the matrix
-	  <argname>A</argname>, which is assumed to be symmetric and
-	  positive definite. The result is a lower-triangular matrix
-	  <math>L</math> which satisfies <equation status="inline"
-	  ascii="A = LL'"  tex="$A = LL'$"/>. The function will fail if
-	  <argname>A</argname> is not symmetric or not positive definite.
-	  <seelist>
-            <fncref targ="psdroot"/>
-	    <fncref targ="Lsolve"/>
-	  </seelist>
+	  Performs a Cholesky decomposition of
+	  <argname>A</argname>. If <argname>A</argname> is real it
+	  must be symmetric and positive definite; if so, the result
+	  is a lower-triangular matrix <math>L</math> which satisfies
+	  <equation status="inline" ascii="A = LL'" tex="$A = LL'$"/>.
+	  If <argname>A</argname> is complex it must be Hermitian and
+	  positive definite, and the result is a lower-triangular
+	  complex matrix such that <equation status="inline" ascii="A
+	  = LL^H" tex="$A = LL^{\mathrm H}$"/>.
+	</para>
+	<para>
+	  For the real case, see also <fncref targ="psdroot"/> and
+	  <fncref targ="Lsolve"/>.
 	</para>
       </description>
     </function>

@@ -166,12 +166,12 @@ categories employed in gretl's online ``Function reference'' (under the
 \subsection{Linear algebra}
 
 The functions that accept complex arguments at present are:
-\texttt{det}, \texttt{ldet}, \texttt{eigensym} (for Hermitian
-matrices), \texttt{ffti}, \texttt{inv}, \texttt{ginv},
+\texttt{cholesky}, \texttt{det}, \texttt{ldet}, \texttt{eigensym} (for
+Hermitian matrices), \texttt{ffti}, \texttt{inv}, \texttt{ginv},
 \texttt{hdprod}, \texttt{mexp}, \texttt{mlog}, \texttt{rank},
-\texttt{svd}, \texttt{tr}, and \texttt{transp}. Note, however,
-that \texttt{mexp} and \texttt{mlog} require that the input
-matrix be diagonalizable.
+\texttt{svd}, \texttt{tr}, and \texttt{transp}. Note, however, that
+\texttt{mexp} and \texttt{mlog} require that the input matrix be
+diagonalizable, and \texttt{cholesky} requires a Hermitian matrix.
 
 In addition the new functions \texttt{eiggen2} and \texttt{fft2} are
 complex-supporting versions of \texttt{eigengen} and \texttt{fft},
