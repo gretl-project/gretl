@@ -258,11 +258,26 @@ matrix A[diag] = d
 \end{code}
 
 When the \texttt{lower} and \texttt{upper} selections are used on the
-right, they yield the vec of the elements in their scope. When used on
-the left, the replacement must be either (a) a vector of length equal to
-the number of elements in the selection or (b) a scalar value. In case
-(a) the elements of the target matrix are set in column-major order,
-in case (b) they are all set using the scalar.
+right, they yield a vector holding the elements in their scope. The
+ordering of the elements is column-major for \texttt{lower} but
+row-major for \texttt{upper}, as illustrated below for the
+$4 \times 4$ case.
+\begin{center}
+  \begin{tabular}{cccc}
+    $d$ & 1 & 2 & 3 \\
+    1 & $d$ & 4 & 5 \\
+    2 & 4 & $d$ & 6 \\
+    3 & 5 & 6 & $d$
+  \end{tabular}
+\end{center}
+This ensures that \texttt{lower} and \texttt{upper} produce the same
+result for a symmetric matrix.
+
+When \texttt{lower} and \texttt{upper} are used on the left, the
+replacement must be either (a) a vector of length equal to the number
+of elements in the selection or (b) a scalar value. In case (a) the
+elements of the target matrix are set in the order just described; in
+case (b) they are all set using the scalar.
 
 \section{Deleting rows or columns}
 \label{sec:neg-indices}

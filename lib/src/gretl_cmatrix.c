@@ -1936,15 +1936,12 @@ int gretl_cmatrix_set_triangle (gretl_matrix *targ,
 
     if (match == 0) {
 	return E_NONCONF;
-    } else {
-	int jmin = upper ? 1 : 0;
-	int jmax = upper ? c : r;
-	int imin = upper ? 0 : 1;
-	int imax = upper ? 1 : r;
+    } else if (upper) {
+	int jmin = 1;
 	int k = 0;
 
-	for (j=jmin; j<jmax; j++) {
-	    for (i=imin; i<imax; i++) {
+	for (i=0; i<p; i++) {
+	    for (j=jmin; j<c; j++) {
 		if (match == 1) {
 		    gretl_cmatrix_set(targ, i, j, src->z[k++]);
 		} else if (match == 3) {
@@ -1953,11 +1950,23 @@ int gretl_cmatrix_set_triangle (gretl_matrix *targ,
 		    gretl_cmatrix_set(targ, i, j, zi);
 		}
 	    }
-	    if (!upper) {
-		imin++;
-	    } else if (imax < r) {
-		imax++;
+	    jmin++;
+	}
+    } else {
+	int imin = 1;
+	int k = 0;
+
+	for (j=0; j<p; j++) {
+	    for (i=imin; i<r; i++) {
+		if (match == 1) {
+		    gretl_cmatrix_set(targ, i, j, src->z[k++]);
+		} else if (match == 3) {
+		    gretl_cmatrix_set(targ, i, j, src->val[k++]);
+		} else {
+		    gretl_cmatrix_set(targ, i, j, zi);
+		}
 	    }
+	    imin++;
 	}
     }
 

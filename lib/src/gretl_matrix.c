@@ -1558,7 +1558,7 @@ int gretl_matrix_set_diagonal (gretl_matrix *targ,
  * otherwise the constant value @x.
  *
  * If @src is given it must be a vector of length equal to
- * that of the number of infra- or super-diagonal elements
+ * that of the number of infra- or supra-diagonal elements
  * of @targ.
  *
  * Returns: 0 on success, error code on non-conformability.
@@ -1608,25 +1608,31 @@ int gretl_matrix_set_triangle (gretl_matrix *targ,
 
     if (match == 0) {
 	err = E_NONCONF;
-    } else {
-	int jmin = upper ? 1 : 0;
-	int jmax = upper ? c : r;
-	int imin = upper ? 0 : 1;
-	int imax = upper ? 1 : r;
+    } else if (upper) {
+	int jmin = 1;
 	int k = 0;
 
-	for (j=jmin; j<jmax; j++) {
-	    for (i=imin; i<imax; i++) {
+	for (i=0; i<p; i++) {
+	    for (j=jmin; j<c; j++) {
 		if (src != NULL) {
 		    x = src->val[k++];
 		}
 		gretl_matrix_set(targ, i, j, x);
 	    }
-	    if (!upper) {
-		imin++;
-	    } else if (imax < r) {
-		imax++;
+	    jmin++;
+	}
+    } else {
+	int imin = 1;
+	int k = 0;
+
+	for (j=0; j<p; j++) {
+	    for (i=imin; i<r; i++) {
+		if (src != NULL) {
+		    x = src->val[k++];
+		}
+		gretl_matrix_set(targ, i, j, x);
 	    }
+	    imin++;
 	}
     }
 
@@ -1679,26 +1685,33 @@ gretl_matrix *gretl_matrix_get_triangle (const gretl_matrix *m,
 
     if (ret == NULL) {
 	*err = E_ALLOC;
-    } else {
-	int jmin = upper ? 1 : 0;
-	int jmax = upper ? c : r;
-	int imin = upper ? 0 : 1;
-	int imax = upper ? 1 : r;
+    } else if (upper) {
+	int jmin = 1;
 	int k = 0;
 
-	for (j=jmin; j<jmax; j++) {
-	    for (i=imin; i<imax; i++) {
+	for (i=0; i<p; i++) {
+	    for (j=jmin; j<c; j++) {
 		if (m->is_complex) {
 		    ret->z[k++] = gretl_cmatrix_get(m, i, j);
 		} else {
 		    ret->val[k++] = gretl_matrix_get(m, i, j);
 		}
 	    }
-	    if (!upper) {
-		imin++;
-	    } else if (imax < r) {
-		imax++;
+	    jmin++;
+	}
+    } else {
+	int imin = 1;
+	int k = 0;
+
+	for (j=0; j<p; j++) {
+	    for (i=imin; i<r; i++) {
+		if (m->is_complex) {
+		    ret->z[k++] = gretl_cmatrix_get(m, i, j);
+		} else {
+		    ret->val[k++] = gretl_matrix_get(m, i, j);
+		}
 	    }
+	    imin++;
 	}
     }
 
@@ -13759,7 +13772,7 @@ gretl_matrix *gretl_matrix_pca (const gretl_matrix *X, int p,
     } else if (X->is_complex) {
 	*err = E_CMPLX;
 	return NULL;
-    }	
+    }
 
     D = gretl_matrix_copy(X);
     if (D == NULL) {
