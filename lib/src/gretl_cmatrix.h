@@ -162,4 +162,8 @@ gretl_matrix *gretl_cmatrix_exp (const gretl_matrix *A,
 gretl_matrix *gretl_cmatrix_cholesky (const gretl_matrix *A,
 				      int *err);
 
+gretl_matrix *gretl_cmatrix_QR_decomp (const gretl_matrix *A,
+				       gretl_matrix *R,
+				       int *err);
+
 #endif /* GRETL_CMATRIX_H */

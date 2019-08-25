@@ -370,6 +370,52 @@ static gretl_matrix *gretl_zgemm (const gretl_matrix *A,
     return C;
 }
 
+static int gretl_zgemm_full (cmplx alpha,
+			     const gretl_matrix *A,
+			     GretlMatrixMod amod,
+			     const gretl_matrix *B,
+			     GretlMatrixMod bmod,
+			     cmplx beta,
+			     gretl_matrix *C)
+{
+    char transa = 'N';
+    char transb = 'N';
+    integer lda, ldb, ldc;
+    integer m, n, k, kb;
+
+    if (amod == GRETL_MOD_CTRANSP) {
+	transa = 'C';
+	m = A->cols; /* rows of op(A) */
+	k = A->rows; /* cols of op(A) */
+    } else {
+	m = A->rows; /* complex rows of A */
+	k = A->cols; /* cols of A */
+    }
+
+    if (bmod == GRETL_MOD_CTRANSP) {
+	transb = 'C';
+	n = B->rows;  /* columns of op(B) */
+	kb = B->cols; /* rows of op(B) */
+    } else {
+	n = B->cols;
+	kb = B->rows;
+    }
+
+    if (k != kb || C->rows != m || C->cols != n) {
+	return E_NONCONF;
+    }
+
+    lda = A->rows;
+    ldb = B->rows;
+    ldc = C->rows;
+
+    zgemm_(&transa, &transb, &m, &n, &k, &alpha,
+	   (cmplx *) A->val, &lda, (cmplx *) B->val, &ldb,
+	   &beta, (cmplx *) C->val, &ldc);
+
+    return 0;
+}
+
 static gretl_matrix *real_cmatrix_multiply (const gretl_matrix *A,
 					    const gretl_matrix *B,
 					    GretlMatrixMod amod,
@@ -493,10 +539,10 @@ gretl_matrix *gretl_zheev (gretl_matrix *A, int eigenvecs,
     return evals;
 }
 
-static int aux_cmatrix_alloc (gretl_matrix *m,
-			      gretl_matrix **paux,
-			      cmplx **ppz,
-			      int r, int c)
+static int ensure_aux_cmatrix (gretl_matrix *m,
+			       gretl_matrix **paux,
+			       cmplx **ppz,
+			       int r, int c)
 {
     gretl_matrix *aux = NULL;
     int mrc, dim = r * c;
@@ -510,13 +556,17 @@ static int aux_cmatrix_alloc (gretl_matrix *m,
 	/* OK, reusable complex matrix */
 	m->rows = r;
 	m->cols = c;
-	*ppz = (cmplx *) m->val;
+	if (ppz != NULL) {
+	    *ppz = (cmplx *) m->val;
+	}
     } else if (mrc == 2*dim && !m->is_complex) {
 	/* OK, reusable real matrix */
 	m->rows = 2*r;
 	m->cols = c;
 	gretl_matrix_set_complex_full(m, 1);
-	*ppz = (cmplx *) m->val;
+	if (ppz != NULL) {
+	    *ppz = (cmplx *) m->val;
+	}
     } else {
 	/* nope, have to allocate anew */
 	aux = gretl_cmatrix_new0(r, c);
@@ -524,7 +574,9 @@ static int aux_cmatrix_alloc (gretl_matrix *m,
 	    return E_ALLOC;
 	} else {
 	    *paux = aux;
-	    *ppz = (cmplx *) aux->val;
+	    if (ppz != NULL) {
+		*ppz = (cmplx *) aux->val;
+	    }
 	}
     }
 
@@ -574,7 +626,7 @@ gretl_matrix *gretl_zgeev (const gretl_matrix *A,
 
     if (VL != NULL) {
 	/* left eigenvectors wanted */
-	*err = aux_cmatrix_alloc(VL, &Ltmp, &vl, n, n);
+	*err = ensure_aux_cmatrix(VL, &Ltmp, &vl, n, n);
 	if (*err) {
 	    goto bailout;
 	}
@@ -582,7 +634,7 @@ gretl_matrix *gretl_zgeev (const gretl_matrix *A,
 
     if (VR != NULL) {
 	/* right eigenvectors wanted */
-	*err = aux_cmatrix_alloc(VR, &Rtmp, &vr, n, n);
+	*err = ensure_aux_cmatrix(VR, &Rtmp, &vr, n, n);
 	if (*err) {
 	    goto bailout;
 	}
@@ -682,7 +734,7 @@ gretl_matrix *gretl_zgees (const gretl_matrix *A,
 
     if (Z != NULL) {
 	/* Schur vectors wanted */
-	*err = aux_cmatrix_alloc(Z, &Ztmp, &vs, n, n);
+	*err = ensure_aux_cmatrix(Z, &Ztmp, &vs, n, n);
 	if (*err) {
 	    goto bailout;
 	}
@@ -691,7 +743,7 @@ gretl_matrix *gretl_zgees (const gretl_matrix *A,
     /* Eigenvalues vector: seems like we need this,
        regardless of whether @W is passed?
     */
-    *err = aux_cmatrix_alloc(W, &Wtmp, &w, n, 1);
+    *err = ensure_aux_cmatrix(W, &Wtmp, &w, n, 1);
     if (*err) {
 	goto bailout;
     }
@@ -2755,4 +2807,161 @@ gretl_matrix *gretl_cmatrix_cholesky (const gretl_matrix *A,
     }
 
     return C;
+}
+
+static gretl_matrix *extract_Q (const gretl_matrix *A,
+				const cmplx *tau,
+				int *err)
+{
+    gretl_matrix *Q;
+    gretl_matrix *v;
+    gretl_matrix *vv;
+    cmplx one = {1,0};
+    cmplx zro = {0,0};
+    cmplx mtj;
+    int m = A->rows;
+    int n = A->cols;
+    int j, i;
+
+    Q = gretl_cmatrix_new0(m, m);
+    v = gretl_cmatrix_new(m, 1);
+    vv = gretl_cmatrix_new(m, m);
+
+    if (Q == NULL || v == NULL || vv == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    for (i=0; i<m; i++) {
+	gretl_cmatrix_set(Q, i, i, 1.0);
+    }
+
+    for (j=0; j<n; j++) {
+	mtj.r = -tau[j].r;
+	mtj.i = -tau[j].i;
+	for (i=0; i<j; i++) {
+	    v->z[i] = 0;
+	}
+	v->z[j] = 1;
+	for (i=j+1; i<m; i++) {
+	    v->z[i] = gretl_cmatrix_get(A, i, j);
+	}
+	gretl_zgemm_full(one, v, GRETL_MOD_NONE,
+			 v, GRETL_MOD_CTRANSP,
+			 zro, vv);
+	gretl_zgemm_full(mtj, Q, GRETL_MOD_NONE,
+			 vv, GRETL_MOD_CTRANSP,
+			 one, Q);
+    }
+
+    gretl_matrix_free(v);
+    gretl_matrix_free(vv);
+
+    /* discard m-n trailing columns */
+    gretl_matrix_realloc(Q, m, n);
+
+    return Q;
+}
+
+gretl_matrix *gretl_cmatrix_QR_decomp (const gretl_matrix *A,
+				       gretl_matrix *R,
+				       int *err)
+{
+    gretl_matrix *B = NULL;
+    gretl_matrix *Q = NULL;
+    gretl_matrix *Rtmp = NULL;
+    integer m, n, lda;
+    integer info = 0;
+    integer lwork = -1;
+    cmplx *tau = NULL;
+    cmplx *work = NULL;
+    int i, j;
+
+    if (!cmatrix_validate(A, 0)) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    lda = m = A->rows;
+    n = A->cols;
+    if (n > m) {
+	*err = E_NONCONF;
+	return NULL;
+    }
+
+    B = gretl_matrix_copy(A);
+    if (B == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    if (R != NULL) {
+	*err = ensure_aux_cmatrix(R, &Rtmp, NULL, n, n);
+	if (*err) {
+	    goto bailout;
+	} else if (Rtmp != NULL) {
+	    gretl_matrix_replace_content(R, Rtmp);
+	}
+    }
+
+    /* dim of tau is min (m, n) */
+    tau = malloc(n * sizeof *tau);
+    work = malloc(sizeof *work);
+    if (tau == NULL || work == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* workspace size query */
+    zgeqrf_(&m, &n, (cmplx *) B->val, &lda, tau, work, &lwork, &info);
+    if (info != 0) {
+	fprintf(stderr, "zgeqrf: info = %d\n", (int) info);
+	*err = E_DATA;
+    } else {
+	/* optimally sized work array */
+	lwork = (integer) work[0].r;
+	work = realloc(work, (size_t) lwork * sizeof *work);
+	if (work == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (*err) {
+	goto bailout;
+    }
+
+    /* run actual QR factorization */
+    zgeqrf_(&m, &n, (cmplx *) B->val, &lda, tau, work, &lwork, &info);
+    if (info != 0) {
+	fprintf(stderr, "zgeqrf: info = %d\n", (int) info);
+	*err = E_DATA;
+	goto bailout;
+    }
+
+    if (R != NULL) {
+	/* copy the upper triangular R out of Q */
+	double complex z;
+
+	for (i=0; i<n; i++) {
+	    for (j=0; j<n; j++) {
+		if (i <= j) {
+		    z = gretl_cmatrix_get(B, i, j);
+		    gretl_cmatrix_set(R, i, j, z);
+		} else {
+		    gretl_cmatrix_set(R, i, j, 0.0);
+		}
+	    }
+	}
+    }
+
+    Q = extract_Q(B, tau, err);
+
+ bailout:
+
+    free(tau);
+    free(work);
+    gretl_matrix_free(Rtmp);
+    gretl_matrix_free(B);
+
+    return Q;
 }

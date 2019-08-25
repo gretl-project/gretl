@@ -4373,7 +4373,11 @@ matrix_to_matrix2_func (NODE *n, NODE *r, int f, parser *p)
 
 	if (!p->err) {
 	    if (f == F_QR) {
-		ret->v.m = user_matrix_QR_decomp(m1, m2, &p->err);
+		if (m1->is_complex) {
+		    ret->v.m = gretl_cmatrix_QR_decomp(m1, m2, &p->err);
+		} else {
+		    ret->v.m = user_matrix_QR_decomp(m1, m2, &p->err);
+		}
 	    } else if (f == F_EIGSYM) {
 		ret->v.m = user_matrix_eigensym(m1, m2, &p->err);
 	    }
