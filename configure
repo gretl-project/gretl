@@ -21363,12 +21363,18 @@ rm -f core conftest.err conftest.$ac_objext \
   rm -f conf.lapacktest
   rm -f conf.blastest
 
-    if test "$have_lapack" = "yes" ; then
-      SAVE_LIBS=$LIBS
-      LIBS=$LAPACK_LIBS
-      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for dgejsv_ in -llapack" >&5
-$as_echo_n "checking for dgejsv_ in -llapack... " >&6; }
-if ${ac_cv_lib_lapack_dgejsv_+:} false; then :
+  ;;
+esac
+if echo $LAPACK_LIBS | $GREP --quiet openblas ; then
+  $as_echo "#define OPENBLAS_BUILD 1" >>confdefs.h
+
+fi
+if test "$have_lapack" = "yes" ; then
+  SAVE_LIBS=$LIBS
+  LIBS=$LAPACK_LIBS
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for zungqr_ in -llapack" >&5
+$as_echo_n "checking for zungqr_ in -llapack... " >&6; }
+if ${ac_cv_lib_lapack_zungqr_+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -21382,38 +21388,32 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char dgejsv_ ();
+char zungqr_ ();
 int
 main ()
 {
-return dgejsv_ ();
+return zungqr_ ();
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_lapack_dgejsv_=yes
+  ac_cv_lib_lapack_zungqr_=yes
 else
-  ac_cv_lib_lapack_dgejsv_=no
+  ac_cv_lib_lapack_zungqr_=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_lapack_dgejsv_" >&5
-$as_echo "$ac_cv_lib_lapack_dgejsv_" >&6; }
-if test "x$ac_cv_lib_lapack_dgejsv_" = xyes; then :
-  $as_echo "#define HAVE_LAPACK_3_2 1" >>confdefs.h
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_lapack_zungqr_" >&5
+$as_echo "$ac_cv_lib_lapack_zungqr_" >&6; }
+if test "x$ac_cv_lib_lapack_zungqr_" = xyes; then :
+  $as_echo "#define HAVE_ZUNGQR 1" >>confdefs.h
 
 fi
 
-      LIBS=$SAVE_LIBS
-    fi
-  ;;
-esac
-if echo $LAPACK_LIBS | $GREP --quiet openblas ; then
-  $as_echo "#define OPENBLAS_BUILD 1" >>confdefs.h
-
+  LIBS=$SAVE_LIBS
 fi
 
 if test "$darwin_build" = "yes" ; then
