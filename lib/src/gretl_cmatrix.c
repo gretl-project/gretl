@@ -21,6 +21,8 @@
 #include "clapack_complex.h"
 #include "gretl_cmatrix.h"
 
+#define HAVE_ZUNGQR 1 /* We need a configure check! */
+
 /* Note: since we include gretl_cmatrix.h (which in turn includes
    C99's complex.h) before fftw3.h, FFTW's fftw_complex will be
    typedef'd to C99's "double complex" and can be manipulated as
@@ -2799,17 +2801,18 @@ gretl_matrix *gretl_cmatrix_cholesky (const gretl_matrix *A,
     return C;
 }
 
-/* Below: FIXME this is going to be horrible for a tall
-   Q matrix (big m). We're doing the extraction of Q by
-   a naive method which requires m x m matrices. Thinks:
-   why isn't there a lapack function zorgqr to match what
-   dorgqr does for real Q? (That is, efficient extraction
-   of Q.) I guess there must be a reason!
+/* Below: Our extract_Q function is going to be horrible for
+   a tall Q matrix (big m). We're doing the extraction of Q
+   by a naive method which requires m x m matrices. Current
+   lapack has the function zungqr which does the job nicely
+   but this first became available in December 2016 (from the
+   doc) so we can't assume it's present in all lapack versions.
+   Oh, well. (But we need a configure-time check.)
 */
 
-static gretl_matrix *extract_Q (const gretl_matrix *A,
-				const cmplx *tau,
-				int *err)
+static gretl_matrix *naive_extract_Q (const gretl_matrix *A,
+				      const cmplx *tau,
+				      int *err)
 {
     gretl_matrix *Q;
     gretl_matrix *v;
@@ -2871,6 +2874,7 @@ gretl_matrix *gretl_cmatrix_QR_decomp (const gretl_matrix *A,
     integer m, n, lda;
     integer info = 0;
     integer lwork = -1;
+    integer m_one = -1;
     cmplx *tau = NULL;
     cmplx *work = NULL;
     int i, j;
@@ -2952,8 +2956,20 @@ gretl_matrix *gretl_cmatrix_QR_decomp (const gretl_matrix *A,
 	}
     }
 
-    /* See comment above! */
-    Q = extract_Q(B, tau, err);
+#if HAVE_ZUNGQR
+    /* turn B into Q, with the help of tau */
+    zungqr_(&m, &n, &n, (cmplx *) B->val, &lda, tau, work, &lwork, &info);
+    if (info != 0) {
+	fprintf(stderr, "zungqr: info = %d\n", (int) info);
+	*err = E_DATA;
+    } else {
+	Q = B;
+	B = NULL;
+    }
+#else
+    /* See disparaging comment above! */
+    Q = naive_extract_Q(B, tau, err);
+#endif
 
  bailout:
 

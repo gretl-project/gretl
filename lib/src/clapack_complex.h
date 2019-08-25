@@ -56,4 +56,7 @@ void zpotrf_ (const char *uplo, integer *n, cmplx *a, integer *lda,
 void zgeqrf_ (integer *m, integer *n, cmplx *a, integer *lda,
 	      cmplx *tau, cmplx *work, integer *lwork, integer *info);
 
+void zungqr_ (integer *m, integer *n, integer *k, cmplx *a, integer *lda,
+	      cmplx *tau, cmplx *work, integer *lwork, integer *info);
+
 #endif /* CLAPACK_COMPLEX_H */
