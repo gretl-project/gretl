@@ -2799,6 +2799,8 @@ gretl_matrix *gretl_cmatrix_cholesky (const gretl_matrix *A,
     return C;
 }
 
+#ifndef HAVE_ZUNGQR
+
 /* Below: Our extract_Q function is going to be horrible for
    a tall Q matrix (big m). We're doing the extraction of Q
    by a naive method which requires m x m matrices. Current
@@ -2862,6 +2864,8 @@ static gretl_matrix *naive_extract_Q (const gretl_matrix *A,
     return Q;
 }
 
+#endif
+
 gretl_matrix *gretl_cmatrix_QR_decomp (const gretl_matrix *A,
 				       gretl_matrix *R,
 				       int *err)
@@ -2872,7 +2876,6 @@ gretl_matrix *gretl_cmatrix_QR_decomp (const gretl_matrix *A,
     integer m, n, lda;
     integer info = 0;
     integer lwork = -1;
-    integer m_one = -1;
     cmplx *tau = NULL;
     cmplx *work = NULL;
     int i, j;
