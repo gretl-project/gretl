@@ -1039,12 +1039,11 @@ int gretl_cmatrix_rank (const gretl_matrix *A, int *err)
     k = MIN(A->rows, A->cols);
 
     if (A->rows > 4 * k || A->cols > 4 * k) {
-	GretlMatrixMod mod1, mod2;
+	char trans1 = A->rows > k ? 'C' : 'N';
+	char trans2 = A->cols > k ? 'C' : 'N';
 	gretl_matrix *B;
 
-	mod1 = A->rows > k ? GRETL_MOD_CTRANSP : 0;
-	mod2 = A->cols > k ? GRETL_MOD_CTRANSP : 0;
-	B = gretl_zgemm(A, mod1, A, mod2, err);
+	B = gretl_zgemm(A, trans1, A, trans2, err);
 	if (!*err) {
 	    *err = gretl_cmatrix_SVD(B, NULL, &S, NULL, 1);
 	}
@@ -1110,7 +1109,7 @@ static gretl_matrix *cmatrix_SVD_inverse (const gretl_matrix *A,
 	}
 	if (!*err) {
 	    Vt->cols = U->cols = h;
-	    ret = gretl_zgemm(Vt, 0, U, GRETL_MOD_CTRANSP, err);
+	    ret = gretl_zgemm(Vt, 'N', U, 'C', err);
 	}
     }
 
@@ -2609,7 +2608,7 @@ static int imag_part_zero (const gretl_matrix *A)
     return 1;
 }
 
-/* matrix logarithm, for a diagonalizable matrix */
+/* Matrix logarithm, for a diagonalizable matrix */
 
 gretl_matrix *gretl_matrix_log (const gretl_matrix *A, int *err)
 {
@@ -2938,7 +2937,7 @@ gretl_matrix *gretl_cmatrix_QR_decomp (const gretl_matrix *A,
     }
 
     if (R != NULL) {
-	/* copy the upper triangular R out of Q */
+	/* copy the upper triangular R out of B */
 	double complex z;
 
 	for (i=0; i<n; i++) {
@@ -2953,6 +2952,7 @@ gretl_matrix *gretl_cmatrix_QR_decomp (const gretl_matrix *A,
 	}
     }
 
+    /* See comment above! */
     Q = extract_Q(B, tau, err);
 
  bailout:
