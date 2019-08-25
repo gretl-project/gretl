@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "gretl_f2c.h"
 #include "clapack_complex.h"
 #include "gretl_cmatrix.h"
 
