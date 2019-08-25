@@ -307,84 +307,18 @@ static gretl_matrix *complex_from_real (const gretl_matrix *A,
    allowing for conjugate transposition of @A or @B.
 */
 
-static gretl_matrix *gretl_zgemm (const gretl_matrix *A,
-				  GretlMatrixMod amod,
-				  const gretl_matrix *B,
-				  GretlMatrixMod bmod,
-				  int *err)
-{
-    gretl_matrix *C;
-    cmplx *a, *b, *c;
-    cmplx alpha = {1, 0};
-    cmplx beta = {0, 0};
-    char transa = 'N';
-    char transb = 'N';
-    integer lda, ldb, ldc;
-    integer m, n, k, kb;
-
-    if (!cmatrix_validate(A, 0) || !cmatrix_validate(B, 0)) {
-	*err = E_INVARG;
-	return NULL;
-    }
-
-    if (amod == GRETL_MOD_CTRANSP) {
-	transa = 'C';
-	m = A->cols; /* rows of op(A) */
-	k = A->rows; /* cols of op(A) */
-    } else {
-	m = A->rows; /* complex rows of A */
-	k = A->cols; /* cols of A */
-    }
-
-    if (bmod == GRETL_MOD_CTRANSP) {
-	transb = 'C';
-	n = B->rows;  /* columns of op(B) */
-	kb = B->cols; /* rows of op(B) */
-    } else {
-	n = B->cols;
-	kb = B->rows;
-    }
-
-    if (k != kb) {
-	*err = E_NONCONF;
-	return NULL;
-    }
-
-    C = gretl_cmatrix_new(m, n);
-    if (C == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    a = (cmplx *) A->val;
-    b = (cmplx *) B->val;
-    c = (cmplx *) C->val;
-
-    lda = A->rows;
-    ldb = B->rows;
-    ldc = C->rows;
-
-    zgemm_(&transa, &transb, &m, &n, &k, &alpha, a, &lda,
-	   b, &ldb, &beta, c, &ldc);
-
-    return C;
-}
-
 static int gretl_zgemm_full (cmplx alpha,
 			     const gretl_matrix *A,
-			     GretlMatrixMod amod,
+			     char transa,
 			     const gretl_matrix *B,
-			     GretlMatrixMod bmod,
+			     char transb,
 			     cmplx beta,
 			     gretl_matrix *C)
 {
-    char transa = 'N';
-    char transb = 'N';
     integer lda, ldb, ldc;
     integer m, n, k, kb;
 
-    if (amod == GRETL_MOD_CTRANSP) {
-	transa = 'C';
+    if (transa == 'C') {
 	m = A->cols; /* rows of op(A) */
 	k = A->rows; /* cols of op(A) */
     } else {
@@ -392,8 +326,7 @@ static int gretl_zgemm_full (cmplx alpha,
 	k = A->cols; /* cols of A */
     }
 
-    if (bmod == GRETL_MOD_CTRANSP) {
-	transb = 'C';
+    if (transb == 'C') {
 	n = B->rows;  /* columns of op(B) */
 	kb = B->cols; /* rows of op(B) */
     } else {
@@ -416,31 +349,89 @@ static int gretl_zgemm_full (cmplx alpha,
     return 0;
 }
 
+/* Variant of zgemm: simplified version of gretl_zgemm_full
+   which allocates the product matrix, C.
+*/
+
+static gretl_matrix *gretl_zgemm (const gretl_matrix *A,
+				  char transa,
+				  const gretl_matrix *B,
+				  char transb,
+				  int *err)
+{
+    gretl_matrix *C;
+    cmplx alpha = {1, 0};
+    cmplx beta = {0, 0};
+    integer lda, ldb, ldc;
+    integer m, n, k, kb;
+
+    if (!cmatrix_validate(A, 0) || !cmatrix_validate(B, 0)) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    if (transa == 'C') {
+	m = A->cols; /* rows of op(A) */
+	k = A->rows; /* cols of op(A) */
+    } else {
+	m = A->rows; /* complex rows of A */
+	k = A->cols; /* cols of A */
+    }
+
+    if (transb == 'C') {
+	n = B->rows;  /* columns of op(B) */
+	kb = B->cols; /* rows of op(B) */
+    } else {
+	n = B->cols;
+	kb = B->rows;
+    }
+
+    if (k != kb) {
+	*err = E_NONCONF;
+	return NULL;
+    }
+
+    C = gretl_cmatrix_new(m, n);
+    if (C == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    lda = A->rows;
+    ldb = B->rows;
+    ldc = C->rows;
+
+    zgemm_(&transa, &transb, &m, &n, &k, &alpha,
+	   (cmplx *) A->val, &lda, (cmplx *) B->val, &ldb,
+	   &beta, (cmplx *) C->val, &ldc);
+
+    return C;
+}
+
 static gretl_matrix *real_cmatrix_multiply (const gretl_matrix *A,
 					    const gretl_matrix *B,
-					    GretlMatrixMod amod,
-					    int *err)
+					    char transa, int *err)
 {
     gretl_matrix *C = NULL;
     gretl_matrix *T = NULL;
 
     if (A->is_complex && B->is_complex) {
-	if (amod == 0 && (cscalar(A) || cscalar(B))) {
+	if (transa == 'N' && (cscalar(A) || cscalar(B))) {
 	    return gretl_cmatrix_dot_op(A, B, '*', err);
 	} else {
-	    C = gretl_zgemm(A, amod, B, 0, err);
+	    C = gretl_zgemm(A, transa, B, 'N', err);
 	}
     } else if (A->is_complex) {
 	/* case of real B */
 	T = complex_from_real(B, err);
 	if (T != NULL) {
-	    C = gretl_zgemm(A, amod, T, 0, err);
+	    C = gretl_zgemm(A, transa, T, 'N', err);
 	}
     } else if (B->is_complex) {
 	/* case of real A */
 	T = complex_from_real(A, err);
 	if (T != NULL) {
-	    C = gretl_zgemm(T, amod, B, 0, err);
+	    C = gretl_zgemm(T, transa, B, 'N', err);
 	}
     } else {
 	*err = E_TYPES;
@@ -461,7 +452,7 @@ gretl_matrix *gretl_cmatrix_multiply (const gretl_matrix *A,
 				      const gretl_matrix *B,
 				      int *err)
 {
-    return real_cmatrix_multiply(A, B, 0, err);
+    return real_cmatrix_multiply(A, B, 'N', err);
 }
 
 /* Returns (conjugate transpose of A, or A^H) times B,
@@ -473,7 +464,7 @@ gretl_matrix *gretl_cmatrix_AHB (const gretl_matrix *A,
 				 const gretl_matrix *B,
 				 int *err)
 {
-    return real_cmatrix_multiply(A, B, GRETL_MOD_CTRANSP, err);
+    return real_cmatrix_multiply(A, B, 'C', err);
 }
 
 /* Eigen decomposition of complex (Hermitian) matrix using
@@ -2809,6 +2800,14 @@ gretl_matrix *gretl_cmatrix_cholesky (const gretl_matrix *A,
     return C;
 }
 
+/* Below: FIXME this is going to be horrible for a tall
+   Q matrix (big m). We're doing the extraction of Q by
+   a naive method which requires m x m matrices. Thinks:
+   why isn't there a lapack function zorgqr to match what
+   dorgqr does for real Q? (That is, efficient extraction
+   of Q.) I guess there must be a reason!
+*/
+
 static gretl_matrix *extract_Q (const gretl_matrix *A,
 				const cmplx *tau,
 				int *err)
@@ -2832,13 +2831,16 @@ static gretl_matrix *extract_Q (const gretl_matrix *A,
 	return NULL;
     }
 
+    /* start Q as m x m identity matrix */
     for (i=0; i<m; i++) {
 	gretl_cmatrix_set(Q, i, i, 1.0);
     }
 
     for (j=0; j<n; j++) {
+	/* get the (negative of) complex scalar tau(j) */
 	mtj.r = -tau[j].r;
 	mtj.i = -tau[j].i;
+	/* fill the v(j) m-vector */
 	for (i=0; i<j; i++) {
 	    v->z[i] = 0;
 	}
@@ -2846,12 +2848,9 @@ static gretl_matrix *extract_Q (const gretl_matrix *A,
 	for (i=j+1; i<m; i++) {
 	    v->z[i] = gretl_cmatrix_get(A, i, j);
 	}
-	gretl_zgemm_full(one, v, GRETL_MOD_NONE,
-			 v, GRETL_MOD_CTRANSP,
-			 zro, vv);
-	gretl_zgemm_full(mtj, Q, GRETL_MOD_NONE,
-			 vv, GRETL_MOD_CTRANSP,
-			 one, Q);
+	/* Q -= tau(j) * Q * v(j) * v(j)' */
+	gretl_zgemm_full(one, v, 'N', v, 'C', zro, vv);
+	gretl_zgemm_full(mtj, Q, 'N', vv, 'N', one, Q);
     }
 
     gretl_matrix_free(v);
