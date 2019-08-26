@@ -6102,13 +6102,7 @@ int *node_get_list (NODE *n, parser *p)
     } else if (dataset_dum(n)) {
 	list = full_var_list(p->dset, NULL);
     } else if (n->t == MAT) {
-	v = gretl_vector_get_length(n->v.m);
-	if (v > 0) {
-	    list = gretl_list_from_vector(n->v.m, p->dset, &p->err);
-	} else if (0) {
-	    /* not ready yet! */
-	    list = gretl_list_from_matrix(n->v.m, NULL, p->dset, &p->err);
-	}
+	list = gretl_list_from_vector(n->v.m, p->dset, &p->err);
     } else {
 	p->err = E_TYPES;
     }
@@ -18072,10 +18066,22 @@ static int create_or_edit_string (parser *p)
 
 static int create_or_edit_list (parser *p)
 {
-    int *list = node_get_list(p->ret, p); /* note: copied */
+    int *list = NULL;
+
+    if (p->ret->t == MAT && gretl_vector_get_length(p->ret->v.m) == 0) {
+	/* special case, list from matrix */
+	const char *prefix;
+
+	prefix = p->ret->vname != NULL ? p->ret->vname : p->lh.name;
+	fprintf(stderr, "RHS list, prefix = '%s'\n", prefix);
+	list = gretl_list_from_matrix(p->ret->v.m, prefix,
+				      p->dset, &p->err);
+    } else {
+	list = node_get_list(p->ret, p); /* note: copied */
+    }
 
 #if EDEBUG
-    printlist(list, "incoming RHS list in edit_list()");
+    printlist(list, "RHS list in edit_list()");
 #endif
 
 #if 0 /* we're not applying the following check (yet?) */

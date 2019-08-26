@@ -3057,7 +3057,7 @@ int *ellipsis_list (const DATASET *dset, int v1, int v2, int *err)
 }
 
 /**
- * gretl_list_from_matrix:
+ * gretl_list_from_vector:
  * @v: matrix (must be a vector).
  * @dset: pointer to dataset.
  * @err: location to receive error code.
@@ -3113,6 +3113,50 @@ int *gretl_list_from_vector (const gretl_matrix *v,
     return list;
 }
 
+static int colnames_ok_for_series (const char **S, int n)
+{
+    int i, j, err = 0;
+
+    for (i=0; i<n; i++) {
+	err = check_varname(S[i]);
+	if (!err && gretl_is_user_var(S[i])) {
+	    gretl_errmsg_sprintf("'%s': name conflicts with different type", S[i]);
+	    err = E_TYPES;
+	} else {
+	    for (j=0; j<n; j++) {
+		if (j != i && strcmp(S[j], S[i]) == 0) {
+		    gretl_errmsg_sprintf("'%s': name is not unique", S[i]);
+		    err = 1;
+		}
+	    }
+	}
+	if (err) {
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
+static int try_list_vname (char *chkname,
+			   const char *pfx,
+			   int j, int n)
+{
+    gchar *tmp = g_strdup_printf("%s%0*d", pfx, n, j);
+    int err = check_varname(tmp);
+
+    if (!err && gretl_is_user_var(tmp)) {
+	gretl_errmsg_sprintf("'%s': name conflicts with different type", tmp);
+	err = E_TYPES;
+    }
+    if (!err) {
+	strcpy(chkname, tmp);
+    }
+    g_free(tmp);
+
+    return err;
+}
+
 /**
  * gretl_list_from_matrix:
  * @X: matrix.
@@ -3134,18 +3178,39 @@ int *gretl_list_from_matrix (const gretl_matrix *X,
 			     int *err)
 {
     int *list = NULL;
+    const char **S = NULL;
+    int orig_v = dset->v;
 
     if (gretl_is_null_matrix(X)) {
 	list = gretl_null_list();
 	if (list == NULL) {
 	    *err = E_ALLOC;
 	}
+	return list;
+    }
+
+    S = gretl_matrix_get_colnames(X);
+    if (S == NULL && prefix == NULL) {
+	*err = E_INVARG;
+    } else if (S != NULL) {
+	/* check the colnames */
+	if (!colnames_ok_for_series(S, X->cols)) {
+	    *err = E_INVARG;
+	}
     } else {
+	/* check the prefix */
+	if (strlen(prefix) > VNAMELEN - 3) {
+	    *err = E_INVARG;
+	}
+    }
+
+    if (!*err) {
+	char chkname[VNAMELEN];
 	int mt1 = gretl_matrix_get_t1(X);
 	int mt2 = gretl_matrix_get_t2(X);
-	int orig_v = dset->v;
-	int k = X->cols;
 	int s2, s1 = -1;
+	int n_add = X->cols;
+	int j, slen = 0;
 
 	if (mt2 > 0) {
 	    if (X->rows != mt2 - mt1 + 1) {
@@ -3168,27 +3233,59 @@ int *gretl_list_from_matrix (const gretl_matrix *X,
 	if (s1 < 0) {
 	    *err = E_DATA;
 	} else {
-	    list = gretl_list_new(k);
+	    list = gretl_list_new(X->cols);
 	    if (list == NULL) {
 		*err = E_ALLOC;
 	    }
 	}
-	if (!*err) {
-	    *err = dataset_add_series(dset, k);
+
+	slen = (int) floor(log10(X->cols)) + 1;
+
+	/* first pass, check the putative series names */
+	for (j=0; j<X->cols && !*err; j++) {
+	    if (S != NULL) {
+		strcpy(chkname, S[j]);
+	    } else if (prefix != NULL) {
+		*err = try_list_vname(chkname, prefix, j+1, slen);
+	    }
+	    if (!*err && gretl_is_series(chkname, dset)) {
+		/* an existing series, decrement the count
+		   of series to be added to @dset
+		*/
+		n_add--;
+	    }
+	}
+
+	if (!*err && n_add > 0) {
+	    *err = dataset_add_NA_series(dset, n_add);
 	}
 	if (!*err) {
-	    int j, vj, t, s;
+	    int vnew = orig_v;
+	    int vj, t, s;
 
-	    for (j=0; j<k; j++) {
-		vj = orig_v + j;
+	    for (j=0; j<X->cols && !*err; j++) {
+		if (S != NULL) {
+		    strcpy(chkname, S[j]);
+		} else if (prefix != NULL) {
+		    sprintf(chkname, "%s%0*d", prefix, slen, j+1);
+		}
+		vj = current_series_index(dset, chkname);
+		if (vj < 0) {
+		    vj = vnew++;
+		    strcpy(dset->varname[vj], chkname);
+		}
 		for (t=dset->t1, s=s1; t<=dset->t2 && s<=s2; t++, s++) {
 		    dset->Z[vj][t] = gretl_matrix_get(X, s, j);
 		}
 		list[j+1] = vj;
-		/* FIXME varnames */
-		sprintf(dset->varname[vj], "Ltest%d", j+1);
 	    }
 	}
+    }
+
+    if (*err) {
+	dataset_drop_last_variables(dset, dset->v > orig_v);
+	free(list);
+	list = NULL;
     }
 
     return list;
