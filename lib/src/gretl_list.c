@@ -3231,6 +3231,7 @@ int *gretl_list_from_matrix (const gretl_matrix *X,
 	    s2 = dset->t2;
 	}
 	if (s1 < 0) {
+	    gretl_errmsg_set("matrix to list: data ranges could not be matched");
 	    *err = E_DATA;
 	} else {
 	    list = gretl_list_new(X->cols);
