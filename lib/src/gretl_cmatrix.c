@@ -304,6 +304,8 @@ static gretl_matrix *complex_from_real (const gretl_matrix *A,
     return C;
 }
 
+#ifndef HAVE_ZUNGQR /* currently not used otherwise */
+
 /* Multiplication of complex matrices via BLAS zgemm(),
    allowing for conjugate transposition of @A or @B.
 */
@@ -349,6 +351,8 @@ static int gretl_zgemm_full (cmplx alpha,
 
     return 0;
 }
+
+#endif
 
 /* Variant of zgemm: simplified version of gretl_zgemm_full
    which allocates the product matrix, C.
