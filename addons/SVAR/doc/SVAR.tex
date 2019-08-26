@@ -87,7 +87,7 @@
 
 \title{The SVAR addon for \app{gretl}}
 \author{Jack Lucchetti and Sven Schreiber}
-\date{Version 1.4}
+\date{Version 1.5}
 \begin{document}
 
 \maketitle
@@ -780,6 +780,16 @@ The ``Partial'' and ``Full'' variant may be enabled by setting the
 bundle member \texttt{biascorr} to 1 and 2, respectively, before
 calling \texttt{SVAR\_boot}. For an example, look at the example file
 \texttt{bias\_correction.inp}.
+
+Another bootstrap choice which has to be specified before the call to 
+\texttt{SVAR\_boot} is the use of the so-called \emph{wild} bootstrap. 
+Instead of resampling the residuals to create a new draw of artificial 
+bootstrap data, for each time period it takes the original estimated 
+residual vector and multiplies it with a Gaussian random number. This 
+procedure is able to account for several forms of heteroskedasticity in
+the errors.
+Activate this option by setting the bundle member \texttt{boottype} to 2.
+(The value 1 is the default and implies the usual residual resampling.)
 
 Finally: if you change the \texttt{optmeth} bundle element before
 \texttt{SVAR\_boot} is called, the choice affects the estimation of
@@ -2479,11 +2489,20 @@ a warning will be printed.
     \texttt{boot\_alpha} & bootstrap confidence level \\
     \texttt{bootdata}	 & output from the bootstrap (see section \ref{sec:bootstrap})\\
     \texttt{biascorr}	 & scalar, 0 for no bias correction, 1 for
-    partial, 2 for full
+    partial, 2 for full\\
+    \texttt{boottype}   & scalar, 1 for standard residual resampling, 2 for residual-based 
+    wild bootstrap
   \end{tabular}
   
 \section{Changelog (after v1.2)}
 \label{sec:changelog}
+
+\subsection*{Version 1.5, August 2019}
+\begin{itemize}
+
+\item Add the option 'boottype' to choose a wild bootstrap to account for 
+heteroskedasticity.
+\end{itemize}
 
 \subsection*{Version 1.4, March 2019}
 \begin{itemize}

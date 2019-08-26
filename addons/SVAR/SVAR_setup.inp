@@ -90,7 +90,7 @@ function matrix set_default_dimensions(bundle *mod, list lY,
 end function
     
 function bundle SVAR_setup(string type_string, list lY, list lX[null], 
-			   int varorder[1::1], bool checkident[1])
+                  			   int varorder[1::1], bool checkident[1])
 
   /*
      This creates a bundle holding the info on the SVAR; this will be
@@ -100,8 +100,6 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
 
      The scalar "step" keeps track of the stage we're at. 
      (maybe not needed any more)
-
-     The bootstrap does _not_ live here.
      
      The arg 'checkident' is just copied into the model bundle. It still needs 
      to be processed later (presumably within SVAR_estimate).
@@ -203,6 +201,7 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
   ret.boot_alpha = -1
   matrix ret.bootdata = {}
   ret.biascorr = 0
+  ret.boottype = 1  # standard resid resampl. (choice new 1.5)
 
   /* Names for shocks */
   # per default, we borrow variable names, following tradition
