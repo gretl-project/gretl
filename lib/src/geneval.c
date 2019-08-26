@@ -6102,7 +6102,13 @@ int *node_get_list (NODE *n, parser *p)
     } else if (dataset_dum(n)) {
 	list = full_var_list(p->dset, NULL);
     } else if (n->t == MAT) {
-	list = gretl_list_from_vector(n->v.m, p->dset, &p->err);
+	v = gretl_vector_get_length(n->v.m);
+	if (v > 0) {
+	    list = gretl_list_from_vector(n->v.m, p->dset, &p->err);
+	} else if (0) {
+	    /* not ready yet! */
+	    list = gretl_list_from_matrix(n->v.m, NULL, p->dset, &p->err);
+	}
     } else {
 	p->err = E_TYPES;
     }
