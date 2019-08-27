@@ -3224,8 +3224,8 @@ int *gretl_list_from_matrix (const gretl_matrix *X,
 	    } else if (mt2 < dset->t1 || mt1 > dset->t2) {
 		; /* no overlap of ranges */
 	    } else {
-		s1 = MAX(mt1, dset->t1);
-		s2 = MIN(mt2, dset->t2);
+		s1 = dset->t1 - mt1;
+		s2 = X->rows - s1;
 	    }
 	} else if (X->rows == sample_size(dset)) {
 	    /* length matches current sample */
@@ -3287,7 +3287,11 @@ int *gretl_list_from_matrix (const gretl_matrix *X,
 		    strcpy(dset->varname[vj], chkname);
 		}
 		for (t=dset->t1, s=s1; t<=dset->t2 && s<=s2; t++, s++) {
-		    dset->Z[vj][t] = gretl_matrix_get(X, s, j);
+		    if (s < 0) {
+			dset->Z[vj][t] = NADBL;
+		    } else {
+			dset->Z[vj][t] = gretl_matrix_get(X, s, j);
+		    }
 		}
 		list[j+1] = vj;
 	    }
