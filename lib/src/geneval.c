@@ -18073,7 +18073,6 @@ static int create_or_edit_list (parser *p)
 	const char *prefix;
 
 	prefix = p->ret->vname != NULL ? p->ret->vname : p->lh.name;
-	fprintf(stderr, "RHS list, prefix = '%s'\n", prefix);
 	list = gretl_list_from_matrix(p->ret->v.m, prefix,
 				      p->dset, &p->err);
     } else {
