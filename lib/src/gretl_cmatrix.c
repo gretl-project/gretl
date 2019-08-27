@@ -689,7 +689,7 @@ gretl_matrix *gretl_zgeev (const gretl_matrix *A,
 
 /* Schur factorization of @A, with optional assignment of the
    matrix of Schur vectors to @Z and/or the eigenvalues of @A
-   to @W.
+   to @W, via LAPACK zgees().
 */
 
 gretl_matrix *gretl_zgees (const gretl_matrix *A,
@@ -2680,6 +2680,10 @@ static int matrix_is_hermitian (const gretl_matrix *z)
     return 1;
 }
 
+/* Cholesky decomposition of Hermitian matrix using LAPACK
+   function zpotrf()
+*/
+
 gretl_matrix *gretl_cmatrix_cholesky (const gretl_matrix *A,
 				      int *err)
 {
@@ -2720,6 +2724,10 @@ gretl_matrix *gretl_cmatrix_cholesky (const gretl_matrix *A,
 
     return C;
 }
+
+/* QR decomposition of complex matrix using LAPACK functions
+   zgeqrf() and zungqr().
+*/
 
 gretl_matrix *gretl_cmatrix_QR_decomp (const gretl_matrix *A,
 				       gretl_matrix *R,
