@@ -3208,7 +3208,7 @@ int *gretl_list_from_matrix (const gretl_matrix *X,
 	char chkname[VNAMELEN];
 	int mt1 = gretl_matrix_get_t1(X);
 	int mt2 = gretl_matrix_get_t2(X);
-	int s2, s1 = -1;
+	int s1 = -1, s2 = -1;
 	int n_add = X->cols;
 	int j, slen = 0;
 
@@ -3240,13 +3240,18 @@ int *gretl_list_from_matrix (const gretl_matrix *X,
 	    }
 	}
 
-	slen = (int) floor(log10(X->cols)) + 1;
+	if (S == NULL) {
+	    slen = (int) floor(log10(X->cols)) + 1;
+	    if (slen > 6) {
+		*err = E_DATA;
+	    }
+	}
 
 	/* first pass, check the putative series names */
 	for (j=0; j<X->cols && !*err; j++) {
 	    if (S != NULL) {
 		strcpy(chkname, S[j]);
-	    } else if (prefix != NULL) {
+	    } else {
 		*err = try_list_vname(chkname, prefix, j+1, slen);
 	    }
 	    if (!*err && gretl_is_series(chkname, dset)) {
@@ -3264,6 +3269,8 @@ int *gretl_list_from_matrix (const gretl_matrix *X,
 	    int vnew = orig_v;
 	    int vj, t, s;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-overflow"
 	    for (j=0; j<X->cols && !*err; j++) {
 		if (S != NULL) {
 		    strcpy(chkname, S[j]);
@@ -3280,6 +3287,7 @@ int *gretl_list_from_matrix (const gretl_matrix *X,
 		}
 		list[j+1] = vj;
 	    }
+#pragma GCC diagnostic pop
 	}
     }
 
