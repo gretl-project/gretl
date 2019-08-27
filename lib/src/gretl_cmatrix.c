@@ -304,7 +304,7 @@ static gretl_matrix *complex_from_real (const gretl_matrix *A,
     return C;
 }
 
-#ifndef HAVE_ZUNGQR /* currently not used otherwise */
+#if 0 /* currently unused but could be useful! */
 
 /* Multiplication of complex matrices via BLAS zgemm(),
    allowing for conjugate transposition of @A or @B.
@@ -352,7 +352,7 @@ static int gretl_zgemm_full (cmplx alpha,
     return 0;
 }
 
-#endif
+#endif /* currently unused */
 
 /* Variant of zgemm: simplified version of gretl_zgemm_full
    which allocates the product matrix, C.
@@ -790,89 +790,6 @@ gretl_matrix *gretl_zgees (const gretl_matrix *A,
 
     return ret;
 }
-
-#if 0
-
-/* Inverse of a complex matrix via LU decomposition using the
-   LAPACK functions zgetrf() and zgetri(). This function does
-   not offer adequate detection of rank-deficiency.
-*/
-
-gretl_matrix *gretl_cmatrix_inverse (const gretl_matrix *A, int *err)
-{
-    gretl_matrix *Ainv = NULL;
-    integer lwork = -1;
-    integer *ipiv;
-    cmplx *a, *work = NULL;
-    integer n, info;
-    int rank;
-
-    if (!cmatrix_validate(A, 1)) {
-	*err = E_INVARG;
-	return NULL;
-    }
-
-    if (*err) {
-	return NULL;
-    }
-
-    Ainv = gretl_matrix_copy(A);
-    if (Ainv == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    n = A->cols;
-
-    ipiv = malloc(2 * n * sizeof *ipiv);
-    if (ipiv == NULL) {
-	*err = E_ALLOC;
-	goto bailout;
-    }
-
-    a = (cmplx *) Ainv->val;
-
-    zgetrf_(&n, &n, a, &n, ipiv, &info);
-    if (info != 0) {
-	printf("zgetrf: info = %d\n", info);
-	*err = E_DATA;
-    }
-
-    if (!*err) {
-	/* workspace size query */
-	cmplx wsz;
-
-	zgetri_(&n, a, &n, ipiv, &wsz, &lwork, &info);
-	lwork = (integer) wsz.r;
-	work = malloc(lwork * sizeof *work);
-	if (work == NULL) {
-	    *err = E_ALLOC;
-	}
-    }
-
-    if (!*err) {
-	/* actual inversion */
-	zgetri_(&n, a, &n, ipiv, work, &lwork, &info);
-	if (info != 0) {
-	    printf("zgetri: info = %d\n", info);
-	    *err = E_DATA;
-	}
-    }
-
- bailout:
-
-    free(work);
-    free(ipiv);
-
-    if (*err && Ainv != NULL) {
-	gretl_matrix_free(Ainv);
-	Ainv = NULL;
-    }
-
-    return Ainv;
-}
-
-#endif
 
 enum {
     SVD_THIN,
@@ -2804,78 +2721,10 @@ gretl_matrix *gretl_cmatrix_cholesky (const gretl_matrix *A,
     return C;
 }
 
-#ifndef HAVE_ZUNGQR
-
-/* Below: Our extract_Q function is going to be horrible for
-   a tall Q matrix (big m). We're doing the extraction of Q
-   by a naive method which requires m x m matrices. Current
-   lapack has the function zungqr which does the job nicely
-   but this first became available in December 2016 (from the
-   doc) so we can't assume it's present in all lapack versions.
-   Oh, well. (But we have a configure-time check.)
-*/
-
-static gretl_matrix *naive_extract_Q (const gretl_matrix *A,
-				      const cmplx *tau,
-				      int *err)
-{
-    gretl_matrix *Q;
-    gretl_matrix *v;
-    gretl_matrix *vv;
-    cmplx one = {1,0};
-    cmplx zro = {0,0};
-    cmplx mtj;
-    int m = A->rows;
-    int n = A->cols;
-    int j, i;
-
-    Q = gretl_cmatrix_new0(m, m);
-    v = gretl_cmatrix_new(m, 1);
-    vv = gretl_cmatrix_new(m, m);
-
-    if (Q == NULL || v == NULL || vv == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    /* start Q as m x m identity matrix */
-    for (i=0; i<m; i++) {
-	gretl_cmatrix_set(Q, i, i, 1.0);
-    }
-
-    for (j=0; j<n; j++) {
-	/* get the (negative of) complex scalar tau(j) */
-	mtj.r = -tau[j].r;
-	mtj.i = -tau[j].i;
-	/* fill the v(j) m-vector */
-	for (i=0; i<j; i++) {
-	    v->z[i] = 0;
-	}
-	v->z[j] = 1;
-	for (i=j+1; i<m; i++) {
-	    v->z[i] = gretl_cmatrix_get(A, i, j);
-	}
-	/* Q -= tau(j) * Q * v(j) * v(j)' */
-	gretl_zgemm_full(one, v, 'N', v, 'C', zro, vv);
-	gretl_zgemm_full(mtj, Q, 'N', vv, 'N', one, Q);
-    }
-
-    gretl_matrix_free(v);
-    gretl_matrix_free(vv);
-
-    /* discard m-n trailing columns */
-    gretl_matrix_realloc(Q, m, n);
-
-    return Q;
-}
-
-#endif
-
 gretl_matrix *gretl_cmatrix_QR_decomp (const gretl_matrix *A,
 				       gretl_matrix *R,
 				       int *err)
 {
-    gretl_matrix *B = NULL;
     gretl_matrix *Q = NULL;
     gretl_matrix *Rtmp = NULL;
     integer m, n, lda;
@@ -2897,8 +2746,8 @@ gretl_matrix *gretl_cmatrix_QR_decomp (const gretl_matrix *A,
 	return NULL;
     }
 
-    B = gretl_matrix_copy(A);
-    if (B == NULL) {
+    Q = gretl_matrix_copy(A);
+    if (Q == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
@@ -2921,7 +2770,7 @@ gretl_matrix *gretl_cmatrix_QR_decomp (const gretl_matrix *A,
     }
 
     /* workspace size query */
-    zgeqrf_(&m, &n, (cmplx *) B->val, &lda, tau, work, &lwork, &info);
+    zgeqrf_(&m, &n, (cmplx *) Q->val, &lda, tau, work, &lwork, &info);
     if (info != 0) {
 	fprintf(stderr, "zgeqrf: info = %d\n", (int) info);
 	*err = E_DATA;
@@ -2939,7 +2788,7 @@ gretl_matrix *gretl_cmatrix_QR_decomp (const gretl_matrix *A,
     }
 
     /* run actual QR factorization */
-    zgeqrf_(&m, &n, (cmplx *) B->val, &lda, tau, work, &lwork, &info);
+    zgeqrf_(&m, &n, (cmplx *) Q->val, &lda, tau, work, &lwork, &info);
     if (info != 0) {
 	fprintf(stderr, "zgeqrf: info = %d\n", (int) info);
 	*err = E_DATA;
@@ -2947,13 +2796,13 @@ gretl_matrix *gretl_cmatrix_QR_decomp (const gretl_matrix *A,
     }
 
     if (R != NULL) {
-	/* copy the upper triangular R out of B */
+	/* copy the upper triangular R out of Q */
 	double complex z;
 
 	for (i=0; i<n; i++) {
 	    for (j=0; j<n; j++) {
 		if (i <= j) {
-		    z = gretl_cmatrix_get(B, i, j);
+		    z = gretl_cmatrix_get(Q, i, j);
 		    gretl_cmatrix_set(R, i, j, z);
 		} else {
 		    gretl_cmatrix_set(R, i, j, 0.0);
@@ -2962,27 +2811,23 @@ gretl_matrix *gretl_cmatrix_QR_decomp (const gretl_matrix *A,
 	}
     }
 
-#if HAVE_ZUNGQR
-    /* turn B into Q, with the help of tau */
-    zungqr_(&m, &n, &n, (cmplx *) B->val, &lda, tau, work, &lwork, &info);
+    /* turn Q into "the real" Q, with the help of tau */
+    zungqr_(&m, &n, &n, (cmplx *) Q->val, &lda, tau, work, &lwork, &info);
     if (info != 0) {
 	fprintf(stderr, "zungqr: info = %d\n", (int) info);
 	*err = E_DATA;
-    } else {
-	Q = B;
-	B = NULL;
     }
-#else
-    /* See disparaging comment above! */
-    Q = naive_extract_Q(B, tau, err);
-#endif
 
  bailout:
 
     free(tau);
     free(work);
     gretl_matrix_free(Rtmp);
-    gretl_matrix_free(B);
+
+    if (*err) {
+	gretl_matrix_free(Q);
+	Q = NULL;
+    }
 
     return Q;
 }

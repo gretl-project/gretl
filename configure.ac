@@ -498,12 +498,6 @@ esac
 if echo $LAPACK_LIBS | $GREP --quiet openblas ; then
   AC_DEFINE(OPENBLAS_BUILD)
 fi
-if test "$have_lapack" = "yes" ; then
-  SAVE_LIBS=$LIBS
-  LIBS=$LAPACK_LIBS
-  AC_CHECK_LIB(lapack, zungqr_, AC_DEFINE(HAVE_ZUNGQR))
-  LIBS=$SAVE_LIBS
-fi
 
 dnl And while we're at it...
 if test "$darwin_build" = "yes" ; then

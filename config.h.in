@@ -159,9 +159,6 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Do we have immintrin.h? */
 #undef HAVE_IMMINTRIN_H
 
-/* Have ZUNGQR for complex QR */
-#undef HAVE_ZUNGQR
-
 /* Have clock_getttime in libc or librt */
 #undef HAVE_CLOCK_GETTIME
 
