@@ -3172,6 +3172,12 @@ static int try_list_vname (char *chkname,
  * Returns: allocated list, or NULL on failure.
  */
 
+/* There's actually no possibility of overflow below */
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-overflow"
+#endif
+
 int *gretl_list_from_matrix (const gretl_matrix *X,
 			     const char *prefix,
 			     DATASET *dset,
@@ -3269,8 +3275,6 @@ int *gretl_list_from_matrix (const gretl_matrix *X,
 	    int vnew = orig_v;
 	    int vj, t, s;
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wformat-overflow"
 	    for (j=0; j<X->cols && !*err; j++) {
 		if (S != NULL) {
 		    strcpy(chkname, S[j]);
@@ -3287,7 +3291,6 @@ int *gretl_list_from_matrix (const gretl_matrix *X,
 		}
 		list[j+1] = vj;
 	    }
-#pragma GCC diagnostic pop
 	}
     }
 
@@ -3299,6 +3302,10 @@ int *gretl_list_from_matrix (const gretl_matrix *X,
 
     return list;
 }
+
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
+#pragma GCC diagnostic pop
+#endif
 
 /**
  * gretl_auxlist_from_vector:
