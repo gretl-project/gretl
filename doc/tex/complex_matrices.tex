@@ -135,7 +135,7 @@ complex matrix with an all-zero imaginary part.
 
 The operators \textit{not} defined for complex values are:
 \begin{itemize}
-\item Those that include an inequality (such as ``\verb+.>+''), since
+\item Those that include the tests ``\verb+>+'' or ``\verb+<+'', since
   complex values as such cannot be compared as greater or lesser
   (though they can be compared as equal or not equal).
 \item The (real) modulus operator (percent sign), as in \texttt{x \%
@@ -150,7 +150,7 @@ complex \texttt{A} this means the conjugate transpose, $A^\mathrm{H}$ or
 $A^*$. If you need the non-conjugated transpose you can use
 \texttt{transp()}--- see section~\ref{sec:funcs}.
 
-You may wish to note, although none of gretl's explicit regressions
+You may wish to note, although none of gretl's explicit regression
 functions (or commands) accept complex input you can calculate
 parameter estimates for a least-squares regression of complex $Y$
 ($T \times 1$) on complex $X$ ($T \times k$) via \verb|B = X \ Y|.
