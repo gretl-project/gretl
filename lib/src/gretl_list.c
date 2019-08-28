@@ -3214,9 +3214,10 @@ int *gretl_list_from_matrix (const gretl_matrix *X,
 	char chkname[VNAMELEN];
 	int mt1 = gretl_matrix_get_t1(X);
 	int mt2 = gretl_matrix_get_t2(X);
-	int s1 = -1, s2 = -1;
+	int s1 = 0, s2 = 0;
 	int n_add = X->cols;
 	int j, slen = 0;
+	int ok = 0;
 
 	if (mt2 > 0) {
 	    if (X->rows != mt2 - mt1 + 1) {
@@ -3226,17 +3227,20 @@ int *gretl_list_from_matrix (const gretl_matrix *X,
 	    } else {
 		s1 = dset->t1 - mt1;
 		s2 = X->rows - s1;
+		ok = 1;
 	    }
 	} else if (X->rows == sample_size(dset)) {
 	    /* length matches current sample */
 	    s1 = 0;
 	    s2 = X->rows - 1;
+	    ok = 1;
 	} else if (X->rows == dset->n) {
 	    /* length matches full series length */
 	    s1 = dset->t1;
 	    s2 = dset->t2;
+	    ok = 1;
 	}
-	if (s1 < 0) {
+	if (!ok) {
 	    gretl_errmsg_set("matrix to list: data ranges could not be matched");
 	    *err = E_DATA;
 	} else {
