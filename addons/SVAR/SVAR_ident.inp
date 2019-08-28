@@ -129,12 +129,12 @@ function scalar strucond(int n, matrix Ra, matrix da,
       matrix nspace = nullspace(CC)
       u_rank = cols(nspace)
       if verbose
-	  loop i=1..u_rank --quiet
-	      printf "Q_%d = \n", i
-	      printf "%6.1f", mshape(nspace[1:n*n,i],n,n)
-	      printf "H_%d = \n", i
-	      printf "%6.1f", mshape(Dtn(n) * nspace[n*n+1:,i],n,n)
-	  endloop
+        loop i=1..u_rank --quiet
+          printf "Q_%d = \n", i
+          printf "%6.1f", mshape(nspace[1:n*n,i],n,n)
+          printf "H_%d = \n", i
+          printf "%6.1f", mshape(Dtn(n) * nspace[n*n+1:,i],n,n)
+        endloop
       endif
   endif
 
@@ -156,10 +156,11 @@ function scalar ordercond(int n, matrix Ra, matrix Rb,
   p = 2*n*n - (n + 1)*n/2
 
   if verbose > 0
-      printf "no. of constraints on A: %d\n", rows(Ra)
-      printf "no. of constraints on B (or C): %d\n", rows(Rb)
-      printf "no. of total constraints: %d\n", rows(Ra) + rows(Rb)
-      printf "no. of necessary restrictions for the order condition = %d\n", p
+      print  "Checking order condition:"
+      printf " no. of constraints on A:\t%d\n", rows(Ra)
+      printf " no. of constraints on B /or C:\t%d\n", rows(Rb)
+      printf " no. of total constraints:\t%d\n", rows(Ra) + rows(Rb)
+      printf " no. of necessary constraints:\t%d\n", p
   endif
 
   return rank(Ra)+rank(Rb) >= p
@@ -194,12 +195,13 @@ function scalar rankcond(int n, matrix Ra, matrix da, matrix Rb, matrix db,
 
   if verbose > 1
       loop foreach m Q11 Q21 Q22 Q --quiet
-	  printf "\n$m:\n%7.2f", $m
+        printf "\n$m:\n%7.2f", $m
       endloop
   endif
 
   if verbose > 0
-      printf "rank condition: r = %d, cols(Q) = %d\n", r, cols(Q)
+      print  "Checking rank condition:"
+      printf " r = %d, cols(Q) = %d\n", r, cols(Q)
   endif
 
   return r == cols(Q)
@@ -229,13 +231,13 @@ function scalar ident(matrix Ra, matrix da, matrix Rb, matrix db,
 
   err = CheckNormalizeRd(&locRa,&locda)
   if err
-      printf "Contradictory constraints on A!\n"
+      printf "--Contradictory constraints on A!--\n"
       return 0
   endif
 
   err = CheckNormalizeRd(&locRb,&locdb)
   if err
-      printf "Contradictory constraints on B (or C, respectively)!\n"
+      printf "--Contradictory constraints on B (or C, respectively)!--\n"
       return 0
   endif
 
@@ -244,9 +246,11 @@ function scalar ident(matrix Ra, matrix da, matrix Rb, matrix db,
   /* check for the order condition */
 
   scalar id_o = ordercond(n, locRa, locRb, verbose)
-  string printout = id_o ? "OK" : "fails!"
-  printf "Order condition %s\n", printout
-
+  if verbose
+      string printout = id_o ? "OK" : "fails!"
+      printf "=> Order condition %s\n", printout
+  endif
+    
   # /* check for the structure condition */
 
   # scalar id_s = strucond(n, locRa, locda, locRb, locdb, verbose)
@@ -256,9 +260,11 @@ function scalar ident(matrix Ra, matrix da, matrix Rb, matrix db,
   /* check for the rank condition */
 
   scalar id_r = rankcond(n, locRa, locda, locRb, locdb, verbose)
-  string printout = id_r ? "OK" : "fails!"
-  printf "Rank condition %s\n", printout
-
+  if verbose
+      string printout = id_r ? "OK" : "fails!"
+      printf "=> Rank condition %s\n\n", printout
+  endif
+    
   return (id_o && id_r)
 end function
 
@@ -270,9 +276,11 @@ function scalar SVAR_ident(bundle *b, int verbose[0])
      (Which is perhaps against convention, 0 for "no error"?)
     */
 
-    print "(Check for identification: it may happen that in special"
-    print " circumstances underidentification goes unnoticed."
-    print " If estimation fails, perhaps try adding restrictions.)"
+    print "Check for identification"
+    print "------------------------"
+    print " (It may happen that in special circumstances under-"
+    print "  identification goes unnoticed. If estimation fails,"
+    print "  perhaps try adding restrictions.)"
     
     type = b.type
     n = b.n
@@ -282,17 +290,18 @@ function scalar SVAR_ident(bundle *b, int verbose[0])
     if (type==1) || (type==2) || (type == 4) # plain, C-model or SVEC
         matrix Rd = get_full_Rd(&b, 0)
         matrix Ra = I(n2)
-        matrix da = vec(I(n))
+        matrix da_transp = vec(I(n))'
         if !nelem(Rd)
             funcerr "No restrictions specified!"
         endif
             
         matrix Rb = Rd[,1:n2]
-        matrix db = Rd[,n2+1]
+        matrix db_transp = Rd[,n2+1]' # (transp for printing out below)
 
         if type == 4    # special SVEC check
-            print "(The identification check for SVEC models is work in progress."
-            print " Be careful especially when loadings alpha are restricted.)"
+            print " (The identification check for SVEC models is work in"
+            print "  progress. Be careful especially when loadings alpha"
+            print "  are restricted.)"
             transshockcheck(b)  # based on Luetkepohl 2008
         endif
 
@@ -301,24 +310,25 @@ function scalar SVAR_ident(bundle *b, int verbose[0])
         matrix aRd = b.Rd0 # restrictions on A
 
         matrix Ra = aRd[,1:n2]
-        matrix da = aRd[,n2+1]
+        matrix da_transp = aRd[,n2+1]'
         matrix Rb = bRd[,1:n2]
-        matrix db = bRd[,n2+1]
+        matrix db_transp = bRd[,n2+1]'
     endif
 
     if verbose
-        printf "Constraints in implicit form:\n\n"
+        printf "\nConstraints in implicit form:\n"
         if type == 3
-            loop foreach i Ra da Rb db --quiet
-                printf "$i:\n%4.0f\n", $i
+            loop foreach i Ra da_transp Rb db_transp --quiet
+                printf " $i: %4.0f", $i
             endloop
         else    # The A restrictions are trivial and confusing
-            printf "Rd:\n%4.0f\n", Rb   # 'b' would be misleading in the C-model
-            printf "dd:\n%4.0f\n", db
+            printf " Rd: %4.0f", Rb   # 'b' would be misleading in the C-model
+            printf " dd_transp: %4.0f", db_transp
         endif
+        printf "\n"  
     endif
 
-    ret = ident(Ra, da, Rb, db, verbose)
+    ret = ident(Ra, da_transp', Rb, db_transp', verbose)
     return ret
 
 end function
