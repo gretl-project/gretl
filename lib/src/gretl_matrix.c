@@ -1200,7 +1200,7 @@ gretl_matrix *gretl_matrix_copy_transpose (const gretl_matrix *m)
 static gretl_matrix *gretl_matrix_copy_tmp (const gretl_matrix *a)
 {
     size_t sz = a->rows * a->cols * sizeof(double);
-    gretl_matrix *b = malloc(sizeof *b);
+    gretl_matrix *b = calloc(1, sizeof *b);
 
     if (a->is_complex) sz *= 2;
 

@@ -7088,7 +7088,9 @@ int gretl_function_append_line (ExecState *s)
 
 	err = push_function_line(fun, origline, 1);
 	if (!err) {
-	    origline = NULL; /* successfully donated */
+	    if (!blank) {
+		origline = NULL; /* successfully donated */
+	    }
 	    if (ignore) {
 		fun->lines[i].ignore = 1;
 	    } else if (!blank) {
