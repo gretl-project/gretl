@@ -17461,6 +17461,11 @@ static int check_existing_lhs_type (parser *p, int *newvar)
 	*newvar = 0;
 
 	if (vtype == GRETL_TYPE_MATRIX) {
+#if 0
+	    if (!strcmp(p->lh.name, "B")) {
+		fprintf(stderr, "HERE B-> existing MAT\n");
+	    }
+#endif
 	    p->lh.t = MAT;
 	} else if (vtype == GRETL_TYPE_DOUBLE) {
 	    if (uvar->flags & UV_NODECL) {
@@ -17834,6 +17839,11 @@ static int LHS_matrix_reusable (parser *p, gretl_matrix **pm,
 	ok = (m->rows == tmp->rows && m->cols == 1);
     } else if (p->ret->t == MAT) {
 	gretl_matrix *retm = p->ret->v.m;
+
+#if 0
+	fprintf(stderr, "HERE LHS_matrix_reusable: candidate m = %p\n", (void *) m);
+	fprintf(stderr, " lh.name = '%s', lh.uv = %p\n", p->lh.name, p->lh.uv);
+#endif
 
 	ok = (retm != NULL &&
 	      m->rows == retm->rows &&
@@ -18849,7 +18859,8 @@ static void maybe_update_lhs_uvar (parser *p, GretlType *type)
 	return;
     }
 
-    if (p->lh.uv == NULL) {
+    if (1 /* p->lh.uv == NULL */) {
+	/* HERE reinit variant */
 	p->lh.uv = get_user_var_by_name(p->lh.name);
     }
 
@@ -19235,8 +19246,9 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
     }
 
 #if EDEBUG
-    fprintf(stderr, "after parser (re-)init, p->err = %d (decl? %s)\n",
-	    p->err, (p->flags & P_DECL)? "yes" : "no");
+    fprintf(stderr, "after parser %s, p->err = %d (decl? %s)\n",
+	    (flags & P_EXEC)? "reinit" : "init", p->err,
+	    (p->flags & P_DECL)? "yes" : "no");
 #endif
 
     if (p->flags & P_DECL) {

@@ -7086,7 +7086,7 @@ int gretl_function_append_line (ExecState *s)
 	/* actually add the line? */
 	int i = fun->n_lines;
 
-#if 1
+#if 0
 	if (ignore) {
 	    /* changed 2019-08-29: don't push comments */
 	    goto addnext;
@@ -9102,6 +9102,7 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    i = u->lines[i].next_idx;
 	    continue;
 	} else {
+	    // fprintf(stderr, "\nmaybe_exec_line: '%s'\n", line);
 	    err = maybe_exec_line(&state, dset, &loopstart);
 	    if (loopstart) {
 		u->line_idx = i;
