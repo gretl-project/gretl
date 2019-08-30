@@ -7080,6 +7080,9 @@ int gretl_function_append_line (ExecState *s)
 
     if (abort || err) {
 	set_compiling_off();
+    } else if (ignore) {
+	/* changed 2019-08-29: don't push comments */
+	goto addnext;
     }
 
     if (compiling) {
@@ -7109,6 +7112,8 @@ int gretl_function_append_line (ExecState *s)
 	/* reset static var */
 	ifdepth = 0;
     }
+
+ addnext:
 
     free(origline);
     cmd->flags &= ~CMD_ENDFUN;
