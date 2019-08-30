@@ -3633,7 +3633,7 @@ static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
     if (l->vname != NULL && !strcmp(l->vname, "B")) {
 	pprintf(p->prn, "B[1,1] = %g\n", gretl_matrix_get(ml, 0, 0));
 	// inspect_matrix_node(l, p);
-	pprintf(p->prn, "B[1,1] = %g\n", gretl_matrix_get(ml, 0, 0));
+	// pprintf(p->prn, "B[1,1] = %g\n", gretl_matrix_get(ml, 0, 0));
     }
 #endif
 

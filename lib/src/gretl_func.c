@@ -7080,15 +7080,18 @@ int gretl_function_append_line (ExecState *s)
 
     if (abort || err) {
 	set_compiling_off();
-    } else if (ignore) {
-	/* changed 2019-08-29: don't push comments */
-	goto addnext;
     }
 
     if (compiling) {
-	/* actually add the line */
+	/* actually add the line? */
 	int i = fun->n_lines;
 
+#if 1
+	if (ignore) {
+	    /* changed 2019-08-29: don't push comments */
+	    goto addnext;
+	}
+#endif
 	err = push_function_line(fun, origline, 1);
 	if (!err) {
 	    if (!blank) {
