@@ -7087,12 +7087,6 @@ int gretl_function_append_line (ExecState *s)
 	/* actually add the line? */
 	int i = fun->n_lines;
 
-#if 0
-	if (ignore) {
-	    /* changed 2019-08-29: don't push comments */
-	    goto addnext;
-	}
-#endif
 	err = push_function_line(fun, origline, 1);
 	if (!err) {
 	    if (!blank) {
