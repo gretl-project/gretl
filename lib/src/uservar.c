@@ -180,10 +180,20 @@ static GHashTable *uvh1;       /* for use within functions */
 static GHashTable *uvars_hash; /* pointer to one or other of the above */
 static int previous_d = -1;    /* record of previous "function depth" */
 
+void set_previous_depth (int d)
+{
+    previous_d = d;
+}
+
+static int get_previous_depth (void)
+{
+    return previous_d;
+}
+
 void switch_uservar_hash (int level)
 {
 #if HDEBUG && defined(_OPENMP)
-    fprintf(stderr, "switch_uservar_hash %d: nthreads = %d\n",
+    fprintf(stderr, "switch_uservar_hash: level %d, nthreads %d\n",
 	    level, omp_get_num_threads());
 #endif
 
@@ -223,7 +233,7 @@ static void uvar_hash_destroy (void)
     /* also NULL the convenience pointer */
     uvars_hash = NULL;
 
-    previous_d = -1;
+    set_previous_depth(-1);
 }
 
 static void user_var_destroy (user_var *u)
@@ -495,16 +505,14 @@ static inline int use_uvh1 (void)
 user_var *get_user_var_of_type_by_name (const char *name,
 					GretlType type)
 {
-    int i, imin = 0, d = gretl_function_depth();
+    int prev_d = get_previous_depth();
+    int d = gretl_function_depth();
+    int i, imin = 0;
     user_var *u = NULL;
 
     if (name == NULL || *name == '\0') {
 	return NULL;
     }
-
-#if 0
-    fprintf(stderr, "get_user_var: '%s' (type=%d)\n", name, (int) type);
-#endif
 
     if (type == GRETL_TYPE_DOUBLE) {
 	/* support "auxiliary scalars" mechanism */
@@ -514,8 +522,9 @@ user_var *get_user_var_of_type_by_name (const char *name,
 #if HDEBUG > 1
     int hfound = 0;
 
-    fprintf(stderr, "get user var: '%s', %s (n_vars=%d, level=%d, imin=%d)\n",
-	    name, gretl_type_get_name(type), n_vars, d, imin);
+    fprintf(stderr, "get user var: '%s', %s (n_vars=%d, level=%d, "
+	    "previous=%d, imin=%d)\n", name, gretl_type_get_name(type),
+	    n_vars, d, prev_d, imin);
 # if HDEBUG > 2
     fputs("uvars list:\n", stderr);
     for (i=0; i<n_vars; i++) {
@@ -526,27 +535,26 @@ user_var *get_user_var_of_type_by_name (const char *name,
 # endif
 #endif
 
-    if (d != previous_d) {
+    if (d != prev_d) {
 	if (d == 0) {
 	    /* we're now at "main" level */
 	    if (uvh0 == NULL) {
 		uvh0 = g_hash_table_new(g_str_hash, g_str_equal);
 #if HDEBUG
-		fprintf(stderr, "uvh0: d=0, prev=%d, allocated at %p\n",
-			previous_d, uvh0);
+		fprintf(stderr, "uvh0: d=0, allocated at %p\n", uvh0);
 #endif
 	    }
 	    if (uvh1 != NULL) {
 #if HDEBUG
 		fprintf(stderr, "d=0, prev=%d: clear uvh1 at %p\n",
-			previous_d, uvh1);
+			prev_d, uvh1);
 #endif
 		g_hash_table_remove_all(uvh1);
 	    }
 	    uvars_hash = uvh0;
 	} else if (!use_uvh1()) {
 	    /* exec'ing a function, hash table not wanted */
-	    if (previous_d > 0 && uvh1 != NULL) {
+	    if (prev_d > 0 && uvh1 != NULL) {
 		g_hash_table_remove_all(uvh1);
 	    }
 	    uvars_hash = NULL;
@@ -556,18 +564,18 @@ user_var *get_user_var_of_type_by_name (const char *name,
 		uvh1 = g_hash_table_new(g_str_hash, g_str_equal);
 #if HDEBUG
 		fprintf(stderr, "uvh1: d=%d, prev=%d, allocated at %p\n",
-			d, previous_d, uvh1);
+			d, prev_d, uvh1);
 #endif
-	    } else if (previous_d > 0 && uvh1 != NULL) {
+	    } else if (prev_d > 0 && uvh1 != NULL) {
 #if HDEBUG
 		fprintf(stderr, "d=%d, prev=%d: clear uvh1 at %p\n",
-			d, previous_d, uvh1);
+			d, prev_d, uvh1);
 #endif
 		g_hash_table_remove_all(uvh1);
 	    }
 	    uvars_hash = uvh1;
 	}
-	previous_d = d;
+	set_previous_depth(d);
     }
 
     if (uvars_hash != NULL) {

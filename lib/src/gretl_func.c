@@ -707,6 +707,7 @@ static void set_executing_off (fncall *call, DATASET *dset, PRN *prn)
     fncall *popcall = NULL;
 
     destroy_option_params_at_level(fn_executing);
+    set_previous_depth(fn_executing);
     fn_executing--;
 
     callstack = g_list_remove(callstack, call);
@@ -8337,6 +8338,7 @@ static int start_fncall (fncall *call, DATASET *dset, PRN *prn)
 	tmp = tmp->next;
     }
 
+    set_previous_depth(fn_executing);
     fn_executing++;
     push_program_state();
 
@@ -9102,7 +9104,6 @@ int gretl_function_exec (fncall *call, int rtype, DATASET *dset,
 	    i = u->lines[i].next_idx;
 	    continue;
 	} else {
-	    // fprintf(stderr, "\nmaybe_exec_line: '%s'\n", line);
 	    err = maybe_exec_line(&state, dset, &loopstart);
 	    if (loopstart) {
 		u->line_idx = i;

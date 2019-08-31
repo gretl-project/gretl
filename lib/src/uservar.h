@@ -104,6 +104,8 @@ int user_var_localize (const char *origname,
 		       const char *localname,
 		       GretlType type);
 
+void set_previous_depth (int d);
+
 void switch_uservar_hash (int level);
 
 int copy_as_arg (const char *param_name, GretlType type, 

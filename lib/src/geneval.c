@@ -3629,14 +3629,6 @@ static NODE *matrix_matrix_calc (NODE *l, NODE *r, int op, parser *p)
 	}
     }
 
-#if 0 /* temporary, debugging */
-    if (l->vname != NULL && !strcmp(l->vname, "B")) {
-	pprintf(p->prn, "B[1,1] = %g\n", gretl_matrix_get(ml, 0, 0));
-	// inspect_matrix_node(l, p);
-	// pprintf(p->prn, "B[1,1] = %g\n", gretl_matrix_get(ml, 0, 0));
-    }
-#endif
-
     return ret;
 }
 
@@ -17461,11 +17453,6 @@ static int check_existing_lhs_type (parser *p, int *newvar)
 	*newvar = 0;
 
 	if (vtype == GRETL_TYPE_MATRIX) {
-#if 0
-	    if (!strcmp(p->lh.name, "B")) {
-		fprintf(stderr, "HERE B-> existing MAT\n");
-	    }
-#endif
 	    p->lh.t = MAT;
 	} else if (vtype == GRETL_TYPE_DOUBLE) {
 	    if (uvar->flags & UV_NODECL) {
@@ -17839,11 +17826,6 @@ static int LHS_matrix_reusable (parser *p, gretl_matrix **pm,
 	ok = (m->rows == tmp->rows && m->cols == 1);
     } else if (p->ret->t == MAT) {
 	gretl_matrix *retm = p->ret->v.m;
-
-#if 0
-	fprintf(stderr, "HERE LHS_matrix_reusable: candidate m = %p\n", (void *) m);
-	fprintf(stderr, " lh.name = '%s', lh.uv = %p\n", p->lh.name, p->lh.uv);
-#endif
 
 	ok = (retm != NULL &&
 	      m->rows == retm->rows &&
@@ -18859,8 +18841,7 @@ static void maybe_update_lhs_uvar (parser *p, GretlType *type)
 	return;
     }
 
-    if (1 /* p->lh.uv == NULL */) {
-	/* HERE reinit variant */
+    if (p->lh.uv == NULL) {
 	p->lh.uv = get_user_var_by_name(p->lh.name);
     }
 
