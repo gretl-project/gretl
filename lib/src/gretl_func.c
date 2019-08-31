@@ -7111,8 +7111,6 @@ int gretl_function_append_line (ExecState *s)
 	ifdepth = 0;
     }
 
- addnext:
-
     free(origline);
     cmd->flags &= ~CMD_ENDFUN;
 

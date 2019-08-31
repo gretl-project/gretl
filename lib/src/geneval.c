@@ -155,7 +155,6 @@ static gretl_matrix *series_to_matrix (const double *x, parser *p);
 static void printnode (NODE *t, parser *p, int value);
 static inline int attach_aux_node (NODE *t, NODE *ret, parser *p);
 static char *get_opstr (int op);
-static void inspect_matrix_node (NODE *n, parser *p);
 
 /* ok_list_node: This is a first-pass assessment of whether
    a given node _may_ be interpretable as holding a LIST.
@@ -6905,28 +6904,6 @@ static NODE *generic_typeof_node (NODE *n, NODE *func, parser *p)
     }
 
     return ret;
-}
-
-static void inspect_matrix_node (NODE *n, parser *p)
-{
-    user_var *uvar;
-
-    pputs(p->prn, "Matrix inspection:\n");
-    pprintf(p->prn, "  matrix pointer on node: %p\n", (void *) n->v.m);
-    pprintf(p->prn, "  val pointer: %p\n", (void *) n->v.m->val);
-    pprintf(p->prn, "  name on node: '%s'\n", n->vname == NULL ? "NULL" : n->vname);
-    pprintf(p->prn, "  uvar on node: %p\n", (void *) n->uv);
-    if (n->vname != NULL) {
-	pprintf(p->prn, "  uvar lookup by name: %p\n",
-		(void *) get_user_var_by_name(n->vname));
-    }
-    uvar = get_user_var_by_data(n->v.m);
-    pprintf(p->prn, "  uvar lookup by data: %p", (void *) uvar);
-    if (uvar != NULL) {
-	pprintf(p->prn, " (name '%s')\n", user_var_get_name(uvar));
-    } else {
-	pputc(p->prn, '\n');
-    }
 }
 
 /* return scalar node holding the number of elements in
