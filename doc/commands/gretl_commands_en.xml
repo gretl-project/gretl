@@ -11149,15 +11149,15 @@
 	control of a format string (providing a subset of the
 	<lit>printf</lit> function in the C programming language).
 	Recognized numeric formats are <lit>%e</lit>, <lit>%E</lit>,
-	<lit>%f</lit>, <lit>%g</lit>, <lit>%G</lit> and <lit>%d</lit>,
-	in each case with the various modifiers available in C.
-	Examples: the format <lit>%.10g</lit> prints a value to 10
-	significant figures; <lit>%12.6f</lit> prints a value to 6
-	decimal places, with a width of 12 characters. Note, however,
-	that in gretl the format <lit>%g</lit> is a good default
-	choice for all numerical values; you don't need to get too
-	complicated.  The format <lit>%s</lit> should be used for
-	strings.
+	<lit>%f</lit>, <lit>%g</lit>, <lit>%G</lit>, <lit>%d</lit> and
+	<lit>%x</lit>, in each case with the various modifiers
+	available in C.  Examples: the format <lit>%.10g</lit> prints
+	a value to 10 significant figures; <lit>%12.6f</lit> prints a
+	value to 6 decimal places, with a width of 12
+	characters. Note, however, that in gretl the format
+	<lit>%g</lit> is a good default choice for all numerical
+	values; you don't need to get too complicated.  The format
+	<lit>%s</lit> should be used for strings.
       </para>
       <para>
 	The format string itself must be enclosed in double quotes.
