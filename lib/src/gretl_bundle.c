@@ -667,7 +667,7 @@ int gretl_bundle_has_key (gretl_bundle *bundle,
 {
     int ret = 0;
 
-    if (bundle != NULL) {
+    if (bundle != NULL && key != NULL) {
 	gpointer p = g_hash_table_lookup(bundle->ht, key);
 
 	ret = (p != NULL);

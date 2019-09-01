@@ -143,6 +143,8 @@ static const char *test_type_key (ModelTestType t)
 	return "re_wald_test";
     } else if (t == GRETL_TEST_XDEPEND) {
 	return "cross_sectional_dependence_test";
+    } else if (t == GRETL_TEST_PANEL_AR) {
+	return "panel_ar_test";
     } else {
 	return NULL;
     }
@@ -5004,7 +5006,7 @@ int bundlize_model_data_items (const MODEL *pmod, void *ptr)
 	for (i=0; i<pmod->ntests && !err; i++) {
 	    test = &pmod->tests[i];
 	    tkey = test_type_key(test->type);
-	    if (!gretl_bundle_has_key(b, tkey)) {
+	    if (tkey != NULL && !gretl_bundle_has_key(b, tkey)) {
 		bt = bundlize_test(test);
 		if (bt != NULL) {
 		    err = gretl_bundle_donate_data(b, tkey, bt,
