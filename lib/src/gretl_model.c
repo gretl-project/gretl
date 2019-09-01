@@ -146,6 +146,7 @@ static const char *test_type_key (ModelTestType t)
     } else if (t == GRETL_TEST_PANEL_AR) {
 	return "panel_ar_test";
     } else {
+	fprintf(stderr, "test_type_key(): type %d has no key!\n", t);
 	return NULL;
     }
 }
