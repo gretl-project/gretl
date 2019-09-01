@@ -1569,6 +1569,7 @@ int gretl_matrix_set_triangle (gretl_matrix *targ,
 			       double x, int upper)
 {
     int r, c, p, i, j, n;
+    int lower = !upper;
     int match = 0;
     int err = 0;
 
@@ -1589,7 +1590,7 @@ int gretl_matrix_set_triangle (gretl_matrix *targ,
     p = MIN(r, c);
     n = (p * (p-1)) / 2;
 
-    if (r > c && !upper) {
+    if (r > c && lower) {
 	n += (r - c) * c;
     } else if (c > r && upper) {
 	n += (c - r) * r;
@@ -1608,31 +1609,25 @@ int gretl_matrix_set_triangle (gretl_matrix *targ,
 
     if (match == 0) {
 	err = E_NONCONF;
-    } else if (upper) {
-	int jmin = 1;
-	int k = 0;
-
-	for (i=0; i<p; i++) {
-	    for (j=jmin; j<c; j++) {
-		if (src != NULL) {
-		    x = src->val[k++];
-		}
-		gretl_matrix_set(targ, i, j, x);
-	    }
-	    jmin++;
-	}
     } else {
-	int imin = 1;
+	int jmin = upper ? 1 : 0;
+	int jmax = upper ? c : r;
+	int imin = upper ? 0 : 1;
+	int imax = upper ? 1 : r;
 	int k = 0;
 
-	for (j=0; j<p; j++) {
-	    for (i=imin; i<r; i++) {
+	for (j=jmin; j<jmax; j++) {
+	    for (i=imin; i<imax; i++) {
 		if (src != NULL) {
 		    x = src->val[k++];
 		}
 		gretl_matrix_set(targ, i, j, x);
 	    }
-	    imin++;
+	    if (lower) {
+		imin++;
+	    } else if (imax < r) {
+		imax++;
+	    }
 	}
     }
 
@@ -1657,6 +1652,7 @@ gretl_matrix *gretl_matrix_get_triangle (const gretl_matrix *m,
 {
     gretl_matrix *ret = NULL;
     int r, c, p, n, i, j;
+    int lower = !upper;
 
     if (gretl_is_null_matrix(m)) {
 	*err = E_INVARG;
@@ -1675,7 +1671,7 @@ gretl_matrix *gretl_matrix_get_triangle (const gretl_matrix *m,
     p = MIN(r, c);
     n = (p * (p-1)) / 2;
 
-    if (r > c && !upper) {
+    if (r > c && lower) {
 	n += (r - c) * c;
     } else if (c > r && upper) {
 	n += (c - r) * r;
@@ -1685,33 +1681,26 @@ gretl_matrix *gretl_matrix_get_triangle (const gretl_matrix *m,
 
     if (ret == NULL) {
 	*err = E_ALLOC;
-    } else if (upper) {
-	int jmin = 1;
-	int k = 0;
-
-	for (i=0; i<p; i++) {
-	    for (j=jmin; j<c; j++) {
-		if (m->is_complex) {
-		    ret->z[k++] = gretl_cmatrix_get(m, i, j);
-		} else {
-		    ret->val[k++] = gretl_matrix_get(m, i, j);
-		}
-	    }
-	    jmin++;
-	}
     } else {
-	int imin = 1;
+	int jmin = upper ? 1 : 0;
+	int jmax = upper ? c : r;
+	int imin = upper ? 0 : 1;
+	int imax = upper ? 1 : r;
 	int k = 0;
 
-	for (j=0; j<p; j++) {
-	    for (i=imin; i<r; i++) {
+	for (j=jmin; j<jmax; j++) {
+	    for (i=imin; i<imax; i++) {
 		if (m->is_complex) {
 		    ret->z[k++] = gretl_cmatrix_get(m, i, j);
 		} else {
 		    ret->val[k++] = gretl_matrix_get(m, i, j);
 		}
 	    }
-	    imin++;
+	    if (lower) {
+		imin++;
+	    } else if (imax < r) {
+		imax++;
+	    }
 	}
     }
 
