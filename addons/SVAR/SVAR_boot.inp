@@ -97,7 +97,7 @@ function matrix bias_correction(scalar H, matrix Ahat, const matrix mu,
     matrix BC = Ahat - Ab
 
     H = add_and_smash(&Ab, BC)
-    printf "H = %g\n", H
+    # printf "H = %g\n", H
   
   else	# not stationary
     matrix Ab = Ahat
@@ -152,7 +152,8 @@ end function
 # for general bootstrap 
 
 function matrix prepres(const matrix E, 
-         int boottype[1:2:1] "bootstrap type" {"resampling", "wild"})
+			int boottype[1:4:1] "bootstrap type" \
+			{"resampling", "wildN", "wildr", "wildM"})
   # The input is demeaned (column-wise) only for 
   # the resampling (type 1).
   
@@ -165,8 +166,9 @@ end function
                       
 
 function matrix drawbootres(const matrix E, 
-   int boottype[1:2:1] "bootstrap type" {"resampling", "wild"},
-   bundle bparams[null] "further inputs" )
+			    int boottype[1:4:1] "bootstrap type" \
+			    {"resampling", "wildN", "wildR", "wildM"},
+			    bundle bparams[null] "further inputs" )
                             
    /*
    Construct a new draw of residuals for bootstrapping, where E 
@@ -175,9 +177,10 @@ function matrix drawbootres(const matrix E,
    input. (See the prepres() function - the pre-processing is 
    not done here to avoid doing it repeatedly.) 
     
-   Currently boottype can be 1 or 2:
+   Currently boottype can go from 1 to 4:
    1: traditional residual resampling (using gretl's resample())
-   2: wild bootstrap with the help of a standard normal 
+   2-4: wild bootstrap with the help of a standard normal,
+        Rademacher, Mammen distributions respectively
    
    Other bootstrap types (block, ...) may be added in the future.
    (The E input could be empty then, e.g. for a purely parametric- 
@@ -191,9 +194,21 @@ function matrix drawbootres(const matrix E,
 
    if boottype == 1	# standard
      return resample(E)
-     
-   elif boottype == 2	# wild  
-      return E .* mnormal(rows(E),1)
+   elif boottype > 1 && boottype <= 4
+       T = rows(E)
+       if boottype == 2
+	   # Normal
+	   matrix w = mnormal(T,1)
+       elif boottype == 3
+	   # Rademacher
+	   matrix w = muniform(T,1) .< 0.5 ? 1 : -1
+       elif boottype == 4
+	   # Mammen
+	   scalar s5 = sqrt(5)
+	   scalar p = (0.5/s5) * (s5 + 1)
+	   matrix w = 0.5 + (muniform(T,1) .< p ? -s5/2 : s5/2)
+       endif
+       return E .* w
    else
       funcerr "Shouldn't happen"
    endif 
@@ -270,7 +285,8 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
   # Prepare the residuals 
   matrix innov = prepres(obj.E, obj.boottype)
 
-  printf "\nBootstrapping model (%d iterations)\n\n", rep
+  printf "\nBootstrapping model (%d iterations)\n", rep
+  printf "Bootstrap type: %s\n\n", btypestring(obj.boottype)
   flush
 
   i = 1

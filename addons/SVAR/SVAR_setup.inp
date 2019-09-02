@@ -54,6 +54,21 @@ function string optimstring(int type)
   return ret
 end function
 
+function string btypestring(int type)
+  string ret = ""
+  if type == 1
+    ret = "resampling"
+  elif type == 2
+      ret = "wild (Normal)"
+  elif type == 3
+      ret = "wild (Rademacher)"
+  elif type == 4
+      ret = "wild (Mammen)"
+  endif
+
+  return ret
+end function
+
 function matrix set_default_dimensions(bundle *mod, list lY,
 				       list lX[null], int varorder)
 
@@ -105,14 +120,10 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
      to be processed later (presumably within SVAR_estimate).
      */
      
-  # Do a general rank deficiency check on the exogenous
-  matrix mcheck = {lX}
-  if rank(mcheck'mcheck) < nelem(lX)	# RHS can be zero!
-    funcerr "Exogenous terms are lin. dependent!"
-  endif   
+  # Drop collinear exogenous terms
+  lX = dropcoll(lX) 
 
   scalar type = modeltype(type_string)
- 
   if type == 4	# SVEC
       # SVEC treats restricted deterministic terms specially as per Johansen,
       # so we'll drop them if present,
@@ -184,6 +195,9 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
     ret.jcase = 0
   endif
 
+  # matrix for holding sign restrictions (for future use)
+  matrix ret.SRest = {}
+  
   /* Optimisation
   */
   ret.optmeth = 4 # default = scoring
