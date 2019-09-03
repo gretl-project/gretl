@@ -86,6 +86,7 @@ static const char *gretl_error_messages[] = {
     N_("Execution aborted by request"),                          /* E_STOP */
     N_("'catch' cannot be used in this context"),                /* E_BADCATCH */
     N_("complex arguments/operands not supported"),              /* E_CMPLX */
+    N_("mixed complex/real arguments not supported"),            /* E_MIXED */
     NULL,                                                        /* E_DB_DUP */
     NULL,                                                        /* E_OK */
     NULL                                                         /* E_MAX */
@@ -340,8 +341,7 @@ void gretl_errmsg_append (const char *str, int err)
     n = strlen(gretl_errmsg);
 
     if (n + m + 2 < ERRLEN) {
-	if (n > 0) {
-	    /* there's a message in place already */
+	if (n > 0 && gretl_errmsg[n] != '\n') {
 	    strcat(gretl_errmsg, "\n");
 	}
 	strcat(gretl_errmsg, str);

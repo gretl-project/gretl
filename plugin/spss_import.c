@@ -780,12 +780,14 @@ static int read_documents (spss_data *sdat)
     } else {
 	int i, n = 80 * n_lines;
 	unsigned char c;
+	size_t b = 0;
 
 	for (i=0; i<n; i++) {
-	    fread(&c, 1, 1, sdat->fp);
+	    b = fread(&c, 1, 1, sdat->fp);
 	}
 
-	fprintf(stderr, "read_documents: got %d lines\n", n_lines);
+	fprintf(stderr, "read_documents: got %d lines (%d bytes)\n",
+		n_lines, (int) b);
     }
 
     return err;
@@ -797,6 +799,7 @@ static int read_sav_other_records (spss_data *sdat)
 {
     FILE *fp = sdat->fp;
     int32_t pad, rec_type = 0;
+    size_t n;
     int err = 0;
 
     while (rec_type >= 0 && !err) {
@@ -825,7 +828,10 @@ static int read_sav_other_records (spss_data *sdat)
 	    read_subrecord(sdat);
 	    break;
 	case 999:
-	    fread(&pad, sizeof pad, 1, fp);
+	    n = fread(&pad, sizeof pad, 1, fp);
+	    if (n != 1) {
+		fprintf(stderr, "couldn't read padding\n");
+	    }
 	    rec_type = -1;
 	    break;
 	default:

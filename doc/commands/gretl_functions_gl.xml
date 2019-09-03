@@ -714,12 +714,13 @@
     <function name="$result" section="access" output="matrix-or-bundle">
       <description>
 	<para>
-	  A continuación dalgunhas instrucións que non teñen accesorios
-	  específicos, proporciona información reservada. As instrucións en
-	  cuestión inclúen <cmdref targ="corr"/>, <cmdref targ="freq"/>,
-	  <cmdref targ="summary"/> e <cmdref targ="xtab"/>
-	  (en cuxos casos, o resultado é unha matriz), ademais de
-	  <cmdref targ="vif"/> (en cuxo caso, o resultado é un feixe).
+	  Proporciona información reservada, a continuación dalgunhas
+	  instrucións que non teñen accesorios específicos. As instrucións
+	  en cuestión inclúen <cmdref targ="corr"/>, <cmdref targ="freq"/>,
+	  <cmdref targ="summary"/>, <cmdref targ="xtab"/>, <cmdref targ="vif"/>
+	  e <cmdref targ="bkw"/> (en cuxos casos, o resultado é unha matriz),
+	  ademais de <cmdref targ="pkg"/> (en cuxo caso, gárdase opcionalmente
+	  un feixe).
 	</para>
       </description>
     </function>
@@ -2256,16 +2257,19 @@
       </fnargs>
       <description>
 	<para>
-	  Realiza a descomposición de Cholesky da matriz <argname>A</argname>,
-	  asumindo que esta é simétrica e definida positiva. O resultado é unha
-	  matriz triangular inferior <math>L</math> que verifica a igualdade
-	  <equation status="inline" ascii="A = LL'"  tex="$A = LL'$"/>. A
-	  función vai fallar se <argname>A</argname> non é simétrica ou non
-	  é definida positiva.
-	  <seelist>
-            <fncref targ="psdroot"/>
-            <fncref targ="Lsolve"/>
-	  </seelist>
+	  Realiza a descomposición de Cholesky de <argname>A</argname>.
+	  Cando <argname>A</argname> sexa unha matriz real, deberá ser
+	  simétrica e definida positiva; nese caso, o resultado será
+	  unha matriz triangular inferior <math>L</math> que verificará
+	  <equation status="inline" ascii="A = LL'" tex="$A = LL'$"/>.
+	  Cando <argname>A</argname> sexa complexa, deberá ser
+	  Hermitiana e definida positiva; e o resultado será unha matriz
+	  complexa triangular inferior de xeito que
+	  <equation status="inline" ascii="A = LL^H" tex="$A = LL^{\mathrm H}$"/>.
+	</para>
+	<para>
+	  Para o caso real, consulta tamén <fncref targ="psdroot"/> e
+	  <fncref targ="Lsolve"/>.
 	</para>
       </description>
     </function>
@@ -3253,6 +3257,12 @@
       </fnargs>
       <description>
 	<para>
+	  <emphasis>Esta é unha función herdada, anterior ao soporte
+	  orixinal de Gretl para matrices complexas. Non debes usala nos
+	  novos guións que escribas en linguaxe 'hansl'. Utiliza </emphasis>
+	  <fncref targ="eiggen2"/> <emphasis>en troques.</emphasis>
+	</para>
+	<para>
 	  Calcula os autovalores e, opcionalmente, os autovectores da matriz
 	  <argname>A</argname> de orde <by r="n" c="n"/>. Cando todos os
 	  autovalores son reais, devólvese unha matriz <by r="n" c="1"/>. Noutro
@@ -3305,6 +3315,43 @@
             <fncref targ="eigensym"/>
             <fncref targ="eigsolve"/>
             <fncref targ="qrdecomp"/>
+            <fncref targ="svd"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="eiggen2" section="linalg" output="matrix">
+      <fnargs>
+	<fnarg type="smatrix">A</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;V</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;W</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Calcula os autovalores (e opcionalmente os autovectores
+	  dereitos e/ou esquerdos) da matriz <argname>A</argname> de
+	  dimensión <by r="n" c="n"/>, que pode ser real ou complexa.
+	  Os autovalores devólvense nun vector columna complexo.
+	</para>
+	<para>
+	  Se queres recuperar os autovectores dereitos (como no caso dunha
+	  matriz complexa de dimensión <by r="n" c="n"/>), indica o nome
+	  dunha matriz xa existente, precedido por <lit>&amp;</lit> para
+	  indicar a <quote>dirección</quote> da matriz en cuestión, como
+	  segundo argumento. Doutro xeito, podes omitir este argumento.
+	</para>
+	<para>
+	  Para recuperar os autovectores esquerdos (de novo, como nunha
+	  matriz complexa), indica a dirección dunha matriz como terceiro
+	  argumento. Cae na conta de que, se queres os autovectores esquerdos
+	  pero non os dereitos, debes usar a palabra chave <lit>null</lit>
+	  como marcador para o segundo argumento.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="eigensym"/>
+            <fncref targ="eigsolve"/>
             <fncref targ="svd"/>
 	  </seelist>
 	</para>
@@ -3439,8 +3486,8 @@
       </fnargs>
       <description>
 	<para>
-	  Devolve un resultado (do mesmo tipo que o argumento) coa transformación
-	  <math>e</math><sup>x</sup> . Con matrices aplícase elemento a elemento.
+	  Devolve un resultado (do tipo do argumento) con <math>e</math><sup>x</sup>.
+	  Cae na conta de que con argumento matricial, aplícase elemento a elemento.
 	  Para a función exponencial matricial consulta <fncref targ="mexp"/>.
 	</para>
       </description>
@@ -3673,16 +3720,45 @@
       </fnargs>
       <description>
 	<para>
-	  Devolve unha matriz coa transformación de Fourier real. Se a matriz
-	  <argname>X</argname> do argumento ten <math>n</math> columnas, a que
-	  se devolve ten 2<math>n</math> columnas, onde as partes reais gárdanse
-	  nas columnas impares e as partes complexas nas columnas pares.
+	  <emphasis>Esta é unha función herdada, anterior ao soporte
+	  orixinal de Gretl para matrices complexas. Non debes usala nos
+	  novos guións que escribas en linguaxe 'hansl'. Utiliza </emphasis>
+	  <fncref targ="fft2"/> <emphasis>en troques.</emphasis>
+	</para>
+	<para>
+	  Devolve unha matriz coa transformación de Fourier real discreta. Se a
+	  matriz <argname>X</argname> do argumento ten <math>n</math> columnas,
+	  a que se devolve ten 2<math>n</math> columnas, onde as partes reais
+	  gárdanse nas columnas impares e as partes complexas nas pares.
 	</para>
 	<para>
 	  Cando necesites aplicar a transformación de Fourier sobre varios
 	  vectores co mesmo número de elementos, resulta numericamente máis
 	  eficiente agrupar os vectores nunha matriz ca executar <lit>fft</lit>
 	  para cada un por separado.
+	  <seelist>
+            <fncref targ="ffti"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="fft2" section="linalg" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devolve unha matriz co resultado da transformación discreta de
+	  Fourier. A matriz <argname>X</argname> do argumento pode ser
+	  real ou complexa. O resultado é unha matriz complexa que ten
+	  a mesma dimensión ca <argname>X</argname>.
+	</para>
+	<para>
+	  Se fora necesario calcular a transformación de Fourier sobre
+	  varios vectores co mesmo número de elementos, é numericamente
+	  máis eficiente agrupalos nunha matriz, en troques de executar
+	  <lit>fft2</lit> para cada vector por separado.
 	  <seelist>
             <fncref targ="ffti"/>
 	  </seelist>
@@ -3697,11 +3773,11 @@
       <description>
 	<para>
 	  Devolve unha matriz con <math>n</math> columnas, co resultado da
-	  transformación inversa discreta real de Fourier. Asúmese que a matriz
+	  transformación inversa de Fourier discreta. Asúmese que a matriz
 	  <argname>X</argname> consta de <math>n</math> vectores columna
-	  complexos, coa parte real nas columnas impares e a parte imaxinaria
-	  nas columnas pares, de forma que deberá ter 2<math>n</math>
-	  columnas.
+	  complexos. Por compatibilidade anterior, o argumento podes indicalo
+	  como unha matriz real con 2<math>n</math> columnas, nas que as columnas
+	  impares conteñen a parte real, e as pares conteñen a parte imaxinaria.
 	</para>
 	<para>
 	  Cando necesites aplicar a transformación inversa de Fourier sobre
@@ -3709,7 +3785,7 @@
 	  eficiente agrupar os vectores nunha matriz ca executar <lit>ffti</lit>
 	  para cada un por separado.
 	  <seelist>
-            <fncref targ="fft"/>
+            <fncref targ="fft2"/>
 	  </seelist>
 	</para>
       </description>
@@ -6122,6 +6198,11 @@
 	  poderá axustarse para garantir que sexa único dentro do conxunto de
 	  nomes que así se vaian construír.
 	</para>
+	<para>
+	  Observa que, no caso de que o argumento sexa unha matriz, a función
+	  opera elemento a elemento. Para a función logarítmica matricial,
+	  consulta <fncref targ="mlog"/>.
+	</para>
       </description>
     </function>
 
@@ -6558,18 +6639,27 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Calcula e devolve a matriz exponencial dunha matriz cadrada
-	  <argname>A</argname> utilizando para elo o algoritmo 11.3.1 de
-	  <cite key="golub96">Golub e Van Loan (1996)</cite>.
+	  Calcula a matriz exponencial dunha matriz cadrada <argname>A</argname>.
+	  Se <argname>A</argname> é unha matriz real, utilízase para elo o
+	  algoritmo 11.3.1 de <cite key="golub96">Golub e Van Loan (1996)</cite>.
+	  Se <argname>A</argname> é unha matriz complexa, o algoritmo utiliza
+	  a descomposición en autovalores e <argname>A</argname> debe ser
+	  diagonalizable.
 	</para>
 	<para context="tex">
 	  Calcula e devolve a matriz exponencial dunha matriz cadrada,
 	  \[ e^A = \sum_{k=0}^{\infty} \frac{A^k}{k!}
 	  = \frac{I}{0!} + \frac{A}{1!} + \frac{A^2}{2!} + \frac{A^3}{3!}
 	  + \cdots\]
-	  (A serie que está implícita nesta expresión vai converxer con
-	  seguridade.) O algoritmo que se vai utilizar é o 11.3.1 de
-	  <cite key="golub96">Golub e Van Loan (1996)</cite>.
+	  (A serie que está implícita nesta expresión seguramente vai converxer.)
+	  Se <argname>A</argname> é unha matriz real, utilízase para elo o
+	  algoritmo 11.3.1 de <cite key="golub96">Golub e Van Loan (1996)</cite>.
+	  Se <argname>A</argname> é unha matriz complexa, o algoritmo utiliza
+	  a descomposición en autovalores e <argname>A</argname> debe ser
+	  diagonalizable.
+	</para>
+	<para>
+	  Consulta tamén <fncref targ="mlog"/>.
 	</para>
       </description>
     </function>
@@ -6700,7 +6790,7 @@
       </description>
     </function>
 
-    <function name="mlag" section="stats" output="matrix">
+    <function name="mlag" section="transforms" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="scalar-or-vec">p</fnarg>
@@ -6783,6 +6873,20 @@
 	<para>
 	  pero utilizar a función <lit>mlincomb</lit>, permite economizar algo
 	  ao teclear e tamén nalgúns ciclos de uso de CPU.
+	</para>
+      </description>
+    </function>
+
+    <function name="mlog" section="linalg" output="smatrix">
+      <fnargs>
+	<fnarg type="smatrix">A</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devolve unha matriz co logaritmo matricial de <argname>A</argname>.
+	  O algoritmo que se usa baséase na descomposición en autovalores, polo
+	  que necesita que a matriz <argname>A</argname> sexa diagonalizable.
+	  Consulta tamén <fncref targ="mexp"/>.
 	</para>
       </description>
     </function>
@@ -6990,7 +7094,7 @@
       </description>
     </function>
 
-    <function name="mread" section="matbuild" output="matrix">
+    <function name="mread" section="data-utils" output="matrix">
       <fnargs>
 	<fnarg type="string">nomeficheiro</fnarg>
 	<fnarg optional="true" type="bool">importar</fnarg>

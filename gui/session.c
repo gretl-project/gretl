@@ -4170,12 +4170,7 @@ view_matrix_properties (const gretl_matrix *m, const char *name)
     }
 
     if (s > 0 && (s != GRETL_MATRIX_SYMMETRIC || evals == NULL)) {
-	gretl_matrix_free(A);
-	A = gretl_matrix_copy(m);
-	if (A != NULL) {
-	    err = 0;
-	    evals = gretl_general_matrix_eigenvals(A, 0, &err);
-	}
+	evals = gretl_general_matrix_eigenvals(m, &err);
     }
 
     if (s > 0) {

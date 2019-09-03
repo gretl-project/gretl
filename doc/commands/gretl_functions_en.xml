@@ -2257,16 +2257,19 @@
       </fnargs>
       <description>
 	<para>
-	  Performs a Cholesky decomposition of the matrix
-	  <argname>A</argname>, which is assumed to be symmetric and
-	  positive definite. The result is a lower-triangular matrix
-	  <math>L</math> which satisfies <equation status="inline"
-	  ascii="A = LL'"  tex="$A = LL'$"/>. The function will fail if
-	  <argname>A</argname> is not symmetric or not positive definite.
-	  <seelist>
-            <fncref targ="psdroot"/>
-	    <fncref targ="Lsolve"/>
-	  </seelist>
+	  Performs a Cholesky decomposition of
+	  <argname>A</argname>. If <argname>A</argname> is real it
+	  must be symmetric and positive definite; if so, the result
+	  is a lower-triangular matrix <math>L</math> which satisfies
+	  <equation status="inline" ascii="A = LL'" tex="$A = LL'$"/>.
+	  If <argname>A</argname> is complex it must be Hermitian and
+	  positive definite, and the result is a lower-triangular
+	  complex matrix such that <equation status="inline" ascii="A
+	  = LL^H" tex="$A = LL^{\mathrm H}$"/>.
+	</para>
+	<para>
+	  For the real case, see also <fncref targ="psdroot"/> and
+	  <fncref targ="Lsolve"/>.
 	</para>
       </description>
     </function>
@@ -3254,6 +3257,12 @@
       </fnargs>
       <description>
 	<para>
+	  <emphasis>This is a legacy function, predating gretl's
+	  native support for complex matrices. It should not be used
+	  in newly written hansl scripts. Use</emphasis> <fncref targ="eiggen2"/>
+	  <emphasis>instead.</emphasis>
+	</para>
+	<para>
 	  Computes the eigenvalues, and optionally the right eigenvectors, of
 	  the <by r="n" c="n"/> matrix <argname>A</argname>.  If all the
 	  eigenvalues are real an <by r="n" c="1"/> matrix is returned;
@@ -3306,6 +3315,43 @@
             <fncref targ="eigensym"/>
             <fncref targ="eigsolve"/>
             <fncref targ="qrdecomp"/>
+            <fncref targ="svd"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="eiggen2" section="linalg" output="matrix">
+      <fnargs>
+	<fnarg type="smatrix">A</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;V</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;W</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Computes the eigenvalues, and optionally the right and/or
+	  left eigenvectors, of the <by r="n" c="n"/> matrix
+	  <argname>A</argname>, which may be real or complex. The
+	  eigenvalues are returned in a complex column vector.
+	</para>
+	<para>
+	  If you wish to retrieve the right eigenvectors (as an <by
+	  r="n" c="n"/> complex matrix), supply the name of an
+	  existing matrix, preceded by <lit>&amp;</lit> to indicate
+	  the <quote>address</quote> of the matrix in question, as the
+	  second argument. Otherwise this argument can be omitted.
+	</para>
+	<para>
+	  To retrieve the left eigenvectors (again, as a complex
+	  matrix), supply a matrix-address as the third argument.
+	  Note that if you want the left eigenvectors but not the
+	  right ones, you should use the keyword <lit>null</lit>
+	  as a placeholder for the second argument.
+	</para>
+	<para>
+	  <seelist>
+            <fncref targ="eigensym"/>
+            <fncref targ="eigsolve"/>
             <fncref targ="svd"/>
 	  </seelist>
 	</para>
@@ -3441,7 +3487,7 @@
       <description>
 	<para>
 	  Returns <math>e</math><sup>x</sup>. Note that in case of
-	  matrices the function acts element by element. For the
+	  matrix input the function acts element by element. For the
 	  matrix exponential function, see <fncref targ="mexp"/>.
 	</para>
       </description>
@@ -3674,6 +3720,12 @@
       </fnargs>
       <description>
 	<para>
+	  <emphasis>This is a legacy function, predating gretl's
+	  native support for complex matrices. It should not be used
+	  in newly written hansl scripts. Use</emphasis> <fncref targ="fft2"/>
+	  <emphasis>instead.</emphasis>
+	</para>
+	<para>
 	  Discrete real Fourier transform. If the input matrix
 	  <argname>X</argname> has <math>n</math> columns, the output has
 	  2<math>n</math> columns, where the real parts are stored in the
@@ -3691,18 +3743,41 @@
       </description>
     </function>
 
+    <function name="fft2" section="linalg" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Discrete Fourier transform. The input matrix
+	  <argname>X</argname> may be real or complex. The output is a
+	  complex matrix of the same dimensions as
+	  <argname>X</argname>.
+	</para>
+	<para>
+	  Should it be necessary to compute the Fourier transform on several
+	  vectors with the same number of elements, it is numerically more
+	  efficient to group them into a matrix rather than invoking
+	  <lit>fft2</lit> for each vector separately.
+	  <seelist>
+            <fncref targ="ffti"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="ffti" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Inverse discrete real Fourier transform. It is assumed that
+	  Inverse discrete Fourier transform. It is assumed that
 	  <argname>X</argname> contains <math>n</math> complex column
-	  vectors, with the real part in the odd columns and the imaginary
-	  part in the even ones, so the total number of columns should be
-	  2<math>n</math>. A matrix with <math>n</math> columns is
-	  returned.
+	  vectors. For backward compatibility the input may be given
+	  as a real matrix with 2<math>n</math> columns, the odd columns
+	  holding the real part and the even ones the imaginary part.
+	  A matrix with <math>n</math> columns is returned.
 	</para>
 	<para>
 	  Should it be necessary to compute the inverse Fourier transform on
@@ -3710,7 +3785,7 @@
 	  numerically more efficient to group them into a matrix rather
 	  than invoking <lit>ffti</lit> for each vector separately.
 	  <seelist>
-            <fncref targ="fft"/>
+            <fncref targ="fft2"/>
 	  </seelist>
 	</para>
       </description>
@@ -6123,6 +6198,11 @@
 	  if necessary, and may be adjusted in case of non-uniqueness
 	  in the set of names thus constructed.
 	</para>
+	<para>
+	  Note that in case of matrix input the function acts element
+	  by element. For the matrix logarithm function, see <fncref
+	  targ="mlog"/>.
+	</para>
       </description>
     </function>
 
@@ -6559,18 +6639,27 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Computes the matrix exponential of <argname>A</argname>,
-	  using algorithm 11.3.1 from <cite key="golub96">Golub and
-	  Van Loan (1996)</cite>.
+	  Computes the matrix exponential of <argname>A</argname>.  If
+	  <argname>A</argname> is a real matrix algorithm 11.3.1 from
+	  <cite key="golub96">Golub and Van Loan (1996)</cite> is
+	  used. If <argname>A</argname> is complex the algorithm uses
+	  eigendecomposition and <argname>A</argname> must be
+	  diagonalizable.
 	</para>
 	<para context="tex">
 	  Computes the matrix exponential,
 	  \[ e^A = \sum_{k=0}^{\infty} \frac{A^k}{k!}
 	  = \frac{I}{0!} + \frac{A}{1!} + \frac{A^2}{2!} + \frac{A^3}{3!}
 	  + \cdots\]
-	  (This series is sure to converge.) The algorithm used
-	  is 11.3.1 from <cite key="golub96">Golub and Van Loan
-	  (1996)</cite>.
+	  (This series is sure to converge.) If <argname>A</argname>
+	  is a real matrix algorithm used is 11.3.1 from <cite
+	  key="golub96">Golub and Van Loan (1996)</cite> is used. If
+	  <argname>A</argname> is complex the algorithm uses
+	  eigendecomposition and <argname>A</argname> must be
+	  diagonalizable.
+	</para>
+	<para>
+	  See also <fncref targ="mlog"/>.
 	</para>
       </description>
     </function>
@@ -6701,7 +6790,7 @@
       </description>
     </function>
 
-    <function name="mlag" section="stats" output="matrix">
+    <function name="mlag" section="transforms" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="scalar-or-vec">p</fnarg>
@@ -6784,6 +6873,20 @@
 	<para>
 	  but use of <lit>mlincomb</lit> saves on some typing and
 	  also some CPU cycles.
+	</para>
+      </description>
+    </function>
+
+    <function name="mlog" section="linalg" output="smatrix">
+      <fnargs>
+	<fnarg type="smatrix">A</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Computes the matrix logarithm of <argname>A</argname>.
+	  The algorithm employed relies on eigendecomposition,
+	  which requires that <argname>A</argname> be
+	  diagonalizable. See also <fncref targ="mexp"/>.
 	</para>
       </description>
     </function>
@@ -6991,7 +7094,7 @@
       </description>
     </function>
 
-    <function name="mread" section="matbuild" output="matrix">
+    <function name="mread" section="data-utils" output="matrix">
       <fnargs>
 	<fnarg type="string">fname</fnarg>
 	<fnarg optional="true" type="bool">import</fnarg>

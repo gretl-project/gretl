@@ -337,8 +337,8 @@ static void bundle_item_destroy (gpointer data)
     bundled_item *item = data;
 
 #if BDEBUG
-    fprintf(stderr, "bundled_item_destroy: type %d (%s)\n",
-	    item->type, gretl_type_get_name(item->type));
+    fprintf(stderr, "bundled_item_destroy: %s\t'%s'\tdata %p\n",
+	    gretl_type_get_name(item->type), item->name, (void *) item->data);
     if (item->type == GRETL_TYPE_STRING) {
 	fprintf(stderr, " string: '%s'\n", (char *) item->data);
     }
@@ -667,7 +667,7 @@ int gretl_bundle_has_key (gretl_bundle *bundle,
 {
     int ret = 0;
 
-    if (bundle != NULL) {
+    if (bundle != NULL && key != NULL) {
 	gpointer p = g_hash_table_lookup(bundle->ht, key);
 
 	ret = (p != NULL);
@@ -2181,7 +2181,7 @@ static int load_bundled_items (gretl_bundle *b, xmlNodePtr cur, xmlDocPtr doc)
 
 /* For internal use only: @p1 should be of type xmlNodePtr and @p2
    should be an xmlDocPtr. We suppress the actual pointer types in the
-   prototype so that it's possible for a module to include
+   signature so that it's possible for a module to include
    gretl_bundle.h without including the full libxml headers.
 */
 

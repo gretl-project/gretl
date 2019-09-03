@@ -3355,6 +3355,7 @@ int equation_system_bundlize (equation_system *sys,
 	gretl_bundle_set_string(b, "method", s);
     }
 
+    /* convert to 1-based */
     gretl_bundle_set_int(b, "t1", sys->t1 + 1);
     gretl_bundle_set_int(b, "t2", sys->t2 + 1);
 

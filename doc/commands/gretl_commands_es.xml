@@ -9865,13 +9865,15 @@
     label="Dirigir la presentación a un archivo" context="cli">
 
     <usage>
-      <arguments>
-	<argument>nombrearchivo</argument>
-      </arguments>
+      <altforms>
+	<altform><lit>outfile</lit> <repl>archivo</repl></altform>
+	<altform><lit>outfile</lit> <lit>--buffer=</lit><repl>strvar</repl></altform>
+	<altform><lit>outfile</lit> <lit>--tempfile=</lit><repl>strvar</repl></altform>
+      </altforms>
       <options>
         <option>
 	  <flag>--append</flag>
-	  <effect>Añade al archivo</effect>
+	  <effect>Añadir a un archivo, solo la primera variante</effect>
         </option>
         <option>
 	  <flag>--quiet</flag>
@@ -9881,37 +9883,34 @@
 	  <flag>--buffer</flag>
 	  <effect>Mira abajo</effect>
         </option>
+        <option>
+	  <flag>--tempfile</flag>
+	  <effect>Mira abajo</effect>
+        </option>
       </options>
-      <examples>
-        <example>outfile regress.txt</example>
-        <example>end outfile</example>
-      </examples>
     </usage>
 
     <description>
       <para>
-	Desvía el resultado a <repl>nombrearchivo</repl>. Por defecto, se genera
-	un nuevo archivo (o se sobreescribe uno ya existente); utiliza la opción
-	<opt>append</opt> si quieres añadir el resultado a un ficheiro ya
-	existente. El desvío se termina mediante <quote><lit>end outfile</lit></quote>;
-	entonces, el resultado vuelve al flujo establecido por
-	defecto.
+	La instrucción <lit>outfile</lit> inicia un bloque con el que se desvía
+	todo resultado a presentar, hacia un archivo o buffer (o, si lo deseas,
+	simplemente se descarta). Dicho bloque se termina con la instrucción
+	<quote><lit>end outfile</lit></quote>, y después de ella los resultados
+	vuelven al cauce por defecto.
+      </para>
+
+      <subhead>Desvío a un archivo señalado</subhead>
+      <para>
+	La primera variante que se muestra abajo envía los resultados al archivo
+	señalado por el argumento <repl>archivo</repl>. Por defecto, se crea un
+	nuevo archivo (o se sobrescribe uno ya existente). El archivo resultante
+	se guarda en la carpeta <cmdref targ="workdir"/> de la configuración,
+	vigente excepto que la cadena de texto <repl>archivo</repl> contenga
+	una especificación completa de la ruta. Pero, si quieres añadir resultados
+	a un archivo ya existente, utiliza la opción <opt>append</opt>.
       </para>
       <para>
-	El archivo resultante se va a escribir en el directorio (<cmdref targ="workdir"/>)
-	establecido en ese momento, excepto que la cadena <repl>nombrearchivo</repl>
-	contenga una especificación completa de la ruta.
-      </para>
-      <para>
-	En la primera línea indicada arriba como ejemplo, se abre el
-	archivo <filename>regress.txt</filename> para escribirlo, y en la
-	segunda se cierra. Esto podría tener sentido como una secuencia
-	solo si algunas instrucciones se proponen antes del cierre. Por ejemplo,
-	cuando se interpone una instrucción de estimación, su resultado
-	iría a <filename>regress.txt</filename> en lugar de ir a la pantalla.
-      </para>
-      <para>
-	Dispones de 3 variantes especiales de lo expuesto arriba. Cuando indicas
+	Dispones de algunas variantes especiales de este tema. Cuando indicas
 	la palabra clave <lit>null</lit> en lugar de un nombre real de archivo,
 	la consecuencia es que se eliminan todos los resultados presentados
 	hasta que la redirección acabe. Si indicas alguna de las palabras clave
@@ -9920,81 +9919,117 @@
 	resultado estándar o a un resultado de error estándar, respectivamente.
       </para>
       <para>
-	El efecto de la opción <opt>quiet</opt> consiste tanto en eliminar la
-	repetición visual de las instrucciones como la presentación de mensajes
-	auxiliares mientras el resultado se vuelve a dirigir. Esto es equivalente a hacer
+	En el sencillo ejemplo que sigue, los resultados de una determinada
+	regresión se escriben en el archivo señalado.
+      </para>
+      <code>
+	open data4-10
+	outfile regress.txt
+	  ols ENROLL 0 CATHOL INCOME COLLEGE
+	end outfile
+      </code>
+
+      <subhead>Desvío a un buffer de cadena</subhead>
+      <para>
+	La opción <opt>buffer</opt> se utiliza para guardar resultados en una
+	variable de cadena. El parámetro que se necesita para esta opción debe
+	ser el nombre de una variable de cadena ya existente, cuyo contenido se
+	sobrescribirá. Abajo se muestra el mismo ejemplo indicado anteriormente,
+	modificado para guardar una cadena. En este caso, al representar el
+	contenido de <lit>model_out</lit> se mostrarán los resultados redirigidos.
+      </para>
+      <code>
+	open data4-10
+	string model_out = ""
+	outfile --buffer=model_out
+	  ols ENROLL 0 CATHOL INCOME COLLEGE
+	end outfile
+	print model_out
+      </code>
+
+      <subhead>Desvío a un archivo temporal</subhead>
+      <para>
+	La opción <opt>tempfile</opt> se utiliza para dirigir los resultados
+	hacia un archivo temporal, con un nombre generado automáticamente
+	que se garantiza que es único, en el directorio <quote>punto</quote>
+	del usuario. Igual que en el caso del desvío a un buffer, el parámetro
+	de opción debe ser el nombre de una variable de cadena: en este caso,
+	su contenido se sobrescribe con el nombre del archivo temporal.
+	Atención: los archivos que se guardan en el directorio 'punto', se
+	van a depurar al salir del programa, por lo que no uses esta modalidad
+	si deseas que los resultados se conserven después de tu sesión
+	de Gretl.
+      </para>
+      <para>
+	Repetimos el sencillo ejemplo de arriba, con un par de líneas extra
+	para ilustrar la cuestión de que <repl>strvar</repl> te indica a
+	donde van los resultados, y que puedes recuperarlos utilizando la
+	función <fncref targ="readfile"/>.
+      </para>
+      <code>
+	open data4-10
+	string mytemp
+	outfile --tempfile=mytemp
+	  ols ENROLL 0 CATHOL INCOME COLLEGE
+	end outfile
+	printf "Los resultados se han dirigido a %s\n", mytemp
+	printf "Los resultados fueron:\n%s\n", readfile(mytemp)
+      </code>
+
+      <subhead>Discreción</subhead>
+      <para>
+	Los efectos de la opción <opt>quiet</opt> son: se desactiva que se vuelvan
+	a presentar las órdenes de instrucción, y se muestran los mensajes auxiliares
+	mientras los resultados estén redirigidos. Es equivalente a hacer
       </para>
       <code>
 	set echo off
 	set messages off
       </code>
       <para>
-	excepto que cuando termina la redirección, los valores originales de las
-	variables <lit>echo</lit> y <lit>messages</lit> se vuelven a
-	restaurar.
+	excepto que, cuando finaliza la redirección, se restablecen los valores
+	originales de las variables <lit>echo</lit> y <lit>messages</lit>.
+	Esta opción está disponible en todo caso.
       </para>
-      <para>
-	En general, puedes abrir un solo archivo de este modo en cualquier momento
-	dado, por lo que no puedes anidar las solicitudes de esta instrucción. Sin embargo,
-	se permite la utilización de esta instrucción dentro de las funciones que define
-	el usuario (puesto que el archivo de resultados también se cierra desde
-	dentro de la misma función), de modo que puedes derivar temporalmente ese
-	resultado y luego devolverlo a un archivo de resultados original, en caso
-	de que el solicitante esté utilizando en ese momento la instrucción <lit>outfile</lit>.
-	Por ejemplo, el código
+
+      <subhead>Niveles de redirección</subhead>
+       <para>
+	En general, solo puedes abrir un archivo de este modo en un momento
+	dado, por lo que las llamadas a esta instrucción no pueden anidarse.
+	Sin embargo, la utilización de esta instrucción se permite dentro de
+	funciones definidas por el usuario (siempre que el archivo de resultados
+	se cierre desde dentro de la misma función) de forma que puedes desviar
+	esos resultados temporalmente, y después devolverlos a un archivo de
+	resultados original en caso de que <lit>outfile</lit> esté en uso en ese
+	momento por el solicitante. Por ejemplo, el código
       </para>
       <code>
 	function void f (string s)
-	    outfile inner.txt
+	    outfile interno.txt
 	      print s
 	    end outfile
 	end function
 
-	outfile outer.txt --quiet
+	outfile externo.txt --quiet
 	  print "Fuera"
-  	f("Dentro")
-	  print "Fuera de nuevo"
+	  f("Dentro")
+	  print "De nuevo fuera"
 	end outfile
       </code>
       <para>
-	va a generar un archivo denominado <quote>outer.txt</quote> que contiene
+	producirá un archivo llamado <quote>externo.txt</quote> que contiene
 	las dos líneas
       </para>
       <code>
 	Fuera
-	Fuera de nuevo
+	De nuevo fuera
       </code>
       <para>
-	y un archivo denominado <quote>inner.txt</quote> que contiene la línea
+	y un archivo llamado <quote>interno.txt</quote> que contiene la línea
       </para>
       <code>
 	Dentro
       </code>
-      <para>
-	Como se describió arriba, el uso principal de esta instrucción es el de
-	desviar resultados al archivo designado. Sin embargo, puedes utilizar la
-	opción <opt>buffer</opt> para lograr un efecto distinto; en
-	concreto dirigir los resultados a una variable indicada de cadena.
-	Esta no es compatible con <opt>append</opt>. La posición del argumento
-	<repl>nombrearchivo</repl> se ocupa con el nombre de una variable de
-	cadena (que, por supuesto, debe de ajustarse a los requerimientos
-	de un identificador válido de Gretl). Cuando ya existe una variable
-	de cadena con el nombre indicado, su valor se va a sobrescribir; y
-	cuando no existe esa variable, se va a generar automáticamente.
-	Aquí tienes un ejemplo sencillo de utilización:
-      </para>
-      <code>
-	open data4-1
-	outfile mybuf --buffer --quiet
-	  labels
-	end outfile
-	printf "mybuf = \n'%s'\n", mybuf
-      </code>
-      <para>
-	En este caso, la variable <lit>mybuf</lit> captura el resultado de la
-	instrucción <lit>labels</lit>. Esta prestación puede resultar de
-	utilidad para los redactores de paquetes de funciones.
-      </para>
     </description>
 
   </command>
@@ -10032,10 +10067,16 @@
 	el botón de Preferencias en el buscador de paquetes instalados).
       </para>
       <para>
-	Para obtener detalles completos sobre la instalación y el trabajo con paquetes de
-	funciones, consulta <mnu targ="Pkgbook">Guía de los paquetes de funciones</mnu>
-	(bajo el menú Ayuda). Esta guía también contiene detalles sobre cómo escribir
-	paquetes de funciones.
+	Para tener todos los detalles sobre instalar y trabajar con paquetes de
+	funciones, mira <mnu targ="Pkgbook">Guía de los paquetes de funciones</mnu>
+	(bajo el menú Ayuda). Esta guía también contiene detalles sobre cómo
+	escribir paquetes de funciones. Puedes encontrar un agradable y
+	breve punto de vista sobre la elaboración de paquetes en
+	<url>http://gretl.sf.net/gfnguide/gfn_for_dummies.html</url>.
+      </para>
+      <para>
+	Para lidiar con paquetes mediante la línea de instrucciones de Gretl,
+	consulta la instrucción <cmdref targ="pkg"/>.
       </para>
     </description>
   </command>
@@ -10528,26 +10569,32 @@
 	  <flag>--local</flag>
 	  <effect>Instala desde un archivo local</effect>
         </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>Mira abajo</effect>
+        </option>
       </options>
      <examples>
         <example>pkg install armax</example>
         <example>pkg install /path/to/myfile.gfn --local</example>
+        <example>pkg query ghosts</example>
         <example>pkg unload armax</example>
      </examples>
     </usage>
 
     <description>
       <para>
-	Esta instrución proporciona una manera de instalar, descargar
-	o eliminar paquetes de funciones de Gretl. El argumento
+	Esta instrución proporciona una manera de instalar, consultar
+	descargar, o eliminar paquetes de funciones de Gretl. El argumento
 	<repl>acción</repl> debe ser alguno de entre <lit>install</lit>,
-	<lit>unload</lit> o <lit>remove</lit>, respectivamente.
+	<lit>query</lit>, <lit>unload</lit> o <lit>remove</lit>,
+	respectivamente.
       </para>
       <para>
 	<lit>install</lit>: En su forma más elemental, sin ningún indicador de
 	opción y con el argumento <repl>nombrepaquete</repl> expresado como
 	el nombre <quote>plano</quote> de un paquete de funciones de Gretl (como
-	en el primer ejemplo de arriba), el efecto de esta instrucción consiste
+	en el primer ejemplo de arriba), el efecto de esta opción consiste
 	en descargar el paquete que se especifica del servidor de Gretl,
 	(excepto que <repl>nombrepaquete</repl> comience con <lit>http://</lit>),
 	e instalarlo en la máquina local. En este caso, no es necesario expresar
@@ -10559,6 +10606,14 @@
 	en copiar el archivo en su sitio (<lit>gfn</lit>), o descomprimirlo
 	en su sitio (<lit>zip</lit>), significando <quote>en su sitio</quote>
 	allí donde lo va a encontrar la instrucción <cmdref targ="include"/>	.
+      </para>
+      <para>
+	<lit>query</lit>: Por defecto, la consecuencia de esta opción es la
+	presentación de información básica sobre el paquete especificado
+	(autor, versión, etc.). Pero si añades la opción <opt>quiet</opt>, no
+	se presenta nada; en su lugar, se guarda la información del paquete
+	en forma de un 'bundle' de Gretl, al que se puede acceder mediante
+	<fncref targ="$result"/>.
       </para>
       <para>
 	<lit>unload</lit>: Debes indicar el argumento <repl>pkgname</repl> en

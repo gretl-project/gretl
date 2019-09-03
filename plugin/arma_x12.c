@@ -200,9 +200,10 @@ static int x12_date_to_n (const char *s, const DATASET *dset)
 
     if (dset->pd > 1) {
 	if (len <= 4) {
-	    strncat(date, s, len - 2);
-	    strcat(date, ":");
-	    strcat(date, s + len - 2);
+	    gchar *tmp = g_strndup(s, len - 2);
+
+	    sprintf(date, "%s:%s", tmp, s + len - 2);
+	    g_free(tmp);
 	} else {
 	    strncat(date, s, 4);
 	    strcat(date, ":");

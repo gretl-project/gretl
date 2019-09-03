@@ -21,6 +21,7 @@
 #define GRETL_MATRIX_H
 
 #include <stdarg.h>
+#include <complex.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -87,6 +88,7 @@ typedef struct gretl_matrix_ {
     int rows;
     int cols;
     double *val;
+    double complex *z;
     int is_complex;
     /*< private >*/
     matrix_info *info;
@@ -104,6 +106,7 @@ typedef struct gretl_matrix_block_ gretl_matrix_block;
  */
 
 #define gretl_matrix_get(m,i,j) (m->val[(j)*m->rows+(i)])
+#define gretl_cmatrix_get(m,i,j) (m->z[(j)*m->rows+(i)])
 
 /**
  * gretl_vector_get:
@@ -126,6 +129,7 @@ typedef struct gretl_matrix_block_ gretl_matrix_block;
  */
 
 #define gretl_matrix_set(m,i,j,x) ((m)->val[(j)*(m)->rows+(i)]=x)
+#define gretl_cmatrix_set(m,i,j,x) ((m)->z[(j)*(m)->rows+(i)]=x)
 
 /**
  * gretl_vector_set:
@@ -203,14 +207,22 @@ typedef struct gretl_matrix_block_ gretl_matrix_block;
  */
 
 #define gretl_matrix_is_scalar(m) ((m) != NULL && \
+				   (m)->is_complex == 0 && \
                                    (m)->rows == 1 && \
                                    (m)->cols == 1)
+
+#define gretl_matrix_is_cscalar(m) ((m) != NULL && \
+				    (m)->is_complex && \
+                                    (m)->rows == 1 && \
+                                    (m)->cols == 1)
 
 #define gretl_is_null_matrix(m) (m == NULL || m->rows == 0 || m->cols == 0)
 
 #define gretl_is_complex(m) (m != NULL && m->is_complex == 1)
 
 int gretl_matrix_set_complex (gretl_matrix *m, int c);
+
+int gretl_matrix_set_complex_full (gretl_matrix *m, int c);
 
 int get_gretl_matrix_err (void);
 
@@ -231,6 +243,13 @@ void gretl_matrix_set_equals_tolerance (double tol);
 void gretl_matrix_unset_equals_tolerance (void);
 
 gretl_matrix *gretl_matrix_alloc (int rows, int cols);
+
+gretl_matrix *gretl_cmatrix_new (int r, int c);
+
+gretl_matrix *gretl_cmatrix_new0 (int r, int c);
+
+gretl_matrix *gretl_matching_matrix_new (int r, int c,
+					 const gretl_matrix *m);
 
 gretl_matrix *gretl_matrix_reuse (gretl_matrix *m, int rows, int cols);
 
@@ -286,6 +305,13 @@ gretl_matrix *gretl_matrix_get_diagonal (const gretl_matrix *m, int *err);
 int gretl_matrix_set_diagonal (gretl_matrix *targ,
 			       const gretl_matrix *src,
 			       double x);
+
+gretl_matrix *gretl_matrix_get_triangle (const gretl_matrix *m,
+					 int upper, int *err);
+
+int gretl_matrix_set_triangle (gretl_matrix *targ,
+			       const gretl_matrix *src,
+			       double x, int upper);
 
 int gretl_matrix_get_row (const gretl_matrix *m, int i, gretl_vector *v);
 
@@ -577,9 +603,7 @@ int gretl_symmetric_eigen_sort (gretl_matrix *evals, gretl_matrix *evecs,
 				int rank);
 
 gretl_matrix *
-gretl_general_matrix_eigenvals (gretl_matrix *m,
-				int eigenvecs,
-				int *err);
+gretl_general_matrix_eigenvals (const gretl_matrix *m, int *err);
 
 gretl_matrix *
 gretl_symmetric_matrix_eigenvals (gretl_matrix *m,
@@ -596,6 +620,16 @@ gretl_gensymm_eigenvals (const gretl_matrix *A,
 			 const gretl_matrix *B,
 			 gretl_matrix *V,
 			 int *err);
+
+gretl_matrix *gretl_dgeev (const gretl_matrix *A,
+			   gretl_matrix *VR,
+			   gretl_matrix *VL,
+			   int *err);
+
+gretl_matrix *old_eigengen (const gretl_matrix *m,
+			    gretl_matrix *VR,
+			    gretl_matrix *VL,
+			    int *err);
 
 double gretl_symm_matrix_lambda_min (const gretl_matrix *m, int *err);
 

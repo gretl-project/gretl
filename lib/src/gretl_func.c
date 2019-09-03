@@ -707,6 +707,7 @@ static void set_executing_off (fncall *call, DATASET *dset, PRN *prn)
     fncall *popcall = NULL;
 
     destroy_option_params_at_level(fn_executing);
+    set_previous_depth(fn_executing);
     fn_executing--;
 
     callstack = g_list_remove(callstack, call);
@@ -4958,6 +4959,8 @@ static int load_public_function (fnpkg *pkg, int i)
 	       bkw package */
 	    gretl_errmsg_sprintf(_("'%s' is the name of a built-in function"),
 				 fun->name);
+	    fprintf(stderr, "%s: function %s would override a built-in\n",
+		    pkg->name, fun->name);
 	    err = E_DATA;
 	}
     }
@@ -7081,12 +7084,14 @@ int gretl_function_append_line (ExecState *s)
     }
 
     if (compiling) {
-	/* actually add the line */
+	/* actually add the line? */
 	int i = fun->n_lines;
 
 	err = push_function_line(fun, origline, 1);
 	if (!err) {
-	    origline = NULL; /* successfully donated */
+	    if (!blank) {
+		origline = NULL; /* successfully donated */
+	    }
 	    if (ignore) {
 		fun->lines[i].ignore = 1;
 	    } else if (!blank) {
@@ -8328,6 +8333,7 @@ static int start_fncall (fncall *call, DATASET *dset, PRN *prn)
 	tmp = tmp->next;
     }
 
+    set_previous_depth(fn_executing);
     fn_executing++;
     push_program_state();
 

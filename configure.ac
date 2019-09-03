@@ -493,12 +493,6 @@ case $host_os in
   ;;
   *)
     AM_PATH_LAPACK(, have_lapack="yes")
-    if test "$have_lapack" = "yes" ; then
-      SAVE_LIBS=$LIBS
-      LIBS=$LAPACK_LIBS
-      AC_CHECK_LIB(lapack, dgejsv_, AC_DEFINE(HAVE_LAPACK_3_2))
-      LIBS=$SAVE_LIBS
-    fi
   ;;
 esac
 if echo $LAPACK_LIBS | $GREP --quiet openblas ; then
