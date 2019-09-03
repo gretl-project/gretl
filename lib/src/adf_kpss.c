@@ -87,6 +87,7 @@ struct adf_info_ {
     int *slist;      /* list of seasonal dummies, if applicable */
     const char *vname; /* name of series tested */
     gretl_matrix *g; /* GLS coefficients (if applicable) */
+    int verbosity;
 };
 
 struct kpss_info_ {
@@ -97,15 +98,18 @@ struct kpss_info_ {
 
 /* replace @y with demeaned or detrended y via GLS */
 
-static int GLS_demean_detrend (double *y, int offset,
-			       int T, DetCode det,
-			       adf_info *ainfo)
+static int GLS_demean_detrend (DATASET *dset, int v,
+			       int offset, int T,
+			       DetCode det,
+			       adf_info *ainfo,
+			       PRN *prn)
 {
+    double *y = dset->Z[v];
     gretl_matrix *yd = NULL;
     gretl_matrix *Xd = NULL;
     gretl_matrix *b = NULL;
     double c;
-    int t, xcols;
+    int i, t, xcols;
     int err = 0;
 
     xcols = (det == UR_TREND)? 2 : 1;
@@ -131,7 +135,8 @@ static int GLS_demean_detrend (double *y, int offset,
     }
     y += offset;
 
-    gretl_vector_set(yd, 0, y[0] /* (1 - c) * y[0] ?? */);
+    gretl_vector_set(yd, 0, y[0]);
+    // gretl_vector_set(yd, 0, (1 - c) * y[0]);
     for (t=1; t<T; t++) {
 	gretl_vector_set(yd, t, y[t] - c * y[t-1]);
     }
@@ -149,6 +154,19 @@ static int GLS_demean_detrend (double *y, int offset,
     }
 
     err = gretl_matrix_ols(yd, Xd, b, NULL, NULL, NULL);
+
+    if (!err && ainfo->verbosity > 1) {
+	char date1[OBSLEN];
+	char date2[OBSLEN];
+
+	ntodate(date1, offset, dset);
+	ntodate(date2, offset + T - 1, dset);
+	pprintf(prn, "\nGLS demean/detrend: using %s-%s (T = %d)\n",
+		date1, date2, yd->rows);
+	for (i=0; i<xcols; i++) {
+	    pprintf(prn, "  %s = %g\n", (i==0)? "mean" : "trend", b->val[i]);
+	}
+    }
 
     if (!err) {
 	for (t=0; t<T; t++) {
@@ -338,7 +356,7 @@ static int adf_y_offset (adf_info *ainfo, int v, DATASET *dset)
 */
 
 static int adf_prepare_vars (adf_info *ainfo, DATASET *dset,
-			     gretlopt opt)
+			     gretlopt opt, PRN *prn)
 {
     int err = 0;
 
@@ -399,8 +417,8 @@ static int adf_prepare_vars (adf_info *ainfo, DATASET *dset,
 	    int offset = adf_y_offset(ainfo, v, dset);
 	    int T = dset->t2 - offset + 1;
 
-	    err = GLS_demean_detrend(dset->Z[v], offset, T,
-				     det, ainfo);
+	    err = GLS_demean_detrend(dset, v, offset, T,
+				     det, ainfo, prn);
 	}
 
 	if (!err) {
@@ -875,10 +893,10 @@ static int ic_adjust_order (adf_info *ainfo, int kmethod,
 	    ICmin = IC;
 	    kopt = k;
 	}
-#if ADF_DEBUG
-	printmodel(&kmod, dset, OPT_NONE, prn);
-#endif
-	if (opt & OPT_V) {
+	if (ainfo->verbosity > 1) {
+	    printmodel(&kmod, dset, OPT_S, prn);
+	}
+	if (ainfo->verbosity) {
 	    const char *tag;
 
 	    if (use_MIC) {
@@ -1318,7 +1336,7 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	}
     }
 
-    err = adf_prepare_vars(ainfo, dset, opt);
+    err = adf_prepare_vars(ainfo, dset, opt, prn);
     if (err) {
 	return err;
     }
@@ -1382,7 +1400,7 @@ static int real_adf_test (adf_info *ainfo, DATASET *dset,
 	    } else if (reset_detrended_data(ainfo, dset, opt)) {
 		/* swap out the detrended data */
 		ainfo->flags &= ~ADF_OLS_FIRST;
-		err = adf_prepare_vars(ainfo, dset, opt);
+		err = adf_prepare_vars(ainfo, dset, opt, prn);
 	    }
 	}
 
@@ -1878,6 +1896,17 @@ int adf_test (int order, const int *list, DATASET *dset,
 	adf_info ainfo = {0};
 
 	ainfo.niv = 1;
+	if (opt & OPT_V) {
+	    int vlevel = get_optval_int(ADF, OPT_V, &err);
+
+	    if (vlevel > 1) {
+		ainfo.verbosity = vlevel;
+	    } else {
+		ainfo.verbosity = 1;
+	    }
+	    /* don't let this check flag an error */
+	    err = 0;
+	}
 
 	for (i=1; i<=list[0] && !err; i++) {
 	    ainfo.v = vlist[1] = list[i];
@@ -1898,7 +1927,6 @@ int adf_test (int order, const int *list, DATASET *dset,
 	    if (!err) {
 		err = real_adf_test(&ainfo, dset, opt, prn);
 	    }
-
 	    dset->t1 = save_t1;
 	    dset->t2 = save_t2;
 	}
