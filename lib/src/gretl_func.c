@@ -8014,11 +8014,14 @@ static int is_pointer_arg (fncall *call, int rtype)
     ufunc *u = call->fun;
 
     if (call->retname != NULL) {
+	fn_param *fp;
 	int i;
 
 	for (i=0; i<call->argc; i++) {
-	    if (u->params[i].type == gretl_type_get_ref_type(rtype) &&
-		!strcmp(u->params[i].name, call->retname)) {
+	    fp = &u->params[i];
+	    if ((fp->type == gretl_type_get_ref_type(rtype) ||
+		 (fp->flags & ARG_CONST)) &&
+		strcmp(fp->name, call->retname) == 0) {
 		return 1;
 	    }
 	}
