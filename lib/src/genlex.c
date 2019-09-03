@@ -74,6 +74,10 @@ struct str_table consts[] = {
 struct str_table dummies[] = {
     { DUM_NULL,    "null" },
     { DUM_DIAG,    "diag" },
+    { DUM_UPPER,   "upper" },
+    { DUM_LOWER,   "lower" },
+    { DUM_REAL,    "real" },
+    { DUM_IMAG,    "imag" },
     { DUM_DATASET, "dataset" },
     { 0,        NULL }
 };
@@ -181,18 +185,6 @@ struct str_table bvars[] = {
     { 0,         NULL }
 };
 
-/* Below: sentinel value, recording the highest-numbered
-   function symbol (see genparse.h, enumeration of F_* and
-   HF_* values) for which we store a pointer to the
-   associated C-function. All such functions take a single
-   double argument and return a double; generally the
-   hansl function name is the same as that of the C
-   function though there are a few exceptions for libgretl
-   C-functions.
-*/
-
-#define MAX_PTR_FUNC F_LOGISTIC
-
 /* Below, @ptrfuncs: table of functions for which we wish to
    attach function-pointers to the relevant NODE. Nota bene:
    it's crucial that no function in @ptrfuncs is also listed
@@ -200,8 +192,8 @@ struct str_table bvars[] = {
 
    The order of function symbols in @ptrfuncs need not match
    the order in which they're listed in genparse.h, but it's
-   crucial that every function with ID number <= MAX_PTR_FUNC
-   has an entry in @ptrfuncs.
+   crucial that every function with ID number <= FP_MAX has
+   an entry in @ptrfuncs.
 
    "Crucial" -> certain crash on calling wrongly classified
    function!
@@ -236,6 +228,10 @@ struct str_table_ex ptrfuncs[] = {
     { F_CNORM, "cnorm", normal_cdf },
     { F_DNORM, "dnorm", normal_pdf },
     { F_QNORM, "qnorm", normal_cdf_inverse },
+    { F_CARG,  "carg",  carg },
+    { F_CMOD,  "cmod",  cabs },
+    { F_REAL,  "Re",    creal },
+    { F_IMAG,  "Im",    cimag },
     { F_LOGISTIC, "logistic", logistic_cdf },
     { 0, NULL, NULL }
 };
@@ -322,6 +318,7 @@ struct str_table funcs[] = {
     { F_IMINR,    "iminr" },
     { F_IMAXR,    "imaxr" },
     { F_FFT,      "fft" },
+    { F_FFT2,     "fft2" },
     { F_FFTI,     "ffti" },
     { F_CMULT,    "cmult" },
     { F_HDPROD,   "hdprod" },
@@ -337,6 +334,7 @@ struct str_table funcs[] = {
     { F_GINV,     "ginv" },
     { F_DIAG,     "diag" },
     { F_TRANSP,   "transp" },
+    { F_CTRANS,   "ctrans" },
     { F_VEC,      "vec" },
     { F_VECH,     "vech" },
     { F_UNVECH,   "unvech" },
@@ -356,10 +354,13 @@ struct str_table funcs[] = {
     { F_QR,       "qrdecomp" },
     { F_EIGSYM,   "eigensym" },
     { F_EIGGEN,   "eigengen" },
+    { F_EIGGEN2,  "eiggen2" },
+    { F_SCHUR,    "schur" },
     { F_EIGSOLVE, "eigsolve" },
     { F_NULLSPC,  "nullspace" },
     { F_PRINCOMP, "princomp" },
     { F_MEXP,     "mexp" },
+    { F_MLOG,     "mlog" },
     { F_FDJAC,    "fdjac" },
     { F_BFGSMAX,  "BFGSmax" },
     { F_BFGSCMAX, "BFGScmax" },
@@ -441,7 +442,7 @@ struct str_table funcs[] = {
     { F_FCSTATS,  "fcstats" },
     { F_BESSEL,   "bessel" },
     { F_FRACLAG,  "fraclag" },
-    { F_MREVERSE, "mreverse" },
+    { F_MREV,     "mreverse" },
     { F_DESEAS,   "deseas" },
     { F_TRAMOLIN, "linearize" },
     { F_PERGM,    "pergm" },
@@ -545,6 +546,9 @@ struct str_table funcs[] = {
     { F_MSPLITBY,  "msplitby" },
     { F_FLATTEN,   "flatten" },
     { F_FUNCERR,   "funcerr" },
+    { F_ISCMPLX,   "iscomplex" },
+    { F_COMPLEX,   "complex" },
+    { F_CONJ,      "conj" },
     { 0,           NULL }
 };
 
@@ -564,27 +568,17 @@ struct str_table func_alias[] = {
     { F_RNAMESET, "rownames" },
     { F_CNAMEGET, "colname" },
     { F_RNAMEGET, "rowname" },
-    { HF_CMATRIX, "complex" },
+    { F_COMPLEX,  "_cmatrix" },
+    { F_EIGGEN,   "_ceigg" },
+    { HF_CSWITCH, "cswitch" },
     { F_EXISTS,   "isnull" }, /* deprecated */
     { 0,          NULL }
 };
 
 struct str_table hidden_funcs[] = {
     { HF_CLOGFI,   "_clogitfi" },
-    { HF_CEIGH,    "_ceigh" },
-    { HF_CEIGG,    "_ceigg" },
-    { HF_CINV,     "_cinv" },
-    { HF_CMMULT,   "_cmmult" },
-    { HF_CFFT,     "_cfft" },
-    { HF_CMATRIX,  "_cmatrix" },
-    { HF_CXTRACT,  "_cxtract" },
-    { HF_CTRAN,    "_ctran" },
-    { HF_CARG,     "_carg" },
-    { HF_CONJ,     "_conj" },
     { HF_CSWITCH,  "_cswitch" },
     { HF_SETCMPLX, "_setcmplx" },
-    { HF_REAL,     "_Re" },
-    { HF_IMAG,     "_Im" },
     { HF_JBTERMS,  "_jbterms" },
     { HF_LISTINFO, "_listinfo" },
     { 0,           NULL }
@@ -731,7 +725,7 @@ static int real_function_lookup (const char *s, int aliases,
     if (fnp != NULL) {
 	struct str_table *st = (struct str_table *) fnp;
 
-	if (p != NULL && st->id > 0 && st->id <= MAX_PTR_FUNC) {
+	if (p != NULL && st->id > 0 && st->id < FP_MAX) {
 	    struct str_table_ex *sx = (struct str_table_ex *) fnp;
 
 	    p->data = sx->ptr;
@@ -1109,25 +1103,40 @@ int genr_function_word (const char *s)
     return ret;
 }
 
+int parser_ensure_error_buffer (parser *p)
+{
+    if (p->errprn == NULL) {
+	p->errprn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
+	if (p->errprn != NULL) {
+	    p->prn = p->errprn;
+	    return 0;
+	} else {
+	    return E_ALLOC;
+	}
+    }
+
+    return 0;
+}
+
 void undefined_symbol_error (const char *s, parser *p)
 {
+    parser_ensure_error_buffer(p);
     parser_print_input(p);
 
     if (p->ch == '.') {
-	gretl_errmsg_sprintf(_("%s: no such object"), s);
+	pprintf(p->prn, _("%s: no such object"), s);
     } else {
-	gretl_errmsg_sprintf(_("The symbol '%s' is undefined"), s);
+	pprintf(p->prn, _("The symbol '%s' is undefined"), s);
     }
-
-    p->err = E_UNKVAR;
+    p->err = E_DATA;
 }
 
 static void function_noargs_error (const char *s, parser *p)
 {
+    parser_ensure_error_buffer(p);
     parser_print_input(p);
 
-    gretl_errmsg_sprintf(_("'%s': no argument was given"), s);
-
+    pprintf(p->prn, _("'%s': no argument was given"), s);
     p->err = E_ARGS;
 }
 
@@ -1138,6 +1147,7 @@ void context_error (int c, parser *p, const char *func)
 	fprintf(stderr, "context error in %s()\n", func);
     }
 #endif
+    parser_ensure_error_buffer(p);
     if (c != 0) {
 	parser_print_input(p);
 	pprintf(p->prn, _("The symbol '%c' is not valid in this context\n"), c);

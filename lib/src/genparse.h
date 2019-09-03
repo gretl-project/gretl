@@ -58,10 +58,10 @@ enum {
               B_DOTADD,
               B_DOTSUB,
               B_DOTEQ,
-              B_DOTGT,
-  /* 30 */    B_DOTLT,
-	      B_DOTGTE,
+              B_DOTLT,
+  /* 30 */    B_DOTGT,
 	      B_DOTLTE,
+	      B_DOTGTE,
 	      B_DOTNEQ,
               B_DOTASN,
               B_KRON,     /* Kronecker product */
@@ -163,7 +163,13 @@ enum {
     F_CNORM,
     F_DNORM,
     F_QNORM,
-    F_LOGISTIC,   /* to here: store C-function pointers: see genlex.c */
+    F_CARG,
+    F_CMOD,
+    F_REAL,
+    F_IMAG,
+    F_LOGISTIC,
+    FP_MAX,      /* separator: end of pointerized functions */
+    F_CONJ,
     F_TOINT,
     F_DIFF,	  /* first difference */
     F_LDIFF,	  /* log difference */
@@ -243,6 +249,7 @@ enum {
     F_IMINR,
     F_IMAXR,
     F_FFT,
+    F_FFT2,
     F_FFTI,
     F_UPPER,
     F_LOWER,
@@ -282,12 +289,9 @@ enum {
     F_GETKEYS,
     F_MCORR,
     F_FUNCERR,
-    HF_CINV,
-    HF_CTRAN,
-    HF_CARG,
-    HF_CONJ,
-    HF_REAL,
-    HF_IMAG,
+    F_ISCMPLX,
+    F_CTRANS,
+    F_MLOG,
     HF_JBTERMS,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     HF_LISTINFO,
@@ -311,8 +315,6 @@ enum {
     F_QFORM,
     F_QR,
     F_EIGSYM,
-    F_EIGGEN,
-    HF_CEIGH,
     F_QUANTILE,
     F_CMULT,	  /* complex multiplication */
     F_HDPROD,     /* horizontal direct product */
@@ -337,7 +339,7 @@ enum {
     F_RESAMPLE,
     F_FCSTATS,
     F_FRACLAG,
-    F_MREVERSE,
+    F_MREV,
     F_DESEAS,
     F_PERGM,
     F_NPV,
@@ -393,10 +395,7 @@ enum {
     F_CONV2D,
     F_FLATTEN,
     F_IMAT,
-    HF_CMMULT,
-    HF_CFFT,
-    HF_CMATRIX,
-    HF_CXTRACT,
+    F_COMPLEX,
     HF_CSWITCH,
     HF_SETCMPLX,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
@@ -456,7 +455,9 @@ enum {
     F_ISOWEEK,
     F_BKW,
     F_FZERO,
-    HF_CEIGG,
+    F_EIGGEN,
+    F_EIGGEN2,
+    F_SCHUR,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,
@@ -508,6 +509,10 @@ enum {
 enum {
     DUM_NULL = 1,
     DUM_DIAG,
+    DUM_UPPER,
+    DUM_LOWER,
+    DUM_REAL,
+    DUM_IMAG,
     DUM_DATASET,
     DUM_TREND
 };
@@ -527,10 +532,13 @@ enum {
 
 #define bnsym(s) (s == MDEF || s == FARGS)
 
+#define alias_reversed(n) (n->flags & ALS_NODE)
+
 /* function with single string argument */
 #define string_arg_func(s) (s == F_ISDISCR || s == F_OBSNUM || \
 			    s == F_BACKTICK || s == F_VARNUM || \
-			    s == F_EXISTS || s == F_REMOVE)
+			    s == F_EXISTS || s == F_REMOVE || \
+			    s == F_ISCMPLX)
 
 /* function with multiple args, string for first arg */
 #define str0_func(s) (s == F_PVAL || s == F_CDF || s == F_INVCDF || \
@@ -563,11 +571,12 @@ enum {
 /* functions where the right-hand argument is actually a return
    location */
 #define r_return(s) (s == F_QR || s == F_EIGSYM || s == F_EIGGEN || \
-                     s == F_MOLS || s == F_MPOLS || s == F_SVD)
+                     s == F_MOLS || s == F_MPOLS || s == F_SVD || \
+		     s == F_EIGGEN2)
 
 /* functions where the middle argument is actually a return
    location */
-#define m_return(s) (s == F_SVD)
+#define m_return(s) (s == F_SVD || s == F_EIGGEN2)
 
 #define reusable(p) (p->flags & (P_COMPILE | P_EXEC))
 
@@ -592,20 +601,20 @@ union val {
     void *ptr;
 };
 
-enum {
+enum node_flags {
     AUX_NODE = 1 << 0, /* auxiliary: free on exit */
     TMP_NODE = 1 << 1, /* temporary: free content on exit */
     SVL_NODE = 1 << 2, /* holds string-valued series */
     PRX_NODE = 1 << 3, /* aux node is proxy (don't reuse!) */
-    ALS_NODE = 1 << 4, /* node holds aliased function call */
-    LHT_NODE = 1 << 5, /* node holds terminal of LHS */
-    MSL_NODE = 1 << 6, /* (scalar) node is matrix element */
-    MUT_NODE = 1 << 7  /* node is inherently mutable in type */
+    LHT_NODE = 1 << 4, /* node holds terminal of LHS */
+    MSL_NODE = 1 << 5, /* (scalar) node is matrix element */
+    MUT_NODE = 1 << 6, /* node is inherently mutable in type */
+    ALS_NODE = 1 << 7  /* function subject to "reversing" alias */
 };
 
 struct node {
-    short t;         /* type identifier */
-    unsigned char flags; /* AUX_NODE etc., see above */
+    gint16 t;        /* type identifier */
+    guint8 flags;    /* AUX_NODE etc., see above */
     int vnum;        /* associated series ID number */
     char *vname;     /* associated variable name */
     user_var *uv;    /* associated named variable */
@@ -664,6 +673,7 @@ struct parser_ {
     const char *rhs;   /* for use in labelling */
     DATASET *dset;     /* convenience pointer to dataset */
     PRN *prn;          /* for printing messages */
+    PRN *errprn;       /* for storing error message in case @prn is NULL */
     int flags;         /* various attributes (see @parser_flags above) */
     int targ;          /* target type */
     int op;            /* assignment operator (possibly inflected) */
@@ -699,12 +709,14 @@ NODE *newdbl (double x);
 NODE *newempty (void);
 NODE *newb2 (int t, NODE *l, NODE *r);
 NODE *obs_node (parser *p);
-void context_error (int c, parser *p, const char *func);
-void undefined_symbol_error (const char *s, parser *p);
 const char *getsymb (int t);
 const char *getsymb_full (int t, const parser *p);
 void set_parsing_query (int s);
 void set_doing_genseries (int s);
+
+int parser_ensure_error_buffer (parser *p);
+void context_error (int c, parser *p, const char *func);
+void undefined_symbol_error (const char *s, parser *p);
 
 int realgen (const char *s, parser *p, DATASET *dset,
 	     PRN *prn, int flags, int targtype);

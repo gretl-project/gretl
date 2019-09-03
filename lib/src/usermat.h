@@ -24,16 +24,22 @@
 
 typedef enum {
     SEL_NULL,    /* nothing supplied */
-    SEL_RANGE,   /* integer range p:q */
-    SEL_ELEMENT, /* derived: selection is a single element */
+    SEL_RANGE,   /* integer range p:q provided */
     SEL_MATRIX,  /* selection matrix provided */
-    SEL_DIAG,    /* using the "diag" dummy constant */
     SEL_ALL,     /* comma-separated blank */
+    SEL_DIAG,    /* the "diag" dummy constant */
+    SEL_UPPER,   /* the "upper" dummy constant */
+    SEL_LOWER,   /* the "lower" dummy constant */
+    SEL_REAL,    /* the "real" dummy constant */
+    SEL_IMAG,    /* the "imag" dummy constant */
+    SEL_ELEMENT, /* derived: selection is a single element */
     SEL_CONTIG,  /* derived: selection is contiguous */
     SEL_EXCL,    /* single exclusion (negative index) */
-    SEL_SINGLE,  /* degenerate range + null */
+    SEL_SINGLE,  /* derived: degenerate range + null */
     SEL_STR      /* for use with bundles only */
 } SelType;
+
+#define is_sel_dummy(s) (s >= SEL_DIAG && s <= SEL_IMAG)
 
 /* Note SEL_EXCL is flagged only in the case of a single negative
    index. SEL_MATRIX can also do exclusion, if all the elements
@@ -49,7 +55,7 @@ union msel {
 };
 
 struct matrix_subspec_ {
-    int owns_lmat;
+    int checked;
     SelType ltype, rtype;
     union msel lsel, rsel;
     int *rslice;
@@ -74,7 +80,9 @@ gretl_matrix *get_matrix_copy_by_name (const char *name, int *err);
 
 gretl_matrix *steal_matrix_by_name (const char *name);
 
-int assign_scalar_to_submatrix (gretl_matrix *M, double x,
+int assign_scalar_to_submatrix (gretl_matrix *M,
+				const gretl_matrix *S,
+				double x,
 				matrix_subspec *spec);
 
 int matrix_replace_submatrix (gretl_matrix *M,
@@ -140,10 +148,9 @@ gretl_matrix *user_matrix_GHK (const gretl_matrix *C,
 			       gretl_matrix *dP,
 			       int *err);
 
-gretl_matrix *
-user_matrix_eigen_analysis (const gretl_matrix *m,
-			    gretl_matrix *R,
-			    int symm, int *err);
+gretl_matrix *user_matrix_eigensym (const gretl_matrix *m,
+				    gretl_matrix *R,
+				    int *err);
 
 gretl_matrix *user_gensymm_eigenvals (const gretl_matrix *A,
 				      const gretl_matrix *B,
@@ -172,5 +179,9 @@ int matrix_cholesky_in_place (gretl_matrix *m);
 int matrix_transpose_in_place (gretl_matrix *m);
 
 int matrix_XTX_in_place (gretl_matrix *m);
+
+int gretl_matrix_set_part (gretl_matrix *targ,
+			   const gretl_matrix *src,
+			   double x, SelType sel);
 
 #endif /* USERMAT_H_ */

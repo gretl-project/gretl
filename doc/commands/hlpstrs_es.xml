@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <localization language="es">
 
  <gentext key="args"          text="Argumentos: "/>
@@ -43,6 +43,7 @@
  <gentext key="smatrix"       text="matriz cuadradax"/>
  <gentext key="symmat"        text="matriz simétrica"/>
  <gentext key="pdmat"         text="matriz definida positiva"/>
+ <gentext key="cmatrix"       text="matriz compleja"/>
  <gentext key="matrixref"     text="referencia a matriz"/>
  <gentext key="seriesref"     text="referencia a serie"/>
  <gentext key="bundleref"     text="referenia a bundle"/>

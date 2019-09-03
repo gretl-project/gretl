@@ -1,0 +1,498 @@
+\documentclass{article}
+\usepackage[letterpaper,body={6.0in,9.1in},top=0.7in,left=1.25in,nohead]{geometry}
+\usepackage{verbatim,fancyvrb}
+\usepackage{color,gretl}
+\usepackage[authoryear]{natbib}
+\usepackage[pdftex]{graphicx}
+\usepackage[pdftex,hyperfootnotes=false]{hyperref}
+
+\definecolor{steel}{rgb}{0.03,0.20,0.45}
+
+\hypersetup{pdftitle={Complex matrices in gretl},
+            pdfauthor={Allin Cottrell},
+            colorlinks=true,
+            linkcolor=blue,
+            urlcolor=red,
+            citecolor=steel,
+            bookmarksnumbered=true,
+            plainpages=false
+}
+
+\begin{document}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1ex}
+\setcounter{secnumdepth}{2}
+
+\title{Complex matrices in gretl}
+\author{Allin Cottrell}
+\maketitle
+
+\section{Introduction}
+\label{sec:intro}
+
+As of mid-August 2019, gretl has native support for complex
+matrices. Not all of hansl's matrix functions accept complex input,
+but we have enabled a sizable subset of these functions which we
+believe should suffice for most econometric purposes. Complex support
+may be extended in future as need arises.
+
+A first point to note is that complex values are treated as a special
+case of the hansl \texttt{matrix} type; there's no \texttt{complex}
+type as such. Complex scalars fall under the \texttt{matrix} type as
+$1 \times 1$ matrices; the hansl \texttt{scalar} type is only for real
+values (as is the \texttt{series} type).
+
+This document explains how to create and manipulate complex matrices,
+and discusses some questions of backward compatibility.
+
+\section{Creating a complex matrix}
+\label{sec:create}
+
+The unique explicit constructor for complex matrices is the
+\texttt{complex()} function.\footnote{At present gretl does not have a
+  notation such as Julia's \texttt{C = A + B*im} for defining a
+  complex matrix.} This takes two arguments, giving the real and
+imaginary parts respectively, and sticks them together, as in
+\begin{code}
+C = complex(A, B)
+\end{code}
+Four cases are supported, as follows. (Other than in the subscripts,
+$i$ denotes $\sqrt{-1}$.)
+\begin{itemize}
+\item \texttt{A} and \texttt{B} are both $m \times n$ real matrices
+  Then \texttt{C} is an $m \times n$ complex matrix such that
+  $c_{ij} = a_{ij} + b_{ij}\,i$.
+\item \texttt{A} and \texttt{B} are both scalars: \texttt{C} is a
+  $1 \times 1$ complex matrix such that $c = a + b\,i$.
+\item \texttt{A} is an $m \times n$ real matrix and \texttt{B} is a
+  scalar: \texttt{C} is an $m \times n$ matrix such that
+  $c_{ij} = a_{ij} + b\,i$.
+\item \texttt{A} is a scalar and \texttt{B} is an $m \times n$ real
+  matrix: \texttt{C} is an $m \times n$ matrix such that
+  $c_{ij} = a + b_{ij}\,i$.
+\end{itemize}
+
+In addition, complex matrices may naturally arise as the result of
+certain computations.
+
+With both real and complex matrices in circulation, one may wish to
+determine whether a particular matrix is complex. The function
+\texttt{iscomplex()} can tell you. Passed an identifier, it returns 1
+if it names a complex matrix, 0 if it names a real matrix, or
+\texttt{NA} otherwise.
+
+\section{Indexation}
+
+Indexation of complex matrices works as with real matrices, on the
+understanding that each element of a complex matrix is a complex
+pair. So for example \texttt{C[i,j]} gets you the complex pair at row
+\texttt{i}, column \texttt{j} of \texttt{C}, in the form of a
+$1 \times 1$ complex matrix.
+
+If you wish to access just the real or imaginary part of a given
+element, or range of elements, you can use the functions \texttt{Re()}
+or \texttt{Im()}, as in
+\begin{code}
+scalar rij = Re(C[i,j])
+\end{code}
+which gets you the real part of $c_{ij}$.
+
+In addition the dummy selectors \texttt{real} and \texttt{imag} can be
+used to assign to just the real or imaginary component of a complex
+matrix. Here are two examples:
+\begin{code}
+# replace the real part of C with random normals
+C[real] = mnormal(rows(C), cols(C))
+
+# set the imaginary part of C to all zeros
+C[imag] = 0
+\end{code}
+The replacement must be either a real matrix of the same dimensions as
+the target, or a scalar.
+
+Further, the \texttt{real} and \texttt{imag} selectors may be combined
+with regular selectors to access specific portions of a complex matrix
+for either reading or writing. Examples:
+\begin{code}
+# retrieve the real part of a submatrix of C
+matrix R = C[1:2,1:2][real]
+
+# set the imaginary part of C[3,3] to y
+C[3,3][imag] = y
+\end{code}
+
+\section{Operators}
+\label{sec:ops}
+
+Most of the operators available for working with real matrices are
+also available for complex ones; this includes the ``dot-operators''
+which work element-wise or by ``broadcasting'' vectors. Moreover,
+``mixed'' operands are accepted, as in \texttt{D = C + A} where
+\texttt{C} is complex and \texttt{A} real. The result, \texttt{D},
+will be complex. In such cases the real operand is treated as a
+complex matrix with an all-zero imaginary part.
+
+The operators \textit{not} defined for complex values are:
+\begin{itemize}
+\item Those that include the tests ``\verb+>+'' or ``\verb+<+'', since
+  complex values as such cannot be compared as greater or lesser
+  (though they can be compared as equal or not equal).
+\item The (real) modulus operator (percent sign), as in \texttt{x \%
+    y} which gives the remainder on division of \texttt{x} by
+  \texttt{y}.
+\end{itemize}
+
+The ``\texttt{'}'' operator is available in both unary form
+(transpose), as in \texttt{B = A'}, and binary form
+(transpose-multiply), as in \texttt{C = A'B}. But note that for
+complex \texttt{A} this means the conjugate transpose, $A^\mathrm{H}$ or
+$A^*$. If you need the non-conjugated transpose you can use
+\texttt{transp()}--- see section~\ref{sec:funcs}.
+
+You may wish to note, although none of gretl's explicit regression
+functions (or commands) accept complex input you can calculate
+parameter estimates for a least-squares regression of complex $Y$
+($T \times 1$) on complex $X$ ($T \times k$) via \verb|B = X \ Y|.
+
+\section{Functions}
+\label{sec:funcs}
+
+To give an idea of what works, and what doesn't work, for complex
+matrices, we'll walk through the hansl function-space using the
+categories employed in gretl's online ``Function reference'' (under the
+\textsf{Help} menu in the GUI program).
+
+\subsection{Linear algebra}
+
+The functions that accept complex arguments at present are:
+\texttt{cholesky}, \texttt{det}, \texttt{ldet}, \texttt{eigensym} (for
+Hermitian matrices), \texttt{ffti}, \texttt{inv}, \texttt{ginv},
+\texttt{hdprod}, \texttt{mexp}, \texttt{mlog}, \texttt{qrdecomp},
+\texttt{rank}, \texttt{svd}, \texttt{tr}, and \texttt{transp}. Note,
+however, that \texttt{mexp} and \texttt{mlog} require that the input
+matrix be diagonalizable, and \texttt{cholesky} requires a Hermitian
+matrix.
+
+In addition the new functions \texttt{eiggen2} and \texttt{fft2} are
+complex-supporting versions of \texttt{eigengen} and \texttt{fft},
+respectively (see section~\ref{sec:compat} for details). And there are
+the complex-only functions \texttt{ctrans}, which gives the conjugate
+transpose,\footnote{The \texttt{transp} function gives the straight
+  (non-conjugated) transpose of a complex matrix.} and \texttt{schur}
+for the Schur factorization (see section~\ref{sec:newsigs}).
+
+\subsection{Matrix building}
+
+Given what was said in section~\ref{sec:create} above, several of the
+functions in this category should be thought of as applying to the
+real or imaginary part of a complex matrix (for example, \texttt{ones}
+and \texttt{mnormal}), and are of course usable in that way.  However,
+some of these functions can be applied to complex matrices as such,
+namely, \texttt{diag}, \texttt{diagcat}, \texttt{lower},
+\texttt{upper}, \texttt{vec}, \texttt{vech} and \texttt{unvech}.
+
+Please note: when \texttt{unvech} is applied to a suitable real
+vector it produces a symmetric matrix, but when applied to a complex
+vector it produces a Hermitian matrix.
+
+The only functions \textit{not} available for complex matrices are
+\texttt{cnameset} and \texttt{rnameset}. That is, you cannot name the
+columns or rows of such matrices (although this restriction could
+probably be lifted without great difficulty).
+
+\subsection{Matrix shaping}
+
+The functions that accept complex input are: \texttt{cols},
+\texttt{rows}, \texttt{mreverse}, \texttt{mshape}, \texttt{selifc},
+\texttt{selifr} and \texttt{trimr}.
+
+The functions \texttt{msortby}, \texttt{sort} and \texttt{dsort} are
+excluded for the reason mentioned in section~\ref{sec:ops}.
+
+\subsection{Statistical}
+
+Supported for complex input: \texttt{meanc}, \texttt{meanr},
+\texttt{sumc}, \texttt{sumr}, \texttt{prodc} and \texttt{prodr}. And
+that's all.
+
+\subsection{Mathematical}
+
+In the matrix context, these are functions that are applied element by
+element. For complex input the following are supported: \texttt{log},
+\texttt{exp} and \texttt{sqrt}, plus all of the trigonometric
+functions with the exception of \texttt{atan2}.
+
+In addition there are the complex-only functions \texttt{cmod}
+(complex modulus, also accessible via \texttt{abs}), \texttt{carg}
+(complex ``argument''), \texttt{conj} (complex conjugate), \texttt{Re}
+(real part) and \texttt{Im} (imaginary part). Note that
+$\mbox{carg}(z) = \mbox{atan2}(y,x)$ for $z=x + y\,i$.
+
+\subsection{Transformations}
+
+The functions \texttt{cum} and \texttt{diff} may be applied to complex
+matrices, but no others.
+
+\section{File input/output}
+
+Complex matrices should be stored and retrieved correctly in the
+XML serialization used for gretl session files (\texttt{*.gretl}).
+
+The functions \texttt{mwrite} and \texttt{mread} work in two modes:
+binary mode if the filename ends with ``\texttt{.bin}'' and text mode
+otherwise. Both modes handle complex matrices correctly if both the
+writing and the reading are to be done by gretl, but for exchange of
+data with ``foreign'' programs text mode will \textit{not} work for
+complex matrices as a whole. The options are:
+\begin{itemize}
+\item In text mode, use \texttt{mwrite} and \texttt{mread} on the two
+  parts of a complex matrix separately, and reassemble the matrix in
+  the target program.
+\item Use binary mode (on the whole matrix), if this is supported for
+  the given foreign program.
+\end{itemize}
+
+At present binary mode transfer of complex matrices is supported for
+\textsf{octave}, \textsf{python} and \textsf{julia}.
+Listing~\ref{cmplx-io} shows some examples: we export a complex matrix
+to each of these programs in turn; calculate its inverse in the
+foreign program; then verify that the result as imported back into
+gretl is the same as that calculated in gretl.
+
+\begin{script}[htbp]
+  \caption{Exporting and importing complex matrices}
+  \label{cmplx-io}
+\begin{scode}
+set seed 34756
+matrix C = complex(mnormal(3,3), mnormal(3,3))
+D = inv(C)
+
+mwrite(C, "C.bin", 1)
+
+foreign language=octave
+  C = gretl_loadmat('C.bin');
+  gretl_export(inv(C), 'oct_D.bin');
+end foreign
+
+oct_D = mread("oct_D.bin", 1)
+eval D - oct_D
+
+foreign language=python
+   import numpy as np
+   C = gretl_loadmat('C.bin')
+   gretl_export(np.linalg.inv(C), 'py_D.bin')
+end foreign
+
+py_D = mread("py_D.bin", 1)
+eval D - py_D
+
+foreign language=julia
+  C = gretl_loadmat("C.bin")
+  gretl_export(inv(C), "jl_D.bin")
+end foreign
+
+jl_D = mread("jl_D.bin", 1)
+eval D - jl_D
+\end{scode}
+\end{script}
+
+\section{Backward compatibility}
+\label{sec:compat}
+
+Compatibility issues arise in two contexts, both related to the fact
+that gretl offered some degree of support for complex matrices before
+they became full citizens of the hansl polity.
+
+\begin{enumerate}
+\item The functions \texttt{fft} (fast Fourier transform for real
+  input) and \texttt{eigengen} (eigenvalues and/or eigenvectors of a
+  non-symmetric real matrix) returned complex matrices in what we may
+  call the ``legacy'' representation. In the case of \texttt{fft} and
+  the eigenvalues from \texttt{eigengen} this took the form of a
+  regular gretl matrix with real values in the first (or odd-numbered)
+  column(s) and imaginary parts in the second (or even-numbered)
+  column(s). Since calculating with such matrices using the standard
+  matrix operators would result in nonsense, we provided the tailored
+  functions \texttt{cmult} and \texttt{cdiv}.
+
+  In the case of complex eigenvectors from \texttt{eigengen}---well,
+  you probably don't want to know, but if you do, consult the help text
+  for \texttt{eigengen}; they were not easy for a user to handle!
+\item The function packages \texttt{cmatrix} and
+  \texttt{ghosts}. These are relatively recent additions to gretl,
+  designed to support frequency-domain analysis. Prior to the
+  development of native complex-matrix functionality, \texttt{cmatrix}
+  was needed as an dependency for \texttt{ghosts} (multivariate
+  spectral analysis).
+\end{enumerate}
+
+So what happens with these functions and packages under the new
+regime?
+
+Our resolution on the two built-in functions is this:
+\begin{itemize}
+\item \texttt{fft} and \texttt{eigengen} continue to behave exactly as
+  before. They do not accept complex input and they produce old-style
+  output. In the documentation they will be marked as legacy
+  functions, not for use in newly written hansl code.
+\item We have added new counterpart functions, \texttt{fft2} and
+  \texttt{eiggen2}. These accept either real or complex input and they
+  produce new-style complex output in both cases.
+\end{itemize}
+
+On the affected packages: \texttt{cmatrix} is no longer required, and
+will not be supported any more: attempting to load this package will
+produce an error message in the next gretl release. We will make
+available an updated version of \texttt{ghosts} which uses gretl's
+native complex functionality.
+
+Further note: It should be mentioned that the \texttt{ffti} function
+is backward compatible: the new functionality is just a superset of
+the old. The input must be complex, and is accepted by \texttt{ffti}
+in either the legacy or the new format. The output is real if the
+input is Hermitian, which in this case means that the first
+(zero-frequency) row is real and the remaining rows are conjugate
+symmetrical about their mid-point. That's the only case that can arise
+when \texttt{ffti} is used on output from the old \texttt{fft} (which
+only accepted real input).  Otherwise (non-Hermitian complex input,
+which can arise only under the new scheme) the output will be complex,
+and in the new format.
+
+\section{Devels corner: internals and testing}
+\label{sec:internals}
+
+In the \textsf{C} programming language a double-precision complex
+value is basically just two regular ``doubles'' contiguous in memory
+(but with a good deal of useful syntactic sugar). Since gretl matrices
+are in column-major order this means that an $m \times n$ complex
+matrix is in a sense equivalent to a $2m \times n$ real matrix, with
+real parts on the odd-numbered rows and imaginary parts on the even
+ones.
+
+In certain special conditions it may be useful to be able to switch
+the interpretation of a given matrix. To this end there's a ``hidden''
+function \verb|_setcmplx|; it takes a matrix argument followed by an
+optional boolean: 1 (the default) to switch the interpretation from
+real to complex, or 0 to go from complex to real. While it's always
+possible to go from complex to real, the opposite switch fails if the
+matrix in question has an odd number of rows. Example:
+\begin{code}
+? matrix C = complex({1,2;3,4},{0,1;0,1})
+Generated matrix C
+? print C
+C (2 x 2)
+
+ 1 + 0i   2 + 1i
+ 3 + 0i   4 + 1i
+
+? C = _setcmplx(C, 0)
+? print C
+C (4 x 2)
+
+  1   2
+  0   1
+  3   4
+  0   1
+\end{code}
+
+We also mentioned above (section~\ref{sec:compat}) that prior to
+offering native complex matrix support gretl employed an \textit{ad
+  hoc} representation of such matrices, with real and imaginary parts
+in alternating columns. A second hidden function, \verb|_cswitch|, can
+be used to convert between these formats.
+
+As with \verb|_setcmplx|, \verb|_cswitch| takes a matrix argument
+followed by an optional boolean: 1 (the default) converts an old-style
+complex matrix to new-style; 0 performs the inverse operation.
+Examples:
+\begin{code}
+? matrix C = complex({1,2;3,4},{0,1;0,1})
+Generated matrix C
+? print C
+C (2 x 2)
+
+ 1 + 0i   2 + 1i
+ 3 + 0i   4 + 1i
+
+? C = _cswitch(C, 0)
+Replaced matrix C
+? print C
+C (2 x 4)
+
+  1   0   2   1
+  3   0   4   1
+
+? C = _cswitch(C, 1)
+Replaced matrix C
+? print C
+C (2 x 2)
+
+ 1 + 0i   2 + 1i
+ 3 + 0i   4 + 1i
+\end{code}
+
+Should they turn out to be useful for more than just testing, one or
+both of these hidden functions might be renamed and exposed for
+general use.
+
+\section{Signatures of new functions}
+\label{sec:newsigs}
+
+In this final section we recap (and elaborate where necessary) on the
+signatures of functions that are specific to the new treatment of
+complex matrices.
+
+\texttt{carg(C)}:\\
+Argument: complex matrix $C$.\\
+Returns: real matrix, the ``argument'' of $C$.
+
+\texttt{cmod(C)}:\\
+Argument: complex matrix $C$.\\
+Returns: real matrix, the modulus of $C$.
+
+\texttt{complex(A, B)}:\\
+Arguments: $A$ (real matrix or scalar), $B$ (real matrix or scalar).\\
+See section~\ref{sec:create} for details.
+
+\texttt{conj(C)}:\\
+Argument: complex matrix $C$.\\
+Returns: complex matrix, the complex conjugate of $C$.
+
+\texttt{ctrans(C)}:\\
+Argument: complex matrix $C$.\\
+Returns: complex matrix, the conjugate transpose of $C$.
+
+\texttt{eiggen2(A, \&V, \&W)}:\\
+Argument 1: square matrix $A$, either real or complex.\\
+Argument 2 (optional): address of matrix.\\
+Argument 3 (optional): address of matrix.\\
+Returns: complex column vector, the eigenvalues of $A$. If argument 2
+is provided it retrieves a complex matrix holding the right
+eigenvectors of $A$; if argument 3 is provided it retrieves a complex
+matrix holding the left eigenvectors of $A$.
+
+\texttt{fft2(X)}:\\
+Argument: matrix $X$, either real or complex.\\
+Returns: complex matrix holding the discrete FFT of $X$, by
+column.
+
+\texttt{Re(C)}:\\
+Argument: complex matrix $C$.\\
+Returns: real matrix, the real part of $C$.
+
+\texttt{Im(C)}:\\
+Argument: complex matrix $C$.\\
+Returns: real matrix, the imaginary part of $C$.
+
+\texttt{schur(A, \&Z, \&w)}:\\
+Argument 1: square complex matrix $A$.\\
+Argument 2 (optional): address of matrix.\\
+Argument 3 (optional): address of matrix.\\
+Returns: complex upper triangular matrix $T$. If argument 2 is
+provided it retrieves a complex matrix $Z$ holding the Schur vectors
+associated with $A$ and $T$, such that $A = ZTZ^{\mathrm H}$. If
+argument 3 is provided it retrieves the eigenvalues of $A$ in
+a complex column vector.
+
+\end{document}

@@ -110,7 +110,7 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
 	} else {
 	    pprintf(prn, _("Generated matrix %s"), name);
 	}
-	if (m != NULL && m->rows == 1 && m->cols == 1) {
+	if (gretl_matrix_is_scalar(m)) {
 	    pprintf(prn, " = {%g}", m->val[0]);
 	}
     } else if (targ == LIST) {

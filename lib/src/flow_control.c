@@ -108,7 +108,7 @@ static int if_eval (int ci, const char *s, DATASET *dset,
     }
 
     if (*err && s != NULL && *s != '\0') {
-	gchar *cond = g_strdup_printf("> %s", s);
+	gchar *cond = g_strdup_printf("> %s %s", gretl_command_word(ci), s);
 
 	gretl_errmsg_append(cond, 0);
 	g_free(cond);
