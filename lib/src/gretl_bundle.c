@@ -2181,7 +2181,7 @@ static int load_bundled_items (gretl_bundle *b, xmlNodePtr cur, xmlDocPtr doc)
 
 /* For internal use only: @p1 should be of type xmlNodePtr and @p2
    should be an xmlDocPtr. We suppress the actual pointer types in the
-   prototype so that it's possible for a module to include
+   signature so that it's possible for a module to include
    gretl_bundle.h without including the full libxml headers.
 */
 

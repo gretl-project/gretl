@@ -1470,7 +1470,7 @@ static NODE *powterm (parser *p, NODE *l)
  maybe_recurse:
 
     if (t != NULL && next == '[') {
-	/* support func(args)[slice] */
+	/* support func(args)[slice], etc. */
 	t = newb2(OSL, t, NULL);
 	if (t != NULL) {
 	    t->R = newb2(MSLRAW, NULL, NULL);

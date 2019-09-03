@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -67,7 +67,7 @@ const char *saved_list_get_name (const int *list)
 
     if (u != NULL) {
 	return user_var_get_name(u);
-    }   
+    }
 
     return NULL;
 }
@@ -79,7 +79,7 @@ const char *saved_list_get_name (const int *list)
  * Looks up @name in the stack of saved variables, at the current level
  * of function execution, and retrieves the associated list.
  *
- * Returns: the list, or NULL if the lookup fails. 
+ * Returns: the list, or NULL if the lookup fails.
  */
 
 int *get_list_by_name (const char *name)
@@ -124,7 +124,7 @@ int gretl_is_midas_list (const int *list, const DATASET *dset)
 
     if (list != NULL && list[0] > 2) {
 	int i, m, p;
-	
+
 	if (!series_is_midas_anchor(dset, list[1])) {
 	    return 0;
 	}
@@ -167,7 +167,7 @@ int gretl_list_set_midas (const int *list, DATASET *dset)
 	if (!is_valid_midas_frequency_ratio(dset, m)) {
 	    err = E_INVARG;
 	}
-	
+
 	for (i=1; i<=list[0] && !err; i++) {
 	    if (list[i] < 1 || list[i] >= dset->v) {
 		err = E_INVARG;
@@ -223,7 +223,7 @@ int append_to_list_by_data (void *ptr, int *add,
 		user_var_replace_value(u, tmp, GRETL_TYPE_LIST);
 	    }
 	}
-    } 
+    }
 
     return err;
 }
@@ -292,7 +292,7 @@ int subtract_from_list_by_data (void *ptr, int *sub,
 	if (!err) {
 	    user_var_replace_value(u, tmp, GRETL_TYPE_LIST);
 	}
-    } 
+    }
 
     return err;
 }
@@ -322,7 +322,7 @@ int replace_list_by_data (void *ptr, const int *src)
 	    err = E_ALLOC;
 	} else {
 	    user_var_replace_value(u, tmp, GRETL_TYPE_LIST);
-	}	    
+	}
     }
 
     return err;
@@ -376,13 +376,13 @@ int remember_list (const int *list, const char *name, PRN *prn)
 /**
  * gretl_list_new:
  * @nterms: the maximum number of elements to be stored in the list.
- * 
+ *
  * Creates a newly allocated list with space for @nterms elements,
  * besides the leading element, which in a gretl list always
  * holds a count of the number of elements that follow.  This
  * leading element is initialized appropriately.  For example, if
  * @nterms = 4, space for 5 integers is allocated and the first
- * element of the array is set to 4.  The other elements of 
+ * element of the array is set to 4.  The other elements of
  * the list are initialized to 0.
  *
  * Returns: the newly allocated list, or NULL on failure.
@@ -392,7 +392,7 @@ int *gretl_list_new (int nterms)
 {
     int *list = NULL;
     int i;
-    
+
     if (nterms < 0) {
 	return NULL;
     }
@@ -413,7 +413,7 @@ int *gretl_list_new (int nterms)
  * gretl_list_array_new:
  * @nlists: the number of lists to create.
  * @nterms: the maximum number of elements to be stored in each list.
- * 
+ *
  * Creates an array of newly allocated lists, each of which as described
  * in connection with gretl_list_new().
  *
@@ -424,13 +424,13 @@ int **gretl_list_array_new (int nlists, int nterms)
 {
     int **lists = NULL;
     int i;
-    
+
     if (nlists < 0) {
 	return NULL;
     }
 
     lists = malloc(nlists * sizeof *lists);
-    
+
     if (lists != NULL) {
 	for (i=0; i<nlists; i++) {
 	    lists[i] = gretl_list_new(nterms);
@@ -444,7 +444,7 @@ int **gretl_list_array_new (int nlists, int nterms)
  * gretl_list_array_free:
  * @lists: array of gretl lists.
  * @nlists: the number of lists in @lists.
- * 
+ *
  * Frees all the lists in @lists and also the top-level pointer.
  */
 
@@ -464,7 +464,7 @@ void gretl_list_array_free (int **lists, int nlists)
  * gretl_consecutive_list_new:
  * @lmin: starting value for consecutive list elements.
  * @lmax: ending value.
- * 
+ *
  * Creates a newly allocated list whose elements run from
  * @lmin to @lmax consecutively.
  *
@@ -496,10 +496,10 @@ int *gretl_consecutive_list_new (int lmin, int lmax)
  * gretl_list_resize:
  * @oldlist: pointer to list to be resized.
  * @nterms: the new maximum number of elements for the list.
- * 
+ *
  * Resizes the content of @oldlist to hold @nterms, and adjusts
  * the first element to reflect the new size.  If the new
- * list is longer than the old, the extra elements are initialized 
+ * list is longer than the old, the extra elements are initialized
  * to zero.
  *
  * Returns: the resized list, or NULL on failure.
@@ -542,7 +542,7 @@ int *gretl_list_resize (int **oldlist, int nterms)
  * gretl_list_append_term:
  * @plist: pointer to list to be augmented.
  * @v: the term to be added.
- * 
+ *
  * Resizes (or allocates from scratch) the content of @plist,
  * so that it can hold one extra element, and sets the last
  * element to @v.
@@ -579,7 +579,7 @@ int *gretl_list_append_term (int **plist, int v)
 /**
  * gretl_list_sort:
  * @list: list to be sorted.
- * 
+ *
  * Sorts the elements from position 1 to the end of @list
  * in ascending order.
  *
@@ -608,7 +608,7 @@ int *gretl_list_sort (int *list)
  * gretl_list_cmp:
  * @list1: gretl list.
  * @list2: gretl list.
- * 
+ *
  * Returns: 0 if @list1 and @list2 have identical content,
  * otherwise 1.
  */
@@ -636,8 +636,8 @@ int gretl_list_cmp (const int *list1, const int *list2)
 
 /**
  * gretl_null_list:
- * 
- * Creates a newly allocated "list" with only one member, 
+ *
+ * Creates a newly allocated "list" with only one member,
  * which is set to zero.
  *
  * Returns: the newly allocated list, or NULL on failure.
@@ -711,10 +711,10 @@ int *gretl_list_copy_from_pos (const int *src, int pos)
  *
  * Reads a string containing a list of integers, separated by
  * spaces and/or commas and possibly wrapped in parentheses,
- * and constructs an array of these integers.  The first 
+ * and constructs an array of these integers.  The first
  * element is the number of integers that follow.
  * This function supports an abbreviation for consecutive
- * (increasing) integers in the list, using the notation, e.g., 
+ * (increasing) integers in the list, using the notation, e.g.,
  * "1-4" as shorthand for "1 2 3 4".
  *
  * Returns: the allocated array, or NULL on failure.
@@ -759,7 +759,7 @@ int *gretl_list_from_string (const char *str, int *err)
 	s++;
 	while (isspace(*s)) s++;
 	tailstrip(s);
-    } 
+    }
 
     q = s; /* copy relevant starting point */
 
@@ -819,7 +819,7 @@ int *gretl_list_from_string (const char *str, int *err)
     }
 
     /* second pass: fill out the list (no error
-       checking should be needed at this stage) 
+       checking should be needed at this stage)
     */
 
     s = q; /* back to start of string */
@@ -843,7 +843,7 @@ int *gretl_list_from_string (const char *str, int *err)
 	} else {
 	    list[n++] = r1;
 	}
-    } 
+    }
 
     free(p);
 
@@ -860,7 +860,7 @@ int *gretl_list_from_string (const char *str, int *err)
  * the series named in @str, or NULL on failure.
  */
 
-int *gretl_list_from_varnames (const char *str, 
+int *gretl_list_from_varnames (const char *str,
 			       const DATASET *dset,
 			       int *err)
 {
@@ -916,7 +916,7 @@ static int integer_length (int k)
     if (x < 0) {
 	x = fabs(x);
 	len = 1;
-    } 
+    }
 
     if (x < 10) {
 	len += 1;
@@ -931,7 +931,7 @@ static int integer_length (int k)
 /**
  * gretl_list_to_numeric_string:
  * @list: array of integers.
- * 
+ *
  * Prints the given @list of integers into a newly
  * allocated string, separated by single spaces and with
  * one leading space.
@@ -982,7 +982,7 @@ char *gretl_list_to_numeric_string (const int *list)
  * @list: array of integers.
  * @dset: pointer to dataset.
  * @err: location to receive error code.
- * 
+ *
  * Returns: allocated string representation of @list, with ID
  * numbers cashed out as series names (and with one leading
  * space), or NULL on failure. The list separator #LISTSEP,
@@ -991,7 +991,7 @@ char *gretl_list_to_numeric_string (const int *list)
  * series ID within @dset.
  */
 
-char *gretl_list_to_string (const int *list, 
+char *gretl_list_to_string (const int *list,
 			    const DATASET *dset,
 			    int *err)
 {
@@ -1034,8 +1034,8 @@ char *gretl_list_to_string (const int *list,
 		strcat(buf, dset->varname[vi]);
 	    }
 	}
-    }   
-	
+    }
+
     return buf;
 }
 
@@ -1043,7 +1043,7 @@ char *gretl_list_to_string (const int *list,
  * gretl_list_to_vector:
  * @list: array of integers.
  * @err: location to receive error code.
- * 
+ *
  * Returns: allocated representation of @list as a row vector
  * or NULL on failure.
  */
@@ -1084,8 +1084,8 @@ gretl_matrix *gretl_list_to_vector (const int *list, int *err)
  * @list: array of integers.
  * @dset: dataset information.
  * @err: location to receive error code.
- * 
- * Prints the names of the members of @list of integers into 
+ *
+ * Prints the names of the members of @list of integers into
  * a newly allocated string, separated by commas.
  *
  * Returns: allocated string on success or NULL on failure.
@@ -1134,8 +1134,8 @@ char *gretl_list_get_names (const int *list, const DATASET *dset,
 	if (i < list[0]) {
 	    strcat(buf, ",");
 	}
-    }    
-	
+    }
+
     return buf;
 }
 
@@ -1144,12 +1144,12 @@ char *gretl_list_get_names (const int *list, const DATASET *dset,
  * @list: array of integers.
  * @dset: dataset information.
  * @err: location to receive error code.
- * 
+ *
  * Returns: An array of strings holding the names of the
  * members of @list, or NULL on failure.
  */
 
-char **gretl_list_get_names_array (const int *list, 
+char **gretl_list_get_names_array (const int *list,
 				   const DATASET *dset,
 				   int *err)
 {
@@ -1195,7 +1195,7 @@ char **gretl_list_get_names_array (const int *list,
  * gretl_list_to_lags_string:
  * @list: array of integers.
  * @err: location to receive error code.
- * 
+ *
  * Prints the given @list of integers into a newly
  * allocated string, enclosed by braces and separated by commas.
  * Will fail if @list contains any numbers greater than 998.
@@ -1256,7 +1256,7 @@ char *gretl_list_to_lags_string (const int *list, int *err)
  * in position 1 or higher.
  *
  * Returns: the position of @k in @list, or 0 if @k is not
- * present. 
+ * present.
  */
 
 int in_gretl_list (const int *list, int k)
@@ -1350,10 +1350,10 @@ int gretl_list_delete_at_pos (int *list, int pos)
  * @list: list of variable ID numbers.
  * @dset: dataset struct.
  *
- * Checks @list from position 1 onward for the presence of a 
- * variable whose valid values in sample all equal 1.0.  If 
- * such a variable is found, it is deleted from @list (that is, 
- * any following elements are moved forward by one and list[0] 
+ * Checks @list from position 1 onward for the presence of a
+ * variable whose valid values in sample all equal 1.0.  If
+ * such a variable is found, it is deleted from @list (that is,
+ * any following elements are moved forward by one and list[0]
  * is decremented by 1).
  *
  * Returns: 1 if a constant was found and deleted, else 0.
@@ -1436,7 +1436,7 @@ int gretl_list_min_max (const int *list, int *lmin, int *lmax)
  * @add: list of variables to be added.
  * @err: location to receive error code.
  *
- * Creates a list containing the union of elements of @orig 
+ * Creates a list containing the union of elements of @orig
  * and the elements of @add.  If one or more elements of
  * @add were already present in @orig, the error code is
  * %E_ADDDUP.
@@ -1565,7 +1565,7 @@ int *gretl_list_union (const int *l1, const int *l2, int *err)
 		n_add--;
 		lcopy[i] = -1;
 	    } else {
-		/* not present in l1, but check for duplicates of 
+		/* not present in l1, but check for duplicates of
 		   this element in l2 */
 		for (j=1; j<=l2[0]; j++) {
 		    if (j != i && l2[j] == l2[i]) {
@@ -1702,7 +1702,7 @@ int *gretl_list_intersection (const int *l1, const int *l2, int *err)
     return ret;
 }
 
-static void name_xprod_term (char *vname, int vi, int vj, 
+static void name_xprod_term (char *vname, int vi, int vj,
 			     int di, const DATASET *dset)
 {
     const char *si = dset->varname[vi];
@@ -1731,7 +1731,7 @@ static void name_xprod_term (char *vname, int vi, int vj,
     sprintf(vname, "%.*s_%.*s_%s", ilen, si, jlen, sj, numstr);
 }
 
-static void set_xprod_label (int v, int vi, int vj, 
+static void set_xprod_label (int v, int vi, int vj,
 			     double val, DATASET *dset)
 {
     const char *si = dset->varname[vi];
@@ -1769,7 +1769,7 @@ static int nonneg_integer_series (const DATASET *dset, int v)
  * Returns: new list on success, NULL on error.
  */
 
-int *gretl_list_product (const int *X, const int *Y, 
+int *gretl_list_product (const int *X, const int *Y,
 			 DATASET *dset, int *err)
 {
     int *ret = NULL;
@@ -1784,7 +1784,7 @@ int *gretl_list_product (const int *X, const int *Y,
     if (X == NULL || Y == NULL) {
 	*err = E_DATA;
 	return NULL;
-    }	
+    }
 
     if (X[0] == 0 || Y[0] == 0) {
 	ret = gretl_null_list();
@@ -1990,7 +1990,7 @@ int *gretl_list_omit (const int *orig, const int *omit,
     }
 
     if (minpos > 1) {
-	/* regression list: it's an error to attempt to omit 
+	/* regression list: it's an error to attempt to omit
 	   all regressors */
 	if (n_omit == n_orig - 1) {
 	    *err = E_NOVARS;
@@ -2018,13 +2018,13 @@ int *gretl_list_omit (const int *orig, const int *omit,
 			break;
 		    }
 		}
-		if (!match) { 
+		if (!match) {
 		    /* var is not in omit list: keep it */
 		    ret[k++] = orig[i];
 		}
 	    }
 	}
-    }		
+    }
 
     return ret;
 }
@@ -2040,7 +2040,7 @@ int *gretl_list_omit (const int *orig, const int *omit,
  * present in @drop.  Unlike gretl_list_omit(), processing always
  * starts from position 1 in @orig, and it is not an error if
  * some members of @drop are not present in @orig, or if some
- * members of @drop are duplicated. 
+ * members of @drop are duplicated.
  *
  * Returns: new list on success, NULL on error.
  */
@@ -2096,11 +2096,11 @@ int *gretl_list_drop (const int *orig, const int *drop, int *err)
  * @biglist: inclusive list.
  * @sublist: subset of biglist.
  *
- * Fills out @targ with the elements of @biglist, from position 2 
- * onwards, that are not present in @sublist.  It is assumed that 
- * the variable ID number in position 1 (dependent variable) is the 
- * same in both lists.  It is an error if, from position 2 on, 
- * @sublist is not a proper subset of @biglist.  See also 
+ * Fills out @targ with the elements of @biglist, from position 2
+ * onwards, that are not present in @sublist.  It is assumed that
+ * the variable ID number in position 1 (dependent variable) is the
+ * same in both lists.  It is an error if, from position 2 on,
+ * @sublist is not a proper subset of @biglist.  See also
  * #gretl_list_diff_new.
  *
  * Returns: 0 on success, 1 on error.
@@ -2146,7 +2146,7 @@ int gretl_list_diff (int *targ, const int *biglist, const int *sublist)
  * @minpos: position in lists at which to start.
  *
  * Returns: a newly allocated list including the elements of @biglist,
- * from position @minpos onwards, that are not present in @sublist, 
+ * from position @minpos onwards, that are not present in @sublist,
  * again from @minpos onwards, or NULL on failure.  Note that
  * comparison stops whenever a list separator is found; i.e. only
  * the pre-separator portions of the lists are compared.
@@ -2381,12 +2381,12 @@ int list_members_replaced (const MODEL *pmod, const DATASET *dset)
  * a variable whose valid values in sample all equal 1.  This usually
  * amounts to checking whether a list of regressors includes
  * an intercept term.
- * 
+ *
  * Returns: The list position of the const, or 0 if none is
  * found.
  */
 
-int gretl_list_const_pos (const int *list, int minpos,  
+int gretl_list_const_pos (const int *list, int minpos,
 			  const DATASET *dset)
 {
     int i;
@@ -2513,7 +2513,7 @@ int gretl_list_split_on_separator (const int *list,
 	}
 	*plist2 = list2;
     }
-    
+
     return 0;
 }
 
@@ -2562,7 +2562,7 @@ int *gretl_lists_join_with_separator (const int *list1, const int *list2)
 
     for (i=1; i<=list2[0]; i++) {
 	biglist[j++] = list2[i];
-    }    
+    }
 
     return biglist;
 }
@@ -2684,7 +2684,7 @@ int gretl_list_duplicates (const int *list, GretlCmdIndex ci)
 	multi = 1;
 	if (list[1] == list[2]) {
 	    ret = 1;
-	} 
+	}
 	if (ret == -1) {
 	    for (i=3; i<list[0]; i++) {
 		if (list[i] == LISTSEP) {
@@ -2697,7 +2697,7 @@ int gretl_list_duplicates (const int *list, GretlCmdIndex ci)
 		ret = real_list_dup(list, 3, start - 2);
 	    }
 	}
-    } 
+    }
 
     if (!multi) {
 	ret = real_list_dup(list, start, list[0]);
@@ -2708,10 +2708,10 @@ int gretl_list_duplicates (const int *list, GretlCmdIndex ci)
 
 /**
  * gretl_lists_share_members:
- * @list1: 
- * @list2: 
+ * @list1:
+ * @list2:
  *
- * Returns: the number of elements that are in common between 
+ * Returns: the number of elements that are in common between
  * @list1 and @list2.
  */
 
@@ -2799,7 +2799,7 @@ int *full_var_list (const DATASET *dset, int *nvars)
     if (nvars != NULL) {
 	*nvars = nv;
     }
-    
+
     if (nv > 0) {
 	list = gretl_list_new(nv);
     }
@@ -2812,7 +2812,7 @@ int *full_var_list (const DATASET *dset, int *nvars)
 		list[j++] = i;
 	    }
 	}
-    }	    
+    }
 
     return list;
 }
@@ -2866,7 +2866,7 @@ int *gretl_list_build (const char *s, const DATASET *dset, int *err)
     }
 
     nf = count_fields(s, NULL);
-    
+
     for (i=0; i<nf && !*err; i++) {
 	s += strspn(s, " ");
 	len = strcspn(s, " ");
@@ -2919,7 +2919,7 @@ int *gretl_list_build (const char *s, const DATASET *dset, int *err)
  * @list: list to print.
  * @dset: dataset information.
  * @prn: gretl printing struct.
- * 
+ *
  * Prints to @prn the given @list of variables, by name
  * if @dset is non-NULL otherwise by ID number.
  */
@@ -2946,7 +2946,7 @@ void gretl_list_print (const int *list, const DATASET *dset,
 	    } else {
 		len += pprintf(prn, "%s ", dset->varname[li]);
 		if (len > testlen && i < list[0]) {
-		    pputs(prn, "\\\n "); 
+		    pputs(prn, "\\\n ");
 		    len = 1;
 		}
 	    }
@@ -2980,7 +2980,7 @@ int *varname_match_list (const DATASET *dset, const char *pattern,
 
     pspec = g_pattern_spec_new(pattern);
 
-    for (i=1; i<dset->v; i++) { 
+    for (i=1; i<dset->v; i++) {
 	if (fd == 0 || fd == series_get_stack_level(dset, i)) {
 	    if (g_pattern_match_string(pspec, dset->varname[i])) {
 		n++;
@@ -2995,7 +2995,7 @@ int *varname_match_list (const DATASET *dset, const char *pattern,
 	} else {
 	    int j = 1;
 
-	    for (i=1; i<dset->v; i++) { 
+	    for (i=1; i<dset->v; i++) {
 		if (fd == 0 || fd == series_get_stack_level(dset, i)) {
 		    if (g_pattern_match_string(pspec, dset->varname[i])) {
 			list[j++] = i;
@@ -3032,7 +3032,7 @@ int *ellipsis_list (const DATASET *dset, int v1, int v2, int *err)
 
     fd = gretl_function_depth();
 
-    for (i=v1; i<=v2; i++) { 
+    for (i=v1; i<=v2; i++) {
 	if (fd == 0 || fd == series_get_stack_level(dset, i)) {
 	    n++;
 	}
@@ -3045,7 +3045,7 @@ int *ellipsis_list (const DATASET *dset, int v1, int v2, int *err)
 	} else {
 	    int j = 1;
 
-	    for (i=v1; i<=v2; i++) { 
+	    for (i=v1; i<=v2; i++) {
 		if (fd == 0 || fd == series_get_stack_level(dset, i)) {
 		    list[j++] = i;
 		}
@@ -3057,7 +3057,7 @@ int *ellipsis_list (const DATASET *dset, int v1, int v2, int *err)
 }
 
 /**
- * list_from_matrix:
+ * gretl_list_from_vector:
  * @v: matrix (must be a vector).
  * @dset: pointer to dataset.
  * @err: location to receive error code.
@@ -3113,6 +3113,208 @@ int *gretl_list_from_vector (const gretl_matrix *v,
     return list;
 }
 
+static int colnames_ok_for_series (const char **S, int n)
+{
+    int i, j, err = 0;
+
+    for (i=0; i<n; i++) {
+	err = check_varname(S[i]);
+	if (!err && gretl_is_user_var(S[i])) {
+	    gretl_errmsg_sprintf("'%s': name conflicts with different type", S[i]);
+	    err = E_TYPES;
+	} else {
+	    for (j=0; j<n; j++) {
+		if (j != i && strcmp(S[j], S[i]) == 0) {
+		    gretl_errmsg_sprintf("'%s': name is not unique", S[i]);
+		    err = 1;
+		}
+	    }
+	}
+	if (err) {
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
+static int try_list_vname (char *chkname,
+			   const char *pfx,
+			   int j, int n)
+{
+    gchar *tmp = g_strdup_printf("%s%0*d", pfx, n, j);
+    int err = check_varname(tmp);
+
+    if (!err && gretl_is_user_var(tmp)) {
+	gretl_errmsg_sprintf("'%s': name conflicts with different type", tmp);
+	err = E_TYPES;
+    }
+    if (!err) {
+	strcpy(chkname, tmp);
+    }
+    g_free(tmp);
+
+    return err;
+}
+
+/**
+ * gretl_list_from_matrix:
+ * @X: matrix.
+ * @prefix: prefix for series names, or NULL.
+ * @dset: pointer to dataset.
+ * @err: location to receive error code.
+ *
+ * Tries to add the columns of @X to @dset as series, and
+ * if successful constructs a list holding the added series.
+ * numbers of series. This is possible only if the rows of
+ * @X can be matched to observations in @dset.
+ *
+ * Returns: allocated list, or NULL on failure.
+ */
+
+/* There's actually no possibility of overflow below */
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-overflow"
+#endif
+
+int *gretl_list_from_matrix (const gretl_matrix *X,
+			     const char *prefix,
+			     DATASET *dset,
+			     int *err)
+{
+    int *list = NULL;
+    const char **S = NULL;
+    int orig_v = dset->v;
+
+    if (gretl_is_null_matrix(X)) {
+	list = gretl_null_list();
+	if (list == NULL) {
+	    *err = E_ALLOC;
+	}
+	return list;
+    }
+
+    S = gretl_matrix_get_colnames(X);
+    if (S == NULL && prefix == NULL) {
+	*err = E_INVARG;
+    } else if (S != NULL) {
+	/* check the colnames */
+	if (!colnames_ok_for_series(S, X->cols)) {
+	    *err = E_INVARG;
+	}
+    } else {
+	/* check the prefix */
+	if (strlen(prefix) > VNAMELEN - 3) {
+	    *err = E_INVARG;
+	}
+    }
+
+    if (!*err) {
+	char chkname[VNAMELEN];
+	int mt1 = gretl_matrix_get_t1(X);
+	int mt2 = gretl_matrix_get_t2(X);
+	int s1 = 0, s2 = 0;
+	int n_add = X->cols;
+	int j, slen = 0;
+	int ok = 0;
+
+	if (mt2 > 0) {
+	    if (X->rows != mt2 - mt1 + 1) {
+		; /* time indices not usable! */
+	    } else if (mt2 < dset->t1 || mt1 > dset->t2) {
+		; /* no overlap of ranges */
+	    } else {
+		s1 = dset->t1 - mt1;
+		s2 = X->rows - s1;
+		ok = 1;
+	    }
+	} else if (X->rows == sample_size(dset)) {
+	    /* length matches current sample */
+	    s1 = 0;
+	    s2 = X->rows - 1;
+	    ok = 1;
+	} else if (X->rows == dset->n) {
+	    /* length matches full series length */
+	    s1 = dset->t1;
+	    s2 = dset->t2;
+	    ok = 1;
+	}
+	if (!ok) {
+	    gretl_errmsg_set("matrix to list: data ranges could not be matched");
+	    *err = E_DATA;
+	} else {
+	    list = gretl_list_new(X->cols);
+	    if (list == NULL) {
+		*err = E_ALLOC;
+	    }
+	}
+
+	if (S == NULL) {
+	    slen = (int) floor(log10(X->cols)) + 1;
+	    if (slen > 6) {
+		*err = E_DATA;
+	    }
+	}
+
+	/* first pass, check the putative series names */
+	for (j=0; j<X->cols && !*err; j++) {
+	    if (S != NULL) {
+		strcpy(chkname, S[j]);
+	    } else {
+		*err = try_list_vname(chkname, prefix, j+1, slen);
+	    }
+	    if (!*err && gretl_is_series(chkname, dset)) {
+		/* an existing series, decrement the count
+		   of series to be added to @dset
+		*/
+		n_add--;
+	    }
+	}
+
+	if (!*err && n_add > 0) {
+	    *err = dataset_add_NA_series(dset, n_add);
+	}
+	if (!*err) {
+	    int vnew = orig_v;
+	    int vj, t, s;
+
+	    for (j=0; j<X->cols && !*err; j++) {
+		if (S != NULL) {
+		    strcpy(chkname, S[j]);
+		} else if (prefix != NULL) {
+		    sprintf(chkname, "%s%0*d", prefix, slen, j+1);
+		}
+		vj = current_series_index(dset, chkname);
+		if (vj < 0) {
+		    vj = vnew++;
+		    strcpy(dset->varname[vj], chkname);
+		}
+		for (t=dset->t1, s=s1; t<=dset->t2 && s<=s2; t++, s++) {
+		    if (s < 0) {
+			dset->Z[vj][t] = NADBL;
+		    } else {
+			dset->Z[vj][t] = gretl_matrix_get(X, s, j);
+		    }
+		}
+		list[j+1] = vj;
+	    }
+	}
+    }
+
+    if (*err) {
+	dataset_drop_last_variables(dset, dset->v > orig_v);
+	free(list);
+	list = NULL;
+    }
+
+    return list;
+}
+
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)
+#pragma GCC diagnostic pop
+#endif
+
 /**
  * gretl_auxlist_from_vector:
  * @v: source vector.
@@ -3166,7 +3368,7 @@ int varname_match_any (const DATASET *dset, const char *pattern)
 
     pspec = g_pattern_spec_new(pattern);
 
-    for (i=1; i<dset->v; i++) { 
+    for (i=1; i<dset->v; i++) {
 	if (fd == 0 || fd == series_get_stack_level(dset, i)) {
 	    if (g_pattern_match_string(pspec, dset->varname[i])) {
 		ret = 1;
@@ -3179,7 +3381,3 @@ int varname_match_any (const DATASET *dset, const char *pattern)
 
     return ret;
 }
-
-
-
-

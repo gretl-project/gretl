@@ -2235,6 +2235,11 @@ double deriv_free_optimize (MaxMethod method,
     gretlopt opt = OPT_NONE;
     double ret = NADBL;
 
+    if (b->is_complex) {
+	*err = E_CMPLX;
+	return ret;
+    }
+
     u = umax_new(GRETL_TYPE_DOUBLE);
     if (u == NULL) {
 	*err = E_ALLOC;

@@ -593,7 +593,7 @@ int package_make_zipfile (const char *gfnname,
 			  PRN *prn)
 {
     char pkgbase[FILENAME_MAX];
-    char pkgname[VNAMELEN];
+    gchar *pkgname = NULL;
     gchar *origdir = NULL;
     gchar *tmp, *dotpath = NULL;
     int len, dir_made = 0;
@@ -630,8 +630,7 @@ int package_make_zipfile (const char *gfnname,
 	return E_DATA;
     }
 
-    *pkgname = '\0';
-    strncat(pkgname, tmp, len);
+    pkgname = g_strndup(tmp, len);
 
     /* record where we are now */
     origdir = g_get_current_dir();
@@ -746,6 +745,7 @@ int package_make_zipfile (const char *gfnname,
     }
 
     g_free(dotpath);
+    g_free(pkgname);
 
     return err;
 }

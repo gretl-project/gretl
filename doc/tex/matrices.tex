@@ -174,10 +174,10 @@ under certain conditions: the functions \texttt{diag, vec, vech,
 arguments is 0; and the function \texttt{nullspace} when its argument
 has full column rank.
 
-\section{Selecting sub-matrices}
+\section{Selecting submatrices}
 \label{sec:matrix-sub}
 
-You can select sub-matrices of a given matrix using the syntax
+You can select submatrices of a given matrix using the syntax
 
 \hspace{1em} \texttt{A[}\textsl{rows},\textsl{cols}\texttt{]}
 
@@ -219,18 +219,30 @@ OK to give just one index specifier and omit the comma. For example,
 \texttt{A[2]} selects the second element of \texttt{A} if \texttt{A}
 is a vector. Otherwise the comma is mandatory.
 
-In addition there is a pre-defined index specification, \texttt{diag},
-which selects the principal diagonal of a square matrix, as in
-\texttt{B[diag]}, where \texttt{B} is square.
+In addition there are some predefined index specifications,
+represented by the keywords \texttt{diag}, \texttt{lower},
+\texttt{upper}, \texttt{real} and \texttt{imag}. These imply specific
+row \textit{and} column selections, and therefore cannot be combined
+with any additional, comma-separated term.
 
-You can use selections of this sort on either the right-hand side of
-a matrix-generating formula or the left.  Here is an example of use of
-a selection on the right, to extract a $2\times 2$ submatrix $B$ from a
-$3\times 3$ matrix $A$:
+\begin{itemize}
+\item The \texttt{diag} specification selects the principal diagonal
+  of a matrix.
+\item \texttt{lower} and \texttt{upper} select, respectively, the
+  elements of a matrix below and those above the principal diagonal.
+\item \texttt{real} and \texttt{imag} are specific to complex matrices
+  and are described in the (forthcoming) chapter on that topic.
+\end{itemize}
+
+You can use submatrix selections on either the right-hand side of a
+matrix-generating formula or the left.  Here is an example of use of a
+selection on the right, to extract a $2\times 2$ submatrix $B$ from a
+$3\times 3$ matrix $A$, then the lower triangle of $A$:
 %
 \begin{code}
 matrix A = {1, 2, 3; 4, 5, 6; 7, 8, 9}
 matrix B = A[1:2,2:3]
+matrix C = A[lower]
 \end{code}
 %
 And here are examples of selection on the left.  The second line below
@@ -245,10 +257,32 @@ matrix d = {1, 1, 1}
 matrix A[diag] = d
 \end{code}
 
+When the \texttt{lower} and \texttt{upper} selections are used on the
+right, they yield a vector holding the elements in their scope. The
+ordering of the elements is column-major for \texttt{lower} but
+row-major for \texttt{upper}, as illustrated below for the
+$4 \times 4$ case.
+\begin{center}
+  \begin{tabular}{cccc}
+    $d$ & 1 & 2 & 3 \\
+    1 & $d$ & 4 & 5 \\
+    2 & 4 & $d$ & 6 \\
+    3 & 5 & 6 & $d$
+  \end{tabular}
+\end{center}
+This ensures that \texttt{lower} and \texttt{upper} produce the same
+result for a symmetric matrix.
+
+When \texttt{lower} and \texttt{upper} are used on the left, the
+replacement must be either (a) a vector of length equal to the number
+of elements in the selection or (b) a scalar value. In case (a) the
+elements of the target matrix are set in the order just described; in
+case (b) they are all set using the scalar.
+
 \section{Deleting rows or columns}
 \label{sec:neg-indices}
 
-A variant of sub-matrix notation is available for convenience in
+A variant of submatrix notation is available for convenience in
 dropping specified rows and/or columns from a matrix, namely giving
 negative values for the indices. Here is a simple example,
 %
@@ -283,7 +317,7 @@ matrix B = A[,-seq(3,7)]
 where \texttt{B} drops columns 3 to 7 from \texttt{A}. Second, use of
 negative indices is valid only on the right-hand side of a matrix
 calculation; there is no ``negative index'' equivalent of assignment
-to a sub-matrix, as in
+to a submatrix, as in
 %
 \begin{code}
 A[1:3,] = ones(3, cols(A))
@@ -613,7 +647,7 @@ or more matrices; these are:
 \begin{center}
 \begin{tabular}{ll}
 \texttt{eigensym} & Eigen-analysis of symmetric matrix \\
-\texttt{eigengen} & Eigen-analysis of general matrix \\
+\texttt{eiggen2}  & Eigen-analysis of general matrix \\
 \texttt{mols}     & Matrix OLS \\
 \texttt{qrdecomp} & QR decomposition \\
 \texttt{svd}      & Singular value decomposition (SVD) 
@@ -626,8 +660,7 @@ retrieved using pre-existing matrices, which are passed to the
 function as pointers (see \ref{sec:funscope}). If such values are not
 needed, the pointer may be substituted with the keyword \texttt{null}.
 
-The syntax for \texttt{qrdecomp}, \texttt{eigensym} and
-\texttt{eigengen} is of the form
+The syntax for \texttt{qrdecomp} and \texttt{eigensym} is of the form
 %
 \begin{code}
 matrix B = func(A, &C)
@@ -639,7 +672,7 @@ argument must be either the name of an existing matrix preceded by
 \verb+&+ (to indicate the ``address'' of the matrix in question), in
 which case an auxiliary result is written to that matrix, or the
 keyword \texttt{null}, in which case the auxiliary result is not
-produced, or is discarded.
+produced.
 
 In case a non-null second argument is given, the specified matrix will
 be over-written with the auxiliary result.  (It is not required that
@@ -652,7 +685,7 @@ $n$; if the eigenvectors are required, they are returned in an $n
 \times n$ matrix.  For example:
 %
 \begin{code}
-matrix V
+matrix V = {}
 matrix E = eigensym(M, &V)
 matrix E = eigensym(M, null)
 \end{code}
@@ -661,60 +694,35 @@ In the first case \texttt{E} holds the eigenvalues of \texttt{M} and
 \texttt{V} holds the eigenvectors.  In the second, \texttt{E} holds
 the eigenvalues but the eigenvectors are not computed.
 
-The function \texttt{eigengen} computes the eigenvalues, and
-optionally the eigenvectors, of a general $n \times n$ matrix.  The
-eigenvalues are returned directly in an $n \times 2$ matrix, the first
-column holding the real components and the second column the imaginary
-components.  
+The function \texttt{eiggen2} computes the eigenvalues, and optionally
+the right and/or left eigenvectors, of a general $n \times n$
+matrix.\footnote{The ``legacy'' function \texttt{eigengen} used to be
+  the way to do this prior to gretl 2019d.} Following the input matrix
+argument there are two slots for matrix-addresses, the first to
+retrieve the right eigenvectors and the second for the left.  Calls to
+this function should therefore conform to one of the following
+patterns.
+\begin{code}
+# get the eigenvalues only
+matrix E = eiggen2(M)
 
-If the eigenvectors are required (that is, if the second argument to
-\texttt{eigengen} is not \texttt{null}), they are returned in an $n
-\times n$ matrix. The column arrangement of this matrix is somewhat
-non-trivial: the eigenvectors are stored in the same order as the
-eigenvalues, but the real eigenvectors occupy one column, whereas
-complex eigenvectors take two (the real part comes first); the total
-number of columns is still $n$, because the conjugate eigenvector is
-skipped. Listing \ref{cmplx-evecs} provides a (hopefully) clarifying
-example (see also subsection \ref{sec:complex}).
+# get the right eigenvectors as well
+matrix V = {}
+matrix E = eiggen2(M, &V)
 
-\begin{script}[htbp]
-  \caption{Complex eigenvalues and eigenvectors}
-  \label{cmplx-evecs}
-\begin{scode}
-set seed 34756
+# get both sets of eigenvectors
+matrix V = {}
+matrix W = {}
+matrix E = eiggen2(M, &V, &W)
 
-matrix v
-A = mnormal(3,3)
+# get the left eigenvectors but not the right
+matrix W = {}
+matrix E = eiggen2(M, null, &W)
+\end{code}
 
-/* do the eigen-analysis */
-l = eigengen(A,&v)
-/* eigenvalue 1 is real, 2 and 3 are complex conjugates */
-print l
-print v
-
-/* 
-  column 1 contains the first eigenvector (real)
-*/
-
-B = A*v[,1]
-c = l[1,1] * v[,1]
-/* B should equal c */
-print B
-print c
-
-
-/* 
-  columns 2:3 contain the real and imaginary parts
-  of eigenvector 2
-*/
-
-B = A*v[,2:3]
-c = cmult(ones(3,1)*(l[2,]),v[,2:3])
-/* B should equal c */
-print B
-print c
-\end{scode}
-\end{script}
+The eigenvalues are returned directly in a complex $n$-vector. If the
+eigenvectors are wanted they are returned in a $n \times n$ complex
+matrix.
 
 The \texttt{qrdecomp} function computes the QR decomposition of an $m
 \times n$ matrix $A$: $A = QR$, where $Q$ is an $m \times n$
@@ -956,7 +964,7 @@ matrix v2 = m1.$vcv[1:2,1:2]
 %$
 The first command grabs the residuals from the last model; the second
 grabs the coefficient vector from model \texttt{m1}; and the third
-(which uses the mechanism of sub-matrix selection described above)
+(which uses the mechanism of submatrix selection described above)
 grabs a portion of the covariance matrix from model \texttt{m1}.
 
 If the model in question a VAR or VECM (only) \dollar{compan} and

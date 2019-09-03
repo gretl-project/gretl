@@ -43,6 +43,7 @@
  <gentext key="smatrix"       text="MAT"/>
  <gentext key="symmat"        text="MAT"/>
  <gentext key="pdmat"         text="MAT"/>
+ <gentext key="cmatrix"       text="MAT"/>
  <gentext key="matrixref"     text="reference to matrix"/>
  <gentext key="seriesref"     text="reference to series"/>
  <gentext key="bundleref"     text="reference to bundle"/>

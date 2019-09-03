@@ -1037,9 +1037,10 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	    return NULL;
 	}
     } else if (f == SAVE_AS_ITEM) {
-	if (!save_as_ok(r)) {
+	if (!save_as_ok(r) || (vwin->flags & VWIN_NO_SAVE)) {
 	    return NULL;
-	} else if (multiple_formats_ok(vwin) || (r == PRINT && vwin->data != NULL)) {
+	} else if (multiple_formats_ok(vwin) ||
+		   (vwin->flags & VWIN_MULTI_SERIES)) {
 	    func = G_CALLBACK(multi_save_as_callback);
 	}
     }

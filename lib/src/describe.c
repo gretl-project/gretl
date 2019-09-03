@@ -3988,7 +3988,7 @@ static gretl_matrix *gretl_matrix_pergm (const gretl_matrix *x, int m,
     gretl_matrix *p = NULL;
     gretl_matrix *f = NULL;
 
-    f = gretl_matrix_fft(x, err);
+    f = gretl_matrix_fft(x, 0, err);
     if (*err) {
 	return NULL;
     }

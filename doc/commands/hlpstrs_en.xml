@@ -43,6 +43,7 @@
  <gentext key="smatrix"       text="square matrix"/>
  <gentext key="symmat"        text="symmetric matrix"/>
  <gentext key="pdmat"         text="positive definite matrix"/>
+ <gentext key="cmatrix"       text="complex matrix"/>
  <gentext key="matrixref"     text="reference to matrix"/>
  <gentext key="seriesref"     text="reference to series"/>
  <gentext key="bundleref"     text="reference to bundle"/>

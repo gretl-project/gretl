@@ -57,6 +57,11 @@ int *gretl_list_from_vector (const gretl_matrix *v,
 int *gretl_auxlist_from_vector (const gretl_matrix *v, 
 				int *err);
 
+int *gretl_list_from_matrix (const gretl_matrix *X,
+			     const char *prefix,
+			     DATASET *dset,
+			     int *err);
+
 char *gretl_list_to_numeric_string (const int *list);
 
 char *gretl_list_to_string (const int *list, 

@@ -130,13 +130,14 @@ The escape sequences \verb|\n| (newline), \verb|\t| (tab), \verb|\v|
 print a literal percent sign, use \verb|%%|.
 
 Apart from those shown in the above example, recognized numeric
-formats are \verb|%e|, \verb|%E|, \verb|%f|, \verb|%g|, and \verb|%G|,
-in each case with the various modifiers available in C. The format
-\verb|%s| should be used for strings. As in C, numerical values that
-form part of the format (width and or precision) may be given directly
-as numbers, as in \verb|%10.4f|, or they may be given as variables. In
-the latter case, one puts asterisks into the format string and
-supplies corresponding arguments in order. For example,
+formats are \verb|%e|, \verb|%E|, \verb|%f|, \verb|%g|, \verb|%G| and
+\verb|%x|, in each case with the various modifiers available in C. The
+format \verb|%s| should be used for strings.
+As in C, numerical values that form part of the format (width and or
+precision) may be given directly as numbers, as in \verb|%10.4f|, or
+they may be given as variables. In the latter case, one puts asterisks
+into the format string and supplies corresponding arguments in
+order. For example,
 
 \begin{code}
   scalar width = 12 

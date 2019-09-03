@@ -7165,6 +7165,7 @@ void display_selected (void)
     if (!err) {
 	series_view *sview = multi_series_view_new(list);
 
+	preset_viewer_flag(VWIN_MULTI_SERIES);
 	view_buffer(prn, 78, 400, _("gretl: display data"),
 		    PRINT, sview);
     }

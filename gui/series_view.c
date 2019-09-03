@@ -581,22 +581,20 @@ int *series_view_get_list (windata_t *vwin)
 
 int has_sortable_data (windata_t *vwin)
 {
-    series_view *sview;
+    if (vwin != NULL && (vwin->flags & VWIN_MULTI_SERIES)) {
+	series_view *sv = vwin->data;
 
-    if (vwin == NULL || vwin->role != PRINT || vwin->data == NULL) {
+	return (sv != NULL && sv->list != NULL && sv->list[0] < 5);
+    } else {
 	return 0;
     }
-
-    sview = vwin->data;
-
-    return (sview->list != NULL && sview->list[0] < 5);
 }
 
 int can_format_data (windata_t *vwin)
 {
     if (vwin->role == VIEW_SERIES || vwin->role == VIEW_MODELTABLE) {
 	return 1;
-    } else if (vwin->role == PRINT && vwin->data != NULL) {
+    } else if (vwin->flags & VWIN_MULTI_SERIES) {
 	series_view *sview = vwin->data;
 
 	return (sview->list != NULL);

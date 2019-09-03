@@ -315,18 +315,11 @@ static void diffuse_Pini (kalman *K)
 
 static int F_out_of_bounds (kalman *K)
 {
-    gretl_matrix *Fcpy;
     gretl_matrix *evals;
     double r, c, x;
     int i, err = 0;
 
-    Fcpy = gretl_matrix_copy(K->F);
-    if (Fcpy == NULL) {
-	return E_ALLOC;
-    }
-
-    evals = gretl_general_matrix_eigenvals(Fcpy, 0, &err);
-    gretl_matrix_free(Fcpy);
+    evals = gretl_general_matrix_eigenvals(K->F, &err);
 
     for (i=0; i<evals->rows && !err; i++) {
 	r = gretl_matrix_get(evals, i, 0);
@@ -2122,7 +2115,7 @@ static int kalman_bundle_recheck_matrices (kalman *K, PRN *prn)
 	    err = construct_Pini(K);
 	}
     }
-    
+
     return err;
 }
 
@@ -2210,7 +2203,7 @@ int kalman_bundle_run (gretl_bundle *b, PRN *prn, int *errp)
 	if (K->LL == NULL) {
 	    err = E_ALLOC;
 	}
-    }    
+    }
 
     if (!err) {
 	err = kalman_forecast(K, prn);

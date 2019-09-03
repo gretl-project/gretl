@@ -172,7 +172,7 @@ static BBBlkAttr *bb_blk_attr_new (guint32 blk)
 static guint8 *get_block_ptr (MsOle *f, BLP b)
 {
     BBBlkAttr *attr, *tmp, *min;
-    size_t offset;
+    size_t offset, rd;
     guint32 i, blks;
 
     g_assert(f);
@@ -189,35 +189,40 @@ static guint8 *get_block_ptr (MsOle *f, BLP b)
     }
 
     /* LRU strategy */
-    min  = NULL;
+    min = NULL;
     blks = 0;
     for (i=0; i<f->bbattr->len; i++) {
 	tmp = g_ptr_array_index (f->bbattr, i);
 	if (tmp->data) {
 	    blks++;
-	    if (!min)
+	    if (min == NULL) {
 		min = tmp;
-	    else if (tmp->usage < min->usage)
+	    } else if (tmp->usage < min->usage) {
 		min = tmp;
+	    }
 	}
 	tmp->usage = (guint32) tmp->usage * 0.707;
     }
-    if (blks < MAX_CACHED_BLOCKS)
-	min = 0;
+    if (blks < MAX_CACHED_BLOCKS) {
+	min = NULL;
+    }
 
     g_assert(!attr->data);
-    if (min) {
+    if (min != NULL) {
 	g_assert(min->data);
-	attr->data  = min->data;
-	min->data   = 0;
-	min->usage  = 0;
+	attr->data = min->data;
+	min->data  = 0;
+	min->usage = 0;
     } else {
 	attr->data = g_new(guint8, BB_BLOCK_SIZE);
     }
 
-    offset = (b+1)*BB_BLOCK_SIZE;
+    offset = (b+1) * BB_BLOCK_SIZE;
     lseek(f->file_des, offset, SEEK_SET);
-    read(f->file_des, attr->data, BB_BLOCK_SIZE);
+    rd = read(f->file_des, attr->data, BB_BLOCK_SIZE);
+    if (rd != BB_BLOCK_SIZE) {
+	fprintf(stderr, "ms-ole, get_block_ptr: data read failed\n");
+    }
     attr->usage = 1;
 
     return attr->data;
