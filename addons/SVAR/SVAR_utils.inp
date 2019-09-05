@@ -96,7 +96,6 @@ function scalar has_unit_diag(matrix Rd)
 
     matrix e
     mols(test, Rd', &e)
-    # ret = maxr(sumc(e.*e)) < 1.0e-12
 
     return maxr(sumc(e.*e)) < 1.0e-12 # ret
 end function
@@ -106,7 +105,6 @@ function scalar has_free_diag(matrix Rd)
     n = sqrt(n2)
     matrix e = 1 + seq(0,n2-1,n+1)
     matrix test = Rd[,e]
-    # ret = sumc(abs(test)) < 1.0e-12
     return ( sumc(abs(test)) < 1.0e-12 ) # ret
 end function
 
@@ -195,7 +193,6 @@ end function
    renamed because its name was misleading (to Sven at least).
    The new name contains 'add' because the Psi input is added
    to the A input.
-   (Call changes needed only in SVAR_boot.inp.)
 */
 function scalar add_and_smash(matrix *A, const matrix Psi)
 

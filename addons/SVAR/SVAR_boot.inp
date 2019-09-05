@@ -151,11 +151,15 @@ end function
 # These private functions introduced in Aug/Sep 2019
 # for general bootstrap
 
-function matrix prepres(const matrix E,
+function matrix prepres(matrix E,
                         int boottype[1:4:1] "bootstrap type" \
                         {"resampling", "wildN", "wildr", "wildM"})
     # The input is demeaned (column-wise) only for
-    # the resampling (type 1).
+    # the resampling (type 1). It isn't done together with the 
+	# new draws to avoid repeating it many times.
+
+	# (Cannot have 'const matrix E' as gretl versions <2019d would 
+	#  crash when doing 'return E'.)
 
     if boottype == 1
         return cdemean(E)
@@ -229,6 +233,11 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
     scalar n2 = n*n
     obj.nboot = rep         # record bootstrap details
     obj.boot_alpha = alpha  # into original model
+	
+	# define default for bias correction iterations
+	if obj.biascorr && !inbundle(obj, "BCiter")
+		obj.BCiter = 1024
+	endif
 
     /* --- constraints-related matrices ---------------------*/
     matrix Rd1 = obj.Rd1
@@ -247,22 +256,30 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
     matrix bmu = calc_bmu(obj)
 
     /*
-       the matrix "bands" will contain the bootstrap results:
+       the matrix "bootirfs" will contain the bootstrap results:
        each bootstrap replication on one row; each row contains
        the vectorisation of the complete IRF matrix
     */
-    matrix bands = zeros(rep, (h+1) * n2)
+    matrix bootirfs = zeros(rep, (h+1) * n2)
 
 
     bundle bobj = obj       # store a copy of the model for bootstrap
 
     # FIXME: Why is this if-block needed??? Where is it used?
-    if obj.ncumul > 0
-        matrix to_cum = obj.cumul
-        matrix tmp = zeros(n, n)
-        tmp[to_cum,] = 1
-        sel = selifr(transp(seq(1, n2)), vec(tmp))	# was: n*n
-    endif
+	/* Partial answer:
+		'sel' is currently calculated in doIRF (?), inside the 
+		bootstrap loop. It'd be slightly more efficient to pre-
+		calculate it here, e.g. storing it in obj.cumsel.
+		However, the cumulated IRF would also be needed when no 
+		bootstrap is done. So it seems 'sel' must be calc'ed 
+		somewhere else...	
+	*/
+#     if obj.ncumul > 0
+#         matrix to_cum = obj.cumul
+#         matrix tmp = zeros(n, n)
+#         tmp[to_cum,] = 1
+#         sel = selifr(transp(seq(1, n2)), vec(tmp))	# was: n*n
+#     endif
 
     # Spar_mat: the result matrix (IRFs further below)
     if (type > 2) || (rows(obj.Rd1l) || obj.calc_lr )
@@ -278,7 +295,7 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
     if BIASCORR
         matrix Psi = {}
         # hardcoded num of iterations here
-        matrix ABC = bias_correction(1000, obj.VARpar, bmu, \
+        matrix ABC = bias_correction(obj.BCiter, obj.VARpar, bmu, \
           obj.E, obj.X, start, &Psi, obj.boottype)
     endif
 
@@ -397,7 +414,7 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
 
         if !errcode && rows(K) == n
             doIRF(&bobj)
-            bands[i,] = vec(bobj.IRFs)'
+            bootirfs[i,] = vec(bobj.IRFs)'
             i++
         else
             failed++
@@ -412,9 +429,9 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
     endif
 
     # quantiles of bootstrapped IRFs used in graphs
-    matrix locb = quantile(bands, 1 - alpha)
-    matrix hicb = quantile(bands, alpha)
-    matrix mdn  = quantile(bands, 0.5)
+    matrix locb = quantile(bootirfs, 1 - alpha)
+    matrix hicb = quantile(bootirfs, alpha)
+    matrix mdn  = quantile(bootirfs, 0.5)
 
     bundle bootdata = null
     bootdata.rep   = rep             # no of replications

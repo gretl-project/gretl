@@ -94,7 +94,8 @@ function string IRFgrph(matrix IRFmat, int snum, int vnum, scalar scale, \
             printf "set key below\n"
         endif
         printf "set style fill solid 0.125\n"
-        printf "plot '-' using 1:2:3 w filledcurve t 'Bstrap %d%% CI', \\\n", floor(100*alpha)
+        printf "plot '-' using 1:2:3 w filledcurve t "
+		printf "'Bstrap %d%% CI', \\\n", floor(100*(2*alpha - 1)) # was: floor(100*alpha)
         printf "'-' w l lw 1 lc 1 t 'Bstrap median', \\\n"
         printf "'-' w l lw 2 lc -1 t 'IRF'\n"
         loop i=1..h -q
