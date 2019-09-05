@@ -159,7 +159,9 @@ void dataset_menubar_state (gboolean s)
     flip(mdata->ui, "/menubar/File/SaveData", s);
     flip(mdata->ui, "/menubar/File/SaveDataAs", s);
     flip(mdata->ui, "/menubar/File/ExportData", s);
+#ifdef ENABLE_MAILER
     flip(mdata->ui, "/menubar/File/MailData", s);
+#endif
     flip(mdata->ui, "/menubar/Data", s);
     flip(mdata->ui, "/menubar/Add", s);
     flip(mdata->ui, "/menubar/Sample", s);
