@@ -1,67 +1,67 @@
 function void doIRF(bundle *SVARobj)
-  /* 
+/*
    constructs the structural VMA representation. Note
    that the companion matrix is never used explicitely;
 
-   The output is not returned by the function, but rather 
+   The output is not returned by the function, but rather
    put into the bundle under the "IRFs" key.
-  */
-  scalar type = SVARobj.type
-  matrix varA = SVARobj.VARpar
-  scalar H = SVARobj.horizon + 1
-  scalar n = SVARobj.n
+    */
+    scalar type = SVARobj.type
+    matrix varA = SVARobj.VARpar
+    scalar H = SVARobj.horizon + 1
+    scalar n = SVARobj.n
 
-  if (type == 1) || (type == 2) || (type == 4)
-    matrix C = SVARobj.C	# was: SVARobj.S1
-  elif type == 3
-    if inbundle(SVARobj, "C")	# maybe not yet computed
-      matrix C = SVARobj.C
-    else
-      matrix C = SVARobj.S1 \ SVARobj.S2 
-    endif      
-  endif
-
-  matrix ret = zeros(H,n*n)
-  scalar np = SVARobj.p * n
-  matrix tmp = I(np)
-  matrix prd = zeros(np,np)
-
-  loop i=1..H --quiet
-    ret[i,] = vec(tmp[1:n,1:n] * C)'
-    if (np>n)
-      prd[n+1:np, ] = tmp[1:np-n, ]
+    if (type == 1) || (type == 2) || (type == 4)
+        matrix C = SVARobj.C	# was: SVARobj.S1
+    elif type == 3
+        if inbundle(SVARobj, "C")	# maybe not yet computed
+            matrix C = SVARobj.C
+        else
+            matrix C = SVARobj.S1 \ SVARobj.S2
+        endif
     endif
-    prd[1:n,] = varA * tmp
-    tmp = prd
-  endloop
 
-  if SVARobj.ncumul > 0
-    matrix to_cum = SVARobj.cumul
-    tmp = zeros(n,n)
-    tmp[to_cum,] = 1
-    sel = selifr(transp(seq(1,n*n)), vec(tmp))
-    ret[, sel] = cum(ret[, sel])
-  endif
+    matrix ret = zeros(H,n*n)
+    scalar np = SVARobj.p * n
+    matrix tmp = I(np)
+    matrix prd = zeros(np,np)
 
-  SVARobj.IRFs = ret
+    loop i=1..H --quiet
+        ret[i,] = vec(tmp[1:n,1:n] * C)'
+        if (np>n)
+            prd[n+1:np, ] = tmp[1:np-n, ]
+        endif
+        prd[1:n,] = varA * tmp
+        tmp = prd
+    endloop
+
+    if SVARobj.ncumul > 0
+        matrix to_cum = SVARobj.cumul
+        tmp = zeros(n,n)
+        tmp[to_cum,] = 1
+        sel = selifr(transp(seq(1,n*n)), vec(tmp))
+        ret[, sel] = cum(ret[, sel])
+    endif
+
+    SVARobj.IRFs = ret
 end function
 
 ##############
 
 function matrix FEVD(bundle *SVARobj)
-  n = SVARobj.n
-  h = SVARobj.horizon + 1
-  sIRF = SVARobj.IRFs
+    n = SVARobj.n
+    h = SVARobj.horizon + 1
+    sIRF = SVARobj.IRFs
 
-  matrix ret = zeros(h, n*n)
-  ctmp = cum(sIRF .* sIRF)
+    matrix ret = zeros(h, n*n)
+    ctmp = cum(sIRF .* sIRF)
 
-  loop i=1..h --quiet
-    tmp = mshape(ctmp[i,],n,n)'
-    ret[i,] = vec(tmp ./ sumc(tmp))'
-  endloop
+    loop i=1..h --quiet
+        tmp = mshape(ctmp[i,],n,n)'
+        ret[i,] = vec(tmp ./ sumc(tmp))'
+    endloop
 
-  return ret
+    return ret
 end function
 
 
@@ -69,114 +69,114 @@ end function
 ### meant to be used by the user.
 
 function series GetShock(bundle *SVARobj, int i)
-  series ret = NA
-  scalar n = SVARobj.n
-  
-  if (i <= n) && (i > 0) 
-    scalar type = SVARobj.type
-    if (type == 1) || (type == 2) || (type == 4)
-      matrix C = SVARobj.C  # was: SVARobj.S1
-    elif type == 3
-      if inbundle(SVARobj, "C")	# maybe not yet computed
-        matrix C = SVARobj.C
-      else
-        matrix C = SVARobj.S1 \ SVARobj.S2 
-      endif      
+    series ret = NA
+    scalar n = SVARobj.n
+
+    if (i <= n) && (i > 0)
+        scalar type = SVARobj.type
+        if (type == 1) || (type == 2) || (type == 4)
+            matrix C = SVARobj.C  # was: SVARobj.S1
+        elif type == 3
+            if inbundle(SVARobj, "C")	# maybe not yet computed
+                matrix C = SVARobj.C
+            else
+                matrix C = SVARobj.S1 \ SVARobj.S2
+            endif
+        endif
+
+        matrix iC = inv(C')
+        scalar extra = $nobs - rows(SVARobj.E)
+        if extra > 0
+            set warnings off
+            matrix tmp = ones(extra,1) .* NA
+        else
+            matrix tmp = {}
+        endif
+        tmp |= SVARobj.E * iC[,i]
+        series ret = tmp
+
+        snames = SVARobj.snames # strings array?
+        string vlab = snames[i]
+
+        setinfo ret --description="@vlab"
     endif
 
-    matrix iC = inv(C')
-    scalar extra = $nobs - rows(SVARobj.E)
-    if extra > 0
-      set warnings off
-      matrix tmp = ones(extra,1) .* NA
-    else
-      matrix tmp = {}
-    endif
-    tmp |= SVARobj.E * iC[,i]
-    series ret = tmp
-
-    snames = SVARobj.snames # strings array?
-    string vlab = snames[i]
-          
-    setinfo ret --description="@vlab"    
-  endif
-  
-  return ret
+    return ret
 end function
 
 #######################
 
 function list SVAR_hd(bundle *Mod, int nv)
 
-  list ret = null
-  loop foreach i n p t1 t2 type --quiet
-    scalar $i = Mod.$i
-  endloop
+    list ret = null
+    loop foreach i n p t1 t2 type --quiet
+        scalar $i = Mod.$i
+    endloop
 
-  if nv<0 && nv>n 
-    printf "Hm. There are %d variables in the model. You asked for no. %d\n", n, nv
-    # (And yno doesn't exist?)
-    return ret
-  endif
-
-  # compute the exogenous part
-  if (type < 4)
-    # this is easy
-    matrix m = Mod.X * Mod.mu
-  else
-    # here we have to take into account the "5 cases"
-    scalar dcase = Mod.jcase
-    scalar T    = Mod.T
-    matrix mreg = (dcase == 1) ? {} : ones(T,1)
-    if dcase > 3
-      matrix mreg ~= seq(1,T)'
+    if nv<0 && nv>n
+        printf "Hm. There are %d variables in the model. You asked for no. %d\n", n, nv
+        # (And yno doesn't exist?)
+        return ret
     endif
 
-    # printf "%8.3f\n", mreg
-    # printf "%8.3f\n", Mod.X
-    # printf "%8.3f\n", Mod.mu
-
-    matrix m = (mreg ~ Mod.X) * Mod.mu
-  endif
-
-  matrix E = Mod.E 
-  matrix VARpar = Mod.VARpar
-  if (type == 1) || (type == 2) || (type == 4)
-    matrix C = Mod.C
-  elif type == 3
-    if inbundle(Mod, "C")
-      matrix C = Mod.C
+    # compute the exogenous part
+    if (type < 4)
+        # this is easy
+        matrix m = Mod.X * Mod.mu
     else
-      matrix C = Mod.S1 \ Mod.S2
+        # here we have to take into account the "5 cases"
+        scalar dcase = Mod.jcase
+        scalar T    = Mod.T
+        matrix mreg = (dcase == 1) ? {} : ones(T,1)
+        if dcase > 3
+            matrix mreg ~= seq(1,T)'
+        endif
+
+        # printf "%8.3f\n", mreg
+        # printf "%8.3f\n", Mod.X
+        # printf "%8.3f\n", Mod.mu
+
+        matrix m = (mreg ~ Mod.X) * Mod.mu
     endif
-  endif
 
-  matrix iC = inv(C)
-  strings Ynames = Mod.Ynames
-  strings snames = Mod.snames
-  string yn = Ynames[nv]
+    matrix E = Mod.E
+    matrix VARpar = Mod.VARpar
+    if (type == 1) || (type == 2) || (type == 4)
+        matrix C = Mod.C
+    elif type == 3
+        if inbundle(Mod, "C")
+            matrix C = Mod.C
+        else
+            matrix C = Mod.S1 \ Mod.S2
+        endif
+    endif
 
-  smpl t1 t2
-  if cols(m)>0
-    Xdet = varsimul(VARpar, m[p+1:,], Mod.Y[1:p,])
-  else
-    Xdet = varsimul(VARpar, zeros(Mod.T-p,n), Mod.Y[1:p,])
-  endif
+    matrix iC = inv(C)
+    strings Ynames = Mod.Ynames
+    strings snames = Mod.snames
+    string yn = Ynames[nv]
 
-  # printf "nobs = %d, rows(Xdet) = %d\n", $nobs, rows(Xdet)
+    smpl t1 t2
+    if cols(m)>0
+        Xdet = varsimul(VARpar, m[p+1:,], Mod.Y[1:p,])
+    else
+        Xdet = varsimul(VARpar, zeros(Mod.T-p,n), Mod.Y[1:p,])
+    endif
 
-  ret += genseries( sprintf("hd_%s_det", yn), Xdet[,nv])
+    # printf "nobs = %d, rows(Xdet) = %d\n", $nobs, rows(Xdet)
 
-  # the structural shocks
-  matrix U = E * iC'
-  rotVARpar = iC * Mod.VARpar * (I(p) ** C)    
+    ret += genseries( sprintf("hd_%s_det", yn), Xdet[,nv])
 
-  loop i=1..n --quiet
-    a = (seq(1,n) .= i)
-    W = varsimul(rotVARpar, U .* a, zeros(p,n)) * C'
-    #printf "U[$i]:\n%8.3f\n", W[1:10,]
-    ret += genseries(sprintf("hd_%s_%s", yn, snames[i]), W[,nv])
-  endloop
+    # the structural shocks
+    matrix U = E * iC'
+    rotVARpar = iC * Mod.VARpar * (I(p) ** C)
 
-  return ret
+    loop i=1..n --quiet
+        a = (seq(1,n) .= i)
+        W = varsimul(rotVARpar, U .* a, zeros(p,n)) * C'
+        #printf "U[$i]:\n%8.3f\n", W[1:10,]
+        ret += genseries(sprintf("hd_%s_%s", yn, snames[i]), W[,nv])
+    endloop
+
+    return ret
 end function
