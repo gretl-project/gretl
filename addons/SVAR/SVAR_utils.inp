@@ -6,7 +6,7 @@ function strings basename(string fn)
     string base = regsub(fn, "(.*)\.([^\.]*)", "\1")
     string ext = fn + (strlen(base) + 1)
     return defarray(base, ext)
-end function 
+end function
 
 ###########################
 
@@ -14,18 +14,18 @@ function scalar range(scalar a, scalar n, scalar *n0, scalar *n1)
     # this is used in the plotting function to have
     # 0 as a synonym for "all"
     #
-    # The flipping of the shock by passing a negative number 
+    # The flipping of the shock by passing a negative number
     # is then not possible to specify; users have to do it explicitly
     # in their own loop then.
-    
+
     if a != 0
-	ret = 0
-	n0 = a
-	n1 = a
+        ret = 0
+        n0 = a
+        n1 = a
     else
-	ret = 1
-	n0 = 1
-	n1 = n
+        ret = 1
+        n0 = 1
+        n1 = n
     endif
     return ret
 end function
@@ -33,188 +33,188 @@ end function
 # ---------------------------
 
 function scalar max_eval(matrix A)
-  n = rows(A)
-  p = cols(A)/n
-  matrix compan = p==1 ? A : A | (I(n*(p-1)) ~ zeros(n*(p-1), n))  
-  matrix lambda = eigengen(compan)
-  scalar maxmod = maxc(sumr(lambda.^2))
-  return maxmod
+    n = rows(A)
+    p = cols(A)/n
+    matrix compan = p==1 ? A : A | (I(n*(p-1)) ~ zeros(n*(p-1), n))
+    matrix lambda = eigengen(compan)
+    scalar maxmod = maxc(sumr(lambda.^2))
+    return maxmod
 end function
 
 /* ------------------------------------------------------------------ */
 
 function list determ(list X, bool cnst, bool trnd, bool seas)
-  list ret = cnst ? const : null 
-    
-  if trnd
-    ret += time
-  endif
-    
-  if seas
-    ret += seasonals(0, 1) # centered
-  endif
-  
-  # stick together deterministics and other exog.
-  ret = ret || X
-  return ret
+    list ret = cnst ? const : null
+
+    if trnd
+        ret += time
+    endif
+
+    if seas
+        ret += seasonals(0, 1) # centered
+    endif
+
+    # stick together deterministics and other exog.
+    ret = ret || X
+    return ret
 end function
 
 
 function matrix vecm_det(int T, int dcase)
-  # build the deterministic matrix for the VECM; if alpha is
-  # empty, it will be estimated via ols later
+    # build the deterministic matrix for the VECM; if alpha is
+    # empty, it will be estimated via ols later
 
-  # deterministics
-  # note that in the "even cases" (restr. const or trend)
-  # the restricted term is _not_ included in x, since its
-  # parameter will be recovered later via alpha*beta
-    
-  matrix mreg = (dcase < 3) ? {} : ones(T,1)
-  if dcase == 5
-    matrix mreg ~= seq(1,T)'
-  endif
+    # deterministics
+    # note that in the "even cases" (restr. const or trend)
+    # the restricted term is _not_ included in x, since its
+    # parameter will be recovered later via alpha*beta
 
-  return mreg
+    matrix mreg = (dcase < 3) ? {} : ones(T,1)
+    if dcase == 5
+        matrix mreg ~= seq(1,T)'
+    endif
+
+    return mreg
 end function
-  
+
 #################
 
 function matrix N2_ify(matrix A)
-  n2 = rows(A) 
-  n = int(sqrt(n2))
-  k = cols(A)
-  matrix e = vec(transp(mshape(seq(1,n2),n,n)))
-  return A + A[e,1:k] 
+    n2 = rows(A)
+    n = int(sqrt(n2))
+    k = cols(A)
+    matrix e = vec(transp(mshape(seq(1,n2),n,n)))
+    return A + A[e,1:k]
 end function
 
 function scalar has_unit_diag(matrix Rd)
-  ret = 0
-  n2 = cols(Rd) - 1
-  n = sqrt(n2)
-  matrix test = transp(seq(0,n2-1)) .= seq(0,n2-1,n+1)
-  test |= ones(1,n)
+    ret = 0
+    n2 = cols(Rd) - 1
+    n = sqrt(n2)
+    matrix test = transp(seq(0,n2-1)) .= seq(0,n2-1,n+1)
+    test |= ones(1,n)
 
-  matrix e
-  mols(test, Rd', &e)
-  # ret = maxr(sumc(e.*e)) < 1.0e-12
+    matrix e
+    mols(test, Rd', &e)
+    # ret = maxr(sumc(e.*e)) < 1.0e-12
 
-  return maxr(sumc(e.*e)) < 1.0e-12 # ret
+    return maxr(sumc(e.*e)) < 1.0e-12 # ret
 end function
 
 function scalar has_free_diag(matrix Rd)
-  n2 = cols(Rd) - 1
-  n = sqrt(n2)
-  matrix e = 1 + seq(0,n2-1,n+1)
-  matrix test = Rd[,e]
-  # ret = sumc(abs(test)) < 1.0e-12
-  return ( sumc(abs(test)) < 1.0e-12 ) # ret
+    n2 = cols(Rd) - 1
+    n = sqrt(n2)
+    matrix e = 1 + seq(0,n2-1,n+1)
+    matrix test = Rd[,e]
+    # ret = sumc(abs(test)) < 1.0e-12
+    return ( sumc(abs(test)) < 1.0e-12 ) # ret
 end function
 
 function matrix mat_exp(matrix theta, matrix Ss, bool force_pos[0])
-  # FIXME: force_pos switch is not used currently (commented out below)
-  
-  # we don't check for conformability, but 
-  # cols(Ss) should be equal to rows(theta)+1
+    # FIXME: force_pos switch is not used currently (commented out below)
 
-  n2 = rows(Ss) 
-  n = int(sqrt(n2))
-  k = cols(Ss) - 1
-  matrix C = (k>0) ? ( Ss[,1:k]*theta + Ss[,k+1] ) : Ss
+    # we don't check for conformability, but
+    # cols(Ss) should be equal to rows(theta)+1
 
-  C = mshape(C,n,n)
+    n2 = rows(Ss)
+    n = int(sqrt(n2))
+    k = cols(Ss) - 1
+    matrix C = (k>0) ? ( Ss[,1:k]*theta + Ss[,k+1] ) : Ss
 
-  /*
-     if force_pos
-     neg = (diag(C)') .< 0
-     pos = !neg
-     C = C .* (pos - neg)
-     endif
-  */
-  return C 
+    C = mshape(C,n,n)
+
+    /*
+       if force_pos
+       neg = (diag(C)') .< 0
+       pos = !neg
+       C = C .* (pos - neg)
+       endif
+    */
+    return C
 end function
 
 function void unscramble_dat(matrix *dat, matrix *Sigma, matrix *Ss)
-  n2 = rows(dat) 
-  n = int(sqrt(n2))
-  k = cols(dat)
+    n2 = rows(dat)
+    n = int(sqrt(n2))
+    k = cols(dat)
 
-  Sigma = mshape(dat[,1],n,n)
-  Ss = dat[,2:k]
+    Sigma = mshape(dat[,1],n,n)
+    Ss = dat[,2:k]
 end function
 
 
 function void maybe_flip_columns(matrix C, matrix *X)
 /*
    the objective here is to make X as similar as possible to C
-   by flipping the sign of the columns. Used for bootstrapping, 
+   by flipping the sign of the columns. Used for bootstrapping,
    to have IRFs with comparable signs.
-  */
-  n = rows(C)
-  matrix sel = seq(1,n)
-  matrix plus = sumc((C + X).^2)
-  matrix minus = sumc((C - X).^2)
+    */
+    n = rows(C)
+    matrix sel = seq(1,n)
+    matrix plus = sumc((C + X).^2)
+    matrix minus = sumc((C - X).^2)
 
-  matrix flip = plus .< minus
-  if sumr(flip) > 0
-    sel = selifc(sel, flip)
-    X[,sel] = -X[,sel] 
-  endif
+    matrix flip = plus .< minus
+    if sumr(flip) > 0
+        sel = selifc(sel, flip)
+        X[,sel] = -X[,sel]
+    endif
 end function
 
 function void printStrMat(matrix X, matrix V, string name)
-  n = rows(X)
-  matrix x = vec(X)
+    n = rows(X)
+    matrix x = vec(X)
 
-  matrix cfse = vec(X)
-  matrix se = sqrt(diag(V))
-  
-  matrix numzero = selifr(seq(1,rows(se))', (se .< 1.0e-15))
-  if rows(numzero) > 1
-    se[numzero] = 0.0
-  endif
-    
-  cfse ~= se
-  string parnames = ""
+    matrix cfse = vec(X)
+    matrix se = sqrt(diag(V))
 
-  loop j=1..n --quiet
-    loop i=1..n --quiet
-      sprintf tmpstr "%s[%2d;%2d]", name, i, j
-      parnames += tmpstr
-      if (j<n) || (i<n)
-        parnames += ","
-      endif
+    matrix numzero = selifr(seq(1,rows(se))', (se .< 1.0e-15))
+    if rows(numzero) > 1
+        se[numzero] = 0.0
+    endif
+
+    cfse ~= se
+    string parnames = ""
+
+    loop j=1..n --quiet
+        loop i=1..n --quiet
+            sprintf tmpstr "%s[%2d;%2d]", name, i, j
+            parnames += tmpstr
+            if (j<n) || (i<n)
+                parnames += ","
+            endif
+        endloop
     endloop
-  endloop
 
-  modprint cfse parnames
+    modprint cfse parnames
 end function
 
 
 # --------------------------
-/* This function was called smash_unstable_roots(), 
+/* This function was called smash_unstable_roots(),
    renamed because its name was misleading (to Sven at least).
    The new name contains 'add' because the Psi input is added
-   to the A input. 
-   (Call changes needed only in SVAR_boot.inp.) 
+   to the A input.
+   (Call changes needed only in SVAR_boot.inp.)
 */
 function scalar add_and_smash(matrix *A, const matrix Psi)
 
-  matrix Ab = A + Psi
-  # now check stationarity
-  scalar maxmod = max_eval(Ab)
+    matrix Ab = A + Psi
+    # now check stationarity
+    scalar maxmod = max_eval(Ab)
 
-  h = 0.99
-  H = 1
-  maxiter = 1000
-  iter = 0
-  loop while (maxmod > 0.9999) && (iter < maxiter) --quiet
-    iter++
-    Ab = A + H .* Psi
-    maxmod = max_eval(Ab)
-    H *= h
-    # printf "H = %g\n", H
-  endloop
-  A = Ab
-  H = (iter >= maxiter) ? NA : H
-  return H
+    h = 0.99
+    H = 1
+    maxiter = 1000
+    iter = 0
+    loop while (maxmod > 0.9999) && (iter < maxiter) --quiet
+        iter++
+        Ab = A + H .* Psi
+        maxmod = max_eval(Ab)
+        H *= h
+        # printf "H = %g\n", H
+    endloop
+    A = Ab
+    H = (iter >= maxiter) ? NA : H
+    return H
 end function

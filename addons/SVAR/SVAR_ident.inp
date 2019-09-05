@@ -1,279 +1,279 @@
 function matrices SampleMatrices(matrix Ra, matrix da, matrix Rb, matrix db)
-  /* 
-     Returns an array with A and B evaluated at a random point 
-     in the parameter space (useful for checking the constraint
-     matrices).
+/*
+   Returns an array with A and B evaluated at a random point
+   in the parameter space (useful for checking the constraint
+   matrices).
 
-     Parameters: Ra, da, Rb, db = constraint matrices;
-  */
+   Parameters: Ra, da, Rb, db = constraint matrices;
+    */
 
-  n = sqrt(cols(Ra | Rb))
-  matrices ret
+    n = sqrt(cols(Ra | Rb))
+    matrices ret
 
-  matrix tmp = imp2exp(Ra ~ da)
-  if cols(tmp) > 1
-      tmp *= muniform(cols(tmp)-1,1) | 1
-  endif
-  ret += mshape(tmp,n,n)
+    matrix tmp = imp2exp(Ra ~ da)
+    if cols(tmp) > 1
+        tmp *= muniform(cols(tmp)-1,1) | 1
+    endif
+    ret += mshape(tmp,n,n)
 
-  matrix tmp = imp2exp(Rb ~ db)
-  if cols(tmp) > 1
-      tmp *= muniform(cols(tmp)-1,1) | 1
-  endif
-  ret += mshape(tmp,n,n)
+    matrix tmp = imp2exp(Rb ~ db)
+    if cols(tmp) > 1
+        tmp *= muniform(cols(tmp)-1,1) | 1
+    endif
+    ret += mshape(tmp,n,n)
 
-  return ret
+    return ret
 end function
 
 # ----------------------------------------------------------------------------
 
 function matrix Dtn(int n)
-  /* 
-     Creates the matrix \tilde{D}_n. 
+/*
+   Creates the matrix \tilde{D}_n.
 
-     Output has n^2 rows and n*(n-1)/2 columns; any (n x n) skewsymmetric 
-     matrix has a vectorised form which lies in the space spanned by the
-     columns of \tilde{D}_n
-  */
+   Output has n^2 rows and n*(n-1)/2 columns; any (n x n) skewsymmetric
+   matrix has a vectorised form which lies in the space spanned by the
+   columns of \tilde{D}_n
+    */
 
-  p = round(n*(n-1)/2)
-  
-  matrix A = zeros(1,n) | (lower(unvech(seq(1,p)')) ~ zeros(n-1,1))
-  matrix B = zeros(n^2,p)
-  matrix C 
+    p = round(n*(n-1)/2)
 
-  loop i=1..p --quiet
-      C = A.=i
-      B[,i] = vec(C .- C')
-  endloop
+    matrix A = zeros(1,n) | (lower(unvech(seq(1,p)')) ~ zeros(n-1,1))
+    matrix B = zeros(n^2,p)
+    matrix C
 
-  return B
+    loop i=1..p --quiet
+        C = A.=i
+        B[,i] = vec(C .- C')
+    endloop
+
+    return B
 end function
 
 # ----------------------------------------------------------------------------
 
 function matrix Umat(int n, matrix R, matrix d, matrix S)
 
-    # See Lucchetti(2006) -- left-hand side of matrix T; 
+    # See Lucchetti(2006) -- left-hand side of matrix T;
     # see eq. 26 on page 248
 
     p = cols(S)
     matrix ret = {}
     loop i=1..p --quiet
-	ret |= R * (mshape(S[,i],n,n)' ** I(n))
+        ret |= R * (mshape(S[,i],n,n)' ** I(n))
     endloop
-  return ret
+    return ret
 end function
 
 function matrix Tmat(int n, matrix R, matrix d, matrix S)
 
-    # See Lucchetti(2006) -- right-hand side of matrix T; 
+    # See Lucchetti(2006) -- right-hand side of matrix T;
     # see eq. 26 on page 248
 
     p = cols(S)
     matrix ret = {}
     loop i=1..p --quiet
-	ret |= R * (I(n) ** mshape(S[,i],n,n))
+        ret |= R * (I(n) ** mshape(S[,i],n,n))
     endloop
-  return ret
+    return ret
 end function
 
 
 # ----------------------------------------------------------------------------
 
-function scalar strucond(int n, matrix Ra, matrix da, 
-			 matrix Rb, matrix db, int verbose[0])
-  /* 
-     Checks the structure condition and optionally
-     prints out some of the relevant matrices:
+function scalar strucond(int n, matrix Ra, matrix da,
+                         matrix Rb, matrix db, int verbose[0])
+    /*
+       Checks the structure condition and optionally
+       prints out some of the relevant matrices:
 
-     Parameters: Ra, da, Rb, db = constraint matrices;
-                 iprint = output mode:
-  */
+       Parameters: Ra, da, Rb, db = constraint matrices;
+       iprint = output mode:
+    */
 
-  matrix Sa = imp2exp(Ra~da)
-  matrix Sb = imp2exp(Rb~db)
+    matrix Sa = imp2exp(Ra~da)
+    matrix Sb = imp2exp(Rb~db)
 
-  if verbose > 1
-      print Ra da Rb db Sa Sb
-  endif
+    if verbose > 1
+        print Ra da Rb db Sa Sb
+    endif
 
-  matrix Ua = Umat(n,Ra,da,Sa)
-  matrix Ub = Umat(n,Rb,db,Sb)
-  matrix Tb = Tmat(n,Rb,db,Sb)
+    matrix Ua = Umat(n,Ra,da,Sa)
+    matrix Ub = Umat(n,Rb,db,Sb)
+    matrix Tb = Tmat(n,Rb,db,Sb)
 
-  if verbose > 1
-      print Ua Ub Tb
-  endif
+    if verbose > 1
+        print Ua Ub Tb
+    endif
 
-  matrix C = Ua ~ zeros(rows(Ua),(n*(n-1)/2))
-  C |= Ub ~ Tb * Dtn(n)
-  if verbose > 1
-      print C
-  endif
+    matrix C = Ua ~ zeros(rows(Ua),(n*(n-1)/2))
+    C |= Ub ~ Tb * Dtn(n)
+    if verbose > 1
+        print C
+    endif
 
-  /* purge zero rows from C */
-  matrix e = maxr(abs(C)) .> 0
-  C = selifr(C,e)
-  if verbose > 1
-      printf "After filtering zero rows, C is %d x %d\n", rows(C), cols(C)
-  endif
+    /* purge zero rows from C */
+    matrix e = maxr(abs(C)) .> 0
+    C = selifr(C,e)
+    if verbose > 1
+        printf "After filtering zero rows, C is %d x %d\n", rows(C), cols(C)
+    endif
 
-  matrix CC = C'C
-  if verbose > 1
-      print CC
-  endif
+    matrix CC = C'C
+    if verbose > 1
+        print CC
+    endif
 
-  d = det(CC)
-  if d == 0
-      matrix nspace = nullspace(CC)
-      u_rank = cols(nspace)
-      if verbose
-        loop i=1..u_rank --quiet
-          printf "Q_%d = \n", i
-          printf "%6.1f", mshape(nspace[1:n*n,i],n,n)
-          printf "H_%d = \n", i
-          printf "%6.1f", mshape(Dtn(n) * nspace[n*n+1:,i],n,n)
+    d = det(CC)
+    if d == 0
+        matrix nspace = nullspace(CC)
+        u_rank = cols(nspace)
+        if verbose
+            loop i=1..u_rank --quiet
+                printf "Q_%d = \n", i
+                printf "%6.1f", mshape(nspace[1:n*n,i],n,n)
+                printf "H_%d = \n", i
+                printf "%6.1f", mshape(Dtn(n) * nspace[n*n+1:,i],n,n)
+            endloop
+        endif
+    endif
+
+    return (d > 0)
+end function
+
+# ----------------------------------------------------------------------------
+
+function scalar ordercond(int n, matrix Ra, matrix Rb,
+                          int verbose[0])
+    /*
+       Checks the order condition and optionally
+       prints out some of the relevant matrices:
+
+       Parameters: Ra, Rb = constraint matrices;
+       iprint = output mode:
+    */
+
+    p = 2*n*n - (n + 1)*n/2
+
+    if verbose > 0
+        print  "Checking order condition:"
+        printf " no. of constraints on A:\t%d\n", rows(Ra)
+        printf " no. of constraints on B /or C:\t%d\n", rows(Rb)
+        printf " no. of total constraints:\t%d\n", rows(Ra) + rows(Rb)
+        printf " no. of necessary constraints:\t%d\n", p
+    endif
+
+    return rank(Ra)+rank(Rb) >= p
+end function
+
+# ----------------------------------------------------------------------------
+
+function scalar rankcond(int n, matrix Ra, matrix da, matrix Rb, matrix db,
+                         int verbose[0])
+    /*
+       Checks the rank condition as per Amisano-Giannini and optionally
+       prints out some of the relevant matrices:
+
+       Parameters: Ra, da, Rb db, = constraint matrices;
+
+       Note that in fact we check for the existence of solutions to
+       the system given in eq. (9), chapter 4. The condition discussed later
+       (matrix Q) is, sadly, wrong.
+    */
+
+    matrices AB = SampleMatrices(Ra, da, Rb, db)
+    matrix A = AB[1]
+    matrix B = AB[2]
+
+    matrix BB = B*B'
+
+    matrix Q11 =  Ra * (A' ** BB)
+    matrix Q21 = -Rb * (B' ** BB)
+    matrix Q22 = Q21 * Dtn(n)
+    matrix Q = (Q11 ~ zeros(rows(Ra), n*(n-1)/2)) | (Q21 ~ Q22)
+    scalar r = rank(Q)
+
+    if verbose > 1
+        loop foreach m Q11 Q21 Q22 Q --quiet
+            printf "\n$m:\n%7.2f", $m
         endloop
-      endif
-  endif
+    endif
 
-  return (d > 0)
-end function 
+    if verbose > 0
+        print  "Checking rank condition:"
+        printf " r = %d, cols(Q) = %d\n", r, cols(Q)
+    endif
 
-# ----------------------------------------------------------------------------
-
-function scalar ordercond(int n, matrix Ra, matrix Rb, 
-			  int verbose[0])
-  /* 
-     Checks the order condition and optionally
-     prints out some of the relevant matrices:
-
-     Parameters: Ra, Rb = constraint matrices;
-                 iprint = output mode:
-  */
-
-  p = 2*n*n - (n + 1)*n/2
-
-  if verbose > 0
-      print  "Checking order condition:"
-      printf " no. of constraints on A:\t%d\n", rows(Ra)
-      printf " no. of constraints on B /or C:\t%d\n", rows(Rb)
-      printf " no. of total constraints:\t%d\n", rows(Ra) + rows(Rb)
-      printf " no. of necessary constraints:\t%d\n", p
-  endif
-
-  return rank(Ra)+rank(Rb) >= p
+    return r == cols(Q)
 end function
 
 # ----------------------------------------------------------------------------
 
-function scalar rankcond(int n, matrix Ra, matrix da, matrix Rb, matrix db, 
-			 int verbose[0])
-  /* 
-     Checks the rank condition as per Amisano-Giannini and optionally
-     prints out some of the relevant matrices:
+function scalar ident(matrix Ra, matrix da, matrix Rb, matrix db,
+                      int verbose[0])
+    /*
+       Main function for checking identification.
 
-     Parameters: Ra, da, Rb db, = constraint matrices;
+       The algorithm is described fully in Lucchetti (2006),
+       "Identification Of Covariance Structures", Econometric
+       Theory, Cambridge University Press, vol. 22(02), p 235-257.
 
-     Note that in fact we check for the existence of solutions to
-     the system given in eq. (9), chapter 4. The condition discussed later 
-     (matrix Q) is, sadly, wrong.
-  */
+       Parameters: Ra, da, Rb, db = constraint matrices.
+    */
 
-  matrices AB = SampleMatrices(Ra, da, Rb, db)
-  matrix A = AB[1]
-  matrix B = AB[2]
+    matrix locRa = Ra
+    matrix locda = da
+    matrix locRb = Rb
+    matrix locdb = db
 
-  matrix BB = B*B'
+    # check on the constraints on A and B for inconsistencies
+    # and/or redundancies
 
-  matrix Q11 =  Ra * (A' ** BB)
-  matrix Q21 = -Rb * (B' ** BB)
-  matrix Q22 = Q21 * Dtn(n)
-  matrix Q = (Q11 ~ zeros(rows(Ra), n*(n-1)/2)) | (Q21 ~ Q22)
-  scalar r = rank(Q)
+    err = CheckNormalizeRd(&locRa,&locda)
+    if err
+        printf "--Contradictory constraints on A!--\n"
+        return 0
+    endif
 
-  if verbose > 1
-      loop foreach m Q11 Q21 Q22 Q --quiet
-        printf "\n$m:\n%7.2f", $m
-      endloop
-  endif
+    err = CheckNormalizeRd(&locRb,&locdb)
+    if err
+        printf "--Contradictory constraints on B (or C, respectively)!--\n"
+        return 0
+    endif
 
-  if verbose > 0
-      print  "Checking rank condition:"
-      printf " r = %d, cols(Q) = %d\n", r, cols(Q)
-  endif
+    n = round(sqrt(cols(Ra | Rb)))
 
-  return r == cols(Q)
-end function
+    /* check for the order condition */
 
-# ----------------------------------------------------------------------------
+    scalar id_o = ordercond(n, locRa, locRb, verbose)
+    if verbose
+        string printout = id_o ? "OK" : "fails!"
+        printf "=> Order condition %s\n", printout
+    endif
 
-function scalar ident(matrix Ra, matrix da, matrix Rb, matrix db, 
-		      int verbose[0])
-  /* 
-     Main function for checking identification.
+    # /* check for the structure condition */
 
-     The algorithm is described fully in Lucchetti (2006), 
-     "Identification Of Covariance Structures", Econometric 
-     Theory, Cambridge University Press, vol. 22(02), p 235-257.
+    # scalar id_s = strucond(n, locRa, locda, locRb, locdb, verbose)
+    # string printout = id_s ? "OK" : "fails!"
+    # printf "Structure condition %s\n", printout
 
-     Parameters: Ra, da, Rb, db = constraint matrices.
-  */
+    /* check for the rank condition */
 
-  matrix locRa = Ra
-  matrix locda = da
-  matrix locRb = Rb
-  matrix locdb = db
+    scalar id_r = rankcond(n, locRa, locda, locRb, locdb, verbose)
+    if verbose
+        string printout = id_r ? "OK" : "fails!"
+        printf "=> Rank condition %s\n\n", printout
+    endif
 
-  # check on the constraints on A and B for inconsistencies
-  # and/or redundancies
-
-  err = CheckNormalizeRd(&locRa,&locda)
-  if err
-      printf "--Contradictory constraints on A!--\n"
-      return 0
-  endif
-
-  err = CheckNormalizeRd(&locRb,&locdb)
-  if err
-      printf "--Contradictory constraints on B (or C, respectively)!--\n"
-      return 0
-  endif
-
-  n = round(sqrt(cols(Ra | Rb)))
-
-  /* check for the order condition */
-
-  scalar id_o = ordercond(n, locRa, locRb, verbose)
-  if verbose
-      string printout = id_o ? "OK" : "fails!"
-      printf "=> Order condition %s\n", printout
-  endif
-    
-  # /* check for the structure condition */
-
-  # scalar id_s = strucond(n, locRa, locda, locRb, locdb, verbose)
-  # string printout = id_s ? "OK" : "fails!"
-  # printf "Structure condition %s\n", printout
-
-  /* check for the rank condition */
-
-  scalar id_r = rankcond(n, locRa, locda, locRb, locdb, verbose)
-  if verbose
-      string printout = id_r ? "OK" : "fails!"
-      printf "=> Rank condition %s\n\n", printout
-  endif
-    
-  return (id_o && id_r)
+    return (id_o && id_r)
 end function
 
 # -------------- public function -------------------------------------
 
 function scalar SVAR_ident(bundle *b, int verbose[0])
 
-    /* Apparently returns a non-zero number if identification holds.
-     (Which is perhaps against convention, 0 for "no error"?)
+/* Apparently returns a non-zero number if identification holds.
+   (Which is perhaps against convention, 0 for "no error"?)
     */
 
     print "Check for identification"
@@ -281,7 +281,7 @@ function scalar SVAR_ident(bundle *b, int verbose[0])
     print " (It may happen that in special circumstances under-"
     print "  identification goes unnoticed. If estimation fails,"
     print "  perhaps try adding restrictions.)"
-    
+
     type = b.type
     n = b.n
     n2 = n*n
@@ -294,7 +294,7 @@ function scalar SVAR_ident(bundle *b, int verbose[0])
         if !nelem(Rd)
             funcerr "No restrictions specified!"
         endif
-            
+
         matrix Rb = Rd[,1:n2]
         matrix db_transp = Rd[,n2+1]' # (transp for printing out below)
 
@@ -325,7 +325,7 @@ function scalar SVAR_ident(bundle *b, int verbose[0])
             printf " Rd: %4.0f", Rb   # 'b' would be misleading in the C-model
             printf " dd_transp: %4.0f", db_transp
         endif
-        printf "\n"  
+        printf "\n"
     endif
 
     ret = ident(Ra, da_transp', Rb, db_transp', verbose)
