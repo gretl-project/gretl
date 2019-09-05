@@ -55,8 +55,6 @@ void menu_boxplot_callback (int varnum);
 
 void boxplot_callback (void);
 
-#ifdef ENABLE_MAILER
 void send_attachment (const char *filename);
-#endif
 
 #endif /* CALLBACKS_H */

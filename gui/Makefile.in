@@ -25,7 +25,6 @@ win32pkg = @win32pkg@
 gtk_version = @gtk_version@
 fake_gtkspinner = @fake_gtkspinner@
 mac_native = @mac_native@
-build_mailer = @build_mailer@
 
 ifeq ($(AVX_CFLAGS),)
   SIMD_OPT = $(SSE2_CFLAGS)
@@ -68,12 +67,6 @@ else
   wimpdir = $(GTK_PREFIX)/share/themes/MS-Windows/gtk-2.0
   INSTALL_CMDFILE = install-cmdfile
 endif
-endif
-
-ifeq ($(build_mailer),yes)
-  MAIN_UI = gretlmain.xml
-else
-  MAIN_UI = gretlmain_nomail.xml
 endif
 
 ifeq ($(pkg_build),no)
@@ -297,7 +290,7 @@ install-data: installdirs
 	$(INSTALL_DATA) $(topsrc)/gretl.appdata.xml $(DESTDIR)$(appdatadir)
 
 install-ui: installdirs
-	$(INSTALL_DATA) $(topsrc)/gui/$(MAIN_UI) $(DESTDIR)$(uidir)/gretlmain.xml
+	$(INSTALL_DATA) $(topsrc)/gui/gretlmain.xml $(DESTDIR)$(uidir)
 	$(INSTALL_DATA) $(topsrc)/gui/gretlmodel.xml $(DESTDIR)$(uidir)
 
 install-script: installdirs

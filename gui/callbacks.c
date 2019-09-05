@@ -962,8 +962,6 @@ void do_nistcheck (GtkAction *action)
     g_free(fname);
 }
 
-#ifdef ENABLE_MAILER
-
 static void mailer_help (void)
 {
     show_gui_help(MAILHELP);
@@ -985,5 +983,3 @@ void send_attachment (const char *filename)
 	}
     }
 }
-
-#endif

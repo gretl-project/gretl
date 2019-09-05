@@ -241,8 +241,6 @@ static void new_gfn_callback (GtkAction *action, gpointer p)
     start_new_function_package(NULL, p);
 }
 
-#ifdef ENABLE_MAILER
-
 static void email_data (gpointer p, guint u, GtkWidget *w)
 {
     char gdttmp[FILENAME_MAX];
@@ -277,8 +275,6 @@ static void email_data (gpointer p, guint u, GtkWidget *w)
     }
     gretl_remove(gdttmp);
 }
-
-#endif /* ENABLE_MAILER */
 
 static void noalloc (void)
 {
@@ -1614,9 +1610,7 @@ GtkActionEntry main_entries[] = {
     { "SaveData",  GTK_STOCK_SAVE, N_("_Save data"), NULL, NULL, G_CALLBACK(auto_store) },
     { "SaveDataAs", GTK_STOCK_SAVE_AS, N_("Save data _as..."), NULL, NULL, G_CALLBACK(fsave_callback) },
     { "ExportData", NULL, N_("_Export data..."), NULL, NULL, G_CALLBACK(fsave_callback) },
-#ifdef ENABLE_MAILER
     { "MailData", GRETL_STOCK_MAIL, N_("Send To..."), NULL, NULL, G_CALLBACK(email_data) },
-#endif
     { "NewData", GTK_STOCK_NEW, N_("_New data set"), NULL, NULL, G_CALLBACK(newdata_callback) },
     { "ClearData", GTK_STOCK_CLEAR, N_("C_lear data set"), NULL, NULL, G_CALLBACK(verify_clear_data) },
 

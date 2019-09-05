@@ -14,7 +14,6 @@ INSTALL = @INSTALL@
 LN = @LN_S@
 
 build_gui = @build_gui@
-build_mailer = @build_mailer@
 have_odbc = @have_odbc@
 quiet_build = @quiet_build@
 gtk_version = @gtk_version@
@@ -182,20 +181,17 @@ GUI_DEPENDENT_PLUGINS = arma_x12.la \
 	xlsx_import.la \
 	gnumeric_import.la \
 	leverage.la \
+	mailer.la \
 	ods_import.la \
 	pca.la \
 	progress_bar.la \
 	tramo-x12a.la
 
-MAILER_PLUGIN = mailer.la
 JSON_PLUGIN = json_get.la
 GMP_PLUGIN = mp_ols.la
 
 ifeq ($(build_gui),yes)
   PLUGINS += $(GUI_DEPENDENT_PLUGINS)
-  ifeq ($(build_mailer),yes)
-     PLUGINS += $(MAILER_PLUGIN)
-  endif
 endif
 
 ifeq ($(win32_build),yes)

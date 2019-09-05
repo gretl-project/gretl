@@ -29,6 +29,7 @@
 #include "treeutils.h"
 #include "session.h"
 #include "gretl_ipc.h"
+#include "gretl_www.h"
 #include "fncall.h"
 #include "menustate.h"
 
@@ -152,16 +153,20 @@ static void gfn_menuitems_state (void)
 
 void dataset_menubar_state (gboolean s)
 {
+    static int mail_ok = -1;
+
     if (mdata == NULL || mdata->ui == NULL) return;
+
+    if (mail_ok < 0) {
+	mail_ok = curl_does_smtp();
+    }
 
     flip(mdata->ui, "/menubar/File/AppendData", s);
     flip(mdata->ui, "/menubar/File/ClearData", s);
     flip(mdata->ui, "/menubar/File/SaveData", s);
     flip(mdata->ui, "/menubar/File/SaveDataAs", s);
     flip(mdata->ui, "/menubar/File/ExportData", s);
-#ifdef ENABLE_MAILER
-    flip(mdata->ui, "/menubar/File/MailData", s);
-#endif
+    flip(mdata->ui, "/menubar/File/MailData", mail_ok && s);
     flip(mdata->ui, "/menubar/Data", s);
     flip(mdata->ui, "/menubar/Add", s);
     flip(mdata->ui, "/menubar/Sample", s);

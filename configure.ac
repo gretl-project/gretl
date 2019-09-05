@@ -35,7 +35,6 @@ build_gui="yes"
 prefer_gtk2="no"
 build_docs="no"
 build_addons="no"
-build_mailer="no"
 use_lucida="no"
 build_po="no"
 have_readline="no"
@@ -405,15 +404,6 @@ if test "$try_mpi" = "yes" ; then
     else
       AC_C_MPI
     fi
-  fi
-fi
-
-dnl (try to) build mailer plugin?
-if test $build_gui = "yes" ; then
-  PKG_CHECK_MODULES(CURL, libcurl >= 7.20.0, curl_mail="yes", curl_mail="no")
-  if test $curl_mail = "yes" ; then
-    AC_DEFINE(ENABLE_MAILER)
-    build_mailer="yes"
   fi
 fi
 
@@ -836,7 +826,6 @@ AC_SUBST(fake_gtkspinner)
 AC_SUBST(have_gnu_regex)
 AC_SUBST(have_odbc)
 AC_SUBST(have_mpi)
-AC_SUBST(build_mailer)
 AC_SUBST(build_po)
 AC_SUBST(use_curl)
 AC_SUBST(use_xdg)

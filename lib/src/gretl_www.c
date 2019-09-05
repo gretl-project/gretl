@@ -31,6 +31,16 @@
 #define WDEBUG 0
 #define WBUFSIZE 8192
 
+/* stave off undeclared symbol errors for old libcurl */
+#if LIBCURL_VERSION_NUM < 0x072000
+# define CURLOPT_MAIL_FROM 10186
+# define CURLOPT_MAIL_RCPT 10187
+#endif
+#if LIBCURL_VERSION_NUM < 0x071901
+# define CURLOPT_USERNAME  10173
+# define CURLOPT_PASSWORD  10174
+#endif
+
 enum {
     SAVE_NONE,
     SAVE_TO_FILE,
@@ -739,8 +749,6 @@ int upload_function_package (const char *login, const char *pass,
     return err;
 }
 
-#ifdef ENABLE_MAILER
-
 /* Upload functionality for email text and attachment */
 
 struct uploader {
@@ -817,7 +825,7 @@ int curl_send_mail (const char *from_addr,
     recip = curl_slist_append(recip, to_addr);
     curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, recip);
 
-    /* We're using a callback function, sincethe online curl doc
+    /* We're using a callback function, since the libcurl doc
        states that otherwise the curl DLL on Windows may crash.
     */
     curl_easy_setopt(curl, CURLOPT_READFUNCTION, get_payload);
@@ -841,7 +849,19 @@ int curl_send_mail (const char *from_addr,
     return err;
 }
 
-#endif /* ENABLE_MAILER */
+int curl_does_smtp (void)
+{
+    static int smtp_ok = -1;
+
+    if (smtp_ok < 0) {
+	curl_version_info_data *vdata;
+
+	vdata = curl_version_info(CURLVERSION_NOW);
+	smtp_ok = vdata->version_num >= 0x073100;
+    }
+
+    return smtp_ok;
+}
 
 int list_remote_dbs (char **getbuf)
 {

@@ -38,9 +38,6 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Using libcurl for http? */
 #undef USE_CURL
 
-/* Support SMTP? */
-#undef ENABLE_MAILER
-
 /* Are we using openmp? */
 #undef OPENMP_BUILD
 

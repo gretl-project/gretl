@@ -40,6 +40,7 @@
 
 #include "uservar.h"
 #include "forecast.h"
+#include "gretl_www.h"
 
 #ifdef G_OS_WIN32
 # include "gretlwin32.h"
@@ -62,9 +63,7 @@
 #include "../pixmaps/mini.bundle.xpm"
 #include "../pixmaps/mini.heatmap.xpm"
 #include "../pixmaps/mini.dbnomics.xpm"
-#ifdef ENABLE_MAILER
-# include "../pixmaps/mail_16.xpm"
-#endif
+#include "../pixmaps/mail_16.xpm"
 
 /* for main-window toolbar */
 #include "../pixmaps/mini.calc.xpm"
@@ -135,9 +134,7 @@ void gretl_stock_icons_init (void)
 {
     struct stock_maker stocks[] = {
 	{ mini_tex_xpm, GRETL_STOCK_TEX },
-#ifdef ENABLE_MAILER
 	{ mail_16_xpm, GRETL_STOCK_MAIL },
-#endif
 	{ mini_tsplot_xpm, GRETL_STOCK_TS },
 	{ mini_boxplot_xpm, GRETL_STOCK_BOX },
 	{ mini_pdf_xpm, GRETL_STOCK_PDF },
@@ -328,8 +325,6 @@ static void display_digits_callback (GtkWidget *w, windata_t *vwin)
     }
 }
 
-#ifdef ENABLE_MAILER
-
 static void mail_script_callback (GtkWidget *w, windata_t *vwin)
 {
     if (viewer_char_count(vwin) == 0) {
@@ -343,8 +338,6 @@ static void mail_script_callback (GtkWidget *w, windata_t *vwin)
 
     send_attachment(vwin->fname);
 }
-
-#endif
 
 /* callback for the "Open" icon in a script editing window,
    which enables the user to switch to a different script,
@@ -828,9 +821,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("Sort by..."), GTK_STOCK_SORT_ASCENDING, G_CALLBACK(multi_series_view_sort_by), SORT_BY_ITEM },
     { N_("Preferences..."), GTK_STOCK_PREFERENCES, G_CALLBACK(editor_prefs_callback), EDIT_HANSL_ITEM },
     { N_("Auto-indent script"), GTK_STOCK_INDENT, G_CALLBACK(indent_hansl), EDIT_HANSL_ITEM },
-#ifdef ENABLE_MAILER
     { N_("Send To..."), GRETL_STOCK_MAIL, G_CALLBACK(mail_script_callback), MAIL_ITEM },
-#endif
     { N_("Scripts index"), GTK_STOCK_INDEX, G_CALLBACK(script_index), INDEX_ITEM },
     { N_("Confidence level..."), GRETL_STOCK_ALPHA, G_CALLBACK(coeffint_set_alpha), ALPHA_ITEM },
     { N_("LaTeX"), GRETL_STOCK_TEX, G_CALLBACK(window_tex_callback), TEX_ITEM },
@@ -927,9 +918,14 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 					 int latex_ok, int sortby_ok,
 					 int format_ok, int save_ok)
 {
+    static int mail_ok = -1;
     GCallback func = item->func;
     int f = item->flag;
     int r = vwin->role;
+
+    if (mail_ok < 0) {
+	mail_ok = curl_does_smtp();
+    }
 
     if (r == EDIT_SPEC) {
 	/* This is a "special" that should maybe be regularized:
@@ -981,7 +977,7 @@ static GCallback tool_item_get_callback (GretlToolItem *item, windata_t *vwin,
 	return NULL;
     } else if (!cmd_help_ok(r) && f == CMD_HELP_ITEM) {
 	return NULL;
-    } else if (r != EDIT_HANSL && f == MAIL_ITEM) {
+    } else if ((!mail_ok || r != EDIT_HANSL) && f == MAIL_ITEM) {
 	return NULL;
     } else if (!help_ok(r) && f == HELP_ITEM) {
 	return NULL;

@@ -47,6 +47,8 @@ int gretl_www_init (const char *host, const char *proxy, int use_proxy);
 
 void gretl_www_cleanup (void);
 
+int curl_does_smtp (void);
+
 int list_remote_dbs (char **getbuf);
 
 int list_remote_function_packages (char **getbuf, int filter);
@@ -103,13 +105,11 @@ int gretl_curl (const char *url, const char *header,
 
 int try_http (const char *s, char *fname, int *http);
 
-#ifdef ENABLE_MAILER
 int curl_send_mail (const char *from_addr,
 		    const char *to_addr,
 		    const char *server,
 		    const char *username,
 		    const char *password,
 		    const char *filename);
-#endif
 
 #endif /* GRETL_WWW_H */
