@@ -7789,11 +7789,12 @@
       <ilist>
        <li>
 	 <para>
-	   To: the email address of the recipient. You will have to
-	   type this yourself: gretl does not have access to your
-	   address book. But once you have entered an address it is
-	   remembered and can be selected subsequently via a drop-down
-	   list. Up to ten addresses can be stored in this way.
+	   To: the email address of the recipient. In the first
+	   instance you will have to type this yourself: gretl does
+	   not have access to your address book. But once you have
+	   entered an address it is remembered and can be selected
+	   subsequently via a drop-down list. Up to ten addresses can
+	   be stored in this way.
 	 </para>
        </li>
        <li>
@@ -7821,8 +7822,8 @@
       <subhead>Email password</subhead>
       <para>
 	If a password is required to send mail, you can choose to have
-	gretl store it; in that case it is saved in obfuscated form in
-	a directory that is private to you on your own computer (not
+	gretl store it. In that case it is saved in obfuscated form in
+	a directory that is private to you, on your own computer (not
 	on any internet server). However, we cannot guarantee its
 	security.
       </para>
