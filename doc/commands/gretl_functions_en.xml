@@ -9731,7 +9731,7 @@
       <description>
 	<para>
 	  Performs the Schur decomposition of the complex matrix
-	  <argname>A</argname>. Returns a complex upper triangular
+	  <argname>A</argname>, returning a complex upper triangular
 	  matrix <math>T</math>. If the second argument is given and
 	  is not <lit>null</lit> it retrieves a complex matrix
 	  <math>Z</math> holding the Schur vectors associated with
