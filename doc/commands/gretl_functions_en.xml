@@ -9722,6 +9722,27 @@
       </description>
     </function>
 
+    <function name="schur" section="complex" output="cmatrix">
+      <fnargs>
+	<fnarg type="cmatrix">A</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;Z</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;w</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Performs the Schur decomposition of the complex matrix
+	  <argname>A</argname>. Returns a complex upper triangular
+	  matrix <math>T</math>. If the second argument is given and
+	  is not <lit>null</lit> it retrieves a complex matrix
+	  <math>Z</math> holding the Schur vectors associated with
+	  <math>A</math> and <math>T</math>, such that <math>A</math>
+	  = <math>ZTZ</math><sup>H</sup>. If the third argument is
+	  given it retrieves the eigenvalues of <math>A</math> in a
+	  complex column vector.
+	</para>
+      </description>
+    </function>
+
     <function name="sd" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">x</fnarg>
