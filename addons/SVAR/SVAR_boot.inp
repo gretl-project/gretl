@@ -429,8 +429,9 @@ function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
     endif
 
     # quantiles of bootstrapped IRFs used in graphs
-    matrix locb = quantile(bootirfs, 1 - alpha)
-    matrix hicb = quantile(bootirfs, alpha)
+    q_alpha = 0.5 * (1 - alpha)	# changed in v1.5
+    matrix locb = quantile(bootirfs, q_alpha)
+    matrix hicb = quantile(bootirfs, 1 - q_alpha)
     matrix mdn  = quantile(bootirfs, 0.5)
 
     bundle bootdata = null

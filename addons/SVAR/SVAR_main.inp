@@ -170,7 +170,8 @@ function bundle GUI_SVAR(int type[1:3:1] "Model type" \
       scalar alpha[0:1:0.9] "Bootstrap alpha",
       int biascorr[0:2:0] "Bias correction" \
       {"None", "Partial", "Full"},
-      int boottype[1:2:1] "Bootstrap type" {"residual resampling", "wild"},
+      int boottype[1:4:1] "Bootstrap type" {"residual resampling", \
+                         "wild/Normal", "wild/Rademacher", "wild/Mammen"},
       bool checkident[0] "Check identification",
       matrix *cumix[null] "Indices of responses to cumulate",
       int optmeth[0:4:4] "Optimization method" \

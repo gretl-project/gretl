@@ -262,8 +262,18 @@ IRFs and their 90\% bootstrap confidence interval.\footnote{Why not
   reason. Anyway, it must be said that in the SVAR literature few
   people use 95\%. 90\%, 84\% or even 66\% are common choices.}
   
+%\subsubsection{Gretl native \texttt{var} command}
+In order to accomplish the above, note that we \emph{don't} need to
+use the \texttt{SVAR} package, as a Cholesky SVAR can be handled by
+\texttt{gretl} natively. In fact, the script shown in Table
+\ref{InternalChol-in} does just that: runs a VAR, collects
+$\hat{\Sigma}$ and estimates $C$ as its Cholesky decomposition. 
+Part of its output is in Table \ref{InternalChol-out}.  The impulse
+responses as computed by \texttt{gretl}'s internal command can be see
+in Figure \ref{fig:nativeIRF}. See the Gretl User's Guide for more
+details.  
+  
 \begin{table}[htbp]
-  \label{InternalChol-in}
   \begin{code}
 # turn extra output off
 set verbose off
@@ -283,10 +293,10 @@ print Sigma C
 %$
   \caption{Cholesky example via \texttt{gretl}'s internal 
   \texttt{var} command}
+   \label{InternalChol-in}
 \end{table}
 
 \begin{table}[htbp]
-  \label{InternalChol-out}
   \centering
   \begin{code}
 VAR system, lag order 3
@@ -319,6 +329,7 @@ C (2 x 2)
   \end{code}
   \caption{Cholesky example via \texttt{gretl}'s internal 
   \texttt{var} command --- Output}
+   \label{InternalChol-out}
 \end{table}
 
 \begin{figure}[htbp]
@@ -327,17 +338,6 @@ C (2 x 2)
   \caption{Impulse response functions for the simple Cholesky model (native)}
   \label{fig:nativeIRF}
 \end{figure}
-
-%\subsubsection{Gretl native \texttt{var} command}
-In order to accomplish the above, note that we \emph{don't} need to
-use the \texttt{SVAR} package, as a Cholesky SVAR can be handled by
-\texttt{gretl} natively. In fact, the script shown in Table
-\ref{InternalChol-in} does just that: runs a VAR, collects
-$\hat{\Sigma}$ and estimates $C$ as its Cholesky decomposition. 
-Part of its output is in Table \ref{InternalChol-out}.  The impulse
-responses as computed by \texttt{gretl}'s internal command can be see
-in figure \ref{fig:nativeIRF}. See the Gretl User's Guide for more
-details.
 
 %\clearpage
 
@@ -626,17 +626,23 @@ model, in which there is a one-to-one correspondence, so I decided to
 make this the default choice.
 
 A word on the unit of measurement of IRFs: by their definition (see
-equation \eqref{eq:IRFdef}), and the fact the structural shocks are
-assumed to have unit variance, clearly their unit of measurement is
+equation \eqref{eq:IRFdef}), clearly their unit of measurement is
 the same as the one for the corresponding observable variable
-$y_{i,t}$. Sometimes, however, a different convention is adopted, and
-people want to display IRFs graphically by normalizing $\IRF{i,i,0} =
-1$. This can be achieved by setting the bundle member \cmd{normalize}
+$y_{i,t}$. 
+Given that the structural shocks are normalized to have unit 
+variance, the conventionally used unit size innovation is at the same
+time a standard deviation shock. The direct impact effect in the same 
+equation then depends on the respective diagonal element of $C$.
+Sometimes, however, a different convention is adopted, and
+people want to display IRFs graphically by normalizing the impact 
+effect $\IRF{i,i,0} =
+1$, by scaling the shocks implicitly to the necessary size. 
+This can be achieved by setting the bundle member \cmd{normalize}
 to 1, as in
 \begin{code}
   Mod.normalize = 1
 \end{code}
-before calling \cmd{IRFplot}. Setting ot back to its default value of
+before calling \cmd{IRFplot}. Setting it back to its default value of
 0 will restore standard behavior.
 
 \subsection{Bootstrapping}
@@ -1303,7 +1309,7 @@ in section \ref{sec:HD} so to replicate figures 8 (p.~664) and 10
 (p.~665) in the original AER article, where the historical
 contribution of demand shocks to output and unemployment is
 reconstructed. The output on your screen should be roughly similar to
-figure \ref{fig:BlQuah-HD-Output}.
+Figure \ref{fig:BlQuah-HD-Output}.
 
 \begin{figure}[hbtp]
   \centering
@@ -2040,20 +2046,22 @@ longrun (3 x 3)
 
 This section introduces the GUI interface with which most of the
 available calculations can be accomplished as well and which can be
-accessed via the \emph{Model $>$ Time Series $>$ Multivariate $>$ Structural VAR}
+accessed via the \emph{Model $>$ Time Series $>$ Multivariate $>$ 
+Structural VAR}
 menu entry of the the graphical \app{gretl} client.  While we recommend
 using the script interface to access the full capabilities of the SVAR
 package, the GUI interface may be less intimidating for less
-experienced users. At the time of writing, the GUI component covers
-everything but the SVEC case (see section \ref{sec:SVECs}) where the
-cointegration properties of the system are exploited for special
-long-run restrictions. The SVEC case will receive its own GUI in a
-future version of the SVAR package. 
+experienced users. The GUI component covers everything but the SVEC case 
+(see section \ref{sec:SVECs}) where the cointegration properties of the 
+system are exploited for special long-run restrictions. For the GUI in
+the SVEC case there is a preliminary additional function package 
+\emph{SVEC\_GUI} available on the gretl package server which uses this
+SVAR addon as its backend. 
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[scale=0.5]{GUI_SVAR.png}
-  \caption{Plain Cholesky model through the GUI interface }
+  \caption{Plain Cholesky model through the GUI interface (earlier SVAR version)}
   \label{fig:GUI-plain}
 \end{figure}
 
@@ -2294,7 +2302,8 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   \begin{enumerate}
   \item a bundle holding the model
   \item the number of bootstrap replications
-  \item the quantile used for the confidence bands
+  \item the coverage probability used for the confidence bands (e.g. 
+    for 0.90 the 0.05 and 0.95 quantiles will be used) 
   \item (optional) omit the table with bootstrap means and standard
     errors (default: yes) 
   \end{enumerate}
@@ -2302,7 +2311,7 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
 
 \begin{funcdoc}{SVAR\_coint(bundle *obj, int dcase[1:5:3],
 			   matrix jbeta, matrix jalpha[null],
-			   bool verbose[0])}
+			   bool verbose[0]), list rexo[null]}
   Sets up a SVEC model for subsequent estimation. Its arguments are:
   \begin{enumerate}
   \item a bundle holding the model
@@ -2312,6 +2321,7 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   \item the loading matrix (optional, will be estimated via OLS if omitted
   or empty)
   \item an optional verbosity switch (default 0)
+  \item (currently unused: list of further restricted exogenous variables)
   \end{enumerate}
 \end{funcdoc}
 
@@ -2448,6 +2458,9 @@ a warning will be printed.
     \texttt{calc\_lr} & switch to get long-run matrix \texttt{lrmat} in short-run models \\ 
     \texttt{checkident} & switch indicating whether to check identification before 
     estimation\\
+    \end{tabular}
+    
+    \begin{tabular}{rp{0.8\textwidth}}
     \hline
     \multicolumn{2}{c}{\textbf{VAR}} \\
     \hline
@@ -2459,6 +2472,9 @@ a warning will be printed.
     \texttt{jbeta}  & (SVEC only) cointegration coefficients \\
     \texttt{crank} & (SVEC only) cointegration rank (inferred from jbeta)\\
     \texttt{jcase} & (SVEC only) deterministic setup (1 to 5)\\
+     \end{tabular}
+    
+    \begin{tabular}{rp{0.8\textwidth}}
     \hline
     \multicolumn{2}{c}{\textbf{SVAR setup}} \\
     \hline
@@ -2473,6 +2489,9 @@ a warning will be printed.
     variables, if any \\
     \texttt{snames}	 & names for shocks (string array) \\
     \texttt{optmeth}	 & integer between 0 and 4, optimisation method \\
+     \end{tabular}
+    
+    \begin{tabular}{rp{0.8\textwidth}}
     \hline
     \multicolumn{2}{c}{\textbf{SVAR post-estimation}} \\
     \hline
@@ -2482,26 +2501,41 @@ a warning will be printed.
     \texttt{lrmat} & estimated long-run matrix \\ 
     \texttt{theta} & coefficient vector \\
     \texttt{IRFs}  & IRF matrix (see section \ref{sec:baseest})\\
+     \end{tabular}
+    
+    \begin{tabular}{rp{0.8\textwidth}}
     \hline
     \multicolumn{2}{c}{\textbf{Bootstrap-related}} \\
     \hline
     \texttt{nboot}	 & number of bootstrap replications \\
-    \texttt{boot\_alpha} & bootstrap confidence level \\
+    \texttt{boot\_alpha} & bootstrap confidence level (coverage)\\
     \texttt{bootdata}	 & output from the bootstrap (see section \ref{sec:bootstrap})\\
     \texttt{biascorr}	 & scalar, 0 for no bias correction, 1 for
     partial, 2 for full\\
-    \texttt{boottype}   & scalar, 1 for standard residual resampling, 2 for residual-based 
-    wild bootstrap
+    \texttt{BCiter} & number of replications for the bias correction \\
+    \texttt{boottype}   & scalar, 1 for standard residual resampling, 2-4 for residual-based 
+    wild bootstraps (2: Normal, 3: Rademacher, 4: Mammen)
   \end{tabular}
   
 \section{Changelog (after v1.2)}
 \label{sec:changelog}
 
-\subsection*{Version 1.5, August 2019}
+\subsection*{Version 1.5, September 2019}
 \begin{itemize}
 
-\item Add the option 'boottype' to choose a wild bootstrap to account for 
+\item The documentation of the bootstrap $\alpha$ level did not match the actual
+implementation. This has been changed such that \texttt{boot\_alpha} really 
+represents the nominal coverage of the confidence intervals around each impulse
+response. (This quantity is often denoted with $1 - \alpha$ instead, but for 
+backward compatibility we stick to $\alpha$.)
+Attention: This change means that existing scripts will produce systematically 
+different (wider) confidence bands with this version.
+
+\item Add the option 'boottype' to choose some wild bootstrap variants to account for 
 heteroskedasticity.
+
+\item Reformat the identification check output.
+
 \end{itemize}
 
 \subsection*{Version 1.4, March 2019}
