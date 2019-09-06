@@ -1,4 +1,5 @@
 version 2019d, in progress
+- Add support for complex matrices
 - Enable nesting of arrays
 - Fix bug: possible crash on appending multiple lists to a
   list inside a bundle
@@ -18,6 +19,8 @@ version 2019d, in progress
   automatically named temporary file
 - Internals: speed up element-wise matrix calculation by
   use of function pointers
+- "Send-to" (email) functionality: use libcurl and improve
+  the user interface
 
 2019-07-02 version 2019c
 - Fix bug: "dataset sortby" not handling missing values
