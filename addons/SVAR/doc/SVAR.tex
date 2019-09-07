@@ -787,15 +787,32 @@ bundle member \texttt{biascorr} to 1 and 2, respectively, before
 calling \texttt{SVAR\_boot}. For an example, look at the example file
 \texttt{bias\_correction.inp}.
 
-Another bootstrap choice which has to be specified before the call to 
-\texttt{SVAR\_boot} is the use of the so-called \emph{wild} bootstrap. 
-Instead of resampling the residuals to create a new draw of artificial 
-bootstrap data, for each time period it takes the original estimated 
-residual vector and multiplies it with a Gaussian random number. This 
-procedure is able to account for several forms of heteroskedasticity in
-the errors.
-Activate this option by setting the bundle member \texttt{boottype} to 2.
-(The value 1 is the default and implies the usual residual resampling.)
+Another bootstrap choice which has to be specified before the call to
+\texttt{SVAR\_boot} is the use of the so-called \emph{wild} bootstrap.
+Instead of resampling the residuals to create a new draw of artificial
+bootstrap data, for each time period $t$ it takes the original
+estimated residual vector and multiplies it by a random number $w_t$
+with mean 0 and variance 1. This procedure is able to account for
+several forms of heteroskedasticity in the errors. Activate this
+option by setting the bundle member \texttt{boottype} to the
+appropriate value, as per the following table.
+\begin{center}
+\begin{tabular}{rcl}
+  \hline
+  \texttt{boottype} & Distribution & Description \\
+  \hline
+  2 & Gaussian & $w_t \sim N(0,1)$ \\
+  3 & Rademacher & $P(w_t = \pm 1) = 0.5$ \\
+  4 & Mammen & $w_t = \begin{cases}
+    -1/\phi &  \frac{\phi}{\sqrt{5}} \\
+    \phi & 1 - \frac{\phi}{\sqrt{5}}
+  \end{cases}$ \\
+  \hline
+\end{tabular}
+\end{center}
+where $\phi$ is the golden ratio (about 1.1618).
+The value 1 is the default and
+implies the usual residual resampling.
 
 Finally: if you change the \texttt{optmeth} bundle element before
 \texttt{SVAR\_boot} is called, the choice affects the estimation of
