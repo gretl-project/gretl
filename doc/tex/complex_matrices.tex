@@ -6,27 +6,29 @@
 
 Native support for complex matrices was added to gretl in version
 2019d. Not all of hansl's matrix functions accept complex input, but
-we have enabled a sizable subset of these functions which we believe
-should suffice for most econometric purposes. Complex support may be
-extended in future as need arises.
+we have enabled a sizable subset of these functions which should
+suffice for most econometric purposes.
 
 A first point to note is that complex values are treated as a special
 case of the hansl \texttt{matrix} type; there's no \texttt{complex}
 type as such. Complex scalars fall under the \texttt{matrix} type as
 $1 \times 1$ matrices; the hansl \texttt{scalar} type is only for real
-values (as is the \texttt{series} type).
+values (as is the \texttt{series} type). A $1 \times 1$ complex matrix
+should do any work you might require of a complex scalar.
 
-By way of brief reminder, complex numbers are pairs of the form
-$a + b\,i$ where $a$ and $b$ are real numbers and $i$ is defined as
-the square root of $-1$: $a$ is the real part and $b$ the imaginary
-part. One can specify a complex number either via $a$ and $b$ or in
-``polar'' form. The latter pertains to the complex plane, which has
-the real component on the horizontal axis and the imaginary component
-on the vertical. The polar representation of a complex number is
-composed of the length $r$ of the ray from the origin to the point in
-question and the angle $\theta$ subtended between the positive real
-axis and this ray, measured counter-clockwise. In polar form the
-complex number $z = a + b\,i$ can be written as
+Before we proceed to the details of complex matrices in gretl, here's
+a brief reminder of the revelant concepts and notation. Complex
+numbers are pairs of the form $a + b\,i$ where $a$ and $b$ are real
+numbers and $i$ is defined as the square root of $-1$: $a$ is the real
+part and $b$ the imaginary part. One can specify a complex number
+either via $a$ and $b$ or in ``polar'' form. The latter pertains to
+the complex plane, which has the real component on the horizontal axis
+and the imaginary component on the vertical. The polar representation
+of a complex number is composed of the length $r$ of the ray from the
+origin, $0 + 0\,i$, to the point in question and the angle $\theta$
+subtended between the positive real axis and this ray, measured
+counter-clockwise in radians. In polar form the complex number
+$z = a + b\,i$ can be written as
 \[
   z = |z|\,(\cos \theta + i\,\sin \theta) = |z|\,e^{i\theta}
 \]
@@ -213,9 +215,65 @@ functions with the exception of \texttt{atan2}.
 
 In addition there are the complex-only functions \texttt{cmod}
 (complex modulus, also accessible via \texttt{abs}), \texttt{carg}
-(complex ``argument''), \texttt{conj} (complex conjugate), \texttt{Re}
+(complex argument), \texttt{conj} (complex conjugate), \texttt{Re}
 (real part) and \texttt{Im} (imaginary part). Note that
-$\mbox{carg}(z) = \mbox{atan2}(y,x)$ for $z=x + y\,i$.
+$\mbox{carg}(z) = \mbox{atan2}(y,x)$ for $z=x +
+y\,i$. Listing~\ref{cmplx-modes} illustrates usage of \texttt{cmod}
+and \texttt{carg}.
+
+\begin{script}[htbp]
+  \caption{Variant representations of complex numbers. We picked 8
+    points on the unit circle in the complex plane, so their modulus
+    is constant and equal to 1. The \texttt{Polar} matrix below shows
+    that the complex argument is expressed in radians; multiplying by
+    180/$\pi$ gives degrees. The \texttt{chk} matrix verifies that
+    we can retrieve the orginal representation of the complex values
+    from the polar form in either of the two ways mentioned at the
+    start of the chapter: $z = |z|\,(\cos \theta + i\,\sin \theta)$ or
+    $z = |z|\,e^{i\theta}$.}
+  \label{cmplx-modes}
+\begin{scode}
+# complex values in a + b*i form
+scalar rp5 = sqrt(0.5)
+matrix A = {1, rp5, 0, -rp5, -1, -rp5,  0,  rp5}'
+matrix B = {0, rp5, 1,  rp5,  0, -rp5, -1, -rp5}'
+matrix Z = complex(A, B)
+
+# calculate modulus and argument
+matrix zmod = cmod(Z)
+matrix theta = carg(Z)
+matrix Polar = zmod ~ theta ~ (theta * 180/$pi)
+cnameset(Polar, "modulus radians degrees")
+printf "%12.4f\n", Polar
+
+# reconstitute the original Z matrix in two ways
+matrix Z1 = zmod .* complex(cos(theta), sin(theta))
+matrix Z2 = zmod .* exp(complex(0, theta))
+matrix chk = Z ~ Z1 ~ Z2
+print chk
+\end{scode}
+  Printing of \texttt{Polar} and \texttt{chk}
+\begin{scode}
+     modulus     radians     degrees
+      1.0000      0.0000      0.0000
+      1.0000      0.7854     45.0000
+      1.0000      1.5708     90.0000
+      1.0000      2.3562    135.0000
+      1.0000      3.1416    180.0000
+      1.0000     -2.3562   -135.0000
+      1.0000     -1.5708    -90.0000
+      1.0000     -0.7854    -45.0000
+
+ 1.00000 + 0.00000i   1.00000 + 0.00000i   1.00000 + 0.00000i
+ 0.70711 + 0.70711i   0.70711 + 0.70711i   0.70711 + 0.70711i
+ 0.00000 + 1.00000i   0.00000 + 1.00000i   0.00000 + 1.00000i
+-0.70711 + 0.70711i  -0.70711 + 0.70711i  -0.70711 + 0.70711i
+-1.00000 + 0.00000i  -1.00000 + 0.00000i  -1.00000 + 0.00000i
+-0.70711 - 0.70711i  -0.70711 - 0.70711i  -0.70711 - 0.70711i
+ 0.00000 - 1.00000i   0.00000 - 1.00000i   0.00000 - 1.00000i
+ 0.70711 - 0.70711i   0.70711 - 0.70711i   0.70711 - 0.70711i
+\end{scode}
+\end{script}
 
 \subsection{Transformations}
 
