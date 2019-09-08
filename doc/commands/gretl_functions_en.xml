@@ -1985,6 +1985,27 @@
       </description>
     </function>
 
+    <function name="carg" section="complex" output="matrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns an <by r="m" c="n"/> real matrix holding the complex
+	  <quote>argument</quote> of each element of the <by r="m"
+	  c="n"/> complex matrix <argname>C</argname>. The argument of
+	  the complex number <math>z</math> = <math>x</math> + <math>yi</math>
+	  can also be computed as <lit>atan2(y, x)</lit>.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="cmod"/>
+	    <fncref targ="atan2"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="cdemean" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
@@ -2183,6 +2204,10 @@
       </fnargs>
       <description>
 	<para>
+	  This is a legacy function, predating gretl's native support
+	  for complex matrices.
+	</para>
+	<para>
 	  Complex division. The two arguments must have the same number of
 	  rows, <math>n</math>, and either one or two columns.  The first
 	  column contains the real part and the second (if present) the
@@ -2308,12 +2333,37 @@
       </description>
     </function>
 
+    <function name="cmod" section="complex" output="matrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns an <by r="m" c="n"/> real matrix holding the complex
+	  modulus of each element of the <by r="m" c="n"/> complex
+	  matrix <argname>C</argname>. The modulus of the complex
+	  number <math>z</math> = <math>x</math> + <math>yi</math>
+	  equals the square root of <math>x</math><sup>2</sup>
+	  + <math>y</math><sup>2</sup>.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="carg"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="cmult" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="matrix">Y</fnarg>
       </fnargs>
       <description>
+	<para>
+	  This is a legacy function, predating gretl's native support
+	  for complex matrices.
+	</para>
 	<para>
 	  Complex multiplication. The two arguments must have the same
 	  number of rows, <math>n</math>, and either one or two columns.
@@ -2461,6 +2511,46 @@
             <fncref targ="unvech"/>
             <fncref targ="vec"/>
             <fncref targ="vech"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="complex" section="complex" output="cmatrix">
+      <fnargs>
+	<fnarg type="scalar-or-matrix">A</fnarg>
+	<fnarg type="scalar-or-matrix">B</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns a complex matrix, where <argname>A</argname> is
+	  taken to supply the real part and <argname>B</argname> the
+	  imaginary part. If <argname>A</argname> is <by r="m" c="n"/>
+	  and <argname>B</argname> is a scalar the result is <by r="m"
+	  c="n"/> with a constant imaginary part&mdash;and similarly
+	  in the converse case but with a constant real part. If both
+	  arguments are matrices they must be of the same dimensions.
+	</para>
+      </description>
+    </function>
+
+    <function name="conj" section="complex" output="cmatrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns an <by r="m" c="n"/> complex matrix holding the
+	  complex conjugate of each element of the <by r="m" c="n"/>
+	  complex matrix <argname>C</argname>. The conjugate of the
+	  complex number <math>z</math> = <math>x</math> +
+	  <math>yi</math> equals <math>x</math> &minus;
+	  <math>yi</math>.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="carg"/>
+	    <fncref targ="cmod"/>
 	  </seelist>
 	</para>
       </description>
@@ -2697,6 +2787,23 @@
             <fncref targ="invcdf"/>
             <fncref targ="pvalue"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="ctrans" section="complex" output="cmatrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns an <by r="n" c="m"/> complex matrix holding the
+	  conjugate transpose of the <by r="m" c="n"/> complex matrix
+	  <argname>C</argname>. The <lit>'</lit> (prime) operator also
+	  performs conjugate transposition for complex matrices. The
+	  <fncref targ="transp"/> function can be used on complex
+	  matrices but it performs <quote>straight</quote>
+	  transposition (not conjugated).
 	</para>
       </description>
     </function>
@@ -4737,6 +4844,19 @@
 	  matrix of order <argname>n</argname>. Otherwise returns an
 	  <by r="n" c="m"/> matrix with ones on the main diagonal and
 	  zeros elsewhere.
+	</para>
+      </description>
+    </function>
+
+    <function name="Im" section="complex" output="matrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns a real matrix of the same dimensions as
+	  <argname>C</argname>, holding the imaginary part of the
+	  input matrix. See also <fncref targ="Re"/>.
 	</para>
       </description>
     </function>
@@ -9289,6 +9409,19 @@
       </description>
     </function>
 
+    <function name="Re" section="complex" output="matrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns a real matrix of the same dimensions as
+	  <argname>C</argname>, holding the real part of the
+	  input matrix. See also <fncref targ="Im"/>.
+	</para>
+      </description>
+    </function>
+
     <function name="readfile" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">fname</fnarg>
@@ -9585,6 +9718,27 @@
             <fncref targ="vec"/>
             <fncref targ="vech"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="schur" section="complex" output="cmatrix">
+      <fnargs>
+	<fnarg type="cmatrix">A</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;Z</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;w</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Performs the Schur decomposition of the complex matrix
+	  <argname>A</argname>, returning a complex upper triangular
+	  matrix <math>T</math>. If the second argument is given and
+	  is not <lit>null</lit> it retrieves a complex matrix
+	  <math>Z</math> holding the Schur vectors associated with
+	  <math>A</math> and <math>T</math>, such that <math>A</math>
+	  = <math>ZTZ</math><sup>H</sup>. If the third argument is
+	  given it retrieves the eigenvalues of <math>A</math> in a
+	  complex column vector.
 	</para>
       </description>
     </function>

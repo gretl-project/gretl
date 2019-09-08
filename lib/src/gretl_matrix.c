@@ -88,6 +88,8 @@ struct gretl_matrix_block_ {
 
 #define is_one_by_one(m) (m->rows == 1 && m->cols == 1)
 
+#define no_metadata(m) (m->info == NULL || is_block_matrix(m))
+
 static inline void *mval_malloc (size_t sz)
 {
     /* forestall "invalid reads" by OpenBLAS */
@@ -124,6 +126,12 @@ struct matrix_info_ {
     char **colnames;
     char **rownames;
 };
+
+typedef enum {
+    COLNAMES = 1 << 0,
+    ROWNAMES = 1 << 1,
+    REVERSED = 1 << 2
+} NameFlags;
 
 /* Central accounting for error in matrix allocation */
 
@@ -1254,42 +1262,123 @@ int gretl_matrix_copy_row (gretl_matrix *dest, int di,
 }
 
 /* Mechanism for copying row or column names from matrix
-   @src to matrix @targ. If @cols is nonzero it's column
-   names in question, otherwise it's row names. If @reverse
-   is non-zero that implies we've carried out an operation
-   such that it makes sense to reverse the row or column
-   names on @targ relative to @src.
+   @src to matrix @targ. If @sel is non-NULL it must be a
+   boolean vector indicating that @targ holds a subset of
+   the columns or rows of @src.
 */
 
 static void maybe_preserve_names (gretl_matrix *targ,
 				  const gretl_matrix *src,
-				  int cols, int reverse)
+				  NameFlags flags,
+				  const gretl_matrix *sel)
 {
-    char **srcnames;
-    int n, err = 0;
+    int cols = (flags & COLNAMES);
+    int reverse = (flags & REVERSED);
+    char **srcnames, **S;
+    int ns, nt, err = 0;
 
-    if (src->info != NULL && src->info != (matrix_info *) INFO_INVALID) {
-	if (cols) {
-	    srcnames = src->info->colnames;
-	    n = src->cols;
-	} else {
-	    srcnames = src->info->rownames;
-	    n = src->rows;
+    if (no_metadata(src)) {
+	return;
+    } else if (cols) {
+	srcnames = src->info->colnames;
+	ns = src->cols;
+	nt = targ->cols;
+    } else {
+	srcnames = src->info->rownames;
+	ns = src->rows;
+	nt = targ->rows;
+    }
+
+    if (srcnames == NULL || nt > ns) {
+	return;
+    } else if (nt < ns && sel == NULL) {
+	return;
+    }
+
+    if (sel != NULL) {
+	int i, n = gretl_vector_get_length(sel);
+	int k = 0;
+
+	for (i=0; i<n; i++) {
+	    k += (sel->val[i] != 0);
 	}
-	if (srcnames != NULL) {
-	    char **S = reverse ? strings_array_reverse(srcnames, n) :
-		strings_array_dup(srcnames, n);
-
-	    if (S != NULL) {
-		if (cols) {
-		    err = gretl_matrix_set_colnames(targ, S);
-		} else {
-		    err = gretl_matrix_set_rownames(targ, S);
-		}
-		if (err) {
-		    strings_array_free(S, n);
+	S = strings_array_new(k);
+	if (S != NULL) {
+	    k = 0;
+	    for (i=0; i<n; i++) {
+		if (sel->val[i] != 0) {
+		    S[k++] = gretl_strdup(srcnames[i]);
 		}
 	    }
+	}
+    } else if (reverse) {
+	S = strings_array_reverse(srcnames, ns);
+    } else {
+	S = strings_array_dup(srcnames, ns);
+    }
+
+    if (S != NULL) {
+	if (cols) {
+	    err = gretl_matrix_set_colnames(targ, S);
+	} else {
+	    err = gretl_matrix_set_rownames(targ, S);
+	}
+	if (err) {
+	    strings_array_free(S, nt);
+	}
+    }
+}
+
+static void maybe_concat_names (gretl_matrix *targ,
+				const gretl_matrix *src1,
+				const gretl_matrix *src2,
+				NameFlags flags)
+{
+    int cols = (flags & COLNAMES);
+    char **srcnames1 = NULL;
+    char **srcnames2 = NULL;
+    char **S = NULL;
+    int n1, ns, err = 0;
+
+    if (no_metadata(src1) || no_metadata(src2)) {
+	return;
+    } else if (cols) {
+	if (targ->cols == src1->cols + src2->cols) {
+	    srcnames1 = src1->info->colnames;
+	    srcnames2 = src2->info->colnames;
+	}
+    } else {
+	if (targ->rows == src1->rows + src2->rows) {
+	    srcnames1 = src1->info->rownames;
+	    srcnames2 = src2->info->rownames;
+	}
+    }
+
+    if (srcnames1 == NULL || srcnames2 == NULL) {
+	return;
+    }
+
+    n1 = cols ? src1->cols : src1->rows;
+    ns = cols ? targ->cols : targ->rows;
+    S = strings_array_new(ns);
+
+    if (S != NULL) {
+	int i, j = 0, k = 0;
+
+	for (i=0; i<ns; i++) {
+	    if (i < n1) {
+		S[i] = gretl_strdup(srcnames1[j++]);
+	    } else {
+		S[i] = gretl_strdup(srcnames2[k++]);
+	    }
+	}
+	if (cols) {
+	    err = gretl_matrix_set_colnames(targ, S);
+	} else {
+	    err = gretl_matrix_set_rownames(targ, S);
+	}
+	if (err) {
+	    strings_array_free(S, ns);
 	}
     }
 }
@@ -1337,8 +1426,8 @@ gretl_matrix *gretl_matrix_reverse_rows (const gretl_matrix *m,
 		}
 	    }
 	}
-	maybe_preserve_names(ret, m, 0, 1);
-	maybe_preserve_names(ret, m, 1, 0);
+	maybe_preserve_names(ret, m, ROWNAMES | REVERSED, NULL);
+	maybe_preserve_names(ret, m, COLNAMES, NULL);
     }
 
     return ret;
@@ -1388,8 +1477,8 @@ gretl_matrix *gretl_matrix_reverse_cols (const gretl_matrix *m,
 	    y -= r;
 	}
 
-	maybe_preserve_names(ret, m, 1, 1);
-	maybe_preserve_names(ret, m, 0, 0);
+	maybe_preserve_names(ret, m, COLNAMES | REVERSED, NULL);
+	maybe_preserve_names(ret, m, ROWNAMES, NULL);
     }
 
     return ret;
@@ -5337,7 +5426,7 @@ gretl_matrix *gretl_matrix_XTX_new (const gretl_matrix *X)
 	matrix_multiply_self_transpose(X, 1, XTX, GRETL_MOD_NONE);
     }
 
-    maybe_preserve_names(XTX, X, 1, 0);
+    maybe_preserve_names(XTX, X, COLNAMES, NULL);
 
     return XTX;
 }
@@ -7266,7 +7355,11 @@ gretl_matrix *gretl_rmatrix_vector_stat (const gretl_matrix *m,
 	}
     }
 
-    maybe_preserve_names(ret, m, !rowwise, 0);
+    if (rowwise) {
+	maybe_preserve_names(ret, m, ROWNAMES, NULL);
+    } else {
+	maybe_preserve_names(ret, m, COLNAMES, NULL);
+    }
 
     return ret;
 }
@@ -10667,8 +10760,13 @@ gretl_matrix_row_concat (const gretl_matrix *a, const gretl_matrix *b,
 
  finish:
 
-    if (!*err && c == NULL) {
-	*err = E_ALLOC;
+    if (!*err) {
+	if (c == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    maybe_preserve_names(c, a, COLNAMES, NULL);
+	    maybe_concat_names(c, a, b, ROWNAMES);
+	}
     }
 
     return c;
@@ -10777,7 +10875,8 @@ gretl_matrix_col_concat (const gretl_matrix *a, const gretl_matrix *b,
 	if (c == NULL) {
 	    *err = E_ALLOC;
 	} else {
-	    maybe_preserve_names(c, a, 0, 0);
+	    maybe_preserve_names(c, a, ROWNAMES, NULL);
+	    maybe_concat_names(c, a, b, COLNAMES);
 	}
     }
 
@@ -14138,7 +14237,13 @@ gretl_matrix *gretl_matrix_bool_sel (const gretl_matrix *A,
 	}
     }
 
-    maybe_preserve_names(ret, A, rowsel, 0);
+    if (rowsel) {
+	maybe_preserve_names(ret, A, ROWNAMES, sel);
+	maybe_preserve_names(ret, A, COLNAMES, NULL);
+    } else {
+	maybe_preserve_names(ret, A, COLNAMES, sel);
+	maybe_preserve_names(ret, A, ROWNAMES, NULL);
+    }
 
  bailout:
 

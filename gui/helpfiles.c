@@ -347,6 +347,8 @@ static const char *real_funcs_heading (const char *s)
 	return _("Calendar");
     } else if (!strcmp(s, "midas")) {
 	return _("MIDAS");
+    } else if (!strcmp(s, "complex")) {
+	return _("Complex numbers");
     } else {
 	return "??";
     }
