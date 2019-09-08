@@ -1,0 +1,21 @@
+set verbose off
+include SVAR.gfn
+open sw_ch14.gdt
+
+series infl = 400*ldiff(PUNEW)
+rename LHUR unemp
+
+list X = unemp infl
+list Z = const
+
+Mod = SVAR_setup("C", X, Z, 3)
+Mod.horizon = 36
+SVAR_restrict(&Mod, "C", 1, 2)
+
+SVAR_estimate(&Mod)
+
+set stopwatch
+bfail = SVAR_boot(&Mod,,, 0, "wildR", 2)	# full BC 
+printf "Failed = %d, Time (bootstrap) = %g\n", bfail, $stopwatch
+
+IRFsave("simpleC.pdf", &Mod, 0, 0)	# 0 means "all"

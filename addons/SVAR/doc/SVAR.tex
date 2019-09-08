@@ -274,7 +274,7 @@ in Figure \ref{fig:nativeIRF}. See the Gretl User's Guide for more
 details.  
   
 \begin{table}[htbp]
-  \begin{code}
+  \begin{scode}
 # turn extra output off
 set verbose off
 
@@ -289,7 +289,7 @@ var 3 unemp infl
 Sigma = $sigma
 C = cholesky(Sigma)
 print Sigma C
-  \end{code}
+  \end{scode}
 %$
   \caption{Cholesky example via \texttt{gretl}'s internal 
   \texttt{var} command}
@@ -298,7 +298,7 @@ print Sigma C
 
 \begin{table}[htbp]
   \centering
-  \begin{code}
+  \begin{scode}
 VAR system, lag order 3
 OLS estimates, observations 1960:1-1999:4 (T = 160)
 Log-likelihood = -267.76524
@@ -326,7 +326,7 @@ C (2 x 2)
 
      0.23525       0.0000 
     -0.12041       1.3268 
-  \end{code}
+  \end{scode}
   \caption{Cholesky example via \texttt{gretl}'s internal 
   \texttt{var} command --- Output}
    \label{InternalChol-out}
@@ -671,13 +671,18 @@ given to the \texttt{SVAR\_boot} function, which takes as arguments
 \begin{enumerate}
 \item The model bundle pointer;
 \item the required number of bootstrap replications (1024
-  here);\footnote{There's a hard limit at 16384 at the moment;
+  here), which can be omitted if the default value of 2000 is 
+    satisfactory;\footnote{There's a hard limit at 16384 at the moment;
     probably, it will be raised in the future. However, unless your
     model is very simple, anything more than that is likely to take
     forever and melt your CPU.}
-\item the desired size of the confidence interval $\alpha$.
+\item the desired size of the confidence interval $\alpha$ (with a default 
+  of 0.9 or 90\% coverage probability, so it could have been omitted in the 
+  example above).
 \end{enumerate}
 
+For further optional arguments see below and the function reference in the 
+appendix.
 The function outputs a scalar, which keeps track of how many bootstrap
 replications failed to converge (none here). Note that this procedure
 may be quite CPU-intensive. 
@@ -763,7 +768,6 @@ The default method for performing the bootstrap is the the most
 straightforward residual-based bootstrap, that is the one put forward
 by \cite{Runkle87}. 
 
-
 As an alternative, one may use bias-correction, which comes in two
 flavors, both inspired by the procedure known as
 ``bootstrap-after-bootstrap'' \citep{Kilian98}.
@@ -782,13 +786,15 @@ coefficients used for generating the bootstrap replications, but
 \emph{not} for computing the VMA representation. The interested user
 may want to experiment with both. 
 
-The ``Partial'' and ``Full'' variant may be enabled by setting the
+The ``Partial'' and ``Full'' variant may either be enabled by setting the
 bundle member \texttt{biascorr} to 1 and 2, respectively, before
 calling \texttt{SVAR\_boot}. For an example, look at the example file
-\texttt{bias\_correction.inp}.
+\texttt{bias\_correction.inp}. Alternatively, that choice can be specified 
+as the final (sixth) argument when calling \texttt{SVAR\_boot}.
 
-Another bootstrap choice which has to be specified before the call to
-\texttt{SVAR\_boot} is the use of the so-called \emph{wild} bootstrap.
+Another bootstrap choice which can either be specified before the call to
+\texttt{SVAR\_boot} or directly in that call is the use of the so-called 
+\emph{wild} bootstrap.
 Instead of resampling the residuals to create a new draw of artificial
 bootstrap data, for each time period $t$ it takes the original
 estimated residual vector and multiplies it by a random number $w_t$
@@ -797,13 +803,14 @@ several forms of heteroskedasticity in the errors. Activate this
 option by setting the bundle member \texttt{boottype} to the
 appropriate value, as per the following table.
 \begin{center}
-\begin{tabular}{rcl}
+\begin{tabular}{rccl}
   \hline
-  \texttt{boottype} & Distribution & Description \\
+  \texttt{boottype} & Argument in \texttt{SVAR\_boot} & Distribution & Description\\
   \hline
-  2 & Gaussian & $w_t \sim N(0,1)$ \\
-  3 & Rademacher & $P(w_t = \pm 1) = 0.5$ \\
-  4 & Mammen & $w_t = \begin{cases}
+  1 & \emph{resampling}, \emph{resample} & (none) & non-wild\\
+  2 & \emph{wild}, \emph{wildN} & Gaussian & $w_t \sim N(0,1)$ \\
+  3 & \emph{wildR} & Rademacher & $P(w_t = \pm 1) = 0.5$ \\
+  4 & \emph{wildM} & Mammen & $w_t = \begin{cases}
     -1/\phi &  \frac{\phi}{\sqrt{5}} \\
     \phi & 1 - \frac{\phi}{\sqrt{5}}
   \end{cases}$ \\
@@ -812,7 +819,12 @@ appropriate value, as per the following table.
 \end{center}
 where $\phi$ is the golden ratio (about 1.1618).
 The value 1 is the default and
-implies the usual residual resampling.
+implies the usual residual resampling. For example, the following invocation
+calls for a Gaussian wild bootstrap with partial bias correction (and through the 0 in
+fourth position activates the table printout as explained above):
+\begin{code}
+SVAR_boot(&Mod, 5000, 0.95, 0, "wild", 1)
+\end{code}
 
 Finally: if you change the \texttt{optmeth} bundle element before
 \texttt{SVAR\_boot} is called, the choice affects the estimation of
@@ -2311,19 +2323,27 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   \end{enumerate}
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_boot(bundle *obj, int rep, scalar alpha, bool
-    quiet[1])}
+\begin{funcdoc}{SVAR\_boot(bundle *obj, int rep[0::2000], scalar alpha[0:1:0.9], bool
+    quiet[1], string btypestr[null], int biascorr[-1:2:-1])}
   Perform a bootstrap analysis of a model. Returns the number of
   bootstrap replications in which the model failed to converge. Its
   arguments are:
   \begin{enumerate}
-  \item a bundle holding the model
-  \item the number of bootstrap replications
-  \item the coverage probability used for the confidence bands (e.g. 
-    for 0.90 the 0.05 and 0.95 quantiles will be used) 
+  \item a bundle holding the model (pointer form)
+  \item (optional) the number of bootstrap replications (default: 2000)
+  \item (optional) the coverage probability used for the confidence bands (e.g. 
+    for 0.90 the 0.05 and 0.95 quantiles will be used; default: 0.9) 
   \item (optional) omit the table with bootstrap means and standard
     errors (default: yes) 
+  \item (optional) the choice of bootstrap type, can be "resampling", or one 
+    of the wild variants: "wildN" (with "wild" as an alias), "wildR", or "wildM"; 
+    the default is to leave the choice in the model as-is
+  
+  \item (optional) bias correction choice: 0 for none, 1 for partial, 2 for full; to leave the 
+    setting as is in the model simply omit the argument (default -1) 
   \end{enumerate}
+  Note that the bias correction
+  option currently only applies to non-SVEC models.
 \end{funcdoc}
 
 \begin{funcdoc}{SVAR\_coint(bundle *obj, int dcase[1:5:3],
@@ -2552,6 +2572,8 @@ different (wider) confidence bands with this version.
 heteroskedasticity.
 
 \item Reformat the identification check output.
+
+\item Add the possibility to choose the bias correction directly in the call to \texttt{SVAR\_boot}.
 
 \end{itemize}
 
