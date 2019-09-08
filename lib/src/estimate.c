@@ -389,7 +389,6 @@ static int compute_ar_stats (MODEL *pmod, const DATASET *dset,
     }
 
     pmod->rsq = gretl_corr_rsq(pmod->t1, pmod->t2, dset->Z[yno], pmod->yhat);
-
     pmod->adjrsq =
 	1.0 - ((1.0 - pmod->rsq) * (pmod->t2 - pmod->t1) /
 	       (double) pmod->dfd);

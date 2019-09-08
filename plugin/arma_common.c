@@ -1,17 +1,17 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -23,13 +23,13 @@
 
 #define SAMPLE_DEBUG 0
 
-static void 
+static void
 real_arima_difference_series (double *dx, const double *x,
-			      int t1, int t2, int *delta, 
+			      int t1, int t2, int *delta,
 			      int k);
 
-static void 
-arma_info_init (arma_info *ainfo, gretlopt opt, 
+static void
+arma_info_init (arma_info *ainfo, gretlopt opt,
 		const int *pqspec, const DATASET *dset)
 {
     ainfo->yno = 0;
@@ -41,7 +41,7 @@ arma_info_init (arma_info *ainfo, gretlopt opt,
     if (opt & OPT_X) {
 	/* we got --x-12-arima */
 	ainfo->flags |= ARMA_X12A;
-    }    
+    }
 
     if (!(opt & OPT_C)) {
 	/* we didn't get --conditional */
@@ -59,8 +59,8 @@ arma_info_init (arma_info *ainfo, gretlopt opt,
     ainfo->q = 0;
     ainfo->P = 0;
     ainfo->D = 0;
-    ainfo->Q = 0; 
-    
+    ainfo->Q = 0;
+
     ainfo->np = 0;
     ainfo->nq = 0;
 
@@ -124,13 +124,13 @@ enum {
     MA_MASK
 };
 
-/* Create a mask for skipping certain intermediate lags, 
+/* Create a mask for skipping certain intermediate lags,
    AR or MA.  This function also sets ainfo->np and ainfo->nq,
    which record the actual number of non-seasonal AR and MA
    lags used.
 */
 
-static char *mask_from_list (const int *list, 
+static char *mask_from_list (const int *list,
 			     arma_info *ainfo,
 			     int m, int *err)
 {
@@ -153,7 +153,7 @@ static char *mask_from_list (const int *list,
     for (i=1; i<=list[0]; i++) {
 	k = list[i];
 	if (k > 0) {
-	    mask[k-1] = '1'; 
+	    mask[k-1] = '1';
 	    nv++;
 	    if (k > nmax) {
 		nmax = k;
@@ -240,7 +240,7 @@ static int arima_integrate (double *dx, const double *x,
     if (c == NULL) {
 	free(ix);
 	return E_ALLOC;
-    }    
+    }
 
     for (t=0; t<t1; t++) {
 	ix[t] = 0.0;
@@ -280,7 +280,7 @@ static void ainfo_data_to_model (arma_info *ainfo, MODEL *pmod)
     if (arma_has_seasonal(ainfo)) {
 	gretl_model_set_int(pmod, "arma_P", ainfo->P);
 	gretl_model_set_int(pmod, "arma_Q", ainfo->Q);
-	gretl_model_set_int(pmod, "arma_pd", ainfo->pd);	
+	gretl_model_set_int(pmod, "arma_pd", ainfo->pd);
     }
 
     if (ainfo->d > 0 || ainfo->D > 0) {
@@ -293,12 +293,12 @@ static void ainfo_data_to_model (arma_info *ainfo, MODEL *pmod)
     }
 
     if (ainfo->pmask != NULL) {
-	gretl_model_set_string_as_data(pmod, "pmask", 
+	gretl_model_set_string_as_data(pmod, "pmask",
 				       gretl_strdup(ainfo->pmask));
     }
 
     if (ainfo->qmask != NULL) {
-	gretl_model_set_string_as_data(pmod, "qmask", 
+	gretl_model_set_string_as_data(pmod, "qmask",
 				       gretl_strdup(ainfo->qmask));
     }
 }
@@ -316,7 +316,7 @@ static void arma_depvar_stats (MODEL *pmod, arma_info *ainfo,
 	if (dy != NULL && delta != NULL) {
 	    int k = d + ainfo->pd * D;
 
-	    real_arima_difference_series(dy, dset->Z[ainfo->yno], 
+	    real_arima_difference_series(dy, dset->Z[ainfo->yno],
 					 pmod->t1, pmod->t2, delta, k);
 	    pmod->ybar = gretl_mean(0, T - 1, dy);
 	    pmod->sdy = gretl_stddev(0, T - 1, dy);
@@ -380,13 +380,13 @@ void write_arma_model_stats (MODEL *pmod, arma_info *ainfo,
 #endif
 	    pmod->ess += pmod->uhat[t] * pmod->uhat[t];
 	    mean_error += pmod->uhat[t];
-	} 
+	}
     }
 
 #if USE_ARIMA_INTEGRATE
     if (arma_is_arima(ainfo) && arima_ydiff(ainfo)) {
-	arima_integrate(pmod->yhat, dset->Z[ainfo->yno], 
-			pmod->t1, pmod->t2, 
+	arima_integrate(pmod->yhat, dset->Z[ainfo->yno],
+			pmod->t1, pmod->t2,
 			ainfo->d, ainfo->D, ainfo->pd);
     }
 #endif
@@ -401,9 +401,13 @@ void write_arma_model_stats (MODEL *pmod, arma_info *ainfo,
     if (na(pmod->sigma)) {
 	/* in x12a or native exact cases this is already done */
 	pmod->sigma = sqrt(pmod->ess / pmod->nobs);
-    } 
+    }
 
-    pmod->rsq = pmod->adjrsq = pmod->fstt = pmod->chisq = NADBL;
+    /* R-squared as suggested by J\"org Breitung */
+    pmod->rsq = gretl_corr_rsq(pmod->t1, pmod->t2, dset->Z[ainfo->yno], pmod->yhat);
+    pmod->adjrsq = 1.0 - ((1.0 - pmod->rsq) * (pmod->t2 - pmod->t1) /
+			  (double) pmod->dfd);
+    pmod->fstt = pmod->chisq = NADBL;
     pmod->tss = NADBL;
 
     if (arma_least_squares(ainfo)) {
@@ -424,7 +428,7 @@ void write_arma_model_stats (MODEL *pmod, arma_info *ainfo,
 
     if (!pmod->errcode) {
 	gretl_model_add_arma_varnames(pmod, dset, ainfo->yno,
-				      ainfo->p, ainfo->q, 
+				      ainfo->p, ainfo->q,
 				      ainfo->pmask, ainfo->qmask,
 				      ainfo->P, ainfo->Q,
 				      ainfo->nexo);
@@ -448,7 +452,7 @@ static void calc_max_lag (arma_info *ainfo)
 #endif
 }
 
-static int arma_adjust_sample (arma_info *ainfo, 
+static int arma_adjust_sample (arma_info *ainfo,
 			       const DATASET *dset,
 			       int *missv, int *misst)
 {
@@ -555,7 +559,7 @@ static int arma_adjust_sample (arma_info *ainfo,
 	ainfo->T = ainfo->fullT - missing;
 	if (ainfo->T <= ainfo->nc) {
 	    /* insufficient observations */
-	    err = E_DF; 
+	    err = E_DF;
 	}
     }
 
@@ -573,7 +577,7 @@ static int arma_adjust_sample (arma_info *ainfo,
 
 /* remove the intercept from list of regressors */
 
-static int arma_remove_const (arma_info *ainfo, 
+static int arma_remove_const (arma_info *ainfo,
 			      const DATASET *dset)
 {
     int *list = ainfo->alist;
@@ -658,7 +662,7 @@ static int arma_add_xlist (arma_info *ainfo, int ypos)
 
 #define count_arma_coeffs(a) (a->ifc + a->np + a->nq + a->P + a->Q + a->nexo)
 
-static int check_arma_list (arma_info *ainfo, 
+static int check_arma_list (arma_info *ainfo,
 			    const DATASET *dset,
 			    gretlopt opt)
 {
@@ -674,7 +678,7 @@ static int check_arma_list (arma_info *ainfo,
     } else if (list[2] < 0 || list[2] > MAX_ARMA_ORDER) {
 	/* non-seasonal MA order out of bounds */
 	err = 1;
-    } 
+    }
 
     if (!err) {
 	ainfo->p = list[1];
@@ -690,7 +694,7 @@ static int check_arma_list (arma_info *ainfo,
 	} else if (list[5] < 0 || list[5] > MAX_ARMA_ORDER) {
 	    /* seasonal MA order out of bounds */
 	    err = 1;
-	} 
+	}
     }
 
     if (!err && arma_has_seasonal(ainfo)) {
@@ -753,7 +757,7 @@ static int check_arima_list (arma_info *ainfo,
 	err = 1;
     } else if (list[3] < 0 || list[3] > MAX_ARMA_ORDER) {
 	err = 1;
-    } 
+    }
 
     if (!err) {
 	ainfo->p = list[1];
@@ -770,7 +774,7 @@ static int check_arima_list (arma_info *ainfo,
 	    err = 1;
 	} else if (list[7] < 0 || list[7] > MAX_ARMA_ORDER) {
 	    err = 1;
-	} 
+	}
     }
 
     if (!err && arma_has_seasonal(ainfo)) {
@@ -818,7 +822,7 @@ static int check_arima_list (arma_info *ainfo,
     return err;
 }
 
-static int arma_check_list (arma_info *ainfo, 
+static int arma_check_list (arma_info *ainfo,
 			    const DATASET *dset,
 			    gretlopt opt)
 {
@@ -848,33 +852,33 @@ static int arma_check_list (arma_info *ainfo,
 	if (arma_is_arima(ainfo)) {
 	    /* check for arima spec */
 	    err = check_arima_list(ainfo, dset, opt);
-	} else {	    
+	} else {
 	    /* check for simple arma spec */
 	    err = check_arma_list(ainfo, dset, opt);
 	    /* catch null model */
 	    if (ainfo->nc == 0) {
 		err = E_ARGS;
-	    }	    
-	} 
+	    }
+	}
     }
 
-#if 0    
+#if 0
     /* catch null model */
     if (ainfo->nc == 0) {
 	err = E_ARGS;
     }
-#endif    
+#endif
 
     return err;
 }
 
-static void 
+static void
 real_arima_difference_series (double *dx, const double *x,
-			      int t1, int t2, int *delta, 
+			      int t1, int t2, int *delta,
 			      int k)
 {
     int i, p, t, s = 0;
-    
+
     for (t=t1; t<=t2; t++) {
 	dx[s] = x[t];
 	for (i=0; i<k && !na(dx[s]); i++) {
@@ -921,9 +925,9 @@ static int transcribe_extra_info (arma_info *ainfo, MODEL *armod)
 
 #ifndef X12A_CODE
 
-/* Add to the ainfo struct a full-length series y holding 
+/* Add to the ainfo struct a full-length series y holding
    the differenced version of the dependent variable.
-   If the "xdiff" flag is set on ainfo, in addition 
+   If the "xdiff" flag is set on ainfo, in addition
    create a matrix dX holding the differenced regressors;
    in that case the time-series length of dX depends on
    the @fullX flag -- if fullX = 0, this equals
@@ -959,7 +963,7 @@ int arima_difference (arma_info *ainfo,
     if (delta == NULL) {
 	free(dy);
 	return E_ALLOC;
-    }    
+    }
 
     for (t=0; t<dset->n; t++) {
 	dy[t] = NADBL;
@@ -982,7 +986,7 @@ int arima_difference (arma_info *ainfo,
     for (t=0; t<dset->n; t++) {
 	fprintf(stderr, "dy[%d] = % 12.7g\n", t, dy[t]);
     }
-#endif    
+#endif
 
     ainfo->y = dy;
     set_arima_ydiff(ainfo);
@@ -994,7 +998,7 @@ int arima_difference (arma_info *ainfo,
 	if (fullX) {
 	    xt1 = 0;
 	    xT = ainfo->t2 + 1;
-	} 
+	}
 
 	ainfo->dX = gretl_matrix_alloc(xT, ainfo->nexo);
 
@@ -1006,7 +1010,7 @@ int arima_difference (arma_info *ainfo,
 
 	    for (i=0; i<ainfo->nexo; i++) {
 		vi = ainfo->xlist[i+1];
-		real_arima_difference_series(val, dset->Z[vi], xt1, 
+		real_arima_difference_series(val, dset->Z[vi], xt1,
 					     ainfo->t2, delta, k);
 		val += xT;
 	    }

@@ -3183,11 +3183,13 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	key[K_SSR] = N_("Mean of innovations"); /* 22: Mean of ARMA innovations */
 	val[K_SSR] = gretl_model_get_double(pmod, "mean_error");
 	key[K_SER] = N_("S.D. of innovations"); /* 22: Std. dev. of ARMA innovations */
+#if 0 /* allow printing of R^2 for ARMA models */
 	for (i=K_RSQ; i<MID_STATS; i++) {
 	    if (i < K_LNL || i > K_HQ) {
 		val[i] = NADBL;
 	    }
 	}
+#endif
     } else if (pmod->ci == LAD) {
 	key[K_YBAR] = N_("Median depend. var");  /* 22: Median of dependent variable */
 	val[K_YBAR] = gretl_model_get_double(pmod, "ymedian");
