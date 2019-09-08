@@ -48,6 +48,7 @@ TEXSRC = cli.tex \
 	discrete.tex \
 	appendices.tex \
 	matrices.tex \
+	complex_matrices.tex \
 	calendar.tex \
 	introduction.tex \
 	datafiles.tex \

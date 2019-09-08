@@ -5360,6 +5360,19 @@
       </description>
     </function>
 
+    <function name="iscomplex" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="string">name</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns 1 if <argname>name</argname> is the name of a
+	  complex matrix, 0 if it is the name of a real matrix, or
+	  <lit>NA</lit> otherwise.
+	</para>
+      </description>
+    </function>
+
     <function name="isconst" section="data-utils" output="int">
       <fnargs>
 	<fnarg type="series-or-vec">y</fnarg>
