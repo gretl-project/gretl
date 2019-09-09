@@ -275,16 +275,25 @@ below for the $4 \times 4$ case.
 \end{center}
 This means that \texttt{lower} and \texttt{upper} do not produce the
 same result for symmetric matrices bigger than $3 \times 3$, which may
-seem unfortunate, but it gives the user flexibility in respect of the
-ordering of the elements. Suppose you have a non-symmetric matrix $M$
-and you'd like to get the infradiagonal elements in \textit{row}-major
-order: \texttt{(M')[upper]} will do the job.
+seem unfortunate, but it gives the user a degree of flexibility in
+respect of the ordering of the elements. Suppose you have a
+non-symmetric matrix $M$ and you'd like to extract the infradiagonal
+elements in \textit{row}-major order: \texttt{(M')[upper]} will do the
+job.
 
 When \texttt{lower} and \texttt{upper} are used on the left, the
 replacement must be either (a) a vector of length equal to the number
 of elements in the selection or (b) a scalar value. In case (a) the
 elements of the target matrix are filled in column-major order; in
 case (b) they are all set using the scalar.
+
+One possible use of these tools is taking (say) a lower triangular
+matrix and rendering it symmetric by copying the elements from beneath
+the diagonal to above. The way to get this right (assuming you have a
+lower triangular matrix \texttt{L}) is
+\begin{code}
+L[upper] = (L')[upper]  # note: not L[upper] = L[lower]
+\end{code}
 
 \section{Deleting rows or columns}
 \label{sec:neg-indices}
