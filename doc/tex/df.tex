@@ -44,26 +44,26 @@ as
 \sigma^2 = E\left[(x_i - \mu)^2\right]
 \]
 %
-where $\mu = E(x_i)$; it is clear that if $\mu$ were observable, a
+where $\mu = E(x)$. It is clear that if $\mu$ were observable, a
 perfectly good estimator would be
 %
 \[
 \bar{\sigma}^2 = \frac{1}{n} \sum_{i=1}^n (x_i - \mu)^2.
 \]
 %
-But this is not a practical option since $\mu$ is generally
-unobservable and must be estimated; therefore, we use $\bar{x}$ as an
-estimator of $\mu$: it is easily shown that $\bar{x}$ is the
-least-squares estimator, and also (assuming normality) the ML
-estimator.  It is unbiased, but is of course subject to sampling
-error; in any given sample it is highly unlikely that $\bar{x} = \mu$.
-Given that $\bar{x}$ is the least-squares estimator, the sum of
-squared deviations of the $x_i$ from \textit{any} value other than
-$\bar{x}$ must be greater than the summation in (\ref{eq:sigma-hat}).
-But since $\mu$ is almost certainly not equal to $\bar{x}$, the sum of
-squared deviations of the $x_i$ from $\mu$ will surely be greater than
-the sum of squared deviations in (\ref{eq:sigma-hat}). It follows that
-the expected value of $\hat{\sigma}^2$ falls short of the population
+But this is not a practical option: $\mu$ is generally
+unobservable. We therefore substitute $\bar{x}$ for the unknown
+$\mu$. It is easily shown that $\bar{x}$ is the least-squares
+estimator of $\mu$, and also (assuming normality) the ML estimator.
+It is unbiased, but is of course subject to sampling error; in any
+given sample it is highly unlikely that $\bar{x} = \mu$.  Given that
+$\bar{x}$ is the least-squares estimator, the sum of squared
+deviations of the $x_i$ from \textit{any} value other than $\bar{x}$
+must be greater than the summation in (\ref{eq:sigma-hat}).  But since
+$\mu$ is almost certainly not equal to $\bar{x}$, the sum of squared
+deviations of the $x_i$ from $\mu$ will surely be greater than the sum
+of squared deviations in (\ref{eq:sigma-hat}). It follows that the
+expected value of $\hat{\sigma}^2$ falls short of the population
 variance.
 
 The proof that $s^2$ is indeed the unbiased estimator can be found in

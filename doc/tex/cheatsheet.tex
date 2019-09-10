@@ -166,11 +166,10 @@ the \textsf{Data} menu.
 \subsection{Time averaging of panel datasets}
 
 \emph{Problem:} You have a panel dataset (comprising observations of
-$n$ indidivuals in each of $T$ periods) and you want to transform it
-by lowering the time frequency by averaging. This is commonly done in
-growth empirical economics, where units are countries and yearly data
-are turned into 3- or 4- or 5-year averages (see \emph{eg}
-\cite{Islam1995}).
+$n$ indidivuals in each of $T$ periods) and you want to lower the time
+frequency by averaging. This is commonly done in empirical growth
+economics, where annual data are turned into 3- or 4- or 5-year
+averages \citep[see for example][]{Islam1995}.
 
 \emph{Solution:} In a panel dataset, \app{gretl} functions that deal
 with time are aware of the panel structure, so they will automatically
@@ -186,7 +185,6 @@ setobs 12 1:1 --stacked-time-series
 ###
 ### generate simulated yearly data
 ###
-
 series year = 2000 + time
 series y = round(normal())
 series x = round(3*uniform())
@@ -196,7 +194,6 @@ print year X -o
 ###
 ### now re-cast as 4-year averages
 ###
-
 # a dummy for endpoints
 series endpoint = (year % 4 == 0) 
 # id variable 
@@ -516,11 +513,10 @@ efficient but still suboptimal, would be
 series y = (d>a)*x + (d<=a)*z  
 \end{code}
 However, the ternary conditional assignment operator is not only the
-most numerically efficient way to accomplish what we want, it is also
-remarkably transparent to read when one gets used to it. Some readers
-may find it helpful to note that the conditional assignment operator
-works exactly the same way as the \texttt{=IF()} function in
-spreadsheets.
+most efficient way to accomplish what we want, it is also remarkably
+transparent to read when one gets used to it. Some readers may find it
+helpful to note that the conditional assignment operator works exactly
+the same way as the \texttt{=IF()} function in spreadsheets.
 
 \subsection{Generating a time index for panel datasets}
 

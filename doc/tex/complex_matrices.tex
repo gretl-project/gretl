@@ -35,8 +35,8 @@ either via $a$ and $b$ or in ``polar'' form. The latter pertains to
 the complex plane, which has the real component on the horizontal axis
 and the imaginary component on the vertical. The polar representation
 of a complex number is composed of the length $r$ of the ray from the
-origin, $0 + 0\,i$, to the point in question and the angle $\theta$
-subtended between the positive real axis and this ray, measured
+origin to the point in question and the angle $\theta$ subtended
+between the positive real axis and this ray, measured
 counter-clockwise in radians. In polar form the complex number
 $z = a + b\,i$ can be written as
 \[
@@ -88,21 +88,19 @@ Note, however, that the \cmd{iscomplex()} function only tells you if a
 certain matrix is endowed with an imaginary part, which may be
 zero. The following code snippet should clarify the point:
 \begin{code}
-set verbose off
-matrix a = complex(1,0)
-scalar b = iscomplex(a)
-scalar c = abs(a[imag]) .= 0
-print b c
+matrix z = complex(1,0)
+scalar a = iscomplex(z)
+scalar b = z[imag] == 0
+printf "a = %g, b = %g\n", a, b
 \end{code}
-
-The code above returns
+The code above gives
 \begin{code}
-              b =  1.0000000
-
-              c =  1.0000000
+a = 1, b = 1
 \end{code}
-because the matrix \texttt{a} is defined as complex, but its content
-is in fact a real matrix, since its imaginary part is 0.
+The test \texttt{a} is non-zero (or ``true'') because the matrix
+\texttt{z} is defined as complex, but \texttt{b}, which tests for an
+all-zero imaginary part of \texttt{z}, is also true. In mathematical
+terms, then, \texttt{z} is effectively a real matrix.
 
 \section{Indexation}
 

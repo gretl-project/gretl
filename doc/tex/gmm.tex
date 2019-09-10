@@ -748,8 +748,8 @@ actually estimated.
 
 A few words of warning are in order: despite its ingenuity, GMM is
 possibly the most fragile estimation method in econometrics. The
-number of non-obvious choices one has to make when using GMM is high,
-and in finite samples each of these can have dramatic consequences on
+number of non-obvious choices one has to make when using GMM is large,
+and in finite samples each of these can have dramatic consequences for
 the eventual output. Some of the factors that may affect the results
 are:
 \begin{enumerate}
@@ -770,14 +770,12 @@ are:
   number of lags to use when computing the long-run covariance matrix
   (see section \ref{sec:gmm-vcv}). Our advice is to go by trial and
   error, since results may be greatly influenced by a poor choice.
-  Future versions of gretl will include more options on
-  covariance matrix estimation.
 \end{enumerate}
 
 One of the consequences of this state of things is that replicating
-various well-known published studies may be extremely difficult. Any
+well-known published studies may be extremely difficult. Any
 non-trivial result is virtually impossible to reproduce unless all
-details of the estimation procedure are carefully recorded. 
+details of the estimation procedure are carefully recorded.
 
 %%% Local Variables: 
 %%% mode: latex
