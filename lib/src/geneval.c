@@ -2223,6 +2223,13 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
     return NULL;
 }
 
+static NODE *mpi_barrier_node (parser *p)
+{
+    gretl_errmsg_set(_("MPI is not supported in this gretl build"));
+    p->err = 1;
+    return NULL;
+}
+
 #endif /* !HAVE_MPI */
 
 static NODE *scalar_calc (NODE *x, NODE *y, int f, parser *p)
@@ -15557,6 +15564,13 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = sleep_node(l, p);
 	} else {
 	    node_type_error(t->t, 0, NUM, l, p);
+	}
+	break;
+    case F_BARRIER:
+	if (l->t == EMPTY) {
+	    ret = mpi_barrier_node(p);
+	} else {
+	    node_type_error(t->t, 0, EMPTY, l, p);
 	}
 	break;
     case LAG:

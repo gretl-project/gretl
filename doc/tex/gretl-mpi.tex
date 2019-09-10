@@ -508,7 +508,19 @@ if $mpirank == 8
 endif
 mpibcast(&X, 8)
 \end{code}
-%$
+% $
+
+In addition to the data-transfer functions, there's a utility function
+whose job is simply to enforce synchronization.  This is
+\texttt{mpibarrier}, which takes no arguments and has no meaningful
+return value. It should be placed in a common portion of an
+MPI-enabled script, where it will be called by all processes: the
+effect is that no process will continue beyond the ``barrier'' until
+the function has been called by all processes.
+\begin{code}
+# nobody gets past this until everyone has called it
+mpibarrier()
+\end{code}
 
 \vspace{1ex}
 

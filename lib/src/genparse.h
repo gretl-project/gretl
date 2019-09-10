@@ -292,6 +292,7 @@ enum {
     F_ISCMPLX,
     F_CTRANS,
     F_MLOG,
+    F_BARRIER,
     HF_JBTERMS,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     HF_LISTINFO,

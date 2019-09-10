@@ -293,3 +293,21 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 
     return ret;
 }
+
+static NODE *mpi_barrier_node (parser *p)
+{
+    NODE *ret = NULL;
+
+    if (!gretl_mpi_initialized()) {
+	gretl_errmsg_set(_("The MPI library is not loaded"));
+	p->err = 1;
+	return NULL;
+    } else {
+	ret = aux_scalar_node(p);
+	if (ret != NULL) {
+	    ret->v.xval = gretl_mpi_barrier();
+	}
+    }
+
+    return ret;
+}

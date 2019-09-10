@@ -493,6 +493,7 @@ struct str_table funcs[] = {
     { F_REDUCE,   "mpireduce" },
     { F_ALLREDUCE, "mpiallred" },
     { F_SCATTER,   "mpiscatter" },
+    { F_BARRIER,   "mpibarrier" },
     { F_EASTER,    "easterday" },
     { F_GENSERIES, "genseries" },
     { F_CURL,      "curl" },

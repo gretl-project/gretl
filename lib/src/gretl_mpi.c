@@ -776,6 +776,11 @@ static int gretl_bundle_mpi_bcast (gretl_bundle **pb, int root)
     return err;
 }
 
+int gretl_mpi_barrier (void)
+{
+    return mpi_barrier(mpi_comm_world) != MPI_SUCCESS;
+}
+
 static int gretl_string_mpi_bcast (char **pbuf, int root)
 {
     char *buf = NULL;
