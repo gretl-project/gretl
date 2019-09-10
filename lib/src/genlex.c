@@ -2272,7 +2272,6 @@ void lex (parser *p)
 		if (isprint(p->ch)) {
 		    pprintf(p->prn, _("Invalid character '%c'\n"), p->ch);
 		} else {
-		    fprintf(stderr, "HERE!\n");
 		    pprintf(p->prn, _("Unexpected byte 0x%x\n"),
 			    (unsigned char) p->ch);
 		}
