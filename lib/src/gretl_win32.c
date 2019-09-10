@@ -554,12 +554,11 @@ static int read_from_pipe (HANDLE hwrite, HANDLE hread,
 }
 
 static int win32_relay_output (HANDLE hread, char *buf, int bufsize,
-			       int gui, PRN *prn)
+			       int gui, DWORD *dwread, PRN *prn)
 {
-    DWORD dwread;
-    int ok = ReadFile(hread, buf, bufsize - 1, &dwread, NULL);
+    int ok = ReadFile(hread, buf, bufsize - 1, dwread, NULL);
 
-    if (ok) {
+    if (ok && *dwread > 0) {
 	pputs(prn, buf);
 	if (gui) {
 	    manufacture_gui_callback(FLUSH);
@@ -571,9 +570,9 @@ static int win32_relay_output (HANDLE hread, char *buf, int bufsize,
     return ok;
 }
 
-/* options: OPT_S for shell mode, as opposed to running an
-   executable directly; OPT_R to try to pass back output
-   in real time
+/* Option: OPT_S for shell mode, as opposed to running an
+   executable directly. If @prn is non-NULL we try to pass
+   back output in real time.
 */
 
 static int
@@ -640,19 +639,28 @@ run_child_with_pipe (const char *arg, const char *currdir,
 	    /* try reading output in real time */
 	    int gui = gretl_in_gui_mode();
 	    char buf[1024];
+	    DWORD dwread;
 	    DWORD excode;
 
+	    fprintf(stderr, "Entering MPI real-time read loop\n");
 	    while (GetExitCodeProcess(pinfo.hProcess, &excode)
 		   && excode == STILL_ACTIVE) {
 		memset(buf, 0, sizeof buf);
-		ok = win32_relay_output(hread, buf, sizeof buf, gui, prn);
+		ok = win32_relay_output(hread, buf, sizeof buf, gui, &dwread, prn);
 		if (!ok) {
+		    fprintf(stderr, " break on ok = %d, dwread = %d\n", ok, dwread);
 		    break;
 		}
-		g_usleep(250000); /* 0.25 seconds */
+		g_usleep(100000); /* 0.10 seconds */
 	    }
-	    win32_relay_output(hread, buf, sizeof buf, gui, prn);
 	    CloseHandle(hwrite);
+	    fprintf(stderr, "Closed write handle on MPI pipe\n");
+#if 0
+	    /* this is in danger of hanging forever -- but might we
+	       miss some output above?
+	    */
+	    win32_relay_output(hread, buf, sizeof buf, gui, &dwread, prn);
+#endif
 	}
 	CloseHandle(pinfo.hProcess);
 	CloseHandle(pinfo.hThread);
@@ -688,6 +696,7 @@ static int run_cmd_with_pipes (const char *arg, const char *currdir,
 	   STDOUT is not inherited */
 	SetHandleInformation(hread, HANDLE_FLAG_INHERIT, 0);
 	if (prn != NULL && (opt & OPT_R)) {
+	    /* OPT_R is supposed to give real time output? */
 	    ok = run_child_with_pipe(arg, currdir, hwrite, hread, opt, prn);
 	} else {
 	    ok = run_child_with_pipe(arg, currdir, hwrite, hread, opt, NULL);
