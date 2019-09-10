@@ -706,12 +706,19 @@ static void mpi_childwatch (GPid pid, gint status, gpointer p)
     *finished = 1;
 }
 
-static void relay_mpi_output (gint sout, char *buf, int bufsize,
-			      int gui, PRN *prn)
+static int relay_mpi_output (gint sout, char *buf, int bufsize,
+			     int gui, PRN *prn)
 {
     int got = read(sout, buf, bufsize - 1);
+    int done = 0;
 
     if (got > 0) {
+	char *s = strstr(buf, "__GRETLMPI_EXIT__");
+
+	if (s != NULL) {
+	    done = 1;
+	    *s = '\0';
+	}
 	pputs(prn, buf);
 	if (gui) {
 	    manufacture_gui_callback(FLUSH);
@@ -719,6 +726,8 @@ static void relay_mpi_output (gint sout, char *buf, int bufsize,
 	    gretl_print_flush_stream(prn);
 	}
     }
+
+    return done;
 }
 
 static int run_mpi_with_pipes (char **argv, gretlopt opt, PRN *prn)
@@ -748,16 +757,21 @@ static int run_mpi_with_pipes (char **argv, gretlopt opt, PRN *prn)
 	err = 1;
     } else {
 	int gui = gretl_in_gui_mode();
+	int got_all = 0;
 
 	g_child_watch_add(child_pid, mpi_childwatch, &finished);
 	while (!finished) {
 	    memset(buf, 0, sizeof buf);
-	    relay_mpi_output(sout, buf, sizeof buf, gui, prn);
-	    g_usleep(250000); /* 0.25 seconds */
+	    got_all = relay_mpi_output(sout, buf, sizeof buf, gui, prn);
+	    if (!got_all) {
+		g_usleep(250000); /* 0.25 seconds */
+	    }
 	    g_main_context_iteration(NULL, FALSE);
 	}
-	memset(buf, 0, sizeof buf);
-	relay_mpi_output(sout, buf, sizeof buf, gui, prn);
+	if (!got_all) {
+	    memset(buf, 0, sizeof buf);
+	    relay_mpi_output(sout, buf, sizeof buf, gui, prn);
+	}
 	close(sout);
     }
 
@@ -1546,6 +1560,13 @@ static int write_gretl_mpi_script (gretlopt opt, const DATASET *dset)
     if (!err) {
 	/* put out the stored 'foreign' lines */
 	put_foreign_lines(fp);
+#ifdef MPI_PIPES
+	/* plus an easily recognized trailer */
+	fputs("mpibarrier()\n", fp);
+	fputs("if $mpirank == 0\n", fp);
+	fputs("  print \"__GRETLMPI_EXIT__\"\n", fp);
+	fputs("endif\n", fp);
+#endif
 	fclose(fp);
     }
 

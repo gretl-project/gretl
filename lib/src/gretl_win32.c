@@ -554,11 +554,20 @@ static int read_from_pipe (HANDLE hwrite, HANDLE hread,
 }
 
 static int win32_relay_output (HANDLE hread, char *buf, int bufsize,
-			       int gui, DWORD *dwread, PRN *prn)
+			       int gui, int *done, PRN *prn)
 {
-    int ok = ReadFile(hread, buf, bufsize - 1, dwread, NULL);
+    DWORD dwread;
+    int ok = ReadFile(hread, buf, bufsize - 1, &dwread, NULL);
 
-    if (ok && *dwread > 0) {
+    if (ok && dwread > 0) {
+	char *s = strstr(buf, "__GRETLMPI_EXIT__");
+
+	if (s != NULL) {
+	    if (done != NULL) {
+		*done = 1;
+	    }
+	    *s = '\0';
+	}
 	pputs(prn, buf);
 	if (gui) {
 	    manufacture_gui_callback(FLUSH);
@@ -639,16 +648,16 @@ run_child_with_pipe (const char *arg, const char *currdir,
 	    /* try reading output in real time */
 	    int gui = gretl_in_gui_mode();
 	    char buf[1024];
-	    DWORD dwread;
 	    DWORD excode;
+	    int done = 0;
 
 	    fprintf(stderr, "Entering MPI real-time read loop\n");
 	    while (GetExitCodeProcess(pinfo.hProcess, &excode)
 		   && excode == STILL_ACTIVE) {
 		memset(buf, 0, sizeof buf);
-		ok = win32_relay_output(hread, buf, sizeof buf, gui, &dwread, prn);
-		if (!ok) {
-		    fprintf(stderr, " break on ok = %d, dwread = %d\n", ok, dwread);
+		ok = win32_relay_output(hread, buf, sizeof buf, gui, &done, prn);
+		if (!ok || done) {
+		    fprintf(stderr, " break on ok = %d, done = %d\n", ok, done);
 		    break;
 		}
 		g_usleep(100000); /* 0.10 seconds */
@@ -659,7 +668,7 @@ run_child_with_pipe (const char *arg, const char *currdir,
 	    /* this is in danger of hanging forever -- but might we
 	       miss some output above?
 	    */
-	    win32_relay_output(hread, buf, sizeof buf, gui, &dwread, prn);
+	    win32_relay_output(hread, buf, sizeof buf, gui, NULL, prn);
 #endif
 	}
 	CloseHandle(pinfo.hProcess);
@@ -696,7 +705,7 @@ static int run_cmd_with_pipes (const char *arg, const char *currdir,
 	   STDOUT is not inherited */
 	SetHandleInformation(hread, HANDLE_FLAG_INHERIT, 0);
 	if (prn != NULL && (opt & OPT_R)) {
-	    /* OPT_R is supposed to give real time output? */
+	    /* OPT_R is intended to support real time output */
 	    ok = run_child_with_pipe(arg, currdir, hwrite, hread, opt, prn);
 	} else {
 	    ok = run_child_with_pipe(arg, currdir, hwrite, hread, opt, NULL);
