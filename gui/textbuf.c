@@ -3959,64 +3959,63 @@ static void insert_tagged_text (GtkTextBuffer *tbuf, GtkTextIter *iter,
     }
 }
 
-static int get_instruction_and_string (const char *p, char *str)
+static gchar *get_string_and_instruction (const char *p, int *ins)
 {
-    int ins = INSERT_NONE;
-    *str = '\0';
+    gchar *str = NULL;
+
+    *ins = INSERT_NONE;
 
     if (!strncmp(p, "ref", 3)) {
-	ins = INSERT_REF;
+	*ins = INSERT_REF;
     } else if (!strncmp(p, "xrf", 3)) {
-	ins = INSERT_XREF;
+	*ins = INSERT_XREF;
     } else if (!strncmp(p, "fig", 3)) {
-	ins = INSERT_FIG;
+	*ins = INSERT_FIG;
     } else if (!strncmp(p, "itl", 3)) {
-	ins = INSERT_ITAL;
+	*ins = INSERT_ITAL;
     } else if (!strncmp(p, "var", 3)) {
-	ins = INSERT_REPL;
+	*ins = INSERT_REPL;
     } else if (!strncmp(p, "lit", 3)) {
-	ins = INSERT_LIT;
+	*ins = INSERT_LIT;
     } else if (!strncmp(p, "url", 3)) {
-	ins = INSERT_URL;
+	*ins = INSERT_URL;
     } else if (!strncmp(p, "opt", 3)) {
-	ins = INSERT_OPT;
+	*ins = INSERT_OPT;
     } else if (!strncmp(p, "sup", 3)) {
-	ins = INSERT_SUP;
+	*ins = INSERT_SUP;
     } else if (!strncmp(p, "sub", 3)) {
-	ins = INSERT_SUB;
+	*ins = INSERT_SUB;
     } else if (!strncmp(p, "mth", 3)) {
-	ins = INSERT_MATH;
+	*ins = INSERT_MATH;
     } else if (!strncmp(p, "pdf", 3)) {
-	ins = INSERT_GUGLINK;
+	*ins = INSERT_GUGLINK;
     } else if (!strncmp(p, "inp", 3)) {
-	ins = INSERT_INPLINK;
+	*ins = INSERT_INPLINK;
     } else if (!strncmp(p, "gfr", 3)) {
-	ins = INSERT_GFRLINK;
+	*ins = INSERT_GFRLINK;
     } else if (!strncmp(p, "bib", 3)) {
-	ins = INSERT_BIBLINK;
+	*ins = INSERT_BIBLINK;
     } else if (!strncmp(p, "adb", 3)) {
-	ins = INSERT_ADBLINK;
+	*ins = INSERT_ADBLINK;
     } else if (!strncmp(p, "mnu", 3)) {
-	ins = INSERT_MNULINK;
+	*ins = INSERT_MNULINK;
     } else if (!strncmp(p, "hd1", 3)) {
-	ins = INSERT_BOLD;
+	*ins = INSERT_BOLD;
     }
 
-    if (ins != INSERT_NONE) {
-	int i = 0;
+    if (*ins != INSERT_NONE) {
+	int i;
 
 	p += 5; /* skip 'tag="' */
-	while (*p) {
-	    if (*p == '"' && *(p+1) == '>') {
-		str[i] = '\0';
+	for (i=0; p[i]; i++) {
+	    if (p[i] == '"' && p[i+1] == '>') {
 		break;
-	    } else {
-		str[i++] = *p++;
 	    }
 	}
+	str = g_strndup(p, i);
     }
 
-    return ins;
+    return str;
 }
 
 static int get_code_skip (const char *s)
@@ -4061,7 +4060,7 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 			 const char *s, int role)
 {
     gboolean ret = FALSE;
-    static char targ[128];
+    gchar *targ = NULL;
     const char *indent = NULL;
     const char *p;
     int code = 0;
@@ -4086,7 +4085,7 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 
 	if (*p == '@') {
 	    /* "atomic" markup */
-	    ins = get_instruction_and_string(p + 1, targ);
+	    targ = get_string_and_instruction(p + 1, &ins);
 	    if (ins == INSERT_REF) {
 		if (function_help(role)) {
 		    /* FIXME? */
@@ -4147,6 +4146,10 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	    gtk_text_buffer_insert(tbuf, iter, "<", 1);
 	}
 
+	if (targ != NULL) {
+	    g_free(targ);
+	    targ = NULL;
+	}
 	s = p + skip;
     }
 
