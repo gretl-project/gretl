@@ -651,10 +651,17 @@ glib-2.0 is available from http://www.gtk.org/
 fi
 
 dnl
+dnl check for glib prior to 2.26 (re. deprecation warnings)
+dnl
+PKG_CHECK_MODULES(GLIB226, glib-2.0 >= 2.26.0,,
+  AC_DEFINE(GLIB_LT_2_26)
+)
+
+dnl
 dnl Do we need to "fake" g_get_monotonic_time() on Linux?
 dnl
 if test "$darwin_build" = "no" ; then
-  PKG_CHECK_MODULES(GLIB28, glib-2.0 >= 2.28.0,
+  PKG_CHECK_MODULES(GLIB228, glib-2.0 >= 2.28.0,
      fake_mono_time="no",
      fake_mono_time="yes",
   )

@@ -693,8 +693,10 @@ GTK2_LIBS
 GTK2_CFLAGS
 JSON_GLIB_LIBS
 JSON_GLIB_CFLAGS
-GLIB28_LIBS
-GLIB28_CFLAGS
+GLIB228_LIBS
+GLIB228_CFLAGS
+GLIB226_LIBS
+GLIB226_CFLAGS
 GLIB_LIBS
 GLIB_CFLAGS
 CURL_LIBS
@@ -926,8 +928,10 @@ CURL_CFLAGS
 CURL_LIBS
 GLIB_CFLAGS
 GLIB_LIBS
-GLIB28_CFLAGS
-GLIB28_LIBS
+GLIB226_CFLAGS
+GLIB226_LIBS
+GLIB228_CFLAGS
+GLIB228_LIBS
 JSON_GLIB_CFLAGS
 JSON_GLIB_LIBS
 GTK2_CFLAGS
@@ -1652,9 +1656,14 @@ Some influential environment variables:
   CURL_LIBS   linker flags for CURL, overriding pkg-config
   GLIB_CFLAGS C compiler flags for GLIB, overriding pkg-config
   GLIB_LIBS   linker flags for GLIB, overriding pkg-config
-  GLIB28_CFLAGS
-              C compiler flags for GLIB28, overriding pkg-config
-  GLIB28_LIBS linker flags for GLIB28, overriding pkg-config
+  GLIB226_CFLAGS
+              C compiler flags for GLIB226, overriding pkg-config
+  GLIB226_LIBS
+              linker flags for GLIB226, overriding pkg-config
+  GLIB228_CFLAGS
+              C compiler flags for GLIB228, overriding pkg-config
+  GLIB228_LIBS
+              linker flags for GLIB228, overriding pkg-config
   JSON_GLIB_CFLAGS
               C compiler flags for JSON_GLIB, overriding pkg-config
   JSON_GLIB_LIBS
@@ -21875,22 +21884,21 @@ glib-2.0 is available from http://www.gtk.org/
    exit 1
 fi
 
-if test "$darwin_build" = "no" ; then
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GLIB28" >&5
-$as_echo_n "checking for GLIB28... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GLIB226" >&5
+$as_echo_n "checking for GLIB226... " >&6; }
 
-if test -n "$GLIB28_CFLAGS"; then
-    pkg_cv_GLIB28_CFLAGS="$GLIB28_CFLAGS"
+if test -n "$GLIB226_CFLAGS"; then
+    pkg_cv_GLIB226_CFLAGS="$GLIB226_CFLAGS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"glib-2.0 >= 2.28.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "glib-2.0 >= 2.28.0") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"glib-2.0 >= 2.26.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "glib-2.0 >= 2.26.0") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GLIB28_CFLAGS=`$PKG_CONFIG --cflags "glib-2.0 >= 2.28.0" 2>/dev/null`
+  pkg_cv_GLIB226_CFLAGS=`$PKG_CONFIG --cflags "glib-2.0 >= 2.26.0" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -21898,16 +21906,16 @@ fi
  else
     pkg_failed=untried
 fi
-if test -n "$GLIB28_LIBS"; then
-    pkg_cv_GLIB28_LIBS="$GLIB28_LIBS"
+if test -n "$GLIB226_LIBS"; then
+    pkg_cv_GLIB226_LIBS="$GLIB226_LIBS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"glib-2.0 >= 2.28.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "glib-2.0 >= 2.28.0") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"glib-2.0 >= 2.26.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "glib-2.0 >= 2.26.0") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GLIB28_LIBS=`$PKG_CONFIG --libs "glib-2.0 >= 2.28.0" 2>/dev/null`
+  pkg_cv_GLIB226_LIBS=`$PKG_CONFIG --libs "glib-2.0 >= 2.26.0" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -21928,12 +21936,89 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        GLIB28_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "glib-2.0 >= 2.28.0" 2>&1`
+	        GLIB226_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "glib-2.0 >= 2.26.0" 2>&1`
         else
-	        GLIB28_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "glib-2.0 >= 2.28.0" 2>&1`
+	        GLIB226_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "glib-2.0 >= 2.26.0" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
-	echo "$GLIB28_PKG_ERRORS" >&5
+	echo "$GLIB226_PKG_ERRORS" >&5
+
+	$as_echo "#define GLIB_LT_2_26 1" >>confdefs.h
+
+
+elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	$as_echo "#define GLIB_LT_2_26 1" >>confdefs.h
+
+
+else
+	GLIB226_CFLAGS=$pkg_cv_GLIB226_CFLAGS
+	GLIB226_LIBS=$pkg_cv_GLIB226_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+fi
+
+if test "$darwin_build" = "no" ; then
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GLIB228" >&5
+$as_echo_n "checking for GLIB228... " >&6; }
+
+if test -n "$GLIB228_CFLAGS"; then
+    pkg_cv_GLIB228_CFLAGS="$GLIB228_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"glib-2.0 >= 2.28.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "glib-2.0 >= 2.28.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_GLIB228_CFLAGS=`$PKG_CONFIG --cflags "glib-2.0 >= 2.28.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$GLIB228_LIBS"; then
+    pkg_cv_GLIB228_LIBS="$GLIB228_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"glib-2.0 >= 2.28.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "glib-2.0 >= 2.28.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_GLIB228_LIBS=`$PKG_CONFIG --libs "glib-2.0 >= 2.28.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        GLIB228_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "glib-2.0 >= 2.28.0" 2>&1`
+        else
+	        GLIB228_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "glib-2.0 >= 2.28.0" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$GLIB228_PKG_ERRORS" >&5
 
 	fake_mono_time="yes"
 elif test $pkg_failed = untried; then
@@ -21941,8 +22026,8 @@ elif test $pkg_failed = untried; then
 $as_echo "no" >&6; }
 	fake_mono_time="yes"
 else
-	GLIB28_CFLAGS=$pkg_cv_GLIB28_CFLAGS
-	GLIB28_LIBS=$pkg_cv_GLIB28_LIBS
+	GLIB228_CFLAGS=$pkg_cv_GLIB228_CFLAGS
+	GLIB228_LIBS=$pkg_cv_GLIB228_LIBS
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 	fake_mono_time="no"

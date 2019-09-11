@@ -39,6 +39,11 @@
 #include <limits.h>
 
 #include <zlib.h>
+
+#ifndef GLIB_LT_2_26
+# define GLIB_VERSION_MIN_REQUIRED GLIB_VERSION_2_26
+# define GLIB_VERSION_MAX_ALLOWED GLIB_VERSION_2_50
+#endif
 #include <glib.h>
 
 #ifdef G_OS_WIN32
