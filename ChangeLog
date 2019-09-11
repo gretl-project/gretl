@@ -1,10 +1,20 @@
 version 2019d, in progress
-- Add support for complex matrices
+- Add support for complex matrices, with new functions
+  carg, cmod, complex, conj, ctrans, eiggen2, fft2, Re, Im
+  and schur; documentation in a new chapter of the Gretl
+  User's Guide
 - Enable nesting of arrays
 - Fix bug: possible crash on appending multiple lists to a
   list inside a bundle
 - Fix bug: "(" could in certain cases be misinterpreted as
   starting a series lag specification
+- Fix obscure bug: ensure that a user-function does not
+  return directly a variable passed as a const argument
+- Fix obscure bug: ensure that a function cannot access
+  the namespace of its caller, which could happen under
+  certain special conditions
+- Matrix row and column names: arrange for these to be
+  preserved in a larger set of cases
 - For various commands: document the --quiet option
 - Functions ones(), zeros(), muniform(), mnormal(): make
   the second argument optional; the shape now defaults
@@ -21,6 +31,7 @@ version 2019d, in progress
   use of function pointers
 - "Send-to" (email) functionality: use libcurl and improve
   the user interface
+- GUI: don't close native database windows on "Clear data"
 
 2019-07-02 version 2019c
 - Fix bug: "dataset sortby" not handling missing values
