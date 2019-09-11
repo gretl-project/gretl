@@ -1985,6 +1985,27 @@
       </description>
     </function>
 
+    <function name="carg" section="complex" output="matrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devuelve una matriz real de dimensión <by r="m" c="n"/> que contiene el
+	  <quote>argumento</quote> complejo de cada elemento de la matriz compleja
+	  <argname>C</argname> de dimensión <by r="m" c="n"/>. El argumento del
+	  número complejo <math>z</math> = <math>x</math> + <math>yi</math>
+	  también puede calcularse mediante <lit>atan2(y, x)</lit>.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="cmod"/>
+	    <fncref targ="atan2"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="cdemean" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
@@ -2183,6 +2204,10 @@
       </fnargs>
       <description>
 	<para>
+	  Esta es una función heredada, anterior al soporte
+	  original de Gretl para matrices complejas.
+	</para>
+	<para>
 	  Devuelve una matriz con el resultado de dividir números complejos. Los dos
 	  argumentos deben componerse del mismo número de filas, <math>n</math>, y
 	  de una o dos columnas. La primera columna contiene la parte real, y la
@@ -2308,12 +2333,37 @@
       </description>
     </function>
 
+    <function name="cmod" section="complex" output="matrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devuelve una matriz real de dimensión <by r="m" c="n"/>
+	  que contiene el módulo complejo de cada elemento de la matriz
+	  compleja <argname>C</argname> de dimensión
+	  <by r="m" c="n"/>. El módulo del número complejo
+	  <math>z</math> = <math>x</math> + <math>yi</math> es igual a la raíz
+	  cuadrada de <math>x</math><sup>2</sup> + <math>y</math><sup>2</sup>.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="carg"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="cmult" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="matrix">Y</fnarg>
       </fnargs>
       <description>
+	<para>
+	  Esta es una función heredada, anterior al soporte
+	  original de Gretl para matrices complejas.
+	</para>
 	<para>
 	  Devuelve una matriz con el resultado de multiplicar números complejos. Los dos
 	  argumentos deben componerse del mismo número de filas, <math>n</math>, y
@@ -2461,6 +2511,46 @@
             <fncref targ="unvech"/>
             <fncref targ="vec"/>
             <fncref targ="vech"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="complex" section="complex" output="cmatrix">
+      <fnargs>
+	<fnarg type="scalar-or-matrix">A</fnarg>
+	<fnarg type="scalar-or-matrix">B</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devuelve una matriz compleja, en la que se toma <argname>A</argname>
+	  para ofrecer la parte real y <argname>B</argname> para la parte
+	  imaginaria. Si <argname>A</argname> es de dimensión <by r="m" c="n"/>
+	  y <argname>B</argname> es un escalar, el resultado es una matriz
+	  <by r="m" c="n"/> con una parte imaginaria constante (y de forma
+	  similar en el caso recíproco, pero con una parte real constante). Si
+	  ambos argumentos son matrices, deben tener las mismas dimensiones.
+	</para>
+      </description>
+    </function>
+
+    <function name="conj" section="complex" output="cmatrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devuelve una matriz compleja de dimensión <by r="m" c="n"/>
+	  que contiene el conjugado complejo de cada elemento de la matriz
+	  compleja <argname>C</argname> de dimensión <by r="m" c="n"/>.
+	  El conjugado de un número complejo
+	  <math>z</math> = <math>x</math> + <math>yi</math> es igual a
+	  <math>x</math> &minus; <math>yi</math>.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="carg"/>
+	    <fncref targ="cmod"/>
 	  </seelist>
 	</para>
       </description>
@@ -2697,6 +2787,23 @@
             <fncref targ="invcdf"/>
             <fncref targ="pvalue"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="ctrans" section="complex" output="cmatrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devuelve una matriz compleja de dimensión <by r="n" c="m"/> que contiene
+	  la traspuesta conjugada de la matriz compleja <argname>C</argname>
+	  de dimensión <by r="m" c="n"/>. El operador <lit>'</lit> (trasponer)
+	  realiza también la trasposición conjugada de matrices complejas.
+	  Puedes utilizar la función <fncref targ="transp"/> con matrices
+	  complejas, pero esto va a hacer la trasposición <quote>directa</quote>
+	  (no la conjugada).
 	</para>
       </description>
     </function>
@@ -3258,9 +3365,10 @@
       <description>
 	<para>
 	  <emphasis>Esta es una función heredada, anterior al soporte
-	  original de Gretl para matrices complejas. No debes usarla en los
-	  guiones nuevos que escribas en lenguaje 'hansl'. Utiliza </emphasis>
-	  <fncref targ="eiggen2"/> <emphasis> en su lugar.</emphasis>
+	  original de Gretl para matrices complejas. No debes usarla
+	  en los guiones nuevos que escribas en lenguaje
+	  'hansl'. Utiliza</emphasis> <fncref targ="eiggen2"/>
+	  <emphasis>en su lugar.</emphasis>
 	</para>
 	<para>
 	  Calcula los autovalores y, opcionalmente, los autovectores de la matriz
@@ -4741,6 +4849,19 @@
       </description>
     </function>
 
+    <function name="Im" section="complex" output="matrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devuelve una matriz real con la misma dimensión que <argname>C</argname>,
+	  que contiene la parte imaginaria de la matriz del argumento. Consulta
+	  también <fncref targ="Re"/>.
+	</para>
+      </description>
+    </function>
+
     <function name="imaxc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
@@ -5236,6 +5357,19 @@
 	  <seelist>
             <fncref targ="npv"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="iscomplex" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="string">nombre</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devuelve 1 cuando <argname>nombre</argname> es la denominación de
+	  una matriz compleja, 0 si es la denominación de una matriz real,
+	  o <lit>NA</lit> en otro caso.
 	</para>
       </description>
     </function>
@@ -9289,6 +9423,19 @@
       </description>
     </function>
 
+    <function name="Re" section="complex" output="matrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devuelve una matriz real con la misma dimensión que
+	  <argname>C</argname>, y que contiene la parte real de la
+	  matriz de ese argumento. Consulta también <fncref targ="Im"/>.
+	</para>
+      </description>
+    </function>
+
     <function name="readfile" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">nombrearchivo</fnarg>
@@ -9585,6 +9732,27 @@
             <fncref targ="vec"/>
             <fncref targ="vech"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="schur" section="complex" output="cmatrix">
+      <fnargs>
+	<fnarg type="cmatrix">A</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;Z</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;w</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Realiza la descomposición de Schur de la matriz compleja
+	  <argname>A</argname> del argumento, devolviendo una matriz
+	  triangular superior compleja <math>T</math>. Cuando indicas un
+	  segundo argumento que non sea <lit>null</lit> (nulo), recoge
+	  una matriz compleja <math>Z</math> que contiene los vectores de
+	  Schur asociados a <math>A</math> y <math>T</math>, tales que
+	  <math>A</math> = <math>ZTZ</math><sup>H</sup>. Cuando indicas el
+	  tercer argumento, recoge los autovalores de la matriz <math>A</math>
+	  en un vector columna complejo.
 	</para>
       </description>
     </function>

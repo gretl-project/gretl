@@ -7789,11 +7789,12 @@
       <ilist>
        <li>
 	 <para>
-	   A: es la dirección de correo del destinatario. Tendrás que introducirla
-	   por tu cuenta, pues Gretl no tiene acceso a tu agenda de direcciones.
-	   Ahora bien, una vez introducida una dirección, esta se recuerda y
-	   puedes seleccionarla más adelante mediante una lista desplegable.
-	   Puedes guardar hasta diez direcciones de esta forma.
+	   A: es la dirección de correo del destinatario. La primera vez
+	   tendrás que introducirla por tu cuenta, pues Gretl no tiene acceso
+	   a tu agenda de direcciones. Ahora bien, una vez introducida una
+	   dirección, esta se recuerda y puedes seleccionarla más adelante
+	   mediante una lista desplegable. Puedes guardar hasta diez
+	   direcciones de esta forma.
 	 </para>
        </li>
        <li>
@@ -7821,8 +7822,8 @@
       <subhead>Contraseña de correo</subhead>
       <para>
 	Si se necesita una contraseña para enviar el correo, puedes elegir
-	que Gretl tenga guardada esta contraseña; en ese caso, se guarda en
-	formato enrevesado en un directorio que está reservado para ti en tu
+	que Gretl tenga guardada esta contraseña. En ese caso, se guarda en
+	formato enrevesado en un directorio que está reservado para ti, en tu
 	ordenador (en ningún servidor de internet). Sin embrago, no podemos
 	garantizar su seguridad.
       </para>
@@ -11145,12 +11146,12 @@
 
     <description>
       <para>
-	Presenta valores escalares, series, matrices o cadenas de
-	texto bajo el control de una cadena de texto para dar formato
-	(ofreciendo una parte de la función <lit>printf</lit> del lenguaje
-	de programación C). Los formatos numéricos reconocidos son
-	<lit>%e</lit>, <lit>%E</lit>, <lit>%f</lit>, <lit>%g</lit>,
-	<lit>%G</lit> y <lit>%d</lit>, en cada caso con los diversos
+	Presenta valores escalares, series, matrices o cadenas de texto
+	bajo el control de una cadena de texto para dar formato (ofreciendo
+	una parte de la función <lit>printf</lit> del lenguaje de programación
+	C). Los formatos numéricos reconocidos son <lit>%e</lit>,
+	<lit>%E</lit>, <lit>%f</lit>, <lit>%g</lit>, <lit>%G</lit>,
+	<lit>%d</lit> y <lit>%x</lit>, en cada caso con los diversos
 	reguladores disponibles en C. Ejemplos: el formato <lit>%.10g</lit>
 	presenta un valor con 10 cifras significativas, y <lit>%12.6f</lit>
 	presenta un valor con un ancho de 12 caracteres de los que 6 son

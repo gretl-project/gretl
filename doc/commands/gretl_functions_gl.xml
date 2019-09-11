@@ -1985,6 +1985,27 @@
       </description>
     </function>
 
+    <function name="carg" section="complex" output="matrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devolve unha matriz real de dimensión <by r="m" c="n"/> que contén o
+	  <quote>argumento</quote> complexo de cada elemento da matriz complexa
+	  <argname>C</argname> de dimensión <by r="m" c="n"/>. O argumento do
+	  número complexo <math>z</math> = <math>x</math> + <math>yi</math>
+	  tamén pode calcularse mediante <lit>atan2(y, x)</lit>.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="cmod"/>
+	    <fncref targ="atan2"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="cdemean" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
@@ -2183,6 +2204,10 @@
       </fnargs>
       <description>
 	<para>
+	  Esta é unha función herdada, anterior ao soporte
+	  orixinal de Gretl para matrices complexas.
+	</para>
+	<para>
 	  Devolve unha matriz co resultado de dividir números complexos. Os dous
 	  argumentos deben comporse do mesmo número de filas, <math>n</math>, e
 	  dunha ou dúas columnas. A primeira columna contén a parte real, e a
@@ -2308,12 +2333,37 @@
       </description>
     </function>
 
+    <function name="cmod" section="complex" output="matrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devolve unha matriz real de dimensión <by r="m" c="n"/>
+	  que contén o módulo complexo de cada elemento da matriz
+	  complexa <argname>C</argname> de dimensión
+	  <by r="m" c="n"/>. O módulo do número complexo
+	  <math>z</math> = <math>x</math> + <math>yi</math> é igual á raíz
+	  cadrada de <math>x</math><sup>2</sup> + <math>y</math><sup>2</sup>.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="carg"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="cmult" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="matrix">Y</fnarg>
       </fnargs>
       <description>
+	<para>
+	  Esta é unha función herdada, anterior ao soporte
+	  orixinal de Gretl para matrices complexas.
+	</para>
 	<para>
 	  Devolve unha matriz co resultado de multiplicar números complexos. Os dous
 	  argumentos deben comporse do mesmo número de filas, <math>n</math>, e
@@ -2461,6 +2511,46 @@
             <fncref targ="unvech"/>
             <fncref targ="vec"/>
             <fncref targ="vech"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="complex" section="complex" output="cmatrix">
+      <fnargs>
+	<fnarg type="scalar-or-matrix">A</fnarg>
+	<fnarg type="scalar-or-matrix">B</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devolve unha matriz complexa, na que tómase <argname>A</argname>
+	  para ofrecer a parte real e <argname>B</argname> para a parte
+	  imaxinaria. Se <argname>A</argname> é de dimensión <by r="m" c="n"/>
+	  e <argname>B</argname> é un escalar, o resultado é unha matriz
+	  <by r="m" c="n"/> cunha parte imaxinaria constante (e de xeito
+	  similar no caso recíproco, mais cunha parte real constante). Se
+	  ambos argumentos son matrices, deben de ter as mesmas dimensións.
+	</para>
+      </description>
+    </function>
+
+    <function name="conj" section="complex" output="cmatrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devolve unha matriz complexa de dimensión <by r="m" c="n"/>
+	  que contén o conxugado complexo de cada elemento da matriz
+	  complexa <argname>C</argname> de dimensión <by r="m" c="n"/>.
+	  O conxugado dun número complexo
+	  <math>z</math> = <math>x</math> + <math>yi</math> é igual a
+	  <math>x</math> &minus; <math>yi</math>.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="carg"/>
+	    <fncref targ="cmod"/>
 	  </seelist>
 	</para>
       </description>
@@ -2697,6 +2787,23 @@
             <fncref targ="invcdf"/>
             <fncref targ="pvalue"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="ctrans" section="complex" output="cmatrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devolve unha matriz complexa de dimensión <by r="n" c="m"/> que
+	  contén a trasposta conxugada da matriz complexa <argname>C</argname>
+	  de dimensión <by r="m" c="n"/>. O operador <lit>'</lit> (traspoñer)
+	  fai tamén a transposición conxugada de matrices complexas. Podes
+	  utilizar a función <fncref targ="transp"/> con matrices complexas,
+	  pero iso vai realizar a transposición <quote>directa</quote>
+	  (non a conxugada).
 	</para>
       </description>
     </function>
@@ -3258,9 +3365,9 @@
       <description>
 	<para>
 	  <emphasis>Esta é unha función herdada, anterior ao soporte
-	  orixinal de Gretl para matrices complexas. Non debes usala nos
-	  novos guións que escribas en linguaxe 'hansl'. Utiliza </emphasis>
-	  <fncref targ="eiggen2"/> <emphasis>en troques.</emphasis>
+	  orixinal de Gretl para matrices complexas. Non debes usala
+	  nos novos guións que escribas en linguaxe 'hansl'. Utiliza
+	  </emphasis> <fncref targ="eiggen2"/> <emphasis> en troques.</emphasis>
 	</para>
 	<para>
 	  Calcula os autovalores e, opcionalmente, os autovectores da matriz
@@ -4741,6 +4848,19 @@
       </description>
     </function>
 
+    <function name="Im" section="complex" output="matrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devolve unha matriz real coa mesma dimensión que <argname>C</argname>,
+	  que contén a parte imaxinaria da matriz do argumento. Consulta
+	  tamén <fncref targ="Re"/>.
+	</para>
+      </description>
+    </function>
+
     <function name="imaxc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
@@ -5236,6 +5356,19 @@
 	  <seelist>
             <fncref targ="npv"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="iscomplex" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="string">nome</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devolve 1 cando <argname>nome</argname> é a denominación dunha
+	  matriz complexa, 0 se é a denominación dunha matriz real, ou
+	  <lit>NA</lit> noutro caso.
 	</para>
       </description>
     </function>
@@ -9289,6 +9422,19 @@
       </description>
     </function>
 
+    <function name="Re" section="complex" output="matrix">
+      <fnargs>
+	<fnarg type="cmatrix">C</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Devolve unha matriz real coa mesma dimensión que <argname>C</argname>,
+	  e que contén a parte real da matriz dese argumento. Consulta
+	  tamén <fncref targ="Im"/>.
+	</para>
+      </description>
+    </function>
+
     <function name="readfile" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">nomeficheiro</fnarg>
@@ -9585,6 +9731,27 @@
             <fncref targ="vec"/>
             <fncref targ="vech"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="schur" section="complex" output="cmatrix">
+      <fnargs>
+	<fnarg type="cmatrix">A</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;Z</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;w</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Realiza a descomposición de Schur da matriz complexa
+	  <argname>A</argname> do argumento, devolvendo unha matriz
+	  triangular superior complexa <math>T</math>. Cando indicas un
+	  segundo argumento que non sexa <lit>null</lit> (nulo), recolle
+	  unha matriz complexa <math>Z</math> que contén os vectores de
+	  Schur asociados a <math>A</math> e <math>T</math>, tales que
+	  <math>A</math> = <math>ZTZ</math><sup>H</sup>. Cando indicas o
+	  terceiro argumento, recolle os autovalores da matriz <math>A</math>
+	  nun vector columna complexo.
 	</para>
       </description>
     </function>
@@ -10867,7 +11034,7 @@
 	<para>
 	  Devolve unha matriz que é a trasposta de <argname>X</argname>. Aviso:
 	  Esta función utilízase raramente. Para traspor unha matriz, en xeral
-	  podes usar simplemente o operador para trasposición: <lit>X'</lit>.
+	  podes usar simplemente o operador para transposición: <lit>X'</lit>.
 	</para>
       </description>
     </function>
