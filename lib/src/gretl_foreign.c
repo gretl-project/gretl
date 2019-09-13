@@ -615,7 +615,11 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	    pputc(prn, '\n');
 	}
 
+#ifdef MPI_PIPES
 	err = gretl_win32_pipe_output(cmd, gretl_workdir(), OPT_R, prn);
+#else
+	err = gretl_win32_pipe_output(cmd, gretl_workdir(), OPT_NONE, prn);
+#endif
 
 	g_free(mpiprog);
 	g_free(hostbit);
