@@ -18,7 +18,7 @@ print fevdmat
 
 var order X --quiet --variance
 set stopwatch
-bfail = SVAR_boot(&Mod, 1024, 0.90)
+bfail = SVAR_boot(&Mod) # old: ..., 1024, 0.90)
 printf "Failed = %d, Time (bootstrap) = %g\n", bfail, $stopwatch
 
 series shock1 = GetShock(&Mod, 1)

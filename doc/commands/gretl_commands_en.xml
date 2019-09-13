@@ -6591,6 +6591,10 @@
 	responses are given in whatever is the <quote>natural</quote>
 	unit of the target variable.
       </para>
+	  <para>
+	  (See the SVAR addon for other shock identification approaches
+	  and more bootstrap options.)
+	  </para>
     </description>
 
   </command>

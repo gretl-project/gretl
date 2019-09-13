@@ -1,5 +1,5 @@
 # new file SVAR_estim_backend.inp for SVAR 1.4 (Feb 2019)
-# to re-arrange some of the existing functions 
+# to re-arrange some of the existing functions
 # (check LF here)
 
 ###########################
@@ -9,35 +9,35 @@ function scalar base_est(bundle *SVARobj)
 /*
    takes a SVAR object and adds the basic VAR estimates
    to the bundle; returns an errcode (virginity check).
-  */
-  
-  scalar step = SVARobj.step
-  err = (step>0)
+    */
 
-  if err
-    printf "Base estimation done already!\n"
-  else
-    matrix mY  = SVARobj.Y
-    scalar p   = SVARobj.p 
-    scalar n   = SVARobj.n
-    scalar k   = SVARobj.k
+    scalar step = SVARobj.step
+    err = (step>0)
 
-    scalar T   = SVARobj.T
+    if err
+        printf "Base estimation done already!\n"
+    else
+        matrix mY  = SVARobj.Y
+        scalar p   = SVARobj.p
+        scalar n   = SVARobj.n
+        scalar k   = SVARobj.k
 
-    matrix E
-    matrix mreg = SVARobj.X ~ mlag(mY, seq(1,p))
-    matrix olspar = mols(mY[p+1:T,], mreg[p+1:T,], &E)
-    matrix Sigma = (E'E) ./ (T - (n*p + k)) # was:  / df
+        scalar T   = SVARobj.T
 
-    matrix SVARobj.VARpar = transp(olspar[k+1:k+n*p,])
-    matrix SVARobj.mu = (k>0) ? olspar[1:k,] : {} # was: d 
-    matrix SVARobj.Sigma = Sigma
-    matrix SVARobj.E = E
-    SVARobj.step = 1
-    SVARobj.LL0 = T * (n* log(2*$pi) - 0.5*log(det(Sigma)) - 0.5)
-  endif
+        matrix E
+        matrix mreg = SVARobj.X ~ mlag(mY, seq(1,p))
+        matrix olspar = mols(mY[p+1:T,], mreg[p+1:T,], &E)
+        matrix Sigma = (E'E) ./ (T - (n*p + k)) # was:  / df
 
-  return err
+        matrix SVARobj.VARpar = transp(olspar[k+1:k+n*p,])
+        matrix SVARobj.mu = (k>0) ? olspar[1:k,] : {} # was: d
+        matrix SVARobj.Sigma = Sigma
+        matrix SVARobj.E = E
+        SVARobj.step = 1
+        SVARobj.LL0 = T * (n* log(2*$pi) - 0.5*log(det(Sigma)) - 0.5)
+    endif
+
+    return err
 
 end function
 
@@ -55,199 +55,199 @@ function scalar vecm_est(bundle *SVARobj)
    so that we already have beta and alpha available as "jbeta" and
    "jalpha", respectively. Finally, we take care of proper treatment of
    deterministics, via the scalar "jcase" (1 to 5).
-  */
-
-  # --- preliminary checks 
-    
-  err = (SVARobj.step > 0)
-    
-  if err
-    printf "Base estimation done already!\n"
-    return err
-  endif
-
-  err = (SVARobj.type != 4)
-
-  if err
-    printf "Wrong model type!\n"
-    return err
-  endif
-
-  # --- grab stuff from the bundle 
-
-  matrix mY     = SVARobj.Y
-  matrix jbeta   = SVARobj.jbeta
-  matrix jalpha  = SVARobj.jalpha
-  scalar p	  = SVARobj.p 
-  scalar n	  = SVARobj.n
-  scalar k	  = SVARobj.k
-  scalar r      = cols(jbeta)
-  scalar dcase   = SVARobj.jcase
-  scalar ols_al = rows(jalpha) == 0
-
-  scalar T      = SVARobj.T
-
-  # --- first thing: do we have a pre-set value for alpha?
-
-  matrix dY = diff(mY)
-  matrix dep = dY[p+1:T,]
-  matrix E = {}
-  ng = n * (p-1) # number coming from Gammas /lagged diffs (p>0 for SVEC)
-
-  # deterministics
-  matrix mreg = vecm_det(T, dcase)
-    
-  # ECM terms
-  matrix ECM = mlag(mY * jbeta[1:n,], 1)
-  if dcase == 2
-    ECM = ECM .+ jbeta[n+1, ]
-  elif dcase == 4
-    ECM += seq(1,T)'jbeta[n+1, ]
-  endif
-
-  if ols_al
-    # alpha must be estimated together with the rest of the VECM
-    matrix mreg ~= SVARobj.X ~ ECM
-  else
-    matrix dep -= (ECM[p+1:T,] * jalpha')
-    matrix mreg ~= SVARobj.X 
-  endif
-    
-  # extra lags
-  if p > 1
-    mreg ~= mlag(dY, seq(1,p-1))
-  endif
-
-  # trim the first rows
-  if rows(mreg)>0
-    mreg = mreg[p+1:T,]
-    # printf "%d rows\n", rows(dep)
-    # printf "%8.3f\n", (dep[1:10,] ~ mreg[1:10,])
-    matrix olspar = mols(dep, mreg, &E)
-  else
-    matrix olspar = {}
-    E = dep
-  endif
-
-  df = T - (n*p + k - (n-r)) # FIXME: aren't the unrestr. determ. terms missing?
-  # (but apparently df is never used again...)
-  matrix Sigma = (E'E)./T
-
-  # --- construct the various matrices required later
-
-  rp = rows(olspar)
-
-  # alpha first (should be before the gammas, if estimated)
-  if ols_al
-    jalpha = olspar[rp-ng-r+1 : rp-ng,]'
-  endif
-    
-  # exogenous
-
-  if dcase == 1
-    matrix mu = {}
-    scalar nd = 0
-  elif dcase == 2
-    matrix mu = jbeta[n+1,] * jalpha'
-    scalar nd = 0
-  elif dcase == 3
-    matrix mu = olspar[1,]
-    scalar nd = 1
-  elif dcase == 4
-    matrix mu =  olspar[1,] |(jbeta[n+1,] * jalpha')
-    scalar nd = 1
-  elif dcase == 5
-    matrix mu = olspar[1:2,]
-    scalar nd = 2
-  endif
-
-  if k > 0
-    # matrix sel = nd + seq(1, k) 
-    mu = mu | olspar[nd + 1 : nd + k,] # was: mu ~ olspar[sel,]
-  endif
-
-  /*
-     companion form in levels
-  */
-  Pi = jalpha * jbeta[1:n,]'
-    
-  if p > 1
-    # the Gammas are always at the back:
-    ini = rp - ng + 1
-    /* old code:
-    if ols_al
-      # the Gammas should be after the ECM terms
-      ini = nd + k + r + 1	# (k was missing)
-    else
-      # the Gammas should be right after the exogenous (was: deterministics)
-      ini = nd + k + 1	# (k was missing)
-    endif
-    fin = ini + (p-1) * n - 1
     */
-    matrix A = olspar[ini: ,] | zeros(n,n)	# was: ini:fin
-    A += I(n) + Pi' | -olspar[ini: ,]
-  else
-    matrix A = I(n) + Pi'
-  endif
-    
-  matrix SVARobj.VARpar = A'
-  matrix SVARobj.mu = mu
-  matrix SVARobj.Sigma = Sigma
-  matrix SVARobj.E = E
-  matrix SVARobj.jalpha = jalpha
-  SVARobj.step = 1
-  SVARobj.LL0 = T*(n*log(2*$pi) - 0.5*log(det(Sigma)) - 0.5)
 
-  return err
+    # --- preliminary checks
+
+    err = (SVARobj.step > 0)
+
+    if err
+        printf "Base estimation done already!\n"
+        return err
+    endif
+
+    err = (SVARobj.type != 4)
+
+    if err
+        printf "Wrong model type!\n"
+        return err
+    endif
+
+    # --- grab stuff from the bundle
+
+    matrix mY     = SVARobj.Y
+    matrix jbeta   = SVARobj.jbeta
+    matrix jalpha  = SVARobj.jalpha
+    scalar p	  = SVARobj.p
+    scalar n	  = SVARobj.n
+    scalar k	  = SVARobj.k
+    scalar r      = cols(jbeta)
+    scalar dcase   = SVARobj.jcase
+    scalar ols_al = rows(jalpha) == 0
+
+    scalar T      = SVARobj.T
+
+    # --- first thing: do we have a pre-set value for alpha?
+
+    matrix dY = diff(mY)
+    matrix dep = dY[p+1:T,]
+    matrix E = {}
+    ng = n * (p-1) # number coming from Gammas /lagged diffs (p>0 for SVEC)
+
+    # deterministics
+    matrix mreg = vecm_det(T, dcase)
+
+    # ECM terms
+    matrix ECM = mlag(mY * jbeta[1:n,], 1)
+    if dcase == 2
+        ECM = ECM .+ jbeta[n+1, ]
+    elif dcase == 4
+        ECM += seq(1,T)'jbeta[n+1, ]
+    endif
+
+    if ols_al
+        # alpha must be estimated together with the rest of the VECM
+        matrix mreg ~= SVARobj.X ~ ECM
+    else
+        matrix dep -= (ECM[p+1:T,] * jalpha')
+        matrix mreg ~= SVARobj.X
+    endif
+
+    # extra lags
+    if p > 1
+        mreg ~= mlag(dY, seq(1,p-1))
+    endif
+
+    # trim the first rows
+    if rows(mreg)>0
+        mreg = mreg[p+1:T,]
+        # printf "%d rows\n", rows(dep)
+        # printf "%8.3f\n", (dep[1:10,] ~ mreg[1:10,])
+        matrix olspar = mols(dep, mreg, &E)
+    else
+        matrix olspar = {}
+        E = dep
+    endif
+
+    df = T - (n*p + k - (n-r)) # FIXME: aren't the unrestr. determ. terms missing?
+    # (but apparently df is never used again...)
+    matrix Sigma = (E'E)./T
+
+    # --- construct the various matrices required later
+
+    rp = rows(olspar)
+
+    # alpha first (should be before the gammas, if estimated)
+    if ols_al
+        jalpha = olspar[rp-ng-r+1 : rp-ng,]'
+    endif
+
+    # exogenous
+
+    if dcase == 1
+        matrix mu = {}
+        scalar nd = 0
+    elif dcase == 2
+        matrix mu = jbeta[n+1,] * jalpha'
+        scalar nd = 0
+    elif dcase == 3
+        matrix mu = olspar[1,]
+        scalar nd = 1
+    elif dcase == 4
+        matrix mu =  olspar[1,] |(jbeta[n+1,] * jalpha')
+        scalar nd = 1
+    elif dcase == 5
+        matrix mu = olspar[1:2,]
+        scalar nd = 2
+    endif
+
+    if k > 0
+        # matrix sel = nd + seq(1, k)
+        mu = mu | olspar[nd + 1 : nd + k,] # was: mu ~ olspar[sel,]
+    endif
+
+    /*
+       companion form in levels
+    */
+    Pi = jalpha * jbeta[1:n,]'
+
+    if p > 1
+        # the Gammas are always at the back:
+        ini = rp - ng + 1
+        /* old code:
+           if ols_al
+           # the Gammas should be after the ECM terms
+           ini = nd + k + r + 1	# (k was missing)
+           else
+           # the Gammas should be right after the exogenous (was: deterministics)
+           ini = nd + k + 1	# (k was missing)
+           endif
+           fin = ini + (p-1) * n - 1
+        */
+        matrix A = olspar[ini: ,] | zeros(n,n)	# was: ini:fin
+        A += I(n) + Pi' | -olspar[ini: ,]
+    else
+        matrix A = I(n) + Pi'
+    endif
+
+    matrix SVARobj.VARpar = A'
+    matrix SVARobj.mu = mu
+    matrix SVARobj.Sigma = Sigma
+    matrix SVARobj.E = E
+    matrix SVARobj.jalpha = jalpha
+    SVARobj.step = 1
+    SVARobj.LL0 = T*(n*log(2*$pi) - 0.5*log(det(Sigma)) - 0.5)
+
+    return err
 
 end function
 
 ##########
 
 function scalar VARloglik(scalar T, matrix Sigma, matrix *C[null])
-  # computes the (concentrated) loglikelihood for a VAR
-  # the matrix C (such that in theory CC' = Sigma) may be null,
+    # computes the (concentrated) loglikelihood for a VAR
+    # the matrix C (such that in theory CC' = Sigma) may be null,
     # for just-identified models
 
-  n = rows(Sigma)
-  ll = n * 1.83787706640934548355 # ln(2*$pi)
+    n = rows(Sigma)
+    ll = n * 1.83787706640934548355 # ln(2*$pi)
 
-  if !exists(C) # just-identified model
-    ll += log(det(Sigma)) + n
-  else
-    matrix KK = invpd(C*C')
-    ll += -log(det(KK)) + tr(KK*Sigma)
-  endif
+    if !exists(C) # just-identified model
+        ll += log(det(Sigma)) + n
+    else
+        matrix KK = invpd(C*C')
+        ll += -log(det(KK)) + tr(KK*Sigma)
+    endif
 
-  return -(T/2) * ll
+    return -(T/2) * ll
 end function
 
 ##########
 
 function scalar loglik(matrix *theta, matrix *dat, scalar modeltype)
-  # modeltype < 0->C; modeltype>=0: AB (contains free elements of a)
-  matrix Sigma = {}
-  matrix Ss = {}
-  unscramble_dat(&dat, &Sigma, &Ss)
-  if modeltype < 0
-    matrix C = mat_exp(theta, Ss, 0)
-  else
-    p1 = modeltype
-    p2 = rows(theta)
-    matrix aSs = Ss[,1:p1+1]
-    matrix bSs = Ss[,p1+2:p2+2]
-    matrix A B
-    ABmat_exp(theta, aSs, bSs, &A, &B)
-    # was: matrix C = B/A
-    matrix C = A\B
-  endif
+    # modeltype < 0->C; modeltype>=0: AB (contains free elements of a)
+    matrix Sigma = {}
+    matrix Ss = {}
+    unscramble_dat(&dat, &Sigma, &Ss)
+    if modeltype < 0
+        matrix C = mat_exp(theta, Ss, 0)
+    else
+        p1 = modeltype
+        p2 = rows(theta)
+        matrix aSs = Ss[,1:p1+1]
+        matrix bSs = Ss[,p1+2:p2+2]
+        matrix A B
+        ABmat_exp(theta, aSs, bSs, &A, &B)
+        # was: matrix C = B/A
+        matrix C = A\B
+    endif
 
-  matrix KK = invpd(C*C')
-  ll = det(KK) # should always be positive
-  ll = (ll<=0) ? NA : -0.5 * (tr(KK*Sigma) - log(ll))
+    matrix KK = invpd(C*C')
+    ll = det(KK) # should always be positive
+    ll = (ll<=0) ? NA : -0.5 * (tr(KK*Sigma) - log(ll))
 
-  return ll
-end function 
+    return ll
+end function
 
 ##############
 
@@ -256,84 +256,84 @@ function matrix InfoMat(matrix CorB, matrix S, matrix *A[null])
 /*
    merged from InfoMatC and InfoMatAB
    First case C model (A is null), latter AB model.
-  */
-  matrix tmp = !exists(A) ? I(rows(CorB)) : (A\CorB) | -I(rows(A))    
-  tmp = S' (tmp ** inv(CorB'))    
-  return tmp * N2_ify(tmp')
+    */
+    matrix tmp = !exists(A) ? I(rows(CorB)) : (A\CorB) | -I(rows(A))
+    tmp = S' (tmp ** inv(CorB'))
+    return tmp * N2_ify(tmp')
 end function
 
 
 function matrix coeffVCV(matrix S, matrix *rhs, matrix *lhs[null])
-  # C or AB model
-  matrix IM = !exists(lhs) ? InfoMat(rhs, S) : InfoMat(rhs, S, &lhs)
-  # (should be correct with new InfoMat)
-  
-  
-  # quick-dirty check for singularity
-  if rcond(IM)>1.0e-10
-    matrix iIM = invpd(IM)/$nobs
-  else
-    matrix evec
-    l = eigensym(IM, &evec)
-    printf "\n\nInformation matrix is not pd!!\n\n%12.5f\n", IM
-    printf "Eigenvalues:\n%12.5f\n", l 
-    matrix e = (l .< 1.0e-07)
-    printf "Troublesome eigenvectors:\n%12.5f\n", selifc(evec, e')
-    printf "S:\n%4.0f\n", S
-    matrix iIM = zeros(rows(IM), cols(IM))
-  endif
+    # C or AB model
+    matrix IM = !exists(lhs) ? InfoMat(rhs, S) : InfoMat(rhs, S, &lhs)
+    # (should be correct with new InfoMat)
 
-  return qform(S,iIM)
+
+    # quick-dirty check for singularity
+    if rcond(IM)>1.0e-10
+        matrix iIM = invpd(IM)/$nobs
+    else
+        matrix evec
+        l = eigensym(IM, &evec)
+        printf "\n\nInformation matrix is not pd!!\n\n%12.5f\n", IM
+        printf "Eigenvalues:\n%12.5f\n", l
+        matrix e = (l .< 1.0e-07)
+        printf "Troublesome eigenvectors:\n%12.5f\n", selifc(evec, e')
+        printf "S:\n%4.0f\n", S
+        matrix iIM = zeros(rows(IM), cols(IM))
+    endif
+
+    return qform(S,iIM)
 end function
 
 ################
 
 function void SVAR_est_printout(bundle *mod)
-  # scalar type = mod.type
-     
-  printf "Optimization method = " 
-  strings os = defarray("BFGS (numerical)", "BFGS (analytical)", \
-    "Newton-Raphson (numerical)", "Newton-Raphson (analytical score)", \
-    "Scoring algorithm")
-  printf "%s\n", os[mod.optmeth + 1]	# Because optmeth starts at 0 here 
-     
-  printf "Unconstrained Sigma:\n%12.5f\n", mod.Sigma
-  
-  if mod.type < 3 || mod.type == 4 # plain or C-model, or (Jan 2018) SVEC 
-    # Standard C matrix
-    printStrMat(mod.C, mod.vcv, "C")	# was mod.S1
+    # scalar type = mod.type
 
-    # Long-run matrix     
-    if rows(mod.Rd1l) || mod.calc_lr || mod.type == 4	
-      # either long-run restr., or user wish, or SVEC
-      # (this could be much embellished, probably)
-      printf "Estimated long-run matrix"
-      if rows(mod.Rd1l)
-        printf " (restricted)"
-      endif
-      printf "\n"
-      
-      matrix longrun = mod.lrmat
-      # round to zero for printout (also do it in general?)
-      longrun = (abs(longrun) .< 1e-15) ? 0.0 : longrun  
-      print longrun
+    printf "Optimization method = "
+    strings os = defarray("BFGS (numerical)", "BFGS (analytical)", \
+      "Newton-Raphson (numerical)", "Newton-Raphson (analytical score)", \
+      "Scoring algorithm")
+    printf "%s\n", os[mod.optmeth + 1]	# Because optmeth starts at 0 here
+
+    printf "Unconstrained Sigma:\n%12.5f\n", mod.Sigma
+
+    if mod.type < 3 || mod.type == 4 # plain or C-model, or (Jan 2018) SVEC
+        # Standard C matrix
+        printStrMat(mod.C, mod.vcv, "C")	# was mod.S1
+
+        # Long-run matrix
+        if rows(mod.Rd1l) || mod.calc_lr || mod.type == 4
+            # either long-run restr., or user wish, or SVEC
+            # (this could be much embellished, probably)
+            printf "Estimated long-run matrix"
+            if rows(mod.Rd1l)
+                printf " (restricted)"
+            endif
+            printf "\n"
+
+            matrix longrun = mod.lrmat
+            # round to zero for printout (also do it in general?)
+            longrun = (abs(longrun) .< 1e-15) ? 0.0 : longrun
+            print longrun
+        endif
+
+    elif mod.type == 3	# AB, new <Sven>
+        n2 = (mod.n)^2
+        if mod.ka > 0
+            printStrMat(mod.S1, mod.vcv[1:n2, 1:n2], "A")
+        endif
+
+        if mod.kb > 0
+            printStrMat(mod.S2, mod.vcv[n2+1 : 2*n2, n2+1 : 2*n2], "B")
+        endif
     endif
 
-  elif mod.type == 3	# AB, new <Sven> 
-    n2 = (mod.n)^2
-    if mod.ka > 0
-      printStrMat(mod.S1, mod.vcv[1:n2, 1:n2], "A")
+    printf "  Log-likelihood = %g\n", mod.LL1
+    if inbundle(mod, "LRoid")	# over-id test was done
+        printf "  Overidentification LR test = %g (%d df, pval = %g)\n\n", \
+          mod.LRoid[1], mod.LRoid[2], mod.LRoid[3]
     endif
-	  
-    if mod.kb > 0
-      printStrMat(mod.S2, mod.vcv[n2+1 : 2*n2, n2+1 : 2*n2], "B")
-    endif
-  endif
 
-  printf "  Log-likelihood = %g\n", mod.LL1
-  if inbundle(mod, "LRoid")	# over-id test was done
-    printf "  Overidentification LR test = %g (%d df, pval = %g)\n\n", \
-      mod.LRoid[1], mod.LRoid[2], mod.LRoid[3]
-  endif
-  
 end function

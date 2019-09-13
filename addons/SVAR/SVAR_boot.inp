@@ -1,374 +1,484 @@
 function void boot_printout(int type, int n, int rep,
                             int failed, matrix *Spar_mat)
 
-  matrix bm = meanc(Spar_mat)
-  matrix bV = mcov(Spar_mat)
-  scalar nc = cols(Spar_mat)
-  scalar n2 = n*n
+    matrix bm = meanc(Spar_mat)
+    matrix bV = mcov(Spar_mat)
+    scalar nc = cols(Spar_mat)
+    scalar n2 = n*n
 
-  # force numerical zeros to real zeros
-  e = diag(bV) .< 1.0e-12
-  if maxc(e)
-      e = selifc(seq(1, nc), e')
-      bV[e,] = 0
-      bV[,e] = 0
-  endif
+    # force numerical zeros to real zeros
+    e = diag(bV) .< 1.0e-12
+    if maxc(e)
+        e = selifc(seq(1, nc), e')
+        bV[e,] = 0
+        bV[,e] = 0
+    endif
 
-  printf "Bootstrap results (%d replications, %d failed)\n", \
-    rep + failed, failed
+    printf "Bootstrap results (%d replications, %d failed)\n", \
+      rep + failed, failed
 
-  if (type != 3) && ( cols(Spar_mat) == 2 * n2 )	
-    # Long-run matrix at the end exists!
-    # And so this is a model with long-run restrictions (Bl-Quah-style or SVEC),
-    # or the user forced it via calc_lr.
-      
-    matrix bK = mshape( bm[1:n2], n, n)
-    printStrMat(bK, bV[1:n2, 1:n2], "C")
-    matrix bL = mshape( bm[n2+1:], n, n)
-    printStrMat(bL, bV[1+n2: , 1+n2: ], "LongRun")
-    
-  # endif
+    if (type != 3) && ( cols(Spar_mat) == 2 * n2 )
+        # Long-run matrix at the end exists!
+        # And so this is a model with long-run restrictions
+        # (Bl-Quah-style or SVEC),
+        # or the user forced it via calc_lr.
 
-  elif type != 3 #  was: (type == 1) || (type == 2) || (type == 4) 
-    
-    # C model without printing the long-run matrix 
-    # (SVEC / type 4 should not happen here, because it has long-run
-    #  constraints by construction)
-    
-    matrix bK = mshape(bm,n,n)
-    printStrMat(bK, bV, "C")
-    
-  elif type == 3	# AB model
-    matrix bmA = mshape( bm[1:n2], n, n)
-    printStrMat(bmA, bV[1:n2, 1:n2], "A")
-    matrix bmB = mshape( bm[n2+1:], n, n)
-    printStrMat(bmB, bV[1+n2:,1+n2:], "B")
-    
-  else
-    funcerr "shouldn't happen"
-  endif
+        matrix bK = mshape( bm[1:n2], n, n)
+        printStrMat(bK, bV[1:n2, 1:n2], "C")
+        matrix bL = mshape( bm[n2+1:], n, n)
+        printStrMat(bL, bV[1+n2: , 1+n2: ], "LongRun")
+
+    elif type != 3 #  was: (type == 1) || (type == 2) || (type == 4)
+
+        # C model without printing the long-run matrix
+        # (SVEC / type 4 should not happen here, because it has long-run
+        #  constraints by construction)
+
+        matrix bK = mshape(bm,n,n)
+        printStrMat(bK, bV, "C")
+
+    elif type == 3	# AB model
+        matrix bmA = mshape( bm[1:n2], n, n)
+        printStrMat(bmA, bV[1:n2, 1:n2], "A")
+        matrix bmB = mshape( bm[n2+1:], n, n)
+        printStrMat(bmB, bV[1+n2:,1+n2:], "B")
+
+    else
+        funcerr "shouldn't happen"
+    endif
 end function
 
 ###############
 
-function matrix bias_correction(scalar H, matrix Ahat, const matrix mu, 
-                                const matrix E, const matrix X, 
-                                matrix Y0, matrix *BC)
+function matrix bias_correction(scalar H, matrix Ahat, const matrix mu,
+                                const matrix E, const matrix X,
+                                matrix Y0, matrix *BC,
+                                int boottype[1:4:1])
 
-  /* This function implements a bias correction for
-     the estimate of the VAR parameters as per Kilian,
-     REStat (1998).
-     (The SVEC case is not allowed here, but it must be checked on the outside.)
-  */
+    /* This function implements a bias correction for
+       the estimate of the VAR parameters as per Kilian,
+       REStat (1998).
+       (The SVEC case is not allowed here, but it must
+       be checked on the outside.)
 
-  n = rows(Ahat)
-  p = cols(Ahat)/n
-  k = cols(X)
-  cmu = cols(mu)
-  rY0 = rows(Y0)
+       New 'boottype' arg (Aug 2019):
+       1: standard resampling (default, as before)
+       2-4: wild bootstrap (3 variants)
+       (It's not ideal to have 8 arguments in this function,
+       but this is the least invasive way to do it now...)
+    */
 
-  # check for stationarity first
-  scalar maxmod = max_eval(Ahat)
+    n = rows(Ahat)
+    p = cols(Ahat)/n
+    k = cols(X)
+    cmu = cols(mu)
+    rY0 = rows(Y0)
 
-  if maxmod < 0.9999
-      matrix Ab = zeros(n, n*p)
+    # check for stationarity first
+    scalar maxmod = max_eval(Ahat)
 
-      loop i=1..H --quiet
-	  matrix U  = zeros(p,n) | resample(E)
-	  if cmu > 0
-	      U = mu + U
-	  endif 
-	  matrix bY = varsimul(Ahat, U[rY0+1:,], Y0)
-	  # printf "rows(bY) = %d, rows(X) = %d\n", rows(bY), rows(X) 
-	  matrix reg  = X ~ mlag(bY, seq(1,p))
-	  matrix Pi = mols(bY[p+1:,], reg[p+1:,])
-	  matrix Ab += transp(Pi[k+1:k+n*p,])
-      endloop
+    if maxmod < 0.9999
+        matrix Ab = zeros(n, n*p)
+        matrix innov = prepres(E, boottype)
 
-      Ab = Ab ./ H
-      matrix BC = Ahat - Ab
+        loop i=1..H --quiet
+            matrix U = zeros(p,n) | drawbootres(innov, boottype)
 
-    H = add_and_smash(&Ab, BC)
-    printf "H = %g\n", H
-  else
-      matrix Ab = Ahat
-  endif
-  return Ab
+            if cmu > 0
+                U = mu + U
+            endif
+            matrix bY = varsimul(Ahat, U[rY0+1:,], Y0)
+            matrix reg  = X ~ mlag(bY, seq(1,p))
+            matrix Pi = mols(bY[p+1:,], reg[p+1:,])
+            matrix Ab += transp(Pi[k+1:k+n*p,])
+        endloop
+
+        Ab = Ab ./ H
+        matrix BC = Ahat - Ab
+
+        H = add_and_smash(&Ab, BC)
+        # printf "H = %g\n", H
+
+    else	# not stationary
+        matrix Ab = Ahat
+    endif
+    return Ab
 end function
 
-/* ---------------------------------------------------------------------- */
-/* --- Main bootstrap function ------------------------------------------ */
-/* ---------------------------------------------------------------------- */
 
-function scalar SVAR_boot(bundle *obj, int rep, scalar alpha, bool quiet[1])
+function matrix calc_bmu(const bundle obj)
+    # disentangle determ/exog
 
-  loop foreach i n k T p type --quiet 
-    scalar $i = obj.$i 	# copy for convenience
-  endloop
-  scalar h = obj.horizon
-  scalar n2 = n*n  
-  matrix m = obj.mu	       # deterministics and/or exogenous
+    matrix bmu = zeros(obj.T, obj.n)
+    if obj.k && obj.type == 4 # SVEC, 
+				# (with some unrestr. exo apart from const/trend)
+        if obj.jcase == 1
+            bmu = obj.X * obj.mu
 
-  /* --- constraints-related matrices ---------------------*/
-  matrix Rd1 = obj.Rd1
-  matrix Rd2 = type==3 ? obj.Rd0 : obj.Rd1l
-   
-  if type == 4
-    # coint_r = cols(obj.jbeta)
-    matrix J = zeros(n - obj.crank, obj.crank) | I(obj.crank)
-  endif
+        elif obj.jcase == 2 || obj.jcase == 3
+            bmu = obj.X * obj.mu[2:, ]  
+						# need to add restr. or unrestr. const later
 
-  matrix X = obj.X        # exogenous variables (more precisely: unrestr. exog.)
-  matrix start = obj.Y[1:p, ] # Y0
-  matrix E = cdemean(obj.E) # was: E .- meanc(E)   # centre residuals
-
-  matrix C = obj.C	# (used below at least in maybe_flip_columns(C, &K))
-  
-  if type == 3 # AB 
-    matrix bmA bmB # needed as memory for transfer 
-  endif  
-
-  /*
-     the matrix "bands" will contain the bootstrap results:
-     each bootstrap replication on one row; each row contains
-     the vectorisation of the complete IRF matrix
-  */
-  matrix bands = zeros(rep, (h+1) * n2)
-
-  # disentangle determ/exog:
-  /* when further (non-determ) restricted terms will be allowed, this block
-    should probably be outsourced to a separate function */
-    
-  matrix bmu = zeros(T, n) 
-  if k && type == 4 # SVEC, some unrestr. exo (apart from const/trend)
-    if obj.jcase == 1 
-      bmu = X * obj.mu
-      
-    elif obj.jcase == 2 || obj.jcase == 3
-      bmu = X * obj.mu[2:, ]  # need to add restr. or unrestr. const later 
-
-    elif obj.jcase == 4 || obj.jcase == 5
-      bmu = X * obj.mu[3:, ] # need to add restr./unr. const and trend later
-    endif
-  
-  elif k    # no SVEC
-    bmu = X * obj.mu    # this was the pre-1.4 handled case
-  endif
-  
-  # more special treatment of SVEC
-  if type == 4  
-    # add constant
-    if obj.jcase > 2      # unrestricted
-      bmu = bmu .+  obj.mu[1, ]  # (use broadcasting)
-    elif obj.jcase == 2   # restricted
-      bmu = bmu .+ (obj.jbeta[n+1, ] * obj.jalpha')
-    endif
-
-    # add trend
-    if obj.jcase == 4
-      bmu += seq(1,T)' obj.jbeta[n+1, ] * obj.jalpha'  # restr.
-    elif obj.jcase == 5
-      bmu += seq(1,T)' obj.mu[2, ]        # unrestr.
-    endif
-  endif
-  
-  # old:
-  # matrix bmu = (k > 0) ? X*m : {}
-
-  bundle bobj = obj       # store a copy of the model for bootstrap
-  obj.nboot = rep         # record bootstrap details
-  obj.boot_alpha = alpha  # into original model
-
-  if obj.ncumul > 0
-    matrix to_cum = obj.cumul
-    matrix tmp = zeros(n, n)
-    tmp[to_cum,] = 1
-    sel = selifr(transp(seq(1, n2)), vec(tmp))	# was: n*n
-  endif
-	
-  i = 1
-  failed = 0
-  set loop_maxiter 16384
-  
-  # The result matrix (IRFs further below)
-  if (type > 2) || (rows(obj.Rd1l) || obj.calc_lr )
-    # save either A,B (for type 3) or C and the long-run matrix
-    matrix Spar_mat = zeros(rep, 2 * n2)
-    
-  else # type 1,2,4 and just save the C matrices.
-    matrix Spar_mat =  zeros(rep, n2) 
-  endif    
-
-  BIASCORR = (type != 4) && obj.biascorr # not available w/unit roots # was: bc
-  if BIASCORR
-    matrix Psi = {}
-    matrix ABC = bias_correction(1000, obj.VARpar, bmu, E, X, start, &Psi) # was: A
-  endif
-
-  printf "\nBootstrapping model (%d iterations)\n\n", rep
-  flush
-
-  loop while i <= rep --quiet
-    bobj.step = 0	# clear previous bootstrap indicator
-    /*
-       generate bootstrap disturbances: first p rows
-       (corresponding to Y0) are 0; next rows are sampled
-       with replacement from VAR residuals
-    */      
-    
-    matrix U = resample(E) + bmu[p + 1:, ]     # bmu may be zero
-
-    # generate bootstrap data
-    matrix ABCorA = BIASCORR ? ABC : obj.VARpar	# was: A
-    matrix bY = varsimul(ABCorA, U, start)
-
-    matrix bobj.Y = bY       # and store it into the bootstrap object
-
-    /*
-       estimate VAR parameters, via VECM if type==4 (SVEC) 
-       or via VAR otherwise
-    */
-    if type == 4 
-      vecm_est(&bobj)
-    else
-      base_est(&bobj)
-    endif
-	
-    matrix bA = bobj.VARpar  # recover estimates (first n rows of companion mat)
-    matrix bSigma = bobj.Sigma
-    matrix theta = obj.theta # init original SVAR params (C/A&B apparently, in suitable form...)
-    # (was: param)
-    errcode = 0
-
-    ## Full bias correction 
-    /* (Moved up from below because the new C estimates should be based
-    on the bc-ed VARpar version.) 
-    But note that the bc-ed VARpar only actually enter the new C matrix if
-    there are long-run constraints, namely via C1 through fullRd.
-    Otherwise the new C only depends on Sigma, but we do not update Sigma
-    in the full biascorr case. (In theory we could, by re-calculating the 
-    residuals using the bc-ed VARpar. We shouldn't, should we?) 
-    */
-         
-    if obj.biascorr == 2 && type != 4 # was: bc; 
-      # (The check for SVEC / type!=4 was missing before -- Sven)       
-      scalar H = add_and_smash(&bA, Psi)
-      # printf("\tH=%g\n",H)
-      if ok(H)
-        bobj.VARpar = bA
-      else
-        errcode = 101
-      endif
-    endif  
-
-    /* now re-estimate C, according to model type */
-
-    if type == 1 # Cholesky
-      matrix K = cholesky(bSigma)
-      
-    elif type == 2 || type == 4 # consolidate the SVEC case here
-      
-      # FIXME: (Sven) The following SVEC check can simply be removed after 
-      # we verify that the call to get_full_Rd() works alright in this case!
-      # Jan 2018: try to remove it...:
-      # if type == 4 && rows(bobj.Rd1l) 
-      #   funcerr "Bootstrap in SVEC with further long-run restrictions not supported (yet)."
-	    # endif
-
-      matrix fullRd = get_full_Rd(&bobj)
-      matrix K = estC(&theta, bSigma, fullRd, null, &errcode, obj.optmeth, 0)
-      
-      /* For type==4, this was before:
-      # FIXME: this is very much WIP
-      matrix aperp = nullspace(bobj.jalpha')
-
-      # set up permanent-transitory constraints
-      r = cols(bobj.jbeta)
-      matrix J = zeros(n-r, r) | I(r)
-      matrix ptRd = (J ** aperp)' ~ zeros(r*(n-r),1)
-      # matrix J = I(n-r) | zeros(r, n-r)
-      # moo = (J ** beta)' ~ zeros(r*(n-r),1)
-      # ptRd |= moo
-
-      matrix fullRd = Rd1 | ptRd
-      */
-
-    elif type == 3 # "AB" 
-      matrices transferAB = array(2)	# new: get A,B instead of re-calc'ing it below
-      matrix K = estAB(&theta, bSigma, Rd2, Rd1, null, \
-        &errcode, obj.optmeth, 0, &transferAB)
-      
-    # elif type == 4 # SVEC
-      # matrix fullRd = get_full_Rd(&bobj)      
-      # matrix K = estC(&theta, bSigma, fullRd, null, &errcode, obj.optmeth, 0)
-    endif
-   
-    ## Process and store the simulated C results 
-    if !errcode && rows(K) == n
-      bobj.step = 2
-      bobj.theta = theta
-      
-      # we don't treat the AB-model specially here (there's no reason to)
-      maybe_flip_columns(C, &K)
-
-      if (type == 1) || (type == 2) || (type == 4) 
-        bobj.C = K	# was: bobj.S1 = K	/ is used in doIRF()
-        Spar_mat[i, 1:n2] = vec(K)'		# was just [i,]
-        
-        /* New Oct 2017: Also bootstrap the long-run matrix if wanted   
-           Jan 2018: add type 4 */        
-        if ( type < 3 && ( rows(bobj.Rd1l) || bobj.calc_lr ) ) || type == 4	
-          # (a plain or C model with long-run constraints, or user switch)          
-          # long-run matrix (C1 comes from get_full_Rd() above (except type 1)):
-          
-          matrix C1 = (type == 2 || type == 4) ? bobj.C1 : C1mat(bobj.VARpar)  
-          matrix bobj.lrmat = C1 * bobj.C
-                    
-          # attach it to the other bootstrap result
-          Spar_mat[i, n2+1 : 2*n2] = vec(bobj.lrmat)'
+        elif obj.jcase == 4 || obj.jcase == 5
+            bmu = obj.X * obj.mu[3:, ] 
+						# need to add restr./unr. const & trend later
         endif
-        
-      elif type == 3
-        # (Sven): the following stuff could be gotten from estAB above
-        bobj.S1 = transferAB[1] # was: bmA
-        bobj.S2 = transferAB[2] # bmB
-        
-        Spar_mat[i,] = vec(bobj.S1)' ~ vec(bobj.S2)' # was: vec(bmA)' ~ vec(bmB)'
-      endif
 
-      ### This was the place where the full bias correction block lived before ###
-      
+    elif obj.k    # no SVEC
+        bmu = obj.X * obj.mu    # this was the pre-1.4 handled case
     endif
 
-    if !errcode && rows(K) == n
-      doIRF(&bobj)	
-      bands[i,] = vec(bobj.IRFs)' # was vec(ir) from ir = bobj.IRFs
-      i++
+    # more special treatment of SVEC
+    if obj.type == 4
+        # add constant
+        if obj.jcase > 2      # unrestricted
+            bmu = bmu .+  obj.mu[1, ]  # (use broadcasting)
+
+        elif obj.jcase == 2   # restricted
+            bmu = bmu .+ (obj.jbeta[obj.n + 1, ] * obj.jalpha')
+        endif
+
+        # add trend
+        if obj.jcase == 4
+            bmu += seq(1, obj.T)' obj.jbeta[obj.n + 1, ] * obj.jalpha'  
+						# restricted
+
+        elif obj.jcase == 5
+            bmu += seq(1, obj.T)' obj.mu[2, ]     # unrestricted
+        endif
+    endif
+
+    return bmu
+end function
+
+#----------------------------------
+# These private functions introduced in Aug/Sep 2019
+# for general bootstrap
+
+function matrix prepres(matrix E,
+                        int boottype[1:4:1] "bootstrap type" \
+                        {"resampling", "wildN", "wildR", "wildM"})
+    # The input is demeaned (column-wise) only for
+    # the resampling (type 1). It isn't done together with the
+    # new draws to avoid repeating it many times.
+
+    # (Cannot have 'const matrix E' as gretl versions <2019d would
+    #  crash when doing 'return E'.)
+
+    if boottype == 1
+        return cdemean(E)
     else
-      failed++
-      outfile stderr --write
-      printf "Iter %4d failed (error code = %d)\n", i, errcode
-      outfile --close
+        return E
     endif
-  endloop
+end function
 
-  if !quiet
-    boot_printout(type, n, rep, failed, &Spar_mat)
-  endif
 
-  # quantiles of bootstrapped IRFs used in graphs    
-  matrix locb = quantile(bands, 1 - alpha)
-  matrix hicb = quantile(bands, alpha)
-  matrix mdn  = quantile(bands, 0.5)
+function matrix drawbootres(const matrix E,
+                            int boottype[1:4:1] "bootstrap type" \
+                            {"resampling", "wildN", "wildR", "wildM"},
+                            bundle bparams[null] "further inputs" )
 
-  bundle bootdata = null
-  bootdata.rep   = rep             # no of replications
-  bootdata.alpha = alpha           # alpha 
-  bootdata.biascorr  = obj.biascorr   # type of bias correction
-  matrix bootdata.lo_cb = mshape(locb, h+1, n2) # was: locb   # lower bounds
-  matrix bootdata.hi_cb = mshape(hicb, h+1, n2) # was: hicb   # upper bounds
-  matrix bootdata.mdns  = mshape(mdn, h+1, n2)	# was: mdn    # medians
+    /*
+       Construct a new draw of residuals for bootstrapping, where E
+       is a Txn matrix.
+       E can be original residuals or can be some pre-processed
+       input. (See the prepres() function - the pre-processing is
+       not done here to avoid doing it repeatedly.)
 
-  bundle obj.bootdata = bootdata
-  return failed
+       Currently boottype can go from 1 to 4:
+       1: traditional residual resampling (using gretl's resample())
+       2-4: wild bootstrap with the help of a standard normal,
+       Rademacher, Mammen distributions respectively
+
+       Other bootstrap types (block, ...) may be added in the future.
+       (The E input could be empty then, e.g. for a purely parametric-
+       distribution bootstrap. The bundle bparams is intended to be
+       used then to specify parameters, in a way that is to be determined.)
+    */
+
+    if exists(bparams)
+        print "Warning, 'bparams' arg is unused, ignoring."
+    endif
+
+    if boottype == 1	# standard
+        return resample(E)
+    elif boottype > 1 && boottype <= 4
+        T = rows(E)
+        if boottype == 2
+            # Normal
+            matrix w = mnormal(T,1)
+        elif boottype == 3
+            # Rademacher
+            matrix w = muniform(T,1) .< 0.5 ? 1 : -1
+        elif boottype == 4
+            # Mammen
+            scalar s5 = sqrt(5)
+            scalar p = (0.5/s5) * (s5 + 1)
+            matrix w = 0.5 + (muniform(T,1) .< p ? -s5/2 : s5/2)
+        endif
+        return E .* w
+    else
+        funcerr "Shouldn't happen"
+    endif
+
+end function
+
+/* ------------------------------------------------------------------- */
+/* --- Main bootstrap function --------------------------------------- */
+/* ------------------------------------------------------------------- */
+
+function scalar SVAR_boot(bundle *obj, 
+													int rep[0::2000] "bootstrap iterations",
+                          scalar alpha[0:1:0.9] "CI coverage",
+										 			bool quiet[1],
+													string btypestr[null] "bootstrap type",
+													int biascorr[-1:2:-1] "bias correction (non-SVEC)")
+		
+		# strBtype: can be "resample" / "resampling", 
+		#  "wildN"/"wild", "wildR", "wildM"	
+
+		# The default value for biascorr of -1 means: 
+		# Do not override the previous setting.		
+		
+    ## Copy some params and choices
+    loop foreach i n k T p type --quiet
+        scalar $i = obj.$i
+    endloop
+    scalar h = obj.horizon
+    scalar n2 = n*n
+    obj.nboot = rep         # record bootstrap details
+    obj.boot_alpha = alpha  # into original model
+
+		# Bootstrap type choice (if different from default)
+		if exists(btypestr)
+				temp = boottypecode(btypestr)
+				if temp == 0
+						print "Warning: ignoring unrecognized bootstrap type choice."
+				else 
+						obj.boottype = temp
+				endif 				 
+		endif
+
+		# Bias correction choice 
+		if biascorr > -1
+				obj.biascorr = biascorr
+		endif		
+		
+    # define default for bias correction iterations
+    if obj.biascorr && !inbundle(obj, "BCiter")
+        obj.BCiter = 1024
+    endif
+
+    /* --- constraints-related matrices ---------------------*/
+    matrix Rd1 = obj.Rd1
+    matrix Rd2 = type==3 ? obj.Rd0 : obj.Rd1l
+
+    ## Various needed stuff
+    if type == 3 # AB
+        matrix bmA bmB # needed as memory for transfer
+    elif type == 4
+        matrix J = zeros(n - obj.crank, obj.crank) | I(obj.crank)
+    endif
+    matrix start = obj.Y[1:p, ] # Y0
+    matrix C = obj.C	# (used below at least in maybe_flip_columns(C, &K))
+
+    # disentangle determ/exog:
+    matrix bmu = calc_bmu(obj)
+
+    /*
+       the matrix "bootirfs" will contain the bootstrap results:
+       each bootstrap replication on one row; each row contains
+       the vectorisation of the complete IRF matrix
+    */
+    matrix bootirfs = zeros(rep, (h+1) * n2)
+
+
+    bundle bobj = obj       # store a copy of the model for bootstrap
+
+    # FIXME: Why is this if-block needed??? Where is it used?
+    /* Partial answer:
+       'sel' is currently calculated in doIRF (?), inside the
+       bootstrap loop. It'd be slightly more efficient to pre-
+       calculate it here, e.g. storing it in obj.cumsel.
+       However, the cumulated IRF would also be needed when no
+       bootstrap is done. So it seems 'sel' must be calc'ed
+       somewhere else...
+    */
+    #     if obj.ncumul > 0
+    #         matrix to_cum = obj.cumul
+    #         matrix tmp = zeros(n, n)
+    #         tmp[to_cum,] = 1
+    #         sel = selifr(transp(seq(1, n2)), vec(tmp))	# was: n*n
+    #     endif
+
+    # Spar_mat: the result matrix (IRFs further below)
+    if (type > 2) || (rows(obj.Rd1l) || obj.calc_lr )
+        # save either A,B (for type 3) or C and the long-run matrix
+        matrix Spar_mat = zeros(rep, 2 * n2)
+
+    else # type 1,2,4 and just save the C matrices.
+        matrix Spar_mat =  zeros(rep, n2)
+    endif
+
+    # Do the bias correction pre-step if applicable
+    BIASCORR = (type != 4) && obj.biascorr # not available w/unit roots
+    if BIASCORR
+        matrix Psi = {}
+        # hardcoded num of iterations here
+        matrix ABC = bias_correction(obj.BCiter, obj.VARpar, bmu, \
+          obj.E, obj.X, start, &Psi, obj.boottype)
+    endif
+
+    # Prepare the residuals
+    matrix innov = prepres(obj.E, obj.boottype)
+
+    printf "\nBootstrapping model (%d iterations)\n", rep
+    printf "Bootstrap type: %s\n", btypestring(obj.boottype)
+		printf "Bias correction: %s\n\n", BCstring(obj.biascorr)
+    flush
+
+    i = 1
+    failed = 0
+    set loop_maxiter 16384
+    loop while i <= rep --quiet
+        bobj.step = 0	# clear previous bootstrap indicator
+        /*
+           generate bootstrap disturbances: first p rows
+           (corresponding to Y0) are 0; for next rows see the
+           drawbootres function.
+        */
+        matrix U = bmu[p+1:, ] + drawbootres(innov, obj.boottype)
+        # (bmu may be zero)
+
+        # generate bootstrap data and store it in bootstrap obj
+        matrix ABCorA = BIASCORR ? ABC : obj.VARpar
+        matrix bobj.Y = varsimul(ABCorA, U, start) 
+
+        /*
+           estimate VAR parameters, special treatment VECM/SVEC (type==4)
+        */
+        if type == 4
+            vecm_est(&bobj)
+        else
+            base_est(&bobj)
+        endif
+
+        matrix bA = bobj.VARpar  # estimates (first n rows of companion mat)
+        matrix bSigma = bobj.Sigma
+        matrix theta = obj.theta # init original SVAR params
+        # (C/A&B apparently, in suitable form...)
+        errcode = 0
+
+        ## Full bias correction
+        /* (Moved up from below because the new C estimates should be based
+           on the bc-ed VARpar version.)
+           But note that the bc-ed VARpar only actually enter the new C 
+					 matrix if there are long-run constraints, namely via C1 through 
+					 fullRd.
+           Otherwise the new C only depends on Sigma, but we do not update 
+					 Sigma in the full biascorr case. (In theory we could, by 
+					 re-calculating the residuals using the bc-ed VARpar. 
+					 We shouldn't, should we?)
+        */
+
+        if obj.biascorr == 2 && type != 4 # only for non-SVEC
+            scalar H = add_and_smash(&bA, Psi)
+
+            if ok(H)
+                bobj.VARpar = bA
+            else
+                errcode = 101
+            endif
+        endif
+
+        /* now re-estimate C, according to model type */
+
+        if type == 1 # Cholesky
+            matrix K = cholesky(bSigma)
+
+        elif type == 2 || type == 4 # consolidate the SVEC case here
+
+            matrix fullRd = get_full_Rd(&bobj)
+            matrix K = estC(&theta, bSigma, fullRd, null, 
+														&errcode, obj.optmeth, 0)
+
+        elif type == 3 # "AB"
+            matrices transferAB = array(2)
+            # new: get A,B instead of re-calc'ing it below
+            matrix K = estAB(&theta, bSigma, Rd2, Rd1, null, \
+              &errcode, obj.optmeth, 0, &transferAB)
+
+        endif
+
+        ## Process and store the simulated C results
+        if !errcode && rows(K) == n
+            bobj.step = 2
+            bobj.theta = theta
+
+            # we don't treat the AB-model specially here (no reason to)
+            maybe_flip_columns(C, &K)
+
+            if (type == 1) || (type == 2) || (type == 4)
+                bobj.C = K	# is used in doIRF()
+                Spar_mat[i, 1:n2] = vec(K)'
+
+                /* New Oct 2017: Also bootstrap the long-run matrix if wanted
+                Jan 2018: add type 4 */
+                if ( type < 3 && ( rows(bobj.Rd1l) || bobj.calc_lr ) ) \
+									|| type == 4
+                    # (a plain or C model w/ long-run constr, or user switch)
+                    # long-run mat (C1 comes from get_full_Rd() above 
+										# (except type 1)):
+
+                    matrix C1 = (type == 2 || type == 4) ? \
+																bobj.C1 : C1mat(bobj.VARpar)
+                    matrix bobj.lrmat = C1 * bobj.C
+
+                    # attach it to the other bootstrap result
+                    Spar_mat[i, n2+1 : 2*n2] = vec(bobj.lrmat)'
+                endif
+
+            elif type == 3
+                # (Sven): the following stuff comes from estAB above
+                bobj.S1 = transferAB[1]
+                bobj.S2 = transferAB[2]
+                Spar_mat[i,] = vec(bobj.S1)' ~ vec(bobj.S2)'
+            endif
+
+            ### Here the full bias correction block lived before ###
+
+        endif
+
+        if !errcode && rows(K) == n
+            doIRF(&bobj)
+            bootirfs[i,] = vec(bobj.IRFs)'
+            i++
+        else
+            failed++
+            outfile stderr --write
+            printf "Iter %4d failed (error code = %d)\n", i, errcode
+            outfile --close
+        endif
+    endloop
+
+    if !quiet
+        boot_printout(type, n, rep, failed, &Spar_mat)
+    endif
+
+    # quantiles of bootstrapped IRFs used in graphs
+    q_alpha = 0.5 * (1 - alpha)	# changed in v1.5
+    matrix locb = quantile(bootirfs, q_alpha)
+    matrix hicb = quantile(bootirfs, 1 - q_alpha)
+    matrix mdn  = quantile(bootirfs, 0.5)
+
+    bundle bootdata = null
+    bootdata.rep   = rep             # no of replications
+    bootdata.alpha = alpha           # alpha
+    bootdata.biascorr  = obj.biascorr   # type of bias correction
+    matrix bootdata.lo_cb = mshape(locb, h+1, n2) # lower bounds
+    matrix bootdata.hi_cb = mshape(hicb, h+1, n2) # upper bounds
+    matrix bootdata.mdns  = mshape(mdn, h+1, n2)	# medians
+
+    bundle obj.bootdata = bootdata
+    return failed
 end function
