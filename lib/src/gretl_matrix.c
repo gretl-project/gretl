@@ -10145,11 +10145,6 @@ gretl_matrix *gretl_gensymm_eigenvals (const gretl_matrix *A,
     return evals;
 }
 
-enum {
-    SVD_THIN,
-    SVD_FULL
-};
-
 /**
  * gretl_matrix_SVD:
  * @x: m x n matrix to decompose.
@@ -10158,7 +10153,7 @@ enum {
  * @pvt: location for matrix V (transposed), or NULL if not wanted.
  * @full: if U and/or V are to be computed, a non-zero value flags
  * production of "full-size" U (m x m) and/or V (n x n). Otherwise U
- * will be m x min(m,n) and and V' will be n x min(m,n). Note that
+ * will be m x min(m,n) and and V' will be min(m,n) x n. Note that
  * this flag matters only if @x is not square.
  *
  * Computes SVD factorization of a general matrix using the lapack
