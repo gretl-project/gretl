@@ -564,11 +564,11 @@ static int win32_relay_output (HANDLE hread, char *buf, int bufsize,
 	char *s = strstr(buf, "__GRETLMPI_EXIT__");
 
 	if (s != NULL) {
-	    if (done != NULL) {
-		*done = 1;
-	    }
+	    fprintf(stderr, "got: '%s'\n", buf);
+	    *done = 1;
 	    *s = '\0';
 	}
+	fprintf(stderr, "buf: '%s'\n", buf);
 	pputs(prn, buf);
 	if (gui) {
 	    manufacture_gui_callback(FLUSH);
@@ -661,14 +661,14 @@ run_child_with_pipe (const char *arg, const char *currdir,
 		    fprintf(stderr, " break on ok = %d, done = %d\n", ok, done);
 		    break;
 		}
-		g_usleep(250000); /* 0.25 seconds */
+		g_usleep(100000); /* 0.10 seconds */
+	    }
+	    while (!done) {
+		memset(buf, 0, sizeof buf);
+		win32_relay_output(hread, buf, sizeof buf, gui, &done, prn);
+		fprintf(stderr, "Extra read: done = %d\n", done);
 	    }
 	    CloseHandle(hwrite);
-	    fprintf(stderr, "Closed write handle on MPI pipe\n");
-	    if (!done) {
-		memset(buf, 0, sizeof buf);
-		win32_relay_output(hread, buf, sizeof buf, gui, NULL, prn);
-	    }
 	}
 	CloseHandle(pinfo.hProcess);
 	CloseHandle(pinfo.hThread);

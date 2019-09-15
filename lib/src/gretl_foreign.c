@@ -1571,8 +1571,9 @@ static int write_gretl_mpi_script (gretlopt opt, const DATASET *dset)
 	fputs("  print \"__GRETLMPI_EXIT__\"\n", fp);
 	fputs("endif\n", fp);
 #endif
-	fclose(fp);
     }
+
+    fclose(fp);
 
     return err;
 }
