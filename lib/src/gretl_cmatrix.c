@@ -791,16 +791,11 @@ gretl_matrix *gretl_zgees (const gretl_matrix *A,
     return ret;
 }
 
-enum {
-    SVD_THIN,
-    SVD_FULL
-};
-
 /* SVD of a complex matrix via the LAPACK function zgesvd() */
 
 int gretl_cmatrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
 		       gretl_vector **ps, gretl_matrix **pvt,
-		       int smod)
+		       int full)
 {
     integer m, n, lda;
     integer ldu = 1, ldvt = 1;
@@ -831,12 +826,6 @@ int gretl_cmatrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
     n = x->cols;
     xsize = lda * n;
 
-    if (smod == SVD_THIN && m < n) {
-	fprintf(stderr, "gretl_cmatrix_SVD: X is %d x %d, should be 'thin'\n",
-		x->rows, x->cols);
-	return E_NONCONF;
-    }
-
     az = malloc(xsize * sizeof *az);
     if (az == NULL) {
 	return E_ALLOC;
@@ -853,34 +842,34 @@ int gretl_cmatrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
 
     if (pu != NULL) {
 	ldu = m;
-	if (smod == SVD_FULL) {
+	if (full) {
 	    u = gretl_cmatrix_new(ldu, m);
 	} else {
-	    u = gretl_cmatrix_new(ldu, n);
+	    u = gretl_cmatrix_new(ldu, k);
 	}
 	if (u == NULL) {
 	    err = E_ALLOC;
 	    goto bailout;
 	} else {
 	    uval = (cmplx *) u->val;
-	    jobu = (smod == SVD_FULL)? 'A' : 'S';
+	    jobu = full ? 'A' : 'S';
 	}
     }
 
     if (pvt != NULL) {
-	ldvt = n;
+	ldvt = full ? n : k;
 	vt = gretl_cmatrix_new(ldvt, n);
 	if (vt == NULL) {
 	    err = E_ALLOC;
 	    goto bailout;
 	} else {
 	    vtval = (cmplx *) vt->val;
-	    jobvt = 'A';
+	    jobvt = full ? 'A' : 'S';
 	}
     }
 
     work = malloc(sizeof *work);
-    rwork = malloc((5 * MIN(m,n)) * sizeof *rwork);
+    rwork = malloc(5 * k * sizeof *rwork);
     if (work == NULL || rwork == NULL) {
 	err = E_ALLOC;
 	goto bailout;

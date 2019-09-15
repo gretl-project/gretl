@@ -217,7 +217,7 @@ gretl_matrix *bkw_matrix (const gretl_matrix *VCV,
 			      Vi, Q, GRETL_MOD_NONE);
 
     if (!*err) {
-	*err = gretl_matrix_SVD(Q, NULL, &lambda, &V);
+	*err = gretl_matrix_SVD(Q, NULL, &lambda, &V, 0);
     }
 
     if (*err) {

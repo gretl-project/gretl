@@ -1658,25 +1658,15 @@ gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
     pV = (V != NULL)? &Vtmp : NULL;
 
     if (m->is_complex) {
-	*err = gretl_cmatrix_SVD(m, pU, &S, pV, 1);
+	*err = gretl_cmatrix_SVD(m, pU, &S, pV, 0);
     } else {
-	*err = gretl_matrix_SVD(m, pU, &S, pV);
+	*err = gretl_matrix_SVD(m, pU, &S, pV, 0);
     }
-
-    if (!*err && (Utmp != NULL || Vtmp != NULL)) {
-	int tall = m->rows - m->cols;
-	int minrc = (m->rows > m->cols)? m->cols : m->rows;
-
+    if (!*err) {
 	if (Utmp != NULL) {
-	    if (tall > 0) {
-		*err = gretl_matrix_realloc(Utmp, m->rows, minrc);
-	    }
 	    maybe_replace_content(U, Utmp, *err);
 	}
 	if (Vtmp != NULL) {
-	    if (tall < 0) {
-		*err = revise_SVD_V(&Vtmp, minrc, m->cols);
-	    }
 	    maybe_replace_content(V, Vtmp, *err);
 	}
     }

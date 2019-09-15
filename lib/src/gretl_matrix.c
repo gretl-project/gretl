@@ -8665,10 +8665,10 @@ int gretl_matrix_rank (const gretl_matrix *a, int *err)
 	mod1 = a->rows > k ? GRETL_MOD_TRANSPOSE : 0;
 	mod2 = a->cols > k ? GRETL_MOD_TRANSPOSE : 0;
 	gretl_matrix_multiply_mod(a, mod1, a, mod2, b, 0);
-	*err = gretl_matrix_SVD(b, NULL, &S, NULL);
+	*err = gretl_matrix_SVD(b, NULL, &S, NULL, 0);
 	gretl_matrix_free(b);
     } else {
-	*err = gretl_matrix_SVD(a, NULL, &S, NULL);
+	*err = gretl_matrix_SVD(a, NULL, &S, NULL, 0);
     }
 
     if (!*err) {
@@ -10152,10 +10152,14 @@ enum {
 
 /**
  * gretl_matrix_SVD:
- * @x: matrix to decompose.
+ * @x: m x n matrix to decompose.
  * @pu: location for matrix U, or NULL if not wanted.
  * @ps: location for vector of singular values, or NULL if not wanted.
  * @pvt: location for matrix V (transposed), or NULL if not wanted.
+ * @full: if U and/or V are to be computed, a non-zero value flags
+ * production of "full-size" U (m x m) and/or V (n x n). Otherwise U
+ * will be m x min(m,n) and and V' will be n x min(m,n). Note that
+ * this flag matters only if @x is not square.
  *
  * Computes SVD factorization of a general matrix using the lapack
  * function dgesvd. A = u * diag(s) * vt.
@@ -10163,10 +10167,9 @@ enum {
  * Returns: 0 on success; non-zero error code on failure.
  */
 
-static int
-real_gretl_matrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
-		       gretl_vector **ps, gretl_matrix **pvt,
-		       int smod)
+int gretl_matrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
+		      gretl_vector **ps, gretl_matrix **pvt,
+		      int full)
 {
     integer m, n, lda;
     integer ldu = 1, ldvt = 1;
@@ -10194,12 +10197,6 @@ real_gretl_matrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
     lda = m = x->rows;
     n = x->cols;
 
-    if (smod == SVD_THIN && m < n) {
-	fprintf(stderr, "real_gretl_matrix_SVD: X is %d x %d, should be 'thin'\n",
-		x->rows, x->cols);
-	return E_NONCONF;
-    }
-
     a = gretl_matrix_copy_tmp(x);
     if (a == NULL) {
 	return E_ALLOC;
@@ -10215,29 +10212,29 @@ real_gretl_matrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
 
     if (pu != NULL) {
 	ldu = m;
-	if (smod == SVD_FULL) {
+	if (full) {
 	    u = gretl_matrix_alloc(ldu, m);
 	} else {
-	    u = gretl_matrix_alloc(ldu, n);
+	    u = gretl_matrix_alloc(ldu, k);
 	}
 	if (u == NULL) {
 	    err = E_ALLOC;
 	    goto bailout;
 	} else {
 	    uval = u->val;
-	    jobu = (smod == SVD_FULL)? 'A' : 'S';
+	    jobu = full ? 'A' : 'S';
 	}
     }
 
     if (pvt != NULL) {
-	ldvt = n;
+	ldvt = full ? n : k;
 	vt = gretl_matrix_alloc(ldvt, n);
 	if (vt == NULL) {
 	    err = E_ALLOC;
 	    goto bailout;
 	} else {
 	    vtval = vt->val;
-	    jobvt = 'A';
+	    jobvt = full ? 'A' : 'S';
 	}
     }
 
@@ -10297,25 +10294,6 @@ real_gretl_matrix_SVD (const gretl_matrix *x, gretl_matrix **pu,
     gretl_matrix_free(vt);
 
     return err;
-}
-
-/**
- * gretl_matrix_SVD:
- * @a: matrix to decompose.
- * @pu: location for matrix U, or NULL if not wanted.
- * @ps: location for vector of singular values, or NULL if not wanted.
- * @pvt: location for matrix V (transposed), or NULL if not wanted.
- *
- * Computes SVD factorization of a general matrix using the lapack
- * function dgesvd. A = u * diag(s) * vt.
- *
- * Returns: 0 on success; non-zero error code on failure.
- */
-
-int gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
-		      gretl_vector **ps, gretl_matrix **pvt)
-{
-    return real_gretl_matrix_SVD(a, pu, ps, pvt, SVD_FULL);
 }
 
 /**
@@ -10388,10 +10366,10 @@ int gretl_matrix_SVD_johansen_solve (const gretl_matrix *R0,
 	return E_NONCONF;
     }
 
-    err = real_gretl_matrix_SVD(R0, &U0, NULL, NULL, SVD_THIN);
+    err = gretl_matrix_SVD(R0, &U0, NULL, NULL, 0);
 
     if (!err) {
-	err = real_gretl_matrix_SVD(R1, &U1, &S1, &V1, SVD_THIN);
+	err = gretl_matrix_SVD(R1, &U1, &S1, &V1, 0);
     }
 
     if (!err) {
@@ -10406,7 +10384,7 @@ int gretl_matrix_SVD_johansen_solve (const gretl_matrix *R0,
     }
 
     if (!err) {
-	err = real_gretl_matrix_SVD(Z, &Uz, &Sz, NULL, SVD_THIN);
+	err = gretl_matrix_SVD(Z, &Uz, &Sz, NULL, 0);
     }
 
     if (!err) {
@@ -10543,7 +10521,7 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M, int *err)
 	return NULL;
     }
 
-    *err = gretl_matrix_SVD(M, NULL, &S, &V);
+    *err = gretl_matrix_SVD(M, NULL, &S, &V, 1); /* last arg? */
 
     if (!*err) {
 	char E = 'E';
@@ -11932,7 +11910,7 @@ int gretl_matrix_moore_penrose (gretl_matrix *A)
     m = A->rows;
     n = A->cols;
 
-    err = gretl_matrix_SVD(A, &U, &S, &Vt);
+    err = gretl_matrix_SVD(A, &U, &S, &Vt, 1); /* last arg? */
 
     if (!err) {
 	int nsv = (m < n)? m : n;
@@ -12008,14 +11986,10 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
 
     /* a = USV' ; a^{-1} = VWU' where W holds inverse of diag elements of S */
 
-    err = gretl_matrix_SVD(a, &u, &s, &vt);
+    err = gretl_matrix_SVD(a, &u, &s, &vt, 0);
 
     if (!err) {
-#if 1
 	double smin = svd_smin(a, s->val[0]);
-#else
-	double smin = SVD_SMIN;
-#endif
 
 	for (i=0; i<n; i++) {
 	    if (s->val[i] > smin) {

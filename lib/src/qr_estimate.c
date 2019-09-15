@@ -594,7 +594,7 @@ int maybe_limit_VAR_coeffs (gretl_matrix *A,
     int amod = 0;
     int err;
 
-    err = gretl_matrix_SVD(A, &B, &D, &C);
+    err = gretl_matrix_SVD(A, &B, &D, &C, 0);
 
     if (!err) {
 	for (i=0; i<k; i++) {
