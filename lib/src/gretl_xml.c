@@ -1601,7 +1601,7 @@ gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node,
 	rows *= 2; /* 8-byte indexing */
     }
 
-    if (rows == 0 && cols == 0) {
+    if (rows == 0 || cols == 0) {
 	/* allow case of empty matrix */
 	m = gretl_null_matrix_new();
 	if (m == NULL) {
