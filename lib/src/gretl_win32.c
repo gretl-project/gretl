@@ -661,16 +661,14 @@ run_child_with_pipe (const char *arg, const char *currdir,
 		    fprintf(stderr, " break on ok = %d, done = %d\n", ok, done);
 		    break;
 		}
-		g_usleep(100000); /* 0.10 seconds */
+		g_usleep(250000); /* 0.25 seconds */
 	    }
 	    CloseHandle(hwrite);
 	    fprintf(stderr, "Closed write handle on MPI pipe\n");
-#if 0
-	    /* this is in danger of hanging forever -- but might we
-	       miss some output above?
-	    */
-	    win32_relay_output(hread, buf, sizeof buf, gui, NULL, prn);
-#endif
+	    if (!done) {
+		memset(buf, 0, sizeof buf);
+		win32_relay_output(hread, buf, sizeof buf, gui, NULL, prn);
+	    }
 	}
 	CloseHandle(pinfo.hProcess);
 	CloseHandle(pinfo.hThread);
