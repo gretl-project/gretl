@@ -10516,14 +10516,15 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M, int *err)
 	return NULL;
     }
 
-    *err = gretl_matrix_SVD(M, NULL, &S, &V, 1); /* last arg? */
+    /* we'll need the full SVD here */
+    *err = gretl_matrix_SVD(M, NULL, &S, &V, 1);
 
     if (!*err) {
 	char E = 'E';
 	int m = M->rows;
 	int n = M->cols;
-	int r = (m < n)? m : n;
-	int sz = (m > n)? m : n;
+	int r = MIN(m, n);
+	int sz = MAX(m, n);
 	double x, eps = dlamch_(&E);
 	double smin = sz * S->val[0] * eps;
 
