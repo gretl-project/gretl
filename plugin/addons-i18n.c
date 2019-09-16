@@ -50,7 +50,9 @@ const char *SVAR_translations[] = {
     N_("Bias correction"),
     N_("Bootstrap alpha"),
     N_("Bootstrap replications"),
+    N_("Bootstrap type"),
     N_("C-model"),
+    N_("CI coverage"),
     N_("Check identification"),
     N_("Constant"),
     N_("Exogenous regressors"),
@@ -74,7 +76,14 @@ const char *SVAR_translations[] = {
     N_("Seasonal dummies"),
     N_("Time trend"),
     N_("VAR variables"),
-    N_("plain (Cholesky)")
+    N_("bias correction (non-SVEC)"),
+    N_("bootstrap iterations"),
+    N_("bootstrap type"),
+    N_("plain (Cholesky)"),
+    N_("residual resampling"),
+    N_("wild/Mammen"),
+    N_("wild/Normal"),
+    N_("wild/Rademacher")
 };
 
 const char *HIP_translations[] = {
