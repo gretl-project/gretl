@@ -11891,55 +11891,67 @@ int gretl_matrix_moore_penrose (gretl_matrix *A)
 {
     gretl_matrix *U = NULL;
     gretl_matrix *S = NULL;
-    gretl_matrix *Vt = NULL;
-    gretl_matrix *SUt = NULL;
-    double x;
-    int m, n;
-    int i, j;
+    gretl_matrix *VT = NULL;
     int err = 0;
 
     if (gretl_is_null_matrix(A)) {
 	return E_DATA;
     }
 
-    m = A->rows;
-    n = A->cols;
-
-    err = gretl_matrix_SVD(A, &U, &S, &Vt, 1); /* last arg? */
+    err = gretl_matrix_SVD(A, &U, &S, &VT, 0);
 
     if (!err) {
-	int nsv = (m < n)? m : n;
+	gretl_matrix *Vsel = NULL;
+	int nsv = MIN(A->rows, A->cols);
+	int i, j, k = 0;
+	double x;
 
-	SUt = gretl_zero_matrix_new(n, m);
-	if (SUt == NULL) {
-	    err = E_ALLOC;
-	    goto bailout;
-	}
-
-	/* invert singular values and multiply into U' */
 	for (i=0; i<nsv; i++) {
 	    if (S->val[i] > SVD_SMIN) {
-		for (j=0; j<m; j++) {
-		    x = gretl_matrix_get(U, j, i);
-		    gretl_matrix_set(SUt, i, j, x / S->val[i]);
+		k++;
+	    }
+	}
+
+	if (k < VT->rows) {
+	    Vsel = gretl_matrix_alloc(k, VT->cols);
+	    if (Vsel == NULL) {
+		err = E_ALLOC;
+		goto bailout;
+	    }
+	    for (j=0; j<VT->cols; j++) {
+		for (i=0; i<k; i++) {
+		    x = gretl_matrix_get(VT, i, j);
+		    gretl_matrix_set(Vsel, i, j, x);
 		}
 	    }
 	}
 
-	/* A^{+} = VS^{-1}U' */
-	A->rows = n;
-	A->cols = m;
-	err = gretl_matrix_multiply_mod(Vt, GRETL_MOD_TRANSPOSE,
-					SUt, GRETL_MOD_NONE,
+	/* U <- U .* S^{-1}, for S[j] > min */
+	for (i=0; i<U->rows; i++) {
+	    for (j=0; j<k; j++) {
+		x = gretl_matrix_get(U, i, j);
+		gretl_matrix_set(U, i, j, x / S->val[j]);
+	    }
+	}
+	if (k < U->cols) {
+	    gretl_matrix_reuse(U, -1, k);
+	}
+
+	err = gretl_matrix_multiply_mod(U, GRETL_MOD_NONE,
+					Vsel != NULL ? Vsel : VT,
+					GRETL_MOD_NONE,
 					A, GRETL_MOD_NONE);
+	if (!err) {
+	    gretl_matrix_transpose_in_place(A);
+	}
+	gretl_matrix_free(Vsel);
     }
 
  bailout:
 
     gretl_matrix_free(U);
     gretl_matrix_free(S);
-    gretl_matrix_free(Vt);
-    gretl_matrix_free(SUt);
+    gretl_matrix_free(VT);
 
     return err;
 }
