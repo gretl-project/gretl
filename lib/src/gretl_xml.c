@@ -1603,7 +1603,11 @@ gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node,
 
     if (rows == 0 || cols == 0) {
 	/* allow case of empty matrix */
-	m = gretl_null_matrix_new();
+	if (rows == 0 && cols == 0) {
+	    m = gretl_null_matrix_new();
+	} else {
+	    m = gretl_matrix_alloc(rows, cols);
+	}
 	if (m == NULL) {
 	    *err = E_ALLOC;
 	}
