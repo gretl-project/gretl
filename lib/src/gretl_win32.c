@@ -554,32 +554,6 @@ static int read_from_pipe (HANDLE hwrite, HANDLE hread,
     return ok;
 }
 
-static int win32_relay_output (HANDLE hread, char *buf, int bufsize,
-			       int gui, int *done, PRN *prn)
-{
-    DWORD dwread;
-    int ok = ReadFile(hread, buf, bufsize - 1, &dwread, NULL);
-
-    if (ok && dwread > 0) {
-	char *s = strstr(buf, "__GRETLMPI_EXIT__");
-
-	if (s != NULL) {
-	    fprintf(stderr, "got: '%s'\n", buf);
-	    *done = 1;
-	    *s = '\0';
-	}
-	fprintf(stderr, "buf: '%s'\n", buf);
-	pputs(prn, buf);
-	if (gui) {
-	    manufacture_gui_callback(FLUSH);
-	} else {
-	    gretl_print_flush_stream(prn);
-	}
-    }
-
-    return ok;
-}
-
 /* Option: OPT_S for shell mode, as opposed to running an
    executable directly. If @prn is non-NULL we try to pass
    back output in real time.
@@ -648,25 +622,25 @@ run_child_with_pipe (const char *arg, const char *currdir,
 	if (prn != NULL) {
 	    /* try reading output in real time */
 	    int gui = gretl_in_gui_mode();
-	    char buf[1024];
+	    char buf[BUFSIZE];
+	    DWORD dwread;
 	    DWORD excode;
-	    int done = 0;
+	    int ok;
 
 	    fprintf(stderr, "Entering MPI real-time read loop\n");
 	    while (GetExitCodeProcess(pinfo.hProcess, &excode)
 		   && excode == STILL_ACTIVE) {
 		memset(buf, 0, sizeof buf);
-		ok = win32_relay_output(hread, buf, sizeof buf, gui, &done, prn);
-		if (!ok || done) {
-		    fprintf(stderr, " break on ok = %d, done = %d\n", ok, done);
+		ok = ReadFile(hread, buf, BUFSIZE - 1, &dwread, NULL);
+		if (!ok || dwread == 0) {
 		    break;
 		}
-		g_usleep(100000); /* 0.10 seconds */
-	    }
-	    while (!done) {
-		memset(buf, 0, sizeof buf);
-		win32_relay_output(hread, buf, sizeof buf, gui, &done, prn);
-		fprintf(stderr, "Extra read: done = %d\n", done);
+		pputs(prn, buf);
+		if (gui) {
+		    manufacture_gui_callback(FLUSH);
+		} else {
+		    gretl_print_flush_stream(prn);
+		}
 	    }
 	    CloseHandle(hwrite);
 	}

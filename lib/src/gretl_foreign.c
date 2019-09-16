@@ -28,7 +28,11 @@
 #ifdef HAVE_MPI
 # include "gretl_mpi.h"
 # include "gretl_xml.h"
-# define MPI_PIPES 1 /* somewhat experimental */
+# ifdef G_OS_WIN32
+#  define MPI_PIPES 0 /* doesn't work right! */
+# else
+#  define MPI_PIPES 1 /* somewhat experimental */
+# endif
 #endif
 
 #ifdef USE_RLIB
@@ -615,7 +619,7 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	    pputc(prn, '\n');
 	}
 
-#ifdef MPI_PIPES
+#if MPI_PIPES
 	err = gretl_win32_pipe_output(cmd, gretl_workdir(), OPT_R, prn);
 #else
 	err = gretl_win32_pipe_output(cmd, gretl_workdir(), OPT_NONE, prn);
@@ -695,7 +699,7 @@ static int lib_run_prog_sync (char **argv, gretlopt opt,
     return err;
 }
 
-#ifdef MPI_PIPES
+#if defined(HAVE_MPI) && MPI_PIPES
 
 static void mpi_childwatch (GPid pid, gint status, gpointer p)
 {
@@ -782,7 +786,7 @@ static int run_mpi_with_pipes (char **argv, gretlopt opt, PRN *prn)
     return err;
 }
 
-#endif /* MPI_PIPES (not on Windows) */
+#endif /* MPI + MPI_PIPES (not on Windows) */
 
 static int lib_run_R_sync (gretlopt opt, PRN *prn)
 {
@@ -940,7 +944,7 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	    print_mpi_command(argv, prn);
 	}
 
-#ifdef MPI_PIPES
+#if MPI_PIPES
 	err = run_mpi_with_pipes(argv, opt, prn);
 #else
 	err = lib_run_prog_sync(argv, opt, prn);
@@ -1564,7 +1568,7 @@ static int write_gretl_mpi_script (gretlopt opt, const DATASET *dset)
     if (!err) {
 	/* put out the stored 'foreign' lines */
 	put_foreign_lines(fp);
-#ifdef MPI_PIPES
+#if !defined(G_OS_WIN32) && MPI_PIPES
 	/* plus an easily recognized trailer */
 	fputs("mpibarrier()\n", fp);
 	fputs("if $mpirank == 0\n", fp);
