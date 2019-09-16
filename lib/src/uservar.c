@@ -304,6 +304,12 @@ static int real_user_var_add (const char *name,
 
     u = user_var_new(name, type, value, &err);
 
+    if (u == NULL) {
+	fprintf(stderr, "real_user_var_add: name='%s', value=%p, u=%p\n",
+		name, value, (void *) u);
+	return err ? err : E_DATA;
+    }
+
     /* We use OPT_P for a private variable, OPT_A
        when adding as a function argument, OPT_S
        when adding as a "shell" variable, OPT_C
@@ -336,10 +342,9 @@ static int real_user_var_add (const char *name,
 	}
     }
 
-    if (user_var_callback != NULL && u->level == 0 &&
+    if (!err && user_var_callback != NULL && u->level == 0 &&
 	!(opt & (OPT_P | OPT_S)) && *name != '$' &&
-	(type == GRETL_TYPE_MATRIX ||
-	 type == GRETL_TYPE_BUNDLE) &&
+	(type == GRETL_TYPE_MATRIX || type == GRETL_TYPE_BUNDLE) &&
 	!(type == GRETL_TYPE_BUNDLE && bname_is_temp(name))) {
 	return (*user_var_callback)(name, type, UVAR_ADD);
     }

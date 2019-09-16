@@ -5549,6 +5549,11 @@ static int do_show_check (int *show, GretlType type)
 {
     int ret = (show != NULL);
 
+    /* types that don't have a GUI representation */
+    if (type == GRETL_TYPE_STRING || type == GRETL_TYPE_ARRAY) {
+	return 0;
+    }
+
     /* don't display the "show" checkbox if the relevant
        window will be shown anyway: i.e. "autoicon" is
        on and we're not saving a scalar (scalars have
