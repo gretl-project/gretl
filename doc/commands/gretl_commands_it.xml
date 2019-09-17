@@ -9564,6 +9564,11 @@
 	  <flag>--robust</flag>
 	  <effect>errori standard robusti</effect>
         </option>
+        <option>
+	  <flag>--cluster</flag>
+	  <optparm>clustvar</optparm>
+	  <effect>errori standard clusterizzati</effect>
+        </option>
          <option>
 	  <flag>--jackknife</flag>
 	  <effect>vedi sotto</effect>
@@ -9598,54 +9603,70 @@
 
     <description>
       <para context="gui">
-        Calcola le stime minimi quadrati ordinari (OLS: Ordinary Least
-        Squares) per il modello specificato.
+      Calcola le stime minimi quadrati ordinari (OLS: Ordinary Least
+      Squares) per il modello specificato.
       </para>
 
       <para context="cli">
-        Calcola le stime minimi quadrati ordinari (OLS: Ordinary Least
-        Squares) usando la <repl>variabile-dipendente</repl> e la lista
-        di <repl>variabili-indipendenti</repl>, che possono essere 
-        specificate per nome o numero. Il termine costante può essere
-        indicato usando il numero 0.
+      Calcola le stime minimi quadrati ordinari (OLS: Ordinary Least
+      Squares) usando la <repl>variabile-dipendente</repl> e la lista
+      di <repl>variabili-indipendenti</repl>, che possono essere 
+      specificate per nome o numero. Il termine costante può essere
+      indicato usando il numero 0.
       </para>
 
-      <para>Oltre alle stime dei coefficienti e agli errori standard, il
-        programma mostra i p-value per le statistiche <math>t</math>
-	(a due code) e <math>F</math>.  Un p-value inferiore a
-	0.01 indica significatività al livello dell'1 per cento ed è
-        denotato con <lit>***</lit>. <lit>**</lit> indica invece la
-        significatività tra l'1 e il 5 per cento, mentre <lit>*</lit>
-	indica un livello di significatività tra il 5 e il 10 per cento.
-	Vengono mostrate anche le statistiche di selezione del modello
-        (il criterio di informazione di Akaike, AIC, e il criterio di
-        informazione bayesiana di Schwarz, BIC). La formula usata per AIC
-        è descritta in Akaike (1974), ossia meno due volte la log-verosimiglianza
-        massimizzata più il doppio del numero di parametri stimati.</para>
-
-      <para context="cli">Usando l'opzione <lit>--no-df-corr</lit> la correzione per i
-	gradi di libertà non viene applicata nel calcolo della varianza
-        stimata dell'errore (e quindi anche dell'errore standard delle
-        stime dei parametri).</para>
-
-      <para context="cli">L'opzione <lit>--print-final</lit> è utilizzabile solo nel contesto
-	di un <cmdref targ="loop"/>. L'effetto è quello di eseguire la
-        regressione in modo silenzioso per tutte le iterazioni del loop
-        tranne l'ultima. Si veda la <guideref targ="chap:looping"/> per i dettagli.
+      <para>
+      Oltre alle stime dei coefficienti e agli errori standard, il
+      programma mostra i p-value per le statistiche <math>t</math>
+      (a due code) e <math>F</math>.  Un p-value inferiore a 0.01
+      indica significatività al livello dell'1 per cento ed è denotato
+      con <lit>***</lit>. <lit>**</lit> indica invece la significatività
+      tra l'1 e il 5 per cento, mentre <lit>*</lit> indica un livello di
+      significatività tra il 5 e il 10 per cento. Vengono mostrate anche
+      le statistiche di selezione del modello (il criterio di informazione
+      di Akaike, AIC, e il criterio di informazione bayesiana di Schwarz,
+      BIC). La formula usata per AIC è descritta in <cite key="akaike74">Akaike (1974)</cite>,
+      ossia meno due volte la log-verosimiglianza massimizzata più il doppio
+      del numero di parametri stimati.
       </para>
 
-      <para context="cli">È possibile salvare alcune variabili
-      interne generate durante la stima, usando il comando <cmdref
-      targ="genr"/> subito dopo questo comando.
+      <para context="cli">
+      Usando l'opzione <lit>--no-df-corr</lit> la correzione 
+      per i gradi di libertà non viene applicata nel calcolo della varianza
+      stimata dell'errore (e quindi anche dell'errore standard delle stime dei parametri).
       </para>
 
-      <para context="cli">La formula usata per generare gli errori
-      standard robusti (quando viene usata l'opzione
-      <opt>robust</opt>) può essere modificata con il comando <cmdref
-      targ="set"/>.
-      L'opzione <opt>jackknife</opt> equivale a impostare
-      <lit>hc_version</lit> a <lit>3a</lit>, in modo da emulare il vecchio
-      comando <lit>hccm</lit>.
+      <para context="cli">
+      L'opzione <lit>--print-final</lit> è utilizzabile solo nel contesto
+	   di un <cmdref targ="loop"/>. L'effetto è quello di eseguire la
+      regressione in modo silenzioso per tutte le iterazioni del loop
+      tranne l'ultima. Si veda la <guideref targ="chap:looping"/> per i dettagli.
+      </para>
+
+      <para context="cli">
+      Varie variabili interne possono essere recuperate per futuri scopi di stima.
+      Ad esempio:
+      </para>
+      <code context="cli">
+	   series uh = $uhat
+      </code>
+      <para context="cli">
+      dove così facendo si salvano i residui stimati dal modello sotto il nome
+      <lit>uh</lit>. Per ulteriori riferimenti si guardi anche alla sezione
+      <quote>accessori</quote> di gretl function.
+      </para>
+      
+      <para context="cli">
+      La formula utilizzata nella versione <opt>HC</opt> per generare
+      errori standard robusti con l'opzione <opt>robust</opt> può
+      essere calibrata attraverso il comando <cmdref targ="set"/>.
+      L'opzione <opt>jackknife</opt> ha l'effetto di selezionare la
+      versione <lit>3a</lit> della matrice <lit>HC</lit>. L'opzione
+      <opt>cluster</opt> annulla la procedura di selezione della
+      versione della matrice HC in quanto produce errori standard
+      robusti in seguito all'operazione di raggruppamento delle
+      singole osservazioni di <repl>clustvar</repl>.  Si veda anche
+      <guideref targ="chap:robust_vcv"/> per maggiori dettagli.
       </para>
     </description>
 
@@ -9664,8 +9685,8 @@
       </arguments>
       <options>
 	<option>
-	  <flag>--wald</flag>
-	  <effect>esegue un test di Wald invece che un test F</effect>
+	  <flag>--test-only</flag>
+	  <effect>non rimpiazza il modello corrente</effect>
 	</option>
 	<option>
 	  <flag>--vcv</flag>
@@ -9675,30 +9696,40 @@
 	  <flag>--quiet</flag>
 	  <effect>non mostra le stime per il modello ridotto</effect>
 	</option>
- 	<option>
- 	  <flag>--silent</flag>
- 	  <effect>non mostra nulla</effect>
- 	</option>
-        <option>
-         <flag>--auto</flag>
-	 <optparm>alpha</optparm>
-         <effect>eliminazione sequenziale, si veda oltre</effect>
-       </option>
-        <option>
-          <flag>--inst</flag>
-          <effect>omette come strumento, solo per TSLS</effect>
-        </option>
-        <option>
-          <flag>--both</flag>
-          <effect>omette come regressore e come strumento, solo per TSLS</effect>
-        </option>
+	<option>
+	  <flag>--silent</flag>
+	  <effect>non stampa nulla</effect>
+	</option>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>stampa la matrice di varianze-covarianze del modello
+	  ridotto</effect>
+	</option>
+	<option>
+	  <flag>--auto</flag>
+	  <optparm>alpha</optparm>
+	  <effect>eliminazione sequenziale, si veda oltre</effect>
+	</option>
+	<option>
+	  <flag>--inst</flag>
+	  <effect>omette come strumento, solo per TSLS</effect>
+	</option>
+	<option>
+	  <flag>--both</flag>
+	  <effect>omette come regressore e come strumento, solo per TSLS</effect>
+	</option>
       </options>
       <examples>
         <example>omit 5 7 9</example>
         <example>omit seasonals --quiet</example>
         <example>omit --auto</example>
         <example>omit --auto=0.05</example>
-      </examples>
+	 <demos>
+	  <demo>restrict.inp</demo>
+	  <demo>sw_ch12.inp</demo>
+	  <demo>sw_ch14.inp</demo>
+	 </demos>
+     </examples>
     </usage>
 
     <description>
@@ -9724,56 +9755,52 @@
         variabili restanti hanno un p-value inferiore a una certa soglia. La
         soglia predefinita è del 10 per cento (con due code), che può essere
         modificata usando l'apposito pulsante.
+        Per default, questo processo opera su tutte le variabili del modello
+        (esclusa la costante). Se si vuole limitare il numero di variabili sul
+        quale far agire il comando allora bisogna spuntare la casella chiamata
+        <quote>Testa solo le variabili selezionate</quote> e fare la selezione.
+        </para>
+      <para context="cli">
+      Questo comando deve seguire un comando di stima. Questo comando
+      calcola un test di Wald per la significatività congiunta delle
+      variabili presenti nella <repl>lista variabili</repl>, che deve
+      essere un sottoinsieme delle variabili indipendenti presenti
+      nell'ultimo modello stimato. I risultati possono poi venire
+      richiamati attraverso l'uso degli accessori <fncref
+      targ="$test"/> e <fncref targ="$pvalue"/>.
       </para>
       <para context="cli">
-        Questo comando deve seguire un comando di stima e calcola un test per la
-        significatività congiunta delle variabili nella
-        <repl>lista-variabili</repl>, che deve essere un sottoinsieme delle
-        variabili indipendenti del modello stimato in precedenza. In
-        alternativa, se si usa l'opzione <opt>auto</opt> viene attivata la
-        procedura di eliminazione sequenziale: ad ogni passo
-        viene omessa la variabile con il p-value più alto, fino a che tutte le
-        variabili restanti hanno un p-value inferiore a una certa soglia. La
-        soglia predefinita è del 10 per cento (con due code), che può essere
-        modificata aggiungendo <quote><lit>=</lit></quote> e un valore tra 0 e 1
-        (senza spazi), come nel quarto esempio mostrato sopra.
+      Per default, il modello ristretto che viene stimato va a
+      rimpiazzare il modello originale come <quote>modello corrente</quote>
+      con lo scopo, ad esempio, di richiamare i residui come <lit>$uhat</lit>
+      o di eseguire dei test. Questo comportamento può essere soppresso
+      attraverso l'uso dell'opzione <opt>test-only</opt>.
       </para>
       <para context="cli">
-	Se il modello originale è stato stimato con OLS, la statistica test è
-        un valore <math>F</math>, basato sulle somme dei quadrati dei
-        residui del modello vincolato e di quello originale, a meno che
-        quest'ultimo sia stato stimato usando errori standard robusti.
-	In questo caso, il valore <math>F</math> viene calcolato delle
-        stime robuste della matrice di covarianza del modello originale (è la
-        versione <math>F</math> di un test di Wald).
+      Per default, viene usata la forma <math>F</math> del test di
+      Wald; se invece si vuole un test chi-quadro, si usi l'opzione
+      <opt>chi-square</opt>.
       </para>
       <para context="cli">
-	Per gli stimatori diversi da OLS, o se si usa l'opzione <opt>wald</opt>,
-        la statistica usata è un valore chi-quadro asintotico di Wald, basato
-        sulla matrice di covarianza del modello originale.
+      Se il modello ristretto viene sia stimato che stampato l'utilizzo
+      dell'opzione <opt>vcv</opt> ha l'effetto di stampare anche la matrice
+      di covarianze, altrimenti se non usata l'opzione viene ignorata.
       </para>
       <para context="cli">
-        Per impostazione predefinita, viene stimato il modello vincolato,
-        vengono mostrate le stime e il modello vincolato rimpiazza quello
-        originale come <quote>modello attuale</quote> nel caso si voglia,
-        ad esempio, recuperare i residui con <fncref targ="$uhat"/> (o eseguire
-        test ulteriori, come <cmd>add</cmd> o <cmd>omit</cmd>).  
-      </para>
-      <para>
-	Usando l'opzione Wald, il modello vincolato
-        non viene stimato (quindi il modello attuale non viene rimpiazzato).
-        L'opzione <opt>quiet</opt> sopprime la stampa dei risultati del
-        modello vincolato (se esso viene stimato): viene mostrato solo il
-        risultato del test. Se il modello vincolato viene stimato e ne viene
-        chiesta la stampa, l'opzione <opt>vcv</opt> ha l'effetto di
-        mostrare la matrice di covarianza dei coefficienti del modello
-        vincolato, altrimenti quest'opzione è ignorata.
-      </para>
-      <para context="cli">
-	Se si usa l'opzione <opt>silent</opt>, non viene mostrato
-        alcun risultato; tuttavia, i risultati del test possono essere
-        recuperati usando le variabili speciali
-	<fncref targ="$test"/> e <fncref targ="$pvalue"/>.
+      Alternativamente, se l'opzione <opt>auto</opt> è abilitata,
+      l'eliminazione sequenziale viene eseguita in questo modo: ad
+      ogni step le variabili con p-value più alto vengono omesse
+      sicchè tutte quelle con p-value maggiore di un certo cutoff
+      vengono eliminate. Il cutoff di default è impostato al 10 per
+      cento (considerando sia la coda destra che sinistra); esso,
+      tuttavia, può venire modificato utilizzando l'argomento
+      <quote><lit>=</lit></quote> ed un valore compreso tra 0 e 1
+      (senza spazio in mezzo), come nel quarto esempio descritto
+      sopra.  Se viene data una <repl>lista-variabili</repl> questo
+      processo sarà limitato alle sole variabili presenti nella lista,
+      altrimenti tutte le variabili saranno coinvolte e considerate
+      come possibili candidate all'omissione.  Si noti che le opzioni
+      <opt>auto</opt> e <opt>test-only</opt> sono incompatibili.
       </para>
       <para context="cli">
        Se il modello originale è stato stimato con i minimi quadrati a due
@@ -9986,6 +10013,15 @@
 	descrizioni informative tramite i comandi <cmdref
 	targ="rename"/> e/o <cmdref targ="setinfo"/>.
       </para>
+      <subhead context="gui">Serie di stringhe di valori</subhead>
+      <para>
+	Di default, quando si importa un file contenente delle
+	stringhe di valori una casella di testo si aprirà mostrando i
+	contenuti del file <lit>string_table.txt</lit>, il quale
+	contiene una legenda sull'associazione fra le stringhe ed i
+	valori numerici corrispondenti. Per far sì che ciò non accada,
+	si usi l'opzione <opt>quiet</opt>.
+      </para>
     </description>
 
     <gui-access>
@@ -10037,10 +10073,6 @@
 	  <effect>aggiunge al file</effect>
         </option>
         <option>
-	  <flag>--write</flag>
-	  <effect>sovrascrive il file</effect>
-        </option>
-        <option>
 	  <flag>--quiet</flag>
 	  <effect>vedi sotto</effect>
         </option>
@@ -10050,8 +10082,8 @@
         </option>	
       </options>
       <examples>
-        <example>outfile --write regress.txt</example>
-        <example>outfile --close</example>
+        <example>outfile regress.txt</example>
+        <example>end outfile</example>
       </examples>
     </usage>
 
@@ -10161,8 +10193,8 @@
       <code>
 	open data4-1
 	outfile mybuf --buffer --quiet
-	labels
-	outfile --close
+	  labels
+	end outfile
 	printf "mybuf = \n'%s'\n", mybuf
       </code>
       <para>
@@ -10193,10 +10225,10 @@
 	disponibilità componenti aggiuntivi</mnu> nel menu Aiuto.
       </para>
       <para>
-	La lista dei pacchetti contibuiti installati è disponibile
-	usando la voce di menu <mnu targ="LocalGfn">Sule sistema
+	La lista dei pacchetti contribuiti installati è disponibile
+	usando la voce di menu <mnu targ="LocalGfn">Sul sistema
 	locale</mnu>, e se si è collegati alla rete la lista di tutti
-	quelli disponibili è visulaizzabile tramite <mnu
+	quelli disponibili è visualizzabile tramite <mnu
 	targ="RemoteGfn">Sul server</mnu>. Entrambi si trovano sotto
 	/File/Pacchetti di funzioni.
       </para>
@@ -10208,10 +10240,16 @@
 	pacchetti installati).
       </para>
       <para>
-	Per più dettagli sull'installazione e il funzionamento dei
-	pacchetti, si veda <mnu targ="Pkgbook">Guida ai
-	pacchetti</mnu> (sotto il menu Aiuto). Questa guida spiega
-	anche come scriverne di propri.
+	Per maggiori dettagli sull'installazione e sul lavoro con i
+	pacchetti allora si guardi <mnu targ="Pkgbook">Guida ai
+	pacchetti di funzioni</mnu> (sotto il menù di aiuto). Questa
+	guida contiene anche dettagli su come scriverne di
+	propri. Un'ottima infarinata in merito può essere trovata al
+	<url>http://gretl.sf.net/gfnguide/gfn_for_dummies.html</url>.
+      </para>
+      <para>
+	Per avere a che fare con i pacchetti tramite la linea di comando
+	di gretl si veda il comando <cmdref targ="pkg"/>.
       </para>
     </description>
   </command>
@@ -10219,6 +10257,10 @@
   <command name="panel" section="Estimation" label="Modelli panel">
 
     <usage>
+      <arguments>
+        <argument>variabile dipendente</argument>
+        <argument>variabili indipendenti</argument>
+      </arguments>
       <options>
 	<option>
 	  <flag>--vcv</flag>
@@ -10233,9 +10275,21 @@
 	  <effect>effetti casuali o modello GLS</effect>
 	</option>
 	<option>
+	  <flag>--nerlove</flag>
+	  <effect>usa la transformazione di Nerlove</effect>
+	</option>
+	<option>
+	  <flag>--pooled</flag>
+	  <effect>stima un modello OLS pooled</effect>
+	</option>
+	<option>
 	  <flag>--between</flag>
 	  <effect>stima il modello tra i gruppi</effect>
         </option>
+	<option>
+	  <flag>--robust</flag>
+	  <effect>errori standard robusti, si veda oltre</effect>
+	</option>
         <option>
 	  <flag>--time-dummies</flag>
 	  <effect>include variabili dummy temporali</effect>
@@ -10249,6 +10303,16 @@
 	  <effect>stima iterativa</effect>
 	</option>
 	<option>
+	  <flag>--matrix-diff</flag>
+	  <effect>esegue un test di Hausman con differenza fra
+	  matrici</effect>
+	</option>
+	<option>
+	  <flag>--unbalanced</flag>
+	  <optparm>metodo</optparm>
+	  <effect>solamente per random effects, si veda oltre</effect>
+	</option>
+	<option>
 	  <flag>--quiet</flag>
 	  <effect>mostra meno risultati</effect>
         </option>
@@ -10257,6 +10321,11 @@
 	  <effect>mostra più risultati</effect>
         </option>
       </options>
+	<examples>
+	<demos>
+	  <demo>penngrow.inp</demo>
+	</demos>
+   </examples>
     </usage>
 
     <description>
@@ -10266,8 +10335,18 @@
         medie di gruppo o delle unità dai dati originali.
       </para>
       <para context="cli">
-        Se si usa l'opzione <lit>--random-effects</lit>, viene usato il modello
-        GLS a effetti casuali, usando il metodo di Swamy e Arora.
+        Se l'opzione <opt>random-effects</opt> è data allora verrano
+        eseguite le stime del modello ad effetti random, utilizzando
+        di default il metodo descritto da <cite key="swamy72">Swamy e
+        Arora (1972)</cite>. In questo caso solamente l'opzione
+        <opt>matrix-diff</opt> consente l'utilizzo forzato del metodo
+        della differenza fra matrici (anziché il metodo della
+        regressione), in modo tale da consentire l'utilizzo del test
+        di Hausman per la consistenza dei stimatori ad effetti
+        random. Altra specifica allo stimatore ad effetti random è
+        data dall'utilizzo del comando <opt>nerlove</opt>, il quale
+        utilizza il metodo di <cite key="nerlove71">Nerlove
+        (1971)</cite> invece del metodo di Swamy e Arora.
       </para>
       <para context="cli">
         In alternativa, con l'opzione <lit>--unit-weights</lit>, il modello viene
@@ -10282,9 +10361,42 @@
         viene stimato il modello tra i gruppi, ossia una regressione OLS usando
         le medie dei gruppi.
       </para>
+      <para context="cli">
+        Il metodo predefinito per calcolare errori standard robusti in
+        modelli con dati panel è descritto dallo stimatore HAC di
+        Arellano, ma può essere utilizzato anche lo stimatore di
+        Beck&ndash;Katz per <quote>panel standard errors
+        corretti</quote> attraverso il comando <lit>set pcse
+        on</lit>. Quando è specificata l'opzione <opt>robust</opt> il
+        test <math>F</math> viene eseguito sullo stimatore ad effetti
+        fissi utilizzando il metodo robusto di <cite
+        key="welch51">Welch (1951)</cite>.
+      </para>
       <para context="gui">
-        Se si seleziona la casella "Effetti casuali", vengono calcolate stime a
-        effetti casuali, usando il metodo di Swamy e Arora.
+        Se la casella "Random effects" è spuntata allora verrà
+        eseguita una stima GLS ad effetti random. Da impostazione
+        predefinita, per la trasformazione GLS viene usato il metodo
+        di Swamy e Arora, ma il metodo di Nerlove è disponibile come
+        opzione (attraverso l'utilizzo dell'apposito selettore). Una
+        ulteriore opzione è quella data da
+        <quote>Swamy-Arora/Baltagi-Chang</quote>: in caso di panel non
+        bilanciati questo implica una modifica del metodo di
+        Swamy-Arora ideato da <cite key="baltagi-chang94">Baltagi e
+        Chang (1994)</cite>, altrimenti il metodo è equivalente a
+        quello di Swamy-Arora.
+      </para>
+      <para context="cli">
+        L'opzione <opt>unbalanced</opt> è disponibile solo per modelli
+        random effects: può essere utilizzato per scegliere un metodo
+        ANOVA da usare con panel non bilanciati.  Per default, gretl
+        utilizza il metodo di Swamy&ndash;Arora come per i panel
+        bilanciati, eccezion fatta per l'utilizzo di una media
+        armonica delle singole lunghezze temporali al posto di una
+        <math>T</math> comune. Con quest'opzione è possibile
+        specificare sia <lit>bc</lit>, per usare il metodo di <cite
+        key="baltagi-chang94">Baltagi e Chang (1994)</cite>, o
+        <lit>stata</lit>, per emulare l'opzione <lit>sa</lit> per il
+        comando <lit>xtreg</lit> in Stata.
       </para>
       <para>
 	Per maggiori dettagli sulla stima panel, si veda la <guideref targ="chap:panel"/>.
@@ -10437,7 +10549,7 @@
        che viene graficato è la variazione della serie sia sotto il
        profilo longitudinale che quello temporale.  Questo tipo di
        grafici è limitato dal numero di unità nel dataset in uso. Ad
-       esmepio, l'opzione <opt>overlay</opt>, che mostra una serie
+       esempio, l'opzione <opt>overlay</opt>, che mostra una serie
        storica per ciascuna unità, è disponibile soltanto se il numero
        di unità <math>N</math> è minore o uguale a 130. (In caso
        contrario, il grafico diventa troppo denso per essere
@@ -10478,11 +10590,16 @@
         </option>	
         <option>
 	  <flag>--save</flag>
+	  <optparm optional="true">n</optparm>
 	  <effect>salva le componenti principali</effect>
         </option>
         <option>
 	  <flag>--save-all</flag>
 	  <effect>salva tutte le componenti</effect>
+        </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>non stampa i risultati</effect>
         </option>
       </options>
     </usage>
@@ -10504,25 +10621,36 @@
 
     <description context="cli">
       <para>
-        Analisi delle componenti principali. Mostra gli autovalori
-        della matrice di correlazione (o della matrice di covarianza, se si
-        usa l'opzione <flag>--covariance</flag>) per le variabili nella
-	<repl>lista-variabili</repl>, insieme alla proporzione della
-        varianza comune spiegata da ogni componente. Mostra anche i
-        corrispondenti autovettori (o <quote>pesi della componente</quote>).
-      </para>  
-      <para>
-        Usando l'opzione <opt>save</opt>, le componenti con autovalori
-        maggiori di 1.0 vengono salvati nel dataset come variabili, con i nomi
-        <lit>PC1</lit>, <lit>PC2</lit> e così via.  Queste variabili artificiali
-        sono definite come la somma del peso della componente moltiplicato per
-        <lit>Xi</lit> standardizzato, dove <lit>Xi</lit> denota la
-        <math>i</math>-esima variabile nella <repl>lista-variabili</repl>.
+	Analisi delle Componenti Principali. A meno che l'opzione
+	<opt>quiet</opt> non sia presente, stampa gli autovalori
+	associati alla matrice di correlazione (o matrice di
+	covarianze se è specificata l'opzione <opt>covariance</opt>)
+	per le variabili inserite nella <repl>lista-variabili</repl>,
+	con allegate proporzioni della varianza totale spiegata dalle
+	singole compenenti. Stampa anche i corrispondenti autovettori,
+	o <quote>pesi delle componenti</quote>.
       </para>
       <para>
-        Usando l'opzione <lit>--save-all</lit>, vengono salvate
-        tutte le componenti, come descritto sopra.
-      </para> 
+	Se si dà l'opzione <opt>save-all</opt> allora tutte le
+	componenti verranno salvate nel dataset come variabili
+	denominate <lit>PC1</lit>, <lit>PC2</lit> e così via. Queste
+	variabili artificiali sono definite come la la combinazione
+	lineare delle <math>X</math><sub>i</sub> standardizzate (dove
+	<math>X</math><sub>i</sub> è l'<math>i</math>-esima variabile
+	della <repl>lista-variabili</repl>) con i pesi.
+      </para>
+      <para>
+	Se si dà l'opzione <opt>save</opt> senza un parametro
+	specificato le componenti con autovalori maggiori della media
+	(il che significa maggiori di 1.0 se l'analisi è basata sulla
+	matrice di correlazione) sono salvati nel dataset come nuove
+	variabili, come descritto sopra. Se invece si dà un valore per
+	<repl>n</repl>, con quest'opzione allora le <math>n</math> più
+	importanti componenti vengono salvate.
+      </para>
+      <para>
+	Si veda anche la function <fncref targ="princomp"/>.
+      </para>
     </description>
 
     <gui-access>
@@ -10549,6 +10677,19 @@
 	  <flag>--log</flag>
 	  <effect>usa una scala logaritmica</effect>
         </option>
+        <option>
+	  <flag>--radians</flag>
+	  <effect>mostra la frequenza in radianti</effect>
+        </option>
+        <option>
+	  <flag>--degrees</flag>
+	  <effect>mostra la frequenza in gradi</effect>
+        </option>
+	<option>
+	  <flag>--plot</flag>
+	  <optparm>modalità o nome del file</optparm>
+	  <effect>si veda oltre</effect>
+        </option>
       </options>
     </usage>
 
@@ -10560,11 +10701,34 @@
 	<opt>bartlett</opt>, lo spettro viene stimato usando una
         finestra di Bartlett per i ritardi (si veda ad esempio <book>Econometric
         Analysis</book> di Greene per una discussione su questo argomento).
-        L'ampiezza predefinita della fiestra di Bartlett è pari a due volte la
+        L'ampiezza predefinita della finestra di Bartlett è pari a due volte la
         radice quadrata dell'ampiezza campionaria, ma questo valore può essere
         impostato manualmente usando il parametro <repl>banda</repl>, fino a un
-        massimo pari a metà dell'ampiezza campionaria. Usando l'opzione <opt>log</opt>,
-        lo spettro viene rappresentato su una scala logaritmica.
+        massimo pari a metà dell'ampiezza campionaria.
+      </para>
+      <para>
+        Usando l'opzione <opt>log</opt>, lo spettro viene
+        rappresentato su una scala logaritmica.
+      </para>
+      <para>
+	Le due opzioni (mutualmente escludibili) <opt>radians</opt> e
+	<opt>degrees</opt> condizionano la tipologia dell'asse di
+	frequenza quando il periodogramma viene rappresentato. Da
+	impostazione predefinita, la frequenza è scalata per il numero
+	di osservazioni nel campione; tuttavia, queste opzioni
+	comportano che l'asse di frequenza possa venire ridenominato
+	da 0 a &pi; radianti o da 0 a 180&deg;, rispettivamente.
+      </para>
+      <para>
+	Di default, se il programma non è in modalità batch, viene
+	mostrato il periodogramma a video. Questo comportamento è
+	modificabile attraverso l'opzione <opt>plot</opt>. I parametri
+	accettabili nel caso sono <lit>none</lit> (sopprime il
+	grafico); <lit>display</lit> (per mostrare a video il grafico
+	anche se il programma è in batch mode); oppure un nome di
+	file. L'effetto di dare un nome di file è quello descritto per
+	l'opzione <opt>output</opt> del comando <cmdref
+	targ="gnuplot"/>.
       </para>
       <para>
         Quando viene mostrato il periodogramma del campione, vengono mostrati
@@ -10607,7 +10771,7 @@
 
     <description>
       <para>
-	Comendo per installare, rimuovere dalla memoria e
+	Comando per installare, rimuovere dalla memoria e
 	disinstallare pacchetti di funzioni (file <lit>gfn</lit> o
 	<lit>zip</lit>). Il parametro <repl>azione</repl>
 	deve essere uno fra <lit>install</lit>, <lit>unload</lit>
@@ -10617,7 +10781,7 @@
 	<lit>install</lit>: Nella sua forma più semplice, senza
 	opzioni e con l'argomento <repl>pkgname</repl> che corrisponde
 	al nome <quote>semplice</quote> di un pacchetto (come nel
-	primo esempi), il pacchetto stesso verrà scaricato dal server
+	primo esempio), il pacchetto stesso verrà scaricato dal server
 	di gretl (a meno che <repl>nomepacchetto</repl> non cominci
 	con <lit>http://</lit>) e installato in locale. In questo
 	caso, indicare l'estensione è superfluo. Se viene data
@@ -10633,15 +10797,12 @@
 	<lit>unload</lit>: l'argomento <repl>pkgname</repl> deve
 	essere dato in forma semplice, senza percorso o suffisso (come
 	nell'ultimo esempio). L'effetto è scaricare il pacchetto dalla
-	memoria rimuoverlo dal menu GUI a cui sia eventualmente
+	memoria e rimuoverlo, anche dal menu GUI a cui sia eventualmente
 	attaccato.
       </para>
       <para>
 	<lit>remove</lit>: come <lit>unload</lit>, ma in aggiunta cancella
 	anche dal disco i file di pacchetto.
-      </para>
-      <para>
-	In assenza di opzioni, 
       </para>
     </description>
 
@@ -10708,44 +10869,54 @@
 	  <effect>usa linee verticali</effect>
         </option>
         <option>
+	  <flag>--with-steps</flag>
+	  <optparm optional="true">varspec</optparm>
+	  <effect>usa linee verticali ed orizzontali</effect>
+        </option>
+        <option>
 	  <flag>--time-series</flag>
-	  <effect>plot against time</effect>
+	  <effect>mostra il grafico rispetto al tempo</effect>
         </option>
         <option>
 	  <flag>--single-yaxis</flag>
-	  <effect>force use of just one y-axis</effect>
+	  <effect>forza all'uso di un solo asse delle ordinate</effect>
         </option>
         <option>
 	  <flag>--dummy</flag>
-	  <effect>see below</effect>
+	  <effect>si veda oltre</effect>
         </option>
         <option>
 	  <flag>--fit</flag>
 	  <optparm>fitspec</optparm>
-	  <effect>see below</effect>
+	  <effect>si veda oltre</effect>
         </option>
         <option>
 	  <flag>--band</flag>
 	  <optparm>bandspec</optparm>
-	  <effect>see below</effect>
+	  <effect>si veda oltre</effect>
         </option>
         <option>
 	  <flag>--band-style</flag>
-	  <optparm>style</optparm>
-	  <effect>see below</effect>
+	  <optparm>stile</optparm>
+	  <effect>si veda oltre</effect>
         </option>	
         <option>
 	  <flag>--output</flag>
-	  <optparm>filename</optparm>
-	  <effect>send output to specified file</effect>
+	  <optparm>nomefile</optparm>
+	  <effect>reindirizza l'output ad un file specifico</effect>
         </option>
       </options>
+	 <examples>
+	<demos>
+	  <demo>nile.inp</demo>
+	</demos>
+    </examples>
     </usage>
     
     <description>
       <para>
 	Il blocco <lit>plot</lit> offre un'alternativa al comando
-	<cmdref targ="gnuplot"/>, che ppotrebbe essere più efficace
+	<cmdref targ="gnuplot"/>, che potrebbe essere più efficace
 	per produrre grafici particolarmente elaborati (con diverse
 	opzioni e/o comandi gnuplot inseriti).
       </para>
@@ -10753,7 +10924,11 @@
 	Un blocco <lit>plot</lit> comincia col comando <lit>plot</lit>
 	seguito dall'argomento <repl>data</repl>, che indica i dati da
 	usare: quest'ultimo dev'essere il nome di una lista, una
-	matrice, o una serie singola.
+matrice, o una serie singola. Se l'argomento <repl>data</repl>
+	non viene specificato allora il blocco deve obbligatoriamente
+	contere almeno una funzione analitica da graficare; queste
+	funzioni posso essere scritte tramite righe <lit>literal</lit>
+	o <lit>printf</lit> (si veda oltre).
       </para>
       <para>
 	Se viene fornita una lista o una matrice, l'ultimo elemento
@@ -10763,9 +10938,9 @@
 	nel qual caso tutte le variabili vanno in ordinata.
       </para>
       <para>
-	The option of supplying a single series name is restricted to
-	time-series data, in which case it is assumed that a
-	time-series plot is wanted; otherwise an error is flagged.
+	L'opzione di fornire il nome di una singola serie è ristretta solo
+	ai dati temporali, nel qual caso si assume che si voglia ricevere
+	un grafico time-series; altrimenti verrà riportato un errore.
       </para>
       <para>
 	La linea iniziale può essere dotata del prefisso
@@ -10785,8 +10960,8 @@
 	</li>
 	<li>
 	  <para>
-	  <lit>options</lit>: specify multiple options on a single
-	  line, separated by spaces.
+	  <lit>options</lit>: specifica più di una opzione per
+	  una singola riga, sono separate da spazi.
 	  </para>
 	</li>
 	<li>
@@ -10797,8 +10972,8 @@
 	</li>
 	<li>
 	  <para>
-	    <lit>printf</lit>: a printf statement whose result will be
-	    passed to gnuplot literally.
+	    <lit>printf</lit>: una comando printf il cui risultato
+	    verrà passato a gnuplot senza modifiche.
 	  </para>
 	</li>
       </ilist>
@@ -10826,24 +11001,24 @@
 	end plot --output=display
       </code>
       <para>
-	This example assumes that <lit>plotmat</lit> is the name of a
-	matrix with at least 2 columns (or a list with at least two
-	members).  Note that it is considered good practice to place
-	the <opt>output</opt> option (only) on the last line of the
-	block.
+	Questo esempio ipotizza che <lit>plotmat</lit> sia un nome di
+	una matrice avente almeno 2 colonne (o di una lista avente
+	almeno 2 membri). Si noti che è considerata buona pratica
+	quella di utilizzare l'opzione <opt>output</opt> (solamente)
+	nell'ultima linea del blocco.
       </para>
       <subhead>Disegnare una banda usando una matrice</subhead>
       <para>
-	The <opt>band</opt> and <opt>band-style</opt> options mostly
-	work as described in the help for <lit>gnuplot</lit>,
-	with the following exception: when the data to be plotted are
-	given in the form of a matrix, the first parameter to
-	<opt>band</opt> must be given as the name of a matrix with two
-	columns (holding, respectively, the center and the width of
-	the band). This parameter takes the place of the two values
-	(series names or ID numbers, or matrix columns) required by
-	the <lit>gnuplot</lit> version of this option. An illustration
-	follows:
+	Le opzioni <opt>band</opt> e <opt>band-style</opt> funzionano
+	principalmente come descritto nell'help del comando
+	<lit>gnuplot</lit>, con le seguenti eccezioni: quando i dati
+	sono passati in forma di matrice, il primo parametro per
+	<opt>band</opt> deve essere dato come il nome di una matrice
+	con 2 colonne (contenenti, rispettivamente, il centro e
+	l'ampiezza della banda). Questo parametro prende il posto dei
+	due valori richiesti dalla versione <lit>gnuplot</lit> di
+	questa opzione (nome della serie o ID numerico o colonne della
+	matrice). Per esempio:
       </para>
       <code>
 	scalar n = 100
@@ -10853,6 +11028,24 @@
 	plot y
 	    options time-series with-lines
 	    options band=B,10 band-style=fill
+	end plot --output=display
+      </code>
+      <subhead>Disegnare senza dati</subhead>
+      <para>
+	Il seguente esempio mostra un semplice caso di come si
+	specifica un grafico senza l'utilizzo di una sorgente dati.
+      </para>
+      <code>
+	plot
+	    literal set title 'CRRA utility'
+	    literal set xlabel 'c'
+	    literal set ylabel 'u(c)'
+	    literal set xrange[1:3]
+	    literal set key top left
+	    literal crra(x,s) = (x**(1-s) - 1)/(1-s)
+	    printf "plot crra(x, 0) t 'sigma=0', \\"
+	    printf " log(x) t 'sigma=1', \\"
+	    printf " crra(x,3) t 'sigma=3"
 	end plot --output=display
       </code>
     </description>
@@ -10874,9 +11067,9 @@
 	Gli schemi di ponderazione offerti qui (quadratico, a coseno e
 	a gradini) possono essere usati allo scopo. Selezionando uno
 	di essi, bisogna poi scegliere il valore per due settaggi
-	aggiuntivi: primo, il massimo peso da usare (il minimo è
-	1.0). Secondo, la frazione di campione centrale a qui dare un
-	peso uniforme (minimale).
+	aggiuntivi: per primo, il massimo peso da usare (il minimo è
+	1.0), e per secondo la frazione di campione centrale a cui
+	dare un peso uniforme (minimale).
       </para>
       <para>
 	Supponiamo, ad esempio, di scegliere un peso massimo pari a
@@ -10902,17 +11095,33 @@
       </arguments>
       <options>
         <option>
+          <flag>--robust</flag>
+          <effect>errori standard robusti</effect>
+        </option>
+	<option>
+	  <flag>--cluster</flag>
+	  <optparm>clustvar</optparm>
+	  <effect>vedi <cmdref targ="logit"/> per una spiegazione</effect>
+        </option>
+        <option>
           <flag>--vcv</flag>
-          <effect>mostra la matrice di covarianza</effect>
+          <effect>stampa la matrice di covarianze</effect>
         </option>
         <option>
           <flag>--verbose</flag>
-          <effect>mostra i dettagli delle iterazioni</effect>
+          <effect>stampa i dettagli delle iterazioni</effect>
+        </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>non stampa i risultati</effect>
         </option>
       </options>
       <examples>
         <example>poisson y 0 x1 x2</example>
-       <example>poisson y 0 x1 x2 ; S</example>
+	<example>poisson y 0 x1 x2 ; S</example>
+	<demos>
+	  <demo>camtriv.inp</demo>
+	</demos>
       </examples>
     </usage>
 
@@ -10955,7 +11164,18 @@
       incidenti.  La variabile di offset dev'essere strettamente
       positiva.
       </para>
-
+      <para>
+	Da impostazione predefinita gli errori standard sono calcolati
+	usando la matrice Hessiana. Se viene data l'opzione
+	<opt>robust</opt> allora gli errori standard vengono calcolati
+	secondo il metodo o di Huber&ndash;White o QML. In questo
+	particolare caso la matrice di covarianze stimata è il
+	prodotto del <quote>sandwich</quote> tra l'Hessiana inversa
+	(negativa) ed il prodotto esterno del gradiente.
+      </para>
+      <para>
+      Si veda anche la voce <cmdref targ="negbin"/>.
+      </para>
     </description>
 
     <gui-access>
@@ -10967,10 +11187,12 @@
   <command name="print" section="Printing" label="Stampa dati o stringhe" context="cli">
 
     <usage>
-      <arguments>
-	<argument>lista-variabili</argument>
-	<argument alternate="true">stringa-letterale</argument>
-      </arguments>
+      <altforms>
+        <altform><lit>print</lit> <repl>lista-variabili</repl></altform>
+	<altform><lit>print</lit></altform>
+	<altform><lit>print</lit> <repl>nomi-oggetto</repl></altform>
+        <altform><lit>print</lit> <repl>stringa</repl></altform>
+      </altforms>
       <options>
 	<option>
 	  <flag>--byobs</flag>
@@ -10996,7 +11218,7 @@
       </options>
       <examples>
 	<example>print x1 x2 --byobs</example>
-	<example>print matriciona</example>
+	<example>print my_matrix</example>
 	<example>print "Questa è una stringa"</example>
 	<example>print my_array --range=3:6</example>
 	<example>print hflist --midas</example>
@@ -11022,16 +11244,16 @@
 	secondo caso, il comportamento predefinito è quello di
 	mostrare la data (per serie storiche) o il marcatore (se
 	esiste) all'inizio di ogni riga.  L'opzione
-	<lit>--no-dates</lit> sopprime la visualizzazione delle date o
+	<opt>no-dates</opt> sopprime la visualizzazione delle date o
 	dei marcatori: viene mostrato solo un semplice numero di
-	osservazione. Si veda l'ultimo paragrafo dio questa voce per
+	osservazione. Si veda l'ultimo paragrafo di questa voce per
 	l'effetto in questo contesto dell'opzione <opt>midas</opt>
 	(che si applica solo a liste predefinite).
       </para>
       <para>
 	Se al comando non vengono forniti argomenti (la seconda variante
 	mostrata all'inizio), l'azione è simile a quella appena
-	descritta, con tatnto di opzioni aggiuntive. La sola
+	descritta, con tanto di opzioni aggiuntive. La sola
 	differenza è che vengono stampate <emphasis>tutte</emphasis>
 	le serie nel dataset aperto.
       </para>
@@ -11044,9 +11266,9 @@
       </para>
       <para>
 	Nella quarta forma (terzo esempio), <repl>stringa</repl>
-	dev'essere una stringa racchiusa da virgolette doppie (e
-	nient'altro dopo). La stringa viene stampata, seguita da un
-	<quote>a capo</quote>.
+	dev'essere una stringa racchiusa da virgolette doppie (senza
+	che vi sia nient'altro dopo). La stringa viene stampata,
+	seguita da un <quote>a capo</quote>.
       </para>
       <para>
 	L'opzione <opt>range</opt> è usata per controllare la quantità
@@ -11074,11 +11296,12 @@
       </para>
       <para>
 	L'opzione <opt>midas</opt> è specifica alla stampa di una
-	lista in dataset che contengono una o più serie ad alta
-	frequenza, ognuna rappresentata da una <cmdref
-	targ="MIDAS_list"/>. Se viene passata come argomento una lista
-	di questo tipo, verrà stampata (per osservazione) la serie
-	alla sua frequenza <quote>nativa</quote>.
+	lista di serie; in particolare, è usata per quei dataset che
+	contengono una o più serie ad alta frequenza, ognuna
+	rappresentata da una <cmdref targ="MIDAS_list"/>. Se viene
+	passata come argomento una lista di questo tipo, verrà
+	stampata (per osservazione) la serie alla sua frequenza
+	<quote>nativa</quote>.
       </para>
     </description>
 
