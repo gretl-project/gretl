@@ -7632,7 +7632,7 @@ gretl_matrix *select_random_matrix_rows (const gretl_matrix *m,
 	int k = 0;
 
 	for (i=0; i<m->rows; i++) {
-	    if (mask[i] == !avail) { /* ?? */
+	    if (mask[i]) {
 		for (j=0; j<m->cols; j++) {
 		    x = gretl_matrix_get(m, i, j);
 		    gretl_matrix_set(ret, k, j, x);
