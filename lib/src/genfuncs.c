@@ -7571,22 +7571,29 @@ gretl_matrix *gretl_matrix_vector_stat (const gretl_matrix *m,
 /* sample @n rows from matrix @m without replacement */
 
 gretl_matrix *select_random_matrix_rows (const gretl_matrix *m,
-					 int n, int *err)
+					 int n, int shuffle,
+					 int *err)
 {
     gretl_matrix *ret = NULL;
+    double *randcol = NULL;
     char *mask = NULL;
     unsigned u;
     int targ, avail;
     int cases, nrej;
     int i, j;
 
-    if (n <= 0 || n >= m->rows) {
+    if (n <= 0 || n > m->rows) {
 	*err = E_DATA;
-    }
-
-    if (*err) {
 	gretl_errmsg_sprintf(_("Invalid number of cases %d"), n);
 	return NULL;
+    }
+
+    if (n == m->rows && !shuffle) {
+	ret = gretl_matrix_copy(m);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	}
+	return ret;
     }
 
     mask = malloc(m->rows);
@@ -7624,7 +7631,22 @@ gretl_matrix *select_random_matrix_rows (const gretl_matrix *m,
 	}
     }
 
-    ret = gretl_matrix_alloc(n, m->cols);
+    if (shuffle) {
+	ret = gretl_matrix_alloc(n, m->cols + 1);
+	if (ret != NULL) {
+	    randcol = malloc(n * sizeof *randcol);
+	    if (randcol == NULL) {
+		*err = E_ALLOC;
+		gretl_matrix_free(ret);
+		ret = NULL;
+	    } else {
+		gretl_rand_uniform(randcol, 0, n-1);
+	    }
+	}
+    } else {
+	ret = gretl_matrix_alloc(n, m->cols);
+    }
+
     if (ret == NULL) {
 	*err = E_ALLOC;
     } else {
@@ -7637,10 +7659,29 @@ gretl_matrix *select_random_matrix_rows (const gretl_matrix *m,
 		    x = gretl_matrix_get(m, i, j);
 		    gretl_matrix_set(ret, k, j, x);
 		}
+		if (shuffle) {
+		    gretl_matrix_set(ret, k, m->cols, randcol[k]);
+		}
 		k++;
 	    }
 	}
+	if (shuffle) {
+	    gretl_matrix *S;
+
+	    free(randcol);
+	    S = gretl_matrix_sort_by_column(ret, m->cols, err);
+	    if (!*err) {
+		gretl_matrix_realloc(S, n, m->cols);
+		gretl_matrix_free(ret);
+		ret = S;
+	    } else {
+		gretl_matrix_free(ret);
+		ret = NULL;
+	    }
+	}
     }
+
+    free(mask);
 
     return ret;
 }

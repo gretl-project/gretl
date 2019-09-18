@@ -4070,10 +4070,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    goto finalize;
 	}
 
-	if (f == F_MSAMPLE) {
-	    /* the @r node must hold a scalar */
-	    a = node_get_scalar(r, p);
-	} else if (f == F_RESAMPLE || f == F_MREV || f == F_SDC ||
+	if (f == F_RESAMPLE || f == F_MREV || f == F_SDC ||
 	    f == F_MCOV || f == F_CDEMEAN || f == F_PSDROOT) {
 	    /* if present, the @r node should hold a scalar */
 	    if (!null_or_scalar(r)) {
@@ -4159,9 +4156,6 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    } else {
 		ret->v.m = gretl_matrix_resample(m, &p->err);
 	    }
-	    break;
-	case F_MSAMPLE:
-	    ret->v.m = select_random_matrix_rows(m, a, &p->err);
 	    break;
 	case F_INV:
 	    if (m->is_complex) {
@@ -11070,6 +11064,25 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 		}
 	    }
 	}
+    } else if (f == F_MSAMPLE) {
+	int preserve = 0;
+
+	if (l->t != MAT) {
+	    node_type_error(f, 1, MAT, l, p);
+	} else if (!scalar_node(m)) {
+	    node_type_error(f, 2, NUM, m, p);
+	}
+	if (!p->err && !null_node(r)) {
+	    preserve = node_get_bool(r, p, 0);
+	}
+	if (!p->err) {
+	    int n = node_get_int(m, p);
+	    int shuffle = !preserve;
+
+	    if (!p->err) {
+		A = select_random_matrix_rows(l->v.m, n, shuffle, &p->err);
+	    }
+	}
     } else if (f == F_TRIMR) {
 	if (l->t != MAT) {
 	    node_type_error(f, 1, MAT, l, p);
@@ -16087,13 +16100,6 @@ static NODE *eval (NODE *t, parser *p)
 	    p->err = E_TYPES;
 	}
 	break;
-    case F_MSAMPLE:
-	if (l->t == MAT && scalar_node(r)) {
-	    ret = matrix_to_matrix_func(l, r, t->t, p);
-	} else {
-	    p->err = E_TYPES;
-	}
-	break;
     case F_FDJAC:
     case F_NUMHESS:
 	/* matrix, fncall, optional scalar */
@@ -16206,6 +16212,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_MSHAPE:
+    case F_MSAMPLE:
     case F_SVD:
     case F_EIGGEN:
     case F_EIGGEN2:
