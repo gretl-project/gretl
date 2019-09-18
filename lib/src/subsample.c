@@ -1093,7 +1093,7 @@ count_panel_units (const char *mask, const DATASET *dset)
 }
 
 /* construct mask for taking random sub-sample from dataset:
-   we're selecting 'subn' cases without replacement, and
+   we're selecting @subn cases without replacement, and
    there may or may not be an existing mask in place that
    has to be respected.
 */
@@ -1135,11 +1135,11 @@ static int make_random_mask (const char *s, const char *oldmask,
     */
     rejn = oldn - subn;
     if (rejn < subn) {
-	/* select rejn observations to discard */
+	/* select @rejn observations to discard */
 	targ = rejn;
 	avail = 1;
     } else {
-	/* select subn observations to include */
+	/* select @subn observations to include */
 	targ = subn;
 	avail = 0;
     }

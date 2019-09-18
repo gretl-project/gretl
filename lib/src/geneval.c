@@ -4070,7 +4070,10 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    goto finalize;
 	}
 
-	if (f == F_RESAMPLE || f == F_MREV || f == F_SDC ||
+	if (f == F_MSAMPLE) {
+	    /* the @r node must hold a scalar */
+	    a = node_get_scalar(r, p);
+	} else if (f == F_RESAMPLE || f == F_MREV || f == F_SDC ||
 	    f == F_MCOV || f == F_CDEMEAN || f == F_PSDROOT) {
 	    /* if present, the @r node should hold a scalar */
 	    if (!null_or_scalar(r)) {
@@ -4156,6 +4159,9 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    } else {
 		ret->v.m = gretl_matrix_resample(m, &p->err);
 	    }
+	    break;
+	case F_MSAMPLE:
+	    ret->v.m = select_random_matrix_rows(m, a, &p->err);
 	    break;
 	case F_INV:
 	    if (m->is_complex) {
@@ -16077,6 +16083,13 @@ static NODE *eval (NODE *t, parser *p)
 	if ((l->t == MAT || l->t == NUM) &&
 	    (r->t == MAT || r->t == NUM)) {
 	    ret = complex_matrix_node(l, r, p);
+	} else {
+	    p->err = E_TYPES;
+	}
+	break;
+    case F_MSAMPLE:
+	if (l->t == MAT && scalar_node(r)) {
+	    ret = matrix_to_matrix_func(l, r, t->t, p);
 	} else {
 	    p->err = E_TYPES;
 	}

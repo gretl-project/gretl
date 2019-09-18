@@ -7567,3 +7567,80 @@ gretl_matrix *gretl_matrix_vector_stat (const gretl_matrix *m,
 	return gretl_rmatrix_vector_stat(m, vs, rowwise, err);
     }
 }
+
+/* sample @n rows from matrix @m without replacement */
+
+gretl_matrix *select_random_matrix_rows (const gretl_matrix *m,
+					 int n, int *err)
+{
+    gretl_matrix *ret = NULL;
+    char *mask = NULL;
+    unsigned u;
+    int targ, avail;
+    int cases, nrej;
+    int i, j;
+
+    if (n <= 0 || n >= m->rows) {
+	*err = E_DATA;
+    }
+
+    if (*err) {
+	gretl_errmsg_sprintf(_("Invalid number of cases %d"), n);
+	return NULL;
+    }
+
+    mask = malloc(m->rows);
+    if (mask == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    /* Which is smaller: the number of cases to be selected or the
+       complement, the number to be discarded?  For the sake of
+       efficiency we'll go for the smaller value.
+    */
+    nrej = m->rows - n;
+    if (nrej < n) {
+	/* select @nrej observations to discard */
+	targ = nrej;
+	avail = 1;
+    } else {
+	/* select @n observations to include */
+	targ = n;
+	avail = 0;
+    }
+
+    for (i=0; i<m->rows; i++) {
+	mask[i] = avail;
+    }
+
+    cases = 0;
+    while (cases < targ) {
+	u = gretl_rand_int_max(m->rows);
+	if (mask[u] == avail) {
+	    /* obs is available, not yet selected */
+	    mask[u] = !avail;
+	    cases++;
+	}
+    }
+
+    ret = gretl_matrix_alloc(n, m->cols);
+    if (ret == NULL) {
+	*err = E_ALLOC;
+    } else {
+	double x;
+	int k = 0;
+
+	for (i=0; i<m->rows; i++) {
+	    if (mask[i] == !avail) { /* ?? */
+		for (j=0; j<m->cols; j++) {
+		    x = gretl_matrix_get(m, i, j);
+		    gretl_matrix_set(ret, k, j, x);
+		}
+		k++;
+	    }
+	}
+    }
+
+    return ret;
+}
