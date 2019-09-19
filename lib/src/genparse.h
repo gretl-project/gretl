@@ -397,6 +397,7 @@ enum {
     F_FLATTEN,
     F_IMAT,
     F_COMPLEX,
+    F_MSAMPLE,
     HF_CSWITCH,
     HF_SETCMPLX,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
@@ -459,7 +460,6 @@ enum {
     F_EIGGEN,
     F_EIGGEN2,
     F_SCHUR,
-    F_MSAMPLE,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,

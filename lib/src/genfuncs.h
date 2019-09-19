@@ -246,7 +246,6 @@ gretl_matrix *gretl_matrix_vector_stat (const gretl_matrix *m,
 					int *err);
 
 gretl_matrix *select_random_matrix_rows (const gretl_matrix *m,
-					 int n, int shuffle,
-					 int *err);
+					 int n, int *err);
 
 #endif /* GENFUNCS_H */

@@ -7571,16 +7571,14 @@ gretl_matrix *gretl_matrix_vector_stat (const gretl_matrix *m,
 /* sample @n rows from matrix @m without replacement */
 
 gretl_matrix *select_random_matrix_rows (const gretl_matrix *m,
-					 int n, int shuffle,
-					 int *err)
+					 int n, int *err)
 {
     gretl_matrix *ret = NULL;
-    double *randcol = NULL;
-    char *mask = NULL;
+    int *pool = NULL;
+    int n_pool, n_tail;
+    double x;
     unsigned u;
-    int targ, avail;
-    int cases, nrej;
-    int i, j;
+    int i, j, k;
 
     if (n <= 0 || n > m->rows) {
 	*err = E_DATA;
@@ -7588,100 +7586,41 @@ gretl_matrix *select_random_matrix_rows (const gretl_matrix *m,
 	return NULL;
     }
 
-    if (n == m->rows && !shuffle) {
-	ret = gretl_matrix_copy(m);
-	if (ret == NULL) {
-	    *err = E_ALLOC;
-	}
-	return ret;
-    }
-
-    mask = malloc(m->rows);
-    if (mask == NULL) {
+    n_pool = m->rows;
+    pool = malloc(n_pool * sizeof *pool);
+    if (pool == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
 
-    /* Which is smaller: the number of cases to be selected or the
-       complement, the number to be discarded?  For the sake of
-       efficiency we'll go for the smaller value.
-    */
-    nrej = m->rows - n;
-    if (nrej < n) {
-	/* select @nrej observations to discard */
-	targ = nrej;
-	avail = 1;
-    } else {
-	/* select @n observations to include */
-	targ = n;
-	avail = 0;
-    }
-
-    for (i=0; i<m->rows; i++) {
-	mask[i] = avail;
-    }
-
-    cases = 0;
-    while (cases < targ) {
-	u = gretl_rand_int_max(m->rows);
-	if (mask[u] == avail) {
-	    /* obs is available, not yet selected */
-	    mask[u] = !avail;
-	    cases++;
-	}
-    }
-
-    if (shuffle) {
-	ret = gretl_matrix_alloc(n, m->cols + 1);
-	if (ret != NULL) {
-	    randcol = malloc(n * sizeof *randcol);
-	    if (randcol == NULL) {
-		*err = E_ALLOC;
-		gretl_matrix_free(ret);
-		ret = NULL;
-	    } else {
-		gretl_rand_uniform(randcol, 0, n-1);
-	    }
-	}
-    } else {
-	ret = gretl_matrix_alloc(n, m->cols);
-    }
-
+    ret = gretl_matrix_alloc(n, m->cols);
     if (ret == NULL) {
 	*err = E_ALLOC;
-    } else {
-	double x;
-	int k = 0;
+	free(pool);
+	return NULL;
+    }
 
-	for (i=0; i<m->rows; i++) {
-	    if (mask[i]) {
-		for (j=0; j<m->cols; j++) {
-		    x = gretl_matrix_get(m, i, j);
-		    gretl_matrix_set(ret, k, j, x);
-		}
-		if (shuffle) {
-		    gretl_matrix_set(ret, k, m->cols, randcol[k]);
-		}
-		k++;
-	    }
+    /* initialize selection pool to all rows of @m */
+    for (i=0; i<n_pool; i++) {
+	pool[i] = i;
+    }
+
+    for (k=0; k<n; k++) {
+	u = gretl_rand_int_max(n_pool);
+	i = pool[u];
+	/* strike @i out of the selection pool */
+	if (u < n_pool - 1) {
+	    n_tail = n_pool - u - 1;
+	    memmove(pool + u, pool + u + 1, n_tail * sizeof *pool);
 	}
-	if (shuffle) {
-	    gretl_matrix *S;
-
-	    free(randcol);
-	    S = gretl_matrix_sort_by_column(ret, m->cols, err);
-	    if (!*err) {
-		gretl_matrix_realloc(S, n, m->cols);
-		gretl_matrix_free(ret);
-		ret = S;
-	    } else {
-		gretl_matrix_free(ret);
-		ret = NULL;
-	    }
+	n_pool--;
+	for (j=0; j<m->cols; j++) {
+	    x = gretl_matrix_get(m, i, j);
+	    gretl_matrix_set(ret, k, j, x);
 	}
     }
 
-    free(mask);
+    free(pool);
 
     return ret;
 }
