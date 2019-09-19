@@ -1615,30 +1615,6 @@ gretl_matrix *user_matrix_QR_decomp (const gretl_matrix *m,
     return Q;
 }
 
-static int revise_SVD_V (gretl_matrix **pV, int r, int c)
-{
-    gretl_matrix *V;
-    double x;
-    int i, j;
-
-    V = gretl_matrix_alloc(r, c);
-    if (V == NULL) {
-	return E_ALLOC;
-    }
-
-    for (i=0; i<r; i++) {
-	for (j=0; j<c; j++) {
-	    x = gretl_matrix_get((*pV), i, j);
-	    gretl_matrix_set(V, i, j, x);
-	}
-    }
-
-    gretl_matrix_free(*pV);
-    *pV = V;
-
-    return 0;
-}
-
 gretl_matrix *user_matrix_SVD (const gretl_matrix *m,
 			       gretl_matrix *U,
 			       gretl_matrix *V,
