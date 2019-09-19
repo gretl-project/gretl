@@ -9689,12 +9689,12 @@
 	  <effect>non rimpiazza il modello corrente</effect>
 	</option>
 	<option>
-	  <flag>--vcv</flag>
-	  <effect>mostra la matrice di covarianza</effect>
+	  <flag>--chi-square</flag>
+	  <effect>restituisce un test chi-quadro di Wald</effect>
 	</option>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>non mostra le stime per il modello ridotto</effect>
+	  <effect>stampa solo i risultati del test</effect>
 	</option>
 	<option>
 	  <flag>--silent</flag>
@@ -10089,48 +10089,44 @@
 
     <description>
       <para>
-        Ridireziona l'output sul file <repl>nomefile</repl>, fino a nuovo
-        ordine. Usando l'opzione <opt>append</opt>, i risultati
-        vengono aggiunti a un file esistente, mentre <opt>write</opt>
-        apre un nuovo file (o ne sovrascrive uno esistente).
+	Reindirizza l'output sul file <repl>nomefile</repl>.  Di
+	default, il file viene creato ex novo (nel caso ne esista già
+	uno quest'ultimo viene sovrascritto); se lo si desidera,
+	usando l'opzione <opt>append</opt> è possibile aggiungere
+	l'output in coda ad un file preesistente. Il reindirizzamento
+	si conclude una volta inserito il comando <quote><lit>end
+	output</lit></quote>; facendo ciò l'output viene mandato di
+	nuovo allo stream predefinito.
       </para>
       <para>
-        L'opzione <opt>close</opt> può essere usata per chiudere un
-        file di output aperto in precedenza, tornando a scrivere i
-        risultati sul canale predefinito. Si noti che solo un file di
-        output può essere aperto in un dato momento (ma vedi sotto),
-        cosicché con l'opzione <opt>close</opt> un serve l'argomento
-        <repl>file-output</repl>.
+	L'output verrà scritto nella corrente <cmdref
+	targ="workdir"/>, a meno che il <repl>nomefile</repl> non
+	contenga un percorso completo.
       </para>
       <para>
-	Il file di output verrà creato nella directory data dal valore
-	corrente di <cmdref targ="workdir"/>, a meno che la stringa
-	<repl>file-output</repl> non contenga essa stessa una
-	specifica completa di percorso.
+	Nel primo esempio il file <filename>regress.txt</filename>
+	viene aperto in scrittura, e nel secondo esempio viene chiuso.
+	Avrebbe senso farlo solo se alcuni comandi si fossero
+	rivelati essere problematici prima della chiusura. Ad esempio
+	se interviene un comando di stima, il suo output andrà al file
+	<filename>regress.txt</filename> piuttosto che venir mostrato
+	a video.
       </para>
       <para>
-        Nel primo degli esempi precedenti viene aperto il file
-	<filename>regress.txt</filename>, mentre nel secondo viene
-        chiuso. Se prima del comando <opt>close</opt> fosse
-        eseguito un comando <cmd>ols</cmd>, i risultati della
-        regressione verrebbero scritti su
-        <filename>regress.txt</filename> invece che sullo schermo.
+	Tre varianti speciali del comando sono disponibili. Se si
+	utilizza la parola chiave <lit>null</lit> al posto del vero
+	nome del file l'effetto prodotto sarà quello di sopprimere
+	tutti gli output fino alla istruzione successiva. Se una delle
+	due parole chiave, tra <lit>stdout</lit> o <lit>stderr</lit>,
+	è data al posto dello standard nome di file l'effetto che si
+	produrrà sarà quello di reindirizzare l'output sull'output
+	standard o sullo standard errors.
       </para>
       <para>
-        Ci sono tre varianti speciali: se si usa la parola chiave
-        <lit>null</lit> al posto di un nome di file insieme
-        all'opzione <opt>write</opt>, l'effetto è quello di sopprimere
-        la stampa dei risultati fino alla successiva istruzione
-        <lit>outfile --close</lit>. Inoltre, se una delle parole
-        chiave <lit>stdout</lit> o <lit>stderr</lit> vengono usate al
-        posto del nome di file, l'effetto è di ridirigere l'output
-        rispettivamente sullo standard output o sullo standard error.
-      </para>
-      <para>
-	L'opzione <opt>quiet</opt> si usa con <opt>write</opt>
-	o <opt>append</opt>: ha l'effetto di annullare la stampa
-	dei comandi e dei messaggi ausiliari fino alla chiusura del
-	file. È equivalente a
+	L'effetto dell'opzione <opt>quite</opt> è quello di
+	disattivare la stampa dei comandi e dei messaggi ausiliari nel
+	frattempo che l'output viene reindirizzato. È l'equivalente di
+	fare:
       </para>
       <code>
 	set echo off
@@ -10146,22 +10142,22 @@
 	con questa tecnica; quindi, le chiamate a questo comando non
 	possono essere annidate. Ciononostante, questo comando è
 	consentito nelle funzioni scritte dall'utente (purché il file
-	di output venga chuso nella stessa funzione), cosicché
-	l'output può essere ridiretto tempraneamente e poi riassegnato
+	di output venga chiuso nella stessa funzione), cosicché
+	l'output può essere ridiretto temporaneamente e poi riassegnato
 	al file di output originale. Ad esempio, il codice
       </para>
       <code>
-	function void f(string s)
-	    outfile inner.txt --write
-	    print s
-	    outfile --close
+	function void f (string s)
+	    outfile inner.txt
+	      print s
+	    end outfile
 	end function
 
-	outfile outer.txt --write --quiet
-	print "Fuori"
-	f("Dentro")
-	print "Ancora fuori"
-	outfile --close
+	outfile outer.txt --quiet
+	  print "Fuori"
+	  f("Dentro")
+	  print "Ancora fuori"
+	end outfile
       </code>
       <para>
 	produrrà un file di nome <quote>outer.txt</quote> contenente le
@@ -10966,8 +10962,8 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	</li>
 	<li>
 	  <para>
-	    <lit>literal</lit>: a command to be passed to gnuplot
-	    literally.
+	    <lit>literal</lit>: un comando da passare a gnuplot senza
+	    modifiche.
 	  </para>
 	</li>
 	<li>
@@ -11328,12 +11324,15 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
         un piccolo sottoinsieme del comando <lit>printf()</lit> del
         linguaggio di programmazione C). I formati numerici
         riconosciuti sono <lit>%e</lit>, <lit>%E</lit>, <lit>%f</lit>,
-        <lit>%g</lit>, <lit>%G</lit>, <lit>%d</lit> e <lit>%x</lit>,
+        <lit>%g</lit>, <lit>%G</lit>, <lit>%d</lit>, e <lit>%x</lit>,
         con i vari modificatori disponibili in C. Esempi: la stringa
         di formato <lit>%.10g</lit> stampa un valore con 10 cifre
         significative; <lit>%12.6f</lit> stampa un valore con 6 cifre
-        decimali e una larghezza di 12 caratteri. Per formattare le
-        stringhe occorre usare la stringa di formato <lit>%s</lit>.
+        decimali e una larghezza di 12 caratteri. Si noti comunque che
+        in gretl il formato <lit>%g</lit> è una buona scelta di
+        default per tutti i valori numerici; non c'è bisogno di andare
+        troppo sul complicato. Il formato <lit>%s</lit> è consigliato
+        qualora si lavori con le stringhe.
       </para>  
 
       <para>
@@ -11354,9 +11353,10 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
       </code>
 
       <para>
- 	Le prossime righe mostrano l'uso delle funzioni varname e date, che
-        rispettivamente mostrano il nome di una variabile dato il suo numero
-        identificativo, e una stringa data, dato un numero di osservazione.
+       Le prossime righe mostrano l'uso delle funzioni varname e date,
+       che mostrano rispettivamente il nome di una variabile dato il
+       suo numero identificativo, e una stringa data, dato un numero
+       di osservazione.
       </para>
        <code>
  	printf "Il nome della variabile %d è %s\n", i, varname(i)
@@ -11406,6 +11406,11 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	  <effect>errori standard robusti</effect>
 	</option>
 	<option>
+	  <flag>--cluster</flag>
+	  <optparm>clustvar</optparm>
+	  <effect>si veda <cmdref targ="logit"/> per una spiegazione</effect>
+   </option>
+	<option>
 	  <flag>--vcv</flag>
 	  <effect>mostra la matrice di covarianza</effect>
 	</option>
@@ -11413,6 +11418,10 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
           <flag>--verbose</flag>
 	  <effect>mostra i dettagli delle iterazioni</effect>
 	</option>
+   <option>
+	  <flag>--quiet</flag>
+	  <effect>non stampa i risultati</effect>
+   </option>
 	<option>
 	  <flag>--p-values</flag>
 	  <effect>mostra i p-value invece degli effetti
@@ -11428,6 +11437,13 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	  <effect>numero di punti di quadratura per la stima RE</effect>
 	</option>
       </options>
+      <examples>
+	<demos>
+	  <demo>ooballot.inp</demo>
+	  <demo>oprobit.inp</demo>
+	  <demo>reprobit.inp</demo>
+	</demos>
+      </examples>
     </usage>
 
     <description>
@@ -11435,39 +11451,47 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
         Se la variabile dipendente è binaria (tutti i suoi valori sono
         0 o 1), esegue una stima di massima verosimiglianza dei
         coefficienti delle <repl>variabili-indipendenti</repl> con il
-        metodo Newton-Raphson. Visto che il modello è nonlineare, gli
+        metodo Newton&ndash;Raphson. Visto che il modello è nonlineare, gli
         effetti marginali (pendenze) dipendono dai valori delle
         variabili indipendenti: per impostazione predefinita, al posto
         dei p-value vengono mostrate le pendenze rispetto ad ognuna
         delle variabili indipendenti, calcolate in corrispondenza
         della media della variabile. Questo comportamento può essere
-        soppresso usando l'opzione <lit>--p-values</lit>.  La
+        soppresso usando l'opzione <opt>p-values</opt>.  La
         statistica chi-quadro testa l'ipotesi nulla che tutti i
         coefficienti tranne la costante siano pari a zero.
       </para>
       <para context="cli">
         In modalità predefinita, gli errori standard sono calcolati
-        tramite l'Hessiana.  Se si usa l'opzione <opt>robust</opt>,
-        verranno calcolati gli errori standard QML
-        (Huber&ndash;White). In questo caso, la matrice di covarianza
-        stimata è un <quote>sandwich</quote> dell'inversa
-        dell'Hessiana stimata e del prodotto esterno del
-        gradiente. Per i dettagli, si veda Davidson e MacKinnon 2004,
-        cap. 10.
+        tramite l'inversa negativa della matrice Hessiana. Se si usa
+        l'opzione <opt>robust</opt>, verranno calcolati gli errori
+        standard con il metodo QML o con quello di Huber&ndash;White.
+        In questo caso, la matrice di covarianza stimata è un
+        <quote>sandwich</quote> dell'inversa dell'Hessiana stimata e
+        del prodotto esterno del gradiente. Per i dettagli, si veda
+        Davidson e MacKinnon 2004, cap. 10.
       </para>
       <para context="gui">
         In modalità predefinita, gli errori standard sono calcolati
-        tramite l'Hessiana.  Se si seleziona la casella "Errori
-        standard robusti", verranno calcolati gli errori standard QML
-        (Huber&ndash;White). In questo caso, la matrice di covarianza
+        tramite l'inversa negativa della matrice Hessiana. Se si
+        seleziona la casella "Errori standard robusti", verranno
+        calcolati gli errori standard con il metodo QML o con quello di
+        Huber&ndash;White. In questo caso, la matrice di covarianza
         stimata è un <quote>sandwich</quote> dell'inversa
         dell'Hessiana stimata e del prodotto esterno del
         gradiente. Per i dettagli, si veda Davidson e MacKinnon 2004,
         cap. 10.
       </para>
       <para>
+        Se la variabile dipendente non è binaria ma è discreta allora si
+        otterranno delle stime Ordered Probit. (Se la variabile selezionata
+        come dipendente non è nemmeno discreta allora viene segnalato un
+        errore.)
+      </para>
+      <subhead>Probit per dati panel</subhead>
+      <para>
 	Con l'opzione <opt>random-effects</opt>, il termine di errore è
-	composto per ipotesi da due componenti gaussiane: una,
+	composto per ipotesi da due componenti gaussiane: una
 	specifica per l'unità cross-sezionale e invariante nel tempo
 	(nota come <quote>effetto individuale</quote>) e l'altra
 	specifica per quella particolare osservazione.
@@ -11510,16 +11534,12 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	</li>
       </ilist>
       <para>
-	Il test LR per l'ipotesi <lit>rho</lit>=0 consente di
-	stabilire se la specificazione a effetti random è in effetti
+	Il test LR per l'ipotesi nulla <lit>rho</lit>=0 consente di
+	stabilire se la specificazione a effetti random è davvero
 	necessaria. Sotto la nulla, una semplice specificazione probit
-	è del tutto adeguata.
-      </para>
-      <para>
-        Se la variabile dipendente non è binaria, ma è discreta, si
-        ottengono stime Probit ordinali. Se la variabile scelta come
-        dipendente non è discreta, viene emesso un messaggio di
-        errore.
+	è del tutto adeguata. Se la nulla non viene rigettata allora questo
+	suggerirà che una semplice specificazione pooled per il modello probit
+	risulta più che adeguata.
       </para>
       <para>
 	Il probit per l'analisi delle proporzioni non è ancora stato
@@ -11546,11 +11566,15 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	<example>pvalue t 25 3.0</example>
 	<example>pvalue X 3 5.6</example>
 	<example>pvalue F 4 58 fval</example>
-	<example>pvalue G forma scala x</example>
-        <example>pvalue B bprob 10 6</example>
+	<example>pvalue G shape scale x</example>
+	<example>pvalue B bprob 10 6</example>
 	<example>pvalue P lambda x</example>
 	<example>pvalue W shape scale x</example>
-      </examples>
+    <demos>
+	  <demo>mrw.inp</demo>
+	  <demo>restrict.inp</demo>
+	</demos>  
+	</examples>
     </usage>
 
     <description>
@@ -11610,6 +11634,10 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	  <optparm>mode-or-filename</optparm>
 	  <effect>si veda sotto</effect>
 	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>non mostra l'output</effect>
+	</option>
       </options>      
     </usage>
 
@@ -11638,15 +11666,15 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
       	L'opzione <opt>limit-to</opt> serve a limitare le interazioni
       	con la dummy di divisione del campione nei test di Chow a un
       	sottoinsieme dei regressori originali. Il parametro dev'essere
-      	una lista predefinita, che non puà contenere la costante, gli
-      	elementi della quale devono essere tutti scelti fra i
-      	regressori originali.
+      	una lista predefinita che non può contenere la costante; gli
+      	elementi della lista devono essere tutti scelti fra i regressori
+      	originali.
       </para>
       <para>
       	Quando questo comando viene eseguito interattivamente, di
       	default verrà mostrato un grafico delle statistiche del test
       	di Chow.  Questo comportamento si può modificare con l'opzione
-      	<opt>plot</opt>. Parametri consentiti sono <lit>none</lit>
+      	<opt>plot</opt>. I parametri consentiti sono <lit>none</lit>
       	(per fare a meno del grafico); <lit>display</lit> (per
       	mostrare il grafico anche quando non si è in modo
       	interattivo), oppure un nome di file. Per la descrizione
@@ -11676,6 +11704,11 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
         <option>
 	  <flag>--raw</flag>
 	  <effect>v. oltre</effect>
+        </option>
+        <option>
+	  <flag>--output</flag>
+	  <optparm>nomefile</optparm>
+	  <effect>manda il grafico ad un file specificato</effect>
         </option>
       </options>
     </usage>
@@ -11710,7 +11743,8 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
       <para>
 	Tramite l'opzione <opt>output</opt> si invia il grafico al
 	file desiderato; usare <quote>display</quote> per forzare l'output
-	allo schermo, ad esempio nel contesto di un loop.
+	allo schermo, ad esempio nel contesto di un loop. si veda il comando
+	<cmdref targ="gnuplot"/> per maggiori dettagli in merito a quest'opzione.
       </para>
       <para>
 	Con due argomenti, <repl>y</repl> and <repl>x</repl>, mostra
@@ -11749,6 +11783,10 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	  <flag>--vcv</flag>
 	  <effect>mostra la matrice di covarianza</effect>
         </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>sopprime la stampa dei risultati</effect>
+        </option>
       </options>
       <examples>
 	<example>quantreg 0.25 y 0 xlist</example>
@@ -11763,12 +11801,12 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 
     <description context="gui">
       <para>
-        Regressione quantile. Per impostazione predefinita, gli errori standard
-        sono calcolati con la formula asintotica di Koenker e Bassett
+        Regressione a quantili. Per default, gli errori standard sono
+        calcolati con la formula asintotica di Koenker e Bassett
         (<book>Econometrica</book>, 1978), ma se si attiva la casella
-        <quote>robusto</quote>, verrà usata la variante robusta per
-        l'eteroschedasticità di Koenker e Zhao (<book>Journal of Nonparametric
-        Statistics</book>, 1994).
+        <quote>robust</quote> verrà usata la variante robusta per
+        l'eteroschedasticità di Koenker e Zhao (<book>Journal of
+        Nonparametric Statistics</book>, 1994).
       </para>
       <para>
 	Se si abilita l'opzione <quote>Calcola intervalli di confidenza</quote>,
@@ -11805,10 +11843,12 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
       </para>
       <para>
         Senza l'opzione <opt>intervals</opt>, vengono mostrati gli errori
-        standard per le stime quantili; questi sono calcolati con la formula
-        asintotica di Koenker e Bassett (1978), ma se si usa l'opzione
-        <opt>robust</opt>, verrà usata la variante robusta per
-        l'eteroschedasticità di Koenker e Zhao (1994).
+        standard per le stime quantili; per impostazione predefinita
+        questi sono calcolati con la formula asintotica di
+        <cite key="koenker-bassett78">Koenker and Bassett (1978)</cite>, ma
+        se si usa l'opzione <opt>robust</opt>, verrà usata la variante robusta
+        per l'eteroschedasticità utilizzando il metodo di <cite key="koenker-zhao94">Koenker
+        and Zhao (1994)</cite>.
       </para>
       <para>
         Se si usa l'opzione <opt>intervals</opt>, gretl calcolerà gli
@@ -11816,9 +11856,9 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
         intervalli sono calcolati col metodo dell'inversione del rango e in
         generale sono asimmetrici rispetto alle stime puntuali dei parametri.
         Se non si usa l'opzione <quote>--robust</quote>, gli intervalli sono
-        calcolati nell'ipotesi di errori IID (Koenker, 1994), mentre se viene
-        indicata, sono calcolati con lo stimatore robusto sviluppato da Koenker
-        e Machado (1999).
+        calcolati nell'ipotesi di errori IID <cite key="koenker94" p="true">(Koenker,
+        1994)</cite>, mentre se viene indicata sono calcolati con lo stimatore
+        robusto sviluppato <cite key="koenker-machado99">Koenker e Machado (1999)</cite>.
       </para>
       <para>
 	Per impostazione predefinita vengono prodotti intervalli di confidenza
@@ -11859,23 +11899,27 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
   <command name="rename" section="Dataset" label="Rinomina variabili" context="cli">
 
     <usage>
-      <altforms>
-	<altform><lit>rename</lit> <repl>numero-var</repl>
-	<repl>nuovo-nome</repl></altform>
-	<altform><lit>rename</lit> <repl>nome-var</repl>
-	<repl>nuovo-nome</repl></altform>
-      </altforms>
+      <arguments>
+	<argument>serie</argument>
+	<argument>nuovo-nome</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>sopprime la stampa dell'output</effect>
+        </option>
+      </options>
     </usage>
 
     <description>
-      <para>Modifica il nome di una variabile con numero
-      identificativo <repl>numero-var</repl> o nome
-      <repl>nome-var</repl> in <repl>nuovo-nome</repl>. Il
-      <repl>numero-var</repl> deve essere compreso tra 1 e il numero
-      di variabili nel dataset. Il nuovo nome deve essere lungo al
-      massimo 15 caratteri, deve iniziare con una lettera e deve
-      essere composto di sole lettere, numeri e il carattere trattino
-      basso.
+      <para>
+	Cambia il nome di una <repl>serie</repl> (identificata da un
+	nome o da un numero identificativo) con un
+	<repl>nuovo-nome</repl>. Il nuovo nome deve essere di massimo
+	31 caratteri, deve iniziare con una lettera e deve essere
+	composto da una combinazione di sole lettere, cifre e
+	trattini.  In aggiunta il nuovo nome non deve essere già ad
+	appartenente a nessun oggetto di nessun tipo del dataset.
       </para>
     </description>
 
@@ -11893,10 +11937,10 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
     <description>
       <para>
 	Lo stimatore a effetti random consente di stimare un modello
-	proit binario in dataset di tipo panel. Il termine di errore è
-	composto per ipotesi da due componenti gaussiane: una,
+	probit binario in dataset di tipo panel. Il termine di errore
+	è, per ipotesi, composto da due componenti gaussiane: una
 	specifica per l'unità cross-sezionale e invariante nel tempo
-	(nota come <quote>effetto individuale</quote>) e l'altra
+	(nota come <quote>effetto individuale</quote>), l'altra
 	specifica per quella particolare osservazione.
       </para>
       <para>
@@ -11929,7 +11973,7 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	</li>
 	<li>
 	  <para>
-	    <lit>rho</lit>: la quota stima dell'effetto individuale
+	    <lit>rho</lit>: la quota stimata dell'effetto individuale
 	    sulla varianza totale del termine di errore composito
 	    (anche nota come correlazione intra-classe).
 	  </para>
@@ -11959,6 +12003,10 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	  <effect>non mostra la regressione ausiliaria</effect>
 	</option>
 	<option>
+	  <flag>--silent</flag>
+	  <effect>non mostra nulla</effect>
+	</option>
+	<option>
 	  <flag>--squares-only</flag>
 	  <effect>calcola il test coi soli quadrati</effect>
 	</option>
@@ -11971,18 +12019,23 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 
     <description>
       <para>
-	Va eseguito dopo la stima di un modello via OLS. Esegue il test
-	RESET di Ramsey per la specificazione del modello
-        (non-linearità), aggiungendo alla regressione il quadrato e/o il
-        cubo dei valori stimati (a meno che non siano specificate le
-	opzioni <lit>--squares-only</lit> o
-	<lit>--cubes-only</lit>) e calcolando la statistica
-        <math>F</math> per l'ipotesi nulla che i coefficienti dei due
-        termini aggiunti siano pari a zero.
+	Deve seguire la stima di un modello OLS. Esegue il test RESET
+	di Ramsey per la specificazione del modello (non-linearità)
+	aggiungendo alla regressione i quadrati e/o cubi dei valori
+	stimati, e calcola la statistica <math>F</math> per l'ipotesi
+	nulla sotto la quale i coefficienti &bgr; delle variabili
+	aggiunte siano uguali a zero.
       </para>
       <para context="cli">
-        Vengono aggiunti sia i quadrati che i cubi, a meno che siano usate le
-        opzioni <lit>--squares-only</lit> o <lit>--cubes-only</lit>.
+	Sia i quadrati che i cubi vengono aggiunti al modello in
+	maniera predefinita a meno che non vengano specificate le
+	opzioni <opt>squares-only</opt> o <opt>cubes-only</opt>.
+      </para>
+      <para context="cli">
+	L'opzione <opt>silent</opt> può essere usata se si intendono
+	utilizzare solo gli accessori <fncref targ="$test"/> o <fncref
+	targ="$pvalue"/> per disporre direttamente dei risultati del
+	test.
       </para>
     </description>
 
@@ -12018,12 +12071,18 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	  <effect>solo OLS e VECM, vedi sotto</effect>
 	</option>
       </options>
+   <examples>
+	<demos>
+	  <demo>hamilton.inp</demo>
+     <demo>restrict.inp</demo>
+	</demos>
+   </examples>
     </usage>    
 
     <description>
       <para>
-	Impone un insieme di vincoli lineari sull'ultimo modello
-	stimato o su un sistema di equazioni definito in precedenza.
+	Impone un insieme di vincoli (solitamente lineari) su (a) l'ultimo
+	modello stimato o (b) su un sistema di equazioni definito in precedenza.
 	In entrambi i casi, l'insieme di vincoli deve essere racchiuso
 	tra i comandi <quote>restrict</quote> e <quote>end
 	restrict</quote>.
@@ -12042,7 +12101,7 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	valutati nella successiva stima del sistema effettuata con il
 	comando <cmdref targ="estimate"/>. Tuttavia, se viene usata
 	l'opzione <opt>wald</opt>, il vincolo viene testato
-	immediatamenteper mezzo di un test chi quadro di Wald usando
+	immediatamente per mezzo di un test chi quadro di Wald usando
 	la matrice di covarianze stimata. Si noti che questa opzione
 	produrrà un errore se il sistema è stato definito, ma non
 	ancora stimato.
@@ -12062,11 +12121,11 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	regressori, a partire da uno, oppure con
 	<lit>b[</lit><repl>variabile</repl><lit>]</lit>, dove
 	<repl>variabile</repl> è il nome del regressore in questione.
-	estion. Nel caso di sistemi, i parametri vengono indicati con
-	la sintassi <lit>b</lit> seguita da due numeri tra parentesi
+	Nel caso di sistemi, i parametri vengono indicati con la
+	sintassi <lit>b</lit> seguita da due numeri tra parentesi
 	quadre.  Il primo numero rappresenta la posizione
 	dell'equazione all'interno del sistema, mentre il secondo
-	indica la posizione nella lista dei regressori.  Ad esempio
+	indica la posizione nella lista dei regressori. Ad esempio
 	<lit>b[2,1]</lit> indica il primo parametro della seconda
 	equazione, mentre <lit>b[3,2]</lit> il secondo parametro della
 	terza equazione. I termini <lit>b</lit> nell'equazione che
@@ -12098,21 +12157,24 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	end restrict
       </code>
       <para>
-        Nel caso di un'equazione singola, i vincoli sono valutati
-        attraverso un test di Wald, usando la matrice di covarianza
-        dei coefficienti del modello in questione.  Se il metodo di
-        stima del modello originale era l'OLS, vengono mostrati i
-        coefficienti vincolati, a meno che non si sia data l'opzione
-        <opt>quiet</opt> al comando <lit>restrict</lit>.  In
-	alternativa al test di Wald, per modelli stimati con OLS o
-	WLS, si può usare l'opzione <opt>bootstrap</opt> per
-	effettuare il test della restrizione con tale metodo.
+	Nel caso di una equazione singola le restrizioni sono
+	valutate, per default, tramite un test di Wald, che utilizza
+	la matrice di covarianze del modello in questione.  Se il
+	modello originale è stato stimato via OLS allora vengono
+	mostrati i coefficienti vincolati stimati, a meno che non si
+	utilizzi l'opzione <opt>quiet</opt> all'inizio del comando
+	<lit>restrict</lit>.  Come alternativa al test di Wald è
+	possibile dare usare l'opzione <opt>bootstrap</opt> affinchè
+	venga eseguito un test sulla restrizione attraverso tale
+	metodo; ciò è consentito solamente per modelli stimati
+	attraverso OLS o WLS.
       </para>
       <para>
-        Nel caso del sistema, la statistica test dipende dallo stimatore scelto:
-        un test del rapporto di verosimiglianza nel caso di un sistema stimato
-        con un metodo di massima verosimiglianza, o un test
-        <math>F</math> asintotico negli altri casi.
+	Nel caso di un sistema, la statistica test dipende dallo
+	stimatore scelto: un test del rapporto di verosimiglianza nel
+	caso di un sistema stimato con un metodo di massima
+	verosimiglianza, o un test <math>F</math> asintotico negli
+	altri casi.
       </para>
       <para>
 	Esistono due alternative alla rappresentazione dei vincoli
@@ -12165,19 +12227,21 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	end function
       </code>
       <para>
-	On successful completion of the <lit>restrict</lit> command
-	the accessors <fncref targ="$test"/> and <fncref
-	targ="$pvalue"/> give the test statistic and its p-value.
+	Se il comando <lit>restrict</lit> va a buon fine, gli
+	accessori <fncref targ="$test"/> e <fncref targ="$pvalue"/>
+	restituiscono la statistica test ed il suo relativo p-value.
       </para>
       <para>
-	When testing restrictions on a single-equation model estimated
-	via OLS, or on a VECM, the <opt>full</opt> option can be
-	used to set the restricted estimates as the <quote>last
-	model</quote> for the purposes of further testing or the use
-	of accessors such as <lit>$coeff</lit> and <lit>$vcv</lit>.
-	Note that some special considerations apply in the case of
-	testing restrictions on Vector Error Correction Models. Please
-	see <guideref targ="chap:vecm"/> for details.
+	Quando si testano delle restrizioni su un modello ad equazione
+	singola stimato via OLS, o su una VECM, l'opzione
+	<opt>full</opt> può essere usata per impostare le stime
+	vincolate come <quote>ultimo modello</quote> di riferimento,
+	allo scopo di compiere ulteriori test o di utilizzare
+	eventuali accessori del tipo <lit>$coeff</lit> e
+	<lit>vcv</lit>. Si noti che alcune considerazioni particolari
+	sopraggiungono nel caso in cui si testino delle restrizioni su
+	modelli VECM. Per maggiori dettagli si consiglia la lettura
+	del<guideref targ="chap:vecm"/>.
       </para>
     </description>
 
@@ -12225,23 +12289,23 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
     label="Vincoli su un sistema di equazioni">
 
     <description>
-
-      <para>Ognuno dei vincoli da imporre a un sistema deve essere espresso
-        sotto forma di equazione con una combinazione lineare dei parametri al
-        primo membro e un valore numerico al secondo. 
-        I parametri vengono indicati con la sintassi <lit>b</lit> seguita da due
-        numeri tra parentesi quadre.  Il primo numero rappresenta la posizione
-        dell'equazione all'interno del sistema, mentre il secondo indica la
-        posizione nella lista dei regressori, entrambi contati a partire da uno.
-        Ad esempio <lit>b[2,1]</lit> indica il primo parametro della seconda
-        equazione, mentre <lit>b[3,2]</lit> il secondo parametro della terza
-        equazione.
+      <para>
+      Ognuno dei vincoli da imporre ad un sistema deve essere espresso
+      sotto forma di equazione con una combinazione lineare dei parametri al
+      primo membro e un valore numerico al secondo. 
+      I parametri vengono indicati con la sintassi <lit>b</lit> seguita da due
+      numeri tra parentesi quadre.  Il primo numero rappresenta la posizione
+      dell'equazione all'interno del sistema, mentre il secondo indica la
+      posizione nella lista dei regressori, entrambi contati a partire da uno.
+      Ad esempio <lit>b[2,1]</lit> indica il primo parametro della seconda
+      equazione, mentre <lit>b[3,2]</lit> il secondo parametro della terza
+      equazione.
       </para>
-
-      <para>I termini <lit>b</lit> nell'equazione che rappresenta un vincolo
-        possono essere prefissati con un moltiplicatore numerico usando il
-        carattere <lit>*</lit> per indicare la moltiplicazione, ad esempio
-        <lit>3.5*b[1,4]</lit>.
+      <para>
+      I termini <lit>b</lit> nell'equazione che rappresenta un vincolo
+      possono essere prefissati con un moltiplicatore numerico usando il
+      carattere <lit>*</lit> per indicare la moltiplicazione, ad esempio
+      <lit>3.5*b[1,4]</lit>.
       </para>
 
       <para>Ecco ad esempio un insieme di vincoli:</para>
@@ -12318,11 +12382,26 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
       <arguments>
         <argument>nome-variabile</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--trim</flag>
+	  <effect>si veda oltre</effect>
+	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>non mostra l'output</effect>
+	</option>
+	<option>
+	  <flag>--output</flag>
+	  <optparm>nomefile</optparm>
+	  <effect>si veda oltre</effect>
+        </option>
+      </options>
     </usage>
 
     <description>
       <para>
-	Grafici Range&ndash;mean: questo comando crea un semplice
+	     Grafici range&ndash;mean: questo comando crea un semplice
         grafico che aiuta a capire se una serie storica
 	<math>y</math>(t) ha varianza costante o no. L'intero
         campione t=1,...,T viene diviso in piccoli sotto-campioni di
@@ -12351,6 +12430,25 @@ matrice, o una serie singola. Se l'argomento <repl>data</repl>
 	zero.  Se il coefficiente di pendenza è significativo al
 	livello del 10 per cento, viene mostrata sul grafico la linea
 	stimata della regressione del campo di variazione sulla media.
+	La statistica <math>t</math> per l'ipotesi nulla, e il corrispondente
+	p-value, vengono registrati e possono venire richiamati attraverso
+	gli accessori <fncref targ="$test"/> e <fncref targ="$pvalue"/>.
+      </para>
+      <para context="cli">
+	Se l'opzione <opt>trim</opt> è presente il valore minimo ed il
+	valore massimo di ogni sotto-campione vengono scartati prima
+	che la media ed il campo di variazione siano calcolati. Questo
+	rende ancor più marginale la presenza di eventuali outlier
+	che potrebbero distorcere i risultati dell'analisi.
+      </para>
+      <para context="cli">
+	Se l'opzione <opt>quiet</opt> è data nessun grafico viene
+	mostrato e nessun output viene stampato; solamente la
+	statistica <math>t</math> ed il corrispondente p-value vengono
+	registrati. Altrimenti il formato del grafico può venire
+	controllato attraverso l'opzione <opt>output</opt>;
+	quest'ultima funziona esattamente come descritto nel comando
+	<cmdref targ="gnuplot"/>.
       </para>
     </description>
 
