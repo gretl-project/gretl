@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -37,13 +37,13 @@
    above and below the diagonal.
 */
 
-static void 
+static void
 insert_sys_X_block (gretl_matrix *X, const gretl_matrix *M,
 		    int startrow, int startcol, double scale)
 {
     int r, c, i, j;
     double mij;
-    
+
     for (i=0; i<M->rows; i++) {
 	r = startrow + i;
 	for (j=0; j<M->cols; j++) {
@@ -52,7 +52,7 @@ insert_sys_X_block (gretl_matrix *X, const gretl_matrix *M,
 	    gretl_matrix_set(X, r, c, mij * scale);
 	}
     }
-    
+
     if (startrow != startcol) {
 	for (i=0; i<M->rows; i++) {
 	    c = startrow + i;
@@ -62,7 +62,7 @@ insert_sys_X_block (gretl_matrix *X, const gretl_matrix *M,
 		gretl_matrix_set(X, r, c, mij * scale);
 	    }
 	}
-    }	
+    }
 }
 
 /* Retrieve the data placed on @pmod in the course of 2sls estimation:
@@ -127,10 +127,10 @@ static int make_liml_X_block (gretl_matrix *X, const MODEL *pmod,
 
 /* construct the X data block pertaining to a specific equation, using
    either the original data or fitted values from regression on a set
-   of instruments 
+   of instruments
 */
 
-static int 
+static int
 make_sys_X_block (gretl_matrix *X, const MODEL *pmod,
 		  DATASET *dset, int t1, int method)
 {
@@ -140,8 +140,8 @@ make_sys_X_block (gretl_matrix *X, const MODEL *pmod,
     X->cols = pmod->ncoeff;
 
     for (i=0; i<X->cols && !err; i++) {
-	if (method == SYS_METHOD_3SLS || 
-	    method == SYS_METHOD_FIML || 
+	if (method == SYS_METHOD_3SLS ||
+	    method == SYS_METHOD_FIML ||
 	    method == SYS_METHOD_TSLS) {
 	    Xi = model_get_Xi(pmod, dset, i);
 	} else {
@@ -229,11 +229,11 @@ static void maybe_correct_model_dfd (equation_system *sys,
     }
 }
 
-/* Compute residuals and related quantities, for all cases 
-   other than FIML 
+/* Compute residuals and related quantities, for all cases
+   other than FIML
 */
 
-static void 
+static void
 sys_resids (equation_system *sys, int eq, const DATASET *dset)
 {
     MODEL *pmod = sys->models[eq];
@@ -267,7 +267,7 @@ sys_resids (equation_system *sys, int eq, const DATASET *dset)
 	/* R-squared based on actual-fitted correlation */
 	double r;
 
-	pmod->rsq = gretl_corr_rsq(pmod->t1, pmod->t2, dset->Z[yno], 
+	pmod->rsq = gretl_corr_rsq(pmod->t1, pmod->t2, dset->Z[yno],
 				   pmod->yhat);
 	r = 1 - pmod->rsq;
 	pmod->adjrsq = 1.0 - (r * (pmod->nobs - 1) / pmod->dfd);
@@ -299,7 +299,7 @@ single_eqn_scale_vcv (MODEL *pmod, gretl_matrix *V, int offset)
 }
 
 /* write results from system estimation into the individual
-   model structs 
+   model structs
 */
 
 static void transcribe_sys_results (equation_system *sys,
@@ -330,7 +330,7 @@ static void transcribe_sys_results (equation_system *sys,
 	/* for single-equation methods, vcv needs scaling by
 	   an estimate of the residual variance
 	*/
-	if (sys->method == SYS_METHOD_OLS || 
+	if (sys->method == SYS_METHOD_OLS ||
 	    sys->method == SYS_METHOD_TSLS ||
 	    sys->method == SYS_METHOD_LIML) {
 	    single_eqn_scale_vcv(pmod, sys->vcv, offset);
@@ -349,12 +349,12 @@ static void transcribe_sys_results (equation_system *sys,
 }
 
 /* compute SUR, 3SLS or LIML parameter estimates (or restricted OLS,
-   TSLS, WLS) 
+   TSLS, WLS)
 */
 
-static int 
+static int
 calculate_sys_coeffs (equation_system *sys, const DATASET *dset,
-		      gretl_matrix *X, gretl_matrix *y, 
+		      gretl_matrix *X, gretl_matrix *y,
 		      int mk, int nr, int do_iters)
 {
     gretl_matrix *V;
@@ -369,7 +369,7 @@ calculate_sys_coeffs (equation_system *sys, const DATASET *dset,
 #if SDEBUG
     gretl_matrix_print(X, "sys X");
     gretl_matrix_print(y, "sys y");
-#endif  
+#endif
 
     /* calculate the coefficients */
 
@@ -379,7 +379,7 @@ calculate_sys_coeffs (equation_system *sys, const DATASET *dset,
 	if (!err) {
 	    posdef = 1;
 	    err = gretl_cholesky_invert(X);
-	} else {	    
+	} else {
 	    /* nope: fall back to the LU solver */
 	    gretl_matrix_copy_values(X, V);
 	    err = 0;
@@ -427,20 +427,20 @@ system_model_list (equation_system *sys, int i, int *freeit)
 	list = system_get_list(sys, i);
     }
 
-    if (sys->method == SYS_METHOD_3SLS || 
+    if (sys->method == SYS_METHOD_3SLS ||
 	sys->method == SYS_METHOD_TSLS ||
 	sys->method == SYS_METHOD_LIML) {
-	/* Is the list already in ivreg form? 
+	/* Is the list already in ivreg form?
 	   If not, ignore it. */
 	if (list != NULL && !gretl_list_has_separator(list)) {
 	    list = NULL;
 	}
     }
 
-    if ((sys->method == SYS_METHOD_FIML || 
+    if ((sys->method == SYS_METHOD_FIML ||
 	 sys->method == SYS_METHOD_LIML ||
-	 sys->method == SYS_METHOD_3SLS || 
-	 sys->method == SYS_METHOD_TSLS) 
+	 sys->method == SYS_METHOD_3SLS ||
+	 sys->method == SYS_METHOD_TSLS)
 	&& list == NULL) {
 	list = compose_ivreg_list(sys, i);
 	*freeit = 1;
@@ -457,7 +457,7 @@ system_model_list (equation_system *sys, int i, int *freeit)
    function.
 */
 
-static int hansen_sargan_test (equation_system *sys, 
+static int hansen_sargan_test (equation_system *sys,
 			       const DATASET *dset)
 {
     const int *exlist = system_get_instr_vars(sys);
@@ -509,7 +509,7 @@ static int hansen_sargan_test (equation_system *sys,
 	goto bailout;
     }
 
-    /* set up vectors of SUR or 3SLS residuals, transposed, 
+    /* set up vectors of SUR or 3SLS residuals, transposed,
        times W; these are stacked in the m * nx matrix eW
     */
     for (i=0; i<m; i++) {
@@ -528,12 +528,12 @@ static int hansen_sargan_test (equation_system *sys,
 	for (j=0; j<nx; j++) {
 	    x = 0.0;
 	    for (t=0; t<nx; t++) {
-		x += gretl_matrix_get(eW, i, t) * 
+		x += gretl_matrix_get(eW, i, t) *
 		    gretl_matrix_get(WTW, t, j);
 	    }
 	    gretl_matrix_set(tmp, i, j, x);
 	}
-    }   
+    }
 
     /* cumulate the Chi-square value */
     X2 = 0.0;
@@ -541,7 +541,7 @@ static int hansen_sargan_test (equation_system *sys,
 	for (j=0; j<m; j++) {
 	    x = 0.0;
 	    for (t=0; t<nx; t++) {
-		x += gretl_matrix_get(tmp, i, t) * 
+		x += gretl_matrix_get(tmp, i, t) *
 		    gretl_matrix_get(eW, j, t); /* transposed */
 	    }
 	    X2 += gretl_matrix_get(sys->S, i, j) * x;
@@ -549,7 +549,7 @@ static int hansen_sargan_test (equation_system *sys,
     }
 
 #if SDEBUG
-    fprintf(stderr, "Hansen-Sargan: Chi-square(%d) = %g (p-value %g)\n", 
+    fprintf(stderr, "Hansen-Sargan: Chi-square(%d) = %g (p-value %g)\n",
 	    df, X2, chisq_cdf_comp(df, X2));
 #endif
     sys->X2 = X2;
@@ -562,7 +562,7 @@ static int hansen_sargan_test (equation_system *sys,
 }
 
 static int basic_system_allocate (equation_system *sys,
-				  int mk, int nr, 
+				  int mk, int nr,
 				  gretl_matrix **X,
 				  gretl_matrix **y)
 {
@@ -574,7 +574,7 @@ static int basic_system_allocate (equation_system *sys,
     sys->models = gretl_model_array_new(m);
     if (sys->models == NULL) {
 	return E_ALLOC;
-    }    
+    }
 
     sys->E = gretl_matrix_alloc(T, m);
     if (sys->E == NULL) {
@@ -586,14 +586,18 @@ static int basic_system_allocate (equation_system *sys,
 	return E_ALLOC;
     }
 
-    *X = gretl_matrix_alloc(ldx, ldx);
-    if (*X == NULL) {
-	return E_ALLOC;
+    if (X != NULL) {
+	*X = gretl_matrix_alloc(ldx, ldx);
+	if (*X == NULL) {
+	    return E_ALLOC;
+	}
     }
 
-    *y = gretl_column_vector_alloc(ldx);
-    if (*y == NULL) {
-	return E_ALLOC;
+    if (y != NULL) {
+	*y = gretl_column_vector_alloc(ldx);
+	if (*y == NULL) {
+	    return E_ALLOC;
+	}
     }
 
     return 0;
@@ -634,7 +638,7 @@ double sur_loglik (equation_system *sys)
 */
 
 static void
-augment_X_with_restrictions (gretl_matrix *X, int mk, 
+augment_X_with_restrictions (gretl_matrix *X, int mk,
 			     equation_system *sys)
 {
     int i, j, nr = sys->R->rows;
@@ -654,7 +658,7 @@ augment_X_with_restrictions (gretl_matrix *X, int mk,
    Rb = q, augment the y matrix with q.
 */
 
-static int 
+static int
 augment_y_with_restrictions (gretl_matrix *y, int mk, int nr,
 			     equation_system *sys)
 {
@@ -687,7 +691,7 @@ static int sys_converged (equation_system *sys, double *llbak,
     double crit, tol = 0.0;
     int met = 0;
 
-    if (sys->method == SYS_METHOD_SUR || 
+    if (sys->method == SYS_METHOD_SUR ||
 	sys->method == SYS_METHOD_WLS) {
 	double ll = sur_loglik(sys);
 
@@ -701,7 +705,7 @@ static int sys_converged (equation_system *sys, double *llbak,
 	    met = 1;
 	} else if (sys->iters < SYS_MAX_ITER) {
 	    *llbak = ll;
-	} 
+	}
     } else if (sys->method == SYS_METHOD_3SLS) {
 	tol = SYS_BDIFF_TOL;
 	crit = sys->bdiff;
@@ -710,7 +714,7 @@ static int sys_converged (equation_system *sys, double *llbak,
 	}
 	if (crit <= tol) {
 	    met = 1;
-	} 
+	}
     }
 
     if (met && tol > 0 && (opt & OPT_V)) {
@@ -721,7 +725,7 @@ static int sys_converged (equation_system *sys, double *llbak,
 	pprintf(prn, "Reached %d iterations without meeting "
 		"tolerance of %g\n", sys->iters, tol);
 	*err = E_NOCONV;
-    }	
+    }
 
     return met;
 }
@@ -739,9 +743,9 @@ static void clean_up_models (equation_system *sys)
 
     for (i=0; i<sys->neqns; i++) {
 	sys->ess += sys->models[i]->ess;
-	if (sys->method == SYS_METHOD_3SLS || 
-	    sys->method == SYS_METHOD_FIML || 
-	    sys->method == SYS_METHOD_TSLS || 
+	if (sys->method == SYS_METHOD_3SLS ||
+	    sys->method == SYS_METHOD_FIML ||
+	    sys->method == SYS_METHOD_TSLS ||
 	    sys->method == SYS_METHOD_LIML) {
 	    tsls_free_data(sys->models[i]);
 	}
@@ -763,11 +767,11 @@ static void clean_up_models (equation_system *sys)
    stage, namely @idroplist, purge these series IDs from both the
    global system instrument list (sys->ilist) and the per-equation
    regression specification list (if the latter is given in tsls
-   form).  
+   form).
 */
 
 static int drop_redundant_instruments (equation_system *sys,
-				       const int *idroplist, 
+				       const int *idroplist,
 				       int eqn)
 {
     int i, j, di, pos;
@@ -821,12 +825,15 @@ static gretlopt sys_tsls_opt (const equation_system *sys)
 
 /* options to be passed in running initial OLS */
 
-static gretlopt sys_ols_opt (const equation_system *sys)
+static gretlopt sys_ols_opt (const equation_system *sys,
+			     int nr)
 {
-    if (sys->flags & SYSTEM_ROBUST) {
-	return OPT_R; /* robust */
+    if (sys->method == SYS_METHOD_OLS && nr == 0) {
+	/* initial OLS will supply the estimates */
+	return (sys->flags & SYSTEM_ROBUST)? OPT_R : OPT_NONE;
     } else {
-	return OPT_A; /* auxiliary */
+	/* treat initial OLS as auxiliary */
+	return OPT_A;
     }
 }
 
@@ -854,6 +861,7 @@ static int ols_data_to_sys (equation_system *sys, int mk)
     int i, j, k;
     int mi, mj;
     int vi, vj;
+    int err = 0;
 
     B = gretl_matrix_alloc(mk, 1);
     V = gretl_zero_matrix_new(mk, mk);
@@ -864,6 +872,12 @@ static int ols_data_to_sys (equation_system *sys, int mk)
     j = vi = vj = 0;
     for (i=0; i<sys->neqns; i++) {
 	pmod = sys->models[i];
+	if (pmod->vcv == NULL) {
+	    err = makevcv(pmod, pmod->sigma);
+	    if (err) {
+		break;
+	    }
+	}
 	k = pmod->ncoeff;
 	for (mi=0; mi<k; mi++) {
 	    B->val[j++] = pmod->coeff[mi];
@@ -876,16 +890,21 @@ static int ols_data_to_sys (equation_system *sys, int mk)
 	vj += k;
     }
 
-    system_attach_coeffs(sys, B);
-    system_attach_vcv(sys, V);
+    if (err) {
+	gretl_matrix_free(B);
+	gretl_matrix_free(V);
+    } else {
+	system_attach_coeffs(sys, B);
+	system_attach_vcv(sys, V);
+    }
 
-    return 0;
+    return err;
 }
 
 /* general function that forms the basis for all specific system
    estimators */
 
-int system_estimate (equation_system *sys, DATASET *dset, 
+int system_estimate (equation_system *sys, DATASET *dset,
 		     gretlopt opt, PRN *prn)
 {
     int i, j, k, T, t;
@@ -897,11 +916,14 @@ int system_estimate (equation_system *sys, DATASET *dset,
     gretl_matrix *Xi = NULL;
     gretl_matrix *Xj = NULL;
     gretl_matrix *M = NULL;
+    gretl_matrix **pX = NULL;
+    gretl_matrix **py = NULL;
     MODEL **models = NULL;
     int method = sys->method;
     double llbak = -1.0e9;
     int single_equation = 0;
     int do_iteration = 0;
+    int plain_ols = 0;
     int rsingle = 0;
     int do_diag = 0;
     int err = 0;
@@ -911,34 +933,41 @@ int system_estimate (equation_system *sys, DATASET *dset,
     if (sys->flags & SYSTEM_ITERATE) {
 	do_iteration = 1;
     }
-    
+
     nr = system_n_restrictions(sys);
 
-    if (method == SYS_METHOD_OLS || method == SYS_METHOD_TSLS || 
+    if (method == SYS_METHOD_OLS || method == SYS_METHOD_TSLS ||
 	method == SYS_METHOD_LIML || method == SYS_METHOD_WLS) {
 	single_equation = 1;
+    }
+
+    if (method == SYS_METHOD_OLS && nr == 0) {
+	plain_ols = 1;
+    } else {
+	pX = &X;
+	py = &y;
     }
 
     if (nr > 0 && !(opt & OPT_U)) {
 	if (method == SYS_METHOD_3SLS) {
 	    /* doing 3SLS with restrictions: we want to obtain
-	       restricted TSLS estimates as a starting point 
+	       restricted TSLS estimates as a starting point
 	    */
 	    rsingle = 1;
 	} else if (method == SYS_METHOD_SUR) {
 	    /* doing SUR with restrictions: we want to obtain
-	       restricted OLS estimates as a starting point 
+	       restricted OLS estimates as a starting point
 	    */
 	    rsingle = 1;
-	}	    
-    } 
+	}
+    }
 
     /* get uniform sample starting and ending points and check for
        missing data */
     err = system_adjust_t1t2(sys, dset);
     if (err) {
 	return err;
-    } 
+    }
 
     /* set sample for auxiliary regressions */
     dset->t1 = sys->t1;
@@ -958,15 +987,15 @@ int system_estimate (equation_system *sys, DATASET *dset,
     T = sys->T;
 
     /* allocate models etc */
-    err = basic_system_allocate(sys, mk, nr, &X, &y);
+    err = basic_system_allocate(sys, mk, nr, pX, py);
     if (err) {
 	goto cleanup;
     }
 
     /* convenience pointers */
     models = sys->models;
-	    
-    if ((method == SYS_METHOD_FIML || 
+
+    if ((method == SYS_METHOD_FIML ||
 	 method == SYS_METHOD_LIML) && !(opt & OPT_Q)) {
 	print_equation_system_info(sys, dset, OPT_H, prn);
     }
@@ -990,7 +1019,7 @@ int system_estimate (equation_system *sys, DATASET *dset,
 	}
 
 	if (sys_ols_ok(sys)) {
-	    *pmod = lsq(list, dset, OLS, sys_ols_opt(sys));
+	    *pmod = lsq(list, dset, OLS, sys_ols_opt(sys, nr));
 	} else {
 	    *pmod = tsls(list, dset, sys_tsls_opt(sys));
 	}
@@ -1003,7 +1032,7 @@ int system_estimate (equation_system *sys, DATASET *dset,
 	    fprintf(stderr, "system_estimate: failed to estimate equation %d: "
 		    "err = %d\n", i+1, err);
 	    break;
-	} 
+	}
 
 	idroplist = gretl_model_get_list(pmod, "inst_droplist");
 	if (idroplist != NULL) {
@@ -1039,6 +1068,12 @@ int system_estimate (equation_system *sys, DATASET *dset,
 	if (err) goto cleanup;
     }
 
+    if (plain_ols) {
+	gls_sigma_from_uhat(sys, sys->S, 1);
+	err = ols_data_to_sys(sys, mk);
+	goto save_etc;
+    }
+
     /* marker for iterated versions of SUR, WLS, or 3SLS; also for
        loopback in case of restricted 3SLS, where we want to compute
        restricted TSLS estimates first
@@ -1047,22 +1082,13 @@ int system_estimate (equation_system *sys, DATASET *dset,
 
     gls_sigma_from_uhat(sys, sys->S, 0);
 
-#if SDEBUG > 1
-    gretl_matrix_print(sys->S, "gls_sigma_from_uhat");
-#endif
-
-    if (method == SYS_METHOD_OLS && (sys->flags & SYSTEM_ROBUST) && nr == 0) {
-	err = ols_data_to_sys(sys, mk);
-	goto save_etc;
-    }
-
     if (method == SYS_METHOD_WLS) {
 	gretl_matrix_zero(X);
 	err = gretl_invert_diagonal_matrix(sys->S);
     } else if (single_equation || rsingle) {
 	gretl_matrix_zero(X);
     } else {
-	err = gretl_invert_symmetric_matrix(sys->S);    
+	err = gretl_invert_symmetric_matrix(sys->S);
     }
 
 #if SDEBUG
@@ -1071,15 +1097,15 @@ int system_estimate (equation_system *sys, DATASET *dset,
 
     if (!err && Xi == NULL) {
 	/* the test against NULL here allows for the possibility
-	   that we're iterating 
+	   that we're iterating
 	*/
 	err = allocate_Xi_etc(&Xi, &Xj, &M, T, k);
     }
 
     if (err) goto cleanup;
 
-    /* form the big stacked X matrix: Xi = data matrix for equation i, 
-       specified in lists[i] 
+    /* form the big stacked X matrix: Xi = data matrix for equation i,
+       specified in lists[i]
     */
 
     krow = 0;
@@ -1088,7 +1114,7 @@ int system_estimate (equation_system *sys, DATASET *dset,
 
 	err = make_sys_X_block(Xi, models[i], dset, sys->t1, method);
 
-	for (j=0; j<=i && !err; j++) { 
+	for (j=0; j<=i && !err; j++) {
 	    const gretl_matrix *Xk;
 	    double sij;
 
@@ -1110,7 +1136,7 @@ int system_estimate (equation_system *sys, DATASET *dset,
 	    M->cols = Xk->cols;
 
 	    err = gretl_matrix_multiply_mod(Xi, GRETL_MOD_TRANSPOSE,
-					    Xk, GRETL_MOD_NONE, 
+					    Xk, GRETL_MOD_NONE,
 					    M, GRETL_MOD_NONE);
 
 	    if (rsingle || (single_equation && method != SYS_METHOD_WLS)) {
@@ -1147,13 +1173,12 @@ int system_estimate (equation_system *sys, DATASET *dset,
     /* form stacked Y column vector (m x k) */
 
     v = 0;
-    for (i=0; i<sys->neqns; i++) { 
+    for (i=0; i<sys->neqns; i++) {
 
 	/* loop over the m vertically-arranged blocks */
-
 	make_sys_X_block(Xi, models[i], dset, sys->t1, method);
 
-	for (j=0; j<models[i]->ncoeff; j++) { 
+	for (j=0; j<models[i]->ncoeff; j++) {
 	    /* loop over the rows within each of the m blocks */
 	    double yv = 0.0;
 	    int lmin = 0, lmax = sys->neqns;
@@ -1164,7 +1189,7 @@ int system_estimate (equation_system *sys, DATASET *dset,
 		lmax = i + 1;
 	    }
 
-	    for (l=lmin; l<lmax; l++) { 
+	    for (l=lmin; l<lmax; l++) {
 		/* loop over the components that must be
 		   added to form each element */
 		const double *yl = NULL;
@@ -1203,7 +1228,7 @@ int system_estimate (equation_system *sys, DATASET *dset,
        unless, that is, we're just doing restricted OLS, WLS or TSLS
        estimates.
     */
-    err = calculate_sys_coeffs(sys, dset, X, y, mk, nr, 
+    err = calculate_sys_coeffs(sys, dset, X, y, mk, nr,
 			       do_iteration);
 
     if (!err && rsingle) {
