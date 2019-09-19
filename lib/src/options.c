@@ -611,6 +611,7 @@ struct gretl_option gretl_opts[] = {
     { SUMMARY,  OPT_X, "matrix", 2 },
     { SYSTEM,   OPT_I, "iterate", 0 },
     { SYSTEM,   OPT_V, "verbose", 0 },
+    { SYSTEM,   OPT_R, "robust", 0 },
     { TEXTPLOT, OPT_O, "one-scale", 0 },
     { TEXTPLOT, OPT_S, "time-series", 0 },
     { TEXTPLOT, OPT_T, "tall", 0 },

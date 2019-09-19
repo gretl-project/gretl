@@ -41,7 +41,8 @@ enum {
     SYSTEM_ITERATE     = 1 << 5,
     SYSTEM_SAVEIT      = 1 << 6,
     SYSTEM_LIML1       = 1 << 7,
-    SYSTEM_QUIET       = 1 << 8
+    SYSTEM_QUIET       = 1 << 8,
+    SYSTEM_ROBUST      = 1 << 9
 };
 
 typedef struct id_atom_ id_atom;

@@ -1193,6 +1193,7 @@ static int real_system_wald_test (const equation_system *sys,
 {
     gretl_matrix *Rbq, *RvR;
     int Rrows, dfn, dfu = 0;
+    int asy = (opt & OPT_W);
     double test = NADBL;
     int err = 0;
 
@@ -1241,7 +1242,7 @@ static int real_system_wald_test (const equation_system *sys,
     if (!err) {
 	double pval;
 
-	if (opt & OPT_W) {
+	if (asy) {
 	    pval = chisq_cdf_comp(dfn, test);
 	} else {
 	    test /= dfn;
@@ -1251,7 +1252,7 @@ static int real_system_wald_test (const equation_system *sys,
 	record_test_result(test, pval);
 
 	if (!(opt & OPT_Q)) {
-	    if (opt & OPT_W) {
+	    if (asy) {
 		pprintf(prn, "%s:\n", _("Wald test for the specified restrictions"));
 		pprintf(prn, "  %s(%d) = %g [%.4f]\n", _("Chi-square"),
 			dfn, test, pval);
@@ -1281,6 +1282,11 @@ int system_wald_test (const equation_system *sys,
     if (b == NULL || V == NULL) {
 	gretl_errmsg_set("restrict: no estimates are available");
 	return E_DATA;
+    }
+
+    if (sys->method == SYS_METHOD_OLS) {
+	/* use the F-form */
+	opt &= ~OPT_W;
     }
 
     return real_system_wald_test(sys, b, V, R, q, opt, prn);
@@ -1444,8 +1450,14 @@ adjust_sys_flags_for_method (equation_system *sys, int method)
 
     sys->flags = 0;
 
-    /* the iterate option is only available for WLS, SUR or 3SLS */
+    /* the robust option is for now OLS-only */
+    if (oldflags & SYSTEM_ROBUST) {
+	if (sys->method == SYS_METHOD_OLS) {
+	    sys->flags |= SYSTEM_ROBUST;
+	}
+    }
 
+    /* the iterate option is only available for WLS, SUR or 3SLS */
     if (oldflags & SYSTEM_ITERATE) {
 	if (sys->method == SYS_METHOD_WLS ||
 	    sys->method == SYS_METHOD_SUR ||
@@ -1455,7 +1467,6 @@ adjust_sys_flags_for_method (equation_system *sys, int method)
     }
 
     /* by default, apply a df correction for single-equation methods */
-
     if (sys->method == SYS_METHOD_OLS ||
 	sys->method == SYS_METHOD_WLS ||
 	sys->method == SYS_METHOD_TSLS ||
@@ -1466,19 +1477,27 @@ adjust_sys_flags_for_method (equation_system *sys, int method)
     }
 
     /* carry forward the GEOMEAN flag */
-
     if (oldflags & SYSTEM_VCV_GEOMEAN) {
 	sys->flags |= SYSTEM_VCV_GEOMEAN;
     }
 }
 
-static void
+static int
 set_sys_flags_from_opt (equation_system *sys, gretlopt opt)
 {
     sys->flags = 0;
 
-    /* the iterate option is available for WLS, SUR or 3SLS */
+    /* the robust option is for now OLS-only */
+    if (opt & OPT_R) {
+	if (sys->method == SYS_METHOD_OLS) {
+	    sys->flags |= SYSTEM_ROBUST;
+	} else {
+	    gretl_errmsg_sprintf(_("Invalid option '--%s'"), "robust");
+	    return E_BADOPT;
+	}
+    }
 
+    /* the iterate option is available for WLS, SUR or 3SLS */
     if (opt & OPT_I) {
 	if (sys->method == SYS_METHOD_WLS ||
 	    sys->method == SYS_METHOD_SUR ||
@@ -1488,7 +1507,6 @@ set_sys_flags_from_opt (equation_system *sys, gretlopt opt)
     }
 
     /* by default, apply a df correction for single-equation methods */
-
     if (sys->method == SYS_METHOD_OLS ||
 	sys->method == SYS_METHOD_TSLS) {
 	if (!(opt & OPT_N)) {
@@ -1508,6 +1526,8 @@ set_sys_flags_from_opt (equation_system *sys, gretlopt opt)
 	/* estimating single equation via LIML */
 	sys->flags |= SYSTEM_LIML1;
     }
+
+    return 0;
 }
 
 /**
@@ -1551,7 +1571,10 @@ equation_system_estimate (equation_system *sys, DATASET *dset,
 	opt = OPT_NONE;
 	adjust_sys_flags_for_method(sys, sys->method);
     } else {
-	set_sys_flags_from_opt(sys, opt);
+	err = set_sys_flags_from_opt(sys, opt);
+	if (err) {
+	    return err;
+	}
     }
 
     /* if restrictions are in place, reset the restricted flag */

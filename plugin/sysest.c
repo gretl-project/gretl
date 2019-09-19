@@ -819,6 +819,17 @@ static gretlopt sys_tsls_opt (const equation_system *sys)
     return opt;
 }
 
+/* options to be passed in running initial OLS */
+
+static gretlopt sys_ols_opt (const equation_system *sys)
+{
+    if (sys->flags & SYSTEM_ROBUST) {
+	return OPT_R; /* robust */
+    } else {
+	return OPT_A; /* auxiliary */
+    }
+}
+
 static int allocate_Xi_etc (gretl_matrix **Xi,
 			    gretl_matrix **Xj,
 			    gretl_matrix **M,
@@ -833,6 +844,42 @@ static int allocate_Xi_etc (gretl_matrix **Xi,
     } else {
 	return 0;
     }
+}
+
+static int ols_data_to_sys (equation_system *sys, int mk)
+{
+    gretl_matrix *B, *V;
+    MODEL *pmod;
+    double vij;
+    int i, j, k;
+    int mi, mj;
+    int vi, vj;
+
+    B = gretl_matrix_alloc(mk, 1);
+    V = gretl_zero_matrix_new(mk, mk);
+    if (B == NULL || V == NULL) {
+	return E_ALLOC;
+    }
+
+    j = vi = vj = 0;
+    for (i=0; i<sys->neqns; i++) {
+	pmod = sys->models[i];
+	k = pmod->ncoeff;
+	for (mi=0; mi<k; mi++) {
+	    B->val[j++] = pmod->coeff[mi];
+	    for (mj=0; mj<k; mj++) {
+		vij = gretl_model_get_vcv_element(pmod, mi, mj, k);
+		gretl_matrix_set(V, vi+mi, vj+mj, vij);
+	    }
+	}
+	vi += k;
+	vj += k;
+    }
+
+    system_attach_coeffs(sys, B);
+    system_attach_vcv(sys, V);
+
+    return 0;
 }
 
 /* general function that forms the basis for all specific system
@@ -943,7 +990,7 @@ int system_estimate (equation_system *sys, DATASET *dset,
 	}
 
 	if (sys_ols_ok(sys)) {
-	    *pmod = lsq(list, dset, OLS, OPT_A);
+	    *pmod = lsq(list, dset, OLS, sys_ols_opt(sys));
 	} else {
 	    *pmod = tsls(list, dset, sys_tsls_opt(sys));
 	}
@@ -1003,6 +1050,11 @@ int system_estimate (equation_system *sys, DATASET *dset,
 #if SDEBUG > 1
     gretl_matrix_print(sys->S, "gls_sigma_from_uhat");
 #endif
+
+    if (method == SYS_METHOD_OLS && (sys->flags & SYSTEM_ROBUST) && nr == 0) {
+	err = ols_data_to_sys(sys, mk);
+	goto save_etc;
+    }
 
     if (method == SYS_METHOD_WLS) {
 	gretl_matrix_zero(X);
@@ -1186,6 +1238,8 @@ int system_estimate (equation_system *sys, DATASET *dset,
 	/* compute FIML estimates */
 	err = fiml_driver(sys, dset, opt, prn);
     }
+
+ save_etc:
 
     if (!err && !(sys->flags & SYSTEM_LIML1)) {
 	err = system_save_and_print_results(sys, dset, opt, prn);
