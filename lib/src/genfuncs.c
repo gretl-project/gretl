@@ -7608,16 +7608,17 @@ gretl_matrix *select_random_matrix_rows (const gretl_matrix *m,
     for (k=0; k<n; k++) {
 	u = gretl_rand_int_max(n_pool);
 	i = pool[u];
-	/* strike @i out of the selection pool */
+	/* put row @i of @m into row @k of @ret */
+	for (j=0; j<m->cols; j++) {
+	    x = gretl_matrix_get(m, i, j);
+	    gretl_matrix_set(ret, k, j, x);
+	}
+	/* strike row @i out of the selection pool */
 	if (u < n_pool - 1) {
 	    n_tail = n_pool - u - 1;
 	    memmove(pool + u, pool + u + 1, n_tail * sizeof *pool);
 	}
 	n_pool--;
-	for (j=0; j<m->cols; j++) {
-	    x = gretl_matrix_get(m, i, j);
-	    gretl_matrix_set(ret, k, j, x);
-	}
     }
 
     free(pool);
