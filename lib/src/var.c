@@ -2668,8 +2668,8 @@ static int var_add_full_vcv (GRETL_VAR *var)
     gretl_matrix *V;
     MODEL *pmod;
     double vij;
-    int i, j, k, nc;
-    int mi, mj;
+    int i, k, nc;
+    int bi, bj;
     int vi, vj;
     int err = 0;
 
@@ -2679,7 +2679,9 @@ static int var_add_full_vcv (GRETL_VAR *var)
 	return E_ALLOC;
     }
 
-    j = vi = vj = 0;
+    k = var->ncoeff;
+
+    vi = vj = 0;
     for (i=0; i<var->neqns; i++) {
 	pmod = var->models[i];
 	if (pmod->vcv == NULL) {
@@ -2688,11 +2690,10 @@ static int var_add_full_vcv (GRETL_VAR *var)
 		break;
 	    }
 	}
-	k = pmod->ncoeff;
-	for (mi=0; mi<k; mi++) {
-	    for (mj=0; mj<k; mj++) {
-		vij = gretl_model_get_vcv_element(pmod, mi, mj, k);
-		gretl_matrix_set(V, vi+mi, vj+mj, vij);
+	for (bi=0; bi<k; bi++) {
+	    for (bj=0; bj<k; bj++) {
+		vij = gretl_model_get_vcv_element(pmod, bi, bj, k);
+		gretl_matrix_set(V, vi+bi, vj+bj, vij);
 	    }
 	}
 	vi += k;
@@ -2717,7 +2718,7 @@ int gretl_VAR_test (GRETL_VAR *var,
 		    gretlopt opt,
 		    PRN *prn)
 {
-    int dfu, err = 0;
+    int err = 0;
 
     if (rset == NULL) {
 	return E_DATA;
@@ -2737,6 +2738,7 @@ int gretl_VAR_test (GRETL_VAR *var,
 	int c = var->B->cols;
 
 	opt &= ~OPT_W; /* FIXME */
+	/* pass var->B as a column vector */
 	gretl_matrix_reuse(var->B, r*c, 1);
 	err = multi_eqn_wald_test(var->B, var->V, R, q, dfu,
 				  opt, prn);

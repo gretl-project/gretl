@@ -241,8 +241,7 @@ static int get_R_var_column (const gretl_restriction *rset,
 {
     const rrow *r = rset->rows[i];
     GRETL_VAR *var = rset->obj;
-    int col = r->bnum[j];
-    int k, n;
+    int k, col = r->bnum[j];
 
     for (k=0; k<r->eq[j]; k++) {
 	col += var->ncoeff;
