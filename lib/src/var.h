@@ -65,6 +65,7 @@ struct GRETL_VAR_ {
     gretl_matrix *C;     /* augmented Cholesky-decomposed error matrix */
     gretl_matrix *S;     /* cross-equation variance matrix */
     gretl_matrix *F;     /* optional forecast matrix */
+    gretl_matrix *V;     /* full parameter covariance matrix */
     gretl_matrix *ord;   /* optional Cholesky-ordering vector */
     MODEL **models;      /* pointers to individual equation estimates */
     double *Fvals;       /* hold results of F-tests */
@@ -226,6 +227,12 @@ int gretl_VECM_test (GRETL_VAR *vecm,
 		     const DATASET *dset,
 		     gretlopt opt,
 		     PRN *prn);
+
+int gretl_VAR_test (GRETL_VAR *var,
+		    gretl_restriction *rset,
+		    const DATASET *dset,
+		    gretlopt opt,
+		    PRN *prn);
 
 GRETL_VAR *
 real_gretl_restricted_vecm (GRETL_VAR *orig,

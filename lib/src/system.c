@@ -1183,44 +1183,26 @@ static int maybe_get_single_equation_dfu (const equation_system *sys,
    or chi-square version if given OPT_W
 */
 
-static int real_system_wald_test (const equation_system *sys,
-				  const gretl_matrix *b,
-				  const gretl_matrix *vcv,
-				  const gretl_matrix *R,
-				  const gretl_matrix *q,
-				  gretlopt opt,
-				  PRN *prn)
+int multi_eqn_wald_test (const gretl_matrix *b,
+			 const gretl_matrix *V,
+			 const gretl_matrix *R,
+			 const gretl_matrix *q,
+			 int dfu, gretlopt opt,
+			 PRN *prn)
 {
     gretl_matrix *Rbq, *RvR;
-    int Rrows, dfn, dfu = 0;
+    int Rrows, dfn;
     int asy = (opt & OPT_W);
     double test = NADBL;
     int err = 0;
 
-    if (R == NULL) {
-	R = sys->R;
-    }
-
-    if (q == NULL) {
-	q = sys->q;
-    }
-
-    if (R == NULL || q == NULL || b == NULL || vcv == NULL) {
+    if (R == NULL || q == NULL || b == NULL || V == NULL) {
 	pputs(prn, "Missing matrix in system Wald test!\n");
 	return E_DATA;
     }
 
     Rrows = gretl_matrix_rows(R);
-    dfu = system_get_dfu(sys);
     dfn = gretl_matrix_rows(R);
-
-    if (sys->method == SYS_METHOD_OLS || sys->method == SYS_METHOD_TSLS) {
-	dfu = maybe_get_single_equation_dfu(sys, R);
-    }
-
-    if (dfu == 0) {
-	dfu = system_get_dfu(sys);
-    }
 
     Rbq = gretl_matrix_alloc(Rrows, 1);
     RvR = gretl_matrix_alloc(Rrows, Rrows);
@@ -1230,7 +1212,7 @@ static int real_system_wald_test (const equation_system *sys,
     } else {
 	gretl_matrix_multiply(R, b, Rbq);
 	gretl_matrix_subtract_from(Rbq, q);
-	gretl_matrix_qform(R, GRETL_MOD_NONE, vcv,
+	gretl_matrix_qform(R, GRETL_MOD_NONE, V,
 			   RvR, GRETL_MOD_NONE);
 	err = gretl_invert_symmetric_matrix(RvR);
     }
@@ -1270,6 +1252,21 @@ static int real_system_wald_test (const equation_system *sys,
     return err;
 }
 
+static int get_wald_dfu (const equation_system *sys,
+			 const gretl_matrix *R)
+{
+    int dfu = 0;
+
+    if (sys->method == SYS_METHOD_OLS || sys->method == SYS_METHOD_TSLS) {
+	dfu = maybe_get_single_equation_dfu(sys, R);
+    }
+    if (dfu == 0) {
+	dfu = system_get_dfu(sys);
+    }
+
+    return dfu;
+}
+
 int system_wald_test (const equation_system *sys,
 		      const gretl_matrix *R,
 		      const gretl_matrix *q,
@@ -1278,6 +1275,7 @@ int system_wald_test (const equation_system *sys,
 {
     const gretl_matrix *b = sys->b;
     const gretl_matrix *V = sys->vcv;
+    int dfu = get_wald_dfu(sys, R);
 
     if (b == NULL || V == NULL) {
 	gretl_errmsg_set("restrict: no estimates are available");
@@ -1289,7 +1287,7 @@ int system_wald_test (const equation_system *sys,
 	opt &= ~OPT_W;
     }
 
-    return real_system_wald_test(sys, b, V, R, q, opt, prn);
+    return multi_eqn_wald_test(b, V, R, q, dfu, opt, prn);
 }
 
 static int system_do_LR_test (const equation_system *sys,
@@ -1429,8 +1427,10 @@ static int estimate_with_test (equation_system *sys, DATASET *dset,
 	if (stest == SYS_TEST_LR) {
 	    err = system_do_LR_test(sys, llu, opt, prn);
 	} else if (stest == SYS_TEST_F) {
-	    err = real_system_wald_test(sys, b, vcv, NULL, NULL,
-					opt, prn);
+	    int dfu = get_wald_dfu(sys, sys->R);
+
+	    err = multi_eqn_wald_test(b, vcv, sys->R, sys->q,
+				      dfu, opt, prn);
 	}
 	shrink_b_and_vcv(b, sys);
     }

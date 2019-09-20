@@ -30,7 +30,6 @@
 #include "cmd_private.h"
 
 #define RDEBUG 0
-
 #define R_UNSPEC -9
 
 enum {
@@ -232,6 +231,21 @@ static int get_R_vecm_column (const gretl_restriction *rset,
 	if (rset->amulti) {
 	    col += r->eq[j] * gretl_VECM_n_alpha(var);
 	}
+    }
+
+    return col;
+}
+
+static int get_R_var_column (const gretl_restriction *rset,
+			     int i, int j)
+{
+    const rrow *r = rset->rows[i];
+    GRETL_VAR *var = rset->obj;
+    int col = r->bnum[j];
+    int k, n;
+
+    for (k=0; k<r->eq[j]; k++) {
+	col += var->ncoeff;
     }
 
     return col;
@@ -496,6 +510,35 @@ static int sys_form_matrices (gretl_restriction *rset)
     return err;
 }
 
+/* For the VAR case, allocate and fill out the restriction
+   matrices. */
+
+static int var_form_matrices (gretl_restriction *rset)
+{
+    GRETL_VAR *var = rset->obj;
+    int nc = var->neqns * var->ncoeff;
+    int col, i, j;
+    int err = 0;
+
+    if (rset_allocate_R_q(rset, nc)) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<rset->g; i++) {
+	rrow *r = rset->rows[i];
+
+	for (j=0; j<r->nterms; j++) {
+	    col = get_R_var_column(rset, i, j);
+	    gretl_matrix_set(rset->R, i, col, r->mult[j]);
+	}
+	gretl_vector_set(rset->q, i, r->rhs);
+    }
+
+    err = check_R_matrix(rset->R);
+
+    return err;
+}
+
 /* For the VECM case, allocate and fill out the restriction
    matrices. */
 
@@ -658,7 +701,11 @@ static int restriction_set_form_matrices (gretl_restriction *rset)
     } else if (rset->otype == GRETL_OBJ_EQN) {
 	err = equation_form_matrices(rset);
     } else if (rset->otype == GRETL_OBJ_VAR) {
-	err = vecm_form_matrices(rset);
+	if (gretl_VECM_rank(rset->obj) > 0) {
+	    err = vecm_form_matrices(rset);
+	} else {
+	    err = var_form_matrices(rset);
+	}
     } else if (rset->g > 0) {
 	/* mutivariate system */
 	err = sys_form_matrices(rset);
@@ -719,9 +766,17 @@ static int count_ops (const char *p)
     return n;
 }
 
-/* Try to retrieve the coefficient number in a model to be restricted,
-   based on the parameter name.  We attempt this only for
-   single-equation models.
+static int coeff_index_from_scalar (const char *s)
+{
+    int err = 0;
+    double x = gretl_scalar_get_value(s, &err);
+
+    return (err || na(x))? -1 : (int) x;
+}
+
+/* Try to retrieve the coefficient number in a model to be
+   restricted, based on the parameter name, or possibly the
+   name of a scalar variable.
 */
 
 static int
@@ -731,7 +786,7 @@ bnum_from_name (gretl_restriction *r, const DATASET *dset,
     int k = -1;
 
     if (dset == NULL || r->obj == NULL) {
-	gretl_errmsg_set(_("Please give a coefficient number"));
+	;
     } else if (r->otype == GRETL_OBJ_VAR) {
 	GRETL_VAR *var = r->obj;
 	int i, v;
@@ -743,22 +798,23 @@ bnum_from_name (gretl_restriction *r, const DATASET *dset,
 		break;
 	    }
 	}
-	if (k < 0) {
-	    gretl_errmsg_set(_("Please give a coefficient number"));
-	}
     } else if (r->otype == GRETL_OBJ_EQN) {
 	const MODEL *pmod = r->obj;
 
 	k = gretl_model_get_param_number(pmod, dset, s);
-
-	if (k < 0) {
-	    gretl_errmsg_sprintf(_("%s: not a valid parameter name"), s);
-	} else {
+	if (k >= 0) {
 	    /* convert to 1-based for compatibility with numbers read
 	       directly: the index will be converted to 0-base below
 	    */
 	    k++;
 	}
+    }
+
+    if (k < 0) {
+	k = coeff_index_from_scalar(s);
+    }
+    if (k < 0) {
+	gretl_errmsg_sprintf(_("%s: couldn't interpret as coefficient number"), s);
     }
 
 #if RDEBUG
@@ -1407,17 +1463,26 @@ static gretl_restriction *restriction_set_new (void *ptr,
 	rset->bmulti = 1;
     } else if (rset->otype == GRETL_OBJ_VAR) {
 	GRETL_VAR *var = ptr;
+	int r = gretl_VECM_rank(var);
 
-	if (var != NULL && gretl_VECM_rank(var) > 1) {
+	if (r == 0) {
+	    /* a plain VAR */
+	    rset->gmax = var->neqns * var->ncoeff;
 	    rset->bmulti = 1;
-	    rset->amulti = 1;
+	} else {
+	    if (r > 1) {
+		rset->bmulti = 1;
+		rset->amulti = 1;
+	    }
+	    rset->vecm = VECM_B;
+	    rset->gmax = gretl_VECM_n_beta(var) * r;
+	    rset->gmax += gretl_VECM_n_alpha(var) * r;
 	}
-	rset->vecm = VECM_B;
-	rset->gmax = gretl_VECM_n_beta(var) *
-	    gretl_VECM_rank(var);
-	rset->gmax += gretl_VECM_n_alpha(var) *
-	    gretl_VECM_rank(var);
     }
+
+#if RDEBUG
+    fprintf(stderr, "restriction_set_new: rset->gmax = %d\n", rset->gmax);
+#endif
 
     return rset;
 }
@@ -1478,16 +1543,29 @@ static int bnum_out_of_bounds (const gretl_restriction *rset,
 
     if (rset->otype == GRETL_OBJ_VAR) {
 	GRETL_VAR *var = rset->obj;
+	int r = gretl_VECM_rank(var);
 
-	if (i >= gretl_VECM_rank(var)) {
-	    gretl_errmsg_sprintf(_("Coefficient number (%d) is out of range"),
-				 i + 1);
-	} else if ((letter == 'b' && j >= gretl_VECM_n_beta(var)) ||
-		   (letter == 'a' && j >= gretl_VECM_n_alpha(var))) {
-	    gretl_errmsg_sprintf(_("Equation number (%d) is out of range"),
-				 j + 1);
+	if (r == 0) {
+	    if (i >= var->neqns) {
+		gretl_errmsg_sprintf(_("Equation number (%d) is out of range"),
+				     i + 1);
+	    } else if (j >= var->ncoeff) {
+		gretl_errmsg_sprintf(_("Coefficient number (%d) is out of range"),
+				     j + 1);
+	    } else {
+		ret = 0;
+	    }
 	} else {
-	    ret = 0;
+	    if (i >= gretl_VECM_rank(var)) {
+		gretl_errmsg_sprintf(_("Coefficient number (%d) is out of range"),
+				     i + 1);
+	    } else if ((letter == 'b' && j >= gretl_VECM_n_beta(var)) ||
+		       (letter == 'a' && j >= gretl_VECM_n_alpha(var))) {
+		gretl_errmsg_sprintf(_("Equation number (%d) is out of range"),
+				     j + 1);
+	    } else {
+		ret = 0;
+	    }
 	}
     } else if (rset->otype == GRETL_OBJ_SYS) {
 	equation_system *sys = rset->obj;
@@ -1687,7 +1765,6 @@ static int parse_restriction_row (gretl_restriction *rset,
 #endif
 
     row = restriction_set_add_row(rset, nt);
-
     if (row == NULL) {
 	return E_ALLOC;
     }
@@ -2789,7 +2866,11 @@ gretl_restriction_finalize_full (ExecState *state,
     }
 
     if (rset->otype == GRETL_OBJ_VAR) {
-	err = gretl_VECM_test(rset->obj, rset, dset, rset->opt, prn);
+	if (gretl_VECM_rank(rset->obj) > 0) {
+	    err = gretl_VECM_test(rset->obj, rset, dset, rset->opt, prn);
+	} else {
+	    err = gretl_VAR_test(rset->obj, rset, dset, rset->opt, prn);
+	}
     } else if (rset->otype == GRETL_OBJ_SYS) {
 	if (rset->opt & OPT_W) {
 	    err = system_wald_test(rset->obj, rset->R, rset->q, opt, prn);

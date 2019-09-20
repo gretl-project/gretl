@@ -1687,7 +1687,7 @@ int last_model_test_ok (int ci, gretlopt opt, const DATASET *dset,
 
 	err = E_NOTIMP;
 
-	if (ci == RESTRICT && r > 0) {
+	if (ci == RESTRICT) {
 	    err = 0;
 	} else if (ci == FCAST) {
 	    err = 0;

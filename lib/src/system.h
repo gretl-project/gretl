@@ -191,6 +191,13 @@ int
 system_normality_test (const equation_system *sys,
 		       gretlopt opt, PRN *prn);
 
+int multi_eqn_wald_test (const gretl_matrix *b,
+			 const gretl_matrix *V,
+			 const gretl_matrix *R,
+			 const gretl_matrix *q,
+			 int dfu, gretlopt opt,
+			 PRN *prn);
+
 int system_wald_test (const equation_system *sys, 
 		      const gretl_matrix *R,
 		      const gretl_matrix *q,

@@ -1323,8 +1323,6 @@ static int replace_col_scaling (Jwrap *J)
 
 static int reset_null_H (Jwrap *J)
 {
-    fprintf(stderr, "** Doing reset_null_H\n");
-
     J->H0 = J->H;
     gretl_matrix_free(J->h);
     J->H = J->h = NULL;

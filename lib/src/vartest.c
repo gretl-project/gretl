@@ -1,24 +1,24 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
-#include "libgretl.h" 
-#include "var.h"  
+#include "libgretl.h"
+#include "var.h"
 #include "johansen.h"
 #include "vartest.h"
 #include "matrix_extra.h"
@@ -522,7 +522,7 @@ static int univariate_arch_test (GRETL_VAR *var, int order,
     return err;
 }
 
-int gretl_VAR_arch_test (GRETL_VAR *var, int order, 
+int gretl_VAR_arch_test (GRETL_VAR *var, int order,
 			 DATASET *dset, gretlopt opt,
 			 PRN *prn)
 {
@@ -544,8 +544,8 @@ int gretl_VAR_arch_test (GRETL_VAR *var, int order,
     return err;
 }
 
-static void 
-form_C0j (const GRETL_VAR *var, gretl_matrix *C0j, 
+static void
+form_C0j (const GRETL_VAR *var, gretl_matrix *C0j,
 	  gretl_matrix *et, gretl_matrix *ej,
 	  int j)
 {
@@ -569,7 +569,7 @@ form_C0j (const GRETL_VAR *var, gretl_matrix *C0j,
 }
 
 /* See S. Johansen, Likelihood-Based Inference in Cointegrated
-   Vector Autoregressive Models, 1995, pp. 21-22 
+   Vector Autoregressive Models, 1995, pp. 21-22
 */
 
 int VAR_portmanteau_test (GRETL_VAR *var)
@@ -726,7 +726,7 @@ static int lagsel_get_min_lag (int p, int *err)
 
 /* apparatus for selecting the optimal lag length for a VAR */
 
-int VAR_do_lagsel (GRETL_VAR *var, const DATASET *dset, 
+int VAR_do_lagsel (GRETL_VAR *var, const DATASET *dset,
 		   gretlopt opt, PRN *prn)
 {
     gretl_matrix *crittab = NULL;
@@ -788,10 +788,10 @@ int VAR_do_lagsel (GRETL_VAR *var, const DATASET *dset,
 	    gretl_matrix_reuse(var->B, jxcols, n);
 
 	    if (use_QR) {
-		err = gretl_matrix_QR_ols(var->Y, var->X, var->B, 
+		err = gretl_matrix_QR_ols(var->Y, var->X, var->B,
 					  E, NULL, NULL);
 	    } else {
-		err = gretl_matrix_multi_ols(var->Y, var->X, var->B, 
+		err = gretl_matrix_multi_ols(var->Y, var->X, var->B,
 					     E, NULL);
 	    }
 	}
@@ -816,8 +816,8 @@ int VAR_do_lagsel (GRETL_VAR *var, const DATASET *dset,
 	    } else {
 		LRtest = 2.0 * (ll - gretl_matrix_get(lltab, m-1, 0));
 		gretl_matrix_set(lltab, m, 1, chisq_cdf_comp(n * n, LRtest));
-	    }	
-	    
+	    }
+
 	    for (c=0; c<N_IVALS; c++) {
 		gretl_matrix_set(crittab, m, c, crit[c]);
 		if (crit[c] < best[c]) {
@@ -825,7 +825,7 @@ int VAR_do_lagsel (GRETL_VAR *var, const DATASET *dset,
 		    best_row[c] = m;
 		}
 	    }
-	
+
 	    m++; /* increment table row */
 	}
     }
@@ -947,7 +947,7 @@ static gretl_matrix *var_hc_xox (GRETL_VAR *var, int k,
 		}
 		if (hcv == 1) {
 		    xij *= (double) T / (T - g);
-		} 
+		}
 		gretl_matrix_set(XOX, i, j, xij);
 		if (i != j) {
 		    gretl_matrix_set(XOX, j, i, xij);
@@ -1025,15 +1025,13 @@ int VAR_wald_omit_tests (GRETL_VAR *var)
 
     if (V == NULL || C == NULL || b == NULL) {
 	return E_ALLOC;
-    }     
+    }
 
     for (i=0; i<var->neqns && !err; i++) {
 	MODEL *pmod = var->models[i];
 	int ii, jj, jpos, ipos = var->ifc;
 	double w, vij;
 	int F_err = 0;
-
-	gretl_matrix_reuse(V, g, g);
 
 	if (var->robust) {
 	    err = VAR_robust_vcv(var, V, pmod, hcv, i);
@@ -1045,18 +1043,14 @@ int VAR_wald_omit_tests (GRETL_VAR *var)
 	if (err) {
 	    break;
 	}
-	
-	/* set (possibly robust) standard errors */
-	for (j=0; j<g; j++) {
-	    vij = gretl_matrix_get(V, j, j);
-	    pmod->sderr[j] = sqrt(vij);
-	}
 
-	/* exclusion of each var, all lags */
+	/* set the per-model VCV */
+	gretl_model_write_vcv(pmod, V);
 
 	gretl_matrix_reuse(C, p, p);
 	gretl_matrix_reuse(b, p, 1);
 
+	/* exclusion of each var, all lags */
 	for (j=0; j<var->neqns; j++) {
 	    double w = NADBL;
 
@@ -1153,7 +1147,7 @@ const int *gretl_VAR_get_endo_list (const GRETL_VAR *var)
     return (var == NULL)? NULL : var->ylist;
 }
 
-/* Based on the specification stored in the original VAR struct, 
+/* Based on the specification stored in the original VAR struct,
    plus a new exogenous list, constitute a full VAR list.
 */
 
@@ -1197,7 +1191,7 @@ static int gretl_VAR_real_omit_test (const GRETL_VAR *orig,
     if (opt & OPT_T) {
 	/* omitting trend */
 	nr++;
-    }    
+    }
 
     LR = orig->T * (new->ldet - orig->ldet);
     df = orig->neqns * nr;
@@ -1209,7 +1203,7 @@ static int gretl_VAR_real_omit_test (const GRETL_VAR *orig,
 
     print_add_omit_null(omitlist, dset, opt | OPT_S, prn);
 
-    pprintf(prn, "  %s: %s(%d) = %g, ", _("LR test"), 
+    pprintf(prn, "  %s: %s(%d) = %g, ", _("LR test"),
 	    _("Chi-square"), df, LR);
     pprintf(prn, _("with p-value = %g\n"), pval);
 
@@ -1233,14 +1227,14 @@ static int VAR_omit_check (GRETL_VAR *var, const int *omitlist,
     } else if ((opt & OPT_E) && !(var->detflags & DET_SEAS)) {
 	/* can't have the --seasonals option with no auto-seasonals */
 	err = E_BADOPT;
-    }    
+    }
 
     return err;
 }
 
 /**
  * gretl_VAR_omit_test:
- * @var: pointer to original VAR. 
+ * @var: pointer to original VAR.
  * @omitlist: list of variables to omit from original model.
  * @dset: dataset struct.
  * @opt: option flags.
@@ -1251,11 +1245,11 @@ static int VAR_omit_check (GRETL_VAR *var, const int *omitlist,
  * specified in @omitlist, and reports per-equation F-tests
  * and system-wide LR tests for the null hypothesis that
  * the omitted variables have zero parameters.
- * 
+ *
  * Returns: restricted VAR on success, %NULL on error.
  */
 
-GRETL_VAR *gretl_VAR_omit_test (GRETL_VAR *var, const int *omitlist, 
+GRETL_VAR *gretl_VAR_omit_test (GRETL_VAR *var, const int *omitlist,
 				DATASET *dset, gretlopt opt,
 				PRN *prn, int *err)
 {
@@ -1291,7 +1285,7 @@ GRETL_VAR *gretl_VAR_omit_test (GRETL_VAR *var, const int *omitlist,
 	tmplist = gretl_list_copy(var->xlist);
 	if (tmplist == NULL) {
 	    goto bailout;
-	}	
+	}
     }
 
     /* create full input VAR list for test VAR */
@@ -1317,12 +1311,12 @@ GRETL_VAR *gretl_VAR_omit_test (GRETL_VAR *var, const int *omitlist,
 	varopt |= OPT_N;
     }
 
-    /* impose as sample range the estimation range of the 
+    /* impose as sample range the estimation range of the
        original VAR */
     dset->t1 = var->t1;
     dset->t2 = var->t2;
 
-    vnew = gretl_VAR(var->order, var->lags, varlist, dset, 
+    vnew = gretl_VAR(var->order, var->lags, varlist, dset,
 		     varopt, NULL, err);
 
     if (vnew != NULL) {
@@ -1330,7 +1324,7 @@ GRETL_VAR *gretl_VAR_omit_test (GRETL_VAR *var, const int *omitlist,
 	*err = gretl_VAR_real_omit_test(var, vnew, dset, opt, prn);
 	if (!*err && prn != NULL) {
 	    gretl_VAR_print(vnew, dset, OPT_NONE, prn);
-	}	
+	}
     }
 
     /* put back into dset what was there on input */
@@ -1363,7 +1357,7 @@ static int set_wald_R_ones (gretl_matrix *R, int k, int r0, int neq,
 
 /**
  * gretl_VAR_wald_omit_test:
- * @var: pointer to original. 
+ * @var: pointer to original.
  * @omitlist: list of variables to omit from original model.
  * @dset: dataset struct.
  * @opt: option flags.
@@ -1371,12 +1365,12 @@ static int set_wald_R_ones (gretl_matrix *R, int k, int r0, int neq,
  *
  * Runs a Wald test for the joint omission of the exogenous
  * variables specified in @omitlist.
- * 
+ *
  * Returns: 0 on successful completion, non-zero error code
  * otherwise.
  */
 
-int gretl_VAR_wald_omit_test (GRETL_VAR *var, const int *omitlist, 
+int gretl_VAR_wald_omit_test (GRETL_VAR *var, const int *omitlist,
 			      DATASET *dset, gretlopt opt,
 			      PRN *prn)
 {
@@ -1391,7 +1385,7 @@ int gretl_VAR_wald_omit_test (GRETL_VAR *var, const int *omitlist,
     int pos, nr = 0, nx_omit = 0;
     int err = 0;
 
-    if (var == NULL || var->B == NULL || 
+    if (var == NULL || var->B == NULL ||
 	var->S == NULL || var->XTX == NULL) {
 	return E_DATA;
     }
@@ -1450,7 +1444,7 @@ int gretl_VAR_wald_omit_test (GRETL_VAR *var, const int *omitlist,
     row0 = 0;
 
     if (nx_omit > 0) {
-	/* @omitlist holds ID numbers of exog variables */ 
+	/* @omitlist holds ID numbers of exog variables */
 	int vi;
 
 	for (i=1; i<=omitlist[0]; i++) {
@@ -1463,7 +1457,7 @@ int gretl_VAR_wald_omit_test (GRETL_VAR *var, const int *omitlist,
 	    }
 	    set_wald_R_ones(R, j, row0, neq, eqk);
 	    row0 += neq;
-	}	
+	}
     }
     if (opt & OPT_E) {
 	/* omit auto-seasonals */
@@ -1472,7 +1466,7 @@ int gretl_VAR_wald_omit_test (GRETL_VAR *var, const int *omitlist,
 	    set_wald_R_ones(R, j, row0, neq, eqk);
 	    row0 += neq;
 	}
-    }   
+    }
     if (opt & OPT_T) {
 	/* omit auto-trend (comes as last param) */
 	j = eqk - 1;

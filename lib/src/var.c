@@ -28,6 +28,7 @@
 #include "transforms.h"
 #include "gretl_xml.h"
 #include "matrix_extra.h"
+#include "system.h"
 
 #define VDEBUG 0
 
@@ -199,6 +200,7 @@ void gretl_VAR_clear (GRETL_VAR *var)
     var->C = NULL;
     var->S = NULL;
     var->F = NULL;
+    var->V = NULL;
     var->ord = NULL;
 
     var->models = NULL;
@@ -852,6 +854,7 @@ void gretl_VAR_free (GRETL_VAR *var)
     gretl_matrix_free(var->C);
     gretl_matrix_free(var->S);
     gretl_matrix_free(var->F);
+    gretl_matrix_free(var->V);
     gretl_matrix_free(var->ord);
 
     free(var->Fvals);
@@ -2655,6 +2658,89 @@ int gretl_VECM_test (GRETL_VAR *vecm,
 	err = 1;
     } else {
 	err = (*jfun) (vecm, rset, dset, opt, prn);
+    }
+
+    return err;
+}
+
+static int var_add_full_vcv (GRETL_VAR *var)
+{
+    gretl_matrix *V;
+    MODEL *pmod;
+    double vij;
+    int i, j, k, nc;
+    int mi, mj;
+    int vi, vj;
+    int err = 0;
+
+    nc = var->neqns * var->ncoeff;
+    V = gretl_zero_matrix_new(nc, nc);
+    if (V == NULL) {
+	return E_ALLOC;
+    }
+
+    j = vi = vj = 0;
+    for (i=0; i<var->neqns; i++) {
+	pmod = var->models[i];
+	if (pmod->vcv == NULL) {
+	    err = makevcv(pmod, pmod->sigma);
+	    if (err) {
+		break;
+	    }
+	}
+	k = pmod->ncoeff;
+	for (mi=0; mi<k; mi++) {
+	    for (mj=0; mj<k; mj++) {
+		vij = gretl_model_get_vcv_element(pmod, mi, mj, k);
+		gretl_matrix_set(V, vi+mi, vj+mj, vij);
+	    }
+	}
+	vi += k;
+	vj += k;
+    }
+
+    if (err) {
+	gretl_matrix_free(V);
+    } else {
+	var->V = V;
+    }
+
+    return err;
+}
+
+/* called from gretl_restriction_finalize() if the target
+   is a plain VAR */
+
+int gretl_VAR_test (GRETL_VAR *var,
+		    gretl_restriction *rset,
+		    const DATASET *dset,
+		    gretlopt opt,
+		    PRN *prn)
+{
+    int dfu, err = 0;
+
+    if (rset == NULL) {
+	return E_DATA;
+    }
+
+    gretl_error_clear();
+
+    if (var->V == NULL) {
+	err = var_add_full_vcv(var);
+    }
+
+    if (!err) {
+	const gretl_matrix *R = rset_get_R_matrix(rset);
+	const gretl_matrix *q = rset_get_q_matrix(rset);
+	int dfu = var->T - var->ncoeff;
+	int r = var->B->rows;
+	int c = var->B->cols;
+
+	opt &= ~OPT_W; /* FIXME */
+	gretl_matrix_reuse(var->B, r*c, 1);
+	err = multi_eqn_wald_test(var->B, var->V, R, q, dfu,
+				  opt, prn);
+	gretl_matrix_reuse(var->B, r, c);
     }
 
     return err;
