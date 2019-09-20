@@ -52,7 +52,7 @@ struct rrow_ {
 struct gretl_restriction_ {
     int g;                        /* number of restrictions (rows of R) */
     int gmax;                     /* max. possible restrictions */
-    int bmulti;                   /* flag for coeffs need two indices */
+    int bmulti;                   /* flag for case where coeffs need two indices */
     int amulti;                   /* VECM only */
     int gb, ga;                   /* restrictions on beta, alpha (VECM only) */
     int bcols, acols;             /* VECM only */
@@ -78,6 +78,27 @@ struct gretl_restriction_ {
 #define targ_specified(r,i,j,c) (((c=='b' && r->bmulti) || (c=='a' && r->amulti)) \
 				 && r->rows[i]->eq != NULL		\
 				 && r->rows[i]->eq[j] != R_UNSPEC)
+
+static int cross_equation_rset (gretl_restriction *rset)
+{
+    rrow *row;
+    int i, j, eq, eq0 = -1;
+    int ret = 0;
+
+    for (i=0; i<rset->g && !ret; i++) {
+	row = rset->rows[i];
+	for (j=0; j<row->nterms && !ret; j++) {
+	    eq = row->eq[j];
+	    if (eq0 < 0) {
+		eq0 = eq;
+	    } else if (eq != eq0) {
+		ret = 1;
+	    }
+	}
+    }
+
+    return ret;
+}
 
 /* @R is putatively the matrix in R \beta -q = 0.  Check that it makes
    sense in that role, i.e., that RR' is non-singular. */
@@ -810,6 +831,7 @@ bnum_from_name (gretl_restriction *r, const DATASET *dset,
     }
 
     if (k < 0) {
+	/* try for a scalar variable */
 	k = coeff_index_from_scalar(s);
     }
     if (k < 0) {
@@ -1517,18 +1539,18 @@ gretl_restriction *rset_from_VECM (GRETL_VAR *var, int *err)
     return rset;
 }
 
-static int list_get_jmax (const int *list)
+static int list_get_bmax (const int *list)
 {
-    int i, jmax = 0;
+    int i, bmax = 0;
 
     for (i=2; i<=list[0]; i++) {
 	if (list[i] == LISTSEP) {
 	    break;
 	}
-	jmax++;
+	bmax++;
     }
 
-    return jmax;
+    return bmax;
 }
 
 /* check that the coefficients referenced in a restriction are
@@ -1536,7 +1558,7 @@ static int list_get_jmax (const int *list)
    to be restricted */
 
 static int bnum_out_of_bounds (const gretl_restriction *rset,
-			       int i, int j, char letter)
+			       int eq, int bnum, char letter)
 {
     int ret = 1;
 
@@ -1545,40 +1567,41 @@ static int bnum_out_of_bounds (const gretl_restriction *rset,
 	int r = gretl_VECM_rank(var);
 
 	if (r == 0) {
-	    if (i >= var->neqns) {
+	    if (eq >= var->neqns) {
 		gretl_errmsg_sprintf(_("Equation number (%d) is out of range"),
-				     i + 1);
-	    } else if (j >= var->ncoeff) {
+				     eq + 1);
+	    } else if (bnum >= var->ncoeff) {
 		gretl_errmsg_sprintf(_("Coefficient number (%d) is out of range"),
-				     j + 1);
+				     bnum + 1);
 	    } else {
 		ret = 0;
 	    }
 	} else {
-	    if (i >= gretl_VECM_rank(var)) {
+	    /* note: @eq and @bnum are transposed here */
+	    if (eq >= gretl_VECM_rank(var)) {
 		gretl_errmsg_sprintf(_("Coefficient number (%d) is out of range"),
-				     i + 1);
-	    } else if ((letter == 'b' && j >= gretl_VECM_n_beta(var)) ||
-		       (letter == 'a' && j >= gretl_VECM_n_alpha(var))) {
+				     eq + 1);
+	    } else if ((letter == 'b' && bnum >= gretl_VECM_n_beta(var)) ||
+		       (letter == 'a' && bnum >= gretl_VECM_n_alpha(var))) {
 		gretl_errmsg_sprintf(_("Equation number (%d) is out of range"),
-				     j + 1);
+				     bnum + 1);
 	    } else {
 		ret = 0;
 	    }
 	}
     } else if (rset->otype == GRETL_OBJ_SYS) {
 	equation_system *sys = rset->obj;
-	const int *list = system_get_list(sys, i);
+	const int *list = system_get_list(sys, eq);
 
 	if (list == NULL) {
 	    gretl_errmsg_sprintf(_("Equation number (%d) is out of range"),
-				 i + 1);
+				 eq + 1);
 	} else {
-	    int jmax = list_get_jmax(list);
+	    int bmax = list_get_bmax(list);
 
-	    if (j >= jmax) {
+	    if (bnum >= bmax) {
 		gretl_errmsg_sprintf(_("Coefficient number (%d) out of range "
-				       "for equation %d"), j + 1, i + 1);
+				       "for equation %d"), bnum + 1, eq + 1);
 	    } else {
 		ret = 0;
 	    }
@@ -1586,13 +1609,13 @@ static int bnum_out_of_bounds (const gretl_restriction *rset,
     } else {
 	MODEL *pmod = rset->obj;
 
-	if (i > 0) {
+	if (eq > 0) {
 	    gretl_errmsg_sprintf(_("Equation number (%d) is out of range"),
-				 i + 1);
-	} else if (j >= pmod->ncoeff || j < 0) {
+				 eq + 1);
+	} else if (bnum >= pmod->ncoeff || bnum < 0) {
 	    if (!gretl_errmsg_is_set()) {
 		gretl_errmsg_sprintf(_("Coefficient number (%d) is out of range"),
-				     j + 1);
+				     bnum + 1);
 	    }
 	} else {
 	    ret = 0;

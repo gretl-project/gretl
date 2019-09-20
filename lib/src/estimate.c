@@ -2951,6 +2951,7 @@ static double get_BP_LM (MODEL *pmod, int *list, MODEL *aux,
     double V = 0.0, LM = NADBL;
     int t, v = list[1];
 
+    /* note: no df adjustment */
     s2 = pmod->ess / pmod->nobs;
 
     if (opt & OPT_R) {
