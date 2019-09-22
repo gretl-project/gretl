@@ -706,6 +706,10 @@ int block_resample_series (const double *x, double *y, int blocklen,
     return 0;
 }
 
+/* retrieve a pre-sample @x value if it's available via the n-vector
+   @x0, an optional argument to the filter() function.
+*/
+
 static double get_xlag (int lag, int t1, gretl_vector *x0, int n)
 {
     int p = t1 - lag;
@@ -758,7 +762,9 @@ static int filter_vector (const double *x, double *y, int t1, int t2,
 	return E_ALLOC;
     }
 
-    x0len = gretl_vector_get_length(x0);
+    if (x0 != NULL) {
+	x0len = gretl_vector_get_length(x0);
+    }
 
     s = 0;
     if (cmax) {
