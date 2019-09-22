@@ -64,38 +64,42 @@ function string btypestring(int type)
         ret = "wild (Rademacher)"
     elif type == 4
         ret = "wild (Mammen)"
+    elif type == 5
+        ret = "MBB (moving blocks)"
     endif
 
     return ret
 end function
 
 function scalar boottypecode(string btypestr)
-		ret = 0
-		string s = tolower(btypestr) # case insensitive
-		if s == "resampling" || s == "resample"
-				ret = 1
-		elif s == "wildn" || s == "wild"
-				ret = 2
-		elif s == "wildr"
-				ret = 3
-		elif s == "wildm"
-				ret = 4
-		endif
-		return ret
-end function 
+    ret = 0
+    string s = tolower(btypestr) # case insensitive!
+    if s == "resampling" || s == "resample"
+        ret = 1
+    elif s == "wildn" || s == "wild"
+        ret = 2
+    elif s == "wildr"
+        ret = 3
+    elif s == "wildm"
+        ret = 4
+    elif s == "mbb" || s == "moving blocks"
+		ret = 5
+    endif
+    return ret
+end function
 
 function string BCstring(int level)
-		string ret = ""
-		if level == 0
-				ret = "none"
-		elif level == 1
-				ret = "partial"
-		elif level == 2
-				ret = "full"
-		endif 
-		return ret 
-end function		
-		
+    string ret = ""
+    if level == 0
+        ret = "none"
+    elif level == 1
+        ret = "partial"
+    elif level == 2
+        ret = "full"
+    endif
+    return ret
+end function
+
 
 function matrix set_default_dimensions(bundle *mod, list lY,
                                        list lX[null], int varorder)
