@@ -2894,10 +2894,15 @@ gretl_restriction_finalize_full (ExecState *state,
 	    err = gretl_VAR_test(rset->obj, rset, dset, rset->opt, prn);
 	}
     } else if (rset->otype == GRETL_OBJ_SYS) {
-	if (rset->opt & OPT_W) {
-	    err = system_wald_test(rset->obj, rset->R, rset->q, opt, prn);
+	equation_system *sys = rset->obj;
+
+	if (sys->flags & SYSTEM_ROBUST) {
+	    /* for now, we'll only do a Wald test */
+	    err = system_wald_test(sys, rset->R, rset->q, opt, prn);
+	} else if (rset->opt & OPT_W) {
+	    err = system_wald_test(sys, rset->R, rset->q, opt, prn);
 	} else {
-	    system_set_restriction_matrices(rset->obj, rset->R, rset->q);
+	    system_set_restriction_matrices(sys, rset->R, rset->q);
 	    rset->R = NULL;
 	    rset->q = NULL;
 	}
