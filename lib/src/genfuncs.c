@@ -706,14 +706,29 @@ int block_resample_series (const double *x, double *y, int blocklen,
     return 0;
 }
 
+static double get_xlag (int lag, int t1, gretl_vector *x0, int n)
+{
+    int p = t1 - lag;
+    int i = n - p;
+
+    if (i >= 0 && i < n) {
+	return x0->val[i];
+    } else {
+	return 0;
+    }
+}
+
 /* implements filter_series() and filter_matrix() */
 
 static int filter_vector (const double *x, double *y, int t1, int t2,
-			  gretl_vector *A, gretl_vector *C, double y0)
+			  gretl_vector *A, gretl_vector *C, double y0,
+			  gretl_vector *x0)
 {
     int t, s, i, n;
     int amax, cmax;
-    double xlag, coef, *e;
+    double xlag, ylag;
+    double coef, *e;
+    int x0len = 0;
     int err = 0;
 
     if (gretl_is_null_matrix(C)) {
@@ -743,12 +758,20 @@ static int filter_vector (const double *x, double *y, int t1, int t2,
 	return E_ALLOC;
     }
 
+    x0len = gretl_vector_get_length(x0);
+
     s = 0;
     if (cmax) {
 	for (t=t1; t<=t2; t++) {
 	    e[s] = 0;
 	    for (i=0; i<cmax; i++) {
-		xlag = (t-i >= t1)? x[t-i] : 0;
+		if (t-i >= t1) {
+		    xlag = x[t-i];
+		} else if (x0 == NULL) {
+		    xlag = 0;
+		} else {
+		    xlag = get_xlag(t-i, t1, x0, x0len);
+		}
 		if (na(xlag)) {
 		    e[s] = NADBL;
 		    break;
@@ -774,13 +797,13 @@ static int filter_vector (const double *x, double *y, int t1, int t2,
 	    } else {
 		y[t] = e[s];
 		for (i=0; i<amax; i++) {
-		    xlag = (t-i>t1)? y[t-i-1] : y0;
-		    if (na(xlag)) {
+		    ylag = (t-i > t1)? y[t-i-1] : y0;
+		    if (na(ylag)) {
 			y[t] = NADBL;
 			break;
 		    } else {
 			coef = gretl_vector_get(A, i);
-			y[t] += coef * xlag;
+			y[t] += coef * ylag;
 		    }
 		}
 	    }
@@ -805,6 +828,7 @@ static int filter_vector (const double *x, double *y, int t1, int t2,
  * @A: vector for autoregressive polynomial.
  * @C: vector for moving average polynomial.
  * @y0: initial value of output series.
+ * @x0: prior values of x.
  *
  * Filters x according to y_t = C(L)/A(L) x_t.  If the intended
  * AR order is p, @A should be a vector of length p.  If the
@@ -817,7 +841,8 @@ static int filter_vector (const double *x, double *y, int t1, int t2,
  */
 
 int filter_series (const double *x, double *y, const DATASET *dset,
-		   gretl_vector *A, gretl_vector *C, double y0)
+		   gretl_vector *A, gretl_vector *C,
+		   double y0, gretl_vector *x0)
 {
     int t1 = dset->t1;
     int t2 = dset->t2;
@@ -826,7 +851,7 @@ int filter_series (const double *x, double *y, const DATASET *dset,
     err = series_adjust_sample(x, &t1, &t2);
 
     if (!err) {
-	err = filter_vector(x, y, t1, t2, A, C, y0);
+	err = filter_vector(x, y, t1, t2, A, C, y0, x0);
     }
 
     return err;
@@ -838,6 +863,7 @@ int filter_series (const double *x, double *y, const DATASET *dset,
  * @A: vector for autoregressive polynomial.
  * @C: vector for moving average polynomial.
  * @y0: initial value of output series.
+ * @x0: prior values of x.
  * @err: location to receive error code.
  *
  * Filters the columns of x according to y_t = C(L)/A(L) x_t.  If the
@@ -852,7 +878,7 @@ int filter_series (const double *x, double *y, const DATASET *dset,
 
 gretl_matrix *filter_matrix (gretl_matrix *X, gretl_vector *A,
 			     gretl_vector *C, double y0,
-			     int *err)
+			     gretl_matrix *x0, int *err)
 {
     int r = X->rows;
     int c = X->cols;
@@ -880,7 +906,7 @@ gretl_matrix *filter_matrix (gretl_matrix *X, gretl_vector *A,
 	for (i=0; i<r; i++) {
 	    a[i] = gretl_matrix_get(X, i, j);
 	}
-	*err = filter_vector(a, b, 0, r-1, A, C, y0);
+	*err = filter_vector(a, b, 0, r-1, A, C, y0, x0);
 	if (*err) {
 	    break;
 	} else {
@@ -7625,3 +7651,51 @@ gretl_matrix *select_random_matrix_rows (const gretl_matrix *m,
 
     return ret;
 }
+
+#if 0
+
+gretl_matrix *select_random_matrix_rows2 (const gretl_matrix *m,
+					  int n, int *err)
+{
+    gretl_matrix *ret = NULL;
+    gretl_matrix *U = NULL;
+    gretl_matrix *R = NULL;
+    double x;
+    int i, j, k;
+
+    if (n <= 0 || n > m->rows) {
+	*err = E_DATA;
+	gretl_errmsg_sprintf(_("Invalid number of cases %d"), n);
+	return NULL;
+    }
+
+    U = gretl_random_matrix_new(m->rows, 1, D_UNIFORM);
+    if (U == NULL) {
+	*err = E_ALLOC;
+    } else {
+	R = rank_vector(U, F_SORT, err);
+    }
+
+    if (!*err) {
+	ret = gretl_matrix_alloc(n, m->cols);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    for (k=0; k<n; k++) {
+	i = (int) R->val[k];
+	/* put row @i of @m into row @k of @ret */
+	for (j=0; j<m->cols; j++) {
+	    x = gretl_matrix_get(m, i, j);
+	    gretl_matrix_set(ret, k, j, x);
+	}
+    }
+
+    gretl_matrix_free(U);
+    gretl_matrix_free(R);
+
+    return ret;
+}
+
+#endif

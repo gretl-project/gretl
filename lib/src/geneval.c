@@ -12368,14 +12368,15 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    p->err = bkbp_filter(x, ret->v.xvec, p->dset, bk[0], bk[1], bk[2]);
 	}
     } else if (t->t == F_FILTER) {
-	const double *x = NULL;
+	const double *x = NULL; /* series */
 	gretl_matrix *X = NULL;
 	gretl_matrix *C = NULL;
 	gretl_matrix *A = NULL;
+	gretl_matrix *x0 = NULL;
 	double y0 = 0;
 
-	if (k < 1 || k > 4) {
-	    n_args_error(k, 4, t->t, p);
+	if (k < 1 || k > 5) {
+	    n_args_error(k, 5, t->t, p);
 	}
 
 	for (i=0; i<k && !p->err; i++) {
@@ -12406,14 +12407,21 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		    A = node_get_real_matrix(e, p, 1, 3);
 		}
 	    } else if (i == 3) {
-		/* initial (scalar) value for output series */
-		if (!scalar_node(e)) {
+		/* initial (optional scalar) value for output series */
+		if (e->t != EMPTY && !scalar_node(e)) {
 		    node_type_error(t->t, i+1, NUM, e, p);
-		} else {
+		} else if (e->t != EMPTY) {
 		    y0 = node_get_scalar(e, p);
 		    if (!p->err && na(y0)) {
 			p->err = E_MISSDATA;
 		    }
+		}
+	    } else if (i == 4) {
+		/* optional pre-sample x vector */
+		if (e->t != MAT && e->t != NUM && e->t != EMPTY) {
+		    node_type_error(t->t, i+1, MAT, e, p);
+		} else if (e->t != EMPTY) {
+		    x0 = node_get_real_matrix(e, p, 1, 5);
 		}
 	    }
 	}
@@ -12424,13 +12432,14 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 		/* matrix output wanted */
 		ret = aux_matrix_node(p);
 		if (!p->err) {
-		    ret->v.m = filter_matrix(X, A, C, y0, &(p->err));
+		    ret->v.m = filter_matrix(X, A, C, y0, x0, &p->err);
 		}
 	    } else if (x != NULL) {
 		/* series output */
 		ret = aux_series_node(p);
 		if (!p->err) {
-		    p->err = filter_series(x, ret->v.xvec, p->dset, A, C, y0);
+		    p->err = filter_series(x, ret->v.xvec, p->dset,
+					   A, C, y0, x0);
 		}
 	    }
 	}

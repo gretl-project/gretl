@@ -543,15 +543,63 @@ get_estimates (const char *fname, MODEL *pmod, arma_info *ainfo)
     return err;
 }
 
+/* On the first pass below we read the in-sample residuals and
+   write to @n_pre the count of pre-sample estimated innovations,
+   if any. On the second pass (if applicable) we pick up the
+   pre-sample values then stop.
+*/
+
+static int read_rsd (double *uh, FILE *fp,
+		     const DATASET *dset,
+		     int *n_pre)
+{
+    char line[64], date[9];
+    int read_pre = (n_pre == NULL);
+    int t, k, start = 0;
+    int nobs = 0;
+    double x;
+
+    k = 0;
+    while (fgets(line, sizeof line, fp)) {
+	if (*line == '-') {
+	    start = 1;
+	    continue;
+	}
+	if (start && sscanf(line, "%s %lf", date, &x) == 2) {
+	    t = x12_date_to_n(date, dset);
+	    if (t < 0) {
+		/* pre-sample */
+		if (read_pre) {
+		    /* pass 2: writing pre-sample values */
+		    uh[k++] = x;
+		} else {
+		    /* pass 1: testing for pre-sample values */
+		    *n_pre += 1;
+		}
+	    } else if (read_pre) {
+		break;
+	    }
+	    if (t >= 0 && t < dset->n) {
+		uh[t] = x;
+		nobs++;
+	    }
+	}
+    }
+
+    return nobs;
+}
+
 /* Parse the residuals from the x12a output file foo.rsd */
 
 static int
 get_uhat (const char *fname, MODEL *pmod, const DATASET *dset)
 {
+    gretl_matrix *pre_innov = NULL;
     FILE *fp;
     char line[64], date[9];
     double x;
     int t, start = 0, nobs = 0;
+    int n_pre = 0;
     int err = 0;
 
     fp = gretl_fopen(fname, "r");
@@ -562,22 +610,19 @@ get_uhat (const char *fname, MODEL *pmod, const DATASET *dset)
 
     gretl_push_c_numeric_locale();
 
-    while (fgets(line, sizeof line, fp)) {
-	if (*line == '-') {
-	    start = 1;
-	    continue;
-	}
-	if (start && sscanf(line, "%s %lf", date, &x) == 2) {
-	    t = x12_date_to_n(date, dset);
-	    if (t >= 0 && t < dset->n) {
-		pmod->uhat[t] = x;
-		nobs++;
-	    }
+    nobs = read_rsd(pmod->uhat, fp, dset, &n_pre);
+
+    if (nobs > 0 && n_pre > 0) {
+	pre_innov = gretl_matrix_alloc(n_pre, 1);
+	if (pre_innov != NULL) {
+	    rewind(fp);
+	    read_rsd(pre_innov->val, fp, dset, NULL);
+	    gretl_model_set_data(pmod, "pre_innov", pre_innov,
+				 GRETL_TYPE_MATRIX, 0);
 	}
     }
 
     gretl_pop_c_numeric_locale();
-
     fclose(fp);
 
     if (nobs == 0) {

@@ -55,10 +55,11 @@ gretl_matrix *boxcox_matrix (const gretl_matrix *m, double d,
 			     int *err);
 
 int filter_series (const double *x, double *y, const DATASET *dset,
-		   gretl_matrix *A, gretl_matrix *C, double y0);
+		   gretl_matrix *A, gretl_matrix *C,
+		   double y0, gretl_matrix *x0);
 
 gretl_matrix *filter_matrix (gretl_matrix *X, gretl_vector *A, gretl_vector *C,
-			     double y0, int *err);
+			     double y0, gretl_matrix *x0, int *err);
 
 int exponential_movavg_series (const double *x, double *y,
 			       const DATASET *dset,
