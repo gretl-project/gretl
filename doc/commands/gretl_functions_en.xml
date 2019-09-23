@@ -3904,6 +3904,7 @@
 	<fnarg optional="true" type="scalar-or-vec">a</fnarg>
 	<fnarg optional="true" type="scalar-or-vec">b</fnarg>
 	<fnarg optional="true" type="scalar">y0</fnarg>
+	<fnarg optional="true" type="scalar-or-vec">x0</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -3957,9 +3958,12 @@
 	<para>
 	  The optional scalar argument <argname>y0</argname> is taken
 	  to represent all values of <math>y</math> prior to the
-	  beginning of sample (used only when <math>p>0</math>). If
-	  omitted, it is understood to be 0.  Pre-sample values of
-	  <argname>x</argname> are always assumed zero.
+	  beginning of sample (used only when <math>p > 0</math>). If
+	  omitted, it is understood to be 0. Similarly, the optional
+	  argument <argname>x0</argname> may be used to specify one or
+	  more pre-sample values of <math>x</math>, information that
+	  is relevant only when <math>q > 0</math>.  Otherwise
+	  pre-sample values of <math>x</math> are assumed to be zero.
 	</para>
 	<para>
 	  <seelist>
