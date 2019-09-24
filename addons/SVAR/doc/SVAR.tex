@@ -2265,9 +2265,9 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   Plots on screen the Forecast Error Variance Decomposition for a
   variable. Its arguments are:
   \begin{enumerate}
-  \item a bundle holding the model
-  \item the progressive number of the variable (0 means all)
-  \item the position of the legend, if any (optional; default = right).
+  \item A bundle holding the model.
+  \item The progressive number of the variable (0 means all).
+  \item The position of the legend, if any (optional; default = right).
   \end{enumerate}
 \end{funcdoc}
 
@@ -2276,10 +2276,10 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   graphic file, whose format is identified by its extension. Its
   arguments are:
   \begin{enumerate}
-  \item The graphic file name
-  \item a bundle holding the model
-  \item the progressive number of the variable (0 means all)
-  \item the position of the legend, if any (optional; default = right).
+  \item The graphic file name.
+  \item A bundle holding the model.
+  \item The progressive number of the variable (0 means all).
+  \item The position of the legend, if any (optional; default = right).
   \end{enumerate}
 \end{funcdoc}
 
@@ -2296,8 +2296,8 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   Plots on screen the Historical Decomposition for a variable. Its
   arguments are:
   \begin{enumerate}
-  \item a bundle holding the model
-  \item the progressive number of the variable (0 means all)
+  \item A bundle holding the model.
+  \item The progressive number of the variable (0 means all).
   \end{enumerate}
 \end{funcdoc}
 
@@ -2305,20 +2305,20 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   Saves the Historical Decomposition for a variable to a graphic file,
   whose format is identified by its extension. Its arguments are:
   \begin{enumerate}
-  \item The graphic file name
-  \item a bundle holding the model
-  \item the progressive number of the variable (0 means all)
+  \item The graphic file name.
+  \item A bundle holding the model.
+  \item The progressive number of the variable (0 means all).
   \end{enumerate}
 \end{funcdoc}
 
 \begin{funcdoc}{IRFplot(bundle *obj, int snum, int vnum, int keypos[0:2:1])}
   Plots an impulse response function on screen. Its arguments are:
   \begin{enumerate}
-  \item a bundle holding the model
-  \item the progressive number of the shock (may be negative, in which
-    case the IRF is flipped)
-  \item the progressive number of the variable
-  \item the position of the legend, if any (optional; default = right).
+  \item A bundle holding the model
+  \item The progressive number of the shock (may be negative, in which
+    case the IRF is flipped).
+  \item The progressive number of the variable.
+  \item The position of the legend, if any (optional; default = right).
   \end{enumerate}
 \end{funcdoc}
 
@@ -2326,54 +2326,56 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   Saves an impulse response function to a graphic file, whose format is
   identified by its extension. Its arguments are:
   \begin{enumerate}
-  \item The graphic file name
-  \item a bundle holding the model
-  \item the progressive number of the shock (may be negative, in which
-    case the IRF is flipped)
-  \item the progressive number of the variable
+  \item The graphic file name.
+  \item A bundle holding the model.
+  \item The progressive number of the shock (may be negative, in which
+    case the IRF is flipped).
+  \item The progressive number of the variable.
   \end{enumerate}
 \end{funcdoc}
 
 \begin{funcdoc}{SVAR\_boot(bundle *obj, int rep[0::2000], scalar alpha[0:1:0.9], bool
-    quiet[1], string btypestr[null], int biascorr[-1:2:-1])}
+    quiet[1],\\
+    string btypestr[null], int biascorr[-1:2:-1])}
   Perform a bootstrap analysis of a model. Returns the number of
   bootstrap replications in which the model failed to converge. Its
   arguments are:
   \begin{enumerate}
-  \item a bundle holding the model (pointer form)
-  \item (optional) the number of bootstrap replications (default: 2000)
-  \item (optional) the coverage probability used for the confidence bands (e.g. 
-    for 0.90 the 0.05 and 0.95 quantiles will be used; default: 0.9) 
-  \item (optional) omit the table with bootstrap means and standard
-    errors (default: yes) 
-  \item (optional) the choice of bootstrap type, can be "resampling", one 
-    of the wild variants: "wildN" (with "wild" as an alias), "wildR", or "wildM", 
-    or "MBB" for moving blocks; 
-    the default is to leave the choice in the model as-is
-  
-  \item (optional) bias correction choice: 0 for none, 1 for partial, 2 for full; to leave the 
-    setting as is in the model simply omit the argument (default -1) 
+  \item A bundle holding the model (pointer form).
+  \item (Optional) the number of bootstrap replications (default: 2000).
+  \item (Optional) the coverage probability used for the confidence bands (e.g.\ 
+    for 0.90 the 0.05 and 0.95 quantiles will be used; default: 0.9).
+  \item (Optional) omit the table with bootstrap means and standard
+    errors (default: yes).
+  \item (Optional) the choice of bootstrap type: can be any one of
+    ``resampling'', one of the wild variants---namely ``wildN'' (with
+    ``wild'' as an alias), ``wildR'' or ``wildM''---or ``MBB'' for
+    moving blocks. The default is to leave the choice in the model
+    as-is.
+  \item (Optional) bias correction choice: 0 for none, 1 for partial,
+    2 for full; the default value of $-1$ preserves whatever setting
+    is the model.
   \end{enumerate}
-  Note that the bias correction
-  option currently only applies to non-SVEC models.
+  Note that the bias correction option currently only applies to
+  non-SVEC models.
 \end{funcdoc}
 
 \begin{funcdoc}{SVAR\_coint(bundle *obj, int dcase[1:5:3],
-			   matrix jbeta, matrix jalpha[null],
+			   matrix jbeta, matrix jalpha[null],\\
 			   bool verbose[0]), list rexo[null]}
   Sets up a SVEC model for subsequent estimation. Its arguments are:
   \begin{enumerate}
-  \item a bundle holding the model
-  \item a code for the constant/trend combination (1 to 5, as per
-    Johansen; default 3)
-  \item the cointegration matrix (required)
-  \item the loading matrix (optional, will be estimated via OLS if omitted
-  or empty)
-  \item an optional verbosity switch (default 0)
-  \item (currently unused: list of further restricted exogenous variables)
+  \item A bundle holding the model.
+  \item A code for the constant/trend combination (1 to 5, as per
+    Johansen; default 3).
+  \item The cointegration matrix (required).
+  \item The loadings matrix (optional, will be estimated via OLS if
+    omitted or empty).
+  \item An optional verbosity switch (default 0).
+  \item (Currently unused: list of further restricted exogenous
+    variables)
   \end{enumerate}
 \end{funcdoc}
-
 
 \begin{funcdoc}{SVAR\_cumulate(bundle *b, int nv)}
   Stores into the model the fact that the cumulated IRFs for
@@ -2384,10 +2386,12 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
 \begin{funcdoc}{SVAR\_estimate(bundle *obj, int verbosity[1])}
   Estimates the model by maximum likelihood. Its second argument is a
   scalar, which controls the verbosity of output. If omitted,
-  output is printed.\\
-  Since v1.4 the identification check is called automatically before the estimation 
-  of the structural form, unless this has been explicitly suppressed in SVAR\_setup
-  (or by manually setting obj.checkident to 0).  
+  output is printed.
+  
+  Since v1.4 the identification check is called automatically before
+  the estimation of the structural form, unless this has been
+  explicitly suppressed in \texttt{SVAR\_setup} (or by manually
+  setting \texttt{obj.checkident} to 0).
 \end{funcdoc}
 
 \begin{funcdoc}{SVAR\_hd(bundle *b, int nv)}
@@ -2415,7 +2419,7 @@ Sets up constraints for an existing model. The function which takes at
 most five arguments:
 \begin{enumerate}
 \item A pointer to the model for which we want to set up the
-  restriction(s)
+  restriction(s).
 \item A code for which type of restriction we want: 
   \begin{description}
   \item[\texttt{"C"}] Applicable to C models. Used for short-run
@@ -2431,24 +2435,26 @@ most five arguments:
   \item[\texttt{"Bdiag"}] Applicable to AB models. Used for constraints on
     the whole diagonal of the $B$ matrix (see below).
   \end{description}
-\item An integer:
+\item An integer whose interpretation depends on the restriction type:
   \begin{description}
-  \item[case 1]: applies to the codes \texttt{"C"}, \texttt{"lrC"},
-    \texttt{"A"} and \texttt{"B"}. Indicates the row of the restricted element.
-  \item[case 2]: applies to the codes \texttt{"Adiag"} and
-    \texttt{"Bdiag"}. Indicates what kind of restriction is to be
-    placed on the diagonal: any valid scalar indicates that the
-    diagonal of $A$ (or $B$) is set to that value. Almost invariably,
-    this is used with the value 1. IMPORTANT: if this argument is
-    \texttt{NA}, all \emph{non-diagonal} elements are constrained to
-    0, while diagonal elements are left unrestricted.
+  \item[Case 1] applies to codes \texttt{"C"}, \texttt{"lrC"},
+    \texttt{"A"} and \texttt{"B"}. The argument indicates the row of
+    the restricted element.
+  \item[Case 2] applies to codes \texttt{"Adiag"} and
+    \texttt{"Bdiag"}. The argument specifies what kind of restriction
+    is to be placed on the diagonal: any valid scalar indicates that
+    the diagonal of $A$ (or $B$) is set to that value. Almost
+    invariably, this is used with the value 1. IMPORTANT: if this
+    argument is \texttt{NA}, all \emph{non-diagonal} elements are
+    constrained to 0, while diagonal elements are left unrestricted.
   \end{description}
 \item An integer: the column of the restricted element, for the codes
   \texttt{"C"}, \texttt{"lrC"}, \texttt{"A"} and
   \texttt{"B"}. Otherwise, unused and can then be omitted.
 \item A scalar: for the codes \texttt{"C"}, \texttt{"lrC"},
-  \texttt{"A"} and \texttt{"B"}, the fixed value the matrix element
-  should be set to (may be omitted if 0). Otherwise, unused and can then be omitted.
+  \texttt{"A"} and \texttt{"B"}, the fixed value to which the matrix
+  element should be set (may be omitted if 0). Otherwise, unused and
+  can then be omitted.
 \end{enumerate}
 
 A few examples: 
@@ -2479,11 +2485,11 @@ a warning will be printed.
   arguments are:
   \begin{enumerate}
   \item A type string: at the moment, valid values are \texttt{"C"},
-    \texttt{"plain"} and \texttt{"AB"};
-  \item a list containing the endogenous variables;
-  \item a list containing the exogenous variables;
-  \item a positive integer, the VAR order;
-  \item a switch to activate or suppress the automatic identification check before 
+    \texttt{"plain"} and \texttt{"AB"}.
+  \item A list containing the endogenous variables.
+  \item A list containing the exogenous variables.
+  \item A positive integer, the VAR order.
+  \item A switch to activate or suppress the automatic identification check before 
   estimation of the structural form (default on).
   \end{enumerate}
 \end{funcdoc}
