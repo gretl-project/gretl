@@ -1180,19 +1180,18 @@ static int maybe_get_single_equation_dfu (const equation_system *sys,
 
    (1/J) * (Rb-q)' * [R*Var(b)*R']^{-1} * (Rb-q)
 
-   or chi-square version if given OPT_W
+   or chi-square version if @dfd = 0.
 */
 
 int multi_eqn_wald_test (const gretl_matrix *b,
 			 const gretl_matrix *V,
 			 const gretl_matrix *R,
 			 const gretl_matrix *q,
-			 int dfu, gretlopt opt,
+			 int dfd, gretlopt opt,
 			 PRN *prn)
 {
     gretl_matrix *Rbq, *RvR;
     int Rrows, dfn;
-    int asy = (opt & OPT_W);
     double test = NADBL;
     int err = 0;
 
@@ -1224,23 +1223,23 @@ int multi_eqn_wald_test (const gretl_matrix *b,
     if (!err) {
 	double pval;
 
-	if (asy) {
+	if (dfd == 0) {
 	    pval = chisq_cdf_comp(dfn, test);
 	} else {
 	    test /= dfn;
-	    pval = snedecor_cdf_comp(dfn, dfu, test);
+	    pval = snedecor_cdf_comp(dfn, dfd, test);
 	}
 
 	record_test_result(test, pval);
 
 	if (!(opt & OPT_Q)) {
-	    if (asy) {
+	    if (dfd == 0) {
 		pprintf(prn, "%s:\n", _("Wald test for the specified restrictions"));
 		pprintf(prn, "  %s(%d) = %g [%.4f]\n", _("Chi-square"),
 			dfn, test, pval);
 	    } else {
 		pprintf(prn, "%s:\n", _("F test for the specified restrictions"));
-		pprintf(prn, "  F(%d,%d) = %g [%.4f]\n", dfn, dfu, test, pval);
+		pprintf(prn, "  F(%d,%d) = %g [%.4f]\n", dfn, dfd, test, pval);
 	    }
 	    pputc(prn, '\n');
 	}
@@ -1252,7 +1251,7 @@ int multi_eqn_wald_test (const gretl_matrix *b,
     return err;
 }
 
-static int get_wald_dfu (const equation_system *sys,
+static int get_wald_dfd (const equation_system *sys,
 			 const gretl_matrix *R)
 {
     int dfu = 0;
@@ -1275,7 +1274,7 @@ int system_wald_test (const equation_system *sys,
 {
     const gretl_matrix *b = sys->b;
     const gretl_matrix *V = sys->vcv;
-    int dfu = get_wald_dfu(sys, R);
+    int dfd = get_wald_dfd(sys, R);
 
     if (b == NULL || V == NULL) {
 	gretl_errmsg_set("restrict: no estimates are available");
@@ -1287,7 +1286,7 @@ int system_wald_test (const equation_system *sys,
 	opt &= ~OPT_W;
     }
 
-    return multi_eqn_wald_test(b, V, R, q, dfu, opt, prn);
+    return multi_eqn_wald_test(b, V, R, q, dfd, opt, prn);
 }
 
 static int system_do_LR_test (const equation_system *sys,
@@ -1427,10 +1426,10 @@ static int estimate_with_test (equation_system *sys, DATASET *dset,
 	if (stest == SYS_TEST_LR) {
 	    err = system_do_LR_test(sys, llu, opt, prn);
 	} else if (stest == SYS_TEST_F) {
-	    int dfu = get_wald_dfu(sys, sys->R);
+	    int dfd = get_wald_dfd(sys, sys->R);
 
 	    err = multi_eqn_wald_test(b, vcv, sys->R, sys->q,
-				      dfu, opt, prn);
+				      dfd, opt, prn);
 	}
 	shrink_b_and_vcv(b, sys);
     }
@@ -2950,14 +2949,13 @@ system_parse_line (equation_system *sys, const char *line,
     return err;
 }
 
-void
-system_set_restriction_matrices (equation_system *sys,
-				 gretl_matrix *R, gretl_matrix *q)
+void system_attach_restriction (equation_system *sys,
+				gretl_restriction *rset)
 {
     system_clear_restrictions(sys);
 
-    sys->R = R;
-    sys->q = q;
+    sys->R = rset_get_R_matrix(rset);
+    sys->q = rset_get_q_matrix(rset);
 
     sys->flags |= SYSTEM_RESTRICT;
 }
@@ -2965,7 +2963,8 @@ system_set_restriction_matrices (equation_system *sys,
 double *
 equation_system_get_series (const equation_system *sys,
 			    const DATASET *dset,
-			    int idx, const char *key, int *err)
+			    int idx, const char *key,
+			    int *err)
 {
     const gretl_matrix *M = NULL;
     double *x = NULL;

@@ -2733,14 +2733,13 @@ int gretl_VAR_test (GRETL_VAR *var,
     if (!err) {
 	const gretl_matrix *R = rset_get_R_matrix(rset);
 	const gretl_matrix *q = rset_get_q_matrix(rset);
-	int dfu = var->T - var->ncoeff;
+	int dfd = var->T - var->ncoeff;
 	int r = var->B->rows;
 	int c = var->B->cols;
 
-	opt &= ~OPT_W; /* FIXME */
 	/* pass var->B as a column vector */
 	gretl_matrix_reuse(var->B, r*c, 1);
-	err = multi_eqn_wald_test(var->B, var->V, R, q, dfu,
+	err = multi_eqn_wald_test(var->B, var->V, R, q, dfd,
 				  opt, prn);
 	gretl_matrix_reuse(var->B, r, c);
     }

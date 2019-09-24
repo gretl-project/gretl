@@ -50,49 +50,54 @@ struct rrow_ {
 };
 
 struct gretl_restriction_ {
-    int g;                        /* number of restrictions (rows of R) */
-    int gmax;                     /* max. possible restrictions */
-    int bmulti;                   /* flag for case where coeffs need two indices */
-    int amulti;                   /* VECM only */
-    int gb, ga;                   /* restrictions on beta, alpha (VECM only) */
-    int bcols, acols;             /* VECM only */
-    int vecm;                     /* pertains to VECM beta or alpha? */
-    gretl_matrix *R;              /* LHS restriction matrix */
-    gretl_matrix *q;              /* RHS restriction matrix */
-    gretl_matrix *Ra;             /* second LHS restriction matrix */
-    gretl_matrix *qa;             /* second RHS restriction matrix */
-    char *mask;                   /* selection mask for coeffs */
-    rrow **rows;                  /* "atomic" restrictions */
-    void *obj;                    /* pointer to model, system */
-    GretlObjType otype;           /* type of model, system */
-    gretlopt opt;                 /* OPT_C is used for "coeffsum" */
-    char *rfunc;                  /* name of nonlinear restriction function */
-    double test;                  /* test statistic */
-    double pval;                  /* p-value of test statistic */
-    double lnl;
-    double bsum;
-    double bse;
-    int code;
+    int g;                    /* number of restrictions (rows of R) */
+    int gmax;                 /* max. possible restrictions */
+    int bmulti;               /* flag for case where coeffs need two indices */
+    int amulti;               /* VECM only */
+    int gb, ga;               /* restrictions on beta, alpha (VECM only) */
+    int bcols, acols;         /* VECM only */
+    int vecm;                 /* pertains to VECM beta or alpha? */
+    gretl_matrix *R;          /* LHS restriction matrix */
+    gretl_matrix *q;          /* RHS restriction matrix */
+    gretl_matrix *Ra;         /* second LHS restriction matrix */
+    gretl_matrix *qa;         /* second RHS restriction matrix */
+    char *mask;               /* selection mask for coeffs */
+    rrow **rows;              /* "atomic" restrictions */
+    void *obj;                /* pointer to model, system */
+    GretlObjType otype;       /* type of model, system */
+    gretlopt opt;             /* OPT_C is used for "coeffsum" */
+    char *rfunc;              /* name of nonlinear restriction function */
+    double test;              /* test statistic */
+    double pval;              /* p-value of test statistic */
+    double lnl;               /* log likelihood */
+    double bsum;              /* sum of coefficients */
+    double bse;               /* std. error of @bsum */
+    int code;                 /* gretl stats code */
+    int single_eqn;           /* references only one equation */
 };
 
 #define targ_specified(r,i,j,c) (((c=='b' && r->bmulti) || (c=='a' && r->amulti)) \
 				 && r->rows[i]->eq != NULL		\
 				 && r->rows[i]->eq[j] != R_UNSPEC)
 
-static int cross_equation_rset (gretl_restriction *rset)
+/* determine if @rset references a single equation (even if
+   may include more than one restriction)
+*/
+
+static int single_equation_rset (gretl_restriction *rset)
 {
     rrow *row;
     int i, j, eq, eq0 = -1;
-    int ret = 0;
+    int ret = 1;
 
-    for (i=0; i<rset->g && !ret; i++) {
+    for (i=0; i<rset->g && ret; i++) {
 	row = rset->rows[i];
-	for (j=0; j<row->nterms && !ret; j++) {
+	for (j=0; j<row->nterms && ret; j++) {
 	    eq = row->eq[j];
 	    if (eq0 < 0) {
 		eq0 = eq;
 	    } else if (eq != eq0) {
-		ret = 1;
+		ret = 0;
 	    }
 	}
     }
@@ -710,7 +715,8 @@ static int test_user_matrices (gretl_restriction *rset)
 
 /* Set up the matrices needed for testing a set of restrictions:
    general driver function that calls more specific functions
-   depending on the case. */
+   depending on the case.
+*/
 
 static int restriction_set_form_matrices (gretl_restriction *rset)
 {
@@ -724,10 +730,12 @@ static int restriction_set_form_matrices (gretl_restriction *rset)
 	if (gretl_VECM_rank(rset->obj) > 0) {
 	    err = vecm_form_matrices(rset);
 	} else {
+	    rset->single_eqn = single_equation_rset(rset);
 	    err = var_form_matrices(rset);
 	}
     } else if (rset->g > 0) {
 	/* mutivariate system */
+	rset->single_eqn = single_equation_rset(rset);
 	err = sys_form_matrices(rset);
     }
 
@@ -1474,6 +1482,7 @@ static gretl_restriction *restriction_set_new (void *ptr,
     rset->acols = 0;
     rset->vecm = 0;
     rset->code = GRETL_STAT_NONE;
+    rset->single_eqn = 0;
 
     if (rset->otype == GRETL_OBJ_EQN) {
 	MODEL *pmod = ptr;
@@ -2902,7 +2911,7 @@ gretl_restriction_finalize_full (ExecState *state,
 	} else if (rset->opt & OPT_W) {
 	    err = system_wald_test(sys, rset->R, rset->q, opt, prn);
 	} else {
-	    system_set_restriction_matrices(sys, rset->R, rset->q);
+	    system_attach_restriction(sys, rset);
 	    rset->R = NULL;
 	    rset->q = NULL;
 	}
@@ -3073,12 +3082,12 @@ GretlObjType gretl_restriction_get_type (const gretl_restriction *rset)
     return (rset != NULL)? rset->otype : GRETL_OBJ_NULL;
 }
 
-const gretl_matrix *rset_get_R_matrix (const gretl_restriction *rset)
+gretl_matrix *rset_get_R_matrix (const gretl_restriction *rset)
 {
     return (rset != NULL)? rset->R : NULL;
 }
 
-const gretl_matrix *rset_get_q_matrix (const gretl_restriction *rset)
+gretl_matrix *rset_get_q_matrix (const gretl_restriction *rset)
 {
     return (rset != NULL)? rset->q : NULL;
 }

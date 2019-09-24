@@ -20,6 +20,8 @@
 #ifndef EQUATION_SYSTEM_H
 #define EQUATION_SYSTEM_H
 
+#include "gretl_restrict.h"
+
 typedef enum {
     SYS_METHOD_SUR = 0,
     SYS_METHOD_3SLS,
@@ -175,17 +177,16 @@ int system_vcv_geomean (const equation_system *sys);
 double system_vcv_denom (const equation_system *sys, 
 			 int i, int j);
 
-int rhs_var_in_identity (const equation_system *sys, int lhsvar,
-			 int rhsvar);
+int rhs_var_in_identity (const equation_system *sys,
+			 int lhsvar, int rhsvar);
 
 void 
 print_equation_system_info (const equation_system *sys, 
 			    const DATASET *dset, 
 			    gretlopt opt, PRN *prn);
 
-void 
-system_set_restriction_matrices (equation_system *sys,
-				 gretl_matrix *R, gretl_matrix *q);
+void system_attach_restriction (equation_system *sys,
+				gretl_restriction *rset);
 
 int 
 system_normality_test (const equation_system *sys,
@@ -204,8 +205,8 @@ int system_wald_test (const equation_system *sys,
 		      gretlopt opt,
 		      PRN *prn);
 
-int system_diag_test (const equation_system *sys, double *test,
-		      double *pval);
+int system_diag_test (const equation_system *sys,
+		      double *test, double *pval);
 
 double *system_get_resid_series (equation_system *sys, int eqnum,
 				 DATASET *dset, int *err);
@@ -213,7 +214,8 @@ double *system_get_resid_series (equation_system *sys, int eqnum,
 double *
 equation_system_get_series (const equation_system *sys, 
 			    const DATASET *dset,
-			    int idx, const char *key, int *err);
+			    int idx, const char *key,
+			    int *err);
 
 gretl_matrix *
 equation_system_get_matrix (const equation_system *sys, int idx, 
