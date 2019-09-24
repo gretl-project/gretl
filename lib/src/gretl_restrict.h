@@ -71,9 +71,9 @@ void destroy_restriction_set (gretl_restriction *rset);
 int gretl_sum_test (const int *list, MODEL *pmod, DATASET *dset,
 		    gretlopt opt, PRN *prn);
 
-gretl_matrix *rset_get_R_matrix (const gretl_restriction *rset);
+const gretl_matrix *rset_get_R_matrix (const gretl_restriction *rset);
 
-gretl_matrix *rset_get_q_matrix (const gretl_restriction *rset);
+const gretl_matrix *rset_get_q_matrix (const gretl_restriction *rset);
 
 const gretl_matrix *rset_get_Ra_matrix (const gretl_restriction *rset);
 

@@ -20,8 +20,6 @@
 #ifndef EQUATION_SYSTEM_H
 #define EQUATION_SYSTEM_H
 
-#include "gretl_restrict.h"
-
 typedef enum {
     SYS_METHOD_SUR = 0,
     SYS_METHOD_3SLS,
@@ -185,8 +183,10 @@ print_equation_system_info (const equation_system *sys,
 			    const DATASET *dset, 
 			    gretlopt opt, PRN *prn);
 
-void system_attach_restriction (equation_system *sys,
-				gretl_restriction *rset);
+void
+system_set_restriction_matrices (equation_system *sys,
+				 gretl_matrix *R,
+				 gretl_matrix *q);
 
 int 
 system_normality_test (const equation_system *sys,
