@@ -7600,108 +7600,48 @@ gretl_matrix *gretl_matrix_vector_stat (const gretl_matrix *m,
     }
 }
 
-/* sample @n rows from matrix @m without replacement */
+/* Fill @v with unique random draws from {1,2,...,@n} */
 
-gretl_matrix *select_random_matrix_rows (const gretl_matrix *m,
-					 int n, int *err)
+int fill_permutation_vector (gretl_vector *v, int n)
 {
-    gretl_matrix *ret = NULL;
     int *pool = NULL;
-    int n_pool, n_tail;
-    double x;
+    int n_tail;
     unsigned u;
-    int i, j, k;
+    int i, k;
 
-    if (n <= 0 || n > m->rows) {
-	*err = E_DATA;
-	gretl_errmsg_sprintf(_("Invalid number of cases %d"), n);
-	return NULL;
+    if (n <= 0) {
+	return E_INVARG;
     }
 
-    n_pool = m->rows;
-    pool = malloc(n_pool * sizeof *pool);
+    k = gretl_vector_get_length(v);
+    if (k <= 0 || k > n) {
+	gretl_errmsg_sprintf(_("Invalid number of draws %d"), k);
+	return E_INVARG;
+    }
+
+    pool = malloc(n * sizeof *pool);
     if (pool == NULL) {
-	*err = E_ALLOC;
-	return NULL;
+	return E_ALLOC;
     }
 
-    ret = gretl_matrix_alloc(n, m->cols);
-    if (ret == NULL) {
-	*err = E_ALLOC;
-	free(pool);
-	return NULL;
+    /* initialize selection pool */
+    for (i=0; i<n; i++) {
+	pool[i] = i + 1;
     }
 
-    /* initialize selection pool to all rows of @m */
-    for (i=0; i<n_pool; i++) {
-	pool[i] = i;
-    }
-
-    for (k=0; k<n; k++) {
-	u = gretl_rand_int_max(n_pool);
-	i = pool[u];
-	/* put row @i of @m into row @k of @ret */
-	for (j=0; j<m->cols; j++) {
-	    x = gretl_matrix_get(m, i, j);
-	    gretl_matrix_set(ret, k, j, x);
-	}
-	/* strike row @i out of the selection pool */
-	if (u < n_pool - 1) {
-	    n_tail = n_pool - u - 1;
+    for (i=0; i<k; i++) {
+	u = gretl_rand_int_max(n);
+	v->val[i] = pool[u];
+	/* remove pool[u] from the selectable set */
+	if (u < n - 1) {
+	    n_tail = n - u - 1;
 	    memmove(pool + u, pool + u + 1, n_tail * sizeof *pool);
 	}
-	n_pool--;
+	n--;
     }
 
     free(pool);
 
-    return ret;
+    return 0;
 }
 
-#if 0
-
-gretl_matrix *select_random_matrix_rows2 (const gretl_matrix *m,
-					  int n, int *err)
-{
-    gretl_matrix *ret = NULL;
-    gretl_matrix *U = NULL;
-    gretl_matrix *R = NULL;
-    double x;
-    int i, j, k;
-
-    if (n <= 0 || n > m->rows) {
-	*err = E_DATA;
-	gretl_errmsg_sprintf(_("Invalid number of cases %d"), n);
-	return NULL;
-    }
-
-    U = gretl_random_matrix_new(m->rows, 1, D_UNIFORM);
-    if (U == NULL) {
-	*err = E_ALLOC;
-    } else {
-	R = rank_vector(U, F_SORT, err);
-    }
-
-    if (!*err) {
-	ret = gretl_matrix_alloc(n, m->cols);
-	if (ret == NULL) {
-	    *err = E_ALLOC;
-	}
-    }
-
-    for (k=0; k<n; k++) {
-	i = (int) R->val[k];
-	/* put row @i of @m into row @k of @ret */
-	for (j=0; j<m->cols; j++) {
-	    x = gretl_matrix_get(m, i, j);
-	    gretl_matrix_set(ret, k, j, x);
-	}
-    }
-
-    gretl_matrix_free(U);
-    gretl_matrix_free(R);
-
-    return ret;
-}
-
-#endif

@@ -550,7 +550,7 @@ struct str_table funcs[] = {
     { F_ISCMPLX,   "iscomplex" },
     { F_COMPLEX,   "complex" },
     { F_CONJ,      "conj" },
-    { F_MSAMPLE,   "msample" },
+    { F_RANDPERM,  "randperm" },
     { 0,           NULL }
 };
 
