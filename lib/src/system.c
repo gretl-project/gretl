@@ -1146,37 +1146,39 @@ static int get_eqn_ref (const equation_system *sys, int j)
     return -1;
 }
 
+/* Determine whether the restrictions on @sys embodied in @R
+   reference just one equation, and if so return the degrees
+   of freedom for that equation. Otherwise return 0.
+*/
+
 static int maybe_get_single_equation_dfu (const equation_system *sys,
 					  const gretl_matrix *R)
 {
-    int i, j, eq = -1, eqbak = -1;
-    int single = 1;
-    int eq_dfu = 0;
+    int i, j, eq = -1, eq0 = -1;
+    int df = 0;
 
-    for (j=0; j<R->cols && single; j++) {
-	for (i=0; i<R->rows && single; i++) {
+    for (j=0; j<R->cols; j++) {
+	for (i=0; i<R->rows; i++) {
 	    if (gretl_matrix_get(R, i, j) != 0) {
 		eq = get_eqn_ref(sys, j);
-		if (eqbak == -1) {
-		    eqbak = eq;
-		} else if (eq != eqbak) {
-		    /* the restriction references more than
-		       one equation
-		    */
-		    single = 0;
+		if (eq0 < 0) {
+		    eq0 = eq;
+		} else if (eq != eq0) {
+		    /* multiple equations are referenced */
+		    return 0;
 		}
 	    }
 	}
     }
 
-    if (single && eq >= 0) {
-	eq_dfu = sys->T - (sys->lists[eq][0] - 1);
+    if (eq >= 0) {
+	df = sys->T - (sys->lists[eq][0] - 1);
     }
 
-    return eq_dfu;
+    return df;
 }
 
-/* Asymptotic F-test, as in Greene:
+/* Asymptotic F-test, as in William Greene:
 
    (1/J) * (Rb-q)' * [R*Var(b)*R']^{-1} * (Rb-q)
 
