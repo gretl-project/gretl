@@ -276,11 +276,13 @@ function scalar SVAR_ident(bundle *b, int verbose[0])
    (Which is perhaps against convention, 0 for "no error"?)
     */
 
-    print "Check for identification"
-    print "------------------------"
-    print " (It may happen that in special circumstances under-"
-    print "  identification goes unnoticed. If estimation fails,"
-    print "  perhaps try adding restrictions.)"
+	if verbose
+	    print "Check for identification"
+    	print "------------------------"
+    	print " (It may happen that in special circumstances under-"
+    	print "  identification goes unnoticed. If estimation fails,"
+    	print "  perhaps try adding restrictions.)"
+	endif 
 
     type = b.type
     n = b.n

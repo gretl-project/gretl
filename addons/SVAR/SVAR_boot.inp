@@ -50,10 +50,10 @@ end function
 
 ###############
 
-function matrix bias_correction(scalar H, matrix Ahat, const matrix mu,
-                                const matrix E, const matrix X,
-                                matrix Y0, matrix *BC,
-                                int boottype[1:4:1])
+function matrix bias_correction(const bundle b, const matrix mu,
+                                const matrix Y0, matrix *BC,
+								const bundle bparams[null])
+
 
     /* This function implements a bias correction for
        the estimate of the VAR parameters as per Kilian,
@@ -64,43 +64,60 @@ function matrix bias_correction(scalar H, matrix Ahat, const matrix mu,
        New 'boottype' arg (Aug 2019):
        1: standard resampling (default, as before)
        2-4: wild bootstrap (3 variants)
-       (It's not ideal to have 8 arguments in this function,
-       but this is the least invasive way to do it now...)
+	   5: moving-blocks bootstrap 
+       (Sep 2019: re-did interface to use bundle)
+
+	   (So the check below for what we need in the bundle.)
     */
 
-    n = rows(Ahat)
-    p = cols(Ahat)/n
-    k = cols(X)
+	if !inbundle(b,"BCiter") || !inbundle(b,"VARpar") || \
+		!inbundle(b,"E") || !inbundle(b,"X") || !inbundle(b,"boottype")
+		funcerr "needed input missing in bundle arg" 
+	endif
+
+	# H = b.BCiter
+	# matrix Ahat = b.VARpar 
+	# matrix E = b.E
+	# matrix X = b.X 
+	# boottype = obj. boottype 
+
+    n = rows(b.VARpar)
+    p = cols(b.VARpar)/n
+    k = cols(b.X)
     cmu = cols(mu)
     rY0 = rows(Y0)
 
     # check for stationarity first
-    scalar maxmod = max_eval(Ahat)
+    scalar maxmod = max_eval(b.VARpar)
 
     if maxmod < 0.9999
         matrix Ab = zeros(n, n*p)
-        matrix innov = prepres(E, boottype)
+        matrix innov = prepres(b.E, b.boottype)
+		matrix U
 
-        loop i=1..H --quiet
-            matrix U = zeros(p,n) | drawbootres(innov, boottype)
+        loop i=1 .. b.BCiter --quiet
+			if exists(bparams)
+				U = zeros(p,n) | drawbootres(innov, b.boottype, bparams)
+			else
+            	U = zeros(p,n) | drawbootres(innov, b.boottype)
+			endif 
 
             if cmu > 0
                 U = mu + U
             endif
-            matrix bY = varsimul(Ahat, U[rY0+1:,], Y0)
-            matrix reg  = X ~ mlag(bY, seq(1,p))
+            matrix bY = varsimul(b.VARpar, U[rY0+1:,], Y0)
+            matrix reg  = b.X ~ mlag(bY, seq(1,p))
             matrix Pi = mols(bY[p+1:,], reg[p+1:,])
-            matrix Ab += transp(Pi[k+1:k+n*p,])
+            Ab += transp(Pi[k+1: k + n*p, ])
         endloop
 
-        Ab = Ab ./ H
-        matrix BC = Ahat - Ab
+        Ab = Ab ./ b.BCiter
+        matrix BC = b.VARpar - Ab
 
-        H = add_and_smash(&Ab, BC)
-        # printf "H = %g\n", H
+        H = add_and_smash(&Ab, BC) 	 # why H? (used to be loop limit)
 
     else	# not stationary
-        matrix Ab = Ahat
+        matrix Ab = b.VARpar
     endif
     return Ab
 end function
@@ -202,12 +219,11 @@ function matrix drawbootres(const matrix E,
        used then to specify parameters, in a way that is to be determined.)
     */
 
-	# process extra input 
+	# process extra input
+	bl = 0 	# signals default data-based choice
     if exists(bparams) && boottype == 5
 		if inbundle(bparams, "moveblocklen")
 			bl = bparams.moveblocklen
-		else 
-			bl = 0	# signals default data-based choice 
 		endif
 	endif
 
@@ -376,9 +392,9 @@ function scalar SVAR_boot(bundle *obj,
     BIASCORR = (type != 4) && obj.biascorr # not available w/unit roots
     if BIASCORR
         matrix Psi = {}
-        # hardcoded num of iterations here
-        matrix ABC = bias_correction(obj.BCiter, obj.VARpar, bmu, \
-          obj.E, obj.X, start, &Psi, obj.boottype)
+        # matrix ABC = bias_correction(obj.BCiter, obj.VARpar, bmu, \
+        #   obj.E, obj.X, start, &Psi, obj.boottype)
+		matrix ABC = bias_correction(obj, bmu, start, &Psi, bparams)
     endif
 
     # Prepare the residuals
