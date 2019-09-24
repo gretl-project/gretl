@@ -9349,6 +9349,44 @@
       </description>
     </function>
 
+    <function name="randperm" section="probdist" output="vector">
+      <fnargs>
+	<fnarg type="int">n</fnarg>
+	<fnarg type="int" optional="true">k</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  If only the first argument is given, returns a row vector
+	  containing a random permutation of the integers from 1 to
+	  <argname>n</argname>, without repetition of elements.  If the
+	  second argument is given it must be a positive integer in
+	  the range 1 to <argname>n</argname>; in this case the
+	  function returns a row vector containing
+	  <argname>k</argname> integers selected randomly from 1 to
+	  <argname>n</argname> without replacement.
+	</para>
+	<para>
+	  If you wish to sample <math>k</math> rows from a matrix
+	  <lit>X</lit> with <math>n</math> rows (without replacement),
+	  that can be accomplished as shown below:
+	</para>
+	<code>
+	  matrix S = X[randperm(n, k),]
+	</code>
+	<para>
+	  And if you wish to preserve the original order of the rows
+	  in the sample:
+	</para>
+	<code>
+	  matrix S = X[sort(randperm(n, k)),]
+	</code>
+	<para>
+	  See also <fncref targ="resample"/> for resampling with
+	  replacement.
+	</para>
+      </description>
+    </function>
+
     <function name="rank" section="linalg" output="int">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>

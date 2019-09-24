@@ -4,6 +4,8 @@ version 2019d, in progress
   and schur; documentation in a new chapter of the Gretl
   User's Guide
 - Enable nesting of arrays
+- New function randperm() (Matlab-compatible, permutation
+  and sampling without replacement)
 - Fix bug: possible crash on appending multiple lists to a
   list inside a bundle
 - Fix bug: "(" could in certain cases be misinterpreted as
@@ -30,7 +32,7 @@ version 2019d, in progress
 - Internals: speed up element-wise matrix calculation by
   use of function pointers
 - "Send-to" (email) functionality: use libcurl and improve
-  the user interface
+  the user interface; now gmail-compatible
 - GUI: don't close native database windows on "Clear data"
 
 2019-07-02 version 2019c
