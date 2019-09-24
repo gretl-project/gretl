@@ -596,9 +596,7 @@ get_uhat (const char *fname, MODEL *pmod, const DATASET *dset)
 {
     gretl_matrix *pre_innov = NULL;
     FILE *fp;
-    char line[64], date[9];
-    double x;
-    int t, start = 0, nobs = 0;
+    int nobs = 0;
     int n_pre = 0;
     int err = 0;
 

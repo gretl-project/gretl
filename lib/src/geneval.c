@@ -4070,10 +4070,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    goto finalize;
 	}
 
-	if (f == F_MSAMPLE) {
-	    /* the @r node must hold a scalar */
-	    a = node_get_scalar(r, p);
-	} else if (f == F_RESAMPLE || f == F_MREV || f == F_SDC ||
+	if (f == F_RESAMPLE || f == F_MREV || f == F_SDC ||
 	    f == F_MCOV || f == F_CDEMEAN || f == F_PSDROOT) {
 	    /* if present, the @r node should hold a scalar */
 	    if (!null_or_scalar(r)) {
@@ -4159,9 +4156,6 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    } else {
 		ret->v.m = gretl_matrix_resample(m, &p->err);
 	    }
-	    break;
-	case F_MSAMPLE:
-	    ret->v.m = select_random_matrix_rows(m, a, &p->err);
 	    break;
 	case F_INV:
 	    if (m->is_complex) {
@@ -4421,11 +4415,19 @@ static int ok_matrix_dim (int r, int c, int f)
 
 static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
 {
-    int cols = 0, rows = node_get_int(l, p);
+    int n = 0, cols = 0, rows = node_get_int(l, p);
     NODE *ret = NULL;
 
     if (!p->err) {
-	if (f == F_IMAT && null_node(r)) {
+	if (f == F_RANDPERM) {
+	    n = rows; /* switched interpretation of first arg */
+	    rows = 1; /* row vector, per Matlab */
+	    if (null_node(r)) {
+		cols = n;
+	    } else {
+		cols = node_get_int(r, p);
+	    }
+	} else if (f == F_IMAT && null_node(r)) {
 	    /* default to square */
 	    cols = rows;
 	} else if (null_node(r)) {
@@ -4467,6 +4469,9 @@ static NODE *matrix_fill_func (NODE *l, NODE *r, int f, parser *p)
 	break;
     case F_MNORM:
 	gretl_matrix_random_fill(ret->v.m, D_NORMAL);
+	break;
+    case F_RANDPERM:
+	p->err = fill_permutation_vector(ret->v.m, n);
 	break;
     default:
 	break;
@@ -15989,6 +15994,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_ONES:
     case F_MUNIF:
     case F_MNORM:
+    case F_RANDPERM:
 	/* matrix-creation functions */
 	if (scalar_node(l) && null_or_scalar(r)) {
 	    ret = matrix_fill_func(l, r, t->t, p);
@@ -16092,13 +16098,6 @@ static NODE *eval (NODE *t, parser *p)
 	if ((l->t == MAT || l->t == NUM) &&
 	    (r->t == MAT || r->t == NUM)) {
 	    ret = complex_matrix_node(l, r, p);
-	} else {
-	    p->err = E_TYPES;
-	}
-	break;
-    case F_MSAMPLE:
-	if (l->t == MAT && scalar_node(r)) {
-	    ret = matrix_to_matrix_func(l, r, t->t, p);
 	} else {
 	    p->err = E_TYPES;
 	}
