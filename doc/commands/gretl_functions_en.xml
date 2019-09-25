@@ -2183,7 +2183,7 @@
 	  \[
 	  f(x; k, \theta) = \frac{x^{k-1}}{\theta^k} \frac{e^{-x/\theta}}{\Gamma(k)}
 	  \]
-	  where $k>0$ is the shape parameter and $\theta>0$ is the scale
+	  where $k&gt;0$ is the shape parameter and $\theta&gt;0$ is the scale
 	  parameter.
 	</para>
 	<para>
