@@ -68,7 +68,7 @@ struct equation_system_ {
     double llu;                 /* unrestricted log-likelihood */
     double X2;                  /* chi-square test value */
     double ess;                 /* total error sum of squares */
-    double diag;                /* test stat for diagonal covariance matrix */
+    double diag_test;           /* test stat for diagonal covariance matrix */
     double bdiff;               /* summary stat for change in coefficients */
     double ldet;                /* log-determinant of covariance matrix */
     int **lists;                /* regression lists for stochastic equations */

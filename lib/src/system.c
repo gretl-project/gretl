@@ -406,7 +406,7 @@ equation_system_new (int method, const char *name, int *err)
     sys->ll = sys->llu = sys->ldet = NADBL;
     sys->X2 = NADBL;
     sys->ess = NADBL;
-    sys->diag = 0.0;
+    sys->diag_test = 0.0;
     sys->bdiff = 0.0;
 
     sys->b = NULL;
@@ -465,7 +465,7 @@ static void system_clear_results (equation_system *sys)
     sys->X2 = NADBL;
     sys->ess = NADBL;
 
-    sys->diag = 0.0;
+    sys->diag_test = 0.0;
     sys->bdiff = 0.0;
 
     if (sys->b != NULL) {
@@ -3454,7 +3454,7 @@ static int sur_ols_diag (equation_system *sys)
     }
 
     if (!err) {
-	sys->diag = ls2sum;
+	sys->diag_test = ls2sum;
     }
 
     return err;
@@ -3539,8 +3539,8 @@ int system_diag_test (const equation_system *sys, double *test,
 
     if (sys->method == SYS_METHOD_SUR && sys->iters > 0) {
 	/* iterated SUR */
-	if (!na(sys->ldet) && sys->diag != 0.0) {
-	    double lr = sys->T * (sys->diag - sys->ldet);
+	if (!na(sys->ldet) && sys->diag_test != 0.0) {
+	    double lr = sys->T * (sys->diag_test - sys->ldet);
 
 	    if (test != NULL) {
 		*test = lr;
@@ -3551,13 +3551,13 @@ int system_diag_test (const equation_system *sys, double *test,
 	} else {
 	    err = E_BADSTAT;
 	}
-    } else if (sys->diag > 0) {
+    } else if (sys->diag_test > 0) {
 	/* other estimators */
 	if (test != NULL) {
-	    *test = sys->diag;
+	    *test = sys->diag_test;
 	}
 	if (pval != NULL) {
-	    *pval = chisq_cdf_comp(df, sys->diag);
+	    *pval = chisq_cdf_comp(df, sys->diag_test);
 	}
     } else {
 	err = E_BADSTAT;
@@ -3581,8 +3581,8 @@ int system_print_sigma (const equation_system *sys, PRN *prn)
     print_contemp_covariance_matrix(sys->S, sys->ldet, prn);
 
     if (sys->method == SYS_METHOD_SUR && sys->iters > 0) {
-	if (!na(sys->ldet) && sys->diag != 0.0) {
-	    double lr = sys->T * (sys->diag - sys->ldet);
+	if (!na(sys->ldet) && sys->diag_test != 0.0) {
+	    double lr = sys->T * (sys->diag_test - sys->ldet);
 	    double x = chisq_cdf_comp(df, lr);
 
 	    if (tex) {
@@ -3596,19 +3596,30 @@ int system_print_sigma (const equation_system *sys, PRN *prn)
 	    }
 	}
     } else {
-	double x, lm = sys->diag;
+	const char *labels[] = {
+            N_("Breusch--Pagan test for diagonal covariance matrix"),
+            N_("Robust Breusch--Pagan test for diagonal covariance matrix"),
+            N_("Breusch-Pagan test for diagonal covariance matrix"),
+            N_("Robust Breusch-Pagan test for diagonal covariance matrix"),
+	};
+	const char *label;
+	double x, lm = sys->diag_test;
+
+	if (sys->flags & SYSTEM_ROBUST) {
+	    label = tex ? labels[1] : labels[3];
+	} else {
+	    label = tex ? labels[0] : labels[2];
+	}
 
 	if (lm > 0) {
 	    x = chisq_cdf_comp(df, lm);
 	    if (tex) {
-		pprintf(prn, "%s:",
-			_("Breusch--Pagan test for diagonal covariance matrix"));
+		pprintf(prn, "%s:", _(label));
 		gretl_prn_newline(prn);
 		pprintf(prn, "  $\\chi^2(%d)$ = %g [%.4f]", df, lm, x);
 		gretl_prn_newline(prn);
 	    } else {
-		pprintf(prn, "%s:\n",
-			_("Breusch-Pagan test for diagonal covariance matrix"));
+		pprintf(prn, "%s:\n", _(label));
 		pprintf(prn, "  %s(%d) = %g [%.4f]\n", _("Chi-square"),
 			df, lm, x);
 	    }

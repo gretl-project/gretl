@@ -162,7 +162,10 @@ make_sys_X_block (gretl_matrix *X, const MODEL *pmod,
 /* Populate the cross-equation covariance matrix, @S, based on
    the per-equation residuals: if @do_diag is non-zero we also
    want to compute the Breusch-Pagan test for diagonality
-   of the matrix.
+   of the matrix. For the robust variant see Halunga, Orme and
+   Yamagata, "A heteroskasticity robust Breusch-Pagan test for
+   contemporaneous correlation...", Journal of Econometrics,
+   198 (2017) pp. 209-230.
 */
 
 static int
@@ -171,41 +174,35 @@ gls_sigma_from_uhat (equation_system *sys, gretl_matrix *S,
 {
     int geomean = system_vcv_geomean(sys);
     double *rdenom = NULL;
-    double eti, etj, sij;
-    double xp, rdij;
+    double eti, etj, sij, dij;
     int m = sys->neqns;
+    int robust = 0;
     int i, j, t, k;
 
-#if 0 /* not yet */
     if (do_diag && (sys->flags & SYSTEM_ROBUST)) {
 	/* denominator of robust B-P test */
 	rdenom = malloc((m * m - m) / 2 * sizeof *rdenom);
+	if (rdenom != NULL) {
+	    robust = 1;
+	}
     }
-#endif
 
     k = 0;
     for (i=0; i<m; i++) {
 	for (j=i; j<m; j++) {
-	    sij = 0.0;
-	    rdij = 0.0;
+	    sij = dij = 0.0;
 	    for (t=0; t<sys->T; t++) {
 		eti = gretl_matrix_get(sys->E, t, i);
 		etj = gretl_matrix_get(sys->E, t, j);
 		/* increment sum of cross-products */
-		xp = eti * etj;
-		sij += xp;
-		if (rdenom != NULL) {
+		sij += eti * etj;
+		if (i != j && robust) {
 		    /* also sum of cross-products of squares */
-		    rdij += xp * xp;
+		    dij += eti * etj * eti * etj;
 		}
 	    }
-	    if (geomean) {
-		sij /= system_vcv_denom(sys, i, j);
-	    } else {
-		sij /= sys->T;
-	    }
-	    if (i != j && rdenom != NULL) {
-		rdenom[k++] = rdij;
+	    if (i != j && robust) {
+		rdenom[k++] = dij;
 	    }
 	    gretl_matrix_set(S, i, j, sij);
 	    if (j != i) {
@@ -216,9 +213,9 @@ gls_sigma_from_uhat (equation_system *sys, gretl_matrix *S,
 
     if (do_diag) {
 	/* B-P test statistic */
-	double sii, sjj;
+	double sii, sjj, r;
 
-	sys->diag = 0.0;
+	sys->diag_test = 0.0;
 
 	k = 0;
 	for (i=1; i<m; i++) {
@@ -226,15 +223,34 @@ gls_sigma_from_uhat (equation_system *sys, gretl_matrix *S,
 	    for (j=0; j<i; j++) {
 		sij = gretl_matrix_get(S, i, j);
 		sjj = gretl_matrix_get(S, j, j);
-		if (rdenom != NULL) {
-		    sys->diag += (sij * sij) / rdenom[k++];
+		if (robust) {
+		    sys->diag_test += (sij * sij) / rdenom[k++];
 		} else {
-		    sys->diag += (sij * sij) / (sii * sjj);
+		    sys->diag_test += (sij * sij) / (sii * sjj);
 		}
 	    }
 	}
-	sys->diag *= sys->T;
-	free(rdenom);
+	if (robust) {
+	    free(rdenom);
+	} else {
+	    sys->diag_test *= sys->T;
+	}
+    }
+
+    /* scale the S matrix */
+    if (geomean) {
+	for (j=0; j<S->cols; j++) {
+	    for (i=j; i<S->rows; i++) {
+		sij = gretl_matrix_get(S, i, j);
+		sij /= system_vcv_denom(sys, i, j);
+		gretl_matrix_set(S, i, j, sij);
+		if (i != j) {
+		    gretl_matrix_set(S, j, i, sij);
+		}
+	    }
+	}
+    } else {
+	gretl_matrix_divide_by_scalar(S, sys->T);
     }
 
     return 0;
