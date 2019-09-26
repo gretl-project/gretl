@@ -79,6 +79,7 @@ const char *SVAR_translations[] = {
     N_("bias correction (non-SVEC)"),
     N_("bootstrap iterations"),
     N_("bootstrap type"),
+    N_("moving blocks"),
     N_("plain (Cholesky)"),
     N_("residual resampling"),
     N_("wild/Mammen"),
