@@ -44,16 +44,16 @@
    section (data-utils | filters | linalg | math | matbuild | 
             matshape | numerical | probdist | stats | sspace | strings | 
             transforms | access | calendar | midas | complex) "math"
-   output  (scalar | series | matrix | smatrix | string | seebelow |
+   output  (scalar | series | matrix | smatrix | vector | string | seebelow |
             rvec | cvec | list | asinput | scalar-or-series | int |
             scalar-or-matrix | matrix-or-bundle | bundle | cmatrix |
-	    strings | string-or-strings | list-or-mat) "series"
+	    strings | matrices | string-or-strings | list-or-mat) "series"
    altout  (none | scalar | series | rvec | matrix | list) "none"
 >
 
 <!ELEMENT fnargs       (fnarg)+>
 <!ELEMENT examples     (example)+>
-<!ELEMENT description  (para | code | pre | ilist | nlist | table | tabular)*>
+<!ELEMENT description  (para | code | subhead | pre | ilist | nlist | table | tabular)*>
 <!ELEMENT gui-access   (menu-path, other-access?)>
 
 <!ELEMENT fnarg (#PCDATA)>
@@ -66,7 +66,8 @@
 	  list-or-string | listetc | scalar-or-vec | int-or-list |
 	  scalar-or-matrix | int | bool | pdmat | strings |
 	  strings-or-list | bundle | series-list-or-mat | cmatrix |
-	  string-or-strings | series-vec-or-strings | varargs) "series"
+	  string-or-strings | series-vec-or-strings | scalarref |
+	  matrices-or-strings | varargs | int-or-string) "series"
     optional  (true | false) "false"
     conditional (true | false) "false"
 >
@@ -87,6 +88,7 @@
 
 <!ELEMENT pre (#PCDATA | repl | lit)*>
 <!ELEMENT code (#PCDATA)>
+<!ELEMENT subhead (#PCDATA)>
 
 <!ELEMENT tabular (#PCDATA)>
 <!ATTLIST tabular
