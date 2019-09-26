@@ -7728,9 +7728,13 @@ static NODE *array_flatten_node (NODE *l, NODE *r, parser *p)
 	    ret->v.m = gretl_matrix_array_flatten(l->v.a, vcat, &p->err);
 	}
     } else if (t == GRETL_TYPE_STRINGS) {
-	ret = aux_string_node(p);
+	int space = node_get_bool(r, p, 0);
+
 	if (!p->err) {
-	    ret->v.str = gretl_strings_array_flatten(l->v.a, &p->err);
+	    ret = aux_string_node(p);
+	}
+	if (!p->err) {
+	    ret->v.str = gretl_strings_array_flatten(l->v.a, space, &p->err);
 	}
     } else {
 	p->err = E_TYPES;

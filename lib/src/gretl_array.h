@@ -49,7 +49,7 @@ int gretl_array_set_type (gretl_array *A, GretlType type);
 
 char **gretl_array_get_strings (gretl_array *A, int *ns);
 
-char *gretl_strings_array_flatten (gretl_array *A, int *err);
+char *gretl_strings_array_flatten (gretl_array *A, int space, int *err);
 
 GretlType gretl_array_get_type (gretl_array *A);
 

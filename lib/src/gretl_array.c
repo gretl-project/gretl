@@ -269,8 +269,9 @@ char **gretl_array_get_strings (gretl_array *A, int *ns)
 
 /* note: the return value is newly allocated, and owned by the caller */
 
-char *gretl_strings_array_flatten (gretl_array *A, int *err)
+char *gretl_strings_array_flatten (gretl_array *A, int space, int *err)
 {
+    const char *sep = space ? " " : "\n";
     char *s = NULL;
 
     if (A == NULL) {
@@ -297,7 +298,7 @@ char *gretl_strings_array_flatten (gretl_array *A, int *err)
 		for (i=0; i<A->n; i++) {
 		    strcat(s, A->data[i]);
 		    if (i < A->n - 1) {
-			strcat(s, "\n");
+			strcat(s, sep);
 		    }
 		}
 	    }
