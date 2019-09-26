@@ -3958,11 +3958,11 @@
 	<para>
 	  The optional scalar argument <argname>y0</argname> is taken
 	  to represent all values of <math>y</math> prior to the
-	  beginning of sample (used only when <math>p > 0</math>). If
+	  beginning of sample (used only when <math>p &gt; 0</math>). If
 	  omitted, it is understood to be 0. Similarly, the optional
 	  argument <argname>x0</argname> may be used to specify one or
 	  more pre-sample values of <math>x</math>, information that
-	  is relevant only when <math>q > 0</math>.  Otherwise
+	  is relevant only when <math>q &gt; 0</math>.  Otherwise
 	  pre-sample values of <math>x</math> are assumed to be zero.
 	</para>
 	<para>
@@ -4080,7 +4080,7 @@
     <function name="flatten" section="data-utils" output="seebelow">
       <fnargs>
 	<fnarg type="matrices-or-strings">A</fnarg>
-	<fnarg optional="true" type="bool">vcat</fnarg>
+	<fnarg optional="true" type="bool">alt</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4090,16 +4090,17 @@
 	<para>
 	  In the matrix case the matrices in <argname>A</argname> are
 	  by default concatented horizontally, but if a non-zero
-	  value is supplied for <argname>vcat</argname> the
+	  value is supplied for <argname>alt</argname> the
 	  concatenation is vertical. In either case an error is
 	  flagged if the matrices are not conformable for the
 	  operation. See <fncref targ="msplitby"/> for the inverse
 	  operation.
 	</para>
 	<para>
-	  In the string case <argname>vcat</argname> is ignored
-	  and the result holds the strings in <argname>A</argname>
-	  arranged one per line.
+	  In the string case the result holds the strings in
+	  <argname>A</argname>, arranged one per line by default. If a
+	  non-zero value is given for <argname>alt</argname> the
+	  strings are separated by spaces rather than newlines.
 	</para>
       </description>
     </function>
@@ -5069,7 +5070,7 @@
 	  is logically equivalent to, but more efficient than,
 	</para>
 	<code>
-	  if strlen(strstr("cattle", "cat")) > 0
+	  if strlen(strstr("cattle", "cat")) &gt; 0
 	</code>
       </description>
     </function>

@@ -4797,7 +4797,7 @@
 	to), <lit>&gt;=</lit> (greater than or equal),
 	<lit>&lt;=</lit> (less than or equal) and <lit>!=</lit> (not
 	equal).  The Boolean operators can be used in constructing
-	dummy variables: for instance <lit>(x > 10)</lit> returns 1 if
+	dummy variables: for instance <lit>(x &gt; 10)</lit> returns 1 if
 	<lit>x</lit> &gt; 10, 0 otherwise.
       </para>
 
@@ -7622,7 +7622,7 @@
       <examples>
         <example>loop 1000</example>
 	<example>loop 1000 --progressive</example>
-        <example>loop while essdiff > .00001</example>
+        <example>loop while essdiff &gt; .00001</example>
         <example>loop i=1991..2000</example>
         <example>loop for (r=-.99; r&lt;=.99; r+=.01)</example>
 	<example>loop foreach i xlist</example>
@@ -12339,7 +12339,7 @@
 	If you choose <quote>Sample/Restrict based on criterion...</quote> you
 	need to supply a Boolean (logical) expression, of the same sort that
 	you would use to define a dummy variable.  For example the expression
-	<quote>sqft > 1400</quote> will select only cases for which the
+	<quote>sqft &gt; 1400</quote> will select only cases for which the
 	variable sqft has a value greater than 1400. Conditions may be
 	concatenated using the logical operators <quote>&amp;&amp;</quote>
 	(AND) and <quote>||</quote> (OR), and may be negated using
@@ -13712,8 +13712,8 @@
         <example>smpl 3 10</example>
 	<example>smpl 1960:2 1982:4</example>
 	<example>smpl +1 -1</example>
-	<example>smpl x > 3000 --restrict</example>
-	<example>smpl y > 3000 --restrict --replace</example>
+	<example>smpl x &gt; 3000 --restrict</example>
+	<example>smpl y &gt; 3000 --restrict --replace</example>
 	<example>smpl 100 --random</example>
       </examples>
     </usage>
