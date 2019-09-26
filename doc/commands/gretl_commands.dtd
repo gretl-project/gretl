@@ -103,10 +103,12 @@
                 lit | emphasis | book | quote | filename | by |
                 func | guideref | cmdref | fncref | tabref | 
                 sub | sup | flag | footnote | refnote | opt |
-                cmd | cite | url | mnu | seelist)*>
+                argname | cmd | cite | url | mnu | seelist)*>
 <!ATTLIST para
    context (cli | gui | tex | notex | all) "all"
 >
+
+<!ELEMENT argname (#PCDATA)>
 
 <!ELEMENT refnote (#PCDATA | gfr | book | quote)*>
 <!ATTLIST refnote
