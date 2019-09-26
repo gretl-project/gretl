@@ -2820,3 +2820,23 @@ gretl_matrix *gretl_cmatrix_QR_decomp (const gretl_matrix *A,
 
     return Q;
 }
+
+/* Copy data from real matrix @src to complex matrix *targ,
+   starting at offset (@r0, @c0) into @targ. @src is treated
+   as a complex matrix with zero imaginary part.
+*/
+
+void real_to_complex_fill (gretl_matrix *targ,
+			   const gretl_matrix *src,
+			   int r0, int c0)
+{
+    double complex z;
+    int i, j, r, c;
+
+    for (j=0, c=c0; j<src->cols && c<targ->cols; j++, c++) {
+	for (i=0, r=r0; i<src->rows && r<targ->rows; i++, r++) {
+	    z = gretl_matrix_get(src, i, j);
+	    gretl_cmatrix_set(targ, r, c, z);
+	}
+    }
+}

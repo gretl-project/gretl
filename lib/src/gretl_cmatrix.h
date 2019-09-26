@@ -166,4 +166,8 @@ gretl_matrix *gretl_cmatrix_QR_decomp (const gretl_matrix *A,
 				       gretl_matrix *R,
 				       int *err);
 
+void real_to_complex_fill (gretl_matrix *targ,
+			   const gretl_matrix *src,
+			   int r0, int c0);
+
 #endif /* GRETL_CMATRIX_H */

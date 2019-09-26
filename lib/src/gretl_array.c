@@ -25,6 +25,7 @@
 #include "gretl_xml.h"
 #include "gretl_typemap.h"
 #include "matrix_extra.h"
+#include "gretl_cmatrix.h"
 #include "gretl_array.h"
 
 /**
@@ -466,16 +467,11 @@ gretl_matrix *gretl_matrix_array_flatten (gretl_array *A,
 	m = A->data[i];
 	if (!gretl_is_null_matrix(m)) {
 	    if (m->is_complex) {
-		cmplx++;
+		cmplx = 1;
 	    } else {
-		real++;
+		real = 1;
 	    }
 	}
-    }
-
-    if (cmplx > 0 && real > 0) {
-	*err = E_MIXED;
-	return NULL;
     }
 
     for (i=0; i<A->n; i++) {
@@ -545,7 +541,10 @@ gretl_matrix *gretl_matrix_array_flatten (gretl_array *A,
 	    if (!gretl_is_null_matrix(m)) {
 		for (j=0; j<c0; j++) {
 		    for (i=0, ii=rpos; i<m->rows; i++, ii++) {
-			if (cmplx) {
+			if (cmplx && !m->is_complex) {
+			    z = gretl_matrix_get(m, i, j);
+			    gretl_cmatrix_set(ret, ii, j, z);
+			} else if (cmplx) {
 			    z = gretl_cmatrix_get(m, i, j);
 			    gretl_cmatrix_set(ret, ii, j, z);
 			} else {
@@ -557,8 +556,26 @@ gretl_matrix *gretl_matrix_array_flatten (gretl_array *A,
 		rpos += m->rows;
 	    }
 	}
+    } else if (cmplx && real) {
+	/* horizontal concatenation: mixed matrices */
+	double complex *dest = ret->z;
+	int n, k = 0;
+
+	for (i=0; i<A->n; i++) {
+	    m = A->data[i];
+	    if (!gretl_is_null_matrix(m)) {
+		n = m->rows * m->cols;
+		if (m->is_complex) {
+		    memcpy(dest, m->z, n * sizeof *dest);
+		} else {
+		    real_to_complex_fill(ret, m, 0, k);
+		}
+		dest += n;
+		k += m->cols;
+	    }
+	}
     } else {
-	/* horizontal concatenation */
+	/* horizontal concatenation: the easy case */
 	double *dest = ret->val;
 	int n, p = cmplx ? 2 : 1;
 
