@@ -452,10 +452,28 @@ gretl_matrix *gretl_matrix_array_flatten (gretl_array *A,
     int sum_r = 0;
     int sum_c = 0;
     int r0 = 0, c0 = 0;
+    int cmplx = 0;
+    int real = 0;
     int i;
 
     if (A->type != GRETL_TYPE_MATRICES) {
 	*err = E_TYPES;
+	return NULL;
+    }
+
+    for (i=0; i<A->n; i++) {
+	m = A->data[i];
+	if (!gretl_is_null_matrix(m)) {
+	    if (m->is_complex) {
+		cmplx++;
+	    } else {
+		real++;
+	    }
+	}
+    }
+
+    if (cmplx > 0 && real > 0) {
+	*err = E_MIXED;
 	return NULL;
     }
 
@@ -500,9 +518,17 @@ gretl_matrix *gretl_matrix_array_flatten (gretl_array *A,
     }
 
     if (vcat) {
-	ret = gretl_matrix_alloc(sum_r, c0);
+	if (cmplx) {
+	    ret = gretl_cmatrix_new(sum_r, c0);
+	} else {
+	    ret = gretl_matrix_alloc(sum_r, c0);
+	}
     } else {
-	ret = gretl_matrix_alloc(r0, sum_c);
+	if (cmplx) {
+	    ret = gretl_cmatrix_new(r0, sum_c);
+	} else {
+	    ret = gretl_matrix_alloc(r0, sum_c);
+	}
     }
 
     if (ret == NULL) {
@@ -510,6 +536,7 @@ gretl_matrix *gretl_matrix_array_flatten (gretl_array *A,
     } else if (vcat) {
 	/* vertical concatenation */
 	int ii, j, k, rpos = 0;
+	double complex z;
 	double x;
 
 	for (k=0; k<A->n; k++) {
@@ -517,8 +544,13 @@ gretl_matrix *gretl_matrix_array_flatten (gretl_array *A,
 	    if (!gretl_is_null_matrix(m)) {
 		for (j=0; j<c0; j++) {
 		    for (i=0, ii=rpos; i<m->rows; i++, ii++) {
-			x = gretl_matrix_get(m, i, j);
-			gretl_matrix_set(ret, ii, j, x);
+			if (cmplx) {
+			    z = gretl_cmatrix_get(m, i, j);
+			    gretl_cmatrix_set(ret, ii, j, z);
+			} else {
+			    x = gretl_matrix_get(m, i, j);
+			    gretl_matrix_set(ret, ii, j, x);
+			}
 		    }
 		}
 		rpos += m->rows;
@@ -526,15 +558,15 @@ gretl_matrix *gretl_matrix_array_flatten (gretl_array *A,
 	}
     } else {
 	/* horizontal concatenation */
-	double *val = ret->val;
-	int n;
+	double *dest = ret->val;
+	int n, p = cmplx ? 2 : 1;
 
 	for (i=0; i<A->n; i++) {
 	    m = A->data[i];
 	    if (!gretl_is_null_matrix(m)) {
-		n = m->rows * m->cols;
-		memcpy(val, m->val, n * sizeof *val);
-		val += n;
+		n = p * m->rows * m->cols;
+		memcpy(dest, m->val, n * sizeof *dest);
+		dest += n;
 	    }
 	}
     }
