@@ -212,20 +212,22 @@ gls_sigma_from_uhat (equation_system *sys, gretl_matrix *S,
     }
 
     if (do_diag) {
-	/* B-P test statistic */
-	double sii, sjj, r;
+	/* compute B-P test statistic */
+	double sii, sjj;
 
 	sys->diag_test = 0.0;
 
 	k = 0;
-	for (i=1; i<m; i++) {
+	for (i=0; i<m-1; i++) {
 	    sii = gretl_matrix_get(S, i, i);
-	    for (j=0; j<i; j++) {
+	    for (j=i+1; j<m; j++) {
 		sij = gretl_matrix_get(S, i, j);
 		sjj = gretl_matrix_get(S, j, j);
 		if (robust) {
+		    /* cumulate \hat{gamma}_{ij}^2 */
 		    sys->diag_test += (sij * sij) / rdenom[k++];
 		} else {
+		    /* cumulate \hat{rho}_{ij}^2 */
 		    sys->diag_test += (sij * sij) / (sii * sjj);
 		}
 	    }
@@ -233,6 +235,7 @@ gls_sigma_from_uhat (equation_system *sys, gretl_matrix *S,
 	if (robust) {
 	    free(rdenom);
 	} else {
+	    /* supply the missing factor of T */
 	    sys->diag_test *= sys->T;
 	}
     }
