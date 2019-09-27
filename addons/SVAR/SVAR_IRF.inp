@@ -175,7 +175,8 @@ function list SVAR_hd(bundle *Mod, int nv)
         a = (seq(1,n) .= i)
         W = varsimul(rotVARpar, U .* a, zeros(p,n)) * C'
         #printf "U[$i]:\n%8.3f\n", W[1:10,]
-        ret += genseries(sprintf("hd_%s_%s", yn, snames[i]), W[,nv])
+        ret += genseries(sprintf("hd_%s_%s", yn,
+				 fixname(snames[i])), W[,nv])
     endloop
 
     return ret
