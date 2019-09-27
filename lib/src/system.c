@@ -3365,6 +3365,37 @@ int equation_system_serialize (equation_system *sys,
     return err;
 }
 
+static gretl_bundle *bundlize_diag_test (const equation_system *sys)
+{
+    gretl_bundle *b = NULL;
+    double test = NADBL;
+    double pval = NADBL;
+    int k = sys->S->rows;
+    int df = k * (k - 1) / 2;
+
+    if (sys->method == SYS_METHOD_SUR && sys->iters > 0) {
+	if (!na(sys->ldet) && sys->diag_test > 0.0) {
+	    test = sys->T * (sys->diag_test - sys->ldet);
+	    pval = chisq_cdf_comp(df, test);
+
+	}
+    } else {
+	test = sys->diag_test;
+	pval = chisq_cdf_comp(df, test);
+    }
+
+    if (!na(test) && !na(pval)) {
+	b = gretl_bundle_new();
+	if (b != NULL) {
+	    gretl_bundle_set_scalar(b, "test", test);
+	    gretl_bundle_set_scalar(b, "pvalue", pval);
+	    gretl_bundle_set_int(b, "df", df);
+	}
+    }
+
+    return b;
+}
+
 int equation_system_bundlize (equation_system *sys,
 			      gretl_bundle *b)
 {
@@ -3377,6 +3408,9 @@ int equation_system_bundlize (equation_system *sys,
     s = system_method_short_string(sys->method);
     if (s != NULL) {
 	gretl_bundle_set_string(b, "method", s);
+    }
+    if (sys->flags & SYSTEM_ROBUST) {
+	gretl_bundle_set_int(b, "robust", 1);
     }
 
     /* convert to 1-based */
@@ -3434,6 +3468,15 @@ int equation_system_bundlize (equation_system *sys,
     }
     if (sys->q != NULL) {
 	gretl_bundle_set_matrix(b, "q", sys->q);
+    }
+
+    if (sys->diag_test > 0) {
+	gretl_bundle *dt = bundlize_diag_test(sys);
+
+	if (dt != NULL) {
+	    gretl_bundle_donate_data(b, "diag_test", dt,
+				     GRETL_TYPE_BUNDLE, 0);
+	}
     }
 
     return err;
