@@ -3611,6 +3611,7 @@ int system_diag_test (const equation_system *sys, double *test,
 
 int system_print_sigma (const equation_system *sys, PRN *prn)
 {
+    double test, pval;
     int tex = tex_format(prn);
     int k, df;
 
@@ -3625,17 +3626,16 @@ int system_print_sigma (const equation_system *sys, PRN *prn)
 
     if (sys->method == SYS_METHOD_SUR && sys->iters > 0) {
 	if (!na(sys->ldet) && sys->diag_test != 0.0) {
-	    double lr = sys->T * (sys->diag_test - sys->ldet);
-	    double x = chisq_cdf_comp(df, lr);
-
+	    test = sys->T * (sys->diag_test - sys->ldet);
+	    pval = chisq_cdf_comp(df, test);
 	    if (tex) {
 		pprintf(prn, "%s:\\\\\n", A_("LR test for diagonal covariance matrix"));
-		pprintf(prn, "  $\\chi^2(%d)$ = %g [%.4f]", df, lr, x);
+		pprintf(prn, "  $\\chi^2(%d)$ = %g [%.4f]", df, test, pval);
 		gretl_prn_newline(prn);
 	    } else {
 		pprintf(prn, "%s:\n", _("LR test for diagonal covariance matrix"));
 		pprintf(prn, "  %s(%d) = %g [%.4f]\n", _("Chi-square"),
-			df, lr, x);
+			df, test, pval);
 	    }
 	}
     } else {
@@ -3646,25 +3646,24 @@ int system_print_sigma (const equation_system *sys, PRN *prn)
             N_("Robust Breusch-Pagan test for diagonal covariance matrix"),
 	};
 	const char *label;
-	double x, lm = sys->diag_test;
 
+	test = sys->diag_test;
 	if (sys->flags & SYSTEM_ROBUST) {
 	    label = tex ? labels[1] : labels[3];
 	} else {
 	    label = tex ? labels[0] : labels[2];
 	}
-
-	if (lm > 0) {
-	    x = chisq_cdf_comp(df, lm);
+	if (test > 0) {
+	    pval = chisq_cdf_comp(df, test);
 	    if (tex) {
 		pprintf(prn, "%s:", _(label));
 		gretl_prn_newline(prn);
-		pprintf(prn, "  $\\chi^2(%d)$ = %g [%.4f]", df, lm, x);
+		pprintf(prn, "  $\\chi^2(%d)$ = %g [%.4f]", df, test, pval);
 		gretl_prn_newline(prn);
 	    } else {
 		pprintf(prn, "%s:\n", _(label));
 		pprintf(prn, "  %s(%d) = %g [%.4f]\n", _("Chi-square"),
-			df, lm, x);
+			df, test, pval);
 	    }
 	}
     }
