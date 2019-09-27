@@ -10858,7 +10858,7 @@ gretl_matrix_col_concat (const gretl_matrix *a, const gretl_matrix *b,
 	    /* neither @a nor @b is scalar */
 	    if (!cmplx_c) {
 		memcpy(c->val, a->val, n_a * xsize);
-		memcpy(c->val + n_a, b->val, n_b * zsize);
+		memcpy(c->val + n_a, b->val, n_b * xsize);
 	    } else {
 		if (cmplx_a) {
 		    memcpy(c->z, a->z, n_a * zsize);
