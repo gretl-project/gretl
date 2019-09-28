@@ -170,13 +170,38 @@ double binomial_cdf_comp (double p, int n, int k)
     return x;
 }
 
-/*
-    gives the event probability p such that the sum of the terms 0
-    through k of the Binomial probability density, for n trials, is
-    equal to the given cumulative probability a.
+/* Returns the smallest x such that the probability of obtaining
+   x successes on @n trials with success probability @p is at least
+   the given cumulative probability @a. FIXME efficiency!
 */
 
-static double binomial_cdf_inverse (int n, int k, double a)
+static double binomial_cdf_inverse (double p, int n, double a)
+{
+    double x = NADBL;
+
+    if (a >= 0 && a < 1 && n > 0 && p > 0 && p < 1) {
+	int k0 = (a > 0.5)? floor(n*p) : 0;
+	int k;
+
+	for (k=k0; k<=n; k++) {
+	    if (binomial_cdf(p, n, k) >= a) {
+		break;
+	    }
+	}
+	x = k;
+    }
+
+    return x;
+}
+
+#if 0
+
+/* Finds the event probability p such that the sum of the terms 0
+   through @k of the Binomial probability density, for @n trials, is
+   equal to the given cumulative probability @a.
+*/
+
+static double gretl_bdtri (int n, int k, double a)
 {
     double p = NADBL;
 
@@ -189,6 +214,8 @@ static double binomial_cdf_inverse (int n, int k, double a)
 
     return p;
 }
+
+#endif
 
 /* The following is no doubt horribly inefficient */
 
@@ -2955,7 +2982,7 @@ double gretl_get_cdf_inverse (int dist, const double *parm,
     } else if (dist == D_SNEDECOR) {
 	y = snedecor_cdf_inverse(parm[0], parm[1], a);
     } else if (dist == D_BINOMIAL) {
-	y = binomial_cdf_inverse((int) parm[0], (int) parm[1], a);
+	y = binomial_cdf_inverse(parm[0], (int) parm[1], a);
     } else if (dist == D_POISSON) {
 	y = poisson_cdf_inverse(parm[0], a);
     } else if (dist == D_GED) {
