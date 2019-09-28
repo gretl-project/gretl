@@ -1494,7 +1494,7 @@ static double poisson_critval (double mu, double a)
 
 /**
  * poisson_cdf_inverse:
- * @lambda: poisson parameter (mean = variance).
+ * @lambda: Poisson parameter (mean = variance).
  * @p: cumulative probability.
  *
  * Returns: the Poisson variable @x such that the integral
@@ -1502,38 +1502,11 @@ static double poisson_critval (double mu, double a)
  * given probability @p.
  */
 
+#include "poisson.h" /* use Mike Giles's code */
+
 static double poisson_cdf_inverse (double lambda, double p)
 {
-    double ret = NADBL;
-
-    if (lambda >= 0 && p >= 0 && p <= 1) {
-	int k = floor(lambda);
-	double c;
-	int x;
-
-	if (p < 0.5) {
-	    for (x=k; x>=0; x--) {
-		c = poisson_cdf(lambda, x);
-		if (c < p) {
-		    x++;
-		    break;
-		}
-	    }
-	    if (x < 0) {
-		x = 0;
-	    }
-	} else {
-	    for (x=k; ; x++) {
-		c = poisson_cdf(lambda, x);
-		if (c >= p) {
-		    break;
-		}
-	    }
-	}
-	ret = x;
-    }
-
-    return ret;
+    return poissinv(p, lambda);
 }
 
 static double weibull_critval (double shape, double scale,
