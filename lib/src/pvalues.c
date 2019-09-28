@@ -1494,26 +1494,46 @@ static double poisson_critval (double mu, double a)
 
 /**
  * poisson_cdf_inverse:
- * @k: test value.
+ * @lambda: poisson parameter (mean = variance).
  * @p: cumulative probability.
  *
- * Returns: the Poisson parameter such that the integral
- * from 0 to @k of the Poisson density is equal to the
+ * Returns: the Poisson variable @x such that the integral
+ * from 0 to @x of the Poisson density is equal to the
  * given probability @p.
  */
 
-static double poisson_cdf_inverse (int k, double p)
+static double poisson_cdf_inverse (double lambda, double p)
 {
-    double x = NADBL;
+    double ret = NADBL;
 
-    if (k >= 0 && p >= 0 && p <= 1) {
-	x = pdtri(k, p);
-	if (get_cephes_errno()) {
-	    x = NADBL;
+    if (lambda >= 0 && p >= 0 && p <= 1) {
+	int k = floor(lambda);
+	double c;
+	int x;
+
+	if (p < 0.5) {
+	    for (x=k; x>=0; x--) {
+		c = poisson_cdf(lambda, x);
+		if (c < p) {
+		    x++;
+		    break;
+		}
+	    }
+	    if (x < 0) {
+		x = 0;
+	    }
+	} else {
+	    for (x=k; ; x++) {
+		c = poisson_cdf(lambda, x);
+		if (c >= p) {
+		    break;
+		}
+	    }
 	}
+	ret = x;
     }
 
-    return x;
+    return ret;
 }
 
 static double weibull_critval (double shape, double scale,
@@ -2964,7 +2984,7 @@ double gretl_get_cdf_inverse (int dist, const double *parm,
     } else if (dist == D_BINOMIAL) {
 	y = binomial_cdf_inverse((int) parm[0], (int) parm[1], a);
     } else if (dist == D_POISSON) {
-	y = poisson_cdf_inverse((int) parm[0], a);
+	y = poisson_cdf_inverse(parm[0], a);
     } else if (dist == D_GED) {
 	y = GED_cdf_inverse(parm[0], a);
     } else if (dist == D_LAPLACE) {
