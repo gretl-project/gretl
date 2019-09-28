@@ -170,6 +170,62 @@ double binomial_cdf_comp (double p, int n, int k)
     return x;
 }
 
+#if 0 /* just notional at this point */
+
+static int bininv_gss (double p, int n, double psum)
+{
+    double gr = (sqrt(5.0) + 1) / 2.0;
+    int verbose = 0;
+    int a = 0;
+    int b = n;
+    int c = b - (b - a) / gr;
+    int d = a + (b - a) / gr;
+    double fc, fd;
+    int absdiff;
+    int iters = 0;
+    int ret = -1;
+
+    while (iters < 50) {
+	fc = binomial_cdf(p, n, c);
+	fd = binomial_cdf(p, n, d);
+	iters += 2;
+	if (1) {
+	    fprintf(stderr, " bracket={%d,%d}, values={%g,%g}\n",
+		    c, d, fc, fd);
+	}
+	if (na(fc) || na(fd)) {
+	    break;
+	}
+	absdiff = abs(c - d);
+	if (fc < fd) {
+	    if (absdiff == 1 && fc < psum && fd >= psum) {
+		ret = d;
+		break;
+	    }
+            b = d;
+        } else {
+	    if (absdiff == 1 && fd < psum && fc >= psum) {
+		ret = c;
+		break;
+	    }
+            a = c;
+	}
+	/* recompute c and d to preserve precision */
+	c = b - (b - a) / gr;
+	d = a + (b - a) / gr;
+	if (c == d) {
+	    ret = c;
+	    break;
+	}
+    }
+
+    fprintf(stderr, "gss: ret = %d, iters %d\n", ret, iters);
+
+    return ret;
+}
+
+#endif
+
 /* Returns the smallest x such that the probability of obtaining
    x successes on @n trials with success probability @p is at least
    the given cumulative probability @a. FIXME efficiency!
@@ -181,14 +237,31 @@ static double binomial_cdf_inverse (double p, int n, double a)
 
     if (a >= 0 && a < 1 && n > 0 && p > 0 && p < 1) {
 	int k0 = (a > 0.5)? floor(n*p) : 0;
-	int k;
+	int k, nn = 0, nb = 0;
+
+	if (n > 9*(1-p)/p && n > 9*p/(1-p)) {
+	    /* use normal approx? */
+	    double afrac = 0.75*a;
+	    double mu = n*p;
+	    double s = mu*(1-p);
+
+	    for (k=k0; k<=n; k++) {
+		nn++;
+		if (normal_cdf((k + 0.5 - mu)/s) >= afrac) {
+		    k0 = k - 2 < 0 ? 0 : k - 2;
+		    break;
+		}
+	    }
+	}
 
 	for (k=k0; k<=n; k++) {
+	    nb++;
 	    if (binomial_cdf(p, n, k) >= a) {
 		break;
 	    }
 	}
 	x = k;
+	fprintf(stderr, "normal evals %d, binomial %d\n", nn, nb);
     }
 
     return x;
@@ -196,16 +269,15 @@ static double binomial_cdf_inverse (double p, int n, double a)
 
 #if 0
 
-/* Finds the event probability p such that the sum of the terms 0
-   through @k of the Binomial probability density, for @n trials, is
-   equal to the given cumulative probability @a.
+/* Returns the event probability p such that the Binomial CDF
+   for @k successes on @n trials equals @a.
 */
 
 static double gretl_bdtri (int n, int k, double a)
 {
     double p = NADBL;
 
-    if (a >= 0 && n >= 0 && k >= 0) {
+    if (a > 0 && a < 1 && n >= 0 && k >= 0 && k <= n) {
 	p = bdtri(k, n, a);
 	if (get_cephes_errno()) {
 	    p = NADBL;
@@ -1535,6 +1607,28 @@ static double poisson_cdf_inverse (double lambda, double p)
 {
     return poissinv(p, lambda);
 }
+
+#if 0
+
+/* Returns the Poisson parameter lambda such that the
+   Poisson CDF evaluated at @k equals @p.
+*/
+
+static double gretl_pdtri (int k, double p)
+{
+    double lambda = NADBL;
+
+    if (k >= 0 && p >= 0 && p <= 1) {
+	lambda = pdtri(k, p);
+	if (get_cephes_errno()) {
+	    lambda = NADBL;
+	}
+    }
+
+    return lambda;
+}
+
+#endif
 
 static double weibull_critval (double shape, double scale,
 			       double rtail)
