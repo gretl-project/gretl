@@ -321,10 +321,11 @@ int gretl_matrix_random_fill (gretl_matrix *m, int dist);
 
 gretl_matrix *gretl_random_matrix_new (int r, int c, int dist);
 
-gretl_matrix *gretl_matrix_resample (const gretl_matrix *m, int *err);
+gretl_matrix *gretl_matrix_resample (const gretl_matrix *m,
+				     int draws, int *err);
 
 gretl_matrix *gretl_matrix_block_resample (const gretl_matrix *m,
-					   int blocklen,
+					   int blocklen, int draws,
 					   int *err);
 
 int gretl_matrix_block_resample2 (const gretl_matrix *src,

@@ -337,7 +337,6 @@ enum {
     F_IMHOF,
     F_XMIN,
     F_XMAX,
-    F_RESAMPLE,
     F_FCSTATS,
     F_FRACLAG,
     F_MREV,
@@ -460,6 +459,7 @@ enum {
     F_EIGGEN,
     F_EIGGEN2,
     F_SCHUR,
+    F_RESAMPLE,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,

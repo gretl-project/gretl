@@ -4070,8 +4070,8 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    goto finalize;
 	}
 
-	if (f == F_RESAMPLE || f == F_MREV || f == F_SDC ||
-	    f == F_MCOV || f == F_CDEMEAN || f == F_PSDROOT) {
+	if (f == F_MREV || f == F_SDC || f == F_MCOV ||
+	    f == F_CDEMEAN || f == F_PSDROOT) {
 	    /* if present, the @r node should hold a scalar */
 	    if (!null_or_scalar(r)) {
 		node_type_error(f, 2, NUM, r, p);
@@ -4149,13 +4149,6 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    break;
 	case F_DATAOK:
 	    ret->v.m = gretl_matrix_isfinite(m, &p->err);
-	    break;
-	case F_RESAMPLE:
-	    if (gotopt) {
-		ret->v.m = gretl_matrix_block_resample(m, optparm, &p->err);
-	    } else {
-		ret->v.m = gretl_matrix_resample(m, &p->err);
-	    }
 	    break;
 	case F_INV:
 	    if (m->is_complex) {
@@ -11580,6 +11573,25 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 		A = midas_gradient(length, gm, method, &p->err);
 	    }
 	}
+    } else if (f == F_RESAMPLE) {
+	int blocklen = 0, draws = 0;
+
+	if (l->t != MAT) {
+	    node_type_error(f, 1, MAT, l, p);
+	}
+	if (!p->err && !null_node(m)) {
+	    blocklen = node_get_int(m, p);
+	}
+	if (!p->err && !null_node(r)) {
+	    draws = node_get_int(r, p);
+	}
+	if (!p->err) {
+	    if (blocklen != 0) {
+		A = gretl_matrix_block_resample(l->v.m, blocklen, draws, &p->err);
+	    } else {
+		A = gretl_matrix_resample(l->v.m, draws, &p->err);
+	    }
+	}
     }
 
     if (!p->err && post_process) {
@@ -15795,7 +15807,11 @@ static NODE *eval (NODE *t, parser *p)
 		ret = series_series_func(l, r, NULL, t->t, p);
 	    }
 	} else if (l->t == MAT) {
-	    ret = matrix_to_matrix_func(l, r, t->t, p);
+	    if (t->t == F_RESAMPLE) {
+		ret = eval_3args_func(l, m, r, t->t, p);
+	    } else {
+		ret = matrix_to_matrix_func(l, r, t->t, p);
+	    }
 	} else if (t->t == F_DIFF && ok_list_node(l, p)) {
 	    ret = apply_list_func(l, NULL, t->t, p);
 	} else if (t->t == F_RESAMPLE && ok_list_node(l, p) &&

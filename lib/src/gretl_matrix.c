@@ -2001,6 +2001,8 @@ double gretl_vector_variance (const gretl_vector *v)
 /**
  * gretl_matrix_resample:
  * @m: input matrix.
+ * @draws: number of draws (or 0 to use the number or rows
+ * in @m).
  * @err: location to receive error code.
  *
  * Returns: a new matrix consisting of a random re-sampling
@@ -2009,7 +2011,7 @@ double gretl_vector_variance (const gretl_vector *v)
  */
 
 gretl_matrix *gretl_matrix_resample (const gretl_matrix *m,
-				     int *err)
+				     int draws, int *err)
 {
     gretl_matrix *R = NULL;
     int *z = NULL;
@@ -2020,9 +2022,20 @@ gretl_matrix *gretl_matrix_resample (const gretl_matrix *m,
     if (gretl_is_null_matrix(m)) {
 	*err = E_DATA;
 	return NULL;
+    } else if (m->is_complex) {
+	*err = E_CMPLX;
+	return NULL;
     }
 
-    r = m->rows;
+    if (draws < 0) {
+	*err = E_INVARG;
+	return NULL;
+    } else if (draws > 0) {
+	r = draws;
+    } else {
+	r = m->rows;
+    }
+
     R = gretl_matrix_alloc(r, m->cols);
     z = malloc(r * sizeof *z);
 
@@ -2038,7 +2051,7 @@ gretl_matrix *gretl_matrix_resample (const gretl_matrix *m,
 
     /* sample from source matrix based on row indices */
     for (i=0; i<r; i++) {
-	k = z[i];
+	k = z[i] % m->rows;
 	for (j=0; j<m->cols; j++) {
 	    x = gretl_matrix_get(m, k, j);
 	    gretl_matrix_set(R, i, j, x);
@@ -2046,7 +2059,7 @@ gretl_matrix *gretl_matrix_resample (const gretl_matrix *m,
     }
 
     t1 = gretl_matrix_get_t1(m);
-    if (t1 > 0) {
+    if (t1 > 0 && r <= m->rows) {
 	gretl_matrix_set_t1(R, t1);
 	gretl_matrix_set_t2(R, t1 + r - 1);
     }
@@ -2060,6 +2073,7 @@ gretl_matrix *gretl_matrix_resample (const gretl_matrix *m,
  * gretl_matrix_block_resample:
  * @m: input matrix.
  * @blocklen: length of moving blocks.
+ * @draws: number of draws (or 0 to use the rows of @m).
  * @err: location to receive error code.
  *
  * Returns: a new matrix consisting of a random re-sampling
@@ -2069,7 +2083,7 @@ gretl_matrix *gretl_matrix_resample (const gretl_matrix *m,
  */
 
 gretl_matrix *gretl_matrix_block_resample (const gretl_matrix *m,
-					   int blocklen,
+					   int blocklen, int draws,
 					   int *err)
 {
     gretl_matrix *R = NULL;
@@ -2079,16 +2093,19 @@ gretl_matrix *gretl_matrix_block_resample (const gretl_matrix *m,
     int t1;
     int i, j, k;
 
-    if (gretl_is_null_matrix(m) || blocklen <= 0) {
+    if (gretl_is_null_matrix(m) || blocklen <= 0 || draws < 0) {
 	*err = E_DATA;
+	return NULL;
+    } else if (m->is_complex) {
+	*err = E_CMPLX;
 	return NULL;
     }
 
     if (blocklen == 1) {
-	return gretl_matrix_resample(m, err);
+	return gretl_matrix_resample(m, draws, err);
     }
 
-    r = m->rows;
+    r = draws > 0 ? draws : m->rows;
 
     /* Let n represent the number of blocks of @blocklen
        contiguous rows which we need to select; the
@@ -2120,7 +2137,7 @@ gretl_matrix *gretl_matrix_block_resample (const gretl_matrix *m,
     for (b=0; b<n; b++) {
 	for (s=0; s<blocklen; s++) {
 	    if (i < r) {
-		k = z[b] + s;
+		k = (z[b] + s) % m->rows;
 		for (j=0; j<m->cols; j++) {
 		    x = gretl_matrix_get(m, k, j);
 		    gretl_matrix_set(R, i, j, x);
@@ -2133,7 +2150,7 @@ gretl_matrix *gretl_matrix_block_resample (const gretl_matrix *m,
     }
 
     t1 = gretl_matrix_get_t1(m);
-    if (t1 > 0) {
+    if (t1 > 0 && r <= m->rows) {
 	gretl_matrix_set_t1(R, t1);
 	gretl_matrix_set_t2(R, t1 + r - 1);
     }
