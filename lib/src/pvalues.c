@@ -207,6 +207,7 @@ static int bininv_binary (double p, int n, double u)
     } else {
 	pdmax = 0;
 	ke = ke1 = -1;
+	fe = fe1 = 0;
     }
 
     while (evals < emax) {
