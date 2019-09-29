@@ -81,7 +81,7 @@ void gretl_pop_c_numeric_locale (void)
 
     numeric_c_locale_depth--;
 
-    if (numeric_c_locale_depth == 0) {
+    if (numeric_c_locale_depth == 0 && numeric_locale != NULL) {
 	setlocale(LC_NUMERIC, numeric_locale);
 	free(numeric_locale);
 	numeric_locale = NULL;
