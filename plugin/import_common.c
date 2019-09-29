@@ -75,7 +75,8 @@ static int check_imported_varname (char *vname, int vnum,
     } else {
 	char *s, tmp[VNAMELEN];
 
-	strcpy(tmp, vname);
+	*tmp = '\0';
+	strncat(tmp, vname, VNAMELEN - 1);
 	s = tmp;
 	*vname = '\0';
 
