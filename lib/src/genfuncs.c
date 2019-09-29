@@ -7067,6 +7067,7 @@ static int panel_daily_or_weekly (const DATASET *dset, double *x)
     tsset.pd = dset->panel_pd;
     tsset.sd0 = dset->panel_sd0;
     tsset.n = dset->pd;
+    calendar_date_string(tsset.stobs, 0, &tsset);
 
     for (t=0; t<dset->pd && !err; t++) {
 	ntodate(datestr, t, &tsset);
@@ -7644,4 +7645,3 @@ int fill_permutation_vector (gretl_vector *v, int n)
 
     return 0;
 }
-
