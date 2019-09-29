@@ -7128,7 +7128,7 @@ int fill_dataset_dates_series (const DATASET *dset, double *x)
 	} else if (pd == 1 || pd == 10) {
 	    err = annual_or_decennial_dates(dset, pd, sd0, T, x);
 	} else if (pd == 5 || pd == 6 || pd == 7 || pd == 52) {
-	    panel_daily_or_weekly(dset, x);
+	    err = panel_daily_or_weekly(dset, x);
 	}
     } else if (calendar_data(dset)) {
 	err = regular_daily_or_weekly(dset, x);

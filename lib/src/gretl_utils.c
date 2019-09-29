@@ -928,7 +928,7 @@ static void maybe_fix_daily_start (guint32 *ed, int pd)
 
 static int process_starting_obs (const char *stobs_in, int pd,
 				 int *pstructure, double *psd0,
-				 guint32 *ped0)
+				 guint32 *ped0, gretlopt opt)
 {
     char stobs[OBSLEN];
     int structure = *pstructure;
@@ -1005,7 +1005,11 @@ static int process_starting_obs (const char *stobs_in, int pd,
 	    } else {
 		if (structure == TIME_SERIES && min > 0 &&
 		    !recognized_ts_frequency(pd)) {
-		    structure = SPECIAL_TIME_SERIES;
+		    if (opt & OPT_I) {
+			return invalid_stobs(stobs);
+		    } else {
+			structure = SPECIAL_TIME_SERIES;
+		    }
 		}
 		real_format_obs(stobs, maj, min, pd, '.');
 		if (structure == STRUCTURE_UNKNOWN &&
@@ -1130,7 +1134,7 @@ int set_obs (const char *parm1, const char *parm2,
 	return 1;
     }
 
-    err = process_starting_obs(stobs, pd, &structure, &sd0, &ed0);
+    err = process_starting_obs(stobs, pd, &structure, &sd0, &ed0, opt);
 
     if (err) {
 	return err;
@@ -1225,7 +1229,7 @@ int simple_set_obs (DATASET *dset, int pd, const char *stobs,
 	structure = TIME_SERIES;
     }
 
-    err = process_starting_obs(stobs, pd, &structure, &sd0, &ed0);
+    err = process_starting_obs(stobs, pd, &structure, &sd0, &ed0, OPT_NONE);
 
     if (err) {
 	return err;
