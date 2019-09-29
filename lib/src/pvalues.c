@@ -172,19 +172,21 @@ double binomial_cdf_comp (double p, int n, int k)
 
 /* Binomial inverse CDF via binary search */
 
-static int bininv_binary (double p, int n, double psum)
+static int bininv_binary (double p, int n, double u)
 {
     int klo = 0;
     int khi = n;
-    int kmid;
+    int kmid, ke, ke1;
     double f, f1;
+    double fe, fe1;
+    double mu, pdmax;
     int evals = 0;
     int nk, emax;
     int ret = -1;
 
-    if (psum > 0.5) {
+    if (u > 0.5) {
 	klo = floor(n*p) - 1;
-    } else if (psum < 0.5) {
+    } else if (u < 0.5) {
 	khi = floor(n*p) + 1;
     }
 
@@ -192,10 +194,29 @@ static int bininv_binary (double p, int n, double psum)
     nk = khi - klo + 1;
     emax = 2 * log2(nk);
 
+    /* Find the max step-up of the CDF, which occurs
+       from expected value minus 1 to expected value.
+    */
+    mu = n*p;
+    ke = u > 0.5 ? ceil(mu) : floor(mu);
+    if (ke > 0) {
+	ke1 = ke - 1;
+	fe = binomial_cdf(p, n, ke);
+	fe1 = binomial_cdf(p, n, ke1);
+	pdmax = fe - fe1;
+    } else {
+	pdmax = 0;
+	ke = ke1 = -1;
+    }
+
     while (evals < emax) {
-	f = binomial_cdf(p, n, kmid);
-	evals++;
-	if (f < psum) {
+	if (kmid == ke || kmid == ke1) {
+	    f = (kmid == ke)? fe : fe1;
+	} else {
+	    f = binomial_cdf(p, n, kmid);
+	    evals++;
+	}
+	if (f < u) {
 	    /* we need to look on the right */
 	    klo = kmid;
 	    kmid = (klo + khi) / 2;
@@ -203,16 +224,23 @@ static int bininv_binary (double p, int n, double psum)
 		ret = kmid;
 		break;
 	    }
-	} else if (f == psum) {
+	} else if (f == u) {
 	    /* on the nail (unlikely) */
 	    ret = kmid;
 	    break;
 	} else {
-	    if (f/psum < 1.4 && kmid > 0) {
+	    /* f > u */
+	    if (f - u <= pdmax && kmid > 0) {
 		/* check out k - 1 */
-		f1 = binomial_cdf(p, n, kmid-1);
-		evals++;
-		if (f1 < psum) {
+		int k1 = kmid - 1;
+
+		if (k1 == ke || k1 == ke1) {
+		    f1 = (k1 == ke)? fe : fe1;
+		} else {
+		    f1 = binomial_cdf(p, n, k1);
+		    evals++;
+		}
+		if (f1 < u) {
 		    ret = kmid;
 		    break;
 		}
@@ -228,9 +256,8 @@ static int bininv_binary (double p, int n, double psum)
     }
 
     if (ret < 0) {
-	fprintf(stderr, "bad: evals=%d, p=%g, n=%d, psum=%g\n",
-		evals, p, n, psum);
-	kmid = floor(n*p);
+	fprintf(stderr, "bininv_binary, bad: evals=%d, p=%g, n=%d, u=%g\n",
+		evals, p, n, u);
     }
 
     return ret;
@@ -242,10 +269,6 @@ static int bininv_sum (double p, int n, double u)
 {
     double f, a, s;
     int k = 1;
-
-    if (u == 1) {
-	return n;
-    }
 
     f = binomial_cdf(p, n, n/2);
 
@@ -276,62 +299,28 @@ static int bininv_sum (double p, int n, double u)
 
 /* Returns the smallest x such that the probability of obtaining
    x successes on @n trials with success probability @p is at least
-   the given cumulative probability @a. FIXME efficiency!
+   the given cumulative probability @u. FIXME efficiency?
 */
 
-static double binomial_cdf_inverse (double p, int n, double a)
+static double binomial_cdf_inverse (double p, int n, double u)
 {
-    static int use_bin = -1;
     double x = NADBL;
+    int k;
 
-    if (n < 500) {
-	int k = bininv_sum(p, n, a);
-
+    if (u <= 0 || u > 1 || n <= 0 || p <= 0 || p >= 1) {
+	;
+    } else if (u == 1.0) {
+	x = n;
+    } else if (n < 500) {
+	k = bininv_sum(p, n, u);
 	if (k >= 0) {
 	    x = k;
 	}
-	return x;
-    }
-
-    if (use_bin < 0) {
-	use_bin = getenv("BIN_USE_BIN") != NULL;
-    }
-
-    if (use_bin) {
-	int k = bininv_binary(p, n, a);
-
+    } else {
+	k = bininv_binary(p, n, u);
 	if (k >= 0) {
 	    x = k;
 	}
-	return x;
-    }
-
-    if (a >= 0 && a < 1 && n > 0 && p > 0 && p < 1) {
-	int k0 = (a > 0.5)? floor(n*p) : 0;
-	int k, nn = 0, nb = 0;
-
-	if (n > 9*(1-p)/p && n > 9*p/(1-p)) {
-	    /* use normal approx? */
-	    double afrac = 0.75*a;
-	    double mu = n*p;
-	    double s = mu*(1-p);
-
-	    for (k=k0; k<=n; k++) {
-		nn++;
-		if (normal_cdf((k + 0.5 - mu)/s) >= afrac) {
-		    k0 = k - 2 < 0 ? 0 : k - 2;
-		    break;
-		}
-	    }
-	}
-
-	for (k=k0; k<=n; k++) {
-	    nb++;
-	    if (binomial_cdf(p, n, k) >= a) {
-		break;
-	    }
-	}
-	x = k;
     }
 
     return x;
