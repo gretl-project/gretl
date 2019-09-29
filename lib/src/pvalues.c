@@ -170,61 +170,109 @@ double binomial_cdf_comp (double p, int n, int k)
     return x;
 }
 
-#if 0 /* just notional at this point */
+/* Binomial inverse CDF via binary search */
 
-static int bininv_gss (double p, int n, double psum)
+static int bininv_binary (double p, int n, double psum)
 {
-    double gr = (sqrt(5.0) + 1) / 2.0;
-    int verbose = 0;
-    int a = 0;
-    int b = n;
-    int c = b - (b - a) / gr;
-    int d = a + (b - a) / gr;
-    double fc, fd;
-    int absdiff;
-    int iters = 0;
+    int klo = 0;
+    int khi = n;
+    int kmid;
+    double f, f1;
+    int evals = 0;
+    int nk, emax;
     int ret = -1;
 
-    while (iters < 50) {
-	fc = binomial_cdf(p, n, c);
-	fd = binomial_cdf(p, n, d);
-	iters += 2;
-	if (1) {
-	    fprintf(stderr, " bracket={%d,%d}, values={%g,%g}\n",
-		    c, d, fc, fd);
-	}
-	if (na(fc) || na(fd)) {
-	    break;
-	}
-	absdiff = abs(c - d);
-	if (fc < fd) {
-	    if (absdiff == 1 && fc < psum && fd >= psum) {
-		ret = d;
+    if (psum > 0.5) {
+	klo = floor(n*p) - 1;
+    } else if (psum < 0.5) {
+	khi = floor(n*p) + 1;
+    }
+
+    kmid = (klo + khi) / 2;
+    nk = khi - klo + 1;
+    emax = 2 * log2(nk);
+
+    while (evals < emax) {
+	f = binomial_cdf(p, n, kmid);
+	evals++;
+	if (f < psum) {
+	    /* we need to look on the right */
+	    klo = kmid;
+	    kmid = (klo + khi) / 2;
+	    if (kmid == klo) {
+		ret = kmid;
 		break;
 	    }
-            b = d;
-        } else {
-	    if (absdiff == 1 && fd < psum && fc >= psum) {
-		ret = c;
+	} else if (f == psum) {
+	    /* on the nail (unlikely) */
+	    ret = kmid;
+	    break;
+	} else {
+	    if (f/psum < 1.4 && kmid > 0) {
+		/* check out k - 1 */
+		f1 = binomial_cdf(p, n, kmid-1);
+		evals++;
+		if (f1 < psum) {
+		    ret = kmid;
+		    break;
+		}
+	    }
+	    /* we need to look on the left */
+	    khi = kmid;
+	    kmid = (klo + khi) / 2;
+	    if (kmid == klo) {
+		ret = kmid;
 		break;
 	    }
-            a = c;
-	}
-	/* recompute c and d to preserve precision */
-	c = b - (b - a) / gr;
-	d = a + (b - a) / gr;
-	if (c == d) {
-	    ret = c;
-	    break;
 	}
     }
 
-    fprintf(stderr, "gss: ret = %d, iters %d\n", ret, iters);
+    if (ret < 0) {
+	fprintf(stderr, "bad: evals=%d, p=%g, n=%d, psum=%g\n",
+		evals, p, n, psum);
+	kmid = floor(n*p);
+    }
 
     return ret;
 }
 
-#endif
+/* Binomial inverse CDF via bottom-up or top-down summation */
+
+static int bininv_sum (double p, int n, double u)
+{
+    double f, a, s;
+    int k = 1;
+
+    if (u == 1) {
+	return n;
+    }
+
+    f = binomial_cdf(p, n, n/2);
+
+    if (u <= f) {
+	/* bottom-up */
+	a = pow(1 - p, n);
+	s = a - u;
+	while (s < 0) {
+	    a = (a*p/(1 - p)) * (n - k + 1)/k;
+	    s += a;
+	    k++;
+	}
+	return k - 1;
+    } else {
+	/* top-down */
+	a = pow(p, n);
+	s = 1 - u - a;
+	while (s >= 0) {
+	    a = (a*(1 - p)/p) * (n - k + 1)/k;
+	    s -= a;
+	    k++;
+	}
+	return n - k + 1;
+    }
+
+    return -1;
+}
 
 /* Returns the smallest x such that the probability of obtaining
    x successes on @n trials with success probability @p is at least
@@ -233,7 +281,30 @@ static int bininv_gss (double p, int n, double psum)
 
 static double binomial_cdf_inverse (double p, int n, double a)
 {
+    static int use_bin = -1;
     double x = NADBL;
+
+    if (n < 500) {
+	int k = bininv_sum(p, n, a);
+
+	if (k >= 0) {
+	    x = k;
+	}
+	return x;
+    }
+
+    if (use_bin < 0) {
+	use_bin = getenv("BIN_USE_BIN") != NULL;
+    }
+
+    if (use_bin) {
+	int k = bininv_binary(p, n, a);
+
+	if (k >= 0) {
+	    x = k;
+	}
+	return x;
+    }
 
     if (a >= 0 && a < 1 && n > 0 && p > 0 && p < 1) {
 	int k0 = (a > 0.5)? floor(n*p) : 0;
@@ -261,7 +332,6 @@ static double binomial_cdf_inverse (double p, int n, double a)
 	    }
 	}
 	x = k;
-	fprintf(stderr, "normal evals %d, binomial %d\n", nn, nb);
     }
 
     return x;
