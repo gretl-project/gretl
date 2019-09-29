@@ -1732,11 +1732,13 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
     err = check_data_block(book, xi, &missvals, &strerr);
 
     if (err) {
+	fprintf(stderr, "HERE -1: err = %d\n", err);
 	pprintf(prn, _("Expected numeric data, found string:\n"
 		       "%s\" at row %d, column %d\n"),
 		strerr.str, strerr.row, strerr.column);
 	g_free(strerr.str);
 	pputs(prn, _(adjust_rc));
+	fprintf(stderr, "HERE 0: goto getout\n");
 	goto getout; 
     } else if (missvals) {
 	pputs(prn, _("Warning: there were missing values\n"));
@@ -1835,15 +1837,19 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
     }
 
  getout:
-    
-    free_xls_info(xi);
-    wbook_free(book);
 
+    fprintf(stderr, "HERE 1, after getout\n");
+    free_xls_info(xi);
+    fprintf(stderr, "HERE 2, after free_xls_info\n");
+    wbook_free(book);
+    fprintf(stderr, "HERE 3, after wbook_free\n");
     gretl_pop_c_numeric_locale();
+    fprintf(stderr, "HERE 4, after pop_c_numeric_locale\n");
 
     if (newset != NULL) {
 	destroy_dataset(newset);
     }
+    fprintf(stderr, "HERE 5, returning %d\n", err);
 
     return err;
 }  
