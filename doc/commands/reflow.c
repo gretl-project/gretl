@@ -68,7 +68,12 @@ static void utf_replace_plain (unsigned char *s)
 	    write_text(s, "-");
 	    memmove(s + 1, s + 3, mvsize(s, 3));
 	} else if (s[0] == 0xe2 && s[1] == 0x89 && s[2] == 0xa4) {
+	    /* &le; */
 	    write_text(s, "<=");
+	    memmove(s + 2, s + 3, mvsize(s, 3));
+	} else if (s[0] == 0xe2 && s[1] == 0x89 && s[2] == 0xa5) {
+	    /* &ge; */
+	    write_text(s, ">=");
 	    memmove(s + 2, s + 3, mvsize(s, 3));
 	} else if (s[0] == 0xce && s[1] == 0x93) {
 	    /* &Gamma */
