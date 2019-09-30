@@ -1639,6 +1639,7 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
 	/* not doing auto-omit */
 	err = make_short_list(orig, omitvars, opt, &tmplist);
 	if (err) {
+	    free(tmplist);
 	    return err;
 	}
     }

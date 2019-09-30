@@ -6143,7 +6143,7 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
     }
 
     if (ok && pmod->ncoeff == 1) {
-	if (ci == OMIT || ci == COEFFSUM) {
+	if (ci == COEFFSUM) {
 	    ok = 0;
 	} else if (pmod->ifc && ci == MODTEST) {
 	    /* const only: rule out squares, logs, h'sked */

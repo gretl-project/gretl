@@ -2373,15 +2373,26 @@ int gretl_delete_variables (int *list,
    the command as a stand-alone test?
 */
 
-static int add_omit_save (CMD *cmd)
+static int add_omit_save (CMD *cmd, MODEL *pmod)
 {
-    if (cmd->ci == ADD) {
+    int ret = 1;
+
+    if (cmd->ci == ADD && (cmd->opt & OPT_L)) {
 	/* not saving if given the --lm option */
-	return !(cmd->opt & OPT_L);
-    } else {
-	/* omit: not saving if given the --test-only option */
-	return !(cmd->opt & OPT_W);
+	ret = 0;
+    } else if (cmd->ci == OMIT && (cmd->opt & OPT_W)) {
+	/* not saving if given the --test-only (Wald) option */
+	ret = 0;
     }
+
+    if (ret && cmd->list != NULL && pmod->list != NULL) {
+	if (cmd->list[0] == pmod->list[0] - 1) {
+	    /* omitting everything */
+	    ret = 0;
+	}
+    }
+
+    return ret;
 }
 
 static int VAR_omit_driver (CMD *cmd, DATASET *dset, PRN *prn)
@@ -3444,7 +3455,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case OMIT:
 	if (get_last_model_type() == GRETL_OBJ_VAR) {
 	    err = VAR_omit_driver(cmd, dset, prn);
-	} else if (add_omit_save(cmd)) {
+	} else if (add_omit_save(cmd, model)) {
 	    MODEL mymod;
 
 	    gretl_model_init(&mymod, dset);

@@ -1989,15 +1989,6 @@ int *gretl_list_omit (const int *orig, const int *omit,
 	}
     }
 
-    if (minpos > 1) {
-	/* regression list: it's an error to attempt to omit
-	   all regressors */
-	if (n_omit == n_orig - 1) {
-	    *err = E_NOVARS;
-	    return NULL;
-	}
-    }
-
     ret = gretl_list_new(n_orig - n_omit);
 
     if (ret == NULL) {
