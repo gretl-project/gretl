@@ -99,7 +99,8 @@ static int check_imported_varname (char *vname, int vnum,
     if (err) {
 	err = E_DATA;
 	if (row >= 0 && col >= 0) {
-	    pprintf(prn, _("At row %d, column %d:\n"), row, col);
+	    pputc(prn, '\n');
+	    pprintf(prn, _("At row %d, column %d:\n"), row+1, col+1);
 	}
 	pputs(prn, gretl_errmsg_get());
     }
