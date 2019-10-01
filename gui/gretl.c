@@ -2478,11 +2478,8 @@ mdata_handle_drag  (GtkWidget *widget,
 
 gboolean open_tryfile (void)
 {
-    static int count;
     gboolean ret = FALSE;
     int ftype = 0;
-
-    fprintf(stderr, "open_tryfile: call %d\n", ++count);
 
     if (has_db_suffix(tryfile)) {
 	ret = open_named_db_index(tryfile);
