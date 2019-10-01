@@ -498,7 +498,7 @@ static gboolean app_open_file_cb (GtkosxApplication *app,
 	    return TRUE;
 	}
 	set_tryfile(path);
-	return real_open_tryfile();
+	return open_tryfile();
     } else {
 	clear_tryfile();
 	return TRUE;
@@ -842,7 +842,7 @@ int main (int argc, char **argv)
 #endif
 
     if (tryfile_is_set()) {
-	real_open_tryfile();
+	open_tryfile();
     }
 
     /* try opening specified database or package */
@@ -2473,13 +2473,16 @@ mdata_handle_drag  (GtkWidget *widget,
     unescape_url(tmp);
     set_tryfile(tmp);
 
-    real_open_tryfile();
+    open_tryfile();
 }
 
-gboolean real_open_tryfile (void)
+gboolean open_tryfile (void)
 {
+    static int count;
     gboolean ret = FALSE;
     int ftype = 0;
+
+    fprintf(stderr, "open_tryfile: call %d\n", ++count);
 
     if (has_db_suffix(tryfile)) {
 	ret = open_named_db_index(tryfile);

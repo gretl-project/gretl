@@ -540,7 +540,7 @@ static void process_handoff_message (void)
 
     if (try_open) {
 	/* we picked up the name of a file to open */
-	real_open_tryfile();
+	open_tryfile();
     }
 }
 
