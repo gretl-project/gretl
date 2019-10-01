@@ -151,7 +151,6 @@ MODEL *model;
 
 char datafile[MAXLEN];
 char scriptfile[MAXLEN];
-char tryfile[MAXLEN];
 
 int data_status, orig_vars;
 float gui_scale;
@@ -183,6 +182,29 @@ char viewpdf[MAXSTR] = "acroread";
 char viewps[MAXSTR] = "gv";
 char Rcommand[MAXSTR] = "xterm -e R";
 #endif
+
+static char tryfile[MAXLEN];
+
+void set_tryfile (const char *fname)
+{
+    tryfile[0] = '\0';
+    strncat(tryfile, fname, MAXLEN - 1);
+}
+
+char *get_tryfile (void)
+{
+    return tryfile;
+}
+
+void clear_tryfile (void)
+{
+    tryfile[0] = '\0';
+}
+
+int tryfile_is_set (void)
+{
+    return tryfile[0] != '\0';
+}
 
 static void spreadsheet_edit (void)
 {
@@ -475,11 +497,10 @@ static gboolean app_open_file_cb (GtkosxApplication *app,
 	    /* we're already on it? */
 	    return TRUE;
 	}
-	*tryfile = '\0';
-	strncat(tryfile, path, MAXLEN - 1);
+	set_tryfile(path);
 	return real_open_tryfile();
     } else {
-	*tryfile = '\0';
+	clear_tryfile();
 	return TRUE;
     }
 }
@@ -566,7 +587,7 @@ static gboolean maybe_hand_off (char *filearg, char *auxname)
 	    char *fname = filearg;
 
 	    if (*fname == '\0') {
-		fname = *tryfile ? tryfile : auxname;
+		fname = tryfile_is_set() ? tryfile : auxname;
 	    }
 	    ret = forward_open_request(gpid, fname);
 	}
@@ -820,7 +841,7 @@ int main (int argc, char **argv)
     fprintf(stderr, "done setting GUI state\n");
 #endif
 
-    if (*tryfile != '\0') {
+    if (tryfile_is_set()) {
 	real_open_tryfile();
     }
 
@@ -2450,7 +2471,7 @@ mdata_handle_drag  (GtkWidget *widget,
 
     /* handle spaces and such then transcribe */
     unescape_url(tmp);
-    strcpy(tryfile, tmp);
+    set_tryfile(tmp);
 
     real_open_tryfile();
 }
@@ -2518,7 +2539,7 @@ static void mdata_text_received (GtkClipboard *cb,
 
 	    pputs(prn, text);
 	    gretl_print_destroy(prn);
-	    strcpy(tryfile, fullname);
+	    set_tryfile(fullname);
 	    do_open_data(NULL, ci);
 	    gretl_remove(fullname);
 	}

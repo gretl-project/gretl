@@ -105,7 +105,6 @@ extern float gui_scale;
 /* global filenames */
 extern char datafile[MAXLEN];
 extern char scriptfile[MAXLEN];
-extern char tryfile[MAXLEN];
 
 /* global option-related vars */
 extern int winsize;
@@ -143,6 +142,11 @@ int gretl_fork (const char *progvar, const char *arg,
 		const char *opt);
 void set_wm_icon (GtkWidget *w);
 #endif
+
+void set_tryfile (const char *fname);
+char *get_tryfile (void);
+void clear_tryfile (void);
+int tryfile_is_set (void);
 
 int mdata_selection_count (void);
 int mdata_active_var (void);

@@ -1339,23 +1339,26 @@ static int set_session_dirname (const char *zdirname)
     return err;
 }
 
-static void maybe_absolutize_tryfile (void)
+static char *maybe_absolutize_tryfile (void)
 {
-    if (!g_path_is_absolute(tryfile)) {
+    char *fname = get_tryfile();
+    
+    if (!g_path_is_absolute(fname)) {
 	gchar *cwd = g_get_current_dir();
 
 	if (cwd != NULL) {
-	    gchar *tmp = g_build_filename(cwd, tryfile, NULL);
+	    gchar *tmp = g_build_filename(cwd, fname, NULL);
 
-	    *tryfile = '\0';
-	    strncat(tryfile, tmp, MAXLEN - 1);
+	    set_tryfile(tmp);
 	    g_free(tmp);
 	    g_free(cwd);
 	}
     }
+
+    return get_tryfile();
 }
 
-/* note: the name of the file to be opened is in the global var
+/* note: the name of the file to be opened is in the gretl.c var
    'tryfile' */
 
 gboolean do_open_session (void)
@@ -1364,6 +1367,7 @@ gboolean do_open_session (void)
     char xmlname[MAXLEN]; /* path to master session XML file */
     char gdtname[MAXLEN]; /* path to session data file */
     char fname[MAXLEN];   /* multi-purpose temp variable */
+    char *tryname = get_tryfile();
     gchar *zdirname = NULL;
     FILE *fp;
     int nodata = 0;
@@ -1371,27 +1375,26 @@ gboolean do_open_session (void)
 
     sinfo_init(&sinfo);
 
-    fp = gretl_fopen(tryfile, "r");
+    fp = gretl_fopen(tryname, "r");
     if (fp != NULL) {
 	fclose(fp);
     } else {
-	file_read_errbox(tryfile);
-	delete_from_filelist(FILE_LIST_SESSION, tryfile);
+	file_read_errbox(tryname);
+	delete_from_filelist(FILE_LIST_SESSION, tryname);
 	return FALSE;
     }
 
     /* close existing session, if any, and initialize */
     close_session(OPT_NONE);
 
-    fprintf(stderr, I_("\nReading session file %s\n"), tryfile);
+    fprintf(stderr, I_("\nReading session file %s\n"), tryname);
 
     /* we're about to change directory: if tryfile is not
        an absolute path we'll lose track of it
     */
-    maybe_absolutize_tryfile();
-
+    tryname = maybe_absolutize_tryfile();
     gretl_chdir(gretl_dotdir());
-    err = gretl_unzip_session_file(tryfile, &zdirname);
+    err = gretl_unzip_session_file(tryname, &zdirname);
 
     if (err) {
 	gui_errmsg(err);
@@ -1399,7 +1402,7 @@ gboolean do_open_session (void)
 	goto bailout;
     }
 
-    session_name_from_session_file(session.name, tryfile);
+    session_name_from_session_file(session.name, tryname);
 
     err = set_session_dirname(zdirname);
     if (err) {
@@ -1504,9 +1507,9 @@ gboolean do_open_session (void)
  bailout:
 
     if (err) {
-	delete_from_filelist(FILE_LIST_SESSION, tryfile);
+	delete_from_filelist(FILE_LIST_SESSION, tryname);
     } else {
-	strcpy(sessionfile, tryfile);
+	strcpy(sessionfile, tryname);
 	mkfilelist(FILE_LIST_SESSION, sessionfile, 0);
 
 	session.status = SESSION_OPEN;

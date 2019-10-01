@@ -8561,19 +8561,20 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
 
 gboolean do_open_script (int action)
 {
-    int err = gretl_test_fopen(tryfile, "r");
+    char *fname = get_tryfile();
+    int err = gretl_test_fopen(fname, "r");
 
     if (err) {
-	file_read_errbox(tryfile);
+	file_read_errbox(fname);
 	if (action == EDIT_HANSL) {
-	    delete_from_filelist(FILE_LIST_SESSION, tryfile);
-	    delete_from_filelist(FILE_LIST_SCRIPT, tryfile);
+	    delete_from_filelist(FILE_LIST_SESSION, fname);
+	    delete_from_filelist(FILE_LIST_SCRIPT, fname);
 	}
 	return FALSE;
     }
 
     if (action == EDIT_HANSL) {
-	strcpy(scriptfile, tryfile);
+	strcpy(scriptfile, fname);
 	mkfilelist(FILE_LIST_SCRIPT, scriptfile, 1);
 	gretl_set_script_dir(scriptfile);
 	if (has_system_prefix(scriptfile, SCRIPT_SEARCH)) {
@@ -8582,7 +8583,7 @@ gboolean do_open_script (int action)
 	    view_script(scriptfile, 1, EDIT_HANSL);
 	}
     } else {
-	view_script(tryfile, 1, action);
+	view_script(fname, 1, action);
     }
 
     return TRUE;

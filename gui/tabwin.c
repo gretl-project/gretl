@@ -538,12 +538,12 @@ tabwin_handle_drag  (GtkWidget *widget,
 	strcat(tmp, dfname + skip);
     }
 
-    /* handle spaces and such then transcribe */
+    /* handle spaces and such */
     unescape_url(tmp);
-    strcpy(tryfile, tmp);
 
-    if (has_suffix(tryfile, ".inp")) {
+    if (has_suffix(tmp, ".inp")) {
 	/* FIXME generalize? */
+	set_tryfile(tmp);
 	do_open_script(EDIT_HANSL);
     }
 }

@@ -744,13 +744,15 @@ void browser_open_data (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
     file_collection *collection;
+    char tmp[MAXLEN];
     gchar *filename;
 
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var,
 			 0, &filename);
     collection = g_object_get_data(G_OBJECT(vwin->listbox), "collection");
-    gretl_build_path(tryfile, collection->path, filename, NULL);
-    strcat(tryfile, ".gdt");
+    gretl_build_path(tmp, collection->path, filename, NULL);
+    strcat(tmp, ".gdt");
+    set_tryfile(tmp);
     g_free(filename);
 
     set_datapage(collection->title);

@@ -1335,7 +1335,7 @@ static int get_native_data (char *fname, int ftype, int append,
 
     if (err) {
 	if (err == E_FOPEN) {
-	    file_read_errbox(tryfile);
+	    file_read_errbox(fname);
 	} else if (buf != NULL && *buf != '\0') {
 	    errbox(buf);
 	} else {
@@ -1371,20 +1371,25 @@ static int maybe_use_join (void)
 		        opts, 2, 0, 0, NULL);
 }
 
+/* The gretl.c variable @tryfile will contain the name
+   of the data file to be opened.
+*/
+
 gboolean do_open_data (windata_t *fwin, int code)
 {
     int append = (code == APPEND_DATA);
+    char *fname = get_tryfile();
+    char tmp[MAXLEN];
     GretlFileType ftype;
     int use_join = 0;
     int err = 0;
 
-    /* the global variable @tryfile will contain the name
-       of the data file in question */
-
-    if (g_path_is_absolute(tryfile)) {
-	ftype = data_file_type_from_name(tryfile);
+    if (g_path_is_absolute(fname)) {
+	strcpy(tmp, fname);
+	ftype = data_file_type_from_name(tmp);
     } else {
-	ftype = detect_filetype(tryfile, OPT_P);
+	strcpy(tmp, fname);
+	ftype = detect_filetype(tmp, OPT_P);
     }
 
     /* destroy the current data set, etc., unless we're
@@ -1398,19 +1403,18 @@ gboolean do_open_data (windata_t *fwin, int code)
 	use_join = maybe_use_join();
 	if (use_join < 0) {
 	    /* canceled */
-	    *tryfile = '\0';
 	    return 0;
 	}
     }
 
     if (use_join) {
-	err = gui_join_data(tryfile, ftype);
+	err = gui_join_data(tmp, ftype);
     } else if (ftype == GRETL_CSV || ftype == GRETL_OCTAVE) {
-	err = get_csv_data(tryfile, ftype, append);
+	err = get_csv_data(tmp, ftype, append);
     } else if (SPREADSHEET_IMPORT(ftype) || OTHER_IMPORT(ftype)) {
-	err = get_imported_data(tryfile, ftype, append);
+	err = get_imported_data(tmp, ftype, append);
     } else {
-	err = get_native_data(tryfile, ftype, append, fwin);
+	err = get_native_data(tmp, ftype, append, fwin);
     }
 
     return !err;
@@ -1446,7 +1450,9 @@ gboolean verify_open_data (windata_t *vwin, int code)
 
 gboolean verify_open_session (void)
 {
-    if (!gretl_is_pkzip_file(tryfile)) {
+    char *fname = get_tryfile();
+    
+    if (!gretl_is_pkzip_file(fname)) {
 	/* not a zipped session file */
 	return do_open_script(EDIT_HANSL);
     }

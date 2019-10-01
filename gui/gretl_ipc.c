@@ -527,8 +527,7 @@ static void process_handoff_message (void)
 	if (fgets(path, sizeof path, fp)) {
 	    tailstrip(path);
 	    if (strcmp(path, "none")) {
-		*tryfile = '\0';
-		strncat(tryfile, path, MAXLEN - 1);
+		set_tryfile(path);
 		try_open = 1;
 	    }
 	}

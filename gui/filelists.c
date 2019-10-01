@@ -506,7 +506,7 @@ static void open_file_from_filelist (GtkAction *action)
     sscanf(s, "%s %d", ftype, &i);
 
     if (!strcmp(ftype, "Data")) {
-	strcpy(tryfile, datap[i]);
+	set_tryfile(datap[i]);
 #if 0 /* probably not a good idea */
 	if (strstr(tryfile, ".csv")) {
 	    int resp = csv_options_dialog(OPEN_DATA, GRETL_OBJ_DSET, NULL);
@@ -518,10 +518,10 @@ static void open_file_from_filelist (GtkAction *action)
 #endif
 	verify_open_data(NULL, 0);
     } else if (!strcmp(ftype, "Script")) {
-	strcpy(tryfile, scriptp[i]);
+	set_tryfile(scriptp[i]);
 	do_open_script(EDIT_HANSL);
     } else if (!strcmp(ftype, "Session")) {
-	strcpy(tryfile, sessionp[i]);
+	set_tryfile(sessionp[i]);
 	verify_open_session();
     } else if (!strcmp(ftype, "Gfn")) {
 	edit_specified_package(gfnp[i]);

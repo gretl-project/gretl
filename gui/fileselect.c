@@ -358,9 +358,8 @@ static void script_open_choice (const char *fname, windata_t *vwin,
 	if (foreign) {
 	    view_script(fname, 1, role);
 	} else {
-	    strcpy(tryfile, fname);
-	    if (view_script(tryfile, 1, EDIT_HANSL) != NULL) {
-		strcpy(scriptfile, tryfile);
+	    if (view_script(fname, 1, EDIT_HANSL) != NULL) {
+		strcpy(scriptfile, fname);
 		mkfilelist(FILE_LIST_SCRIPT, scriptfile, 0);
 	    }
 	}
@@ -421,9 +420,8 @@ static void filesel_open_script (const char *fname, windata_t *vwin)
     } else if (foreign) {
 	view_script(fname, 1, role);
     } else {
-	strcpy(tryfile, fname);
-	if (view_script(tryfile, 1, EDIT_HANSL) != NULL) {
-	    strcpy(scriptfile, tryfile);
+	if (view_script(fname, 1, EDIT_HANSL) != NULL) {
+	    strcpy(scriptfile, fname);
 	    mkfilelist(FILE_LIST_SCRIPT, scriptfile, 0);
 	}
     }
@@ -431,22 +429,21 @@ static void filesel_open_script (const char *fname, windata_t *vwin)
 
 static void filesel_open_session (const char *fname)
 {
-    strcpy(tryfile, fname);
-
     if (gretl_is_pkzip_file(fname)) {
+	set_tryfile(fname);
 	verify_open_session();
     } else {
 	/* old script-style session file? */
 	windata_t *vwin;
 
-	if (has_system_prefix(tryfile, SCRIPT_SEARCH)) {
-	    vwin = view_script(tryfile, 0, VIEW_SCRIPT);
+	if (has_system_prefix(fname, SCRIPT_SEARCH)) {
+	    vwin = view_script(fname, 0, VIEW_SCRIPT);
 	} else {
-	    vwin = view_script(tryfile, 1, EDIT_HANSL);
+	    vwin = view_script(fname, 1, EDIT_HANSL);
 	}
 
 	if (vwin != NULL) {
-	    strcpy(scriptfile, tryfile);
+	    strcpy(scriptfile, fname);
 	}
     }
 }
@@ -594,10 +591,10 @@ file_selector_process_result (const char *in_fname, int action,
     }
 
     if (action == OPEN_DATA) {
-	strcpy(tryfile, fname);
+	set_tryfile(fname);
 	verify_open_data(NULL, action);
     } else if (action == APPEND_DATA) {
-	strcpy(tryfile, fname);
+	set_tryfile(fname);
 	do_open_data(NULL, action);
     } else if (action == OPEN_SCRIPT) {
 	if (src == FSEL_DATA_VWIN) {
