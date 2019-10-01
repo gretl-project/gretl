@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* Originally based on the Gnumeric excel plugin by Michael Meeks */
@@ -104,13 +104,13 @@ static int dbprintf (const char *format, ...)
 
 static void print_version (void)
 {
-    dbprintf("gretl, version %s, %s %s\n", GRETL_VERSION, 
+    dbprintf("gretl, version %s, %s %s\n", GRETL_VERSION,
 	     _("build date"), BUILD_DATE);
 }
 
-static double get_le_double (const unsigned char *rec) 
+static double get_le_double (const unsigned char *rec)
 {
-    union { 
+    union {
         unsigned char cc[8];
         double d;
     } dconv;
@@ -126,9 +126,9 @@ static double get_le_double (const unsigned char *rec)
 
 #if G_BYTE_ORDER == G_BIG_ENDIAN
     for (s=rec+8, d=dconv.cc, i=0; i<8; i++) *(d++) = *(--s);
-#else       
+#else
     for (s=rec, d=dconv.cc, i=0; i<8; i++) *(d++) = *(s++);
-#endif     
+#endif
 
     return dconv.d;
 }
@@ -137,9 +137,9 @@ static double biff_get_rk (const unsigned char *ptr)
 {
     gint32 number;
     enum eType {
-	eIEEE = 0, 
-	eIEEEx100, 
-	eInt, 
+	eIEEE = 0,
+	eIEEEx100,
+	eInt,
 	eIntx100
     } type;
 
@@ -175,7 +175,7 @@ static double biff_get_rk (const unsigned char *ptr)
     return NADBL;
 }
 
-static gchar *convert8to7 (const char *s, int count) 
+static gchar *convert8to7 (const char *s, int count)
 {
     gchar *dest;
     int n;
@@ -203,7 +203,7 @@ static gchar *convert8to7 (const char *s, int count)
     return dest;
 }
 
-static gchar *convert16to7 (const unsigned char *s, int count) 
+static gchar *convert16to7 (const unsigned char *s, int count)
 {
     char *dest;
     int i, u, j = 0;
@@ -225,12 +225,12 @@ static gchar *convert16to7 (const unsigned char *s, int count)
 
     dbprintf("convert16to7: returning '%s'\n", dest);
 
-    return dest;    
+    return dest;
 }
 
 static gchar *
-copy_unicode_string (xls_info *xi, unsigned char *src, int remlen, 
-		     int *skip, int *slop) 
+copy_unicode_string (xls_info *xi, unsigned char *src, int remlen,
+		     int *skip, int *slop)
 {
     int count = MS_OLE_GET_GUINT16(src);
     unsigned char flags = *(src + 2);
@@ -246,7 +246,7 @@ copy_unicode_string (xls_info *xi, unsigned char *src, int remlen,
     }
     if (flags & 0x04) {
 	dbprintf(" contains Far-East info\n");
-    }    
+    }
 
     skip_to_next += count * csize;
 
@@ -256,7 +256,7 @@ copy_unicode_string (xls_info *xi, unsigned char *src, int remlen,
 	rich_text_info_len = 4 * MS_OLE_GET_GUINT16(src + 3);
 	this_skip += 2;
 	skip_to_next += 2 + rich_text_info_len;
-    } 
+    }
 
     if (flags & 0x04) {
 	guint32 far_east_info_len = 0;
@@ -294,13 +294,15 @@ copy_unicode_string (xls_info *xi, unsigned char *src, int remlen,
 	strncat(show, (char *) src + this_skip, count);
 	dbprintf("original string = '%s'\n", show);
 	ret = convert8to7((char *) src + this_skip, count);
-    } else { 
+    } else {
 	if (xi->codepage == 1200) {
+	    const gunichar2 *orig = (const gunichar2 *) (src + this_skip);
 	    GError *gerr = NULL;
-	    gsize written;
+	    glong len = count;
+	    glong got, wrote;
 
-	    ret = g_convert((const gchar *) src + this_skip, 2*count, 
-			    "UTF-8", "UTF-16", NULL, &written, &gerr);    
+	    ret = g_utf16_to_utf8(orig, len, &got, &wrote, &gerr);
+	    dbprintf("utf16_to_utf8: got=%d, wrote=%d\n", (int) got, (int) wrote);
 	    if (gerr != NULL) {
 		fprintf(stderr, "%s\n", gerr->message);
 		g_error_free(gerr);
@@ -318,7 +320,7 @@ copy_unicode_string (xls_info *xi, unsigned char *src, int remlen,
     return ret;
 }
 
-static gchar *make_string (gchar *str) 
+static gchar *make_string (gchar *str)
 {
     gchar *ret = NULL;
 
@@ -330,13 +332,13 @@ static gchar *make_string (gchar *str)
     }
 
     return ret;
-}    
+}
 
-static int row_col_err (int row, int col, PRN *prn) 
+static int row_col_err (int row, int col, PRN *prn)
 {
     static int prevrow = -1, prevcol = -1;
     int err = 0;
-    
+
     if (row < 0 || col < 0) {
 	fprintf(stderr, "Error: got row=%d, col=%d\n", row, col);
 	err = 1;
@@ -345,7 +347,7 @@ static int row_col_err (int row, int col, PRN *prn)
 		prevrow, prevcol);
 	err = 1;
     }
-	
+
     prevrow = row;
     prevcol = col;
 
@@ -362,11 +364,11 @@ static int row_col_err (int row, int col, PRN *prn)
    junk out first before doing the numeric-value test.
 */
 
-static int check_copy_string (struct sheetrow *prow, int row, int col, 
+static int check_copy_string (struct sheetrow *prow, int row, int col,
 			      int idx, const char *s)
 {
     dbprintf("inspecting sst[%d] = '%s'\n", idx, s);
-    
+
     if (row > 0 && col > 0) {
 	const char *numok = "0123456789 -,.";
 	int i, len = strlen(s);
@@ -402,7 +404,7 @@ static int check_copy_string (struct sheetrow *prow, int row, int col,
 	    for (i=0; i<len; i++) {
 		if (s[i] != ' ' && s[i] != ',') {
 		    *p++ = s[i];
-		} 
+		}
 		if (commas == 1 && s[i] == ',') {
 		    /* single comma could be for 000s, or decimal */
 		    if (!warned) {
@@ -419,7 +421,7 @@ static int check_copy_string (struct sheetrow *prow, int row, int col,
 
 	    /* If we don't do a rigorous check on q, as below, we
 	       may end up with zeros where there should be NAs.
-	    */ 
+	    */
 	    if (numeric_string(q)) {
 		dbprintf(" taking '%s' to be numeric string: %s\n", s, q);
 		prow->cells[col] = q;
@@ -427,7 +429,7 @@ static int check_copy_string (struct sheetrow *prow, int row, int col,
 	    } else {
 		g_free(q);
 	    }
-	} 
+	}
     }
 
     dbprintf(" copying '%s' into place as string\n", s);
@@ -487,7 +489,7 @@ static void check_for_date_formula (BiffQuery *q, wbook *book)
 {
     int version = book->version;
     int offset = (version < MS_BIFF_V5)? 16 : 20;
-    guint8 *fdata = q->data + offset;    
+    guint8 *fdata = q->data + offset;
     guint16 sz, targ;
     guint8 u1;
     int i;
@@ -556,7 +558,7 @@ static int is_na_formula (unsigned char *ptr, wbook *book)
 #undef FORMAT_INFO
 
 static int process_item (BiffQuery *q, wbook *book, xls_info *xi,
-			 PRN *prn) 
+			 PRN *prn)
 {
     struct sheetrow *prow = NULL;
     static char **string_targ;
@@ -576,17 +578,17 @@ static int process_item (BiffQuery *q, wbook *book, xls_info *xi,
 	    int fmt = wbook_find_format(book, xfref);
 
 #if 0
-	    fprintf(stderr, "Numeric cell (%d, %d), XF index = %d, fmt = %d\n", 
+	    fprintf(stderr, "Numeric cell (%d, %d), XF index = %d, fmt = %d\n",
 		    i, j, (int) xfref, fmt);
 #endif
-	    if (i == book->row_offset + 1 && 
-		j == book->col_offset && 
+	    if (i == book->row_offset + 1 &&
+		j == book->col_offset &&
 		is_date_format(fmt)) {
-		fprintf(stderr, "Testing first obs cell (%d, %d): date format %d\n", 
+		fprintf(stderr, "Testing first obs cell (%d, %d): date format %d\n",
 			i, j, fmt);
 		book_set_numeric_dates(book);
 	    }
-	} 
+	}
     }
 
     switch (q->ls_op) {
@@ -607,7 +609,7 @@ static int process_item (BiffQuery *q, wbook *book, xls_info *xi,
 	    return 1;
 	}
 
-	dbprintf("Got SST: allocated for %d strings (%d bytes), %p\n", 
+	dbprintf("Got SST: allocated for %d strings (%d bytes), %p\n",
 		 xi->sstsize, xi->sstsize * sizeof *xi->sst, (void *) xi->sst);
 
 	for (k=oldsz; k<xi->sstsize; k++) {
@@ -619,7 +621,7 @@ static int process_item (BiffQuery *q, wbook *book, xls_info *xi,
 
 	for (k=oldsz; k<xi->sstsize; k++) {
 	    remlen = q->length - (ptr - q->data);
-	    dbprintf("Working on sst[%d], data offset=%d, remlen=%d\n", 
+	    dbprintf("Working on sst[%d], data offset=%d, remlen=%d\n",
 		     k, (int) (ptr - q->data), remlen);
 	    if (remlen <= 0) {
 		break;
@@ -633,10 +635,10 @@ static int process_item (BiffQuery *q, wbook *book, xls_info *xi,
 	}
 
 	break;
-    }	
+    }
 
-    case BIFF_CONTINUE: 
-	dbprintf("Got CONTINUE, xi->sstnext = %d, len = %d\n", 
+    case BIFF_CONTINUE:
+	dbprintf("Got CONTINUE, xi->sstnext = %d, len = %d\n",
 		 xi->sstnext, (int) q->length);
 	if (xi->sstnext > 0) {
 	    int k, skip, remlen;
@@ -667,21 +669,21 @@ static int process_item (BiffQuery *q, wbook *book, xls_info *xi,
 	    }
 	}
 	break;
-			   
-    case BIFF_LABEL: 
+
+    case BIFF_LABEL:
 	dbprintf("Got LABEL, row=%d, col=%d\n", i, j);
 	if (allocate_row_col(i, j, book, xi)) {
 	    return E_ALLOC;
 	} else {
 	    unsigned int len = MS_OLE_GET_GUINT16(q->data + 6);
-	
+
 	    prow = xi->rows + i;
 	    ptr = q->data + 8;
 	    fprintf(stderr, "BIFF_LABEL: calling convert8to7\n");
 	    prow->cells[j] = make_string(convert8to7((char *) ptr, len));
 	}
 	break;
-  
+
     case BIFF_LABELSST:
 	dbprintf("Got LABELSST, row=%d, col=%d\n", i, j);
 	if (allocate_row_col(i, j, book, xi)) {
@@ -702,10 +704,10 @@ static int process_item (BiffQuery *q, wbook *book, xls_info *xi,
 		    prow->cells[j][0] = '\0';
 		}
 	    }
-	}	
+	}
 	break;
 
-    case BIFF_NUMBER: 
+    case BIFF_NUMBER:
 	if (allocate_row_col(i, j, book, xi)) {
 	    return E_ALLOC;
 	} else {
@@ -716,7 +718,7 @@ static int process_item (BiffQuery *q, wbook *book, xls_info *xi,
 	}
 	break;
 
-    case BIFF_RK: 
+    case BIFF_RK:
 	if (allocate_row_col(i, j, book, xi)) {
 	    return E_ALLOC;
 	} else {
@@ -744,7 +746,7 @@ static int process_item (BiffQuery *q, wbook *book, xls_info *xi,
 	break;
     }
 
-    case BIFF_FORMULA:  
+    case BIFF_FORMULA:
 	dbprintf("Got FORMULA, row=%d, col=%d\n", i, j);
 	if (allocate_row_col(i, j, book, xi)) {
 	    return E_ALLOC;
@@ -757,7 +759,7 @@ static int process_item (BiffQuery *q, wbook *book, xls_info *xi,
 		unsigned char fcode = ptr[0];
 
 		if (fcode == 0x0) {
-		    /* string formula: record the target for following 
+		    /* string formula: record the target for following
 		       STRING record */
 		    string_targ = prow->cells + j;
 		} else if (fcode == 0x1) {
@@ -767,7 +769,7 @@ static int process_item (BiffQuery *q, wbook *book, xls_info *xi,
 		    /* error code or empty */
 		    prow->cells[j] = g_strdup("-999");
 		} else {
-		    fprintf(stderr, "Bad formula code 0x%u\n", 
+		    fprintf(stderr, "Bad formula code 0x%u\n",
 			    (unsigned) fcode);
 		    prow->cells[j] = g_strdup("-999");
 		}
@@ -780,7 +782,7 @@ static int process_item (BiffQuery *q, wbook *book, xls_info *xi,
 		} else if (isnan(val)) {
 		    dbprintf("floating-point value is NaN\n");
 		    prow->cells[j] = g_strdup("-999");
-		} else {		    
+		} else {
 		    dbprintf(" floating-point value = %g\n", val);
 		    prow->cells[j] = g_strdup_printf("%.15g", val);
 		    if (i == book->row_offset + 1 && j == book->col_offset) {
@@ -792,19 +794,19 @@ static int process_item (BiffQuery *q, wbook *book, xls_info *xi,
 	}
 	break;
 
-    case BIFF_STRING: 
+    case BIFF_STRING:
 	if (string_targ == NULL) {
 	    dbprintf("String record without preceding string formula\n");
 	} else {
 	    gchar *tmp = copy_unicode_string(xi, q->data, 0, NULL, NULL);
 
 	    *string_targ = make_string(tmp);
-	    dbprintf("Filled out string formula with '%s'\n", *string_targ);	
+	    dbprintf("Filled out string formula with '%s'\n", *string_targ);
 	    string_targ = NULL; /* handled */
 	}
 	break;
 
-    case BIFF_BOF: 
+    case BIFF_BOF:
 	if (xi->rows != NULL) {
 	    fprintf(stderr, "BOF when current sheet is not flushed\n");
 	    return 1;
@@ -849,7 +851,7 @@ static int process_item (BiffQuery *q, wbook *book, xls_info *xi,
     }
 #endif
 
-    default: 
+    default:
 	break;
     }
 
@@ -857,11 +859,11 @@ static int process_item (BiffQuery *q, wbook *book, xls_info *xi,
 }
 
 static int handled_record (BiffQuery *q)
-{ 
-    if (q->opcode == BIFF_SST || 
-	q->opcode == BIFF_CONTINUE ||  
-	q->opcode == BIFF_LABELSST || 
-	q->opcode == BIFF_MULRK || 
+{
+    if (q->opcode == BIFF_SST ||
+	q->opcode == BIFF_CONTINUE ||
+	q->opcode == BIFF_LABELSST ||
+	q->opcode == BIFF_MULRK ||
 	q->opcode == BIFF_FORMULA) {
 	return 1;
     }
@@ -884,8 +886,8 @@ static int handled_record (BiffQuery *q)
 	if (q->ls_op == BIFF_FORMAT) {
 	    return 1;
 	}
-    } 
-#endif   
+    }
+#endif
 
     if (q->ms_op == 0x08) {
 	if (q->ls_op == BIFF_BOF) return 1;
@@ -895,9 +897,10 @@ static int handled_record (BiffQuery *q)
 }
 
 static int process_sheet (const char *filename, wbook *book, xls_info *xi,
-			  PRN *prn) 
-{    
+			  PRN *prn)
+{
     int err = 0, gotbof = 0, eofcount = 0;
+    static int skipped;
     long offset = book->byte_offsets[book->selected];
     MsOleStream *stream;
     MsOleErr result;
@@ -928,7 +931,7 @@ static int process_sheet (const char *filename, wbook *book, xls_info *xi,
     if (!gotbof) {
 	pprintf(prn, _("%s: No BOF record found"), filename);
 	return 1;
-    } 
+    }
 
     while (!err && ms_biff_query_next(q)) {
 	dbprintf("At %lu: q->opcode=0x%02x\n", (unsigned long) q->streamPos, q->opcode);
@@ -940,10 +943,10 @@ static int process_sheet (const char *filename, wbook *book, xls_info *xi,
 		if (ms_ole_stream_position(stream) < offset) {
 		    /* skip to the worksheet we want? */
 		    while (q->streamPos < offset && ms_biff_query_next(q)) ;
-		    fprintf(stderr, "skipped forward to %lu\n", 
+		    fprintf(stderr, "skipped forward to %lu\n",
 			    (unsigned long) q->streamPos);
 		} else {
-		    fprintf(stderr, "reading worksheet at %lu\n", 
+		    fprintf(stderr, "reading worksheet at %lu\n",
 			    (unsigned long) ms_ole_stream_position(stream));
 		}
 	    }
@@ -953,7 +956,7 @@ static int process_sheet (const char *filename, wbook *book, xls_info *xi,
 	    } else {
 		continue;
 	    }
-	} 
+	}
 
 	if (handled_record(q)) {
 	    err = process_item(q, book, xi, prn);
@@ -969,7 +972,10 @@ static int process_sheet (const char *filename, wbook *book, xls_info *xi,
 		xi->codepage = cp;
 	    }
 	} else {
-	    dbprintf("skipping unhandled opcode 0x%02x\n", q->opcode);
+	    if (q->opcode != skipped) {
+		dbprintf("skipping unhandled opcode 0x%02x\n", q->opcode);
+	    }
+	    skipped = q->opcode;
 	}
     }
 
@@ -977,7 +983,7 @@ static int process_sheet (const char *filename, wbook *book, xls_info *xi,
     ms_ole_stream_close(&stream);
     ms_ole_destroy(&file);
 
-    return err;    
+    return err;
 }
 
 static void row_init (struct sheetrow *row)
@@ -988,7 +994,7 @@ static void row_init (struct sheetrow *row)
 }
 
 static int allocate_row_col (int i, int j, wbook *book,
-			     xls_info *xi) 
+			     xls_info *xi)
 {
     static int started;
     int k;
@@ -1040,8 +1046,8 @@ static int allocate_row_col (int i, int j, wbook *book,
 	    xi->rows[i].cells[k] = NULL;
 	}
 	xi->rows[i].end = newcol;
-    } 
- 
+    }
+
     if (j > xi->rows[i].last) {
 	xi->rows[i].last = j;
     }
@@ -1063,7 +1069,7 @@ static void xls_info_init (xls_info *xi)
     xi->st = NULL;
 }
 
-static void free_xls_info (xls_info *xi) 
+static void free_xls_info (xls_info *xi)
 {
     int i, j;
 
@@ -1089,7 +1095,7 @@ static void free_xls_info (xls_info *xi)
 		if (xi->rows[i].cells[j] != NULL) {
 		    dbprintf("Freeing rows[%d].cells[%d] at %p\n",
 			     i, j, (void *) xi->rows[i].cells[j]);
-		    g_free(xi->rows[i].cells[j]); 
+		    g_free(xi->rows[i].cells[j]);
 		}
 	    }
 	    dbprintf("Freeing rows[%d].cells at %p\n", i, (void *) xi->rows[i].cells);
@@ -1122,7 +1128,7 @@ static int first_col_strings (wbook *book, xls_info *xi)
     for (i=startrow; i<xi->nrows; i++) {
 	dbprintf("book->row_offset=%d, i=%d\n", book->row_offset, i);
 	dbprintf("rows = %p\n", (void *) xi->rows);
-	if (xi->rows == NULL || xi->rows[i].cells == NULL || 
+	if (xi->rows == NULL || xi->rows[i].cells == NULL ||
 	    xi->rows[i].cells[j] == NULL ||
 	    !IS_STRING(xi->rows[i].cells[j])) {
 	    dbprintf("no: not a string at row %d\n", i);
@@ -1164,7 +1170,7 @@ static int check_all_varnames (wbook *book, xls_info *xi, PRN *prn)
 	}
     }
 
-    for (j=startcol; j<xi->totcols; j++) { 
+    for (j=startcol; j<xi->totcols; j++) {
 	if (xi->blank_col[j]) {
 	    gotcols++;
 	    continue;
@@ -1177,14 +1183,14 @@ static int check_all_varnames (wbook *book, xls_info *xi, PRN *prn)
 
 	gotcols++;
 
-	dbprintf("got_varnames: rows[%d].cells[%d] is '%s'\n", i, j, 
+	dbprintf("got_varnames: rows[%d].cells[%d] is '%s'\n", i, j,
 		 xi->rows[i].cells[j]);
 
 	if (IS_STRING(xi->rows[i].cells[j])) {
 	    /* skip beyond the quote */
 	    char *test = xi->rows[i].cells[j] + 1;
 
-	    /* "obs" or "id" is OK in the first col of the selection, 
+	    /* "obs" or "id" is OK in the first col of the selection,
 	       but not thereafter */
 	    if (j == startcol && obs_string(test)) {
 		/* pass along */
@@ -1235,7 +1241,7 @@ static void clear_string_err (struct string_err *strerr)
 
 /* check for invalid data in the selected data block */
 
-static int 
+static int
 check_data_block (wbook *book, xls_info *xi, int *missvals,
 		  struct string_err *strerr)
 {
@@ -1324,7 +1330,7 @@ check_data_block (wbook *book, xls_info *xi, int *missvals,
    labels
 */
 
-static int 
+static int
 n_vars_from_col (wbook *book, int totcols, char *blank_col)
 {
     int offset = book->col_offset;
@@ -1344,8 +1350,8 @@ n_vars_from_col (wbook *book, int totcols, char *blank_col)
     return nv;
 }
 
-static int 
-transcribe_data (wbook *book, xls_info *xi, DATASET *dset, 
+static int
+transcribe_data (wbook *book, xls_info *xi, DATASET *dset,
 		 PRN *prn)
 {
     int startcol = book->col_offset;
@@ -1384,7 +1390,7 @@ transcribe_data (wbook *book, xls_info *xi, DATASET *dset,
 	} else if (i >= xi->rows[roff].end) {
 	    sprintf(dset->varname[j], "v%d", j);
 	} else {
-	    strncat(dset->varname[j], xi->rows[roff].cells[i] + 1, 
+	    strncat(dset->varname[j], xi->rows[roff].cells[i] + 1,
 		    VNAMELEN - 1);
 	    dbprintf("accessing rows[%d].cells[%d] at %p\n",
 		     roff, i, (void *) xi->rows[roff].cells[i]);
@@ -1457,7 +1463,7 @@ static int get_sheet_dimensions (wbook *book, xls_info *xi, PRN *prn)
 	    break;
 	}
     }
-	
+
     for (i=0; i<xi->nrows; i++) {
 	if (xi->rows[i].cells != NULL) {
 	    if (xi->rows[i].last + 1 > xi->totcols) {
@@ -1502,7 +1508,7 @@ static int get_sheet_dimensions (wbook *book, xls_info *xi, PRN *prn)
 	xi->datacols -= 1;
     }
 
-    printf("rows=%d, total cols=%d, data cols=%d\n", xi->nrows, 
+    printf("rows=%d, total cols=%d, data cols=%d\n", xi->nrows,
 	   xi->totcols, xi->datacols);
 
     if (xi->datacols < 1) {
@@ -1523,7 +1529,7 @@ static int col0_is_numeric (xls_info *xi, int row_offset, int col_offset)
     int nx = 0;
     char *test;
 
-    fprintf(stderr, "testing for all numerical values in col %d\n", 
+    fprintf(stderr, "testing for all numerical values in col %d\n",
 	    col_offset);
 
     for (t=tstart; t<xi->nrows; t++) {
@@ -1670,7 +1676,7 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 
     if (book->selected == -1) {
 	/* canceled */
-	err = -1; 
+	err = -1;
     }
 
     if (err) goto getout;
@@ -1726,7 +1732,7 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 	err = 0;
     }
 
-    if (err) goto getout; 
+    if (err) goto getout;
 
     /* any bad data? */
     err = check_data_block(book, xi, &missvals, &strerr);
@@ -1737,7 +1743,7 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 		strerr.str, strerr.row, strerr.column);
 	g_free(strerr.str);
 	pputs(prn, _(adjust_rc));
-	goto getout; 
+	goto getout;
     } else if (missvals) {
 	pputs(prn, _("Warning: there were missing values\n"));
     }
@@ -1746,7 +1752,7 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
     c0 = book->col_offset;
     newset->n = xi->nrows - 1 - r0;
 
-    if (book_numeric_dates(book) || 
+    if (book_numeric_dates(book) ||
 	(!book_auto_varnames(book) && import_obs_label(xls_cell(xi, r0, c0)))) {
 	char **labels = labels_array(xi, r0 + 1, c0, newset);
 
@@ -1760,8 +1766,8 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 	    book_time_series_setup(book, newset, pd);
 	    ts_markers = newset->markers;
 	    ts_S = newset->S;
-	} else if (!book_numeric_dates(book) && 
-		   alpha_cell(xls_cell(xi, r0, c0)) && 
+	} else if (!book_numeric_dates(book) &&
+		   alpha_cell(xls_cell(xi, r0, c0)) &&
 		   col0_is_numeric(xi, r0, c0)) {
 	    book_unset_obs_labels(book);
 	    maybe_revise_xls_codelist(xi);
@@ -1784,7 +1790,7 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 	newset->S = ts_S;
     } else {
 	dataset_obs_info_default(newset);
-    } 
+    }
 
     /* OK: actually populate the dataset */
     err = transcribe_data(book, xi, newset, prn);
@@ -1845,4 +1851,4 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
     }
 
     return err;
-}  
+}

@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "libgretl.h"
@@ -35,7 +35,7 @@ static int native_dot = -1;
  *
  * Description: Saves the current %LC_NUMERIC locale and sets it to "C".
  * This way you can safely read/write floating point numbers all in the
- * same format, using '.' as the decimal character.  You should make sure 
+ * same format, using '.' as the decimal character.  You should make sure
  * that code between gretl_push_c_numeric_locale() and gretl_pop_c_numeric_locale()
  * doesn't do any setlocale calls, or locale may end up in a strange setting.
  * Also make sure to always pop the C numeric locale after you've pushed it.
@@ -53,20 +53,20 @@ void gretl_push_c_numeric_locale (void)
     if (native_dot == 1) {
 	return;
     }
-    
+
     if (numeric_c_locale_depth == 0) {
 	free(numeric_locale);
 	numeric_locale = gretl_strdup(setlocale(LC_NUMERIC, NULL));
 	setlocale(LC_NUMERIC, "C");
     }
-    
+
     numeric_c_locale_depth++;
 }
 
 /**
  * gretl_pop_c_numeric_locale:
  *
- * Description:  Restores the LC_NUMERIC locale to what it was 
+ * Description:  Restores the LC_NUMERIC locale to what it was
  * before the matching gretl_push_c_numeric_locale(). If these calls
  * were nested, then this is a no-op until we get to the most outermost
  * layer. Code in between these should not do any setlocale calls
@@ -215,13 +215,13 @@ void set_gretl_charset (void)
 		while (*p && !isdigit((unsigned char) *p)) p++;
 		gretl_cset_min = atoi(p);
 	    }
-	    
+
 	    if (gretl_cset_maj < 0 || gretl_cset_maj > 9000) {
 		gretl_cset_maj = gretl_cset_min = 0;
 	    } else if (gretl_cset_min < 0 || gretl_cset_min > 30) {
 		gretl_cset_maj = gretl_cset_min = 0;
 	    }
-	} 
+	}
 #ifdef WIN32
 	if (p == NULL) {
 	    sscanf(gretl_charset, "cp%d", &gretl_cpage);
@@ -272,7 +272,7 @@ static const char *get_gretl_charset (void)
     if (gretl_cset_maj > 0 && gretl_cset_min > 0 && gretl_cset_min < 99) {
 	sprintf(cset, "ISO-%d-%d", gretl_cset_maj, gretl_cset_min);
 	return cset;
-    } 
+    }
 
     return NULL;
 }
@@ -284,7 +284,7 @@ int iso_latin_version (void)
     char *lang = NULL;
 
     if (gretl_cset_maj == 8859 &&
-	(gretl_cset_min == 1 || 
+	(gretl_cset_min == 1 ||
 	 gretl_cset_min == 2 ||
 	 gretl_cset_min == 5 ||
 	 gretl_cset_min == 7 ||
@@ -326,7 +326,7 @@ int iso_latin_version (void)
 	} else if (!strncmp(lang, "uk", 2)) {
 	    return 5;
 	}
-    } 
+    }
 
     return 1;
 }
@@ -368,7 +368,7 @@ int east_asian_locale (void)
 			    !strncmp(loc, "ja", 2)));
 #else
     return 0;
-#endif    
+#endif
 }
 
 #ifdef ENABLE_NLS
@@ -380,9 +380,9 @@ char *iso_gettext (const char *msgid)
     static int cli;
     char *ret;
 
-    /* command line program: switching of codesets should not be 
+    /* command line program: switching of codesets should not be
        required, since unlike the GUI program there's no need
-       to force UTF-8 as the default.  
+       to force UTF-8 as the default.
     */
 
     if (!strcmp(msgid, "@CLI_INIT")) {
@@ -390,14 +390,14 @@ char *iso_gettext (const char *msgid)
 	return NULL;
     }
 
-    if (cli) { 
+    if (cli) {
 	return gettext(msgid);
     }
 
     /* iso_switch: we'll reckon that if the system character set is
        not UTF-8, and is an ISO-8859-N or Windows CP12NN 8-bit set,
        then we should probably recode when printing translated strings
-       in the context of writing CSV files.  
+       in the context of writing CSV files.
 
        If iso_switch is non-zero (once it's determinate) this makes the
        I_() gettext macro use the system encoding, otherwise I_() is
@@ -424,7 +424,7 @@ char *iso_gettext (const char *msgid)
     }
 
     return ret;
-} 
+}
 
 /* return translated @msgid in UTF-8, when this is not
    the default operation for plain gettext()
@@ -444,7 +444,7 @@ static char *force_utf8_gettext (const char *msgid)
     bind_textdomain_codeset(PACKAGE, cset);
 
     return ret;
-} 
+}
 
 /* Cases to consider below:
 
@@ -589,7 +589,7 @@ static struct langinfo langs[] = {
     { LANG_C,     "English",              "C"     },
     { LANG_SQ,    "Albanian",             "sq_AL" },
     { LANG_EU,    "Basque",               "eu_ES" },
-    { LANG_BG,    "Bulgarian",            "bg_BG" },    
+    { LANG_BG,    "Bulgarian",            "bg_BG" },
     { LANG_CA,    "Catalan",              "ca_ES" },
     { LANG_ZH_TW, "Chinese (Taiwan)",     "zh_TW" },
     { LANG_ZH_CN, "Chinese (simplified)", "zh_CN" },
@@ -764,7 +764,7 @@ void set_lcnumeric (int langid, int lcnumeric)
 # else
 	    set = other_set_numeric(lang);
 # endif
-	} 
+	}
 	if (set == NULL) {
 	    setlocale(LC_NUMERIC, "");
 	    gretl_setenv("LC_NUMERIC", "");
@@ -774,13 +774,13 @@ void set_lcnumeric (int langid, int lcnumeric)
     reset_local_decpoint();
 }
 
-static int 
+static int
 set_locale_with_workaround (int langid, const char *lcode,
 			    char **locp)
 {
     char *test = setlocale(LC_ALL, lcode);
 
-# ifndef WIN32    
+# ifndef WIN32
     if (test == NULL) {
 	char lfix[32];
 
@@ -794,7 +794,7 @@ set_locale_with_workaround (int langid, const char *lcode,
 	if (strcmp("_File", _("_File")) == 0) {
 	    const char *langstr;
 	    char tmp[64];
-	    
+
 	    langstr = lang_string_from_id(langid);
 	    sscanf(langstr, "%s", tmp);
 	    gretl_lower(tmp);
@@ -816,7 +816,7 @@ set_locale_with_workaround (int langid, const char *lcode,
 # endif
 
 /* @langstr should be the English name of the selected language
-   as displayed in the GUI (e.g. "German", "French") 
+   as displayed in the GUI (e.g. "German", "French")
 */
 
 int test_locale (const char *langstr)
@@ -841,7 +841,7 @@ int test_locale (const char *langstr)
 			       "on this system"), lcode);
     } else {
 	setlocale(LC_ALL, ocpy); /* restore the original locale */
-    } 
+    }
 
     return err;
 }
@@ -849,7 +849,7 @@ int test_locale (const char *langstr)
 static void record_locale (char *locale)
 {
     int done = 0;
-    
+
 # ifdef WIN32
     /* LANG probably not present, use setlocale output */
     if (locale != NULL) {
@@ -919,7 +919,7 @@ int force_language (int langid)
     } else {
 	/* setting a specific language other than English */
 	lcode = get_setlocale_string(langid);
-	if (lcode != NULL) {  
+	if (lcode != NULL) {
 # ifdef WIN32
 	    locale = gretl_strdup(setlocale(LC_ALL, lcode));
             fprintf(stderr, "lcode='%s' -> locale='%s'\n", lcode, locale);
@@ -1008,7 +1008,7 @@ int get_local_decpoint (void)
 
 #endif /* non-NLS stubs */
 
-static void 
+static void
 iso_to_ascii_translate (char *targ, const char *src, int latin)
 {
     char *p;
@@ -1387,7 +1387,7 @@ static char *real_iso_to_ascii (char *s, int latin)
     return s;
 }
 
-char *iso_to_ascii (char *s) 
+char *iso_to_ascii (char *s)
 {
     return real_iso_to_ascii(s, 1);
 }
@@ -1425,7 +1425,7 @@ char *utf8_to_rtf (const char *s)
     if (prn == NULL) {
 	return NULL;
     }
- 
+
     while (*p) {
 	nextp = g_utf8_next_char(p);
 	if (nextp - p > 1) {
@@ -1462,7 +1462,7 @@ int gretl_is_ascii (const char *buf)
 }
 
 /* We want to print @str in a field of @width (visible) characters,
-   but @str may contain multi-byte characters. In that case, determine 
+   but @str may contain multi-byte characters. In that case, determine
    the adjustment to @width that is needed to avoid underrun and
    return the adjusted value.
 */
@@ -1527,7 +1527,7 @@ static gchar *file_get_content (const char *fname,
     return buf;
 }
 
-static int file_set_content (const char *fname, 
+static int file_set_content (const char *fname,
 			     const gchar *buf,
 			     gsize buflen)
 {
@@ -1591,8 +1591,17 @@ int gretl_recode_file (const char *path1, const char *path2,
 	gsize written = 0;
 
 	/* recode the buffer */
-	trbuf = g_convert(buf, bytes, to_set, from_set,
-			  NULL, &written, &gerr);
+	if (!strcmp(to_set, "UTF-8") && !strcmp(from_set, "UTF-16")) {
+	    const gunichar2 *orig = (const gunichar2 *) buf;
+	    glong len = bytes / 2;
+	    glong got, wrote;
+
+	    trbuf = g_utf16_to_utf8(orig, len, &got, &wrote, &gerr);
+	    written = (gsize) wrote;
+	} else {
+	    trbuf = g_convert(buf, bytes, to_set, from_set,
+			      NULL, &written, &gerr);
+	}
 
 	if (gerr != NULL) {
 	    err = E_DATA;
@@ -1611,4 +1620,3 @@ int gretl_recode_file (const char *path1, const char *path2,
 
     return err;
 }
-
