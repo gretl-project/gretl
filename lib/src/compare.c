@@ -1389,13 +1389,9 @@ static int auto_drop_var (const MODEL *pmod,
 			  PRN *prn)
 {
     double tstat, pv = 0.0, tmin = 4.0;
-    int imax = pmod->ncoeff;
+    int imin, imax = pmod->ncoeff;
     int i, k = -1;
     int ret = 0;
-
-    if (pmod->ncoeff == 1) {
-	return 0;
-    }
 
     if ((pmod->ci == LOGIT || pmod->ci == PROBIT) &&
 	gretl_model_get_int(pmod, "ordered")) {
@@ -1403,7 +1399,11 @@ static int auto_drop_var (const MODEL *pmod,
 	imax = pmod->list[0] - 1;
     }
 
-    for (i=pmod->ifc; i<imax; i++) {
+    /* if the constant is the sole regressors, allow it
+       to be dropped */
+    imin = (pmod->ncoeff == 1)? 0 : pmod->ifc;
+
+    for (i=imin; i<imax; i++) {
 	if (coeff_is_removable(cands, pmod, dset, i)) {
 	    tstat = fabs(pmod->coeff[i] / pmod->sderr[i]);
 	    if (tstat < tmin) {
@@ -1465,6 +1465,7 @@ static MODEL auto_omit (MODEL *orig, const int *omitlist,
     MODEL omod;
     double amax;
     int *tmplist;
+    int allgone = 0;
     int i, drop;
     int err = 0;
 
@@ -1493,7 +1494,7 @@ static MODEL auto_omit (MODEL *orig, const int *omitlist,
 	err = omod.errcode = E_NOOMIT;
     }
 
-    for (i=0; drop > 0; i++) {
+    for (i=0; drop > 0 && !allgone; i++) {
 	if (i > 0) {
 	    set_reference_missmask_from_model(orig);
 	}
@@ -1502,16 +1503,23 @@ static MODEL auto_omit (MODEL *orig, const int *omitlist,
 	if (err) {
 	    fprintf(stderr, "auto_omit: error %d from replicate_estimator\n",
 		    err);
-	    drop = 0; /* break */
+	    drop = 0; /* will break */
 	} else {
 	    list_copy_values(tmplist, omod.list);
 	    drop = auto_drop_var(&omod, tmplist, omitlist, dset,
 				 amax, 0, opt, prn);
+	    if (drop && omod.ncoeff == 1) {
+		allgone = 1; /* will break */
+	    }
 	    clear_model(&omod);
 	}
     }
 
-    if (!err) {
+    if (allgone) {
+	pputc(prn, '\n');
+	pprintf(prn, _("No coefficient has a p-value less than %g"), amax);
+	pputc(prn, '\n');
+    } else if (!err) {
 	/* re-estimate the final model without the auxiliary flag */
 	gretlopt ropt = OPT_NONE;
 
@@ -1672,16 +1680,29 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
 	    errmsg(err, prn);
 	}
     } else {
+	MODEL *newmod = NULL;
 	int minpos = 2;
-	int *omitlist;
+	int *omitlist = NULL;
 
 	if (orig->ci == ARBOND || orig->ci == DPANEL) {
 	    /* skip AR spec, separator, and dep var */
 	    minpos = 4;
 	}
-	omitlist = gretl_list_diff_new(orig->list, rmod.list, minpos);
+
+	if (rmod.list == NULL) {
+	    /* handle the case where sequential elimination
+	       ended up dropping all regressors */
+	    int *minlist = gretl_list_new(1);
+
+	    minlist[1] = orig->list[1];
+	    omitlist = gretl_list_diff_new(orig->list, minlist, minpos);
+	    free(minlist);
+	} else {
+	    newmod = &rmod;
+	    omitlist = gretl_list_diff_new(orig->list, rmod.list, minpos);
+	}
 	if (omitlist != NULL) {
-	    err = add_or_omit_compare(orig, &rmod, omitlist,
+	    err = add_or_omit_compare(orig, newmod, omitlist,
 				      dset, OMIT, opt, prn);
 	    free(omitlist);
 	}

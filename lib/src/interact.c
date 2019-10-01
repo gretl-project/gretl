@@ -2377,18 +2377,22 @@ static int add_omit_save (CMD *cmd, MODEL *pmod)
 {
     int ret = 1;
 
-    if (cmd->ci == ADD && (cmd->opt & OPT_L)) {
-	/* not saving if given the --lm option */
-	ret = 0;
-    } else if (cmd->ci == OMIT && (cmd->opt & OPT_W)) {
-	/* not saving if given the --test-only (Wald) option */
-	ret = 0;
-    }
-
-    if (ret && cmd->list != NULL && pmod->list != NULL) {
-	if (cmd->list[0] == pmod->list[0] - 1) {
-	    /* omitting everything */
+    if (cmd->ci == ADD) {
+	if (cmd->opt & OPT_L) {
+	    /* not saving if given the --lm option */
 	    ret = 0;
+	}
+    } else if (cmd->ci == OMIT) {
+	if (cmd->opt & OPT_W) {
+	    /* not saving under the --test-only (Wald) option */
+	    ret = 0;
+	} else if (!(cmd->opt & OPT_A)) {
+	    /* not in --auto mode */
+	    if (cmd->list != NULL && pmod->list != NULL &&
+		cmd->list[0] == pmod->list[0] - 1) {
+		/* omitting everything, can't save */
+		ret = 0;
+	    }
 	}
     }
 
@@ -3466,7 +3470,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 		err = omit_test_full(model, &mymod, cmd->list,
 				     dset, cmd->opt, prn);
 	    }
-	    if (!err) {
+	    if (!err && mymod.ncoeff > 0) {
 		gretlopt popt = OPT_NONE;
 
 		if (cmd->opt & (OPT_I | OPT_Q)) {

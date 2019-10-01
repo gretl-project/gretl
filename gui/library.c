@@ -2388,7 +2388,7 @@ int do_add_omit (selector *sr)
 	update_model_tests(vwin);
 	record_model_command(pmod->ID);
 
-	if (newmod != NULL) {
+	if (newmod != NULL && newmod->ncoeff > 0) {
 	    /* record sub-sample info (if any) with the model */
 	    if (pmod->dataset != NULL) {
 		newmod->submask = copy_subsample_mask(pmod->submask, &err);
@@ -2398,9 +2398,16 @@ int do_add_omit (selector *sr)
 	    printmodel(newmod, dataset, OPT_NONE, prn);
 	    view_model(prn, newmod, NULL);
 	} else {
+	    const char *omit_title = NULL;
+
+	    if (newmod != NULL) {
+		omit_title = N_("gretl: sequential omit test");
+		gretl_model_free(newmod);
+	    } else {
+		omit_title = N_("gretl: Wald omit test");
+	    }
 	    view_buffer_with_parent(vwin, prn, 78, 400,
-				    (ci == OMIT)?
-				    _("gretl: Wald omit test") :
+				    (ci == OMIT)? _(omit_title) :
 				    _("gretl: LM test"),
 				    PRINT, NULL);
 	}
