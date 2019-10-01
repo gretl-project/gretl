@@ -454,7 +454,7 @@ static void quell_glib_spew (void)
 
 #ifdef MAC_INTEGRATION
 
-static GtkosxApplication *theApp;
+static GtkosxApplication *MacApp;
 
 static gboolean app_should_quit_cb (GtkosxApplication *App, gpointer p)
 {
@@ -470,9 +470,18 @@ static void app_will_quit_cb (GtkosxApplication *App, gpointer p)
 static gboolean app_open_file_cb (GtkosxApplication *app,
 				  gchar *path, gpointer p)
 {
-    *tryfile = '\0';
-    strncat(tryfile, path, MAXLEN - 1);
-    return real_open_tryfile();
+    if (path != NULL) {
+	if (!strcmp(tryfile, path)) {
+	    /* we're already on it? */
+	    return TRUE;
+	}
+	*tryfile = '\0';
+	strncat(tryfile, path, MAXLEN - 1);
+	return real_open_tryfile();
+    } else {
+	*tryfile = '\0';
+	return TRUE;
+    }
 }
 
 static void install_mac_signals (GtkosxApplication *App)
@@ -491,11 +500,11 @@ gint mac_hide_unhide (GdkEventKey *event)
 {
     if (event->keyval == GDK_h) {
 	/* straight command-h = hide */
-	gtkosx_application_hide(theApp);
+	gtkosx_application_hide(MacApp);
 	return TRUE;
     } else if ((event->state & GDK_MOD1_MASK) && event->keyval == 0x1ff) {
 	/* opt-command-h = hide others */
-	gtkosx_application_hide_others(theApp);
+	gtkosx_application_hide_others(MacApp);
 	return TRUE;
     }
 
@@ -676,9 +685,9 @@ int main (int argc, char **argv)
     }
 
 #ifdef MAC_INTEGRATION
-    theApp = g_object_new(GTKOSX_TYPE_APPLICATION, NULL);
-    install_mac_signals(theApp);
-    gtkosx_application_set_use_quartz_accelerators(theApp, FALSE);
+    MacApp = g_object_new(GTKOSX_TYPE_APPLICATION, NULL);
+    install_mac_signals(MacApp);
+    gtkosx_application_set_use_quartz_accelerators(MacApp, FALSE);
 #endif
 
 #ifdef G_OS_WIN32
@@ -729,7 +738,7 @@ int main (int argc, char **argv)
     set_query_stop_func(gui_query_stop);
     set_gui_model_list_callback(get_or_send_gui_models);
 
-    /* allocate data information struct */
+    /* allocate dataset struct */
     dataset = datainfo_new();
     if (dataset == NULL) {
 	noalloc();
@@ -852,7 +861,7 @@ int main (int argc, char **argv)
     free_command_stack();
 
 #ifdef MAC_INTEGRATION
-    g_object_unref(theApp);
+    g_object_unref(MacApp);
 #endif
 
     return EXIT_SUCCESS;
@@ -1419,7 +1428,7 @@ void show_link_cursor (GtkWidget *w, gpointer p)
 static void make_main_window (void)
 {
 #ifdef MAC_INTEGRATION
-    GtkUIManager *mac_mgr;
+    GtkUIManager *mac_mgr = NULL;
 #endif
     GtkWidget *box, *dlabel;
     GtkWidget *wlabel = NULL;
@@ -1572,7 +1581,9 @@ static void make_main_window (void)
     gtk_widget_show_all(mdata->main);
 
 #ifdef MAC_INTEGRATION
-    finish_mac_ui(mac_mgr);
+    if (mac_mgr != NULL) {
+	finish_mac_ui(mac_mgr);
+    }
 #endif
 
 #if GUI_DEBUG
@@ -2103,14 +2114,14 @@ static GtkUIManager *add_mac_menu (void)
 
 static void finish_mac_ui (GtkUIManager *mgr)
 {
-    GtkosxApplication *App;
     GtkWidget *menu;
 
-    App = g_object_new(GTKOSX_TYPE_APPLICATION, NULL);
     menu = gtk_ui_manager_get_widget(mgr, "/menubar");
-    gtkosx_application_set_menu_bar(App, GTK_MENU_SHELL(menu));
-    gtkosx_application_set_use_quartz_accelerators(App, FALSE);
-    gtkosx_application_ready(App);
+    if (menu != NULL) {
+	gtkosx_application_set_menu_bar(MacApp, GTK_MENU_SHELL(menu));
+    }
+    gtkosx_application_set_use_quartz_accelerators(MacApp, FALSE);
+    gtkosx_application_ready(MacApp);
 }
 
 #endif /* MAC_INTEGRATION */
@@ -2365,10 +2376,7 @@ void set_wm_icon (GtkWidget *w)
 
 # ifdef MAC_INTEGRATION
     if (icon != NULL) {
-	GtkosxApplication *App;
-
-	App = g_object_new(GTKOSX_TYPE_APPLICATION, NULL);
-	gtkosx_application_set_dock_icon_pixbuf(App, icon);
+	gtkosx_application_set_dock_icon_pixbuf(MacApp, icon);
 	gtk_window_set_icon(GTK_WINDOW(w), icon);
 	g_object_unref(icon);
     }
