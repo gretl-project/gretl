@@ -2183,8 +2183,8 @@
 	  \[
 	  f(x; k, \theta) = \frac{x^{k-1}}{\theta^k} \frac{e^{-x/\theta}}{\Gamma(k)}
 	  \]
-	  onde $k>0$ é o parámetro de forma, e $\theta>0$ é o parámetro de
-	  escala.
+	  onde $k&gt;0$ é o parámetro de forma, e $\theta&gt;0$ é o parámetro
+	  de escala.
 	</para>
 	<para>
 	  <seelist>
@@ -3904,6 +3904,7 @@
 	<fnarg optional="true" type="scalar-or-vec">a</fnarg>
 	<fnarg optional="true" type="scalar-or-vec">b</fnarg>
 	<fnarg optional="true" type="scalar">y0</fnarg>
+	<fnarg optional="true" type="scalar-or-vec">x0</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -3957,9 +3958,12 @@
 	<para>
 	  O argumento escalar opcional <argname>y0</argname> utilízase para
 	  representar todos os valores de <math>y</math> anteriores ao comezo
-	  da mostra (úsase só cando <math>p>0</math>). Cando se omite,
-	  enténdese que é igual a 0. Asúmese que os valores de
-	  <argname>x</argname> anteriores ao comezo da mostra son sempre 0.
+	  da mostra (úsase só cando <math>p &gt; 0</math>). Cando se omite,
+	  enténdese que é igual a 0. De forma similar, podes usar o argumento
+	  opcional <argname>x0</argname> para especificar un ou máis valores
+	  de <math>x</math> anteriores ao comezo da mostra (información só
+	  relevante cando <math>q &gt; 0</math>). Doutro xeito, asúmese que os
+	  valores de <argname>x</argname> anteriores ao comezo da mostra son 0.
 	</para>
 	<para>
 	  <seelist>
@@ -4076,7 +4080,7 @@
     <function name="flatten" section="data-utils" output="seebelow">
       <fnargs>
 	<fnarg type="matrices-or-strings">A</fnarg>
-	<fnarg optional="true" type="bool">vertic</fnarg>
+	<fnarg optional="true" type="bool">alt</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4086,16 +4090,17 @@
 	<para>
 	  Os argumentos indícanse entre parénteses. Con matrices, por defecto,
 	  concaténanse horizontalmente as matrices de <argname>A</argname>;
-	  pero cando indicas un valor non nulo para <argname>vertic</argname>,
+	  pero cando indicas un valor non nulo para <argname>alt</argname>,
 	  a concatenación faise verticalmente. En calquera caso, amósase un
 	  fallo se as matrices non son conformables para realizar esta
 	  operación. Consulta <fncref targ="msplitby"/> para a operación
 	  inversa.
 	</para>
 	<para>
-	  No caso de cadeas de texto, <argname>vertic</argname> ignórase,
-	  e o resultado contén as cadeas de <argname>A</argname> ordenadas
-	  unha en cada liña.
+	  No caso de cadeas de texto, o resultado por defecto mantén as
+	  cadeas de <argname>A</argname>, ordenadas unha en cada liña.
+	  Se indicas un valor non nulo para <argname>alt</argname>, as
+	  cadeas sepáranse mediante espazos en troques de novas liñas.
 	</para>
       </description>
     </function>
@@ -5065,7 +5070,7 @@
 	  é equivalente loxicamente (pero máis eficiente) ca
 	</para>
 	<code>
-	  if strlen(strstr("gatada", "gata")) > 0
+	  if strlen(strstr("gatada", "gata")) &gt; 0
 	</code>
       </description>
     </function>
@@ -5127,19 +5132,25 @@
       <fnargs>
 	<fnarg type="string">d</fnarg>
 	<fnarg type="seebelow">&hellip;</fnarg>
-	<fnarg type="anyfloat">p</fnarg>
+	<fnarg type="anyfloat">u</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Calcula a inversa da función de distribución acumulativa, e devolve un
-	  resultado (do tipo do argumento) co valor de <math>x</math> que cumpre
-	  <equation status="inline" ascii="P(X &le; x) = p" tex="$P(X \le x) = p$"/>,
-	  onde o tipo de distribución de <math>X</math> especifícase por
-	  medio da letra <argname>d</argname>. Entre os argumentos
-	  <argname>d</argname> e <argname>p</argname>, podes necesitar
-	  algún argumento adicional escalar para especificar os parámetros
-	  da distribución de que se trate. Isto faise da forma que se indica
-	  a continuación:
+	  Calcula a inversa da función de distribución acumulativa.
+	  Para unha distribución continua devolve un resultado (do tipo
+	  do argumento) co valor de <math>x</math> que cumpre
+	  <equation status="inline" ascii="P(X &le; x) = u" tex="$P(X \le x) = u$"/>,
+	  con <argname>u</argname> dentro do intervalo entre 0 e 1.
+	  Para unha distribución discreta (Binomial ou Poisson), devolve
+	  o valor máis pequeno de <math>x</math> para o que se cumpre
+	  <equation status="inline" ascii="P(X &le; x) &ge; u" tex="$P(X \le x) \ge u$"/>.
+	</para>
+	<para>
+	  A distribución de <math>X</math> especifícase por medio da letra
+	  <argname>d</argname>. Entre os argumentos <argname>d</argname> e
+	  <argname>u</argname>, podes necesitar algún argumento adicional
+	  escalar para especificar os parámetros da distribución de que se
+	  trate. Isto faise da forma que se indica a continuación:
 	</para>
 	<ilist context="notex">
 	  <li>
@@ -9341,6 +9352,44 @@
 	  <seelist>
 	    <fncref targ="randgen"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="randperm" section="probdist" output="vector">
+      <fnargs>
+	<fnarg type="int">n</fnarg>
+	<fnarg type="int" optional="true">k</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Se indicas só o primeiro argumento, devolve un vector fila que
+	  contén unha permutación aleatoria dos números enteiros desde 1
+	  ata ese valor <argname>n</argname>, sen repetición dos elementos.
+	  Cando indiques o segundo argumento, deberá ser un número enteiro
+	  positivo dentro do rango de 1 a <argname>n</argname>; nese caso
+	  a función devolve un vector fila que contén <argname>k</argname>
+	  número enteiros escollidos de xeito aleatorio desde 1 ata
+	  <argname>n</argname>, sen substitución.
+	</para>
+	<para>
+	  Se queres extraer unha mostra de <math>k</math> filas dunha matriz
+	  <lit>X</lit> que ten <math>n</math> filas (e sen substitución), iso
+	  podes conseguilo tal como se amosa debaixo:
+	</para>
+	<code>
+	  matrix S = X[randperm(n, k),]
+	</code>
+	<para>
+	  E se desexas manter a orde orixinal das filas na
+	  mostra:
+	</para>
+	<code>
+	  matrix S = X[sort(randperm(n, k)),]
+	</code>
+	<para>
+	  Consulta tamén a función <fncref targ="resample"/> para repetir a
+	  mostraxe, con substitución.
 	</para>
       </description>
     </function>

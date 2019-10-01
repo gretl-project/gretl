@@ -4797,7 +4797,7 @@
 	<lit>&gt;=</lit> (maior ou igual que), <lit>&lt;=</lit> (menor ou igual que)
 	e <lit>!=</lit> (non igual). Tamén podes utilizar os operadores
 	booleanos na construción de variables ficticias: por exemplo,
-	<lit>(x > 10)</lit> devolve 1 no caso de que <lit>x</lit> &gt; 10,
+	<lit>(x &gt; 10)</lit> devolve 1 no caso de que <lit>x</lit> &gt; 10,
 	e 0 noutro caso.
       </para>
 
@@ -6591,6 +6591,10 @@
 	proporcionan en calquera que sexa a unidade <quote>natural</quote>
 	da variable obxectivo.
       </para>
+	  <para>
+	  (Consulta o complemento SVAR para outras propostas de identificación
+	  de 'shocks' e para máis opcións de bootstrap.)
+	  </para>
     </description>
 
   </command>
@@ -7618,7 +7622,7 @@
       <examples>
         <example>loop 1000</example>
 	<example>loop 1000 --progressive</example>
-        <example>loop while essdiff > .00001</example>
+        <example>loop while essdiff &gt; .00001</example>
         <example>loop i=1991..2000</example>
         <example>loop for (r=-.99; r&lt;=.99; r+=.01)</example>
 	<example>loop foreach i xlista</example>
@@ -9554,40 +9558,51 @@
 
     <description context="gui">
       <para>
-	Esta instrución volve estimar un determinado modelo, ben logo de excluír as
-	variables especificadas, ou ben logo de omitir de xeito secuencial as variables
-	que non son significativas (se o correspondente cadriño está dispoñible e o
-	marcas). Aparte do resultado habitual do modelo, presenta unha proba da
-	significación conxunta das variables excluídas. A hipótese nula é que os
-	verdadeiros coeficientes de todas as variables excluídas son iguais a cero.
+	A forma básica desta instrución volve estimar o modelo indicado,
+	logo de excluír as variables especificadas. Aparte do resultado
+	habitual do modelo, presenta unha proba da significación conxunta
+	das variables excluídas. A hipótese nula supón que os verdadeiros
+	coeficientes de todas as variables excluídas son iguais a cero.
       </para>
       <para>
-	A eliminación secuencial funciona por pasos, como se indica deseguido. En cada
-	etapa exclúese a variable ligada á maior probabilidade asociada (valor p), ata
-	que todas as que queden estean ligadas a valores p que non sexan maiores
-	ca algún valor de corte. Por defecto, este é o 10 por cento (con 2 colas) e
-	podes axustalo co botón con frechas arriba/abaixo. Este proceso opera
-	automaticamente sobre todas as variables no modelo (aparte da constante).
-	Se queres limitalo só a un subconxunto das variables, marca o cadriño de
+	Se escolles a opción <quote>Proba de Wald</quote>, avalíase a
+	significación conxunta das variables especificadas por medio
+	dunha proba de Wald baseada na matriz de varianzas-covarianzas
+	do modelo indicado, e non se volve realizar a estimación.
+      </para>
+      <para>
+	Se escolles a opción <quote>Eliminación secuencial</quote> (aviso:
+	dita opción non sempre se vai amosar), esta vai funcionar como se
+	indica deseguido. En cada etapa exclúese a variable ligada á maior
+	probabilidade asociada (valor p), ata que todas as que queden estean
+	ligadas a valores p que non sexan maiores ca algún valor de corte.
+	Por defecto, este é o 10 por cento (con 2 colas) e podes axustalo
+	co botón con frechas arriba/abaixo. Por defecto, este proceso opera de
+	modo automático sobre todas as variables no modelo (aparte da constante);
+	se queres limitalo só a un subconxunto das variables, marca o cadriño de
 	<quote>Probar só as variables seleccionadas</quote> e fai a selección.
+	De igual xeito que no caso básico, vaise volver estimar un modelo logo
+	de excluír as variables, agás que non quede ningunha.
       </para>
     </description>
 
     <description context="cli">
       <para>
 	Esta instrución debe de ir despois dunha instrución de estimación.
-	Calcula o estatístico de proba de Wald para a significación
-	conxunta das variables de <repl>listavariables</repl>, que debe de
-	ser un subconxunto das variables independentes do último modelo
-	estimado. Podes recuperar os resultados da proba utilizando os
-	accesorios <fncref targ="$test"/> e <fncref targ="$pvalue"/>.
+	Na súa forma básica, calcula o estatístico de proba de Wald para a
+	significación conxunta das variables de <repl>listavariables</repl>,
+	que debe ser un subconxunto (aínda que non necesariamente un subconxunto
+	axeitado) das variables independentes do último modelo estimado.
+	Podes recuperar os resultados da proba utilizando os accesorios
+	<fncref targ="$test"/> e <fncref targ="$pvalue"/>.
       </para>
       <para>
-	Por defecto, estímase o modelo restrinxido e este substitúe ao
-	orixinal como <quote>modelo vixente</quote> se tes intención,
-	por exemplo, de recuperar os erros con <lit>$uhat</lit> ou facer
-	probas posteriores. Podes impedir este comportamento mediante
-	a opción <opt>test-only</opt>.
+	Agás que a restrición elimine todos os regresores orixinais, por
+	defecto, estímase o modelo restrinxido e este substitúe ao orixinal
+	como <quote>modelo vixente</quote> se tes intención, por exemplo,
+	de recuperar os erros con <lit>$uhat</lit> ou facer probas posteriores.
+	Podes impedir este comportamento mediante a opción
+	<opt>test-only</opt>.
       </para>
       <para>
 	Por defecto, rexístrase a forma <math>F</math> da proba de Wald;
@@ -9602,15 +9617,16 @@
       <para>
 	Como alternativa, cando indicas a opción <opt>auto</opt>, lévase
 	adiante a eliminación secuencial por pasos. En cada etapa exclúese
-	a variable ligada á maior probabilidade asociada (valor p), ata que
-	todas as que queden estean ligadas a valores p que non sexan maiores
-	ca algún valor de corte. Por defecto, este é do 10 por cento (con 2
-	colas) e podes axustalo engadindo <quote><lit>=</lit></quote> e un
-	valor entre 0 e 1 (sen espazos), como no cuarto exemplo de arriba.
-	Se indicas <repl>listavariables</repl>, este proceso limítase só ás variables
-	da lista; se non, todas as variables se tratan como candidatas
-	á exclusión. Cae na conta de que as opcións <opt>auto</opt> e
-	<opt>test-only</opt> non podes combinalas.
+	a variable ligada á maior probabilidade asociada (valor p), ata
+	que todas as que queden estean ligadas a valores p que non sexan
+	maiores ca algún valor de corte. Por defecto, este é do 10 por cento
+	(con 2 colas) e podes axustalo engadindo <quote><lit>=</lit></quote>,
+	e un valor entre 0 e 1 (sen espazos), como no cuarto exemplo de
+	arriba. Se indicas <repl>listavariables</repl>, este proceso limítase
+	só ás variables da lista; se non, todos os regresores aparte da
+	constante se tratan como candidatos á exclusión. Cae na conta de
+	que as opcións <opt>auto</opt> e <opt>test-only</opt> non podes
+	combinalas.
       </para>
     </description>
 
@@ -12335,7 +12351,7 @@
 	Se escolles <quote>Mostra/Restrinxir, a partir do criterio...</quote>
 	é necesario que indiques unha expresión booleana (lóxica), do mesmo
 	tipo que usarías para definir unha variable ficticia. Por exemplo, a
-	expresión <quote>sqft > 1400</quote> seleccionará só os casos nos que
+	expresión <quote>sqft &gt; 1400</quote> seleccionará só os casos nos que
 	a variable 'sqft' ten un valor maior ca 1400. Podes encadear as condicións
 	utilizando os operadores lóxicos <quote>&amp;&amp;</quote> (AND)
 	e <quote>||</quote> (OR), e podes aplicar a negación utilizando
@@ -13708,8 +13724,8 @@
         <example>smpl 3 10</example>
 	<example>smpl 1960:2 1982:4</example>
 	<example>smpl +1 -1</example>
-	<example>smpl x > 3000 --restrict</example>
-	<example>smpl y > 3000 --restrict --replace</example>
+	<example>smpl x &gt; 3000 --restrict</example>
+	<example>smpl y &gt; 3000 --restrict --replace</example>
 	<example>smpl 100 --random</example>
       </examples>
     </usage>

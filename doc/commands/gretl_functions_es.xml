@@ -2183,8 +2183,8 @@
 	  \[
 	  f(x; k, \theta) = \frac{x^{k-1}}{\theta^k} \frac{e^{-x/\theta}}{\Gamma(k)}
 	  \]
-	  donde $k>0$ es el parámetro de forma, y $\theta>0$ es el parámetro de
-	  escala.
+	  donde $k&gt;0$ es el parámetro de forma, y$\theta&gt;0$ es el
+	  parámetro de escala.
 	</para>
 	<para>
 	  <seelist>
@@ -3365,10 +3365,9 @@
       <description>
 	<para>
 	  <emphasis>Esta es una función heredada, anterior al soporte
-	  original de Gretl para matrices complejas. No debes usarla
-	  en los guiones nuevos que escribas en lenguaje
-	  'hansl'. Utiliza</emphasis> <fncref targ="eiggen2"/>
-	  <emphasis>en su lugar.</emphasis>
+	  original de Gretl para matrices complejas. No debes usarla en
+	  los guiones nuevos que escribas en lenguaje 'hansl'. Utiliza
+	  </emphasis> <fncref targ="eiggen2"/> <emphasis> en su lugar.</emphasis>
 	</para>
 	<para>
 	  Calcula los autovalores y, opcionalmente, los autovectores de la matriz
@@ -3905,6 +3904,7 @@
 	<fnarg optional="true" type="scalar-or-vec">a</fnarg>
 	<fnarg optional="true" type="scalar-or-vec">b</fnarg>
 	<fnarg optional="true" type="scalar">y0</fnarg>
+	<fnarg optional="true" type="scalar-or-vec">x0</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -3958,9 +3958,12 @@
 	<para>
 	  El argumento escalar opcional <argname>y0</argname> se utiliza para
 	  representar todos los valores de <math>y</math> anteriores al inicio
-	  de la muestra (se usa solo cuando <math>p>0</math>). Cuando se omite,
-	  se entiende que es igual a 0. Se asume que los valores de
-	  <argname>x</argname> anteriores al inicio de la muestra son siempre 0.
+	  de la muestra (se usa solo cuando <math>p &gt; 0</math>). Cuando se omite,
+	  se entiende que es igual a 0. Similarmente, puedes usar el argumento
+	  opcional <argname>x0</argname> para especificar uno o más valores
+	  de <math>x</math> anteriores al inicio de la muestra (información solo
+	  relevante cuando <math>q &gt; 0</math>). En caso contario, se asume que los
+	  valores de <argname>x</argname> anteriores al inicio de la muestra son 0.
 	</para>
 	<para>
 	  <seelist>
@@ -4077,7 +4080,7 @@
     <function name="flatten" section="data-utils" output="seebelow">
       <fnargs>
 	<fnarg type="matrices-or-strings">A</fnarg>
-	<fnarg optional="true" type="bool">vertic</fnarg>
+	<fnarg optional="true" type="bool">alt</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -4087,16 +4090,17 @@
 	<para>
 	  Los argumentos se indican entre paréntesis. Con matrices, por defecto,
 	  se concatenan horizontalmente las matrices de <argname>A</argname>;
-	  pero cuando indicas un valor no nulo para <argname>vertic</argname>,
+	  pero cuando indicas un valor no nulo para <argname>alt</argname>,
 	  la concatenación se hace verticalmente. En cualquier caso, se muestra
 	  un fallo si las matrices no son conformables para realizar esta
 	  operación. Consulta <fncref targ="msplitby"/> para la operación
 	  inversa.
 	</para>
 	<para>
-	  En el caso de cadenas de texto, <argname>vertic</argname> se ignora,
-	  y el resultado contiene las cadenas de <argname>A</argname> ordenadas
-	  una en cada línea.
+	  En caso de cadenas de texto, el resultado por defecto mantiene las
+	  cadenas de <argname>A</argname>, ordenadas una en cada línea.
+	  Si indicas un valor no nulo para <argname>alt</argname>, las
+	  cadenas se separan mediante espacios en lugar de nuevas líneas.
 	</para>
       </description>
     </function>
@@ -5066,7 +5070,7 @@
 	  es equivalente lógicamente (pero más eficiente) que
 	</para>
 	<code>
-	  if strlen(strstr("gatada", "gata")) > 0
+	  if strlen(strstr("gatada", "gata")) &gt; 0
 	</code>
       </description>
     </function>
@@ -5128,19 +5132,25 @@
       <fnargs>
 	<fnarg type="string">d</fnarg>
 	<fnarg type="seebelow">&hellip;</fnarg>
-	<fnarg type="anyfloat">p</fnarg>
+	<fnarg type="anyfloat">u</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Calcula la inversa de la función de distribución acumulativa, y devuelve un
-	  resultado (del tipo del argumento) con el valor de <math>x</math> que cumple
-	  <equation status="inline" ascii="P(X &le; x) = p" tex="$P(X \le x) = p$"/>,
-	  donde el tipo de distribución de <math>X</math> se especifica
-	  mediante la letra <argname>d</argname>. Entre los argumentos
-	  <argname>d</argname> y <argname>p</argname>, puedes necesitar
-	  algún argumento adicional escalar para especificar los parámetros
-	  de la distribución de que se trate. Esto se hace del modo que se indica
-	  a continuación:
+	  Calcula la inversa de la función de distribución acumulativa.
+	  Para una distribución continua devuelve un resultado (del tipo
+	  del argumento) con el valor de <math>x</math> que cumple
+	  <equation status="inline" ascii="P(X &le; x) = u" tex="$P(X \le x) = u$"/>,
+	  con <argname>u</argname> dentro del intervalo entre 0 y 1.
+	  Para una distribución discreta (Binomial o Poisson), devuelve
+	  el valor más pequeño de <math>x</math> para el que se cumple
+	  <equation status="inline" ascii="P(X &le; x) &ge; u" tex="$P(X \le x) \ge u$"/>.
+	</para>
+	<para>
+	  La distribución de <math>X</math> se especifica mediante la letra
+	  <argname>d</argname>. Entre los argumentos <argname>d</argname> y
+	  <argname>u</argname>, puedes necesitar algún argumento escalar
+	  adicional para especificar los parámetros de la distribución de que
+	  se trate. Esto se hace del modo que se indica a continuación:
 	</para>
 	<ilist context="notex">
 	  <li>
@@ -9342,6 +9352,44 @@
 	  <seelist>
 	    <fncref targ="randgen"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="randperm" section="probdist" output="vector">
+      <fnargs>
+	<fnarg type="int">n</fnarg>
+	<fnarg type="int" optional="true">k</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Si solo indicas el primer argumento, devuelve un vector fila que
+	  contiene una permutación aleatoria de los números enteros desde 1
+	  hasta ese valor <argname>n</argname>, sin repetición de elementos.
+	  Cuando indiques el segundo argumento, deberá ser un número entero
+	  positivo dentro del rango de 1 a <argname>n</argname>; en ese caso
+	  la función devuelve un vector fila que contiene <argname>k</argname>
+	  número enteros seleccionados aleatoriamente desde 1 hasta
+	  <argname>n</argname>, sin reemplazamiento.
+	</para>
+	<para>
+	  Si quieres extraer una muestra de <math>k</math> filas de una matriz
+	  <lit>X</lit> que tiene <math>n</math> filas (y sin reemplazamiento),
+	  puedes conseguir eso tal como se muestra debajo:
+	</para>
+	<code>
+	  matrix S = X[randperm(n, k),]
+	</code>
+	<para>
+	  Y si deseas mantener el orden original de las filas en la
+	  muestra:
+	</para>
+	<code>
+	  matrix S = X[sort(randperm(n, k)),]
+	</code>
+	<para>
+	  Consulta también la función <fncref targ="resample"/> para
+	  remuestrear con reemplazamiento.
 	</para>
       </description>
     </function>

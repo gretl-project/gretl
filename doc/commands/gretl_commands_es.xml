@@ -4797,7 +4797,7 @@
 	<lit>&gt;=</lit> (mayor o igual que), <lit>&lt;=</lit> (menor o igual que)
 	y <lit>!=</lit> (no igual). También puedes utilizar los operadores
 	booleanos en la construcción de variables ficticias: por ejemplo,
-	<lit>(x > 10)</lit> devuelve 1 en caso de que <lit>x</lit> &gt; 10,
+	<lit>(x &gt; 10)</lit> devuelve 1 en caso de que <lit>x</lit> &gt; 10,
 	y 0 en otro caso.
       </para>
 
@@ -6591,6 +6591,10 @@
 	proporcionan en cualquiera que sea la unidad <quote>natural</quote>
 	de la variable objetivo.
       </para>
+	  <para>
+	  (Consulta el complemento SVAR para otras propuestas de identificación
+	  de 'shocks' y para más opciones de bootstrap.)
+	  </para>
     </description>
 
   </command>
@@ -7618,7 +7622,7 @@
       <examples>
         <example>loop 1000</example>
 	<example>loop 1000 --progressive</example>
-        <example>loop while essdiff > .00001</example>
+        <example>loop while essdiff &gt; .00001</example>
         <example>loop i=1991..2000</example>
         <example>loop for (r=-.99; r&lt;=.99; r+=.01)</example>
 	<example>loop foreach i xlista</example>
@@ -9554,36 +9558,47 @@
 
     <description context="gui">
       <para>
-	Esta instrucción vuelve a estimar un determinado modelo, bien luego de excluir las
-	variables especificadas, o bien luego de omitir de modo secuencial las variables
-	que no son significativas (si el correspondiente cuadradito está disponible y lo
-	marcas). Aparte del resultado habitual del modelo, presenta un contraste de la
-	significación conjunta de las variables excluidas. La hipótesis nula es que los
+	La forma básica de esta instrucción vuelve a estimar el modelo
+	indicado, después de excluir las variables especificadas. Aparte del
+	resultado habitual del modelo, presenta un contraste de la significación
+	conjunta de las variables excluidas. La hipótesis nula supone que los
 	verdaderos coeficientes de todas las variables excluidas son iguales a cero.
       </para>
       <para>
-	La eliminación secuencial funciona por pasos, como se indica a continuación. En cada
-	etapa se excluye la variable ligada a la mayor probabilidad asociada (valor p), hasta
-	que todas las que queden, estén ligadas a valores p que no sean mayores
-	que algún valor de corte. Por defecto, este es el 10 por ciento (con 2 colas) y
-	puedes ajustarlo con el botón con flechas arriba/abajo. Este proceso opera
-	automáticamente sobre todas las variables en el modelo (aparte de la constante).
-	Si quieres limitarlo solo a un subconjunto de las variables, marca el cuadradito de
-	<quote>Contrastar solo las variables seleccionadas</quote> y haz la selección.
+	Si eliges la opción <quote>Contraste de Wald</quote>, se evalúa la
+	significación conjunta de las variables especificadas mediante un
+	contraste de Wald basado en la matriz de covarianzas del modelo
+	indicado, y no se vuelve a realizar la estimación.
+      </para>
+      <para>
+	Si eliges la opción <quote>Eliminación secuencial</quote> (aviso: dicha
+	opción no siempre se presenta), esta va a funcionar como se indica a
+	continuación. En cada etapa se excluye la variable ligada a la mayor
+	probabilidad asociada (valor p), hasta que todas las que queden estén
+	ligadas a valores p que no sean mayores que algún valor de corte. Por
+	defecto, este es el 10 por ciento (con 2 colas) y puedes ajustarlo con el
+	botón con flechas arriba/abajo. Por defecto, este proceso opera de forma
+	automática sobre todas las variables en el modelo (aparte de la constante);
+	si quieres limitarlo solo a un subconjunto de las variables, marca el
+	cuadradito de <quote>Contrastar solo las variables seleccionadas</quote>
+	y haz la selección. Al igual que en el caso básico, se va a reestimar un
+	modelo después de excluir las variables, salvo que no quede ninguna.
       </para>
     </description>
 
     <description context="cli">
       <para>
 	Esta instrucción debe ir después de una instrucción de estimación.
-	Calcula el estadístico de contraste de Wald para la significación
-	conjunta de las variables de <repl>listavariables</repl>, que debe
-	ser un subconjunto de las variables independientes del último modelo
-	estimado. Puedes recuperar los resultados del contraste utilizando los
-	accesorios <fncref targ="$test"/> y <fncref targ="$pvalue"/>.
+	En su forma básica, calcula el estadístico de contraste de Wald para la
+	significación conjunta de las variables de <repl>listavariables</repl>,
+	que debe ser un subconjunto (aunque no necesariamente un subconjunto
+	apropiado) de las variables independientes del último modelo estimado.
+	Puedes recuperar los resultados del contraste utilizando los accesores
+	<fncref targ="$test"/> y <fncref targ="$pvalue"/>.
       </para>
       <para>
-	Por defecto, se estima el modelo restringido y este substituye al
+	A no ser que la restricción elimine todos los regresores originales,
+	por defecto, se estima el modelo restringido y este substituye al
 	original como <quote>modelo vigente</quote> si tienes intención,
 	por ejemplo, de recuperar los errores con <lit>$uhat</lit> o hacer
 	contrastes posteriores. Puedes impedir este comportamiento mediante
@@ -9602,15 +9617,16 @@
       <para>
 	Como alternativa, cuando indicas la opción <opt>auto</opt>, se lleva
 	a cabo la eliminación secuencial por pasos. En cada etapa se excluye
-	la variable ligada a la mayor probabilidad asociada (valor p), hasta que
-	todas las que queden estén ligadas a valores p que no sean mayores
-	que algún valor de corte. Por defecto, este es del 10 por ciento (con 2
-	colas) y puedes ajustarlo añadiendo <quote><lit>=</lit></quote> y un
-	valor entre 0 y 1 (sin espacios), como en el cuarto ejemplo de arriba.
-	Si indicas <repl>listavariables</repl>, este proceso se limita solo a las variables
-	de la lista; en otro caso, todas las variables se tratan como candidatas
-	a la exclusión. Ten en cuenta que las opciones <opt>auto</opt> y
-	<opt>test-only</opt> no puedes combinarlas.
+	la variable ligada a la mayor probabilidad asociada (valor p), hasta
+	que todas las que queden estén ligadas a valores p que no sean
+	mayores que algún valor de corte. Por defecto, este es del 10 por ciento
+	(con 2 colas) y puedes ajustarlo añadiendo <quote><lit>=</lit></quote>,
+	y un valor entre 0 y 1 (sin espacios), como en el cuarto ejemplo de
+	arriba. Si indicas <repl>listavariables</repl>, este proceso se limita
+	solo a las variables de la lista; en otro caso, todos los regresores
+	aparte de la constante se tratan como candidatos a la exclusión. Ten
+	en cuenta que las opciones <opt>auto</opt> y <opt>test-only</opt>
+	no puedes combinarlas.
       </para>
     </description>
 
@@ -12335,7 +12351,7 @@
 	Si escoges <quote>Muestra/Restringir, a partir del criterio...</quote>
 	es necesario que indiques una expresión booleana (lógica), del mismo
 	tipo que usarías para definir una variable ficticia. Por ejemplo, la
-	expresión <quote>sqft > 1400</quote> seleccionará solo los casos en los que
+	expresión <quote>sqft &gt; 1400</quote> seleccionará solo los casos en los que
 	la variable 'sqft' tiene un valor mayor que 1400. Puedes encadenar las condiciones
 	utilizando los operadores lógicos <quote>&amp;&amp;</quote> (AND)
 	y <quote>||</quote> (OR), y puedes aplicar la negación utilizando
