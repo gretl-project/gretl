@@ -1589,19 +1589,11 @@ int gretl_recode_file (const char *path1, const char *path2,
 	GError *gerr = NULL;
 	gchar *trbuf = NULL;
 	gsize written = 0;
+	gsize got = 0;
 
 	/* recode the buffer */
-	if (!strcmp(to_set, "UTF-8") && !strcmp(from_set, "UTF-16")) {
-	    const gunichar2 *orig = (const gunichar2 *) buf;
-	    glong len = bytes / 2;
-	    glong got, wrote;
-
-	    trbuf = g_utf16_to_utf8(orig, len, &got, &wrote, &gerr);
-	    written = (gsize) wrote;
-	} else {
-	    trbuf = g_convert(buf, bytes, to_set, from_set,
-			      NULL, &written, &gerr);
-	}
+	trbuf = g_convert(buf, bytes, to_set, from_set,
+			  &got, &written, &gerr);
 
 	if (gerr != NULL) {
 	    err = E_DATA;
