@@ -6031,7 +6031,8 @@ int command_ok_for_model (int test_ci, gretlopt opt,
 	break;
 
     case OMIT:
-	if (mci == ARMA || mci == GARCH || mci == INTREG) {
+	if (mci == ARMA || mci == GARCH || mci == INTREG ||
+	    mci == DPANEL) {
 	    ok = 0;
 	} else if (between) {
 	    ok = 0;
@@ -6153,12 +6154,10 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
 	}
     }
 
-#if 1 /* experimental */
     if (ci == MODTEST && (opt & OPT_A) &&
 	gretl_is_regular_panel_model(pmod)) {
 	return 1;
     }
-#endif
 
     if (ok && !dataset_is_time_series(dset)) {
 	/* time-series-only tests */
