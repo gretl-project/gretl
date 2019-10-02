@@ -1603,7 +1603,7 @@ Optional Packages:
   --with-lucida           Use Lucida fonts for manual [git only]
   --with-gmake            Use GNU make explicitly [default=no]
   --with-readline        Use readline library [default=auto]
-  --with-gsf             Use libgsf (if available) [default=no]
+  --with-gsf             Use libgsf [default=auto]
   --with-x-12-arima      include X-12-ARIMA support [default=yes]
   --with-tramo-seats     include TRAMO/SEATS support [default=yes]
   --with-libR            include libR support [default=auto]
@@ -6755,12 +6755,12 @@ fi
 
 # Check whether --with-gsf was given.
 if test "${with_gsf+set}" = set; then :
-  withval=$with_gsf; if test "x${withval}" = "xyes"
+  withval=$with_gsf; if test "x${withval}" = "xno"
 then
-  try_gsf=yes
+  try_gsf=no
 fi
 else
-  try_gsf=no
+  try_gsf=yes
 fi
 
 

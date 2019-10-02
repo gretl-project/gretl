@@ -267,12 +267,12 @@ fi,
 try_readline=yes)
 
 AC_ARG_WITH(gsf,
-[  --with-gsf             Use libgsf (if available) [[default=no]]],
-if test "x${withval}" = "xyes"
+[  --with-gsf             Use libgsf [[default=auto]]],
+if test "x${withval}" = "xno"
 then
-  try_gsf=yes
+  try_gsf=no
 fi,
-try_gsf=no)
+try_gsf=yes)
 
 AC_ARG_WITH(x-12-arima,
 [  --with-x-12-arima      include X-12-ARIMA support [[default=yes]]],
