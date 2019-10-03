@@ -59,20 +59,19 @@ and imaginary parts respectively, and sticks them together, as in
 \begin{code}
 C = complex(A, B)
 \end{code}
-Four cases are supported, as follows. (Other than in the subscripts,
-$i$ denotes $\sqrt{-1}$.)
+Four cases are supported, as follows.
 \begin{itemize}
 \item \texttt{A} and \texttt{B} are both $m \times n$ real matrices
   Then \texttt{C} is an $m \times n$ complex matrix such that
-  $c_{ij} = a_{ij} + b_{ij}\,i$.
+  $c_{kj} = a_{kj} + b_{kj}\,i$.
 \item \texttt{A} and \texttt{B} are both scalars: \texttt{C} is a
   $1 \times 1$ complex matrix such that $c = a + b\,i$.
 \item \texttt{A} is an $m \times n$ real matrix and \texttt{B} is a
   scalar: \texttt{C} is an $m \times n$ matrix such that
-  $c_{ij} = a_{ij} + b\,i$.
+  $c_{kj} = a_{kj} + b\,i$.
 \item \texttt{A} is a scalar and \texttt{B} is an $m \times n$ real
   matrix: \texttt{C} is an $m \times n$ matrix such that
-  $c_{ij} = a + b_{ij}\,i$.
+  $c_{kj} = a + b_{kj}\,i$.
 \end{itemize}
 
 In addition, complex matrices may naturally arise as the result of
@@ -148,26 +147,27 @@ C[3,3][imag] = y
 Most of the operators available for working with real matrices are
 also available for complex ones; this includes the ``dot-operators''
 which work element-wise or by ``broadcasting'' vectors. Moreover,
-``mixed'' operands are accepted, as in \texttt{D = C + A} where
-\texttt{C} is complex and \texttt{A} real. The result, \texttt{D},
-will be complex. In such cases the real operand is treated as a
-complex matrix with an all-zero imaginary part.
+mixed operands are accepted, as in \texttt{D = C + A} where \texttt{C}
+is complex and \texttt{A} real; the result, \texttt{D}, will be
+complex. In such cases the real operand is treated as a complex matrix
+with an all-zero imaginary part.
 
 The operators \textit{not} defined for complex values are:
 \begin{itemize}
-\item Those that include the tests ``\verb+>+'' or ``\verb+<+'', since
-  complex values as such cannot be compared as greater or lesser
-  (though they can be compared as equal or not equal).
+\item Those that include the inequality tests ``\verb+>+'' or
+  ``\verb+<+'', since complex values as such cannot be compared as
+  greater or lesser (though they can be compared as equal or not
+  equal).
 \item The (real) modulus operator (percent sign), as in \texttt{x \%
     y} which gives the remainder on division of \texttt{x} by
   \texttt{y}.
 \end{itemize}
 
-The transposition operator ``\cmd{'}'' is available in both unary
-form, as in \texttt{B = A'}, and binary form, as in \texttt{C = A'B}
-(transpose-multiply). But note that for complex \texttt{A} this means
-the conjugate transpose, $A^\mathrm{H}$. If you need the
-non-conjugated transpose you can use \cmd{transp()}.
+As for real matrices, the transposition operator ``\cmd{'}'' is
+available in both unary form, as in \texttt{B = A'}, and binary form,
+as in \texttt{C = A'B} (transpose-multiply). But note that for complex
+\texttt{A} this means the conjugate transpose, $A^\mathrm{H}$. If you
+need the non-conjugated transpose you can use \cmd{transp()}.
 
 You may wish to note: although none of gretl's explicit regression
 functions (or commands) accept complex input you can calculate
