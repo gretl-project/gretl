@@ -1428,9 +1428,10 @@ static int no_data_check (const DATASET *dset)
     }
 }
 
-static int *get_send_data_list (const DATASET *dset, int *err)
+static int *get_send_data_list (int ci, const DATASET *dset,
+				int *err)
 {
-    const char *dname = get_optval_string(FOREIGN, OPT_D);
+    const char *dname = get_optval_string(ci, OPT_D);
     static int list1[2] = {1, 0};
     int *list = NULL;
 
@@ -1451,6 +1452,7 @@ static int *get_send_data_list (const DATASET *dset, int *err)
 		list1[1] = vi;
 		list = list1;
 	    } else {
+		gretl_errmsg_sprintf(_("'%s': no such list"), dname);
 		*err = E_DATA;
 	    }
 	}
@@ -1474,7 +1476,11 @@ static int mpi_send_data_setup (const DATASET *dset, FILE *fp)
 	return err;
     }
 
-    list = get_send_data_list(dset, &err);
+    list = get_send_data_list(MPI, dset, &err);
+    if (err) {
+	return err;
+    }
+
     if (list != NULL) {
 	nvars = list[0];
     } else {
@@ -1596,7 +1602,7 @@ static int write_data_for_stata (const DATASET *dset,
 	return err;
     }
 
-    list = get_send_data_list(dset, &err);
+    list = get_send_data_list(FOREIGN, dset, &err);
 
     if (!err) {
 	gchar *sdata;
@@ -1635,7 +1641,7 @@ static int write_data_for_octave (const DATASET *dset,
 	return err;
     }
 
-    list = get_send_data_list(dset, &err);
+    list = get_send_data_list(FOREIGN, dset, &err);
 
     if (!err) {
 	gchar *mdata = gretl_make_dotpath("mdata.tmp");
@@ -1801,7 +1807,7 @@ static int write_data_for_R (const DATASET *dset,
     /* FIXME: can R's "ts" handle daily data, weekly data, etc.? */
     ts = annual_data(dset) || quarterly_or_monthly(dset);
 
-    list = get_send_data_list(dset, &err);
+    list = get_send_data_list(FOREIGN, dset, &err);
 
     if (!err) {
 	gchar *Rdata = gretl_make_dotpath("Rdata.tmp");

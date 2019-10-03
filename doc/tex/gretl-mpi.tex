@@ -563,6 +563,8 @@ The gretl \texttt{mpi} command supports five options, as follows.
   specify the number of OpenMP threads per process \\
 \verb|--|\texttt{send-functions} & 
   share function definitions with \texttt{gretlmpi} \\
+\verb|--|\texttt{send-data}[\texttt{=}\textsl{list}] &
+  share all or part of the current dataset \\
 \verb|--|\texttt{local} & ignore MPI hosts file, if present \\
 \verb|--|\texttt{single-rng} & 
   use a single pseudo-random number generator
@@ -587,6 +589,12 @@ in the workspace of the calling gretl process. (It's OK to define
 functions within an \texttt{mpi} block, but in some cases it may be more
 convenient to define functions at the ``main'' script level and pass
 them on.)
+
+The \verb|--send-data| option can be used to send to \texttt{gretlmpi}
+the content of the current dataset. (It will provoke an error if no
+dataset is present). The optional \textsl{list} parameter restricts
+the data sent to the series included in the list named by the
+parameter.
 
 The \verb|--local| option can be used if you have specified a hosts
 file (see sections~\ref{subsec:hosts} and \ref{subsec:mpi-indirect})
