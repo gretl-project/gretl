@@ -23,10 +23,15 @@ version 2019d, in progress
   to a column vector
 - Generalize the I() function: can now create a non-square
   matrix
+- The resample() function: add an optional third argument
+  to control the number of draws, for matrix input only
 - "modtest" command with --autocorr option: add support for
   Wooldridge's first-order test for panel data
 - "funcerr" command: add a function version of this
 - "pkg" command: add "query" action plus --quiet option
+- "system" command: support the --robust option, but only
+  when estimation is via OLS
+- "var" command: enable the "omit" test
 - "outfile" command: add --tempfile option to use an
   automatically named temporary file
 - Internals: speed up element-wise matrix calculation by
@@ -34,6 +39,8 @@ version 2019d, in progress
 - "Send-to" (email) functionality: use libcurl and improve
   the user interface; now gmail-compatible
 - GUI: don't close native database windows on "Clear data"
+- Builds for MS Windows and Mac: switch to use of libgsf
+  for zipping/unzipping
 
 2019-07-02 version 2019c
 - Fix bug: "dataset sortby" not handling missing values
