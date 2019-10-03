@@ -9629,6 +9629,7 @@
       <fnargs>
 	<fnarg type="series-or-mat">x</fnarg>
 	<fnarg optional="true" type="int">blocksize</fnarg>
+	<fnarg optional="true" type="int">draws</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -9657,6 +9658,20 @@
 	  the data is not an integer multiple of the block size, the
 	  last selected block is truncated to fit.
 	</para>
+	<subhead>Number of draws</subhead>
+	<para>
+	  By default the number of resampled observations in the
+	  output is equal to that in the input&mdash;if
+	  <argname>x</argname> is a series, the length of the current
+	  sample range; if <argname>x</argname> is a matrix, its
+	  number of rows.  In the matrix case
+	  <emphasis>only</emphasis> this can be adjusted via the
+	  optional third argument, which must be a positive integer.
+	  Note that if <argname>blocksize</argname> is greater than
+	  1, <argname>draws</argname> refers to the number of
+	  individual observations, not the number of blocks.
+	</para>
+	<subhead>Panel data</subhead>
 	<para>
 	  If the argument <argname>x</argname> is a series and the
 	  dataset takes the form of a panel, resampling by moving

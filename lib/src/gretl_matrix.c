@@ -2113,7 +2113,7 @@ gretl_matrix *gretl_matrix_block_resample (const gretl_matrix *m,
     */
     n = r / blocklen + (r % blocklen > 0);
 
-    rmax = r - blocklen;
+    rmax = m->rows - blocklen;
     if (rmax < 0) {
 	*err = E_DATA;
 	return NULL;
@@ -2137,7 +2137,8 @@ gretl_matrix *gretl_matrix_block_resample (const gretl_matrix *m,
     for (b=0; b<n; b++) {
 	for (s=0; s<blocklen; s++) {
 	    if (i < r) {
-		k = (z[b] + s) % m->rows;
+		/* don't spill over the end */
+		k = z[b] + s;
 		for (j=0; j<m->cols; j++) {
 		    x = gretl_matrix_get(m, k, j);
 		    gretl_matrix_set(R, i, j, x);
