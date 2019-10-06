@@ -2857,7 +2857,7 @@ seas_name_and_label (int k, const DATASET *dset, gretlopt opt,
 	sprintf(vlabel, _("= 1 if month = %d, 0 otherwise"), k);
     } else {
 	char dumstr[8] = "dummy_";
-	char numstr[8];
+	char numstr[12];
 	int len;
 
 	sprintf(numstr, "%d", k);
