@@ -20,7 +20,9 @@
             bookmarks=true,
             bookmarksnumbered=true,
             plainpages=false
-}
+          }
+
+\def\mymbox{\leavevmode\hbox}
 
 \begin{document}
 
@@ -242,10 +244,11 @@ mpiexec --hostfile mpi.hosts -n 16 gretlmpi myscript.inp
 \end{code}
 
 Command-line syntax differs slightly across \texttt{mpiexec}
-implementations. In place of \textsf{Open MPI}'s \verb|--hostfile| tag
-you would use \verb|-machinefile| with \textsf{MPICH}, or
-\verb|/machinefile| with \textsf{MS-MPI}. Also under \textsf{MS-MPI}
-you should use \texttt{/np} for the number of processes option.
+implementations. In place of \textsf{Open MPI}'s
+\mymbox{\verb|--hostfile|} tag you would use \verb|-machinefile| with
+\textsf{MPICH}, or \verb|/machinefile| with \textsf{MS-MPI}. Also
+under \textsf{MS-MPI} you should use \texttt{/np} for the number of
+processes option.
 
 The \texttt{mpiexec} program supports several additional options not
 discussed here; see the documentation for your MPI implementation for
