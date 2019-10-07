@@ -2129,7 +2129,9 @@ static int sys_has_user_name (equation_system *sys)
  * @sys: pre-defined equation system.
  * @dset: dataset struct.
  * @opt: may include OPT_V for verbose operation, OPT_S
- * to permit estimation of a single equation.
+ * to permit estimation of a single equation, OPT_R for
+ * a robust variance matrix (OLS only), OPT_N for no
+ * df correction (OLS and TSLS only).
  * @prn: printing struct.
  *
  * Finalize an equation system, e.g. in response to "end system".

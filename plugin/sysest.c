@@ -873,13 +873,25 @@ static gretlopt sys_tsls_opt (const equation_system *sys)
 static gretlopt sys_ols_opt (const equation_system *sys,
 			     int nr)
 {
+    gretlopt opt = OPT_NONE;
+
+    if (sys->method == SYS_METHOD_OLS) {
+	if (!(sys->flags & SYSTEM_DFCORR)) {
+	    opt |= OPT_N; /* suppress df correction */
+	}
+    }
+
     if (sys->method == SYS_METHOD_OLS && nr == 0) {
 	/* initial OLS will supply the estimates */
-	return (sys->flags & SYSTEM_ROBUST)? OPT_R : OPT_NONE;
+	if (sys->flags & SYSTEM_ROBUST) {
+	    opt |= OPT_R;
+	}
     } else {
 	/* treat initial OLS as auxiliary */
-	return OPT_A;
+	opt |= OPT_A;
     }
+
+    return opt;
 }
 
 static int allocate_Xi_etc (gretl_matrix **Xi,
