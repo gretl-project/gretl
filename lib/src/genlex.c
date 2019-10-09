@@ -875,10 +875,10 @@ const char *gen_func_name (int i)
     for (j=0; funcs[j].id != 0; j++) {
 	seq++;
 	if (seq == i) {
-	    return funcs[i].str;
+	    return funcs[j].str;
 	}
     }
-
+    
     for (j=0; func_alias[j].id != 0; j++) {
 	if (show_alias(j)) {
 	    seq++;
