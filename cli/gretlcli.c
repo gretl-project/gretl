@@ -1212,8 +1212,10 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
     gretl_exec_state_transcribe_flags(s, cmd);
 
     /* if in batch mode, echo comments from input */
-    if (batch && runit < 2 && cmd->ci == CMD_COMMENT && gretl_echo_on()) {
-	printline(linebak);
+    if (batch && runit < 2 && cmd->ci == CMD_COMMENT) {
+	if (gretl_echo_on() || gretl_comments_on()) {
+	    printline(linebak);
+	}
     }
 
     if (cmd->ci < 0) {

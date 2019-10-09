@@ -178,6 +178,8 @@ int gretl_echo_space (void);
 void set_gretl_messages (int e);
 int gretl_messages_on (void);
 
+int gretl_comments_on (void);
+
 int gretl_warnings_on (void);
 int gretl_debugging_on (void);
 int gretl_strsub_on (void);

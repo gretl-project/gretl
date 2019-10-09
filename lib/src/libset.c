@@ -209,6 +209,7 @@ static int user_mp_bits;
 static int R_functions;
 static int R_lib = 1;
 static int csv_digits = UNSET_INT;
+static int comments_on = 0;
 static char data_delim = ',';
 static char data_export_decpoint = '.';
 #ifdef OS_OSX
@@ -727,6 +728,15 @@ int gretl_echo_on (void)
 {
     if (check_for_state()) return 1;
     return flag_to_bool(state, STATE_ECHO_ON);
+}
+
+int gretl_comments_on (void)
+{
+    if (gretl_function_depth() > 0) {
+	return 0;
+    } else {
+	return comments_on;
+    }
 }
 
 int gretl_echo_space (void)
@@ -1844,17 +1854,26 @@ int execute_set (const char *setobj, const char *setarg,
 	} else if (!strcmp(setobj, "echo")) {
 	    return set_echo_status(setarg);
 	} else if (!strcmp(setobj, "verbose")) {
-	    int ret;
 	    if (!strcmp(setarg, "on")) {
 		set_gretl_messages(1);
-		ret = set_echo_status(setarg);
+		err = set_echo_status(setarg);
 	    } else if (!strcmp(setarg, "off")) {
 		set_gretl_messages(0);
-		ret = set_echo_status(setarg);
+		err = set_echo_status(setarg);
 	    } else {
-		ret = E_INVARG;
+		err = E_INVARG;
 	    }
-	    return ret;
+	    return err;
+	} else if (!strcmp(setobj, "comments")) {
+	    if (!strcmp(setarg, "on")) {
+		comments_on = 1;
+		err = 0;
+	    } else if (!strcmp(setarg, "off")) {
+		err = comments_on = 0;
+	    } else {
+		err = E_INVARG;
+	    }
+	    return err;
 	}
 
 	if (libset_boolvar(setobj)) {

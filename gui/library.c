@@ -9523,8 +9523,12 @@ int execute_script (char *runfile, const char *buf,
 	    if (!exec_err) {
 		if (!strncmp(line, "(* saved objects:", 17)) {
 		    strcpy(line, "quit");
-		} else if (gretl_echo_on() && !including) {
-		    gui_output_line(line, &state, prn);
+		} else if (!including) {
+		    if (gretl_echo_on()) {
+			gui_output_line(line, &state, prn);
+		    } else if (*line == '#' && gretl_comments_on()) {
+			gui_output_line(line, &state, prn);
+		    }
 		}
 		strcpy(tmp, line);
 		if (runfile != NULL) {
