@@ -2272,13 +2272,16 @@ int gretl_bundle_write_to_file (gretl_bundle *b,
 }
 
 char *gretl_bundle_write_to_buffer (gretl_bundle *b,
+				    int rank,
 				    int *bytes,
 				    int *err)
 {
-    char fname[32] = "_mpi_bun.XXXXXX";
+    gchar *fname;
     long pos;
     char *buf = NULL;
     FILE *fp = NULL;
+
+    fname = g_strdup_printf("_mpi_bun_%d.XXXXXX", rank);
 
     *err = gretl_chdir(gretl_dotdir());
     if (!*err) {
@@ -2286,6 +2289,7 @@ char *gretl_bundle_write_to_buffer (gretl_bundle *b,
     }
 
     if (fp == NULL) {
+	g_free(fname);
 	*err = E_FOPEN;
 	return NULL;
     }
@@ -2315,6 +2319,7 @@ char *gretl_bundle_write_to_buffer (gretl_bundle *b,
     gretl_pop_c_numeric_locale();
     fclose(fp);
     remove(fname);
+    g_free(fname);
 
     if (*err && buf != NULL) {
 	free(buf);

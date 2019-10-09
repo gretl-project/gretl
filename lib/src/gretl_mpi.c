@@ -733,7 +733,7 @@ static int gretl_bundle_mpi_bcast (gretl_bundle **pb, int root)
 
     if (id == root) {
 	b = *pb;
-	buf = gretl_bundle_write_to_buffer(b, &bytes, &err);
+	buf = gretl_bundle_write_to_buffer(b, id, &bytes, &err);
 	if (err) {
 	    return err;
 	}
@@ -945,14 +945,16 @@ int gretl_matrix_mpi_send (const gretl_matrix *m, int dest)
 static int gretl_bundle_mpi_send (gretl_bundle *b, int dest)
 {
     char *buf = NULL;
-    int bytes = 0;
+    int id, bytes = 0;
     int err = 0;
+
+    mpi_comm_rank(mpi_comm_world, &id);
 
     /* serialize bundle to XML buffer and get size of the
        buffer in bytes; then send buffer size, followed by
        the XML bytes if successful */
 
-    buf = gretl_bundle_write_to_buffer(b, &bytes, &err);
+    buf = gretl_bundle_write_to_buffer(b, id, &bytes, &err);
     if (err) {
 	return err;
     }
