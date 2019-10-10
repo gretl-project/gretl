@@ -12724,10 +12724,12 @@
          </para>
 	</li>
 	<li>
-	  <para><lit>verbose</lit>: <lit>off</lit> or <lit>on</lit> (the
-	  default). Acts as a <quote>master switch</quote> for
-	  <lit>echo</lit> and <lit>messages</lit> (see above), turning
-	  them both off or on simultaneously.
+	  <para><lit>verbose</lit>: <lit>off</lit>, <lit>on</lit> (the
+	  default) or <lit>comments</lit>. Acts as a <quote>master
+	  switch</quote> for <lit>echo</lit> and <lit>messages</lit>
+	  (see above), turning them both off or on simultaneously.
+	  The <lit>comments</lit> argument turns off echo and messages
+	  but preserves printing of comments in a script.
          </para>
 	</li>
 	<li>
