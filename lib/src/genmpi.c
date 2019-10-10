@@ -303,8 +303,7 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 	    Gretl_MPI_Op op = scatter_op_from_string(r->v.str);
 	    gretl_matrix *m = NULL;
 
-	    p->err = ret->v.xval = gretl_matrix_mpi_scatter(l->v.m, &m,
-							    op, root);
+	    p->err = ret->v.xval = gretl_matrix_mpi_scatter(lm, &m, op, root);
 	    if (!p->err) {
 		p->err = node_replace_matrix(l, m);
 	    }
