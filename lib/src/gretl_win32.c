@@ -2083,7 +2083,6 @@ int win32_get_core_count (void)
             n_cores++;
             /* hyper-threaded cores supply more than one logical processor */
             n_procs += count_set_bits(ptr->ProcessorMask);
-            break;
 	}
         offset += bufsize;
         ptr++;
