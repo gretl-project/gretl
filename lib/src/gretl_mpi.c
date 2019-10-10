@@ -670,7 +670,7 @@ int gretl_scalar_mpi_reduce (double x,
 int gretl_matrix_mpi_bcast (gretl_matrix **pm, int root)
 {
     gretl_matrix *m = NULL;
-    int rc[2];
+    int rc[3];
     int id, np, err;
 
     mpi_comm_rank(mpi_comm_world, &id);
@@ -684,14 +684,23 @@ int gretl_matrix_mpi_bcast (gretl_matrix **pm, int root)
 	m = *pm;
 	rc[0] = m->rows;
 	rc[1] = m->cols;
+	rc[2] = m->is_complex;
     }
 
     /* broadcast the matrix dimensions first */
-    err = mpi_bcast(rc, 2, mpi_int, root, mpi_comm_world);
+    err = mpi_bcast(rc, 3, mpi_int, root, mpi_comm_world);
 
     if (!err && id != root) {
+	int r = rc[0];
+	int c = rc[1];
+	int cmplx = rc[2];
+
 	/* everyone but root needs to allocate space */
-	*pm = m = gretl_matrix_alloc(rc[0], rc[1]);
+	if (cmplx) {
+	    *pm = m = gretl_cmatrix_new(r, c);
+	} else {
+	    *pm = m = gretl_matrix_alloc(r, c);
+	}
 	if (m == NULL) {
 	    return E_ALLOC;
 	}
@@ -700,6 +709,10 @@ int gretl_matrix_mpi_bcast (gretl_matrix **pm, int root)
     if (!err) {
 	/* broadcast the matrix content */
 	int n = rc[0] * rc[1];
+
+	if (rc[2]) {
+	    n *= 2;
+	}
 
 	/* FIXME we can get a hang here with 100% CPU if
 	   a worker bombs out on bcast(); in that case
@@ -922,15 +935,18 @@ int gretl_mpi_bcast (void *p, GretlType type, int root)
 
 int gretl_matrix_mpi_send (const gretl_matrix *m, int dest)
 {
-    int rc[2] = {m->rows, m->cols};
+    int rc[3] = {m->rows, m->cols, m->is_complex};
     int err;
 
-    err = mpi_send(rc, 2, mpi_int, dest, TAG_MATRIX_DIM,
+    err = mpi_send(rc, 3, mpi_int, dest, TAG_MATRIX_DIM,
 		   mpi_comm_world);
 
     if (!err) {
 	int n = m->rows * m->cols;
 
+	if (m->is_complex) {
+	    n *= 2;
+	}
 	err = mpi_send(m->val, n, mpi_double, dest, TAG_MATRIX_VAL,
 		       mpi_comm_world);
     }
@@ -1045,19 +1061,28 @@ gretl_matrix *gretl_matrix_mpi_receive (int source,
 					int *err)
 {
     gretl_matrix *m = NULL;
-    int rc[2];
+    int rc[3];
 
-    *err = mpi_recv(rc, 2, mpi_int, source, TAG_MATRIX_DIM,
+    *err = mpi_recv(rc, 3, mpi_int, source, TAG_MATRIX_DIM,
 		    mpi_comm_world, MPI_STATUS_IGNORE);
 
     if (!*err) {
-	m = gretl_matrix_alloc(rc[0], rc[1]);
+	int r = rc[0];
+	int c = rc[1];
+	int cmplx = rc[2];
+	int n = r * c;
+
+	if (cmplx) {
+	    m = gretl_cmatrix_new(r, c);
+	    n *= 2;
+	} else {
+	    m = gretl_matrix_alloc(r, c);
+	}
+
 	if (m == NULL) {
 	    *err = E_ALLOC;
 	    return NULL;
 	} else {
-	    int n = rc[0] * rc[1];
-
 	    *err = mpi_recv(m->val, n, mpi_double, source,
 			    TAG_MATRIX_VAL, mpi_comm_world,
 			    MPI_STATUS_IGNORE);

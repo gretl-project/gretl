@@ -186,15 +186,13 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 	void *sendp;
 
 	if (type == GRETL_TYPE_MATRIX) {
-	    sendp = get_transfer_matrix(l, f, p);
+	    sendp = l->v.m;
 	} else if (type == GRETL_TYPE_BUNDLE) {
 	    sendp = l->v.b;
 	} else {
 	    sendp = &l->v.xval;
 	}
-	if (!p->err) {
-	    ret = aux_scalar_node(p);
-	}
+	ret = aux_scalar_node(p);
 	if (!p->err) {
 	    p->err = ret->v.xval = gretl_mpi_send(sendp, type, id);
 	}
@@ -237,7 +235,7 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 
 	if (type == GRETL_TYPE_MATRIX) {
 	    if (id == root) {
-		m = get_transfer_matrix(l, f, p);
+		m = l->v.m;
 	    }
 	    bcastp = &m;
 	} else if (type == GRETL_TYPE_BUNDLE) {
@@ -250,9 +248,7 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 	    bcastp = &x;
 	}
 
-	if (!p->err) {
-	    ret = aux_scalar_node(p);
-	}
+	ret = aux_scalar_node(p);
 	if (!p->err) {
 	    p->err = gretl_mpi_bcast(bcastp, type, root);
 	    if (!p->err && id != root) {
