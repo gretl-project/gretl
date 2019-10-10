@@ -1854,22 +1854,18 @@ int execute_set (const char *setobj, const char *setarg,
 	} else if (!strcmp(setobj, "echo")) {
 	    return set_echo_status(setarg);
 	} else if (!strcmp(setobj, "verbose")) {
+	    err = 0;
 	    if (!strcmp(setarg, "on")) {
 		set_gretl_messages(1);
-		err = set_echo_status(setarg);
+		set_echo_status(setarg);
 	    } else if (!strcmp(setarg, "off")) {
 		set_gretl_messages(0);
-		err = set_echo_status(setarg);
-	    } else {
-		err = E_INVARG;
-	    }
-	    return err;
-	} else if (!strcmp(setobj, "comments")) {
-	    if (!strcmp(setarg, "on")) {
+		set_echo_status(setarg);
+		comments_on = 0;
+	    } else if (!strcmp(setarg, "comments")) {
+		set_gretl_messages(0);
+		set_echo_status("off");
 		comments_on = 1;
-		err = 0;
-	    } else if (!strcmp(setarg, "off")) {
-		err = comments_on = 0;
 	    } else {
 		err = E_INVARG;
 	    }
