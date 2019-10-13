@@ -80,6 +80,10 @@ loop i=1..nelem(pp) -q
   eval pp[i]
 endloop
 
+## strpos
+strings S = defarray("A", "B", "C", "A", "C")
+eval strpos(S, "A")
+
 ######## Examples that require a dataset ############
 
 open denmark	# get some data

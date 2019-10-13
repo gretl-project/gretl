@@ -461,3 +461,29 @@ function scalar WSRpvalue (int n[4::] "number of trials",
         return pvalue(N, Wstar)
     endif
 end function
+
+
+function matrix strpos (const strings S "Array of strings",
+                        const string str "String being searched for in S",
+                        const bool print_warnings[1] "Print eventual warnings")
+    /* Returns the positional entries of str in S in a column vector 
+    if S contains str, 0 otherwise. */
+
+    if nelem(S) == 0 && print_warnings
+        printf "Warning: String array '%s' is empty.\n", argname(S)
+        return {0}
+    endif
+
+    matrix ret = {}
+    loop i=1..nelem(S) -q
+        if S[i] == str
+            ret |= $i
+        endif
+    endloop
+
+    if rows(ret)>0
+        return ret
+    else
+        return zeros(1,1)
+    endif
+end function
