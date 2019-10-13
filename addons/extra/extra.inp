@@ -4,14 +4,14 @@
 # date='2018-10-27'
 
 function strings powerset(strings S)
-  # Computes the powerset of the input S,
-  # i.e. all possible cominations of the 
-  # string elements in S. (Including the
-  # empty set / empty string "".) 
-  # Each combination
-  # yields one string in the output array. 
-  # Being a set, the ordering is not
-  # defined. 
+    # Computes the powerset of the input S,
+    # i.e. all possible cominations of the
+    # string elements in S. (Including the
+    # empty set / empty string "".)
+    # Each combination
+    # yields one string in the output array.
+    # Being a set, the ordering is not
+    # defined.
     l = nelem(S)
     N = 2^l
     matrix P = zeros(N,l)
@@ -36,10 +36,10 @@ function strings powerset(strings S)
     endloop
 
     return PS
-end function 
+end function
 
 function matrix WPtable (int n[4::12] "number of trials")
-   /*
+/*
    Upper and Lower Percentiles of the Wilcoxon Signed
    Rank Statistic W
    Returns a 3 x M matrix of critical values:
@@ -231,42 +231,42 @@ function matrix commute (const matrix A,
     elif post && (cols(A) != n*m)
         funcerr "m*n doesn't match col dim of input"
     endif
-     
+
     matrix e = vec(mshape(seq(1, m*n), m, n)')
     return post ? A[,e] : A[e,]
 end function
 
 function matrix eliminate(const matrix vecA)
-  # Each column of the input vecA is assumed to 
-  # come from the operation vec(A) on a square 
-  # matrix, thus rows(vecA) must be a square number.
-  # Returns vech(A), which is the result of pre-
-  # multiplying vec(A) with the "elimination"
-  # matrix L_m.
-  # If vecA has several columns, each column is 
-  # treated separately as described above 
-  # (and the results stacked side-by-side).
-  
-  r = sqrt(rows(vecA))
-  if r != round(r)
-    funcerr "input must have a square number of rows"
-  endif
-  e = vech(mshape(seq(1,r^2), r, r)')
-  return vecA[e,]
-end function 
+    # Each column of the input vecA is assumed to
+    # come from the operation vec(A) on a square
+    # matrix, thus rows(vecA) must be a square number.
+    # Returns vech(A), which is the result of pre-
+    # multiplying vec(A) with the "elimination"
+    # matrix L_m.
+    # If vecA has several columns, each column is
+    # treated separately as described above
+    # (and the results stacked side-by-side).
+
+    r = sqrt(rows(vecA))
+    if r != round(r)
+        funcerr "input must have a square number of rows"
+    endif
+    e = vech(mshape(seq(1,r^2), r, r)')
+    return vecA[e,]
+end function
 
 function matrix duplicate(const matrix vechA)
-  # The input is a vector assumed to come from 
-  # an operation like vech(A).
-  # Returns vec(A), which is the result of pre-
-  # multiplying vech(A) with the "duplication"
-  # matrix D_m. 
-  # If vechA has several columns, each column is 
-  # treated separately as described above 
-  # (and the results stacked side-by-side).
+    # The input is a vector assumed to come from
+    # an operation like vech(A).
+    # Returns vec(A), which is the result of pre-
+    # multiplying vech(A) with the "duplication"
+    # matrix D_m.
+    # If vechA has several columns, each column is
+    # treated separately as described above
+    # (and the results stacked side-by-side).
 
-  e = vec(unvech(seq(1,rows(vechA))'))
-  return vechA[e,]
+    e = vec(unvech(seq(1,rows(vechA))'))
+    return vechA[e,]
 end function
 
 function matrix truncnorm (int n[1::],
@@ -413,10 +413,10 @@ function scalar WSRpvalue (int n[4::] "number of trials",
        values 1e-3 or 1 - 1e-3 as an approximation here.
        The normal approximation instead of the exact table values can be
        enforced with the 'forcenorm' argument.
-       
-       Source of the table: Wilfrid J Dixon and Frank J. Massey, Jr., 
-         Introduction to Statistical Analysis, 2nd ed. (New York: McGraw-Hill, 1957), 
-         pp. 443-444.
+
+       Source of the table: Wilfrid J Dixon and Frank J. Massey, Jr.,
+       Introduction to Statistical Analysis, 2nd ed. (New York: McGraw-Hill, 1957),
+       pp. 443-444.
     */
     # input check
     if W > n * (n+1) / 2
@@ -466,11 +466,13 @@ end function
 function matrix strpos (const strings S "Array of strings",
                         const string str "String being searched for in S",
                         const bool print_warnings[1] "Print eventual warnings")
-    /* Returns the positional entries of str in S in a column vector 
-    if S contains str, 0 otherwise. */
+    # Returns the positional entries of string in S in a column vector
+    # if S contains string, 0 otherwise.
 
-    if nelem(S) == 0 && print_warnings
-        printf "Warning: String array '%s' is empty.\n", argname(S)
+    if nelem(S) == 0
+        if print_warnings
+            printf "Warning: String array '%s' is empty.\n", argname(S)
+        endif
         return {0}
     endif
 
@@ -481,9 +483,9 @@ function matrix strpos (const strings S "Array of strings",
         endif
     endloop
 
-    if rows(ret)>0
+    if rows(ret) > 0
         return ret
     else
-        return zeros(1,1)
+        return {0}
     endif
 end function
