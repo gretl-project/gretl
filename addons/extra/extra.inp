@@ -3,7 +3,7 @@
 # version='0.5'
 # date='2018-10-27'
 
-function strings powerset(strings S)
+function strings powerset (strings S)
     # Computes the powerset of the input S,
     # i.e. all possible cominations of the
     # string elements in S. (Including the
@@ -236,7 +236,7 @@ function matrix commute (const matrix A,
     return post ? A[,e] : A[e,]
 end function
 
-function matrix eliminate(const matrix vecA)
+function matrix eliminate (const matrix vecA)
     # Each column of the input vecA is assumed to
     # come from the operation vec(A) on a square
     # matrix, thus rows(vecA) must be a square number.
@@ -255,7 +255,7 @@ function matrix eliminate(const matrix vecA)
     return vecA[e,]
 end function
 
-function matrix duplicate(const matrix vechA)
+function matrix duplicate (const matrix vechA)
     # The input is a vector assumed to come from
     # an operation like vech(A).
     # Returns vec(A), which is the result of pre-
