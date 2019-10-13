@@ -508,23 +508,23 @@ end function
 
 
 function matrix drill (const matrices x "???",
-                      const matrix rowspec "???",
-                      const matrix colspec "???")
-    # TODO: Add some words on its purpose and 
-    
+                       const matrix rowspec "???",
+                       const matrix colspec "???")
+    # TODO: Add some words on its purpose and
+
     matrix ret = {}
-    
+
     # check dimensions
     if nelem(rowspec) > 1 && nelem(colspec) > 1
         funcerr "one of the two specs must be scalar"
         return ret
     endif
-    
+
     matrix rs = vec(rowspec) # force to column
     matrix cs = vec(colspec)
     scalar nrs = nelem(rowspec)
     scalar nrc = nelem(colspec)
-    
+
     # TODO: The following if-blocks are almost the same
     if nrs == 1 && rowspec[1] == 0
         scalar all_rows = 1
@@ -544,17 +544,17 @@ function matrix drill (const matrices x "???",
     else
         all_cols = 0
     endif
-    
+
     if minc(rs|cs) < 0
         funcerr "Negative spec?"
         return ret
     endif
-    
+
     scalar n = nelem(x)
     if n == 0
         return ret
     endif
-    
+
     if !all_rows && !all_cols
         scalar dim = xmax(rows(rs), rows(cs))
     else
@@ -567,7 +567,7 @@ function matrix drill (const matrices x "???",
             endif
         endloop
     endif
-    
+
     ret = mshape(NA, dim, n)
     loop k=1..n --quiet
         xk = x[k]
@@ -579,11 +579,64 @@ function matrix drill (const matrices x "???",
             ret[,k] = vec(xk[rs,cs])
         endif
     endloop
-    
+
     if all_cols || rows(cs) > 1
         ret = ret’
     endif
-    
+
     return ret
 end function
+
+
+function string gbundle2json (bundle b)
+    # TODO: Add some words on this
+
+    strings keys = getkeys(b)
+    string out = "{"
+
+    loop k=1..nelem(keys) -q
+        string key = keys[k]
+
+        # print the key
+        out ~= sprintf("\n\"%s\": ", key)
+        # print the value
+        string typ = typestr(typeof(b["@key"]))
+
+        if typ == "string"
+            out ~= sprintf("\"%s\"", b[key])
+        elif typ == "scalar"
+            out ~= sprintf("%g", b[key])
+        elif typ == "series" || typ == "matrix" # (series as vector)
+            matrix m = (typ == "series") ? {b[key]} : b[key]
+
+            # matrix and vector always two-dim
+            out ~= "["
+            loop r=1..rows(m) -q
+                string stemp = "["~ strstrip( sprintf("%14.10f", m[r,]) ) ~"]"
+                out ~= regsub(stemp, "\s+", ",")
+                # replace (multiple) blanks
+                out ~= (r < rows(m)) ? sprintf(",\n") : sprintf("]")
+            endloop
+        else
+            printf "Warning: Type %s not supported. Skipping.", typ
+        endif
+        out ~= (k < nelem(keys)) ? "," : sprintf("\n}")
+    endloop
+
+    return out
+end function
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

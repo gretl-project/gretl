@@ -91,6 +91,10 @@ eval onemode({1,2,3,1,1,2})
 # TODO: Add an example
 # eval drill(x, rowspec, colspec)
 
+## gbundle2json
+bundle bin = defbundle("a", "heyho", "b", $pi, \
+"mm", mnormal(5,2), "m2", ones(1,3))
+eval gbundle2json(bin)
 
 ######## Examples that require a dataset ############
 
