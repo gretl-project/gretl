@@ -504,3 +504,86 @@ function matrix onemode (const matrix v "Vector of values")
 
     return E[where, 1] | howmuch[where]
 end function
+
+
+
+function matrix drill (const matrices x "???",
+                      const matrix rowspec "???",
+                      const matrix colspec "???")
+    # TODO: Add some words on its purpose and 
+    
+    matrix ret = {}
+    
+    # check dimensions
+    if nelem(rowspec) > 1 && nelem(colspec) > 1
+        funcerr "one of the two specs must be scalar"
+        return ret
+    endif
+    
+    matrix rs = vec(rowspec) # force to column
+    matrix cs = vec(colspec)
+    scalar nrs = nelem(rowspec)
+    scalar nrc = nelem(colspec)
+    
+    # TODO: The following if-blocks are almost the same
+    if nrs == 1 && rowspec[1] == 0
+        scalar all_rows = 1
+        if nelem(colspec) > 1
+            funcerr "If you want all rows, you can’t have more than 1 column."
+            return ret
+        endif
+    else
+        all_rows = 0
+    endif
+    if nrc == 1 && colspec[1] == 0
+        scalar all_cols = 1
+        if nelem(rowspec) > 1
+            funcerr "If you want all columns, you can’t have more than 1 row"
+            return ret
+        endif
+    else
+        all_cols = 0
+    endif
+    
+    if minc(rs|cs) < 0
+        funcerr "Negative spec?"
+        return ret
+    endif
+    
+    scalar n = nelem(x)
+    if n == 0
+        return ret
+    endif
+    
+    if !all_rows && !all_cols
+        scalar dim = xmax(rows(rs), rows(cs))
+    else
+        scalar dim = 1
+        loop k=1..n --quiet
+            if all_rows
+                dim = xmax(dim, rows(x[k]))
+            elif all_cols
+                dim = xmax(dim, cols(x[k]))
+            endif
+        endloop
+    endif
+    
+    ret = mshape(NA, dim, n)
+    loop k=1..n --quiet
+        xk = x[k]
+        if all_rows
+            ret[,k] = vec(xk[,cs])
+        elif all_cols
+            ret[,k] = vec(xk[rs,])
+        else
+            ret[,k] = vec(xk[rs,cs])
+        endif
+    endloop
+    
+    if all_cols || rows(cs) > 1
+        ret = ret’
+    endif
+    
+    return ret
+end function
+
