@@ -581,7 +581,7 @@ function matrix drill (const matrices x "???",
     endloop
 
     if all_cols || rows(cs) > 1
-        ret = ret’
+        ret = ret'
     endif
 
     return ret
