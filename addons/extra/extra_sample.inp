@@ -84,6 +84,9 @@ endloop
 strings S = defarray("A", "B", "C", "A", "C")
 eval strpos(S, "A")
 
+## onemode
+eval onemode({1,2,3,1,1,2})
+
 ######## Examples that require a dataset ############
 
 open denmark	# get some data
