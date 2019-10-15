@@ -1312,12 +1312,9 @@ int gretl_matrix_write_to_file (gretl_matrix *A, const char *fname,
 {
     char targ[FILENAME_MAX];
     int r, c, i, j;
-    int format_g = 0;
     int is_complex = 0;
     PRN *prn = NULL;
     FILE *fp = NULL;
-    double x;
-    char pad, d = '\t';
     int gz, bin = 0;
     int err = 0;
 
@@ -1325,9 +1322,6 @@ int gretl_matrix_write_to_file (gretl_matrix *A, const char *fname,
 
     if (!gz) {
 	bin = has_suffix(fname, ".bin");
-    }
-    if (!bin) {
-	format_g = libset_get_bool(MWRITE_G);
     }
 
     if (export) {
@@ -1355,8 +1349,8 @@ int gretl_matrix_write_to_file (gretl_matrix *A, const char *fname,
 	gretl_matrix_set_complex_full(A, 0);
     }
 
-    c = A->cols;
     r = A->rows;
+    c = A->cols;
 
     if (bin) {
 	const char *header = is_complex ? "gretl_binar_cmatrix" :
@@ -1366,7 +1360,6 @@ int gretl_matrix_write_to_file (gretl_matrix *A, const char *fname,
 
 #if G_BYTE_ORDER == G_BIG_ENDIAN
 	double x;
-	size_t i;
 	int k;
 
 	fwrite(header, 1, strlen(header), fp);
@@ -1388,6 +1381,10 @@ int gretl_matrix_write_to_file (gretl_matrix *A, const char *fname,
 	fclose(fp);
     } else {
 	/* !bin: textual representation */
+	int format_g = libset_get_bool(MWRITE_G);
+	char pad, d = '\t';
+	double x;
+
 	if (is_complex) {
 	    pprintf(prn, "# rows: %d\n", r);
 	    pprintf(prn, "# columns: %d\n", c);
