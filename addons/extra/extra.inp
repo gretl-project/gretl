@@ -505,7 +505,7 @@ function matrix onemode (const matrix v "Vector of values")
     return E[where, 1] | howmuch[where]
 end function
 
-function matrix drill(matrices x,
+function matrix drill(const matrices x,
                       matrix rowspec[null],
                       matrix colspec[null])
 
@@ -513,97 +513,91 @@ function matrix drill(matrices x,
     # and returns a matrix; for example, drill(x, 2, 3) returns
     # a vector with the [2,3] elements of all matrices in the x
     # array. "0" means "all".
+    #
+    # NOTA BENE: all matrices must be the same size
 
     matrix ret = {}
-
-    if !exists(rowspec)
-        rowspec = {0}
-    endif
-
-    if !exists(colspec)
-        colspec = {0}
-    endif
-
-    ### check dimensions
-    if nelem(rowspec) > 1 && nelem(colspec) > 1
-        funcerr "one of the two specs must be scalar"
-        return ret
-    endif
-
-    matrix rs = vec(rowspec) # force to column
-    matrix cs = vec(colspec) # force to column
-    scalar nrs = nelem(rowspec)
-    scalar nrc = nelem(colspec)
-
-    if nrs == 1 && rowspec[1] == 0
-        all_rows = 1
-        if nelem(colspec) > 1
-            funcerr "if you want all rows, you can’t have more than 1 column"
-            return ret
-        endif
-    else
-        all_rows = 0
-    endif
-
-    if nrc == 1 && colspec[1] == 0
-        all_cols = 1
-        if nelem(rowspec) > 1
-            funcerr "if you want all columns, you can’t have more than 1 row"
-            return ret
-        endif
-    else
-        all_cols = 0
-    endif
-
-    if minc(rs|cs) < 0
-        funcerr "negative spec?"
-        return ret
-    endif
-
     n = nelem(x)
+
     if n == 0
         return ret
     endif
 
-    if !all_rows && ! all_cols
-        dim = xmax(rows(rs), rows(cs))
+    ### check sizes
+
+    nr = rows(x[1])
+    nc = cols(x[1])
+    
+    same_dim = 1
+    loop i = 2 .. n --quiet
+        same_dim = same_dim && (rows(x[i]) == nr) && (cols(x[i]) == nc) 
+        if !same_dim
+            funcerr "Inconsistent dimensions (not all matrices are the same size)"
+            return ret
+        endif
+    endloop
+
+    ### process specs
+
+    if !exists(rowspec) 
+        matrix rs = seq(1, nr)'
     else
-        dim = 1
-        loop k = 1 .. n --quiet
-            if all_rows
-                dim = xmax(dim, rows(x[k]))
-            elif all_cols
-                dim = xmax(dim, cols(x[k]))
-            endif
-        endloop
-    endif
-
-    ret = mshape(NA, dim, n)
-    # make ret complex if necessary
-
-    loop k = 1 .. n --quiet
-        xk = x[k]
-        if iscomplex(xk)
-            ret = complex(ret, 0)
-            break
-        endif
-    endloop
-
-    loop k = 1 .. n --quiet
-        xk = x[k]
-        if all_rows
-            ret[,k] = vec(xk[,cs])
-        elif all_cols
-            ret[,k] = vec(xk[rs,])
+        if rowspec[1] == 0
+            matrix rs = seq(1, nr)'
         else
-            ret[,k] = vec(xk[rs,cs])
+            matrix rs = vec(rowspec) # force to column
         endif
-    endloop
-
-    if all_cols || rows(cs) > 1
-        ret = transp(ret)
     endif
 
+    if !exists(colspec)
+        matrix cs = seq(1, nc)'
+    else
+        if colspec[1] == 0
+            matrix cs = seq(1, nc)'
+        else
+            matrix cs = vec(colspec) # force to column
+        endif
+    endif
+        
+    ### check for multiple or illegal specs
+    
+    scalar nrspec = rows(rs)
+    scalar ncspec = rows(cs)
+
+    if xmin(nrspec, ncspec) > 1
+        funcerr "you can’t have multiple row and column specs"
+        return ret
+    endif
+    
+    if minc(rs|cs) < 0
+        funcerr "negative spec not allowed"
+        return ret
+    endif
+    
+    if maxc(rs) > nr
+        errstr = sprintf("incorrect row spec (matrices have %d rows, but %d wanted)", nr, maxc(rs))
+        funcerr(errstr) 
+        return ret
+    endif
+    
+    if maxc(cs) > nc
+        errstr = sprintf("incorrect col spec (matrices have %d columns, but %d wanted)", nc, maxc(cs))
+        funcerr(errstr) 
+        return ret
+    endif
+    
+    ### do the actual drilling
+
+    if nrspec == 1 
+        ret = flatten(x)[rs,]
+        ret = transp(mshape(ret, nc, n))
+        ret = ret[,cs]
+    elif ncspec == 1 
+        ret = flatten(x,1)[,cs]
+        ret = mshape(ret, nr, n)
+        ret = ret[rs,]
+    endif
+    
     return ret
 end function
 
@@ -644,18 +638,3 @@ function string gbundle2json (bundle b)
 
     return out
 end function
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
