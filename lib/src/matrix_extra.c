@@ -1280,33 +1280,16 @@ gretl_matrix *gretl_matrix_read_from_file (const char *fname,
 
 #ifdef WIN32
 
-static void win32_xna_out (double x, gzFile fz, FILE *fp,
-			   char pad)
+static void win32_xna_out (double x, char pad, PRN *prn)
 {
     if (isnan(x) || na(x)) {
-	if (fz) {
-	    gzputs(fz, "nan");
-	} else {
-	    fputs("nan", fp);
-	}
+	pputs(prn, "nan");
     } else if (x < 0) {
-	if (fz) {
-	    gzputs(fz, "-inf");
-	} else {
-	    fputs("-inf", fp);
-	}
+	pputs(prn, "-inf");
     } else {
-	if (fz) {
-	    gzputs(fz, "inf");
-	} else {
-	    fputs("inf", fp);
-	}
+	pputs(prn, "inf");
     }
-    if (fz) {
-	gzputc(fz, pad);
-    } else {
-	fputc(pad, fp);
-    }
+    pputc(prn, pad);
 }
 
 #endif
@@ -1327,10 +1310,11 @@ static void win32_xna_out (double x, gzFile fz, FILE *fp,
 int gretl_matrix_write_to_file (gretl_matrix *A, const char *fname,
 				int export)
 {
+    char targ[FILENAME_MAX];
     int r, c, i, j;
     int format_g = 0;
     int is_complex = 0;
-    gzFile fz = Z_NULL;
+    PRN *prn = NULL;
     FILE *fp = NULL;
     double x;
     char pad, d = '\t';
@@ -1347,24 +1331,21 @@ int gretl_matrix_write_to_file (gretl_matrix *A, const char *fname,
     }
 
     if (export) {
-	char targ[FILENAME_MAX];
-
 	gretl_build_path(targ, gretl_dotdir(), fname, NULL);
-	if (gz) {
-	    fz = gretl_gzopen(targ, "w");
-	} else {
-	    fp = gretl_fopen(targ, "wb");
-	}
     } else {
 	fname = gretl_maybe_switch_dir(fname);
-	if (gz) {
-	    fz = gretl_gzopen(fname, "w");
-	} else {
-	    fp = gretl_fopen(fname, "wb");
-	}
+	strcpy(targ, fname);
     }
 
-    if (fp == NULL && fz == NULL) {
+    if (bin) {
+	fp = gretl_fopen(targ, "wb");
+    } else if (gz) {
+	prn = gretl_gzip_print_new(targ, -1, &err);
+    } else {
+	prn = gretl_print_new_with_filename(targ, &err);
+    }
+
+    if (fp == NULL && prn == NULL) {
 	return E_FOPEN;
     }
 
@@ -1404,70 +1385,45 @@ int gretl_matrix_write_to_file (gretl_matrix *A, const char *fname,
 	fwrite(dim, sizeof *dim, 2, fp);
 	fwrite(A->val, sizeof *A->val, n, fp);
 #endif
-	goto finish;
-    }
-
-    if (gz) {
-	if (is_complex) {
-	    gzprintf(fz, "# rows: %d\n", r);
-	    gzprintf(fz, "# columns: %d\n", c);
-	    gzprintf(fz, "# complex: %d\n", 1);
-	} else {
-	    gzprintf(fz, "%d%c%d\n", r, d, c);
-	}
+	fclose(fp);
     } else {
+	/* !bin: textual representation */
 	if (is_complex) {
-	    fprintf(fp, "# rows: %d\n", r);
-	    fprintf(fp, "# columns: %d\n", c);
-	    fprintf(fp, "# complex: %d\n", 1);
+	    pprintf(prn, "# rows: %d\n", r);
+	    pprintf(prn, "# columns: %d\n", c);
+	    pprintf(prn, "# complex: %d\n", 1);
 	} else {
-	    fprintf(fp, "%d%c%d\n", r, d, c);
+	    pprintf(prn, "%d%c%d\n", r, d, c);
 	}
-    }
 
-    gretl_push_c_numeric_locale();
+	gretl_push_c_numeric_locale();
 
-    for (i=0; i<r; i++) {
-	for (j=0; j<c; j++) {
-	    pad = (j == c-1)? '\n' : d;
-	    x = gretl_matrix_get(A, i, j);
+	for (i=0; i<r; i++) {
+	    for (j=0; j<c; j++) {
+		pad = (j == c-1)? '\n' : d;
+		x = gretl_matrix_get(A, i, j);
 #ifdef WIN32
-	    if (na(x)) {
-		win32_xna_out(x, fz, fp, pad);
-		continue;
-	    }
+		if (na(x)) {
+		    win32_xna_out(x, pad, prn);
+		    continue;
+		}
 #endif
-	    if (fz) {
 		if (format_g) {
-		    gzprintf(fz, "%g", x);
+		    pprintf(prn, "%g", x);
 		} else {
-		    gzprintf(fz, "%26.18E", x);
+		    pprintf(prn, "%26.18E", x);
 		}
-		gzputc(fz, pad);
-	    } else {
-		if (format_g) {
-		    fprintf(fp, "%g", x);
-		} else {
-		    fprintf(fp, "%26.18E", x);
-		}
-		fputc(pad, fp);
+		pputc(prn, pad);
 	    }
 	}
+
+	gretl_pop_c_numeric_locale();
+	gretl_print_destroy(prn);
     }
-
-    gretl_pop_c_numeric_locale();
-
- finish:
 
     if (is_complex) {
 	/* reset A's original status */
 	gretl_matrix_set_complex_full(A, 1);
-    }
-
-    if (fz) {
-	gzclose(fz);
-    } else {
-	fclose(fp);
     }
 
     return err;
