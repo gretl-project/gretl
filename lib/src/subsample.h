@@ -32,9 +32,9 @@ char *copy_subsample_mask (const char *src, int *err);
 
 char *copy_datainfo_submask (const DATASET *dset, int *err);
 
-int write_datainfo_submask (const DATASET *dset, FILE *fp);
+int write_datainfo_submask (const DATASET *dset, PRN *prn);
 
-int write_model_submask (const MODEL *pmod, FILE *fp);
+int write_model_submask (const MODEL *pmod, PRN *prn);
 
 int get_dataset_submask_size (const DATASET *dset);
 

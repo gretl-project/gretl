@@ -151,47 +151,47 @@ char *copy_datainfo_submask (const DATASET *dset, int *err)
     return mask;
 }
 
-int write_model_submask (const MODEL *pmod, FILE *fp)
+int write_model_submask (const MODEL *pmod, PRN *prn)
 {
     int ret = 0;
 
     if (pmod->submask == RESAMPLED) {
-	fputs("<submask length=\"0\"></submask>\n", fp);
+	pputs(prn, "<submask length=\"0\"></submask>\n");
 	ret = 1;
     } else if (pmod->submask != NULL) {
 	int i, n = get_submask_length(pmod->submask);
 
-	fprintf(fp, "<submask length=\"%d\">", n);
+	pprintf(prn, "<submask length=\"%d\">", n);
 	for (i=0; i<n; i++) {
-	    fprintf(fp, "%d ", (int) pmod->submask[i]);
+	    pprintf(prn, "%d ", (int) pmod->submask[i]);
 	}
-	fputs("</submask>\n", fp);
+	pputs(prn, "</submask>\n");
 	ret = 1;
     }
 
     return ret;
 }
 
-int write_datainfo_submask (const DATASET *dset, FILE *fp)
+int write_datainfo_submask (const DATASET *dset, PRN *prn)
 {
     int ret = 0;
 
     if (dset->submask == RESAMPLED) {
 	unsigned int seed = get_resampling_seed();
 
-	fprintf(fp, "<resample seed=\"%u\" n=\"%d\"/>\n", seed, dset->n);
+	pprintf(prn, "<resample seed=\"%u\" n=\"%d\"/>\n", seed, dset->n);
 	ret = 1;
     } else if (complex_subsampled()) {
 	int i, n = get_submask_length(dset->submask);
 
-	fprintf(fp, "<submask length=\"%d\">", n);
+	pprintf(prn, "<submask length=\"%d\">", n);
 	for (i=0; i<n; i++) {
-	    fprintf(fp, "%d ", (int) dset->submask[i]);
+	    pprintf(prn, "%d ", (int) dset->submask[i]);
 	}
-	fputs("</submask>\n", fp);
+	pputs(prn, "</submask>\n");
 
 	if (dset->restriction != NULL) {
-	    gretl_xml_put_tagged_string("restriction", dset->restriction, fp);
+	    gretl_xml_put_tagged_string("restriction", dset->restriction, prn);
 	}
 
 	ret = 1;

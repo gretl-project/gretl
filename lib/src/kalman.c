@@ -4363,7 +4363,7 @@ int print_kalman_bundle_info (void *kptr, PRN *prn)
    information in the kalman struct to XML
 */
 
-int kalman_serialize (void *kptr, FILE *fp)
+int kalman_serialize (void *kptr, PRN *prn)
 {
     kalman *K = kptr;
     const gretl_matrix *m;
@@ -4377,12 +4377,12 @@ int kalman_serialize (void *kptr, FILE *fp)
 	return E_DATA;
     }
 
-    fputs("<gretl-kalman>\n", fp);
+    pputs(prn, "<gretl-kalman>\n");
 
     for (i=0; i<K_MMAX; i++) {
 	m = k_input_matrix_by_id(K, K_input_mats[i].sym);
 	if (m != NULL) {
-	    gretl_matrix_serialize(m, K_input_mats[i].name, fp);
+	    gretl_matrix_serialize(m, K_input_mats[i].name, prn);
 	}
     }
 
@@ -4390,7 +4390,7 @@ int kalman_serialize (void *kptr, FILE *fp)
 	name = kalman_output_matrix_names[i];
 	pm = kalman_output_matrix(K, name);
 	if (pm != NULL && *pm != NULL) {
-	    gretl_matrix_serialize(*pm, name, fp);
+	    gretl_matrix_serialize(*pm, name, prn);
 	}
     }
 
@@ -4398,15 +4398,15 @@ int kalman_serialize (void *kptr, FILE *fp)
 	name = kalman_output_scalar_names[i];
 	px = kalman_output_scalar(K, name);
 	if (px != NULL && !na(*px)) {
-	    gretl_finite_scalar_serialize(*px, name, fp);
+	    gretl_finite_scalar_serialize(*px, name, prn);
 	}
     }
 
     if (K->matcall != NULL) {
-	gretl_string_serialize(K->matcall, "timevar_call", fp);
+	gretl_string_serialize(K->matcall, "timevar_call", prn);
     }
 
-    fputs("</gretl-kalman>\n", fp);
+    pputs(prn, "</gretl-kalman>\n");
 
     return err;
 }

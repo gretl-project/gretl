@@ -141,7 +141,7 @@ int gretl_array_print_range (gretl_array *A,
 			     int imin, int imax,
 			     PRN *prn);
 
-void gretl_array_serialize (gretl_array *A, FILE *fp);
+void gretl_array_serialize (gretl_array *A, PRN *prn);
 
 gretl_array *gretl_array_deserialize (void *p1, void *p2,
 				      int *err);

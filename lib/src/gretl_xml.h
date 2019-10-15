@@ -24,33 +24,33 @@
 
 #define XUC const xmlChar *
 
-void gretl_xml_header (FILE *fp);
+void gretl_xml_header (PRN *prn);
 
 int gretl_xml_open_doc_root (const char *fname,
 			     const char *rootname,
 			     xmlDocPtr *pdoc,
 			     xmlNodePtr *pnode);
 
-void gretl_xml_put_int (const char *tag, int i, FILE *fp);
+void gretl_xml_put_int (const char *tag, int i, PRN *prn);
 
-void gretl_xml_put_unsigned (const char *tag, unsigned int u, FILE *fp);
+void gretl_xml_put_unsigned (const char *tag, unsigned int u, PRN *prn);
 
-void gretl_xml_put_double (const char *tag, double x, FILE *fp);
+void gretl_xml_put_double (const char *tag, double x, PRN *prn);
 
 void gretl_xml_put_double_array (const char *tag, double *x, int n,
-				 FILE *fp);
+				 PRN *prn);
 
 void gretl_xml_put_strings_array (const char *tag, const char **strs,
-				  int n, FILE *fp);
+				  int n, PRN *prn);
 
 void gretl_xml_put_strings_array_quoted (const char *tag,
 					 const char **strs, int n,
-					 FILE *fp);
+					 PRN *prn);
 
 void gretl_xml_put_tagged_list (const char *tag, const int *list,
-				FILE *fp);
+				PRN *prn);
 
-int gretl_xml_put_string (const char *str, FILE *fp);
+int gretl_xml_put_string (const char *str, PRN *prn);
 
 int gretl_xml_get_prop_as_int (xmlNodePtr node, const char *tag,
 			       int *i);
@@ -119,33 +119,33 @@ int gretl_xml_get_submask (xmlNodePtr node, xmlDocPtr doc, char **pmask);
 
 void gretl_xml_put_tagged_string (const char *tag,
 				  const char *str,
-				  FILE *fp);
+				  PRN *prn);
 
 void gretl_xml_put_tagged_string_plus (const char *tag,
 				       const char *str,
 				       const char *attrib,
 				       const char *attval,
-				       FILE *fp);
+				       PRN *prn);
 
 void gretl_xml_put_tagged_list (const char *tag,
 				const int *list,
-				FILE *fp);
+				PRN *prn);
 
 void gretl_matrix_serialize (const gretl_matrix *m,
 			     const char *name,
-			     FILE *fp);
+			     PRN *prn);
 
 void gretl_list_serialize (const int *list,
 			   const char *name,
-			   FILE *fp);
+			   PRN *prn);
 
 void gretl_finite_scalar_serialize (double x,
 				    const char *name,
-				    FILE *fp);
+				    PRN *prn);
 
 void gretl_string_serialize (const char *s,
 			     const char *name,
-			     FILE *fp);
+			     PRN *prn);
 
 int gretl_matrix_write_as_gdt (const char *fname,
 			       const gretl_matrix *X,

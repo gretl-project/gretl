@@ -1468,10 +1468,10 @@ char *temp_name_for_bundle (void)
     return gretl_strdup(tmpname);
 }
 
-static void xml_put_user_matrix (user_var *u, FILE *fp)
+static void xml_put_user_matrix (user_var *u, PRN *prn)
 {
     if (u != NULL && u->ptr != NULL) {
-	gretl_matrix_serialize(u->ptr, u->name, fp);
+	gretl_matrix_serialize(u->ptr, u->name, prn);
     }
 }
 
@@ -1488,16 +1488,16 @@ static void write_scalar_value (double x, const char *fmt, PRN *prn)
     }
 }
 
-static void serialize_scalar_value (double x, FILE *fp)
+static void serialize_scalar_value (double x, PRN *prn)
 {
     if (na(x)) {
 #ifdef WIN32
 	win32_fprint_nonfinite(x, fp);
 #else
-	fprintf(fp, "%g", x);
+	pprintf(prn, "%g", x);
 #endif
     } else {
-	fprintf(fp, "%.16g", x);
+	pprintf(prn, "%.16g", x);
     }
 }
 
@@ -2032,7 +2032,7 @@ void gretl_lists_cleanup (void)
    from XML -- for use in GUI session mechanism
 */
 
-static void write_user_scalars (FILE *fp)
+static void write_user_scalars (PRN *prn)
 {
     double x;
     int i;
@@ -2040,25 +2040,25 @@ static void write_user_scalars (FILE *fp)
     for (i=0; i<n_vars; i++) {
 	if (uvars[i]->type == GRETL_TYPE_DOUBLE) {
 	    x = *(double *) uvars[i]->ptr;
-	    fprintf(fp, " <gretl-scalar name=\"%s\" value=\"", uvars[i]->name);
-	    serialize_scalar_value(x, fp);
-	    fputs("\"/>\n", fp);
+	    pprintf(prn, " <gretl-scalar name=\"%s\" value=\"", uvars[i]->name);
+	    serialize_scalar_value(x, prn);
+	    pputs(prn, "\"/>\n");
 	}
     }
 }
 
-static void write_user_matrices (FILE *fp)
+static void write_user_matrices (PRN *prn)
 {
     int i;
 
     for (i=0; i<n_vars; i++) {
 	if (uvars[i]->type == GRETL_TYPE_MATRIX) {
-	    xml_put_user_matrix(uvars[i], fp);
+	    xml_put_user_matrix(uvars[i], prn);
 	}
     }
 }
 
-static void write_user_lists (FILE *fp)
+static void write_user_lists (PRN *prn)
 {
     int i;
 
@@ -2066,12 +2066,12 @@ static void write_user_lists (FILE *fp)
 	if (uvars[i]->type == GRETL_TYPE_LIST) {
 	    gretl_list_serialize(uvars[i]->ptr,
 				 uvars[i]->name,
-				 fp);
+				 prn);
 	}
     }
 }
 
-static void write_user_bundles (FILE *fp)
+static void write_user_bundles (PRN *prn)
 {
     int i;
 
@@ -2079,7 +2079,7 @@ static void write_user_bundles (FILE *fp)
 	if (uvars[i]->type == GRETL_TYPE_BUNDLE) {
 	    gretl_bundle_serialize(uvars[i]->ptr,
 				   uvars[i]->name,
-				   fp);
+				   prn);
 	}
     }
 }
@@ -2211,7 +2211,7 @@ static int read_user_bundles (xmlDocPtr doc, xmlNodePtr cur)
     return err;
 }
 
-typedef void (*xml_write_func) (FILE *);
+typedef void (*xml_write_func) (PRN *);
 typedef int (*xml_read_func) (xmlDocPtr, xmlNodePtr);
 
 struct uvar_file_ {
@@ -2236,7 +2236,7 @@ int serialize_user_vars (const char *dirname)
     const char *typestr;
     void (*write_func)();
     char path[MAXLEN];
-    FILE *fp;
+    PRN *prn;
     int i, n, ni;
     int err = 0;
 
@@ -2248,19 +2248,21 @@ int serialize_user_vars (const char *dirname)
 	type = uvar_files[i].type;
 	ni = user_var_count_for_type(type);
 	if (ni > 0) {
+	    int errp = 0;
+
 	    typestr = uvar_files[i].typestr;
 	    sprintf(path, "%s%c%s.xml", dirname, SLASH, typestr);
 	    write_func = uvar_files[i].write_func;
-	    fp = gretl_fopen(path, "w");
-	    if (fp == NULL) {
+	    prn = gretl_print_new_with_filename(path, &errp);
+	    if (prn == NULL) {
 		err++;
 		continue;
 	    }
-	    gretl_xml_header(fp);
-	    fprintf(fp, "<gretl-%s count=\"%d\">\n", typestr, ni);
-	    (*write_func)(fp);
-	    fprintf(fp, "</gretl-%s>\n", typestr);
-	    fclose(fp);
+	    gretl_xml_header(prn);
+	    pprintf(prn, "<gretl-%s count=\"%d\">\n", typestr, ni);
+	    (*write_func)(prn);
+	    pprintf(prn, "</gretl-%s>\n", typestr);
+	    gretl_print_destroy(prn);
 	}
     }
 

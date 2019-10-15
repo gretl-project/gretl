@@ -23,7 +23,7 @@
 #include "uservar.h"
 #include <stdarg.h>
 #include <errno.h>
-#include <glib.h>
+#include <glib/gprintf.h>
 
 /**
  * SECTION:gretl_prn
@@ -54,6 +54,7 @@
 
 struct PRN_ {
     FILE *fp;          /* file to which to print, or NULL */
+    gzFile fz;         /* gzipped file target, or NULL */
     char *buf;         /* buffer to which to print, or NULL */
     size_t bufsize;    /* allocated size of buffer */
     size_t blen;       /* string length of buffer */
@@ -131,6 +132,8 @@ void gretl_print_destroy (PRN *prn)
 #endif
 	    fclose(prn->fp);
 	}
+    } else if (prn->fz != NULL) {
+	gzclose(prn->fz);
     }
 
     if (prn->fname != NULL) {
@@ -187,6 +190,7 @@ static PRN *real_gretl_print_new (PrnType ptype,
 				  const char *fname,
 				  char *buf,
 				  FILE *fp,
+				  int zcomp,
 				  int *perr)
 {
     PRN *prn = malloc(sizeof *prn);
@@ -200,6 +204,7 @@ static PRN *real_gretl_print_new (PrnType ptype,
     }
 
     prn->fp = NULL;
+    prn->fz = NULL;
     prn->fplist = NULL;
     prn->buf = NULL;
     prn->bufsize = 0;
@@ -219,6 +224,15 @@ static PRN *real_gretl_print_new (PrnType ptype,
 	    err = E_FOPEN;
 	    free(prn);
 	    prn = NULL;
+	}
+    } else if (ptype == GRETL_PRINT_GZFILE) {
+	prn->fz = gretl_gzopen(fname, "wb");
+	if (prn->fz == NULL) {
+	    err = E_FOPEN;
+	    free(prn);
+	    prn = NULL;
+	} else if (zcomp >= 0) {
+	    gzsetparams(prn->fz, zcomp, Z_DEFAULT_STRATEGY);
 	}
     } else if (ptype == GRETL_PRINT_TEMPFILE) {
 	err = prn_add_tempfile(prn);
@@ -293,7 +307,7 @@ PRN *gretl_print_new (PrnType ptype, int *err)
     fprintf(stderr, "gretl_print_new() called, type = %d\n", ptype);
 #endif
 
-    return real_gretl_print_new(ptype, NULL, NULL, NULL, err);
+    return real_gretl_print_new(ptype, NULL, NULL, NULL, -1, err);
 }
 
 /**
@@ -314,7 +328,36 @@ PRN *gretl_print_new_with_filename (const char *fname, int *err)
 	return NULL;
     }
 
-    return real_gretl_print_new(GRETL_PRINT_FILE, fname, NULL, NULL, err);
+    return real_gretl_print_new(GRETL_PRINT_FILE, fname,
+				NULL, NULL, -1, err);
+}
+
+/**
+ * gretl_gzip_print_new:
+ * @fname: name of the compressed file to be opened for writing.
+ * @comp_level: -1 for default, or integer 0 to 9.
+ * @err: location to receive error code.
+ *
+ * Create and initialize a gretl printing struct, with
+ * output directed to the named compressed file.
+ *
+ * Returns: pointer to newly created struct, or NULL on failure.
+ */
+
+PRN *gretl_gzip_print_new (const char *fname, int comp_level,
+			   int *err)
+{
+    if (fname == NULL) {
+	fprintf(stderr, "gretl_gzip_print_new: must supply a filename\n");
+	return NULL;
+    } else if (comp_level < -1 || comp_level > 9) {
+	fprintf(stderr, "gretl_gzip_print_new: invalid compression level\n");
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    return real_gretl_print_new(GRETL_PRINT_GZFILE, fname,
+				NULL, NULL, comp_level, err);
 }
 
 /**
@@ -330,7 +373,8 @@ PRN *gretl_print_new_with_filename (const char *fname, int *err)
 
 PRN *gretl_print_new_with_tempfile (int *err)
 {
-    return real_gretl_print_new(GRETL_PRINT_TEMPFILE, NULL, NULL, NULL, err);
+    return real_gretl_print_new(GRETL_PRINT_TEMPFILE, NULL,
+				NULL, NULL, -1, err);
 }
 
 /**
@@ -386,7 +430,8 @@ PRN *gretl_print_new_with_buffer (char *buf)
     if (buf == NULL) {
 	return NULL;
     } else {
-	return real_gretl_print_new(GRETL_PRINT_BUFFER, NULL, buf, NULL, NULL);
+	return real_gretl_print_new(GRETL_PRINT_BUFFER, NULL,
+				    buf, NULL, -1, NULL);
     }
 }
 
@@ -408,7 +453,8 @@ PRN *gretl_print_new_with_gchar_buffer (gchar *buf)
     PRN *prn = NULL;
 
     if (buf != NULL) {
-	prn = real_gretl_print_new(GRETL_PRINT_BUFFER, NULL, buf, NULL, NULL);
+	prn = real_gretl_print_new(GRETL_PRINT_BUFFER, NULL,
+				   buf, NULL, -1, NULL);
 	if (prn != NULL) {
 	    prn->gbuf = 1;
 	}
@@ -435,7 +481,8 @@ PRN *gretl_print_new_with_stream (FILE *fp)
     if (fp == NULL) {
 	return NULL;
     } else {
-	return real_gretl_print_new(GRETL_PRINT_STREAM, NULL, NULL, fp, NULL);
+	return real_gretl_print_new(GRETL_PRINT_STREAM, NULL,
+				    NULL, fp, -1, NULL);
     }
 }
 
@@ -990,6 +1037,15 @@ int pprintf (PRN *prn, const char *format, ...)
 	plen = vfprintf(prn->fp, format, args);
 	va_end(args);
 	return plen;
+    } else if (prn->fz != NULL) {
+	gchar *tmp = NULL;
+
+	va_start(args, format);
+	plen = g_vasprintf(&tmp, format, args);
+	va_end(args);
+	gzputs(prn->fz, tmp);
+	g_free(tmp);
+	return plen;
     }
 
     if (strncmp(format, "@init", 5) == 0) {
@@ -1116,6 +1172,8 @@ int pputs (PRN *prn, const char *s)
     if (prn->fp != NULL) {
 	fputs(s, prn->fp);
 	return slen;
+    } else if (prn->fz != NULL) {
+	return gzputs(prn->fz, s);
     }
 
     if (prn->buf == NULL) {
@@ -1160,6 +1218,10 @@ int pputc (PRN *prn, int c)
     if (prn->fp != NULL) {
 	fputc(c, prn->fp);
 	return 1;
+    } else if (prn->fz != NULL) {
+	char s[2] = {c, '\0'};
+
+	return gzputs(prn->fz, s);
     }
 
     if (prn->buf == NULL) {
@@ -1212,8 +1274,12 @@ void gretl_prn_newline (PRN *prn)
 
 void gretl_print_flush_stream (PRN *prn)
 {
-    if (prn != NULL && prn->fp != NULL) {
-	fflush(prn->fp);
+    if (prn != NULL) {
+	if (prn->fp != NULL) {
+	    fflush(prn->fp);
+	} else if (prn->fz != NULL) {
+	    gzflush(prn->fz, Z_SYNC_FLUSH);
+	}
     }
 }
 
@@ -1221,17 +1287,24 @@ void gretl_print_flush_stream (PRN *prn)
  * gretl_print_close_file:
  * @prn: gretl printing struct.
  *
- * If the output of @prn is directed to a stream, close
- * the stream. Also frees and sets to NULL the filename
+ * If the output of @prn is directed to a file, close
+ * the file. Also frees and sets to NULL the filename
  * associated with the stream (but does not remove the
  * file).
  */
 
 void gretl_print_close_stream (PRN *prn)
 {
-    if (prn != NULL && prn->fp != NULL) {
+    if (prn == NULL) return;
+
+    if (prn->fp != NULL) {
 	fclose(prn->fp);
 	prn->fp = NULL;
+	free(prn->fname);
+	prn->fname = NULL;
+    } else if (prn->fz != NULL) {
+	gzclose(prn->fz);
+	prn->fz = NULL;
 	free(prn->fname);
 	prn->fname = NULL;
     }

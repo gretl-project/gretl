@@ -601,6 +601,7 @@ int gretl_rename (const char *oldpath, const char *newpath)
 #endif
 
     if (errno != 0) {
+	perror("rename");
 	gretl_errmsg_set_from_errno("gretl_rename", errno);
     }
 

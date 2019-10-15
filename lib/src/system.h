@@ -226,7 +226,7 @@ int highest_numbered_var_in_system (const equation_system *sys,
 
 int equation_system_serialize (equation_system *sys, 
 			       SavedObjectFlags flags,
-			       FILE *fp);
+			       PRN *prn);
 
 int equation_system_bundlize (equation_system *sys,
 			      gretl_bundle *b);

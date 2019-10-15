@@ -2218,7 +2218,7 @@ static void maybe_correct_line (char *line)
 /* write out a single user-defined function as XML, according to
    gretlfunc.dtd */
 
-static int write_function_xml (ufunc *fun, FILE *fp)
+static int write_function_xml (ufunc *fun, PRN *prn)
 {
     int rtype = fun->rettype;
     int this_indent = 0;
@@ -2229,97 +2229,96 @@ static int write_function_xml (ufunc *fun, FILE *fp)
 	rtype = GRETL_TYPE_VOID;
     }
 
-    fprintf(fp, "<gretl-function name=\"%s\" type=\"%s\"",
-	    fun->name, gretl_type_get_name(rtype));
+    pprintf(prn, "<gretl-function name=\"%s\" type=\"%s\"",
+		      fun->name, gretl_type_get_name(rtype));
 
     if (function_is_private(fun)) {
-	fputs(" private=\"1\"", fp);
+	pputs(prn, " private=\"1\"");
     }
     if (function_is_plugin(fun)) {
-	fputs(" plugin-wrapper=\"1\"", fp);
+	pputs(prn, " plugin-wrapper=\"1\"");
     }
     if (function_is_noprint(fun)) {
-	fputs(" no-print=\"1\"", fp);
+	pputs(prn, " no-print=\"1\"");
     }
     if (function_is_menu_only(fun)) {
-	fputs(" menu-only=\"1\"", fp);
+	pputs(prn, " menu-only=\"1\"");
     }
 
     if (fun->pkg_role) {
-	fprintf(fp, " pkg-role=\"%s\"", package_role_get_key(fun->pkg_role));
+	pprintf(prn, " pkg-role=\"%s\"", package_role_get_key(fun->pkg_role));
     }
 
-    fputs(">\n", fp);
+    pputs(prn, ">\n");
 
     if (fun->n_params > 0) {
 
 	gretl_push_c_numeric_locale();
 
-	fprintf(fp, " <params count=\"%d\">\n", fun->n_params);
+	pprintf(prn, " <params count=\"%d\">\n", fun->n_params);
 	for (i=0; i<fun->n_params; i++) {
 	    fn_param *param = &fun->params[i];
 
-	    fprintf(fp, "  <param name=\"%s\" type=\"%s\"",
+	    pprintf(prn, "  <param name=\"%s\" type=\"%s\"",
 		    param->name, arg_type_xml_string(param->type));
 	    if (!na(param->min)) {
-		fprintf(fp, " min=\"%g\"", param->min);
+		pprintf(prn, " min=\"%g\"", param->min);
 	    }
 	    if (!na(param->max)) {
-		fprintf(fp, " max=\"%g\"", param->max);
+		pprintf(prn, " max=\"%g\"", param->max);
 	    }
 	    if (!default_unset(param)) {
 		if (na(param->deflt)) {
-		    fputs(" default=\"NA\"", fp);
+		    pputs(prn, " default=\"NA\"");
 		} else {
-		    fprintf(fp, " default=\"%g\"", param->deflt);
+		    pprintf(prn, " default=\"%g\"", param->deflt);
 		}
 	    }
 	    if (!na(param->step)) {
-		fprintf(fp, " step=\"%g\"", param->step);
+		pprintf(prn, " step=\"%g\"", param->step);
 	    }
 	    if (param->flags & ARG_OPTIONAL) {
-		fputs(" optional=\"true\"", fp);
+		pputs(prn, " optional=\"true\"");
 	    }
 	    if (param->flags & ARG_CONST) {
-		fputs(" const=\"true\"", fp);
+		pputs(prn, " const=\"true\"");
 	    }
 	    if (parm_has_children(param)) {
-		fputs(">\n", fp); /* terminate opening tag */
+		pputs(prn, ">\n"); /* terminate opening tag */
 		if (param->descrip != NULL) {
 		    gretl_xml_put_tagged_string("description",
 						param->descrip,
-						fp);
+						prn);
 		}
 		if (param->nlabels > 0) {
 		    gretl_xml_put_strings_array_quoted("labels",
 						       (const char **) param->labels,
-						       param->nlabels, fp);
+						       param->nlabels, prn);
 		}
-		fputs("  </param>\n", fp);
+		pputs(prn, "  </param>\n");
 	    } else {
-		fputs("/>\n", fp); /* terminate opening tag */
+		pputs(prn, "/>\n"); /* terminate opening tag */
 	    }
 	}
-	fputs(" </params>\n", fp);
+	pputs(prn, " </params>\n");
 
 	gretl_pop_c_numeric_locale();
     }
 
-    fputs("<code>", fp);
+    pputs(prn, "<code>");
 
     for (i=0; i<fun->n_lines; i++) {
 	adjust_indent(fun->lines[i].s, &this_indent, &next_indent);
 	for (j=0; j<this_indent; j++) {
-	    fputs("  ", fp);
+	    pputs(prn, "  ");
 	}
 	maybe_correct_line(fun->lines[i].s);
-	gretl_xml_put_string(fun->lines[i].s, fp);
-	fputc('\n', fp);
+	gretl_xml_put_string(fun->lines[i].s, prn);
+	pputs(prn, "\n");
     }
 
-    fputs("</code>\n", fp);
-
-    fputs("</gretl-function>\n", fp);
+    pputs(prn, "</code>\n");
+    pputs(prn, "</gretl-function>\n");
 
     return 0;
 }
@@ -2796,79 +2795,78 @@ int package_is_addon (const char *name)
     return ret;
 }
 
-static int package_write_index (fnpkg *pkg, PRN *prn)
+static int package_write_index (fnpkg *pkg, PRN *inprn)
 {
+    PRN *prn;
     gchar *idxname;
-    FILE *fp;
+    int err = 0;
 
     idxname = g_strdup_printf("%s.xml", pkg->name);
 
-    fp = gretl_fopen(idxname, "wb");
-    if (fp == NULL) {
-	gretl_errmsg_sprintf(_("Couldn't open %s"), idxname);
+    prn = gretl_print_new_with_filename(idxname, &err);
+    if (prn == NULL) {
 	g_free(idxname);
-	return E_FOPEN;
+	return err;
     }
 
-    gretl_xml_header(fp);
+    gretl_xml_header(prn);
 
-    fputs("<gretl-addon", fp);
-
-    fprintf(fp, " name=\"%s\"", pkg->name);
+    pprintf(prn, "<gretl-addon name=\"%s\"", pkg->name);
 
     if (pkg->dreq == FN_NEEDS_TS) {
-	fprintf(fp, " %s=\"true\"", NEEDS_TS);
+	pprintf(prn, " %s=\"true\"", NEEDS_TS);
     } else if (pkg->dreq == FN_NEEDS_QM) {
-	fprintf(fp, " %s=\"true\"", NEEDS_QM);
+	pprintf(prn, " %s=\"true\"", NEEDS_QM);
     } else if (pkg->dreq == FN_NEEDS_PANEL) {
-	fprintf(fp, " %s=\"true\"", NEEDS_PANEL);
+	pprintf(prn, " %s=\"true\"", NEEDS_PANEL);
     } else if (pkg->dreq == FN_NODATA_OK) {
-	fprintf(fp, " %s=\"true\"", NO_DATA_OK);
+	pprintf(prn, " %s=\"true\"", NO_DATA_OK);
     }
 
     if (pkg->modelreq > 0) {
-	fprintf(fp, " model-requirement=\"%s\"",
+	pprintf(prn, " model-requirement=\"%s\"",
 		gretl_command_word(pkg->modelreq));
     }
 
     if (pkg->minver > 0) {
 	char vstr[8];
 
-	fprintf(fp, " minver=\"%s\"", gretl_version_string(vstr, pkg->minver));
+	pprintf(prn, " minver=\"%s\"",
+		gretl_version_string(vstr, pkg->minver));
     }
 
     if (pkg->uses_subdir) {
-	fprintf(fp, " lives-in-subdir=\"true\"");
+	pputs(prn, " lives-in-subdir=\"true\"");
     }
 
     if (pkg->data_access) {
-	fprintf(fp, " wants-data-access=\"true\"");
+	pputs(prn, " wants-data-access=\"true\"");
     }
 
-    fputs(">\n", fp);
+    pputs(prn, ">\n");
 
-    gretl_xml_put_tagged_string("author",  pkg->author, fp);
-    gretl_xml_put_tagged_string("version", pkg->version, fp);
-    gretl_xml_put_tagged_string("date",    pkg->date, fp);
-    gretl_xml_put_tagged_string("description", pkg->descrip, fp);
+    gretl_xml_put_tagged_string("author",  pkg->author, prn);
+    gretl_xml_put_tagged_string("version", pkg->version, prn);
+    gretl_xml_put_tagged_string("date",    pkg->date, prn);
+    gretl_xml_put_tagged_string("description", pkg->descrip, prn);
 
     if (pkg->tags != NULL) {
-	gretl_xml_put_tagged_string("tags", pkg->tags, fp);
+	gretl_xml_put_tagged_string("tags", pkg->tags, prn);
     }
 
     if (pkg->label != NULL) {
-	gretl_xml_put_tagged_string("label", pkg->label, fp);
+	gretl_xml_put_tagged_string("label", pkg->label, prn);
     }
 
     if (pkg->mpath != NULL) {
-	gretl_xml_put_tagged_string("menu-attachment", pkg->mpath, fp);
+	gretl_xml_put_tagged_string("menu-attachment", pkg->mpath, prn);
     }
 
-    fputs("</gretl-addon>\n", fp);
+    pputs(prn, "</gretl-addon>\n");
 
-    fclose(fp);
+    gretl_print_destroy(prn);
 
-    pprintf(prn, "Wrote index file %s\n", idxname);
+    pprintf(inprn, "Wrote index file %s\n", idxname);
     g_free(idxname);
 
     return 0;
@@ -2881,150 +2879,148 @@ static int package_write_index (fnpkg *pkg, PRN *prn)
    which already has an associated open stream.
 */
 
-static int real_write_function_package (fnpkg *pkg, FILE *fp)
+static int real_write_function_package (fnpkg *pkg, PRN *prn)
 {
-    int standalone = (fp == NULL);
+    int standalone = (prn == NULL);
     int i, err = 0;
 
     if (standalone) {
-	/* 2017-02-22: switch mode to "wb" to avoid CR+LF on Windows */
-	fp = gretl_fopen(pkg->fname, "wb");
-	if (fp == NULL) {
-	    gretl_errmsg_sprintf(_("Couldn't open %s"), pkg->fname);
-	    return E_FOPEN;
+	prn = gretl_print_new_with_filename(pkg->fname, &err);
+	if (prn == NULL) {
+	    return err;
 	} else {
-	    gretl_xml_header(fp);
-	    fputs("<gretl-functions>\n", fp);
+	    gretl_xml_header(prn);
+	    pputs(prn, "<gretl-functions>\n");
 	}
     }
 
-    fputs("<gretl-function-package", fp);
+    pputs(prn, "<gretl-function-package");
 
     if (pkg->name[0] == '\0') {
 	name_package_from_filename(pkg);
     }
 
-    fprintf(fp, " name=\"%s\"", pkg->name);
+    pprintf(prn, " name=\"%s\"", pkg->name);
 
     if (pkg->dreq == FN_NEEDS_TS) {
-	fprintf(fp, " %s=\"true\"", NEEDS_TS);
+	pprintf(prn, " %s=\"true\"", NEEDS_TS);
     } else if (pkg->dreq == FN_NEEDS_QM) {
-	fprintf(fp, " %s=\"true\"", NEEDS_QM);
+	pprintf(prn, " %s=\"true\"", NEEDS_QM);
     } else if (pkg->dreq == FN_NEEDS_PANEL) {
-	fprintf(fp, " %s=\"true\"", NEEDS_PANEL);
+	pprintf(prn, " %s=\"true\"", NEEDS_PANEL);
     } else if (pkg->dreq == FN_NODATA_OK) {
-	fprintf(fp, " %s=\"true\"", NO_DATA_OK);
+	pprintf(prn, " %s=\"true\"", NO_DATA_OK);
     }
 
     if (pkg->modelreq > 0) {
-	fprintf(fp, " model-requirement=\"%s\"",
+	pprintf(prn, " model-requirement=\"%s\"",
 		gretl_command_word(pkg->modelreq));
     }
 
     if (pkg->minver > 0) {
 	char vstr[8];
 
-	fprintf(fp, " minver=\"%s\"", gretl_version_string(vstr, pkg->minver));
+	pprintf(prn, " minver=\"%s\"", gretl_version_string(vstr, pkg->minver));
     }
 
     if (pkg->uses_subdir) {
-	fprintf(fp, " lives-in-subdir=\"true\"");
+	pprintf(prn, " lives-in-subdir=\"true\"");
     }
 
     if (pkg->data_access) {
-	fprintf(fp, " wants-data-access=\"true\"");
+	pprintf(prn, " wants-data-access=\"true\"");
     }
 
-    fputs(">\n", fp);
+    pputs(prn, ">\n");
 
     if (pkg->email != NULL && *pkg->email != '\0') {
 	gretl_xml_put_tagged_string_plus("author", pkg->author,
 					 "email", pkg->email,
-					 fp);
+					 prn);
     } else {
-	gretl_xml_put_tagged_string("author", pkg->author, fp);
+	gretl_xml_put_tagged_string("author", pkg->author, prn);
     }
-    gretl_xml_put_tagged_string("version", pkg->version, fp);
-    gretl_xml_put_tagged_string("date",    pkg->date, fp);
-    gretl_xml_put_tagged_string("description", pkg->descrip, fp);
+    gretl_xml_put_tagged_string("version", pkg->version, prn);
+    gretl_xml_put_tagged_string("date",    pkg->date, prn);
+    gretl_xml_put_tagged_string("description", pkg->descrip, prn);
 
     if (pkg->tags != NULL) {
-	gretl_xml_put_tagged_string("tags", pkg->tags, fp);
+	gretl_xml_put_tagged_string("tags", pkg->tags, prn);
     }
 
     if (pkg->label != NULL) {
-	gretl_xml_put_tagged_string("label", pkg->label, fp);
+	gretl_xml_put_tagged_string("label", pkg->label, prn);
     }
 
     if (pkg->mpath != NULL) {
-	gretl_xml_put_tagged_string("menu-attachment", pkg->mpath, fp);
+	gretl_xml_put_tagged_string("menu-attachment", pkg->mpath, prn);
     }
 
     if (pkg->help != NULL) {
 	if (pkg->help_fname != NULL) {
-	    fprintf(fp, "<help filename=\"%s\">\n", pkg->help_fname);
+	    pprintf(prn, "<help filename=\"%s\">\n", pkg->help_fname);
 	} else {
-	    fputs("<help>\n", fp);
+	    pputs(prn, "<help>\n");
 	}
-	gretl_xml_put_string(trim_text(pkg->help), fp);
-	fputs("\n</help>\n", fp);
+	gretl_xml_put_string(trim_text(pkg->help), prn);
+	pputs(prn, "\n</help>\n");
     }
 
     if (pkg->gui_help != NULL) {
 	if (pkg->gui_help_fname != NULL) {
-	    fprintf(fp, "<gui-help filename=\"%s\">\n",
-		    pkg->gui_help_fname);
+	    pprintf(prn, "<gui-help filename=\"%s\">\n",
+			      pkg->gui_help_fname);
 	} else {
-	    fputs("<gui-help>\n", fp);
+	    pputs(prn, "<gui-help>\n");
 	}
-	gretl_xml_put_string(trim_text(pkg->gui_help), fp);
-	fputs("\n</gui-help>\n", fp);
+	gretl_xml_put_string(trim_text(pkg->gui_help), prn);
+	pputs(prn, "\n</gui-help>\n");
     }
 
     if (pkg->datafiles != NULL) {
 	gretl_xml_put_strings_array("data-files",
 				    (const char **) pkg->datafiles,
-				    pkg->n_files, fp);
+				    pkg->n_files, prn);
     }
 
     if (pkg->depends != NULL) {
 	gretl_xml_put_strings_array("depends",
 				    (const char **) pkg->depends,
-				    pkg->n_depends, fp);
+				    pkg->n_depends, prn);
     }
 
     if (pkg->provider != NULL) {
-	gretl_xml_put_tagged_string("provider", pkg->provider, fp);
+	gretl_xml_put_tagged_string("provider", pkg->provider, prn);
     }
 
     if (pkg->pub != NULL) {
 	for (i=0; i<pkg->n_pub; i++) {
-	    write_function_xml(pkg->pub[i], fp);
+	    write_function_xml(pkg->pub[i], prn);
 	}
     }
 
     if (pkg->priv != NULL) {
 	for (i=0; i<pkg->n_priv; i++) {
-	    write_function_xml(pkg->priv[i], fp);
+	    write_function_xml(pkg->priv[i], prn);
 	}
     }
 
     if (pkg->sample != NULL) {
 	if (pkg->sample_fname != NULL) {
-	    fprintf(fp, "<sample-script filename=\"%s\">\n",
-		    pkg->sample_fname);
+	    pprintf(prn, "<sample-script filename=\"%s\">\n",
+			      pkg->sample_fname);
 	} else {
-	    fputs("<sample-script>\n", fp);
+	    pputs(prn, "<sample-script>\n");
 	}
-	gretl_xml_put_string(trim_text(pkg->sample), fp);
-	fputs("\n</sample-script>\n", fp);
+	gretl_xml_put_string(trim_text(pkg->sample), prn);
+	pputs(prn, "\n</sample-script>\n");
     }
 
-    fputs("</gretl-function-package>\n", fp);
+    pputs(prn, "</gretl-function-package>\n");
 
     if (standalone) {
-	fputs("</gretl-functions>\n", fp);
-	fclose(fp);
+	pputs(prn, "</gretl-functions>\n");
+	gretl_print_destroy(prn);
     }
 
     return err;
@@ -4676,20 +4672,20 @@ static int validate_function_package (fnpkg *pkg)
 
 int write_loaded_functions_file (const char *fname, int mpicall)
 {
-    FILE *fp;
-    int i;
+    PRN *prn;
+    int i, err = 0;
 
     if (n_ufuns == 0) {
 	return 0;
     }
 
-    fp = gretl_fopen(fname, "wb");
-    if (fp == NULL) {
-	return E_FOPEN;
+    prn = gretl_print_new_with_filename(fname, &err);
+    if (prn == NULL) {
+	return err;
     }
 
-    gretl_xml_header(fp);
-    fputs("<gretl-functions>\n", fp);
+    gretl_xml_header(prn);
+    pputs(prn, "<gretl-functions>\n");
 
 #ifdef HAVE_MPI
     if (mpicall) {
@@ -4699,7 +4695,7 @@ int write_loaded_functions_file (const char *fname, int mpicall)
 	ufunc *u = currently_called_function();
 
 	if (u != NULL) {
-	    fprintf(fp, "<caller>%s</caller>\n", u->name);
+	    pprintf(prn, "<caller>%s</caller>\n", u->name);
 	}
     }
 #endif
@@ -4708,7 +4704,7 @@ int write_loaded_functions_file (const char *fname, int mpicall)
 
     for (i=0; i<n_pkgs; i++) {
 	if (validate_function_package(pkgs[i])) {
-	    real_write_function_package(pkgs[i], fp);
+	    real_write_function_package(pkgs[i], prn);
 	}
     }
 
@@ -4716,13 +4712,13 @@ int write_loaded_functions_file (const char *fname, int mpicall)
 
     for (i=0; i<n_ufuns; i++) {
 	if (ufuns[i]->pkg == NULL) {
-	    write_function_xml(ufuns[i], fp);
+	    write_function_xml(ufuns[i], prn);
 	}
     }
 
-    fputs("</gretl-functions>\n", fp);
+    pputs(prn, "</gretl-functions>\n");
 
-    fclose(fp);
+    gretl_print_destroy(prn);
 
     return 0;
 }

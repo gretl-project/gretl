@@ -34,7 +34,8 @@ typedef enum {
     GRETL_PRINT_FILE,
     GRETL_PRINT_BUFFER,
     GRETL_PRINT_TEMPFILE,
-    GRETL_PRINT_STREAM
+    GRETL_PRINT_STREAM,
+    GRETL_PRINT_GZFILE
 } PrnType;
 
 typedef enum {
@@ -59,6 +60,9 @@ PRN *gretl_print_new (PrnType ptype, int *err);
 void gretl_print_destroy (PRN *prn);
 
 PRN *gretl_print_new_with_filename (const char *fname, int *err);
+
+PRN *gretl_gzip_print_new (const char *fname, int comp_level,
+			   int *err);
 
 PRN *gretl_print_new_with_tempfile (int *err);
 

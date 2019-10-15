@@ -1954,7 +1954,7 @@ static void xml_put_bundled_item (gpointer keyp, gpointer value, gpointer p)
 {
     const char *key = keyp;
     bundled_item *item = value;
-    FILE *fp = p;
+    PRN *prn = p;
     int j;
 
     if (item->type == GRETL_TYPE_STRING) {
@@ -1964,96 +1964,96 @@ static void xml_put_bundled_item (gpointer keyp, gpointer value, gpointer p)
 	}
     }
 
-    fprintf(fp, "<bundled-item key=\"%s\" type=\"%s\"", key,
+    pprintf(prn, "<bundled-item key=\"%s\" type=\"%s\"", key,
 	    gretl_type_get_name(item->type));
 
     if (item->note != NULL) {
-	fprintf(fp, " note=\"%s\"", item->note);
+	pprintf(prn, " note=\"%s\"", item->note);
     }
 
     if (item->size > 0) {
-	fprintf(fp, " size=\"%d\">\n", item->size);
+	pprintf(prn, " size=\"%d\">\n", item->size);
     } else if (item->type == GRETL_TYPE_STRING) {
-	fputc('>', fp);
+	pputc(prn, '>');
     } else {
-	fputs(">\n", fp);
+	pputs(prn, ">\n");
     }
 
     if (item->type == GRETL_TYPE_DOUBLE) {
 	double x = *(double *) item->data;
 
 	if (na(x)) {
-	    fputs("NA", fp);
+	    pputs(prn, "NA");
 	} else {
-	    fprintf(fp, "%.16g", x);
+	    pprintf(prn, "%.16g", x);
 	}
     } else if (item->type == GRETL_TYPE_INT) {
 	int i = *(int *) item->data;
 
-	fprintf(fp, "%d", i);
+	pprintf(prn, "%d", i);
     } else if (item->type == GRETL_TYPE_UNSIGNED) {
 	unsigned int u = *(unsigned int *) item->data;
 
-	fprintf(fp, "%u", u);
+	pprintf(prn, "%u", u);
     } else if (item->type == GRETL_TYPE_SERIES) {
 	double *vals = (double *) item->data;
 
 	for (j=0; j<item->size; j++) {
 	    if (na(vals[j])) {
-		fputs("NA ", fp);
+		pputs(prn, "NA ");
 	    } else {
-		fprintf(fp, "%.16g ", vals[j]);
+		pprintf(prn, "%.16g ", vals[j]);
 	    }
 	}
     } else if (item->type == GRETL_TYPE_STRING) {
-	gretl_xml_put_string((char *) item->data, fp);
+	gretl_xml_put_string((char *) item->data, prn);
     } else if (item->type == GRETL_TYPE_MATRIX) {
 	gretl_matrix *m = (gretl_matrix *) item->data;
 
-	gretl_matrix_serialize(m, NULL, fp);
+	gretl_matrix_serialize(m, NULL, prn);
     } else if (item->type == GRETL_TYPE_BUNDLE) {
 	gretl_bundle *b = (gretl_bundle *) item->data;
 
-	gretl_bundle_serialize(b, NULL, fp);
+	gretl_bundle_serialize(b, NULL, prn);
     } else if (item->type == GRETL_TYPE_ARRAY) {
 	gretl_array *a = (gretl_array *) item->data;
 
-	gretl_array_serialize(a, fp);
+	gretl_array_serialize(a, prn);
     } else if (item->type == GRETL_TYPE_LIST) {
 	int *list = (int *) item->data;
 
-	gretl_list_serialize(list, NULL, fp);
+	gretl_list_serialize(list, NULL, prn);
     } else {
 	fprintf(stderr, "bundle -> XML: skipping %s\n", key);
     }
 
-    fputs("</bundled-item>\n", fp);
+    pputs(prn, "</bundled-item>\n");
 }
 
 void gretl_bundle_serialize (gretl_bundle *b, const char *name,
-			     FILE *fp)
+			     PRN *prn)
 {
-    fputs("<gretl-bundle", fp);
+    pputs(prn, "<gretl-bundle");
     if (name != NULL) {
-	fprintf(fp, " name=\"%s\"", name);
+	pprintf(prn, " name=\"%s\"", name);
     }
     if (b->creator != NULL && *b->creator != '\0') {
-	fprintf(fp, " creator=\"%s\"", b->creator);
+	pprintf(prn, " creator=\"%s\"", b->creator);
     }
     if (b->type == BUNDLE_KALMAN) {
-	fputs(" type=\"kalman\"", fp);
+	pputs(prn, " type=\"kalman\"");
     }
-    fputs(">\n", fp);
+    pputs(prn, ">\n");
 
     if (b->type == BUNDLE_KALMAN) {
-	kalman_serialize(b->data, fp);
+	kalman_serialize(b->data, prn);
     }
 
     if (b->ht != NULL) {
-	g_hash_table_foreach(b->ht, xml_put_bundled_item, fp);
+	g_hash_table_foreach(b->ht, xml_put_bundled_item, prn);
     }
 
-    fputs("</gretl-bundle>\n", fp);
+    pputs(prn, "</gretl-bundle>\n");
 }
 
 static int load_bundled_items (gretl_bundle *b, xmlNodePtr cur, xmlDocPtr doc)
@@ -2226,46 +2226,28 @@ int gretl_bundle_write_to_file (gretl_bundle *b,
 				int to_dotdir)
 {
     char fullname[FILENAME_MAX];
-    gchar *realzname = NULL;
-    FILE *fp;
+    PRN *prn;
     int err = 0;
 
+    if (to_dotdir) {
+	gretl_build_path(fullname, gretl_dotdir(), fname, NULL);
+    } else {
+	strcpy(fullname, fname);
+	gretl_maybe_switch_dir(fullname);
+    }
+
     if (has_suffix(fname, ".gz")) {
-	char tmp[FILENAME_MAX];
-
-	gretl_build_path(fullname, gretl_dotdir(), "_bun_tmp_.xml", NULL);
-	if (to_dotdir) {
-	    gretl_build_path(tmp, gretl_dotdir(), fname, NULL);
-	} else {
-	    strcpy(tmp, fname);
-	    gretl_maybe_switch_dir(tmp);
-	}
-	realzname = g_strdup(tmp);
+	prn = gretl_gzip_print_new(fullname, -1, &err);
     } else {
-	if (to_dotdir) {
-	    gretl_build_path(fullname, gretl_dotdir(), fname, NULL);
-	} else {
-	    strcpy(fullname, fname);
-	    gretl_maybe_switch_dir(fullname);
-	}
+	prn = gretl_print_new_with_filename(fullname, &err);
     }
 
-    fp = gretl_fopen(fullname, "wb");
-
-    if (fp == NULL) {
-	err = E_FOPEN;
-    } else {
+    if (prn != NULL) {
 	gretl_push_c_numeric_locale();
-	gretl_xml_header(fp);
-	gretl_bundle_serialize(b, NULL, fp);
-	fclose(fp);
+	gretl_xml_header(prn);
+	gretl_bundle_serialize(b, NULL, prn);
+	gretl_print_destroy(prn);
 	gretl_pop_c_numeric_locale();
-    }
-
-    if (!err && realzname != NULL) {
-	gretl_gzip(fullname, realzname);
-	gretl_remove(fullname);
-	g_free(realzname);
     }
 
     return err;
@@ -2276,54 +2258,18 @@ char *gretl_bundle_write_to_buffer (gretl_bundle *b,
 				    int *bytes,
 				    int *err)
 {
-    gchar *fname;
-    long pos;
     char *buf = NULL;
-    FILE *fp = NULL;
+    PRN *prn;
 
-    fname = g_strdup_printf("_mpi_bun_%d.XXXXXX", rank);
+    prn = gretl_print_new(GRETL_PRINT_BUFFER, err);
 
-    *err = gretl_chdir(gretl_dotdir());
     if (!*err) {
-	fp = gretl_mktemp(fname, "wb+");
-    }
-
-    if (fp == NULL) {
-	g_free(fname);
-	*err = E_FOPEN;
-	return NULL;
-    }
-
-    gretl_push_c_numeric_locale();
-    gretl_xml_header(fp);
-    gretl_bundle_serialize(b, NULL, fp);
-    fflush(fp);
-    fseek(fp, 0, SEEK_END);
-    pos = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
-
-    if (pos <= 0 || pos > INT_MAX) {
-	*err = E_DATA;
-    } else {
-	size_t sz = (size_t) pos;
-
-	*bytes = (int) pos;
-	buf = calloc(sz + 1, 1);
-	if (buf == NULL) {
-	    *err = E_ALLOC;
-	} else if (fread(buf, 1, sz, fp) != sz) {
-	    *err = E_DATA;
-	}
-    }
-
-    gretl_pop_c_numeric_locale();
-    fclose(fp);
-    remove(fname);
-    g_free(fname);
-
-    if (*err && buf != NULL) {
-	free(buf);
-	buf = NULL;
+	gretl_push_c_numeric_locale();
+	gretl_xml_header(prn);
+	gretl_bundle_serialize(b, NULL, prn);
+	buf = gretl_print_steal_buffer(prn);
+	gretl_pop_c_numeric_locale();
+	gretl_print_destroy(prn);
     }
 
     return buf;

@@ -176,7 +176,7 @@ void gretl_bundle_destroy (gretl_bundle *bundle);
 void gretl_bundle_void_content (gretl_bundle *bundle);
 
 void gretl_bundle_serialize (gretl_bundle *b, const char *name, 
-			     FILE *fp);
+			     PRN *prn);
 
 gretl_bundle *gretl_bundle_deserialize (void *p1, void *p2, 
 					int *err);

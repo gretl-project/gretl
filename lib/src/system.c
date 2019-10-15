@@ -3305,22 +3305,22 @@ equation_system_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
     return sys;
 }
 
-static void xml_print_identity (identity *ident, FILE *fp)
+static void xml_print_identity (identity *ident, PRN *prn)
 {
     int i;
 
-    fprintf(fp, "<identity n_atoms=\"%d\" depvar=\"%d\">\n",
+    pprintf(prn, "<identity n_atoms=\"%d\" depvar=\"%d\">\n",
 	    ident->n_atoms, ident->depvar);
     for (i=0; i<ident->n_atoms; i++) {
-	fprintf(fp, " <id_atom op=\"%d\" varnum=\"%d\"/>\n",
+	pprintf(prn, " <id_atom op=\"%d\" varnum=\"%d\"/>\n",
 		ident->atoms[i].op, ident->atoms[i].varnum);
     }
-    fputs("</identity>\n", fp);
+    pputs(prn, "</identity>\n");
 }
 
 int equation_system_serialize (equation_system *sys,
 			       SavedObjectFlags flags,
-			       FILE *fp)
+			       PRN *prn)
 {
     char *xmlname = NULL;
     int tsls_style = 0;
@@ -3332,15 +3332,15 @@ int equation_system_serialize (equation_system *sys,
 	xmlname = gretl_xml_encode(sys->name);
     }
 
-    fprintf(fp, "<gretl-equation-system name=\"%s\" saveflags=\"%d\" method=\"%d\" ",
+    pprintf(prn, "<gretl-equation-system name=\"%s\" saveflags=\"%d\" method=\"%d\" ",
 	    xmlname, flags, sys->method);
     free(xmlname);
 
-    fprintf(fp, "n_equations=\"%d\" nidents=\"%d\" flags=\"%d\" order=\"%d\">\n",
+    pprintf(prn, "n_equations=\"%d\" nidents=\"%d\" flags=\"%d\" order=\"%d\">\n",
 	    sys->neqns, sys->nidents, sys->flags, sys->order);
 
     for (i=0; i<sys->neqns; i++) {
-	gretl_xml_put_tagged_list("eqnlist", sys->lists[i], fp);
+	gretl_xml_put_tagged_list("eqnlist", sys->lists[i], prn);
     }
 
     for (i=0; i<sys->neqns; i++) {
@@ -3351,18 +3351,18 @@ int equation_system_serialize (equation_system *sys,
     }
 
     if (!tsls_style) {
-	gretl_xml_put_tagged_list("endog_vars", sys->ylist, fp);
-	gretl_xml_put_tagged_list("instr_vars", sys->ilist, fp);
+	gretl_xml_put_tagged_list("endog_vars", sys->ylist, prn);
+	gretl_xml_put_tagged_list("instr_vars", sys->ilist, prn);
     }
 
     for (i=0; i<sys->nidents; i++) {
-	xml_print_identity(sys->idents[i], fp);
+	xml_print_identity(sys->idents[i], prn);
     }
 
-    gretl_matrix_serialize(sys->R, "R", fp);
-    gretl_matrix_serialize(sys->q, "q", fp);
+    gretl_matrix_serialize(sys->R, "R", prn);
+    gretl_matrix_serialize(sys->q, "q", prn);
 
-    fputs("</gretl-equation-system>\n", fp);
+    pputs(prn, "</gretl-equation-system>\n");
 
     return err;
 }

@@ -3753,31 +3753,31 @@ int attach_model_tests_from_xml (MODEL *pmod, xmlNodePtr node)
     return err;
 }
 
-static void serialize_test (const ModelTest *src, FILE *fp)
+static void serialize_test (const ModelTest *src, PRN *prn)
 {
-    fprintf(fp, "<test type=\"%d\" ", src->type);
+    pprintf(prn, "<test type=\"%d\" ", src->type);
 
     if (src->param != NULL && *src->param != '\0') {
-	fprintf(fp, "param=\"%s\" ", src->param);
+	pprintf(prn, "param=\"%s\" ", src->param);
     }
 
-    fprintf(fp, "teststat=\"%d\" ", (int) src->teststat);
-    fprintf(fp, "dfn=\"%d\" ", src->dfn);
-    fprintf(fp, "dfd=\"%g\" ", src->dfd);
-    fprintf(fp, "order=\"%d\" ", src->order);
-    fprintf(fp, "value=\"%.15g\" ", src->value);
-    fprintf(fp, "pvalue=\"%.15g\" ", src->pvalue);
+    pprintf(prn, "teststat=\"%d\" ", (int) src->teststat);
+    pprintf(prn, "dfn=\"%d\" ", src->dfn);
+    pprintf(prn, "dfd=\"%g\" ", src->dfd);
+    pprintf(prn, "order=\"%d\" ", src->order);
+    pprintf(prn, "value=\"%.15g\" ", src->value);
+    pprintf(prn, "pvalue=\"%.15g\" ", src->pvalue);
 
     if (!na(src->crit)) {
-	fprintf(fp, "crit=\"%g\" ", src->crit);
-	fprintf(fp, "alpha=\"%g\" ", src->alpha);
+	pprintf(prn, "crit=\"%g\" ", src->crit);
+	pprintf(prn, "alpha=\"%g\" ", src->alpha);
     }
 
     if (src->opt != OPT_NONE) {
-	fprintf(fp, "opt=\"%u\" ", (unsigned) src->opt);
+	pprintf(prn, "opt=\"%u\" ", (unsigned) src->opt);
     }
 
-    fputs("/>\n", fp);
+    pputs(prn, "/>\n");
 }
 
 static gretl_bundle *bundlize_test (const ModelTest *src)
@@ -3815,7 +3815,7 @@ static gretl_bundle *bundlize_test (const ModelTest *src)
     return b;
 }
 
-static int serialize_model_tests (const MODEL *pmod, FILE *fp)
+static int serialize_model_tests (const MODEL *pmod, PRN *prn)
 {
     int i, n = pmod->ntests;
 
@@ -3823,13 +3823,13 @@ static int serialize_model_tests (const MODEL *pmod, FILE *fp)
 	return 0;
     }
 
-    fprintf(fp, "<tests count=\"%d\">\n", pmod->ntests);
+    pprintf(prn, "<tests count=\"%d\">\n", pmod->ntests);
 
     for (i=0; i<n; i++) {
-	serialize_test(&pmod->tests[i], fp);
+	serialize_test(&pmod->tests[i], prn);
     }
 
-    fputs("</tests>\n", fp);
+    pputs(prn, "</tests>\n");
 
     return 0;
 }
@@ -4668,35 +4668,35 @@ static int copy_model_params (MODEL *targ, const MODEL *src)
     return err;
 }
 
-static void serialize_coeff_sep (model_data_item *item, FILE *fp)
+static void serialize_coeff_sep (model_data_item *item, PRN *prn)
 {
     CoeffSep *cs = (CoeffSep *) item->ptr;
 
-    fprintf(fp, " pos=\"%d\"", cs->pos);
+    pprintf(prn, " pos=\"%d\"", cs->pos);
     if (*cs->str != '\0') {
-	fputs(" string=\"", fp);
-	gretl_xml_put_string(cs->str, fp);
-	fputc('"', fp);
+	pputs(prn, " string=\"");
+	gretl_xml_put_string(cs->str, prn);
+	pputc(prn, '"');
     }
-    fputs("/>\n", fp);
+    pputs(prn, "/>\n");
 }
 
-static void serialize_vcv_info (model_data_item *item, FILE *fp)
+static void serialize_vcv_info (model_data_item *item, PRN *prn)
 {
     VCVInfo *vi = (VCVInfo *) item->ptr;
 
-    fprintf(fp, " vmaj=\"%d\"", vi->vmaj);
-    fprintf(fp, " vmin=\"%d\"", vi->vmin);
+    pprintf(prn, " vmaj=\"%d\"", vi->vmaj);
+    pprintf(prn, " vmin=\"%d\"", vi->vmin);
     if (vi->order > 0) {
-	fprintf(fp, " order=\"%d\"", vi->order);
+	pprintf(prn, " order=\"%d\"", vi->order);
     }
     if (vi->flags > 0) {
-	fprintf(fp, " flags=\"%d\"", vi->flags);
+	pprintf(prn, " flags=\"%d\"", vi->flags);
     }
     if (vi->bw > 0 && !na(vi->bw)) {
-	fprintf(fp, " bw=\"%.12g\"", vi->bw);
+	pprintf(prn, " bw=\"%.12g\"", vi->bw);
     }
-    fputs("/>\n", fp);
+    pputs(prn, "/>\n");
 }
 
 /* FIXME updating and placement of these functions */
@@ -4762,25 +4762,25 @@ static const char *gretl_type_name (int t)
     return "unknown";
 }
 
-static void serialize_model_data_items (const MODEL *pmod, FILE *fp)
+static void serialize_model_data_items (const MODEL *pmod, PRN *prn)
 {
     model_data_item *item;
     int i, j, nelem;
 
-    fprintf(fp, "<data-items count=\"%d\">\n", pmod->n_data_items);
+    pprintf(prn, "<data-items count=\"%d\">\n", pmod->n_data_items);
 
     for (i=0; i<pmod->n_data_items; i++) {
 	item = pmod->data_items[i];
 	nelem = 0;
 
-	fprintf(fp, "<data-item key=\"%s\" type=\"%s\"",
+	pprintf(prn, "<data-item key=\"%s\" type=\"%s\"",
 		item->key, gretl_type_name(item->type));
 
 	if (!strcmp(item->key, "coeffsep")) {
-	    serialize_coeff_sep(item, fp);
+	    serialize_coeff_sep(item, prn);
 	    continue;
 	} else if (!strcmp(item->key, "vcv_info")) {
-	    serialize_vcv_info(item, fp);
+	    serialize_vcv_info(item, prn);
 	    continue;
 	}
 
@@ -4793,37 +4793,37 @@ static void serialize_model_data_items (const MODEL *pmod, FILE *fp)
 	}
 
 	if (nelem > 0) {
-	    fprintf(fp, " count=\"%d\">\n", nelem);
+	    pprintf(prn, " count=\"%d\">\n", nelem);
 	} else if (item->type == GRETL_TYPE_STRING) {
-	    fputc('>', fp);
+	    pputc(prn, '>');
 	} else {
-	    fputs(">\n", fp);
+	    pputs(prn, ">\n");
 	}
 
 	if (item->type == GRETL_TYPE_INT) {
-	    fprintf(fp, "%d", *(int *) item->ptr);
+	    pprintf(prn, "%d", *(int *) item->ptr);
 	} else if (item->type == GRETL_TYPE_DOUBLE) {
 	    double x = *(double *) item->ptr;
 
 	    if (na(x)) {
-		fputs("NA", fp);
+		pputs(prn, "NA");
 	    } else {
-		fprintf(fp, "%.15g", x);
+		pprintf(prn, "%.15g", x);
 	    }
 	} else if (item->type == GRETL_TYPE_INT_ARRAY) {
 	    int *vals = (int *) item->ptr;
 
 	    for (j=0; j<nelem; j++) {
-		fprintf(fp, "%d ", vals[j]);
+		pprintf(prn, "%d ", vals[j]);
 	    }
 	} else if (item->type == GRETL_TYPE_DOUBLE_ARRAY) {
 	    double *vals = (double *) item->ptr;
 
 	    for (j=0; j<nelem; j++) {
 		if (na(vals[j])) {
-		    fputs("NA ", fp);
+		    pputs(prn, "NA ");
 		} else {
-		    fprintf(fp, "%.15g ", vals[j]);
+		    pprintf(prn, "%.15g ", vals[j]);
 		}
 	    }
 	} else if (item->type == GRETL_TYPE_CMPLX_ARRAY) {
@@ -4833,41 +4833,41 @@ static void serialize_model_data_items (const MODEL *pmod, FILE *fp)
 	    for (j=0; j<nelem; j++) {
 		x = vals[j].r;
 		if (na(x)) {
-		    fputs("NA ", fp);
+		    pputs(prn, "NA ");
 		} else {
-		    fprintf(fp, "%.15g ", x);
+		    pprintf(prn, "%.15g ", x);
 		}
 		x = vals[j].i;
 		if (na(x)) {
-		    fputs("NA ", fp);
+		    pputs(prn, "NA ");
 		} else {
-		    fprintf(fp, "%.15g ", x);
+		    pprintf(prn, "%.15g ", x);
 		}
 	    }
 	} else if (item->type == GRETL_TYPE_LIST) {
 	    int *list = (int *) item->ptr;
 
 	    for (j=0; j<=list[0]; j++) {
-		fprintf(fp, "%d ", list[j]);
+		pprintf(prn, "%d ", list[j]);
 	    }
 	} else if (item->type == GRETL_TYPE_STRING) {
-	    fprintf(fp, "%s", (char *) item->ptr);
+	    pprintf(prn, "%s", (char *) item->ptr);
 	} else if (item->type == GRETL_TYPE_MATRIX) {
 	    gretl_matrix *m = (gretl_matrix *) item->ptr;
 
-	    gretl_matrix_serialize(m, NULL, fp);
+	    gretl_matrix_serialize(m, NULL, prn);
 	} else if (item->type == GRETL_TYPE_ARRAY) {
 	    gretl_array *A = (gretl_array *) item->ptr;
 
-	    gretl_array_serialize(A, fp);
+	    gretl_array_serialize(A, prn);
 	} else {
 	    ; /* no-op: not handled */
 	}
 
-	fputs("</data-item>\n", fp);
+	pputs(prn, "</data-item>\n");
     }
 
-    fputs("</data-items>\n", fp);
+    pputs(prn, "</data-items>\n");
 }
 
 static int copy_model_data_items (MODEL *targ, const MODEL *src)
@@ -5175,7 +5175,7 @@ static int copy_model (MODEL *targ, MODEL *src)
 }
 
 int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
-			   FILE *fp)
+			   PRN *prn)
 {
     char *xmlname = NULL;
     int k = pmod->ncoeff;
@@ -5188,110 +5188,110 @@ int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
 	xmlname = gretl_xml_encode(pmod->name);
     }
 
-    fprintf(fp, "<gretl-model ID=\"%d\" name=\"%s\" saveflags=\"%d\" ",
+    pprintf(prn, "<gretl-model ID=\"%d\" name=\"%s\" saveflags=\"%d\" ",
 	    pmod->ID, xmlname, (int) flags);
     free(xmlname);
 
     if (pmod->depvar != NULL) {
-	fprintf(fp, "depvar=\"%s\" ", pmod->depvar);
+	pprintf(prn, "depvar=\"%s\" ", pmod->depvar);
     }
 
-    fprintf(fp, "t1=\"%d\" t2=\"%d\" nobs=\"%d\" ",
+    pprintf(prn, "t1=\"%d\" t2=\"%d\" nobs=\"%d\" ",
 	    pmod->t1, pmod->t2, pmod->nobs);
-    fprintf(fp, "full_n=\"%d\" ncoeff=\"%d\" dfn=\"%d\" dfd=\"%d\" ",
+    pprintf(prn, "full_n=\"%d\" ncoeff=\"%d\" dfn=\"%d\" dfd=\"%d\" ",
 	    pmod->full_n, pmod->ncoeff, pmod->dfn, pmod->dfd);
-    fprintf(fp, "ifc=\"%d\" ci=\"%s\" opt=\"%u\" nwt=\"%d\" aux=\"%d\" ",
+    pprintf(prn, "ifc=\"%d\" ci=\"%s\" opt=\"%u\" nwt=\"%d\" aux=\"%d\" ",
 	    pmod->ifc, gretl_command_word(pmod->ci), pmod->opt,
 	    pmod->nwt, pmod->aux);
 
     gretl_push_c_numeric_locale();
 
-    gretl_xml_put_double("ess", pmod->ess, fp);
-    gretl_xml_put_double("tss", pmod->tss, fp);
-    gretl_xml_put_double("sigma", pmod->sigma, fp);
-    gretl_xml_put_double("rsq", pmod->rsq, fp);
-    gretl_xml_put_double("adjrsq", pmod->adjrsq, fp);
-    gretl_xml_put_double("fstt", pmod->fstt, fp);
-    gretl_xml_put_double("chi-square", pmod->chisq, fp);
-    gretl_xml_put_double("lnL", pmod->lnL, fp);
-    gretl_xml_put_double("ybar", pmod->ybar, fp);
-    gretl_xml_put_double("sdy", pmod->sdy, fp);
+    gretl_xml_put_double("ess", pmod->ess, prn);
+    gretl_xml_put_double("tss", pmod->tss, prn);
+    gretl_xml_put_double("sigma", pmod->sigma, prn);
+    gretl_xml_put_double("rsq", pmod->rsq, prn);
+    gretl_xml_put_double("adjrsq", pmod->adjrsq, prn);
+    gretl_xml_put_double("fstt", pmod->fstt, prn);
+    gretl_xml_put_double("chi-square", pmod->chisq, prn);
+    gretl_xml_put_double("lnL", pmod->lnL, prn);
+    gretl_xml_put_double("ybar", pmod->ybar, prn);
+    gretl_xml_put_double("sdy", pmod->sdy, prn);
 
-    gretl_xml_put_double("crit0", pmod->criterion[0], fp);
-    gretl_xml_put_double("crit1", pmod->criterion[1], fp);
-    gretl_xml_put_double("crit2", pmod->criterion[2], fp);
+    gretl_xml_put_double("crit0", pmod->criterion[0], prn);
+    gretl_xml_put_double("crit1", pmod->criterion[1], prn);
+    gretl_xml_put_double("crit2", pmod->criterion[2], prn);
 
-    gretl_xml_put_double("dw", pmod->dw, fp);
-    gretl_xml_put_double("rho", pmod->rho, fp);
+    gretl_xml_put_double("dw", pmod->dw, prn);
+    gretl_xml_put_double("rho", pmod->rho, prn);
 
-    fputs(">\n", fp);
+    pputs(prn, ">\n");
 
     if (pmod->smpl.rseed > 0) {
-	fprintf(fp, "<sample t1=\"%d\" t2=\"%d\" rseed=\"%u\"/>\n",
+	pprintf(prn, "<sample t1=\"%d\" t2=\"%d\" rseed=\"%u\"/>\n",
 		pmod->smpl.t1, pmod->smpl.t2, pmod->smpl.rseed);
     } else {
-	fprintf(fp, "<sample t1=\"%d\" t2=\"%d\"/>\n",
+	pprintf(prn, "<sample t1=\"%d\" t2=\"%d\"/>\n",
 		pmod->smpl.t1, pmod->smpl.t2);
     }
 
-    gretl_xml_put_double_array("coeff", pmod->coeff, k, fp);
-    gretl_xml_put_double_array("sderr", pmod->sderr, k, fp);
+    gretl_xml_put_double_array("coeff", pmod->coeff, k, prn);
+    gretl_xml_put_double_array("sderr", pmod->sderr, k, prn);
 
     if (pmod->uhat != NULL) {
-	gretl_xml_put_double_array("uhat", pmod->uhat, pmod->full_n, fp);
+	gretl_xml_put_double_array("uhat", pmod->uhat, pmod->full_n, prn);
     }
 
     if (pmod->yhat != NULL) {
-	gretl_xml_put_double_array("yhat", pmod->yhat, pmod->full_n, fp);
+	gretl_xml_put_double_array("yhat", pmod->yhat, pmod->full_n, prn);
     }
 
     if (pmod->submask != NULL) {
-	write_model_submask(pmod, fp);
+	write_model_submask(pmod, prn);
     }
 
     if (pmod->missmask != NULL) {
-	fputs("<missmask>", fp);
-	fputs(pmod->missmask, fp);
-	fputs("</missmask>\n", fp);
+	pputs(prn, "<missmask>");
+	pputs(prn, pmod->missmask);
+	pputs(prn, "</missmask>\n");
     }
 
     if (pmod->xpx != NULL) {
-	gretl_xml_put_double_array("xpx", pmod->xpx, m, fp);
+	gretl_xml_put_double_array("xpx", pmod->xpx, m, prn);
     }
 
     if (pmod->vcv != NULL) {
-	gretl_xml_put_double_array("vcv", pmod->vcv, m, fp);
+	gretl_xml_put_double_array("vcv", pmod->vcv, m, prn);
     }
 
     if (pmod->arinfo != NULL && pmod->arinfo->arlist != NULL) {
 	int r = pmod->arinfo->arlist[0];
 
-	fputs("<arinfo>\n", fp);
-	gretl_xml_put_tagged_list("arlist", pmod->arinfo->arlist, fp);
-	gretl_xml_put_double_array("rho", pmod->arinfo->rho, r, fp);
-	gretl_xml_put_double_array("sderr", pmod->arinfo->sderr, r, fp);
-	fputs("</arinfo>\n", fp);
+	pputs(prn, "<arinfo>\n");
+	gretl_xml_put_tagged_list("arlist", pmod->arinfo->arlist, prn);
+	gretl_xml_put_double_array("rho", pmod->arinfo->rho, r, prn);
+	gretl_xml_put_double_array("sderr", pmod->arinfo->sderr, r, prn);
+	pputs(prn, "</arinfo>\n");
     }
 
     if (pmod->ntests > 0 && pmod->tests != NULL) {
-	serialize_model_tests(pmod, fp);
+	serialize_model_tests(pmod, prn);
     }
 
     if (pmod->nparams > 0 && pmod->params != NULL) {
 	gretl_xml_put_strings_array("params",
 				    (const char **) pmod->params,
-				    pmod->nparams, fp);
+				    pmod->nparams, prn);
     }
 
     if (pmod->list != NULL) {
-	gretl_xml_put_tagged_list("list", pmod->list, fp);
+	gretl_xml_put_tagged_list("list", pmod->list, prn);
     }
 
     if (pmod->n_data_items > 0) {
-	serialize_model_data_items(pmod, fp);
+	serialize_model_data_items(pmod, prn);
     }
 
-    fputs("</gretl-model>\n", fp);
+    pputs(prn, "</gretl-model>\n");
 
     /* note: the DATASET element of pmod is not
        handled here */

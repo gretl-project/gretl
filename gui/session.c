@@ -1977,13 +1977,19 @@ int save_session (char *fname)
 	maybe_suspend_session_log();
 	log_code = LOG_SAVE_AS;
 	dirbak = gretl_strdup(session.dirname);
+	if (gretl_isdir(dirname)) {
+	    /* don't trip over a non-empty dir */
+	    gretl_deltree(dirname);
+	    gretl_error_clear();
+	}
 #ifdef G_OS_WIN32
 	err = win32_rename_dir(session.dirname, dirname);
 #else
 	err = gretl_rename(session.dirname, dirname);
 #endif
 	if (err) {
-	    fprintf(stderr, " failed to rename session dir\n");
+	    fprintf(stderr, " failed to rename session dir: '%s' -> '%s'\n",
+		    session.dirname, dirname);
 	    gui_errmsg(err);
 	} else {
 	    fprintf(stderr, " renamed session dir OK\n");
@@ -2010,6 +2016,9 @@ int save_session (char *fname)
 #if SAVE_DEBUG
 	fprintf(stderr, " real_save_session_dataset: err = %d\n", err);
 #endif
+	if (err) {
+	    gui_errmsg(err);
+	}
     }
 
     if (!err) {

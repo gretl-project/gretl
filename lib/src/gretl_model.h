@@ -531,7 +531,7 @@ gretl_model_get_data_element (MODEL *pmod, int idx, const char *s,
 			      const DATASET *dset, int *err);
 
 int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
-			   FILE *fp);
+			   PRN *prn);
 
 #ifdef FULL_XML_HEADERS
 

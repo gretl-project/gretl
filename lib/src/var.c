@@ -4397,40 +4397,40 @@ GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc,
     return var;
 }
 
-static void johansen_serialize (JohansenInfo *j, FILE *fp)
+static void johansen_serialize (JohansenInfo *j, PRN *prn)
 {
-    fprintf(fp, "<gretl-johansen ID=\"%d\" code=\"%d\" rank=\"%d\" ",
+    pprintf(prn, "<gretl-johansen ID=\"%d\" code=\"%d\" rank=\"%d\" ",
 	    j->ID, j->code, j->rank);
-    fprintf(fp, "seasonals=\"%d\" ", j->seasonals);
+    pprintf(prn, "seasonals=\"%d\" ", j->seasonals);
 
     if (j->lrdf > 0 && !na(j->ll0)) {
-	gretl_xml_put_double("ll0", j->ll0, fp);
-	gretl_xml_put_int("bdf", j->lrdf, fp);
+	gretl_xml_put_double("ll0", j->ll0, prn);
+	gretl_xml_put_int("bdf", j->lrdf, prn);
     }
 
     if (j->prior_df > 0 && !na(j->prior_ll)) {
-	gretl_xml_put_double("oldll", j->prior_ll, fp);
-	gretl_xml_put_int("olddf", j->prior_df, fp);
+	gretl_xml_put_double("oldll", j->prior_ll, prn);
+	gretl_xml_put_int("olddf", j->prior_df, prn);
     }
 
-    fputs(">\n", fp);
+    pputs(prn, ">\n");
 
-    gretl_matrix_serialize(j->R0, "u", fp);
-    gretl_matrix_serialize(j->R1, "v", fp);
-    gretl_matrix_serialize(j->S00, "Suu", fp);
-    gretl_matrix_serialize(j->S11, "Svv", fp);
-    gretl_matrix_serialize(j->S01, "Suv", fp);
-    gretl_matrix_serialize(j->evals, "evals", fp);
-    gretl_matrix_serialize(j->Beta, "Beta", fp);
-    gretl_matrix_serialize(j->Alpha, "Alpha", fp);
-    gretl_matrix_serialize(j->Bvar, "Bvar", fp);
-    gretl_matrix_serialize(j->Bse, "Bse", fp);
-    gretl_matrix_serialize(j->R, "R", fp);
-    gretl_matrix_serialize(j->q, "q", fp);
-    gretl_matrix_serialize(j->Ra, "Ra", fp);
-    gretl_matrix_serialize(j->qa, "qa", fp);
+    gretl_matrix_serialize(j->R0, "u", prn);
+    gretl_matrix_serialize(j->R1, "v", prn);
+    gretl_matrix_serialize(j->S00, "Suu", prn);
+    gretl_matrix_serialize(j->S11, "Svv", prn);
+    gretl_matrix_serialize(j->S01, "Suv", prn);
+    gretl_matrix_serialize(j->evals, "evals", prn);
+    gretl_matrix_serialize(j->Beta, "Beta", prn);
+    gretl_matrix_serialize(j->Alpha, "Alpha", prn);
+    gretl_matrix_serialize(j->Bvar, "Bvar", prn);
+    gretl_matrix_serialize(j->Bse, "Bse", prn);
+    gretl_matrix_serialize(j->R, "R", prn);
+    gretl_matrix_serialize(j->q, "q", prn);
+    gretl_matrix_serialize(j->Ra, "Ra", prn);
+    gretl_matrix_serialize(j->qa, "qa", prn);
 
-    fputs("</gretl-johansen>\n", fp);
+    pputs(prn, "</gretl-johansen>\n");
 }
 
 /* Retrieve enough VECM-related info from @b to carry
@@ -4530,7 +4530,7 @@ static gretl_bundle *johansen_bundlize (JohansenInfo *j)
 }
 
 int gretl_VAR_serialize (const GRETL_VAR *var, SavedObjectFlags flags,
-			 FILE *fp)
+			 PRN *prn)
 {
     char *xmlname = NULL;
     int g = var->neqns;
@@ -4543,69 +4543,69 @@ int gretl_VAR_serialize (const GRETL_VAR *var, SavedObjectFlags flags,
 	xmlname = gretl_xml_encode(var->name);
     }
 
-    fprintf(fp, "<gretl-VAR name=\"%s\" saveflags=\"%d\" ", xmlname, (int) flags);
+    pprintf(prn, "<gretl-VAR name=\"%s\" saveflags=\"%d\" ", xmlname, (int) flags);
     free(xmlname);
 
-    fprintf(fp, "ecm=\"%d\" neqns=\"%d\" order=\"%d\" detflags=\"%d\" ",
+    pprintf(prn, "ecm=\"%d\" neqns=\"%d\" order=\"%d\" detflags=\"%d\" ",
 	    (var->ci == VECM), var->neqns, var->order, var->detflags);
 
     if (var->robust) {
-	gretl_xml_put_int("robust", var->robust, fp);
+	gretl_xml_put_int("robust", var->robust, prn);
     }
 
     if (var->LBs > 0 && !na(var->LB)) {
 	/* Portmanteau test */
-	gretl_xml_put_double("LB", var->LB, fp);
-	gretl_xml_put_int("LBs", var->LBs, fp);
+	gretl_xml_put_double("LB", var->LB, prn);
+	gretl_xml_put_int("LBs", var->LBs, prn);
     }
 
-    fputs(">\n", fp);
+    pputs(prn, ">\n");
 
-    gretl_xml_put_tagged_list("lags", var->lags, fp);
-    gretl_xml_put_tagged_list("ylist", var->ylist, fp);
-    gretl_xml_put_tagged_list("xlist", var->xlist, fp);
-    gretl_xml_put_tagged_list("rlist", var->rlist, fp);
+    gretl_xml_put_tagged_list("lags", var->lags, prn);
+    gretl_xml_put_tagged_list("ylist", var->ylist, prn);
+    gretl_xml_put_tagged_list("xlist", var->xlist, prn);
+    gretl_xml_put_tagged_list("rlist", var->rlist, prn);
 
     gretl_push_c_numeric_locale();
 
     if (var->Fvals != NULL) {
-	gretl_xml_put_double_array("Fvals", var->Fvals, m, fp);
+	gretl_xml_put_double_array("Fvals", var->Fvals, m, prn);
     }
 
     if (var->Ivals != NULL) {
-	gretl_xml_put_double_array("Ivals", var->Ivals, N_IVALS, fp);
+	gretl_xml_put_double_array("Ivals", var->Ivals, N_IVALS, prn);
     }
 
     if (var->X != NULL && var->Y != NULL) {
 	/* could be fiddly to reconstruct, needed for IRF bootstrap */
-	gretl_matrix_serialize(var->X, "X", fp);
-	gretl_matrix_serialize(var->Y, "Y", fp);
+	gretl_matrix_serialize(var->X, "X", prn);
+	gretl_matrix_serialize(var->Y, "Y", prn);
     }
 
     if (var->ord != NULL) {
-	gretl_matrix_serialize(var->ord, "ord", fp);
+	gretl_matrix_serialize(var->ord, "ord", prn);
     }
 
     if (var->ci == VECM) {
 	/* this is hard to reconstruct for VECMs */
-	gretl_matrix_serialize(var->A, "A", fp);
+	gretl_matrix_serialize(var->A, "A", prn);
     }
 
     gretl_pop_c_numeric_locale();
 
-    fputs("<equations>\n", fp);
+    pputs(prn, "<equations>\n");
 
     for (i=0; i<var->neqns; i++) {
-	gretl_model_serialize(var->models[i], 0, fp);
+	gretl_model_serialize(var->models[i], 0, prn);
     }
 
-    fputs("</equations>\n", fp);
+    pputs(prn, "</equations>\n");
 
     if (var->jinfo != NULL) {
-	johansen_serialize(var->jinfo, fp);
+	johansen_serialize(var->jinfo, prn);
     }
 
-    fputs("</gretl-VAR>\n", fp);
+    pputs(prn, "</gretl-VAR>\n");
 
     return err;
 }
