@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "gretl_mpi.h"
+#include "gretl_typemap.h"
 #include <mpi.h>
 
 #ifdef WIN32
@@ -732,15 +733,68 @@ int gretl_matrix_mpi_bcast (gretl_matrix **pm, int root)
 
 #if 0
 
+static int compose_msgbuf (char *buf, GretlType type,
+			   const char *key, int sz,
+			   void *data)
+{
+    int err = 0;
+
+    if (type == GRETL_TYPE_DOUBLE) {
+	sprintf(buf, "%d %s 0 0 0", type, key);
+    } else if (type == GRETL_TYPE_MATRIX) {
+	gretl_matrix *m = data;
+
+	sprintf(buf, "%d %s %d %d %d", type, key,
+		m->rows, m->cols, m->is_complex);
+    } else if (type == GRETL_TYPE_STRING) {
+	char *s = data;
+
+	sprintf(buf, "%d %s %d 0 0", type, key,
+		(int) strlen(s) + 1);
+    } else if (type == GRETL_TYPE_BUNDLE) {
+	int n = gretl_bundle_get_n_keys(data);
+
+	sprintf(buf, "%d %s %d 0 0", type, key, n);
+    } else if (type == GRETL_TYPE_ARRAY) {
+	GretlType atype = gretl_array_get_content_type(data);
+	int n = gretl_array_get_length(data);
+
+	sprintf(buf, "%d %s %d 0 0", atype, key, n);
+    } else {
+	err = E_DATA;
+    }
+
+    return err;
+}
+
+static int parse_msgbuf (int id, const char *buf, int *sizes)
+{
+    int type;
+    char key[16];
+    int nf, err = 0;
+    
+    nf = sscanf(buf, "%d %s %d %d %d", &type, key,
+		&sizes[0], &sizes[1], &sizes[2]);
+    if (nf != 5) {
+	err = E_DATA;
+    } else {
+	const char *typename = gretl_type_get_name(type);
+	
+	printf("id %d: got type %s, key '%s', sizes %d %d %d\n",
+	       id, typename, key, sizes[0], sizes[1], sizes[2]);
+    }
+
+    return err;
+}
+
 static int gretl_bundle_mpi_bcast2 (gretl_bundle **pb, int root)
 {
     gretl_bundle *b = NULL;
     gretl_array *keys = NULL;
-    char *key;
+    GretlType type;
     void *data;
-    char buf[128];
-    int size[3];
-    int bytes = 0;
+    char msgbuf[128];
+    int sizes[3];
     int id, np, nk;
     int i, err = 0;
 
@@ -775,39 +829,32 @@ static int gretl_bundle_mpi_bcast2 (gretl_bundle **pb, int root)
 	int msglen;
 
 	if (id == root) {
-	    const char *typename;
-
-	    size[0] = size[1] = size[2] = 0;
-	    key = keys[i];
-	    data = gretl_bundle_get_data(b, key, &type, &size[0], &err);
+	    const char *key = gretl_array_get_data(keys, i);
+	    
+	    data = gretl_bundle_get_data(b, key, &type, &sizes[0], &err);
 	    if (!err) {
-		typename = gretl_type_get_name(type);
-		sprintf(buf, "%s %s %d %d %d", typename, key,
-			size[0], size[1], size[2]);
-		msglen = strlen(buf) + 1;
+		compose_msgbuf(msgbuf, type, key, sizes[0], data);
+		msglen = strlen(msgbuf) + 1;
 	    }
 	}
 	if (!err) {
 	    err = mpi_bcast(&msglen, 1, mpi_int, root, mpi_comm_world);
 	}
 	if (!err) {
-	    err = mpi_bcast(buf, msglen, mpi_byte, root, mpi_comm_world);
+	    err = mpi_bcast(msgbuf, msglen, mpi_byte, root, mpi_comm_world);
 	}
 	if (!err && id != root) {
-	    nf = sscanf(buf, "%s %s %d %d %d", key, typename,
-			&size[0], &size[1], &size[2]);
-	    if (nf != 5) {
-		err = E_DATA;
-	    }
-	    printf("not-root: got '%s'\n", buf);
+	    err = parse_msgbuf(id, msgbuf, sizes);
 	}
-	if (0 && !err) {
+#if 0	
+	if (!err) {
 	    err = mpi_bcast(data, , , root, mpi_comm_world);
 	}
-	if (0 && !err && id != root) {
+	if (!err && id != root) {
 	    /* set, or donate? */
 	    err = gretl_bundle_set_data(b, key, data, type, size);
 	}
+#endif	
     }
 
     mpi_barrier(mpi_comm_world);
