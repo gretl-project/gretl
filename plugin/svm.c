@@ -2377,7 +2377,7 @@ static int call_mpi_cross_validation (sv_data *data,
     }
 
     /* arrange to get rand() in sync across the processes */
-    gretl_unsigned_mpi_bcast(&w->seed, 0);
+    gretl_mpi_bcast(&w->seed, GRETL_TYPE_UNSIGNED, 0);
 
     if (w->rank == 0) {
 	if (prn != NULL) {

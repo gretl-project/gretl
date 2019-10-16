@@ -156,8 +156,8 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 	    } else if (ubundle_node(l) && f == F_BCAST) {
 		/* bundle: only broadcast OK */
 		type = GRETL_TYPE_BUNDLE;
-	    } else if (uarray_node(l) && f == F_REDUCE) {
-		/* array: only reduce OK */
+	    } else if (uarray_node(l) && (f == F_REDUCE || f == F_BCAST)) {
+		/* array: reduce OK, bcast partial */
 		type = GRETL_TYPE_ARRAY;
 	    } else if (uscalar_node(l) && f != F_SCATTER) {
 		/* scalar: all ops OK apart from scatter */
@@ -230,6 +230,7 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
     } else if (f == F_BCAST) {
 	gretl_matrix *m = NULL;
 	gretl_bundle *b = NULL;
+	gretl_array *a = NULL;
 	double x = NADBL;
 	void *bcastp;
 
@@ -243,6 +244,11 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 		b = l->v.b;
 	    }
 	    bcastp = &b;
+	} else if (type == GRETL_TYPE_ARRAY) {
+	    if (id == root) {
+		a = l->v.a;
+	    }
+	    bcastp = &a;
 	} else {
 	    x = l->v.xval;
 	    bcastp = &x;
@@ -256,6 +262,8 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 		    p->err = node_replace_matrix(l, m);
 		} else if (type == GRETL_TYPE_BUNDLE) {
 		    p->err = node_replace_bundle(l, b);
+		} else if (type == GRETL_TYPE_ARRAY) {
+		    p->err = node_replace_array(l, a);
 		} else {
 		    p->err = node_replace_scalar(l, x);
 		}
