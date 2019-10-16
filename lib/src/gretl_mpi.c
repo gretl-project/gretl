@@ -730,6 +730,97 @@ int gretl_matrix_mpi_bcast (gretl_matrix **pm, int root)
     return err;
 }
 
+#if 0
+
+static int gretl_bundle_mpi_bcast2 (gretl_bundle **pb, int root)
+{
+    gretl_bundle *b = NULL;
+    gretl_array *keys = NULL;
+    char *key;
+    void *data;
+    char buf[128];
+    int size[3];
+    int bytes = 0;
+    int id, np, nk;
+    int i, err = 0;
+
+    mpi_comm_rank(mpi_comm_world, &id);
+    mpi_comm_size(mpi_comm_world, &np);
+
+    if (root < 0 || root >= np) {
+	return invalid_rank_error(root);
+    }
+
+    if (id == root) {
+	b = *pb;
+	nk = gretl_bundle_get_n_keys(b);
+	keys = gretl_bundle_get_keys(b, &err);
+	if (err) {
+	    return err;
+	}
+    }
+
+    /* broadcast the number of keys first */
+    err = mpi_bcast(&nk, 1, mpi_int, root, mpi_comm_world);
+
+    if (!err && id != root) {
+	/* everyone but root needs to start a bundle */
+	b = gretl_bundle_new();
+	if (b == NULL) {
+	    return E_ALLOC;
+	}
+    }
+
+    for (i=0; i<nk && !err; i++) {
+	int msglen;
+
+	if (id == root) {
+	    const char *typename;
+
+	    size[0] = size[1] = size[2] = 0;
+	    key = keys[i];
+	    data = gretl_bundle_get_data(b, key, &type, &size[0], &err);
+	    if (!err) {
+		typename = gretl_type_get_name(type);
+		sprintf(buf, "%s %s %d %d %d", typename, key,
+			size[0], size[1], size[2]);
+		msglen = strlen(buf) + 1;
+	    }
+	}
+	if (!err) {
+	    err = mpi_bcast(&msglen, 1, mpi_int, root, mpi_comm_world);
+	}
+	if (!err) {
+	    err = mpi_bcast(buf, msglen, mpi_byte, root, mpi_comm_world);
+	}
+	if (!err && id != root) {
+	    nf = sscanf(buf, "%s %s %d %d %d", key, typename,
+			&size[0], &size[1], &size[2]);
+	    if (nf != 5) {
+		err = E_DATA;
+	    }
+	    printf("not-root: got '%s'\n", buf);
+	}
+	if (0 && !err) {
+	    err = mpi_bcast(data, , , root, mpi_comm_world);
+	}
+	if (0 && !err && id != root) {
+	    /* set, or donate? */
+	    err = gretl_bundle_set_data(b, key, data, type, size);
+	}
+    }
+
+    mpi_barrier(mpi_comm_world);
+
+    if (err) {
+	gretl_mpi_error(&err);
+    }
+
+    return err;
+}
+
+#endif
+
 static int gretl_bundle_mpi_bcast (gretl_bundle **pb, int root)
 {
     gretl_bundle *b = NULL;

@@ -2268,6 +2268,7 @@ char *gretl_bundle_write_to_buffer (gretl_bundle *b,
 	gretl_xml_header(prn);
 	gretl_bundle_serialize(b, NULL, prn);
 	buf = gretl_print_steal_buffer(prn);
+	*bytes = strlen(buf) + 1;
 	gretl_pop_c_numeric_locale();
 	gretl_print_destroy(prn);
     }
