@@ -107,7 +107,9 @@ static int (*mpi_probe) (int, int, MPI_Comm, MPI_Status *);
 static double (*mpi_wtime) (void);
 static int (*mpi_initialized) (int *);
 
-static int gretl_matrix_mpi_bcast (gretl_matrix **pm, int id, int root);
+static int gretl_matrix_bcast (gretl_matrix **pm, int id, int root);
+static int gretl_array_bcast (gretl_array **pa, int id, int root);
+static int gretl_matrix_mpi_send (const gretl_matrix *m, int dest);
 
 static void *mpiget (void *handle, const char *name, int *err)
 {
@@ -406,7 +408,7 @@ static int invalid_rank_error (int r)
     return E_DATA;
 }
 
-static int gretl_mpi_comm_check (int root, int *idp, int *npp)
+static int gretl_comm_check (int root, int *idp, int *npp)
 {
     int np;
 
@@ -446,7 +448,7 @@ int gretl_matrix_mpi_reduce (gretl_matrix *sm,
 	return E_DATA;
     }
 
-    err = gretl_mpi_comm_check(root, &id, &np);
+    err = gretl_comm_check(root, &id, &np);
     if (err) {
 	return err;
     }
@@ -545,7 +547,7 @@ int gretl_matrix_mpi_reduce (gretl_matrix *sm,
     }
 
     if (!err && (opt & OPT_A)) {
-	err = gretl_matrix_mpi_bcast(pm, id, root);
+	err = gretl_matrix_bcast(pm, id, root);
     }
 
     return err;
@@ -569,7 +571,7 @@ int gretl_array_mpi_reduce (gretl_array *sa,
 	return E_TYPES;
     }
 
-    err = gretl_mpi_comm_check(root, &id, &np);
+    err = gretl_comm_check(root, &id, &np);
     if (err) {
 	return err;
     }
@@ -685,7 +687,7 @@ int gretl_scalar_mpi_reduce (double x,
     return ret;
 }
 
-static int gretl_matrix_mpi_bcast (gretl_matrix **pm, int id, int root)
+static int gretl_matrix_bcast (gretl_matrix **pm, int id, int root)
 {
     gretl_matrix *m = NULL;
     int rc[3];
@@ -741,7 +743,40 @@ static int gretl_matrix_mpi_bcast (gretl_matrix **pm, int id, int root)
     return err;
 }
 
-static int gretl_list_mpi_bcast (int **plist, int id, int root)
+static int gretl_series_bcast (double **px, int len,
+			       int id, int root)
+{
+    double *x = NULL;
+    int err = 0;
+
+    if (id == root) {
+	x = *px;
+	if (x == NULL) {
+	    return E_DATA;
+	}
+    } else {
+	/* everyone else needs to allocate space */
+	x = malloc(len * sizeof *x);
+	if (x == NULL) {
+	    return E_ALLOC;
+	}
+    }
+
+    if (!err) {
+	/* broadcast the series */
+	err = mpi_bcast(x, len, mpi_double, root, mpi_comm_world);
+    }
+
+    if (err) {
+	gretl_mpi_error(&err);
+    } else if (id != root) {
+	*px = x;
+    }
+
+    return err;
+}
+
+static int gretl_list_bcast (int **plist, int id, int root)
 {
     int *list = NULL;
     int len = 0;
@@ -772,18 +807,16 @@ static int gretl_list_mpi_bcast (int **plist, int id, int root)
 	err = mpi_bcast(list, len + 1, mpi_int, root, mpi_comm_world);
     }
 
-    if (!err && id != root) {
-	*plist = list;
-    }
-
     if (err) {
 	gretl_mpi_error(&err);
+    } else if (id != root) {
+	*plist = list;
     }
 
     return err;
 }
 
-static int gretl_string_mpi_bcast (char **pbuf, int id, int root)
+static int gretl_string_bcast (char **pbuf, int id, int root)
 {
     char *buf = NULL;
     int bytes = 0;
@@ -814,18 +847,16 @@ static int gretl_string_mpi_bcast (char **pbuf, int id, int root)
 	err = mpi_bcast(buf, bytes, mpi_byte, root, mpi_comm_world);
     }
 
-    if (!err && id != root) {
-	*pbuf = buf;
-    }
-
     if (err) {
 	gretl_mpi_error(&err);
+    } else if (id != root) {
+	*pbuf = buf;
     }
 
     return err;
 }
 
-static int gretl_scalar_mpi_bcast (double *px, int root)
+static int gretl_scalar_bcast (double *px, int root)
 {
     int err;
 
@@ -838,7 +869,7 @@ static int gretl_scalar_mpi_bcast (double *px, int root)
     return err;
 }
 
-static int gretl_int_mpi_bcast (int *pi, int root)
+static int gretl_int_bcast (int *pi, int root)
 {
     int err;
 
@@ -851,7 +882,7 @@ static int gretl_int_mpi_bcast (int *pi, int root)
     return err;
 }
 
-static int gretl_unsigned_mpi_bcast (unsigned int *pu, int root)
+static int gretl_unsigned_bcast (unsigned int *pu, int root)
 {
     int err;
 
@@ -864,28 +895,44 @@ static int gretl_unsigned_mpi_bcast (unsigned int *pu, int root)
     return err;
 }
 
-#define ALT_BUNCAST 0 /* not yet */
+#define NEW_BUNCAST 1 /* kinda experimental */
 
-#if ALT_BUNCAST
+#if NEW_BUNCAST
+
+/* Compose a message indicating the type (and size, if
+   applicable) of a bundle member to be passed via MPI.
+*/
 
 static int compose_msgbuf (char *buf, GretlType type,
 			   const char *key, int sz,
 			   void *data)
 {
-    int err = 0;
+    int n, err = 0;
 
     if (type == GRETL_TYPE_DOUBLE) {
-	int n = sizeof(double);
-
+	n = sizeof(double);
 	sprintf(buf, "%d %s %d", type, key, n);
+    } else if (type == GRETL_TYPE_INT) {
+	n = sizeof(int);
+	sprintf(buf, "%d %s %d", type, key, n);
+    } else if (type == GRETL_TYPE_UNSIGNED) {
+	n = sizeof(unsigned int);
+	sprintf(buf, "%d %s %d", type, key, n);
+    } else if (type == GRETL_TYPE_SERIES) {
+	sprintf(buf, "%d %s %d", type, key, sz);
     } else if (type == GRETL_TYPE_STRING) {
 	char *s = data;
-	int n = strlen(s) + 1;
 
+	n = strlen(s) + 1;
 	sprintf(buf, "%d %s %d", type, key, n);
-    } else if (type == GRETL_TYPE_MATRIX) {
-	sprintf(buf, "%d %s 0", type, key);
-    } else if (type == GRETL_TYPE_BUNDLE) {
+    } else if (type == GRETL_TYPE_LIST) {
+	int *list = data;
+
+	n = (list[0] + 1) * sizeof(int);
+	sprintf(buf, "%d %s %d", type, key, n);
+    } else if (type == GRETL_TYPE_MATRIX ||
+	       type == GRETL_TYPE_BUNDLE ||
+	       type == GRETL_TYPE_ARRAY) {
 	sprintf(buf, "%d %s 0", type, key);
     } else {
 	err = E_DATA;
@@ -893,37 +940,36 @@ static int compose_msgbuf (char *buf, GretlType type,
 
     return err;
 }
+
+/* Parse the information sent in @buf by root, regarding a
+   bundle member.
+*/
 
 static int parse_msgbuf (int id, const char *buf,
 			 char *key, GretlType *type,
 			 int *size)
 {
-    int t, nf, err = 0;
+    int t;
 
-    nf = sscanf(buf, "%d %s %d", &t, key, size);
-    if (nf != 3) {
-	err = E_DATA;
+    if (sscanf(buf, "%d %s %d", &t, key, size) != 3) {
+	return E_DATA;
     } else {
 	*type = t;
-	if (1) {
-	    const char *typename = gretl_type_get_name(t);
-
-	    printf("id %d: got type %s, key '%s', size %d\n",
-		   id, typename, key, *size);
-	}
+	return 0;
     }
-
-    return err;
 }
 
-static int gretl_bundle_mpi_bcast2 (gretl_bundle **pb,
-				    int id, int root)
+static int gretl_bundle_bcast (gretl_bundle **pb,
+			       int id, int root)
 {
     gretl_bundle *b = NULL;
     gretl_matrix *m = NULL;
+    gretl_array *a = NULL;
+    gretl_bundle *bsub = NULL;
     gretl_array *keys = NULL;
-    char key[32];
+    double *x = NULL;
     GretlType type;
+    char key[32];
     void *data;
     char msgbuf[128];
     int msglen;
@@ -959,6 +1005,9 @@ static int gretl_bundle_mpi_bcast2 (gretl_bundle **pb,
 	size = 0;
 	data = NULL;
 	m = NULL;
+	a = NULL;
+	bsub = NULL;
+	x = NULL;
 
 	if (id == root) {
 	    const char *rkey = gretl_array_get_data(keys, i);
@@ -969,6 +1018,12 @@ static int gretl_bundle_mpi_bcast2 (gretl_bundle **pb,
 		compose_msgbuf(msgbuf, type, rkey, sz, data);
 		if (type == GRETL_TYPE_MATRIX) {
 		    m = (gretl_matrix *) data;
+		} else if (type == GRETL_TYPE_ARRAY) {
+		    a = (gretl_array *) data;
+		} else if (type == GRETL_TYPE_BUNDLE) {
+		    bsub = (gretl_bundle *) data;
+		} else if (type == GRETL_TYPE_SERIES) {
+		    x = (double *) data;
 		}
 	    }
 	}
@@ -983,11 +1038,27 @@ static int gretl_bundle_mpi_bcast2 (gretl_bundle **pb,
 	    break;
 	}
 	if (type == GRETL_TYPE_MATRIX) {
-	    err = gretl_matrix_mpi_bcast(&m, id, root);
+	    err = gretl_matrix_bcast(&m, id, root);
 	    if (!err && id != root) {
 		err = gretl_bundle_donate_data(b, key, m, type, 0);
 	    }
+	} else if (type == GRETL_TYPE_ARRAY) {
+	    err = gretl_array_bcast(&a, id, root);
+	    if (!err && id != root) {
+		err = gretl_bundle_donate_data(b, key, a, type, 0);
+	    }
+	} else if (type == GRETL_TYPE_BUNDLE) {
+	    err = gretl_bundle_bcast(&bsub, id, root);
+	    if (!err && id != root) {
+		err = gretl_bundle_donate_data(b, key, bsub, type, 0);
+	    }
+	} else if (type == GRETL_TYPE_SERIES) {
+	    err = gretl_series_bcast(&x, size, id, root);
+	    if (!err && id != root) {
+		err = gretl_bundle_donate_data(b, key, x, type, size);
+	    }
 	} else {
+	    /* scalar, string or list */
 	    if (id != root) {
 		data = calloc(size, 1);
 		if (data == NULL) {
@@ -996,9 +1067,12 @@ static int gretl_bundle_mpi_bcast2 (gretl_bundle **pb,
 	    }
 	    err = mpi_bcast(data, size, mpi_byte, root, mpi_comm_world);
 	    if (!err && id != root && data != NULL) {
-		/* set, or donate? */
-		err = gretl_bundle_set_data(b, key, data, type, 0);
-		free(data);
+		if (gretl_is_scalar_type(type)) {
+		    err = gretl_bundle_set_data(b, key, data, type, 0);
+		    free(data);
+		} else {
+		    err = gretl_bundle_donate_data(b, key, data, type, 0);
+		}
 	    }
 	}
     }
@@ -1014,9 +1088,9 @@ static int gretl_bundle_mpi_bcast2 (gretl_bundle **pb,
     return err;
 }
 
-#else /* !ALT_BUNCAST */
+#else /* !NEW_BUNCAST */
 
-static int gretl_bundle_mpi_bcast (gretl_bundle **pb, int id, int root)
+static int gretl_bundle_bcast (gretl_bundle **pb, int id, int root)
 {
     gretl_bundle *b = NULL;
     char *buf = NULL;
@@ -1068,9 +1142,9 @@ static int gretl_bundle_mpi_bcast (gretl_bundle **pb, int id, int root)
     return err;
 }
 
-#endif
+#endif /* NEW_BUNCAST or not */
 
-static int gretl_array_mpi_bcast (gretl_array **pa, int id, int root)
+static int gretl_array_bcast (gretl_array **pa, int id, int root)
 {
     gretl_array *a = NULL;
     GretlType type = 0;
@@ -1082,10 +1156,6 @@ static int gretl_array_mpi_bcast (gretl_array **pa, int id, int root)
 	a = *pa;
 	st[0] = nelem = gretl_array_get_length(a);
 	st[1] = type = gretl_array_get_type(a);
-	if (type != GRETL_TYPE_MATRICES &&
-	    type != GRETL_TYPE_STRINGS) {
-	    return E_TYPES;
-	}
     }
 
     /* broadcast the array size and type */
@@ -1106,17 +1176,32 @@ static int gretl_array_mpi_bcast (gretl_array **pa, int id, int root)
 	}
 	ptr = &data;
 	if (type == GRETL_TYPE_MATRICES) {
-	    err = gretl_matrix_mpi_bcast(ptr, id, root);
+	    err = gretl_matrix_bcast(ptr, id, root);
 	    if (id != root) {
 		data = *(gretl_matrix **) ptr;
 	    }
 	} else if (type == GRETL_TYPE_STRINGS) {
-	    err = gretl_string_mpi_bcast(ptr, id, root);
+	    err = gretl_string_bcast(ptr, id, root);
 	    if (id != root) {
 		data = *(char **) ptr;
 	    }
+	} else if (type == GRETL_TYPE_BUNDLES) {
+	    err = gretl_bundle_bcast(ptr, id, root);
+	    if (id != root) {
+		data = *(gretl_bundle **) ptr;
+	    }
+	} else if (type == GRETL_TYPE_LISTS) {
+	    err = gretl_list_bcast(ptr, id, root);
+	    if (id != root) {
+		data = *(int **) ptr;
+	    }
+	} else if (type == GRETL_TYPE_ARRAYS) {
+	    err = gretl_array_bcast(ptr, id, root);
+	    if (id != root) {
+		data = *(gretl_array **) ptr;
+	    }
 	} else {
-	    /* not handled yet */
+	    /* ?? */
 	    err = E_TYPES;
 	}
 	if (!err && id != root) {
@@ -1158,37 +1243,33 @@ int gretl_mpi_bcast (void *p, GretlType type, int root)
 {
     int id, err;
 
-    err = gretl_mpi_comm_check(root, &id, NULL);
+    err = gretl_comm_check(root, &id, NULL);
     if (err) {
 	return err;
     }
 
     if (type == GRETL_TYPE_DOUBLE) {
-	return gretl_scalar_mpi_bcast((double *) p, root);
+	return gretl_scalar_bcast((double *) p, root);
     } else if (type == GRETL_TYPE_INT) {
-	return gretl_int_mpi_bcast((int *) p, root);
+	return gretl_int_bcast((int *) p, root);
     } else if (type == GRETL_TYPE_UNSIGNED) {
-	return gretl_unsigned_mpi_bcast((unsigned int *) p, root);
+	return gretl_unsigned_bcast((unsigned int *) p, root);
     } else if (type == GRETL_TYPE_MATRIX) {
-	return gretl_matrix_mpi_bcast((gretl_matrix **) p, id, root);
+	return gretl_matrix_bcast((gretl_matrix **) p, id, root);
     } else if (type == GRETL_TYPE_BUNDLE) {
-#if ALT_BUNCAST
-	return gretl_bundle_mpi_bcast2((gretl_bundle **) p, id, root);
-#else
-	return gretl_bundle_mpi_bcast((gretl_bundle **) p, id, root);
-#endif
+	return gretl_bundle_bcast((gretl_bundle **) p, id, root);
     } else if (type == GRETL_TYPE_ARRAY) {
-	return gretl_array_mpi_bcast((gretl_array **) p, id, root);
+	return gretl_array_bcast((gretl_array **) p, id, root);
     } else if (type == GRETL_TYPE_STRING) {
-	return gretl_string_mpi_bcast((char **) p, id, root);
+	return gretl_string_bcast((char **) p, id, root);
     } else if (type == GRETL_TYPE_LIST) {
-	return gretl_list_mpi_bcast((int **) p, id, root);
+	return gretl_list_bcast((int **) p, id, root);
     } else {
 	return E_DATA;
     }
 }
 
-int gretl_matrix_mpi_send (const gretl_matrix *m, int dest)
+static int gretl_matrix_mpi_send (const gretl_matrix *m, int dest)
 {
     int rc[3] = {m->rows, m->cols, m->is_complex};
     int err;

@@ -326,6 +326,14 @@ int gretl_is_array_type (GretlType type)
 	type == GRETL_TYPE_ARRAYS;
 }
 
+int gretl_is_scalar_type (GretlType type)
+{
+    return type == GRETL_TYPE_BOOL ||
+	type == GRETL_TYPE_INT ||
+	type == GRETL_TYPE_UNSIGNED ||
+	type == GRETL_TYPE_DOUBLE;
+}
+
 void gretl_typemap_cleanup (void)
 {
     gretl_get_gen_type(NULL);

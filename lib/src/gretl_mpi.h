@@ -46,8 +46,6 @@ int gretl_mpi_bcast (void *p, GretlType type, int root);
 
 int gretl_mpi_send (void *p, GretlType type, int dest);
 
-int gretl_matrix_mpi_send (const gretl_matrix *m, int dest);
-
 gretl_matrix *gretl_matrix_mpi_receive (int source, 
 					int *err);
 

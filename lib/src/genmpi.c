@@ -157,7 +157,7 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 		/* bundle: only broadcast OK */
 		type = GRETL_TYPE_BUNDLE;
 	    } else if (uarray_node(l) && (f == F_REDUCE || f == F_BCAST)) {
-		/* array: reduce OK, bcast partial */
+		/* array: reduce and broadcast OK */
 		type = GRETL_TYPE_ARRAY;
 	    } else if (uscalar_node(l) && f != F_SCATTER) {
 		/* scalar: all ops OK apart from scatter */
