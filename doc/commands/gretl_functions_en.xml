@@ -513,6 +513,27 @@
       </description>
     </function>
 
+    <function name="$mpirank" section="access" output="int">
+      <description>
+	<para>
+	  If gretl is built with MPI support, and the program is
+	  running in MPI mode, returns the 0-based <quote>rank</quote>
+	  or ID number of the current process. Otherwise returns
+	  &minus;1.
+	</para>
+      </description>
+    </function>
+
+    <function name="$mpisize" section="access" output="int">
+      <description>
+	<para>
+	  If gretl is built with MPI support, and the program is
+	  running in MPI mode, returns the number of MPI processes
+	  currently running. Otherwise returns 0.
+	</para>
+      </description>
+    </function>
+
     <function name="$ncoeff" section="access" output="int">
       <description>
 	<para>
@@ -7175,6 +7196,207 @@
 	  argument; in that case the <argname>control</argname>
 	  argument is ignored.
 	</para>
+      </description>
+    </function>
+
+    <function name="mpiallred" section="mpi" output="int">
+      <fnargs>
+	<fnarg type="objectref">&amp;object</fnarg>
+	<fnarg type="string">op</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Available only when gretl is in MPI mode. Must be called by
+	  all processes. This function works like <fncref
+	  targ="mpireduce"/> except that all processes, not just the
+	  root process, get a copy of the <quote>reduced</quote>
+	  object in place of the original. It is therefore equivalent
+	  to <lit>mpireduce</lit> followed by a call to <fncref
+	  targ="mpibcast"/>, but more efficient.
+	</para>
+      </description>
+    </function>
+
+    <function name="mpibarrier" section="mpi" output="int">
+      <description>
+	<para>
+	  Available only when gretl is in MPI mode. Takes no
+	  arguments. Enforces synchronization of MPI processes: no
+	  process can continue beyond the barrier until it has been
+	  reached by all.
+	</para>
+	<code>
+	  # nobody gets past until everyone gets here
+	  mpibarrier()
+	</code>
+      </description>
+    </function>
+
+    <function name="mpibcast" section="mpi" output="int">
+      <fnargs>
+	<fnarg type="objectref">&amp;object</fnarg>
+	<fnarg type="int" optional="true">root</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Available onlywhen gretl is in MPI mode. Must be called by
+	  all processes. Broadcasts the <argname>object</argname>
+	  argument, which must be given in pointer form, to all
+	  processes. The object in question must be a named matrix,
+	  bundle, array or scalar, declared in all processes prior to
+	  the broadcast. No process can continue beyond a call to
+	  <lit>mpibcast</lit> until all processes have successfully
+	  executed it.
+	</para>
+	<para>
+	  By default <quote>root</quote>, the source of the broadcast,
+	  is the MPI process with rank 0, but this can be adjusted
+	  via the optional second argument, which must be an integer
+	  from 0 to the number of MPI processes minus 1.
+	</para>
+	<para>
+	  A simple example follows. On successful completion every
+	  process will have a copy of the matrix <lit>X</lit> defined
+	  at rank 0.
+	</para>
+	<code>
+	  matrix X
+	  if $mpirank == 0
+	      X = mnormal(T, k)
+	  endif
+	  mpibcast(&amp;X)
+	</code>
+      </description>
+    </function>
+
+    <function name="mpirecv" section="mpi" output="object">
+      <fnargs>
+	<fnarg type="int">src</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Available only when gretl is in MPI mode. See <fncref
+	  targ="mpisend"/>, with which <lit>mpirecv</lit> must always
+	  be paired, for an explanation. The <argname>src</argname>
+	  argument specifies the rank of the process from which the
+	  object is to be received, in the range 0 to the number of
+	  MPI processes minus 1.
+	</para>
+      </description>
+    </function>
+
+    <function name="mpireduce" section="mpi" output="int">
+      <fnargs>
+	<fnarg type="objectref">&amp;object</fnarg>
+	<fnarg type="string">op</fnarg>
+	<fnarg type="int" optional="true">root</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Available when gretl is in MPI mode. Must be called by all
+	  processes. This function gathers objects (scalars or
+	  matrices only) of a specified name, given in pointer form,
+	  from all processes and <quote>reduces</quote> them to a
+	  single object at the root node.
+	</para>
+	<para>
+	  The <lit>op</lit> argument specifies the reduction operation
+	  or method.  The methods supported for scalars are
+	  <lit>sum</lit>, <lit>prod</lit> (product), <lit>max</lit>
+	  and <lit>min</lit>. For matrices the methods are
+	  <lit>sum</lit>, <lit>prod</lit> (Hadamard product),
+	  <lit>hcat</lit> (horizontal concatenation) and
+	  <lit>vcat</lit> (vertical concatenation).
+	</para>
+	<para>
+	  By default <quote>root</quote>, the target of the reduction,
+	  is the MPI process with rank 0, but this can be adjusted
+	  via the optional third argument, which must be an integer
+	  from 0 to the number of MPI processes minus 1.
+	</para>
+	<para>
+	  An example follows. On successful completion of the above,
+	  the root process will have a matrix <lit>X</lit> which is
+	  the sum of the matrices <lit>X</lit> at all processes.
+	</para>
+	<code>
+	  matrix X
+	  X = mnormal(T, k)
+	  mpireduce(&amp;X, sum)
+	</code>
+      </description>
+    </function>
+
+    <function name="mpiscatter" section="mpi" output="int">
+      <fnargs>
+	<fnarg type="matrixref">&amp;M</fnarg>
+	<fnarg type="string">op</fnarg>
+	<fnarg type="int" optional="true">root</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Available only when gretl is in MPI mode. Must be called by
+	  all processes. This function distributes chunks of a matrix
+	  in the root process to all processes. The matrix must be
+	  declared in all processes prior to the call to
+	  <lit>mpiscatter</lit>, and must be given in pointer form.
+	</para>
+	<para>
+	  The <lit>op</lit> argument must be either <lit>byrows</lit>
+	  or <lit>bycols</lit>. Let <math>q</math> denote the quotient
+	  of the number of rows in the matrix to be scattered and the
+	  number of processes. In the <lit>byrows</lit> case root
+	  sends the first <math>q</math> rows to process 0, the next
+	  <math>q</math> to process 1, and so on. If there is a
+	  remainder from the division of rows it is added to the last
+	  allotment. The <lit>bycols</lit> case is exactly analogous
+	  but splitting of the matrix is by columns.
+	</para>
+	<para>
+	  An example follows. If there are 4 processes, each one
+	  (including root) will each get a <by r="2500" c="10"/> share
+	  of the original <lit>X</lit> as it existed in the root
+	  process. If you want to preserve the full matrix in the root
+	  process, it is necessary to make a copy of it before calling
+	  <lit>mpiscatter.</lit>
+	</para>
+	<code>
+	  matrix X
+	  if $mpirank == 0
+	      X = mnormal(10000, 10)
+	  endif
+	  mpiscatter(&amp;X, byrows)
+	</code>
+      </description>
+    </function>
+
+    <function name="mpisend" section="mpi" output="int">
+      <fnargs>
+	<fnarg type="object">object</fnarg>
+	<fnarg type="int">dest</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Available only when gretl is in MPI mode. Sends the named
+	  object (which must be a matrix, bundle, array or scalar)
+	  from the current process to the one identified by the
+	  integer <argname>dest</argname> (from 0 to the number of MPI
+	  processes minus 1).
+	</para>
+	<para>
+	  A call to this function must always by paired with a call to
+	  <fncref targ="mpirecv"/> in the <argname>dest</argname>
+	  process, as in the following example which sends a matrix
+	  from rank 2 to rank 3.
+	</para>
+	<code>
+	  if $mpirank == 2
+	      matrix C = cholesky(A)
+	      mpisend(C, 3)
+	  elif $mpirank == 3
+	      matrix C = mpirecv(2)
+	  endif
+	</code>
       </description>
     </function>
 

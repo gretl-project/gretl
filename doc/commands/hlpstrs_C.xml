@@ -44,10 +44,12 @@
  <gentext key="symmat"        text="MAT"/>
  <gentext key="pdmat"         text="MAT"/>
  <gentext key="cmatrix"       text="MAT"/>
+ <gentext key="object"        text="OBJ"/>
  <gentext key="matrixref"     text="reference to matrix"/>
  <gentext key="seriesref"     text="reference to series"/>
  <gentext key="bundleref"     text="reference to bundle"/>
  <gentext key="scalarref"     text="reference to scalar"/>
+ <gentext key="scalarref"     text="reference to object"/>
  <gentext key="cvec"          text="MAT"/>
  <gentext key="rvec"          text="MAT"/>
  <gentext key="list"          text="LIST"/>

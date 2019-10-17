@@ -44,9 +44,9 @@
    targ    CDATA #IMPLIED
    section (data-utils | filters | linalg | math | matbuild | 
             matshape | numerical | probdist | stats | sspace | strings | 
-            transforms | access | calendar | midas | complex) "math"
+            transforms | access | calendar | midas | complex | mpi) "math"
    output  (scalar | series | matrix | smatrix | vector | string | seebelow |
-            rvec | cvec | list | asinput | scalar-or-series | int |
+            rvec | cvec | list | asinput | scalar-or-series | int | object |
             scalar-or-matrix | matrix-or-bundle | bundle | cmatrix |
 	    strings | matrices | string-or-strings | list-or-mat) "series"
    altout  (none | scalar | series | rvec | matrix | list) "none"
@@ -62,13 +62,14 @@
     type (scalar | series | vector | rvec | cvec | matrix | smatrix |
 	  symmat | matrixref | seriesref | bundleref | anyfloat |
 	  scalar-or-series | series-or-vec | series-or-mat | list |
-	  coeffname | string | char | sslist | series-or-list | smlist
-	  | pscalar | seebelow | fncall | anyfloat-or-list |
+	  coeffname | string | char | sslist | series-or-list | smlist |
+	  pscalar | seebelow | fncall | anyfloat-or-list |
 	  list-or-string | listetc | scalar-or-vec | int-or-list |
 	  scalar-or-matrix | int | bool | pdmat | strings |
 	  strings-or-list | bundle | series-list-or-mat | cmatrix |
 	  string-or-strings | series-vec-or-strings | scalarref |
-	  matrices-or-strings | varargs | int-or-string) "series"
+	  matrices-or-strings | varargs | int-or-string | object |
+	  objectref) "series"
     optional  (true | false) "false"
     conditional (true | false) "false"
 >

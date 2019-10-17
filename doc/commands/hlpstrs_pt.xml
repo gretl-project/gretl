@@ -44,10 +44,12 @@
  <gentext key="symmat"        text="matriz simétrica"/>
  <gentext key="pdmat"         text="matriz positiva definida"/>
  <gentext key="cmatrix"       text="matriz complexa"/>
+ <gentext key="object"        text="objeto"/>
  <gentext key="matrixref"     text="referência a matriz"/>
  <gentext key="seriesref"     text="referência a série"/>
  <gentext key="bundleref"     text="referência a lote"/>
  <gentext key="scalarref"     text="referência a escalar"/>
+ <gentext key="objectref"     text="referência ao objeto"/>
  <gentext key="cvec"          text="vetor coluna"/>
  <gentext key="rvec"          text="vetor linha"/>
  <gentext key="list"          text="lista"/>

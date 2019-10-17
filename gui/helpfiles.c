@@ -349,6 +349,8 @@ static const char *real_funcs_heading (const char *s)
 	return _("MIDAS");
     } else if (!strcmp(s, "complex")) {
 	return _("Complex numbers");
+    } else if (!strcmp(s, "mpi")) {
+	return _("MPI");
     } else {
 	return "??";
     }
