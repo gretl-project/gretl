@@ -2105,7 +2105,7 @@ static int cross_validate_worker_task (sv_data *data,
 
     /* send results back to root */
     if (!err) {
-	err = gretl_mpi_send(task, GRETL_TYPE_MATRIX, 0);
+	err = gretl_matrix_mpi_send(task, 0);
     }
 
     /* local clean up */
@@ -2301,7 +2301,7 @@ static int carve_up_xvalidation (sv_data *data,
 
     /* send matrices to workers, keeping the last for root */
     for (i=0; i<nproc-1; i++) {
-	gretl_mpi_send(M[i], GRETL_TYPE_MATRIX, i+1);
+	gretl_matrix_mpi_send(M[i], i+1);
 	gretl_matrix_free(M[i]);
 	M[i] = NULL;
     }
