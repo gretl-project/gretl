@@ -1275,7 +1275,9 @@ int gretl_mpi_bcast (void *p, GretlType type, int root)
     }
 }
 
-/* this "send" function is public, for convenience of callers */
+/* this "send" function is public, for convenience of callers
+   such as the svm plugin
+*/
 
 int gretl_matrix_mpi_send (const gretl_matrix *m, int dest)
 {
