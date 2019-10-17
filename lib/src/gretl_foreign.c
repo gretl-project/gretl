@@ -31,7 +31,7 @@
 # ifdef G_OS_WIN32
 #  define MPI_PIPES 0 /* doesn't work right! */
 # else
-#  define MPI_PIPES 1 /* somewhat experimental */
+#  define MPI_PIPES 0 /* somewhat experimental */
 # endif
 #endif
 
@@ -699,7 +699,7 @@ static int lib_run_prog_sync (char **argv, gretlopt opt,
     return err;
 }
 
-#if defined(HAVE_MPI) && MPI_PIPES
+#if MPI_PIPES
 
 static void mpi_childwatch (GPid pid, gint status, gpointer p)
 {
@@ -772,7 +772,7 @@ static int run_mpi_with_pipes (char **argv, gretlopt opt, PRN *prn)
 	    memset(buf, 0, sizeof buf);
 	    got_all = relay_mpi_output(sout, buf, sizeof buf, gui, prn);
 	    if (!got_all) {
-		g_usleep(250000); /* 0.25 seconds */
+		g_usleep(100000); /* 0.10 seconds */
 	    }
 	    g_main_context_iteration(NULL, FALSE);
 	}
