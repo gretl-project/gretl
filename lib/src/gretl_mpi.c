@@ -79,7 +79,7 @@ enum {
     TAG_SCALAR_VAL,
     TAG_BUNDLE_BYTES,
     TAG_BUNDLE_XML,
-    TAG_INTEGER_VAL,
+    TAG_INT_VAL,
     TAG_ARRAY_LEN,
     TAG_SERIES_LEN,
     TAG_SERIES_VAL,
@@ -1360,7 +1360,7 @@ static int gretl_int_send (int *pi, int dest)
 {
     int err;
 
-    err = mpi_send(pi, 1, mpi_int, dest, TAG_INTEGER_VAL,
+    err = mpi_send(pi, 1, mpi_int, dest, TAG_INT_VAL,
 		   mpi_comm_world);
 
     if (err) {
@@ -1546,7 +1546,7 @@ static double gretl_int_receive (int source, int *err)
 {
     int i = 0;
 
-    *err = mpi_recv(&i, 1, mpi_int, source, TAG_INTEGER_VAL,
+    *err = mpi_recv(&i, 1, mpi_int, source, TAG_INT_VAL,
 		    mpi_comm_world, MPI_STATUS_IGNORE);
     if (*err) {
 	gretl_mpi_error(err);
@@ -1614,7 +1614,7 @@ int gretl_mpi_receive (int source,
 	double *px = *(double **) ptr;
 	*px = gretl_scalar_receive(source, &err);
 	*type = GRETL_TYPE_DOUBLE;
-    } else if  (status.MPI_TAG == TAG_INTEGER_VAL) {
+    } else if  (status.MPI_TAG == TAG_INT_VAL) {
 	int *pi = *(int **) ptr;
 	*pi = gretl_int_receive(source, &err);
 	*type = GRETL_TYPE_INT;

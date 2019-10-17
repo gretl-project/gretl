@@ -201,8 +201,8 @@ static NODE *mpi_transfer_node (NODE *l, NODE *r, NODE *r2,
 	    p->err = ret->v.xval = gretl_mpi_send(sendp, type, id);
 	}
     } else if (f == F_MPI_RECV) {
-	char c;
-	void *ptr = &c;
+	double x = 0;
+	void *ptr = &x;
 
 	p->err = gretl_mpi_receive(id, &type, &ptr);
 
