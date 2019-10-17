@@ -1415,11 +1415,8 @@ static int gretl_array_send (gretl_array *a, int dest)
  * @type: the type of the object.
  * @dest: the MPI rank of the destination.
  *
- * Sends the value referenced by @p to the MPI process with
- * rank @dest. At present @type must be GRETL_TYPE_MATRIX,
- * GRETL_TYPE_DOUBLE, GRETL_TYPE_INT or GRETL_TYPE_BUNDLE.
- * The @p argument should be a pointer of matching type:
- * (*gretl_matrix), (*double), (*int) or (*gretl_bundle).
+ * Sends the value referenced by @p, of gretl type @type, to the
+ * MPI process with rank @dest.
  *
  * Returns: 0 on successful completion, non-zero code otherwise.
  **/
@@ -1625,10 +1622,12 @@ int gretl_mpi_receive (int source,
 	*pm = gretl_matrix_mpi_receive(source, &err);
 	*type = GRETL_TYPE_MATRIX;
     } else if (status.MPI_TAG == TAG_BUNDLE_SIZE) {
+	/* new bundle send/receive form */
 	gretl_bundle **pb = (gretl_bundle **) ptr;
 	*pb = gretl_bundle_receive(source, &err);
 	*type = GRETL_TYPE_BUNDLE;
     } else if (status.MPI_TAG == TAG_BUNDLE_BYTES) {
+	/* old bundle send/receive form */
 	gretl_bundle **pb = (gretl_bundle **) ptr;
 	*pb = gretl_bundle_receive(source, &err);
 	*type = GRETL_TYPE_BUNDLE;
@@ -2091,7 +2090,7 @@ int gretl_mpi_initialized (void)
 /* Experimental: implementation of the functions mwrite() and
    mread() via shared memory. This implementation is invoked
    when the matrix filename has suffix ".shm". The filename
-   should not have any path component as in "mymatrix.shm".
+   should not have any path component, as in "mymatrix.shm".
 
    This is intended for fast transport between gretl or gretlcli
    and gretlmpi when an "mpi block" is used. In that context a
