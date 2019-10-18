@@ -7239,7 +7239,7 @@
       </fnargs>
       <description>
 	<para>
-	  Available onlywhen gretl is in MPI mode. Must be called by
+	  Available only when gretl is in MPI mode. Must be called by
 	  all processes. Broadcasts the <argname>object</argname>
 	  argument, which must be given in pointer form, to all
 	  processes. The object in question must be a named matrix,
@@ -7293,8 +7293,8 @@
       </fnargs>
       <description>
 	<para>
-	  Available when gretl is in MPI mode. Must be called by all
-	  processes. This function gathers objects (scalars or
+	  Available only when gretl is in MPI mode. Must be called by
+	  all processes. This function gathers objects (scalars or
 	  matrices only) of a specified name, given in pointer form,
 	  from all processes and <quote>reduces</quote> them to a
 	  single object at the root node.
@@ -7358,7 +7358,7 @@
 	  of the original <lit>X</lit> as it existed in the root
 	  process. If you want to preserve the full matrix in the root
 	  process, it is necessary to make a copy of it before calling
-	  <lit>mpiscatter.</lit>
+	  <lit>mpiscatter</lit>.
 	</para>
 	<code>
 	  matrix X
