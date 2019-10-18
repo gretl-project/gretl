@@ -216,15 +216,12 @@ int gretl_MPI_init (void)
 
 static void gretl_mpi_error (int *err)
 {
-    char msg1[BUFSIZ], msg2[BUFSIZ];
-    int len, errclass;
-    int id = 0;
+    char msg[BUFSIZ];
+    int len, id = 0;
 
     mpi_comm_rank(mpi_comm_world, &id);
-    mpi_error_class(*err, &errclass);
-    mpi_error_string(errclass, msg1, &len);
-    mpi_error_string(*err, msg2, &len);
-    gretl_errmsg_sprintf("%3d: %s %s\n", id, msg1, msg2);
+    mpi_error_string(*err, msg, &len);
+    gretl_errmsg_sprintf("%3d: %s", id, msg);
 
     *err = E_EXTERNAL;
 }
@@ -923,7 +920,7 @@ static int gretl_unsigned_bcast (unsigned int *pu, int root)
     return err;
 }
 
-#define NEW_BUNPASS 1 /* kinda experimental */
+#define NEW_BUNPASS 2 /* still somewhat experimental */
 
 #if NEW_BUNPASS
 
@@ -1728,14 +1725,21 @@ static int gretl_bundle_send (gretl_bundle *b, int dest)
     int err = 0;
 
     nk = gretl_bundle_get_n_keys(b);
-    keys = gretl_bundle_get_keys(b, &err);
-    if (err) {
-	return err;
+    if (nk > 0) {
+	keys = gretl_bundle_get_keys(b, &err);
+	if (err) {
+	    return err;
+	}
     }
 
     /* send the number of keys first */
     err = mpi_send(&nk, 1, mpi_int, dest, TAG_BUNDLE_SIZE,
 		   mpi_comm_world);
+
+    if (nk == 0) {
+	/* the bundle is empty */
+	return 0;
+    }
 
     for (i=0; i<nk && !err; i++) {
 	/* loop across bundle keys */
@@ -1798,6 +1802,11 @@ gretl_bundle *gretl_bundle_receive (int source, int *err)
 	    *err = E_ALLOC;
 	    return NULL;
 	}
+    }
+
+    if (nk == 0) {
+	/* the bundle is empty */
+	return b;
     }
 
     for (i=0; i<nk && !*err; i++) {
