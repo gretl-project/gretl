@@ -1479,7 +1479,7 @@ static void write_scalar_value (double x, const char *fmt, PRN *prn)
 {
     if (na(x)) {
 #ifdef WIN32
-	win32_pprint_nonfinite(x, prn, 1);
+	win32_pprint_nonfinite(prn, x, '\n');
 #else
 	pprintf(prn, "%g\n", x);
 #endif
@@ -1492,7 +1492,7 @@ static void serialize_scalar_value (double x, PRN *prn)
 {
     if (na(x)) {
 #ifdef WIN32
-	win32_fprint_nonfinite(x, fp);
+	win32_pprint_nonfinite(prn, x, 0);
 #else
 	pprintf(prn, "%g", x);
 #endif

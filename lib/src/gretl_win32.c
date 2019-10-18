@@ -1860,18 +1860,7 @@ double win32_sscan_nonfinite (const char *s, int *err)
     }
 }
 
-void win32_fprint_nonfinite (double x, FILE *fp)
-{
-    if (isnan(x)) {
-	fputs("nan", fp);
-    } else if (x < 0) {
-	fputs("-inf", fp);
-    } else {
-	fputs("inf", fp);
-    }
-}
-
-void win32_pprint_nonfinite (double x, PRN *prn, int final)
+void win32_pprint_nonfinite (PRN *prn, double x, char c)
 {
     if (isnan(x)) {
 	pputs(prn, "nan");
@@ -1881,7 +1870,9 @@ void win32_pprint_nonfinite (double x, PRN *prn, int final)
 	pputs(prn, "inf");
     }
 
-    pputc(prn, final ? '\n' : ' ');
+    if (c != 0) {
+	pputc(prn, c);
+    }
 }
 
 static LARGE_INTEGER timer_freq;

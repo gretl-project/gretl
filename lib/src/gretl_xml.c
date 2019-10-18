@@ -591,8 +591,7 @@ void gretl_matrix_serialize (const gretl_matrix *m,
 	    x = gretl_matrix_get(m, i, j);
 #ifdef WIN32
 	    if (na(x)) {
-		win32_fprint_nonfinite(x, fp);
-		pputs(prn, " ");
+		win32_pprint_nonfinite(prn, x, ' ');
 		continue;
 	    }
 #endif
