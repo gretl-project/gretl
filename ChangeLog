@@ -3,6 +3,7 @@ version 2019d, in progress
   carg, cmod, complex, conj, ctrans, eiggen2, fft2, Re, Im
   and schur; documentation in a new chapter of the Gretl
   User's Guide
+- MPI data transfer: enable sending of arrays
 - Enable nesting of arrays
 - New function randperm() (Matlab-compatible, permutation
   and sampling without replacement)
@@ -32,6 +33,7 @@ version 2019d, in progress
 - "system" command: support the --robust option, but only
   when estimation is via OLS
 - "var" command: enable the "omit" test
+- "set verbose": add a "comments" setting
 - "outfile" command: add --tempfile option to use an
   automatically named temporary file
 - Internals: speed up element-wise matrix calculation by
