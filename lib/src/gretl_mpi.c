@@ -382,36 +382,38 @@ static int matrix_reduce_alloc (int *rows, int *cols,
     return err;
 }
 
-static int matrix_reduce_step (gretl_matrix *targ, double *src,
+static int matrix_reduce_step (gretl_matrix *mtarg,
+			       double * restrict src,
 			       int n, Gretl_MPI_Op op,
 			       int *offset)
 {
+    double * restrict targ = mtarg->val;
     int i;
 
     if (op == GRETL_MPI_SUM) {
 	for (i=0; i<n; i++) {
-	    targ->val[i] += src[i];
+	    targ[i] += src[i];
 	}
     } else if (op == GRETL_MPI_PROD) {
 	for (i=0; i<n; i++) {
-	    targ->val[i] *= src[i];
+	    targ[i] *= src[i];
 	}
     } else if (op == GRETL_MPI_HCAT) {
 	int k = *offset;
 
 	for (i=0; i<n; i++) {
-	    targ->val[k++] = src[i];
+	    targ[k++] = src[i];
 	}
 	*offset = k;
     } else if (op == GRETL_MPI_VCAT) {
 	int rmin = *offset;
-	int nrows = n / targ->cols;
+	int nrows = n / mtarg->cols;
 	int rmax = rmin + nrows;
 	int j, k = 0;
 
-	for (j=0; j<targ->cols; j++) {
+	for (j=0; j<mtarg->cols; j++) {
 	    for (i=rmin; i<rmax; i++) {
-		gretl_matrix_set(targ, i, j, src[k++]);
+		gretl_matrix_set(mtarg, i, j, src[k++]);
 	    }
 	}
 	*offset += nrows;
@@ -1931,7 +1933,8 @@ static gretl_bundle *gretl_bundle_receive (int source,
 
 #endif /* NEW_BUNPASS > 1 or not */
 
-static void fill_tmp (const gretl_matrix *m, double *tmp,
+static void fill_tmp (double * restrict tmp,
+		      const gretl_matrix *m,
 		      int nr, int *offset)
 {
     double x;
@@ -2008,7 +2011,7 @@ int gretl_matrix_mpi_scatter (const gretl_matrix *m,
 		    rc[0] += rem;
 		    n += m->cols * rem;
 		}
-		fill_tmp(m, tmp, rc[0], &offset);
+		fill_tmp(tmp, m, rc[0], &offset);
 		if (i == root) {
 		    err = scatter_to_self(rc, tmp, recvm);
 		} else {
