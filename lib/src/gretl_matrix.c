@@ -5557,9 +5557,9 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 			 gretl_matrix *c, GretlMatrixMod cmod,
 			 int m, int n, int k)
 {
-    const double *A = a->val;
-    const double *B = b->val;
-    double *C = c->val;
+    const double * restrict A = a->val;
+    const double * restrict B = b->val;
+    double * restrict C = c->val;
     double x, alpha = 1.0;
     int beta = 0;
     int ar = a->rows;

@@ -34,6 +34,7 @@ static double bhhh_numeric (double *b, int k,
 			    BHHH_FUNC func, void *data,
 			    int *err)
 {
+    double * restrict Lval = L->val;
     const double h = 1.0e-8;
     double gti, ret;
     int i, t, T = G->rows;
@@ -53,7 +54,7 @@ static double bhhh_numeric (double *b, int k,
 	}
 
 	for (t=0; t<T; t++) {
-	    gretl_matrix_set(G, t, i, L->val[t]);
+	    gretl_matrix_set(G, t, i, Lval[t]);
 	}
 
 	b[i] = bi0 + h;
@@ -68,7 +69,7 @@ static double bhhh_numeric (double *b, int k,
 
 	for (t=0; t<T; t++) {
 	    gti = gretl_matrix_get(G, t, i);
-	    gti = (L->val[t] - gti) / (2.0 * h);
+	    gti = (Lval[t] - gti) / (2.0 * h);
 	    gretl_matrix_set(G, t, i, gti);
 	}
     }
@@ -144,8 +145,9 @@ int bhhh_max (double *theta, int k,
     gretl_matrix *c = NULL;
     gretl_matrix *g = NULL;
     gretl_matrix *G = NULL;
-    double *delta = NULL, *ctemp = NULL;
-    double *grad;
+    double * restrict delta = NULL;
+    double * restrict ctemp = NULL;
+    double * restrict grad;
     int itermax, iter = 0;
     int fcount = 0;
     int gcount = 0;
