@@ -1615,8 +1615,12 @@ static gretl_array *gretl_array_receive (int source, int *err)
 }
 
 int gretl_mpi_receive (int source,
-		       GretlType *type,
-		       void *ptr)
+		       GretlType *ptype,
+		       gretl_matrix **pm,
+		       gretl_bundle **pb,
+		       gretl_array **pa,
+		       double *px,
+		       int *pk)
 {
     MPI_Status status;
     int np, err = 0;
@@ -1630,31 +1634,25 @@ int gretl_mpi_receive (int source,
     mpi_probe(source, MPI_ANY_TAG, mpi_comm_world, &status);
 
     if (status.MPI_TAG == TAG_SCALAR_VAL) {
-	double *px = *(double **) ptr;
 	*px = gretl_scalar_receive(source, &err);
-	*type = GRETL_TYPE_DOUBLE;
+	*ptype = GRETL_TYPE_DOUBLE;
     } else if  (status.MPI_TAG == TAG_INT_VAL) {
-	int *pi = *(int **) ptr;
-	*pi = gretl_int_receive(source, &err);
-	*type = GRETL_TYPE_INT;
+	*pk = gretl_int_receive(source, &err);
+	*ptype = GRETL_TYPE_INT;
     } else if (status.MPI_TAG == TAG_MATRIX_INFO) {
-	gretl_matrix **pm = (gretl_matrix **) ptr;
 	*pm = gretl_matrix_mpi_receive(source, &err);
-	*type = GRETL_TYPE_MATRIX;
+	*ptype = GRETL_TYPE_MATRIX;
     } else if (status.MPI_TAG == TAG_BUNDLE_SIZE) {
 	/* new bundle send/receive form */
-	gretl_bundle **pb = (gretl_bundle **) ptr;
 	*pb = gretl_bundle_receive(source, &err);
-	*type = GRETL_TYPE_BUNDLE;
+	*ptype = GRETL_TYPE_BUNDLE;
     } else if (status.MPI_TAG == TAG_BUNDLE_BYTES) {
 	/* old bundle send/receive form */
-	gretl_bundle **pb = (gretl_bundle **) ptr;
 	*pb = gretl_bundle_receive(source, &err);
-	*type = GRETL_TYPE_BUNDLE;
+	*ptype = GRETL_TYPE_BUNDLE;
     } else if (status.MPI_TAG == TAG_ARRAY_INFO) {
-	gretl_array **pa = (gretl_array **) ptr;
 	*pa = gretl_array_receive(source, &err);
-	*type = GRETL_TYPE_ARRAY;
+	*ptype = GRETL_TYPE_ARRAY;
     } else {
 	err = E_DATA;
     }
