@@ -169,6 +169,7 @@ static int not_wanted (const char *s)
 	!strcmp(s, "filters") ||
 	!strcmp(s, "data-utils") ||
 	!strcmp(s, "midas") ||
+	!strcmp(s, "mpi") ||
 	!strcmp(s, "complex") ||
 	!strcmp(s, "math")) {
 	return 1;
