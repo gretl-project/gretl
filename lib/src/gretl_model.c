@@ -3742,7 +3742,7 @@ int attach_model_tests_from_xml (MODEL *pmod, xmlNodePtr node)
 	if (got < 7) {
 	    err = E_DATA;
 	} else {
-	    gretl_xml_get_prop_as_int(cur, "opt", (int *) &test.opt);
+	    gretl_xml_get_prop_as_opt(cur, "opt", &test.opt);
 	    gretl_xml_get_prop_as_string(cur, "param", &test.param);
 	    err = real_add_test_to_model(pmod, &test);
 	    free(test.param); /* copied by real_add_test_to_model */

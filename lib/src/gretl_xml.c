@@ -659,6 +659,33 @@ int gretl_xml_get_prop_as_int (xmlNodePtr node, const char *tag,
 }
 
 /**
+ * gretl_xml_get_prop_as_opt:
+ * @node: XML node pointer.
+ * @tag: name by which integer property is known.
+ * @o: location to write gretlopt value.
+ *
+ * Returns: 1 if an int is found and read successfully, 0
+ * otherwise.
+ */
+
+int gretl_xml_get_prop_as_opt (xmlNodePtr node, const char *tag,
+			       gretlopt *o)
+{
+    xmlChar *tmp = xmlGetProp(node, (XUC) tag);
+    int ret = 0;
+
+    if (tmp != NULL) {
+	int i;
+
+	ret = sscanf((const char *) tmp, "%d", &i);
+	*o = (gretlopt) i;
+	free(tmp);
+    }
+
+    return ret;
+}
+
+/**
  * gretl_xml_get_prop_as_unsigned_int:
  * @node: XML node pointer.
  * @tag: name by which unsigned integer property is known.

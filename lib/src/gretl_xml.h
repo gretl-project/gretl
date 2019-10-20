@@ -55,6 +55,9 @@ int gretl_xml_put_string (const char *str, PRN *prn);
 int gretl_xml_get_prop_as_int (xmlNodePtr node, const char *tag,
 			       int *i);
 
+int gretl_xml_get_prop_as_opt (xmlNodePtr node, const char *tag,
+			       gretlopt *o);
+
 unsigned int
 gretl_xml_get_prop_as_unsigned_int (xmlNodePtr node,
 				    const char *tag,
