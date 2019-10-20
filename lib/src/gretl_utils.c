@@ -2439,6 +2439,20 @@ gretl_matrix *get_last_pvals_matrix (int *err)
     return record_or_get_test_matrix(NULL, NULL, GET_TEST_PVAL, err);
 }
 
+#define NEED_ALIGNED_MALLOC 0
+
+#if NEED_ALIGNED_MALLOC
+
+/* We needed this -- in the absence of posix_memalign -- when
+   experimenting with the array variant of SFMT (random.c). Since that
+   did not seem to be faster than the "one at a time" variant when we
+   last experimented, we junked the array-using code, which makes the
+   following functionality redundant. However, we may want to try
+   using SFMT arrays again. In that case, see git commit
+   65f3395bbdb01450496fb20fcf0f8f15092f9eeb for the last revision of
+   random.c that included the array code.
+*/
+
 /*
   malloc and free for alignments greater than that guaranteed by the C
   library, based on Steven G. Johnson's public domand code at
@@ -2504,6 +2518,8 @@ void gretl_aligned_free (void *mem)
 	free(ORIG_PTR(mem));
     }
 }
+
+#endif /* NEED_ALIGNED_MALLOC */
 
 #ifdef WIN32
 
