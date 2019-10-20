@@ -558,7 +558,7 @@ instance via the functions \texttt{mwrite} and \texttt{mread} or
 can also use the \texttt{store} and \texttt{open} commands to
 communicate a dataset.
 
-The gretl \texttt{mpi} command supports five options, as follows.
+The gretl \texttt{mpi} command supports the following options:
 \begin{center}
 \begin{tabular}{ll}
 \verb|--|\texttt{np=}\textsl{n} & specify the number of MPI processes\\
@@ -570,7 +570,9 @@ The gretl \texttt{mpi} command supports five options, as follows.
   share all or part of the current dataset \\
 \verb|--|\texttt{local} & ignore MPI hosts file, if present \\
 \verb|--|\texttt{single-rng} & 
-  use a single pseudo-random number generator
+  use a single pseudo-random number generator \\
+\verb|--|\texttt{verbose} & print extra information, including
+  the \texttt{mpiexec} command used
 \end{tabular}
 \end{center}
 
