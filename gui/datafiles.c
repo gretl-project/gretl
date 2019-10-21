@@ -1151,6 +1151,16 @@ static void browser_functions_handler (windata_t *vwin, int task)
     gchar *dir = NULL;
     int dircol = 0;
 
+    if (vwin->role == DBNOMICS_TOP && task == VIEW_PKG_DOC) {
+	/* special case: not coming from gfn window */
+	gchar *docpath = g_build_filename(gretl_home(), "functions",
+					  "dbnomics", "dbnomics.pdf",
+					  NULL);
+	gretl_show_pdf(docpath, NULL);
+	g_free(docpath);
+	return;
+    }
+
     if (vwin->role == FUNC_FILES) {
 	dircol = GFN_DIRNAME_COL;
     } else if (vwin->role != REMOTE_FUNC_FILES &&
@@ -1789,7 +1799,11 @@ static int files_item_get_callback (GretlToolItem *item, int role)
 	    return 1;
 	}
     } else if (local_funcs_item(item->flag)) {
-	return (role == FUNC_FILES);
+	if (item->flag == BTN_DOC && role == DBNOMICS_TOP) {
+	    return 1;
+	} else {
+	    return (role == FUNC_FILES);
+	}
     } else if (item->flag == BTN_INST) {
 	if (role == REMOTE_ADDONS) {
 	    item->func = G_CALLBACK(install_addon_callback);
@@ -1974,7 +1988,8 @@ static void make_files_toolbar (windata_t *vwin)
 	    } else if (item->flag == BTN_RES) {
 		g_object_set_data(G_OBJECT(vwin->mbar), "res-button", button);
 		gtk_widget_set_sensitive(button, FALSE);
-	    } else if (item->flag == BTN_DOC) {
+	    } else if (item->flag == BTN_DOC && vwin->role != DBNOMICS_TOP) {
+		/* condition on availablity of PDF documentation */
 		g_object_set_data(G_OBJECT(vwin->mbar), "doc-button", button);
 		gtk_widget_set_sensitive(button, FALSE);
 	    }
