@@ -1555,6 +1555,8 @@ static gchar *get_mnu_string (const char *key)
 	s = _("Check for _addons");
     } else if (!strcmp(key, "Registry")) {
 	s = _("Package registry");
+    } else if (!strcmp(key, "gretlMPI")) {
+	s = _("gretl + MPI");
     } else if (!strcmp(key, "gretlSVM")) {
 	s = _("gretl + SVM");
     } else if (!strcmp(key, "SetSeed")) {

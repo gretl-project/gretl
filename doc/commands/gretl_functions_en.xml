@@ -7206,8 +7206,9 @@
       </fnargs>
       <description>
 	<para>
-	  Available only when gretl is in MPI mode. Must be called by
-	  all processes. This function works like <fncref
+	  Available only when gretl is in MPI mode (see <mnu
+	  targ="gretlMPI">gretl + MPI</mnu>). Must be called by all
+	  processes. This function works like <fncref
 	  targ="mpireduce"/> except that all processes, not just the
 	  root process, get a copy of the <quote>reduced</quote>
 	  object in place of the original. It is therefore equivalent
@@ -7220,7 +7221,8 @@
     <function name="mpibarrier" section="mpi" output="int">
       <description>
 	<para>
-	  Available only when gretl is in MPI mode. Takes no
+	  Available only when gretl is in MPI mode (see <mnu
+	  targ="gretlMPI">gretl + MPI</mnu>). Takes no
 	  arguments. Enforces synchronization of MPI processes: no
 	  process can continue beyond the barrier until it has been
 	  reached by all.
@@ -7239,8 +7241,9 @@
       </fnargs>
       <description>
 	<para>
-	  Available only when gretl is in MPI mode. Must be called by
-	  all processes. Broadcasts the <argname>object</argname>
+	  Available only when gretl is in MPI mode (see <mnu
+	  targ="gretlMPI">gretl + MPI</mnu>). Must be called by all
+	  processes. Broadcasts the <argname>object</argname>
 	  argument, which must be given in pointer form, to all
 	  processes. The object in question must be a named matrix,
 	  bundle, array or scalar, declared in all processes prior to
@@ -7275,7 +7278,8 @@
       </fnargs>
       <description>
 	<para>
-	  Available only when gretl is in MPI mode. See <fncref
+	  Available only when gretl is in MPI mode (see <mnu
+	  targ="gretlMPI">gretl + MPI</mnu>). See <fncref
 	  targ="mpisend"/>, with which <lit>mpirecv</lit> must always
 	  be paired, for an explanation. The <argname>src</argname>
 	  argument specifies the rank of the process from which the
@@ -7293,8 +7297,9 @@
       </fnargs>
       <description>
 	<para>
-	  Available only when gretl is in MPI mode. Must be called by
-	  all processes. This function gathers objects (scalars or
+	  Available only when gretl is in MPI mode (see <mnu
+	  targ="gretlMPI">gretl + MPI</mnu>). Must be called by all
+	  processes. This function gathers objects (scalars or
 	  matrices only) of a specified name, given in pointer form,
 	  from all processes and <quote>reduces</quote> them to a
 	  single object at the root node.
@@ -7335,9 +7340,10 @@
       </fnargs>
       <description>
 	<para>
-	  Available only when gretl is in MPI mode. Must be called by
-	  all processes. This function distributes chunks of a matrix
-	  in the root process to all processes. The matrix must be
+	  Available only when gretl is in MPI mode (see <mnu
+	  targ="gretlMPI">gretl + MPI</mnu>). Must be called by all
+	  processes. This function distributes chunks of a matrix in
+	  the root process to all processes. The matrix must be
 	  declared in all processes prior to the call to
 	  <lit>mpiscatter</lit>, and must be given in pointer form.
 	</para>
@@ -7377,10 +7383,11 @@
       </fnargs>
       <description>
 	<para>
-	  Available only when gretl is in MPI mode. Sends the named
-	  object (which must be a matrix, bundle, array or scalar)
-	  from the current process to the one identified by the
-	  integer <argname>dest</argname> (from 0 to the number of MPI
+	  Available only when gretl is in MPI mode (see <mnu
+	  targ="gretlMPI">gretl + MPI</mnu>). Sends the named object
+	  (which must be a matrix, bundle, array or scalar) from the
+	  current process to the one identified by the integer
+	  <argname>dest</argname> (from 0 to the number of MPI
 	  processes minus 1).
 	</para>
 	<para>
