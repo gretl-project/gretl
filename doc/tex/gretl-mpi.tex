@@ -24,6 +24,18 @@
 
 \def\mymbox{\leavevmode\hbox}
 
+\newcommand{\mpititle}[1]{\vspace*{1in}
+   {\Huge \sffamily #1}\par
+   \vspace{.5in}
+\begin{minipage}{\textwidth}
+  \centering
+  \qquad
+  \raisebox{-0.5\height}{\includegraphics{figures/gretl-logo}}
+  \hspace{-2em}
+  \raisebox{-0.5\height}{\includegraphics{figures/mpi-logo}}
+\end{minipage}
+}
+
 \begin{document}
 
 \VerbatimFootnotes
@@ -39,7 +51,9 @@
 \begin{center}
 \pdfbookmark[1]{Gretl + MPI}{titlepage}
 
-\gtitle{Gretl + MPI}
+\mpititle{Gretl + MPI}
+
+\gsubtitle{Using MPI with gretl}
 
 {\large \sffamily
 Allin Cottrell\\
