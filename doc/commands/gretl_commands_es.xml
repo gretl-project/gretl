@@ -12724,10 +12724,12 @@
 	  </para>
 	</li>
 	<li>
-	  <para><lit>verbose</lit>: <lit>off</lit> u <lit>on</lit> (por defecto).
-	  Funciona como un <quote>interruptor maestro</quote> para <lit>echo</lit>
-	  y <lit>messages</lit> (mira más abajo), apagando o encendiendo los
-	  dos simultáneamente.
+	  <para><lit>verbose</lit>: <lit>off</lit>, <lit>on</lit> (por defecto) o
+	  <lit>comments</lit>. Funciona como un <quote>interruptor maestro</quote>
+	  para <lit>echo</lit> y <lit>messages</lit> (mira más abajo),
+	  apagando o encendiendo los dos simultáneamente. El argumento
+	  <lit>comments</lit> apaga la resonancia y la aparición de mensajes,
+	  pero mantiene la presentación de comentarios de un guion.
 	  </para>
 	</li>
 	<li>

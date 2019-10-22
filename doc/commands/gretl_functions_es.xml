@@ -513,6 +513,27 @@
       </description>
     </function>
 
+    <function name="$mpirank" section="access" output="int">
+      <description>
+	<para>
+	  Cuando se prepara Gretl con soporte MPI, y el programa está
+	  funcionando en modo MPI, devuelve la <quote>jerarquía</quote>
+	  en base 0 o número ID del proceso vigente. En caso contrario,
+	  devuelve &minus;1.
+	</para>
+      </description>
+    </function>
+
+    <function name="$mpisize" section="access" output="int">
+      <description>
+	<para>
+	  Cuando se prepara Gretl con soporte MPI, y el programa está
+	  funcionando en modo MPI, devuelve el número de procesos MPI
+	  que están funcionando en ese momento. En caso contrario, devuelve 0.
+	</para>
+      </description>
+    </function>
+
     <function name="$ncoeff" section="access" output="int">
       <description>
 	<para>
@@ -7178,6 +7199,207 @@
       </description>
     </function>
 
+    <function name="mpiallred" section="mpi" output="int">
+      <fnargs>
+	<fnarg type="objectref">&amp;object</fnarg>
+	<fnarg type="string">op</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Solo disponible cuando Gretl está en modo MPI; deberán invocarlo todos
+	  los procesos. Esta función opera igual que <fncref targ="mpireduce"/>
+	  excepto por el hecho de que todos los procesos (no solo el proceso
+	  principal) reciben una copia del objeto <quote>reducido</quote> en
+	  lugar del original. Por lo tanto, esto es equivalente a lo que hace
+	  la función <lit>mpireduce</lit> seguida por una llamada a la función
+	  <fncref targ="mpibcast"/>, pero más eficiente.
+	</para>
+      </description>
+    </function>
+
+    <function name="mpibarrier" section="mpi" output="int">
+      <description>
+	<para>
+	  Solo disponible cuando Gretl está en modo MPI; no requiere
+	  argumentos. Fuerza la sincronización de los procesos MPI:
+	  ningún proceso puede continuar más allá de la barrera hasta
+	  que la alcancen todos ellos.
+	</para>
+	<code>
+	  # Ninguno pasa hasta que todos lleguen aquí
+	  mpibarrier()
+	</code>
+      </description>
+    </function>
+
+    <function name="mpibcast" section="mpi" output="int">
+      <fnargs>
+	<fnarg type="objectref">&amp;objeto</fnarg>
+	<fnarg type="int" optional="true">raíz</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Solo disponible cuando Gretl está en modo MPI; deberán invocarlo
+	  todos los procesos. Difunde el argumento <argname>objeto</argname>,
+	  que deberás indicar en forma puntero, a todos los procesos. El
+	  objeto en cuestión deberá ser una matriz, un 'bundle', un 'array'
+	  o un escalar ya definidos, expresados en todos los procesos
+	  anteriores a la difusión. Ningún proceso puede continuar después
+	  de una llamada a <lit>mpibcast</lit> hasta que todos los procesos
+	  lo consigan ejecutar con éxito.
+	</para>
+	<para>
+	  Por defecto, se entiende que la <quote>raíz</quote> u origen de la
+	  difusión es el proceso MPI con rango 0; pero puedes ajustar esto
+	  mediante el segundo argumento (opcional), que deberá ser un
+	  número entero entre 0 y el número de procesos MPI menos 1.
+	</para>
+	<para>
+	  A continuación, tenemos un ejemplo sencillo. Cuando se complete con
+	  éxito, cada proceso va a tener una copia de la matriz <lit>X</lit>
+	  definida en el rango 0.
+	</para>
+	<code>
+	  matrix X
+	  if $mpirank == 0
+	      X = mnormal(T, k)
+	  endif
+	  mpibcast(&amp;X)
+	</code>
+      </description>
+    </function>
+
+    <function name="mpirecv" section="mpi" output="object">
+      <fnargs>
+	<fnarg type="int">src</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Solo disponible cuando Gretl está en modo MPI. Para mayor aclaración,
+	  mira la función <fncref targ="mpisend"/>, con la que <lit>mpirecv</lit>
+	  deberá siempre emparejarse. El argumento <argname>src</argname>
+	  especifica la jerarquía del proceso del que se va a recibir el objeto,
+	  en el rango que va desde 0 hasta el número de procesos MPI
+	  menos 1.
+	</para>
+      </description>
+    </function>
+
+    <function name="mpireduce" section="mpi" output="int">
+      <fnargs>
+	<fnarg type="objectref">&amp;objeto</fnarg>
+	<fnarg type="string">op</fnarg>
+	<fnarg type="int" optional="true">raíz</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Solo disponible cuando Gretl está en modo MPI; deberán invocarlo todos
+	  los procesos. Esta función reúne objetos (solo escalares o matrices)
+	  con un nombre específico e indicados en forma de puntero, de todos los
+	  procesos; y los <quote>reduce</quote> a un único objeto en el nodo
+	  raíz.
+	</para>
+	<para>
+	  El argumento <lit>op</lit> especifica la operación o método
+	  de reducción. Los métodos admitidos para los escalares son
+	  <lit>sum</lit> (suma), <lit>prod</lit> (producto), <lit>max</lit>
+	  (máximo) y <lit>min</lit> (mínimo). Para las matrices, los métodos
+	  son <lit>sum</lit>, <lit>prod</lit> (producto de Hadamard),
+	  <lit>hcat</lit> (concatenación horizontal) y
+	  <lit>vcat</lit> (concatenación vertical).
+	</para>
+	<para>
+	  Por defecto, se entiende que la <quote>raíz</quote> o meta de la
+	  reducción es el proceso MPI con rango 0; pero puedes ajustar esto
+	  mediante el tercer argumento (opcional), que deberá ser un entero
+	  entre 0 y el número de procesos MPI menos 1.
+	</para>
+	<para>
+	  A continuación, tenemos un ejemplo. Cuando se complete con éxito lo
+	  dicho antes, el proceso raíz va a tener una matriz <lit>X</lit> que
+	  será la suma de las matrices <lit>X</lit> de todos los procesos.
+	</para>
+	<code>
+	  matrix X
+	  X = mnormal(T, k)
+	  mpireduce(&amp;X, sum)
+	</code>
+      </description>
+    </function>
+
+    <function name="mpiscatter" section="mpi" output="int">
+      <fnargs>
+	<fnarg type="matrixref">&amp;M</fnarg>
+	<fnarg type="string">op</fnarg>
+	<fnarg type="int" optional="true">raíz</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Solo disponible cuando Gretl está en modo MPI; deberán invocarlo
+	  todos los procesos. Esta función distribuye trozos de una matriz
+	  del proceso raíz, a todos los procesos. Debes anunciar la matriz en
+	  todos los procesos que preceden a invocar a <lit>mpiscatter</lit>,
+	  y debes indicarlo en forma de puntero.
+	</para>
+	<para>
+	  El argumento <lit>op</lit> debe ser <lit>byrows</lit> o bien
+	  <lit>bycols</lit>. Denotemos con <math>q</math> al cociente
+	  entre el número de filas de la matriz que se va a dispersar,
+	  y el número de procesos. En el caso <lit>byrows</lit>, el proceso
+	  raíz va a enviar las primeras <math>q</math> filas al proceso 0;
+	  las siguientes <math>q</math> al proceso 1, etcétera. Si queda un
+	  remanente del reparto de filas, se añade a la última asignación.
+	  El caso <lit>bycols</lit> es exactamente análogo pero el reparto
+	  de la matriz se hace por columnas.
+	</para>
+	<para>
+	  A continuación, tenemos un ejemplo. Si tenemos 4 procesos, cada uno
+	  (incluido el raíz) va a tener una porción <by r="2500" c="10"/>
+	  de la <lit>X</lit> original, tal como se encontraba en el proceso
+	  raíz. Si quisieras mantener la matriz completa en el proceso raíz,
+	  es necesario que hagas una copia de la misma antes de invocar a
+	  <lit>mpiscatter</lit>.
+	</para>
+	<code>
+	  matrix X
+	  if $mpirank == 0
+	      X = mnormal(10000, 10)
+	  endif
+	  mpiscatter(&amp;X, byrows)
+	</code>
+      </description>
+    </function>
+
+    <function name="mpisend" section="mpi" output="int">
+      <fnargs>
+	<fnarg type="object">objeto</fnarg>
+	<fnarg type="int">destino</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Solo disponible cuando Gretl está en modo MPI. Envía el objeto
+	  indicado (que deberá ser una matriz, un 'bundle', un 'array' o
+	  un escalar) desde el proceso vigente hasta el identificado por el
+	  entero <argname>destino</argname> (desde 0 hasta el número de
+	  procesos MPI menos 1).
+	</para>
+	<para>
+	  Una llamada a esta función debe siempre estar emparejada con una
+	  llamada a <fncref targ="mpirecv"/> en el proceso <argname>destino</argname>,
+	  como en el siguiente ejemplo en el que se envía una matriz desde el
+	  rango 2 hasta el rango 3.
+	</para>
+	<code>
+	  if $mpirank == 2
+	      matrix C = cholesky(A)
+	      mpisend(C, 3)
+	  elif $mpirank == 3
+	      matrix C = mpirecv(2)
+	  endif
+	</code>
+      </description>
+    </function>
+
     <function name="mpols" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="matrix">Y</fnarg>
@@ -9629,6 +9851,7 @@
       <fnargs>
 	<fnarg type="series-or-mat">x</fnarg>
 	<fnarg optional="true" type="int">tamañobloque</fnarg>
+	<fnarg optional="true" type="int">extracciones</fnarg>
       </fnargs>
       <description>
 	<para>
@@ -9657,6 +9880,20 @@
 	  entero que sea múltiplo del tamaño del bloque, el último bloque
 	  seleccionado se trunca para que se ajuste.
 	</para>
+	<subhead>Número de extracciones</subhead>
+	<para>
+	  Por defecto, el número de observaciones que se vuelven a extraer
+	  para obtener el resultado es igual al del argumento indicado
+	  &mdash;si <argname>x</argname> fuese una serie, sería la longitud del
+	  rango muestral vigente; si <argname>x</argname> fuese una matriz, sería
+	  el número de sus filas. En el caso matricial, <emphasis>solo</emphasis>
+	  puedes ajustar esto mediante el tercer argumento (opcional), que
+	  habrá de ser un número entero positivo. Ten en cuenta que si el
+	  argumento <argname>tamañobloque</argname> es mayor que 1, el
+	  argumento <argname>extracciones</argname> se refiere al número de
+	  observaciones individuales, no al número de bloques.
+	</para>
+	<subhead>Datos de panel</subhead>
 	<para>
 	  Cuando el argumento <argname>x</argname> es una serie, y el conjunto
 	  de datos tiene formato de panel, no se admite hacer el muestreo por

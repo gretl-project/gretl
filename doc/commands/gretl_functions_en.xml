@@ -5169,7 +5169,7 @@
 	<para>
 	  The distribution of <math>X</math> is determined by the
 	  string <argname>d</argname>.  Between the arguments
-	  <argname>d</argname> and <argname>p</argname>, zero or more
+	  <argname>d</argname> and <argname>u</argname>, zero or more
 	  additional scalar arguments are required to specify the
 	  parameters of the distribution, as follows.
 	</para>
@@ -7391,7 +7391,7 @@
 	  processes minus 1).
 	</para>
 	<para>
-	  A call to this function must always by paired with a call to
+	  A call to this function must always be paired with a call to
 	  <fncref targ="mpirecv"/> in the <argname>dest</argname>
 	  process, as in the following example which sends a matrix
 	  from rank 2 to rank 3.
