@@ -791,7 +791,8 @@ static int translate_panel_vars (dw_opts *opts, int *uv, int *tv)
     return err;
 }
 
-static int diagnose_panel_problem (DATASET *dset, int uv, int tv)
+static int diagnose_panel_problem (DATASET *dset, int uv, int tv,
+				   int known_problem)
 {
     gchar *msg = NULL;
     double ui, ti;
@@ -806,12 +807,17 @@ static int diagnose_panel_problem (DATASET *dset, int uv, int tv)
 	    uj = dset->Z[uv][j];
 	    tj = dset->Z[tv][j];
 	    if (uj == ui && tj == ti) {
-		msg = g_strdup_printf("unit = %g and time = %g duplicated on "
-				      "rows %d and %d", ui, ti, i+1, j+1);
+		msg = g_strdup_printf("%s = %g and %s = %g duplicated on "
+				      "rows %d and %d", dset->varname[uv],
+				      ui, dset->varname[tv], ti, i+1, j+1);
 		found = 1;
 		break;
 	    }
 	}
+    }
+
+    if (!known_problem && !found) {
+	return 0; /* nothing amiss */
     }
 
     if (msg != NULL) {
@@ -890,9 +896,13 @@ static int process_panel_vars (DATASET *dwinfo, dw_opts *opts)
 	    fprintf(stderr, "nunits=%d, nperiods=%d, n=%d\n",
 		    nunits, nperiods, n);
 	    err = E_DATA;
-	} else if (nunits * nperiods < n) {
-	    err = diagnose_panel_problem(dataset, uv, tv);
 	} else {
+	    int known_problem = nunits * nperiods < n;
+
+	    err = diagnose_panel_problem(dataset, uv, tv, known_problem);
+	}
+
+	if (!err) {
 	    dwinfo->n = nunits;
 	    dwinfo->pd = nperiods;
 	}
