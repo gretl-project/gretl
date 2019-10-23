@@ -36,11 +36,15 @@ version 2019d, in progress
 - "set verbose": add a "comments" setting
 - "outfile" command: add --tempfile option to use an
   automatically named temporary file
+- "markers" command: add option to save observation marker
+  strings in the form of an array
 - Internals: speed up element-wise matrix calculation by
   use of function pointers
 - "Send-to" (email) functionality: use libcurl and improve
   the user interface; now gmail-compatible
 - GUI: don't close native database windows on "Clear data"
+- GUI: beef up error-checking for the case of defining a
+  dataset as a panel via index variables
 - Builds for MS Windows and Mac: switch to use of libgsf
   for zipping/unzipping
 
