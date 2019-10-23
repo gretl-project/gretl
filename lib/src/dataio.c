@@ -2630,6 +2630,45 @@ static int save_var_labels_to_array (const DATASET *dset,
     return err;
 }
 
+static int save_obs_markers_to_array (const DATASET *dset,
+				      const char *aname)
+{
+    gretl_array *a = NULL;
+    int err = 0;
+
+    if (gretl_is_series(aname, dset)) {
+	err = E_TYPES;
+    } else {
+	err = check_identifier(aname);
+    }
+
+    if (!err) {
+	a = gretl_array_new(GRETL_TYPE_STRINGS, dset->n, &err);
+    }
+
+    if (!err) {
+	err = user_var_add_or_replace(aname, GRETL_TYPE_STRINGS, a);
+    }
+
+    if (!err) {
+	char *marker;
+	int i;
+
+	for (i=0; i<dset->n; i++) {
+	    marker = dset->S[i];
+	    gretl_array_set_element(a, i, marker != NULL ? marker : "",
+				    GRETL_TYPE_STRING, 1);
+	}
+    }
+
+    if (err && a != NULL) {
+	gretl_array_destroy(a);
+	a = NULL;
+    }
+
+    return err;
+}
+
 /**
  * add_var_labels_from_file:
  * @dset: data information struct.
@@ -2808,19 +2847,22 @@ int read_or_write_obs_markers (gretlopt opt, DATASET *dset, PRN *prn)
 	}
     }
 
+    if (opt & (OPT_A | OPT_T)) {
+	/* writing to file or array */
+	if (dset->S == NULL) {
+	    gretl_errmsg_set(_("No markers are available for writing"));
+	    return E_DATA;
+	}
+    }
+
     if (opt & OPT_D) {
 	/* delete */
 	dataset_destroy_obs_markers(dset);
     } else if (opt & OPT_T) {
 	/* to-file */
-	if (dset->S == NULL) {
-	    gretl_errmsg_set(_("No markers are available for writing"));
-	    err = E_DATA;
-	} else {
-	    err = save_obs_markers_to_file(dset, fname);
-	    if (!err && gretl_messages_on() && !gretl_looping_quietly()) {
-		pprintf(prn, "Markers written OK\n");
-	    }
+	err = save_obs_markers_to_file(dset, fname);
+	if (!err && gretl_messages_on() && !gretl_looping_quietly()) {
+	    pprintf(prn, "Markers written OK\n");
 	}
     } else if (opt & OPT_F) {
 	/* from-file */
@@ -2828,6 +2870,11 @@ int read_or_write_obs_markers (gretlopt opt, DATASET *dset, PRN *prn)
 	if (!err && gretl_messages_on() && !gretl_looping_quietly()) {
 	    pprintf(prn, "Markers loaded OK\n");
 	}
+    } else if (opt & OPT_A) {
+	/* to-array */
+	const char *aname = get_optval_string(MARKERS, OPT_A);
+
+	err = save_obs_markers_to_array(dset, aname);
     }
 
     return err;

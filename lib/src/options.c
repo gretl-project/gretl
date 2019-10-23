@@ -351,6 +351,7 @@ struct gretl_option gretl_opts[] = {
     { MARKERS,  OPT_D, "delete", 0 },
     { MARKERS,  OPT_F, "from-file", 2 },
     { MARKERS,  OPT_T, "to-file", 2 },
+    { MARKERS,  OPT_A, "to-array", 2 },
     { MODTEST,  OPT_A, "autocorr", 0 },
     { MODTEST,  OPT_B, "breusch-pagan", 0 },
     { MODTEST,  OPT_C, "comfac", 0 },

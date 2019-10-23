@@ -7920,6 +7920,7 @@
     <usage>
       <altforms>
 	<altform><lit>markers --to-file=</lit><repl>filename</repl></altform>
+	<altform><lit>markers --to-array=</lit><repl>name</repl></altform>
 	<altform><lit>markers --from-file=</lit><repl>filename</repl></altform>
 	<altform><lit>markers --delete</lit></altform>
       </altforms>
@@ -7927,12 +7928,16 @@
 
     <description>
       <para>
-	With the option <opt>to-file</opt>, writes to the named file
-	the observation marker strings from the current dataset, one
-	per line. If no such strings are present an error is flagged.
-	The output file will be written in the currently set <cmdref
-	targ="workdir"/>, unless the <repl>filename</repl> string
-	contains a full path specification.
+	The options <opt>to-file</opt> and <opt>to-array</opt> provide
+	means of saving the observation marker strings from the
+	current dataset, either to a named file or a named array.  If
+	no such strings are present an error is flagged. In the file
+	case output will be written in the current <cmdref
+	targ="workdir"/> unless the <repl>filename</repl> string
+	contains a full path specification. The markers are written
+	one per line. In the array case, if <argname>name</argname> is
+	the identifier of an existing array of strings it will be
+	overwritten, otherwise a new array will be created.
       </para>
       <para>
 	With the option <opt>from-file</opt>, reads the specified
