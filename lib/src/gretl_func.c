@@ -5259,7 +5259,7 @@ static void real_bundle_package_info (const fnpkg *pkg,
 
     gretl_bundle_set_string(b, "name", pkg->name);
     gretl_bundle_set_string(b, "author", pkg->author);
-    gretl_bundle_set_string(b, "version", pkg->version);
+    gretl_bundle_set_scalar(b, "version", dot_atof(pkg->version));
     gretl_bundle_set_string(b, "date", pkg->date);
     if (pkg->email != NULL && *pkg->email != '\0') {
 	gretl_bundle_set_string(b, "email", pkg->email);
@@ -6197,7 +6197,7 @@ int package_needs_zipping (const char *fname,
     return ret;
 }
 
-double function_package_get_version (const char *fname)
+double gfn_file_get_version (const char *fname)
 {
     xmlDocPtr doc = NULL;
     xmlNodePtr node;

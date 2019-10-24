@@ -284,7 +284,7 @@ int get_function_file_header (const char *fname, char **pdesc,
 			      char **pver, char **pdate,
 			      char **pauthor, int *pdfdoc);
 
-double function_package_get_version (const char *fname);
+double gfn_file_get_version (const char *fname);
 
 int user_function_help (const char *fnname, gretlopt opt, PRN *prn);
 

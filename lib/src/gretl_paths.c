@@ -1416,7 +1416,7 @@ char *gretl_addon_get_path (const char *name)
 		strcat(path, ".gfn");
 		err = gretl_test_fopen(path, "r");
 		if (!err) {
-		    version = function_package_get_version(path);
+		    version = gfn_file_get_version(path);
 		    if (!na(version) && version > maxver) {
 			maxver = version;
 			free(ret);
