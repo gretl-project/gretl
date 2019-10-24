@@ -5549,6 +5549,17 @@ static int fill_fcstats_column (gretl_matrix *m,
     }
 
     if (!err) {
+	fnpkg *pkg = get_active_function_package(0);
+	const char *pkgname = NULL;
+	int show_MSE = 0;
+
+	if (pkg != NULL) {
+	    pkgname = function_package_get_name(pkg);
+	}
+	if (pkgname != NULL && !strcmp(pkgname, "fcModels")) {
+	    show_MSE = 1;
+	}
+
 	ME /= T;
 	MSE /= T;
 	MAE /= T;
@@ -5562,7 +5573,11 @@ static int fill_fcstats_column (gretl_matrix *m,
 	    U = sqrt(u[0] / T) / sqrt(u[1] / T);
 	}
 	gretl_matrix_set(m, 0, col, ME);
-	gretl_matrix_set(m, 1, col, sqrt(MSE));
+	if (show_MSE) {
+	    gretl_matrix_set(m, 1, col, MSE);
+	} else {
+	    gretl_matrix_set(m, 1, col, sqrt(MSE));
+	}
 	gretl_matrix_set(m, 2, col, MAE);
 	gretl_matrix_set(m, 3, col, MPE);
 	gretl_matrix_set(m, 4, col, MAPE);
