@@ -3032,7 +3032,9 @@ make_dollar_substitutions (char *str, int maxlen,
 {
     int err = 0;
 
-    *subst = 0;
+    if (subst != NULL) {
+	*subst = 0;
+    }
 
     /* if (opt & OPT_T) we're just processing a variable name, at the top
        of a loop, so we can skip to the "parentage" bit

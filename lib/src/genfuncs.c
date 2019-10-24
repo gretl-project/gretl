@@ -5556,7 +5556,8 @@ static int fill_fcstats_column (gretl_matrix *m,
 	if (pkg != NULL) {
 	    pkgname = function_package_get_name(pkg);
 	}
-	if (pkgname != NULL && !strcmp(pkgname, "fcModels")) {
+	if (pkgname != NULL && !strcmp(pkgname, "fcModels") &&
+	    function_package_get_version(pkg) <= 1.1) {
 	    show_MSE = 1;
 	}
 

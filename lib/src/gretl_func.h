@@ -219,6 +219,8 @@ char **function_package_get_depends (fnpkg *pkg, int *n);
 
 const char *function_package_get_name (fnpkg *pkg);
 
+double function_package_get_version (fnpkg *pkg);
+
 int function_package_write_file (fnpkg *pkg);
 
 int create_and_write_function_package (const char *fname, 

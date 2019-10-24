@@ -4088,6 +4088,22 @@ const char *function_package_get_name (fnpkg *pkg)
     return (pkg != NULL)? pkg->name : NULL;
 }
 
+/**
+ * function_package_get_version:
+ * @pkg: function package.
+ *
+ * Returns: the name of the package.
+ */
+
+double function_package_get_version (fnpkg *pkg)
+{
+    if (pkg == NULL) {
+	return NADBL;
+    } else {
+	return dot_atof(pkg->version);
+    }
+}
+
 static int maybe_replace_string_var (char **svar, const char *src)
 {
     if (src == NULL) {
