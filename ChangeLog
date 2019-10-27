@@ -45,6 +45,8 @@ version 2019d, in progress
 - GUI: don't close native database windows on "Clear data"
 - GUI: beef up error-checking for the case of defining a
   dataset as a panel via index variables
+- GUI: fix for failure of "freezing" plot data labels in
+  some cases
 - Builds for MS Windows and Mac: switch to use of libgsf
   for zipping/unzipping
 
