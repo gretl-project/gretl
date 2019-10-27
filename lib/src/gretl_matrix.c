@@ -92,8 +92,19 @@ struct gretl_matrix_block_ {
 
 static inline void *mval_malloc (size_t sz)
 {
+#if 0 /* ifdef USE_SIMD */
+    void *mem = NULL;
+    int err;
+
+    err = posix_memalign(&mem, 32, sz);
+    if (err) {
+	fprintf(stderr, "posix_memalign: failed\n");
+    }
+    return mem;
+#else
     /* forestall "invalid reads" by OpenBLAS */
     return malloc(sz % 16 ? sz + 8 : sz);
+#endif
 }
 
 static inline void *mval_realloc (void *ptr, size_t sz)
@@ -6653,6 +6664,11 @@ double gretl_vector_dot_product (const gretl_vector *a,
 	}
 	dp = NADBL;
     } else {
+#if USE_SIMD
+	if (simd_add_sub(dima)) {
+	    return gretl_vector_simd_dot_product(a, b);
+	}
+#endif
 	for (i=0; i<dima; i++) {
 	    dp += a->val[i] * b->val[i];
 	}

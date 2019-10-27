@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 /* All code here is conditional on AVX (128-bit SSE is not really
@@ -42,7 +42,7 @@ static int gretl_matrix_simd_add_to (gretl_matrix *a,
 	__m256d Ymm_A = _mm256_loadu_pd(ax);
 	__m256d Ymm_B = _mm256_loadu_pd(bx);
 	__m256d Ymm_C = _mm256_add_pd(Ymm_A, Ymm_B);
-	
+
 	_mm256_storeu_pd(ax, Ymm_C);
 	ax += 4;
 	bx += 4;
@@ -65,8 +65,8 @@ static int gretl_matrix_simd_subt_from (gretl_matrix *a,
     int rem = n % 4;
 
 #if SHOW_SIMD
-    fprintf(stderr, "AVX: gretl_matrix_simd_subt_from (%d x %d)\n",
-	    a->rows, a->cols);
+    fprintf(stderr, "AVX: gretl_matrix_simd_subt_from (%d x %d, rem=%d)\n",
+	    a->rows, a->cols, rem);
 #endif
 
     for (i=0; i<imax; i++) {
@@ -74,7 +74,7 @@ static int gretl_matrix_simd_subt_from (gretl_matrix *a,
 	__m256d Ymm_A = _mm256_loadu_pd(ax);
 	__m256d Ymm_B = _mm256_loadu_pd(bx);
 	__m256d Ymm_C = _mm256_sub_pd(Ymm_A, Ymm_B);
-	
+
 	_mm256_storeu_pd(ax, Ymm_C);
 	ax += 4;
 	bx += 4;
@@ -105,7 +105,7 @@ static int gretl_matrix_simd_add (const double *ax,
 	__m256d Ymm_A = _mm256_loadu_pd(ax);
 	__m256d Ymm_B = _mm256_loadu_pd(bx);
 	__m256d Ymm_C = _mm256_add_pd(Ymm_A, Ymm_B);
-	
+
 	_mm256_storeu_pd(cx, Ymm_C);
 	ax += 4;
 	bx += 4;
@@ -128,8 +128,8 @@ static int gretl_matrix_simd_subtract (const double *ax,
     int rem = n % 4;
 
 #if SHOW_SIMD
-    fprintf(stderr, "AVX: gretl_matrix_simd_subtract (%d x %d)\n",
-	    a->rows, a->cols);
+    fprintf(stderr, "AVX: gretl_matrix_simd_subtract (n = %d, rem = %d)\n",
+	    n, rem);
 #endif
 
     for (i=0; i<imax; i++) {
@@ -137,7 +137,7 @@ static int gretl_matrix_simd_subtract (const double *ax,
 	__m256d Ymm_A = _mm256_loadu_pd(ax);
 	__m256d Ymm_B = _mm256_loadu_pd(bx);
 	__m256d Ymm_C = _mm256_sub_pd(Ymm_A, Ymm_B);
-	
+
 	_mm256_storeu_pd(cx, Ymm_C);
 	cx += 4;
 	ax += 4;
@@ -196,7 +196,7 @@ static int gretl_matrix_avx_mul8 (const double *aval,
 {
     __m256d a1, a2, a3, a4, a5, a6, a7, a8;
     __m256d b1, b2, b3, b4, b5, b6, b7, b8;
-    __m256d mul, col; 
+    __m256d mul, col;
     int i, j;
 
     for (i=0; i<2; i++) {
@@ -311,7 +311,7 @@ static int gretl_matrix_simd_mul (const gretl_matrix *A,
 	    cval += 4;
 	}
     }
-    
+
     if (hrem >= 2) {
 	/* do a single 128-bit run */
 	__m128d a[k], b[k];
@@ -335,7 +335,7 @@ static int gretl_matrix_simd_mul (const gretl_matrix *A,
 	aval += 2;
 	cval += 2;
     }
-    
+
     if (hrem) {
 	/* odd-valued m: compute the last row */
 	double ccol, a[k];
@@ -344,7 +344,7 @@ static int gretl_matrix_simd_mul (const gretl_matrix *A,
 	    a[j] = aval[j*m];
 	}
 	for (j=0; j<n; j++) {
-	    ccol = 0.0; 
+	    ccol = 0.0;
 	    for (i=0; i<k; i++) {
 		ccol += bval[j*k + i] * a[i];
 	    }
@@ -355,3 +355,46 @@ static int gretl_matrix_simd_mul (const gretl_matrix *A,
     return 0;
 }
 
+/* See https://stackoverflow.com/questions/49941645,
+   Peter Cordes's answer on how efficiently to sum the
+   contents of an __m256d into a single double.
+*/
+
+static inline double hsum_double_avx (__m256d v)
+{
+    __m128d vlow  = _mm256_castpd256_pd128(v);
+    __m128d vhigh = _mm256_extractf128_pd(v, 1);
+    __m128d high64;
+
+    vlow   = _mm_add_pd(vlow, vhigh);
+    high64 = _mm_unpackhi_pd(vlow, vlow);
+    return  _mm_cvtsd_f64(_mm_add_sd(vlow, high64));
+}
+
+double gretl_vector_simd_dot_product (const gretl_vector *a,
+				      const gretl_vector *b)
+{
+    __m256d Ymm_A, Ymm_B, Ymm_C;
+    const double *ax = a->val;
+    const double *bx = b->val;
+    int n = gretl_vector_get_length(a);
+    int i, imax = n / 4;
+    int rem = n % 4;
+    double ret = 0.0;
+
+    for (i=0; i<imax; i++) {
+	/* multiply 4 doubles in parallel */
+	Ymm_A = _mm256_loadu_pd(ax);
+	Ymm_B = _mm256_loadu_pd(bx);
+	Ymm_C = _mm256_mul_pd(Ymm_A, Ymm_B);
+	ret += hsum_double_avx(Ymm_C);
+	ax += 4;
+	bx += 4;
+    }
+
+    for (i=0; i<rem; i++) {
+	ret += ax[i] * bx[i];
+    }
+
+    return ret;
+}
