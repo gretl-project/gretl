@@ -846,22 +846,24 @@ static int print_data_labels (const GPT_SPEC *spec, FILE *fp)
     yrange = (na(ymin) || na(ymax)) ? 0.0 : ymax - ymin;
 
     if (xrange == 0.0 || yrange == 0.0) {
-	ymin = 1.0e+16; ymax = -1.0e+16;
-	xmin = 1.0e+16; xmax = -1.0e+16;
+	ymin = 1.0e+50; ymax = -1.0e+50;
+	xmin = 1.0e+50; xmax = -1.0e+50;
 
 	for (t=0; t<spec->nobs; t++) {
 	    if (usable_obs(x, y0, y1, t, &y)) {
 		if (yrange == 0.0) {
 		    if (y[t] < ymin) {
 			ymin = y[t];
-		    } else if (y[t] > ymax) {
+		    }
+		    if (y[t] > ymax) {
 			ymax = y[t];
 		    }
 		}
 		if (xrange == 0.0) {
 		    if (x[t] < xmin) {
 			xmin = x[t];
-		    } else if (x[t] > xmax) {
+		    }
+		    if (x[t] > xmax) {
 			xmax = x[t];
 		    }
 		}
