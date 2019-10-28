@@ -149,11 +149,13 @@ static int dbn_dset_from_csv (DATASET *dbset,
 	    if (fp == NULL) {
 		err = E_FOPEN;
 	    } else {
-		maybe_reorder_dbn_data(S, T, v, fp);
+		err = maybe_reorder_dbn_data(S, T, v, fp);
 		fclose(fp);
 		free_Z(dbset);
 		clear_datainfo(dbset, CLEAR_FULL);
-		err = import_csv(fname, dbset, OPT_NONE, NULL);
+		if (!err) {
+		    err = import_csv(fname, dbset, OPT_NONE, NULL);
+		}
 	    }
 	}
 	gretl_remove(fname);
