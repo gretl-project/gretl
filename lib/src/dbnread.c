@@ -50,12 +50,17 @@ struct dbn_sorter {
     int t;
 };
 
-static void write_dbn_csv (char **S, int T,
-			   gretl_matrix *v,
-			   struct dbn_sorter *ds,
-			   FILE *fp)
+static int write_dbn_csv (char **S, int T,
+			  gretl_matrix *v,
+			  struct dbn_sorter *ds,
+			  FILE *fp)
 {
     int t, i;
+
+    if (gretl_is_null_matrix(v)) {
+	gretl_errmsg_set("Failed to get data from dbnomics");
+	return E_DATA;
+    }
 
     gretl_push_c_numeric_locale();
 
@@ -70,6 +75,8 @@ static void write_dbn_csv (char **S, int T,
     }
 
     gretl_pop_c_numeric_locale();
+
+    return 0;
 }
 
 static int dbtcomp (const void *a, const void *b)
@@ -89,7 +96,7 @@ static int maybe_reorder_dbn_data (char **S, int T,
 				   FILE *fp)
 {
     struct dbn_sorter *ds;
-    int t;
+    int t, err = 0;
 
     ds = malloc(T * sizeof *ds);
     if (ds == NULL) {
@@ -102,10 +109,10 @@ static int maybe_reorder_dbn_data (char **S, int T,
     }
 
     qsort(ds, T, sizeof *ds, dbtcomp);
-    write_dbn_csv(S, T, v, ds, fp);
+    err = write_dbn_csv(S, T, v, ds, fp);
     free(ds);
 
-    return 0;
+    return err;
 }
 
 /* write the info from @P (periods) and @v (values) to
@@ -129,10 +136,12 @@ static int dbn_dset_from_csv (DATASET *dbset,
     } else {
 	char **S = gretl_array_get_strings(P, &T);
 
-	write_dbn_csv(S, T, v, NULL, fp);
+	err = write_dbn_csv(S, T, v, NULL, fp);
 	fclose(fp);
 
-	err = import_csv(fname, dbset, OPT_NONE, NULL);
+	if (!err) {
+	    err = import_csv(fname, dbset, OPT_NONE, NULL);
+	}
 	if (!err && !dataset_is_time_series(dbset)) {
 	    /* try again, after sorting by "period" strings */
 	    gretl_remove(fname);
