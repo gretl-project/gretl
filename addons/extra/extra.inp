@@ -531,7 +531,7 @@ function matrix drill(const matrices x,
     loop i = 2 .. n --quiet
         same_dim = same_dim && (rows(x[i]) == nr) && (cols(x[i]) == nc) 
         if !same_dim
-            printf "Error: Inconsistent dimensions (not all matrices are the same size)"
+            printf "Error: Inconsistent dimensions (not all matrices are the same size)\n"
             return ret
         endif
     endloop
@@ -564,22 +564,22 @@ function matrix drill(const matrices x,
     scalar ncspec = rows(cs)
 
     if xmin(nrspec, ncspec) > 1
-        printf "Error: you can’t have multiple row and column specs"
+        printf "Error: you can’t have multiple row and column specs\n"
         return ret
     endif
     
     if minc(rs|cs) < 0
-        printf "Error: negative spec not allowed"
+        printf "Error: negative spec not allowed\n"
         return ret
     endif
     
     if maxc(rs) > nr
-        printf "Error: incorrect row spec (matrices have %d rows, but %d wanted)", nr, maxc(rs)
+        printf "Error: incorrect row spec (matrices have %d rows, but %d wanted)\n", nr, maxc(rs)
         return ret
     endif
     
     if maxc(cs) > nc
-        printf "Error: incorrect col spec (matrices have %d columns, but %d wanted)", nc, maxc(cs)
+        printf "Error: incorrect col spec (matrices have %d columns, but %d wanted)\n", nc, maxc(cs)
         return ret
     endif
     
@@ -628,7 +628,7 @@ function string gbundle2json (bundle b)
                 out ~= (r < rows(m)) ? sprintf(",\n") : sprintf("]")
             endloop
         else
-            printf "Warning: Type %s not supported. Skipping.", typ
+            printf "Warning: Type %s not supported. Skipping.\n", typ
         endif
         out ~= (k < nelem(keys)) ? "," : sprintf("\n}")
     endloop
