@@ -509,10 +509,9 @@ function matrix drill(const matrices x,
                       matrix rowspec[null],
                       matrix colspec[null])
 
-    # This function "drills through" a matrix array along
-    # and returns a matrix; for example, drill(x, 2, 3) returns
-    # a vector with the [2,3] elements of all matrices in the x
-    # array. "0" means "all".
+    # This function "drills through" a matrix array and returns a matrix;
+    # for example, drill(x, 2, 3) returns a vector with the [2,3] elements
+    # of all matrices in the x array. "0" means "all".
     #
     # NOTA BENE: all matrices must be the same size
 
@@ -532,7 +531,7 @@ function matrix drill(const matrices x,
     loop i = 2 .. n --quiet
         same_dim = same_dim && (rows(x[i]) == nr) && (cols(x[i]) == nc) 
         if !same_dim
-            funcerr "Inconsistent dimensions (not all matrices are the same size)"
+            printf "Error: Inconsistent dimensions (not all matrices are the same size)"
             return ret
         endif
     endloop
@@ -565,24 +564,22 @@ function matrix drill(const matrices x,
     scalar ncspec = rows(cs)
 
     if xmin(nrspec, ncspec) > 1
-        funcerr "you can’t have multiple row and column specs"
+        printf "Error: you can’t have multiple row and column specs"
         return ret
     endif
     
     if minc(rs|cs) < 0
-        funcerr "negative spec not allowed"
+        printf "Error: negative spec not allowed"
         return ret
     endif
     
     if maxc(rs) > nr
-        errstr = sprintf("incorrect row spec (matrices have %d rows, but %d wanted)", nr, maxc(rs))
-        funcerr(errstr) 
+        printf "Error: incorrect row spec (matrices have %d rows, but %d wanted)", nr, maxc(rs)
         return ret
     endif
     
     if maxc(cs) > nc
-        errstr = sprintf("incorrect col spec (matrices have %d columns, but %d wanted)", nc, maxc(cs))
-        funcerr(errstr) 
+        printf "Error: incorrect col spec (matrices have %d columns, but %d wanted)", nc, maxc(cs)
         return ret
     endif
     
