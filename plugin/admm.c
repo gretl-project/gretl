@@ -1,5 +1,31 @@
-#include <libgretl.h>
-#include <matrix_extra.h>
+/*
+ *  gretl -- Gnu Regression, Econometrics and Time-series Library
+ *  Copyright (C) 2017 Allin Cottrell and Riccardo "Jack" Lucchetti
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+/* Code to use ADMM to solve the Lasso problem. Based on Boyd et al,
+   "Distributed Optimization and Statistical Learning via the
+   Alternating Direction Method of Multipliers", Foundations and
+   Trends in Machine Learning Vol. 3, No. 1 (2010) 1­122.
+*/
+
+#include "libgretl.h"
+#include "matrix_extra.h"
+#include "version.h"
 
 static gretl_matrix *gretl_vector_calloc (int n)
 {
@@ -109,7 +135,7 @@ int admm_lasso (const gretl_matrix *A,
     fprintf(stderr, "lambda-max = %g\n", lmax);
 
     nlam = gretl_vector_get_length(lfrac);
-    printf("using lambda sequence of length %d, starting at %g\n",
+    printf("using lambda-fraction sequence of length %d, starting at %g\n",
 	   nlam, lfrac->val[0]);
 
     /* Use the matrix inversion lemma for efficiency */
@@ -252,6 +278,7 @@ int admm_lasso (const gretl_matrix *A,
 	gretl_bundle_donate_data(bun, "B", B, GRETL_TYPE_MATRIX, 0);
     } else {
 	gretl_bundle_donate_data(bun, "b", B, GRETL_TYPE_MATRIX, 0);
+	gretl_bundle_set_scalar(bun, "lambda", lfrac->val[0] * lmax);
     }
 
     /* cleanup */
