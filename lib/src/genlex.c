@@ -581,6 +581,7 @@ struct str_table hidden_funcs[] = {
     { HF_SETCMPLX, "_setcmplx" },
     { HF_JBTERMS,  "_jbterms" },
     { HF_LISTINFO, "_listinfo" },
+    { HF_ADMM,     "_admm_lasso" },
     { 0,           NULL }
 };
 

@@ -135,7 +135,8 @@ SRCS = excel_import.c \
 	biprobit.c \
 	reprobit.c \
 	interpolate.c \
-	iso3166.c
+	iso3166.c \
+	admm.c
 
 ZIPSRC = zfileio.c \
 	zsystem.c \
@@ -174,7 +175,8 @@ PLUGINS = arbond.la \
 	reprobit.la \
 	panurc.la \
 	xml_get.la \
-	svm.la
+	svm.la \
+	admm.la
 
 GUI_DEPENDENT_PLUGINS = arma_x12.la \
 	excel_import.la \
@@ -356,6 +358,9 @@ json_get.la: json_get.lo
 
 svm.la: svm.lo svmlib.lo
 	$(LDXX) -o $@ $^ $(GRETLLIB)
+
+admm.la: admm.lo
+	$(LINK) -o $@ $^ $(GRETLLIB)
 
 # plugins that require GTK+
 

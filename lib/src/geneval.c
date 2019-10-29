@@ -11592,6 +11592,22 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 		A = gretl_matrix_resample(l->v.m, draws, &p->err);
 	    }
 	}
+    } else if (f == HF_ADMM) {
+	int (*admmfunc) (const gretl_matrix *, const gretl_matrix *,
+			 gretl_bundle *);
+
+	post_process = 0;
+	admmfunc = get_plugin_function("admm_lasso");
+	if (admmfunc == NULL) {
+	    p->err = E_FOPEN;
+	} else if (l->t != MAT || m->t != MAT || r->t != BUNDLE) {
+	    p->err = E_TYPES;
+	} else {
+	    ret = aux_scalar_node(p);
+	}
+	if (!p->err) {
+	    p->err = ret->v.xval = admmfunc(l->v.m, m->v.m, r->v.b);
+	}
     }
 
     if (!p->err && post_process) {
@@ -16268,6 +16284,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_LRCOVAR:
     case F_BRENAME:
     case F_ISOWEEK:
+    case HF_ADMM:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {
 	    ret = replace_value(l, m, r, p);
