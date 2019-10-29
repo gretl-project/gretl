@@ -85,6 +85,12 @@ int admm_lasso (const gretl_matrix *A,
     gretl_matrix *L = NULL;
     gretl_matrix *B = NULL;
     double lmax, d, nrm2;
+    double nxstack  = 0;
+    double nystack  = 0;
+    double prires   = 0;
+    double dualres  = 0;
+    double eps_pri  = 0;
+    double eps_dual = 0;
     int verbose = 0;
     int skinny, nlam;
     int m, n, i, j;
@@ -117,13 +123,6 @@ int admm_lasso (const gretl_matrix *A,
 
     gretl_vector *Atb    = gretl_vector_calloc(n);
     gretl_vector *Azb    = gretl_vector_calloc(m);
-
-    double nxstack  = 0;
-    double nystack  = 0;
-    double prires   = 0;
-    double dualres  = 0;
-    double eps_pri  = 0;
-    double eps_dual = 0;
 
     /* Precompute and cache factorizations */
 
@@ -268,7 +267,7 @@ int admm_lasso (const gretl_matrix *A,
 	    critmin = crit;
 	    jbest = j;
 	}
-    } /* end lambda values */
+    } /* end loop over lambda values */
 
     gretl_bundle_set_scalar(bun, "lmax", lmax);
     gretl_bundle_set_scalar(bun, "jbest", jbest + 1);
@@ -282,19 +281,41 @@ int admm_lasso (const gretl_matrix *A,
     }
 
     /* cleanup */
-    gretl_matrix_free(L);
     gretl_matrix_free(x);
     gretl_matrix_free(u);
     gretl_matrix_free(z);
     gretl_matrix_free(y);
     gretl_matrix_free(r);
-    gretl_matrix_free(w);
     gretl_matrix_free(zprev);
     gretl_matrix_free(zdiff);
     gretl_matrix_free(q);
+    gretl_matrix_free(w);
+    gretl_matrix_free(p);
     gretl_matrix_free(Atb);
     gretl_matrix_free(Azb);
-    gretl_matrix_free(p);
+    gretl_matrix_free(L);
+
+    return err;
+}
+
+int admm_lasso_xv (const gretl_matrix *A,
+		   const gretl_matrix *b,
+		   gretl_bundle *bun)
+{
+    int err = 0;
+
+    /* To be written! */
+
+    /* algo:
+       outer loop across folds
+         inner loop across lambda values
+           find out-of-sample MSE and cumulate, using admm_lasso()
+         end inner loop
+       end outer loop
+       find min of cumulated MSEs
+       using "best" lambda, rerun using all training data
+       send back coeffs
+    */
 
     return err;
 }
