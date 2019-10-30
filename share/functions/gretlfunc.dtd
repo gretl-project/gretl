@@ -11,7 +11,7 @@
 
 <!ELEMENT gretl-function-package (author, version, date, description, tags, 
                                   label?, menu-attachment?, help, gui-help?, 
-                                  data-files?, depends?, provider?,
+                                  data-files?, depends?, provider?, R-depends?,
 				  gretl-function+, sample-script)>
 <!ATTLIST gretl-function-package
    name CDATA #REQUIRED
@@ -35,6 +35,7 @@
 <!ELEMENT label       (#PCDATA)>
 <!ELEMENT menu-attachment (#PCDATA)>
 <!ELEMENT provider    (#PCDATA)>
+<!ELEMENT R-depends    (#PCDATA)>
 <!ATTLIST author
    email CDATA #REQUIRED
 >

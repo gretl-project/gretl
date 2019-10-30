@@ -147,6 +147,7 @@ struct fnpkg_ {
     char *descrip;    /* package description */
     char *help;       /* package help text */
     char *gui_help;   /* GUI-specific help (optional) */
+    char *Rdeps;      /* R dependencies (if any) */
     char *sample;     /* sample caller script */
     char *help_fname;     /* filename: package help text */
     char *gui_help_fname; /* filename: GUI-specific help text */
@@ -645,6 +646,7 @@ static fnpkg *function_package_alloc (const char *fname)
     pkg->descrip = NULL;
     pkg->help = NULL;
     pkg->gui_help = NULL;
+    pkg->Rdeps = NULL;
     pkg->sample = NULL;
     pkg->help_fname = NULL;
     pkg->gui_help_fname = NULL;
@@ -2993,6 +2995,10 @@ static int real_write_function_package (fnpkg *pkg, PRN *prn)
 	gretl_xml_put_tagged_string("provider", pkg->provider, prn);
     }
 
+    if (pkg->Rdeps != NULL) {
+	gretl_xml_put_tagged_string("R-depends", pkg->Rdeps, prn);
+    }
+
     if (pkg->pub != NULL) {
 	for (i=0; i<pkg->n_pub; i++) {
 	    write_function_xml(pkg->pub[i], prn);
@@ -3643,6 +3649,11 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 		    pprintf(prn, "Recording dependency list: %s\n", p);
 		}
 		err = pkg_set_depends(pkg, p);
+	    } else if (!strncmp(line, "R-depends", 9)) {
+		if (!quiet) {
+		    pprintf(prn, "Recording R dependency list: %s\n", p);
+		}
+		err = function_package_set_properties(pkg, "R-depends",p, NULL);
 	    } else if (!strncmp(line, "data-requirement", 16)) {
 		err = pkg_set_dreq(pkg, p);
 	    } else if (!strncmp(line, "model-requirement", 17)) {
@@ -4225,6 +4236,8 @@ static char **pkg_strvar_pointer (fnpkg *pkg, const char *key,
 	return &pkg->mpath;
     } else if (!strcmp(key, "gui-help")) {
 	return &pkg->gui_help;
+    } else if (!strcmp(key, "R-depends")) {
+	return &pkg->Rdeps;
     } else if (!strcmp(key, "help-fname")) {
 	return &pkg->help_fname;
     } else if (!strcmp(key, "gui-help-fname")) {
@@ -4463,6 +4476,9 @@ int function_package_get_properties (fnpkg *pkg, ...)
 	} else if (!strcmp(key, "gui-help")) {
 	    ps = (char **) ptr;
 	    handle_optional_string(ps, pkg->gui_help);
+	} else if (!strcmp(key, "R-depends")) {
+	    ps = (char **) ptr;
+	    handle_optional_string(ps, pkg->Rdeps);
 	} else if (!strcmp(key, "sample-script")) {
 	    ps = (char **) ptr;
 	    *ps = g_strdup(pkg->sample);
@@ -4571,6 +4587,8 @@ const char *function_package_get_string (fnpkg *pkg,
 	return pkg->help;
     } else if (!strcmp(id, "gui-help")) {
 	return pkg->gui_help;
+    } else if (!strcmp(id, "R-depends")) {
+	return pkg->Rdeps;
     } else {
 	return NULL;
     }
@@ -4786,6 +4804,7 @@ static void real_function_package_free (fnpkg *pkg, int full)
 	free(pkg->descrip);
 	free(pkg->help);
 	free(pkg->gui_help);
+	free(pkg->Rdeps);
 	free(pkg->sample);
 	free(pkg->help_fname);
 	free(pkg->gui_help_fname);
@@ -5427,6 +5446,8 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node,
 	} else if (!xmlStrcmp(cur->name, (XUC) "gui-help")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->gui_help);
 	    gretl_xml_get_prop_as_string(cur, "filename", &pkg->gui_help_fname);
+	} else if (!xmlStrcmp(cur->name, (XUC) "R-depends")) {
+	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->Rdeps);
 	} else if (!xmlStrcmp(cur->name, (XUC) "sample-script")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->sample);
 	    gretl_xml_get_prop_as_string(cur, "filename", &pkg->sample_fname);
