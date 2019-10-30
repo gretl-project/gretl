@@ -2753,6 +2753,15 @@ GUI package editor they appear under the tabs \textsf{Data files} and
 
   \ttusage{provider = extra}
 
+\item \texttt{R-depends} (optional): This should be used if your
+  package depends on \textsf{R} for its functionality. You should give
+  an \textsf{R} version with which the package is known to work, along
+  with the names and known-good version numbers of any \textsf{R}
+  packages it requires. The example below might be suitable for a
+  package that requires \textsf{R} and its \textsf{glmnet} package.
+
+  \ttusage{R-depends = R 3.5.3 glmnet 2.0-18}
+
 \end{description}
 
 In each case multiple elements should be separated by spaces.
