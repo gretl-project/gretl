@@ -3497,6 +3497,45 @@ static int is_pdf_ref (const char *s)
 	has_suffix(s, ".pdf");
 }
 
+static int check_R_depends (const char *s)
+{
+    int err = 0;
+
+    if (strncmp(s, "R ", 2)) {
+	err = E_DATA;
+    } else {
+	/* skip "R " */
+	s += 2;
+	s += strcspn(s, " ");
+	if (*s == '\0') {
+	    err = E_DATA;
+	} else {
+	    /* skip R version */
+	    s += strcspn(s, " ");
+	    while (*s && !err) {
+		s += strspn(s, " ");
+		if (*s == '\0') break;
+		/* R package? */
+		s += strcspn(s, " ");
+		s += strspn(s, " ");
+		if (*s == '\0') {
+		    /* no version given? */
+		    err = E_DATA;
+		} else {
+		    /* skip package version */
+		    s += strcspn(s, " ");
+		}
+	    }
+	}
+    }
+
+    if (err) {
+	gretl_errmsg_set("Invalid R-depends line");
+    }
+
+    return err;
+}
+
 /* Having assembled and checked the function-listing for a new
    package, now retrieve the additional information from the
    spec file (named by @fname, opened as @fp).
@@ -3650,10 +3689,13 @@ static int new_package_info_from_spec (fnpkg *pkg, const char *fname,
 		}
 		err = pkg_set_depends(pkg, p);
 	    } else if (!strncmp(line, "R-depends", 9)) {
-		if (!quiet) {
-		    pprintf(prn, "Recording R dependency list: %s\n", p);
+		err = check_R_depends(p);
+		if (!err) {
+		    if (!quiet) {
+			pprintf(prn, "Recording R dependency list: %s\n", p);
+		    }
+		    err = function_package_set_properties(pkg, "R-depends",p, NULL);
 		}
-		err = function_package_set_properties(pkg, "R-depends",p, NULL);
 	    } else if (!strncmp(line, "data-requirement", 16)) {
 		err = pkg_set_dreq(pkg, p);
 	    } else if (!strncmp(line, "model-requirement", 17)) {
@@ -5704,12 +5746,12 @@ static fnpkg *check_for_loaded (const char *fname, gretlopt opt)
 static void maybe_print_R_info (fnpkg *pkg, PRN *prn)
 {
     if (pkg->Rdeps != NULL) {
-	pputs(prn, "** Notice: this package requires GNU R.\n"
-	      "** It is known to work with the following version of R,\n"
-	      "** and required R package(s) if applicable:\n");
-	pprintf(prn, "** %s\n", pkg->Rdeps);
-	pputs(prn, "** It will likely work with later versions but that is\n"
-	      "** not guaranteed.\n\n");
+	pputs(prn, "# Notice: this package requires GNU R.\n"
+	      "# It is known to work with the following version of R,\n"
+	      "# plus required R package(s) if applicable:\n");
+	pprintf(prn, "#\n# %s\n#\n", pkg->Rdeps);
+	pputs(prn, "# It will likely work with later versions but that is\n"
+	      "# not guaranteed.\n\n");
     }
 }
 
