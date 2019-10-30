@@ -1987,6 +1987,8 @@ int get_full_filename (const char *fname, char *fullname, gretlopt opt)
     fprintf(stderr, "get_full_filename: after: '%s'\n", fullname);
 #endif
 
+    gretl_normalize_path(fullname);
+
  test_open:
 
     if (!err && test == NULL) {
