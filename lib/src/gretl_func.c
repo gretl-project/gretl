@@ -5701,6 +5701,18 @@ static fnpkg *check_for_loaded (const char *fname, gretlopt opt)
     return pkg;
 }
 
+static void maybe_print_R_info (fnpkg *pkg, PRN *prn)
+{
+    if (pkg->Rdeps != NULL) {
+	pputs(prn, "** Notice: this package requires GNU R.\n"
+	      "** It is known to work with the following version of R,\n"
+	      "** and required R package(s) if applicable:\n");
+	pprintf(prn, "** %s\n", pkg->Rdeps);
+	pputs(prn, "** It will likely work with later versions but that is\n"
+	      "** not guaranteed.\n\n");
+    }
+}
+
 /**
  * load_function_package:
  * @fname: full path to gfn file.
@@ -5749,6 +5761,7 @@ static int load_function_package (const char *fname,
 	if (prn != NULL && not_mpi_duplicate()) {
 	    pprintf(prn, "%s %s, %s (%s)\n", pkg->name, pkg->version,
 		    pkg->date, pkg->author);
+	    maybe_print_R_info(pkg, prn);
 	}
     }
 
