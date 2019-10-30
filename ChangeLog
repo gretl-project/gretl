@@ -3,7 +3,8 @@ version 2019d, in progress
   carg, cmod, complex, conj, ctrans, eiggen2, fft2, Re, Im
   and schur; documentation in a new chapter of the Gretl
   User's Guide
-- MPI data transfer: enable sending of arrays
+- MPI data transfer: enable sending of arrays, and speed
+  up sending of bundles
 - Enable nesting of arrays
 - New function randperm() (Matlab-compatible, permutation
   and sampling without replacement)
