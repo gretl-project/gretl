@@ -97,6 +97,7 @@ static int real_admm_lasso (const gretl_matrix *A,
     gretl_matrix *L = NULL;
     gretl_matrix *B = NULL;
     gretl_matrix *MSE = NULL;
+    gretl_matrix *lfrac;
     double lmax, d, nrm2;
     double nxstack  = 0;
     double nystack  = 0;
@@ -114,15 +115,21 @@ static int real_admm_lasso (const gretl_matrix *A,
     gretl_vector *x, *u, *z, *y, *r, *zprev, *zdiff;
     gretl_vector *q, *p, *w, *Atb, *Azb;
 
-    gretl_matrix *lfrac = gretl_bundle_get_matrix(bun, "lfrac", &err);
     double rho = gretl_bundle_get_scalar(bun, "rho", &err);
     int stdize = gretl_bundle_get_scalar(bun, "stdize", &err);
+
+    if (gretl_bundle_has_key(bun, "lxv")) {
+	lfrac = gretl_bundle_get_matrix(bun, "lxv", &err);
+    } else {
+	lfrac = gretl_bundle_get_matrix(bun, "lfrac", &err);
+    }
 
     if (err) {
 	return err;
     }
 
     xvalidate = (A_out != NULL);
+    nlam = gretl_vector_get_length(lfrac);
 
     /* dimensions */
     m = A->rows;
@@ -149,11 +156,16 @@ static int real_admm_lasso (const gretl_matrix *A,
 			      Atb, GRETL_MOD_NONE);
 
     lmax = gretl_matrix_infinity_norm(Atb);
-    fprintf(stderr, "lambda-max = %g\n", lmax);
 
-    nlam = gretl_vector_get_length(lfrac);
-    printf("using lambda-fraction sequence of length %d, starting at %g\n",
-	   nlam, lfrac->val[0]);
+    if (!xvalidate) {
+	fprintf(stderr, "lambda-max = %g\n", lmax);
+	if (nlam > 1) {
+	    printf("using lambda-fraction sequence of length %d, starting at %g\n",
+		   nlam, lfrac->val[0]);
+	} else {
+	    printf("using lambda-fraction %g\n", lfrac->val[0]);
+	}
+    }
 
     /* Use the matrix inversion lemma for efficiency */
     if (m >= n) {
@@ -180,7 +192,7 @@ static int real_admm_lasso (const gretl_matrix *A,
     }
 
     if (xvalidate) {
-	MSE = gretl_bundle_get_matrix(bun, "MSE", &err);;
+	MSE = gretl_bundle_get_matrix(bun, "MSE", &err);
     } else {
 	B = gretl_zero_matrix_new(n + stdize, nlam);
 	if (nlam > 0) {
@@ -293,7 +305,7 @@ static int real_admm_lasso (const gretl_matrix *A,
 		gretl_matrix_set(B, i+stdize, j, z->val[i]);
 	    }
 	    crit = objective(A, b, z, lambda, Azb);
-	    printf("%#12.6g  %5d    %#g (%d iters%s)\n", lambda/m, nnz, crit,
+	    printf("%#12.6g  %5d    %#.8g (%d iters%s)\n", lambda/m, nnz, crit,
 		   conv ? conv : MAX_ITER, conv ? ", full convergence" : "");
 	    if (crit < critmin) {
 		critmin = crit;
@@ -378,15 +390,15 @@ static int admm_lasso_xv (const gretl_matrix *A,
 	    }
 	}
 	err = real_admm_lasso(A_est, b_est, A_out, b_out, bun);
-	printf("fold %d: real_admm_lasso returns %d\n", f, err);
     }
 
     if (!err) {
+	gretl_matrix *lxv = gretl_matrix_alloc(1, 1);
 	double minMSE = MSE->val[0];
 	int jbest = 0;
 
 	for (j=0; j<nlam; j++) {
-	    printf("s = %#g -> MSE %g\n", lfrac->val[j], MSE->val[j]);
+	    printf("s = %#g -> MSE %#g\n", lfrac->val[j], MSE->val[j]);
 	    if (MSE->val[j] < minMSE) {
 		jbest = j;
 		minMSE = MSE->val[j];
@@ -394,7 +406,10 @@ static int admm_lasso_xv (const gretl_matrix *A,
 	}
 	printf("\nOut-of-sample MSE minimized at %g for s=%g\n",
 	       minMSE, lfrac->val[jbest]);
-	/* now determine optimal lambda-frac on full training set */
+	/* now determine coefficient vector on full training set */
+	lxv->val[0] = lfrac->val[jbest];
+	gretl_bundle_donate_data(bun, "lxv", lxv, GRETL_TYPE_MATRIX, 0);
+	err = real_admm_lasso(A, b, NULL, NULL, bun);
     }
 
     gretl_matrix_free(A_est);
@@ -414,10 +429,6 @@ int admm_lasso (const gretl_matrix *A,
     xv = gretl_bundle_get_int(bun, "xvalidate", &err);
 
     if (xv) {
-	/* use global lambda-max? */
-	// lmax = gretl_matrix_infinity_norm(Atb);
-	// fprintf(stderr, "lambda-max = %g\n", lmax);
-
 	return admm_lasso_xv(A, b, bun);
     } else {
 	return real_admm_lasso(A, b, NULL, NULL, bun);
