@@ -89,12 +89,11 @@ static int real_admm_lasso (const gretl_matrix *A,
 			    const gretl_matrix *b_out,
 			    gretl_bundle *bun)
 {
+    gretl_matrix_block *MB;
     const int MAX_ITER  = 20000; // was 50 in Boyd
     const double RELTOL = 1e-3;  // 1e-2 in Boyd
     const double ABSTOL = 1e-5;  // 1e-4 in Boyd
     double critmin = 1e200;
-    gretl_matrix_block *MB;
-    gretl_matrix *L = NULL;
     gretl_matrix *B = NULL;
     gretl_matrix *MSE = NULL;
     gretl_matrix *lfrac;
@@ -114,6 +113,7 @@ static int real_admm_lasso (const gretl_matrix *A,
 
     gretl_vector *x, *u, *z, *y, *r, *zprev, *zdiff;
     gretl_vector *q, *p, *w, *Atb, *Azb;
+    gretl_matrix *L;
 
     double rho = gretl_bundle_get_scalar(bun, "rho", &err);
     int stdize = gretl_bundle_get_scalar(bun, "stdize", &err);
