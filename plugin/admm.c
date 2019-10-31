@@ -27,11 +27,6 @@
 #include "matrix_extra.h"
 #include "version.h"
 
-static gretl_matrix *gretl_vector_calloc (int n)
-{
-    return gretl_zero_matrix_new(n, 1);
-}
-
 static double abs_sum (const gretl_vector *z)
 {
     int i, n = gretl_vector_get_length(z);
@@ -61,6 +56,20 @@ static double objective (const gretl_matrix *A,
     return obj / A->rows;
 }
 
+static double xv_score (const gretl_matrix *A,
+			const gretl_vector *b,
+			const gretl_vector *z,
+			gretl_vector *Azb)
+{
+    double SSR;
+
+    gretl_matrix_multiply(A, z, Azb);
+    gretl_matrix_subtract_from(Azb, b);
+    SSR = gretl_vector_dot_product(Azb, Azb, NULL);
+
+    return SSR / A->rows;
+}
+
 static void soft_threshold (gretl_vector *v, double k)
 {
     double vi;
@@ -74,16 +83,20 @@ static void soft_threshold (gretl_vector *v, double k)
     }
 }
 
-int admm_lasso (const gretl_matrix *A,
-		const gretl_matrix *b,
-		gretl_bundle *bun)
+static int real_admm_lasso (const gretl_matrix *A,
+			    const gretl_matrix *b,
+			    const gretl_matrix *A_out,
+			    const gretl_matrix *b_out,
+			    gretl_bundle *bun)
 {
     const int MAX_ITER  = 20000; // was 50 in Boyd
     const double RELTOL = 1e-3;  // 1e-2 in Boyd
     const double ABSTOL = 1e-5;  // 1e-4 in Boyd
     double critmin = 1e200;
+    gretl_matrix_block *MB;
     gretl_matrix *L = NULL;
     gretl_matrix *B = NULL;
+    gretl_matrix *MSE = NULL;
     double lmax, d, nrm2;
     double nxstack  = 0;
     double nystack  = 0;
@@ -92,10 +105,14 @@ int admm_lasso (const gretl_matrix *A,
     double eps_pri  = 0;
     double eps_dual = 0;
     int verbose = 0;
-    int skinny, nlam;
+    int xvalidate = 0;
+    int ldim, nlam;
     int m, n, i, j;
     int jbest = 0;
     int err = 0;
+
+    gretl_vector *x, *u, *z, *y, *r, *zprev, *zdiff;
+    gretl_vector *q, *p, *w, *Atb, *Azb;
 
     gretl_matrix *lfrac = gretl_bundle_get_matrix(bun, "lfrac", &err);
     double rho = gretl_bundle_get_scalar(bun, "rho", &err);
@@ -105,24 +122,25 @@ int admm_lasso (const gretl_matrix *A,
 	return err;
     }
 
+    xvalidate = (A_out != NULL);
+
+    /* dimensions */
     m = A->rows;
     n = A->cols;
-    skinny = (m >= n);
+    ldim = m >= n ? n : m;
 
-    gretl_vector *x      = gretl_vector_calloc(n);
-    gretl_vector *u      = gretl_vector_calloc(n);
-    gretl_vector *z      = gretl_vector_calloc(n);
-    gretl_vector *y      = gretl_vector_calloc(n);
-    gretl_vector *r      = gretl_vector_calloc(n);
-    gretl_vector *zprev  = gretl_vector_calloc(n);
-    gretl_vector *zdiff  = gretl_vector_calloc(n);
-
-    gretl_vector *q      = gretl_vector_calloc(n);
-    gretl_vector *w      = gretl_vector_calloc(n);
-    gretl_vector *p      = gretl_vector_calloc(m);
-
-    gretl_vector *Atb    = gretl_vector_calloc(n);
-    gretl_vector *Azb    = gretl_vector_calloc(m);
+    MB = gretl_matrix_block_new(&x, n, 1, &u, n, 1,
+				&z, n, 1, &y, n, 1,
+				&r, n, 1, &zprev, n, 1,
+				&zdiff, n, 1, &q, n, 1,
+				&q, n, 1, &w, n, 1,
+				&p, m, 1, &Atb, n, 1,
+				&Azb, m, 1, &L, ldim, ldim,
+				NULL);
+    if (MB == NULL) {
+	return E_ALLOC;
+    }
+    gretl_matrix_block_zero(MB);
 
     /* Precompute and cache factorizations */
 
@@ -138,9 +156,8 @@ int admm_lasso (const gretl_matrix *A,
 	   nlam, lfrac->val[0]);
 
     /* Use the matrix inversion lemma for efficiency */
-    if (skinny) {
-	/* L = chol(AtA + rho*I) */
-	L = gretl_matrix_alloc(n, n);
+    if (m >= n) {
+	/* "skinny": L = chol(AtA + rho*I) */
 	gretl_matrix_multiply_mod(A, GRETL_MOD_TRANSPOSE,
 				  A, GRETL_MOD_NONE,
 				  L, GRETL_MOD_NONE);
@@ -150,8 +167,7 @@ int admm_lasso (const gretl_matrix *A,
 	}
 	gretl_matrix_cholesky_decomp(L);
     } else {
-	/* L = chol(I + 1/rho*AAt) */
-	L = gretl_matrix_alloc(m, m);
+	/* "fat": L = chol(I + 1/rho*AAt) */
 	gretl_matrix_multiply_mod(A, GRETL_MOD_NONE,
 				  A, GRETL_MOD_TRANSPOSE,
 				  L, GRETL_MOD_NONE);
@@ -163,15 +179,18 @@ int admm_lasso (const gretl_matrix *A,
 	err = gretl_matrix_cholesky_decomp(L);
     }
 
-    B = gretl_zero_matrix_new(n + stdize, nlam);
-
-    if (nlam > 0) {
-	printf("     lambda  coeffs    criterion\n");
+    if (xvalidate) {
+	MSE = gretl_bundle_get_matrix(bun, "MSE", &err);;
+    } else {
+	B = gretl_zero_matrix_new(n + stdize, nlam);
+	if (nlam > 0) {
+	    printf("     lambda  coeffs    criterion\n");
+	}
     }
 
     /* loop across lambda values */
 
-    for (j=0; j<nlam; j++) {
+    for (j=0; j<nlam && !err; j++) {
 	double lambda, crit;
 	int iter = 0;
 	int conv = 0;
@@ -193,7 +212,7 @@ int admm_lasso (const gretl_matrix *A,
 	    gretl_matrix_multiply_by_scalar(q, rho);
 	    gretl_matrix_add_to(q, Atb);   // q = A^T b + rho*(z - u)
 
-	    if (skinny) {
+	    if (m >= n) {
 		/* x = U \ (L \ q) */
 		gretl_cholesky_solve(L, q);
 		gretl_matrix_copy_values(x, q);
@@ -252,70 +271,155 @@ int admm_lasso (const gretl_matrix *A,
 	    gretl_matrix_subtract_from(r, z);
 
 	    iter++;
-	} /* end ADMM solve */
+	} /* end ADMM solve loop */
 
-	for (i=0; i<n; i++) {
-	    if (z->val[i] != 0.0) {
-		nnz++;
+	if (xvalidate) {
+	    /* cumulate out-of-sample MSE or R-squared */
+	    double score;
+
+	    gretl_matrix_reuse(Azb, A_out->rows, 1);
+	    score = xv_score(A_out, b_out, z, Azb);
+	    MSE->val[j] += score;
+#if 0
+	    printf("  lambda-frac=%g, score=%g, cum=%g\n", lfrac->val[j],
+		   score, MSE->val[j]);
+#endif
+	    gretl_matrix_reuse(Azb, m, 1);
+	} else {
+	    for (i=0; i<n; i++) {
+		if (z->val[i] != 0.0) {
+		    nnz++;
+		}
+		gretl_matrix_set(B, i+stdize, j, z->val[i]);
 	    }
-	    gretl_matrix_set(B, i+stdize, j, z->val[i]);
-	}
-	crit = objective(A, b, z, lambda, Azb);
-	printf("%#12.6g  %5d    %#g (%d iters%s)\n", lambda/m, nnz, crit,
-	       conv ? conv : MAX_ITER, conv ? ", full convergence" : "");
-	if (crit < critmin) {
-	    critmin = crit;
-	    jbest = j;
+	    crit = objective(A, b, z, lambda, Azb);
+	    printf("%#12.6g  %5d    %#g (%d iters%s)\n", lambda/m, nnz, crit,
+		   conv ? conv : MAX_ITER, conv ? ", full convergence" : "");
+	    if (crit < critmin) {
+		critmin = crit;
+		jbest = j;
+	    }
 	}
     } /* end loop over lambda values */
 
-    gretl_bundle_set_scalar(bun, "lmax", lmax);
-    gretl_bundle_set_scalar(bun, "jbest", jbest + 1);
-    gretl_bundle_set_scalar(bun, "lfbest", lfrac->val[jbest]);
-    gretl_bundle_set_scalar(bun, "crit", critmin);
-    if (nlam > 1) {
-	gretl_bundle_donate_data(bun, "B", B, GRETL_TYPE_MATRIX, 0);
-    } else {
-	gretl_bundle_donate_data(bun, "b", B, GRETL_TYPE_MATRIX, 0);
-	gretl_bundle_set_scalar(bun, "lambda", lfrac->val[0] * lmax);
+    if (!xvalidate) {
+	gretl_bundle_set_scalar(bun, "lmax", lmax);
+	gretl_bundle_set_scalar(bun, "jbest", jbest + 1);
+	gretl_bundle_set_scalar(bun, "lfbest", lfrac->val[jbest]);
+	gretl_bundle_set_scalar(bun, "crit", critmin);
+	if (nlam > 1) {
+	    gretl_bundle_donate_data(bun, "B", B, GRETL_TYPE_MATRIX, 0);
+	} else {
+	    gretl_bundle_donate_data(bun, "b", B, GRETL_TYPE_MATRIX, 0);
+	    gretl_bundle_set_scalar(bun, "lambda", lfrac->val[0] * lmax);
+	}
     }
 
     /* cleanup */
-    gretl_matrix_free(x);
-    gretl_matrix_free(u);
-    gretl_matrix_free(z);
-    gretl_matrix_free(y);
-    gretl_matrix_free(r);
-    gretl_matrix_free(zprev);
-    gretl_matrix_free(zdiff);
-    gretl_matrix_free(q);
-    gretl_matrix_free(w);
-    gretl_matrix_free(p);
-    gretl_matrix_free(Atb);
-    gretl_matrix_free(Azb);
-    gretl_matrix_free(L);
+    gretl_matrix_block_destroy(MB);
 
     return err;
 }
 
-int admm_lasso_xv (const gretl_matrix *A,
-		   const gretl_matrix *b,
-		   gretl_bundle *bun)
+static int admm_lasso_xv (const gretl_matrix *A,
+			  const gretl_matrix *b,
+			  gretl_bundle *bun)
 {
+    gretl_matrix *A_est = NULL;
+    gretl_matrix *b_est = NULL;
+    gretl_matrix *A_out = NULL;
+    gretl_matrix *b_out = NULL;
+    gretl_matrix *lfrac = NULL;
+    gretl_matrix *MSE = NULL;
+    int i, j, f, nf, fsize;
+    int nlam;
     int err = 0;
 
-    /* To be written! */
+    nf = gretl_bundle_get_scalar(bun, "nfolds", &err);
+    fsize = A->rows / nf;
 
-    /* algo:
-       outer loop across folds
-         inner loop across lambda values
-           find out-of-sample MSE and cumulate, using admm_lasso()
-         end inner loop
-       end outer loop
-       find min of cumulated MSEs
-       using "best" lambda, rerun using all training data
-       send back coeffs
-    */
+    printf("admm_lasso_xv: nf=%d, fsize=%d\n", nf, fsize);
+
+    A_est = gretl_matrix_alloc((nf-1)*fsize, A->cols);
+    A_out = gretl_matrix_alloc(fsize, A->cols);
+    b_est = gretl_matrix_alloc((nf-1)*fsize, 1);
+    b_out = gretl_matrix_alloc(fsize, 1);
+
+    lfrac = gretl_bundle_get_matrix(bun, "lfrac", &err);
+    nlam = gretl_vector_get_length(lfrac);
+
+    MSE = gretl_zero_matrix_new(nlam, 1);
+    gretl_bundle_donate_data(bun, "MSE", MSE, GRETL_TYPE_MATRIX, 0);
+
+    for (f=0; f<nf && !err; f++) {
+	double aij;
+	int ke, ko;
+
+	/* subset the data */
+	for (j=0; j<A->cols; j++) {
+	    ke = ko = 0;
+	    for (i=0; i<A->rows; i++) {
+		aij = gretl_matrix_get(A, i, j);
+		if (i/fsize == f) {
+		    /* "out of sample" range */
+		    gretl_matrix_set(A_out, ko, j, aij);
+		    if (j == 0) {
+			b_out->val[ko] = b->val[i];
+		    }
+		    ko++;
+		} else {
+		    /* estimation sample */
+		    gretl_matrix_set(A_est, ke, j, aij);
+		    if (j == 0) {
+			b_est->val[ke] = b->val[i];
+		    }
+		    ke++;
+		}
+	    }
+	}
+	err = real_admm_lasso(A_est, b_est, A_out, b_out, bun);
+	printf("fold %d: real_admm_lasso returns %d\n", f, err);
+    }
+
+    if (!err) {
+	double minMSE = MSE->val[0];
+	int jbest = 0;
+
+	for (j=0; j<nlam; j++) {
+	    printf("s = %#g -> MSE %g\n", lfrac->val[j], MSE->val[j]);
+	    if (MSE->val[j] < minMSE) {
+		jbest = j;
+		minMSE = MSE->val[j];
+	    }
+	}
+	printf("\nOut-of-sample MSE minimized at %g for s=%g\n",
+	       minMSE, lfrac->val[jbest]);
+	/* now determine optimal lambda-frac on full training set */
+    }
+
+    gretl_matrix_free(A_est);
+    gretl_matrix_free(b_est);
+    gretl_matrix_free(A_out);
+    gretl_matrix_free(b_out);
 
     return err;
+}
+
+int admm_lasso (const gretl_matrix *A,
+		const gretl_matrix *b,
+		gretl_bundle *bun)
+{
+    int xv, err = 0;
+
+    xv = gretl_bundle_get_int(bun, "xvalidate", &err);
+
+    if (xv) {
+	/* use global lambda-max? */
+	// lmax = gretl_matrix_infinity_norm(Atb);
+	// fprintf(stderr, "lambda-max = %g\n", lmax);
+
+	return admm_lasso_xv(A, b, bun);
+    } else {
+	return real_admm_lasso(A, b, NULL, NULL, bun);
+    }
 }
