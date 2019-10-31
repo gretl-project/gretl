@@ -20,7 +20,7 @@
 /* Code to use ADMM to solve the Lasso problem. Based on Boyd et al,
    "Distributed Optimization and Statistical Learning via the
    Alternating Direction Method of Multipliers", Foundations and
-   Trends in Machine Learning Vol. 3, No. 1 (2010) 1­122.
+   Trends in Machine Learning, Vol. 3, No. 1 (2010) 1­122.
 */
 
 #include "libgretl.h"
@@ -286,7 +286,7 @@ static int real_admm_lasso (const gretl_matrix *A,
 	} /* end ADMM solve loop */
 
 	if (xvalidate) {
-	    /* cumulate out-of-sample MSE or R-squared */
+	    /* cumulate out-of-sample MSE */
 	    double score;
 
 	    gretl_matrix_reuse(Azb, A_out->rows, 1);
