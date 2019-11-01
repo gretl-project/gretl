@@ -27,6 +27,17 @@
 #include "matrix_extra.h"
 #include "version.h"
 
+#define MAX_ITER 20000 // was 50 in Boyd
+#define RELTOL 1e-3    // 1e-2 in Boyd
+#define ABSTOL 1e-5    // 1e-4 in Boyd
+
+static void vector_copy_values (gretl_vector *targ,
+				const gretl_vector *src,
+				int n)
+{
+    memcpy(targ->val, src->val, n * sizeof *targ->val);
+}
+
 static double abs_sum (const gretl_vector *z)
 {
     int i, n = gretl_vector_get_length(z);
@@ -75,7 +86,7 @@ static void soft_threshold (gretl_vector *v, double k)
     double vi;
     int i;
 
-    for (i = 0; i < v->rows; i++) {
+    for (i=0; i<v->rows; i++) {
 	vi = v->val[i];
 	if (vi > k)       { v->val[i] = vi - k; }
 	else if (vi < -k) { v->val[i] = vi + k; }
@@ -83,17 +94,46 @@ static void soft_threshold (gretl_vector *v, double k)
     }
 }
 
+static int get_cholesky_factor (const gretl_matrix *A,
+				gretl_matrix *L,
+				double rho)
+{
+    double d;
+    int i, err = 0;
+
+    if (A->rows >= A->cols) {
+	/* "skinny": L = chol(AtA + rho*I) */
+	gretl_matrix_multiply_mod(A, GRETL_MOD_TRANSPOSE,
+				  A, GRETL_MOD_NONE,
+				  L, GRETL_MOD_NONE);
+	for (i=0; i<A->cols; i++) {
+	    d = gretl_matrix_get(L, i, i);
+	    gretl_matrix_set(L, i, i, d + rho);
+	}
+	gretl_matrix_cholesky_decomp(L);
+    } else {
+	/* "fat": L = chol(I + 1/rho*AAt) */
+	gretl_matrix_multiply_mod(A, GRETL_MOD_NONE,
+				  A, GRETL_MOD_TRANSPOSE,
+				  L, GRETL_MOD_NONE);
+	gretl_matrix_multiply_by_scalar(L, 1/rho);
+	for (i=0; i<A->rows; i++) {
+	    d = gretl_matrix_get(L, i, i);
+	    gretl_matrix_set(L, i, i, d + 1.0);
+	}
+	err = gretl_matrix_cholesky_decomp(L);
+    }
+
+    return err;
+}
+
 static int real_admm_lasso (const gretl_matrix *A,
 			    const gretl_matrix *b,
-			    const gretl_matrix *A_out,
-			    const gretl_matrix *b_out,
 			    gretl_bundle *bun)
 {
     gretl_matrix_block *MB;
-    const int MAX_ITER  = 20000; // was 50 in Boyd
-    const double RELTOL = 1e-3;  // 1e-2 in Boyd
-    const double ABSTOL = 1e-5;  // 1e-4 in Boyd
     double critmin = 1e200;
+    double abstol;
     gretl_matrix *B = NULL;
     gretl_matrix *MSE = NULL;
     gretl_matrix *lfrac;
@@ -105,7 +145,6 @@ static int real_admm_lasso (const gretl_matrix *A,
     double eps_pri  = 0;
     double eps_dual = 0;
     int verbose = 0;
-    int xvalidate = 0;
     int ldim, nlam;
     int m, n, i, j;
     int jbest = 0;
@@ -117,6 +156,7 @@ static int real_admm_lasso (const gretl_matrix *A,
 
     double rho = gretl_bundle_get_scalar(bun, "rho", &err);
     int stdize = gretl_bundle_get_scalar(bun, "stdize", &err);
+    double rho2 = rho * rho;
 
     if (gretl_bundle_has_key(bun, "lxv")) {
 	lfrac = gretl_bundle_get_matrix(bun, "lxv", &err);
@@ -128,13 +168,12 @@ static int real_admm_lasso (const gretl_matrix *A,
 	return err;
     }
 
-    xvalidate = (A_out != NULL);
-    nlam = gretl_vector_get_length(lfrac);
-
     /* dimensions */
+    nlam = gretl_vector_get_length(lfrac);
     m = A->rows;
     n = A->cols;
     ldim = m >= n ? n : m;
+    abstol = sqrt(n) * ABSTOL;
 
     MB = gretl_matrix_block_new(&x, n, 1, &u, n, 1,
 				&z, n, 1, &y, n, 1,
@@ -157,47 +196,19 @@ static int real_admm_lasso (const gretl_matrix *A,
 
     lmax = gretl_matrix_infinity_norm(Atb);
 
-    if (!xvalidate) {
-	fprintf(stderr, "lambda-max = %g\n", lmax);
-	if (nlam > 1) {
-	    printf("using lambda-fraction sequence of length %d, starting at %g\n",
-		   nlam, lfrac->val[0]);
-	} else {
-	    printf("using lambda-fraction %g\n", lfrac->val[0]);
-	}
+    fprintf(stderr, "lambda-max = %g\n", lmax);
+    if (nlam > 1) {
+	printf("using lambda-fraction sequence of length %d, starting at %g\n",
+	       nlam, lfrac->val[0]);
+    } else {
+	printf("using lambda-fraction %g\n", lfrac->val[0]);
     }
 
-    /* Use the matrix inversion lemma for efficiency */
-    if (m >= n) {
-	/* "skinny": L = chol(AtA + rho*I) */
-	gretl_matrix_multiply_mod(A, GRETL_MOD_TRANSPOSE,
-				  A, GRETL_MOD_NONE,
-				  L, GRETL_MOD_NONE);
-	for (i=0; i<n; i++) {
-	    d = gretl_matrix_get(L, i, i);
-	    gretl_matrix_set(L, i, i, d + rho);
-	}
-	gretl_matrix_cholesky_decomp(L);
-    } else {
-	/* "fat": L = chol(I + 1/rho*AAt) */
-	gretl_matrix_multiply_mod(A, GRETL_MOD_NONE,
-				  A, GRETL_MOD_TRANSPOSE,
-				  L, GRETL_MOD_NONE);
-	gretl_matrix_multiply_by_scalar(L, 1/rho);
-	for (i=0; i<m; i++) {
-	    d = gretl_matrix_get(L, i, i);
-	    gretl_matrix_set(L, i, i, d + 1.0);
-	}
-	err = gretl_matrix_cholesky_decomp(L);
-    }
+    get_cholesky_factor(A, L, rho);
 
-    if (xvalidate) {
-	MSE = gretl_bundle_get_matrix(bun, "MSE", &err);
-    } else {
-	B = gretl_zero_matrix_new(n + stdize, nlam);
-	if (nlam > 0) {
-	    printf("     lambda  coeffs    criterion\n");
-	}
+    B = gretl_zero_matrix_new(n + stdize, nlam);
+    if (nlam > 0) {
+	printf("     lambda  coeffs    criterion\n");
     }
 
     /* loop across lambda values */
@@ -219,7 +230,7 @@ static int real_admm_lasso (const gretl_matrix *A,
 	    gretl_matrix_add_to(u, x);
 
 	    /* x-update: x = (A^T A + rho I) \ (A^T b + rho z - y) */
-	    gretl_matrix_copy_values(q, z);
+	    vector_copy_values(q, z, n);
 	    gretl_matrix_subtract_from(q, u);
 	    gretl_matrix_multiply_by_scalar(q, rho);
 	    gretl_matrix_add_to(q, Atb);   // q = A^T b + rho*(z - u)
@@ -227,7 +238,7 @@ static int real_admm_lasso (const gretl_matrix *A,
 	    if (m >= n) {
 		/* x = U \ (L \ q) */
 		gretl_cholesky_solve(L, q);
-		gretl_matrix_copy_values(x, q);
+		vector_copy_values(x, q, n);
 	    } else {
 		/* x = q/rho - 1/rho^2 * A^T * (U \ (L \ (A*q))) */
 		gretl_matrix_multiply(A, q, p);
@@ -235,12 +246,12 @@ static int real_admm_lasso (const gretl_matrix *A,
 		gretl_matrix_multiply_mod(A, GRETL_MOD_TRANSPOSE,
 					  p, GRETL_MOD_NONE,
 					  x, GRETL_MOD_NONE);
-		gretl_matrix_multiply_by_scalar(x, -1/(rho*rho));
+		gretl_matrix_multiply_by_scalar(x, -1/rho2);
 		gretl_matrix_multiply_by_scalar(q, 1/rho);
 		gretl_matrix_add_to(x, q);
 	    }
 
-	    gretl_matrix_copy_values(w, x);
+	    vector_copy_values(w, x, n);
 	    gretl_matrix_add_to(w, u);   /* w = x + u */
 
 	    /* sqrt(sum ||r_i||_2^2) */
@@ -248,17 +259,17 @@ static int real_admm_lasso (const gretl_matrix *A,
 	    /* sqrt(sum ||r_i||_2^2) */
 	    nxstack = sqrt(gretl_vector_dot_product(x, x, NULL));
 	    /* sqrt(sum ||y_i||_2^2) */
-	    nystack = gretl_vector_dot_product(u, u, NULL) / pow(rho, 2);
+	    nystack = gretl_vector_dot_product(u, u, NULL) / rho2;
 	    nystack = sqrt(nystack);
 
-	    gretl_matrix_copy_values(zprev, z);
-	    gretl_matrix_copy_values(z, w);
+	    vector_copy_values(zprev, z, n);
+	    vector_copy_values(z, w, n);
 	    soft_threshold(z, lambda/rho);
 
 	    /* Termination checks */
 
 	    /* dual residual */
-	    gretl_matrix_copy_values(zdiff, z);
+	    vector_copy_values(zdiff, z, n);
 	    gretl_matrix_subtract_from(zdiff, zprev);
 	    /* ||s^k||_2^2 = N rho^2 ||z - zprev||_2^2 */
 	    nrm2 = sqrt(gretl_vector_dot_product(zdiff, zdiff, NULL));
@@ -266,8 +277,8 @@ static int real_admm_lasso (const gretl_matrix *A,
 
 	    /* compute primal and dual feasibility tolerances */
 	    nrm2 = sqrt(gretl_vector_dot_product(z, z, NULL));
-	    eps_pri  = sqrt(n)*ABSTOL + RELTOL * fmax(nxstack, nrm2);
-	    eps_dual = sqrt(n)*ABSTOL + RELTOL * nystack;
+	    eps_pri  = abstol + RELTOL * fmax(nxstack, nrm2);
+	    eps_dual = abstol + RELTOL * nystack;
 
 	    if (iter > 1 && prires <= eps_pri && dualres <= eps_dual) {
 		if (verbose) {
@@ -279,25 +290,13 @@ static int real_admm_lasso (const gretl_matrix *A,
 	    }
 
 	    /* Compute residual: r = x - z */
-	    gretl_matrix_copy_values(r, x);
+	    vector_copy_values(r, x, n);
 	    gretl_matrix_subtract_from(r, z);
 
 	    iter++;
 	} /* end ADMM solve loop */
 
-	if (xvalidate) {
-	    /* cumulate out-of-sample MSE */
-	    double score;
-
-	    gretl_matrix_reuse(Azb, A_out->rows, 1);
-	    score = xv_score(A_out, b_out, z, Azb);
-	    MSE->val[j] += score;
-#if 0
-	    printf("  lambda-frac=%g, score=%g, cum=%g\n", lfrac->val[j],
-		   score, MSE->val[j]);
-#endif
-	    gretl_matrix_reuse(Azb, m, 1);
-	} else {
+	if (!err) {
 	    for (i=0; i<n; i++) {
 		if (z->val[i] != 0.0) {
 		    nnz++;
@@ -314,18 +313,186 @@ static int real_admm_lasso (const gretl_matrix *A,
 	}
     } /* end loop over lambda values */
 
-    if (!xvalidate) {
-	gretl_bundle_set_scalar(bun, "lmax", lmax);
-	gretl_bundle_set_scalar(bun, "jbest", jbest + 1);
-	gretl_bundle_set_scalar(bun, "lfbest", lfrac->val[jbest]);
-	gretl_bundle_set_scalar(bun, "crit", critmin);
-	if (nlam > 1) {
-	    gretl_bundle_donate_data(bun, "B", B, GRETL_TYPE_MATRIX, 0);
-	} else {
-	    gretl_bundle_donate_data(bun, "b", B, GRETL_TYPE_MATRIX, 0);
-	    gretl_bundle_set_scalar(bun, "lambda", lfrac->val[0] * lmax);
-	}
+    gretl_bundle_set_scalar(bun, "lmax", lmax);
+    gretl_bundle_set_scalar(bun, "jbest", jbest + 1);
+    gretl_bundle_set_scalar(bun, "lfbest", lfrac->val[jbest]);
+    gretl_bundle_set_scalar(bun, "crit", critmin);
+    if (nlam > 1) {
+	gretl_bundle_donate_data(bun, "B", B, GRETL_TYPE_MATRIX, 0);
+    } else {
+	gretl_bundle_donate_data(bun, "b", B, GRETL_TYPE_MATRIX, 0);
+	gretl_bundle_set_scalar(bun, "lambda", lfrac->val[0] * lmax);
     }
+
+    /* cleanup */
+    gretl_matrix_block_destroy(MB);
+
+    return err;
+}
+
+static int lasso_xv_round (const gretl_matrix *A,
+			   const gretl_matrix *b,
+			   const gretl_matrix *A_out,
+			   const gretl_matrix *b_out,
+			   gretl_bundle *bun)
+{
+    gretl_matrix_block *MB;
+    double critmin = 1e200;
+    double abstol;
+    gretl_matrix *MSE = NULL;
+    double lmax, d, nrm2;
+    double nxstack  = 0;
+    double nystack  = 0;
+    double prires   = 0;
+    double dualres  = 0;
+    double eps_pri  = 0;
+    double eps_dual = 0;
+    int verbose = 0;
+    int ldim, nlam;
+    int m, n, i, j;
+    int jbest = 0;
+    int err = 0;
+
+    gretl_vector *x, *u, *z, *y, *r, *zprev, *zdiff;
+    gretl_vector *q, *p, *w, *Atb, *Azb;
+    gretl_matrix *L;
+
+    double rho = gretl_bundle_get_scalar(bun, "rho", &err);
+    int stdize = gretl_bundle_get_scalar(bun, "stdize", &err);
+    gretl_matrix *lfrac = gretl_bundle_get_matrix(bun, "lfrac", &err);
+    double rho2 = rho * rho;
+
+    if (err) {
+	return err;
+    }
+
+    /* dimensions */
+    nlam = gretl_vector_get_length(lfrac);
+    m = A->rows;
+    n = A->cols;
+    ldim = m >= n ? n : m;
+    abstol = sqrt(n) * ABSTOL;
+
+    MB = gretl_matrix_block_new(&x, n, 1, &u, n, 1,
+				&z, n, 1, &y, n, 1,
+				&r, n, 1, &zprev, n, 1,
+				&zdiff, n, 1, &q, n, 1,
+				&q, n, 1, &w, n, 1,
+				&p, m, 1, &Atb, n, 1,
+				&Azb, m, 1, &L, ldim, ldim,
+				NULL);
+    if (MB == NULL) {
+	return E_ALLOC;
+    }
+    gretl_matrix_block_zero(MB);
+
+    /* Precompute and cache factorizations */
+
+    gretl_matrix_multiply_mod(A, GRETL_MOD_TRANSPOSE,
+			      b, GRETL_MOD_NONE,
+			      Atb, GRETL_MOD_NONE);
+
+    lmax = gretl_matrix_infinity_norm(Atb);
+
+    get_cholesky_factor(A, L, rho);
+
+    MSE = gretl_bundle_get_matrix(bun, "MSE", &err);
+
+    /* loop across lambda values */
+
+    for (j=0; j<nlam && !err; j++) {
+	double lambda, score;
+	int iter = 0;
+	int conv = 0;
+	int nnz = 0;
+
+	/* pull current lambda fraction and scale it */
+	lambda = lfrac->val[j] * lmax;
+
+	/* ADMM solver loop for given lambda */
+
+	while (iter < MAX_ITER && !err) {
+	    /* u-update: u = u + x - z */
+	    gretl_matrix_subtract_from(x, z);
+	    gretl_matrix_add_to(u, x);
+
+	    /* x-update: x = (A^T A + rho I) \ (A^T b + rho z - y) */
+	    vector_copy_values(q, z, n);
+	    gretl_matrix_subtract_from(q, u);
+	    gretl_matrix_multiply_by_scalar(q, rho);
+	    gretl_matrix_add_to(q, Atb);   // q = A^T b + rho*(z - u)
+
+	    if (m >= n) {
+		/* x = U \ (L \ q) */
+		gretl_cholesky_solve(L, q);
+		vector_copy_values(x, q, n);
+	    } else {
+		/* x = q/rho - 1/rho^2 * A^T * (U \ (L \ (A*q))) */
+		gretl_matrix_multiply(A, q, p);
+		err = gretl_cholesky_solve(L, p);
+		gretl_matrix_multiply_mod(A, GRETL_MOD_TRANSPOSE,
+					  p, GRETL_MOD_NONE,
+					  x, GRETL_MOD_NONE);
+		gretl_matrix_multiply_by_scalar(x, -1/rho2);
+		gretl_matrix_multiply_by_scalar(q, 1/rho);
+		gretl_matrix_add_to(x, q);
+	    }
+
+	    vector_copy_values(w, x, n);
+	    gretl_matrix_add_to(w, u);   /* w = x + u */
+
+	    /* sqrt(sum ||r_i||_2^2) */
+	    prires  = sqrt(gretl_vector_dot_product(r, r, NULL));
+	    /* sqrt(sum ||r_i||_2^2) */
+	    nxstack = sqrt(gretl_vector_dot_product(x, x, NULL));
+	    /* sqrt(sum ||y_i||_2^2) */
+	    nystack = gretl_vector_dot_product(u, u, NULL) / rho2;
+	    nystack = sqrt(nystack);
+
+	    vector_copy_values(zprev, z, n);
+	    vector_copy_values(z, w, n);
+	    soft_threshold(z, lambda/rho);
+
+	    /* Termination checks */
+
+	    /* dual residual */
+	    vector_copy_values(zdiff, z, n);
+	    gretl_matrix_subtract_from(zdiff, zprev);
+	    /* ||s^k||_2^2 = N rho^2 ||z - zprev||_2^2 */
+	    nrm2 = sqrt(gretl_vector_dot_product(zdiff, zdiff, NULL));
+	    dualres = rho * nrm2;
+
+	    /* compute primal and dual feasibility tolerances */
+	    nrm2 = sqrt(gretl_vector_dot_product(z, z, NULL));
+	    eps_pri  = abstol + RELTOL * fmax(nxstack, nrm2);
+	    eps_dual = abstol + RELTOL * nystack;
+
+	    if (iter > 1 && prires <= eps_pri && dualres <= eps_dual) {
+		if (verbose) {
+		    printf("breaking at iter %d: prires = %g, dualres = %g\n",
+			   iter, prires, dualres);
+		}
+		conv = iter + 1;
+		break;
+	    }
+
+	    /* Compute residual: r = x - z */
+	    vector_copy_values(r, x, n);
+	    gretl_matrix_subtract_from(r, z);
+
+	    iter++;
+	} /* end ADMM solve loop */
+
+	/* cumulate out-of-sample MSE */
+	gretl_matrix_reuse(Azb, A_out->rows, 1);
+	score = xv_score(A_out, b_out, z, Azb);
+	MSE->val[j] += score;
+#if 0
+	printf("  lambda-frac=%g, score=%g, cum=%g\n", lfrac->val[j],
+	       score, MSE->val[j]);
+#endif
+	gretl_matrix_reuse(Azb, m, 1);
+    } /* end loop over lambda values */
 
     /* cleanup */
     gretl_matrix_block_destroy(MB);
@@ -389,7 +556,7 @@ static int admm_lasso_xv (const gretl_matrix *A,
 		}
 	    }
 	}
-	err = real_admm_lasso(A_est, b_est, A_out, b_out, bun);
+	err = lasso_xv_round(A_est, b_est, A_out, b_out, bun);
     }
 
     if (!err) {
@@ -409,7 +576,7 @@ static int admm_lasso_xv (const gretl_matrix *A,
 	/* now determine coefficient vector on full training set */
 	lxv->val[0] = lfrac->val[jbest];
 	gretl_bundle_donate_data(bun, "lxv", lxv, GRETL_TYPE_MATRIX, 0);
-	err = real_admm_lasso(A, b, NULL, NULL, bun);
+	err = real_admm_lasso(A, b, bun);
     }
 
     gretl_matrix_free(A_est);
@@ -431,6 +598,6 @@ int admm_lasso (const gretl_matrix *A,
     if (xv) {
 	return admm_lasso_xv(A, b, bun);
     } else {
-	return real_admm_lasso(A, b, NULL, NULL, bun);
+	return real_admm_lasso(A, b, bun);
     }
 }
