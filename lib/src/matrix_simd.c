@@ -398,3 +398,24 @@ double gretl_vector_simd_dot_product (const gretl_vector *a,
 
     return ret;
 }
+
+void gretl_matrix_simd_scalar_mul (double *mx, double x, int n)
+{
+    __m256d mxi, mul, res;
+    int i, imax = n / 4;
+    int rem = n % 4;
+
+    mul = _mm256_broadcast_sd(&x);
+
+    for (i=0; i<imax; i++) {
+	/* multiply 4 doubles in parallel */
+	mxi = _mm256_loadu_pd(mx);
+	res = _mm256_mul_pd(mul, mxi);
+	_mm256_storeu_pd(mx, res);
+	mx += 4;
+    }
+
+    for (i=0; i<rem; i++) {
+	mx[i] *= x;
+    }
+}

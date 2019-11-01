@@ -119,6 +119,39 @@ static inline void *mval_realloc (void *ptr, size_t sz)
 # include "matrix_simd.c"
 #endif
 
+/* Below: setting of the maximal value of K = the shared inner
+   dimension in matrix multiplication for use of SIMD. Also
+   setting of the minimum value of M x N for doing matrix
+   addition and subtraction via SIMD. If these variables are
+   set to -1 that disables SIMD by default (though the user
+   can change that via the "set" command).
+*/
+
+static int simd_k_max = 8;   /* 2014-03-07: was -1 */
+static int simd_mn_min = 16; /* 2014-03-07: was -1 */
+
+void set_simd_k_max (int k)
+{
+    simd_k_max = k;
+}
+
+int get_simd_k_max (void)
+{
+    return simd_k_max;
+}
+
+void set_simd_mn_min (int mn)
+{
+    simd_mn_min = mn;
+}
+
+int get_simd_mn_min (void)
+{
+    return simd_mn_min;
+}
+
+#define simd_add_sub(mn) (simd_mn_min > 0 && mn >= simd_mn_min)
+
 #define SVD_SMIN 1.0e-9
 
 /* maybe experiment with these? */
@@ -2304,6 +2337,13 @@ void gretl_matrix_multiply_by_scalar (gretl_matrix *m, double x)
 {
     int i, n = m->rows * m->cols;
 
+#if defined(USE_SIMD)
+    if (simd_add_sub(n)) {
+	gretl_matrix_simd_scalar_mul(m->val, x, n);
+	return;
+    }
+#endif
+
     for (i=0; i<n; i++) {
 	m->val[i] *= x;
     }
@@ -2765,39 +2805,6 @@ static int subtract_scalar_from_matrix (gretl_matrix *targ, double x)
 
     return 0;
 }
-
-/* Below: setting of the maximal value of K = the shared inner
-   dimension in matrix multiplication for use of SIMD. Also
-   setting of the minimum value of M x N for doing matrix
-   addition and subtraction via SIMD. If these variables are
-   set to -1 that disables SIMD by default (though the user
-   can change that via the "set" command).
-*/
-
-static int simd_k_max = 8;   /* 2014-03-07: was -1 */
-static int simd_mn_min = 16; /* 2014-03-07: was -1 */
-
-void set_simd_k_max (int k)
-{
-    simd_k_max = k;
-}
-
-int get_simd_k_max (void)
-{
-    return simd_k_max;
-}
-
-void set_simd_mn_min (int mn)
-{
-    simd_mn_min = mn;
-}
-
-int get_simd_mn_min (void)
-{
-    return simd_mn_min;
-}
-
-#define simd_add_sub(mn) (simd_mn_min > 0 && mn >= simd_mn_min)
 
 /**
  * gretl_matrix_add_to:
