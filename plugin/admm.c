@@ -137,13 +137,10 @@ static int real_admm_lasso (const gretl_matrix *A,
     gretl_matrix *B = NULL;
     gretl_matrix *MSE = NULL;
     gretl_matrix *lfrac;
-    double lmax, d, nrm2;
-    double nxstack  = 0;
-    double nystack  = 0;
-    double prires   = 0;
-    double dualres  = 0;
-    double eps_pri  = 0;
-    double eps_dual = 0;
+    double lmax, nrm2;
+    double nxstack, nystack;
+    double prires, dualres;
+    double eps_pri, eps_dual;
     int verbose = 0;
     int ldim, nlam;
     int m, n, i, j;
@@ -336,26 +333,28 @@ static int lasso_xv_round (const gretl_matrix *A,
 			   const gretl_matrix *b_out,
 			   gretl_bundle *bun)
 {
-    gretl_matrix_block *MB;
-    double critmin = 1e200;
+    static gretl_matrix_block *MB;
+    gretl_matrix *MSE;
     double abstol;
-    gretl_matrix *MSE = NULL;
-    double lmax, d, nrm2;
-    double nxstack  = 0;
-    double nystack  = 0;
-    double prires   = 0;
-    double dualres  = 0;
-    double eps_pri  = 0;
-    double eps_dual = 0;
+    double lmax, nrm2;
+    double nxstack, nystack;
+    double prires, dualres;
+    double eps_pri, eps_dual;
     int verbose = 0;
     int ldim, nlam;
     int m, n, i, j;
-    int jbest = 0;
     int err = 0;
 
-    gretl_vector *x, *u, *z, *y, *r, *zprev, *zdiff;
-    gretl_vector *q, *p, *w, *Atb, *Azb;
-    gretl_matrix *L;
+    if (A == NULL) {
+	/* cleanup signal */
+	gretl_matrix_block_destroy(MB);
+	MB = NULL;
+	return 0;
+    }
+
+    static gretl_vector *x, *u, *z, *y, *r, *zprev, *zdiff;
+    static gretl_vector *q, *p, *w, *Atb, *Azb;
+    static gretl_matrix *L;
 
     double rho = gretl_bundle_get_scalar(bun, "rho", &err);
     int stdize = gretl_bundle_get_scalar(bun, "stdize", &err);
@@ -373,18 +372,21 @@ static int lasso_xv_round (const gretl_matrix *A,
     ldim = m >= n ? n : m;
     abstol = sqrt(n) * ABSTOL;
 
-    MB = gretl_matrix_block_new(&x, n, 1, &u, n, 1,
-				&z, n, 1, &y, n, 1,
-				&r, n, 1, &zprev, n, 1,
-				&zdiff, n, 1, &q, n, 1,
-				&q, n, 1, &w, n, 1,
-				&p, m, 1, &Atb, n, 1,
-				&Azb, m, 1, &L, ldim, ldim,
-				NULL);
     if (MB == NULL) {
-	return E_ALLOC;
+	MB = gretl_matrix_block_new(&x, n, 1, &u, n, 1,
+				    &z, n, 1, &y, n, 1,
+				    &r, n, 1, &zprev, n, 1,
+				    &zdiff, n, 1, &q, n, 1,
+				    &q, n, 1, &w, n, 1,
+				    &p, m, 1, &Atb, n, 1,
+				    &Azb, m, 1, &L, ldim, ldim,
+				    NULL);
+	if (MB == NULL) {
+	    return E_ALLOC;
+	}
+	gretl_matrix_block_zero(MB);
     }
-    gretl_matrix_block_zero(MB);
+    // gretl_matrix_block_zero(MB);
 
     /* Precompute and cache factorizations */
 
@@ -403,8 +405,6 @@ static int lasso_xv_round (const gretl_matrix *A,
     for (j=0; j<nlam && !err; j++) {
 	double lambda, score;
 	int iter = 0;
-	int conv = 0;
-	int nnz = 0;
 
 	/* pull current lambda fraction and scale it */
 	lambda = lfrac->val[j] * lmax;
@@ -446,8 +446,7 @@ static int lasso_xv_round (const gretl_matrix *A,
 	    /* sqrt(sum ||r_i||_2^2) */
 	    nxstack = sqrt(gretl_vector_dot_product(x, x, NULL));
 	    /* sqrt(sum ||y_i||_2^2) */
-	    nystack = gretl_vector_dot_product(u, u, NULL) / rho2;
-	    nystack = sqrt(nystack);
+	    nystack = sqrt(gretl_vector_dot_product(u, u, NULL) / rho2);
 
 	    vector_copy_values(zprev, z, n);
 	    vector_copy_values(z, w, n);
@@ -468,11 +467,6 @@ static int lasso_xv_round (const gretl_matrix *A,
 	    eps_dual = abstol + RELTOL * nystack;
 
 	    if (iter > 1 && prires <= eps_pri && dualres <= eps_dual) {
-		if (verbose) {
-		    printf("breaking at iter %d: prires = %g, dualres = %g\n",
-			   iter, prires, dualres);
-		}
-		conv = iter + 1;
 		break;
 	    }
 
@@ -495,7 +489,7 @@ static int lasso_xv_round (const gretl_matrix *A,
     } /* end loop over lambda values */
 
     /* cleanup */
-    gretl_matrix_block_destroy(MB);
+    // gretl_matrix_block_destroy(MB);
 
     return err;
 }
@@ -558,6 +552,9 @@ static int admm_lasso_xv (const gretl_matrix *A,
 	}
 	err = lasso_xv_round(A_est, b_est, A_out, b_out, bun);
     }
+
+    /* send cleanup signal */
+    lasso_xv_round(NULL, NULL, NULL, NULL, NULL);
 
     if (!err) {
 	gretl_matrix *lxv = gretl_matrix_alloc(1, 1);
