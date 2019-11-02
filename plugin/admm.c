@@ -261,7 +261,7 @@ static int admm_iteration (const gretl_matrix *A,
 	vector_subtract_into(x, z, u, n, 1);
 
 	/* x-update: x = (A^T A + rho I) \ (A^T b + rho z - y) */
-	vector_subtract_into(z, u, q, n, 0);
+	vector_subtract_into(z, u, q, n, 0); /* q = z - u */
 	gretl_matrix_multiply_by_scalar(q, rho);
 	gretl_matrix_add_to(q, Atb);   // q = A^T b + rho*(z - u)
 
