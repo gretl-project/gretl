@@ -12,6 +12,7 @@ LDFLAGS = @LDFLAGS@
 MAKE = @MAKE@
 INSTALL = @INSTALL@
 LN = @LN_S@
+SIMD_OPT = @AVX_CFLAGS@
 
 build_gui = @build_gui@
 have_odbc = @have_odbc@
@@ -72,12 +73,12 @@ ifeq ($(quiet_build),yes)
   CCECHO = @echo "  CC    $@"
   LDECHO = @echo "  LD    $@"
   CXXECHO = @echo "  CXX   $@"
-  CCV = $(CC) $(OMP_OPT) > /dev/null
+  CCV = $(CC) $(SIMD_OPT) $(OMP_OPT) > /dev/null
   CXXV = $(CXX) $(OMP_OPT) > /dev/null
   LINK = $(LDECHO); $(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -module -avoid-version -rpath $(plugindir)
   LDXX = $(LDECHO); $(LIBTOOL) --mode=link $(CXXV) $(LDFLAGS) -module -avoid-version -rpath $(plugindir)
 else
-  CCV = $(CC) $(OMP_OPT)
+  CCV = $(CC) $(SIMD_OPT) $(OMP_OPT)
   CXXV = $(CXX) $(OMP_OPT)
   LINK = $(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -module -avoid-version -rpath $(plugindir)
   LDXX = $(LIBTOOL) --mode=link $(CXXV) $(LDFLAGS) -module -avoid-version -rpath $(plugindir)
