@@ -39,8 +39,9 @@
 #endif
 
 #define MAX_ITER 20000 // was 50 in Boyd
-#define RELTOL 1.0e-3  // 1e-2 in Boyd
-#define ABSTOL 1.0e-5  // 1e-4 in Boyd
+
+double reltol; // 1e-2 in Boyd
+double base_abstol; // 1e-4 in Boyd
 
 static void vector_copy_values (gretl_vector *targ,
 				const gretl_vector *src,
@@ -421,8 +422,8 @@ static int admm_iteration (const gretl_matrix *A,
 
 	/* compute primal and dual feasibility tolerances */
 	nrm2 = sqrt(gretl_vector_dot_product(z, z, NULL));
-	eps_pri  = abstol + RELTOL * fmax(nxstack, nrm2);
-	eps_dual = abstol + RELTOL * nystack;
+	eps_pri  = abstol + reltol * fmax(nxstack, nrm2);
+	eps_dual = abstol + reltol * nystack;
 
 	if (iter > 1 && prires <= eps_pri && dualres <= eps_dual) {
 	    break;
@@ -438,8 +439,6 @@ static int admm_iteration (const gretl_matrix *A,
 
     return err;
 }
-
-#endif
 
 static int real_admm_lasso (const gretl_matrix *A,
 			    const gretl_matrix *b,
@@ -478,7 +477,7 @@ static int real_admm_lasso (const gretl_matrix *A,
     m = A->rows;
     n = A->cols;
     ldim = m >= n ? n : m;
-    abstol = sqrt(n) * ABSTOL;
+    abstol = sqrt(n) * base_abstol;
 
     MB = gretl_matrix_block_new(&x, n, 1, &u, n, 1,
 				&z, n, 1, &y, n, 1,
@@ -589,7 +588,7 @@ static int lasso_xv_round (const gretl_matrix *A,
     m = A->rows;
     n = A->cols;
     ldim = m >= n ? n : m;
-    abstol = sqrt(n) * ABSTOL;
+    abstol = sqrt(n) * base_abstol;
 
     if (MB == NULL) {
 	MB = gretl_matrix_block_new(&x, n, 1, &u, n, 1,
@@ -741,8 +740,26 @@ int admm_lasso (const gretl_matrix *A,
 		const gretl_matrix *b,
 		gretl_bundle *bun)
 {
+    gretl_matrix *ctrl;
     double rho = 1.0; /* or maybe larger? */
     int xv, err = 0;
+
+    /* default values */
+    reltol = 1.0e-3;
+    base_abstol = 1.0e-5;
+
+    ctrl = gretl_bundle_get_matrix(bun, "admmctrl", NULL);
+    if (ctrl != NULL) {
+	if (ctrl->val[0] > 0) {
+	    rho = ctrl->val[0];
+	}
+	if (ctrl->val[1] > 0) {
+	    reltol = ctrl->val[1];
+	}
+	if (ctrl->val[2] > 0) {
+	    base_abstol = ctrl->val[2];
+	}
+    }
 
     xv = gretl_bundle_get_int(bun, "xvalidate", &err);
 
