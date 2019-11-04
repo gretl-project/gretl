@@ -78,6 +78,31 @@ static void vector_add_into (const gretl_vector *a,
     }
 }
 
+static void vector_add_to (gretl_vector *a,
+			   const gretl_vector *b,
+			   int n)
+{
+    double *ax = a->val;
+    const double *bx = b->val;
+    int imax = n / 4;
+    int rem = n % 4;
+    int i;
+
+    __m256d a256, b256, sum;
+
+    for (i=0; i<imax; i++) {
+	a256 = _mm256_loadu_pd(ax);
+	b256 = _mm256_loadu_pd(bx);
+	sum = _mm256_add_pd(a256, b256);
+	_mm256_storeu_pd(ax, sum);
+	ax += 4;
+	bx += 4;
+    }
+    for (i=0; i<rem; i++) {
+	ax[i] += bx[i];
+    }
+}
+
 static void vector_subtract_into (const gretl_vector *a,
 				  const gretl_vector *b,
 				  gretl_vector *c, int n,
@@ -144,15 +169,15 @@ static inline void compute_q (gretl_vector *q,
 	z256 = _mm256_loadu_pd(zx);
 	u256 = _mm256_loadu_pd(ux);
 	a256 = _mm256_loadu_pd(ax);
-	/* sub u from z */
+	/* subtract u from z */
 	tmp = _mm256_sub_pd(z256, u256);
 	if (mul) {
-	    /* mul by rho */
+	    /* multiply by rho */
 	    tmp = _mm256_mul_pd(tmp, r256);
 	}
 	/* add a */
 	tmp = _mm256_add_pd(tmp, a256);
-	/* write into q */
+	/* write result into q */
 	_mm256_storeu_pd(qx, tmp);
 	zx += 4;
 	ux += 4;
@@ -179,6 +204,17 @@ static void vector_add_into (const gretl_vector *a,
 
     for (i=0; i<n; i++) {
 	c->val[i] = a->val[i] + b->val[i];
+    }
+}
+
+static void vector_add_to (gretl_vector *a,
+			   const gretl_vector *b,
+			   int n)
+{
+    int i;
+
+    for (i=0; i<n; i++) {
+	a->val[i] += b->val[i];
     }
 }
 
@@ -216,7 +252,7 @@ static inline void compute_q (gretl_vector *q,
     }
 }
 
-#endif /* AVX or not */
+#endif /* AVX/SIMD or not */
 
 static double abs_sum (const gretl_vector *z)
 {
@@ -283,7 +319,6 @@ static int get_cholesky_factor (const gretl_matrix *A,
 				double rho)
 {
     double d;
-    const int mul = rho != 1.0;
     int i, err = 0;
 
     if (A->rows >= A->cols) {
@@ -301,7 +336,7 @@ static int get_cholesky_factor (const gretl_matrix *A,
 	gretl_matrix_multiply_mod(A, GRETL_MOD_NONE,
 				  A, GRETL_MOD_TRANSPOSE,
 				  L, GRETL_MOD_NONE);
-	if (mul) {
+	if (rho != 1.0) {
 	    gretl_matrix_multiply_by_scalar(L, 1/rho);
 	}
 	for (i=0; i<A->rows; i++) {
@@ -334,26 +369,8 @@ static int admm_iteration (const gretl_matrix *A,
     int err = 0;
 
     while (iter < MAX_ITER && !err) {
-	/* u-update: u = u + x - z */
-	vector_subtract_into(x, z, u, n, 1);
-
-#if 0
-	/* the following is not right yet */
-	if (iter > 100 && iter < 500) {
-	    /* possibly modify rho?? */
-	    if (prires > 10 * dualres) {
-		rho *= 2.0;
-		rho2 = rho * rho;
-		gretl_matrix_multiply_by_scalar(u, 0.5);
-	    } else if (dualres > 10 * prires) {
-		rho *= 0.5;
-		rho2 = rho * rho;
-		gretl_matrix_multiply_by_scalar(u, 2.0);
-	    }
-	    fprintf(stderr, "iter %d, rho = %g\n", iter, rho);
-	    mul = rho != 1.0;
-	}
-#endif
+	/* u-update: u = u + r */
+	vector_add_to(u, r, n);
 
 	/* x-update: x = (A^T A + rho I) \ (A^T b + rho z - y) */
 
@@ -375,7 +392,7 @@ static int admm_iteration (const gretl_matrix *A,
 	    } else {
 		gretl_matrix_multiply_by_scalar(x, -1);
 	    }
-	    gretl_matrix_add_to(x, q);
+	    vector_add_to(x, q, n);
 	}
 
 	/* sqrt(sum ||r_i||_2^2) */
@@ -421,6 +438,8 @@ static int admm_iteration (const gretl_matrix *A,
 
     return err;
 }
+
+#endif
 
 static int real_admm_lasso (const gretl_matrix *A,
 			    const gretl_matrix *b,
@@ -722,7 +741,7 @@ int admm_lasso (const gretl_matrix *A,
 		const gretl_matrix *b,
 		gretl_bundle *bun)
 {
-    double rho = 1.0;
+    double rho = 1.0; /* or maybe larger? */
     int xv, err = 0;
 
     xv = gretl_bundle_get_int(bun, "xvalidate", &err);
