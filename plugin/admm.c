@@ -328,7 +328,7 @@ static int admm_iteration (const gretl_matrix *A,
     double prires, dualres;
     double eps_pri, eps_dual;
     double nrm2, rho2 = rho*rho;
-    const int mul = rho != 1.0;
+    int mul = rho != 1.0;
     int n = A->cols;
     int iter = 0;
     int err = 0;
@@ -336,6 +336,24 @@ static int admm_iteration (const gretl_matrix *A,
     while (iter < MAX_ITER && !err) {
 	/* u-update: u = u + x - z */
 	vector_subtract_into(x, z, u, n, 1);
+
+#if 0
+	/* the following is not right yet */
+	if (iter > 100 && iter < 500) {
+	    /* possibly modify rho?? */
+	    if (prires > 10 * dualres) {
+		rho *= 2.0;
+		rho2 = rho * rho;
+		gretl_matrix_multiply_by_scalar(u, 0.5);
+	    } else if (dualres > 10 * prires) {
+		rho *= 0.5;
+		rho2 = rho * rho;
+		gretl_matrix_multiply_by_scalar(u, 2.0);
+	    }
+	    fprintf(stderr, "iter %d, rho = %g\n", iter, rho);
+	    mul = rho != 1.0;
+	}
+#endif
 
 	/* x-update: x = (A^T A + rho I) \ (A^T b + rho z - y) */
 
@@ -365,8 +383,12 @@ static int admm_iteration (const gretl_matrix *A,
 	/* sqrt(sum ||r_i||_2^2) */
 	nxstack = sqrt(gretl_vector_dot_product(x, x, NULL));
 	/* sqrt(sum ||y_i||_2^2) */
-	nystack = gretl_vector_dot_product(u, u, NULL) / rho2;
-	nystack = sqrt(nystack);
+	if (mul) {
+	    nystack = gretl_vector_dot_product(u, u, NULL) / rho2;
+	    nystack = sqrt(nystack);
+	} else {
+	    nystack = sqrt(gretl_vector_dot_product(u, u, NULL));
+	}
 
 	vector_copy_values(zprev, z, n);
 	vector_add_into(x, u, z, n);
