@@ -319,13 +319,13 @@ static double objective (const gretl_matrix *A,
 			 double lambda,
 			 gretl_vector *Azb)
 {
-    double Azb_nrm2;
+    double SSR;
     double obj = 0;
 
     gretl_matrix_multiply(A, z, Azb);
     vector_subtract_from(Azb, b, A->rows);
-    Azb_nrm2 = gretl_vector_dot_product(Azb, Azb, NULL);
-    obj = 0.5 * Azb_nrm2 + lambda * abs_sum(z);
+    SSR = gretl_vector_dot_product(Azb, Azb, NULL);
+    obj = 0.5 * SSR + lambda * abs_sum(z);
 
     return obj / A->rows;
 }
@@ -341,7 +341,7 @@ static double xv_score (const gretl_matrix *A,
     vector_subtract_from(Azb, b, A->rows);
     SSR = gretl_vector_dot_product(Azb, Azb, NULL);
 
-    return SSR / A->rows;
+    return SSR / A->rows; /* MSE */
 }
 
 static void soft_threshold (gretl_vector *v, double lambda,
@@ -368,7 +368,7 @@ static int get_cholesky_factor (const gretl_matrix *A,
     int i, err = 0;
 
     if (A->rows >= A->cols) {
-	/* "skinny": L = chol(AtA + rho*I) */
+	/* "skinny": L = chol(A'A + rho*I) */
 	gretl_matrix_multiply_mod(A, GRETL_MOD_TRANSPOSE,
 				  A, GRETL_MOD_NONE,
 				  L, GRETL_MOD_NONE);
@@ -376,9 +376,8 @@ static int get_cholesky_factor (const gretl_matrix *A,
 	    d = gretl_matrix_get(L, i, i);
 	    gretl_matrix_set(L, i, i, d + rho);
 	}
-	gretl_matrix_cholesky_decomp(L);
     } else {
-	/* "fat": L = chol(I + 1/rho*AAt) */
+	/* "fat": L = chol(I + 1/rho*AA') */
 	gretl_matrix_multiply_mod(A, GRETL_MOD_NONE,
 				  A, GRETL_MOD_TRANSPOSE,
 				  L, GRETL_MOD_NONE);
@@ -389,10 +388,9 @@ static int get_cholesky_factor (const gretl_matrix *A,
 	    d = gretl_matrix_get(L, i, i);
 	    gretl_matrix_set(L, i, i, d + 1.0);
 	}
-	err = gretl_matrix_cholesky_decomp(L);
     }
 
-    return err;
+    return gretl_matrix_cholesky_decomp(L);
 }
 
 static int admm_iteration (const gretl_matrix *A,
@@ -557,16 +555,14 @@ static int real_admm_lasso (const gretl_matrix *A,
 
     for (j=0; j<nlam && !err; j++) {
 	/* loop across lambda values */
-	double lambda = lfrac->val[j] * lmax;
+	double crit, lambda = lfrac->val[j] * lmax;
 	int iters = 0;
+	int nnz = 0;
 
 	err = admm_iteration(A, L, Atb, x, z, u, q, p, r, zprev, zdiff,
 			     lambda, rho, &iters);
 
 	if (!err) {
-	    double crit;
-	    int nnz = 0;
-
 	    for (i=0; i<n; i++) {
 		if (z->val[i] != 0.0) {
 		    nnz++;
@@ -778,7 +774,6 @@ static int admm_lasso_xv (const gretl_matrix *A,
 	       minMSE, lfrac->val[jbest]);
 	/* now determine coefficient vector on full training set */
 	lxv->val[0] = lfrac->val[jbest];
-	/* FIXME try using per-observation basis */
 	gretl_bundle_donate_data(bun, "lxv", lxv, GRETL_TYPE_MATRIX, 0);
 	err = real_admm_lasso(A, b, bun, rho);
     }
