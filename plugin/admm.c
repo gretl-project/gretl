@@ -451,6 +451,7 @@ static int real_admm_lasso (const gretl_matrix *A,
     gretl_matrix *B = NULL;
     gretl_matrix *lfrac;
     double lmax;
+    int lam_per_obs = 0;
     int ldim, nlam;
     int m, n, i, j;
     int jbest = 0;
@@ -462,7 +463,11 @@ static int real_admm_lasso (const gretl_matrix *A,
 
     int stdize = gretl_bundle_get_scalar(bun, "stdize", &err);
 
-    if (gretl_bundle_has_key(bun, "lxv")) {
+    if (gretl_bundle_has_key(bun, "lxv_per_obs")) {
+	/* emulate glmnet? */
+	lfrac = gretl_bundle_get_matrix(bun, "lxv_per_obs", &err);
+	lam_per_obs = 1;
+    } else if (gretl_bundle_has_key(bun, "lxv")) {
 	lfrac = gretl_bundle_get_matrix(bun, "lxv", &err);
     } else {
 	lfrac = gretl_bundle_get_matrix(bun, "lfrac", &err);
@@ -514,8 +519,14 @@ static int real_admm_lasso (const gretl_matrix *A,
 
     for (j=0; j<nlam && !err; j++) {
 	/* loop across lambda values */
-	double lambda = lfrac->val[j] * lmax;
+	double lambda;
 	int iters = 0;
+
+	if (lam_per_obs) {
+	    lambda = lfrac->val[j] * m;
+	} else {
+	    lambda = lfrac->val[j] * lmax;
+	}
 
 	err = admm_iteration(A, L, x, z, u, q, p, r, zprev, zdiff,
 			     Atb, abstol, lambda, rho, &iters);
@@ -721,6 +732,7 @@ static int admm_lasso_xv (const gretl_matrix *A,
 	       minMSE, lfrac->val[jbest]);
 	/* now determine coefficient vector on full training set */
 	lxv->val[0] = lfrac->val[jbest];
+	/* FIXME try using per-observation basis */
 	gretl_bundle_donate_data(bun, "lxv", lxv, GRETL_TYPE_MATRIX, 0);
 	err = real_admm_lasso(A, b, bun, rho);
     }
