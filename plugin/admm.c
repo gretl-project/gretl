@@ -40,8 +40,8 @@
 
 #define MAX_ITER 20000 // was 50 in Boyd
 
-double reltol; // 1e-2 in Boyd
-double base_abstol; // 1e-4 in Boyd
+double reltol = 1.0e-3; // 1e-2 in Boyd
+double abstol = 1.0e-5; // 1e-4 in Boyd
 
 static void vector_copy_values (gretl_vector *targ,
 				const gretl_vector *src,
@@ -104,6 +104,35 @@ static void vector_add_to (gretl_vector *a,
     }
 }
 
+/* a = a - b */
+
+static void vector_subtract_from (gretl_vector *a,
+				  const gretl_vector *b,
+				  int n)
+{
+    double *ax = a->val;
+    const double *bx = b->val;
+    int imax = n / 4;
+    int rem = n % 4;
+    int i;
+
+    __m256d a256, b256, dif;
+
+    for (i=0; i<imax; i++) {
+	a256 = _mm256_loadu_pd(ax);
+	b256 = _mm256_loadu_pd(bx);
+	dif = _mm256_sub_pd(a256, b256);
+	_mm256_storeu_pd(ax, dif);
+	ax += 4;
+	bx += 4;
+    }
+    for (i=0; i<rem; i++) {
+	ax[i] -= bx[i];
+    }
+}
+
+/* c = a - b */
+
 static void vector_subtract_into (const gretl_vector *a,
 				  const gretl_vector *b,
 				  gretl_vector *c, int n,
@@ -144,6 +173,8 @@ static void vector_subtract_into (const gretl_vector *a,
     }
 }
 
+/* compute q = rho * (z - u) + A'b */
+
 static inline void compute_q (gretl_vector *q,
 			      const gretl_vector *z,
 			      const gretl_vector *u,
@@ -165,6 +196,9 @@ static inline void compute_q (gretl_vector *q,
 	/* broadcast rho */
 	r256 = _mm256_broadcast_sd(&rho);
     }
+
+    /* FIXME check for _mm256_fmadd_pd() and use it
+       if available? */
 
     for (i=0; i<imax; i++) {
 	z256 = _mm256_loadu_pd(zx);
@@ -219,6 +253,17 @@ static void vector_add_to (gretl_vector *a,
     }
 }
 
+static void vector_subtract_from (gretl_vector *a,
+				  const gretl_vector *b,
+				  int n)
+{
+    int i;
+
+    for (i=0; i<n; i++) {
+	a->val[i] -= b->val[i];
+    }
+}
+
 static void vector_subtract_into (const gretl_vector *a,
 				  const gretl_vector *b,
 				  gretl_vector *c, int n,
@@ -253,7 +298,7 @@ static inline void compute_q (gretl_vector *q,
     }
 }
 
-#endif /* AVX/SIMD or not */
+#endif /* AVX or not */
 
 static double abs_sum (const gretl_vector *z)
 {
@@ -278,7 +323,7 @@ static double objective (const gretl_matrix *A,
     double obj = 0;
 
     gretl_matrix_multiply(A, z, Azb);
-    gretl_matrix_subtract_from(Azb, b);
+    vector_subtract_from(Azb, b, A->rows);
     Azb_nrm2 = gretl_vector_dot_product(Azb, Azb, NULL);
     obj = 0.5 * Azb_nrm2 + lambda * abs_sum(z);
 
@@ -293,7 +338,7 @@ static double xv_score (const gretl_matrix *A,
     double SSR;
 
     gretl_matrix_multiply(A, z, Azb);
-    gretl_matrix_subtract_from(Azb, b);
+    vector_subtract_from(Azb, b, A->rows);
     SSR = gretl_vector_dot_product(Azb, Azb, NULL);
 
     return SSR / A->rows;
@@ -352,13 +397,13 @@ static int get_cholesky_factor (const gretl_matrix *A,
 
 static int admm_iteration (const gretl_matrix *A,
 			   const gretl_matrix *L,
+			   const gretl_vector *Atb,
 			   gretl_vector *x, gretl_vector *z,
 			   gretl_vector *u, gretl_vector *q,
 			   gretl_vector *p, gretl_vector *r,
 			   gretl_vector *zprev, gretl_vector *zdiff,
-			   gretl_vector *Atb,
-			   double abstol, double lambda,
-			   double rho, int *iters)
+			   double lambda, double rho,
+			   int *iters)
 {
     double nxstack, nystack;
     double prires, dualres;
@@ -447,11 +492,9 @@ static int real_admm_lasso (const gretl_matrix *A,
 {
     gretl_matrix_block *MB;
     double critmin = 1e200;
-    double abstol;
     gretl_matrix *B = NULL;
     gretl_matrix *lfrac;
     double lmax;
-    int lam_per_obs = 0;
     int ldim, nlam;
     int m, n, i, j;
     int jbest = 0;
@@ -463,11 +506,7 @@ static int real_admm_lasso (const gretl_matrix *A,
 
     int stdize = gretl_bundle_get_scalar(bun, "stdize", &err);
 
-    if (gretl_bundle_has_key(bun, "lxv_per_obs")) {
-	/* emulate glmnet? */
-	lfrac = gretl_bundle_get_matrix(bun, "lxv_per_obs", &err);
-	lam_per_obs = 1;
-    } else if (gretl_bundle_has_key(bun, "lxv")) {
+    if (gretl_bundle_has_key(bun, "lxv")) {
 	lfrac = gretl_bundle_get_matrix(bun, "lxv", &err);
     } else {
 	lfrac = gretl_bundle_get_matrix(bun, "lfrac", &err);
@@ -482,7 +521,6 @@ static int real_admm_lasso (const gretl_matrix *A,
     m = A->rows;
     n = A->cols;
     ldim = m >= n ? n : m;
-    abstol = sqrt(n) * base_abstol;
 
     MB = gretl_matrix_block_new(&x, n, 1, &u, n, 1,
 				&z, n, 1, &y, n, 1,
@@ -502,7 +540,7 @@ static int real_admm_lasso (const gretl_matrix *A,
 
     lmax = gretl_matrix_infinity_norm(Atb);
 
-    fprintf(stderr, "lambda-max = %g\n", lmax);
+    fprintf(stderr, "lambda max = %#g\n", lmax);
     if (nlam > 1) {
 	printf("using lambda-fraction sequence of length %d, starting at %g\n",
 	       nlam, lfrac->val[0]);
@@ -519,17 +557,11 @@ static int real_admm_lasso (const gretl_matrix *A,
 
     for (j=0; j<nlam && !err; j++) {
 	/* loop across lambda values */
-	double lambda;
+	double lambda = lfrac->val[j] * lmax;
 	int iters = 0;
 
-	if (lam_per_obs) {
-	    lambda = lfrac->val[j] * m;
-	} else {
-	    lambda = lfrac->val[j] * lmax;
-	}
-
-	err = admm_iteration(A, L, x, z, u, q, p, r, zprev, zdiff,
-			     Atb, abstol, lambda, rho, &iters);
+	err = admm_iteration(A, L, Atb, x, z, u, q, p, r, zprev, zdiff,
+			     lambda, rho, &iters);
 
 	if (!err) {
 	    double crit;
@@ -574,15 +606,16 @@ static int lasso_xv_round (const gretl_matrix *A,
 			   const gretl_matrix *b_out,
 			   const gretl_matrix *lfrac,
 			   gretl_matrix *MSE,
-			   double rho)
+			   double lmax, double rho)
 {
     static gretl_vector *x, *u, *z, *y;
     static gretl_vector *r, *zprev, *zdiff;
     static gretl_vector *q, *p, *Atb, *Azb;
     static gretl_matrix *L;
     static gretl_matrix_block *MB;
-    double abstol;
+#if 0
     double lmax;
+#endif
     int ldim, nlam;
     int m, n, j;
     int err = 0;
@@ -599,7 +632,6 @@ static int lasso_xv_round (const gretl_matrix *A,
     m = A->rows;
     n = A->cols;
     ldim = m >= n ? n : m;
-    abstol = sqrt(n) * base_abstol;
 
     if (MB == NULL) {
 	MB = gretl_matrix_block_new(&x, n, 1, &u, n, 1,
@@ -618,7 +650,9 @@ static int lasso_xv_round (const gretl_matrix *A,
     gretl_matrix_multiply_mod(A, GRETL_MOD_TRANSPOSE,
 			      b, GRETL_MOD_NONE,
 			      Atb, GRETL_MOD_NONE);
+#if 0
     lmax = gretl_matrix_infinity_norm(Atb);
+#endif
 
     get_cholesky_factor(A, L, rho);
 
@@ -627,8 +661,8 @@ static int lasso_xv_round (const gretl_matrix *A,
 	double lambda = lfrac->val[j] * lmax;
 	int iters = 0;
 
-	err = admm_iteration(A, L, x, z, u, q, p, r, zprev, zdiff,
-			     Atb, abstol, lambda, rho, &iters);
+	err = admm_iteration(A, L, Atb, x, z, u, q, p, r, zprev, zdiff,
+			     lambda, rho, &iters);
 
 	if (!err) {
 	    /* cumulate out-of-sample MSE */
@@ -684,7 +718,8 @@ static int admm_lasso_xv (const gretl_matrix *A,
     gretl_matrix *Ae, *Af;
     gretl_matrix *be, *bf;
     gretl_matrix *lfrac;
-    gretl_matrix *MSE;
+    gretl_matrix *Atb, *MSE;
+    double lmax;
     int nlam, fsize, esize;
     int j, f, nf;
     int err = 0;
@@ -706,15 +741,26 @@ static int admm_lasso_xv (const gretl_matrix *A,
     lfrac = gretl_bundle_get_matrix(bun, "lfrac", &err);
     nlam = gretl_vector_get_length(lfrac);
 
+    /* determine the infnorm for all training data */
+    Atb = gretl_matrix_alloc(A->cols, 1);
+    gretl_matrix_multiply_mod(A, GRETL_MOD_TRANSPOSE,
+			      b, GRETL_MOD_NONE,
+			      Atb, GRETL_MOD_NONE);
+    lmax = gretl_matrix_infinity_norm(Atb);
+    /* and scale it down for the folds */
+    lmax *= esize / (double) A->rows;
+    fprintf(stderr, "cross validation lambda max = %#g\n", lmax);
+    gretl_matrix_free(Atb);
+
     MSE = gretl_zero_matrix_new(nlam, 1);
 
     for (f=0; f<nf && !err; f++) {
 	prepare_xv_data(A, b, Ae, be, Af, bf, f);
-	err = lasso_xv_round(Ae, be, Af, bf, lfrac, MSE, rho);
+	err = lasso_xv_round(Ae, be, Af, bf, lfrac, MSE, lmax, rho);
     }
 
     /* send cleanup signal */
-    lasso_xv_round(NULL, NULL, NULL, NULL, NULL, NULL, 0);
+    lasso_xv_round(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
 
     if (!err) {
 	gretl_matrix *lxv = gretl_matrix_alloc(1, 1);
@@ -756,10 +802,6 @@ int admm_lasso (const gretl_matrix *A,
     double rho = 1.0; /* or maybe larger? */
     int xv, err = 0;
 
-    /* default values */
-    reltol = 1.0e-3;
-    base_abstol = 1.0e-5;
-
     ctrl = gretl_bundle_get_matrix(bun, "admmctrl", NULL);
     if (ctrl != NULL) {
 	if (ctrl->val[0] > 0) {
@@ -769,9 +811,12 @@ int admm_lasso (const gretl_matrix *A,
 	    reltol = ctrl->val[1];
 	}
 	if (ctrl->val[2] > 0) {
-	    base_abstol = ctrl->val[2];
+	    abstol = ctrl->val[2];
 	}
     }
+
+    /* scale the absolute tolerance */
+    abstol = sqrt(A->cols) * abstol;
 
     xv = gretl_bundle_get_int(bun, "xvalidate", &err);
 
