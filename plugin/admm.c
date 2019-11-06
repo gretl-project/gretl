@@ -43,6 +43,40 @@
 double reltol = 1.0e-3; // 1e-2 in Boyd
 double abstol = 1.0e-5; // 1e-4 in Boyd
 
+static int randomize_rows (gretl_matrix *A, gretl_matrix *b)
+{
+    gretl_vector *vp;
+    double x, tmp;
+    int i, j, src;
+
+    vp = gretl_matrix_alloc(A->rows, 1);
+    if (vp == NULL) {
+	return E_ALLOC;
+    }
+
+    fill_permutation_vector(vp, A->rows);
+
+    for (i=0; i<A->rows; i++) {
+	src = vp->val[i] - 1;
+	if (src == i) {
+	    continue;
+	}
+	for (j=0; j<A->cols; j++) {
+	    tmp = gretl_matrix_get(A, i, j);
+	    x = gretl_matrix_get(A, src, j);
+	    gretl_matrix_set(A, i, j, x);
+	    gretl_matrix_set(A, src, j, tmp);
+	}
+	tmp = b->val[i];
+	b->val[i] = b->val[src];
+	b->val[src] = tmp;
+    }
+
+    gretl_matrix_free(vp);
+
+    return 0;
+}
+
 static void vector_copy_values (gretl_vector *targ,
 				const gretl_vector *src,
 				int n)
@@ -365,7 +399,7 @@ static int get_cholesky_factor (const gretl_matrix *A,
 				double rho)
 {
     double d;
-    int i, err = 0;
+    int i;
 
     if (A->rows >= A->cols) {
 	/* "skinny": L = chol(A'A + rho*I) */
@@ -502,7 +536,7 @@ static int real_admm_lasso (const gretl_matrix *A,
     gretl_vector *q, *p, *Atb, *Azb;
     gretl_matrix *L;
 
-    int stdize = gretl_bundle_get_scalar(bun, "stdize", &err);
+    int stdize = gretl_bundle_get_int(bun, "stdize", &err);
 
     if (gretl_bundle_has_key(bun, "lxv")) {
 	lfrac = gretl_bundle_get_matrix(bun, "lxv", &err);
@@ -549,7 +583,7 @@ static int real_admm_lasso (const gretl_matrix *A,
     get_cholesky_factor(A, L, rho);
 
     B = gretl_zero_matrix_new(n + stdize, nlam);
-    if (nlam > 0) {
+    if (nlam > 1) {
 	printf("     lambda  coeffs    criterion\n");
     }
 
@@ -570,8 +604,10 @@ static int real_admm_lasso (const gretl_matrix *A,
 		gretl_matrix_set(B, i+stdize, j, z->val[i]);
 	    }
 	    crit = objective(A, b, z, lambda, Azb);
-	    printf("%#12.6g  %5d    %#.8g (%d iters)\n",
-		   lambda/m, nnz, crit, iters);
+	    if (nlam > 1) {
+		printf("%#12.6g  %5d    %#.8g (%d iters)\n",
+		       lambda/m, nnz, crit, iters);
+	    }
 	    if (crit < critmin) {
 		critmin = crit;
 		jbest = j;
@@ -609,9 +645,6 @@ static int lasso_xv_round (const gretl_matrix *A,
     static gretl_vector *q, *p, *Atb, *Azb;
     static gretl_matrix *L;
     static gretl_matrix_block *MB;
-#if 0
-    double lmax;
-#endif
     int ldim, nlam;
     int m, n, j;
     int err = 0;
@@ -705,8 +738,8 @@ static void prepare_xv_data (const gretl_matrix *X,
     }
 }
 
-static int admm_lasso_xv (const gretl_matrix *A,
-			  const gretl_matrix *b,
+static int admm_lasso_xv (gretl_matrix *A,
+			  gretl_matrix *b,
 			  gretl_bundle *bun,
 			  double rho)
 {
@@ -717,14 +750,22 @@ static int admm_lasso_xv (const gretl_matrix *A,
     gretl_matrix *Atb, *MSE;
     double lmax;
     int nlam, fsize, esize;
+    int randfolds = 0;
     int j, f, nf;
     int err = 0;
 
-    nf = gretl_bundle_get_scalar(bun, "nfolds", &err);
+    nf = gretl_bundle_get_int(bun, "nfolds", &err);
+    randfolds = gretl_bundle_get_int(bun, "randfolds", &err);
+    lfrac = gretl_bundle_get_matrix(bun, "lfrac", &err);
+    if (err) {
+	return err;
+    }
+
     fsize = A->rows / nf;
     esize = (nf - 1) * fsize;
 
-    printf("admm_lasso_xv: nf=%d, fsize=%d\n", nf, fsize);
+    printf("admm_lasso_xv: nf=%d, fsize=%d, randfolds=%d\n",
+	   nf, fsize, randfolds);
 
     AB = gretl_matrix_block_new(&Ae, esize, A->cols,
 				&Af, fsize, A->cols,
@@ -734,7 +775,6 @@ static int admm_lasso_xv (const gretl_matrix *A,
 	return E_ALLOC;
     }
 
-    lfrac = gretl_bundle_get_matrix(bun, "lfrac", &err);
     nlam = gretl_vector_get_length(lfrac);
 
     /* determine the infnorm for all training data */
@@ -747,6 +787,11 @@ static int admm_lasso_xv (const gretl_matrix *A,
     lmax *= esize / (double) A->rows;
     fprintf(stderr, "cross validation lambda max = %#g\n", lmax);
     gretl_matrix_free(Atb);
+
+    if (randfolds) {
+	/* scramble the row order of A and b */
+	randomize_rows(A, b);
+    }
 
     MSE = gretl_zero_matrix_new(nlam, 1);
 
@@ -789,8 +834,8 @@ static int admm_lasso_xv (const gretl_matrix *A,
     return err;
 }
 
-int admm_lasso (const gretl_matrix *A,
-		const gretl_matrix *b,
+int admm_lasso (gretl_matrix *A,
+		gretl_matrix *b,
 		gretl_bundle *bun)
 {
     gretl_matrix *ctrl;
