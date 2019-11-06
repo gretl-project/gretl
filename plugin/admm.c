@@ -43,6 +43,46 @@
 double reltol = 1.0e-3; // 1e-2 in Boyd
 double abstol = 1.0e-5; // 1e-4 in Boyd
 
+static int randomize_rows (gretl_matrix *A, gretl_matrix *b)
+{
+    gretl_matrix *Acpy, *bcpy;
+    gretl_vector *vp;
+    double x;
+    int m = A->rows;
+    int n = A->cols;
+    int i, k, err = 0;
+
+    Acpy = gretl_matrix_copy(A);
+    bcpy = gretl_matrix_copy(b);
+    vp = gretl_matrix_alloc(m, 1);
+
+    if (Acpy == NULL || bcpy == NULL || vp == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    fill_permutation_vector(vp, m);
+
+    for (j=0; j<n; j++) {
+	for (i=0; i<m; i++) {
+	    k = vp->val[i] - 1;
+	    x = gretl_matrix_get(Acpy, k, j);
+	    gretl_matrix_set(A, i, j, x);
+	    if (j == 0) {
+		b->val[i] = bcpy->val[k];
+	    }
+	}
+    }
+
+ bailout:
+
+    gretl_matrix_free(Acpy);
+    gretl_matrix_free(bcpy);
+    gretl_matrix_free(vp);
+
+    return err;
+}
+
 static void vector_copy_values (gretl_vector *targ,
 				const gretl_vector *src,
 				int n)
@@ -365,7 +405,7 @@ static int get_cholesky_factor (const gretl_matrix *A,
 				double rho)
 {
     double d;
-    int i, err = 0;
+    int i;
 
     if (A->rows >= A->cols) {
 	/* "skinny": L = chol(A'A + rho*I) */
@@ -609,9 +649,6 @@ static int lasso_xv_round (const gretl_matrix *A,
     static gretl_vector *q, *p, *Atb, *Azb;
     static gretl_matrix *L;
     static gretl_matrix_block *MB;
-#if 0
-    double lmax;
-#endif
     int ldim, nlam;
     int m, n, j;
     int err = 0;
