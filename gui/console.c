@@ -526,7 +526,7 @@ static gint console_complete_word (GtkTextBuffer *buf,
     }
 
     src = gtk_text_buffer_get_text(buf, &start, &end, FALSE);
-    
+
     if (src != NULL && *src != '\0') {
 	if (gtk_text_iter_get_line_offset(&start) == 2) {
 	    /* first word on line */
@@ -664,8 +664,12 @@ static gint console_key_handler (GtkWidget *cview,
 	    }
 	}
 
+#if 0 /* 2019-11-06 */
 	event->keyval = GDK_End;
 	return FALSE;
+#else
+	return TRUE;
+#endif
     }
 
     if (keyval == GDK_Up || keyval == GDK_Down) {
