@@ -390,7 +390,11 @@ int emf_to_clipboard (char *emfname)
     HANDLE htest;
     gchar *fconv = NULL;
 
+#if GTK_MAJOR_VERSION > 2
+    mainw = GDK_WINDOW_HWND(gtk_widget_get_window(mdata->main));
+#else
     mainw = GDK_WINDOW_HWND(mdata->main->window);
+#endif
     if (mainw == NULL) {
 	errbox("Got NULL HWND");
 	return 1;
