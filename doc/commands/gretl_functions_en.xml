@@ -9873,7 +9873,9 @@
 	  the values of <math>x</math><sub>t</sub> with equal
 	  probability.  When a matrix argument is given, each row of
 	  the returned matrix is drawn from the rows of
-	  <argname>x</argname> with equal probability.
+	  <argname>x</argname> with equal probability. See also
+	  <fncref targ="randperm"/> for sampling rows from a matrix
+	  without replacement.
 	</para>
 	<para>
 	  The optional argument <argname>blocksize</argname>
