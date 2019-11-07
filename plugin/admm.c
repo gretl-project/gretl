@@ -638,7 +638,8 @@ static int lasso_xv_round (const gretl_matrix *A,
 			   const gretl_matrix *b_out,
 			   const gretl_matrix *lfrac,
 			   gretl_matrix *MSE,
-			   double lmax, double rho)
+			   double lmax, double rho,
+			   int fold)
 {
     static gretl_vector *x, *u, *z, *y;
     static gretl_vector *r, *zprev, *zdiff;
@@ -687,17 +688,18 @@ static int lasso_xv_round (const gretl_matrix *A,
 
     for (j=0; j<nlam && !err; j++) {
 	/* loop across lambda values */
-	double lambda = lfrac->val[j] * lmax;
+	double score, lambda = lfrac->val[j] * lmax;
 	int iters = 0;
 
 	err = admm_iteration(A, L, Atb, x, z, u, q, p, r, zprev, zdiff,
 			     lambda, rho, &iters);
 
 	if (!err) {
-	    /* cumulate out-of-sample MSE */
+	    /* record out-of-sample MSE */
 	    gretl_matrix_reuse(Azb, A_out->rows, 1);
-	    MSE->val[j] += xv_score(A_out, b_out, z, Azb);
+	    score = xv_score(A_out, b_out, z, Azb);
 	    gretl_matrix_reuse(Azb, m, 1);
+	    gretl_matrix_set(MSE, j, fold, score);
 	}
     }
 
@@ -738,6 +740,85 @@ static void prepare_xv_data (const gretl_matrix *X,
     }
 }
 
+/* Given @MSE holding MSE values per lambda (rows) and
+   per fold (columns), write into the last two columns
+   the means and standard errors.
+*/
+
+static void process_xv_MSE (gretl_matrix *MSE,
+			    gretl_matrix *lfrac,
+			    int *ibest, int *i1se,
+			    int nf)
+{
+    double avg, d, v, se, se1, avgmin;
+    int i, j, ialt, imin = 0;
+
+    for (i=0; i<MSE->rows; i++) {
+	v = avg = 0;
+	for (j=0; j<nf; j++) {
+	    avg += gretl_matrix_get(MSE, i, j);
+	}
+	avg /= nf;
+	if (i == 0) {
+	    avgmin = avg;
+	} else if (avg < avgmin) {
+	    avgmin = avg;
+	    imin = i;
+	}
+	gretl_matrix_set(MSE, i, nf, avg);
+	for (j=0; j<nf; j++) {
+	    d = gretl_matrix_get(MSE, i, j) - avg;
+	    v += d * d;
+	}
+	v /= (nf - 1);
+	se = sqrt(v/nf);
+	gretl_matrix_set(MSE, i, nf+1, se);
+	printf("s = %#g -> MSE %#g (%#g)\n", lfrac->val[i], avg, se);
+    }
+
+    *ibest = ialt = imin;
+
+    /* estd. standard error of minimum average MSE */
+    se1 = gretl_matrix_get(MSE, imin, nf+1);
+
+    /* Find the index of the largest lamba that gives
+       an average MSE within one standard error of the
+       minimum (glmnet's "$lambda.1se").
+    */
+    for (i=imin-1; i>=0; i--) {
+	avg = gretl_matrix_get(MSE, i, nf);
+	if (avg - avgmin < se1) {
+	    ialt = i;
+	} else {
+	    break;
+	}
+    }
+
+    *i1se = ialt;
+}
+
+/* Shrink the MSE matrix down to what the user might be
+   interested: the per-lambda average MSEs and their
+   estimated std errors.
+*/
+
+static void shrink_MSE (gretl_matrix **pMSE)
+{
+    gretl_matrix *MSE = *pMSE;
+    gretl_matrix *tmp;
+
+    tmp = gretl_matrix_alloc(MSE->rows, 2);
+
+    if (tmp != NULL) {
+	int n = MSE->rows;
+	int offset = n * (MSE->cols - 2);
+
+	memcpy(tmp->val, MSE->val + offset, 2*n * sizeof *tmp->val);
+	gretl_matrix_free(MSE);
+	*pMSE = tmp;
+    }
+}
+
 static int admm_lasso_xv (gretl_matrix *A,
 			  gretl_matrix *b,
 			  gretl_bundle *bun,
@@ -751,7 +832,7 @@ static int admm_lasso_xv (gretl_matrix *A,
     double lmax;
     int nlam, fsize, esize;
     int randfolds = 0;
-    int j, f, nf;
+    int f, nf;
     int err = 0;
 
     nf = gretl_bundle_get_int(bun, "nfolds", &err);
@@ -793,37 +874,33 @@ static int admm_lasso_xv (gretl_matrix *A,
 	randomize_rows(A, b);
     }
 
-    MSE = gretl_zero_matrix_new(nlam, 1);
+    MSE = gretl_zero_matrix_new(nlam, nf + 2);
 
     for (f=0; f<nf && !err; f++) {
 	prepare_xv_data(A, b, Ae, be, Af, bf, f);
-	err = lasso_xv_round(Ae, be, Af, bf, lfrac, MSE, lmax, rho);
+	err = lasso_xv_round(Ae, be, Af, bf, lfrac, MSE, lmax, rho, f);
     }
 
     /* send cleanup signal */
-    lasso_xv_round(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
+    lasso_xv_round(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0);
 
     if (!err) {
 	gretl_matrix *lxv = gretl_matrix_alloc(1, 1);
-	double minMSE = MSE->val[0];
-	int jbest = 0;
+	int ibest = 0, i1se = 0;
 
-	for (j=0; j<nlam; j++) {
-	    printf("s = %#g -> MSE %#g\n", lfrac->val[j], MSE->val[j]);
-	    if (MSE->val[j] < minMSE) {
-		jbest = j;
-		minMSE = MSE->val[j];
-	    }
-	}
-	printf("\nOut-of-sample MSE minimized at %g for s=%g\n",
-	       minMSE, lfrac->val[jbest]);
+	process_xv_MSE(MSE, lfrac, &ibest, &i1se, nf);
+	printf("\nAverage out-of-sample MSE minimized at %g for s=%g\n",
+	       gretl_matrix_get(MSE, ibest, nf), lfrac->val[ibest]);
+	printf("Largest s within one s.e. of minimum MSE: %g\n",
+	       lfrac->val[i1se]);
 	/* now determine coefficient vector on full training set */
-	lxv->val[0] = lfrac->val[jbest];
+	lxv->val[0] = lfrac->val[ibest];
 	gretl_bundle_donate_data(bun, "lxv", lxv, GRETL_TYPE_MATRIX, 0);
 	err = real_admm_lasso(A, b, bun, rho);
     }
 
     if (!err) {
+	shrink_MSE(&MSE);
 	gretl_bundle_donate_data(bun, "MSE", MSE, GRETL_TYPE_MATRIX, 0);
     } else {
 	gretl_matrix_free(MSE);
