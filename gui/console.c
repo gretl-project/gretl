@@ -660,16 +660,10 @@ static gint console_key_handler (GtkWidget *cview,
 		windata_t *vwin = (windata_t *) p;
 
 		gtk_widget_destroy(vwin->main);
-		return TRUE; /* handled! */
 	    }
 	}
-
-#if 0 /* 2019-11-06 */
-	event->keyval = GDK_End;
-	return FALSE;
-#else
-	return TRUE;
-#endif
+	
+	return TRUE; /* handled */
     }
 
     if (keyval == GDK_Up || keyval == GDK_Down) {
