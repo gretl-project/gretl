@@ -38,10 +38,10 @@
 # endif
 #endif
 
-#define MAX_ITER 30000 // was 50 in Boyd
+#define MAX_ITER 20000
 
-double reltol = 1.0e-3; // 1e-2 in Boyd
-double abstol = 1.0e-5; // 1e-4 in Boyd
+double reltol = 1.0e-4;
+double abstol = 1.0e-6;
 
 static int randomize_rows (gretl_matrix *A, gretl_matrix *b)
 {
@@ -527,13 +527,13 @@ static int real_admm_lasso (const gretl_matrix *A,
     gretl_matrix *B = NULL;
     gretl_matrix *lfrac;
     double lmax;
-    int ldim, nlam, ns;
+    int ldim, nlam;
     int m, n, i, j;
     int jbest = 0;
     int err = 0;
 
     gretl_vector *x, *u, *z, *y, *r, *zprev, *zdiff;
-    gretl_vector *q, *p, *Atb, *Azb;
+    gretl_vector *q, *Atb, *m1;
     gretl_matrix *L;
 
     int stdize = gretl_bundle_get_int(bun, "stdize", &err);
@@ -559,9 +559,8 @@ static int real_admm_lasso (const gretl_matrix *A,
 				&z, n, 1, &y, n, 1,
 				&r, n, 1, &zprev, n, 1,
 				&zdiff, n, 1, &q, n, 1,
-				&p, m, 1, &Atb, n, 1,
-				&Azb, m, 1, &L, ldim, ldim,
-				NULL);
+				&m1, m, 1, &Atb, n, 1,
+				&L, ldim, ldim, NULL);
     if (MB == NULL) {
 	return E_ALLOC;
     }
@@ -594,7 +593,7 @@ static int real_admm_lasso (const gretl_matrix *A,
 	int iters = 0;
 	int nnz = 0;
 
-	err = admm_iteration(A, L, Atb, x, z, u, q, p, r, zprev, zdiff,
+	err = admm_iteration(A, L, Atb, x, z, u, q, m1, r, zprev, zdiff,
 			     lambda, rho, &iters);
 
 	if (!err) {
@@ -604,7 +603,7 @@ static int real_admm_lasso (const gretl_matrix *A,
 		}
 		gretl_matrix_set(B, i+stdize, j, z->val[i]);
 	    }
-	    crit = objective(A, b, z, lambda, Azb);
+	    crit = objective(A, b, z, lambda, m1);
 	    if (nlam > 1) {
 		printf("%#12.6g  %5d    %#.8g (%d iters)\n",
 		       lambda/m, nnz, crit, iters);
@@ -635,6 +634,8 @@ static int real_admm_lasso (const gretl_matrix *A,
     return err;
 }
 
+#define CACHE_INIT 0
+
 static int lasso_xv_round (const gretl_matrix *A,
 			   const gretl_matrix *b,
 			   const gretl_matrix *A_out,
@@ -646,9 +647,11 @@ static int lasso_xv_round (const gretl_matrix *A,
 {
     static gretl_vector *x, *u, *z, *y;
     static gretl_vector *r, *zprev, *zdiff;
-    static gretl_vector *q, *p, *Atb, *Azb;
-    static gretl_matrix *L;
+    static gretl_vector *q, *Atb, *m1, *L;
     static gretl_matrix_block *MB;
+#if CACHE_INIT
+    static double *cache;
+#endif
     int ldim, nlam;
     int m, n, j;
     int err = 0;
@@ -657,6 +660,10 @@ static int lasso_xv_round (const gretl_matrix *A,
 	/* cleanup signal */
 	gretl_matrix_block_destroy(MB);
 	MB = NULL;
+#if CACHE_INIT
+	free(cache);
+	cache = NULL;
+#endif
 	return 0;
     }
 
@@ -671,8 +678,7 @@ static int lasso_xv_round (const gretl_matrix *A,
 				    &z, n, 1, &y, n, 1,
 				    &r, n, 1, &zprev, n, 1,
 				    &zdiff, n, 1, &q, n, 1,
-				    &q, n, 1, &p, m, 1,
-				    &Atb, n, 1, &Azb, m, 1,
+				    &m1, m, 1, &Atb, n, 1,
 				    &L, ldim, ldim, NULL);
 	if (MB == NULL) {
 	    return E_ALLOC;
@@ -689,21 +695,42 @@ static int lasso_xv_round (const gretl_matrix *A,
 
     get_cholesky_factor(A, L, rho);
 
+    /* FIXME try cacheing the values obtained for the
+       greatest lambda for use when starting the next
+       fold
+    */
+
     for (j=0; j<nlam && !err; j++) {
 	/* loop across lambda values */
 	double score, lambda = lfrac->val[j] * lmax;
 	int iters = 0;
 
-	err = admm_iteration(A, L, Atb, x, z, u, q, p, r, zprev, zdiff,
+	err = admm_iteration(A, L, Atb, x, z, u, q, m1, r, zprev, zdiff,
 			     lambda, rho, &iters);
 
 	if (!err) {
 	    /* record out-of-sample MSE */
-	    gretl_matrix_reuse(Azb, A_out->rows, 1);
-	    score = xv_score(A_out, b_out, z, Azb);
-	    gretl_matrix_reuse(Azb, m, 1);
+	    gretl_matrix_reuse(m1, A_out->rows, 1);
+	    score = xv_score(A_out, b_out, z, m1);
+	    gretl_matrix_reuse(m1, m, 1);
 	    gretl_matrix_set(MSE, j, fold, score);
 	}
+#if CACHE_INIT
+	if (j == 0 && nlam > 1) {
+	    if (cache == NULL) {
+		/* cache values for first lambda */
+		cache = malloc(3 * n * sizeof *cache);
+		memcpy(cache, z->val, n * sizeof *cache);
+		memcpy(cache + n, u->val, n * sizeof *cache);
+		memcpy(cache + 2*n, r->val, n * sizeof *cache);
+	    } else {
+		/* load cached values for first lambda */
+		memcpy(z->val, cache, n * sizeof *cache);
+		memcpy(u->val, cache + n, n * sizeof *cache);
+		memcpy(r->val, cache + 2*n, n * sizeof *cache);
+	    }
+	}
+#endif
     }
 
     return err;
@@ -801,7 +828,7 @@ static void process_xv_MSE (gretl_matrix *MSE,
 }
 
 /* Shrink the MSE matrix down to what the user might be
-   interested: the per-lambda average MSEs and their
+   interested in: the per-lambda average MSEs and their
    estimated std errors.
 */
 
@@ -919,7 +946,7 @@ int admm_lasso (gretl_matrix *A,
 		gretl_bundle *bun)
 {
     gretl_matrix *ctrl;
-    double rho = 1.0; /* or maybe larger? */
+    double rho = 8.0; /* was 1.0 */
     int xv, err = 0;
 
     ctrl = gretl_bundle_get_matrix(bun, "admmctrl", NULL);
