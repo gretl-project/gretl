@@ -33,13 +33,12 @@ for lang in $LANGS ; do
 done
 
 # copy in third-party dlls not detected by ldd: this listing
-# is correct as of 2017-12-25
+# is correct, for GTK 2, as of 2019-11-08
 for f in \
 	libcairo-gobject-2.dll \
 	libgailutil-18.dll \
 	libgthread-2.0-0.dll \
-	libjson-glib-1.0-0.dll \
-	libsvm.dll
+	libjson-glib-1.0-0.dll
 do
     cp ${SYSBIN}/$f ${TARGET}/$f
 done
