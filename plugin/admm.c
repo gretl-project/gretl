@@ -38,7 +38,7 @@
 # endif
 #endif
 
-#define MAX_ITER 20000 // was 50 in Boyd
+#define MAX_ITER 30000 // was 50 in Boyd
 
 double reltol = 1.0e-3; // 1e-2 in Boyd
 double abstol = 1.0e-5; // 1e-4 in Boyd
@@ -527,7 +527,7 @@ static int real_admm_lasso (const gretl_matrix *A,
     gretl_matrix *B = NULL;
     gretl_matrix *lfrac;
     double lmax;
-    int ldim, nlam;
+    int ldim, nlam, ns;
     int m, n, i, j;
     int jbest = 0;
     int err = 0;
@@ -537,6 +537,7 @@ static int real_admm_lasso (const gretl_matrix *A,
     gretl_matrix *L;
 
     int stdize = gretl_bundle_get_int(bun, "stdize", &err);
+    int xval = gretl_bundle_get_int(bun, "xvalidate", &err);
 
     if (gretl_bundle_has_key(bun, "lxv")) {
 	lfrac = gretl_bundle_get_matrix(bun, "lxv", &err);
@@ -616,8 +617,10 @@ static int real_admm_lasso (const gretl_matrix *A,
     }
 
     gretl_bundle_set_scalar(bun, "lmax", lmax);
-    gretl_bundle_set_scalar(bun, "jbest", jbest + 1);
-    gretl_bundle_set_scalar(bun, "lfbest", lfrac->val[jbest]);
+    if (nlam > 1 || xval) {
+	gretl_bundle_set_scalar(bun, "best_idx", jbest + 1);
+	gretl_bundle_set_scalar(bun, "lfbest", lfrac->val[jbest]);
+    }
     gretl_bundle_set_scalar(bun, "crit", critmin);
     if (nlam > 1) {
 	gretl_bundle_donate_data(bun, "B", B, GRETL_TYPE_MATRIX, 0);
