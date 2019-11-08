@@ -801,7 +801,7 @@ static void process_xv_MSE (gretl_matrix *MSE,
 }
 
 /* Shrink the MSE matrix down to what the user might be
-   interested: the per-lambda average MSEs and their
+   interested in: the per-lambda average MSEs and their
    estimated std errors.
 */
 
