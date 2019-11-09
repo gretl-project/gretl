@@ -634,8 +634,6 @@ static int real_admm_lasso (const gretl_matrix *A,
     return err;
 }
 
-#define CACHE_INIT 0
-
 static int lasso_xv_round (const gretl_matrix *A,
 			   const gretl_matrix *b,
 			   const gretl_matrix *A_out,
@@ -649,9 +647,6 @@ static int lasso_xv_round (const gretl_matrix *A,
     static gretl_vector *r, *zprev, *zdiff;
     static gretl_vector *q, *Atb, *m1, *L;
     static gretl_matrix_block *MB;
-#if CACHE_INIT
-    static double *cache;
-#endif
     int ldim, nlam;
     int m, n, j;
     int err = 0;
@@ -660,10 +655,6 @@ static int lasso_xv_round (const gretl_matrix *A,
 	/* cleanup signal */
 	gretl_matrix_block_destroy(MB);
 	MB = NULL;
-#if CACHE_INIT
-	free(cache);
-	cache = NULL;
-#endif
 	return 0;
     }
 
@@ -695,11 +686,6 @@ static int lasso_xv_round (const gretl_matrix *A,
 
     get_cholesky_factor(A, L, rho);
 
-    /* FIXME try cacheing the values obtained for the
-       greatest lambda for use when starting the next
-       fold
-    */
-
     for (j=0; j<nlam && !err; j++) {
 	/* loop across lambda values */
 	double score, lambda = lfrac->val[j] * lmax;
@@ -715,22 +701,6 @@ static int lasso_xv_round (const gretl_matrix *A,
 	    gretl_matrix_reuse(m1, m, 1);
 	    gretl_matrix_set(MSE, j, fold, score);
 	}
-#if CACHE_INIT
-	if (j == 0 && nlam > 1) {
-	    if (cache == NULL) {
-		/* cache values for first lambda */
-		cache = malloc(3 * n * sizeof *cache);
-		memcpy(cache, z->val, n * sizeof *cache);
-		memcpy(cache + n, u->val, n * sizeof *cache);
-		memcpy(cache + 2*n, r->val, n * sizeof *cache);
-	    } else {
-		/* load cached values for first lambda */
-		memcpy(z->val, cache, n * sizeof *cache);
-		memcpy(u->val, cache + n, n * sizeof *cache);
-		memcpy(r->val, cache + 2*n, n * sizeof *cache);
-	    }
-	}
-#endif
     }
 
     return err;
