@@ -1015,6 +1015,7 @@ if test "${win32_build}" = "yes" ; then
       win32/windist/mkiss.sh
       win32/windist/post-install.sh
       win32/windist/install-runtime.sh
+      win32/windist/install-runtime-gtk3.sh
     ])
   else
     GHOME="${prefix}/share/gretl"

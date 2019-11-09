@@ -1,0 +1,107 @@
+#!/bin/sh
+
+# these first paths may need configuring
+TARGET=@prefix@
+SRCDIR=@top_srcdir@
+
+# and set this to "no" if you don't want to install pre-built
+# gnuplot from the server
+INSTALL_GNUPLOT="yes"
+
+# nothing below here should need configuring
+
+SERVERDIR="http://ricardo.ecn.wfu.edu/pub/gretl/winbuild"
+SYSBASE=${MINGW_PREFIX}
+SYSBIN=${SYSBASE}/bin
+SYSTRANS=${SYSBASE}/share/locale
+SYSTHEME=${SYSBASE}/share/themes
+SYSSV=${SYSBASE}/share/gtksourceview-3.0
+
+# create required GTK-related directories not created by "make install"
+mkdir -p ${TARGET}/share/themes/Emacs/gtk-3.0
+mkdir -p ${TARGET}/share/themes/Default/gtk-3.0
+mkdir -p ${TARGET}/share/themes/Adwaita/gtk-3.0
+# ?? mkdir -p ${TARGET}/share/themes/MS-Windows/gtk-3.0
+# not sure how many of the following are wanted
+mkdir -p ${TARGET}/lib/gtk-3.0/3.0.0
+mkdir -p ${TARGET}/lib/gtk-3.0/modules
+mkdir -p ${TARGET}/lib/gtk-3.0/3.0.0/immodules
+mkdir -p ${TARGET}/lib/gtk-3.0/3.0.0/printbackends
+mkdir -p ${TARGET}/lib/gtk-3.0/3.0.0/theming-engines
+
+# directories to hold GTK message catalogs
+LANGS=`cat ${SRCDIR}/po/LINGUAS | grep -v ^#`
+for lang in $LANGS ; do
+  mkdir -p ${TARGET}/share/locale/$lang/LC_MESSAGES
+done
+
+# copy in third-party dlls not detected by ldd: this listing
+# may need correction for GTK 3
+for f in \
+	libcairo-gobject-2.dll \
+	libgailutil-3.dll \
+	libgthread-2.0-0.dll \
+	libjson-glib-1.0-0.dll
+do
+    cp ${SYSBIN}/$f ${TARGET}/$f
+done
+
+# make list of ldd-detected DLL dependencies...
+ldd ${TARGET}/gretl.exe | grep -vi /c/windows > dlls.tmp
+ldd ${TARGET}/gretlcli.exe | grep -vi /c/windows >> dlls.tmp
+cat dlls.tmp | awk '{print $1}' | sort | uniq | \
+  grep -v libgretl | grep -v '?' > dlls.txt && rm dlls.tmp
+# and copy them in
+for f in `cat dlls.txt` ; do
+  cp ${SYSBIN}/$f ${TARGET}/$f
+done
+
+# gdk-pixbuf loaders
+cp -r ${SYSBASE}/lib/gdk-pixbuf-2.0 ${TARGET}/lib
+
+# misc file
+cp ${SRCDIR}/win32/gretl_website.url ${TARGET}/gretl_website.url
+
+# gnuplot -- unless you're building it yourself
+if [ "x${INSTALL_GNUPLOT}" = "xyes" ] ; then
+  if [ "$MSYSTEM_CARCH" = "x86_64" ] ; then
+    GPTGZ=${SERVERDIR}/gp524w64.tar.gz
+  else
+    GPTGZ=${SERVERDIR}/gp524w32.tar.gz
+  fi
+  cd ${TARGET} && wget -N ${GPTGZ} && tar xvf ${GPTGZ} && rm ${GPTGZ}
+fi
+
+# GTK theme files
+cp $SYSTHEME/Emacs/gtk-3.0/gtk-keys.css ${TARGET}/share/themes/Emacs/gtk-3.0/gtk-keys.css
+cp $SYSTHEME/Default/gtk-3.0/gtk-keys.css ${TARGET}/share/themes/Default/gtk-3.0/gtk-keys.css
+
+# anything else?
+cp $SYSBASE/lib/gtk-3.0/3.0.0/immodules/*.dll ${TARGET}/lib/gtk-3.0/3.3.3/immodules/
+
+# data files for gtksourceview, other than the gretl-special ones
+cp ${SYSSV}/language-specs/R.lang ${TARGET}/gtksourceview/R.lang
+cp ${SYSSV}/language-specs/cpp.lang ${TARGET}/gtksourceview/cpp.lang
+cp ${SYSSV}/language-specs/octave.lang ${TARGET}/gtksourceview/octave.lang
+cp ${SYSSV}/language-specs/python.lang ${TARGET}/gtksourceview/python.lang
+cp ${SYSSV}/language-specs/def.lang ${TARGET}/gtksourceview/def.lang
+cp ${SYSSV}/language-specs/c.lang ${TARGET}/gtksourceview/c.lang
+cp ${SYSSV}/language-specs/gtk-doc.lang ${TARGET}/gtksourceview/gtk-doc.lang
+cp ${SYSSV}/language-specs/language2.rng ${TARGET}/gtksourceview/language2.rng
+cp ${SYSSV}/styles/classic.xml ${TARGET}/gtksourceview/classic.xml
+cp ${SYSSV}/styles/cobalt.xml ${TARGET}/gtksourceview/cobalt.xml
+cp ${SYSSV}/styles/kate.xml ${TARGET}/gtksourceview/kate.xml
+cp ${SYSSV}/styles/oblivion.xml ${TARGET}/gtksourceview/oblivion.xml
+cp ${SYSSV}/styles/tango.xml ${TARGET}/gtksourceview/tango.xml
+cp ${SYSSV}/styles/styles.rng ${TARGET}/gtksourceview/styles.rng
+
+# locale file, certs for cURL, libsvm copyright
+cd ${TARGET} && wget -N ${SERVERDIR}/gretl-extra.tar.gz && \
+ tar xvf gretl-extra.tar.gz && rm gretl-extra.tar.gz && \
+ mv locale.alias share/locale/locale.alias
+
+# GLib and GTK message catalogs
+for lang in $LANGS ; do
+  cp $SYSTRANS/$lang/LC_MESSAGES/glib20.mo ${TARGET}/share/locale/$lang/LC_MESSAGES/glib20.mo
+  cp $SYSTRANS/$lang/LC_MESSAGES/gtk30.mo ${TARGET}/share/locale/$lang/LC_MESSAGES/gtk30.mo
+done
