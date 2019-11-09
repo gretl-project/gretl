@@ -56,6 +56,9 @@ done
 # gdk-pixbuf loaders
 cp -r ${SYSBASE}/lib/gdk-pixbuf-2.0 ${TARGET}/lib
 
+# misc file
+cp ${SRCDIR}/win32/gretl_website.url ${TARGET}/gretl_website.url
+
 # gnuplot -- unless you're building it yourself
 if [ "x${INSTALL_GNUPLOT}" = "xyes" ] ; then
   if [ "$MSYSTEM_CARCH" = "x86_64" ] ; then
@@ -104,7 +107,3 @@ for lang in $LANGS ; do
   cp $SYSTRANS/$lang/LC_MESSAGES/glib20.mo ${TARGET}/share/locale/$lang/LC_MESSAGES/glib20.mo
   cp $SYSTRANS/$lang/LC_MESSAGES/gtk20.mo ${TARGET}/share/locale/$lang/LC_MESSAGES/gtk20.mo
 done
-
-# misc files
-cp ${SRCDIR}/win32/gretl_website.url ${TARGET}/gretl_website.url
-
