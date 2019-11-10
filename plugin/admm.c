@@ -42,6 +42,25 @@
 
 double reltol = 1.0e-4;
 double abstol = 1.0e-6;
+#if 0
+double ybar = 0.0;
+#endif
+
+enum {
+    CRIT_MSE,
+    CRIT_MAE
+};
+
+static const char *crit_string (int crit)
+{
+    if (crit == CRIT_MSE) {
+	return "MSE";
+    } else if (crit == CRIT_MAE) {
+	return "MAE";
+    } else {
+	return "pc correct";
+    }
+}
 
 static int randomize_rows (gretl_matrix *A, gretl_matrix *b)
 {
@@ -347,6 +366,8 @@ static double abs_sum (const gretl_vector *z)
     return ret;
 }
 
+/* calculate the lasso criterion */
+
 static double objective (const gretl_matrix *A,
 			 const gretl_vector *b,
 			 const gretl_vector *z,
@@ -364,18 +385,27 @@ static double objective (const gretl_matrix *A,
     return obj / A->rows;
 }
 
+/* calculate the cross validation criterion */
+
 static double xv_score (const gretl_matrix *A,
 			const gretl_vector *b,
 			const gretl_vector *z,
-			gretl_vector *Azb)
+			gretl_vector *Azb,
+			int crit_type)
 {
-    double SSR;
+    double sum = 0;
 
+    /* get fitted values */
     gretl_matrix_multiply(A, z, Azb);
+    /* and compute residuals */
     vector_subtract_from(Azb, b, A->rows);
-    SSR = gretl_vector_dot_product(Azb, Azb, NULL);
+    if (crit_type == CRIT_MSE) {
+	sum = gretl_vector_dot_product(Azb, Azb, NULL);
+    } else {
+	sum = abs_sum(Azb);
+    }
 
-    return SSR / A->rows; /* MSE */
+    return sum / A->rows;
 }
 
 static void soft_threshold (gretl_vector *v, double lambda,
@@ -639,9 +669,9 @@ static int lasso_xv_round (const gretl_matrix *A,
 			   const gretl_matrix *A_out,
 			   const gretl_matrix *b_out,
 			   const gretl_matrix *lfrac,
-			   gretl_matrix *MSE,
+			   gretl_matrix *XVC,
 			   double lmax, double rho,
-			   int fold)
+			   int fold, int crit_type)
 {
     static gretl_vector *x, *u, *z, *y;
     static gretl_vector *r, *zprev, *zdiff;
@@ -695,11 +725,11 @@ static int lasso_xv_round (const gretl_matrix *A,
 			     lambda, rho, &iters);
 
 	if (!err) {
-	    /* record out-of-sample MSE */
+	    /* record out-of-sample criterion */
 	    gretl_matrix_reuse(m1, A_out->rows, 1);
-	    score = xv_score(A_out, b_out, z, m1);
+	    score = xv_score(A_out, b_out, z, m1, crit_type);
 	    gretl_matrix_reuse(m1, m, 1);
-	    gretl_matrix_set(MSE, j, fold, score);
+	    gretl_matrix_set(XVC, j, fold, score);
 	}
     }
 
@@ -740,23 +770,23 @@ static void prepare_xv_data (const gretl_matrix *X,
     }
 }
 
-/* Given @MSE holding MSE values per lambda (rows) and
+/* Given @C holding criterion values per lambda (rows) and
    per fold (columns), write into the last two columns
    the means and standard errors.
 */
 
-static void process_xv_MSE (gretl_matrix *MSE,
-			    gretl_matrix *lfrac,
-			    int *ibest, int *i1se,
-			    int nf)
+static void process_xv_criterion (gretl_matrix *XVC,
+				  gretl_matrix *lfrac,
+				  int *ibest, int *i1se,
+				  int nf, int crit_type)
 {
-    double avg, d, v, se, se1, avgmin;
+    double avg, d, v, se, se1, avgmin = 1e200;
     int i, j, ialt, imin = 0;
 
-    for (i=0; i<MSE->rows; i++) {
+    for (i=0; i<XVC->rows; i++) {
 	v = avg = 0;
 	for (j=0; j<nf; j++) {
-	    avg += gretl_matrix_get(MSE, i, j);
+	    avg += gretl_matrix_get(XVC, i, j);
 	}
 	avg /= nf;
 	if (i == 0) {
@@ -765,28 +795,29 @@ static void process_xv_MSE (gretl_matrix *MSE,
 	    avgmin = avg;
 	    imin = i;
 	}
-	gretl_matrix_set(MSE, i, nf, avg);
+	gretl_matrix_set(XVC, i, nf, avg);
 	for (j=0; j<nf; j++) {
-	    d = gretl_matrix_get(MSE, i, j) - avg;
+	    d = gretl_matrix_get(XVC, i, j) - avg;
 	    v += d * d;
 	}
 	v /= (nf - 1);
 	se = sqrt(v/nf);
-	gretl_matrix_set(MSE, i, nf+1, se);
-	printf("s = %#g -> MSE %#g (%#g)\n", lfrac->val[i], avg, se);
+	gretl_matrix_set(XVC, i, nf+1, se);
+	printf("s = %#g -> %s %#g (%#g)\n", lfrac->val[i],
+	       crit_string(crit_type), avg, se);
     }
 
     *ibest = ialt = imin;
 
-    /* estd. standard error of minimum average MSE */
-    se1 = gretl_matrix_get(MSE, imin, nf+1);
+    /* estd. standard error of minimum average XVC */
+    se1 = gretl_matrix_get(XVC, imin, nf+1);
 
     /* Find the index of the largest lamba that gives
-       an average MSE within one standard error of the
+       an average XVC within one standard error of the
        minimum (glmnet's "$lambda.1se").
     */
     for (i=imin-1; i>=0; i--) {
-	avg = gretl_matrix_get(MSE, i, nf);
+	avg = gretl_matrix_get(XVC, i, nf);
 	if (avg - avgmin < se1) {
 	    ialt = i;
 	} else {
@@ -797,26 +828,45 @@ static void process_xv_MSE (gretl_matrix *MSE,
     *i1se = ialt;
 }
 
-/* Shrink the MSE matrix down to what the user might be
-   interested in: the per-lambda average MSEs and their
-   estimated std errors.
+/* Shrink the cross validation criterion matrix down to what the user
+   might be interested in: the per-lambda criteria and their estimated
+   std errors.
 */
 
-static void shrink_MSE (gretl_matrix **pMSE)
+static void shrink_crit (gretl_matrix **pXVC)
 {
-    gretl_matrix *MSE = *pMSE;
+    gretl_matrix *XVC = *pXVC;
     gretl_matrix *tmp;
 
-    tmp = gretl_matrix_alloc(MSE->rows, 2);
+    tmp = gretl_matrix_alloc(XVC->rows, 2);
 
     if (tmp != NULL) {
-	int n = MSE->rows;
-	int offset = n * (MSE->cols - 2);
+	int n = XVC->rows;
+	int offset = n * (XVC->cols - 2);
 
-	memcpy(tmp->val, MSE->val + offset, 2*n * sizeof *tmp->val);
-	gretl_matrix_free(MSE);
-	*pMSE = tmp;
+	memcpy(tmp->val, XVC->val + offset, 2*n * sizeof *tmp->val);
+	gretl_matrix_free(XVC);
+	*pXVC = tmp;
     }
+}
+
+static int get_crit_type (gretl_bundle *bun)
+{
+    const char *s = gretl_bundle_get_string(bun, "xvcrit", NULL);
+    int ret = 0;
+
+    if (s != NULL) {
+	if (g_ascii_strcasecmp(s, "mse") == 0) {
+	    ret = CRIT_MSE;
+	} else if (g_ascii_strcasecmp(s, "mae") == 0) {
+	    ret = CRIT_MAE;
+	} else {
+	    gretl_errmsg_sprintf("'%s' invalid criterion", s);
+	    ret = -1;
+	}
+    }
+
+    return ret;
 }
 
 static int admm_lasso_xv (gretl_matrix *A,
@@ -828,10 +878,11 @@ static int admm_lasso_xv (gretl_matrix *A,
     gretl_matrix *Ae, *Af;
     gretl_matrix *be, *bf;
     gretl_matrix *lfrac;
-    gretl_matrix *Atb, *MSE;
+    gretl_matrix *Atb, *XVC;
     double lmax;
     int nlam, fsize, esize;
     int randfolds = 0;
+    int crit_type = 0;
     int f, nf;
     int err = 0;
 
@@ -842,11 +893,16 @@ static int admm_lasso_xv (gretl_matrix *A,
 	return err;
     }
 
+    crit_type = get_crit_type(bun);
+    if (crit_type < 0) {
+	return E_INVARG;
+    }
+
     fsize = A->rows / nf;
     esize = (nf - 1) * fsize;
 
-    printf("admm_lasso_xv: nf=%d, fsize=%d, randfolds=%d\n",
-	   nf, fsize, randfolds);
+    printf("admm_lasso_xv: nf=%d, fsize=%d, randfolds=%d, crit=%s\n",
+	   nf, fsize, randfolds, crit_string(crit_type));
 
     AB = gretl_matrix_block_new(&Ae, esize, A->cols,
 				&Af, fsize, A->cols,
@@ -874,24 +930,26 @@ static int admm_lasso_xv (gretl_matrix *A,
 	randomize_rows(A, b);
     }
 
-    MSE = gretl_zero_matrix_new(nlam, nf + 2);
+    XVC = gretl_zero_matrix_new(nlam, nf + 2);
 
     for (f=0; f<nf && !err; f++) {
 	prepare_xv_data(A, b, Ae, be, Af, bf, f);
-	err = lasso_xv_round(Ae, be, Af, bf, lfrac, MSE, lmax, rho, f);
+	err = lasso_xv_round(Ae, be, Af, bf, lfrac, XVC, lmax, rho,
+			     f, crit_type);
     }
 
     /* send cleanup signal */
-    lasso_xv_round(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0);
+    lasso_xv_round(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0);
 
     if (!err) {
 	gretl_matrix *lxv = gretl_matrix_alloc(1, 1);
 	int ibest = 0, i1se = 0;
 
-	process_xv_MSE(MSE, lfrac, &ibest, &i1se, nf);
-	printf("\nAverage out-of-sample MSE minimized at %g for s=%g\n",
-	       gretl_matrix_get(MSE, ibest, nf), lfrac->val[ibest]);
-	printf("Largest s within one s.e. of minimum MSE: %g\n",
+	process_xv_criterion(XVC, lfrac, &ibest, &i1se, nf, crit_type);
+	printf("\nAverage out-of-sample %s minimized at %g for s=%g\n",
+	       crit_string(crit_type), gretl_matrix_get(XVC, ibest, nf),
+	       lfrac->val[ibest]);
+	printf("Largest s within one s.e. of best criterion: %g\n",
 	       lfrac->val[i1se]);
 	/* now determine coefficient vector on full training set */
 	lxv->val[0] = lfrac->val[ibest];
@@ -900,10 +958,10 @@ static int admm_lasso_xv (gretl_matrix *A,
     }
 
     if (!err) {
-	shrink_MSE(&MSE);
-	gretl_bundle_donate_data(bun, "MSE", MSE, GRETL_TYPE_MATRIX, 0);
+	shrink_crit(&XVC);
+	gretl_bundle_donate_data(bun, "XVC", XVC, GRETL_TYPE_MATRIX, 0);
     } else {
-	gretl_matrix_free(MSE);
+	gretl_matrix_free(XVC);
     }
 
     gretl_matrix_block_destroy(AB);
@@ -931,6 +989,11 @@ int admm_lasso (gretl_matrix *A,
 	    abstol = ctrl->val[2];
 	}
     }
+
+#if 0
+    double ycheck = gretl_mean(0, b->rows-1, b->val);
+    ybar = fabs(ycheck) > 1.0e-14 ? ycheck : 0;
+#endif
 
     /* scale the absolute tolerance */
     abstol = sqrt(A->cols) * abstol;
