@@ -25,7 +25,6 @@ mkdir -p ${TARGET}/share/themes/Adwaita/gtk-3.0
 # not sure how many of the following are wanted
 mkdir -p ${TARGET}/lib/gtk-3.0/3.0.0
 mkdir -p ${TARGET}/lib/gtk-3.0/modules
-mkdir -p ${TARGET}/lib/gtk-3.0/3.0.0/immodules
 mkdir -p ${TARGET}/lib/gtk-3.0/3.0.0/printbackends
 mkdir -p ${TARGET}/lib/gtk-3.0/3.0.0/theming-engines
 
@@ -39,7 +38,7 @@ done
 # may need correction for GTK 3
 for f in \
 	libcairo-gobject-2.dll \
-	libgailutil-3.dll \
+	libgailutil-3-0.dll \
 	libgthread-2.0-0.dll \
 	libjson-glib-1.0-0.dll
 do
@@ -75,9 +74,6 @@ fi
 # GTK theme files
 cp $SYSTHEME/Emacs/gtk-3.0/gtk-keys.css ${TARGET}/share/themes/Emacs/gtk-3.0/gtk-keys.css
 cp $SYSTHEME/Default/gtk-3.0/gtk-keys.css ${TARGET}/share/themes/Default/gtk-3.0/gtk-keys.css
-
-# anything else?
-cp $SYSBASE/lib/gtk-3.0/3.0.0/immodules/*.dll ${TARGET}/lib/gtk-3.0/3.3.3/immodules/
 
 # data files for gtksourceview, other than the gretl-special ones
 cp ${SYSSV}/language-specs/R.lang ${TARGET}/gtksourceview/R.lang
