@@ -15,12 +15,14 @@ SYSBASE=${MINGW_PREFIX}
 SYSBIN=${SYSBASE}/bin
 SYSTRANS=${SYSBASE}/share/locale
 SYSTHEME=${SYSBASE}/share/themes
+SYSICONS=${SYSBASE}/share/icons
 SYSSV=${SYSBASE}/share/gtksourceview-3.0
 
 # create required GTK-related directories not created by "make install"
 mkdir -p ${TARGET}/share/themes/Emacs/gtk-3.0
 mkdir -p ${TARGET}/share/themes/Default/gtk-3.0
 mkdir -p ${TARGET}/share/themes/Adwaita/gtk-3.0
+mkdir -p ${TARGET}/share/themes/icons
 # ?? mkdir -p ${TARGET}/share/themes/MS-Windows/gtk-3.0
 # not sure how many of the following are wanted
 mkdir -p ${TARGET}/lib/gtk-3.0/3.0.0
@@ -74,6 +76,9 @@ fi
 # GTK theme files
 cp $SYSTHEME/Emacs/gtk-3.0/gtk-keys.css ${TARGET}/share/themes/Emacs/gtk-3.0/gtk-keys.css
 cp $SYSTHEME/Default/gtk-3.0/gtk-keys.css ${TARGET}/share/themes/Default/gtk-3.0/gtk-keys.css
+
+# GTK icons (check details!)
+# cp $SYSICONS/*.* ${TARGET}/share/icons/
 
 # data files for gtksourceview, other than the gretl-special ones
 cp ${SYSSV}/language-specs/R.lang ${TARGET}/gtksourceview/R.lang
