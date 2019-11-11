@@ -39,16 +39,18 @@
 #endif
 
 #define MAX_ITER 20000
+#define USE_YBAR 1
 
 double reltol = 1.0e-4;
 double abstol = 1.0e-6;
-#if 0
+#if USE_YBAR
 double ybar = 0.0;
 #endif
 
 enum {
     CRIT_MSE,
-    CRIT_MAE
+    CRIT_MAE,
+    CRIT_PCC
 };
 
 static const char *crit_string (int crit)
@@ -282,6 +284,30 @@ static inline void compute_q (gretl_vector *q,
     }
 }
 
+static void vector_add_scalar (gretl_vector *v,
+			       double x, int n)
+{
+    double *vx = v->val;
+    int imax = n / 4;
+    int rem = n % 4;
+    int i;
+
+    __m256d x256, v256, sum;
+
+    /* broadcast x */
+    x256 = _mm256_broadcast_sd(&x);
+
+    for (i=0; i<imax; i++) {
+	v256 = _mm256_loadu_pd(vx);
+	sum = _mm256_add_pd(v256, x256);
+	_mm256_storeu_pd(vx, sum);
+	vx += 4;
+    }
+    for (i=0; i<rem; i++) {
+	vx[i] += x;
+    }
+}
+
 #else
 
 static void vector_add_into (const gretl_vector *a,
@@ -351,6 +377,16 @@ static inline void compute_q (gretl_vector *q,
     }
 }
 
+static void vector_add_scalar (gretl_vector *v,
+			       double x, int n)
+{
+    int i;
+
+    for (i=0; i<n; i++) {
+	v->val[i] += x;
+    }
+}
+
 #endif /* AVX or not */
 
 static double abs_sum (const gretl_vector *z)
@@ -378,6 +414,11 @@ static double objective (const gretl_matrix *A,
     double obj = 0;
 
     gretl_matrix_multiply(A, z, Azb);
+#if USE_YBAR
+    if (ybar != 0) {
+	vector_add_scalar(Azb, ybar, A->rows);
+    }
+#endif
     vector_subtract_from(Azb, b, A->rows);
     SSR = gretl_vector_dot_product(Azb, Azb, NULL);
     obj = 0.5 * SSR + lambda * abs_sum(z);
@@ -397,12 +438,29 @@ static double xv_score (const gretl_matrix *A,
 
     /* get fitted values */
     gretl_matrix_multiply(A, z, Azb);
-    /* and compute residuals */
-    vector_subtract_from(Azb, b, A->rows);
-    if (crit_type == CRIT_MSE) {
-	sum = gretl_vector_dot_product(Azb, Azb, NULL);
+#if USE_YBAR
+    if (ybar != 0) {
+	vector_add_scalar(Azb, ybar, A->rows);
+    }
+#endif
+    if (crit_type == CRIT_PCC) {
+	/* count incorrect classifications */
+	double yhat;
+	int i, icc = 0;
+
+	for (i=0; i<A->rows; i++) {
+	    yhat = gretl_round(Azb->val[i]);
+	    icc += yhat != b->val[i];
+	}
+	sum = 100 * icc;
     } else {
-	sum = abs_sum(Azb);
+	/* compute and process residuals */
+	vector_subtract_from(Azb, b, A->rows);
+	if (crit_type == CRIT_MSE) {
+	    sum = gretl_vector_dot_product(Azb, Azb, NULL);
+	} else {
+	    sum = abs_sum(Azb);
+	}
     }
 
     return sum / A->rows;
@@ -796,6 +854,11 @@ static void process_xv_criterion (gretl_matrix *XVC,
 	    imin = i;
 	}
 	gretl_matrix_set(XVC, i, nf, avg);
+	if (crit_type == CRIT_PCC) {
+	    printf("s = %#g -> %s %#g\n", lfrac->val[i],
+		   crit_string(crit_type), 100 - avg);
+	    continue;
+	}
 	for (j=0; j<nf; j++) {
 	    d = gretl_matrix_get(XVC, i, j) - avg;
 	    v += d * d;
@@ -808,6 +871,10 @@ static void process_xv_criterion (gretl_matrix *XVC,
     }
 
     *ibest = ialt = imin;
+
+    if (crit_type == CRIT_PCC) {
+	return;
+    }
 
     /* estd. standard error of minimum average XVC */
     se1 = gretl_matrix_get(XVC, imin, nf+1);
@@ -860,6 +927,8 @@ static int get_crit_type (gretl_bundle *bun)
 	    ret = CRIT_MSE;
 	} else if (g_ascii_strcasecmp(s, "mae") == 0) {
 	    ret = CRIT_MAE;
+	} else if (g_ascii_strcasecmp(s, "rank") == 0) {
+	    ret = CRIT_PCC;
 	} else {
 	    gretl_errmsg_sprintf("'%s' invalid criterion", s);
 	    ret = -1;
@@ -990,9 +1059,11 @@ int admm_lasso (gretl_matrix *A,
 	}
     }
 
-#if 0
-    double ycheck = gretl_mean(0, b->rows-1, b->val);
-    ybar = fabs(ycheck) > 1.0e-14 ? ycheck : 0;
+#if USE_YBAR
+    if (gretl_bundle_get_int(bun, "stdize_y", NULL) == 0) {
+	/* we'll need to add mean(y) */
+	ybar = gretl_mean(0, b->rows-1, b->val);
+    }
 #endif
 
     /* scale the absolute tolerance */
