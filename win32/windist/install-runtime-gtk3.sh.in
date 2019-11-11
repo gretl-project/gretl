@@ -15,17 +15,18 @@ SYSBASE=${MINGW_PREFIX}
 SYSBIN=${SYSBASE}/bin
 SYSTRANS=${SYSBASE}/share/locale
 SYSTHEME=${SYSBASE}/share/themes
+SYSICONS=${SYSBASE}/share/icons
 SYSSV=${SYSBASE}/share/gtksourceview-3.0
 
 # create required GTK-related directories not created by "make install"
 mkdir -p ${TARGET}/share/themes/Emacs/gtk-3.0
 mkdir -p ${TARGET}/share/themes/Default/gtk-3.0
 mkdir -p ${TARGET}/share/themes/Adwaita/gtk-3.0
+mkdir -p ${TARGET}/share/themes/icons
 # ?? mkdir -p ${TARGET}/share/themes/MS-Windows/gtk-3.0
 # not sure how many of the following are wanted
 mkdir -p ${TARGET}/lib/gtk-3.0/3.0.0
 mkdir -p ${TARGET}/lib/gtk-3.0/modules
-mkdir -p ${TARGET}/lib/gtk-3.0/3.0.0/immodules
 mkdir -p ${TARGET}/lib/gtk-3.0/3.0.0/printbackends
 mkdir -p ${TARGET}/lib/gtk-3.0/3.0.0/theming-engines
 
@@ -39,7 +40,7 @@ done
 # may need correction for GTK 3
 for f in \
 	libcairo-gobject-2.dll \
-	libgailutil-3.dll \
+	libgailutil-3-0.dll \
 	libgthread-2.0-0.dll \
 	libjson-glib-1.0-0.dll
 do
@@ -76,8 +77,8 @@ fi
 cp $SYSTHEME/Emacs/gtk-3.0/gtk-keys.css ${TARGET}/share/themes/Emacs/gtk-3.0/gtk-keys.css
 cp $SYSTHEME/Default/gtk-3.0/gtk-keys.css ${TARGET}/share/themes/Default/gtk-3.0/gtk-keys.css
 
-# anything else?
-cp $SYSBASE/lib/gtk-3.0/3.0.0/immodules/*.dll ${TARGET}/lib/gtk-3.0/3.3.3/immodules/
+# GTK icons (check details!)
+# cp $SYSICONS/*.* ${TARGET}/share/icons/
 
 # data files for gtksourceview, other than the gretl-special ones
 cp ${SYSSV}/language-specs/R.lang ${TARGET}/gtksourceview/R.lang
