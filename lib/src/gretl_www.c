@@ -937,9 +937,11 @@ static int check_downloaded_file (const char *fname,
 
     if (has_suffix(fname, ".zip") &&
 	!gretl_is_pkzip_file(fname)) {
+	fprintf(stderr, "download: zip suffix but not pkzip\n");
 	err = E_DATA;
     } else if (has_suffix(fname, ".gfn") &&
 	       !gretl_is_xml_file(fname)) {
+	fprintf(stderr, "download: gfn suffix but not XML\n");
 	err = E_DATA;
     }
 
@@ -987,7 +989,6 @@ int retrieve_remote_function_package (const char *pkgname,
 
     err = retrieve_url(gretlhost, GRAB_FUNC, pkgname, NULL,
 		       localname, 0, NULL);
-
     if (!err) {
 	err = check_downloaded_file(localname, pkgname);
     }
