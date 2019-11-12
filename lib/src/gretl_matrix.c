@@ -6660,6 +6660,9 @@ double gretl_vector_dot_product (const gretl_vector *a,
 
     if (gretl_is_null_matrix(a) || gretl_is_null_matrix(b)) {
 	return NADBL;
+    } else if (a->is_complex || b->is_complex) {
+	*err = E_CMPLX;
+	return NADBL;
     }
 
     dima = (a->rows > 1)? a->rows : a->cols;
