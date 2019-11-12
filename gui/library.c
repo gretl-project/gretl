@@ -6434,10 +6434,37 @@ void do_remove_obs (void)
     }
 }
 
+static int stdize_option_dialog (int selvar, gretlopt *opt)
+{
+    const char *opts[] = {
+	N_("Divide by sample standard deviation"),
+	N_("Divide by standard deviation without df correction"),
+	N_("Center only")
+    };
+    gchar *label;
+    int ret;
+
+    if (selvar > 0) {
+	label = g_strdup_printf(_("Standardizing %s"),
+				dataset->varname[selvar]);
+    } else {
+	label = g_strdup(_("Standardizing variables"));
+    }
+
+    ret = radio_dialog(_("gretl: create standardized variables"),
+		       label, opts, 3, 0, STDIZE, NULL);
+    g_free(label);
+
+    *opt = (ret == 1)? OPT_N : (ret == 2)? OPT_C : OPT_NONE;
+
+    return ret;
+}
+
 void add_logs_etc (int ci, int varnum, int midas)
 {
     char *liststr;
     int *tmplist = NULL;
+    gretlopt opt = OPT_NONE;
     int order = 0;
     int err = 0;
 
@@ -6473,6 +6500,18 @@ void add_logs_etc (int ci, int varnum, int midas)
 	} else {
 	    lib_command_sprintf("lags%s", liststr);
 	}
+    } else if (ci == STDIZE) {
+	int resp = stdize_option_dialog(varnum, &opt);
+
+	if (canceled(resp)) {
+	    free(liststr);
+	    return;
+	}
+	if (opt != OPT_NONE) {
+	    lib_command_sprintf("stdize%s%s", liststr, print_flags(opt, ci));
+	} else {
+	    lib_command_sprintf("stdize%s", liststr);
+	}
     } else {
 	lib_command_sprintf("%s%s", gretl_command_word(ci), liststr);
     }
@@ -6490,11 +6529,13 @@ void add_logs_etc (int ci, int varnum, int midas)
     }
 
     if (ci == LAGS) {
-	err = list_laggenr(&tmplist, 1, order, NULL, dataset, 0, OPT_NONE);
+	err = list_laggenr(&tmplist, 1, order, NULL, dataset, 0, opt);
     } else if (ci == LOGS) {
 	err = list_loggenr(tmplist, dataset);
     } else if (ci == SQUARE) {
-	err = list_xpxgenr(&tmplist, dataset, OPT_NONE);
+	err = list_xpxgenr(&tmplist, dataset, opt);
+    } else if (ci == STDIZE) {
+	err = list_stdgenr(tmplist, dataset, opt);
     } else if (ci == DIFF || ci == LDIFF || ci == SDIFF) {
 	err = list_diffgenr(tmplist, ci, dataset);
     }
@@ -6531,6 +6572,8 @@ static int logs_etc_code (GtkAction *action)
 	return LDIFF;
     else if (!strcmp(s, "sdiff"))
 	return SDIFF;
+    else if (!strcmp(s, "stdize"))
+	return STDIZE;
     else
 	return LOGS;
 }
@@ -6538,9 +6581,10 @@ static int logs_etc_code (GtkAction *action)
 void logs_etc_callback (GtkAction *action)
 {
     int ci = logs_etc_code(action);
+    int v = mdata_active_var();
 
     /* FIXME MIDAS */
-    add_logs_etc(ci, 0, 0);
+    add_logs_etc(ci, v, 0);
 }
 
 int save_fit_resid (windata_t *vwin, int code)
