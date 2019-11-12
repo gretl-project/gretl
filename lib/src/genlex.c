@@ -551,6 +551,7 @@ struct str_table funcs[] = {
     { F_COMPLEX,   "complex" },
     { F_CONJ,      "conj" },
     { F_RANDPERM,  "randperm" },
+    { F_STDIZE,    "stdize" },
     { 0,           NULL }
 };
 

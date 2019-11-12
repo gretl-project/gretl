@@ -3976,7 +3976,7 @@ static NODE *bkw_node (NODE *l, NODE *m, NODE *r, parser *p)
 */
 
 static gretl_matrix *apply_ovwrite_func (gretl_matrix *m,
-					 int f, int flag,
+					 int f, int parm,
 					 int tmpmat,
 					 int *err)
 {
@@ -4002,11 +4002,21 @@ static gretl_matrix *apply_ovwrite_func (gretl_matrix *m,
 
     if (R != NULL) {
 	if (f == F_CDEMEAN) {
-	    *err = gretl_matrix_demean_by_column(R, flag);
+	    if (parm) {
+		*err = gretl_matrix_standardize(R, 1);
+	    } else {
+		*err = gretl_matrix_center(R);
+	    }
+	} else if (f == F_STDIZE) {
+	    if (parm < 0) {
+		*err = gretl_matrix_center(R);
+	    } else {
+		*err = gretl_matrix_standardize(R, parm);
+	    }
 	} else if (f == F_CHOL) {
 	    *err = gretl_matrix_cholesky_decomp(R);
 	} else if (f == F_PSDROOT) {
-	    *err = gretl_matrix_psd_root(R, flag);
+	    *err = gretl_matrix_psd_root(R, parm);
 	} else if (f == F_INVPD) {
 	    *err = gretl_invpd(R);
 	} else if (f == F_GINV) {
@@ -4052,9 +4062,13 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
     if (ret != NULL && starting(p)) {
 	gretl_matrix *m = NULL;
 	int tmpmat = 0;
-	int optparm = 0;
+	int parm = 0;
 	int gotopt = 0;
 	int a = 0, b, c;
+
+	/* note: @parm is an integer parameter, required
+	   for some functions, optional for others
+	*/
 
 	m = node_get_matrix(n, p, 0, 0);
 	tmpmat = n->t == MAT && is_tmp_node(n);
@@ -4071,12 +4085,12 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	}
 
 	if (f == F_MREV || f == F_SDC || f == F_MCOV ||
-	    f == F_CDEMEAN || f == F_PSDROOT) {
+	    f == F_CDEMEAN || f == F_STDIZE || f == F_PSDROOT) {
 	    /* if present, the @r node should hold a scalar */
 	    if (!null_or_scalar(r)) {
 		node_type_error(f, 2, NUM, r, p);
 	    } else if (!null_node(r)) {
-		optparm = node_get_int(r, p);
+		parm = node_get_int(r, p);
 		gotopt = 1;
 	    }
 	} else if (f == F_RANKING) {
@@ -4125,17 +4139,17 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    break;
 	case F_SDC:
 	    if (gotopt) {
-		ret->v.m = gretl_matrix_column_sd2(m, optparm, &p->err);
+		ret->v.m = gretl_matrix_column_sd2(m, parm, &p->err);
 	    } else {
 		ret->v.m = gretl_matrix_column_sd(m, &p->err);
 	    }
 	    break;
 	case F_MCOV:
 	    if (!gotopt) {
-		optparm = 1;
+		parm = 1;
 	    }
 	    ret->v.m = gretl_covariance_matrix(m, f == F_MCORR,
-					       optparm, &p->err);
+					       parm, &p->err);
 	    break;
 	case F_MCORR:
 	    ret->v.m = gretl_covariance_matrix(m, f == F_MCORR,
@@ -4154,29 +4168,30 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    if (m->is_complex) {
 		ret->v.m = gretl_cmatrix_inverse(m, &p->err);
 	    } else {
-		ret->v.m = apply_ovwrite_func(m, f, optparm, tmpmat, &p->err);
+		ret->v.m = apply_ovwrite_func(m, f, parm, tmpmat, &p->err);
 	    }
 	    break;
 	case F_GINV:
 	    if (m->is_complex) {
 		ret->v.m = gretl_cmatrix_ginv(m, &p->err);
 	    } else {
-		ret->v.m = apply_ovwrite_func(m, f, optparm, tmpmat, &p->err);
+		ret->v.m = apply_ovwrite_func(m, f, parm, tmpmat, &p->err);
 	    }
 	    break;
 	case F_CHOL:
 	    if (m->is_complex) {
 		ret->v.m = gretl_cmatrix_cholesky(m, &p->err);
 	    } else {
-		ret->v.m = apply_ovwrite_func(m, f, optparm, tmpmat, &p->err);
+		ret->v.m = apply_ovwrite_func(m, f, parm, tmpmat, &p->err);
 	    }
 	    break;
 	case F_CDEMEAN:
+	case F_STDIZE:
 	case F_PSDROOT:
 	case F_INVPD:
 	case F_UPPER:
 	case F_LOWER:
-	    ret->v.m = apply_ovwrite_func(m, f, optparm, tmpmat, &p->err);
+	    ret->v.m = apply_ovwrite_func(m, f, parm, tmpmat, &p->err);
 	    break;
 	case F_DIAG:
 	    ret->v.m = gretl_matrix_get_diagonal(m, &p->err);
@@ -4198,7 +4213,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    ret->v.m = user_matrix_unvech(m, &p->err);
 	    break;
 	case F_MREV:
-	    if (optparm != 0) {
+	    if (parm != 0) {
 		ret->v.m = gretl_matrix_reverse_cols(m, &p->err);
 	    } else {
 		ret->v.m = gretl_matrix_reverse_rows(m, &p->err);
@@ -5627,6 +5642,34 @@ static NODE *get_info_on_series (NODE *n, parser *p)
 
 	if (!p->err) {
 	    ret->v.b = series_info_bundle(p->dset, v, &p->err);
+	}
+    }
+
+    return ret;
+}
+
+static NODE *list_standardize (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_list_node(p);
+
+    if (ret != NULL && starting(p)) {
+	int *list = NULL;
+	int dfc = 1;
+
+	if (!null_node(r)) {
+	    dfc = node_get_int(r, p);
+	}
+	if (!p->err) {
+	    list = node_get_list(l, p);
+	}
+	if (!p->err) {
+	    gretlopt opt;
+
+	    opt = dfc < 0 ? OPT_C : dfc == 0 ? OPT_N : OPT_NONE;
+	    if (list[0] > 0) {
+		p->err = list_stdgenr(list, p->dset, opt);
+	    }
+	    ret->v.ivec = list;
 	}
     }
 
@@ -15444,6 +15487,17 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = list_make_lags(l, m, r, p);
 	} else if (ok_matrix_node(l) && m->t == MAT) {
 	    ret = matrix_make_lags(l, m, r, p);
+	} else {
+	    p->err = E_TYPES;
+	}
+	break;
+    case F_STDIZE:
+	if (!null_or_scalar(r)) {
+	    p->err = E_TYPES;
+	} else if (useries_node(l) || l->t == LIST) {
+	    ret = list_standardize(l, r, p);
+	} else if (l->t == MAT) {
+	    ret = matrix_to_matrix_func(l, r, t->t, p);
 	} else {
 	    p->err = E_TYPES;
 	}
