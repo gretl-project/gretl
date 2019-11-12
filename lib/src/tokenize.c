@@ -199,6 +199,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { SPRINTF,  "sprintf",  CI_PARM1 | CI_PARM2 | CI_VARGS },
     { SQUARE,   "square",   CI_LIST },
     { SSCANF,   "sscanf",   CI_EXPR },
+    { STDIZE,   "stdize",   CI_LIST },
     { STORE,    "store",    CI_PARM1 | CI_FNAME | CI_LIST | CI_DOALL },
     { SUMMARY,  "summary",  CI_LIST | CI_DOALL },
     { SYSTEM,   "system",   CI_PARM1 | CI_BLOCK },

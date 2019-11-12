@@ -592,6 +592,8 @@ struct gretl_option gretl_opts[] = {
     { SMPL,     OPT_U, "unit", 0 },
     { SPEARMAN, OPT_V, "verbose", 0 },
     { SQUARE,   OPT_O, "cross", 0 },
+    { STDIZE,   OPT_C, "center-only", 0 },
+    { STDIZE,   OPT_N, "no-df-corr", 0 },
     { STORE,    OPT_C, "csv", 0 },
     { STORE,    OPT_D, "database", 0 },
     { STORE,    OPT_F, "overwrite", 0 },

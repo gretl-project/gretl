@@ -529,7 +529,9 @@ gretl_matrix *gretl_matrix_column_sd2 (const gretl_matrix *m,
 
 void gretl_matrix_demean_by_row (gretl_matrix *m);
 
-int gretl_matrix_demean_by_column (gretl_matrix *m, int std);
+int gretl_matrix_standardize (gretl_matrix *m, int dfcorr);
+
+int gretl_matrix_center (gretl_matrix *m);
 
 gretl_matrix *gretl_matrix_quantiles (const gretl_matrix *m,
 				      const gretl_matrix *p,

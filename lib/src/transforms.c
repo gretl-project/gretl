@@ -157,6 +157,9 @@ make_transform_varname (char *vname, const char *orig, int ci,
     } else if (ci == INVERSE) {
 	strcpy(vname, "i_");
 	strncat(vname, orig, len - 2);
+    } else if (ci == STDIZE) {
+	strcpy(vname, "s_");
+	strncat(vname, orig, len - 2);
     } else if (ci == RESAMPLE) {
 	strcpy(vname, "rs_");
 	strncat(vname, orig, len - 3);
@@ -173,7 +176,7 @@ make_transform_varname (char *vname, const char *orig, int ci,
 
 static int
 make_transform_label (char *label, const char *parent,
-		      int ci, int lag)
+		      int ci, int aux)
 {
     int err = 0;
 
@@ -188,15 +191,23 @@ make_transform_label (char *label, const char *parent,
     } else if (ci == SQUARE) {
 	sprintf(label, _("= %s squared"), parent);
     } else if (ci == LAGS) {
-	if (lag >= 0) {
-	    sprintf(label, "= %s(t - %d)", parent, lag);
+	/* @aux = lag */
+	if (aux >= 0) {
+	    sprintf(label, "= %s(t - %d)", parent, aux);
 	} else {
-	    sprintf(label, "= %s(t + %d)", parent, -lag);
+	    sprintf(label, "= %s(t + %d)", parent, -aux);
 	}
     } else if (ci == INVERSE) {
 	sprintf(label, "= 1/%s", parent);
+    } else if (ci == STDIZE) {
+	/* @aux = dfcorr */
+	if (aux < 0) {
+	    sprintf(label, _("= centered %s"), parent);
+	} else {
+	    sprintf(label, _("= standardized %s"), parent);
+	}
     } else if (ci == RESAMPLE) {
-	sprintf(label, "= resampled %s", parent);
+	sprintf(label, _("= resampled %s"), parent);
     } else if (ci == HFDIFF) {
 	sprintf(label, _("= high-frequency difference of %s"), parent);
     } else if (ci == HFLDIFF) {
@@ -521,6 +532,62 @@ static int get_inverse (int v, double *xvec, const DATASET *dset)
     return 0;
 }
 
+/* write standardized series v into targ */
+
+static int get_std (int v, int dfc, double *targ, const DATASET *dset)
+{
+    double *x = dset->Z[v];
+    double d, xbar = 0;
+    int t, n = 0;
+
+    for (t=dset->t1; t<=dset->t2; t++) {
+	if (!na(x[t])) {
+	    xbar += x[t];
+	    n++;
+	}
+    }
+
+    if (dfc >= 0 && n < dfc + 1) {
+	return E_TOOFEW;
+    }
+
+    xbar /= n;
+
+    if (dfc < 0) {
+	/* just centering */
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    if (na(x[t])) {
+		targ[t] = NADBL;
+	    } else {
+		targ[t] = x[t] - xbar;
+	    }
+	}
+    } else {
+	/* dividing by s.d. */
+	double sd, TSS = 0;
+
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    if (!na(x[t])) {
+		d = x[t] - xbar;
+		TSS += d * d;
+	    }
+	}
+
+	TSS /= (n - dfc);
+	sd = sqrt(TSS);
+
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    if (na(x[t])) {
+		targ[t] = NADBL;
+	    } else {
+		targ[t] = (x[t] - xbar) / sd;
+	    }
+	}
+    }
+
+    return 0;
+}
+
 /* write resampled series into rsvec */
 
 static int get_resampled (int v, double *rsvec,
@@ -766,6 +833,8 @@ static int get_transform (int ci, int v, int aux, double x,
 	err = get_discdum(v, x, vx, dset);
     } else if (ci == INVERSE) {
 	err = get_inverse(v, vx, dset);
+    } else if (ci == STDIZE) {
+	err = get_std(v, aux, vx, dset);
     } else if (ci == RESAMPLE) {
 	err = get_resampled(v, vx, dset, idxvec);
     }
@@ -1284,6 +1353,58 @@ int list_loggenr (int *list, DATASET *dset)
     destroy_mangled_names();
 
     return (l0 > 0)? 0 : E_LOGS;
+}
+
+/**
+ * list_stdgenr:
+ * @list: on entry, list of variables to process; on exit,
+ * holds the ID numbers of the generated variables.
+ * @dset: dataset struct.
+ *
+ * Generates and adds to the dataset standardized versions
+ * of the series given in @list.
+ *
+ * Returns: 0 on success, error code on error.
+ */
+
+int list_stdgenr (int *list, DATASET *dset, gretlopt opt)
+{
+    int origv = dset->v;
+    int tnum, i, j, v;
+    int startlen;
+    int dfc = 1;
+    int l0 = 0;
+    int err;
+
+    err = transform_preprocess_list(list, dset, STDIZE);
+    if (err) {
+	return err;
+    }
+
+    if (opt & OPT_C) {
+	dfc = -1;
+    } else if (opt & OPT_N) {
+	dfc = 0;
+    }
+
+    startlen = get_starting_length(list, dset, 2);
+
+    j = 1;
+    for (i=1; i<=list[0]; i++) {
+	v = list[i];
+	tnum = get_transform(STDIZE, v, dfc, 0.0, dset, startlen,
+			     origv, NULL);
+	if (tnum > 0) {
+	    list[j++] = tnum;
+	    l0++;
+	}
+    }
+
+    list[0] = l0;
+
+    destroy_mangled_names();
+
+    return (l0 > 0)? 0 : E_DATA;
 }
 
 static int *make_lags_list (int *list, int order)

@@ -54,6 +54,8 @@ int *laggenr_from_to (int v, int fromlag, int tolag,
 
 int list_loggenr (int *list, DATASET *dset);
 
+int list_stdgenr (int *list, DATASET *dset, gretlopt opt);
+
 int list_xpxgenr (int **plist, DATASET *dset, gretlopt opt);
 
 int list_dumgenr (int **plist, DATASET *dset, gretlopt opt);

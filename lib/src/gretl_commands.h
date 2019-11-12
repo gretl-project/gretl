@@ -147,6 +147,7 @@ typedef enum {
     SPRINTF,
     SQUARE,
     SSCANF,
+    STDIZE,
     STORE, 
     SUMMARY,
     SYSTEM,

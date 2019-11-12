@@ -158,6 +158,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { SPRINTF,  "sprintf" },
     { SQUARE,   "square" },
     { SSCANF,   "sscanf" },
+    { STDIZE,   "stdize" },
     { STORE,    "store" },
     { SUMMARY,  "summary" },
     { SYSTEM,   "system" },

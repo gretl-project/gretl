@@ -187,7 +187,8 @@ static int filter_comments (char *s, CMD *cmd)
 			  c == LAGS ||		\
 			  c == LOGS ||		\
 			  c == SQUARE ||	\
-	                  c == ORTHDEV)
+	                  c == ORTHDEV ||	\
+			  c == STDIZE)
 
 static int has_param (const CMD *cmd)
 {
@@ -3091,6 +3092,14 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case LOGS:
 	err = list_loggenr(listcpy, dset);
+	if (!err) {
+	    maybe_list_series(dset, prn);
+	    set_dataset_is_changed();
+	}
+	break;
+
+    case STDIZE:
+	err = list_stdgenr(listcpy, dset, cmd->opt);
 	if (!err) {
 	    maybe_list_series(dset, prn);
 	    set_dataset_is_changed();

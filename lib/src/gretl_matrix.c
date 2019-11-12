@@ -7501,9 +7501,14 @@ void gretl_matrix_demean_by_row (gretl_matrix *m)
     }
 }
 
-/* subtract the column means */
+/**
+ * gretl_matrix_center:
+ * @m: matrix on which to operate.
+ *
+ * Subtracts the column mean from each column of @m.
+ */
 
-static int gretl_matrix_center (gretl_matrix *m)
+int gretl_matrix_center (gretl_matrix *m)
 {
     double x, xbar;
     int i, j;
@@ -7543,8 +7548,17 @@ static int gretl_matrix_center (gretl_matrix *m)
     return 0;
 }
 
-static int gretl_matrix_standardize (gretl_matrix *m,
-				     int dfcorr)
+/**
+ * gretl_matrix_standardize:
+ * @m: matrix on which to operate.
+ * @dfcorr: degrees of freedom correction.
+ *
+ * Subtracts the column mean from each column of @m and
+ * divides by the column standard deviation, using @dfcorr
+ * as degrees of freedom correction (0 for MLE).
+ */
+
+int gretl_matrix_standardize (gretl_matrix *m, int dfcorr)
 {
     double x, xbar, sdc;
     int i, j;
@@ -7598,24 +7612,6 @@ static int gretl_matrix_standardize (gretl_matrix *m,
 	}
     }
     return 0;
-}
-
-/**
- * gretl_matrix_demean_by_column:
- * @m: matrix on which to operate.
- * @sdt: if non-zero, standardize in addition to centering.
- *
- * For each column of @m, subtracts the column mean from each
- * element in the column.
- */
-
-int gretl_matrix_demean_by_column (gretl_matrix *m, int std)
-{
-    if (std) {
-	return gretl_matrix_standardize(m, 1);
-    } else {
-	return gretl_matrix_center(m);
-    }
 }
 
 /**
