@@ -2700,9 +2700,9 @@ void win32_set_gretldir (const char *progname)
 
 	if (*tail == '\\' || *tail == '/' && !strncmp(tail+1, "bin", 3)) {
 	    tail[1] = '\0';
-	    strncat(tail + 1, "share", 5);
+	    strcat(tail + 1, "share");
 	    slash_terminate(paths.gretldir);
-	    strncat(paths.gretldir, "gretl", 5);
+	    strcat(paths.gretldir, "gretl");
 	    slash_terminate(paths.gretldir);
 	}
     } else {
