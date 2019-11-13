@@ -2360,7 +2360,7 @@ int read_win32_config (int debug)
 	if (home != NULL) {
 	    strcpy(rcfile, home);
 	    slash_terminate(rcfile);
-	    strncat(rcfile, ".gretl2rc", 9);
+	    strcat(rcfile, ".gretl2rc");
 	}
     }
 #endif
