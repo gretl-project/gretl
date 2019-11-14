@@ -805,7 +805,7 @@ int main (int argc, char **argv)
     fprintf(stderr, "about to build GUI...\n");
 #endif
 
-#if defined(G_OS_WIN32)
+#if defined(G_OS_WIN32) && GTK_MAJOR_VERSION < 3
     set_up_windows_look();
 #elif defined(MAC_NATIVE) && defined(HAVE_MAC_THEMES)
     set_up_mac_look();
@@ -2014,13 +2014,6 @@ static void add_conditional_items (windata_t *vwin)
 {
     GtkUIManager *ui = vwin->ui;
     int add_appfont = 1;
-
-#if 0 /* was: ifdef G_OS_WIN32 */
-    if (using_wimp()) {
-	/* disable choice of "Menu font" when using MS-Windows theme */
-	add_appfont = 0;
-    }
-#endif
 
     if (add_appfont) {
 	gtk_ui_manager_add_ui(ui, gtk_ui_manager_new_merge_id(ui),

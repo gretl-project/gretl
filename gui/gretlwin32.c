@@ -283,6 +283,7 @@ void gretl_win32_init (const char *progname, int debug)
 
     set_gretlnet_filename(progname);
 
+#if GTK_MAJOR_VERSION < 3
     /* Are we using the XP theme (as opposed to "classic")?
        In that case we'll make use of libwimp the default,
        prior to reading the user's config file.
@@ -291,6 +292,7 @@ void gretl_win32_init (const char *progname, int debug)
 		 "Microsoft\\Windows\\CurrentVersion\\ThemeManager",
 		 "ThemeActive", tmp);
     set_wimp_preferred(!strcmp(tmp, "1"));
+#endif
 
     read_win32_config(debug);
     set_gretl_startdir();

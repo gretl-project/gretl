@@ -1282,7 +1282,7 @@ static const char **get_list_setting_strings (void *var, int *n)
 	strs = theme_strs;
 	*n = sizeof theme_strs / sizeof theme_strs[0];
     }
-#elif defined(G_OS_WIN32)
+#elif defined(G_OS_WIN32) && GTK_MAJOR_VERSION < 3
     else if (var == themepref) {
 
 	static const char *theme_strs[] = {
@@ -3228,7 +3228,7 @@ void set_up_mac_look (void)
     }
 }
 
-#elif defined (G_OS_WIN32)
+#elif defined (G_OS_WIN32) && GTK_MAJOR_VERSION < 3
 
 void set_up_windows_look (void)
 {
@@ -3262,11 +3262,6 @@ void set_up_windows_look (void)
 
 	g_object_set(G_OBJECT(settings), "gtk-theme-name", "Raleigh", NULL);
     }
-}
-
-int using_wimp (void)
-{
-    return !strcmp(themepref, "MS-Windows");
 }
 
 void set_wimp_preferred (int s)
