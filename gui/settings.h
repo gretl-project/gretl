@@ -38,7 +38,7 @@ int get_x12a_ok (void);
 void set_up_mac_look (void);
 #endif
 
-#ifdef G_OS_WIN32 && GTK_MAJOR_VERSION < 3
+#if defined(G_OS_WIN32) && GTK_MAJOR_VERSION < 3
 void set_wimp_preferred (int s);
 void set_up_windows_look (void);
 #endif
