@@ -63,13 +63,14 @@ function scalar CheckNormalizeRd(matrix *R, matrix *d)
             R = {}
             d = {}
             ret = 1
+
         else # redundant
             matrix RR
             matrix QQ = qrdecomp(Rd', &RR)
             matrix e = abs(diag(RR)) .> $macheps
             QQ = selifc(QQ, e')
-            matrix RR = selifr(selifc(RR, e'), e)
-            matrix Rd = QQ * RR
+            RR = selifr(selifc(RR, e'), e)
+            Rd = QQ * RR
             R = Rd[1:rows(Rd)-1,]'
             d = Rd[rows(Rd),]'
             ret = 2
@@ -213,17 +214,17 @@ function matrix get_full_Rd(bundle *obj, int verbosity[0])
         # before ML estimation, we need to take into account the
         # permanent/temporary shock classification in SVEC
         if type == 4
-            matrix alpha = obj.jalpha # don't mix up with the scalar sig level obj.alpha!!
+            matrix locjalpha = obj.jalpha
             # trim beta from restr. exo terms if needed:
             matrix beta = (obj.jcase % 2 == 0) ? obj.jbeta[1:n,] : obj.jbeta
             r = cols(beta)
-            matrix C1 = C1mat(obj.VARpar, 1, alpha, beta)
+            matrix C1 = C1mat(obj.VARpar, 1, locjalpha, beta)
 
             matrix J = zeros(n-r, r) | I(r)
-            matrix ptRd = (J ** nullspace(alpha'))' ~ zeros(r*(n-r), 1)
-            fullRd = fullRd | ptRd  # put the constraints together
+            matrix permatransRd = (J ** nullspace(locjalpha'))' ~ zeros(r*(n-r), 1)
+            fullRd = fullRd | permatransRd  # put the constraints together
 
-        else # can only be type 2 (or 1 if obj.calc_lr)
+        else # can be type 2 (or 1 if obj.calc_lr)
             matrix C1 = C1mat(obj.VARpar, 0) # compute the lr matrix
         endif
 
