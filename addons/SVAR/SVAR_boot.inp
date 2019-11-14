@@ -467,7 +467,20 @@ function scalar SVAR_boot(bundle *obj,
 
         elif type == 2 || type == 4 # consolidate the SVEC case here
 
-            matrix fullRd = get_full_Rd(&bobj)
+            # Watch out for the possibility of constraints that were 
+            # partly redundant originally.
+            # (In the SVEC case this re-use of the initially created
+            # cleanfullRd presupposes that the restricted alpha was
+            # _not_ re-estimated in vecm_est; this is true (2019),
+            # but in principle it could be generalized. In that case
+            # the cleanfullRd would also have to be re-calculated. 
+            #  - Sven)
+
+            if inbundle(bobj, "cleanfullRd")
+                matrix fullRd = bobj.cleanfullRd
+            else
+                matrix fullRd = get_full_Rd(&bobj)
+            endif
             matrix K = estC(&theta, bSigma, fullRd, null,
               &errcode, obj.optmeth, 0)
 

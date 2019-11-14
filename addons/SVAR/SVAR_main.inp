@@ -53,7 +53,18 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
     elif (type==2) || (type == 4)
         # C models in a broad sense (including SVEC)
 
-        matrix fullRd = get_full_Rd(&obj, verbosity) # this also sets obj.C1 !
+        # Maybe redundant restrictions have already been detected
+        # by SVAR_ident and then removed; in this case we mustn't
+        # use the plain vanilla fullRd.
+        if inbundle(obj, "cleanfullRd")
+            matrix fullRd = obj.cleanfullRd
+            # (obj.C1 already created by SVAR_ident then)
+
+        else
+            matrix fullRd = get_full_Rd(&obj, verbosity) 
+            # (This also sets obj.C1; slightly redundant if obj.checkident,
+            # because SVAR_ident would have done it already.)
+        endif 
 
         # try to set some "sensible" initial values
         matrix param = init_C(Sigma, fullRd)
