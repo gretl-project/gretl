@@ -22640,6 +22640,8 @@ $as_echo "yes" >&6; }
 	fake_gtkspinner="no"
 fi
     GTK_PREFIX=`$PKG_CONFIG --variable=prefix gtk+-2.0`
+else
+    GTK_PREFIX=`$PKG_CONFIG --variable=prefix gtk+-3.0`
 fi
 
 if test "$gtk_version" = "2.0" ; then

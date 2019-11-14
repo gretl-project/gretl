@@ -777,6 +777,8 @@ if test "$gtk_version" = "2.0" ; then
       fake_gtkspinner="yes",
     )
     GTK_PREFIX=`$PKG_CONFIG --variable=prefix gtk+-2.0`
+else
+    GTK_PREFIX=`$PKG_CONFIG --variable=prefix gtk+-3.0`
 fi
 
 dnl
