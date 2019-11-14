@@ -2,11 +2,12 @@
    internal; constraints-related functions
 */
 
-function scalar transshockcheck(bundle b)
+function scalar transshockcheck(const bundle b)
     # only for SVEC case
     # check the last r columns of C (trans shocks),
     # shouldn't have more than r-1 zeros in each of them
     # according to Luetkepohl (2008, EL)
+	# (for unrestricted alpha)
     # (passing this check doesn't mean everything is OK)
 
     if b.type != 4
@@ -15,15 +16,25 @@ function scalar transshockcheck(bundle b)
 
     elif nelem(b.Rd1)	# else there are no short-run restr.
 
-        loop i = (b.n - b.crank)..(b.n - 1) -q
-            matrix part = b.Rd1[, i * b.n + 1: (i+1) * b.n]
-            # check for exclusion restrictions (RHS zero)
-            matrix mc = (sumr(part) .= 1) && (b.Rd1[,cols(b.Rd1)] .= 0)
-            if sum(mc) > b.crank - 1
-                printf "Concerning shock %d\n", i+1
-                funcerr "Too many zero restrictions"
-            endif
-        endloop
+        # check for weakly exogenous variables
+        weakexo = 0
+        if inbundle(b, "jalpha")
+            if min(sumr(abs(b.jalpha))) < 1e-8
+                weakexo = 1
+		    endif
+        endif
+
+        if !weakexo
+            loop i = (b.n - b.crank)..(b.n - 1) -q
+                matrix part = b.Rd1[, i * b.n + 1: (i+1) * b.n]
+                # check for exclusion restrictions (RHS zero)
+                matrix mc = (sumr(part) .= 1) && (b.Rd1[,cols(b.Rd1)] .= 0)
+                if sum(mc) > b.crank - 1
+                    printf "Concerning shock %d\n", i+1
+                    funcerr "Too many zero restrictions"
+                endif
+            endloop
+        endif
 
     else
         print "No short-run restrictions found (Rd1)"
@@ -36,7 +47,7 @@ function scalar CheckNormalizeRd(matrix *R, matrix *d)
 /*
    Checks that
    (1) the constraints are consistent
-   (2) the constraints are non-contradictory
+   (2) the constraints are non-contradictory (??? non-redundant ? - Sven)
 
    if (1) fails, an error message is printed and R and d are replaced by
    empty matrices; if (2) fails, redundant rows in R and d are dropped.
@@ -89,7 +100,7 @@ function scalar add_constraint(matrix *Rd, int n, int i, int j,
         endif
 
         err2 = CheckNormalizeRd(&newR, &newd)
-        if err2==0
+        if err2 == 0
             Rd = Rd | tmp
         elif err2 == 1
             printf "The restriction conflicts with previous ones and was ignored\n"
@@ -216,9 +227,16 @@ function matrix get_full_Rd(bundle *obj, int verbosity[0])
             matrix C1 = C1mat(obj.VARpar, 0) # compute the lr matrix
         endif
 
-        if lr_constr # avoid function call if unnecessary
+        if lr_constr
+            # TODO: Here we could also check whether in a SVEC model
+            # the additional long-run constraints are really related
+            # to the permanent shocks.
+            # (Otherwise they will probably be either redundant or 
+            # impossible. Or should we do that in the ident check?)
+  
             fullRd = fullRd | lrConstr(C1, obj.Rd1l) # put the constraints together
         endif
+
         if verbosity > 1
             matrix lrSigma = qform(C1, obj.Sigma) # compute the lr cov matrix
             printf "Long-run matrix (C1): \n%8.3f\n", C1
