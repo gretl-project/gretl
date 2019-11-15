@@ -3033,7 +3033,13 @@ static int out_of_sample_check (MODEL *pmod, DATASET *dset)
     if (pmod->smpl.t1 == 0 && pmod->smpl.t2 == dset->n - 1) {
 	/* no out-of-sample obs reachable via t1, t2 */
 	ret = OS_ERR;
-	if (panel) {
+	if (!panel) {
+	    if (pmod->t2 < dset->n - 1) {
+		/* 2019-11-15: may be OK for dynamic model */
+		ret = OS_OK;
+	    }
+	} else {
+	    /* the panel case */
 	    DATASET *fullset = fetch_full_dataset();
 
 	    if (dataset_is_panel(fullset)) {
