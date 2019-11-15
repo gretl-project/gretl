@@ -218,13 +218,15 @@ function bundle SVAR_setup(string type_string, list lY, list lX[null],
 
     if type == 3
         matrix ret.Rd0 = {}
-    endif
+    else
+        matrix ret.fullRd = {}	# short- and long-run restrictions together later
 
-    if type == 4
-        /* SVEC model: cointegration stuff */
-        matrix ret.jalpha = {}
-        matrix ret.jbeta = {}
-        ret.jcase = 0
+        if type == 4
+            /* SVEC model: cointegration stuff */
+            matrix ret.jalpha = {}
+            matrix ret.jbeta = {}
+            ret.jcase = 0
+        endif  
     endif
 
     # matrix for holding sign restrictions (for future use)
