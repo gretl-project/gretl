@@ -132,7 +132,7 @@ var
 begin
 	taskname := ModPathName;
 	if CurStep = ssPostInstall then
-		if IsTaskSelected(taskname) then
+		if WizardIsTaskSelected(taskname) then
 			ModPath();
 end;
 

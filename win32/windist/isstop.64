@@ -9,13 +9,15 @@ ArchitecturesInstallIn64BitMode=x64
 AppPublisher=The gretl team
 AppPublisherURL=http://gretl.sourceforge.net/
 AppSupportURL=http://gretl.sourceforge.net/
-DefaultDirName={pf}\gretl
+DefaultDirName={commonpf}\gretl
 DefaultGroupName=gretl
 PrivilegesRequired=poweruser
 UninstallDisplayIcon={app}\gretl.exe
 ChangesAssociations=yes
 ChangesEnvironment=yes
 DirExistsWarning=no
+UsedUserAreasWarning=no
+OutputBaseFilename=gretl_install-64
 
 [InstallDelete]
 Type: files; Name: "{app}\*.dll"
