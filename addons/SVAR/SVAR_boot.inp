@@ -467,19 +467,27 @@ function scalar SVAR_boot(bundle *obj,
 
         elif type == 2 || type == 4 # consolidate the SVEC case here
 
-            # Watch out for the possibility of constraints that were 
-            # partly redundant originally.
-            # (In the SVEC case this re-use of the initially created
-            # cleanfullRd presupposes that the restricted alpha was
-            # _not_ re-estimated in vecm_est; this is true (2019),
-            # but in principle it could be generalized. In that case
-            # the cleanfullRd would also have to be re-calculated. 
-            #  - Sven)
-
+            /* Watch out for the possibility of constraints that were 
+             partly redundant originally.
+             In the AB-model the cleaned restrictions are inherited 
+             from the original model, but in the C model -where long-run
+             constraints are allowed- the restrictions may depend on the 
+             simulated bootstrap data. So the cleaning of the restrictions
+             must be re-done here to be on the safe side.
+             */
+             
+            if type==4 || rows(bobj.Rd1l) # some long-run constraints 
+                bobj.fullRd = {}	 # reset
+                id = ident(&bobj, 0) # re-creates fullRd and possibly cleanfullRd
+                if !id    
+                    printf "Ident problem in bootstrap draw %d\n", i
+                    funcerr "Unexpected ID problem in bootstrap"
+                endif
+            endif
             if inbundle(bobj, "cleanfullRd")
                 matrix fullRd = bobj.cleanfullRd
             else
-                matrix fullRd = get_full_Rd(&bobj)
+                matrix fullRd = bobj.fullRd
             endif
             matrix K = estC(&theta, bSigma, fullRd, null,
               &errcode, obj.optmeth, 0)

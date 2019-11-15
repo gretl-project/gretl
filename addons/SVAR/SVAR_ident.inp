@@ -209,43 +209,76 @@ end function
 
 # ----------------------------------------------------------------------------
 
-function scalar ident(matrix *Ra, matrix *da, matrix *Rb, matrix *db,
-                      int verbose[0])
+function scalar ident(bundle *mod, int verbose[0])
+    # signature was: matrix *Ra, matrix *da, matrix *Rb, matrix *db, int verbose[0]
     /*
        Main function for checking identification.
+       
+       The function also rewrites the 'fullRd' matrix to the mod if empty,
+       and adds or overwrites 'cleanfullRd' or 'Rd0' and 'Rd1' 
+       if redundant restrictions are found.
 
        The algorithm is described fully in Lucchetti (2006),
        "Identification Of Covariance Structures", Econometric
        Theory, Cambridge University Press, vol. 22(02), p 235-257.
+       (currently partly unused due to some issues, work in progress) 
 
-       Parameters: Ra, da, Rb, db = constraint matrices. (From v1.52 on
-       they are received as pointers because in case of redundant 
-       constraints they need to be "shrunk".)
+       The Ra, da, Rb, db  constraint matrices are constructed from mod.Rd0, 
+         mod.Rd1 and oher ingredients if long-run constraints play a role 
+         (in C and SVEC models). 
 
        Return value 0 means: no identification (check failed).
     */
-
-    matrix locRa = Ra
-    matrix locda = da
-    matrix locRb = Rb
-    matrix locdb = db
-
-    # check on the constraints on A and B for inconsistencies
-    # and/or redundancies
-
-    err = CheckNormalizeRd(&locRa, &locda)
-    if err == 1
-        printf "--Contradictory constraints on A!--\n"
-        return 0
-    elif err == 2
-        if verbose
-            print "Warning: redundant constraints on A, dropping some."
+       
+    n2 = mod.n * mod.n
+     
+    if mod.type == 3 # AB - Model
+        matrix Ra = mod.Rd0[, 1:n2] # restrictions on A
+        matrix da = mod.Rd0[, n2+1]
+        matrix Rb = mod.Rd1[, 1:n2] # restrictions on B
+        matrix db = mod.Rd1[, n2+1]
+        
+        # check the constraints on A for inconsistencies
+        # and/or redundancies
+        # (for B further down, along with C)
+        err = CheckNormalizeRd(&Ra, &da)
+        if err == 1
+            printf "--Contradictory constraints on A!--\n"
+            return 0
+            
+        elif err == 2
+            if verbose
+                print "Warning: redundant constraints on A, dropping some."
+            endif
+            mod.Rd0 = Ra ~ da
         endif
-        Ra = locRa
-        da = locda
-    endif
+         
+    else             # plain, C-model or SVEC
+        if !nelem(mod.fullRd)
+            matrix mod.fullRd = get_full_Rd(&mod, 0) 
+            if !nelem(mod.fullRd) 	# possible only for C model?
+                funcerr "No restrictions specified!"
+            endif
+        endif               
 
-    err = CheckNormalizeRd(&locRb,&locdb)
+        matrix Rb = mod.fullRd[, 1:n2]
+        matrix db = mod.fullRd[, n2+1]
+        matrix Ra = I(n2)	# just needed as a dummy below
+        matrix da = vec(I(mod.n))
+
+        if mod.type == 4    # special SVEC check
+            if verbose
+                print " (The identification check for SVEC models is work in"
+                print "  progress. Be careful especially when loadings alpha"
+                print "  are restricted.)"
+            endif
+            transshockcheck(mod)  # based on Luetkepohl 2008
+        endif    
+    endif   
+
+    # check the constraints on B and C (respectively) for inconsistencies
+    # and/or redundancies
+    err = CheckNormalizeRd(&Rb, &db)
     if err == 1
         printf "--Contradictory constraints on B (or C, respectively)!--\n"
         return 0
@@ -253,15 +286,18 @@ function scalar ident(matrix *Ra, matrix *da, matrix *Rb, matrix *db,
         if verbose
             print "Warning: redundant constraints on B (or C), dropping some."
         endif
-        Rb = locRb
-        db = locdb
+        if mod.type == 3
+            mod.Rd1 = Rb ~ db
+        else
+            matrix mod.cleanfullRd = Rb ~ db
+        endif
     endif
 
-    n = round(sqrt(cols(Ra | Rb)))
+    # removed redundant calc: n = round(sqrt(cols(Ra | Rb)))
 
     /* check for the order condition */
 
-    scalar id_o = ordercond(n, locRa, locRb, verbose)
+    scalar id_o = ordercond(mod.n, Ra, Rb, verbose)
     if verbose
         string printout = id_o ? "OK" : "fails!"
         printf "=> Order condition %s\n", printout
@@ -275,7 +311,7 @@ function scalar ident(matrix *Ra, matrix *da, matrix *Rb, matrix *db,
 
     /* check for the rank condition */
 
-    scalar id_r = rankcond(n, locRa, locda, locRb, locdb, verbose)
+    scalar id_r = rankcond(mod.n, Ra, da, Rb, db, verbose)
     if verbose
         string printout = id_r ? "OK" : "fails!"
         printf "=> Rank condition %s\n\n", printout
@@ -288,8 +324,9 @@ end function
 
 function scalar SVAR_ident(bundle *b, int verbose[0])
 
-/* Apparently returns a non-zero number if identification holds.
-   (Which is perhaps against convention, 0 for "no error"?)
+    /* Apparently returns a non-zero number if identification holds.
+    (Coming from ident(); Which is perhaps against convention, 
+    usually 0 for "no error"?)
     */
 
 	if verbose
@@ -300,11 +337,14 @@ function scalar SVAR_ident(bundle *b, int verbose[0])
     	print "  perhaps try adding restrictions.)"
 	endif 
 
-    type = b.type
-    n = b.n
-    n2 = n*n
-    ret = 1
+    # type = b.type
+    # n = b.n
+    n2 = b.n * b.n
+    # ret = 1
 
+    ##################
+    # The following moved into the new ident() version:
+    /*
     if (type==1) || (type==2) || (type == 4) # plain, C-model or SVEC
         matrix Rd = get_full_Rd(&b, 0)
         matrix Ra = I(n2)
@@ -329,29 +369,35 @@ function scalar SVAR_ident(bundle *b, int verbose[0])
         matrix Rb = b.Rd1[,1:n2] # restrictions on B
         matrix db = b.Rd1[,n2+1]
     endif
+    */
+    ######################
+    
+    # numRa = rows(Ra)              # (to compare sizes later)
+    # numRb = rows(Rb)
 
-    numRa = rows(Ra)              # (to compare sizes later)
-    numRb = rows(Rb)
-
-    if verbose
-        matrix db_transp = db'
+    if verbose        
         printf "\nConstraints in implicit form:\n"
-
-        if type == 3
-            matrix da_transp = da'            
-            loop foreach i Ra da_transp Rb db_transp --quiet
-                printf " $i: %4.0f", $i
-            endloop
+        if b.type == 3
+            printf " Ra: %4.0f", b.Rd0[,1:n2]
+            printf " da_T: %4.0f", b.Rd0[,n2+1]'
+            printf " Rb: %4.0f", b.Rd1[,1:n2]
+            printf " db_T: %4.0f", b.Rd1[,n2+1]'
 
         else    # The A restrictions are trivial and confusing here.
-            printf " Rd: %4.0f", Rb   # 'b' would be misleading in the C-model
-            printf " dd_transp: %4.0f", db_transp
+            matrix b.fullRd = get_full_Rd(&b, 0)
+            # (maybe change get_full_Rd so that it saves its result directly in the model 
+            #  bundle, just like it does with C1...)
+    
+            printf " Rc: %4.0f", b.fullRd[,1:n2]  
+            printf " dc_T: %4.0f", b.fullRd[,n2+1]'
         endif
         printf "\n"
     endif
 
-    ret = ident(&Ra, &da, &Rb, &db, verbose)
+    ret = ident(&b, verbose) # was: &Ra, &da, &Rb, &db, verbose)
 
+    # made obsolete:
+    /*
     if (type==1 || type==2 || type==4) && ret 
         if numRb > rows(Rb) # some redundancies about C and/or long-run dropped
            matrix b.cleanfullRd = Rb ~ db # store the non-redundant constraints  
@@ -365,7 +411,7 @@ function scalar SVAR_ident(bundle *b, int verbose[0])
             b.Rd1 = Rb ~ db 
         endif 
     endif
-
+    */
     return ret
 
 end function
