@@ -133,18 +133,6 @@ The input is always sanitized by taking the upper 2x2 part, using
 absolute values, and integer-ization. Warnings are issued if \texttt{verbose}
 is 1. 
 
-\subsection{sepstr2arr}
-
-% Arguments: \texttt{string in, string sep }(optional)
-
-% \noindent Return type: \texttt{strings} array
-
-Transforms comma-separated string to an array of strings. 
-(Retired as of v0.5, use the extended functionality of gretl's built-in 
-strsplit function.)
-%(The comma
-%as separation character can be overridden with the sep argument, but
-%only the first character is used.) 
 
 \subsection{truncnorm}
 
@@ -270,10 +258,12 @@ determines only the lower frequency and \texttt{phi} the upper.
 \item nearPSD, zeroifclose, scores2x2, WSRcritical, WSRpvalue:
 Sven Schreiber 
 \item winsor: Sven Schreiber, original code JoshuaHe
+\item strpos: Artur Tarassow
 \end{itemize}
 
 \section{Changelog }
 \begin{itemize}
+\item November 2019: 0.6, add drill, gbundle2json, onemode, strpos
 \item October 2018: 0.5, fix small commute bug; retire sepstr2arr; add powerset,
   eliminate, duplicate
 \item February 2018: 0.41, allow non-integer input in WSRpvalue

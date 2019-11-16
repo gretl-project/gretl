@@ -200,20 +200,6 @@ function scalar zeroifclose (matrix *m,
     endif
 end function
 
-function strings sepstr2arr (string in,
-                             string sep[null])
-    # Transforms comma-separated string to an array of strings.
-    # (The comma as separation character can be overridden with
-    #  the sep argument, but only the first character is used.)
-    if !exists(sep)
-        string sep = ","
-    else
-        sep = substr(sep,1,1)	# only first char
-    endif
-    strings out = strsplit(strsub(in, sep, " "))
-    return out
-end function
-
 function matrix commute (const matrix A,
                          int m[1::],
                          int n[0::0],
