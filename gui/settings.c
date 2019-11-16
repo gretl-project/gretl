@@ -1286,7 +1286,7 @@ static const char **get_list_setting_strings (void *var, int *n)
     else if (var == themepref) {
 
 	static const char *theme_strs[] = {
-	    "MS-Windows", "Clearlooks", "Raleigh"
+            "MS-Windows", "Clearlooks", "Windows-10", "Raleigh"
 	};
 
 	strs = theme_strs;
@@ -3236,7 +3236,8 @@ void set_up_windows_look (void)
 	    themepref);
 
     if (!strcmp(themepref, "MS-Windows") ||
-	!strcmp(themepref, "Clearlooks")) {
+	!strcmp(themepref, "Clearlooks") ||
+	!strcmp(themepref, "Windows-10")) {
 	const char *prefix;
 	char sl[2] = {0};
 	gchar *gtkrc;
