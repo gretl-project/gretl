@@ -353,22 +353,6 @@ function scalar SVAR_boot(bundle *obj,
 
     bundle bobj = obj       # store a copy of the model for bootstrap
 
-    # FIXME: Why is this if-block needed??? Where is it used?
-    /* Partial answer:
-       'sel' is currently calculated in doIRF (?), inside the
-       bootstrap loop. It'd be slightly more efficient to pre-
-       calculate it here, e.g. storing it in obj.cumsel.
-       However, the cumulated IRF would also be needed when no
-       bootstrap is done. So it seems 'sel' must be calc'ed
-       somewhere else...
-    */
-    #     if obj.ncumul > 0
-    #         matrix to_cum = obj.cumul
-    #         matrix tmp = zeros(n, n)
-    #         tmp[to_cum,] = 1
-    #         sel = selifr(transp(seq(1, n2)), vec(tmp))	# was: n*n
-    #     endif
-
     # Spar_mat: the result matrix (IRFs further below)
     if (type > 2) || (rows(obj.Rd1l) || obj.calc_lr )
         # save either A,B (for type 3) or C and the long-run matrix

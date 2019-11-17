@@ -515,7 +515,14 @@ function scalar SVAR_cumulate(bundle *b, int nv)
         printf "Variable %s cumulated\n",  vn[nv]
         b.cumul = b.cumul | {nv}
         b.ncumul = b.ncumul + 1
-    endif
+
+        # The following code was in doIRF but doesn't depend
+        # on the data, so slightly inefficient for the bootstrap.
+        # Instead we introduce b.cumsel which can be reused later        
+        tmp = zeros(b.n, b.n)
+        tmp[b.cumul,] = 1
+        matrix b.cumsel = selifr(transp(seq(1, b.n * b.n)), vec(tmp))
+    endif   
     return err
 end function
 
