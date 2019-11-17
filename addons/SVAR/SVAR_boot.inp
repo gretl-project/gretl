@@ -28,11 +28,11 @@ function void boot_printout(int type, int n, int rep,
         matrix bL = mshape( bm[n2+1:], n, n)
         printStrMat(bL, bV[1+n2: , 1+n2: ], "LongRun")
 
-    elif type != 3 #  was: (type == 1) || (type == 2) || (type == 4)
+    elif type != 3
 
         # C model without printing the long-run matrix
-        # (SVEC / type 4 should not happen here, because it has long-run
-        #  constraints by construction)
+        # (SVEC / type 4 should not happen here, because it has 
+        # long-run constraints by construction)
 
         matrix bK = mshape(bm,n,n)
         printStrMat(bK, bV, "C")
@@ -54,19 +54,18 @@ function matrix bias_correction(const bundle b, const matrix mu,
                                 const matrix Y0, matrix *BC,
 								const bundle bparams[null])
 
-
     /* This function implements a bias correction for
        the estimate of the VAR parameters as per Kilian,
        REStat (1998).
        (The SVEC case is not allowed here, but it must
        be checked on the outside.)
 
-       New 'boottype' arg (Aug 2019):
+       Sep 2019: re-did interface to use bundle; the new 
+        'boottype' member means:
        1: standard resampling (default, as before)
        2-4: wild bootstrap (3 variants)
 	   5: moving-blocks bootstrap 
-       (Sep 2019: re-did interface to use bundle)
-
+       
 	   (So the check below for what we need in the bundle.)
     */
 
@@ -74,12 +73,6 @@ function matrix bias_correction(const bundle b, const matrix mu,
 		!inbundle(b,"E") || !inbundle(b,"X") || !inbundle(b,"boottype")
 		funcerr "needed input missing in bundle arg" 
 	endif
-
-	# H = b.BCiter
-	# matrix Ahat = b.VARpar 
-	# matrix E = b.E
-	# matrix X = b.X 
-	# boottype = obj. boottype 
 
     n = rows(b.VARpar)
     p = cols(b.VARpar)/n
@@ -113,8 +106,7 @@ function matrix bias_correction(const bundle b, const matrix mu,
 
         Ab = Ab ./ b.BCiter
         matrix BC = b.VARpar - Ab
-
-        H = add_and_smash(&Ab, BC) 	 # why H? (used to be loop limit)
+        add_and_smash(&Ab, BC) 	 # was H = ..., unused
 
     else	# not stationary
         matrix Ab = b.VARpar
@@ -156,12 +148,11 @@ function matrix calc_bmu(const bundle obj)
         endif
 
         # add trend
-        if obj.jcase == 4
-            bmu += seq(1, obj.T)' obj.jbeta[obj.n + 1, ] * obj.jalpha'
-            # restricted
+        if obj.jcase == 4	# restricted
+            bmu += seq(1, obj.T)' obj.jbeta[obj.n + 1, ] * obj.jalpha'         
 
-        elif obj.jcase == 5
-            bmu += seq(1, obj.T)' obj.mu[2, ]     # unrestricted
+        elif obj.jcase == 5 # unrestricted
+            bmu += seq(1, obj.T)' obj.mu[2, ]
         endif
     endif
 
@@ -296,7 +287,7 @@ function scalar SVAR_boot(bundle *obj,
                           string btypestr[null] "bootstrap type",
                           int biascorr[-1:2:-1] "bias correction (non-SVEC)")
 
-    # strBtype: can be "resample" / "resampling",
+    # btypestr: can be "resample" / "resampling",
     #  "wildN"/"wild", "wildR", "wildM"
 
     # The default value for biascorr of -1 means:
@@ -360,24 +351,7 @@ function scalar SVAR_boot(bundle *obj,
     */
     matrix bootirfs = zeros(rep, (h+1) * n2)
 
-
     bundle bobj = obj       # store a copy of the model for bootstrap
-
-    # FIXME: Why is this if-block needed??? Where is it used?
-    /* Partial answer:
-       'sel' is currently calculated in doIRF (?), inside the
-       bootstrap loop. It'd be slightly more efficient to pre-
-       calculate it here, e.g. storing it in obj.cumsel.
-       However, the cumulated IRF would also be needed when no
-       bootstrap is done. So it seems 'sel' must be calc'ed
-       somewhere else...
-    */
-    #     if obj.ncumul > 0
-    #         matrix to_cum = obj.cumul
-    #         matrix tmp = zeros(n, n)
-    #         tmp[to_cum,] = 1
-    #         sel = selifr(transp(seq(1, n2)), vec(tmp))	# was: n*n
-    #     endif
 
     # Spar_mat: the result matrix (IRFs further below)
     if (type > 2) || (rows(obj.Rd1l) || obj.calc_lr )
@@ -392,9 +366,10 @@ function scalar SVAR_boot(bundle *obj,
     BIASCORR = (type != 4) && obj.biascorr # not available w/unit roots
     if BIASCORR
         matrix Psi = {}
-        # matrix ABC = bias_correction(obj.BCiter, obj.VARpar, bmu, \
-        #   obj.E, obj.X, start, &Psi, obj.boottype)
 		matrix ABC = bias_correction(obj, bmu, start, &Psi, bparams)
+        matrix ABCorA = ABC # moved up from inside the loop 
+    else 
+        matrix ABCorA = obj.VARpar
     endif
 
     # Prepare the residuals
@@ -420,11 +395,11 @@ function scalar SVAR_boot(bundle *obj,
         # (bmu may be zero)
 
         # generate bootstrap data and store it in bootstrap obj
-        matrix ABCorA = BIASCORR ? ABC : obj.VARpar
+        # matrix ABCorA = BIASCORR ? ABC : obj.VARpar # moved up
         matrix bobj.Y = varsimul(ABCorA, U, start)
 
         /*
-           estimate VAR parameters, special treatment VECM/SVEC (type==4)
+           estimate VAR parameters, special treatment VECM/SVEC
         */
         if type == 4
             vecm_est(&bobj)
@@ -436,15 +411,14 @@ function scalar SVAR_boot(bundle *obj,
         matrix bSigma = bobj.Sigma
         matrix theta = obj.theta # init original SVAR params
         # (C/A&B apparently, in suitable form...)
+
         errcode = 0
 
         ## Full bias correction
-        /* (Moved up from below because the new C estimates should be based
-           on the bc-ed VARpar version.)
-           But note that the bc-ed VARpar only actually enter the new C
-           matrix if there are long-run constraints, namely via C1 through
-           fullRd.
-           Otherwise the new C only depends on Sigma, but we do not update
+        /* (The bc-ed VARpar need to be done before the new C matrix is 
+            calculated at least if there are long-run constraints, because 
+            then they enter via C1 through fullRd into C.
+           Otherwise the new C only depends on Sigma. - BTW, we do not update
            Sigma in the full biascorr case. (In theory we could, by
            re-calculating the residuals using the bc-ed VARpar.
            We shouldn't, should we?)
@@ -470,25 +444,33 @@ function scalar SVAR_boot(bundle *obj,
             /* Watch out for the possibility of constraints that were 
              partly redundant originally.
              In the AB-model the cleaned restrictions are inherited 
-             from the original model, but in the C model -where long-run
-             constraints are allowed- the restrictions may depend on the 
-             simulated bootstrap data. So the cleaning of the restrictions
-             must be re-done here to be on the safe side.
+             from the original model, apart from the fact that they 
+             should already be caught at specification time (in SVAR_restrict).
+             But with long-run constraints (C, and especially SVEC with 
+              weakly exog.)
+             the restrictions depend on the simulated bootstrap data. 
+             So the cleaning of the restrictions must be re-done here.
              */
              
-            if type==4 || rows(bobj.Rd1l) # some long-run constraints 
+            if type != 3 && inbundle(obj, "cleanfullRd")  
                 bobj.fullRd = {}	 # reset
                 id = ident(&bobj, 0) # re-creates fullRd and possibly cleanfullRd
                 if !id    
                     printf "Ident problem in bootstrap draw %d\n", i
                     funcerr "Unexpected ID problem in bootstrap"
                 endif
+
+            elif type == 4 || nelem(obj.Rd1l) # long-run constraints
+                bobj.fullRd = get_full_Rd(&bobj, 0)	# update fullRd
+ 
             endif
+
             if inbundle(bobj, "cleanfullRd")
                 matrix fullRd = bobj.cleanfullRd
             else
                 matrix fullRd = bobj.fullRd
             endif
+
             matrix K = estC(&theta, bSigma, fullRd, null,
               &errcode, obj.optmeth, 0)
 
@@ -534,8 +516,6 @@ function scalar SVAR_boot(bundle *obj,
                 bobj.S2 = transferAB[2]
                 Spar_mat[i,] = vec(bobj.S1)' ~ vec(bobj.S2)'
             endif
-
-            ### Here the full bias correction block lived before ###
 
         endif
 

@@ -36,11 +36,13 @@ function void doIRF(bundle *SVARobj)
     endloop
 
     if SVARobj.ncumul > 0
-        matrix to_cum = SVARobj.cumul
-        tmp = zeros(n,n)
-        tmp[to_cum,] = 1
-        sel = selifr(transp(seq(1,n*n)), vec(tmp))
-        ret[, sel] = cum(ret[, sel])
+        # The following code is now done in SVAR_cumulate
+        # once and for all:
+        # matrix to_cum = SVARobj.cumul
+        # tmp = zeros(n,n)
+        # tmp[to_cum,] = 1
+        # sel = selifr(transp(seq(1,n*n)), vec(tmp))
+        ret[, SVARobj.cumsel] = cum(ret[, SVARobj.cumsel]) # .cumsel was sel
     endif
 
     SVARobj.IRFs = ret
