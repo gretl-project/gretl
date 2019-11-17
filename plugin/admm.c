@@ -27,6 +27,10 @@
 #include "matrix_extra.h"
 #include "version.h"
 
+#ifdef HAVE_MPI
+# include "gretl_mpi.h"
+#endif
+
 #if defined(USE_AVX)
 # define USE_SIMD
 # if defined(HAVE_IMMINTRIN_H)
@@ -1040,6 +1044,168 @@ static int admm_lasso_xv (gretl_matrix *A,
     return err;
 }
 
+#ifdef HAVE_MPI
+
+static int mpi_admm_lasso_xv (gretl_matrix *A,
+			      gretl_matrix *b,
+			      gretl_bundle *bun,
+			      double rho)
+{
+    gretl_matrix_block *AB = NULL;
+    gretl_matrix *XVC = NULL;
+    gretl_matrix *XVCf = NULL;
+    gretl_matrix *Ae = NULL;
+    gretl_matrix *Af = NULL;
+    gretl_matrix *be = NULL;
+    gretl_matrix *bf = NULL;
+    gretl_matrix *lfrac;
+    double lmax;
+    size_t xv_colsize;
+    int nlam, rank;
+    int crit_type = 0;
+    int rankmax = 0;
+    int folds_per;
+    int folds_rem;
+    int i, f, nf, r;
+    int err = 0;
+
+    rank = gretl_mpi_rank();
+    rankmax = gretl_mpi_n_processes() - 1;
+
+    nf = gretl_bundle_get_int(bun, "nfolds", &err);
+    lfrac = gretl_bundle_get_matrix(bun, "lfrac", &err);
+    if (err) {
+	return err;
+    }
+
+    crit_type = get_crit_type(bun);
+    if (crit_type < 0) {
+	return E_INVARG;
+    }
+
+    nlam = gretl_vector_get_length(lfrac);
+    folds_per = nf / rankmax;
+    folds_rem = nf % rankmax;
+
+    if (rank == 0) {
+	gretl_matrix *Atb = NULL;
+	int fsize = A->rows / nf;
+	int esize = (nf - 1) * fsize;
+	int randfolds;
+
+	randfolds = gretl_bundle_get_int(bun, "randfolds", &err);
+
+	printf("admm_lasso_xv: nf=%d, fsize=%d, randfolds=%d, crit=%s\n",
+	       nf, fsize, randfolds, crit_string(crit_type));
+
+	AB = gretl_matrix_block_new(&Ae, esize, A->cols,
+				    &Af, fsize, A->cols,
+				    &be, esize, 1,
+				    &bf, fsize, 1, NULL);
+	if (AB == NULL) {
+	    return E_ALLOC;
+	}
+
+	/* determine the infnorm for all training data */
+	Atb = gretl_matrix_alloc(A->cols, 1);
+	gretl_matrix_multiply_mod(A, GRETL_MOD_TRANSPOSE,
+				  b, GRETL_MOD_NONE,
+				  Atb, GRETL_MOD_NONE);
+	lmax = gretl_matrix_infinity_norm(Atb);
+	/* and scale it down for the folds */
+	lmax *= esize / (double) A->rows;
+	fprintf(stderr, "cross validation lambda max = %#g\n", lmax);
+	gretl_matrix_free(Atb);
+
+	if (randfolds) {
+	    /* scramble the row order of A and b */
+	    randomize_rows(A, b);
+	}
+	XVC = gretl_zero_matrix_new(nlam, nf + 2);
+	xv_colsize = nlam * sizeof(double);
+    } else {
+	XVC = gretl_zero_matrix_new(nlam, 1);
+    }
+
+    r = 1;
+    for (f=0; f<nf && !err; f++) {
+	if (rank == 0) {
+	    prepare_xv_data(A, b, Ae, be, Af, bf, f);
+	    gretl_matrix_mpi_send(Ae, r);
+	    gretl_matrix_mpi_send(be, r);
+	    gretl_matrix_mpi_send(Af, r);
+	    gretl_matrix_mpi_send(bf, r);
+	} else if (rank == r) {
+	    Ae = gretl_matrix_mpi_receive(0, &err);
+	    be = gretl_matrix_mpi_receive(0, &err);
+	    Af = gretl_matrix_mpi_receive(0, &err);
+	    bf = gretl_matrix_mpi_receive(0, &err);
+	    err = lasso_xv_round(Ae, be, Af, bf, lfrac, XVC, lmax, rho,
+				 0, crit_type);
+	    if (!err) {
+		printf("rank %d sending XVC to root\n", rank);
+		gretl_matrix_mpi_send(XVC, 0);
+	    }
+	    gretl_matrix_free(Ae);
+	    gretl_matrix_free(be);
+	    gretl_matrix_free(Af);
+	    gretl_matrix_free(bf);
+	}
+	if (rank == 0) {
+	    XVCf = gretl_matrix_mpi_receive(r, &err);
+	    if (!err) {
+		printf("root received XVCf from rank %d\n", r);
+		memcpy(XVC->val + f * nlam, XVCf->val, xv_colsize);
+		gretl_matrix_free(XVCf);
+	    }
+	}
+	if (r == rankmax) {
+	    r = 1;
+	} else {
+	    r++;
+	}
+    }
+
+    if (rank == 0) {
+	gretl_matrix_print(XVC, "XVC");
+    }
+
+    /* send cleanup signal, all processes */
+    lasso_xv_round(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0);
+
+    if (rank == 0) {
+	if (!err) {
+	    gretl_matrix *lxv = gretl_matrix_alloc(1, 1);
+	    int ibest = 0, i1se = 0;
+
+	    process_xv_criterion(XVC, lfrac, &ibest, &i1se, nf, crit_type);
+	    printf("\nAverage out-of-sample %s minimized at %g for s=%g\n",
+		   crit_string(crit_type), gretl_matrix_get(XVC, ibest, nf),
+		   lfrac->val[ibest]);
+	    printf("Largest s within one s.e. of best criterion: %g\n",
+		   lfrac->val[i1se]);
+	    /* now determine coefficient vector on full training set */
+	    lxv->val[0] = lfrac->val[ibest];
+	    gretl_bundle_donate_data(bun, "lxv", lxv, GRETL_TYPE_MATRIX, 0);
+	    err = real_admm_lasso(A, b, bun, rho);
+	}
+
+	if (!err) {
+	    shrink_crit(&XVC);
+	    gretl_bundle_donate_data(bun, "XVC", XVC, GRETL_TYPE_MATRIX, 0);
+	} else {
+	    gretl_matrix_free(XVC);
+	}
+	gretl_matrix_block_destroy(AB);
+    } else {
+	gretl_matrix_free(XVC);
+    }
+
+    return err;
+}
+
+#endif /* HAVE_MPI */
+
 int admm_lasso (gretl_matrix *A,
 		gretl_matrix *b,
 		gretl_bundle *bun)
@@ -1074,6 +1240,11 @@ int admm_lasso (gretl_matrix *A,
     xv = gretl_bundle_get_int(bun, "xvalidate", &err);
 
     if (xv) {
+#if 0 // ifdef HAVE_MPI not ready!!
+	if (gretl_mpi_n_processes() > 1) {
+	    return mpi_admm_lasso_xv(A, b, bun, rho);
+	}
+#endif
 	return admm_lasso_xv(A, b, bun, rho);
     } else {
 	return real_admm_lasso(A, b, bun, rho);
