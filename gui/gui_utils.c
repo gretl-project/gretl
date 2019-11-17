@@ -459,22 +459,21 @@ void delete_widget (GtkWidget *widget, gpointer data)
 
 void set_wait_cursor (GdkWindow **pcwin)
 {
-    GdkDisplay *disp = gdk_display_get_default();
     GdkWindow *w;
 
     if (*pcwin == NULL) {
 	gint x, y;
 
-	*pcwin = w = gdk_display_get_window_at_pointer(disp, &x, &y);
+	*pcwin = w = gdk_display_get_window_at_pointer(gretl_display, &x, &y);
     } else {
 	w = *pcwin;
     }
 
     if (w != NULL) {
-	GdkCursor *cursor = gdk_cursor_new(GDK_WATCH);
+	GdkCursor *cursor = gdk_cursor_new_from_name(gretl_display, "wait");
 
 	gdk_window_set_cursor(w, cursor);
-	gdk_display_sync(disp);
+	gdk_display_sync(gretl_display);
 	gdk_cursor_unref(cursor);
     }
 }
@@ -2461,7 +2460,7 @@ static gboolean leave_close_button (GtkWidget *button,
 				    GdkEventCrossing *event,
 				    gpointer p)
 {
-    GdkCursor *cursor = gdk_cursor_new(GDK_XTERM);
+    GdkCursor *cursor = gdk_cursor_new_from_name(gretl_display, "text");
 
     /* replace text cursor */
     gdk_window_set_cursor(gtk_widget_get_window(button), cursor);

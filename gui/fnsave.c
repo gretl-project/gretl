@@ -4305,7 +4305,6 @@ void upload_specified_package (const char *fname)
     gchar *buf = NULL;
     char *retbuf = NULL;
     login_info linfo;
-    GdkDisplay *disp;
     GdkCursor *cursor;
     GdkWindow *w1;
     gint x, y;
@@ -4334,12 +4333,11 @@ void upload_specified_package (const char *fname)
     realname = zname != NULL ? zname : fname;
 
     /* set waiting cursor */
-    disp = gdk_display_get_default();
-    w1 = gdk_display_get_window_at_pointer(disp, &x, &y);
+    w1 = gdk_display_get_window_at_pointer(gretl_display, &x, &y);
     if (w1 != NULL) {
-	cursor = gdk_cursor_new(GDK_WATCH);
+	cursor = gdk_cursor_new_from_name(gretl_display, "wait");
 	gdk_window_set_cursor(w1, cursor);
-	gdk_display_sync(disp);
+	gdk_display_sync(gretl_display);
 	gdk_cursor_unref(cursor);
     }
 

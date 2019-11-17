@@ -359,7 +359,7 @@ void plot_position_click (GtkWidget *w, png_plot *plot)
 	GtkWidget *entry;
 	GdkCursor* cursor;
 
-	cursor = gdk_cursor_new(GDK_CROSSHAIR);
+	cursor = gdk_cursor_new_from_name(gretl_display, "crosshair");
 	gdk_window_set_cursor(plot->window, cursor);
 	gdk_cursor_unref(cursor);
 	entry = g_object_get_data(G_OBJECT(w), "pos_entry");
@@ -4246,7 +4246,7 @@ static void clear_labels (png_plot *plot)
 
 static void prepare_for_zoom (png_plot *plot)
 {
-    GdkCursor* cursor = gdk_cursor_new(GDK_CROSSHAIR);
+    GdkCursor* cursor = gdk_cursor_new_from_name(gretl_display, "crosshair");
 
     gdk_window_set_cursor(plot->window, cursor);
     gdk_cursor_unref(cursor);

@@ -148,6 +148,7 @@ static GOptionEntry options[] = {
 windata_t *mdata;
 DATASET *dataset;
 MODEL *model;
+GdkDisplay *gretl_display;
 
 char datafile[MAXLEN];
 char scriptfile[MAXLEN];
@@ -1441,7 +1442,7 @@ void show_link_cursor (GtkWidget *w, gpointer p)
     GdkWindow *window = gtk_widget_get_window(w);
     GdkCursor *c;
 
-    c = gdk_cursor_new(GDK_HAND2);
+    c = gdk_cursor_new_from_name(gretl_display, "pointer");
     gdk_window_set_cursor(window, c);
     gdk_cursor_unref(c);
 }
@@ -1472,6 +1473,7 @@ static void make_main_window (void)
     }
 
     gui_scale = get_gui_scale();
+    gretl_display = gdk_display_get_default();
 
 #if GUI_DEBUG
     fprintf(stderr, " gui_scale = %g\n", (double) gui_scale);

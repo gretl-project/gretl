@@ -132,6 +132,7 @@ extern char midiplayer[MAXSTR];
 extern windata_t *mdata;
 extern GtkTargetEntry gretl_drag_targets[];
 extern PangoFontDescription *fixed_font;
+extern GdkDisplay *gretl_display;
 
 #include "gretl_enums.h"
 

@@ -35,7 +35,7 @@ extern int script_line_numbers;
 extern int script_auto_complete;
 extern int script_auto_bracket;
 
-void text_set_cursor (GtkWidget *w, GdkCursorType cspec);
+void text_set_cursor (GtkWidget *w, const char *cspec);
 
 void cursor_to_top (windata_t *vwin);
 
