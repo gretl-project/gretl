@@ -66,11 +66,11 @@ cp ${SRCDIR}/win32/gretl_website.url ${TARGET}/gretl_website.url
 # gnuplot -- unless you're building it yourself
 if [ "x${INSTALL_GNUPLOT}" = "xyes" ] ; then
   if [ "$MSYSTEM_CARCH" = "x86_64" ] ; then
-    GPTGZ=${SERVERDIR}/gp524w64.tar.gz
+    GPTGZ=gp524w64.tar.gz
   else
-    GPTGZ=${SERVERDIR}/gp524w32.tar.gz
+    GPTGZ=gp524w32.tar.gz
   fi
-  cd ${TARGET} && wget -N ${GPTGZ} && tar xvf ${GPTGZ} && rm ${GPTGZ}
+  cd ${TARGET} && wget -N ${SERVERDIR}/${GPTGZ} && tar xvf ${GPTGZ} && rm ${GPTGZ}
 fi
 
 # GTK theme files
