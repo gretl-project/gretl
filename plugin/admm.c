@@ -626,6 +626,7 @@ static int real_admm_lasso (const gretl_matrix *A,
 
     int stdize = gretl_bundle_get_int(bun, "stdize", &err);
     int xval = gretl_bundle_get_int(bun, "xvalidate", &err);
+    int verbo = gretl_bundle_get_int(bun, "verbosity", &err);
 
     if (gretl_bundle_has_key(bun, "lxv")) {
 	lfrac = gretl_bundle_get_matrix(bun, "lxv", &err);
@@ -660,18 +661,19 @@ static int real_admm_lasso (const gretl_matrix *A,
 
     lmax = gretl_matrix_infinity_norm(Atb);
 
-    fprintf(stderr, "lambda max = %#g\n", lmax);
-    if (nlam > 1) {
-	printf("using lambda-fraction sequence of length %d, starting at %g\n",
-	       nlam, lfrac->val[0]);
-    } else {
-	printf("using lambda-fraction %g\n", lfrac->val[0]);
+    if (verbo > 0) {
+	if (nlam > 1) {
+	    printf("using lambda-fraction sequence of length %d, starting at %g\n",
+		   nlam, lfrac->val[0]);
+	} else {
+	    printf("using lambda-fraction %g\n", lfrac->val[0]);
+	}
     }
 
     get_cholesky_factor(A, L, rho);
 
     B = gretl_zero_matrix_new(n + stdize, nlam);
-    if (nlam > 1) {
+    if (verbo > 0 && nlam > 1) {
 	printf("     lambda  coeffs    criterion\n");
     }
 
@@ -692,7 +694,7 @@ static int real_admm_lasso (const gretl_matrix *A,
 		gretl_matrix_set(B, i+stdize, j, z->val[i]);
 	    }
 	    crit = objective(A, b, z, lambda, m1);
-	    if (nlam > 1) {
+	    if (verbo > 0 && nlam > 1) {
 		printf("%#12.6g  %5d    %#.8g (%d iters)\n",
 		       lambda/m, nnz, crit, iters);
 	    }
