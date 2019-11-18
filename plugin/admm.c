@@ -43,13 +43,10 @@
 #endif
 
 #define MAX_ITER 20000
-#define USE_YBAR 1
 
 double reltol = 1.0e-4;
 double abstol = 1.0e-6;
-#if USE_YBAR
 double ybar = 0.0;
-#endif
 
 enum {
     CRIT_MSE,
@@ -418,11 +415,9 @@ static double objective (const gretl_matrix *A,
     double obj = 0;
 
     gretl_matrix_multiply(A, z, Azb);
-#if USE_YBAR
     if (ybar != 0) {
 	vector_add_scalar(Azb, ybar, A->rows);
     }
-#endif
     vector_subtract_from(Azb, b, A->rows);
     SSR = gretl_vector_dot_product(Azb, Azb, NULL);
     obj = 0.5 * SSR + lambda * abs_sum(z);
@@ -442,11 +437,9 @@ static double xv_score (const gretl_matrix *A,
 
     /* get fitted values */
     gretl_matrix_multiply(A, z, Azb);
-#if USE_YBAR
     if (ybar != 0) {
 	vector_add_scalar(Azb, ybar, A->rows);
     }
-#endif
     if (crit_type == CRIT_PCC) {
 	/* count incorrect classifications */
 	double yhat;
@@ -1174,7 +1167,7 @@ int admm_lasso (gretl_matrix *A,
 		gretl_bundle *bun)
 {
     gretl_matrix *ctrl;
-    double rho = 8.0; /* was 1.0 */
+    double rho = 8.0; /* once upon a time, was 1.0 */
     int xv, err = 0;
 
     ctrl = gretl_bundle_get_matrix(bun, "admmctrl", NULL);
@@ -1190,12 +1183,10 @@ int admm_lasso (gretl_matrix *A,
 	}
     }
 
-#if USE_YBAR
     if (gretl_bundle_get_int(bun, "stdize_y", NULL) == 0) {
 	/* we'll need to add mean(y) */
 	ybar = gretl_mean(0, b->rows-1, b->val);
     }
-#endif
 
     /* scale the absolute tolerance */
     abstol = sqrt(A->cols) * abstol;
