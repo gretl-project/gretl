@@ -1040,17 +1040,22 @@ static int mpi_admm_lasso_xv (gretl_matrix *A,
     gretl_matrix *lfrac;
     double lmax;
     int fsize, esize;
+    int folds_per;
+    int folds_rem;
+    int randfolds;
     int nlam, rank;
     int crit_type = 0;
-    int rankmax = 0;
+    int np, rankmax = 0;
     int f, nf, r;
     int my_f = 0;
     int err = 0;
 
     rank = gretl_mpi_rank();
-    rankmax = gretl_mpi_n_processes() - 1;
+    np = gretl_mpi_n_processes();
+    rankmax = np - 1;
 
     nf = gretl_bundle_get_int(bun, "nfolds", &err);
+    randfolds = gretl_bundle_get_int(bun, "randfolds", &err);
     lfrac = gretl_bundle_get_matrix(bun, "lfrac", &err);
     if (err) {
 	return err;
@@ -1064,8 +1069,10 @@ static int mpi_admm_lasso_xv (gretl_matrix *A,
     nlam = gretl_vector_get_length(lfrac);
     fsize = A->rows / nf;
     esize = (nf - 1) * fsize;
+    folds_per = nf / np;
+    folds_rem = nf % np;
 
-    /* space for per-fold data */
+    /* matrix-space for per-fold data */
     AB = gretl_matrix_block_new(&Ae, esize, A->cols,
 				&Af, fsize, A->cols,
 				&be, esize, 1,
@@ -1076,9 +1083,6 @@ static int mpi_admm_lasso_xv (gretl_matrix *A,
 
     if (rank == 0) {
 	gretl_matrix *Atb = NULL;
-	int randfolds;
-
-	randfolds = gretl_bundle_get_int(bun, "randfolds", &err);
 
 	printf("admm_lasso_xv: nf=%d, fsize=%d, randfolds=%d, crit=%s\n",
 	       nf, fsize, randfolds, crit_string(crit_type));
@@ -1093,21 +1097,31 @@ static int mpi_admm_lasso_xv (gretl_matrix *A,
 	lmax *= esize / (double) A->rows;
 	fprintf(stderr, "cross validation lambda max = %#g\n", lmax);
 	gretl_matrix_free(Atb);
+    }
 
-	if (randfolds) {
-	    /* scramble the row order of A and b */
-	    /* FIXME MPI!! */
-	    randomize_rows(A, b);
+    if (randfolds) {
+	/* generate the same random folds in all processes */
+	unsigned seed;
+
+	if (rank == 0) {
+	    gretl_rand_get_seed();
 	}
+	gretl_mpi_bcast(&seed, GRETL_TYPE_UNSIGNED, 0);
+	gretl_rand_set_seed(seed);
+	randomize_rows(A, b);
+    }
+
+    if (rank < folds_rem) {
+	XVC = gretl_zero_matrix_new(nlam, folds_per + 1);
     } else {
-	/* FIXME not general enough */
-	XVC = gretl_zero_matrix_new(nlam, nf / rankmax);
+	XVC = gretl_zero_matrix_new(nlam, folds_per);
     }
 
     /* send @lmax to workers */
     gretl_mpi_bcast(&lmax, GRETL_TYPE_DOUBLE, 0);
 
-    r = 1;
+    /* process all folds */
+    r = 0;
     for (f=0; f<nf && !err; f++) {
 	if (rank == r) {
 	    prepare_xv_data(A, b, Ae, be, Af, bf, f);
@@ -1115,19 +1129,17 @@ static int mpi_admm_lasso_xv (gretl_matrix *A,
 				 my_f++, crit_type);
 	}
 	if (r == rankmax) {
-	    r = 1;
+	    r = 0;
 	} else {
 	    r++;
 	}
     }
 
-    /* reduce @XVC to root */
+    /* reduce @XVC to root by column concatenation */
     gretl_matrix_mpi_reduce(XVC, &XVC, GRETL_MPI_HCAT, 0, OPT_NONE);
 
-    /* send cleanup signal, all workers */
-    if (rank > 0) {
-	lasso_xv_round(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0);
-    }
+    /* send cleanup signal, all processes */
+    lasso_xv_round(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0);
 
     if (rank == 0 && !err) {
 	gretl_matrix *lxv = gretl_matrix_alloc(1, 1);
@@ -1140,7 +1152,7 @@ static int mpi_admm_lasso_xv (gretl_matrix *A,
 	       lfrac->val[ibest]);
 	printf("Largest s within one s.e. of best criterion: %g\n",
 	       lfrac->val[i1se]);
-	/* now determine coefficient vector on full training set */
+	/* determine coefficient vector on full training set */
 	lxv->val[0] = lfrac->val[ibest];
 	gretl_bundle_donate_data(bun, "lxv", lxv, GRETL_TYPE_MATRIX, 0);
 	err = real_admm_lasso(A, b, bun, rho);
@@ -1191,7 +1203,7 @@ int admm_lasso (gretl_matrix *A,
     xv = gretl_bundle_get_int(bun, "xvalidate", &err);
 
     if (xv) {
-#if 0 // ifdef HAVE_MPI not ready yet
+#ifdef HAVE_MPI /* experimental at this point */
 	if (gretl_mpi_n_processes() > 1) {
 	    return mpi_admm_lasso_xv(A, b, bun, rho);
 	}
