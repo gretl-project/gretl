@@ -622,7 +622,7 @@ example,
 If you omit this step, the structural shocks will be labelled with
 names corresponding to the observable variables in your VAR. This
 doesn't make particular sense in general, but it does in a triangular
-model, in which there is a one-to-one correspondence, so I decided to
+model, in which there is a one-to-one correspondence, so we decided to
 make this the default choice.
 
 A word on the unit of measurement of IRFs: by their definition (see
@@ -883,7 +883,7 @@ main object of interest in the applied SVAR literature, but is by no
 means the only one.  After estimation, two more techniques are readily
 available for inspecting the results: the Forecast Error Variance
 Decomposition and the Historical Decomposition. Since the results from
-these two procedures are often visualised as graphs, I will describe
+these two procedures are often visualised as graphs, we will describe
 them here.
 
 \subsection{Plotting the FEVD}
@@ -1332,7 +1332,7 @@ straight away set the optional fourth (trailing) argument to 0.
   \label{fig:BlQuah}
 \end{figure}
 
-In Table \ref{tab:BlQuahOutput} I reported the output to the example
+In Table \ref{tab:BlQuahOutput} we reported the output to the example
 code in Table \ref{tab:BlQuah}, while the pretty pictures are in
 Figure \ref{fig:BlQuah}.\footnote{I found it impossible to reproduce
   Blanchard and Quah's results \emph{exactly}. I believe this is due
@@ -1441,7 +1441,7 @@ IRFplot(&ISLM, 1, 2)
 \end{table}
 AB models are more general than the C model, but more rarely used in
 practice. In order to exemplify the way in which they are handled in
-the \texttt{SVAR} package, I will replicate the example given in
+the \texttt{SVAR} package, we will replicate the example given in
 section 4.7.1 of  \cite{LKBook04}. See Table
 \ref{tab:ABmodel}.
 
@@ -1769,10 +1769,11 @@ long-run effect on any variable: therefore, the corresponding column
 of $C(1) \cdot C$ must be full of zeros. But this, in turn, implies
 that the corresponding column of $C$ must be a linear combination of
 the columns of $\alpha$. Since $\alpha$ has $r$ linearly independent
-columns, the vector of structural shocks must contain $r$ transitory
-shocks and $n-r$ permanent ones.
+columns, the vector of structural shocks can contain at most $r$ transitory
+shocks and $n-r$ permanent ones; the \texttt{SVAR} addon follows the 
+widespread assumption that there are indeed $r$ transitory shocks.
 
-By ordering the structural shocks with the permanent ones first,
+By ordering the structural shocks with the permanent ones appearing first,
 \[
   \StS{t} = \left[ \begin{array}{c} \StS{t}^p \\ \StS{t}^t  \end{array}\right] 
 \] 
@@ -1798,6 +1799,9 @@ form as
 \]
 since $\alpha_{\perp}$ has $n-r$ columns, this provides $r\cdot(n-r)$
 constraints of the type $R \VEC(C) = d$, that we know how to handle.
+Note the convention to put those equations on top where the permanent 
+shocks occur. Sometimes this requires a manual re-ordering of the variables, 
+especially if some of them are restricted to be weakly exogenous.
 
 Since $0 < r < n$, this system of constraints is not sufficient to
 achieve identification, apart from the special case $n =2$, $r=1$, so
@@ -1883,24 +1887,30 @@ some of the variables to be weakly exogenous. Note that the
 painless to fetch them from a Johansen-style VECM if necessary. 
 This also means that the coefficients of any restricted deterministic 
 terms must be included as part of the given $\beta$ matrix in the 
-cases 2 and 4 (sometimes called $\beta*$ in the literature).
+cases 2 and 4 (sometimes called $\beta^*$ in the literature).
 
 Calling this function will
 \begin{enumerate}
-\item set up a system of constraints such that the $n-r$ permanent
+\item Set up a system of constraints such that the $n-r$ permanent
   shocks will come first in the ordering, followed by the $r$
   temporary ones. The shock names will be set accordingly.
-\item Estimate the VECM parameters subject to the constraints implied
-  by the given $\beta$ (and $\alpha$, if not empty): in practice, the
+\item Prepare the estimation of the VECM parameters subject to the constraints 
+  implied by the given $\beta$ (and $\alpha$, if not empty): in practice, the
   matrix $\Sigma$ and the parameters $\mu$ and $\Gamma_i$ in equation
-  \eqref{eq:VECM}. Internally, \texttt{SVAR\_coint} will take care of
-  transforming into the VAR form \eqref{eq:VAR} so that the VMA
-  representation can be computed and everything will proceed like in
-  an ordinary C model.
+  \eqref{eq:VECM}. Internally, later everything will be transformed into 
+  the VAR form \eqref{eq:VAR} so that the VMA representation can be computed 
+  and everything will proceed like in an ordinary C model.
 \end{enumerate}
 
-At that point, the rest of the model can be setup as per usual
-(setting extra restrictions and so on). In the next subsection, I will
+At that point, the rest of the model can be set up as usual. This involves 
+setting extra restrictions, but note that long-run constraints (including 
+those implied by the properties of $\beta$ and $\alpha$) also depend on 
+estimated autoregressive parameters. Therefore the interplay of short- and
+long-run constraints can only be analyzed at estimation time, not when the 
+restrictions are specified. Switching on the identification check may in some
+cases help to uncover redundant or contradictory constraints.
+
+In the next subsection, we will
 provide an extended and annotated example.
 
 
@@ -1964,7 +1974,7 @@ In this example, we will go through a pseudo-replication of the
 simpler of the two examples presented in \cite{KPSW91}: the structure
 of the model will be kept the same, but we will use a different
 dataset. While the original article used post-WWII data for the US
-economy, I will use the so-called AWM dataset, which is supplied among
+economy, we will use the so-called AWM dataset, which is supplied among
 \app{gretl}'s sample datasets. AWM stands for Area-Wide Model, and is
 a quarterly dataset of the Euro area, which spans the 1970-1998
 period. It was originally developed by \cite{AWM} but has been used in
@@ -2408,7 +2418,8 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
 \end{funcdoc}
 
 \begin{funcdoc}{SVAR\_ident(bundle *b, int verbose[0])}
-  Checks if a model is identified by applying the algorithm described
+  Checks if a model is identified by applying (among other things) 
+  the algorithm described
   in \cite{AG}. Returns a 0/1 scalar. Its second argument is a
   scalar, which controls the verbosity of output. If set to a non-zero
   value, a few messages are printed as checks are performed.
@@ -2480,7 +2491,7 @@ implied by the pre-existing constraints, they will just be ignored and
 a warning will be printed.
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_setup(string type, list Y, list X, int varorder, bool checkident[1])}
+\begin{funcdoc}{SVAR\_setup(string type, list Y, list X, int varorder, bool checkident[0])}
   Initialises a model: the function's output is a bundle. The function
   arguments are:
   \begin{enumerate}
@@ -2490,7 +2501,7 @@ a warning will be printed.
   \item A list containing the exogenous variables.
   \item A positive integer, the VAR order.
   \item A switch to activate or suppress the automatic identification check before 
-  estimation of the structural form (default on).
+  estimation of the structural form (default off).
   \end{enumerate}
 \end{funcdoc}
 
@@ -2509,6 +2520,7 @@ a warning will be printed.
     %\texttt{k}	  & number of exogenous variables \\
     \texttt{T}	  & number of observations \\
     \texttt{t1, t2}	  & initial and final observations \\
+    \texttt{Y}	  & endogenous variables data matrix \\
     \texttt{X}	  & exogenous variables data matrix \\
     \texttt{calc\_lr} & switch to get long-run matrix \texttt{lrmat} in short-run models \\ 
     \texttt{checkident} & switch indicating whether to check identification before 
@@ -2522,7 +2534,7 @@ a warning will be printed.
     \texttt{VARpar} & autoregressive parameters \\
     \texttt{mu}	    & coefficients for the deterministic terms \\
     \texttt{E}	    & residuals from base VAR (as matrix) \\
-    \texttt{Sigma}  & unrestricted covariance matrix \\
+    \texttt{Sigma}  & unrestricted residual covariance matrix \\
     \texttt{jalpha} & (SVEC only) cointegration loadings \\
     \texttt{jbeta}  & (SVEC only) cointegration coefficients \\
     \texttt{crank} & (SVEC only) cointegration rank (inferred from jbeta)\\
@@ -2544,18 +2556,21 @@ a warning will be printed.
     variables, if any \\
     \texttt{snames}	 & names for shocks (string array) \\
     \texttt{optmeth}	 & integer between 0 and 4, optimisation method \\
+    \texttt{normalize} & switch for shock rescaling, see section \ref{sec:IRF-FEVD} \\
      \end{tabular}
     
     \begin{tabular}{rp{0.8\textwidth}}
     \hline
     \multicolumn{2}{c}{\textbf{SVAR post-estimation}} \\
     \hline
-    \texttt{S1, S2, C}	   & estimated A, B, C \\
+    \texttt{S1, S2, C} & estimated A, B, C \\
     % \texttt{S2}	   & estimated B \\
     % \texttt{C}	   & estimated C \\
     \texttt{lrmat} & estimated long-run matrix \\ 
-    \texttt{theta} & coefficient vector \\
+    \texttt{theta} & identified coefficients as vector \\
+    \texttt{vcv} & covariance matrix of these coefficients \\
     \texttt{IRFs}  & IRF matrix (see section \ref{sec:baseest})\\
+    \texttt{LL0, LL1} & Unrestricted and restricted maximized likelihoods \\
      \end{tabular}
     
     \begin{tabular}{rp{0.8\textwidth}}
@@ -2579,7 +2594,12 @@ a warning will be printed.
 
 \subsection*{Version 1.52, November 2019}
 \begin{itemize}
-\item Fix the Luetkepohl (2008) check for SVECs with weakly exogenous variables.
+\item Fix the Luetkepohl (2008) check for SVECs with weakly exogenous variables,
+and actually process the existing extra check whether a restriction might be redundant,
+which is relevant mostly in the case of some weakly exogenous variables.
+
+\item Undo making the identification check the default, since it was cluttering the output.
+
 \end{itemize}
 
 

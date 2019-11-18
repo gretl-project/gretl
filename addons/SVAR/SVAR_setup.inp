@@ -137,7 +137,7 @@ function matrix set_default_dimensions(bundle *mod, list lY,
 end function
 
 function bundle SVAR_setup(string type_string, list lY, list lX[null],
-                           int varorder[1::1], bool checkident[1])
+                           int varorder[1::1], bool checkident[0])
 
     /*
        This creates a bundle holding the info on the SVAR; this will be
