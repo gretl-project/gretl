@@ -50,6 +50,8 @@ int gretl_matrix_mpi_send (const gretl_matrix *m, int dest);
 
 gretl_matrix *gretl_matrix_mpi_receive (int source, int *err);
 
+int gretl_matrix_mpi_fill (gretl_matrix **pm, int source);
+
 int gretl_matrix_mpi_reduce (gretl_matrix *sm,
 			     gretl_matrix **pm,
 			     Gretl_MPI_Op op,

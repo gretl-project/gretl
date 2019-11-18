@@ -496,8 +496,12 @@ int gretl_matrix_mpi_reduce (gretl_matrix *sm,
 
 	for (i=0; i<np && !err; i++) {
 	    if (i == root) {
-		rows[i] = sm->rows;
-		cols[i] = sm->cols;
+		if (sm != NULL) {
+		    rows[i] = sm->rows;
+		    cols[i] = sm->cols;
+		} else {
+		    rows[i] = cols[i] = 0;
+		}
 	    } else {
 		err = mpi_recv(rc, MI_LEN, mpi_int, i, TAG_MATRIX_INFO,
 			       mpi_comm_world, MPI_STATUS_IGNORE);
@@ -537,8 +541,10 @@ int gretl_matrix_mpi_reduce (gretl_matrix *sm,
 		    continue;
 		}
 		if (i == root) {
-		    err = matrix_reduce_step(rm, sm->val, recvsize, op,
-					     &offset);
+		    if (sm != NULL) {
+			err = matrix_reduce_step(rm, sm->val, recvsize, op,
+						 &offset);
+		    }
 		} else {
 		    err = mpi_recv(val, recvsize, mpi_double, i,
 				   TAG_MATRIX_VAL,  mpi_comm_world,
@@ -1504,6 +1510,59 @@ gretl_matrix *gretl_matrix_mpi_receive (int source,
     }
 
     return m;
+}
+
+int gretl_matrix_mpi_fill (gretl_matrix **pm, int source)
+{
+    int rc[MI_LEN];
+    int err;
+
+    if (pm == NULL) {
+	return E_DATA;
+    }
+
+    err = mpi_recv(rc, MI_LEN, mpi_int, source, TAG_MATRIX_INFO,
+		   mpi_comm_world, MPI_STATUS_IGNORE);
+
+    if (!err) {
+	gretl_matrix *m = *pm;
+	int r = rc[0];
+	int c = rc[1];
+	int cmplx = rc[2];
+	int n = r * c;
+
+	if (m == NULL) {
+	    if (cmplx) {
+		m = gretl_cmatrix_new(r, c);
+		n *= 2;
+	    } else {
+		m = gretl_matrix_alloc(r, c);
+	    }
+	    if (m == NULL) {
+		err = E_ALLOC;
+	    } else {
+		*pm = m;
+	    }
+	} else if (m->rows != r || m->cols != c ||
+		   m->is_complex != cmplx) {
+	    err = E_NONCONF;
+	}
+
+	if (!err) {
+	    err = mpi_recv(m->val, n, mpi_double, source,
+			   TAG_MATRIX_VAL, mpi_comm_world,
+			   MPI_STATUS_IGNORE);
+	    if (err) {
+		maybe_date_matrix(m, rc);
+	    }
+	}
+    }
+
+    if (err) {
+	gretl_mpi_error(&err);
+    }
+
+    return err;
 }
 
 static int *gretl_list_receive (int source, int *err)
