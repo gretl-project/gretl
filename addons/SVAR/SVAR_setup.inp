@@ -291,9 +291,18 @@ function scalar SVAR_restrict(bundle *b, string code, int r,
         return 1
 
         # check for unsupported case
-    elif code=="lrC" && type==3
+    elif code == "lrC" && type == 3
         print "Long-run restrictions only supported in C model."
         return 3	# (Which code to return here? <Sven>)
+
+        # check for bogus long-run constraint 
+    elif code == "lrC" && type == 4
+        if c > n - b.crank
+            print "Long-run constraints only make sense on permanent shocks."
+            printf " (First %d shocks.)\n", n - b.crank
+            # (p.29, section 7 of the doc)
+            return 4
+        endif
     endif
 
     # if no input error, proceed with this:
