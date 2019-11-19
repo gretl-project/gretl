@@ -58,17 +58,22 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
         # use the plain vanilla fullRd.
         if inbundle(obj, "cleanfullRd")
             matrix fullRd = obj.cleanfullRd
-            # (obj.C1 already created by SVAR_ident then)
+            # (obj.C1 and obj.fullRd already created by SVAR_ident then)
+      
+        elif inbundle(obj, "fullRd") && inbundle(obj, "C1")
+            matrix fullRd = obj.fullRd
 
         else
             matrix fullRd = get_full_Rd(&obj, verbosity) 
-            # (This also sets obj.C1; slightly redundant if obj.checkident,
-            # because SVAR_ident would have done it already.)
+            # (This also sets obj.C1.)
+            matrix obj.fullRd = fullRd
+
         endif 
 
         # try to set some "sensible" initial values
         matrix param = init_C(Sigma, fullRd)
 
+        /* isn't used, can probably be scrapped:
         if obj.simann > 0
             printf "before simann:\n%12.6f\n", param
             matrix dat = vec(Sigma) ~ imp2exp(fullRd)
@@ -77,6 +82,7 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
             param = parcpy
             printf "after simann:\n%12.6f\n", param
         endif
+        */
 
         # do estimation; note that vcv is estimated inside "estC"
         matrix C = estC(&param, Sigma, fullRd, &vcv, &errcode, meth, verbosity)
@@ -119,10 +125,9 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
         endif
         /*
            We now also store C in the bundle because its computation
-        was repeated several times elsewhere */
+        was repeated several times elsewhere 
+        (This was obj.S1 for C models instead of obj.C, no idea why.) */
         matrix obj.C = C
-        /* (This was obj.S1 for C models instead of obj.C, don't know why...)
-        matrix obj.S1 = C */
 
         matrix obj.theta = param
         matrix obj.vcv = vcv
@@ -135,7 +140,7 @@ function scalar SVAR_estimate(bundle *obj, int verbosity[1])
 
             # re-use the C1 matrix from above if possible
             matrix C1 = (type == 2 || type == 4) ? obj.C1 : C1mat(obj.VARpar)
-            matrix obj.lrmat = C1 * obj.C	# was: obj.S1
+            matrix obj.lrmat = C1 * obj.C
         endif
 
         # Indicate that estimation is done (still needed?)
