@@ -1,20 +1,20 @@
-/* 
+/*
  *  gretl -- Gnu Regression, Econometrics and Time-series Library
  *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "gretl.h"
@@ -59,7 +59,7 @@
    the situation is the opposite of that on Linux and Windows. In the
    GTK-quartz version of gretl we offer a top-level menu item to
    override this and launch a second (or third, etc.) gretl instance.
-   
+
    GRETL_OPEN_HANDLER depends on GRETL_PID_FILE for its mechanism but
    not vice versa.
 */
@@ -104,7 +104,7 @@ static void get_prior_gretl_pids (long *gpids, long mypid)
 		    if (match && j < N_PIDS) {
 			gpids[j++] = pe.th32ProcessID;
 		    }
-		}		    
+		}
             } while (Process32Next(hsnap, &pe));
 	}
 	CloseHandle(hsnap);
@@ -122,19 +122,19 @@ static void get_prior_gretl_pids (long *gpids, long mypid)
     size_t psize;
     pid_t *pids;
     int i, j, match;
-    
+
     psize = nproc * sizeof *pids;
     pids = calloc(nproc, sizeof *pids);
     if (pids == NULL) {
 	return;
     }
-    
+
     proc_listpids(PROC_ALL_PIDS, 0, pids, psize);
 
     j = 0;
     for (i=0; i<nproc; i++) {
-	if (pids[i] == 0 || pids[i] == mypid) { 
-	    continue; 
+	if (pids[i] == 0 || pids[i] == mypid) {
+	    continue;
 	}
 	memset(buf, 0, sizeof buf);
 	proc_pidpath(pids[i], buf, sizeof buf);
@@ -149,7 +149,7 @@ static void get_prior_gretl_pids (long *gpids, long mypid)
 	    if (match && j < N_PIDS) {
 		gpids[j++] = (long) pids[i];
 	    }
-	} 
+	}
     }
 
     free(pids);
@@ -160,10 +160,10 @@ static void get_prior_gretl_pids (long *gpids, long mypid)
 # if defined(__linux) || defined(linux)
 
 /* Given the PID @test, retrieved from dotdir/gretl.pid,
-   see if it really represents a prior gretl process. We do 
+   see if it really represents a prior gretl process. We do
    this to guard against the possibility that gretl crashes on
    some occasion (or something else weird happens), in which
-   case the multi-instance "sequence number" would get screwed up. 
+   case the multi-instance "sequence number" would get screwed up.
 
    Return 1 if @test is OK, zero otherwise.
 */
@@ -177,7 +177,7 @@ static int pid_is_valid (long test, long mypid)
 
     snprintf(buf, sizeof buf, "/proc/%ld/stat", test);
     fp = gretl_fopen(buf, "r");
-    
+
     if (fp == NULL) {
 	/* no such pid? */
 	return 0;
@@ -203,7 +203,7 @@ static int pid_is_valid (long test, long mypid)
 
 # else
 
-/* Windows and Mac: in these cases we have to construct 
+/* Windows and Mac: in these cases we have to construct
    an array of "good" PIDs against which to test.
 */
 
@@ -235,7 +235,7 @@ static int pid_is_valid (long test, long mypid)
    scratch them out.
 */
 
-static int prune_pid_file (const char *pidfile, FILE *f1, 
+static int prune_pid_file (const char *pidfile, FILE *f1,
 			   char *buf, int bufsize,
 			   long mypid)
 {
@@ -266,7 +266,7 @@ static int prune_pid_file (const char *pidfile, FILE *f1,
 	if (err) {
 	    fprintf(stderr, "copy pid file: err = %d\n", err);
 	}
-	gretl_remove(newfile);	
+	gretl_remove(newfile);
     }
 
     return err;
@@ -333,7 +333,7 @@ int write_pid_to_file (void)
 	}
 
 	fclose(f1);
-	
+
 	if (err) {
 	    gretl_remove(pidfile);
 	} else {
@@ -410,7 +410,7 @@ void delete_pid_from_file (void)
 #endif /* GRETL_PID_FILE */
 
 /* Now come the more ambitious open-handler functions,
-   implemented for Linux and Windows but not required 
+   implemented for Linux and Windows but not required
    for Mac.
 */
 
@@ -437,11 +437,11 @@ long gretl_prior_instance (void)
 # ifdef WIN32
     if (WM_GRETL == 0) {
 	WM_GRETL = RegisterWindowMessage((LPCTSTR) "gretl_message");
-    }    
+    }
     mypid = (long) GetCurrentProcessId();
 # else
     mypid = getpid();
-# endif   
+# endif
 
     sprintf(pidfile, "%sgretl.pid", gretl_dotdir());
     fp = gretl_fopen(pidfile, "r");
@@ -497,7 +497,7 @@ long gretl_prior_instance (void)
    If the hand-off involves opening a file (which will be the case if
    the trigger is double-clicking on a gretl-associated file), the
    name of this file is written into the IPC file; otherwise the IPC
-   file contains the word "none".  
+   file contains the word "none".
 */
 
 static void process_handoff_message (void)
@@ -586,7 +586,7 @@ int install_open_handler (void)
     static struct sigaction action;
 
     action.sa_sigaction = open_handler;
-    sigemptyset(&action.sa_mask);    
+    sigemptyset(&action.sa_mask);
     action.sa_flags = SA_SIGINFO;
 
     return sigaction(SIGUSR1, &action, NULL);
@@ -613,7 +613,7 @@ gboolean forward_open_request (long gpid, const char *fname)
 
 	data.sival_ptr = (void *) 0xf0;
 	/* note: gpid is the PID of the previously running
-	   process to which the signal should be sent 
+	   process to which the signal should be sent
 	*/
 	ok = (sigqueue(gpid, SIGUSR1, data) == 0);
     }
@@ -630,7 +630,7 @@ gboolean forward_open_request (long gpid, const char *fname)
 
 /* If we receive a special WM_GRETL message from another gretl
    instance, process it and remove it from the message queue;
-   otherwise hand the message off to GDK.  
+   otherwise hand the message off to GDK.
 */
 
 static GdkFilterReturn mdata_filter (GdkXEvent *xevent,
@@ -640,7 +640,7 @@ static GdkFilterReturn mdata_filter (GdkXEvent *xevent,
     MSG *msg = (MSG *) xevent;
 
     if (msg->message == WM_GRETL && msg->wParam == 0xf0) {
-	fprintf(stderr, "mdata_filter: got WM_GRETL\n");
+	fprintf(stderr, "mdata_filter: got WM_GRETL + 0xf0\n");
 	process_handoff_message();
 	return GDK_FILTER_REMOVE;
     }
@@ -657,6 +657,33 @@ int install_open_handler (void)
     return 0;
 }
 
+/* Some window handles matched by pid seem to be
+   spurious: here we screen them and accept only
+   a plausible target for messaging.
+*/
+
+static int plausible_target (HWND hw)
+{
+    WINDOWINFO wi = {0};
+    char s[64];
+    int ret = 0;
+
+    wi.cbSize = sizeof(WINDOWINFO);
+
+    if (GetWindowInfo(hw, &wi) != 0) {
+	if ((wi.dwStyle & WS_CAPTION) &&
+	    (wi.dwExStyle & WS_EX_ACCEPTFILES)) {
+	    s[0] = '\0';
+	    GetWindowTextA(hw, s, 63);
+	    if (!strcmp(s, "gretl")) {
+		return 1;
+	    }
+	}
+    }
+
+    return 0;
+}
+
 /* Find the window handle associated with a given PID:
    this is used when we've found the PID of a running
    gretl instance and we need its window handle for
@@ -665,22 +692,25 @@ int install_open_handler (void)
 
 static HWND get_hwnd_for_pid (long gpid)
 {
-    HWND hw = GetTopWindow(NULL);
+    HWND hw = NULL, ret = NULL;
     DWORD pid;
 
-    while (hw) {
-	GetWindowThreadProcessId(hw, &pid);
-	if (pid == gpid) {
+    do {
+        hw = FindWindowEx(NULL, hw, NULL, NULL);
+	if (hw == NULL) {
 	    break;
 	}
-	hw = GetNextWindow(hw, GW_HWNDNEXT);
-    }
+        GetWindowThreadProcessId(hw, &pid);
+        if ((long) pid == gpid && plausible_target(hw)) {
+	    ret = hw;
+        }
+    } while (ret == NULL);
 
-    return hw;
+    return ret;
 }
 
-/* Try forwarding a request to the prior gretl instance with 
-   PID @gpid, either to open a file or just to show itself. 
+/* Try forwarding a request to the prior gretl instance with
+   PID @gpid, either to open a file or just to show itself.
 
    Return TRUE if we're able to do this, otherwise FALSE.
 */
@@ -706,4 +736,3 @@ gboolean forward_open_request (long gpid, const char *fname)
 
 # endif /* OS variations */
 #endif /* GRETL_OPEN_HANDLER */
-
