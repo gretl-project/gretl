@@ -2915,25 +2915,34 @@ static int peek_foldvar (gretl_bundle *bparm, int *fvar)
 
 #ifdef HAVE_MPI
 
+/* Here we're trying to tell if we should invoke automated
+   local-machine MPI -- having already ascertained that it's
+   feasible in general terms.
+*/
+
 static int peek_use_mpi (gretl_bundle *bparm,
 			 gretl_bundle *bmodel,
 			 gretl_bundle *bprob,
 			 PRN *prn)
 {
-    int ival, ret = 0;
+    int ival = 0, ret = 0;
 
     if (bmodel != NULL || bprob != NULL) {
 	/* these cases are not handled yet */
 	return 0;
     }
 
-    if (get_optional_int(bparm, "use_mpi", &ival, NULL) && ival > 0) {
+    if (get_optional_int(bparm, "use_mpi", &ival, NULL)) {
+	/* if the user specified @use_mpi, respect it provisionally */
 	ret = ival;
+    } else {
+	/* otherwise default to using MPI subject to the check below? */
+	ret = 1;
     }
 
     if (ret > 0) {
 	/* MPI is actually used internally only in parameter search,
-	   so let's peek at that too.
+	   so let's peek at that.
 	*/
 	int search = 0;
 
@@ -2943,7 +2952,7 @@ static int peek_use_mpi (gretl_bundle *bparm,
 	} else if (gretl_bundle_get_matrix(bparm, "grid", NULL) != NULL) {
 	    search = 1;
 	}
-	if (!search) {
+	if (!search && ival > 0) {
 	    pputs(prn, "svm: 'use_mpi' option ignored in the absence of search");
 	    pputc(prn, '\n');
 	    ret = 0;
@@ -3414,18 +3423,22 @@ static int forward_to_gretlmpi (const int *list,
     return err;
 }
 
-static int can_do_mpi (void)
+/* Are we able to do automated local MPI? */
+
+static int can_do_auto_mpi (void)
 {
+    int ret = 0;
+
     if (gretl_mpi_initialized()) {
-	/* can't run MPI under MPI */
-	return 0;
+	; /* No: can't run MPI under MPI */
     } else if (gretl_n_processors() < 2) {
-	/* can't do local MPI */
-	return 0;
+	; /* No: can't do local MPI */
     } else {
-	/* OK if mpiexec is installed */
-	return check_for_mpiexec();
+	/* Yes, if mpiexec is installed */
+	ret = check_for_mpiexec();
     }
+
+    return ret;
 }
 
 #endif
@@ -3451,8 +3464,9 @@ int gretl_svm_driver (const int *list,
 
 #ifdef HAVE_MPI
     if (gretl_mpi_rank() > 0) {
+	/* cut out chatter from ranks other than 0 */
 	prn = NULL;
-    } else if (can_do_mpi()) {
+    } else if (can_do_auto_mpi()) {
 	int np = peek_use_mpi(bparams, bmodel, bprob, prn);
 
 	if (np > 0) {
