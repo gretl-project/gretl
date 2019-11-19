@@ -605,7 +605,8 @@ static int admm_iteration (const gretl_matrix *A,
 static int real_admm_lasso (const gretl_matrix *A,
 			    const gretl_matrix *b,
 			    gretl_bundle *bun,
-			    double rho)
+			    double rho,
+			    PRN *prn)
 {
     gretl_matrix_block *MB;
     double critmin = 1e200;
@@ -660,10 +661,10 @@ static int real_admm_lasso (const gretl_matrix *A,
 
     if (verbo > 0) {
 	if (nlam > 1) {
-	    printf("using lambda-fraction sequence of length %d, starting at %g\n",
-		   nlam, lfrac->val[0]);
+	    pprintf(prn, "using lambda-fraction sequence of length %d, starting at %g\n",
+		    nlam, lfrac->val[0]);
 	} else {
-	    printf("using lambda-fraction %g\n", lfrac->val[0]);
+	    pprintf(prn, "using lambda-fraction %g\n", lfrac->val[0]);
 	}
     }
 
@@ -671,7 +672,7 @@ static int real_admm_lasso (const gretl_matrix *A,
 
     B = gretl_zero_matrix_new(n + stdize, nlam);
     if (verbo > 0 && nlam > 1) {
-	printf("     lambda  coeffs    criterion\n");
+	pprintf(prn, "     lambda  coeffs    criterion\n");
     }
 
     for (j=0; j<nlam && !err; j++) {
@@ -692,8 +693,8 @@ static int real_admm_lasso (const gretl_matrix *A,
 	    }
 	    crit = objective(A, b, z, lambda, m1);
 	    if (verbo > 0 && nlam > 1) {
-		printf("%#12.6g  %5d    %#.8g (%d iters)\n",
-		       lambda/m, nnz, crit, iters);
+		pprintf(prn, "%#12.6g  %5d    %#.8g (%d iters)\n",
+			lambda/m, nnz, crit, iters);
 	    }
 	    if (crit < critmin) {
 		critmin = crit;
@@ -835,7 +836,8 @@ static void prepare_xv_data (const gretl_matrix *X,
 static gretl_matrix *process_xv_criterion (gretl_matrix *XVC,
 					   gretl_matrix *lfrac,
 					   int *ibest, int *i1se,
-					   int crit_type)
+					   int crit_type,
+					   PRN *prn)
 {
     gretl_matrix *metrics;
     double avg, d, v, se, se1, avgmin = 1e200;
@@ -859,8 +861,8 @@ static gretl_matrix *process_xv_criterion (gretl_matrix *XVC,
 	}
 	gretl_matrix_set(metrics, i, 0, avg);
 	if (crit_type == CRIT_PCC) {
-	    printf("s = %#g -> %s %#g\n", lfrac->val[i],
-		   crit_string(crit_type), 100 - avg);
+	    pprintf(prn, "s = %#g -> %s %#g\n", lfrac->val[i],
+		    crit_string(crit_type), 100 - avg);
 	    continue;
 	}
 	for (j=0; j<nf; j++) {
@@ -870,8 +872,8 @@ static gretl_matrix *process_xv_criterion (gretl_matrix *XVC,
 	v /= (nf - 1);
 	se = sqrt(v/nf);
 	gretl_matrix_set(metrics, i, 1, se);
-	printf("s = %#g -> %s %#g (%#g)\n", lfrac->val[i],
-	       crit_string(crit_type), avg, se);
+	pprintf(prn, "s = %#g -> %s %#g (%#g)\n", lfrac->val[i],
+		crit_string(crit_type), avg, se);
     }
 
     *ibest = ialt = imin;
@@ -922,7 +924,8 @@ static int get_crit_type (gretl_bundle *bun)
 static int admm_lasso_xv (gretl_matrix *A,
 			  gretl_matrix *b,
 			  gretl_bundle *bun,
-			  double rho)
+			  double rho,
+			  PRN *prn)
 {
     gretl_matrix_block *AB;
     gretl_matrix *Ae, *Af;
@@ -951,8 +954,8 @@ static int admm_lasso_xv (gretl_matrix *A,
     fsize = A->rows / nf;
     esize = (nf - 1) * fsize;
 
-    printf("admm_lasso_xv: nf=%d, fsize=%d, randfolds=%d, crit=%s\n",
-	   nf, fsize, randfolds, crit_string(crit_type));
+    pprintf(prn, "admm_lasso_xv: nf=%d, fsize=%d, randfolds=%d, crit=%s\n",
+	    nf, fsize, randfolds, crit_string(crit_type));
 
     AB = gretl_matrix_block_new(&Ae, esize, A->cols,
 				&Af, fsize, A->cols,
@@ -972,7 +975,9 @@ static int admm_lasso_xv (gretl_matrix *A,
     lmax = gretl_matrix_infinity_norm(Atb);
     /* and scale it down for the folds */
     lmax *= esize / (double) A->rows;
+#if 0
     fprintf(stderr, "cross validation lambda max = %#g\n", lmax);
+#endif
     gretl_matrix_free(Atb);
 
     if (randfolds) {
@@ -996,16 +1001,16 @@ static int admm_lasso_xv (gretl_matrix *A,
 	gretl_matrix *metrics;
 	int ibest = 0, i1se = 0;
 
-	metrics = process_xv_criterion(XVC, lfrac, &ibest, &i1se, crit_type);
-	printf("\nAverage out-of-sample %s minimized at %g for s=%g\n",
-	       crit_string(crit_type), gretl_matrix_get(metrics, ibest, 0),
-	       lfrac->val[ibest]);
-	printf("Largest s within one s.e. of best criterion: %g\n",
-	       lfrac->val[i1se]);
+	metrics = process_xv_criterion(XVC, lfrac, &ibest, &i1se, crit_type, prn);
+	pprintf(prn, "\nAverage out-of-sample %s minimized at %g for s=%g\n",
+		crit_string(crit_type), gretl_matrix_get(metrics, ibest, 0),
+		lfrac->val[ibest]);
+	pprintf(prn, "Largest s within one s.e. of best criterion: %g\n",
+		lfrac->val[i1se]);
 	/* now determine coefficient vector on full training set */
 	lxv->val[0] = lfrac->val[ibest];
 	gretl_bundle_donate_data(bun, "lxv", lxv, GRETL_TYPE_MATRIX, 0);
-	err = real_admm_lasso(A, b, bun, rho);
+	err = real_admm_lasso(A, b, bun, rho, prn);
 	if (!err) {
 	    gretl_bundle_donate_data(bun, "XVC", metrics, GRETL_TYPE_MATRIX, 0);
 	}
@@ -1022,7 +1027,8 @@ static int admm_lasso_xv (gretl_matrix *A,
 static int mpi_admm_lasso_xv (gretl_matrix *A,
 			      gretl_matrix *b,
 			      gretl_bundle *bun,
-			      double rho)
+			      double rho,
+			      PRN *prn)
 {
     gretl_matrix_block *AB = NULL;
     gretl_matrix *XVC = NULL;
@@ -1077,8 +1083,8 @@ static int mpi_admm_lasso_xv (gretl_matrix *A,
     if (rank == 0) {
 	gretl_matrix *Atb = NULL;
 
-	printf("admm_lasso_xv: nf=%d, fsize=%d, randfolds=%d, crit=%s\n",
-	       nf, fsize, randfolds, crit_string(crit_type));
+	pprintf(prn, "admm_lasso_xv: nf=%d, fsize=%d, randfolds=%d, crit=%s\n",
+		nf, fsize, randfolds, crit_string(crit_type));
 
 	/* determine the infnorm for all training data */
 	Atb = gretl_matrix_alloc(A->cols, 1);
@@ -1088,7 +1094,6 @@ static int mpi_admm_lasso_xv (gretl_matrix *A,
 	lmax = gretl_matrix_infinity_norm(Atb);
 	/* and scale it down for the folds */
 	lmax *= esize / (double) A->rows;
-	fprintf(stderr, "cross validation lambda max = %#g\n", lmax);
 	gretl_matrix_free(Atb);
     }
 
@@ -1139,16 +1144,16 @@ static int mpi_admm_lasso_xv (gretl_matrix *A,
 	gretl_matrix *metrics;
 	int ibest = 0, i1se = 0;
 
-	metrics = process_xv_criterion(XVC, lfrac, &ibest, &i1se, crit_type);
-	printf("\nAverage out-of-sample %s minimized at %g for s=%g\n",
-	       crit_string(crit_type), gretl_matrix_get(metrics, ibest, 0),
-	       lfrac->val[ibest]);
-	printf("Largest s within one s.e. of best criterion: %g\n",
-	       lfrac->val[i1se]);
+	metrics = process_xv_criterion(XVC, lfrac, &ibest, &i1se, crit_type, prn);
+	pprintf(prn, "\nAverage out-of-sample %s minimized at %g for s=%g\n",
+		crit_string(crit_type), gretl_matrix_get(metrics, ibest, 0),
+		lfrac->val[ibest]);
+	pprintf(prn, "Largest s within one s.e. of best criterion: %g\n",
+		lfrac->val[i1se]);
 	/* determine coefficient vector on full training set */
 	lxv->val[0] = lfrac->val[ibest];
 	gretl_bundle_donate_data(bun, "lxv", lxv, GRETL_TYPE_MATRIX, 0);
-	err = real_admm_lasso(A, b, bun, rho);
+	err = real_admm_lasso(A, b, bun, rho, prn);
 	if (!err) {
 	    gretl_bundle_donate_data(bun, "XVC", metrics, GRETL_TYPE_MATRIX, 0);
 	}
@@ -1164,7 +1169,8 @@ static int mpi_admm_lasso_xv (gretl_matrix *A,
 
 int admm_lasso (gretl_matrix *A,
 		gretl_matrix *b,
-		gretl_bundle *bun)
+		gretl_bundle *bun,
+		PRN *prn)
 {
     gretl_matrix *ctrl;
     double rho = 8.0; /* once upon a time, was 1.0 */
@@ -1196,11 +1202,11 @@ int admm_lasso (gretl_matrix *A,
     if (xv) {
 #ifdef HAVE_MPI /* experimental at this point */
 	if (gretl_mpi_n_processes() > 1) {
-	    return mpi_admm_lasso_xv(A, b, bun, rho);
+	    return mpi_admm_lasso_xv(A, b, bun, rho, prn);
 	}
 #endif
-	return admm_lasso_xv(A, b, bun, rho);
+	return admm_lasso_xv(A, b, bun, rho, prn);
     } else {
-	return real_admm_lasso(A, b, bun, rho);
+	return real_admm_lasso(A, b, bun, rho, prn);
     }
 }

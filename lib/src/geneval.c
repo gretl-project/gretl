@@ -11637,7 +11637,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	}
     } else if (f == HF_ADMM) {
 	int (*admmfunc) (const gretl_matrix *, const gretl_matrix *,
-			 gretl_bundle *);
+			 gretl_bundle *, PRN *);
 
 	post_process = 0;
 	admmfunc = get_plugin_function("admm_lasso");
@@ -11649,7 +11649,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    ret = aux_scalar_node(p);
 	}
 	if (!p->err) {
-	    p->err = ret->v.xval = admmfunc(l->v.m, m->v.m, r->v.b);
+	    p->err = ret->v.xval = admmfunc(l->v.m, m->v.m, r->v.b, p->prn);
 	}
     }
 
