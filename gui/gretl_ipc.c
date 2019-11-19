@@ -720,9 +720,7 @@ gboolean forward_open_request (long gpid, const char *fname)
     HWND hw = get_hwnd_for_pid(gpid);
     gboolean ok = FALSE;
 
-    if (!hw) {
-	fprintf(stderr, "forward_open_request: couldn't find HWND\n");
-    } else {
+    if (hw != NULL) {
 	long mypid = (long) GetCurrentProcessId();
 
 	ok = write_request_file(gpid, fname);
