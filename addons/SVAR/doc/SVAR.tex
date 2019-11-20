@@ -2263,15 +2263,23 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
 \section{Alphabetical list of (public) functions}
 \label{sec:syntax}
 
-\begin{funcdoc}{FEVD(bundle *SVARobj)}
+The name of the model bundle which is passed around in pointer form between 
+most of these functions is determined by the user when the bundle is assigned
+from a call to \texttt{SVAR\_setup}. To avoid confusion, it is assumed in the
+following that that bundle is named \texttt{"Smod"} (although the internal 
+name of the argument inside the local function scope is of course arbitrary 
+and need not be harmonized). 
+
+
+\begin{funcdoc}{FEVD(bundle *Smod)}
   Computes the Forecast Error Variance Decomposition from the
-  structural IRFs, as contained in the model \texttt{SVARobj}. Returns
+  structural IRFs, as contained in the model \texttt{Smod}. Returns
   an $h \times n^2$ matrix. The FEVD for variable $k$ is the block of
   columns from $(k-1) n + 1$ to $k n$ (where $n$ is the number of
   variables in the VAR).
 \end{funcdoc}
 
-\begin{funcdoc}{FEVDplot(bundle *obj, int vnum[0], int keypos[0:2:1])}
+\begin{funcdoc}{FEVDplot(bundle *Smod, int vnum[0], int keypos[0:2:1])}
   Plots on screen the Forecast Error Variance Decomposition for a
   variable. Its arguments are:
   \begin{enumerate}
@@ -2281,7 +2289,7 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   \end{enumerate}
 \end{funcdoc}
 
-\begin{funcdoc}{FEVDsave(string outfilename, bundle *obj, int vnum[0], int keypos[0:2:1])}
+\begin{funcdoc}{FEVDsave(string outfilename, bundle *Smod, int vnum[0], int keypos[0:2:1])}
   Saves the Forecast Error Variance Decomposition for a variable to a
   graphic file, whose format is identified by its extension. Its
   arguments are:
@@ -2293,16 +2301,16 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   \end{enumerate}
 \end{funcdoc}
 
-\begin{funcdoc}{GetShock(bundle *SVARobj, int i)}
+\begin{funcdoc}{GetShock(bundle *Smod, int i)}
   Retrieves, as a series, the estimate of $i$-th structural shock of
   the system via equation \eqref{eq:PrE-StS-AB}, in which VAR
   residuals are used instead of the one-step-ahead prediction errors
-  $\PrE{t}$. If the bundle \texttt{SVARobj} contains a non-null string
+  $\PrE{t}$. If the bundle \texttt{Smod} contains a non-null string
   \texttt{snames} with shock names, those are used in the description
   for the generated series.
 \end{funcdoc}
 
-\begin{funcdoc}{HDplot(bundle *obj, int vnum[0])}
+\begin{funcdoc}{HDplot(bundle *Smod, int vnum[0])}
   Plots on screen the Historical Decomposition for a variable. Its
   arguments are:
   \begin{enumerate}
@@ -2311,17 +2319,17 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   \end{enumerate}
 \end{funcdoc}
 
-\begin{funcdoc}{HDsave(string outfilename, bundle *obj, int vnum[0])}
+\begin{funcdoc}{HDsave(string outfilename, bundle *Smod, int vnum[0])}
   Saves the Historical Decomposition for a variable to a graphic file,
   whose format is identified by its extension. Its arguments are:
   \begin{enumerate}
   \item The graphic file name.
-  \item A bundle holding the model.
+  \item A bundle holding the model (pointer form).
   \item The progressive number of the variable (0 means all).
   \end{enumerate}
 \end{funcdoc}
 
-\begin{funcdoc}{IRFplot(bundle *obj, int snum, int vnum, int keypos[0:2:1])}
+\begin{funcdoc}{IRFplot(bundle *Smod, int snum, int vnum, int keypos[0:2:1])}
   Plots an impulse response function on screen. Its arguments are:
   \begin{enumerate}
   \item A bundle holding the model
@@ -2332,19 +2340,19 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   \end{enumerate}
 \end{funcdoc}
 
-\begin{funcdoc}{IRFsave(string outfilename, bundle *obj, int snum, int vnum, int keypos[0:2:1]))}
+\begin{funcdoc}{IRFsave(string outfilename, bundle *Smod, int snum, int vnum, int keypos[0:2:1]))}
   Saves an impulse response function to a graphic file, whose format is
   identified by its extension. Its arguments are:
   \begin{enumerate}
   \item The graphic file name.
-  \item A bundle holding the model.
+  \item A bundle holding the model (pointer form).
   \item The progressive number of the shock (may be negative, in which
     case the IRF is flipped).
   \item The progressive number of the variable.
   \end{enumerate}
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_boot(bundle *obj, int rep[0::2000], scalar alpha[0:1:0.9], bool
+\begin{funcdoc}{SVAR\_boot(bundle *Smod, int rep[0::2000], scalar alpha[0:1:0.9], bool
     quiet[1],\\
     string btypestr[null], int biascorr[-1:2:-1])}
   Perform a bootstrap analysis of a model. Returns the number of
@@ -2370,7 +2378,7 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   non-SVEC models.
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_coint(bundle *obj, int dcase[1:5:3],
+\begin{funcdoc}{SVAR\_coint(bundle *Smod, int dcase[1:5:3],
 			   matrix jbeta, matrix jalpha[null],\\
 			   bool verbose[0]), list rexo[null]}
   Sets up a SVEC model for subsequent estimation. Its arguments are:
@@ -2387,24 +2395,24 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   \end{enumerate}
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_cumulate(bundle *b, int nv)}
+\begin{funcdoc}{SVAR\_cumulate(bundle *Smod, int nv)}
   Stores into the model the fact that the cumulated IRFs for
   variable \texttt{nv} are desired. This is typically used jointly
   with long-run restrictions.
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_estimate(bundle *obj, int verbosity[1])}
+\begin{funcdoc}{SVAR\_estimate(bundle *Smod, int verbosity[1])}
   Estimates the model by maximum likelihood. Its second argument is a
   scalar, which controls the verbosity of output. If omitted,
   output is printed.
   
-  Since v1.4 the identification check is called automatically before
-  the estimation of the structural form, unless this has been
-  explicitly suppressed in \texttt{SVAR\_setup} (or by manually
-  setting \texttt{obj.checkident} to 0).
+  The identification check before
+  the estimation of the structural form is activated in 
+  \texttt{SVAR\_setup} (or by manually setting \texttt{obj.checkident}
+  to 1).
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_hd(bundle *b, int nv)}
+\begin{funcdoc}{SVAR\_hd(bundle *Smod, int nv)}
   Performs the ``historical decomposition'' of variable \texttt{nv}:
   this function outputs a list of variables which decomposes the
   \verb|nv|-th variable in the system into a deterministic component
@@ -2417,7 +2425,7 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   \texttt{hd\_foo\_det}.
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_ident(bundle *b, int verbose[0])}
+\begin{funcdoc}{SVAR\_ident(bundle *Smod, int verbose[0])}
   Checks if a model is identified by applying (among other things) 
   the algorithm described
   in \cite{AG}. Returns a 0/1 scalar. Its second argument is a
@@ -2425,7 +2433,7 @@ by clicking on the leftmost icon\footnote{The visual appearance of the
   value, a few messages are printed as checks are performed.
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_restrict(bundle *b, string code, int r, int c[0], scalar d[0])}
+\begin{funcdoc}{SVAR\_restrict(bundle *Smod, string code, int r, int c[0], scalar d[0])}
 Sets up constraints for an existing model. The function which takes at
 most five arguments:
 \begin{enumerate}
@@ -2496,7 +2504,7 @@ a warning will be printed.
   arguments are:
   \begin{enumerate}
   \item A type string: at the moment, valid values are \texttt{"C"},
-    \texttt{"plain"} and \texttt{"AB"}.
+    \texttt{"plain"}, \texttt{"AB"} and \texttt{"SVEC"}.
   \item A list containing the endogenous variables.
   \item A list containing the exogenous variables.
   \item A positive integer, the VAR order.
@@ -2597,8 +2605,10 @@ a warning will be printed.
 \item Fix the Luetkepohl (2008) check for SVECs with weakly exogenous variables,
 and actually process the existing extra check whether a restriction might be redundant,
 which is relevant mostly in the case of some weakly exogenous variables.
+Also for SVECs, check whether a long-run restriction really applies to a permanent shock.
 
 \item Undo making the identification check the default, since it was cluttering the output.
+\item Some documentation updates.
 
 \end{itemize}
 
