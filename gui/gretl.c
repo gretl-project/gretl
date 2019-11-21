@@ -2567,6 +2567,8 @@ int mdata_active_var (void)
 
     if (selcount == 1 && v != 0) {
 	mdata->active_var = v;
+    } else {
+	mdata->active_var = 0;
     }
 
     return mdata->active_var;

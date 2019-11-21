@@ -13954,6 +13954,74 @@
 
   </command>
 
+  <command name="stdize" section="Transformations"
+    label="Standardize series">
+
+    <usage>
+      <arguments>
+        <argument>varlist</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--no-df-corr</flag>
+	  <effect>no degrees of freedom correction</effect>
+        </option>
+        <option>
+	  <flag>--center-only</flag>
+	  <effect>don't divide by s.d.</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description context="gui">
+      <para>
+	By default this action adds to dataset new series which are
+	standardized versions of the originals, named with a prefix
+	of <lit>s_</lit>. For example, <lit>s_x</lit> is formed by
+	subtracting the mean from <lit>x</lit> and dividing by its
+	sample standard deviation (with a degrees of freedom
+	correction of 1). But you can choose to divide by the
+	standard deviation without a degrees of freedom correction,
+	the maximum likelihood estimator.
+      </para>
+      <para>
+	You also have the option of forming series which are just
+	centered (the mean is subtracted by no scaling is applied).
+	In this case the new series names have prefix <lit>c_</lit>
+	rather than <lit>s_</lit>.
+      </para>
+    </description>
+
+    <description context="cli">
+      <para>
+	By default a standardized version of each of the series in
+	<repl>varlist</repl> is obtained and the result stored in a
+	new series with the prefix <lit>s_</lit>.  For example,
+	<cmd>stdize x y</cmd> creates the new series <lit>s_x</lit>
+	and <lit>s_y</lit>, each of which is centered and divided by
+	its sample standard deviation (with a degrees of freedom
+	correction of 1).
+      </para>
+      <para>
+	If the <opt>no-df-corr</opt> option is given no degrees of
+	freedom correction is applied; the standard deviation used is
+	the maximum likelihood estimator. If <opt>center-only</opt> is
+	given the series just have their means subtracted, and in that
+	case the output names have prefix <lit>c_</lit> rather than
+	<lit>s_</lit>.
+      </para>
+      <para>
+	The functionality of this command is available in somewhat
+	more flexible form via the <fncref targ="stdize"/> function.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Add/Standardize selected variables</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="store" section="Dataset" label="Save data">
 
     <usage>

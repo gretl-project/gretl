@@ -2041,6 +2041,10 @@
 	  <math>n</math> &minus; 1 as divisor, where <math>n</math>
 	  is the number of rows of <argname>X</argname>).
 	</para>
+	<para>
+	  Note that <fncref targ="stdize"/> provides more flexible
+	  functionality.
+	</para>
       </description>
     </function>
 
@@ -10697,6 +10701,31 @@
 	  <seelist>
             <fncref targ="var"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="stdize" section="stats" output="asinput">
+      <fnargs>
+	<fnarg type="series-list-or-mat">X</fnarg>
+	<fnarg type="int" optional="true">v</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  By default, returns a standardized version of the series,
+	  list or matrix: the input is centered and divided by its
+	  sample standard deviation (with a degrees of freedom
+	  correction of 1). Results are computed by column in the case
+	  of matrix input.
+	</para>
+	<para>
+	  The optional second argument can be used to inflect the
+	  result. A non-negative value of <argname>v</argname> sets
+	  the degrees of freedom correction used in the standard
+	  deviation, so <argname>v</argname> = 0 gives the maximum
+	  likelihood estimator. As a special case, if
+	  <argname>v</argname> equals &minus;1 only centering
+	  is performed.
 	</para>
       </description>
     </function>

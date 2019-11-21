@@ -158,7 +158,11 @@ make_transform_varname (char *vname, const char *orig, int ci,
 	strcpy(vname, "i_");
 	strncat(vname, orig, len - 2);
     } else if (ci == STDIZE) {
-	strcpy(vname, "s_");
+	if (aux < 0) {
+	    strcpy(vname, "c_");
+	} else {
+	    strcpy(vname, "s_");
+	}
 	strncat(vname, orig, len - 2);
     } else if (ci == RESAMPLE) {
 	strcpy(vname, "rs_");
