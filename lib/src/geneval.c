@@ -6991,8 +6991,10 @@ static NODE *n_elements_node (NODE *n, parser *p)
 	    if (list != NULL) {
 		/* backward compatibility (?): _name_ of list */
 		ret->v.xval = list[0];
-	    } else {
+	    } else if (n->v.str != NULL) {
 		ret->v.xval = strlen(n->v.str);
+	    } else {
+		ret->v.xval = 0;
 	    }
 	} else {
 	    p->err = E_TYPES;
