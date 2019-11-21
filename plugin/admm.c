@@ -56,9 +56,9 @@ enum {
 };
 
 #ifdef HAVE_MPI
-static int mpi_parent_action (gretl_matrix *X,
-			      gretl_matrix *y,
-			      gretl_bundle *b,
+static int mpi_parent_action (gretl_matrix *A,
+			      gretl_matrix *b,
+			      gretl_bundle *bun,
 			      double rho,
 			      PRN *prn);
 #endif
@@ -839,7 +839,7 @@ static void prepare_xv_data (const gretl_matrix *X,
 
 /* Given @C holding criterion values per lambda (rows) and
    per fold (columns), compose a matrix holding the means
-   and possibly the means and standard errors.
+   and possibly standard errors.
 */
 
 static gretl_matrix *process_xv_criterion (gretl_matrix *XVC,
