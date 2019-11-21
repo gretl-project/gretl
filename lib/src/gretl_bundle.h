@@ -49,6 +49,8 @@ BundleType gretl_bundle_get_type (gretl_bundle *bundle);
 
 void *gretl_bundle_get_content (gretl_bundle *bundle);
 
+int gretl_bundles_swap_content (gretl_bundle *b1, gretl_bundle *b2);
+
 void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
 			     GretlType *type, int *size, int *err);
 

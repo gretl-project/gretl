@@ -29,6 +29,7 @@
 
 #ifdef HAVE_MPI
 # include "gretl_mpi.h"
+# include "gretl_foreign.h"
 #endif
 
 #if defined(USE_AVX)
@@ -53,6 +54,14 @@ enum {
     CRIT_MAE,
     CRIT_PCC
 };
+
+#ifdef HAVE_MPI
+static int mpi_parent_action (gretl_matrix *X,
+			      gretl_matrix *y,
+			      gretl_bundle *b,
+			      double rho,
+			      PRN *prn);
+#endif
 
 static const char *crit_string (int crit)
 {
@@ -796,10 +805,10 @@ static int lasso_xv_round (const gretl_matrix *A,
 
 static void prepare_xv_data (const gretl_matrix *X,
 			     const gretl_matrix *y,
-			     gretl_matrix *Ae,
-			     gretl_matrix *be,
-			     gretl_matrix *Af,
-			     gretl_matrix *bf,
+			     gretl_matrix *Xe,
+			     gretl_matrix *ye,
+			     gretl_matrix *Xf,
+			     gretl_matrix *yf,
 			     int f)
 {
     int i, j, ke, ko;
@@ -809,18 +818,18 @@ static void prepare_xv_data (const gretl_matrix *X,
 	ke = ko = 0;
 	for (i=0; i<X->rows; i++) {
 	    xij = gretl_matrix_get(X, i, j);
-	    if (i/Af->rows == f) {
+	    if (i/Xf->rows == f) {
 		/* "out of sample" range */
-		gretl_matrix_set(Af, ko, j, xij);
+		gretl_matrix_set(Xf, ko, j, xij);
 		if (j == 0) {
-		    bf->val[ko] = y->val[i];
+		    yf->val[ko] = y->val[i];
 		}
 		ko++;
 	    } else {
 		/* estimation sample */
-		gretl_matrix_set(Ae, ke, j, xij);
+		gretl_matrix_set(Xe, ke, j, xij);
 		if (j == 0) {
-		    be->val[ke] = y->val[i];
+		    ye->val[ke] = y->val[i];
 		}
 		ke++;
 	    }
@@ -846,6 +855,9 @@ static gretl_matrix *process_xv_criterion (gretl_matrix *XVC,
     int i, j, ialt, imin = 0;
 
     metrics = gretl_zero_matrix_new(XVC->rows, mcols);
+    if (metrics == NULL) {
+	return NULL;
+    }
 
     for (i=0; i<XVC->rows; i++) {
 	v = avg = 0;
@@ -900,6 +912,38 @@ static gretl_matrix *process_xv_criterion (gretl_matrix *XVC,
     return metrics;
 }
 
+static int post_xvalidation_task (gretl_matrix *XVC,
+				  gretl_matrix *lfrac,
+				  int crit_type,
+				  gretl_bundle *b,
+				  PRN *prn)
+{
+    gretl_matrix *metrics, *lxv;
+    int ibest = 0, i1se = 0;
+
+    metrics = process_xv_criterion(XVC, lfrac, &ibest, &i1se,
+				   crit_type, prn);
+    if (metrics == NULL) {
+	return E_ALLOC;
+    }
+
+    if (prn != NULL) {
+	pprintf(prn, "\nAverage out-of-sample %s minimized at %g for s=%g\n",
+		crit_string(crit_type), gretl_matrix_get(metrics, ibest, 0),
+		lfrac->val[ibest]);
+	pprintf(prn, "Largest s within one s.e. of best criterion: %g\n",
+		lfrac->val[i1se]);
+    }
+
+    lxv = gretl_matrix_alloc(1, 1);
+    lxv->val[0] = lfrac->val[ibest];
+
+    gretl_bundle_donate_data(b, "lxv", lxv, GRETL_TYPE_MATRIX, 0);
+    gretl_bundle_donate_data(b, "XVC", metrics, GRETL_TYPE_MATRIX, 0);
+
+    return 0;
+}
+
 static int get_crit_type (gretl_bundle *bun)
 {
     const char *s = gretl_bundle_get_string(bun, "xvcrit", NULL);
@@ -921,6 +965,49 @@ static int get_crit_type (gretl_bundle *bun)
     return ret;
 }
 
+static double get_xvalidation_lmax (gretl_matrix *A,
+				    gretl_matrix *b,
+				    int esize)
+{
+    gretl_matrix *Atb;
+    double lmax;
+
+    /* determine the infnorm for all training data */
+    Atb = gretl_matrix_alloc(A->cols, 1);
+    gretl_matrix_multiply_mod(A, GRETL_MOD_TRANSPOSE,
+			      b, GRETL_MOD_NONE,
+			      Atb, GRETL_MOD_NONE);
+    lmax = gretl_matrix_infinity_norm(Atb);
+
+    /* and scale it down for the folds */
+    lmax *= esize / (double) A->rows;
+
+    gretl_matrix_free(Atb);
+
+    return lmax;
+}
+
+static int get_xvalidation_details (gretl_bundle *bun,
+				    int *nf, int *randfolds,
+				    gretl_matrix **lfrac,
+				    int *crit_type)
+{
+    int err = 0;
+
+    *nf = gretl_bundle_get_int(bun, "nfolds", &err);
+    *randfolds = gretl_bundle_get_int(bun, "randfolds", &err);
+    *lfrac = gretl_bundle_get_matrix(bun, "lfrac", &err);
+
+    if (!err) {
+	*crit_type = get_crit_type(bun);
+	if (*crit_type < 0) {
+	    err = E_INVARG;
+	}
+    }
+
+    return err;
+}
+
 static int admm_lasso_xv (gretl_matrix *A,
 			  gretl_matrix *b,
 			  gretl_bundle *bun,
@@ -931,24 +1018,18 @@ static int admm_lasso_xv (gretl_matrix *A,
     gretl_matrix *Ae, *Af;
     gretl_matrix *be, *bf;
     gretl_matrix *lfrac;
-    gretl_matrix *Atb, *XVC;
+    gretl_matrix *XVC;
     double lmax;
     int nlam, fsize, esize;
     int randfolds = 0;
     int crit_type = 0;
     int f, nf;
-    int err = 0;
+    int err;
 
-    nf = gretl_bundle_get_int(bun, "nfolds", &err);
-    randfolds = gretl_bundle_get_int(bun, "randfolds", &err);
-    lfrac = gretl_bundle_get_matrix(bun, "lfrac", &err);
+    err = get_xvalidation_details(bun, &nf, &randfolds,
+				  &lfrac, &crit_type);
     if (err) {
 	return err;
-    }
-
-    crit_type = get_crit_type(bun);
-    if (crit_type < 0) {
-	return E_INVARG;
     }
 
     fsize = A->rows / nf;
@@ -966,19 +1047,7 @@ static int admm_lasso_xv (gretl_matrix *A,
     }
 
     nlam = gretl_vector_get_length(lfrac);
-
-    /* determine the infnorm for all training data */
-    Atb = gretl_matrix_alloc(A->cols, 1);
-    gretl_matrix_multiply_mod(A, GRETL_MOD_TRANSPOSE,
-			      b, GRETL_MOD_NONE,
-			      Atb, GRETL_MOD_NONE);
-    lmax = gretl_matrix_infinity_norm(Atb);
-    /* and scale it down for the folds */
-    lmax *= esize / (double) A->rows;
-#if 0
-    fprintf(stderr, "cross validation lambda max = %#g\n", lmax);
-#endif
-    gretl_matrix_free(Atb);
+    lmax = get_xvalidation_lmax(A, b, esize);
 
     if (randfolds) {
 	/* scramble the row order of A and b */
@@ -997,22 +1066,10 @@ static int admm_lasso_xv (gretl_matrix *A,
     lasso_xv_round(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0);
 
     if (!err) {
-	gretl_matrix *lxv = gretl_matrix_alloc(1, 1);
-	gretl_matrix *metrics;
-	int ibest = 0, i1se = 0;
-
-	metrics = process_xv_criterion(XVC, lfrac, &ibest, &i1se, crit_type, prn);
-	pprintf(prn, "\nAverage out-of-sample %s minimized at %g for s=%g\n",
-		crit_string(crit_type), gretl_matrix_get(metrics, ibest, 0),
-		lfrac->val[ibest]);
-	pprintf(prn, "Largest s within one s.e. of best criterion: %g\n",
-		lfrac->val[i1se]);
-	/* now determine coefficient vector on full training set */
-	lxv->val[0] = lfrac->val[ibest];
-	gretl_bundle_donate_data(bun, "lxv", lxv, GRETL_TYPE_MATRIX, 0);
-	err = real_admm_lasso(A, b, bun, rho, prn);
+	err = post_xvalidation_task(XVC, lfrac, crit_type, bun, prn);
 	if (!err) {
-	    gretl_bundle_donate_data(bun, "XVC", metrics, GRETL_TYPE_MATRIX, 0);
+	    /* determine coefficient vector on full training set */
+	    err = real_admm_lasso(A, b, bun, rho, prn);
 	}
     }
 
@@ -1053,16 +1110,10 @@ static int mpi_admm_lasso_xv (gretl_matrix *A,
     np = gretl_mpi_n_processes();
     rankmax = np - 1;
 
-    nf = gretl_bundle_get_int(bun, "nfolds", &err);
-    randfolds = gretl_bundle_get_int(bun, "randfolds", &err);
-    lfrac = gretl_bundle_get_matrix(bun, "lfrac", &err);
+    err = get_xvalidation_details(bun, &nf, &randfolds,
+				  &lfrac, &crit_type);
     if (err) {
 	return err;
-    }
-
-    crit_type = get_crit_type(bun);
-    if (crit_type < 0) {
-	return E_INVARG;
     }
 
     nlam = gretl_vector_get_length(lfrac);
@@ -1081,20 +1132,9 @@ static int mpi_admm_lasso_xv (gretl_matrix *A,
     }
 
     if (rank == 0) {
-	gretl_matrix *Atb = NULL;
-
 	pprintf(prn, "admm_lasso_xv: nf=%d, fsize=%d, randfolds=%d, crit=%s\n",
 		nf, fsize, randfolds, crit_string(crit_type));
-
-	/* determine the infnorm for all training data */
-	Atb = gretl_matrix_alloc(A->cols, 1);
-	gretl_matrix_multiply_mod(A, GRETL_MOD_TRANSPOSE,
-				  b, GRETL_MOD_NONE,
-				  Atb, GRETL_MOD_NONE);
-	lmax = gretl_matrix_infinity_norm(Atb);
-	/* and scale it down for the folds */
-	lmax *= esize / (double) A->rows;
-	gretl_matrix_free(Atb);
+	lmax = get_xvalidation_lmax(A, b, esize);
     }
 
     if (randfolds) {
@@ -1140,22 +1180,10 @@ static int mpi_admm_lasso_xv (gretl_matrix *A,
     lasso_xv_round(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0);
 
     if (rank == 0 && !err) {
-	gretl_matrix *lxv = gretl_matrix_alloc(1, 1);
-	gretl_matrix *metrics;
-	int ibest = 0, i1se = 0;
-
-	metrics = process_xv_criterion(XVC, lfrac, &ibest, &i1se, crit_type, prn);
-	pprintf(prn, "\nAverage out-of-sample %s minimized at %g for s=%g\n",
-		crit_string(crit_type), gretl_matrix_get(metrics, ibest, 0),
-		lfrac->val[ibest]);
-	pprintf(prn, "Largest s within one s.e. of best criterion: %g\n",
-		lfrac->val[i1se]);
-	/* determine coefficient vector on full training set */
-	lxv->val[0] = lfrac->val[ibest];
-	gretl_bundle_donate_data(bun, "lxv", lxv, GRETL_TYPE_MATRIX, 0);
-	err = real_admm_lasso(A, b, bun, rho, prn);
+	err = post_xvalidation_task(XVC, lfrac, crit_type, bun, prn);
 	if (!err) {
-	    gretl_bundle_donate_data(bun, "XVC", metrics, GRETL_TYPE_MATRIX, 0);
+	    /* determine coefficient vector on full training set */
+	    err = real_admm_lasso(A, b, bun, rho, prn);
 	}
     }
 
@@ -1167,19 +1195,18 @@ static int mpi_admm_lasso_xv (gretl_matrix *A,
 
 #endif /* HAVE_MPI */
 
-int admm_lasso (gretl_matrix *A,
-		gretl_matrix *b,
-		gretl_bundle *bun,
-		PRN *prn)
+static void prepare_admm_params (gretl_matrix *A,
+				 gretl_matrix *b,
+				 gretl_bundle *bun,
+				 double *rho)
 {
     gretl_matrix *ctrl;
-    double rho = 8.0; /* once upon a time, was 1.0 */
-    int xv, err = 0;
 
     ctrl = gretl_bundle_get_matrix(bun, "admmctrl", NULL);
+
     if (ctrl != NULL) {
 	if (ctrl->val[0] > 0) {
-	    rho = ctrl->val[0];
+	    *rho = ctrl->val[0];
 	}
 	if (ctrl->val[1] > 0) {
 	    reltol = ctrl->val[1];
@@ -1196,13 +1223,26 @@ int admm_lasso (gretl_matrix *A,
 
     /* scale the absolute tolerance */
     abstol = sqrt(A->cols) * abstol;
+}
+
+int admm_lasso (gretl_matrix *A,
+		gretl_matrix *b,
+		gretl_bundle *bun,
+		PRN *prn)
+{
+    double rho = 8.0; /* once upon a time, was 1.0 */
+    int xv, err = 0;
+
+    prepare_admm_params(A, b, bun, &rho);
 
     xv = gretl_bundle_get_int(bun, "xvalidate", &err);
 
     if (xv) {
-#ifdef HAVE_MPI /* experimental at this point */
+#ifdef HAVE_MPI
 	if (gretl_mpi_n_processes() > 1) {
 	    return mpi_admm_lasso_xv(A, b, bun, rho, prn);
+	} else if (auto_mpi_ok()) {
+	    return mpi_parent_action(A, b, bun, rho, prn);
 	}
 #endif
 	return admm_lasso_xv(A, b, bun, rho, prn);
@@ -1210,3 +1250,88 @@ int admm_lasso (gretl_matrix *A,
 	return real_admm_lasso(A, b, bun, rho, prn);
     }
 }
+
+#ifdef HAVE_MPI
+
+/* We come here if a parent process has called our
+   automatic local MPI routine for cross validation.
+*/
+
+int admm_xv_mpi (PRN *prn)
+{
+    gretl_bundle *bun = NULL;
+    gretl_matrix *A;
+    gretl_matrix *b;
+    double rho = 8.0;
+    int err = 0;
+
+    /* pick up the arguments deposited by parent process */
+
+    A = gretl_matrix_read_from_file("lasso_A.bin", 1, &err);
+    b = gretl_matrix_read_from_file("lasso_b.bin", 1, &err);
+
+    if (!err) {
+	bun = gretl_bundle_read_from_file("lasso_bun.xml", 1, &err);
+    }
+
+    if (!err) {
+	prepare_admm_params(A, b, bun, &rho);
+    }
+
+    if (!err) {
+	err = mpi_admm_lasso_xv(A, b, bun, rho, prn);
+	if (!err && gretl_mpi_rank() == 0) {
+	    gretl_bundle_write_to_file(bun, "lasso_XV_result.xml", 1);
+	}
+    }
+
+    gretl_matrix_free(A);
+    gretl_matrix_free(b);
+    gretl_bundle_destroy(bun);
+
+    return err;
+}
+
+static int mpi_parent_action (gretl_matrix *A,
+			      gretl_matrix *b,
+			      gretl_bundle *bun,
+			      double rho,
+			      PRN *prn)
+{
+    int err;
+
+    err = gretl_matrix_write_to_file(A, "lasso_A.bin", 1);
+    if (!err) {
+	err = gretl_matrix_write_to_file(b, "lasso_b.bin", 1);
+    }
+    if (!err) {
+	err = gretl_bundle_write_to_file(bun, "lasso_bun.xml", 1);
+    }
+
+    if (!err) {
+	/* compose and execute MPI script */
+	err = foreign_start(MPI, NULL, OPT_NONE, prn);
+	if (!err) {
+	    foreign_append("_admm_lasso()", MPI);
+	    err = foreign_execute(NULL, OPT_L | OPT_S, prn);
+	    if (err) {
+		fprintf(stderr, "mpi_parent: foreign exec error %d\n", err);
+	    }
+	}
+    }
+
+    if (!err) {
+	/* retrieve results bundle written by gretlmpi */
+	gretl_bundle *res;
+
+	res = gretl_bundle_read_from_file("lasso_XV_result.xml", 1, &err);
+	if (!err) {
+	    gretl_bundles_swap_content(bun, res);
+	    gretl_bundle_destroy(res);
+	}
+    }
+
+    return err;
+}
+
+#endif /* HAVE_MPI */

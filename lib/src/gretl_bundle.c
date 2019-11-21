@@ -1148,6 +1148,30 @@ void *gretl_bundle_get_content (gretl_bundle *bundle)
     return (bundle == NULL)? NULL : (void *) bundle->ht;
 }
 
+/**
+ * gretl_bundles_swap_content:
+ * @b1: first bundle.
+ * @b2: second bundle.
+ *
+ * Exchanges the entire contents of the two bundles.
+ *
+ * Returns: 0 on success, error code on failure.
+ */
+
+int gretl_bundles_swap_content (gretl_bundle *b1, gretl_bundle *b2)
+{
+    if (b1 == NULL || b1->type != BUNDLE_PLAIN ||
+	b2 == NULL || b2->type != BUNDLE_PLAIN) {
+	return E_DATA;
+    } else {
+	void *tmp = b1->ht;
+
+	b1->ht = b2->ht;
+	b2->ht = tmp;
+	return 0;
+    }
+}
+
 static int real_bundle_set_data (gretl_bundle *b, const char *key,
 				 void *ptr, GretlType type,
 				 int size, int copy,

@@ -3020,3 +3020,27 @@ int gretl_gunzip (char *zname, char *fname)
 
     return 0;
 }
+
+/* Check if we're able to launch an automatic MPI routine, on the
+   local machine, from within some time-consuming function.  This
+   requires that MPI is available but not already running, and
+   the local machine has at least 2 processors.
+*/
+
+int auto_mpi_ok (void)
+{
+    int ret = 0;
+
+#ifdef HAVE_MPI
+    if (gretl_mpi_initialized()) {
+	; /* No: can't run MPI under MPI */
+    } else if (gretl_n_processors() < 2) {
+	; /* No: can't do local MPI */
+    } else {
+	/* Yes, if mpiexec is installed */
+	ret = check_for_mpiexec();
+    }
+#endif
+
+    return ret;
+}

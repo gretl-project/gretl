@@ -3423,24 +3423,6 @@ static int forward_to_gretlmpi (const int *list,
     return err;
 }
 
-/* Are we able to do automated local MPI? */
-
-static int can_do_auto_mpi (void)
-{
-    int ret = 0;
-
-    if (gretl_mpi_initialized()) {
-	; /* No: can't run MPI under MPI */
-    } else if (gretl_n_processors() < 2) {
-	; /* No: can't do local MPI */
-    } else {
-	/* Yes, if mpiexec is installed */
-	ret = check_for_mpiexec();
-    }
-
-    return ret;
-}
-
 #endif
 
 int gretl_svm_driver (const int *list,
@@ -3466,7 +3448,7 @@ int gretl_svm_driver (const int *list,
     if (gretl_mpi_rank() > 0) {
 	/* cut out chatter from ranks other than 0 */
 	prn = NULL;
-    } else if (can_do_auto_mpi()) {
+    } else if (auto_mpi_ok()) {
 	int np = peek_use_mpi(bparams, bmodel, bprob, prn);
 
 	if (np > 0) {

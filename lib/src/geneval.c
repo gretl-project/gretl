@@ -11636,20 +11636,34 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r,
 	    }
 	}
     } else if (f == HF_ADMM) {
-	int (*admmfunc) (const gretl_matrix *, const gretl_matrix *,
-			 gretl_bundle *, PRN *);
-
 	post_process = 0;
-	admmfunc = get_plugin_function("admm_lasso");
-	if (admmfunc == NULL) {
-	    p->err = E_FOPEN;
+	if (null_node(l) && null_node(m) && null_node(r)) {
+	    /* doing automatic MPI: no args needed */
+	    int (*admmfunc) (PRN *);
+
+	    admmfunc = get_plugin_function("admm_xv_mpi");
+	    if (admmfunc == NULL) {
+		p->err = E_FOPEN;
+	    } else {
+		p->err = admmfunc(p->prn);
+	    }
 	} else if (l->t != MAT || m->t != MAT || r->t != BUNDLE) {
+	    /* otherwise three args needed */
 	    p->err = E_TYPES;
 	} else {
-	    ret = aux_scalar_node(p);
+	    int (*admmfunc) (const gretl_matrix *, const gretl_matrix *,
+			     gretl_bundle *, PRN *);
+
+	    admmfunc = get_plugin_function("admm_lasso");
+	    if (admmfunc == NULL) {
+		p->err = E_FOPEN;
+	    } else {
+		p->err = admmfunc(l->v.m, m->v.m, r->v.b, p->prn);
+	    }
 	}
 	if (!p->err) {
-	    p->err = ret->v.xval = admmfunc(l->v.m, m->v.m, r->v.b, p->prn);
+	    ret = aux_scalar_node(p);
+	    ret->v.xval = 0;
 	}
     }
 

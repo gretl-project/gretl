@@ -46,6 +46,8 @@ int libgretl_mpi_init (int self, int np, int dcmt);
 int gretl_mpi_initialized (void);
 #endif
 
+int auto_mpi_ok (void);
+
 void libgretl_session_cleanup (int mode);
 
 void libgretl_cleanup (void);
