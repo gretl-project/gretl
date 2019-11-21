@@ -3424,6 +3424,8 @@ MODEL ar_model (const int *list, DATASET *dset,
     if (gretl_model_add_arinfo(&ar, maxlag)) {
 	ar.errcode = E_ALLOC;
     } else {
+	double *y = dset->Z[reglist[1]];
+
 	for (i=0; i<=arlist[0]; i++) {
 	    ar.arinfo->arlist[i] = arlist[i];
 	    if (i >= 1) {
@@ -3431,6 +3433,8 @@ MODEL ar_model (const int *list, DATASET *dset,
 		ar.arinfo->sderr[i-1] = rhomod.sderr[i-1];
 	    }
 	}
+	ar.ybar = gretl_mean(ar.t1, ar.t2, y);
+	ar.sdy = gretl_stddev(ar.t1, ar.t2, y);
     }
     clear_model(&rhomod);
 
