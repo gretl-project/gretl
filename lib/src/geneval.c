@@ -18124,14 +18124,14 @@ static int create_or_edit_string (parser *p)
     const char *orig = NULL;
     char *newstr = NULL;
     user_var *uvar;
-
+    
     if (p->ret->t == NUM) {
 	/* OK only in case of "+=" */
 	if (p->op != B_ADD) {
 	    p->err = E_TYPES;
 	    return p->err;
 	}
-    } else if (p->ret->t == EMPTY) {
+    } else if (p->ret->t == EMPTY || p->ret->v.str == NULL) {
 	src = "";
     } else {
 	src = p->ret->v.str;
