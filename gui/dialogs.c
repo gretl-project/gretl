@@ -3038,6 +3038,8 @@ void dialog_add_confidence_selector (GtkWidget *dlg, double *conf,
     }
 }
 
+/* at present this is specific to the IRF dialog box */
+
 void dialog_add_iters_spinner (GtkWidget *dlg, int *iters)
 {
     GtkWidget *spin, *lbl, *cb;
