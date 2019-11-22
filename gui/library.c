@@ -10079,9 +10079,14 @@ static int try_run_include (ExecState *s, char *runfile,
     s->flags = SCRIPT_EXEC;
     if (s->cmd->ci == INCLUDE) {
 	s->flags |= INCLUDE_EXEC;
-    } else {
+    }
+#if 0 /* changed to unconditional, 2019-11-22 */
+    else {
 	gretl_set_script_dir(runfile);
     }
+#else
+    gretl_set_script_dir(runfile);
+#endif    
     err = execute_script(runfile, NULL, prn, s->flags,
 			 parent);
     gretl_set_batch_mode(save_batch);
