@@ -2872,7 +2872,7 @@
         <altform><lit>delete</lit> <repl>listavariables</repl></altform>
         <altform><lit>delete</lit> <repl>nomevar</repl></altform>
 	      <altform><lit>delete --type=</lit><repl>tipo</repl></altform>
-	      <altform><lit>delete</lit><repl>nomepaquete</repl></altform>
+	      <altform><lit>delete</lit> <repl>nomepaquete</repl></altform>
       </altforms>
       <options>
 	<option>
@@ -7920,6 +7920,7 @@
     <usage>
       <altforms>
 	<altform><lit>markers --to-file=</lit><repl>nomeficheiro</repl></altform>
+	<altform><lit>markers --to-array=</lit><repl>nome</repl></altform>
 	<altform><lit>markers --from-file=</lit><repl>nomeficheiro</repl></altform>
 	<altform><lit>markers --delete</lit></altform>
       </altforms>
@@ -7927,12 +7928,16 @@
 
     <description>
       <para>
-	Coa opción <opt>to-file</opt>, escribe no ficheiro indicado as cadeas
-	de texto (unha por cada liña) que son marcadores das observacións do
-	conxunto vixente de datos. Se este non presenta ningunha desas cadeas,
-	amósase un fallo. O ficheiro resultante vaise escribir no cartafol
-	(<cmdref targ="workdir"/>) establecido nese momento, agás que a cadea
-	<repl>nomeficheiro</repl> conteña unha especificación completa da ruta.
+	As opcións <opt>to-file</opt> e <opt>to-array</opt> proporcionan xeitos
+	de gardar as cadeas de texto que son marcadores das observacións do
+	conxunto vixente de datos, ben no ficheiro ou ben no arranxo que indiques.
+	Se non existe ningunha desas cadeas, amósase un fallo. No caso do
+	ficheiro, as cadeas escríbense unha por cada liña nese ficheiro, e este
+	gárdase no cartafol (<cmdref targ="workdir"/>) establecido nese momento,
+	agás que a cadea <repl>nomeficheiro</repl> conteña unha especificación
+	completa da ruta. No caso do arranxo, se <argname>nome</argname> é o
+	identificador dun arraxo de cadeas de texto xa existente, ese arranxo 
+	vaise sobrescribir; noutro caso, vaise crear un novo.
       </para>
       <para>
 	Coa opción <opt>from-file</opt>, lese o ficheiro especificado (que
@@ -13945,6 +13950,74 @@
 
     <gui-access>
       <menu-path>/Engadir/Cadrados das variables seleccionadas</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="stdize" section="Transformations"
+    label="Tipificar series">
+
+    <usage>
+      <arguments>
+        <argument>listavar</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--no-df-corr</flag>
+	  <effect>Sen corrección de graos de liberdade</effect>
+        </option>
+        <option>
+	  <flag>--center-only</flag>
+	  <effect>Sen dividir por d.p.</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description context="gui">
+      <para>
+	Por defecto, esta instrución engade ao conxunto de datos vixente, novas
+	series que son versións tipificadas das series orixinais, e que se
+	nomean co prefixo <lit>s_</lit>. Por exemplo, <lit>s_x</lit> fórmase
+	restándolle a media a <lit>x</lit>, e dividindo o resultado pola
+	desviación padrón mostral de <lit>x</lit> (coa corrección de 1, nos
+	graos de liberdade). Pero podes elixir que se divida pola desviación
+	padrón sen ningunha corrección dos graos de liberdade, é dicir, o
+	estimador máximo-verosímil.
+      </para>
+      <para>
+	Tamén dispós da opción de formar series que son o resultado de
+	unicamente centrar as orixinais (réstase a media, pero non se aplica
+	o cambio de escala). Neste caso, os nomes das novas series teñen o
+	prefixo <lit>c_</lit> en troques de <lit>s_</lit>.
+      </para>
+    </description>
+
+    <description context="cli">
+      <para>
+	Por defecto, obtense unha versión tipificada de cada unha das
+	variables de <repl>listavar</repl>, e cada resultado gárdase
+	nunha nova serie co prefixo <lit>s_</lit>. Así, por exemplo, a
+	expresión <cmd>stdize x y</cmd> crea as novas series <lit>s_x</lit>
+	e <lit>s_y</lit>, cada unha como resultado de centrar e dividir a
+	orixinal pola súa desviación padrón mostral (coa corrección de 1,
+	nos graos de liberdade).
+      </para>
+      <para>
+	Cando indicas a opción <opt>no-df-corr</opt>, non se vai aplicar
+	ningunha corrección dos graos de liberdade na desviación padrón
+	que se utiliza; será o estimador máximo-verosímil. Se indicas a
+	opción <opt>center-only</opt>, as series resultan de unicamente
+	restar a media e, nese caso, os nomes das resultantes van ter o
+	prefixo <lit>c_</lit> en troques de <lit>s_</lit>.
+      </para>
+      <para>
+	A funcionalidade desta instrución está dispoñible de xeito en certo
+	modo máis flexible, por medio da función <fncref targ="stdize"/>.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Engadir/Tipificar as variables escollidas</menu-path>
     </gui-access>
 
   </command>

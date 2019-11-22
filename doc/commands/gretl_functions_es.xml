@@ -2041,6 +2041,10 @@
 	  <math>n</math> &minus; 1 como divisor, en el que <math>n</math>
 	  es el número de filas de <argname>X</argname>).
 	</para>
+	<para>
+	  Ten en cuenta que <fncref targ="stdize"/> proporciona una
+	  funcionalidad más flexible.
+	</para>
       </description>
     </function>
 
@@ -7206,7 +7210,8 @@
       </fnargs>
       <description>
 	<para>
-	  Solo disponible cuando Gretl está en modo MPI; deberán invocarlo todos
+	  Solo disponible cuando Gretl está en modo MPI (consulta
+	  <mnu targ="gretlMPI">gretl + MPI</mnu>); deberán invocarlo todos
 	  los procesos. Esta función opera igual que <fncref targ="mpireduce"/>
 	  excepto por el hecho de que todos los procesos (no solo el proceso
 	  principal) reciben una copia del objeto <quote>reducido</quote> en
@@ -7220,7 +7225,8 @@
     <function name="mpibarrier" section="mpi" output="int">
       <description>
 	<para>
-	  Solo disponible cuando Gretl está en modo MPI; no requiere
+	  Solo disponible cuando Gretl está en modo MPI (consulta
+	  <mnu targ="gretlMPI">gretl + MPI</mnu>); no requiere
 	  argumentos. Fuerza la sincronización de los procesos MPI:
 	  ningún proceso puede continuar más allá de la barrera hasta
 	  que la alcancen todos ellos.
@@ -7239,7 +7245,8 @@
       </fnargs>
       <description>
 	<para>
-	  Solo disponible cuando Gretl está en modo MPI; deberán invocarlo
+	  Solo disponible cuando Gretl está en modo MPI (consulta
+	  <mnu targ="gretlMPI">gretl + MPI</mnu>); deberán invocarlo
 	  todos los procesos. Difunde el argumento <argname>objeto</argname>,
 	  que deberás indicar en forma puntero, a todos los procesos. El
 	  objeto en cuestión deberá ser una matriz, un 'bundle', un 'array'
@@ -7275,7 +7282,8 @@
       </fnargs>
       <description>
 	<para>
-	  Solo disponible cuando Gretl está en modo MPI. Para mayor aclaración,
+	  Solo disponible cuando Gretl está en modo MPI (consulta
+	  <mnu targ="gretlMPI">gretl + MPI</mnu>). Para mayor aclaración,
 	  mira la función <fncref targ="mpisend"/>, con la que <lit>mpirecv</lit>
 	  deberá siempre emparejarse. El argumento <argname>src</argname>
 	  especifica la jerarquía del proceso del que se va a recibir el objeto,
@@ -7293,11 +7301,12 @@
       </fnargs>
       <description>
 	<para>
-	  Solo disponible cuando Gretl está en modo MPI; deberán invocarlo todos
+	  Solo disponible cuando Gretl está en modo MPI (consulta
+	  <mnu targ="gretlMPI">gretl + MPI</mnu>); deberán invocarlo todos
 	  los procesos. Esta función reúne objetos (solo escalares o matrices)
-	  con un nombre específico e indicados en forma de puntero, de todos los
-	  procesos; y los <quote>reduce</quote> a un único objeto en el nodo
-	  raíz.
+	  con un nombre específico e indicados en forma de puntero, de todos
+	  los procesos; y los <quote>reduce</quote> a un único objeto en el
+	  nodo raíz.
 	</para>
 	<para>
 	  El argumento <lit>op</lit> especifica la operación o método
@@ -7335,7 +7344,8 @@
       </fnargs>
       <description>
 	<para>
-	  Solo disponible cuando Gretl está en modo MPI; deberán invocarlo
+	  Solo disponible cuando Gretl está en modo MPI (consulta
+	  <mnu targ="gretlMPI">gretl + MPI</mnu>); deberán invocarlo
 	  todos los procesos. Esta función distribuye trozos de una matriz
 	  del proceso raíz, a todos los procesos. Debes anunciar la matriz en
 	  todos los procesos que preceden a invocar a <lit>mpiscatter</lit>,
@@ -7377,7 +7387,8 @@
       </fnargs>
       <description>
 	<para>
-	  Solo disponible cuando Gretl está en modo MPI. Envía el objeto
+	  Solo disponible cuando Gretl está en modo MPI (consulta
+	  <mnu targ="gretlMPI">gretl + MPI</mnu>). Envía el objeto
 	  indicado (que deberá ser una matriz, un 'bundle', un 'array' o
 	  un escalar) desde el proceso vigente hasta el identificado por el
 	  entero <argname>destino</argname> (desde 0 hasta el número de
@@ -9855,30 +9866,32 @@
       </fnargs>
       <description>
 	<para>
-	  La descripción inicial de esta función se refiere a los casos con datos de
-	  corte transversal o con series temporales; mira más abajo para los
-	  casos con datos de panel.
+	  La descripción inicial de esta función se refiere a los casos con
+	  datos de corte transversal o con series temporales; mira más abajo
+	  para los casos con datos de panel.
 	</para>
 	<para>
-	  Devuelve el resultado (del tipo del argumento) que se obtiene haciendo un
-	  muestreo por repetición de <argname>x</argname> con substitución. Si
-	  el argumento es una serie, cada valor <math>y</math><sub>t</sub> de la
-	  serie que se devuelve, se obtiene de entre todos los valores de
-	  <math>x</math><sub>t</sub> que tienen la misma probabilidad. Cuando el
-	  argumento es una matriz, cada fila de la matriz que se devuelve, se obtiene
-	  de las filas de <argname>x</argname> que tienen la misma probabilidad.
+	  Devuelve el resultado (del tipo del argumento) que se obtiene haciendo
+	  un remuestreo de <argname>x</argname> con reemplazamiento. Si el
+	  argumento es una serie, cada valor <math>y</math><sub>t</sub> de
+	  la serie que se devuelve, se obtiene de entre todos los valores de
+	  <math>x</math><sub>t</sub> que tienen la misma probabilidad. Cuando
+	  el argumento es una matriz, cada fila de la matriz que se devuelve,
+	  se obtiene de las filas de <argname>x</argname> que tienen la misma
+	  probabilidad. Consulta también <fncref targ="randperm"/> para
+	  extraer una muestra de filas de una matriz sin reemplazamiento.
 	</para>
 	<para>
 	  El argumento <argname>tamañobloque</argname> (opcional) representa el
-	  tamaño del bloque para hacer el muestreo por repetición moviendo
-	  bloques. Cuando se indica este argumento, deberá ser un entero
-	  positivo mayor o igual a 2. Como consecuencia, el resultado se va a
-	  componer por selección aleatoria con substitución, de entre todas las
-	  posibles secuencias contiguas de longitud <argname>tamañobloque</argname>
+	  tamaño del bloque para hacer el remuestreo moviendo bloques. Cuando
+	  se indique este argumento, deberá ser un entero positivo mayor o
+	  igual a 2. Como consecuencia, el resultado se va a componer por
+	  selección aleatoria con reemplazamiento, de entre todas las posibles
+	  secuencias contiguas de longitud <argname>tamañobloque</argname>
 	  del argumento. (En caso de que el argumento sea una matriz, esto
-	  significa filas contiguas.) Si la longitud de los datos no es un número
-	  entero que sea múltiplo del tamaño del bloque, el último bloque
-	  seleccionado se trunca para que se ajuste.
+	  significa filas contiguas.) Si la longitud de los datos no es un
+	  número entero que sea múltiplo del tamaño del bloque, el último
+	  bloque seleccionado se trunca para que se ajuste.
 	</para>
 	<subhead>Número de extracciones</subhead>
 	<para>
@@ -10688,6 +10701,31 @@
 	  <seelist>
             <fncref targ="var"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="stdize" section="stats" output="asinput">
+      <fnargs>
+	<fnarg type="series-list-or-mat">X</fnarg>
+	<fnarg type="int" optional="true">v</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Por defecto, devuelve un resultado del mismo tipo que el argumento, con
+	  la versión tipificada de esa serie, lista o matriz: el argumento se
+	  centra y se divide por su desviación típica muestral (con corrección
+	  de 1, en los grados de libertad). En caso de que el argumento sea una
+	  matriz, los resultados se calculan por columnas.
+	</para>
+	<para>
+	  Puedes usar el segundo argumento (opcional) para modular el resultado.
+	  Un valor no negativo de ese <argname>v</argname> permite configurar
+	  la corrección en los grados de libertad que se utilizan para la
+	  desviación típica; así <argname>v</argname> = 0 solicita utilizar
+	  el estimador máximo-verosímil. Como caso especial, si estableces
+	  que <argname>v</argname> sea igual a &minus;1, únicamente se va
+	  a centrar el primer argumento.
 	</para>
       </description>
     </function>

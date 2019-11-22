@@ -2041,6 +2041,10 @@
 	  <math>n</math> &minus; 1 como divisor, no que <math>n</math>
 	  é o número de filas de <argname>X</argname>).
 	</para>
+	<para>
+	  Cae na conta de que <fncref targ="stdize"/> proporciona unha
+	  funcionalidade máis flexible.
+	</para>
       </description>
     </function>
 
@@ -7206,7 +7210,8 @@
       </fnargs>
       <description>
 	<para>
-	  Só dispoñible cando Gretl está en modo MPI; deberán invocalo todos
+	  Só dispoñible cando Gretl está en modo MPI (consulta
+	  <mnu targ="gretlMPI">gretl + MPI</mnu>); deberán invocalo todos
 	  os procesos. Esta función opera igual que <fncref targ="mpireduce"/>
 	  agás polo feito de que todos os procesos (non só o proceso principal)
 	  reciben unha copia do obxecto <quote>reducido</quote> en troques
@@ -7220,7 +7225,8 @@
     <function name="mpibarrier" section="mpi" output="int">
       <description>
 	<para>
-	  Só dispoñible cando Gretl está en modo MPI; non require
+	  Só dispoñible cando Gretl está en modo MPI (consulta
+	  <mnu targ="gretlMPI">gretl + MPI</mnu>); non require
 	  argumentos. Forza a sincronización dos procesos MPI: ningún
 	  proceso pode continuar máis alá da barreira ata que a acaden
 	  todos eles.
@@ -7239,7 +7245,8 @@
       </fnargs>
       <description>
 	<para>
-	  Só dispoñible cando Gretl está en modo MPI; deberán invocalo todos
+	  Só dispoñible cando Gretl está en modo MPI (consulta
+	  <mnu targ="gretlMPI">gretl + MPI</mnu>); deberán invocalo todos
 	  os procesos. Difunde o argumento <argname>obxecto</argname>,
 	  que deberás indicar en forma punteiro, a todos os procesos. O
 	  obxecto en cuestión deberá ser unha matriz, un feixe, un arranxo
@@ -7275,7 +7282,8 @@
       </fnargs>
       <description>
 	<para>
-	  Só dispoñible cando Gretl está en modo MPI. Para maior aclaración,
+	  Só dispoñible cando Gretl está en modo MPI (consulta
+	  <mnu targ="gretlMPI">gretl + MPI</mnu>). Para maior aclaración,
 	  consulta a función <fncref targ="mpisend"/>, coa que <lit>mpirecv</lit>
 	  deberá sempre emparellarse. O argumento <argname>src</argname>
 	  especifica a xerarquía do proceso do que se vai recibir o obxecto,
@@ -7293,7 +7301,8 @@
       </fnargs>
       <description>
 	<para>
-	  Só dispoñible cando Gretl está en modo MPI; deberán invocalo todos
+	  Só dispoñible cando Gretl está en modo MPI (consulta
+	  <mnu targ="gretlMPI">gretl + MPI</mnu>); deberán invocalo todos
 	  os procesos. Esta función reúne obxectos (só escalares ou matrices)
 	  cun nome específico e indicados en forma de punteiro, de todos os
 	  procesos; e os <quote>reduce</quote> a un único obxecto no nodo
@@ -7335,7 +7344,8 @@
       </fnargs>
       <description>
 	<para>
-	  Só dispoñible cando Gretl está en modo MPI; deberán invocalo
+	  Só dispoñible cando Gretl está en modo MPI (consulta
+	  <mnu targ="gretlMPI">gretl + MPI</mnu>); deberán invocalo
 	  todos os procesos. Esta función distribúe anacos dunha matriz
 	  do proceso raíz, a todos os procesos. Debes anunciar a matriz en
 	  todos os procesos que preceden a invocar a <lit>mpiscatter</lit>,
@@ -7377,7 +7387,8 @@
       </fnargs>
       <description>
 	<para>
-	  Só dispoñible cando Gretl está en modo MPI. Envía o obxecto
+	  Só dispoñible cando Gretl está en modo MPI (consulta
+	  <mnu targ="gretlMPI">gretl + MPI</mnu>). Envía o obxecto
 	  indicado (que deberá ser unha matriz, un feixe, un arranxo ou
 	  un escalar) desde o proceso vixente cara ao identificado polo
 	  enteiro <argname>destino</argname> (desde 0 ata o número de
@@ -9855,23 +9866,25 @@
       </fnargs>
       <description>
 	<para>
-	  A descrición inicial desta función refírese aos casos con datos de
-	  corte transversal ou con series temporais; mira máis abaixo para os
-	  casos con datos de panel.
+	  A descrición inicial desta función refírese aos casos con datos
+	  de corte transversal ou con series temporais; mira máis abaixo
+	  para os casos con datos de panel.
 	</para>
 	<para>
 	  Devolve o resultado (do tipo do argumento) que se obtén facendo unha
 	  mostraxe por repetición de <argname>x</argname> con substitución. Se
 	  o argumento é unha serie, cada valor <math>y</math><sub>t</sub> da
 	  serie que se devolve, obtense de entre todos os valores de
-	  <math>x</math><sub>t</sub> que teñen a mesma probabilidade. Cando o
-	  argumento é unha matriz, cada fila da matriz que se devolve, obtense
-	  das filas de <argname>x</argname> que teñen a mesma probabilidade.
+	  <math>x</math><sub>t</sub> que teñen a mesma probabilidade. Cando
+	  o argumento é unha matriz, cada fila da matriz que se devolve vaise
+	  obter das filas de <argname>x</argname> que teñen a mesma
+	  probabilidade. Consulta tamén <fncref targ="randperm"/> para
+	  extraer unha mostra de filas dunha matriz sen substitución.
 	</para>
 	<para>
 	  O argumento <argname>tamañobloque</argname> (opcional) representa o
 	  tamaño do bloque para facer a mostraxe por repetición movendo
-	  bloques. Cando se indica este argumento, deberá de ser un enteiro
+	  bloques. Cando se indique este argumento, deberá de ser un enteiro
 	  positivo maior ou igual a 2. Como consecuencia, o resultado vaise
 	  compoñer por selección aleatoria con substitución, de entre todas as
 	  posibles secuencias contiguas de lonxitude <argname>tamañobloque</argname>
@@ -9883,7 +9896,7 @@
 	<subhead>Número de extraccións</subhead>
 	<para>
 	  Por defecto, o número de observacións que se volven extraer
-	  para acadar o resultado é igual á do argumento indicado
+	  para acadar o resultado é igual ó do argumento indicado
 	  &mdash;se <argname>x</argname> fose unha serie, sería a longura do
 	  rango mostral vixente; se <argname>x</argname> fose unha matriz, sería
 	  o número das súas filas. No caso matricial, <emphasis>só</emphasis>
@@ -10688,6 +10701,31 @@
 	  <seelist>
             <fncref targ="var"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="stdize" section="stats" output="asinput">
+      <fnargs>
+	<fnarg type="series-list-or-mat">X</fnarg>
+	<fnarg type="int" optional="true">v</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Por defecto, devolve un resultado do mesmo tipo que o argumento, coa
+	  versión tipificada desa serie, lista ou matriz: o argumento céntrase
+	  e divídese pola súa desviación padrón mostral (con corrección de 1,
+	  nos graos de liberdade). No caso de que o argumento sexa unha matriz,
+	  os resultados calcúlanse por columnas.
+	</para>
+	<para>
+	  Podes usar o segundo argumento (opcional) para modular o resultado.
+	  Un valor non negativo dese <argname>v</argname> permite configurar
+	  a corrección nos graos de liberdade que se utilizan para a desviación
+	  padrón; así <argname>v</argname> = 0 solicita utilizar o estimador
+	  máximo-verosímil. Como caso especial, se estableces que
+	  <argname>v</argname> sexa igual a &minus;1, unicamente
+	  se vai centrar o primeiro argumento.
 	</para>
       </description>
     </function>

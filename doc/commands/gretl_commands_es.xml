@@ -2872,7 +2872,7 @@
         <altform><lit>delete</lit> <repl>listavariables</repl></altform>
         <altform><lit>delete</lit> <repl>nombrevar</repl></altform>
 	      <altform><lit>delete --type=</lit><repl>tipo</repl></altform>
-	      <altform><lit>delete</lit><repl>nombrepaquete</repl></altform>
+	      <altform><lit>delete</lit> <repl>nombrepaquete</repl></altform>
       </altforms>
       <options>
 	<option>
@@ -7920,6 +7920,7 @@
     <usage>
       <altforms>
 	<altform><lit>markers --to-file=</lit><repl>nombrearchivo</repl></altform>
+	<altform><lit>markers --to-array=</lit><repl>nombre</repl></altform>
 	<altform><lit>markers --from-file=</lit><repl>nombrearchivo</repl></altform>
 	<altform><lit>markers --delete</lit></altform>
       </altforms>
@@ -7927,12 +7928,16 @@
 
     <description>
       <para>
-	Con la opción <opt>to-file</opt>, escribe en el archivo indicado las cadenas
-	de texto (una por cada línea) que son etiquetas de las observaciones del
-	conjunto vigente de datos. Si este no presenta ninguna de esas cadenas,
-	se muestra un fallo. El archivo resultante se va a escribir en el directorio
-	(<cmdref targ="workdir"/>) establecido en ese momento, excepto que la cadena
-	<repl>nombrearchivo</repl> contenga una especificación completa de la ruta.
+	Las opciones <opt>to-file</opt> y <opt>to-array</opt> proporcionan formas
+	de guardar las cadenas de texto que son marcadores de observaciones del
+	conjunto vigente de datos, en el archivo o 'array' que indiques. Si no hay
+	ninguna de esas cadenas, se muestra un fallo. En el caso del archivo, las
+	cadenas se escriben una por línea en ese archivo, y este se guarda en el
+	directorio (<cmdref targ="workdir"/>) establecido en ese momento, excepto
+	que la cadena <repl>nombrearchivo</repl> contenga una especificación
+	completa de la ruta. En el caso del 'array', si <argname>nombre</argname>
+	es el identificador de un 'array' de cadenas de texto ya existente, ese
+	'array' se va a sobrescribir; en caso contrario, se crea uno nuevo.
       </para>
       <para>
 	Con la opción <opt>from-file</opt>, se lee el archivo especificado (que
@@ -13945,6 +13950,74 @@
 
     <gui-access>
       <menu-path>/Añadir/Cuadrados de las variables seleccionadas</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="stdize" section="Transformations"
+    label="Tipificar series">
+
+    <usage>
+      <arguments>
+        <argument>listavar</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--no-df-corr</flag>
+	  <effect>Sin corrección de grados de libertad</effect>
+        </option>
+        <option>
+	  <flag>--center-only</flag>
+	  <effect>Sin dividir por d.t.</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description context="gui">
+      <para>
+	Por defecto, esta instrucción añade al conjunto de datos vigente, nuevas
+	series que son versiones tipificadas de las series originales, y que se
+	nombran con el prefijo <lit>s_</lit>. Por ejemplo, <lit>s_x</lit> se
+	forma restándole la media a <lit>x</lit>, y dividiendo el resultado por
+	la desviación típica muestral de <lit>x</lit> (con la corrección de 1,
+	en los grados de libertad). Pero puedes elegir que se divida por la
+	desviación típica sin ninguna corrección de los grados de libertad,
+	es decir, el estimador máximo-verosímil.
+      </para>
+      <para>
+	También dispones de la opción de formar series que son el resultado
+	de únicamente centrar las originales (se resta la media, pero no se
+	aplica el cambio de escala). En este caso, los nombres de las nuevas
+	series tienen el prefijo <lit>c_</lit> en lugar de <lit>s_</lit>.
+      </para>
+    </description>
+
+    <description context="cli">
+      <para>
+	Por defecto, se obtiene una versión tipificada de cada una de las
+	variables de <repl>listavar</repl>, y cada resultado se guarda
+	en una nueva serie con el prefijo <lit>s_</lit>. Por ejemplo, la
+	expresión <cmd>stdize x y</cmd> crea las nuevas series <lit>s_x</lit>
+	y <lit>s_y</lit>, cada una como resultado de centrar y dividir la
+	original por su desviación típica muestral (con la corrección de 1,
+	en los grados de libertad).
+      </para>
+      <para>
+	Cuando indicas la opción <opt>no-df-corr</opt>, no se aplica
+	ninguna corrección de los graos de libertad en la desviación típica
+	que se utiliza; será el estimador máximo-verosímil. Si indicas la
+	opción <opt>center-only</opt>, las series resultan de únicamente
+	restar la media y, en ese caso, los nombres de las resultantes tendrán
+	el prefijo <lit>c_</lit> en lugar de <lit>s_</lit>.
+      </para>
+      <para>
+	La funcionalidad de esta instrucción está disponible de forma en
+	cierto modo más flexible, mediante la función <fncref targ="stdize"/>.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Añadir/Tipificar las variables seleccionadas</menu-path>
     </gui-access>
 
   </command>
