@@ -44,6 +44,7 @@ typedef enum {
 /* guard against consequences of typos */
 
 #define BFGS_MAXITER     "bfgs_maxiter"
+#define BOOT_ITERS       "boot_iters"
 #define BFGS_TOLER       "bfgs_toler"
 #define BFGS_MAXGRAD     "bfgs_maxgrad"
 #define BFGS_VERBSKIP    "bfgs_verbskip"

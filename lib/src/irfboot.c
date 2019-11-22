@@ -24,13 +24,12 @@
 #include "johansen.h"
 #include "vartest.h"
 #include "matrix_extra.h"
+#include "libset.h"
 
 #define BDEBUG 0
 
 #if BDEBUG
-# define BOOT_ITERS 5
-#else
-# define BOOT_ITERS 999
+# define DBG_BOOT_ITERS 5
 #endif
 
 typedef struct irfboot_ irfboot;
@@ -38,6 +37,7 @@ typedef struct irfboot_ irfboot;
 struct irfboot_ {
     int ncoeff;         /* number of coefficients per equation */
     int horizon;        /* horizon for impulse responses */
+    int iters;          /* number of iterations */
     gretl_matrix_block *MB; /* wrapper for some of the following */
     gretl_matrix *rE;   /* matrix of resampled original residuals */
     gretl_matrix *Xt;   /* row t of X matrix */
@@ -79,7 +79,7 @@ static int boot_allocate (irfboot *b, const GRETL_VAR *v)
     b->MB = gretl_matrix_block_new(&b->rtmp, n, v->neqns,
 				   &b->ctmp, n, v->neqns,
 				   &b->rE, v->T, v->neqns,
-				   &b->resp, b->horizon, BOOT_ITERS,
+				   &b->resp, b->horizon, b->iters,
 				   NULL);
     if (b->MB == NULL) {
 	return E_ALLOC;
@@ -123,6 +123,11 @@ static irfboot *irf_boot_new (const GRETL_VAR *var, int periods)
     b->dset = NULL;
 
     b->horizon = periods;
+#if BDEBUG
+    b->iters = DBG_BOOT_ITERS;
+#else
+    b->iters = libset_get_int(BOOT_ITERS);
+#endif
 
     if (var->jinfo != NULL) {
 	b->ncoeff = var->ncoeff + (var->neqns - jrank(var)) +
@@ -708,23 +713,23 @@ static int irf_boot_quantiles (irfboot *b, gretl_matrix *R, double alpha)
     double *rk;
     int k, ilo, ihi;
 
-    rk = malloc(BOOT_ITERS * sizeof *rk);
+    rk = malloc(b->iters * sizeof *rk);
     if (rk == NULL) {
 	return E_ALLOC;
     }
 
 #if BDEBUG
     ilo = 1;
-    ihi = BOOT_ITERS;
-    fprintf(stderr, "IRF bootstrap (%d iters), min and max values\n", BOOT_ITERS);
+    ihi = b->iters;
+    fprintf(stderr, "IRF bootstrap (%d iters), min and max values\n", b->iters);
 #else
-    ilo = (BOOT_ITERS + 1) * alpha / 2.0;
-    ihi = (BOOT_ITERS + 1) * (1.0 - alpha / 2.0);
+    ilo = (b->iters + 1) * alpha / 2.0;
+    ihi = (b->iters + 1) * (1.0 - alpha / 2.0);
 #endif
 
     for (k=0; k<b->horizon; k++) {
 	gretl_matrix_row_to_array(b->resp, k, rk);
-	qsort(rk, BOOT_ITERS, sizeof *rk, gretl_compare_doubles);
+	qsort(rk, b->iters, sizeof *rk, gretl_compare_doubles);
 	gretl_matrix_set(R, k, 1, rk[ilo-1]);
 	gretl_matrix_set(R, k, 2, rk[ihi-1]);
     }
@@ -926,7 +931,7 @@ gretl_matrix *irf_bootstrap (GRETL_VAR *var,
 	}
     }
 
-    for (iter=0; iter<BOOT_ITERS && !*err; iter++) {
+    for (iter=0; iter<boot->iters && !*err; iter++) {
 #if BDEBUG
 	fprintf(stderr, "starting iteration %d\n", iter);
 #endif

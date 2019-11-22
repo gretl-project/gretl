@@ -107,6 +107,7 @@ struct set_vars_ {
     int vecm_norm;              /* VECM beta normalization */
     int optim;                  /* code for preferred optimizer */
     int bfgs_maxiter;           /* max iterations, BFGS */
+    int boot_iters;             /* max iterations, IRF bootstrap */
     double bfgs_toler;          /* convergence tolerance, BFGS */
     double bfgs_maxgrad;        /* max acceptable gradient norm, BFGS */
     int bfgs_verbskip;          /* BFGS: show one in n iterations  */
@@ -178,6 +179,7 @@ struct set_vars_ {
 			  !strcmp(s, FDJAC_EPS))
 
 #define libset_int(s) (!strcmp(s, BFGS_MAXITER) || \
+		       !strcmp(s, BOOT_ITERS) || \
 		       !strcmp(s, BFGS_VERBSKIP) || \
 		       !strcmp(s, OPTIM_STEPLEN) || \
 		       !strcmp(s, BHHH_MAXITER) || \
@@ -449,6 +451,7 @@ static void state_vars_copy (set_vars *sv)
     sv->optim_steplen = state->optim_steplen;
     sv->bhhh_maxiter = state->bhhh_maxiter;
     sv->bhhh_toler = state->bhhh_toler;
+    sv->boot_iters = state->boot_iters;
     sv->lbfgs_mem = state->lbfgs_mem;
     sv->garch_vcv = state->garch_vcv;
     sv->arma_vcv = state->arma_vcv;
@@ -676,6 +679,7 @@ static void state_vars_init (set_vars *sv)
     sv->optim_steplen = STEPLEN_POWER;
     sv->bhhh_maxiter = 500;
     sv->bhhh_toler = NADBL;
+    sv->boot_iters = 999;
     sv->lbfgs_mem = 8;
     sv->garch_vcv = ML_UNSET;
     sv->arma_vcv = ML_HESSIAN;
@@ -1605,6 +1609,7 @@ static int print_settings (PRN *prn, gretlopt opt)
     libset_print_int(OMP_N_THREADS, prn, opt);
     libset_print_int(SIMD_K_MAX, prn, opt);
     libset_print_int(SIMD_MN_MIN, prn, opt);
+    libset_print_int(BOOT_ITERS, prn, opt);
 
     if (opt & OPT_D) {
 	/* display only */
@@ -2067,6 +2072,8 @@ int libset_get_int (const char *key)
 
     if (!strcmp(key, BFGS_MAXITER)) {
 	return state->bfgs_maxiter;
+    } else if (!strcmp(key, BOOT_ITERS)) {
+	return state->boot_iters;
     } else if (!strcmp(key, OPTIM_STEPLEN)) {
 	return state->optim_steplen;
     } else if (!strcmp(key, BHHH_MAXITER)) {
@@ -2134,6 +2141,9 @@ static int intvar_min_max (const char *s, int *min, int *max,
     if (!strcmp(s, BFGS_MAXITER)) {
 	*min = 0;
 	*var = &state->bfgs_maxiter;
+    } else if (!strcmp(s, BOOT_ITERS)) {
+	*min = 50;
+	*var = &state->boot_iters;
     } else if (!strcmp(s, BFGS_VERBSKIP)) {
 	*min = 1;
 	*var = &state->bfgs_verbskip;
