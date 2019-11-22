@@ -207,13 +207,24 @@ static void maybe_resize_vecm_matrices (GRETL_VAR *v)
     }
 }
 
-/* In re-estimation of VAR or VECM we'll tolerate at most 49 cases of
-   near-perfect collinearity (which can arise by chance): maybe this
-   should be more flexible?
+/* In re-estimation of VAR or VECM we'll tolerate only so many cases
+   of near-perfect collinearity. These can surely arise by chance but
+   if their frequency is too high this would seem to indicate an
+   inherent problem.
 */
 
-#define MAXSING 50 /* was 10 */
-#define VAR_FATAL(e,i,s) (e && (e != E_SINGULAR || i == 0 || s >= MAXSING))
+#define MAXSING 0.10 /* no more than 10 percent such cases */
+
+static int irf_fatal (int err, irfboot *b, int iter, int scount)
+{
+    if (err != E_SINGULAR || iter == 0) {
+	return 1;
+    } else if ((scount / (double) b->iters) > MAXSING) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
 
 static int
 re_estimate_VECM (irfboot *b, GRETL_VAR *v, int targ, int shock,
@@ -931,6 +942,10 @@ gretl_matrix *irf_bootstrap (GRETL_VAR *var,
 	}
     }
 
+#if 0 /* just checking */
+    fprintf(stderr, "boot->iters = %d\n", boot->iters);
+#endif
+
     for (iter=0; iter<boot->iters && !*err; iter++) {
 #if BDEBUG
 	fprintf(stderr, "starting iteration %d\n", iter);
@@ -948,16 +963,17 @@ gretl_matrix *irf_bootstrap (GRETL_VAR *var,
 	    compute_VAR_dataset(boot, var, vbak);
 	    *err = re_estimate_VAR(boot, var, targ, shock, iter);
 	}
-	if (*err && !VAR_FATAL(*err, iter, scount)) {
+	if (*err && !irf_fatal(*err, boot, iter, scount)) {
 	    /* excessive collinearity: try again, unless this is
-	       becoming a serious habit */
+	       becoming a serious habit
+	    */
 	    scount++;
 	    iter--;
 	    *err = 0;
 	}
     }
 
-    if (*err && scount == MAXSING) {
+    if (*err && scount / (double) boot->iters >= MAXSING) {
 	gretl_errmsg_set("Excessive collinearity in resampled datasets");
     }
 

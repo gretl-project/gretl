@@ -679,7 +679,7 @@ static void state_vars_init (set_vars *sv)
     sv->optim_steplen = STEPLEN_POWER;
     sv->bhhh_maxiter = 500;
     sv->bhhh_toler = NADBL;
-    sv->boot_iters = 999;
+    sv->boot_iters = 1999;
     sv->lbfgs_mem = 8;
     sv->garch_vcv = ML_UNSET;
     sv->arma_vcv = ML_HESSIAN;
@@ -2142,7 +2142,8 @@ static int intvar_min_max (const char *s, int *min, int *max,
 	*min = 0;
 	*var = &state->bfgs_maxiter;
     } else if (!strcmp(s, BOOT_ITERS)) {
-	*min = 50;
+	*max = 999999;
+	*min = 499;
 	*var = &state->boot_iters;
     } else if (!strcmp(s, BFGS_VERBSKIP)) {
 	*min = 1;
