@@ -3038,6 +3038,35 @@ void dialog_add_confidence_selector (GtkWidget *dlg, double *conf,
     }
 }
 
+void dialog_add_iters_spinner (GtkWidget *dlg, int *iters)
+{
+    GtkWidget *spin, *lbl, *cb;
+    GtkWidget *vbox, *hbox;
+    GtkAdjustment *adj;
+
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
+
+    lbl = gtk_label_new("bootstrap iterations");
+    adj = (GtkAdjustment *) gtk_adjustment_new(*iters, 499, 999999,
+					       500, 500, 0);
+    spin = gtk_spin_button_new(adj, 1, 0);
+    g_signal_connect(GTK_SPIN_BUTTON(spin), "value-changed",
+		     G_CALLBACK(set_int_from_spinner), iters);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
+    cb = g_object_get_data(G_OBJECT(dlg), "checkbox");
+    if (cb != NULL) {
+	gboolean ok = button_is_active(cb);
+
+	gtk_widget_set_sensitive(hbox, ok);
+	sensitize_conditional_on(hbox, cb);
+    }
+}
+
 static void fcast_toggle_scope (GtkComboBox *cb, gretlopt *optp)
 {
     gint i = gtk_combo_box_get_active(cb);

@@ -942,7 +942,7 @@ gretl_matrix *irf_bootstrap (GRETL_VAR *var,
 	}
     }
 
-#if 0 /* just checking */
+#if 0 /* just checking, for mild debugging */
     fprintf(stderr, "boot->iters = %d\n", boot->iters);
 #endif
 

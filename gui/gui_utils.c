@@ -35,6 +35,7 @@
 #include "gretl_panel.h"
 #include "csvdata.h"
 #include "kalman.h"
+#include "libset.h"
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -1450,7 +1451,7 @@ gboolean verify_open_data (windata_t *vwin, int code)
 gboolean verify_open_session (void)
 {
     char *fname = get_tryfile();
-    
+
     if (!gretl_is_pkzip_file(fname)) {
 	/* not a zipped session file */
 	return do_open_script(EDIT_HANSL);
@@ -3939,28 +3940,27 @@ static void dialog_add_order_selector (GtkWidget *dlg, GRETL_VAR *var,
 
 static int
 impulse_response_setup (GRETL_VAR *var, gretl_matrix *ordvec, int *horizon,
-			int *bootstrap, double *alpha, gretlopt *gopt,
-			GtkWidget *parent)
+			int *bootstrap, double *alpha, int *piters,
+			gretlopt *gopt, GtkWidget *parent)
 {
     gchar *title;
     int h = default_VAR_horizon(dataset);
     const char *impulse_opts[] = {
 	N_("include bootstrap confidence interval")
     };
-    static int active[] = { 0 };
+    static int active[] = {0};
     GtkWidget *dlg;
     double conf = 1 - *alpha;
+    int iters = *piters;
     int resp = -1;
 
     title = g_strdup_printf("gretl: %s", _("impulse responses"));
-
     dlg = build_checks_dialog(title, NULL,
 			      impulse_opts, 1, active, 0, 0, /* check */
 			      0, NULL, /* no radios */
 			      &h, _("forecast horizon (periods):"),
 			      2, dataset->n / 2, IRF_BOOT,
 			      parent, &resp);
-
     g_free(title);
 
     if (dlg == NULL) {
@@ -3969,19 +3969,26 @@ impulse_response_setup (GRETL_VAR *var, gretl_matrix *ordvec, int *horizon,
 
     dialog_add_confidence_selector(dlg, &conf, gopt);
 
+    if (iters == 0) {
+	iters = libset_get_int(BOOT_ITERS);
+    }
+    dialog_add_iters_spinner(dlg, &iters);
+
     if (ordvec != NULL) {
 	dialog_add_order_selector(dlg, var, ordvec);
     }
-
     gtk_widget_show_all(dlg);
 
     if (resp < 0) {
-	/* cancelled */
+	/* canceled */
 	*horizon = 0;
     } else {
 	*horizon = h;
 	*bootstrap = (active[0] > 0);
-	*alpha = 1 - conf;
+	if (*bootstrap) {
+	    *alpha = 1 - conf;
+	    *piters = iters;
+	}
     }
 
     return resp;
@@ -4126,15 +4133,18 @@ static void impulse_plot_call (GtkAction *action, gpointer p)
     gint shock, targ;
     static double alpha = 0.10;
     static gretlopt gopt = OPT_NONE;
+    static int iters = 0;
     gretl_matrix *ordvec = NULL;
     double this_alpha = 0;
+    int save_iters;
     int resp, err;
 
     impulse_params_from_action(action, &targ, &shock);
     ordvec = cholesky_order_vector(var);
+    save_iters = libset_get_int(BOOT_ITERS);
 
     resp = impulse_response_setup(var, ordvec, &horizon, &bootstrap,
-				  &alpha, &gopt, vwin->main);
+				  &alpha, &iters, &gopt, vwin->main);
 
     if (resp < 0) {
 	/* canceled */
@@ -4155,9 +4165,16 @@ static void impulse_plot_call (GtkAction *action, gpointer p)
 	}
     }
 
+    if (iters != save_iters) {
+	libset_set_int(BOOT_ITERS, iters);
+    }
     err = gretl_VAR_plot_impulse_response(var, targ, shock,
 					  horizon, this_alpha,
 					  dataset, gopt);
+    if (iters != save_iters) {
+	libset_set_int(BOOT_ITERS, save_iters);
+    }
+
     gui_graph_handler(err);
 }
 
@@ -4168,15 +4185,17 @@ static void multiple_irf_plot_call (GtkAction *action, gpointer p)
     int horizon, bootstrap;
     static double alpha = 0.10;
     static gretlopt gopt = OPT_NONE;
+    static int iters = 0;
     gretl_matrix *ordvec = NULL;
     double this_alpha = 0;
+    int save_iters;
     int resp, err;
 
     ordvec = cholesky_order_vector(var);
+    save_iters = libset_get_int(BOOT_ITERS);
 
-    resp = impulse_response_setup(var, ordvec, &horizon,
-				  &bootstrap, &alpha, &gopt,
-				  vwin->main);
+    resp = impulse_response_setup(var, ordvec, &horizon, &bootstrap,
+				  &alpha, &iters, &gopt, vwin->main);
 
     if (resp < 0) {
 	/* canceled */
@@ -4197,8 +4216,15 @@ static void multiple_irf_plot_call (GtkAction *action, gpointer p)
 	}
     }
 
+    if (iters != save_iters) {
+	libset_set_int(BOOT_ITERS, iters);
+    }
     err = gretl_VAR_plot_multiple_irf(var, horizon, this_alpha,
 				      dataset, gopt);
+    if (iters != save_iters) {
+	libset_set_int(BOOT_ITERS, save_iters);
+    }
+
     gui_graph_handler(err);
 }
 
