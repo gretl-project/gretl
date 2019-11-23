@@ -9,7 +9,10 @@ version 2019d, in progress
 - New function randperm() (Matlab-compatible, permutation
   and sampling without replacement)
 - New function stdize() for standardization or centering
-  of series, list or matrix, plus "stdize" command
+  of series, list or matrix; plus new "stdize" command
+- "set" command: add new "boot_iters" argument to se the
+  number of iterations used when computing impulse response
+  functions with confidence interval
 - Fix bug: possible crash on appending multiple lists to a
   list inside a bundle
 - Fix bug: "fcast" could fail to produce dynamic out of
@@ -46,7 +49,7 @@ version 2019d, in progress
 - Internals: speed up element-wise matrix calculation by
   use of function pointers
 - "Send-to" (email) functionality: use libcurl and improve
-  the user interface; now gmail-compatible
+  the user interface; it's now gmail-compatible
 - GUI: don't close native database windows on "Clear data"
 - GUI: beef up error-checking for the case of defining a
   dataset as a panel via index variables
