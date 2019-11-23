@@ -4518,6 +4518,11 @@ static void maybe_adjust_label (DATASET *dset, int v,
 	len += strlen(S[i]) + 1 + floor(log10(1.0 + i));
     }
 
+    /* let's not create a super-long series label */
+    if (len > 255) {
+	return;
+    }
+
     tmp = calloc(len + 1, 1);
 
     if (tmp != NULL) {

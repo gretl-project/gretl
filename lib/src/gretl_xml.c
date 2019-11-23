@@ -2248,7 +2248,7 @@ static int real_write_gdt (const char *fname, const int *inlist,
     char *p15 = NULL;
     char startdate[OBSLEN], enddate[OBSLEN];
     char datname[MAXLEN], freqstr[32];
-    char numstr[128], xmlbuf[256];
+    char numstr[128], xmlbuf[1024];
     const char *gdtver;
     int (*show_progress) (double, double, int) = NULL;
     double dsize = 0;
@@ -2551,7 +2551,7 @@ static int real_write_gdt (const char *fname, const int *inlist,
     ntabs = string_table_count(dset, list, nvars);
 
     if (ntabs > 0) {
-	char **strs;
+	char *sbuf, **strs;
 	int j, n_strs;
 
 	pprintf(prn, "<string-tables count=\"%d\">\n", ntabs);
@@ -2563,16 +2563,17 @@ static int real_write_gdt (const char *fname, const int *inlist,
 	    }
 	    strs = series_get_string_vals(dset, v, &n_strs);
 	    gretl_xml_encode_to_buf(xmlbuf, dset->varname[v], sizeof xmlbuf);
-	    pprintf(prn, "<valstrings owner=\"%s\" count=\"%d\">",
-			      xmlbuf, n_strs);
+	    pprintf(prn, "<valstrings owner=\"%s\" count=\"%d\">", xmlbuf, n_strs);
 	    for (j=0; j<n_strs; j++) {
-		gretl_xml_encode_to_buf(xmlbuf, strs[j], sizeof xmlbuf);
-		if (*xmlbuf == '\0') {
+		sbuf = gretl_xml_encode(strs[j]);
+		if (sbuf == NULL || *sbuf == '\0') {
 		    fprintf(stderr, "string values for var %d: string %d is empty\n",
 			    i, j);
-		    strcpy(xmlbuf, "empty string");
+		    pputs(prn, "\"empty string\" ");
+		} else {
+		    pprintf(prn, "\"%s\" ", xmlbuf);
 		}
-		pprintf(prn, "\"%s\" ", xmlbuf);
+		free(sbuf);
 	    }
 	    pputs(prn, "</valstrings>\n");
 	}
