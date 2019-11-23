@@ -265,17 +265,14 @@ which contains private school enrollment data and covariates for the
 50 US states plus Washington, D.C. ($n = 51$).
 \begin{code}
 open data4-10.gdt
-markers --to-file="markers.txt"
-strings state_codes = strsplit(readfile("markers.txt"))
+markers --to-array="state_codes"
 genr index
 stringify(index, state_codes)
 store joindata.gdt
 \end{code}
 
 \emph{Comment:} The \texttt{markers} command saves the observation
-markers to a plain text file, one per line. We then read that file
-using \texttt{readfile()} and split its content into an array of
-strings using \texttt{strsplit()}. The command \texttt{genr index}
+markers to an array if strings. The command \texttt{genr index}
 creates a series that goes 1, 2, 3, \dots{}, and we attach the state
 codes to this series via \texttt{stringify()}. After saving the result
 we have a datafile that contains a series, \texttt{index}, that can be
