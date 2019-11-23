@@ -1609,7 +1609,6 @@ static int print_settings (PRN *prn, gretlopt opt)
     libset_print_int(OMP_N_THREADS, prn, opt);
     libset_print_int(SIMD_K_MAX, prn, opt);
     libset_print_int(SIMD_MN_MIN, prn, opt);
-    libset_print_int(BOOT_ITERS, prn, opt);
 
     if (opt & OPT_D) {
 	/* display only */
@@ -1676,6 +1675,7 @@ static int print_settings (PRN *prn, gretlopt opt)
 
     libset_print_int(HORIZON, prn, opt);
     libset_print_int(VECM_NORM, prn, opt);
+    libset_print_int(BOOT_ITERS, prn, opt);
 
     pputc(prn, '\n');
 

@@ -4494,7 +4494,7 @@
 	function to terminate with an error condition flagged.
       </para>
       <para>
-	The optional <argname>message</argname> argument can take the
+	The optional <repl>message</repl> argument can take the
 	form of a string literal or the name of a string variable; if
 	present it is printed as part of the error message shown to
 	the caller of the function.
@@ -6567,15 +6567,16 @@
     <description>
       <para>
 	If you select the bootstrap option when plotting impulse
-	responses, gretl computes a confidence interval for the responses
-	using the bootstrap method.  The residuals from the original VAR
-	(or VECM) are resampled with replacement; an artificial dataset is
-	constructed based on the original parameter estimates and the
-	resampled residuals; the system is re-estimated and the impulse
-	responses are re-evaluated.  This is repeated 999 times and the
-	&alpha;/2 and 1 &minus; &alpha;/2 quantiles for the responses are
-	found and plotted along with the point estimates. This option is
-	not currently available for restricted VECMs.
+	responses, gretl computes a confidence interval for the
+	responses using the bootstrap method.  The residuals from the
+	original VAR (or VECM) are resampled with replacement; an
+	artificial dataset is constructed based on the original
+	parameter estimates and the resampled residuals; the system is
+	re-estimated and the impulse responses are re-evaluated.  By
+	default this is repeated 1999 times and the &alpha;/2 and 1
+	&minus; &alpha;/2 quantiles for the responses are found and
+	plotted along with the point estimates. This option is not
+	currently available for restricted VECMs.
       </para>
       <para>
 	This dialog also supports reordering of the variables for the
@@ -7935,7 +7936,7 @@
 	case output will be written in the current <cmdref
 	targ="workdir"/> unless the <repl>filename</repl> string
 	contains a full path specification. The markers are written
-	one per line. In the array case, if <argname>name</argname> is
+	one per line. In the array case, if <repl>name</repl> is
 	the identifier of an existing array of strings it will be
 	overwritten, otherwise a new array will be created.
       </para>
@@ -13192,6 +13193,17 @@
 	    details.
 	  </para>
 	</li>
+	<li>
+	  <para>
+	    <lit>boot_iters</lit>: one integer, <math>B</math>. Sets
+	    the number of bootstrap iterations used when computing
+	    impulse response functions with confidence intervals. The
+	    default is 1999. It is recommended that <math>B</math> + 1
+	    is evenly divisible by 100&alpha;/2, so for example with
+	    &alpha; = 0.1 <math>B</math> should be a multiple of 5.
+	    The minimum acceptable value is 499.
+	  </para>
+	</li>
       </ilist>
 
       <subhead>Interaction with R</subhead>
@@ -15676,7 +15688,7 @@
         named matrix is treated as a precomputed set of frequencies,
         to be displayed as a cross-tabulation (see also the <fncref
         targ="mxtab"/> function). In this case the
-        <argname>list</argname> argument(s) should be omitted.
+        <repl>list</repl> argument(s) should be omitted.
       </para>
       <para>
 	By default the cell entries are given as frequency counts. The
