@@ -522,6 +522,7 @@ static int get_cholesky_factor (const gretl_matrix *A,
 }
 
 #define VAR_RHO 0
+#define VAR_RHO_CHK 0
 
 static int admm_iteration (const gretl_matrix *A,
 			   gretl_matrix *L,
@@ -537,19 +538,13 @@ static int admm_iteration (const gretl_matrix *A,
     double prires, dualres;
     double eps_pri, eps_dual;
     double nrm2, rho2 = rho*rho;
-#if VAR_RHO
-    int itermin = 128;
-#else
     int itermin = 1;
-#endif
-    int mul = rho != 1.0;
     int n = A->cols;
     int iter = 0;
     int err = 0;
 
-#if VAR_RHO
-    fprintf(stderr, "*** admm_iteration: lambda %g, rho %g, tune_rho %d ***\n",
-	    lambda, rho, tune_rho);
+#if VAR_RHO_CHK
+    fprintf(stderr, "*** admm: lambda %g, tune %d ***\n", lambda, tune_rho);
 #endif
 
     while (iter < MAX_ITER && !err) {
@@ -570,12 +565,8 @@ static int admm_iteration (const gretl_matrix *A,
 	    gretl_matrix_multiply_mod(A, GRETL_MOD_TRANSPOSE,
 				      p, GRETL_MOD_NONE,
 				      x, GRETL_MOD_NONE);
-	    if (mul) {
-		gretl_matrix_multiply_by_scalar(x, -1/rho2);
-		gretl_matrix_multiply_by_scalar(q, 1/rho);
-	    } else {
-		gretl_matrix_multiply_by_scalar(x, -1);
-	    }
+	    gretl_matrix_multiply_by_scalar(x, -1/rho2);
+	    gretl_matrix_multiply_by_scalar(q, 1/rho);
 	    vector_add_to(x, q, n);
 	}
 
@@ -584,12 +575,8 @@ static int admm_iteration (const gretl_matrix *A,
 	/* sqrt(sum ||r_i||_2^2) */
 	nxstack = sqrt(gretl_vector_dot_product(x, x, NULL));
 	/* sqrt(sum ||y_i||_2^2) */
-	if (mul) {
-	    nystack = gretl_vector_dot_product(u, u, NULL) / rho2;
-	    nystack = sqrt(nystack);
-	} else {
-	    nystack = sqrt(gretl_vector_dot_product(u, u, NULL));
-	}
+	nystack = gretl_vector_dot_product(u, u, NULL) / rho2;
+	nystack = sqrt(nystack);
 
 	vector_copy_values(zprev, z, n);
 	vector_add_into(x, u, z, n);
@@ -601,7 +588,7 @@ static int admm_iteration (const gretl_matrix *A,
 	vector_subtract_into(z, zprev, zdiff, n, 0); /* zdiff = z - zprev */
 	/* ||s^k||_2^2 = N rho^2 ||z - zprev||_2^2 */
 	nrm2 = sqrt(gretl_vector_dot_product(zdiff, zdiff, NULL));
-	dualres = mul ? rho * nrm2 : nrm2;
+	dualres = rho * nrm2;
 
 	/* compute primal and dual feasibility tolerances */
 	nrm2 = sqrt(gretl_vector_dot_product(z, z, NULL));
@@ -626,13 +613,15 @@ static int admm_iteration (const gretl_matrix *A,
 	    }
 	    if (adj > 0) {
 		rho *= adj;
+# if VAR_RHO_CHK
 		fprintf(stderr, "  iter %d: rho *= %g (now %g)\n",
 			iter, adj, rho);
+# endif
 		rho2 = rho * rho;
 		gretl_matrix_multiply_by_scalar(u, 1.0/adj);
 		gretl_matrix_multiply_by_scalar(r, 1.0/adj);
-		mul = rho != 1.0;
 		get_cholesky_factor(A, L, rho);
+		/* ensure a fair number of subsequent iterations*/
 		itermin = iter + 100;
 	    }
 	}
@@ -716,24 +705,20 @@ static int real_admm_lasso (const gretl_matrix *A,
 
     B = gretl_zero_matrix_new(n + stdize, nlam);
     if (verbo > 0 && nlam > 1) {
-	pprintf(prn, "     lambda  coeffs    criterion\n");
+	pprintf(prn, "      lambda     df     criterion\n");
     }
-
-#if VAR_RHO
-    double save_reltol = reltol;
-    double save_abstol = abstol;
-#endif
 
     for (j=0; j<nlam && !err; j++) {
 	/* loop across lambda values */
 	double crit, lambda = lfrac->val[j] * lmax;
-#if VAR_RHO
-	int tune_rho = lfrac->val[j] > 0.01;
-#else
 	int tune_rho = 0;
-#endif
 	int iters = 0;
 	int nnz = 0;
+
+#if VAR_RHO
+	tune_rho = lfrac->val[j] > 0.01;
+	rho = tune_rho ? rho : 16.0;
+#endif
 
 	err = admm_iteration(A, L, Atb, x, z, u, q, m1, r, zprev, zdiff,
 			     lambda, rho, tune_rho, &iters);
@@ -754,19 +739,8 @@ static int real_admm_lasso (const gretl_matrix *A,
 		critmin = crit;
 		jbest = j;
 	    }
-#if VAR_RHO
-	    if (!tune_rho) {
-		reltol = save_reltol / 10;
-		abstol = save_abstol / 10;
-	    }
-#endif
 	}
     }
-
-#if VAR_RHO
-    reltol = save_reltol;
-    abstol = save_abstol;
-#endif
 
     gretl_bundle_set_scalar(bun, "lmax", lmax);
     if (nlam > 1 || xvalid) {
@@ -847,12 +821,12 @@ static int lasso_xv_round (const gretl_matrix *A,
     for (j=0; j<nlam && !err; j++) {
 	/* loop across lambda values */
 	double score, lambda = lfrac->val[j] * lmax;
-#if VAR_RHO
-	int tune_rho = lfrac->val[j] > 0.01;
-#else
 	int tune_rho = 0;
-#endif
 	int iters = 0;
+
+#if VAR_RHO
+	tune_rho = lfrac->val[j] > 0.01;
+#endif
 
 	err = admm_iteration(A, L, Atb, x, z, u, q, m1, r, zprev, zdiff,
 			     lambda, rho, tune_rho, &iters);
@@ -918,7 +892,7 @@ static gretl_matrix *process_xv_criterion (gretl_matrix *XVC,
     double avg, d, v, se, se1, avgmin = 1e200;
     int mcols = (crit_type == CRIT_PCC)? 1 : 2;
     int nf = XVC->cols;
-    int i, j, ialt, imin = 0;
+    int i, j, imin = 0;
 
     metrics = gretl_zero_matrix_new(XVC->rows, mcols);
     if (metrics == NULL) {
