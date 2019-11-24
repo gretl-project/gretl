@@ -970,6 +970,45 @@ int gretl_bundle_get_int (gretl_bundle *bundle,
 }
 
 /**
+ * gretl_bundle_get_bool:
+ * @bundle: bundle to access.
+ * @key: name of key to access.
+ * @deflt: default boolean value.
+ *
+ * Returns: the boolean value associated with @key in the
+ * specified @bundle, if any; otherwise @deflt.
+ */
+
+int gretl_bundle_get_bool (gretl_bundle *bundle,
+			   const char *key,
+			   int deflt)
+{
+    int val = deflt;
+    GretlType type;
+    void *ptr;
+
+    ptr = gretl_bundle_get_data(bundle, key, &type, NULL, NULL);
+
+    if (ptr != NULL) {
+	if (type == GRETL_TYPE_INT) {
+	    int *pi = (int *) ptr;
+
+	    val = (*pi != 0);
+	} else if (type == GRETL_TYPE_UNSIGNED) {
+	    unsigned int *pu = (unsigned int *) ptr;
+
+	    val = (*pu != 0);
+	} else if (type == GRETL_TYPE_DOUBLE) {
+	    double *px = (double *) ptr;
+
+	    val = (*px != 0);
+	}
+    }
+
+    return val;
+}
+
+/**
  * gretl_bundle_get_unsigned:
  * @bundle: bundle to access.
  * @key: name of key to access.
