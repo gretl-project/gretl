@@ -521,24 +521,36 @@ static int get_cholesky_factor (const gretl_matrix *A,
     return gretl_matrix_cholesky_decomp(L);
 }
 
+#define VAR_RHO 0
+
 static int admm_iteration (const gretl_matrix *A,
-			   const gretl_matrix *L,
+			   gretl_matrix *L,
 			   const gretl_vector *Atb,
 			   gretl_vector *x, gretl_vector *z,
 			   gretl_vector *u, gretl_vector *q,
 			   gretl_vector *p, gretl_vector *r,
 			   gretl_vector *zprev, gretl_vector *zdiff,
 			   double lambda, double rho,
-			   int *iters)
+			   int tune_rho, int *iters)
 {
     double nxstack, nystack;
     double prires, dualres;
     double eps_pri, eps_dual;
     double nrm2, rho2 = rho*rho;
+#if VAR_RHO
+    int itermin = 128;
+#else
+    int itermin = 1;
+#endif
     int mul = rho != 1.0;
     int n = A->cols;
     int iter = 0;
     int err = 0;
+
+#if VAR_RHO
+    fprintf(stderr, "*** admm_iteration: lambda %g, rho %g, tune_rho %d ***\n",
+	    lambda, rho, tune_rho);
+#endif
 
     while (iter < MAX_ITER && !err) {
 	/* u-update: u = u + r */
@@ -596,12 +608,35 @@ static int admm_iteration (const gretl_matrix *A,
 	eps_pri  = abstol + reltol * fmax(nxstack, nrm2);
 	eps_dual = abstol + reltol * nystack;
 
-	if (iter > 1 && prires <= eps_pri && dualres <= eps_dual) {
+	if (iter >= itermin && prires <= eps_pri && dualres <= eps_dual) {
 	    break;
 	}
 
 	/* Compute residual: r = x - z */
 	vector_subtract_into(x, z, r, n, 0);
+
+#if VAR_RHO
+	if (tune_rho && iter > 0 && (iter == 32 || iter % 200 == 0)) {
+	    double adj = 0.0;
+
+	    if (prires > 10 * dualres) {
+		adj = 2.0;
+	    } else if (dualres > 10 * prires) {
+		adj = 0.5;
+	    }
+	    if (adj > 0) {
+		rho *= adj;
+		fprintf(stderr, "  iter %d: rho *= %g (now %g)\n",
+			iter, adj, rho);
+		rho2 = rho * rho;
+		gretl_matrix_multiply_by_scalar(u, 1.0/adj);
+		gretl_matrix_multiply_by_scalar(r, 1.0/adj);
+		mul = rho != 1.0;
+		get_cholesky_factor(A, L, rho);
+		itermin = iter + 100;
+	    }
+	}
+#endif
 
 	iter++;
     }
@@ -684,14 +719,24 @@ static int real_admm_lasso (const gretl_matrix *A,
 	pprintf(prn, "     lambda  coeffs    criterion\n");
     }
 
+#if VAR_RHO
+    double save_reltol = reltol;
+    double save_abstol = abstol;
+#endif
+
     for (j=0; j<nlam && !err; j++) {
 	/* loop across lambda values */
 	double crit, lambda = lfrac->val[j] * lmax;
+#if VAR_RHO
+	int tune_rho = lfrac->val[j] > 0.01;
+#else
+	int tune_rho = 0;
+#endif
 	int iters = 0;
 	int nnz = 0;
 
 	err = admm_iteration(A, L, Atb, x, z, u, q, m1, r, zprev, zdiff,
-			     lambda, rho, &iters);
+			     lambda, rho, tune_rho, &iters);
 
 	if (!err) {
 	    for (i=0; i<n; i++) {
@@ -709,8 +754,19 @@ static int real_admm_lasso (const gretl_matrix *A,
 		critmin = crit;
 		jbest = j;
 	    }
+#if VAR_RHO
+	    if (!tune_rho) {
+		reltol = save_reltol / 10;
+		abstol = save_abstol / 10;
+	    }
+#endif
 	}
     }
+
+#if VAR_RHO
+    reltol = save_reltol;
+    abstol = save_abstol;
+#endif
 
     gretl_bundle_set_scalar(bun, "lmax", lmax);
     if (nlam > 1 || xvalid) {
@@ -791,10 +847,15 @@ static int lasso_xv_round (const gretl_matrix *A,
     for (j=0; j<nlam && !err; j++) {
 	/* loop across lambda values */
 	double score, lambda = lfrac->val[j] * lmax;
+#if VAR_RHO
+	int tune_rho = lfrac->val[j] > 0.01;
+#else
+	int tune_rho = 0;
+#endif
 	int iters = 0;
 
 	err = admm_iteration(A, L, Atb, x, z, u, q, m1, r, zprev, zdiff,
-			     lambda, rho, &iters);
+			     lambda, rho, tune_rho, &iters);
 
 	if (!err) {
 	    /* record out-of-sample criterion */
