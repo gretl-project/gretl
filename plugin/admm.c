@@ -521,7 +521,7 @@ static int get_cholesky_factor (const gretl_matrix *A,
     return gretl_matrix_cholesky_decomp(L);
 }
 
-#define VAR_RHO 0
+#define VAR_RHO 0 /* not quite ready? */
 #define VAR_RHO_CHK 0
 
 static int admm_iteration (const gretl_matrix *A,
@@ -657,7 +657,7 @@ static int real_admm_lasso (const gretl_matrix *A,
 
     int stdize = gretl_bundle_get_int(bun, "stdize", &err);
     int xvalid = gretl_bundle_get_int(bun, "xvalidate", &err);
-    int verbo = gretl_bundle_get_int(bun, "verbosity", &err);
+    int verbose = gretl_bundle_get_int(bun, "verbosity", &err);
 
     if (gretl_bundle_has_key(bun, "lxv")) {
 	lfrac = gretl_bundle_get_matrix(bun, "lxv", &err);
@@ -692,7 +692,7 @@ static int real_admm_lasso (const gretl_matrix *A,
 
     lmax = gretl_matrix_infinity_norm(Atb);
 
-    if (verbo > 0) {
+    if (verbose > 0) {
 	if (nlam > 1) {
 	    pprintf(prn, "using lambda-fraction sequence of length %d, starting at %g\n",
 		    nlam, lfrac->val[0]);
@@ -704,8 +704,8 @@ static int real_admm_lasso (const gretl_matrix *A,
     get_cholesky_factor(A, L, rho);
 
     B = gretl_zero_matrix_new(n + stdize, nlam);
-    if (verbo > 0 && nlam > 1) {
-	pprintf(prn, "      lambda     df     criterion\n");
+    if (verbose > 0 && nlam > 1) {
+	pprintf(prn, "      lambda     df     criterion   iters\n");
     }
 
     for (j=0; j<nlam && !err; j++) {
@@ -731,8 +731,8 @@ static int real_admm_lasso (const gretl_matrix *A,
 		gretl_matrix_set(B, i+stdize, j, z->val[i]);
 	    }
 	    crit = objective(A, b, z, lambda, m1);
-	    if (verbo > 0 && nlam > 1) {
-		pprintf(prn, "%#12.6g  %5d    %#.8g (%d iters)\n",
+	    if (verbose > 0 && nlam > 1) {
+		pprintf(prn, "%#12.6g  %5d    %#.8g   %5d\n",
 			lambda/m, nnz, crit, iters);
 	    }
 	    if (crit < critmin) {
@@ -826,6 +826,7 @@ static int lasso_xv_round (const gretl_matrix *A,
 
 #if VAR_RHO
 	tune_rho = lfrac->val[j] > 0.01;
+	rho = tune_rho ? rho : 16.0;
 #endif
 
 	err = admm_iteration(A, L, Atb, x, z, u, q, m1, r, zprev, zdiff,
@@ -912,7 +913,7 @@ static gretl_matrix *process_xv_criterion (gretl_matrix *XVC,
 	    imin = i;
 	}
 	gretl_matrix_set(metrics, i, 0, avg);
-	if (crit_type == CRIT_PCC) {
+	if (crit_type == CRIT_PCC && prn != NULL) {
 	    pprintf(prn, "s = %#g -> %s %#g\n", lfrac->val[i],
 		    crit_string(crit_type), 100 - avg);
 	    continue;
@@ -924,8 +925,10 @@ static gretl_matrix *process_xv_criterion (gretl_matrix *XVC,
 	v /= (nf - 1);
 	se = sqrt(v/nf);
 	gretl_matrix_set(metrics, i, 1, se);
-	pprintf(prn, "s = %#g -> %s %#g (%#g)\n", lfrac->val[i],
-		crit_string(crit_type), avg, se);
+	if (prn != NULL) {
+	    pprintf(prn, "s = %#g -> %s %#g (%#g)\n", lfrac->val[i],
+		    crit_string(crit_type), avg, se);
+	}
     }
 
     *ibest = *i1se = imin;
@@ -1068,6 +1071,7 @@ static int admm_lasso_xv (gretl_matrix *A,
     int nlam, fsize, esize;
     int randfolds = 0;
     int crit_type = 0;
+    int verbose;
     int f, nf;
     int err;
 
@@ -1077,11 +1081,15 @@ static int admm_lasso_xv (gretl_matrix *A,
 	return err;
     }
 
+    verbose = gretl_bundle_get_bool(bun, "verbosity", 1);
+
     fsize = A->rows / nf;
     esize = (nf - 1) * fsize;
 
-    pprintf(prn, "admm_lasso_xv: nf=%d, fsize=%d, randfolds=%d, crit=%s\n",
-	    nf, fsize, randfolds, crit_string(crit_type));
+    if (verbose) {
+	pprintf(prn, "admm_lasso_xv: nf=%d, fsize=%d, randfolds=%d, crit=%s\n",
+		nf, fsize, randfolds, crit_string(crit_type));
+    }
 
     AB = gretl_matrix_block_new(&Ae, esize, A->cols,
 				&Af, fsize, A->cols,
@@ -1111,10 +1119,12 @@ static int admm_lasso_xv (gretl_matrix *A,
     lasso_xv_round(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0);
 
     if (!err) {
-	err = post_xvalidation_task(XVC, lfrac, crit_type, bun, prn);
+	PRN *myprn = verbose ? prn : NULL;
+
+	err = post_xvalidation_task(XVC, lfrac, crit_type, bun, myprn);
 	if (!err) {
 	    /* determine coefficient vector on full training set */
-	    err = real_admm_lasso(A, b, bun, rho, prn);
+	    err = real_admm_lasso(A, b, bun, rho, myprn);
 	}
     }
 
@@ -1147,6 +1157,7 @@ static int mpi_admm_lasso_xv (gretl_matrix *A,
     int nlam, rank;
     int crit_type = 0;
     int np, rankmax = 0;
+    int verbose;
     int f, nf, r;
     int my_f = 0;
     int err = 0;
@@ -1160,6 +1171,8 @@ static int mpi_admm_lasso_xv (gretl_matrix *A,
     if (err) {
 	return err;
     }
+
+    verbose = gretl_bundle_get_bool(bun, "verbosity", 1);
 
     nlam = gretl_vector_get_length(lfrac);
     fsize = A->rows / nf;
@@ -1177,8 +1190,10 @@ static int mpi_admm_lasso_xv (gretl_matrix *A,
     }
 
     if (rank == 0) {
-	pprintf(prn, "admm_lasso_xv: nf=%d, fsize=%d, randfolds=%d, crit=%s\n",
-		nf, fsize, randfolds, crit_string(crit_type));
+	if (verbose) {
+	    pprintf(prn, "admm_lasso_xv: nf=%d, fsize=%d, randfolds=%d, crit=%s\n",
+		    nf, fsize, randfolds, crit_string(crit_type));
+	}
 	lmax = get_xvalidation_lmax(A, b, esize);
     }
 
@@ -1225,10 +1240,12 @@ static int mpi_admm_lasso_xv (gretl_matrix *A,
     lasso_xv_round(NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0);
 
     if (rank == 0 && !err) {
-	err = post_xvalidation_task(XVC, lfrac, crit_type, bun, prn);
+	PRN *myprn = verbose ? prn : NULL;
+
+	err = post_xvalidation_task(XVC, lfrac, crit_type, bun, myprn);
 	if (!err) {
 	    /* determine coefficient vector on full training set */
-	    err = real_admm_lasso(A, b, bun, rho, prn);
+	    err = real_admm_lasso(A, b, bun, rho, myprn);
 	}
     }
 
@@ -1280,7 +1297,7 @@ int admm_lasso (gretl_matrix *A,
 
     prepare_admm_params(A, b, bun, &rho);
 
-    xv = gretl_bundle_get_int(bun, "xvalidate", &err);
+    xv = gretl_bundle_get_bool(bun, "xvalidate", 0);
 
     if (xv) {
 #ifdef HAVE_MPI
