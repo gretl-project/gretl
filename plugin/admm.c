@@ -632,7 +632,7 @@ static int real_admm_lasso (const gretl_matrix *A,
     gretl_matrix *L;
 
     int stdize = gretl_bundle_get_int(bun, "stdize", &err);
-    int xval = gretl_bundle_get_int(bun, "xvalidate", &err);
+    int xvalid = gretl_bundle_get_int(bun, "xvalidate", &err);
     int verbo = gretl_bundle_get_int(bun, "verbosity", &err);
 
     if (gretl_bundle_has_key(bun, "lxv")) {
@@ -713,7 +713,7 @@ static int real_admm_lasso (const gretl_matrix *A,
     }
 
     gretl_bundle_set_scalar(bun, "lmax", lmax);
-    if (nlam > 1 || xval) {
+    if (nlam > 1 || xvalid) {
 	gretl_bundle_set_scalar(bun, "best_idx", jbest + 1);
 	gretl_bundle_set_scalar(bun, "lfbest", lfrac->val[jbest]);
     }
@@ -723,6 +723,11 @@ static int real_admm_lasso (const gretl_matrix *A,
     } else {
 	gretl_bundle_donate_data(bun, "b", B, GRETL_TYPE_MATRIX, 0);
 	gretl_bundle_set_scalar(bun, "lambda", lfrac->val[0] * lmax);
+    }
+
+    gretl_bundle_delete_data(bun, "verbosity");
+    if (xvalid) {
+	gretl_bundle_delete_data(bun, "lxv");
     }
 
     /* cleanup */
@@ -1286,6 +1291,7 @@ int admm_xv_mpi (PRN *prn)
     if (!err) {
 	err = mpi_admm_lasso_xv(A, b, bun, rho, prn);
 	if (!err && gretl_mpi_rank() == 0) {
+	    /* write results, to be picked up by parent */
 	    gretl_bundle_write_to_file(bun, "lasso_XV_result.xml", 1);
 	}
     }
@@ -1333,6 +1339,7 @@ static int mpi_parent_action (gretl_matrix *A,
 	if (!err) {
 	    gretl_bundles_swap_content(bun, res);
 	    gretl_bundle_destroy(res);
+	    gretl_bundle_delete_data(bun, "verbosity");
 	}
     }
 
