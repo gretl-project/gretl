@@ -888,7 +888,7 @@ static gretl_matrix *process_xv_criterion (gretl_matrix *XVC,
 		crit_string(crit_type), avg, se);
     }
 
-    *ibest = ialt = imin;
+    *ibest = *i1se = imin;
 
     if (crit_type != CRIT_PCC) {
 	/* estd. standard error of minimum average XVC */
@@ -901,12 +901,11 @@ static gretl_matrix *process_xv_criterion (gretl_matrix *XVC,
 	for (i=imin-1; i>=0; i--) {
 	    avg = gretl_matrix_get(metrics, i, 0);
 	    if (avg - avgmin < se1) {
-		ialt = i;
+		*i1se = i;
 	    } else {
 		break;
 	    }
 	}
-	*i1se = ialt;
     }
 
     return metrics;
@@ -931,8 +930,10 @@ static int post_xvalidation_task (gretl_matrix *XVC,
 	pprintf(prn, "\nAverage out-of-sample %s minimized at %g for s=%g\n",
 		crit_string(crit_type), gretl_matrix_get(metrics, ibest, 0),
 		lfrac->val[ibest]);
-	pprintf(prn, "Largest s within one s.e. of best criterion: %g\n",
-		lfrac->val[i1se]);
+	if (i1se != ibest) {
+	    pprintf(prn, "Largest s within one s.e. of best criterion: %g\n",
+		    lfrac->val[i1se]);
+	}
     }
 
     lxv = gretl_matrix_alloc(1, 1);
@@ -940,6 +941,10 @@ static int post_xvalidation_task (gretl_matrix *XVC,
 
     gretl_bundle_donate_data(b, "lxv", lxv, GRETL_TYPE_MATRIX, 0);
     gretl_bundle_donate_data(b, "XVC", metrics, GRETL_TYPE_MATRIX, 0);
+
+    if (i1se != ibest) {
+	gretl_bundle_set_scalar(b, "lf1se", lfrac->val[i1se]);
+    }
 
     return 0;
 }
@@ -1201,19 +1206,19 @@ static void prepare_admm_params (gretl_matrix *A,
 				 double *rho)
 {
     gretl_matrix *ctrl;
+    int len;
 
     ctrl = gretl_bundle_get_matrix(bun, "admmctrl", NULL);
+    len = gretl_vector_get_length(ctrl);
 
-    if (ctrl != NULL) {
-	if (ctrl->val[0] > 0) {
-	    *rho = ctrl->val[0];
-	}
-	if (ctrl->val[1] > 0) {
-	    reltol = ctrl->val[1];
-	}
-	if (ctrl->val[2] > 0) {
-	    abstol = ctrl->val[2];
-	}
+    if (len > 0 && ctrl->val[0] > 0) {
+	*rho = ctrl->val[0];
+    }
+    if (len > 1 && ctrl->val[1] > 0) {
+	reltol = ctrl->val[1];
+    }
+    if (len > 2 && ctrl->val[2] > 0) {
+	abstol = ctrl->val[2];
     }
 
     if (gretl_bundle_get_int(bun, "stdize_y", NULL) == 0) {
