@@ -1918,7 +1918,9 @@ static void write_R_io_funcs (FILE *fp)
 	"    gretlmsg <- paste(\"gretl.export: don't know how to write object\", objname, "
 	" \"(try as.matrix?)\\n\")\n"
 	"  }\n"
-	"  cat(gretlmsg)\n"
+	"  if (!quiet) {\n"
+	"    cat(gretlmsg)\n"
+	"  }\n"
 	"}\n";
     const char *ddir = get_export_dotdir();
 
@@ -1930,7 +1932,7 @@ static void write_R_io_funcs (FILE *fp)
     fputs("}\n", fp);
 #endif
 
-    fputs("gretl.export <- function(x, sx) {\n", fp);
+    fputs("gretl.export <- function(x, sx, quiet=0) {\n", fp);
     fprintf(fp, "  prefix <- \"%s\"\n", ddir);
     fputs(export_body, fp);
 
