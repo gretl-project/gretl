@@ -2497,7 +2497,20 @@ static int package_check_dependencies (const char *fname,
     int ndeps;
     int err = 0;
 
-    depends = package_peek_dependencies(fname, &ndeps);
+    if (has_suffix(fname, ".zip")) {
+	/* we need to map from @fname to the gfn name */
+	gchar *tmp, *gfnname;
+	const char *p;
+
+	tmp = g_strndup(fname, strlen(fname) - 4);
+	p = path_last_element(tmp);
+	gfnname = g_strdup_printf("%s%c%s.gfn", tmp, SLASH, p);
+	depends = package_peek_dependencies(gfnname, &ndeps);
+	g_free(tmp);
+	g_free(gfnname);
+    } else {
+	depends = package_peek_dependencies(fname, &ndeps);
+    }
 
     if (depends != NULL) {
 	char *pkgpath;
