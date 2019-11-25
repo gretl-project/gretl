@@ -2404,12 +2404,13 @@ and need not be harmonized).
 \begin{funcdoc}{SVAR\_estimate(bundle *Smod, int verbosity[1])}
   Estimates the model by maximum likelihood. Its second argument is a
   scalar, which controls the verbosity of output. If omitted,
-  output is printed.
+  standard output is printed. If set to 2 or higher, the output of the 
+  identification check is printed, too.
   
-  The identification check before
-  the estimation of the structural form is activated in 
+  If you're sure about it, the identification check before
+  the estimation of the structural form can be suppressed in 
   \texttt{SVAR\_setup} (or by manually setting \texttt{obj.checkident}
-  to 1).
+  to 0).
 \end{funcdoc}
 
 \begin{funcdoc}{SVAR\_hd(bundle *Smod, int nv)}
@@ -2427,10 +2428,13 @@ and need not be harmonized).
 
 \begin{funcdoc}{SVAR\_ident(bundle *Smod, int verbose[0])}
   Checks if a model is identified by applying (among other things) 
-  the algorithm described
-  in \cite{AG}. Returns a 0/1 scalar. Its second argument is a
-  scalar, which controls the verbosity of output. If set to a non-zero
-  value, a few messages are printed as checks are performed.
+  the algorithm described in \cite{AG}. Returns a 0/1 scalar. 
+  Its second argument is a scalar, which controls the verbosity of output. 
+  If set to a non-zero value, a representation of the restrictions and
+  a few messages are printed as checks are performed.
+  
+  In case redundant restrictions are found, these are dropped in the 
+  model bundle to facilitate further estimation.
 \end{funcdoc}
 
 \begin{funcdoc}{SVAR\_restrict(bundle *Smod, string code, int r, int c[0], scalar d[0])}
@@ -2499,7 +2503,8 @@ implied by the pre-existing constraints, they will just be ignored and
 a warning will be printed.
 \end{funcdoc}
 
-\begin{funcdoc}{SVAR\_setup(string type, list Y, list X, int varorder, bool checkident[0])}
+\begin{funcdoc}{SVAR\_setup(string type, list Y, list X, int varorder, 
+  bool checkident[1])}
   Initialises a model: the function's output is a bundle. The function
   arguments are:
   \begin{enumerate}
@@ -2509,7 +2514,7 @@ a warning will be printed.
   \item A list containing the exogenous variables.
   \item A positive integer, the VAR order.
   \item A switch to activate or suppress the automatic identification check before 
-  estimation of the structural form (default off).
+  estimation of the structural form (default on).
   \end{enumerate}
 \end{funcdoc}
 
@@ -2607,7 +2612,9 @@ and actually process the existing extra check whether a restriction might be red
 which is relevant mostly in the case of some weakly exogenous variables.
 Also for SVECs, check whether a long-run restriction really applies to a permanent shock.
 
-\item Undo making the identification check the default, since it was cluttering the output.
+\item The identification check output is now suppressed by default to avoid clutter.
+(It is still run by default, but quietly.)
+
 \item Some documentation updates.
 
 \end{itemize}
