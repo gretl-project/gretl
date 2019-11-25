@@ -521,22 +521,23 @@ static int get_cholesky_factor (const gretl_matrix *A,
     return gretl_matrix_cholesky_decomp(L);
 }
 
-#define VAR_RHO 0 /* not quite ready? */
+#define VAR_RHO 1 /* not quite ready? */
 #define VAR_RHO_CHK 0
 
 static int admm_iteration (const gretl_matrix *A,
-			   gretl_matrix *L,
 			   const gretl_vector *Atb,
+			   gretl_matrix *L,
 			   gretl_vector *x, gretl_vector *z,
 			   gretl_vector *u, gretl_vector *q,
 			   gretl_vector *p, gretl_vector *r,
 			   gretl_vector *zprev, gretl_vector *zdiff,
-			   double lambda, double rho,
+			   double lambda, double *prho,
 			   int tune_rho, int *iters)
 {
     double nxstack, nystack;
     double prires, dualres;
     double eps_pri, eps_dual;
+    double rho = *prho;
     double nrm2, rho2 = rho*rho;
     int itermin = 1;
     int n = A->cols;
@@ -631,6 +632,7 @@ static int admm_iteration (const gretl_matrix *A,
     }
 
     *iters = iter;
+    *prho = rho;
 
     return err;
 }
@@ -638,14 +640,14 @@ static int admm_iteration (const gretl_matrix *A,
 static int real_admm_lasso (const gretl_matrix *A,
 			    const gretl_matrix *b,
 			    gretl_bundle *bun,
-			    double rho,
+			    double rho0,
 			    PRN *prn)
 {
     gretl_matrix_block *MB;
     double critmin = 1e200;
     gretl_matrix *B = NULL;
     gretl_matrix *lfrac;
-    double lmax;
+    double lmax, rho = rho0;
     int ldim, nlam;
     int m, n, i, j;
     int jbest = 0;
@@ -716,12 +718,11 @@ static int real_admm_lasso (const gretl_matrix *A,
 	int nnz = 0;
 
 #if VAR_RHO
-	tune_rho = lfrac->val[j] > 0.01;
-	rho = tune_rho ? rho : 16.0;
+	tune_rho = 1;
 #endif
 
-	err = admm_iteration(A, L, Atb, x, z, u, q, m1, r, zprev, zdiff,
-			     lambda, rho, tune_rho, &iters);
+	err = admm_iteration(A, Atb, L, x, z, u, q, m1, r, zprev, zdiff,
+			     lambda, &rho, tune_rho, &iters);
 
 	if (!err) {
 	    for (i=0; i<n; i++) {
@@ -772,13 +773,14 @@ static int lasso_xv_round (const gretl_matrix *A,
 			   const gretl_matrix *b_out,
 			   const gretl_matrix *lfrac,
 			   gretl_matrix *XVC,
-			   double lmax, double rho,
+			   double lmax, double rho0,
 			   int fold, int crit_type)
 {
     static gretl_vector *x, *u, *z, *y;
     static gretl_vector *r, *zprev, *zdiff;
     static gretl_vector *q, *Atb, *m1, *L;
     static gretl_matrix_block *MB;
+    double rho = rho0;
     int ldim, nlam;
     int m, n, j;
     int err = 0;
@@ -825,12 +827,10 @@ static int lasso_xv_round (const gretl_matrix *A,
 	int iters = 0;
 
 #if VAR_RHO
-	tune_rho = lfrac->val[j] > 0.01;
-	rho = tune_rho ? rho : 16.0;
+	tune_rho = 1;
 #endif
-
-	err = admm_iteration(A, L, Atb, x, z, u, q, m1, r, zprev, zdiff,
-			     lambda, rho, tune_rho, &iters);
+	err = admm_iteration(A, Atb, L, x, z, u, q, m1, r, zprev, zdiff,
+			     lambda, &rho, tune_rho, &iters);
 
 	if (!err) {
 	    /* record out-of-sample criterion */
@@ -1293,7 +1293,7 @@ int admm_lasso (gretl_matrix *A,
 		PRN *prn)
 {
     double rho = 8.0; /* once upon a time, was 1.0 */
-    int xv, err = 0;
+    int xv;
 
     prepare_admm_params(A, b, bun, &rho);
 
@@ -1376,7 +1376,7 @@ static int mpi_parent_action (gretl_matrix *A,
 	err = foreign_start(MPI, NULL, OPT_NONE, prn);
 	if (!err) {
 	    foreign_append("_admm_lasso()", MPI);
-	    err = foreign_execute(NULL, OPT_L | OPT_S, prn);
+	    err = foreign_execute(NULL, OPT_L | OPT_S | OPT_Q, prn);
 	    if (err) {
 		fprintf(stderr, "mpi_parent: foreign exec error %d\n", err);
 	    }
