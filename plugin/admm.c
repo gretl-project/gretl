@@ -603,7 +603,6 @@ static int admm_iteration (const gretl_matrix *A,
 	/* Compute residual: r = x - z */
 	vector_subtract_into(x, z, r, n, 0);
 
-#if VAR_RHO
 	if (tune_rho && iter > 0 && (iter == 32 || iter % 200 == 0)) {
 	    double adj = 0.0;
 
@@ -626,7 +625,6 @@ static int admm_iteration (const gretl_matrix *A,
 		itermin = iter + 100;
 	    }
 	}
-#endif
 
 	iter++;
     }
