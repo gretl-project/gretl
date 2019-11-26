@@ -45,9 +45,12 @@
 
 #define MAX_ITER 20000
 
-double reltol = 1.0e-4;
-double abstol = 1.0e-6;
-double ybar = 0.0;
+#define RELTOL_DEFAULT 1.0e-4
+#define ABSTOL_DEFAULT 1.0e-6
+
+double reltol;
+double abstol;
+double ybar;
 
 enum {
     CRIT_MSE,
@@ -621,7 +624,7 @@ static int admm_iteration (const gretl_matrix *A,
 		gretl_matrix_multiply_by_scalar(u, 1.0/adj);
 		gretl_matrix_multiply_by_scalar(r, 1.0/adj);
 		get_cholesky_factor(A, L, rho);
-		/* ensure a fair number of subsequent iterations*/
+		/* ensure a fair number of subsequent iterations */
 		itermin = iter + 100;
 	    }
 	}
@@ -812,7 +815,7 @@ static int lasso_xv_round (const gretl_matrix *A,
     gretl_matrix_multiply_mod(A, GRETL_MOD_TRANSPOSE,
 			      b, GRETL_MOD_NONE,
 			      Atb, GRETL_MOD_NONE);
-#if 0
+#if 0 /* ?? */
     lmax = gretl_matrix_infinity_norm(Atb);
 #endif
 
@@ -1263,6 +1266,10 @@ static void prepare_admm_params (gretl_matrix *A,
     gretl_matrix *ctrl;
     int len;
 
+    /* set defaults */
+    reltol = RELTOL_DEFAULT;
+    abstol = ABSTOL_DEFAULT;
+
     ctrl = gretl_bundle_get_matrix(bun, "admmctrl", NULL);
     len = gretl_vector_get_length(ctrl);
 
@@ -1279,6 +1286,8 @@ static void prepare_admm_params (gretl_matrix *A,
     if (gretl_bundle_get_int(bun, "stdize_y", NULL) == 0) {
 	/* we'll need to add mean(y) */
 	ybar = gretl_mean(0, b->rows-1, b->val);
+    } else {
+	ybar = 0.0;
     }
 
     /* scale the absolute tolerance */
@@ -1290,7 +1299,7 @@ int admm_lasso (gretl_matrix *A,
 		gretl_bundle *bun,
 		PRN *prn)
 {
-    double rho = 8.0; /* once upon a time, was 1.0 */
+    double rho = 8.0;
     int xv;
 
     prepare_admm_params(A, b, bun, &rho);
@@ -1302,6 +1311,7 @@ int admm_lasso (gretl_matrix *A,
 	if (gretl_mpi_n_processes() > 1) {
 	    return mpi_admm_lasso_xv(A, b, bun, rho, prn);
 	} else if (auto_mpi_ok()) {
+	    pputs(prn, "invoking MPI\n");
 	    return mpi_parent_action(A, b, bun, rho, prn);
 	}
 #endif
