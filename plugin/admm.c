@@ -642,6 +642,7 @@ static int real_admm_lasso (const gretl_matrix *A,
 			    const gretl_matrix *b,
 			    gretl_bundle *bun,
 			    double rho0,
+			    double lxv,
 			    PRN *prn)
 {
     gretl_matrix_block *MB;
@@ -649,7 +650,7 @@ static int real_admm_lasso (const gretl_matrix *A,
     gretl_matrix *B = NULL;
     gretl_matrix *lfrac;
     double lmax, rho = rho0;
-    int ldim, nlam;
+    int ldim, nlam = 1;
     int m, n, i, j;
     int jbest = 0;
     int err = 0;
@@ -659,21 +660,21 @@ static int real_admm_lasso (const gretl_matrix *A,
     gretl_matrix *L;
 
     int stdize = gretl_bundle_get_int(bun, "stdize", &err);
-    int xvalid = gretl_bundle_get_int(bun, "xvalidate", &err);
     int verbose = gretl_bundle_get_int(bun, "verbosity", &err);
+    int xvalid = gretl_bundle_get_int(bun, "xvalidate", &err);
 
-    if (gretl_bundle_has_key(bun, "lxv")) {
-	lfrac = gretl_bundle_get_matrix(bun, "lxv", &err);
-    } else {
-	lfrac = gretl_bundle_get_matrix(bun, "lfrac", &err);
-    }
+    lfrac = gretl_bundle_get_matrix(bun, "lfrac", &err);
 
     if (err) {
 	return err;
     }
 
+    if (lxv < 0) {
+	/* we're actually using @lfrac */
+	nlam = gretl_vector_get_length(lfrac);
+    }
+
     /* dimensions */
-    nlam = gretl_vector_get_length(lfrac);
     m = A->rows;
     n = A->cols;
     ldim = m >= n ? n : m;
@@ -700,7 +701,7 @@ static int real_admm_lasso (const gretl_matrix *A,
 	    pprintf(prn, "using lambda-fraction sequence of length %d, starting at %g\n",
 		    nlam, lfrac->val[0]);
 	} else {
-	    pprintf(prn, "using lambda-fraction %g\n", lfrac->val[0]);
+	    pprintf(prn, "using lambda-fraction %g\n", lxv < 0 ? lfrac->val[0] : lxv);
 	}
     }
 
@@ -713,10 +714,13 @@ static int real_admm_lasso (const gretl_matrix *A,
 
     for (j=0; j<nlam && !err; j++) {
 	/* loop across lambda values */
-	double crit, lambda = lfrac->val[j] * lmax;
+	double crit, s, lambda;
 	int tune_rho = 0;
 	int iters = 0;
 	int nnz = 0;
+
+	s = lxv < 0 ? lfrac->val[j] : lxv;
+	lambda = s * lmax;
 
 #if VAR_RHO
 	tune_rho = 1;
@@ -754,13 +758,14 @@ static int real_admm_lasso (const gretl_matrix *A,
 	gretl_bundle_donate_data(bun, "B", B, GRETL_TYPE_MATRIX, 0);
     } else {
 	gretl_bundle_donate_data(bun, "b", B, GRETL_TYPE_MATRIX, 0);
-	gretl_bundle_set_scalar(bun, "lambda", lfrac->val[0] * lmax);
+	if (xvalid) {
+	    gretl_bundle_set_scalar(bun, "lambda", lxv * lmax);
+	} else {
+	    gretl_bundle_set_scalar(bun, "lambda", lfrac->val[0] * lmax);
+	}
     }
 
     gretl_bundle_delete_data(bun, "verbosity");
-    if (xvalid) {
-	gretl_bundle_delete_data(bun, "lxv");
-    }
 
     /* cleanup */
     gretl_matrix_block_destroy(MB);
@@ -955,19 +960,24 @@ static gretl_matrix *process_xv_criterion (gretl_matrix *XVC,
     return metrics;
 }
 
-static int post_xvalidation_task (gretl_matrix *XVC,
-				  gretl_matrix *lfrac,
-				  int crit_type,
-				  gretl_bundle *b,
-				  PRN *prn)
+/* Analyse results after cross-validation. Return the
+   optimal lambda value or NADBL on failure.
+*/
+
+static double post_xvalidation_task (gretl_matrix *XVC,
+				     gretl_matrix *lfrac,
+				     int crit_type,
+				     gretl_bundle *b,
+				     PRN *prn, int *err)
 {
-    gretl_matrix *metrics, *lxv;
+    gretl_matrix *metrics;
     int ibest = 0, i1se = 0;
 
     metrics = process_xv_criterion(XVC, lfrac, &ibest, &i1se,
 				   crit_type, prn);
     if (metrics == NULL) {
-	return E_ALLOC;
+	*err = E_ALLOC;
+	return NADBL;
     }
 
     if (prn != NULL) {
@@ -980,17 +990,13 @@ static int post_xvalidation_task (gretl_matrix *XVC,
 	}
     }
 
-    lxv = gretl_matrix_alloc(1, 1);
-    lxv->val[0] = lfrac->val[ibest];
-
-    gretl_bundle_donate_data(b, "lxv", lxv, GRETL_TYPE_MATRIX, 0);
     gretl_bundle_donate_data(b, "XVC", metrics, GRETL_TYPE_MATRIX, 0);
 
     if (i1se != ibest) {
 	gretl_bundle_set_scalar(b, "lf1se", lfrac->val[i1se]);
     }
 
-    return 0;
+    return lfrac->val[ibest];
 }
 
 static int get_crit_type (gretl_bundle *bun)
@@ -1121,11 +1127,12 @@ static int admm_lasso_xv (gretl_matrix *A,
 
     if (!err) {
 	PRN *myprn = verbose ? prn : NULL;
+	double lxv;
 
-	err = post_xvalidation_task(XVC, lfrac, crit_type, bun, myprn);
+	lxv = post_xvalidation_task(XVC, lfrac, crit_type, bun, myprn, &err);
 	if (!err) {
 	    /* determine coefficient vector on full training set */
-	    err = real_admm_lasso(A, b, bun, rho, myprn);
+	    err = real_admm_lasso(A, b, bun, rho, lxv, myprn);
 	}
     }
 
@@ -1242,11 +1249,12 @@ static int mpi_admm_lasso_xv (gretl_matrix *A,
 
     if (rank == 0 && !err) {
 	PRN *myprn = verbose ? prn : NULL;
+	double lxv;
 
-	err = post_xvalidation_task(XVC, lfrac, crit_type, bun, myprn);
+	lxv = post_xvalidation_task(XVC, lfrac, crit_type, bun, myprn, &err);
 	if (!err) {
 	    /* determine coefficient vector on full training set */
-	    err = real_admm_lasso(A, b, bun, rho, myprn);
+	    err = real_admm_lasso(A, b, bun, rho, lxv, myprn);
 	}
     }
 
@@ -1317,14 +1325,16 @@ int admm_lasso (gretl_matrix *A,
 #endif
 	return admm_lasso_xv(A, b, bun, rho, prn);
     } else {
-	return real_admm_lasso(A, b, bun, rho, prn);
+	return real_admm_lasso(A, b, bun, rho, -1.0, prn);
     }
 }
 
 #ifdef HAVE_MPI
 
 /* We come here if a parent process has called our
-   automatic local MPI routine for cross validation.
+   automatic local MPI routine for cross validation:
+   this function will be executed by all gretlmpi
+   instances.
 */
 
 int admm_xv_mpi (PRN *prn)
