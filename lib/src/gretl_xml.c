@@ -2571,7 +2571,7 @@ static int real_write_gdt (const char *fname, const int *inlist,
 			    i, j);
 		    pputs(prn, "\"empty string\" ");
 		} else {
-		    pprintf(prn, "\"%s\" ", xmlbuf);
+		    pprintf(prn, "\"%s\" ", sbuf);
 		}
 		free(sbuf);
 	    }
