@@ -1296,15 +1296,16 @@ int admm_lasso (gretl_matrix *A,
 		PRN *prn)
 {
     double rho = 8.0;
-    int xv, no_mpi;
+    int xv;
 
     prepare_admm_params(A, b, bun, &rho);
 
     xv = gretl_bundle_get_bool(bun, "xvalidate", 0);
-    no_mpi = gretl_bundle_get_bool(bun, "no_mpi", 0);
 
     if (xv) {
 #ifdef HAVE_MPI
+	int no_mpi = gretl_bundle_get_bool(bun, "no_mpi", 0);
+
 	if (!no_mpi) {
 	    if (gretl_mpi_n_processes() > 1) {
 		return mpi_admm_lasso_xv(A, b, bun, rho, prn);
