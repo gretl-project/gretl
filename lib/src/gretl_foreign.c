@@ -640,7 +640,7 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 #else /* !G_OS_WIN32 */
 
 static int lib_run_prog_sync (char **argv, gretlopt opt,
-			      PRN *prn)
+			      int lang, PRN *prn)
 {
     gchar *sout = NULL;
     gchar *errout = NULL;
@@ -671,8 +671,10 @@ static int lib_run_prog_sync (char **argv, gretlopt opt,
 	}
 	err = 1;
     } else if (sout != NULL) {
-	if (!(opt & OPT_Q)) {
-	    /* with OPT_Q, don't print non-error output */
+	if (lang == LANG_MPI || !(opt & OPT_Q)) {
+	    /* with OPT_Q, don't print non-error output,
+	       unless we're running MPI
+	    */
 	    if (foreign_lang == LANG_STATA) {
 		do_stata_printout(prn);
 	    } else {
@@ -799,7 +801,7 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
 	NULL
     };
 
-    return lib_run_prog_sync(argv, opt, prn);
+    return lib_run_prog_sync(argv, opt, LANG_R, prn);
 }
 
 static int lib_run_other_sync (gretlopt opt, PRN *prn)
@@ -848,7 +850,7 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
 	gretl_setenv("OCTAVE_HISTFILE", "/dev/null");
     }
 
-    err = lib_run_prog_sync(argv, opt, prn);
+    err = lib_run_prog_sync(argv, opt, foreign_lang, prn);
 
     return err;
 }
@@ -947,7 +949,7 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 #if MPI_PIPES
 	err = run_mpi_with_pipes(argv, opt, prn);
 #else
-	err = lib_run_prog_sync(argv, opt, prn);
+	err = lib_run_prog_sync(argv, opt, LANG_MPI, prn);
 #endif
 	g_free(mpiprog);
     }
