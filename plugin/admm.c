@@ -641,18 +641,16 @@ static int admm_iteration (const gretl_matrix *A,
 static int real_admm_lasso (const gretl_matrix *A,
 			    const gretl_matrix *b,
 			    gretl_bundle *bun,
-			    double rho0,
-			    double lxv,
-			    PRN *prn)
+			    double rho0, PRN *prn)
 {
     gretl_matrix_block *MB;
-    double critmin = 1e200;
+    double lcritmin = 1e200;
     gretl_matrix *B = NULL;
     gretl_matrix *lfrac;
     double lmax, rho = rho0;
     int ldim, nlam = 1;
     int m, n, i, j;
-    int jbest = 0;
+    int idxmin = 0;
     int err = 0;
 
     gretl_vector *x, *u, *z, *y, *r, *zprev, *zdiff;
@@ -669,12 +667,8 @@ static int real_admm_lasso (const gretl_matrix *A,
 	return err;
     }
 
-    if (lxv < 0) {
-	/* we're actually using @lfrac */
-	nlam = gretl_vector_get_length(lfrac);
-    }
-
     /* dimensions */
+    nlam = gretl_vector_get_length(lfrac);
     m = A->rows;
     n = A->cols;
     ldim = m >= n ? n : m;
@@ -696,31 +690,28 @@ static int real_admm_lasso (const gretl_matrix *A,
 
     lmax = gretl_matrix_infinity_norm(Atb);
 
-    if (verbose > 0) {
+    if (!xvalid && verbose > 0) {
 	if (nlam > 1) {
 	    pprintf(prn, "using lambda-fraction sequence of length %d, starting at %g\n",
 		    nlam, lfrac->val[0]);
 	} else {
-	    pprintf(prn, "using lambda-fraction %g\n", lxv < 0 ? lfrac->val[0] : lxv);
+	    pprintf(prn, "using lambda-fraction %g\n", lfrac->val[0]);
 	}
     }
 
     get_cholesky_factor(A, L, rho);
 
     B = gretl_zero_matrix_new(n + stdize, nlam);
-    if (verbose > 0 && nlam > 1) {
+    if (!xvalid && verbose > 0 && nlam > 1) {
 	pprintf(prn, "      lambda     df     criterion   iters\n");
     }
 
     for (j=0; j<nlam && !err; j++) {
 	/* loop across lambda values */
-	double crit, s, lambda;
+	double lcrit, lambda = lfrac->val[j] * lmax;
 	int tune_rho = 0;
 	int iters = 0;
 	int nnz = 0;
-
-	s = lxv < 0 ? lfrac->val[j] : lxv;
-	lambda = s * lmax;
 
 #if VAR_RHO
 	tune_rho = 1;
@@ -736,33 +727,33 @@ static int real_admm_lasso (const gretl_matrix *A,
 		}
 		gretl_matrix_set(B, i+stdize, j, z->val[i]);
 	    }
-	    crit = objective(A, b, z, lambda, m1);
-	    if (verbose > 0 && nlam > 1) {
-		pprintf(prn, "%#12.6g  %5d    %#.8g   %5d\n",
-			lambda/m, nnz, crit, iters);
-	    }
-	    if (crit < critmin) {
-		critmin = crit;
-		jbest = j;
+	    if (!xvalid) {
+		lcrit = objective(A, b, z, lambda, m1);
+		if (verbose > 0 && nlam > 1) {
+		    pprintf(prn, "%#12.6g  %5d    %#.8g   %5d\n",
+			    lambda/m, nnz, lcrit, iters);
+		}
+		if (lcrit < lcritmin) {
+		    lcritmin = lcrit;
+		    idxmin = j;
+		}
 	    }
 	}
     }
 
     gretl_bundle_set_scalar(bun, "lmax", lmax);
-    if (nlam > 1 || xvalid) {
-	gretl_bundle_set_scalar(bun, "best_idx", jbest + 1);
-	gretl_bundle_set_scalar(bun, "lfbest", lfrac->val[jbest]);
+    if (!xvalid) {
+	if (nlam > 1) {
+	    gretl_bundle_set_scalar(bun, "idxmin", idxmin + 1);
+	    gretl_bundle_set_scalar(bun, "lfmin", lfrac->val[idxmin]);
+	}
+	gretl_bundle_set_scalar(bun, "lcrit", lcritmin);
     }
-    gretl_bundle_set_scalar(bun, "crit", critmin);
     if (nlam > 1) {
 	gretl_bundle_donate_data(bun, "B", B, GRETL_TYPE_MATRIX, 0);
     } else {
 	gretl_bundle_donate_data(bun, "b", B, GRETL_TYPE_MATRIX, 0);
-	if (xvalid) {
-	    gretl_bundle_set_scalar(bun, "lambda", lxv * lmax);
-	} else {
-	    gretl_bundle_set_scalar(bun, "lambda", lfrac->val[0] * lmax);
-	}
+	gretl_bundle_set_scalar(bun, "lambda", lfrac->val[0] * lmax);
     }
 
     gretl_bundle_delete_data(bun, "verbosity");
@@ -891,7 +882,7 @@ static void prepare_xv_data (const gretl_matrix *X,
 
 static gretl_matrix *process_xv_criterion (gretl_matrix *XVC,
 					   gretl_matrix *lfrac,
-					   int *ibest, int *i1se,
+					   int *imin, int *i1se,
 					   int crit_type,
 					   PRN *prn)
 {
@@ -899,12 +890,14 @@ static gretl_matrix *process_xv_criterion (gretl_matrix *XVC,
     double avg, d, v, se, se1, avgmin = 1e200;
     int mcols = (crit_type == CRIT_PCC)? 1 : 2;
     int nf = XVC->cols;
-    int i, j, imin = 0;
+    int i, j;
 
     metrics = gretl_zero_matrix_new(XVC->rows, mcols);
     if (metrics == NULL) {
 	return NULL;
     }
+
+    *imin = 0;
 
     for (i=0; i<XVC->rows; i++) {
 	v = avg = 0;
@@ -916,7 +909,7 @@ static gretl_matrix *process_xv_criterion (gretl_matrix *XVC,
 	    avgmin = avg;
 	} else if (avg < avgmin) {
 	    avgmin = avg;
-	    imin = i;
+	    *imin = i;
 	}
 	gretl_matrix_set(metrics, i, 0, avg);
 	if (crit_type == CRIT_PCC && prn != NULL) {
@@ -937,17 +930,17 @@ static gretl_matrix *process_xv_criterion (gretl_matrix *XVC,
 	}
     }
 
-    *ibest = *i1se = imin;
+    *i1se = *imin;
 
     if (crit_type != CRIT_PCC) {
 	/* estd. standard error of minimum average XVC */
-	se1 = gretl_matrix_get(metrics, imin, 1);
+	se1 = gretl_matrix_get(metrics, *imin, 1);
 
 	/* Find the index of the largest lamba that gives
 	   an average XVC within one standard error of the
 	   minimum (glmnet's "$lambda.1se").
 	*/
-	for (i=imin-1; i>=0; i--) {
+	for (i=*imin-1; i>=0; i--) {
 	    avg = gretl_matrix_get(metrics, i, 0);
 	    if (avg - avgmin < se1) {
 		*i1se = i;
@@ -964,39 +957,36 @@ static gretl_matrix *process_xv_criterion (gretl_matrix *XVC,
    optimal lambda value or NADBL on failure.
 */
 
-static double post_xvalidation_task (gretl_matrix *XVC,
-				     gretl_matrix *lfrac,
-				     int crit_type,
-				     gretl_bundle *b,
-				     PRN *prn, int *err)
+static int post_xvalidation_task (gretl_matrix *XVC,
+				  gretl_matrix *lfrac,
+				  int crit_type,
+				  gretl_bundle *b,
+				  PRN *prn)
 {
     gretl_matrix *metrics;
-    int ibest = 0, i1se = 0;
+    int imin = 0, i1se = 0;
 
-    metrics = process_xv_criterion(XVC, lfrac, &ibest, &i1se,
+    metrics = process_xv_criterion(XVC, lfrac, &imin, &i1se,
 				   crit_type, prn);
     if (metrics == NULL) {
-	*err = E_ALLOC;
-	return NADBL;
+	return E_ALLOC;
     }
 
     if (prn != NULL) {
 	pprintf(prn, "\nAverage out-of-sample %s minimized at %g for s=%g\n",
-		crit_string(crit_type), gretl_matrix_get(metrics, ibest, 0),
-		lfrac->val[ibest]);
-	if (i1se != ibest) {
-	    pprintf(prn, "Largest s within one s.e. of best criterion: %g\n",
-		    lfrac->val[i1se]);
-	}
+		crit_string(crit_type), gretl_matrix_get(metrics, imin, 0),
+		lfrac->val[imin]);
+	pprintf(prn, "Largest s within one s.e. of best criterion: %g\n",
+		lfrac->val[i1se]);
     }
 
     gretl_bundle_donate_data(b, "XVC", metrics, GRETL_TYPE_MATRIX, 0);
+    gretl_bundle_set_int(b, "idxmin", imin + 1);
+    gretl_bundle_set_int(b, "idx1se", i1se + 1);
+    gretl_bundle_set_scalar(b, "lfmin", lfrac->val[imin]);
+    gretl_bundle_set_scalar(b, "lf1se", lfrac->val[i1se]);
 
-    if (i1se != ibest) {
-	gretl_bundle_set_scalar(b, "lf1se", lfrac->val[i1se]);
-    }
-
-    return lfrac->val[ibest];
+    return 0;
 }
 
 static int get_crit_type (gretl_bundle *bun)
@@ -1127,12 +1117,11 @@ static int admm_lasso_xv (gretl_matrix *A,
 
     if (!err) {
 	PRN *myprn = verbose ? prn : NULL;
-	double lxv;
 
-	lxv = post_xvalidation_task(XVC, lfrac, crit_type, bun, myprn, &err);
+	err = post_xvalidation_task(XVC, lfrac, crit_type, bun, myprn);
 	if (!err) {
 	    /* determine coefficient vector on full training set */
-	    err = real_admm_lasso(A, b, bun, rho, lxv, myprn);
+	    err = real_admm_lasso(A, b, bun, rho, myprn);
 	}
     }
 
@@ -1249,12 +1238,11 @@ static int mpi_admm_lasso_xv (gretl_matrix *A,
 
     if (rank == 0 && !err) {
 	PRN *myprn = verbose ? prn : NULL;
-	double lxv;
 
-	lxv = post_xvalidation_task(XVC, lfrac, crit_type, bun, myprn, &err);
+	err = post_xvalidation_task(XVC, lfrac, crit_type, bun, myprn);
 	if (!err) {
 	    /* determine coefficient vector on full training set */
-	    err = real_admm_lasso(A, b, bun, rho, lxv, myprn);
+	    err = real_admm_lasso(A, b, bun, rho, myprn);
 	}
     }
 
@@ -1325,7 +1313,7 @@ int admm_lasso (gretl_matrix *A,
 #endif
 	return admm_lasso_xv(A, b, bun, rho, prn);
     } else {
-	return real_admm_lasso(A, b, bun, rho, -1.0, prn);
+	return real_admm_lasso(A, b, bun, rho, prn);
     }
 }
 
