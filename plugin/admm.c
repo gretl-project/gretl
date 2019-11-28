@@ -638,6 +638,53 @@ static int admm_iteration (const gretl_matrix *A,
     return err;
 }
 
+static gretl_matrix *make_coeff_matrix (gretl_bundle *bun, int xvalid,
+					int rows, int nlam,
+					int *jmin, int *jmax)
+{
+    gretl_matrix *B = NULL;
+    int xv_single_b = 0;
+
+    /* FIXME to support this stuff, _admm_lasso needs to be passed
+       "single_b" and "use_1se", if applicable
+    */
+
+    if (xvalid) {
+	/* do we want just the "best" coeff vector? */
+	xv_single_b = gretl_bundle_get_bool(bun, "single_b", 0);
+    }
+
+    if (xv_single_b) {
+	int use_1se = gretl_bundle_get_bool(bun, "use_1se", 0);
+	const char *ikey = use_1se ? "idx1se" : "idxmin";
+	int idx;
+
+	idx = gretl_bundle_get_int(bun, ikey, NULL);
+	B = gretl_zero_matrix_new(rows, 1);
+	*jmin = idx - 1; /* zero-based */
+	*jmax = *jmin + 1;
+    } else {
+	B = gretl_zero_matrix_new(rows, nlam);
+	*jmin = 0;
+	*jmax = nlam;
+    }
+
+    if (B != NULL) {
+	const char *bkey = B->cols == 1 ? "b" : "B";
+
+	gretl_bundle_donate_data(bun, bkey, B, GRETL_TYPE_MATRIX, 0);
+    }
+
+    return B;
+}
+
+/* This function is executed when we want to obtain a set
+   of coefficients using the full training data, with either
+   a single value of lambda or a vector of lambdas. We come
+   here straight away if the user has not requested cross
+   validation; we also come here after cross validation.
+*/
+
 static int real_admm_lasso (const gretl_matrix *A,
 			    const gretl_matrix *b,
 			    gretl_bundle *bun,
@@ -650,6 +697,7 @@ static int real_admm_lasso (const gretl_matrix *A,
     double lmax, rho = rho0;
     int ldim, nlam = 1;
     int m, n, i, j;
+    int jmin, jmax;
     int idxmin = 0;
     int err = 0;
 
@@ -701,12 +749,17 @@ static int real_admm_lasso (const gretl_matrix *A,
 
     get_cholesky_factor(A, L, rho);
 
-    B = gretl_zero_matrix_new(n + stdize, nlam);
+    B = make_coeff_matrix(bun, xvalid, n + stdize, nlam, &jmin, &jmax);
+    if (B == NULL) {
+	gretl_matrix_block_destroy(MB);
+	return E_ALLOC;
+    }
+
     if (!xvalid && verbose > 0 && nlam > 1) {
 	pprintf(prn, "      lambda     df     criterion   iters\n");
     }
 
-    for (j=0; j<nlam && !err; j++) {
+    for (j=jmin; j<jmax && !err; j++) {
 	/* loop across lambda values */
 	double lcrit, lambda = lfrac->val[j] * lmax;
 	int tune_rho = 0;
@@ -725,7 +778,11 @@ static int real_admm_lasso (const gretl_matrix *A,
 		if (z->val[i] != 0.0) {
 		    nnz++;
 		}
-		gretl_matrix_set(B, i+stdize, j, z->val[i]);
+		if (B->cols == 1) {
+		    gretl_matrix_set(B, i+stdize, 0, z->val[i]);
+		} else {
+		    gretl_matrix_set(B, i+stdize, j, z->val[i]);
+		}
 	    }
 	    if (!xvalid) {
 		lcrit = objective(A, b, z, lambda, m1);
@@ -749,10 +806,7 @@ static int real_admm_lasso (const gretl_matrix *A,
 	}
 	gretl_bundle_set_scalar(bun, "lcrit", lcritmin);
     }
-    if (nlam > 1) {
-	gretl_bundle_donate_data(bun, "B", B, GRETL_TYPE_MATRIX, 0);
-    } else {
-	gretl_bundle_donate_data(bun, "b", B, GRETL_TYPE_MATRIX, 0);
+    if (nlam == 1) {
 	gretl_bundle_set_scalar(bun, "lambda", lfrac->val[0] * lmax);
     }
 
@@ -1199,7 +1253,11 @@ static int mpi_admm_lasso_xv (gretl_matrix *A,
 	unsigned seed;
 
 	if (rank == 0) {
-	    gretl_rand_get_seed();
+	    if (gretl_bundle_has_key(bun, "seed")) {
+		seed = gretl_bundle_get_unsigned(bun, "seed", NULL);
+	    } else {
+		seed = gretl_rand_get_seed();
+	    }
 	}
 	gretl_mpi_bcast(&seed, GRETL_TYPE_UNSIGNED, 0);
 	gretl_rand_set_seed(seed);
