@@ -972,7 +972,7 @@ int gretl_bundle_get_int (gretl_bundle *bundle,
 /**
  * gretl_bundle_get_bool:
  * @bundle: bundle to access.
- * @key: name of key to access.
+ * @key: name of key to access, if present.
  * @deflt: default boolean value.
  *
  * Returns: the boolean value associated with @key in the

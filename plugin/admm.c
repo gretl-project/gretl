@@ -706,8 +706,8 @@ static int real_admm_lasso (const gretl_matrix *A,
     gretl_matrix *L;
 
     int stdize = gretl_bundle_get_int(bun, "stdize", &err);
-    int verbose = gretl_bundle_get_int(bun, "verbosity", &err);
     int xvalid = gretl_bundle_get_int(bun, "xvalidate", &err);
+    int verbose = gretl_bundle_get_bool(bun, "verbosity", 1);
 
     lfrac = gretl_bundle_get_matrix(bun, "lfrac", &err);
 
@@ -756,6 +756,7 @@ static int real_admm_lasso (const gretl_matrix *A,
     }
 
     if (!xvalid && verbose > 0 && nlam > 1) {
+	pputc(prn, '\n');
 	pprintf(prn, "      lambda     df     criterion   iters\n");
     }
 
@@ -1097,6 +1098,9 @@ static int get_xvalidation_details (gretl_bundle *bun,
     *randfolds = gretl_bundle_get_int(bun, "randfolds", &err);
     *lfrac = gretl_bundle_get_matrix(bun, "lfrac", &err);
 
+    if (!err && *nf < 2) {
+	err = E_INVARG;
+    }
     if (!err) {
 	*crit_type = get_crit_type(bun);
 	if (*crit_type < 0) {
