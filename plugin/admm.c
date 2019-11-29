@@ -645,10 +645,6 @@ static gretl_matrix *make_coeff_matrix (gretl_bundle *bun, int xvalid,
     gretl_matrix *B = NULL;
     int xv_single_b = 0;
 
-    /* FIXME to support this stuff, _admm_lasso needs to be passed
-       "single_b" and "use_1se", if applicable
-    */
-
     if (xvalid) {
 	/* do we want just the "best" coeff vector? */
 	xv_single_b = gretl_bundle_get_bool(bun, "single_b", 0);
