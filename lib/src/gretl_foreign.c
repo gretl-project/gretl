@@ -2047,8 +2047,10 @@ static int write_R_source_file (const char *buf,
 	if (!(opt & OPT_I) && !(opt & OPT_L)) {
 	    /* Windows, non-interactive, not using Rlib */
 	    fprintf(fp, "sink(\"%s\", type=\"output\")\n", gretl_Rout);
-	    fprintf(fp, "errout <- file(\"%s\", open=\"wt\")\n", gretl_Rmsg);
-	    fputs("sink(errout, type=\"message\")\n", fp);
+	    fputs("if (sink.number(\"message\") == 2) {\n", fp);
+	    fprintf(fp, "  errout <- file(\"%s\", open=\"wt\")\n", gretl_Rmsg);
+	    fputs("  sink(errout, type=\"message\")\n", fp);
+	    fputs("}\n", fp);
 	    sunk = 1;
 	}
 #endif
@@ -2066,8 +2068,10 @@ static int write_R_source_file (const char *buf,
 	    }
 	    fprintf(fp, "sink(\"%s\", type=\"output\")\n", gretl_Rout);
 	    if (!(opt & OPT_I)) {
-		fprintf(fp, "errout <- file(\"%s\", open=\"wt\")\n", gretl_Rmsg);
-		fputs("sink(errout, type=\"message\")\n", fp);
+		fputs("if (sink.number(\"message\") == 2) {\n", fp);
+		fprintf(fp, "  errout <- file(\"%s\", open=\"wt\")\n", gretl_Rmsg);
+		fputs("  sink(errout, type=\"message\")\n", fp);
+		fputs("}\n", fp);
 	    }
 	    sunk = 1;
 	}
