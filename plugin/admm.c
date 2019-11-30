@@ -1224,7 +1224,7 @@ static int mpi_admm_lasso_xv (gretl_matrix *A,
 	return err;
     }
 
-    verbose = gretl_bundle_get_bool(bun, "verbosity", 1);
+    verbose = gretl_bundle_get_int_deflt(bun, "verbosity", 1);
 
     nlam = gretl_vector_get_length(lfrac);
     fsize = A->rows / nf;
@@ -1279,6 +1279,9 @@ static int mpi_admm_lasso_xv (gretl_matrix *A,
     for (f=0; f<nf && !err; f++) {
 	if (rank == r) {
 	    prepare_xv_data(A, b, Ae, be, Af, bf, f);
+	    if (verbose > 1) {
+		pprintf(prn, "rank %d: taking fold %d\n", rank, f+1);
+	    }
 	    err = lasso_xv_round(Ae, be, Af, bf, lfrac, XVC, lmax, rho,
 				 my_f++, crit_type);
 	}
@@ -1369,7 +1372,7 @@ int admm_lasso (gretl_matrix *A,
 	    if (gretl_mpi_n_processes() > 1) {
 		return mpi_admm_lasso_xv(A, b, bun, rho, prn);
 	    } else if (auto_mpi_ok()) {
-		pputs(prn, "invoking MPI\n");
+		// pputs(prn, "invoking MPI\n");
 		return mpi_parent_action(A, b, bun, rho, prn);
 	    }
 	}

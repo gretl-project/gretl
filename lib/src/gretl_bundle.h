@@ -86,6 +86,10 @@ int gretl_bundle_get_int (gretl_bundle *bundle,
 			  const char *key,
 			  int *err);
 
+int gretl_bundle_get_int_deflt (gretl_bundle *bundle,
+				const char *key,
+				int deflt);
+
 int gretl_bundle_get_bool (gretl_bundle *bundle,
 			   const char *key,
 			   int deflt);
