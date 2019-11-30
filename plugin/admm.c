@@ -525,7 +525,7 @@ static int get_cholesky_factor (const gretl_matrix *A,
 }
 
 #define VAR_RHO 1 /* seems to work well */
-#define VAR_RHO_CHK 0
+#define RHO_DEBUG 0
 
 static int admm_iteration (const gretl_matrix *A,
 			   const gretl_vector *Atb,
@@ -547,8 +547,8 @@ static int admm_iteration (const gretl_matrix *A,
     int iter = 0;
     int err = 0;
 
-#if VAR_RHO_CHK
-    fprintf(stderr, "*** admm: lambda %g, tune %d ***\n", lambda, tune_rho);
+#if RHO_DEBUG
+    fprintf(stderr, "*** admm: lambda %g, rho %g ***\n", lambda, rho);
 #endif
 
     while (iter < MAX_ITER && !err) {
@@ -617,7 +617,7 @@ static int admm_iteration (const gretl_matrix *A,
 	    }
 	    if (adj > 0) {
 		rho *= adj;
-# if VAR_RHO_CHK
+# if RHO_DEBUG
 		fprintf(stderr, "  iter %d: rho *= %g (now %g)\n",
 			iter, adj, rho);
 # endif
