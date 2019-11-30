@@ -524,7 +524,7 @@ static int get_cholesky_factor (const gretl_matrix *A,
     return gretl_matrix_cholesky_decomp(L);
 }
 
-#define VAR_RHO 1 /* not quite ready? */
+#define VAR_RHO 1 /* seems to work well */
 #define VAR_RHO_CHK 0
 
 static int admm_iteration (const gretl_matrix *A,
@@ -607,11 +607,12 @@ static int admm_iteration (const gretl_matrix *A,
 	vector_subtract_into(x, z, r, n, 0);
 
 	if (tune_rho && iter > 0 && (iter == 32 || iter % 200 == 0)) {
+	    double mult = 10;
 	    double adj = 0.0;
 
-	    if (prires > 10 * dualres) {
+	    if (prires > mult * dualres) {
 		adj = 2.0;
-	    } else if (dualres > 10 * prires) {
+	    } else if (dualres > mult * prires) {
 		adj = 0.5;
 	    }
 	    if (adj > 0) {
@@ -1381,6 +1382,8 @@ int admm_lasso (gretl_matrix *A,
 
 #ifdef HAVE_MPI
 
+#define MPI_USE_SHM 0 /* no speed advantage? */
+
 /* We come here if a parent process has called our
    automatic local MPI routine for cross validation:
    this function will be executed by all gretlmpi
@@ -1393,12 +1396,24 @@ int admm_xv_mpi (PRN *prn)
     gretl_matrix *A;
     gretl_matrix *b;
     double rho = 8.0;
-    int err = 0;
+    int rank, err = 0;
 
-    /* pick up the arguments deposited by parent process */
+    rank = gretl_mpi_rank();
 
+    /* read matrices deposited by parent process */
+#if MPI_USE_SHM
+    if (rank == 0) {
+	A = shm_read_matrix("lasso_A.shm", &err);
+	b = shm_read_matrix("lasso_b.shm", &err);
+    }
+    if (!err) {
+	gretl_mpi_bcast(&A, GRETL_TYPE_MATRIX, 0);
+	gretl_mpi_bcast(&b, GRETL_TYPE_MATRIX, 0);
+    }
+#else
     A = gretl_matrix_read_from_file("lasso_A.bin", 1, &err);
     b = gretl_matrix_read_from_file("lasso_b.bin", 1, &err);
+#endif
 
     if (!err) {
 	bun = gretl_bundle_read_from_file("lasso_bun.xml", 1, &err);
@@ -1410,7 +1425,7 @@ int admm_xv_mpi (PRN *prn)
 
     if (!err) {
 	err = mpi_admm_lasso_xv(A, b, bun, rho, prn);
-	if (!err && gretl_mpi_rank() == 0) {
+	if (!err && rank == 0) {
 	    /* write results, to be picked up by parent */
 	    gretl_bundle_write_to_file(bun, "lasso_XV_result.xml", 1);
 	}
@@ -1431,10 +1446,18 @@ static int mpi_parent_action (gretl_matrix *A,
 {
     int err;
 
+#if MPI_USE_SHM
+    err = shm_write_matrix(A, "lasso_A.shm");
+    if (!err) {
+	err = shm_write_matrix(b, "lasso_b.shm");
+    }
+#else
     err = gretl_matrix_write_to_file(A, "lasso_A.bin", 1);
     if (!err) {
 	err = gretl_matrix_write_to_file(b, "lasso_b.bin", 1);
     }
+#endif
+
     if (!err) {
 	err = gretl_bundle_write_to_file(bun, "lasso_bun.xml", 1);
     }
