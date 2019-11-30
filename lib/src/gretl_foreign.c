@@ -677,7 +677,7 @@ static int lib_run_prog_sync (char **argv, gretlopt opt,
 	    */
 	    if (foreign_lang == LANG_STATA) {
 		do_stata_printout(prn);
-	    } else {
+	    } else if (*sout != '\0') {
 		pputs(prn, sout);
 		pputc(prn, '\n');
 	    }

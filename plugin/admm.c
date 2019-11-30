@@ -1372,7 +1372,6 @@ int admm_lasso (gretl_matrix *A,
 	    if (gretl_mpi_n_processes() > 1) {
 		return mpi_admm_lasso_xv(A, b, bun, rho, prn);
 	    } else if (auto_mpi_ok()) {
-		// pputs(prn, "invoking MPI\n");
 		return mpi_parent_action(A, b, bun, rho, prn);
 	    }
 	}
