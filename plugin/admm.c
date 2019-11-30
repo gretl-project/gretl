@@ -1382,13 +1382,16 @@ int admm_lasso (gretl_matrix *A,
 
 #ifdef HAVE_MPI
 
-#define MPI_USE_SHM 0 /* no speed advantage? */
-
 /* We come here if a parent process has called our
    automatic local MPI routine for cross validation:
    this function will be executed by all gretlmpi
    instances.
 */
+
+/* Using shared memory to transfer matrices is perhaps
+   a little faster, but it's not yet tested on Windows.
+*/
+#define MPI_USE_SHM 0
 
 int admm_xv_mpi (PRN *prn)
 {
@@ -1402,14 +1405,8 @@ int admm_xv_mpi (PRN *prn)
 
     /* read matrices deposited by parent process */
 #if MPI_USE_SHM
-    if (rank == 0) {
-	A = shm_read_matrix("lasso_A.shm", &err);
-	b = shm_read_matrix("lasso_b.shm", &err);
-    }
-    if (!err) {
-	gretl_mpi_bcast(&A, GRETL_TYPE_MATRIX, 0);
-	gretl_mpi_bcast(&b, GRETL_TYPE_MATRIX, 0);
-    }
+    A = shm_read_matrix("lasso_A.shm", 0, &err);
+    b = shm_read_matrix("lasso_b.shm", 0, &err);
 #else
     A = gretl_matrix_read_from_file("lasso_A.bin", 1, &err);
     b = gretl_matrix_read_from_file("lasso_b.bin", 1, &err);
@@ -1430,6 +1427,13 @@ int admm_xv_mpi (PRN *prn)
 	    gretl_bundle_write_to_file(bun, "lasso_XV_result.xml", 1);
 	}
     }
+
+#if MPI_USE_SHM
+    if (rank == 0) {
+	shm_finalize_matrix("lasso_A.shm");
+	shm_finalize_matrix("lasso_b.shm");
+    }
+#endif
 
     gretl_matrix_free(A);
     gretl_matrix_free(b);

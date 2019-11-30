@@ -4322,7 +4322,7 @@ static NODE *read_object_func (NODE *n, NODE *r, int f, parser *p)
 	case F_MREAD:
 #ifdef HAVE_MPI
 	    if (has_suffix(fname, ".shm")) {
-		ret->v.m = shm_read_matrix(fname, &p->err);
+		ret->v.m = shm_read_matrix(fname, 1, &p->err);
 		done = 1;
 	    }
 #endif

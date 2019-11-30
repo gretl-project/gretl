@@ -2272,7 +2272,9 @@ int shm_write_matrix (const gretl_matrix *m,
     return err;
 }
 
-gretl_matrix *shm_read_matrix (const char *fname, int *err)
+gretl_matrix *shm_read_matrix (const char *fname,
+			       int finalize,
+			       int *err)
 {
     gretl_matrix *m = NULL;
     char buf[IDLEN] = {0};
@@ -2364,10 +2366,24 @@ gretl_matrix *shm_read_matrix (const char *fname, int *err)
 	CloseHandle(diskfile);
     }
 
-    gretl_remove(diskname);
+    if (finalize) {
+	gretl_remove(diskname);
+    }
     g_free(diskname);
 
     return m;
+}
+
+int shm_finalize_matrix (const char *fname)
+{
+    gchar *diskname;
+    int ret;
+
+    diskname = g_strdup_printf("%s%s", gretl_dotdir(), fname);
+    ret = gretl_remove(diskname);
+    g_free(diskname);
+
+    return ret;
 }
 
 #else /* not MS Windows: Linux, OS X, etc. */
@@ -2452,7 +2468,9 @@ int shm_write_matrix (const gretl_matrix *m,
     return err;
 }
 
-gretl_matrix *shm_read_matrix (const char *fname, int *err)
+gretl_matrix *shm_read_matrix (const char *fname,
+			       int finalize,
+			       int *err)
 {
     gretl_matrix *m = NULL;
     char buf[IDLEN] = {0};
@@ -2516,11 +2534,25 @@ gretl_matrix *shm_read_matrix (const char *fname, int *err)
     if (fd != -1) {
 	close(fd);
     }
-    shm_unlink(memname);
+    if (finalize) {
+	shm_unlink(memname);
+    }
 
     g_free(memname);
 
     return m;
+}
+
+int shm_finalize_matrix (const char *fname)
+{
+    gchar *memname;
+    int ret;
+
+    memname = canonical_memname(fname);
+    ret = shm_unlink(memname);
+    g_free(memname);
+
+    return ret == -1 ? E_DATA: 0;
 }
 
 #endif /* shared memory variants */
