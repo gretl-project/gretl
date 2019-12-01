@@ -1139,9 +1139,10 @@ static int admm_lasso_xv (gretl_matrix *A,
     esize = (nf - 1) * fsize;
 
     if (verbose) {
-	pprintf(prn, "admm_lasso_xv: nf=%d, fsize=%d, randfolds=%d, crit=%s\n",
+	pprintf(prn, "admm_lasso_xv: nf=%d, fsize=%d, randfolds=%d, crit=%s\n\n",
 		nf, fsize, randfolds, crit_string(crit_type));
     }
+    manufacture_gui_callback(FLUSH);
 
     AB = gretl_matrix_block_new(&Ae, esize, A->cols,
 				&Af, fsize, A->cols,
@@ -1242,10 +1243,6 @@ static int mpi_admm_lasso_xv (gretl_matrix *A,
     }
 
     if (rank == 0) {
-	if (verbose) {
-	    pprintf(prn, "admm_lasso_xv: nf=%d, fsize=%d, randfolds=%d, crit=%s\n",
-		    nf, fsize, randfolds, crit_string(crit_type));
-	}
 	lmax = get_xvalidation_lmax(A, b, esize);
     }
 
@@ -1273,6 +1270,14 @@ static int mpi_admm_lasso_xv (gretl_matrix *A,
 
     /* send @lmax to workers */
     gretl_mpi_bcast(&lmax, GRETL_TYPE_DOUBLE, 0);
+
+    if (rank == 0) {
+	if (verbose) {
+	    pprintf(prn, "admm_lasso_xv: nf=%d, fsize=%d, randfolds=%d, crit=%s\n\n",
+		    nf, fsize, randfolds, crit_string(crit_type));
+	}
+	manufacture_gui_callback(FLUSH);
+    }
 
     /* process all folds */
     r = 0;
