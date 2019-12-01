@@ -4126,13 +4126,15 @@ int multi_scatters (const int *list, const DATASET *dset,
     }
 
     nplots = plotlist[0];
-    get_multiplot_layout(nplots, tseries, &rows, &cols);
-    maybe_set_small_font(nplots);
 
-    if (nplots > 12) {
-	flags |= GPT_XXL;
-    } else if (nplots > 9) {
-	flags |= GPT_XL;
+    if (nplots > 1) {
+	get_multiplot_layout(nplots, tseries, &rows, &cols);
+	maybe_set_small_font(nplots);
+	if (nplots > 12) {
+	    flags |= GPT_XXL;
+	} else if (nplots > 9) {
+	    flags |= GPT_XL;
+	}
     }
 
     fp = open_plot_input_file(PLOT_MULTI_SCATTER, flags, &err);
@@ -4140,7 +4142,9 @@ int multi_scatters (const int *list, const DATASET *dset,
 	return err;
     }
 
-    fprintf(fp, "set multiplot layout %d,%d\n", rows, cols);
+    if (nplots > 1) {
+	fprintf(fp, "set multiplot layout %d,%d\n", rows, cols);
+    }
     fputs("set nokey\n", fp);
 
     if (opt & OPT_K) {
@@ -4206,7 +4210,9 @@ int multi_scatters (const int *list, const DATASET *dset,
 
     gretl_pop_c_numeric_locale();
 
-    fputs("unset multiplot\n", fp);
+    if (nplots > 1) {
+	fputs("unset multiplot\n", fp);
+    }
 
     free(plotlist);
 
