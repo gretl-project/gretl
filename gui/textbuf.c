@@ -1384,17 +1384,20 @@ void textview_set_text_dbsearch (windata_t *vwin, const char *buf)
 void textview_delete_processing_message (GtkWidget *view)
 {
     GtkTextBuffer *tbuf;
-    GtkTextMark *mark;
+    GtkTextMark *m0, *m1;
     GtkTextIter i0, i1;
 
     g_return_if_fail(GTK_IS_TEXT_VIEW(view));
 
     tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
-    mark = gtk_text_buffer_get_mark(tbuf, "procmark");
-    if (mark != NULL) {
-	gtk_text_buffer_get_iter_at_mark(tbuf, &i0, mark);
-	gtk_text_buffer_get_end_iter(tbuf, &i1);
+    m0 = gtk_text_buffer_get_mark(tbuf, "pstart");
+    m1 = gtk_text_buffer_get_mark(tbuf, "pstop");
+    if (m0 != NULL && m1 != NULL) {
+	gtk_text_buffer_get_iter_at_mark(tbuf, &i0, m0);
+	gtk_text_buffer_get_iter_at_mark(tbuf, &i1, m1);
 	gtk_text_buffer_delete(tbuf, &i0, &i1);
+	gtk_text_buffer_delete_mark(tbuf, m0);
+	gtk_text_buffer_delete_mark(tbuf, m1);
     }
 }
 
@@ -1403,17 +1406,18 @@ void textview_add_processing_message (GtkWidget *view)
     const char *msg = N_("processing...\n");
     GtkTextBuffer *tbuf;
     GtkTextIter iter;
-    GtkTextMark *mark;
+    GtkTextMark *m0, *m1;
 
     g_return_if_fail(GTK_IS_TEXT_VIEW(view));
 
     tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
     gtk_text_buffer_get_end_iter(tbuf, &iter);
-    mark = gtk_text_buffer_create_mark(tbuf, "procmark", &iter, TRUE);
+    m0 = gtk_text_buffer_create_mark(tbuf, "pstart", &iter, TRUE);
     gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
 					     _(msg), -1,
 					     "redtext", NULL);
-    gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(view), mark, 0.0,
+    m1 = gtk_text_buffer_create_mark(tbuf, "pstop", &iter, TRUE);
+    gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(view), m1, 0.0,
 				 FALSE, 0, 0);
 }
 
