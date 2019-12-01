@@ -1341,7 +1341,7 @@ static void prepare_admm_params (gretl_matrix *A,
 	abstol = ctrl->val[2];
     }
 
-    if (gretl_bundle_get_int(bun, "stdize_y", NULL) == 0) {
+    if (gretl_bundle_get_bool(bun, "stdize_y", 0)) {
 	/* we need to add mean(y) */
 	ybar = gretl_mean(0, b->rows-1, b->val);
     } else {
