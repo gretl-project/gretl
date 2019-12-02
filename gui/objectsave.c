@@ -42,7 +42,9 @@ static int gui_parse_object_request (const char *line,
 
     if (gretl_is_bundle(word)) {
 	return OBJ_ACTION_NONE;
-    }    
+    } else if (!strcmp(word, "R") && strchr(*param, '(')) {
+	return OBJ_ACTION_NONE;
+    }
 
     /* see if there's an object associated with the name */
     *pptr = get_session_object_by_name(word, type);
