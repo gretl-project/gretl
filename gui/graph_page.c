@@ -698,6 +698,7 @@ int display_graph_page (GtkWidget *parent)
 	N_("monochrome")
     };
     const char *sdir = get_session_dirname();
+    gchar *full_session_dir = NULL;
     gchar *latex_orig = NULL;
     int resp, err = 0;
 
@@ -714,7 +715,18 @@ int display_graph_page (GtkWidget *parent)
 
     gpage.mono = (resp == 1);
 
-    gretl_chdir(sdir);
+    err = gretl_chdir(sdir);
+    if (err) {
+	/* maybe we're not in @dotdir? */
+	gchar *full_session_dir = gretl_make_dotpath(sdir);
+
+	err = gretl_chdir(full_session_dir);
+	g_free(full_session_dir);
+    }
+    if (err) {
+	err = E_FOPEN;
+	goto bailout;
+    }
 
     gpage_filenames_init(NULL);
 
@@ -745,6 +757,8 @@ int display_graph_page (GtkWidget *parent)
 
     gpage_revert_compiler(latex_orig);
     gpage_cleanup();
+
+ bailout:
 
     if (err) {
 	gui_errmsg(err);
