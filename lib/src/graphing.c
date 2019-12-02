@@ -8547,6 +8547,7 @@ static int normal_qq_plot (const int *list,
 			   const DATASET *dset,
 			   gretlopt opt)
 {
+    GptFlags flags = 0;
     char title[48];
     int zscores = 0;
     double ym = 0, ys = 1;
@@ -8585,7 +8586,11 @@ static int normal_qq_plot (const int *list,
 	}
     }
 
-    fp = open_plot_input_file(PLOT_QQ, 0, &err);
+    if (opt & OPT_G) {
+	flags = GPT_ICON;
+    }
+
+    fp = open_plot_input_file(PLOT_QQ, flags, &err);
     if (err) {
 	free(y);
 	return err;
