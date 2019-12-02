@@ -705,7 +705,7 @@ gzFile gretl_gzopen (const char *fname, const char *mode)
  * the possibility that @path has to be converted from
  * UTF-8 to UTF-16 on Windows.
  *
- * Returns: 0 on sucess, non-zero on failure.
+ * Returns: 0 on success, non-zero on failure.
  */
 
 int gretl_chdir (const char *path)
