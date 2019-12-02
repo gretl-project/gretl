@@ -2812,7 +2812,7 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
 
 	*ret = gretl_strdup(s);
 	R_unprotect(1);
-    } else {
+    } else if (*rtype != GRETL_TYPE_NONE) {
 	err = E_TYPES;
     }
 

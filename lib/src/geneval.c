@@ -9550,6 +9550,8 @@ static NODE *eval_Rfunc (NODE *t, parser *p)
 		    }
 		    ret->v.str = (char *) retp;
 		}
+	    } else if (rtype == GRETL_TYPE_NONE) {
+		; /* OK? */
 	    }
 	}
     }
