@@ -2773,7 +2773,6 @@ static void maybe_schedule_graph_callback (ExecState *s)
 
     if (graph_written_to_file()) {
 	if (gui_mode && *s->cmd->savename != '\0') {
-	    /* FIXME? */
 	    pprintf(s->prn, "Warning: ignoring \"%s <-\"\n", s->cmd->savename);
 	}
 	report_plot_written(s->prn);
@@ -2825,6 +2824,8 @@ static int execute_plot_call (CMD *cmd, DATASET *dset,
 	err = hf_plot(cmd->list, cmd->param, dset, opt);
     } else if (cmd->ci == PANPLOT) {
 	err = cli_panel_plot(cmd->list, cmd->param, dset, opt);
+    } else if (cmd->ci == QQPLOT) {
+	err = qq_plot(cmd->list, dset, opt);
     }
 
     return err;
@@ -3137,10 +3138,6 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case HURST:
 	err = hurstplot(cmd->list, dset, cmd->opt, prn);
-	break;
-
-    case QQPLOT:
-	err = qq_plot(cmd->list, dset, cmd->opt);
 	break;
 
     case INFO:
@@ -3715,6 +3712,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case SCATTERS:
     case HFPLOT:
     case PANPLOT:
+    case QQPLOT:
 	err = execute_plot_call(cmd, dset, NULL, prn);
 	break;
 
