@@ -31,7 +31,7 @@
 # ifdef G_OS_WIN32
 #  define MPI_PIPES 0 /* doesn't work right! */
 # else
-#  define MPI_PIPES 0 /* somewhat experimental */
+#  define MPI_PIPES 1 /* somewhat experimental */
 # endif
 #endif
 
@@ -2571,8 +2571,7 @@ static SEXP find_R_function (const char *name)
 	}
     }
 
-    if (t != CLOSXP && t != BUILTINSXP &&
-	t != BUILTINSXP && t != SPECIALSXP) {
+    if (t != CLOSXP && t != BUILTINSXP && t != SPECIALSXP) {
 	return VR_UnboundValue;
     }
 
