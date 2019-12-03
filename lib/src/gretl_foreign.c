@@ -333,7 +333,197 @@ static gchar *gretl_mpi_binary (void)
     return ret;
 }
 
-#else
+# if MPI_PIPES /* common MPI_PIPES code */
+
+static void mpi_childwatch (GPid pid, gint status, gpointer p)
+{
+    int *finished = (int *) p;
+
+#if GLIB_MINOR_VERSION >= 34
+    fprintf(stderr, "gretlmpi: child process exited %s\n",
+	    g_spawn_check_exit_status(status, NULL)?
+	    "normally" : "abnormally");
+#endif
+    g_spawn_close_pid(pid);
+    *finished = 1;
+}
+
+#define USE_CHANNEL 0
+
+#if USE_CHANNEL
+
+/* not working, but seems like it ought to if we
+   can find out what's wrong ;-)
+*/
+
+struct io_data {
+    char *buf;
+    int len;
+    int gui;
+    PRN *prn;
+    GError *err;
+};
+
+static gboolean mpi_watch (GIOChannel *channel,
+			   GIOCondition cond,
+			   struct io_data *io)
+{
+    gsize bytes = 0;
+
+    fprintf(stderr, "HERE mpi_watch\n");
+
+    if (cond == G_IO_HUP) {
+	g_io_channel_unref(channel);
+	return FALSE;
+    }
+
+    memset(io->buf, 0, io->len);
+    g_io_channel_read_chars(channel, io->buf, io->len - 1, &bytes, &io->err);
+
+    if (bytes > 0) {
+	char *s = strstr(io->buf, "__GRETLMPI_EXIT__");
+
+	fprintf(stderr, " relay: got '%s'\n", io->buf);
+
+	if (s != NULL) {
+	    *s = '\0';
+	}
+	pputs(io->prn, io->buf);
+	if (io->gui) {
+	    manufacture_gui_callback(FLUSH);
+	} else {
+	    gretl_print_flush_stream(io->prn);
+	}
+    }
+
+    return TRUE;
+}
+
+static int run_mpi_with_pipes (char **argv, gretlopt opt, PRN *prn)
+{
+    gint sout, finished = 0;
+    char buf[1024];
+    GError *gerr = NULL;
+    GPid child_pid;
+    int err = 0;
+
+    g_spawn_async_with_pipes(gretl_workdir(),
+			     argv,
+			     NULL, /* envp */
+			     G_SPAWN_SEARCH_PATH |
+			     G_SPAWN_DO_NOT_REAP_CHILD,
+			     NULL, /* child_setup */
+			     NULL, /* data for child_setup */
+			     &child_pid,
+			     NULL, /* stdin */
+			     &sout,
+			     NULL,
+			     &gerr);
+
+    if (gerr != NULL) {
+	pprintf(prn, "%s\n", gerr->message);
+	g_error_free(gerr);
+	err = 1;
+    } else {
+	GIOChannel *out_ch;
+	int gui = gretl_in_gui_mode();
+
+	struct io_data io = {buf, sizeof buf, gui, prn, gerr};
+
+# ifdef G_OS_WIN32
+	out_ch = g_io_channel_win32_new_fd(sout);
+# else
+	out_ch = g_io_channel_unix_new(sout);
+# endif
+	g_child_watch_add(child_pid, mpi_childwatch, &finished);
+	g_io_add_watch(out_ch, G_IO_IN | G_IO_HUP, (GIOFunc) mpi_watch, &io);
+	close(sout);
+    }
+
+    return err;
+}
+
+#else /* not CHANNEL, PIPES variant that works fine on Linux */
+
+static int relay_mpi_output (gint fd, char *buf, int bufsize,
+			     int gui, PRN *prn)
+{
+    int got = read(fd, buf, bufsize - 1);
+    int done = 0;
+
+    if (got > 0) {
+	char *s = strstr(buf, "__GRETLMPI_EXIT__");
+
+	// fprintf(stderr, " relay: got '%s'\n", buf);
+	if (s != NULL) {
+	    done = 1;
+	    *s = '\0';
+	}
+	pputs(prn, buf);
+	if (gui) {
+	    manufacture_gui_callback(FLUSH);
+	} else {
+	    gretl_print_flush_stream(prn);
+	}
+    }
+
+    return done;
+}
+
+static int run_mpi_with_pipes (char **argv, gretlopt opt, PRN *prn)
+{
+    gint sout, finished = 0;
+    char buf[1024];
+    GError *gerr = NULL;
+    GPid child_pid;
+    int err = 0;
+
+    g_spawn_async_with_pipes(gretl_workdir(),
+			     argv,
+			     NULL, /* envp */
+			     G_SPAWN_SEARCH_PATH |
+			     G_SPAWN_DO_NOT_REAP_CHILD,
+			     NULL, /* child_setup */
+			     NULL, /* data for child_setup */
+			     &child_pid,
+			     NULL, /* stdin */
+			     &sout,
+			     NULL,
+			     &gerr);
+
+    if (gerr != NULL) {
+	pprintf(prn, "%s\n", gerr->message);
+	g_error_free(gerr);
+	err = 1;
+    } else {
+	int gui = gretl_in_gui_mode();
+	int got_all = 0;
+
+	g_child_watch_add(child_pid, mpi_childwatch, &finished);
+
+	while (!finished && !got_all) {
+	    memset(buf, 0, sizeof buf);
+	    got_all = relay_mpi_output(sout, buf, sizeof buf, gui, prn);
+	    if (!got_all) {
+		g_usleep(100000); /* 0.10 seconds */
+	    }
+	    g_main_context_iteration(NULL, FALSE);
+	}
+	if (!got_all) {
+	    memset(buf, 0, sizeof buf);
+	    relay_mpi_output(sout, buf, sizeof buf, gui, prn);
+	}
+	close(sout);
+    }
+
+    return err;
+}
+
+# endif /* variants */
+
+# endif /* MPI_PIPES */
+
+#else /* no MPI support */
 
 int gretl_max_mpi_processes (void)
 {
@@ -623,7 +813,7 @@ static int win32_lib_run_mpi_sync (gretlopt opt, PRN *prn)
 
 # endif /* HAVE_MPI (&& G_OS_WIN32) */
 
-#else /* !G_OS_WIN32 */
+#endif /* G_OS_WIN32 */
 
 static int lib_run_prog_sync (char **argv, gretlopt opt,
 			      int lang, PRN *prn)
@@ -687,94 +877,7 @@ static int lib_run_prog_sync (char **argv, gretlopt opt,
     return err;
 }
 
-#if MPI_PIPES
-
-static void mpi_childwatch (GPid pid, gint status, gpointer p)
-{
-    int *finished = (int *) p;
-
-#if GLIB_MINOR_VERSION >= 34
-    fprintf(stderr, "gretlmpi: child process exited %s\n",
-	    g_spawn_check_exit_status(status, NULL)?
-	    "normally" : "abnormally");
-#endif
-    g_spawn_close_pid(pid);
-    *finished = 1;
-}
-
-static int relay_mpi_output (gint sout, char *buf, int bufsize,
-			     int gui, PRN *prn)
-{
-    int got = read(sout, buf, bufsize - 1);
-    int done = 0;
-
-    if (got > 0) {
-	char *s = strstr(buf, "__GRETLMPI_EXIT__");
-
-	if (s != NULL) {
-	    done = 1;
-	    *s = '\0';
-	}
-	pputs(prn, buf);
-	if (gui) {
-	    manufacture_gui_callback(FLUSH);
-	} else {
-	    gretl_print_flush_stream(prn);
-	}
-    }
-
-    return done;
-}
-
-static int run_mpi_with_pipes (char **argv, gretlopt opt, PRN *prn)
-{
-    gint sout, finished = 0;
-    char buf[1024];
-    GError *gerr = NULL;
-    GPid child_pid;
-    int err = 0;
-
-    g_spawn_async_with_pipes(gretl_workdir(),
-			     argv,
-			     NULL, /* envp */
-			     G_SPAWN_SEARCH_PATH |
-			     G_SPAWN_DO_NOT_REAP_CHILD,
-			     NULL, /* child_setup */
-			     NULL, /* data for child_setup */
-			     &child_pid,
-			     NULL, /* stdin */
-			     &sout,
-			     NULL,
-			     &gerr);
-
-    if (gerr != NULL) {
-	pprintf(prn, "%s\n", gerr->message);
-	g_error_free(gerr);
-	err = 1;
-    } else {
-	int gui = gretl_in_gui_mode();
-	int got_all = 0;
-
-	g_child_watch_add(child_pid, mpi_childwatch, &finished);
-	while (!finished) {
-	    memset(buf, 0, sizeof buf);
-	    got_all = relay_mpi_output(sout, buf, sizeof buf, gui, prn);
-	    if (!got_all) {
-		g_usleep(100000); /* 0.10 seconds */
-	    }
-	    g_main_context_iteration(NULL, FALSE);
-	}
-	if (!got_all) {
-	    memset(buf, 0, sizeof buf);
-	    relay_mpi_output(sout, buf, sizeof buf, gui, prn);
-	}
-	close(sout);
-    }
-
-    return err;
-}
-
-#endif /* MPI + MPI_PIPES (not on Windows) */
+#ifndef G_OS_WIN32 /* non-Windows code follows */
 
 static int lib_run_R_sync (gretlopt opt, PRN *prn)
 {
@@ -841,6 +944,11 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
     return err;
 }
 
+#endif /* end non-Windows block */
+
+/* experimental: this block moved out of specifically
+   not-Windows scope */
+
 #ifdef HAVE_MPI
 
 static void print_mpi_command (char **argv, PRN *prn)
@@ -853,6 +961,8 @@ static void print_mpi_command (char **argv, PRN *prn)
     }
     pputc(prn, '\n');
 }
+
+#define MPI_VG 0 /* debugging via valgrind */
 
 static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 {
@@ -880,7 +990,7 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	const char *mpiexec = gretl_mpiexec();
 	gchar *mpiprog = gretl_mpi_binary();
 	const char *hostsopt = NULL;
-	char *argv[11] = {0};
+	char *argv[12] = {0};
 	char npnum[8] = {0};
 	int nproc, i = 0;
 
@@ -918,6 +1028,9 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 		argv[i++] = "--oversubscribe";
 	    }
 	}
+#if MPI_VG
+	argv[i++] = "valgrind";
+#endif
 	argv[i++] = mpiprog;
 	if (opt & OPT_S) {
 	    argv[i++] = "--single-rng";
@@ -928,15 +1041,15 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 	argv[i++] = (char *) get_mpi_scriptname();
 	argv[i] = NULL;
 
-	if (opt & OPT_V) {
+	if (1 /* opt & OPT_V */) {
 	    print_mpi_command(argv, prn);
 	}
 
-#if MPI_PIPES
+# if MPI_PIPES
 	err = run_mpi_with_pipes(argv, opt, prn);
-#else
+# else
 	err = lib_run_prog_sync(argv, opt, LANG_MPI, prn);
-#endif
+# endif
 	g_free(mpiprog);
     }
 
@@ -945,7 +1058,7 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 
 #endif /* HAVE_MPI */
 
-#endif /* switch on MS Windows or not */
+/* end experimental move */
 
 static FILE *write_open_dotfile (const char *fname)
 {
@@ -1562,7 +1675,7 @@ static int write_gretl_mpi_script (gretlopt opt, const DATASET *dset)
     if (!err) {
 	/* put out the stored 'foreign' lines */
 	put_foreign_lines(fp);
-#if !defined(G_OS_WIN32) && MPI_PIPES
+#if MPI_PIPES
 	/* plus an easily recognized trailer */
 	fputs("mpibarrier()\n", fp);
 	fputs("if $mpirank == 0\n", fp);
@@ -2972,7 +3085,7 @@ int foreign_execute (const DATASET *dset,
 	if (err) {
 	    delete_mpi_script();
 	} else {
-# ifdef G_OS_WIN32
+#ifdef G_OS_WIN32 /* change this if enabling pipes */
 	    err = win32_lib_run_mpi_sync(foreign_opt, prn);
 # else
 	    err = lib_run_mpi_sync(foreign_opt, prn);
