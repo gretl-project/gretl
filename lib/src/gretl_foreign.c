@@ -295,17 +295,6 @@ int check_for_mpiexec (void)
     return check_for_program(prog);
 }
 
-#else
-
-int gretl_max_mpi_processes (void)
-{
-    return 0;
-}
-
-#endif /* HAVE_MPI */
-
-#ifdef HAVE_MPI
-
 static const gchar *get_mpi_scriptname (void)
 {
     if (gretl_mpi_script == NULL) {
@@ -315,7 +304,43 @@ static const gchar *get_mpi_scriptname (void)
     return gretl_mpi_script;
 }
 
+/* The following should probably be redundant on Linux but may
+   be needed for the OS X package, where the gretl bin
+   directory may not be in PATH, and in general will be needed
+   on Windows.
+*/
+
+static gchar *gretl_mpi_binary (void)
+{
+    gchar *ret;
+
+#ifdef WIN32
+    ret = g_strdup_printf("%sgretlmpi", gretl_bindir());
+#else
+    gchar *tmp = g_strdup(gretl_home());
+    gchar *p = strstr(tmp, "/share/gretl");
+
+    if (p != NULL) {
+	*p = '\0';
+	ret = g_strdup_printf("%s/bin/gretlmpi", tmp);
+    } else {
+	ret = g_strdup("gretlmpi");
+    }
+
+    g_free(tmp);
 #endif
+
+    return ret;
+}
+
+#else
+
+int gretl_max_mpi_processes (void)
+{
+    return 0;
+}
+
+#endif /* HAVE_MPI or not */
 
 /* special: print to @prn Stata's batch logfile */
 
@@ -351,42 +376,9 @@ static void make_gretl_R_names (void)
     }
 }
 
-#ifdef HAVE_MPI
+#ifdef G_OS_WIN32 /* Windows specific */
 
-/* The following should probably be redundant on Linux but may
-   be needed for the OS X package, where the gretl bin
-   directory may not be in PATH, and in general will be needed
-   on Windows.
-*/
-
-static gchar *gretl_mpi_binary (void)
-{
-    gchar *ret;
-
-#ifdef WIN32
-    ret = g_strdup_printf("%sgretlmpi", gretl_bindir());
-#else
-    gchar *tmp = g_strdup(gretl_home());
-    gchar *p = strstr(tmp, "/share/gretl");
-
-    if (p != NULL) {
-	*p = '\0';
-	ret = g_strdup_printf("%s/bin/gretlmpi", tmp);
-    } else {
-	ret = g_strdup("gretlmpi");
-    }
-
-    g_free(tmp);
-#endif
-
-    return ret;
-}
-
-#endif
-
-#ifdef G_OS_WIN32
-
-static char *get_rscript_path (void)
+static char *win32_get_rscript_path (void)
 {
     const char *rbin = gretl_rbin_path();
     char *p, *rscript;
@@ -412,11 +404,9 @@ static char *get_rscript_path (void)
     return rscript;
 }
 
-/* Windows-specific */
-
 /* FIXME Windows console? */
 
-static void put_R_output_line (const char *line, PRN *prn)
+static void win32_put_R_output_line (const char *line, PRN *prn)
 {
     if (gretl_in_gui_mode() && !g_utf8_validate(line, -1, NULL)) {
 	gsize bytes;
@@ -434,11 +424,9 @@ static void put_R_output_line (const char *line, PRN *prn)
     }
 }
 
-/* Windows variant */
-
-static int lib_run_R_sync (gretlopt opt, PRN *prn)
+static int win32_lib_run_R_sync (gretlopt opt, PRN *prn)
 {
-    char *rscript = get_rscript_path();
+    char *rscript = win32_get_rscript_path();
     gchar *cmd;
     int err = 0;
 
@@ -479,7 +467,7 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
 	    char line[1024];
 
 	    while (fgets(line, sizeof line, fp)) {
-		put_R_output_line(line, prn);
+		win32_put_R_output_line(line, prn);
 	    }
 	    fclose(fp);
 	    gretl_remove(outname);
@@ -491,9 +479,7 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
     return err;
 }
 
-/* Windows variant */
-
-static int lib_run_other_sync (gretlopt opt, PRN *prn)
+static int win32_lib_run_other_sync (gretlopt opt, PRN *prn)
 {
     const char *exe;
     const char *fname;
@@ -548,7 +534,7 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
    other than "native" MS-MPI
 */
 
-static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
+static int win32_lib_run_mpi_sync (gretlopt opt, PRN *prn)
 {
     const char *hostfile = gretl_mpi_hosts();
     int np = 0;
@@ -2536,7 +2522,7 @@ static int lib_run_Rlib_sync (gretlopt opt, PRN *prn)
 
 	    while (fgets(line, sizeof line, fp)) {
 #ifdef G_OS_WIN32
-		put_R_output_line(line, prn);
+		win32_put_R_output_line(line, prn);
 #else
 		pputs(prn, line);
 #endif
@@ -2940,7 +2926,11 @@ static int run_R_binary (const char *buf,
     if (err) {
 	delete_gretl_R_files();
     } else {
+#ifdef G_OS_WIN32
+	err = win32_lib_run_R_sync(opt, prn);
+#else
 	err = lib_run_R_sync(opt, prn);
+#endif
     }
 
     return err;
@@ -2982,7 +2972,11 @@ int foreign_execute (const DATASET *dset,
 	if (err) {
 	    delete_mpi_script();
 	} else {
+# ifdef G_OS_WIN32
+	    err = win32_lib_run_mpi_sync(foreign_opt, prn);
+# else
 	    err = lib_run_mpi_sync(foreign_opt, prn);
+# endif
 	}
 	foreign_destroy();
 	return err; /* handled */
@@ -3009,7 +3003,11 @@ int foreign_execute (const DATASET *dset,
     if (err) {
 	delete_foreign_script(foreign_lang);
     } else {
+#ifdef G_OS_WIN32
+	err = win32_lib_run_other_sync(foreign_opt, prn);
+#else
 	err = lib_run_other_sync(foreign_opt, prn);
+#endif
     }
 
     foreign_destroy();
