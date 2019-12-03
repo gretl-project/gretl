@@ -13200,8 +13200,8 @@
 	    impulse response functions with confidence intervals. The
 	    default is 1999. It is recommended that <math>B</math> + 1
 	    is evenly divisible by 100&alpha;/2, so for example with
-	    &alpha; = 0.1 <math>B</math> should be a multiple of 5.
-	    The minimum acceptable value is 499.
+	    &alpha; = 0.1 <math>B</math> + 1 should be a multiple of
+	    5.  The minimum acceptable value is 499.
 	  </para>
 	</li>
       </ilist>
