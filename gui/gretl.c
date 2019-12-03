@@ -148,7 +148,6 @@ static GOptionEntry options[] = {
 windata_t *mdata;
 DATASET *dataset;
 MODEL *model;
-GdkDisplay *gretl_display;
 
 char datafile[MAXLEN];
 char scriptfile[MAXLEN];
@@ -610,6 +609,34 @@ static gboolean maybe_hand_off (char *filearg, char *auxname)
    Windows APIs to get a UTF-16 version of this array.
 */
 
+# if 1
+
+static void alt_gtk_init (int *pargc,
+			  char ***pargv,
+			  char *filearg,
+			  GError **popterr)
+{
+    gchar **argv = g_win32_get_command_line();
+
+    if (argv != NULL) {
+	int argc = g_strv_length(argv);
+
+	gtk_init_with_args(&argc, &argv, _(param_msg),
+			   options, "gretl", popterr);
+	if (argc > 1 && *filearg == '\0') {
+	    strncat(filearg, argv[1], MAXLEN - 1);
+	}
+	*pargc = argc; /* update (residual) arg count */
+	g_strfreev(argv);
+    } else {
+	/* try fallback? */
+	gtk_init_with_args(pargc, pargv, _(param_msg), options,
+			   "gretl", popterr);
+    }
+}
+
+# else
+
 static void alt_gtk_init (int *pargc,
 			  char ***pargv,
 			  char *filearg,
@@ -658,6 +685,8 @@ static void alt_gtk_init (int *pargc,
 			   "gretl", popterr);
     }
 }
+
+# endif
 
 #endif
 
@@ -1442,7 +1471,7 @@ void show_link_cursor (GtkWidget *w, gpointer p)
     GdkWindow *window = gtk_widget_get_window(w);
     GdkCursor *c;
 
-    c = gdk_cursor_new_from_name(gretl_display, "pointer");
+    c = gdk_cursor_new(GDK_HAND2);
     gdk_window_set_cursor(window, c);
     gdk_cursor_unref(c);
 }
@@ -1473,7 +1502,6 @@ static void make_main_window (void)
     }
 
     gui_scale = get_gui_scale();
-    gretl_display = gdk_display_get_default();
 
 #if GUI_DEBUG
     fprintf(stderr, " gui_scale = %g\n", (double) gui_scale);

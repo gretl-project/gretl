@@ -107,15 +107,15 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 			 const char *s, int role);
 static void connect_link_signals (windata_t *vwin);
 
-void text_set_cursor (GtkWidget *w, const char *cspec)
+void text_set_cursor (GtkWidget *w, GdkCursorType cspec)
 {
     GdkWindow *win = gtk_text_view_get_window(GTK_TEXT_VIEW(w),
                                               GTK_TEXT_WINDOW_TEXT);
 
-    if (cspec == NULL) {
+    if (cspec == 0) {
 	gdk_window_set_cursor(win, NULL);
     } else {
-	GdkCursor *cursor = gdk_cursor_new_from_name(gretl_display, cspec);
+	GdkCursor *cursor = gdk_cursor_new(cspec);
 
 	gdk_window_set_cursor(win, cursor);
 	gdk_cursor_unref(cursor);
@@ -2083,11 +2083,11 @@ cmdref_visibility_notify (GtkWidget *w,  GdkEventVisibility *e)
 static void connect_link_signals (windata_t *vwin)
 {
     if (hand_cursor == NULL) {
-	hand_cursor = gdk_cursor_new_from_name(gretl_display, "pointer");
+	hand_cursor = gdk_cursor_new(GDK_HAND2);
     }
 
     if (regular_cursor == NULL) {
-	regular_cursor = gdk_cursor_new_from_name(gretl_display, "text");
+	regular_cursor = gdk_cursor_new(GDK_XTERM);
     }
 
     g_signal_connect(G_OBJECT(vwin->text), "key-press-event",
@@ -2106,11 +2106,11 @@ static void maybe_connect_help_signals (windata_t *hwin, int en)
 						 "sigs_connected"));
 
     if (hand_cursor == NULL) {
-	hand_cursor = gdk_cursor_new_from_name(gretl_display, "pointer");
+	hand_cursor = gdk_cursor_new(GDK_HAND2);
     }
 
     if (regular_cursor == NULL) {
-	regular_cursor = gdk_cursor_new_from_name(gretl_display, "text");
+	regular_cursor = gdk_cursor_new(GDK_XTERM);
     }
 
     if (!done) {
