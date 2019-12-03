@@ -13998,7 +13998,7 @@
       </para>
       <para>
 	You also have the option of forming series which are just
-	centered (the mean is subtracted by no scaling is applied).
+	centered (the mean is subtracted but no scaling is applied).
 	In this case the new series names have prefix <lit>c_</lit>
 	rather than <lit>s_</lit>.
       </para>
