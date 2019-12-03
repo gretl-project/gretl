@@ -609,8 +609,6 @@ static gboolean maybe_hand_off (char *filearg, char *auxname)
    Windows APIs to get a UTF-16 version of this array.
 */
 
-# if 1
-
 static void alt_gtk_init (int *pargc,
 			  char ***pargv,
 			  char *filearg,
@@ -634,59 +632,6 @@ static void alt_gtk_init (int *pargc,
 			   "gretl", popterr);
     }
 }
-
-# else
-
-static void alt_gtk_init (int *pargc,
-			  char ***pargv,
-			  char *filearg,
-			  GError **popterr)
-{
-    int argc_w = 0;
-    int initted = 0;
-    LPWSTR *argv_w;
-
-    /* get args as UTF-16 */
-    argv_w = CommandLineToArgvW(GetCommandLineW(), &argc_w);
-
-    if (argv_w != NULL) {
-	gchar **argv_u8 = calloc(argc_w, sizeof *argv_u8);
-	gchar **origp = argv_u8; /* for use with g_free */
-	int n_u8 = argc_w;
-	int i, uerr = 0;
-
-	/* for GTK, convert args to UTF-8 */
-	for (i=0; i<argc_w && !uerr; i++) {
-	    argv_u8[i] = g_utf16_to_utf8(argv_w[i], -1, NULL, NULL, NULL);
-	    if (argv_u8[i] == NULL) {
-		uerr = 1;
-	    }
-	}
-	if (!uerr) {
-	    gtk_init_with_args(&argc_w, &argv_u8, _(param_msg),
-			       options, "gretl", popterr);
-	    if (argc_w > 1 && *filearg == '\0') {
-		strncat(filearg, argv_u8[1], MAXLEN - 1);
-	    }
-	    *pargc = argc_w; /* update (residual) arg count */
-	    initted = 1;
-	}
-	/* clean up */
-	for (i=0; i<n_u8; i++) {
-	    g_free(origp[i]);
-	}
-	g_free(origp);
-	LocalFree(argv_w);
-    }
-
-    if (!initted) {
-	/* try fallback? */
-	gtk_init_with_args(pargc, pargv, _(param_msg), options,
-			   "gretl", popterr);
-    }
-}
-
-# endif
 
 #endif
 
