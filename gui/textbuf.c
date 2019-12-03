@@ -1406,18 +1406,18 @@ void textview_add_processing_message (GtkWidget *view)
     const char *msg = N_("processing...\n");
     GtkTextBuffer *tbuf;
     GtkTextIter iter;
-    GtkTextMark *m0, *m1;
+    GtkTextMark *mstop;
 
     g_return_if_fail(GTK_IS_TEXT_VIEW(view));
 
     tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
     gtk_text_buffer_get_end_iter(tbuf, &iter);
-    m0 = gtk_text_buffer_create_mark(tbuf, "pstart", &iter, TRUE);
+    gtk_text_buffer_create_mark(tbuf, "pstart", &iter, TRUE);
     gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
 					     _(msg), -1,
 					     "redtext", NULL);
-    m1 = gtk_text_buffer_create_mark(tbuf, "pstop", &iter, TRUE);
-    gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(view), m1, 0.0,
+    mstop = gtk_text_buffer_create_mark(tbuf, "pstop", &iter, TRUE);
+    gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(view), mstop, 0.0,
 				 FALSE, 0, 0);
 }
 

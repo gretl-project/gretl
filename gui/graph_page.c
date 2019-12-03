@@ -698,7 +698,6 @@ int display_graph_page (GtkWidget *parent)
 	N_("monochrome")
     };
     const char *sdir = get_session_dirname();
-    gchar *full_session_dir = NULL;
     gchar *latex_orig = NULL;
     int resp, err = 0;
 
