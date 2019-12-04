@@ -333,11 +333,21 @@ static gchar *gretl_mpi_binary (void)
     return ret;
 }
 
-# if MPI_PIPES /* common MPI_PIPES code */
+# if MPI_PIPES /* (potentially) common MPI_PIPES code */
+
+#define USE_IOCHANNEL 0
+
+#if USE_IOCHANNEL
+
+struct io_data {
+    int sout;
+    int gui;
+    PRN *prn;
+};
 
 static void mpi_childwatch (GPid pid, gint status, gpointer p)
 {
-    int *finished = (int *) p;
+    struct io_data *io = p;
 
 #if GLIB_MINOR_VERSION >= 34
     fprintf(stderr, "gretlmpi: child process exited %s\n",
@@ -345,29 +355,15 @@ static void mpi_childwatch (GPid pid, gint status, gpointer p)
 	    "normally" : "abnormally");
 #endif
     g_spawn_close_pid(pid);
-    *finished = 1;
+    close(io->sout);
+    free(io);
 }
 
-#define USE_CHANNEL 0
-
-#if USE_CHANNEL
-
-/* not working, but seems like it ought to if we
-   can find out what's wrong ;-)
-*/
-
-struct io_data {
-    char *buf;
-    int len;
-    int gui;
-    PRN *prn;
-    GError *err;
-};
-
-static gboolean mpi_watch (GIOChannel *channel,
-			   GIOCondition cond,
-			   struct io_data *io)
+static gboolean mpi_out_watch (GIOChannel *channel,
+			       GIOCondition cond,
+			       struct io_data *io)
 {
+    gchar *buf = NULL;
     gsize bytes = 0;
 
     fprintf(stderr, "HERE mpi_watch\n");
@@ -377,23 +373,16 @@ static gboolean mpi_watch (GIOChannel *channel,
 	return FALSE;
     }
 
-    memset(io->buf, 0, io->len);
-    g_io_channel_read_chars(channel, io->buf, io->len - 1, &bytes, &io->err);
+    g_io_channel_read_line(channel, &buf, &bytes, NULL, NULL);
 
-    if (bytes > 0) {
-	char *s = strstr(io->buf, "__GRETLMPI_EXIT__");
-
-	fprintf(stderr, " relay: got '%s'\n", io->buf);
-
-	if (s != NULL) {
-	    *s = '\0';
-	}
-	pputs(io->prn, io->buf);
+    if (buf != NULL) {
+	pputs(io->prn, buf);
 	if (io->gui) {
 	    manufacture_gui_callback(FLUSH);
 	} else {
 	    gretl_print_flush_stream(io->prn);
 	}
+	g_free(buf);
     }
 
     return TRUE;
@@ -401,8 +390,7 @@ static gboolean mpi_watch (GIOChannel *channel,
 
 static int run_mpi_with_pipes (char **argv, gretlopt opt, PRN *prn)
 {
-    gint sout, finished = 0;
-    char buf[1024];
+    gint sout;
     GError *gerr = NULL;
     GPid child_pid;
     int err = 0;
@@ -426,24 +414,42 @@ static int run_mpi_with_pipes (char **argv, gretlopt opt, PRN *prn)
 	err = 1;
     } else {
 	GIOChannel *out_ch;
-	int gui = gretl_in_gui_mode();
+	struct io_data *io;
 
-	struct io_data io = {buf, sizeof buf, gui, prn, gerr};
+	io = malloc(sizeof *io);
+	if (io == NULL) {
+	    return E_ALLOC;
+	}
+	io->sout = sout;
+	io->gui = gretl_in_gui_mode();
+	io->prn = prn;
 
 # ifdef G_OS_WIN32
 	out_ch = g_io_channel_win32_new_fd(sout);
 # else
 	out_ch = g_io_channel_unix_new(sout);
 # endif
-	g_child_watch_add(child_pid, mpi_childwatch, &finished);
-	g_io_add_watch(out_ch, G_IO_IN | G_IO_HUP, (GIOFunc) mpi_watch, &io);
-	close(sout);
+	g_child_watch_add(child_pid, mpi_childwatch, io);
+	g_io_add_watch(out_ch, G_IO_IN | G_IO_HUP, (GIOFunc) mpi_out_watch, io);
     }
 
     return err;
 }
 
-#else /* not CHANNEL, PIPES variant that works fine on Linux */
+#else /* not USE_IOCHANNEL, PIPES variant that works OK on Linux */
+
+static void mpi_childwatch (GPid pid, gint status, gpointer p)
+{
+    int *finished = (int *) p;
+
+#if GLIB_MINOR_VERSION >= 34
+    fprintf(stderr, "gretlmpi: child process exited %s\n",
+	    g_spawn_check_exit_status(status, NULL)?
+	    "normally" : "abnormally");
+#endif
+    g_spawn_close_pid(pid);
+    *finished = 1;
+}
 
 static int relay_mpi_output (gint fd, char *buf, int bufsize,
 			     int gui, PRN *prn)
@@ -454,7 +460,6 @@ static int relay_mpi_output (gint fd, char *buf, int bufsize,
     if (got > 0) {
 	char *s = strstr(buf, "__GRETLMPI_EXIT__");
 
-	// fprintf(stderr, " relay: got '%s'\n", buf);
 	if (s != NULL) {
 	    done = 1;
 	    *s = '\0';
