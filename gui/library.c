@@ -10354,6 +10354,11 @@ int gui_exec_line (ExecState *s, DATASET *dset, GtkWidget *parent)
 		}
 	    }
 	}
+	if (err && cmd->flags & CMD_CATCH) {
+	    set_gretl_errno(err);
+	    cmd->flags ^= CMD_CATCH;
+	    err = 0;
+	}
 	break;
 
     case HELP:
