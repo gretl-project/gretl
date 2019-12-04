@@ -827,6 +827,10 @@ static int cli_exec_line (ExecState *s, int id, DATASET *dset,
 	if (err) {
 	    errmsg(err, prn);
 	}
+	if (err && cmd->flags & CMD_CATCH) {
+	    cmd->flags ^= CMD_CATCH;
+	    err = 0;
+	}
 	break;
 
     case HELP:

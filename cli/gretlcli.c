@@ -1281,6 +1281,10 @@ static int cli_exec_line (ExecState *s, DATASET *dset, PRN *cmdprn)
 	    pputc(prn, '\n');
 	    maybe_list_series(dset, prn);
 	}
+	if (err && cmd->flags & CMD_CATCH) {
+	    cmd->flags ^= CMD_CATCH;
+	    err = 0;
+	}
 	break;
 
     case HELP:
