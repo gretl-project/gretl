@@ -554,6 +554,28 @@ static int read_from_pipe (HANDLE hwrite, HANDLE hread,
     return ok;
 }
 
+static int relay_mpi_output (HANDLE hread, char *buf, PRN *prn)
+{
+    DWORD dwread;
+    int done = 0;
+
+    memset(buf, 0, BUFSIZE);
+    ReadFile(hread, buf, BUFSIZE - 1, &dwread, NULL);
+
+    if (dwread > 0) {
+	char *s = strstr(buf, "__GRETLMPI_EXIT__");
+
+	if (s != NULL) {
+	    done = 1;
+	    *s = '\0';
+	}
+	pputs(prn, buf);
+	gretl_flush(prn);
+    }
+
+    return done;
+}
+
 /* Option: OPT_S for shell mode, as opposed to running an
    executable directly. If @prn is non-NULL we try to pass
    back output in real time.
@@ -621,27 +643,19 @@ run_child_with_pipe (const char *arg, const char *currdir,
     } else {
 	if (prn != NULL) {
 	    /* try reading output in real time */
-	    int gui = gretl_in_gui_mode();
 	    char buf[BUFSIZE];
-	    DWORD dwread;
 	    DWORD excode;
-	    int ok;
+	    int ok, got_all;
 
 	    fprintf(stderr, "Entering MPI real-time read loop\n");
 	    while (GetExitCodeProcess(pinfo.hProcess, &excode)
 		   && excode == STILL_ACTIVE) {
-		memset(buf, 0, sizeof buf);
-		ok = ReadFile(hread, buf, BUFSIZE - 1, &dwread, NULL);
-		if (!ok || dwread == 0) {
+		got_all = relay_mpi_output(hread, buf, prn);
+		if (got_all) {
 		    break;
 		}
-		pputs(prn, buf);
-		if (gui) {
-		    manufacture_gui_callback(FLUSH);
-		} else {
-		    gretl_print_flush_stream(prn);
-		}
 	    }
+	    fprintf(stderr, "HERE got_all = %d\n", got_all);
 	    CloseHandle(hwrite);
 	}
 	CloseHandle(pinfo.hProcess);

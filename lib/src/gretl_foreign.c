@@ -29,7 +29,7 @@
 # include "gretl_mpi.h"
 # include "gretl_xml.h"
 # ifdef G_OS_WIN32
-#  define MPI_PIPES 0 /* doesn't work right! */
+#  define MPI_PIPES 1 /* somewhat experimental */
 # else
 #  define MPI_PIPES 1 /* somewhat experimental */
 # endif
@@ -333,13 +333,14 @@ static gchar *gretl_mpi_binary (void)
     return ret;
 }
 
-# if MPI_PIPES /* works on Linux */
+# if MPI_PIPES && !defined(G_OS_WIN32)
+
+/* This approach works on Linux */
 
 struct iodata {
     int fd;
-    char buf[1024];
+    char buf[4096];
     int len;
-    int gui;
     PRN *prn;
 };
 
@@ -347,7 +348,7 @@ static void mpi_childwatch (GPid pid, gint status, gpointer p)
 {
     int *finished = (int *) p;
 
-#if GLIB_MINOR_VERSION >= 34
+#if 0 /* GLIB_MINOR_VERSION >= 34 */
     fprintf(stderr, "gretlmpi: child process exited %s\n",
 	    g_spawn_check_exit_status(status, NULL)?
 	    "normally" : "abnormally");
@@ -371,11 +372,7 @@ static int relay_mpi_output (struct iodata *io, PRN *prn)
 	    *s = '\0';
 	}
 	pputs(prn, io->buf);
-	if (io->gui) {
-	    manufacture_gui_callback(FLUSH);
-	} else {
-	    gretl_print_flush_stream(prn);
-	}
+	gretl_flush(prn);
     }
 
     return done;
@@ -412,7 +409,6 @@ static int run_mpi_with_pipes (char **argv, gretlopt opt, PRN *prn)
 
 	io.fd = sout;
 	io.len = sizeof io.buf;
-	io.gui = gretl_in_gui_mode();
 
 	g_child_watch_add(child_pid, mpi_childwatch, &finished);
 
@@ -423,8 +419,8 @@ static int run_mpi_with_pipes (char **argv, gretlopt opt, PRN *prn)
 	    }
 	    g_main_context_iteration(NULL, FALSE);
 	}
-	if (!got_all) {
-	    relay_mpi_output(&io, prn);
+	while (!got_all) {
+	    got_all = relay_mpi_output(&io, prn);
 	}
 	close(sout);
     }
@@ -432,7 +428,7 @@ static int run_mpi_with_pipes (char **argv, gretlopt opt, PRN *prn)
     return err;
 }
 
-# endif /* MPI_PIPES */
+# endif /* MPI_PIPES && !Windows */
 
 #else /* no MPI support */
 
@@ -855,11 +851,6 @@ static int lib_run_other_sync (gretlopt opt, PRN *prn)
     return err;
 }
 
-#endif /* end non-Windows block */
-
-/* experimental: this block moved out of specifically
-   not-Windows scope */
-
 #ifdef HAVE_MPI
 
 static void print_mpi_command (char **argv, PRN *prn)
@@ -968,6 +959,8 @@ static int lib_run_mpi_sync (gretlopt opt, PRN *prn)
 }
 
 #endif /* HAVE_MPI */
+
+#endif /* end non-Windows block */
 
 /* end experimental move */
 
@@ -1586,8 +1579,9 @@ static int write_gretl_mpi_script (gretlopt opt, const DATASET *dset)
     if (!err) {
 	/* put out the stored 'foreign' lines */
 	put_foreign_lines(fp);
-#if MPI_PIPES && !USE_IOCHANNEL
+#if MPI_PIPES
 	/* plus an easily recognized trailer */
+	fputs("flush\n", fp);
 	fputs("mpibarrier()\n", fp);
 	fputs("if $mpirank == 0\n", fp);
 	fputs("  print \"__GRETLMPI_EXIT__\"\n", fp);
@@ -2996,7 +2990,7 @@ int foreign_execute (const DATASET *dset,
 	if (err) {
 	    delete_mpi_script();
 	} else {
-#ifdef G_OS_WIN32 /* change this if enabling pipes */
+# ifdef G_OS_WIN32
 	    err = win32_lib_run_mpi_sync(foreign_opt, prn);
 # else
 	    err = lib_run_mpi_sync(foreign_opt, prn);
