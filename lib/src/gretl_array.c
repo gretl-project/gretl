@@ -1304,6 +1304,32 @@ gretl_array *get_array_by_name (const char *name)
     return a;
 }
 
+/**
+ * get_strings_array_by_name:
+ * @name: the name to look up.
+ *
+ * Returns: pointer to a saved array of strings, if found, else NULL.
+ */
+
+gretl_array *get_strings_array_by_name (const char *name)
+{
+    gretl_array *ret = NULL;
+
+    if (name != NULL && *name != '\0') {
+	user_var *u =
+	    get_user_var_of_type_by_name(name, GRETL_TYPE_ARRAY);
+
+	if (u != NULL) {
+	    ret = user_var_get_value(u);
+	    if (ret->type != GRETL_TYPE_STRINGS) {
+		ret = NULL;
+	    }
+	}
+    }
+
+    return ret;
+}
+
 gretl_array *gretl_array_pull_from_stack (const char *name,
 					  int *err)
 {

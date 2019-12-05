@@ -132,6 +132,8 @@ gretl_array *gretl_array_copy_range (gretl_array *A,
 
 gretl_array *get_array_by_name (const char *name);
 
+gretl_array *get_strings_array_by_name (const char *name);
+
 gretl_array *gretl_array_pull_from_stack (const char *name,
 					  int *err);
 
