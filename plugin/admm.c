@@ -524,7 +524,6 @@ static int get_cholesky_factor (const gretl_matrix *A,
     return gretl_matrix_cholesky_decomp(L);
 }
 
-#define VAR_RHO 1 /* seems to work well */
 #define RHO_DEBUG 0
 
 static int admm_iteration (const gretl_matrix *A,
@@ -760,13 +759,9 @@ static int real_admm_lasso (const gretl_matrix *A,
     for (j=jmin; j<jmax && !err; j++) {
 	/* loop across lambda values */
 	double lcrit, lambda = lfrac->val[j] * lmax;
-	int tune_rho = 0;
+	int tune_rho = 1;
 	int iters = 0;
 	int nnz = 0;
-
-#if VAR_RHO
-	tune_rho = 1;
-#endif
 
 	err = admm_iteration(A, Atb, L, x, z, u, q, m1, r, zprev, zdiff,
 			     lambda, &rho, tune_rho, &iters);
@@ -872,12 +867,9 @@ static int lasso_xv_round (const gretl_matrix *A,
     for (j=0; j<nlam && !err; j++) {
 	/* loop across lambda values */
 	double score, lambda = lfrac->val[j] * lmax;
-	int tune_rho = 0;
+	int tune_rho = 1;
 	int iters = 0;
 
-#if VAR_RHO
-	tune_rho = 1;
-#endif
 	err = admm_iteration(A, Atb, L, x, z, u, q, m1, r, zprev, zdiff,
 			     lambda, &rho, tune_rho, &iters);
 
