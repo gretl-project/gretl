@@ -148,15 +148,6 @@ static int gui_mode;
 static PRN *worker_prn;
 #endif
 
-static void svm_flush (PRN *prn)
-{
-    if (gui_mode) {
-	manufacture_gui_callback(FLUSH);
-    } else {
-	gretl_print_flush_stream(prn);
-    }
-}
-
 static void sv_wrapper_init (sv_wrapper *w, const DATASET *dset)
 {
     w->auto_type = EPSILON_SVR;
@@ -454,7 +445,7 @@ static void gretl_libsvm_print (const char *s)
 {
     if (svm_prn != NULL) {
 	pputs(svm_prn, s);
-	svm_flush(svm_prn);
+	gretl_flush(svm_prn);
     } else {
 	fputs(s, stdout);
 	fflush(stdout);
@@ -1453,7 +1444,7 @@ static int real_svm_predict (double *yhat,
     }
 
     pprintf(prn, "Calling prediction function (this may take a while)\n");
-    svm_flush(prn);
+    gretl_flush(prn);
     for (i=0; i<prob->l; i++) {
 	x = prob->x[i];
 	if (w->do_probs) {
@@ -1548,7 +1539,7 @@ static void print_xvalid_iter (sv_parm *parm,
 	pprintf(prn, ", nu = %g", parm->nu);
     }
     pprintf(prn, ": %s = %#.8g\n", label, val);
-    svm_flush(prn);
+    gretl_flush(prn);
 }
 
 static int *get_fold_sizes (const sv_data *data,
@@ -2417,7 +2408,7 @@ static int call_cross_validation (sv_data *data,
 	pprintf(prn, "using %d random folds", w->nfold);
     }
     pputs(prn, " (may take a while)\n");
-    svm_flush(prn);
+    gretl_flush(prn);
 
     if (w->grid != NULL) {
 	sv_grid *grid = w->grid;
@@ -3017,7 +3008,7 @@ static int get_svm_ranges (const int *list,
 		wrap->ranges_infile);
 	err = read_ranges(wrap);
 	report_result(err, prn);
-	svm_flush(prn);
+	gretl_flush(prn);
     } else {
 	pprintf(prn, "Getting data ranges (sample = %d to %d)... ",
 		dset->t1 + 1, dset->t2 + 1);
@@ -3027,7 +3018,7 @@ static int get_svm_ranges (const int *list,
 	    err = write_ranges(wrap);
 	    report_result(err, prn);
 	}
-	svm_flush(prn);
+	gretl_flush(prn);
     }
 
     return err;
@@ -3220,7 +3211,7 @@ static int svm_predict_main (const int *list,
 
     if (!err && do_training) {
 	pputs(prn, "Calling training function (this may take a while)\n");
-	svm_flush(prn);
+	gretl_flush(prn);
 	if (wrap->do_probs) {
 	    maybe_set_svm_seed(wrap);
 	}
@@ -3229,7 +3220,7 @@ static int svm_predict_main (const int *list,
 	    err = E_DATA;
 	}
 	pprintf(prn, "Training done, err = %d\n", err);
-	svm_flush(prn);
+	gretl_flush(prn);
     }
 
     if (model != NULL && saving_model(wrap)) {
@@ -3526,7 +3517,7 @@ int gretl_svm_driver (const int *list,
 	prob = gretl_sv_data_alloc(T, wrap.k, &x_space, &err);
 	report_result(err, prn);
     }
-    svm_flush(prn);
+    gretl_flush(prn);
 
     if (!err) {
 	/* fill out the "problem" data */

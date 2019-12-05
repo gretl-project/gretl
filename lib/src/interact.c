@@ -2122,6 +2122,25 @@ void manufacture_gui_callback (int ci)
     }
 }
 
+/* whether we're in gui or cli mode, try to ensure
+   that printed output gets displayed
+*/
+
+void gretl_flush (PRN *prn)
+{
+    if (gui_callback != NULL) {
+	ExecState s = {0};
+	CMD cmd = {0};
+
+	cmd.ci = FLUSH;
+	cmd.opt = OPT_Q;
+	s.cmd = &cmd;
+	gui_callback(&s, NULL, 0);
+    } else {
+	gretl_print_flush_stream(prn);
+    }
+}
+
 static int do_end_restrict (ExecState *s, DATASET *dset)
 {
     GretlObjType otype = gretl_restriction_get_type(s->rset);
@@ -2933,6 +2952,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case FLUSH:
 	if (gretl_in_gui_mode()) {
 	    schedule_callback(s);
+	} else {
+	    gretl_print_flush_stream(prn);
 	}
 	break;
 

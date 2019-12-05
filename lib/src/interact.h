@@ -105,6 +105,8 @@ int gretl_shell_grab (const char *arg, char **sout);
 
 void manufacture_gui_callback (int ci);
 
+void gretl_flush (PRN *prn);
+
 int is_plotting_command (CMD *cmd);
 
 void set_plot_produced (void);

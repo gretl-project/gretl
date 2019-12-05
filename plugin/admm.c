@@ -1141,8 +1141,8 @@ static int admm_lasso_xv (gretl_matrix *A,
     if (verbose) {
 	pprintf(prn, "admm_lasso_xv: nf=%d, fsize=%d, randfolds=%d, crit=%s\n\n",
 		nf, fsize, randfolds, crit_string(crit_type));
+	gretl_flush(prn);
     }
-    manufacture_gui_callback(FLUSH);
 
     AB = gretl_matrix_block_new(&Ae, esize, A->cols,
 				&Af, fsize, A->cols,
@@ -1275,8 +1275,8 @@ static int mpi_admm_lasso_xv (gretl_matrix *A,
 	if (verbose) {
 	    pprintf(prn, "admm_lasso_xv: nf=%d, fsize=%d, randfolds=%d, crit=%s\n\n",
 		    nf, fsize, randfolds, crit_string(crit_type));
+	    gretl_flush(prn);
 	}
-	manufacture_gui_callback(FLUSH);
     }
 
     /* process all folds */
@@ -1477,6 +1477,8 @@ static int mpi_parent_action (gretl_matrix *A,
 	/* compose and execute MPI script */
 	err = foreign_start(MPI, NULL, OPT_NONE, prn);
 	if (!err) {
+	    pputs(prn, "Invoking MPI...\n\n");
+	    gretl_flush(prn);
 	    foreign_append("_admm_lasso()", MPI);
 	    err = foreign_execute(NULL, OPT_L | OPT_S | OPT_Q, prn);
 	    if (err) {
