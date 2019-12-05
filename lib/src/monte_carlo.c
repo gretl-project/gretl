@@ -1097,7 +1097,7 @@ static int loop_list_refresh (LOOPSET *loop, const DATASET *dset)
 	    loop->final.val = n;
 	}
     } else if (!err) {
-	/* FIXME do/should we ver come here? */
+	/* FIXME do/should we ever come here? */
 	if (strval != NULL) {
 	    /* maybe space separated strings? */
 	    int nf = 0;
