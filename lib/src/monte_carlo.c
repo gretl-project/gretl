@@ -170,6 +170,7 @@ struct LOOPSET_ {
     user_var *idxvar;
     int idxval;
     char eachname[VNAMELEN];
+    GretlType eachtype;
 
     /* break signal */
     char brk;
@@ -573,6 +574,7 @@ static void gretl_loop_init (LOOPSET *loop)
     loop->idxval = 0;
     loop->brk = 0;
     *loop->eachname = '\0';
+    loop->eachtype = 0;
     loop->eachstrs = NULL;
 
     controller_init(&loop->init);
@@ -662,7 +664,7 @@ void gretl_loop_destroy (LOOPSET *loop)
     free(loop->model_lines);
     free(loop->models);
 
-    if (loop->eachstrs != NULL) {
+    if (loop->eachstrs != NULL && loop->eachtype != GRETL_TYPE_STRINGS) {
 	strings_array_free(loop->eachstrs, loop->itermax);
     }
 
@@ -1006,6 +1008,26 @@ static int list_vars_to_strings (LOOPSET *loop, const int *list,
     return err;
 }
 
+static void *get_eachvar_by_name (const char *s, GretlType *t)
+{
+    void *ptr = NULL;
+
+    if (*t == GRETL_TYPE_LIST) {
+	ptr = get_list_by_name(s);
+    } else if (*t == GRETL_TYPE_STRINGS) {
+	ptr = get_strings_array_by_name(s);
+    } else {
+	/* type not yet determined */
+	if ((ptr = get_list_by_name(s)) != NULL) {
+	    *t = GRETL_TYPE_LIST;
+	} else if ((ptr = get_strings_array_by_name(s)) != NULL) {
+	    *t = GRETL_TYPE_STRINGS;
+	}
+    }
+
+    return ptr;
+}
+
 /* At loop runtime, check the named list and insert the names (or
    numbers) of the variables as "eachstrs"; flag an error if the list
    has disappeared. We also have to handle the case where the name
@@ -1014,87 +1036,112 @@ static int list_vars_to_strings (LOOPSET *loop, const int *list,
 
 static int loop_list_refresh (LOOPSET *loop, const DATASET *dset)
 {
+    void *eachvar = NULL;
     const char *strval = NULL;
-    int *list = NULL;
     int err = 0;
 
     if (!gretl_strsub_on()) {
 	/* not doing string substitution */
-	list = get_list_by_name(loop->eachname);
+	eachvar = get_eachvar_by_name(loop->eachname, &loop->eachtype);
     } else if (strchr(loop->eachname, '$') != NULL) {
 	/* $-string substitution required */
-	char lname[VNAMELEN];
+	char vname[VNAMELEN];
 
-	strcpy(lname, loop->eachname);
-	err = make_dollar_substitutions(lname, VNAMELEN, loop,
+	strcpy(vname, loop->eachname);
+	err = make_dollar_substitutions(vname, VNAMELEN, loop,
 					dset, NULL, OPT_T);
 	if (!err) {
-	    list = get_list_by_name(lname);
+	    eachvar = get_eachvar_by_name(vname, &loop->eachtype);
 	}
     } else if (*loop->eachname == '@') {
 	/* @-string substitution required */
 	strval = get_string_by_name(loop->eachname + 1);
 	if (strval != NULL && strlen(strval) < VNAMELEN) {
-	    list = get_list_by_name(strval);
+	    eachvar = get_eachvar_by_name(strval, &loop->eachtype);
 	}
     } else {
 	/* no string substitution needed */
-	list = get_list_by_name(loop->eachname);
+	eachvar = get_eachvar_by_name(loop->eachname, &loop->eachtype);
     }
 
+    /* note: if @eachvar is an array of strings then loop->eachstrs
+       will be borrowed data and should not be freed!
+    */
     if (loop->eachstrs != NULL) {
-	strings_array_free(loop->eachstrs, loop->itermax);
+	if (loop->eachtype != GRETL_TYPE_STRINGS) {
+	    strings_array_free(loop->eachstrs, loop->itermax);
+	}
 	loop->eachstrs = NULL;
     }
 
     loop->itermax = loop->final.val = 0;
 
-    if (list == NULL) {
-	if (!err) {
-	    if (strval != NULL) {
-		/* maybe space separated strings? */
-		int nf = 0;
+    if (loop->eachtype != GRETL_TYPE_NONE && eachvar == NULL) {
+	/* foreach variable has disappeared? */
+	err = E_DATA;
+    } else if (loop->eachtype == GRETL_TYPE_LIST) {
+	int *list = eachvar;
 
-		loop->eachstrs = gretl_string_split_quoted(strval, &nf, NULL, &err);
-		if (!err) {
-		    loop->final.val = nf;
-		}
-	    } else {
-		err = E_UNKVAR;
+	if (list[0] > 0) {
+	    err = list_vars_to_strings(loop, list, dset);
+	    if (!err) {
+		loop->final.val = list[0];
 	    }
 	}
-    } else if (list[0] > 0) {
-	err = list_vars_to_strings(loop, list, dset);
-	if (!err) {
-	    loop->final.val = list[0];
+    } else if (loop->eachtype == GRETL_TYPE_STRINGS) {
+	gretl_array *a = eachvar;
+	int n = gretl_array_get_length(a);
+
+	if (n > 0) {
+	    loop->eachstrs = gretl_array_get_strings(a, &n);
+	    loop->final.val = n;
+	}
+    } else if (!err) {
+	/* FIXME do/should we ver come here? */
+	if (strval != NULL) {
+	    /* maybe space separated strings? */
+	    int nf = 0;
+
+	    loop->eachstrs = gretl_string_split_quoted(strval, &nf, NULL, &err);
+	    if (!err) {
+		loop->final.val = nf;
+	    }
+	} else {
+	    err = E_UNKVAR;
 	}
     }
 
     return err;
 }
 
-static int find_list_in_parentage (LOOPSET *loop, const char *s)
+static GretlType find_target_in_parentage (LOOPSET *loop,
+					   const char *s)
 {
-    char fmt[16], lname[VNAMELEN];
+    char lfmt[16], afmt[18], vname[VNAMELEN];
     int i;
 
-    sprintf(fmt, "list %%%d[^ =]", VNAMELEN-1);
+    sprintf(lfmt, "list %%%d[^ =]", VNAMELEN-1);
+    sprintf(afmt, "strings %%%d[^ =]", VNAMELEN-1);
 
     while ((loop = loop->parent) != NULL) {
 	for (i=0; i<loop->n_cmds; i++) {
-	    if (sscanf(loop->cmds[i].line, fmt, lname)) {
-		if (!strcmp(lname, s)) {
-		    return 1;
+	    if (sscanf(loop->cmds[i].line, lfmt, vname)) {
+		if (!strcmp(vname, s)) {
+		    return GRETL_TYPE_LIST;
+		}
+	    } else if (sscanf(loop->cmds[i].line, afmt, vname)) {
+		if (!strcmp(vname, s)) {
+		    return GRETL_TYPE_STRINGS;
 		}
 	    }
 	}
     }
 
-    return 0;
+    return GRETL_TYPE_NONE;
 }
 
 /* We're looking at a "foreach" loop with just one field after the
-   index variable, so it's most likely a loop over a list.
+   index variable, so it's most likely a loop over a list or array.
 
    We begin by looking for a currently existing named list, but if
    this fails we don't give up immediately.  If we're working on an
@@ -1114,7 +1161,9 @@ static int find_list_in_parentage (LOOPSET *loop, const char *s)
 
 static int list_loop_setup (LOOPSET *loop, char *s, int *nf)
 {
-    int *list;
+    GretlType t = 0;
+    gretl_array *a = NULL;
+    int *list = NULL;
     int err = 0;
 
     while (isspace(*s)) s++;
@@ -1128,19 +1177,26 @@ static int list_loop_setup (LOOPSET *loop, char *s, int *nf)
 	return 0;
     }
 
-    list = get_list_by_name(s);
-
 #if LOOP_DEBUG > 1
     fprintf(stderr, "list_loop_setup: s = '%s'\n", s);
-    printlist(list, "get_list_by_name");
 #endif
 
-    if (list == NULL && !find_list_in_parentage(loop, s)) {
+    if ((list = get_list_by_name(s)) != NULL) {
+	t = GRETL_TYPE_LIST;
+    } else if ((a = get_strings_array_by_name(s)) != NULL) {
+	t = GRETL_TYPE_STRINGS;
+    } else {
+	t = find_target_in_parentage(loop, s);
+    }
+
+    if (t == GRETL_TYPE_NONE) {
 	err = E_UNKVAR;
     } else {
+	loop->eachtype = t;
 	*loop->eachname = '\0';
 	strncat(loop->eachname, s, VNAMELEN - 1);
-	*nf = (list != NULL)? list[0] : 0;
+	*nf = list != NULL ? list[0] :
+	    a != NULL ? gretl_array_get_length(a) : 0;
     }
 
     return err;
@@ -1167,7 +1223,6 @@ each_strings_from_list_of_vars (LOOPSET *loop, const DATASET *dset,
 
 	gretl_delchar(' ', s);
 	sprintf(fmt, "%%%d[^.]..%%%ds", VNAMELEN-1, VNAMELEN-1);
-
 
 	if (sscanf(s, fmt, vn1, vn2) != 2) {
 	    err = E_PARSE;
@@ -1294,7 +1349,7 @@ parse_as_each_loop (LOOPSET *loop, DATASET *dset, char *s)
     }
 
     if (!done && nf == 1) {
-	/* try for a named list? */
+	/* try for a named list or array? */
 	err = list_loop_setup(loop, s, &nf);
 	done = (err == 0);
     }
