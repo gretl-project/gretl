@@ -2446,6 +2446,8 @@ gretl_bundle *gretl_bundle_read_from_buffer (const char *buf,
     return b;
 }
 
+/* get the key strings from @b in the form of a gretl_array */
+
 void *gretl_bundle_get_keys (gretl_bundle *b, int *err)
 {
     gretl_array *A = NULL;
@@ -2482,6 +2484,41 @@ void *gretl_bundle_get_keys (gretl_bundle *b, int *err)
     }
 
     return (void *) A;
+}
+
+/* get the key strings from @b in the form of a "raw" array
+   of Ctype char *
+*/
+
+char **gretl_bundle_get_keys_raw (gretl_bundle *b, int *ns)
+{
+    char **S = NULL;
+
+    *ns = 0;
+
+    if (b != NULL && b->ht != NULL) {
+	GList *keys = g_hash_table_get_keys(b->ht);
+	guint n;
+
+	if (keys != NULL && (n = g_list_length(keys)) > 0) {
+	    S = strings_array_new(n);
+	    if (S != NULL) {
+		GList *L = g_list_first(keys);
+		int i = 0;
+
+		while (L != NULL) {
+		    S[i++] = gretl_strdup(L->data);
+		    L = g_list_next(L);
+		}
+		*ns = n;
+	    }
+	}
+	if (keys != NULL) {
+	    g_list_free(keys);
+	}
+    }
+
+    return S;
 }
 
 gretl_bundle *get_sysinfo_bundle (int *err)

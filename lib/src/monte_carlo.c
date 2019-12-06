@@ -1016,12 +1016,16 @@ static void *get_eachvar_by_name (const char *s, GretlType *t)
 	ptr = get_list_by_name(s);
     } else if (*t == GRETL_TYPE_STRINGS) {
 	ptr = get_strings_array_by_name(s);
+    } else if (*t == GRETL_TYPE_BUNDLE) {
+	ptr = get_bundle_by_name(s);
     } else {
 	/* type not yet determined */
 	if ((ptr = get_list_by_name(s)) != NULL) {
 	    *t = GRETL_TYPE_LIST;
 	} else if ((ptr = get_strings_array_by_name(s)) != NULL) {
 	    *t = GRETL_TYPE_STRINGS;
+	} else if ((ptr = get_bundle_by_name(s)) != NULL) {
+	    *t = GRETL_TYPE_BUNDLE;
 	}
     }
 
@@ -1096,6 +1100,14 @@ static int loop_list_refresh (LOOPSET *loop, const DATASET *dset)
 	    loop->eachstrs = gretl_array_get_strings(a, &n);
 	    loop->final.val = n;
 	}
+    } else if (loop->eachtype == GRETL_TYPE_BUNDLE) {
+	gretl_bundle *b = eachvar;
+	int n = gretl_bundle_get_n_keys(b);
+
+	if (n > 0) {
+	    loop->eachstrs = gretl_bundle_get_keys_raw(b, &n);
+	    loop->final.val = n;
+	}
     } else if (!err) {
 	/* FIXME do/should we ever come here? */
 	if (strval != NULL) {
@@ -1163,7 +1175,9 @@ static int list_loop_setup (LOOPSET *loop, char *s, int *nf)
 {
     GretlType t = 0;
     gretl_array *a = NULL;
+    gretl_bundle *b = NULL;
     int *list = NULL;
+    int len = 0;
     int err = 0;
 
     while (isspace(*s)) s++;
@@ -1183,8 +1197,13 @@ static int list_loop_setup (LOOPSET *loop, char *s, int *nf)
 
     if ((list = get_list_by_name(s)) != NULL) {
 	t = GRETL_TYPE_LIST;
+	len = list[0];
     } else if ((a = get_strings_array_by_name(s)) != NULL) {
 	t = GRETL_TYPE_STRINGS;
+	len = gretl_array_get_length(a);
+    } else if ((b = get_bundle_by_name(s)) != NULL) {
+	t = GRETL_TYPE_BUNDLE;
+	len = gretl_bundle_get_n_keys(b);
     } else {
 	t = find_target_in_parentage(loop, s);
     }
@@ -1195,8 +1214,7 @@ static int list_loop_setup (LOOPSET *loop, char *s, int *nf)
 	loop->eachtype = t;
 	*loop->eachname = '\0';
 	strncat(loop->eachname, s, VNAMELEN - 1);
-	*nf = list != NULL ? list[0] :
-	    a != NULL ? gretl_array_get_length(a) : 0;
+	*nf = len;
     }
 
     return err;

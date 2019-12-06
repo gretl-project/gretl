@@ -210,6 +210,8 @@ gretl_bundle *gretl_bundle_read_from_buffer (const char *buf,
 
 void *gretl_bundle_get_keys (gretl_bundle *b, int *err);
 
+char **gretl_bundle_get_keys_raw (gretl_bundle *b, int *ns);
+
 gretl_bundle *get_sysinfo_bundle (int *err);
 
 void *sysinfo_bundle_get_data (const char *key,
