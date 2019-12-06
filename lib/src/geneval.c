@@ -3480,6 +3480,23 @@ static NODE *bundle_file_write (NODE *l, NODE *m, NODE *r, parser *p)
     return ret;
 }
 
+static int check_complex_dims (gretl_matrix *m, int f)
+{
+    if (f == HF_SETCMPLX) {
+	/* we need an even number of rows in the real source */
+	if (m->rows % 2) {
+	    return E_INVARG;
+	}
+    } else if (f == HF_CSWITCH) {
+	/* we need an even number of columns in the real source */
+	if (m->cols % 2) {
+	    return E_INVARG;
+	}
+    }
+
+    return 0;
+}
+
 /* matrix on left, scalar on right: returns a matrix,
    except when the function is _setcmplx
 */
@@ -3495,8 +3512,8 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
 
 	if (f == HF_CSWITCH || f == HF_SETCMPLX) {
 	    k = node_get_bool(r, p, 1);
-	    if (!p->err && k && m->rows % 2) {
-		p->err = E_INVARG;
+	    if (!p->err && k) {
+		p->err = check_complex_dims(m, f);
 	    }
 	} else {
 	    k = node_get_int(r, p);
