@@ -154,7 +154,7 @@ of the variable \texttt{Y} for each value of \texttt{Z8}.
 \label{loop-each}
 
 The fourth form of loop control also uses an index variable, in this
-case to index a specified list of strings.  The loop is executed once
+case to index a specified set of strings.  The loop is executed once
 for each string in the list.  This can be useful for performing
 repetitive operations on a list of variables.  Here is an example of
 the syntax:
@@ -204,6 +204,21 @@ replacing the third line with
 %
 \begin{code}
    ols ylist.$i const x1 x2
+\end{code}
+%$
+Two other cases are supported: the target of \texttt{foreach} can be a
+named array of strings or a bundle (see
+chapter~\ref{chap:datatypes}). In the array case, \verb|$i| gets
+(naturally) the string at position \texttt{i} in the array, from 1 to
+the number of elements; in the bundle case it gets the key-strings of
+all bundle members (in no particular order). For a bundle \texttt{b},
+the command ``\texttt{print b}'' gives a fairly terse account of the
+bundle's membership; for a full account you can do:
+\begin{code}
+loop foreach i b --quiet
+   print "$i:"
+   eval b["$i"]
+endloop
 \end{code}
 
 \subsection{For loop}
@@ -276,17 +291,17 @@ get a printout of (a) the mean value of each estimated coefficient
 across all the repetitions, (b) the standard deviation of those
 coefficient estimates, (c) the mean value of the estimated standard
 error for each coefficient, and (d) the standard deviation of the
-estimated standard errors.  This makes sense only if there is some
-random input at each step.
+estimated standard errors.  Note that this is useful only if there is
+some random input at each step.
 
 \cmd{print}: When this command is used to print the value of a
-variable, you do not get a print each time round the loop.  Instead,
+variable, its value is not printed each time round the loop.  Rather,
 when the loop is terminated you get a printout of the mean and
 standard deviation of the variable, across the repetitions of the
 loop.  This mode is intended for use with variables that have a scalar
-value at each iteration, for example the error sum of squares from a
-regression.  Data series cannot be printed in this way, and neither
-can matrices.
+value at each iteration, for example the sum of squared residuals from
+a regression.  Series cannot be printed in this way, and neither can
+matrices.
 
 \cmd{store}: This command writes out the values of the specified
 scalars, from each time round the loop, to a specified file.  Thus it
@@ -331,27 +346,26 @@ endloop
 \end{scode}
 \end{script}
 
-This loop will print out summary statistics for the `a' and `b'
-estimates and $R^2$ across the 100 repetitions.  After running the
-loop, \verb+coeffs.gdt+, which contains the individual coefficient
-estimates from all the runs, can be opened in gretl to examine
-the frequency distribution of the estimates in detail.
+This loop will print out summary statistics for the \texttt{a} and
+\texttt{b} estimates and
+$R^2$ across the 100 repetitions.  After running the loop,
+\verb+coeffs.gdt+, which contains the individual coefficient estimates
+from all the runs, can be opened in gretl to examine the frequency
+distribution of the estimates in detail.
 
-The command \cmd{nulldata} is useful for Monte Carlo work.  Instead of
-opening a ``real'' data set, \cmd{nulldata 50} (for instance) opens a
-dummy data set, containing just a constant and an index variable, with
-a series length of 50. Constructed variables can then be added.  See
-the \cmd{set} command for information on generating repeatable
-pseudo-random series.
+The \cmd{nulldata} command is useful for Monte Carlo work.  Instead of
+opening a ``real'' data set, \cmd{nulldata 50} (for instance) creates
+an artificial dataset, containing just a constant and an index
+variable, with 50 observations. Constructed variables can then be
+added.  See the \cmd{set} command for information on generating
+repeatable pseudo-random series.
 
 \subsection{Iterated least squares}
 \label{loop-ils-examples}
 
 Listing \ref{greene-ils-script} uses a ``while'' loop to replicate the
 estimation of a nonlinear consumption function of the form
-	
 \[ C = \alpha + \beta Y^{\gamma} + \epsilon \]
-
 as presented in \cite{greene00}, Example 11.3.  This script is included
 in the gretl distribution under the name \verb+greene11_3.inp+;
 you can find it in gretl under the menu item ``File, Script files,
@@ -399,6 +413,9 @@ printf "gamma = %g\n", gamma
 Listing~\ref{jack-arma} shows how a loop can be used to estimate an
 ARMA model, exploiting the ``outer product of the gradient'' (OPG)
 regression discussed by \cite{davidson-mackinnon93}.
+
+Further examples of \cmd{loop} usage that may be of interest can be
+found in chapter~\ref{chap:cheatsheet}.
 
 \begin{script}[htbp]
   \caption{ARMA 1, 1}
@@ -464,9 +481,6 @@ printf "ar1 coefficient = %.8g (se = %#.6g, t = %.4f)\n", a, se_a, a/se_a
 printf "ma1 coefficient = %.8g (se = %#.6g, t = %.4f)\n", m, se_m, m/se_m
 \end{scode}
 \end{script}
-
-Further examples of \cmd{loop} usage that may be of interest can be
-found in chapter~\ref{chap:cheatsheet}.
 
 %%% Local Variables: 
 %%% mode: latex
