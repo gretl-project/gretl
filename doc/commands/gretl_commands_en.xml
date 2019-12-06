@@ -2879,6 +2879,10 @@
 	  <flag>--db</flag>
 	  <effect>delete series from database</effect>
 	</option>
+	<option>
+	  <flag>--force</flag>
+	  <effect>see below</effect>
+	</option>	
       </options>
     </usage>
 
@@ -2924,6 +2928,18 @@
       <para>
 	Note that this does not delete the package file, it just
 	unloads the package from memory.
+      </para>
+
+      <subhead>Deleting variables in a loop</subhead>
+      <para>
+	In general it is not permitted to delete variables in the
+	context of a loop, since this may threaten the integrity of
+	the loop code. However, if you are confident that deleting a
+	certain variable is safe (first and foremost, it's not being
+	used as the index variable for the current loop or a parent
+	loop, if any), and are willing to take responsibility for the
+	consequences, you can override this prohibition by appending
+	the <opt>force</opt> flag to the <lit>delete</lit> command.
       </para>
     </description>
 
