@@ -2555,6 +2555,7 @@
 	  c="n"/> with a constant imaginary part&mdash;and similarly
 	  in the converse case but with a constant real part. If both
 	  arguments are matrices they must be of the same dimensions.
+	  <seelist><fncref targ="cswitch"/></seelist>
 	</para>
       </description>
     </function>
@@ -2828,30 +2829,33 @@
 	  (which must have value 1, 2, 3 or 4) as follows:
 	</para>
 	<para>
-	  mode = 1: <argname>A</argname> must be a real matrix with an
+	  mode 1: <argname>A</argname> must be a real matrix with an
 	  even number of columns. Returns a complex matrix with half
 	  as many columns, the odd-numbered columns of
 	  <argname>A</argname> supplying the real parts and the
 	  even-numbered columns the imaginary parts.
 	</para>
 	<para>
-	  mode = 2: Performs the inverse operation of mode
+	  mode 2: Performs the inverse operation of mode
 	  1. <argname>A</argname> must be a complex matrix and the
 	  return value is a real matrix with twice as many columns
 	  as <argname>A</argname>.
 	</para>
 	<para>
-	  mode = 3: <argname>A</argname> must be a real matrix with an
+	  mode 3: <argname>A</argname> must be a real matrix with an
 	  even number of rows. Returns a complex matrix with half as
 	  many rows, the odd-numbered rows of <argname>A</argname>
 	  supplying the real parts and the even-numbered rows the
 	  imaginary parts.
 	</para>
 	<para>
-	  mode = 4: Performs the inverse operation of mode
+	  mode 4: Performs the inverse operation of mode
 	  3. <argname>A</argname> must be a complex matrix and the
 	  return value is a real matrix with twice as many rows as
 	  <argname>A</argname>.
+	</para>
+	<para>
+	  <seelist><fncref targ="complex"/></seelist>
 	</para>
       </description>
     </function>
