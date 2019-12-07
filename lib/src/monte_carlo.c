@@ -3323,6 +3323,34 @@ static inline void cmd_info_to_loop (LOOPSET *loop, int j,
 #endif
 }
 
+/* We come here when the --force option has been applied to
+   the "delete" command, trying to prevent deletion of the
+   index variable for the loop: even --force can't allow that,
+   on penalty of crashing.
+*/
+
+static int loop_check_deletion (LOOPSET *loop, const char *param,
+				PRN *prn)
+{
+    user_var *uv = get_user_var_by_name(param);
+
+    if (uv != NULL) {
+	while (loop != NULL) {
+	    if (loop->idxvar == uv) {
+		pprintf(prn, _("delete %s: not allowed\n"), param);
+		return 1;
+	    }
+	    loop = loop->parent;
+	}
+    }
+
+    return 0;
+}
+
+/* We come here if the --force option has not been applied to
+   the "delete" command, and we'll be conservative.
+*/
+
 static int loop_delete_object (LOOPSET *loop, CMD *cmd, PRN *prn)
 {
     int err = 0;
@@ -3914,7 +3942,13 @@ int gretl_loop_exec (ExecState *s, DATASET *dset, LOOPSET *loop)
 		/* send command to the regular processor */
 		int catch = cmd->flags & CMD_CATCH;
 
-		err = gretl_cmd_exec(s, dset);
+		if (cmd->ci == DELEET && cmd->param != NULL) {
+		    /* don't delete loop indices! */
+		    err = loop_check_deletion(loop, cmd->param, prn);
+		}
+		if (!err) {
+		    err = gretl_cmd_exec(s, dset);
+		}
 		if (catch) {
 		    /* ensure "catch" hasn't been scrubbed */
 		    cmd->flags |= CMD_CATCH;
