@@ -3487,9 +3487,6 @@ static int check_cswitch_param (gretl_matrix *m, int *k)
     if (*k < 0 || *k > 4) {
 	/* out of bounds */
 	err = E_INVARG;
-    } else if (*k == 0) {
-	/* respect old code for column-wise complex -> real (?) */
-	*k == 2;
     } else if (*k == 1) {
 	/* real to complex, column-wise */
 	if (m->cols % 2) {
