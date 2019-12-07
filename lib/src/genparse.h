@@ -398,8 +398,7 @@ enum {
     F_COMPLEX,
     F_RANDPERM,
     F_STDIZE,
-    HF_CSWITCH,
-    HF_SETCMPLX,
+    F_CSWITCH,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_LLAG,
     F_HFLAG,

@@ -550,6 +550,7 @@ struct str_table funcs[] = {
     { F_ISCMPLX,   "iscomplex" },
     { F_COMPLEX,   "complex" },
     { F_CONJ,      "conj" },
+    { F_CSWITCH,   "cswitch" },
     { F_RANDPERM,  "randperm" },
     { F_STDIZE,    "stdize" },
     { 0,           NULL }
@@ -571,15 +572,12 @@ struct str_table func_alias[] = {
     { F_RNAMESET, "rownames" },
     { F_CNAMEGET, "colname" },
     { F_RNAMEGET, "rowname" },
-    { HF_CSWITCH, "cswitch" },
     { F_EXISTS,   "isnull" }, /* deprecated */
     { 0,          NULL }
 };
 
 struct str_table hidden_funcs[] = {
     { HF_CLOGFI,   "_clogitfi" },
-    { HF_CSWITCH,  "_cswitch" },
-    { HF_SETCMPLX, "_setcmplx" },
     { HF_JBTERMS,  "_jbterms" },
     { HF_LISTINFO, "_listinfo" },
     { HF_ADMM,     "_admm_lasso" },

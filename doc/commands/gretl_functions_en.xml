@@ -2816,6 +2816,46 @@
       </description>
     </function>
 
+    <function name="cswitch" section="complex" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">A</fnarg>
+	<fnarg type="scalar">mode</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Reinterprets a real matrix as holding complex values or vice
+	  versa. The precise action depends on <argname>mode</argname>
+	  (which must have value 1, 2, 3 or 4) as follows:
+	</para>
+	<para>
+	  mode = 1: <argname>A</argname> must be a real matrix with an
+	  even number of columns. Returns a complex matrix with half
+	  as many columns, the odd-numbered columns of
+	  <argname>A</argname> supplying the real parts and the
+	  even-numbered columns the imaginary parts.
+	</para>
+	<para>
+	  mode = 2: Performs the inverse operation of mode
+	  1. <argname>A</argname> must be a complex matrix and the
+	  return value is a real matrix with twice as many columns
+	  as <argname>A</argname>.
+	</para>
+	<para>
+	  mode = 3: <argname>A</argname> must be a real matrix with an
+	  even number of rows. Returns a complex matrix with half as
+	  many rows, the odd-numbered rows of <argname>A</argname>
+	  supplying the real parts and the even-numbered rows the
+	  imaginary parts.
+	</para>
+	<para>
+	  mode = 4: Performs the inverse operation of mode
+	  3. <argname>A</argname> must be a complex matrix and the
+	  return value is a real matrix with twice as many rows as
+	  <argname>A</argname>.
+	</para>
+      </description>
+    </function>
+
     <function name="ctrans" section="complex" output="cmatrix">
       <fnargs>
 	<fnarg type="cmatrix">C</fnarg>

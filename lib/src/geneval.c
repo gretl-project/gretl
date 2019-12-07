@@ -3480,26 +3480,32 @@ static NODE *bundle_file_write (NODE *l, NODE *m, NODE *r, parser *p)
     return ret;
 }
 
-static int check_complex_dims (gretl_matrix *m, int f)
+static int check_cswitch_param (gretl_matrix *m, int *k)
 {
-    if (f == HF_SETCMPLX) {
-	/* we need an even number of rows in the real source */
-	if (m->rows % 2) {
-	    return E_INVARG;
-	}
-    } else if (f == HF_CSWITCH) {
-	/* we need an even number of columns in the real source */
+    int err = 0;
+
+    if (*k < 0 || *k > 4) {
+	/* out of bounds */
+	err = E_INVARG;
+    } else if (*k == 0) {
+	/* respect old code for column-wise complex -> real (?) */
+	*k == 2;
+    } else if (*k == 1) {
+	/* real to complex, column-wise */
 	if (m->cols % 2) {
-	    return E_INVARG;
+	    err = E_NONCONF;
+	}
+    } else if (*k == 3) {
+	/* real to complex, row-wise */
+	if (m->rows % 2) {
+	    err = E_NONCONF;
 	}
     }
 
-    return 0;
+    return err;
 }
 
-/* matrix on left, scalar on right: returns a matrix,
-   except when the function is _setcmplx
-*/
+/* matrix on left, scalar(s) on right: returns a matrix */
 
 static NODE *matrix_scalar_func (NODE *l, NODE *r,
 				 int f, parser *p)
@@ -3508,12 +3514,14 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
 
     if (starting(p)) {
 	gretl_matrix *m = l->v.m;
-	int k;
+	int k = 0;
 
-	if (f == HF_CSWITCH || f == HF_SETCMPLX) {
-	    k = node_get_bool(r, p, 1);
-	    if (!p->err && k) {
-		p->err = check_complex_dims(m, f);
+	if (f == F_CSWITCH) {
+	    if (!null_node(r)) {
+		k = node_get_int(r, p);
+	    }
+	    if (!p->err) {
+		p->err = check_cswitch_param(m, &k);
 	    }
 	} else {
 	    k = node_get_int(r, p);
@@ -3533,14 +3541,19 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
 
 	if (f == F_MSORTBY) {
 	    ret->v.m = gretl_matrix_sort_by_column(m, k-1, &p->err);
-	} else if (f == HF_CSWITCH) {
-	    ret->v.m = gretl_cmatrix_switch(m, k, &p->err);
-	} else if (f == HF_SETCMPLX) {
-	    ret->v.m = gretl_matrix_copy(m);
-	    if (ret->v.m == NULL) {
-		p->err = E_ALLOC;
+	} else if (f == F_CSWITCH) {
+	    if (k > 2) {
+		/* the old _setcmplx() */
+		k = (k == 3)? 1 : 0;
+		ret->v.m = gretl_matrix_copy(m);
+		if (ret->v.m == NULL) {
+		    p->err = E_ALLOC;
+		} else {
+		    p->err = gretl_matrix_set_complex_full(ret->v.m, k);
+		}
 	    } else {
-		p->err = gretl_matrix_set_complex_full(ret->v.m, k);
+		k = (k == 1)? 1 : 0;
+		ret->v.m = gretl_cmatrix_switch(m, k, &p->err);
 	    }
 	}
     } else {
@@ -15496,8 +15509,7 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_MSORTBY:
-    case HF_CSWITCH:
-    case HF_SETCMPLX:
+    case F_CSWITCH:
 	/* matrix on left, scalar on right */
 	if (l->t == MAT && null_or_scalar(r)) {
 	    ret = matrix_scalar_func(l, r, t->t, p);
@@ -18145,7 +18157,7 @@ static int create_or_edit_string (parser *p)
     const char *orig = NULL;
     char *newstr = NULL;
     user_var *uvar;
-    
+
     if (p->ret->t == NUM) {
 	/* OK only in case of "+=" */
 	if (p->op != B_ADD) {
