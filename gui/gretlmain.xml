@@ -256,13 +256,13 @@
 	  <menuitem action="ar1"/>
 	  <menuitem action="ar"/>
 	</menu>
-	<menu action="TSMulti">
-	  <menuitem action="var"/>
-	  <menuitem action="VLAGSEL"/>
-	  <menuitem action="vecm"/>
-	  <menuitem action="coint2"/>
-	  <menuitem action="coint"/>
-	</menu>
+      </menu>
+      <menu action="TSMulti">
+	<menuitem action="var"/>
+	<menuitem action="VLAGSEL"/>
+	<menuitem action="vecm"/>
+	<menuitem action="coint2"/>
+	<menuitem action="coint"/>
       </menu>
       <menu action="PanelModels">
 	<menuitem action="panel"/>

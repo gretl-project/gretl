@@ -5414,6 +5414,20 @@ static void print_package_code (const fnpkg *pkg,
     }
 }
 
+/* Handle any old references to Model/TSModels/TSMulti;
+   now moved to Model/TSMulti (2019-12-07).
+*/
+
+static void maybe_update_ts_path (fnpkg *pkg)
+{
+    if (pkg->mpath != NULL) {
+	if (!strcmp(pkg->mpath, "/menubar/Model/TSModels/TSMulti")) {
+	    free(pkg->mpath);
+	    pkg->mpath = gretl_strdup("/menubar/Model/TSMulti");
+	}
+    }
+}
+
 /* allocate a fnpkg structure and read from XML file into it */
 
 static fnpkg *
@@ -5499,6 +5513,7 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node,
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->label);
 	} else if (!xmlStrcmp(cur->name, (XUC) "menu-attachment")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->mpath);
+	    maybe_update_ts_path(pkg);
 	} else if (!xmlStrcmp(cur->name, (XUC) "provider")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->provider);
 	} else if (!xmlStrcmp(cur->name, (XUC) "data-files")) {

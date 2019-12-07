@@ -3287,7 +3287,7 @@ static int read_packages_file (const char *fname, int *pn, int which)
 		!strcmp(path, "/menubar/Model/TSModels")) {
 		/* update menu path */
 		free(path);
-		path = gretl_strdup("/menubar/Model/TSModels/TSMulti");
+		path = gretl_strdup("/menubar/Model/TSMulti");
 	    }
 
 	    if (mw) {

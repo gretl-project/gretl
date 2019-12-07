@@ -267,6 +267,7 @@ void time_series_menu_state (gboolean s)
 
     /* Model menu */
     flip(mdata->ui, "/menubar/Model/TSModels", s);
+    flip(mdata->ui, "/menubar/Model/TSMulti", s);
 #if 1 /* not ready yet */
     flip(mdata->ui, "/menubar/Model/TSModels/midasreg",
 	 s && OK_MIDAS_PD(dataset->pd));

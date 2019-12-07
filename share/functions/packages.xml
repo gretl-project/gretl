@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gretl-package-info>
 <package name="gig" label="GARCH variants" path="/menubar/Model/TSModels"/>
-<package name="SVAR" label="Structural VARs" path="/menubar/Model/TSModels"/>
+<package name="SVAR" label="Structural VARs" path="/menubar/Model/TSMulti"/>
 <package name="ivpanel" label="Panel IV model" path="/menubar/Model/PanelModels"/>
 <package name="HIP" label="IV/Heteroskedastic" path="/menubar/Model/LimdepModels/probit"/>
 <package name="bandplot" label="Confidence band plot" model-window="true" path="/menubar/Graphs" toplev="true"/>
