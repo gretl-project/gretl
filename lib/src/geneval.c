@@ -3514,9 +3514,10 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
 
     if (starting(p)) {
 	gretl_matrix *m = l->v.m;
-	int k = 0;
+	int k;
 
 	if (f == F_CSWITCH) {
+	    k = 1; /* default */
 	    if (!null_node(r)) {
 		k = node_get_int(r, p);
 	    }
