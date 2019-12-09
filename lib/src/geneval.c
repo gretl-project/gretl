@@ -17402,9 +17402,14 @@ static void maybe_do_type_errmsg (const char *name, int t)
 
 static void assignment_type_errmsg (int targ, int rhs, int op)
 {
+    const char *rhstr = typestr(rhs);
+
+    if (*rhstr == '?') {
+	rhstr = getsymb(rhs);
+    }
     gretl_errmsg_sprintf(_("Incompatible types in assignment: "
 			   "%s %s %s"), typestr(targ), get_opstr(op),
-			 typestr(rhs));
+			 rhstr);
 }
 
 static int overwrite_type_check (parser *p)

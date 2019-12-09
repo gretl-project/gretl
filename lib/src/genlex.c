@@ -2392,7 +2392,7 @@ const char *getsymb_full (int t, const parser *p)
 	} else if (t == CON) {
 	    return "CON";
 	} else if (t == DUM) {
-	    return "DUM";
+	    return "dummy constant";
 	} else if (t == DVAR) {
 	    return "DVAR";
 	} else if (t == MVAR) {
