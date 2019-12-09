@@ -36,6 +36,8 @@
 # define LDEBUG 0
 #endif
 
+static int parser_next_char (parser *p, int skip);
+
 #define defining_list(p) (p->flags & P_LISTDEF)
 
 #define bare_data_type(s) (s > PUNCT_MAX && s < DTYPE_MAX)
@@ -81,6 +83,11 @@ struct str_table dummies[] = {
     { DUM_DATASET, "dataset" },
     { 0,        NULL }
 };
+
+/* Identify matrix-selection dummy constants:
+   these can be valid only brtween '[' and ']'.
+*/
+#define MSEL_DUM(d) (d >= DUM_DIAG && d <= DUM_IMAG)
 
 /* dvars: dataset- and test-related accessors */
 
@@ -878,7 +885,7 @@ const char *gen_func_name (int i)
 	    return funcs[j].str;
 	}
     }
-    
+
     for (j=0; func_alias[j].id != 0; j++) {
 	if (show_alias(j)) {
 	    seq++;
@@ -970,17 +977,22 @@ const char *gretl_const_name (int i)
 
 /* end external stuff */
 
-static int dummy_lookup (const char *s)
+static int dummy_lookup (const char *s, parser *p)
 {
-    int i;
+    int i, d = 0;
 
     for (i=0; dummies[i].id != 0; i++) {
 	if (!strcmp(s, dummies[i].str)) {
-	    return dummies[i].id;
+	    d = dummies[i].id;
+	    break;
 	}
     }
 
-    return 0;
+    if (MSEL_DUM(d) && parser_next_char(p, 0) != ']') {
+	d = 0;
+    }
+
+    return d;
 }
 
 const char *dumname (int t)
@@ -1532,7 +1544,7 @@ static void look_up_word (const char *s, parser *p)
 	if (p->idnum > 0) {
 	    p->sym = CON;
 	} else {
-	    p->idnum = dummy_lookup(s);
+	    p->idnum = dummy_lookup(s, p);
 	    if (p->idnum > 0) {
 		p->sym = DUM;
 	    } else if (have_dset &&
