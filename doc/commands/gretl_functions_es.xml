@@ -2555,6 +2555,7 @@
 	  <by r="m" c="n"/> con una parte imaginaria constante (y de forma
 	  similar en el caso recíproco, pero con una parte real constante). Si
 	  ambos argumentos son matrices, deben tener las mismas dimensiones.
+	  <seelist><fncref targ="cswitch"/></seelist>
 	</para>
       </description>
     </function>
@@ -2812,6 +2813,49 @@
             <fncref targ="invcdf"/>
             <fncref targ="pvalue"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="cswitch" section="complex" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">A</fnarg>
+	<fnarg type="scalar">modo</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Reinterpreta una matriz real como si contuviese valores complejos, o
+	  viceversa. La acción concreta depende de <argname>modo</argname> (que
+	  deberá tener un valor de 1, 2, 3 o 4), como se explica a continuación:
+	</para>
+	<para>
+	  Modo 1: El argumento <argname>A</argname> debe ser una matriz
+	  real con un número par de columnas. La función devuelve una matriz
+	  con la mitad de las columnas, con valores complejos formados usando
+	  las columnas impares de <argname>A</argname> para las partes reales,
+	  y las columnas pares para las partes imaginarias.
+	</para>
+	<para>
+	  Modo 2: Permite realizar la operación inversa a la del modo 1. El
+	  argumento <argname>A</argname> debe ser una matriz compleja, y el
+	  resultado que se devuelve es una matriz real que tendrá el doble de
+	  columnas que las de <argname>A</argname>.
+	</para>
+	<para>
+	  Modo 3: El argumento <argname>A</argname> debe ser una matriz
+	  real con un número par de filas. La función devuelve una matriz
+	  con la mitad de las filas, con valores complejos formados usando
+	  las filas impares de <argname>A</argname> para las partes reales,
+	  y las filas pares para las partes imaginarias.
+	</para>
+	<para>
+	  Modo 4: Permite realizar la operación inversa a la del modo 3. El
+	  argumento <argname>A</argname> debe ser una matriz compleja, y el
+	  resultado que se devuelve es una matriz real que tendrá el doble de
+	  filas que las de <argname>A</argname>.
+	</para>
+	<para>
+	  <seelist><fncref targ="complex"/></seelist>
 	</para>
       </description>
     </function>

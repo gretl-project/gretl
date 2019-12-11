@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+﻿<?xml version="1.0" encoding="UTF-8" ?>
 <localization language="es">
 
  <gentext key="args"          text="Argumentos: "/>
@@ -47,9 +47,9 @@
  <gentext key="object"        text="objeto"/>
  <gentext key="matrixref"     text="referencia a matriz"/>
  <gentext key="seriesref"     text="referencia a serie"/>
- <gentext key="bundleref"     text="referenia a bundle"/>
+ <gentext key="bundleref"     text="referencia a bundle"/>
  <gentext key="scalarref"     text="referencia a escalar"/>
- <gentext key="objectref"     text="referencia al objeto"/>
+ <gentext key="objectref"     text="referencia a objeto"/>
  <gentext key="cvec"          text="vector columna"/>
  <gentext key="rvec"          text="vector fila"/>
  <gentext key="list"          text="lista"/>

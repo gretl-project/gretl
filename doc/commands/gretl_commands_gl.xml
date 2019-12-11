@@ -2879,6 +2879,10 @@
 	  <flag>--db</flag>
 	  <effect>Elimina series do banco de datos</effect>
 	</option>
+	<option>
+	  <flag>--force</flag>
+	  <effect>Mira abaixo</effect>
+	</option>
       </options>
     </usage>
 
@@ -2924,6 +2928,16 @@
       <para>
 	Cae na conta de que isto non elimina o ficheiro de paquete; unicamente
 	descarga o paquete da memoria.
+      </para>
+
+      <subhead>Eliminar variables nun bucle</subhead>
+      <para>
+	En xeral, non se permite eliminar variables no contexto dun bucle,
+	posto que isto pode supor un risco para a integridade do código
+	do propio bucle. Porén, se tes total confianza en que a eliminación
+	dunha determinada variable vai ser inocua, podes anular esta
+	prohibición engadindo a opción <opt>force</opt> á instrución
+	<lit>delete</lit>.
       </para>
     </description>
 
@@ -4494,7 +4508,7 @@
 	function actual, remate coa sinalización dunha condición de fallo.
       </para>
       <para>
-	O argumento <argname>mensaxe</argname> (opcional) pode ter
+	O argumento <repl>mensaxe</repl> (opcional) pode ter
 	a forma dunha cadea de texto literal, ou do nome dunha variable
 	de cadea; se está presente, preséntase como parte da mensaxe
 	de fallo que se lle amosa a quen invoca a función.
@@ -6572,10 +6586,11 @@
 	do VAR (ou VECM) orixinal, con substitución; constrúese un conxunto
 	de datos artificial baseado nas estimacións orixinais dos parámetros
 	e nos erros desa nova mostraxe; o sistema vólvese a estimar e as
-	respostas ao impulso vólvense avaliar. Isto repítese 999 veces,
-	áchanse os cuantís &alpha;/2 e 1 &minus; &alpha;/2 para as respostas,
-	e debúxanse xunto coas estimacións por punto. Esta opción non está
-	dispoñible actualmente para VECMs restrinxidos.
+	respostas ao impulso vólvense avaliar. Por defecto, isto repítese
+	1999 veces, áchanse os cuantís &alpha;/2 e 1 &minus; &alpha;/2
+	para as respostas, e debúxanse xunto coas estimacións por punto.
+	Esta opción non está dispoñible actualmente para VECMs
+	restrinxidos.
       </para>
       <para>
 	Este diálogo tamén admite a reordenación das variables para facer a
@@ -7935,7 +7950,7 @@
 	ficheiro, as cadeas escríbense unha por cada liña nese ficheiro, e este
 	gárdase no cartafol (<cmdref targ="workdir"/>) establecido nese momento,
 	agás que a cadea <repl>nomeficheiro</repl> conteña unha especificación
-	completa da ruta. No caso do arranxo, se <argname>nome</argname> é o
+	completa da ruta. No caso do arranxo, se <repl>nome</repl> é o
 	identificador dun arraxo de cadeas de texto xa existente, ese arranxo 
 	vaise sobrescribir; noutro caso, vaise crear un novo.
       </para>
@@ -13192,6 +13207,17 @@
 	  para obter máis detalles.
 	  </para>
 	</li>
+	<li>
+	  <para>
+    <lit>boot_iters</lit>: Un enteiro, <math>B</math>. Establece o
+    número de iteracións 'bootstrap' que se utilizan cando se calculan
+    funcións de resposta ao impulso con intervalos de confianza. O
+    valor por defecto é 1999. É recomendable que <math>B</math> + 1
+    sexa sempre divisible por 100&alpha;/2 de xeito que, por exemplo con
+    &alpha; = 0.1, <math>B</math>+1 debería ser múltiplo de 5. O mínimo
+    valor aceptable para B é 499.
+	  </para>
+	</li>
       </ilist>
 
 	    <subhead>Interacción con R</subhead>
@@ -13968,7 +13994,7 @@
         </option>
         <option>
 	  <flag>--center-only</flag>
-	  <effect>Sen dividir por d.p.</effect>
+	  <effect>Sen dividir por desviación padrón</effect>
         </option>
       </options>
     </usage>
@@ -15676,7 +15702,7 @@
 	indicada como un conxunto calculado previamente de frecuencias a
 	presentar como tabulación cruzada (consulta tamén a función
 	<fncref targ="mxtab"/>). Neste caso deberás de omitir o argumento
-	<argname>list</argname>.
+	<repl>list</repl>.
       </para>
       <para>
 	Por defecto, a anotación de cada cela indica o reconto da frecuencia de

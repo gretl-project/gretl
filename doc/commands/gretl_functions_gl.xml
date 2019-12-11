@@ -2555,6 +2555,7 @@
 	  <by r="m" c="n"/> cunha parte imaxinaria constante (e de xeito
 	  similar no caso recíproco, mais cunha parte real constante). Se
 	  ambos argumentos son matrices, deben de ter as mesmas dimensións.
+	  <seelist><fncref targ="cswitch"/></seelist>
 	</para>
       </description>
     </function>
@@ -2812,6 +2813,49 @@
             <fncref targ="invcdf"/>
             <fncref targ="pvalue"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="cswitch" section="complex" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">A</fnarg>
+	<fnarg type="scalar">xeito</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Reinterpreta unha matriz real como se contivese valores complexos,
+	  ou viceversa. A acción concreta depende de <argname>xeito</argname>
+	  (que deberá ter un valor de 1, 2, 3 ou 4), como se explica deseguido:
+	</para>
+	<para>
+	  Xeito 1: O argumento <argname>A</argname> debe ser unha matriz
+	  real cun número par de columnas. A función devolve unha matriz coa
+	  metade das columnas, con valores complexos formados utilizando as
+	  columnas impares de <argname>A</argname> para as partes reais, e
+	  as columnas pares para as partes imaxinarias.
+	</para>
+	<para>
+	  Xeito 2: Permite facer a operación inversa á do xeito 1. O argumento
+	  <argname>A</argname> debe ser unha matriz complexa, e o resultado
+	  que se devolve é unha matriz real que terá o dobre de columnas que
+	  as de <argname>A</argname>.
+	</para>
+	<para>
+	  Xeito 3: O argumento <argname>A</argname> debe ser unha matriz
+	  real cun número par de filas. A función devolve unha matriz coa
+	  metade das filas, con valores complexos formados utilizando as
+	  filas impares de <argname>A</argname> para as partes reais, e
+	  as filas pares para as partes imaxinarias.
+	</para>
+	<para>
+	  Xeito 4: Permite facer a operación inversa á do xeito 3. O argumento
+	  <argname>A</argname> debe ser unha matriz complexa, e o resultado
+	  que se devolve é unha matriz real que terá o dobre de filas que as de
+	  <argname>A</argname>.
+	</para>
+	<para>
+	  <seelist><fncref targ="complex"/></seelist>
 	</para>
       </description>
     </function>

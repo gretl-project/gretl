@@ -2879,6 +2879,10 @@
 	  <flag>--db</flag>
 	  <effect>Elimina series de la base de datos</effect>
 	</option>
+	<option>
+	  <flag>--force</flag>
+	  <effect>Mira abajo</effect>
+	</option>
       </options>
     </usage>
 
@@ -2924,6 +2928,16 @@
       <para>
 	Ten en cuenta que esto no elimina el archivo de paquete; únicamente
 	descarga el paquete de la memoria.
+      </para>
+
+      <subhead>Eliminar variables en un bucle</subhead>
+      <para>
+	En general, no se permite eliminar variables en el contexto de un
+	bucle, puesto que esto puede suponer un riesgo para la integridad
+	del código del propio bucle. Sin embargo, si tienes total confianza
+	en que la eliminación de una determinada variable va a ser inocua,
+	puedes anular esta prohibición añadiendo la opción <opt>force</opt>
+	a la instrucción <lit>delete</lit>.
       </para>
     </description>
 
@@ -4494,7 +4508,7 @@
 	función actual, finalice con la señalización de una condición de fallo.
       </para>
       <para>
-	El argumento <argname>mensaje</argname> (opcional) puede tener
+	El argumento <repl>mensaje</repl> (opcional) puede tener
 	la forma de una cadena de texto literal, o del nome de una variable
 	de cadena; si está presente, se presenta como parte del mensaje
 	de fallo que se le muestra a quien invoca la función.
@@ -6568,14 +6582,15 @@
       <para>
 	Si escoges la opción 'bootstrap' cuando representas respuestas al
 	impulso, Gretl calcula un intervalo de confianza para las respuestas
-	utilizando el método bootstrap. Se vuelve a hacer el muestreo con los errores
-	del VAR (o VECM) original, con substitución; se construye un conjunto
-	de datos artificial basado en las estimaciones originales de los parámetros
-	y en los errores de ese nuevo muestreo; el sistema se vuelve a estimar y las
-	respuestas al impulso se vuelven a evaluar. Esto se repite 999 veces,
-	se hallan los cuantiles &alpha;/2 y 1 &minus; &alpha;/2 para las respuestas,
-	y se dibujan junto con las estimaciones por punto. Esta opción no está
-	disponible actualmente para VECMs restringidos.
+	utilizando el método bootstrap. Se vuelve a hacer el muestreo con los
+	errores del VAR (o VECM) original, con substitución; se construye
+	un conjunto de datos artificial basado en las estimaciones originales
+	de los parámetros y en los errores de ese nuevo muestreo; el sistema
+	se vuelve a estimar y las respuestas al impulso se vuelven a evaluar.
+	Por defecto, esto se repite 1999 veces, se hallan los cuantiles
+	&alpha;/2 y 1 &minus; &alpha;/2 para las respuestas, y se dibujan
+	junto con las estimaciones por punto. Esta opción no está disponible
+	actualmente para VECMs restringidos.
       </para>
       <para>
 	Este diálogo también admite la reordenación de las variables para hacer la
@@ -7935,7 +7950,7 @@
 	cadenas se escriben una por línea en ese archivo, y este se guarda en el
 	directorio (<cmdref targ="workdir"/>) establecido en ese momento, excepto
 	que la cadena <repl>nombrearchivo</repl> contenga una especificación
-	completa de la ruta. En el caso del 'array', si <argname>nombre</argname>
+	completa de la ruta. En el caso del 'array', si <repl>nombre</repl>
 	es el identificador de un 'array' de cadenas de texto ya existente, ese
 	'array' se va a sobrescribir; en caso contrario, se crea uno nuevo.
       </para>
@@ -13192,6 +13207,17 @@
 	  para obtener más detalles.
 	  </para>
 	</li>
+	<li>
+	  <para>
+    <lit>boot_iters</lit>: Un entero, <math>B</math>. Establece el
+    número de iteracciones 'bootstrap' que se usan cuando se calculan
+    funciones de respuesta al impulso con intervalos de confianza. El
+    valor por defecto es 1999. Es recomendable que <math>B</math> + 1
+    sea siempre divisible por 100&alpha;/2 de forma que, por ejemplo con
+    &alpha; = 0.1, <math>B</math>+1 debería ser múltiplo de 5. El mínimo
+    valor aceptable para B es 499.
+	  </para>
+	</li>
       </ilist>
 
 	    <subhead>Interacción con R</subhead>
@@ -13968,7 +13994,7 @@
         </option>
         <option>
 	  <flag>--center-only</flag>
-	  <effect>Sin dividir por d.t.</effect>
+	  <effect>Sin dividir por desviación típica</effect>
         </option>
       </options>
     </usage>
@@ -15676,7 +15702,7 @@
 	indicada como un conjunto calculado previamente de frecuencias a
 	presentar como tabulación cruzada (consulta también la función
 	<fncref targ="mxtab"/>). En este caso deberás omitir el argumento
-	<argname>list</argname>.
+	<repl>list</repl>.
       </para>
       <para>
 	Por defecto, la anotación de cada celda indica el recuento de la frecuencia de
