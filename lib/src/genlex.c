@@ -36,7 +36,7 @@
 # define LDEBUG 0
 #endif
 
-static int parser_next_char (parser *p, int skip);
+static int parser_next_char (parser *p);
 
 #define defining_list(p) (p->flags & P_LISTDEF)
 
@@ -87,6 +87,7 @@ struct str_table dummies[] = {
 /* Identify matrix-selection dummy constants:
    these can be valid only brtween '[' and ']'.
 */
+//#define MSEL_DUM(d) (d==DUM_DIAG || d==DUM_REAL || d==DUM_IMAG)
 #define MSEL_DUM(d) (d >= DUM_DIAG && d <= DUM_IMAG)
 
 /* dvars: dataset- and test-related accessors */
@@ -988,7 +989,7 @@ static int dummy_lookup (const char *s, parser *p)
 	}
     }
 
-    if (MSEL_DUM(d) && parser_next_char(p, 0) != ']') {
+    if (MSEL_DUM(d) && parser_next_char(p) != ']') {
 	d = 0;
     }
 
@@ -1433,25 +1434,38 @@ void set_doing_genseries (int s)
     doing_genseries = s;
 }
 
-/* Look ahead to the next non-space character in the
-   parser stream and return it; if @skip then start at
-   offset 1 beyond the current p->point.
+/* Get the next non-space byte beyond what's already parsed:
+   this will either be p->ch, or may be found at p->point
+   or beyond.
 */
 
-static int parser_next_char (parser *p, int skip)
+static int parser_next_char (parser *p)
 {
-    int i, offset = skip ? 1 : 0;
+    if (p->ch != ' ') {
+	return p->ch;
+    } else {
+	const char *s = p->point;
 
-    if (*p->point == '\0') {
+	while (*s) {
+	    if (!isspace(*s)) {
+		return *s;
+	    }
+	}
 	return 0;
     }
+}
 
-    for (i=offset; p->point[i] != '\0'; i++) {
-	if (!isspace(p->point[i])) {
-	    return p->point[i];
+static int char_past_point (parser *p)
+{
+    if (*p->point != '\0') {
+	int i;
+
+	for (i=1; p->point[i] != '\0'; i++) {
+	    if (!isspace(p->point[i])) {
+		return p->point[i];
+	    }
 	}
     }
-
     return 0;
 }
 
@@ -1518,11 +1532,11 @@ static void look_up_word (const char *s, parser *p)
 
 #if LDEBUG
     fprintf(stderr, "look_up_word: s='%s', ch='%c', next='%c'\n",
-	    s, p->ch, parser_next_char(p, 0));
+	    s, p->ch, parser_next_char(p));
 #endif
 
     /* is the next (or next non-space) character left paren? */
-    lpnext = p->ch == '(' || (p->ch == ' ' && parser_next_char(p, 0) == '(');
+    lpnext = parser_next_char(p) == '(';
 
     /* initialize */
     p->sym = 0;
@@ -1621,7 +1635,7 @@ static void maybe_treat_as_postfix (parser *p)
 {
     if (p->sym == NUM) {
 	const char *ok = ")]}+-*/%,:";
-	int c = parser_next_char(p, 1);
+	int c = char_past_point(p);
 
 	/* Interpret as foo++ or foo-- ? Only if
 	   the following character is suitable.
