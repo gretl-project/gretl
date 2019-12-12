@@ -282,11 +282,26 @@ static int obs_overlap_check (int pd, const char *stobs,
     return err;
 }
 
-static int pd_conversion_check (int db_pd)
+static int pd_conversion_check (DATASET *dbset,
+				SERIESINFO *sinfo,
+				windata_t *vwin)
 {
-    int err;
+    int db_pd, err;
+
+    db_pd = dbset != NULL ? dbset->pd : sinfo->pd;
 
     err = check_db_import_conversion(db_pd, dataset);
+
+#if 0
+    if (err && vwin->role == VIEW_DBNOMICS) {
+	gretl_bundle *b = vwin->data;
+	PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+
+	fprintf(stderr, "Can we fix this?\n");
+	gretl_bundle_print(b, prn);
+	gretl_print_destroy(prn);
+    }
+#endif
 
     if (err) {
 	warnbox(_("Sorry, can't handle this frequency conversion"));
@@ -474,7 +489,11 @@ add_single_series_to_dataset (windata_t *vwin, DATASET *dbset)
     int interpol = 0;
     int err = 0;
 
-    err = pd_conversion_check(dbset->pd);
+    if (vwin->role == VIEW_DBNOMICS) {
+	;
+    }
+
+    err = pd_conversion_check(dbset, NULL, vwin);
     if (!err) {
 	err = obs_overlap_check(dbset->pd, dbset->stobs, dbset->endobs,
 				dbset->varname[1]);
@@ -564,7 +583,7 @@ add_db_series_to_dataset (windata_t *vwin, DATASET *dbset, dbwrapper *dw)
     int i, err = 0;
 
     sinfo = &dw->sinfo[0];
-    err = pd_conversion_check(sinfo->pd);
+    err = pd_conversion_check(NULL, sinfo, vwin);
     if (err) {
 	return err;
     }

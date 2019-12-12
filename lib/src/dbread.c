@@ -2958,6 +2958,7 @@ int check_db_import_conversion (int pd, DATASET *dset)
     } else if (pd == 12 && target == 4) {
 	; /* monthly to quarterly compaction */
     } else {
+	fprintf(stderr, "db import fail: pd = %d, target %d\n", pd, target);
 	err = E_DATA;
     }
 
