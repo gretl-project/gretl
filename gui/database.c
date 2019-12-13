@@ -66,6 +66,7 @@ static int add_pcgive_db_series_list (windata_t *vwin);
 static dbwrapper *get_db_series_info (windata_t *vwin, int action);
 static int *db_get_selection_list (windata_t *vwin);
 static void gui_get_db_series (windata_t *vwin, int cmd);
+static void record_db_open_command (dbwrapper *dw);
 
 enum db_data_actions {
     DB_DISPLAY,
@@ -282,6 +283,109 @@ static int obs_overlap_check (int pd, const char *stobs,
     return err;
 }
 
+/* Handle the case of dbnomics pd != dataset->pd, for daily data */
+
+static int dbn_add_daily_data (windata_t *vwin, char *vname,
+			       DATASET *dset, PRN *prn)
+{
+    gretl_bundle *b = vwin->data;
+    gretl_array *S = NULL;
+    gretl_matrix *x = NULL;
+    gchar *tempname = NULL;
+    const char *obsstr;
+    FILE *fp = NULL;
+    int t, T;
+    int err = 0;
+
+    T = gretl_bundle_get_int(b, "T", &err);
+    if (err) {
+	gretl_errmsg_set("dbnomics bundle is broken");
+	return err;
+    }
+
+    S = gretl_bundle_get_array(b, "period", NULL);
+    x = gretl_bundle_get_matrix(b, "value", NULL);
+    if (S == NULL || x == NULL) {
+	gretl_errmsg_set("dbnomics bundle is broken");
+	err = E_DATA;
+    }
+
+    if (!err) {
+	tempname = gretl_make_dotpath("dbdata.XXXXXX");
+	fp = gretl_mktemp(tempname, "wb");
+	if (fp == NULL) {
+	    err = E_FOPEN;
+	}
+    }
+
+    if (!err) {
+	gretl_push_c_numeric_locale();
+	fprintf(fp, "obs,%s\n", vname);
+	for (t=0; t<T; t++) {
+	    obsstr = gretl_array_get_data(S, t);
+	    if (na(x->val[t])) {
+		fprintf(fp, "%s,NA\n", obsstr);
+	    } else {
+		fprintf(fp, "%s,%.15g\n", obsstr, x->val[t]);
+	    }
+	}
+	fclose(fp);
+	gretl_pop_c_numeric_locale();
+    }
+
+    if (!err) {
+	const char *vnames[] = {vname, NULL};
+	const char *okey = "obs,%Y-%m-%d";
+
+	err = gretl_join_data(tempname,
+			      vnames, 1,
+			      dset,
+			      NULL, /* ikeyvars */
+			      okey, /* for daily data */
+			      NULL, /* no filter */
+			      NULL, /* no "dataname" */
+			      0,    /* aggregation */
+			      0,    /* seqval */
+			      NULL, /* auxname */
+			      NULL, /* tconvstr */
+			      NULL, /* tconvfmt */
+			      0,    /* midas_pd */
+			      OPT_K, prn);
+    }
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	const char *descrip;
+	const char *prov, *dscode, *scode;
+	int v;
+
+	descrip = gretl_bundle_get_string(b, "series_name", NULL);
+	v = current_series_index(dset, vname);
+	if (v > 0 && descrip != NULL) {
+	    series_record_label(dset, v, descrip);
+	}
+	prov = gretl_bundle_get_string(b, "provider_code", NULL);
+	dscode = gretl_bundle_get_string(b, "dataset_code", NULL);
+	scode = gretl_bundle_get_string(b, "series_code", NULL);
+	if (prov != NULL && dscode != NULL && scode != NULL) {
+	    record_db_open_command(NULL);
+	    lib_command_sprintf("series %s = dbnomics_fetch(\"%s/%s/%s\")",
+				vname, prov, dscode, scode);
+	    record_command_verbatim();
+	}
+    }
+
+    if (tempname != NULL) {
+	gretl_remove(tempname);
+	g_free(tempname);
+    }
+
+    return err;
+}
+
+/* end experimental */
+
 static int pd_conversion_check (DATASET *dbset,
 				SERIESINFO *sinfo,
 				windata_t *vwin)
@@ -289,20 +393,7 @@ static int pd_conversion_check (DATASET *dbset,
     int db_pd, err;
 
     db_pd = dbset != NULL ? dbset->pd : sinfo->pd;
-
     err = check_db_import_conversion(db_pd, dataset);
-
-#if 0
-    if (err && vwin->role == VIEW_DBNOMICS) {
-	gretl_bundle *b = vwin->data;
-	PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
-
-	fprintf(stderr, "Can we fix this?\n");
-	gretl_bundle_print(b, prn);
-	gretl_print_destroy(prn);
-    }
-#endif
-
     if (err) {
 	warnbox(_("Sorry, can't handle this frequency conversion"));
     }
@@ -484,13 +575,31 @@ add_single_series_to_dataset (windata_t *vwin, DATASET *dbset)
 {
     CompactMethod cmethod = COMPACT_AVG;
     int dbv, resp, overwrite = 0;
-    int existing = 0;
     int compact = 0;
     int interpol = 0;
     int err = 0;
 
+    /* is there a series of this name already in the dataset? */
+    dbv = series_index(dataset, dbset->varname[1]);
+    if (dbv < dataset->v) {
+	resp = yes_no_dialog("gretl",
+			     _("There is already a variable of this name\n"
+			       "in the dataset.  OK to overwrite it?"),
+			     vwin_toplevel(vwin));
+	if (resp != GRETL_YES) {
+	    return 0;
+	}
+	overwrite = 1;
+	maybe_retrieve_compact_method(dbv, &cmethod);
+    }
+
     if (vwin->role == VIEW_DBNOMICS) {
-	;
+	if ((dbset->pd != dataset->pd) && dated_daily_data(dataset)
+	    && (dbset->pd >= 5 && dbset->pd <= 7)) {
+	    err = dbn_add_daily_data(vwin, dbset->varname[1],
+				     dataset, NULL);
+	    return err;
+	}
     }
 
     err = pd_conversion_check(dbset, NULL, vwin);
@@ -503,13 +612,6 @@ add_single_series_to_dataset (windata_t *vwin, DATASET *dbset)
     }
 
     record_db_open_command(NULL);
-
-    /* is there a series of this name already in the dataset? */
-    dbv = series_index(dataset, dbset->varname[1]);
-    if (dbv < dataset->v) {
-	existing = 1;
-	maybe_retrieve_compact_method(dbv, &cmethod);
-    }
 
     if (dbset->pd < dataset->pd) {
 	/* the incoming series needs to be expanded */
@@ -528,17 +630,6 @@ add_single_series_to_dataset (windata_t *vwin, DATASET *dbset)
 	    return handle_compact_spread(NULL, NULL, dataset, dbset);
 	}
 	compact = 1;
-    }
-
-    if (existing) {
-	resp = yes_no_dialog("gretl",
-			     _("There is already a variable of this name\n"
-			       "in the dataset.  OK to overwrite it?"),
-			     vwin_toplevel(vwin));
-	if (resp != GRETL_YES) {
-	    return 0;
-	}
-	overwrite = 1;
     }
 
     if (!overwrite) {
