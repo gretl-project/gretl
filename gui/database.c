@@ -289,23 +289,18 @@ static int dbn_add_daily_data (windata_t *vwin, char *vname,
 			       DATASET *dset, PRN *prn)
 {
     gretl_bundle *b = vwin->data;
-    gretl_array *S = NULL;
-    gretl_matrix *x = NULL;
+    gretl_array *S;
+    gretl_matrix *x;
     gchar *tempname = NULL;
     const char *obsstr;
     FILE *fp = NULL;
     int t, T;
     int err = 0;
 
-    T = gretl_bundle_get_int(b, "T", &err);
-    if (err) {
-	gretl_errmsg_set("dbnomics bundle is broken");
-	return err;
-    }
-
+    T = gretl_bundle_get_int(b, "T", NULL);
     S = gretl_bundle_get_array(b, "period", NULL);
     x = gretl_bundle_get_matrix(b, "value", NULL);
-    if (S == NULL || x == NULL) {
+    if (T == 0 || S == NULL || x == NULL) {
 	gretl_errmsg_set("dbnomics bundle is broken");
 	err = E_DATA;
     }
@@ -319,6 +314,7 @@ static int dbn_add_daily_data (windata_t *vwin, char *vname,
     }
 
     if (!err) {
+	/* write temporary CSV file */
 	gretl_push_c_numeric_locale();
 	fprintf(fp, "obs,%s\n", vname);
 	for (t=0; t<T; t++) {
@@ -356,6 +352,7 @@ static int dbn_add_daily_data (windata_t *vwin, char *vname,
     if (err) {
 	gui_errmsg(err);
     } else {
+	/* set series description and record command */
 	const char *descrip;
 	const char *prov, *dscode, *scode;
 	int v;
@@ -365,9 +362,9 @@ static int dbn_add_daily_data (windata_t *vwin, char *vname,
 	if (v > 0 && descrip != NULL) {
 	    series_record_label(dset, v, descrip);
 	}
-	prov = gretl_bundle_get_string(b, "provider_code", NULL);
+	prov =   gretl_bundle_get_string(b, "provider_code", NULL);
 	dscode = gretl_bundle_get_string(b, "dataset_code", NULL);
-	scode = gretl_bundle_get_string(b, "series_code", NULL);
+	scode =  gretl_bundle_get_string(b, "series_code", NULL);
 	if (prov != NULL && dscode != NULL && scode != NULL) {
 	    record_db_open_command(NULL);
 	    lib_command_sprintf("series %s = dbnomics_fetch(\"%s/%s/%s\")",
