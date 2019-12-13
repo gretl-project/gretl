@@ -674,6 +674,124 @@ static gretl_matrix *make_coeff_matrix (gretl_bundle *bun, int xvalid,
     return B;
 }
 
+#define TRY_CCD 0 /* not for now */
+
+#if TRY_CCD
+
+#include "ccd_iter.c"
+
+static int real_ccd_lasso (const gretl_matrix *X,
+			   const gretl_matrix *y,
+			   gretl_bundle *bun,
+			   PRN *prn)
+{
+    //double lcritmin = 1e200;
+    gretl_matrix *B = NULL;
+    gretl_matrix *lfrac;
+    gretl_matrix *g, *xv;
+    gretl_matrix *R2;
+    double lmax, ssq, xij;
+    int *ia, *df;
+    int nlam = 1;
+    int m, n, i, j;
+    int jmin, jmax;
+    // int idxmin = 0;
+    int nlp = 0;
+    int err = 0;
+
+    int stdize = gretl_bundle_get_int(bun, "stdize", &err);
+    int xvalid = gretl_bundle_get_int(bun, "xvalidate", &err);
+    int verbose = gretl_bundle_get_bool(bun, "verbosity", 1);
+
+    lfrac = gretl_bundle_get_matrix(bun, "lfrac", &err);
+
+    if (err) {
+	return err;
+    }
+
+    /* dimensions */
+    nlam = gretl_vector_get_length(lfrac);
+    m = X->rows;
+    n = X->cols;
+
+    xv = gretl_matrix_alloc(n, 1);
+    g = gretl_matrix_alloc(n, 1);
+    R2 = gretl_matrix_alloc(nlam, 1);
+    df = malloc(nlam * sizeof *df);
+    ia = malloc(n * sizeof *ia);
+
+    /* xv: sums of squares of columns of X */
+    for (j=0; j<n; j++) {
+	ssq = 0.0;
+	for (i=0; i<m; i++) {
+	    xij = gretl_matrix_get(X, i, j);
+	    ssq += xij * xij;
+	}
+	gretl_vector_set(xv, j, ssq);
+    }
+
+    /* g = X'y */
+    gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
+			      y, GRETL_MOD_NONE,
+			      g, GRETL_MOD_NONE);
+    lmax = gretl_matrix_infinity_norm(g);
+
+    if (!xvalid && verbose > 0) {
+	if (nlam > 1) {
+	    pprintf(prn, "using lambda-fraction sequence of length %d, starting at %g\n",
+		    nlam, lfrac->val[0]);
+	} else {
+	    pprintf(prn, "using lambda-fraction %g\n", lfrac->val[0]);
+	}
+    }
+
+    B = make_coeff_matrix(bun, xvalid, n + stdize, nlam, &jmin, &jmax);
+    if (B == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    if (!xvalid && verbose > 0 && nlam > 1) {
+	pputc(prn, '\n');
+	pprintf(prn, "      lambda     df     criterion   iters\n");
+    }
+
+    err = ccd_iteration(1.0, n, g->val, m, X, nlam, lfrac->val,
+			lmax, 1.0e-7, 200000, xv->val, B, stdize,
+			ia, df, R2->val, &nlp);
+    printf("ccd: err=%d, nlp=%d\n", err, nlp);
+
+    if (!err) {
+	double nulldev = 0.0;
+
+	for (i=0; i<y->rows; i++) {
+	    nulldev += y->val[i] * y->val[i];
+	}
+	for (i=0; i<nlam; i++) {
+	    R2->val[i] /= nulldev;
+	    printf("lam %#g, df %d, R2 %.5f\n", lfrac->val[i],
+		   df[i], R2->val[i]);
+	}
+	gretl_bundle_donate_data(bun, "B", B, GRETL_TYPE_MATRIX, 0);
+    } else {
+	gretl_matrix_free(B);
+    }
+
+ bailout:
+
+    gretl_bundle_delete_data(bun, "verbosity");
+
+    gretl_matrix_free(g);
+    gretl_matrix_free(xv);
+    gretl_matrix_free(R2);
+    free(ia);
+    free(df);
+
+    return err;
+}
+
+#endif
+
 /* This function is executed when we want to obtain a set
    of coefficients using the full training data, with either
    a single value of lambda or a vector of lambdas. We come
@@ -1358,7 +1476,6 @@ int admm_lasso (gretl_matrix *A,
     int xv;
 
     prepare_admm_params(A, b, bun, &rho);
-
     xv = gretl_bundle_get_bool(bun, "xvalidate", 0);
 
     if (xv) {
@@ -1374,9 +1491,13 @@ int admm_lasso (gretl_matrix *A,
 	}
 #endif
 	return admm_lasso_xv(A, b, bun, rho, prn);
-    } else {
-	return real_admm_lasso(A, b, bun, rho, prn);
     }
+#if TRY_CCD
+    if (gretl_bundle_get_bool(bun, "try_ccd", 0)) {
+	return real_ccd_lasso(A, b, bun, prn);
+    }
+#endif
+    return real_admm_lasso(A, b, bun, rho, prn);
 }
 
 #ifdef HAVE_MPI
