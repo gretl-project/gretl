@@ -585,7 +585,7 @@ function matrix drill(const matrices x,
 end function
 
 function string gbundle2json (bundle b)
-    # TODO: Add some words on this
+    # Write bundle elements to json-file.
 
     strings keys = getkeys(b)
     string out = "{"
@@ -608,10 +608,23 @@ function string gbundle2json (bundle b)
             # matrix and vector always two-dim
             out ~= "["
             loop r=1..rows(m) -q
-                string stemp = "["~ strstrip( sprintf("%14.10f", m[r,]) ) ~"]"
+                if int(m[r,]) == m[r,]
+                    string sprintf_stmt = sprintf("%14.d", m[r,])
+                else
+                    string sprintf_stmt = sprintf("%14.10f", m[r,])
+                endif
+                string stemp = "["~ strstrip(sprintf_stmt) ~"]"
                 out ~= regsub(stemp, "\s+", ",")
                 # replace (multiple) blanks
                 out ~= (r < rows(m)) ? sprintf(",\n") : sprintf("]")
+            endloop
+        elif typ == "array"
+            # string array always two-dim
+            strings S = b[key]
+            out ~= "["
+            loop r=1..nelem(S) -q
+                out ~= sprintf("\"%s\"", S[r])
+                out ~= (r < nelem(S)) ? sprintf(",") : sprintf("]")
             endloop
         else
             printf "Warning: Type %s not supported. Skipping.\n", typ
