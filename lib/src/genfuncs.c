@@ -288,6 +288,73 @@ int diff_series (const double *x, double *y, int f,
 }
 
 /**
+ * standardize_series:
+ * @x: array of original data.
+ * @y: array into which to write the result.
+ * @dfc: degrees of freedom correction.
+ * @dset: data set information.
+ *
+ * By default calculates the standardized counterpart to the input
+ * series @x, but if @dfc < 0 the result is just centered.
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+int standardize_series (const double *x, double *y, int dfc,
+			const DATASET *dset)
+{
+    double d, xbar = 0;
+    int t, n = 0;
+
+    for (t=dset->t1; t<=dset->t2; t++) {
+	if (!na(x[t])) {
+	    xbar += x[t];
+	    n++;
+	}
+    }
+
+    if (dfc >= 0 && n < dfc + 1) {
+	return E_TOOFEW;
+    }
+
+    xbar /= n;
+
+    if (dfc < 0) {
+	/* just centering */
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    if (na(x[t])) {
+		y[t] = NADBL;
+	    } else {
+		y[t] = x[t] - xbar;
+	    }
+	}
+    } else {
+	/* dividing by s.d. */
+	double sd, TSS = 0;
+
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    if (!na(x[t])) {
+		d = x[t] - xbar;
+		TSS += d * d;
+	    }
+	}
+
+	TSS /= (n - dfc);
+	sd = sqrt(TSS);
+
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    if (na(x[t])) {
+		y[t] = NADBL;
+	    } else {
+		y[t] = (x[t] - xbar) / sd;
+	    }
+	}
+    }
+
+    return 0;
+}
+
+/**
  * orthdev_series:
  * @x: array of original data.
  * @y: array into which to write the result.

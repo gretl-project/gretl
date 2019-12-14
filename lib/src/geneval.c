@@ -5676,7 +5676,7 @@ static NODE *get_info_on_series (NODE *n, parser *p)
     return ret;
 }
 
-static NODE *list_standardize (NODE *l, NODE *r, parser *p)
+static NODE *list_stdize (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_list_node(p);
 
@@ -5698,6 +5698,25 @@ static NODE *list_standardize (NODE *l, NODE *r, parser *p)
 		p->err = list_stdgenr(list, p->dset, opt);
 	    }
 	    ret->v.ivec = list;
+	}
+    }
+
+    return ret;
+}
+
+static NODE *series_stdize (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_series_node(p);
+
+    if (ret != NULL && starting(p)) {
+	int dfc = 1;
+
+	if (!null_node(r)) {
+	    dfc = node_get_int(r, p);
+	}
+	if (!p->err) {
+	    p->err = standardize_series(l->v.xvec, ret->v.xvec,
+					dfc, p->dset);
 	}
     }
 
@@ -15539,8 +15558,10 @@ static NODE *eval (NODE *t, parser *p)
     case F_STDIZE:
 	if (!null_or_scalar(r)) {
 	    p->err = E_TYPES;
-	} else if (useries_node(l) || l->t == LIST) {
-	    ret = list_standardize(l, r, p);
+	} else if (l->t == SERIES) {
+	    ret = series_stdize(l, r, p);
+	} else if (l->t == LIST) {
+	    ret = list_stdize(l, r, p);
 	} else if (l->t == MAT) {
 	    ret = matrix_to_matrix_func(l, r, t->t, p);
 	} else {

@@ -541,55 +541,8 @@ static int get_inverse (int v, double *xvec, const DATASET *dset)
 static int get_std (int v, int dfc, double *targ, const DATASET *dset)
 {
     double *x = dset->Z[v];
-    double d, xbar = 0;
-    int t, n = 0;
 
-    for (t=dset->t1; t<=dset->t2; t++) {
-	if (!na(x[t])) {
-	    xbar += x[t];
-	    n++;
-	}
-    }
-
-    if (dfc >= 0 && n < dfc + 1) {
-	return E_TOOFEW;
-    }
-
-    xbar /= n;
-
-    if (dfc < 0) {
-	/* just centering */
-	for (t=dset->t1; t<=dset->t2; t++) {
-	    if (na(x[t])) {
-		targ[t] = NADBL;
-	    } else {
-		targ[t] = x[t] - xbar;
-	    }
-	}
-    } else {
-	/* dividing by s.d. */
-	double sd, TSS = 0;
-
-	for (t=dset->t1; t<=dset->t2; t++) {
-	    if (!na(x[t])) {
-		d = x[t] - xbar;
-		TSS += d * d;
-	    }
-	}
-
-	TSS /= (n - dfc);
-	sd = sqrt(TSS);
-
-	for (t=dset->t1; t<=dset->t2; t++) {
-	    if (na(x[t])) {
-		targ[t] = NADBL;
-	    } else {
-		targ[t] = (x[t] - xbar) / sd;
-	    }
-	}
-    }
-
-    return 0;
+    return standardize_series(x, targ, dfc, dset);
 }
 
 /* write resampled series into rsvec */
