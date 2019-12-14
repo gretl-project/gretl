@@ -685,7 +685,7 @@ static int real_ccd_lasso (const gretl_matrix *X,
 			   gretl_bundle *bun,
 			   PRN *prn)
 {
-    //double lcritmin = 1e200;
+    double lcritmin = 1e200;
     gretl_matrix *B = NULL;
     gretl_matrix *lfrac;
     gretl_matrix *g, *xv;
@@ -695,7 +695,7 @@ static int real_ccd_lasso (const gretl_matrix *X,
     int nlam = 1;
     int m, n, i, j;
     int jmin, jmax;
-    // int idxmin = 0;
+    int idxmin = 0;
     int nlp = 0;
     int err = 0;
 
@@ -720,6 +720,12 @@ static int real_ccd_lasso (const gretl_matrix *X,
     df = malloc(nlam * sizeof *df);
     ia = malloc(n * sizeof *ia);
 
+    /* g = X'y */
+    gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
+			      y, GRETL_MOD_NONE,
+			      g, GRETL_MOD_NONE);
+    lmax = gretl_matrix_infinity_norm(g);    
+
     /* xv: sums of squares of columns of X */
     for (j=0; j<n; j++) {
 	ssq = 0.0;
@@ -729,12 +735,6 @@ static int real_ccd_lasso (const gretl_matrix *X,
 	}
 	gretl_vector_set(xv, j, ssq);
     }
-
-    /* g = X'y */
-    gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
-			      y, GRETL_MOD_NONE,
-			      g, GRETL_MOD_NONE);
-    lmax = gretl_matrix_infinity_norm(g);
 
     if (!xvalid && verbose > 0) {
 	if (nlam > 1) {
@@ -753,7 +753,7 @@ static int real_ccd_lasso (const gretl_matrix *X,
 
     if (!xvalid && verbose > 0 && nlam > 1) {
 	pputc(prn, '\n');
-	pprintf(prn, "      lambda     df     criterion   iters\n");
+	pprintf(prn, "      lambda     df     criterion\n");
     }
 
     err = ccd_iteration(1.0, n, g->val, m, X, nlam, lfrac->val,
@@ -762,19 +762,49 @@ static int real_ccd_lasso (const gretl_matrix *X,
     printf("ccd: err=%d, nlp=%d\n", err, nlp);
 
     if (!err) {
-	double nulldev = 0.0;
+	double lambda, lcrit, nulldev = 0.0;
+	gretl_matrix *b = gretl_matrix_alloc(n, 1);
+	gretl_matrix *m1 = gretl_matrix_alloc(m, 1);
+	size_t bsize = n * sizeof *b->val;
 
 	for (i=0; i<y->rows; i++) {
 	    nulldev += y->val[i] * y->val[i];
 	}
-	for (i=0; i<nlam; i++) {
-	    R2->val[i] /= nulldev;
-	    printf("lam %#g, df %d, R2 %.5f\n", lfrac->val[i],
-		   df[i], R2->val[i]);
+	for (j=0; j<nlam; j++) {
+	    lambda = lfrac->val[j] * lmax;
+	    R2->val[j] /= nulldev;
+	    memcpy(b->val, B->val + j * B->rows + stdize, bsize);
+	    if (!xvalid) {
+		lcrit = objective(X, y, b, lambda, m1);
+		if (verbose > 0 && nlam > 1) {
+		    pprintf(prn, "%#12.6g  %5d    %#.8g\n",
+			    lambda/m, df[j], lcrit);
+		}
+		if (lcrit < lcritmin) {
+		    lcritmin = lcrit;
+		    idxmin = j;
+		}
+	    }
 	}
+	gretl_matrix_free(b);
+	gretl_matrix_free(m1);
 	gretl_bundle_donate_data(bun, "B", B, GRETL_TYPE_MATRIX, 0);
     } else {
 	gretl_matrix_free(B);
+    }
+
+    if (!err) {
+	gretl_bundle_set_scalar(bun, "lmax", lmax);
+	if (!xvalid) {
+	    if (nlam > 1) {
+		gretl_bundle_set_scalar(bun, "idxmin", idxmin + 1);
+		gretl_bundle_set_scalar(bun, "lfmin", lfrac->val[idxmin]);
+	    }
+	    gretl_bundle_set_scalar(bun, "lcrit", lcritmin);
+	}
+	if (nlam == 1) {
+	    gretl_bundle_set_scalar(bun, "lambda", lfrac->val[0] * lmax);
+	}
     }
 
  bailout:
